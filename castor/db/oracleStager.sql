@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.643 $ $Date: 2008/03/03 13:11:41 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.644 $ $Date: 2008/03/11 16:16:14 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -10,61 +10,61 @@
 /* PL/SQL declaration for the castor package */
 CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskCopyCore IS RECORD (
-        id INTEGER,
-        path VARCHAR2(2048),
-        status NUMBER,
-        fsWeight NUMBER,
-        mountPoint VARCHAR2(2048),
-        diskServer VARCHAR2(2048));
+    id INTEGER,
+    path VARCHAR2(2048),
+    status NUMBER,
+    fsWeight NUMBER,
+    mountPoint VARCHAR2(2048),
+    diskServer VARCHAR2(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
   TYPE TapeCopy_Cur IS REF CURSOR RETURN TapeCopy%ROWTYPE;
   TYPE Segment_Cur IS REF CURSOR RETURN Segment%ROWTYPE;
   TYPE StreamCore IS RECORD (
-        id INTEGER,
-        initialSizeToTransfer INTEGER,
-        status NUMBER,
-        tapePoolId NUMBER,
-        tapePoolName VARCHAR2(2048));
+    id INTEGER,
+    initialSizeToTransfer INTEGER,
+    status NUMBER,
+    tapePoolId NUMBER,
+    tapePoolName VARCHAR2(2048));
   TYPE Stream_Cur IS REF CURSOR RETURN StreamCore;
   TYPE "strList" IS TABLE OF VARCHAR2(2048) index by binary_integer;
   TYPE "cnumList" IS TABLE OF NUMBER index by binary_integer;
   TYPE QueryLine IS RECORD (
-        fileid INTEGER,
-        nshost VARCHAR2(2048),
-        diskCopyId INTEGER,
-        diskCopyPath VARCHAR2(2048),
-        filesize INTEGER,
-        diskCopyStatus INTEGER,
-        diskServerName VARCHAR2(2048),
-        fileSystemMountPoint VARCHAR2(2048),
-        nbaccesses INTEGER,
-        lastKnownFileName VARCHAR2(2048));
+    fileid INTEGER,
+    nshost VARCHAR2(2048),
+    diskCopyId INTEGER,
+    diskCopyPath VARCHAR2(2048),
+    filesize INTEGER,
+    diskCopyStatus INTEGER,
+    diskServerName VARCHAR2(2048),
+    fileSystemMountPoint VARCHAR2(2048),
+    nbaccesses INTEGER,
+    lastKnownFileName VARCHAR2(2048));
   TYPE QueryLine_Cur IS REF CURSOR RETURN QueryLine;
   TYPE FileList_Cur IS REF CURSOR RETURN FilesDeletedProcOutput%ROWTYPE;
   TYPE DiskPoolQueryLine IS RECORD (
-        isDP INTEGER,
-        isDS INTEGER,
-        diskServerName VARCHAR(2048),
-        diskServerStatus INTEGER,
-        fileSystemmountPoint VARCHAR(2048),
-        fileSystemfreeSpace INTEGER,
-        fileSystemtotalSpace INTEGER,
-        fileSystemminfreeSpace INTEGER,
-        fileSystemmaxFreeSpace INTEGER,
-        fileSystemStatus INTEGER);
+    isDP INTEGER,
+    isDS INTEGER,
+    diskServerName VARCHAR(2048),
+    diskServerStatus INTEGER,
+    fileSystemmountPoint VARCHAR(2048),
+    fileSystemfreeSpace INTEGER,
+    fileSystemtotalSpace INTEGER,
+    fileSystemminfreeSpace INTEGER,
+    fileSystemmaxFreeSpace INTEGER,
+    fileSystemStatus INTEGER);
   TYPE DiskPoolQueryLine_Cur IS REF CURSOR RETURN DiskPoolQueryLine;
   TYPE DiskPoolsQueryLine IS RECORD (
-        isDP INTEGER,
-        isDS INTEGER,
-        diskPoolName VARCHAR(2048),
-        diskServerName VARCHAR(2048),
-        diskServerStatus INTEGER,
-        fileSystemmountPoint VARCHAR(2048),
-        fileSystemfreeSpace INTEGER,
-        fileSystemtotalSpace INTEGER,
-        fileSystemminfreeSpace INTEGER,
-        fileSystemmaxFreeSpace INTEGER,
-        fileSystemStatus INTEGER);
+    isDP INTEGER,
+    isDS INTEGER,
+    diskPoolName VARCHAR(2048),
+    diskServerName VARCHAR(2048),
+    diskServerStatus INTEGER,
+    fileSystemmountPoint VARCHAR(2048),
+    fileSystemfreeSpace INTEGER,
+    fileSystemtotalSpace INTEGER,
+    fileSystemminfreeSpace INTEGER,
+    fileSystemmaxFreeSpace INTEGER,
+    fileSystemStatus INTEGER);
   TYPE DiskPoolsQueryLine_Cur IS REF CURSOR RETURN DiskPoolsQueryLine;
   TYPE IDRecord IS RECORD (id INTEGER);
   TYPE IDRecord_Cur IS REF CURSOR RETURN IDRecord;
@@ -1416,8 +1416,6 @@ BEGIN
 END;
 
 /* PL/SQL method implementing stageRm */
-
-
 CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
                                      fid IN INTEGER,
                                      nh IN VARCHAR2,
@@ -1591,6 +1589,21 @@ BEGIN
   UPDATE DiskCopy SET status = 7 -- INVALID
    WHERE id IN (SELECT * FROM TABLE(dcsToRm));
   ret := 1;  -- ok
+END;
+
+
+/* PL/SQL method implementing a setFileGCWeight request */
+CREATE OR REPLACE PROCEDURE setFileGCWeight
+(fid IN NUMBER, nh IN VARCHAR2(2048), svcClassId IN NUMBER, weight IN FLOAT) AS
+BEGIN
+  UPDATE DiskCopy
+     SET gcWeight = gcWeight + weight
+   WHERE castorFile = (SELECT id FROM CastorFile WHERE fileid = fid AND nshost = nh)
+     AND fileSystem IN (
+       SELECT FileSystem.id
+         FROM FileSystem, DiskPool2SvcClass D2S
+        WHERE FileSystem.diskPool = D2S.parent
+          AND D2S.child = svcClassId);         
 END;
 
 
