@@ -35,28 +35,16 @@ ICOMMON_H = \
 	 FileName($(DESTDIRCASTOR),socket_timeout.h) FileName($(DESTDIRCASTOR),trace.h) \
 	 FileName($(DESTDIRCASTOR),u64subr.h) FileName($(DESTDIRCASTOR),ypgetacctent.h) \
 	 FileName($(TOPINCLUDE),shift.h) \
-	 FileName($(DESTDIRCASTOR),stager.h) \
 	 FileName($(DESTDIRCASTOR),stager_api.h) \
-	 FileName($(DESTDIRCASTOR),stager_admin_api.h) \
 	 FileName($(DESTDIRCASTOR),stager_catalogInterface.h) \
 	 FileName($(DESTDIRCASTOR),stager_client_api.h) \
 	 FileName($(DESTDIRCASTOR),stager_constants.h) \
-	 FileName($(DESTDIRCASTOR),stager_db_service.h) \
 	 FileName($(DESTDIRCASTOR),stager_errmsg.h) \
-	 FileName($(DESTDIRCASTOR),stager_error_service.h) \
 	 FileName($(DESTDIRCASTOR),stager_extern_globals.h) \
-	 FileName($(DESTDIRCASTOR),stager_fs_service.h) \
-	 FileName($(DESTDIRCASTOR),stager_gc_service.h) \
-	 FileName($(DESTDIRCASTOR),stager_getnext_service.h) \
-	 FileName($(DESTDIRCASTOR),stager_job_service.h) \
 	 FileName($(DESTDIRCASTOR),stager_macros.h) \
 	 FileName($(DESTDIRCASTOR),stager_mapper.h) \
 	 FileName($(DESTDIRCASTOR),stager_messages.h) \
 	 FileName($(DESTDIRCASTOR),stager_mover_api.h) \
-	 FileName($(DESTDIRCASTOR),stager_query_service.h) \
-	 FileName($(DESTDIRCASTOR),stager_service_api.h) \
-	 FileName($(DESTDIRCASTOR),stager_service2name.h) \
-	 FileName($(DESTDIRCASTOR),stager_services.h) \
 	 FileName($(DESTDIRCASTOR),stager_util.h) \
 	 FileName($(DESTDIRCASTOR),stager_uuid.h) \
 	 FileName($(DESTDIRCASTOR),Cdlopen_api.h) \
@@ -116,28 +104,16 @@ ECOMMON_H = \
 	 $(EXPORTH)/socket_timeout.h $(EXPORTH)/trace.h \
 	 $(EXPORTH)/u64subr.h $(EXPORTH)/ypgetacctent.h \
 	 $(EXPORTINC)/shift.h \
-	 $(EXPORTH)/stager.h \
 	 $(EXPORTH)/stager_api.h \
-	 $(EXPORTH)/stager_admin_api.h \
 	 $(EXPORTH)/stager_catalogInterface.h \
 	 $(EXPORTH)/stager_client_api.h \
 	 $(EXPORTH)/stager_constants.h \
-	 $(EXPORTH)/stager_db_service.h \
 	 $(EXPORTH)/stager_errmsg.h \
-	 $(EXPORTH)/stager_error_service.h \
 	 $(EXPORTH)/stager_extern_globals.h \
-	 $(EXPORTH)/stager_fs_service.h \
-	 $(EXPORTH)/stager_gc_service.h \
-	 $(EXPORTH)/stager_getnext_service.h \
-	 $(EXPORTH)/stager_job_service.h \
 	 $(EXPORTH)/stager_macros.h \
 	 $(EXPORTH)/stager_mapper.h \
 	 $(EXPORTH)/stager_messages.h \
 	 $(EXPORTH)/stager_mover_api.h \
-	 $(EXPORTH)/stager_query_service.h \
-	 $(EXPORTH)/stager_service_api.h \
-	 $(EXPORTH)/stager_service2name.h \
-	 $(EXPORTH)/stager_services.h \
 	 $(EXPORTH)/stager_util.h \
 	 $(EXPORTH)/stager_uuid.h \
 	 $(EXPORTH)/Cdlopen_api.h \
@@ -295,38 +271,17 @@ IEXPORT(Cglobals.h,$(EXPORTH),644)
 InstallNonExecFile(Cdomainname.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Cdomainname.h,$(EXPORTH),644)
 
-InstallNonExecFile(stager.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(stager.h,$(EXPORTH),644)
-
 InstallNonExecFile(stager_catalogInterface.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(stager_catalogInterface.h,$(EXPORTH),644)
 
 InstallNonExecFile(stager_constants.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(stager_constants.h,$(EXPORTH),644)
 
-InstallNonExecFile(stager_db_service.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(stager_db_service.h,$(EXPORTH),644)
-
 InstallNonExecFile(stager_errmsg.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(stager_errmsg.h,$(EXPORTH),644)
 
-InstallNonExecFile(stager_error_service.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(stager_error_service.h,$(EXPORTH),644)
-
 InstallNonExecFile(stager_extern_globals.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(stager_extern_globals.h,$(EXPORTH),644)
-
-InstallNonExecFile(stager_fs_service.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(stager_fs_service.h,$(EXPORTH),644)
-
-InstallNonExecFile(stager_gc_service.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(stager_gc_service.h,$(EXPORTH),644)
-
-InstallNonExecFile(stager_getnext_service.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(stager_getnext_service.h,$(EXPORTH),644)
-
-InstallNonExecFile(stager_job_service.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(stager_job_service.h,$(EXPORTH),644)
 
 InstallNonExecFile(stager_macros.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(stager_macros.h,$(EXPORTH),644)
@@ -339,18 +294,6 @@ IEXPORT(stager_messages.h,$(EXPORTH),644)
 
 InstallNonExecFile(stager_mover_api.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(stager_mover_api.h,$(EXPORTH),644)
-
-InstallNonExecFile(stager_query_service.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(stager_query_service.h,$(EXPORTH),644)
-
-InstallNonExecFile(stager_service_api.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(stager_service_api.h,$(EXPORTH),644)
-
-InstallNonExecFile(stager_service2name.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(stager_service2name.h,$(EXPORTH),644)
-
-InstallNonExecFile(stager_services.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(stager_services.h,$(EXPORTH),644)
 
 InstallNonExecFile(stager_util.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(stager_util.h,$(EXPORTH),644)
@@ -657,9 +600,6 @@ IEXPORT(ypgetacctent.h,$(EXPORTH),644)
 
 InstallNonExecFile(stager_api.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(stager_api.h,$(EXPORTH),644)
-
-InstallNonExecFile(stager_admin_api.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(stager_admin_api.h,$(EXPORTH),644)
 
 InstallNonExecFile(stager_client_api.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(stager_client_api.h,$(EXPORTH),644)
