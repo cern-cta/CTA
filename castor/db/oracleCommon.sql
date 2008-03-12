@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.639 $ $Date: 2008/03/03 13:11:38 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.640 $ $Date: 2008/03/12 14:36:35 $ $Author: itglp $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -100,7 +100,6 @@ CREATE INDEX I_DiskCopy_Castorfile on DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem on DiskCopy (fileSystem);
 CREATE INDEX I_DiskCopy_Status on DiskCopy (status);
 CREATE INDEX I_DiskCopy_FS_Status_10 on DiskCopy (fileSystem,decode(status,10,status,NULL));
-CREATE INDEX I_DiskCopy_GC on DiskCopy (fileSystem,creationTime+gcWeight);
 
 CREATE INDEX I_TapeCopy_Castorfile on TapeCopy (castorFile);
 CREATE INDEX I_TapeCopy_Status on TapeCopy (status);
@@ -160,11 +159,6 @@ ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT I_DiskPool2SvcCla_ParentChild PRIMA
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
   (fileid NUMBER, nshost VARCHAR2(2048))
   ON COMMIT PRESERVE ROWS;
-
-/* Global temporary table to help selectFiles2Delete procedure */
-CREATE GLOBAL TEMPORARY TABLE SelectFiles2DeleteProcHelper
-  (id NUMBER, path VARCHAR2(2048))
-  ON COMMIT DELETE ROWS;
 
 /* Global temporary table to handle output of the nsFilesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE NsFilesDeletedOrphans
@@ -350,7 +344,7 @@ END;
 /* compute the impact of a file's size in its gcweight */
 CREATE OR REPLACE FUNCTION size2gcweight(s NUMBER) RETURN NUMBER IS
 BEGIN
-  RETURN 1073741824/(s+1)*86400;  -- 1GB/fileize
+  RETURN 1073741824/(s+1)*86400 + getTime();  -- 1GB/filesize (days) + current time as lastAccessTime
 END;
 
 

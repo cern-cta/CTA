@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.645 $ $Date: 2008/03/12 11:22:05 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.646 $ $Date: 2008/03/12 14:36:35 $ $Author: itglp $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -204,13 +204,17 @@ BEGIN
     -- It might happen that we have more than one, because LSF may have
     -- scheduled a replication on a fileSystem which already had a previous diskcopy.
     -- We don't care and we randomly take the first one.
+    -- Here we also update the gcWeight taking into account the new lastAccessTime
+    -- and the weightForAccess from our svcClass: this is added as a bonus to 
+    -- the selected diskCopy.
     SELECT gcWeightForAccess INTO wAccess 
       FROM SvcClass, DiskPool2SvcClass D2S, FileSystem
      WHERE FileSystem.id = fileSystemId
        AND FileSystem.diskPool = D2S.parent
        AND D2S.child = SvcClass.id;
     UPDATE DiskCopy
-       SET gcWeight = gcWeight + wAccess*86400
+       SET gcWeight = gcWeight + wAccess*86400 + getTime() - lastAccessTime,
+           lastAccessTime = getTime()
      WHERE id = dcIds(1)
     RETURNING id, path, status INTO dci, rpath, rstatus;
     -- Let's update the SubRequest and set the link with the DiskCopy
@@ -363,10 +367,9 @@ BEGIN
      AND SubRequest.request = Req.id
      AND Req.svcClass = SvcClass.id;
   
-  -- update status and gcWeight: a replica starts with some aging
+  -- update status
   UPDATE DiskCopy
-     SET status = srcStatus,
-         creationTime = getTime()   -- for the GC, effective lifetime of this diskcopy starts now
+     SET status = srcStatus
    WHERE id = dcId
   RETURNING castorFile, fileSystem INTO cfId, fsId;
   -- If the maxReplicaNb is exceeded, update one of the diskcopies in a 

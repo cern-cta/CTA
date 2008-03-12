@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.645 $ $Date: 2008/03/11 16:20:16 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.646 $ $Date: 2008/03/12 14:36:35 $ $Author: itglp $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -629,7 +629,7 @@ BEGIN
   ELSE
     UPDATE DiskCopy
        SET status = 0,  -- DISKCOPY_STAGED
-           creationTime = getTime(),    -- for the GC, effective lifetime of this diskcopy starts now
+           lastAccessTime = getTime(),    -- for the GC, effective lifetime of this diskcopy starts now
            gcWeight = size2gcweight(fs)
      WHERE id = dci;
     -- restart this subrequest if it's not a repack one

@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.645 $ $Date: 2008/03/11 16:20:16 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.646 $ $Date: 2008/03/12 14:36:35 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -644,8 +644,8 @@ BEGIN
   
   -- Create the DiskCopy without filesystem
   buildPathFromFileId(fileId, nsHost, destDcId, rpath);
-  INSERT INTO DiskCopy (path, id, filesystem, castorfile, status, creationtime, gcWeight)
-    VALUES (rpath, destDcId, 0, cfId, 1, gettime(), size2gcweight(fileSize));  -- WAITDISK2DISKCOPY  
+  INSERT INTO DiskCopy (path, id, filesystem, castorfile, status, creationTime, lastAccessTime, gcWeight)
+    VALUES (rpath, destDcId, 0, cfId, 1, getTime(), getTime(), size2gcweight(fileSize));  -- WAITDISK2DISKCOPY  
   INSERT INTO Id2Type (id, type) VALUES (destDcId, 5);  -- OBJ_DiskCopy
   COMMIT;
 END;
@@ -796,14 +796,14 @@ BEGIN
   IF nbTC = 0 OR fs = 0 THEN
     UPDATE DiskCopy
        SET status = 0, -- STAGED
-           creationTime = getTime(),    -- for the GC, effective lifetime of this diskcopy starts now
+           lastAccessTime = getTime(),    -- for the GC, effective lifetime of this diskcopy starts now
            gcWeight = size2gcweight(fs)
      WHERE castorFile = cfId AND status = 6; -- STAGEOUT
   ELSE
     -- update the DiskCopy status to CANBEMIGR
     UPDATE DiskCopy 
        SET status = 10, -- CANBEMIGR
-           creationTime = getTime(),    -- for the GC, effective lifetime of this diskcopy starts now
+           lastAccessTime = getTime(),    -- for the GC, effective lifetime of this diskcopy starts now
            gcWeight = size2gcweight(fs)
      WHERE castorFile = cfId AND status = 6 -- STAGEOUT
      RETURNING id INTO dcId;
@@ -831,8 +831,8 @@ BEGIN
          AND SubRequest.request = Request.id
          AND SubRequest.status = 6;  -- READY
       archiveSubReq(srId);
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-      NULL; --Ignore the missing subrequest
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      NULL; -- Ignore the missing subrequest
     END;
   END IF;
 END;
@@ -1267,8 +1267,8 @@ BEGIN
     SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
     SELECT ids_seq.nextval INTO dcId FROM DUAL;
     buildPathFromFileId(fid, nh, dcId, rpath);
-    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime, gcWeight)
-         VALUES (rpath, dcId, 0, cfId, 5, getTime(), 0); -- status WAITFS
+    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime, lastAccessTime, gcWeight)
+         VALUES (rpath, dcId, 0, cfId, 5, getTime(), getTime(), 0); -- status WAITFS
     INSERT INTO Id2Type (id, type) VALUES (dcId, 5); -- OBJ_DiskCopy
     rstatus := 5; -- WAITFS
     rmountPoint := '';

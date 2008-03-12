@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.641 $ $Date: 2008/03/12 11:21:30 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.642 $ $Date: 2008/03/12 14:36:35 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -57,14 +57,14 @@ BEGIN
     -- First take the INVALID diskcopies, they have to go in any case
     UPDATE DiskCopy
        SET status = 9, -- BEING_DELETED
-           creationTime = getTime()   -- see comment below on the status = 9 condition
+           lastAccessTime = getTime()   -- see comment below on the status = 9 condition
      WHERE fileSystem = fs.id 
        AND (
              (status = 7 AND NOT EXISTS  -- INVALID
                (SELECT 'x' FROM SubRequest
                  WHERE SubRequest.diskcopy = DiskCopy.id
                    AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14)))  -- All but FINISHED, FAILED*, ARCHIVED
-          OR (status = 9 AND creationTime < getTime() - 1800))
+          OR (status = 9 AND lastAccessTime < getTime() - 1800))
              -- for failures recovery we also take all DiskCopies which were already
              -- selected but got stuck somehow and didn't get removed after 30 mins. 
     RETURNING id BULK COLLECT INTO dcIds;
@@ -98,7 +98,7 @@ BEGIN
                       SELECT 'x' FROM SubRequest 
                        WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id 
                          AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14))   -- All but FINISHED, FAILED*, ARCHIVED
-                  ORDER BY creationTime + gcWeight ASC) LOOP
+                  ORDER BY gcWeight ASC) LOOP
       -- Mark the DiskCopy
       UPDATE DiskCopy SET status = 9  -- BEINGDELETED
        WHERE id = dc.id;
