@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.640 $ $Date: 2008/03/11 16:28:52 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.641 $ $Date: 2008/03/12 11:21:30 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -36,9 +36,11 @@ CREATE OR REPLACE PROCEDURE selectFiles2Delete(diskServerName IN VARCHAR2,
 BEGIN
   -- First of all, check if we have GC enabled
   dontGC := 0;
-  FOR sc IN (SELECT gcEnabled FROM SvcClass, DiskPool2SvcClass D2S, DiskServer
+  FOR sc IN (SELECT gcEnabled 
+               FROM SvcClass, DiskPool2SvcClass D2S, DiskServer, FileSystem
               WHERE SvcClass.id = D2S.child
-                AND D2S.parent = DiskServer.diskPool
+                AND D2S.parent = FileSystem.diskPool
+                AND FileSystem.diskServer = DiskServer.id
                 AND DiskServer.name = diskServerName) LOOP
     -- if any of the service classes to which we belong (normally a single one)
     -- says don't GC, we don't GC STAGED files.
@@ -250,9 +252,8 @@ BEGIN
     RETURN;
   END IF;
   -- Insert diskcopy ids into a temporary table
-  FORALL i IN dcIds.FIRST..dcIds.LAST LOOP
-    INSERT INTO StgFilesDeletedOrphans VALUES(dcIds(i));
-  END LOOP;
+  FORALL i IN dcIds.FIRST..dcIds.LAST
+   INSERT INTO StgFilesDeletedOrphans VALUES(dcIds(i));
   -- Return a list of diskcopy ids which no longer exist
   OPEN stgOrphans FOR
     SELECT diskCopyId FROM StgFilesDeletedOrphans
