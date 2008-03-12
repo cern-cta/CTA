@@ -1,9 +1,6 @@
 /*                        ORACLE ENTERPRISE EDITION                         */
 /*                                                                          */
 /* This file contains SQL code that will generate the dlf database schema   */
-/* tablespaces DLF_INDX and DLF_DATA must be present on the target database */
-/* and DBA privileges must be present for scheduling the maintenance jobs   */
-/* and to create and alter tablespaces                                      */
 
 /*
  * dlf_version
@@ -12,8 +9,7 @@ CREATE TABLE dlf_version
 (
 	schemaVersion 	VARCHAR2(20),
 	release 	VARCHAR2(20)
-)
-TABLESPACE dlf_data;
+);
 
 /*
  * dlf_settings
@@ -23,10 +19,9 @@ CREATE TABLE dlf_settings
 	name		VARCHAR2(50),
 	value		VARCHAR2(255),
 	description	VARCHAR2(255)
-)
-TABLESPACE dlf_data;
+);
 
-CREATE UNIQUE INDEX i_set_name ON dlf_settings (name) TABLESPACE dlf_indx;
+CREATE UNIQUE INDEX i_set_name ON dlf_settings (name);
 
 /*
  * dlf_sequences
@@ -35,8 +30,7 @@ CREATE TABLE dlf_sequences
 (
 	seq_name	CHAR(15),
 	seq_no		NUMBER
-)
-TABLESPACE dlf_data;
+);
 
 /*
  * dlf_mode
@@ -45,8 +39,7 @@ CREATE TABLE dlf_mode
 (
 	name		VARCHAR2(20),
 	enabled		NUMBER(1)
-)
-TABLESPACE dlf_data;
+);
 
 /*
  * dlf_jobstats
@@ -64,9 +57,8 @@ CREATE TABLE dlf_jobstats
 	interval        NUMBER)
 PARTITION BY RANGE (timestamp)
 (
-	PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE) TABLESPACE dlf_data
-)
-TABLESPACE dlf_data;
+	PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE)
+);
 
 /*
  * dlf_reqstats
@@ -83,9 +75,8 @@ CREATE TABLE dlf_reqstats
 	interval        NUMBER)
 PARTITION BY RANGE (timestamp)
 (
-	PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE) TABLESPACE dlf_data
-)
-TABLESPACE dlf_data;
+	PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE)
+);
 
 /*
  * dlf_tapestats
@@ -100,9 +91,8 @@ CREATE TABLE dlf_tapestats
 	interval	NUMBER)
 PARTITION BY RANGE (timestamp)
 (
-	PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE) TABLESPACE dlf_data
-)
-TABLESPACE dlf_data;
+	PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE)
+);
 
 /*
  * dlf_monitoring
@@ -135,9 +125,8 @@ CREATE TABLE dlf_monitoring
 	interval        NUMBER)
 PARTITION BY RANGE (timestamp)
 (
-	PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE) TABLESPACE dlf_data
-)
-TABLESPACE dlf_data;
+	PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE)
+);
 
 /*
  * dlf_messages main/primary link table
@@ -164,24 +153,23 @@ CREATE TABLE dlf_messages
 	sec_name	VARCHAR2(255))
 PARTITION BY RANGE (timestamp)
 (
-	PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE) TABLESPACE dlf_data
-)
-TABLESPACE dlf_data;
+	PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE)
+);
 
 /* local indexes */
-CREATE INDEX i_msg_timestamp ON dlf_messages (timestamp) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_fac ON dlf_messages (facility) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_pid ON dlf_messages (pid) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_reqid ON dlf_messages (reqid) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_subreqid ON dlf_messages (subreqid) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_hostid ON dlf_messages (hostid) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_nshostid ON dlf_messages (nshostid) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_fileid ON dlf_messages (nsfileid) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_tapevid ON dlf_messages (tapevid) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_userid ON dlf_messages (userid) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_groupid ON dlf_messages (groupid) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_sec_type ON dlf_messages (sec_type) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_sec_name ON dlf_messages (sec_name) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_timestamp ON dlf_messages (timestamp);
+CREATE INDEX i_msg_fac ON dlf_messages (facility);
+CREATE INDEX i_msg_pid ON dlf_messages (pid);
+CREATE INDEX i_msg_reqid ON dlf_messages (reqid);
+CREATE INDEX i_msg_subreqid ON dlf_messages (subreqid);
+CREATE INDEX i_msg_hostid ON dlf_messages (hostid);
+CREATE INDEX i_msg_nshostid ON dlf_messages (nshostid);
+CREATE INDEX i_msg_fileid ON dlf_messages (nsfileid);
+CREATE INDEX i_msg_tapevid ON dlf_messages (tapevid);
+CREATE INDEX i_msg_userid ON dlf_messages (userid);
+CREATE INDEX i_msg_groupid ON dlf_messages (groupid);
+CREATE INDEX i_msg_sec_type ON dlf_messages (sec_type);
+CREATE INDEX i_msg_sec_name ON dlf_messages (sec_name);
 
 /*
  * dlf_num_param_values
@@ -194,11 +182,10 @@ CREATE TABLE dlf_num_param_values
 	value		NUMBER)
 PARTITION BY RANGE (timestamp)
 (
-	PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE) TABLESPACE dlf_data
-)
-TABLESPACE dlf_data;
+	PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE)
+);
 
-CREATE INDEX i_num_id ON dlf_num_param_values (id) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_num_id ON dlf_num_param_values (id);
 
 /*
  * dlf_str_param_values
@@ -211,11 +198,10 @@ CREATE TABLE dlf_str_param_values
 	value		VARCHAR2(2048))
 PARTITION BY RANGE (timestamp)
 (
-	PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE) TABLESPACE dlf_data
-)
-TABLESPACE dlf_data;
+	PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE)
+);
 
-CREATE INDEX i_str_id ON dlf_str_param_values (id) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_str_id ON dlf_str_param_values (id);
 
 /*
  * dlf_severities
@@ -224,11 +210,10 @@ CREATE TABLE dlf_severities
 (
 	sev_no		NUMBER(3),
 	sev_name	VARCHAR2(20)
-)
-TABLESPACE dlf_data;
+);
 
-CREATE UNIQUE INDEX i_sev_no ON dlf_severities (sev_no) TABLESPACE dlf_indx;
-CREATE UNIQUE INDEX i_sev_name ON dlf_severities (sev_name) TABLESPACE dlf_indx;
+CREATE UNIQUE INDEX i_sev_no ON dlf_severities (sev_no);
+CREATE UNIQUE INDEX i_sev_name ON dlf_severities (sev_name);
 
 ALTER TABLE dlf_severities ADD CONSTRAINT i_sev_no UNIQUE (sev_no) ENABLE;
 ALTER TABLE dlf_severities ADD CONSTRAINT i_sev_name UNIQUE (sev_name) ENABLE;
@@ -240,11 +225,10 @@ CREATE TABLE dlf_facilities
 (
 	fac_no		NUMBER(3),
 	fac_name	VARCHAR2(20)
-)
-TABLESPACE dlf_data;
+);
 
-CREATE UNIQUE INDEX i_fac_no ON dlf_facilities (fac_no) TABLESPACE dlf_indx;
-CREATE UNIQUE INDEX i_fac_name ON dlf_facilities (fac_name) TABLESPACE dlf_indx;
+CREATE UNIQUE INDEX i_fac_no ON dlf_facilities (fac_no);
+CREATE UNIQUE INDEX i_fac_name ON dlf_facilities (fac_name);
 
 ALTER TABLE dlf_facilities ADD CONSTRAINT i_fac_no UNIQUE (fac_no) ENABLE;
 ALTER TABLE dlf_facilities ADD CONSTRAINT i_fac_name UNIQUE (fac_name) ENABLE;
@@ -257,10 +241,9 @@ CREATE TABLE dlf_msg_texts
 	fac_no		NUMBER(3),
 	msg_no		NUMBER(5),
 	msg_text	VARCHAR2(512)
-)
-TABLESPACE dlf_data;
+);
 
-CREATE UNIQUE INDEX i_msg_texts ON dlf_msg_texts (fac_no, msg_no) TABLESPACE dlf_indx;
+CREATE UNIQUE INDEX i_msg_texts ON dlf_msg_texts (fac_no, msg_no);
 
 /*
  * dlf_host_map
@@ -269,11 +252,10 @@ CREATE TABLE dlf_host_map
 (
 	hostid		NUMBER,
 	hostname	VARCHAR2(64)
-)
-TABLESPACE dlf_data;
+);
 
-CREATE UNIQUE INDEX i_hostid ON dlf_host_map (hostid) TABLESPACE dlf_indx;
-CREATE UNIQUE INDEX i_hostname ON dlf_host_map (hostname) TABLESPACE dlf_indx;
+CREATE UNIQUE INDEX i_hostid ON dlf_host_map (hostid);
+CREATE UNIQUE INDEX i_hostname ON dlf_host_map (hostname);
 
 ALTER TABLE dlf_host_map ADD CONSTRAINT i_hostid UNIQUE (hostid) ENABLE;
 ALTER TABLE dlf_host_map ADD CONSTRAINT i_hostname UNIQUE (hostname) ENABLE;
@@ -285,17 +267,16 @@ CREATE TABLE dlf_nshost_map
 (
 	nshostid	NUMBER,
 	nshostname	VARCHAR2(64)
-)
-TABLESPACE dlf_data;
+);
 
-CREATE UNIQUE INDEX i_nshostid ON dlf_nshost_map (nshostid) TABLESPACE dlf_indx;
-CREATE UNIQUE INDEX i_nshostname ON dlf_nshost_map (nshostname) TABLESPACE dlf_indx;
+CREATE UNIQUE INDEX i_nshostid ON dlf_nshost_map (nshostid);
+CREATE UNIQUE INDEX i_nshostname ON dlf_nshost_map (nshostname);
 
 ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostid UNIQUE (nshostid) ENABLE;
 ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostname UNIQUE (nshostname) ENABLE;
 
 /* version number */
-INSERT INTO dlf_version VALUES ('2_1_2_0', '2_1_6_10');
+INSERT INTO dlf_version VALUES ('2_1_2_0', '2_1_7_0');
 
 /* initialise severities */
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('1', 'Emergency');
@@ -315,13 +296,11 @@ INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('12', 'UserError');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (0, 'rtcpcld');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (1, 'migrator');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (2, 'recaller');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (3, 'stager');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (4, 'RequestHandler');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (5, 'job');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (6, 'MigHunter');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (7, 'rmmaster');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (8, 'GC');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (9, 'scheduler');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (9, 'Scheduler');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (10, 'TapeErrorHandler');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (11, 'Vdqm');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (12, 'rfio');
