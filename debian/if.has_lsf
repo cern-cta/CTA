@@ -1,6 +1,4 @@
 #
-# $Id: if.has_lsf,v 1.5 2007/12/04 12:44:50 waldron Exp $
-#
 ## List of packages to do only if LSF is available
 #
 castor-job

@@ -1,6 +1,4 @@
 #
-# $Id: if.has_oracle,v 1.11 2007/12/05 07:42:24 waldron Exp $
-#
 ## List of packages to do only if oracle is available
 #
 castor-devel-oracle
