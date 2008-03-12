@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.640 $ $Date: 2008/03/12 14:36:35 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.641 $ $Date: 2008/03/12 18:15:46 $ $Author: itglp $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -168,6 +168,11 @@ CREATE GLOBAL TEMPORARY TABLE NsFilesDeletedOrphans
 /* Global temporary table to handle output of the stgFilesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE StgFilesDeletedOrphans
   (diskCopyId NUMBER)
+  ON COMMIT DELETE ROWS;
+  
+/* Global temporary table for the filesClearedProc procedure */
+CREATE GLOBAL TEMPORARY TABLE FilesClearedProcHelper
+  (cfId NUMBER)
   ON COMMIT DELETE ROWS;
 
 /* Global temporary tables for the cleanup procedures */

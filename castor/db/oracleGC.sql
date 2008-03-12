@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.642 $ $Date: 2008/03/12 14:36:35 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.643 $ $Date: 2008/03/12 18:15:46 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -172,9 +172,12 @@ BEGIN
   IF cfIds.COUNT <= 0 THEN
     RETURN;
   END IF;
+  -- first convert the input array into a temporary table
+  FORALL i IN cfIds.FIRST..cfIds.LAST
+    INSERT INTO FilesClearedProcHelper (cfId) VALUES (cfIds(i));
   -- delete the DiskCopies in bulk
   SELECT id BULK COLLECT INTO dcIds
-    FROM Diskcopy WHERE castorfile IN (SELECT * FROM TABLE(cfIds);
+    FROM Diskcopy WHERE castorfile IN (SELECT cfId FROM FilesClearedProcHelper);
   FORALL i IN dcIds.FIRST .. dcIds.LAST
     DELETE FROM Id2Type WHERE id = dcIds(i);
   FORALL i IN dcIds.FIRST .. dcIds.LAST
@@ -184,8 +187,8 @@ BEGIN
      SET status = 7,  -- FAILED
          errorCode = 16,  -- EBUSY
          errorMessage = 'Request canceled by another user request'
-   WHERE castorfile IN (SELECT * FROM TABLE(cfIds))
-     AND status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14));
+   WHERE castorfile IN (SELECT cfId FROM FilesClearedProcHelper)
+     AND status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14);
   -- Loop over the deleted files for cleaning the tape copies
   FOR i in cfIds.FIRST .. cfIds.LAST LOOP
     deleteTapeCopies(cfIds(i));
