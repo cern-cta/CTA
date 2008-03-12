@@ -110,7 +110,7 @@ CREATE TABLE TapeCopy (copyNb NUMBER, id INTEGER CONSTRAINT I_TapeCopy_Id PRIMAR
 CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER, creationTime INTEGER, lastAccessTime INTEGER, nbAccesses NUMBER, lastKnownFileName VARCHAR2(2048), lastUpdateTime INTEGER, id INTEGER CONSTRAINT I_CastorFile_Id PRIMARY KEY, svcClass INTEGER, fileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type DiskCopy */
-CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight float, creationTime INTEGER, id INTEGER CONSTRAINT I_DiskCopy_Id PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight float, creationTime INTEGER, lastAccessTime INTEGER, id INTEGER CONSTRAINT I_DiskCopy_Id PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type FileSystem */
 CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minFreeSpace float, minAllowedFreeSpace float, maxFreeSpace float, spaceToBeFreed INTEGER, totalSize INTEGER, readRate INTEGER, writeRate INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbReadWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT I_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -314,7 +314,7 @@ INSERT INTO Type2Obj (type, object) VALUES (150, 'StgFilesDeletedResponse');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleCommon.sql,v  Revision: 1.639  Date: 2008/03/03 13:11:38  Author: waldron 
+ * @(#)RCSfile: oracleCommon.sql,v  Revision: 1.641  Date: 2008/03/12 18:15:46  Author: itglp 
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -414,7 +414,6 @@ CREATE INDEX I_DiskCopy_Castorfile on DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem on DiskCopy (fileSystem);
 CREATE INDEX I_DiskCopy_Status on DiskCopy (status);
 CREATE INDEX I_DiskCopy_FS_Status_10 on DiskCopy (fileSystem,decode(status,10,status,NULL));
-CREATE INDEX I_DiskCopy_GC on DiskCopy (fileSystem,creationTime+gcWeight);
 
 CREATE INDEX I_TapeCopy_Castorfile on TapeCopy (castorFile);
 CREATE INDEX I_TapeCopy_Status on TapeCopy (status);
@@ -475,11 +474,6 @@ CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
   (fileid NUMBER, nshost VARCHAR2(2048))
   ON COMMIT PRESERVE ROWS;
 
-/* Global temporary table to help selectFiles2Delete procedure */
-CREATE GLOBAL TEMPORARY TABLE SelectFiles2DeleteProcHelper
-  (id NUMBER, path VARCHAR2(2048))
-  ON COMMIT DELETE ROWS;
-
 /* Global temporary table to handle output of the nsFilesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE NsFilesDeletedOrphans
   (fileid NUMBER)
@@ -488,6 +482,11 @@ CREATE GLOBAL TEMPORARY TABLE NsFilesDeletedOrphans
 /* Global temporary table to handle output of the stgFilesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE StgFilesDeletedOrphans
   (diskCopyId NUMBER)
+  ON COMMIT DELETE ROWS;
+  
+/* Global temporary table for the filesClearedProc procedure */
+CREATE GLOBAL TEMPORARY TABLE FilesClearedProcHelper
+  (cfId NUMBER)
   ON COMMIT DELETE ROWS;
 
 /* Global temporary tables for the cleanup procedures */
@@ -668,7 +667,7 @@ END;
 /* compute the impact of a file's size in its gcweight */
 CREATE OR REPLACE FUNCTION size2gcweight(s NUMBER) RETURN NUMBER IS
 BEGIN
-  RETURN 1073741824/(s+1)*86400;  -- 1GB/fileize
+  RETURN 1073741824/(s+1)*86400 + getTime();  -- 1GB/filesize (days) + current time as lastAccessTime
 END;
 /
 
@@ -1149,7 +1148,7 @@ END castorBW;
 /
 /*******************************************************************
  *
- * @(#)RCSfile: oracleStager.sql,v  Revision: 1.645  Date: 2008/03/11 16:20:16  Author: itglp 
+ * @(#)RCSfile: oracleStager.sql,v  Revision: 1.646  Date: 2008/03/12 14:36:35  Author: itglp 
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1810,8 +1809,8 @@ BEGIN
   
   -- Create the DiskCopy without filesystem
   buildPathFromFileId(fileId, nsHost, destDcId, rpath);
-  INSERT INTO DiskCopy (path, id, filesystem, castorfile, status, creationtime, gcWeight)
-    VALUES (rpath, destDcId, 0, cfId, 1, gettime(), size2gcweight(fileSize));  -- WAITDISK2DISKCOPY  
+  INSERT INTO DiskCopy (path, id, filesystem, castorfile, status, creationTime, lastAccessTime, gcWeight)
+    VALUES (rpath, destDcId, 0, cfId, 1, getTime(), getTime(), size2gcweight(fileSize));  -- WAITDISK2DISKCOPY  
   INSERT INTO Id2Type (id, type) VALUES (destDcId, 5);  -- OBJ_DiskCopy
   COMMIT;
 END;
@@ -1964,14 +1963,14 @@ BEGIN
   IF nbTC = 0 OR fs = 0 THEN
     UPDATE DiskCopy
        SET status = 0, -- STAGED
-           creationTime = getTime(),    -- for the GC, effective lifetime of this diskcopy starts now
+           lastAccessTime = getTime(),    -- for the GC, effective lifetime of this diskcopy starts now
            gcWeight = size2gcweight(fs)
      WHERE castorFile = cfId AND status = 6; -- STAGEOUT
   ELSE
     -- update the DiskCopy status to CANBEMIGR
     UPDATE DiskCopy 
        SET status = 10, -- CANBEMIGR
-           creationTime = getTime(),    -- for the GC, effective lifetime of this diskcopy starts now
+           lastAccessTime = getTime(),    -- for the GC, effective lifetime of this diskcopy starts now
            gcWeight = size2gcweight(fs)
      WHERE castorFile = cfId AND status = 6 -- STAGEOUT
      RETURNING id INTO dcId;
@@ -1999,8 +1998,8 @@ BEGIN
          AND SubRequest.request = Request.id
          AND SubRequest.status = 6;  -- READY
       archiveSubReq(srId);
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-      NULL; --Ignore the missing subrequest
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      NULL; -- Ignore the missing subrequest
     END;
   END IF;
 END;
@@ -2440,8 +2439,8 @@ BEGIN
     SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
     SELECT ids_seq.nextval INTO dcId FROM DUAL;
     buildPathFromFileId(fid, nh, dcId, rpath);
-    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime, gcWeight)
-         VALUES (rpath, dcId, 0, cfId, 5, getTime(), 0); -- status WAITFS
+    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime, lastAccessTime, gcWeight)
+         VALUES (rpath, dcId, 0, cfId, 5, getTime(), getTime(), 0); -- status WAITFS
     INSERT INTO Id2Type (id, type) VALUES (dcId, 5); -- OBJ_DiskCopy
     rstatus := 5; -- WAITFS
     rmountPoint := '';
@@ -2999,7 +2998,7 @@ END;
 /
 /*******************************************************************
  *
- * @(#)RCSfile: oracleJob.sql,v  Revision: 1.644  Date: 2008/03/11 16:20:16  Author: itglp 
+ * @(#)RCSfile: oracleJob.sql,v  Revision: 1.646  Date: 2008/03/12 14:36:35  Author: itglp 
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -3208,13 +3207,17 @@ BEGIN
     -- It might happen that we have more than one, because LSF may have
     -- scheduled a replication on a fileSystem which already had a previous diskcopy.
     -- We don't care and we randomly take the first one.
-    SELECT gcWeigthForAccess INTO wAccess 
+    -- Here we also update the gcWeight taking into account the new lastAccessTime
+    -- and the weightForAccess from our svcClass: this is added as a bonus to 
+    -- the selected diskCopy.
+    SELECT gcWeightForAccess INTO wAccess 
       FROM SvcClass, DiskPool2SvcClass D2S, FileSystem
      WHERE FileSystem.id = fileSystemId
        AND FileSystem.diskPool = D2S.parent
        AND D2S.child = SvcClass.id;
     UPDATE DiskCopy
-       SET gcWeight = gcWeight + wAccess*86400
+       SET gcWeight = gcWeight + wAccess*86400 + getTime() - lastAccessTime,
+           lastAccessTime = getTime()
      WHERE id = dcIds(1)
     RETURNING id, path, status INTO dci, rpath, rstatus;
     -- Let's update the SubRequest and set the link with the DiskCopy
@@ -3369,10 +3372,9 @@ BEGIN
      AND SubRequest.request = Req.id
      AND Req.svcClass = SvcClass.id;
   
-  -- update status and gcWeight: a replica starts with some aging
+  -- update status
   UPDATE DiskCopy
-     SET status = srcStatus,
-         creationTime = getTime()   -- for the GC, effective lifetime of this diskcopy starts now
+     SET status = srcStatus
    WHERE id = dcId
   RETURNING castorFile, fileSystem INTO cfId, fsId;
   -- If the maxReplicaNb is exceeded, update one of the diskcopies in a 
@@ -4244,7 +4246,7 @@ END;
 /
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTape.sql,v  Revision: 1.645  Date: 2008/03/11 16:20:16  Author: itglp 
+ * @(#)RCSfile: oracleTape.sql,v  Revision: 1.647  Date: 2008/03/12 18:19:37  Author: itglp 
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -4889,7 +4891,7 @@ BEGIN
   ELSE
     UPDATE DiskCopy
        SET status = 0,  -- DISKCOPY_STAGED
-           creationTime = getTime(),    -- for the GC, effective lifetime of this diskcopy starts now
+           lastAccessTime = getTime(),    -- for the GC, effective lifetime of this diskcopy starts now
            gcWeight = size2gcweight(fs)
      WHERE id = dci;
     -- restart this subrequest if it's not a repack one
@@ -5220,16 +5222,13 @@ CREATE OR REPLACE PROCEDURE startChosenStreams
         (streamIds IN castor."cnumList",
 	initSize IN NUMBER) AS
 BEGIN	
-  FOR i IN streamIds.FIRST .. streamIds.LAST LOOP
-    UPDATE Stream SET initialSizeToTransfer = initSize -- PENDING
-     WHERE Stream.status=7 -- WAITPOLICY
-       AND Stream.initialSizeToTransfer = 0 -- I overwrite it only if it is NULL
-       AND id=streamIds(i);
-		 		
-    UPDATE Stream SET Stream.status = 0 -- PENDING
-     WHERE Stream.status=7  -- WAITPOLICY
-       AND id=streamIds(i);
-  END LOOP;	
+  FORALL i IN streamIds.FIRST .. streamIds.LAST
+    UPDATE Stream 
+       SET status = 0, -- PENDING
+           -- initialSize overwritten to initSize only if it is 0
+           initialSizeToTransfer = decode(initialSizeToTransfer, 0, initSize, initialSizeToTransfer)
+     WHERE Stream.status = 7 -- WAITPOLICY
+       AND id = streamIds(i);
   COMMIT;
 END;
 /
@@ -5239,10 +5238,9 @@ END;
 CREATE OR REPLACE PROCEDURE stopChosenStreams
         (streamIds IN castor."cnumList") AS
 BEGIN	
-  FOR i IN streamIds.FIRST .. streamIds.LAST LOOP
+  FORALL i IN streamIds.FIRST .. streamIds.LAST
     UPDATE Stream SET Stream.status = 6 -- STOPPED
      WHERE id = streamIds(i) AND Stream.status=7; -- WAITPOLICY
-  END LOOP;	
   COMMIT;
 END;
 /
@@ -5254,7 +5252,7 @@ AS
   unused "numList";
 BEGIN
   FORALL i IN migrationCandidates.FIRST .. migrationCandidates.LAST
-  UPDATE TapeCopy SET Status=1 WHERE Status=7 AND id=migrationCandidates(i);
+    UPDATE TapeCopy SET Status=1 WHERE Status=7 AND id=migrationCandidates(i);
   COMMIT;
 END;
 /
@@ -5264,9 +5262,8 @@ CREATE OR REPLACE PROCEDURE invalidateTapeCopies
 (tapecopyIds IN castor."cnumList") -- tapecopies not in the nameserver
 AS
 BEGIN
-  FOR i IN tapecopyIds.FIRST .. tapecopyIds.LAST LOOP
+  FORALL i IN tapecopyIds.FIRST .. tapecopyIds.LAST
     UPDATE TapeCopy SET status = 6 WHERE id = tapecopyIds(i) AND status=7;
-  END LOOP;
   COMMIT;
 END;
 /
@@ -5305,7 +5302,7 @@ END;
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleGC.sql,v  Revision: 1.640  Date: 2008/03/11 16:28:52  Author: itglp 
+ * @(#)RCSfile: oracleGC.sql,v  Revision: 1.643  Date: 2008/03/12 18:15:46  Author: itglp 
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -5342,9 +5339,11 @@ CREATE OR REPLACE PROCEDURE selectFiles2Delete(diskServerName IN VARCHAR2,
 BEGIN
   -- First of all, check if we have GC enabled
   dontGC := 0;
-  FOR sc IN (SELECT gcEnabled FROM SvcClass, DiskPool2SvcClass D2S, DiskServer
+  FOR sc IN (SELECT gcEnabled 
+               FROM SvcClass, DiskPool2SvcClass D2S, DiskServer, FileSystem
               WHERE SvcClass.id = D2S.child
-                AND D2S.parent = DiskServer.diskPool
+                AND D2S.parent = FileSystem.diskPool
+                AND FileSystem.diskServer = DiskServer.id
                 AND DiskServer.name = diskServerName) LOOP
     -- if any of the service classes to which we belong (normally a single one)
     -- says don't GC, we don't GC STAGED files.
@@ -5361,14 +5360,14 @@ BEGIN
     -- First take the INVALID diskcopies, they have to go in any case
     UPDATE DiskCopy
        SET status = 9, -- BEING_DELETED
-           creationTime = getTime()   -- see comment below on the status = 9 condition
+           lastAccessTime = getTime()   -- see comment below on the status = 9 condition
      WHERE fileSystem = fs.id 
        AND (
              (status = 7 AND NOT EXISTS  -- INVALID
                (SELECT 'x' FROM SubRequest
                  WHERE SubRequest.diskcopy = DiskCopy.id
                    AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14)))  -- All but FINISHED, FAILED*, ARCHIVED
-          OR (status = 9 AND creationTime < getTime() - 1800))
+          OR (status = 9 AND lastAccessTime < getTime() - 1800))
              -- for failures recovery we also take all DiskCopies which were already
              -- selected but got stuck somehow and didn't get removed after 30 mins. 
     RETURNING id BULK COLLECT INTO dcIds;
@@ -5402,7 +5401,7 @@ BEGIN
                       SELECT 'x' FROM SubRequest 
                        WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id 
                          AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14))   -- All but FINISHED, FAILED*, ARCHIVED
-                  ORDER BY creationTime + gcWeight ASC) LOOP
+                  ORDER BY gcWeight ASC) LOOP
       -- Mark the DiskCopy
       UPDATE DiskCopy SET status = 9  -- BEINGDELETED
        WHERE id = dc.id;
@@ -5478,9 +5477,12 @@ BEGIN
   IF cfIds.COUNT <= 0 THEN
     RETURN;
   END IF;
+  -- first convert the input array into a temporary table
+  FORALL i IN cfIds.FIRST..cfIds.LAST
+    INSERT INTO FilesClearedProcHelper (cfId) VALUES (cfIds(i));
   -- delete the DiskCopies in bulk
   SELECT id BULK COLLECT INTO dcIds
-    FROM Diskcopy WHERE castorfile IN (SELECT * FROM TABLE(cfIds);
+    FROM Diskcopy WHERE castorfile IN (SELECT cfId FROM FilesClearedProcHelper);
   FORALL i IN dcIds.FIRST .. dcIds.LAST
     DELETE FROM Id2Type WHERE id = dcIds(i);
   FORALL i IN dcIds.FIRST .. dcIds.LAST
@@ -5490,8 +5492,8 @@ BEGIN
      SET status = 7,  -- FAILED
          errorCode = 16,  -- EBUSY
          errorMessage = 'Request canceled by another user request'
-   WHERE castorfile IN (SELECT * FROM TABLE(cfIds))
-     AND status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14));
+   WHERE castorfile IN (SELECT cfId FROM FilesClearedProcHelper)
+     AND status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14);
   -- Loop over the deleted files for cleaning the tape copies
   FOR i in cfIds.FIRST .. cfIds.LAST LOOP
     deleteTapeCopies(cfIds(i));
@@ -5561,9 +5563,8 @@ BEGIN
     RETURN;
   END IF;
   -- Insert diskcopy ids into a temporary table
-  FORALL i IN dcIds.FIRST..dcIds.LAST LOOP
-    INSERT INTO StgFilesDeletedOrphans VALUES(dcIds(i));
-  END LOOP;
+  FORALL i IN dcIds.FIRST..dcIds.LAST
+   INSERT INTO StgFilesDeletedOrphans VALUES(dcIds(i));
   -- Return a list of diskcopy ids which no longer exist
   OPEN stgOrphans FOR
     SELECT diskCopyId FROM StgFilesDeletedOrphans
