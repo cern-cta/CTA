@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/03/10 09:12:24 $ $Author: waldron $
+ * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/03/12 10:31:39 $ $Author: waldron $
  *
  * Castor LSF External Plugin - Phase 2 (Python)
  *
@@ -965,7 +965,7 @@ extern "C" {
 	  python->pySet("Filesystem", it2->first.c_str());
 	  python->pySet("FreeSpace", it2->second.freeSpace());
 	  python->pySet("TotalSpace", it2->second.space());
-	  python->pySet("TotalNbFilesystems", it->second.size());
+	  python->pySet("TotalNbFilesystems", (unsigned int)it->second.size());
 	  
 	  // The data rate and stream counts for this filesystem only
 	  python->pySet("ReadRate", it2->second.readRate() + 
