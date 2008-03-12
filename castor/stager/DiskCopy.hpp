@@ -124,7 +124,8 @@ namespace castor {
 
       /**
        * Get the value of m_gcWeight
-       * Weight possibly used by the garbage collector to decide who should be removed.
+       * Weight used by the garbage collector to decide who is the next candidate for
+       * removal
        * @return the value of m_gcWeight
        */
       float gcWeight() const {
@@ -133,7 +134,8 @@ namespace castor {
 
       /**
        * Set the value of m_gcWeight
-       * Weight possibly used by the garbage collector to decide who should be removed.
+       * Weight used by the garbage collector to decide who is the next candidate for
+       * removal
        * @param new_var the new value of m_gcWeight
        */
       void setGcWeight(float new_var) {
@@ -156,6 +158,26 @@ namespace castor {
        */
       void setCreationTime(u_signed64 new_var) {
         m_creationTime = new_var;
+      }
+
+      /**
+       * Get the value of m_lastAccessTime
+       * Time when this DiskCopy was last accessed: this information is used to recompute
+       * the gcWeight at each access
+       * @return the value of m_lastAccessTime
+       */
+      u_signed64 lastAccessTime() const {
+        return m_lastAccessTime;
+      }
+
+      /**
+       * Set the value of m_lastAccessTime
+       * Time when this DiskCopy was last accessed: this information is used to recompute
+       * the gcWeight at each access
+       * @param new_var the new value of m_lastAccessTime
+       */
+      void setLastAccessTime(u_signed64 new_var) {
+        m_lastAccessTime = new_var;
       }
 
       /**
@@ -258,11 +280,14 @@ namespace castor {
       /// path of this copy in the filesystem
       std::string m_path;
 
-      /// Weight possibly used by the garbage collector to decide who should be removed.
+      /// Weight used by the garbage collector to decide who is the next candidate for removal
       float m_gcWeight;
 
       /// Time when this DiskCopy was created
       u_signed64 m_creationTime;
+
+      /// Time when this DiskCopy was last accessed: this information is used to recompute the gcWeight at each access
+      u_signed64 m_lastAccessTime;
 
       /// The id of this object
       u_signed64 m_id;

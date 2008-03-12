@@ -58,7 +58,7 @@ static castor::CnvFactory<castor::db::cnv::DbDiskCopyCnv>* s_factoryDbDiskCopyCn
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbDiskCopyCnv::s_insertStatementString =
-"INSERT INTO DiskCopy (path, gcWeight, creationTime, id, fileSystem, castorFile, status) VALUES (:1,:2,:3,ids_seq.nextval,:4,:5,:6) RETURNING id INTO :7";
+"INSERT INTO DiskCopy (path, gcWeight, creationTime, lastAccessTime, id, fileSystem, castorFile, status) VALUES (:1,:2,:3,NULL,ids_seq.nextval,:4,:5,:6) RETURNING id INTO :7";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbDiskCopyCnv::s_deleteStatementString =
@@ -66,7 +66,7 @@ const std::string castor::db::cnv::DbDiskCopyCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbDiskCopyCnv::s_selectStatementString =
-"SELECT path, gcWeight, creationTime, id, fileSystem, castorFile, status FROM DiskCopy WHERE id = :1";
+"SELECT path, gcWeight, creationTime, lastAccessTime, id, fileSystem, castorFile, status FROM DiskCopy WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbDiskCopyCnv::s_updateStatementString =
@@ -436,7 +436,7 @@ void castor::db::cnv::DbDiskCopyCnv::fillObjFileSystem(castor::stager::DiskCopy*
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 fileSystemId = rset->getInt64(5);
+  u_signed64 fileSystemId = rset->getInt64(6);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -476,7 +476,7 @@ void castor::db::cnv::DbDiskCopyCnv::fillObjCastorFile(castor::stager::DiskCopy*
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 castorFileId = rset->getInt64(6);
+  u_signed64 castorFileId = rset->getInt64(7);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -549,6 +549,7 @@ void castor::db::cnv::DbDiskCopyCnv::createRep(castor::IAddress* address,
                     << "  path : " << obj->path() << std::endl
                     << "  gcWeight : " << obj->gcWeight() << std::endl
                     << "  creationTime : " << obj->creationTime() << std::endl
+                    << "  lastAccessTime : " << obj->lastAccessTime() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  fileSystem : " << obj->fileSystem() << std::endl
                     << "  castorFile : " << obj->castorFile() << std::endl
@@ -663,8 +664,9 @@ castor::IObject* castor::db::cnv::DbDiskCopyCnv::createObj(castor::IAddress* add
     object->setPath(rset->getString(1));
     object->setGcWeight(rset->getFloat(2));
     object->setCreationTime(rset->getUInt64(3));
-    object->setId(rset->getUInt64(4));
-    object->setStatus((enum castor::stager::DiskCopyStatusCodes)rset->getInt(7));
+    object->setLastAccessTime(rset->getUInt64(4));
+    object->setId(rset->getUInt64(5));
+    object->setStatus((enum castor::stager::DiskCopyStatusCodes)rset->getInt(8));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -705,8 +707,9 @@ void castor::db::cnv::DbDiskCopyCnv::updateObj(castor::IObject* obj)
     object->setPath(rset->getString(1));
     object->setGcWeight(rset->getFloat(2));
     object->setCreationTime(rset->getUInt64(3));
-    object->setId(rset->getUInt64(4));
-    object->setStatus((enum castor::stager::DiskCopyStatusCodes)rset->getInt(7));
+    object->setLastAccessTime(rset->getUInt64(4));
+    object->setId(rset->getUInt64(5));
+    object->setStatus((enum castor::stager::DiskCopyStatusCodes)rset->getInt(8));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback

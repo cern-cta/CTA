@@ -102,13 +102,15 @@ int Cstager_DiskCopyForRecall_setPath(struct Cstager_DiskCopyForRecall_t* instan
 
 /**
  * Get the value of gcWeight
- * Weight possibly used by the garbage collector to decide who should be removed.
+ * Weight used by the garbage collector to decide who is the next candidate for
+ * removal
  */
 int Cstager_DiskCopyForRecall_gcWeight(struct Cstager_DiskCopyForRecall_t* instance, float* var);
 
 /**
  * Set the value of gcWeight
- * Weight possibly used by the garbage collector to decide who should be removed.
+ * Weight used by the garbage collector to decide who is the next candidate for
+ * removal
  */
 int Cstager_DiskCopyForRecall_setGcWeight(struct Cstager_DiskCopyForRecall_t* instance, float new_var);
 
@@ -123,6 +125,20 @@ int Cstager_DiskCopyForRecall_creationTime(struct Cstager_DiskCopyForRecall_t* i
  * Time when this DiskCopy was created
  */
 int Cstager_DiskCopyForRecall_setCreationTime(struct Cstager_DiskCopyForRecall_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of lastAccessTime
+ * Time when this DiskCopy was last accessed: this information is used to recompute
+ * the gcWeight at each access
+ */
+int Cstager_DiskCopyForRecall_lastAccessTime(struct Cstager_DiskCopyForRecall_t* instance, u_signed64* var);
+
+/**
+ * Set the value of lastAccessTime
+ * Time when this DiskCopy was last accessed: this information is used to recompute
+ * the gcWeight at each access
+ */
+int Cstager_DiskCopyForRecall_setLastAccessTime(struct Cstager_DiskCopyForRecall_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of id

@@ -96,6 +96,7 @@ void castor::io::StreamDiskCopyForRecallCnv::createRep(castor::IAddress* address
   ad->stream() << obj->path();
   ad->stream() << obj->gcWeight();
   ad->stream() << obj->creationTime();
+  ad->stream() << obj->lastAccessTime();
   ad->stream() << obj->id();
   ad->stream() << obj->mountPoint();
   ad->stream() << obj->diskServer();
@@ -122,6 +123,9 @@ castor::IObject* castor::io::StreamDiskCopyForRecallCnv::createObj(castor::IAddr
   u_signed64 creationTime;
   ad->stream() >> creationTime;
   object->setCreationTime(creationTime);
+  u_signed64 lastAccessTime;
+  ad->stream() >> lastAccessTime;
+  object->setLastAccessTime(lastAccessTime);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
