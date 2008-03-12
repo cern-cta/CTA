@@ -1047,7 +1047,7 @@ class StagerSpecialQueryCase(unittest.TestCase):
     def queryE(self):
         cmd=["stager_put -M "+dirCastor+"fileClientQueryE"+ticket+"TEXT1","stager_put -M "+dirCastor+"fileClientQueryE"+ticket+"TEXT2","stager_qry -E "+dirCastor+"fileClientQueryE"+ticket+"*"]
 
-        myScenE=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,-1,stagerVersion,[["STAGER_TRACE","3"]])
+        myScenE=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,[["STAGER_TRACE","3"]])
         
         UtilityForCastorTest.saveOnFile(localDir+"ClientQueryE",cmd,myScenE)
         fi=open(localDir+"ClientQueryE2","r")
