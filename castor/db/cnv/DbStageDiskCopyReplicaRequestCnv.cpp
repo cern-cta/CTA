@@ -519,7 +519,7 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::createRep(castor::IAddre
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { cnvSvc()->rollback(); }
+    try { if (autocommit) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
@@ -585,7 +585,7 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::updateRep(castor::IAddre
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { cnvSvc()->rollback(); }
+    try { if (autocommit) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
@@ -634,7 +634,7 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::deleteRep(castor::IAddre
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { cnvSvc()->rollback(); }
+    try { if (autocommit) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"

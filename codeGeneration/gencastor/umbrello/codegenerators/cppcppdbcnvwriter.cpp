@@ -2275,7 +2275,7 @@ void CppCppDbCnvWriter::writeCreateRepContent() {
             << "} catch (castor::exception::SQLError e) {"
             << endl;
   m_indent++;
-  printSQLError("insert", members, assocs);
+  printSQLError("insert", members, assocs, true);
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
 }
@@ -2377,7 +2377,7 @@ void CppCppDbCnvWriter::writeUpdateRepContent() {
             << endl;
   m_indent++;
   AssocList emptyList;
-  printSQLError("update", members, emptyList);
+  printSQLError("update", members, emptyList, true);
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
 }
@@ -2560,7 +2560,7 @@ void CppCppDbCnvWriter::writeDeleteRepContent() {
             << endl;
   m_indent++;
   MemberList emptyList;
-  printSQLError("delete", emptyList, assocs);
+  printSQLError("delete", emptyList, assocs, true);
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
 }
@@ -2656,7 +2656,7 @@ void CppCppDbCnvWriter::writeCreateObjContent() {
             << "} catch (castor::exception::SQLError e) {"
             << endl;
   m_indent++;
-  printSQLError("select", members, assocs);
+  printSQLError("select", members, assocs, false);
   m_indent--;
   *m_stream << getIndent()
             << "}" << endl;
@@ -2744,7 +2744,7 @@ void CppCppDbCnvWriter::writeUpdateObjContent() {
             << "} catch (castor::exception::SQLError e) {"
             << endl;
   m_indent++;
-  printSQLError("update", members, assocs);
+  printSQLError("update", members, assocs, false);
   m_indent--;
   *m_stream << getIndent()
             << "}" << endl;
@@ -2927,13 +2927,18 @@ QString CppCppDbCnvWriter::getPgSQLType(QString& type) {
 // printSQLError
 //=============================================================================
 void CppCppDbCnvWriter::printSQLError(QString name,
-                                       MemberList& members,
-                                       AssocList& assocs) {
+				      MemberList& members,
+				      AssocList& assocs,
+				      bool useAutoCommit) {
   fixTypeName("DbCnvSvc", "castor::db", m_classInfo->packageName);
   *m_stream << getIndent()
             << "// Always try to rollback" << endl
             << getIndent()
-            << "try { cnvSvc()->rollback(); }"
+            << "try { ";
+  if (useAutoCommit) {
+    *m_stream << "if (autocommit) ";
+  }
+  *m_stream << "cnvSvc()->rollback(); }"
             << endl << getIndent()
             << "catch(castor::exception::Exception ignored) {}"
             << endl << getIndent()

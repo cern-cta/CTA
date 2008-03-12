@@ -530,7 +530,7 @@ void castor::db::cnv::DbVersionQueryCnv::createRep(castor::IAddress* address,
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { cnvSvc()->rollback(); }
+    try { if (autocommit) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
@@ -592,7 +592,7 @@ void castor::db::cnv::DbVersionQueryCnv::updateRep(castor::IAddress* address,
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { cnvSvc()->rollback(); }
+    try { if (autocommit) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
@@ -641,7 +641,7 @@ void castor::db::cnv::DbVersionQueryCnv::deleteRep(castor::IAddress* address,
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { cnvSvc()->rollback(); }
+    try { if (autocommit) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"

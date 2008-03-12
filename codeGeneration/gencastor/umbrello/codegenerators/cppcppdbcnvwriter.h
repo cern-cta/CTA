@@ -133,7 +133,8 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
    */
   void printSQLError(QString name,
                      MemberList& members,
-                     AssocList& assocs);
+                     AssocList& assocs,
+                     bool useAutoCommit);
 
   /**
    * Says whether the current object is a request that
