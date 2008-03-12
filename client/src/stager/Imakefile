@@ -44,8 +44,8 @@ DEPLIB = DepSharedLibraryTargetName(../../shlib,shift)
 GLOBLIB = -L../../../shlib -lshift
 #endif
 
-MANPAGES_STAGER = FileName($(MANDIR),stager_get.$(MANSUFFIX)) FileName($(MANDIR),stager_update.$(MANSUFFIX)) FileName($(MANDIR),stager_put.$(MANSUFFIX)) FileName($(MANDIR),stager_putdone.$(MANSUFFIX)) FileName($(MANDIR),stager_qry.$(MANSUFFIX)),FileName($(MANDIR),stager_rm.$(MANSUFFIX)),FileName($(MANDIR),stager_setFileGCWeight.$(MANSUFFIX))
-EMANPAGES_STAGER = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_get.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_update.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_put.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_putdone.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_qry.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_rm.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_setFileGCWeight.$(MANSUFFIX)))
+MANPAGES_STAGER = FileName($(MANDIR),stager_get.$(MANSUFFIX)) FileName($(MANDIR),stager_update.$(MANSUFFIX)) FileName($(MANDIR),stager_put.$(MANSUFFIX)) FileName($(MANDIR),stager_putdone.$(MANSUFFIX)) FileName($(MANDIR),stager_qry.$(MANSUFFIX)),FileName($(MANDIR),stager_rm.$(MANSUFFIX)),FileName($(MANDIR),stager_setFileGCWeight.$(MANSUFFIX)) FileName($(MANDIR),newacct.$(MANSUFFIX))
+EMANPAGES_STAGER = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_get.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_update.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_put.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_putdone.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_qry.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_rm.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_setFileGCWeight.$(MANSUFFIX)))  FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),newacct.$(MANSUFFIX)))
 
 #if BuildSecurity
 GLOBLIB += -ldl
@@ -137,7 +137,7 @@ EMANPAGE(stager_putdone,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(stager_qry,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(stager_rm,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(stager_setFileGCWeight,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(newacct,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(newacct,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(MANDIR),root,bin,0755)
