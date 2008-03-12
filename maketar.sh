@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.72 2008/02/26 17:24:08 waldron Exp $
+# $Id: maketar.sh,v 1.73 2008/03/12 10:30:54 waldron Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -274,6 +274,9 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
     fi
     if [ -s "debian/$package.logrotate" ]; then
 	echo "%config(noreplace) /etc/logrotate.d/$package" >> CASTOR.spec
+    fi
+    if [ "$package" = "castor-gridftp-dsi-ext" ]; then
+	echo "%config(noreplace) /etc/xinetd.d/gsiftp" >> CASTOR.spec
     fi
     if [ -s "debian/$package.manpages" ]; then
 	for man in `cat debian/$package.manpages | sed 's/debian\/castor\///g'`; do
