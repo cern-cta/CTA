@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.646 $ $Date: 2008/03/12 14:36:35 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.647 $ $Date: 2008/03/12 18:19:37 $ $Author: itglp $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -951,16 +951,13 @@ CREATE OR REPLACE PROCEDURE startChosenStreams
         (streamIds IN castor."cnumList",
 	initSize IN NUMBER) AS
 BEGIN	
-  FOR i IN streamIds.FIRST .. streamIds.LAST LOOP
-    UPDATE Stream SET initialSizeToTransfer = initSize -- PENDING
-     WHERE Stream.status=7 -- WAITPOLICY
-       AND Stream.initialSizeToTransfer = 0 -- I overwrite it only if it is NULL
-       AND id=streamIds(i);
-		 		
-    UPDATE Stream SET Stream.status = 0 -- PENDING
-     WHERE Stream.status=7  -- WAITPOLICY
-       AND id=streamIds(i);
-  END LOOP;	
+  FORALL i IN streamIds.FIRST .. streamIds.LAST
+    UPDATE Stream 
+       SET status = 0, -- PENDING
+           -- initialSize overwritten to initSize only if it is 0
+           initialSizeToTransfer = decode(initialSizeToTransfer, 0, initSize, initialSizeToTransfer)
+     WHERE Stream.status = 7 -- WAITPOLICY
+       AND id = streamIds(i);
   COMMIT;
 END;
 
@@ -969,10 +966,9 @@ END;
 CREATE OR REPLACE PROCEDURE stopChosenStreams
         (streamIds IN castor."cnumList") AS
 BEGIN	
-  FOR i IN streamIds.FIRST .. streamIds.LAST LOOP
+  FORALL i IN streamIds.FIRST .. streamIds.LAST
     UPDATE Stream SET Stream.status = 6 -- STOPPED
      WHERE id = streamIds(i) AND Stream.status=7; -- WAITPOLICY
-  END LOOP;	
   COMMIT;
 END;
 
@@ -983,7 +979,7 @@ AS
   unused "numList";
 BEGIN
   FORALL i IN migrationCandidates.FIRST .. migrationCandidates.LAST
-  UPDATE TapeCopy SET Status=1 WHERE Status=7 AND id=migrationCandidates(i);
+    UPDATE TapeCopy SET Status=1 WHERE Status=7 AND id=migrationCandidates(i);
   COMMIT;
 END;
 
@@ -992,9 +988,8 @@ CREATE OR REPLACE PROCEDURE invalidateTapeCopies
 (tapecopyIds IN castor."cnumList") -- tapecopies not in the nameserver
 AS
 BEGIN
-  FOR i IN tapecopyIds.FIRST .. tapecopyIds.LAST LOOP
+  FORALL i IN tapecopyIds.FIRST .. tapecopyIds.LAST
     UPDATE TapeCopy SET status = 6 WHERE id = tapecopyIds(i) AND status=7;
-  END LOOP;
   COMMIT;
 END;
 
