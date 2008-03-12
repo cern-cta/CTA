@@ -1103,7 +1103,7 @@ void CppCppDbCnvWriter::writeFillRep() {
             << " object," << endl << getIndent()
             << func << "unsigned int type,"
             << endl << getIndent()
-            << func << "bool autocommit)"
+            << func << "bool endTransaction)"
             << endl << getIndent() << "  throw ("
             << fixTypeName("Exception",
                            "castor.exception",
@@ -1158,7 +1158,7 @@ void CppCppDbCnvWriter::writeFillRep() {
             << "throw ex;" << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl << getIndent()
-            << "if (autocommit) {" << endl;
+            << "if (endTransaction) {" << endl;
   m_indent++;
   *m_stream << getIndent() << "cnvSvc()->commit();"
             << endl;
@@ -1221,7 +1221,7 @@ void CppCppDbCnvWriter::writeFillObj() {
             << " object," << endl << getIndent()
             << func << "unsigned int type,"
             << endl << getIndent()
-            << func << "bool autocommit)"
+            << func << "bool endTransaction)"
             << endl << getIndent() << "  throw ("
             << fixTypeName("Exception",
                            "castor.exception",
@@ -1274,7 +1274,7 @@ void CppCppDbCnvWriter::writeFillObj() {
             << "throw ex;" << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
-  *m_stream << getIndent() << "if (autocommit) {" << endl;
+  *m_stream << getIndent() << "if (endTransaction) {" << endl;
   m_indent++;
   *m_stream << getIndent() << "cnvSvc()->commit();" << endl;
   m_indent--;
@@ -2263,7 +2263,7 @@ void CppCppDbCnvWriter::writeCreateRepContent() {
   }
   // Commit if needed
   *m_stream << getIndent()
-            << "if (autocommit) {" << endl;
+            << "if (endTransaction) {" << endl;
   m_indent++;
   *m_stream << getIndent() << "cnvSvc()->commit();"
             << endl;
@@ -2364,7 +2364,7 @@ void CppCppDbCnvWriter::writeUpdateRepContent() {
             << endl;
   // Commit if needed
   *m_stream << getIndent()
-            << "if (autocommit) {" << endl;
+            << "if (endTransaction) {" << endl;
   m_indent++;
   *m_stream << getIndent() << "cnvSvc()->commit();"
             << endl;
@@ -2547,7 +2547,7 @@ void CppCppDbCnvWriter::writeDeleteRepContent() {
   }
   // Commit if needed
   *m_stream << getIndent()
-            << "if (autocommit) {" << endl;
+            << "if (endTransaction) {" << endl;
   m_indent++;
   *m_stream << getIndent() << "cnvSvc()->commit();"
             << endl;
@@ -2931,17 +2931,16 @@ void CppCppDbCnvWriter::printSQLError(QString name,
 				      AssocList& assocs,
 				      bool useAutoCommit) {
   fixTypeName("DbCnvSvc", "castor::db", m_classInfo->packageName);
-  *m_stream << getIndent()
-            << "// Always try to rollback" << endl
-            << getIndent()
-            << "try { ";
   if (useAutoCommit) {
-    *m_stream << "if (autocommit) ";
+    *m_stream << getIndent()
+              << "// Always try to rollback" << endl
+              << getIndent()
+              << "try { if (endTransaction) cnvSvc()->rollback(); }"
+              << endl << getIndent()
+              << "catch(castor::exception::Exception ignored) {}"
+              << endl;
   }
-  *m_stream << "cnvSvc()->rollback(); }"
-            << endl << getIndent()
-            << "catch(castor::exception::Exception ignored) {}"
-            << endl << getIndent()
+  *m_stream << getIndent()
             << fixTypeName("InvalidArgument",
                            "castor.exception",
                            m_classInfo->packageName)

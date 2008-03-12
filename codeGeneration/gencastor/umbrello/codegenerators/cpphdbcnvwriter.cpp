@@ -43,7 +43,7 @@ void CppHDbCnvWriter::writeFillRep() {
      QString("@param address the place where to find the foreign representation\n") +
      "@param object the original C++ object\n" +
      "@param type the type of the refered objects to store\n" +
-     "@param autocommit whether the changes to the database\n" +
+     "@param endTransaction whether the changes to the database\n" +
      "should be commited or not\n" +
      "@exception Exception throws an Exception in case of error",
      *m_stream);
@@ -60,7 +60,7 @@ void CppHDbCnvWriter::writeFillRep() {
             << " object," << endl << getIndent()
             << "                     unsigned int type,"
             << endl << getIndent()
-            << "                     bool autocommit)"
+            << "                     bool endTransaction)"
             << endl << getIndent() << "  throw ("
             << fixTypeName("Exception",
                            "castor.exception",
@@ -110,7 +110,7 @@ void CppHDbCnvWriter::writeFillObj() {
             << " object," << endl << getIndent()
             << "                     unsigned int type,"
             << endl << getIndent()
-            << "                     bool autocommit)"
+            << "                     bool endTransaction)"
             << endl << getIndent() << "  throw ("
             << fixTypeName("Exception",
                            "castor.exception",

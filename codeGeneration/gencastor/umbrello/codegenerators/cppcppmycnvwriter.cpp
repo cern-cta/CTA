@@ -930,7 +930,7 @@ void CppCppMyCnvWriter::writeFillRep() {
             << " object," << endl << getIndent()
             << func << "unsigned int type,"
             << endl << getIndent()
-            << func << "bool autocommit)"
+            << func << "bool endTransaction)"
             << endl << getIndent() << "  throw ("
             << fixTypeName("Exception",
                            "castor.exception",
@@ -983,7 +983,7 @@ void CppCppMyCnvWriter::writeFillRep() {
             << "throw ex;" << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl << getIndent()
-            << "if (autocommit) {" << endl;
+            << "if (endTransaction) {" << endl;
   m_indent++;
   *m_stream << getIndent() << "cnvSvc()->commit();"
             << endl;
@@ -2098,7 +2098,7 @@ void CppCppMyCnvWriter::writeCreateRepContent() {
   }
   // Commit if needed
   *m_stream << getIndent()
-            << "if (autocommit) {" << endl;
+            << "if (endTransaction) {" << endl;
   m_indent++;
   *m_stream << getIndent() << "cnvSvc()->commit();"
             << endl;
@@ -2196,7 +2196,7 @@ void CppCppMyCnvWriter::writeUpdateRepContent() {
             << endl;
   // Commit if needed
   *m_stream << getIndent()
-            << "if (autocommit) {" << endl;
+            << "if (endTransaction) {" << endl;
   m_indent++;
   *m_stream << getIndent() << "cnvSvc()->commit();"
             << endl;
@@ -2377,7 +2377,7 @@ void CppCppMyCnvWriter::writeDeleteRepContent() {
   }
   // Commit if needed
   *m_stream << getIndent()
-            << "if (autocommit) {" << endl;
+            << "if (endTransaction) {" << endl;
   m_indent++;
   *m_stream << getIndent() << "cnvSvc()->commit();"
             << endl;

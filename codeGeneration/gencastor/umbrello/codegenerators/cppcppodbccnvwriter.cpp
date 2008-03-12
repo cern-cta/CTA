@@ -699,7 +699,7 @@ void CppCppOdbcCnvWriter::writeCreateRepContent() {
   }
   // Commit if needed
   *m_stream << getIndent()
-            << "if (autocommit) {" << endl;
+            << "if (endTransaction) {" << endl;
   m_indent++;
   *m_stream << getIndent()
             << "SQLTransactWrapper(m_environment, m_connection, SQL_COMMIT);"
@@ -860,7 +860,7 @@ void CppCppOdbcCnvWriter::writeUpdateRepContent() {
   }
   // Commit if needed
   *m_stream << getIndent()
-            << "if (autocommit) {" << endl;
+            << "if (endTransaction) {" << endl;
   m_indent++;
   *m_stream << getIndent()
             << "SQLTransactWrapper(m_environment, m_connection, SQL_COMMIT);"
@@ -1063,7 +1063,7 @@ void CppCppOdbcCnvWriter::writeDeleteRepContent() {
   }
   // Commit if needed
   *m_stream << getIndent()
-            << "if (autocommit) {" << endl;
+            << "if (endTransaction) {" << endl;
   m_indent++;
   *m_stream << getIndent()
             << "SQLTransactWrapper(m_environment, m_connection, SQL_COMMIT);"

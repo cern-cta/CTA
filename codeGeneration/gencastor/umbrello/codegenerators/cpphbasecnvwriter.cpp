@@ -52,7 +52,7 @@ void CppHBaseCnvWriter::writeMethods (bool delUpMethods) {
      QString("@param address where to store the representation of\n") +
      "the object\n" +
      "@param object the object to deal with\n" +
-     "@param autocommit whether the changes to the database\n" +
+     "@param endTransaction whether the changes to the database\n" +
      "should be commited or not\n" +
      "@param type if not OBJ_INVALID, the ids representing\n" +
      "the links to objects of this type will not set to 0\n" +
@@ -75,7 +75,7 @@ void CppHBaseCnvWriter::writeMethods (bool delUpMethods) {
             << " object,"
             << endl
             << getIndent()
-            << "                       bool autocommit,"
+            << "                       bool endTransaction,"
             << endl
             << getIndent()
             << "                       unsigned int type = castor::OBJ_INVALID)"
@@ -94,7 +94,7 @@ void CppHBaseCnvWriter::writeMethods (bool delUpMethods) {
        QString("@param address where the representation of\n") +
        "the object is stored\n" +
        "@param object the object to deal with\n" +
-       "@param autocommit whether the changes to the database\n" +
+       "@param endTransaction whether the changes to the database\n" +
        "should be commited or not\n" +
        "@exception Exception throws an Exception in cas of error",
        *m_stream);
@@ -113,7 +113,7 @@ void CppHBaseCnvWriter::writeMethods (bool delUpMethods) {
               << " object,"
               << endl
               << getIndent()
-              << "                       bool autocommit)"
+              << "                       bool endTransaction)"
               << endl
               << getIndent()
               << "  throw ("
@@ -128,7 +128,7 @@ void CppHBaseCnvWriter::writeMethods (bool delUpMethods) {
        QString("@param address where the representation of\n") +
        "the object is stored\n" +
        "@param object the object to deal with\n" +
-       "@param autocommit whether the changes to the database\n" +
+       "@param endTransaction whether the changes to the database\n" +
        "should be commited or not\n" +
        "@exception Exception throws an Exception in cas of error",
        *m_stream);
@@ -147,7 +147,7 @@ void CppHBaseCnvWriter::writeMethods (bool delUpMethods) {
               << " object,"
               << endl
               << getIndent()
-              << "                       bool autocommit)"
+              << "                       bool endTransaction)"
               << endl
               << getIndent()
               << "  throw ("

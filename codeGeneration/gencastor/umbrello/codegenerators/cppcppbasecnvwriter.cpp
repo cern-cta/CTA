@@ -87,7 +87,7 @@ void CppCppBaseCnvWriter::writeCreateRep() {
             << fixTypeName("IObject*", "castor", m_classInfo->packageName)
             << " object,"
             << endl << getIndent() << str
-            << "bool autocommit,"
+            << "bool endTransaction,"
             << endl << getIndent() << str
             << "unsigned int type)" << endl
             << getIndent() << "  throw ("
@@ -126,7 +126,7 @@ void CppCppBaseCnvWriter::writeUpdateRep() {
             << fixTypeName("IObject*", "castor", m_classInfo->packageName)
             << " object,"
             << endl << getIndent() << str
-            << "bool autocommit)" << endl
+            << "bool endTransaction)" << endl
             << getIndent() << "  throw ("
             << fixTypeName ("Exception",
                             "castor.exception",
@@ -156,7 +156,7 @@ void CppCppBaseCnvWriter::writeDeleteRep() {
             << fixTypeName("IObject*", "castor", m_classInfo->packageName)
             << " object,"
             << endl << getIndent() << str
-            << "bool autocommit)" << endl
+            << "bool endTransaction)" << endl
             << getIndent() << "  throw ("
             << fixTypeName ("Exception",
                             "castor.exception",
