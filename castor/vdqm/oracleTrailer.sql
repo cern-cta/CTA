@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.33 $ $Release$ $Date: 2008/03/11 14:55:54 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.34 $ $Release$ $Date: 2008/03/12 12:54:52 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -324,6 +324,15 @@ ON
 WHERE
       TapeDrive.status=0 -- UNIT_UP
   AND TapeDrive.runningTapeReq=0
+  -- Exclude a request if its tape is associated with an on-going request
+  AND NOT EXISTS (
+    SELECT
+      'x'
+    FROM
+      TapeRequest TapeRequest2
+    WHERE
+      TapeRequest2.tapeDrive != 0
+  )
   -- Exclude a request if its tape is already in a drive, such a request
   -- will be considered upon the release of the drive in question
   -- (cf. TapeDriveStatusHandler)
