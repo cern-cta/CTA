@@ -345,7 +345,6 @@ castor::db::ora::OraVdqmSvc::selectTape(const std::string vid,
             throw ex;
           }
         } else {
-	  m_selectTapeStatement->closeResultSet(rset);
 	  // Else, "standard" error, throw exception
 	  castor::exception::Internal ex;
 	  ex.getMessage()
