@@ -180,6 +180,7 @@ mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/js
 mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/images
 %if %has_globus
   mkdir -p ${RPM_BUILD_ROOT}/etc/xinetd.d
+  install -m 644 gridftp2/external/gsiftp ${RPM_BUILD_ROOT}/etc/xinetd.d/gsiftp
 %if ! %has_globus_location
   mkdir -p ${RPM_BUILD_ROOT}/opt/globus/lib
 %else
@@ -207,7 +208,7 @@ install -m 644 debian/migration.py ${RPM_BUILD_ROOT}/etc/castor/policies/migrati
 install -m 644 debian/stream.py ${RPM_BUILD_ROOT}/etc/castor/policies/stream.py.example
 install -m 644 debian/rechandler.py ${RPM_BUILD_ROOT}/etc/castor/policies/rechandler.py.example
 for i in debian/*.logrotate; do
-    install -m 755 ${i} ${RPM_BUILD_ROOT}/etc/logrotate.d/`basename ${i} | sed 's/\.logrotate//g'`
+    install -m 644 ${i} ${RPM_BUILD_ROOT}/etc/logrotate.d/`basename ${i} | sed 's/\.logrotate//g'`
 done
 for i in `find . -name "*.sysconfig"`; do
     install -m 644 ${i} ${RPM_BUILD_ROOT}/etc/sysconfig/`basename ${i} | sed 's/\.sysconfig//g'`.example
@@ -219,7 +220,7 @@ done
 %package -n CASTOR-client
 Summary: Cern Advanced mass STORage
 Group: Application/Castor
-Requires: castor-commands,castor-stager-clientold,castor-lib,castor-doc,castor-rtcopy-client,castor-upv-client,castor-rtcopy-messages,castor-ns-client,castor-stager-client,castor-vdqm-client,castor-rfio-client,castor-vmgr-client,castor-devel,castor-tape-client,castor-lib-compat
+Requires: castor-stager-clientold,castor-lib,castor-doc,castor-rtcopy-client,castor-upv-client,castor-rtcopy-messages,castor-ns-client,castor-stager-client,castor-vdqm-client,castor-rfio-client,castor-vmgr-client,castor-devel,castor-tape-client,castor-lib-compat
 %description -n CASTOR-client
 castor (Cern Advanced STORage system)  Meta package for CASTOR-client from castor1 transition to castor2
 %files -n CASTOR-client
