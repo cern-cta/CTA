@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.12 $ $Release$ $Date: 2008/03/10 16:12:16 $ $Author: itglp $
+ * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.13 $ $Release$ $Date: 2008/03/12 15:03:25 $ $Author: waldron $
  *
  * 
  *
@@ -169,7 +169,7 @@ int main(int argc, char *argv[])
   char *cmd, *name = NULL;
   char *tapePoolsStr = NULL, *diskPoolsStr = NULL;
   char **tapePoolsArray = NULL, **diskPoolsArray = NULL;
-  char *gcEnabled = NULL, *gcWeightForAccess = NULL;
+  char *gcEnabled = NULL;
   int nbDiskPools = 0, nbTapePools = 0;
   int defaultReplicaNb = 1, maxReplicaNb = -1;
   struct C_BaseAddress_t *baseAddr = NULL;
