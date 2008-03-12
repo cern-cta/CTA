@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.646 $ $Date: 2008/03/12 14:36:35 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.647 $ $Date: 2008/03/12 21:19:00 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -423,7 +423,7 @@ BEGIN
   IF nb = 0 THEN
     -- all subrequests have finished: archive or delete depending on the request type
     SELECT type INTO rtype FROM Id2Type WHERE id = rId;
-    IF rtype IN (51, 95) THEN   -- Release, SetFileGCWeight
+    IF rtype IN (51, 95) THEN -- Release, SetFileGCWeight
       deleteRequest(rId);
     ELSE
       UPDATE SubRequest SET status = 11 WHERE request = rId;  -- ARCHIVED 
@@ -1627,8 +1627,8 @@ END;
 
 
 /* PL/SQL method implementing a setFileGCWeight request */
-CREATE OR REPLACE PROCEDURE setFileGCWeight
-(fid IN NUMBER, nh IN VARCHAR2(2048), svcClassId IN NUMBER, weight IN FLOAT) AS
+CREATE OR REPLACE PROCEDURE setFileGCWeightProc
+(fid IN NUMBER, nh IN VARCHAR2, svcClassId IN NUMBER, weight IN FLOAT) AS
 BEGIN
   UPDATE DiskCopy
      SET gcWeight = gcWeight + weight

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.240 $ $Release$ $Date: 2008/03/10 17:30:42 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.241 $ $Release$ $Date: 2008/03/12 21:20:17 $ $Author: waldron $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -154,7 +154,7 @@ const std::string castor::db::ora::OraStagerSvc::s_getCFByNameStatementString =
 
 /// SQL statement for setFileGCWeight
 const std::string castor::db::ora::OraStagerSvc::s_setFileGCWeightStatementString =
-  "BEGIN setFileGCWeight(:1, :2, :3, :4); END;";
+  "BEGIN setFileGCWeightProc(:1, :2, :3, :4); END;";
 
 /// SQL statement for selectDiskPool
 const std::string castor::db::ora::OraStagerSvc::s_selectDiskPoolStatementString =
@@ -1033,6 +1033,7 @@ int castor::db::ora::OraStagerSvc::stageRm
     throw ex;
   }
 }
+
 
 //------------------------------------------------------------------------------
 // setFileGCWeight
