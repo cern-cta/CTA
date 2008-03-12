@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.644 $ $Date: 2008/03/11 16:20:16 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.645 $ $Date: 2008/03/12 11:22:05 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -204,7 +204,7 @@ BEGIN
     -- It might happen that we have more than one, because LSF may have
     -- scheduled a replication on a fileSystem which already had a previous diskcopy.
     -- We don't care and we randomly take the first one.
-    SELECT gcWeigthForAccess INTO wAccess 
+    SELECT gcWeightForAccess INTO wAccess 
       FROM SvcClass, DiskPool2SvcClass D2S, FileSystem
      WHERE FileSystem.id = fileSystemId
        AND FileSystem.diskPool = D2S.parent
