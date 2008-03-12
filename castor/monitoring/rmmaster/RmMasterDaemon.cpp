@@ -180,8 +180,7 @@ castor::monitoring::rmmaster::RmMasterDaemon::RmMasterDaemon() :
     { 13, "Received unknown object from socket" },
     { 17, "General exception caught" },
     { 35, "Updating cluster status information from database to shared memory" },
-    { 46, "Failed to determine the hostname of the LSF master" },
-    { 49,  "Failed to create LSF Helper" },
+    { 46, "Failed to determine the status of LSF, skipping database synchronization" },
 
     // Heartbeat thread
     { 18, "Invalid RmMaster/HeartbeatInterval option, using default" },
@@ -256,5 +255,5 @@ castor::monitoring::rmmaster::RmMasterDaemon::RmMasterDaemon() :
 
   // "Updating cluster status information from database to shared memory"
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 35, 0, 0);
-  rmMasterService->retrieveClusterStatus(m_clusterStatus, true, true);
+  rmMasterService->retrieveClusterStatus(m_clusterStatus, true);
 }

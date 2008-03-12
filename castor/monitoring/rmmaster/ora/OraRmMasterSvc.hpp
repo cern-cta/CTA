@@ -1,5 +1,5 @@
 /******************************************************************************
- *            castor/monitoring/rmmaster/ora/OraRmMasterSvc.hpp
+ *            OraRmMasterSvc.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRmMasterSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/12/04 13:25:56 $ $Author: waldron $
+ * @(#)$RCSfile: OraRmMasterSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/03/12 10:43:34 $ $Author: waldron $
  *
  * Implementation of the IRmMasterSvc for Oracle
  *
@@ -94,16 +94,13 @@ namespace castor {
            * Retrieves the last known cluster status from the stager database
            * and updates the passed ClusterStatus
            * @param clusterStatus the ClusterStatus as known by RmMaster
-	   * @param master flag to indicate if the daemon is the resource
-	   * monitoring master
 	   * @param dsDisabled flag to indicate whether the diskservers should
 	   * be added to the shared memory in a disabled state or the state as
 	   * defined in the database
            * @exception Exception in case of error
            */
           virtual void retrieveClusterStatus
-          (castor::monitoring::ClusterStatus* clusterStatus,
-	   bool master, bool dsDisabled)
+          (castor::monitoring::ClusterStatus* clusterStatus, bool dsDisabled)
             throw (castor::exception::Exception);
 
         private:

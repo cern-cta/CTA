@@ -25,15 +25,14 @@
  * @author Giulia Taurelli
  *****************************************************************************/
 
-// Include files
-#include "castor/Services.hpp"
-#include "castor/System.hpp"
-#include "castor/Constants.hpp"
-#include "castor/IService.hpp"
-#include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
+// Include file
 #include "castor/monitoring/rmmaster/IRmMasterSvc.hpp"
 #include "castor/monitoring/rmmaster/DatabaseActuatorThread.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
+#include "castor/Services.hpp"
+#include "castor/Constants.hpp"
+#include "castor/IService.hpp"
 
 
 //-----------------------------------------------------------------------------
@@ -87,49 +86,27 @@ void castor::monitoring::rmmaster::DatabaseActuatorThread::run(void* par)
   // "DatabaseActuator thread running"
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 32, 0, 0);
 
-  // Determine whether or not we are operating as the master
-  bool master = false;
+  // Get the information about who is the current resource monitoring master
+  bool production;
   try {
-    std::string masterName =
-      castor::monitoring::rmmaster::LSFSingleton::getInstance()->
-      getLSFMasterName();
-    std::string hostName = castor::System::getHostName();
-    if (masterName == hostName) {
-      master = true;
-    }
-
-    // Announce if we have changed from master to slave or vice versa
-    if ((m_prevMasterName != "") && (m_prevMasterName != masterName)) {
-      if (master) {
-	// "Assuming role as production RmMaster server. LSF failover detected"
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 47, 0, 0);
-      } else if (m_prevMasterName == hostName) {
-	// "Assuming role as slave RmMaster server. LSF failover detected"
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("Master", masterName)};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 48, 1, params);
-      }
-    }
-    m_prevMasterName = masterName;
-
+    castor::monitoring::rmmaster::LSFStatus::getInstance()->
+      getLSFStatus(production, true);
   } catch (castor::exception::Exception e) {
-
-    // "Failed to determine the hostname of the LSF master"
+    // "Failed to determine the status of LSF, skipping database synchronization"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Type", sstrerror(e.code())),
-       castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("Function", "DatabaseActuatorThread::run")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 46, 3, params);
+       castor::dlf::Param("Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 46, 2, params);
     return;
   }
 
   // If we are the slave we need to retrieve the cluster status not update it!
   try {
     if (m_rmMasterService != 0) {
-      if (master == true) {
+      if (production) {
 	m_rmMasterService->storeClusterStatus(m_clusterStatus);
       } else {
-	m_rmMasterService->retrieveClusterStatus(m_clusterStatus, true, false);
+	m_rmMasterService->retrieveClusterStatus(m_clusterStatus, false);
       }
     }
   } catch(castor::exception::Exception e) {

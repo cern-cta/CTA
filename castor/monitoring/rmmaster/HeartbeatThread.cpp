@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: HeartbeatThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/12/04 13:25:55 $ $Author: waldron $
+ * @(#)$RCSfile: HeartbeatThread.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/03/12 10:43:33 $ $Author: waldron $
  *
  * The Heartbeat thread of the rmMasterDaemon is responsible for checking all
  * disk servers in shared memory and automatically disabling them if no data
@@ -33,7 +33,6 @@
 #include "castor/monitoring/AdminStatusCodes.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/System.hpp"
 #include "getconfent.h"
 #include <time.h>
 
@@ -83,13 +82,12 @@ void castor::monitoring::rmmaster::HeartbeatThread::run(void* par) throw() {
       return;
     }
 
-    // If operating in slave mode do nothing!
+    // Get the information about who is the current resource monitoring master
     try {
-      std::string masterName =
-	castor::monitoring::rmmaster::LSFSingleton::getInstance()->
-	getLSFMasterName();
-      std::string hostName = castor::System::getHostName();
-      if (masterName != hostName) {
+      bool production;
+      castor::monitoring::rmmaster::LSFStatus::getInstance()->
+	getLSFStatus(production, false);
+      if (!production) {
 	m_lastPause = time(NULL);
 	return;
       }
@@ -100,13 +98,8 @@ void castor::monitoring::rmmaster::HeartbeatThread::run(void* par) throw() {
 	return;
       }
     } catch (castor::exception::Exception e) {
-
-      // "Failed to determine the hostname of the LSF master"
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("Type", sstrerror(e.code())),
-	 castor::dlf::Param("Message", e.getMessage().str()),
-	 castor::dlf::Param("Function", "HeartbeatThread::run")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 46, 3, params);
+      // All errors are interpreted as us not being the master server. The real
+      // error will be reported by the DatabaseActuatorThread
       return;
     }
 

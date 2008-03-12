@@ -27,8 +27,6 @@
 
 // Include files
 #include "castor/monitoring/rmmaster/ora/StatusUpdateHelper.hpp"
-#include "castor/stager/DiskServer.hpp"
-#include "castor/stager/FileSystem.hpp"
 #include "castor/monitoring/ClusterStatus.hpp"
 #include "castor/monitoring/DiskServerStatus.hpp"
 #include "castor/monitoring/FileSystemStatus.hpp"
@@ -40,6 +38,8 @@
 #include "castor/monitoring/admin/FileSystemAdminReport.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/NoEntry.hpp"
+#include "castor/stager/DiskServer.hpp"
+#include "castor/stager/FileSystem.hpp"
 #include "castor/Constants.hpp"
 #include <time.h>
 #include <errno.h>
@@ -58,12 +58,16 @@ castor::monitoring::rmmaster::ora::StatusUpdateHelper::StatusUpdateHelper
 // HandleStateUpdate
 //-----------------------------------------------------------------------------
 void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
-(castor::monitoring::DiskServerStateReport* state, bool master)
+(castor::monitoring::DiskServerStateReport* state)
   throw (castor::exception::Exception) {
 
-  // We are operating in master mode?
-  if (master == false) {
-    return;
+  // Get the information about who is the current resource monitoring master
+  bool production;
+  try {
+    castor::monitoring::rmmaster::LSFStatus::getInstance()->
+      getLSFStatus(production, false);
+  } catch (castor::exception::Exception e) {
+    // Ignore error
   }
 
   // Throw away reports with no name cause the build of a shared memory string
@@ -96,10 +100,12 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
   if ((it->second.adminStatus() == ADMIN_NONE) &&
       (it->second.status() == castor::stager::DISKSERVER_DISABLED) &&
       (state->status() == castor::stager::DISKSERVER_PRODUCTION)) {
-    // "Heartbeat resumed for diskserver, status changed to PRODUCTION"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Hostname", state->name())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 39, 1, params);
+    if (production) {
+      // "Heartbeat resumed for diskserver, status changed to PRODUCTION"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("DiskServer", state->name())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 39, 1, params);
+    }
   }
 
   // Update status if needed
@@ -130,10 +136,12 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
     // of accepting this is a seg fault in any process attempting to read it
     // (other than the one that created the empty string).
     if ((*itFs)->mountPoint().size() == 0) {
-      // "Ignored state report for filesystem with empty name"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("DiskServer", state->name())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 27, 1, params);
+      if (production) {
+	// "Ignored state report for filesystem with empty name"
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("DiskServer", state->name())};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 27, 1, params);
+      }
       continue;
     }
     // Take care of the FileSystem creation
@@ -239,13 +247,8 @@ castor::monitoring::rmmaster::ora::StatusUpdateHelper::getOrCreateFileSystem
 // HandleMetricsUpdate
 //-----------------------------------------------------------------------------
 void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleMetricsUpdate
-(castor::monitoring::DiskServerMetricsReport* metrics, bool master)
+(castor::monitoring::DiskServerMetricsReport* metrics)
   throw (castor::exception::Exception) {
-
-  // We are operating in master mode?
-  if (master == false) {
-    return;
-  }
 
   // Throw away reports with no name cause the build of a shared memory string
   // fails for empty strings. This is due to an optimization inside the string

@@ -46,7 +46,6 @@
 #include "castor/exception/NoEntry.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/Constants.hpp"
-#include "castor/System.hpp"
 #include <time.h>
 #include <errno.h>
 
@@ -83,38 +82,9 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
     castor::IObject* obj = 0;
     unsigned short port;
     unsigned long  ip;
-    bool master = false;
-    std::string masterName("");
-    std::string hostName("");
     try {
       obj = sock->readObject();
       sock->getPeerIp(port, ip);
-
-      // Are we operating as the master server ? We do this after the socket
-      // read as its a blocking call and the cached value in getLSFMasterName
-      // may require updating
-      try {
-	masterName = castor::monitoring::rmmaster::LSFSingleton::getInstance()->
-	  getLSFMasterName();
-	hostName = castor::System::getHostName();
-	if (masterName == hostName) {
-	  master = true;
-	}
-      } catch (castor::exception::Exception e) {
-
-	// "Failed to determine the hostname of the LSF master"
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("Type", sstrerror(e.code())),
-	   castor::dlf::Param("Message", e.getMessage().str()),
-	   castor::dlf::Param("Function", "CollectorThread::run")};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 46, 3, params);
-	ack.setStatus(false);
-	ack.setErrorCode(SEINTERNAL);
-	std::ostringstream stst;
-	stst << "Failed to determine the hostname of the LSF master"
-	     << std::endl << e.getMessage().str();
-	ack.setErrorMessage(stst.str());
-      }
     } catch (castor::exception::Exception e) {
       // "Unable to read object from socket"
       castor::dlf::Param params[] =
@@ -129,21 +99,36 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
       return;
     }
 
+    // Get the information about who is the current resource monitoring master
+    std::string masterName;
+    std::string hostName;
+    bool production;
+    try {
+      castor::monitoring::rmmaster::LSFStatus::getInstance()->
+	getLSFStatus(production, masterName, hostName, false);
+    } catch (castor::exception::Exception e) {
+      // Ignore error
+    }
+
     // Handle it
     if (ack.status()) {
       try {
         if (OBJ_DiskServerStateReport == obj->type()) {
           castor::monitoring::DiskServerStateReport* dss =
             dynamic_cast<castor::monitoring::DiskServerStateReport*>(obj);
-          m_updater->handleStateUpdate(dss, master);
+	  if (production) {
+	    m_updater->handleStateUpdate(dss);
+	  }
         } else if (OBJ_DiskServerMetricsReport == obj->type()) {
           castor::monitoring::DiskServerMetricsReport* dss =
             dynamic_cast<castor::monitoring::DiskServerMetricsReport*>(obj);
-          m_updater->handleMetricsUpdate(dss, master);
+	  if (production) {
+	    m_updater->handleMetricsUpdate(dss);
+	  }
         } else if (OBJ_DiskServerAdminReport == obj->type()) {
           castor::monitoring::admin::DiskServerAdminReport* dss =
             dynamic_cast<castor::monitoring::admin::DiskServerAdminReport*>(obj);
-	  if (master == true) {
+	  if (production) {
 	    m_updater->handleDiskServerAdminUpdate(dss, ip);
 	  } else {
 	    // Send "Try again" back to the client setting the error message
@@ -158,7 +143,7 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
         } else if (OBJ_FileSystemAdminReport == obj->type()) {
           castor::monitoring::admin::FileSystemAdminReport* dss =
             dynamic_cast<castor::monitoring::admin::FileSystemAdminReport*>(obj);
-	  if (master == true) {
+	  if (production) {
 	    m_updater->handleFileSystemAdminUpdate(dss, ip);
 	  } else {
 	    // Send "Try again" back to the client setting the error message
@@ -201,7 +186,7 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
     // For objects of type DiskServerStateReport send back the disk server and
     // file system status values in the acknowledgement. Only if we are the
     // master
-    if ((OBJ_DiskServerStateReport == obj->type()) && (master == true)) {
+    if ((OBJ_DiskServerStateReport == obj->type()) && (production)) {
       castor::monitoring::DiskServerStateReport* dss =
         dynamic_cast<castor::monitoring::DiskServerStateReport*>(obj);
 

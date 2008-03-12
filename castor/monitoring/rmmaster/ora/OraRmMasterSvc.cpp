@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/03/10 10:59:14 $ $Author: waldron $
+ * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/03/12 10:43:34 $ $Author: waldron $
  *
  * Implementation of the IRmMasterSvc for Oracle
  *
@@ -380,8 +380,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
 // retrieveClusterStatus
 //-----------------------------------------------------------------------------
 void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
-(castor::monitoring::ClusterStatus* clusterStatus,
- bool master, bool dsDisabled)
+(castor::monitoring::ClusterStatus* clusterStatus, bool dsDisabled)
   throw (castor::exception::Exception) {
 
   // Initailize statements
@@ -446,7 +445,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
       }
 
       // "send" the report to update the cluster status
-      updater->handleStateUpdate(dsReport, master);
+      updater->handleStateUpdate(dsReport);
       delete dsReport;
     }
     m_getDiskServersStatement->closeResultSet(dsRset);

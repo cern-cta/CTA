@@ -34,7 +34,6 @@
 #include "castor/monitoring/StreamReport.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/Constants.hpp"
-#include "castor/System.hpp"
 
 
 //-----------------------------------------------------------------------------
@@ -100,23 +99,17 @@ void castor::monitoring::rmmaster::UpdateThread::handleStreamReport
 (castor::monitoring::StreamReport* report)
   throw (castor::exception::Exception) {
 
-  // If operating in slave mode do nothing!
+  // Get the information about who is the current resource monitoring master
   try {
-    std::string masterName =
-      castor::monitoring::rmmaster::LSFSingleton::getInstance()->
-      getLSFMasterName();
-    std::string hostName = castor::System::getHostName();
-    if (masterName != hostName) {
+    bool production;
+    castor::monitoring::rmmaster::LSFStatus::getInstance()->
+      getLSFStatus(production, false);
+    if (!production) {
       return;
     }
   } catch (castor::exception::Exception e) {
-
-    // "Failed to determine the hostname of the LSF master"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Type", sstrerror(e.code())),
-       castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("Function", "UpdateThread::run")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 46, 3, params);
+    // All errors are interpreted as us not being the master server. The real
+    // error will be reported by the DatabaseActuatorThread
     return;
   }
 

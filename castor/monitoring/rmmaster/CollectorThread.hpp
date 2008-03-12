@@ -33,7 +33,7 @@
 // Include files
 #include "castor/server/IThread.hpp"
 #include "castor/monitoring/rmmaster/ora/StatusUpdateHelper.hpp"
-#include "castor/monitoring/rmmaster/LSFSingleton.hpp"
+#include "castor/monitoring/rmmaster/LSFStatus.hpp"
 
 namespace castor {
 
