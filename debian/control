@@ -13,12 +13,6 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  Contains a logrotate for accounting files
 
-Package: castor-commands
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: castor (Cern Advanced STORage system)
- general commands
-
 Package: castor-config
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
