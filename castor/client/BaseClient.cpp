@@ -539,12 +539,12 @@ void castor::client::BaseClient::setAuthorization() throw(castor::exception::Exc
   if ((security = getenv (castor::client::SECURITY_ENV)) != 0 && strcasecmp(security,"YES") == 0 ){
     if (( mech = getenv (castor::client::SEC_MECH_ENV)) !=0) {
       if(strlen(mech) > CA_MAXCSECPROTOLEN){
-	serrno = EINVAL;
-	castor::exception::Exception e(serrno);
-    	e.getMessage()
-      	<< "Supplied Security protocol is too long" << std::endl;
-    	throw e;
-      }else {
+        serrno = EINVAL;
+        castor::exception::Exception e(serrno);
+        e.getMessage()
+         	<< "Supplied Security protocol is too long" << std::endl;
+        throw e;
+      } else {
         m_Sec_mech = mech;
         m_hasSecAuthorization = true;
         stage_trace(3, "Setting security mechanism: %s", mech);
