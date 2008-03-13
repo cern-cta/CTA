@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.242 $ $Release$ $Date: 2008/03/13 16:32:16 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.243 $ $Release$ $Date: 2008/03/13 17:50:21 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1047,7 +1047,7 @@ int castor::db::ora::OraStagerSvc::setFileGCWeight
     if (0 == m_setFileGCWeightStatement) {
       m_setFileGCWeightStatement =
         createStatement(s_setFileGCWeightStatementString);
-      m_stageForcedRmStatement->registerOutParam
+      m_setFileGCWeightStatement->registerOutParam
         (5, oracle::occi::OCCIINT);
       m_setFileGCWeightStatement->setAutoCommit(true);
     }
