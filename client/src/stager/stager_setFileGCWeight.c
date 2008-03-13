@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_setFileGCWeight.c,v $ $Revision: 1.5 $ $Release$ $Date: 2008/02/18 11:49:00 $ $Author: itglp $
+ * @(#)$RCSfile: stager_setFileGCWeight.c,v $ $Revision: 1.6 $ $Release$ $Date: 2008/03/13 16:34:45 $ $Author: itglp $
  *
  * command line for stager_setFileGCWeight
  *
@@ -27,36 +27,43 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <stager_api.h>
-#include <serrno.h>
+#include "stager_api.h"
+#include "stager_errmsg.h"
+#include "serrno.h"
 #include "Cgetopt.h"
 #include "stager_client_commandline.h"
 
 static struct Coptions longopts[] =
   {
     {"filename",      REQUIRED_ARGUMENT,  NULL,      'M'},
+    {"service_class", REQUIRED_ARGUMENT,  NULL,      'S'},
     {"help",          NO_ARGUMENT,        NULL,      'h'},
     {NULL,            0,                  NULL,        0}
   };
 
 void usage _PROTO((char *));
-int cmd_parse(int argc, char *argv[], struct stage_filereq **reqs, int* nbreqs, float *weight);
+int cmd_parse(int argc, char *argv[], struct stage_filereq **reqs, int* nbreqs, char **service_class, float *weight);
 int cmd_countHsmFiles(int argc, char *argv[]);
-
-#define ERRBUFSIZE 255
 
 int main(int argc, char *argv[]) {
   struct stage_filereq *reqs;
   struct stage_fileresp *response;
+  struct stage_options opts;
+  opts.stage_host = NULL;
+  opts.service_class = NULL;
+  opts.stage_port=0;
+  opts.stage_version=2;
   float weight = 0.0;
   int nbresps, nbreqs;
   char *reqid;
   char errbuf[ERRBUFSIZE+1];
   int errflg, rc;
   
+  getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
+
   /* Parsing the command line */
   memset(&errbuf,  '\0', sizeof(errbuf));
-  errflg =  cmd_parse(argc, argv, &reqs, &nbreqs, &weight);
+  errflg = cmd_parse(argc, argv, &reqs, &nbreqs, &opts.service_class, &weight);
   if (errflg != 0) {
     usage (argv[0]);
     exit (EXIT_FAILURE);
@@ -72,7 +79,7 @@ int main(int argc, char *argv[]) {
                              &response,
                              &nbresps,
                              &reqid,
-                             NULL);
+                             &opts);
  
   if (rc < 0) {
     fprintf(stderr, "Error: %s\n", sstrerror(serrno));
@@ -88,7 +95,7 @@ int main(int argc, char *argv[]) {
 int cmd_parse(int argc,
               char *argv[],
               struct stage_filereq **reqs,
-              int* nbreqs, float *weight) {
+              int* nbreqs, char **service_class, float *weight) {
   int nbfiles, Coptind, Copterr, errflg;
   char c;
 
@@ -108,11 +115,14 @@ int cmd_parse(int argc,
   errflg = 0;
   nbfiles = 0;
   while ((c = Cgetopt_long
-          (argc, argv, "M:h", longopts, NULL)) != -1) {
+          (argc, argv, "M:S:h", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
       (*reqs)[nbfiles].filename = Coptarg;
       nbfiles++;
+      break;
+    case 'S':
+      *service_class = Coptarg;
       break;
     case 'h':
     default:
@@ -151,7 +161,7 @@ int cmd_countHsmFiles(int argc, char *argv[]) {
   Copterr = 1;
   errflg = 0;
   nbargs = 0;
-  while ((c = Cgetopt_long (argc, argv, "M:h", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "M:S:h", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
       nbargs++;;
@@ -175,5 +185,5 @@ int cmd_countHsmFiles(int argc, char *argv[]) {
 void usage(char* cmd) {
   fprintf (stderr, "usage: %s ", cmd);
   fprintf (stderr, "%s",
-           "[-h] -M hsmfile [-M ...] <weight>\n");
+           "[-h] [-S service class] -M hsmfile [-M ...] <weight>\n");
 }
