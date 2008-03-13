@@ -99,7 +99,6 @@ class StagerPutCase(unittest.TestCase):
         
         assert buffOut.count("SUBREQUEST_READY") == 10, "stager_put doesn't work with two files"
         
-
         fi=open(localDir+"ClientPutManyFiles11","r")
         buffOut=fi.read()
         fi.close()
@@ -151,8 +150,7 @@ class StagerPutCase(unittest.TestCase):
         buffOut=fi.read()
         fi.close()
         assert checkSvcClass(buffOut, stagerSvcClass), "stager_put doesn't work with svc class option -S"
-        
-        
+                
         fi=open(localDir+"ClientPutSvc1","r")
         outBuf=fi.read()
         fi.close()
@@ -163,7 +161,6 @@ class StagerPutCase(unittest.TestCase):
         buffOut=fi.read()
         fi.close()
         assert checkSvcClass(outBuf, stagerExtraSvcClass), "stager_qry doesn't work with svc class option -S"
-
 
         fi=open(localDir+"ClientPutSvc3","r")
         buffOut=fi.read()
@@ -301,15 +298,15 @@ class StagerGetCase(unittest.TestCase):
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "stager_putdone doesn't work after put, rfcp and get"
         
-    
-        fi=open(localDir+"ClientGetAndRfcp5","r")
-        assert fi.read().find("SUBREQUEST_READY") != -1, "stager_get doesn't work after a put, rfcp and putDone"
+    	fi=open(localDir+"ClientGetAndRfcp5","r")
+	buffOut=fi.read()
         fi.close()
+        assert buffOut.find("SUBREQUEST_READY") != -1, "stager_get doesn't work after a put, rfcp and putDone"
         
         fi=open(localDir+"ClientGetAndRfcp6","r")
         buffOut=fi.read()
         fi.close()
-        assert buffOut.find("CANBEMIGR") != -1 or  buffOut.find("STAGED"), "stager_qry doesn't work after a put, rfcp and putDone"
+        assert buffOut.find("CANBEMIGR") != -1 or buffOut.find("STAGED"), "stager_qry doesn't work after a put, rfcp and putDone"
         
         
     def getManyFiles(self):
@@ -327,8 +324,7 @@ class StagerGetCase(unittest.TestCase):
         buffOut=fi.read()
         fi.close()
         assert buffOut.count("SUBREQUEST_READY") == 10, "stager_get doesn't work after stager_put with many files and rfcp"
-        
-        
+                
         fi=open(localDir+"ClientGetManyFiles13","r")
         buffOut=fi.read()
         fi.close()        
@@ -350,7 +346,6 @@ class StagerGetCase(unittest.TestCase):
         fi.close()        
         assert buffOut.find("SUBREQUEST_READY") != -1, "stager_get doesn't work with tag after put and rfcp"
         
-
         fi=open(localDir+"ClientGetTag5","r")
         buffOut=fi.read()
         fi.close()        
@@ -406,8 +401,7 @@ class StagerGetCase(unittest.TestCase):
 
         reqId=line[len(line)-3]
         assert buffOut.count(reqId) != 3, "stager_put doesn't work with svc class the option -r"
-        
-    
+            
         fi=open(localDir+"ClientGetR3","r")
         buffOut=fi.read()
         fi.close()
