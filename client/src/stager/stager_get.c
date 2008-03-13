@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_get.c,v $ $Revision: 1.12 $ $Release$ $Date: 2008/02/18 11:49:00 $ $Author: itglp $
+ * @(#)$RCSfile: stager_get.c,v $ $Revision: 1.13 $ $Release$ $Date: 2008/03/13 10:16:49 $ $Author: waldron $
  *
  * command line for stage_prepareToGet 
  *
@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "stager_api.h"
+#include "stager_errmsg.h"
 #include "serrno.h"
 #include "stager_client_commandline.h"
 

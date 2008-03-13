@@ -1,15 +1,11 @@
 /*
- * $Id: newacct.c,v 1.8 2005/10/20 16:01:51 jdurand Exp $
+ * $Id: newacct.c,v 1.9 2008/03/13 10:16:49 waldron Exp $
  */
 
 /*
  * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: newacct.c,v $ $Revision: 1.8 $ $Date: 2005/10/20 16:01:51 $ CERN/IT/PDP/DM Antoine Trannoy";
-#endif /* not lint */
 
 /* newacct		Command to change current account	*/
 
@@ -93,7 +89,7 @@ static void setacct(pwd,account,shell_opt)
 	exit(1) ; 
 }
 
-main(argc,argv)
+int main(argc,argv)
 	int     argc ; 
 	char ** argv ; 
 {
@@ -103,8 +99,8 @@ main(argc,argv)
 	struct passwd    * pwd ;
 	char     * shell= NULL ; 
 	char 	     * account ; 
-    extern char *optarg;
-    extern int optind;
+	extern char *optarg;
+	extern int optind;
 
 	/*
 	 * Checking arguments
@@ -158,4 +154,6 @@ main(argc,argv)
 	 */
 	setacct(pwd,cp,shell) ; 
 	/* NOTREACHED */
+
+	exit(0);
 }
