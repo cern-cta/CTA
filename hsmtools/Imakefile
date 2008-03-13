@@ -88,8 +88,6 @@ MANPAGES = $(MANDIR)/reclaim.$(MANSUFFIX) \
 	   $(MANDIR)/printSvcClass.$(MANSUFFIX) \
 	   $(MANDIR)/gcAllFS.$(MANSUFFIX) \
 	   $(MANDIR)/moveDiskServer.$(MANSUFFIX) \
-	   $(MANDIR)/houseKeeping.$(MANSUFFIX) \
-	   $(MANDIR)/springCleaning.$(MANSUFFIX) \
 	   $(MANDIR)/c2probe.$(MANSUFFIX) \
 	   $(MANDIR)/adler32.$(MANSUFFIX) \
 	   $(MANDIR)/adminMultiInstance.$(MANSUFFIX)
@@ -109,8 +107,6 @@ EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUF
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),printSvcClass.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),gcAllFS.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),moveDiskServer.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),houseKeeping.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),springCleaning.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),c2probe.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),adler32.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),adminMultiInstance.$(MANSUFFIX)))
@@ -146,8 +142,6 @@ PROGS_TO_KEEP =  ProgramTargetName(cleanLostFiles) \
 	 ProgramTargetName(moveDiskServer) \
 	 ProgramTargetName(dedicateTapeDrive) \
 	 ProgramTargetName(listDedications) \
-	 ProgramTargetName(houseKeeping) \
-	 ProgramTargetName(springCleaning) \
 	 ProgramTargetName(checkreplicas)
 #endif
 
@@ -169,10 +163,8 @@ IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(moveDiskServer)) \
 	 FileName($(BIN),ProgramTargetName(dedicateTapeDrive)) \
 	 FileName($(BIN),ProgramTargetName(listDedications)) \
-	 FileName($(BIN),ProgramTargetName(houseKeeping)) \
 	 FileName($(BIN),ProgramTargetName(c2probe)) \
 	 FileName($(BIN),ProgramTargetName(adler32)) \
-	 FileName($(BIN),ProgramTargetName(springCleaning)) \
 	 FileName($(BIN),ProgramTargetName(checkreplicas)) \
 	 FileName($(BIN),ProgramTargetName(rfcpupd))
 
@@ -198,10 +190,8 @@ EPROGS = $(EXPORTBIN)/reclaim \
 	 $(EXPORTBIN)/moveDiskServer \
 	 $(EXPORTBIN)/dedicateTapeDrive \
 	 $(EXPORTBIN)/listDedications \
-	 $(EXPORTBIN)/houseKeeping \
 	 $(EXPORTBIN)/c2probe \
 	 $(EXPORTBIN)/adler32 \
-	 $(EXPORTBIN)/springCleaning \
 	 $(EXPORTBIN)/checkreplicas
 
 
@@ -293,12 +283,6 @@ IEXPORT(gcAllFS,$(EXPORTBIN),755);
 InstallProgram(moveDiskServer,$(BIN),root,bin,755)
 IEXPORT(moveDiskServer,$(EXPORTBIN),755);
 
-InstallProgram(houseKeeping,$(BIN),root,bin,755)
-IEXPORT(houseKeeping,$(EXPORTBIN),755);
-
-InstallProgram(springCleaning,$(BIN),root,bin,755)
-IEXPORT(springCleaning,$(EXPORTBIN),755);
-
 InstallProgram(checkreplicas,$(BIN),root,bin,755)
 IEXPORT(checkreplicas,$(EXPORTBIN),755);
 
@@ -352,8 +336,6 @@ IMANPAGE(printFileClass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(printSvcClass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(gcAllFS,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(moveDiskServer,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(houseKeeping,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(springCleaning,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(c2probe,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(adler32,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(adminMultiInstance,$(MANDIR),$(MANSUFFIX))
@@ -373,8 +355,6 @@ EMANPAGE(printFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(printSvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(gcAllFS,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(moveDiskServer,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(houseKeeping,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(springCleaning,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(c2probe,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(adler32,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(adminMultiInstance,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
