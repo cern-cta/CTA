@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_update.cpp,v 1.17 2008/03/10 17:27:14 itglp Exp $
+ * $Id: stager_client_api_update.cpp,v 1.18 2008/03/13 10:25:20 waldron Exp $
  */
 
 /*
@@ -97,6 +97,11 @@ EXTERN_C int DLL_DECL stage_prepareToUpdate(const char *userTag,
       std::string sfilename(requests[i].filename);
       subreq->setFileName(sfilename);
       subreq->setRequest(&req);
+      // set some reasonable defaults to be able to PrepareToUpdate non existing files.
+      // XXX this should be allowed at the API level, but we don't change it for the
+      // XXX time being as this would mean an incompatibility change on the client side.
+      subreq->setModeBits(0666);
+      subreq->setFlags(O_CREAT);
 
     }
 
@@ -155,7 +160,7 @@ EXTERN_C int DLL_DECL stage_prepareToUpdate(const char *userTag,
     
   } catch (castor::exception::Exception e) {
     serrno = e.code();
-    stager_errmsg(func, (e.getMessage().str().c_str()));
+    stager_errmsg(func, e.getMessage().str().c_str());
     return -1;
   }
   
@@ -275,7 +280,7 @@ EXTERN_C int DLL_DECL stage_update(const char *userTag,
 
   } catch (castor::exception::Exception e) {
     serrno = e.code();
-    stager_errmsg(func, (e.getMessage().str().c_str()));
+    stager_errmsg(func, e.getMessage().str().c_str());
     return -1;
   }
   
