@@ -86,7 +86,6 @@ MANPAGES = $(MANDIR)/reclaim.$(MANSUFFIX) \
 	   $(MANDIR)/listSvcClass.$(MANSUFFIX) \
 	   $(MANDIR)/printFileClass.$(MANSUFFIX) \
 	   $(MANDIR)/printSvcClass.$(MANSUFFIX) \
-	   $(MANDIR)/gcAllFS.$(MANSUFFIX) \
 	   $(MANDIR)/moveDiskServer.$(MANSUFFIX) \
 	   $(MANDIR)/c2probe.$(MANSUFFIX) \
 	   $(MANDIR)/adler32.$(MANSUFFIX) \
@@ -105,7 +104,6 @@ EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUF
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),listSvcClass.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),printFileClass.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),printSvcClass.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),gcAllFS.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),moveDiskServer.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),c2probe.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),adler32.$(MANSUFFIX))) \
@@ -138,7 +136,6 @@ PROGS_TO_KEEP =  ProgramTargetName(cleanLostFiles) \
 	 ProgramTargetName(diskServer_qry) \
 	 ProgramTargetName(listFileClass) \
 	 ProgramTargetName(listSvcClass) \
-	 ProgramTargetName(gcAllFS) \
 	 ProgramTargetName(moveDiskServer) \
 	 ProgramTargetName(dedicateTapeDrive) \
 	 ProgramTargetName(listDedications) \
@@ -159,7 +156,6 @@ IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(listSvcClass)) \
 	 FileName($(BIN),ProgramTargetName(printFileClass)) \
 	 FileName($(BIN),ProgramTargetName(printSvcClass)) \
-	 FileName($(BIN),ProgramTargetName(gcAllFS)) \
 	 FileName($(BIN),ProgramTargetName(moveDiskServer)) \
 	 FileName($(BIN),ProgramTargetName(dedicateTapeDrive)) \
 	 FileName($(BIN),ProgramTargetName(listDedications)) \
@@ -186,7 +182,6 @@ EPROGS = $(EXPORTBIN)/reclaim \
 	 $(EXPORTBIN)/listSvcClass \
 	 $(EXPORTBIN)/printFileClass \
 	 $(EXPORTBIN)/printSvcClass \
-	 $(EXPORTBIN)/gcAllFS \
 	 $(EXPORTBIN)/moveDiskServer \
 	 $(EXPORTBIN)/dedicateTapeDrive \
 	 $(EXPORTBIN)/listDedications \
@@ -277,9 +272,6 @@ IEXPORT(listSvcClass,$(EXPORTBIN),755);
 InstallProgram(printFileClass,$(BIN),root,bin,755)
 IEXPORT(printFileClass,$(EXPORTBIN),755);
 
-InstallProgram(gcAllFS,$(BIN),root,bin,755)
-IEXPORT(gcAllFS,$(EXPORTBIN),755);
-
 InstallProgram(moveDiskServer,$(BIN),root,bin,755)
 IEXPORT(moveDiskServer,$(EXPORTBIN),755);
 
@@ -334,7 +326,6 @@ IMANPAGE(listFileClass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(listSvcClass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(printFileClass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(printSvcClass,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(gcAllFS,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(moveDiskServer,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(c2probe,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(adler32,$(MANDIR),$(MANSUFFIX))
@@ -353,7 +344,6 @@ EMANPAGE(listFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(listSvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(printFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(printSvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(gcAllFS,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(moveDiskServer,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(c2probe,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(adler32,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
