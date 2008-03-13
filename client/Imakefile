@@ -1,5 +1,5 @@
 COMM
-COMM                      castor/monitoring/Imakefile
+COMM                      client/Imakefile
 COMM
 COMM This file is part of the Castor project.
 COMM See http://castor.web.cern.ch/castor
@@ -19,7 +19,7 @@ COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 COMM
 COMM @(#)Imakefile,v 1.123 $Release$ 2006/02/27 15:19:27 itglp
 COMM
-COMM Make Castor libraries and executables
+COMM Make Castor clients
 COMM
 COMM @author castor-dev team
 COMM
