@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: template.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/07/26 09:18:24 $ $Author: itglp $
+ * @(#)$RCSfile: template.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/03/13 13:19:09 $ $Author: itglp $
  *
  * This script upgrades a CASTOR vprevRelease database into vnewRelease
  *
@@ -40,7 +40,10 @@ END;
 UPDATE CastorVersion SET release = 'newRelTag';
 COMMIT;
 
-/* From now on, all PL-SQL code is updated */
-/*******************************************/
+/* Schema changes go here */
+
+
+/* Update and revalidation of all PL-SQL code */
+/**********************************************/
 
 
