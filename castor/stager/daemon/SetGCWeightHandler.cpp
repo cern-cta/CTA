@@ -58,7 +58,7 @@ namespace castor{
           
           // this method fails only if no diskCopies were found on the given service class. In such a case we answer the client
           // without involving the Error service.
-          stgRequestHelper->subrequest->setStatus(ret ? SUBREQUEST_ARCHIVED : SUBREQUEST_FAILED_FINISHED);
+          stgRequestHelper->subrequest->setStatus(rc ? SUBREQUEST_ARCHIVED : SUBREQUEST_FAILED_FINISHED);
           
           std::stringstream errMsg;
           if(rc == 0) {
