@@ -60,12 +60,9 @@ namespace castor{
           // without involving the Error service.
           stgRequestHelper->subrequest->setStatus(rc ? SUBREQUEST_ARCHIVED : SUBREQUEST_FAILED_FINISHED);
           
-          std::stringstream errMsg;
-          if(rc == 0) {
-            errMsg << "File " << stgRequestHelper->subrequest->fileName() << " not on this service class";
-          }
           stgReplyHelper = new ReplyHelper();
-          stgReplyHelper->setAndSendIoResponse(stgRequestHelper, &(stgCnsHelper->cnsFileid), (rc ? 0 : ENOENT), errMsg.str());
+          stgReplyHelper->setAndSendIoResponse(stgRequestHelper, &(stgCnsHelper->cnsFileid),
+                                               (rc ? 0 : ENOENT), (rc ? "" : "File not on this service class"));
           stgReplyHelper->endReplyToClient(stgRequestHelper);
           delete stgReplyHelper;
           stgReplyHelper = 0;
