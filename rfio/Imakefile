@@ -588,7 +588,7 @@ EMANPAGE(rfiosetopt,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
 
 clean:
 	@echo cleaning in CurDir
-	-@RemoveFiles(FilesToClean $(CRAYFORTRANF))
+	-@RemoveFiles(FilesToClean $(CRAYFORTRANF) $(OBSOLETE_OBJS))
 
 clobber:        clean
 	@echo clobbering in CurDir
