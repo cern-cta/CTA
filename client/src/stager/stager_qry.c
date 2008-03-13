@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.26 2008/02/18 11:49:00 itglp Exp $
+ * $Id: stager_qry.c,v 1.27 2008/03/13 16:37:03 itglp Exp $
  */
 
 /*
@@ -14,6 +14,7 @@
 #include <winsock2.h>
 #endif
 #include "stager_api.h"
+#include "stager_errmsg.h"
 #include "serrno.h"
 #include "Cgetopt.h"
 #include "stager_client_commandline.h"

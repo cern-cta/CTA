@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_putdone.c,v $ $Revision: 1.11 $ $Release$ $Date: 2008/02/18 11:49:00 $ $Author: itglp $
+ * @(#)$RCSfile: stager_putdone.c,v $ $Revision: 1.12 $ $Release$ $Date: 2008/03/13 16:37:03 $ $Author: itglp $
  *
  * command line for stage_putDone
  *
@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "stager_api.h"
+#include "stager_errmsg.h"
 #include "serrno.h"
 #include "Cgetopt.h"
 #include "stager_client_commandline.h"
@@ -73,7 +74,7 @@ main(int argc, char *argv[]) {
   filenb = 0;
 
   /* Parsing command line */
-  errflg =  parseCmdLine(argc, argv, _countFiles, &opts.stage_host, &opts.service_class, &usertag, &display_reqid);
+  errflg =  parseCmdLine(argc, argv, _countFiles, &opts.service_class, &usertag, &display_reqid);
   if (errflg != 0 || filenb <= 0) {
     usage (argv[0]);
     exit (EXIT_FAILURE);
@@ -88,7 +89,7 @@ main(int argc, char *argv[]) {
 
   /* Iterating over the command line again to fill in the array of requests */
   filenb = 0;
-  errflg = parseCmdLine(argc, argv, _fillStruct, &unused, &unused, &unused, &display_reqid);
+  errflg = parseCmdLine(argc, argv, _fillStruct, &unused, &unused, &display_reqid);
 
   /* Performing the actual call */
   rc = stage_putDone(usertag,

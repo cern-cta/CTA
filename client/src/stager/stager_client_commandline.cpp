@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_commandline.cpp,v 1.7 2007/12/06 18:32:37 waldron Exp $
+ * $Id: stager_client_commandline.cpp,v 1.8 2008/03/13 16:37:03 itglp Exp $
  *
  * Copyright (C) 2004-2006 by CERN/IT/FIO/FD
  * All rights reserved
@@ -176,8 +176,7 @@ extern "C" {
 
 /* command line parser for a generic stager command line client */
 int DLL_DECL parseCmdLine(int argc, char *argv[], int (*callback)(char *),
-                          char** stage_host, char** service_class,
-                          char** usertag, int* display_reqid)
+                          char** service_class, char** usertag, int* display_reqid)
 {
   int nargs, Coptind, Copterr, errflg;
   char c;
@@ -211,7 +210,6 @@ int DLL_DECL parseCmdLine(int argc, char *argv[], int (*callback)(char *),
       *display_reqid = 1;
       break;
     case 'h':
-    case '?':
       errflg++;
       break;
     default:
