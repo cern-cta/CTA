@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.647 $ $Date: 2008/03/12 21:19:00 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.648 $ $Date: 2008/03/13 13:18:13 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -664,6 +664,7 @@ CREATE OR REPLACE PROCEDURE getDiskCopiesForJob
   svcClassId NUMBER;
   cfId NUMBER;
   srcDcId NUMBER;
+  d2dsrId NUMBER;
 BEGIN
   -- retrieve the castorFile and the svcClass for this subrequest
   SELECT SubRequest.castorFile, Request.svcClass, Request.upd
@@ -684,7 +685,7 @@ BEGIN
      AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
      AND DiskServer.id(+) = FileSystem.diskServer
      AND nvl(DiskServer.status, 0) = 0 -- PRODUCTION
-     AND DiskCopy.status IN (1, 2, 11); -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS_SCHEDULING
+     AND DiskCopy.status IN (2, 11); -- WAITTAPERECALL, WAITFS_SCHEDULING
   IF dcIds.COUNT > 0 THEN
     -- DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
     makeSubRequestWait(srId, dcIds(1));
@@ -742,7 +743,7 @@ BEGIN
     -- Give an hint to the stager whether internal replication can happen or not:
     -- count the number of diskservers which DON'T contain a diskCopy for this castorFile
     -- and are hence eligible for replication should it need to be done
-    SELECT COUNT(DISTINCT(DiskServer.name)) INTO nbDSs 
+    SELECT COUNT(DISTINCT(DiskServer.name)) INTO nbDSs
       FROM DiskServer, FileSystem, DiskPool2SvcClass
      WHERE FileSystem.diskServer = DiskServer.id
        AND FileSystem.diskPool = DiskPool2SvcClass.parent
@@ -765,19 +766,36 @@ BEGIN
     END IF;
   ELSE
     -- No diskcopies available for this service class:
-    -- we may have to schedule a disk to disk copy or trigger a recall
-    checkForD2DCopyOrRecall(cfId, srId, svcClassId, srcDcId);
-    IF srcDcId > 0 THEN
-      -- create DiskCopyReplica request and make this subRequest wait on it
-      createDiskCopyReplicaRequest(srId, srcDcId, svcClassId);
+    -- first check whether there's already a disk to disk copy going on
+    BEGIN
+      SELECT SubRequest.id INTO d2dsrId
+        FROM StageDiskCopyReplicaRequest Req, SubRequest
+       WHERE SubRequest.request = Req.id
+         AND Req.svcClass = svcClassId    -- this is the destination service class
+         AND status IN (13, 14, 6)  -- WAITINGFORSCHED, BEINGSCHED, READY
+         AND castorFile = cfId;
+      -- found it, wait on it
+      UPDATE SubRequest
+         SET parent = d2dsrId, status = 5  -- WAITSUBREQ
+       WHERE id = srId;
       result := -2;
-    ELSIF srcDcId = 0 THEN
-      -- no diskcopy found at all, go for recall
-      result := 2;  -- DISKCOPY_WAITTAPERECALL
-    ELSE
-      -- user error 
-      result := -1;
-    END IF;
+      COMMIT;
+      RETURN;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- not found, we may have to schedule a disk to disk copy or trigger a recall
+      checkForD2DCopyOrRecall(cfId, srId, svcClassId, srcDcId);
+      IF srcDcId > 0 THEN
+        -- create DiskCopyReplica request and make this subRequest wait on it
+        createDiskCopyReplicaRequest(srId, srcDcId, svcClassId);
+        result := -2;
+      ELSIF srcDcId = 0 THEN
+        -- no diskcopy found at all, go for recall
+        result := 2;  -- DISKCOPY_WAITTAPERECALL
+      ELSE
+        -- user error 
+        result := -1;
+      END IF;
+    END;
   END IF;
 END;
 
@@ -1596,7 +1614,7 @@ BEGIN
       -- so that clients eventually get an answer
       UPDATE SubRequest
          SET status = 7,  -- FAILED
-             errorCode = 16,  -- EBUSY
+             errorCode = 4,  -- EINTR
              errorMessage = 'Recall canceled by another user request'
        WHERE castorFile = cfId and status IN (4, 5);   -- WAITTAPERECALL, WAITSUBREQ
     END;
