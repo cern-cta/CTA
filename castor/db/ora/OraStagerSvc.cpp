@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.241 $ $Release$ $Date: 2008/03/12 21:20:17 $ $Author: waldron $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.242 $ $Release$ $Date: 2008/03/13 16:32:16 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -154,7 +154,7 @@ const std::string castor::db::ora::OraStagerSvc::s_getCFByNameStatementString =
 
 /// SQL statement for setFileGCWeight
 const std::string castor::db::ora::OraStagerSvc::s_setFileGCWeightStatementString =
-  "BEGIN setFileGCWeightProc(:1, :2, :3, :4); END;";
+  "BEGIN setFileGCWeightProc(:1, :2, :3, :4, :5); END;";
 
 /// SQL statement for selectDiskPool
 const std::string castor::db::ora::OraStagerSvc::s_selectDiskPoolStatementString =
@@ -927,8 +927,8 @@ void castor::db::ora::OraStagerSvc::stageRelease
 // stageRm
 //------------------------------------------------------------------------------
 int castor::db::ora::OraStagerSvc::stageRm
-(castor::stager::SubRequest* subreq, const u_signed64 fileId, const std::string nsHost,
- const u_signed64 svcClassId, const std::string fileName)
+(castor::stager::SubRequest* subreq, const u_signed64 fileId,
+ const std::string nsHost, const u_signed64 svcClassId)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -967,7 +967,7 @@ int castor::db::ora::OraStagerSvc::stageRm
       castor::BaseAddress ad;
       ad.setCnvSvcName("DbCnvSvc");
       ad.setCnvSvcType(castor::SVC_DBCNV);
-      m_getCFByNameStatement->setString(1, fileName);
+      m_getCFByNameStatement->setString(1, subreq->fileName());
       oracle::occi::ResultSet *rset = m_getCFByNameStatement->executeQuery();
       if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
         // Nothing found, fail the request
@@ -1038,22 +1038,26 @@ int castor::db::ora::OraStagerSvc::stageRm
 //------------------------------------------------------------------------------
 // setFileGCWeight
 //------------------------------------------------------------------------------
-void castor::db::ora::OraStagerSvc::setFileGCWeight
-(const u_signed64 fileId, const std::string nsHost, const u_signed64 svcClassId, const float weight)
+int castor::db::ora::OraStagerSvc::setFileGCWeight
+(const u_signed64 fileId, const std::string nsHost,
+ const u_signed64 svcClassId, const float weight)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statement is ok
     if (0 == m_setFileGCWeightStatement) {
       m_setFileGCWeightStatement =
         createStatement(s_setFileGCWeightStatementString);
+      m_stageForcedRmStatement->registerOutParam
+        (5, oracle::occi::OCCIINT);
       m_setFileGCWeightStatement->setAutoCommit(true);
     }
-    // execute the statement; there's no return code
+    // execute the statement and return the return code given by the procedure
     m_setFileGCWeightStatement->setDouble(1, fileId);
     m_setFileGCWeightStatement->setString(2, nsHost);
     m_setFileGCWeightStatement->setDouble(3, svcClassId);
     m_setFileGCWeightStatement->setFloat(4, weight);
     m_setFileGCWeightStatement->executeUpdate();
+    return m_setFileGCWeightStatement->getInt(5);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;

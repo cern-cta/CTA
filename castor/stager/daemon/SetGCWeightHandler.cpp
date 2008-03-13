@@ -48,36 +48,40 @@ namespace castor{
       
       void SetGCWeightHandler::handle() throw(castor::exception::Exception)
       {
-        
         ReplyHelper* stgReplyHelper=NULL;
-        try{
-          
+        try {
           stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_SETGC, &(stgCnsHelper->cnsFileid));
           
-          /* execute the main function for the setFileGCWeight request   */
-          /* basically a call to the corresponding stagerService method */
-          /* passing the SetFileGCWeight object                        */
           castor::stager::SetFileGCWeight* setGCWeightReq = dynamic_cast<castor::stager::SetFileGCWeight*>(stgRequestHelper->fileRequest);
-          stgRequestHelper->stagerService->setFileGCWeight(stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server,
-                                                           stgRequestHelper->svcClass->id(), setGCWeightReq->weight());
+          int rc = stgRequestHelper->stagerService->setFileGCWeight(stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server,
+                                                                     stgRequestHelper->svcClass->id(), setGCWeightReq->weight());
           
-          stgRequestHelper->subrequest->setStatus(SUBREQUEST_ARCHIVED);
+          // this method fails only if no diskCopies were found on the given service class. In such a case we answer the client
+          // without involving the Error service.
+          stgRequestHelper->subrequest->setStatus(ret ? SUBREQUEST_ARCHIVED : SUBREQUEST_FAILED_FINISHED);
           
+          std::stringstream errMsg;
+          if(rc == 0) {
+            errMsg << "File " << stgRequestHelper->subrequest->fileName() << " not on this service class";
+          }
           stgReplyHelper = new ReplyHelper();
-          stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "No error");
+          stgReplyHelper->setAndSendIoResponse(stgRequestHelper, &(stgCnsHelper->cnsFileid), (rc ? 0 : ENOENT), errMsg.str());
           stgReplyHelper->endReplyToClient(stgRequestHelper);
           delete stgReplyHelper;
           stgReplyHelper = 0;
           
-          stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());	 
-        }catch(castor::exception::Exception e){
-          
+          if(rc) {
+            stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
+          }
+        }
+        catch(castor::exception::Exception e) {          
           if(stgReplyHelper != NULL) delete stgReplyHelper;
-          castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
-            castor::dlf::Param("Error Message",e.getMessage().str())
+          castor::dlf::Param params[]={
+            castor::dlf::Param("Error Code", sstrerror(e.code())),
+            castor::dlf::Param("Error Message", e.getMessage().str())
           };
           
-          castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_UPDATE, 2 ,params, &(stgCnsHelper->cnsFileid));
+          castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_SETGC, 2 ,params, &(stgCnsHelper->cnsFileid));
           throw(e); 
           
         }

@@ -285,23 +285,21 @@ namespace castor {
          * Otherwise, it deletes all running requests
          * for the file and marks all the copies of the file
          * as candidates for the garbage collection.
+         * If fileId is not found, a stageRm
+         * is still performed in the stager if nothing is
+         * found on the nameserver for this fileName.
          * @param subreq the subRequest to be processed
          * @param fileId the fileId of the CastorFile
          * @param nsHost the name server to use
          * @param svcClassId the svcClass where to perform
          * the rm operation; 0 for all svcClasses.
-         * @param fileName the HSM fileName in case the
-         * fileId was not found. In such a case, a stageRm
-         * is still performed in the stager if nothing is
-         * found on the nameserver for this file.
          * @return 0: user error (ENOENT)
          *         1: success.
          * @exception in case of system error
          */
         virtual int stageRm
         (castor::stager::SubRequest* subreq, const u_signed64 fileId,
-         const std::string nsHost, const u_signed64 svcClassId,
-         const std::string fileName)
+         const std::string nsHost, const u_signed64 svcClassId)
           throw (castor::exception::Exception);
 
         /**
@@ -312,9 +310,11 @@ namespace castor {
          * @param nsHost the name server to use
          * @param svcClassId the service class id to be affected
          * @param weight the new gcWeight for the file
+         * @return 0: user error (ENOENT)
+         *         1: success.
          * @exception in case of error
          */
-        virtual void setFileGCWeight
+        virtual int setFileGCWeight
         (const u_signed64 fileId, const std::string nsHost, 
          const u_signed64 svcClassId, const float weight)
           throw (castor::exception::Exception);

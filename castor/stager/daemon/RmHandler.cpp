@@ -120,7 +120,7 @@ namespace castor{
         try{
           // try to perform the stageRm; internally, the method checks for non existing files
           if(stgRequestHelper->stagerService->stageRm(stgRequestHelper->subrequest,
-            stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server, svcClassId, stgRequestHelper->subrequest->fileName())) {
+            stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server, svcClassId)) {
             
             stgRequestHelper->subrequest->setStatus(SUBREQUEST_ARCHIVED);
             

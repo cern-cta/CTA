@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.89 $ $Release$ $Date: 2008/03/10 17:30:42 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.90 $ $Release$ $Date: 2008/03/13 16:32:15 $ $Author: itglp $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -281,23 +281,21 @@ namespace castor {
        * Otherwise, it deletes all running requests
        * for the file and marks all the copies of the file
        * as candidates for the garbage collection.
-       * @param subreq the SubRequest to be processed
+       * If fileId is not found, a stageRm
+       * is still performed in the stager if nothing is
+       * found on the nameserver for this fileName.
+       * @param subreq the subRequest to be processed
        * @param fileId the fileId of the CastorFile
        * @param nsHost the name server to use
        * @param svcClassId the svcClass where to perform
        * the rm operation; 0 for all svcClasses.
-       * @param fileName the HSM fileName in case the
-       * fileId was not found. In such a case, a stageRm
-       * is still performed in the stager if nothing is
-       * found on the nameserver for this file.
        * @return 0: user error (ENOENT)
        *         1: success.
        * @exception in case of system error
        */
       virtual int stageRm
       (castor::stager::SubRequest* subreq, const u_signed64 fileId,
-       const std::string nsHost, const u_signed64 svcClassId,
-       const std::string fileName)
+       const std::string nsHost, const u_signed64 svcClassId)
         throw (castor::exception::Exception) = 0;
 
       /**
@@ -308,9 +306,11 @@ namespace castor {
        * @param nsHost the name server to use
        * @param svcClassId the service class id to be affected
        * @param weight the new gcWeight for the file
+       * @return 0: user error (ENOENT)
+       *         1: success.
        * @exception in case of error
        */
-      virtual void setFileGCWeight
+      virtual int setFileGCWeight
       (const u_signed64 fileId, const std::string nsHost, 
        const u_signed64 svcClassId, const float weight)
         throw (castor::exception::Exception) = 0;

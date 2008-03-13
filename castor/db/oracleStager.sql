@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.648 $ $Date: 2008/03/13 13:18:13 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.649 $ $Date: 2008/03/13 16:32:15 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1646,8 +1646,9 @@ END;
 
 /* PL/SQL method implementing a setFileGCWeight request */
 CREATE OR REPLACE PROCEDURE setFileGCWeightProc
-(fid IN NUMBER, nh IN VARCHAR2, svcClassId IN NUMBER, weight IN FLOAT) AS
+(fid IN NUMBER, nh IN VARCHAR2, svcClassId IN NUMBER, weight IN FLOAT, ret OUT INTEGER) AS
 BEGIN
+  ret := 0;
   UPDATE DiskCopy
      SET gcWeight = gcWeight + weight
    WHERE castorFile = (SELECT id FROM CastorFile WHERE fileid = fid AND nshost = nh)
@@ -1655,7 +1656,10 @@ BEGIN
        SELECT FileSystem.id
          FROM FileSystem, DiskPool2SvcClass D2S
         WHERE FileSystem.diskPool = D2S.parent
-          AND D2S.child = svcClassId);         
+          AND D2S.child = svcClassId);
+  IF SQL%ROWCOUNT > 0 THEN
+    ret := 1;   -- some diskcopies found, ok
+  END IF;
 END;
 
 
