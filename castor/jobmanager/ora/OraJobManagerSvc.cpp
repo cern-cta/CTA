@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/03/10 10:59:14 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/03/13 16:13:27 $ $Author: waldron $
  *
  * Implementation of the IJobManagerSvc for Oracle
  *
@@ -26,6 +26,7 @@
 
 // Include files
 #include "castor/jobmanager/ora/OraJobManagerSvc.hpp"
+#include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/Constants.hpp"
 #include "castor/SvcFactory.hpp"
@@ -375,7 +376,7 @@ void castor::jobmanager::ora::OraJobManagerSvc::updateSchedulerJob
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in updateSchedulerJob trying to change SubRequest "
-      << "status to " << status
+      << "status to " << castor::stager::SubRequestStatusCodesStrings[status]
       << std::endl << e.getMessage();
     throw ex;
   }
