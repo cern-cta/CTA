@@ -217,8 +217,8 @@
   ---------------------
     - Before upgrading the CASTOR 2 head nodes, one should first upgrade the nameserver
        - This is actually mandatory if you want to have synchronization of diskservers with the nameserver
-       - It is a pure RPM upgrade, no DB update
-       - The 2.1.6 nameserver can be ran concurrently to an older one in case you have
+       - The database needs to be updated using script Cns_oracle_addsynchro.sql (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.6-8/upgrades). This script can be run beforehand with no service interruption.
+       - The 2.1.6 nameserver can be run concurrently to an older one in case you have
          DNS load balanced clusters of nameservers, allowing an upgrade with no service interruption
     - Make sure that no LSF jobs stay in the queue. bkill all the remaining ones
     - Update the configuration of LSF
