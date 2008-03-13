@@ -106,7 +106,7 @@ int main(int argc,char **argv)
 	if (sumflag) {
 		c = Cns_tapesum(vid, &count, &size, dflag == 0 ? 1 : 3);
 		if (c < 0) {
-			fprintf (stderr, "%s: %s\n", vid, (serrno == ENOENT) ? "No such volume" : sstrerror(serrno));
+			fprintf (stderr, "%s: %s\n", vid, (serrno == ENOENT) ? "No such volume or no files found" : sstrerror(serrno));
 #if defined(_WIN32)
 			WSACleanup();
 #endif
@@ -168,7 +168,7 @@ int main(int argc,char **argv)
 		}
 	}
 	if (serrno != 0) {
-		fprintf (stderr, "%s: %s\n", vid, (serrno == ENOENT) ? "No such volume" : sstrerror(serrno)); 
+		fprintf (stderr, "%s: %s\n", vid, (serrno == ENOENT) ? "No such volume or no files found" : sstrerror(serrno)); 
 		exit(USERR);
 	} 
 	(void) Cns_listtape (server, vid, CNS_LIST_END, &list, fseq);
