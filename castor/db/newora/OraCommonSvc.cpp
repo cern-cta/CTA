@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2008/03/10 16:12:01 $ $Author: itglp $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2008/03/14 10:24:29 $ $Author: waldron $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -87,7 +87,7 @@ const std::string castor::db::ora::OraCommonSvc::s_selectFileClassStatementStrin
 
 /// SQL statement for selectFileSystem
 const std::string castor::db::ora::OraCommonSvc::s_selectFileSystemStatementString =
-  "SELECT d.id, d.status, d.adminStatus, d.readRate, d.writeRate, d.nbReadStreams, d.nbWriteStreams, d.nbReadWriteStreams, d.nbMigratorStreams, d.nbRecallerStreams, f.id, f.free, f.minFreeSpace, f.minAllowedFreeSpace, f.maxFreeSpace, f.spaceToBeFreed, f.totalSize, f.readRate, f.writeRate, f.nbReadStreams, f.nbWriteStreams, f.nbReadWriteStreams, f.nbMigratorStreams, f.nbRecallerStreams, f.status, f.adminStatus FROM FileSystem f, DiskServer d WHERE d.name = :1 AND f.mountPoint = :2 AND f.diskserver = d.id";
+  "SELECT d.id, d.status, d.adminStatus, d.readRate, d.writeRate, d.nbReadStreams, d.nbWriteStreams, d.nbReadWriteStreams, d.nbMigratorStreams, d.nbRecallerStreams, f.id, f.free, f.minFreeSpace, f.minAllowedFreeSpace, f.maxFreeSpace, f.totalSize, f.readRate, f.writeRate, f.nbReadStreams, f.nbWriteStreams, f.nbReadWriteStreams, f.nbMigratorStreams, f.nbRecallerStreams, f.status, f.adminStatus FROM FileSystem f, DiskServer d WHERE d.name = :1 AND f.mountPoint = :2 AND f.diskserver = d.id";
 
 
 //------------------------------------------------------------------------------
@@ -440,19 +440,18 @@ castor::db::ora::OraCommonSvc::selectFileSystem
     result->setMinFreeSpace(rset->getFloat(13));
     result->setMinAllowedFreeSpace(rset->getFloat(14));
     result->setMaxFreeSpace(rset->getFloat(15));
-    result->setSpaceToBeFreed((u_signed64)rset->getDouble(16));
-    result->setTotalSize((u_signed64)rset->getDouble(17));
-    result->setReadRate((u_signed64)rset->getDouble(18));
-    result->setWriteRate((u_signed64)rset->getDouble(19));
-    result->setNbReadStreams(rset->getInt(20));
-    result->setNbWriteStreams(rset->getInt(21));
-    result->setNbReadWriteStreams(rset->getInt(22));
-    result->setNbMigratorStreams(rset->getInt(23));
-    result->setNbRecallerStreams(rset->getInt(24));
+    result->setTotalSize((u_signed64)rset->getDouble(16));
+    result->setReadRate((u_signed64)rset->getDouble(17));
+    result->setWriteRate((u_signed64)rset->getDouble(18));
+    result->setNbReadStreams(rset->getInt(19));
+    result->setNbWriteStreams(rset->getInt(20));
+    result->setNbReadWriteStreams(rset->getInt(21));
+    result->setNbMigratorStreams(rset->getInt(22));
+    result->setNbRecallerStreams(rset->getInt(23));
     result->setStatus
-      ((enum castor::stager::FileSystemStatusCodes)rset->getInt(25));
+      ((enum castor::stager::FileSystemStatusCodes)rset->getInt(24));
     result->setAdminStatus
-      ((enum castor::monitoring::AdminStatusCodes)rset->getInt(26));
+      ((enum castor::monitoring::AdminStatusCodes)rset->getInt(25));
     result->setMountPoint(mountPoint);
     result->setDiskserver(ds);
     ds->addFileSystems(result);
