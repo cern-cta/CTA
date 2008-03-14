@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Python.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/02/22 08:57:52 $ $Author: waldron $
+ * @(#)$RCSfile: Python.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/14 13:49:45 $ $Author: waldron $
  *
  * CPP Wrapper for Python
  *
@@ -224,7 +224,7 @@ float castor::scheduler::Python::pyExecute(std::string function)
 
   // Attempt to find the function in the Python modules dictionary with the
   // function name. If the function cannot be found revert to the default.
-  PyObject *pyFunc = PyDict_GetItemString(m_pyDict, function.c_str());
+  PyObject *pyFunc = PyDict_GetItemString(m_pyDict, (char *)function.c_str());
   if (pyFunc == NULL) {
     pyFunc = PyDict_GetItemString(m_pyDict, "default");
   }
