@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/05/02 10:13:02 $ $Author: itglp $
+ * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/03/14 10:40:26 $ $Author: sponcec3 $
  *
  *
  *
@@ -73,7 +73,7 @@ inline const unsigned int castor::io::StreamBaseCnv::repType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamBaseCnv::updateRep(castor::IAddress* address,
                                           castor::IObject* object,
-                                          bool autocommit)
+                                          bool endTransaction)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Cannot update representation in case of streaming."
@@ -86,7 +86,7 @@ void castor::io::StreamBaseCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::io::StreamBaseCnv::deleteRep(castor::IAddress* address,
                                           castor::IObject* object,
-                                          bool autocommit)
+                                          bool endTransaction)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Cannot delete representation in case of streaming."
@@ -111,7 +111,7 @@ void castor::io::StreamBaseCnv::updateObj(castor::IObject* obj)
 void castor::io::StreamBaseCnv::fillRep(castor::IAddress* address,
                                         castor::IObject* object,
                                         unsigned int type,
-                                        bool autocommit)
+                                        bool endTransaction)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "fillRep should never be called in case of streaming."
@@ -125,7 +125,7 @@ void castor::io::StreamBaseCnv::fillRep(castor::IAddress* address,
 void castor::io::StreamBaseCnv::fillObj(castor::IAddress* address,
                                         castor::IObject* object,
                                         unsigned int type,
-                                        bool autocommit)
+                                        bool endTransaction)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "fillObj should never be called in case of streaming."

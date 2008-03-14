@@ -80,7 +80,7 @@ const unsigned int castor::io::StreamJobSubmissionRequestCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamJobSubmissionRequestCnv::createRep(castor::IAddress* address,
                                                           castor::IObject* object,
-                                                          bool autocommit,
+                                                          bool endTransaction,
                                                           unsigned int type)
   throw (castor::exception::Exception) {
   castor::jobmanager::JobSubmissionRequest* obj = 

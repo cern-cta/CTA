@@ -80,7 +80,7 @@ namespace castor {
          * @param address where to store the representation of
          * the object
          * @param object the object to deal with
-         * @param autocommit whether the changes to the database
+         * @param endTransaction whether the changes to the database
          * should be commited or not
          * @param type if not OBJ_INVALID, the ids representing
          * the links to objects of this type will not set to 0
@@ -89,7 +89,7 @@ namespace castor {
          */
         virtual void createRep(castor::IAddress* address,
                                castor::IObject* object,
-                               bool autocommit,
+                               bool endTransaction,
                                unsigned int type = castor::OBJ_INVALID)
           throw (castor::exception::Exception);
 
@@ -98,13 +98,13 @@ namespace castor {
          * @param address where the representation of
          * the object is stored
          * @param object the object to deal with
-         * @param autocommit whether the changes to the database
+         * @param endTransaction whether the changes to the database
          * should be commited or not
          * @exception Exception throws an Exception in cas of error
          */
         virtual void updateRep(castor::IAddress* address,
                                castor::IObject* object,
-                               bool autocommit)
+                               bool endTransaction)
           throw (castor::exception::Exception);
 
         /**
@@ -112,13 +112,13 @@ namespace castor {
          * @param address where the representation of
          * the object is stored
          * @param object the object to deal with
-         * @param autocommit whether the changes to the database
+         * @param endTransaction whether the changes to the database
          * should be commited or not
          * @exception Exception throws an Exception in cas of error
          */
         virtual void deleteRep(castor::IAddress* address,
                                castor::IObject* object,
-                               bool autocommit)
+                               bool endTransaction)
           throw (castor::exception::Exception);
 
         /**
@@ -152,14 +152,14 @@ namespace castor {
          * @param address the place where to find the foreign representation
          * @param object the original C++ object
          * @param type the type of the refered objects to store
-         * @param autocommit whether the changes to the database
+         * @param endTransaction whether the changes to the database
          * should be commited or not
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRep(castor::IAddress* address,
                              castor::IObject* object,
                              unsigned int type,
-                             bool autocommit)
+                             bool endTransaction)
           throw (castor::exception::Exception);
 
         /**
@@ -171,7 +171,7 @@ namespace castor {
         virtual void fillObj(castor::IAddress* address,
                              castor::IObject* object,
                              unsigned int type,
-                             bool autocommit)
+                             bool endTransaction)
           throw (castor::exception::Exception);
 
       private:

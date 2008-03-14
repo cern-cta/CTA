@@ -82,7 +82,7 @@ const unsigned int castor::io::StreamFirstByteWrittenCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamFirstByteWrittenCnv::createRep(castor::IAddress* address,
                                                       castor::IObject* object,
-                                                      bool autocommit,
+                                                      bool endTransaction,
                                                       unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::FirstByteWritten* obj = 

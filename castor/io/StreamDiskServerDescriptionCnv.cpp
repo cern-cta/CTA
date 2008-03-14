@@ -83,7 +83,7 @@ const unsigned int castor::io::StreamDiskServerDescriptionCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamDiskServerDescriptionCnv::createRep(castor::IAddress* address,
                                                            castor::IObject* object,
-                                                           bool autocommit,
+                                                           bool endTransaction,
                                                            unsigned int type)
   throw (castor::exception::Exception) {
   castor::query::DiskServerDescription* obj = 

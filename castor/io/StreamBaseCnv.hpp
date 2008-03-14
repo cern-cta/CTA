@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamBaseCnv.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/05/02 10:13:02 $ $Author: itglp $
+ * @(#)$RCSfile: StreamBaseCnv.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/03/14 10:40:26 $ $Author: sponcec3 $
  *
  * 
  *
@@ -82,7 +82,7 @@ namespace castor {
        */
       virtual void updateRep(castor::IAddress* address,
                              castor::IObject* object,
-                             bool autocommit)
+                             bool endTransaction)
         throw (castor::exception::Exception);
 
       /**
@@ -91,7 +91,7 @@ namespace castor {
        */
       virtual void deleteRep(castor::IAddress* address,
                              castor::IObject* object,
-                             bool autocommit)
+                             bool endTransaction)
         throw (castor::exception::Exception);
 
       /**
@@ -109,7 +109,7 @@ namespace castor {
       virtual void fillRep(castor::IAddress* address,
                            castor::IObject* object,
                            unsigned int type,
-                           bool autocommit = false)
+                           bool endTransaction = false)
         throw (castor::exception::Exception);
       
       /**
@@ -120,7 +120,7 @@ namespace castor {
       virtual void fillObj(castor::IAddress* address,
                            castor::IObject* object,
                            unsigned int type,
-                           bool autocommit = false)
+                           bool endTransaction = false)
         throw (castor::exception::Exception);
 
     protected:

@@ -81,7 +81,7 @@ const unsigned int castor::io::StreamTapeDriveDedicationCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamTapeDriveDedicationCnv::createRep(castor::IAddress* address,
                                                          castor::IObject* object,
-                                                         bool autocommit,
+                                                         bool endTransaction,
                                                          unsigned int type)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeDriveDedication* obj = 

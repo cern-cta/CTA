@@ -82,7 +82,7 @@ const unsigned int castor::io::StreamQueryParameterCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamQueryParameterCnv::createRep(castor::IAddress* address,
                                                     castor::IObject* object,
-                                                    bool autocommit,
+                                                    bool endTransaction,
                                                     unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::QueryParameter* obj = 

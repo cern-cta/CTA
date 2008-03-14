@@ -81,7 +81,7 @@ const unsigned int castor::io::StreamStartResponseCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamStartResponseCnv::createRep(castor::IAddress* address,
                                                    castor::IObject* object,
-                                                   bool autocommit,
+                                                   bool endTransaction,
                                                    unsigned int type)
   throw (castor::exception::Exception) {
   castor::rh::StartResponse* obj = 

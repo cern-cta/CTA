@@ -384,7 +384,7 @@ castor::repack::RepackSubRequest*
       m_selectCheckSubRequestStatement = createStatement(s_selectCheckSubRequestStatementString);
     }	
     m_selectCheckSubRequestStatement->setInt(1, status);
-    m_selectCheckSubRequestStatement->autoCommit();
+    m_selectCheckSubRequestStatement->endTransaction();
     rset = m_selectCheckSubRequestStatement->executeQuery();
     
     if ( rset->next() ){

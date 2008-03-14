@@ -84,7 +84,7 @@ const unsigned int castor::io::StreamNsFilesDeletedCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamNsFilesDeletedCnv::createRep(castor::IAddress* address,
                                                     castor::IObject* object,
-                                                    bool autocommit,
+                                                    bool endTransaction,
                                                     unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::NsFilesDeleted* obj = 

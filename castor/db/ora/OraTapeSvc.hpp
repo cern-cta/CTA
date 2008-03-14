@@ -159,7 +159,7 @@ namespace castor {
          * matching catalog entry Stream status to STREAM_RUNNING and
          * the matching catalog entry TapeCopy status to TAPECOPY_SELECTED.
          * @param searchItem the Stream information used for the search
-         * @param autocommit whether to commit the changes
+         * @param endTransaction whether to commit the changes
          * @return vector with all waiting TapeCopies
          * @exception in case of error
          */

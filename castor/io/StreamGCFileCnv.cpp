@@ -80,7 +80,7 @@ const unsigned int castor::io::StreamGCFileCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamGCFileCnv::createRep(castor::IAddress* address,
                                             castor::IObject* object,
-                                            bool autocommit,
+                                            bool endTransaction,
                                             unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::GCFile* obj = 

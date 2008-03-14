@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamThreadNotificationCnv.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/10/23 12:32:48 $ $Author: itglp $
+ * @(#)$RCSfile: StreamThreadNotificationCnv.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/14 10:40:28 $ $Author: sponcec3 $
  *
  * 
  *
@@ -84,7 +84,7 @@ namespace castor {
        * @param address where to store the representation of
        * the object
        * @param object the object to deal with
-       * @param autocommit whether the changes to the database
+       * @param endTransaction whether the changes to the database
        * should be commited or not
        * @param type if not OBJ_INVALID, the ids representing
        * the links to objects of this type will not set to 0
@@ -93,7 +93,7 @@ namespace castor {
        */
       virtual void createRep(castor::IAddress* address,
                              castor::IObject* object,
-                             bool autocommit,
+                             bool endTransaction,
                              unsigned int type = castor::OBJ_INVALID)
         throw (castor::exception::Exception);
 

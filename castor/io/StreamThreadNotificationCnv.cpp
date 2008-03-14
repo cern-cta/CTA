@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamThreadNotificationCnv.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/10/23 12:32:48 $ $Author: itglp $
+ * @(#)$RCSfile: StreamThreadNotificationCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/14 10:40:28 $ $Author: sponcec3 $
  *
  * 
  *
@@ -79,7 +79,7 @@ const unsigned int castor::io::StreamThreadNotificationCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamThreadNotificationCnv::createRep(castor::IAddress* address,
                                                         castor::IObject* object,
-                                                        bool autocommit,
+                                                        bool endTransaction,
                                                         unsigned int type)
   throw (castor::exception::Exception) {
   castor::server::ThreadNotification* obj = 

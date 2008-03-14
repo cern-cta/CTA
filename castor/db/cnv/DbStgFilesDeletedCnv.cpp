@@ -190,7 +190,7 @@ const unsigned int castor::db::cnv::DbStgFilesDeletedCnv::objType() const {
 void castor::db::cnv::DbStgFilesDeletedCnv::fillRep(castor::IAddress* address,
                                                     castor::IObject* object,
                                                     unsigned int type,
-                                                    bool autocommit)
+                                                    bool endTransaction)
   throw (castor::exception::Exception) {
   castor::stager::StgFilesDeleted* obj = 
     dynamic_cast<castor::stager::StgFilesDeleted*>(object);
@@ -212,7 +212,7 @@ void castor::db::cnv::DbStgFilesDeletedCnv::fillRep(castor::IAddress* address,
                       << ". This is meaningless.";
       throw ex;
     }
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
@@ -326,7 +326,7 @@ void castor::db::cnv::DbStgFilesDeletedCnv::fillRepIClient(castor::stager::StgFi
 void castor::db::cnv::DbStgFilesDeletedCnv::fillObj(castor::IAddress* address,
                                                     castor::IObject* object,
                                                     unsigned int type,
-                                                    bool autocommit)
+                                                    bool endTransaction)
   throw (castor::exception::Exception) {
   castor::stager::StgFilesDeleted* obj = 
     dynamic_cast<castor::stager::StgFilesDeleted*>(object);
@@ -347,7 +347,7 @@ void castor::db::cnv::DbStgFilesDeletedCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
-  if (autocommit) {
+  if (endTransaction) {
     cnvSvc()->commit();
   }
 }
@@ -482,7 +482,7 @@ void castor::db::cnv::DbStgFilesDeletedCnv::fillObjIClient(castor::stager::StgFi
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStgFilesDeletedCnv::createRep(castor::IAddress* address,
                                                       castor::IObject* object,
-                                                      bool autocommit,
+                                                      bool endTransaction,
                                                       unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::StgFilesDeleted* obj = 
@@ -525,12 +525,12 @@ void castor::db::cnv::DbStgFilesDeletedCnv::createRep(castor::IAddress* address,
     m_insertNewReqStatement->setUInt64(1, obj->id());
     m_insertNewReqStatement->setUInt64(2, obj->type());
     m_insertNewReqStatement->execute();
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (autocommit) cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
@@ -562,7 +562,7 @@ void castor::db::cnv::DbStgFilesDeletedCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStgFilesDeletedCnv::updateRep(castor::IAddress* address,
                                                       castor::IObject* object,
-                                                      bool autocommit)
+                                                      bool endTransaction)
   throw (castor::exception::Exception) {
   castor::stager::StgFilesDeleted* obj = 
     dynamic_cast<castor::stager::StgFilesDeleted*>(object);
@@ -587,12 +587,12 @@ void castor::db::cnv::DbStgFilesDeletedCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt(11, time(0));
     m_updateStatement->setUInt64(12, obj->id());
     m_updateStatement->execute();
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (autocommit) cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
@@ -609,7 +609,7 @@ void castor::db::cnv::DbStgFilesDeletedCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStgFilesDeletedCnv::deleteRep(castor::IAddress* address,
                                                       castor::IObject* object,
-                                                      bool autocommit)
+                                                      bool endTransaction)
   throw (castor::exception::Exception) {
   castor::stager::StgFilesDeleted* obj = 
     dynamic_cast<castor::stager::StgFilesDeleted*>(object);
@@ -636,12 +636,12 @@ void castor::db::cnv::DbStgFilesDeletedCnv::deleteRep(castor::IAddress* address,
     if (obj->client() != 0) {
       cnvSvc()->deleteRep(0, obj->client(), false);
     }
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (autocommit) cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"

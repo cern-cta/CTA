@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2006/11/06 10:33:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/03/14 10:46:17 $ $Author: sponcec3 $
  *
  *
  *
@@ -81,13 +81,13 @@ namespace castor {
      * @param address where to store the representation of
      * the object
      * @param object the object to deal with
-     * @param autocommit whether the changes to the database
+     * @param endTransaction whether the changes to the database
      * should be commited or not. Default is yes.
      * @exception Exception throws an Exception in case of error
      */
     void createRep(IAddress* address,
                    IObject* object,
-                   bool autocommit = true)
+                   bool endTransaction = true)
       throw (castor::exception::Exception);
 
     /**
@@ -95,13 +95,13 @@ namespace castor {
      * @param address where the representation of
      * the object is stored
      * @param object the object to deal with
-     * @param autocommit whether the changes to the database
+     * @param endTransaction whether the changes to the database
      * should be commited or not
      * @exception Exception throws an Exception in case of error
      */
     void updateRep(IAddress* address,
                    IObject* object,
-                   bool autocommit = true)
+                   bool endTransaction = true)
       throw (castor::exception::Exception);
 
     /**
@@ -109,13 +109,13 @@ namespace castor {
      * @param address where the representation of
      * the object is stored
      * @param object the object to deal with
-     * @param autocommit whether the changes to the database
+     * @param endTransaction whether the changes to the database
      * should be commited or not. Default is not.
      * @exception Exception throws an Exception in case of error
      */
     void deleteRep(IAddress* address,
                    IObject* object,
-                   bool autocommit = false)
+                   bool endTransaction = false)
       throw (castor::exception::Exception);
 
     /**
@@ -148,14 +148,14 @@ namespace castor {
      * @param address the place where to find the foreign representation
      * @param object the original C++ object
      * @param type the type of the refered objects to store
-     * @param autocommit whether the changes to the database
+     * @param endTransaction whether the changes to the database
      * should be commited or not
      * @exception Exception throws an Exception in case of error
      */
     virtual void fillRep(castor::IAddress* address,
                          castor::IObject* object,
                          unsigned int type,
-                         bool autocommit)
+                         bool endTransaction)
       throw (castor::exception::Exception);
     
     /**
@@ -164,14 +164,14 @@ namespace castor {
      * @param address the place where to find the foreign representation
      * @param object the original object
      * @param type the type of the refered objects to retrieve
-     * @param autocommit whether the locks taken in the database
+     * @param endTransaction whether the locks taken in the database
      * should be released or not
      * @exception Exception throws an Exception in case of error
      */
     virtual void fillObj(castor::IAddress* address,
                          castor::IObject* object,
                          unsigned int type,
-                         bool autocommit = false)
+                         bool endTransaction = false)
       throw (castor::exception::Exception);
 
     /**

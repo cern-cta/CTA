@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCnvSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/11/05 14:22:42 $ $Author: bcouturi $
+ * @(#)$RCSfile: StreamCnvSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/03/14 10:40:26 $ $Author: sponcec3 $
  *
  *
  *
@@ -77,7 +77,7 @@ namespace castor {
        * @param address where to store the representation of
        * the object
        * @param object the object to deal with
-       * @param autocommit whether the changes to the database
+       * @param endTransaction whether the changes to the database
        * should be commited or not
        * @param type if not OBJ_INVALID, the ids representing
        * the links to objects of this type will not set to 0
@@ -86,7 +86,7 @@ namespace castor {
        */
       virtual void createRep(IAddress* address,
                              IObject* object,
-                             bool autocommit,
+                             bool endTransaction,
                              unsigned int type = OBJ_INVALID)
         throw (castor::exception::Exception);
 

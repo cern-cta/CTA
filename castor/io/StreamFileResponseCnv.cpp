@@ -80,7 +80,7 @@ const unsigned int castor::io::StreamFileResponseCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamFileResponseCnv::createRep(castor::IAddress* address,
                                                   castor::IObject* object,
-                                                  bool autocommit,
+                                                  bool endTransaction,
                                                   unsigned int type)
   throw (castor::exception::Exception) {
   castor::rh::FileResponse* obj = 

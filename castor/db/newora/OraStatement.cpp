@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/12/20 10:36:33 $ $Author: itglp $
+ * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/03/14 10:39:52 $ $Author: sponcec3 $
  *
  *
  *
@@ -41,7 +41,7 @@ castor::db::ora::OraStatement::~OraStatement() {
   catch(oracle::occi::SQLException ignored) {}
 }
 
-void castor::db::ora::OraStatement::autoCommit()
+void castor::db::ora::OraStatement::endTransaction()
 {
   m_statement->setAutoCommit(true);
 }

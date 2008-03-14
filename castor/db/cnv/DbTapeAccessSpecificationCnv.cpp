@@ -135,7 +135,7 @@ const unsigned int castor::db::cnv::DbTapeAccessSpecificationCnv::objType() cons
 void castor::db::cnv::DbTapeAccessSpecificationCnv::fillRep(castor::IAddress* address,
                                                             castor::IObject* object,
                                                             unsigned int type,
-                                                            bool autocommit)
+                                                            bool endTransaction)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeAccessSpecification* obj = 
     dynamic_cast<castor::vdqm::TapeAccessSpecification*>(object);
@@ -148,7 +148,7 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::fillRep(castor::IAddress* ad
                       << ". This is meaningless.";
       throw ex;
     }
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
@@ -165,7 +165,7 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::fillRep(castor::IAddress* ad
 void castor::db::cnv::DbTapeAccessSpecificationCnv::fillObj(castor::IAddress* address,
                                                             castor::IObject* object,
                                                             unsigned int type,
-                                                            bool autocommit)
+                                                            bool endTransaction)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeAccessSpecification* obj = 
     dynamic_cast<castor::vdqm::TapeAccessSpecification*>(object);
@@ -177,7 +177,7 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::fillObj(castor::IAddress* ad
                     << ". This is meaningless.";
     throw ex;
   }
-  if (autocommit) {
+  if (endTransaction) {
     cnvSvc()->commit();
   }
 }
@@ -186,7 +186,7 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::fillObj(castor::IAddress* ad
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbTapeAccessSpecificationCnv::createRep(castor::IAddress* address,
                                                               castor::IObject* object,
-                                                              bool autocommit,
+                                                              bool endTransaction,
                                                               unsigned int type)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeAccessSpecification* obj = 
@@ -212,12 +212,12 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::createRep(castor::IAddress* 
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
@@ -238,7 +238,7 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::createRep(castor::IAddress* 
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbTapeAccessSpecificationCnv::updateRep(castor::IAddress* address,
                                                               castor::IObject* object,
-                                                              bool autocommit)
+                                                              bool endTransaction)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeAccessSpecification* obj = 
     dynamic_cast<castor::vdqm::TapeAccessSpecification*>(object);
@@ -255,12 +255,12 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::updateRep(castor::IAddress* 
     m_updateStatement->setString(3, obj->tapeModel());
     m_updateStatement->setUInt64(4, obj->id());
     m_updateStatement->execute();
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
@@ -277,7 +277,7 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::updateRep(castor::IAddress* 
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbTapeAccessSpecificationCnv::deleteRep(castor::IAddress* address,
                                                               castor::IObject* object,
-                                                              bool autocommit)
+                                                              bool endTransaction)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeAccessSpecification* obj = 
     dynamic_cast<castor::vdqm::TapeAccessSpecification*>(object);
@@ -296,12 +296,12 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::deleteRep(castor::IAddress* 
     m_deleteTypeStatement->execute();
     m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"

@@ -81,7 +81,7 @@ const unsigned int castor::io::StreamTapeDriveCompatibilityCnv::objType() const 
 //------------------------------------------------------------------------------
 void castor::io::StreamTapeDriveCompatibilityCnv::createRep(castor::IAddress* address,
                                                             castor::IObject* object,
-                                                            bool autocommit,
+                                                            bool endTransaction,
                                                             unsigned int type)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeDriveCompatibility* obj = 

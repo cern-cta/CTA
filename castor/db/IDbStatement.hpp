@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/12/20 10:36:33 $ $Author: itglp $
+ * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/03/14 10:39:50 $ $Author: sponcec3 $
  *
  * 
  *
@@ -46,7 +46,7 @@ class IDbStatement {
 	
     virtual ~IDbStatement() {};
 
-    virtual void autoCommit() = 0;
+    virtual void endTransaction() = 0;
     
     /**
      * Sets a parameter in the prepared statement 

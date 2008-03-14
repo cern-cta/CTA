@@ -84,7 +84,7 @@ const unsigned int castor::io::StreamSubRequestCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamSubRequestCnv::createRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                bool autocommit,
+                                                bool endTransaction,
                                                 unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::SubRequest* obj = 

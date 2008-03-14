@@ -84,7 +84,7 @@ const unsigned int castor::io::StreamSetFileGCWeightCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamSetFileGCWeightCnv::createRep(castor::IAddress* address,
                                                      castor::IObject* object,
-                                                     bool autocommit,
+                                                     bool endTransaction,
                                                      unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::SetFileGCWeight* obj = 

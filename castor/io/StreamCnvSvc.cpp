@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCnvSvc.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/04/07 14:03:16 $ $Author: itglp $
+ * @(#)$RCSfile: StreamCnvSvc.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/03/14 10:40:26 $ $Author: sponcec3 $
  *
  *
  *
@@ -87,7 +87,7 @@ const unsigned int castor::io::StreamCnvSvc::REPTYPE() {
 // -----------------------------------------------------------------------
 void castor::io::StreamCnvSvc::createRep(castor::IAddress* address,
                                          castor::IObject* object,
-                                         bool autocommit,
+                                         bool endTransaction,
                                          unsigned int type)
   throw (castor::exception::Exception) {
   castor::io::StreamAddress* ad =

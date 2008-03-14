@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamOldClientCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/07/11 14:58:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamOldClientCnv.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/03/14 10:40:27 $ $Author: sponcec3 $
  *
  * 
  *
@@ -79,7 +79,7 @@ const unsigned int castor::io::StreamOldClientCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamOldClientCnv::createRep(castor::IAddress* address,
 					       castor::IObject* object,
-					       bool autocommit,
+					       bool endTransaction,
 					       unsigned int type)
   throw (castor::exception::Exception) {
   castor::rh::Client* obj = 

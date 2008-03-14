@@ -81,7 +81,7 @@ const unsigned int castor::io::StreamRepackAckCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamRepackAckCnv::createRep(castor::IAddress* address,
                                                castor::IObject* object,
-                                               bool autocommit,
+                                               bool endTransaction,
                                                unsigned int type)
   throw (castor::exception::Exception) {
   castor::repack::RepackAck* obj = 

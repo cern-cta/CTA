@@ -82,7 +82,7 @@ const unsigned int castor::io::StreamGCFilesResponseCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamGCFilesResponseCnv::createRep(castor::IAddress* address,
                                                      castor::IObject* object,
-                                                     bool autocommit,
+                                                     bool endTransaction,
                                                      unsigned int type)
   throw (castor::exception::Exception) {
   castor::rh::GCFilesResponse* obj = 

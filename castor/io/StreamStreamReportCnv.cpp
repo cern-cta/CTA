@@ -81,7 +81,7 @@ const unsigned int castor::io::StreamStreamReportCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamStreamReportCnv::createRep(castor::IAddress* address,
                                                   castor::IObject* object,
-                                                  bool autocommit,
+                                                  bool endTransaction,
                                                   unsigned int type)
   throw (castor::exception::Exception) {
   castor::monitoring::StreamReport* obj = 

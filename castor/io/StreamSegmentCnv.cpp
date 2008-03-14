@@ -83,7 +83,7 @@ const unsigned int castor::io::StreamSegmentCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamSegmentCnv::createRep(castor::IAddress* address,
                                              castor::IObject* object,
-                                             bool autocommit,
+                                             bool endTransaction,
                                              unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::Segment* obj = 

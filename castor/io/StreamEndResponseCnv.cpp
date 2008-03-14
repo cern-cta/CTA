@@ -80,7 +80,7 @@ const unsigned int castor::io::StreamEndResponseCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamEndResponseCnv::createRep(castor::IAddress* address,
                                                  castor::IObject* object,
-                                                 bool autocommit,
+                                                 bool endTransaction,
                                                  unsigned int type)
   throw (castor::exception::Exception) {
   castor::rh::EndResponse* obj = 

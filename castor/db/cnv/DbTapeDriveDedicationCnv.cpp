@@ -151,7 +151,7 @@ const unsigned int castor::db::cnv::DbTapeDriveDedicationCnv::objType() const {
 void castor::db::cnv::DbTapeDriveDedicationCnv::fillRep(castor::IAddress* address,
                                                         castor::IObject* object,
                                                         unsigned int type,
-                                                        bool autocommit)
+                                                        bool endTransaction)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeDriveDedication* obj = 
     dynamic_cast<castor::vdqm::TapeDriveDedication*>(object);
@@ -167,7 +167,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::fillRep(castor::IAddress* addres
                       << ". This is meaningless.";
       throw ex;
     }
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
@@ -216,7 +216,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::fillRepTapeDrive(castor::vdqm::T
 void castor::db::cnv::DbTapeDriveDedicationCnv::fillObj(castor::IAddress* address,
                                                         castor::IObject* object,
                                                         unsigned int type,
-                                                        bool autocommit)
+                                                        bool endTransaction)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeDriveDedication* obj = 
     dynamic_cast<castor::vdqm::TapeDriveDedication*>(object);
@@ -231,7 +231,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::fillObj(castor::IAddress* addres
                     << ". This is meaningless.";
     throw ex;
   }
-  if (autocommit) {
+  if (endTransaction) {
     cnvSvc()->commit();
   }
 }
@@ -280,7 +280,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::fillObjTapeDrive(castor::vdqm::T
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbTapeDriveDedicationCnv::createRep(castor::IAddress* address,
                                                           castor::IObject* object,
-                                                          bool autocommit,
+                                                          bool endTransaction,
                                                           unsigned int type)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeDriveDedication* obj = 
@@ -312,12 +312,12 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::createRep(castor::IAddress* addr
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
@@ -344,7 +344,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::createRep(castor::IAddress* addr
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbTapeDriveDedicationCnv::updateRep(castor::IAddress* address,
                                                           castor::IObject* object,
-                                                          bool autocommit)
+                                                          bool endTransaction)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeDriveDedication* obj = 
     dynamic_cast<castor::vdqm::TapeDriveDedication*>(object);
@@ -366,12 +366,12 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::updateRep(castor::IAddress* addr
     m_updateStatement->setString(8, obj->reason());
     m_updateStatement->setUInt64(9, obj->id());
     m_updateStatement->execute();
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
@@ -388,7 +388,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::updateRep(castor::IAddress* addr
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbTapeDriveDedicationCnv::deleteRep(castor::IAddress* address,
                                                           castor::IObject* object,
-                                                          bool autocommit)
+                                                          bool endTransaction)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeDriveDedication* obj = 
     dynamic_cast<castor::vdqm::TapeDriveDedication*>(object);
@@ -407,12 +407,12 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::deleteRep(castor::IAddress* addr
     m_deleteTypeStatement->execute();
     m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"

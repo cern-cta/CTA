@@ -85,7 +85,7 @@ const unsigned int castor::io::StreamStagePutDoneRequestCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamStagePutDoneRequestCnv::createRep(castor::IAddress* address,
                                                          castor::IObject* object,
-                                                         bool autocommit,
+                                                         bool endTransaction,
                                                          unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::StagePutDoneRequest* obj = 

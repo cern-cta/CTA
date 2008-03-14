@@ -84,7 +84,7 @@ namespace castor {
        * @param address where to store the representation of
        * the object
        * @param object the object to deal with
-       * @param autocommit whether the changes to the database
+       * @param endTransaction whether the changes to the database
        * should be commited or not
        * @param type if not OBJ_INVALID, the ids representing
        * the links to objects of this type will not set to 0
@@ -93,7 +93,7 @@ namespace castor {
        */
       virtual void createRep(castor::IAddress* address,
                              castor::IObject* object,
-                             bool autocommit,
+                             bool endTransaction,
                              unsigned int type = castor::OBJ_INVALID)
         throw (castor::exception::Exception);
 

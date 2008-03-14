@@ -82,7 +82,7 @@ const unsigned int castor::io::StreamDisk2DiskCopyStartRequestCnv::objType() con
 //------------------------------------------------------------------------------
 void castor::io::StreamDisk2DiskCopyStartRequestCnv::createRep(castor::IAddress* address,
                                                                castor::IObject* object,
-                                                               bool autocommit,
+                                                               bool endTransaction,
                                                                unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::Disk2DiskCopyStartRequest* obj = 

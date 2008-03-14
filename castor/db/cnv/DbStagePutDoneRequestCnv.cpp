@@ -191,7 +191,7 @@ const unsigned int castor::db::cnv::DbStagePutDoneRequestCnv::objType() const {
 void castor::db::cnv::DbStagePutDoneRequestCnv::fillRep(castor::IAddress* address,
                                                         castor::IObject* object,
                                                         unsigned int type,
-                                                        bool autocommit)
+                                                        bool endTransaction)
   throw (castor::exception::Exception) {
   castor::stager::StagePutDoneRequest* obj = 
     dynamic_cast<castor::stager::StagePutDoneRequest*>(object);
@@ -216,7 +216,7 @@ void castor::db::cnv::DbStagePutDoneRequestCnv::fillRep(castor::IAddress* addres
                       << ". This is meaningless.";
       throw ex;
     }
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
@@ -345,7 +345,7 @@ void castor::db::cnv::DbStagePutDoneRequestCnv::fillRepFileRequest(castor::stage
 void castor::db::cnv::DbStagePutDoneRequestCnv::fillObj(castor::IAddress* address,
                                                         castor::IObject* object,
                                                         unsigned int type,
-                                                        bool autocommit)
+                                                        bool endTransaction)
   throw (castor::exception::Exception) {
   castor::stager::StagePutDoneRequest* obj = 
     dynamic_cast<castor::stager::StagePutDoneRequest*>(object);
@@ -369,7 +369,7 @@ void castor::db::cnv::DbStagePutDoneRequestCnv::fillObj(castor::IAddress* addres
                     << ". This is meaningless.";
     throw ex;
   }
-  if (autocommit) {
+  if (endTransaction) {
     cnvSvc()->commit();
   }
 }
@@ -542,7 +542,7 @@ void castor::db::cnv::DbStagePutDoneRequestCnv::fillObjFileRequest(castor::stage
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStagePutDoneRequestCnv::createRep(castor::IAddress* address,
                                                           castor::IObject* object,
-                                                          bool autocommit,
+                                                          bool endTransaction,
                                                           unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::StagePutDoneRequest* obj = 
@@ -581,12 +581,12 @@ void castor::db::cnv::DbStagePutDoneRequestCnv::createRep(castor::IAddress* addr
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (autocommit) cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
@@ -620,7 +620,7 @@ void castor::db::cnv::DbStagePutDoneRequestCnv::createRep(castor::IAddress* addr
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStagePutDoneRequestCnv::updateRep(castor::IAddress* address,
                                                           castor::IObject* object,
-                                                          bool autocommit)
+                                                          bool endTransaction)
   throw (castor::exception::Exception) {
   castor::stager::StagePutDoneRequest* obj = 
     dynamic_cast<castor::stager::StagePutDoneRequest*>(object);
@@ -646,12 +646,12 @@ void castor::db::cnv::DbStagePutDoneRequestCnv::updateRep(castor::IAddress* addr
     m_updateStatement->setString(12, obj->parentUuid());
     m_updateStatement->setUInt64(13, obj->id());
     m_updateStatement->execute();
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (autocommit) cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
@@ -668,7 +668,7 @@ void castor::db::cnv::DbStagePutDoneRequestCnv::updateRep(castor::IAddress* addr
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStagePutDoneRequestCnv::deleteRep(castor::IAddress* address,
                                                           castor::IObject* object,
-                                                          bool autocommit)
+                                                          bool endTransaction)
   throw (castor::exception::Exception) {
   castor::stager::StagePutDoneRequest* obj = 
     dynamic_cast<castor::stager::StagePutDoneRequest*>(object);
@@ -695,12 +695,12 @@ void castor::db::cnv::DbStagePutDoneRequestCnv::deleteRep(castor::IAddress* addr
     if (obj->client() != 0) {
       cnvSvc()->deleteRep(0, obj->client(), false);
     }
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (autocommit) cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"

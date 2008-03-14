@@ -83,7 +83,7 @@ const unsigned int castor::io::StreamStageGetNextRequestCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamStageGetNextRequestCnv::createRep(castor::IAddress* address,
                                                          castor::IObject* object,
-                                                         bool autocommit,
+                                                         bool endTransaction,
                                                          unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::StageGetNextRequest* obj = 

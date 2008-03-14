@@ -84,7 +84,7 @@ const unsigned int castor::io::StreamStageDiskCopyReplicaRequestCnv::objType() c
 //------------------------------------------------------------------------------
 void castor::io::StreamStageDiskCopyReplicaRequestCnv::createRep(castor::IAddress* address,
                                                                  castor::IObject* object,
-                                                                 bool autocommit,
+                                                                 bool endTransaction,
                                                                  unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::StageDiskCopyReplicaRequest* obj = 

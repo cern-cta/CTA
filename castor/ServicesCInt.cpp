@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2006/11/06 10:33:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2008/03/14 10:46:17 $ $Author: sponcec3 $
  *
  *
  *
@@ -93,14 +93,14 @@ extern "C" {
   int C_Services_createRep(C_Services_t* svcs,
                            castor::IAddress* address,
                            castor::IObject* object,
-                           char autocommit = 0) {
+                           char endTransaction = 0) {
     if (0 == svcs->svcs) {
       errno = EINVAL;
       svcs->errorMsg = "Empty context";
       return -1;
     }
     try {
-      svcs->svcs->createRep(address, object, autocommit);
+      svcs->svcs->createRep(address, object, endTransaction);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       svcs->errorMsg = e.getMessage().str();
@@ -115,14 +115,14 @@ extern "C" {
   int C_Services_updateRep(C_Services_t* svcs,
                            castor::IAddress* address,
                            castor::IObject* object,
-                           char autocommit = 0) {
+                           char endTransaction = 0) {
     if (0 == svcs->svcs) {
       errno = EINVAL;
       svcs->errorMsg = "Empty context";
       return -1;
     }
     try {
-      svcs->svcs->updateRep(address, object, autocommit);
+      svcs->svcs->updateRep(address, object, endTransaction);
     } catch (castor::exception::Exception e) {
       serrno = e.code();      
       svcs->errorMsg = e.getMessage().str();
@@ -137,14 +137,14 @@ extern "C" {
   int C_Services_deleteRep(C_Services_t* svcs,
                            castor::IAddress* address,
                            castor::IObject* object,
-                           char autocommit = 0) {
+                           char endTransaction = 0) {
     if (0 == svcs->svcs) {
       errno = EINVAL;
       svcs->errorMsg = "Empty context";
       return -1;
     }
     try {
-      svcs->svcs->deleteRep(address, object, autocommit);
+      svcs->svcs->deleteRep(address, object, endTransaction);
     } catch (castor::exception::Exception e) {
       serrno = e.code();      
       svcs->errorMsg = e.getMessage().str();
@@ -202,14 +202,14 @@ extern "C" {
                          castor::IAddress* address,
                          castor::IObject* object,
                          unsigned int type,
-                         char autocommit = 0) {
+                         char endTransaction = 0) {
     if (0 == svcs->svcs) {
       errno = EINVAL;
       svcs->errorMsg = "Empty context";
       return -1;
     }
     try {
-      svcs->svcs->fillRep(address, object, type, autocommit);
+      svcs->svcs->fillRep(address, object, type, endTransaction);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       svcs->errorMsg = e.getMessage().str();
@@ -225,14 +225,14 @@ extern "C" {
                          castor::IAddress* address,
                          castor::IObject* object,
                          unsigned int type,
-                         char autocommit = 0) {
+                         char endTransaction = 0) {
     if (0 == svcs->svcs) {
       errno = EINVAL;
       svcs->errorMsg = "Empty context";
       return -1;
     }
     try {
-      svcs->svcs->fillObj(address, object, type, autocommit);
+      svcs->svcs->fillObj(address, object, type, endTransaction);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       svcs->errorMsg = e.getMessage().str();

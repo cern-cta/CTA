@@ -166,7 +166,7 @@ const unsigned int castor::db::cnv::DbFirstByteWrittenCnv::objType() const {
 void castor::db::cnv::DbFirstByteWrittenCnv::fillRep(castor::IAddress* address,
                                                      castor::IObject* object,
                                                      unsigned int type,
-                                                     bool autocommit)
+                                                     bool endTransaction)
   throw (castor::exception::Exception) {
   castor::stager::FirstByteWritten* obj = 
     dynamic_cast<castor::stager::FirstByteWritten*>(object);
@@ -185,7 +185,7 @@ void castor::db::cnv::DbFirstByteWrittenCnv::fillRep(castor::IAddress* address,
                       << ". This is meaningless.";
       throw ex;
     }
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
@@ -249,7 +249,7 @@ void castor::db::cnv::DbFirstByteWrittenCnv::fillRepIClient(castor::stager::Firs
 void castor::db::cnv::DbFirstByteWrittenCnv::fillObj(castor::IAddress* address,
                                                      castor::IObject* object,
                                                      unsigned int type,
-                                                     bool autocommit)
+                                                     bool endTransaction)
   throw (castor::exception::Exception) {
   castor::stager::FirstByteWritten* obj = 
     dynamic_cast<castor::stager::FirstByteWritten*>(object);
@@ -267,7 +267,7 @@ void castor::db::cnv::DbFirstByteWrittenCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
-  if (autocommit) {
+  if (endTransaction) {
     cnvSvc()->commit();
   }
 }
@@ -352,7 +352,7 @@ void castor::db::cnv::DbFirstByteWrittenCnv::fillObjIClient(castor::stager::Firs
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbFirstByteWrittenCnv::createRep(castor::IAddress* address,
                                                        castor::IObject* object,
-                                                       bool autocommit,
+                                                       bool endTransaction,
                                                        unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::FirstByteWritten* obj = 
@@ -398,12 +398,12 @@ void castor::db::cnv::DbFirstByteWrittenCnv::createRep(castor::IAddress* address
     m_insertNewReqStatement->setUInt64(1, obj->id());
     m_insertNewReqStatement->setUInt64(2, obj->type());
     m_insertNewReqStatement->execute();
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (autocommit) cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
@@ -438,7 +438,7 @@ void castor::db::cnv::DbFirstByteWrittenCnv::createRep(castor::IAddress* address
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbFirstByteWrittenCnv::updateRep(castor::IAddress* address,
                                                        castor::IObject* object,
-                                                       bool autocommit)
+                                                       bool endTransaction)
   throw (castor::exception::Exception) {
   castor::stager::FirstByteWritten* obj = 
     dynamic_cast<castor::stager::FirstByteWritten*>(object);
@@ -466,12 +466,12 @@ void castor::db::cnv::DbFirstByteWrittenCnv::updateRep(castor::IAddress* address
     m_updateStatement->setString(14, obj->nsHost());
     m_updateStatement->setUInt64(15, obj->id());
     m_updateStatement->execute();
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (autocommit) cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
@@ -488,7 +488,7 @@ void castor::db::cnv::DbFirstByteWrittenCnv::updateRep(castor::IAddress* address
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbFirstByteWrittenCnv::deleteRep(castor::IAddress* address,
                                                        castor::IObject* object,
-                                                       bool autocommit)
+                                                       bool endTransaction)
   throw (castor::exception::Exception) {
   castor::stager::FirstByteWritten* obj = 
     dynamic_cast<castor::stager::FirstByteWritten*>(object);
@@ -510,12 +510,12 @@ void castor::db::cnv::DbFirstByteWrittenCnv::deleteRep(castor::IAddress* address
     if (obj->client() != 0) {
       cnvSvc()->deleteRep(0, obj->client(), false);
     }
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (autocommit) cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"

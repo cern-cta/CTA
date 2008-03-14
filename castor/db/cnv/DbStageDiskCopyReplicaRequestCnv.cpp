@@ -183,7 +183,7 @@ const unsigned int castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::objType() 
 void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::fillRep(castor::IAddress* address,
                                                                 castor::IObject* object,
                                                                 unsigned int type,
-                                                                bool autocommit)
+                                                                bool endTransaction)
   throw (castor::exception::Exception) {
   castor::stager::StageDiskCopyReplicaRequest* obj = 
     dynamic_cast<castor::stager::StageDiskCopyReplicaRequest*>(object);
@@ -205,7 +205,7 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::fillRep(castor::IAddress
                       << ". This is meaningless.";
       throw ex;
     }
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
@@ -319,7 +319,7 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::fillRepIClient(castor::s
 void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::fillObj(castor::IAddress* address,
                                                                 castor::IObject* object,
                                                                 unsigned int type,
-                                                                bool autocommit)
+                                                                bool endTransaction)
   throw (castor::exception::Exception) {
   castor::stager::StageDiskCopyReplicaRequest* obj = 
     dynamic_cast<castor::stager::StageDiskCopyReplicaRequest*>(object);
@@ -340,7 +340,7 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::fillObj(castor::IAddress
                     << ". This is meaningless.";
     throw ex;
   }
-  if (autocommit) {
+  if (endTransaction) {
     cnvSvc()->commit();
   }
 }
@@ -475,7 +475,7 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::fillObjIClient(castor::s
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::createRep(castor::IAddress* address,
                                                                   castor::IObject* object,
-                                                                  bool autocommit,
+                                                                  bool endTransaction,
                                                                   unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::StageDiskCopyReplicaRequest* obj = 
@@ -514,12 +514,12 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::createRep(castor::IAddre
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (autocommit) cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
@@ -553,7 +553,7 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::createRep(castor::IAddre
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::updateRep(castor::IAddress* address,
                                                                   castor::IObject* object,
-                                                                  bool autocommit)
+                                                                  bool endTransaction)
   throw (castor::exception::Exception) {
   castor::stager::StageDiskCopyReplicaRequest* obj = 
     dynamic_cast<castor::stager::StageDiskCopyReplicaRequest*>(object);
@@ -580,12 +580,12 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::updateRep(castor::IAddre
     m_updateStatement->setUInt64(13, obj->destDiskCopyId());
     m_updateStatement->setUInt64(14, obj->id());
     m_updateStatement->execute();
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (autocommit) cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
@@ -602,7 +602,7 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::updateRep(castor::IAddre
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::deleteRep(castor::IAddress* address,
                                                                   castor::IObject* object,
-                                                                  bool autocommit)
+                                                                  bool endTransaction)
   throw (castor::exception::Exception) {
   castor::stager::StageDiskCopyReplicaRequest* obj = 
     dynamic_cast<castor::stager::StageDiskCopyReplicaRequest*>(object);
@@ -629,12 +629,12 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::deleteRep(castor::IAddre
     if (obj->client() != 0) {
       cnvSvc()->deleteRep(0, obj->client(), false);
     }
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (autocommit) cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"

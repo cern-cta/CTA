@@ -84,7 +84,7 @@ const unsigned int castor::io::StreamDiskServerStateReportCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamDiskServerStateReportCnv::createRep(castor::IAddress* address,
                                                            castor::IObject* object,
-                                                           bool autocommit,
+                                                           bool endTransaction,
                                                            unsigned int type)
   throw (castor::exception::Exception) {
   castor::monitoring::DiskServerStateReport* obj = 
