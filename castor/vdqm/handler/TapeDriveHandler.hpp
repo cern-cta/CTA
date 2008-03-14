@@ -90,18 +90,25 @@ namespace castor {
         
         /**
          * This function replaces the old vdqm_GetDrvQueue() C-function. 
-         * I looks into the data base for all stored tapeDrives and sends
+         * It looks into the data base for all stored tapeDrives and sends
          * them back to the client via the OldProtocolInterpreter interface.
          *
          * @param volumeRequest The TapeRequest in the old protocol
          * @param oldProtInterpreter The interface to send the queue to the
          * client
-         * @param cuuid The unique id of the request. Needed for dlf 
          * @exception In case of error
          */
         void sendTapeDriveQueue(newVdqmVolReq_t *volumeRequest,
                                 OldProtocolInterpreter* oldProtInterpreter) 
           throw (castor::exception::Exception);  
+
+        /**
+         * This method replaces the old vdqm_DedicateDrv() C-function.
+         * This method is used to handle request for dedicating drives to VIDs
+         * and to hosts.
+         */
+        void dedicateTapeDrive()
+          throw (castor::exception::Exception);
           
           
       private:

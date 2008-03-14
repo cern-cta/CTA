@@ -97,10 +97,10 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
   castor::vdqm::TapeDrive* tapeDrive = NULL;
   
 
-  // XXX: This log doesn't appear in th log!
+  // XXX: This log doesn't appear in the log!
   //"The parameters of the old vdqm DrvReq Request" message
   castor::dlf::Param params[] =
-    {castor::dlf::Param("errorHistory (dedidcate)", ptr_driveRequest->errorHistory),
+    {castor::dlf::Param("dedidcate", ptr_driveRequest->dedicate),
      castor::dlf::Param("dgn", ptr_driveRequest->dgn),
      castor::dlf::Param("drive", ptr_driveRequest->drive),
      castor::dlf::Param("errcount", ptr_driveRequest->errcount),
@@ -126,7 +126,7 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
     
 
     /**
-     * If it is an tape daemon startup status we delete all TapeDrives 
+     * If it is a tape daemon startup status we delete all TapeDrives 
      * on that tape server.
      */
     if ( ptr_driveRequest->status == VDQM_TPD_STARTED ) {
@@ -442,14 +442,6 @@ castor::vdqm::TapeDrive*
       tapeDrive->setDeviceGroupName(dgName);
       tapeDrive->setDriveName(ptr_driveRequest->drive);
       tapeDrive->setTapeServer(tapeServer);
-      
-      /**
-       * The dedication string is not longer in use in the new VDQM.
-       * We use the old field in the struct, to send error informations
-       * back to the client.
-       */
-
-      
       tapeDrive->setErrcount(ptr_driveRequest->errcount);
       tapeDrive->setJobID(ptr_driveRequest->jobID);
       tapeDrive->setModificationTime(time(NULL));
@@ -475,33 +467,27 @@ castor::vdqm::TapeDrive*
       
       /*
        * Make sure it doesn't come up with some non-persistent status
-       * becasue of a previous VDQM server crash.
+       * because of a previous VDQM server crash.
        */
       ptr_driveRequest->status = ptr_driveRequest->status & ( ~VDQM_VOL_MOUNT &
           ~VDQM_VOL_UNMOUNT & ~VDQM_UNIT_MBCOUNT );
           
-      
-      std::string driveModel = ptr_driveRequest->tapeDriveModel;
-      if ( driveModel == "" ) {
-        vmgr_list list;
-        struct vmgr_tape_dgnmap *dgnmap;
-        int flags;
-        
-        /**
-         * Retrieve the information about the cartridge model, if the tape drive
-         * name is not provided by the client.
-         * Please note, that this is a work around!
-         */
-        flags = VMGR_LIST_BEGIN;
-        while ((dgnmap = vmgr_listdgnmap (flags, &list)) != NULL) {
-          if ( std::strcmp(dgnmap->dgn, ptr_driveRequest->dgn) == 0 ) {
-            driveModel = dgnmap->model;
-            break;
-          }
-          flags = VMGR_LIST_CONTINUE;
+      /**
+       * Retrieve the information about the cartridge model.
+       */
+      std::string driveModel = "";
+      vmgr_list list;
+      struct vmgr_tape_dgnmap *dgnmap;
+      int flags;
+      flags = VMGR_LIST_BEGIN;
+      while ((dgnmap = vmgr_listdgnmap (flags, &list)) != NULL) {
+        if ( std::strcmp(dgnmap->dgn, ptr_driveRequest->dgn) == 0 ) {
+          driveModel = dgnmap->model;
+          break;
         }
-        (void) vmgr_listdgnmap (VMGR_LIST_END, &list);
+        flags = VMGR_LIST_CONTINUE;
       }
+      (void) vmgr_listdgnmap (VMGR_LIST_END, &list);
       
       /**
        * Looks, wheter there is already existing entries in the 
@@ -592,9 +578,7 @@ void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
       throw ex;
   }
   
-  
   ptr_driveRequest->DrvReqID  = (unsigned int)tapeDrive->id();
-  
   ptr_driveRequest->jobID     = tapeDrive->jobID();
   ptr_driveRequest->recvtime  = (int)tapeDrive->modificationTime();
   ptr_driveRequest->resettime = (int)tapeDrive->resettime();
@@ -631,15 +615,6 @@ void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
   devGrpName = tapeDrive->deviceGroupName();
   strcpy(ptr_driveRequest->dgn, devGrpName->dgName().c_str());
   devGrpName = 0;
-  
-  //TODO: Take the last occured error out of the ErrorHistoy table
-//  ptr_driveRequest->errorHistory
-
-  std::vector<castor::vdqm::TapeDriveCompatibility*> driveCompatibilities =
-    tapeDrive->tapeDriveCompatibilities();
-  if ( driveCompatibilities.size() > 0 ) {
-    strcpy(ptr_driveRequest->tapeDriveModel, driveCompatibilities[0]->tapeDriveModel().c_str());
-  }
 }
 
 
@@ -888,6 +863,28 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
   ptr_driveRequest->DrvReqID = -1;
   
   oldProtInterpreter->sendToOldClient(ptr_header, NULL, ptr_driveRequest);
+}
+
+
+//------------------------------------------------------------------------------
+// dedicateTapeDrive
+//------------------------------------------------------------------------------
+void castor::vdqm::handler::TapeDriveHandler::dedicateTapeDrive()
+  throw (castor::exception::Exception) {
+/*
+
+  std::cout << "ptr_driveRequest->dedicate = " << ptr_driveRequest->dedicate << std::endl;
+
+  char uid[sizeof(ptr_driveRequest->dedicate)];
+  char gid[sizeof(ptr_driveRequest->dedicate)];
+  char name[sizeof(ptr_driveRequest->dedicate)];
+  char host[sizeof(ptr_driveRequest->dedicate)];
+  char vid[sizeof(ptr_driveRequest->dedicate)];
+  char mode[sizeof(ptr_driveRequest->dedicate)];
+  char datestr[sizeof(ptr_driveRequest->dedicate)];
+  char timestr[sizeof(ptr_driveRequest->dedicate)];
+  char age[sizeof(ptr_driveRequest->dedicate)];
+*/
 }
 
 

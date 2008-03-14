@@ -269,11 +269,7 @@ throw (castor::exception::Exception) {
     DO_MARSHALL_STRING(p,driveRequest->drive,ReceiveFrom, sizeof(driveRequest->drive));
     DO_MARSHALL_STRING(p,driveRequest->dgn,ReceiveFrom, sizeof(driveRequest->dgn));
 
-    /**
-     * Normally we received the dedicate String, but we ignore it and use 
-     * it for the errorHistory
-     */
-    DO_MARSHALL_STRING(p,driveRequest->errorHistory,ReceiveFrom, sizeof(driveRequest->errorHistory));
+    DO_MARSHALL_STRING(p,driveRequest->dedicate,ReceiveFrom, sizeof(driveRequest->dedicate));
     if ( (local_access == 1) &&
          (domain = strstr(driveRequest->server,".")) != NULL ) *domain = '\0';
   }
@@ -370,16 +366,16 @@ throw (castor::exception::Exception) {
       DO_MARSHALL(LONG,p,driveRequest->MBtransf,SendTo);
       DO_MARSHALL(LONG,p,driveRequest->mode,SendTo);
       DO_MARSHALL(HYPER,p,driveRequest->TotalMB,SendTo);
-      DO_MARSHALL_STRING(p,driveRequest->volid,SendTo, sizeof(driveRequest->volid));
-      DO_MARSHALL_STRING(p,driveRequest->server,SendTo, sizeof(driveRequest->server));
-      DO_MARSHALL_STRING(p,driveRequest->drive,SendTo, sizeof(driveRequest->drive));
-      DO_MARSHALL_STRING(p,driveRequest->dgn,SendTo, sizeof(driveRequest->dgn));
-      
-      /**
-       * Normally we sent the dedicate String now, but we ignore it and use 
-       * it for the errorHistory. This will be interpreted by newer tapeDaemon
-       */
-      DO_MARSHALL_STRING(p,driveRequest->errorHistory,SendTo, sizeof(driveRequest->errorHistory));
+      DO_MARSHALL_STRING(p,driveRequest->volid,SendTo,
+        sizeof(driveRequest->volid));
+      DO_MARSHALL_STRING(p,driveRequest->server,SendTo,
+        sizeof(driveRequest->server));
+      DO_MARSHALL_STRING(p,driveRequest->drive,SendTo,
+        sizeof(driveRequest->drive));
+      DO_MARSHALL_STRING(p,driveRequest->dgn,SendTo,
+        sizeof(driveRequest->dgn));
+      DO_MARSHALL_STRING(p,driveRequest->dedicate,SendTo,
+        sizeof(driveRequest->dedicate));
   }
  
   
