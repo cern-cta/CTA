@@ -871,11 +871,12 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveHandler::dedicateTapeDrive()
   throw (castor::exception::Exception) {
-/*
 
+/*
   std::cout << "ptr_driveRequest->dedicate = " << ptr_driveRequest->dedicate << std::endl;
   std::cout << "vid=" << extractDedication(ptr_driveRequest->dedicate, "vid=*,") << std::endl;
   std::cout << "host=" << extractDedication(ptr_driveRequest->dedicate, "host=*,") << std::endl;
+  std::cout << "age=" << extractDedication(ptr_driveRequest->dedicate, "age=*") << std::endl;
 */
 }
 
@@ -999,13 +1000,11 @@ void castor::vdqm::handler::TapeDriveHandler::handleTapeDriveCompatibilities(
 // extractDedication
 //------------------------------------------------------------------------------
 std::string castor::vdqm::handler::TapeDriveHandler::extractDedication(
-std::string input, std::string format) {
+const char *input, const char *format) {
   std::string        output;
   std::ostringstream oss;
-  const char*        input_c_str  = input.c_str();
-  const char*        format_c_str = format.c_str();
-  int                inputLen   = strlen(input_c_str);
-  int                formatLen  = strlen(format_c_str);
+  int                inputLen   = strlen(input);
+  int                formatLen  = strlen(format);
   int                inputPos   = 0;
   int                formatPos  = 0;
 

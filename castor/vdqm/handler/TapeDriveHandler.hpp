@@ -209,7 +209,7 @@ namespace castor {
          * @return the extracted string or an empty string if nothing was
          * extracted
          */
-        std::string extractDedication(std::string input, std::string format);
+        std::string extractDedication(const char *input, const char *format);
           
       }; // class TapeDriveHandler
     
