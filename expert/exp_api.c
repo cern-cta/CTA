@@ -64,6 +64,7 @@
 #include "marshall.h"
 #include "serrno.h"
 #include "expert.h"
+#include "expert_daemon.h"
 
 int DLL_DECL expert_send_request(exp_socket, request)
 int *exp_socket;

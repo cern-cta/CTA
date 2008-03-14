@@ -5,10 +5,6 @@
  *
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: exp_procreq.c,v $ $Revision: 1.3 $ $Date: 2005/01/07 09:18:00 $ CERN IT-ADC/CA Vitaly Motyakov";
-#endif /* not lint */
-
 #include <stdio.h>
 #include <unistd.h>
 

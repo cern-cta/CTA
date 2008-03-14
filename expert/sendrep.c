@@ -5,10 +5,6 @@
  *
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.1 $ $Date: 2004/06/30 16:18:36 $ CERN IT-ADC/CA Vitaly Motyakov";
-#endif /* not lint */
-
 #include <errno.h>
 #include <sys/types.h>
 #include <string.h>
