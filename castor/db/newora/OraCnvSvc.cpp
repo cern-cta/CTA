@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2008/01/28 16:07:43 $ $Author: itglp $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2008/03/14 09:56:27 $ $Author: itglp $
  *
  * The conversion service to Oracle
  *
@@ -355,29 +355,20 @@ void castor::db::ora::OraCnvSvc::closeStatement(castor::db::IDbStatement* stmt)
 //  handleException
 // -------------------------------------------------------------------------
 void castor::db::ora::OraCnvSvc::handleException(std::exception& e) {
-  try {
-    // Always try to rollback
-    rollback();
-    
-    int errcode = ((oracle::occi::SQLException&)e).getErrorCode();
-    if (errcode == 28 || errcode == 3113 || errcode == 3114 || errcode == 32102
-      || errcode == 3135 || errcode == 12170 || errcode == 12541 || errcode == 1012
-      || errcode == 1003 || errcode == 12571 || errcode == 25408 || errcode == 1033
-      || errcode == 1089) {  
-      // here we lost the connection due to an Oracle restart or network glitch
-      // and this is the current list of errors acknowledged as a lost connection.
-      // Notes:
-      // - error #1003 'no statement parsed' means a SQL procedure
-      // got invalid. The SQL code has still to be revalidated by hand, but
-      // this way the process doesn't need to be restarted afterwards.
-      // - error #32102 'invalid OCI handle' seems to happen after an uncaught
-      // Oracle side error, and a priori should act as a catch-all case
-      dropConnection();  // reset values and drop the connection
-    }
+  int errcode = ((oracle::occi::SQLException&)e).getErrorCode();
+  if (errcode == 28 || errcode == 3113 || errcode == 3114 || errcode == 32102
+    || errcode == 3135 || errcode == 12170 || errcode == 12541 || errcode == 1012
+    || errcode == 1003 || errcode == 12571 || errcode == 25408 || errcode == 1033
+    || errcode == 1089) {  
+    // here we lost the connection due to an Oracle restart or network glitch
+    // and this is the current list of errors acknowledged as a lost connection.
+    // Notes:
+    // - error #1003 'no statement parsed' means a SQL procedure
+    // got invalid. The SQL code has still to be revalidated by hand, but
+    // this way the process doesn't need to be restarted afterwards.
+    // - error #32102 'invalid OCI handle' seems to happen after an uncaught
+    // Oracle side error, and a priori should act as a catch-all case
+    dropConnection();  // reset values and drop the connection
   }
-  catch (castor::exception::Exception e) {
-    // rollback failed, let's drop the connection for security
-    dropConnection(); // instead of reset .... 
-  }	
 }
 
