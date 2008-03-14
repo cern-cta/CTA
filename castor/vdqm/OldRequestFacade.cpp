@@ -195,14 +195,17 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
         }
         break;
     default:
+        castor::exception::NotSupported ex;
+
         if ( VDQM_VALID_REQTYPE(m_reqtype) ) 
-          handleRequest = false;
-        else {
-          castor::exception::NotSupported ex;
-          ex.getMessage() << "Invalid Request 0x"
+          ex.getMessage() << "Valid but not supported request 0x"
                       << std::hex << m_reqtype << "\n";
-          throw ex;
+        else {
+          ex.getMessage() << "Invalid request 0x"
+                      << std::hex << m_reqtype << "\n";
         }
+
+        throw ex;
   }
   
   return handleRequest;
