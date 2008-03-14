@@ -1,7 +1,6 @@
 #
 ## List of packages to do only if LSF is available
 #
-castor-job
 castor-lsf-plugin
 castor-rmmaster-server
 castor-jobmanager-server
