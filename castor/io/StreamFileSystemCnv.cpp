@@ -86,7 +86,7 @@ const unsigned int castor::io::StreamFileSystemCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamFileSystemCnv::createRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                bool autocommit,
+                                                bool endTransaction,
                                                 unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::FileSystem* obj = 
@@ -99,7 +99,6 @@ void castor::io::StreamFileSystemCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->minFreeSpace();
   ad->stream() << obj->minAllowedFreeSpace();
   ad->stream() << obj->maxFreeSpace();
-  ad->stream() << obj->spaceToBeFreed();
   ad->stream() << obj->totalSize();
   ad->stream() << obj->readRate();
   ad->stream() << obj->writeRate();
@@ -138,9 +137,6 @@ castor::IObject* castor::io::StreamFileSystemCnv::createObj(castor::IAddress* ad
   float maxFreeSpace;
   ad->stream() >> maxFreeSpace;
   object->setMaxFreeSpace(maxFreeSpace);
-  u_signed64 spaceToBeFreed;
-  ad->stream() >> spaceToBeFreed;
-  object->setSpaceToBeFreed(spaceToBeFreed);
   u_signed64 totalSize;
   ad->stream() >> totalSize;
   object->setTotalSize(totalSize);

@@ -113,7 +113,7 @@ CREATE TABLE CastorFile (fileId INT8, nsHost VARCHAR(2048), fileSize INT8, creat
 CREATE TABLE DiskCopy (path VARCHAR(2048), gcWeight float, creationTime INT8, lastAccessTime INT8, id INT8 CONSTRAINT I_DiskCopy_Id PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER);
 
 /* SQL statements for type FileSystem */
-CREATE TABLE FileSystem (free INT8, mountPoint VARCHAR(2048), minFreeSpace float, minAllowedFreeSpace float, maxFreeSpace float, spaceToBeFreed INT8, totalSize INT8, readRate INT8, writeRate INT8, nbReadStreams INT4, nbWriteStreams INT4, nbReadWriteStreams INT4, nbMigratorStreams INT4, nbRecallerStreams INT4, id INT8 CONSTRAINT I_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER);
+CREATE TABLE FileSystem (free INT8, mountPoint VARCHAR(2048), minFreeSpace float, minAllowedFreeSpace float, maxFreeSpace float, totalSize INT8, readRate INT8, writeRate INT8, nbReadStreams INT4, nbWriteStreams INT4, nbReadWriteStreams INT4, nbMigratorStreams INT4, nbRecallerStreams INT4, id INT8 CONSTRAINT I_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER);
 
 /* SQL statements for type SvcClass */
 CREATE TABLE SvcClass (nbDrives INT4, name VARCHAR(2048), defaultFileSize INT8, maxReplicaNb INT4, replicationPolicy VARCHAR(2048), migratorPolicy VARCHAR(2048), recallerPolicy VARCHAR(2048), streamPolicy VARCHAR(2048), gcWeightForAccess INT4, gcEnabled INT4, hasDiskOnlyBehavior INT4, id INT8 CONSTRAINT I_SvcClass_Id PRIMARY KEY, forcedFileClass INTEGER);

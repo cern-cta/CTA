@@ -184,22 +184,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_FileSystem_spaceToBeFreed
-  //----------------------------------------------------------------------------
-  int Cstager_FileSystem_spaceToBeFreed(castor::stager::FileSystem* instance, u_signed64* var) {
-    *var = instance->spaceToBeFreed();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_FileSystem_setSpaceToBeFreed
-  //----------------------------------------------------------------------------
-  int Cstager_FileSystem_setSpaceToBeFreed(castor::stager::FileSystem* instance, u_signed64 new_var) {
-    instance->setSpaceToBeFreed(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_FileSystem_totalSize
   //----------------------------------------------------------------------------
   int Cstager_FileSystem_totalSize(castor::stager::FileSystem* instance, u_signed64* var) {

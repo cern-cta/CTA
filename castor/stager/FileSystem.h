@@ -162,22 +162,6 @@ int Cstager_FileSystem_maxFreeSpace(struct Cstager_FileSystem_t* instance, float
 int Cstager_FileSystem_setMaxFreeSpace(struct Cstager_FileSystem_t* instance, float new_var);
 
 /**
- * Get the value of spaceToBeFreed
- * The space that will be deleted in the future by the GC workers. This are files
- * that were selected by the GC but are not yet physically removed. This value can
- * help another iteration of the GC to know what to delete.
- */
-int Cstager_FileSystem_spaceToBeFreed(struct Cstager_FileSystem_t* instance, u_signed64* var);
-
-/**
- * Set the value of spaceToBeFreed
- * The space that will be deleted in the future by the GC workers. This are files
- * that were selected by the GC but are not yet physically removed. This value can
- * help another iteration of the GC to know what to delete.
- */
-int Cstager_FileSystem_setSpaceToBeFreed(struct Cstager_FileSystem_t* instance, u_signed64 new_var);
-
-/**
  * Get the value of totalSize
  * Total size of the fileSystem (given in bytes)
  */

@@ -206,28 +206,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_spaceToBeFreed
-       * The space that will be deleted in the future by the GC workers. This are files
-       * that were selected by the GC but are not yet physically removed. This value can
-       * help another iteration of the GC to know what to delete.
-       * @return the value of m_spaceToBeFreed
-       */
-      u_signed64 spaceToBeFreed() const {
-        return m_spaceToBeFreed;
-      }
-
-      /**
-       * Set the value of m_spaceToBeFreed
-       * The space that will be deleted in the future by the GC workers. This are files
-       * that were selected by the GC but are not yet physically removed. This value can
-       * help another iteration of the GC to know what to delete.
-       * @param new_var the new value of m_spaceToBeFreed
-       */
-      void setSpaceToBeFreed(u_signed64 new_var) {
-        m_spaceToBeFreed = new_var;
-      }
-
-      /**
        * Get the value of m_totalSize
        * Total size of the fileSystem (given in bytes)
        * @return the value of m_totalSize
@@ -499,9 +477,6 @@ namespace castor {
 
       /// Maximum free space this FileSystem should have. Of course this limit can be transgressed but a Garbage Collector should never go under this limit. This is given as a fraction of the totalSize.
       float m_maxFreeSpace;
-
-      /// The space that will be deleted in the future by the GC workers. This are files that were selected by the GC but are not yet physically removed. This value can help another iteration of the GC to know what to delete.
-      u_signed64 m_spaceToBeFreed;
 
       /// Total size of the fileSystem (given in bytes)
       u_signed64 m_totalSize;

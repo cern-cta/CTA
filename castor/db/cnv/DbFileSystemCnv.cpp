@@ -59,7 +59,7 @@ static castor::CnvFactory<castor::db::cnv::DbFileSystemCnv>* s_factoryDbFileSyst
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbFileSystemCnv::s_insertStatementString =
-"INSERT INTO FileSystem (free, mountPoint, minFreeSpace, minAllowedFreeSpace, maxFreeSpace, spaceToBeFreed, totalSize, readRate, writeRate, nbReadStreams, nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams, id, diskPool, diskserver, status, adminStatus) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,ids_seq.nextval,:15,:16,:17,:18) RETURNING id INTO :19";
+"INSERT INTO FileSystem (free, mountPoint, minFreeSpace, minAllowedFreeSpace, maxFreeSpace, totalSize, readRate, writeRate, nbReadStreams, nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams, id, diskPool, diskserver, status, adminStatus) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,ids_seq.nextval,:14,:15,:16,:17) RETURNING id INTO :18";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbFileSystemCnv::s_deleteStatementString =
@@ -67,11 +67,11 @@ const std::string castor::db::cnv::DbFileSystemCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbFileSystemCnv::s_selectStatementString =
-"SELECT free, mountPoint, minFreeSpace, minAllowedFreeSpace, maxFreeSpace, spaceToBeFreed, totalSize, readRate, writeRate, nbReadStreams, nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams, id, diskPool, diskserver, status, adminStatus FROM FileSystem WHERE id = :1";
+"SELECT free, mountPoint, minFreeSpace, minAllowedFreeSpace, maxFreeSpace, totalSize, readRate, writeRate, nbReadStreams, nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams, id, diskPool, diskserver, status, adminStatus FROM FileSystem WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbFileSystemCnv::s_updateStatementString =
-"UPDATE FileSystem SET free = :1, mountPoint = :2, minFreeSpace = :3, minAllowedFreeSpace = :4, maxFreeSpace = :5, spaceToBeFreed = :6, totalSize = :7, readRate = :8, writeRate = :9, nbReadStreams = :10, nbWriteStreams = :11, nbReadWriteStreams = :12, nbMigratorStreams = :13, nbRecallerStreams = :14, status = :15, adminStatus = :16 WHERE id = :17";
+"UPDATE FileSystem SET free = :1, mountPoint = :2, minFreeSpace = :3, minAllowedFreeSpace = :4, maxFreeSpace = :5, totalSize = :6, readRate = :7, writeRate = :8, nbReadStreams = :9, nbWriteStreams = :10, nbReadWriteStreams = :11, nbMigratorStreams = :12, nbRecallerStreams = :13, status = :14, adminStatus = :15 WHERE id = :16";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbFileSystemCnv::s_storeTypeStatementString =
@@ -192,7 +192,7 @@ const unsigned int castor::db::cnv::DbFileSystemCnv::objType() const {
 void castor::db::cnv::DbFileSystemCnv::fillRep(castor::IAddress* address,
                                                castor::IObject* object,
                                                unsigned int type,
-                                               bool autocommit)
+                                               bool endTransaction)
   throw (castor::exception::Exception) {
   castor::stager::FileSystem* obj = 
     dynamic_cast<castor::stager::FileSystem*>(object);
@@ -214,7 +214,7 @@ void castor::db::cnv::DbFileSystemCnv::fillRep(castor::IAddress* address,
                       << ". This is meaningless.";
       throw ex;
     }
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
@@ -345,7 +345,7 @@ void castor::db::cnv::DbFileSystemCnv::fillRepDiskServer(castor::stager::FileSys
 void castor::db::cnv::DbFileSystemCnv::fillObj(castor::IAddress* address,
                                                castor::IObject* object,
                                                unsigned int type,
-                                               bool autocommit)
+                                               bool endTransaction)
   throw (castor::exception::Exception) {
   castor::stager::FileSystem* obj = 
     dynamic_cast<castor::stager::FileSystem*>(object);
@@ -366,7 +366,7 @@ void castor::db::cnv::DbFileSystemCnv::fillObj(castor::IAddress* address,
                     << ". This is meaningless.";
     throw ex;
   }
-  if (autocommit) {
+  if (endTransaction) {
     cnvSvc()->commit();
   }
 }
@@ -387,7 +387,7 @@ void castor::db::cnv::DbFileSystemCnv::fillObjDiskPool(castor::stager::FileSyste
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 diskPoolId = rset->getInt64(16);
+  u_signed64 diskPoolId = rset->getInt64(15);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -477,7 +477,7 @@ void castor::db::cnv::DbFileSystemCnv::fillObjDiskServer(castor::stager::FileSys
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 diskserverId = rset->getInt64(17);
+  u_signed64 diskserverId = rset->getInt64(16);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -505,7 +505,7 @@ void castor::db::cnv::DbFileSystemCnv::fillObjDiskServer(castor::stager::FileSys
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbFileSystemCnv::createRep(castor::IAddress* address,
                                                  castor::IObject* object,
-                                                 bool autocommit,
+                                                 bool endTransaction,
                                                  unsigned int type)
   throw (castor::exception::Exception) {
   castor::stager::FileSystem* obj = 
@@ -517,7 +517,7 @@ void castor::db::cnv::DbFileSystemCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(19, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(18, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -528,30 +528,29 @@ void castor::db::cnv::DbFileSystemCnv::createRep(castor::IAddress* address,
     m_insertStatement->setFloat(3, obj->minFreeSpace());
     m_insertStatement->setFloat(4, obj->minAllowedFreeSpace());
     m_insertStatement->setFloat(5, obj->maxFreeSpace());
-    m_insertStatement->setUInt64(6, obj->spaceToBeFreed());
-    m_insertStatement->setUInt64(7, obj->totalSize());
-    m_insertStatement->setUInt64(8, obj->readRate());
-    m_insertStatement->setUInt64(9, obj->writeRate());
-    m_insertStatement->setInt(10, obj->nbReadStreams());
-    m_insertStatement->setInt(11, obj->nbWriteStreams());
-    m_insertStatement->setInt(12, obj->nbReadWriteStreams());
-    m_insertStatement->setInt(13, obj->nbMigratorStreams());
-    m_insertStatement->setInt(14, obj->nbRecallerStreams());
-    m_insertStatement->setUInt64(15, (type == OBJ_DiskPool && obj->diskPool() != 0) ? obj->diskPool()->id() : 0);
-    m_insertStatement->setUInt64(16, (type == OBJ_DiskServer && obj->diskserver() != 0) ? obj->diskserver()->id() : 0);
-    m_insertStatement->setInt(17, (int)obj->status());
-    m_insertStatement->setInt(18, (int)obj->adminStatus());
+    m_insertStatement->setUInt64(6, obj->totalSize());
+    m_insertStatement->setUInt64(7, obj->readRate());
+    m_insertStatement->setUInt64(8, obj->writeRate());
+    m_insertStatement->setInt(9, obj->nbReadStreams());
+    m_insertStatement->setInt(10, obj->nbWriteStreams());
+    m_insertStatement->setInt(11, obj->nbReadWriteStreams());
+    m_insertStatement->setInt(12, obj->nbMigratorStreams());
+    m_insertStatement->setInt(13, obj->nbRecallerStreams());
+    m_insertStatement->setUInt64(14, (type == OBJ_DiskPool && obj->diskPool() != 0) ? obj->diskPool()->id() : 0);
+    m_insertStatement->setUInt64(15, (type == OBJ_DiskServer && obj->diskserver() != 0) ? obj->diskserver()->id() : 0);
+    m_insertStatement->setInt(16, (int)obj->status());
+    m_insertStatement->setInt(17, (int)obj->adminStatus());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(19));
+    obj->setId(m_insertStatement->getUInt64(18));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (autocommit) cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
@@ -564,7 +563,6 @@ void castor::db::cnv::DbFileSystemCnv::createRep(castor::IAddress* address,
                     << "  minFreeSpace : " << obj->minFreeSpace() << std::endl
                     << "  minAllowedFreeSpace : " << obj->minAllowedFreeSpace() << std::endl
                     << "  maxFreeSpace : " << obj->maxFreeSpace() << std::endl
-                    << "  spaceToBeFreed : " << obj->spaceToBeFreed() << std::endl
                     << "  totalSize : " << obj->totalSize() << std::endl
                     << "  readRate : " << obj->readRate() << std::endl
                     << "  writeRate : " << obj->writeRate() << std::endl
@@ -587,7 +585,7 @@ void castor::db::cnv::DbFileSystemCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbFileSystemCnv::updateRep(castor::IAddress* address,
                                                  castor::IObject* object,
-                                                 bool autocommit)
+                                                 bool endTransaction)
   throw (castor::exception::Exception) {
   castor::stager::FileSystem* obj = 
     dynamic_cast<castor::stager::FileSystem*>(object);
@@ -604,25 +602,24 @@ void castor::db::cnv::DbFileSystemCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setFloat(3, obj->minFreeSpace());
     m_updateStatement->setFloat(4, obj->minAllowedFreeSpace());
     m_updateStatement->setFloat(5, obj->maxFreeSpace());
-    m_updateStatement->setUInt64(6, obj->spaceToBeFreed());
-    m_updateStatement->setUInt64(7, obj->totalSize());
-    m_updateStatement->setUInt64(8, obj->readRate());
-    m_updateStatement->setUInt64(9, obj->writeRate());
-    m_updateStatement->setInt(10, obj->nbReadStreams());
-    m_updateStatement->setInt(11, obj->nbWriteStreams());
-    m_updateStatement->setInt(12, obj->nbReadWriteStreams());
-    m_updateStatement->setInt(13, obj->nbMigratorStreams());
-    m_updateStatement->setInt(14, obj->nbRecallerStreams());
-    m_updateStatement->setInt(15, (int)obj->status());
-    m_updateStatement->setInt(16, (int)obj->adminStatus());
-    m_updateStatement->setUInt64(17, obj->id());
+    m_updateStatement->setUInt64(6, obj->totalSize());
+    m_updateStatement->setUInt64(7, obj->readRate());
+    m_updateStatement->setUInt64(8, obj->writeRate());
+    m_updateStatement->setInt(9, obj->nbReadStreams());
+    m_updateStatement->setInt(10, obj->nbWriteStreams());
+    m_updateStatement->setInt(11, obj->nbReadWriteStreams());
+    m_updateStatement->setInt(12, obj->nbMigratorStreams());
+    m_updateStatement->setInt(13, obj->nbRecallerStreams());
+    m_updateStatement->setInt(14, (int)obj->status());
+    m_updateStatement->setInt(15, (int)obj->adminStatus());
+    m_updateStatement->setUInt64(16, obj->id());
     m_updateStatement->execute();
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (autocommit) cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
@@ -639,7 +636,7 @@ void castor::db::cnv::DbFileSystemCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbFileSystemCnv::deleteRep(castor::IAddress* address,
                                                  castor::IObject* object,
-                                                 bool autocommit)
+                                                 bool endTransaction)
   throw (castor::exception::Exception) {
   castor::stager::FileSystem* obj = 
     dynamic_cast<castor::stager::FileSystem*>(object);
@@ -658,12 +655,12 @@ void castor::db::cnv::DbFileSystemCnv::deleteRep(castor::IAddress* address,
     m_deleteTypeStatement->execute();
     m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
-    if (autocommit) {
+    if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (autocommit) cnvSvc()->rollback(); }
+    try { if (endTransaction) cnvSvc()->rollback(); }
     catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
@@ -703,24 +700,20 @@ castor::IObject* castor::db::cnv::DbFileSystemCnv::createObj(castor::IAddress* a
     object->setMinFreeSpace(rset->getFloat(3));
     object->setMinAllowedFreeSpace(rset->getFloat(4));
     object->setMaxFreeSpace(rset->getFloat(5));
-    object->setSpaceToBeFreed(rset->getUInt64(6));
-    object->setTotalSize(rset->getUInt64(7));
-    object->setReadRate(rset->getUInt64(8));
-    object->setWriteRate(rset->getUInt64(9));
-    object->setNbReadStreams(rset->getInt(10));
-    object->setNbWriteStreams(rset->getInt(11));
-    object->setNbReadWriteStreams(rset->getInt(12));
-    object->setNbMigratorStreams(rset->getInt(13));
-    object->setNbRecallerStreams(rset->getInt(14));
-    object->setId(rset->getUInt64(15));
-    object->setStatus((enum castor::stager::FileSystemStatusCodes)rset->getInt(18));
-    object->setAdminStatus((enum castor::monitoring::AdminStatusCodes)rset->getInt(19));
+    object->setTotalSize(rset->getUInt64(6));
+    object->setReadRate(rset->getUInt64(7));
+    object->setWriteRate(rset->getUInt64(8));
+    object->setNbReadStreams(rset->getInt(9));
+    object->setNbWriteStreams(rset->getInt(10));
+    object->setNbReadWriteStreams(rset->getInt(11));
+    object->setNbMigratorStreams(rset->getInt(12));
+    object->setNbRecallerStreams(rset->getInt(13));
+    object->setId(rset->getUInt64(14));
+    object->setStatus((enum castor::stager::FileSystemStatusCodes)rset->getInt(17));
+    object->setAdminStatus((enum castor::monitoring::AdminStatusCodes)rset->getInt(18));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
-    // Always try to rollback
-    try { cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -757,23 +750,19 @@ void castor::db::cnv::DbFileSystemCnv::updateObj(castor::IObject* obj)
     object->setMinFreeSpace(rset->getFloat(3));
     object->setMinAllowedFreeSpace(rset->getFloat(4));
     object->setMaxFreeSpace(rset->getFloat(5));
-    object->setSpaceToBeFreed(rset->getUInt64(6));
-    object->setTotalSize(rset->getUInt64(7));
-    object->setReadRate(rset->getUInt64(8));
-    object->setWriteRate(rset->getUInt64(9));
-    object->setNbReadStreams(rset->getInt(10));
-    object->setNbWriteStreams(rset->getInt(11));
-    object->setNbReadWriteStreams(rset->getInt(12));
-    object->setNbMigratorStreams(rset->getInt(13));
-    object->setNbRecallerStreams(rset->getInt(14));
-    object->setId(rset->getUInt64(15));
-    object->setStatus((enum castor::stager::FileSystemStatusCodes)rset->getInt(18));
-    object->setAdminStatus((enum castor::monitoring::AdminStatusCodes)rset->getInt(19));
+    object->setTotalSize(rset->getUInt64(6));
+    object->setReadRate(rset->getUInt64(7));
+    object->setWriteRate(rset->getUInt64(8));
+    object->setNbReadStreams(rset->getInt(9));
+    object->setNbWriteStreams(rset->getInt(10));
+    object->setNbReadWriteStreams(rset->getInt(11));
+    object->setNbMigratorStreams(rset->getInt(12));
+    object->setNbRecallerStreams(rset->getInt(13));
+    object->setId(rset->getUInt64(14));
+    object->setStatus((enum castor::stager::FileSystemStatusCodes)rset->getInt(17));
+    object->setAdminStatus((enum castor::monitoring::AdminStatusCodes)rset->getInt(18));
     delete rset;
   } catch (castor::exception::SQLError e) {
-    // Always try to rollback
-    try { cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
