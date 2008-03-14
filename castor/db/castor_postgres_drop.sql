@@ -206,6 +206,9 @@ DROP TABLE FirstByteWritten;
 /* SQL statements for type StageGetRequest */
 DROP TABLE StageGetRequest;
 
+/* SQL statements for type StgFilesDeleted */
+DROP TABLE StgFilesDeleted;
+
 /* SQL statements for type DiskPoolQuery */
 DROP TABLE DiskPoolQuery;
 
