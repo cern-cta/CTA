@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.641 $ $Date: 2008/03/12 18:15:46 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.642 $ $Date: 2008/03/14 10:29:41 $ $Author: itglp $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -99,6 +99,7 @@ CREATE INDEX I_CastorFile_SvcClass on CastorFile (svcClass);
 CREATE INDEX I_DiskCopy_Castorfile on DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem on DiskCopy (fileSystem);
 CREATE INDEX I_DiskCopy_Status on DiskCopy (status);
+CREATE INDEX I_DiskCopy_GCWeight on DiskCopy (gcWeight);
 CREATE INDEX I_DiskCopy_FS_Status_10 on DiskCopy (fileSystem,decode(status,10,status,NULL));
 
 CREATE INDEX I_TapeCopy_Castorfile on TapeCopy (castorFile);
