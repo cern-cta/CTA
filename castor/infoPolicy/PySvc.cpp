@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: PySvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/11/29 16:17:42 $ $Author: waldron $
+ * @(#)$RCSfile: PySvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/03/14 10:41:40 $ $Author: sponcec3 $
  *
  * CPP Wrapper for Python 
  *
@@ -66,7 +66,7 @@ castor::infoPolicy::PySvc::PySvc(std::string module)
 
   // Import the pythons modules __main__ namespace
   
-  m_pyModule = PyImport_AddModule("__main__");
+  m_pyModule = PyImport_AddModule((char*)"__main__");
    
   if (m_pyModule == NULL) {
     castor::exception::Exception ex(SEINTERNAL);

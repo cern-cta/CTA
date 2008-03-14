@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigrationPySvc.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/06 12:56:28 $ $Author: gtaur $
+ * @(#)$RCSfile: MigrationPySvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/14 10:41:40 $ $Author: sponcec3 $
  *
  * @author Giulia Taurelli
  *****************************************************************************/
@@ -48,7 +48,7 @@ bool castor::infoPolicy::MigrationPySvc::applyPolicy(castor::infoPolicy::PolicyO
   // python-Bugs-1308740  Py_BuildValue (C/API): "K" format
   // K must be used for unsigned (feature not documented at all but available)
 
-  PyObject *inputScript= Py_BuildValue("(s,s,K,K,K,K,K,K,K,K,K,l)", (myInfoDb->tapePoolName()).c_str(), (myInfoDb->castorFileName()).c_str(),myInfoDb->copyNb(),myInfoCns->fileId(),myInfoCns->fileSize(),myInfoCns->fileMode(),myInfoCns->uid(),myInfoCns->gid(),myInfoCns->aTime(),myInfoCns->mTime(),myInfoCns->cTime(),myInfoCns->fileClass());
+  PyObject *inputScript= Py_BuildValue((char*)"(s,s,K,K,K,K,K,K,K,K,K,l)", (myInfoDb->tapePoolName()).c_str(), (myInfoDb->castorFileName()).c_str(),myInfoDb->copyNb(),myInfoCns->fileId(),myInfoCns->fileSize(),myInfoCns->fileMode(),myInfoCns->uid(),myInfoCns->gid(),myInfoCns->aTime(),myInfoCns->mTime(),myInfoCns->cTime(),myInfoCns->fileClass());
   bool ret = castor::infoPolicy::PySvc::callPolicyFunction(pObj->policyName(),inputScript);
 
   return ret;

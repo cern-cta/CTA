@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraPolicySvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/02/21 07:54:02 $ $Author: gtaur $
+ * @(#)$RCSfile: OraPolicySvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/03/14 10:41:40 $ $Author: sponcec3 $
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -139,7 +139,7 @@ namespace castor {
 	/** 
 	 * migHunterCleanUp
 	 */
-	virtual void   castor::infoPolicy::ora::OraPolicySvc::migHunterCleanUp(std::string svcClassName) throw (castor::exception::Exception); 
+	virtual void migHunterCleanUp(std::string svcClassName) throw (castor::exception::Exception); 
 
       private:
 
