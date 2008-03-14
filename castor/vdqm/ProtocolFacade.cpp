@@ -131,16 +131,13 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
   int rc = 0; // For checking purpose
   bool reqHandled = false;
   
-  // handles the connection to the client
-  OldProtocolInterpreter* oldProtInterpreter;
-
   // Needed for commit and rollback actions on the database
   castor::BaseAddress ad;
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);   
   
-  
-  oldProtInterpreter = new OldProtocolInterpreter(ptr_serverSocket, m_cuuid);
+  // handles the connection to the client
+  OldProtocolInterpreter oldProtInterpreter(ptr_serverSocket, m_cuuid);
   
   // The socket read out phase
   try {
@@ -153,16 +150,13 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
     header.magic = magicNumber;
     
     // read the rest of the vdqm message    
-    reqtype = oldProtInterpreter->readProtocol(&header, 
-                                    &volumeRequest, 
-                                    &driveRequest);                            
+    reqtype = oldProtInterpreter.readProtocol(&header, &volumeRequest, 
+      &driveRequest);                            
   } catch (castor::exception::Exception e) {  
     // "Unable to read Request from socket" message
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, VDQM_FAILED_SOCK_READ, 1, params);
-    
-    delete oldProtInterpreter;
     
     return;
   }
@@ -186,7 +180,8 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
     castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_DEBUG, VDQM_HANDLE_OLD_VDQM_REQUEST_TYPE);
     
     oldRequestFacade.checkRequestType(*m_cuuid);
-    reqHandled = oldRequestFacade.handleRequestType(oldProtInterpreter, *m_cuuid);
+    reqHandled = oldRequestFacade.handleRequestType(&oldProtInterpreter,
+      *m_cuuid);
 
   } catch (castor::exception::Exception e) { 
     castor::dlf::Param params2[] =
@@ -217,10 +212,10 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
       if (reqtype == VDQM_PING) {
         //This is Protocol specific, because normally it receives the positive
         // queue position number back.
-        oldProtInterpreter->sendAcknPing(-e.code());
+        oldProtInterpreter.sendAcknPing(-e.code());
       }
       else {
-        oldProtInterpreter->sendAcknRollback(e.code());
+        oldProtInterpreter.sendAcknRollback(e.code());
       }
     } catch (castor::exception::Exception e) {  
       // "Exception caught" message
@@ -228,8 +223,6 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
         {castor::dlf::Param("Message", e.getMessage().str())};
       castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, VDQM_EXCEPTION, 1, params);
     }
-    
-    delete oldProtInterpreter;
     
     // Now, we don't need to make a handshake
     return;
@@ -246,14 +239,17 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
      */
     if (reqHandled && reqtype != VDQM_PING) {
       //Sending reply to client
-      castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_DEBUG, VDQM_SEND_REPLY_TO_CLIENT);
+      castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_DEBUG,
+        VDQM_SEND_REPLY_TO_CLIENT);
       
-      oldProtInterpreter->sendAcknCommit();
-      oldProtInterpreter->sendToOldClient(&header, &volumeRequest, &driveRequest);
+      oldProtInterpreter.sendAcknCommit();
+      oldProtInterpreter.sendToOldClient(&header, &volumeRequest,
+        &driveRequest);
       
       //"VdqmServer::handleOldVdqmRequest(): waiting for client acknowledge" message
-      castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_DEBUG, VDQM_HANDLE_OLD_VDQM_REQUEST_WAITING_FOR_CLIENT_ACK);
-      rc = oldProtInterpreter->recvAcknFromOldClient();
+      castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_DEBUG,
+        VDQM_HANDLE_OLD_VDQM_REQUEST_WAITING_FOR_CLIENT_ACK);
+      rc = oldProtInterpreter.recvAcknFromOldClient();
 
       /**
        * Now we can commit everything for the database... or not
@@ -265,13 +261,15 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
         castor::server::NotifierThread::getInstance()->doNotify('J');
         
         // "Request stored in DB" message
-        castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_DEBUG, VDQM_REQUEST_STORED_IN_DB);        
+        castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_DEBUG,
+          VDQM_REQUEST_STORED_IN_DB);        
       }
       else {
         // "Client didn't send a VDQM_COMMIT => Rollback of request in db"
         svcs()->rollback(&ad);
           
-        castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, VDQM_NO_VDQM_COMMIT_FROM_CLIENT);        
+        castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM,
+          VDQM_NO_VDQM_COMMIT_FROM_CLIENT);        
       }
     }
   } catch (castor::exception::Exception e) { 
@@ -281,9 +279,8 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
     castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, VDQM_EXCEPTION, 1, params);
     
     // "VdqmServer::handleOldVdqmRequest(): Rollback of the whole request" message   
-    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_OLD_VDQM_REQUEST_ROLLBACK);        
-     svcs()->rollback(&ad);
+    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM,
+      VDQM_HANDLE_OLD_VDQM_REQUEST_ROLLBACK);        
+    svcs()->rollback(&ad);
   }
-  
-  delete oldProtInterpreter;
 }
