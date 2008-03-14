@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfcp.man,v 1.17 2006/07/10 13:42:00 itglp Exp $
+.\" $Id: rfcp.man,v 1.18 2008/03/14 13:36:10 itglp Exp $
 .\"
-.\" @(#)$RCSfile: rfcp.man,v $ $Revision: 1.17 $ $Date: 2006/07/10 13:42:00 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand
+.\" @(#)$RCSfile: rfcp.man,v $ $Revision: 1.18 $ $Date: 2008/03/14 13:36:10 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand
 .\" Copyright (C) 1998-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFCP 1 "$Date: 2006/07/10 13:42:00 $" CASTOR "Rfio User Commands"
+.TH RFCP 1 "$Date: 2008/03/14 13:36:10 $" CASTOR "Rfio User Commands"
 .SH NAME
 rfcp \- Remote file copy
 .SH SYNOPSIS
@@ -58,7 +58,7 @@ or a local file name (not containing the :/ character combination). The standard
 .BI \-
 character. Then directory in output is not supported.
 .LP
-For castor files we can use as remote file the new TURL sintax, there are two way to specify it:
+For castor files the new TURL sintax may be used, with the following variants:
 .LP
  "rfio://[stagehost][:port]/?[svcClass=MySvcClass&][castorVersion=MyCastorVersion&]path=/castor/cern.ch/user/n/nobody/Myfile"
 .LP
@@ -69,7 +69,7 @@ For castor files we can use as remote file the new TURL sintax, there are two wa
 If there is the pamameter "path", it must be the last one. The order of the other options is not taken into account.
 .LP
 The path must be specified as path in the parameters or before the parameters.
-Of course the old Rfio sintax (rfio://[diskserver][:port]/path) is still valid.
+Of course the old RFIO sintax (rfio://[diskserver][:port]/path) is still valid.
 .LP
 
 .SH OPTIONS
@@ -90,7 +90,7 @@ If specified, only
 bytes will be copied
 .TP
 .BI \-v2
-If specified, forces the RFIO V.2 protocol.
+If specified, forces the RFIO V.2 protocol. Otherwise, V.3 is used and rfio3 is passed as protocol to the stager.
 .SH RETURN CODES
 \
 .br
@@ -111,9 +111,18 @@ If specified, forces the RFIO V.2 protocol.
 198	Stager not active.
 .br
 200	Bad checksum.
+.br
+In addition, errors from the
+.B STAGE ERRORS
+section in
+.B serrno(3)
+page may be returned.
+
 
 .SH SEE ALSO
 .BR rcp(1), 
-.BR rfiod(1)
+.BR rfiod(1),
+.BR serrno(3)
+
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
