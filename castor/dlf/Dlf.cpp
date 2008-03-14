@@ -42,7 +42,7 @@ castor::dlf::dlf_getPendingMessages () throw() {
 // dlf_init
 // -----------------------------------------------------------------------
 void castor::dlf::dlf_init
-(char* facilityName, castor::dlf::Message messages[])
+(const char* facilityName, castor::dlf::Message messages[])
   throw (castor::exception::Exception) {
   // Initialise the DLF interface, ignore any errors that may be generated
   char dlfErrBuf[CA_MAXLINELEN+1];  

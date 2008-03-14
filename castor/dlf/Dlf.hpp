@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Dlf.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/03/10 09:26:08 $ $Author: waldron $
+ * @(#)$RCSfile: Dlf.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/03/14 10:41:11 $ $Author: sponcec3 $
  *
  * C++ interface to DLF
  *
@@ -55,7 +55,7 @@ namespace castor {
      * message with negative number.
      * @param throws a CASTOR exception in case of failure
      */
-    void dlf_init(char* facilityName,
+    void dlf_init(const char* facilityName,
                   Message messages[])
       throw (castor::exception::Exception);
 
