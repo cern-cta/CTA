@@ -586,9 +586,6 @@ castor::IObject* castor::db::cnv::DbSegmentCnv::createObj(castor::IAddress* addr
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
-    // Always try to rollback
-    try { cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -639,9 +636,6 @@ void castor::db::cnv::DbSegmentCnv::updateObj(castor::IObject* obj)
     object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(19));
     delete rset;
   } catch (castor::exception::SQLError e) {
-    // Always try to rollback
-    try { cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
