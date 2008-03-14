@@ -1,12 +1,12 @@
-.\" @(#)$RCSfile: stager_setFileGCWeight.man,v $ $Revision: 1.3 $ $Date: 2008/03/13 16:34:45 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_setfilegcweight.man,v $ $Revision: 1.1 $ $Date: 2008/03/14 13:30:04 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_SETFILEGCWEIGHT 1castor "$Date: 2008/03/13 16:34:45 $" CASTOR "STAGER Commands"
+.TH STAGER_SETFILEGCWEIGHT 1castor "$Date: 2008/03/14 13:30:04 $" CASTOR "STAGER Commands"
 .SH NAME
-stager_setFileGCWeight \- Updates the weight of a file for the garbage collection 
+stager_setfilegcweight \- Updates the weight of a file for the garbage collection 
 .SH SYNOPSIS
-.B stager_setFileGCWeight
+.B stager_setfilegcweight
 .BI -M
 .BI hsmfile
 [
@@ -23,7 +23,7 @@ stager_setFileGCWeight \- Updates the weight of a file for the garbage collectio
 .BI <weight>
 .SH DESCRIPTION
 The
-.B stager_setFileGCWeight
+.B stager_setfilegcweight
 command updates, for one or many castor file(s) in the stager, the weight used to rank
 the file(s) at garbage collection time. The passed weight is added to the current one
 of the correspondent disk copies, and it can be thought as a time interval in seconds
@@ -48,7 +48,7 @@ the new weight of the file(s)
 
 .SH EXAMPLE
 .fi
-$ stager_setFileGCWeight -M /castor/cern.ch/user/t/test/file1 86400
+$ stager_setfilegcweight -M /castor/cern.ch/user/t/test/file1 86400
 .fi
 Received 1 responses
 .fi

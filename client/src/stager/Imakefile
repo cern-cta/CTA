@@ -44,8 +44,8 @@ DEPLIB = DepSharedLibraryTargetName(../../shlib,shift)
 GLOBLIB = -L../../../shlib -lshift
 #endif
 
-MANPAGES_STAGER = FileName($(MANDIR),stager_get.$(MANSUFFIX)) FileName($(MANDIR),stager_update.$(MANSUFFIX)) FileName($(MANDIR),stager_put.$(MANSUFFIX)) FileName($(MANDIR),stager_putdone.$(MANSUFFIX)) FileName($(MANDIR),stager_qry.$(MANSUFFIX)),FileName($(MANDIR),stager_rm.$(MANSUFFIX)),FileName($(MANDIR),stager_setFileGCWeight.$(MANSUFFIX)) FileName($(MANDIR),newacct.$(MANSUFFIX))
-EMANPAGES_STAGER = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_get.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_update.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_put.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_putdone.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_qry.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_rm.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_setFileGCWeight.$(MANSUFFIX)))  FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),newacct.$(MANSUFFIX)))
+MANPAGES_STAGER = FileName($(MANDIR),stager_get.$(MANSUFFIX)) FileName($(MANDIR),stager_update.$(MANSUFFIX)) FileName($(MANDIR),stager_put.$(MANSUFFIX)) FileName($(MANDIR),stager_putdone.$(MANSUFFIX)) FileName($(MANDIR),stager_qry.$(MANSUFFIX)),FileName($(MANDIR),stager_rm.$(MANSUFFIX)),FileName($(MANDIR),stager_setfilegcweight.$(MANSUFFIX)) FileName($(MANDIR),newacct.$(MANSUFFIX))
+EMANPAGES_STAGER = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_get.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_update.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_put.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_putdone.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_qry.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_rm.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_setfilegcweight.$(MANSUFFIX)))  FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),newacct.$(MANSUFFIX)))
 
 #if BuildSecurity
 GLOBLIB += -ldl
@@ -67,14 +67,14 @@ STAGERLIB_OBJS = \
 		stager_mapper.Osuf
 
 PROGS_STAGERCLIENT=ProgramTargetName(stager_get) ProgramTargetName(stager_update) ProgramTargetName(stager_put) ProgramTargetName(stager_qry) \
-        ProgramTargetName(stager_putdone) ProgramTargetName(stager_rm) ProgramTargetName(stager_setFileGCWeight) ProgramTargetName(castor) ProgramTargetName(newacct)
+        ProgramTargetName(stager_putdone) ProgramTargetName(stager_rm) ProgramTargetName(stager_setfilegcweight) ProgramTargetName(castor) ProgramTargetName(newacct)
 IPROGS_STAGERCLIENT = FileName($(BIN),ProgramTargetName(stager_get)) FileName($(BIN),ProgramTargetName(stager_update)) FileName($(BIN),ProgramTargetName(stager_qry)) \
         FileName($(BIN),ProgramTargetName(stager_put)) FileName($(BIN),ProgramTargetName(stager_putdone)) \
-        FileName($(BIN),ProgramTargetName(stager_rm)) FileName($(BIN),ProgramTargetName(stager_setFileGCWeight)) \
+        FileName($(BIN),ProgramTargetName(stager_rm)) FileName($(BIN),ProgramTargetName(stager_setfilegcweight)) \
         FileName($(BIN),ProgramTargetName(castor)) FileName($(BIN),ProgramTargetName(newacct))
 EPROGS_STAGERCLIENT = FileName($(EXPORTBIN),stager_get) FileName($(EXPORTBIN),stager_update) FileName($(EXPORTBIN),stager_qry) \
         FileName($(EXPORTBIN),stager_put) FileName($(EXPORTBIN),stager_putdone) \
-        FileName($(EXPORTBIN),stager_rm) FileName($(EXPORTBIN),stager_setFileGCWeight) \
+        FileName($(EXPORTBIN),stager_rm) FileName($(EXPORTBIN),stager_setfilegcweight) \
         FileName($(EXPORTBIN),castor) FileName($(EXPORTBIN),newacct)
 
 all: $(PROGS_STAGERCLIENT)
@@ -85,7 +85,7 @@ NormalProgramTarget(stager_put,stager_put.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 NormalProgramTarget(stager_putdone,stager_putdone.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 NormalProgramTarget(stager_qry,stager_qry.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 NormalProgramTarget(stager_rm,stager_rm.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
-NormalProgramTarget(stager_setFileGCWeight,stager_setFileGCWeight.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
+NormalProgramTarget(stager_setfilegcweight,stager_setFileGCWeight.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 NormalProgramTarget(castor,castor.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 NormalProgramTarget(newacct,newacct.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 
@@ -101,7 +101,7 @@ InstallProgram(stager_put,$(BIN),root,bin,0755)
 InstallProgram(stager_putdone,$(BIN),root,bin,0755)
 InstallProgram(stager_qry,$(BIN),root,bin,0755)
 InstallProgram(stager_rm,$(BIN),root,bin,0755)
-InstallProgram(stager_setFileGCWeight,$(BIN),root,bin,0755)
+InstallProgram(stager_setfilegcweight,$(BIN),root,bin,0755)
 InstallProgram(castor,$(BIN),root,bin,755)
 InstallProgram(newacct,$(BIN),root,bin,4755)
 
@@ -113,7 +113,7 @@ IMANPAGE(stager_put,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(stager_putdone,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(stager_qry,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(stager_rm,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(stager_setFileGCWeight,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(stager_setfilegcweight,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(newacct,$(MANDIR),$(MANSUFFIX))
 
 export: $(EPROGS_STAGERCLIENT)
@@ -124,7 +124,7 @@ IEXPORT(stager_put,$(EXPORTBIN),755)
 IEXPORT(stager_putdone,$(EXPORTBIN),755)
 IEXPORT(stager_qry,$(EXPORTBIN),755)
 IEXPORT(stager_rm,$(EXPORTBIN),755)
-IEXPORT(stager_setFileGCWeight,$(EXPORTBIN),755)
+IEXPORT(stager_setfilegcweight,$(EXPORTBIN),755)
 IEXPORT(castor,$(EXPORTBIN),755);
 IEXPORT(newacct,$(EXPORTBIN),755);
 
@@ -136,7 +136,7 @@ EMANPAGE(stager_put,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(stager_putdone,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(stager_qry,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(stager_rm,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(stager_setFileGCWeight,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(stager_setfilegcweight,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(newacct,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 
 MakeDir($(BIN),root,bin,0755)
