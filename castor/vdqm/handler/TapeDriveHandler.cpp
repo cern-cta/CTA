@@ -874,16 +874,8 @@ void castor::vdqm::handler::TapeDriveHandler::dedicateTapeDrive()
 /*
 
   std::cout << "ptr_driveRequest->dedicate = " << ptr_driveRequest->dedicate << std::endl;
-
-  char uid[sizeof(ptr_driveRequest->dedicate)];
-  char gid[sizeof(ptr_driveRequest->dedicate)];
-  char name[sizeof(ptr_driveRequest->dedicate)];
-  char host[sizeof(ptr_driveRequest->dedicate)];
-  char vid[sizeof(ptr_driveRequest->dedicate)];
-  char mode[sizeof(ptr_driveRequest->dedicate)];
-  char datestr[sizeof(ptr_driveRequest->dedicate)];
-  char timestr[sizeof(ptr_driveRequest->dedicate)];
-  char age[sizeof(ptr_driveRequest->dedicate)];
+  std::cout << "vid=" << extractDedication(ptr_driveRequest->dedicate, "vid=*,") << std::endl;
+  std::cout << "host=" << extractDedication(ptr_driveRequest->dedicate, "host=*,") << std::endl;
 */
 }
 
@@ -1000,4 +992,76 @@ void castor::vdqm::handler::TapeDriveHandler::handleTapeDriveCompatibilities(
     castor::vdqm::DatabaseHelper::storeRepresentation(
       tapeDriveCompatibilityVector[i], m_cuuid);
   }  
+}
+
+
+//------------------------------------------------------------------------------
+// extractDedication
+//------------------------------------------------------------------------------
+std::string castor::vdqm::handler::TapeDriveHandler::extractDedication(
+std::string input, std::string format) {
+  std::string        output;
+  std::ostringstream oss;
+  const char*        input_c_str  = input.c_str();
+  const char*        format_c_str = format.c_str();
+  int                inputLen   = strlen(input_c_str);
+  int                formatLen  = strlen(format_c_str);
+  int                inputPos   = 0;
+  int                formatPos  = 0;
+
+  // For each input character
+  for(inputPos=0; inputPos<inputLen; inputPos++) {
+
+    // If the current format character is a '*'
+    if(format[formatPos] == '*') {
+
+      // If there is a format character after the '*'
+      if((formatPos + 1) < formatLen) {
+
+        // If the current input character matches the next format character
+        if(input[inputPos] == format[formatPos + 1]) {
+
+          // Finish the extraction
+          break;
+
+        } else {
+
+          // Append the current input character to the output
+          oss << input[inputPos];
+        }
+
+      // Else there is no format character after the '*'
+      } else {
+
+        // Append the current input character to the output
+        oss << input[inputPos];
+      }
+
+    // Else the current format character is not a '*'
+    } else {
+
+      // If the current input character matches the current format character
+      if(input[inputPos] == format[formatPos]) {
+
+        // Move to the next format character
+        formatPos++;
+
+        // If the end of the format string has been reached
+        if(formatPos == formatLen) {
+
+          // Finish the extraction
+          break;
+        }
+
+      // Else the current input character does not match the current format
+      // character
+      } else {
+
+        // Reset the format character position
+        formatPos = 0;
+      }
+    }
+  }
+
+  return oss.str();
 }

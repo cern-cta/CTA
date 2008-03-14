@@ -182,6 +182,34 @@ namespace castor {
         void handleTapeDriveCompatibilities(
           castor::vdqm::TapeDrive *newTapeDrive, std::string driveModel) 
           throw (castor::exception::Exception);
+
+        /**
+         * Simple parsing algorithm written specifically for extracting values
+         * from the dedicate string of a drive request message.  This method
+         * extracts a string from the specified input string using the
+         * specified format string.  The first string that matches the format
+         * string is returned, any subsequent possible matches are ignored.
+         *
+         * The format string is very specialised and is of the form:
+         *
+         *     "xyz*p"
+         *
+         * Where * represents the string to be extracted (there can be only
+         * one '* in the format string), xyz represents any number of
+         * characters before the string to be extracted, and p represents the
+         * single character if any, after the string to be extracted.  Example
+         * format strings:
+         *
+         *     "host=*,"
+         *     "vid=*,"
+         *     "age=*"
+         *
+         * @param input the input string
+         * @param format the format string
+         * @return the extracted string or an empty string if nothing was
+         * extracted
+         */
+        std::string extractDedication(std::string input, std::string format);
           
       }; // class TapeDriveHandler
     
