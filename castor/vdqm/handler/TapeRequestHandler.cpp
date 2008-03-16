@@ -357,9 +357,6 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
   Cuuid_t cuuid) 
   throw (castor::exception::Exception) {
 
-  // The result of the search in the database.
-  std::vector<newVdqmVolReq_t>* volReqs = 0;
-  
   std::string dgn    = "";
   std::string server = "";
     
@@ -367,13 +364,14 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
   if ( *(volumeRequest->server) != '\0' ) server = volumeRequest->server;
 
   try {
-    // This method call retirves the request queue from the datase. The
+    // This method call retirves the request queue from the database. The
     // result depends on the parameters. If the paramters are not specified,
     // then information about all oft the requests is returned.
-    volReqs = ptr_IVdqmService->selectTapeRequestQueue(dgn, server);
+    std::auto_ptr< std::vector<newVdqmVolReq_t> > volReqs(
+      ptr_IVdqmService->selectTapeRequestQueue(dgn, server));
   
     // If there is a result to send to the client
-    if (volReqs != NULL && volReqs->size() > 0 ) {
+    if (volReqs.get() != NULL && volReqs->size() > 0 ) {
       for(std::vector<newVdqmVolReq_t>::iterator it = volReqs->begin();
         it != volReqs->end(); it++) {
 
@@ -389,10 +387,6 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
       }
     }
   } catch (castor::exception::Exception ex) {
-    // Clean up the memory
-    if(volReqs != NULL) {
-      delete volReqs;
-    }
 
     // To inform the client about the end of the queue, we send again a 
     // volumeRequest with the VolReqID = -1
@@ -401,11 +395,6 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
     oldProtInterpreter->sendToOldClient(header, volumeRequest, NULL);
 
     throw ex;
-  }
-
-  // Clean up the memory
-  if(volReqs != NULL) {
-    delete volReqs;
   }
 
   // To inform the client about the end of the queue, we send again a 
