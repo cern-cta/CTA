@@ -248,119 +248,79 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
 // deleteTapeRequest
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
-                                                  newVdqmVolReq_t *volumeRequest,
-                                                  Cuuid_t cuuid) 
+  newVdqmVolReq_t *volumeRequest, Cuuid_t cuuid) 
   throw (castor::exception::Exception) {
-   //The db related informations
-  TapeRequest *tapeReq = NULL;
-  castor::BaseAddress ad;
   
   // Get the tapeReq from its id
-  try {
-    tapeReq = ptr_IVdqmService->selectTapeRequest(volumeRequest->VolReqID);
+  std::auto_ptr<TapeRequest> tapeReq(ptr_IVdqmService->selectTapeRequest(
+    volumeRequest->VolReqID));
     
-    if ( tapeReq == NULL ) {
-      /**
-       * If we don't find the tapeRequest in the db it is normally not a big deal,
-       * because the assigned tape drive has probably already finished the transfer.
-       */
+  if ( tapeReq.get() == NULL ) {
+    // If we don't find the tapeRequest in the db it is normally not a big
+    // deal, because the assigned tape drive has probably already finished
+    // the transfer.
+
+    // "Couldn't find the tape request in db. Maybe it is already deleted?"
+    // message
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("tapeRequest ID", volumeRequest->VolReqID),
+      castor::dlf::Param("function",
+        "castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest()")};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING,
+      VDQM_TAPE_REQUEST_NOT_FOUND_IN_DB, 2, params);
       
-      //"Couldn't find the tape request in db. Maybe it is already deleted?" message
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("tapeRequest ID", volumeRequest->VolReqID),
-         castor::dlf::Param("function", "castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest()")};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, VDQM_TAPE_REQUEST_NOT_FOUND_IN_DB, 2, params);
-      
-      return;
-    }
-  } catch (castor::exception::Exception e) {
-    /**
-     * If we don't find the tapeRequest in the db it is normally not a big deal,
-     * because the assigned tape drive has probably already finished the transfer.
-     */
-    
-    //"Couldn't find the tape request in db. Maybe it is already deleted?" message
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("tapeRequest ID", volumeRequest->VolReqID),
-       castor::dlf::Param("function", "castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest()"),
-       castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, VDQM_TAPE_REQUEST_NOT_FOUND_IN_DB, 2, params);
-    
-    if ( tapeReq ) {
-      if ( tapeReq->tapeDrive() ) {
-        delete tapeReq->tapeDrive();
-        tapeReq->setTapeDrive(0);
-      }
-      
-      delete tapeReq;
-      tapeReq = 0;
-    }
-    
     return;
   }
-    
-  /**
-   * OK, now we have the tapeReq and its client :-)
-   */
-  
-  try {  
-    if ( tapeReq->tapeDrive() ) {
-      // If we are here, the TapeRequest is already assigned to a TapeDrive
-      //TODO:
-      /*
-       * PROBLEM:
-       * Can only remove request, if it is not assigned to a drive. Otherwise
-       * it should be cleanup by resetting the drive status to RELEASE + FREE.
-       * Mark it as UNKNOWN until an unit status clarifies what has happened.
-       */
-       TapeDrive* tapeDrive = tapeReq->tapeDrive();
-      
-      // Set new TapeDriveStatusCode
-      tapeDrive->setStatus(STATUS_UNKNOWN);
-      
-      tapeReq->setModificationTime(time(NULL));
-        
-      /**
-       * Update the data base. To avoid a deadlock, the tape drive has to be 
-       * updated first!
-       */
-       castor::vdqm::DatabaseHelper::updateRepresentation(
-                          tapeDrive, cuuid);
-      castor::vdqm::DatabaseHelper::updateRepresentation(
-                          tapeReq, cuuid);
 
-      delete tapeDrive;
-      tapeDrive=0;
-      tapeReq->setTapeDrive(0);
-      delete tapeReq;
-      tapeReq = 0;
-          
-      castor::exception::Exception ex(EVQREQASS);
-      ex.getMessage() << "TapeRequest is assigned to a TapeDrive. "
-                      << "Can't delete it at the moment" << std::endl;
-      throw ex;
-    }
-    else {
-      // Remove the TapeRequest from the db (queue)
-      castor::vdqm::DatabaseHelper::deleteRepresentation(tapeReq, cuuid);
+  // castor::db::ora::OraVdqmSvc::selectTapeRequest uses fillObj to fill the
+  // member TapeRequest::m_tapeDrive, but the memory referenced by this
+  // member is not owned (i.e. deleted in the destructor of TapeRequest) by
+  // TapeRequest.  Use an auto_ptr to manage the TapeDrive heap object.
+  std::auto_ptr<TapeDrive> tapeDrive(tapeReq->tapeDrive());
     
-      // "TapeRequest and its ClientIdentification removed" message
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("TapeRequest ID", tapeReq->id())};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_TAPE_REQUEST_ANDCLIENT_ID_REMOVED, 1, params);
-    }
-  } catch(castor::exception::Exception e) {
-     if (tapeReq) {
-       delete tapeReq;
-       tapeReq = 0;
-     }
+  // OK, now we have the tapeReq and its client :-)
+  if ( tapeDrive.get() ) {
+    // If we are here, the TapeRequest is already assigned to a TapeDrive
+    //TODO:
+    //
+    // PROBLEM:
+    // Can only remove request, if it is not assigned to a drive. Otherwise
+    // it should be cleanup by resetting the drive status to RELEASE + FREE.
+    // Mark it as UNKNOWN until an unit status clarifies what has happened.
+    //
+    
+    // Set new TapeDriveStatusCode
+    tapeDrive->setStatus(STATUS_UNKNOWN);
+    
+    tapeReq->setModificationTime(time(NULL));
+      
+    // Update the data base. To avoid a deadlock, the tape drive has to be 
+    // updated first!
+    castor::vdqm::DatabaseHelper::updateRepresentation(tapeDrive.get(),
+      cuuid);
+    castor::vdqm::DatabaseHelper::updateRepresentation(tapeReq.get(), cuuid);
+
+    castor::exception::Exception ex(EVQREQASS);
+    ex.getMessage() << "TapeRequest is assigned to a TapeDrive. "
+                    << "Can't delete it at the moment" << std::endl;
+    throw ex;
+
+  // Else the TapeRequest is not assigned to a TapeDrive
+  } else {
+
+    // Remove the TapeRequest from the db (queue)
+    castor::Services *svcs = castor::BaseObject::services();
+    castor::BaseAddress ad;
+    ad.setCnvSvcName("DbCnvSvc");
+    ad.setCnvSvcType(castor::SVC_DBCNV);
+    svcs->deleteRep(&ad, tapeReq.get(), false);
   
-    throw e;
+    // "TapeRequest and its ClientIdentification removed" message
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("TapeRequest ID", tapeReq->id())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
+      VDQM_TAPE_REQUEST_ANDCLIENT_ID_REMOVED, 1, params);
   }
-  
-  // Delete all Objects
-  delete tapeReq;
-  tapeReq = 0;
 }
 
 
