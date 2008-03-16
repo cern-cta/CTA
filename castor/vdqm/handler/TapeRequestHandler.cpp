@@ -24,6 +24,7 @@
  * @author Matthias Braeger
  *****************************************************************************/
  
+#include <memory>
 #include <string> 
 #include <vector>
 #include <time.h>
@@ -82,24 +83,13 @@ castor::vdqm::handler::TapeRequestHandler::~TapeRequestHandler() throw() {
 //------------------------------------------------------------------------------
 // newTapeRequest
 //------------------------------------------------------------------------------
-void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *header, 
-                                                  newVdqmVolReq_t *volumeRequest,
-                                                  Cuuid_t cuuid) 
+void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
+  newVdqmHdr_t *header, newVdqmVolReq_t *volumeRequest, Cuuid_t cuuid) 
   throw (castor::exception::Exception) {
-  
-  //The db related informations
-  TapeRequest *newTapeReq = NULL;
-  castor::vdqm::ClientIdentification *clientData = NULL;
-  castor::vdqm::VdqmTape *tape = NULL;
   
   struct vmgr_tape_info tape_info; // used to get information about the tape
   
-  TapeServer *reqTapeServer = NULL;
-  DeviceGroupName *dgName = NULL;
-  TapeAccessSpecification *tapeAccessSpec = NULL;
-  
-  int rowNumber = 0; 
-  int rc = 0; // return value from vmgr_querytape
+  int rc = 0;
   char *p;
 
 
@@ -109,7 +99,6 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
                     << std::endl;
     throw ex;
   }
-  
   
   //The parameters of the old vdqm VolReq Request
   castor::dlf::Param params[] =
@@ -121,196 +110,137 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
      castor::dlf::Param("volid", volumeRequest->volid),
      castor::dlf::Param("mode", volumeRequest->mode),
      castor::dlf::Param("dgn", volumeRequest->dgn),
-     castor::dlf::Param("drive", (*volumeRequest->drive == '\0' ? "***" : volumeRequest->drive)),
-     castor::dlf::Param("server", (*volumeRequest->server == '\0' ? "***" : volumeRequest->server))};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_OLD_VDQM_VOLREQ_PARAMS, 10, params);
+     castor::dlf::Param("drive",
+       (*volumeRequest->drive == '\0' ? "***" : volumeRequest->drive)),
+     castor::dlf::Param("server",
+       (*volumeRequest->server == '\0' ? "***" : volumeRequest->server))};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_OLD_VDQM_VOLREQ_PARAMS,
+    10, params);
   
-  try {
-    //------------------------------------------------------------------------
-    //The Tape related informations
-    newTapeReq = new TapeRequest();
-    newTapeReq->setCreationTime(time(NULL));
-    /**
-     * The modification time will only be changed,
-     * in case that an error occures during the tape assignment
-     * procedure with RTCPD
-     */
-     newTapeReq->setModificationTime(newTapeReq->creationTime());
-     /*
-     * We don't allow client to set priority
-     */
-     newTapeReq->setPriority(VDQM_PRIORITY_NORMAL);
-     
-     //The client related informations
-     clientData = new castor::vdqm::ClientIdentification();
-     clientData->setMachine(volumeRequest->client_host);
-     clientData->setUserName(volumeRequest->client_name);
-     clientData->setPort(volumeRequest->client_port);
-     clientData->setEuid(volumeRequest->clientUID);
-     clientData->setEgid(volumeRequest->clientGID);
-     clientData->setMagic(header->magic);
-     
-     /**
-      * Annotation: The side of the Tape is not necesserally needed
-      * by the vdqmDaemon. Normaly the RTCopy daemon should already 
-      * have created an entry to the Tape table. So, we just give 0 as parameter 
-      * at this place.
-      */
-     tape = ptr_IVdqmService->selectTape(volumeRequest->volid, 
-                                         0, 
-                                         volumeRequest->mode);                                     
-    
-    //The requested tape server: Return value is NULL if the server name is empty
-    reqTapeServer = ptr_IVdqmService->selectTapeServer(volumeRequest->server, false);
-    
-    memset(&tape_info,'\0',sizeof(vmgr_tape_info));
-    
-    // "Try to get information about the tape from the VMGR daemon" message
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_GET_TAPE_INFO_FROM_VMGR);     
-    
-    /**
-     * Create a connection to vmgr daemon, to obtain more information about the
-     * tape, like its density and its tapeModel.
-     */
-    rc = vmgr_querytape (tape->vid().c_str(), 0, &tape_info, volumeRequest->dgn);    
-    
-    if ( rc == -1) {
-      castor::exception::Exception ex(EVQDGNINVL);
-      ex.getMessage() << "Errors, while using to vmgr_querytape: "
-                      << "serrno = " << serrno
-                      << std::endl;
-      throw ex;      
-    }
-    
-    /**
-     * Valids the requested tape Access for the specific tape model.
-     * In case of errors, the return value is NULL
-     */
-    try {
-      tapeAccessSpec = 
-        ptr_IVdqmService->selectTapeAccessSpecification(volumeRequest->mode, 
-          tape_info.density, tape_info.model);
-    } catch(castor::exception::Exception &e) {
-      castor::exception::Internal ie;
+  //------------------------------------------------------------------------
+  //The Tape related informations
+  std::auto_ptr<TapeRequest> newTapeReq(new TapeRequest());
+  newTapeReq->setCreationTime(time(NULL));
+  // The modification time will only be changed,
+  // in case that an error occures during the tape assignment
+  // procedure with RTCPD
+  newTapeReq->setModificationTime(newTapeReq->creationTime());
 
-      ie.getMessage() << "Failed to select the tape access specification: "
-        << e.getMessage().str();
-
-      throw ie;
-    }
-    
-    if (0 == tapeAccessSpec) {
-      castor::exception::Exception ex(EVQDGNINVL);
-      ex.getMessage()
-        << "The specified tape access mode doesn't exist in the db"
-        << std::endl;
-      throw ex;
-    }
-    
-    /**
-     * The requested device group name. If the entry doesn't yet exist, 
-     * it will be created.
-     */
-    try {
-      dgName = ptr_IVdqmService->selectDeviceGroupName(volumeRequest->dgn);
-    } catch(castor::exception::Exception &e) {
-      castor::exception::Internal ie;
-
-      ie.getMessage() << "Failed to select (creating if does not exist) "
-        "the device group name: " << e.getMessage().str();
-
-      throw ie;
-    }
-    
-    if(0 == dgName) {
-      castor::exception::Exception ex(EVQDGNINVL);
-      ex.getMessage() << "DGN " <<  volumeRequest->dgn
-                      << " does not exist in the db" << std::endl;
-      throw ex;
-    }
-    
-    
-    //Connect the tapeRequest with the additional information
-    newTapeReq->setClient(clientData);
-    newTapeReq->setTapeAccessSpecification(tapeAccessSpec);
-    newTapeReq->setRequestedSrv(reqTapeServer);
-    newTapeReq->setTape(tape);
-    newTapeReq->setDeviceGroupName(dgName);
-    
+  // We don't allow client to set priority
+  newTapeReq->setPriority(VDQM_PRIORITY_NORMAL);
+   
+  //The client related informations
+  std::auto_ptr<ClientIdentification>
+    clientData(new castor::vdqm::ClientIdentification());
+  clientData->setMachine(volumeRequest->client_host);
+  clientData->setUserName(volumeRequest->client_name);
+  clientData->setPort(volumeRequest->client_port);
+  clientData->setEuid(volumeRequest->clientUID);
+  clientData->setEgid(volumeRequest->clientGID);
+  clientData->setMagic(header->magic);
+   
+  // Annotation: The side of the Tape is not necesserally needed
+  // by the vdqmDaemon. Normaly the RTCopy daemon should already 
+  // have created an entry to the Tape table. So, we just give 0 as parameter 
+  // at this place.
+  std::auto_ptr<VdqmTape> tape(ptr_IVdqmService->selectTape(
+    volumeRequest->volid, 0, volumeRequest->mode));                                     
+  // The requested tape server: Return value is NULL if the server name is
+  // empty
+  std::auto_ptr<TapeServer> reqTapeServer(
+    ptr_IVdqmService->selectTapeServer(volumeRequest->server, false));
   
-    /*
-     * Set priority for tpwrite
-     */
-    if ( (tapeAccessSpec->accessMode() == WRITE_ENABLE) &&
-         ((p = getconfent("VDQM","WRITE_PRIORITY",0)) != NULL) ) {
-      if ( strcmp(p,"YES") == 0 ) {
-        newTapeReq->setPriority(VDQM_PRIORITY_MAX);
-      }
-    }
-    
-    // Request priority changed
-    castor::dlf::Param params2[] = {
-      castor::dlf::Param("priority", newTapeReq->priority())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      VDQM_REQUEST_PRIORITY_CHANGED, 1, params2);
-    
-    
-    // Verify that the request doesn't exist, 
-    // by calling IVdqmSvc->checkTapeRequest
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_VERIFY_REQUEST_NON_EXISTANT);
-    /*
-     * Verify that the request doesn't (yet) exist. If it doesn't exist,
-     * the return value should be true.
-     */
-    bool requestNotExists = ptr_IVdqmService->checkTapeRequest(newTapeReq);
-    if ( requestNotExists == false ) {
-      castor::exception::Exception ex(EVQALREADY);
-      ex.getMessage() << "Input request already queued: " 
-                      << "Position = " << rowNumber << std::endl;
-      throw ex;
-    }
-    
-    // Try to store Request into the data base
-     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_STORE_REQUEST_IN_DB);
-    /*
-     * Add the record to the volume queue
-     */
-    castor::vdqm::DatabaseHelper::storeRepresentation(newTapeReq, cuuid);
-    
-    /**
-     * Now the newTapeReq has the id of its 
-     * row representatioon in the db table.
-     * 
-     * Please note: Because of the restrictions of the old
-     * protocol, we must convert the 64bit id into a 32bit number.
-     * This is still sufficient to have a unique TapeRequest ID, because
-     * the requests don't stay for long time in the db.
-     */
-    volumeRequest->VolReqID = (unsigned int)newTapeReq->id();  
-  } catch(castor::exception::Exception e) {
-     if (newTapeReq)
-       delete newTapeReq; //also deletes clientData, because of composition
-     if (tape)
-       delete tape;
-    if (tapeAccessSpec)
-      delete tapeAccessSpec;
-    if (reqTapeServer)
-      delete reqTapeServer;
-    if (dgName)
-      delete dgName;
+  memset(&tape_info,'\0',sizeof(vmgr_tape_info));
   
-    throw e;
+  // "Try to get information about the tape from the VMGR daemon" message
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,VDQM_GET_TAPE_INFO_FROM_VMGR);     
+  // Create a connection to vmgr daemon, to obtain more information about the
+  // tape, like its density and its tapeModel.
+  rc = vmgr_querytape(tape->vid().c_str(), 0, &tape_info, volumeRequest->dgn);    
+  if ( rc == -1) {
+    castor::exception::Exception ex(EVQDGNINVL);
+    ex.getMessage() << "Errors, while using to vmgr_querytape: "
+                    << "serrno = " << serrno
+                    << std::endl;
+    throw ex;      
   }
   
-  // Delete all Objects
-  delete newTapeReq; //also deletes clientData, because of composition 
-  delete tape;
-  delete tapeAccessSpec;
+  // Validate the requested tape Access for the specific tape model.
+  // In case of errors, the return value is NULL
+  std::auto_ptr<TapeAccessSpecification> tapeAccessSpec(
+    ptr_IVdqmService->selectTapeAccessSpecification(volumeRequest->mode,
+    tape_info.density, tape_info.model));
+
+  if (0 == tapeAccessSpec.get()) {
+    castor::exception::Exception ex(EVQDGNINVL);
+    ex.getMessage()
+      << "The specified tape access mode doesn't exist in the db"
+      << std::endl;
+    throw ex;
+  }
   
-  if (reqTapeServer)
-    delete reqTapeServer;
+  // The requested device group name. If the entry doesn't yet exist, 
+  // it will be created.
+  std::auto_ptr<DeviceGroupName> dgName(
+    ptr_IVdqmService->selectDeviceGroupName(volumeRequest->dgn));
+    
+  if(0 == dgName.get()) {
+    castor::exception::Exception ex(EVQDGNINVL);
+    ex.getMessage() << "DGN " <<  volumeRequest->dgn
+                    << " does not exist in the db" << std::endl;
+    throw ex;
+  }
+
+  // Connect the tapeRequest with the additional information
+  newTapeReq->setClient(clientData.release()); // Tape request becomes owner
+  newTapeReq->setTapeAccessSpecification(tapeAccessSpec.get());
+  newTapeReq->setRequestedSrv(reqTapeServer.get());
+  newTapeReq->setTape(tape.get());
+  newTapeReq->setDeviceGroupName(dgName.get());
   
-  delete dgName;
+  // Set priority for tpwrite
+  if ( (tapeAccessSpec->accessMode() == WRITE_ENABLE) &&
+       ((p = getconfent("VDQM","WRITE_PRIORITY",0)) != NULL) ) {
+    if ( strcmp(p,"YES") == 0 ) {
+      newTapeReq->setPriority(VDQM_PRIORITY_MAX);
+    }
+  }
+    
+  // Request priority changed
+  castor::dlf::Param params2[] = {
+    castor::dlf::Param("priority", newTapeReq->priority())};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
+    VDQM_REQUEST_PRIORITY_CHANGED, 1, params2);
+  
+  // Verify that the request doesn't exist, 
+  // by calling IVdqmSvc->checkTapeRequest
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
+    VDQM_VERIFY_REQUEST_NON_EXISTANT);
+
+  // Verify that the request doesn't (yet) exist. If it doesn't exist,
+  // the return value should be true.
+  bool requestNotExists =
+    ptr_IVdqmService->checkTapeRequest(newTapeReq.get());
+  if ( requestNotExists == false ) {
+    castor::exception::Exception ex(EVQALREADY);
+    ex.getMessage() << "Input request already queued " << std::endl;
+    throw ex;
+  }
+    
+  // Try to store Request into the data base
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_STORE_REQUEST_IN_DB);
+
+  // Add the record to the volume queue
+  castor::vdqm::DatabaseHelper::storeRepresentation(newTapeReq.get(), cuuid);
+    
+  // Now the newTapeReq has the id of its 
+  // row representatioon in the db table.
+  // 
+  // Please note: Because of the restrictions of the old
+  // protocol, we must convert the 64bit id into a 32bit number.
+  // This is still sufficient to have a unique TapeRequest ID, because
+  // the requests don't stay for long time in the db.
+  volumeRequest->VolReqID = (unsigned int)newTapeReq->id();  
 }
 
 
