@@ -22,6 +22,7 @@
  * @author castor dev team
  *****************************************************************************/
 
+#include <memory>
 #include <rtcp_constants.h>
 
 #include "castor/BaseAddress.hpp"
@@ -109,11 +110,11 @@ castor::IObject* castor::vdqm::RTCPJobSubmitterThread::select()
 void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
   throw() {
 
-  castor::vdqm::TapeRequest* request =
-    dynamic_cast<castor::vdqm::TapeRequest*>(param);
+  std::auto_ptr<castor::vdqm::TapeRequest>
+    request(dynamic_cast<castor::vdqm::TapeRequest*>(param));
 
   // If the dynamic cast failed
-  if(request == NULL) {
+  if(request.get() == NULL) {
     castor::exception::Internal e;
 
     e.getMessage()
@@ -123,12 +124,12 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
   }
 
   // Get a handle to the associated tape drive
-  castor::vdqm::TapeDrive* drive = request->tapeDrive();
-    
+  std::auto_ptr<castor::vdqm::TapeDrive> drive(request->tapeDrive());
+
   try {
 
     // Submit the remote tape copy job to RTCPD
-    submitJobToRTCPD(request);
+    submitJobToRTCPD(request.get());
 
     // Everything is OK, so update the status of the request
     request->setStatus(castor::vdqm::REQUEST_SUBMITTED);
@@ -168,22 +169,18 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
   try {
 
     // Update the attributes of the request and drive in the DB
-    services()->updateRep(&ad, request, false);
-    services()->updateRep(&ad, drive, false);
+    services()->updateRep(&ad, request.get(), false);
+    services()->updateRep(&ad, drive.get(), false);
 
     // If the associated drive was un-linked from the request then update
     // the DB
     if(request->tapeDrive() == 0) {
-      services()->fillRep(&ad, request, OBJ_TapeDrive, false);
-      services()->fillRep(&ad, drive, OBJ_TapeRequest, false);
+      services()->fillRep(&ad, request.get(), OBJ_TapeDrive, false);
+      services()->fillRep(&ad, drive.get(), OBJ_TapeRequest, false);
     }
 
     // Commit the changes in the DB
     services()->commit(&ad);
-
-    // Clean up
-    delete request;
-    delete drive;
 
   } catch(castor::exception::Exception &e) {
 
@@ -194,10 +191,6 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
     };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
       VDQM_DRIVE_ALLOCATION_ERROR, 3, params);
-
-    // Clean up
-    delete request;
-    delete drive;
   }
 }
 
