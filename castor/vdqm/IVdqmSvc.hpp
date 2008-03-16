@@ -86,11 +86,9 @@ namespace castor {
         /**
          * Returns the queue position of the tape request.
          * 
-         * @return The row number, 
-         *         0 : The request is handled at the moment from a TapeDrive, 
-         *         -1: if there is no entry for it.
+         * @return The row number or -1 if there is no entry for it.
          */  
-        virtual int getQueuePosition(const TapeRequest *tapeRequest)
+        virtual int getQueuePosition(const u_signed64 tapeRequestId)
           throw (castor::exception::Exception) = 0;
         
         /**

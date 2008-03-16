@@ -328,46 +328,20 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 // getQueuePosition
 //------------------------------------------------------------------------------
 int castor::vdqm::handler::TapeRequestHandler::getQueuePosition(
-                                                  newVdqmVolReq_t *volumeRequest,
-                                                  Cuuid_t cuuid) 
+  newVdqmVolReq_t *volumeRequest, Cuuid_t cuuid) 
   throw (castor::exception::Exception) {
     
   //To store the db related informations
-  castor::vdqm::TapeRequest *tapeReq = NULL;
-  int queuePosition = 0;
-  
-  try {
-    tapeReq = ptr_IVdqmService->selectTapeRequest(volumeRequest->VolReqID);
-    
-    if ( tapeReq == NULL ) {
-      return -1;
-    }
-    else if ( tapeReq->tapeDrive() ) {
-      delete tapeReq->tapeDrive();
-      tapeReq->setTapeDrive(0);
-    }
-    else {
-      queuePosition = ptr_IVdqmService->getQueuePosition(tapeReq);
-    }
-    
-    // Queue position of TapeRequest
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Queue position", queuePosition),
-       castor::dlf::Param("TapeRequest id", tapeReq->id())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_QUEUE_POS_OF_TAPE_REQUEST, 2, params);
-    
-  } catch(castor::exception::Exception e) {
-     if (tapeReq) {
-       delete tapeReq;
-       tapeReq = 0;
-     }
-  
-    throw e;
-  }
-  // Delete the tapeRequest Object
-  delete tapeReq;
-  tapeReq = 0;
-  
+  int queuePosition = 
+    ptr_IVdqmService->getQueuePosition(volumeRequest->VolReqID);
+
+  // Queue position of TapeRequest
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("Queue position", queuePosition),
+    castor::dlf::Param("TapeRequest id", volumeRequest->VolReqID)};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_QUEUE_POS_OF_TAPE_REQUEST,
+    2, params);
+
   return queuePosition;
 }
 
