@@ -613,8 +613,7 @@ bool castor::db::ora::OraVdqmSvc::checkTapeRequest(
 // getQueuePosition
 // -----------------------------------------------------------------------
 int castor::db::ora::OraVdqmSvc::getQueuePosition(
-  const castor::vdqm::TapeRequest *tapeRequest) 
-  throw (castor::exception::Exception) {
+  const u_signed64 tapeRequestId) throw (castor::exception::Exception) {
     
   try {
     // Check whether the statements are ok
@@ -624,7 +623,7 @@ int castor::db::ora::OraVdqmSvc::getQueuePosition(
     }
     
     // execute the statement
-    m_getQueuePositionStatement->setDouble(1, tapeRequest->id());
+    m_getQueuePositionStatement->setDouble(1, tapeRequestId);
     oracle::occi::ResultSet *rset = m_getQueuePositionStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       // Nothing found, return -1
@@ -638,7 +637,8 @@ int castor::db::ora::OraVdqmSvc::getQueuePosition(
     m_getQueuePositionStatement->closeResultSet(rset);
     
     // XXX: Maybe in future the return value should be double!
-    return queuePosition;
+    // -1 means not found
+    return queuePosition == 0 ? -1 : queuePosition;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -1285,15 +1285,8 @@ std::vector<newVdqmDrvReq_t>*
       // Null-terminate in case source string is longer than destination
       drvReq.dgn[sizeof(drvReq.dgn) - 1] = '\0';
 
-      // TODO: Here, we can give infomation about occured errors, which will
-      // be stored in the future in ErrorHistory. At the moment we leave it 
-      // empty, because we don't care about the old dedicate string.
-      drvReq.errorHistory[0] = '\0';
-
-      strncpy(drvReq.tapeDriveModel, rs->getString(16).c_str(),
-        sizeof(drvReq.tapeDriveModel));
-      // Null-terminate in case source string is longer than destination
-      drvReq.tapeDriveModel[sizeof(drvReq.tapeDriveModel) - 1] = '\0';
+      // TBD - Put back dedifcation!
+      drvReq.dedicate[0] = '\0';
 
       drvReqs->push_back(drvReq);
     }

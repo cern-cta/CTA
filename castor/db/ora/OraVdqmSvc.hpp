@@ -117,8 +117,7 @@ namespace castor {
          *         -1: if there is no entry for it.
          * @exception in case of error
          */  
-        virtual int getQueuePosition
-        (const castor::vdqm::TapeRequest *tapeRequest)
+        virtual int getQueuePosition(const u_signed64 tapeRequestId)
           throw (castor::exception::Exception);
   
   
