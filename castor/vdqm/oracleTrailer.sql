@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.37 $ $Release$ $Date: 2008/03/17 16:55:50 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.38 $ $Release$ $Date: 2008/03/17 23:30:26 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -723,8 +723,8 @@ END;
  * @param clientHostVar the client host dedication
  * @param vidVar the vid dedication
  * @param resultVar is 0 if the dedications were successfully inserted into the
- * database and -1 if the specified tape drive and tape server combination do
- * not exist
+ * database, -1 if the specified tape drive does not exist and -2 if the
+ * specified tape drive and tape server combination does not exist
  */
 CREATE OR REPLACE PROCEDURE DedicateDrive
 ( driveNameVar IN VARCHAR2
@@ -734,43 +734,56 @@ CREATE OR REPLACE PROCEDURE DedicateDrive
 , vidVar IN VARCHAR2
 , resultVar OUT INTEGER
 ) AS
- driveIdVar NUMBER;
+  driveIdVar           NUMBER;
+  serverIdVar          NUMBER;
+  nbMatchingServersVar NUMBER;
 BEGIN
   resultVar := 0;
 
   -- Lock the tape drive row
   BEGIN
-    SELECT TapeDrive.id INTO driveIdVar
+    SELECT
+      TapeDrive.id, TapeDrive.tapeServer
+      INTO driveIdVar, serverIdVar
       FROM TapeDrive
       INNER JOIN TapeServer ON
         TapeDrive.tapeServer = TapeServer.id
       WHERE
-            TapeDrive.driveName   = driveNameVar
-        AND TapeServer.serverName = serverNameVar
+        TapeDrive.driveName = driveNameVar
       FOR UPDATE;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    resultVar := -1; -- No such "tape drive" / "tape server" pair
+    resultVar := -1; -- No such tape drive
     RETURN;
   END;
 
+  -- Check the specified tape drive is associated with the tape server
+  SELECT count(*) INTO nbMatchingServersVar
+    FROM TapeServer
+    WHERE
+          TapeServer.id         = serverIdVar
+      AND TapeServer.serverName = serverNameVar;
+
+  IF nbMatchingServersVar = 0 THEN
+    resultVar := -2; -- Tape server is not associated with tape drive
+    RETURN;
+  END IF;
+
+  -- Delete all existing dedications associated with tape drive
   DELETE FROM TapeDriveDedication
     WHERE tapeDrive = driveIdVar;
 
+  -- Insert new dedications
   IF accessModeVar = 0 THEN
     INSERT INTO TapeDriveDedication(tapeDrive, accessMode)
       VALUES(driveIdVar, accessModeVar);
   END IF;
-
   IF (clientHostVar != '') AND (clientHostVar != '.*') THEN
     INSERT INTO TapeDriveDedication(tapeDrive, clientHost)
       VALUES(driveIdVar, clientHostVar);
   END IF;
-
   IF (vidVar != '') AND (vidVar != '.*') THEN
     INSERT INTO TapeDriveDedication(tapeDrive, vid)
       VALUES(driveIdVar, vidVar);
   END IF;
 
-  DBMS_OUTPUT.PUT_LINE('driveIdVar = ' || driveIdVar);
-  
 END;
