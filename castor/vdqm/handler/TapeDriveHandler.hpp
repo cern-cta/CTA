@@ -209,7 +209,21 @@ namespace castor {
          * @return the extracted string or an empty string if nothing was
          * extracted
          */
-        std::string extractDedication(const char *input, const char *format);
+        std::string getDedication(const char *input, const char *format);
+
+        /**
+         * This methods returns true if all the characters of the specified
+         * string are either alphanumeric or '_', else this method returns
+         * false.
+         */
+        bool allAlphanumericOrUnderscore(std::string &s);
+
+        /**
+         * Rejects invalid dedications in the specified dedicate string by
+         * throwing the appropriate exception.
+         */
+        void rejectInvalidDedications(const char *dedicate)
+          throw (castor::exception::Exception);
           
       }; // class TapeDriveHandler
     
