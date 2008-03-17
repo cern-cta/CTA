@@ -1,0 +1,4 @@
+#!/bin/bash
+cd /pool
+sh /afs/cern.ch/project/castor/stresstest/analysisloop /pool/testfile2G.tar throughput.log tape &
+

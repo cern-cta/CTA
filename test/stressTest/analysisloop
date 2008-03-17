@@ -1,0 +1,22 @@
+#!/bin/bash
+export STAGE_HOST=c2itdcrh
+export STAGER_TRACE=3
+export RFIO_USE_CASTOR_V2=YES
+export CASTORDIR=/castor/cern.ch/c3/itdc/$3
+
+#export CNS_HOST=castorns
+name=`hostname`
+let counter=0
+while true
+  do 
+   if [ $((counter%300)) -eq 0 ]; then nsmkdir ${CASTORDIR}/$((counter%100)); fi
+   basefile=`basename $1`
+   uuid=`uuidgen`
+   shortname="${basefile}_${name}_${uuid}"
+   filename="${CASTORDIR}/$((counter/300))/${shortname}"
+   export STAGE_SVCCLASS=itdc
+   rfcp $1 $filename >> /pool/itdc/$2 2>> /pool/itdc/$2 
+   export STAGE_SVCCLASS=default
+   rfcp $filename /dev/null >> /pool/itdc/$2 2>> /pool/itdc/$2 
+   let counter=counter+1
+done

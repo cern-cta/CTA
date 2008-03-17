@@ -1,0 +1,20 @@
+#!/bin/bash
+export STAGE_HOST=c2itdcrh
+export STAGER_TRACE=3
+export RFIO_USE_CASTOR_V2=YES
+export STAGE_SVCCLASS=itdc
+export CASTORDIR=/castor/cern.ch/c3/itdc/tape
+LISTFILE=/afs/cern.ch/project/castor/stresstest/list
+# the list file is generated like this:
+#nsls /castor/cern.ch/user/r/riojac3/stresstest | grep group |head -n 500 > list
+#nsls /castor/cern.ch/user/r/riojac3/stresstest | grep testfile |head -n 500 >> list
+
+touch /pool/itdc/read.log
+while true
+  do
+    count=`cat $LISTFILE | wc -l`
+    let "l = $RANDOM % $count"
+    file=`cat $LISTFILE | head -n $l | tail -n 1`
+    stager_qry -M $CASTORDIR/$file >> /pool/itdc/read.log
+    rfcp $CASTORDIR/$file /dev/null >> /pool/itdc/read.log 2>> /pool/itdc/read.log
+done

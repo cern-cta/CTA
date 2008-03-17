@@ -1,0 +1,4 @@
+#!/bin/bash
+cd /pool
+sh /afs/cern.ch/project/castor/stresstest/racecond2loop /pool/testfile20M.tar racecond.log tape &
+

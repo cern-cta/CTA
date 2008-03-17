@@ -1,0 +1,34 @@
+#!/bin/bash
+export STAGE_HOST=c2itdcrh
+#export STAGER_TRACE=3
+export RFIO_USE_CASTOR_V2=YES
+export STAGE_SVCCLASS=itdc
+export CASTORDIR=/castor/cern.ch/c3/itdc/$3
+
+#export CNS_HOST=castorns
+while true
+  do 
+   count=`cat $LISTFILE | wc -l`
+   let "l = $RANDOM % $count"
+   filename=`cat $LISTFILE | head -n $l | tail -n 1`
+   let "opt = $RANDOM % 5"
+   case "$opt" in
+     0)
+       stager_get -M $filename >> /pool/itdc/$2 
+       ;;
+     1)
+       stager_put -M $filename >> /pool/itdc/$2
+       ;;
+     2)
+       stager_rm -M $filename >> /pool/itdc/$2
+       ;;
+     3)
+       stager_putdone -M $filename >> /pool/itdc/$2
+       ;;
+     4)
+       rfcp $1 $filename >> /pool/itdc/$2 2>> /pool/itdc/$2
+       ;;
+   esac
+   stager_qry -M $filename >> /pool/itdc/$2
+   rfcp $filename /dev/null >> /pool/itdc/$2 2>> /pool/itdc/$2
+done
