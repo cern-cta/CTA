@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: HandlerData.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/03 13:26:49 $ $Author: waldron $
+ * @(#)$RCSfile: HandlerData.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/03/18 06:59:48 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -142,6 +142,6 @@ castor::scheduler::HandlerData::HandlerData(void *resreq)
     castor::exception::Exception ex(EINVAL);
     ex.getMessage() << "Unable to parse external scheduler option: "
 		    << "'" << msgArray[1] << "'" << "Error was : " << e.what();
-    throw e;
+    throw ex;
   }
 }
