@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.649 $ $Date: 2008/03/13 16:32:15 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.650 $ $Date: 2008/03/18 07:06:49 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1819,12 +1819,12 @@ BEGIN
             SELECT ids_seq.nextval INTO fsId FROM DUAL;
             INSERT INTO FileSystem (free, mountPoint,
                    minFreeSpace, minAllowedFreeSpace, maxFreeSpace,
-                   spaceToBeFreed, totalSize, readRate, writeRate, nbReadStreams,
+                   totalSize, readRate, writeRate, nbReadStreams,
                    nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams,
                    id, diskPool, diskserver, status, adminStatus)
             VALUES (fileSystemValues(ind + 9), fileSystems(i), fileSystemValues(ind+11),
                     fileSystemValues(ind+13), fileSystemValues(ind+12),
-                    0, fileSystemValues(ind + 10), fileSystemValues(ind + 2),
+                    fileSystemValues(ind + 10), fileSystemValues(ind + 2),
                     fileSystemValues(ind + 3), fileSystemValues(ind + 4),
                     fileSystemValues(ind + 5), fileSystemValues(ind + 6),
                     fileSystemValues(ind + 7), fileSystemValues(ind + 8),
