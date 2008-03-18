@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.649 $ $Date: 2008/03/18 07:08:25 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.650 $ $Date: 2008/03/18 10:08:52 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -218,7 +218,7 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
   lastButOneFSUsed NUMBER;
   findNewFS NUMBER := 1;
   nbMigrators NUMBER := 0;
-  unused NUMBER := 0;
+  unused "numList";
 BEGIN
   -- First try to see whether we should resuse the same filesystem as last time
   SELECT lastFileSystemChange, lastFileSystemUsed, lastButOneFileSystemUsed
@@ -338,7 +338,7 @@ BEGIN
   -- the deadlock would occur with updates to the NbTapeCopiesInFS
   -- table performed by the tr_stream2tapecopy_delete trigger triggered
   -- by the "DELETE FROM Stream2TapeCopy" statement below
-  SELECT 1
+  SELECT 1 BULK COLLECT
     INTO unused
     FROM Stream
     WHERE id IN (SELECT parent FROM Stream2TapeCopy WHERE child = tapeCopyId)
