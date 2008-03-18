@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2008/03/10 17:32:48 $ $Author: itglp $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2008/03/18 07:12:54 $ $Author: waldron $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -545,7 +545,8 @@ std::vector<u_signed64> castor::db::ora::OraGCSvc::nsFilesDeleted
 // stgFilesDeleted
 //------------------------------------------------------------------------------
 std::vector<u_signed64> castor::db::ora::OraGCSvc::stgFilesDeleted
-(std::vector<u_signed64> &diskCopyIds) throw() {
+(std::vector<u_signed64> &diskCopyIds,
+ std::string nsHost) throw() {
   std::vector<u_signed64> orphans;
   // do not call oracle if not needed
   if (0 == diskCopyIds.size()) return orphans;

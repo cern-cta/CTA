@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteGCSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/02/26 14:39:24 $ $Author: waldron $
+ * @(#)$RCSfile: RemoteGCSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/03/18 07:12:54 $ $Author: waldron $
  *
  *
  *
@@ -197,10 +197,12 @@ namespace castor {
       /**
        * Find the files which are not anymore in the Stager
        * @param diskCopyIds a list of diskcopy ids to be checked
+       * @param nsHost the nameserver in which they reside
        * @return the list of diskcopy ids that were not found in the stager
        */
       virtual std::vector<u_signed64> stgFilesDeleted
-      (std::vector<u_signed64> &diskCopyIds) throw();
+      (std::vector<u_signed64> &diskCopyIds,
+       std::string nsHost) throw();
 
     protected:
       
