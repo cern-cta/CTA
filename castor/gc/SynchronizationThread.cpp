@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/03/10 09:30:08 $ $Author: waldron $
+ * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/03/18 07:28:36 $ $Author: waldron $
  *
  * Synchronization thread used to check periodically whether files need to be
  * deleted
@@ -435,7 +435,7 @@ void castor::gc::SynchronizationThread::synchronizeFiles
   }
 
   // Synchronize the diskcopys with the stager catalog
-  std::vector<u_signed64> orphans = gcSvc->stgFilesDeleted(dcIds);
+  std::vector<u_signed64> orphans = gcSvc->stgFilesDeleted(dcIds, nameServer);
 
   // Remove orphaned files
   Cns_fileid fileId;
