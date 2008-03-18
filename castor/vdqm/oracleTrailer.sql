@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.38 $ $Release$ $Date: 2008/03/17 23:30:26 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.39 $ $Release$ $Date: 2008/03/18 13:51:34 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -726,7 +726,7 @@ END;
  * database, -1 if the specified tape drive does not exist and -2 if the
  * specified tape drive and tape server combination does not exist
  */
-CREATE OR REPLACE PROCEDURE DedicateDrive
+CREATE OR REPLACE PROCEDURE dedicateDrive
 ( driveNameVar IN VARCHAR2
 , serverNameVar IN VARCHAR2
 , accessModeVar IN NUMBER
@@ -737,6 +737,7 @@ CREATE OR REPLACE PROCEDURE DedicateDrive
   driveIdVar           NUMBER;
   serverIdVar          NUMBER;
   nbMatchingServersVar NUMBER;
+  dedicationIdVar      NUMBER;
 BEGIN
   resultVar := 0;
 
@@ -774,16 +775,25 @@ BEGIN
 
   -- Insert new dedications
   IF accessModeVar = 0 THEN
-    INSERT INTO TapeDriveDedication(tapeDrive, accessMode)
-      VALUES(driveIdVar, accessModeVar);
+    INSERT INTO TapeDriveDedication(id, tapeDrive, accessMode)
+      VALUES(ids_seq.nextval, driveIdVar, accessModeVar)
+    RETURNING id INTO dedicationIdVar;
+    INSERT INTO Id2Type (id, type)
+      VALUES (dedicationIdVar, 90);
   END IF;
   IF (clientHostVar != '') AND (clientHostVar != '.*') THEN
-    INSERT INTO TapeDriveDedication(tapeDrive, clientHost)
-      VALUES(driveIdVar, clientHostVar);
+    INSERT INTO TapeDriveDedication(id, tapeDrive, clientHost)
+      VALUES(ids_seq.nextval, driveIdVar, clientHostVar)
+    RETURNING id INTO dedicationIdVar;
+    INSERT INTO Id2Type (id, type)
+      VALUES (dedicationIdVar, 90);
   END IF;
   IF (vidVar != '') AND (vidVar != '.*') THEN
-    INSERT INTO TapeDriveDedication(tapeDrive, vid)
-      VALUES(driveIdVar, vidVar);
+    INSERT INTO TapeDriveDedication(id, tapeDrive, vid)
+      VALUES(ids_seq.nextval, driveIdVar, vidVar)
+    RETURNING id INTO dedicationIdVar;
+    INSERT INTO Id2Type (id, type)
+      VALUES (dedicationIdVar, 90);
   END IF;
 
 END;
