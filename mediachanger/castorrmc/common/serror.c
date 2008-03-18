@@ -262,14 +262,15 @@ char *sys_sterrlist[ESTMAXERR-ESTBASEOFF+2] =
    "Request killed",
    "Request too long (socket buffer size)",
    "Stage configuration error",
-   "Required tape segments are not all accessible",
+   "Unreadable file on tape (segments not all accessible)",
    "File replication failed",
    "File is currently not available",
    "Job killed by service administrator",
    "Job timed out while waiting to be scheduled",
    "Scheduler error",
    "No filesystems available in service class",
-   "No tape segment found",
+   "File has no copy on tape",
+   "File is on an offline tape",
    "BAD ERROR NUMBER"
   };
 
