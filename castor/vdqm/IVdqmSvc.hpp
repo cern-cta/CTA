@@ -213,7 +213,7 @@ namespace castor {
           throw (castor::exception::Exception) = 0;                                       
    
           
-//------------------ functions for TapeDriveRequestHandler ------------------
+//------------------ functions for TapeDriveHandler -------------------------
 
         /**
          * Retrieves a tapeDrive from the database based on its struct 
@@ -232,6 +232,20 @@ namespace castor {
           const newVdqmDrvReq_t* driveRequest,
           TapeServer* tapeServer)
           throw (castor::exception::Exception) = 0;  
+
+        /**
+         * Inserts the specified dedications for the specified drive into the
+         * database.
+         *
+         * @driveName  drive name
+         * @serverName server name
+         * @accessMode access mode
+         * @clientHost client host
+         */
+        virtual void dedicateDrive(std::string driveName,
+          std::string serverName, std::string dgName,
+          const unsigned int accessMode, std::string clientHost,
+          std::string vid) throw (castor::exception::Exception) = 0;
                   
 //---------------- functions for TapeDriveStatusHandler ------------------------
 

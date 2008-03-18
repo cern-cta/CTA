@@ -44,6 +44,7 @@ namespace castor {
     class OldProtocolInterpreter;
 
     namespace handler {
+
       /**
        * The TapeDriveHandler provides functions to handle all vdqm related
        * tape drive issues. It handles for example the VDQM_DRV_REQ
@@ -60,9 +61,8 @@ namespace castor {
          * @param cuuid The unique id of the request. Needed for dlf
          * @exception In case of error
          */
-        TapeDriveHandler(newVdqmHdr_t* header, 
-                         newVdqmDrvReq_t* driveRequest, Cuuid_t cuuid) 
-                         throw(castor::exception::Exception);
+        TapeDriveHandler(newVdqmHdr_t* header, newVdqmDrvReq_t* driveRequest,
+          Cuuid_t cuuid) throw(castor::exception::Exception);
         
         /**
          * Destructor
@@ -112,6 +112,20 @@ namespace castor {
           
           
       private:
+
+        // Structure used to store the dedications of a drive
+        struct DriveDedications {
+          std::string uid;
+          std::string gid;
+          std::string name;
+          std::string host;
+          std::string vid;
+          std::string mode;
+          std::string datestr;
+          std::string timestr;
+          std::string age;
+        };
+
         // Private variables
         newVdqmHdr_t* ptr_header;
         newVdqmDrvReq_t* ptr_driveRequest;
@@ -222,7 +236,7 @@ namespace castor {
          * Rejects invalid dedications in the specified dedicate string by
          * throwing the appropriate exception.
          */
-        void rejectInvalidDedications(const char *dedicate)
+        void rejectInvalidDedications(DriveDedications *dedications)
           throw (castor::exception::Exception);
           
       }; // class TapeDriveHandler

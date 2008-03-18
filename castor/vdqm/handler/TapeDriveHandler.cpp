@@ -872,11 +872,34 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
 void castor::vdqm::handler::TapeDriveHandler::dedicateTapeDrive()
   throw (castor::exception::Exception) {
 
-  std::cout << "ptr_driveRequest->dedicate: " << ptr_driveRequest->dedicate
-    << std::endl;
+std::cout << "ptr_driveRequest->dedicate" << ptr_driveRequest->dedicate << std::endl;
 
-  // Rejects invalid dedications by throwing the appropriate exception
-  rejectInvalidDedications(ptr_driveRequest->dedicate);
+  DriveDedications dedications;
+
+  // Extract all possible dedications
+  dedications.uid     = getDedication(ptr_driveRequest->dedicate, "uid=*,"    );
+  dedications.gid     = getDedication(ptr_driveRequest->dedicate, "gid=*,"    );
+  dedications.name    = getDedication(ptr_driveRequest->dedicate, "name=*,"   );
+  dedications.host    = getDedication(ptr_driveRequest->dedicate, "host=*,"   );
+  dedications.vid     = getDedication(ptr_driveRequest->dedicate, "vid=*,"    );
+  dedications.mode    = getDedication(ptr_driveRequest->dedicate, "mode=*,"   );
+  dedications.datestr = getDedication(ptr_driveRequest->dedicate, "datestr=*,");
+  dedications.timestr = getDedication(ptr_driveRequest->dedicate, "timestr=*,");
+  dedications.age     = getDedication(ptr_driveRequest->dedicate, "age=*"     );
+
+  // Reject those dedications with invalid syntax and those which require
+  // unsupported functionality
+  rejectInvalidDedications(&dedications);
+
+  // Try to dedicate the drive, a castor::exception::Exception will be thrown
+  // if there is an error
+  ptr_IVdqmService->dedicateDrive(
+    ptr_driveRequest->drive,
+    ptr_driveRequest->server,
+    ptr_driveRequest->dgn,
+    dedications.mode == "0" ? 0 : 1,
+    dedications.host,
+    dedications.vid);
 }
 
 
@@ -1115,70 +1138,65 @@ bool castor::vdqm::handler::TapeDriveHandler::setTapeDriveVidDedication(
 // rejectInvalidDedications
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveHandler::rejectInvalidDedications(
-  const char *dedicate) throw (castor::exception::Exception) {
-
-  // Extract all possible dedications
-  std::string uid     = getDedication(ptr_driveRequest->dedicate, "uid=*,"    );
-  std::string gid     = getDedication(ptr_driveRequest->dedicate, "gid=*,"    );
-  std::string name    = getDedication(ptr_driveRequest->dedicate, "name=*,"   );
-  std::string host    = getDedication(ptr_driveRequest->dedicate, "host=*,"   );
-  std::string vid     = getDedication(ptr_driveRequest->dedicate, "vid=*,"    );
-  std::string mode    = getDedication(ptr_driveRequest->dedicate, "mode=*,"   );
-  std::string datestr = getDedication(ptr_driveRequest->dedicate, "datestr=*,");
-  std::string timestr = getDedication(ptr_driveRequest->dedicate, "timestr=*,");
-  std::string age     = getDedication(ptr_driveRequest->dedicate, "age=*"     );
+  DriveDedications *dedications) throw (castor::exception::Exception) {
 
   // Reject uid, gid, name, datestr, timestr and age dedications
-  if((uid != ".*") && (uid != "")) {
+  if((dedications->uid != ".*") && (dedications->uid != "")) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
       << "TapeDriveHandler::rejectInvalidDedications(): "
-      << "uid dedications are not supported '" << uid << "' "
+      << "uid dedications are not supported '"
+      << dedications->uid << "' "
       << ptr_driveRequest->drive << "@"
       << ptr_driveRequest->server << std::endl;
     throw ex;
   }
-  if((gid != ".*") && (gid != "")) {
+  if((dedications->gid != ".*") && (dedications->gid != "")) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
       << "TapeDriveHandler::rejectInvalidDedications(): "
-      << "gid dedications are not supported '" << gid << "' "
+      << "gid dedications are not supported '"
+      << dedications->gid << "' "
       << ptr_driveRequest->drive << "@"
       << ptr_driveRequest->server << std::endl;
     throw ex;
   }
-  if((name != ".*") && (name != "")) {
+  if((dedications->name != ".*") && (dedications->name != "")) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
       << "TapeDriveHandler::rejectInvalidDedications(): "
-      << "name dedications are not supported '" << name << "' "
+      << "name dedications are not supported '"
+      << dedications->name << "' "
       << ptr_driveRequest->drive << "@"
       << ptr_driveRequest->server << std::endl;
     throw ex;
   }
-  if((datestr != ".*") && (datestr != "")) {
+  if((dedications->datestr != ".*") && (dedications->datestr != "")) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
       << "TapeDriveHandler::rejectInvalidDedications(): "
-      << "datestr dedications are not supported '" << datestr << "' "
+      << "datestr dedications are not supported '"
+      << dedications->datestr << "' "
       << ptr_driveRequest->drive << "@"
       << ptr_driveRequest->server << std::endl;
     throw ex;
   }
-  if((timestr != ".*") && (timestr != "")) {
+  if((dedications->timestr != ".*") && (dedications->timestr != "")) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
       << "TapeDriveHandler::rejectInvalidDedications(): "
-      << "timestr dedications are not supported '" << timestr << "' "
+      << "timestr dedications are not supported '"
+      << dedications->timestr << "' "
       << ptr_driveRequest->drive << "@"
       << ptr_driveRequest->server << std::endl;
     throw ex;
   }
-  if((age != ".*") && (age != "")) {
+  if((dedications->age != ".*") && (dedications->age != "")) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
       << "TapeDriveHandler::rejectInvalidDedications(): "
-      << "age dedications are not supported '" << age << "' "
+      << "age dedications are not supported '"
+      << dedications->age << "' "
       << ptr_driveRequest->drive << "@"
       << ptr_driveRequest->server << std::endl;
     throw ex;
@@ -1186,31 +1204,36 @@ void castor::vdqm::handler::TapeDriveHandler::rejectInvalidDedications(
 
   // Reject host and vid dedications that use a regular expression other
   // than ".*"
-  if((host != ".*") && !allAlphanumericOrUnderscore(host)) {
+  if((dedications->host != ".*") &&
+    !allAlphanumericOrUnderscore(dedications->host)) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
       << "TapeDriveHandler::rejectInvalidDedications(): "
-      << "Invalid host dedication '" << host << "' "
+      << "Invalid host dedication '"
+      << dedications->host << "' "
       << ptr_driveRequest->drive << "@"
       << ptr_driveRequest->server << std::endl;
     throw ex;
   }
-  if((vid != ".*") && !allAlphanumericOrUnderscore(vid)) {
+  if((dedications->vid != ".*") &&
+    !allAlphanumericOrUnderscore(dedications->vid)) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
       << "TapeDriveHandler::rejectInvalidDedications(): "
-      << "Invalid vid dedication '" << vid << "' "
+      << "Invalid vid dedication '"
+      << dedications->vid << "' "
       << ptr_driveRequest->drive << "@"
       << ptr_driveRequest->server << std::endl;
     throw ex;
   }
 
   // Reject invalid mode dedications
-  if((mode != ".*") && (mode != "0")) {
+  if((dedications->mode != ".*") && (dedications->mode != "0")) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
       << "TapeDriveHandler::rejectInvalidDedications(): "
-      << "Invalid mode dedication '" << mode << "' "
+      << "Invalid mode dedication '"
+      << dedications->mode << "' "
       << ptr_driveRequest->drive << "@"
       << ptr_driveRequest->server << std::endl;
     throw ex;

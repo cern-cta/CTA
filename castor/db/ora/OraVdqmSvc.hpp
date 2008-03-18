@@ -164,6 +164,14 @@ namespace castor {
           selectTapeDriveQueue(const std::string dgn,
           const std::string requestedSrv)
           throw (castor::exception::Exception);     
+
+        /**
+         * See the documentation for castor::vdqm::IVdqmSvc.
+         */
+        void dedicateDrive(std::string driveName, std::string serverName,
+          std::string dgName, const unsigned int accessMode,
+          std::string clientHost, std::string vid)
+          throw (castor::exception::Exception);
   
         /**
          * Selects from the TapeDriveCompatibility table all entries for the
@@ -352,6 +360,12 @@ namespace castor {
   
         /// SQL statement object for function selectTapeDrive
         oracle::occi::Statement *m_selectTapeDriveStatement;
+
+        /// SQL statement for function dedicateDrive
+        static const std::string s_dedicateDriveStatementString;
+
+        /// SQL statement object for function dedicateDrive
+        oracle::occi::Statement *m_dedicateDriveStatement;
   
         /// SQL statement for function existTapeDriveWithTapeInUse
         static const std::string s_existTapeDriveWithTapeInUseStatementString;

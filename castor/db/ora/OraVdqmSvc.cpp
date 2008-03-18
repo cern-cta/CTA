@@ -80,7 +80,11 @@ const std::string castor::db::ora::OraVdqmSvc::s_getQueuePositionStatementString
   
 /// SQL statement for function deleteAllTapeDrvsFromSrv
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveStatementString =
-  "SELECT id FROM TapeDrive WHERE driveName = :1 AND tapeServer = :2 FOR UPDATE";
+ "SELECT id FROM TapeDrive WHERE driveName = :1 AND tapeServer = :2 FOR UPDATE";
+
+/// SQL statement for function dedicateDrive
+const std::string castor::db::ora::OraVdqmSvc::s_dedicateDriveStatementString
+  = "BEGIN dedicateDrive(:1, :2, :3, :4, :5, :6, :7); END;";
   
 /// SQL statement for function existTapeDriveWithTapeInUse
 const std::string castor::db::ora::OraVdqmSvc::s_existTapeDriveWithTapeInUseStatementString =
@@ -197,6 +201,7 @@ castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   m_checkTapeRequestStatement2(0),
   m_getQueuePositionStatement(0),
   m_selectTapeDriveStatement(0),
+  m_dedicateDriveStatement(0),
   m_existTapeDriveWithTapeInUseStatement(0),
   m_existTapeDriveWithTapeMountedStatement(0),
   m_selectTapeByVidStatement(0),
@@ -248,6 +253,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
     if (m_checkTapeRequestStatement2) deleteStatement(m_checkTapeRequestStatement2);
     if (m_getQueuePositionStatement) deleteStatement(m_getQueuePositionStatement);
     if (m_selectTapeDriveStatement) deleteStatement(m_selectTapeDriveStatement);
+    if (m_dedicateDriveStatement) deleteStatement(m_dedicateDriveStatement);
     if (m_existTapeDriveWithTapeInUseStatement) deleteStatement(m_existTapeDriveWithTapeInUseStatement);
     if (m_existTapeDriveWithTapeMountedStatement) deleteStatement(m_existTapeDriveWithTapeMountedStatement);
     if (m_selectTapeByVidStatement) deleteStatement(m_selectTapeByVidStatement);
@@ -271,6 +277,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   m_checkTapeRequestStatement2 = 0;
   m_getQueuePositionStatement = 0;
   m_selectTapeDriveStatement = 0;
+  m_dedicateDriveStatement = 0;
   m_existTapeDriveWithTapeInUseStatement = 0;
   m_existTapeDriveWithTapeMountedStatement = 0;
   m_selectTapeByVidStatement = 0;
@@ -743,6 +750,102 @@ castor::vdqm::TapeDrive*
     throw ex;
   }
   // We should never reach this point
+}
+
+
+// -----------------------------------------------------------------------
+// dedicateDrive
+// -----------------------------------------------------------------------
+void castor::db::ora::OraVdqmSvc::dedicateDrive(std::string driveName,
+  std::string serverName, std::string dgName, const unsigned int accessMode,
+  std::string clientHost, std::string vid)
+  throw (castor::exception::Exception){
+
+  // Check whether the statements are ok
+  if (0 == m_dedicateDriveStatement) {
+    m_dedicateDriveStatement =
+      createStatement(s_dedicateDriveStatementString);
+    m_dedicateDriveStatement->setAutoCommit(false);
+
+    m_dedicateDriveStatement->registerOutParam(7, oracle::occi::OCCIINT);
+  }
+
+  m_dedicateDriveStatement->setString(1, driveName );
+  m_dedicateDriveStatement->setString(2, serverName);
+  m_dedicateDriveStatement->setString(3, dgName    );
+  m_dedicateDriveStatement->setInt   (4, accessMode);
+  m_dedicateDriveStatement->setString(5, clientHost);
+  m_dedicateDriveStatement->setString(6, vid       );
+
+  // Execute statement and get result
+  int result = 0;
+  try {
+    m_dedicateDriveStatement->executeUpdate();
+    result = m_dedicateDriveStatement->getInt(7);
+  } catch(oracle::occi::SQLException &e) {
+    handleException(e);
+
+    castor::exception::Internal ie;
+
+    ie.getMessage()
+      << "Failed to try to dedicate a drive: "
+      << std::endl << e.getMessage();
+
+    throw ie;
+  }
+
+  // Base on the result, continue as nomral or generate the appropriate
+  // exception
+  switch(result) {
+  case  0: // Success
+    // Do nothing
+    break;
+  case -1: // Tape drive does not exist
+    {
+      castor::exception::Exception ex(EVQNOSDRV);
+      ex.getMessage()
+        << "OraVdqmSvc::dedicateDrive(): drive record not found for drive "
+        << driveName << "@" << serverName
+        << " dgn='" << dgName << "'" << std::endl;
+
+      throw ex;
+    }
+    break;
+  case -2: // Tape server is not associated
+    {
+      castor::exception::Exception ex(EVQNOSDRV);
+      ex.getMessage()
+        << "OraVdqmSvc::dedicateDrive(): Tape server is not associated "
+        << driveName << "@" << serverName
+        << " dgn='" << dgName << "'" << std::endl;
+
+      throw ex;
+    }
+    break;
+  case -3: // Device group name is not associated
+    {
+      castor::exception::Exception ex(EVQNOSDRV);
+      ex.getMessage()
+        << "OraVdqmSvc::dedicateDrive(): Device group name is not associated "
+        << driveName << "@" << serverName
+        << " dgn='" << dgName << "'" << std::endl;
+
+      throw ex;
+    }
+    break;
+  default:
+    {
+      castor::exception::Internal ie;
+
+      ie.getMessage()
+        << "Unknown result value from dedicate drive PL/SQL procedure: "
+        << result << " "
+        << driveName << "@" << serverName
+        << " dgn='" << dgName << "'" << std::endl;
+
+      throw ie;
+    }
+  }
 }
 
 
