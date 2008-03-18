@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.44 $ $Date: 2008/03/04 15:00:49 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.45 $ $Date: 2008/03/18 14:03:35 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -35,6 +35,8 @@
 #include "vdqm_api.h"
 #endif
 #include "tplogger_api.h"
+#include <time.h>
+
 char *devtype;
 char *dvrname;
 char errbuf[512];
@@ -94,7 +96,11 @@ char	**argv;
         int writefailure;
         int vsnretry;
 
+        time_t TStartUnmount, TEndUnmount, TUnmount;
+
 	ENTRY (rlstape);
+
+        TStartUnmount = (int)time(NULL);        
 
         p = getconfent ("TAPE", "TPLOGGER", 0);
         if (p && (0 == strcasecmp(p, "SYSLOG"))) {
@@ -129,29 +135,29 @@ char	**argv;
         vsnretry = 0;
 
 	tplogit (func, "rls dvn=<%s>, vid=<%s>, rlsflags=%d\n", dvn, vid, rlsflags);
-    tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 6,
-                        "func"    , TL_MSG_PARAM_STR  , func,
-                        "Message" , TL_MSG_PARAM_STR  , "rls",
-                        "dvn"     , TL_MSG_PARAM_STR  , dvn,
-                        "vid"     , TL_MSG_PARAM_STR  , vid,
-                        "rlsflags", TL_MSG_PARAM_INT  , rlsflags,
-                        "TPVID"   , TL_MSG_PARAM_TPVID, vid );
-
-    if (rlsflags & TPRLS_DELAY) {
-        int slp = 60;
-        if ((p = getconfent ("TAPE", "CRASHED_RLS_HANDLING_RETRY_DELAY", 0))) {
-            slp = atoi(p)>0?atoi(p):60;
-        }                
-        tplogit (func, "release delayed for %d seconds\n", slp);
-        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 5,
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 6,
                             "func"    , TL_MSG_PARAM_STR  , func,
-                            "Message" , TL_MSG_PARAM_STR  , "release delayed",
-                            "seconds" , TL_MSG_PARAM_INT  , slp,
+                            "Message" , TL_MSG_PARAM_STR  , "rls",
+                            "dvn"     , TL_MSG_PARAM_STR  , dvn,
                             "vid"     , TL_MSG_PARAM_STR  , vid,
+                            "rlsflags", TL_MSG_PARAM_INT  , rlsflags,
                             "TPVID"   , TL_MSG_PARAM_TPVID, vid );
-        sleep(slp);
-    }
-
+        
+        if (rlsflags & TPRLS_DELAY) {
+                int slp = 60;
+                if ((p = getconfent ("TAPE", "CRASHED_RLS_HANDLING_RETRY_DELAY", 0))) {
+                        slp = atoi(p)>0?atoi(p):60;
+                }                
+                tplogit (func, "release delayed for %d seconds\n", slp);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 5,
+                                    "func"    , TL_MSG_PARAM_STR  , func,
+                                    "Message" , TL_MSG_PARAM_STR  , "release delayed",
+                                    "seconds" , TL_MSG_PARAM_INT  , slp,
+                                    "vid"     , TL_MSG_PARAM_STR  , vid,
+                                    "TPVID"   , TL_MSG_PARAM_TPVID, vid );
+                sleep(slp);
+        }
+        
 #if SONYRAW
 	if (strcmp (devtype, "DIR1") == 0 && den == SRAW)
 		sonyraw = 1;
@@ -388,7 +394,15 @@ unload_loop:
 	if (*loader != 'm') {
 		demountforce = 0;
 		do {
-            vsnretry++;
+                        vsnretry++;
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 79, 7,
+                                            "func"    , TL_MSG_PARAM_STR  , func,
+                                            "VID"     , TL_MSG_PARAM_STR  , vid,
+                                            "Drive"   , TL_MSG_PARAM_STR  , drive, 
+                                            "DGN"     , TL_MSG_PARAM_STR  , dgn,
+                                            "Hostname", TL_MSG_PARAM_STR  , hostname,
+                                            "Job ID"  , TL_MSG_PARAM_INT  , jid,
+                                            "TPVID"   , TL_MSG_PARAM_TPVID, vid );
 			c = rbtdemount (vid, drive, dvn, loader, demountforce,vsnretry);
 			if ((n = rbtdmntchk (&c, drive, &demountforce)) < 0)
 				goto freevol;
@@ -461,6 +475,17 @@ freedrv:
                             "func" , TL_MSG_PARAM_STR  , func,
                             "vid"  , TL_MSG_PARAM_STR  , vid,
                             "TPVID", TL_MSG_PARAM_TPVID, vid );
+
+        /* get the time for unmount */
+        TEndUnmount = (int)time(NULL); 
+        TUnmount = ((time_t)TEndUnmount - (time_t)TStartUnmount);
+        
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 92, 5,
+                            "func"       , TL_MSG_PARAM_STR  , func,
+                            "unmounttime", TL_MSG_PARAM_INT  , TUnmount,
+                            "tapemoved"  , TL_MSG_PARAM_STR  , (rlsflags & TPRLS_NOUNLOAD)?"no":"yes", 
+                            "vid"        , TL_MSG_PARAM_STR  , vid,
+                            "TPVID"      , TL_MSG_PARAM_TPVID, vid );
 
         tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );
 	exit (c);

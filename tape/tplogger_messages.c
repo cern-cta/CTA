@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger_messages.c,v 1.9 2008/02/26 13:27:27 wiebalck Exp $
+** $Id: tplogger_messages.c,v 1.10 2008/03/18 14:03:31 wiebalck Exp $
 */
 
 #include <string.h>
@@ -162,6 +162,8 @@ tplogger_message_t tplogger_messages_tpdaemon[] = {
         {  75, TL_LVL_IMPORTANT,  "TP075 - Tape released"                       },
         {  76, TL_LVL_IMPORTANT,  "TP076 - Free drive request"                  },
         {  77, TL_LVL_IMPORTANT,  "TP077 - Drive put down"                      },
+        {  78, TL_LVL_IMPORTANT,  "TP078 - Put tape into drive (TP020)"         },
+        {  79, TL_LVL_IMPORTANT,  "TP079 - Remove tape from drive"              },
 
         /* tape alerts */
         {  80, TL_LVL_ERROR,      "TP080 - Tape alerts error"                   },
@@ -175,6 +177,9 @@ tplogger_message_t tplogger_messages_tpdaemon[] = {
         {  88, TL_LVL_WARNING,    "TP088 - Bad MIR request continued"           },
         {  89, TL_LVL_ERROR,      "TP089 - Bad MIR repair failed"               },
         {  90, TL_LVL_MONITORING, "TP090 - Bad MIR repair finished"             },
+
+        {  91, TL_LVL_IMPORTANT,  "TP091 - Mount summary"                       },
+        {  92, TL_LVL_IMPORTANT,  "TP092 - Unmount summary"                     },
 
         /* general messages */
         { 101, TL_LVL_EMERGENCY , "TP101 - General Emergency Message"           },  

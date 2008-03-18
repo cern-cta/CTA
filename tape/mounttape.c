@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.64 $ $Date: 2008/03/04 15:00:49 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.65 $ $Date: 2008/03/18 14:03:35 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -46,6 +46,7 @@
 #include "tplogger_api.h"
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
+#include <time.h>
 
 char *acctname;
 char *devtype;
@@ -137,12 +138,16 @@ char	**argv;
 	char *why;
 	int why4a;
     
+        time_t TStartMount, TEndMount, TMount;
+
         char *getconfent();
 	void cleanup();
 	void mountkilled();
         static int repairbadmir();
 
 	ENTRY (mounttape);
+
+        TStartMount = (int)time(NULL);      
 
         p = getconfent ("TAPE", "TPLOGGER", 0);
         if (p && (0 == strcasecmp(p, "SYSLOG"))) {
@@ -329,13 +334,14 @@ char	**argv;
                          name, jid, why);
                 
                 tplogit (func, "%s\n", msg);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 20, 11,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 78, 12,
                                     "func"    , TL_MSG_PARAM_STR  , func,
                                     "Message" , TL_MSG_PARAM_STR  , msg,
                                     "VID"     , TL_MSG_PARAM_STR  , vid,
                                     "Label"   , TL_MSG_PARAM_STR  , labels[lblcode],
                                     "Rings"   , TL_MSG_PARAM_STR  , rings, 
                                     "Drive"   , TL_MSG_PARAM_STR  , drive, 
+                                    "DGN"     , TL_MSG_PARAM_STR  , dgn,
                                     "Hostname", TL_MSG_PARAM_STR  , hostname, 
                                     "Name"    , TL_MSG_PARAM_STR  , name,
                                     "Job ID"  , TL_MSG_PARAM_INT  , jid,
@@ -980,6 +986,17 @@ reply:
                             "func" , TL_MSG_PARAM_STR  , func,
                             "vid"  , TL_MSG_PARAM_STR  , vid,
                             "TPVID", TL_MSG_PARAM_TPVID, vid );
+
+        /* get the time for unmount */
+        TEndMount = (int)time(NULL); 
+        TMount = ((time_t)TEndMount - (time_t)TStartMount);
+        
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 91, 4,
+                            "func"     , TL_MSG_PARAM_STR  , func,
+                            "mounttime", TL_MSG_PARAM_INT  , TMount,
+                            "vid"      , TL_MSG_PARAM_STR  , vid,
+                            "TPVID"    , TL_MSG_PARAM_TPVID, vid );
+
         if (!c) {
                 /* tl_exit has been called in clenaup() already,
                    double free leads to crash */
