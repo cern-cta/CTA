@@ -272,15 +272,16 @@
 #define ESTKILLED       ESTBASEOFF+13	/* aborted by kill */
 #define ESTMEM          ESTBASEOFF+14	/* request too long (api) */
 #define ESTCONF         ESTBASEOFF+15	/* Stage configuration error */
-#define ESTSEGNOACC     ESTBASEOFF+16	/* Required tape segments are not all accessible */
+#define ESTSEGNOACC     ESTBASEOFF+16	/* Unreadable file on tape (segments not all accessible) */
 #define ESTREPLFAILED   ESTBASEOFF+17	/* File replication failed */
 #define ESTNOTAVAIL     ESTBASEOFF+18	/* File is currently not available */
 #define ESTJOBKILLED	ESTBASEOFF+19   /* Job killed by service administrator */
 #define ESTJOBTIMEDOUT	ESTBASEOFF+20	/* Job timed out while waiting to be scheduled */
 #define ESTSCHEDERR     ESTBASEOFF+21   /* Scheduler error */
 #define ESTSVCCLASSNOFS ESTBASEOFF+22   /* No filesystems available in service class */
-#define ESTNOSEGFOUND   ESTBASEOFF+23   /* No tape segment found */
-#define ESTMAXERR       ESTBASEOFF+23
+#define ESTNOSEGFOUND   ESTBASEOFF+23   /* File has no copy on tape */
+#define ESTTAPEOFFLINE  ESTBASEOFF+24   /* File is on an offline tape */
+#define ESTMAXERR       ESTBASEOFF+24
 
 /*
  *------------------------------------------------------------------------

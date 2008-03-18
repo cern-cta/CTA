@@ -402,6 +402,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               exception/SQLError.cpp \
               exception/TooBig.cpp \
               exception/SegmentNotAccessible.cpp \
+	      exception/TapeOffline.cpp \
               query/DiskPoolQueryResponseCInt.cpp \
               query/DiskPoolQueryResponse.cpp \
               query/FileSystemDescriptionCInt.cpp \
