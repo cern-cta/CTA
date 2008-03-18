@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/02/21 16:32:33 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/03/18 07:34:43 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -50,14 +50,14 @@ int main(int argc, char *argv[]) {
 
   try {
     castor::jobmanager::JobManagerDaemon daemon;
-    
+
     // Attempt to find the LSF cluster and master name for logging purposes.
     // This isn't really required but could be useful for future debugging
     // efforts
     std::string clusterName("Unknown");
     std::string masterName("Unknown");
     char **results = NULL;
-    
+
     // Errors are ignored here!
     lsb_init("JobManager");
     clusterInfo *cInfo = ls_clusterinfo(NULL, NULL, results, 0, 0);
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
 
     // Create the preforked workers used to submit jobs into LSF. We do this
     // before creating any threads to minimise duplication of thread specific
-    // data in the child process. 
+    // data in the child process.
     char *value = getconfent("JobManager", "PreforkedWorkers", 0);
     int processes = DEFAULT_PREFORKED_WORKERS;
     if (value) {
@@ -90,8 +90,8 @@ int main(int argc, char *argv[]) {
     }
 
     // Determine if the job manager should perform sanity checks on the uids
-    // that it retrieves from the database. These checks include a reverse 
-    // lookup of uid to username and checks to see if the user belongs to the 
+    // that it retrieves from the database. These checks include a reverse
+    // lookup of uid to username and checks to see if the user belongs to the
     // group reported.
     value = getconfent("JobManager", "ReverseUidLookups", 0);
     bool reverseUidLookups = true;
@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
     value = getconfent("JobManager", "SharedLSFResource", 0);
     if (!value) {
       castor::exception::Exception e(EINVAL);
-      e.getMessage() << "Missing configuration option " 
+      e.getMessage() << "Missing configuration option "
 		     << "JobManager/SharedLSFResource" << std::endl;
       throw e;
     }
@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
       e.getMessage() << "Invalid syntax for JobManager/SharedLSFResource: "
 		     << value << " - must start with file:// or http://"
 		     << std::endl;
-      throw e;      
+      throw e;
     }
 
     // Forked Process Pool
@@ -143,9 +143,9 @@ int main(int argc, char *argv[]) {
 	notifyPort = castor::System::porttoi(value);
       } catch (castor::exception::Exception ex) {
 	castor::exception::Exception e(EINVAL);
-	e.getMessage() << "Invalid JOBMANAGER/NOTIFYPORT value: " 
+	e.getMessage() << "Invalid JOBMANAGER/NOTIFYPORT value: "
 		       << ex.getMessage() << std::endl;
-	throw e;	
+	throw e;
       }
     }
 
@@ -160,7 +160,7 @@ int main(int argc, char *argv[]) {
     daemon.addNotifierThreadPool(notifyPort);
 
     // Determine the polling interval for the management thread. This thread
-    // communicates with LSF. A polling interval which is too small will most 
+    // communicates with LSF. A polling interval which is too small will most
     // likely stress the LSF master unnecessarily, maybe even kill it!
     value = getconfent("JobManager", "ManagementInterval", 0);
     int interval = DEFAULT_MANAGEMENT_INTERVAL;

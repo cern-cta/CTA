@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DispatchThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/01/09 14:16:47 $ $Author: waldron $
+ * @(#)$RCSfile: DispatchThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/03/18 07:34:43 $ $Author: waldron $
  *
- * A thread used to dispatch subrequest's in a SUBREQUEST_READYFORSCHED into 
+ * A thread used to dispatch subrequest's in a SUBREQUEST_READYFORSCHED into
  * the scheduler using the forked process pool
  *
  * @author Dennis Waldron
@@ -50,7 +50,7 @@ castor::jobmanager::DispatchThread::DispatchThread
     e.getMessage() << "Unable to get OraJobManagerSVC for DispatchThread";
     throw e;
   }
-  m_jobManagerService = 
+  m_jobManagerService =
     dynamic_cast<castor::jobmanager::IJobManagerSvc *>(orasvc);
   if (m_jobManagerService == NULL) {
     castor::exception::Internal e;
@@ -66,18 +66,18 @@ castor::jobmanager::DispatchThread::DispatchThread
 //-----------------------------------------------------------------------------
 castor::IObject *castor::jobmanager::DispatchThread::select() throw() {
   try {
-    castor::jobmanager::JobSubmissionRequest *result = 
+    castor::jobmanager::JobSubmissionRequest *result =
       m_jobManagerService->jobToSchedule();
     return result;
   } catch (castor::exception::Exception e) {
-    
+
     // "Exception caught selecting a new job to schedule in DispatchThread::select"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Type", sstrerror(e.code())),
        castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 61, 2, params);
   } catch (...) {
-    
+
     // "Failed to execute jobToSchedule procedure in DispatchThread::select"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", "General exception caught")};
@@ -105,7 +105,7 @@ void castor::jobmanager::DispatchThread::process(castor::IObject *param) throw()
   m_fileId.fileid = request->fileId();
   strncpy(m_fileId.server, request->nsHost().c_str(), CA_MAXHOSTNAMELEN);
   m_fileId.server[CA_MAXHOSTNAMELEN] = '\0';
-    
+
   // "Job received"
   castor::dlf::Param params[] =
     {castor::dlf::Param("ID", request->id()),
@@ -115,14 +115,14 @@ void castor::jobmanager::DispatchThread::process(castor::IObject *param) throw()
   try {
     m_processPool->dispatch(*param);
   } catch (castor::exception::Exception e) {
-        
+
     // Attempt to restart the job for later selection and processing
     try {
-      m_jobManagerService->updateSchedulerJob(request, 
+      m_jobManagerService->updateSchedulerJob(request,
         castor::stager::SUBREQUEST_READYFORSCHED);
     } catch (castor::exception::Exception e) {
-      
-      // "Exception caught trying to restart a job in DispatchThread::process, 
+
+      // "Exception caught trying to restart a job in DispatchThread::process,
       // job will remain incorrectly in SUBREQUEST_BEINGSCHED"
       castor::dlf::Param params[] =
 	{castor::dlf::Param("Type", sstrerror(e.code())),
@@ -132,7 +132,7 @@ void castor::jobmanager::DispatchThread::process(castor::IObject *param) throw()
       castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 63, 4, params, &m_fileId);
     } catch (...) {
 
-      // "Failed to execute updateSchedulerJob in DispatchThread::process, 
+      // "Failed to execute updateSchedulerJob in DispatchThread::process,
       // job will remain incorrectly in SUBREQUEST_BEINGSCHED"
       castor::dlf::Param params[] =
 	{castor::dlf::Param("Message", "General exception caught"),

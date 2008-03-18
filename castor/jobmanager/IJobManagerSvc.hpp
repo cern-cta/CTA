@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobManagerSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/02/21 16:10:56 $ $Author: waldron $
+ * @(#)$RCSfile: IJobManagerSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/03/18 07:34:43 $ $Author: waldron $
  *
  * This class provides methods for managing jobs
  *
@@ -45,13 +45,13 @@ namespace castor {
      * This classs provides methods related to managing jobs in the database
      */
     class IJobManagerSvc: public virtual castor::stager::ICommonSvc {
-      
+
     public:
-      
+
       /**
        * Terminate a subrequest in SUBREQUEST_STAGEOUT i.e. waiting to be
        * started on a diskserver. Set the subrequest to SUBREQUEST_FAILED
-       * with the given error code. The stager error service will then pick 
+       * with the given error code. The stager error service will then pick
        * up the subrequest and notify the client of the termination.
        * @param subReqId The SubRequest id to update
        * @param errorCode The error code associated with the failure
@@ -91,7 +91,7 @@ namespace castor {
       <std::string, castor::jobmanager::DiskServerResource *>*
       getSchedulerResources()
 	throw(castor::exception::Exception) = 0;
-      
+
       /**
        * This method is called when a StageDiskCopyReplicaRequest exits the
        * LSF queue. It is designed to check that the status of the diskcopy

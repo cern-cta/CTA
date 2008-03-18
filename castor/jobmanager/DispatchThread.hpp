@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DispatchThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/10/22 17:57:19 $ $Author: itglp $
+ * @(#)$RCSfile: DispatchThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/03/18 07:34:43 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -40,9 +40,9 @@ namespace castor {
      * Dispatch Thread
      */
     class DispatchThread: public virtual castor::server::SelectProcessThread {
-      
+
     public:
-      
+
       /**
        * Default constructor
        */
@@ -55,7 +55,7 @@ namespace castor {
        */
       DispatchThread(castor::server::ForkedProcessPool *processPool)
 	throw(castor::exception::Exception);
-      
+
       /**
        * Default destructor
        */
@@ -63,7 +63,7 @@ namespace castor {
 
       /**
        * Select a new job from the database that requires scheduling. This
-       * method is called periodically and also woken up by external 
+       * method is called periodically and also woken up by external
        * notification from the stager.
        */
       virtual castor::IObject* select() throw();

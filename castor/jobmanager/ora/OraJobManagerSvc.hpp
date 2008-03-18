@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobManagerSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/02/21 16:10:57 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobManagerSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/03/18 07:34:44 $ $Author: waldron $
  *
  * Implementation of the IJobManagerSvc for Oracle
  *
@@ -63,7 +63,7 @@ namespace castor {
 	 * Default destructor
 	 */
 	virtual ~OraJobManagerSvc() throw();
-	
+
 	/**
 	 * Get the service id
 	 */
@@ -73,7 +73,7 @@ namespace castor {
 	 * Get the service id
 	 */
 	static const unsigned int ID();
-	
+
 	/**
 	 * Reset the converter statements
 	 */
@@ -82,7 +82,7 @@ namespace castor {
 	/**
 	 * Terminate a subrequest in SUBREQUEST_STAGEOUT i.e. waiting to be
 	 * started on a diskserver. Set the subrequest to SUBREQUEST_FAILED
-	 * with the given error code. The stager error service will then pick 
+	 * with the given error code. The stager error service will then pick
 	 * up the subrequest and notify the client of the termination.
 	 * @param subReqId The SubRequest id to update
 	 * @param errorCode The error code associated with the failure
@@ -91,7 +91,7 @@ namespace castor {
 	virtual bool failSchedulerJob
 	(const std::string subReqId, const int errorCode)
 	  throw(castor::exception::Exception);
-	
+
 	/**
 	 * Retrieve the next job to be scheduled from the database with
 	 * status SUBREQUEST_READYFORSCHED.

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ManagementThread.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/26 15:12:25 $ $Author: waldron $
+ * @(#)$RCSfile: ManagementThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/18 07:34:43 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -47,9 +47,9 @@ namespace castor {
      * Management Thread
      */
     class ManagementThread: public castor::server::IThread {
-      
+
     public:
-      
+
       /**
        * Default constructor
        */
@@ -86,7 +86,7 @@ namespace castor {
        * @param job The LSF job structure
        */
       virtual void processJob(jobInfoEnt *job);
-    
+
       /**
        * Terminate a LSF job and the subrequest associated with it using the
        * provided error code.
@@ -98,7 +98,7 @@ namespace castor {
        * @param errorCode The error code to use when terminating the job
        */
       virtual bool terminateRequest(LS_LONG_INT jobId,
-				    Cuuid_t requestId, 
+				    Cuuid_t requestId,
 				    Cuuid_t subRequestId,
 				    Cns_fileid fileId,
 				    int errorCode);
@@ -122,16 +122,16 @@ namespace castor {
 
       /// Kill jobs if all requested filesystems are no longer available?
       bool m_resReqKill;
-      
+
       /// The maximum pending time in LSF
       u_signed64 m_diskCopyPendingTimeout;
 
       /// A container holding the timeout values for all service classes
       std::map<std::string, u_signed64> m_pendingTimeouts;
- 
+
       /// A container holding a list of jobs already processed
       std::map<std::string, u_signed64> m_processedCache;
-    
+
       /// A container holding the resources available for scheduling
       std::map<std::string, castor::jobmanager::DiskServerResource *>
       *m_schedulerResources;
