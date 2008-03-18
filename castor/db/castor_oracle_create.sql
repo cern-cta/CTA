@@ -161,7 +161,7 @@ CREATE TABLE FirstByteWritten (flags INTEGER, userName VARCHAR2(2048), euid NUMB
 CREATE TABLE StageGetRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StageGetRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StgFilesDeleted */
-CREATE TABLE StgFilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StgFilesDeleted_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StgFilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT I_StgFilesDeleted_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type DiskPoolQuery */
 CREATE TABLE DiskPoolQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskPoolName VARCHAR2(2048), id INTEGER CONSTRAINT I_DiskPoolQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -180,7 +180,7 @@ ALTER TABLE Stream2TapeCopy
   ADD CONSTRAINT fk_Stream2TapeCopy_C FOREIGN KEY (Child) REFERENCES TapeCopy (id);
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_7_0');
+INSERT INTO CastorVersion VALUES ('-', '2_1_7_1');
 
 /* Fill Type2Obj metatable */
 CREATE TABLE Type2Obj (type INTEGER PRIMARY KEY NOT NULL, object VARCHAR2(100) NOT NULL, svcHandler VARCHAR2(100));
@@ -314,7 +314,7 @@ INSERT INTO Type2Obj (type, object) VALUES (150, 'StgFilesDeletedResponse');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleCommon.sql,v  Revision: 1.641  Date: 2008/03/12 18:15:46  Author: itglp 
+ * @(#)RCSfile: oracleCommon.sql,v  Revision: 1.642  Date: 2008/03/14 10:29:41  Author: itglp 
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -1138,7 +1138,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
 END castorBW;
 /*******************************************************************
  *
- * @(#)RCSfile: oracleStager.sql,v  Revision: 1.649  Date: 2008/03/13 16:32:15  Author: itglp 
+ * @(#)RCSfile: oracleStager.sql,v  Revision: 1.650  Date: 2008/03/18 07:06:49  Author: waldron 
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -2957,12 +2957,12 @@ BEGIN
             SELECT ids_seq.nextval INTO fsId FROM DUAL;
             INSERT INTO FileSystem (free, mountPoint,
                    minFreeSpace, minAllowedFreeSpace, maxFreeSpace,
-                   spaceToBeFreed, totalSize, readRate, writeRate, nbReadStreams,
+                   totalSize, readRate, writeRate, nbReadStreams,
                    nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams,
                    id, diskPool, diskserver, status, adminStatus)
             VALUES (fileSystemValues(ind + 9), fileSystems(i), fileSystemValues(ind+11),
                     fileSystemValues(ind+13), fileSystemValues(ind+12),
-                    0, fileSystemValues(ind + 10), fileSystemValues(ind + 2),
+                    fileSystemValues(ind + 10), fileSystemValues(ind + 2),
                     fileSystemValues(ind + 3), fileSystemValues(ind + 4),
                     fileSystemValues(ind + 5), fileSystemValues(ind + 6),
                     fileSystemValues(ind + 7), fileSystemValues(ind + 8),
@@ -4199,7 +4199,7 @@ BEGIN
 END;
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTape.sql,v  Revision: 1.647  Date: 2008/03/12 18:19:37  Author: itglp 
+ * @(#)RCSfile: oracleTape.sql,v  Revision: 1.649  Date: 2008/03/18 07:08:25  Author: waldron 
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -4927,6 +4927,26 @@ END;
 
 
 /** Functions for the MigHunterDaemon **/
+
+/** Cleanup before starting a new MigHunterDaemon **/
+CREATE OR REPLACE PROCEDURE migHunterCleanUp(svcName IN VARCHAR2)
+AS
+  svcId NUMBER;
+BEGIN
+  SELECT id INTO svcId FROM SvcClass WHERE name = svcName;
+  -- clean up tapecopies , WAITPOLICY reset into TOBEMIGRATED 
+  UPDATE TapeCopy A SET status = 1
+   WHERE status = 7 AND EXISTS (
+     SELECT 'x' FROM CastorFile 
+      WHERE CastorFile.id = A.castorfile
+        AND CastorFile.svcclass = svcId);
+  -- clean up streams, WAITPOLICY reset into CREATED			
+  UPDATE Stream SET status = 5 WHERE status = 7 AND tapepool IN
+   (SELECT svcclass2tapepool.child 
+      FROM svcclass2tapepool 
+     WHERE svcId = svcclass2tapepool.parent);
+  COMMIT;
+END;
 
 /* Get input for python migration policy */
 CREATE OR REPLACE PROCEDURE inputForMigrationPolicy
