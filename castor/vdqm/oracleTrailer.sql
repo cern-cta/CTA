@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.39 $ $Release$ $Date: 2008/03/18 13:51:34 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.40 $ $Release$ $Date: 2008/03/18 17:43:57 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -723,20 +723,24 @@ END;
  * @param clientHostVar the client host dedication
  * @param vidVar the vid dedication
  * @param resultVar is 0 if the dedications were successfully inserted into the
- * database, -1 if the specified tape drive does not exist and -2 if the
- * specified tape drive and tape server combination does not exist
+ * database, -1 if the specified tape drive does not exist, -2 if the
+ * specified tape server is not associated with the specified tape drive and -3
+ * if the specified dgn is not associated with the specified tape drive
  */
 CREATE OR REPLACE PROCEDURE dedicateDrive
-( driveNameVar IN VARCHAR2
-, serverNameVar IN VARCHAR2
-, accessModeVar IN NUMBER
-, clientHostVar IN VARCHAR2
-, vidVar IN VARCHAR2
-, resultVar OUT INTEGER
+( driveNameVar  IN  VARCHAR2
+, serverNameVar IN  VARCHAR2
+, dgNameVar     IN  VARCHAR2
+, accessModeVar IN  NUMBER
+, clientHostVar IN  VARCHAR2
+, vidVar        IN  VARCHAR2
+, resultVar     OUT INTEGER
 ) AS
   driveIdVar           NUMBER;
+  dgnIdVar             NUMBER;
   serverIdVar          NUMBER;
   nbMatchingServersVar NUMBER;
+  nbMatchingDgnsVar    NUMBER;
   dedicationIdVar      NUMBER;
 BEGIN
   resultVar := 0;
@@ -744,8 +748,8 @@ BEGIN
   -- Lock the tape drive row
   BEGIN
     SELECT
-      TapeDrive.id, TapeDrive.tapeServer
-      INTO driveIdVar, serverIdVar
+      TapeDrive.id, TapeDrive.deviceGroupName, TapeDrive.tapeServer
+      INTO driveIdVar, dgnIdVar, serverIdVar
       FROM TapeDrive
       INNER JOIN TapeServer ON
         TapeDrive.tapeServer = TapeServer.id
@@ -769,6 +773,18 @@ BEGIN
     RETURN;
   END IF;
 
+  -- Check the specified dgn is associated with the tape server
+  SELECT count(*) INTO nbMatchingDgnsVar
+    FROM DeviceGroupName
+    WHERE
+          DeviceGroupName.id     = dgnIdVar
+      AND DeviceGroupName.dgName = dgNameVar;
+
+  IF nbMatchingDgnsVar = 0 THEN
+    resultVar := -3; -- Tape server is not associated with dgn
+    RETURN;
+  END IF;
+
   -- Delete all existing dedications associated with tape drive
   DELETE FROM TapeDriveDedication
     WHERE tapeDrive = driveIdVar;
@@ -781,14 +797,14 @@ BEGIN
     INSERT INTO Id2Type (id, type)
       VALUES (dedicationIdVar, 90);
   END IF;
-  IF (clientHostVar != '') AND (clientHostVar != '.*') THEN
+  IF (clientHostVar IS NOT NULL) AND (clientHostVar != '.*') THEN
     INSERT INTO TapeDriveDedication(id, tapeDrive, clientHost)
       VALUES(ids_seq.nextval, driveIdVar, clientHostVar)
     RETURNING id INTO dedicationIdVar;
     INSERT INTO Id2Type (id, type)
       VALUES (dedicationIdVar, 90);
   END IF;
-  IF (vidVar != '') AND (vidVar != '.*') THEN
+  IF (vidVar IS NOT NULL) AND (vidVar != '.*') THEN
     INSERT INTO TapeDriveDedication(id, tapeDrive, vid)
       VALUES(ids_seq.nextval, driveIdVar, vidVar)
     RETURNING id INTO dedicationIdVar;
