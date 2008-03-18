@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/03/12 10:31:39 $ $Author: waldron $
+ * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/03/18 07:05:18 $ $Author: waldron $
  *
  * Castor LSF External Plugin - Phase 2 (Python)
  *
@@ -875,8 +875,7 @@ extern "C" {
     // measured to the accuracy of 1 second 
     timeval tv;
     gettimeofday(&tv, NULL);
-    signed64 queueTime = ((tv.tv_sec * 1000000) + tv.tv_usec) - 
-      (j->submitTime * 1000000);
+    signed64 queueTime = ((tv.tv_sec - j->submitTime) * 1000000) + tv.tv_usec;
 
     // "Wrote notification file"
     castor::dlf::Param param[] = 
