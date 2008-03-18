@@ -1,3 +1,268 @@
+-----------
+- 2.1.7-1 -
+-----------
+
+  Highlights
+  ----------
+
+  
+  Package changes
+  ---------------
+  - The nsGetPath command has moved from the castor-hsmtools package to castor-ns-client
+    and renamed to nsgetpath
+  - The contents of the castor-commands package has been moved to the castor-stager-client
+    and the castor-commands package has been discontinued.
+  - The follow packages are no longer distributed: castor-scriptlets, castor-msg-client,
+    castor-msg-server, castor-monitor-server and castor-commands
+
+
+  Bug Fixes
+  ---------
+  - #1441:  nlinks in name server
+  - #27610: vmgrmodifytape error message incorrect
+  - #27622: nslisttape needs a fast 'total files' option
+  - #27681: nsGetPath and related utilities
+  - #27736: nslisttape information on a fseq
+  - #29037: vmgrmodifytape anomaly concerning library change
+  - #29809: rh server logging: incoming requests
+  - #29942: nslisttape to return non-zero exit status if VID not found
+  - #30391: daemons on castor should be stateless and redundant: rmMasterDaemon
+  - #30993: RFE vmgrlistpool and vmgrlisttape output for scripts
+  - #31247: ns client should retry if server not available
+  - #31616: prepareToGet requests sometime doesn't fill tape segment information
+  - #32903: db schema change scripts have hard-coded table names
+  - #33949: Failure of vmgrdeletepool for empty pool
+
+
+  Available in 2.1.6-11
+  ---------------------	
+  - #33253: Error_Code=BAD ERROR NUMBER: 0
+  - #33558: weird paths cause name server client to hang which cause stager to hang
+  - #34025: 2.1.6-10: timeouts kill jobmanager
+  - #31481: Problems with white/blacklists on c2atlas
+  - #33091: tpdaemon does not clean up if rlstape dumps
+  - #34292: Stager segmentation faults when making a DLF log
+  - #20354: recreation of CASTOR file doesn't reset the filesize in the name server
+  - #20887: creation of read only files in CASTOR
+  - Fixed memory leak in the rmMasterDaemon.
+  - Fixed the arguments being passed through to the recall policies.
+  - Fixed the bad handling of disabled segments in the repack server which would cause the
+    name server to become unresponsive.
+  - Fixed the concurrent updates problem.
+  - Fixed the scheduler plugin to allow disk2disk copying from a draining filesystem.
+  - Fixed a bug in the gcDaemon which prevented the synchronisation of the diskservers 
+    contents with the stager for files over 2GB.
+  - Fixed the disk2DiskCopyFailed procedure so that it correctly restarts waiting 
+    subrequests when a prior call to disk2DiskCopyStart was never issued.
+  - Fixed the resource killing logic of the jobManager to respect disk2disk copy 
+    replication requests and the detection of service classes with no filesystems in 
+    production.
+  - Optimization of the gc to fix scalability issues with stagers that have millions
+    of diskcopies.
+  - Optimised the processing of filesystems when they move from disabled to production.
+  - Fixed the ownership of the gridftp log file for internal transfers
+  - Changed the logging of gridftp to be more suitable
+
+
+  Available in 2.1.6-10
+  ---------------------
+  - #33251: invalid cursor on FILESDELETEDPROC
+  - #33419: ATLAS migrator errors => missing diskcopies
+  - #33879: wrong FREE SPACE % and put jobs still accepted for full pool
+  - Fixed the 'communication errors' between nameserver and gcDaemon when trying to 
+    synchronise the diskserver contents with the nameserver.
+  - Fixed segmentation fault in gcDaemon when trying to extract the fileid from a file on 
+    disk which does not conform to the castor naming conventions.
+  - Fixed random writing of zero sized files during replication
+  - Fixed UDP notification problems between headnode daemons leading to poor response times.
+
+
+  Available in 2.1.6-9
+  ---------------------
+  - Made the client timeout tunable so that repack can have longer timeouts
+  - Fixed bug in stageForcedRm leading to not answering the client in all cases
+  - Tuning for inputForMigrationgPolicy
+  - Ignore temporary tables in tableShrink procedure
+  - Changed sleeping time for the error svc thread pool
+  - In case of failures explicitly call the disk2DiskCopyFailed procedure in order to 
+    avoid accumulation of WAITDISK2DISKCOPY in case of timeouts.
+  - After a disk to disk copy, make sure that the size of the replica is equal in size to
+    the original file. This allows to detect transfer failures.
+  - Fixed resurrectCandidates to avoid to resurrect candidates that are actually already
+    attached to a stream.
+
+
+  Testing
+  ---------
+  - #32295: Removal of the lddisplay command
+  - #32901: scheduling slowdown
+  - #32954: Make the response to a LIBRARY_FAILURE more flexible
+  - #33091: tpdaemon does not clean up if rlstape dumps
+  - #33250: garbage collection not scaling
+  - #33301: Continuing problem with castor filesize after concurrent StageUpdateRequests
+  - #33418: Errors in BESTTAPECOPYFORSTREAM that explain tape timeouts
+  - #34027: PROCESSPREPAREREQUEST: exact fetch returns more than requested number of rows
+
+
+  Planned
+  ---------
+  - #29786: Add support for CLOB in the CASTOR code generation
+  - #31217: SubRequest in status WAITSUBREQ without a valid parent
+
+
+  Upgrading from 2.1.6-*
+  --------------------
+
+   Software Upgrades
+   -----------------
+
+    Central services
+    ----------------
+
+    Although there are modifications to the central services (CNS, VMGR and CUPV)
+    within this release, they are not mandatory for the correct operation and running
+    of a 2.1.7 stager instance of CASTOR2. As a result the upgrade of the following 
+    packages:
+
+      - castor-ns-server
+      - castor-vmgr-server
+      - castor-upv-server
+
+    are not prerequisites for installing 2.1.7 stagers. However, if you wish to
+    benefit from enhanced client-side functionality or minor bug fixes in these services
+    you will need to upgrade. (Note: 2.1.7 CNS, VMGR and CUPV clients support 
+    backwards compatibility with pre 2.1.7 services). If you wish to upgrade repack to 
+    2.1.7 then the CNS (Castor Name Server) must also be upgraded.
+
+      Instructions
+      ------------
+      1. For the CNS (Castor Name Server), VMGR and CUPV services upgrade the software
+         to use the 2.1.7 RPMS. Note: the services may not come back automatically. This
+         is a known bug which is fixed in this release.
+ 
+    Stager
+    ------
+
+    Before upgrading to a 2.1.7 stager instance of CASTOR2 please make sure to read the 
+    upgrade instructions fully before proceeding. It is highly recommended to have an 
+    Oracle DBA on standby while upgrading the stager database just in case a database
+    restoration is required.
+    
+    Note: to upgrade to this version of CASTOR2 all jobs PEND'ing in the LSF queue will
+    need to be terminated. In order to reduce the visible impact of the upgrade to the
+    users in terms of failed transfers it is recommended to suspend any new user 
+    activity from entering the instance several hours before the upgrade.
+
+      Instructions
+      ------------
+      1. Stop all daemons on both the stager headnodes and diskservers. This includes: 
+         rhserver, stager, cleaning, jobManager, rtcpclientd, mighunter, rechandler,
+         rmMasterDaemon, rmNodeDaemon, expertd, dlfserver, rfiod and gcDaemon
+      2. Verify that all sessions from CASTOR2 related daemons to the database are gone.
+         This step is advised to make sure that modifications are no longer being made
+         to the database.
+      3. Ask your DBA to create a backup of the database (better to be safe then sorry)
+      4. Upgrade the stager and dlf databases using the correct upgrade scripts from
+         - http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-1/upgrades
+         - Note: If upgrading from the 2.1.6 series of Castor2 you must first upgrade to 
+                 2.1.6-11, then you can upgrade from 2.1.6-11 to 2.1.7-1
+      5. Apply hotfixes where applicable.
+
+      In this release of CASTOR2 the configuration of LSF has changed. In the past
+      resources where defined in LSF to represent A) which service class a diskserver
+      belonged to and B) the protocols that the diskserver supported. In 2.1.7 only
+      protocols are defined as resources and service classes are defined as host groups.
+
+      Furthermore, in 2.1.7 a new protocol called 'rfio3' is required. This is to support
+      the distinction between those clients which open a file in streaming mode (rfio3)
+      vs non-streaming mode (rfio). This allows the number of streaming vs non-streaming
+      resources on a diskserver to be configured independently. Note: only 2.1.7 clients
+      and above make this distinction, 2.1.6 clients will continue to use the rfio
+      resource for both streaming and non-streaming transfer modes.
+
+      At the recommendation of Platform (LSF), CASTOR2 now uses two plugins (schmod_shmem
+      and schmod_python) when making decisions where to schedule jobs. This is done for 
+      performance reasons.
+
+      6. Stop the LSF master and clients
+
+      7. Modify the lsb.hosts file to define the host groups known to LSF. The name of
+         group must be of the form <svcclass>Group e.g. defaultGroup, recoveryGroup etc..
+
+         Example:
+           Begin HostGroup
+           GROUP_NAME    GROUP_MEMBER      # Key words
+           defaultGroup (diskserver1.domain.com diskserver2.domain.com ...)
+           exportGroup (diskserver3.domain.com ...)
+           End HostGroup
+
+      8. Modify the lsb.modules file to define the CASTOR2 plugins. Note: they have
+         changed name in this release! The only plugins required for a working CASTOR2 
+         stager instance are:
+
+         schmod_default                  ()                              ()
+         schmod_shmem                    ()                              ()
+         schmod_fcfs                     ()                              ()
+         schmod_limit                    ()                              ()
+         schmod_parallel                 ()                              ()
+         schmod_python                   ()                              ()
+
+         All other modules can be commented out to improve performance. The order in
+         which the modules are listed is very important!! schmod_shmem must be after the
+         default module and schmod_python must be the last.
+
+      9. Modify the ego.shared file. Remove all resources which refer to service classes
+         and add the resource:
+
+         rfio3      Boolean ()       ()          (RFIO Transfer Protocol V3)
+
+     10. Modify the ego.cluster.* file. Remove all references to resources which are
+         service classes and give all diskservers the rfio3 resource.
+
+     11. Delete the shared memory used by the rmMasterDaemon and scheduler plugins using
+         the command `ipcrm -M 0x946`. The contents are no longer compatible with this
+         release.
+
+     12. Upgrade the software on the headnodes and diskservers to 2.1.7. Note: the
+         castor-scriplets, castor-rtcopy-mighunter, castor-msg-daemon, castor-msg-client 
+         and castor-commands RPMS are no longer provided. The old contents of the
+         castor-commands RPM can now be found in castor-stager-clients.
+
+     13. Update the castor.conf configuration file on all machines based on the
+         castor.conf.example in /etc/castor/castor.conf.example
+
+     14. The information made available to the schedulers python policy file has changed.
+         If you are using the defaults original provided:
+           mv /etc/castor/policies/scheduler.py.example /etc/castor/policies/scheduler.py
+         If not, please review the file /etc/castor/policies/scheduler.py.example and
+         merge the changes into your existing version.
+
+     15. Restart the service
+
+         - Start the dlfserver
+         - Start the rmMasterDaemon, followed by the LSF master
+         - Start the rmNodeDaemon and LSF clients.
+
+         To verify that the LSF upgrade has been successful please run `badmin reconfig`
+         and `lsadmin reconfig` if you are presented with any warnings please correct the
+         LSF configuration and retry. To view the list of host groups defined in LSF use 
+         the command `bmgroup`
+
+         - Start all other daemons: rhserver (private), stager, cleaning, jobManager, 
+         rtcpclientd, mighunter, rechandler, expertd, rfiod and gcDaemon.
+
+         Note: if you have a concept of private and public rhserver's you should start the
+         private one only so that you can test/validate the installation without user 
+         interference.
+
+     16. Test the instance by running the test suite available from:
+         - http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-1/fastTest
+
+     17. Start the public rhserver (if applicable)
+
+     18. Congratulations you have successfully upgraded to the 2.1.7 release of CASTOR2!!
+
+
 ------------
 - 2.1.6-10 -
 ------------
@@ -157,6 +422,7 @@
   - #26029 disk to disk copy scheduling
   - #23218 File update/append does not update the size in nameserver
   - #21821 stuck file in case of nbStreams = 0
+  - #31481 Problems with white/blacklists on c2atlas
   Already in 2.1.4-10:
   - #30228 MigHunter gets free(): invalid pointer ...
   - Fix bad processing after ENOENT in Cns_lastfseq() in the migrator
@@ -283,7 +549,7 @@
     ---------------------
 
     - Official support for head nodes on SLC4 32 and 64 bit.
-    - rmmaster has been dropped and replace by a jobManager dealing with LSF and the job scheduling
+    - rmmaster has been dropped and replaced by a jobManager dealing with LSF and the job scheduling
     - initd scripts and sysconfig files have been cleaned up and improved
     - Introduced hooks for recall policies. Policies themselves are not implemented yet
     - Implemented stageRm per service class
