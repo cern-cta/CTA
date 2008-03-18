@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/03/18 07:35:38 $ $Author: waldron $
+ * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/03/18 09:51:38 $ $Author: waldron $
  *
  * The Submission Process is used to submit new jobs into the scheduler. It is
  * run inside a separate process allowing for setuid and setgid calls to take
@@ -326,7 +326,6 @@ void castor::jobmanager::SubmissionProcess::submitJob
   } else {
     snprintf(resReq, MAXLINELEN, "%s", request->protocol().c_str());
   }
-  resReq[MAXLINELEN] = '\0';
   m_job.resReq = resReq;
 
   // Both GET requests and DiskCopy replication requests require a set of hosts
@@ -375,7 +374,6 @@ void castor::jobmanager::SubmissionProcess::submitJob
       << "TYPE="         << request->requestType()          << ";"
       << "SRCSVCCLASS="  << request->sourceSvcClass();
   strncpy(extSched, oss.str().c_str(), MAXLINELEN);
-  extSched[MAXLINELEN] = '\0';
   m_job.extsched = extSched;
 
   // Construct the command line to be executed
@@ -419,7 +417,6 @@ void castor::jobmanager::SubmissionProcess::submitJob
 	<< " " << request->requestCreationTime();
   }
   strncpy(command, cmd.str().c_str(), MAX_CMD_DESC_LEN);
-  command[MAX_CMD_DESC_LEN] = '\0';
   m_job.command = command;
 
   // Submit the job into LSF
