@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2008/03/10 09:38:59 $ $Author: waldron $
+ * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2008/03/18 07:10:07 $ $Author: waldron $
  *
  * Service thread for garbage collection related requests
  *
@@ -304,7 +304,7 @@ void castor::stager::daemon::GcSvcThread::handleStgFilesDeleted
     castor::dlf::Param params[] =
       {castor::dlf::Param("NbFiles", uReq->files().size())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_GCSVC_STGFILDEL, 1, params);
-    orphanDiskCopies = gcSvc->stgFilesDeleted(diskCopies);
+    orphanDiskCopies = gcSvc->stgFilesDeleted(diskCopies, uReq->nsHost());
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
@@ -316,7 +316,7 @@ void castor::stager::daemon::GcSvcThread::handleStgFilesDeleted
     res.setErrorMessage(e.getMessage().str());
   }
   Cns_fileid fileId;
-  memset(&fileId, 0, sizeof(fileId));
+  strncpy(fileId.server, uReq->nsHost().c_str(), CA_MAXHOSTNAMELEN+1);
   for(std::vector<u_signed64>::iterator it =
 	orphanDiskCopies.begin();
       it != orphanDiskCopies.end();
