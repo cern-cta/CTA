@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.648 $ $Date: 2008/03/17 16:19:52 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.649 $ $Date: 2008/03/18 07:08:25 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -730,21 +730,22 @@ END;
 /** Functions for the MigHunterDaemon **/
 
 /** Cleanup before starting a new MigHunterDaemon **/
-
-
 CREATE OR REPLACE PROCEDURE migHunterCleanUp(svcName IN VARCHAR2)
 AS
-svcId NUMBER;
+  svcId NUMBER;
 BEGIN
- SELECT id into svcId FROM SvcClass where name=svcName;
- -- clean up tapecopies , WAITPOLICY reset into TOBEMIGRATED 
- UPDATE TapeCopy A set status=1
-  WHERE status=7 AND EXISTS (
-	SELECT 'x' FROM CastorFile WHERE CastorFile.id=A.castorfile
-		AND CastorFile.svcclass=svcId);
+  SELECT id INTO svcId FROM SvcClass WHERE name = svcName;
+  -- clean up tapecopies , WAITPOLICY reset into TOBEMIGRATED 
+  UPDATE TapeCopy A SET status = 1
+   WHERE status = 7 AND EXISTS (
+     SELECT 'x' FROM CastorFile 
+      WHERE CastorFile.id = A.castorfile
+        AND CastorFile.svcclass = svcId);
   -- clean up streams, WAITPOLICY reset into CREATED			
-  UPDATE Stream SET status=5 WHERE status=7 AND tapepool in 
-   (select svcclass2tapepool.child FROM svcclass2tapepool WHERE svcId = svcclass2tapepool.parent);
+  UPDATE Stream SET status = 5 WHERE status = 7 AND tapepool IN
+   (SELECT svcclass2tapepool.child 
+      FROM svcclass2tapepool 
+     WHERE svcId = svcclass2tapepool.parent);
   COMMIT;
 END;
 
