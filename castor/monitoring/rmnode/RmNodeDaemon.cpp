@@ -210,7 +210,7 @@ castor::monitoring::rmnode::RmNodeDaemon::RmNodeDaemon() :
     { 24, "Failed to collect diskserver metrics" },
     { 25, "Failed to send metrics information" },
     { 26, "Received no acknowledgement from server" },
-    { 27, "Invalid mountpoint, cannot collect metric information" },
+    { 27, "Failed to collect filesystem metrics" },
 
     { -1, "" }};
   dlfInit(messages);

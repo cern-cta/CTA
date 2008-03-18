@@ -257,14 +257,14 @@ void castor::monitoring::rmnode::MetricsThread::collectDiskServerMetrics()
 	// file.
 	std::map<std::string, u_signed64>::const_iterator it =
 	  m_invalidMountPoints.find(metrics->mountPoint());
-	if (it == m_invalidMountPoints.end()) {
-	  m_invalidMountPoints[metrics->mountPoint()] = time(NULL);
-	} else if ((time(NULL) - (*it).second) > 3600) {
+	if ((it == m_invalidMountPoints.end()) ||
+	    ((time(NULL) - (*it).second) > 3600)) {
 
-	  // "Invalid mountpoint, cannot collect metric information"
+	  // "Failed to collect filesystem metrics"
 	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("MountPoint", metrics->mountPoint())};
+	    {castor::dlf::Param("Message", e.getMessage().str())};
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 27, 1, params);
+	  m_invalidMountPoints[metrics->mountPoint()] = time(NULL);
 	}
 	m_diskServerMetrics->removeFileSystemMetricsReports(metrics);
       }
