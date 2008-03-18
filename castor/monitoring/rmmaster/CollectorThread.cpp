@@ -158,9 +158,11 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
         } else {
 
           // "Received unknown object from socket"
-          castor::dlf::Param params[] =
-            {castor::dlf::Param("Type", obj->type())};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 13, 1, params);
+	  castor::dlf::Param params[] =
+	    {castor::dlf::Param("Type", obj->type()),
+	     castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+	     castor::dlf::Param("Port", port)};
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 13, 3, params);
           ack.setStatus(false);
           ack.setErrorCode(EINVAL);
           std::ostringstream stst;
@@ -173,8 +175,10 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
         // "Caught exception in CollectorThread"
         castor::dlf::Param params[] =
 	  {castor::dlf::Param("Type", sstrerror(e.code())),
-	   castor::dlf::Param("Message", e.getMessage().str())};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 45, 2, params);
+	   castor::dlf::Param("Message", e.getMessage().str()),
+	   castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+	   castor::dlf::Param("Port", port)};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 45, 4, params);
         ack.setStatus(false);
         ack.setErrorCode(e.code());
         std::ostringstream stst;
@@ -221,15 +225,20 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
     if (0 != obj) delete obj;
 
     // "Sending acknowledgement to client"
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 15, 0, 0);
+    castor::dlf::Param params2[] =
+      {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+       castor::dlf::Param("Port", port)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 15, 2, params2);
     try {
       sock->sendObject(ack);
     } catch (castor::exception::Exception e) {
       // "Unable to send ack to client"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("Type", sstrerror(e.code())),
-         castor::dlf::Param("Message", e.getMessage().str())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 16, 2, params);
+	{castor::dlf::Param("Type", sstrerror(e.code())),
+	 castor::dlf::Param("Message", e.getMessage().str()),
+	 castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+	 castor::dlf::Param("Port", port)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 16, 4, params);
     }
     // Closing and deleting socket
     delete sock;
