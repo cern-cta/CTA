@@ -100,6 +100,24 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
+       * Get the value of m_nsHost
+       * Name of the nameserver where all files reside
+       * @return the value of m_nsHost
+       */
+      std::string nsHost() const {
+        return m_nsHost;
+      }
+
+      /**
+       * Set the value of m_nsHost
+       * Name of the nameserver where all files reside
+       * @param new_var the new value of m_nsHost
+       */
+      void setNsHost(std::string new_var) {
+        m_nsHost = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -118,6 +136,9 @@ namespace castor {
       }
 
     private:
+
+      /// Name of the nameserver where all files reside
+      std::string m_nsHost;
 
       /// The id of this object
       u_signed64 m_id;

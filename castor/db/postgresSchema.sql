@@ -161,7 +161,7 @@ CREATE TABLE FirstByteWritten (flags INT8, userName VARCHAR(2048), euid INT4, eg
 CREATE TABLE StageGetRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_StageGetRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type StgFilesDeleted */
-CREATE TABLE StgFilesDeleted (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_StgFilesDeleted_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE StgFilesDeleted (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, nsHost VARCHAR(2048), id INT8 CONSTRAINT I_StgFilesDeleted_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type DiskPoolQuery */
 CREATE TABLE DiskPoolQuery (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, diskPoolName VARCHAR(2048), id INT8 CONSTRAINT I_DiskPoolQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);

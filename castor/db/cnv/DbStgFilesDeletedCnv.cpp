@@ -57,7 +57,7 @@ static castor::CnvFactory<castor::db::cnv::DbStgFilesDeletedCnv>* s_factoryDbStg
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbStgFilesDeletedCnv::s_insertStatementString =
-"INSERT INTO StgFilesDeleted (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,ids_seq.nextval,:13,:14) RETURNING id INTO :15";
+"INSERT INTO StgFilesDeleted (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, nsHost, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,ids_seq.nextval,:14,:15) RETURNING id INTO :16";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbStgFilesDeletedCnv::s_deleteStatementString =
@@ -65,11 +65,11 @@ const std::string castor::db::cnv::DbStgFilesDeletedCnv::s_deleteStatementString
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbStgFilesDeletedCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client FROM StgFilesDeleted WHERE id = :1";
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, nsHost, id, svcClass, client FROM StgFilesDeleted WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbStgFilesDeletedCnv::s_updateStatementString =
-"UPDATE StgFilesDeleted SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, lastModificationTime = :11 WHERE id = :12";
+"UPDATE StgFilesDeleted SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, lastModificationTime = :11, nsHost = :12 WHERE id = :13";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbStgFilesDeletedCnv::s_storeTypeStatementString =
@@ -418,7 +418,7 @@ void castor::db::cnv::DbStgFilesDeletedCnv::fillObjSvcClass(castor::stager::StgF
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = rset->getInt64(14);
+  u_signed64 svcClassId = rset->getInt64(15);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -456,7 +456,7 @@ void castor::db::cnv::DbStgFilesDeletedCnv::fillObjIClient(castor::stager::StgFi
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = rset->getInt64(15);
+  u_signed64 clientId = rset->getInt64(16);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -494,7 +494,7 @@ void castor::db::cnv::DbStgFilesDeletedCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(15, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(16, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_insertNewReqStatement) {
       m_insertNewReqStatement = createStatement(s_insertNewReqStatementString);
@@ -515,10 +515,11 @@ void castor::db::cnv::DbStgFilesDeletedCnv::createRep(castor::IAddress* address,
     m_insertStatement->setString(10, obj->reqId());
     m_insertStatement->setInt(11, time(0));
     m_insertStatement->setInt(12, time(0));
-    m_insertStatement->setUInt64(13, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setUInt64(14, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setString(13, obj->nsHost());
+    m_insertStatement->setUInt64(14, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setUInt64(15, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(15));
+    obj->setId(m_insertStatement->getUInt64(16));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -550,6 +551,7 @@ void castor::db::cnv::DbStgFilesDeletedCnv::createRep(castor::IAddress* address,
                     << "  reqId : " << obj->reqId() << std::endl
                     << "  creationTime : " << obj->creationTime() << std::endl
                     << "  lastModificationTime : " << obj->lastModificationTime() << std::endl
+                    << "  nsHost : " << obj->nsHost() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  svcClass : " << obj->svcClass() << std::endl
                     << "  client : " << obj->client() << std::endl;
@@ -585,7 +587,8 @@ void castor::db::cnv::DbStgFilesDeletedCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setString(9, obj->userTag());
     m_updateStatement->setString(10, obj->reqId());
     m_updateStatement->setInt(11, time(0));
-    m_updateStatement->setUInt64(12, obj->id());
+    m_updateStatement->setString(12, obj->nsHost());
+    m_updateStatement->setUInt64(13, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
@@ -688,7 +691,8 @@ castor::IObject* castor::db::cnv::DbStgFilesDeletedCnv::createObj(castor::IAddre
     object->setReqId(rset->getString(10));
     object->setCreationTime(rset->getUInt64(11));
     object->setLastModificationTime(rset->getUInt64(12));
-    object->setId(rset->getUInt64(13));
+    object->setNsHost(rset->getString(13));
+    object->setId(rset->getUInt64(14));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -735,7 +739,8 @@ void castor::db::cnv::DbStgFilesDeletedCnv::updateObj(castor::IObject* obj)
     object->setReqId(rset->getString(10));
     object->setCreationTime(rset->getUInt64(11));
     object->setLastModificationTime(rset->getUInt64(12));
-    object->setId(rset->getUInt64(13));
+    object->setNsHost(rset->getString(13));
+    object->setId(rset->getUInt64(14));
     delete rset;
   } catch (castor::exception::SQLError e) {
     castor::exception::InvalidArgument ex;

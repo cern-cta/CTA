@@ -104,6 +104,7 @@ void castor::io::StreamStgFilesDeletedCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->reqId();
   ad->stream() << obj->creationTime();
   ad->stream() << obj->lastModificationTime();
+  ad->stream() << obj->nsHost();
   ad->stream() << obj->id();
 }
 
@@ -153,6 +154,9 @@ castor::IObject* castor::io::StreamStgFilesDeletedCnv::createObj(castor::IAddres
   u_signed64 lastModificationTime;
   ad->stream() >> lastModificationTime;
   object->setLastModificationTime(lastModificationTime);
+  std::string nsHost;
+  ad->stream() >> nsHost;
+  object->setNsHost(nsHost);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

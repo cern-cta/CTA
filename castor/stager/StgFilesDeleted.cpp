@@ -41,6 +41,7 @@
 //------------------------------------------------------------------------------
 castor::stager::StgFilesDeleted::StgFilesDeleted() throw() :
   GCFileList(),
+  m_nsHost(""),
   m_id(0) {
 }
 
@@ -65,6 +66,7 @@ void castor::stager::StgFilesDeleted::print(std::ostream& stream,
   // Call print on the parent class(es)
   this->GCFileList::print(stream, indent, alreadyPrinted);
   // Output of all members
+  stream << indent << "nsHost : " << m_nsHost << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }
