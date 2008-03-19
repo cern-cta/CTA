@@ -195,6 +195,22 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Retrieves a Physical file name of a castorFile in the diskserver
+	 * from the database based on its fileId.
+         * Caller is in charge of the deletion of the allocated object
+         * @param fileId the fileId of the CastorFile
+         * @param svcClass the service class of the castor file.
+         * @return the physicalFileName composed by the filesystem mounting point
+         * and the path of the diskcopy, if none found
+         * @exception Exception in case of error
+         */
+
+        virtual std::string selectPhysicalFileName 
+	 (struct Cns_fileid* CnsfileId, castor::stager::SvcClass* svcClass)
+ 	   throw (castor::exception::Exception); 
+
+
+        /**
          * Updates a SubRequest status in the DB, including
          * the answered flag that is set to 1 and tells
          * whether the request to which it belongs still
@@ -423,6 +439,12 @@ namespace castor {
 
         /// SQL statement object for function selectCastorFile
         oracle::occi::Statement *m_selectCastorFileStatement;
+
+        /// SQL statement for function selectPhysicalFileName
+        static const std::string s_selectPhysicalFileNameStatementString;
+
+        /// SQL statement object for function selectPhysicalFileName
+        oracle::occi::Statement *m_selectPhysicalFileNameStatement;
 
         /// SQL statement for function updateAndCheckSubRequest
         static const std::string s_updateAndCheckSubRequestStatementString;

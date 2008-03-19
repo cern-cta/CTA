@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.90 $ $Release$ $Date: 2008/03/13 16:32:15 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.91 $ $Release$ $Date: 2008/03/19 10:19:50 $ $Author: riojac3 $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -188,6 +188,20 @@ namespace castor {
       (const u_signed64 fileId, const std::string nsHost,
        u_signed64 svcClass, u_signed64 fileClass,
        u_signed64 fileSize, const std::string fileName)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Retrieves a Physical file name of a castorFile in the diskserver
+       * from the database based on its fileId REQUIRED ONLY FOR XROOTD.
+       * Caller is in charge of the deletion of the allocated object
+       * @param fileId the fileId of the CastorFile
+       * @param svcClass the service class of the castor file.
+       * @return the physicalFileName composed by the filesystem mounting point
+       * and the path of the diskcopy, if none found
+       * @exception Exception in case of error
+       */
+      virtual std::string selectPhysicalFileName
+      (struct Cns_fileid* CnsfileId, castor::stager::SvcClass* svcClass)
         throw (castor::exception::Exception) = 0;
 
       /**

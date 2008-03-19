@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.243 $ $Release$ $Date: 2008/03/13 17:50:21 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.244 $ $Release$ $Date: 2008/03/19 10:19:37 $ $Author: riojac3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -124,6 +124,10 @@ const std::string castor::db::ora::OraStagerSvc::s_createDiskCopyReplicaRequestS
 const std::string castor::db::ora::OraStagerSvc::s_selectCastorFileStatementString =
   "BEGIN selectCastorFile(:1, :2, :3, :4, :5, :6, :7, :8); END;";
 
+/// SQL statement for selectPhysicalFileName
+const std::string castor::db::ora::OraStagerSvc::s_selectPhysicalFileNameStatementString =
+  "BEGIN selectPhysicalFileName(:1, :2, :3, :4); END;";
+
 /// SQL statement for updateAndCheckSubRequest
 const std::string castor::db::ora::OraStagerSvc::s_updateAndCheckSubRequestStatementString =
   "BEGIN updateAndCheckSubRequest(:1, :2, :3); END;";
@@ -176,6 +180,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_processPutDoneRequestStatement(0),
   m_createDiskCopyReplicaRequestStatement(0),
   m_selectCastorFileStatement(0),
+  m_selectPhysicalFileNameStatement(0),
   m_updateAndCheckSubRequestStatement(0),
   m_recreateCastorFileStatement(0),
   m_archiveSubReqStatement(0),
@@ -224,6 +229,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     if (m_processPutDoneRequestStatement) deleteStatement(m_processPutDoneRequestStatement);
     if (m_createDiskCopyReplicaRequestStatement) deleteStatement(m_createDiskCopyReplicaRequestStatement);
     if (m_selectCastorFileStatement) deleteStatement(m_selectCastorFileStatement);
+    if (m_selectPhysicalFileNameStatement) deleteStatement(m_selectPhysicalFileNameStatement);
     if (m_updateAndCheckSubRequestStatement) deleteStatement(m_updateAndCheckSubRequestStatement);
     if (m_recreateCastorFileStatement) deleteStatement(m_recreateCastorFileStatement);
     if (m_archiveSubReqStatement) deleteStatement(m_archiveSubReqStatement);
@@ -243,6 +249,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_processPutDoneRequestStatement = 0;
   m_createDiskCopyReplicaRequestStatement = 0;
   m_selectCastorFileStatement = 0;
+  m_selectPhysicalFileNameStatement = 0;
   m_updateAndCheckSubRequestStatement = 0;
   m_recreateCastorFileStatement = 0;
   m_archiveSubReqStatement = 0;
@@ -755,6 +762,50 @@ castor::db::ora::OraStagerSvc::selectCastorFile
     throw ex;
   }
 }
+
+
+//------------------------------------------------------------------------------
+// selectPhysicalfileName
+//------------------------------------------------------------------------------
+std::string castor::db::ora::OraStagerSvc::selectPhysicalFileName (struct Cns_fileid *fileId, castor::stager::SvcClass *svcClass)
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_selectPhysicalFileNameStatement) {
+    m_selectPhysicalFileNameStatement =
+      createStatement(s_selectPhysicalFileNameStatementString);
+    m_selectPhysicalFileNameStatement->registerOutParam
+      (3, oracle::occi::OCCISTRING,2048);
+    m_selectPhysicalFileNameStatement->registerOutParam
+      (4, oracle::occi::OCCISTRING, 2048);
+    m_selectPhysicalFileNameStatement->setAutoCommit(true);
+  }
+  // Execute statement and get result
+  try {
+    m_selectPhysicalFileNameStatement->setDouble(1, fileId->fileid);
+    m_selectPhysicalFileNameStatement->setDouble(2, svcClass->id());
+   
+    int nb  = m_selectPhysicalFileNameStatement->executeUpdate();
+    if (0 == nb) {
+      // Nothing found, throw exception
+      castor::exception::Internal e;
+      e.getMessage()
+        << "selectPhysicalFileName returned no CastorFile";
+      throw e;
+    }
+    std::string dcPath = m_selectPhysicalFileNameStatement->getString(3);
+    std::string fsMountingP = m_selectPhysicalFileNameStatement->getString(4);
+    std::string result= fsMountingP + dcPath;
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select Physical FileName  by fileId :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+}
+
 
 //------------------------------------------------------------------------------
 // updateAndCheckSubRequest
