@@ -872,8 +872,6 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
 void castor::vdqm::handler::TapeDriveHandler::dedicateTapeDrive()
   throw (castor::exception::Exception) {
 
-std::cout << "ptr_driveRequest->dedicate" << ptr_driveRequest->dedicate << std::endl;
-
   DriveDedications dedications;
 
   // Extract all possible dedications
