@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.42 $ $Release$ $Date: 2008/03/19 15:11:07 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.43 $ $Release$ $Date: 2008/03/19 17:58:45 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -350,8 +350,53 @@ END castorVdqm;
 
 
 /**
+ * This PL/SQL function returns 1 if the specified drive passes its mode
+ * dedication if there is one, else it returns 0.
+ *
+ * @param driveIdVar    the ID of the drive
+ * @param accessModeVar the access mode of the volume request
+ */
+CREATE OR REPLACE FUNCTION PASSESMODEDEDICATION(
+  driveIdVar    IN NUMBER,
+  accessModeVar IN NUMBER)
+  RETURN NUMBER AS
+  nbModeDedicationsVar NUMBER;
+BEGIN
+  -- Count the number of mode dedications for the drive
+  -- (there should only be one)
+  SELECT COUNT(*) INTO nbModeDedicationsVar
+    FROM TapeDriveDedication
+    WHERE tapeDrive = driveIdVar AND accessMode IS NOT NULL;
+
+  -- Drive passes if there are no access mode dedications for it
+  IF nbModeDedicationsVar = 0 THEN
+    RETURN 1;
+  END IF;
+
+  -- Drive has a mode dedication
+
+  -- Count the number of matching vid dedications
+  -- (there should be a maximum of one)
+  SELECT COUNT(*) INTO nbModeDedicationsVar
+    FROM TapeDriveDedication
+    WHERE tapeDrive = driveIdVar AND accessMode = accessModeVar;
+
+  -- As there is a mode dedication for the drive, the drive only passes if it
+  -- matches
+  IF nbModeDedicationsVar > 0 THEN
+    RETURN 1;
+  ELSE
+    RETURN 0;
+  END IF;
+END;
+
+
+/**
  * This PL/SQL function returns 1 if the specified drive passes its host
  * dedications, else it returns 0.
+ *
+ * @param driveIdVar    the ID of the drive
+ * @param clientHostVar the client host of the volume request
  */
 CREATE OR REPLACE FUNCTION PASSESHOSTDEDICATIONS(
   driveIdVar    IN NUMBER,
@@ -362,7 +407,7 @@ BEGIN
   -- Count the number of host dedications for the drive
   SELECT COUNT(*) INTO nbHostDedicationsVar
     FROM TapeDriveDedication
-    WHERE tapeDrive = driveIdVar;
+    WHERE tapeDrive = driveIdVar AND clientHost IS NOT NULL;
 
   -- Drive passes if there are no host dedications for it
   IF nbHostDedicationsVar = 0 THEN
@@ -390,6 +435,9 @@ END;
 /**
  * This PL/SQL function returns 1 if the specified drive passes its vid
  * dedications, else it returns 0.
+ *
+ * @param driveIdVar the ID of the drive
+ * @param vidVar     the vid of the volume request
  */
 CREATE OR REPLACE FUNCTION PASSESVIDDEDICATIONS(
   driveIdVar IN NUMBER,
@@ -400,7 +448,7 @@ BEGIN
   -- Count the number of vid dedications for the drive
   SELECT COUNT(*) INTO nbVidDedicationsVar
     FROM TapeDriveDedication
-    WHERE tapeDrive = driveIdVar;
+    WHERE tapeDrive = driveIdVar AND vid IS NOT NULL;
 
   -- Drive passes if there are no vid dedications for it
   IF nbVidDedicationsVar = 0 THEN
@@ -434,6 +482,8 @@ AS SELECT
   TapeDrive.id as tapeDriveID, TapeRequest.id as tapeRequestID
 FROM
   TapeRequest
+INNER JOIN TapeAccessSpecification ON
+  TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
 INNER JOIN VdqmTape ON
   TapeRequest.tape = VdqmTape.id
 INNER JOIN ClientIdentification ON
@@ -468,6 +518,7 @@ WHERE
   )
   AND TapeServer.actingMode=0 -- ACTIVE
   AND TapeRequest.tapeDrive=0 -- Request has not already been allocated a drive
+  AND passesModeDedication(tapeDrive.id, TapeAccessSpecification.accessMode)=1
   AND passesHostDedications(tapeDrive.id, ClientIdentification.machine)=1
   AND passesVidDedications(tapeDrive.id, VdqmTape.vid)=1
 ORDER BY
