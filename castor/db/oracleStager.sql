@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.651 $ $Date: 2008/03/19 10:41:26 $ $Author: riojac3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.652 $ $Date: 2008/03/19 13:15:25 $ $Author: riojac3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1385,14 +1385,14 @@ EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
     WHERE fileId = fid AND nsHost = nh;
 END;
 
-/*get the Physicalfilename for the preparetoGet case when the protocol is xrootd*/
+/*PL/SQL method implementing selectPhysicalfilename for the preparetoGet request when the protocol is xrootd*/
 CREATE OR REPLACE PROCEDURE selectPhysicalFileName(cfId IN NUMBER,
 						      svcClassId IN NUMBER,
                              			      dcP OUT VARCHAR2,
 						      fsmp OUT VARCHAR2) AS
 BEGIN
-
- SELECT DiskCopy.path, Filesystem.mountpoint INTO dcP,fsmp
+ SELECT path, mountpoint INTO dcP,fsmp from(
+        select DiskCopy.path, Filesystem.mountpoint
         FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass,castorfile
            WHERE castorfile.fileid=cfId
             AND FileSystem.diskpool = DiskPool2SvcClass.parent
@@ -1402,12 +1402,11 @@ BEGIN
             AND FileSystem.status = 0  -- PRODUCTION
             AND DiskServer.id = FileSystem.diskServer
             AND DiskServer.status = 0  -- PRODUCTION
-	    and rownum < 2
+	   -- and rownum < 2
 	   ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
                                 FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
-                                FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC;      
-
-
+                                FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC)
+ where rownum < 2;
 END;
 
 
