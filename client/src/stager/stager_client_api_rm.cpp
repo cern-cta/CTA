@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_rm.cpp,v 1.12 2008/03/10 17:27:14 itglp Exp $
+ * $Id: stager_client_api_rm.cpp,v 1.13 2008/03/19 14:53:45 itglp Exp $
  */
 
 /*
@@ -31,7 +31,6 @@
 #include "castor/stager/StageAbortRequest.hpp"
 #include "castor/rh/Response.hpp"
 #include "castor/rh/FileResponse.hpp"
-#include "castor/rh/IOResponse.hpp"
 
 // To be removed when getting rid of 
 // request printing

@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_setFileGCWeight.cpp,v 1.8 2008/03/10 17:27:14 itglp Exp $
+ * $Id: stager_client_api_setFileGCWeight.cpp,v 1.9 2008/03/19 14:53:45 itglp Exp $
  */
 
 /*
@@ -28,7 +28,6 @@
 #include "castor/stager/SetFileGCWeight.hpp"
 #include "castor/rh/Response.hpp"
 #include "castor/rh/FileResponse.hpp"
-#include "castor/rh/IOResponse.hpp"
 
 // To be removed when getting rid of 
 // request printing
