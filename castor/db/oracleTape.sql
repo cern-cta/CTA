@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.650 $ $Date: 2008/03/18 10:08:52 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.651 $ $Date: 2008/03/19 13:06:54 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -961,6 +961,12 @@ BEGIN
      -- Go on the tapecopy has been resurrected or migrated
       NULL;
     END;
+     
+    counter := counter + 1;
+    IF counter = 100 THEN
+         counter := 0;
+         COMMIT;
+    END IF;
   END LOOP;
   COMMIT;
 END;
