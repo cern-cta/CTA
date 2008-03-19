@@ -81,7 +81,7 @@ int main(int argc, char* argv[]){
     
     // get migration policy name
 
-    if ( (pm = getconfent("Policy","Migration",1)) != NULL ){ 
+    if ( (pm = getconfent("Policy","Migration",0)) != NULL ){ 
       migrationPolicyName=pm;
     } else {
        castor::dlf::Param params[] =
@@ -92,7 +92,7 @@ int main(int argc, char* argv[]){
 
     // get stream policy name
 
-    if ( (ps = getconfent("Policy","Stream",1)) != NULL ){ 
+    if ( (ps = getconfent("Policy","Stream",0)) != NULL ){ 
       streamPolicyName=ps;
     } else {
       castor::dlf::Param params[] =
@@ -141,9 +141,9 @@ int main(int argc, char* argv[]){
   
   }// end try block
   catch (castor::exception::Exception e) {
-       std::cerr << "Caught castor exception : "
-       	    << sstrerror(e.code()) << std::endl
-       	    << e.getMessage().str() << std::endl;
+    std::cerr << "Caught castor exception : "
+     << sstrerror(e.code()) << std::endl
+     << e.getMessage().str() << std::endl;
   }
   catch (...) {
     

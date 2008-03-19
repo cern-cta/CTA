@@ -105,7 +105,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 
 	char* p=NULL;
 	u_signed64 initialSizeCeiling=0;
-	if ( (p = getconfent("MigHunter","SIZECEILING",1)) != NULL ) {
+	if ( (p = getconfent("MigHunter","SIZECEILING",0)) != NULL ) {
 	  initialSizeCeiling = strutou64(p);
 	}
       
