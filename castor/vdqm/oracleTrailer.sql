@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.43 $ $Release$ $Date: 2008/03/19 17:58:45 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.44 $ $Release$ $Date: 2008/03/19 20:33:57 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -404,6 +404,16 @@ CREATE OR REPLACE FUNCTION PASSESHOSTDEDICATIONS(
   RETURN NUMBER AS
   nbHostDedicationsVar NUMBER;
 BEGIN
+  -- Determine if the host is dedicated to another drive
+  SELECT COUNT(*) INTO nbHostDedicationsVar
+    FROM TapeDriveDedication
+    WHERE tapeDrive != driveIdVar AND clientHost = clientHostVar;
+
+  -- Drive does not pass if the host is dedicated to another drive
+  IF nbHostDedicationsVar > 0 THEN
+    RETURN 0;
+  END IF;
+
   -- Count the number of host dedications for the drive
   SELECT COUNT(*) INTO nbHostDedicationsVar
     FROM TapeDriveDedication
@@ -445,6 +455,16 @@ CREATE OR REPLACE FUNCTION PASSESVIDDEDICATIONS(
   RETURN NUMBER AS
   nbVidDedicationsVar NUMBER;
 BEGIN
+  -- Determine if the vid is dedicated to another drive
+  SELECT COUNT(*) INTO nbVidDedicationsVar
+    FROM TapeDriveDedication
+    WHERE tapeDrive != driveIdVar AND vid = vidVar;
+
+  -- Drive does not pass if the vid is dedicated to another drive
+  IF nbVidDedicationsVar > 0 THEN
+    RETURN 0;
+  END IF;
+
   -- Count the number of vid dedications for the drive
   SELECT COUNT(*) INTO nbVidDedicationsVar
     FROM TapeDriveDedication
