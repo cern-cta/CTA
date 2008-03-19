@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.40 $ $Release$ $Date: 2008/03/18 17:43:57 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.41 $ $Release$ $Date: 2008/03/19 10:22:42 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -341,11 +341,11 @@ END;
 /* PL/SQL code for castorVdqm package */
 CREATE OR REPLACE PACKAGE castorVdqm AS
   TYPE Drive2Req IS RECORD (
-        tapeDrive NUMBER,
-        tapeRequest NUMBER);
+    tapeDrive NUMBER,
+    tapeRequest NUMBER);
   TYPE Drive2Req_Cur IS REF CURSOR RETURN Drive2Req;
-	TYPE TapeDrive_Cur IS REF CURSOR RETURN TapeDrive%ROWTYPE;
-	TYPE TapeRequest_Cur IS REF CURSOR RETURN TapeRequest%ROWTYPE;
+  TYPE TapeDrive_Cur IS REF CURSOR RETURN TapeDrive%ROWTYPE;
+  TYPE TapeRequest_Cur IS REF CURSOR RETURN TapeRequest%ROWTYPE;
 END castorVdqm;
 
 
@@ -446,51 +446,86 @@ on
 
 
 /**
+ * Returns the dedications of the specified drive in the format required by
+ * the showqueues command-line tool.
+ */
+CREATE OR REPLACE FUNCTION getVdqmDedicate(driveIdVar IN NUMBER)
+  RETURN VARCHAR2
+IS
+  buf VARCHAR2(1024);
+BEGIN
+  FOR accessModeDedication IN (
+    SELECT accessMode
+      FROM TAPEDRIVEDEDICATION
+      WHERE tapeDrive = driveIdVar AND accessMode IS NOT NULL
+      ORDER BY accessMode)
+  LOOP
+    -- Add a comma if there is already a dedication in the buffer
+    IF LENGTH(buf) > 0 THEN
+      buf := buf || ',';
+    END IF;
+
+    -- Add dedication to buffer
+    buf := buf || 'mode=' || accessModeDedication.accessMode;
+  END LOOP;
+
+  FOR clientHostDedication IN (
+    SELECT clientHost
+      FROM TAPEDRIVEDEDICATION
+      WHERE tapeDrive = driveIdVar AND clientHost IS NOT NULL
+      ORDER BY clientHost)
+  LOOP
+    -- Add a comma if there is already a dedication in the buffer
+    IF LENGTH(buf) > 0 THEN
+      buf := buf || ',';
+    END IF;
+
+    -- Add dedication to buffer
+    buf := buf || 'host=' || clientHostDedication.clientHost;
+  END LOOP;
+
+  FOR vidDedication IN (
+    SELECT vid
+      FROM TAPEDRIVEDEDICATION
+      WHERE tapeDrive = driveIdVar AND vid IS NOT NULL
+      ORDER BY vid)
+  LOOP
+    -- Add a comma if there is already a dedication in the buffer
+    IF LENGTH(buf) > 0 THEN
+      buf := buf || ',';
+    END IF;
+
+    -- Add dedication to buffer
+    buf := buf || 'vid=' || vidDedication.vid;
+  END LOOP;
+
+  RETURN buf;
+END;
+
+
+/**
  * View used for generating the list of drives when replying to the showqueues
  * command
  */
 create or replace view
   TAPEDRIVESHOWQUEUES_VIEW
-as with
-  TAPEDRIVE2MODEL
-as
-(
-  select
-    TAPEDRIVE2TAPEDRIVECOMP.PARENT as TAPEDRIVE,
-    max(TAPEDRIVECOMPATIBILITY.TAPEDRIVEMODEL) as DRIVEMODEL
-  from
-    TAPEDRIVE2TAPEDRIVECOMP
-  inner join
-    TAPEDRIVECOMPATIBILITY
-  on
-    TAPEDRIVE2TAPEDRIVECOMP.CHILD = TAPEDRIVECOMPATIBILITY.ID
-  group by
-    parent
-)
-select
+as select
   TAPEDRIVE.STATUS, TAPEDRIVE.ID, TAPEDRIVE.RUNNINGTAPEREQ, TAPEDRIVE.JOBID,
   TAPEDRIVE.MODIFICATIONTIME, TAPEDRIVE.RESETTIME, TAPEDRIVE.USECOUNT,
   TAPEDRIVE.ERRCOUNT, TAPEDRIVE.TRANSFERREDMB, TAPEDRIVE.TAPEACCESSMODE,
   TAPEDRIVE.TOTALMB, TAPESERVER.SERVERNAME, VDQMTAPE.VID, TAPEDRIVE.DRIVENAME,
-  DEVICEGROUPNAME.DGNAME, TAPEDRIVE2MODEL.DRIVEMODEL
+  DEVICEGROUPNAME.DGNAME,
+  getVdqmDedicate(TAPEDRIVE.ID) as DEDICATE
 from
   TAPEDRIVE
-left outer join
-  TAPESERVER
-on
+left outer join TAPESERVER on
   TAPEDRIVE.TAPESERVER = TAPESERVER.ID
-left outer join
-  VDQMTAPE
-on
+left outer join VDQMTAPE on
   TAPEDRIVE.TAPE = VDQMTAPE.ID
-left outer join
-  DEVICEGROUPNAME
-on
+left outer join DEVICEGROUPNAME on
   TAPEDRIVE.DEVICEGROUPNAME = DEVICEGROUPNAME.ID
-inner join
-  TAPEDRIVE2MODEL
-on
-  TAPEDRIVE.ID = TAPEDRIVE2MODEL.TAPEDRIVE;
+left outer join TAPEDRIVEDEDICATION on
+  TAPEDRIVE.ID = TAPEDRIVEDEDICATION.TAPEDRIVE;
 
 
 /**

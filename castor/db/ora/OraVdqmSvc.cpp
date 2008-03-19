@@ -146,7 +146,7 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveQueueStatementSt
   "SELECT"
   "  STATUS, ID, RUNNINGTAPEREQ, JOBID, MODIFICATIONTIME, RESETTIME, USECOUNT,"
   "  ERRCOUNT, TRANSFERREDMB, TAPEACCESSMODE, TOTALMB, SERVERNAME, VID,"
-  "  DRIVENAME, DGNAME, DRIVEMODEL "
+  "  DRIVENAME, DGNAME, DEDICATE "
   "FROM"
   "  TAPEDRIVESHOWQUEUES_VIEW "
   "WHERE"
@@ -1388,8 +1388,10 @@ std::vector<newVdqmDrvReq_t>*
       // Null-terminate in case source string is longer than destination
       drvReq.dgn[sizeof(drvReq.dgn) - 1] = '\0';
 
-      // TBD - Put back dedifcation!
-      drvReq.dedicate[0] = '\0';
+      strncpy(drvReq.dedicate, rs->getString(16).c_str(),
+        sizeof(drvReq.dedicate));
+      // Null-terminate in case source string is longer than destination
+      drvReq.dedicate[sizeof(drvReq.dedicate) - 1] = '\0';
 
       drvReqs->push_back(drvReq);
     }
