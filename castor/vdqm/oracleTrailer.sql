@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.44 $ $Release$ $Date: 2008/03/19 20:33:57 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.45 $ $Release$ $Date: 2008/03/19 20:54:38 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -109,7 +109,24 @@ ALTER TABLE VDQMTAPE MODIFY (SIDE NOT NULL);
 ALTER TABLE VDQMTAPE MODIFY (STATUS NOT NULL);
 ALTER TABLE VDQMTAPE MODIFY (TPMODE NOT NULL);
 
-/* Foreign key constraints with an index for each*/
+/* Unique constraints */
+-- A client host can only be dedicated to one drive
+ALTER TABLE TapeDriveDedication
+  ADD CONSTRAINT I_U_TapeDrvDedic_clientHost
+    UNIQUE (clientHost);
+
+-- A vid can only be dedicated to one drive
+ALTER TABLE TapeDriveDedication
+  ADD CONSTRAINT I_U_TapeDrvDedic_vid
+    UNIQUE (vid);
+
+-- A drive can only have one or no access mode dedication
+ALTER TABLE TapeDriveDedication
+  ADD CONSTRAINT I_U_TapeDrvDedic_tapeDrv_mode
+    UNIQUE (tapeDrive, accessMode);
+
+
+/* Foreign key constraints with an index for each */
 ALTER TABLE ClientIdentification
   ADD CONSTRAINT FK_ClientIdentification_id
     FOREIGN KEY (id)
