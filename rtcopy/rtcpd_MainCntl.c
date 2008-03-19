@@ -1106,9 +1106,14 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
   int TMount = 0, TUnmount = 0;
   int Tservice = 0;
   int Ttransfer = 0;
+  int Tposition = 0;
   int totFiles = 0;
   char vid[CA_MAXVIDLEN+1];
   int mode,jobID,status,rc;
+  int VolReqID;
+  int client_uid, client_gid;
+  char client_host[CA_MAXHOSTNAMELEN+1];
+  char client_name[CA_MAXUSRNAMELEN+1]; 
 
   /*
    * Close and free client listen socket if still active. This
@@ -1123,6 +1128,22 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
     rtcp_CloseConnection(*client_socket);
     free(*client_socket);
     *client_socket = NULL;
+  }
+
+  /* Extract the client info */
+  if (client && *client) {
+          if ((*client)->name) {
+                  strcpy(client_name, (*client)->name);
+          } else {
+                  strcpy(client_name, "N/A");
+          }
+          client_uid = (*client)->uid;
+          client_gid = (*client)->gid;
+          if ((*client)->clienthost) {
+                  strcpy(client_host, (*client)->clienthost);
+          } else {
+                  strcpy(client_host, "N/A");
+          }
   }
 
   if ( client != NULL && *client != NULL ) {
@@ -1187,6 +1208,18 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
           else if ( tapereq->mode == WRITE_DISABLE )
             totSz += filereq->bytes_out;
           totFiles++;
+                    
+          if (filereq) {
+                  Tposition += ((time_t)filereq->TEndPosition - 
+                                (time_t)filereq->TStartPosition);
+          }
+        }
+        
+        /* Get the VDQM ID */       
+        if (filereq) {
+                VolReqID = filereq->VolReqID;
+        } else {
+                VolReqID = -1;
         }
                 
         CLIST_DELETE(nextfile,tmpfile);
@@ -1278,23 +1311,55 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
                      "Message", TL_MSG_PARAM_STR, "request successful" );
 
-    tl_rtcpd.tl_log( &tl_rtcpd, 44, 10, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 44, 20, 
                      "func"           , TL_MSG_PARAM_STR  , "rtcpd_FreeResources",
                      "Message"        , TL_MSG_PARAM_STR  , "Request statistics",
                      "RequestType"    , TL_MSG_PARAM_STR  , (mode == WRITE_ENABLE) ? "WRITE" : "READ",
                      "VID"            , TL_MSG_PARAM_STR  , vid, 
                      "MountTime"      , TL_MSG_PARAM_INT  , TMount,
                      "ServiceTime"    , TL_MSG_PARAM_INT  , Tservice,
-                     "DataVolume [kB]", TL_MSG_PARAM_INT  , totKBSz,
-                     "DataRate [kB/s]", TL_MSG_PARAM_INT  , totKBSz/Ttransfer,
+                     "WaitTime"       , TL_MSG_PARAM_INT  , Twait,
+                     "TransferTime"   , TL_MSG_PARAM_INT  , Ttransfer,
+                     "PositionTime"   , TL_MSG_PARAM_INT  , Tposition,
+                     "DataVolumekB"   , TL_MSG_PARAM_INT  , totKBSz,
+                     "DataRatekBs"    , TL_MSG_PARAM_INT  , totKBSz/Ttransfer,
                      "Files"          , TL_MSG_PARAM_INT  , totFiles,
-                     "TPVID"          , TL_MSG_PARAM_TPVID, vid );
+                     "DGN"            , TL_MSG_PARAM_STR  , dgn,
+                     "VolReqID"       , TL_MSG_PARAM_INT  , VolReqID,
+                     "ClientName"     , TL_MSG_PARAM_STR  , client_name,                     
+                     "ClientUID"      , TL_MSG_PARAM_INT  , client_uid,
+                     "ClientGID"      , TL_MSG_PARAM_INT  , client_gid,
+                     "ClientHost"     , TL_MSG_PARAM_STR  , client_host,
+                     "TPVID"          , TL_MSG_PARAM_TPVID, vid,
+                     "RequestState"   , TL_MSG_PARAM_STR  , "successful");
 
   } else {
     rtcp_log(LOG_INFO,"request failed\n");
     tl_rtcpd.tl_log( &tl_rtcpd, 43, 2, 
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
                      "Message", TL_MSG_PARAM_STR, "request failed" );
+    if ( Ttransfer <= 0 ) Ttransfer = 1;
+    tl_rtcpd.tl_log( &tl_rtcpd, 44, 20, 
+                     "func"           , TL_MSG_PARAM_STR  , "rtcpd_FreeResources",
+                     "Message"        , TL_MSG_PARAM_STR  , "Request statistics",
+                     "RequestType"    , TL_MSG_PARAM_STR  , (mode == WRITE_ENABLE) ? "WRITE" : "READ",
+                     "VID"            , TL_MSG_PARAM_STR  , vid, 
+                     "MountTime"      , TL_MSG_PARAM_INT  , TMount,
+                     "ServiceTime"    , TL_MSG_PARAM_INT  , Tservice,
+                     "WaitTime"       , TL_MSG_PARAM_INT  , Twait,
+                     "TransferTime"   , TL_MSG_PARAM_INT  , Ttransfer,
+                     "PositionTime"   , TL_MSG_PARAM_INT  , Tposition,
+                     "DataVolumekB"   , TL_MSG_PARAM_INT  , totKBSz,
+                     "DataRatekBs"    , TL_MSG_PARAM_INT  , totKBSz/Ttransfer,
+                     "Files"          , TL_MSG_PARAM_INT  , totFiles,
+                     "DGN"            , TL_MSG_PARAM_STR  , dgn,
+                     "VolReqID"       , TL_MSG_PARAM_INT  , VolReqID, 
+                     "ClientName"     , TL_MSG_PARAM_STR  , client_name,                     
+                     "ClientUID"      , TL_MSG_PARAM_INT  , client_uid,
+                     "ClientGID"      , TL_MSG_PARAM_INT  , client_gid,
+                     "ClientHost"     , TL_MSG_PARAM_STR  , client_host,                   
+                     "TPVID"          , TL_MSG_PARAM_TPVID, vid,
+                     "RequestState"   , TL_MSG_PARAM_STR  , "failed");
   }
 
   rtcpd_SetProcError(RTCP_OK);
