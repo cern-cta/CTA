@@ -56,11 +56,18 @@ namespace castor{
         ~ReplyHelper() throw();
         
         
-        
-        /****************************************************************************/
-        /* set fileId, reqAssociated (reqId()), castorFileName,newSubReqStatus,    */
-        /**************************************************************************/
-        void setAndSendIoResponse(RequestHelper* stgRequestHelper, Cns_fileid* cnsFileid, int errorCode, std::string errorMessage) throw(castor::exception::Exception);
+        /*******************************************************************************************/
+        /* set fileId, reqAssociated (reqId()), castorFileName,newSubReqStatus,physicalFileName    */
+        /* The physicalFileName will be set in the ioResponse.castorfileName only for PrepareToGet */
+        /* requests done via xrootd                                                                */
+        /*******************************************************************************************/
+        void setAndSendIoResponse
+        (RequestHelper* stgRequestHelper, 
+         Cns_fileid* cnsFileid,
+         int errorCode,
+         std::string errorMessage,
+         const std::string physicalFileName = " ")
+          throw(castor::exception::Exception);       
         
         
         /*********************************************************************************************/

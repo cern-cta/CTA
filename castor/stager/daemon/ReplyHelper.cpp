@@ -61,7 +61,7 @@ namespace castor{
       /****************************************************************************/
       /* set fileId, reqAssociated (reqId()), castorFileName,newSubReqStatus,    */
       /**************************************************************************/
-      void ReplyHelper::setAndSendIoResponse(RequestHelper* stgRequestHelper, Cns_fileid* cnsFileid, int errorCode, std::string errorMessage) throw(castor::exception::Exception)
+      void ReplyHelper::setAndSendIoResponse(RequestHelper* stgRequestHelper, Cns_fileid* cnsFileid, int errorCode, std::string errorMessage, const std::string physicalFileName) throw(castor::exception::Exception)
       {
         if(stgRequestHelper->fileRequest) {
           if(stgRequestHelper->fileRequest->client() == 0) {
@@ -90,7 +90,11 @@ namespace castor{
           castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_WARNING, STAGER_REQUESTUUID_EXCEPTION, 5, params);
         }
 
-        ioResponse->setCastorFileName(stgRequestHelper->subrequest->fileName());
+        if (physicalFileName != " "){
+          ioResponse->setFileName(physicalFileName); 
+        }else{
+          ioResponse->setCastorFileName(stgRequestHelper->subrequest->fileName());
+        }
         ioResponse->setStatus(stgRequestHelper->subrequest->status() == SUBREQUEST_FAILED_FINISHED ? SUBREQUEST_FAILED : SUBREQUEST_READY);
         ioResponse->setId(stgRequestHelper->subrequest->id());
 
