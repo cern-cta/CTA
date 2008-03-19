@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.650 $ $Date: 2008/03/18 07:06:49 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.651 $ $Date: 2008/03/19 10:41:26 $ $Author: riojac3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1383,6 +1383,31 @@ EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
   -- retry the select since a creation was done in between
   SELECT id, fileSize INTO rid, rfs FROM CastorFile
     WHERE fileId = fid AND nsHost = nh;
+END;
+
+/*get the Physicalfilename for the preparetoGet case when the protocol is xrootd*/
+CREATE OR REPLACE PROCEDURE selectPhysicalFileName(cfId IN NUMBER,
+						      svcClassId IN NUMBER,
+                             			      dcP OUT VARCHAR2,
+						      fsmp OUT VARCHAR2) AS
+BEGIN
+
+ SELECT DiskCopy.path, Filesystem.mountpoint INTO dcP,fsmp
+        FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass,castorfile
+           WHERE castorfile.fileid=cfId
+            AND FileSystem.diskpool = DiskPool2SvcClass.parent
+            AND DiskPool2SvcClass.child = svcClassId
+            AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
+            AND FileSystem.id = DiskCopy.fileSystem
+            AND FileSystem.status = 0  -- PRODUCTION
+            AND DiskServer.id = FileSystem.diskServer
+            AND DiskServer.status = 0  -- PRODUCTION
+	    and rownum < 2
+	   ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
+                                FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
+                                FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC;      
+
+
 END;
 
 
