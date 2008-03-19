@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.636 $ $Date: 2008/02/13 11:42:20 $ $Author: itglp $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.637 $ $Date: 2008/03/19 10:52:18 $ $Author: sponcec3 $
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -374,7 +374,11 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     IF c = 0 THEN RETURN; END IF;
     -- If any, add them to blackList
     FOR q IN (SELECT * FROM removePrivilegeTmpTable) LOOP
-      addPrivilegeToBL(q);
+      wlr.svcClass := q.svcClass;
+      wlr.euid := q.euid;
+      wlr.egid := q.egid;
+      wlr.reqType := q.reqType;
+      addPrivilegeToBL(wlr);
     END LOOP;
   END;
     
