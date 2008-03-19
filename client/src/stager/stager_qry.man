@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.18 $ $Date: 2007/12/06 14:46:22 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.19 $ $Date: 2008/03/19 14:25:54 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_QRY 1castor "$Date: 2007/12/06 14:46:22 $" CASTOR "STAGER Commands"
+.TH STAGER_QRY 1castor "$Date: 2008/03/19 14:25:54 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_qry \- query the CASTOR stager for files and requests
 .SH SYNOPSIS
@@ -135,7 +135,7 @@ and
 .B stager_put(1castor)
 commands. There is no constraint on the uniqueness of the usertag so it is up to the user to make sure that the string is unique enough to not clash with other users' usertags.
 .fi
-Note that if the request has been fully processed (i.e. all requested files are STAGED), it will not be possible anymore to query by usertag.
+Note that if the request has been fully processed (e.g. all requested files are STAGED for a prestage request), it will still be possible to query by usertag for typically a day, after which the request will be dropped from the stager database.
 .TP
 .BI \-r,\ \-\-requestid " requestid"
 allows for querying the status of a request identified by the stager request identifier.
