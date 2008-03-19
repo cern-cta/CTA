@@ -547,7 +547,7 @@ The following error values are returned only by the stager package:
 (1715) stage configuration error
 .TP
 .B ESTSEGNOACC
-(1716) Required tape segments are not all accessible
+(1716) Unreadable file on tape (segments not all accessible)
 .TP
 .B ESTREPLFAILED
 (1717) File replication failed
@@ -568,7 +568,10 @@ The following error values are returned only by the stager package:
 (1722) No filesystems available in service class
 .TP
 .B ESTNOSEGFOUND
-(1723) No tape segment found
+(1723) File has no copy on tape
+.TP
+.B ESTTAPEOFFLINE
+(1724) File is on an offline tape
 
 .SH SYSREQ ERRORS
 The following error value is returned only by the sysreq package:
