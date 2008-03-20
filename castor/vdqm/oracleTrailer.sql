@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.45 $ $Release$ $Date: 2008/03/19 20:54:38 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.46 $ $Release$ $Date: 2008/03/20 13:01:40 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -111,14 +111,14 @@ ALTER TABLE VDQMTAPE MODIFY (TPMODE NOT NULL);
 
 /* Unique constraints */
 -- A client host can only be dedicated to one drive
-ALTER TABLE TapeDriveDedication
-  ADD CONSTRAINT I_U_TapeDrvDedic_clientHost
-    UNIQUE (clientHost);
+--ALTER TABLE TapeDriveDedication
+--  ADD CONSTRAINT I_U_TapeDrvDedic_clientHost
+--    UNIQUE (clientHost);
 
 -- A vid can only be dedicated to one drive
-ALTER TABLE TapeDriveDedication
-  ADD CONSTRAINT I_U_TapeDrvDedic_vid
-    UNIQUE (vid);
+--ALTER TABLE TapeDriveDedication
+--  ADD CONSTRAINT I_U_TapeDrvDedic_vid
+--    UNIQUE (vid);
 
 -- A drive can only have one or no access mode dedication
 ALTER TABLE TapeDriveDedication
@@ -373,7 +373,7 @@ END castorVdqm;
  * @param driveIdVar    the ID of the drive
  * @param accessModeVar the access mode of the volume request
  */
-CREATE OR REPLACE FUNCTION PASSESMODEDEDICATION(
+CREATE OR REPLACE FUNCTION passesModeDedication(
   driveIdVar    IN NUMBER,
   accessModeVar IN NUMBER)
   RETURN NUMBER AS
@@ -415,12 +415,13 @@ END;
  * @param driveIdVar    the ID of the drive
  * @param clientHostVar the client host of the volume request
  */
-CREATE OR REPLACE FUNCTION PASSESHOSTDEDICATIONS(
+CREATE OR REPLACE FUNCTION passesHostDedications(
   driveIdVar    IN NUMBER,
   clientHostVar IN VARCHAR2)
   RETURN NUMBER AS
   nbHostDedicationsVar NUMBER;
 BEGIN
+/*
   -- Determine if the host is dedicated to another drive
   SELECT COUNT(*) INTO nbHostDedicationsVar
     FROM TapeDriveDedication
@@ -430,7 +431,7 @@ BEGIN
   IF nbHostDedicationsVar > 0 THEN
     RETURN 0;
   END IF;
-
+*/
   -- Count the number of host dedications for the drive
   SELECT COUNT(*) INTO nbHostDedicationsVar
     FROM TapeDriveDedication
@@ -466,12 +467,13 @@ END;
  * @param driveIdVar the ID of the drive
  * @param vidVar     the vid of the volume request
  */
-CREATE OR REPLACE FUNCTION PASSESVIDDEDICATIONS(
+CREATE OR REPLACE FUNCTION passesVidDedications(
   driveIdVar IN NUMBER,
   vidVar     IN VARCHAR2)
   RETURN NUMBER AS
   nbVidDedicationsVar NUMBER;
 BEGIN
+/*
   -- Determine if the vid is dedicated to another drive
   SELECT COUNT(*) INTO nbVidDedicationsVar
     FROM TapeDriveDedication
@@ -481,7 +483,7 @@ BEGIN
   IF nbVidDedicationsVar > 0 THEN
     RETURN 0;
   END IF;
-
+*/
   -- Count the number of vid dedications for the drive
   SELECT COUNT(*) INTO nbVidDedicationsVar
     FROM TapeDriveDedication
