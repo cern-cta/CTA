@@ -1,4 +1,3 @@
 #!/bin/bash
-cd /pool
-sh /afs/cern.ch/project/castor/stresstest/racecond2loop /pool/testfile20M.tar racecond.log tape &
+/afs/cern.ch/project/castor/stresstest/racecond2loop /etc/group /tmp/throughput.log /castor/cern.ch/c3/itdc/tape castoritdc itdc &
 
