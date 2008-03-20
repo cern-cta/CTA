@@ -1,13 +1,14 @@
 #!/usr/bin/python
 
-import os, baseputloop
+import os
 from putUtils import *
+from stressUtils import *
 
 # all the preparation is done in baseputloop, we only have to execute the commands
 counter = 0
 while True:
     createDirIfNeeded(baseCastorDir, counter)
-    fileName = getCastorDir(baseCastorDir, counter) + os.sep + inputFileBaseName + "_" + host + "_" + stressUtils.buildUuid()
+    fileName = getCastorDir(baseCastorDir, counter) + os.sep + inputFileBaseName + "_" + getHost() + "_" + buildUuid()
     command = baseCmd + pathToCastorCommands + "rfcp " + inputFile + " " + fileName + " >> " + logFile + " 2>> " + logFile
     command = command + "; " + pathToCastorCommands + "rfcp " + fileName + " /dev/null >> " + logFile + " 2>> " + logFile
     os.system(command)

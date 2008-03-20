@@ -1,5 +1,7 @@
 import os, sys, socket
 
+nbFilesPerDir = 20
+
 # OS specific code
 os2Path = { '2.6' : {'x86_64' : 'slc4_amd64_gcc34',
                      'i386'   : 'slc4_ia32_gcc34' },
@@ -25,3 +27,10 @@ def buildEnv(instance, svcClass, isDebug):
 
 def getHost():
     return socket.gethostname()
+
+def getCastorDir(base, counter):
+    return base + os.sep + str(counter/nbFilesPerDir)
+
+def createDirIfNeeded(base, counter):
+    if counter % nbFilesPerDir == 0:
+        os.system("nsmkdir " + getCastorDir(baseCastorDir, counter))

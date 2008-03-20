@@ -18,15 +18,6 @@ baseCastorDir = sys.argv[3]
 instance = sys.argv[4]
 svcClass = sys.argv[5]
 pathToCastorCommands = stressUtils.getCastorBinPath() + os.sep
-nbFilesPerDir = 20
-host = stressUtils.getHost()
 
 # build common part of the command line
 baseCmd = stressUtils.buildEnv(instance, svcClass, True)
-
-def getCastorDir(base, counter):
-    return base + os.sep + str(counter/nbFilesPerDir)
-
-def createDirIfNeeded(base, counter):
-    if counter % nbFilesPerDir == 0:
-        os.system("nsmkdir " + getCastorDir(baseCastorDir, counter))
