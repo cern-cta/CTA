@@ -1,22 +1,39 @@
-#!/bin/bash
-export STAGE_HOST=c2itdcrh
-export STAGER_TRACE=3
-export RFIO_USE_CASTOR_V2=YES
-export CASTORDIR=/castor/cern.ch/c3/itdc/$3
+#!/usr/bin/python
 
-#export CNS_HOST=castorns
-name=`hostname`
-let counter=0
-while true
-  do 
-   if [ $((counter%300)) -eq 0 ]; then nsmkdir ${CASTORDIR}/$((counter%100)); fi
-   basefile=`basename $1`
-   uuid=`uuidgen`
-   shortname="${basefile}_${name}_${uuid}"
-   filename="${CASTORDIR}/$((counter/300))/${shortname}"
-   export STAGE_SVCCLASS=itdc
-   rfcp $1 $filename >> /pool/itdc/$2 2>> /pool/itdc/$2 
-   export STAGE_SVCCLASS=default
-   rfcp $filename /dev/null >> /pool/itdc/$2 2>> /pool/itdc/$2 
-   let counter=counter+1
-done
+import os, sys
+from stressUtils import *
+
+# print usage. Arguments should be <inputFile> <logFileName> <CastorPath> <instance> <svcClass>
+def usage():
+    print sys.argv[0] + " <inputFile> <logFileName> <CastorPath> <instance> <svcClass1> <svcClass2>"
+
+# check number of input arguments
+if len(sys.argv) != 7:
+    print "Wrong number of arguments"
+    usage()
+    sys.exit(1)
+
+# extract arguments and define default parameters
+inputFile = sys.argv[1]
+inputFileBaseName = os.path.basename(inputFile)
+logFile = sys.argv[2]
+baseCastorDir = sys.argv[3]
+instance = sys.argv[4]
+svcClass1 = sys.argv[5]
+svcClass2 = sys.argv[6]
+pathToCastorCommands = getCastorBinPath() + os.sep
+
+# build common part of the command line
+baseCmd1 = buildEnv(instance, svcClass1, True)
+baseCmd2 = buildEnv(instance, svcClass2, True)
+
+# Loop on files
+counter = 0
+while True:
+    createDirIfNeeded(baseputloop.baseCastorDir, counter)
+    fileName = getCastorDir(baseCastorDir, counter) + os.sep + inputFileBaseName + "_" + getHost() + "_" + buildUuid()
+    command1 = baseCmd1 + pathToCastorCommands + "rfcp " + inputFile + " " + fileName + " >> " + logFile + " 2>> " + logFile
+    os.system(command1)
+    command2 = baseCmd2 + pathToCastorCommands + "rfcp " + fileName + " /dev/null >> " + logFile + " 2>> " + logFile
+    os.system(command2)
+    counter = counter + 1
