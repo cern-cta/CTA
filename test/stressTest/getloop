@@ -1,20 +1,37 @@
-#!/bin/bash
-export STAGE_HOST=c2itdcrh
-export STAGER_TRACE=3
-export RFIO_USE_CASTOR_V2=YES
-export STAGE_SVCCLASS=itdc
-export CASTORDIR=/castor/cern.ch/c3/itdc/tape
-LISTFILE=/afs/cern.ch/project/castor/stresstest/list
-# the list file is generated like this:
-#nsls /castor/cern.ch/user/r/riojac3/stresstest | grep group |head -n 500 > list
-#nsls /castor/cern.ch/user/r/riojac3/stresstest | grep testfile |head -n 500 >> list
+#!/usr/bin/python
 
-touch /pool/itdc/read.log
-while true
-  do
-    count=`cat $LISTFILE | wc -l`
-    let "l = $RANDOM % $count"
-    file=`cat $LISTFILE | head -n $l | tail -n 1`
-    stager_qry -M $CASTORDIR/$file >> /pool/itdc/read.log
-    rfcp $CASTORDIR/$file /dev/null >> /pool/itdc/read.log 2>> /pool/itdc/read.log
-done
+import os, sys, random
+from stressUtils import *
+
+# print usage. Arguments should be <logFileName> <CastorPath> <instance> <svcClass>
+def usage():
+    print sys.argv[0] + " <logFileName> <CastorPath> <instance> <svcClass>"
+
+# check number of input arguments
+if len(sys.argv) != 5:
+    print "Wrong number of arguments"
+    usage()
+    sys.exit(1)
+
+# extract arguments and define default parameters
+logFile = sys.argv[1]
+baseCastorDir = sys.argv[2]
+instance = sys.argv[3]
+svcClass = sys.argv[4]
+pathToCastorCommands = getCastorBinPath() + os.sep
+
+# build common part of the command line
+baseCmd = buildEnv(instance, svcClass, True)
+
+# build a list of files to be read
+print(baseCmd + pathToCastorCommands + "nsls " + baseCastorDir)
+fileList = os.popen(baseCmd + pathToCastorCommands + "nsls " + baseCastorDir).read().split()
+
+# Loop
+counter = 0
+while True:
+    index = random.randint(0, len(fileList) - 1)
+    fileName = getCastorDir(baseCastorDir, counter) + os.sep + fileList[index]
+    command = baseCmd + pathToCastorCommands + "rfcp " + fileName + " /dev/null >> " + logFile + " 2>> " + logFile
+    os.system(command)
+    counter = counter + 1
