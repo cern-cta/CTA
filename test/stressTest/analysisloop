@@ -3,7 +3,7 @@
 import os, sys
 from stressUtils import *
 
-# print usage. Arguments should be <inputFile> <logFileName> <CastorPath> <instance> <svcClass>
+# print usage. Arguments should be <inputFile> <logFileName> <CastorPath> <instance> <svcClass1> <svcClass2>
 def usage():
     print sys.argv[0] + " <inputFile> <logFileName> <CastorPath> <instance> <svcClass1> <svcClass2>"
 
