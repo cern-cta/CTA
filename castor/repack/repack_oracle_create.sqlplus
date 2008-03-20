@@ -22,7 +22,7 @@ INSERT INTO CastorVersion VALUES ('-', '2_1_7_1');
  *******************************************************************/
 
 /* A small table used to cross check code and DB versions */
-UPDATE CastorVersion SET schemaVersion = '2_1_4_0';
+UPDATE CastorVersion SET schemaVersion = '2_1_6_0';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
