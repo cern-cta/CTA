@@ -28,7 +28,7 @@ castorDir = sys.argv[3]
 instance = sys.argv[4]
 svcClass = sys.argv[5]
 pathToCastorCommands = "/afs/cern.ch/sw/lcg/external/castor/2.1.2-4/" + getOsPath() + "/usr"
-nbFilesPerDir = 1000
+nbFilesPerDir = 20
 
 # build environment
 cmd = "STAGE_HOST=" + instance + " STAGER_TRACE=3 RFIO_USE_CASTOR_V2=YES STAGE_SVCCLASS=" + svcClass + " CASTORDIR=" + castorDir + " LD_LIBRARY_PATH=" + pathToCastorCommands + os.sep + "lib " + pathToCastorCommands + os.sep + "bin" + os.sep
