@@ -1,21 +1,14 @@
-#!/bin/bash
-export STAGE_HOST=c2itdcrh
-export STAGER_TRACE=3
-export RFIO_USE_CASTOR_V2=YES
-export STAGE_SVCCLASS=itdc
-export CASTORDIR=/castor/cern.ch/c3/itdc/$3
+#!/usr/bin/python
 
-#export CNS_HOST=castorns
-name=`hostname`
-let counter=0
-while true
-  do 
-   if [ $((counter%300)) -eq 0 ]; then nsmkdir ${CASTORDIR}/$((counter%100)); fi
-   basefile=`basename $1`
-   uuid=`uuidgen`
-   shortname="${basefile}_${name}_${uuid}"
-   filename="${CASTORDIR}/$((counter/300))/${shortname}"
-   rfcp $1 $filename >> /pool/itdc/$2 2>> /pool/itdc/$2 
-   rfcp $filename /dev/null >> /pool/itdc/$2 2>> /pool/itdc/$2 
-   let counter=counter+1
-done
+import os, baseputloop
+from putUtils import *
+
+# all the preparation is done in baseputloop, we only have to execute the commands
+counter = 0
+while True:
+    createDirIfNeeded(baseCastorDir, counter)
+    fileName = getCastorDir(baseCastorDir, counter) + os.sep + inputFileBaseName + "_" + host + "_" + stressUtils.buildUuid()
+    command = baseCmd + pathToCastorCommands + "rfcp " + inputFile + " " + fileName + " >> " + logFile + " 2>> " + logFile
+    command = command + "; " + pathToCastorCommands + "rfcp " + fileName + " /dev/null >> " + logFile + " 2>> " + logFile
+    os.system(command)
+    counter = counter + 1
