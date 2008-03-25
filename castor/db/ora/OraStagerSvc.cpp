@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.245 $ $Release$ $Date: 2008/03/19 18:41:48 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.246 $ $Release$ $Date: 2008/03/25 14:30:46 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -691,27 +691,10 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
       throw ex2;
     }
   }
-  catch (castor::exception::TapeOffline& e) {
-    // Tape is offline (not in the robot).
-    // This is also classified as user error, those files should never be requested,
-    // So we set the subrequest to failed and we commit the transaction
-    try {
-      subreq->setStatus(castor::stager::SUBREQUEST_FAILED);
-      subreq->setErrorCode(e.code());
-      cnvSvc()->updateRep(&ad, subreq, true);
-      return 0;
-    }
-    catch(castor::exception::Exception& e) {
-      // should never happen
-      castor::exception::Internal ex2;
-      ex2.getMessage() << "Couldn't fail subrequest in createRecallCandidate: "
-      << std::endl << e.getMessage().str();
-      throw ex2;
-    }
-  }
   catch(castor::exception::Exception& forward) {
-    // any other exception is forwarded, the stager will reply to the client
-    // and close the db transaction
+    // any other exception is forwarded, the stager will reply to the client,
+    // log the error and close the db transaction.
+    // SegmentNotAccessible and TapeOffline errors are included here.
     if(dc) {
       delete dc;
       subreq->setDiskcopy(0);
@@ -1163,6 +1146,7 @@ int validateNsSegments(struct Cns_segattrs *nsSegments, int nbNsSegments)
       free(nsSegments);
       // The tape is not accessible at all (i.e. out of the robot), inform user
       castor::exception::TapeOffline e;
+      e.getMessage() << sstrerror(e.code());
       throw e;
     }
     if(useCopyNb == -1) {
