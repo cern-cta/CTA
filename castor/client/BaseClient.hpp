@@ -130,12 +130,10 @@ namespace castor {
        * Sets the authorization ID under which the request should be sent.
        */
       void setAuthorizationId(uid_t uid, gid_t gid) throw();
-      
        
       /**
        * Set the Authorization mechanism.
        */
-
       void setAuthorization() throw (castor::exception::Exception );
       void setAuthorization(char *mech, char *id) throw (castor::exception::Exception );
 
@@ -158,13 +156,25 @@ namespace castor {
        * May be overwritten in case this behavior should be
        * modified.
        */
-
-      
       virtual void setRhHost(std::string optHost) throw (castor::exception::Exception);
-      virtual void setRhHost()throw (castor::exception::Exception);
+      virtual void setRhHost() throw (castor::exception::Exception);
+
+      /**
+       * Gets the service class to be used with a similar
+       * strategy as above.
+       */
       virtual void setRhSvcClass(std::string optSvcClass) throw (castor::exception::Exception);
-      virtual void setRhSvcClass()throw (castor::exception::Exception);
-      virtual void setOption(struct stage_options* opts, castor::stager::Request* req)
+      virtual void setRhSvcClass() throw (castor::exception::Exception);
+
+      /**
+       * Gathers options from the parameter and calls the
+       * above methods to set the internal variables. If
+       * any is missing, it will be resolved as explained
+       * above.
+       * @param opts the options, i.e. RH host, RH port
+       * and service class.
+       */
+      virtual void setOptions(struct stage_options* opts)
         throw (castor::exception::Exception);
 
       /**

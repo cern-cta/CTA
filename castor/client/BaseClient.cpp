@@ -474,10 +474,9 @@ void castor::client::BaseClient::setRhSvcClass(std::string optSvcClass)
 
 
 //------------------------------------------------------------------------------
-// setOption
+// setOptions
 //------------------------------------------------------------------------------
-void castor::client::BaseClient::setOption
-  (struct stage_options* opts, castor::stager::Request* req)
+void castor::client::BaseClient::setOptions(struct stage_options* opts)
   throw (castor::exception::Exception) {
   if (0 != opts) {
     setRhHost(opts->stage_host);
