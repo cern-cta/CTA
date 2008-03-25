@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: HandlerData.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/03 13:26:50 $ $Author: waldron $
+ * @(#)$RCSfile: HandlerData.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/03/25 12:27:26 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -79,8 +79,15 @@ namespace castor {
       /// The protocol that will be used to access the file
       std::string protocol;
 
-      /// The expected size of the castor file
+      /// The expected size of the castor file. For reads this is 0. For disk
+      /// copy replication requests this is the exact size of the file. For 
+      /// writes this is the estimated file size or the default file size as
+      /// defined on the service class
       u_signed64 xsize;
+
+      /// The default size of the castor file as determined by the settings on
+      /// the service class
+      u_signed64 defaultFileSize;
 
       /// The name of the service class
       std::string svcClass;

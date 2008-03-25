@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: HandlerData.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/03/18 06:59:48 $ $Author: waldron $
+ * @(#)$RCSfile: HandlerData.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/03/25 12:27:26 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -38,6 +38,7 @@ castor::scheduler::HandlerData::HandlerData(void *resreq)
   jobName(""),
   protocol(""),
   xsize(0),
+  defaultFileSize(0),
   svcClass(""),
   requestedFileSystems(""),
   openFlags(""),
@@ -58,16 +59,9 @@ castor::scheduler::HandlerData::HandlerData(void *resreq)
   // during the lsb_submit(3) call with option2 SUB_EXTSCHED
   int msgCnt = 0;
   char **msgArray = lsb_resreq_getextresreq(resreq, &msgCnt);
-  if ((msgCnt < 1) || (msgArray == NULL)) {
-    castor::exception::Exception e(EFAULT);
-    e.getMessage() << "";
-    throw e;
-  }
-
-  // The Extsched option appears as msg box 1
-  if (msgArray[1][0] == 0) {
+  if ((msgCnt < 1) || (msgArray == NULL) || (msgArray[1][0] == 0)) {
     castor::exception::Exception e(EINVAL);
-    e.getMessage() << "Missing ExtSched option for job";
+    e.getMessage() << "Missing external scheduler option for job";
     throw e;
   }
 
@@ -81,6 +75,8 @@ castor::scheduler::HandlerData::HandlerData(void *resreq)
     std::string token;
     std::getline(extsched, token, '=');                // SIZE
     extsched >> xsize;
+    std::getline(extsched, token, '=');                // DEFSIZE
+    extsched >> defaultFileSize;
     std::getline(extsched, token, '=');                // RFS
     std::getline(extsched, requestedFileSystems, ';');
     std::getline(extsched, token, '=');                // PROTOCOL
