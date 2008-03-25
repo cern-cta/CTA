@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.37 $ $Release$ $Date: 2007/08/10 11:11:55 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.38 $ $Release$ $Date: 2008/03/25 09:02:02 $ $Author: wiebalck $
  *
  * 
  *
@@ -1154,11 +1154,12 @@ static int initTapeReq(
                        density,
                        label,
                        unit,
-                       vdqmVolReqID
+                       vdqmVolReqID,
+                       tStartRequest
                        )
      tape_list_t *tape;
      char *vid, *dgn, *density, *label, *unit;
-     int side, vdqmVolReqID;
+     int side, vdqmVolReqID, tStartRequest;
 {
   if ( (tape == NULL) || (vid == NULL) ) {
     serrno = EINVAL;
@@ -1200,6 +1201,7 @@ static int initTapeReq(
   }
 
   tape->tapereq.VolReqID = vdqmVolReqID;
+  tape->tapereq.TStartRequest = tStartRequest;
   
   return(0);
 }
@@ -1371,7 +1373,8 @@ int rtcpcld_parseWorkerCmd(
                    density,
                    lbltype,
                    unit,
-                   vdqmVolReqID
+                   vdqmVolReqID,
+                   tStartRequest
                    );
   if ( rc == -1 ) return(-1);
   return(0);
