@@ -2784,12 +2784,16 @@ struct Cns_srv_thread_info *thip;
 	
 	/* Extract fileIds */
 	unmarshall_LONG(rbp, nbFileIds);
-	fileIds = (u_signed64*) malloc(nbFileIds*sizeof(u_signed64));
+
+	sprintf(logbuf, "bulkexist %d", nbFileIds);
+	Cns_logreq(func, logbuf);
+	if (nbFileIds > 3000) {
+		RETURN (EINVAL);
+	}
+	fileIds = (u_signed64*) malloc(nbFileIds * HYPERSIZE);
 	for (i = 0; i < nbFileIds; i++) {
 		unmarshall_HYPER(rbp, fileIds[i]);
 	}
-	sprintf(logbuf, "bulkexist %d", nbFileIds);
-	Cns_logreq(func, logbuf);
 	
 	/* Check file existence */
 	c = Cns_check_files_exist(&thip->dbfd, fileIds, &nbFileIds);
@@ -2799,7 +2803,11 @@ struct Cns_srv_thread_info *thip;
 	}
 	
 	/* Marshall list of non existent files */
-	repbuf = (char*) malloc(LONGSIZE+nbFileIds*HYPERSIZE);
+	repbuf = (char*) malloc(LONGSIZE + nbFileIds * HYPERSIZE);
+	if (repbuf == NULL) {
+		free(fileIds);
+		RETURN (serrno);
+	}
 	sbp = repbuf;
 	marshall_LONG(sbp, nbFileIds);
 	for (i = 0; i < nbFileIds; i++) {
