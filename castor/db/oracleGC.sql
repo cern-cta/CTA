@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.644 $ $Date: 2008/03/20 16:07:13 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.645 $ $Date: 2008/03/25 12:39:42 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -42,7 +42,7 @@ BEGIN
                 AND D2S.parent = FileSystem.diskPool
                 AND FileSystem.diskServer = DiskServer.id
                 AND DiskServer.name = diskServerName) LOOP
-    -- if any of the service classes to which we belong (normally a single one)
+    -- If any of the service classes to which we belong (normally a single one)
     -- says don't GC, we don't GC STAGED files.
     IF sc.gcEnabled = 0 THEN
       dontGC := 1;
@@ -57,68 +57,70 @@ BEGIN
     -- First take the INVALID diskcopies, they have to go in any case
     UPDATE DiskCopy
        SET status = 9, -- BEING_DELETED
-           lastAccessTime = getTime()   -- see comment below on the status = 9 condition
+           lastAccessTime = getTime() -- See comment below on the status = 9 condition
      WHERE fileSystem = fs.id 
        AND (
-             (status = 7 AND NOT EXISTS  -- INVALID
+             (status = 7 AND NOT EXISTS -- INVALID
                (SELECT 'x' FROM SubRequest
                  WHERE SubRequest.diskcopy = DiskCopy.id
-                   AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14)))  -- All but FINISHED, FAILED*, ARCHIVED
-          OR (status = 9 AND lastAccessTime < getTime() - 1800))
-             -- for failures recovery we also take all DiskCopies which were already
-             -- selected but got stuck somehow and didn't get removed after 30 mins. 
+                   AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14))) -- All but FINISHED, FAILED*, ARCHIVED
+        OR (status = 9 AND lastAccessTime < getTime() - 1800))
+        -- For failures recovery we also take all DiskCopies which were already
+        -- selected but got stuck somehow and didn't get removed after 30 mins. 
     RETURNING id BULK COLLECT INTO dcIds;
     COMMIT;
-    IF dontGC = 1 THEN
-      -- nothing else to do, exit the loop and eventually return the list of INVALID
-      EXIT;
-    END IF;
-    IF dcIds.COUNT > 0 THEN
-      SELECT SUM(fileSize) INTO freed
-        FROM CastorFile, DiskCopy
-       WHERE DiskCopy.castorFile = CastorFile.id
-         AND DiskCopy.id IN (SELECT * FROM TABLE(dcIds));
-    ELSE
-      freed := 0;
-    END IF;
-    -- Get the amount of space to liberate
-    SELECT maxFreeSpace * totalSize - free
-      INTO toBeFreed
-      FROM FileSystem
-     WHERE id = fs.id;
-    -- Check whether we're done with the INVALID
-    IF toBeFreed <= freed THEN
-      EXIT;
-    END IF;
-    -- Loop on file deletions
-    FOR dc IN (SELECT id, castorFile FROM DiskCopy
-                WHERE fileSystem = fs.id
-                  AND status = 0  -- STAGED
-                  AND NOT EXISTS (
-                      SELECT 'x' FROM SubRequest 
-                       WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id 
-                         AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14))   -- All but FINISHED, FAILED*, ARCHIVED
-                  ORDER BY gcWeight ASC) LOOP
-      -- Mark the DiskCopy
-      UPDATE DiskCopy SET status = 9  -- BEINGDELETED
-       WHERE id = dc.id;
-      -- Update toBeFreed
-      SELECT fileSize INTO deltaFree FROM CastorFile WHERE id = dc.castorFile;
-      freed := freed + deltaFree;
-      -- Shall we continue ?
-      IF toBeFreed <= freed THEN
-        EXIT;
+
+    -- Continue processing but with STAGED files.
+    IF dontGC = 0 THEN
+      -- Determine the space that would be freed if the INVALID files selected above
+      -- were to be removed
+      IF dcIds.COUNT > 0 THEN
+        SELECT SUM(fileSize) INTO freed
+          FROM CastorFile, DiskCopy
+         WHERE DiskCopy.castorFile = CastorFile.id
+           AND DiskCopy.id IN (SELECT * FROM TABLE(dcIds));
+      ELSE
+        freed := 0;
       END IF;
-    END LOOP;
-    COMMIT;
+      -- Get the amount of space to be liberated
+      SELECT decode(sign(maxFreeSpace * totalSize - free), -1, 0, maxFreeSpace * totalSize - free)
+        INTO toBeFreed
+        FROM FileSystem
+       WHERE id = fs.id;
+      -- If space is still required even after removal of INVALID files, consider
+      -- removing STAGED files until we are below the free space watermark
+      IF freed < toBeFreed THEN
+        -- Loop on file deletions
+        FOR dc IN (SELECT id, castorFile FROM DiskCopy
+                    WHERE fileSystem = fs.id
+                      AND status = 0 -- STAGED
+                      AND NOT EXISTS (
+                          SELECT 'x' FROM SubRequest 
+                           WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id 
+                             AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14)) -- All but FINISHED, FAILED*, ARCHIVED
+                      ORDER BY gcWeight ASC) LOOP
+          -- Mark the DiskCopy
+          UPDATE DiskCopy SET status = 9 -- BEINGDELETED
+           WHERE id = dc.id;
+          -- Update toBeFreed
+          SELECT fileSize INTO deltaFree FROM CastorFile WHERE id = dc.castorFile;
+          freed := freed + deltaFree;
+          -- Shall we continue ?
+          IF toBeFreed <= freed THEN
+            EXIT;
+          END IF;
+        END LOOP;
+      END IF;
+      COMMIT;
+    END IF;
   END LOOP;
-  
-  -- now select all the BEINGDELETED diskcopies in this diskserver for the gcDaemon
+      
+  -- Now select all the BEINGDELETED diskcopies in this diskserver for the gcDaemon
   OPEN files FOR
-    SELECT FileSystem.mountPoint||DiskCopy.path, DiskCopy.id,
-	         Castorfile.fileid, Castorfile.nshost
+    SELECT FileSystem.mountPoint || DiskCopy.path, DiskCopy.id,
+	   Castorfile.fileid, Castorfile.nshost
       FROM CastorFile, DiskCopy, FileSystem, DiskServer
-     WHERE DiskCopy.status = 9  -- BEINGDELETED
+     WHERE DiskCopy.status = 9 -- BEINGDELETED
        AND DiskCopy.castorfile = CastorFile.id
        AND DiskCopy.fileSystem = FileSystem.id
        AND FileSystem.diskServer = DiskServer.id
