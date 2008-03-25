@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.652 $ $Date: 2008/03/19 13:15:25 $ $Author: riojac3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.653 $ $Date: 2008/03/25 12:31:40 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -958,6 +958,21 @@ BEGIN
      AND FileSystem.diskserver = DiskServer.id
      AND DiskServer.status = 0 -- PRODUCTION
      AND DiskCopy.status IN (0, 1, 6, 10);  -- STAGED, WAITDISK2DISKCOPY, STAGEOUT, CANBEMIGR
+
+  -- For DiskCopyReplicaRequests which are waiting to be scheduled, the filesystem
+  -- link in the diskcopy table is set to 0. As a consequence of this it is not
+  -- possible to determine the service class via the filesystem -> diskpool -> svcclass
+  -- relationship, as assumed in the previous query. Instead the service class of 
+  -- the replication request must be used!!!
+  IF nbDCs = 0 THEN
+    SELECT COUNT(DiskCopy.id) INTO nbDCs
+      FROM DiskCopy, StageDiskCopyReplicaRequest
+     WHERE DiskCopy.id = StageDiskCopyReplicaRequest.destDiskCopyId
+       AND StageDiskCopyReplicaRequest.svcclass = svcClassId
+       AND DiskCopy.castorfile = cfId
+       AND DiskCopy.status = 1; -- WAITDISK2DISKCOPY
+  END IF;
+
   IF nbDCs > 0 THEN
     -- Yes, we have some
     result := 0;  -- DISKCOPY_STAGED
