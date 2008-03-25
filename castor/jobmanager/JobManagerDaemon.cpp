@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/03/18 07:34:43 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/03/25 10:31:38 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -37,7 +37,7 @@
 #include "signal.h"
 
 // Definitions
-#define DEFAULT_MANAGEMENT_INTERVAL 30
+#define DEFAULT_MANAGEMENT_INTERVAL 60
 #define DEFAULT_DISPATCH_INTERVAL   10
 #define DEFAULT_NOTIFICATION_PORT   15011
 #define DEFAULT_PREFORKED_WORKERS   2
