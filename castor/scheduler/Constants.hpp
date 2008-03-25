@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/02/22 08:57:52 $ $Author: waldron $
+ * @(#)$RCSfile: Constants.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/25 10:28:55 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -49,7 +49,6 @@ static const int HANDLER_PYTHON_ID = 104;
 #define PYINI_THROTTLING 60
 
 // Customised pending reasons
-#define PEND_HOST_CNOSLOTS    20002 // No slots available on host
 #define PEND_HOST_CUNKNOWN    20003 // Host not listed in shared memory
 #define PEND_HOST_CSTATE      20004 // Diskserver status incorrect
 #define PEND_HOST_CNOTRFS     20005 // Diskserver is not in the list of RFS

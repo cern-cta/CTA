@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: schmod_shmem.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/03 13:26:50 $ $Author: waldron $
+ * @(#)$RCSfile: schmod_shmem.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/03/25 10:28:55 $ $Author: waldron $
  *
  * Castor LSF External Plugin - Phase 1 (Shared Memory)
  *
@@ -171,9 +171,6 @@ extern "C" {
 	}
 	else if (it == clusterStatus->end()) {
 	  reason = PEND_HOST_CUNKNOWN; // Host not listed in shared memory
-	}
-	else if (hInfo->nslotAvail == 0) {
-	  reason = PEND_HOST_CNOSLOTS; // No slots available on host
 	}
 
 	// For non diskcopy replication requests the diskserver must be in
