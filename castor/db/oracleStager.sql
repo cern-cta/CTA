@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.653 $ $Date: 2008/03/25 12:31:40 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.654 $ $Date: 2008/03/25 14:38:01 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -507,10 +507,10 @@ BEGIN
               AND R.sourceDiskCopyId = DiskCopy.id
               AND SubRequest.status = 9 -- FAILED
            HAVING COUNT(*) >= 10)
-         ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
-                                 FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
-                                 FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC
-         )
+      ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
+                              FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
+                              FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC
+      )
      WHERE ROWNUM < 2;
   -- We found at least one, therefore we schedule a disk2disk
   -- copy from the existing diskcopy not available to this svcclass
@@ -1542,11 +1542,11 @@ BEGIN
       SELECT DC.id
         FROM DiskCopy DC, FileSystem, DiskPool2SvcClass DP2SC
        WHERE DC.castorFile = cfId
-         AND DC.status IN (0, 1, 2, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR, WAITDISK2DISK, WAITTAPERECALL
+         AND DC.status IN (0, 1, 2, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR, WAITDISK2DISKCOPY, WAITTAPERECALL
          AND DC.fileSystem = FileSystem.id
          AND FileSystem.diskPool = DP2SC.parent
          AND DP2SC.child = scId)
-      UNION ALL (
+    UNION ALL (
       -- and then diskcopies resulting from PrepareToPut|Update requests
       SELECT DC.id
         FROM (SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
@@ -1571,7 +1571,7 @@ BEGIN
     -- we are performing a stageRm everywhere
     SELECT count(*) INTO nbRes FROM DiskCopy
      WHERE castorFile = cfId
-       AND status IN (0, 1, 2, 5, 6, 10, 11)  -- WAITDISK2DISK, WAITTAPERECALL, STAGED, STAGEOUT, CANBEMIGR, WAITFS, WAITFS_SCHEDULING
+       AND status IN (0, 1, 2, 5, 6, 10, 11)  -- WAITDISK2DISKCOPY, WAITTAPERECALL, STAGED, STAGEOUT, CANBEMIGR, WAITFS, WAITFS_SCHEDULING
        AND id NOT IN (SELECT * FROM TABLE(dcsToRm));
     IF nbRes = 0 THEN
       scId := 0;
@@ -1581,7 +1581,7 @@ BEGIN
     SELECT id BULK COLLECT INTO dcsToRm
       FROM DiskCopy
      WHERE castorFile = cfId
-       AND status IN (0, 1,2, 5, 6, 10, 11);  -- WAITDISK2DISK, WAITTAPERECALL, STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
+       AND status IN (0, 1, 2, 5, 6, 10, 11);  -- WAITDISK2DISKCOPY, WAITTAPERECALL, STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
   END IF;
   
   IF scId = 0 THEN
