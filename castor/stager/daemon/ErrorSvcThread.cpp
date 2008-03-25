@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2008/03/10 09:38:59 $ $Author: waldron $
+ * @(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2008/03/25 14:28:25 $ $Author: itglp $
  *
  * Service thread for dealing with requests that failed
  *
@@ -166,15 +166,15 @@ void castor::stager::daemon::ErrorSvcThread::process
       res.setErrorCode(SEINTERNAL);
       std::stringstream ss;
       ss << "Could not retrieve file.\n"
-	 << "Please report error and mention file name and the "
-	 << "following request ID : " << req->id();
+         << "Please report error and mention file name and the "
+         << "following request ID : " << req->id();
       res.setErrorMessage(ss.str());
     } else {
       res.setErrorCode(subReq->errorCode());
       if (subReq->errorMessage().empty()) {
-	res.setErrorMessage(sstrerror(subReq->errorCode()));
+        res.setErrorMessage(sstrerror(subReq->errorCode()));
       } else {
-	res.setErrorMessage(subReq->errorMessage());
+        res.setErrorMessage(subReq->errorMessage());
       }
     }
     res.setStatus(castor::stager::SUBREQUEST_FAILED);
