@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/03/13 16:13:27 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/03/25 10:32:54 $ $Author: waldron $
  *
  * Implementation of the IJobManagerSvc for Oracle
  *
@@ -55,7 +55,7 @@ const std::string castor::jobmanager::ora::OraJobManagerSvc::s_failSchedulerJobS
 
 /// SQL statement for function jobToSchedule
 const std::string castor::jobmanager::ora::OraJobManagerSvc::s_jobToScheduleString =
-  "BEGIN jobToSchedule(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18, :19, :20, :21, :22, :23); END;";
+  "BEGIN jobToSchedule(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18, :19, :20, :21, :22, :23, :24); END;";
 
 /// SQL statement for function updateSchedulerJob
 const std::string castor::jobmanager::ora::OraJobManagerSvc::s_updateSchedulerJobString =
@@ -234,6 +234,8 @@ castor::jobmanager::JobSubmissionRequest
 	(22, oracle::occi::OCCISTRING, 2048);
       m_jobToScheduleStatement->registerOutParam
 	(23, oracle::occi::OCCIDOUBLE);
+      m_jobToScheduleStatement->registerOutParam
+	(24, oracle::occi::OCCIDOUBLE);
       m_jobToScheduleStatement->setAutoCommit(true);
     }
 
@@ -321,6 +323,7 @@ castor::jobmanager::JobSubmissionRequest
     result->setClientSecure(m_jobToScheduleStatement->getInt(21));
     result->setSourceSvcClass(m_jobToScheduleStatement->getString(22));
     result->setRequestCreationTime((u_signed64)m_jobToScheduleStatement->getDouble(23));
+    result->setDefaultFileSize((u_signed64)m_jobToScheduleStatement->getDouble(24));
 
     // For statistical purposes
     timeval tv;

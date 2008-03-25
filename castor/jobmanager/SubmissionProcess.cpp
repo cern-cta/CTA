@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/03/18 09:51:38 $ $Author: waldron $
+ * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/03/25 10:32:53 $ $Author: waldron $
  *
  * The Submission Process is used to submit new jobs into the scheduler. It is
  * run inside a separate process allowing for setuid and setgid calls to take
@@ -293,6 +293,13 @@ void castor::jobmanager::SubmissionProcess::submitJob
   m_job.jobName     = (char *)request->subReqId().c_str();
   m_job.projectName = (char *)request->svcClass().c_str();
 
+  // Set stdin, stdout and stderr to /dev/null. This will disable job output
+  // emails sent by LSF after the job ends.
+  m_job.options |= SUB_IN_FILE | SUB_OUT_FILE | SUB_ERR_FILE;
+  m_job.inFile  = "/dev/null";
+  m_job.outFile = "/dev/null";
+  m_job.errFile = "/dev/null";
+
   // Only change the queue if the job is not meant to run in the default
   // service class. By not defining the queue LSF will but the job into the
   // queue which it has defined as default .e.g castor
@@ -322,9 +329,9 @@ void castor::jobmanager::SubmissionProcess::submitJob
   // the job requires
   char resReq[MAXLINELEN];
   if (request->requestType() == OBJ_StageDiskCopyReplicaRequest) {
-    strncpy(resReq, "span[ptile=1] diskcopy", MAXLINELEN);
+    strncpy(resReq, "span[ptile=1] type==any && diskcopy", MAXLINELEN);
   } else {
-    snprintf(resReq, MAXLINELEN, "%s", request->protocol().c_str());
+    snprintf(resReq, MAXLINELEN, "type==any && %s", request->protocol().c_str());
   }
   m_job.resReq = resReq;
 
@@ -363,6 +370,7 @@ void castor::jobmanager::SubmissionProcess::submitJob
   char extSched[MAXLINELEN];
   std::ostringstream oss;
   oss << "SIZE="         << request->xsize()                << ";"
+      << "DEFSIZE="      << request->defaultFileSize()      << ";"
       << "RFS="          << request->requestedFileSystems() << ";"
       << "PROTOCOL="     << request->protocol()             << ";"
       << "SVCCLASS="     << request->svcClass()             << ";"
