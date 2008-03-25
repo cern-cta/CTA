@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.646 $ $Date: 2008/03/12 14:36:35 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.647 $ $Date: 2008/03/25 12:32:18 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -297,7 +297,7 @@ BEGIN
        AND DiskCopy.castorfile = Castorfile.id
        AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
        AND FileSystem.id = DiskCopy.filesystem
-       AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
+       AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
        AND FileSystem.diskPool = DiskPool2SvcClass.parent
        AND DiskPool2SvcClass.child = SvcClass.id
        AND DiskPool2SvcClass.parent = DiskPool.id
@@ -730,7 +730,8 @@ END;
 
 
 /* PL/SQL method implementing jobToSchedule */
-CREATE OR REPLACE PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCHAR2, srProtocol OUT VARCHAR2,
+CREATE OR REPLACE
+PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCHAR2, srProtocol OUT VARCHAR2,
                         srXsize OUT INTEGER, srRfs OUT VARCHAR2, reqId OUT VARCHAR2,
                         cfFileId OUT INTEGER, cfNsHost OUT VARCHAR2, reqSvcClass OUT VARCHAR2,
                         reqType OUT INTEGER, reqEuid OUT INTEGER, reqEgid OUT INTEGER,
@@ -738,7 +739,7 @@ CREATE OR REPLACE PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCH
                         clientPort OUT INTEGER, clientVersion OUT INTEGER, clientType OUT INTEGER,
                         reqSourceDiskCopyId OUT INTEGER, reqDestDiskCopyId OUT INTEGER, 
                         clientSecure OUT INTEGER, reqSourceSvcClass OUT VARCHAR2, 
-                        reqCreationTime OUT INTEGER) AS
+                        reqCreationTime OUT INTEGER, reqDefaultFileSize OUT INTEGER) AS
   dsId INTEGER;
   nuId INTEGER;                   
 BEGIN
@@ -758,10 +759,11 @@ BEGIN
 	 Client.ipAddress, Client.port, Client.version, 
 	 (SELECT type 
             FROM Id2type 
-           WHERE id = Client.id) clientType, Client.secure, Request.creationTime
+           WHERE id = Client.id) clientType, Client.secure, Request.creationTime, 
+         decode(SvcClass.defaultFileSize, 0, 2000000000, SvcClass.defaultFileSize)
     INTO cfFileId, cfNsHost, reqSvcClass, reqType, reqId, reqEuid, reqEgid, reqUsername, 
          srOpenFlags, reqSourceDiskCopyId, reqDestDiskCopyId, clientIp, clientPort, 
-         clientVersion, clientType, clientSecure, reqCreationTime
+         clientVersion, clientType, clientSecure, reqCreationTime, reqDefaultFileSize
     FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
          (SELECT id, username, euid, egid, reqid, client, creationTime,
                  'w' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
