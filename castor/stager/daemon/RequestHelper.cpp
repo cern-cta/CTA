@@ -291,7 +291,7 @@ namespace castor{
         }
         try{
           u_signed64 fileClassId = fileClass->id();
-          u_signed64 svcClassId = svcClass->id();
+          u_signed64 svcClassId = svcClass->id();                              
           cnsFileId = &(stgCnsHelper->cnsFileid);
 
           // get the castorFile from the stagerService and fill it on the subrequest
@@ -306,7 +306,7 @@ namespace castor{
           // create links in db and in memory
 
           dbSvc->fillRep(baseAddr, subrequest, castor::OBJ_CastorFile, false);
-          dbSvc->fillRep(baseAddr, castorFile, castor::OBJ_FileClass, true);
+          dbSvc->fillRep(baseAddr, castorFile, castor::OBJ_FileClass, false);
         }
         catch(castor::exception::Exception e){
           logToDlf(DLF_LVL_ERROR, STAGER_CASTORFILE_EXCEPTION, cnsFileId);
