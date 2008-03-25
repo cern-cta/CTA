@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.45 $ $Date: 2008/03/18 14:03:35 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.46 $ $Date: 2008/03/25 11:50:38 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -480,10 +480,13 @@ freedrv:
         TEndUnmount = (int)time(NULL); 
         TUnmount = ((time_t)TEndUnmount - (time_t)TStartUnmount);
         
-        tl_tpdaemon.tl_log( &tl_tpdaemon, 92, 5,
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 92, 8,
                             "func"       , TL_MSG_PARAM_STR  , func,
                             "unmounttime", TL_MSG_PARAM_INT  , TUnmount,
-                            "tapemoved"  , TL_MSG_PARAM_STR  , (rlsflags & TPRLS_NOUNLOAD)?"no":"yes", 
+                            "tapemoved"  , TL_MSG_PARAM_STR  , (rlsflags & TPRLS_NOUNLOAD)?"no":"yes",
+                            "Drive"      , TL_MSG_PARAM_STR  , drive, 
+                            "DGN"        , TL_MSG_PARAM_STR  , dgn,
+                            "Job ID"     , TL_MSG_PARAM_INT  , jid,
                             "vid"        , TL_MSG_PARAM_STR  , vid,
                             "TPVID"      , TL_MSG_PARAM_TPVID, vid );
 
