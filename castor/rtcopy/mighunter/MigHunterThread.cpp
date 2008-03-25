@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: gtaur $
+ * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: waldron $
  *
  *
  *
@@ -136,7 +136,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	// call the policy foreach tape copy
 
 	infoCandidate=infoCandidateTapeCopies.begin();
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 5, 1, params0);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 1, params0);
       	
 	u_signed64 policyYes=0;
 	u_signed64 policyNo=0;
