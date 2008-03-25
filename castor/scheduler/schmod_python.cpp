@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/03/18 07:05:18 $ $Author: waldron $
+ * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/03/25 12:28:55 $ $Author: waldron $
  *
  * Castor LSF External Plugin - Phase 2 (Python)
  *
@@ -50,9 +50,6 @@
 
 // Shared memory pointer
 castor::monitoring::ClusterStatus *clusterStatus = 0;
-
-// Expected average file size
-u_signed64 expectedAverageFileSize = 0x80000000; // 2G
 
 // Python pointer
 castor::scheduler::Python *python = 0;
@@ -205,8 +202,9 @@ extern "C" {
     } catch (castor::exception::Exception e) {
       // "Unable to access shared memory"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Error", e.getMessage().str())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 1, 1, params);
+	{castor::dlf::Param("Type", sstrerror(e.code())),
+	 castor::dlf::Param("Error", e.getMessage().str())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 1, 2, params);
       return -1;
     }
 
@@ -422,11 +420,6 @@ extern "C" {
       (jobNbReadWriteStreamCost, "JobNbReadWriteStreamCost");
     castor::scheduler::getIntCoeff
       (jobNbWriteStreamCost, "JobNbWriteStreamCost");
- 
-    // Expected average file size (used for estimating the amount of data to be
-    // written by ongoing streams)
-    castor::scheduler::getU64Coeff
-      (expectedAverageFileSize, "ExpectedAverageFileSize");
   }
 
 
@@ -470,8 +463,9 @@ extern "C" {
     } catch (castor::exception::Exception e) {
       // "Failed to parse resource requirements, exiting python_new"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Error", e.getMessage().str())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 13, 1, params);
+	{castor::dlf::Param("Type", sstrerror(e.code())),
+	 castor::dlf::Param("Error", e.getMessage().str())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 13, 2, params);
       return -1;
     }
     
@@ -581,7 +575,7 @@ extern "C" {
 	    // Does the filesystem have enough space to accept the job? This
 	    // check does not apply to diskcopy replication requests where
 	    // the source diskserver and filesystem are the ones being
-	    // test. Why? because the job only reads from the source! 
+	    // tested. Why? because the job only reads from the source! 
 	    if ((handler->xsize > 0) &&
 		(!((handler->requestType ==
 		    castor::OBJ_StageDiskCopyReplicaRequest) &&
@@ -595,8 +589,10 @@ extern "C" {
 	      // filesystem in the not too distant future.
 	      signed64 actualFreeSpace =
 		(signed64)it3->second.freeSpace() + it3->second.deltaFreeSpace() -
-		expectedAverageFileSize * (it3->second.nbWriteStreams() +
-					   it3->second.nbReadWriteStreams());
+		handler->defaultFileSize * (it3->second.nbWriteStreams() +
+					    it3->second.deltaNbWriteStreams() +
+					    it3->second.nbReadWriteStreams() +
+					    it3->second.deltaNbReadWriteStreams());
 	      
 	      if (!((actualFreeSpace > (signed64)handler->xsize) &&
 		    (actualFreeSpace > it3->second.minAllowedFreeSpace() * 
@@ -704,7 +700,7 @@ extern "C" {
 	}
 	
 	if (remove) {
-	  lsb_reason_set(reasonTb, candHost,  PEND_HOST_CNOINTEREST);
+	  lsb_reason_set(reasonTb, candHost, PEND_HOST_CNOINTEREST);
 	  lsb_cand_removehost(candGroupEntry, index);
 	} else {
 	  // This diskserver and filesystem combination is to be kept so we
