@@ -569,6 +569,26 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_defaultFileSize
+       * The default size of the castor file as determined by the settings on the service
+       * class
+       * @return the value of m_defaultFileSize
+       */
+      u_signed64 defaultFileSize() const {
+        return m_defaultFileSize;
+      }
+
+      /**
+       * Set the value of m_defaultFileSize
+       * The default size of the castor file as determined by the settings on the service
+       * class
+       * @param new_var the new value of m_defaultFileSize
+       */
+      void setDefaultFileSize(u_signed64 new_var) {
+        m_defaultFileSize = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -665,6 +685,9 @@ namespace castor {
 
       /// The time the request was created in the database
       u_signed64 m_requestCreationTime;
+
+      /// The default size of the castor file as determined by the settings on the service class
+      u_signed64 m_defaultFileSize;
 
       /// The id of this object
       u_signed64 m_id;
