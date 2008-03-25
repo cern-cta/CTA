@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.651 $ $Date: 2008/03/19 13:06:54 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.652 $ $Date: 2008/03/25 12:40:06 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -760,33 +760,32 @@ BEGIN
   -- do the same operation of getMigrCandidate and return the dbInfoMigrationPolicy
   -- we look first for repack condidates for this svcclass
   -- we update atomically WAITPOLICY
-  
-   SELECT SvcClass.migratorpolicy, SvcClass.id INTO policyName, svcId 
+  SELECT SvcClass.migratorpolicy, SvcClass.id INTO policyName, svcId 
     FROM SvcClass 
    WHERE SvcClass.name = svcClassName;
   
-   UPDATE TapeCopy A set status=7
-    WHERE status IN (0, 1) AND
+  UPDATE TapeCopy A SET status = 7
+   WHERE status IN (0, 1) AND
     EXISTS (SELECT 'x' FROM  SubRequest, StageRepackRequest
-   		WHERE StageRepackRequest.svcclass = svcId 
-     			AND SubRequest.request = StageRepackRequest.id
-     			AND SubRequest.status = 12  --SUBREQUEST_REPACK
-     			AND A.castorfile = SubRequest.castorfile
-     ) RETURNING A.id-- CREATED / TOBEMIGRATED
-     BULK COLLECT INTO tcIds;
-     COMMIT;
+             WHERE StageRepackRequest.svcclass = svcId 
+               AND SubRequest.request = StageRepackRequest.id
+               AND SubRequest.status = 12  -- SUBREQUEST_REPACK
+               AND A.castorfile = SubRequest.castorfile
+    ) RETURNING A.id -- CREATED / TOBEMIGRATED
+    BULK COLLECT INTO tcIds;
+  COMMIT;
   -- if we didn't find anything, we look 
   -- the usual svcclass from castorfile table.
   -- we update atomically WAITPOLICY
   IF tcIds.count = 0 THEN
-    UPDATE TapeCopy A set status=7  
+    UPDATE TapeCopy A SET status = 7  
      WHERE status IN (0, 1) AND
       EXISTS ( SELECT 'x' FROM  CastorFile 
      	WHERE A.castorFile = CastorFile.id 
           AND CastorFile.svcClass = svcId 
       ) RETURNING A.id -- CREATED / TOBEMIGRATED
-       BULK COLLECT INTO tcIds;
-       COMMIT;
+      BULK COLLECT INTO tcIds;
+      COMMIT;
   END IF;
   -- return the full resultset
   OPEN dbInfo FOR
@@ -794,7 +793,7 @@ BEGIN
            CastorFile.nsHost, CastorFile.fileid, CastorFile.filesize 
       FROM Tapecopy,CastorFile
      WHERE CastorFile.id = TapeCopy.castorfile 
-       AND TapeCopy.id in (SELECT * FROM table(tcIds)); 
+       AND TapeCopy.id IN (SELECT * FROM table(tcIds)); 
 END;
 
 
