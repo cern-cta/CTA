@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_version.cpp,v 1.4 2008/03/10 17:27:14 itglp Exp $
+ * $Id: stager_client_api_version.cpp,v 1.5 2008/03/25 14:35:21 itglp Exp $
  */
 
 /* ============= */
@@ -41,7 +41,7 @@ EXTERN_C int DLL_DECL stage_version(int *majorVersion,
     castor::client::BaseClient client;
     castor::query::VersionQuery req;
     ret=setDefaultOption(opts);
-    client.setOption(opts, &req);
+    client.setOptions(opts);
     client.setAuthorizationId();
     if(ret==-1){free(opts);}
 

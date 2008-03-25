@@ -132,7 +132,7 @@ void RepackMonitor::getStats(RepackSubRequest* sreq,
   
   /// set the service class information from repackrequest
   getStageOpts(&opts, sreq);
-  client.setOption(&opts, &req);
+  client.setOptions(&opts);
 
   // Prepare the Request
   castor::stager::QueryParameter *par = new castor::stager::QueryParameter();

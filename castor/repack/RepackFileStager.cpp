@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2008/01/30 10:49:20 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2008/03/25 14:36:03 $ $Author: itglp $
  *
  *
  *
@@ -408,7 +408,7 @@ int RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
   /** Uses a BaseClient to handle the request */
   castor::client::BaseClient client(stage_getClientTimeout(),stage_getClientTimeout());
   // line against the time out
-  client.setOption(opts, req);
+  client.setOptions(opts);
 
   client.setAuthorizationId(rsreq->repackrequest()->userId(), rsreq->repackrequest()->groupId());
   
@@ -531,7 +531,7 @@ void  RepackFileStager::sendRepackRemoveRequest( RepackSubRequest*sreq)throw(cas
   /* set the service class information from repackrequest */
   
   getStageOpts(&opts, sreq);
-  client.setOption(&opts, &req);
+  client.setOptions(&opts);
 
   std::vector<castor::rh::Response *>respvec;
   castor::client::VectorResponseHandler rh(&respvec);

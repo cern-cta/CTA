@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.36 2008/03/10 17:27:14 itglp Exp $
+ * $Id: stager_client_api_query.cpp,v 1.37 2008/03/25 14:35:21 itglp Exp $
  */
 
 /*
@@ -72,7 +72,7 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
     castor::stager::StageFileQueryRequest req;
     
     ret=setDefaultOption(opts);
-    client.setOption(opts, &req);
+    client.setOptions(opts);
     client.setAuthorizationId();
     if (ret==-1){free(opts);}
     
@@ -202,7 +202,7 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
     castor::stager::StageRequestQueryRequest req;
 
     ret=setDefaultOption(opts);
-    client.setOption(opts, &req);
+    client.setOptions(opts);
     client.setAuthorizationId();
     if(ret==-1){free(opts);}
     // Preparing the requests
@@ -354,7 +354,7 @@ EXTERN_C int DLL_DECL stage_diskpoolquery
 
     // Dealing with options
     ret = setDefaultOption(opts);
-    client.setOption(opts, &req);
+    client.setOptions(opts);
     client.setAuthorizationId();
     if (-1 == ret) { free(opts); }
 
@@ -429,7 +429,7 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
 
     // Dealing with options
     ret = setDefaultOption(opts);
-    client.setOption(opts, &req);
+    client.setOptions(opts);
     client.setAuthorizationId(); 
     if (-1 == ret) { free(opts); }
 

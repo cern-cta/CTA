@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_update.cpp,v 1.18 2008/03/13 10:25:20 waldron Exp $
+ * $Id: stager_client_api_update.cpp,v 1.19 2008/03/25 14:35:21 itglp Exp $
  */
 
 /*
@@ -75,7 +75,7 @@ EXTERN_C int DLL_DECL stage_prepareToUpdate(const char *userTag,
     castor::stager::StagePrepareToUpdateRequest req;
 
     ret=setDefaultOption(opts);
-    client.setOption(opts, &req);
+    client.setOptions(opts);
     client.setAuthorizationId(); 
     if (ret==-1){free(opts);}
 
@@ -209,7 +209,7 @@ EXTERN_C int DLL_DECL stage_update(const char *userTag,
     }
 
     ret=setDefaultOption(opts);
-    client.setOption(opts, &req);
+    client.setOptions(opts);
     client.setAuthorizationId(); 
     if (ret==-1){free(opts);}  
     if (0 != protocol) {

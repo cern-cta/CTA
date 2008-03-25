@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.33 2008/03/10 17:27:14 itglp Exp $
+ * $Id: stager_client_api_put.cpp,v 1.34 2008/03/25 14:35:21 itglp Exp $
  */
 
 /*
@@ -81,7 +81,7 @@ EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
 
     ret=setDefaultOption(opts);
     castor::stager::StagePrepareToPutRequest req;
-    client.setOption(opts, &req);
+    client.setOptions(opts);
     client.setAuthorizationId();
     if(ret==-1){free(opts);}
 
@@ -221,7 +221,7 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
     castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
 
     ret=setDefaultOption(opts);
-    client.setOption(opts, &req);
+    client.setOptions(opts);
     client.setAuthorizationId();
     if (ret==-1){free(opts);}
 
@@ -347,7 +347,7 @@ EXTERN_C int DLL_DECL stage_putDone(char *putRequestId,
     castor::stager::StagePutDoneRequest req;
 
     ret=setDefaultOption(opts);
-    client.setOption(opts, &req);
+    client.setOptions(opts);
     client.setAuthorizationId();
     if(ret==-1){free(opts);}
 

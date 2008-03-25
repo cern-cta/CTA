@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/03/18 07:12:54 $ $Author: waldron $
+ * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/03/25 14:35:41 $ $Author: itglp $
  *
  *
  *
@@ -265,7 +265,7 @@ castor::stager::RemoteGCSvc::selectFiles2Delete
   Files2DeleteResponseHandler rh(result);
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteGCClientTimeout());
-  client.setOption(NULL, &req);
+  client.setOptions(0);
   client.sendRequest(&req, &rh);
   return result;
 }
@@ -294,7 +294,7 @@ void castor::stager::RemoteGCSvc::filesDeleted
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteGCClientTimeout());
-  client.setOption(NULL, &req);
+  client.setOptions(0);
   client.sendRequest(&req, &rh); 
   // no need to cleanup files since the ownership of its content
   // was transmitted to req and the deletion of req will delete it !
@@ -324,7 +324,7 @@ void castor::stager::RemoteGCSvc::filesDeletionFailed
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteGCClientTimeout());
-  client.setOption(NULL, &req);
+  client.setOptions(0);
   client.sendRequest(&req, &rh);
   // no need to cleanup files since the ownership of its content
   // was transmitted to req and the deletion of req will delete it !
@@ -402,7 +402,7 @@ std::vector<u_signed64> castor::stager::RemoteGCSvc::nsFilesDeleted
     NsFilesDeletedResponseHandler rh(&result);
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(getRemoteGCClientTimeout());
-    client.setOption(NULL, &req);
+    client.setOptions(0);
     client.sendRequest(&req, &rh);
   } catch (castor::exception::Exception e) {
     // Exception caught in RemoteGCSvc::nsFilesDeleted
@@ -488,7 +488,7 @@ std::vector<u_signed64> castor::stager::RemoteGCSvc::stgFilesDeleted
     StgFilesDeletedResponseHandler rh(&result);
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(getRemoteGCClientTimeout());
-    client.setOption(NULL, &req);
+    client.setOptions(0);
     client.sendRequest(&req, &rh);
   } catch (castor::exception::Exception e) {
     // Exception caught in RemoteGCSvc::stgFilesDeleted

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/03/05 16:14:32 $ $Author: riojac3 $
+ * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2008/03/25 14:35:41 $ $Author: itglp $
  *
  *
  *
@@ -198,7 +198,7 @@ castor::stager::RemoteJobSvc::getUpdateStart
   req.setNsHost(nsHost);
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteJobClientTimeout());
-  client.setOption(NULL, &req);
+  client.setOptions(0);
   client.sendRequest(&req, &rh);
   // return
   return result;
@@ -278,7 +278,7 @@ castor::stager::RemoteJobSvc::putStart
   req.setNsHost(nsHost);
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteJobClientTimeout());
-  client.setOption(NULL, &req);
+  client.setOptions(0);
   client.sendRequest(&req, &rh);
   // return
   return result;
@@ -402,7 +402,7 @@ void castor::stager::RemoteJobSvc::disk2DiskCopyStart
   DiskCopyStartResponseHandler rh(diskCopy, sourceDiskCopy);
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteJobClientTimeout());
-  client.setOption(NULL, &req);
+  client.setOptions(0);
   client.sendRequest(&req, &rh);
 }
 
@@ -425,7 +425,7 @@ void castor::stager::RemoteJobSvc::disk2DiskCopyDone
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteJobClientTimeout());
-  client.setOption(NULL, &req);
+  client.setOptions(0);
   client.sendRequest(&req, &rh);
 }
 
@@ -447,7 +447,7 @@ void castor::stager::RemoteJobSvc::disk2DiskCopyFailed
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteJobClientTimeout());
-  client.setOption(NULL, &req);
+  client.setOptions(0);
   client.sendRequest(&req, &rh);
 }
 
@@ -473,7 +473,7 @@ void castor::stager::RemoteJobSvc::prepareForMigration
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteJobClientTimeout());
-  client.setOption(NULL, &req);
+  client.setOptions(0);
   client.sendRequest(&req, &rh);
 }
 
@@ -517,7 +517,7 @@ void castor::stager::RemoteJobSvc::getUpdateDone
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteJobClientTimeout());
-  client.setOption(NULL, &req);
+  client.setOptions(0);
   client.sendRequest(&req, &rh);
 }
 
@@ -538,7 +538,7 @@ void castor::stager::RemoteJobSvc::getUpdateFailed
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteJobClientTimeout());
-  client.setOption(NULL, &req);
+  client.setOptions(0);
   client.sendRequest(&req, &rh);
 }
 
@@ -559,7 +559,7 @@ void castor::stager::RemoteJobSvc::putFailed
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteJobClientTimeout());
-  client.setOption(NULL, &req);
+  client.setOptions(0);
   client.sendRequest(&req, &rh);
 }
 
@@ -580,6 +580,6 @@ void castor::stager::RemoteJobSvc::firstByteWritten
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteJobClientTimeout());
-  client.setOption(NULL, &req);
+  client.setOptions(0);
   client.sendRequest(&req, &rh);
 }

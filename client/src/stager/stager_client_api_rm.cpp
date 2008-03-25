@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_rm.cpp,v 1.13 2008/03/19 14:53:45 itglp Exp $
+ * $Id: stager_client_api_rm.cpp,v 1.14 2008/03/25 14:35:21 itglp Exp $
  */
 
 /*
@@ -66,7 +66,7 @@ static int _processFileRequest(const char *func,
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
     ret=setDefaultOption(opts);
-    client.setOption(opts, &req);
+    client.setOptions(opts);
     client.setAuthorizationId(); 
     if(ret==-1){free(opts);}
 
@@ -242,7 +242,7 @@ EXTERN_C int DLL_DECL stage_abortRequest(char *requestId,
     castor::stager::StageAbortRequest req;
 
     ret=setDefaultOption(opts);
-    client.setOption(opts, &req);   
+    client.setOptions(opts);   
     client.setAuthorizationId(); 
     if(ret==-1){free(opts);}
 
