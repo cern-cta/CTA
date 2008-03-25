@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DeletionThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/03/10 09:33:13 $ $Author: waldron $
+ * @(#)$RCSfile: DeletionThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/03/25 13:03:38 $ $Author: waldron $
  *
  * Deletion thread used to check periodically whether files need to be deleted
  *
@@ -136,8 +136,9 @@ void castor::gc::DeletionThread::run(void *param) {
 
       // "Error caught while looking for garbage files"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("Message", e.getMessage().str())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 8, 1, params);
+        {castor::dlf::Param("Type", sstrerror(e.code())),
+	 castor::dlf::Param("Message", e.getMessage().str())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 8, 2, params);
 
       // "Sleeping"
       castor::dlf::Param params2[] =

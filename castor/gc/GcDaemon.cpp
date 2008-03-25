@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
 
   try {
     castor::gc::GcDaemon daemon;
-    
+
     // Randomize the start0up of the daemon between 1 and 15 minutes.
     char *value;
     int startDelay = 1;
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
        ("Deletion",
 	new castor::gc::DeletionThread(startDelay)));
     daemon.getThreadPool('D')->setNbThreads(1);
-    
+
     // Create the Synchronization thread
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
@@ -144,6 +144,8 @@ castor::gc::GcDaemon::GcDaemon(): castor::server::BaseDaemon("GC") {
     { 36, "Deleting local file which is no longer in the stager catalog" },
     { 37, "New chunk interval" },
     { 38, "Invalid GC/ChunkInterval option, using default" },
-    { -1, ""}};
+    { 39, "Ignoring filename that does not conform to castor naming conventions" },
+    { 40, "Unexpected exception caught in synchronizeFiles" },
+    { -1, "" }};
   dlfInit(messages);
 }

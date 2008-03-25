@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/03/18 07:28:36 $ $Author: waldron $
+ * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/03/25 13:03:38 $ $Author: waldron $
  *
  * Synchronization thread used to check periodically whether files need to be
  * deleted
@@ -163,10 +163,21 @@ void castor::gc::SynchronizationThread::run(void *param) {
 	    continue;  // not a file
 	  }
 
+	  // Extract the nameserver host and diskcopy id from the filename
+	  std::pair<std::string, u_signed64> fid;
+	  try {
+	    fid = diskCopyIdFromFileName(file->d_name);
+	  } catch (castor::exception::Exception e) {
+	    // "Ignoring filename that does not conform to castor naming
+	    // conventions"
+	    castor::dlf::Param params[] =
+	      {castor::dlf::Param("Filename", file->d_name)};
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 39, 1, params);
+	    continue;
+	  }
+
           try {
-            std::pair<std::string, u_signed64> fid =
-              diskCopyIdFromFileName(file->d_name);
-            diskCopyIds[fid.first].push_back(fid.second);
+	    diskCopyIds[fid.first].push_back(fid.second);
             paths[fid.first][fid.second] = *it + "/" + file->d_name;
 
 	    // In the case of a large number of files, synchronize them in
@@ -177,36 +188,44 @@ void castor::gc::SynchronizationThread::run(void *param) {
               castor::dlf::Param params[] =
                 {castor::dlf::Param("NbFiles", diskCopyIds[fid.first].size()),
                  castor::dlf::Param("Nameserver", fid.first)};
-              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 31, 2, params);
-
+	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 31, 2, params);
+	      
 	      synchronizeFiles(fid.first, diskCopyIds[fid.first], paths[fid.first]);
-              diskCopyIds[fid.first].clear();
-              paths[fid.first].clear();
+	      diskCopyIds[fid.first].clear();
+	      paths[fid.first].clear();
 	      sleep(chunkInterval);
 	    }
-          } catch (castor::exception::Exception e) {
-            // Ignore files badly named, they are probably not ours
-          }
-        }
-        closedir(files);
+	  } catch (castor::exception::Exception e) {
+	    // "Unexpected exception caught in synchronizeFiles"
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 40, 0, 0);
+	    sleep(chunkInterval);
+	  }
+	}
+	closedir(files);
       }
       free(fs[fsIt]);
       fsIt = (fsIt + 1) % nbFs;
     }
-
+    
     // Synchronize the remaining files not yet checked
     for (std::map<std::string, std::vector<u_signed64> >::const_iterator it2 =
 	   diskCopyIds.begin();
 	 it2 != diskCopyIds.end();
 	 it2++) {
-      if (it2->second.size() > 0) {
-	// "Synchronizing files with nameserver and stager catalog"
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("NbFiles", it2->second.size()),
-	   castor::dlf::Param("Nameserver", it2->first)};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 31, 2, params);
+      try {
+	if (it2->second.size() > 0) {
+	  // "Synchronizing files with nameserver and stager catalog"
+	  castor::dlf::Param params[] =
+	    {castor::dlf::Param("NbFiles", it2->second.size()),
+	     castor::dlf::Param("Nameserver", it2->first)};
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 31, 2, params);
 
-	synchronizeFiles(it2->first, it2->second, paths[it2->first]);
+	  synchronizeFiles(it2->first, it2->second, paths[it2->first]);
+	  sleep(chunkInterval);
+	}
+      } catch (castor::exception::Exception e) {
+	// "Unexpected exception caught in synchronizeFiles"
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 40, 0, 0);
 	sleep(chunkInterval);
       }
     }
