@@ -1,5 +1,5 @@
 /*
- * $Id: Cns.h,v 1.6 2008/02/27 07:18:11 waldron Exp $
+ * $Id: Cns.h,v 1.7 2008/03/25 12:46:37 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns.h,v $ $Revision: 1.6 $ $Date: 2008/02/27 07:18:11 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns.h,v $ $Revision: 1.7 $ $Date: 2008/03/25 12:46:37 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_H
@@ -45,9 +45,9 @@
 #define DIRBUFSZ 4096
 #define LISTBUFSZ 4096
 #define LOGBUFSZ 1024
-#define PRTBUFSZ  180
-#define REPBUFSZ 4100	/* must be >= max name server reply size */
-#define REQBUFSZ 2854	/* must be >= max name server request size */
+#define PRTBUFSZ 180
+#define REPBUFSZ 28100	/* must be >= max name server reply size */
+#define REQBUFSZ 26854	/* must be >= max name server request size */
 
 			/* name server request types */
 
