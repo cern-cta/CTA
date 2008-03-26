@@ -1226,7 +1226,8 @@ void castor::vdqm::handler::TapeDriveHandler::rejectInvalidDedications(
   }
 
   // Reject invalid mode dedications
-  if((dedications->mode != ".*") && (dedications->mode != "0")) {
+  if((dedications->mode != ".*") && (dedications->mode != "0") &&
+    (dedications->mode != "")) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
       << "TapeDriveHandler::rejectInvalidDedications(): "
