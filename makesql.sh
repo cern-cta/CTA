@@ -7,6 +7,7 @@ tag=`echo $ver | sed 's/\./_/g' | sed 's/-/_/g'`
 # generate creation scripts for the db-based CASTOR components
 tools/makeSqlScripts.sh castor castor/db $tag
 tools/makeSqlScripts.sh repack castor/repack $tag
+tools/makeSqlScripts.sh vdqm castor/vdqm $tag
 cd dlf/scripts
 ./makeDlfScripts.sh $tag oracle/oracleCreate.sql oracle/dlf_oracle_create.sql
 ./makeDlfScripts.sh $tag oracle/express/oracleCreate.sql oracle/express/dlf_oracle_create.sql
