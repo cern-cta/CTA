@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.48 $ $Release$ $Date: 2008/03/26 11:07:17 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.49 $ $Release$ $Date: 2008/03/26 13:28:55 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -995,12 +995,14 @@ BEGIN
     FROM TapeDriveDedication
     WHERE TapeDriveDedication.tapeDrive = driveIdVar;
 
-  FOR i IN dedicationsToDelete.FIRST .. dedicationsToDelete.LAST LOOP
-    DELETE FROM TapeDriveDedication
-      WHERE TapeDriveDedication.id = dedicationsToDelete(i);
-    DELETE FROM Id2Type
-      WHERE Id2Type.id = dedicationsToDelete(i);
-  END LOOP;
+  IF dedicationsToDelete.COUNT > 0 THEN
+    FOR i IN dedicationsToDelete.FIRST .. dedicationsToDelete.LAST LOOP
+      DELETE FROM TapeDriveDedication
+        WHERE TapeDriveDedication.id = dedicationsToDelete(i);
+      DELETE FROM Id2Type
+        WHERE Id2Type.id = dedicationsToDelete(i);
+    END LOOP;
+  END IF;
 
   -- Insert new dedications
   IF accessModeVar = 0 THEN
