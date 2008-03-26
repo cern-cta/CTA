@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os
+import os, putUtils, stressUtils
 from putUtils import *
 from stressUtils import *
 
@@ -10,6 +10,6 @@ while True:
     createDirIfNeeded(baseCastorDir, counter)
     fileName = getCastorDir(baseCastorDir, counter) + os.sep + inputFileBaseName + "_" + getHost() + "_" + buildUuid()
     command = baseCmd + pathToCastorCommands + "rfcp " + inputFile + " " + fileName + " >> " + logFile + " 2>> " + logFile
-    command = command + "; " + pathToCastorCommands + "rfcp " + fileName + " /dev/null >> " + logFile + " 2>> " + logFile
+    command = command + "; " + baseCmd + pathToCastorCommands + "rfcp " + fileName + " /dev/null >> " + logFile + " 2>> " + logFile
     os.system(command)
     counter = counter + 1
