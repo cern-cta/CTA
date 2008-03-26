@@ -1185,9 +1185,6 @@ castor::IObject* castor::db::cnv::DbTapeDriveCnv::createObj(castor::IAddress* ad
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
-    // Always try to rollback
-    try { cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -1232,9 +1229,6 @@ void castor::db::cnv::DbTapeDriveCnv::updateObj(castor::IObject* obj)
     object->setStatus((enum castor::vdqm::TapeDriveStatusCodes)rset->getInt(14));
     delete rset;
   } catch (castor::exception::SQLError e) {
-    // Always try to rollback
-    try { cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
