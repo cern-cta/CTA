@@ -1,0 +1,3 @@
+DbCnvSvc       user    username
+DbCnvSvc       passwd  password
+DbCnvSvc       dbName  instance
