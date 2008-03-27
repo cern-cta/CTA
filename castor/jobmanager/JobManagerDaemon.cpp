@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/03/27 13:32:29 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/03/27 18:23:56 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -256,8 +256,8 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
      { 51, "Cannot submit job into LSF, svcclass/queue name is a reserved word" },
      { 53, "Memory allocation failure, job submission cancelled" },
      { 54, "Invalid diskCopySource syntax, job submission cancelled" },
-     { 55, "Exception caught when trying to fail job submission" },
-     { 56, "Failed to execute failJobSubmission procedure" },
+     { 55, "Exception caught when trying to fail scheduler job" },
+     { 56, "Failed to execute failSchedulerJob procedure" },
 
      // Dispatch
      { 60, "Job received" },

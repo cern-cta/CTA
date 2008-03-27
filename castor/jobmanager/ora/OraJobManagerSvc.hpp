@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobManagerSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/03/27 13:32:30 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobManagerSvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/03/27 18:23:57 $ $Author: waldron $
  *
  * Implementation of the IJobManagerSvc for Oracle
  *
@@ -80,7 +80,9 @@ namespace castor {
 	void reset() throw();
 
 	/**
-	 * Fail a subrequest that could not be submitted into the scheduler.
+	 * Fail a scheduler job in the stager database. This involves failing
+	 * the subrequest and calling the necessary cleanup procedures
+	 * on behalf of the job.
 	 * The stager error service will then pick up the subrequest and
 	 * notify the client of the termination. This method will only modify
 	 * subrequests that are in a SUBREQUEST_READY or SUBREQEST_BEINGSCHED
@@ -89,7 +91,7 @@ namespace castor {
 	 * @param errorCode The error code associated with the failure
 	 * @exception Exception in case of error
 	 */
-	virtual bool failJobSubmission
+	virtual bool failSchedulerJob
 	(const std::string subReqId, const int errorCode)
 	  throw(castor::exception::Exception);
 
@@ -145,11 +147,11 @@ namespace castor {
 
       private:
 
-	/// SQL statement for function failJobSubmission
-	static const std::string s_failJobSubmissionString;
+	/// SQL statement for function failSchedulerJob
+	static const std::string s_failSchedulerJobString;
 
-	/// SQL statement object for failJobSubmission
-	oracle::occi::Statement *m_failJobSubmissionStatement;
+	/// SQL statement object for failSchedulerJob
+	oracle::occi::Statement *m_failSchedulerJobStatement;
 
 	/// SQL statement for function jobToSchedule
 	static const std::string s_jobToScheduleString;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/03/27 13:32:29 $ $Author: waldron $
+ * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2008/03/27 18:23:56 $ $Author: waldron $
  *
  * The Submission Process is used to submit new jobs into the scheduler. It is
  * run inside a separate process allowing for setuid and setgid calls to take
@@ -516,10 +516,10 @@ void castor::jobmanager::SubmissionProcess::terminateRequest
 
   // Fail the submission of the job
   try {
-    m_jobManagerService->failJobSubmission(request->subReqId(), errorCode);
+    m_jobManagerService->failSchedulerJob(request->subReqId(), errorCode);
   } catch (castor::exception::Exception e) {
 
-    // "Exception caught when trying to fail job submission"
+    // "Exception caught when trying to fail scheduler job"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Type", sstrerror(e.code())),
        castor::dlf::Param("Message", e.getMessage().str()),
@@ -527,7 +527,7 @@ void castor::jobmanager::SubmissionProcess::terminateRequest
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 55, 3, params, &m_fileId);
   } catch (...) {
 
-    // "Failed to execute failJobSubmission procedure"
+    // "Failed to execute failSchedulerJob procedure"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", "General exception caught"),
        castor::dlf::Param(m_subRequestId)};
