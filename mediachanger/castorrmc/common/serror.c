@@ -271,6 +271,7 @@ char *sys_sterrlist[ESTMAXERR-ESTBASEOFF+2] =
    "No filesystems available in service class",
    "File has no copy on tape",
    "File is on an offline tape",
+   "Request canceled while queuing",
    "BAD ERROR NUMBER"
   };
 
