@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DeletionThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/03/27 13:05:51 $ $Author: waldron $
+ * @(#)$RCSfile: DeletionThread.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/03/27 18:34:56 $ $Author: waldron $
  *
  * Deletion thread used to check periodically whether files need to be deleted
  *
@@ -178,7 +178,7 @@ void castor::gc::DeletionThread::run(void *param) {
           filestotal++;
 	  u_signed64 filesize;
 	  u_signed64 fileage;
-	  gcRemoveFilePath((*it)->fileName(), &filesize, &fileage);
+	  gcRemoveFilePath((*it)->fileName(), filesize, fileage);
           removedsize += filesize;
           filesremoved++;
 
@@ -274,7 +274,7 @@ void castor::gc::DeletionThread::run(void *param) {
 // gcRemoveFilePath
 //-----------------------------------------------------------------------------
 void castor::gc::DeletionThread::gcRemoveFilePath
-(std::string filepath, u_signed64 *filesize, u_signed64 *fileage)
+(std::string filepath, u_signed64 &filesize, u_signed64 &fileage)
   throw (castor::exception::Exception) {
   struct stat64 fileinfo;
   if (::stat64(filepath.c_str(), &fileinfo) ) {
@@ -282,8 +282,8 @@ void castor::gc::DeletionThread::gcRemoveFilePath
     e.getMessage() << "Failed to stat file " << filepath;
     throw e;
   }
-  *filesize = fileinfo.st_size;
-  *fileage  = time(NULL) - fileinfo.st_ctime;
+  filesize = fileinfo.st_size;
+  fileage  = time(NULL) - fileinfo.st_ctime;
   if (unlink(filepath.c_str()) < 0) {
     castor::exception::Exception e(errno);
     e.getMessage() << "Failed to unlink file " << filepath;

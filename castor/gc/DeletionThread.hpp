@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DeletionThread.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/03/27 13:05:51 $ $Author: waldron $
+ * @(#)$RCSfile: DeletionThread.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/03/27 18:34:56 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -77,7 +77,7 @@ namespace castor {
        * @exception when the removing failed
        */
       void gcRemoveFilePath
-      (std::string filepath, u_signed64 *filesize, u_signed64 *fileage)
+      (std::string filepath, u_signed64 &filesize, u_signed64 &fileage)
 	throw (castor::exception::Exception);
 
     private:
