@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.55 $ $Release$ $Date: 2008/03/10 09:34:53 $ $Author: waldron $
+ * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.56 $ $Release$ $Date: 2008/03/27 17:19:44 $ $Author: sponcec3 $
  *
  * Service thread for job related requests
  *
@@ -40,6 +40,7 @@
 #include "castor/stager/IJobSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/RequestCanceled.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/SubRequest.hpp"
@@ -151,7 +152,14 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
 	{castor::dlf::Param(suuid)};
       castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_PUTS,
 			      fileId, nsHost, 1, params);
-      dc = jobSvc->putStart(subreq, fs, fileId, nsHost);
+      try {
+        dc = jobSvc->putStart(subreq, fs, fileId, nsHost);
+      } catch (castor::exception::RequestCanceled e) {
+        // special case of canceled requests, don't log
+        res.setErrorCode(e.code());
+        res.setErrorMessage(e.getMessage().str());
+        failed = true;
+      }
     }
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
