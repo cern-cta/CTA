@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DeletionThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/03/25 13:03:38 $ $Author: waldron $
+ * @(#)$RCSfile: DeletionThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/03/27 13:05:51 $ $Author: waldron $
  *
  * Deletion thread used to check periodically whether files need to be deleted
  *
@@ -176,15 +176,18 @@ void castor::gc::DeletionThread::run(void *param) {
 
         try {
           filestotal++;
-          u_signed64 filesize = gcRemoveFilePath((*it)->fileName());
+	  u_signed64 filesize;
+	  u_signed64 fileage;
+	  gcRemoveFilePath((*it)->fileName(), &filesize, &fileage);
           removedsize += filesize;
           filesremoved++;
 
           // "Removed file successfully"
           castor::dlf::Param params[] =
             {castor::dlf::Param("Filename", (*it)->fileName()),
-             castor::dlf::Param("FileSize", filesize)};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 11, 2, params, &fileId);
+             castor::dlf::Param("FileSize", filesize),
+	     castor::dlf::Param("FileAge", fileage)};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 11, 3, params, &fileId);
 
 	  // Add the file to the list of deleted ones
           u_signed64 *fileid = new u_signed64((*it)->diskCopyId());
@@ -194,8 +197,8 @@ void castor::gc::DeletionThread::run(void *param) {
           // "Failed to remove file"
           castor::dlf::Param params[] =
             {castor::dlf::Param("Filename", (*it)->fileName()),
-             castor::dlf::Param("Error", e.getMessage().str()),
-             castor::dlf::Param("Origin", strerror(e.code()))};
+             castor::dlf::Param("Message", e.getMessage().str()),
+             castor::dlf::Param("Type", strerror(e.code()))};
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 12, 3, params, &fileId);
 
 	  // Add the file to the list of failed ones
@@ -268,32 +271,22 @@ void castor::gc::DeletionThread::run(void *param) {
 
 
 //-----------------------------------------------------------------------------
-// GCremoveFilePath
+// gcRemoveFilePath
 //-----------------------------------------------------------------------------
-u_signed64 castor::gc::DeletionThread::gcRemoveFilePath
-(std::string filepath)
+void castor::gc::DeletionThread::gcRemoveFilePath
+(std::string filepath, u_signed64 *filesize, u_signed64 *fileage)
   throw (castor::exception::Exception) {
-  u_signed64 filesize = gcGetFileSize(filepath);
+  struct stat64 fileinfo;
+  if (::stat64(filepath.c_str(), &fileinfo) ) {
+    castor::exception::Exception e(errno);
+    e.getMessage() << "Failed to stat file " << filepath;
+    throw e;
+  }
+  *filesize = fileinfo.st_size;
+  *fileage  = time(NULL) - fileinfo.st_ctime;
   if (unlink(filepath.c_str()) < 0) {
     castor::exception::Exception e(errno);
-    e.getMessage() << "gcRemoveFilePath : Cannot unlink file " << filepath;
+    e.getMessage() << "Failed to unlink file " << filepath;
     throw e;
   }
-  return filesize;
-}
-
-
-//-----------------------------------------------------------------------------
-// GCgetFileSize
-//-----------------------------------------------------------------------------
-u_signed64 castor::gc::DeletionThread::gcGetFileSize
-(std::string& filepath)
-  throw (castor::exception::Exception) {
-  struct stat64  filedata;
-  if (::stat64(&filepath[0], &filedata) ) {
-    castor::exception::Exception e(errno);
-    e.getMessage() << "gcGetFileSize : Cannot stat file " << filepath;
-    throw e;
-  }
-  return filedata.st_size;
 }

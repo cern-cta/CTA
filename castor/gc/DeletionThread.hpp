@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DeletionThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/03/10 09:33:13 $ $Author: waldron $
+ * @(#)$RCSfile: DeletionThread.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/03/27 13:05:51 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -69,21 +69,15 @@ namespace castor {
     private:
 
       /**
-       * Get size (in bytes) of a file
-       * @param filepath the path of the file
-       * @return the size (in bytes) of the file
-       * @exception when the internal stat64 failed
-       */
-      u_signed64 gcGetFileSize (std::string& filepath)
-	throw (castor::exception::Exception);
-
-      /**
        * Actually remove the file from local filesystem.
        * @param filepath the path of the file to remove
+       * @param filesize the size of the file
+       * @param fileage the age of the file
        * @return the size (in bytes) of the removed file
        * @exception when the removing failed
        */
-      u_signed64 gcRemoveFilePath (std::string filepath)
+      void gcRemoveFilePath
+      (std::string filepath, u_signed64 *filesize, u_signed64 *fileage)
 	throw (castor::exception::Exception);
 
     private:
