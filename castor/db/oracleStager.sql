@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.654 $ $Date: 2008/03/25 14:38:01 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.655 $ $Date: 2008/03/27 07:30:49 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1664,14 +1664,13 @@ BEGIN
   -- and the ones waiting on them as failed
   -- so that clients eventually get an answer
   FOR sr IN (SELECT id, status FROM SubRequest
-              WHERE diskcopy IN (SELECT * FROM TABLE(dcsToRm))) LOOP
-    IF sr.status IN (0, 1, 2, 3, 5, 6, 7, 10, 13, 14) THEN  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
-      UPDATE SubRequest 
-         SET status = 7, parent = 0,  -- FAILED
-             errorCode = 4,  -- EINTR
-             errorMessage = 'Canceled by another user request'
-       WHERE (id = sr.id) OR (parent = sr.id);             
-    END IF;
+              WHERE diskcopy IN (SELECT * FROM TABLE(dcsToRm))
+                AND status IN (0, 1, 2, 5, 6, 7, 10, 13)) LOOP
+    UPDATE SubRequest 
+       SET status = 7, parent = 0,  -- FAILED
+           errorCode = 4,  -- EINT
+           errorMessage = 'Canceled by another user request'
+     WHERE (id = sr.id) OR (parent = sr.id);
   END LOOP;
   -- Set selected DiskCopies to INVALID. In any case keep
   -- WAITTAPERECALL diskcopies so that recalls can continue.
