@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2008/03/10 09:38:59 $ $Author: waldron $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2008/03/27 07:36:36 $ $Author: waldron $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -120,8 +120,10 @@ void castor::rh::RHThread::run(void* param) {
   } catch (castor::exception::Exception e) {
     // "Unable to read Request from socket"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 7, 1, params);
+      {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+       castor::dlf::Param("Port", port),
+       castor::dlf::Param("Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 7, 3, params);
     ack.setStatus(false);
     ack.setErrorCode(EINVAL);
     std::ostringstream stst;
