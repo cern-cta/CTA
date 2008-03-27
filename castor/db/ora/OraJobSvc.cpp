@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2008/03/27 15:48:27 $ $Author: itglp $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2008/03/27 17:16:49 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -61,6 +61,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Busy.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/RequestCanceled.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
 #include "castor/stager/TapeCopyStatusCodes.hpp"
 #include "castor/stager/StreamStatusCodes.hpp"
@@ -322,6 +323,12 @@ castor::db::ora::OraJobSvc::putStart
       delete result;
     }
     handleException(e);
+    if (e.getErrorCode() == 20104) {
+      // SubRequest canceled while queuing in scheduler error
+      castor::exception::RequestCanceled ex;
+      ex.getMessage() << e.what();
+      throw ex;
+    }
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in putStart."
