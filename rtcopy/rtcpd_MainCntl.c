@@ -1101,6 +1101,7 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
   char ifce[5],dgn[CA_MAXDGNLEN+1],unit[CA_MAXUNMLEN+1];
   u_signed64 totSz = 0;
   int totKBSz = 0;
+  double totMBSz_d = 0.0;
   int totMBSz = 0;
   int Twait = 0;
   int TMount = 0, TUnmount = 0;
@@ -1255,8 +1256,11 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
       nexttape = *tape;
     }
   }
+  totMBSz_d = (double) totSz / 1024 / 1024;
+
   totKBSz = (int)(totSz / 1024);
   totMBSz = totKBSz / 1024;
+
   if ( totMBSz > 0 ) {
     status = VDQM_UNIT_MBCOUNT;
     rc = vdqm_UnitStatus(NULL,NULL,dgn,NULL,unit,&status,&totMBSz,jobID);
@@ -1274,9 +1278,9 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
   if ( (rtcpd_CheckProcError() & RTCP_OK) != 0 ) {
     rtcp_log(LOG_INFO,"total number of Kbytes transferred is %d\n",totKBSz);
     tl_rtcpd.tl_log( &tl_rtcpd, 10, 3, 
-                     "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
-                     "Message", TL_MSG_PARAM_STR, "total number of Kbytes transferred",
-                     "kBytes" , TL_MSG_PARAM_INT, totKBSz );
+                     "func"   , TL_MSG_PARAM_STR   , "rtcpd_FreeResources",
+                     "Message", TL_MSG_PARAM_STR   , "total number of Mbytes transferred",
+                     "MBytes" , TL_MSG_PARAM_DOUBLE, totMBSz_d );
     rtcp_log(LOG_INFO,"waiting time was %ld seconds\n",Twait);
     tl_rtcpd.tl_log( &tl_rtcpd, 39, 3, 
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
@@ -1296,7 +1300,7 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
                        "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
                        "Message", TL_MSG_PARAM_STR, "cpdsktp: Data transfer bandwidth",
                        "ifce"   , TL_MSG_PARAM_STR, ifce,                       
-                       "kB/sec" , TL_MSG_PARAM_INT, totKBSz/Ttransfer );
+                       "MB/sec" , TL_MSG_PARAM_DOUBLE, (double)totMBSz_d/Ttransfer );
     } else {
       rtcp_log(LOG_INFO,"cptpdsk: Data transfer bandwidth (%s) is %d KB/sec\n",
                ifce,totKBSz/Ttransfer);
@@ -1304,7 +1308,7 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
                        "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
                        "Message", TL_MSG_PARAM_STR, "cptpdsk: Data transfer bandwidth",
                        "ifce"   , TL_MSG_PARAM_STR, ifce,                       
-                       "kB/sec" , TL_MSG_PARAM_INT, totKBSz/Ttransfer );
+                       "MB/sec" , TL_MSG_PARAM_DOUBLE, (double)totMBSz_d/Ttransfer );
     }
     rtcp_log(LOG_INFO,"request successful\n");
     tl_rtcpd.tl_log( &tl_rtcpd, 42, 2, 
@@ -1312,26 +1316,26 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
                      "Message", TL_MSG_PARAM_STR, "request successful" );
 
     tl_rtcpd.tl_log( &tl_rtcpd, 44, 20, 
-                     "func"           , TL_MSG_PARAM_STR  , "rtcpd_FreeResources",
-                     "Message"        , TL_MSG_PARAM_STR  , "Request statistics",
-                     "RequestType"    , TL_MSG_PARAM_STR  , (mode == WRITE_ENABLE) ? "WRITE" : "READ",
-                     "VID"            , TL_MSG_PARAM_STR  , vid, 
-                     "MountTime"      , TL_MSG_PARAM_INT  , TMount,
-                     "ServiceTime"    , TL_MSG_PARAM_INT  , Tservice,
-                     "WaitTime"       , TL_MSG_PARAM_INT  , Twait,
-                     "TransferTime"   , TL_MSG_PARAM_INT  , Ttransfer,
-                     "PositionTime"   , TL_MSG_PARAM_INT  , Tposition,
-                     "DataVolumekB"   , TL_MSG_PARAM_INT  , totKBSz,
-                     "DataRatekBs"    , TL_MSG_PARAM_INT  , totKBSz/Ttransfer,
-                     "Files"          , TL_MSG_PARAM_INT  , totFiles,
-                     "DGN"            , TL_MSG_PARAM_STR  , dgn,
-                     "VolReqID"       , TL_MSG_PARAM_INT  , VolReqID,
-                     "ClientName"     , TL_MSG_PARAM_STR  , client_name,                     
-                     "ClientUID"      , TL_MSG_PARAM_INT  , client_uid,
-                     "ClientGID"      , TL_MSG_PARAM_INT  , client_gid,
-                     "ClientHost"     , TL_MSG_PARAM_STR  , client_host,
-                     "TPVID"          , TL_MSG_PARAM_TPVID, vid,
-                     "RequestState"   , TL_MSG_PARAM_STR  , "successful");
+                     "func"           , TL_MSG_PARAM_STR   , "rtcpd_FreeResources",
+                     "Message"        , TL_MSG_PARAM_STR   , "Request statistics",
+                     "RequestType"    , TL_MSG_PARAM_STR   , (mode == WRITE_ENABLE) ? "WRITE" : "READ",
+                     "VID"            , TL_MSG_PARAM_STR   , vid, 
+                     "MountTime"      , TL_MSG_PARAM_INT   , TMount,
+                     "ServiceTime"    , TL_MSG_PARAM_INT   , Tservice,
+                     "WaitTime"       , TL_MSG_PARAM_INT   , Twait,
+                     "TransferTime"   , TL_MSG_PARAM_INT   , Ttransfer,
+                     "PositionTime"   , TL_MSG_PARAM_INT   , Tposition,
+                     "DataVolumeMB"   , TL_MSG_PARAM_DOUBLE, totMBSz_d,
+                     "DataRateMBs"    , TL_MSG_PARAM_DOUBLE, totMBSz_d/Ttransfer,
+                     "Files"          , TL_MSG_PARAM_INT   , totFiles,
+                     "DGN"            , TL_MSG_PARAM_STR   , dgn,
+                     "VolReqID"       , TL_MSG_PARAM_INT   , VolReqID,
+                     "ClientName"     , TL_MSG_PARAM_STR   , client_name,                     
+                     "ClientUID"      , TL_MSG_PARAM_INT   , client_uid,
+                     "ClientGID"      , TL_MSG_PARAM_INT   , client_gid,
+                     "ClientHost"     , TL_MSG_PARAM_STR   , client_host,
+                     "TPVID"          , TL_MSG_PARAM_TPVID , vid,
+                     "RequestState"   , TL_MSG_PARAM_STR   , "successful");
 
   } else {
     rtcp_log(LOG_INFO,"request failed\n");
@@ -1340,26 +1344,26 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
                      "Message", TL_MSG_PARAM_STR, "request failed" );
     if ( Ttransfer <= 0 ) Ttransfer = 1;
     tl_rtcpd.tl_log( &tl_rtcpd, 44, 20, 
-                     "func"           , TL_MSG_PARAM_STR  , "rtcpd_FreeResources",
-                     "Message"        , TL_MSG_PARAM_STR  , "Request statistics",
-                     "RequestType"    , TL_MSG_PARAM_STR  , (mode == WRITE_ENABLE) ? "WRITE" : "READ",
-                     "VID"            , TL_MSG_PARAM_STR  , vid, 
-                     "MountTime"      , TL_MSG_PARAM_INT  , TMount,
-                     "ServiceTime"    , TL_MSG_PARAM_INT  , Tservice,
-                     "WaitTime"       , TL_MSG_PARAM_INT  , Twait,
-                     "TransferTime"   , TL_MSG_PARAM_INT  , Ttransfer,
-                     "PositionTime"   , TL_MSG_PARAM_INT  , Tposition,
-                     "DataVolumekB"   , TL_MSG_PARAM_INT  , totKBSz,
-                     "DataRatekBs"    , TL_MSG_PARAM_INT  , totKBSz/Ttransfer,
-                     "Files"          , TL_MSG_PARAM_INT  , totFiles,
-                     "DGN"            , TL_MSG_PARAM_STR  , dgn,
-                     "VolReqID"       , TL_MSG_PARAM_INT  , VolReqID, 
-                     "ClientName"     , TL_MSG_PARAM_STR  , client_name,                     
-                     "ClientUID"      , TL_MSG_PARAM_INT  , client_uid,
-                     "ClientGID"      , TL_MSG_PARAM_INT  , client_gid,
-                     "ClientHost"     , TL_MSG_PARAM_STR  , client_host,                   
-                     "TPVID"          , TL_MSG_PARAM_TPVID, vid,
-                     "RequestState"   , TL_MSG_PARAM_STR  , "failed");
+                     "func"           , TL_MSG_PARAM_STR   , "rtcpd_FreeResources",
+                     "Message"        , TL_MSG_PARAM_STR   , "Request statistics",
+                     "RequestType"    , TL_MSG_PARAM_STR   , (mode == WRITE_ENABLE) ? "WRITE" : "READ",
+                     "VID"            , TL_MSG_PARAM_STR   , vid, 
+                     "MountTime"      , TL_MSG_PARAM_INT   , TMount,
+                     "ServiceTime"    , TL_MSG_PARAM_INT   , Tservice,
+                     "WaitTime"       , TL_MSG_PARAM_INT   , Twait,
+                     "TransferTime"   , TL_MSG_PARAM_INT   , Ttransfer,
+                     "PositionTime"   , TL_MSG_PARAM_INT   , Tposition,
+                     "DataVolumeMB"   , TL_MSG_PARAM_DOUBLE, totMBSz_d,
+                     "DataRateMBs"    , TL_MSG_PARAM_DOUBLE, totMBSz_d/Ttransfer,
+                     "Files"          , TL_MSG_PARAM_INT   , totFiles,
+                     "DGN"            , TL_MSG_PARAM_STR   , dgn,
+                     "VolReqID"       , TL_MSG_PARAM_INT   , VolReqID, 
+                     "ClientName"     , TL_MSG_PARAM_STR   , client_name,                     
+                     "ClientUID"      , TL_MSG_PARAM_INT   , client_uid,
+                     "ClientGID"      , TL_MSG_PARAM_INT   , client_gid,
+                     "ClientHost"     , TL_MSG_PARAM_STR   , client_host,                   
+                     "TPVID"          , TL_MSG_PARAM_TPVID , vid,
+                     "RequestState"   , TL_MSG_PARAM_STR   , "failed");
   }
 
   rtcpd_SetProcError(RTCP_OK);
