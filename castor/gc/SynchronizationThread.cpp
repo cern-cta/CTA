@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/03/25 13:03:38 $ $Author: waldron $
+ * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/03/27 13:27:21 $ $Author: waldron $
  *
  * Synchronization thread used to check periodically whether files need to be
  * deleted
@@ -460,15 +460,11 @@ void castor::gc::SynchronizationThread::synchronizeFiles
   Cns_fileid fileId;
   memset(&fileId, 0, sizeof(fileId));
   strncpy(fileId.server, nameServer.c_str(), sizeof(fileId.server));
+  u_signed64 nbOrphanFiles = 0;
   for (std::vector<u_signed64>::const_iterator it = orphans.begin();
        it != orphans.end();
        it++) {
     fileId.fileid = fileIdFromFilePath(filePaths.find(*it)->second);
-
-    // "Deleting local file which is no longer in the stager catalog"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Filename", filePaths.find(*it)->second)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 36, 1, params, &fileId);
 
     if (unlink(filePaths.find(*it)->second.c_str()) < 0) {
       if (errno != ENOENT) {
@@ -478,6 +474,12 @@ void castor::gc::SynchronizationThread::synchronizeFiles
 	   castor::dlf::Param("Error", strerror(errno))};
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28, 2, params, &fileId);
       }
+    } else {
+      // "Deleting local file which is no longer in the stager catalog"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Filename", filePaths.find(*it)->second)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 36, 1, params, &fileId);
+      nbOrphanFiles++;
     }
 
     // Remove the file from the file paths map
@@ -485,9 +487,9 @@ void castor::gc::SynchronizationThread::synchronizeFiles
   }
 
   // "Summary of files removed by stager synchronization"
-  if (orphans.size()) {
+  if (nbOrphanFiles) {
     castor::dlf::Param params[] =
-      {castor::dlf::Param("NbOrphanFiles", orphans.size())};
+      {castor::dlf::Param("NbOrphanFiles", nbOrphanFiles)};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_MONITORING, 33, 1, params);
   }
 
