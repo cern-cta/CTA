@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: waldron $
+ * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: sponcec3 $
  *
  *
  *
@@ -104,7 +104,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	// input for stream operation 
 
 	char* p=NULL;
-	u_signed64 initialSizeCeiling=0;
+        u_signed64 initialSizeCeiling=10*1024*1024*1024; // 10G
 	if ( (p = getconfent("MigHunter","SIZECEILING",0)) != NULL ) {
 	  initialSizeCeiling = strutou64(p);
 	}
