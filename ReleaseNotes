@@ -1,5 +1,5 @@
 -----------
-- 2.1.7-1 -
+- 2.1.7-2 -
 -----------
 
   Highlights
@@ -19,6 +19,7 @@
   Bug Fixes
   ---------
   - #1441:  nlinks in name server
+  - #27327: Start time for tape requests not set leads to false accounting
   - #27610: vmgrmodifytape error message incorrect
   - #27622: nslisttape needs a fast 'total files' option
   - #27681: nsGetPath and related utilities
@@ -28,10 +29,25 @@
   - #29942: nslisttape to return non-zero exit status if VID not found
   - #30391: daemons on castor should be stateless and redundant: rmMasterDaemon
   - #30993: RFE vmgrlistpool and vmgrlisttape output for scripts
+  - #31217: SubRequest in status WAITSUBREQ without a valid parent
   - #31247: ns client should retry if server not available
   - #31616: prepareToGet requests sometime doesn't fill tape segment information
+  - #32295: Removal of the lddisplay command
+  - #32901: scheduling slowdown
   - #32903: db schema change scripts have hard-coded table names
+  - #32954: Make the response to a LIBRARY_FAILURE more flexible
+  - #33091: tpdaemon does not clean up if rlstape dumps
+  - #33203: Stream policy should not be called when stream is busy
+  - #33250: garbage collection not scaling
+  - #33301: Continuing problem with castor filesize after concurrent StageUpdateRequests
+  - #33418: Errors in BESTTAPECOPYFORSTREAM that explain tape timeouts
   - #33949: Failure of vmgrdeletepool for empty pool
+  - #34027: PROCESSPREPAREREQUEST: exact fetch returns more than requested number of rows
+  - #34607: RFE: "STAGER SVCCLASS" directive to added to castor.conf example file
+  - #34639: rfcp returns 'Host not known' from 2.1.6 stagers for files on DISABLED 
+  - #34699: rmMasterDaemon hangs not fixed in 2.1.6-11
+  - #34748: GC: Error="Operation now in progress"
+  - #34957: rtcpcld_gettape() - Invalid argument
 
 
   Available in 2.1.6-11
@@ -92,24 +108,6 @@
     attached to a stream.
 
 
-  Testing
-  ---------
-  - #32295: Removal of the lddisplay command
-  - #32901: scheduling slowdown
-  - #32954: Make the response to a LIBRARY_FAILURE more flexible
-  - #33091: tpdaemon does not clean up if rlstape dumps
-  - #33250: garbage collection not scaling
-  - #33301: Continuing problem with castor filesize after concurrent StageUpdateRequests
-  - #33418: Errors in BESTTAPECOPYFORSTREAM that explain tape timeouts
-  - #34027: PROCESSPREPAREREQUEST: exact fetch returns more than requested number of rows
-
-
-  Planned
-  ---------
-  - #29786: Add support for CLOB in the CASTOR code generation
-  - #31217: SubRequest in status WAITSUBREQ without a valid parent
-
-
   Upgrading from 2.1.6-*
   --------------------
 
@@ -119,20 +117,19 @@
     Central services
     ----------------
 
-    Although there are modifications to the central services (CNS, VMGR and CUPV)
-    within this release, they are not mandatory for the correct operation and running
+    Although there are modifications to the central services (VMGR and CUPV) within
+    this release, they are not mandatory for the correct operation and running
     of a 2.1.7 stager instance of CASTOR2. As a result the upgrade of the following 
     packages:
 
-      - castor-ns-server
       - castor-vmgr-server
       - castor-upv-server
 
-    are not prerequisites for installing 2.1.7 stagers. However, if you wish to
-    benefit from enhanced client-side functionality or minor bug fixes in these services
-    you will need to upgrade. (Note: 2.1.7 CNS, VMGR and CUPV clients support 
-    backwards compatibility with pre 2.1.7 services). If you wish to upgrade repack to 
-    2.1.7 then the CNS (Castor Name Server) must also be upgraded.
+    are not prerequisites for installing 2.1.7 stagers. However, if you wish to benefit
+    from enhanced client-side functionality or minor bug fixes in these services you will
+    need to upgrade. (Note: 2.1.7 CNS, VMGR and CUPV clients support backwards 
+    compatibility with pre 2.1.7 services). The Castor Name Server (CNS) must be installed
+    before deploying any 2.1.7 stagers.
 
       Instructions
       ------------
