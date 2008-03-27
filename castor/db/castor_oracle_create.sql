@@ -180,7 +180,7 @@ ALTER TABLE Stream2TapeCopy
   ADD CONSTRAINT fk_Stream2TapeCopy_C FOREIGN KEY (Child) REFERENCES TapeCopy (id);
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_7_1');
+INSERT INTO CastorVersion VALUES ('-', '2_1_7_2');
 
 /* Fill Type2Obj metatable */
 CREATE TABLE Type2Obj (type INTEGER PRIMARY KEY NOT NULL, object VARCHAR2(100) NOT NULL, svcHandler VARCHAR2(100));
@@ -757,7 +757,7 @@ BEGIN
 END;
 /*******************************************************************
  *
- * @(#)RCSfile: oraclePerm.sql,v  Revision: 1.636  Date: 2008/02/13 11:42:20  Author: itglp 
+ * @(#)RCSfile: oraclePerm.sql,v  Revision: 1.637  Date: 2008/03/19 10:52:18  Author: sponcec3 
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -1131,14 +1131,18 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     IF c = 0 THEN RETURN; END IF;
     -- If any, add them to blackList
     FOR q IN (SELECT * FROM removePrivilegeTmpTable) LOOP
-      addPrivilegeToBL(q);
+      wlr.svcClass := q.svcClass;
+      wlr.euid := q.euid;
+      wlr.egid := q.egid;
+      wlr.reqType := q.reqType;
+      addPrivilegeToBL(wlr);
     END LOOP;
   END;
     
 END castorBW;
 /*******************************************************************
  *
- * @(#)RCSfile: oracleStager.sql,v  Revision: 1.650  Date: 2008/03/18 07:06:49  Author: waldron 
+ * @(#)RCSfile: oracleStager.sql,v  Revision: 1.655  Date: 2008/03/27 07:30:49  Author: waldron 
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1645,10 +1649,10 @@ BEGIN
               AND R.sourceDiskCopyId = DiskCopy.id
               AND SubRequest.status = 9 -- FAILED
            HAVING COUNT(*) >= 10)
-         ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
-                                 FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
-                                 FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC
-         )
+      ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
+                              FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
+                              FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC
+      )
      WHERE ROWNUM < 2;
   -- We found at least one, therefore we schedule a disk2disk
   -- copy from the existing diskcopy not available to this svcclass
@@ -2096,6 +2100,21 @@ BEGIN
      AND FileSystem.diskserver = DiskServer.id
      AND DiskServer.status = 0 -- PRODUCTION
      AND DiskCopy.status IN (0, 1, 6, 10);  -- STAGED, WAITDISK2DISKCOPY, STAGEOUT, CANBEMIGR
+
+  -- For DiskCopyReplicaRequests which are waiting to be scheduled, the filesystem
+  -- link in the diskcopy table is set to 0. As a consequence of this it is not
+  -- possible to determine the service class via the filesystem -> diskpool -> svcclass
+  -- relationship, as assumed in the previous query. Instead the service class of 
+  -- the replication request must be used!!!
+  IF nbDCs = 0 THEN
+    SELECT COUNT(DiskCopy.id) INTO nbDCs
+      FROM DiskCopy, StageDiskCopyReplicaRequest
+     WHERE DiskCopy.id = StageDiskCopyReplicaRequest.destDiskCopyId
+       AND StageDiskCopyReplicaRequest.svcclass = svcClassId
+       AND DiskCopy.castorfile = cfId
+       AND DiskCopy.status = 1; -- WAITDISK2DISKCOPY
+  END IF;
+
   IF nbDCs > 0 THEN
     -- Yes, we have some
     result := 0;  -- DISKCOPY_STAGED
@@ -2523,6 +2542,30 @@ EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
     WHERE fileId = fid AND nsHost = nh;
 END;
 
+/*PL/SQL method implementing selectPhysicalfilename for the preparetoGet request when the protocol is xrootd*/
+CREATE OR REPLACE PROCEDURE selectPhysicalFileName(cfId IN NUMBER,
+						      svcClassId IN NUMBER,
+                             			      dcP OUT VARCHAR2,
+						      fsmp OUT VARCHAR2) AS
+BEGIN
+ SELECT path, mountpoint INTO dcP,fsmp from(
+        select DiskCopy.path, Filesystem.mountpoint
+        FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass,castorfile
+           WHERE castorfile.fileid=cfId
+            AND FileSystem.diskpool = DiskPool2SvcClass.parent
+            AND DiskPool2SvcClass.child = svcClassId
+            AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
+            AND FileSystem.id = DiskCopy.fileSystem
+            AND FileSystem.status = 0  -- PRODUCTION
+            AND DiskServer.id = FileSystem.diskServer
+            AND DiskServer.status = 0  -- PRODUCTION
+	   -- and rownum < 2
+	   ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
+                                FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
+                                FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC)
+ where rownum < 2;
+END;
+
 
 /* PL/SQL method implementing stageRelease */
 CREATE OR REPLACE PROCEDURE stageRelease (fid IN INTEGER,
@@ -2641,11 +2684,11 @@ BEGIN
       SELECT DC.id
         FROM DiskCopy DC, FileSystem, DiskPool2SvcClass DP2SC
        WHERE DC.castorFile = cfId
-         AND DC.status IN (0, 1, 2, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR, WAITDISK2DISK, WAITTAPERECALL
+         AND DC.status IN (0, 1, 2, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR, WAITDISK2DISKCOPY, WAITTAPERECALL
          AND DC.fileSystem = FileSystem.id
          AND FileSystem.diskPool = DP2SC.parent
          AND DP2SC.child = scId)
-      UNION ALL (
+    UNION ALL (
       -- and then diskcopies resulting from PrepareToPut|Update requests
       SELECT DC.id
         FROM (SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
@@ -2670,7 +2713,7 @@ BEGIN
     -- we are performing a stageRm everywhere
     SELECT count(*) INTO nbRes FROM DiskCopy
      WHERE castorFile = cfId
-       AND status IN (0, 1, 2, 5, 6, 10, 11)  -- WAITDISK2DISK, WAITTAPERECALL, STAGED, STAGEOUT, CANBEMIGR, WAITFS, WAITFS_SCHEDULING
+       AND status IN (0, 1, 2, 5, 6, 10, 11)  -- WAITDISK2DISKCOPY, WAITTAPERECALL, STAGED, STAGEOUT, CANBEMIGR, WAITFS, WAITFS_SCHEDULING
        AND id NOT IN (SELECT * FROM TABLE(dcsToRm));
     IF nbRes = 0 THEN
       scId := 0;
@@ -2680,7 +2723,7 @@ BEGIN
     SELECT id BULK COLLECT INTO dcsToRm
       FROM DiskCopy
      WHERE castorFile = cfId
-       AND status IN (0, 1,2, 5, 6, 10, 11);  -- WAITDISK2DISK, WAITTAPERECALL, STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
+       AND status IN (0, 1, 2, 5, 6, 10, 11);  -- WAITDISK2DISKCOPY, WAITTAPERECALL, STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
   END IF;
   
   IF scId = 0 THEN
@@ -2763,14 +2806,13 @@ BEGIN
   -- and the ones waiting on them as failed
   -- so that clients eventually get an answer
   FOR sr IN (SELECT id, status FROM SubRequest
-              WHERE diskcopy IN (SELECT * FROM TABLE(dcsToRm))) LOOP
-    IF sr.status IN (0, 1, 2, 3, 5, 6, 7, 10, 13, 14) THEN  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
-      UPDATE SubRequest 
-         SET status = 7, parent = 0,  -- FAILED
-             errorCode = 4,  -- EINTR
-             errorMessage = 'Canceled by another user request'
-       WHERE (id = sr.id) OR (parent = sr.id);             
-    END IF;
+              WHERE diskcopy IN (SELECT * FROM TABLE(dcsToRm))
+                AND status IN (0, 1, 2, 5, 6, 7, 10, 13)) LOOP
+    UPDATE SubRequest 
+       SET status = 7, parent = 0,  -- FAILED
+           errorCode = 4,  -- EINT
+           errorMessage = 'Canceled by another user request'
+     WHERE (id = sr.id) OR (parent = sr.id);
   END LOOP;
   -- Set selected DiskCopies to INVALID. In any case keep
   -- WAITTAPERECALL diskcopies so that recalls can continue.
@@ -2977,7 +3019,7 @@ BEGIN
 END;
 /*******************************************************************
  *
- * @(#)RCSfile: oracleJob.sql,v  Revision: 1.646  Date: 2008/03/12 14:36:35  Author: itglp 
+ * @(#)RCSfile: oracleJob.sql,v  Revision: 1.648  Date: 2008/03/27 07:34:03  Author: waldron 
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -3160,8 +3202,8 @@ BEGIN
   SELECT euid, egid, svcClass, upd, diskCopy
     INTO reuid, regid, srSvcClass, isUpd, dcIdInReq
     FROM SubRequest,
-        (SELECT id, euid, egid, svcClass, 0 as upd from StageGetRequest UNION ALL
-         SELECT id, euid, egid, svcClass, 1 as upd from StageUpdateRequest) Request
+        (SELECT id, euid, egid, svcClass, 0 AS upd FROM StageGetRequest UNION ALL
+         SELECT id, euid, egid, svcClass, 1 AS upd FROM StageUpdateRequest) Request
    WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
   -- Take a lock on the CastorFile. Associated with triggers,
   -- this guarantees we are the only ones dealing with its copies
@@ -3241,9 +3283,18 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyStart
  srcSvcClass OUT VARCHAR2) AS
   fsId NUMBER;
   cfId NUMBER;
-  res  NUMBER;
+  res NUMBER;
+  unused NUMBER;
   cfNsHost VARCHAR2(2048); 
 BEGIN
+  -- Check that we did not cancel the replication request in the mean time
+  BEGIN
+    SELECT status INTO unused FROM SubRequest
+     WHERE diskcopy = dcId
+       AND status = 6; -- READY
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    raise_application_error(-20111, 'Replication request canceled while queuing in scheduler. Giving up.');
+  END;
   -- Check to see if the proposed diskserver and filesystem selected by the
   -- scheduler to run the destination end of disk2disk copy transfer is in the
   -- correct service class. I.e the service class of the original request. This
@@ -3274,7 +3325,7 @@ BEGIN
        AND DiskCopy.castorfile = Castorfile.id
        AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
        AND FileSystem.id = DiskCopy.filesystem
-       AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
+       AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
        AND FileSystem.diskPool = DiskPool2SvcClass.parent
        AND DiskPool2SvcClass.child = SvcClass.id
        AND DiskPool2SvcClass.parent = DiskPool.id
@@ -3351,20 +3402,20 @@ BEGIN
   RETURNING castorFile, fileSystem INTO cfId, fsId;
   -- If the maxReplicaNb is exceeded, update one of the diskcopies in a 
   -- DRAINING filesystem to INVALID.
-  SELECT count(*) into repl 
+  SELECT count(*) INTO repl 
     FROM DiskCopy, FileSystem, DiskPool2SvcClass DP2SC
    WHERE castorFile = cfId
      AND DiskCopy.fileSystem = FileSystem.id
      AND FileSystem.diskPool = DP2SC.parent
      AND DP2SC.child = svcClassId
-     AND DiskCopy.status in (0, 10);  -- STAGED, CANBEMIGR
+     AND DiskCopy.status IN (0, 10);  -- STAGED, CANBEMIGR
   IF repl > maxRepl THEN
     -- We did replicate only because of a DRAINING filesystem.
     -- Invalidate one of the original diskcopies, not all of them for fault resiliency purposes
-    UPDATE DiskCopy set status = 7
-     WHERE status in (0, 10)  -- STAGED, CANBEMIGR
+    UPDATE DiskCopy SET status = 7
+     WHERE status IN (0, 10)  -- STAGED, CANBEMIGR
        AND castorFile = cfId
-       AND fileSystem in (
+       AND fileSystem IN (
          SELECT FileSystem.id 
            FROM FileSystem, DiskPool2SvcClass DP2SC
           WHERE FileSystem.diskPool = DP2SC.parent
@@ -3386,63 +3437,41 @@ END;
 
 /* PL/SQL method implementing disk2DiskCopyFailed */
 CREATE OR REPLACE PROCEDURE disk2DiskCopyFailed
-(dcId IN INTEGER, srId OUT INTEGER) AS
+(dcId IN INTEGER, res OUT INTEGER) AS
   fsId INTEGER;
 BEGIN
   -- Set the diskcopy status to INVALID so that it will be garbage collected
   -- at a later date.
   fsId := 0;
-  srId := 0;
+  res := 0;
   UPDATE DiskCopy SET status = 7 -- INVALID
    WHERE status = 1 -- WAITDISK2DISKCOPY
      AND id = dcId
    RETURNING fileSystem INTO fsId;
   -- Fail the corresponding subrequest
-  UPDATE SubRequest 
-     SET status = 9, -- SUBREQUEST_FAILED_FINISHED
+  UPDATE SubRequest SET status = 9, -- FAILED_FINISHED
          lastModificationTime = getTime()
    WHERE diskCopy = dcId 
-     AND status IN (6, 14) -- SUBREQUEST_READY, SUBREQUEST_BEINGSHCED
-   RETURNING id INTO srId;
-  IF srId = 0 THEN
+     AND status IN (6, 14) -- READY, BEINGSHCED
+   RETURNING id INTO res;
+  IF res = 0 THEN
     RETURN;
   END IF;
+  -- If no filesystem was set on the diskcopy then we can safely delete it
+  -- without waiting for garbage collection as the transfer was never started
+  IF fsId = 0 THEN
+    DELETE FROM DiskCopy WHERE id = dcId;
+    DELETE FROM Id2Type WHERE id = dcId; 
+  END IF;
   -- Wake up other subrequests waiting on it
-  UPDATE SubRequest SET status = 1, -- SUBREQUEST_RESTART
+  UPDATE SubRequest SET status = 1, -- RESTART
                         lastModificationTime = getTime(),
                         parent = 0
-   WHERE parent = srId;
-  -- update filesystem status
+   WHERE parent = res;
+  -- Update filesystem status
   IF fsId > 0 THEN
     updateFsFileClosed(fsId);
   END IF;
-END;
-
-
-/* PL/SQL method implementing disk2DiskCopyCheck */
-CREATE OR REPLACE PROCEDURE disk2DiskCopyCheck
-(srSubReqId IN VARCHAR2, res OUT INTEGER) AS
-  dcId INTEGER;
-BEGIN
-  -- The disk2DiskCopyCheck method is called by the jobManager when a disk2disk
-  -- copy replication request exits the LSF queue. Its primary goal is to make
-  -- sure that the diskcopy behind a replication request has not been left
-  -- in WAITDISK2DISKCOPY. If it is, then this is an indication of a scheduling
-  -- error in LSF.
-  -- Note: this is to fix a bug in the parallel scheduling in LSF whereby a job
-  -- starts but actually does nothing!!!
-  BEGIN
-    SELECT SubRequest.diskcopy INTO dcId
-      FROM SubRequest, DiskCopy
-     WHERE SubRequest.diskCopy = DiskCopy.id
-       AND SubRequest.subReqId = srSubReqId
-       AND DiskCopy.status = 1; -- WAITDISK2DISKCOPY
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    res := 0;
-    RETURN;
-  END;
-  -- Attempt to fail the diskcopy replication request on behalf of the failed job
-  disk2DiskCopyFailed(dcId, res);
 END;
 
 
@@ -3465,7 +3494,7 @@ CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
 BEGIN
   errorCode := 0;
   -- get CastorFile
-  SELECT castorFile, diskCopy INTO cfId, dcId FROM SubRequest where id = srId;
+  SELECT castorFile, diskCopy INTO cfId, dcId FROM SubRequest WHERE id = srId;
   -- Determine the context (Put inside PrepareToPut or not)
   -- check that we are a Put or an Update
   SELECT Request.id INTO unused
@@ -3484,7 +3513,7 @@ BEGIN
         SELECT id FROM StagePrepareToUpdateRequest) Request
      WHERE SubRequest.CastorFile = cfId
        AND Request.id = SubRequest.request
-       AND SubRequest.status = 6;  -- READY
+       AND SubRequest.status = 6; -- READY
     -- if we got here, we are a Put inside a PrepareToPut
     contextPIPP := 0;
   EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -3508,7 +3537,7 @@ BEGIN
   END;
   -- now we can safely update CastorFile's file size
   UPDATE CastorFile SET fileSize = fs, lastUpdateTime = ts 
-   WHERE id = cfId AND (lastUpdateTime is NULL or ts > lastUpdateTime); 
+   WHERE id = cfId AND (lastUpdateTime IS NULL OR ts > lastUpdateTime); 
   -- If ts < lastUpdateTime, we were late and another job already updated the
   -- CastorFile. So we nevertheless retrieve the real file size, and
   -- we take a lock on the CastorFile. Together with triggers, this insures that
@@ -3525,7 +3554,7 @@ BEGIN
        SELECT euid, egid, id, svcClass from StagePutDoneRequest) Request
    WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
   
-  SELECT fileSystem into fsId from DiskCopy
+  SELECT fileSystem INTO fsId from DiskCopy
    WHERE castorFile = cfId AND status = 6;
   updateFsFileClosed(fsId);
 
@@ -3580,11 +3609,10 @@ BEGIN
   UPDATE SubRequest
      SET status = 9 -- FAILED_FINISHED
    WHERE id = srId
-  RETURNING diskCopy, castorFile
-    INTO dcId, cfId;
+  RETURNING diskCopy, castorFile INTO dcId, cfId;
   IF dcId > 0 THEN
     SELECT fileSystem INTO fsId FROM DiskCopy WHERE id = dcId;
-    -- take file closing into account
+    -- Take file closing into account
     IF fsId > 0 THEN
       updateFsFileClosed(fsId);
     END IF;
@@ -3595,7 +3623,7 @@ BEGIN
   END IF;
   -- Determine the context (Put inside PrepareToPut/Update ?)
   BEGIN
-    -- check that there is a PrepareToPut/Update going on. There can be only a single one
+    -- Check that there is a PrepareToPut/Update going on. There can be only a single one
     -- or none. If there was a PrepareTo, any subsequent PPut would be rejected and any
     -- subsequent PUpdate would be directly archived (cf. processPrepareRequest).
     SELECT SubRequest.id INTO unused
@@ -3604,7 +3632,7 @@ BEGIN
      WHERE SubRequest.castorFile = cfId
        AND PrepareRequest.id = SubRequest.request
        AND SubRequest.status = 6; -- READY
-    -- the select worked out, so we have a prepareToPut/Update
+    -- The select worked out, so we have a prepareToPut/Update
     -- In such a case, we do not cleanup DiskCopy and CastorFile
     -- but we have to wake up a potential waiting putDone
     UPDATE SubRequest SET status = 1, parent = 0 -- RESTART
@@ -3615,7 +3643,7 @@ BEGIN
          AND StagePutDoneRequest.id = SubRequest.request
          AND SubRequest.status = 5); -- WAITSUBREQ
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- this means we are a standalone put
+    -- This means we are a standalone put
     -- thus cleanup DiskCopy and maybe the CastorFile
     -- (the physical file is dropped by the job)
     DELETE FROM DiskCopy WHERE id = dcId;
@@ -3644,70 +3672,104 @@ BEGIN
 END;
 
 
-/* PL/SQL method implementing failSchedulerJob */
-CREATE OR REPLACE 
-PROCEDURE failSchedulerJob(srSubReqId IN VARCHAR2, srErrorCode IN NUMBER, res OUT INTEGER) AS
+/* PL/SQL method implementing postJobChecks */
+CREATE OR REPLACE
+PROCEDURE postJobChecks(srSubReqId IN VARCHAR2, srErrorCode IN NUMBER, res OUT INTEGER) AS
   reqType NUMBER;
-  reqId NUMBER;
   srId NUMBER;
   dcId NUMBER;
 BEGIN
-  res := 0;
+  -- Check to see if the subrequest status is SUBREQUEST_READY
+  BEGIN
+    SELECT SubRequest.id, SubRequest.diskcopy, Id2Type.type
+      INTO srId, dcId, reqType
+      FROM SubRequest, Id2Type
+     WHERE SubRequest.subreqid = srSubReqId
+       AND SubRequest.request = Id2Type.id
+       AND status = 6; -- READY
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- The subrequest has the correct status because A) the job was successfully
+    -- scheduled in LSF or B) a postJobChecks call has already been performed by
+    -- another jobManager
+    res := 0;
+    RETURN;
+  END;
+  -- Assume that the call to this procedure will do some work
+  res := 1;
+  -- Call the relevant cleanup procedures for the job, procedures that they
+  -- would have called themselves if the job had failed!
+  IF reqType = 40 THEN -- Put
+    putFailedProc(srId);
+  ELSIF reqType = 133 THEN -- DiskCopyReplica
+    disk2DiskCopyFailed(dcId, res);
+    RETURN;
+  ELSE -- Get or Update
+    getUpdateFailedProc(srId);
+  END IF;
+  -- Try to answer the client if it hasn't been done yet. Note: this overrides
+  -- some of the logic that is in the putFailedProc and getUpdateFailedProc
+  -- procedures as they set the subrequest status to FAILED_FINISHED which is
+  -- usually correct as the job itself will notify the client directly of any
+  -- error. However, this procedure is most likely processing a job that
+  -- never ran at all, so we reset the status to FAILED so that the waiting 
+  -- client gets an error and can retry.
+  UPDATE SubRequest
+     SET status = 7, -- FAILED
+         errorCode = srErrorCode,
+         lastModificationTime = getTime()
+   WHERE id = srId -- READY, BEINGSCHED
+     AND answered = 0;
+END;
+
+
+/* PL/SQL method implementing failJobSubmission */
+CREATE OR REPLACE
+PROCEDURE failJobSubmission(srSubReqId IN VARCHAR2, srErrorCode IN NUMBER, res OUT INTEGER) AS
+  reqType NUMBER;
+  srId NUMBER;
+  dcId NUMBER;
+BEGIN
   -- Get the necessary information needed about the request and subrequest
   BEGIN
-    SELECT SubRequest.request, SubRequest.id, Id2Type.type
-      INTO reqId, srId, reqType
+    SELECT SubRequest.id, SubRequest.diskcopy, Id2Type.type
+      INTO srId, dcId, reqType
       FROM SubRequest, Id2Type
      WHERE SubRequest.subreqid = srSubReqId
        AND SubRequest.request = Id2Type.id;
   EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- The subrequest may have been removed, nothing to be done
+    res := 0;
     RETURN;
   END;
-
-  -- If the request type is a PrepareToGetRequest or PrepareToUpdateRequest 
-  -- put the subrequest into SUBREQUEST_FAILED_FINISHED not SUBREQUEST_FAILED
-  -- as SUBREQUEST_FAILED will trigger a reply to the client which is no 
-  -- longer there.
-  IF reqType = 36 OR reqType = 38 THEN
-    UPDATE SubRequest 
-       SET status = 9, lastModificationTime = getTime()
-     WHERE id = srId     
-       AND status IN (6, 14) -- SUBREQUEST_READY, SUBREQUEST_BEINGSHCED
-    RETURNING id INTO res;
-
-  -- For StageDiskCopyReplicaRequests call disk2DiskCopyFailed. We don't restart
-  -- requests waiting on the failed one as this is done in disk2DiskCopyFailed
-  ELSIF reqType = 133 THEN
-    SELECT diskcopy INTO dcId FROM SubRequest WHERE id = srId;
-      disk2DiskCopyFailed(dcId, res);
+  -- For StageDiskCopyReplicaRequests call disk2DiskCopyFailed. The logic for 
+  -- dealing with SubRequest restarts is dealt with inside this procedure so
+  -- we can return immediately.
+  IF reqType = 133 THEN
+    disk2DiskCopyFailed(dcId, res);
     RETURN;
-  ELSE
-    -- Update the subrequest status putting the request into a SUBREQUEST_FAILED
-    -- status. We only concern ourselves in the termination of a job waiting to
-    -- start i.e. in a SUBREQUEST_READY status. Requests in other statuses are
-    -- left unaltered!
-    res := 0;
-    UPDATE SubRequest
-       SET status = 7,      -- SUBREQUEST_FAILED
-           errorCode = srErrorCode,
-           lastModificationTime = getTime()
-     WHERE id = srId
-       AND status IN (6, 14) -- SUBREQUEST_READY, SUBREQUEST_BEINGSCHED
-    RETURNING id INTO res;
   END IF;
-
-  -- In both cases, restart requests waiting on the failed one
+  -- Fail the subrequest
+  UPDATE SubRequest
+     SET status = 7, -- FAILED
+         errorCode = srErrorCode,
+         lastModificationTime = getTime()
+   WHERE id = srId
+     AND status IN (6, 14) -- READY, BEINGSCHED
+  RETURNING id INTO res;  
+  -- In all cases, restart requests waiting on the failed one
   IF res IS NOT NULL THEN
-    UPDATE SubRequest
-       SET status = 1, -- SUBREQUEST_RESTART
-           parent = 0
-     WHERE parent = res AND status = 5;
+    -- Wake up other subrequests waiting on it
+    UPDATE SubRequest SET status = 1, -- RESTART
+                        lastModificationTime = getTime(),
+                        parent = 0
+     WHERE parent = res AND status = 5; -- WAITSUBREQ
   END IF;
 END;
 
 
 /* PL/SQL method implementing jobToSchedule */
-CREATE OR REPLACE PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCHAR2, srProtocol OUT VARCHAR2,
+CREATE OR REPLACE
+PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCHAR2, srProtocol OUT VARCHAR2,
                         srXsize OUT INTEGER, srRfs OUT VARCHAR2, reqId OUT VARCHAR2,
                         cfFileId OUT INTEGER, cfNsHost OUT VARCHAR2, reqSvcClass OUT VARCHAR2,
                         reqType OUT INTEGER, reqEuid OUT INTEGER, reqEgid OUT INTEGER,
@@ -3715,14 +3777,14 @@ CREATE OR REPLACE PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCH
                         clientPort OUT INTEGER, clientVersion OUT INTEGER, clientType OUT INTEGER,
                         reqSourceDiskCopyId OUT INTEGER, reqDestDiskCopyId OUT INTEGER, 
                         clientSecure OUT INTEGER, reqSourceSvcClass OUT VARCHAR2, 
-                        reqCreationTime OUT INTEGER) AS
+                        reqCreationTime OUT INTEGER, reqDefaultFileSize OUT INTEGER) AS
   dsId INTEGER;
-  nuId INTEGER;                   
+  unused INTEGER;                   
 BEGIN
   -- Get the next subrequest to be scheduled.
   UPDATE SubRequest 
-     SET status = 14, lastModificationTime = getTime() -- SUBREQUEST_BEINGSCHED
-   WHERE status = 13 -- SUBREQUEST_READYFORSCHED
+     SET status = 14, lastModificationTime = getTime() -- BEINGSCHED
+   WHERE status = 13 -- READYFORSCHED
      AND rownum < 2
  RETURNING id, subReqId, protocol, xsize, requestedFileSystems
     INTO srId, srSubReqId, srProtocol, srXsize, srRfs;
@@ -3735,10 +3797,11 @@ BEGIN
 	 Client.ipAddress, Client.port, Client.version, 
 	 (SELECT type 
             FROM Id2type 
-           WHERE id = Client.id) clientType, Client.secure, Request.creationTime
+           WHERE id = Client.id) clientType, Client.secure, Request.creationTime, 
+         decode(SvcClass.defaultFileSize, 0, 2000000000, SvcClass.defaultFileSize)
     INTO cfFileId, cfNsHost, reqSvcClass, reqType, reqId, reqEuid, reqEgid, reqUsername, 
          srOpenFlags, reqSourceDiskCopyId, reqDestDiskCopyId, clientIp, clientPort, 
-         clientVersion, clientType, clientSecure, reqCreationTime
+         clientVersion, clientType, clientSecure, reqCreationTime, reqDefaultFileSize
     FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
          (SELECT id, username, euid, egid, reqid, client, creationTime,
                  'w' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
@@ -3749,20 +3812,8 @@ BEGIN
             FROM StageGetRequest 
            UNION ALL
           SELECT id, username, euid, egid, reqid, client, creationTime,
-                 'r' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
-            FROM StagePrepareToGetRequest
-           UNION ALL
-          SELECT id, username, euid, egid, reqid, client, creationTime,
                  'o' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
             FROM StageUpdateRequest
-           UNION ALL
-          SELECT id, username, euid, egid, reqid, client, creationTime,
-                 'o' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
-            FROM StagePrepareToUpdateRequest
-           UNION ALL
-          SELECT id, username, euid, egid, reqid, client, creationTime,
-                 'r' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
-            FROM StageRepackRequest
            UNION ALL
           SELECT id, username, euid, egid, reqid, client, creationTime,
                  'w' direction, svcClass, sourceDiskCopyId, destDiskCopyId
@@ -3797,7 +3848,7 @@ BEGIN
       -- The source diskcopy has been removed before the jobManager could enter
       -- the job into LSF. Under this circumstance fail the diskcopy transfer.
       -- This will restart the subrequest and trigger a tape recall if possible
-      disk2DiskCopyFailed(reqDestDiskCopyId, nuId);
+      disk2DiskCopyFailed(reqDestDiskCopyId, unused);
       COMMIT;
       RAISE;
     END;
@@ -4199,7 +4250,7 @@ BEGIN
 END;
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTape.sql,v  Revision: 1.649  Date: 2008/03/18 07:08:25  Author: waldron 
+ * @(#)RCSfile: oracleTape.sql,v  Revision: 1.652  Date: 2008/03/25 12:40:06  Author: waldron 
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -4417,7 +4468,7 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
   lastButOneFSUsed NUMBER;
   findNewFS NUMBER := 1;
   nbMigrators NUMBER := 0;
-  unused NUMBER := 0;
+  unused "numList";
 BEGIN
   -- First try to see whether we should resuse the same filesystem as last time
   SELECT lastFileSystemChange, lastFileSystemUsed, lastButOneFileSystemUsed
@@ -4537,7 +4588,7 @@ BEGIN
   -- the deadlock would occur with updates to the NbTapeCopiesInFS
   -- table performed by the tr_stream2tapecopy_delete trigger triggered
   -- by the "DELETE FROM Stream2TapeCopy" statement below
-  SELECT 1
+  SELECT 1 BULK COLLECT
     INTO unused
     FROM Stream
     WHERE id IN (SELECT parent FROM Stream2TapeCopy WHERE child = tapeCopyId)
@@ -4959,33 +5010,32 @@ BEGIN
   -- do the same operation of getMigrCandidate and return the dbInfoMigrationPolicy
   -- we look first for repack condidates for this svcclass
   -- we update atomically WAITPOLICY
-  
-   SELECT SvcClass.migratorpolicy, SvcClass.id INTO policyName, svcId 
+  SELECT SvcClass.migratorpolicy, SvcClass.id INTO policyName, svcId 
     FROM SvcClass 
    WHERE SvcClass.name = svcClassName;
   
-   UPDATE TapeCopy A set status=7
-    WHERE status IN (0, 1) AND
+  UPDATE TapeCopy A SET status = 7
+   WHERE status IN (0, 1) AND
     EXISTS (SELECT 'x' FROM  SubRequest, StageRepackRequest
-   		WHERE StageRepackRequest.svcclass = svcId 
-     			AND SubRequest.request = StageRepackRequest.id
-     			AND SubRequest.status = 12  --SUBREQUEST_REPACK
-     			AND A.castorfile = SubRequest.castorfile
-     ) RETURNING A.id-- CREATED / TOBEMIGRATED
-     BULK COLLECT INTO tcIds;
-     COMMIT;
+             WHERE StageRepackRequest.svcclass = svcId 
+               AND SubRequest.request = StageRepackRequest.id
+               AND SubRequest.status = 12  -- SUBREQUEST_REPACK
+               AND A.castorfile = SubRequest.castorfile
+    ) RETURNING A.id -- CREATED / TOBEMIGRATED
+    BULK COLLECT INTO tcIds;
+  COMMIT;
   -- if we didn't find anything, we look 
   -- the usual svcclass from castorfile table.
   -- we update atomically WAITPOLICY
   IF tcIds.count = 0 THEN
-    UPDATE TapeCopy A set status=7  
+    UPDATE TapeCopy A SET status = 7  
      WHERE status IN (0, 1) AND
       EXISTS ( SELECT 'x' FROM  CastorFile 
      	WHERE A.castorFile = CastorFile.id 
           AND CastorFile.svcClass = svcId 
       ) RETURNING A.id -- CREATED / TOBEMIGRATED
-       BULK COLLECT INTO tcIds;
-       COMMIT;
+      BULK COLLECT INTO tcIds;
+      COMMIT;
   END IF;
   -- return the full resultset
   OPEN dbInfo FOR
@@ -4993,7 +5043,7 @@ BEGIN
            CastorFile.nsHost, CastorFile.fileid, CastorFile.filesize 
       FROM Tapecopy,CastorFile
      WHERE CastorFile.id = TapeCopy.castorfile 
-       AND TapeCopy.id in (SELECT * FROM table(tcIds)); 
+       AND TapeCopy.id IN (SELECT * FROM table(tcIds)); 
 END;
 
 
@@ -5160,6 +5210,12 @@ BEGIN
      -- Go on the tapecopy has been resurrected or migrated
       NULL;
     END;
+     
+    counter := counter + 1;
+    IF counter = 100 THEN
+         counter := 0;
+         COMMIT;
+    END IF;
   END LOOP;
   COMMIT;
 END;
@@ -5244,7 +5300,7 @@ END;
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleGC.sql,v  Revision: 1.643  Date: 2008/03/12 18:15:46  Author: itglp 
+ * @(#)RCSfile: oracleGC.sql,v  Revision: 1.645  Date: 2008/03/25 12:39:42  Author: waldron 
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -5286,7 +5342,7 @@ BEGIN
                 AND D2S.parent = FileSystem.diskPool
                 AND FileSystem.diskServer = DiskServer.id
                 AND DiskServer.name = diskServerName) LOOP
-    -- if any of the service classes to which we belong (normally a single one)
+    -- If any of the service classes to which we belong (normally a single one)
     -- says don't GC, we don't GC STAGED files.
     IF sc.gcEnabled = 0 THEN
       dontGC := 1;
@@ -5301,68 +5357,70 @@ BEGIN
     -- First take the INVALID diskcopies, they have to go in any case
     UPDATE DiskCopy
        SET status = 9, -- BEING_DELETED
-           lastAccessTime = getTime()   -- see comment below on the status = 9 condition
+           lastAccessTime = getTime() -- See comment below on the status = 9 condition
      WHERE fileSystem = fs.id 
        AND (
-             (status = 7 AND NOT EXISTS  -- INVALID
+             (status = 7 AND NOT EXISTS -- INVALID
                (SELECT 'x' FROM SubRequest
                  WHERE SubRequest.diskcopy = DiskCopy.id
-                   AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14)))  -- All but FINISHED, FAILED*, ARCHIVED
-          OR (status = 9 AND lastAccessTime < getTime() - 1800))
-             -- for failures recovery we also take all DiskCopies which were already
-             -- selected but got stuck somehow and didn't get removed after 30 mins. 
+                   AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14))) -- All but FINISHED, FAILED*, ARCHIVED
+        OR (status = 9 AND lastAccessTime < getTime() - 1800))
+        -- For failures recovery we also take all DiskCopies which were already
+        -- selected but got stuck somehow and didn't get removed after 30 mins. 
     RETURNING id BULK COLLECT INTO dcIds;
     COMMIT;
-    IF dontGC = 1 THEN
-      -- nothing else to do, exit the loop and eventually return the list of INVALID
-      EXIT;
-    END IF;
-    IF dcIds.COUNT > 0 THEN
-      SELECT SUM(fileSize) INTO freed
-        FROM CastorFile, DiskCopy
-       WHERE DiskCopy.castorFile = CastorFile.id
-         AND DiskCopy.id IN (SELECT * FROM TABLE(dcIds));
-    ELSE
-      freed := 0;
-    END IF;
-    -- Get the amount of space to liberate
-    SELECT maxFreeSpace * totalSize - free
-      INTO toBeFreed
-      FROM FileSystem
-     WHERE id = fs.id;
-    -- Check whether we're done with the INVALID
-    IF toBeFreed <= freed THEN
-      EXIT;
-    END IF;
-    -- Loop on file deletions
-    FOR dc IN (SELECT id, castorFile FROM DiskCopy
-                WHERE fileSystem = fs.id
-                  AND status = 0  -- STAGED
-                  AND NOT EXISTS (
-                      SELECT 'x' FROM SubRequest 
-                       WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id 
-                         AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14))   -- All but FINISHED, FAILED*, ARCHIVED
-                  ORDER BY gcWeight ASC) LOOP
-      -- Mark the DiskCopy
-      UPDATE DiskCopy SET status = 9  -- BEINGDELETED
-       WHERE id = dc.id;
-      -- Update toBeFreed
-      SELECT fileSize INTO deltaFree FROM CastorFile WHERE id = dc.castorFile;
-      freed := freed + deltaFree;
-      -- Shall we continue ?
-      IF toBeFreed <= freed THEN
-        EXIT;
+
+    -- Continue processing but with STAGED files.
+    IF dontGC = 0 THEN
+      -- Determine the space that would be freed if the INVALID files selected above
+      -- were to be removed
+      IF dcIds.COUNT > 0 THEN
+        SELECT SUM(fileSize) INTO freed
+          FROM CastorFile, DiskCopy
+         WHERE DiskCopy.castorFile = CastorFile.id
+           AND DiskCopy.id IN (SELECT * FROM TABLE(dcIds));
+      ELSE
+        freed := 0;
       END IF;
-    END LOOP;
-    COMMIT;
+      -- Get the amount of space to be liberated
+      SELECT decode(sign(maxFreeSpace * totalSize - free), -1, 0, maxFreeSpace * totalSize - free)
+        INTO toBeFreed
+        FROM FileSystem
+       WHERE id = fs.id;
+      -- If space is still required even after removal of INVALID files, consider
+      -- removing STAGED files until we are below the free space watermark
+      IF freed < toBeFreed THEN
+        -- Loop on file deletions
+        FOR dc IN (SELECT id, castorFile FROM DiskCopy
+                    WHERE fileSystem = fs.id
+                      AND status = 0 -- STAGED
+                      AND NOT EXISTS (
+                          SELECT 'x' FROM SubRequest 
+                           WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id 
+                             AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14)) -- All but FINISHED, FAILED*, ARCHIVED
+                      ORDER BY gcWeight ASC) LOOP
+          -- Mark the DiskCopy
+          UPDATE DiskCopy SET status = 9 -- BEINGDELETED
+           WHERE id = dc.id;
+          -- Update toBeFreed
+          SELECT fileSize INTO deltaFree FROM CastorFile WHERE id = dc.castorFile;
+          freed := freed + deltaFree;
+          -- Shall we continue ?
+          IF toBeFreed <= freed THEN
+            EXIT;
+          END IF;
+        END LOOP;
+      END IF;
+      COMMIT;
+    END IF;
   END LOOP;
-  
-  -- now select all the BEINGDELETED diskcopies in this diskserver for the gcDaemon
+      
+  -- Now select all the BEINGDELETED diskcopies in this diskserver for the gcDaemon
   OPEN files FOR
-    SELECT FileSystem.mountPoint||DiskCopy.path, DiskCopy.id,
-	         Castorfile.fileid, Castorfile.nshost
+    SELECT FileSystem.mountPoint || DiskCopy.path, DiskCopy.id,
+	   Castorfile.fileid, Castorfile.nshost
       FROM CastorFile, DiskCopy, FileSystem, DiskServer
-     WHERE DiskCopy.status = 9  -- BEINGDELETED
+     WHERE DiskCopy.status = 9 -- BEINGDELETED
        AND DiskCopy.castorfile = CastorFile.id
        AND DiskCopy.fileSystem = FileSystem.id
        AND FileSystem.diskServer = DiskServer.id
@@ -5384,11 +5442,6 @@ CREATE OR REPLACE PROCEDURE filesDeletedProc
   cfId NUMBER;
 BEGIN
   IF dcIds.COUNT > 0 THEN
-    -- Loop over the deleted files; first use FORALL for bulk operation
-    FORALL i IN dcIds.FIRST .. dcIds.LAST
-      DELETE FROM Id2Type WHERE id = dcIds(i);
-    FORALL i IN dcIds.FIRST .. dcIds.LAST
-      DELETE FROM DiskCopy WHERE id = dcIds(i);
     -- then use a normal loop to clean castorFiles
     FOR i IN dcIds.FIRST .. dcIds.LAST LOOP
       SELECT castorFile INTO cfId
@@ -5396,6 +5449,11 @@ BEGIN
        WHERE id = dcIds(i);
       deleteCastorFile(cfId);
     END LOOP;
+    -- Loop over the deleted files; first use FORALL for bulk operation
+    FORALL i IN dcIds.FIRST .. dcIds.LAST
+      DELETE FROM Id2Type WHERE id = dcIds(i);
+    FORALL i IN dcIds.FIRST .. dcIds.LAST
+      DELETE FROM DiskCopy WHERE id = dcIds(i);
   END IF;
   OPEN fileIds FOR SELECT * FROM FilesDeletedProcOutput;
 END;

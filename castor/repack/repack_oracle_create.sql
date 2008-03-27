@@ -9,11 +9,11 @@ CREATE TABLE RepackSubRequest (vid VARCHAR2(2048), xsize INTEGER, status NUMBER,
 
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_7_1');
+INSERT INTO CastorVersion VALUES ('-', '2_1_7_2');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.3  Release Date: 2007/07/03 16:29:05  Author: itglp 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.4  Release Date: 2008/03/20 10:49:03  Author: itglp 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
