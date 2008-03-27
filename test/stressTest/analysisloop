@@ -30,7 +30,7 @@ baseCmd2 = buildEnv(instance, svcClass2, True)
 # Loop on files
 counter = 0
 while True:
-    createDirIfNeeded(baseputloop.baseCastorDir, counter)
+    createDirIfNeeded(baseCastorDir, counter)
     fileName = getCastorDir(baseCastorDir, counter) + os.sep + inputFileBaseName + "_" + getHost() + "_" + buildUuid()
     command1 = baseCmd1 + pathToCastorCommands + "rfcp " + inputFile + " " + fileName + " >> " + logFile + " 2>> " + logFile
     os.system(command1)
