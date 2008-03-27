@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/03/18 07:34:43 $ $Author: waldron $
+ * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/03/27 13:32:29 $ $Author: waldron $
  *
  * Cancellation thread used to cancel jobs in the LSF with have been in a
  * PENDING status for too long
@@ -202,7 +202,7 @@ void castor::jobmanager::ManagementThread::run(void *param) {
     }
   } catch (castor::exception::Exception e) {
 
-    // "Exception caught in get scheduler resources, continuing anyway"
+    // "Exception caught trying to get scheduler resources, continuing anyway"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Type", sstrerror(e.code())),
        castor::dlf::Param("Message", e.getMessage().str())};
@@ -272,9 +272,6 @@ void castor::jobmanager::ManagementThread::run(void *param) {
 //-----------------------------------------------------------------------------
 void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
 
-  if (!IS_PEND(job->status) && !(job->status & JOB_STAT_EXIT))
-    return;
-
   // The job has been processed previously ? In this case we are waiting
   // for the job to be removed from the LSF output after CLEAN_PERIOD seconds
   std::map<std::string, u_signed64>::const_iterator iter =
@@ -334,42 +331,48 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
     return;
   }
 
-  // Check if the job has exited via administrative action, a bkill or
-  // abnormally terminated on the host.
-  if (job->status & JOB_STAT_EXIT) {
-    if (!job->exitStatus) {
-      if (terminateRequest(0, requestId, subRequestId, fileId, ESTJOBKILLED)) {
+  // Processing for jobs which have finished
+  if (IS_FINISH(job->status)) {
 
+    // Common logging parameters
+    std::ostringstream jobStatus;
+    jobStatus << job->status << ":" << job->exitStatus;
+
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("JobId", (int)job->jobId),
+       castor::dlf::Param("Username", job->user),
+       castor::dlf::Param("Type", castor::ObjectsIdStrings[requestType]),
+       castor::dlf::Param("Status", jobStatus.str()),
+       castor::dlf::Param(subRequestId)};
+
+    // Check for abnormal termination caused by administrative action such
+    // as a bkill or abnormal termination on the remote execution host.
+    if ((job->status & JOB_STAT_EXIT) && !(job->status & JOB_STAT_DONE) &&
+	!(job->status & JOB_STAT_PDONE)) {
+      if (terminateRequest(0, requestId, subRequestId, fileId, ESTJOBKILLED)) {
 	// "Job terminated by service administrator"
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("JobId", (int)job->jobId),
-	   castor::dlf::Param("Username", job->user),
-	   castor::dlf::Param("Type", castor::ObjectsIdStrings[requestType]),
-	   castor::dlf::Param(subRequestId)};
-	castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 26, 4, params, &fileId);
-      }
-    } else if (requestType == castor::OBJ_StageDiskCopyReplicaRequest) {
-      // For diskcopy replication requests check that the diskcopy is no longer
-      // in WAITDISK2DISKCOPY. This can happen when the mover fails to cleanup
-      // after an error
-      try {
-	if (m_jobManagerService->disk2DiskCopyCheck(job->submit.jobName)) {
-	  // "Restarting failed scheduling of a disk2disk copy replication
-	  // request"
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("JobId", (int)job->jobId),
-	     castor::dlf::Param(subRequestId)};
-	  castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 35, 2, params, &fileId);
-	}
-      } catch (castor::exception::Exception e) {
-	// "Exception caught in trying to call disk2DiskCopyCheck"
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("Type", sstrerror(e.code())),
-	   castor::dlf::Param("Message", e.getMessage().str()),
-	   castor::dlf::Param(subRequestId)};
-	castor::dlf::dlf_writep(requestId, DLF_LVL_ERROR, 36, 3, params, &fileId);
+	castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 26, 5, params, &fileId);
       }
     }
+
+    // Run the post checks after a job has ended. We do this to catch
+    // situations were LSF has attempted to run the job but failed. As a
+    // consequence of this we are left with inconsistencies in the stager
+    // database such as SUBREQUEST's stuck in a SUBREQUEST_READY state.
+    // Note: the name of the method being called here is misleading, we don't
+    // want to terminate the request in this particular case just check it
+    // went through ok
+    else if (terminateRequest(0, requestId, subRequestId, fileId, ESTSCHEDERR)) {
+      // "Job terminated due to scheduling error"
+      castor::dlf::dlf_writep(requestId, DLF_LVL_ERROR, 36, 5, params, &fileId);
+    }
+
+    m_processedCache[job->submit.jobName] = time(NULL);
+    return;
+  }
+
+  // No furthur processing is required unless the job is in a PEND'ing state
+  if (!IS_PEND(job->status)) {
     return;
   }
 
@@ -405,8 +408,9 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
 	   castor::dlf::Param("Timeout", timeout),
 	   castor::dlf::Param(subRequestId)};
 	castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 25, 5, params, &fileId);
-	return;
       }
+      m_processedCache[job->submit.jobName] = time(NULL);
+      return;
     }
   }
 
@@ -485,6 +489,7 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
 	  castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 33, 5, params, &fileId);
 	}
       }
+      m_processedCache[job->submit.jobName] = time(NULL);
       return;
     }
   }
@@ -530,6 +535,7 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
 	   castor::dlf::Param(subRequestId)};
 	castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 34, 5, params, &fileId);
       }
+      m_processedCache[job->submit.jobName] = time(NULL);
       return;
     }
   }
@@ -541,13 +547,6 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
 //-----------------------------------------------------------------------------
 bool castor::jobmanager::ManagementThread::terminateRequest
 (LS_LONG_INT jobId, Cuuid_t requestId, Cuuid_t subRequestId, Cns_fileid fileId, int errorCode) {
-
-  // Flag the job as being processed even if we didn't manage to update the
-  // database correctly. Failre to do so will cause the management process
-  // to become recursive.
-  char jobName[CUUID_STRING_LEN + 1];
-  Cuuid2string(jobName, CUUID_STRING_LEN + 1, &subRequestId);
-  m_processedCache[jobName] = time(NULL);
 
   // LSF has the capacity to kill jobs on bulk (lsb_killbulkjobs). However
   // testing has shown that this call fails to invoke the deletion hook of the
@@ -571,26 +570,26 @@ bool castor::jobmanager::ManagementThread::terminateRequest
     }
   }
 
-  // Fail the subrequest in the stager DB
+  // Run the post checks for the job, this will perform the necessary cleanups
   try {
-    return m_jobManagerService->failSchedulerJob(jobName, errorCode);
+    char jobName[CUUID_STRING_LEN + 1];
+    Cuuid2string(jobName, CUUID_STRING_LEN + 1, &subRequestId);
+    return m_jobManagerService->postJobChecks(jobName, errorCode);
   } catch (castor::exception::Exception e) {
 
-    // "Exception caught in trying to fail subrequest"
+    // "Exception caught trying to run post job checks"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Type", sstrerror(e.code())),
        castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("Method", "ManagementThread::terminateRequest"),
        castor::dlf::Param(subRequestId)};
-    castor::dlf::dlf_writep(requestId, DLF_LVL_ERROR, 28, 4, params, &fileId);
+    castor::dlf::dlf_writep(requestId, DLF_LVL_ERROR, 28, 3, params, &fileId);
   } catch (...) {
 
-    // "Failed to execute failSchedulerJob procedure"
+    // "Failed to execute postJobChecks procedure"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", "General exception caught"),
-       castor::dlf::Param("Method", "ManagementThread::terminateRequest"),
        castor::dlf::Param(subRequestId)};
-    castor::dlf::dlf_writep(requestId, DLF_LVL_ERROR, 29, 3, params, &fileId);
+    castor::dlf::dlf_writep(requestId, DLF_LVL_ERROR, 29, 2, params, &fileId);
   }
   return false;
 }

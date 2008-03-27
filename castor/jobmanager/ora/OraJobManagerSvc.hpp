@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobManagerSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/03/18 07:34:44 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobManagerSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/03/27 13:32:30 $ $Author: waldron $
  *
  * Implementation of the IJobManagerSvc for Oracle
  *
@@ -80,15 +80,16 @@ namespace castor {
 	void reset() throw();
 
 	/**
-	 * Terminate a subrequest in SUBREQUEST_STAGEOUT i.e. waiting to be
-	 * started on a diskserver. Set the subrequest to SUBREQUEST_FAILED
-	 * with the given error code. The stager error service will then pick
-	 * up the subrequest and notify the client of the termination.
+	 * Fail a subrequest that could not be submitted into the scheduler.
+	 * The stager error service will then pick up the subrequest and
+	 * notify the client of the termination. This method will only modify
+	 * subrequests that are in a SUBREQUEST_READY or SUBREQEST_BEINGSCHED
+	 * status.
 	 * @param subReqId The SubRequest id to update
 	 * @param errorCode The error code associated with the failure
 	 * @exception Exception in case of error
 	 */
-	virtual bool failSchedulerJob
+	virtual bool failJobSubmission
 	(const std::string subReqId, const int errorCode)
 	  throw(castor::exception::Exception);
 
@@ -124,24 +125,31 @@ namespace castor {
 	  throw(castor::exception::Exception);
 
 	/**
-	 * This method is called when a StageDiskCopyReplicaRequest exits the
-	 * LSF queue. It is designed to check that the status of the diskcopy
-	 * is no longer in WAITDISK2DISKCOPY. If it is, disk2DiskCopyFailed
-	 * will be called on behalf of the job.
-	 * @param subReqId The SubRequest id to check
+	 * Run post job checks on an exited or terminated job. We run these
+	 * checks for two reasons:
+	 * A) to make sure that the subrequest and waiting subrequests are
+	 * updated accordingly when a job is terminated/killed and
+	 * B) to make sure that the status of the subrequest is not
+	 * SUBREQUEST_READY after a job has successfully ended. If this is
+	 * the case then it is an indication that LSF failed to schedule the
+	 * job and gave up. As a consequence of LSF giving up the stager
+	 * database is left in an inconsistent state which this method
+	 * attempts to rectify.
+	 * @param subReqId The SubRequest id to update
+	 * @param errorCode The error code associated with the failure
 	 * @exception Exception in case of error
 	 */
-	virtual bool disk2DiskCopyCheck
-	(const std::string subReqId)
+	virtual bool postJobChecks
+	(const std::string subReqId, const int errorCode)
 	  throw(castor::exception::Exception);
 
       private:
 
-	/// SQL statement for function failSchedulerJob
-	static const std::string s_failSchedulerJobString;
+	/// SQL statement for function failJobSubmission
+	static const std::string s_failJobSubmissionString;
 
-	/// SQL statement object for failSchedulerJob
-	oracle::occi::Statement *m_failSchedulerJobStatement;
+	/// SQL statement object for failJobSubmission
+	oracle::occi::Statement *m_failJobSubmissionStatement;
 
 	/// SQL statement for function jobToSchedule
 	static const std::string s_jobToScheduleString;
@@ -161,11 +169,11 @@ namespace castor {
 	/// SQL statement object for getSchedulerResources
 	oracle::occi::Statement *m_getSchedulerResourcesStatement;
 
-	/// SQL statement for function disk2DiskCopyCheck
-	static const std::string s_disk2DiskCopyCheckString;
+	/// SQL statement for function postJobChecks
+	static const std::string s_postJobChecksString;
 
-	/// SQL statement object for disk2DiskCopyCheck
-	oracle::occi::Statement *m_disk2DiskCopyCheckStatement;
+	/// SQL statement object for postJobChecks
+	oracle::occi::Statement *m_postJobChecksStatement;
 
       };
 

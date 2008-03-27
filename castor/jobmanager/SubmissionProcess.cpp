@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/03/25 10:32:53 $ $Author: waldron $
+ * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/03/27 13:32:29 $ $Author: waldron $
  *
  * The Submission Process is used to submit new jobs into the scheduler. It is
  * run inside a separate process allowing for setuid and setgid calls to take
@@ -514,25 +514,23 @@ void castor::jobmanager::SubmissionProcess::submitJob
 void castor::jobmanager::SubmissionProcess::terminateRequest
 (castor::jobmanager::JobSubmissionRequest *request, int errorCode) {
 
-  // Fail the scheduler job
+  // Fail the submission of the job
   try {
-    m_jobManagerService->failSchedulerJob(request->subReqId(), errorCode);
+    m_jobManagerService->failJobSubmission(request->subReqId(), errorCode);
   } catch (castor::exception::Exception e) {
 
-    // "Exception caught when trying to fail subrequest"
+    // "Exception caught when trying to fail job submission"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Type", sstrerror(e.code())),
        castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("Method", "SubmissionProcess::terminateRequest"),
        castor::dlf::Param(m_subRequestId)};
-    castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 28, 4, params, &m_fileId);
+    castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 55, 3, params, &m_fileId);
   } catch (...) {
 
-    // "Failed to execute failSchedulerJob procedure"
+    // "Failed to execute failJobSubmission procedure"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", "General exception caught"),
-       castor::dlf::Param("Method", "SubmissionProcess::terminateRequest"),
        castor::dlf::Param(m_subRequestId)};
-    castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 29, 3, params, &m_fileId);
+    castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 56, 2, params, &m_fileId);
   }
 }

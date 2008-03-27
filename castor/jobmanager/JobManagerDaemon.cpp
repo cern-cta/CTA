@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/03/25 10:31:38 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/03/27 13:32:29 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -231,15 +231,15 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
      { 25, "Job terminated, timeout occurred" },
      { 26, "Job terminated by service administrator" },
      { 27, "Management thread interval is greater then CLEAN_PERIOD in lsb.params, detection of abnormally EXITING jobs disabled" },
-     { 28, "Exception caught in trying to fail subrequest" },
-     { 29, "Failed to execute failSchedulerJob procedure" },
-     { 30, "Exception caught in trying to get scheduler resources, continuing anyway" },
+     { 28, "Exception caught trying to run post job checks" },
+     { 29, "Failed to execute postJobChecks procedure" },
+     { 30, "Exception caught trying to get scheduler resources, continuing anyway" },
      { 31, "Failed to execute getSchedulerResources procedure, continuing anyway" },
      { 32, "Job terminated, all requested filesystems are DRAINING or DISABLED" },
      { 33, "Job terminated, source filesystem for disk2disk copy is DISABLED, restarting SubRequest" },
      { 34, "Job terminated, svcclass has no filesystems in PRODUCTION" },
      { 35, "Restarting failed scheduling of a disk2disk copy replication request" },
-     { 36, "Exception caught in trying to call disk2DiskCopyCheck" },
+     { 36, "Job terminated due to scheduling error" },
 
      // Submission
      { 40, "Invalid JobManager/SubmitRetryAttempts option, using default" },
@@ -256,6 +256,8 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
      { 51, "Cannot submit job into LSF, svcclass/queue name is a reserved word" },
      { 53, "Memory allocation failure, job submission cancelled" },
      { 54, "Invalid diskCopySource syntax, job submission cancelled" },
+     { 55, "Exception caught when trying to fail job submission" },
+     { 56, "Failed to execute failJobSubmission procedure" },
 
      // Dispatch
      { 60, "Job received" },

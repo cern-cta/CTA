@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobManagerSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/03/18 07:34:43 $ $Author: waldron $
+ * @(#)$RCSfile: IJobManagerSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/03/27 13:32:29 $ $Author: waldron $
  *
  * This class provides methods for managing jobs
  *
@@ -49,15 +49,16 @@ namespace castor {
     public:
 
       /**
-       * Terminate a subrequest in SUBREQUEST_STAGEOUT i.e. waiting to be
-       * started on a diskserver. Set the subrequest to SUBREQUEST_FAILED
-       * with the given error code. The stager error service will then pick
-       * up the subrequest and notify the client of the termination.
+       * Fail a subrequest that could not be submitted into the scheduler.
+       * The stager error service will then pick up the subrequest and
+       * notify the client of the termination. This method will only modify
+       * subrequests that are in a SUBREQUEST_READY or SUBREQEST_BEINGSCHED
+       * status.
        * @param subReqId The SubRequest id to update
        * @param errorCode The error code associated with the failure
        * @exception Exception in case of error
        */
-      virtual bool failSchedulerJob
+      virtual bool failJobSubmission
       (const std::string subReqId, const int errorCode)
 	throw(castor::exception::Exception) = 0;
 
@@ -93,16 +94,23 @@ namespace castor {
 	throw(castor::exception::Exception) = 0;
 
       /**
-       * This method is called when a StageDiskCopyReplicaRequest exits the
-       * LSF queue. It is designed to check that the status of the diskcopy
-       * is no longer in WAITDISK2DISKCOPY. If it is, disk2DiskCopyFailed
-       * will be called on behalf of the job.
-       * @param subReqId The SubRequest id to check
+       * Run post job checks on an exited or terminated job. We run these
+       * checks for two reasons:
+       * A) to make sure that the subrequest and waiting subrequests are
+       * updated accordingly when a job is terminated/killed and
+       * B) to make sure that the status of the subrequest is not
+       * SUBREQUEST_READY after a job has successfully ended. If this is
+       * the case then it is an indication that LSF failed to schedule the
+       * job and gave up. As a consequence of LSF giving up the stager
+       * database is left in an inconsistent state which this method
+       * attempts to rectify.
+       * @param subReqId The SubRequest id to update
+       * @param errorCode The error code associated with the failure
        * @exception Exception in case of error
        */
-      virtual bool disk2DiskCopyCheck
-      (const std::string subReqId)
-	throw(castor::exception::Exception)= 0;
+      virtual bool postJobChecks
+      (const std::string subReqId, const int errorCode)
+	throw(castor::exception::Exception) = 0;
 
     };
 
