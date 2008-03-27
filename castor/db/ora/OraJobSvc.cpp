@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.41 $ $Release$ $Date: 2008/03/10 09:11:07 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2008/03/27 15:48:27 $ $Author: itglp $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -228,6 +228,7 @@ castor::db::ora::OraJobSvc::getUpdateStart
         (6, oracle::occi::OCCIINT);
       m_getUpdateStartStatement->registerOutParam
         (7, oracle::occi::OCCIINT);
+      m_getUpdateStartStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
     m_getUpdateStartStatement->setDouble(1, subreq->id());
@@ -248,7 +249,6 @@ castor::db::ora::OraJobSvc::getUpdateStart
       = (u_signed64)m_getUpdateStartStatement->getDouble(3);
     // If no DiskCopy returned, we have to wait, hence return
     if (0 == id) {
-      cnvSvc()->commit();
       return 0;
     }
     
@@ -262,7 +262,6 @@ castor::db::ora::OraJobSvc::getUpdateStart
     }
 
     // return
-    cnvSvc()->commit();
     return result;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -296,12 +295,14 @@ castor::db::ora::OraJobSvc::putStart
         (4, oracle::occi::OCCIINT);
       m_putStartStatement->registerOutParam
         (5, oracle::occi::OCCISTRING, 2048);
+      m_putStartStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
     m_putStartStatement->setDouble(1, subreq->id());
     m_putStartStatement->setDouble(2, fileSystem->id());
     unsigned int nb = m_putStartStatement->executeUpdate();
     if (0 == nb) {
+      rollback();
       castor::exception::Internal ex;
       ex.getMessage()
         << "putStart : unable to schedule SubRequest.";
@@ -315,7 +316,6 @@ castor::db::ora::OraJobSvc::putStart
        m_putStartStatement->getInt(4));
     result->setPath(m_putStartStatement->getString(5));
     // return
-    cnvSvc()->commit();
     return result;
   } catch (oracle::occi::SQLException e) {
     if (0 != result) {
