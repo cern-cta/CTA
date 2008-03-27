@@ -35,7 +35,7 @@ commands = ["stager_get", "stager_put", "stager_rm", "stager_putDone", "rfcp", "
 counter = 0
 while True:
     index = random.randint(0, len(fileList) - 1)
-    fileName = getCastorDir(baseCastorDir, counter) + os.sep + fileList[index]
+    fileName = baseCastorDir + os.sep + fileList[index]
     cmdType = random.randint(0, 5)
     command = baseCmd + pathToCastorCommands + commands[cmdType]
     if cmdType < 4:

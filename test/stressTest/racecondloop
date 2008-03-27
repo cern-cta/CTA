@@ -32,11 +32,11 @@ fileList = os.popen(baseCmd + pathToCastorCommands + "nsls " + baseCastorDir).re
 counter = 0
 while True:
     index = random.randint(0, len(fileList) - 1)
-    fileName = getCastorDir(baseCastorDir, counter) + os.sep + fileList[index]
+    fileName = baseCastorDir + os.sep + fileList[index]
     command = baseCmd + pathToCastorCommands + "rfcp " + inputFile + " " + fileName + " >> " + logFile + " 2>> " + logFile
     os.system(command)
     index = random.randint(0, len(fileList) - 1)
-    fileName = getCastorDir(baseCastorDir, counter) + os.sep + fileList[index]
+    fileName = baseCastorDir + os.sep + fileList[index]
     command = baseCmd + pathToCastorCommands + "rfcp " + fileName + " /dev/null >> " + logFile + " 2>> " + logFile
     os.system(command)
     counter = counter + 1
