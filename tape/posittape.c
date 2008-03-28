@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.20 $ $Date: 2007/12/11 10:20:30 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.21 $ $Date: 2008/03/28 09:56:52 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -146,6 +146,14 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 				if ((c = skiptpff (tapefd, path, 1))) goto reply;
 			}
 			(*cfseq)++;
+                        if (0 == mode) {                                
+                                /* set the cfseq to the requested fseq on a read;
+                                   this is required as the current fseq will be 
+                                   checked later on by CASTOR2 */
+                                (*cfseq) = fseq;
+                        }
+                        tplogit (func, "%s tape, cfseq is now %d\n", 
+                                 (lblcode == NL)?"nl":"blp", *cfseq);
 			goto reply;
 		}
 		if ((c = rwndtape (tapefd, path))) goto reply;
