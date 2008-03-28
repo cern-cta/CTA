@@ -139,7 +139,7 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeRequestQueueStatement
   "      (:1 IS NULL OR :2 = DGNAME)"
   "  AND (:3 IS NULL OR :4 = TAPESERVER) "
   "ORDER BY"
-  "  MODIFICATIONTIME";
+  "  ID";
 
 /// SQL statement for function selectTapeDriveQueue
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveQueueStatementString =
