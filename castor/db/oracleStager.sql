@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.656 $ $Date: 2008/03/28 15:48:07 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.657 $ $Date: 2008/03/28 16:59:59 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1669,9 +1669,9 @@ BEGIN
   -- mark all get/put requests for those diskcopies
   -- and the ones waiting on them as failed
   -- so that clients eventually get an answer
-  FOR sr IN (SELECT id, status FROM SubRequest
+  FOR sr IN (SELECT id FROM SubRequest
               WHERE diskcopy IN (SELECT * FROM TABLE(dcsToRm))
-                AND status IN (0, 1, 2, 5, 6, 7, 10, 13)) LOOP
+                AND status IN (0, 1, 2, 5, 6, 13)) LOOP   -- START, WAITSUBREQ, READY, READYFORSCHED
     UPDATE SubRequest 
        SET status = 7, parent = 0,  -- FAILED
            errorCode = 4,  -- EINT
@@ -1755,7 +1755,7 @@ BEGIN
   result := 1;
   SELECT id INTO result FROM SubRequest
    WHERE request = reqId
-     AND status IN (0, 1, 2, 3, 4, 5, 7, 10)   -- START, RESTART, RETRY, WAITSCHED, WAITTAPERECALL, WAITSUBREQ, FAILED, FAILED_ANSWERING
+     AND status IN (0, 1, 2, 3, 4, 5, 7, 10, 12, 13, 14)   -- all but FINISHED, FAILED_FINISHED, ARCHIVED
      AND answered = 0
      AND ROWNUM < 2;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
