@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.648 $ $Date: 2008/03/27 07:34:03 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.649 $ $Date: 2008/03/28 17:29:34 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -653,30 +653,20 @@ BEGIN
 END;
 
 
-/* PL/SQL method implementing postJobChecks */
+/* PL/SQL method implementing failSchedulerJob */
 CREATE OR REPLACE
-PROCEDURE postJobChecks(srSubReqId IN VARCHAR2, srErrorCode IN NUMBER, res OUT INTEGER) AS
+PROCEDURE failSchedulerJob(srSubReqId IN VARCHAR2, srErrorCode IN NUMBER, res OUT INTEGER) AS
   reqType NUMBER;
   srId NUMBER;
   dcId NUMBER;
 BEGIN
-  -- Check to see if the subrequest status is SUBREQUEST_READY
-  BEGIN
-    SELECT SubRequest.id, SubRequest.diskcopy, Id2Type.type
-      INTO srId, dcId, reqType
-      FROM SubRequest, Id2Type
-     WHERE SubRequest.subreqid = srSubReqId
-       AND SubRequest.request = Id2Type.id
-       AND status = 6; -- READY
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- The subrequest has the correct status because A) the job was successfully
-    -- scheduled in LSF or B) a postJobChecks call has already been performed by
-    -- another jobManager
-    res := 0;
-    RETURN;
-  END;
-  -- Assume that the call to this procedure will do some work
-  res := 1;
+  -- Get the necessary information needed about the request and subrequest
+  SELECT SubRequest.id, SubRequest.diskcopy, Id2Type.type
+    INTO srId, dcId, reqType
+    FROM SubRequest, Id2Type
+   WHERE SubRequest.subreqid = srSubReqId
+     AND SubRequest.request = Id2Type.id
+     AND SubRequest.status IN (6, 14); -- READY, BEINGSCHED
   -- Call the relevant cleanup procedures for the job, procedures that they
   -- would have called themselves if the job had failed!
   IF reqType = 40 THEN -- Put
@@ -687,64 +677,49 @@ BEGIN
   ELSE -- Get or Update
     getUpdateFailedProc(srId);
   END IF;
-  -- Try to answer the client if it hasn't been done yet. Note: this overrides
-  -- some of the logic that is in the putFailedProc and getUpdateFailedProc
-  -- procedures as they set the subrequest status to FAILED_FINISHED which is
-  -- usually correct as the job itself will notify the client directly of any
-  -- error. However, this procedure is most likely processing a job that
-  -- never ran at all, so we reset the status to FAILED so that the waiting 
-  -- client gets an error and can retry.
-  UPDATE SubRequest
-     SET status = 7, -- FAILED
-         errorCode = srErrorCode,
-         lastModificationTime = getTime()
-   WHERE id = srId -- READY, BEINGSCHED
-     AND answered = 0;
-END;
-
-
-/* PL/SQL method implementing failJobSubmission */
-CREATE OR REPLACE
-PROCEDURE failJobSubmission(srSubReqId IN VARCHAR2, srErrorCode IN NUMBER, res OUT INTEGER) AS
-  reqType NUMBER;
-  srId NUMBER;
-  dcId NUMBER;
-BEGIN
-  -- Get the necessary information needed about the request and subrequest
-  BEGIN
-    SELECT SubRequest.id, SubRequest.diskcopy, Id2Type.type
-      INTO srId, dcId, reqType
-      FROM SubRequest, Id2Type
-     WHERE SubRequest.subreqid = srSubReqId
-       AND SubRequest.request = Id2Type.id;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- The subrequest may have been removed, nothing to be done
-    res := 0;
-    RETURN;
-  END;
-  -- For StageDiskCopyReplicaRequests call disk2DiskCopyFailed. The logic for 
-  -- dealing with SubRequest restarts is dealt with inside this procedure so
-  -- we can return immediately.
-  IF reqType = 133 THEN
-    disk2DiskCopyFailed(dcId, res);
-    RETURN;
-  END IF;
   -- Fail the subrequest
   UPDATE SubRequest
      SET status = 7, -- FAILED
          errorCode = srErrorCode,
          lastModificationTime = getTime()
    WHERE id = srId
-     AND status IN (6, 14) -- READY, BEINGSCHED
+     AND answered = 0
   RETURNING id INTO res;  
   -- In all cases, restart requests waiting on the failed one
   IF res IS NOT NULL THEN
     -- Wake up other subrequests waiting on it
     UPDATE SubRequest SET status = 1, -- RESTART
-                        lastModificationTime = getTime(),
-                        parent = 0
+                          lastModificationTime = getTime(),
+                          parent = 0
      WHERE parent = res AND status = 5; -- WAITSUBREQ
   END IF;
+  -- CAUTION: if you add additional processing here make sure the logic
+  -- is also covered in the disk2DiskCopyFailed procedure as we don't
+  -- get this far in the processing for StageDiskCopyReplicaRequests!!
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- The subrequest may have been removed, nothing to be done
+  res := 0;
+  RETURN;
+END;  
+
+
+/* PL/SQL method implementing postJobChecks */
+CREATE OR REPLACE
+PROCEDURE postJobChecks(srSubReqId IN VARCHAR2, srErrorCode IN NUMBER, res OUT INTEGER) AS
+  unused NUMBER;
+BEGIN
+  -- Check to see if the subrequest status is SUBREQUEST_READY
+  SELECT status INTO unused FROM SubRequest
+   WHERE subreqid = srSubReqId
+     AND status = 6; -- READY
+  -- The job status is incorrect so terminate the scheduler job
+  failSchedulerJob(srSubReqId, srErrorCode, res);
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- The subrequest has the correct status because A) the job was successfully
+  -- scheduled in LSF or B) a postJobChecks call has already been performed by
+  -- another jobManager
+  res := 0;
+  RETURN;
 END;
 
 
