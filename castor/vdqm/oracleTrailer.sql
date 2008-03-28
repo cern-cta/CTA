@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.50 $ $Release$ $Date: 2008/03/28 12:29:46 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.51 $ $Release$ $Date: 2008/03/28 16:29:00 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -513,6 +513,38 @@ END;
 
 
 /**
+ * This PL/SQL function returns 1 if the specified drive passes all of its
+ * dedications, else it returns 0.
+ *
+ * @param driveIdVar the ID of the drive
+ * @param vidVar     the vid of the volume request
+ */
+CREATE OR REPLACE FUNCTION passesDedications(
+  driveIdVar    IN NUMBER,
+  clientHostVar IN VARCHAR2,
+  accessModeVar IN NUMBER,
+  vidVar        IN VARCHAR2)
+  RETURN NUMBER AS
+  nbVidDedicationsVar NUMBER;
+BEGIN
+  IF passesHostDedications(driveIdVar, clientHostVar) = 0 THEN
+    RETURN 0;
+  END IF;
+
+  IF passesModeDedication(driveIdVar, accessModeVar) = 0 THEN
+    RETURN 0;
+  END IF;
+
+  IF passesVidDedications(driveIdVar, vidVar) = 0 THEN
+    RETURN 0;
+  END IF;
+
+  -- Drive has passed all of its dedications
+  RETURN 1;
+END;
+
+
+/**
  * This view shows candidate "free tape drive to pending tape request"
  * allocations.
  */
@@ -557,9 +589,8 @@ WHERE
   )
   AND TapeServer.actingMode=0 -- ACTIVE
   AND TapeRequest.tapeDrive=0 -- Request has not already been allocated a drive
-  AND passesModeDedication(tapeDrive.id, TapeAccessSpecification.accessMode)=1
-  AND passesHostDedications(tapeDrive.id, ClientIdentification.machine)=1
-  AND passesVidDedications(tapeDrive.id, VdqmTape.vid)=1
+  AND passesDedications(tapeDrive.id, ClientIdentification.machine,
+    TapeAccessSpecification.accessMode, VdqmTape.vid)=1
 ORDER BY
   TapeRequest.modificationTime ASC;
 
@@ -881,31 +912,33 @@ END;
 
 
 /**
- * PL/SQL procedure to check and reuse a tape allocation, that is a tape-tape
- * drive match
+ * PL/SQL procedure to check and reuse a tape allocation.
  */
-CREATE OR REPLACE PROCEDURE reuseTapeAllocation(tapeId IN NUMBER,
-  tapeDriveId IN NUMBER, tapeReqId OUT NUMBER) AS
+CREATE OR REPLACE PROCEDURE reuseTapeAllocation(
+  tapeIdVar      IN  NUMBER,
+  tapeDriveIdVar IN  NUMBER,
+  tapeReqIdVar   OUT NUMBER) AS
 BEGIN
-  tapeReqId := 0;
+  tapeReqIdVar := 0;
   UPDATE TapeRequest
      SET status = 1,  -- MATCHED
-         tapeDrive = tapeDriveId,
+         tapeDrive = tapeDriveIdVar,
          modificationTime = getTime()
    WHERE tapeDrive = 0
      AND status = 0  -- PENDING
-     AND tape = tapeId
+     AND tape = tapeIdVar
      AND ROWNUM < 2
-  RETURNING id INTO tapeReqId;
-  IF tapeReqId > 0 THEN -- If a tape request was found
+  RETURNING id INTO tapeReqIdVar;
+  IF tapeReqIdVar > 0 THEN -- If a tape request was found
     UPDATE TapeDrive
        SET status = 1, -- UNIT_STARTING
            jobID = 0,
-           runningTapeReq = tapeReqId,
+           runningTapeReq = tapeReqIdVar,
            modificationTime = getTime()
-     WHERE id = tapeDriveId;
+     WHERE id = tapeDriveIdVar;
   END IF;
 END;
+
 
 /**
  * PL/SQL procedure to insert the specfied drive dedications into the database.
