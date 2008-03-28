@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.655 $ $Date: 2008/03/27 07:30:49 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.656 $ $Date: 2008/03/28 15:48:07 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -258,7 +258,7 @@ CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
                                            srId OUT INTEGER, srRetryCounter OUT INTEGER, srFileName OUT VARCHAR2,
                                            srProtocol OUT VARCHAR2, srXsize OUT INTEGER, srPriority OUT INTEGER,
                                            srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
-                                           srSubReqId OUT VARCHAR2) AS
+                                           srSubReqId OUT VARCHAR2, srAnswered OUT INTEGER) AS
 LockError EXCEPTION;
 PRAGMA EXCEPTION_INIT (LockError, -54);
 CURSOR c IS
@@ -277,8 +277,8 @@ BEGIN
   OPEN c;
   FETCH c INTO srId;
   UPDATE SubRequest SET status = 3, subReqId = uuidGen() WHERE id = srId  -- WAITSCHED
-    RETURNING retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags, subReqId
-    INTO srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus, srModeBits, srFlags, srSubReqId;
+    RETURNING retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags, subReqId, answered
+    INTO srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus, srModeBits, srFlags, srSubReqId, srAnswered;
   CLOSE c;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- just return srId = 0, nothing to do
@@ -299,19 +299,25 @@ CREATE OR REPLACE PROCEDURE subRequestFailedToDo(srId OUT INTEGER, srRetryCounte
                                                  srSubReqId OUT VARCHAR2, srErrorCode OUT NUMBER,
                                                  srErrorMessage OUT VARCHAR2) AS
 CURSOR c IS
-   SELECT /*+ USE_NL */ id
+   SELECT /*+ USE_NL */ id, answered
      FROM SubRequest
     WHERE status = 7  -- FAILED
     FOR UPDATE SKIP LOCKED;
+srAnswered INTEGER;
 BEGIN
   srId := 0;
   OPEN c;
-  FETCH c INTO srId;
-  UPDATE subrequest SET status = 10 WHERE id = srId   -- SUBREQUEST_FAILED_ANSWERING
-    RETURNING retryCounter, fileName, protocol, xsize, priority, status,
-              modeBits, flags, subReqId, errorCode, errorMessage
-    INTO srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus,
-         srModeBits, srFlags, srSubReqId, srErrorCode, srErrorMessage;
+  FETCH c INTO srId, srAnswered;
+  IF srAnswered = 1 THEN
+    UPDATE SubRequest SET status = 9 WHERE id = srId;
+    srId := 0;
+  ELSE
+    UPDATE subrequest SET status = 10 WHERE id = srId   -- SUBREQUEST_FAILED_ANSWERING
+      RETURNING retryCounter, fileName, protocol, xsize, priority, status,
+                modeBits, flags, subReqId, errorCode, errorMessage
+      INTO srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus,
+           srModeBits, srFlags, srSubReqId, srErrorCode, srErrorMessage;
+  END IF;
   CLOSE c;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- just return srId = 0, nothing to do
