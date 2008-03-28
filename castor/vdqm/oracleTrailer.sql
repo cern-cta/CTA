@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.49 $ $Release$ $Date: 2008/03/26 13:28:55 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.50 $ $Release$ $Date: 2008/03/28 12:29:46 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -587,30 +587,20 @@ as select
   CLIENTIDENTIFICATION.USERNAME as CLIENTUSERNAME
 from
   TAPEREQUEST
-left outer join
-  TAPEDRIVE
-on
+left outer join TAPEDRIVE on
   TAPEREQUEST.TAPEDRIVE = TAPEDRIVE.ID
-left outer join
-  CLIENTIDENTIFICATION
-on
+left outer join CLIENTIDENTIFICATION on
   TAPEREQUEST.CLIENT = CLIENTIDENTIFICATION.ID
-inner join
-  TAPEACCESSSPECIFICATION
-on
+inner join TAPEACCESSSPECIFICATION on
   TAPEREQUEST.TAPEACCESSSPECIFICATION = TAPEACCESSSPECIFICATION.ID
-left outer join
-  VDQMTAPE
-on
+left outer join VDQMTAPE on
   TAPEREQUEST.TAPE = VDQMTAPE.ID
-left outer join
-  TAPESERVER
-on
+left outer join TAPESERVER on
   TAPEREQUEST.REQUESTEDSRV = TAPESERVER.ID
-left outer join
-  DEVICEGROUPNAME
-on
-  TAPEREQUEST.DEVICEGROUPNAME = DEVICEGROUPNAME.ID;
+left outer join DEVICEGROUPNAME on
+  TAPEREQUEST.DEVICEGROUPNAME = DEVICEGROUPNAME.ID
+order by
+  TAPEREQUEST.ID;
 
 
 /**
