@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.246 $ $Release$ $Date: 2008/03/25 14:30:46 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.247 $ $Release$ $Date: 2008/03/28 15:46:20 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -98,11 +98,11 @@ static castor::SvcFactory<castor::db::ora::OraStagerSvc>* s_factoryOraStagerSvc 
 
 /// SQL statement for subRequestToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestToDoStatementString =
-  "BEGIN subrequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11); END;";
+  "BEGIN subRequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12); END;";
 
 /// SQL statement for subRequestFailedToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestFailedToDoStatementString =
-  "BEGIN subrequestFailedToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12); END;";
+  "BEGIN subRequestFailedToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12); END;";
 
 /// SQL statement for getDiskCopiesForJob
 const std::string castor::db::ora::OraStagerSvc::s_getDiskCopiesForJobStatementString =
@@ -294,6 +294,8 @@ castor::db::ora::OraStagerSvc::subRequestToDo
         (10, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
         (11, oracle::occi::OCCISTRING, 2048);
+      m_subRequestToDoStatement->registerOutParam
+        (12, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->setAutoCommit(true);
     }
     m_subRequestToDoStatement->setString(1, service);
@@ -327,6 +329,7 @@ castor::db::ora::OraStagerSvc::subRequestToDo
     result->setModeBits(m_subRequestToDoStatement->getInt(9));
     result->setFlags(m_subRequestToDoStatement->getInt(10));
     result->setSubreqId(m_subRequestToDoStatement->getString(11));
+    result->setAnswered(m_subRequestToDoStatement->getInt(12));
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
