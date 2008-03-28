@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: sponcec3 $
+ * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: waldron $
  *
  *
  *
@@ -122,7 +122,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	  }  
            if (ret==-2){
 	     castor::dlf::Param params1[]={castor::dlf::Param("message", "Not enough data")};
-	     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 4, 1, params1);
+	     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 4, 1, params1);
 	   }
 	   if (ret==-3){
 	     castor::dlf::Param params1[]={castor::dlf::Param("message", "nbDrives zero")};
