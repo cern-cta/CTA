@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.52 $ $Release$ $Date: 2008/03/29 19:18:03 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.53 $ $Release$ $Date: 2008/03/29 21:15:07 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -8,18 +8,33 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
+/**
+ * The DriveSchedulerLock table contains a single row which is used to
+ * serialize the drive scheduler algoritm of the VDQM2.
+ *
+ * A thread wishing to execute the scheduler algorithm should first select
+ * the single row of the DriveSchedulerLock table for update.  The row will
+ * will always have a single column named 'id' with a value of 1.  The row
+ * should be released by the thread when the algorithm has been executed.
+ */
+CREATE TABLE DriveSchedulerLock(
+  id NUMBER,
+  CONSTRAINT PK_DriveSchedulerLock_id PRIMARY KEY (id));
+INSERT INTO DriveSchedulerLock VALUES (1);
+COMMIT;
+
 /* SQL statements for object types */
 CREATE TABLE Id2Type (
   id   INTEGER,
   type NUMBER,
-  CONSTRAINT PK_Id2Type PRIMARY KEY (id));
+  CONSTRAINT PK_Id2Type_id PRIMARY KEY (id));
 CREATE INDEX I_Id2Type_typeId on Id2Type (type, id);
 
 /* Enumerations */
 CREATE TABLE TapeServerStatusCodes (
   id   NUMBER,
   name VARCHAR2(30),
-  CONSTRAINT PK_TapeServerStatusCodes PRIMARY KEY (id));
+  CONSTRAINT PK_TapeServerStatusCodes_id PRIMARY KEY (id));
 INSERT INTO TapeServerStatusCodes VALUES (0, 'TAPESERVER_ACTIVE');
 INSERT INTO TapeServerStatusCodes VALUES (1, 'TAPESERVER_INACTIVE');
 COMMIT;
@@ -27,7 +42,7 @@ COMMIT;
 CREATE TABLE TapeDriveStatusCodes (
   id   NUMBER,
   name VARCHAR2(30),
-  CONSTRAINT PK_TapeDriveStatusCodes PRIMARY KEY (id));
+  CONSTRAINT PK_TapeDriveStatusCodes_id PRIMARY KEY (id));
 INSERT INTO TapeDriveStatusCodes VALUES (0, 'UNIT_UP');
 INSERT INTO TapeDriveStatusCodes VALUES (1, 'UNIT_STARTING');
 INSERT INTO TapeDriveStatusCodes VALUES (2, 'UNIT_ASSIGNED');
@@ -41,7 +56,7 @@ COMMIT;
 CREATE TABLE TapeStatusCodes (
   id   NUMBER,
   name VARCHAR2(30),
-  CONSTRAINT PK_TapeStatusCodes PRIMARY KEY (id));
+  CONSTRAINT PK_TapeStatusCodes_id PRIMARY KEY (id));
 INSERT INTO TapeStatusCodes VALUES (0, 'TAPE_USED');
 INSERT INTO TapeStatusCodes VALUES (1, 'TAPE_PENDING');
 INSERT INTO TapeStatusCodes VALUES (2, 'TAPE_WAITDRIVE');
@@ -55,7 +70,7 @@ COMMIT;
 CREATE TABLE TapeRequestStatusCodes (
   id NUMBER,
   name VARCHAR2(30),
-  CONSTRAINT PK_TapeRequestStatusCodes PRIMARY KEY (id));
+  CONSTRAINT PK_TapeRequestStatusCodes_id PRIMARY KEY (id));
 INSERT INTO TapeRequestStatusCodes VALUES (0, 'REQUEST_PENDING');
 INSERT INTO TapeRequestStatusCodes VALUES (1, 'REQUEST_MATCHED');
 INSERT INTO TapeRequestStatusCodes VALUES (2, 'REQUEST_BEINGSUBMITTED');
@@ -725,12 +740,17 @@ left outer join TAPEDRIVEDEDICATION on
  * successfully allocates a drive, else 0.
  */
 CREATE OR REPLACE
-PROCEDURE allocateDrive
- (ret OUT NUMBER) AS
- tapeDriveID_var   NUMBER := 0;
- tapeRequestID_var NUMBER := 0;
+PROCEDURE allocateDrive(
+  ret OUT NUMBER) AS
+
+  lock_var          NUMBER;
+  tapeDriveID_var   NUMBER := 0;
+  tapeRequestID_var NUMBER := 0;
 BEGIN
   ret := 0;
+
+  -- Grab the drive scheduler lock before executing the scheduler algorithm
+  SELECT id INTO lock_var FROM DriveSchedulerLock WHERE id=1 FOR UPDATE;
 
   SELECT
     tapeDriveID,
