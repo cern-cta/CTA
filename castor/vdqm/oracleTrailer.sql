@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.54 $ $Release$ $Date: 2008/03/30 13:04:21 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.55 $ $Release$ $Date: 2008/03/30 15:48:40 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -564,8 +564,9 @@ END;
  * allocations.
  */
 CREATE OR REPLACE VIEW CANDIDATEDRIVEALLOCATIONS_VIEW
-AS SELECT
-  TapeDrive.id as tapeDriveID, TapeRequest.id as tapeRequestID
+AS SELECT UNIQUE
+  TapeDrive.id as tapeDriveID, TapeRequest.id as tapeRequestID,
+  TapeRequest.modificationTime
 FROM
   TapeRequest
 INNER JOIN TapeAccessSpecification ON
@@ -615,8 +616,9 @@ ORDER BY
  * allocation.
  */
 CREATE OR REPLACE VIEW DRIVEALLOCATIONSFORREUSE_VIEW
-AS SELECT
-  TapeDrive.id as tapeDriveID, TapeRequest.id as tapeRequestID
+AS SELECT UNIQUE
+  TapeDrive.id as tapeDriveID, TapeRequest.id as tapeRequestID,
+  TapeRequest.modificationTime
 FROM
   TapeRequest
 INNER JOIN TapeAccessSpecification ON
@@ -854,25 +856,39 @@ CREATE OR REPLACE PROCEDURE reuseTapeAllocation(
   tapeIdVar      IN  NUMBER,
   tapeDriveIdVar IN  NUMBER,
   tapeReqIdVar   OUT NUMBER) AS
+  unused NUMBER;
 BEGIN
-  tapeReqIdVar := 0;
-  UPDATE TapeRequest
-     SET status = 1,  -- MATCHED
-         tapeDrive = tapeDriveIdVar,
-         modificationTime = getTime()
-   WHERE tapeDrive = 0
-     AND status = 0  -- PENDING
-     AND tape = tapeIdVar
-     AND ROWNUM < 2
-  RETURNING id INTO tapeReqIdVar;
-  IF tapeReqIdVar > 0 THEN -- If a tape request was found
-    UPDATE TapeDrive
-       SET status = 1, -- UNIT_STARTING
-           jobID = 0,
-           runningTapeReq = tapeReqIdVar,
-           modificationTime = getTime()
-     WHERE id = tapeDriveIdVar;
-  END IF;
+  -- Grab a lock on the drive
+  SELECT TapeDrive.id INTO unused
+    FROM TapeDrive
+    WHERE TapeDrive.id = tapeDriveIdVar
+    FOR UPDATE;
+
+  -- Try to find a candidate volume request that can reuse the current drive
+  -- allocation
+  SELECT tapeRequestID INTO tapeReqIdVar
+    FROM DriveAllocationsForReuse_VIEW
+    WHERE rownum < 2;
+
+  -- A candidate was found
+
+  UPDATE TapeRequest SET
+    status           = 1,  -- MATCHED
+    tapeDrive        = tapeDriveIdVar,
+    modificationTime = getTime()
+  WHERE id = tapeReqIdVar;
+
+  UPDATE TapeDrive SET
+    status           = 1, -- UNIT_STARTING
+    jobID            = 0,
+    runningTapeReq   = tapeReqIdVar,
+    modificationTime = getTime()
+  WHERE id = tapeDriveIdVar;
+
+EXCEPTION
+  -- Return a tape request ID of 0 if there was no candidate volume request
+  -- which would have reused the current drive allocation
+  WHEN NO_DATA_FOUND THEN tapeReqIdVar := 0;
 END;
 
 
