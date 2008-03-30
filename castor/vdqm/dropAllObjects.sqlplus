@@ -8,6 +8,9 @@ prompt
 prompt -- Drop procedures
 select 'drop ' || object_type || ' ' || object_name || ';' from user_procedures where object_type='PROCEDURE' order by object_name;
 prompt
+prompt -- Drop triggers
+select 'drop ' || object_type || ' ' || object_name || ';' from user_procedures where object_type='TRIGGER' order by object_name;
+prompt
 prompt -- Drop packages
 select 'drop ' || object_type || ' ' || object_name || ';' from user_procedures where object_type='PACKAGE' order by object_name;
 prompt
