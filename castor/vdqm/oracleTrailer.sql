@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.57 $ $Release$ $Date: 2008/03/31 17:55:31 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.58 $ $Release$ $Date: 2008/03/31 19:49:37 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -904,10 +904,11 @@ END;
 
 
 /**
- * PL/SQL procedure to insert the specfied drive dedications into the database.
+ * PL/SQL procedure to insert the specified drive dedications into the database.
  *
  * @param driveNameVar the name of the tape drive to be dedicated
  * @param serverNameVar the name of the tape server of the tape drive
+ * @param dgNameVar the name of the device group of the tape drive
  * @param accessModeVar the access mode dedication
  * @param clientHostVar the client host dedication
  * @param vidVar the vid dedication
@@ -1013,4 +1014,66 @@ BEGIN
       VALUES (dedicationIdVar, 90);
   END IF;
 
+END;
+
+
+/**
+ * PL/SQL procedure to delete the specified drive from the database.
+ *
+ * @param driveNameVar the name of the tape drive to be delete
+ * @param serverNameVar the name of the tape server of the tape drive
+ * @param dgNameVar the name of the device group of the tape drive
+ * @param resultVar is 0 if the deletion was successful. -1 if the specified
+ * tape server does not exist, -2 if the specified device group name does not
+ * exist, -3 if the specified tape drive does not exist and -4 if the specified
+ * drive has a job assigned.
+ */
+CREATE OR REPLACE PROCEDURE deleteDrive
+( driveNameVar  IN  VARCHAR2
+, serverNameVar IN  VARCHAR2
+, dgNameVar     IN  VARCHAR2
+, resultVar     OUT INTEGER
+) AS
+  dgnIdVar        NUMBER;
+  tapeServerIdVar NUMBER;
+  driveIdVar      NUMBER;
+  driveStatusVar  NUMBER;
+BEGIN
+  resultVar := 0;
+
+  BEGIN
+    SELECT id INTO tapeServerIdVar FROM TapeServer
+      WHERE
+        serverName = serverNameVar;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    resultVar := -1; -- Tape server does not exist
+    RETURN;
+  END;
+  
+  BEGIN
+    SELECT id INTO dgnIdVar FROM DeviceGroupName WHERE dgName = dgNameVar;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    resultVar := -2; -- DGN does not exits
+    RETURN;
+  END;
+  
+  BEGIN
+    SELECT id, status INTO driveIdVar, driveStatusVar FROM TapeDrive
+      WHERE
+            deviceGroupName = dgnIdVar
+        AND tapeServer = tapeServerIdVar
+        AND driveName = driveNameVar
+      FOR UPDATE;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    resultVar := -3; -- Tape drive does not exist
+    RETURN;
+  END;
+  
+  -- Not UNIT_UP and not UNIT_DOWN
+  IF driveStatusVar != 0 AND driveStatusVar != 5 THEN
+    resultVar := -4; -- Drive has a job assigned
+    RETURN;
+  END IF;
+  
+  DELETE FROM TapeDrive WHERE id = driveIdVar;
 END;
