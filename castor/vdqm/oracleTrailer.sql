@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.56 $ $Release$ $Date: 2008/03/31 14:30:35 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.57 $ $Release$ $Date: 2008/03/31 17:55:31 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -649,10 +649,7 @@ create or replace view
   TAPEREQUESTSSHOWQUEUES_VIEW
 as with TIMEZONEOFFSET as (
   select
-    case to_char(current_timestamp, 'TZH')
-      when '+02' then 3600
-      else 0
-    end as VALUE
+    (extract(timezone_hour from current_timestamp) - 1) * 3600 as VALUE
   from DUAL)
 select
   TAPEREQUEST.ID,
@@ -754,10 +751,7 @@ create or replace view
   TAPEDRIVESHOWQUEUES_VIEW
 as with TIMEZONEOFFSET as (
   select
-    case to_char(current_timestamp, 'TZH')
-      when '+02' then 3600
-      else 0
-    end as VALUE
+    (extract(timezone_hour from current_timestamp) - 1) * 3600 as VALUE
   from DUAL)
 select
   TAPEDRIVE.STATUS, TAPEDRIVE.ID, TAPEDRIVE.RUNNINGTAPEREQ, TAPEDRIVE.JOBID,
