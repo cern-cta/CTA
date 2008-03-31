@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.657 $ $Date: 2008/03/28 16:59:59 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.658 $ $Date: 2008/03/31 17:10:07 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -309,10 +309,11 @@ BEGIN
   OPEN c;
   FETCH c INTO srId, srAnswered;
   IF srAnswered = 1 THEN
-    UPDATE SubRequest SET status = 9 WHERE id = srId;
+    -- already answered, ignore it
+    UPDATE SubRequest SET status = 9 WHERE id = srId;  -- FAILED_FINISHED
     srId := 0;
   ELSE
-    UPDATE subrequest SET status = 10 WHERE id = srId   -- SUBREQUEST_FAILED_ANSWERING
+    UPDATE subrequest SET status = 10 WHERE id = srId   -- FAILED_ANSWERING
       RETURNING retryCounter, fileName, protocol, xsize, priority, status,
                 modeBits, flags, subReqId, errorCode, errorMessage
       INTO srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus,
@@ -885,7 +886,7 @@ BEGIN
   UPDATE DiskCopy SET status = 6  -- DISKCOPY_STAGEOUT 
    WHERE id = dcId RETURNING fileSystem INTO fsId;
   -- how many do we have to create ?
-  -- select subrequest in status 3 in case of repack with staged diskcopy
+  -- select subrequest in status 3 in case of repack with already staged diskcopy
   SELECT count(StageRepackRequest.repackVid) INTO nbTC
     FROM SubRequest, StageRepackRequest 
    WHERE subrequest.castorfile = cfId
@@ -1017,7 +1018,19 @@ BEGIN
           makeSubRequestWait(srId, srcDcId);
           result := -2;
         EXCEPTION WHEN NO_DATA_FOUND THEN
-           -- the file is being written/migrated, fail the request
+           -- the file is being written/migrated. This may happen in two cases:
+           -- either there's another repack going on for the same file, or another
+           -- user is overwriting the file.
+           -- In the first case, if this request comes for a tape other
+           -- than the one being repacked, i.e. the file has a double tape copy,
+           -- then we should make the request wait on the first repack (it may be
+           -- for a different service class than the one being used right now).
+           -- In the second case, we just have to fail this request. 
+           -- However at the moment it's not easy to restart a waiting repack after
+           -- a migration (relevant db callback should be put in rtcpcld_updcFileMigrated(),
+           -- rtcpcldCatalogueInterface.c:3300), so we simply fail this repack
+           -- request and rely for the time being on Repack to submit
+           -- such double tape repacks one by one.
            UPDATE SubRequest
               SET status = 7,  -- FAILED
                   errorCode = 16,  -- EBUSY
