@@ -96,10 +96,8 @@
   - #31217: SubRequest in status WAITSUBREQ without a valid parent
   - #31247: ns client should retry if server not available
   - #31616: prepareToGet requests sometime doesn't fill tape segment information
-  - #32295: Removal of the lddisplay command
   - #32901: scheduling slowdown
   - #32903: db schema change scripts have hard-coded table names
-  - #32954: Make the response to a LIBRARY_FAILURE more flexible
   - #33091: tpdaemon does not clean up if rlstape dumps
   - #33203: Stream policy should not be called when stream is busy
   - #33250: garbage collection not scaling
@@ -112,7 +110,6 @@
   - #34699: rmMasterDaemon hangs not fixed in 2.1.6-11
   - #34748: GC: Error="Operation now in progress"
   - #34957: rtcpcld_gettape() - Invalid argument
-  - #34699: rmMasterDaemon hangs not fixed in 2.1.6-11
   - #35021: Cannot read nl tapes with Castor-2
 
 
