@@ -164,7 +164,7 @@ int DLL_DECL stager_errmsg(const char *func, const char *msg, ...) {
 				errbufp[errbuflen-1] = '\0';
 			}
 		} else {
-			fprintf (stderr, "%s", prtbuf);
+			fprintf (stderr, "%s\n", prtbuf);
 		}
 	}
 
@@ -212,7 +212,7 @@ int DLL_DECL stager_outmsg(const char *func, const char *msg, ...) {
 				outbufp[outbuflen-1] = '\0';
 			}
 		} else {
-			fprintf (stdout, "%s", prtbuf);
+			fprintf (stdout, "%s\n", prtbuf);
 		}
 	}
 	va_end (args);
