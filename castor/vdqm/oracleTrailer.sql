@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.55 $ $Release$ $Date: 2008/03/30 15:48:40 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.56 $ $Release$ $Date: 2008/03/31 14:30:35 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -647,7 +647,14 @@ ORDER BY
  */
 create or replace view
   TAPEREQUESTSSHOWQUEUES_VIEW
-as select
+as with TIMEZONEOFFSET as (
+  select
+    case to_char(current_timestamp, 'TZH')
+      when '+02' then 3600
+      else 0
+    end as VALUE
+  from DUAL)
+select
   TAPEREQUEST.ID,
   TAPEDRIVE.DRIVENAME,
   TAPEDRIVE.ID as TAPEDRIVEID,
@@ -656,7 +663,8 @@ as select
   CLIENTIDENTIFICATION.EUID as CLIENTEUID,
   CLIENTIDENTIFICATION.EGID as CLIENTEGID,
   TAPEACCESSSPECIFICATION.ACCESSMODE,
-  TAPEREQUEST.MODIFICATIONTIME,
+  TAPEREQUEST.MODIFICATIONTIME -
+    (select TIMEZONEOFFSET.VALUE from TIMEZONEOFFSET) as MODIFICATIONTIME,
   CLIENTIDENTIFICATION.MACHINE AS CLIENTMACHINE,
   VDQMTAPE.VID,
   TAPESERVER.SERVERNAME as TAPESERVER,
@@ -744,9 +752,18 @@ END;
  */
 create or replace view
   TAPEDRIVESHOWQUEUES_VIEW
-as select
+as with TIMEZONEOFFSET as (
+  select
+    case to_char(current_timestamp, 'TZH')
+      when '+02' then 3600
+      else 0
+    end as VALUE
+  from DUAL)
+select
   TAPEDRIVE.STATUS, TAPEDRIVE.ID, TAPEDRIVE.RUNNINGTAPEREQ, TAPEDRIVE.JOBID,
-  TAPEDRIVE.MODIFICATIONTIME, TAPEDRIVE.RESETTIME, TAPEDRIVE.USECOUNT,
+  TAPEDRIVE.MODIFICATIONTIME -
+    (select TIMEZONEOFFSET.VALUE from TIMEZONEOFFSET) as MODIFICATIONTIME,
+  TAPEDRIVE.RESETTIME, TAPEDRIVE.USECOUNT,
   TAPEDRIVE.ERRCOUNT, TAPEDRIVE.TRANSFERREDMB, TAPEDRIVE.TAPEACCESSMODE,
   TAPEDRIVE.TOTALMB, TAPESERVER.SERVERNAME, VDQMTAPE.VID, TAPEDRIVE.DRIVENAME,
   DEVICEGROUPNAME.DGNAME,
