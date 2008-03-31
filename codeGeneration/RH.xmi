@@ -775,7 +775,6 @@ Resources can be allocated to one or many projects are are composed of a set of 
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="2075" initialValue="5" type="133771" name="DISKCOPY_WAITFS" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="2076" initialValue="6" type="133771" name="DISKCOPY_STAGEOUT" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="2077" initialValue="7" type="133771" name="DISKCOPY_INVALID" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="79179" initialValue="8" type="133771" name="DISKCOPY_GCCANDIDATE" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="79182" initialValue="9" type="133771" name="DISKCOPY_BEINGDELETED" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="87429" initialValue="10" type="133771" name="DISKCOPY_CANBEMIGR" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="101189" initialValue="11" type="133771" name="DISKCOPY_WAITFS_SCHEDULING" />
@@ -7727,7 +7726,6 @@ The TapeCopy is detached from the stream and the other streams should not select
         <listitem open="0" type="814" id="2075" />
         <listitem open="0" type="814" id="2076" />
         <listitem open="0" type="814" id="2077" />
-        <listitem open="0" type="814" id="79179" />
         <listitem open="0" type="814" id="79182" />
         <listitem open="0" type="814" id="87429" />
         <listitem open="0" type="814" id="101189" />
