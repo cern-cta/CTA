@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteGCSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/03/18 07:12:54 $ $Author: waldron $
+ * @(#)$RCSfile: RemoteGCSvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/03/31 10:29:21 $ $Author: itglp $
  *
  *
  *
@@ -75,8 +75,9 @@ namespace castor {
 
       /**
        * List files to be deleted on a given diskServer.
-       * These are the files corresponding to DiskCopies
-       * in GCCANDIDATE status. This status is changed
+       * These are the files corresponding to DiskCopies in
+       * STAGED status and eligible for garbage collection,
+       * plus the INVALID ones. This status is changed
        * to BEINGDELETED atomically.
        * @param diskServer the name of the DiskServer
        * involved
