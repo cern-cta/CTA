@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.71 $ $Release$ $Date: 2008/03/10 17:51:51 $ $Author: itglp $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.72 $ $Release$ $Date: 2008/03/31 08:49:32 $ $Author: itglp $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -687,22 +687,24 @@ void castor::stager::daemon::QueryRequestSvcThread::process
     }
     // Getting the svcClass
     // We take an empty svcClass or '*' as a wildcard
-    std::string className = req->svcClassName();
-    if ("" != className && "*" != className) {
-      castor::stager::SvcClass* svcClass = qrySvc->selectSvcClass(className);
-      if (0 == svcClass) {
-        // "Invalid ServiceClass name"
-        castor::dlf::Param params[] =
-          {castor::dlf::Param("svcClassName", className)};
-        castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_INVSC, 1, params);
-        castor::exception::NoEntry e;
-        e.getMessage() << "Invalid ServiceClass name : '" << className << "'";
-        failed = true;
-        throw e;
+    if (req->type() != castor::OBJ_VersionQuery) {
+      std::string className = req->svcClassName();
+      if ("" != className && "*" != className) {
+        castor::stager::SvcClass* svcClass = qrySvc->selectSvcClass(className);
+        if (0 == svcClass) {
+          // "Invalid ServiceClass name"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("svcClassName", className)};
+          castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_INVSC, 1, params);
+          castor::exception::NoEntry e;
+          e.getMessage() << "Invalid ServiceClass name : '" << className << "'";
+          failed = true;
+          throw e;
+        }
+        // Filling SvcClass in the DataBase
+        req->setSvcClass(svcClass);
+        svcs->fillRep(&ad, req, castor::OBJ_SvcClass, false);
       }
-      // Filling SvcClass in the DataBase
-      req->setSvcClass(svcClass);
-      svcs->fillRep(&ad, req, castor::OBJ_SvcClass, true);
     }
   } catch (castor::exception::Exception e) {
     if (!failed) {
