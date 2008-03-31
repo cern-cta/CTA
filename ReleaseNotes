@@ -1,11 +1,75 @@
 -----------
-- 2.1.7-2 -
+- 2.1.7-3 -
 -----------
 
   Highlights
   ----------
 
-  
+  - A synchronization between the diskservers and the stager database has now been 
+    introduced. By default all gcDaemon's will now verify the contents of the diskservers
+    filesystems with the stager database and flag files for deletion if the files are not
+    meant to be on the diskcache. Furthermore, improved synchronization logic between the
+    diskserver and name server has been developed to reduce the load and number of queries
+    per second to the name server on large Castor2 installations.
+
+  - In this release of Castor2 the configuration of LSF has changed. In the past resources
+    where defined in LSF to represent A) which service class a diskserver belonged to and
+    B) the protocols that the diskserver supported. In 2.1.7 only protocols are defined as
+    resources and service classes are defined as host groups.
+
+  - A new protocol called 'rfio3' has been introduced. This is to support the distinction
+    between those clients which open a file in streaming mode (rfio3) vs non-streaming 
+    mode (rfio). This allows the number of streaming vs non-streaming resources on a 
+    diskserver to be configured independently. Note: only 2.1.7 clients and above make this
+    distinction, 2.1.6 clients will continue to use the rfio resource for both streaming 
+    and non-streaming transfer modes.
+
+  - At the recommendation of Platform (LSF), Castor2 now uses two plugins (schmod_shmem
+    and schmod_python) when making decisions where to schedule jobs. This is done for 
+    performance and scalability reasons. 
+
+  - The scheduler logic has been enhanced to properly schedule access for disk replication
+    jobs. In the previous release of Castor2, policies were only applied to the destination
+    end of a transfer. Now both destination and source policies are taken into 
+    consideration.
+
+  - CTRL-C propagation between clients and the rhserver. In previous releases of Castor2
+    if a client issuing a command issued a CTRL-C or a network failure occurred the 
+    requested actions of the client up to that point were committed to the stager database
+    and processed. Now these events are correctly detected by the rhserver and all actions
+    are cancelled accordingly. Note: This is a server side change only and does not apply
+    to RFIO transfers between the client and the diskserver.
+
+  - The rmMasterDaemon has been certified to work in setups where multiple LSF masters
+    exist. I.e. in a failover/redundancy deployment model.
+
+  - The garbage collection logic has been completely written to address issues in
+    scalability. As a consequence the spaceToBeFreed column in the filesystem table no 
+    longer exists.
+
+  - The logging of the stager has been improved so that the fileid and nshost attributes
+    are recorded in all messages which are job centric.
+
+  - The jobManager now has post job checking functionality in order to address operational
+    problems with LSF. In particular it has been observed that LSF will sometimes fail to
+    start a job on the remote execution host and just EXIT the job from the queue. When
+    this happens the status of the diskcopy and subrequest within the stager database is
+    left in a bad status which is never cleaned up. In response to this problem the
+    jobManager now runs checks against the stager database whenever a job exits to verify
+    that the status of the diskcopy and subrequest are correct. If not, an error will be
+    logged and the jobManager will cleanup after the job.
+
+  - Miscellaneous
+    - All initialization scripts now use the same logic (inc. tape related daemons)
+    - Improved logging output has been added to several daemons to recording statistical
+      related information. E.g QueueTime for the scheduler, TotalWaitTime on jobs and
+      FileAge in the GC.
+    - Several bug fixes to the name server have been back ported from the DPM name 
+      server to the Castor Name Server.
+    - The infamous stagein stuck problem (#31616) has been fixed.
+    - Several memory leaks have been fixed.
+
+
   Package changes
   ---------------
   - The nsGetPath command has moved from the castor-hsmtools package to castor-ns-client
@@ -48,6 +112,8 @@
   - #34699: rmMasterDaemon hangs not fixed in 2.1.6-11
   - #34748: GC: Error="Operation now in progress"
   - #34957: rtcpcld_gettape() - Invalid argument
+  - #34699: rmMasterDaemon hangs not fixed in 2.1.6-11
+  - #35021: Cannot read nl tapes with Castor-2
 
 
   Available in 2.1.6-11
@@ -108,7 +174,7 @@
     attached to a stream.
 
 
-  Upgrading from 2.1.6-*
+  Upgrading from 2.1.6-11+
   --------------------
 
    Software Upgrades
@@ -160,26 +226,10 @@
          to the database.
       3. Ask your DBA to create a backup of the database (better to be safe then sorry)
       4. Upgrade the stager and dlf databases using the correct upgrade scripts from
-         - http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-1/upgrades
-         - Note: If upgrading from the 2.1.6 series of Castor2 you must first upgrade to 
-                 2.1.6-11, then you can upgrade from 2.1.6-11 to 2.1.7-1
+         - http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-3/upgrades
+         - Note: If you are not running 2.1.6-11 or newer you must first upgrade the
+                 stager database schema to 2.1.6-11 perform proceeding.
       5. Apply hotfixes where applicable.
-
-      In this release of CASTOR2 the configuration of LSF has changed. In the past
-      resources where defined in LSF to represent A) which service class a diskserver
-      belonged to and B) the protocols that the diskserver supported. In 2.1.7 only
-      protocols are defined as resources and service classes are defined as host groups.
-
-      Furthermore, in 2.1.7 a new protocol called 'rfio3' is required. This is to support
-      the distinction between those clients which open a file in streaming mode (rfio3)
-      vs non-streaming mode (rfio). This allows the number of streaming vs non-streaming
-      resources on a diskserver to be configured independently. Note: only 2.1.7 clients
-      and above make this distinction, 2.1.6 clients will continue to use the rfio
-      resource for both streaming and non-streaming transfer modes.
-
-      At the recommendation of Platform (LSF), CASTOR2 now uses two plugins (schmod_shmem
-      and schmod_python) when making decisions where to schedule jobs. This is done for 
-      performance reasons.
 
       6. Stop the LSF master and clients
 
@@ -238,7 +288,7 @@
 
          - Start the dlfserver
          - Start the rmMasterDaemon, followed by the LSF master
-         - Start the rmNodeDaemon and LSF clients.
+         - Start the rmNodeDaemon's and LSF clients.
 
          To verify that the LSF upgrade has been successful please run `badmin reconfig`
          and `lsadmin reconfig` if you are presented with any warnings please correct the
