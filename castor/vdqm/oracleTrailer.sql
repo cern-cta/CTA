@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.59 $ $Release$ $Date: 2008/04/01 11:55:47 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.60 $ $Release$ $Date: 2008/04/01 12:00:02 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -339,7 +339,7 @@ BEGIN
     COMMIT;
   END IF;
 END;
-UPDATE CastorVersion SET schemaVersion = '2_1_6_0';
+UPDATE CastorVersion SET schemaVersion = '2_1_7_0';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 200;
