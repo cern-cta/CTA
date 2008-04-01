@@ -33,7 +33,6 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
 #include "castor/vdqm/DatabaseHelper.hpp"
-#include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveCompatibility.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
@@ -104,15 +103,6 @@ void castor::vdqm::DatabaseHelper::storeRepresentation(castor::IObject* fr,
     if (0 != tapeDriveCompatibility) {
       svcs->fillRep(&ad, fr, OBJ_TapeAccessSpecification, false);
     }
-    
-    // Store files for ErrorHistory
-    castor::vdqm::ErrorHistory* errorHistory =
-      dynamic_cast<castor::vdqm::ErrorHistory*>(fr);
-    
-    if (0 != errorHistory) {
-      svcs->fillRep(&ad, fr, OBJ_VdqmTape, false);
-      svcs->fillRep(&ad, fr, OBJ_TapeDrive, false);
-    }    
   } catch (castor::exception::Exception e) {
     svcs->rollback(&ad);
     

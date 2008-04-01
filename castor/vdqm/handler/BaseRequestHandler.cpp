@@ -36,7 +36,6 @@
 
 #include "castor/exception/Internal.hpp"
 
-#include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveCompatibility.hpp"
