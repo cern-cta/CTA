@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.30 $ $Release$ $Date: 2008/02/01 09:39:23 $ $Author: murrayc3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.31 $ $Release$ $Date: 2008/04/01 12:03:25 $ $Author: murrayc3 $
 #
 # Make Castor vdqm library
 #
@@ -35,7 +35,8 @@ DEBUG  = -g
 #endif
 
 INCLUDES = -I FileName(FileName(..,..),h) -I FileName(..,..)
-CPPFLAGS = -DPRINT_NETWORK_MESSAGES -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\" $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
+#CPPFLAGS = -DPRINT_NETWORK_MESSAGES -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\" $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
+CPPFLAGS = -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\" $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 CFLAGS = -O -I$(INCLUDES) $(THREADFLAGS)
 
 LIBS = -lshift -lcastorCnvs -Wl,-rpath-link,../../shlib
