@@ -85,6 +85,10 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveStatementString 
 /// SQL statement for function dedicateDrive
 const std::string castor::db::ora::OraVdqmSvc::s_dedicateDriveStatementString
   = "BEGIN dedicateDrive(:1, :2, :3, :4, :5, :6, :7); END;";
+
+/// SQL statement for function deleteDrive
+const std::string castor::db::ora::OraVdqmSvc::s_deleteDriveStatementString
+  = "BEGIN deleteDrive(:1, :2, :3, :4); END;";
   
 /// SQL statement for function existTapeDriveWithTapeInUse
 const std::string castor::db::ora::OraVdqmSvc::s_existTapeDriveWithTapeInUseStatementString =
@@ -202,6 +206,7 @@ castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   m_getQueuePositionStatement(0),
   m_selectTapeDriveStatement(0),
   m_dedicateDriveStatement(0),
+  m_deleteDriveStatement(0),
   m_existTapeDriveWithTapeInUseStatement(0),
   m_existTapeDriveWithTapeMountedStatement(0),
   m_selectTapeByVidStatement(0),
@@ -254,6 +259,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
     if (m_getQueuePositionStatement) deleteStatement(m_getQueuePositionStatement);
     if (m_selectTapeDriveStatement) deleteStatement(m_selectTapeDriveStatement);
     if (m_dedicateDriveStatement) deleteStatement(m_dedicateDriveStatement);
+    if (m_deleteDriveStatement) deleteStatement(m_deleteDriveStatement);
     if (m_existTapeDriveWithTapeInUseStatement) deleteStatement(m_existTapeDriveWithTapeInUseStatement);
     if (m_existTapeDriveWithTapeMountedStatement) deleteStatement(m_existTapeDriveWithTapeMountedStatement);
     if (m_selectTapeByVidStatement) deleteStatement(m_selectTapeByVidStatement);
@@ -278,6 +284,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   m_getQueuePositionStatement = 0;
   m_selectTapeDriveStatement = 0;
   m_dedicateDriveStatement = 0;
+  m_deleteDriveStatement = 0;
   m_existTapeDriveWithTapeInUseStatement = 0;
   m_existTapeDriveWithTapeMountedStatement = 0;
   m_selectTapeByVidStatement = 0;
@@ -794,7 +801,7 @@ void castor::db::ora::OraVdqmSvc::dedicateDrive(std::string driveName,
     throw ie;
   }
 
-  // Base on the result, continue as nomral or generate the appropriate
+  // Based on the result, continue as normal or generate the appropriate
   // exception
   switch(result) {
   case  0: // Success
@@ -839,6 +846,108 @@ void castor::db::ora::OraVdqmSvc::dedicateDrive(std::string driveName,
 
       ie.getMessage()
         << "Unknown result value from dedicate drive PL/SQL procedure: "
+        << result << " "
+        << driveName << "@" << serverName
+        << " dgn='" << dgName << "'" << std::endl;
+
+      throw ie;
+    }
+  }
+}
+
+
+// -----------------------------------------------------------------------
+// deleteDrive
+// -----------------------------------------------------------------------
+void castor::db::ora::OraVdqmSvc::deleteDrive(std::string driveName,
+  std::string serverName, std::string dgName)
+  throw (castor::exception::Exception){
+
+  // Check whether the statements are ok
+  if (0 == m_deleteDriveStatement) {
+    m_deleteDriveStatement =
+      createStatement(s_deleteDriveStatementString);
+    m_deleteDriveStatement->setAutoCommit(false);
+
+    m_deleteDriveStatement->registerOutParam(4, oracle::occi::OCCIINT);
+  }
+
+  m_deleteDriveStatement->setString(1, driveName );
+  m_deleteDriveStatement->setString(2, serverName);
+  m_deleteDriveStatement->setString(3, dgName    );
+
+  // Execute statement and get result
+  int result = 0;
+  try {
+    m_deleteDriveStatement->executeUpdate();
+    result = m_deleteDriveStatement->getInt(4);
+  } catch(oracle::occi::SQLException &e) {
+    handleException(e);
+
+    castor::exception::Internal ie;
+
+    ie.getMessage()
+      << "Failed to try to delete a drive: "
+      << std::endl << e.getMessage();
+
+    throw ie;
+  }
+
+  // Based on the result, continue as normal or generate the appropriate
+  // exception
+  switch(result) {
+  case  0: // Success
+    // Do nothing
+    break;
+  case -1: // Tape server does not exist
+    {
+      castor::exception::Exception ex(EVQNOSDRV);
+      ex.getMessage()
+        << "OraVdqmSvc::deleteDrive(): tape server does not exist "
+        << driveName << "@" << serverName
+        << " dgn='" << dgName << "'" << std::endl;
+
+      throw ex;
+    }
+    break;
+  case -2: // DGN does not exist
+    {
+      castor::exception::Exception ex(EVQNOSDRV);
+      ex.getMessage()
+        << "OraVdqmSvc::deleteDrive(): DGN does not exist "
+        << driveName << "@" << serverName
+        << " dgn='" << dgName << "'" << std::endl;
+
+      throw ex;
+    }
+    break;
+  case -3: // Device group name is not associated
+    {
+      castor::exception::Exception ex(EVQNOSDRV);
+      ex.getMessage()
+        << "OraVdqmSvc::deleteDrive(): Tape drive does not exist "
+        << driveName << "@" << serverName
+        << " dgn='" << dgName << "'" << std::endl;
+
+      throw ex;
+    }
+    break;
+  case -4: // Drive has a job assigned
+    {
+      castor::exception::Exception ex(EVQREQASS);
+      ex.getMessage()
+        << "OraVdqmSvc::deleteDrive(): Tape drive has a job assigned "
+        << driveName << "@" << serverName
+        << " dgn='" << dgName << "'" << std::endl;
+
+      throw ex;
+    }
+  default:
+    {
+      castor::exception::Internal ie;
+
+      ie.getMessage()
+        << "Unknown result value from delete drive PL/SQL procedure: "
         << result << " "
         << driveName << "@" << serverName
         << " dgn='" << dgName << "'" << std::endl;

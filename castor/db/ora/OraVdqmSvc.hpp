@@ -172,6 +172,12 @@ namespace castor {
           std::string dgName, const unsigned int accessMode,
           std::string clientHost, std::string vid)
           throw (castor::exception::Exception);
+
+        /**
+         * See the documentation for castor::vdqm::IVdqmSvc.
+         */
+        void deleteDrive(std::string driveName, std::string serverName,
+          std::string dgName) throw (castor::exception::Exception);
   
         /**
          * Selects from the TapeDriveCompatibility table all entries for the
@@ -366,6 +372,12 @@ namespace castor {
 
         /// SQL statement object for function dedicateDrive
         oracle::occi::Statement *m_dedicateDriveStatement;
+
+        /// SQL statement for function deleteDrive
+        static const std::string s_deleteDriveStatementString;
+
+        /// SQL statement object for function deleteDrive
+        oracle::occi::Statement *m_deleteDriveStatement;
   
         /// SQL statement for function existTapeDriveWithTapeInUse
         static const std::string s_existTapeDriveWithTapeInUseStatementString;

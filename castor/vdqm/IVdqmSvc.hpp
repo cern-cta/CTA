@@ -239,6 +239,7 @@ namespace castor {
          *
          * @driveName  drive name
          * @serverName server name
+         * @dgName     device group name
          * @accessMode access mode
          * @clientHost client host
          */
@@ -246,6 +247,16 @@ namespace castor {
           std::string serverName, std::string dgName,
           const unsigned int accessMode, std::string clientHost,
           std::string vid) throw (castor::exception::Exception) = 0;
+
+        /**
+         * Deletes the specified drive from the database;
+         *
+         * @driveName  drive name
+         * @serverName server name
+         * @dgName     device group name
+         */
+        virtual void deleteDrive(std::string driveName, std::string serverName,
+          std::string dgName) throw (castor::exception::Exception) = 0;
                   
 //---------------- functions for TapeDriveStatusHandler ------------------------
 
