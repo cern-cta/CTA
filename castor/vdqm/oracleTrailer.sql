@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.58 $ $Release$ $Date: 2008/03/31 19:49:37 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.59 $ $Release$ $Date: 2008/04/01 11:55:47 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -83,9 +83,6 @@ ALTER TABLE CLIENTIDENTIFICATION MODIFY (EGID NOT NULL);
 ALTER TABLE CLIENTIDENTIFICATION MODIFY (EUID NOT NULL);
 ALTER TABLE CLIENTIDENTIFICATION MODIFY (MAGIC NOT NULL);
 ALTER TABLE CLIENTIDENTIFICATION MODIFY (PORT NOT NULL);
-ALTER TABLE ERRORHISTORY MODIFY (TAPE NOT NULL);
-ALTER TABLE ERRORHISTORY MODIFY (TAPEDRIVE NOT NULL);
-ALTER TABLE ERRORHISTORY MODIFY (TIMESTAMP NOT NULL);
 ALTER TABLE ID2TYPE MODIFY (TYPE NOT NULL);
 ALTER TABLE TAPEACCESSSPECIFICATION MODIFY (ACCESSMODE NOT NULL);
 ALTER TABLE TAPEDRIVE MODIFY (DEVICEGROUPNAME NOT NULL);
@@ -157,21 +154,6 @@ ALTER TABLE DeviceGroupName
     DEFERRABLE
     INITIALLY DEFERRED
     ENABLE;
-
-ALTER TABLE ErrorHistory
-  ADD CONSTRAINT FK_ErrorHistory_tapeDrive
-    FOREIGN KEY (tapeDrive)
-    REFERENCES TapeDrive (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    DISABLE
-  ADD CONSTRAINT FK_ErrorHistory_tape
-    FOREIGN KEY (tape)
-    REFERENCES VdqmTape (id)
-    DEFERRABLE
-    INITIALLY DEFERRED
-    DISABLE;
-CREATE INDEX I_FK_ErrorHistory_tape ON ErrorHistory (tape);
 
 ALTER TABLE TapeAccessSpecification
   ADD CONSTRAINT FK_TapeAccessSpecification_id
