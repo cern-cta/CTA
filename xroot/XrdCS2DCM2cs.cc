@@ -8,9 +8,9 @@
 /*              DE-AC02-76-SFO0515 with the Department of Energy              */
 /******************************************************************************/
 
-//         $Id: XrdCS2DCM2cs.cc,v 1.3 2008/03/31 14:56:28 riojac3 Exp $
+//         $Id: XrdCS2DCM2cs.cc,v 1.4 2008/04/01 12:33:33 apeters Exp $
 
-const char *XrdCS2DCMCVSID = "$Id: XrdCS2DCM2cs.cc,v 1.3 2008/03/31 14:56:28 riojac3 Exp $";
+const char *XrdCS2DCMCVSID = "$Id: XrdCS2DCM2cs.cc,v 1.4 2008/04/01 12:33:33 apeters Exp $";
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -29,6 +29,7 @@ const char *XrdCS2DCMCVSID = "$Id: XrdCS2DCM2cs.cc,v 1.3 2008/03/31 14:56:28 rio
 #include "XrdSys/XrdSysLogger.hh"
 #include "XrdSys/XrdSysTimer.hh"
 #include "XrdSys/XrdSysPthread.hh"
+#include "XrdOuc/XrdOucUtils.hh"
 #include "XrdCS2/XrdCS2DCM.hh"
 
 #include "XrdNet/XrdNetLink.hh"
@@ -267,19 +268,15 @@ int XrdCS2DCM::CS2_rDone(const char *Tid, unsigned long long reqID,
   const char *TraceID = "_rDone";
   XrdCS2DCMService *sp;
   int allOK = 1;
-  struct Cns_fileid *fileid = NULL;  
-
 
 // Obatin a service object
 //
-   TRACE(DEBUG, "Calling getUpdateDone(" <<reqID << ',' << fileid->fileid << ',' <<fileid->server<<") for " <<Lfn);
+   TRACE(DEBUG, "Calling getUpdateDone(" <<reqID <<") for " <<Lfn);
    sp = XrdCS2DCMService::Get();
-
-//Obtain fileId and the nsHost name from  the Pfn
 
 // Issue the done
 //
-  try {sp->jobSvc->getUpdateDone(reqID,fileid->fileid,fileid->nsHost);}
+  try {sp->jobSvc->getUpdateDone(reqID);}
 
   catch (castor::exception::Communication e)
         {XrdLog.Emsg("rDone", Tid, "Communications error;",
@@ -315,7 +312,6 @@ int  XrdCS2DCM::CS2_wDone(const char *Tid, unsigned long long reqID,
   struct stat buf;
   unsigned long long fileSize = 0;
   int allOK = 1;
-  struct Cns_fileid *fileid = NULL;  
 
 // Obtain the file size
 //
@@ -332,15 +328,11 @@ int  XrdCS2DCM::CS2_wDone(const char *Tid, unsigned long long reqID,
 //
    subReq.setId(reqID);
 
-//Get the fileId and the nsHost name from  the Pfn
-
-
 // Issue the prepare for Migration followed by a putDone (new files) or
 // getUpdateDone (existing files opened for r/w).
 //
-//perpareForMigration (fileid, nshost)
-  try {TRACE(DEBUG, "Calling prepareForMigration(" <<reqID <<',' <<fileSize <<',' << fileid->fileid << ',' <<fileid->server<<") for " <<Pfn);
-       sp->jobSvc->prepareForMigration(&subReq, fileSize, time(NULL),fileid->fileid, fileid->server);
+  try {TRACE(DEBUG, "Calling prepareForMigration(" <<reqID <<',' <<fileSize <<") for " <<Pfn);
+       sp->jobSvc->prepareForMigration(&subReq, fileSize, time(NULL));
       }
   catch (castor::exception::Communication e)
         {XrdLog.Emsg("wDone", Tid, "Communications error;",
@@ -373,20 +365,19 @@ int  XrdCS2DCM::CS2_wFail(const char *Tid, unsigned long long reqID,
   const char *TraceID = "_wFail";
   XrdCS2DCMService *sp;
   int allOK = 1;
-  struct Cns_fileid *fileid = NULL;  
+
 // Obatin a service object
 //
    sp = XrdCS2DCMService::Get();
-//Get the fileId and the nsHost name from  the Pfn
-    
+
 // Issue the putFailed (new file) or getUpdateFailed (existing files open for rw)
 //
   try {if (isNew)
-          {TRACE(DEBUG, "Calling putFailed(" <<reqID <<',' << fileid->fileid << ',' <<fileid->server<<") for " <<Pfn);
-           sp->jobSvc->putFailed(reqID, fileid->fileid, fileid->server);
+          {TRACE(DEBUG, "Calling putFailed(" <<reqID <<") for " <<Pfn);
+           sp->jobSvc->putFailed(reqID);
           } else {
-           TRACE(DEBUG, "Calling getUpdateFailed(" <<reqID <<',' << fileid->fileid << ',' <<fileid->server<<") for " <<Pfn);
-           sp->jobSvc->getUpdateFailed(reqID,fileid->fileid, fileid->server);
+           TRACE(DEBUG, "Calling getUpdateFailed(" <<reqID <<") for " <<Pfn);
+           sp->jobSvc->getUpdateFailed(reqID);
           }
       }
   catch (castor::exception::Communication e)
@@ -426,6 +417,12 @@ void  XrdCS2DCM::addLink(const char *Rfn, const char *Lfn)
 
 // Create the symlink to the real file
 //
+   int rc;
+   if ((rc = XrdOucUtils::makePath(Pfn,0770)))
+     {XrdLog.Emsg("addLink", rc, "create directory path for", Pfn);
+     return;
+     }
+
    if (symlink(Rfn, Pfn))
       {XrdLog.Emsg("addLink", errno, "create symlink", Pfn);
        return;

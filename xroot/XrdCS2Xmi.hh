@@ -10,7 +10,7 @@
 /*              DE-AC02-76-SFO0515 with the Department of Energy              */
 /******************************************************************************/
 
-//         $Id: XrdCS2Xmi.hh,v 1.2 2008/02/29 12:12:57 apeters Exp $
+//         $Id: XrdCS2Xmi.hh,v 1.3 2008/04/01 12:33:33 apeters Exp $
 
 #include "XrdOlb/XrdOlbReq.hh"
 #include "XrdOlb/XrdOlbXmi.hh"
@@ -88,7 +88,7 @@ public:
        void InitXeq();
 
        void doPut(XrdOlbReq *Request, const char *path);
-       void doGet(XrdOlbReq *Request, const char *path);
+       void doGet(XrdOlbReq *Request, const char *path, bool noresponse=false);
 
        void MSSPoll(int reqType, const char *UserTag, int is_W);
 

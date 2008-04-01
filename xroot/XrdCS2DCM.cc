@@ -8,9 +8,9 @@
 /*              DE-AC02-76-SFO0515 with the Department of Energy              */
 /******************************************************************************/
 
-//         $Id: XrdCS2DCM.cc,v 1.2 2008/02/29 12:12:57 apeters Exp $
+//         $Id: XrdCS2DCM.cc,v 1.3 2008/04/01 12:33:33 apeters Exp $
 
-const char *XrdCS2DCM2csCVSID = "$Id: XrdCS2DCM.cc,v 1.2 2008/02/29 12:12:57 apeters Exp $";
+const char *XrdCS2DCM2csCVSID = "$Id: XrdCS2DCM.cc,v 1.3 2008/04/01 12:33:33 apeters Exp $";
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -115,7 +115,9 @@ void XrdCS2DCM::doEvents()
                    }
 
 	 if (!(strcmp(Eid,"closew"))) {
+	   TRACE(DEBUG, "Event: waiting for lock");
 	   writeMutex.Lock();
+	   TRACE(DEBUG, "Event: got lock");
 	   writeMutex.UnLock();
 	 }
 	 if (!(strcmp(Eid,"fwrite"))) {

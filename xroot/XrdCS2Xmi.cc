@@ -8,9 +8,9 @@
 /*              DE-AC02-76-SFO0515 with the Department of Energy              */
 /******************************************************************************/
 
-//         $Id: XrdCS2Xmi.cc,v 1.2 2008/02/29 12:12:57 apeters Exp $
+//         $Id: XrdCS2Xmi.cc,v 1.3 2008/04/01 12:33:33 apeters Exp $
 
-const char *XrdCS2Xmi2csCVSID = "$Id: XrdCS2Xmi.cc,v 1.2 2008/02/29 12:12:57 apeters Exp $";
+const char *XrdCS2Xmi2csCVSID = "$Id: XrdCS2Xmi.cc,v 1.3 2008/04/01 12:33:33 apeters Exp $";
 
 #include <stdlib.h>
 #include <string.h>
@@ -85,7 +85,7 @@ void DoIt() {
   if ((!strcmp(Type,"Prep2Put") || (!strcmp(Type,"Prep2Update")))) {
     XmiP->doPut(ReqP, Path); delete this;
   } else {
-    XmiP->doGet(ReqP,Path);
+    XmiP->doGet(ReqP,Path,false);
     delete this;
   }
 }
@@ -529,9 +529,19 @@ int XrdCS2Xmi::Mkpath_internal(XrdOlbReq *Request, const char *path, mode_t mode
 int XrdCS2Xmi::Prep(const char *ReqID, const char *path, int opts)
 {
   EPNAME("Prep");
-  
+
+  stage_apiInit(&Tinfo);  
+  setDefaultOption(&Opts);
+
+  if (strcmp(ReqID,"*")) {
+    EPNAME("Stage");
+    DEBUG("path=" <<path);
+    doGet(NULL,path,true);
+    return 1;
+  }
+
   DEBUG("path=" <<path);
-  
+
   castor::stager::FileRequest *req;
   castor::stager::SubRequest *subreq  = new castor::stager::SubRequest();
   std::vector<castor::rh::Response *>respvec;
@@ -715,7 +725,7 @@ int XrdCS2Xmi::Select( XrdOlbReq *Request, const char *path, int opts)
 //   
    if (!initDone) {Request->Reply_Wait(retryTime); return 1;}
    stage_apiInit(&Tinfo);
-
+   setDefaultOption(&Opts);
 
         if (opts & XMI_NEW) {rType = "Prep2Put";}
    else if (opts & XMI_RW)  {rType = "Prep2Upd";}
@@ -876,7 +886,7 @@ void XrdCS2Xmi::doPut(XrdOlbReq *Request, const char *path)
 /*                                 d o G e t                                  */
 /******************************************************************************/
   
-void XrdCS2Xmi::doGet(XrdOlbReq *Request, const char *path)
+void XrdCS2Xmi::doGet(XrdOlbReq *Request, const char *path, bool noresponse )
 {
    EPNAME("doGet");
    castor::stager::StageGetRequest  getReq_ro;
@@ -905,12 +915,12 @@ void XrdCS2Xmi::doGet(XrdOlbReq *Request, const char *path)
 //
    if (Cns_stat(path, &cnsbuf)) {
      DEBUG("File does not exists: " << path);
-     sendError(Request, ENOENT, "stat", path);
+     if (!noresponse)sendError(Request, ENOENT, "stat", path);
      return ;
    } else {
      if (cnsbuf.filesize == 0) {
        DEBUG("File has 0 size: " <<path);
-       sendError(Request, ENODATA,"no tape copy for 0-size file", path);
+       if (!noresponse)sendError(Request, ENODATA,"no tape copy for 0-size file", path);
        return ;
      }
    }
@@ -937,7 +947,7 @@ void XrdCS2Xmi::doGet(XrdOlbReq *Request, const char *path)
        if (*errbuf)
 	 eDest->Emsg("Get", errbuf);
        
-       Request->Reply_Wait(retryTime);
+       if (!noresponse)Request->Reply_Wait(retryTime);
        return;
      } else {
        DEBUG("Received " <<nbresps <<" stage_filequery() responses");
@@ -951,25 +961,25 @@ void XrdCS2Xmi::doGet(XrdOlbReq *Request, const char *path)
 	     if (!strcmp(stage_fileStatusName(resp[i].status),"STAGEIN")) {  
 	       // this file is in STAGEIN we cannot yet redirect
 	       eDest->Emsg("Get","file is STAGEIN",path);
-	       Request->Reply_Wait(retryTime);
+	       if (!noresponse)Request->Reply_Wait(retryTime);
 	       return;
 	     } else {
 	       DEBUG("Procedd to get path=" <<resp[i].filename );
 	     }
 	   } else { 
 	     DEBUG("Error for " << path );
-	     sendError(Request, resp[i].castorfilename,
+	     if (!noresponse)sendError(Request, resp[i].castorfilename,
 		       resp[i].errorCode, resp[i].errorMessage);
 	     return;
 	   }
 	 } else {
 	   DEBUG("Issue Prep for " <<path );
 	   int ec;
-	   if ((ec = Prep("noid",path, 0))!=1) {
-	     sendError(Request,path, ec, "failed to prepare");
+	   if ((ec = Prep("*",path, 0))!=1) {
+	     if (!noresponse)sendError(Request,path, ec, "failed to prepare");
 	     return;
 	   } else {
-	     Request->Reply_Wait(retryTime);
+	     if (!noresponse)Request->Reply_Wait(retryTime);
 	   }
 	   return;
 	 }
@@ -1008,12 +1018,12 @@ void XrdCS2Xmi::doGet(XrdOlbReq *Request, const char *path)
          }
    catch (castor::exception::Communication e)
          {eDest->Emsg("Get","Communications error;",e.getMessage().str().c_str());
-          Request->Reply_Wait(retryTime);
+ 	  if (!noresponse)Request->Reply_Wait(retryTime);
           return;
          }
    catch (castor::exception::Exception e)
          {eDest->Emsg("Select","sendRequest exception;",e.getMessage().str().c_str());
-          Request->Reply_Error("Unexpected communications exception.");
+          if (!noresponse)Request->Reply_Error("Unexpected communications exception.");
           return;
          }
 
@@ -1021,7 +1031,7 @@ void XrdCS2Xmi::doGet(XrdOlbReq *Request, const char *path)
 //
    if (respvec.size() <= 0)
       {eDest->Emsg("Get", "No response for get", path);
-       Request->Reply_Error("Internal Castor2 error receiving get response.");
+       if (!noresponse)Request->Reply_Error("Internal Castor2 error receiving get response.");
        return;
       }
 
@@ -1031,19 +1041,24 @@ void XrdCS2Xmi::doGet(XrdOlbReq *Request, const char *path)
                dynamic_cast<castor::rh::IOResponse*>(respvec[0]);
    if (0 == fr)
       {eDest->Emsg("Select", "Invalid response object for get", path);
-       Request->Reply_Error("Internal Castor2 error casting get response.");
+       if (!noresponse)Request->Reply_Error("Internal Castor2 error casting get response.");
        return;
       }
 
 // Send an error or just add this to the queue (sendError/Recycle does unlock)
 //
-   if (fr->errorCode())
-      sendError(Request,path,fr->errorCode(),fr->errorMessage().c_str());
-      else {DEBUG(stage_fileStatusName(fr->status()) <<" rc=" << fr->errorCode()
-                  <<" path=" <<fr->server().c_str() <<':' <<fr->fileName().c_str()
-                  <<" (" <<fr->castorFileName().c_str() <<") id=" <<fr->id());
-            sendRedirect(Request, fr, path);
-           }
+   if (fr->errorCode()) {
+     if (!noresponse) 
+       {
+	 sendError(Request,path,fr->errorCode(),fr->errorMessage().c_str());
+       }
+   }  else {
+     DEBUG(stage_fileStatusName(fr->status()) <<" rc=" << fr->errorCode()
+	   <<" path=" <<fr->server().c_str() <<':' <<fr->fileName().c_str()
+	   <<" (" <<fr->castorFileName().c_str() <<") id=" <<fr->id());
+     if (!noresponse)
+       sendRedirect(Request, fr, path);
+   }
 
 // Free response data and return
 //

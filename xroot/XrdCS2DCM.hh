@@ -10,7 +10,7 @@
 /*              DE-AC02-76-SFO0515 with the Department of Energy              */
 /******************************************************************************/
 
-//         $Id: XrdCS2DCM.hh,v 1.2 2008/02/29 12:12:57 apeters Exp $
+//         $Id: XrdCS2DCM.hh,v 1.3 2008/04/01 12:33:33 apeters Exp $
 
 #include "XrdOuc/XrdOucStream.hh"
 #include "XrdSys/XrdSysPthread.hh"
