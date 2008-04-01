@@ -39,12 +39,10 @@
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
-#include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeStatusCodes.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
 #include "osdep.h"
 #include <string>
-#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
@@ -159,12 +157,6 @@ void castor::io::StreamVdqmTapeCnv::marshalObject(castor::IObject* object,
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    address->stream() << obj->errorHistory().size();
-    for (std::vector<castor::vdqm::ErrorHistory*>::iterator it = obj->errorHistory().begin();
-         it != obj->errorHistory().end();
-         it++) {
-      cnvSvc()->marshalObject(*it, address, alreadyDone);
-    }
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -181,16 +173,6 @@ castor::IObject* castor::io::StreamVdqmTapeCnv::unmarshalObject(castor::io::bini
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
-  // Fill object with associations
-  castor::vdqm::VdqmTape* obj = 
-    dynamic_cast<castor::vdqm::VdqmTape*>(object);
-  unsigned int errorHistoryNb;
-  ad.stream() >> errorHistoryNb;
-  for (unsigned int i = 0; i < errorHistoryNb; i++) {
-    ad.setObjType(castor::OBJ_INVALID);
-    castor::IObject* objErrorHistory = cnvSvc()->unmarshalObject(ad, newlyCreated);
-    obj->addErrorHistory(dynamic_cast<castor::vdqm::ErrorHistory*>(objErrorHistory));
-  }
   return object;
 }
 

@@ -187,14 +187,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Fill the database with objects of type ErrorHistory refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepErrorHistory(castor::vdqm::TapeDrive* obj)
-          throw (castor::exception::Exception);
-
-        /**
          * Fill the database with objects of type TapeDriveDedication refered by a given
          * object.
          * @param obj the original object
@@ -256,15 +248,6 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjTapeRequest(castor::vdqm::TapeDrive* obj)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type ErrorHistory refered by a given
-         * object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjErrorHistory(castor::vdqm::TapeDrive* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -382,24 +365,6 @@ namespace castor {
 
         /// SQL update statement object for member runningTapeReq
         castor::db::IDbStatement *m_updateTapeRequestStatement;
-
-        /// SQL select statement for member errorHistory
-        static const std::string s_selectErrorHistoryStatementString;
-
-        /// SQL select statement object for member errorHistory
-        castor::db::IDbStatement *m_selectErrorHistoryStatement;
-
-        /// SQL delete statement for member errorHistory
-        static const std::string s_deleteErrorHistoryStatementString;
-
-        /// SQL delete statement object for member errorHistory
-        castor::db::IDbStatement *m_deleteErrorHistoryStatement;
-
-        /// SQL remote update statement for member errorHistory
-        static const std::string s_remoteUpdateErrorHistoryStatementString;
-
-        /// SQL remote update statement object for member errorHistory
-        castor::db::IDbStatement *m_remoteUpdateErrorHistoryStatement;
 
         /// SQL select statement for member tapeDriveDedication
         static const std::string s_selectTapeDriveDedicationStatementString;

@@ -41,14 +41,6 @@ namespace castor {
   class IObject;
   class ICnvSvc;
 
-  // Forward declarations
-  namespace vdqm {
-
-    // Forward declarations
-    class VdqmTape;
-
-  } /* end of namespace vdqm */
-
   namespace db {
 
     namespace cnv {
@@ -171,14 +163,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Fill the database with objects of type ErrorHistory refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepErrorHistory(castor::vdqm::VdqmTape* obj)
-          throw (castor::exception::Exception);
-
-        /**
          * Retrieve from the database some of the objects refered by a given object.
          * @param object the original object
          * @param type the type of the refered objects to retrieve
@@ -188,15 +172,6 @@ namespace castor {
                              castor::IObject* object,
                              unsigned int type,
                              bool endTransaction)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type ErrorHistory refered by a given
-         * object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjErrorHistory(castor::vdqm::VdqmTape* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -272,24 +247,6 @@ namespace castor {
 
         /// SQL remote update statement object for member 
         castor::db::IDbStatement *m_remoteUpdateTapeDriveStatement;
-
-        /// SQL select statement for member errorHistory
-        static const std::string s_selectErrorHistoryStatementString;
-
-        /// SQL select statement object for member errorHistory
-        castor::db::IDbStatement *m_selectErrorHistoryStatement;
-
-        /// SQL delete statement for member errorHistory
-        static const std::string s_deleteErrorHistoryStatementString;
-
-        /// SQL delete statement object for member errorHistory
-        castor::db::IDbStatement *m_deleteErrorHistoryStatement;
-
-        /// SQL remote update statement for member errorHistory
-        static const std::string s_remoteUpdateErrorHistoryStatementString;
-
-        /// SQL remote update statement object for member errorHistory
-        castor::db::IDbStatement *m_remoteUpdateErrorHistoryStatement;
 
       }; // end of class DbVdqmTapeCnv
 

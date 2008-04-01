@@ -40,7 +40,6 @@
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
-#include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveCompatibility.hpp"
 #include "castor/vdqm/TapeDriveDedication.hpp"
@@ -175,12 +174,6 @@ void castor::io::StreamTapeDriveCnv::marshalObject(castor::IObject* object,
     alreadyDone.insert(obj);
     cnvSvc()->marshalObject(obj->tape(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->runningTapeReq(), address, alreadyDone);
-    address->stream() << obj->errorHistory().size();
-    for (std::vector<castor::vdqm::ErrorHistory*>::iterator it = obj->errorHistory().begin();
-         it != obj->errorHistory().end();
-         it++) {
-      cnvSvc()->marshalObject(*it, address, alreadyDone);
-    }
     address->stream() << obj->tapeDriveDedication().size();
     for (std::vector<castor::vdqm::TapeDriveDedication*>::iterator it = obj->tapeDriveDedication().begin();
          it != obj->tapeDriveDedication().end();
@@ -220,13 +213,6 @@ castor::IObject* castor::io::StreamTapeDriveCnv::unmarshalObject(castor::io::bin
   ad.setObjType(castor::OBJ_INVALID);
   castor::IObject* objRunningTapeReq = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setRunningTapeReq(dynamic_cast<castor::vdqm::TapeRequest*>(objRunningTapeReq));
-  unsigned int errorHistoryNb;
-  ad.stream() >> errorHistoryNb;
-  for (unsigned int i = 0; i < errorHistoryNb; i++) {
-    ad.setObjType(castor::OBJ_INVALID);
-    castor::IObject* objErrorHistory = cnvSvc()->unmarshalObject(ad, newlyCreated);
-    obj->addErrorHistory(dynamic_cast<castor::vdqm::ErrorHistory*>(objErrorHistory));
-  }
   unsigned int tapeDriveDedicationNb;
   ad.stream() >> tapeDriveDedicationNb;
   for (unsigned int i = 0; i < tapeDriveDedicationNb; i++) {

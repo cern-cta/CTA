@@ -35,7 +35,6 @@
 #include "osdep.h"
 #include <iostream>
 #include <string>
-#include <vector>
 
 namespace castor {
 
@@ -43,9 +42,6 @@ namespace castor {
   class ObjectSet;
 
   namespace vdqm {
-
-    // Forward declarations
-    class ErrorHistory;
 
     /**
      * class VdqmTape
@@ -242,35 +238,6 @@ namespace castor {
       }
 
       /**
-       * Add a ErrorHistory* object to the m_errorHistoryVector list
-       */
-      void addErrorHistory(ErrorHistory* add_object) {
-        m_errorHistoryVector.push_back(add_object);
-      }
-
-      /**
-       * Remove a ErrorHistory* object from m_errorHistoryVector
-       */
-      void removeErrorHistory(ErrorHistory* remove_object) {
-        for (unsigned int i = 0; i < m_errorHistoryVector.size(); i++) {
-          ErrorHistory* item = m_errorHistoryVector[i];
-          if (item == remove_object) {
-            std::vector<ErrorHistory*>::iterator it = m_errorHistoryVector.begin() + i;
-            m_errorHistoryVector.erase(it);
-            return;
-          }
-        }
-      }
-
-      /**
-       * Get the list of ErrorHistory* objects held by m_errorHistoryVector
-       * @return list of ErrorHistory* objects held by m_errorHistoryVector
-       */
-      std::vector<ErrorHistory*>& errorHistory() {
-        return m_errorHistoryVector;
-      }
-
-      /**
        * Get the value of m_status
        * @return the value of m_status
        */
@@ -309,8 +276,6 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
-
-      std::vector<ErrorHistory*> m_errorHistoryVector;
 
       TapeStatusCodes m_status;
 

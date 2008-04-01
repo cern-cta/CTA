@@ -33,7 +33,6 @@
 #include "castor/vdqm/TapeStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
-struct Cvdqm_ErrorHistory_t;
 struct Cvdqm_VdqmTape_t;
 
 /* --------------------------------------------------------------------------
@@ -178,22 +177,6 @@ int Cvdqm_VdqmTape_id(struct Cvdqm_VdqmTape_t* instance, u_signed64* var);
  * The id of this object
  */
 int Cvdqm_VdqmTape_setId(struct Cvdqm_VdqmTape_t* instance, u_signed64 new_var);
-
-/**
- * Add a struct Cvdqm_ErrorHistory_t* object to the errorHistory list
- */
-int Cvdqm_VdqmTape_addErrorHistory(struct Cvdqm_VdqmTape_t* instance, struct Cvdqm_ErrorHistory_t* obj);
-
-/**
- * Remove a struct Cvdqm_ErrorHistory_t* object from errorHistory
- */
-int Cvdqm_VdqmTape_removeErrorHistory(struct Cvdqm_VdqmTape_t* instance, struct Cvdqm_ErrorHistory_t* obj);
-
-/**
- * Get the list of struct Cvdqm_ErrorHistory_t* objects held by errorHistory. Note
- * that the caller is responsible for the deletion of the returned vector.
- */
-int Cvdqm_VdqmTape_errorHistory(struct Cvdqm_VdqmTape_t* instance, struct Cvdqm_ErrorHistory_t*** var, int* len);
 
 /**
  * Get the value of status

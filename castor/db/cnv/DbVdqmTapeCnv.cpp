@@ -30,7 +30,6 @@
 #include "DbVdqmTapeCnv.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/CnvFactory.hpp"
-#include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
@@ -39,11 +38,8 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
-#include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeStatusCodes.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
-#include <set>
-#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
@@ -78,18 +74,6 @@ const std::string castor::db::cnv::DbVdqmTapeCnv::s_storeTypeStatementString =
 const std::string castor::db::cnv::DbVdqmTapeCnv::s_deleteTypeStatementString =
 "DELETE FROM Id2Type WHERE id = :1";
 
-/// SQL select statement for member errorHistory
-const std::string castor::db::cnv::DbVdqmTapeCnv::s_selectErrorHistoryStatementString =
-"SELECT id FROM ErrorHistory WHERE tape = :1 FOR UPDATE";
-
-/// SQL delete statement for member errorHistory
-const std::string castor::db::cnv::DbVdqmTapeCnv::s_deleteErrorHistoryStatementString =
-"UPDATE ErrorHistory SET tape = 0 WHERE id = :1";
-
-/// SQL remote update statement for member errorHistory
-const std::string castor::db::cnv::DbVdqmTapeCnv::s_remoteUpdateErrorHistoryStatementString =
-"UPDATE ErrorHistory SET tape = :1 WHERE id = :2";
-
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -100,10 +84,7 @@ castor::db::cnv::DbVdqmTapeCnv::DbVdqmTapeCnv(castor::ICnvSvc* cnvSvc) :
   m_selectStatement(0),
   m_updateStatement(0),
   m_storeTypeStatement(0),
-  m_deleteTypeStatement(0),
-  m_selectErrorHistoryStatement(0),
-  m_deleteErrorHistoryStatement(0),
-  m_remoteUpdateErrorHistoryStatement(0) {}
+  m_deleteTypeStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -125,9 +106,6 @@ void castor::db::cnv::DbVdqmTapeCnv::reset() throw() {
     if(m_updateStatement) delete m_updateStatement;
     if(m_storeTypeStatement) delete m_storeTypeStatement;
     if(m_deleteTypeStatement) delete m_deleteTypeStatement;
-    if(m_deleteErrorHistoryStatement) delete m_deleteErrorHistoryStatement;
-    if(m_selectErrorHistoryStatement) delete m_selectErrorHistoryStatement;
-    if(m_remoteUpdateErrorHistoryStatement) delete m_remoteUpdateErrorHistoryStatement;
   } catch (castor::exception::Exception ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -136,9 +114,6 @@ void castor::db::cnv::DbVdqmTapeCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
-  m_selectErrorHistoryStatement = 0;
-  m_deleteErrorHistoryStatement = 0;
-  m_remoteUpdateErrorHistoryStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -167,9 +142,6 @@ void castor::db::cnv::DbVdqmTapeCnv::fillRep(castor::IAddress* address,
     dynamic_cast<castor::vdqm::VdqmTape*>(object);
   try {
     switch (type) {
-    case castor::OBJ_ErrorHistory :
-      fillRepErrorHistory(obj);
-      break;
     default :
       castor::exception::InvalidArgument ex;
       ex.getMessage() << "fillRep called for type " << type 
@@ -189,56 +161,6 @@ void castor::db::cnv::DbVdqmTapeCnv::fillRep(castor::IAddress* address,
 }
 
 //------------------------------------------------------------------------------
-// fillRepErrorHistory
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbVdqmTapeCnv::fillRepErrorHistory(castor::vdqm::VdqmTape* obj)
-  throw (castor::exception::Exception) {
-  // check select statement
-  if (0 == m_selectErrorHistoryStatement) {
-    m_selectErrorHistoryStatement = createStatement(s_selectErrorHistoryStatementString);
-  }
-  // Get current database data
-  std::set<int> errorHistoryList;
-  m_selectErrorHistoryStatement->setUInt64(1, obj->id());
-  castor::db::IDbResultSet *rset = m_selectErrorHistoryStatement->executeQuery();
-  while (rset->next()) {
-    errorHistoryList.insert(rset->getInt(1));
-  }
-  delete rset;
-  // update errorHistory and create new ones
-  for (std::vector<castor::vdqm::ErrorHistory*>::iterator it = obj->errorHistory().begin();
-       it != obj->errorHistory().end();
-       it++) {
-    if (0 == (*it)->id()) {
-      cnvSvc()->createRep(0, *it, false, OBJ_VdqmTape);
-    } else {
-      // Check remote update statement
-      if (0 == m_remoteUpdateErrorHistoryStatement) {
-        m_remoteUpdateErrorHistoryStatement = createStatement(s_remoteUpdateErrorHistoryStatementString);
-      }
-      // Update remote object
-      m_remoteUpdateErrorHistoryStatement->setUInt64(1, obj->id());
-      m_remoteUpdateErrorHistoryStatement->setUInt64(2, (*it)->id());
-      m_remoteUpdateErrorHistoryStatement->execute();
-      std::set<int>::iterator item;
-      if ((item = errorHistoryList.find((*it)->id())) != errorHistoryList.end()) {
-        errorHistoryList.erase(item);
-      }
-    }
-  }
-  // Delete old links
-  for (std::set<int>::iterator it = errorHistoryList.begin();
-       it != errorHistoryList.end();
-       it++) {
-    if (0 == m_deleteErrorHistoryStatement) {
-      m_deleteErrorHistoryStatement = createStatement(s_deleteErrorHistoryStatementString);
-    }
-    m_deleteErrorHistoryStatement->setUInt64(1, *it);
-    m_deleteErrorHistoryStatement->execute();
-  }
-}
-
-//------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbVdqmTapeCnv::fillObj(castor::IAddress* address,
@@ -249,9 +171,6 @@ void castor::db::cnv::DbVdqmTapeCnv::fillObj(castor::IAddress* address,
   castor::vdqm::VdqmTape* obj = 
     dynamic_cast<castor::vdqm::VdqmTape*>(object);
   switch (type) {
-  case castor::OBJ_ErrorHistory :
-    fillObjErrorHistory(obj);
-    break;
   default :
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "fillObj called on type " << type 
@@ -263,56 +182,6 @@ void castor::db::cnv::DbVdqmTapeCnv::fillObj(castor::IAddress* address,
     cnvSvc()->commit();
   }
 }
-//------------------------------------------------------------------------------
-// fillObjErrorHistory
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbVdqmTapeCnv::fillObjErrorHistory(castor::vdqm::VdqmTape* obj)
-  throw (castor::exception::Exception) {
-  // Check select statement
-  if (0 == m_selectErrorHistoryStatement) {
-    m_selectErrorHistoryStatement = createStatement(s_selectErrorHistoryStatementString);
-  }
-  // retrieve the object from the database
-  std::set<int> errorHistoryList;
-  m_selectErrorHistoryStatement->setUInt64(1, obj->id());
-  castor::db::IDbResultSet *rset = m_selectErrorHistoryStatement->executeQuery();
-  while (rset->next()) {
-    errorHistoryList.insert(rset->getInt(1));
-  }
-  // Close ResultSet
-  delete rset;
-  // Update objects and mark old ones for deletion
-  std::vector<castor::vdqm::ErrorHistory*> toBeDeleted;
-  for (std::vector<castor::vdqm::ErrorHistory*>::iterator it = obj->errorHistory().begin();
-       it != obj->errorHistory().end();
-       it++) {
-    std::set<int>::iterator item;
-    if ((item = errorHistoryList.find((*it)->id())) == errorHistoryList.end()) {
-      toBeDeleted.push_back(*it);
-    } else {
-      errorHistoryList.erase(item);
-      cnvSvc()->updateObj((*it));
-    }
-  }
-  // Delete old objects
-  for (std::vector<castor::vdqm::ErrorHistory*>::iterator it = toBeDeleted.begin();
-       it != toBeDeleted.end();
-       it++) {
-    obj->removeErrorHistory(*it);
-    (*it)->setTape(0);
-  }
-  // Create new objects
-  for (std::set<int>::iterator it = errorHistoryList.begin();
-       it != errorHistoryList.end();
-       it++) {
-    castor::IObject* item = cnvSvc()->getObjFromId(*it);
-    castor::vdqm::ErrorHistory* remoteObj = 
-      dynamic_cast<castor::vdqm::ErrorHistory*>(item);
-    obj->addErrorHistory(remoteObj);
-    remoteObj->setTape(obj);
-  }
-}
-
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------

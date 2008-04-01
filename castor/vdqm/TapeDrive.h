@@ -34,7 +34,6 @@
 #include "osdep.h"
 struct C_IObject_t;
 struct Cvdqm_DeviceGroupName_t;
-struct Cvdqm_ErrorHistory_t;
 struct Cvdqm_TapeDriveCompatibility_t;
 struct Cvdqm_TapeDriveDedication_t;
 struct Cvdqm_TapeDrive_t;
@@ -240,22 +239,6 @@ int Cvdqm_TapeDrive_runningTapeReq(struct Cvdqm_TapeDrive_t* instance, struct Cv
  * Set the value of runningTapeReq
  */
 int Cvdqm_TapeDrive_setRunningTapeReq(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeRequest_t* new_var);
-
-/**
- * Add a struct Cvdqm_ErrorHistory_t* object to the errorHistory list
- */
-int Cvdqm_TapeDrive_addErrorHistory(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_ErrorHistory_t* obj);
-
-/**
- * Remove a struct Cvdqm_ErrorHistory_t* object from errorHistory
- */
-int Cvdqm_TapeDrive_removeErrorHistory(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_ErrorHistory_t* obj);
-
-/**
- * Get the list of struct Cvdqm_ErrorHistory_t* objects held by errorHistory. Note
- * that the caller is responsible for the deletion of the returned vector.
- */
-int Cvdqm_TapeDrive_errorHistory(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_ErrorHistory_t*** var, int* len);
 
 /**
  * Add a struct Cvdqm_TapeDriveDedication_t* object to the tapeDriveDedication

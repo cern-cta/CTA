@@ -31,7 +31,6 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
-#include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveCompatibility.hpp"
 #include "castor/vdqm/TapeDriveDedication.hpp"
@@ -72,10 +71,6 @@ castor::vdqm::TapeDrive::~TapeDrive() throw() {
   if (0 != m_runningTapeReq) {
     m_runningTapeReq->setTapeDrive(0);
   }
-  for (unsigned int i = 0; i < m_errorHistoryVector.size(); i++) {
-    m_errorHistoryVector[i]->setTapeDrive(0);
-  }
-  m_errorHistoryVector.clear();
   for (unsigned int i = 0; i < m_tapeDriveDedicationVector.size(); i++) {
     m_tapeDriveDedicationVector[i]->setTapeDrive(0);
   }
@@ -121,17 +116,6 @@ void castor::vdqm::TapeDrive::print(std::ostream& stream,
     m_runningTapeReq->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
-  }
-  {
-    stream << indent << "ErrorHistory : " << std::endl;
-    int i;
-    std::vector<ErrorHistory*>::const_iterator it;
-    for (it = m_errorHistoryVector.begin(), i = 0;
-         it != m_errorHistoryVector.end();
-         it++, i++) {
-      stream << indent << "  " << i << " :" << std::endl;
-      (*it)->print(stream, indent + "    ", alreadyPrinted);
-    }
   }
   {
     stream << indent << "TapeDriveDedication : " << std::endl;

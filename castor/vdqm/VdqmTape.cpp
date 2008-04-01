@@ -30,13 +30,11 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeStatusCodes.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
-#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -57,10 +55,6 @@ castor::vdqm::VdqmTape::VdqmTape() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::vdqm::VdqmTape::~VdqmTape() throw() {
-  for (unsigned int i = 0; i < m_errorHistoryVector.size(); i++) {
-    m_errorHistoryVector[i]->setTape(0);
-  }
-  m_errorHistoryVector.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -85,17 +79,6 @@ void castor::vdqm::VdqmTape::print(std::ostream& stream,
   stream << indent << "vwAddress : " << m_vwAddress << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  {
-    stream << indent << "ErrorHistory : " << std::endl;
-    int i;
-    std::vector<ErrorHistory*>::const_iterator it;
-    for (it = m_errorHistoryVector.begin(), i = 0;
-         it != m_errorHistoryVector.end();
-         it++, i++) {
-      stream << indent << "  " << i << " :" << std::endl;
-      (*it)->print(stream, indent + "    ", alreadyPrinted);
-    }
-  }
   stream << indent << "status : " << TapeStatusCodesStrings[m_status] << std::endl;
 }
 
