@@ -247,69 +247,8 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
 void castor::vdqm::handler::TapeDriveHandler::deleteTapeDrive() 
   throw (castor::exception::Exception) {
 
-    TapeDrive* tapeDrive = NULL; // the tape Drive which hast to be deleted
-    TapeServer* tapeServer = NULL; // the tape server, where the tape drive is installed
-  
-    // Get the tape server
-    tapeServer = ptr_IVdqmService->selectTapeServer(ptr_driveRequest->reqhost, false);
-      
-    try {
-      /**
-       * Check, if the tape drive already exists
-       */
-      tapeDrive = ptr_IVdqmService->selectTapeDrive(ptr_driveRequest, tapeServer);    
-    } catch (castor::exception::Exception ex) {
-      delete tapeServer;
-      tapeServer = 0;
-      
-      throw ex;
-    }
-        
-    if ( tapeDrive == NULL ) {
-      delete tapeServer;
-      tapeServer = 0;
-    
-      castor::exception::Exception ex(EVQNOSDRV);
-      ex.getMessage() << "TapeDriveHandler::deleteTapeDrive(): "
-                      << "drive record not found for drive "
-                      << ptr_driveRequest->drive << "@"
-                      << ptr_driveRequest->server << std::endl;
-      throw ex;
-    }
-  
-    /**
-     * Free memory for all Objects, which are not needed any more
-     */
-    freeMemory(tapeDrive, tapeServer);
-  
-    /*
-     * Don't allow to delete drives with running jobs.
-     */
-    if ( (tapeDrive->status() != UNIT_UP) &&
-         (tapeDrive->status() != UNIT_DOWN) ) {
-       delete tapeDrive;
-      tapeDrive = 0;     
-           
-      castor::exception::Exception ex(EVQREQASS);
-      ex.getMessage() << "TapeDriveHandler::deleteTapeDrive(): "
-                      << "Cannot remove drive record with assigned job."
-                      << std::endl;
-      throw ex;
-    }
-    
-    try {
-      castor::vdqm::DatabaseHelper::deleteRepresentation(tapeDrive, m_cuuid);
-    } 
-    catch (castor::exception::Exception ex) {
-      delete tapeDrive;
-      tapeDrive = 0;
-      
-      throw ex;
-    }
-    
-    delete tapeDrive;
-    tapeServer = 0;
-    tapeDrive = 0;
+  ptr_IVdqmService->deleteDrive(ptr_driveRequest->drive,
+    ptr_driveRequest->server, ptr_driveRequest->dgn);    
 }
 
 
@@ -769,17 +708,6 @@ void castor::vdqm::handler::TapeDriveHandler::freeMemory(
   tapeServer = 0;
   tapeDrive->setTapeServer(0);
   
-  std::vector<castor::vdqm::ErrorHistory*> errorHistoryVector = tapeDrive->errorHistory();
-  for (unsigned int i = 0; i < errorHistoryVector.size(); i++) {
-    if ( errorHistoryVector[i]->tape() != NULL ) {
-      delete errorHistoryVector[i]->tape();
-      errorHistoryVector[i]->setTape(0);
-    }
-    
-    delete errorHistoryVector[i];
-  }
-  errorHistoryVector.clear();
-
   std::vector<castor::vdqm::TapeDriveDedication*> tapeDriveDedicationVector = tapeDrive->tapeDriveDedication();
   for (unsigned int i = 0; i < tapeDriveDedicationVector.size(); i++) {
     delete tapeDriveDedicationVector[i];
