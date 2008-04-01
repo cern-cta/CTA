@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.62 $ $Release$ $Date: 2008/04/01 12:48:45 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.63 $ $Release$ $Date: 2008/04/01 13:16:43 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -8,22 +8,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
-/* A small table used to cross check code and DB versions */
-DECLARE
-  nbTables NUMBER;
-BEGIN
-  SELECT COUNT(*) INTO nbTables FROM USER_TABLES
-    WHERE TABLE_NAME='CASTORVERSION';
-
-  IF nbTables = 0 THEN
-    EXECUTE IMMEDIATE
-      'CREATE TABLE CastorVersion' ||
-      '  (schemaVersion VARCHAR2(20), release VARCHAR2(20))';
-    EXECUTE IMMEDIATE
-      'INSERT INTO CastorVersion VALUES (''-'', ''-'')';
-    COMMIT;
-  END IF;
-END;
+/* Update the schema version number */
 UPDATE CastorVersion SET schemaVersion = '2_1_7_4';
 
 /* Sequence used to generate unique indentifies */
