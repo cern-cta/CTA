@@ -104,7 +104,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	// input for stream operation 
 
 	char* p=NULL;
-        u_signed64 initialSizeCeiling=10*1024*1024*1024; // 10G
+        u_signed64 initialSizeCeiling = 0x280000000; // 10G
 	if ( (p = getconfent("MigHunter","SIZECEILING",0)) != NULL ) {
 	  initialSizeCeiling = strutou64(p);
 	}
