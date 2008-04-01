@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.72 $ $Release$ $Date: 2008/03/31 08:49:32 $ $Author: itglp $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.73 $ $Release$ $Date: 2008/04/01 15:36:05 $ $Author: waldron $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -88,7 +88,6 @@ void castor::stager::daemon::QueryRequestSvcThread::setFileResponseStatus
   std::string diskServer = "";
 
   switch(dc->diskCopyStatus()) {
-  case DISKCOPY_GCCANDIDATE:
   case DISKCOPY_BEINGDELETED:
   case DISKCOPY_DELETED:
     // just IGNORE the discopies in those statuses
