@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.60 $ $Release$ $Date: 2008/04/01 12:00:02 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.61 $ $Release$ $Date: 2008/04/01 12:08:56 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1057,5 +1057,7 @@ BEGIN
     RETURN;
   END IF;
   
+  DELETE From TapeDrive2TapeDriveComp WHERE parent = driveIdVar;
   DELETE FROM TapeDrive WHERE id = driveIdVar;
+  DELETE FROM Id2Type WHERE id = driveIdVar;
 END;
