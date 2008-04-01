@@ -1,12 +1,33 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.61 $ $Release$ $Date: 2008/04/01 12:08:56 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.62 $ $Release$ $Date: 2008/04/01 12:48:45 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
+
+/* A small table used to cross check code and DB versions */
+DECLARE
+  nbTables NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO nbTables FROM USER_TABLES
+    WHERE TABLE_NAME='CASTORVERSION';
+
+  IF nbTables = 0 THEN
+    EXECUTE IMMEDIATE
+      'CREATE TABLE CastorVersion' ||
+      '  (schemaVersion VARCHAR2(20), release VARCHAR2(20))';
+    EXECUTE IMMEDIATE
+      'INSERT INTO CastorVersion VALUES (''-'', ''-'')';
+    COMMIT;
+  END IF;
+END;
+UPDATE CastorVersion SET schemaVersion = '2_1_7_4';
+
+/* Sequence used to generate unique indentifies */
+CREATE SEQUENCE ids_seq CACHE 200;
 
 /**
  * The DriveSchedulerLock table contains a single row which is used to
@@ -322,27 +343,6 @@ ALTER TABLE VdqmTape
     INITIALLY IMMEDIATE
     ENABLE;
 CREATE INDEX I_FK_VdqmTape_status ON VdqmTape (status);
-
-/* A small table used to cross check code and DB versions */
-DECLARE
-  nbTables NUMBER;
-BEGIN
-  SELECT COUNT(*) INTO nbTables FROM USER_TABLES
-    WHERE TABLE_NAME='CASTORVERSION';
-
-  IF nbTables = 0 THEN
-    EXECUTE IMMEDIATE
-      'CREATE TABLE CastorVersion' ||
-      '  (schemaVersion VARCHAR2(20), release VARCHAR2(20))';
-    EXECUTE IMMEDIATE
-      'INSERT INTO CastorVersion VALUES (''-'', ''-'')';
-    COMMIT;
-  END IF;
-END;
-UPDATE CastorVersion SET schemaVersion = '2_1_7_0';
-
-/* Sequence for indices */
-CREATE SEQUENCE ids_seq CACHE 200;
 
 /* get current time as a time_t. Not that easy in ORACLE */
 CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
