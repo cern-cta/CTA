@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.642 $ $Date: 2008/03/14 10:29:41 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.643 $ $Date: 2008/04/02 08:19:37 $ $Author: itglp $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -176,15 +176,6 @@ CREATE GLOBAL TEMPORARY TABLE FilesClearedProcHelper
   (cfId NUMBER)
   ON COMMIT DELETE ROWS;
 
-/* Global temporary tables for the cleanup procedures */
-CREATE GLOBAL TEMPORARY TABLE ArchivedRequestCleaning
-  (id NUMBER NOT NULL ENABLE, type NUMBER NOT NULL ENABLE)
-  ON COMMIT PRESERVE ROWS;
-
-CREATE GLOBAL TEMPORARY TABLE OutOfDateRequestCleaning
-  (id NUMBER NOT NULL ENABLE, type NUMBER NOT NULL ENABLE)
-  ON COMMIT PRESERVE ROWS;
-
 /* Global temporary table for dropped out of date StageOut diskCopies */
 CREATE GLOBAL TEMPORARY TABLE OutOfDateStageOutDropped
   (fileId NUMBER, nsHost VARCHAR2(2048))
@@ -193,11 +184,6 @@ CREATE GLOBAL TEMPORARY TABLE OutOfDateStageOutDropped
 /* Global temporary table for out of date StageOut diskCopies
    where putdone was issued */
 CREATE GLOBAL TEMPORARY TABLE OutOfDateStageOutPutDone
-  (fileId NUMBER, nsHost VARCHAR2(2048))
-  ON COMMIT DELETE ROWS;
-
-/* Global temporary table for dropped out of date Recalls */
-CREATE GLOBAL TEMPORARY TABLE OutOfDateRecallDropped
   (fileId NUMBER, nsHost VARCHAR2(2048))
   ON COMMIT DELETE ROWS;
 
