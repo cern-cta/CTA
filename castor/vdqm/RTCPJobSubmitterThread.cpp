@@ -154,11 +154,10 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
     // Set the status of the request to pending
     request->setStatus(castor::vdqm::REQUEST_PENDING);
 
-    // Update the modficiation times of the request and associated tape drive.
-    // In the case of the request, this will move the request to the end of the
-    // queue as the oldest requests are serviced first.
-    request->setModificationTime(time(NULL));
-    drive->setModificationTime(time(NULL));
+    // The modification times of the drive and the request will be updated by
+    // database triggers because status of the drive and request have been
+    // changed. In the case of the request, this will move the request to the
+    // end of the queue as the oldest requests are serviced first.
   }
 
   // Needed to commit the changes

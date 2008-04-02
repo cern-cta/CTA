@@ -382,7 +382,7 @@ castor::vdqm::TapeDrive*
       tapeDrive->setTapeServer(tapeServer);
       tapeDrive->setErrcount(ptr_driveRequest->errcount);
       tapeDrive->setJobID(ptr_driveRequest->jobID);
-      tapeDrive->setModificationTime(time(NULL));
+      tapeDrive->setModificationTime(0); // Will be set by db trigger
       tapeDrive->setResettime(ptr_driveRequest->resettime);
       tapeDrive->setTotalMB(ptr_driveRequest->TotalMB);
       tapeDrive->setTransferredMB(ptr_driveRequest->MBtransf);

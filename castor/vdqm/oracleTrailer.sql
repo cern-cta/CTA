@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.64 $ $Release$ $Date: 2008/04/02 08:44:50 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.65 $ $Release$ $Date: 2008/04/02 14:53:51 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -349,13 +349,61 @@ END castorVdqm;
 
 
 /**
- * PL/SQL trigger responsible for updating the modification time of a tape
- * drive when the status of that tape drive is changed.
+ * PL/SQL trigger responsible for setting the modification time of a tape
+ * drive when it is inserted into the TapeDrive table.
  */
-CREATE OR REPLACE TRIGGER TR_U_TapeDrive_status
- BEFORE UPDATE OF STATUS ON TAPEDRIVE 
+CREATE OR REPLACE TRIGGER TR_I_TapeDrive
+  BEFORE INSERT ON TapeDrive
+FOR EACH ROW
+BEGIN
+  -- Set modification time
+  :NEW.modificationTime := getTime();
+END;
+
+
+/**
+ * PL/SQL trigger responsible for updating the modification time of a tape
+ * drive.
+ */
+CREATE OR REPLACE TRIGGER TR_U_TapeDrive
+  BEFORE UPDATE OF modificationTime, status ON TapeDrive 
 FOR EACH ROW 
-WHEN (NEW.status != OLD.status)  -- When the status has been modified
+WHEN
+  ((NEW.modificationTime != OLD.modificationTime) OR (NEW.status != OLD.status))
+BEGIN
+  -- Update the modification time
+  :NEW.modificationTime := getTime();
+END;
+
+
+/**
+ * PL/SQL trigger responsible for setting the creation time and initial
+ * modification time of a tape request when it is inserted into the
+ * TapeRequest table.
+ */
+CREATE OR REPLACE TRIGGER TR_I_TapeRequest
+  BEFORE INSERT ON TapeRequest
+FOR EACH ROW
+DECLARE
+  timeVar NUMBER := getTime();
+BEGIN
+  -- Set creation time
+  :NEW.creationTime := timeVar;
+
+  -- Set modification time
+  :NEW.modificationTime := timeVar;
+END;
+
+
+/**
+ * PL/SQL trigger responsible for updating the modification time of a tape
+ * request.
+ */
+CREATE OR REPLACE TRIGGER TR_U_TapeRequest
+  BEFORE UPDATE OF modificationTime, status ON TapeRequest
+FOR EACH ROW
+WHEN
+  ((NEW.modificationTime != OLD.modificationTime) OR (NEW.status != OLD.status))
 BEGIN
   -- Update the modification time
   :NEW.modificationTime := getTime();

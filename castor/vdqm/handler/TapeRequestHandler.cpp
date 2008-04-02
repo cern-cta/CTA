@@ -120,7 +120,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
   //------------------------------------------------------------------------
   //The Tape related informations
   std::auto_ptr<TapeRequest> newTapeReq(new TapeRequest());
-  newTapeReq->setCreationTime(time(NULL));
+  newTapeReq->setCreationTime(0); // Will be set by a database trigger
   // The modification time will only be changed,
   // in case that an error occures during the tape assignment
   // procedure with RTCPD
@@ -292,7 +292,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
     // Set new TapeDriveStatusCode
     tapeDrive->setStatus(STATUS_UNKNOWN);
     
-    tapeReq->setModificationTime(time(NULL));
+    // Modification time will be updated by a database trigger
       
     // Update the data base. To avoid a deadlock, the tape drive has to be 
     // updated first!
