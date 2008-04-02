@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.63 $ $Release$ $Date: 2008/04/01 13:16:43 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.64 $ $Release$ $Date: 2008/04/02 08:44:50 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -346,6 +346,20 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
   TYPE TapeDrive_Cur IS REF CURSOR RETURN TapeDrive%ROWTYPE;
   TYPE TapeRequest_Cur IS REF CURSOR RETURN TapeRequest%ROWTYPE;
 END castorVdqm;
+
+
+/**
+ * PL/SQL trigger responsible for updating the modification time of a tape
+ * drive when the status of that tape drive is changed.
+ */
+CREATE OR REPLACE TRIGGER TR_U_TapeDrive_status
+ BEFORE UPDATE OF STATUS ON TAPEDRIVE 
+FOR EACH ROW 
+WHEN (NEW.status != OLD.status)  -- When the status has been modified
+BEGIN
+  -- Update the modification time
+  :NEW.modificationTime := getTime();
+END;
 
 
 /**
