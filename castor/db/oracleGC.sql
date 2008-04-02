@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.646 $ $Date: 2008/04/01 08:25:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.647 $ $Date: 2008/04/02 08:14:42 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -275,12 +275,14 @@ CREATE OR REPLACE PROCEDURE bulkDelete(sel IN VARCHAR2, tab IN VARCHAR2) AS
 BEGIN
   EXECUTE IMMEDIATE
   'DECLARE
-    cursor s IS '||sel||'
+    CURSOR s IS '||sel||'
     ids "numList";
   BEGIN
     OPEN s;
     LOOP
       FETCH s BULK COLLECT INTO ids LIMIT 10000;
+      FORALL i IN ids.FIRST..ids.LAST
+        DELETE FROM Id2Type WHERE id = ids(i);
       FORALL i IN ids.FIRST..ids.LAST
         DELETE FROM '||tab||' WHERE id = ids(i);
       COMMIT;
@@ -289,101 +291,68 @@ BEGIN
   END;';
 END;
 
-
-/* PL/SQL method to delete a group of requests */
-CREATE OR REPLACE PROCEDURE deleteRequests
-  (tab IN VARCHAR2, typ IN VARCHAR2, cleanTab IN VARCHAR2) AS
+/* A generic method to delete requests of a given type */
+CREATE OR REPLACE Procedure bulkDeleteRequests(reqType IN VARCHAR) AS
 BEGIN
-  -- delete client id2type
-  bulkDelete(
-    'SELECT client FROM '||tab||', '||cleanTab||'
-       WHERE '||tab||'.id = '||cleanTab||'.id;',
-    'Id2Type');
-  -- delete client itself
-  bulkDelete(
-    'SELECT client FROM '||tab||', '||cleanTab||'
-       WHERE '||tab||'.id = '||cleanTab||'.id;',
+  -- first the clients
+  bulkDelete('SELECT client FROM '|| reqType ||' R WHERE
+    NOT EXISTS (SELECT ''x'' FROM SubRequest WHERE request = R.id);',
     'Client');
-  -- delete request id2type
-  bulkDelete(
-    'SELECT id FROM '||cleanTab||' WHERE type = '||typ||';',
-    'Id2Type');
-  -- delete request itself
-  bulkDelete(
-    'SELECT id FROM '||cleanTab||' WHERE type = '||typ||';',
-    tab);
-END;
-
-
-/* internal procedure to efficiently delete all requests in the cleanTab table */
-CREATE OR REPLACE PROCEDURE internalCleaningProc(cleanTab IN VARCHAR) AS
-BEGIN
-  -- Delete SubRequests
-    -- Starting with id
-  bulkDelete(
-     'SELECT SubRequest.id FROM SubRequest, '||cleanTab||'
-       WHERE SubRequest.request = '||cleanTab||'.id;',
-     'Id2Type');
-    -- Then the subRequests
-  bulkDelete(
-     'SELECT SubRequest.id FROM SubRequest, '||cleanTab||'
-       WHERE SubRequest.request = '||cleanTab||'.id;',
-     'SubRequest');
-  -- Delete Request + Clients
-    ---- Get ----
-  deleteRequests('StageGetRequest', '35', cleanTab);
-    ---- Put ----
-  deleteRequests('StagePutRequest', '40', cleanTab);
-    ---- Update ----
-  deleteRequests('StageUpdateRequest', '44', cleanTab);
-    ---- Rm ----
-  deleteRequests('StageRmRequest', '42', cleanTab);
-    ---- PrepareToGet -----
-  deleteRequests('StagePrepareToGetRequest', '36', cleanTab);
-    ---- PrepareToPut ----
-  deleteRequests('StagePrepareToPutRequest', '37', cleanTab);
-    ---- PrepareToUpdate ----
-  deleteRequests('StagePrepareToUpdateRequest', '38', cleanTab);
-    ---- PutDone ----
-  deleteRequests('StagePutDoneRequest', '39', cleanTab);
-    ---- Rm ----
-  deleteRequests('StageRmRequest', '42', cleanTab);
-    ---- Repack ----
-  deleteRequests('StageRepackRequest', '119', cleanTab);
-    ---- DiskCopyReplica ----
-  deleteRequests('StageDiskCopyReplicaRequest', '133', cleanTab);
-  EXECUTE IMMEDIATE 'TRUNCATE TABLE '||cleanTab;
-END;
-
-
-/* Search and delete too old archived subrequests and their requests */
-CREATE OR REPLACE PROCEDURE deleteArchivedRequests(timeOut IN NUMBER) AS
-BEGIN
-  INSERT /*+ APPEND */ INTO ArchivedRequestCleaning
-    SELECT UNIQUE request, type 
-      FROM SubRequest, id2type
-     WHERE subrequest.request = id2type.id
-     GROUP BY request, type
-    HAVING min(status) = 11
-       AND max(status) = 11  -- only ARCHIVED requests are taken into account here
-       AND max(lastModificationTime) < getTime() - timeOut;
+  -- then the requests: they could be merged to make it more efficient
+  bulkDelete('SELECT id FROM '|| reqType ||' R WHERE
+    NOT EXISTS (SELECT ''x'' FROM SubRequest WHERE request = R.id);',
+    reqType);
   COMMIT;
-  internalCleaningProc('ArchivedRequestCleaning');
+END;
+
+/* Search and delete old archived/failed subrequests and their requests */
+CREATE OR REPLACE PROCEDURE deleteArchivedRequests(maxTimeOut IN NUMBER) AS
+  timeOut INTEGER;
+  rate INTEGER;
+BEGIN
+  -- get a rough estimate of the current request processing rate
+  SELECT count(*) INTO rate
+    FROM SubRequest
+   WHERE status IN (9, 11)  -- FAILED_FINISHED, ARCHIVED
+     AND lastModificationTime > getTime() - 1800;
+  timeOut := 500000/rate*1800;    -- try to keep 500k requests max
+  IF timeOut > maxTimeOut THEN
+    timeOut := maxTimeOut;    -- anyway, don't keep very old requests
+  END IF;
+  
+  -- now delete the SubRequests
+  bulkDelete('SELECT id FROM SubRequest WHERE status IN (9, 11)
+                AND lastModificationTime < getTime() - '|| timeOut ||';',
+             'SubRequest');
+  COMMIT;
+  
+  -- and then the related Requests + Clients
+    ---- Get ----
+  bulkDeleteRequests('StageGetRequest');
+    ---- Put ----
+  bulkDeleteRequests('StagePutRequest');
+    ---- Update ----
+  bulkDeleteRequests('StageUpdateRequest');
+    ---- PrepareToGet -----
+  bulkDeleteRequests('StagePrepareToGetRequest');
+    ---- PrepareToPut ----
+  bulkDeleteRequests('StagePrepareToPutRequest');
+    ---- PrepareToUpdate ----
+  bulkDeleteRequests('StagePrepareToUpdateRequest');
+    ---- PutDone ----
+  bulkDeleteRequests('StagePutDoneRequest');
+    ---- Rm ----
+  bulkDeleteRequests('StageRmRequest');
+    ---- Repack ----
+  bulkDeleteRequests('StageRepackRequest');
+    ---- DiskCopyReplica ----
+  bulkDeleteRequests('StageDiskCopyReplicaRequest');
 END;
 
 /* Search and delete "out of date" subrequests and their requests */
 CREATE OR REPLACE PROCEDURE deleteOutOfDateRequests(timeOut IN NUMBER) AS
 BEGIN
-  INSERT /*+ APPEND */ INTO OutOfDateRequestCleaning
-    SELECT UNIQUE request, type 
-      FROM SubRequest, id2type
-     WHERE subrequest.request = id2type.id
-     GROUP BY request, type
-    HAVING min(status) >= 8
-       AND max(status) <= 12 -- repack 
-       AND max(lastModificationTime) < getTime() - timeOut;
-  COMMIT;
-  internalCleaningProc('OutOfDateRequestCleaning');
+  -- superseded by previous procedure. To be dropped in 2.1.8
 END;
 
 
