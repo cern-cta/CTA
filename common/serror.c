@@ -269,7 +269,7 @@ char *sys_sterrlist[ESTMAXERR-ESTBASEOFF+2] =
    "Job timed out while waiting to be scheduled",
    "Scheduler error",
    "No filesystems available in service class",
-   "File has no copy on tape",
+   "File has no copy on tape or no diskcopies are accessible",
    "File is on an offline tape",
    "Request canceled while queuing",
    "BAD ERROR NUMBER"
