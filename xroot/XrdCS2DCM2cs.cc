@@ -8,9 +8,9 @@
 /*              DE-AC02-76-SFO0515 with the Department of Energy              */
 /******************************************************************************/
 
-//         $Id: XrdCS2DCM2cs.cc,v 1.5 2008/04/02 07:12:00 riojac3 Exp $
+//         $Id: XrdCS2DCM2cs.cc,v 1.6 2008/04/02 07:13:32 riojac3 Exp $
 
-const char *XrdCS2DCMCVSID = "$Id: XrdCS2DCM2cs.cc,v 1.5 2008/04/02 07:12:00 riojac3 Exp $";
+const char *XrdCS2DCMCVSID = "$Id: XrdCS2DCM2cs.cc,v 1.6 2008/04/02 07:13:32 riojac3 Exp $";
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -291,19 +291,29 @@ int XrdCS2DCM::CS2_rDone(const char *Tid, unsigned long long reqID,
   const char *TraceID = "_rDone";
   XrdCS2DCMService *sp;
   int allOK = 1;
-  unsigned long long fileid=0;
-  char *nshost=NULL;
 
   
 // Obatin a service object
 //
-   TRACE(DEBUG, "Calling getUpdateDone(" <<reqID << ',' << fileid << ',' << nshost <<") for " <<Lfn);
-   sp = XrdCS2DCMService::Get();
- 
-   parser(Tid,&nshost,&fileid);
+#ifdef CASTOR_217
+  unsigned long long fileid=0;
+  char *nshost=NULL;
+  parser(Tid,&nshost,&fileid);
+  TRACE(DEBUG, "Calling getUpdateDone(" <<reqID << ',' << fileid << ',' << nshost <<") for " <<Lfn);
+#else
+  TRACE(DEBUG, "Calling getUpdateDone(" <<reqID <<" ) for " <<Lfn);
+#endif  
+
+
+  sp = XrdCS2DCMService::Get();
 // Issue the done
 //
-  try {sp->jobSvc->getUpdateDone(reqID,fileid,nshost);}
+  try {
+        #ifdef CASTOR_217
+          sp->jobSvc->getUpdateDone(reqID,fileid,nshost);}
+	#else
+	  sp->jobSvc->getUpdateDone(reqID);}
+        #endif
 
   catch (castor::exception::Communication e)
         {XrdLog.Emsg("rDone", Tid, "Communications error;",
@@ -339,8 +349,6 @@ int  XrdCS2DCM::CS2_wDone(const char *Tid, unsigned long long reqID,
   struct stat buf;
   unsigned long long fileSize = 0;
   int allOK = 1;
-  unsigned long long fileid=0;
-  char *nshost=NULL;
  
  
 // Obtain the file size
@@ -357,13 +365,24 @@ int  XrdCS2DCM::CS2_wDone(const char *Tid, unsigned long long reqID,
 // Insert the requestid into the subRequest
 //
    subReq.setId(reqID);
+#ifdef CASTOR_217
+  unsigned long long fileid=0;
+  char *nshost=NULL;
+  parser(Tid,&nshost,&fileid);
+#endif
 
-   parser(Tid,&nshost,&fileid);
+
 // Issue the prepare for Migration followed by a putDone (new files) or
 // getUpdateDone (existing files opened for r/w).
 //
-  try {TRACE(DEBUG, "Calling prepareForMigration(" <<reqID <<',' <<fileSize << ',' << fileid << ',' << nshost <<") for " <<Pfn);
-       sp->jobSvc->prepareForMigration(&subReq, fileSize, time(NULL),fileid,nshost);
+  try {
+	#ifdef CASTOR_217
+	  TRACE(DEBUG, "Calling prepareForMigration(" <<reqID <<',' <<fileSize << ',' << fileid << ',' << nshost <<") for " <<Pfn);
+	  sp->jobSvc->prepareForMigration(&subReq, fileSize, time(NULL),fileid,nshost);
+	#else
+  	  TRACE(DEBUG, "Calling prepareForMigration(" <<reqID <<',' <<fileSize << ") for " <<Pfn);
+          sp->jobSvc->prepareForMigration(&subReq, fileSize, time(NULL));
+        #endif
       }
   catch (castor::exception::Communication e)
         {XrdLog.Emsg("wDone", Tid, "Communications error;",
@@ -396,22 +415,35 @@ int  XrdCS2DCM::CS2_wFail(const char *Tid, unsigned long long reqID,
   const char *TraceID = "_wFail";
   XrdCS2DCMService *sp;
   int allOK = 1;
-  unsigned long long fileid;
-  char *nshost;
 // Obatin a service object
 //
    sp = XrdCS2DCMService::Get();
 
 // Issue the putFailed (new file) or getUpdateFailed (existing files open for rw)
 //
-
+#ifdef CASTOR_217
+   unsigned long long fileid;
+   char *nshost;
    parser(Tid,&nshost,&fileid);
-  try {if (isNew)
-          {TRACE(DEBUG, "Calling putFailed(" <<reqID <<',' << fileid << ',' << nshost <<") for " <<Pfn);
-           sp->jobSvc->putFailed(reqID, fileid,nshost);
-          } else {
-           TRACE(DEBUG, "Calling getUpdateFailed(" <<reqID << ',' << fileid << ',' << nshost <<") for " <<Pfn);
-           sp->jobSvc->getUpdateFailed(reqID,fileid,nshost);
+#endif
+
+  try {
+       if (isNew){ 
+         #ifdef CASTOR_217
+	    TRACE(DEBUG, "Calling putFailed(" <<reqID <<',' << fileid << ',' << nshost <<") for " <<Pfn);
+            sp->jobSvc->putFailed(reqID, fileid,nshost);
+	 #else
+ 	    TRACE(DEBUG, "Calling putFailed(" <<reqID <<") for " <<Pfn);
+            sp->jobSvc->putFailed(reqID);
+	 #endif
+       } else {
+	  #ifdef CASTOR_217
+            TRACE(DEBUG, "Calling getUpdateFailed(" <<reqID << ',' << fileid << ',' << nshost <<") for " <<Pfn);
+            sp->jobSvc->getUpdateFailed(reqID,fileid,nshost);	
+	  #else
+	    TRACE(DEBUG, "Calling getUpdateFailed(" <<reqID << ") for " <<Pfn);
+            sp->jobSvc->getUpdateFailed(reqID);
+          #endif
           }
       }
   catch (castor::exception::Communication e)
