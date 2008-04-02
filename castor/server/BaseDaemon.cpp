@@ -162,24 +162,24 @@ void castor::server::BaseDaemon::handleSignals()
         {
           // Reap dead processes to prevent defunct processes
           pid_t pid = 0;
-	  int status;
-	  while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
-	    if (WIFEXITED(status)) {
-	      if (WEXITSTATUS(status) == 0) {
-		clog() << DEBUG << "CHILD STOPPED [SIGCHLD] - " << pid 
-		       << " terminated normally" << std::endl;
-	      } else {
-		clog() << ERROR << "CHILD STOPPED [SIGCHLD] - " << pid 
-		       << " terminated unexpectedly, exit code " 
-		       << WTERMSIG(status) << std::endl;
-	      }
-	    } else if (WIFSIGNALED(status)) {
-	      clog() << ERROR << "CHILD STOPPED [SIGCHLD] - " << pid 
-		     << " exited with signal " 
-		     << WTERMSIG(status) << std::endl;
-	    }
-	  }
-	  break;
+          int status;
+          while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+            if (WIFEXITED(status)) {
+              if (WEXITSTATUS(status) == 0) {
+                clog() << DEBUG << "CHILD STOPPED [SIGCHLD] - " << pid 
+                       << " terminated normally" << std::endl;
+              } else {
+                clog() << ERROR << "CHILD STOPPED [SIGCHLD] - " << pid 
+                       << " terminated unexpectedly, exit code " 
+                       << WTERMSIG(status) << std::endl;
+              }
+            } else if (WIFSIGNALED(status)) {
+              clog() << ERROR << "CHILD STOPPED [SIGCHLD] - " << pid 
+                     << " exited with signal " 
+                     << WTERMSIG(status) << std::endl;
+            }
+          }
+          break;
         }
         
         default:
@@ -211,7 +211,7 @@ void castor::server::BaseDaemon::waitAllThreads(bool beGraceful) throw()
 {
   std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
   std::vector<castor::server::BaseThreadPool*> busyTPools;
-  // stop all pools, and keep the busy ones
+  // shutdown all pools, and keep the busy ones
   for(tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
     if(!tp->second->shutdown()) {
       busyTPools.push_back(tp->second);
@@ -259,7 +259,7 @@ void* castor::server::_signalThread_run(void* arg)
       // so from now on this function is calling nothing external
 
       // Because of the way in which signals are handled in the signalHandler
-      // method its more then possible that multiple signals overwrite each other.
+      // method its more than possible that multiple signals overwrite each other.
       // So for example, a killall -15 on a multi threaded, multi process daemon
       // will trap a SIGTERM followed by multiple SIGCHLD's from the dying 
       // children. The SIGCHLD's will overwrite the SIGTERM and it will never be
@@ -272,25 +272,25 @@ void* castor::server::_signalThread_run(void* arg)
       switch (sig_number) {       
       case SIGABRT:
       case SIGTERM:
-	daemon->m_signalMutex->setValueNoMutex(castor::server::STOP_GRACEFULLY);
-	break;
+        daemon->m_signalMutex->setValueNoMutex(castor::server::STOP_GRACEFULLY);
+        break;
         
       case SIGINT:
-	daemon->m_signalMutex->setValueNoMutex(castor::server::STOP_NOW);
-	break;
+        daemon->m_signalMutex->setValueNoMutex(castor::server::STOP_NOW);
+        break;
         
       case SIGCHLD:
-	daemon->m_signalMutex->setValueNoMutex(castor::server::CHILD_STOPPED);
-	break;
+        daemon->m_signalMutex->setValueNoMutex(castor::server::CHILD_STOPPED);
+        break;
 	
       case SIGPIPE:
-	// ignore
-	break;
+        // ignore
+        break;
 	
       default:
-	// all other signals
-	daemon->m_signalMutex->setValueNoMutex(-1*sig_number);
-	break;
+        // all other signals
+        daemon->m_signalMutex->setValueNoMutex(-1*sig_number);
+        break;
       }
       // signal the main thread to process the signal we got
       daemon->m_signalMutex->signal();

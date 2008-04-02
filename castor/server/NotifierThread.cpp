@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: NotifierThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/02/12 13:09:43 $ $Author: itglp $
+* @(#)$RCSfile: NotifierThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/04/02 17:32:03 $ $Author: itglp $
 *
 * A thread to handle notifications to wake up workers in a pool
 *
@@ -80,7 +80,7 @@ void castor::server::NotifierThread::doNotify(char tpName, int nbThreads) throw 
       // only SignalThreadPool's are valid
       return;
 
-    // signal the condition variable: we are friend of the SignalThreadPool
+    // lock the condition variable: we are friend of the SignalThreadPool
     pool->m_poolMutex->lock();
     
     pool->m_notified += nbThreads;
@@ -103,6 +103,7 @@ void castor::server::NotifierThread::doNotify(char tpName, int nbThreads) throw 
     }
     
     if (pool->m_notified > 0) {
+      // wake up sleeping thread(s)
       pool->m_poolMutex->signal();
     }
     

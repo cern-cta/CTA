@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/02/21 15:23:17 $ $Author: waldron $
+ * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/04/02 17:32:03 $ $Author: itglp $
  *
  * A pool of forked processes
  *
@@ -128,7 +128,7 @@ void castor::server::ForkedProcessPool::init()
       ps->closeWrite();
       for (int fd = ps->getFdWrite(); fd < getdtablesize(); fd++) {
         if ((fd != ps->getFdRead()) && (fd != ps->getFdWrite())) {
-	  close(fd);
+          close(fd);
         }
       }
       childRun(ps);      // this is a blocking call
@@ -143,7 +143,7 @@ void castor::server::ForkedProcessPool::init()
       int fd = ps->getFdWrite();
       FD_SET(fd, &m_writePipes);
       if (fd > m_writeHighFd) {
-	m_writeHighFd = fd;
+        m_writeHighFd = fd;
       }
     }
   }
