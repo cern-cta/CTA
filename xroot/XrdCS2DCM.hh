@@ -10,7 +10,7 @@
 /*              DE-AC02-76-SFO0515 with the Department of Energy              */
 /******************************************************************************/
 
-//         $Id: XrdCS2DCM.hh,v 1.3 2008/04/01 12:33:33 apeters Exp $
+//         $Id: XrdCS2DCM.hh,v 1.4 2008/04/02 07:12:00 riojac3 Exp $
 
 #include "XrdOuc/XrdOucStream.hh"
 #include "XrdSys/XrdSysPthread.hh"
@@ -49,6 +49,7 @@ private:
 
 void  addLink(const char *Rfn, const char *Lfn);
 void  delLink(const char *Lfn);
+void  parser(const char *,char **, unsigned long long *);
 int   CS2_Open(const char *Tid, const char *Fid, char *Lfn,
                int flags, off_t fsize);
 int   CS2_rDone(const char *, unsigned long long, const char *);
