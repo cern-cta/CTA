@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.647 $ $Date: 2008/04/02 08:14:42 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.648 $ $Date: 2008/04/02 08:18:58 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -353,6 +353,7 @@ END;
 CREATE OR REPLACE PROCEDURE deleteOutOfDateRequests(timeOut IN NUMBER) AS
 BEGIN
   -- superseded by previous procedure. To be dropped in 2.1.8
+  RETURN;
 END;
 
 
@@ -431,18 +432,8 @@ CREATE OR REPLACE PROCEDURE deleteOutOfDateRecallDcs
 (timeOut IN NUMBER,
  dropped OUT castor.FileEntry_Cur) AS
 BEGIN
-  FOR cf IN (SELECT c.filesize, c.id, c.fileId, c.nsHost, d.fileSystem, d.id AS dcid
-               FROM DiskCopy d, SubRequest s, StagePrepareToPutRequest r, Castorfile c
-              WHERE d.castorfile = s.castorfile
-                AND s.request = r.id
-                AND c.id = d.castorfile
-                AND d.creationtime < getTime() - timeOut
-                AND d.status = 2) LOOP -- WAITTAPERECALL
-    -- cancel recall and fail subrequests
-    cancelRecall(cf.id, cf.dcId, 7); -- FAILED
-    INSERT INTO OutOfDateRecallDropped VALUES (cf.fileId, cf.nsHost);
-  END LOOP;
-  OPEN dropped FOR SELECT * FROM OutOfDateRecallDropped;
+  -- this was a workaround, a priori no longer needed. To be dropped
+  RETURN;
 END;
 
 
