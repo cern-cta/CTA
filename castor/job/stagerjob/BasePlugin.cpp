@@ -1,0 +1,130 @@
+/******************************************************************************
+ *                      BasePlugin.cpp
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
+ *
+ * Base class for a stagerJob plugin
+ *
+ * @author Sebastien Ponce
+ *****************************************************************************/
+
+// Include Files
+#include <sys/types.h>
+#include <sys/wait.h>
+#include "castor/IClient.hpp"
+#include "castor/dlf/Dlf.hpp"
+#include "castor/rh/Client.hpp"
+#include "castor/rh/IOResponse.hpp"
+#include "castor/io/ClientSocket.hpp"
+#include "castor/exception/Internal.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/job/stagerjob/BasePlugin.hpp"
+
+#define SELECT_TIMEOUT 60
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::job::stagerjob::BasePlugin::BasePlugin
+(std::string protocol) throw() :
+  m_selectTimeOut(SELECT_TIMEOUT) {
+  castor::job::stagerjob::StagerJob::registerPlugin(protocol, this);
+}
+
+//------------------------------------------------------------------------------
+// getPortRange
+//------------------------------------------------------------------------------
+std::pair<int, int>
+castor::job::stagerjob::BasePlugin::getPortRange
+(castor::job::stagerjob::InputArguments &args) throw() {
+  return std::pair<int, int>(1024, 65536);
+}
+
+//------------------------------------------------------------------------------
+// waitForChild
+//------------------------------------------------------------------------------
+bool castor::job::stagerjob::BasePlugin::waitForChild
+(castor::job::stagerjob::InputArguments &args) throw() {
+  int childFailed = false;
+  // Wait for all child to exit
+  while (1) {
+    int term_status = -1;
+    pid_t childPid = waitpid(-1, &term_status, WNOHANG);
+    if (childPid < 0) {
+      break;
+    }
+    if (childPid > 0) {
+      if (WIFEXITED(term_status)) {
+        int status = WEXITSTATUS(term_status);
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+           castor::dlf::Param("pid", childPid),
+           castor::dlf::Param("status", status),
+           castor::dlf::Param(args.subRequestUuid)};
+        childFailed = (status != 0);
+        if (childFailed) {
+          castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
+                                  CHILDEXITED, 4, params, &args.fileId);
+        } else {
+          castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_DEBUG,
+                                  CHILDEXITED, 4, params, &args.fileId);
+        }
+      } else if (WIFSIGNALED(term_status)) {
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+           castor::dlf::Param("pid", childPid),
+           castor::dlf::Param("signal", WTERMSIG(term_status)),
+           castor::dlf::Param(args.subRequestUuid)};
+        castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
+                                CHILDSIGNALED, 4, params, &args.fileId);
+        childFailed = true;
+      } else {
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+           castor::dlf::Param("pid", childPid),
+           castor::dlf::Param(args.subRequestUuid)};
+        castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
+                                CHILDSTOPPED, 3, params, &args.fileId);
+        childFailed = true;
+      }
+    }
+    sleep(1);
+  }
+  return childFailed;
+}
+
+//------------------------------------------------------------------------------
+// sendResponse
+//------------------------------------------------------------------------------
+void castor::job::stagerjob::BasePlugin::sendResponse
+(castor::IClient *client,
+ castor::rh::IOResponse &response)
+  throw (castor::exception::Exception) {
+  castor::rh::Client* rhc = dynamic_cast<castor::rh::Client*>(client);
+  if (0 == rhc) {
+    castor::exception::Internal e;
+    e.getMessage() << "Unable to reply to client, unknown client type : "
+                   << client->type();
+    throw e;
+  }
+  castor::io::ClientSocket s(rhc->port(), rhc->ipAddress());
+  s.connect();
+  s.sendObject(response);
+}
+
