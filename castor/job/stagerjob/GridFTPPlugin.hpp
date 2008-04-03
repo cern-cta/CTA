@@ -71,12 +71,6 @@ namespace castor {
         (castor::job::stagerjob::InputArguments &args) throw();
 
         /**
-         * Specific socket binding for GridFTP, respecting port ranges
-         */
-        virtual void bindSocket(int s, InputArguments &args)
-          throw (castor::exception::Exception);
-
-        /**
          * hook for the code to be executed just after the mover fork,
          * in the parent process. Only logging and calling the method
          * of InstrumentedPlugin.
