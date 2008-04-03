@@ -15,7 +15,7 @@ DEBUG=1
 
 Wait4File () {
     Debug "Checking file $2 ..."
-    tcnt=45
+    tcnt=10
     time=1
     warn=0
     until test -${1} $2 -o $tcnt -eq 0; do
