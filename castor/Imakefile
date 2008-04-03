@@ -400,6 +400,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               exception/PermissionDenied.cpp \
               exception/RequestCanceled.cpp \
               exception/SQLError.cpp \
+              exception/TimeOut.cpp \
               exception/TooBig.cpp \
               exception/SegmentNotAccessible.cpp \
 	      exception/TapeOffline.cpp \
