@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.65 $ $Release$ $Date: 2008/04/02 14:53:51 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.66 $ $Release$ $Date: 2008/04/03 07:16:26 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -142,6 +142,14 @@ ALTER TABLE VDQMTAPE MODIFY (TPMODE NOT NULL);
 ALTER TABLE TapeDriveDedication
   ADD CONSTRAINT I_U_TapeDrvDedic_tapeDrv_mode
     UNIQUE (tapeDrive, accessMode);
+
+
+/* Check constraints */
+-- The tapeAccessMode column of the TapeDrive table has 3 possible values:
+-- -1=unknown, 0=write-disabled or 1=write-enabled
+ALTER TABLE TapeDrive
+  ADD CONSTRAINT CH_TapeDrive_tapeAccessMode
+    CHECK ((tapeAccessMode=-1) OR (tapeAccessMode=0) OR (tapeAccessMode=1));
 
 
 /* Foreign key constraints with an index for each */
