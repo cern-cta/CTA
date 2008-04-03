@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.7-3_to_2.1.7-4.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/04/02 16:30:50 $ $Author: waldron $
+ * @(#)$RCSfile: 2.1.7-3_to_2.1.7-4.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/04/03 09:39:34 $ $Author: waldron $
  *
  * This script upgrades a CASTOR v2.1.7-3 database into v2.1.7-4
  *
@@ -49,9 +49,6 @@ DROP PROCEDURE deleteOutOfDateRecallDcs;
 DROP TABLE OutOfDateRequestCleaning;
 DROP TABLE ArchivedRequestCleaning;
 DROP TABLE OutOfDateRecallDropped;
-
-/* Enable row movement */
-ALTER TABLE Id2Type ENABLE ROW MOVEMENT;
 
 /* Update and revalidation of all PL-SQL code */
 /**********************************************/
