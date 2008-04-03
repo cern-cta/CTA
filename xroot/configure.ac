@@ -1,4 +1,4 @@
-AC_INIT([xrootd Castor2], [20070802cvs_4_2.1.46.1])
+AC_INIT([xrootd Castor2], [20070802cvs_8_v2.1.7.1])
 AC_PREREQ(2.53)
 AC_CONFIG_SRCDIR([XrdCS2Xmi.hh])
 

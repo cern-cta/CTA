@@ -10,7 +10,7 @@
 /*              DE-AC02-76-SFO0515 with the Department of Energy              */
 /******************************************************************************/
 
-//         $Id: XrdCS2DCM.hh,v 1.4 2008/04/02 07:12:00 riojac3 Exp $
+//         $Id: XrdCS2DCM.hh,v 1.5 2008/04/03 15:11:22 apeters Exp $
 
 #include "XrdOuc/XrdOucStream.hh"
 #include "XrdSys/XrdSysPthread.hh"
@@ -53,8 +53,8 @@ void  parser(const char *,char **, unsigned long long *);
 int   CS2_Open(const char *Tid, const char *Fid, char *Lfn,
                int flags, off_t fsize);
 int   CS2_rDone(const char *, unsigned long long, const char *);
-int   CS2_wDone(const char *, unsigned long long, const char *);
-int   CS2_wFail(const char *, unsigned long long, const char *, int);
+int   CS2_wDone(const char *, unsigned long long, const char *, const char *);
+int   CS2_wFail(const char *, unsigned long long, const char *, const char *, int);
 int   CS2_Init();
 void  failRequest(char *Pfn);
 int   makeFname(char *, const char *, int, const char *);

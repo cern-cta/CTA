@@ -8,9 +8,9 @@
 /*              DE-AC02-76-SFO0515 with the Department of Energy              */
 /******************************************************************************/
 
-//         $Id: XrdCS2DCM.cc,v 1.3 2008/04/01 12:33:33 apeters Exp $
+//         $Id: XrdCS2DCM.cc,v 1.4 2008/04/03 15:11:22 apeters Exp $
 
-const char *XrdCS2DCM2csCVSID = "$Id: XrdCS2DCM.cc,v 1.3 2008/04/01 12:33:33 apeters Exp $";
+const char *XrdCS2DCM2csCVSID = "$Id: XrdCS2DCM.cc,v 1.4 2008/04/03 15:11:22 apeters Exp $";
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -441,8 +441,8 @@ int XrdCS2DCM::Release(const char *Tid, const char *Lfn, int Fail)
 //
    while((reqID = theFile.reqID()))
         {if (isNew | isMod)
-            if (Fail) CS2_wFail(Tid, reqID, Pfn, isNew);
-               else   CS2_wDone(Tid, reqID, Pfn);
+            if (Fail) CS2_wFail(Tid, reqID, Pfn, Lfn,isNew);
+               else   CS2_wDone(Tid, reqID, Pfn, Lfn);
 	 else  
 	    CS2_rDone(Tid, reqID, Lfn);
         }

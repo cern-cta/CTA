@@ -5,7 +5,7 @@
 ## Author: Andreas Joachim Peters <andreas.joachim.peters@cern.ch>
 ## Initial version: 13.4.2007
 ##
-## Version info: $Id: Makefile.am,v 1.1 2008/02/25 15:15:46 apeters Exp $
+## Version info: $Id: Makefile.am,v 1.2 2008/04/03 15:11:22 apeters Exp $
 ## Checked in by $Author: apeters $
 #######################################################################
 
@@ -13,7 +13,7 @@ XRDCS2 = `if test -L XrdCS2; then unlink XrdCS2; fi; if ! test -L XrdCS2; then l
 
 lib_LTLIBRARIES = libXrdCS2.la
 
-INCLUDES = -I$(CASTOR_INCDIR) -I$(CASTOR_INCDIR)/h -I$(XROOTD_LOCATION)/include/xrootd/ -I../ $(XRDCS2) -DCASTOR_214
+INCLUDES = -I$(CASTOR_INCDIR) -I$(CASTOR_INCDIR)/h -I$(XROOTD_LOCATION)/include/xrootd/ -I../ $(XRDCS2) -DCASTOR_217
 
 
 libXrdCS2_la_SOURCES =  XrdCS2Req.cc \

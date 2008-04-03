@@ -8,9 +8,9 @@
 /*              DE-AC02-76-SFO0515 with the Department of Energy              */
 /******************************************************************************/
 
-//         $Id: XrdCS2DCM2cs.cc,v 1.6 2008/04/02 07:13:32 riojac3 Exp $
+//         $Id: XrdCS2DCM2cs.cc,v 1.7 2008/04/03 15:11:23 apeters Exp $
 
-const char *XrdCS2DCMCVSID = "$Id: XrdCS2DCM2cs.cc,v 1.6 2008/04/02 07:13:32 riojac3 Exp $";
+const char *XrdCS2DCMCVSID = "$Id: XrdCS2DCM2cs.cc,v 1.7 2008/04/03 15:11:23 apeters Exp $";
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -30,6 +30,7 @@ const char *XrdCS2DCMCVSID = "$Id: XrdCS2DCM2cs.cc,v 1.6 2008/04/02 07:13:32 rio
 #include "XrdSys/XrdSysTimer.hh"
 #include "XrdSys/XrdSysPthread.hh"
 #include "XrdOuc/XrdOucUtils.hh"
+#include "XrdOuc/XrdOucString.hh"
 #include "XrdCS2/XrdCS2DCM.hh"
 
 #include "XrdNet/XrdNetLink.hh"
@@ -263,15 +264,33 @@ int XrdCS2DCM::CS2_Open(const char *Tid, const char *Fid, char *Lfn,
 /*                                                                              */
 /********************************************************************************/
 
-void XrdCS2DCM::parser(const char *Fid,char **nshost, unsigned long long *fileid){
+void XrdCS2DCM::parser(const char *filename,char **nshost, unsigned long long *fileid){
+  const char *TraceID = "parser";
+  char *endP,*servP;
+  char* Fid=NULL;
 
-char *endP,*servP;
+  XrdOucString cname=XPath;
+  cname += "/";
+  cname += filename;
+  cname.replace("%","/");
+  char linkbuffer[1024];
+  if (readlink(cname.c_str(),linkbuffer,sizeof(linkbuffer)) != -1 ) {
+    Fid = basename(linkbuffer);
+  } else {
+    Fid = "0000000@unknown";
+  }
 
+  TRACE(DEBUG, "Fileid=" <<Fid);
+    
 // Extract out the requestid from Fid (<reqid>:<fid>@<server>)
 
   if ((endP = index(Fid, ':'))){
     Fid = endP+1;
   }
+  if (strchr(Fid,'.')) {
+    *(strchr(Fid,'.')) = 0;
+  }
+
   if ((servP = index(Fid, '@'))){
     servP++;
     *fileid = strtoll(Fid, &endP, 10);
@@ -298,7 +317,7 @@ int XrdCS2DCM::CS2_rDone(const char *Tid, unsigned long long reqID,
 #ifdef CASTOR_217
   unsigned long long fileid=0;
   char *nshost=NULL;
-  parser(Tid,&nshost,&fileid);
+  parser(Lfn,&nshost,&fileid);
   TRACE(DEBUG, "Calling getUpdateDone(" <<reqID << ',' << fileid << ',' << nshost <<") for " <<Lfn);
 #else
   TRACE(DEBUG, "Calling getUpdateDone(" <<reqID <<" ) for " <<Lfn);
@@ -340,8 +359,8 @@ int XrdCS2DCM::CS2_rDone(const char *Tid, unsigned long long reqID,
 /*                             C S 2 _ w D o n e                              */
 /******************************************************************************/
   
-int  XrdCS2DCM::CS2_wDone(const char *Tid, unsigned long long reqID, 
-                          const char *Pfn)
+int  XrdCS2DCM::CS2_wDone(const char *Tid,  unsigned long long reqID, 
+                          const char *Pfn, const char *Lfn)
 {
   const char *TraceID = "_wDone";
   castor::stager::SubRequest subReq;
@@ -368,7 +387,7 @@ int  XrdCS2DCM::CS2_wDone(const char *Tid, unsigned long long reqID,
 #ifdef CASTOR_217
   unsigned long long fileid=0;
   char *nshost=NULL;
-  parser(Tid,&nshost,&fileid);
+  parser(Lfn,&nshost,&fileid);
 #endif
 
 
@@ -410,7 +429,7 @@ int  XrdCS2DCM::CS2_wDone(const char *Tid, unsigned long long reqID,
 /******************************************************************************/
   
 int  XrdCS2DCM::CS2_wFail(const char *Tid, unsigned long long reqID, 
-                          const char *Pfn, int isNew)
+                          const char *Pfn, const char *Lfn, int isNew)
 {
   const char *TraceID = "_wFail";
   XrdCS2DCMService *sp;
@@ -424,7 +443,7 @@ int  XrdCS2DCM::CS2_wFail(const char *Tid, unsigned long long reqID,
 #ifdef CASTOR_217
    unsigned long long fileid;
    char *nshost;
-   parser(Tid,&nshost,&fileid);
+   parser(Lfn,&nshost,&fileid);
 #endif
 
   try {

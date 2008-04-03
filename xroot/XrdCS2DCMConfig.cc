@@ -8,9 +8,9 @@
 /*              DE-AC02-76-SFO0515 with the Department of Energy              */
 /******************************************************************************/
 
-//         $Id: XrdCS2DCMConfig.cc,v 1.3 2008/04/01 12:33:33 apeters Exp $
+//         $Id: XrdCS2DCMConfig.cc,v 1.4 2008/04/03 15:11:23 apeters Exp $
 
-const char *XrdCS2DCMConfigCVSID = "$Id: XrdCS2DCMConfig.cc,v 1.3 2008/04/01 12:33:33 apeters Exp $";
+const char *XrdCS2DCMConfigCVSID = "$Id: XrdCS2DCMConfig.cc,v 1.4 2008/04/03 15:11:23 apeters Exp $";
 
 #include <dirent.h>
 #include <fcntl.h>
@@ -333,7 +333,7 @@ void XrdCS2DCM::Cleanup()
          {if (dir->d_name[0] != '%') continue;
           cp = dir->d_name;
           while(*cp) {if (*cp == '%') *cp = '/'; cp++;}
-          fnum += Release("CS2d", dir->d_name, 1);
+	  fnum += Release("CS2d", dir->d_name, 1);
           errno = 0;
          }
 

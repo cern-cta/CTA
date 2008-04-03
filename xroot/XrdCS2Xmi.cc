@@ -8,9 +8,9 @@
 /*              DE-AC02-76-SFO0515 with the Department of Energy              */
 /******************************************************************************/
 
-//         $Id: XrdCS2Xmi.cc,v 1.3 2008/04/01 12:33:33 apeters Exp $
+//         $Id: XrdCS2Xmi.cc,v 1.4 2008/04/03 15:11:23 apeters Exp $
 
-const char *XrdCS2Xmi2csCVSID = "$Id: XrdCS2Xmi.cc,v 1.3 2008/04/01 12:33:33 apeters Exp $";
+const char *XrdCS2Xmi2csCVSID = "$Id: XrdCS2Xmi.cc,v 1.4 2008/04/03 15:11:23 apeters Exp $";
 
 #include <stdlib.h>
 #include <string.h>
@@ -593,10 +593,10 @@ int XrdCS2Xmi::Prep(const char *ReqID, const char *path, int opts)
   
   req = &prepReq_ro; rType = "Prep2Get";
 
-#ifndef CASTOR_214
+#ifdef CASTOR_216
   prepClient.setOption(&Opts, &prepReq_ro);
-#else 
-  prepClient.setOption(&Opts);
+#else
+  prepClient.setOptions(&Opts);
 #endif
 
 
@@ -827,10 +827,14 @@ void XrdCS2Xmi::doPut(XrdOlbReq *Request, const char *path)
 //
 #ifdef CASTOR_214
    putHlp_ww.setOptions(&Opts);
-   putClient.setOption(&Opts);
-#else
-   putClient.setOption(&Opts, &putReq_ww);
 #endif
+
+#ifdef CASTOR_216
+   putClient.setOption(&Opts, &putReq_ww);
+#else
+   putClient.setOptions(&Opts);
+#endif
+
 
 
    try   {DEBUG("Sending Put path=" <<path);
@@ -1007,9 +1011,12 @@ void XrdCS2Xmi::doGet(XrdOlbReq *Request, const char *path, bool noresponse )
 //
 #ifdef CASTOR_214
    getHlp_ww.setOptions(&Opts);
-   getClient.setOption(&Opts);
-#else
+#endif
+
+#ifdef CASTOR_216
    getClient.setOption(&Opts, &getReq_ro);
+#else
+   getClient.setOptions(&Opts);
 #endif
 
    try   {DEBUG("Sending Get path=" <<path);
