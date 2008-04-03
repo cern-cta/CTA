@@ -1,0 +1,102 @@
+#
+#                      castor/job/stagerjob/Imakefile
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Release$ $Date: 2008/04/03 14:34:35 $ $Author: sponcec3 $
+#
+# Makefile for the CASTOR2 stagerjob
+#
+# @author castor dev team
+
+#include <Project.tmpl>
+
+#if !defined(_WIN32)
+#if linux
+DEBUG  = -g -O0
+#else
+DEBUG  = -g
+#endif
+#endif
+
+#ifdef StagerSuperUser
+STAGERSUPERUSER0 = StagerSuperUser
+#else
+STAGERSUPERUSER0 = stage
+#endif
+#ifdef StagerSuperGroup
+STAGERSUPERGROUP0 = StagerSuperGroup
+#else
+STAGERSUPERGROUP0 = st
+#endif
+STAGERSUPERUSER  = -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER0)\"
+STAGERSUPERGROUP = -DSTAGERSUPERGROUP=\"$(STAGERSUPERGROUP0)\"
+
+INCLUDES = -I FileName(FileName(../..,..),h) -I FileName(../..,..)
+CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) $(STAGERSUPERUSER) $(STAGERSUPERGROUP) `curl-config --cflags`
+
+LIBS = -lshift `curl-config --libs` -Wl,-rpath-link,../../../shlib
+
+JOB_SRCS = StagerJob.cpp \
+           BasePlugin.cpp \
+           RawMoverPlugin.cpp \
+           InstrumentedMoverPlugin.cpp \
+           RfioPlugin.cpp \
+           RootPlugin.cpp \
+           XRootPlugin.cpp \
+           GridFTPPlugin.cpp \
+           ../SharedResourceHelper.cpp
+
+JOB_OBJS = $(JOB_SRCS:.cpp=.Osuf)
+
+DEPLIB = DepSharedLibraryTargetName(../../shlib,shift)
+
+LDFLAGS += -L FileName(../../..,shlib) $(MTLDFLAGS)
+LD = g++
+
+all: ProgramTargetName(stagerJob)
+
+NormalProgramTarget(stagerJob,$(JOB_OBJS),$(DEPLIB),$(LIBS))
+
+MakeDepSharedLibrary(../../shlib,shift)
+
+Makefiles:
+
+#if defined(_WIN32)
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend $(INCLUDES) $(JOB_SRCS) 2> /dev/null
+#endif
+
+install: FileName($(BIN),diskCopyTransfer)
+
+InstallProgram(stagerJob,$(BIN),root,bin,755)
+
+install.man: $(MANDIR)
+MakeDir($(MANDIR),root,bin,0755)
+
+exportman:
+
+clean:
+	-@RemoveFiles(FilesToClean $(JOB_OBJS))
+
+clobber: clean
+	-@RemoveFiles(ProgramTargetName(stagerJob))
+
+FORCE:
