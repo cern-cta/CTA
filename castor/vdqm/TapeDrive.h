@@ -193,22 +193,6 @@ int Cvdqm_TapeDrive_driveName(struct Cvdqm_TapeDrive_t* instance, const char** v
 int Cvdqm_TapeDrive_setDriveName(struct Cvdqm_TapeDrive_t* instance, const char* new_var);
 
 /**
- * Get the value of tapeAccessMode
- * The tape access mode is the information, how the tape drive is accessing the
- * mounted tape. The value could  be WRITE_ENABLE, WRITE_DISABLE or -1 for
- * UNKNOWN.
- */
-int Cvdqm_TapeDrive_tapeAccessMode(struct Cvdqm_TapeDrive_t* instance, int* var);
-
-/**
- * Set the value of tapeAccessMode
- * The tape access mode is the information, how the tape drive is accessing the
- * mounted tape. The value could  be WRITE_ENABLE, WRITE_DISABLE or -1 for
- * UNKNOWN.
- */
-int Cvdqm_TapeDrive_setTapeAccessMode(struct Cvdqm_TapeDrive_t* instance, int new_var);
-
-/**
  * Get the value of id
  * The id of this object
  */

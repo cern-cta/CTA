@@ -61,7 +61,7 @@ static castor::CnvFactory<castor::db::cnv::DbTapeDriveCnv>* s_factoryDbTapeDrive
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbTapeDriveCnv::s_insertStatementString =
-"INSERT INTO TapeDrive (jobID, modificationTime, resettime, usecount, errcount, transferredMB, totalMB, driveName, tapeAccessMode, id, tape, runningTapeReq, deviceGroupName, status, tapeServer) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,ids_seq.nextval,:10,:11,:12,:13,:14) RETURNING id INTO :15";
+"INSERT INTO TapeDrive (jobID, modificationTime, resettime, usecount, errcount, transferredMB, totalMB, driveName, id, tape, runningTapeReq, deviceGroupName, status, tapeServer) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,ids_seq.nextval,:9,:10,:11,:12,:13) RETURNING id INTO :14";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbTapeDriveCnv::s_deleteStatementString =
@@ -69,11 +69,11 @@ const std::string castor::db::cnv::DbTapeDriveCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbTapeDriveCnv::s_selectStatementString =
-"SELECT jobID, modificationTime, resettime, usecount, errcount, transferredMB, totalMB, driveName, tapeAccessMode, id, tape, runningTapeReq, deviceGroupName, status, tapeServer FROM TapeDrive WHERE id = :1";
+"SELECT jobID, modificationTime, resettime, usecount, errcount, transferredMB, totalMB, driveName, id, tape, runningTapeReq, deviceGroupName, status, tapeServer FROM TapeDrive WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbTapeDriveCnv::s_updateStatementString =
-"UPDATE TapeDrive SET jobID = :1, modificationTime = :2, resettime = :3, usecount = :4, errcount = :5, transferredMB = :6, totalMB = :7, driveName = :8, tapeAccessMode = :9, status = :10 WHERE id = :11";
+"UPDATE TapeDrive SET jobID = :1, modificationTime = :2, resettime = :3, usecount = :4, errcount = :5, transferredMB = :6, totalMB = :7, driveName = :8, status = :9 WHERE id = :10";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbTapeDriveCnv::s_storeTypeStatementString =
@@ -622,7 +622,7 @@ void castor::db::cnv::DbTapeDriveCnv::fillObjVdqmTape(castor::vdqm::TapeDrive* o
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapeId = rset->getInt64(11);
+  u_signed64 tapeId = rset->getInt64(10);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -660,7 +660,7 @@ void castor::db::cnv::DbTapeDriveCnv::fillObjTapeRequest(castor::vdqm::TapeDrive
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 runningTapeReqId = rset->getInt64(12);
+  u_signed64 runningTapeReqId = rset->getInt64(11);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -798,7 +798,7 @@ void castor::db::cnv::DbTapeDriveCnv::fillObjDeviceGroupName(castor::vdqm::TapeD
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 deviceGroupNameId = rset->getInt64(13);
+  u_signed64 deviceGroupNameId = rset->getInt64(12);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -836,7 +836,7 @@ void castor::db::cnv::DbTapeDriveCnv::fillObjTapeServer(castor::vdqm::TapeDrive*
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapeServerId = rset->getInt64(15);
+  u_signed64 tapeServerId = rset->getInt64(14);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -876,7 +876,7 @@ void castor::db::cnv::DbTapeDriveCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(15, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(14, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -890,14 +890,13 @@ void castor::db::cnv::DbTapeDriveCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(6, obj->transferredMB());
     m_insertStatement->setUInt64(7, obj->totalMB());
     m_insertStatement->setString(8, obj->driveName());
-    m_insertStatement->setInt(9, obj->tapeAccessMode());
-    m_insertStatement->setUInt64(10, (type == OBJ_VdqmTape && obj->tape() != 0) ? obj->tape()->id() : 0);
-    m_insertStatement->setUInt64(11, (type == OBJ_TapeRequest && obj->runningTapeReq() != 0) ? obj->runningTapeReq()->id() : 0);
-    m_insertStatement->setUInt64(12, (type == OBJ_DeviceGroupName && obj->deviceGroupName() != 0) ? obj->deviceGroupName()->id() : 0);
-    m_insertStatement->setInt(13, (int)obj->status());
-    m_insertStatement->setUInt64(14, (type == OBJ_TapeServer && obj->tapeServer() != 0) ? obj->tapeServer()->id() : 0);
+    m_insertStatement->setUInt64(9, (type == OBJ_VdqmTape && obj->tape() != 0) ? obj->tape()->id() : 0);
+    m_insertStatement->setUInt64(10, (type == OBJ_TapeRequest && obj->runningTapeReq() != 0) ? obj->runningTapeReq()->id() : 0);
+    m_insertStatement->setUInt64(11, (type == OBJ_DeviceGroupName && obj->deviceGroupName() != 0) ? obj->deviceGroupName()->id() : 0);
+    m_insertStatement->setInt(12, (int)obj->status());
+    m_insertStatement->setUInt64(13, (type == OBJ_TapeServer && obj->tapeServer() != 0) ? obj->tapeServer()->id() : 0);
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(15));
+    obj->setId(m_insertStatement->getUInt64(14));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -922,7 +921,6 @@ void castor::db::cnv::DbTapeDriveCnv::createRep(castor::IAddress* address,
                     << "  transferredMB : " << obj->transferredMB() << std::endl
                     << "  totalMB : " << obj->totalMB() << std::endl
                     << "  driveName : " << obj->driveName() << std::endl
-                    << "  tapeAccessMode : " << obj->tapeAccessMode() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  tape : " << obj->tape() << std::endl
                     << "  runningTapeReq : " << obj->runningTapeReq() << std::endl
@@ -958,9 +956,8 @@ void castor::db::cnv::DbTapeDriveCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt(6, obj->transferredMB());
     m_updateStatement->setUInt64(7, obj->totalMB());
     m_updateStatement->setString(8, obj->driveName());
-    m_updateStatement->setInt(9, obj->tapeAccessMode());
-    m_updateStatement->setInt(10, (int)obj->status());
-    m_updateStatement->setUInt64(11, obj->id());
+    m_updateStatement->setInt(9, (int)obj->status());
+    m_updateStatement->setUInt64(10, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
@@ -1051,9 +1048,8 @@ castor::IObject* castor::db::cnv::DbTapeDriveCnv::createObj(castor::IAddress* ad
     object->setTransferredMB(rset->getInt(6));
     object->setTotalMB(rset->getUInt64(7));
     object->setDriveName(rset->getString(8));
-    object->setTapeAccessMode(rset->getInt(9));
-    object->setId(rset->getUInt64(10));
-    object->setStatus((enum castor::vdqm::TapeDriveStatusCodes)rset->getInt(14));
+    object->setId(rset->getUInt64(9));
+    object->setStatus((enum castor::vdqm::TapeDriveStatusCodes)rset->getInt(13));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -1096,9 +1092,8 @@ void castor::db::cnv::DbTapeDriveCnv::updateObj(castor::IObject* obj)
     object->setTransferredMB(rset->getInt(6));
     object->setTotalMB(rset->getUInt64(7));
     object->setDriveName(rset->getString(8));
-    object->setTapeAccessMode(rset->getInt(9));
-    object->setId(rset->getUInt64(10));
-    object->setStatus((enum castor::vdqm::TapeDriveStatusCodes)rset->getInt(14));
+    object->setId(rset->getUInt64(9));
+    object->setStatus((enum castor::vdqm::TapeDriveStatusCodes)rset->getInt(13));
     delete rset;
   } catch (castor::exception::SQLError e) {
     castor::exception::InvalidArgument ex;

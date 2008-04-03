@@ -104,7 +104,6 @@ void castor::io::StreamTapeDriveCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->transferredMB();
   ad->stream() << obj->totalMB();
   ad->stream() << obj->driveName();
-  ad->stream() << obj->tapeAccessMode();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
@@ -143,9 +142,6 @@ castor::IObject* castor::io::StreamTapeDriveCnv::createObj(castor::IAddress* add
   std::string driveName;
   ad->stream() >> driveName;
   object->setDriveName(driveName);
-  int tapeAccessMode;
-  ad->stream() >> tapeAccessMode;
-  object->setTapeAccessMode(tapeAccessMode);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
