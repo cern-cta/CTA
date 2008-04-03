@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.68 $ $Release$ $Date: 2008/04/03 13:33:03 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.69 $ $Release$ $Date: 2008/04/03 14:13:38 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -799,10 +799,6 @@ select
   DEVICEGROUPNAME.DGNAME, getVdqmDedicate(TAPEDRIVE.ID) as DEDICATE
 from
   TAPEDRIVE
-inner join TAPEREQUEST on
-  TAPEDRIVE.RUNNINGTAPEREQ = TAPEREQUEST.ID
-inner join TAPEACCESSSPECIFICATION on
-  TAPEREQUEST.TAPEACCESSSPECIFICATION = TAPEACCESSSPECIFICATION.ID
 left outer join TAPESERVER on
   TAPEDRIVE.TAPESERVER = TAPESERVER.ID
 left outer join VDQMTAPE on
@@ -810,7 +806,11 @@ left outer join VDQMTAPE on
 left outer join DEVICEGROUPNAME on
   TAPEDRIVE.DEVICEGROUPNAME = DEVICEGROUPNAME.ID
 left outer join TAPEDRIVEDEDICATION on
-  TAPEDRIVE.ID = TAPEDRIVEDEDICATION.TAPEDRIVE;
+  TAPEDRIVE.ID = TAPEDRIVEDEDICATION.TAPEDRIVE
+left outer join TAPEREQUEST on
+  TAPEDRIVE.RUNNINGTAPEREQ = TAPEREQUEST.ID
+left outer join TAPEACCESSSPECIFICATION on
+  TAPEREQUEST.TAPEACCESSSPECIFICATION = TAPEACCESSSPECIFICATION.ID;
 
 
 /**
