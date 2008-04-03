@@ -215,17 +215,8 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
                       << "TapeDrive is busy with another request" << std::endl;
       throw ex;        
     }
-    
-    ptr_tapeDrive->setTapeAccessMode(-1); /* Mode is unknown */
   } 
-  else {
-    /**
-     * Not needed any more!
-     */
-    ptr_tapeDrive->setTapeAccessMode(
-      tapeRequest->tapeAccessSpecification()->accessMode());
-  }
-  
+
   if (strcmp(tapeRequest->tape()->vid().c_str(), ptr_driveRequest->volid) == 0) {
     //The tape, which is now in the tape drive
     mountedTape = ptr_IVdqmService->selectTape(ptr_driveRequest->volid, 0, 
@@ -280,8 +271,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolUnmountStatus()
   tape = 0;
   
   ptr_tapeDrive->setTape(NULL);
-  ptr_tapeDrive->setTapeAccessMode(-1); // UNKNOWN
-  
+
   
   if ( ptr_tapeDrive->status() == WAIT_FOR_UNMOUNT ) {
     /*

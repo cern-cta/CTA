@@ -106,7 +106,7 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
      castor::dlf::Param("jobID", ptr_driveRequest->jobID),
      castor::dlf::Param("MBtransf", ptr_driveRequest->MBtransf),
      castor::dlf::Param("mode", ptr_driveRequest->mode),
-      castor::dlf::Param("recvtime", ptr_driveRequest->recvtime),
+     castor::dlf::Param("recvtime", ptr_driveRequest->recvtime),
      castor::dlf::Param("reqhost", ptr_driveRequest->reqhost),
      castor::dlf::Param("resettime", ptr_driveRequest->resettime),
      castor::dlf::Param("server", ptr_driveRequest->server),
@@ -475,6 +475,7 @@ void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
   }
 
   castor::vdqm::TapeRequest* runningTapeReq;
+  castor::vdqm::TapeAccessSpecification* tapeAccessSpecification;
   castor::vdqm::VdqmTape* tape;
   castor::vdqm::TapeServer* tapeServer;
   castor::vdqm::DeviceGroupName* devGrpName;
@@ -523,7 +524,6 @@ void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
   ptr_driveRequest->usecount  = tapeDrive->usecount();        
   ptr_driveRequest->errcount  = tapeDrive->errcount();
   ptr_driveRequest->MBtransf  = tapeDrive->transferredMB();
-  ptr_driveRequest->mode      = tapeDrive->tapeAccessMode();
   ptr_driveRequest->TotalMB   = tapeDrive->totalMB();
   
   runningTapeReq = tapeDrive->runningTapeReq();
@@ -532,6 +532,13 @@ void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
     
     castor::vdqm::ClientIdentification* client = runningTapeReq->client();
     strcpy(ptr_driveRequest->reqhost, client->machine().c_str());
+
+    tapeAccessSpecification = runningTapeReq->tapeAccessSpecification();
+    if( NULL != tapeAccessSpecification ) {
+      ptr_driveRequest->mode = tapeAccessSpecification->accessMode();
+
+      tapeAccessSpecification = 0;
+    }
     
     client = 0;
     runningTapeReq = 0; 

@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.66 $ $Release$ $Date: 2008/04/03 07:16:26 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.67 $ $Release$ $Date: 2008/04/03 13:05:28 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -145,11 +145,11 @@ ALTER TABLE TapeDriveDedication
 
 
 /* Check constraints */
--- The tapeAccessMode column of the TapeDrive table has 3 possible values:
--- -1=unknown, 0=write-disabled or 1=write-enabled
-ALTER TABLE TapeDrive
-  ADD CONSTRAINT CH_TapeDrive_tapeAccessMode
-    CHECK ((tapeAccessMode=-1) OR (tapeAccessMode=0) OR (tapeAccessMode=1));
+-- The accessMode column of the TapeAccessSpecification table has 3 possible
+-- values: -1=unknown, 0=write-disabled or 1=write-enabled
+ALTER TABLE TapeAccessSpecification
+  ADD CONSTRAINT CH_TapeAccessSpec_accessMode
+    CHECK ((accessMode=-1) OR (accessMode=0) OR (accessMode=1));
 
 
 /* Foreign key constraints with an index for each */
@@ -794,13 +794,16 @@ select
   TAPEDRIVE.STATUS, TAPEDRIVE.ID, TAPEDRIVE.RUNNINGTAPEREQ, TAPEDRIVE.JOBID,
   TAPEDRIVE.MODIFICATIONTIME -
     (select TIMEZONEOFFSET.VALUE from TIMEZONEOFFSET) as MODIFICATIONTIME,
-  TAPEDRIVE.RESETTIME, TAPEDRIVE.USECOUNT,
-  TAPEDRIVE.ERRCOUNT, TAPEDRIVE.TRANSFERREDMB, TAPEDRIVE.TAPEACCESSMODE,
+  TAPEDRIVE.RESETTIME, TAPEDRIVE.USECOUNT, TAPEDRIVE.ERRCOUNT,
+  TAPEDRIVE.TRANSFERREDMB, TAPEACCESSSPECIFICATION.ACCESSMODE as TAPEACCESSMODE,
   TAPEDRIVE.TOTALMB, TAPESERVER.SERVERNAME, VDQMTAPE.VID, TAPEDRIVE.DRIVENAME,
-  DEVICEGROUPNAME.DGNAME,
-  getVdqmDedicate(TAPEDRIVE.ID) as DEDICATE
+  DEVICEGROUPNAME.DGNAME, getVdqmDedicate(TAPEDRIVE.ID) as DEDICATE
 from
   TAPEDRIVE
+inner join TAPEREQUEST on
+  TAPEDRIVE.RUNNINGTAPEREQ = TAPEREQUEST.ID
+inner join TAPEACCESSSPECIFICATION on
+  TAPEREQUEST.TAPEACCESSSPECIFICATION = TAPEACCESSSPECIFICATION.ID
 left outer join TAPESERVER on
   TAPEDRIVE.TAPESERVER = TAPESERVER.ID
 left outer join VDQMTAPE on
