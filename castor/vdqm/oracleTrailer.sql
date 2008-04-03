@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.67 $ $Release$ $Date: 2008/04/03 13:05:28 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.68 $ $Release$ $Date: 2008/04/03 13:33:03 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -99,7 +99,6 @@ ALTER TABLE TAPEDRIVE MODIFY (RESETTIME NOT NULL);
 ALTER TABLE TAPEDRIVE MODIFY (RUNNINGTAPEREQ NOT NULL);
 ALTER TABLE TAPEDRIVE MODIFY (STATUS NOT NULL);
 ALTER TABLE TAPEDRIVE MODIFY (TAPE NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (TAPEACCESSMODE NOT NULL);
 ALTER TABLE TAPEDRIVE MODIFY (TAPESERVER NOT NULL);
 ALTER TABLE TAPEDRIVE MODIFY (TOTALMB NOT NULL);
 ALTER TABLE TAPEDRIVE MODIFY (TRANSFERREDMB NOT NULL);
