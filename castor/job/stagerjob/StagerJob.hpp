@@ -140,36 +140,20 @@ namespace castor {
       };
 
       /**
-       * a static class holding the list of available plugins
+       * gets the plugin for a given protocol
+       * @param protocol the requested protocol
        */
-      class StagerJob {
+      IPlugin* getPlugin(std::string protocol)
+        throw (castor::exception::Exception);
 
-      public:
-
-        /**
-         * gets the plugin for a given protocol
-         * @param protocol the requested protocol
-         */
-        static IPlugin* getPlugin(std::string protocol)
-          throw (castor::exception::Exception);
-
-        /**
-         * registers a new plugin
-         * @param protocol the associatedprotocol
-         * @param protocol the plugin to register
-         */
-        static void registerPlugin(std::string protocol,
-                                   IPlugin* plugin)
-          throw();
-
-      private:
-
-        /**
-         * the list of available Plugins
-         */
-        static std::map<std::string, IPlugin*> s_plugins;
-
-      }; // end of class StagerJob
+      /**
+       * registers a new plugin
+       * @param protocol the associatedprotocol
+       * @param protocol the plugin to register
+       */
+      void registerPlugin(std::string protocol,
+                          IPlugin* plugin)
+        throw();
 
     } // end of namespace stagerjob
 

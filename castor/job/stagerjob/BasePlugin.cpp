@@ -44,7 +44,7 @@
 castor::job::stagerjob::BasePlugin::BasePlugin
 (std::string protocol) throw() :
   m_selectTimeOut(SELECT_TIMEOUT) {
-  castor::job::stagerjob::StagerJob::registerPlugin(protocol, this);
+  castor::job::stagerjob::registerPlugin(protocol, this);
 }
 
 //------------------------------------------------------------------------------

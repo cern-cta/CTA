@@ -58,17 +58,17 @@
 #define DEFAULT_RETRY_INTERVAL 10
 
 // static map s_plugins
-std::map<std::string, castor::job::stagerjob::IPlugin*>
-castor::job::stagerjob::StagerJob::s_plugins;
+static std::map<std::string, castor::job::stagerjob::IPlugin*> *s_plugins =
+  new std::map<std::string, castor::job::stagerjob::IPlugin*>();
 
 // -----------------------------------------------------------------------
 // getPlugin
 // -----------------------------------------------------------------------
 castor::job::stagerjob::IPlugin*
-castor::job::stagerjob::StagerJob::getPlugin(std::string protocol)
+castor::job::stagerjob::getPlugin(std::string protocol)
   throw (castor::exception::Exception) {
-  if (s_plugins.find(protocol) != s_plugins.end()) {
-    return s_plugins[protocol];
+  if (s_plugins->find(protocol) != s_plugins->end()) {
+    return s_plugins->operator[](protocol);
   }
   castor::exception::NoEntry e;
   e.getMessage() << "No mover plugin found for protocol "
@@ -79,10 +79,10 @@ castor::job::stagerjob::StagerJob::getPlugin(std::string protocol)
 // -----------------------------------------------------------------------
 // registerPlugin
 // -----------------------------------------------------------------------
-void castor::job::stagerjob::StagerJob::registerPlugin
+void castor::job::stagerjob::registerPlugin
 (std::string protocol, castor::job::stagerjob::IPlugin* plugin)
   throw () {
-  s_plugins[protocol] = plugin;
+  s_plugins->operator[](protocol) = plugin;
 }
 
 // -----------------------------------------------------------------------
@@ -561,7 +561,7 @@ void process(castor::job::stagerjob::InputArguments& args)
     }
     // get proper plugin
     castor::job::stagerjob::IPlugin* plugin =
-      castor::job::stagerjob::StagerJob::getPlugin(args.protocol);
+      castor::job::stagerjob::getPlugin(args.protocol);
     // create a socket
     context.socket = socket(AF_INET, SOCK_STREAM, 0);
     if (context.socket < 0) {
