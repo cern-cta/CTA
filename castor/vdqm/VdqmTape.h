@@ -30,7 +30,6 @@
 #define CASTOR_VDQM_VDQMTAPE_H
 
 /* Include Files and Forward declarations for the C world */
-#include "castor/vdqm/TapeStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
 struct Cvdqm_VdqmTape_t;
@@ -99,74 +98,6 @@ int Cvdqm_VdqmTape_vid(struct Cvdqm_VdqmTape_t* instance, const char** var);
 int Cvdqm_VdqmTape_setVid(struct Cvdqm_VdqmTape_t* instance, const char* new_var);
 
 /**
- * Get the value of side
- * Side (for future support of two sided media)
- */
-int Cvdqm_VdqmTape_side(struct Cvdqm_VdqmTape_t* instance, int* var);
-
-/**
- * Set the value of side
- * Side (for future support of two sided media)
- */
-int Cvdqm_VdqmTape_setSide(struct Cvdqm_VdqmTape_t* instance, int new_var);
-
-/**
- * Get the value of tpmode
- * Tape access mode (WRITE_DISABLE or WRITE_ENABLE)
- */
-int Cvdqm_VdqmTape_tpmode(struct Cvdqm_VdqmTape_t* instance, int* var);
-
-/**
- * Set the value of tpmode
- * Tape access mode (WRITE_DISABLE or WRITE_ENABLE)
- */
-int Cvdqm_VdqmTape_setTpmode(struct Cvdqm_VdqmTape_t* instance, int new_var);
-
-/**
- * Get the value of errMsgTxt
- */
-int Cvdqm_VdqmTape_errMsgTxt(struct Cvdqm_VdqmTape_t* instance, const char** var);
-
-/**
- * Set the value of errMsgTxt
- */
-int Cvdqm_VdqmTape_setErrMsgTxt(struct Cvdqm_VdqmTape_t* instance, const char* new_var);
-
-/**
- * Get the value of errorCode
- * RTCOPY serrno if status == SEGMENT_FAILED
- */
-int Cvdqm_VdqmTape_errorCode(struct Cvdqm_VdqmTape_t* instance, int* var);
-
-/**
- * Set the value of errorCode
- * RTCOPY serrno if status == SEGMENT_FAILED
- */
-int Cvdqm_VdqmTape_setErrorCode(struct Cvdqm_VdqmTape_t* instance, int new_var);
-
-/**
- * Get the value of severity
- */
-int Cvdqm_VdqmTape_severity(struct Cvdqm_VdqmTape_t* instance, int* var);
-
-/**
- * Set the value of severity
- */
-int Cvdqm_VdqmTape_setSeverity(struct Cvdqm_VdqmTape_t* instance, int new_var);
-
-/**
- * Get the value of vwAddress
- * Vid worker address for killing requests
- */
-int Cvdqm_VdqmTape_vwAddress(struct Cvdqm_VdqmTape_t* instance, const char** var);
-
-/**
- * Set the value of vwAddress
- * Vid worker address for killing requests
- */
-int Cvdqm_VdqmTape_setVwAddress(struct Cvdqm_VdqmTape_t* instance, const char* new_var);
-
-/**
  * Get the value of id
  * The id of this object
  */
@@ -177,15 +108,5 @@ int Cvdqm_VdqmTape_id(struct Cvdqm_VdqmTape_t* instance, u_signed64* var);
  * The id of this object
  */
 int Cvdqm_VdqmTape_setId(struct Cvdqm_VdqmTape_t* instance, u_signed64 new_var);
-
-/**
- * Get the value of status
- */
-int Cvdqm_VdqmTape_status(struct Cvdqm_VdqmTape_t* instance, enum Cvdqm_TapeStatusCodes_t* var);
-
-/**
- * Set the value of status
- */
-int Cvdqm_VdqmTape_setStatus(struct Cvdqm_VdqmTape_t* instance, enum Cvdqm_TapeStatusCodes_t new_var);
 
 #endif /* CASTOR_VDQM_VDQMTAPE_H */

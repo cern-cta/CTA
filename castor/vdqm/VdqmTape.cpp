@@ -30,7 +30,6 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/vdqm/TapeStatusCodes.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -41,14 +40,7 @@
 //------------------------------------------------------------------------------
 castor::vdqm::VdqmTape::VdqmTape() throw() :
   m_vid(""),
-  m_side(0),
-  m_tpmode(0),
-  m_errMsgTxt(""),
-  m_errorCode(0),
-  m_severity(0),
-  m_vwAddress(""),
-  m_id(0),
-  m_status(TapeStatusCodes(0)) {
+  m_id(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -71,15 +63,8 @@ void castor::vdqm::VdqmTape::print(std::ostream& stream,
   }
   // Output of all members
   stream << indent << "vid : " << m_vid << std::endl;
-  stream << indent << "side : " << m_side << std::endl;
-  stream << indent << "tpmode : " << m_tpmode << std::endl;
-  stream << indent << "errMsgTxt : " << m_errMsgTxt << std::endl;
-  stream << indent << "errorCode : " << m_errorCode << std::endl;
-  stream << indent << "severity : " << m_severity << std::endl;
-  stream << indent << "vwAddress : " << m_vwAddress << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "status : " << TapeStatusCodesStrings[m_status] << std::endl;
 }
 
 //------------------------------------------------------------------------------

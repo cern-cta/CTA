@@ -31,7 +31,6 @@
 
 // Include Files
 #include "castor/IObject.hpp"
-#include "castor/vdqm/TapeStatusCodes.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -116,110 +115,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_side
-       * Side (for future support of two sided media)
-       * @return the value of m_side
-       */
-      int side() const {
-        return m_side;
-      }
-
-      /**
-       * Set the value of m_side
-       * Side (for future support of two sided media)
-       * @param new_var the new value of m_side
-       */
-      void setSide(int new_var) {
-        m_side = new_var;
-      }
-
-      /**
-       * Get the value of m_tpmode
-       * Tape access mode (WRITE_DISABLE or WRITE_ENABLE)
-       * @return the value of m_tpmode
-       */
-      int tpmode() const {
-        return m_tpmode;
-      }
-
-      /**
-       * Set the value of m_tpmode
-       * Tape access mode (WRITE_DISABLE or WRITE_ENABLE)
-       * @param new_var the new value of m_tpmode
-       */
-      void setTpmode(int new_var) {
-        m_tpmode = new_var;
-      }
-
-      /**
-       * Get the value of m_errMsgTxt
-       * @return the value of m_errMsgTxt
-       */
-      std::string errMsgTxt() const {
-        return m_errMsgTxt;
-      }
-
-      /**
-       * Set the value of m_errMsgTxt
-       * @param new_var the new value of m_errMsgTxt
-       */
-      void setErrMsgTxt(std::string new_var) {
-        m_errMsgTxt = new_var;
-      }
-
-      /**
-       * Get the value of m_errorCode
-       * RTCOPY serrno if status == SEGMENT_FAILED
-       * @return the value of m_errorCode
-       */
-      int errorCode() const {
-        return m_errorCode;
-      }
-
-      /**
-       * Set the value of m_errorCode
-       * RTCOPY serrno if status == SEGMENT_FAILED
-       * @param new_var the new value of m_errorCode
-       */
-      void setErrorCode(int new_var) {
-        m_errorCode = new_var;
-      }
-
-      /**
-       * Get the value of m_severity
-       * @return the value of m_severity
-       */
-      int severity() const {
-        return m_severity;
-      }
-
-      /**
-       * Set the value of m_severity
-       * @param new_var the new value of m_severity
-       */
-      void setSeverity(int new_var) {
-        m_severity = new_var;
-      }
-
-      /**
-       * Get the value of m_vwAddress
-       * Vid worker address for killing requests
-       * @return the value of m_vwAddress
-       */
-      std::string vwAddress() const {
-        return m_vwAddress;
-      }
-
-      /**
-       * Set the value of m_vwAddress
-       * Vid worker address for killing requests
-       * @param new_var the new value of m_vwAddress
-       */
-      void setVwAddress(std::string new_var) {
-        m_vwAddress = new_var;
-      }
-
-      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -237,47 +132,13 @@ namespace castor {
         m_id = new_var;
       }
 
-      /**
-       * Get the value of m_status
-       * @return the value of m_status
-       */
-      TapeStatusCodes status() const {
-        return m_status;
-      }
-
-      /**
-       * Set the value of m_status
-       * @param new_var the new value of m_status
-       */
-      void setStatus(TapeStatusCodes new_var) {
-        m_status = new_var;
-      }
-
     private:
 
       /// Tape visual identifier
       std::string m_vid;
 
-      /// Side (for future support of two sided media)
-      int m_side;
-
-      /// Tape access mode (WRITE_DISABLE or WRITE_ENABLE)
-      int m_tpmode;
-
-      std::string m_errMsgTxt;
-
-      /// RTCOPY serrno if status == SEGMENT_FAILED
-      int m_errorCode;
-
-      int m_severity;
-
-      /// Vid worker address for killing requests
-      std::string m_vwAddress;
-
       /// The id of this object
       u_signed64 m_id;
-
-      TapeStatusCodes m_status;
 
     }; /* end of class VdqmTape */
 

@@ -38,7 +38,6 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
-#include "castor/vdqm/TapeStatusCodes.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
 
 //------------------------------------------------------------------------------
@@ -52,7 +51,7 @@ static castor::CnvFactory<castor::db::cnv::DbVdqmTapeCnv>* s_factoryDbVdqmTapeCn
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbVdqmTapeCnv::s_insertStatementString =
-"INSERT INTO VdqmTape (vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, id, status) VALUES (:1,:2,:3,:4,:5,:6,:7,ids_seq.nextval,:8) RETURNING id INTO :9";
+"INSERT INTO VdqmTape (vid, id) VALUES (:1,ids_seq.nextval) RETURNING id INTO :2";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbVdqmTapeCnv::s_deleteStatementString =
@@ -60,11 +59,11 @@ const std::string castor::db::cnv::DbVdqmTapeCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbVdqmTapeCnv::s_selectStatementString =
-"SELECT vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, id, status FROM VdqmTape WHERE id = :1";
+"SELECT vid, id FROM VdqmTape WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbVdqmTapeCnv::s_updateStatementString =
-"UPDATE VdqmTape SET vid = :1, side = :2, tpmode = :3, errMsgTxt = :4, errorCode = :5, severity = :6, vwAddress = :7, status = :8 WHERE id = :9";
+"UPDATE VdqmTape SET vid = :1 WHERE id = :2";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbVdqmTapeCnv::s_storeTypeStatementString =
@@ -199,22 +198,15 @@ void castor::db::cnv::DbVdqmTapeCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(9, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(2, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // Now Save the current object
     m_insertStatement->setString(1, obj->vid());
-    m_insertStatement->setInt(2, obj->side());
-    m_insertStatement->setInt(3, obj->tpmode());
-    m_insertStatement->setString(4, obj->errMsgTxt());
-    m_insertStatement->setInt(5, obj->errorCode());
-    m_insertStatement->setInt(6, obj->severity());
-    m_insertStatement->setString(7, obj->vwAddress());
-    m_insertStatement->setInt(8, (int)obj->status());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(9));
+    obj->setId(m_insertStatement->getUInt64(2));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -232,14 +224,7 @@ void castor::db::cnv::DbVdqmTapeCnv::createRep(castor::IAddress* address,
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
                     << "  vid : " << obj->vid() << std::endl
-                    << "  side : " << obj->side() << std::endl
-                    << "  tpmode : " << obj->tpmode() << std::endl
-                    << "  errMsgTxt : " << obj->errMsgTxt() << std::endl
-                    << "  errorCode : " << obj->errorCode() << std::endl
-                    << "  severity : " << obj->severity() << std::endl
-                    << "  vwAddress : " << obj->vwAddress() << std::endl
-                    << "  id : " << obj->id() << std::endl
-                    << "  status : " << obj->status() << std::endl;
+                    << "  id : " << obj->id() << std::endl;
     throw ex;
   }
 }
@@ -262,14 +247,7 @@ void castor::db::cnv::DbVdqmTapeCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setString(1, obj->vid());
-    m_updateStatement->setInt(2, obj->side());
-    m_updateStatement->setInt(3, obj->tpmode());
-    m_updateStatement->setString(4, obj->errMsgTxt());
-    m_updateStatement->setInt(5, obj->errorCode());
-    m_updateStatement->setInt(6, obj->severity());
-    m_updateStatement->setString(7, obj->vwAddress());
-    m_updateStatement->setInt(8, (int)obj->status());
-    m_updateStatement->setUInt64(9, obj->id());
+    m_updateStatement->setUInt64(2, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
@@ -353,14 +331,7 @@ castor::IObject* castor::db::cnv::DbVdqmTapeCnv::createObj(castor::IAddress* add
     castor::vdqm::VdqmTape* object = new castor::vdqm::VdqmTape();
     // Now retrieve and set members
     object->setVid(rset->getString(1));
-    object->setSide(rset->getInt(2));
-    object->setTpmode(rset->getInt(3));
-    object->setErrMsgTxt(rset->getString(4));
-    object->setErrorCode(rset->getInt(5));
-    object->setSeverity(rset->getInt(6));
-    object->setVwAddress(rset->getString(7));
-    object->setId(rset->getUInt64(8));
-    object->setStatus((enum castor::vdqm::TapeStatusCodes)rset->getInt(9));
+    object->setId(rset->getUInt64(2));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -396,14 +367,7 @@ void castor::db::cnv::DbVdqmTapeCnv::updateObj(castor::IObject* obj)
     castor::vdqm::VdqmTape* object = 
       dynamic_cast<castor::vdqm::VdqmTape*>(obj);
     object->setVid(rset->getString(1));
-    object->setSide(rset->getInt(2));
-    object->setTpmode(rset->getInt(3));
-    object->setErrMsgTxt(rset->getString(4));
-    object->setErrorCode(rset->getInt(5));
-    object->setSeverity(rset->getInt(6));
-    object->setVwAddress(rset->getString(7));
-    object->setId(rset->getUInt64(8));
-    object->setStatus((enum castor::vdqm::TapeStatusCodes)rset->getInt(9));
+    object->setId(rset->getUInt64(2));
     delete rset;
   } catch (castor::exception::SQLError e) {
     castor::exception::InvalidArgument ex;

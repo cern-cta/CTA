@@ -39,7 +39,6 @@
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
-#include "castor/vdqm/TapeStatusCodes.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
 #include "osdep.h"
 #include <string>
@@ -90,14 +89,7 @@ void castor::io::StreamVdqmTapeCnv::createRep(castor::IAddress* address,
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->vid();
-  ad->stream() << obj->side();
-  ad->stream() << obj->tpmode();
-  ad->stream() << obj->errMsgTxt();
-  ad->stream() << obj->errorCode();
-  ad->stream() << obj->severity();
-  ad->stream() << obj->vwAddress();
   ad->stream() << obj->id();
-  ad->stream() << obj->status();
 }
 
 //------------------------------------------------------------------------------
@@ -113,30 +105,9 @@ castor::IObject* castor::io::StreamVdqmTapeCnv::createObj(castor::IAddress* addr
   std::string vid;
   ad->stream() >> vid;
   object->setVid(vid);
-  int side;
-  ad->stream() >> side;
-  object->setSide(side);
-  int tpmode;
-  ad->stream() >> tpmode;
-  object->setTpmode(tpmode);
-  std::string errMsgTxt;
-  ad->stream() >> errMsgTxt;
-  object->setErrMsgTxt(errMsgTxt);
-  int errorCode;
-  ad->stream() >> errorCode;
-  object->setErrorCode(errorCode);
-  int severity;
-  ad->stream() >> severity;
-  object->setSeverity(severity);
-  std::string vwAddress;
-  ad->stream() >> vwAddress;
-  object->setVwAddress(vwAddress);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
-  int status;
-  ad->stream() >> status;
-  object->setStatus((castor::vdqm::TapeStatusCodes)status);
   return object;
 }
 
