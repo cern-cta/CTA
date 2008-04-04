@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Release$ $Date: 2008/04/03 14:34:35 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Release$ $Date: 2008/04/04 12:55:21 $ $Author: sponcec3 $
 #
 # Makefile for the CASTOR2 stagerjob
 #
@@ -84,7 +84,7 @@ depend:
 	makedepend $(INCLUDES) $(JOB_SRCS) 2> /dev/null
 #endif
 
-install: FileName($(BIN),diskCopyTransfer)
+install: FileName($(BIN),stagerJob)
 
 InstallProgram(stagerJob,$(BIN),root,bin,755)
 
