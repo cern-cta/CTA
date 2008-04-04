@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.69 $ $Release$ $Date: 2008/04/03 14:13:38 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.70 $ $Release$ $Date: 2008/04/04 09:53:25 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -144,11 +144,11 @@ ALTER TABLE TapeDriveDedication
 
 
 /* Check constraints */
--- The accessMode column of the TapeAccessSpecification table has 3 possible
--- values: -1=unknown, 0=write-disabled or 1=write-enabled
+-- The accessMode column of the TapeAccessSpecification table has 2 possible
+-- values: 0=write-disabled or 1=write-enabled
 ALTER TABLE TapeAccessSpecification
   ADD CONSTRAINT CH_TapeAccessSpec_accessMode
-    CHECK ((accessMode=-1) OR (accessMode=0) OR (accessMode=1));
+    CHECK ((accessMode=0) OR (accessMode=1));
 
 
 /* Foreign key constraints with an index for each */
