@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.71 $ $Release$ $Date: 2008/04/04 15:21:19 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.72 $ $Release$ $Date: 2008/04/04 16:10:24 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -57,20 +57,6 @@ INSERT INTO TapeDriveStatusCodes VALUES (4, 'FORCED_UNMOUNT');
 INSERT INTO TapeDriveStatusCodes VALUES (5, 'UNIT_DOWN');
 INSERT INTO TapeDriveStatusCodes VALUES (6, 'WAIT_FOR_UNMOUNT');
 INSERT INTO TapeDriveStatusCodes VALUES (7, 'STATUS_UNKNOWN');
-COMMIT;
-
-CREATE TABLE TapeStatusCodes (
-  id   NUMBER,
-  name VARCHAR2(30),
-  CONSTRAINT PK_TapeStatusCodes_id PRIMARY KEY (id));
-INSERT INTO TapeStatusCodes VALUES (0, 'TAPE_USED');
-INSERT INTO TapeStatusCodes VALUES (1, 'TAPE_PENDING');
-INSERT INTO TapeStatusCodes VALUES (2, 'TAPE_WAITDRIVE');
-INSERT INTO TapeStatusCodes VALUES (3, 'TAPE_WAITMOUNT');
-INSERT INTO TapeStatusCodes VALUES (4, 'TAPE_MOUNTED');
-INSERT INTO TapeStatusCodes VALUES (5, 'TAPE_FINISHED');
-INSERT INTO TapeStatusCodes VALUES (6, 'TAPE_FAILED');
-INSERT INTO TapeStatusCodes VALUES (7, 'TAPE_UNKNOWN');
 COMMIT;
 
 CREATE TABLE TapeRequestStatusCodes (
@@ -332,14 +318,7 @@ ALTER TABLE VdqmTape
     REFERENCES Id2Type (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    ENABLE
-  ADD CONSTRAINT FK_VdqmTape_status
-    FOREIGN KEY (status)
-    REFERENCES TapeStatusCodes (id)
-    DEFERRABLE
-    INITIALLY IMMEDIATE
     ENABLE;
-CREATE INDEX I_FK_VdqmTape_status ON VdqmTape (status);
 
 /* get current time as a time_t. Not that easy in ORACLE */
 CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
