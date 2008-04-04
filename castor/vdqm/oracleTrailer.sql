@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.72 $ $Release$ $Date: 2008/04/04 16:10:24 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.73 $ $Release$ $Date: 2008/04/04 17:28:10 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -106,11 +106,6 @@ ALTER TABLE TAPEREQUEST MODIFY (TAPE NOT NULL);
 ALTER TABLE TAPEREQUEST MODIFY (TAPEACCESSSPECIFICATION NOT NULL);
 ALTER TABLE TAPEREQUEST MODIFY (TAPEDRIVE NOT NULL);
 ALTER TABLE TAPESERVER MODIFY (ACTINGMODE NOT NULL);
-ALTER TABLE VDQMTAPE MODIFY (ERRORCODE NOT NULL);
-ALTER TABLE VDQMTAPE MODIFY (SEVERITY NOT NULL);
-ALTER TABLE VDQMTAPE MODIFY (SIDE NOT NULL);
-ALTER TABLE VDQMTAPE MODIFY (STATUS NOT NULL);
-ALTER TABLE VDQMTAPE MODIFY (TPMODE NOT NULL);
 
 /* Unique constraints */
 -- A client host can only be dedicated to one drive
