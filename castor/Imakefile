@@ -386,7 +386,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               vdqm/TapeServer.cpp \
               vdqm/TapeServerStatusCodes.cpp \
 	      vdqm/VdqmTape.cpp \
-	      vdqm/TapeStatusCodes.cpp \
               exception/BadVersion.cpp \
               exception/Busy.cpp \
               exception/Exception.cpp \
