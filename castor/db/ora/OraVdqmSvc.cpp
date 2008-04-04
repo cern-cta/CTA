@@ -60,7 +60,7 @@ static castor::SvcFactory<castor::db::ora::OraVdqmSvc>* s_factoryOraVdqmSvc =
 //------------------------------------------------------------------------------
 /// SQL statement for selectTape
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeStatementString =
-  "SELECT id FROM VdqmTape WHERE vid = :1 AND side = :2 AND tpmode = :3 FOR UPDATE";
+  "SELECT id FROM VdqmTape WHERE vid = :1 FOR UPDATE";
 
 /// SQL statement for function getTapeServer
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeServerStatementString =
@@ -319,8 +319,6 @@ castor::db::ora::OraVdqmSvc::selectTape(const std::string vid,
   unsigned long id;
   try {
     m_selectTapeStatement->setString(1, vid);
-    m_selectTapeStatement->setInt(2, side);
-    m_selectTapeStatement->setInt(3, tpmode);
     oracle::occi::ResultSet *rset = m_selectTapeStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       m_selectTapeStatement->closeResultSet(rset);
@@ -328,9 +326,6 @@ castor::db::ora::OraVdqmSvc::selectTape(const std::string vid,
 
       castor::vdqm::VdqmTape* tape = new castor::vdqm::VdqmTape();
       tape->setVid(vid);
-      tape->setSide(side);
-      tape->setTpmode(tpmode);
-      tape->setStatus(castor::vdqm::TAPE_UNUSED);
       castor::BaseAddress ad;
       ad.setCnvSvcName("DbCnvSvc");
       ad.setCnvSvcType(castor::SVC_DBCNV);
