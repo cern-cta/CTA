@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.70 $ $Release$ $Date: 2008/04/04 09:53:25 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.71 $ $Release$ $Date: 2008/04/04 15:21:19 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -141,6 +141,11 @@ ALTER TABLE VDQMTAPE MODIFY (TPMODE NOT NULL);
 ALTER TABLE TapeDriveDedication
   ADD CONSTRAINT I_U_TapeDrvDedic_tapeDrv_mode
     UNIQUE (tapeDrive, accessMode);
+
+-- Tape VIDs are unique
+ALTER TABLE VdqmTape
+  ADD CONSTRAINT I_U_VdqmTape_vid
+    UNIQUE (VID);
 
 
 /* Check constraints */
