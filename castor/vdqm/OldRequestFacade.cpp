@@ -24,23 +24,21 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
+#include <sstream>
 #include <string>
 
 #include "castor/Constants.hpp"
-
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NotSupported.hpp"
-
-#include "castor/vdqm/handler/TapeRequestHandler.hpp"
-#include "castor/vdqm/handler/TapeDriveHandler.hpp"
-
-#include <net.h>
-#include <vdqm_constants.h>
- 
+#include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/newVdqm.h"
-#include "castor/vdqm/OldRequestFacade.hpp"
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
+#include "castor/vdqm/OldRequestFacade.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
+#include "castor/vdqm/handler/TapeDriveHandler.hpp"
+#include "castor/vdqm/handler/TapeRequestHandler.hpp"
+#include "h/net.h"
+#include "h/vdqm_constants.h"
 
 // To make the code more readable
 using namespace castor::vdqm::handler;
@@ -122,9 +120,14 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
     if ( ptr_header == NULL || ptr_driveRequest == NULL )
       handleRequest = false;
     else {
+      std::stringstream oss;
+
+      castor::vdqm::DevTools::printTapeDriveStatusBitset(oss,
+        ptr_driveRequest->status);
+
       // Handle VDQM_DRV_REQ
       castor::dlf::Param params[] = {
-        castor::dlf::Param("status", ptr_driveRequest->status),
+        castor::dlf::Param("status", oss.str()),
         castor::dlf::Param("DrvReqID", ptr_driveRequest->DrvReqID),
         castor::dlf::Param("VolReqID", ptr_driveRequest->VolReqID),
         castor::dlf::Param("jobID", ptr_driveRequest->jobID),

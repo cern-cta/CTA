@@ -132,8 +132,6 @@ void castor::vdqm::DevTools::printMessage(std::ostream &os,
 void castor::vdqm::DevTools::printTapeDriveStatusBitset(std::ostream &os,
   const int bitset) {
 
-  os << "  Drive status bitset: ";
-
   if(bitset & VDQM_TPD_STARTED)   os << "+TPD_STARTED";
   if(bitset & VDQM_FORCE_UNMOUNT) os << "+FORCE_UNMOUNT";
   if(bitset & VDQM_UNIT_QUERY)    os << "+UNIT_QUERY";
