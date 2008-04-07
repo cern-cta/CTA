@@ -256,6 +256,7 @@ void castor::vdqm::VdqmServer::initDlf()
     {VDQM_MATCHTAPE2TAPEDRIVE_ERROR, "Error occured when determining if there is matching free drive and waiting request"},
     {VDQM_DRIVE_ALLOCATION_ERROR, "Error occurred whilst allocating a free drive to a tape request"},
     {VDQM_HANDLE_REQUEST_EXCEPT, "Exception raised by castor::vdqm::VdqmServer::handleRequest"},
+    {VDQM_SEND_RTCPD_JOB, "Sending job to RTCPD"},
     {-1, ""}
   }; // castor::dlf::Message messages[]
 

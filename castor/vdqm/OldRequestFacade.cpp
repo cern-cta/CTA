@@ -123,7 +123,25 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
       handleRequest = false;
     else {
       // Handle VDQM_DRV_REQ
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_DRV_REQ);
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("status", ptr_driveRequest->status),
+        castor::dlf::Param("DrvReqID", ptr_driveRequest->DrvReqID),
+        castor::dlf::Param("VolReqID", ptr_driveRequest->VolReqID),
+        castor::dlf::Param("jobID", ptr_driveRequest->jobID),
+        castor::dlf::Param("recvtime", ptr_driveRequest->recvtime),
+        castor::dlf::Param("usecount", ptr_driveRequest->usecount),
+        castor::dlf::Param("errcount", ptr_driveRequest->errcount),
+        castor::dlf::Param("MBtransf", ptr_driveRequest->MBtransf),
+        castor::dlf::Param("mode", ptr_driveRequest->mode),
+        castor::dlf::Param("TotalMB", ptr_driveRequest->TotalMB),
+        castor::dlf::Param("reqhost", ptr_driveRequest->reqhost),
+        castor::dlf::Param("volid", ptr_driveRequest->volid),
+        castor::dlf::Param("server", ptr_driveRequest->server),
+        castor::dlf::Param("drive", ptr_driveRequest->drive),
+        castor::dlf::Param("dgn", ptr_driveRequest->dgn),
+        castor::dlf::Param("dedicate", ptr_driveRequest->dedicate)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_DRV_REQ, 16,
+        params);
       TapeDriveHandler tapeDriveHandler(ptr_header, ptr_driveRequest, cuuid);
       tapeDriveHandler.newTapeDriveRequest();
     }

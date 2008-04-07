@@ -243,6 +243,21 @@ void castor::vdqm::RTCPJobSubmitterThread::submitJobToRTCPD(
       
   bool acknSucc = true;
 
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("tapeRequestID", request->id()),
+      castor::dlf::Param("clientUserName", client->userName()),
+      castor::dlf::Param("clientMachine", client->machine()),
+      castor::dlf::Param("clientPort", client->port()),
+      castor::dlf::Param("clientEuid", client->euid()),
+      castor::dlf::Param("clientEgid", client->egid()),
+      castor::dlf::Param("deviceGroupName", dgn->dgName()),
+      castor::dlf::Param("tapeDriveName", tapeDrive->driveName())};
+
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, VDQM_SEND_RTCPD_JOB, 8,
+      params);
+  }
+
   try {
     acknSucc = rtcpConnection.sendJobToRTCPD(request->id(),
       client->userName(), client->machine(), client->port(), client->euid(),

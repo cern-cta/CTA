@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.73 $ $Release$ $Date: 2008/04/04 17:28:10 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.74 $ $Release$ $Date: 2008/04/07 14:31:54 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -661,7 +661,7 @@ ORDER BY
  * showqueues command
  */
 create or replace view
-  TAPEREQUESTSSHOWQUEUES_VIEW
+  TAPEREQUESTSHOWQUEUES_VIEW
 as with TIMEZONEOFFSET as (
   select
     (extract(timezone_hour from current_timestamp) - 1) * 3600 as VALUE

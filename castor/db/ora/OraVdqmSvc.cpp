@@ -138,7 +138,7 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeRequestQueueStatement
   "  DGNAME,"
   "  CLIENTUSERNAME "
   "FROM"
-  "  TAPEREQUESTSSHOWQUEUES_VIEW "
+  "  TAPEREQUESTSHOWQUEUES_VIEW "
   "WHERE"
   "      (:1 IS NULL OR :2 = DGNAME)"
   "  AND (:3 IS NULL OR :4 = TAPESERVER) "
