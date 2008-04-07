@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.40 2007/10/02 13:20:07 sponcec3 Exp $
+## $Id: PACKAGING.howto,v 1.41 2008/04/07 13:50:17 sponcec3 Exp $
 #
 
 #
@@ -70,8 +70,9 @@ mv intReleases/x.y.z-r CERN/savannah/CASTOR.pkg/
 # More info at: https://twiki.cern.ch/twiki/bin/view/FIOgroup/CastorHowtoRPMs
 
 # 2. Install in AFS
-# You should request the (automatic) creation of the volume by following the instructions at:
-# https://twiki.cern.ch/twiki/bin/view/SPI/SpiSpaceRequests
+# You should request the (automatic) creation of the volume.
+# Log to lxadm and run :
+# /afs/cern.ch/sw/lcg/app/spi/tools/test/scripts/requestAfsSpace.py --project castor --version x.y.z-r
 #
 ./tools/installOnAFS.py x.y.z-r > /tmp/afsInstallScript
 source /tmp/afsInstallScript   # run it from lxplus or make sure you have rpm utilities (rpm2cpio)
