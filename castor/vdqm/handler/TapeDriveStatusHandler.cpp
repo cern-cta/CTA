@@ -87,52 +87,67 @@ castor::vdqm::handler::TapeDriveStatusHandler::~TapeDriveStatusHandler()
 void castor::vdqm::handler::TapeDriveStatusHandler::handleOldStatus() 
   throw (castor::exception::Exception) {
 
-      
-
-
   if ( ptr_tapeDrive->status() != UNIT_DOWN &&  
        ptr_tapeDrive->status() != STATUS_UNKNOWN) {
 
     if ( (ptr_driveRequest->status & VDQM_UNIT_MBCOUNT) ) {
-        /*
-         * Update TotalMB counter. Since this request is sent by
-         * RTCOPY rather than the tape daemon we cannot yet reset
-         * unknown status if it was previously set.
-         */
-        ptr_tapeDrive->setTransferredMB(ptr_driveRequest->MBtransf);
-        ptr_tapeDrive->setTotalMB(ptr_tapeDrive->totalMB() + ptr_driveRequest->MBtransf);
+
+      // Update TotalMB counter. Since this request is sent by
+      // RTCOPY rather than the tape daemon we cannot yet reset
+      // unknown status if it was previously set.
+      ptr_tapeDrive->setTransferredMB(ptr_driveRequest->MBtransf);
+      ptr_tapeDrive->setTotalMB(ptr_tapeDrive->totalMB() +
+        ptr_driveRequest->MBtransf);
     }
     
     if ( (ptr_driveRequest->status & VDQM_UNIT_ERROR) ) {
-        /*
-         * Update error counter.
-         */
-        ptr_tapeDrive->setErrcount(ptr_tapeDrive->errcount() + 1);
+      // Update error counter.
+      ptr_tapeDrive->setErrcount(ptr_tapeDrive->errcount() + 1);
+    }
+
+    bool volMount = ptr_driveRequest->status & VDQM_VOL_MOUNT;
+    bool volUnmount = ptr_driveRequest->status & VDQM_VOL_UNMOUNT;
+    bool unitRelease = (ptr_driveRequest->status & VDQM_UNIT_RELEASE) &&
+        !(ptr_driveRequest->status & VDQM_UNIT_FREE);
+
+    // Check for inconsistent status mask
+    if(volMount && volUnmount) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "TapeDriveStatusHandler::handleOldStatus(): "
+        "Invalid status mask.  A tape cannot be simultaneously mounted and "
+        "unmounted.";
+      throw ex;
+    }
+    if(volMount && unitRelease) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "TapeDriveStatusHandler::handleOldStatus(): "
+        "Invalid status mask.  A tape cannot be simultaneously mounted and "
+        "its unit released.";
+      throw ex;
+    }
+    if(volUnmount && unitRelease) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "TapeDriveStatusHandler::handleOldStatus(): "
+        "Invalid status mask.  A tape cannot be simultaneously unmounted and "
+        "its unit released.";
+      throw ex;
     }
     
-    
-    if ( (ptr_driveRequest->status & VDQM_VOL_MOUNT) ) {
+    if (volMount) {
       handleVolMountStatus();
-    }
-    if ( (ptr_driveRequest->status & VDQM_VOL_UNMOUNT) ) {
+    } else if (volUnmount) {
       handleVolUnmountStatus();
-    }
-    if ((ptr_driveRequest->status & VDQM_UNIT_RELEASE) &&
-        !(ptr_driveRequest->status & VDQM_UNIT_FREE) ) { 
+    } else if (unitRelease) {
       handleUnitReleaseStatus();
     } 
-    
-    /*
-     * If unit is free, reset dynamic data in drive record
-     */
-    if ( (ptr_driveRequest->status & VDQM_UNIT_FREE) ) {
+
+    // If unit is free, reset dynamic data in drive record
+    if (ptr_driveRequest->status & VDQM_UNIT_FREE) {
       handleUnitFreeStatus();
     }
-  } 
-  else { // TapeDrive is DOWN
-    /*
-     * If drive is down, report error for any requested update.
-     */
+  } else { // TapeDrive is DOWN
+
+    // If drive is down, report error for any requested update.
     if ( ptr_driveRequest->status & (VDQM_UNIT_FREE | VDQM_UNIT_ASSIGN |
         VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE | VDQM_VOL_MOUNT |
         VDQM_VOL_UNMOUNT ) ) {
