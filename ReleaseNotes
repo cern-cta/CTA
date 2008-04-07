@@ -93,6 +93,7 @@
   - #29942: nslisttape to return non-zero exit status if VID not found
   - #30391: daemons on castor should be stateless and redundant: rmMasterDaemon
   - #30993: RFE vmgrlistpool and vmgrlisttape output for scripts
+  - #31028: 2.1.4.-9 rfiod segfaults
   - #31217: SubRequest in status WAITSUBREQ without a valid parent
   - #31247: ns client should retry if server not available
   - #31616: prepareToGet requests sometime doesn't fill tape segment information
@@ -180,10 +181,9 @@
     Central services
     ----------------
 
-    Although there are modifications to the central services (VMGR and CUPV) within
-    this release, they are not mandatory for the correct operation and running
-    of a 2.1.7 stager instance of CASTOR2. As a result the upgrade of the following 
-    packages:
+    Although there are modifications to the central services (VMGR and CUPV) within this
+    release, they are not mandatory for the correct operation and running of a 2.1.7 stager
+    instance of CASTOR2. As a result the upgrade of the following packages:
 
       - castor-vmgr-server
       - castor-upv-server
@@ -199,6 +199,11 @@
       1. For the CNS (Castor Name Server), VMGR and CUPV services upgrade the software
          to use the 2.1.7 RPMS. Note: the services may not come back automatically. This
          is a known bug which is fixed in this release.
+         
+      2. For all tape related daemons review their corresponding sysconfig file based on 
+         the example file <dameon>.example in /etc/sysconfig. Changes have been made in
+         this area to standardise the initialization scripts and sysconfig files with the
+         rest of Castor2. For example OPTIONS becomes RMCDAEMON_OPTIONS for the rmcdaemon.
  
     Stager
     ------
@@ -305,6 +310,12 @@
      17. Start the public rhserver (if applicable)
 
      18. Congratulations you have successfully upgraded to the 2.1.7 release of CASTOR2!!
+
+
+  Hotfixes for 2.1.7-3
+  ---------------------
+  - 2.1.7-3-1: Enforce black and white list checks for disk copy replication requests and 
+               file recalls.
 
 
 ------------
