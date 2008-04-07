@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.658 $ $Date: 2008/03/31 17:10:07 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.659 $ $Date: 2008/04/07 15:51:07 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -479,9 +479,12 @@ END;
 /* PL/SQL method implementing checkForD2DCopyOrRecall */
 /* dcId is the DiskCopy id of the best candidate for replica, 0 if none is found (tape recall), -1 in case of user error */
 /* Internally used by getDiskCopiesForJob and processPrepareRequest */
-CREATE OR REPLACE PROCEDURE checkForD2DCopyOrRecall
-                            (cfId IN NUMBER, srId IN NUMBER, svcClassId IN NUMBER,
-                             dcId OUT NUMBER) AS
+CREATE OR REPLACE
+PROCEDURE checkForD2DCopyOrRecall(cfId IN NUMBER, srId IN NUMBER, reuid IN NUMBER, regid IN NUMBER,
+                                  svcClassId IN NUMBER, dcId OUT NUMBER) AS
+  destSvcClass VARCHAR2(2048);
+  authDest NUMBER;
+  authSource NUMBER;
 BEGIN
   -- First check whether we are a disk only pool that is already full.
   -- In such a case, we should fail the request with an ENOSPACE error
@@ -495,33 +498,49 @@ BEGIN
     COMMIT;
     RETURN;
   END IF;
-  -- Check whether there are any diskcopies available for a disk2disk copy
-  SELECT id INTO dcId 
-    FROM (
-      SELECT DiskCopy.id
-        FROM DiskCopy, FileSystem, DiskServer
-       WHERE DiskCopy.castorfile = cfId
-         AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
-         AND FileSystem.id = DiskCopy.fileSystem
-         AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
-         AND DiskServer.id = FileSystem.diskserver
-         AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
-         AND NOT EXISTS (
-           -- don't select source diskcopies which already failed more than 10 times
-           SELECT 'x'
-             FROM StageDiskCopyReplicaRequest R, SubRequest
-            WHERE SubRequest.request = R.id
-              AND R.sourceDiskCopyId = DiskCopy.id
-              AND SubRequest.status = 9 -- FAILED
-           HAVING COUNT(*) >= 10)
-      ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
-                              FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
-                              FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC
-      )
-     WHERE ROWNUM < 2;
-  -- We found at least one, therefore we schedule a disk2disk
-  -- copy from the existing diskcopy not available to this svcclass
-EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- Resolve the service class id to a name
+  SELECT name INTO destSvcClass FROM SvcClass WHERE id = svcClassId;
+  -- Check that the user has the necessary access rights to create a file in the
+  -- destination service class. I.e Check for StagePutRequest access rights.
+  checkPermission(destSvcClass, reuid, regid, 40, authDest);
+  IF authDest = 0 THEN
+    -- The user has the rights to create files so check if there are possible 
+    -- diskcopies which could be replicated.
+    FOR a IN (SELECT DiskCopy.id, SvcClass.name sourceSvcClass
+                FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
+               WHERE DiskCopy.castorfile = cfId
+                 AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
+                 AND FileSystem.id = DiskCopy.fileSystem
+                 AND FileSystem.diskpool = DiskPool2SvcClass.parent
+                 AND DiskPool2SvcClass.child = SvcClass.id
+                 AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+                 AND DiskServer.id = FileSystem.diskserver
+                 AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+                 AND NOT EXISTS (
+                   -- Don't select source diskcopies which already failed more than 10 times
+                   SELECT 'x'
+                     FROM StageDiskCopyReplicaRequest R, SubRequest
+                    WHERE SubRequest.request = R.id
+                      AND R.sourceDiskCopyId = DiskCopy.id
+                      AND SubRequest.status = 9 -- FAILED
+                   HAVING COUNT(*) >= 10)
+               ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
+                                       FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
+                                       FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC)
+    LOOP
+      -- Check that the user has the necessary access rights to replicate a file
+      -- from the source service class. Note: instead of using a StageGetRequest
+      -- type here we use a StageDiskCopyReplicaRequest type to be able to 
+      -- distinguish between a read and replication request.
+      checkPermission(a.sourceSvcClass, reuid, regid, 133, authSource);
+      IF authSource = 0 THEN
+        -- The user is authorized on both the source and destination service
+        -- classes so a disk2disk replication can be scheduled.
+        dcId := a.id;
+        RETURN;
+      END IF;
+    END LOOP;
+  END IF;
   -- We found no diskcopies at all. We should not schedule
   -- and make a tape recall... except ... in 2 cases :
   --   - if there is some temporarily unavailable diskcopy
@@ -570,8 +589,20 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
      WHERE id = srId;
     COMMIT;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- We did not find the very special case, go for recall
-    dcId := 0;
+    -- We did not find the very special case, so if the user has the necessary
+    -- access rights to create file in the destination service class we 
+    -- trigger a tape recall.
+    IF authDest = 0 THEN
+      dcId := 0;
+    ELSE
+      dcId := -1;
+      UPDATE SubRequest
+         SET status = 7, -- FAILED
+             errorCode = 13, -- EACCES
+             errorMessage = 'Insufficient user privileges to trigger a recall or file replication request to the '''||destSvcClass||''' service class '
+       WHERE id = srId;
+      COMMIT;
+    END IF;
   END;
 END;
 
@@ -672,12 +703,14 @@ CREATE OR REPLACE PROCEDURE getDiskCopiesForJob
   cfId NUMBER;
   srcDcId NUMBER;
   d2dsrId NUMBER;
+  reuid NUMBER;
+  regid NUMBER;
 BEGIN
   -- retrieve the castorFile and the svcClass for this subrequest
-  SELECT SubRequest.castorFile, Request.svcClass, Request.upd
-    INTO cfId, svcClassId, upd
-    FROM (SELECT id, svcClass, 0 upd from StageGetRequest UNION ALL
-          SELECT id, svcClass, 1 upd from StageUpdateRequest) Request,
+  SELECT SubRequest.castorFile, Request.euid, Request.egid, Request.svcClass, Request.upd
+    INTO cfId, reuid, regid, svcClassId, upd
+    FROM (SELECT id, euid, egid, svcClass, 0 upd from StageGetRequest UNION ALL
+          SELECT id, euid, egid, svcClass, 1 upd from StageUpdateRequest) Request,
          SubRequest
    WHERE Subrequest.request = Request.id
      AND Subrequest.id = srId;
@@ -790,7 +823,7 @@ BEGIN
       RETURN;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- not found, we may have to schedule a disk to disk copy or trigger a recall
-      checkForD2DCopyOrRecall(cfId, srId, svcClassId, srcDcId);
+      checkForD2DCopyOrRecall(cfId, srId, reuid, regid, svcClassId, srcDcId);
       IF srcDcId > 0 THEN
         -- create DiskCopyReplica request and make this subRequest wait on it
         createDiskCopyReplicaRequest(srId, srcDcId, svcClassId);
@@ -805,6 +838,7 @@ BEGIN
     END;
   END IF;
 END;
+
 
 /* PL/SQL method internalPutDoneFunc, used by fileRecalled and putDoneFunc.
    checks for diskcopies in STAGEOUT and creates the tapecopies for migration
@@ -940,13 +974,15 @@ CREATE OR REPLACE PROCEDURE processPrepareRequest
   srcDcId NUMBER;
   recSvcClass NUMBER;
   recDcId NUMBER;
+  reuid NUMBER;
+  regid NUMBER;
 BEGIN
   -- retrieve the castorfile, the svcclass and the reqId for this subrequest
-  SELECT SubRequest.castorFile, Request.svcClass, Request.repack
-    INTO cfId, svcClassId, repack
-    FROM (SELECT id, svcClass, 0 repack FROM StagePrepareToGetRequest UNION ALL
-          SELECT id, svcClass, 1 repack FROM StageRepackRequest UNION ALL
-          SELECT id, svcClass, 0 repack FROM StagePrepareToUpdateRequest) Request,
+  SELECT SubRequest.castorFile, Request.euid, Request.egid, Request.svcClass, Request.repack
+    INTO cfId, reuid, regid, svcClassId, repack
+    FROM (SELECT id, euid, egid, svcClass, 0 repack FROM StagePrepareToGetRequest UNION ALL
+          SELECT id, euid, egid, svcClass, 1 repack FROM StageRepackRequest UNION ALL
+          SELECT id, euid, egid, svcClass, 0 repack FROM StagePrepareToUpdateRequest) Request,
          SubRequest
    WHERE Subrequest.request = Request.id
      AND Subrequest.id = srId;
@@ -1018,19 +1054,7 @@ BEGIN
           makeSubRequestWait(srId, srcDcId);
           result := -2;
         EXCEPTION WHEN NO_DATA_FOUND THEN
-           -- the file is being written/migrated. This may happen in two cases:
-           -- either there's another repack going on for the same file, or another
-           -- user is overwriting the file.
-           -- In the first case, if this request comes for a tape other
-           -- than the one being repacked, i.e. the file has a double tape copy,
-           -- then we should make the request wait on the first repack (it may be
-           -- for a different service class than the one being used right now).
-           -- In the second case, we just have to fail this request. 
-           -- However at the moment it's not easy to restart a waiting repack after
-           -- a migration (relevant db callback should be put in rtcpcld_updcFileMigrated(),
-           -- rtcpcldCatalogueInterface.c:3300), so we simply fail this repack
-           -- request and rely for the time being on Repack to submit
-           -- such double tape repacks one by one.
+           -- the file is being written/migrated, fail the request
            UPDATE SubRequest
               SET status = 7,  -- FAILED
                   errorCode = 16,  -- EBUSY
@@ -1046,7 +1070,7 @@ BEGIN
   
   -- No diskcopies available for this service class:
   -- we may have to schedule a disk to disk copy or trigger a recall
-  checkForD2DCopyOrRecall(cfId, srId, svcClassId, srcDcId);
+  checkForD2DCopyOrRecall(cfId, srId, reuid, regid, svcClassId, srcDcId);
   IF srcDcId > 0 THEN  -- disk to disk copy
     IF repack = 1 THEN
       createDiskCopyReplicaRequest(srId, srcDcId, svcClassId);
