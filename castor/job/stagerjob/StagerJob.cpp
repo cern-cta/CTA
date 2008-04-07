@@ -58,8 +58,7 @@
 #define DEFAULT_RETRY_INTERVAL 10
 
 // static map s_plugins
-static std::map<std::string, castor::job::stagerjob::IPlugin*> *s_plugins =
-  new std::map<std::string, castor::job::stagerjob::IPlugin*>();
+static std::map<std::string, castor::job::stagerjob::IPlugin*> *s_plugins = 0;
 
 // -----------------------------------------------------------------------
 // getPlugin
@@ -67,7 +66,7 @@ static std::map<std::string, castor::job::stagerjob::IPlugin*> *s_plugins =
 castor::job::stagerjob::IPlugin*
 castor::job::stagerjob::getPlugin(std::string protocol)
   throw (castor::exception::Exception) {
-  if (s_plugins->find(protocol) != s_plugins->end()) {
+  if (0 != s_plugins && s_plugins->find(protocol) != s_plugins->end()) {
     return s_plugins->operator[](protocol);
   }
   castor::exception::NoEntry e;
@@ -82,6 +81,9 @@ castor::job::stagerjob::getPlugin(std::string protocol)
 void castor::job::stagerjob::registerPlugin
 (std::string protocol, castor::job::stagerjob::IPlugin* plugin)
   throw () {
+  if (0 == s_plugins) {
+    s_plugins = new std::map<std::string, castor::job::stagerjob::IPlugin*>();
+  }
   s_plugins->operator[](protocol) = plugin;
 }
 
