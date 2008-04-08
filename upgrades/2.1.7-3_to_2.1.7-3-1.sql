@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.7-3_to_2.1.7-3-1.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/04/07 17:05:39 $ $Author: waldron $
+ * @(#)$RCSfile: 2.1.7-3_to_2.1.7-3-1.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/04/08 06:22:44 $ $Author: waldron $
  *
  * This script upgrades a CASTOR v2.1.7-3 database into v2.1.7-3-1
  *
@@ -40,6 +40,38 @@ END;
 
 UPDATE CastorVersion SET release = '2_1_7_3_1';
 COMMIT;
+
+/* Update the WhiteList accordingly */
+DECLARE
+  entries NUMBER;
+  priv CASTORBW.Privilege;
+BEGIN
+  SELECT COUNT(*) INTO entries FROM BlackList;
+  IF entries = 0 THEN
+    -- If there are no entries in the WhiteList other then the defaults add
+    -- StagePutRequest access rights for all users to all services classes. 
+    -- If this is not done replication requests and tape recalls will be 
+    -- forbidden to all service classes.
+    SELECT COUNT(*) INTO entries FROM WhiteList
+     WHERE rowid NOT IN (
+       SELECT rowid FROM WhiteList
+        WHERE svcclass = '*'
+          AND egid IS NULL
+          AND euid IS NULL
+          AND reqtype IS NULL);
+    IF entries = 0 THEN
+      INSERT INTO WhiteList VALUES (NULL, NULL, NULL, 40);
+    END IF;
+  END IF;
+  -- In all cases add  StageDiskCopyReplicaRequest rights to all users
+  -- across all service classes. This allows the reading of files from the
+  -- source service class to the destination.
+  priv.svcClass := NULL;
+  priv.euid := NULL;
+  priv.egid := NULL;
+  priv.reqType := 133;
+  CASTORBW.addPrivilege(priv);
+END;
 
 
 /* PL/SQL method implementing checkForD2DCopyOrRecall */
