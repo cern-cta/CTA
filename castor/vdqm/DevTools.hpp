@@ -30,6 +30,7 @@
 #include <iostream>
 
 #include "castor/exception/Exception.hpp"
+#include "castor/vdqm/TapeDriveStatusCodes.hpp"
 
 
 namespace castor {
@@ -79,6 +80,8 @@ namespace castor {
        * Prints the string form of the specified tape drive status bitset using
        * the specified output stream.
        *
+       * @param os the output stream to which the string form should be written
+       * to.
        * @param bitset the status of a tape drive specified as a bitset.  This
        * is the bitset used by the VDQM messages and is not an internal tape
        * drive status value of the VDQM2
@@ -86,6 +89,13 @@ namespace castor {
       static void printTapeDriveStatusBitset(std::ostream &os,
         const int bitset);
 
+      /**
+       * Returns the string form of the specified tape drive status.
+       *
+       * @param status the tape drive status
+       */
+      static const char *tapeDriveStatus2Str(
+        const TapeDriveStatusCodes status);
     
     private:
 

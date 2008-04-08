@@ -150,3 +150,23 @@ void castor::vdqm::DevTools::printTapeDriveStatusBitset(std::ostream &os,
 
   os << std::endl;
 }
+
+
+//------------------------------------------------------------------------------
+// printTapeDriveStatus
+//------------------------------------------------------------------------------
+const char *castor::vdqm::DevTools::tapeDriveStatus2Str(
+  const castor::vdqm::TapeDriveStatusCodes status) {
+
+  switch(status) {
+  case castor::vdqm::UNIT_UP         : return "UNIT_UP";
+  case castor::vdqm::UNIT_STARTING   : return "UNIT_STARTING";
+  case castor::vdqm::UNIT_ASSIGNED   : return "UNIT_ASSIGNED";
+  case castor::vdqm::VOL_MOUNTED     : return "VOL_MOUNTED";
+  case castor::vdqm::FORCED_UNMOUNT  : return "FORCED_UNMOUNT";
+  case castor::vdqm::UNIT_DOWN       : return "UNIT_DOWN";
+  case castor::vdqm::WAIT_FOR_UNMOUNT: return "WAIT_FOR_UNMOUNT";
+  case castor::vdqm::STATUS_UNKNOWN  : return "STATUS_UNKNOWN";
+  default                            : return "UNKNOWN";
+  };
+}

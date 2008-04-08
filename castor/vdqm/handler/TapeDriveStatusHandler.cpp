@@ -108,7 +108,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleOldStatus()
     bool volMount = ptr_driveRequest->status & VDQM_VOL_MOUNT;
     bool volUnmount = ptr_driveRequest->status & VDQM_VOL_UNMOUNT;
     bool unitRelease = (ptr_driveRequest->status & VDQM_UNIT_RELEASE) &&
-        !(ptr_driveRequest->status & VDQM_UNIT_FREE);
+      !(ptr_driveRequest->status & VDQM_UNIT_FREE);
 
     // Check for inconsistent status mask
     if(volMount && volUnmount) {
@@ -389,7 +389,8 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
         VDQM_DRIVE_STATUS_UNKNOWN_FORCE_UNMOUNT);
     } else {
       // Try to reuse the tape allocation
-      *ptr_newRequestId = ptr_IVdqmService->reuseTapeAllocation(tape, ptr_tapeDrive);
+      *ptr_newRequestId =
+        ptr_IVdqmService->reuseTapeAllocation(tape, ptr_tapeDrive);
 
       // If the tape allocation was reused
       if ( *ptr_newRequestId > 0) {
