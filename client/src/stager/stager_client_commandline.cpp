@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_commandline.cpp,v 1.8 2008/03/13 16:37:03 itglp Exp $
+ * $Id: stager_client_commandline.cpp,v 1.9 2008/04/08 07:40:31 waldron Exp $
  *
  * Copyright (C) 2004-2006 by CERN/IT/FIO/FD
  * All rights reserved
@@ -108,7 +108,7 @@ int DLL_DECL getDefaultForGlobal(
 		if (svcDefault==NULL || strcmp(svcDefault,"")==0 ){
 		  if(svcDefault!= NULL &&strcmp(svcDefault,"")){free(svcDefault);svcDefault=NULL;}
 			if (svcMap==NULL || strcmp(svcMap,"")==0 ){
-				aux=(char*)getconfent("STAGER","SVC_CLASS", 0);
+				aux=(char*)getconfent("STAGER","SVCCLASS", 0);
 				svcDefault=aux==NULL?NULL:strdup(aux);
 				if (svcDefault==NULL || strcmp(svcDefault,"")==0 ){
 				        if(svcDefault!=NULL){free(svcDefault);svcDefault=NULL;}
