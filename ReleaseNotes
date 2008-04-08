@@ -223,19 +223,28 @@
       1. Stop all daemons on both the stager headnodes and diskservers. This includes: 
          rhserver, stager, cleaning, jobManager, rtcpclientd, mighunter, rechandler,
          rmMasterDaemon, rmNodeDaemon, expertd, dlfserver, rfiod and gcDaemon
-      2. Verify that all sessions from CASTOR2 related daemons to the database are gone.
+
+      2. Stop and/or remove any cron scripts which maybe performing corrective actions
+         against the database such as cleanup procedures. In this particular release of
+         Castor2 the notion of spaceToBeFreed no longer exists so any cron scripts which 
+         deal with periodically resetting this field should be permanently stopped.
+
+      3. Verify that all sessions from CASTOR2 related daemons to the database are gone.
          This step is advised to make sure that modifications are no longer being made
          to the database.
-      3. Ask your DBA to create a backup of the database (better to be safe then sorry)
-      4. Upgrade the stager and dlf databases using the correct upgrade scripts from
+
+      4. Ask your DBA to create a backup of the database (better to be safe then sorry)
+
+      5. Upgrade the stager and dlf databases using the correct upgrade scripts from
          - http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-3/upgrades
          - Note: If you are not running 2.1.6-11 or newer you must first upgrade the
                  stager database schema to 2.1.6-11 perform proceeding.
-      5. Apply hotfixes where applicable.
 
-      6. Stop the LSF master and clients
+      6. Apply hotfixes where applicable.
 
-      7. Modify the lsb.hosts file to define the host groups known to LSF. The name of
+      7. Stop the LSF master and clients
+
+      8. Modify the lsb.hosts file to define the host groups known to LSF. The name of
          group must be of the form <svcclass>Group e.g. defaultGroup, recoveryGroup etc..
 
          Example:
@@ -245,7 +254,7 @@
            exportGroup (diskserver3.domain.com ...)
            End HostGroup
 
-      8. Modify the lsb.modules file to define the CASTOR2 plugins. Note: they have
+      9. Modify the lsb.modules file to define the CASTOR2 plugins. Note: they have
          changed name in this release! The only plugins required for a working CASTOR2 
          stager instance are:
 
@@ -260,33 +269,33 @@
          which the modules are listed is very important!! schmod_shmem must be after the
          default module and schmod_python must be the last.
 
-      9. Modify the ego.shared file. Remove all resources which refer to service classes
+     10. Modify the ego.shared file. Remove all resources which refer to service classes
          and add the resource:
 
          rfio3      Boolean ()       ()          (RFIO Transfer Protocol V3)
 
-     10. Modify the ego.cluster.* file. Remove all references to resources which are
+     11. Modify the ego.cluster.* file. Remove all references to resources which are
          service classes and give all diskservers the rfio3 resource.
 
-     11. Delete the shared memory used by the rmMasterDaemon and scheduler plugins using
+     12. Delete the shared memory used by the rmMasterDaemon and scheduler plugins using
          the command `ipcrm -M 0x946`. The contents are no longer compatible with this
          release.
 
-     12. Upgrade the software on the headnodes and diskservers to 2.1.7. Note: the
+     13. Upgrade the software on the headnodes and diskservers to 2.1.7. Note: the
          castor-scriplets, castor-rtcopy-mighunter, castor-msg-daemon, castor-msg-client 
          and castor-commands RPMS are no longer provided. The old contents of the
          castor-commands RPM can now be found in castor-stager-clients.
 
-     13. Update the castor.conf configuration file on all machines based on the
+     14. Update the castor.conf configuration file on all machines based on the
          castor.conf.example in /etc/castor/castor.conf.example
 
-     14. The information made available to the schedulers python policy file has changed.
+     15. The information made available to the schedulers python policy file has changed.
          If you are using the defaults original provided:
            mv /etc/castor/policies/scheduler.py.example /etc/castor/policies/scheduler.py
          If not, please review the file /etc/castor/policies/scheduler.py.example and
          merge the changes into your existing version.
 
-     15. Restart the service
+     16. Restart the service
 
          - Start the dlfserver
          - Start the rmMasterDaemon, followed by the LSF master
@@ -304,18 +313,33 @@
          private one only so that you can test/validate the installation without user 
          interference.
 
-     16. Test the instance by running the test suite available from:
+     17. Test the instance by running the test suite available from:
          - http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-1/fastTest
 
-     17. Start the public rhserver (if applicable)
+     18. Start the public rhserver (if applicable)
 
-     18. Congratulations you have successfully upgraded to the 2.1.7 release of CASTOR2!!
+     19. Congratulations you have successfully upgraded to the 2.1.7 release of CASTOR2!!
 
 
   Hotfixes for 2.1.7-3
   ---------------------
   - 2.1.7-3-1: Enforce black and white list checks for disk copy replication requests and 
-               file recalls.
+    file recalls. For stagers which are using black and white lists please make sure that
+    the access rights are setup correctly before applying this hotfix.
+
+    If you wish users to be able to replicate between service classes they must have 
+    StageDiskCopyReplicaRequest (133) rights on the source service class and StagePutRequest
+    (40) rights on the destination service class. Likewise, if you wish to allow file 
+    recalls from tape, the user must have StagePutRequest (40) rights on destination/target
+    service class.
+
+    By default when this hotfix is applied all users in all service classes will be granted
+    access rights to read files from the source service class involved in disk2disk copy
+    replication request. CAUTION: they will not by default be granted put rights!!!
+
+    For stagers which have never used white and black lists. i.e. no entries exist in the
+    BlackList table and only the default '*', NULL, NULL, NULL entry is found in the 
+    WhiteList table no actions are required.
 
 
 ------------
