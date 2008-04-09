@@ -575,7 +575,8 @@ void process(castor::job::stagerjob::InputArguments& args)
       throw e;
     }
     int rcode = 1;
-    int rc = setsockopt(context.socket, SOL_SOCKET, SO_REUSEADDR, (char *)&rcode, sizeof(rcode));
+    int rc = setsockopt(context.socket, SOL_SOCKET, SO_REUSEADDR,
+                        (char *)&rcode, sizeof(rcode));
     if (rc < 0) {
       castor::exception::Exception e(errno);
       e.getMessage() << "Error caught in call to setsockopt";
@@ -647,7 +648,8 @@ void process(castor::job::stagerjob::InputArguments& args)
 // main
 // -----------------------------------------------------------------------
 int main(int argc, char** argv) {
-  // Ignore SIGPIPE to avoid being brutally interrupted because of network [write] error
+  // Ignore SIGPIPE to avoid being brutally interrupted
+  // because of network [write] error
   signal(SIGPIPE,SIG_IGN);
   castor::job::stagerjob::InputArguments arguments;
   try {
@@ -713,8 +715,9 @@ int main(int argc, char** argv) {
     // compute waiting time of the request
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    double totalWaitTime =
-      ((tv.tv_sec - arguments.requestCreationTime) * 1000000) + tv.tv_usec;
+    double totalWaitTime = tv.tv_usec;
+    totalWaitTime = totalWaitTime/1000000 +
+      tv.tv_sec - arguments.requestCreationTime;
     castor::dlf::Param params[] =
       {castor::dlf::Param("Arguments", stagerConcatenatedArgv),
        castor::dlf::Param("JobId", getenv("LSB_JOBID")),
@@ -731,8 +734,9 @@ int main(int argc, char** argv) {
     castor::dlf::Param params2[] =
       {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
        castor::dlf::Param(arguments.subRequestUuid)};
-    castor::dlf::dlf_writep(arguments.requestUuid, DLF_LVL_SYSTEM,
-                            castor::job::stagerjob::JOBENDED, 2, params2, &arguments.fileId);
+    castor::dlf::dlf_writep
+      (arguments.requestUuid, DLF_LVL_SYSTEM,
+       castor::job::stagerjob::JOBENDED, 2, params2, &arguments.fileId);
 
   } catch (castor::exception::Exception e) {
     // "Job failed"
