@@ -208,7 +208,13 @@ void parseCommandLine
   // Get the diskserver and filesystem from the resource file
   std::string path = argv[6];
   if (path[path.size()-1] != '/') path += '/';
-  path += getenv("LSB_JOBID");
+  char* lsbJobId = getenv("LSB_JOBID");
+  if (0 == lsbJobId) {
+    castor::exception::Internal e;
+    e.getMessage() << "environment variable LSB_JOBID should be set but is not";
+    throw e;
+  }
+  path += lsbJobId;
   castor::job::SharedResourceHelper resHelper(attempts, interval);
   resHelper.setUrl(path);
   std::string content = resHelper.download(false);
