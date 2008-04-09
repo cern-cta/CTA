@@ -41,6 +41,7 @@
 
 #include "castor/vdqm/DatabaseHelper.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
+#include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/newVdqm.h"
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
@@ -289,6 +290,16 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
     // Mark it as UNKNOWN until an unit status clarifies what has happened.
     //
     
+    castor::dlf::Param param[] = {
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("driveName", tapeDrive->driveName()),
+      castor::dlf::Param("oldStatus",
+        castor::vdqm::DevTools::tapeDriveStatus2Str(tapeDrive->status())),
+      castor::dlf::Param("newStatus",
+        castor::vdqm::DevTools::tapeDriveStatus2Str(STATUS_UNKNOWN))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      VDQM_DRIVE_STATE_TRANSITION, 4, param);
+
     // Set new TapeDriveStatusCode
     tapeDrive->setStatus(STATUS_UNKNOWN);
     

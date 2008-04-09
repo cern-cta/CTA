@@ -26,6 +26,7 @@
 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/vdqm/DatabaseHelper.hpp"
+#include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/newVdqm.h"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
@@ -113,6 +114,16 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency()
         // We delete the old Tape request, if any
         deleteOldRequest();
     }
+
+    castor::dlf::Param param[] = {
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+      castor::dlf::Param("oldStatus",
+        castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
+      castor::dlf::Param("newStatus",
+        castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_DOWN))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      VDQM_DRIVE_STATE_TRANSITION, 4, param);
     
     ptr_tapeDrive->setStatus(UNIT_DOWN);
   } 
@@ -135,11 +146,32 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency()
       // We delete the old Tape request, if any
       deleteOldRequest();
       
+      castor::dlf::Param param[] = {
+        castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+        castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+        castor::dlf::Param("oldStatus",
+          castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
+        castor::dlf::Param("newStatus",
+          castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_UP))};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+        VDQM_DRIVE_STATE_TRANSITION, 4, param);
+
       ptr_tapeDrive->setStatus(UNIT_UP);
     }
 
-    if ( ptr_driveRequest->status == VDQM_UNIT_UP )
+    if ( ptr_driveRequest->status == VDQM_UNIT_UP ) {
+      castor::dlf::Param param[] = {
+        castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+        castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+        castor::dlf::Param("oldStatus",
+          castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
+        castor::dlf::Param("newStatus",
+          castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_UP))};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+        VDQM_DRIVE_STATE_TRANSITION, 4, param);
+
       ptr_tapeDrive->setStatus(UNIT_UP);
+    }
   } 
   else {
     
@@ -217,18 +249,38 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkBusyConsistency()
    */
   if ( ptr_driveRequest->status & VDQM_UNIT_FREE ) {
      castor::exception::Exception ex(EVQBADSTAT);
-    ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
-                    << "bad status from tpdaemon! FREE + BUSY doesn't fit together" 
-                    << std::endl;      
+    ex.getMessage()
+      << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
+         "bad status from tpdaemon! FREE + BUSY doesn't fit together" 
+      << std::endl;      
     throw ex;
   }
 
   if ( (ptr_tapeDrive->status() == UNIT_UP) ||
        (ptr_tapeDrive->status() == WAIT_FOR_UNMOUNT)) {
+    castor::dlf::Param param[] = {
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+      castor::dlf::Param("oldStatus",
+        castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
+      castor::dlf::Param("newStatus",
+        castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_STARTING))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      VDQM_DRIVE_STATE_TRANSITION, 4, param);
+
     //The tapeDrive is now in starting mode
     ptr_tapeDrive->setStatus(UNIT_STARTING);
-  }
-  else {
+  } else {
+    castor::dlf::Param param[] = {
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+      castor::dlf::Param("oldStatus",
+        castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
+      castor::dlf::Param("newStatus",
+        castor::vdqm::DevTools::tapeDriveStatus2Str(STATUS_UNKNOWN))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      VDQM_DRIVE_STATE_TRANSITION, 4, param);
+
     ptr_tapeDrive->setStatus(STATUS_UNKNOWN);
     
     castor::exception::Exception ex(EVQBADSTAT);
@@ -433,23 +485,52 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkAssignConsistency(
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, VDQM_LOCAL_ASSIGN_TO_JOB_ID, 2, params);          
         
         ptr_tapeDrive->setJobID(ptr_driveRequest->jobID);
-        
-        
-        
+
+        {        
+          castor::dlf::Param param[] = {
+            castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+            castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+            castor::dlf::Param("oldStatus",
+              castor::vdqm::DevTools::tapeDriveStatus2Str(
+                ptr_tapeDrive->status())),
+            castor::dlf::Param("newStatus",
+              castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_ASSIGNED))};
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+              VDQM_DRIVE_STATE_TRANSITION, 4, param);
+        }
         // Switched to unit ASSIGNED status
         ptr_tapeDrive->setStatus(UNIT_ASSIGNED);
         
       }
       else if (ptr_tapeDrive->status() == UNIT_STARTING) {
-        /**
-         * If we are not in UNIT_STARTING mode, we can't put the the tapeDrive
-         * to UNIT_ASSIGNED mode!
-         */
+        // If we are not in UNIT_STARTING mode, we can't put the the tapeDrive
+        // to UNIT_ASSIGNED mode!
+
+        castor::dlf::Param param[] = {
+          castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+          castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+          castor::dlf::Param("oldStatus",
+            castor::vdqm::DevTools::tapeDriveStatus2Str(
+              ptr_tapeDrive->status())),
+          castor::dlf::Param("newStatus",
+            castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_ASSIGNED))};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+            VDQM_DRIVE_STATE_TRANSITION, 4, param);
         
-         // Switched to unit ASSIGNED status
+        // Switched to unit ASSIGNED status
         ptr_tapeDrive->setStatus(UNIT_ASSIGNED);
-      }
-      else {
+      } else {
+        castor::dlf::Param param[] = {
+          castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+          castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+          castor::dlf::Param("oldStatus",
+            castor::vdqm::DevTools::tapeDriveStatus2Str(
+              ptr_tapeDrive->status())),
+          castor::dlf::Param("newStatus",
+            castor::vdqm::DevTools::tapeDriveStatus2Str(STATUS_UNKNOWN))};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+            VDQM_DRIVE_STATE_TRANSITION, 4, param);
+
         ptr_tapeDrive->setStatus(STATUS_UNKNOWN);
         
         castor::exception::Exception ex(EVQBADSTAT);

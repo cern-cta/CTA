@@ -103,7 +103,8 @@ namespace castor {
       VDQM_MATCHTAPE2TAPEDRIVE_ERROR=69, /* "Error occured when determining if there is matching free drive and waiting request" */
       VDQM_DRIVE_ALLOCATION_ERROR=70, /* "Error occurred whilst allocating a free drive to a tape request" */
       VDQM_HANDLE_REQUEST_EXCEPT=71, /* "Exception raised by castor::vdqm::VdqmServer::handleRequest" */
-      VDQM_SEND_RTCPD_JOB=72 /* "Sending job to RTCPD" */
+      VDQM_SEND_RTCPD_JOB=72, /* "Sending job to RTCPD" */
+      VDQM_DRIVE_STATE_TRANSITION=73 /* "Tape drive state transition" */
     }; // enum VdqmDlfMessages
 
   } // namespace vdqm

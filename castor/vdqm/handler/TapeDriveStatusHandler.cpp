@@ -32,6 +32,7 @@
 #include "castor/vdqm/VdqmTape.hpp"
 #include "castor/vdqm/DatabaseHelper.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
+#include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/newVdqm.h"
 #include "castor/vdqm/RTCopyDConnection.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
@@ -247,6 +248,16 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
     throw ex;    
   }
   
+  castor::dlf::Param param[] = {
+    castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+    castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+    castor::dlf::Param("oldStatus",
+      castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
+    castor::dlf::Param("newStatus",
+      castor::vdqm::DevTools::tapeDriveStatus2Str(VOL_MOUNTED))};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+    VDQM_DRIVE_STATE_TRANSITION, 4, param);
+
   // Now we can switch from UNIT_ASSIGNED to the next status 
   ptr_tapeDrive->setStatus(VOL_MOUNTED);
   
@@ -292,29 +303,81 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolUnmountStatus()
     /*
      * Set status to FREE if there is no job assigned to the unit
      */
-    if ( ptr_tapeDrive->runningTapeReq() == NULL )
+    if ( ptr_tapeDrive->runningTapeReq() == NULL ) {
+      castor::dlf::Param param[] = {
+        castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+        castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+        castor::dlf::Param("oldStatus",
+          castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
+        castor::dlf::Param("newStatus",
+          castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_UP))};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      VDQM_DRIVE_STATE_TRANSITION, 4, param);
+
       ptr_tapeDrive->setStatus(UNIT_UP);
-    else if ( ptr_tapeDrive->jobID() == 0 )
+    } else if ( ptr_tapeDrive->jobID() == 0 ) {
+      castor::dlf::Param param[] = {
+        castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+        castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+        castor::dlf::Param("oldStatus",
+          castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
+        castor::dlf::Param("newStatus",
+          castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_STARTING))};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      VDQM_DRIVE_STATE_TRANSITION, 4, param);
+
       ptr_tapeDrive->setStatus(UNIT_STARTING);
-    else
+    } else {
+      castor::dlf::Param param[] = {
+        castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+        castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+        castor::dlf::Param("oldStatus",
+          castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
+        castor::dlf::Param("newStatus",
+          castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_ASSIGNED))};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      VDQM_DRIVE_STATE_TRANSITION, 4, param);
+
       ptr_tapeDrive->setStatus(UNIT_ASSIGNED);
+    }
       
   }
   else if ( ptr_tapeDrive->status() == FORCED_UNMOUNT ) {
+    castor::dlf::Param param[] = {
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+      castor::dlf::Param("oldStatus",
+        castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
+      castor::dlf::Param("newStatus",
+        castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_UP))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+    VDQM_DRIVE_STATE_TRANSITION, 4, param);
+
     ptr_tapeDrive->setStatus(UNIT_UP);
   }
   else {
+    castor::dlf::Param param[] = {
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+      castor::dlf::Param("oldStatus",
+        castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
+      castor::dlf::Param("newStatus",
+        castor::vdqm::DevTools::tapeDriveStatus2Str(STATUS_UNKNOWN))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+    VDQM_DRIVE_STATE_TRANSITION, 4, param);
+
     /**
      * The status of the tape drive must be WAIT_FOR_UNMOUNT or
      * FORCED_UNMOUNT. If it is not the case, we throw an error!
      */
     ptr_tapeDrive->setStatus(STATUS_UNKNOWN);
     
-     castor::exception::Exception ex(EVQBADSTAT);
-    ex.getMessage() << "TapeDriveStatusHandler::handleVolUnmountStatus(): "
-                    << "bad status from tpdaemon! Can't unmount tape in this status! "
-                    << "TapeDrive is set to STATUS_UNKNOWN." 
-                    << std::endl;      
+    castor::exception::Exception ex(EVQBADSTAT);
+    ex.getMessage()
+      << "TapeDriveStatusHandler::handleVolUnmountStatus(): "
+         "bad status from tpdaemon! Can't unmount tape in this status! "
+         "TapeDrive is set to STATUS_UNKNOWN." 
+      << std::endl;      
     throw ex;    
   }
 }
@@ -420,6 +483,16 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
          (ptr_driveRequest->status & VDQM_FORCE_UNMOUNT) ||
          *ptr_newRequestId == 0) {
 
+      castor::dlf::Param param[] = {
+        castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+        castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+        castor::dlf::Param("oldStatus",
+          castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
+        castor::dlf::Param("newStatus",
+          castor::vdqm::DevTools::tapeDriveStatus2Str(WAIT_FOR_UNMOUNT))};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      VDQM_DRIVE_STATE_TRANSITION, 4, param);
+
       // No, there wasn't any other job for that volume. Tell the
       // drive to unmount the volume. Put unit in WAIT_FOR_UNMOUNT status
       // until volume has been unmounted to prevent other
@@ -439,11 +512,31 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
     if ( !(ptr_driveRequest->status & VDQM_FORCE_UNMOUNT) &&
          ptr_tapeDrive->status() != FORCED_UNMOUNT ) {
 
+      castor::dlf::Param param[] = {
+        castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+        castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+        castor::dlf::Param("oldStatus",
+          castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
+        castor::dlf::Param("newStatus",
+          castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_UP))};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      VDQM_DRIVE_STATE_TRANSITION, 4, param);
+
       // Switch tape Drive to status UNIT_UP
       ptr_tapeDrive->setStatus(UNIT_UP);
 
     } else {
  
+      castor::dlf::Param param[] = {
+        castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+        castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+        castor::dlf::Param("oldStatus",
+          castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
+        castor::dlf::Param("newStatus",
+          castor::vdqm::DevTools::tapeDriveStatus2Str(FORCED_UNMOUNT))};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      VDQM_DRIVE_STATE_TRANSITION, 4, param);
+
       // Switch tape Drive to status FORCED_UNMOUNT
       // If client specified FORCE_UNMOUNT it means that there is "something"
       // mounted which is unknown to the VDQM. We have to wait for the unmount
@@ -467,6 +560,16 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitFreeStatus()
 
   TapeRequest* tapeRequest = NULL;
   
+  castor::dlf::Param param[] = {
+    castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+    castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+    castor::dlf::Param("oldStatus",
+      castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
+    castor::dlf::Param("newStatus",
+      castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_UP))};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+  VDQM_DRIVE_STATE_TRANSITION, 4, param);
+
   ptr_tapeDrive->setStatus(UNIT_UP);
   
   

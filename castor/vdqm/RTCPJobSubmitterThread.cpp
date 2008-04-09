@@ -23,7 +23,6 @@
  *****************************************************************************/
 
 #include <memory>
-#include <rtcp_constants.h>
 
 #include "castor/BaseAddress.hpp"
 #include "castor/Constants.hpp"
@@ -33,6 +32,7 @@
 #include "castor/vdqm/ClientIdentification.hpp"
 #include "castor/vdqm/DatabaseHelper.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
+#include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
 #include "castor/vdqm/RTCopyDConnection.hpp"
 #include "castor/vdqm/RTCPJobSubmitterThread.hpp"
@@ -40,6 +40,7 @@
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
+#include "h/rtcp_constants.h"
 
 
 //-----------------------------------------------------------------------------
@@ -147,6 +148,16 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
     // Un-link the associated tape drive
     request->setTapeDrive(0);
     drive->setRunningTapeReq(0);
+
+    castor::dlf::Param param[] = {
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("driveName", drive->driveName()),
+      castor::dlf::Param("oldStatus",
+        castor::vdqm::DevTools::tapeDriveStatus2Str(drive->status())),
+      castor::dlf::Param("newStatus",
+        castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_UP))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      VDQM_DRIVE_STATE_TRANSITION, 4, param);
 
     // The associated tape drive is now free
     drive->setStatus(UNIT_UP);

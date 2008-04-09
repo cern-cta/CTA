@@ -397,6 +397,17 @@ castor::vdqm::TapeDrive*
       if ( (ptr_driveRequest->status & ( VDQM_UNIT_UP|VDQM_UNIT_DOWN)) == 0 ) {
         ptr_driveRequest->status |= VDQM_UNIT_UP|VDQM_UNIT_UNKNOWN;
         
+        castor::dlf::Param param[] = {
+          castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+          castor::dlf::Param("driveName", tapeDrive->driveName()),
+          castor::dlf::Param("oldStatus",
+            castor::vdqm::DevTools::tapeDriveStatus2Str(
+              tapeDrive->status())),
+          castor::dlf::Param("newStatus",
+            castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_UP))};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+            VDQM_DRIVE_STATE_TRANSITION, 4, param);
+
         /**
          *  Our new tapeDrive Object is just in status UNIT_UP
          */
