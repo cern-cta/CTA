@@ -75,6 +75,7 @@ namespace castor {
         enum AccessMode accessMode;
         castor::IClient* client;
         bool isSecure;
+        u_signed64 requestCreationTime;
       };
 
       /**
@@ -88,6 +89,7 @@ namespace castor {
         std::string fullDestPath;
         int childPid;
         castor::stager::IJobSvc* jobSvc;
+        double totalWaitTime;
       };
 
       /**

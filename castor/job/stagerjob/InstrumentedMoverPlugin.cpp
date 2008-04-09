@@ -64,6 +64,16 @@ void castor::job::stagerjob::InstrumentedMoverPlugin::postForkHook
   ioResponse.setProtocol(args.protocol);
   ioResponse.setFileName(args.rawSubRequestUuid);
   sendResponse(args.client, ioResponse);
+  // then wait for the child to complete and inform stager
+  waitChildAndInformStager(args, context);
+}
+
+//------------------------------------------------------------------------------
+// waitChildAndInformStager
+//------------------------------------------------------------------------------
+void castor::job::stagerjob::InstrumentedMoverPlugin::waitChildAndInformStager
+(InputArguments &args, PluginContext &context)
+  throw(castor::exception::Exception) {
   // Wait for children
   int childFailed = waitForChild(args);
   // If all was fine, just return

@@ -67,6 +67,20 @@ namespace castor {
                                   PluginContext &context)
           throw (castor::exception::Exception);
 
+      protected :
+
+        /**
+         * waits for the child to end and informs stager
+         * Used internally by postForkHook after the response was
+         * sent to the client. Can be reused by children classes
+         * reimplementing postForkHook with a different response
+         * @param args the arguments given to the stager job
+         * @param context the current context (localhost, port, etc...)
+         */
+        void waitChildAndInformStager(InputArguments &args,
+                                      PluginContext &context)
+          throw (castor::exception::Exception);      
+
       }; // end of class InstrumentedMoverPlugin
 
     } // end of namespace stagerjob

@@ -95,7 +95,7 @@ void parseCommandLine
   // We expect nine arguments :
   // fileid@nshost requestuuid subrequestuuid rfeatures
   // subrequest_id@type host:fs mode clientString securityOption
-  if (argc != 10) {
+  if (argc != 11) {
     castor::exception::InvalidArgument e;
     e.getMessage() << "Wrong number of arguments given";
     throw e;
@@ -246,6 +246,9 @@ void parseCommandLine
   if (secureFlag == "1") {
     args.isSecure = true;
   }
+
+  // request creation time
+  args.requestCreationTime = atoi(argv[10]);
 }
 
 // -----------------------------------------------------------------------
@@ -561,6 +564,11 @@ void process(castor::job::stagerjob::InputArguments& args)
       // we've already logged, so just quit
       return;
     }
+    // compute waiting time of the request
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    context.totalWaitTime =
+      ((tv.tv_sec - args.requestCreationTime) * 1000000) + tv.tv_usec;
     // get proper plugin
     castor::job::stagerjob::IPlugin* plugin =
       castor::job::stagerjob::getPlugin(args.protocol);

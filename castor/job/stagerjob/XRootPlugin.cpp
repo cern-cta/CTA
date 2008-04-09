@@ -29,7 +29,9 @@
 #include <sstream>
 #include "getconfent.h"
 #include "castor/dlf/Dlf.hpp"
+#include "castor/rh/IOResponse.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/job/stagerjob/XRootPlugin.hpp"
 
 // static instance of the XRootPlugin
@@ -70,9 +72,10 @@ void castor::job::stagerjob::XRootPlugin::postForkHook
   castor::dlf::Param params[] =
     {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
      castor::dlf::Param("command line" , cmdLine.str()),
+     castor::dlf::Param("TotalWaitTime", context.totalWaitTime),
      castor::dlf::Param(args.subRequestUuid)};
   castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_DEBUG,
-                          MOVERFORK, 3, params, &args.fileId);
+                          MOVERFORK, 4, params, &args.fileId);
 
   // check that the mover can be executed
   if (access(progfullpath.c_str(), X_OK) != 0) {
@@ -84,8 +87,20 @@ void castor::job::stagerjob::XRootPlugin::postForkHook
     castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
                             MOVERNOTEXEC, 3, params, &args.fileId);
   }
-  // and call upper level for the actual work
-  InstrumentedMoverPlugin::postForkHook(args, context);
+  // answer the client so that it can connect to the mover
+  castor::rh::IOResponse ioResponse;
+  ioResponse.setStatus(castor::stager::SUBREQUEST_READY);
+  ioResponse.setSubreqId(args.rawSubRequestUuid);
+  ioResponse.setReqAssociated(args.rawRequestUuid);
+  ioResponse.setId(args.subRequestId);
+  ioResponse.setFileId(args.fileId.fileid);
+  ioResponse.setServer(context.host);
+  ioResponse.setPort(context.port);
+  ioResponse.setProtocol(args.protocol);
+  ioResponse.setFileName(context.fullDestPath);
+  sendResponse(args.client, ioResponse);
+  // then wait for the child to complete and inform stager
+  waitChildAndInformStager(args, context);
 }
 
 //------------------------------------------------------------------------------
