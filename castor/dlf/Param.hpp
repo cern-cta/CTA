@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Param.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/03/03 10:29:00 $ $Author: murrayc3 $
+ * @(#)$RCSfile: Param.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/04/09 10:31:06 $ $Author: sponcec3 $
  *
  * A parameter for the DLF (Distributed Logging System)
  *
@@ -62,7 +62,11 @@ namespace castor {
         m_deallocate(true) {
         m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_STR;
-        m_cParam.par.par_string = strdup(value);
+        if (0 != value) {
+          m_cParam.par.par_string = strdup(value);
+        } else {
+          m_cParam.par.par_string = 0;
+        }
       };
 
       /**
@@ -184,7 +188,7 @@ namespace castor {
        *
        */
       ~Param() {
-        if (m_deallocate) {
+        if (m_deallocate && 0 != m_cParam.par.par_string) {
           free(m_cParam.par.par_string);
         }
       };

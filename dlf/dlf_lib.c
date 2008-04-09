@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.28 2008/03/03 14:07:02 waldron Exp $
+ * $Id: dlf_lib.c,v 1.29 2008/04/09 10:32:02 sponcec3 Exp $
  */
 
 /* headers */
@@ -337,9 +337,13 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 			value[DLF_LEN_TAPEID] = '\0';
 		}
 		else if (param->type == DLF_MSG_PARAM_STR) {
-			strncpy(value, params[i].par.par_string, DLF_LEN_STRINGVALUE);
-			rtrim(value);
-			value[DLF_LEN_STRINGVALUE] = '\0';
+      if (0 != params[i].par.par_string) {
+        strncpy(value, params[i].par.par_string, DLF_LEN_STRINGVALUE);
+        rtrim(value);
+        value[DLF_LEN_STRINGVALUE] = '\0';
+      } else {
+        value[0] = 0;
+      }
 		}
 		else if (param->type == DLF_MSG_PARAM_INT) {
 			snprintf(value, DLF_LEN_NUMBERVALUE, "%d", params[i].par.par_int);
