@@ -72,10 +72,9 @@ void castor::job::stagerjob::XRootPlugin::postForkHook
   castor::dlf::Param params[] =
     {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
      castor::dlf::Param("command line" , cmdLine.str()),
-     castor::dlf::Param("TotalWaitTime", context.totalWaitTime),
      castor::dlf::Param(args.subRequestUuid)};
   castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_DEBUG,
-                          MOVERFORK, 4, params, &args.fileId);
+                          MOVERFORK, 3, params, &args.fileId);
 
   // check that the mover can be executed
   if (access(progfullpath.c_str(), X_OK) != 0) {

@@ -89,7 +89,6 @@ namespace castor {
         std::string fullDestPath;
         int childPid;
         castor::stager::IJobSvc* jobSvc;
-        double totalWaitTime;
       };
 
       /**

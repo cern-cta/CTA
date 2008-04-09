@@ -209,14 +209,13 @@ void castor::job::stagerjob::GridFTPPlugin::postForkHook
   castor::dlf::Param params[] =
     {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
      castor::dlf::Param("command line", cmdLine.str()),
-     castor::dlf::Param("TotalWaitTime", context.totalWaitTime),
      castor::dlf::Param("tcp_port_range", tcprange.str()),
      castor::dlf::Param("tcp_source_range", sourcerange.str()),
      castor::dlf::Param("certificate", env.globus_x509_user_cert),
      castor::dlf::Param("user key", env.globus_x509_user_key),
      castor::dlf::Param(args.subRequestUuid)};
   castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_DEBUG,
-                          MOVERFORK, 8, params, &args.fileId);
+                          MOVERFORK, 7, params, &args.fileId);
   // check that the mover can be executed
   if (access(progfullpath.c_str(), X_OK) != 0) {
     // "Mover program can not be executed. Check permissions"

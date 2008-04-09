@@ -564,11 +564,6 @@ void process(castor::job::stagerjob::InputArguments& args)
       // we've already logged, so just quit
       return;
     }
-    // compute waiting time of the request
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    context.totalWaitTime =
-      ((tv.tv_sec - args.requestCreationTime) * 1000000) + tv.tv_usec;
     // get proper plugin
     castor::job::stagerjob::IPlugin* plugin =
       castor::job::stagerjob::getPlugin(args.protocol);
@@ -715,9 +710,15 @@ int main(int argc, char** argv) {
       stagerConcatenatedArgv += argv[i];
       stagerConcatenatedArgv += " ";
     }
+    // compute waiting time of the request
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    double totalWaitTime =
+      ((tv.tv_sec - arguments.requestCreationTime) * 1000000) + tv.tv_usec;
     castor::dlf::Param params[] =
       {castor::dlf::Param("Arguments", stagerConcatenatedArgv),
        castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+       castor::dlf::Param("TotalWaitTime", totalWaitTime),
        castor::dlf::Param(arguments.subRequestUuid)};
     castor::dlf::dlf_writep
       (arguments.requestUuid, DLF_LVL_SYSTEM,
