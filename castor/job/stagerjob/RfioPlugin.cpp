@@ -40,6 +40,8 @@ castor::job::stagerjob::RfioPlugin rfioPlugin;
 //------------------------------------------------------------------------------
 castor::job::stagerjob::RfioPlugin::RfioPlugin() throw():
   InstrumentedMoverPlugin("rfio") {
+  // also register for rfio3 (rfio registration is done by the parent)
+  castor::job::stagerjob::registerPlugin("rfio3", this);
 }
 
 //------------------------------------------------------------------------------
