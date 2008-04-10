@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.65 $ $Date: 2008/03/18 14:03:35 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.66 $ $Date: 2008/04/10 07:44:24 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -1294,7 +1294,7 @@ char *loader;
 		*c = ETVBSY;	/* volume in use (ifndef TMS) */
 		return (-1);
 	case RBT_FAST_RETRY:
-                tplogit (func, "RBT_FAST_RETRY %s", msg);
+                tplogit (func, "RBT_FAST_RETRY %s\n", msg);
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "Message", TL_MSG_PARAM_STR, msg );        
