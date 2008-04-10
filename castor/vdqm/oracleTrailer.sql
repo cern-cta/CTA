@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.77 $ $Release$ $Date: 2008/04/10 16:17:22 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.78 $ $Release$ $Date: 2008/04/10 17:31:18 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -836,9 +836,11 @@ BEGIN
     -- their statuses to see if the drive allocation is still valid
     SELECT TapeDrive.status INTO TapeDriveStatusVar
     FROM TapeDrive
+    WHERE TapeDrive.id = tapeDriveIdVar
     FOR UPDATE;
     SELECT TapeRequest.status INTO TapeRequestStatusVar
     FROM TapeRequest
+    WHERE TapeRequest.id = tapeRequestIdVar
     FOR UPDATE;
 
     -- Get the drive name (used for logging)
