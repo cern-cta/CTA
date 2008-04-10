@@ -1636,12 +1636,14 @@ castor::vdqm::TapeRequest*
 // -----------------------------------------------------------------------
 // allocateDrive
 // -----------------------------------------------------------------------
-bool castor::db::ora::OraVdqmSvc::allocateDrive(u_signed64 *tapeDriveId,
+int castor::db::ora::OraVdqmSvc::allocateDrive(u_signed64 *tapeDriveId,
   std::string *tapeDriveName, u_signed64 *tapeRequestId,
   std::string *tapeRequestVid)
   throw (castor::exception::Exception) {
 
-  int aDriveWasAllocated = 0; // 0 = FALSE and 1 = TRUE
+  // 1 = drive allocated, 0 = no possible allocation found, -1 possible
+  // allocation found, but invalidated by other threads
+  int allocationResult = 0;
   
 
   // Check whether the statements are ok
@@ -1662,7 +1664,7 @@ bool castor::db::ora::OraVdqmSvc::allocateDrive(u_signed64 *tapeDriveId,
   try {
     m_allocateDriveStatement->executeUpdate();
     
-    aDriveWasAllocated = m_allocateDriveStatement->getInt(1);
+    allocationResult   = m_allocateDriveStatement->getInt(1);
     *tapeDriveId       = (u_signed64)m_allocateDriveStatement->getDouble(2);
     *tapeDriveName     = m_allocateDriveStatement->getString(3);
     *tapeRequestId     = (u_signed64)m_allocateDriveStatement->getDouble(4);
@@ -1676,7 +1678,7 @@ bool castor::db::ora::OraVdqmSvc::allocateDrive(u_signed64 *tapeDriveId,
     throw ex;
   }
   
-  return aDriveWasAllocated == 1;
+  return allocationResult;
 }
 
 

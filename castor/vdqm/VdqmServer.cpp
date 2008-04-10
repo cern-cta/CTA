@@ -259,6 +259,7 @@ void castor::vdqm::VdqmServer::initDlf()
     {VDQM_SEND_RTCPD_JOB, "Sending job to RTCPD"},
     {VDQM_DRIVE_STATE_TRANSITION, "Tape drive state transition"},
     {VDQM_DRIVE_ALLOCATED, "Tape drive allocated"},
+    {VDQM_INVALIDATED_DRIVE_ALLOCATION, "Invalidated tape drive allocation"},
     {-1, ""}
   }; // castor::dlf::Message messages[]
 

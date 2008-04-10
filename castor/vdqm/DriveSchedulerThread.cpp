@@ -57,9 +57,7 @@ castor::vdqm::DriveSchedulerThread::~DriveSchedulerThread()
 //-----------------------------------------------------------------------------
 void castor::vdqm::DriveSchedulerThread::run(void *param) {
 
-  castor::vdqm::IVdqmSvc *vdqmSvc           = NULL;
-  bool                   aDriveWasAllocated = false;
-
+  castor::vdqm::IVdqmSvc *vdqmSvc = NULL;
 
   try {
     vdqmSvc = getDbVdqmSvc();
@@ -76,23 +74,36 @@ void castor::vdqm::DriveSchedulerThread::run(void *param) {
     return;
   }
 
+
+  // 1 = drive allocated, 0 = no possible allocation found, -1 possible
+  // allocation found, but invalidated by other threads
+  int allocationResult = 0;
+
   try {
     u_signed64  tapeDriveId;
     std::string tapeDriveName;
     u_signed64  tapeRequestId;
     std::string tapeRequestVid;
 
-    aDriveWasAllocated = vdqmSvc->allocateDrive(&tapeDriveId, &tapeDriveName,
+    allocationResult = vdqmSvc->allocateDrive(&tapeDriveId, &tapeDriveName,
       &tapeRequestId, &tapeRequestVid);
 
-    if(aDriveWasAllocated) {
+    // If a drive was allocated or a possible drive allocation was found, but
+    // was invalidated by other threads
+    if((allocationResult == 1) || (allocationResult == -1)){
       castor::dlf::Param param[] = {
         castor::dlf::Param("tapeDrive ID"  , tapeDriveId),
         castor::dlf::Param("driveName"     , tapeDriveName),
         castor::dlf::Param("tapeRequest ID", tapeRequestId),
         castor::dlf::Param("tape vid"      , tapeRequestVid)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-      VDQM_DRIVE_ALLOCATED, 4, param);
+
+      if(allocationResult == 1) { // Drive allocated
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+          VDQM_DRIVE_ALLOCATED, 4, param);
+      } else { // Invalidated drive allocation
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+          VDQM_INVALIDATED_DRIVE_ALLOCATION, 4, param);
+      }
     }
   } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] = {
@@ -106,7 +117,8 @@ void castor::vdqm::DriveSchedulerThread::run(void *param) {
     return;
   }
 
-  if(aDriveWasAllocated) {
+  // If a drive was allocated
+  if(allocationResult == 1) {
     // Notiify the RTCP job submitter threads
     castor::server::NotifierThread::getInstance()->doNotify('J');
   }

@@ -112,10 +112,12 @@ namespace castor {
          * @param tapeRequestVid if a free drive was successfully allocated
          * then the value of this parameter will be the VID of the pending
          * request, else the value of this parameter will be undefined.
-         * @return true if a free tape drive was allocated to a pending
-         * request, else false
+         * @return 1 if a free drive was successfully allocated to a pending
+         * request, or 0 if no possible allocation could be found or -1 if an
+         * allocation was found but was invalidated by other threads before the
+         * appropriate locks could be taken.
          */  
-       virtual bool allocateDrive(u_signed64 *tapeDriveId,
+       virtual int allocateDrive(u_signed64 *tapeDriveId,
          std::string *tapeDriveName, u_signed64 *tapeRequestId,
          std::string *tapeRequestVid)
          throw (castor::exception::Exception) = 0;

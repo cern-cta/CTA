@@ -221,7 +221,7 @@ namespace castor {
         /**
          * See castor::vdqm::IVdqmSvc documentation.
          */
-        virtual bool allocateDrive(u_signed64 *tapeDriveId,
+        virtual int allocateDrive(u_signed64 *tapeDriveId,
           std::string *tapeDriveName, u_signed64 *tapeRequestId,
           std::string *tapeRequestVid)
           throw (castor::exception::Exception);
