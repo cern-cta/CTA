@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.46 $ $Date: 2008/03/25 11:50:38 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.47 $ $Date: 2008/04/10 07:48:44 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -401,7 +401,7 @@ unload_loop:
                                             "Drive"   , TL_MSG_PARAM_STR  , drive, 
                                             "DGN"     , TL_MSG_PARAM_STR  , dgn,
                                             "Hostname", TL_MSG_PARAM_STR  , hostname,
-                                            "Job ID"  , TL_MSG_PARAM_INT  , jid,
+                                            "JobID"   , TL_MSG_PARAM_INT  , jid,
                                             "TPVID"   , TL_MSG_PARAM_TPVID, vid );
 			c = rbtdemount (vid, drive, dvn, loader, demountforce,vsnretry);
 			if ((n = rbtdmntchk (&c, drive, &demountforce)) < 0)
@@ -486,7 +486,7 @@ freedrv:
                             "tapemoved"  , TL_MSG_PARAM_STR  , (rlsflags & TPRLS_NOUNLOAD)?"no":"yes",
                             "Drive"      , TL_MSG_PARAM_STR  , drive, 
                             "DGN"        , TL_MSG_PARAM_STR  , dgn,
-                            "Job ID"     , TL_MSG_PARAM_INT  , jid,
+                            "JobID"      , TL_MSG_PARAM_INT  , jid,
                             "vid"        , TL_MSG_PARAM_STR  , vid,
                             "TPVID"      , TL_MSG_PARAM_TPVID, vid );
 

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.66 $ $Date: 2008/04/10 07:44:24 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.67 $ $Date: 2008/04/10 07:48:44 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -344,7 +344,7 @@ char	**argv;
                                     "DGN"     , TL_MSG_PARAM_STR  , dgn,
                                     "Hostname", TL_MSG_PARAM_STR  , hostname, 
                                     "Name"    , TL_MSG_PARAM_STR  , name,
-                                    "Job ID"  , TL_MSG_PARAM_INT  , jid,
+                                    "JobID"   , TL_MSG_PARAM_INT  , jid,
                                     "Reason"  , TL_MSG_PARAM_STR  , why,
                                     "TPVID"   , TL_MSG_PARAM_TPVID, vid );
 
