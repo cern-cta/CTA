@@ -38,6 +38,10 @@
 #include "castor/Services.hpp"
 #include "castor/IClientFactory.hpp"
 #include "castor/dlf/Dlf.hpp"
+#include "castor/rh/Client.hpp"
+#include "castor/rh/IOResponse.hpp"
+#include "castor/rh/EndResponse.hpp"
+#include "castor/io/ClientSocket.hpp"
 #include "castor/stager/IJobSvc.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskServer.hpp"
@@ -137,8 +141,8 @@ void parseCommandLine
 
   // rfeatures
   args.protocol = argv[4];
+  if (args.protocol == "rfio3") args.protocol = "rfio";
   if (args.protocol!= "rfio" &&
-      args.protocol!= "rfio3" &&
       args.protocol!= "root" &&
       args.protocol!= "xroot" &&
       args.protocol!= "gsiftp") {
@@ -650,6 +654,28 @@ void process(castor::job::stagerjob::InputArguments& args)
 }
 
 
+//------------------------------------------------------------------------------
+// sendResponse
+//------------------------------------------------------------------------------
+void castor::job::stagerjob::sendResponse
+(castor::IClient *client,
+ castor::rh::IOResponse &response)
+  throw (castor::exception::Exception) {
+  castor::rh::Client* rhc = dynamic_cast<castor::rh::Client*>(client);
+  if (0 == rhc) {
+    castor::exception::Internal e;
+    e.getMessage() << "Unable to reply to client, unknown client type : "
+                   << client->type();
+    throw e;
+  }
+  castor::io::ClientSocket s(rhc->port(), rhc->ipAddress());
+  s.connect();
+  s.sendObject(response);
+  castor::rh::EndResponse endRes;
+  s.sendObject(endRes);
+}
+
+
 // -----------------------------------------------------------------------
 // main
 // -----------------------------------------------------------------------
@@ -754,6 +780,11 @@ int main(int argc, char** argv) {
     castor::dlf::dlf_writep
       (arguments.requestUuid, DLF_LVL_SYSTEM,
        castor::job::stagerjob::JOBENDED, 4, params, &arguments.fileId);
+    // Try to answer the client
+    castor::rh::IOResponse ioResponse;
+    ioResponse.setErrorCode(e.code());
+    ioResponse.setErrorMessage(e.getMessage().str());
+    castor::job::stagerjob::sendResponse(arguments.client, ioResponse);
     return -1;
   }
 }

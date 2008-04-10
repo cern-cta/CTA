@@ -82,16 +82,6 @@ namespace castor {
         (castor::job::stagerjob::InputArguments &args) throw();
 
         /**
-         * Sends a given response to a given client
-         * @param client the client waiting for the response
-         * @param response the response to be sent
-         * @return whether the child failed
-         */
-        void sendResponse(castor::IClient *client,
-                          castor::rh::IOResponse &response)
-          throw (castor::exception::Exception);
-
-        /**
          * set the select timeout for inetd mode
          * @param timeOut the new value in seconds
          */

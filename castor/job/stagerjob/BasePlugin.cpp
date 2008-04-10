@@ -29,9 +29,6 @@
 #include <sys/wait.h>
 #include "castor/IClient.hpp"
 #include "castor/dlf/Dlf.hpp"
-#include "castor/rh/Client.hpp"
-#include "castor/rh/IOResponse.hpp"
-#include "castor/io/ClientSocket.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/job/stagerjob/BasePlugin.hpp"
@@ -108,23 +105,3 @@ bool castor::job::stagerjob::BasePlugin::waitForChild
   }
   return childFailed;
 }
-
-//------------------------------------------------------------------------------
-// sendResponse
-//------------------------------------------------------------------------------
-void castor::job::stagerjob::BasePlugin::sendResponse
-(castor::IClient *client,
- castor::rh::IOResponse &response)
-  throw (castor::exception::Exception) {
-  castor::rh::Client* rhc = dynamic_cast<castor::rh::Client*>(client);
-  if (0 == rhc) {
-    castor::exception::Internal e;
-    e.getMessage() << "Unable to reply to client, unknown client type : "
-                   << client->type();
-    throw e;
-  }
-  castor::io::ClientSocket s(rhc->port(), rhc->ipAddress());
-  s.connect();
-  s.sendObject(response);
-}
-

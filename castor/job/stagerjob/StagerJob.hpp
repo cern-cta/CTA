@@ -156,6 +156,16 @@ namespace castor {
                           IPlugin* plugin)
         throw();
 
+      /**
+       * Sends a given response to a given client
+       * @param client the client waiting for the response
+       * @param response the response to be sent
+       * @return whether the child failed
+       */
+      void sendResponse(castor::IClient *client,
+                        castor::rh::IOResponse &response)
+        throw (castor::exception::Exception);
+
     } // end of namespace stagerjob
 
   } // end of namespace job
