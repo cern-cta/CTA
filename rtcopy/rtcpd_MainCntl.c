@@ -1109,7 +1109,7 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
   int Ttransfer = 0;
   int Tposition = 0;
   int totFiles = 0;
-  char vid[CA_MAXVIDLEN+1];
+  char vid[CA_MAXVIDLEN+1] = "N/A";
   int mode,jobID,status,rc;
   int VolReqID;
   int client_uid, client_gid;
@@ -1164,6 +1164,12 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
       strcpy(vid,tapereq->vid);
       Tservice = ((time_t)tapereq->TEndUnmount - 
                   (time_t)tapereq->TStartRequest);
+      if (Tservice<0) {
+              /* failed request: the unmount time is not set, 
+                 so take the current time as an approximation */
+              Tservice = ((time_t)time(NULL) - 
+                          (time_t)tapereq->TStartRequest);
+      }
       if ( Twait == 0 ) 
         Twait = ((time_t)tapereq->TStartMount - 
                  (time_t)tapereq->TStartRequest);
