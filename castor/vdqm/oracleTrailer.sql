@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.74 $ $Release$ $Date: 2008/04/07 14:31:54 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.75 $ $Release$ $Date: 2008/04/10 12:29:23 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -796,51 +796,82 @@ left outer join TAPEACCESSSPECIFICATION on
  * PL/SQL procedure which tries to allocate a free tape drive to a pending tape
  * request.
  *
- * This method returns the ID of the corresponding tape request if the method
- * successfully allocates a drive, else 0.
+ * @param returnVar has a value of 1 if a free drive was successfully allocated
+ * to a pending request, else 0.
+ * @param tapeDriveIdVar if a free drive was successfully allocated then the
+ * value of this parameter will be the ID of the allocated tape drive, else the
+ * value of this parameter will be undefined.
+ * @param tapeDriveIdVar if a free drive was successfully allocated then the
+ * value of this parameter will be the name of the allocated tape drive, else
+ * the value of this parameter will be undefined.
+ * @param tapeRequestIdVar if a free drive was successfully allocated then the
+ * value of this parameter will be the ID of the pending request, else the
+ * value of this parameter will be undefined.
+ * @param tapeRequestVidVar if a free drive was successfully allocated then the
+ * value of this parameter will be the VID of the pending request, else the
+ * value of this parameter will be undefined.
  */
-CREATE OR REPLACE
-PROCEDURE allocateDrive(
-  ret OUT NUMBER) AS
+CREATE OR REPLACE PROCEDURE allocateDrive(
+  returnVar         OUT NUMBER,
+  tapeDriveIdVar    OUT NUMBER,
+  tapeDriveNameVar  OUT NOCOPY VARCHAR2,
+  tapeRequestIdVar  OUT NUMBER,
+  tapeRequestVidVar OUT NOCOPY VARCHAR2
+  ) AS
 
-  lock_var          NUMBER;
-  tapeDriveID_var   NUMBER := 0;
-  tapeRequestID_var NUMBER := 0;
+  lockVar          NUMBER;
 BEGIN
-  ret := 0;
+  returnVar         := 0;
+  tapeDriveIdVar    := 0;
+  tapeDriveNameVar  := '';
+  tapeRequestIdVar  := 0;
+  tapeRequestVidVar := '';
 
   -- Grab the drive scheduler lock before executing the scheduler algorithm
-  SELECT id INTO lock_var FROM DriveSchedulerLock WHERE id=1 FOR UPDATE;
+  SELECT id INTO lockVar FROM DriveSchedulerLock WHERE id=1 FOR UPDATE;
 
   SELECT
-    tapeDriveID,
-    tapeRequestID
+    tapeDriveId,
+    tapeRequestId
   INTO
-    tapeDriveID_var, tapeRequestID_var
+    tapeDriveIdVar, tapeRequestIdVar
   FROM
     CANDIDATEDRIVEALLOCATIONS_VIEW
   WHERE
     rownum < 2;
 
   -- If there is a free drive which can be allocated to a pending request
-  IF tapeDriveID_var != 0 AND tapeRequestID_var != 0 THEN
+  IF tapeDriveIdVar != 0 AND tapeRequestIdVar != 0 THEN
 
+    -- Get the drive name (used for logging)
+    SELECT TapeDrive.driveName INTO TapeDriveNameVar
+    FROM TapeDrive
+    WHERE TapeDrive.id = tapeDriveIdVar;
+    
+    -- Get the VID of the pending request (used for logging)
+    SELECT VdqmTape.vid INTO tapeRequestVidVar
+    FROM TapeRequest
+    INNER JOIN VdqmTape ON TapeRequest.tape = VdqmTape.id
+    WHERE TapeRequest.id = tapeRequestIdVar;
+
+    -- Allocate the free drive to the pending request
     UPDATE TapeDrive SET
       status           = 1, -- UNIT_STARTING
       jobID            = 0,
       modificationTime = getTime(),
-      runningTapeReq   = tapeRequestID_var
+      runningTapeReq   = tapeRequestIDVar
     WHERE
-      id = tapeDriveID_var;
+      id = tapeDriveIdVar;
 
     UPDATE TapeRequest SET
       status           = 1, -- MATCHED
-      tapeDrive        = tapeDriveID_var,
+      tapeDrive        = tapeDriveIdVar,
       modificationTime = getTime()
     WHERE
-      id = tapeRequestID_var;
+      id = tapeRequestIdVar;
 
-    RET := 1;
+    -- A free drive has been allocated to a pending request
+    returnVar := 1;
   END IF;
 
 EXCEPTION

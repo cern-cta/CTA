@@ -77,7 +77,23 @@ void castor::vdqm::DriveSchedulerThread::run(void *param) {
   }
 
   try {
-    aDriveWasAllocated = vdqmSvc->allocateDrive();
+    u_signed64  tapeDriveId;
+    std::string tapeDriveName;
+    u_signed64  tapeRequestId;
+    std::string tapeRequestVid;
+
+    aDriveWasAllocated = vdqmSvc->allocateDrive(&tapeDriveId, &tapeDriveName,
+      &tapeRequestId, &tapeRequestVid);
+
+    if(aDriveWasAllocated) {
+      castor::dlf::Param param[] = {
+        castor::dlf::Param("tapeDrive ID"  , tapeDriveId),
+        castor::dlf::Param("driveName"     , tapeDriveName),
+        castor::dlf::Param("tapeRequest ID", tapeRequestId),
+        castor::dlf::Param("tape vid"      , tapeRequestVid)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      VDQM_DRIVE_ALLOCATED, 4, param);
+    }
   } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("Function", "castor::vdqm::DriveSchedulerThread::run"),

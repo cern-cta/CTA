@@ -172,18 +172,11 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeAccessSpecificationsS
   "SELECT id FROM TapeAccessSpecification WHERE tapeModel = :1 ORDER BY accessMode DESC";  
 
 /**
- * This is the main select statement to dedicate a tape to a tape drive.
- * It respects the old and of course the new way to select a tape for a 
- * tape drive.
- * The old way is to look, if the tapeDrive and the tapeRequest have the same
- * dgn.
- * The new way is to look if the TapeAccessSpecification can be served by a 
- * specific tapeDrive. The tape Request are then orderd by the priorityLevel (for 
- * the new way) and by the modification time.
+ * The drive scheduler algorithm.
  */  
 /// SQL statement for function allocateDrive
 const std::string castor::db::ora::OraVdqmSvc::s_allocateDriveStatementString =
-  "BEGIN allocateDrive(:1); END;";
+  "BEGIN allocateDrive(:1, :2, :3, :4, :5); END;";
 
 /// SQL statement for function reuseTapeAllocation
 const std::string castor::db::ora::OraVdqmSvc::s_reuseTapeAllocationStatementString =
@@ -1643,7 +1636,9 @@ castor::vdqm::TapeRequest*
 // -----------------------------------------------------------------------
 // allocateDrive
 // -----------------------------------------------------------------------
-bool castor::db::ora::OraVdqmSvc::allocateDrive()
+bool castor::db::ora::OraVdqmSvc::allocateDrive(u_signed64 *tapeDriveId,
+  std::string *tapeDriveName, u_signed64 *tapeRequestId,
+  std::string *tapeRequestVid)
   throw (castor::exception::Exception) {
 
   int aDriveWasAllocated = 0; // 0 = FALSE and 1 = TRUE
@@ -1654,8 +1649,11 @@ bool castor::db::ora::OraVdqmSvc::allocateDrive()
     m_allocateDriveStatement =
       createStatement(s_allocateDriveStatementString);
     
-    m_allocateDriveStatement->registerOutParam
-        (1, oracle::occi::OCCIINT);
+    m_allocateDriveStatement->registerOutParam(1, oracle::occi::OCCIINT);
+    m_allocateDriveStatement->registerOutParam(2, oracle::occi::OCCIDOUBLE);
+    m_allocateDriveStatement->registerOutParam(3, oracle::occi::OCCISTRING,256);
+    m_allocateDriveStatement->registerOutParam(4, oracle::occi::OCCIDOUBLE);
+    m_allocateDriveStatement->registerOutParam(5, oracle::occi::OCCISTRING,256);
 
     m_allocateDriveStatement->setAutoCommit(true);
   }
@@ -1665,6 +1663,10 @@ bool castor::db::ora::OraVdqmSvc::allocateDrive()
     m_allocateDriveStatement->executeUpdate();
     
     aDriveWasAllocated = m_allocateDriveStatement->getInt(1);
+    *tapeDriveId       = (u_signed64)m_allocateDriveStatement->getDouble(2);
+    *tapeDriveName     = m_allocateDriveStatement->getString(3);
+    *tapeRequestId     = (u_signed64)m_allocateDriveStatement->getDouble(4);
+    *tapeRequestVid    = m_allocateDriveStatement->getString(5);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;

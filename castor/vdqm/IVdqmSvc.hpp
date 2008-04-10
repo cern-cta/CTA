@@ -100,10 +100,24 @@ namespace castor {
          * favour an older drive over a newer one in order to help keep the
          * newer drives free for newer tapes.
          * 
+         * @param tapeDriveId if a free drive was successfully allocated then
+         * the value of this parameter will be the ID of the allocated tape
+         * drive, else the value of this parameter will be undefined.
+         * @param tapeDriveId if a free drive was successfully allocated then
+         * the value of this parameter will be the name of the allocated tape
+         * drive, else the value of this parameter will be undefined.
+         * @param tapeRequestId if a free drive was successfully allocated then
+         * the value of this parameter will be the ID of the pending request,
+         * else the value of this parameter will be undefined.
+         * @param tapeRequestVid if a free drive was successfully allocated
+         * then the value of this parameter will be the VID of the pending
+         * request, else the value of this parameter will be undefined.
          * @return true if a free tape drive was allocated to a pending
          * request, else false
          */  
-       virtual bool allocateDrive()
+       virtual bool allocateDrive(u_signed64 *tapeDriveId,
+         std::string *tapeDriveName, u_signed64 *tapeRequestId,
+         std::string *tapeRequestVid)
          throw (castor::exception::Exception) = 0;
 
        /**

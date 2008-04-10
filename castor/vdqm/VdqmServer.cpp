@@ -258,6 +258,7 @@ void castor::vdqm::VdqmServer::initDlf()
     {VDQM_HANDLE_REQUEST_EXCEPT, "Exception raised by castor::vdqm::VdqmServer::handleRequest"},
     {VDQM_SEND_RTCPD_JOB, "Sending job to RTCPD"},
     {VDQM_DRIVE_STATE_TRANSITION, "Tape drive state transition"},
+    {VDQM_DRIVE_ALLOCATED, "Tape drive allocated"},
     {-1, ""}
   }; // castor::dlf::Message messages[]
 

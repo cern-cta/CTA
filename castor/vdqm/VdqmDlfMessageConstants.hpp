@@ -104,7 +104,8 @@ namespace castor {
       VDQM_DRIVE_ALLOCATION_ERROR=70, /* "Error occurred whilst allocating a free drive to a tape request" */
       VDQM_HANDLE_REQUEST_EXCEPT=71, /* "Exception raised by castor::vdqm::VdqmServer::handleRequest" */
       VDQM_SEND_RTCPD_JOB=72, /* "Sending job to RTCPD" */
-      VDQM_DRIVE_STATE_TRANSITION=73 /* "Tape drive state transition" */
+      VDQM_DRIVE_STATE_TRANSITION=73, /* "Tape drive state transition" */
+      VDQM_DRIVE_ALLOCATED=74 /* "Tape drive allocated" */
     }; // enum VdqmDlfMessages
 
   } // namespace vdqm
