@@ -17,12 +17,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbParamsSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/04/10 14:43:21 $ $Author: gtaur $
+ * @(#)$RCSfile: DbParamsSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/04/10 14:58:59 $ $Author: gtaur $
  *  
  * A service to provide parameters to access the db layer of a Castor application
  *
  * @author castor dev team
  *****************************************************************************/
+
 
 // Local Files
 #include "castor/db/DbParamsSvc.hpp"
