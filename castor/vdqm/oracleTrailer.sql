@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.76 $ $Release$ $Date: 2008/04/10 15:59:45 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.77 $ $Release$ $Date: 2008/04/10 16:17:22 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -782,7 +782,7 @@ left outer join TAPEACCESSSPECIFICATION on
  *
  * @param returnVar has a value of 1 if a free drive was successfully allocated
  * to a pending request, or 0 if no possible allocation could be found or -1 if
- * and allocation was found but was invalidated by other threads before the
+ * an allocation was found but was invalidated by other threads before the
  * appropriate locks could be taken.
  * @param tapeDriveIdVar if a free drive was successfully allocated then the
  * value of this parameter will be the ID of the allocated tape drive, else the
@@ -841,20 +841,20 @@ BEGIN
     FROM TapeRequest
     FOR UPDATE;
 
+    -- Get the drive name (used for logging)
+    SELECT TapeDrive.driveName INTO TapeDriveNameVar
+    FROM TapeDrive
+    WHERE TapeDrive.id = tapeDriveIdVar;
+  
+    -- Get the VID of the pending request (used for logging)
+    SELECT VdqmTape.vid INTO tapeRequestVidVar
+    FROM TapeRequest
+    INNER JOIN VdqmTape ON TapeRequest.tape = VdqmTape.id
+    WHERE TapeRequest.id = tapeRequestIdVar;
+
     -- If the drive allocation is still valid, i.e. drive status is UNIT_UP and
     -- request status is REQUEST_PENDING
     IF(TapeDriveStatusVar = 0) AND (TapeRequestStatusVar = 0) THEN
-
-      -- Get the drive name (used for logging)
-      SELECT TapeDrive.driveName INTO TapeDriveNameVar
-      FROM TapeDrive
-      WHERE TapeDrive.id = tapeDriveIdVar;
-    
-      -- Get the VID of the pending request (used for logging)
-      SELECT VdqmTape.vid INTO tapeRequestVidVar
-      FROM TapeRequest
-      INNER JOIN VdqmTape ON TapeRequest.tape = VdqmTape.id
-      WHERE TapeRequest.id = tapeRequestIdVar;
 
       -- Allocate the free drive to the pending request
       UPDATE TapeDrive SET
