@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.652 $ $Date: 2008/03/25 12:40:06 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.653 $ $Date: 2008/04/10 14:43:21 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -947,11 +947,6 @@ BEGIN
           BEGIN 
           -- check if it is not been resurrected by the start of a new mighunter on the same svcclass
              INSERT INTO stream2tapecopy (parent ,child) VALUES (streamId.id, tapeCopyIds(i));
-        	counter := counter + 1;
-             IF counter = 100 THEN
-                 counter := 0;
-                 COMMIT;
-             END IF;
           EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
       	     UPDATE tapecopy set status=1 where id=tapeCopyIds(i);
           END;
