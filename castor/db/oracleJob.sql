@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.649 $ $Date: 2008/03/28 17:29:34 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.650 $ $Date: 2008/04/11 11:54:30 $ $Author: sponcec3 $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -208,10 +208,8 @@ BEGIN
     -- and the weightForAccess from our svcClass: this is added as a bonus to 
     -- the selected diskCopy.
     SELECT gcWeightForAccess INTO wAccess 
-      FROM SvcClass, DiskPool2SvcClass D2S, FileSystem
-     WHERE FileSystem.id = fileSystemId
-       AND FileSystem.diskPool = D2S.parent
-       AND D2S.child = SvcClass.id;
+      FROM SvcClass
+     WHERE id = srSvcClass;
     UPDATE DiskCopy
        SET gcWeight = gcWeight + wAccess*86400 + getTime() - lastAccessTime,
            lastAccessTime = getTime()
