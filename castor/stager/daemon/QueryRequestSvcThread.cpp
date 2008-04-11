@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.73 $ $Release$ $Date: 2008/04/01 15:36:05 $ $Author: waldron $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.74 $ $Release$ $Date: 2008/04/11 11:59:23 $ $Author: waldron $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -694,7 +694,7 @@ void castor::stager::daemon::QueryRequestSvcThread::process
           // "Invalid ServiceClass name"
           castor::dlf::Param params[] =
             {castor::dlf::Param("svcClassName", className)};
-          castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_INVSC, 1, params);
+          castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_QRYSVC_INVSC, 1, params);
           castor::exception::NoEntry e;
           e.getMessage() << "Invalid ServiceClass name : '" << className << "'";
           failed = true;
