@@ -34,8 +34,9 @@
 #include <Cgrp.h>
 #include "common.h"
 #include "getconfent.h"
-#include "castor/BaseObject.hpp"
+#include "castor/System.hpp"
 #include "castor/Services.hpp"
+#include "castor/BaseObject.hpp"
 #include "castor/IClientFactory.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/rh/Client.hpp"
@@ -563,6 +564,7 @@ void process(castor::job::stagerjob::InputArguments& args)
     castor::stager::IJobSvc* jobSvc = getJobSvc();
     // get full path of the file we handle
     castor::job::stagerjob::PluginContext context;
+    context.host = castor::System::getHostName();
     context.mask = S_IRWXG|S_IRWXO;
     context.jobSvc = jobSvc;
     context.fullDestPath = startAndGetPath(args, context);
