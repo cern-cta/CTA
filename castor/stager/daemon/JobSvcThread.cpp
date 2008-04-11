@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.56 $ $Release$ $Date: 2008/03/27 17:19:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.57 $ $Release$ $Date: 2008/04/11 12:27:18 $ $Author: itglp $
  *
  * Service thread for job related requests
  *
@@ -142,15 +142,15 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
     if (castor::OBJ_GetUpdateStartRequest == sReq->type()) {
       // "Invoking getUpdateStart"
       castor::dlf::Param params[] =
-	{castor::dlf::Param(suuid)};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_GETUPDS,
+        {castor::dlf::Param(suuid)};
+         castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_GETUPDS,
 			      fileId, nsHost, 1, params);
       dc = jobSvc->getUpdateStart(subreq, fs, &emptyFile, fileId, nsHost);
     } else {
       // "Invoking PutStart"
       castor::dlf::Param params[] =
-	{castor::dlf::Param(suuid)};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_PUTS,
+        {castor::dlf::Param(suuid)};
+         castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_PUTS,
 			      fileId, nsHost, 1, params);
       try {
         dc = jobSvc->putStart(subreq, fs, fileId, nsHost);
@@ -168,7 +168,7 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code()),
        castor::dlf::Param(suuid)};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
 			    fileId, nsHost, 4, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
