@@ -73,15 +73,14 @@ void castor::job::stagerjob::RawMoverPlugin::preForkHook
   sendResponse(args.client, ioResponse);
   // Do ourselves a timeouted accept() so that the mover can work in inetd mode
   struct timeval timeval;
-  fd_set readfd, readmask;
-  FD_ZERO(&readfd);
+  fd_set readmask;
   FD_ZERO(&readmask);
+  FD_SET (context.socket, &readmask);
   int saccept;
   int rc_select;
-  memcpy (&readfd, &readmask, sizeof(readmask));
   timeval.tv_sec = getSelectTimeOut();
   timeval.tv_usec = 0;
-  if ((rc_select = select(context.socket + 1, &readfd, (fd_set *) NULL,
+  if ((rc_select = select(context.socket + 1, &readmask, (fd_set *) NULL,
                           (fd_set *) NULL, &timeval)) <= 0) {
     if (rc_select == 0) {
       castor::exception::TimeOut e;
@@ -92,11 +91,6 @@ void castor::job::stagerjob::RawMoverPlugin::preForkHook
       e.getMessage() << "In call to select";
       throw e;
     }
-  }
-  if (!FD_ISSET (context.socket, &readfd)) {
-    castor::exception::Internal e;
-    e.getMessage() << "FD_ISSET not setted !?";
-    throw e;
   }
   struct sockaddr_in from;
   socklen_t fromlen = sizeof(from);

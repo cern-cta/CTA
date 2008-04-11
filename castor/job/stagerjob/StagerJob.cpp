@@ -539,9 +539,6 @@ void bindSocketAndListen
     e.getMessage() << "Error caught in call to listen";
     throw e;
   }
-  fd_set readmask;
-  FD_ZERO (&readmask);
-  FD_SET(context.socket, &readmask);
   socklen_t len = sizeof(sin);
   if (getsockname(context.socket,(struct sockaddr *)&sin,&len) < 0) {
     castor::exception::Exception e(errno);
@@ -707,7 +704,7 @@ int main(int argc, char** argv) {
       { INVRETRYNBAT,  "Invalid DiskCopy/RetryAttempts option, using default" },
       // Informative logs
       { JOBSTARTED,    "Job Started" },
-      { JOBENDED,      "Job exiting successfully" },
+      { JOBENDED,      "Job exiting" },
       { JOBFAILED,     "Job failed" },
       { JOBORIGCRED,   "Credentials at start time" },
       { JOBACTCRED,    "Actual credentials used" },
