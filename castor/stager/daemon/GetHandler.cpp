@@ -75,10 +75,14 @@ namespace castor{
         int result = stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest, sources);
         
         switch(result) {
+          case -3:
+            stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_PREPARETOGET_DISK2DISKCOPY, &(stgCnsHelper->cnsFileid));
+            // we notify the jobManager as we have to wait on diskcopy replication
+            m_notifyJobManager = true;
+            break;
+          
           case -2:
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
-            // we nevertheless notify the jobManager as we may have to wait on diskcopy replication across svcclasses
-            m_notifyJobManager = true;
             break;
           
           case -1:

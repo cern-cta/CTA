@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.659 $ $Date: 2008/04/07 15:51:07 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.660 $ $Date: 2008/04/11 12:28:11 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -691,7 +691,7 @@ END;
 
 /* PL/SQL method implementing getDiskCopiesForJob */
 /* the result output is a DiskCopy status for STAGED, DISK2DISKCOPY, RECALL or WAITFS
-   -1 for user failure, -2 for subrequest put in WAITSUBREQ */
+   -1 for user failure, -2 or -3 for subrequest put in WAITSUBREQ */
 CREATE OR REPLACE PROCEDURE getDiskCopiesForJob
         (srId IN INTEGER, result OUT INTEGER,
          sources OUT castor.DiskCopy_Cur) AS
@@ -827,7 +827,7 @@ BEGIN
       IF srcDcId > 0 THEN
         -- create DiskCopyReplica request and make this subRequest wait on it
         createDiskCopyReplicaRequest(srId, srcDcId, svcClassId);
-        result := -2;
+        result := -3; -- return code is different here for logging purposes
       ELSIF srcDcId = 0 THEN
         -- no diskcopy found at all, go for recall
         result := 2;  -- DISKCOPY_WAITTAPERECALL

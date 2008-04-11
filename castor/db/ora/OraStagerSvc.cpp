@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.247 $ $Release$ $Date: 2008/03/28 15:46:20 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.248 $ $Release$ $Date: 2008/04/11 12:28:12 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -483,7 +483,7 @@ int castor::db::ora::OraStagerSvc::getDiskCopiesForJob
       }
     }
     return status;
-     /* -2 = SubRequest put in WAITSUBREQ
+     /* -2,-3 = SubRequest put in WAITSUBREQ (-3 for disk copy replication)
       * -1 = no schedule, user error
       *  0 = DISKCOPY_STAGED, disk copies available
       *  1 = DISKCOPY_WAITDISK2DISKCOPY, disk copies available and replication allowed
@@ -526,9 +526,10 @@ int castor::db::ora::OraStagerSvc::processPrepareRequest
     }
     // return result
     return m_processPrepareRequestStatement->getInt(2);
-     /* -2 = SubRequest put in WAITSUBREQ
+     /* -2 = SubRequest put in WAITSUBREQ (only in case of Repack)
       * -1 = user error
       *  0 = DISKCOPY_STAGED, disk copies available
+      *  1 = DISKCOPY_WAITDISK2DISKCOPY, a disk copy replication is needed
       *  2 = DISKCOPY_WAITTAPERECALL, a tape recall is needed */
   } catch (oracle::occi::SQLException e) {
     handleException(e);

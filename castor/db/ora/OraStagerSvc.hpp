@@ -114,7 +114,7 @@ namespace castor {
          * subrequest.
          * The return value is a valid DiskCopy status and
          * the scheduling decision is taken this way :
-         * -2: no scheduling, subrequest put on WAITSUBREQ status.
+         * -2,-3: no scheduling, subrequest put on WAITSUBREQ status.
          * -1: no scheduling because of user error.
          * DISKCOPY_STAGED (0): schedule + list of avail sources,
            a DiskCopy was found and the SubRequest can be scheduled.
@@ -130,7 +130,7 @@ namespace castor {
          * can be used by the subrequest.
          * Note that the DiskCopies returned in sources must be
          * deallocated by the caller.
-         * @return -2,-1,0,1,2,5
+         * @return -3,-2,-1,0,1,2,5
          * @exception Exception in case of system error
          */
         virtual int getDiskCopiesForJob
@@ -141,7 +141,7 @@ namespace castor {
         /**
          * Processes a PToGet, PToUpdate, or Repack subrequest.
          * @param subreq the SubRequest to consider
-         * @return -2,-1,0,2, cf. return value for getDiskCopiesForJob.
+         * @return -2,-1,0,1,2, cf. return value for getDiskCopiesForJob.
          * @exception Exception in case of system error
          */
         virtual int processPrepareRequest

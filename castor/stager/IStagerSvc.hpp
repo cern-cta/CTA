@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.91 $ $Release$ $Date: 2008/03/19 10:19:50 $ $Author: riojac3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.92 $ $Release$ $Date: 2008/04/11 12:28:11 $ $Author: itglp $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -108,7 +108,7 @@ namespace castor {
        * subrequest.
        * The return value is a valid DiskCopy status and
        * the scheduling decision is taken this way :
-       * -2: no scheduling, subrequest put on WAITSUBREQ status.
+       * -2,-3: no scheduling, subrequest put on WAITSUBREQ status.
        * -1: no scheduling because of user error.
        * DISKCOPY_STAGED (0): schedule + list of avail sources,
          a DiskCopy was found and the SubRequest can be scheduled.
@@ -124,7 +124,7 @@ namespace castor {
        * can be used by the subrequest.
        * Note that the DiskCopies returned in sources must be
        * deallocated by the caller.
-       * @return -2,-1,0,1,2,5
+       * @return -3,-2,-1,0,1,2,5
        * @exception Exception in case of system error
        */
       virtual int getDiskCopiesForJob
@@ -135,7 +135,7 @@ namespace castor {
       /**
        * Processes a PToGet, PToUpdate, or Repack subrequest.
        * @param subreq the SubRequest to consider
-       * @return -2,-1,0,2, cf. return value for getDiskCopiesForJob.
+       * @return -2,-1,0,1,2, cf. return value for getDiskCopiesForJob.
        * @exception Exception in case of system error
        */
       virtual int processPrepareRequest
