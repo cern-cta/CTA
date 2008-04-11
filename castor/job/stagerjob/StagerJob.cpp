@@ -775,7 +775,7 @@ int main(int argc, char** argv) {
   } catch (castor::exception::Exception e) {
     // "Job failed"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Error", strerror(e.code())),
+      {castor::dlf::Param("Error", sstrerror(e.code())),
        castor::dlf::Param("Detailed Error", e.getMessage().str()),
        castor::dlf::Param("JobId", getenv("LSB_JOBID")),
        castor::dlf::Param(arguments.subRequestUuid)};
