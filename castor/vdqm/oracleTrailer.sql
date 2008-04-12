@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.79 $ $Release$ $Date: 2008/04/12 20:04:41 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.80 $ $Release$ $Date: 2008/04/12 20:42:22 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -809,7 +809,7 @@ CREATE OR REPLACE PROCEDURE allocateDrive(
   tapeRequestStatusVar NUMBER;
 
 BEGIN
-  returnVar         := 0;
+  returnVar         := 0; -- No possible allocation could be found
   tapeDriveIdVar    := 0;
   tapeDriveNameVar  := '';
   tapeRequestIdVar  := 0;
@@ -831,9 +831,9 @@ BEGIN
     -- The status of the drives and requests maybe modified by other scheduler
     -- threads.  The status of the drives may be modified by threads handling
     -- drive request messages.  The status of the requests may be modified by
-    -- other threads responsible for handling tape request messages.  Therefore
-    -- get a lock on the corresponding drive and request rows and retrieve
-    -- their statuses to see if the drive allocation is still valid
+    -- threads handling tape request messages.  Therefore get a lock on the
+    -- corresponding drive and request rows and retrieve their statuses to see
+    -- if the drive allocation is still valid
     SELECT TapeDrive.status INTO TapeDriveStatusVar
     FROM TapeDrive
     WHERE TapeDrive.id = tapeDriveIdVar
