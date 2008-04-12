@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.78 $ $Release$ $Date: 2008/04/10 17:31:18 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.79 $ $Release$ $Date: 2008/04/12 20:04:41 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -943,7 +943,7 @@ BEGIN
   -- allocation
   SELECT tapeRequestID INTO tapeReqIdVar
     FROM DriveAllocationsForReuse_VIEW
-    WHERE rownum < 2;
+    WHERE TapeDriveId = tapeDriveIdVar AND rownum < 2;
 
   -- A candidate was found
 
