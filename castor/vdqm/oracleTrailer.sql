@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.81 $ $Release$ $Date: 2008/04/13 11:55:09 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.82 $ $Release$ $Date: 2008/04/13 13:02:06 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -781,8 +781,8 @@ left outer join TAPEACCESSSPECIFICATION on
  * request.
  *
  * @param returnVar has a value of 1 if a free drive was successfully allocated
- * to a pending request, or 0 if no possible allocation could be found or -1 if
- * an allocation was found but was invalidated by other threads before the
+ * to a pending request, 0 if no possible allocation could be found or -1 if an
+ * allocation was found but was invalidated by other threads before the
  * appropriate locks could be taken.
  * @param tapeDriveIdVar if a free drive was successfully allocated then the
  * value of this parameter will be the ID of the allocated tape drive, else the
@@ -925,6 +925,96 @@ END;
 
 
 /**
+ * PL/SQL procedure which tries to reuse a drive allocation.
+ *
+ * @param tapeIdVar the ID of the tape of the current drive allocation.
+ * @param tapeDriveIdVar the ID of the drive of the current drive allocation.
+ * @param returnVar has a value of 1 if the specified drive allocation was
+ * successfully reused, 0 if no possible reuse was found or -1 if a possible
+ * reuse was found but was invalidated by other threads before the appropriate
+ * locks could be taken.
+ * @param tapeRequestIdVar if the drive allocation was successfully reused then
+ * the value of this parameter will be the ID of the new assigned request, else
+ * the value of this parameter will be undefined.
+ */
+CREATE OR REPLACE PROCEDURE reuseDriveAllocation(
+  tapeIdVar          IN NUMBER,
+  tapeDriveIdVar     IN NUMBER,
+  returnVar         OUT NUMBER,
+  tapeRequestIdVar  OUT NUMBER)
+AS
+  tapeDriveStatusVar   NUMBER;
+  mountedTapeIdVar     NUMBER;
+  tapeRequestStatusVar NUMBER;
+BEGIN
+  returnVar := 0;
+
+  -- Try to find a candidate volume request that can reuse the current drive
+  -- allocation
+  SELECT tapeRequestId INTO tapeRequestIdVar
+    FROM DriveAllocationsForReuse_VIEW
+    WHERE
+          DriveAllocationsForReuse_VIEW.TapeDriveId = tapeDriveIdVar
+      AND DriveAllocationsForReuse_VIEW.TapeId      = tapeIdVar
+      AND rownum < 2;
+
+  -- A candidate was found, because a NO_DATA_FOUND exception was not raised
+
+  -- The status of the drives including which tapes may be mounted in them,
+  -- may be modified by threads handling drive request messages.  The status of
+  -- the requests may be modified by threads handling tape request messages.
+  -- Therefore get a lock on the corresponding drive and request rows and
+  -- retrieve their statuses and mounted tape in the case of the drive, to see
+  -- if the reuse of the drive allocation is still valid.
+  SELECT TapeDrive.status, TapeDrive.tape
+  INTO TapeDriveStatusVar, mountedTapeIdVar
+  FROM TapeDrive
+  WHERE TapeDrive.id = tapeDriveIdVar
+  FOR UPDATE;
+  SELECT TapeRequest.status INTO TapeRequestStatusVar
+  FROM TapeRequest
+  WHERE TapeRequest.id = tapeRequestIdVar
+  FOR UPDATE; 
+
+  -- If the reuse of the drive allocation is still valid, i.e. the drive's
+  -- status is VOL_MOUNTED and the correct tape is mounted and the tape
+  -- request's status is REQUEST_PENDING
+  IF(tapeDriveStatusVar = 3) AND(mountedTapeIdVar = tapeIdVar) AND
+    (tapeRequestStatusVar = 0) THEN
+
+    -- Reuse the drive allocation with the pending request
+    UPDATE TapeRequest SET
+      status           = 1,  -- MATCHED
+      tapeDrive        = tapeDriveIdVar,
+      modificationTime = getTime()
+    WHERE id = tapeRequestIdVar;
+    UPDATE TapeDrive SET
+      status           = 1, -- UNIT_STARTING
+      jobId            = 0,
+      runningTapeReq   = tapeRequestIdVar,
+      modificationTime = getTime()
+    WHERE id = tapeDriveIdVar;
+
+    -- The drive allocation was reused
+    returnVar := 1;
+
+   -- Else the reuse of the drive allocation is no longer valid
+   ELSE
+
+     -- A possible reuse of the drive allocation was found but was invalidated
+     -- by other threads before the appropriate locks could be taken
+     returnVar := -1;
+
+  END IF; -- If the reuse of the drive allocation is still valid
+
+EXCEPTION
+  -- Return a tape request ID of 0 if there was no candidate volume request
+  -- which would have reused the current drive allocation
+  WHEN NO_DATA_FOUND THEN tapeRequestIdVar := 0;
+END;
+
+
+/**
  * PL/SQL procedure to check and reuse a tape allocation.
  */
 CREATE OR REPLACE PROCEDURE reuseTapeAllocation(
@@ -943,10 +1033,7 @@ BEGIN
   -- allocation
   SELECT tapeRequestId INTO tapeReqIdVar
     FROM DriveAllocationsForReuse_VIEW
-    WHERE
-          TapeDriveId = tapeDriveIdVar
-      AND TapeId      = tapeIdVar
-      AND rownum < 2;
+    WHERE TapeDriveId = tapeDriveIdVar AND rownum < 2;
 
   -- A candidate was found
 
