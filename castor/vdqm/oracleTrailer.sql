@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.82 $ $Release$ $Date: 2008/04/13 13:02:06 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.83 $ $Release$ $Date: 2008/04/13 13:54:14 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -934,8 +934,8 @@ END;
  * reuse was found but was invalidated by other threads before the appropriate
  * locks could be taken.
  * @param tapeRequestIdVar if the drive allocation was successfully reused then
- * the value of this parameter will be the ID of the new assigned request, else
- * the value of this parameter will be undefined.
+ * the value of this parameter will be the ID of the newly assigned request,
+ * else the value of this parameter will be undefined.
  */
 CREATE OR REPLACE PROCEDURE reuseDriveAllocation(
   tapeIdVar          IN NUMBER,
