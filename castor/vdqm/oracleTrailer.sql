@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.83 $ $Release$ $Date: 2008/04/13 13:54:14 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.84 $ $Release$ $Date: 2008/04/13 14:10:32 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -947,7 +947,8 @@ AS
   mountedTapeIdVar     NUMBER;
   tapeRequestStatusVar NUMBER;
 BEGIN
-  returnVar := 0;
+  returnVar         := 0; -- No possible reuse was found
+  tapeRequestIdVar  := 0;
 
   -- Try to find a candidate volume request that can reuse the current drive
   -- allocation
@@ -1010,7 +1011,7 @@ BEGIN
 EXCEPTION
   -- Return a tape request ID of 0 if there was no candidate volume request
   -- which would have reused the current drive allocation
-  WHEN NO_DATA_FOUND THEN tapeRequestIdVar := 0;
+  WHEN NO_DATA_FOUND THEN NULL;
 END;
 
 
