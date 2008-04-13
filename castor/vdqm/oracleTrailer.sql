@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.80 $ $Release$ $Date: 2008/04/12 20:42:22 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.81 $ $Release$ $Date: 2008/04/13 11:55:09 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -565,7 +565,7 @@ END;
  */
 CREATE OR REPLACE VIEW CandidateDriveAllocations_VIEW
 AS SELECT UNIQUE
-  TapeDrive.id as tapeDriveID, TapeRequest.id as tapeRequestID,
+  TapeDrive.id as tapeDriveId, TapeRequest.id as tapeRequestId,
   TapeRequest.modificationTime
 FROM
   TapeRequest
@@ -614,10 +614,10 @@ ORDER BY
  * This view shows candidate drive allocations that will reuse a current drive
  * allocation.
  */
-CREATE OR REPLACE VIEW DRIVEALLOCATIONSFORREUSE_VIEW
+CREATE OR REPLACE VIEW DriveAllocationsForReuse_VIEW
 AS SELECT UNIQUE
-  TapeDrive.id as tapeDriveID, TapeRequest.id as tapeRequestID,
-  TapeRequest.modificationTime
+  TapeDrive.id as tapeDriveId, TapeDrive.tape as tapeId,
+  TapeRequest.id as tapeRequestId, TapeRequest.modificationTime
 FROM
   TapeRequest
 INNER JOIN TapeAccessSpecification ON
@@ -861,9 +861,9 @@ BEGIN
       -- Allocate the free drive to the pending request
       UPDATE TapeDrive SET
         status           = 1, -- UNIT_STARTING
-        jobID            = 0,
+        jobId            = 0,
         modificationTime = getTime(),
-        runningTapeReq   = tapeRequestIDVar
+        runningTapeReq   = tapeRequestIdVar
       WHERE
         id = tapeDriveIdVar;
       UPDATE TapeRequest SET
@@ -941,9 +941,12 @@ BEGIN
 
   -- Try to find a candidate volume request that can reuse the current drive
   -- allocation
-  SELECT tapeRequestID INTO tapeReqIdVar
+  SELECT tapeRequestId INTO tapeReqIdVar
     FROM DriveAllocationsForReuse_VIEW
-    WHERE TapeDriveId = tapeDriveIdVar AND rownum < 2;
+    WHERE
+          TapeDriveId = tapeDriveIdVar
+      AND TapeId      = tapeIdVar
+      AND rownum < 2;
 
   -- A candidate was found
 
@@ -955,7 +958,7 @@ BEGIN
 
   UPDATE TapeDrive SET
     status           = 1, -- UNIT_STARTING
-    jobID            = 0,
+    jobId            = 0,
     runningTapeReq   = tapeReqIdVar,
     modificationTime = getTime()
   WHERE id = tapeDriveIdVar;
