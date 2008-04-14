@@ -107,7 +107,8 @@ namespace castor {
       VDQM_DRIVE_STATE_TRANSITION=73, /* "Tape drive state transition" */
       VDQM_DRIVE_ALLOCATED=74, /* "Tape drive allocated" */
       VDQM_INVALIDATED_DRIVE_ALLOCATION=75, /* "Invalidated tape drive allocation" */
-      VDQM_INVALIDATED_REUSE_OF_DRIVE_ALLOCATION=76 /* "Invalidated reuse of tape drive allocation" */
+      VDQM_INVALIDATED_REUSE_OF_DRIVE_ALLOCATION=76, /* "Invalidated reuse of tape drive allocation" */
+      VDQM_REMOVING_TAPE_REQUEST=77 /* "Removing tape request" */
     }; // enum VdqmDlfMessages
 
   } // namespace vdqm

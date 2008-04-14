@@ -261,6 +261,7 @@ void castor::vdqm::VdqmServer::initDlf()
     {VDQM_DRIVE_ALLOCATED, "Tape drive allocated"},
     {VDQM_INVALIDATED_DRIVE_ALLOCATION, "Invalidated tape drive allocation"},
     {VDQM_INVALIDATED_REUSE_OF_DRIVE_ALLOCATION, "Invalidated reuse of tape drive allocation"},
+    {VDQM_REMOVING_TAPE_REQUEST, "Removing tape request"},
     {-1, ""}
   }; // castor::dlf::Message messages[]
 

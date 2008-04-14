@@ -329,7 +329,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
     // "TapeRequest and its ClientIdentification removed" message
     castor::dlf::Param params[] = {
       castor::dlf::Param("tapeRequestID", tapeReq->id())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       VDQM_TAPE_REQUEST_ANDCLIENT_ID_REMOVED, 1, params);
   }
 }
