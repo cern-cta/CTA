@@ -451,23 +451,28 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_WARNING,
         VDQM_DRIVE_STATUS_UNKNOWN_FORCE_UNMOUNT);
     } else {
-      // Try to reuse the tape allocation
-      *ptr_newRequestId =
-        ptr_IVdqmService->reuseTapeAllocation(tape, ptr_tapeDrive);
+      // Try to reuse the drive allocation
+      int reuseResult = ptr_IVdqmService->reuseDriveAllocation(tape,
+        ptr_tapeDrive, ptr_newRequestId);
 
-      // If the tape allocation was reused
-      if ( *ptr_newRequestId > 0) {
+      // If the drive allocation was reused or a possible reuse was found, but
+      // was invalidated by other threads
+      if((reuseResult == 1) || (reuseResult == -1)) {
         castor::dlf::Param params[] = {
           castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
           castor::dlf::Param("serverName",
             ptr_tapeDrive->tapeServer()->serverName()),
           castor::dlf::Param("tape vid", tape->vid()),
           castor::dlf::Param("tapeRequest ID", *ptr_newRequestId)}; 
-        castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-          VDQM_FOUND_QUEUED_TAPE_REQUEST_FOR_MOUNTED_TAPE, 4, params);
 
-      // Else the tape allocation could not be reused
-      } else {
+        if(reuseResult == 1) { // Allocation reused
+          castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+            VDQM_FOUND_QUEUED_TAPE_REQUEST_FOR_MOUNTED_TAPE, 4, params);
+        } else { // Invalidated allocation reuse
+          castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+            VDQM_INVALIDATED_DRIVE_ALLOCATION_REUSE, 4, params);
+        }
+      } else { // Else the drive allocation could not be reused
         castor::dlf::Param params[] = {
           castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
           castor::dlf::Param("serverName",
@@ -506,7 +511,6 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
 
     // A RELEASE has been requested, therefore the unit is FREE (no job and no
     // volume assigned to it). Update status accordingly.
-
 
     // If there is no FORCE_UNMOUNT
     if ( !(ptr_driveRequest->status & VDQM_FORCE_UNMOUNT) &&

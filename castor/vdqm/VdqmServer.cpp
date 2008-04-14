@@ -260,6 +260,7 @@ void castor::vdqm::VdqmServer::initDlf()
     {VDQM_DRIVE_STATE_TRANSITION, "Tape drive state transition"},
     {VDQM_DRIVE_ALLOCATED, "Tape drive allocated"},
     {VDQM_INVALIDATED_DRIVE_ALLOCATION, "Invalidated tape drive allocation"},
+    {VDQM_INVALIDATED_DRIVE_ALLOCATION_REUSE, "Invalidated tape drive allocation reuse"},
     {-1, ""}
   }; // castor::dlf::Message messages[]
 
