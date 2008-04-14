@@ -775,7 +775,7 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
         //"Send information for showqueues command" message
         castor::dlf::Param param[] = {
           castor::dlf::Param("message", "TapeDrive info"),
-          castor::dlf::Param("TapeDrive ID", it->DrvReqID)};
+          castor::dlf::Param("tapeDriveID", it->DrvReqID)};
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
           VDQM_SEND_SHOWQUEUES_INFO, 2, param);
         

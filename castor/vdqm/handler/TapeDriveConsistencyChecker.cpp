@@ -218,7 +218,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::deleteOldRequest()
   if ( ptr_tapeDrive->runningTapeReq() ) {
     // "Remove old TapeRequest from db" message
     castor::dlf::Param param[] =
-      {castor::dlf::Param("TapeRequest ID", ptr_tapeDrive->runningTapeReq()->id())};
+      {castor::dlf::Param("tapeRequestID", ptr_tapeDrive->runningTapeReq()->id())};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, VDQM_REMOVE_OLD_TAPE_REQUEST_FROM_DB, 1, param);
 
     //Delete the tape request from the db and from the tapeDrive Object
@@ -384,7 +384,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkAssignConsistency(
             
           // "Assign of tapeRequest to jobID" message
           castor::dlf::Param params[] =
-            {castor::dlf::Param("tapeRequest ID", tapeRequest->id()),
+            {castor::dlf::Param("tapeRequestID", tapeRequest->id()),
              castor::dlf::Param("jobID", ptr_driveRequest->jobID)};
           castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, VDQM_ASSIGN_TAPE_REQUEST_TO_JOB_ID, 2, params);
         }

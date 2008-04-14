@@ -92,10 +92,10 @@ void castor::vdqm::DriveSchedulerThread::run(void *param) {
     // was invalidated by other threads
     if((allocationResult == 1) || (allocationResult == -1)){
       castor::dlf::Param param[] = {
-        castor::dlf::Param("tapeDrive ID"  , tapeDriveId),
-        castor::dlf::Param("driveName"     , tapeDriveName),
-        castor::dlf::Param("tapeRequest ID", tapeRequestId),
-        castor::dlf::Param("tape vid"      , tapeRequestVid)};
+        castor::dlf::Param("tapeDriveID"  , tapeDriveId),
+        castor::dlf::Param("driveName"    , tapeDriveName),
+        castor::dlf::Param("tapeRequestID", tapeRequestId),
+        castor::dlf::Param("tapeVID"      , tapeRequestVid)};
 
       if(allocationResult == 1) { // Drive allocated
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,

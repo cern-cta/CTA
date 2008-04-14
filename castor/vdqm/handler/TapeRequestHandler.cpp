@@ -264,7 +264,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
     // "Couldn't find the tape request in db. Maybe it is already deleted?"
     // message
     castor::dlf::Param params[] = {
-      castor::dlf::Param("tapeRequest ID", volumeRequest->VolReqID),
+      castor::dlf::Param("tapeRequestID", volumeRequest->VolReqID),
       castor::dlf::Param("function",
         "castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest()")};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING,
@@ -328,7 +328,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
   
     // "TapeRequest and its ClientIdentification removed" message
     castor::dlf::Param params[] = {
-      castor::dlf::Param("TapeRequest ID", tapeReq->id())};
+      castor::dlf::Param("tapeRequestID", tapeReq->id())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       VDQM_TAPE_REQUEST_ANDCLIENT_ID_REMOVED, 1, params);
   }
@@ -349,7 +349,7 @@ int castor::vdqm::handler::TapeRequestHandler::getQueuePosition(
   // Queue position of TapeRequest
   castor::dlf::Param params[] = {
     castor::dlf::Param("Queue position", queuePosition),
-    castor::dlf::Param("TapeRequest id", volumeRequest->VolReqID)};
+    castor::dlf::Param("tapeRequestID", volumeRequest->VolReqID)};
   castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_QUEUE_POS_OF_TAPE_REQUEST,
     2, params);
 
@@ -389,7 +389,7 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
         //"Send information for showqueues command" message
         castor::dlf::Param param[] = {
           castor::dlf::Param("message", "TapeRequest info"),
-          castor::dlf::Param("TapeRequest ID", it->VolReqID)};
+          castor::dlf::Param("tapeRequestID", it->VolReqID)};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
           VDQM_SEND_SHOWQUEUES_INFO, 2, param);
         

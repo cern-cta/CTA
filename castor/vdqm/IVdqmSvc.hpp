@@ -148,27 +148,6 @@ namespace castor {
          throw (castor::exception::Exception) = 0;
 
        /**
-        * Tries to re-use a tape allocation, that is a tape-tape drive match.
-        *
-        * This method is to be called when a tape is released.  The method will
-        * try to match a pending tape request with the drive in which the tape
-        * is still mounted.  This method does not conflict with allocateDrive()
-        * because the allocateDrive() does not match pending tape requests
-        * whose tapes are busy, and this method can only match tape requests
-        * whose tapes are busy.  Please note that this method does not commit
-        * the changes to the DB."
-        *
-        * @param The tape which has been released
-        * @param The tape drive in which the tape is still mounted
-        * @return the ID of the matched request if the allocation was
-        * successfully reused, else 0
-        */
-       virtual u_signed64 reuseTapeAllocation(
-         const castor::vdqm::VdqmTape *tape,
-         const castor::vdqm::TapeDrive *drive)
-         throw (castor::exception::Exception) = 0;
-
-       /**
         * Returns a matched "tape drive / tape request" pair if one exists,
         * else NULL.
         */
