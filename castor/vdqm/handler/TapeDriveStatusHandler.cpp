@@ -470,7 +470,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
             VDQM_FOUND_QUEUED_TAPE_REQUEST_FOR_MOUNTED_TAPE, 4, params);
         } else { // Invalidated allocation reuse
           castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-            VDQM_INVALIDATED_DRIVE_ALLOCATION_REUSE, 4, params);
+            VDQM_INVALIDATED_REUSE_OF_DRIVE_ALLOCATION, 4, params);
         }
       } else { // Else the drive allocation could not be reused
         castor::dlf::Param params[] = {
