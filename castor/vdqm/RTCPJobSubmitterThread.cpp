@@ -104,13 +104,14 @@ castor::IObject* castor::vdqm::RTCPJobSubmitterThread::select()
   return obj;
 }
 
-
 //-----------------------------------------------------------------------------
 // process
 //-----------------------------------------------------------------------------
 void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
   throw() {
 
+  // Create an auto pointer to delete the tape request object when it goes out
+  // of scope.
   std::auto_ptr<castor::vdqm::TapeRequest>
     request(dynamic_cast<castor::vdqm::TapeRequest*>(param));
 
@@ -124,7 +125,65 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
     throw e;
   }
 
-  // Get a handle to the associated tape drive
+  // The destructor of a castor::vdqm::TapeRequest object does not delete the
+  // tape drive it points to.  Therefore create an auto pointer to delete the
+  // tape drive when it goes out of scope.
+  std::auto_ptr<castor::vdqm::TapeDrive> drive(request->tapeDrive());
+
+  try {
+
+    // Submit the remote tape copy job to RTCPD
+    submitJobToRTCPD(request.get());
+
+    // Handle successful submission of job to RTCPD
+  } catch(castor::exception::Exception &e) {
+    // Handle unsuccessful submission of job to RTCPD
+  }
+
+  try
+  {
+    // Commit the changes to the DB
+    castor::BaseAddress ad;
+    ad.setCnvSvcName("DbCnvSvc");
+    ad.setCnvSvcType(castor::SVC_DBCNV);
+    services()->commit(&ad);
+  } catch(castor::exception::Exception &e) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Function", "RTCPJobSubmitterThread::process"),
+      castor::dlf::Param("Message", "Failed to commit changes" +
+        e.getMessage().str()),
+      castor::dlf::Param("Code", e.code())
+    };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+      VDQM_DRIVE_ALLOCATION_ERROR, 3, params);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// process
+//-----------------------------------------------------------------------------
+/*
+void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
+  throw() {
+
+  // Create an auto pointer to manage the tape request
+  std::auto_ptr<castor::vdqm::TapeRequest>
+    request(dynamic_cast<castor::vdqm::TapeRequest*>(param));
+
+  // If the dynamic cast failed
+  if(request.get() == NULL) {
+    castor::exception::Internal e;
+
+    e.getMessage()
+      << "Failed to cast param to castor::vdqm::TapeRequest*";
+
+    throw e;
+  }
+
+  // The destructor of a castor::vdqm::TapeRequest ibject does not delete the
+  // tape drive it points to.  Therefore create an auto pointer to manage thei
+  // tape drive pointed to by the request.
   std::auto_ptr<castor::vdqm::TapeDrive> drive(request->tapeDrive());
 
   try {
@@ -203,6 +262,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
       VDQM_DRIVE_ALLOCATION_ERROR, 3, params);
   }
 }
+*/
 
 
 //-----------------------------------------------------------------------------

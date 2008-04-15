@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SelectProcessThread.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/12/14 18:39:53 $ $Author: itglp $
+ * @(#)$RCSfile: SelectProcessThread.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/04/15 07:42:35 $ $Author: murrayc3 $
  *
  * Base thread for the select/process model: it loops until select() returns
  * something to do. If stop() is called, the underlying database connection is dropped.
@@ -28,11 +28,8 @@
 #ifndef CASTOR_SERVER_SELECTPROCESSTHREAD_HPP
 #define CASTOR_SERVER_SELECTPROCESSTHREAD_HPP 1
 
-#include <iostream>
-#include <string>
 #include "castor/IObject.hpp"
-#include "castor/server/IThread.hpp"
-#include "castor/BaseObject.hpp"
+#include "castor/server/BaseDbThread.hpp"
 
 namespace castor {
 
@@ -41,18 +38,13 @@ namespace castor {
   /**
    * Basic select/process thread for internal database-driven services.
    */
-  class SelectProcessThread : public virtual IThread, public castor::BaseObject {
+  class SelectProcessThread : public castor::server::BaseDbThread {
   public:
 
     /**
      * Standard constructor
      */
-    SelectProcessThread() : m_stopped(false) {};
-
-    /**
-     * Thread initialization, empty in this case
-     */
-    virtual void init() {};
+    SelectProcessThread() : BaseDbThread() {};
 
     /**
      * Select part of the service.
@@ -70,16 +62,6 @@ namespace castor {
      * Main work for this thread
      */
     virtual void run(void* param);
-
-    /**
-     * Mark the threads as to be stopped
-     */
-    virtual void stop();
-    
-  private:
-  
-    /// flag to stop the activity of all threads based on this class
-    bool m_stopped;
 
   };
 

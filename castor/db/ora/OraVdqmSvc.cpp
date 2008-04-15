@@ -182,10 +182,6 @@ const std::string castor::db::ora::OraVdqmSvc::s_allocateDriveStatementString =
 const std::string castor::db::ora::OraVdqmSvc::s_reuseDriveAllocationStatementString =
   "BEGIN reuseDriveAllocation(:1, :2, :3, :4); END;";
 
-/// SQL statement for function reuseTapeAllocation
-const std::string castor::db::ora::OraVdqmSvc::s_reuseTapeAllocationStatementString =
-  "BEGIN reuseTapeAllocation(:1, :2, :3); END;";
-
 /// SQL statement for function requestToSubmit
 const std::string castor::db::ora::OraVdqmSvc::s_requestToSubmitStatementString
   = "BEGIN requestToSubmit(:1); END;";
@@ -214,7 +210,6 @@ castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   m_selectTapeDriveQueueStatement(0),
   m_allocateDriveStatement(0),
   m_reuseDriveAllocationStatement(0),
-  m_reuseTapeAllocationStatement(0),
   m_requestToSubmitStatement(0),
   m_selectCompatibilitiesForDriveModelStatement(0),
   m_selectTapeAccessSpecificationsStatement(0),
@@ -269,7 +264,6 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
     if (m_selectTapeDriveQueueStatement) deleteStatement(m_selectTapeDriveQueueStatement);
     if (m_allocateDriveStatement) deleteStatement(m_allocateDriveStatement);
     if (m_reuseDriveAllocationStatement) deleteStatement(m_reuseDriveAllocationStatement);
-    if (m_reuseTapeAllocationStatement) deleteStatement(m_reuseTapeAllocationStatement);
     if (m_requestToSubmitStatement) deleteStatement(m_requestToSubmitStatement);
     if (m_selectCompatibilitiesForDriveModelStatement) deleteStatement(m_selectCompatibilitiesForDriveModelStatement);
     if (m_selectTapeAccessSpecificationsStatement) deleteStatement(m_selectTapeAccessSpecificationsStatement);
@@ -295,7 +289,6 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   m_selectTapeRequestStatement = 0;
   m_allocateDriveStatement = 0;
   m_reuseDriveAllocationStatement = 0;
-  m_reuseTapeAllocationStatement = 0;
   m_requestToSubmitStatement = 0;
   m_selectCompatibilitiesForDriveModelStatement = 0;
   m_selectTapeAccessSpecificationsStatement = 0;
@@ -1732,48 +1725,6 @@ int castor::db::ora::OraVdqmSvc::reuseDriveAllocation(
   }
   
   return reuseResult;
-}
-
-
-// -----------------------------------------------------------------------
-// reuseTapeAllocation
-// -----------------------------------------------------------------------
-u_signed64 castor::db::ora::OraVdqmSvc::reuseTapeAllocation(
-  const castor::vdqm::VdqmTape *tape, const castor::vdqm::TapeDrive *drive)
-  throw (castor::exception::Exception) {
-
-  u_signed64 requestId = 0;
-
-
-  // Check whether the statements are ok
-  if (0 == m_reuseTapeAllocationStatement) {
-    m_reuseTapeAllocationStatement =
-      createStatement(s_reuseTapeAllocationStatementString);
-    
-    m_reuseTapeAllocationStatement->registerOutParam
-        (3, oracle::occi::OCCIDOUBLE);
-
-    m_reuseTapeAllocationStatement->setAutoCommit(false);
-  }
-
-  m_reuseTapeAllocationStatement->setDouble(1, tape->id());
-  m_reuseTapeAllocationStatement->setDouble(2, drive->id());
-  
-  // Execute statement and get result
-  try {
-    m_reuseTapeAllocationStatement->executeUpdate();
-    
-    requestId = (u_signed64)m_reuseTapeAllocationStatement->getDouble(3);
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Failed to try to reuse tape allocation: "
-      << std::endl << e.getMessage();
-    throw ex;
-  }
-  
-  return requestId;
 }
 
 

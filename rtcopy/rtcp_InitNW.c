@@ -123,7 +123,8 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type, char *servic
         /* 
          * Client just wants to listen to an arbitrary port
          */
-        rtcp_port = 0;
+        rtcp_port = 0; // STEVE WAS ERE
+        //rtcp_port = 50000; // STEVE WAS ERE
     }
 
     if ( rtcp_port < 0 ) {

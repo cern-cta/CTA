@@ -238,14 +238,6 @@ namespace castor {
         /**
          * See castor::vdqm::IVdqmSvc documentation.
          */
-        virtual u_signed64 reuseTapeAllocation(
-          const castor::vdqm::VdqmTape *tape,
-          const castor::vdqm::TapeDrive *drive)
-          throw (castor::exception::Exception);
-  
-        /**
-         * See castor::vdqm::IVdqmSvc documentation.
-         */
         virtual castor::vdqm::TapeRequest *requestToSubmit()
           throw (castor::exception::Exception);            
 
@@ -449,12 +441,6 @@ namespace castor {
   
         /// SQL statement object for function reuseDiveAllocation
         oracle::occi::Statement *m_reuseDriveAllocationStatement;
-  
-        /// SQL statement for function reuseTapeAllocation
-        static const std::string s_reuseTapeAllocationStatementString;
-  
-        /// SQL statement object for function reuseTapeAllocation
-        oracle::occi::Statement *m_reuseTapeAllocationStatement;
   
         /// SQL statement for function requestToSubmit
         static const std::string s_requestToSubmitStatementString;

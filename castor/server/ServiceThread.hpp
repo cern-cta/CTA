@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServiceThread.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/07/09 17:07:11 $ $Author: itglp $
+ * @(#)$RCSfile: ServiceThread.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/04/15 07:42:35 $ $Author: murrayc3 $
  *
  * Internal thread to allow user service threads running forever
  *
@@ -72,16 +72,25 @@ namespace castor {
 
     /**
      * Convenience method to stop the thread.
-     * Simply delegates to the user thread.
      */
-    virtual void stop() {
-      m_userThread->stop();
+    virtual void stop();
+    
+    /**
+     * 
+     */
+    bool stopped() {
+      return m_stopped;
     };
 
   private:
 
+    /// the thread pool owning this thread
     SignalThreadPool* m_owner;
     
+    /// flag to signal that the thread has to stop
+    bool m_stopped;
+    
+    /// pointer to the class containing the user code to be executed
     IThread* m_userThread;
 
   };

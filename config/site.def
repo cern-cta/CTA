@@ -220,22 +220,22 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildCupvDaemon		NO
 #define	BuildCupvLibrary	NO
 #define BuildExamples		NO
-#define BuildHsmTools		NO
+#define BuildHsmTools		YES
 #define BuildNameServerClient	NO
 #define BuildNameServerDaemon	NO
 #define BuildNameServerLibrary	NO
-#define BuildRfioClient		NO
-#define BuildRfioServer		NO
-#define BuildRfioLibrary	NO
+#define BuildRfioClient		YES
+#define BuildRfioServer		YES
+#define BuildRfioLibrary	YES
 /* To be added when there will be end-user RMC client(s) */
 /* #define BuildRmcClient		NO */
 #define BuildRmcServer		NO
 #define BuildRmcLibrary		NO
 #define BuildJob		NO
 #define BuildJobManagerCpp	NO
-#define BuildRtcopyClient	NO
-#define BuildRtcopyServer	NO
-#define BuildRtcopyLibrary	NO
+#define BuildRtcopyClient	YES
+#define BuildRtcopyServer	YES
+#define BuildRtcopyLibrary	YES
 #define BuildRtstat		NO
 #define BuildRtcpclientd	NO
 #define BuildStageClient	NO
@@ -250,9 +250,9 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildTapeLibrary	NO
 #define BuildTest	        NO
 #define BuildTpusage		NO
-#define BuildVdqmClient		NO
-#define BuildVdqmServer		NO
-#define BuildVdqmLibrary	NO
+#define BuildVdqmClient		YES
+#define BuildVdqmServer		YES
+#define BuildVdqmLibrary	YES
 #define BuildVolumeMgrClient	NO
 #define BuildVolumeMgrDaemon	NO
 #define BuildVolumeMgrLibrary	NO
@@ -264,7 +264,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildExpertLibrary	NO
 #define BuildSchedPlugin	NO
 #define BuildRHCpp              NO
-#define BuildVDQMCpp            NO
+#define BuildVDQMCpp            YES
 #define BuildGCCpp              NO
 #define BuildOraCpp             NO
 #define BuildMyCpp              NO
