@@ -80,9 +80,6 @@ CTAPEFLG = -DCTAPE
 CTAPEFLG = -DCTAPE_DUMMIES
 #endif
 
-#Force test harness
-CTAPEFLG = -DCTAPE_DUMMIES
-
 OPSGRP = OperatorGid
 
 #if Accounting
