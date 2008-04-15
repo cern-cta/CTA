@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.84 $ $Release$ $Date: 2008/04/13 14:10:32 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.85 $ $Release$ $Date: 2008/04/15 15:39:26 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -962,17 +962,18 @@ BEGIN
   -- A candidate was found, because a NO_DATA_FOUND exception was not raised
 
   -- The status of the drives including which tapes may be mounted in them,
-  -- may be modified by threads handling drive request messages.  The status of
-  -- the requests may be modified by threads handling tape request messages.
-  -- Therefore get a lock on the corresponding drive and request rows and
-  -- retrieve their statuses and mounted tape in the case of the drive, to see
-  -- if the reuse of the drive allocation is still valid.
+  -- may be modified by other threads handling drive request messages.  The
+  -- status of the requests may be modified by threads handling tape request
+  -- messages.  Therefore get a lock on the corresponding drive and request
+  -- rows and retrieve their statuses and mounted tape in the case of the
+  -- drive, to see if the reuse of the drive allocation is still valid.
   SELECT TapeDrive.status, TapeDrive.tape
   INTO TapeDriveStatusVar, mountedTapeIdVar
   FROM TapeDrive
   WHERE TapeDrive.id = tapeDriveIdVar
   FOR UPDATE;
-  SELECT TapeRequest.status INTO TapeRequestStatusVar
+  SELECT TapeRequest.status
+  INTO TapeRequestStatusVar
   FROM TapeRequest
   WHERE TapeRequest.id = tapeRequestIdVar
   FOR UPDATE; 
@@ -1012,49 +1013,6 @@ EXCEPTION
   -- Return a tape request ID of 0 if there was no candidate volume request
   -- which would have reused the current drive allocation
   WHEN NO_DATA_FOUND THEN NULL;
-END;
-
-
-/**
- * PL/SQL procedure to check and reuse a tape allocation.
- */
-CREATE OR REPLACE PROCEDURE reuseTapeAllocation(
-  tapeIdVar      IN  NUMBER,
-  tapeDriveIdVar IN  NUMBER,
-  tapeReqIdVar   OUT NUMBER) AS
-  unused NUMBER;
-BEGIN
-  -- Grab a lock on the drive
-  SELECT TapeDrive.id INTO unused
-    FROM TapeDrive
-    WHERE TapeDrive.id = tapeDriveIdVar
-    FOR UPDATE;
-
-  -- Try to find a candidate volume request that can reuse the current drive
-  -- allocation
-  SELECT tapeRequestId INTO tapeReqIdVar
-    FROM DriveAllocationsForReuse_VIEW
-    WHERE TapeDriveId = tapeDriveIdVar AND rownum < 2;
-
-  -- A candidate was found
-
-  UPDATE TapeRequest SET
-    status           = 1,  -- MATCHED
-    tapeDrive        = tapeDriveIdVar,
-    modificationTime = getTime()
-  WHERE id = tapeReqIdVar;
-
-  UPDATE TapeDrive SET
-    status           = 1, -- UNIT_STARTING
-    jobId            = 0,
-    runningTapeReq   = tapeReqIdVar,
-    modificationTime = getTime()
-  WHERE id = tapeDriveIdVar;
-
-EXCEPTION
-  -- Return a tape request ID of 0 if there was no candidate volume request
-  -- which would have reused the current drive allocation
-  WHEN NO_DATA_FOUND THEN tapeReqIdVar := 0;
 END;
 
 
@@ -1233,4 +1191,137 @@ BEGIN
   DELETE From TapeDrive2TapeDriveComp WHERE parent = driveIdVar;
   DELETE FROM TapeDrive WHERE id = driveIdVar;
   DELETE FROM Id2Type WHERE id = driveIdVar;
+END;
+
+
+/**
+ * PL/SQL procedure which tries to write to the database the fact that a
+ * successful RTCPD job submission has occured.  This update of the database
+ * may not be possible if the corresponding drive and tape request states have
+ * been modified by other threads.  For example a thread handling a tape drive
+ * request message may have put the drive into the down state.  The RTCPD job
+ * submission should be ignored in this case.
+ *
+ * @param tapeDriveIdVar the ID of the drive
+ * @param tapeRequestIdVar the ID of the tape request
+ * @param returnVar has a value of 1 if the occurance of the RTCPD job
+ * submission was successfully written to the database, else 0.
+ */
+CREATE OR REPLACE PROCEDURE writeRTPCDJobSubmission(
+  tapeDriveIdVar    IN NUMBER,
+  tapeRequestIdVar  IN NUMBER,
+  returnVar        OUT NUMBER)
+AS
+  tapeDriveStatusVar      NUMBER;
+  runningTapeRequestIdVar NUMBER;
+  tapeRequestStatusVar    NUMBER;
+BEGIN
+  returnVar := 0; -- RTCPD job submission not written to database
+
+  -- The status of the tape requests may be modified by threads handling tape
+  -- request messages.  The status of the drives may be modified by threads
+  -- handling drive request messages.  One such modification may be the
+  -- bringing down of the drive in question, which would make it meaningless to
+  -- record a successful RTPCD job submission.  Therefore get a lock on the
+  -- corresponding request and drive rows and retrieve their statuses to see
+  -- whether or not the success of the RTPCD job submission should be recorded
+  -- in the database.
+  SELECT TapeDrive.status, TapeDrive.runningTapeReq
+  INTO tapeDriveStatusVar, runningTapeRequestIdVar
+  FROM TapeDrive
+  WHERE TapeDrive.id = tapeDriveIdVar
+  FOR UPDATE;
+  SELECT TapeRequest.status
+  INTO tapeRequestStatusVar
+  FROM TapeRequest
+  WHERE TapeRequest.id = tapeRequestIdVar
+  FOR UPDATE;
+
+  -- If recording of successfull RTCPD job submission is permitted,
+  -- i.e. the status of the drive is UNIT_STARTING and the drive is still
+  -- paired with the tape request and the status of the tape request is
+  -- REQUEST_BEINGSUBMITTED
+  IF (tapeDriveStatusVar = 1) AND (runningTapeRequestIdVar = tapeRequestIdVar)
+    AND (tapeRequestStatusVar = 2) THEN
+
+    -- Set the state of the tape request to REQUEST_SUBMITTED (3)
+    UPDATE TapeRequest
+    SET TapeRequest.status = 3
+    WHERE TapeRequest.id = tapeRequestIdVar;
+
+    returnVar := 1; -- RTCPD job submission written to database
+  END IF;
+END;
+
+
+/**
+ * PL/SQL procedure which tries to write to the database the fact that a
+ * failed RTCPD job submission has occured.  This update of the database
+ * may not be possible if the corresponding drive and tape request states have
+ * been modified by other threads.  For example a thread handling a tape drive
+ * request message may have put the drive into the down state.  The failed
+ * RTCPD job submission should be ignored in this case.
+ *
+ * @param tapeDriveIdVar the ID of the drive
+ * @param tapeRequestIdVar the ID of the tape request
+ * @param returnVar has a value of 1 if the occurance of the failed RTCPD job
+ * submission was successfully written to the database, else 0.
+ */
+CREATE OR REPLACE PROCEDURE writeFailedRTPCDJobSubmission(
+  tapeDriveIdVar    IN NUMBER,
+  tapeRequestIdVar  IN NUMBER,
+  returnVar        OUT NUMBER)
+AS
+  tapeDriveStatusVar      NUMBER;
+  runningTapeRequestIdVar NUMBER;
+  tapeRequestStatusVar    NUMBER;
+BEGIN
+  returnVar := 0; -- Failed RTCPD job submission not written to database
+
+  -- The status of the tape requests may be modified by threads handling tape
+  -- request messages.  The status of the drives may be modified by threads
+  -- handling drive request messages.  One such modification may be the
+  -- bringing down of the drive in question, which would make it meaningless to
+  -- record a successful RTPCD job submission.  Therefore get a lock on the
+  -- corresponding request and drive rows and retrieve their statuses to see
+  -- whether or not the success of the RTPCD job submission should be recorded
+  -- in the database.
+  SELECT TapeDrive.status, TapeDrive.runningTapeReq
+  INTO tapeDriveStatusVar, runningTapeRequestIdVar
+  FROM TapeDrive
+  WHERE TapeDrive.id = tapeDriveIdVar
+  FOR UPDATE;
+  SELECT TapeRequest.status
+  INTO tapeRequestStatusVar
+  FROM TapeRequest
+  WHERE TapeRequest.id = tapeRequestIdVar
+  FOR UPDATE;
+
+  -- If recording of failed RTCPD job submission is permitted,
+  -- i.e. the status of the drive is UNIT_STARTING and the drive is still
+  -- paired with the tape request and the status of the tape request is
+  -- REQUEST_BEINGSUBMITTED
+  IF (tapeDriveStatusVar = 1) AND (runningTapeRequestIdVar = tapeRequestIdVar)
+    AND (tapeRequestStatusVar = 2) THEN
+
+    -- Unlink the tape drive from the tape request
+    UPDATE TapeDrive
+    SET TapeDrive.runningTapeReq = 0
+    WHERE TapeDrive.id = tapeDriveIdVar;
+    UPDATE TapeRequest
+    SET TapeRequest.tapeDrive = 0
+    WHERE TapeRequest.id = tapeRequestIdVar;
+
+    -- set the state of the tape drive to STATUS_UNKNOWN (7)
+    UPDATE TapeDrive
+    SET TapeDrive.status = 7
+    WHERE TapeDrive.id = tapeDriveIdVar;
+
+    -- Set the state of the tape request to REQUEST_PENDING (0)
+    UPDATE TapeRequest
+    SET TapeRequest.status = 0
+    WHERE TapeRequest.id = tapeRequestIdVar;
+
+    returnVar := 1; -- Failed RTCPD job submission written to database
+  END IF;
 END;
