@@ -17,28 +17,46 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SelectProcessThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/04/15 07:42:35 $ $Author: murrayc3 $
+ * @(#)$RCSfile: SelectProcessThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/04/15 07:59:44 $ $Author: murrayc3 $
  *
  * Base thread for the select/process model: it loops until select() returns
- * something to do, or until a stop signal is received.
+ * something to do. If stop() is called, the underlying database connection is dropped.
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-#include "castor/server/ServiceThread.hpp"
+#include <iostream>
+#include <string>
 #include "castor/server/SelectProcessThread.hpp"
 #include "castor/Services.hpp"
+#include "castor/db/DbCnvSvc.hpp"
 
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
 void castor::server::SelectProcessThread::run(void* param) {
-  //castor::IService* svc = getService();
-  ServiceThread* st = (ServiceThread*)param;
-  while(!st->stopped()) {
-    castor::IObject* selectOutput = select(); //svc);
+  while(!m_stopped) {
+    castor::IObject* selectOutput = select();
     if(selectOutput == 0)
       break;
-    process(selectOutput);  // (svc, );
+    process(selectOutput);
+  }
+  if(m_stopped) {
+    // this is true on a SIGTERM only
+    // drop the db connection only if already instantiated
+    castor::IService* s = svcs()->service("DbCnvSvc", 0);
+    castor::db::DbCnvSvc* dbs = dynamic_cast<castor::db::DbCnvSvc*>(s);
+    if(dbs) {
+      // if it is already dropped, this is a no-op
+      dbs->dropConnection();
+    }
   }
 }
+
+//------------------------------------------------------------------------------
+// stop
+//------------------------------------------------------------------------------
+void castor::server::SelectProcessThread::stop() {
+  m_stopped = true;
+}
+

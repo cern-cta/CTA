@@ -68,7 +68,6 @@ void castor::server::BaseDaemon::init() throw (castor::exception::Exception)
 
   sigemptyset(&m_signalSet);
   sigaddset(&m_signalSet, SIGINT);
-  //sigaddset(&m_signalSet, SIGINT);
   sigaddset(&m_signalSet, SIGTERM);
   sigaddset(&m_signalSet, SIGHUP);
   sigaddset(&m_signalSet, SIGABRT);
