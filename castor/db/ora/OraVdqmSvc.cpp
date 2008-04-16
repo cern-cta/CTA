@@ -1797,9 +1797,12 @@ int castor::db::ora::OraVdqmSvc::reuseDriveAllocation(
   if (0 == m_reuseDriveAllocationStatement) {
     m_reuseDriveAllocationStatement =
       createStatement(s_reuseDriveAllocationStatementString);
-    
+
     m_reuseDriveAllocationStatement->registerOutParam
-        (3, oracle::occi::OCCIDOUBLE);
+        (3, oracle::occi::OCCIINT);
+
+    m_reuseDriveAllocationStatement->registerOutParam
+        (4, oracle::occi::OCCIDOUBLE);
 
     m_reuseDriveAllocationStatement->setAutoCommit(false);
   }
@@ -1811,7 +1814,7 @@ int castor::db::ora::OraVdqmSvc::reuseDriveAllocation(
   try {
     m_reuseDriveAllocationStatement->executeUpdate();
     
-    reuseResult    = m_reuseDriveAllocationStatement->getInt(2);
+    reuseResult    = m_reuseDriveAllocationStatement->getInt(3);
     *tapeRequestId = (u_signed64)m_reuseDriveAllocationStatement->getDouble(4);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
