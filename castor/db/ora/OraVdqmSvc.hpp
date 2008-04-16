@@ -178,6 +178,20 @@ namespace castor {
          */
         void deleteDrive(std::string driveName, std::string serverName,
           std::string dgName) throw (castor::exception::Exception);
+
+        /**
+         * See the documentation for castor::vdqm::IVdqmSvc.
+         */
+        bool writeRTPCDJobSubmission(const u_signed64 tapeDriveId,
+          const u_signed64 tapeRequestId)
+          throw (castor::exception::Exception);
+
+        /**
+         * See the documentation for castor::vdqm::IVdqmSvc.
+         */
+        bool writeFailedRTPCDJobSubmission(const u_signed64 tapeDriveId,
+          const u_signed64 tapeRequestId)
+          throw (castor::exception::Exception);
   
         /**
          * Selects from the TapeDriveCompatibility table all entries for the
@@ -381,6 +395,18 @@ namespace castor {
 
         /// SQL statement object for function deleteDrive
         oracle::occi::Statement *m_deleteDriveStatement;
+
+        /// SQL statement for function writeRTPCDJobSubmission
+        static const std::string s_writeRTPCDJobSubmissionStatementString;
+
+        /// SQL statement object for function writeFailedRTPCDJobSubmission
+        oracle::occi::Statement *m_writeRTPCDJobSubmissionStatement;
+
+        /// SQL statement for function writeFailedRTPCDJobSubmission
+        static const std::string s_writeFailedRTPCDJobSubmissionStatementString;
+
+        /// SQL statement object for function writeFailedRTPCDJobSubmission
+        oracle::occi::Statement *m_writeFailedRTPCDJobSubmissionStatement;
   
         /// SQL statement for function existTapeDriveWithTapeInUse
         static const std::string s_existTapeDriveWithTapeInUseStatementString;

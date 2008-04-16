@@ -89,6 +89,16 @@ const std::string castor::db::ora::OraVdqmSvc::s_dedicateDriveStatementString
 /// SQL statement for function deleteDrive
 const std::string castor::db::ora::OraVdqmSvc::s_deleteDriveStatementString
   = "BEGIN deleteDrive(:1, :2, :3, :4); END;";
+
+/// SQL statement for function writeRTPCDJobSubmission
+const std::string castor::db::ora::OraVdqmSvc::
+  s_writeRTPCDJobSubmissionStatementString
+  = "BEGIN writeRTPCDJobSubmission(:1, :2, :3); END;";
+
+/// SQL statement for function writeFailedRTPCDJobSubmission
+const std::string castor::db::ora::OraVdqmSvc::
+  s_writeFailedRTPCDJobSubmissionStatementString
+  = "BEGIN writeFailedRTPCDJobSubmission(:1, :2, :3); END;";
   
 /// SQL statement for function existTapeDriveWithTapeInUse
 const std::string castor::db::ora::OraVdqmSvc::s_existTapeDriveWithTapeInUseStatementString =
@@ -200,6 +210,8 @@ castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   m_selectTapeDriveStatement(0),
   m_dedicateDriveStatement(0),
   m_deleteDriveStatement(0),
+  m_writeRTPCDJobSubmissionStatement(0),
+  m_writeFailedRTPCDJobSubmissionStatement(0),
   m_existTapeDriveWithTapeInUseStatement(0),
   m_existTapeDriveWithTapeMountedStatement(0),
   m_selectTapeByVidStatement(0),
@@ -253,6 +265,8 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
     if (m_selectTapeDriveStatement) deleteStatement(m_selectTapeDriveStatement);
     if (m_dedicateDriveStatement) deleteStatement(m_dedicateDriveStatement);
     if (m_deleteDriveStatement) deleteStatement(m_deleteDriveStatement);
+    if (m_writeRTPCDJobSubmissionStatement) deleteStatement(m_writeRTPCDJobSubmissionStatement);
+    if (m_writeFailedRTPCDJobSubmissionStatement) deleteStatement(m_writeFailedRTPCDJobSubmissionStatement);
     if (m_existTapeDriveWithTapeInUseStatement) deleteStatement(m_existTapeDriveWithTapeInUseStatement);
     if (m_existTapeDriveWithTapeMountedStatement) deleteStatement(m_existTapeDriveWithTapeMountedStatement);
     if (m_selectTapeByVidStatement) deleteStatement(m_selectTapeByVidStatement);
@@ -278,6 +292,8 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   m_selectTapeDriveStatement = 0;
   m_dedicateDriveStatement = 0;
   m_deleteDriveStatement = 0;
+  m_writeRTPCDJobSubmissionStatement = 0;
+  m_writeFailedRTPCDJobSubmissionStatement = 0;
   m_existTapeDriveWithTapeInUseStatement = 0;
   m_existTapeDriveWithTapeMountedStatement = 0;
   m_selectTapeByVidStatement = 0;
@@ -943,6 +959,92 @@ void castor::db::ora::OraVdqmSvc::deleteDrive(std::string driveName,
       throw ie;
     }
   }
+}
+
+
+// -----------------------------------------------------------------------
+// writeRTPCDJobSubmission
+// -----------------------------------------------------------------------
+bool castor::db::ora::OraVdqmSvc::writeRTPCDJobSubmission(
+  const u_signed64 tapeDriveId, const u_signed64 tapeRequestId)
+  throw (castor::exception::Exception) {
+
+  bool result = false;
+
+
+  // Check whether the statements are ok
+  if (0 == m_writeRTPCDJobSubmissionStatement) {
+    m_writeRTPCDJobSubmissionStatement =
+      createStatement(s_writeRTPCDJobSubmissionStatementString);
+    m_writeRTPCDJobSubmissionStatement->setAutoCommit(false);
+
+    m_writeRTPCDJobSubmissionStatement->registerOutParam(3,
+      oracle::occi::OCCIINT);
+  }
+
+  m_writeRTPCDJobSubmissionStatement->setDouble(1, tapeDriveId);
+  m_writeRTPCDJobSubmissionStatement->setDouble(2, tapeRequestId);
+
+  // Execute statement and get result
+  try {
+    m_writeRTPCDJobSubmissionStatement->executeUpdate();
+    result = m_writeRTPCDJobSubmissionStatement->getInt(3);
+  } catch(oracle::occi::SQLException &e) {
+    handleException(e);
+
+    castor::exception::Internal ie;
+
+    ie.getMessage()
+      << "Failed to try to write RTPCD job submission to database: "
+      << std::endl << e.getMessage();
+
+    throw ie;
+  }
+
+  return result;
+}
+
+
+// -----------------------------------------------------------------------
+// writeFailedRTPCDJobSubmission
+// -----------------------------------------------------------------------
+bool castor::db::ora::OraVdqmSvc::writeFailedRTPCDJobSubmission(
+  const u_signed64 tapeDriveId, const u_signed64 tapeRequestId)
+  throw (castor::exception::Exception) {
+
+  bool result = false;
+
+
+  // Check whether the statements are ok
+  if (0 == m_writeFailedRTPCDJobSubmissionStatement) {
+    m_writeFailedRTPCDJobSubmissionStatement =
+      createStatement(s_writeFailedRTPCDJobSubmissionStatementString);
+    m_writeFailedRTPCDJobSubmissionStatement->setAutoCommit(false);
+
+    m_writeFailedRTPCDJobSubmissionStatement->registerOutParam(3,
+      oracle::occi::OCCIINT);
+  }
+
+  m_writeFailedRTPCDJobSubmissionStatement->setDouble(1, tapeDriveId);
+  m_writeFailedRTPCDJobSubmissionStatement->setDouble(2, tapeRequestId);
+
+  // Execute statement and get result
+  try {
+    m_writeFailedRTPCDJobSubmissionStatement->executeUpdate();
+    result = m_writeFailedRTPCDJobSubmissionStatement->getInt(3);
+  } catch(oracle::occi::SQLException &e) {
+    handleException(e);
+
+    castor::exception::Internal ie;
+
+    ie.getMessage()
+      << "Failed to try to write failed RTPCD job submission to database: "
+      << std::endl << e.getMessage();
+
+    throw ie;
+  }
+
+  return result;
 }
 
 

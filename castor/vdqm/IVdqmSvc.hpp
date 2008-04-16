@@ -382,6 +382,41 @@ namespace castor {
         virtual std::vector<TapeAccessSpecification*>*
           selectTapeAccessSpecifications(const std::string tapeModel)
           throw (castor::exception::Exception) = 0;                  
+
+        /**
+         * Tries to write to the database the fact that a successful RTCPD job
+         * submission has occured.  This update of the database may not be
+         * possible if the corresponding drive and tape request states have
+         * been modified by other threads.  For example a thread handling a
+         * tape drive request message may have put the drive into the down
+         * state.  The RTCPD job submission should be ignored in this case.
+         *
+         * @param tapeDriveId the ID of the drive
+         * @param tapeRequestId the ID of the tape request
+         * @return true if the occurance of the RTCPD job submission was
+         * successfully written to the database, else false.
+         */
+        virtual bool writeRTPCDJobSubmission(const u_signed64 tapeDriveId,
+          const u_signed64 tapeRequestId)
+          throw (castor::exception::Exception) = 0;
+
+        /**
+         * Tries to write to the database the fact that a failed RTCPD job
+         * submission has occured.  This update of the database may not be
+         * possible if the corresponding drive and tape request states have
+         * been modified by other threads.  For example a thread handling a
+         * tape drive request message may have put the drive into the down
+         * state.  The failed RTCPD job submission should be ignored in this
+         * case.
+         *
+         * @param tapeDriveId the ID of the drive
+         * @param tapeRequestId the ID of the tape request
+         * @return true if the occurance of the failed RTCPD job submission was
+         * successfully written to the database, else false.
+         */
+        virtual bool writeFailedRTPCDJobSubmission(const u_signed64 tapeDriveId,
+          const u_signed64 tapeRequestId)
+          throw (castor::exception::Exception) = 0;
           
     }; // end of class IVdqmSvc
 
