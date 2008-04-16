@@ -1,5 +1,5 @@
 /*
- * $Id: vdqm.h,v 1.2 2008/03/10 20:17:16 murrayc3 Exp $
+ * $Id: vdqm.h,v 1.3 2008/04/16 15:44:20 murrayc3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vdqm.h,v $ $Revision: 1.2 $ $Date: 2008/03/10 20:17:16 $ CERN IT-PDP/DM Olof Barring
+ * @(#)$RCSfile: vdqm.h,v $ $Revision: 1.3 $ $Date: 2008/04/16 15:44:20 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -119,13 +119,14 @@ typedef struct vdqmVolPriority {
     int  clientGID;
     char client_host[CA_MAXHOSTNAMELEN+1];
     char volid[CA_MAXVIDLEN+1];
+    int  tpmode;
     int  nbVolRequests;
 } vdqmVolPriority_t;
 /*
  * Length of marshalled structure. Don't forget to update
  * if entries are added
  */
-#define VDQM_VOLPRIORITYLEN(X) ( 4*LONGSIZE + \
+#define VDQM_VOLPRIORITYLEN(X) ( 5*LONGSIZE + \
     strlen(X->client_host) + strlen(X->volid))
 
 
