@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.653 $ $Date: 2008/04/10 14:43:21 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.654 $ $Date: 2008/04/16 09:46:34 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1026,8 +1026,8 @@ BEGIN
      WHERE Tape.id = Segment.tape(+) 
        AND TapeCopy.id(+) = Segment.copy
        AND CastorFile.id(+) = TapeCopy.castorfile 
-       AND Tape.status=8
-     GROUP BY Tape.id, Tape.vid;
+       AND Tape.status=8 AND Segment.status=0
+     GROUP BY Tape.id, Tape.vid having count(distinct segment.id) > 0;
 END;
 
 /* resurrect tapes */
