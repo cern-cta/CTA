@@ -994,9 +994,7 @@ bool castor::db::ora::OraVdqmSvc::writeRTPCDJobSubmission(
 
     castor::exception::Internal ie;
 
-    ie.getMessage()
-      << "Failed to try to write RTPCD job submission to database: "
-      << std::endl << e.getMessage();
+    ie.getMessage() << e.getMessage();
 
     throw ie;
   }
@@ -1037,9 +1035,7 @@ bool castor::db::ora::OraVdqmSvc::writeFailedRTPCDJobSubmission(
 
     castor::exception::Internal ie;
 
-    ie.getMessage()
-      << "Failed to try to write failed RTPCD job submission to database: "
-      << std::endl << e.getMessage();
+    ie.getMessage() << e.getMessage();
 
     throw ie;
   }

@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.85 $ $Release$ $Date: 2008/04/15 15:39:26 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.86 $ $Release$ $Date: 2008/04/16 14:59:53 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1251,6 +1251,12 @@ BEGIN
 
     returnVar := 1; -- RTCPD job submission written to database
   END IF;
+
+EXCEPTION
+
+  -- Do nothing if either the drive or request no longer exist in the database
+  WHEN NO_DATA_FOUND THEN NULL;
+
 END;
 
 
@@ -1324,4 +1330,10 @@ BEGIN
 
     returnVar := 1; -- Failed RTCPD job submission written to database
   END IF;
+
+EXCEPTION
+
+  -- Do nothing if either the drive or request no longer exist in the database
+  WHEN NO_DATA_FOUND THEN NULL;
+
 END;

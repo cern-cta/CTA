@@ -262,6 +262,8 @@ void castor::vdqm::VdqmServer::initDlf()
     {VDQM_INVALIDATED_DRIVE_ALLOCATION, "Invalidated tape drive allocation"},
     {VDQM_INVALIDATED_REUSE_OF_DRIVE_ALLOCATION, "Invalidated reuse of tape drive allocation"},
     {VDQM_REMOVING_TAPE_REQUEST, "Removing tape request"},
+    {VDQM_IGNORED_RTCPD_JOB_SUBMISSION, "Ignored successful submission of RTCPD job"},
+    {VDQM_IGNORED_FAILED_RTCPD_JOB_SUBMISSION, "Ignored failed submission of RTCPD job"},
     {-1, ""}
   }; // castor::dlf::Message messages[]
 

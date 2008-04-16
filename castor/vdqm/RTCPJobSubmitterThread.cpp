@@ -110,6 +110,8 @@ castor::IObject* castor::vdqm::RTCPJobSubmitterThread::select()
 void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
   throw() {
 
+  castor::vdqm::IVdqmSvc *vdqmSvc = NULL;
+
   // Create an auto pointer to delete the tape request object when it goes out
   // of scope.
   std::auto_ptr<castor::vdqm::TapeRequest>
@@ -131,13 +133,70 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
   std::auto_ptr<castor::vdqm::TapeDrive> drive(request->tapeDrive());
 
   try {
+    vdqmSvc = getDbVdqmSvc();
+  } catch(castor::exception::Exception &e) {
+    // "Could not get DbVdqmSvc"
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Function",
+        "castor::vdqm::RTCPJobSubmitterThread::process"),
+      castor::dlf::Param("Message", e.getMessage().str()),
+      castor::dlf::Param("Code", e.code())
+    };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_DBVDQMSVC_GETSVC,
+      3, params);
+
+    return;
+  }
+
+  try {
 
     // Submit the remote tape copy job to RTCPD
     submitJobToRTCPD(request.get());
 
-    // Handle successful submission of job to RTCPD
+    try
+    {
+      // Write successful submission of RTCPD job to the database
+      if(!vdqmSvc->writeRTPCDJobSubmission(drive->id(), request->id())) {
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("tapeDriveID", drive->id()),
+          castor::dlf::Param("driveName", drive->driveName()),
+          castor::dlf::Param("tapeRequestID", request->id())};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+          VDQM_IGNORED_RTCPD_JOB_SUBMISSION, 3, params);
+      }
+    } catch(castor::exception::Exception &e) {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("tapeDriveID", drive->id()),
+        castor::dlf::Param("driveName", drive->driveName()),
+        castor::dlf::Param("tapeRequestID", request->id()),
+        castor::dlf::Param("Message", "Failed to write successful submission "
+          "of RTCPD job to the database: " + e.getMessage().str()),
+        castor::dlf::Param("Code", e.code())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+        VDQM_DRIVE_ALLOCATION_ERROR, 5, params);
+    }
   } catch(castor::exception::Exception &e) {
-    // Handle unsuccessful submission of job to RTCPD
+    try {
+      // Write failed submission of RTCPD job to the database
+      if(!vdqmSvc->writeFailedRTPCDJobSubmission(drive->id(), request->id())) {
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("tapeDriveID", drive->id()),
+          castor::dlf::Param("driveName", drive->driveName()),
+          castor::dlf::Param("tapeRequestID", request->id())};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+          VDQM_IGNORED_FAILED_RTCPD_JOB_SUBMISSION, 3, params);
+      }
+    } catch(castor::exception::Exception &e) {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("tapeDriveID", drive->id()),
+        castor::dlf::Param("driveName", drive->driveName()),
+        castor::dlf::Param("tapeRequestID", request->id()),
+        castor::dlf::Param("Message", "Failed to write failed submission "
+          "of RTCPD job to the database: " + e.getMessage().str()),
+        castor::dlf::Param("Code", e.code())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+        VDQM_DRIVE_ALLOCATION_ERROR, 5, params);
+    }
   }
 
   try
@@ -158,111 +217,6 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
       VDQM_DRIVE_ALLOCATION_ERROR, 3, params);
   }
 }
-
-
-//-----------------------------------------------------------------------------
-// process
-//-----------------------------------------------------------------------------
-/*
-void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
-  throw() {
-
-  // Create an auto pointer to manage the tape request
-  std::auto_ptr<castor::vdqm::TapeRequest>
-    request(dynamic_cast<castor::vdqm::TapeRequest*>(param));
-
-  // If the dynamic cast failed
-  if(request.get() == NULL) {
-    castor::exception::Internal e;
-
-    e.getMessage()
-      << "Failed to cast param to castor::vdqm::TapeRequest*";
-
-    throw e;
-  }
-
-  // The destructor of a castor::vdqm::TapeRequest ibject does not delete the
-  // tape drive it points to.  Therefore create an auto pointer to manage thei
-  // tape drive pointed to by the request.
-  std::auto_ptr<castor::vdqm::TapeDrive> drive(request->tapeDrive());
-
-  try {
-
-    // Submit the remote tape copy job to RTCPD
-    submitJobToRTCPD(request.get());
-
-    // Everything is OK, so update the status of the request
-    request->setStatus(castor::vdqm::REQUEST_SUBMITTED);
-
-  } catch(castor::exception::Exception &e) {
-
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", "RTCPJobSubmitterThread::process"),
-      castor::dlf::Param("Message", e.getMessage().str()),
-      castor::dlf::Param("Code", e.code())
-    };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-      VDQM_DRIVE_ALLOCATION_ERROR, 3, params);
-
-    // Un-link the associated tape drive
-    request->setTapeDrive(0);
-    drive->setRunningTapeReq(0);
-
-    castor::dlf::Param param[] = {
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-      castor::dlf::Param("driveName", drive->driveName()),
-      castor::dlf::Param("oldStatus",
-        castor::vdqm::DevTools::tapeDriveStatus2Str(drive->status())),
-      castor::dlf::Param("newStatus",
-        castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_UP))};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-      VDQM_DRIVE_STATE_TRANSITION, 4, param);
-
-    // The associated tape drive is now free
-    drive->setStatus(UNIT_UP);
-
-    // Set the status of the request to pending
-    request->setStatus(castor::vdqm::REQUEST_PENDING);
-
-    // The modification times of the drive and the request will be updated by
-    // database triggers because status of the drive and request have been
-    // changed. In the case of the request, this will move the request to the
-    // end of the queue as the oldest requests are serviced first.
-  }
-
-  // Needed to commit the changes
-  castor::BaseAddress ad;
-  ad.setCnvSvcName("DbCnvSvc");
-  ad.setCnvSvcType(castor::SVC_DBCNV);
-
-  try {
-
-    // Update the attributes of the request and drive in the DB
-    services()->updateRep(&ad, request.get(), false);
-    services()->updateRep(&ad, drive.get(), false);
-
-    // If the associated drive was un-linked from the request then update
-    // the DB
-    if(request->tapeDrive() == 0) {
-      services()->fillRep(&ad, request.get(), OBJ_TapeDrive, false);
-      services()->fillRep(&ad, drive.get(), OBJ_TapeRequest, false);
-    }
-
-    // Commit the changes in the DB
-    services()->commit(&ad);
-
-  } catch(castor::exception::Exception &e) {
-
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", "RTCPJobSubmitterThread::process"),
-      castor::dlf::Param("Message", e.getMessage().str()),
-      castor::dlf::Param("Code", e.code())
-    };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-      VDQM_DRIVE_ALLOCATION_ERROR, 3, params);
-  }
-}
-*/
 
 
 //-----------------------------------------------------------------------------
