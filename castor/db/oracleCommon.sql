@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.644 $ $Date: 2008/04/02 16:30:23 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.645 $ $Date: 2008/04/17 06:13:40 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -54,7 +54,10 @@ partition by list (type)
   partition type_80 values (80)  tablespace stager_data,
   partition type_84 values (84)  tablespace stager_data,
   partition type_90 values (90)  tablespace stager_data,
+  partition type_142 values (142)  tablespace stager_data,	
   partition type_144 values (144)  tablespace stager_data,
+  partition type_147 values (147)  tablespace stager_data,
+  partition type_149 values (149)  tablespace stager_data,
   partition notlisted values (default) tablespace stager_data
  );
 
@@ -210,14 +213,10 @@ CREATE GLOBAL TEMPORARY TABLE removePrivilegeTmpTable
   */
 CREATE TABLE WhiteList (svcClass VARCHAR2(2048), euid NUMBER, egid NUMBER, reqType NUMBER);
 CREATE TABLE BlackList (svcClass VARCHAR2(2048), euid NUMBER, egid NUMBER, reqType NUMBER);
-BEGIN
-  FOR sc IN (SELECT name FROM SvcClass) LOOP
-    INSERT INTO WhiteList VALUES (sc.name, NULL, NULL, NULL);
-  END LOOP;
-  -- extra one specific to queries on all service classes
-  INSERT INTO WhiteList VALUES ('*', NULL, NULL, NULL);  
-  COMMIT;
-END;
+
+INSERT INTO WhiteList VALUES ('*', NULL, NULL, NULL);
+INSERT INTO WhiteList VALUES (NULL, NULL, NULL, NULL);
+
 
 /* Define the service handlers for the appropriate sets of stage request objects */
 UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type in (35, 40, 44);
@@ -261,7 +260,7 @@ CREATE INDEX I_NbTapeCopiesInFS_Stream on NbTapeCopiesInFS(Stream);
 
 /* This table is needed to insure that bestTapeCopyForStream works Ok.
  * It basically serializes the queries ending to the same diskserver.
- * This is only needed because of lack of funstionnality in ORACLE.
+ * This is only needed because of lack of functionnality in ORACLE.
  * The original goal was to lock the selected filesystem in the first
  * query of bestTapeCopyForStream. But a SELECT FOR UPDATE was not enough
  * because it does not revalidate the inner select and we were thus selecting
@@ -362,7 +361,7 @@ END;
 /* PL/SQL method canceling a given recall */
 CREATE OR REPLACE PROCEDURE cancelRecall
 (cfId NUMBER, dcId NUMBER, newSubReqStatus NUMBER) AS
-  srId NUMBER;
+  srIds "numList";
 BEGIN
   -- cancel the recall
   deleteTapeCopies(cfId);
@@ -371,11 +370,11 @@ BEGIN
   -- Look for request associated to the recall and fail
   -- it and all the waiting ones
   UPDATE SubRequest SET status = newSubReqStatus
-   WHERE diskCopy = dcId RETURNING id INTO srId;
+   WHERE diskCopy = dcId RETURNING id BULK COLLECT INTO srIds;
   UPDATE SubRequest
      SET status = newSubReqStatus, parent = 0 -- FAILED
    WHERE status = 5 -- WAITSUBREQ
-     AND parent = srId
+     AND parent IN (SELECT * FROM TABLE(srIds))
      AND castorfile = cfId;
 END;
 
