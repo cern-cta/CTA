@@ -241,8 +241,8 @@ const char *clienthost;
 		if (Cns_chkaclperm (fmd_entry, mode, uid, gid) == 0)
 			return (0);
 	}
-	if (fmd_entry->gid == gid &&
-	    !Cupv_check (uid, gid, clienthost, localhost, P_GRP_ADMIN)) {
+	if ((fmd_entry->gid == gid) &&
+	    (Cupv_check (uid, gid, clienthost, localhost, P_GRP_ADMIN) == 0)) {
 		return(0);
 	}
 	return (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN));
