@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: LSFStatus.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/03/12 10:42:14 $ $Author: waldron $
+ * @(#)$RCSfile: LSFStatus.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/04/17 06:29:14 $ $Author: waldron $
  *
  * Singleton used to access LSF related information
  *
@@ -103,9 +103,6 @@ namespace castor {
 	virtual ~LSFStatus() throw() {};
 
       private:
-
-	/// The name of the LSF master
-	std::string m_masterName;
 
 	/// The previous name of the LSF master
 	std::string m_prevMasterName;

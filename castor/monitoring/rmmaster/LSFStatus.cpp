@@ -43,7 +43,6 @@ castor::monitoring::rmmaster::LSFStatus::s_instance(0);
 //-----------------------------------------------------------------------------
 castor::monitoring::rmmaster::LSFStatus::LSFStatus()
   throw(castor::exception::Exception) :
-  m_masterName(""),
   m_prevMasterName(""),
   m_lastUpdate(0) {
 
@@ -102,22 +101,23 @@ void castor::monitoring::rmmaster::LSFStatus::getLSFStatus
   // For stability reasons we cache the result of the query to LSF and only
   // refresh it when updating is enabled and 1 minute has passed since the
   // previous query.
-  Cthread_mutex_lock(&m_masterName);
-  if ((m_masterName == "") || (update && (time(NULL) - m_lastUpdate) < 60)) {
+  if ((m_prevMasterName == "") || (update && ((time(NULL) - m_lastUpdate) > 60))) {
 
     // Get the name of the LSF master. This is the equivalent to `lsid`
     char **results = NULL;
     clusterInfo *cInfo = ls_clusterinfo(NULL, NULL, results, 0, 0);
     if (cInfo == NULL) {
-      Cthread_mutex_unlock(&m_masterName);
       castor::exception::Exception e(SEINTERNAL);
       e.getMessage() << lsb_sysmsg();
       throw e;
     }
+
+    Cthread_mutex_lock(&m_prevMasterName);
     masterName = cInfo[0].masterName;
     m_lastUpdate = time(NULL);
   } else {
-    masterName = m_masterName;;
+    Cthread_mutex_lock(&m_prevMasterName);
+    masterName = m_prevMasterName;
   }
 
   // Determine the hostname of the machine we are currently running on. If
@@ -128,7 +128,7 @@ void castor::monitoring::rmmaster::LSFStatus::getLSFStatus
       production = false;
     }
   } catch (castor::exception::Exception e) {
-    Cthread_mutex_unlock(&m_masterName);
+    Cthread_mutex_unlock(&m_prevMasterName);
     throw e;
   }
 
@@ -147,5 +147,5 @@ void castor::monitoring::rmmaster::LSFStatus::getLSFStatus
 
   // Return
   m_prevMasterName = masterName;
-  Cthread_mutex_unlock(&m_masterName);
+  Cthread_mutex_unlock(&m_prevMasterName);
 }
