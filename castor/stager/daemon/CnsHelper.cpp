@@ -158,7 +158,7 @@ namespace castor{
               castor::dlf::Param("Error", sstrerror(serrno))};
 	    
 	    if ((serrno == ENOENT) || (serrno == EACCES) || (serrno == ENOTDIR) ||
-		(serrno == ENAMETOOLONG)) {
+		(serrno == ENAMETOOLONG) || (serrno == EMLINK)) {
 	      castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, 
 				      STAGER_CNS_EXCEPTION, 3, params);      
 	    } else {
