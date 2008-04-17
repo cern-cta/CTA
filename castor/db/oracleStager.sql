@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.661 $ $Date: 2008/04/11 12:30:52 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.662 $ $Date: 2008/04/17 06:21:52 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -118,7 +118,6 @@ CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
  *     coming back but already exist on another one
  */
 CREATE OR REPLACE PROCEDURE checkFSBackInProd(fsId NUMBER) AS
-  srId NUMBER;
   srIds "numList";
 BEGIN
   -- Flag the filesystem for processing in a bulk operation later. 
@@ -264,7 +263,7 @@ PRAGMA EXCEPTION_INIT (LockError, -54);
 CURSOR c IS
    SELECT /*+ USE_NL */ id
      FROM SubRequest
-    WHERE status in (0,1,2)    -- START, RESTART, RETRY
+    WHERE status in (0,1,2)  -- START, RESTART, RETRY
       AND EXISTS
          (SELECT /*+ index(a I_Id2Type_id) */ 'x'
             FROM Id2Type a, Type2Obj
@@ -276,7 +275,8 @@ BEGIN
   srId := 0;
   OPEN c;
   FETCH c INTO srId;
-  UPDATE SubRequest SET status = 3, subReqId = uuidGen() WHERE id = srId  -- WAITSCHED
+  UPDATE SubRequest SET status = 3, subReqId = nvl(subReqId, uuidGen())
+   WHERE id = srId  -- WAITSCHED
     RETURNING retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags, subReqId, answered
     INTO srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus, srModeBits, srFlags, srSubReqId, srAnswered;
   CLOSE c;
