@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_mkdir.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:19 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_mkdir.man,v $ $Revision: 1.3 $ $Date: 2008/04/17 12:10:03 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_MKDIR 3 "$Date: 2006/01/26 15:36:19 $" CASTOR "Cns Library Functions"
+.TH CNS_MKDIR 3 "$Date: 2008/04/17 12:10:03 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_mkdir \- create a new CASTOR directory in the name server
 .SH SYNOPSIS
@@ -55,6 +55,10 @@ is a null pathname.
 Search permission is denied on a component of the
 .I path
 prefix or write permission on the parent directory is denied.
+.TP
+.B EMLINK
+.I path
+contains too many files and/or directories.
 .TP
 .B EFAULT
 .I path
