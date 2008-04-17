@@ -55,7 +55,7 @@ class SWREP (threading.Thread):
         for rpm in os.listdir(dir):
             export2swrep(self.swrepArch, dir + os.sep + rpm)
             # export the 32bit castor-lib in 64 bits
-            if self.OS == 'SLC3' and self.arch == 'i386' and rpm.startswith('castor-lib-2'):
+            if self.OS == 'SLC4' and self.arch == 'i386' and rpm.startswith('castor-lib-2'):
                 export2swrep('x86_64_slc4', dir + os.sep + rpm)
 
 castorlibslc3i386 = ''
