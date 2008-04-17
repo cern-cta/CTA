@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.7-3_to_2.1.7-4.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/04/03 09:39:34 $ $Author: waldron $
+ * @(#)$RCSfile: 2.1.7-3_to_2.1.7-4.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/04/17 06:33:23 $ $Author: waldron $
  *
  * This script upgrades a CASTOR v2.1.7-3 database into v2.1.7-4
  *
@@ -49,6 +49,16 @@ DROP PROCEDURE deleteOutOfDateRecallDcs;
 DROP TABLE OutOfDateRequestCleaning;
 DROP TABLE ArchivedRequestCleaning;
 DROP TABLE OutOfDateRecallDropped;
+
+/* Add new partititons to the NewRequests table */
+ALTER TABLE NewRequests SPLIT PARTITION notlisted VALUES (142) 
+ INTO (PARTITION type_142, PARTITION notlisted);
+
+ALTER TABLE NewRequests SPLIT PARTITION notlisted VALUES (147) 
+ INTO (PARTITION type_147, PARTITION notlisted);
+
+ALTER TABLE NewRequests SPLIT PARTITION notlisted VALUES (149) 
+ INTO (PARTITION type_149, PARTITION notlisted);
 
 /* Update and revalidation of all PL-SQL code */
 /**********************************************/
