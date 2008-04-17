@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.86 $ $Release$ $Date: 2008/04/16 14:59:53 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.87 $ $Release$ $Date: 2008/04/17 11:54:54 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -565,7 +565,9 @@ END;
  */
 CREATE OR REPLACE VIEW CandidateDriveAllocations_VIEW
 AS SELECT UNIQUE
-  TapeDrive.id as tapeDriveId, TapeRequest.id as tapeRequestId,
+  TapeDrive.id as tapeDriveId,
+  TapeRequest.id as tapeRequestId,
+  TapeAccessSpecification.accessMode,
   TapeRequest.modificationTime
 FROM
   TapeRequest
@@ -607,6 +609,7 @@ WHERE
   AND passesDedications(tapeDrive.id, ClientIdentification.machine,
         TapeAccessSpecification.accessMode, VdqmTape.vid)=1
 ORDER BY
+  TapeAccessSpecification.accessMode DESC,
   TapeRequest.modificationTime ASC;
 
 
@@ -616,8 +619,11 @@ ORDER BY
  */
 CREATE OR REPLACE VIEW DriveAllocationsForReuse_VIEW
 AS SELECT UNIQUE
-  TapeDrive.id as tapeDriveId, TapeDrive.tape as tapeId,
-  TapeRequest.id as tapeRequestId, TapeRequest.modificationTime
+  TapeDrive.id as tapeDriveId,
+  TapeDrive.tape as tapeId,
+  TapeRequest.id as tapeRequestId,
+  TapeAccessSpecification.accessMode,
+  TapeRequest.modificationTime
 FROM
   TapeRequest
 INNER JOIN TapeAccessSpecification ON
@@ -637,6 +643,7 @@ WHERE
   AND passesDedications(tapeDrive.id, ClientIdentification.machine,
         TapeAccessSpecification.accessMode, VdqmTape.vid)=1
 ORDER BY
+  TapeAccessSpecification.accessMode DESC,
   TapeRequest.modificationTime ASC;
 
 
@@ -644,44 +651,44 @@ ORDER BY
  * View used for generating the list of requests when replying to the
  * showqueues command
  */
-create or replace view
-  TAPEREQUESTSHOWQUEUES_VIEW
-as with TIMEZONEOFFSET as (
-  select
-    (extract(timezone_hour from current_timestamp) - 1) * 3600 as VALUE
-  from DUAL)
-select
-  TAPEREQUEST.ID,
-  TAPEDRIVE.DRIVENAME,
-  TAPEDRIVE.ID as TAPEDRIVEID,
-  TAPEREQUEST.PRIORITY,
-  CLIENTIDENTIFICATION.PORT as CLIENTPORT,
-  CLIENTIDENTIFICATION.EUID as CLIENTEUID,
-  CLIENTIDENTIFICATION.EGID as CLIENTEGID,
-  TAPEACCESSSPECIFICATION.ACCESSMODE,
-  TAPEREQUEST.MODIFICATIONTIME -
-    (select TIMEZONEOFFSET.VALUE from TIMEZONEOFFSET) as MODIFICATIONTIME,
-  CLIENTIDENTIFICATION.MACHINE AS CLIENTMACHINE,
-  VDQMTAPE.VID,
-  TAPESERVER.SERVERNAME as TAPESERVER,
-  DEVICEGROUPNAME.DGNAME,
-  CLIENTIDENTIFICATION.USERNAME as CLIENTUSERNAME
-from
-  TAPEREQUEST
-left outer join TAPEDRIVE on
-  TAPEREQUEST.TAPEDRIVE = TAPEDRIVE.ID
-left outer join CLIENTIDENTIFICATION on
-  TAPEREQUEST.CLIENT = CLIENTIDENTIFICATION.ID
-inner join TAPEACCESSSPECIFICATION on
-  TAPEREQUEST.TAPEACCESSSPECIFICATION = TAPEACCESSSPECIFICATION.ID
-left outer join VDQMTAPE on
-  TAPEREQUEST.TAPE = VDQMTAPE.ID
-left outer join TAPESERVER on
-  TAPEREQUEST.REQUESTEDSRV = TAPESERVER.ID
-left outer join DEVICEGROUPNAME on
-  TAPEREQUEST.DEVICEGROUPNAME = DEVICEGROUPNAME.ID
-order by
-  TAPEREQUEST.ID;
+CREATE OR REPLACE VIEW TapeRequestShowqueues_VIEW
+AS WITH TimezoneOffset AS (
+  SELECT
+    (EXTRACT(TIMEZONE_HOUR FROM CURRENT_TIMESTAMP) - 1) * 3600 as value
+  FROM DUAL)
+SELECT
+  TapeRequest.id,
+  TapeDrive.driveName,
+  TapeDrive.id AS tapeDriveId,
+  TapeRequest.priority,
+  ClientIdentification.port AS clientPort,
+  ClientIdentification.euid AS clientEuid,
+  ClientIdentification.egid AS clientEgid,
+  TapeAccessSpecification.accessMode,
+  TapeRequest.modificationTime -
+    (SELECT TimezoneOffset.value FROM TimezoneOffset) AS modificationTime,
+  ClientIdentification.machine AS clientMachine,
+  VdqmTape.vid,
+  TapeServer.serverName AS tapeServer,
+  DeviceGroupName.dgName,
+  ClientIdentification.username AS clientUsername
+FROM
+  TapeRequest
+LEFT OUTER JOIN TapeDrive ON
+  TapeRequest.tapeDrive = TapeDrive.id
+LEFT OUTER JOIN ClientIdentification ON
+  TapeRequest.client = ClientIdentification.id
+INNER JOIN TapeAccessSpecification ON
+  TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
+LEFT OUTER JOIN VdqmTape ON
+  TapeRequest.tape = VdqmTape.id
+LEFT OUTER JOIN TapeServer ON
+  TapeRequest.requestedSrv = TapeServer.id
+LEFT OUTER JOIN DeviceGroupName ON
+  TapeRequest.deviceGroupName = DeviceGroupName.id
+ORDER BY
+  TapeAccessSpecification.accessMode DESC,
+  TapeRequest.id;
 
 
 /**
