@@ -151,9 +151,7 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeRequestQueueStatement
   "  TAPEREQUESTSHOWQUEUES_VIEW "
   "WHERE"
   "      (:1 IS NULL OR :2 = DGNAME)"
-  "  AND (:3 IS NULL OR :4 = TAPESERVER) "
-  "ORDER BY"
-  "  ID";
+  "  AND (:3 IS NULL OR :4 = TAPESERVER)";
 
 /// SQL statement for function selectTapeDriveQueue
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveQueueStatementString =
@@ -165,10 +163,8 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveQueueStatementSt
   "  TAPEDRIVESHOWQUEUES_VIEW "
   "WHERE"
   "      (:1 IS NULL OR :2 = DGNAME)"
-  "  AND (:3 IS NULL OR :4 = SERVERNAME) "
-  "ORDER BY"
-  "  DRIVENAME ASC";
-  
+  "  AND (:3 IS NULL OR :4 = SERVERNAME)";
+
 /// SQL statement for function selectDeviceGroupName
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeRequestStatementString =
   "SELECT id FROM TapeRequest WHERE CAST(id AS INT) = :1";

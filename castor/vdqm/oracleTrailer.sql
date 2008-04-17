@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.88 $ $Release$ $Date: 2008/04/17 13:59:36 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.89 $ $Release$ $Date: 2008/04/17 16:03:19 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -688,7 +688,6 @@ LEFT OUTER JOIN TapeServer ON
 LEFT OUTER JOIN DeviceGroupName ON
   TapeRequest.deviceGroupName = DeviceGroupName.id
 ORDER BY
-  TapeAccessSpecification.accessMode DESC,
   TapeRequest.id;
 
 
@@ -754,8 +753,7 @@ END;
  * View used for generating the list of drives when replying to the showqueues
  * command
  */
-create or replace view
-  TAPEDRIVESHOWQUEUES_VIEW
+create or replace view TAPEDRIVESHOWQUEUES_VIEW
 as with TIMEZONEOFFSET as (
   select
     (extract(timezone_hour from current_timestamp) - 1) * 3600 as VALUE
@@ -781,7 +779,9 @@ left outer join TAPEDRIVEDEDICATION on
 left outer join TAPEREQUEST on
   TAPEDRIVE.RUNNINGTAPEREQ = TAPEREQUEST.ID
 left outer join TAPEACCESSSPECIFICATION on
-  TAPEREQUEST.TAPEACCESSSPECIFICATION = TAPEACCESSSPECIFICATION.ID;
+  TAPEREQUEST.TAPEACCESSSPECIFICATION = TAPEACCESSSPECIFICATION.ID
+order by
+  DRIVENAME ASC;
 
 
 /**
