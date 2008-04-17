@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: gtaur $
+ * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: waldron $
  *
  *
  *
@@ -160,7 +160,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	    //not in the nameServer
             invalidTapeCopies.push_back(*infoCandidate);
             infoCandidate++;
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6, 2, params0);
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6, 1, params0);
 	    continue;
 	  }  
 
@@ -402,32 +402,35 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 
 
 castor::infoPolicy::CnsInfoMigrationPolicy* castor::rtcopy::mighunter::MigHunterThread::getInfoFromNs(std::string nsHost,u_signed64 fileId){
-     castor::infoPolicy::CnsInfoMigrationPolicy* result=new castor::infoPolicy::CnsInfoMigrationPolicy();
-      struct Cns_filestat statbuf;
-      struct Cns_fileid cnsFile;
-      memset(&cnsFile,'\0',sizeof(cnsFile));
-      cnsFile.fileid=fileId;
-      char castorFileName[CA_MAXPATHLEN+1];
-      castorFileName[0] = '\0';
-      strncpy(cnsFile.server,nsHost.c_str(),sizeof(cnsFile.server)-1);
-      int rc = Cns_statx(castorFileName,&cnsFile,&statbuf);
-      if (rc == -1){
-	 castor::dlf::Param params2[]={castor::dlf::Param("message","cannot stat the file")};
-	 castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6, 1, params2,&cnsFile);
-         return NULL;
-      }        
-      result->setFileId(statbuf.fileid);
-      result->setFileMode((u_signed64)statbuf.filemode);
-      result->setNlink(statbuf.nlink);
-      result->setUid((u_signed64)statbuf.uid);
-      result->setGid((u_signed64)statbuf.gid);
-      result->setFileSize(statbuf.filesize);
-      result->setATime((u_signed64)statbuf.atime);
-      result->setMTime((u_signed64)statbuf.mtime);
-      result->setCTime((u_signed64)statbuf.ctime);
-      result->setFileClass((int)statbuf.fileclass);
-      result->setStatus((unsigned char)statbuf.status);
-      
-      return result;
+  castor::infoPolicy::CnsInfoMigrationPolicy* result=new castor::infoPolicy::CnsInfoMigrationPolicy();
+  struct Cns_filestat statbuf;
+  struct Cns_fileid cnsFile;
+  memset(&cnsFile,'\0',sizeof(cnsFile));
+  cnsFile.fileid=fileId;
+  char castorFileName[CA_MAXPATHLEN+1];
+  castorFileName[0] = '\0';
+  strncpy(cnsFile.server,nsHost.c_str(),sizeof(cnsFile.server)-1);
+  int rc = Cns_statx(castorFileName,&cnsFile,&statbuf);
+  if (rc == -1){
+    castor::dlf::Param params2[]={
+      castor::dlf::Param("Filename", castorFileName),
+      castor::dlf::Param("Function", "Cns_statx"),
+      castor::dlf::Param("Error", sstrerror(serrno))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6, 3, params2, &cnsFile);
+    return NULL;
+  }        
+  result->setFileId(statbuf.fileid);
+  result->setFileMode((u_signed64)statbuf.filemode);
+  result->setNlink(statbuf.nlink);
+  result->setUid((u_signed64)statbuf.uid);
+  result->setGid((u_signed64)statbuf.gid);
+  result->setFileSize(statbuf.filesize);
+  result->setATime((u_signed64)statbuf.atime);
+  result->setMTime((u_signed64)statbuf.mtime);
+  result->setCTime((u_signed64)statbuf.ctime);
+  result->setFileClass((int)statbuf.fileclass);
+  result->setStatus((unsigned char)statbuf.status);
+  
+  return result;
 }
 
