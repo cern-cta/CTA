@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.87 $ $Release$ $Date: 2008/04/17 11:54:54 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.88 $ $Release$ $Date: 2008/04/17 13:59:36 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -591,7 +591,8 @@ WHERE
     FROM
       TapeRequest TapeRequest2
     WHERE
-      TapeRequest2.tapeDrive = TapeRequest.tape
+          TapeRequest2.tape = TapeRequest.tape
+      AND TapeRequest2.tapeDrive != 0
   )
   -- Exclude a request if its tape is already in a drive, such a request
   -- will be considered upon the release of the drive in question
