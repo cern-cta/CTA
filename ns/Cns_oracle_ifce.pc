@@ -942,7 +942,7 @@ int endlist;
 DBLISTPTR *dblistptr;
 {
 	char fileid_str[21];
-	char func[20];
+	char func[22];
 	char rowid_value[19];
 	char segsize_str[21];
 	struct sqlca sqlca;
@@ -1181,7 +1181,7 @@ int side;
 struct Cns_seg_metadata *smd_entry;
 {
 	char fileid_str[21];
-	char func[19];
+	char func[24];
 	char segsize_str[21];
 	struct sqlca sqlca;
 	short checksum_name_ind;
@@ -1236,7 +1236,7 @@ int *nbFileIds;
 {
 	double *dfileIds;
 	int i;
-	char func[19];
+	char func[22];
 	struct sqlca sqlca;
 
 	/* prepare input */
@@ -1244,6 +1244,8 @@ int *nbFileIds;
 	for (i = 0; i < *nbFileIds; i++) {
 		dfileIds[i] = fileIds[i];
 	}
+	strcpy (func, "Cns_check_files_exist");
+
 	/* check existence */
 	EXEC SQL FOR :*nbFileIds INSERT INTO Cns_files_Exist_tmp VALUES (:dfileIds);
 	EXEC SQL DECLARE files_exist_cursor CURSOR FOR
@@ -1252,6 +1254,7 @@ int *nbFileIds;
                             WHERE fileid = tmpFileId);
 	EXEC SQL OPEN files_exist_cursor;
 	EXEC SQL FOR :*nbFileIds FETCH files_exist_cursor INTO :dfileIds;
+
 	switch (sqlca.sqlcode) {
 	case 0:
 	case 1403:
@@ -1262,11 +1265,12 @@ int *nbFileIds;
 		}
 		break;
 	default:
-		Cns_oracle_error (func, "Cursor", dbfd, &sqlca);
+		Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
 		EXEC SQL ROLLBACK WORK;
 		free(dfileIds);
 		return(-1);
 	}
+
 	EXEC SQL COMMIT WORK;
 	free(dfileIds);
 	return(0);
@@ -1279,7 +1283,7 @@ int filter;
 u_signed64 *count;
 u_signed64 *size;
 {
-	char func[19];
+	char func[23];
 	char count_str[21];
 	char size_str[21];
 	int exists = 0;
@@ -2290,11 +2294,16 @@ struct Cns_file_metadata *fmd_entry;
 		CSUMVALUE= :fmd_entry->csumvalue,
 		ACL	= :fmd_entry->acl
 		WHERE ROWID = :rowid_value;
-	if (sqlca.sqlcode) {
+	switch (sqlca.sqlcode) {
+	case 0:
+		return (0);
+	case -1438:
+		serrno = EMLINK; 
+		break;
+	default:
 		Cns_oracle_error (func, "UPDATE", dbfd, &sqlca);
-		return (-1);
 	}
-	return (0);
+	return (-1);
 }
 
 int Cns_update_rep_entry(dbfd, rec_addr, rep_entry)
