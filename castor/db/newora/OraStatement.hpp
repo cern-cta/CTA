@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/04/17 09:49:12 $ $Author: itglp $
+ * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/04/17 14:31:08 $ $Author: itglp $
  *
  *
  *
@@ -99,6 +99,10 @@ namespace castor {
         oracle::occi::Statement *m_statement;
         
         castor::db::ora::OraCnvSvc* m_cnvSvc;
+        
+        std::string m_clobBuf;
+        
+        unsigned m_clobPos;
       };
 
     }
