@@ -83,21 +83,21 @@ Cns_access_internal(const char* func, const char *path, int amode, uid_t uid, gi
 int DLL_DECL
 Cns_access(const char *path, int amode)
 {
-  gid_t gid;
-  uid_t uid;
-  char* func = "Cns_access";
-  Cns_getrealid(&uid, &gid);
-
-  return Cns_access_internal(func, path, amode, uid, gid);
+	gid_t gid;
+	uid_t uid;
+	char* func = "Cns_access";
+	Cns_getrealid(&uid, &gid);
+	
+	return Cns_access_internal(func, path, amode, uid, gid);
 }
 
 
 int DLL_DECL
 Cns_accessUser(const char *path, int amode, uid_t uid, gid_t gid)
 {
-  char* func = "Cns_accessUser";
-
-  return Cns_access_internal(func, path, amode, uid, gid);
+	char* func = "Cns_accessUser";
+	
+	return Cns_access_internal(func, path, amode, uid, gid);
 }
 
 
