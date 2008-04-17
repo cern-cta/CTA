@@ -642,6 +642,7 @@ struct Cns_srv_thread_info *thip;
 	case CNS_UPDATESEG_CHECKSUM:
 		c = Cns_srv_updateseg_checksum (magic, req_data, clienthost, thip);
 		break;
+	/*
 	case CNS_ADDREPLICA:
 		c = Cns_srv_addreplica (magic, req_data, clienthost, thip);
 		break;
@@ -651,6 +652,7 @@ struct Cns_srv_thread_info *thip;
 	case CNS_LISTREPLICA:
 		c = procdirreq (magic, req_type, req_data, clienthost, thip);
 		break;
+	*/
 	case CNS_STARTTRANS:
 		c = proctransreq (magic, req_data, clienthost, thip);
 		break;
@@ -669,6 +671,7 @@ struct Cns_srv_thread_info *thip;
 	case CNS_STATG:
 		c = Cns_srv_statg (magic, req_data, clienthost, thip);
 		break;
+	/*	
 	case CNS_STATR:
 		c = Cns_srv_statr (magic, req_data, clienthost, thip);
 		break;
@@ -690,6 +693,7 @@ struct Cns_srv_thread_info *thip;
 	case CNS_LISTREPLICAX:
 		c = procdirreq (magic, req_type, req_data, clienthost, thip);
 		break;
+	*/
 	case CNS_LASTFSEQ:
 	        c = Cns_srv_lastfseq (magic, req_data, clienthost, thip);
 		break;
@@ -738,9 +742,11 @@ struct Cns_srv_thread_info *thip;
 	case CNS_GETLINKS:
 		c = Cns_srv_getlinks (magic, req_data, clienthost, thip);
 		break;
+	/*
 	case CNS_GETREPLICA:
 		c = Cns_srv_getreplica (magic, req_data, clienthost, thip);
 		break;
+	*/
 	case CNS_ENTGRPMAP:
 		c = Cns_srv_entergrpmap (magic, req_data, clienthost, thip);
 		break;
