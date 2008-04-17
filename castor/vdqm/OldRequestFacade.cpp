@@ -207,7 +207,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
     break;
   case VDQM_PING:
     // Handle VDQM_PING
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_VDQM_PING);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_HANDLE_VDQM_PING);
         
     {
       int queuePosition = -1;
@@ -217,7 +217,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
       // Send VDQM_PING back to client
       castor::dlf::Param params[] = {
         castor::dlf::Param("Queue position", queuePosition)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_SEND_BACK_VDQM_PING,
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_SEND_BACK_VDQM_PING,
         1, params);
       oldProtInterpreter->sendAcknPing(queuePosition);
     }
