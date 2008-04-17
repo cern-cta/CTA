@@ -264,6 +264,7 @@ void castor::vdqm::VdqmServer::initDlf()
     {VDQM_REMOVING_TAPE_REQUEST, "Removing tape request"},
     {VDQM_IGNORED_RTCPD_JOB_SUBMISSION, "Ignored successful submission of RTCPD job"},
     {VDQM_IGNORED_FAILED_RTCPD_JOB_SUBMISSION, "Ignored failed submission of RTCPD job"},
+    {VDQM_TAPE_REQUEST_NOT_IN_QUEUE, "Tape request not in queue"},
     {-1, ""}
   }; // castor::dlf::Message messages[]
 

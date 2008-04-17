@@ -353,6 +353,14 @@ int castor::vdqm::handler::TapeRequestHandler::getQueuePosition(
   castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_QUEUE_POS_OF_TAPE_REQUEST,
     2, params);
 
+  // Generate a log message if the TapeRequest was not found
+  if(queuePosition == -1) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("tapeRequestID", volumeRequest->VolReqID)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      VDQM_TAPE_REQUEST_NOT_IN_QUEUE, 1, params);
+  }
+
   return queuePosition;
 }
 

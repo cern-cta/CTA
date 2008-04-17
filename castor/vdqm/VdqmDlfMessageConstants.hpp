@@ -110,7 +110,8 @@ namespace castor {
       VDQM_INVALIDATED_REUSE_OF_DRIVE_ALLOCATION=76, /* "Invalidated reuse of tape drive allocation" */
       VDQM_REMOVING_TAPE_REQUEST=77, /* "Removing tape request" */
       VDQM_IGNORED_RTCPD_JOB_SUBMISSION=78, /* "Ignored successful submission of RTCPD job" */
-      VDQM_IGNORED_FAILED_RTCPD_JOB_SUBMISSION=79 /* "Ignored failed submission of RTCPD job" */
+      VDQM_IGNORED_FAILED_RTCPD_JOB_SUBMISSION=79, /* "Ignored failed submission of RTCPD job" */
+      VDQM_TAPE_REQUEST_NOT_IN_QUEUE=80 /* "Tape request not in queue" */
     }; // enum VdqmDlfMessages
 
   } // namespace vdqm
