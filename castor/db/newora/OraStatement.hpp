@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/03/14 10:39:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/04/17 09:49:12 $ $Author: itglp $
  *
  *
  *
@@ -87,7 +87,7 @@ namespace castor {
         virtual IDbResultSet* executeQuery()
           throw (castor::exception::SQLError);
 
-        virtual void execute()
+        virtual int execute()
           throw (castor::exception::SQLError);
 
         inline oracle::occi::Statement* getStatementImpl() {

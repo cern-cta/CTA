@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/03/14 10:39:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/04/17 09:47:58 $ $Author: itglp $
  *
  *
  *
@@ -226,10 +226,10 @@ castor::db::IDbResultSet* castor::db::ora::OraStatement::executeQuery()
   }
 }
 
-void castor::db::ora::OraStatement::execute()
+int castor::db::ora::OraStatement::execute()
   throw (castor::exception::SQLError) {
   try {
-    m_statement->executeUpdate();
+    return m_statement->executeUpdate();
   }
   catch(oracle::occi::SQLException e) {
     m_cnvSvc->handleException(e);

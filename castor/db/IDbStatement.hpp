@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/03/14 10:39:50 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/04/17 09:47:58 $ $Author: itglp $
  *
  * 
  *
@@ -42,7 +42,7 @@ namespace castor {
  */
 class IDbStatement {
 	
-	public:
+    public:
 	
     virtual ~IDbStatement() {};
 
@@ -81,7 +81,7 @@ class IDbStatement {
     /**
      * 
      */
-    virtual void execute()
+    virtual int execute()
 	    throw (castor::exception::SQLError) = 0;
 
 };
