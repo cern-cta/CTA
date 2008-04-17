@@ -44,40 +44,40 @@ int Cupv_check(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt,
 #endif
 
 	if (priv_uid < 0 || priv_gid < 0 || priv < 0) {
-	  serrno = EINVAL;
-	  return (-1);
+		serrno = EINVAL;
+		return (-1);
 	}
-
+	
 	if (src == NULL) {
-	  lensrc = 0;
+		lensrc = 0;
 	} else {
-	  lensrc = strlen(src);
+		lensrc = strlen(src);
 	}
-
+	
 	if (tgt == NULL) {
-	  lentgt = 0;
+		lentgt = 0;
 	} else {
-	  lentgt = strlen(tgt);
+		lentgt = strlen(tgt);
 	}
-
+	
 	if (lensrc > CA_MAXREGEXPLEN || lentgt > CA_MAXREGEXPLEN) {
-	  serrno = EINVAL;
-	  return(-1);
+		serrno = EINVAL;
+		return(-1);
 	}
-
+	
 	/* Applying a first check to see if the request is for root */
 	/* In this case just return without asking the server */
 
 	if (priv_uid == 0) {
-	  if (src == NULL && tgt == NULL) {
-	    /* Both NULL, authorized */
-	    return(0);
-	  } else if ((src != NULL) && (tgt != NULL) && (strcmp(src, tgt)==0)) {
-	    /* src == tmp */
-	    return(0);
-	  }
+		if (src == NULL && tgt == NULL) {
+			/* Both NULL, authorized */
+			return(0);
+		} else if ((src != NULL) && (tgt != NULL) && (strcmp(src, tgt)==0)) {
+			/* src == tmp */
+			return(0);
+		}
 	} /* In other cases, a message is sent to the server for validation */
-
+	
 #ifndef USE_CUPV
 	serrno = EPERM;
 	return(-1);
@@ -96,28 +96,25 @@ int Cupv_check(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt,
 	marshall_LONG (sbp, priv_gid);
 
 	if (src == NULL) {
-	  marshall_STRING (sbp, "");
+		marshall_STRING (sbp, "");
 	} else {
-	  marshall_STRING(sbp, src);
+		marshall_STRING(sbp, src);
 	}
 
 	if (tgt == NULL) {
-	  marshall_STRING (sbp, "");
+		marshall_STRING (sbp, "");
 	} else {
-	  marshall_STRING(sbp, tgt);
+		marshall_STRING(sbp, tgt);
 	}
-
+	
 	marshall_LONG (sbp, priv); 
- 
+	
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
-
+	
 	while ((c = send2Cupv (NULL, sendbuf, msglen, NULL, 0)) &&
 	       serrno == ECUPVNACT)
 	  sleep (RETRYI);
 	return (c);
 #endif
 }
-
-
-
