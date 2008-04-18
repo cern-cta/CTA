@@ -386,23 +386,24 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
     // This method call retirves the request queue from the database. The
     // result depends on the parameters. If the paramters are not specified,
     // then information about all oft the requests is returned.
-    std::auto_ptr< std::list<newVdqmVolReq_t> > volReqs(
+    std::auto_ptr<castor::vdqm::IVdqmSvc::VolReqList> volReqs(
       ptr_IVdqmService->selectTapeRequestQueue(dgn, server));
-  
+
     // If there is a result to send to the client
     if (volReqs.get() != NULL && volReqs->size() > 0 ) {
-      for(std::list<newVdqmVolReq_t>::iterator it = volReqs->begin();
+      for(castor::vdqm::IVdqmSvc::VolReqList::iterator it = volReqs->begin();
         it != volReqs->end(); it++) {
 
+/*
         //"Send information for showqueues command" message
         castor::dlf::Param param[] = {
           castor::dlf::Param("message", "TapeRequest info"),
-          castor::dlf::Param("tapeRequestID", it->VolReqID)};
+          castor::dlf::Param("tapeRequestID", (*it)->VolReqID)};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
           VDQM_SEND_SHOWQUEUES_INFO, 2, param);
-        
+*/
         //Send informations to the client
-        oldProtInterpreter->sendToOldClient(header, &(*it), NULL);
+        oldProtInterpreter->sendToOldClient(header, *it, NULL);
       }
     }
   } catch (castor::exception::Exception ex) {
