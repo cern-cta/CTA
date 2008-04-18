@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.37 $ $Date: 2008/03/05 11:37:32 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.38 $ $Date: 2008/04/18 09:24:21 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -723,18 +723,36 @@ int cc;		/* error returned by the mount/dismount routine */
 	  {STATUS_INCOMPATIBLE_MEDIA_TYPE, RBT_NORETRY, RBT_NORETRY},
 	};
 	int i;
+        char func[16];
 
         static int ctr = 0;
         int        slp = 0;
         int        rtr = 0;
         short      act = 0;
 
+        ENTRY (acserr2act);
+
         if (actionChanged(cc, req_type, &act, &slp, &rtr)) {
 
-                if ((ctr<rtr) && (slp>=60)) {                        
+                char tmpStr[128];
+                if ((ctr<rtr) && (slp>=60)) {
+
+                        sprintf(tmpStr, "Retry %d (of %d), waiting %d seconds", ctr+1, rtr, slp);
+                        tplogit(func, "%s\n", tmpStr);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Message", TL_MSG_PARAM_STR, tmpStr );
+
                         sleep(slp-60); /* RBT_FAST_RETRY will add 60 more seconds */                        
                         ctr++;
+
                 } else {
+                        
+                        sprintf(tmpStr, "Maximum number of retries (%d) reached, drive put down\n", rtr);
+                        tplogit (func, "%s\n", tmpStr);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Message", TL_MSG_PARAM_STR, tmpStr );
                         act = RBT_CONF_DRV_DN;
                         ctr = 0;
                 }
@@ -750,7 +768,7 @@ int cc;		/* error returned by the mount/dismount routine */
 				acserr_acttbl[i].mnt_fail_action :
 				acserr_acttbl[i].dmnt_fail_action);
 	}
-	return (RBT_NORETRY);
+	RETURN (RBT_NORETRY);
 }
 
 char *
