@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.34 $ $Date: 2008/03/05 10:15:22 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.35 $ $Date: 2008/04/18 09:22:41 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -414,9 +414,11 @@ char	**argv;
 		sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
 	} else {
 		usrmsg (func, "%s", errbuf);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 5,
                                     "func"   , TL_MSG_PARAM_STR  , func,
                                     "Message", TL_MSG_PARAM_STR  , errbuf,
+                                    "JobID"  , TL_MSG_PARAM_INT  , jid,
+                                    "vid"    , TL_MSG_PARAM_STR  , vid,
                                     "TPVID"  , TL_MSG_PARAM_TPVID, vid );                        
         }
 reply:

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.67 $ $Date: 2008/04/10 07:48:44 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.68 $ $Date: 2008/04/18 09:22:40 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -235,9 +235,12 @@ char	**argv;
                 rc = sigaction( SIGINT, &sa, NULL );
                 if( -1 == rc ) {
                         tplogit (func, "Error in sigaction\n");
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "Message", TL_MSG_PARAM_STR, "Error in sigaction" );
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 5,
+                                            "func",    TL_MSG_PARAM_STR  , func,
+                                            "Message", TL_MSG_PARAM_STR  , "Error in sigaction",
+                                            "JobID"  , TL_MSG_PARAM_INT  , jid,
+                                            "vid"    , TL_MSG_PARAM_STR  , vid,
+                                            "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                 }
         }
 
@@ -254,11 +257,13 @@ char	**argv;
 			sleep (60);
 	tplogit (func, "vdqm_UnitStatus returned %s\n",
 		vdqm_rc ? sstrerror(serrno) : "ok");
-        tl_tpdaemon.tl_log( &tl_tpdaemon, vdqm_rc ? 103 : 111, 4,
+        tl_tpdaemon.tl_log( &tl_tpdaemon, vdqm_rc ? 103 : 111, 6,
                             "func"   , TL_MSG_PARAM_STR  , func,
                             "Message", TL_MSG_PARAM_STR  , "vdqm_UnitStatus returned",
                             "Error"  , TL_MSG_PARAM_STR  , vdqm_rc ? sstrerror(serrno) : "ok",
-                            "TPVID"  , TL_MSG_PARAM_TPVID, vid); 
+                            "JobID"  , TL_MSG_PARAM_INT  , jid,
+                            "vid"    , TL_MSG_PARAM_STR  , vid,
+                            "TPVID"  , TL_MSG_PARAM_TPVID, vid );
 #endif
 
 	updvsn_done = 0;
@@ -447,10 +452,12 @@ remount_loop:
 			                          sleep (60);
 	                                          tplogit (func, "vdqm_UnitStatus returned %s\n",
 		                                           vdqm_rc ? sstrerror(serrno) : "ok");
-                                                  tl_tpdaemon.tl_log( &tl_tpdaemon, vdqm_rc ? 103 : 111, 4,
+                                                  tl_tpdaemon.tl_log( &tl_tpdaemon, vdqm_rc ? 103 : 111, 6,
                                                                       "func"   , TL_MSG_PARAM_STR  , func,
                                                                       "Message", TL_MSG_PARAM_STR  , "vdqm_UnitStatus returned",
                                                                       "Error"  , TL_MSG_PARAM_STR  , vdqm_rc ? sstrerror(serrno) : "ok",
+                                                                      "JobID"  , TL_MSG_PARAM_INT  , jid,
+                                                                      "vid"    , TL_MSG_PARAM_STR  , vid,
                                                                       "TPVID"  , TL_MSG_PARAM_TPVID, vid); 
 #endif
                                         }
@@ -730,9 +737,10 @@ remount_loop:
                                                                 "TPVID"  , TL_MSG_PARAM_TPVID, vid);
 
                                             tplogit(func, "Bad MIR request=canceled vid=%s\n", vid);
-                                            tl_tpdaemon.tl_log( &tl_tpdaemon, 87, 4,
+                                            tl_tpdaemon.tl_log( &tl_tpdaemon, 87, 5,
                                                                 "func"   , TL_MSG_PARAM_STR  , func,
                                                                 "Message", TL_MSG_PARAM_STR  , "Bad MIR request=canceled",
+                                                                "JobID"  , TL_MSG_PARAM_INT,   jid,
                                                                 "VID"    , TL_MSG_PARAM_STR  , vid, 
                                                                 "TPVID"  , TL_MSG_PARAM_TPVID, vid);
                                             cleanup();
@@ -787,9 +795,10 @@ remount_loop:
                                                         "Message", TL_MSG_PARAM_STR  , "Bad MIR config=CANCEL",
                                                         "TPVID"  , TL_MSG_PARAM_TPVID, vid);
                                     tplogit(func, "Bad MIR request=canceled vid=%s\n", vid);
-                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 87, 4,
+                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 87, 5,
                                                         "func"   , TL_MSG_PARAM_STR  , func,
                                                         "Message", TL_MSG_PARAM_STR  , "Bad MIR request=canceled",
+                                                        "JobID"  , TL_MSG_PARAM_INT  , jid,
                                                         "VID"    , TL_MSG_PARAM_STR  , vid, 
                                                         "TPVID"  , TL_MSG_PARAM_TPVID, vid);                                    
                                     cleanup();
@@ -806,9 +815,10 @@ remount_loop:
                                                         "Option" , TL_MSG_PARAM_STR  , p, 
                                                         "TPVID"  , TL_MSG_PARAM_TPVID, vid);
                                     tplogit(func, "Bad MIR request=canceled vid=%s\n", vid);
-                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 87, 4,
+                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 87, 5,
                                                         "func"   , TL_MSG_PARAM_STR  , func,
                                                         "Message", TL_MSG_PARAM_STR  , "Bad MIR request=canceled",
+                                                        "JobID"  , TL_MSG_PARAM_INT  , jid,
                                                         "VID"    , TL_MSG_PARAM_STR  , vid, 
                                                         "TPVID"  , TL_MSG_PARAM_TPVID, vid);                                    
                                     cleanup();
@@ -825,9 +835,10 @@ remount_loop:
                                                 "TPVID"  , TL_MSG_PARAM_TPVID, vid);
                             
                             tplogit(func, "Bad MIR request=canceled vid=%s\n", vid);
-                            tl_tpdaemon.tl_log( &tl_tpdaemon, 87, 4,
+                            tl_tpdaemon.tl_log( &tl_tpdaemon, 87, 5,
                                                 "func"   , TL_MSG_PARAM_STR  , func,
                                                 "Message", TL_MSG_PARAM_STR  , "Bad MIR request=canceled",
+                                                "JobID"  , TL_MSG_PARAM_INT,   jid,
                                                 "VID"    , TL_MSG_PARAM_STR  , vid, 
                                                 "TPVID"  , TL_MSG_PARAM_TPVID, vid);
                             cleanup();
@@ -857,16 +868,20 @@ remount_loop:
 	if (vmgr_tpmounted (vid, mode, jid) && serrno != ENOENT) {
 		if (*errbuf) {
 			usrmsg (func, "%s", errbuf);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 5,
                                             "func"   , TL_MSG_PARAM_STR  , func,
                                             "Message", TL_MSG_PARAM_STR  , errbuf,
+                                            "JobID"  , TL_MSG_PARAM_INT  , jid,
+                                            "vid"    , TL_MSG_PARAM_STR  , vid,
                                             "TPVID"  , TL_MSG_PARAM_TPVID, vid );                       
                 }
 		usrmsg (func, "vmgr_tpmounted returned %s\n", sstrerror (serrno));
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 4,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 6,
                                     "func"   , TL_MSG_PARAM_STR  , func,
                                     "Message", TL_MSG_PARAM_STR  , "vmgr_tpmounted returned",
                                     "Error"  , TL_MSG_PARAM_STR  , sstrerror (serrno),
+                                    "JobID"  , TL_MSG_PARAM_INT  , jid,
+                                    "vid"    , TL_MSG_PARAM_STR  , vid,
                                     "TPVID"  , TL_MSG_PARAM_TPVID, vid );
 		c = -1;
 		goto reply;
@@ -890,10 +905,12 @@ mounted:
 			sleep (60);
 	tplogit (func, "vdqm_UnitStatus returned %s\n",
 		vdqm_rc ? sstrerror(serrno) : "ok");
-        tl_tpdaemon.tl_log( &tl_tpdaemon, vdqm_rc ? 103 : 111, 4,
+        tl_tpdaemon.tl_log( &tl_tpdaemon, vdqm_rc ? 103 : 111, 6,
                             "func"   , TL_MSG_PARAM_STR  , func,
                             "Message", TL_MSG_PARAM_STR  , "vdqm_UnitStatus returned",
                             "Error"  , TL_MSG_PARAM_STR  , vdqm_rc ? sstrerror(serrno) : "ok",
+                            "JobID"  , TL_MSG_PARAM_INT  , jid,
+                            "vid"    , TL_MSG_PARAM_STR  , vid,
                             "TPVID"  , TL_MSG_PARAM_TPVID, vid );
 #endif
 
@@ -1051,9 +1068,11 @@ char *dvn;
 		unmarshall_STRING (rbp, dvn);
 	} else {
 		usrmsg (func, "%s", errbuf);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 5,
                                     "func"   , TL_MSG_PARAM_STR, func,
                                     "Message", TL_MSG_PARAM_STR, errbuf,
+                                    "JobID"  , TL_MSG_PARAM_INT  , jid,
+                                    "vid"    , TL_MSG_PARAM_STR  , vid,
                                     "TPVID"  , TL_MSG_PARAM_TPVID, vid );
         }
 	return (c);
@@ -1103,9 +1122,12 @@ int mode;
 	c = send2tpd (NULL, sendbuf, msglen, NULL, 0);
 	if (c < 0) {
 		usrmsg (func, "%s", errbuf);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, errbuf );
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 5,
+                                    "func",    TL_MSG_PARAM_STR  , func,
+                                    "Message", TL_MSG_PARAM_STR  , errbuf,
+                                    "JobID"  , TL_MSG_PARAM_INT  , jid,
+                                    "vid"    , TL_MSG_PARAM_STR  , vid,
+                                    "TPVID"  , TL_MSG_PARAM_TPVID, vid );
         }
 	return (c);
 }
@@ -1153,9 +1175,12 @@ void cleanup()
                 */                
 		if ( mount_ongoing == 1 ) {
                         tplogit (func, "Cleanup triggered in a pending mount. Cleanup deferred.\n");
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 5,
                                             "func",    TL_MSG_PARAM_STR, func,
-                                            "Message", TL_MSG_PARAM_STR, "Cleanup triggered in a pending mount. Cleanup deferred." );
+                                            "Message", TL_MSG_PARAM_STR, "Cleanup triggered in a pending mount. Cleanup deferred.",
+                                            "JobID"  , TL_MSG_PARAM_INT  , jid,
+                                            "vid"    , TL_MSG_PARAM_STR  , vid,
+                                            "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                         return;
                 }
         }

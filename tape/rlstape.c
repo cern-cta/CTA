@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.47 $ $Date: 2008/04/10 07:48:44 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.48 $ $Date: 2008/04/18 09:22:40 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -195,13 +195,14 @@ char	**argv;
                        mediaerror, 
                        readfailure,
                        writefailure);
-              tl_tpdaemon.tl_log( &tl_tpdaemon, (harderror || mediaerror || mediaerror || writefailure) ? 80 : 82, 7,
+              tl_tpdaemon.tl_log( &tl_tpdaemon, (harderror || mediaerror || mediaerror || writefailure) ? 80 : 82, 8,
                                   "func"          , TL_MSG_PARAM_STR,   func,
                                   "Message"       , TL_MSG_PARAM_STR,   "tape alerts",
                                   "hardware error", TL_MSG_PARAM_INT,   harderror,
                                   "media error"   , TL_MSG_PARAM_INT,   mediaerror,
                                   "read failure"  , TL_MSG_PARAM_INT,   readfailure,
                                   "write failure" , TL_MSG_PARAM_INT,   writefailure,
+                                  "JobID"         , TL_MSG_PARAM_INT,   jid,
                                   "TPVID"         , TL_MSG_PARAM_TPVID, vid );
               
               if (tapealerts > 0) {
@@ -213,24 +214,30 @@ char	**argv;
                               /* found a config entry */
                               if ( (0 == strcmp( p, "yes")) || (0 == strcmp( p, "YES"))) {                               
                                       tplogit( func, "Configure the drive down (config)\n" );
-                                      tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                                      tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 5,
                                                           "func"   , TL_MSG_PARAM_STR  , func,
                                                           "Message", TL_MSG_PARAM_STR  , "Configure the drive down (config)",
+                                                          "JobID"  , TL_MSG_PARAM_INT,   jid,
+                                                          "vid"    , TL_MSG_PARAM_STR  , vid,
                                                           "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                                       configdown (drive);
                               } else {
                                       tplogit( func, "Leave the drive up (config)\n" );
-                                      tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 3,
+                                      tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 5,
                                                           "func"   , TL_MSG_PARAM_STR  , func,
                                                           "Message", TL_MSG_PARAM_STR  , "Leave the drive up (config)",
+                                                          "JobID"  , TL_MSG_PARAM_INT,   jid,
+                                                          "vid"    , TL_MSG_PARAM_STR  , vid,
                                                           "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                               }
                       } else {
                               /* default: configure the drive down */
                               tplogit( func, "Configure the drive down (default)\n" );
-                              tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                              tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 5,
                                                   "func"   , TL_MSG_PARAM_STR  , func,
                                                   "Message", TL_MSG_PARAM_STR  , "Configure the drive down (default)",
+                                                  "JobID"  , TL_MSG_PARAM_INT,   jid,
+                                                  "vid"    , TL_MSG_PARAM_STR  , vid,
                                                   "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                               configdown (drive);
                       }
@@ -294,10 +301,12 @@ char	**argv;
 			sleep (60);
 	tplogit (func, "vdqm_UnitStatus returned %s\n",
 		vdqm_rc ? sstrerror(serrno) : "ok");
-        tl_tpdaemon.tl_log( &tl_tpdaemon, vdqm_rc ? 103 : 111, 4,
-                            "func"   , TL_MSG_PARAM_STR, func,
-                            "Message", TL_MSG_PARAM_STR, "vdqm_UnitStatus returned",
-                            "Error"  , TL_MSG_PARAM_STR, vdqm_rc ? sstrerror(serrno) : "ok",
+        tl_tpdaemon.tl_log( &tl_tpdaemon, vdqm_rc ? 103 : 111, 6,
+                            "func"   , TL_MSG_PARAM_STR,   func,
+                            "Message", TL_MSG_PARAM_STR,   "vdqm_UnitStatus returned",
+                            "Error"  , TL_MSG_PARAM_STR,   vdqm_rc ? sstrerror(serrno) : "ok",
+                            "JobID"  , TL_MSG_PARAM_INT,   jid,
+                            "vid"    , TL_MSG_PARAM_STR,   vid,
                             "TPVID"  , TL_MSG_PARAM_TPVID, vid );  
 	if (vdqm_rc == 0 && (vdqm_status & VDQM_VOL_UNMOUNT) == 0 &&
 	    (rlsflags & TPRLS_UNLOAD) == 0) {
@@ -426,10 +435,12 @@ vol_unmount:
 			sleep (60);
 	tplogit (func, "vdqm_UnitStatus returned %s\n",
 		vdqm_rc ? sstrerror(serrno) : "ok");
-        tl_tpdaemon.tl_log( &tl_tpdaemon, vdqm_rc ? 103 : 111, 4,
+        tl_tpdaemon.tl_log( &tl_tpdaemon, vdqm_rc ? 103 : 111, 6,
                             "func"   , TL_MSG_PARAM_STR  , func,
                             "Message", TL_MSG_PARAM_STR  , "vdqm_UnitStatus returned",
                             "Error"  , TL_MSG_PARAM_STR  , vdqm_rc ? sstrerror(serrno) : "ok",
+                            "JobID"  , TL_MSG_PARAM_INT  , jid,
+                            "vid"    , TL_MSG_PARAM_STR  , vid,
                             "TPVID"  , TL_MSG_PARAM_TPVID, vid );        
 #endif
 	goto freedrv;
