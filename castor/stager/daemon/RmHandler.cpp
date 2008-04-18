@@ -86,7 +86,7 @@ namespace castor{
           stgCnsHelper->checkFileOnNameServer(stgRequestHelper->subrequest, stgRequestHelper->svcClass);
 
           // check if the user (euid,egid) has the right permission for the request's type. otherwise throw exception
-          stgRequestHelper->checkFilePermission(false);
+          stgRequestHelper->checkFilePermission(false, stgCnsHelper);
         }
         catch(castor::exception::Exception e) {
           if(serrno != ENOENT) {

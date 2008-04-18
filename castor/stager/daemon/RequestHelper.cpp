@@ -22,7 +22,7 @@
 #include "stager_constants.h"
 
 #include "Cns_api.h"
-
+#include "Cupv_api.h"
 
 #include "Cpwd.h"
 #include "Cgrp.h"
@@ -41,6 +41,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/Constants.hpp"
+#include "castor/System.hpp"
 
 #include "dlf_api.h"
 #include "castor/dlf/Dlf.hpp"
@@ -318,11 +319,12 @@ namespace castor{
       }
 
 
-      /*****************************************************************************************************/
-      /* check if the user (euid,egid) has the ritght permission for the request's type                   */
-      /* note that we don' t check the permissions for SetFileGCWeight and PutDone request (true)        */
-      /**************************************************************************************************/
-      void RequestHelper::checkFilePermission(bool fileCreated) throw(castor::exception::Exception)
+      /*********************************************************************************/
+      /* check if the user (euid,egid) has the right permission for the request's type */
+      /*********************************************************************************/
+      void RequestHelper::checkFilePermission(bool fileCreated,
+					      castor::stager::daemon::CnsHelper* stgCnsHelper) 
+	throw(castor::exception::Exception)
       {
         try{
           std::string filename = this->subrequest->fileName();
@@ -334,7 +336,7 @@ namespace castor{
             case OBJ_StagePrepareToGetRequest:
             case OBJ_StageRepackRequest:
               if ( Cns_accessUser(filename.c_str(), R_OK, euid, egid) == -1 ) {
-                castor::exception::Exception ex(SEINTERNAL);
+                castor::exception::Exception ex(serrno);
                 throw ex;
               }
               break;
@@ -345,20 +347,44 @@ namespace castor{
             case OBJ_StageRmRequest:
             case OBJ_StageUpdateRequest:
             case OBJ_StagePutDoneRequest:
-            case OBJ_SetFileGCWeight:
               if ( Cns_accessUser(filename.c_str(), (fileCreated ? R_OK : W_OK), euid, egid) == -1 ) {
-                castor::exception::Exception ex(SEINTERNAL);
+                castor::exception::Exception ex(serrno);
                 throw ex;
               }
-              break;
+	      break;
+
+            case OBJ_SetFileGCWeight: {
+	      // Get the name of the localhost to pass into the Cupv interface.
+	      std::string hostName;
+	      try {
+		hostName = castor::System::getHostName();
+	      } catch (castor::exception::Exception e) {
+                castor::exception::Exception ex(SEINTERNAL);
+                throw ex;
+	      }
+	      // Check if the user has GRP_ADMIN or ADMIN privileges.
+	      if ((stgCnsHelper->cnsFilestat.gid == egid) &&
+		  (Cupv_check(euid, egid, hostName.c_str(), hostName.c_str(), P_GRP_ADMIN) == 0)) {
+        	return;
+	      }
+	      if (Cupv_check(euid, egid, hostName.c_str(), hostName.c_str(), P_ADMIN) == -1) {
+		castor::exception::Exception ex(serrno);
+                throw ex;
+	      }
+	    }
+	      break;
 
             default:
               break;
           }
         }
         catch(castor::exception::Exception e){
-          logToDlf(DLF_LVL_USER_ERROR, STAGER_USER_PERMISSION);
-          e.getMessage() << "Access denied";
+	  if (e.code() == SEINTERNAL) {
+	    logToDlf(DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT);
+	  } else {
+	    logToDlf(DLF_LVL_USER_ERROR, STAGER_USER_PERMISSION);
+	  }
+          e.getMessage() << sstrerror(e.code());
           throw e;
         }
       }

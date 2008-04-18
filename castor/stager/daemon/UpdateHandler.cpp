@@ -87,7 +87,7 @@ namespace castor{
         bool fileCreated = stgCnsHelper->checkFileOnNameServer(stgRequestHelper->subrequest, stgRequestHelper->svcClass);
         
         /* check if the user (euid,egid) has the right permission for the request's type. otherwise -> throw exception  */
-        stgRequestHelper->checkFilePermission(fileCreated);
+        stgRequestHelper->checkFilePermission(fileCreated, stgCnsHelper);
         
         recreate = fileCreated || ((stgRequestHelper->subrequest->flags() & O_TRUNC) == O_TRUNC);
       }

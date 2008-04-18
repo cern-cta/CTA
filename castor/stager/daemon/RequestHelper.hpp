@@ -56,7 +56,6 @@
 namespace castor{
   namespace stager{
     namespace daemon{
-
       
       class castor::stager::IStagerSvc;
       class castor::db::DbCnvSvc;
@@ -69,23 +68,18 @@ namespace castor{
       class castor::stager::FileClass;
       class castor::stager::daemon::CnsHelper;
     
-      
-
       class RequestHelper : public virtual castor::BaseObject{
 
-
-
       public:
-	  	
+	
 	/* services needed: database and stager services*/
 	castor::stager::IStagerSvc* stagerService;
 	castor::db::DbCnvSvc* dbSvc;
-  
-  struct Cns_fileid* cnsFileId;
+	
+	struct Cns_fileid* cnsFileId;
 
 	/* BaseAddress */
 	castor::BaseAddress* baseAddr;
-
 
 	/* subrequest and fileRequest  */
 	castor::stager::SubRequest* subrequest;
@@ -107,8 +101,8 @@ namespace castor{
 	Cuuid_t requestUuid;
 	
 	std::string default_protocol;
-
-  timeval tvStart;
+	
+	timeval tvStart;
 
 	/****************************************************/
 	/*  called on the different thread (job, pre, stg) */
@@ -117,22 +111,18 @@ namespace castor{
 	/* destructor */
 	~RequestHelper() throw();
 
-
 	/****************************************************************************************/
 	/* get svClass by selecting with stagerService                                         */
 	/* (using the svcClassName:getting from request OR defaultName (!!update on request)) */
 	/*************************************************************************************/
 	void getSvcClass() throw(castor::exception::Exception);
-	
-   
+	   
 	/*******************************************************************************/
 	/* update request in DB, create and fill request->svcClass link on DB         */ 
 	/*****************************************************************************/
 	void linkRequestToSvcClassOnDB() throw(castor::exception::Exception);
       
-
-     
-	/******************************************************************************************/
+     	/******************************************************************************************/
 	/* get and (create or initialize) Cuuid_t subrequest and request                         */
 	/* and copy to the thread-safe variables (subrequestUuid and requestUuid)               */
 	/***************************************************************************************/
@@ -140,43 +130,40 @@ namespace castor{
 	/* get or create subrequest uuid */
 	void setSubrequestUuid() throw(castor::exception::Exception);
 	
-      
-	/* get request uuid (we cannon' t create it!) */ 
+      	/* get request uuid (we cannon' t create it!) */ 
 	void setRequestUuid() throw(castor::exception::Exception);
      
-
-
 	/*******************************************************************************************************************************************/
 	/*  link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name) ): called in Request.jobOriented()*/
 	/*****************************************************************************************************************************************/
-  void getCastorFileFromSvcClass(castor::stager::daemon::CnsHelper* stgCnsHelper) throw(castor::exception::Exception);
+	void getCastorFileFromSvcClass(castor::stager::daemon::CnsHelper* stgCnsHelper) throw(castor::exception::Exception);
        
-
 	/************************************************************************************/
 	/* set the username and groupname string versions using id2name c function  */
 	/**********************************************************************************/
 	void setUsernameAndGroupname() throw(castor::exception::Exception);
 
-
 	/**
-   * Checks if the user (euid,egid) has the right permission for this request.
-   * Write permissions are needed for any request that changes any attribute of the file
-   * (including SetFileGCWeight and PutDone).
-   * @param fileCreated true if the file has just been created. In such a case, read permission
-   * is sufficient for any operation, allowing for putting read-only files.
-   * @throw exception when the user has not enough permissions for this request.
+	 * Checks if the user (euid,egid) has the right permission for this request.
+	 * Write permissions are needed for any request that changes any attribute of the file,
+	 * this includes PutDone.
+	 * @param fileCreated true if the file has just been created. In such a case, read permission
+	 * is sufficient for any operation, allowing for putting read-only files.
+	 * @param stgCnsHelper information about the file to be checked e.g. the uid and gid.
+	 * @throw exception when the user has not enough permissions for this request.
 	 */
-	void checkFilePermission(bool fileCreated) throw(castor::exception::Exception);
-     
-  /**
-   * Logs a standard message to DLF including all needed info (e.g. filename, svcClass, etc.)
-   * @param level the DLF logging level
-   * @param messageNb the message number as defined in DlfMessages.hpp
-   * @param fid the fileId structure if needed
-   */
-  void logToDlf(int level, int messageNb, Cns_fileid* fid = 0) throw();
+	void checkFilePermission(bool fileCreated,
+				 castor::stager::daemon::CnsHelper* stgCnsHelper) 
+	  throw(castor::exception::Exception);
 	
-
+	/**
+	 * Logs a standard message to DLF including all needed info (e.g. filename, svcClass, etc.)
+	 * @param level the DLF logging level
+	 * @param messageNb the message number as defined in DlfMessages.hpp
+	 * @param fid the fileId structure if needed
+	 */
+	void logToDlf(int level, int messageNb, Cns_fileid* fid = 0) throw();
+	
       }; //end RequestHelper class
     }//end namespace daemon
   }//end namespace stager
