@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.89 $ $Release$ $Date: 2008/04/17 16:03:19 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.90 $ $Release$ $Date: 2008/04/18 07:28:23 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -666,8 +666,8 @@ SELECT
   ClientIdentification.euid AS clientEuid,
   ClientIdentification.egid AS clientEgid,
   TapeAccessSpecification.accessMode,
-  TapeRequest.modificationTime -
-    (SELECT TimezoneOffset.value FROM TimezoneOffset) AS modificationTime,
+  TapeRequest.creationTime -
+    (SELECT TimezoneOffset.value FROM TimezoneOffset) AS creationTime,
   ClientIdentification.machine AS clientMachine,
   VdqmTape.vid,
   TapeServer.serverName AS tapeServer,
@@ -688,7 +688,7 @@ LEFT OUTER JOIN TapeServer ON
 LEFT OUTER JOIN DeviceGroupName ON
   TapeRequest.deviceGroupName = DeviceGroupName.id
 ORDER BY
-  TapeRequest.id;
+  TapeRequest.creationTime;
 
 
 /**

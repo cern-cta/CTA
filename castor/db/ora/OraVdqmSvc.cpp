@@ -124,34 +124,28 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeAccessSpecificationSt
 const std::string castor::db::ora::OraVdqmSvc::s_selectDeviceGroupNameStatementString =
   "SELECT id FROM DeviceGroupName WHERE dgName = :1";
   
-/*
-/// SQL statement for function selectTapeRequestQueue
-const std::string castor::db::ora::OraVdqmSvc::s_selectTapeRequestQueueStatementString =
-  "BEGIN selectTapeRequestQueue(:1, :2, :3); END;";
-*/
-  
 /// SQL statement for function selectTapeRequestQueue
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeRequestQueueStatementString =
   "SELECT"
-  "  ID,"
-  "  DRIVENAME,"
-  "  TAPEDRIVEID,"
-  "  PRIORITY,"
-  "  CLIENTPORT,"
-  "  CLIENTEUID,"
-  "  CLIENTEGID,"
-  "  ACCESSMODE,"
-  "  MODIFICATIONTIME,"
-  "  CLIENTMACHINE,"
-  "  VID,"
-  "  TAPESERVER,"
-  "  DGNAME,"
-  "  CLIENTUSERNAME "
+  "  id,"
+  "  driveName,"
+  "  tapeDriveId,"
+  "  priority,"
+  "  clientPort,"
+  "  clientEuid,"
+  "  clientEgid,"
+  "  accessMode,"
+  "  creationTime,"
+  "  clientMachine,"
+  "  vid,"
+  "  tapeServer,"
+  "  dgName,"
+  "  clientUsername "
   "FROM"
-  "  TAPEREQUESTSHOWQUEUES_VIEW "
+  "  tapeRequestShowqueues_VIEW "
   "WHERE"
-  "      (:1 IS NULL OR :2 = DGNAME)"
-  "  AND (:3 IS NULL OR :4 = TAPESERVER)";
+  "      (:1 IS NULL OR :2 = dgName)"
+  "  AND (:3 IS NULL OR :4 = tapeServer)";
 
 /// SQL statement for function selectTapeDriveQueue
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveQueueStatementString =
