@@ -381,12 +381,24 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
           if ( strlen(logline) + 11 >= CA_MAXLINELEN ) {
             if ( logline[strlen(logline)-1] == '-' )
               if ( (filereq->concat & 
-                    (NOCONCAT_TO_EOD|CONCAT_TO_EOD))==0 ) 
+                    (NOCONCAT_TO_EOD|CONCAT_TO_EOD))==0 ) {
                 rtcp_log(LOG_INFO,"%s%d \\\n",logline,fseq);
-              else
+                tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
+                                 "func"   , TL_MSG_PARAM_STR, "rtcpd_PrintCmd",
+                                 "Message", TL_MSG_PARAM_STR, logline ); 
+              }
+              else {
                 rtcp_log(LOG_INFO,"%s \\\n",logline);
-            else
+                tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
+                                 "func"   , TL_MSG_PARAM_STR, "rtcpd_PrintCmd",
+                                 "Message", TL_MSG_PARAM_STR, logline ); 
+              }
+            else {
               rtcp_log(LOG_INFO,"%s, \\\n",logline);
+              tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
+                               "func"   , TL_MSG_PARAM_STR, "rtcpd_PrintCmd",
+                               "Message", TL_MSG_PARAM_STR, logline );
+            }
             *logline = '\0';
           }
           if ( (filereq->concat & (NOCONCAT_TO_EOD|CONCAT_TO_EOD))==0 ) {
@@ -431,14 +443,22 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
       if ( logline[strlen(logline)-1] == '-' ) {
         if ( (tape->file->prev->filereq.concat &
               (CONCAT_TO_EOD|NOCONCAT_TO_EOD)) == 0 ) {
-          if ( strlen(logline) + 11 >= CA_MAXLINELEN ) 
+          if ( strlen(logline) + 11 >= CA_MAXLINELEN ) {
             rtcp_log(LOG_INFO,"%s%d \\\n",logline,fseq);
+            tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
+                             "func"   , TL_MSG_PARAM_STR, "rtcpd_PrintCmd",
+                             "Message", TL_MSG_PARAM_STR, logline );
+          }
           else LOGLINE_APPEND("%d",fseq);
         }
       } else if ( (tape->file->prev->filereq.concat &
                    (CONCAT_TO_EOD|NOCONCAT_TO_EOD)) != 0 ) {
-        if ( strlen(logline) + 4 >= CA_MAXLINELEN )
+        if ( strlen(logline) + 4 >= CA_MAXLINELEN ) {
           rtcp_log(LOG_INFO,"%s- \\\n",logline);
+          tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
+                           "func"   , TL_MSG_PARAM_STR, "rtcpd_PrintCmd",
+                           "Message", TL_MSG_PARAM_STR, logline );          
+        }
         else LOGLINE_APPEND("%s","-");
       }
     }
@@ -470,6 +490,9 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
             LOGLINE_APPEND(":%s",filereq->fid);
           else {
             rtcp_log(LOG_INFO,"%s: \\\n",logline);
+            tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
+                           "func"   , TL_MSG_PARAM_STR, "rtcpd_PrintCmd",
+                           "Message", TL_MSG_PARAM_STR, logline );          
             *logline = '\0';
             LOGLINE_APPEND("%s",filereq->fid);
           }
@@ -506,6 +529,9 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
                          (unsigned int)(filereq->maxsize/(1024*1024)));
         else {
           rtcp_log(LOG_INFO,"%s: \\\n",logline);
+          tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
+                           "func"   , TL_MSG_PARAM_STR, "rtcpd_PrintCmd",
+                           "Message", TL_MSG_PARAM_STR, logline );
           *logline = '\0';
           LOGLINE_APPEND("%d",
                          (unsigned int)(filereq->maxsize/(1024*1024)));
@@ -522,6 +548,9 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
           LOGLINE_APPEND(" %s",filereq->file_path);
         } else {
           rtcp_log(LOG_INFO,"%s \\\n",logline);
+          tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
+                           "func"   , TL_MSG_PARAM_STR, "rtcpd_PrintCmd",
+                           "Message", TL_MSG_PARAM_STR, logline );          
           *logline = '\0';
           LOGLINE_APPEND("%s",filereq->file_path);
         }
