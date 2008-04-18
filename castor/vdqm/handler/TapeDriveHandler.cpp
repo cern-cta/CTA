@@ -753,7 +753,7 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
   throw (castor::exception::Exception) {
 
   // The result of the search in the database.
-  std::vector<newVdqmDrvReq_t>* drvReqs = 0;
+  std::list<newVdqmDrvReq_t>* drvReqs = 0;
   
   std::string dgn    = "";
   std::string server = "";
@@ -769,7 +769,7 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
 
     // If there is a result to send to the client
     if (drvReqs != NULL && drvReqs->size() > 0 ) {
-      for(std::vector<newVdqmDrvReq_t>::iterator it = drvReqs->begin();
+      for(std::list<newVdqmDrvReq_t>::iterator it = drvReqs->begin();
         it != drvReqs->end(); it++) {
         
         //"Send information for showqueues command" message

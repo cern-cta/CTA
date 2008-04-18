@@ -386,12 +386,12 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
     // This method call retirves the request queue from the database. The
     // result depends on the parameters. If the paramters are not specified,
     // then information about all oft the requests is returned.
-    std::auto_ptr< std::vector<newVdqmVolReq_t> > volReqs(
+    std::auto_ptr< std::list<newVdqmVolReq_t> > volReqs(
       ptr_IVdqmService->selectTapeRequestQueue(dgn, server));
   
     // If there is a result to send to the client
     if (volReqs.get() != NULL && volReqs->size() > 0 ) {
-      for(std::vector<newVdqmVolReq_t>::iterator it = volReqs->begin();
+      for(std::list<newVdqmVolReq_t>::iterator it = volReqs->begin();
         it != volReqs->end(); it++) {
 
         //"Send information for showqueues command" message

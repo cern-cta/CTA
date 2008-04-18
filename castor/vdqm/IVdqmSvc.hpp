@@ -27,11 +27,12 @@
 #ifndef VDQM_IVDQMSVC_HPP
 #define VDQM_IVDQMSVC_HPP 1
 
-// Include Files
+#include "castor/IService.hpp"
+
+#include <list>
 #include <string>
 #include <vector>
 
-#include "castor/IService.hpp"
 
 // Forward declaration
 typedef struct newVdqmDrvReq newVdqmDrvReq_t;
@@ -198,7 +199,7 @@ namespace castor {
          * requests to the showqueues comman-line application.
          * Note that the returned vector should be deallocated by the caller.
          */
-        virtual std::vector<newVdqmVolReq_t>* selectTapeRequestQueue(
+        virtual std::list<newVdqmVolReq_t>* selectTapeRequestQueue(
           const std::string dgn, const std::string requestedSrv)
           throw (castor::exception::Exception) = 0;   
           
@@ -218,7 +219,7 @@ namespace castor {
          * drives to the showqueues comman-line application.
          * Note that the returned vector should be deallocated by the caller.
          */
-        virtual std::vector<newVdqmDrvReq_t>* selectTapeDriveQueue(
+        virtual std::list<newVdqmDrvReq_t>* selectTapeDriveQueue(
           const std::string dgn, const std::string requestedSrv)
           throw (castor::exception::Exception) = 0;    
                                        
