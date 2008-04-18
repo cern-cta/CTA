@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_setfilegcweight.man,v $ $Revision: 1.1 $ $Date: 2008/03/14 13:30:04 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_setfilegcweight.man,v $ $Revision: 1.2 $ $Date: 2008/04/18 08:12:26 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_SETFILEGCWEIGHT 1castor "$Date: 2008/03/14 13:30:04 $" CASTOR "STAGER Commands"
+.TH STAGER_SETFILEGCWEIGHT 1castor "$Date: 2008/04/18 08:12:26 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_setfilegcweight \- Updates the weight of a file for the garbage collection 
 .SH SYNOPSIS
@@ -28,6 +28,10 @@ command updates, for one or many castor file(s) in the stager, the weight used t
 the file(s) at garbage collection time. The passed weight is added to the current one
 of the correspondent disk copies, and it can be thought as a time interval in seconds
 the disk copies would gain before being garbage collected.
+
+The
+.B stager_setfilegcweight
+command is restricted to group administrators.
 
 .SH OPTIONS
 
