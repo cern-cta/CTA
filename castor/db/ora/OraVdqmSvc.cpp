@@ -1438,6 +1438,7 @@ std::vector<newVdqmVolReq_t>*
 
     // The result of the search in the database.
     std::vector<newVdqmVolReq_t>* volReqs = new std::vector<newVdqmVolReq_t>;
+    volReqs->reserve(1000);
 
     newVdqmVolReq_t volReq;
 
