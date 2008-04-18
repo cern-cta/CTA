@@ -1404,7 +1404,7 @@ castor::vdqm::DeviceGroupName*
 // -----------------------------------------------------------------------
 // selectTapeRequestQueue
 // -----------------------------------------------------------------------
-std::vector<newVdqmVolReq_t>*
+std::list<newVdqmVolReq_t>*
   castor::db::ora::OraVdqmSvc::selectTapeRequestQueue(const std::string dgn, 
   const std::string requestedSrv) throw (castor::exception::Exception) {
 
@@ -1412,6 +1412,8 @@ std::vector<newVdqmVolReq_t>*
   if (0 == m_selectTapeRequestQueueStatement) {
     m_selectTapeRequestQueueStatement =
       createStatement(s_selectTapeRequestQueueStatementString);
+    m_selectTapeRequestQueueStatement->setPrefetchMemorySize(0);
+    m_selectTapeRequestQueueStatement->setPrefetchRowCount(100);
   }
 
   // Set the query statements parameters
@@ -1437,8 +1439,7 @@ std::vector<newVdqmVolReq_t>*
       m_selectTapeRequestQueueStatement->executeQuery();
 
     // The result of the search in the database.
-    std::vector<newVdqmVolReq_t>* volReqs = new std::vector<newVdqmVolReq_t>;
-    volReqs->reserve(1000);
+    std::list<newVdqmVolReq_t>* volReqs = new std::list<newVdqmVolReq_t>;
 
     newVdqmVolReq_t volReq;
 
@@ -1502,7 +1503,7 @@ std::vector<newVdqmVolReq_t>*
 // -----------------------------------------------------------------------
 // selectTapeDriveQueue
 // -----------------------------------------------------------------------
-std::vector<newVdqmDrvReq_t>*
+std::list<newVdqmDrvReq_t>*
   castor::db::ora::OraVdqmSvc::selectTapeDriveQueue(const std::string dgn,
   const std::string requestedSrv) throw (castor::exception::Exception) {
 
@@ -1535,7 +1536,7 @@ std::vector<newVdqmDrvReq_t>*
       m_selectTapeDriveQueueStatement->executeQuery();
 
     // The result of the search in the database.
-    std::vector<newVdqmDrvReq_t>* drvReqs = new std::vector<newVdqmDrvReq_t>;
+    std::list<newVdqmDrvReq_t>* drvReqs = new std::list<newVdqmDrvReq_t>;
 
     newVdqmDrvReq_t drvReq;
 

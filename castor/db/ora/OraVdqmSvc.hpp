@@ -154,13 +154,13 @@ namespace castor {
         /**
          * See the documentation for castor::vdqm::IVdqmSvc.
          */
-        virtual std::vector<newVdqmVolReq_t>*
+        virtual std::list<newVdqmVolReq_t>*
           selectTapeRequestQueue(const std::string dgn, 
           const std::string requestedSrv) throw (castor::exception::Exception);        
         /**
          * See the documentation for castor::vdqm::IVdqmSvc.
          */
-        virtual std::vector<newVdqmDrvReq_t>*
+        virtual std::list<newVdqmDrvReq_t>*
           selectTapeDriveQueue(const std::string dgn,
           const std::string requestedSrv)
           throw (castor::exception::Exception);     
