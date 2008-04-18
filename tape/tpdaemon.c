@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.16 2008/03/04 15:00:48 wiebalck Exp $
+ * $Id: tpdaemon.c,v 1.17 2008/04/18 09:26:32 wiebalck Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.16 $ $Date: 2008/03/04 15:00:48 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.17 $ $Date: 2008/04/18 09:26:32 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -167,6 +167,7 @@ struct main_args *main_args;
 #if SACCT
 	tapeacct (TPDSTART, 0, 0, jid, "", "", "", 0, 0);
 #endif
+
 	if (Cdomainname (domainname, sizeof(domainname)) < 0) {
 
 		tplogit (func, "Unable to get domainname\n");
@@ -408,7 +409,8 @@ struct main_args *main_args;
                         int vdqmstate;
                         vdqmstate = vdqmdrvstate(tunp);
                         if ( (vdqmstate == (VDQM_UNIT_UP|VDQM_UNIT_BUSY|VDQM_UNIT_ASSIGN)) ||                      /* RUNNING */
-                             (vdqmstate == (VDQM_UNIT_UP|VDQM_UNIT_BUSY|VDQM_UNIT_RELEASE|VDQM_UNIT_UNKNOWN)) ) {  /* RELEASE */
+                             (vdqmstate == (VDQM_UNIT_UP|VDQM_UNIT_BUSY|VDQM_UNIT_RELEASE|VDQM_UNIT_UNKNOWN)) ||   /* RELEASE */
+                             (vdqmstate == (VDQM_UNIT_UP|VDQM_UNIT_BUSY|VDQM_UNIT_UNKNOWN)) ) {                    /* bad UNKNOWN (0x221)*/ 
 
                             /* 
                                ... update VDQM. We explicitely do not check (vdqmstate == UP|FREE) here, since
@@ -534,9 +536,9 @@ void clean4jobdied()
 	for (j = 0; j < n; j++) {
 		tplogit (func, "cleaning up: job %d has died\n", jids[j]);
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 3,
-                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "func"   , TL_MSG_PARAM_STR, func,
                                     "Message", TL_MSG_PARAM_STR, "Cleaning up: job has died",
-                                    "JID",     TL_MSG_PARAM_INT, jids[j] );                
+                                    "JobID"  , TL_MSG_PARAM_INT, jids[j] );                
 		rrtp = tpdrrt.next;
 		while (rrtp) {
 			if (rrtp->jid == jids[j]) break;
@@ -551,10 +553,11 @@ void clean4jobdied()
 					if (tunp->mntovly_pid) {
 						tplogit (func, "killing process %d\n",
 							tunp->mntovly_pid);
-                                                tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 3,
+                                                tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 4,
                                                                     "func",    TL_MSG_PARAM_STR, func,
                                                                     "Message", TL_MSG_PARAM_STR, "Killing process",
-                                                                    "PID",     TL_MSG_PARAM_INT, tunp->mntovly_pid );
+                                                                    "PID",     TL_MSG_PARAM_INT, tunp->mntovly_pid,
+                                                                    "JobID"  , TL_MSG_PARAM_INT, jids[j] );
 						kill (tunp->mntovly_pid, SIGINT);
 						tunp->mntovly_pid = 0;
 					} else {
@@ -1144,7 +1147,7 @@ void procfrdrvreq(req_data, clienthost)
 	RESETID(uid,gid);
 
 	tplogit (func, TP056, "free drive", uid, gid, clienthost);
-    tl_tpdaemon.tl_log( &tl_tpdaemon, 76, 5,
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 76, 5,
                         "func",       TL_MSG_PARAM_STR, func,
                         "Message",    TL_MSG_PARAM_STR, "free drive",
                         "UID",        TL_MSG_PARAM_UID, uid,
@@ -1312,15 +1315,17 @@ char *clienthost;
 
 	RESETID(uid,gid);
 
+	unmarshall_LONG (rbp, jid);
+	unmarshall_STRING (rbp, path);
+
 	tplogit (func, TP056, "kill", uid, gid, clienthost);
-        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 5,
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 6,
                             "func",       TL_MSG_PARAM_STR, func,
                             "Message",    TL_MSG_PARAM_STR, "kill",
                             "UID",        TL_MSG_PARAM_UID, uid,
                             "GID",        TL_MSG_PARAM_GID, gid,
+                            "JobID",      TL_MSG_PARAM_INT, jid,
                             "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
-	unmarshall_LONG (rbp, jid);
-	unmarshall_STRING (rbp, path);
 
 	c = 0;
 
@@ -1339,10 +1344,11 @@ char *clienthost;
 				if (tunp->mntovly_pid) {
 					tplogit (func, "killing process %d\n",
 						tunp->mntovly_pid);
-                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 3,
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 4,
                                                             "func",    TL_MSG_PARAM_STR, func,
                                                             "Message", TL_MSG_PARAM_STR, "Killing process",
-                                                            "PID",     TL_MSG_PARAM_INT, tunp->mntovly_pid );                        
+                                                            "PID",     TL_MSG_PARAM_INT, tunp->mntovly_pid,
+                                                            "JobID",   TL_MSG_PARAM_INT, jid );                        
 					kill (tunp->mntovly_pid, SIGINT);
 					tunp->mntovly_pid = 0;
 				}
@@ -1413,9 +1419,10 @@ char *clienthost;
 	unmarshall_LONG (rbp, vdqm_reqid);
 
 	tplogit (func, "mount request %s\n", vid);
-        tl_tpdaemon.tl_log( &tl_tpdaemon, 72, 4,
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 72, 5,
                             "func"   , TL_MSG_PARAM_STR  , func,
                             "Message", TL_MSG_PARAM_STR  , "Mount request",
+                            "JobID"  , TL_MSG_PARAM_INT  , jid,
                             "VID"    , TL_MSG_PARAM_STR  , vid,
                             "TPVID"  , TL_MSG_PARAM_TPVID, vid );                        
 	c = 0;
@@ -1429,8 +1436,9 @@ char *clienthost;
 	}
 	if (rrtp == 0) {
 		usrmsg (func, TP014);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 14, 1,
-                                    "func", TL_MSG_PARAM_STR, func );                
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 14, 2,
+                                    "func",  TL_MSG_PARAM_STR, func,
+                                    "JobID", TL_MSG_PARAM_INT, jid );                
 		c = ETNRS;		/* reserve not done */
 		goto reply;
 	}
@@ -1441,8 +1449,9 @@ char *clienthost;
 		if (strcmp (rrtp->dg[j].name, dgn) == 0) break;
 	if (j == nbdgp) {
 		usrmsg (func, TP013);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 13, 1,
-                                    "func", TL_MSG_PARAM_STR, func );                
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 13, 2,
+                                    "func",  TL_MSG_PARAM_STR, func,
+                                    "JobID", TL_MSG_PARAM_INT, jid );                 
 		c = ETIDG;		/* invalid device group name */
 		goto reply;
 	}
@@ -1451,9 +1460,10 @@ char *clienthost;
 
 	if ((den = cvtden (density)) < 0) {
 		usrmsg (func, TP006, "density");
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 6, 2,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 6, 3,
                                     "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, "density" );                
+                                    "Message", TL_MSG_PARAM_STR, "density",
+                                    "JobID",   TL_MSG_PARAM_INT, jid );                
 		errflg++;
 	}
 	if (! strcmp (lbltype, "al")) lblcode = AL;
@@ -1463,15 +1473,17 @@ char *clienthost;
 	else if (! strcmp (lbltype, "aul")) lblcode = AUL;
 	else {
 		usrmsg (func, TP006, "lbltype");
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 6, 2,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 6, 3,
                                     "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, "lbltype" );                
+                                    "Message", TL_MSG_PARAM_STR, "lbltype",
+                                    "JobID",   TL_MSG_PARAM_INT, jid );                
 		errflg++;
 	}
 	if (lblcode == BLP && mode == WRITE_ENABLE) {
 		usrmsg (func, TP017);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 17, 1,
-                                    "func", TL_MSG_PARAM_STR, func );                
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 17, 2,
+                                    "func",  TL_MSG_PARAM_STR, func,
+                                    "JobID", TL_MSG_PARAM_INT, jid );                
 		errflg++;
 	}
 	if (errflg) {
@@ -1487,40 +1499,45 @@ char *clienthost;
 		}
 		if (i == nbtpdrives) {
 			usrmsg (func, TP015);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 1,
-                                            "func", TL_MSG_PARAM_STR, func );                
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 2,
+                                            "func",  TL_MSG_PARAM_STR, func,
+                                            "JobID", TL_MSG_PARAM_INT, jid );                
 			c = ETIDN;	/* non existing drive */
 			goto reply;
 		}
 		if (strcmp (tunp->dgn, dgn) != 0) {
 			usrmsg (func, TP013);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 13, 1,
-                                            "func", TL_MSG_PARAM_STR, func );                
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 13, 2,
+                                            "func",  TL_MSG_PARAM_STR, func,
+                                            "JobID", TL_MSG_PARAM_INT, jid );                
 			c = ETIDG;	/* device group name does not match */
 			goto reply;
 		}
 		if (rrtp->dg[j].used >= rrtp->dg[j].rsvd) {
 			usrmsg (func, TP012);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 12, 1,
-                                            "func", TL_MSG_PARAM_STR, func );                
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 12, 2,
+                                            "func",  TL_MSG_PARAM_STR, func,
+                                            "JobID", TL_MSG_PARAM_INT, jid );                
 			c = ETNDV;	/* request would exceed # of drives rsvd */
 			goto reply;
 		}
 		if (chk_den (tunp, den, &cdevp) != 0) {
 			usrmsg (func, TP015);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 1,
-                                            "func", TL_MSG_PARAM_STR, func );                
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 2,
+                                            "func",  TL_MSG_PARAM_STR, func,
+                                            "JobID", TL_MSG_PARAM_INT, jid );                
 			c = ETIDN;	/* drive does not have requested density */
 			goto reply;
 		}
 		if (tunp->asn != 0 || tunp->up != 1 ||
 		    (*tunp->vid && (strcmp (tunp->vid, vid) || strcmp (tunp->vsn, vsn)))) {
 			usrmsg (func, TP057, drive);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 57, 4,
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 57, 5,
                                             "func"     , TL_MSG_PARAM_STR, func,
                                             "Drive"    , TL_MSG_PARAM_STR, drive,
                                             "Assigned" , TL_MSG_PARAM_INT, tunp->asn,
-                                            "Up"       , TL_MSG_PARAM_INT, tunp->up );
+                                            "Up"       , TL_MSG_PARAM_INT, tunp->up,
+                                            "JobID"    , TL_MSG_PARAM_INT, jid );
 			c = EBUSY;
 			goto reply;
 		}
@@ -1528,8 +1545,9 @@ char *clienthost;
 	} else {	/* non specific drive request */
 		if (rrtp->dg[j].used >= rrtp->dg[j].rsvd) {
 			usrmsg (func, TP012);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 12, 1,
-                                            "func", TL_MSG_PARAM_STR, func );
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 12, 2,
+                                            "func" ,  TL_MSG_PARAM_STR, func,
+                                            "JobID", TL_MSG_PARAM_INT, jid );
 			c = ETNDV;	/* request would exceed # of drives rsvd */
 			goto reply;
 		}
@@ -2782,7 +2800,7 @@ void check_child_exit()
                                             "func"   , TL_MSG_PARAM_STR  , func,
                                             "Message", TL_MSG_PARAM_STR  , "rlstape process found dead",
                                             "pid"    , TL_MSG_PARAM_INT  , pid,
-                                            "jid"    , TL_MSG_PARAM_INT  , tunp->jid,
+                                            "JobID"  , TL_MSG_PARAM_INT  , tunp->jid,
                                             "vid"    , TL_MSG_PARAM_STR  , tunp->vid,
                                             "TPVID"  , TL_MSG_PARAM_TPVID, tunp->vid );
                     }
@@ -2833,9 +2851,10 @@ void check_child_exit()
                             } else {
 
                                 tplogit (func, "rlstape crashed, release failed, configure the drive down\n");
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 4,
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 5,
                                                     "func"   , TL_MSG_PARAM_STR  , func,
                                                     "Message", TL_MSG_PARAM_STR  , "rlstape crashed, release failed, configure the drive down",
+                                                    "JobID"  , TL_MSG_PARAM_INT  , tunp->jid,
                                                     "vid"    , TL_MSG_PARAM_STR  , tunp->vid,
                                                     "TPVID"  , TL_MSG_PARAM_TPVID, tunp->vid );
 
@@ -2869,9 +2888,10 @@ void check_child_exit()
                             */
 
                             tplogit (func, "rlstape crashed, configure the drive down\n");
-                            tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 4,
+                            tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 5,
                                                 "func"   , TL_MSG_PARAM_STR  , func,
                                                 "Message", TL_MSG_PARAM_STR  , "rlstape crashed, configure the drive down",
+                                                "JobID"  , TL_MSG_PARAM_INT  , tunp->jid,
                                                 "vid"    , TL_MSG_PARAM_STR  , tunp->vid,
                                                 "TPVID"  , TL_MSG_PARAM_TPVID, tunp->vid );
 
@@ -2904,17 +2924,23 @@ void check_child_exit()
                             */
 
                             tplogit (func, "rlstape crashed, no action defined\n"); 
-                            tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                            tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 5,
                                                 "func"   , TL_MSG_PARAM_STR  , func,
-                                                "Message", TL_MSG_PARAM_STR  , "rlstape crashed, no action defined" );
+                                                "Message", TL_MSG_PARAM_STR  , "rlstape crashed, no action defined",
+                                                "JobID"  , TL_MSG_PARAM_INT  , tunp->jid,
+                                                "vid"    , TL_MSG_PARAM_STR  , tunp->vid,
+                                                "TPVID"  , TL_MSG_PARAM_TPVID, tunp->vid );
                         }
 
                     } else {
                                                 
                         tplogit (func, "rlstape crashed, CRASHED_RLS_HANDLING not defined\n"); 
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 5,
                                             "func"   , TL_MSG_PARAM_STR  , func,
-                                            "Message", TL_MSG_PARAM_STR  , "rlstape crashed, CRASHED_RLS_HANDLING not defined" );
+                                            "Message", TL_MSG_PARAM_STR  , "rlstape crashed, CRASHED_RLS_HANDLING not defined",
+                                            "JobID"  , TL_MSG_PARAM_INT  , tunp->jid,
+                                            "vid"    , TL_MSG_PARAM_STR  , tunp->vid,
+                                            "TPVID"  , TL_MSG_PARAM_TPVID, tunp->vid );
                     }
 
                 } else {
@@ -2924,7 +2950,7 @@ void check_child_exit()
                                         "func"   , TL_MSG_PARAM_STR  , func,
                                         "Message", TL_MSG_PARAM_STR  , "rlstape exited normally",
                                         "pid"    , TL_MSG_PARAM_INT  , pid,
-                                        "jid"    , TL_MSG_PARAM_INT  , tunp->jid );
+                                        "JobID"  , TL_MSG_PARAM_INT  , tunp->jid );
                 }
 			}
 			tunp++;
