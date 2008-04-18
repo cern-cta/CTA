@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger_api.h,v 1.4 2008/02/26 13:27:27 wiebalck Exp $
+** $Id: tplogger_api.h,v 1.5 2008/04/18 09:28:56 wiebalck Exp $
 */
 
 
@@ -154,7 +154,12 @@ EXTERN_C int DLL_DECL tplogger_nb_messages _PROTO(( tplogger_t *self ));
 /*
 ** DLF prototypes of the tplogger interface
 */
-#define MAX_SYSLOG_MSG_LEN 1024
+
+/* #define MAX_SYSLOG_MSG_LEN 1024 */
+#define MAX_SYSLOG_MSG_LEN 1048576 
+
+/* chunk size -1 passed to syslog  */
+#define MAX_SYSLOG_CHUNK 767
 
 EXTERN_C int DLL_DECL tl_init_dlf         _PROTO(( tplogger_t *self, int init ));
 

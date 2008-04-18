@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger.c,v 1.10 2008/02/27 09:29:19 wiebalck Exp $
+** $Id: tplogger.c,v 1.11 2008/04/18 09:28:56 wiebalck Exp $
 */
 
 #include <string.h>
@@ -841,6 +841,7 @@ int DLL_DECL tl_log_syslog( tplogger_t *self, unsigned short msg_no, int num_par
         int err = 0, i, ndx = -1, prio, strndx, type;
 	va_list ap;
         char    msg[MAX_SYSLOG_MSG_LEN];
+        char    syslogmsg[MAX_SYSLOG_CHUNK+1+64];
         char   *name, *string;
         int     par_int;
         double  par_double;
@@ -872,59 +873,82 @@ int DLL_DECL tl_log_syslog( tplogger_t *self, unsigned short msg_no, int num_par
         prio = loglevel_2_syslogpriority(self->tl_msg[ndx].tm_lvl);
 
         /* insert the message */
-        strndx = snprintf(msg, MAX_SYSLOG_MSG_LEN, "\"TYPE\"=\"%s\", ", self->tl_msg[ndx].tm_txt);
+        strndx = snprintf(msg, MAX_SYSLOG_MSG_LEN-1, "\"TYPE\"=\"%s\", ", self->tl_msg[ndx].tm_txt);
 
         /* translate the variable argument list to a string */
        	va_start(ap, num_params);
 	for( i = 0; i<num_params; i++ ) {
 
+                int ret;
+
                 /* get the name */
 		name = va_arg(ap, char *);                
 		if (name == NULL) {
-                        strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN, "\"%s\"=", "(nil)");
+                        if (strndx < (MAX_SYSLOG_MSG_LEN-2)) {
+                                strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN-strndx-1, "\"%s\"=", "(nil)");
+                        }
 		} else {
                         char *name2 = strdup(name);
                         if (!convert2upper(name2)) {
-                                strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN, "\"%s\"=", name2);
+                                if (strndx < (MAX_SYSLOG_MSG_LEN-2)) {
+                                        strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN-strndx-1, "\"%s\"=", name2);
+                                }
                         } else {
-                                strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN, "\"%s\"=", name);
+                                if (strndx < (MAX_SYSLOG_MSG_LEN-2)) {
+                                        strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN-strndx-1, "\"%s\"=", name);
+                                }
                         }
                         free(name2);
 		}
 
                 /* process type */
-                type = va_arg(ap, int );
+                type = va_arg(ap, int);
 		if ((type == TL_MSG_PARAM_TPVID) || (type == TL_MSG_PARAM_STR)) {
 			string = va_arg(ap, char *);
 			if (string == NULL) {
-                                strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN, "\"%s\", ", "(nil)");   
+                                
+                                if (strndx < (MAX_SYSLOG_MSG_LEN-2)) {
+                                        strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN-strndx-1, "\"%s\", ", "(nil)");
+                                }
 			} else {
-                                strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN, "\"%s\", ", string);
+                                if (strndx < (MAX_SYSLOG_MSG_LEN-2)) {
+                                        strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN-strndx-1, "\"%s\", ", string);
+                                }
 			}
 
 		} else if ((type == TL_MSG_PARAM_INT) || 
                            (type == TL_MSG_PARAM_UID) || 
                            (type == TL_MSG_PARAM_GID)) {
                         par_int = va_arg(ap, int);
-                        strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN, "\"%d\", ", par_int);
+                        if (strndx < (MAX_SYSLOG_MSG_LEN-2)) {
+                                strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN-strndx-1, "\"%d\", ", par_int);
+                        }
 
 		} else if (type == TL_MSG_PARAM_INT64) {
                         par_u64 = va_arg(ap, HYPER);
-                        strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN, "\"%lld\", ", par_u64);
+                        if (strndx < (MAX_SYSLOG_MSG_LEN-2)) {
+                                strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN-strndx-1, "\"%lld\", ", par_u64);
+                        }
 
 		} else if (type == TL_MSG_PARAM_DOUBLE) {
                         par_double = va_arg(ap, double);
-                        strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN, "\"%f\", ", par_double);
+                        if (strndx < (MAX_SYSLOG_MSG_LEN-2)) {
+                                strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN-strndx-1, "\"%f\", ", par_double);
+                        }
 
 		} else if (type == TL_MSG_PARAM_UUID) {
                         char tmp[CUUID_STRING_LEN];
                         par_uuid = va_arg(ap, Cuuid_t);
                         Cuuid2string(tmp, CUUID_STRING_LEN, &par_uuid);
-                        strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN, "\"%s\", ", tmp);
+                        if (strndx < (MAX_SYSLOG_MSG_LEN-2)) {
+                                strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN-strndx-1, "\"%s\", ", tmp);
+                        }
 
 		} else if (type == TL_MSG_PARAM_FLOAT) {
                         par_double = va_arg(ap, double);
-                        strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN, "\"%f\", ", par_double);
+                        if (strndx < (MAX_SYSLOG_MSG_LEN-2)) {
+                                strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN-strndx-1, "\"%f\", ", par_double);
+                        }
 
 		} else {
 
@@ -936,7 +960,20 @@ int DLL_DECL tl_log_syslog( tplogger_t *self, unsigned short msg_no, int num_par
         /* remove the trailing comma */
         msg[strlen(msg)-2] = '\0';
 
-        syslog(prio, "%s", msg);
+        /* pass message in (MAX_SYSLOG_CHUNK+1) byte blocks to syslog */
+        ndx = 0;
+        while (ndx < strlen(msg)) {
+
+                /* print a chunk or the rest */
+                int len = ((strlen(msg)-ndx)>MAX_SYSLOG_CHUNK) ? MAX_SYSLOG_CHUNK : (strlen(msg)-ndx);
+                snprintf(syslogmsg, len+1, "%s", msg+ndx);
+                if (ndx>0) {
+                        syslog(prio, "(cont) %s", syslogmsg);
+                } else {
+                        syslog(prio, "%s", syslogmsg);
+                }
+                ndx += len;
+        }
         
  err_out:
         return err;
