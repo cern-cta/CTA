@@ -1404,9 +1404,10 @@ castor::vdqm::DeviceGroupName*
 // -----------------------------------------------------------------------
 // selectTapeRequestQueue
 // -----------------------------------------------------------------------
-std::list<newVdqmVolReq_t>*
-  castor::db::ora::OraVdqmSvc::selectTapeRequestQueue(const std::string dgn, 
-  const std::string requestedSrv) throw (castor::exception::Exception) {
+castor::vdqm::IVdqmSvc::VolReqList*
+  castor::db::ora::OraVdqmSvc::selectTapeRequestQueue(const std::string dgn,
+  const std::string requestedSrv)
+  throw (castor::exception::Exception) {
 
   // Check whether the statements are ok
   if (0 == m_selectTapeRequestQueueStatement) {
@@ -1439,49 +1440,50 @@ std::list<newVdqmVolReq_t>*
       m_selectTapeRequestQueueStatement->executeQuery();
 
     // The result of the search in the database.
-    std::list<newVdqmVolReq_t>* volReqs = new std::list<newVdqmVolReq_t>;
+    castor::vdqm::IVdqmSvc::VolReqList* volReqs =
+      new castor::vdqm::IVdqmSvc::VolReqList();
 
-    newVdqmVolReq_t volReq;
+    newVdqmVolReq_t *volReq = NULL;
 
     while(rs->next())
     {
-      volReq.VolReqID = rs->getInt(1);
+      volReqs->push_back(volReq = new newVdqmVolReq_t());
 
-      strncpy(volReq.drive, rs->getString(2).c_str(), sizeof(volReq.drive));
+      volReq->VolReqID = rs->getInt(1);
+
+      strncpy(volReq->drive, rs->getString(2).c_str(), sizeof(volReq->drive));
       // Null-terminate in case source string is longer than destination
-      volReq.drive[sizeof(volReq.drive) - 1] = '\0';
+      volReq->drive[sizeof(volReq->drive) - 1] = '\0';
 
-      volReq.DrvReqID    = rs->getInt(3);
-      volReq.priority    = rs->getInt(4);
-      volReq.client_port = rs->getInt(5);
-      volReq.clientUID   = rs->getInt(6);
-      volReq.clientGID   = rs->getInt(7);
-      volReq.mode        = rs->getInt(8);
-      volReq.recvtime    = rs->getInt(9);
+      volReq->DrvReqID    = rs->getInt(3);
+      volReq->priority    = rs->getInt(4);
+      volReq->client_port = rs->getInt(5);
+      volReq->clientUID   = rs->getInt(6);
+      volReq->clientGID   = rs->getInt(7);
+      volReq->mode        = rs->getInt(8);
+      volReq->recvtime    = rs->getInt(9);
 
-      strncpy(volReq.client_host, rs->getString(10).c_str(),
-        sizeof(volReq.client_host));
+      strncpy(volReq->client_host, rs->getString(10).c_str(),
+        sizeof(volReq->client_host));
       // Null-terminate in case source string is longer than destination
-      volReq.client_host[sizeof(volReq.client_host) - 1] = '\0';
+      volReq->client_host[sizeof(volReq->client_host) - 1] = '\0';
 
-      strncpy(volReq.volid, rs->getString(11).c_str(), sizeof(volReq.volid));
+      strncpy(volReq->volid, rs->getString(11).c_str(), sizeof(volReq->volid));
       // Null-terminate in case source string is longer than destination
-      volReq.volid[sizeof(volReq.volid) - 1] = '\0';
+      volReq->volid[sizeof(volReq->volid) - 1] = '\0';
 
-      strncpy(volReq.server, rs->getString(12).c_str(), sizeof(volReq.server));
+      strncpy(volReq->server,rs->getString(12).c_str(),sizeof(volReq->server));
       // Null-terminate in case source string is longer than destination
-      volReq.server[sizeof(volReq.server) - 1] = '\0';
+      volReq->server[sizeof(volReq->server) - 1] = '\0';
 
-      strncpy(volReq.dgn, rs->getString(13).c_str(), sizeof(volReq.dgn));
+      strncpy(volReq->dgn, rs->getString(13).c_str(), sizeof(volReq->dgn));
       // Null-terminate in case source string is longer than destination
-      volReq.dgn[sizeof(volReq.dgn) - 1] = '\0';
+      volReq->dgn[sizeof(volReq->dgn) - 1] = '\0';
 
-      strncpy(volReq.client_name, rs->getString(14).c_str(),
-        sizeof(volReq.client_name));
+      strncpy(volReq->client_name, rs->getString(14).c_str(),
+        sizeof(volReq->client_name));
       // Null-terminate in case source string is longer than destination
-      volReq.client_name[sizeof(volReq.client_name) - 1] = '\0';
-
-      volReqs->push_back(volReq);
+      volReq->client_name[sizeof(volReq->client_name) - 1] = '\0';
     }
 
     m_selectTapeRequestQueueStatement->closeResultSet(rs);

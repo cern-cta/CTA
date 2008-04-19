@@ -51,7 +51,7 @@ namespace castor {
                          public virtual castor::vdqm::IVdqmSvc {
   
       public:
-  
+
         /**
          * default constructor
          */
@@ -154,7 +154,7 @@ namespace castor {
         /**
          * See the documentation for castor::vdqm::IVdqmSvc.
          */
-        virtual std::list<newVdqmVolReq_t>*
+        virtual castor::vdqm::IVdqmSvc::VolReqList *
           selectTapeRequestQueue(const std::string dgn, 
           const std::string requestedSrv) throw (castor::exception::Exception);        
         /**
