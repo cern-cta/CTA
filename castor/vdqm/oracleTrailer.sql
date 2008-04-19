@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.90 $ $Release$ $Date: 2008/04/18 07:28:23 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.91 $ $Release$ $Date: 2008/04/19 15:05:24 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -462,7 +462,9 @@ BEGIN
   -- Count the number of matching host dedications
   SELECT COUNT(*) INTO nbHostDedicationsVar
     FROM TapeDriveDedication
-    WHERE tapeDrive = driveIdVar AND clientHost = clientHostVar;
+    WHERE
+          tapeDrive = driveIdVar
+      AND clientHost like '%' || clientHostVar || '%';
 
   -- As there are host dedications for the drive, it only passes if at least
   -- one matches
