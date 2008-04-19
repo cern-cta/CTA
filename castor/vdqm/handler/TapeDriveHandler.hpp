@@ -226,11 +226,20 @@ namespace castor {
         std::string getDedication(const char *input, const char *format);
 
         /**
-         * This methods returns true if all the characters of the specified
-         * string are either alphanumeric or '_', else this method returns
-         * false.
+         * This methods checks whether the specified host drive-dedication is
+         * valid.
+         *
+         * @return true if the specified dedication is valid, else false.
          */
-        bool allAlphanumericOrUnderscore(std::string &s);
+        bool hostDriveDedicationIsValid(std::string &s);
+
+        /**
+         * This methods checks whether the specified VID drive-dedication is
+         * valid.
+         *
+         * @return true if the specified dedication is valid, else false.
+         */
+        bool vidDriveDedicationIsValid(std::string &s);
 
         /**
          * Rejects invalid dedications in the specified dedicate string by

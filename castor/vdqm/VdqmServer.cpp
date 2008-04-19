@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
 
   server.addThreadPool(
     new castor::server::SignalThreadPool("JobSubmitterThreadPool",
-      new castor::vdqm::RTCPJobSubmitterThread(), 2)); // 2 seconds
+      new castor::vdqm::RTCPJobSubmitterThread(), 1000)); // 2 seconds
 
   server.addNotifierThreadPool(server.getListenPort());
 

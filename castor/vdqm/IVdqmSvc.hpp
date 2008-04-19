@@ -28,15 +28,12 @@
 #define VDQM_IVDQMSVC_HPP 1
 
 #include "castor/IService.hpp"
+#include "castor/vdqm/newVdqm.h"
 
 #include <list>
 #include <string>
 #include <vector>
 
-
-// Forward declaration
-typedef struct newVdqmDrvReq newVdqmDrvReq_t;
-typedef struct newVdqmVolReq newVdqmVolReq_t;
 
 namespace castor {
 
@@ -57,7 +54,26 @@ namespace castor {
     class IVdqmSvc : public virtual castor::IService {
 
       public:
-                
+
+        /**
+         * Inner class used to help manage the allocated memory associated with
+         * a list of volume requests for showqueues
+         */
+        class VolReqList : public std::list<newVdqmVolReq_t*> {
+        public:
+
+          /**
+           * Destructor which deletes each of the newVdqmVolReq_t messages
+           * pointed to by the pointers within this container.
+           */
+          ~VolReqList() {
+            for(std::list<newVdqmVolReq_t*>::iterator itor=begin();
+              itor != end(); itor++) {
+              delete *itor;
+            }
+          }
+        };
+
         /**
          * Retrieves a TapeServer from the database based on its serverName. 
          * If no tapeServer is found, creates one.
@@ -199,7 +215,7 @@ namespace castor {
          * requests to the showqueues comman-line application.
          * Note that the returned vector should be deallocated by the caller.
          */
-        virtual std::list<newVdqmVolReq_t>* selectTapeRequestQueue(
+        virtual VolReqList* selectTapeRequestQueue(
           const std::string dgn, const std::string requestedSrv)
           throw (castor::exception::Exception) = 0;   
           
