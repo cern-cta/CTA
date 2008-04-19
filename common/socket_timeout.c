@@ -394,7 +394,7 @@ int _net_isclosed(fd)
 	char buf[1];
 	
 	/* Will return > 0 if the descriptor is closed */
-	if (poll(&pollit,1,10) > 0) {
+	if (poll(&pollit,1,0) > 0) {
 		if (recv(fd, buf, sizeof(buf), MSG_PEEK | MSG_DONTWAIT) == 0) {
 			serrno = SECONNDROP;
 			return 1;
