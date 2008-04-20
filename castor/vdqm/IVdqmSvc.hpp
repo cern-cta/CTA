@@ -434,6 +434,14 @@ namespace castor {
         virtual bool writeFailedRTPCDJobSubmission(const u_signed64 tapeDriveId,
           const u_signed64 tapeRequestId)
           throw (castor::exception::Exception) = 0;
+
+        /**
+         * Checks that the specified regular expression is valid.  If the
+         * expression is valid then this method simply returns, else the method
+         * raises an exception.
+         */
+        virtual void checkRegExp(const std::string &regExp)
+          throw (castor::exception::Exception) = 0;
           
     }; // end of class IVdqmSvc
 

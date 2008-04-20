@@ -86,6 +86,10 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveStatementString 
 const std::string castor::db::ora::OraVdqmSvc::s_dedicateDriveStatementString
   = "BEGIN dedicateDrive(:1, :2, :3, :4, :5, :6, :7); END;";
 
+/// SQL statement for function checkRegExp
+const std::string castor::db::ora::OraVdqmSvc::s_checkRegExpStatementString
+  = "SELECT dummy FROM DUAL WHERE REGEXP_LIKE(dummy, :1)";
+
 /// SQL statement for function deleteDrive
 const std::string castor::db::ora::OraVdqmSvc::s_deleteDriveStatementString
   = "BEGIN deleteDrive(:1, :2, :3, :4); END;";
@@ -199,6 +203,7 @@ castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   m_getQueuePositionStatement(0),
   m_selectTapeDriveStatement(0),
   m_dedicateDriveStatement(0),
+  m_checkRegExpStatement(0),
   m_deleteDriveStatement(0),
   m_writeRTPCDJobSubmissionStatement(0),
   m_writeFailedRTPCDJobSubmissionStatement(0),
@@ -254,6 +259,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
     if (m_getQueuePositionStatement) deleteStatement(m_getQueuePositionStatement);
     if (m_selectTapeDriveStatement) deleteStatement(m_selectTapeDriveStatement);
     if (m_dedicateDriveStatement) deleteStatement(m_dedicateDriveStatement);
+    if (m_checkRegExpStatement) deleteStatement(m_checkRegExpStatement);
     if (m_deleteDriveStatement) deleteStatement(m_deleteDriveStatement);
     if (m_writeRTPCDJobSubmissionStatement) deleteStatement(m_writeRTPCDJobSubmissionStatement);
     if (m_writeFailedRTPCDJobSubmissionStatement) deleteStatement(m_writeFailedRTPCDJobSubmissionStatement);
@@ -281,6 +287,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   m_getQueuePositionStatement = 0;
   m_selectTapeDriveStatement = 0;
   m_dedicateDriveStatement = 0;
+  m_checkRegExpStatement = 0;
   m_deleteDriveStatement = 0;
   m_writeRTPCDJobSubmissionStatement = 0;
   m_writeFailedRTPCDJobSubmissionStatement = 0;
@@ -2140,4 +2147,35 @@ castor::db::ora::OraVdqmSvc::deleteStatement(oracle::occi::Statement* stmt)
     castor::db::ora::OraStatement* oraStmt =
         new castor::db::ora::OraStatement(stmt, dynamic_cast<castor::db::ora::OraCnvSvc*>(cnvSvc()));
     delete oraStmt;
+}
+
+
+// -----------------------------------------------------------------------
+// checkRegExp
+// -----------------------------------------------------------------------
+void castor::db::ora::OraVdqmSvc::checkRegExp(const std::string &regExp)
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_checkRegExpStatement) {
+    m_checkRegExpStatement =
+      createStatement(s_checkRegExpStatementString);
+    m_checkRegExpStatement->setAutoCommit(false);
+  }
+
+  // Execute statement
+  try {
+    m_checkRegExpStatement->setString(1, regExp);
+    oracle::occi::ResultSet *rset = m_checkRegExpStatement->executeQuery();
+    m_checkRegExpStatement->closeResultSet(rset);
+  } catch(oracle::occi::SQLException &e) {
+    handleException(e);
+
+    castor::exception::Internal ie;
+
+    ie.getMessage()
+      << "Invalid regExp '" << regExp << "': "
+      << std::endl << e.getMessage();
+
+    throw ie;
+  }
 }

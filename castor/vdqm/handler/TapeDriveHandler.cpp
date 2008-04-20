@@ -1099,6 +1099,32 @@ void castor::vdqm::handler::TapeDriveHandler::rejectInvalidDedications(
     throw ex;
   }
 
+  // Reject invalid host and vid deciations
+  try {
+    ptr_IVdqmService->checkRegExp(dedications->host);
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage()
+      << "TapeDriveHandler::rejectInvalidDedications(): "
+      << "Invalid host dedication '"
+      << dedications->host << "' "
+      << ptr_driveRequest->drive << "@"
+      << ptr_driveRequest->server << std::endl;
+    throw ex;
+  }
+  try {
+    ptr_IVdqmService->checkRegExp(dedications->vid);
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage()
+      << "TapeDriveHandler::rejectInvalidDedications(): "
+      << "Invalid vid dedication '"
+      << dedications->vid << "' "
+      << ptr_driveRequest->drive << "@"
+      << ptr_driveRequest->server << std::endl;
+    throw ex;
+  }
+
   // Reject invalid mode dedications
   if((dedications->mode != ".*") && (dedications->mode != "0") &&
     (dedications->mode != "")) {

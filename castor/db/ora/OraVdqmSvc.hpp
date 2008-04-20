@@ -192,6 +192,12 @@ namespace castor {
         bool writeFailedRTPCDJobSubmission(const u_signed64 tapeDriveId,
           const u_signed64 tapeRequestId)
           throw (castor::exception::Exception);
+
+        /**
+         * See the documentation for castor::vdqm::IVdqmSvc.
+         */
+        virtual void checkRegExp(const std::string &regExp)
+          throw (castor::exception::Exception);
   
         /**
          * Selects from the TapeDriveCompatibility table all entries for the
@@ -345,7 +351,7 @@ namespace castor {
         virtual castor::vdqm::TapeRequest* selectTapeReqForMountedTape
         (const castor::vdqm::TapeDrive* tapeDrive)
           throw (castor::exception::Exception);            
-  
+
       private:
   
         /// SQL statement for function selectTape
@@ -389,6 +395,12 @@ namespace castor {
 
         /// SQL statement object for function dedicateDrive
         oracle::occi::Statement *m_dedicateDriveStatement;
+
+        /// SQL statement for function checkRegExp
+        static const std::string s_checkRegExpStatementString;
+
+        /// SQL statement object for function checkRegExp
+        oracle::occi::Statement *m_checkRegExpStatement;
 
         /// SQL statement for function deleteDrive
         static const std::string s_deleteDriveStatementString;
