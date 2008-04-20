@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.91 $ $Release$ $Date: 2008/04/19 15:05:24 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.92 $ $Release$ $Date: 2008/04/20 20:23:40 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -464,7 +464,7 @@ BEGIN
     FROM TapeDriveDedication
     WHERE
           tapeDrive = driveIdVar
-      AND clientHost like '%' || clientHostVar || '%';
+      AND REGEXP_LIKE(clientHost, clientHostVar);
 
   -- As there are host dedications for the drive, it only passes if at least
   -- one matches
@@ -516,7 +516,9 @@ BEGIN
   -- Count the number of matching vid dedications
   SELECT COUNT(*) INTO nbVidDedicationsVar
     FROM TapeDriveDedication
-    WHERE tapeDrive = driveIdVar AND vid = vidVar;
+    WHERE
+          tapeDrive = driveIdVar
+      AND REGEXP_LIKE(vid, vidVar);
 
   -- As there are vid dedications for the drive, it only passes if at least
   -- one matches

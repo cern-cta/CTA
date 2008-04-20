@@ -1032,61 +1032,6 @@ const char *input, const char *format) {
 
 
 //------------------------------------------------------------------------------
-// hostDriveDedicationIsValid
-//------------------------------------------------------------------------------
-bool castor::vdqm::handler::TapeDriveHandler::hostDriveDedicationIsValid(
-  std::string &s) {
-  std::string::iterator itor;
-
-  if(s == ".*") {
-    return true;
-  }
-
-  // For each character in the string
-  for(std::string::iterator itor=s.begin(); itor!=s.end(); itor++) {
-    if(
-      !((*itor >= '0') && (*itor <= '9')) && // Not a numeric
-      !((*itor >= 'A') && (*itor <= 'Z')) && // Not an upper case alphabetic
-      !((*itor >= 'a') && (*itor <= 'z')) && // Not a lower case alphabetic
-      (*itor != '_')                      && // Not an underscore
-      (*itor != '-')                      && // Not a dash
-      (*itor != '.')) {                      // Not a full stop
-
-      return false;
-    }
-  }
-
-  return true;
-}
-
-
-//------------------------------------------------------------------------------
-// vidDriveDedicationIsValid
-//------------------------------------------------------------------------------
-bool castor::vdqm::handler::TapeDriveHandler::vidDriveDedicationIsValid(
-  std::string &s) {
-
-  if(s == ".*") {
-    return true;
-  }
-
-  // For each character in the string
-  for(std::string::iterator itor=s.begin(); itor!=s.end(); itor++) {
-    if(
-      !((*itor >= '0') && (*itor <= '9')) && // Not a numeric
-      !((*itor >= 'A') && (*itor <= 'Z')) && // Not an upper case alphabetic
-      !((*itor >= 'a') && (*itor <= 'z')) && // Not a lower case alphabetic
-      (*itor != '_')) {                      // Not an underscore
-
-      return false;
-    }
-  }
-
-  return true;
-}
-
-
-//------------------------------------------------------------------------------
 // rejectInvalidDedications
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveHandler::rejectInvalidDedications(
@@ -1149,30 +1094,6 @@ void castor::vdqm::handler::TapeDriveHandler::rejectInvalidDedications(
       << "TapeDriveHandler::rejectInvalidDedications(): "
       << "age dedications are not supported '"
       << dedications->age << "' "
-      << ptr_driveRequest->drive << "@"
-      << ptr_driveRequest->server << std::endl;
-    throw ex;
-  }
-
-  // Reject invalid host dedications
-  if(!hostDriveDedicationIsValid(dedications->host)) {
-    castor::exception::Exception ex(EINVAL);
-    ex.getMessage()
-      << "TapeDriveHandler::rejectInvalidDedications(): "
-      << "Invalid host dedication '"
-      << dedications->host << "' "
-      << ptr_driveRequest->drive << "@"
-      << ptr_driveRequest->server << std::endl;
-    throw ex;
-  }
-
-  // Reject invalid vid dedications
-  if(!vidDriveDedicationIsValid(dedications->vid)) {
-    castor::exception::Exception ex(EINVAL);
-    ex.getMessage()
-      << "TapeDriveHandler::rejectInvalidDedications(): "
-      << "Invalid vid dedication '"
-      << dedications->vid << "' "
       << ptr_driveRequest->drive << "@"
       << ptr_driveRequest->server << std::endl;
     throw ex;
