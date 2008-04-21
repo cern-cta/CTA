@@ -5,7 +5,6 @@
   Bug Fixes
   ---------
   - #25996: Inconsistently linked DLF records
-  - #29786: Add support for CLOB in the CASTOR code generation
   - #29787: Improve overview of disk-cache use
   - #31342: Cupv GRP_ADMIN privileges for the stager are not respected
   - #34607: RFE: "STAGER SVCCLASS" directive to added to castor.conf example file
