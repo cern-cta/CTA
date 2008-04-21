@@ -10,13 +10,11 @@ tools/makeSqlScripts.sh repack castor/repack $tag
 tools/makeSqlScripts.sh vdqm castor/vdqm $tag
 cd dlf/scripts
 ./makeDlfScripts.sh $tag oracle/oracleCreate.sql oracle/dlf_oracle_create.sql
-./makeDlfScripts.sh $tag oracle/express/oracleCreate.sql oracle/express/dlf_oracle_create.sql
-./makeDlfScripts.sh $tag mysql/mysqlCreate.sql mysql/dlf_mysql_create.sql
 echo Creation scripts for dlf generated with tag $tag
 cd ../..
 
 # commit and tag in CVS
-sqlscripts='castor/db/castor_oracle_create.sql castor/db/castor_oracle_create.sqlplus castor/repack/repack_oracle_create.sql castor/repack/repack_oracle_create.sqlplus dlf/scripts'
+sqlscripts='castor/db/castor_oracle_create.sql castor/db/castor_oracle_create.sqlplus castor/repack/repack_oracle_create.sql castor/repack/repack_oracle_create.sqlplus dlf/scripts/oracle/dlf_oracle_create.sql dlf/scripts/oracle/dlf_oracle_create.sqlplus'
 echo Running CVS diff...
 cvs diff $sqlscripts > /tmp/cvsdiffs
 less /tmp/cvsdiffs
