@@ -99,8 +99,9 @@ void parseCommandLine
 (int argc, char** argv, castor::job::stagerjob::InputArguments &args) {
   // We expect nine arguments :
   // fileid@nshost requestuuid subrequestuuid rfeatures
-  // subrequest_id@type host:fs mode clientString securityOption
-  if (argc != 11) {
+  // subrequest_id@type host:fs mode clientString securityOption Euid EGid  Creation Time
+
+  if (argc != 13) {
     castor::exception::InvalidArgument e;
     e.getMessage() << "Wrong number of arguments given";
     throw e;
@@ -257,9 +258,15 @@ void parseCommandLine
   if (secureFlag == "1") {
     args.isSecure = true;
   }
+ 
+  // Euid
+  args.Euid = strtou64(argv[10]);
+
+  // Gid
+  args.EGid = strtou64(argv[11]);
 
   // request creation time
-  args.requestCreationTime = atoi(argv[10]);
+  args.requestCreationTime = atoi(argv[12]);
 }
 
 // -----------------------------------------------------------------------

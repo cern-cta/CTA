@@ -75,6 +75,8 @@ namespace castor {
         enum AccessMode accessMode;
         castor::IClient* client;
         bool isSecure;
+	uid_t Euid;
+	gid_t EGid;
         u_signed64 requestCreationTime;
       };
 
