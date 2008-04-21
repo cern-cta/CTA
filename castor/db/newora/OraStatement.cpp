@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/04/17 14:41:21 $ $Author: itglp $
+ * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/04/21 12:29:50 $ $Author: itglp $
  *
  *
  *
@@ -170,8 +170,8 @@ std::string castor::db::ora::OraStatement::getClob(int pos)
     clob.open(oracle::occi::OCCI_LOB_READONLY);
     int len = clob.length();
     char* buf = (char*) malloc(len+1);
+    clob.read(len, (unsigned char*)buf, len);
     buf[len] = 0;
-    clob.read(len, (unsigned char*)buf, len+1);
     clob.close();
     std::string res(buf);
     free(buf);
