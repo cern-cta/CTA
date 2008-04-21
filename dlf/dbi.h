@@ -21,7 +21,7 @@
  * @file  dbi.h
  * @brief database interface layer
  *
- * $Id: dbi.h,v 1.6 2006/10/27 07:05:55 waldron Exp $
+ * $Id: dbi.h,v 1.7 2008/04/21 11:57:44 waldron Exp $
  */
 
 #ifndef _DBI_H
@@ -40,7 +40,7 @@
 #define DB_ORA_ARRAY_SIZE     50000         /**< the number of nelts in an oracle host array        */
 
 /* thread related */
-#define DB_THREAD_POOLSIZE    2             /**< the default number of threads in the database pool */
+#define DB_THREAD_POOLSIZE    1             /**< the default number of threads in the database pool */
 
 
 /**
@@ -114,18 +114,6 @@ EXTERN_C int DLL_DECL db_open _PROTO((database_t *db, unsigned int retries));
  */
 
 EXTERN_C void DLL_DECL db_worker _PROTO((database_t *db));
-
-
-/**
- * This function is responsible for changing the internal mode of the DLF server based on the state 
- * information in the dlf_status table. The function should be called periodically in order to make sure
- * changes are detected and propagated throughout the system.
- *
- * @returns     : APP_SUCCESS on success
- * @returns     : APP_FAILURE on failure of the database
- */
-
-EXTERN_C int DLL_DECL db_mode _PROTO((unsigned int interval));
 
 
 /**

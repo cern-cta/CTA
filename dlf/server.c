@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: server.c,v 1.14 2007/06/28 15:34:17 waldron Exp $
+ * $Id: server.c,v 1.15 2008/04/21 11:57:44 waldron Exp $
  */
 
 /* headers */
@@ -377,7 +377,7 @@ int main(int argc, char **argv) {
 
 
 	/* process options */
-	while ((c = getopt(argc, argv, "hdfl:T:D:p:")) != -1) {
+	while ((c = getopt(argc, argv, "hdfl:T:p:")) != -1) {
 		switch(c) {
 		case 'd':
 			debug = 1;
@@ -396,13 +396,6 @@ int main(int argc, char **argv) {
 				return APP_FAILURE;
 			}
 			break;
-		case 'D':
-			d_threads = atoi(optarg);
-			if (d_threads < 0) {
-				fprintf(stderr, "%s: number of database threads must be greater then 0\n", argv[0]);
-				return APP_FAILURE;
-			}
-			break;
 		case 'h':
 			fprintf(stdout, "Usage: %s [OPTIONS]\n", argv[0]);
 			fprintf(stdout, "The following options are available:\n\n");
@@ -412,7 +405,6 @@ int main(int argc, char **argv) {
 			fprintf(stdout, "  -l <path>        path to log file\n");
 			fprintf(stdout, "  -p <int>         servers listening port (default: %d)\n", port);
 			fprintf(stdout, "  -T <int>         number of handler/transport threads\n");
-			fprintf(stdout, "  -D <int>         number of database threads\n");
 			fprintf(stdout, "  -n               disable the generation of job and request statistics\n");
 			fprintf(stdout, "\nReport bugs to castor.support@cern.ch\n");
 			return APP_SUCCESS;
@@ -598,10 +590,7 @@ int main(int argc, char **argv) {
 
 	/* main loop */
 	while (!IsShutdown(server_mode)) {
-
 		(void)db_monitoring(hpool, 300);
-		(void)db_mode(60);
-
 		sleep(1);
 	}
 

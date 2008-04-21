@@ -5,9 +5,8 @@
 #   -l <path>      path to the log file (default: config/site.def/DlfSpool)
 #   -p <int>       the server listening port (default: 5036)
 #   -T <int>       number of handler/transport threads
-#   -D <int>       number of database threads
 #
-DLFSERVER_OPTIONS="-T 2 -D 2"
+#DLFSERVER_OPTIONS=
 
 # Should we run with another limit on the core file size than the default?
 #DAEMON_COREFILE_LIMIT=unlimited

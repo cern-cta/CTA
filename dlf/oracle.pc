@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.pc,v 1.29 2007/07/11 12:35:33 waldron Exp $
+ * $Id: oracle.pc,v 1.30 2008/04/21 11:57:44 waldron Exp $
  */
 
 /* headers */
@@ -1542,134 +1542,6 @@ error:
 	}
 	db->errors++;
 
-	ClrActive(db->mode);
-
-	Cthread_mutex_unlock(&db->mutex);
-	return APP_FAILURE;
-}
-
-
-/*
- * db_mode
- */
-
-int DLL_DECL db_mode(unsigned int interval) {
-
-	/* variables */
-	database_t *db;
-	struct     sqlca sqlca;
-	char       err_msg[512];
-	char       name[20];
-	int        status;
-	size_t     err_size;
-	size_t     err_len;
-	int        i;
-	int        found;
-
-	/* interval passed ? */
-	if ((time(NULL) - last_mode) < interval) {
-		return APP_SUCCESS;
-	}
-	last_mode = time(NULL);
-
-        /* attempt to find a database connection which is currently connected and not in a busy state
-         *   - if no connection can be found pick any connected connection
-         */
-        for (i = 0, found = 0; i < MAX_THREADS; i++) {
-                if (dpool[i] == NULL)
-                        continue;
-                if (IsConnected(dpool[i]->mode) && !IsActive(dpool[i]->mode)) {
-                        found = 1;
-                        break;
-                }
-        }
-
-        /* pick any ? */
-        if (found != 1) {
-                for (i = 0, found = 0; i < MAX_THREADS; i++) {
-                        if (dpool[i] == NULL)
-                                continue;
-                        if (IsConnected(dpool[i]->mode)) {
-                                found = 1;
-                                break;
-                        }
-                }
-        }
-	db = dpool[i];
-
-	if (found == 0) {
-		log(LOG_ERR, "db_mode() : no database connections available\n");
-		return APP_FAILURE;
-	}
-
-	/* set context and error handling */
-	Cthread_mutex_lock(&db->mutex);
-
-	SetActive(db->mode);
-	EXEC SQL WHENEVER SQLERROR GOTO error;
-	EXEC SQL CONTEXT USE :db->ctx;
-
-	db->selects++;
-	EXEC SQL DECLARE status1 CURSOR FOR
-		SELECT name, enabled 
-		FROM   dlf_mode;
-
-	/* set error handling and open cursor */
-	EXEC SQL WHENEVER NOT FOUND GOTO end_status1;
-	db->cursors++;
-	EXEC SQL OPEN status1;
-
-	/* loop over cursor results */
-	while (sqlca.sqlcode == 0) {
-		EXEC SQL FETCH status1 INTO :name, :status;
-
-		/* process the status */
-		if (!strcasecmp(name, "queue_purge")) {
-			if (status) SetServerPurge(server_mode);
-			else ClrServerPurge(server_mode);
-		} 
-		if (!strcasecmp(name, "queue_suspend")) {
-			if (status) SetSuspendedQueue(server_mode);
-			else ClrSuspendedQueue(server_mode);
-		} 
-		if (!strcasecmp(name, "database_suspend")) {
-			if (status) SetSuspendedDB(server_mode);
-			else ClrSuspendedDB(server_mode);
-		} 	
-	}
-
-end_status1:
-
-	EXEC SQL CLOSE status1;
-
-	ClrActive(db->mode);
-	Cthread_mutex_unlock(&db->mutex);
-
-	return APP_SUCCESS;
-	
-error:
-
-	/* get error message (thread-safe) */
-	err_size = sizeof(err_msg);
-	sqlglmt(db->ctx, err_msg, &err_size, &err_len);
-
-	EXEC SQL WHENEVER SQLERROR CONTINUE;
-
-	strip_newline(err_msg, err_len);
-	log(LOG_ERR, "db_mode() : %.*s\n", err_len, err_msg);
-
-	if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
-	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||
-	    (sqlca.sqlcode == -2131)  || (sqlca.sqlcode == -3113) ||
-	    (sqlca.sqlcode == -12170) || (sqlca.sqlcode == -12541) ||
-	    (sqlca.sqlcode == -1003)) {
-		ClrConnected(db->mode);
-	}
-
-	/* close cursor */
-	EXEC SQL CLOSE status1;
-
-	db->errors++;
 	ClrActive(db->mode);
 
 	Cthread_mutex_unlock(&db->mutex);

@@ -11,7 +11,7 @@ The
 .BR dlfserver
 command starts the DLF server daemon process. The command is usually executed at system start-up time
 .RC ( /etc.rc.local).
-This will source the dlfserver sysconfig file and launch the server with two thread pools. One pool for receiving connections from remote hosts and another for database interactivity.
+This will source the dlfserver sysconfig file and launch the server.
 
 .SH OPTIONS
 The program is usually run without any arguments.
@@ -33,21 +33,16 @@ The servers listening port.
 .TP
 .B \-t <threads>
 The number of handler/transport threads
-.TP
-.B \-D <threads>
-The number of database threads
 
 .SH "FILES"
 In order to connect to the DLF database a username, password and server are required. The configuration file /etc/DLFCONFIG defines this information using a signal line in the format:
-username/password@serv
-
-Under Oracle the 'serv' name represents the server name of tns name of the database, while under Mysql it represents the aliased or physical hostname of the machine running the mysqld process.
+dbusername/password@dbserver
 
 .SH "FIRST RUN"
 Prior to running the server for the first time the DLF database schema must be setup within the relational database. Failure to setup the schema will result in the dlfserver shutting down.
 
 .SH NOTES
-The dlfserver is basically a large memory cache acting as a gateway for recording logging messages into an oracle or mysql database backend.  It has the capacity to store
+The dlfserver is basically a large memory cache acting as a gateway for recording logging messages into an oracle database backend. It has the capacity to store
 .BR MAX_QUEUE_SIZE
 messages pending database insertion as defined in dlf/server.h. As a result a large portion of memory (several hundreds of megabytes) can be allocated to the server at any given time.
 
