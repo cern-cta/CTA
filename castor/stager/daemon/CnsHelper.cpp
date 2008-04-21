@@ -108,7 +108,7 @@ namespace castor{
         int type = subReq->request()->type();
         
         // check if the filename is valid (it has to start with /)
-        if (subReq->fileName().at(0)!='/'){
+        if (subReq->fileName().empty() || subReq->fileName().at(0)!='/'){
           castor::exception::Exception ex(EINVAL);
           ex.getMessage() << "Invalid file path";
           throw ex;	

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.74 $ $Release$ $Date: 2008/04/11 11:59:23 $ $Author: waldron $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.75 $ $Release$ $Date: 2008/04/21 09:29:22 $ $Author: sponcec3 $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -436,7 +436,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
 
         // check if the filename is valid (it has to start with /)
 
-	if (pval.at(0)!='/'){
+	if (pval.empty() || pval.at(0)!='/'){
 	  castor::exception::Exception ex(EINVAL);
             ex.getMessage() << "Invalid file path";
             throw ex;
