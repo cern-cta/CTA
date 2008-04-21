@@ -27,7 +27,6 @@ IFILES = $(DLFWEB)/config.php          \
 	 $(DLFWEB)/results.php         \
 	 $(DLFWEB)/site.css            \
 	 $(DLFWEB)/utils.php           \
-	 $(DLFWEB)/db/mysql.php        \
 	 $(DLFWEB)/db/oracle.php       \
 	 $(DLFWEB)/js/CalendarPopup.js \
 	 $(DLFWEB)/js/Date.js          \
@@ -57,7 +56,6 @@ InstallNonExecFile(site.css,$(DLFWEB),root,root,644)
 InstallNonExecFile(utils.php,$(DLFWEB),root,root,644)
 
 INSUBDIR=db/
-InstallNonExecFile(mysql.php,$(DLFWEB)/db,root,root,644)
 InstallNonExecFile(oracle.php,$(DLFWEB)/db,root,root,644)
 
 INSUBDIR=js/

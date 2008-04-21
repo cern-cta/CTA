@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.php,v 1.8 2007/06/28 06:18:31 waldron Exp $
+ * $Id: oracle.php,v 1.9 2008/04/21 11:55:25 waldron Exp $
  */
 
 /* definitions */
@@ -63,7 +63,7 @@ function db_connect($instance, $persistency, $stager) {
 		$pass	= $db_instances[$instance]['stagerdb']['password'];		
 	}
 	
-	/* open connection to a mysql database */
+	/* open connection to a oracle database */
 	if ($persistency == true) {
 		$conn = ocilogon($user, $pass, $server);
 	} else {

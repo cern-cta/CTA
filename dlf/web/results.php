@@ -69,30 +69,16 @@ setcookie("style", $_GET['style']);
 
 	/* timestamp */
 	$timeframe = "";
-	if (DB_LAYER == 'mysql') {
-		if (isset($_GET['drilltime'])) {
-			$timeframe = "((t1.timestamp >= DATE_SUB(STR_TO_DATE('".$_GET['drilltime']."', '%Y-%m-%d %H:%i:%s'), interval ".$db_drilldown_time." hour)) AND
-						  (t1.timestamp < DATE_ADD(STR_TO_DATE('".$_GET['drilltime']."', '%Y-%m-%d %H:%i:%s'), interval ".$db_drilldown_time." hour)))";
-		}
-		else if (($_GET['last'] != 0) && ($_GET['last'] != -1)) {
-			$timeframe = "t1.timestamp > DATE_SUB(NOW(), interval ".$_GET['last']." minute)";
-		} 
-		else if ((isset($_GET['drilldown'])) || ($_GET['last'] == 0)) {
-			$timeframe = "((t1.timestamp >= STR_TO_DATE('".$_GET['from']." ".$_GET['fromtime'].":00', '%d/%m/%Y %H:%i:%s')) AND
-						  (t1.timestamp <  STR_TO_DATE('". $_GET['to']. " " .$_GET['totime'].":00', '%d/%m/%Y %H:%i:%s')))";
-		}	
-	} else {
-		if (isset($_GET['drilltime'])) {
-			$timeframe = "((t1.timestamp >= (TO_DATE('".$_GET['drilltime']."', 'DD/MM/YYYY HH24:MI:SS') - ".$db_drilldown_time."/24)) AND
-						  (t1.timestamp <  (TO_DATE('".$_GET['drilltime']."', 'DD/MM/YYYY HH24:MI:SS') + ".$db_drilldown_time."/24)))"; 
-		}
-		else if (($_GET['last'] != 0) && ($_GET['last'] != -1)) {
-			$timeframe = "t1.timestamp > (SYSDATE - ".$_GET['last']."/1440)";
-		}
-		else if ((isset($_GET['drilldown'])) || ($_GET['last'] == 0)) {
-			$timeframe = "((t1.timestamp >= TO_DATE('".$_GET['from'] ." " .$_GET['fromtime'].":00', 'DD/MM/YYYY HH24:MI:SS')) AND
-						  (t1.timestamp <  TO_DATE('".$_GET['to']." " .$_GET['totime'].":00', 'DD/MM/YYYY HH24:MI:SS')))";  
-		}
+	if (isset($_GET['drilltime'])) {
+		$timeframe = "((t1.timestamp >= (TO_DATE('".$_GET['drilltime']."', 'DD/MM/YYYY HH24:MI:SS') - ".$db_drilldown_time."/24)) AND
+				(t1.timestamp <  (TO_DATE('".$_GET['drilltime']."', 'DD/MM/YYYY HH24:MI:SS') + ".$db_drilldown_time."/24)))"; 
+	}
+	else if (($_GET['last'] != 0) && ($_GET['last'] != -1)) {
+		$timeframe = "t1.timestamp > (SYSDATE - ".$_GET['last']."/1440)";
+	}
+	else if ((isset($_GET['drilldown'])) || ($_GET['last'] == 0)) {
+		$timeframe = "((t1.timestamp >= TO_DATE('".$_GET['from'] ." " .$_GET['fromtime'].":00', 'DD/MM/YYYY HH24:MI:SS')) AND
+				(t1.timestamp <  TO_DATE('".$_GET['to']." " .$_GET['totime'].":00', 'DD/MM/YYYY HH24:MI:SS')))";  
 	}
 	
 	/* ordering */
@@ -102,25 +88,21 @@ setcookie("style", $_GET['style']);
 	}
 
 	/* result limit */
-	if (DB_LAYER == 'mysql') {
-		$limit = "LIMIT ".(($_GET['page'] - 1) * $_GET['limit']).", ".$_GET['limit'];
+	if ((((isset($_GET['paramvalue']) && isset($_GET['paramname']) && $_GET['paramvalue'] && $_GET['paramname'])) ||
+	   (isset($_GET['col_subreqid']) || isset($_GET['col_tapevid']) || ($_GET['columns'] == 'default'))) && 
+	   ($schema_version <= 1)) {
+		$s_timestamp = "a.timestamp";
+		$s_timeusec  = "a.timeusec";
 	} else {
-		if ((((isset($_GET['paramvalue']) && isset($_GET['paramname']) && $_GET['paramvalue'] && $_GET['paramname'])) ||
-		   (isset($_GET['col_subreqid']) || isset($_GET['col_tapevid']) || ($_GET['columns'] == 'default'))) && 
-		   ($schema_version <= 1)) {
-			$s_timestamp = "a.timestamp";
-			$s_timeusec  = "a.timeusec";
-		} else {
-			$s_timestamp = "timestamp";
-			$s_timeusec  = "timeusec";
-		}
-
-		$limit = "SELECT * FROM (SELECT p.*, ROWNUM RNUM
-					 FROM (subquery ORDER BY $s_timestamp $tordering, $s_timeusec $tordering) p)
-					 WHERE (RNUM >  ".($_GET['page'] - 1) * $_GET['limit']."
-					 AND    RNUM <= ".($_GET['page'])     * $_GET['limit'].")";	
+		$s_timestamp = "timestamp";
+		$s_timeusec  = "timeusec";
 	}
-	
+
+	$limit = "SELECT * FROM (SELECT p.*, ROWNUM RNUM
+				 FROM (subquery ORDER BY $s_timestamp $tordering, $s_timeusec $tordering) p)
+				 WHERE (RNUM >  ".($_GET['page'] - 1) * $_GET['limit']."
+				 AND    RNUM <= ".($_GET['page'])     * $_GET['limit'].")";	
+
 	/* construct filters */
 	$filter = "";
 	if (isset($_GET['severity']) && is_array($_GET['severity']) && ($_GET['severity'][0] != 'All')) {
@@ -203,11 +185,7 @@ setcookie("style", $_GET['style']);
 		$limit = str_replace('ORDER BY timestamp', 'ORDER BY a.timestamp', $limit);
 	}
 
-	if (DB_LAYER == 'mysql') {
-		$exe_query = "$query $limit";
-	} else {
-		$exe_query = str_replace('subquery', $query, $limit);
-	}
+	$exe_query = str_replace('subquery', $query, $limit);
 	$exe_query .= " ORDER BY timestamp $tordering, timeusec $tordering";
 	echo '<!-- '.$exe_query.' -->';
 

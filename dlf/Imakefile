@@ -68,14 +68,6 @@ DLFCONFIG = DlfConfigFile
 DBOBJS    = oracle.Osuf
 DBFLAG    = -DUSE_ORACLE
 ORAINC = -I$(ORACLE_HOME)/precomp/public
-#else
-#if UseMySQL
-DBOBJS    = mysql.Osuf
-DBFLAG    = -DUSE_MYSQL
-MYSQLINC  = $(shell /usr/bin/mysql_config --include)
-MYSQLLIB  = $(shell /usr/bin/mysql_config --libs_r)
-
-#endif
 #endif
 
 DFLAGS    = -DLOGFILE=\"$(LOGFILE)\" -DDLFCONFIG=\"$(DLFCONFIG)\" $(DBFLAG)
@@ -121,17 +113,8 @@ all: $(DLFLIBTARGET) $(PROGS)
 oracle.c: oracle.pc
 	proc iname=oracle include=$(INCLUDES) threads=yes char_map=string parse=full
 
-mysql.o: mysql.c
-	$(CC) $(CFLAGS) $(MYSQLINC) -c -o $@ mysql.c
-
-#if UseOracle
 dlfserver: $(DLFSRV_OBJS) $(DEPLIB) $(DLFLIB)
 	$(MAKE) -f oralink.mk dlfserver DLFSERVER_OBJS="$(DLFSRV_OBJS)" CLDFLAGS=$(MTLDFLAGS) LIBS="$(LIBS)"
-#else
-#if UseMySQL
-NormalProgramTarget(dlfserver, $(DLFSRV_OBJS), $(DEPLIB), $(MTLDFLAGS) $(LIBS) $(MYSQLINC) $(MYSQLLIB))
-#endif
-#endif
 
 NormalLibraryTarget(dlf,$(DLFLIB_OBJS))
 
