@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.92 $ $Release$ $Date: 2008/04/20 20:23:40 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.93 $ $Release$ $Date: 2008/04/21 08:31:19 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -411,7 +411,9 @@ BEGIN
   -- (there should be a maximum of one)
   SELECT COUNT(*) INTO nbModeDedicationsVar
     FROM TapeDriveDedication
-    WHERE tapeDrive = driveIdVar AND accessMode = accessModeVar;
+    WHERE
+          TapeDriveDedication.tapeDrive = driveIdVar
+      AND TapeDriveDedication.accessMode = accessModeVar;
 
   -- As there is a mode dedication for the drive, the drive only passes if it
   -- matches
@@ -463,8 +465,8 @@ BEGIN
   SELECT COUNT(*) INTO nbHostDedicationsVar
     FROM TapeDriveDedication
     WHERE
-          tapeDrive = driveIdVar
-      AND REGEXP_LIKE(clientHost, clientHostVar);
+          TapeDriveDedication.tapeDrive = driveIdVar
+      AND REGEXP_LIKE(clientHostVar, TapeDriveDedication.clientHost);
 
   -- As there are host dedications for the drive, it only passes if at least
   -- one matches
@@ -517,8 +519,8 @@ BEGIN
   SELECT COUNT(*) INTO nbVidDedicationsVar
     FROM TapeDriveDedication
     WHERE
-          tapeDrive = driveIdVar
-      AND REGEXP_LIKE(vid, vidVar);
+          TapeDriveDedication.tapeDrive = driveIdVar
+      AND REGEXP_LIKE(vidVar, TapeDriveDedication.vid);
 
   -- As there are vid dedications for the drive, it only passes if at least
   -- one matches
