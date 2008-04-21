@@ -1,4 +1,94 @@
 -----------
+- 2.1.7-4 -
+-----------
+
+  Bug Fixes
+  ---------
+  - #25996: Inconsistently linked DLF records
+  - #29786: Add support for CLOB in the CASTOR code generation
+  - #29787: Improve overview of disk-cache use
+  - #31342: Cupv GRP_ADMIN privileges for the stager are not respected
+  - #34607: RFE: "STAGER SVCCLASS" directive to added to castor.conf example file
+  - #35398: stager_setFileGCWeight should be protected with GRP_ADMIN Cupv rights
+  - #35414: mighunter crashes in 2.1.7
+  - #35494: Too many files in a directory - Cns_update_fmd_entry: UPDATE error: ORA-01438
+  - #35498: Name server database schema does not respect CA_MAXNAMELEN - 
+            Cns_insert_fmd_entry: INSERT error: ORA-12899
+  - #35500: Transfers remain PEND'ing for full disk only service classes
+  - #35520: Oracle deadlock updating filesystem/diskserver related tables
+  - #35647: Syslog message too large, rtcpd crashes, drive left in UNKNOWN 
+  - #35835: Stager crashes with empty filenames
+
+  - Added support for checking the black and white list for both the source and destination
+    service classes of a disk2disk replication request. Likewise when triggering a tape 
+    recall verify that the user has access rights to create a file in the target service 
+    class. Refer to hotfix: 2.1.7-3-1
+
+  - Fixed the subRequestToDo procedure which was incorrectly generating uuid's every time 
+    a subrequest was picked up for processing by the stager. Prior to this modification it
+    was not possible to trace the history of a subrequest if it had been restarted.
+
+  - Fixed the caching logic of the LSF master name within the rmMasterDaemon. Prior to this
+    modification every metric update from a diskserver was triggering a call to LSF. As a 
+    consequence of this, the processing time for updating information in the shared memory 
+    increased and client connections were timing out.
+  
+  - Fixed the post install script of the castor-gridftp-dsi-int package which was trying 
+    to change the ownership of a file that did not exist.
+ 
+  - Fixed the totalWaitTime statistic for disk2disk copy transfers.
+
+  - Fixed the update of the GcWeight of a diskcopy when opening a file for read.
+
+  - Changed the permissions on the /var/spool/job directory from 777 to 755.
+
+  - Changed the default value for the heartbeat timeout of diskservers in castor.conf from
+    20 to 60 seconds. Prior to this change a single lost message from a diskserver to the 
+    rmMasterDaemon was enough to cause the diskserver to be disabled in Castor.
+
+  Upgrading from 2.1.7-3
+  ----------------------
+
+    Central services
+    ----------------
+
+    It is not mandatory to upgrade the central services in this release. However, if you
+    wish to benefit from the following bug fixes as documented above: #31342, #35494 and
+    #35498 you will need to upgrade the CNS (Castor Name Server).
+
+      Instructions
+      ------------
+      1. Upgrade the castor name server database using the correct upgrade scripts from
+         - http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-4/upgrades
+         - Note: the schema modification which is made in this script does not require
+           any downtime.
+
+      2. Upgrade the software on the headnodes and diskservers to 2.1.7. Daemons will
+         automatically be restarted on upgrade.
+ 
+    Stager
+    ------
+
+    Before upgrading to a 2.1.7 stager instance of CASTOR2 please make sure to read the 
+    upgrade instructions fully before proceeding. Note: this upgrade does not require
+    stopping of the instance and should be transparent to the end users.
+
+      Instructions
+      ------------
+      1. Upgrade the stager and dlf databases using the correct upgrade scripts from
+         - http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-4/upgrades
+
+      2. Upgrade the software on the headnodes and diskservers to 2.1.7. Daemons will
+         automatically be restarted on upgrade.
+
+      3. If you are using the dlfserver.sysconfig file, please regenerate it using the
+         example in /etc/sysconfig/dlfserver.example. In particular the -D option has
+         been removed.
+
+      4. Change the permissions on the /var/spool/job directory to 755.
+
+
+-----------
 - 2.1.7-3 -
 -----------
 
@@ -73,11 +163,13 @@
   Package changes
   ---------------
   - The nsGetPath command has moved from the castor-hsmtools package to castor-ns-client
-    and renamed to nsgetpath
+    and renamed to nsgetpath.
   - The contents of the castor-commands package has been moved to the castor-stager-client
     and the castor-commands package has been discontinued.
   - The follow packages are no longer distributed: castor-scriptlets, castor-msg-client,
-    castor-msg-server, castor-monitor-server and castor-commands
+    castor-msg-server, castor-monitor-server and castor-commands.
+  - The stager_setFileGCWeight command within the castor-stager-client package has been
+    renamed to stager_setfilegcweight.
 
 
   Bug Fixes
@@ -106,10 +198,12 @@
   - #33418: Errors in BESTTAPECOPYFORSTREAM that explain tape timeouts
   - #33949: Failure of vmgrdeletepool for empty pool
   - #34027: PROCESSPREPAREREQUEST: exact fetch returns more than requested number of rows
+  - #34159: stager and rh server memory leak
   - #34607: RFE: "STAGER SVCCLASS" directive to added to castor.conf example file
   - #34639: rfcp returns 'Host not known' from 2.1.6 stagers for files on DISABLED 
   - #34699: rmMasterDaemon hangs not fixed in 2.1.6-11
   - #34748: GC: Error="Operation now in progress"
+  - #34767: mighunter logs fileid missplaced
   - #34957: rtcpcld_gettape() - Invalid argument
   - #35021: Cannot read nl tapes with Castor-2
 
@@ -173,7 +267,7 @@
 
 
   Upgrading from 2.1.6-11+
-  --------------------
+  ------------------------
 
    Software Upgrades
    -----------------
@@ -287,15 +381,19 @@
          castor-commands RPM can now be found in castor-stager-clients.
 
      14. Update the castor.conf configuration file on all machines based on the
-         castor.conf.example in /etc/castor/castor.conf.example
+         castor.conf.example file in /etc/castor/
 
-     15. The information made available to the schedulers python policy file has changed.
+     15. Update the stream.py python policy file for the mighunter based on the
+         stream.py.example file in /etc/castor/. The major difference here is that the
+         status argument provided to each function has been removed.
+
+     16. The information made available to the schedulers python policy file has changed.
          If you are using the defaults original provided:
            mv /etc/castor/policies/scheduler.py.example /etc/castor/policies/scheduler.py
          If not, please review the file /etc/castor/policies/scheduler.py.example and
          merge the changes into your existing version.
 
-     16. Restart the service
+     17. Restart the service
 
          - Start the dlfserver
          - Start the rmMasterDaemon, followed by the LSF master
@@ -313,12 +411,12 @@
          private one only so that you can test/validate the installation without user 
          interference.
 
-     17. Test the instance by running the test suite available from:
-         - http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-1/fastTest
+     18. Test the instance by running the test suite available from:
+         - http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-3/fastTest
 
-     18. Start the public rhserver (if applicable)
+     19. Start the public rhserver (if applicable)
 
-     19. Congratulations you have successfully upgraded to the 2.1.7 release of CASTOR2!!
+     20. Congratulations you have successfully upgraded to the 2.1.7 release of CASTOR2!!
 
 
   Hotfixes for 2.1.7-3
@@ -341,7 +439,8 @@
     BlackList table and only the default '*', NULL, NULL, NULL entry is found in the 
     WhiteList table no actions are required.
 
-  - 2.1.7-3-2: Modification in attachTapeCopiesToStream procedure to have always a stateless behaviour. 
+  - 2.1.7-3-2: Modification in attachTapeCopiesToStream procedure to have always a 
+    stateless behaviour. 
 
 
 ------------
