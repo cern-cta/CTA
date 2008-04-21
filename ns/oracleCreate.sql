@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Revision: 1.3 $ $Date: 2007/12/04 12:28:38 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Revision: 1.4 $ $Date: 2008/04/21 11:44:21 $ $Author: waldron $
  *
  * This file creates the Name Server database schema.
  *
@@ -31,7 +31,7 @@ CREATE TABLE Cns_file_metadata (
        fileid NUMBER,
        parent_fileid NUMBER,
        guid CHAR(36),
-       name VARCHAR2(231),
+       name VARCHAR2(255),
        filemode NUMBER(6),
        nlink NUMBER(6),
        owner_uid NUMBER(6),
