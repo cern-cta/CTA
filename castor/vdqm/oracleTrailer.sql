@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.94 $ $Release$ $Date: 2008/04/21 08:58:49 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.95 $ $Release$ $Date: 2008/04/21 09:30:30 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -102,11 +102,6 @@ ALTER TABLE TAPESERVER MODIFY (ACTINGMODE NOT NULL);
 --ALTER TABLE TapeDriveDedication
 --  ADD CONSTRAINT I_U_TapeDrvDedic_vid
 --    UNIQUE (vid);
-
--- A drive can only have one or no access mode dedication
-ALTER TABLE TapeDriveDedication
-  ADD CONSTRAINT I_U_TapeDrvDedic_tapeDrv_mode
-    UNIQUE (tapeDrive, accessMode);
 
 -- Tape VIDs are unique
 ALTER TABLE VdqmTape
