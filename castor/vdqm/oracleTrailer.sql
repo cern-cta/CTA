@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.93 $ $Release$ $Date: 2008/04/21 08:31:19 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.94 $ $Release$ $Date: 2008/04/21 08:58:49 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1126,14 +1126,14 @@ BEGIN
     INSERT INTO Id2Type (id, type)
       VALUES (dedicationIdVar, 90);
   END IF;
-  IF (clientHostVar IS NOT NULL) AND (clientHostVar != '.*') THEN
+  IF clientHostVar IS NOT NULL THEN
     INSERT INTO TapeDriveDedication(id, tapeDrive, clientHost)
       VALUES(ids_seq.nextval, driveIdVar, clientHostVar)
     RETURNING id INTO dedicationIdVar;
     INSERT INTO Id2Type (id, type)
       VALUES (dedicationIdVar, 90);
   END IF;
-  IF (vidVar IS NOT NULL) AND (vidVar != '.*') THEN
+  IF vidVar IS NOT NULL THEN
     INSERT INTO TapeDriveDedication(id, tapeDrive, vid)
       VALUES(ids_seq.nextval, driveIdVar, vidVar)
     RETURNING id INTO dedicationIdVar;
