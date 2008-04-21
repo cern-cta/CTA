@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobManagerSvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/03/27 18:23:57 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobManagerSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/04/21 11:53:01 $ $Author: waldron $
  *
  * Implementation of the IJobManagerSvc for Oracle
  *
@@ -122,7 +122,7 @@ namespace castor {
 	 * @exception Exception in case of error
 	 */
 	virtual std::map
-	<std::string, castor::jobmanager::DiskServerResource *>*
+	<std::string, castor::jobmanager::DiskServerResource *>
 	getSchedulerResources()
 	  throw(castor::exception::Exception);
 
@@ -143,6 +143,14 @@ namespace castor {
 	 */
 	virtual bool postJobChecks
 	(const std::string subReqId, const int errorCode)
+	  throw(castor::exception::Exception);
+
+	/**
+	 * Get a list of all service classes which are classified as having
+	 * diskonly behaviour and no longer have space available.
+	 * @exception Exception in case of error
+	 */
+	virtual std::vector<std::string> getSvcClassesWithNoSpace()
 	  throw(castor::exception::Exception);
 
       private:
@@ -176,6 +184,12 @@ namespace castor {
 
 	/// SQL statement object for postJobChecks
 	oracle::occi::Statement *m_postJobChecksStatement;
+
+	/// SQL statement for function getSvcClassesWithNoSpace
+	static const std::string s_getSvcClassesWithNoSpaceString;
+
+	/// SQL statement object for getSvcClassesWithNoSpace
+	oracle::occi::Statement *m_getSvcClassesWithNoSpaceStatement;
 
       };
 

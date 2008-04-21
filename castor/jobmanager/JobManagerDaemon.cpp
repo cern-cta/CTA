@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/03/27 18:23:56 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/04/21 11:53:00 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -240,6 +240,9 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
      { 34, "Job terminated, svcclass has no filesystems in PRODUCTION" },
      { 35, "Restarting failed scheduling of a disk2disk copy replication request" },
      { 36, "Job terminated due to scheduling error" },
+     { 37, "Exception caught trying get space availability of all diskonly service classes, continuing anyway" },
+     { 38, "Failed to execute getSvcClassesWithNoSpace, continuing anyway" },
+     { 39, "Job terminated, svcclass no longer has any space available" },
 
      // Submission
      { 40, "Invalid JobManager/SubmitRetryAttempts option, using default" },

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/03/27 18:23:57 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/04/21 11:53:01 $ $Author: waldron $
  *
  * Implementation of the IJobManagerSvc for Oracle
  *
@@ -69,6 +69,10 @@ const std::string castor::jobmanager::ora::OraJobManagerSvc::s_getSchedulerResou
 const std::string castor::jobmanager::ora::OraJobManagerSvc::s_postJobChecksString =
   "BEGIN postJobChecks(:1, :2, :3); END;";
 
+/// SQL statement for function getSvcClassesWithNoSpace
+const std::string castor::jobmanager::ora::OraJobManagerSvc::s_getSvcClassesWithNoSpaceString =
+  "SELECT name FROM SvcClass WHERE checkFailJobsWhenNoSpace(id) = 1";
+
 
 //-----------------------------------------------------------------------------
 // constructor
@@ -80,7 +84,8 @@ castor::jobmanager::ora::OraJobManagerSvc::OraJobManagerSvc
   m_jobToScheduleStatement(0),
   m_updateSchedulerJobStatement(0),
   m_getSchedulerResourcesStatement(0),
-  m_postJobChecksStatement(0) {}
+  m_postJobChecksStatement(0),
+  m_getSvcClassesWithNoSpaceStatement(0) {}
 
 
 //-----------------------------------------------------------------------------
@@ -125,16 +130,19 @@ void castor::jobmanager::ora::OraJobManagerSvc::reset() throw() {
       deleteStatement(m_getSchedulerResourcesStatement);
     if (m_postJobChecksStatement)
       deleteStatement(m_postJobChecksStatement);
+    if (m_getSvcClassesWithNoSpaceStatement)
+      deleteStatement(m_getSvcClassesWithNoSpaceStatement);
   } catch (oracle::occi::SQLException e) {
     // Do nothing
   }
 
   // Now reset all pointers to 0
-  m_failSchedulerJobStatement      = 0;
-  m_jobToScheduleStatement         = 0;
-  m_updateSchedulerJobStatement    = 0;
-  m_getSchedulerResourcesStatement = 0;
-  m_postJobChecksStatement         = 0;
+  m_failSchedulerJobStatement         = 0;
+  m_jobToScheduleStatement            = 0;
+  m_updateSchedulerJobStatement       = 0;
+  m_getSchedulerResourcesStatement    = 0;
+  m_postJobChecksStatement            = 0;
+  m_getSvcClassesWithNoSpaceStatement = 0;
 }
 
 
@@ -389,11 +397,12 @@ void castor::jobmanager::ora::OraJobManagerSvc::updateSchedulerJob
 //-----------------------------------------------------------------------------
 // getSchedulerResources
 //-----------------------------------------------------------------------------
-std::map<std::string, castor::jobmanager::DiskServerResource *>*
+std::map<std::string, castor::jobmanager::DiskServerResource *>
 castor::jobmanager::ora::OraJobManagerSvc::getSchedulerResources()
   throw(castor::exception::Exception) {
 
   // Initialize statements
+  std::map<std::string, castor::jobmanager::DiskServerResource *> result;
   try {
     if (m_getSchedulerResourcesStatement == NULL) {
       m_getSchedulerResourcesStatement = createStatement(s_getSchedulerResourcesString);
@@ -411,27 +420,23 @@ castor::jobmanager::ora::OraJobManagerSvc::getSchedulerResources()
       throw ex;
     }
 
-    // Loop over the cursor
-    std::map<std::string, castor::jobmanager::DiskServerResource *> *result =
-      new std::map<std::string, castor::jobmanager::DiskServerResource *>;
-
     oracle::occi::ResultSet *rs = m_getSchedulerResourcesStatement->getCursor(1);
     while (oracle::occi::ResultSet::END_OF_FETCH != rs->next()) {
 
       // Attempt to find the diskserver in the map. If it doesn't exist then
       // a new diskserver needs to be created.
       std::map<std::string, castor::jobmanager::DiskServerResource *>::const_iterator it =
-	result->find(rs->getString(1));
+	result.find(rs->getString(1));
 
       // New diskserver ?
-      if (it == result->end()) {
+      if (it == result.end()) {
 	castor::jobmanager::DiskServerResource *ds =
 	  new castor::jobmanager::DiskServerResource();
 	ds->setDiskServerName(rs->getString(1));
 	ds->setStatus((castor::stager::DiskServerStatusCode)rs->getInt(2));
 	ds->setAdminStatus((castor::monitoring::AdminStatusCodes)rs->getInt(3));
-	result->insert(std::make_pair(ds->diskServerName(), ds));
-	it = result->find(ds->diskServerName());
+	result.insert(std::make_pair(ds->diskServerName(), ds));
+	it = result.find(ds->diskServerName());
       }
 
       // Add the filesystem
@@ -448,6 +453,7 @@ castor::jobmanager::ora::OraJobManagerSvc::getSchedulerResources()
     return result;
 
   } catch (oracle::occi::SQLException e) {
+    result.clear();
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -455,6 +461,7 @@ castor::jobmanager::ora::OraJobManagerSvc::getSchedulerResources()
       << std::endl << e.getMessage();
     throw ex;
   }
+  return result;
 }
 
 
@@ -497,4 +504,42 @@ bool castor::jobmanager::ora::OraJobManagerSvc::postJobChecks
     throw ex;
   }
   return false;
+}
+
+
+//-----------------------------------------------------------------------------
+// getSvcClassesWithNoSpace
+//-----------------------------------------------------------------------------
+std::vector<std::string>
+castor::jobmanager::ora::OraJobManagerSvc::getSvcClassesWithNoSpace()
+  throw(castor::exception::Exception) {
+
+  // Initialize statements
+  std::vector<std::string> result;
+  try {
+    if (m_getSvcClassesWithNoSpaceStatement == NULL) {
+      m_getSvcClassesWithNoSpaceStatement = 
+	createStatement(s_getSvcClassesWithNoSpaceString);
+      m_getSvcClassesWithNoSpaceStatement->setAutoCommit(true);
+    }
+
+    // Loop over results
+    oracle::occi::ResultSet *rs = 
+      m_getSvcClassesWithNoSpaceStatement->executeQuery();
+    while (oracle::occi::ResultSet::END_OF_FETCH != rs->next()) {
+      result.push_back(rs->getString(1));
+    }
+    m_getSvcClassesWithNoSpaceStatement->closeResultSet(rs);
+    return result;
+
+  } catch (oracle::occi::SQLException e) {
+    result.clear();
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in getSvcClassesWithNoSpace."
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+  return result;
 }

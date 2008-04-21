@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/03/27 13:32:29 $ $Author: waldron $
+ * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/04/21 11:53:00 $ $Author: waldron $
  *
  * Cancellation thread used to cancel jobs in the LSF with have been in a
  * PENDING status for too long
@@ -46,8 +46,7 @@ castor::jobmanager::ManagementThread::ManagementThread(int timeout)
   m_timeout(timeout),
   m_initialized(false),
   m_resReqKill(false),
-  m_diskCopyPendingTimeout(0),
-  m_schedulerResources(0) {
+  m_diskCopyPendingTimeout(0) {
 
   // Initialize the oracle job manager service.
   castor::IService *orasvc =
@@ -124,10 +123,8 @@ void castor::jobmanager::ManagementThread::run(void *param) {
 
   // Reset configuration variables
   m_pendingTimeouts.clear();
-  if (m_schedulerResources != 0) {
-    delete m_schedulerResources;
-    m_schedulerResources = 0;
-  }
+  m_schedulerResources.clear();
+  m_svcClassesWithNoSpace.clear();
 
   // Remove all entries in the processed cache whose timestamp has exceeded
   // the CLEAN_PERIOD in lsb.params.
@@ -157,11 +154,6 @@ void castor::jobmanager::ManagementThread::run(void *param) {
       // option.
       std::getline(iss, svcclass, ':');
       iss >> timeout;
-
-      // If the svcclass is 'default' map it to the default queue in LSF
-      if (!strcasecmp(svcclass.c_str(), "default")) {
-	svcclass = m_defaultQueue;
-      }
 
       if (iss.fail()) {
 	// "Invalid JobManager/PendingTimeouts option, ignoring entry"
@@ -195,7 +187,7 @@ void castor::jobmanager::ManagementThread::run(void *param) {
     }
   }
 
-  // Extract the available scheduler resources from the database.
+  // Extract the available scheduler resources from the stager database.
   try {
     if (m_resReqKill) {
       m_schedulerResources = m_jobManagerService->getSchedulerResources();
@@ -213,6 +205,28 @@ void castor::jobmanager::ManagementThread::run(void *param) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", "General exception caught")};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 31, 1, params);
+  }
+
+  // Extract the list of diskonly service classes which no longer have any
+  // available space from the stager database.
+  try {
+    if (m_resReqKill) {
+      m_svcClassesWithNoSpace = m_jobManagerService->getSvcClassesWithNoSpace();
+    }
+  } catch (castor::exception::Exception e) {
+    
+    // "Exception caught trying get space availability of all diskonly service
+    // classes, continuing anyway"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Type", sstrerror(e.code())),
+       castor::dlf::Param("Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 37, 2, params);
+  } catch (...) {
+
+    // "Failed to execute getSvcClassesWithNoSpace, continuing anyway"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Message", "General exception caught")};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 38, 1, params);
   }
 
   // Retrieve a list of all LSF jobs recently finished. This will allow us to
@@ -331,6 +345,12 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
     return;
   }
 
+  // Determine the name of the service class being used.
+  std::string svcClass =job->submit.queue;
+  if (!strcasecmp(job->submit.queue, m_defaultQueue.c_str())) {
+    svcClass = "default";
+  }
+  
   // Processing for jobs which have finished
   if (IS_FINISH(job->status)) {
 
@@ -381,7 +401,7 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
   u_signed64 timeout = 0;
   if (requestType != OBJ_StageDiskCopyReplicaRequest) {
     std::map<std::string, u_signed64>::const_iterator it =
-      m_pendingTimeouts.find(job->submit.queue);
+      m_pendingTimeouts.find(svcClass);
 
     // If no svcclass entry can be found in the PendingTimeout option check for
     // a default signified by an "all" svcclass name.
@@ -406,8 +426,34 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
 	   castor::dlf::Param("Username", job->user),
 	   castor::dlf::Param("Type", castor::ObjectsIdStrings[requestType]),
 	   castor::dlf::Param("Timeout", timeout),
+	   castor::dlf::Param("SvcClass", svcClass),
 	   castor::dlf::Param(subRequestId)};
-	castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 25, 5, params, &fileId);
+	castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 25, 6, params, &fileId);
+      }
+      m_processedCache[job->submit.jobName] = time(NULL);
+      return;
+    }
+  }
+
+  // Terminate the job if the target service classes is a diskonly service class
+  // which no longer has any space available.
+  if ((m_resReqKill) &&
+      (requestType == OBJ_StageDiskCopyReplicaRequest) || 
+      (requestType == OBJ_StagePutRequest) ||
+      (requestType == OBJ_StageUpdateRequest)) {
+    std::vector<std::string>::const_iterator it =
+      std::find(m_svcClassesWithNoSpace.begin(), 
+		m_svcClassesWithNoSpace.end(), svcClass); 
+    if (it != m_svcClassesWithNoSpace.end()) {
+      if (terminateRequest(job->jobId, requestId, subRequestId, fileId, ENOSPC)) {
+	// "Job terminated, svcclass no longer has any space available"
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("JobId", (int)job->jobId),
+	   castor::dlf::Param("Username", job->user),
+	   castor::dlf::Param("Type", castor::ObjectsIdStrings[requestType]),
+	   castor::dlf::Param("SvcClass", svcClass),
+	   castor::dlf::Param(subRequestId)};
+	castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 39, 5, params, &fileId);
       }
       m_processedCache[job->submit.jobName] = time(NULL);
       return;
@@ -415,7 +461,7 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
   }
 
   // All further processing requires the scheduler resources to be defined.
-  if ((m_schedulerResources == NULL) || (!m_resReqKill)) {
+  if (!m_schedulerResources.size() || !m_resReqKill) {
     return;
   }
 
@@ -443,8 +489,8 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
       // Diskserver and or requested filesystem is disabled ?
       std::map<std::string,
 	castor::jobmanager::DiskServerResource *>::const_iterator it =
-	m_schedulerResources->find(diskServer);
-      if (it != m_schedulerResources->end()) {
+	m_schedulerResources.find(diskServer);
+      if (it != m_schedulerResources.end()) {
 	DiskServerResource *ds = (*it).second;
 	for (unsigned int i = 0; i < ds->fileSystems().size(); i++) {
 	  FileSystemResource *fs = ds->fileSystems()[i];
@@ -475,8 +521,9 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
 	    {castor::dlf::Param("JobId", (int)job->jobId),
 	     castor::dlf::Param("Username", job->user),
 	     castor::dlf::Param("Type", castor::ObjectsIdStrings[requestType]),
+	     castor::dlf::Param("SvcClass", svcClass),
 	     castor::dlf::Param(subRequestId)};
-	  castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 32, 4, params, &fileId);
+	  castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 32, 5, params, &fileId);
 	} else {
 	  // "Job terminated, source filesystem for disk2disk copy is
 	  // DISABLED, restarting SubRequest"
@@ -485,8 +532,9 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
 	     castor::dlf::Param("Username", job->user),
 	     castor::dlf::Param("Type", castor::ObjectsIdStrings[requestType]),
 	     castor::dlf::Param("RequestedFileSystem", rfs[0]),
+	     castor::dlf::Param("SvcClass", svcClass),
 	     castor::dlf::Param(subRequestId)};
-	  castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 33, 5, params, &fileId);
+	  castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 33, 6, params, &fileId);
 	}
       }
       m_processedCache[job->submit.jobName] = time(NULL);
@@ -498,26 +546,20 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
   // for requests which do not force a set of requested filesystems. e.g. PUTs
   if ((!rfs.size()) || (requestType == OBJ_StageDiskCopyReplicaRequest)) {
 
-    // Map the default queue name to the default svcclass.
-    std::string queue = job->submit.queue;
-    if (!strcasecmp(job->submit.queue, m_defaultQueue.c_str())) {
-      queue = "default";
-    }
-
     // If we don't find any filesystems belonging to the svclass in PRODUCTION
     // fail the request
     bool terminateJob = true;
     for (std::map<std::string,
 	   castor::jobmanager::DiskServerResource *>::const_iterator it =
-	   m_schedulerResources->begin();
-	 it != m_schedulerResources->end();
+	   m_schedulerResources.begin();
+	 it != m_schedulerResources.end();
 	 it++) {
       DiskServerResource *ds = (*it).second;
       for (unsigned int i = 0; i < ds->fileSystems().size(); i++) {
 	FileSystemResource *fs = ds->fileSystems()[i];
 	if ((ds->status() == castor::stager::DISKSERVER_PRODUCTION) &&
 	    (fs->status() == castor::stager::FILESYSTEM_PRODUCTION) &&
-	    (fs->svcClassName() == queue)) {
+	    (fs->svcClassName() == svcClass)) {
 	  terminateJob = false;
 	  break;
 	}
@@ -531,7 +573,7 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
 	  {castor::dlf::Param("JobId", (int)job->jobId),
 	   castor::dlf::Param("Username", job->user),
 	   castor::dlf::Param("Type", castor::ObjectsIdStrings[requestType]),
-	   castor::dlf::Param("SvcClass", job->submit.queue),
+	   castor::dlf::Param("SvcClass", svcClass),
 	   castor::dlf::Param(subRequestId)};
 	castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 34, 5, params, &fileId);
       }

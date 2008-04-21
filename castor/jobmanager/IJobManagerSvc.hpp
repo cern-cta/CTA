@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobManagerSvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/03/27 18:23:56 $ $Author: waldron $
+ * @(#)$RCSfile: IJobManagerSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/04/21 11:53:00 $ $Author: waldron $
  *
  * This class provides methods for managing jobs
  *
@@ -91,7 +91,7 @@ namespace castor {
        * @exception Exception in case of error
        */
       virtual std::map
-      <std::string, castor::jobmanager::DiskServerResource *>*
+      <std::string, castor::jobmanager::DiskServerResource *>
       getSchedulerResources()
 	throw(castor::exception::Exception) = 0;
 
@@ -114,6 +114,14 @@ namespace castor {
       (const std::string subReqId, const int errorCode)
 	throw(castor::exception::Exception) = 0;
 
+      /**
+       * Get a list of all service classes which are classified as having
+       * diskonly behaviour and no longer have space available.
+       * @exception Exception in case of error
+       */
+      virtual std::vector<std::string> getSvcClassesWithNoSpace()
+	throw(castor::exception::Exception) = 0;
+      
     };
 
   } // End of namespace jobmanager

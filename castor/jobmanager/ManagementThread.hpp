@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ManagementThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/18 07:34:43 $ $Author: waldron $
+ * @(#)$RCSfile: ManagementThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/04/21 11:53:01 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -133,9 +133,12 @@ namespace castor {
       std::map<std::string, u_signed64> m_processedCache;
 
       /// A container holding the resources available for scheduling
-      std::map<std::string, castor::jobmanager::DiskServerResource *>
-      *m_schedulerResources;
+      std::map<std::string, castor::jobmanager::DiskServerResource *> 
+      m_schedulerResources;
 
+      /// A containter holding the names of the service classes which no longer
+      /// have any space available.
+      std::vector<std::string> m_svcClassesWithNoSpace;
     };
 
   } // End of namespace jobmanager
