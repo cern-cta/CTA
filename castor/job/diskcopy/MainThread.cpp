@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/03/10 09:39:25 $ $Author: waldron $
+ * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/04/21 11:50:14 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -190,28 +190,28 @@ void castor::job::diskcopy::MainThread::parseCommandLine
   Coptions_t longopts[] = {
     
     // Defaults
-    { "config",     REQUIRED_ARGUMENT, NULL, 'c' },
-    { "help",       NO_ARGUMENT,       NULL, 'h' },
+    { "config",        REQUIRED_ARGUMENT, NULL, 'c' },
+    { "help",          NO_ARGUMENT,       NULL, 'h' },
 
     // These options are for logging purposes only!
-    { "request",    REQUIRED_ARGUMENT, NULL, 'r' },
-    { "subrequest", REQUIRED_ARGUMENT, NULL, 's' },
+    { "request",       REQUIRED_ARGUMENT, NULL, 'r' },
+    { "subrequest",    REQUIRED_ARGUMENT, NULL, 's' },
 
     // The nameserver invariants
-    { "fileid",     REQUIRED_ARGUMENT, NULL, 'F' },
-    { "nshost",     REQUIRED_ARGUMENT, NULL, 'H' },
+    { "fileid",        REQUIRED_ARGUMENT, NULL, 'F' },
+    { "nshost",        REQUIRED_ARGUMENT, NULL, 'H' },
 
     // Source and destination diskcopy ids
-    { "destdc",     REQUIRED_ARGUMENT, NULL, 'D' },
-    { "srcdc",      REQUIRED_ARGUMENT, NULL, 'X' },
+    { "destdc",        REQUIRED_ARGUMENT, NULL, 'D' },
+    { "srcdc",         REQUIRED_ARGUMENT, NULL, 'X' },
     
     // Resources
-    { "svcclass",   REQUIRED_ARGUMENT, NULL, 'S' },
-    { "resfile",    REQUIRED_ARGUMENT, NULL, 'R' },
+    { "svcclass",      REQUIRED_ARGUMENT, NULL, 'S' },
+    { "resfile",       REQUIRED_ARGUMENT, NULL, 'R' },
 
     // Logging/statistics
-    { "rstarttime", REQUIRED_ARGUMENT, NULL, 't' },
-    { NULL,         0,                 NULL, 0   }
+    { "rcreationtime", REQUIRED_ARGUMENT, NULL, 't' },
+    { NULL,            0,                 NULL, 0   }
   };
 
   Coptind   = 1;
@@ -640,13 +640,19 @@ void castor::job::diskcopy::MainThread::terminate
   }
 
   // "DiskCopyTransfer failed"
-  castor::dlf::Param params[] =
-    {castor::dlf::Param("ExitCode", status),
-     castor::dlf::Param("FileSize", m_mover->fileSize()),
-     castor::dlf::Param("BytesTransferred", m_mover->bytesTransferred()),
-     castor::dlf::Param(m_subRequestId)};
-  castor::dlf::dlf_writep(m_requestId, DLF_LVL_SYSTEM, 41, 4, params, &m_fileId);
-
+  if (m_mover) {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("ExitCode", status),
+       castor::dlf::Param("FileSize", m_mover->fileSize()),
+       castor::dlf::Param("BytesTransferred", m_mover->bytesTransferred()),
+       castor::dlf::Param(m_subRequestId)};
+    castor::dlf::dlf_writep(m_requestId, DLF_LVL_SYSTEM, 41, 4, params, &m_fileId);
+  } else {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("ExitCode", status),
+       castor::dlf::Param(m_subRequestId)};
+    castor::dlf::dlf_writep(m_requestId, DLF_LVL_SYSTEM, 41, 2, params, &m_fileId);
+  }
   dlf_shutdown(5);
   exit(status);
 }
