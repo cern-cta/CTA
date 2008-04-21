@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.96 $ $Release$ $Date: 2008/04/21 12:00:57 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.97 $ $Release$ $Date: 2008/04/21 15:07:42 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -115,34 +115,6 @@ ALTER TABLE VdqmTape
 ALTER TABLE TapeAccessSpecification
   ADD CONSTRAINT CH_TapeAccessSpec_accessMode
     CHECK ((accessMode=0) OR (accessMode=1));
-
-
-/* Triggers implementing constraints */
-CREATE OR REPLACE TRIGGER TR_I_TapeDriveDedication
-  BEFORE INSERT ON TapeDriveDedication
-FOR EACH ROW
-DECLARE
-  dummyVar VARCHAR2(255);
-BEGIN
-
-  BEGIN
-    SELECT dummy INTO dummyVar
-      FROM DUAL
-      WHERE REGEXP_LIKE(dummy, :NEW.clientHost);
-  EXCEPTION
-    WHEN OTHERS THEN
-      RAISE_APPLICATION_ERROR(-20000, 'Invalid clientHost regular expression');
-  END;
-
-  BEGIN
-    SELECT dummy INTO dummyVar
-      FROM DUAL
-      WHERE REGEXP_LIKE(dummy, :NEW.vid);
-  EXCEPTION
-    WHEN OTHERS THEN
-      RAISE_APPLICATION_ERROR(-20001, 'Invalid vid regular expression');
-  END;
-END;
 
 
 /* Foreign key constraints with an index for each */
