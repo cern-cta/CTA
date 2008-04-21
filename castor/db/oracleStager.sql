@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.662 $ $Date: 2008/04/17 06:21:52 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.663 $ $Date: 2008/04/21 11:48:48 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1867,6 +1867,9 @@ BEGIN
         END;
       END;
     END IF;
+    -- Release the lock on the DiskServer as soon as possible to prevent
+    -- deadlocks with other activities e.g. recaller
+    COMMIT;
   END LOOP;
   -- And then FileSystems
   ind := fileSystemValues.FIRST;
@@ -1916,7 +1919,7 @@ BEGIN
                    nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams,
                    id, diskPool, diskserver, status, adminStatus)
             VALUES (fileSystemValues(ind + 9), fileSystems(i), fileSystemValues(ind+11),
-                    fileSystemValues(ind+13), fileSystemValues(ind+12),
+                    fileSystemValues(ind + 13), fileSystemValues(ind + 12),
                     fileSystemValues(ind + 10), fileSystemValues(ind + 2),
                     fileSystemValues(ind + 3), fileSystemValues(ind + 4),
                     fileSystemValues(ind + 5), fileSystemValues(ind + 6),
@@ -1928,5 +1931,8 @@ BEGIN
       END IF;
       ind := ind + 14;
     END IF;
+    -- Release the lock on the FileSystem as soon as possible to prevent
+    -- deadlocks with other activities e.g. recaller
+    COMMIT;
   END LOOP;
 END;

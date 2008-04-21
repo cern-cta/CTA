@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.645 $ $Date: 2008/04/17 06:13:40 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.646 $ $Date: 2008/04/21 11:48:48 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -362,8 +362,12 @@ END;
 CREATE OR REPLACE PROCEDURE cancelRecall
 (cfId NUMBER, dcId NUMBER, newSubReqStatus NUMBER) AS
   srIds "numList";
+  unused NUMBER;
 BEGIN
-  -- cancel the recall
+  -- Lock the CastorFile
+  SELECT id INTO unused FROM CastorFile 
+   WHERE id = cfId FOR UPDATE;
+  -- Cancel the recall
   deleteTapeCopies(cfId);
   -- Delete the DiskCopy
   UPDATE DiskCopy SET status = 7 WHERE id = dcId; -- INVALID
