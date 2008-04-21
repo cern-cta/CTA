@@ -1,10 +1,31 @@
-/*                        ORACLE ENTERPRISE EDITION                         */
-/*                                                                          */
-/* This file contains SQL code that will destroy the dlf database schema    */
-/* DBA privileges must be present for removing the scheduled job            */
+/******************************************************************************
+ *              dlf_oracle_drop.sql
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * @(#)$RCSfile: dlf_oracle_drop.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/04/21 12:08:21 $ $Author: waldron $
+ *
+ * This script drops a DLF schema
+ *
+ * @author Castor Dev team, castor-dev@cern.ch
+ *****************************************************************************/
 
 DECLARE
-  v_current_user  VARCHAR2(2048);
+  username VARCHAR2(2048);
 BEGIN
 
   -- Purge the recycle bin
@@ -35,13 +56,13 @@ BEGIN
 
   -- Extract the name of the current user running the PLSQL procedure.
   SELECT SYS_CONTEXT('USERENV', 'CURRENT_USER') 
-    INTO v_current_user
+    INTO username
     FROM dual;
 
   -- Drop tablespaces
   FOR rec IN (SELECT tablespace_name
                 FROM user_tablespaces
-               WHERE tablespace_name LIKE CONCAT('DLF_%_', v_current_user))
+               WHERE tablespace_name LIKE CONCAT('DLF_%_', username))
   LOOP
     EXECUTE IMMEDIATE 'ALTER TABLESPACE '||rec.tablespace_name||' OFFLINE';
     EXECUTE IMMEDIATE 'DROP TABLESPACE '||rec.tablespace_name||'
