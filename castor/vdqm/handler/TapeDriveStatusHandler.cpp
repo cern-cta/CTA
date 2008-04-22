@@ -229,18 +229,20 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
     }
   } 
 
-  if(strcmp(tapeRequest->tape()->vid().c_str(), ptr_driveRequest->volid) == 0) {
-    //The tape, which is now in the tape drive
-    mountedTape = ptr_IVdqmService->selectTape(ptr_driveRequest->volid, 0, 
+  if(tapeRequest) {
+    if(strcmp(tapeRequest->tape()->vid().c_str(),ptr_driveRequest->volid)==0) {
+      //The tape, which is now in the tape drive
+      mountedTape = ptr_IVdqmService->selectTape(ptr_driveRequest->volid, 0, 
                           tapeRequest->tapeAccessSpecification()->accessMode());
-    ptr_tapeDrive->setTape(mountedTape);
-  } else {
-    // Normally, this is not needed any more!
-    castor::exception::Exception ex(EVQBADVOLID);
-    ex.getMessage() << "TapeDriveStatusHandler::handleVolMountStatus(): "
-                    << "No Tape with specified volid in db" << std::endl;
+      ptr_tapeDrive->setTape(mountedTape);
+    } else {
+      // Normally, this is not needed any more!
+      castor::exception::Exception ex(EVQBADVOLID);
+      ex.getMessage() << "TapeDriveStatusHandler::handleVolMountStatus(): "
+                      << "No Tape with specified volid in db" << std::endl;
                     
-    throw ex;    
+      throw ex;    
+    }
   }
   
   castor::dlf::Param param[] = {
