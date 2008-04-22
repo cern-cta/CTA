@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/04/21 12:07:49 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/04/22 06:18:48 $ $Author: waldron $
  *
  * This script create a new DLF schema
  *
@@ -629,7 +629,7 @@ BEGIN
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'partitionCreationJob',
       JOB_TYPE        => 'STORED_PROCEDURE',
-      JOB_ACTION      => 'createPartition',
+      JOB_ACTION      => 'createPartitions',
       START_DATE      => TRUNC(SYSDATE) + 1/24,
       REPEAT_INTERVAL => 'FREQ=DAILY',
       ENABLED         => TRUE,

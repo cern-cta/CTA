@@ -629,7 +629,7 @@ BEGIN
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'partitionCreationJob',
       JOB_TYPE        => 'STORED_PROCEDURE',
-      JOB_ACTION      => 'createPartition',
+      JOB_ACTION      => 'createPartitions',
       START_DATE      => TRUNC(SYSDATE) + 1/24,
       REPEAT_INTERVAL => 'FREQ=DAILY',
       ENABLED         => TRUE,
