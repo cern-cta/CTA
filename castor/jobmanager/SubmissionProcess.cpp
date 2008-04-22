@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2008/04/21 14:54:16 $ $Author: riojac3 $
+ * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2008/04/22 08:59:59 $ $Author: riojac3 $
  *
  * The Submission Process is used to submit new jobs into the scheduler. It is
  * run inside a separate process allowing for setuid and setgid calls to take
@@ -422,9 +422,9 @@ void castor::jobmanager::SubmissionProcess::submitJob
 	<< ((request->ipAddress() & 0x000000FF))
 	<< ":" << request->port() << "\""
 	<< " " << request->clientSecure()
+	<< " " << request->requestCreationTime()
         << " " << request->euid()
-	<< " " << request->egid()
-	<< " " << request->requestCreationTime();
+        << " " << request->egid();
   }
   strncpy(command, cmd.str().c_str(), MAX_CMD_DESC_LEN);
   m_job.command = command;
