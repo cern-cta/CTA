@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: waldron $
+ * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: gtaur $
  *
  *
  *
@@ -402,7 +402,6 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 
 
 castor::infoPolicy::CnsInfoMigrationPolicy* castor::rtcopy::mighunter::MigHunterThread::getInfoFromNs(std::string nsHost,u_signed64 fileId){
-  castor::infoPolicy::CnsInfoMigrationPolicy* result=new castor::infoPolicy::CnsInfoMigrationPolicy();
   struct Cns_filestat statbuf;
   struct Cns_fileid cnsFile;
   memset(&cnsFile,'\0',sizeof(cnsFile));
@@ -411,6 +410,7 @@ castor::infoPolicy::CnsInfoMigrationPolicy* castor::rtcopy::mighunter::MigHunter
   castorFileName[0] = '\0';
   strncpy(cnsFile.server,nsHost.c_str(),sizeof(cnsFile.server)-1);
   int rc = Cns_statx(castorFileName,&cnsFile,&statbuf);
+
   if (rc == -1){
     castor::dlf::Param params2[]={
       castor::dlf::Param("Filename", castorFileName),
@@ -418,7 +418,9 @@ castor::infoPolicy::CnsInfoMigrationPolicy* castor::rtcopy::mighunter::MigHunter
       castor::dlf::Param("Error", sstrerror(serrno))};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6, 3, params2, &cnsFile);
     return NULL;
-  }        
+  }  
+
+  castor::infoPolicy::CnsInfoMigrationPolicy* result=new castor::infoPolicy::CnsInfoMigrationPolicy();     
   result->setFileId(statbuf.fileid);
   result->setFileMode((u_signed64)statbuf.filemode);
   result->setNlink(statbuf.nlink);
