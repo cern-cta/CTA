@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/04/21 12:29:50 $ $Author: itglp $
+ * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/04/22 18:04:17 $ $Author: itglp $
  *
  *
  *
@@ -68,12 +68,19 @@ void castor::db::ora::OraStatement::setString(int pos, std::string value)
 
 void castor::db::ora::OraStatement::setClob(int pos, std::string value)
 {
+  if(value.empty()) {
+    // we explicitly prevent this because any subsequent query on a row
+    // where an empty clob was stored will fail!
+    castor::exception::SQLError ex;
+    ex.getMessage() << "Cannot store an empty clob at pos " << pos;
+    throw ex;
+  }
   // a clob is actually stored in two steps: first as an empty one
   oracle::occi::Clob clob(m_cnvSvc->getConnection());
   clob.setEmpty();
   m_statement->setClob(pos, clob);
   // then afterwards with a SELECT FOR UPDATE query: so we keep the value
-  // for later reuse in the execute method
+  // for later use in the execute method
   m_clobBuf = value;
   m_clobPos = pos;
 }
