@@ -259,14 +259,15 @@ void parseCommandLine
     args.isSecure = true;
   }
  
+  // request creation time
+  args.requestCreationTime = atoi(argv[10]);
+  
   // Euid
-  args.Euid = strtou64(argv[10]);
+  args.Euid = strtou64(argv[11]);
 
   // Gid
-  args.EGid = strtou64(argv[11]);
+  args.EGid = strtou64(argv[12]);
 
-  // request creation time
-  args.requestCreationTime = atoi(argv[12]);
 }
 
 // -----------------------------------------------------------------------
