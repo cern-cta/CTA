@@ -172,7 +172,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
     
   TapeRequest* tapeRequest = ptr_tapeDrive->runningTapeReq();
   TapeServer* tapeServer = ptr_tapeDrive->tapeServer();
-  castor::vdqm::VdqmTape* mountedTape = NULL;  
+
 
   // A mount volume request. The unit must first have been assigned.
   if ( ptr_tapeDrive->status() != UNIT_ASSIGNED) {
@@ -229,18 +229,18 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
     }
   } 
 
-  if(tapeRequest) {
+  if(tapeRequest != NULL) {
     if(strcmp(tapeRequest->tape()->vid().c_str(),ptr_driveRequest->volid)==0) {
-      //The tape, which is now in the tape drive
-      mountedTape = ptr_IVdqmService->selectTape(ptr_driveRequest->volid, 0, 
-                          tapeRequest->tapeAccessSpecification()->accessMode());
+      // The tape, which is now in the tape drive
+      castor::vdqm::VdqmTape* mountedTape =
+        ptr_IVdqmService->selectTape(ptr_driveRequest->volid, 0, 
+        tapeRequest->tapeAccessSpecification()->accessMode());
       ptr_tapeDrive->setTape(mountedTape);
     } else {
       // Normally, this is not needed any more!
       castor::exception::Exception ex(EVQBADVOLID);
       ex.getMessage() << "TapeDriveStatusHandler::handleVolMountStatus(): "
                       << "No Tape with specified volid in db" << std::endl;
-                    
       throw ex;    
     }
   }
@@ -262,25 +262,23 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
   ptr_tapeDrive->setUsecount(ptr_tapeDrive->usecount() + 1);
   
   
-  if ( tapeRequest ) {
+  if(tapeRequest != NULL) {
     // "TapeDriveStatusHandler::handleVolMountStatus(): Tape mounted in
     // tapeDrive"
     castor::dlf::Param params[] = {
       castor::dlf::Param("tapeDriveID", ptr_tapeDrive->id()),
-      castor::dlf::Param("tapeID", mountedTape->id()),
+      castor::dlf::Param("tapeID", ptr_tapeDrive->tape()),
       castor::dlf::Param("tapeRequestID", tapeRequest->id())};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       VDQM_HANDLE_VOL_MOUNT_STATUS_MOUNTED, 3, params);
-  }
-  else {
+  } else {
     // "TapeDriveStatusHandler::handleVolMountStatus(): Tape mounted in
     // tapeDrive"
     castor::dlf::Param params[] =
       {castor::dlf::Param("tapeDriveID", ptr_tapeDrive->id()),
-       castor::dlf::Param("tapeID", mountedTape->id()),
        castor::dlf::Param("tapeRequestID", "Local Request")};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-      VDQM_HANDLE_VOL_MOUNT_STATUS_MOUNTED, 3, params);
+      VDQM_HANDLE_VOL_MOUNT_STATUS_MOUNTED, 2, params);
   }
 }
 
