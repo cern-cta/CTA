@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.97 $ $Release$ $Date: 2008/04/21 15:07:42 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.98 $ $Release$ $Date: 2008/04/23 19:30:33 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -54,6 +54,7 @@ INSERT INTO TapeRequestStatusCodes VALUES (2, 'REQUEST_BEINGSUBMITTED');
 INSERT INTO TapeRequestStatusCodes VALUES (3, 'REQUEST_SUBMITTED');
 INSERT INTO TapeRequestStatusCodes VALUES (4, 'REQUEST_FAILED');
 COMMIT;
+
 
 /* Not null column constraints */
 ALTER TABLE CLIENTIDENTIFICATION MODIFY (EGID NOT NULL);
@@ -295,269 +296,364 @@ ALTER TABLE VdqmTape
     INITIALLY DEFERRED
     ENABLE;
 
-/* get current time as a time_t. Not that easy in ORACLE */
-CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
-  ret NUMBER;
-BEGIN
-  SELECT (SYSDATE - to_date('01-jan-1970 01:00:00','dd-mon-yyyy HH:MI:SS')) * (24*60*60) INTO ret FROM DUAL;
-  RETURN ret;
-END;
-
-/* PL/SQL code for castorVdqm package */
-CREATE OR REPLACE PACKAGE castorVdqm AS
-  TYPE Drive2Req IS RECORD (
-    tapeDrive NUMBER,
-    tapeRequest NUMBER);
-  TYPE Drive2Req_Cur IS REF CURSOR RETURN Drive2Req;
-  TYPE TapeDrive_Cur IS REF CURSOR RETURN TapeDrive%ROWTYPE;
-  TYPE TapeRequest_Cur IS REF CURSOR RETURN TapeRequest%ROWTYPE;
-END castorVdqm;
-
-
 /**
- * PL/SQL trigger responsible for setting the modification time of a tape
- * drive when it is inserted into the TapeDrive table.
+ * castorVdqmCommon package specification.
  */
-CREATE OR REPLACE TRIGGER TR_I_TapeDrive
-  BEFORE INSERT ON TapeDrive
-FOR EACH ROW
-BEGIN
-  -- Set modification time
-  :NEW.modificationTime := getTime();
-END;
+CREATE OR REPLACE PACKAGE castorVdqmCommon AS
+
+  /**
+   * Currently under development.
+   */
+  PROCEDURE tokenize;
+
+  /**
+   * This function returns the number of seconds since the EPOCH UTC + 1.
+   *
+   * @return number of seconds since the EPOCH UTC + 1.
+   */
+  FUNCTION getTime RETURN NUMBER;
+
+END castorVdqmCommon;
 
 
 /**
- * PL/SQL trigger responsible for updating the modification time of a tape
- * drive.
+ * castorVdqmCommon package body.
  */
-CREATE OR REPLACE TRIGGER TR_U_TapeDrive
-  BEFORE UPDATE OF modificationTime, status ON TapeDrive 
-FOR EACH ROW 
-WHEN
-  ((NEW.modificationTime != OLD.modificationTime) OR (NEW.status != OLD.status))
-BEGIN
-  -- Update the modification time
-  :NEW.modificationTime := getTime();
-END;
+CREATE OR REPLACE PACKAGE BODY castorVdqmCommon AS
+
+  /**
+   * See the castorVdqm package specification for documentation.
+   */
+  PROCEDURE tokenize AS
+    TYPE TokensType IS TABLE OF VARCHAR2(256) INDEX BY BINARY_INTEGER;
+    tokensVar TokensType;
+
+    bufferVar       VARCHAR2(256) := 'vid=I10489,host=lxb8294';
+    delimiterVar    VARCHAR2(1)   := ',';
+    currentPosVAR   NUMBER        := 1;
+    nextPosVar      NUMBER        := 1;
+    delimiterPosVar NUMBER        := 1;
+    lengthVar       NUMBER        := 0;
+    indexVar        NUMBER        := 1;
+  BEGIN
+    DBMS_OUTPUT.PUT_LINE('Hello World!');
+  
+    WHILE currentPosVar <= LENGTH(bufferVar) LOOP
+      -- Try to find the next delimiter
+      delimiterPosVar := INSTR(bufferVar, delimiterVar, currentPosVar);
+
+      -- If a delimiter was found  
+      IF delimiterPosVar > 0 THEN
+        lengthVar  := delimiterPosVar - currentPosVar;
+        nextPosVar := delimiterPosVar + 1;
+      -- Else no delimiter was found
+      ELSE
+        lengthVar  := LENGTH(bufferVar) - currentPosVar + 1;
+        nextPosVar := LENGTH(bufferVar) + 1;
+      END IF;
+
+      tokensVar(tokensVar.count + 1) :=
+        SUBSTR(bufferVar, currentPosVar, lengthVar);
+
+      currentPosVar := nextPosVar;
+    END LOOP;
+
+    FOR indexVar IN tokensVar.FIRST .. tokensVar.LAST LOOP
+      DBMS_OUTPUT.PUT_LINE('tokensVar(' || indexVar || ') = ' ||
+        tokensVar(indexVar));
+
+    END LOOP;
+  END tokenize;
+
+  /**
+   * See the castorVdqm package specification for documentation.
+   */
+  FUNCTION getTime RETURN NUMBER AS
+    ret NUMBER;
+  BEGIN
+    SELECT (SYSDATE - to_date('01-jan-1970 01:00:00','dd-mon-yyyy HH:MI:SS')) *
+      (24*60*60) INTO ret FROM DUAL;
+    RETURN ret;
+  END getTime;
+
+END castorVdqmCommon;
 
 
 /**
- * PL/SQL trigger responsible for setting the creation time and initial
- * modification time of a tape request when it is inserted into the
- * TapeRequest table.
- */
-CREATE OR REPLACE TRIGGER TR_I_TapeRequest
-  BEFORE INSERT ON TapeRequest
-FOR EACH ROW
-DECLARE
-  timeVar NUMBER := getTime();
-BEGIN
-  -- Set creation time
-  :NEW.creationTime := timeVar;
-
-  -- Set modification time
-  :NEW.modificationTime := timeVar;
-END;
-
-
-/**
- * PL/SQL trigger responsible for updating the modification time of a tape
- * request.
- */
-CREATE OR REPLACE TRIGGER TR_U_TapeRequest
-  BEFORE UPDATE OF modificationTime, status ON TapeRequest
-FOR EACH ROW
-WHEN
-  ((NEW.modificationTime != OLD.modificationTime) OR (NEW.status != OLD.status))
-BEGIN
-  -- Update the modification time
-  :NEW.modificationTime := getTime();
-END;
-
-
-/**
- * This PL/SQL function returns 1 if the specified drive passes its mode
- * dedication if there is one, else it returns 0.
+ * castorVdqmView package specification.
  *
- * @param driveIdVar    the ID of the drive
- * @param accessModeVar the access mode of the volume request
+ * This package contains functionsused by some of the VDQM database views.
  */
-CREATE OR REPLACE FUNCTION passesModeDedication(
-  driveIdVar    IN NUMBER,
-  accessModeVar IN NUMBER)
-  RETURN NUMBER AS
-  nbModeDedicationsVar NUMBER;
-BEGIN
-  -- Count the number of mode dedications for the drive
-  -- (there should only be one)
-  SELECT COUNT(*) INTO nbModeDedicationsVar
-    FROM TapeDriveDedication
-    WHERE tapeDrive = driveIdVar AND accessMode IS NOT NULL;
+CREATE OR REPLACE PACKAGE castorVdqmView AS
 
-  -- Drive passes if there are no access mode dedications for it
-  IF nbModeDedicationsVar = 0 THEN
-    RETURN 1;
-  END IF;
+  /**
+   * This function determines if the specified drive and usage pass all of the
+   * dedications of the drive.
+   *
+   * @param driveIdVar the ID of the drive.
+   * @param vidVar     the vid of the volume request.
+   * @return 1 if the specified drive passes all of its dedications, else 0.
+   */
+  FUNCTION passesDedications(driveIdVar IN NUMBER, clientHostVar IN VARCHAR2,
+    accessModeVar IN NUMBER, vidVar IN VARCHAR2) RETURN NUMBER;
 
-  -- Drive has a mode dedication
+  /**
+   * This function returns the dedications of the specified drive in the format
+   * required by the showqueues command-line tool.
+   *
+   * @param driveIdVar the ID of the drive.
+   * @return the dedications of the specified drive in the format required by
+   * the showqueues command-line tool.
+   */
+  FUNCTION getVdqmDedicate(driveIdVar IN NUMBER) RETURN VARCHAR2;
 
-  -- Count the number of matching vid dedications
-  -- (there should be a maximum of one)
-  SELECT COUNT(*) INTO nbModeDedicationsVar
-    FROM TapeDriveDedication
-    WHERE
-          TapeDriveDedication.tapeDrive = driveIdVar
-      AND TapeDriveDedication.accessMode = accessModeVar;
-
-  -- As there is a mode dedication for the drive, the drive only passes if it
-  -- matches
-  IF nbModeDedicationsVar > 0 THEN
-    RETURN 1;
-  ELSE
-    RETURN 0;
-  END IF;
-END;
+END castorVdqmView;
 
 
 /**
- * This PL/SQL function returns 1 if the specified drive passes its host
- * dedications, else it returns 0.
- *
- * @param driveIdVar    the ID of the drive
- * @param clientHostVar the client host of the volume request
+ * castorVdqmView package body.
  */
-CREATE OR REPLACE FUNCTION passesHostDedications(
-  driveIdVar    IN NUMBER,
-  clientHostVar IN VARCHAR2)
-  RETURN NUMBER AS
-  nbHostDedicationsVar NUMBER;
-BEGIN
-/*
-  -- Determine if the host is dedicated to another drive
-  SELECT COUNT(*) INTO nbHostDedicationsVar
-    FROM TapeDriveDedication
-    WHERE tapeDrive != driveIdVar AND clientHost = clientHostVar;
+CREATE OR REPLACE PACKAGE BODY castorVdqmView AS
 
-  -- Drive does not pass if the host is dedicated to another drive
-  IF nbHostDedicationsVar > 0 THEN
-    RETURN 0;
-  END IF;
-*/
-  -- Count the number of host dedications for the drive
-  SELECT COUNT(*) INTO nbHostDedicationsVar
-    FROM TapeDriveDedication
-    WHERE tapeDrive = driveIdVar AND clientHost IS NOT NULL;
+  /**
+   * This private function determines whether or not the specified drive and
+   * access mode pass the mode dedications of the drive.
+   *
+   * @param driveIdVar    the ID of the drive.
+   * @param accessModeVar the access mode of the volume request.
+   * @return 1 if the specified drive and access mode pass the dedications,
+   * else 0.
+   */
+  FUNCTION passesModeDedication(
+    driveIdVar    IN NUMBER,
+    accessModeVar IN NUMBER)
+    RETURN NUMBER AS
+    nbModeDedicationsVar NUMBER;
+  BEGIN
+    -- Count the number of mode dedications for the drive
+    -- (there should only be one)
+    SELECT COUNT(*) INTO nbModeDedicationsVar
+      FROM TapeDriveDedication
+      WHERE tapeDrive = driveIdVar AND accessMode IS NOT NULL;
 
-  -- Drive passes if there are no host dedications for it
-  IF nbHostDedicationsVar = 0 THEN
+    -- Drive passes if there are no access mode dedications for it
+    IF nbModeDedicationsVar = 0 THEN
+      RETURN 1;
+    END IF;
+
+    -- Drive has a mode dedication
+
+    -- Count the number of matching vid dedications
+    -- (there should be a maximum of one)
+    SELECT COUNT(*) INTO nbModeDedicationsVar
+      FROM TapeDriveDedication
+      WHERE
+            TapeDriveDedication.tapeDrive = driveIdVar
+        AND TapeDriveDedication.accessMode = accessModeVar;
+
+    -- As there is a mode dedication for the drive, the drive only passes if it
+    -- matches
+    IF nbModeDedicationsVar > 0 THEN
+      RETURN 1;
+    ELSE
+      RETURN 0;
+    END IF;
+  END passesModeDedication;
+
+
+  /**
+   * This private function determines whether or not the specified drive and
+   * host pass the host dedications of the drive.
+   *
+   * @param driveIdVar    the ID of the drive.
+   * @param clientHostVar the client host of the volume request.
+   * @return 1 if the specified drive and host pass the dedications, else 0.
+   */
+  FUNCTION passesHostDedications(
+    driveIdVar    IN NUMBER,
+    clientHostVar IN VARCHAR2)
+    RETURN NUMBER AS
+    nbHostDedicationsVar NUMBER;
+  BEGIN
+  /*
+    -- Determine if the host is dedicated to another drive
+    SELECT COUNT(*) INTO nbHostDedicationsVar
+      FROM TapeDriveDedication
+      WHERE tapeDrive != driveIdVar AND clientHost = clientHostVar;
+
+    -- Drive does not pass if the host is dedicated to another drive
+    IF nbHostDedicationsVar > 0 THEN
+      RETURN 0;
+    END IF;
+  */
+    -- Count the number of host dedications for the drive
+    SELECT COUNT(*) INTO nbHostDedicationsVar
+      FROM TapeDriveDedication
+      WHERE tapeDrive = driveIdVar AND clientHost IS NOT NULL;
+
+    -- Drive passes if there are no host dedications for it
+    IF nbHostDedicationsVar = 0 THEN
+      RETURN 1;
+    END IF;
+
+    -- Drive has one or more host dedications
+
+    -- Count the number of matching host dedications
+    SELECT COUNT(*) INTO nbHostDedicationsVar
+      FROM TapeDriveDedication
+      WHERE
+            TapeDriveDedication.tapeDrive = driveIdVar
+        AND REGEXP_LIKE(clientHostVar, TapeDriveDedication.clientHost);
+
+    -- As there are host dedications for the drive, it only passes if at least
+    -- one matches
+    IF nbHostDedicationsVar > 0 THEN
+      RETURN 1;
+    ELSE
+      RETURN 0;
+    END IF;
+  END passesHostDedications;
+
+
+  /**
+   * This private function determines whether or not the specified drive and
+   * VID pass the VID dedications of the drive.
+   *
+   * @param driveIdVar the ID of the drive.
+   * @param vidVar     the vid of the volume request.
+   * @return 1 if the specified drive and VID pass the dedications, else 0.
+   */
+  FUNCTION passesVidDedications(
+    driveIdVar IN NUMBER,
+    vidVar     IN VARCHAR2)
+    RETURN NUMBER AS
+    nbVidDedicationsVar NUMBER;
+  BEGIN
+  /*
+    -- Determine if the vid is dedicated to another drive
+    SELECT COUNT(*) INTO nbVidDedicationsVar
+      FROM TapeDriveDedication
+      WHERE tapeDrive != driveIdVar AND vid = vidVar;
+
+    -- Drive does not pass if the vid is dedicated to another drive
+    IF nbVidDedicationsVar > 0 THEN
+      RETURN 0;
+    END IF;
+  */
+    -- Count the number of vid dedications for the drive
+    SELECT COUNT(*) INTO nbVidDedicationsVar
+      FROM TapeDriveDedication
+      WHERE tapeDrive = driveIdVar AND vid IS NOT NULL;
+
+    -- Drive passes if there are no vid dedications for it
+    IF nbVidDedicationsVar = 0 THEN
+      RETURN 1;
+    END IF;
+
+    -- Drive has one or more vid dedications
+
+    -- Count the number of matching vid dedications
+    SELECT COUNT(*) INTO nbVidDedicationsVar
+      FROM TapeDriveDedication
+      WHERE
+            TapeDriveDedication.tapeDrive = driveIdVar
+        AND REGEXP_LIKE(vidVar, TapeDriveDedication.vid);
+
+    -- As there are vid dedications for the drive, it only passes if at least
+    -- one matches
+    IF nbVidDedicationsVar > 0 THEN
+      RETURN 1;
+    ELSE
+      RETURN 0;
+    END IF;
+  END passesVidDedications;
+
+
+  /**
+   * See the castorVdqmView package specification for documentation.
+   */
+  FUNCTION passesDedications(
+    driveIdVar    IN NUMBER,
+    clientHostVar IN VARCHAR2,
+    accessModeVar IN NUMBER,
+    vidVar        IN VARCHAR2)
+    RETURN NUMBER AS
+    nbVidDedicationsVar NUMBER;
+  BEGIN
+    IF passesHostDedications(driveIdVar, clientHostVar) = 0 THEN
+      RETURN 0;
+    END IF;
+
+    IF passesModeDedication(driveIdVar, accessModeVar) = 0 THEN
+      RETURN 0;
+    END IF;
+
+    IF passesVidDedications(driveIdVar, vidVar) = 0 THEN
+      RETURN 0;
+    END IF;
+
+    -- Drive has passed all of its dedications
     RETURN 1;
-  END IF;
-
-  -- Drive has one or more host dedications
-
-  -- Count the number of matching host dedications
-  SELECT COUNT(*) INTO nbHostDedicationsVar
-    FROM TapeDriveDedication
-    WHERE
-          TapeDriveDedication.tapeDrive = driveIdVar
-      AND REGEXP_LIKE(clientHostVar, TapeDriveDedication.clientHost);
-
-  -- As there are host dedications for the drive, it only passes if at least
-  -- one matches
-  IF nbHostDedicationsVar > 0 THEN
-    RETURN 1;
-  ELSE
-    RETURN 0;
-  END IF;
-
-END;
+  END passesDedications;
 
 
-/**
- * This PL/SQL function returns 1 if the specified drive passes its vid
- * dedications, else it returns 0.
- *
- * @param driveIdVar the ID of the drive
- * @param vidVar     the vid of the volume request
- */
-CREATE OR REPLACE FUNCTION passesVidDedications(
-  driveIdVar IN NUMBER,
-  vidVar     IN VARCHAR2)
-  RETURN NUMBER AS
-  nbVidDedicationsVar NUMBER;
-BEGIN
-/*
-  -- Determine if the vid is dedicated to another drive
-  SELECT COUNT(*) INTO nbVidDedicationsVar
-    FROM TapeDriveDedication
-    WHERE tapeDrive != driveIdVar AND vid = vidVar;
+  /**
+   * See the castorVdqmView package specification for documentation.
+   */
+  FUNCTION getVdqmDedicate(driveIdVar IN NUMBER)
+    RETURN VARCHAR2
+  IS
+    buf VARCHAR2(1024);
+  BEGIN
+    FOR accessModeDedication IN (
+      SELECT accessMode
+        FROM TapeDriveDedication
+        WHERE tapeDrive = driveIdVar AND accessMode IS NOT NULL
+        ORDER BY accessMode)
+    LOOP
+      -- Add a comma if there is already a dedication in the buffer
+      IF LENGTH(buf) > 0 THEN
+        buf := buf || ',';
+      END IF;
 
-  -- Drive does not pass if the vid is dedicated to another drive
-  IF nbVidDedicationsVar > 0 THEN
-    RETURN 0;
-  END IF;
-*/
-  -- Count the number of vid dedications for the drive
-  SELECT COUNT(*) INTO nbVidDedicationsVar
-    FROM TapeDriveDedication
-    WHERE tapeDrive = driveIdVar AND vid IS NOT NULL;
+      -- Add dedication to buffer
+      buf := buf || 'mode=' || accessModeDedication.accessMode;
+    END LOOP;
 
-  -- Drive passes if there are no vid dedications for it
-  IF nbVidDedicationsVar = 0 THEN
-    RETURN 1;
-  END IF;
+    FOR clientHostDedication IN (
+      SELECT clientHost
+        FROM TapeDriveDedication
+        WHERE tapeDrive = driveIdVar AND clientHost IS NOT NULL
+        ORDER BY clientHost)
+    LOOP
+      -- Add a comma if there is already a dedication in the buffer
+      IF LENGTH(buf) > 0 THEN
+        buf := buf || ',';
+      END IF;
 
-  -- Drive has one or more vid dedications
+      -- Add dedication to buffer
+      buf := buf || 'host=' || clientHostDedication.clientHost;
+    END LOOP;
 
-  -- Count the number of matching vid dedications
-  SELECT COUNT(*) INTO nbVidDedicationsVar
-    FROM TapeDriveDedication
-    WHERE
-          TapeDriveDedication.tapeDrive = driveIdVar
-      AND REGEXP_LIKE(vidVar, TapeDriveDedication.vid);
+    FOR vidDedication IN (
+      SELECT vid
+        FROM TapeDriveDedication
+        WHERE tapeDrive = driveIdVar AND vid IS NOT NULL
+        ORDER BY vid)
+    LOOP
+      -- Add a comma if there is already a dedication in the buffer
+      IF LENGTH(buf) > 0 THEN
+        buf := buf || ',';
+      END IF;
 
-  -- As there are vid dedications for the drive, it only passes if at least
-  -- one matches
-  IF nbVidDedicationsVar > 0 THEN
-    RETURN 1;
-  ELSE
-    RETURN 0;
-  END IF;
+      -- Add dedication to buffer
+      buf := buf || 'vid=' || vidDedication.vid;
+    END LOOP;
 
-END;
+    RETURN buf;
+  END getVdqmDedicate;
 
-
-/**
- * This PL/SQL function returns 1 if the specified drive passes all of its
- * dedications, else it returns 0.
- *
- * @param driveIdVar the ID of the drive
- * @param vidVar     the vid of the volume request
- */
-CREATE OR REPLACE FUNCTION passesDedications(
-  driveIdVar    IN NUMBER,
-  clientHostVar IN VARCHAR2,
-  accessModeVar IN NUMBER,
-  vidVar        IN VARCHAR2)
-  RETURN NUMBER AS
-  nbVidDedicationsVar NUMBER;
-BEGIN
-  IF passesHostDedications(driveIdVar, clientHostVar) = 0 THEN
-    RETURN 0;
-  END IF;
-
-  IF passesModeDedication(driveIdVar, accessModeVar) = 0 THEN
-    RETURN 0;
-  END IF;
-
-  IF passesVidDedications(driveIdVar, vidVar) = 0 THEN
-    RETURN 0;
-  END IF;
-
-  -- Drive has passed all of its dedications
-  RETURN 1;
-END;
+END castorVdqmView;
 
 
 /**
@@ -608,8 +704,9 @@ WHERE
   )
   AND TapeServer.actingMode=0 -- TAPE_SERVER_ACTIVE
   AND TapeRequest.status=0 -- REQUEST_PENDING
-  AND passesDedications(tapeDrive.id, ClientIdentification.machine,
-        TapeAccessSpecification.accessMode, VdqmTape.vid)=1
+  AND castorVdqmView.passesDedications(tapeDrive.id,
+    ClientIdentification.machine, TapeAccessSpecification.accessMode,
+    VdqmTape.vid)=1
 ORDER BY
   TapeAccessSpecification.accessMode DESC,
   TapeRequest.modificationTime ASC;
@@ -642,11 +739,48 @@ INNER JOIN TapeServer ON
 WHERE
       TapeServer.actingMode=0 -- ACTIVE
   AND TapeRequest.tapeDrive=0 -- Request has not already been allocated a drive
-  AND passesDedications(tapeDrive.id, ClientIdentification.machine,
-        TapeAccessSpecification.accessMode, VdqmTape.vid)=1
+  AND castorVdqmView.passesDedications(tapeDrive.id,
+    ClientIdentification.machine, TapeAccessSpecification.accessMode,
+    VdqmTape.vid)=1
 ORDER BY
   TapeAccessSpecification.accessMode DESC,
   TapeRequest.modificationTime ASC;
+
+
+/**
+ * View used for generating the list of drives when replying to the showqueues
+ * command
+ */
+CREATE OR REPLACE VIEW tapeDriveShowqueues_VIEW
+AS WITH TimeZoneOffset AS (
+  SELECT
+    (EXTRACT(TIMEZONE_HOUR FROM CURRENT_TIMESTAMP) - 1) * 3600 AS value
+  FROM DUAL)
+SELECT
+  TapeDrive.status, TapeDrive.id, TapeDrive.runningTapeReq, TapeDrive.jobId,
+  TapeDrive.modificationTime -
+    (SELECT TimeZoneOffset.value FROM TimeZoneOffset) AS modificationTime,
+  TapeDrive.resetTime, TapeDrive.useCount, TapeDrive.errCount,
+  TapeDrive.transferredMB, TapeAccessSpecification.accessMode AS tapeAccessMode,
+  TapeDrive.totalMB, TapeServer.serverName, VdqmTape.vid, TapeDrive.driveName,
+  DeviceGroupName.dgName, castorVdqmView.getVdqmDedicate(TapeDrive.Id) AS
+    dedicate
+FROM
+  TapeDrive
+LEFT OUTER JOIN TapeServer ON
+  TapeDrive.tapeServer = TapeServer.id
+LEFT OUTER JOIN VdqmTape ON
+  TapeDrive.tape = VDQMTAPE.ID
+LEFT OUTER JOIN DEVICEGROUPNAME ON
+  TapeDrive.deviceGroupName = DeviceGroupName.id
+LEFT OUTER JOIN TapeDriveDedication ON
+  TapeDrive.id = TapeDriveDedication.tapeDrive
+LEFT OUTER JOIN TapeRequest ON
+  TapeDrive.RunningTapeReq = TapeRequest.id
+LEFT OUTER JOIN TapeAccessSpecification ON
+  TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
+ORDER BY
+  DriveName ASC;
 
 
 /**
@@ -693,656 +827,705 @@ ORDER BY
 
 
 /**
- * Returns the dedications of the specified drive in the format required by
- * the showqueues command-line tool.
+ * castorVdqm package specification.
  */
-CREATE OR REPLACE FUNCTION getVdqmDedicate(driveIdVar IN NUMBER)
-  RETURN VARCHAR2
-IS
-  buf VARCHAR2(1024);
-BEGIN
-  FOR accessModeDedication IN (
-    SELECT accessMode
-      FROM TAPEDRIVEDEDICATION
-      WHERE tapeDrive = driveIdVar AND accessMode IS NOT NULL
-      ORDER BY accessMode)
-  LOOP
-    -- Add a comma if there is already a dedication in the buffer
-    IF LENGTH(buf) > 0 THEN
-      buf := buf || ',';
-    END IF;
+CREATE OR REPLACE PACKAGE castorVdqm AS
 
-    -- Add dedication to buffer
-    buf := buf || 'mode=' || accessModeDedication.accessMode;
-  END LOOP;
+  /**
+   * This procedure tries to allocate a free tape drive to a pending tape
+   * request.
+   *
+   * @param returnVar has a value of 1 if a free drive was successfully
+   * allocated to a pending request, 0 if no possible allocation could be found
+   * or -1 if an allocation was found but was invalidated by other threads
+   * before the appropriate locks could be taken.
+   * @param tapeDriveIdVar if a free drive was successfully allocated then the
+   * value of this parameter will be the ID of the allocated tape drive, else
+   * the value of this parameter will be undefined.
+   * @param tapeDriveIdVar if a free drive was successfully allocated then the
+   * value of this parameter will be the name of the allocated tape drive, else
+   * the value of this parameter will be undefined.
+   * @param tapeRequestIdVar if a free drive was successfully allocated then the
+   * value of this parameter will be the ID of the pending request, else the
+   * value of this parameter will be undefined.
+   * @param tapeRequestVidVar if a free drive was successfully allocated then
+   * the value of this parameter will be the VID of the pending request, else
+   * the value of this parameter will be undefined.
+   */
+  PROCEDURE allocateDrive(returnVar OUT NUMBER, tapeDriveIdVar OUT NUMBER,
+    tapeDriveNameVar  OUT NOCOPY VARCHAR2, tapeRequestIdVar  OUT NUMBER,
+    tapeRequestVidVar OUT NOCOPY VARCHAR2);
 
-  FOR clientHostDedication IN (
-    SELECT clientHost
-      FROM TAPEDRIVEDEDICATION
-      WHERE tapeDrive = driveIdVar AND clientHost IS NOT NULL
-      ORDER BY clientHost)
-  LOOP
-    -- Add a comma if there is already a dedication in the buffer
-    IF LENGTH(buf) > 0 THEN
-      buf := buf || ',';
-    END IF;
+  /**
+   * This procedure gets a new matched request to be submitted to rtcpd.
+   *
+   * @tapeReqId the ID of the matched request.
+   */
+  PROCEDURE getRequestToSubmit(tapeReqId OUT NUMBER);
 
-    -- Add dedication to buffer
-    buf := buf || 'host=' || clientHostDedication.clientHost;
-  END LOOP;
+  /**
+   * This procedure tries to reuse a drive allocation.
+   *
+   * @param tapeIdVar the ID of the tape of the current drive allocation.
+   * @param tapeDriveIdVar the ID of the drive of the current drive allocation.
+   * @param returnVar has a value of 1 if the specified drive allocation was
+   * successfully reused, 0 if no possible reuse was found or -1 if a possible
+   * reuse was found but was invalidated by other threads before the appropriate
+   * locks could be taken.
+   * @param tapeRequestIdVar if the drive allocation was successfully reused
+   * then the value of this parameter will be the ID of the newly assigned
+   * request, else the value of this parameter will be undefined.
+   */
+  PROCEDURE reuseDriveAllocation(tapeIdVar IN NUMBER, tapeDriveIdVar IN NUMBER,
+    returnVar OUT NUMBER, tapeRequestIdVar  OUT NUMBER);
 
-  FOR vidDedication IN (
-    SELECT vid
-      FROM TAPEDRIVEDEDICATION
-      WHERE tapeDrive = driveIdVar AND vid IS NOT NULL
-      ORDER BY vid)
-  LOOP
-    -- Add a comma if there is already a dedication in the buffer
-    IF LENGTH(buf) > 0 THEN
-      buf := buf || ',';
-    END IF;
+  /**
+   * This procedure inserts the specified drive dedications into the database.
+   *
+   * @param driveNameVar the name of the tape drive to be dedicated
+   * @param serverNameVar the name of the tape server of the tape drive
+   * @param dgNameVar the name of the device group of the tape drive
+   * @param accessModeVar the access mode dedication
+   * @param clientHostVar the client host dedication
+   * @param vidVar the vid dedication
+   * @param euidVar the euid dedication
+   * @param egidVar the egid dedication
+   * @param resultVar is 0 if the dedications were successfully inserted into
+   * the database, -1 if the specified tape drive does not exist, -2 if the
+   * specified tape server is not associated with the specified tape drive and
+   * -3 if the specified dgn is not associated with the specified tape drive.
+   */
+  PROCEDURE dedicateDrive(driveNameVar IN VARCHAR2, serverNameVar IN  VARCHAR2,
+    dgNameVar IN  VARCHAR2, accessModeVar IN  NUMBER,
+    clientHostVar IN VARCHAR2, vidVar IN VARCHAR2, euidVar IN NUMBER,
+    egidVar IN NUMBER , resultVar OUT INTEGER);
 
-    -- Add dedication to buffer
-    buf := buf || 'vid=' || vidDedication.vid;
-  END LOOP;
+  /**
+   * This procedure deletes the specified drive from the database.
+   *
+   * @param driveNameVar the name of the tape drive to be delete
+   * @param serverNameVar the name of the tape server of the tape drive
+   * @param dgNameVar the name of the device group of the tape drive
+   * @param resultVar is 0 if the deletion was successful. -1 if the specified
+   * tape server does not exist, -2 if the specified device group name does not
+   * exist, -3 if the specified tape drive does not exist and -4 if the
+   * specified drive has a job assigned.
+   */
+  PROCEDURE deleteDrive(driveNameVar IN VARCHAR2, serverNameVar IN VARCHAR2,
+    dgNameVar IN VARCHAR2, resultVar OUT INTEGER);
 
-  RETURN buf;
-END;
+  /**
+   * This procedure tries to write to the database the fact that a successful
+   * RTCPD job submission has occured.  This update of the database may not be
+   * possible if the corresponding drive and tape request states have been
+   * modified by other threads.  For example a thread handling a tape drive
+   * request message may have put the drive into the down state.  The RTCPD job
+   * submission should be ignored in this case.
+   *
+   * @param tapeDriveIdVar the ID of the drive
+   * @param tapeRequestIdVar the ID of the tape request
+   * @param returnVar has a value of 1 if the occurance of the RTCPD job
+   * submission was successfully written to the database, else 0.
+   */
+  PROCEDURE writeRTPCDJobSubmission(tapeDriveIdVar IN NUMBER,
+    tapeRequestIdVar IN NUMBER, returnVar OUT NUMBER);
+
+  /**
+   * This procedure tries to write to the database the fact that a failed RTCPD
+   * job submission has occured.  This update of the database may not be
+   * possible if the corresponding drive and tape request states have been
+   * modified by other threads.  For example a thread handling a tape drive
+   * request message may have put the drive into the down state.  The failed
+   * RTCPD job submission should be ignored in this case.
+   *
+   * @param tapeDriveIdVar the ID of the drive
+   * @param tapeRequestIdVar the ID of the tape request
+   * @param returnVar has a value of 1 if the occurance of the failed RTCPD job
+   * submission was successfully written to the database, else 0.
+   */
+  PROCEDURE writeFailedRTPCDJobSubmission(tapeDriveIdVar IN NUMBER,
+    tapeRequestIdVar IN NUMBER, returnVar OUT NUMBER);
+
+END castorVdqm;
 
 
 /**
- * View used for generating the list of drives when replying to the showqueues
- * command
+ * castorVdqm package body.
  */
-create or replace view TAPEDRIVESHOWQUEUES_VIEW
-as with TIMEZONEOFFSET as (
-  select
-    (extract(timezone_hour from current_timestamp) - 1) * 3600 as VALUE
-  from DUAL)
-select
-  TAPEDRIVE.STATUS, TAPEDRIVE.ID, TAPEDRIVE.RUNNINGTAPEREQ, TAPEDRIVE.JOBID,
-  TAPEDRIVE.MODIFICATIONTIME -
-    (select TIMEZONEOFFSET.VALUE from TIMEZONEOFFSET) as MODIFICATIONTIME,
-  TAPEDRIVE.RESETTIME, TAPEDRIVE.USECOUNT, TAPEDRIVE.ERRCOUNT,
-  TAPEDRIVE.TRANSFERREDMB, TAPEACCESSSPECIFICATION.ACCESSMODE as TAPEACCESSMODE,
-  TAPEDRIVE.TOTALMB, TAPESERVER.SERVERNAME, VDQMTAPE.VID, TAPEDRIVE.DRIVENAME,
-  DEVICEGROUPNAME.DGNAME, getVdqmDedicate(TAPEDRIVE.ID) as DEDICATE
-from
-  TAPEDRIVE
-left outer join TAPESERVER on
-  TAPEDRIVE.TAPESERVER = TAPESERVER.ID
-left outer join VDQMTAPE on
-  TAPEDRIVE.TAPE = VDQMTAPE.ID
-left outer join DEVICEGROUPNAME on
-  TAPEDRIVE.DEVICEGROUPNAME = DEVICEGROUPNAME.ID
-left outer join TAPEDRIVEDEDICATION on
-  TAPEDRIVE.ID = TAPEDRIVEDEDICATION.TAPEDRIVE
-left outer join TAPEREQUEST on
-  TAPEDRIVE.RUNNINGTAPEREQ = TAPEREQUEST.ID
-left outer join TAPEACCESSSPECIFICATION on
-  TAPEREQUEST.TAPEACCESSSPECIFICATION = TAPEACCESSSPECIFICATION.ID
-order by
-  DRIVENAME ASC;
+CREATE OR REPLACE PACKAGE BODY castorVdqm AS
+
+  /**
+   * See the castorVdqm package specification for documentation.
+   */
+  PROCEDURE allocateDrive(
+    returnVar         OUT NUMBER,
+    tapeDriveIdVar    OUT NUMBER,
+    tapeDriveNameVar  OUT NOCOPY VARCHAR2,
+    tapeRequestIdVar  OUT NUMBER,
+    tapeRequestVidVar OUT NOCOPY VARCHAR2
+    ) AS
+
+    tapeDriveStatusVar   NUMBER;
+    tapeRequestStatusVar NUMBER;
+
+  BEGIN
+    returnVar         := 0; -- No possible allocation could be found
+    tapeDriveIdVar    := 0;
+    tapeDriveNameVar  := '';
+    tapeRequestIdVar  := 0;
+    tapeRequestVidVar := '';
+
+    SELECT
+      tapeDriveId,
+      tapeRequestId
+    INTO
+      tapeDriveIdVar, tapeRequestIdVar
+    FROM
+      CandidateDriveAllocations_VIEW
+    WHERE
+      rownum < 2;
+
+    -- If there is a possible drive allocation
+    IF tapeDriveIdVar != 0 AND tapeRequestIdVar != 0 THEN
+
+      -- The status of the drives and requests maybe modified by other scheduler
+      -- threads.  The status of the drives may be modified by threads handling
+      -- drive request messages.  The status of the requests may be modified by
+      -- threads handling tape request messages.  Therefore get a lock on the
+      -- corresponding drive and request rows and retrieve their statuses to see
+      -- if the drive allocation is still valid
+      SELECT TapeDrive.status INTO TapeDriveStatusVar
+      FROM TapeDrive
+      WHERE TapeDrive.id = tapeDriveIdVar
+      FOR UPDATE;
+      SELECT TapeRequest.status INTO TapeRequestStatusVar
+      FROM TapeRequest
+      WHERE TapeRequest.id = tapeRequestIdVar
+      FOR UPDATE;
+
+      -- Get the drive name (used for logging)
+      SELECT TapeDrive.driveName INTO TapeDriveNameVar
+      FROM TapeDrive
+      WHERE TapeDrive.id = tapeDriveIdVar;
+  
+      -- Get the VID of the pending request (used for logging)
+      SELECT VdqmTape.vid INTO tapeRequestVidVar
+      FROM TapeRequest
+      INNER JOIN VdqmTape ON TapeRequest.tape = VdqmTape.id
+      WHERE TapeRequest.id = tapeRequestIdVar;
+
+      -- If the drive allocation is still valid, i.e. drive status is UNIT_UP 
+      -- and request status is REQUEST_PENDING
+      IF(TapeDriveStatusVar = 0) AND (TapeRequestStatusVar = 0) THEN
+
+        -- Allocate the free drive to the pending request
+        UPDATE TapeDrive SET
+          status           = 1, -- UNIT_STARTING
+          jobId            = 0,
+          modificationTime = castorVdqmCommon.getTime(),
+          runningTapeReq   = tapeRequestIdVar
+        WHERE
+          id = tapeDriveIdVar;
+        UPDATE TapeRequest SET
+          status           = 1, -- MATCHED
+          tapeDrive        = tapeDriveIdVar,
+          modificationTime = castorVdqmCommon.getTime()
+        WHERE
+          id = tapeRequestIdVar;
+
+        -- A free drive has been allocated to a pending request
+        returnVar := 1;
+
+     -- Else the drive allocation is no longer valid
+     ELSE
+
+       -- A possible drive allocation was found but was invalidated by other
+       -- threads before the appropriate locks could be taken
+       returnVar := -1;
+
+     END IF; -- If the drive allocation is still valid
+
+    END IF; -- If there is a possible drive allocation
+
+  EXCEPTION
+
+    -- Do nothing if there was no free tape drive which could be allocated to a
+    -- pending request
+    WHEN NO_DATA_FOUND THEN NULL;
+
+  END allocateDrive;
 
 
-/**
- * PL/SQL procedure which tries to allocate a free tape drive to a pending tape
- * request.
- *
- * @param returnVar has a value of 1 if a free drive was successfully allocated
- * to a pending request, 0 if no possible allocation could be found or -1 if an
- * allocation was found but was invalidated by other threads before the
- * appropriate locks could be taken.
- * @param tapeDriveIdVar if a free drive was successfully allocated then the
- * value of this parameter will be the ID of the allocated tape drive, else the
- * value of this parameter will be undefined.
- * @param tapeDriveIdVar if a free drive was successfully allocated then the
- * value of this parameter will be the name of the allocated tape drive, else
- * the value of this parameter will be undefined.
- * @param tapeRequestIdVar if a free drive was successfully allocated then the
- * value of this parameter will be the ID of the pending request, else the
- * value of this parameter will be undefined.
- * @param tapeRequestVidVar if a free drive was successfully allocated then the
- * value of this parameter will be the VID of the pending request, else the
- * value of this parameter will be undefined.
- */
-CREATE OR REPLACE PROCEDURE allocateDrive(
-  returnVar         OUT NUMBER,
-  tapeDriveIdVar    OUT NUMBER,
-  tapeDriveNameVar  OUT NOCOPY VARCHAR2,
-  tapeRequestIdVar  OUT NUMBER,
-  tapeRequestVidVar OUT NOCOPY VARCHAR2
-  ) AS
+  /**
+   * See the castorVdqm package specification for documentation.
+   */
+  PROCEDURE getRequestToSubmit(tapeReqId OUT NUMBER) AS
+  LockError EXCEPTION;
+  PRAGMA EXCEPTION_INIT (LockError, -54);
+  CURSOR c IS
+     SELECT id
+       FROM TapeRequest
+      WHERE status = 1  -- MATCHED
+      FOR UPDATE SKIP LOCKED;
+  BEGIN
+    tapeReqId := 0;
+    OPEN c;
+    FETCH c INTO tapeReqId;
+    UPDATE TapeRequest SET status = 2 WHERE id = tapeReqId;  -- BEINGSUBMITTED
+    CLOSE c;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- just return reqId = 0, nothing to do
+    NULL;
+  WHEN LockError THEN
+    -- We have observed ORA-00054 errors (resource busy and acquire with
+    -- NOWAIT) even with the SKIP LOCKED clause. This is a workaround to ignore
+    -- the error until we understand what to do, another thread will pick up
+    -- the request so we don't do anything.
+    NULL;
+  END getRequestToSubmit;
 
-  tapeDriveStatusVar   NUMBER;
-  tapeRequestStatusVar NUMBER;
 
-BEGIN
-  returnVar         := 0; -- No possible allocation could be found
-  tapeDriveIdVar    := 0;
-  tapeDriveNameVar  := '';
-  tapeRequestIdVar  := 0;
-  tapeRequestVidVar := '';
+  /**
+   * See the castorVdqm package specification for documentation.
+   */
+  PROCEDURE reuseDriveAllocation(
+    tapeIdVar          IN NUMBER,
+    tapeDriveIdVar     IN NUMBER,
+    returnVar         OUT NUMBER,
+    tapeRequestIdVar  OUT NUMBER)
+  AS
+    tapeDriveStatusVar   NUMBER;
+    mountedTapeIdVar     NUMBER;
+    tapeRequestStatusVar NUMBER;
+  BEGIN
+    returnVar         := 0; -- No possible reuse was found
+    tapeRequestIdVar  := 0;
 
-  SELECT
-    tapeDriveId,
-    tapeRequestId
-  INTO
-    tapeDriveIdVar, tapeRequestIdVar
-  FROM
-    CandidateDriveAllocations_VIEW
-  WHERE
-    rownum < 2;
+    -- Try to find a candidate volume request that can reuse the current drive
+    -- allocation
+    SELECT tapeRequestId INTO tapeRequestIdVar
+      FROM DriveAllocationsForReuse_VIEW
+      WHERE
+            DriveAllocationsForReuse_VIEW.TapeDriveId = tapeDriveIdVar
+        AND DriveAllocationsForReuse_VIEW.TapeId      = tapeIdVar
+        AND rownum < 2;
 
-  -- If there is a possible drive allocation
-  IF tapeDriveIdVar != 0 AND tapeRequestIdVar != 0 THEN
+    -- A candidate was found, because a NO_DATA_FOUND exception was not raised
 
-    -- The status of the drives and requests maybe modified by other scheduler
-    -- threads.  The status of the drives may be modified by threads handling
-    -- drive request messages.  The status of the requests may be modified by
-    -- threads handling tape request messages.  Therefore get a lock on the
-    -- corresponding drive and request rows and retrieve their statuses to see
-    -- if the drive allocation is still valid
-    SELECT TapeDrive.status INTO TapeDriveStatusVar
+    -- The status of the drives including which tapes may be mounted in them,
+    -- may be modified by other threads handling drive request messages.  The
+    -- status of the requests may be modified by threads handling tape request
+    -- messages.  Therefore get a lock on the corresponding drive and request
+    -- rows and retrieve their statuses and mounted tape in the case of the
+    -- drive, to see if the reuse of the drive allocation is still valid.
+    SELECT TapeDrive.status, TapeDrive.tape
+    INTO TapeDriveStatusVar, mountedTapeIdVar
     FROM TapeDrive
     WHERE TapeDrive.id = tapeDriveIdVar
     FOR UPDATE;
-    SELECT TapeRequest.status INTO TapeRequestStatusVar
+    SELECT TapeRequest.status
+    INTO TapeRequestStatusVar
+    FROM TapeRequest
+    WHERE TapeRequest.id = tapeRequestIdVar
+    FOR UPDATE; 
+
+    -- If the reuse of the drive allocation is still valid, i.e. the drive's
+    -- status is VOL_MOUNTED and the correct tape is mounted and the tape
+    -- request's status is REQUEST_PENDING
+    IF(tapeDriveStatusVar = 3) AND(mountedTapeIdVar = tapeIdVar) AND
+      (tapeRequestStatusVar = 0) THEN
+
+      -- Reuse the drive allocation with the pending request
+      UPDATE TapeRequest SET
+        status           = 1,  -- MATCHED
+        tapeDrive        = tapeDriveIdVar,
+        modificationTime = castorVdqmCommon.getTime()
+      WHERE id = tapeRequestIdVar;
+      UPDATE TapeDrive SET
+        status           = 1, -- UNIT_STARTING
+        jobId            = 0,
+        runningTapeReq   = tapeRequestIdVar,
+        modificationTime = castorVdqmCommon.getTime()
+      WHERE id = tapeDriveIdVar;
+
+      -- The drive allocation was reused
+      returnVar := 1;
+
+     -- Else the reuse of the drive allocation is no longer valid
+     ELSE
+
+       -- A possible reuse of the drive allocation was found but was invalidated
+       -- by other threads before the appropriate locks could be taken
+       returnVar := -1;
+
+    END IF; -- If the reuse of the drive allocation is still valid
+
+  EXCEPTION
+    -- Return a tape request ID of 0 if there was no candidate volume request
+    -- which would have reused the current drive allocation
+    WHEN NO_DATA_FOUND THEN NULL;
+  END reuseDriveAllocation;
+
+
+  /**
+   * See the castorVdqm package specification for documentation.
+   */
+  PROCEDURE dedicateDrive
+  ( driveNameVar  IN  VARCHAR2
+  , serverNameVar IN  VARCHAR2
+  , dgNameVar     IN  VARCHAR2
+  , accessModeVar IN  NUMBER
+  , clientHostVar IN  VARCHAR2
+  , vidVar        IN  VARCHAR2
+  , euidVar       IN  NUMBER
+  , egidVar       IN  NUMBER
+  , resultVar     OUT INTEGER
+  ) AS
+    driveIdVar           NUMBER;
+    dgnIdVar             NUMBER;
+    serverIdVar          NUMBER;
+    nbMatchingServersVar NUMBER;
+    nbMatchingDgnsVar    NUMBER;
+    TYPE dedicationList_t IS TABLE OF NUMBER INDEX BY BINARY_INTEGER;
+    dedicationsToDelete  dedicationList_t;
+    dedicationIdVar      NUMBER;
+  BEGIN
+    resultVar := 0;
+
+    -- Lock the tape drive row
+    BEGIN
+      SELECT
+        TapeDrive.id, TapeDrive.deviceGroupName, TapeDrive.tapeServer
+        INTO driveIdVar, dgnIdVar, serverIdVar
+        FROM TapeDrive
+        INNER JOIN TapeServer ON
+          TapeDrive.tapeServer = TapeServer.id
+        WHERE
+          TapeDrive.driveName = driveNameVar
+        FOR UPDATE;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      resultVar := -1; -- No such tape drive
+      RETURN;
+    END;
+
+    -- Check the specified tape drive is associated with the tape server
+    SELECT count(*) INTO nbMatchingServersVar
+      FROM TapeServer
+      WHERE
+            TapeServer.id         = serverIdVar
+        AND TapeServer.serverName = serverNameVar;
+
+    IF nbMatchingServersVar = 0 THEN
+      resultVar := -2; -- Tape server is not associated with tape drive
+      RETURN;
+    END IF;
+
+    -- Check the specified dgn is associated with the tape server
+    SELECT count(*) INTO nbMatchingDgnsVar
+      FROM DeviceGroupName
+      WHERE
+            DeviceGroupName.id     = dgnIdVar
+        AND DeviceGroupName.dgName = dgNameVar;
+
+    IF nbMatchingDgnsVar = 0 THEN
+      resultVar := -3; -- Tape server is not associated with dgn
+      RETURN;
+    END IF;
+
+    -- Delete all existing dedications associated with tape drive
+    SELECT id BULK COLLECT INTO dedicationsToDelete
+      FROM TapeDriveDedication
+      WHERE TapeDriveDedication.tapeDrive = driveIdVar;
+
+    IF dedicationsToDelete.COUNT > 0 THEN
+      FOR i IN dedicationsToDelete.FIRST .. dedicationsToDelete.LAST LOOP
+        DELETE FROM TapeDriveDedication
+          WHERE TapeDriveDedication.id = dedicationsToDelete(i);
+        DELETE FROM Id2Type
+          WHERE Id2Type.id = dedicationsToDelete(i);
+      END LOOP;
+    END IF;
+
+    -- Insert new dedications
+    IF accessModeVar = 0 THEN
+      INSERT INTO TapeDriveDedication(id, tapeDrive, accessMode)
+        VALUES(ids_seq.nextval, driveIdVar, accessModeVar)
+      RETURNING id INTO dedicationIdVar;
+      INSERT INTO Id2Type (id, type)
+        VALUES (dedicationIdVar, 90);
+    END IF;
+    IF clientHostVar IS NOT NULL THEN
+      INSERT INTO TapeDriveDedication(id, tapeDrive, clientHost)
+        VALUES(ids_seq.nextval, driveIdVar, clientHostVar)
+      RETURNING id INTO dedicationIdVar;
+      INSERT INTO Id2Type (id, type)
+        VALUES (dedicationIdVar, 90);
+    END IF;
+    IF vidVar IS NOT NULL THEN
+      INSERT INTO TapeDriveDedication(id, tapeDrive, vid)
+        VALUES(ids_seq.nextval, driveIdVar, vidVar)
+      RETURNING id INTO dedicationIdVar;
+      INSERT INTO Id2Type (id, type)
+        VALUES (dedicationIdVar, 90);
+    END IF;
+    IF euidVar IS NOT NULL THEN
+      INSERT INTO TapeDriveDedication(id, tapeDrive, euid)
+        VALUES(ids_seq.nextval, driveIdVar, euidVar)
+      RETURNING id INTO dedicationIdVar;
+      INSERT INTO Id2Type (id, type)
+        VALUES (dedicationIdVar, 90);
+    END IF;
+    IF egidVar IS NOT NULL THEN
+      INSERT INTO TapeDriveDedication(id, tapeDrive, egid)
+        VALUES(ids_seq.nextval, driveIdVar, egidVar)
+      RETURNING id INTO dedicationIdVar;
+      INSERT INTO Id2Type (id, type)
+        VALUES (dedicationIdVar, 90);
+    END IF;
+
+  END dedicateDrive;
+
+
+  /**
+   * See the castorVdqm package specification for documentation.
+   */
+  PROCEDURE deleteDrive
+  ( driveNameVar  IN  VARCHAR2
+  , serverNameVar IN  VARCHAR2
+  , dgNameVar     IN  VARCHAR2
+  , resultVar     OUT INTEGER
+  ) AS
+    dgnIdVar        NUMBER;
+    tapeServerIdVar NUMBER;
+    driveIdVar      NUMBER;
+    driveStatusVar  NUMBER;
+  BEGIN
+    resultVar := 0;
+
+    BEGIN
+      SELECT id INTO tapeServerIdVar FROM TapeServer
+        WHERE
+          serverName = serverNameVar;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      resultVar := -1; -- Tape server does not exist
+      RETURN;
+    END;
+  
+    BEGIN
+      SELECT id INTO dgnIdVar FROM DeviceGroupName WHERE dgName = dgNameVar;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      resultVar := -2; -- DGN does not exits
+      RETURN;
+    END;
+  
+    BEGIN
+      SELECT id, status INTO driveIdVar, driveStatusVar FROM TapeDrive
+        WHERE
+              deviceGroupName = dgnIdVar
+          AND tapeServer = tapeServerIdVar
+          AND driveName = driveNameVar
+        FOR UPDATE;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      resultVar := -3; -- Tape drive does not exist
+      RETURN;
+    END;
+  
+    -- Not UNIT_UP and not UNIT_DOWN
+    IF driveStatusVar != 0 AND driveStatusVar != 5 THEN
+      resultVar := -4; -- Drive has a job assigned
+      RETURN;
+    END IF;
+  
+    DELETE From TapeDrive2TapeDriveComp WHERE parent = driveIdVar;
+    DELETE FROM TapeDrive WHERE id = driveIdVar;
+    DELETE FROM Id2Type WHERE id = driveIdVar;
+  END deleteDrive;
+
+
+  /**
+   * See the castorVdqm package specification for documentation.
+   */
+  PROCEDURE writeRTPCDJobSubmission(
+    tapeDriveIdVar    IN NUMBER,
+    tapeRequestIdVar  IN NUMBER,
+    returnVar        OUT NUMBER)
+  AS
+    tapeDriveStatusVar      NUMBER;
+    runningTapeRequestIdVar NUMBER;
+    tapeRequestStatusVar    NUMBER;
+  BEGIN
+    returnVar := 0; -- RTCPD job submission not written to database
+
+    -- The status of the tape requests may be modified by threads handling tape
+    -- request messages.  The status of the drives may be modified by threads
+    -- handling drive request messages.  One such modification may be the
+    -- bringing down of the drive in question, which would make it meaningless
+    -- to record a successful RTPCD job submission.  Therefore get a lock on the
+    -- corresponding request and drive rows and retrieve their statuses to see
+    -- whether or not the success of the RTPCD job submission should be recorded
+    -- in the database.
+    SELECT TapeDrive.status, TapeDrive.runningTapeReq
+    INTO tapeDriveStatusVar, runningTapeRequestIdVar
+    FROM TapeDrive
+    WHERE TapeDrive.id = tapeDriveIdVar
+    FOR UPDATE;
+    SELECT TapeRequest.status
+    INTO tapeRequestStatusVar
     FROM TapeRequest
     WHERE TapeRequest.id = tapeRequestIdVar
     FOR UPDATE;
 
-    -- Get the drive name (used for logging)
-    SELECT TapeDrive.driveName INTO TapeDriveNameVar
+    -- If recording of successfull RTCPD job submission is permitted,
+    -- i.e. the status of the drive is UNIT_STARTING and the drive is still
+    -- paired with the tape request and the status of the tape request is
+    -- REQUEST_BEINGSUBMITTED
+    IF (tapeDriveStatusVar = 1) AND (runningTapeRequestIdVar = tapeRequestIdVar)
+      AND (tapeRequestStatusVar = 2) THEN
+
+      -- Set the state of the tape request to REQUEST_SUBMITTED (3)
+      UPDATE TapeRequest
+      SET TapeRequest.status = 3
+      WHERE TapeRequest.id = tapeRequestIdVar;
+
+      returnVar := 1; -- RTCPD job submission written to database
+    END IF;
+
+  EXCEPTION
+
+    -- Do nothing if either the drive or request no longer exist in the database
+    WHEN NO_DATA_FOUND THEN NULL;
+
+  END writeRTPCDJobSubmission;
+
+
+  /**
+   * See the castorVdqm package specification for documentation.
+   */
+  PROCEDURE writeFailedRTPCDJobSubmission(
+    tapeDriveIdVar    IN NUMBER,
+    tapeRequestIdVar  IN NUMBER,
+    returnVar        OUT NUMBER)
+  AS
+    tapeDriveStatusVar      NUMBER;
+    runningTapeRequestIdVar NUMBER;
+    tapeRequestStatusVar    NUMBER;
+  BEGIN
+    returnVar := 0; -- Failed RTCPD job submission not written to database
+
+    -- The status of the tape requests may be modified by threads handling tape
+    -- request messages.  The status of the drives may be modified by threads
+    -- handling drive request messages.  One such modification may be the
+    -- bringing down of the drive in question, which would make it meaningless
+    -- to record a successful RTPCD job submission.  Therefore get a lock on the
+    -- corresponding request and drive rows and retrieve their statuses to see
+    -- whether or not the success of the RTPCD job submission should be recorded
+    -- in the database.
+    SELECT TapeDrive.status, TapeDrive.runningTapeReq
+    INTO tapeDriveStatusVar, runningTapeRequestIdVar
     FROM TapeDrive
-    WHERE TapeDrive.id = tapeDriveIdVar;
-  
-    -- Get the VID of the pending request (used for logging)
-    SELECT VdqmTape.vid INTO tapeRequestVidVar
+    WHERE TapeDrive.id = tapeDriveIdVar
+    FOR UPDATE;
+    SELECT TapeRequest.status
+    INTO tapeRequestStatusVar
     FROM TapeRequest
-    INNER JOIN VdqmTape ON TapeRequest.tape = VdqmTape.id
-    WHERE TapeRequest.id = tapeRequestIdVar;
+    WHERE TapeRequest.id = tapeRequestIdVar
+    FOR UPDATE;
 
-    -- If the drive allocation is still valid, i.e. drive status is UNIT_UP and
-    -- request status is REQUEST_PENDING
-    IF(TapeDriveStatusVar = 0) AND (TapeRequestStatusVar = 0) THEN
+    -- If recording of failed RTCPD job submission is permitted,
+    -- i.e. the status of the drive is UNIT_STARTING and the drive is still
+    -- paired with the tape request and the status of the tape request is
+    -- REQUEST_BEINGSUBMITTED
+    IF (tapeDriveStatusVar = 1) AND (runningTapeRequestIdVar = tapeRequestIdVar)
+      AND (tapeRequestStatusVar = 2) THEN
 
-      -- Allocate the free drive to the pending request
-      UPDATE TapeDrive SET
-        status           = 1, -- UNIT_STARTING
-        jobId            = 0,
-        modificationTime = getTime(),
-        runningTapeReq   = tapeRequestIdVar
-      WHERE
-        id = tapeDriveIdVar;
-      UPDATE TapeRequest SET
-        status           = 1, -- MATCHED
-        tapeDrive        = tapeDriveIdVar,
-        modificationTime = getTime()
-      WHERE
-        id = tapeRequestIdVar;
+      -- Unlink the tape drive from the tape request
+      UPDATE TapeDrive
+      SET TapeDrive.runningTapeReq = 0
+      WHERE TapeDrive.id = tapeDriveIdVar;
+      UPDATE TapeRequest
+      SET TapeRequest.tapeDrive = 0
+      WHERE TapeRequest.id = tapeRequestIdVar;
 
-      -- A free drive has been allocated to a pending request
-      returnVar := 1;
+      -- set the state of the tape drive to STATUS_UNKNOWN (7)
+      UPDATE TapeDrive
+      SET TapeDrive.status = 7
+      WHERE TapeDrive.id = tapeDriveIdVar;
 
-   -- Else the drive allocation is no longer valid
-   ELSE
+      -- Set the state of the tape request to REQUEST_PENDING (0)
+      UPDATE TapeRequest
+      SET TapeRequest.status = 0
+      WHERE TapeRequest.id = tapeRequestIdVar;
 
-     -- A possible drive allocation was found but was invalidated by other
-     -- threads before the appropriate locks could be taken
-     returnVar := -1;
+      returnVar := 1; -- Failed RTCPD job submission written to database
+    END IF;
 
-   END IF; -- If the drive allocation is still valid
+  EXCEPTION
 
-  END IF; -- If there is a possible drive allocation
+    -- Do nothing if either the drive or request no longer exist in the database
+    WHEN NO_DATA_FOUND THEN NULL;
 
-EXCEPTION
+  END writeFailedRTPCDJobSubmission;
 
-  -- Do nothing if there was no free tape drive which could be allocated to a
-  -- pending request
-  WHEN NO_DATA_FOUND THEN NULL;
+END castorVdqm;
 
+
+/**
+ * PL/SQL trigger responsible for setting the modification time of a tape
+ * drive when it is inserted into the TapeDrive table.
+ */
+CREATE OR REPLACE TRIGGER TR_I_TapeDrive
+  BEFORE INSERT ON TapeDrive
+FOR EACH ROW
+BEGIN
+  -- Set modification time
+  :NEW.modificationTime := castorVdqmCommon.getTime();
 END;
 
 
 /**
- * PL/SQL method to get a new matched request to be submitted to rtcpd
+ * PL/SQL trigger responsible for updating the modification time of a tape
+ * drive.
  */
-CREATE OR REPLACE PROCEDURE requestToSubmit(tapeReqId OUT NUMBER) AS
-LockError EXCEPTION;
-PRAGMA EXCEPTION_INIT (LockError, -54);
-CURSOR c IS
-   SELECT id
-     FROM TapeRequest
-    WHERE status = 1  -- MATCHED
-    FOR UPDATE SKIP LOCKED;
+CREATE OR REPLACE TRIGGER TR_U_TapeDrive
+  BEFORE UPDATE OF modificationTime, status ON TapeDrive 
+FOR EACH ROW 
+WHEN
+  ((NEW.modificationTime != OLD.modificationTime) OR (NEW.status != OLD.status))
 BEGIN
-  tapeReqId := 0;
-  OPEN c;
-  FETCH c INTO tapeReqId;
-  UPDATE TapeRequest SET status = 2 WHERE id = tapeReqId;  -- BEINGSUBMITTED
-  CLOSE c;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- just return reqId = 0, nothing to do
-  NULL;
-WHEN LockError THEN
-  -- We have observed ORA-00054 errors (resource busy and acquire with NOWAIT) even with
-  -- the SKIP LOCKED clause. This is a workaround to ignore the error until we understand
-  -- what to do, another thread will pick up the request so we don't do anything.
-  NULL;
+  -- Update the modification time
+  :NEW.modificationTime := castorVdqmCommon.getTime();
 END;
 
 
 /**
- * PL/SQL procedure which tries to reuse a drive allocation.
- *
- * @param tapeIdVar the ID of the tape of the current drive allocation.
- * @param tapeDriveIdVar the ID of the drive of the current drive allocation.
- * @param returnVar has a value of 1 if the specified drive allocation was
- * successfully reused, 0 if no possible reuse was found or -1 if a possible
- * reuse was found but was invalidated by other threads before the appropriate
- * locks could be taken.
- * @param tapeRequestIdVar if the drive allocation was successfully reused then
- * the value of this parameter will be the ID of the newly assigned request,
- * else the value of this parameter will be undefined.
+ * PL/SQL trigger responsible for setting the creation time and initial
+ * modification time of a tape request when it is inserted into the
+ * TapeRequest table.
  */
-CREATE OR REPLACE PROCEDURE reuseDriveAllocation(
-  tapeIdVar          IN NUMBER,
-  tapeDriveIdVar     IN NUMBER,
-  returnVar         OUT NUMBER,
-  tapeRequestIdVar  OUT NUMBER)
-AS
-  tapeDriveStatusVar   NUMBER;
-  mountedTapeIdVar     NUMBER;
-  tapeRequestStatusVar NUMBER;
+CREATE OR REPLACE TRIGGER TR_I_TapeRequest
+  BEFORE INSERT ON TapeRequest
+FOR EACH ROW
+DECLARE
+  timeVar NUMBER := castorVdqmCommon.getTime();
 BEGIN
-  returnVar         := 0; -- No possible reuse was found
-  tapeRequestIdVar  := 0;
+  -- Set creation time
+  :NEW.creationTime := timeVar;
 
-  -- Try to find a candidate volume request that can reuse the current drive
-  -- allocation
-  SELECT tapeRequestId INTO tapeRequestIdVar
-    FROM DriveAllocationsForReuse_VIEW
-    WHERE
-          DriveAllocationsForReuse_VIEW.TapeDriveId = tapeDriveIdVar
-      AND DriveAllocationsForReuse_VIEW.TapeId      = tapeIdVar
-      AND rownum < 2;
-
-  -- A candidate was found, because a NO_DATA_FOUND exception was not raised
-
-  -- The status of the drives including which tapes may be mounted in them,
-  -- may be modified by other threads handling drive request messages.  The
-  -- status of the requests may be modified by threads handling tape request
-  -- messages.  Therefore get a lock on the corresponding drive and request
-  -- rows and retrieve their statuses and mounted tape in the case of the
-  -- drive, to see if the reuse of the drive allocation is still valid.
-  SELECT TapeDrive.status, TapeDrive.tape
-  INTO TapeDriveStatusVar, mountedTapeIdVar
-  FROM TapeDrive
-  WHERE TapeDrive.id = tapeDriveIdVar
-  FOR UPDATE;
-  SELECT TapeRequest.status
-  INTO TapeRequestStatusVar
-  FROM TapeRequest
-  WHERE TapeRequest.id = tapeRequestIdVar
-  FOR UPDATE; 
-
-  -- If the reuse of the drive allocation is still valid, i.e. the drive's
-  -- status is VOL_MOUNTED and the correct tape is mounted and the tape
-  -- request's status is REQUEST_PENDING
-  IF(tapeDriveStatusVar = 3) AND(mountedTapeIdVar = tapeIdVar) AND
-    (tapeRequestStatusVar = 0) THEN
-
-    -- Reuse the drive allocation with the pending request
-    UPDATE TapeRequest SET
-      status           = 1,  -- MATCHED
-      tapeDrive        = tapeDriveIdVar,
-      modificationTime = getTime()
-    WHERE id = tapeRequestIdVar;
-    UPDATE TapeDrive SET
-      status           = 1, -- UNIT_STARTING
-      jobId            = 0,
-      runningTapeReq   = tapeRequestIdVar,
-      modificationTime = getTime()
-    WHERE id = tapeDriveIdVar;
-
-    -- The drive allocation was reused
-    returnVar := 1;
-
-   -- Else the reuse of the drive allocation is no longer valid
-   ELSE
-
-     -- A possible reuse of the drive allocation was found but was invalidated
-     -- by other threads before the appropriate locks could be taken
-     returnVar := -1;
-
-  END IF; -- If the reuse of the drive allocation is still valid
-
-EXCEPTION
-  -- Return a tape request ID of 0 if there was no candidate volume request
-  -- which would have reused the current drive allocation
-  WHEN NO_DATA_FOUND THEN NULL;
+  -- Set modification time
+  :NEW.modificationTime := timeVar;
 END;
 
 
 /**
- * PL/SQL procedure to insert the specified drive dedications into the database.
- *
- * @param driveNameVar the name of the tape drive to be dedicated
- * @param serverNameVar the name of the tape server of the tape drive
- * @param dgNameVar the name of the device group of the tape drive
- * @param accessModeVar the access mode dedication
- * @param clientHostVar the client host dedication
- * @param vidVar the vid dedication
- * @param resultVar is 0 if the dedications were successfully inserted into the
- * database, -1 if the specified tape drive does not exist, -2 if the
- * specified tape server is not associated with the specified tape drive and -3
- * if the specified dgn is not associated with the specified tape drive
+ * PL/SQL trigger responsible for updating the modification time of a tape
+ * request.
  */
-CREATE OR REPLACE PROCEDURE dedicateDrive
-( driveNameVar  IN  VARCHAR2
-, serverNameVar IN  VARCHAR2
-, dgNameVar     IN  VARCHAR2
-, accessModeVar IN  NUMBER
-, clientHostVar IN  VARCHAR2
-, vidVar        IN  VARCHAR2
-, resultVar     OUT INTEGER
-) AS
-  driveIdVar           NUMBER;
-  dgnIdVar             NUMBER;
-  serverIdVar          NUMBER;
-  nbMatchingServersVar NUMBER;
-  nbMatchingDgnsVar    NUMBER;
-  TYPE dedicationList_t IS TABLE OF NUMBER INDEX BY BINARY_INTEGER;
-  dedicationsToDelete  dedicationList_t;
-  dedicationIdVar      NUMBER;
+CREATE OR REPLACE TRIGGER TR_U_TapeRequest
+  BEFORE UPDATE OF modificationTime, status ON TapeRequest
+FOR EACH ROW
+WHEN
+  ((NEW.modificationTime != OLD.modificationTime) OR (NEW.status != OLD.status))
 BEGIN
-  resultVar := 0;
-
-  -- Lock the tape drive row
-  BEGIN
-    SELECT
-      TapeDrive.id, TapeDrive.deviceGroupName, TapeDrive.tapeServer
-      INTO driveIdVar, dgnIdVar, serverIdVar
-      FROM TapeDrive
-      INNER JOIN TapeServer ON
-        TapeDrive.tapeServer = TapeServer.id
-      WHERE
-        TapeDrive.driveName = driveNameVar
-      FOR UPDATE;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    resultVar := -1; -- No such tape drive
-    RETURN;
-  END;
-
-  -- Check the specified tape drive is associated with the tape server
-  SELECT count(*) INTO nbMatchingServersVar
-    FROM TapeServer
-    WHERE
-          TapeServer.id         = serverIdVar
-      AND TapeServer.serverName = serverNameVar;
-
-  IF nbMatchingServersVar = 0 THEN
-    resultVar := -2; -- Tape server is not associated with tape drive
-    RETURN;
-  END IF;
-
-  -- Check the specified dgn is associated with the tape server
-  SELECT count(*) INTO nbMatchingDgnsVar
-    FROM DeviceGroupName
-    WHERE
-          DeviceGroupName.id     = dgnIdVar
-      AND DeviceGroupName.dgName = dgNameVar;
-
-  IF nbMatchingDgnsVar = 0 THEN
-    resultVar := -3; -- Tape server is not associated with dgn
-    RETURN;
-  END IF;
-
-  -- Delete all existing dedications associated with tape drive
-  SELECT id BULK COLLECT INTO dedicationsToDelete
-    FROM TapeDriveDedication
-    WHERE TapeDriveDedication.tapeDrive = driveIdVar;
-
-  IF dedicationsToDelete.COUNT > 0 THEN
-    FOR i IN dedicationsToDelete.FIRST .. dedicationsToDelete.LAST LOOP
-      DELETE FROM TapeDriveDedication
-        WHERE TapeDriveDedication.id = dedicationsToDelete(i);
-      DELETE FROM Id2Type
-        WHERE Id2Type.id = dedicationsToDelete(i);
-    END LOOP;
-  END IF;
-
-  -- Insert new dedications
-  IF accessModeVar = 0 THEN
-    INSERT INTO TapeDriveDedication(id, tapeDrive, accessMode)
-      VALUES(ids_seq.nextval, driveIdVar, accessModeVar)
-    RETURNING id INTO dedicationIdVar;
-    INSERT INTO Id2Type (id, type)
-      VALUES (dedicationIdVar, 90);
-  END IF;
-  IF clientHostVar IS NOT NULL THEN
-    INSERT INTO TapeDriveDedication(id, tapeDrive, clientHost)
-      VALUES(ids_seq.nextval, driveIdVar, clientHostVar)
-    RETURNING id INTO dedicationIdVar;
-    INSERT INTO Id2Type (id, type)
-      VALUES (dedicationIdVar, 90);
-  END IF;
-  IF vidVar IS NOT NULL THEN
-    INSERT INTO TapeDriveDedication(id, tapeDrive, vid)
-      VALUES(ids_seq.nextval, driveIdVar, vidVar)
-    RETURNING id INTO dedicationIdVar;
-    INSERT INTO Id2Type (id, type)
-      VALUES (dedicationIdVar, 90);
-  END IF;
-
-END;
-
-
-/**
- * PL/SQL procedure to delete the specified drive from the database.
- *
- * @param driveNameVar the name of the tape drive to be delete
- * @param serverNameVar the name of the tape server of the tape drive
- * @param dgNameVar the name of the device group of the tape drive
- * @param resultVar is 0 if the deletion was successful. -1 if the specified
- * tape server does not exist, -2 if the specified device group name does not
- * exist, -3 if the specified tape drive does not exist and -4 if the specified
- * drive has a job assigned.
- */
-CREATE OR REPLACE PROCEDURE deleteDrive
-( driveNameVar  IN  VARCHAR2
-, serverNameVar IN  VARCHAR2
-, dgNameVar     IN  VARCHAR2
-, resultVar     OUT INTEGER
-) AS
-  dgnIdVar        NUMBER;
-  tapeServerIdVar NUMBER;
-  driveIdVar      NUMBER;
-  driveStatusVar  NUMBER;
-BEGIN
-  resultVar := 0;
-
-  BEGIN
-    SELECT id INTO tapeServerIdVar FROM TapeServer
-      WHERE
-        serverName = serverNameVar;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    resultVar := -1; -- Tape server does not exist
-    RETURN;
-  END;
-  
-  BEGIN
-    SELECT id INTO dgnIdVar FROM DeviceGroupName WHERE dgName = dgNameVar;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    resultVar := -2; -- DGN does not exits
-    RETURN;
-  END;
-  
-  BEGIN
-    SELECT id, status INTO driveIdVar, driveStatusVar FROM TapeDrive
-      WHERE
-            deviceGroupName = dgnIdVar
-        AND tapeServer = tapeServerIdVar
-        AND driveName = driveNameVar
-      FOR UPDATE;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    resultVar := -3; -- Tape drive does not exist
-    RETURN;
-  END;
-  
-  -- Not UNIT_UP and not UNIT_DOWN
-  IF driveStatusVar != 0 AND driveStatusVar != 5 THEN
-    resultVar := -4; -- Drive has a job assigned
-    RETURN;
-  END IF;
-  
-  DELETE From TapeDrive2TapeDriveComp WHERE parent = driveIdVar;
-  DELETE FROM TapeDrive WHERE id = driveIdVar;
-  DELETE FROM Id2Type WHERE id = driveIdVar;
-END;
-
-
-/**
- * PL/SQL procedure which tries to write to the database the fact that a
- * successful RTCPD job submission has occured.  This update of the database
- * may not be possible if the corresponding drive and tape request states have
- * been modified by other threads.  For example a thread handling a tape drive
- * request message may have put the drive into the down state.  The RTCPD job
- * submission should be ignored in this case.
- *
- * @param tapeDriveIdVar the ID of the drive
- * @param tapeRequestIdVar the ID of the tape request
- * @param returnVar has a value of 1 if the occurance of the RTCPD job
- * submission was successfully written to the database, else 0.
- */
-CREATE OR REPLACE PROCEDURE writeRTPCDJobSubmission(
-  tapeDriveIdVar    IN NUMBER,
-  tapeRequestIdVar  IN NUMBER,
-  returnVar        OUT NUMBER)
-AS
-  tapeDriveStatusVar      NUMBER;
-  runningTapeRequestIdVar NUMBER;
-  tapeRequestStatusVar    NUMBER;
-BEGIN
-  returnVar := 0; -- RTCPD job submission not written to database
-
-  -- The status of the tape requests may be modified by threads handling tape
-  -- request messages.  The status of the drives may be modified by threads
-  -- handling drive request messages.  One such modification may be the
-  -- bringing down of the drive in question, which would make it meaningless to
-  -- record a successful RTPCD job submission.  Therefore get a lock on the
-  -- corresponding request and drive rows and retrieve their statuses to see
-  -- whether or not the success of the RTPCD job submission should be recorded
-  -- in the database.
-  SELECT TapeDrive.status, TapeDrive.runningTapeReq
-  INTO tapeDriveStatusVar, runningTapeRequestIdVar
-  FROM TapeDrive
-  WHERE TapeDrive.id = tapeDriveIdVar
-  FOR UPDATE;
-  SELECT TapeRequest.status
-  INTO tapeRequestStatusVar
-  FROM TapeRequest
-  WHERE TapeRequest.id = tapeRequestIdVar
-  FOR UPDATE;
-
-  -- If recording of successfull RTCPD job submission is permitted,
-  -- i.e. the status of the drive is UNIT_STARTING and the drive is still
-  -- paired with the tape request and the status of the tape request is
-  -- REQUEST_BEINGSUBMITTED
-  IF (tapeDriveStatusVar = 1) AND (runningTapeRequestIdVar = tapeRequestIdVar)
-    AND (tapeRequestStatusVar = 2) THEN
-
-    -- Set the state of the tape request to REQUEST_SUBMITTED (3)
-    UPDATE TapeRequest
-    SET TapeRequest.status = 3
-    WHERE TapeRequest.id = tapeRequestIdVar;
-
-    returnVar := 1; -- RTCPD job submission written to database
-  END IF;
-
-EXCEPTION
-
-  -- Do nothing if either the drive or request no longer exist in the database
-  WHEN NO_DATA_FOUND THEN NULL;
-
-END;
-
-
-/**
- * PL/SQL procedure which tries to write to the database the fact that a
- * failed RTCPD job submission has occured.  This update of the database
- * may not be possible if the corresponding drive and tape request states have
- * been modified by other threads.  For example a thread handling a tape drive
- * request message may have put the drive into the down state.  The failed
- * RTCPD job submission should be ignored in this case.
- *
- * @param tapeDriveIdVar the ID of the drive
- * @param tapeRequestIdVar the ID of the tape request
- * @param returnVar has a value of 1 if the occurance of the failed RTCPD job
- * submission was successfully written to the database, else 0.
- */
-CREATE OR REPLACE PROCEDURE writeFailedRTPCDJobSubmission(
-  tapeDriveIdVar    IN NUMBER,
-  tapeRequestIdVar  IN NUMBER,
-  returnVar        OUT NUMBER)
-AS
-  tapeDriveStatusVar      NUMBER;
-  runningTapeRequestIdVar NUMBER;
-  tapeRequestStatusVar    NUMBER;
-BEGIN
-  returnVar := 0; -- Failed RTCPD job submission not written to database
-
-  -- The status of the tape requests may be modified by threads handling tape
-  -- request messages.  The status of the drives may be modified by threads
-  -- handling drive request messages.  One such modification may be the
-  -- bringing down of the drive in question, which would make it meaningless to
-  -- record a successful RTPCD job submission.  Therefore get a lock on the
-  -- corresponding request and drive rows and retrieve their statuses to see
-  -- whether or not the success of the RTPCD job submission should be recorded
-  -- in the database.
-  SELECT TapeDrive.status, TapeDrive.runningTapeReq
-  INTO tapeDriveStatusVar, runningTapeRequestIdVar
-  FROM TapeDrive
-  WHERE TapeDrive.id = tapeDriveIdVar
-  FOR UPDATE;
-  SELECT TapeRequest.status
-  INTO tapeRequestStatusVar
-  FROM TapeRequest
-  WHERE TapeRequest.id = tapeRequestIdVar
-  FOR UPDATE;
-
-  -- If recording of failed RTCPD job submission is permitted,
-  -- i.e. the status of the drive is UNIT_STARTING and the drive is still
-  -- paired with the tape request and the status of the tape request is
-  -- REQUEST_BEINGSUBMITTED
-  IF (tapeDriveStatusVar = 1) AND (runningTapeRequestIdVar = tapeRequestIdVar)
-    AND (tapeRequestStatusVar = 2) THEN
-
-    -- Unlink the tape drive from the tape request
-    UPDATE TapeDrive
-    SET TapeDrive.runningTapeReq = 0
-    WHERE TapeDrive.id = tapeDriveIdVar;
-    UPDATE TapeRequest
-    SET TapeRequest.tapeDrive = 0
-    WHERE TapeRequest.id = tapeRequestIdVar;
-
-    -- set the state of the tape drive to STATUS_UNKNOWN (7)
-    UPDATE TapeDrive
-    SET TapeDrive.status = 7
-    WHERE TapeDrive.id = tapeDriveIdVar;
-
-    -- Set the state of the tape request to REQUEST_PENDING (0)
-    UPDATE TapeRequest
-    SET TapeRequest.status = 0
-    WHERE TapeRequest.id = tapeRequestIdVar;
-
-    returnVar := 1; -- Failed RTCPD job submission written to database
-  END IF;
-
-EXCEPTION
-
-  -- Do nothing if either the drive or request no longer exist in the database
-  WHEN NO_DATA_FOUND THEN NULL;
-
+  -- Update the modification time
+  :NEW.modificationTime := castorVdqmCommon.getTime();
 END;
