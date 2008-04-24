@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.98 $ $Release$ $Date: 2008/04/23 19:30:33 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.99 $ $Release$ $Date: 2008/04/24 12:27:54 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -302,9 +302,19 @@ ALTER TABLE VdqmTape
 CREATE OR REPLACE PACKAGE castorVdqmCommon AS
 
   /**
-   * Currently under development.
+   * Datatype for a list of VARCHAR2(256).
    */
-  PROCEDURE tokenize;
+  TYPE Varchar256List IS TABLE OF VARCHAR2(256) INDEX BY BINARY_INTEGER;
+
+  /**
+   * Tokenizes the specified string buffer using the specified delimiter.
+   *
+   * @param bufferVar The buffer string to be tokenized.
+   * @param delimiterVar The delimiter used to separate the tpkens.
+   * @return the tokens.
+   */
+  FUNCTION tokenize(bufferVar IN VARCHAR2, delimiterVar IN VARCHAR2)
+    RETURN Varchar256List;
 
   /**
    * This function returns the number of seconds since the EPOCH UTC + 1.
@@ -324,25 +334,20 @@ CREATE OR REPLACE PACKAGE BODY castorVdqmCommon AS
   /**
    * See the castorVdqm package specification for documentation.
    */
-  PROCEDURE tokenize AS
-    TYPE TokensType IS TABLE OF VARCHAR2(256) INDEX BY BINARY_INTEGER;
-    tokensVar TokensType;
-
-    bufferVar       VARCHAR2(256) := 'vid=I10489,host=lxb8294';
-    delimiterVar    VARCHAR2(1)   := ',';
-    currentPosVAR   NUMBER        := 1;
-    nextPosVar      NUMBER        := 1;
-    delimiterPosVar NUMBER        := 1;
-    lengthVar       NUMBER        := 0;
-    indexVar        NUMBER        := 1;
+  FUNCTION tokenize(bufferVar IN VARCHAR2, delimiterVar IN VARCHAR2)
+    RETURN Varchar256List AS
+    currentPosVAR   NUMBER := 1;
+    nextPosVar      NUMBER := 1;
+    delimiterPosVar NUMBER := 1;
+    lengthVar       NUMBER := 0;
+    tokensVar       Varchar256List;
   BEGIN
-    DBMS_OUTPUT.PUT_LINE('Hello World!');
-  
+    -- While the end of the buffer has not been reached
     WHILE currentPosVar <= LENGTH(bufferVar) LOOP
       -- Try to find the next delimiter
       delimiterPosVar := INSTR(bufferVar, delimiterVar, currentPosVar);
 
-      -- If a delimiter was found  
+      -- If a delimiter was found
       IF delimiterPosVar > 0 THEN
         lengthVar  := delimiterPosVar - currentPosVar;
         nextPosVar := delimiterPosVar + 1;
@@ -352,18 +357,17 @@ CREATE OR REPLACE PACKAGE BODY castorVdqmCommon AS
         nextPosVar := LENGTH(bufferVar) + 1;
       END IF;
 
+      -- Add token to list
       tokensVar(tokensVar.count + 1) :=
         SUBSTR(bufferVar, currentPosVar, lengthVar);
 
+      -- Move past the token in the buffer
       currentPosVar := nextPosVar;
     END LOOP;
 
-    FOR indexVar IN tokensVar.FIRST .. tokensVar.LAST LOOP
-      DBMS_OUTPUT.PUT_LINE('tokensVar(' || indexVar || ') = ' ||
-        tokensVar(indexVar));
-
-    END LOOP;
+    RETURN tokensVar;
   END tokenize;
+
 
   /**
    * See the castorVdqm package specification for documentation.
