@@ -1,18 +1,12 @@
 set feedback OFF
 set pagesize 0
 set linesize 1000
-prompt -- Drop functions
-select 'drop ' || object_type || ' ' || object_name || ';' as command
-from user_procedures where object_type='FUNCTION' order by object_name;
-prompt
-prompt -- Drop procedures
-select 'drop ' || object_type || ' ' || object_name || ';' from user_procedures where object_type='PROCEDURE' order by object_name;
-prompt
+
 prompt -- Drop triggers
 select 'drop ' || object_type || ' ' || object_name || ';' from user_procedures where object_type='TRIGGER' order by object_name;
 prompt
 prompt -- Drop packages
-select 'drop ' || object_type || ' ' || object_name || ';' from user_procedures where object_type='PACKAGE' order by object_name;
+select 'drop ' || object_type || ' ' || object_name || ';' from user_objects where object_type='PACKAGE' order by object_name;
 prompt
 prompt -- Drop views
 select 'drop view ' || view_name || ';' from user_views order by view_name;
