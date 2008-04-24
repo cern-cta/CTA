@@ -277,13 +277,11 @@ namespace castor {
          * @driveName  drive name
          * @serverName server name
          * @dgName     device group name
-         * @accessMode access mode
-         * @clientHost client host
+         * @dedicate   dedication string
          */
-        virtual void dedicateDrive(std::string driveName,
-          std::string serverName, std::string dgName,
-          const unsigned int accessMode, std::string clientHost,
-          std::string vid) throw (castor::exception::Exception) = 0;
+        virtual void dedicateDrive(const std::string driveName,
+          const std::string serverName, const std::string dgName,
+          const std::string dedicate) throw (castor::exception::Exception) = 0;
 
         /**
          * Deletes the specified drive from the database;

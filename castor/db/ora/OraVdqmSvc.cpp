@@ -45,6 +45,7 @@
 
 #include "occi.h"
 #include <Cuuid.h>
+#include <errno.h>
 #include <net.h>
 #include <string.h>
 
@@ -63,28 +64,66 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeStatementString =
   "SELECT id FROM VdqmTape WHERE vid = :1 FOR UPDATE";
 
 /// SQL statement for function getTapeServer
-const std::string castor::db::ora::OraVdqmSvc::s_selectTapeServerStatementString =
+const std::string
+  castor::db::ora::OraVdqmSvc::s_selectTapeServerStatementString =
   "SELECT id FROM TapeServer WHERE serverName = :1 FOR UPDATE";
 
 /// SQL statement for function checkTapeRequest
-const std::string castor::db::ora::OraVdqmSvc::s_checkTapeRequestStatement1String =
-  "SELECT id FROM ClientIdentification WHERE machine = :1 AND userName = :2 AND port = :3 AND euid = :4 AND egid = :5 and magic = :6";
+const std::string
+  castor::db::ora::OraVdqmSvc::s_checkTapeRequestStatement1String =
+  "SELECT"
+  "  id "
+  "FROM"
+  "  ClientIdentification "
+  "WHERE"
+  "      ClientIdentification.machine = :1"
+  "  AND userName = :2"
+  "  AND port = :3"
+  "  AND euid = :4"
+  "  AND egid = :5"
+  "  AND magic = :6";
 
 /// SQL statement for function checkTapeRequest
-const std::string castor::db::ora::OraVdqmSvc::s_checkTapeRequestStatement2String =
-  "SELECT id FROM TapeRequest WHERE tapeAccessSpecification = :1 AND tape = :2 AND requestedSrv = :3 AND client = :4";
+const std::string
+  castor::db::ora::OraVdqmSvc::s_checkTapeRequestStatement2String =
+  "SELECT"
+  "  id "
+  "FROM"
+  "  TapeRequest "
+  "WHERE"
+  "      TapeRequest.tapeAccessSpecification = :1"
+  "  AND TapeRequest.tape = :2"
+  "  AND TapeRequest.requestedSrv = :3"
+  "  AND TapeRequest.client = :4";
 
 /// SQL statement for function getQueuePosition
-const std::string castor::db::ora::OraVdqmSvc::s_getQueuePositionStatementString =
-  "SELECT count(*) FROM TapeRequest tr1, TapeRequest tr2 WHERE tr1.id = :1 AND tr1.deviceGroupName = tr2.deviceGroupName AND tr2.modificationTime <= tr1.modificationTime";
+const std::string
+  castor::db::ora::OraVdqmSvc::s_getQueuePositionStatementString =
+  "SELECT"
+  "  count(*) "
+  "FROM"
+  "  TapeRequest tr1,"
+  "  TapeRequest tr2 "
+  "WHERE"
+  "      tr1.id = :1 "
+  "  AND tr1.deviceGroupName = tr2.deviceGroupName"
+  "  AND tr2.modificationTime <= tr1.modificationTime";
   
 /// SQL statement for function deleteAllTapeDrvsFromSrv
-const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveStatementString =
- "SELECT id FROM TapeDrive WHERE driveName = :1 AND tapeServer = :2 FOR UPDATE";
+const std::string
+  castor::db::ora::OraVdqmSvc::s_selectTapeDriveStatementString =
+  "SELECT"
+  "  id "
+  "FROM"
+  "  TapeDrive "
+  "WHERE"
+  "      driveName = :1"
+  "  AND tapeServer = :2 "
+  "FOR UPDATE";
 
 /// SQL statement for function dedicateDrive
 const std::string castor::db::ora::OraVdqmSvc::s_dedicateDriveStatementString
-  = "BEGIN dedicateDrive(:1, :2, :3, :4, :5, :6, :7); END;";
+  = "BEGIN castorVdqm.dedicateDrive(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;";
 
 /// SQL statement for function checkRegExp
 const std::string castor::db::ora::OraVdqmSvc::s_checkRegExpStatementString
@@ -92,44 +131,83 @@ const std::string castor::db::ora::OraVdqmSvc::s_checkRegExpStatementString
 
 /// SQL statement for function deleteDrive
 const std::string castor::db::ora::OraVdqmSvc::s_deleteDriveStatementString
-  = "BEGIN deleteDrive(:1, :2, :3, :4); END;";
+  = "BEGIN castorVdqm.deleteDrive(:1, :2, :3, :4); END;";
 
 /// SQL statement for function writeRTPCDJobSubmission
 const std::string castor::db::ora::OraVdqmSvc::
   s_writeRTPCDJobSubmissionStatementString
-  = "BEGIN writeRTPCDJobSubmission(:1, :2, :3); END;";
+  = "BEGIN castorVdqm.writeRTPCDJobSubmission(:1, :2, :3); END;";
 
 /// SQL statement for function writeFailedRTPCDJobSubmission
 const std::string castor::db::ora::OraVdqmSvc::
   s_writeFailedRTPCDJobSubmissionStatementString
-  = "BEGIN writeFailedRTPCDJobSubmission(:1, :2, :3); END;";
+  = "BEGIN castorVdqm.writeFailedRTPCDJobSubmission(:1, :2, :3); END;";
   
 /// SQL statement for function existTapeDriveWithTapeInUse
-const std::string castor::db::ora::OraVdqmSvc::s_existTapeDriveWithTapeInUseStatementString =
-  "SELECT td.id FROM TapeDrive td, TapeRequest tr, VdqmTape WHERE td.runningTapeReq = tr.id AND tr.tape = VdqmTape.id AND VdqmTape.vid = :1";
+const std::string
+  castor::db::ora::OraVdqmSvc::s_existTapeDriveWithTapeInUseStatementString =
+  "SELECT"
+  "  td.id "
+  "FROM"
+  "  TapeDrive td,"
+  "  TapeRequest tr,"
+  "  VdqmTape "
+  "WHERE"
+  "      td.runningTapeReq = tr.id"
+  "  AND tr.tape = VdqmTape.id"
+  "  AND VdqmTape.vid = :1";
   
 /// SQL statement for function existTapeDriveWithTapeMounted
-const std::string castor::db::ora::OraVdqmSvc::s_existTapeDriveWithTapeMountedStatementString =
-  "SELECT td.id FROM TapeDrive td, VdqmTape WHERE td.tape = VdqmTape.id AND VdqmTape.vid = :1";
+const std::string
+  castor::db::ora::OraVdqmSvc::s_existTapeDriveWithTapeMountedStatementString =
+  "SELECT"
+  "  td.id "
+  "FROM"
+  "  TapeDrive td,"
+  "  VdqmTape "
+  "WHERE"
+  "      td.tape = VdqmTape.id"
+  "  AND VdqmTape.vid = :1";
   
 /// SQL statement for function selectTapeByVid
-const std::string castor::db::ora::OraVdqmSvc::s_selectTapeByVidStatementString =
+const std::string
+  castor::db::ora::OraVdqmSvc::s_selectTapeByVidStatementString =
   "SELECT id FROM VdqmTape WHERE vid = :1";      
   
 /// SQL statement for function selectTapeReqForMountedTape
-const std::string castor::db::ora::OraVdqmSvc::s_selectTapeReqForMountedTapeStatementString =
-  "SELECT id FROM TapeRequest WHERE tapeDrive = 0 AND tape = :1 AND (requestedSrv = :2 OR requestedSrv = 0) FOR UPDATE";
+const std::string
+  castor::db::ora::OraVdqmSvc::s_selectTapeReqForMountedTapeStatementString =
+  "SELECT"
+  "  id "
+  "FROM"
+  "  TapeRequest "
+  "WHERE"
+  "      tapeDrive = 0"
+  "  AND tape = :1"
+  "  AND (requestedSrv = :2"
+  "   OR requestedSrv = 0) "
+  "FOR UPDATE";
   
 /// SQL statement for function selectTapeAccessSpecification
-const std::string castor::db::ora::OraVdqmSvc::s_selectTapeAccessSpecificationStatementString =
-  "SELECT id FROM TapeAccessSpecification WHERE accessMode = :1 AND density = :2 AND tapeModel = :3";
+const std::string
+  castor::db::ora::OraVdqmSvc::s_selectTapeAccessSpecificationStatementString =
+  "SELECT"
+  "  id "
+  "FROM"
+  "  TapeAccessSpecification "
+  "WHERE"
+  "      accessMode = :1"
+  "  AND density = :2"
+  "  AND tapeModel = :3";
   
 /// SQL statement for function selectDeviceGroupName
-const std::string castor::db::ora::OraVdqmSvc::s_selectDeviceGroupNameStatementString =
+const std::string
+  castor::db::ora::OraVdqmSvc::s_selectDeviceGroupNameStatementString =
   "SELECT id FROM DeviceGroupName WHERE dgName = :1";
   
 /// SQL statement for function selectTapeRequestQueue
-const std::string castor::db::ora::OraVdqmSvc::s_selectTapeRequestQueueStatementString =
+const std::string
+  castor::db::ora::OraVdqmSvc::s_selectTapeRequestQueueStatementString =
   "SELECT"
   "  id,"
   "  driveName,"
@@ -152,7 +230,8 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeRequestQueueStatement
   "  AND (:3 IS NULL OR :4 = tapeServer)";
 
 /// SQL statement for function selectTapeDriveQueue
-const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveQueueStatementString =
+const std::string
+  castor::db::ora::OraVdqmSvc::s_selectTapeDriveQueueStatementString =
   "SELECT"
   "  STATUS, ID, RUNNINGTAPEREQ, JOBID, MODIFICATIONTIME, RESETTIME, USECOUNT,"
   "  ERRCOUNT, TRANSFERREDMB, TAPEACCESSMODE, TOTALMB, SERVERNAME, VID,"
@@ -164,31 +243,43 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveQueueStatementSt
   "  AND (:3 IS NULL OR :4 = SERVERNAME)";
 
 /// SQL statement for function selectDeviceGroupName
-const std::string castor::db::ora::OraVdqmSvc::s_selectTapeRequestStatementString =
+const std::string
+  castor::db::ora::OraVdqmSvc::s_selectTapeRequestStatementString =
   "SELECT id FROM TapeRequest WHERE CAST(id AS INT) = :1";
   
 /// SQL statement for function selectCompatibilitiesForDriveModel
-const std::string castor::db::ora::OraVdqmSvc::s_selectCompatibilitiesForDriveModelStatementString =
+const std::string castor::db::ora::OraVdqmSvc::
+  s_selectCompatibilitiesForDriveModelStatementString =
   "SELECT id FROM TapeDriveCompatibility WHERE tapeDriveModel = :1";
   
 /// SQL statement for function selectTapeAccessSpecifications
-const std::string castor::db::ora::OraVdqmSvc::s_selectTapeAccessSpecificationsStatementString =
-  "SELECT id FROM TapeAccessSpecification WHERE tapeModel = :1 ORDER BY accessMode DESC";  
+const std::string
+  castor::db::ora::OraVdqmSvc::s_selectTapeAccessSpecificationsStatementString =
+  "SELECT"
+  "  id "
+  "FROM"
+  "  TapeAccessSpecification "
+  "WHERE"
+  "  tapeModel = :1 "
+  "ORDER BY"
+  "  accessMode DESC";  
 
 /**
  * The drive scheduler algorithm.
  */  
 /// SQL statement for function allocateDrive
 const std::string castor::db::ora::OraVdqmSvc::s_allocateDriveStatementString =
-  "BEGIN allocateDrive(:1, :2, :3, :4, :5); END;";
+  "BEGIN castorVdqm.allocateDrive(:1, :2, :3, :4, :5); END;";
 
 /// SQL statement for function reuseDriveAllocation
-const std::string castor::db::ora::OraVdqmSvc::s_reuseDriveAllocationStatementString =
-  "BEGIN reuseDriveAllocation(:1, :2, :3, :4); END;";
+const std::string
+  castor::db::ora::OraVdqmSvc::s_reuseDriveAllocationStatementString =
+  "BEGIN castorVdqm.reuseDriveAllocation(:1, :2, :3, :4); END;";
 
 /// SQL statement for function requestToSubmit
-const std::string castor::db::ora::OraVdqmSvc::s_requestToSubmitStatementString
-  = "BEGIN requestToSubmit(:1); END;";
+const std::string
+  castor::db::ora::OraVdqmSvc::s_requestToSubmitStatementString =
+  "BEGIN castorVdqm.getRequestToSubmit(:1); END;";
 
 
 // -----------------------------------------------------------------------
@@ -422,7 +513,8 @@ castor::vdqm::TapeServer*
     
   // Check whether the statements are ok
   if (0 == m_selectTapeServerStatement) {
-    m_selectTapeServerStatement = createStatement(s_selectTapeServerStatementString);
+    m_selectTapeServerStatement =
+      createStatement(s_selectTapeServerStatementString);
   }
   // Execute statement and get result
   u_signed64 id;
@@ -764,10 +856,9 @@ castor::vdqm::TapeDrive*
 // -----------------------------------------------------------------------
 // dedicateDrive
 // -----------------------------------------------------------------------
-void castor::db::ora::OraVdqmSvc::dedicateDrive(std::string driveName,
-  std::string serverName, std::string dgName, const unsigned int accessMode,
-  std::string clientHost, std::string vid)
-  throw (castor::exception::Exception){
+void castor::db::ora::OraVdqmSvc::dedicateDrive(const std::string driveName,
+  const std::string serverName, const std::string dgName,
+  const std::string dedicate) throw (castor::exception::Exception) {
 
   // Check whether the statements are ok
   if (0 == m_dedicateDriveStatement) {
@@ -775,21 +866,53 @@ void castor::db::ora::OraVdqmSvc::dedicateDrive(std::string driveName,
       createStatement(s_dedicateDriveStatementString);
     m_dedicateDriveStatement->setAutoCommit(false);
 
-    m_dedicateDriveStatement->registerOutParam(7, oracle::occi::OCCIINT);
+    m_dedicateDriveStatement->registerOutParam(9, oracle::occi::OCCIINT);
   }
 
+  DriveDedications dedications;
+
+  // Extract all possible dedications
+  dedications.uid     = getDriveDedication(dedicate, "uid=*,"    );
+  dedications.gid     = getDriveDedication(dedicate, "gid=*,"    );
+  dedications.name    = getDriveDedication(dedicate, "name=*,"   );
+  dedications.host    = getDriveDedication(dedicate, "host=*,"   );
+  dedications.vid     = getDriveDedication(dedicate, "vid=*,"    );
+  dedications.mode    = getDriveDedication(dedicate, "mode=*,"   );
+  dedications.datestr = getDriveDedication(dedicate, "datestr=*,");
+  dedications.timestr = getDriveDedication(dedicate, "timestr=*,");
+  dedications.age     = getDriveDedication(dedicate, "age=*"     );
+
+  // Reject those dedications with invalid syntax and those which require
+  // unsupported functionality
+  rejectInvalidDriveDedications(driveName, serverName, dedications);
+
+  // Set the dedication parameters of the SQL statement
   m_dedicateDriveStatement->setString(1, driveName );
   m_dedicateDriveStatement->setString(2, serverName);
   m_dedicateDriveStatement->setString(3, dgName    );
-  m_dedicateDriveStatement->setInt   (4, accessMode);
-  m_dedicateDriveStatement->setString(5, clientHost);
-  m_dedicateDriveStatement->setString(6, vid       );
+  m_dedicateDriveStatement->setInt   (4, dedications.mode == "0" ? 0 : 1);
+  m_dedicateDriveStatement->setString(5, dedications.host);
+  m_dedicateDriveStatement->setString(6, dedications.vid);
+  // If uid is an integer then pass it as an integer
+  if(isValidUInt(dedications.uid)) {
+    m_dedicateDriveStatement->setInt(7, atoi(dedications.uid.c_str()));
+  // Else uid is either "" or ".*" then pass it as a NULL meaning no dedication
+  } else {
+    m_dedicateDriveStatement->setNull(7, oracle::occi::OCCIINT);
+  }
+  // If gid is an integer then pass it as an integer
+  if(isValidUInt(dedications.gid)) {
+    m_dedicateDriveStatement->setInt(8, atoi(dedications.gid.c_str()));
+  // Else gid is either "" or ".*" then pass it as a NULL meaning no dedication
+  } else {
+    m_dedicateDriveStatement->setNull(8, oracle::occi::OCCIINT);
+  }
 
   // Execute statement and get result
   int result = 0;
   try {
     m_dedicateDriveStatement->executeUpdate();
-    result = m_dedicateDriveStatement->getInt(7);
+    result = m_dedicateDriveStatement->getInt(9);
   } catch(oracle::occi::SQLException &e) {
     handleException(e);
 
@@ -2121,6 +2244,7 @@ std::vector<castor::vdqm::TapeAccessSpecification*>*
   // We should never reach this point
 }
 
+
 // -------------------------------------------------------------------------
 //  handleException
 // -------------------------------------------------------------------------
@@ -2128,6 +2252,7 @@ void
 castor::db::ora::OraVdqmSvc::handleException(oracle::occi::SQLException& e) {
   dynamic_cast<castor::db::ora::OraCnvSvc*>(cnvSvc())->handleException(e);
 }
+
 
 // -----------------------------------------------------------------------
 // createStatement - for Oracle specific statements
@@ -2137,6 +2262,7 @@ castor::db::ora::OraVdqmSvc::createStatement (const std::string &stmtString)
   throw (castor::exception::Exception) {
     return dynamic_cast<castor::db::ora::OraCnvSvc*>(cnvSvc())->createOraStatement(stmtString);
 }
+
 
 // -----------------------------------------------------------------------
 // deleteStatement - for Oracle specific statements
@@ -2178,4 +2304,191 @@ void castor::db::ora::OraVdqmSvc::checkRegExp(const std::string &regExp)
 
     throw ie;
   }
+}
+
+
+// -----------------------------------------------------------------------
+// getDriveDedication
+// -----------------------------------------------------------------------
+std::string castor::db::ora::OraVdqmSvc::getDriveDedication(
+const std::string &input, const char *format) {
+  std::string        output;
+  std::ostringstream oss;
+  int                inputLen   = input.length();
+  int                formatLen  = strlen(format);
+  int                inputPos   = 0;
+  int                formatPos  = 0;
+
+  // For each input character
+  for(inputPos=0; inputPos<inputLen; inputPos++) {
+
+    // If the current format character is a '*'
+    if(format[formatPos] == '*') {
+
+      // If there is a format character after the '*'
+      if((formatPos + 1) < formatLen) {
+
+        // If the current input character matches the next format character
+        if(input[inputPos] == format[formatPos + 1]) {
+
+          // Finish the extraction
+          break;
+
+        } else {
+
+          // Append the current input character to the output
+          oss << input[inputPos];
+        }
+
+      // Else there is no format character after the '*'
+      } else {
+
+        // Append the current input character to the output
+        oss << input[inputPos];
+      }
+
+    // Else the current format character is not a '*'
+    } else {
+
+      // If the current input character matches the current format character
+      if(input[inputPos] == format[formatPos]) {
+
+        // Move to the next format character
+        formatPos++;
+
+        // If the end of the format string has been reached
+        if(formatPos == formatLen) {
+
+          // Finish the extraction
+          break;
+        }
+
+      // Else the current input character does not match the current format
+      // character
+      } else {
+
+        // Reset the format character position
+        formatPos = 0;
+      }
+    }
+  }
+
+  return oss.str();
+}
+
+
+// -----------------------------------------------------------------------
+// rejectInvalidDriveDedications
+// -----------------------------------------------------------------------
+void castor::db::ora::OraVdqmSvc::rejectInvalidDriveDedications(
+  const std::string &driveName, const std::string &serverName,
+  DriveDedications &dedications) throw (castor::exception::Exception) {
+  // Reject name, datestr, timestr and age dedications
+  if((dedications.name != ".*") && (dedications.name != "")) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage()
+      << "name dedications are not supported '"
+      << dedications.name << "' "
+      << driveName << "@" << serverName << std::endl;
+    throw ex;
+  }
+  if((dedications.datestr != ".*") && (dedications.datestr != "")) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage()
+      << "datestr dedications are not supported '"
+      << dedications.datestr << "' "
+      << driveName << "@" << serverName << std::endl;
+    throw ex;
+  }
+  if((dedications.timestr != ".*") && (dedications.timestr != "")) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage()
+      << "timestr dedications are not supported '"
+      << dedications.timestr << "' "
+      << driveName << "@" << serverName << std::endl;
+    throw ex;
+  }
+  if((dedications.age != ".*") && (dedications.age != "")) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage()
+      << "age dedications are not supported '"
+      << dedications.age << "' "
+      << driveName << "@" << serverName << std::endl;
+    throw ex;
+  }
+
+  // Reject invalid uid and gid dedications
+  if(dedications.uid != "" && dedications.uid != ".*" &&
+    !isValidUInt(dedications.uid)) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage()
+      << "Invalid uid dedication '"
+      << dedications.uid << "' "
+      << driveName << "@" << serverName << std::endl;
+    throw ex;
+  }
+  if(dedications.gid != "" && dedications.gid != ".*" &&
+    !isValidUInt(dedications.gid)) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage()
+      << "Invalid gid dedication '"
+      << dedications.gid << "' "
+      << driveName << "@" << serverName << std::endl;
+    throw ex;
+  }
+
+  // Reject invalid host and vid dedications
+  try {
+    checkRegExp(dedications.host);
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage()
+      << "Invalid host dedication '"
+      << dedications.host << "' "
+      << driveName << "@" << serverName << std::endl;
+    throw ex;
+  }
+  try {
+    checkRegExp(dedications.vid);
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage()
+      << "Invalid vid dedication '"
+      << dedications.vid << "' "
+      << driveName << "@" << serverName << std::endl;
+    throw ex;
+  }
+
+  // Reject invalid mode dedications
+  if((dedications.mode != ".*") && (dedications.mode != "0") &&
+    (dedications.mode != "")) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage()
+      << "Invalid mode dedication '"
+      << dedications.mode << "' "
+      << driveName << "@" << serverName << std::endl;
+    throw ex;
+  }
+}
+
+
+// -----------------------------------------------------------------------
+// isValidUInt
+// -----------------------------------------------------------------------
+bool castor::db::ora::OraVdqmSvc::isValidUInt(std::string &s) {
+  // If the string is empty
+  if(s.length() < 1) {
+    return false;
+  }
+
+  // For each character in the specified string
+  for(std::string::iterator itor=s.begin(); itor != s.end(); itor++) {
+
+    // If the character is not a numerical digit
+    if( (*itor < '0') || (*itor > '9') ) {
+      return false;
+    }
+  }
+
+  return true;
 }

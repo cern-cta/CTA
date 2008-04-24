@@ -113,19 +113,6 @@ namespace castor {
           
       private:
 
-        // Structure used to store the dedications of a drive
-        struct DriveDedications {
-          std::string uid;
-          std::string gid;
-          std::string name;
-          std::string host;
-          std::string vid;
-          std::string mode;
-          std::string datestr;
-          std::string timestr;
-          std::string age;
-        };
-
         // Private variables
         newVdqmHdr_t* ptr_header;
         newVdqmDrvReq_t* ptr_driveRequest;
@@ -197,41 +184,6 @@ namespace castor {
           castor::vdqm::TapeDrive *newTapeDrive, std::string driveModel) 
           throw (castor::exception::Exception);
 
-        /**
-         * Simple parsing algorithm written specifically for extracting values
-         * from the dedicate string of a drive request message.  This method
-         * extracts a string from the specified input string using the
-         * specified format string.  The first string that matches the format
-         * string is returned, any subsequent possible matches are ignored.
-         *
-         * The format string is very specialised and is of the form:
-         *
-         *     "xyz*p"
-         *
-         * Where * represents the string to be extracted (there can be only
-         * one '* in the format string), xyz represents any number of
-         * characters before the string to be extracted, and p represents the
-         * single character if any, after the string to be extracted.  Example
-         * format strings:
-         *
-         *     "host=*,"
-         *     "vid=*,"
-         *     "age=*"
-         *
-         * @param input the input string
-         * @param format the format string
-         * @return the extracted string or an empty string if nothing was
-         * extracted
-         */
-        std::string getDedication(const char *input, const char *format);
-
-        /**
-         * Rejects invalid dedications in the specified dedicate string by
-         * throwing the appropriate exception.
-         */
-        void rejectInvalidDedications(DriveDedications *dedications)
-          throw (castor::exception::Exception);
-          
       }; // class TapeDriveHandler
     
     } // end of namespace handler
