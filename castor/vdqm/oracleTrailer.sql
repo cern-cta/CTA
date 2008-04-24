@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.100 $ $Release$ $Date: 2008/04/24 15:32:50 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.101 $ $Release$ $Date: 2008/04/24 16:25:20 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -905,6 +905,30 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
     egidVar IN NUMBER , resultVar OUT INTEGER);
 
   /**
+   * This procedure inserts the specified drive dedications into the database.
+   *
+   * This procedure raises an application error with an error number of -20001
+   * if it detects an error in the dedicate string.
+   *
+   * This procedure raises an application error with an error number of -20002
+   * if the specified tape drive does not exist.
+   *
+   * This procedure raises an application error with an error number of -20003
+   * if the specified tape drive is not associated with the specified tape
+   * server.
+   *
+   * This procedure raises an application error with an error number of -20004
+   * if the specified tape drive is not associated with the specified DGN.
+   *
+   * @param driveNameVar the name of the tape drive to be dedicated
+   * @param serverNameVar the name of the tape server of the tape drive
+   * @param dgNameVar the name of the device group of the tape drive
+   * @param dedicateVar the dedication string
+   */
+  PROCEDURE dedicateDrive2(driveNameVar IN VARCHAR2, serverNameVar IN VARCHAR2,
+    dgNameVar IN  VARCHAR2, dedicateVar IN  VARCHAR2);
+
+  /**
    * This procedure deletes the specified drive from the database.
    *
    * @param driveNameVar the name of the tape drive to be delete
@@ -1440,6 +1464,124 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
   /**
    * See the castorVdqm package specification for documentation.
    */
+  PROCEDURE dedicateDrive2(driveNameVar IN VARCHAR2, serverNameVar IN  VARCHAR2,
+    dgNameVar IN  VARCHAR2, dedicateVar IN  VARCHAR2) AS
+    gidVar               NUMBER;
+    hostVar              VARCHAR2(256);
+    modeVar              NUMBER;
+    uidVar               NUMBER;
+    vidVar               VARCHAR2(256);
+    driveIdVar           NUMBER;
+    dgnIdVar             NUMBER;
+    serverIdVar          NUMBER;
+    nbMatchingServersVar NUMBER;
+    nbMatchingDgnsVar    NUMBER;
+    TYPE dedicationList_t IS TABLE OF NUMBER INDEX BY BINARY_INTEGER;
+    dedicationsToDelete  dedicationList_t;
+    dedicationIdVar      NUMBER;
+  BEGIN
+    -- Parse the dedication string rasing an application error with an error
+    -- number of -20001 if there is an error in the dedicate string
+    parseDedicateStr(dedicateVar, gidVar, hostVar, modeVar, uidVar, vidVar);
+
+    -- Lock the tape drive row
+    BEGIN
+      SELECT
+        TapeDrive.id, TapeDrive.deviceGroupName, TapeDrive.tapeServer
+        INTO driveIdVar, dgnIdVar, serverIdVar
+        FROM TapeDrive
+        INNER JOIN TapeServer ON
+          TapeDrive.tapeServer = TapeServer.id
+        WHERE
+          TapeDrive.driveName = driveNameVar
+        FOR UPDATE;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      RAISE_APPLICATION_ERROR(-20002, 'No such tape drive ''' || driveNameVar);
+    END;
+
+    -- Check the specified tape drive is associated with the specified tape
+    -- server
+    SELECT count(*) INTO nbMatchingServersVar
+      FROM TapeServer
+      WHERE
+            TapeServer.id         = serverIdVar
+        AND TapeServer.serverName = serverNameVar;
+
+    IF nbMatchingServersVar = 0 THEN
+      RAISE_APPLICATION_ERROR(-20003, 'Tape drive ''' || driveNameVar ||
+        ''' is not associated with tape server ''' || serverNameVar || '''');
+    END IF;
+
+    -- Check the specified tape drive is associated with the specified dgn
+    SELECT count(*) INTO nbMatchingDgnsVar
+      FROM DeviceGroupName
+      WHERE
+            DeviceGroupName.id     = dgnIdVar
+        AND DeviceGroupName.dgName = dgNameVar;
+
+    IF nbMatchingDgnsVar = 0 THEN
+      RAISE_APPLICATION_ERROR(-20004, 'Tape drive ''' || driveNameVar ||
+        ''' is not associated with DGN ''' || dgNameVar || '''');
+      RETURN;
+    END IF;
+
+    -- Delete all existing dedications associated with tape drive
+    SELECT id BULK COLLECT INTO dedicationsToDelete
+      FROM TapeDriveDedication
+      WHERE TapeDriveDedication.tapeDrive = driveIdVar;
+
+    IF dedicationsToDelete.COUNT > 0 THEN
+      FOR i IN dedicationsToDelete.FIRST .. dedicationsToDelete.LAST LOOP
+        DELETE FROM TapeDriveDedication
+          WHERE TapeDriveDedication.id = dedicationsToDelete(i);
+        DELETE FROM Id2Type
+          WHERE Id2Type.id = dedicationsToDelete(i);
+      END LOOP;
+    END IF;
+
+    -- Insert new dedications
+    IF gidVar IS NOT NULL THEN
+      INSERT INTO TapeDriveDedication(id, tapeDrive, egid)
+        VALUES(ids_seq.nextval, driveIdVar, gidVar)
+      RETURNING id INTO dedicationIdVar;
+      INSERT INTO Id2Type (id, type)
+        VALUES (dedicationIdVar, 90);
+    END IF;
+    IF hostVar IS NOT NULL THEN
+      INSERT INTO TapeDriveDedication(id, tapeDrive, clientHost)
+        VALUES(ids_seq.nextval, driveIdVar, hostVar)
+      RETURNING id INTO dedicationIdVar;
+      INSERT INTO Id2Type (id, type)
+        VALUES (dedicationIdVar, 90);
+    END IF;
+    IF modeVar IS NOT NULL THEN
+      INSERT INTO TapeDriveDedication(id, tapeDrive, accessMode)
+        VALUES(ids_seq.nextval, driveIdVar, modeVar)
+      RETURNING id INTO dedicationIdVar;
+      INSERT INTO Id2Type (id, type)
+        VALUES (dedicationIdVar, 90);
+    END IF;
+    IF uidVar IS NOT NULL THEN
+      INSERT INTO TapeDriveDedication(id, tapeDrive, euid)
+        VALUES(ids_seq.nextval, driveIdVar, uidVar)
+      RETURNING id INTO dedicationIdVar;
+      INSERT INTO Id2Type (id, type)
+        VALUES (dedicationIdVar, 90);
+    END IF;
+    IF vidVar IS NOT NULL THEN
+      INSERT INTO TapeDriveDedication(id, tapeDrive, vid)
+        VALUES(ids_seq.nextval, driveIdVar, vidVar)
+      RETURNING id INTO dedicationIdVar;
+      INSERT INTO Id2Type (id, type)
+        VALUES (dedicationIdVar, 90);
+    END IF;
+
+  END dedicateDrive2;
+
+
+  /**
+   * See the castorVdqm package specification for documentation.
+   */
   PROCEDURE deleteDrive
   ( driveNameVar  IN  VARCHAR2
   , serverNameVar IN  VARCHAR2
@@ -1487,7 +1629,7 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
       RETURN;
     END IF;
   
-    DELETE From TapeDrive2TapeDriveComp WHERE parent = driveIdVar;
+    DELETE FROM TapeDrive2TapeDriveComp WHERE parent = driveIdVar;
     DELETE FROM TapeDrive WHERE id = driveIdVar;
     DELETE FROM Id2Type WHERE id = driveIdVar;
   END deleteDrive;
