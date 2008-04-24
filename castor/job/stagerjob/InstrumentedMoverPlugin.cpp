@@ -36,6 +36,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/job/stagerjob/InputArguments.hpp"
 #include "castor/job/stagerjob/InstrumentedMoverPlugin.hpp"
 
 //------------------------------------------------------------------------------
@@ -75,7 +76,7 @@ void castor::job::stagerjob::InstrumentedMoverPlugin::waitChildAndInformStager
 (InputArguments &args, PluginContext &context)
   throw(castor::exception::Exception) {
   // Wait for children
-  int childFailed = waitForChild(args);
+  bool childFailed = waitForChild(args);
   // If all was fine, just return
   if (!childFailed) return;
   // else inform CASTOR

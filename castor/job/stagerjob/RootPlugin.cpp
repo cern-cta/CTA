@@ -31,6 +31,7 @@
 #include "getconfent.h"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/job/stagerjob/InputArguments.hpp"
 #include "castor/job/stagerjob/RootPlugin.hpp"
 
 // static instance of the RootPlugin
@@ -125,8 +126,15 @@ void castor::job::stagerjob::RootPlugin::execMover
   // execute mover
   execl (progfullpath.c_str(), progname.c_str(),
          "-i", "-d", "0", "-F", context.fullDestPath.c_str(),
-         "-H", args.requestUuid, NULL);
+         "-H", args.rawRequestUuid.c_str(), NULL);
   // Should never be reached
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("errorCode", errno),
+     castor::dlf::Param("errorMessage", strerror(errno)),
+     castor::dlf::Param(args.subRequestUuid)};
+  castor::dlf::dlf_writep
+    (args.requestUuid, DLF_LVL_ERROR,
+     castor::job::stagerjob::EXECFAILED, 3, params, &args.fileId);
   dlf_shutdown(5);
   exit(EXIT_FAILURE);
 }

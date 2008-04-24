@@ -42,6 +42,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/job/stagerjob/InputArguments.hpp"
 #include "castor/job/stagerjob/RawMoverPlugin.hpp"
 
 //------------------------------------------------------------------------------
@@ -140,11 +141,11 @@ void castor::job::stagerjob::RawMoverPlugin::postForkHook
 (InputArguments &args, PluginContext &context)
   throw(castor::exception::Exception) {
   // Wait for children
-  int childFailed = waitForChild(args);
+  bool childFailed = waitForChild(args);
   // Inform CASTOR
   if (args.accessMode == ReadOnly ||
       args.accessMode == ReadWrite) {
-    if (childFailed == 0) {
+    if (childFailed) {
       context.jobSvc->getUpdateDone
         (args.subRequestId, args.fileId.fileid, args.fileId.server);
     } else {

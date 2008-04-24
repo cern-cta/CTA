@@ -32,6 +32,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/job/stagerjob/BasePlugin.hpp"
+#include "castor/job/stagerjob/InputArguments.hpp"
 
 #define SELECT_TIMEOUT 60
 
@@ -58,7 +59,7 @@ castor::job::stagerjob::BasePlugin::getPortRange
 //------------------------------------------------------------------------------
 bool castor::job::stagerjob::BasePlugin::waitForChild
 (castor::job::stagerjob::InputArguments &args) throw() {
-  int childFailed = false;
+  bool childFailed = false;
   // Wait for all child to exit
   while (1) {
     int term_status = -1;

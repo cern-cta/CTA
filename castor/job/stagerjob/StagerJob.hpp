@@ -28,10 +28,7 @@
 #define STAGERJOB_STAGERJOB_HPP 1
 
 // Include Files
-#include <map>
 #include <string>
-#include "Cns_api.h"
-#include "Cuuid.h"
 #include "castor/exception/Exception.hpp"
 
 namespace castor {
@@ -41,6 +38,9 @@ namespace castor {
   namespace stager {
     class IJobSvc;
   }
+  namespace rh {
+    class IOResponse;
+  }
 
   namespace job {
 
@@ -48,37 +48,6 @@ namespace castor {
 
       // Forward declaration
       class IPlugin;
-
-      /**
-       * internal enum describing the access mode
-       */
-      enum AccessMode {
-        ReadOnly,
-        WriteOnly,
-        ReadWrite
-      };
-
-      /**
-       * internal struct holding the list of arguments passed to stagerJob
-       */
-      struct InputArguments {
-        struct Cns_fileid fileId;
-        Cuuid_t requestUuid;
-        Cuuid_t subRequestUuid;
-        std::string rawRequestUuid;
-        std::string rawSubRequestUuid;
-        std::string protocol;
-        u_signed64 subRequestId;
-        int type;
-        std::string diskServer;
-        std::string fileSystem;
-        enum AccessMode accessMode;
-        castor::IClient* client;
-        bool isSecure;
-	uid_t Euid;
-	gid_t EGid;
-        u_signed64 requestCreationTime;
-      };
 
       /**
        * internal struct holding the context passed to a plugin
@@ -104,6 +73,7 @@ namespace castor {
         CHDIRFAILED =  4, /* Failed to change directory to tmp */
         DUP2FAILED =   5, /* Failed to duplicate socket */
         MOVERNOTEXEC = 6, /* Mover program can not be executed. Check permissions */
+        EXECFAILED =   7, /* Failed to exec mover */
 
         // Invalid configurations or parameters
         INVRLIMIT =     10, /* rlimit found in config file exceeds hard limit */
@@ -113,23 +83,25 @@ namespace castor {
         INVRETRYNBAT =  14, /* Invalid DiskCopy/RetryAttempts option, using default */
 
         // Informative logs
-        JOBSTARTED =  20, /* Job Started */
-        JOBENDED =    21, /* Job exiting successfully */
-        JOBFAILED =   22, /* Job failed */
-        JOBORIGCRED = 23, /* Credentials at start time */
-        JOBACTCRED =  24, /* Actual credentials used */
-        JOBNOOP =     25, /* No operation performed */
-        FORKMOVER =   26, /* Forking mover */
-        REQCANCELED = 27, /* Request canceled */
-        MOVERPORT =   28, /* Mover will use the following port */
-        MOVERFORK =   29, /* Mover fork uses the following command line */
-        ACCEPTCONN =  30, /* Client connected */
+        JOBSTARTED =     20, /* Job Started */
+        JOBENDED =       21, /* Job exiting successfully */
+        JOBFAILED =      22, /* Job failed */
+        JOBORIGCRED =    23, /* Credentials at start time */
+        JOBACTCRED =     24, /* Actual credentials used */
+        JOBNOOP =        25, /* No operation performed */
+        FORKMOVER =      26, /* Forking mover */
+        REQCANCELED =    27, /* Request canceled */
+        MOVERPORT =      28, /* Mover will use the following port */
+        MOVERFORK =      29, /* Mover fork uses the following command line */
+        ACCEPTCONN =     30, /* Client connected */
+        JOBFAILEDNOANS = 31, /* Job failed before it could send an answer to client */
 
         // Errors
         STAT64FAIL =    40, /* rfio_stat64 error */
         CHILDEXITED =   41, /* Child exited */
         CHILDSIGNALED = 42, /* Child exited due to uncaught signal */
         CHILDSTOPPED =  43, /* Child was stopped */
+        NOANSWERSENT =  44, /* Could not send answer to client */
 
         // Protocol specific. Should not be here if the plugins
         // were properly packaged in separate libs

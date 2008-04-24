@@ -30,6 +30,7 @@
 #include "getconfent.h"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/job/stagerjob/InputArguments.hpp"
 #include "castor/job/stagerjob/RfioPlugin.hpp"
 
 // static instance of the RfioPlugin

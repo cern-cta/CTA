@@ -32,6 +32,7 @@
 #include "castor/rh/IOResponse.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/job/stagerjob/InputArguments.hpp"
 #include "castor/job/stagerjob/XRootPlugin.hpp"
 
 // static instance of the XRootPlugin

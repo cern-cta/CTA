@@ -30,6 +30,7 @@
 #include <sys/resource.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sstream>
 #include <fcntl.h>
 #include <Cgrp.h>
 #include "common.h"
@@ -37,7 +38,6 @@
 #include "castor/System.hpp"
 #include "castor/Services.hpp"
 #include "castor/BaseObject.hpp"
-#include "castor/IClientFactory.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/rh/Client.hpp"
 #include "castor/rh/IOResponse.hpp"
@@ -50,17 +50,11 @@
 #include "castor/stager/SubRequest.hpp"
 #include "castor/job/stagerjob/IPlugin.hpp"
 #include "castor/job/stagerjob/StagerJob.hpp"
-#include "castor/job/SharedResourceHelper.hpp"
+#include "castor/job/stagerjob/InputArguments.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/Internal.hpp"
-#include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/RequestCanceled.hpp"
-
-// default number of retries and interval between retries
-// for the sharedResourceHelper
-#define DEFAULT_RETRY_ATTEMPTS 60
-#define DEFAULT_RETRY_INTERVAL 10
 
 // static map s_plugins
 static std::map<std::string, castor::job::stagerjob::IPlugin*> *s_plugins = 0;
@@ -90,184 +84,6 @@ void castor::job::stagerjob::registerPlugin
     s_plugins = new std::map<std::string, castor::job::stagerjob::IPlugin*>();
   }
   s_plugins->operator[](protocol) = plugin;
-}
-
-// -----------------------------------------------------------------------
-// parseCommandLine
-// -----------------------------------------------------------------------
-void parseCommandLine
-(int argc, char** argv, castor::job::stagerjob::InputArguments &args) {
-  // We expect nine arguments :
-  // fileid@nshost requestuuid subrequestuuid rfeatures
-  // subrequest_id@type host:fs mode clientString securityOption Euid EGid  Creation Time
-
-  if (argc != 13) {
-    castor::exception::InvalidArgument e;
-    e.getMessage() << "Wrong number of arguments given";
-    throw e;
-  }
-
-  // fileid and nshost
-  std::string input = argv[1];
-  unsigned int atPos = input.find('@');
-  if (atPos == input.npos) {
-    castor::exception::InvalidArgument e;
-    e.getMessage() << "First argument should be <fileid>@<nshost>. "
-                   << "No '@' found.";
-    throw e;
-  }
-  if (input.find_first_not_of("0123456789") != atPos) {
-    castor::exception::InvalidArgument e;
-    e.getMessage() << "First argument should be <fileid>@<nshost> "
-                   << "and <fileid> should be a numerical value";
-    throw e;
-  }
-  strcpy(args.fileId.server, input.substr(atPos+1).c_str());
-  args.fileId.fileid = strtou64(input.substr(0, atPos).c_str());
-
-  // request uuid
-  args.rawRequestUuid = argv[2];
-  if (string2Cuuid(&args.requestUuid,argv[2]) != 0) {
-    castor::exception::InvalidArgument e;
-    e.getMessage() << "Invalid request uuid : " << argv[2];
-    throw e;
-  }
-
-  // subRequest uuid
-  args.rawSubRequestUuid = argv[3];
-  if (string2Cuuid(&args.subRequestUuid,argv[3]) != 0) {
-    castor::exception::InvalidArgument e;
-    e.getMessage() << "Invalid request uuid : " << argv[3];
-    throw e;
-  }
-
-  // rfeatures
-  args.protocol = argv[4];
-  if (args.protocol == "rfio3") args.protocol = "rfio";
-  if (args.protocol!= "rfio" &&
-      args.protocol!= "root" &&
-      args.protocol!= "xroot" &&
-      args.protocol!= "gsiftp") {
-    castor::exception::InvalidArgument e;
-    e.getMessage() << "Unsupported protocol " << args.protocol;
-    throw e;
-  }
-
-  // subrequest_id and type
-  input = argv[5];
-  atPos = input.find('@');
-  if (atPos == input.npos) {
-    castor::exception::InvalidArgument e;
-    e.getMessage() << "Fifth argument should be <subreqId>@<type>. "
-                   << "No '@' found.";
-    throw e;
-  }
-  if (input.find_first_not_of("0123456789") != atPos) {
-    castor::exception::InvalidArgument e;
-    e.getMessage() << "Fifth argument should be <subreqId>@<type> "
-                   << "and <subreqId> should be a numerical value";
-    throw e;
-  }
-  if (input.find_last_not_of("0123456789") != atPos) {
-    castor::exception::InvalidArgument e;
-    e.getMessage() << "Fifth argument should be <subreqId>@<type> "
-                   << "and <type> should be a numerical value";
-    throw e;
-  }
-  args.subRequestId = strtou64(input.substr(0, atPos).c_str());
-  args.type = atoi(input.substr(atPos+1).c_str());
-
-  // Determine the number of times that the shared resource helper should try
-  // to download the resource file from the shared resource URL
-  char *value = getconfent("DiskCopy", "RetryAttempts", 0);
-  int attempts = DEFAULT_RETRY_ATTEMPTS;
-  if (value) {
-    attempts = std::strtol(value, 0, 10);
-    if (attempts < 1) {
-      // "Invalid DiskCopy/RetryInterval option, using default"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Default", attempts),
-         castor::dlf::Param(args.subRequestUuid)};
-      castor::dlf::dlf_writep
-        (args.requestUuid, DLF_LVL_WARNING,
-         castor::job::stagerjob::INVRETRYINT, 2, params, &args.fileId);
-    }
-  }
-
-  // Extract the value of the retry interval. This value determines how long
-  // we sleep between retry attempts
-  value = getconfent("DiskCopy", "RetryInterval", 0);
-  int interval = DEFAULT_RETRY_INTERVAL;
-  if (value) {
-    interval = std::strtol(value, 0, 10);
-    if (interval < 1) {
-      // "Invalid DiskCopy/RetryAttempts option, using default"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Default", interval),
-         castor::dlf::Param(args.subRequestUuid)};
-      castor::dlf::dlf_writep
-        (args.requestUuid, DLF_LVL_WARNING,
-         castor::job::stagerjob::INVRETRYNBAT, 2, params, &args.fileId);
-    }
-  }
-
-  // Get the diskserver and filesystem from the resource file
-  std::string path = argv[6];
-  if (path[path.size()-1] != '/') path += '/';
-  char* lsbJobId = getenv("LSB_JOBID");
-  if (0 == lsbJobId) {
-    castor::exception::Internal e;
-    e.getMessage() << "environment variable LSB_JOBID should be set but is not";
-    throw e;
-  }
-  path += lsbJobId;
-  castor::job::SharedResourceHelper resHelper(attempts, interval);
-  resHelper.setUrl(path);
-  std::string content = resHelper.download(false);
-  std::istringstream iss(content);
-  std::getline(iss, args.diskServer, ':');
-  std::getline(iss, args.fileSystem, '\n');
-  if (iss.fail() || args.diskServer.empty() || args.fileSystem.empty()) {
-    castor::exception::Internal e;
-    e.getMessage() << "Sixth argument should be a resource file containing "
-                   << "diskserver:filesystem";
-    throw e;
-  }
-
-  // Retrieve mode
-  char* mode = argv[7];
-  if (mode[0] == 'r') {
-    args.accessMode = castor::job::stagerjob::ReadOnly;
-  } else if (mode[0] == 'w') {
-    args.accessMode = castor::job::stagerjob::WriteOnly;
-  } else if (mode[0] == 'o') {
-    args.accessMode = castor::job::stagerjob::ReadWrite;
-  } else {
-    castor::exception::InvalidArgument e;
-    e.getMessage() << "Seventh argument should be a mode. "
-                   << "Legal values are 'r', 'w' and 'o'";
-    throw e;
-  }
-
-  // clientString
-  args.client = castor::IClientFactory::string2Client(argv[8]);
-
-  // security Option
-  std::string secureFlag = argv[9];
-  args.isSecure = false;
-  if (secureFlag == "1") {
-    args.isSecure = true;
-  }
- 
-  // request creation time
-  args.requestCreationTime = atoi(argv[10]);
-  
-  // Euid
-  args.Euid = strtou64(argv[11]);
-
-  // Gid
-  args.EGid = strtou64(argv[12]);
-
 }
 
 // -----------------------------------------------------------------------
@@ -343,30 +159,30 @@ castor::stager::IJobSvc* getJobSvc()
 // startAndGetPath
 // -----------------------------------------------------------------------
 std::string startAndGetPath
-(castor::job::stagerjob::InputArguments& args,
+(castor::job::stagerjob::InputArguments* args,
  castor::job::stagerjob::PluginContext& context)
   throw (castor::exception::Exception) {
 
   // create diskserver and filesystem in memory
   castor::stager::DiskServer diskServer;
-  diskServer.setName(args.diskServer);
+  diskServer.setName(args->diskServer);
   castor::stager::FileSystem fileSystem;
-  fileSystem.setMountPoint(args.fileSystem);
+  fileSystem.setMountPoint(args->fileSystem);
   fileSystem.setDiskserver(&diskServer);
   diskServer.addFileSystems(&fileSystem);
 
   // create a subreq in memory and we will just fill its id
   castor::stager::SubRequest subrequest;
-  subrequest.setId(args.subRequestId);
+  subrequest.setId(args->subRequestId);
 
   // Get & Update case
-  if ((args.accessMode == castor::job::stagerjob::ReadOnly) ||
-      (args.accessMode == castor::job::stagerjob::ReadWrite)) {
+  if ((args->accessMode == castor::job::stagerjob::ReadOnly) ||
+      (args->accessMode == castor::job::stagerjob::ReadWrite)) {
     bool emptyFile;
     castor::stager::DiskCopy* diskCopy =
       context.jobSvc->getUpdateStart
       (&subrequest, &fileSystem, &emptyFile,
-       args.fileId.fileid, args.fileId.server);
+       args->fileId.fileid, args->fileId.server);
     if (diskCopy == NULL) {
       // No DiskCopy return, nothing should be done
       // The job was scheduled for nothing
@@ -374,13 +190,13 @@ std::string startAndGetPath
       // while the job waits in the scheduler queue
       castor::dlf::Param params[] =
         {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-         castor::dlf::Param(args.subRequestUuid)};
+         castor::dlf::Param(args->subRequestUuid)};
       castor::dlf::dlf_writep
-        (args.requestUuid, DLF_LVL_SYSTEM,
-         castor::job::stagerjob::JOBNOOP, 2, params, &args.fileId);
+        (args->requestUuid, DLF_LVL_SYSTEM,
+         castor::job::stagerjob::JOBNOOP, 2, params, &args->fileId);
       return "";
     }
-    std::string fullDestPath = args.fileSystem + diskCopy->path();
+    std::string fullDestPath = args->fileSystem + diskCopy->path();
     // Deal with recalls of empty files
     if (emptyFile) {
       int thisfd = creat(fullDestPath.c_str(), (S_IRUSR|S_IWUSR));
@@ -390,10 +206,10 @@ std::string startAndGetPath
           {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
            castor::dlf::Param("Path", fullDestPath),
            castor::dlf::Param("Error", strerror(errno)),
-           castor::dlf::Param(args.subRequestUuid)};
+           castor::dlf::Param(args->subRequestUuid)};
         castor::dlf::dlf_writep
-          (args.requestUuid, DLF_LVL_ERROR,
-           castor::job::stagerjob::CREATFAILED, 4, params, &args.fileId);
+          (args->requestUuid, DLF_LVL_ERROR,
+           castor::job::stagerjob::CREATFAILED, 4, params, &args->fileId);
         delete diskCopy;
         castor::exception::Exception e(errno);
         e.getMessage() << "Failed to create empty file";
@@ -404,10 +220,10 @@ std::string startAndGetPath
           {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
            castor::dlf::Param("Path", fullDestPath),
            castor::dlf::Param("Error", strerror(errno)),
-           castor::dlf::Param(args.subRequestUuid)};
+           castor::dlf::Param(args->subRequestUuid)};
         castor::dlf::dlf_writep
-          (args.requestUuid, DLF_LVL_ERROR,
-           castor::job::stagerjob::FCLOSEFAILED, 4, params, &args.fileId);
+          (args->requestUuid, DLF_LVL_ERROR,
+           castor::job::stagerjob::FCLOSEFAILED, 4, params, &args->fileId);
       }
     }
     delete diskCopy;
@@ -419,8 +235,8 @@ std::string startAndGetPath
     castor::stager::DiskCopy* diskCopy =
       context.jobSvc->putStart
       (&subrequest, &fileSystem,
-       args.fileId.fileid, args.fileId.server);
-    std::string fullDestPath = args.fileSystem + diskCopy->path();
+       args->fileId.fileid, args->fileId.server);
+    std::string fullDestPath = args->fileSystem + diskCopy->path();
     delete diskCopy;
     return fullDestPath;
   }
@@ -433,7 +249,7 @@ std::string startAndGetPath
 // -----------------------------------------------------------------------
 // switchToCastorSuperuser
 // -----------------------------------------------------------------------
-void switchToCastorSuperuser(castor::job::stagerjob::InputArguments &args)
+void switchToCastorSuperuser(castor::job::stagerjob::InputArguments *args)
   throw (castor::exception::Exception) {
 
   struct passwd *stage_passwd;    // password structure pointer
@@ -453,10 +269,10 @@ void switchToCastorSuperuser(castor::job::stagerjob::InputArguments &args)
      castor::dlf::Param("gid", getgid()),
      castor::dlf::Param("euid", geteuid()),
      castor::dlf::Param("egid", getegid()),
-     castor::dlf::Param(args.subRequestUuid)};
+     castor::dlf::Param(args->subRequestUuid)};
   castor::dlf::dlf_writep
-    (args.requestUuid, DLF_LVL_DEBUG,
-     castor::job::stagerjob::JOBORIGCRED, 5, params, &args.fileId);
+    (args->requestUuid, DLF_LVL_DEBUG,
+     castor::job::stagerjob::JOBORIGCRED, 5, params, &args->fileId);
 
   // Get information on generic stage account from password file
   if ((stage_passwd = Cgetpwnam(STAGERSUPERUSER)) == NULL) {
@@ -507,10 +323,10 @@ void switchToCastorSuperuser(castor::job::stagerjob::InputArguments &args)
      castor::dlf::Param("gid", getgid()),
      castor::dlf::Param("euid", geteuid()),
      castor::dlf::Param("egid", getegid()),
-     castor::dlf::Param(args.subRequestUuid)};
+     castor::dlf::Param(args->subRequestUuid)};
   castor::dlf::dlf_writep
-    (args.requestUuid, DLF_LVL_DEBUG,
-     castor::job::stagerjob::JOBACTCRED, 5, params2, &args.fileId);
+    (args->requestUuid, DLF_LVL_DEBUG,
+     castor::job::stagerjob::JOBACTCRED, 5, params2, &args->fileId);
 }
 
 
@@ -560,7 +376,7 @@ void bindSocketAndListen
 // -----------------------------------------------------------------------
 // process
 // -----------------------------------------------------------------------
-void process(castor::job::stagerjob::InputArguments& args)
+void process(castor::job::stagerjob::InputArguments* args)
   throw (castor::exception::Exception) {
   try {
     // First switch to stage/st privileges
@@ -583,7 +399,7 @@ void process(castor::job::stagerjob::InputArguments& args)
     }
     // get proper plugin
     castor::job::stagerjob::IPlugin* plugin =
-      castor::job::stagerjob::getPlugin(args.protocol);
+      castor::job::stagerjob::getPlugin(args->protocol);
     // create a socket
     context.socket = socket(AF_INET, SOCK_STREAM, 0);
     if (context.socket < 0) {
@@ -600,33 +416,33 @@ void process(castor::job::stagerjob::InputArguments& args)
       throw e;
     }
     // get available port range for the socket
-    std::pair<int,int> portRange = plugin->getPortRange(args);
+    std::pair<int,int> portRange = plugin->getPortRange(*args);
     // bind socket and listen for client connection
     bindSocketAndListen(context, portRange);
     // "Mover will use the following port"
     std::ostringstream sPortRange;
     sPortRange << portRange.first << ":" << portRange.second;
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Protocol", args.protocol),
+      {castor::dlf::Param("Protocol", args->protocol),
        castor::dlf::Param("Available port range", sPortRange.str()),
        castor::dlf::Param("Port used", context.port),
        castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-       castor::dlf::Param(args.subRequestUuid)};
+       castor::dlf::Param(args->subRequestUuid)};
     castor::dlf::dlf_writep
-      (args.requestUuid, DLF_LVL_DEBUG,
-       castor::job::stagerjob::MOVERPORT, 5, params, &args.fileId);
+      (args->requestUuid, DLF_LVL_DEBUG,
+       castor::job::stagerjob::MOVERPORT, 5, params, &args->fileId);
     // prefork hook for the different movers
-    plugin->preForkHook(args, context);
+    plugin->preForkHook(*args, context);
     // Set our mask to the most restrictive mode
     umask(context.mask);
     // chdir into something else but the root system...
     if (chdir("/tmp") != 0) {
       castor::dlf::Param params[] =
         {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-         castor::dlf::Param(args.subRequestUuid)};
+         castor::dlf::Param(args->subRequestUuid)};
       castor::dlf::dlf_writep
-        (args.requestUuid, DLF_LVL_ERROR,
-         castor::job::stagerjob::CHDIRFAILED, 2, params, &args.fileId);
+        (args->requestUuid, DLF_LVL_ERROR,
+         castor::job::stagerjob::CHDIRFAILED, 2, params, &args->fileId);
       // not fatal, we just ignore the error
     }
     // Fork and execute the mover
@@ -642,21 +458,21 @@ void process(castor::job::stagerjob::InputArguments& args)
       // Child side of the fork
       dlf_child();
       // this call will never come back, since it call execl
-      plugin->execMover(args, context);
+      plugin->execMover(*args, context);
       // but in case, let's fail
       dlf_shutdown(5);
       exit(EXIT_FAILURE);
     }
     // Parent side of the fork
     dlf_parent();
-    plugin->postForkHook(args, context);
+    plugin->postForkHook(*args, context);
   } catch (castor::exception::RequestCanceled ex) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-       castor::dlf::Param(args.subRequestUuid)};
+       castor::dlf::Param(args->subRequestUuid)};
     castor::dlf::dlf_writep
-      (args.requestUuid, DLF_LVL_SYSTEM,
-       castor::job::stagerjob::REQCANCELED, 2, params, &args.fileId);
+      (args->requestUuid, DLF_LVL_SYSTEM,
+       castor::job::stagerjob::REQCANCELED, 2, params, &args->fileId);
   }
 }
 
@@ -690,9 +506,8 @@ int main(int argc, char** argv) {
   // Ignore SIGPIPE to avoid being brutally interrupted
   // because of network [write] error
   signal(SIGPIPE,SIG_IGN);
-  castor::job::stagerjob::InputArguments arguments;
+  castor::job::stagerjob::InputArguments* arguments = 0;
   try {
-
     // Initializing logging
     castor::BaseObject::initLog("job", castor::SVC_DLFMSG);
     using namespace castor::job::stagerjob;
@@ -704,6 +519,7 @@ int main(int argc, char** argv) {
       { CHDIRFAILED,   "Failed to change directory to tmp"},
       { DUP2FAILED,    "Failed to duplicate socket"},
       { MOVERNOTEXEC,  "Mover program can not be executed. Check permissions"},
+      { EXECFAILED,    "Failed to exec mover"},
       // Invalid configurations or parameters
       { INVRLIMIT,     "rlimit found in config file exceeds hard limit"},
       { INVLIMCPU,     "Invalid LimitCPU value found in configuration file, will be ignored"},
@@ -722,11 +538,13 @@ int main(int argc, char** argv) {
       { MOVERPORT,     "Mover will use the following port" },
       { MOVERFORK,     "Mover fork uses the following command line" },
       { ACCEPTCONN,    "Client connected" },
+      { JOBFAILEDNOANS,"Job failed before it could send an answer to client" },
       // Errors
       { STAT64FAIL,    "rfio_stat64 error" },
       { CHILDEXITED,   "Child exited" },
       { CHILDSIGNALED, "Child exited due to uncaught signal" },
       { CHILDSTOPPED,  "Child was stopped" },
+      { NOANSWERSENT,  "Could not send answer to client" },
       // Protocol specific. Should not be here if the plugins
       // were properly packaged in separate libs
       { GSIBADPORT,    "Invalid port range for GridFTP in config file. using default" },
@@ -743,7 +561,23 @@ int main(int argc, char** argv) {
     setCPULimit();
 
     // Parse the command line
-    parseCommandLine(argc, argv, arguments);
+    arguments = new castor::job::stagerjob::InputArguments(argc, argv);
+
+  } catch (castor::exception::Exception e) {
+    // Something went wrong but we are not yet in a situation
+    // where we can inform the client. So log it and return straight
+    // "Job failed"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Error", sstrerror(e.code())),
+       castor::dlf::Param("Detailed Error", e.getMessage().str()),
+       castor::dlf::Param("JobId", getenv("LSB_JOBID"))};
+    castor::dlf::dlf_writep
+      (nullCuuid, DLF_LVL_ERROR,
+       castor::job::stagerjob::JOBFAILEDNOANS, 3, params);
+    return -1;
+  }
+
+  try {
 
     // "Job Started"
     std::string stagerConcatenatedArgv;
@@ -756,15 +590,15 @@ int main(int argc, char** argv) {
     gettimeofday(&tv, NULL);
     double totalWaitTime = tv.tv_usec;
     totalWaitTime = totalWaitTime/1000000 +
-      tv.tv_sec - arguments.requestCreationTime;
+      tv.tv_sec - arguments->requestCreationTime;
     castor::dlf::Param params[] =
       {castor::dlf::Param("Arguments", stagerConcatenatedArgv),
        castor::dlf::Param("JobId", getenv("LSB_JOBID")),
        castor::dlf::Param("TotalWaitTime", totalWaitTime),
-       castor::dlf::Param(arguments.subRequestUuid)};
+       castor::dlf::Param(arguments->subRequestUuid)};
     castor::dlf::dlf_writep
-      (arguments.requestUuid, DLF_LVL_SYSTEM,
-       castor::job::stagerjob::JOBSTARTED, 3, params, &arguments.fileId);
+      (arguments->requestUuid, DLF_LVL_SYSTEM,
+       castor::job::stagerjob::JOBSTARTED, 3, params, &arguments->fileId);
 
     // Call stagerJobProcess
     process(arguments);
@@ -772,10 +606,13 @@ int main(int argc, char** argv) {
     // "Job exiting successfully"
     castor::dlf::Param params2[] =
       {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-       castor::dlf::Param(arguments.subRequestUuid)};
+       castor::dlf::Param(arguments->subRequestUuid)};
     castor::dlf::dlf_writep
-      (arguments.requestUuid, DLF_LVL_SYSTEM,
-       castor::job::stagerjob::JOBENDED, 2, params2, &arguments.fileId);
+      (arguments->requestUuid, DLF_LVL_SYSTEM,
+       castor::job::stagerjob::JOBENDED, 2, params2, &arguments->fileId);
+    
+    // memory cleanup
+    delete arguments;
 
   } catch (castor::exception::Exception e) {
     // "Job failed"
@@ -783,15 +620,29 @@ int main(int argc, char** argv) {
       {castor::dlf::Param("Error", sstrerror(e.code())),
        castor::dlf::Param("Detailed Error", e.getMessage().str()),
        castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-       castor::dlf::Param(arguments.subRequestUuid)};
+       castor::dlf::Param(arguments->subRequestUuid)};
     castor::dlf::dlf_writep
-      (arguments.requestUuid, DLF_LVL_SYSTEM,
-       castor::job::stagerjob::JOBENDED, 4, params, &arguments.fileId);
+      (arguments->requestUuid, DLF_LVL_ERROR,
+       castor::job::stagerjob::JOBFAILED, 4, params, &arguments->fileId);
     // Try to answer the client
-    castor::rh::IOResponse ioResponse;
-    ioResponse.setErrorCode(e.code());
-    ioResponse.setErrorMessage(e.getMessage().str());
-    castor::job::stagerjob::sendResponse(arguments.client, ioResponse);
+    try {
+      castor::rh::IOResponse ioResponse;
+      ioResponse.setErrorCode(e.code());
+      ioResponse.setErrorMessage(e.getMessage().str());
+      castor::job::stagerjob::sendResponse(arguments->client, ioResponse);
+    } catch (castor::exception::Exception e2) {
+      // "Could not send answer to client"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Error", sstrerror(e2.code())),
+         castor::dlf::Param("Detailed Error", e2.getMessage().str()),
+         castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+         castor::dlf::Param(arguments->subRequestUuid)};
+      castor::dlf::dlf_writep
+        (arguments->requestUuid, DLF_LVL_ERROR,
+         castor::job::stagerjob::NOANSWERSENT, 4, params, &arguments->fileId);
+    }
+    // memory cleanup
+    if (0 != arguments) delete arguments;
     return -1;
   }
 }
