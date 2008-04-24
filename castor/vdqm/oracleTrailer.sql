@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.99 $ $Release$ $Date: 2008/04/24 12:27:54 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.100 $ $Release$ $Date: 2008/04/24 15:32:50 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -959,6 +959,18 @@ END castorVdqm;
 CREATE OR REPLACE PACKAGE BODY castorVdqm AS
 
   /**
+   * Datatype for a name value pair.
+   */
+  TYPE NameValue is RECORD (name VARCHAR2(256), val VARCHAR2(256));
+
+
+  /**
+   * Datatype for a list of name value pairs.
+   */
+  TYPE NameValueList IS TABLE OF NameValue INDEX BY BINARY_INTEGER;
+
+
+  /**
    * See the castorVdqm package specification for documentation.
    */
   PROCEDURE allocateDrive(
@@ -1169,6 +1181,141 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     -- which would have reused the current drive allocation
     WHEN NO_DATA_FOUND THEN NULL;
   END reuseDriveAllocation;
+
+
+  /**
+   * This procedure parses the specified dedicate string for gid, host, mode,
+   * uid and VID dedications.  This procedure raises an application error with
+   * an error number of -20001 if it detects an error in the dedicate string.
+   *
+   * @param dedicateStrVar the dedicate string to be parsed.
+   * @param gidVar the extracted gid if there was one, else NULL.
+   * @param hostVar the extracted host if there was one, else NULL.
+   * @param modeVar the extracted mode if there was one, else NULL.
+   * @param uidVar the extracted uid if there was one, else NULL.
+   * @param vidVar the extracted VID if there was one, else NULL
+   */
+  PROCEDURE parseDedicateStr(
+    dedicateStrVar  IN VARCHAR2,
+    gidVar         OUT NUMBER,
+    hostVar        OUT NOCOPY VARCHAR2,
+    modeVar        OUT NUMBER,
+    uidVar         OUT NUMBER,
+    vidVar         OUT NOCOPY VARCHAR2
+    ) AS
+    dedicationStrsVar castorVdqmCommon.Varchar256List;
+    nameValueListVar  castorVdqmCommon.Varchar256List;
+    nameValueVar      NameValue;
+    dedicationsVar    NameValueList;
+    indexVar          NUMBER := 1;
+    dummyStrVar       VARCHAR2(256) := NULL;
+  BEGIN
+    gidVar  := NULL;
+    hostVar := NULL;
+    modeVar := NULL;
+    uidVar  := NULL;
+    vidVar  := NULL;
+
+    -- Split the dedicate string into the individual dedications
+    dedicationStrsVar := castorVdqmCommon.tokenize(dedicateStrVar, ',');
+
+    -- Split each individual dedication into a name value pair
+    FOR indexVar IN dedicationStrsVar.FIRST .. dedicationStrsVar.LAST LOOP
+      nameValueListVar :=
+        castorVdqmCommon.tokenize(dedicationStrsVar(indexVar), '=');
+
+      -- Raise an application error if the dedication is not a name value pair
+      IF nameValueListVar.count != 2 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Invalid dedication ''' ||
+          dedicationStrsVar(indexVar) || '''');
+      END IF;
+
+      nameValueVar.name := LOWER(LTRIM(RTRIM(nameValueListVar(1))));
+      nameValueVar.val  := LTRIM(RTRIM(nameValueListVar(2)));
+
+      dedicationsVar(dedicationsVar.count + 1) := nameValueVar;
+    END LOOP;
+
+    -- Extract the specific types of dedication (gid, host, etc.), raising an
+    -- application error if there is an invalid dedication
+    FOR indexVar IN dedicationsVar.FIRST .. dedicationsVar.LAST LOOP
+      CASE
+        WHEN dedicationsVar(indexVar).name = 'gid' THEN
+          IF gidVar IS NOT NULL THEN
+            RAISE_APPLICATION_ERROR(-20001,
+              'Invalid dedication.  More than one gid dedication.');
+          END IF;
+
+          BEGIN
+            gidVar := TO_NUMBER(dedicationsVar(indexVar).val);
+          EXCEPTION
+            WHEN VALUE_ERROR THEN
+              RAISE_APPLICATION_ERROR(-20001, 'Invalid gid dedication ''' ||
+                dedicationsVar(indexVar).val || ''' ' || SQLERRM);
+          END;
+        WHEN dedicationsVar(indexVar).name = 'host' THEN
+          IF hostVar IS NOT NULL THEN
+            RAISE_APPLICATION_ERROR(-20001,
+              'Invalid dedication.  More than one host dedication.');
+          END IF;
+
+          BEGIN
+            SELECT dummy INTO dummyStrVar
+              FROM DUAL WHERE REGEXP_LIKE(dummy, dedicationsVar(indexVar).val);
+            hostVar := dedicationsVar(indexVar).val;
+          EXCEPTION
+            WHEN OTHERS THEN
+              RAISE_APPLICATION_ERROR(-20001, 'Invalid host dedication ''' ||
+                dedicationsVar(indexVar).val || ''' ' || SQLERRM);
+          END;
+        WHEN dedicationsVar(indexVar).name = 'mode' THEN
+          IF modeVar IS NOT NULL THEN
+            RAISE_APPLICATION_ERROR(-20001,
+              'Invalid dedication.  More than one mode dedication.');
+          END IF;
+
+          BEGIN
+            modeVar := TO_NUMBER(dedicationsVar(indexVar).val);
+          EXCEPTION
+            WHEN VALUE_ERROR THEN
+              RAISE_APPLICATION_ERROR(-20001, 'Invalid mode dedication ''' ||
+                dedicationsVar(indexVar).val || ''' ' || SQLERRM);
+          END;
+        WHEN dedicationsVar(indexVar).name = 'uid' THEN
+          IF uidVar Is NOT NULL THEN
+            RAISE_APPLICATION_ERROR(-20001,
+              'Invalid dedication.  More than one uid dedication.');
+          END IF;
+
+          BEGIN
+            uidVar := TO_NUMBER(dedicationsVar(indexVar).val);
+          EXCEPTION
+            WHEN VALUE_ERROR THEN
+              RAISE_APPLICATION_ERROR(-20001, 'Invalid uid dedication ''' ||
+                dedicationsVar(indexVar).val || ''' ' || SQLERRM);
+          END;
+        WHEN dedicationsVar(indexVar).name = 'vid' THEN
+          IF vidVar Is NOT NULL THEN
+            RAISE_APPLICATION_ERROR(-20001,
+              'Invalid dedication.  More than one vid dedication.');
+          END IF;
+
+          BEGIN
+            SELECT dummy INTO dummyStrVar
+              FROM DUAL WHERE REGEXP_LIKE(dummy, dedicationsVar(indexVar).val);
+            vidVar := dedicationsVar(indexVar).val;
+          EXCEPTION
+            WHEN OTHERS THEN
+              RAISE_APPLICATION_ERROR(-20001, 'Invalid vid dedication ''' ||
+                dedicationsVar(indexVar).val || ''' ' || SQLERRM);
+          END;
+        ELSE
+          RAISE_APPLICATION_ERROR(-20001, 'Invalid dedication name ''' ||
+            dedicationsVar(indexVar).name || '''');
+      END CASE;
+    END LOOP;
+
+  END parseDedicateStr;
 
 
   /**
