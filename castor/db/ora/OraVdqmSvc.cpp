@@ -123,7 +123,7 @@ const std::string
 
 /// SQL statement for function dedicateDrive
 const std::string castor::db::ora::OraVdqmSvc::s_dedicateDriveStatementString
-  = "BEGIN castorVdqm.dedicateDrive(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;";
+  = "BEGIN castorVdqm.dedicateDrive(:1, :2, :3, :4); END;";
 
 /// SQL statement for function checkRegExp
 const std::string castor::db::ora::OraVdqmSvc::s_checkRegExpStatementString
@@ -865,116 +865,46 @@ void castor::db::ora::OraVdqmSvc::dedicateDrive(const std::string driveName,
     m_dedicateDriveStatement =
       createStatement(s_dedicateDriveStatementString);
     m_dedicateDriveStatement->setAutoCommit(false);
-
-    m_dedicateDriveStatement->registerOutParam(9, oracle::occi::OCCIINT);
   }
 
-  DriveDedications dedications;
-
-  // Extract all possible dedications
-  dedications.uid     = getDriveDedication(dedicate, "uid=*,"    );
-  dedications.gid     = getDriveDedication(dedicate, "gid=*,"    );
-  dedications.name    = getDriveDedication(dedicate, "name=*,"   );
-  dedications.host    = getDriveDedication(dedicate, "host=*,"   );
-  dedications.vid     = getDriveDedication(dedicate, "vid=*,"    );
-  dedications.mode    = getDriveDedication(dedicate, "mode=*,"   );
-  dedications.datestr = getDriveDedication(dedicate, "datestr=*,");
-  dedications.timestr = getDriveDedication(dedicate, "timestr=*,");
-  dedications.age     = getDriveDedication(dedicate, "age=*"     );
-
-  // Reject those dedications with invalid syntax and those which require
-  // unsupported functionality
-  rejectInvalidDriveDedications(driveName, serverName, dedications);
-
-  // Set the dedication parameters of the SQL statement
+  // Set the parameters of the SQL statement
   m_dedicateDriveStatement->setString(1, driveName );
   m_dedicateDriveStatement->setString(2, serverName);
   m_dedicateDriveStatement->setString(3, dgName    );
-  m_dedicateDriveStatement->setInt   (4, dedications.mode == "0" ? 0 : 1);
-  m_dedicateDriveStatement->setString(5, dedications.host);
-  m_dedicateDriveStatement->setString(6, dedications.vid);
-  // If uid is an integer then pass it as an integer
-  if(isValidUInt(dedications.uid)) {
-    m_dedicateDriveStatement->setInt(7, atoi(dedications.uid.c_str()));
-  // Else uid is either "" or ".*" then pass it as a NULL meaning no dedication
-  } else {
-    m_dedicateDriveStatement->setNull(7, oracle::occi::OCCIINT);
-  }
-  // If gid is an integer then pass it as an integer
-  if(isValidUInt(dedications.gid)) {
-    m_dedicateDriveStatement->setInt(8, atoi(dedications.gid.c_str()));
-  // Else gid is either "" or ".*" then pass it as a NULL meaning no dedication
-  } else {
-    m_dedicateDriveStatement->setNull(8, oracle::occi::OCCIINT);
-  }
+  m_dedicateDriveStatement->setString(4, dedicate  );
 
   // Execute statement and get result
-  int result = 0;
   try {
     m_dedicateDriveStatement->executeUpdate();
-    result = m_dedicateDriveStatement->getInt(9);
   } catch(oracle::occi::SQLException &e) {
     handleException(e);
 
-    castor::exception::Internal ie;
-
-    ie.getMessage()
-      << "Failed to try to dedicate a drive: "
-      << std::endl << e.getMessage();
-
-    throw ie;
-  }
-
-  // Based on the result, continue as normal or generate the appropriate
-  // exception
-  switch(result) {
-  case  0: // Success
-    // Do nothing
-    break;
-  case -1: // Tape drive does not exist
-    {
-      castor::exception::Exception ex(EVQNOSDRV);
-      ex.getMessage()
-        << "OraVdqmSvc::dedicateDrive(): drive record not found for drive "
-        << driveName << "@" << serverName
-        << " dgn='" << dgName << "'" << std::endl;
-
-      throw ex;
-    }
-    break;
-  case -2: // Tape server is not associated
-    {
-      castor::exception::Exception ex(EVQNOSDRV);
-      ex.getMessage()
-        << "OraVdqmSvc::dedicateDrive(): Tape server is not associated "
-        << driveName << "@" << serverName
-        << " dgn='" << dgName << "'" << std::endl;
-
-      throw ex;
-    }
-    break;
-  case -3: // Device group name is not associated
-    {
-      castor::exception::Exception ex(EVQNOSDRV);
-      ex.getMessage()
-        << "OraVdqmSvc::dedicateDrive(): Device group name is not associated "
-        << driveName << "@" << serverName
-        << " dgn='" << dgName << "'" << std::endl;
-
-      throw ex;
-    }
-    break;
-  default:
-    {
-      castor::exception::Internal ie;
-
-      ie.getMessage()
-        << "Unknown result value from dedicate drive PL/SQL procedure: "
-        << result << " "
-        << driveName << "@" << serverName
-        << " dgn='" << dgName << "'" << std::endl;
-
-      throw ie;
+    switch(e.getErrorCode()) {
+    case castor::vdqm::IVdqmSvc::DbExceptions::INVALID_DRIVE_DEDICATE:
+      {
+        castor::exception::Exception ex(EINVAL);
+        ex.getMessage() << "Failed to try to dedicate a drive: "
+          << std::endl << e.getMessage();
+        throw ex;
+        break;
+      }
+    case castor::vdqm::IVdqmSvc::DbExceptions::DRIVE_NOT_FOUND:
+    case castor::vdqm::IVdqmSvc::DbExceptions::DRIVE_SERVER_NOT_FOUND:
+    case castor::vdqm::IVdqmSvc::DbExceptions::DRIVE_DGN_NOT_FOUND:
+      {
+        castor::exception::Exception ex(EVQNOSDRV);
+        ex.getMessage() << "Failed to try to dedicate a drive: "
+          << std::endl << e.getMessage();
+        throw ex;
+        break;
+      }
+    default:
+      {
+        castor::exception::Internal ie;
+        ie.getMessage() << "Failed to try to dedicate a drive: "
+          << std::endl << e.getMessage();
+        throw ie;
+      }
     }
   }
 }
@@ -2304,191 +2234,4 @@ void castor::db::ora::OraVdqmSvc::checkRegExp(const std::string &regExp)
 
     throw ie;
   }
-}
-
-
-// -----------------------------------------------------------------------
-// getDriveDedication
-// -----------------------------------------------------------------------
-std::string castor::db::ora::OraVdqmSvc::getDriveDedication(
-const std::string &input, const char *format) {
-  std::string        output;
-  std::ostringstream oss;
-  int                inputLen   = input.length();
-  int                formatLen  = strlen(format);
-  int                inputPos   = 0;
-  int                formatPos  = 0;
-
-  // For each input character
-  for(inputPos=0; inputPos<inputLen; inputPos++) {
-
-    // If the current format character is a '*'
-    if(format[formatPos] == '*') {
-
-      // If there is a format character after the '*'
-      if((formatPos + 1) < formatLen) {
-
-        // If the current input character matches the next format character
-        if(input[inputPos] == format[formatPos + 1]) {
-
-          // Finish the extraction
-          break;
-
-        } else {
-
-          // Append the current input character to the output
-          oss << input[inputPos];
-        }
-
-      // Else there is no format character after the '*'
-      } else {
-
-        // Append the current input character to the output
-        oss << input[inputPos];
-      }
-
-    // Else the current format character is not a '*'
-    } else {
-
-      // If the current input character matches the current format character
-      if(input[inputPos] == format[formatPos]) {
-
-        // Move to the next format character
-        formatPos++;
-
-        // If the end of the format string has been reached
-        if(formatPos == formatLen) {
-
-          // Finish the extraction
-          break;
-        }
-
-      // Else the current input character does not match the current format
-      // character
-      } else {
-
-        // Reset the format character position
-        formatPos = 0;
-      }
-    }
-  }
-
-  return oss.str();
-}
-
-
-// -----------------------------------------------------------------------
-// rejectInvalidDriveDedications
-// -----------------------------------------------------------------------
-void castor::db::ora::OraVdqmSvc::rejectInvalidDriveDedications(
-  const std::string &driveName, const std::string &serverName,
-  DriveDedications &dedications) throw (castor::exception::Exception) {
-  // Reject name, datestr, timestr and age dedications
-  if((dedications.name != ".*") && (dedications.name != "")) {
-    castor::exception::Exception ex(EINVAL);
-    ex.getMessage()
-      << "name dedications are not supported '"
-      << dedications.name << "' "
-      << driveName << "@" << serverName << std::endl;
-    throw ex;
-  }
-  if((dedications.datestr != ".*") && (dedications.datestr != "")) {
-    castor::exception::Exception ex(EINVAL);
-    ex.getMessage()
-      << "datestr dedications are not supported '"
-      << dedications.datestr << "' "
-      << driveName << "@" << serverName << std::endl;
-    throw ex;
-  }
-  if((dedications.timestr != ".*") && (dedications.timestr != "")) {
-    castor::exception::Exception ex(EINVAL);
-    ex.getMessage()
-      << "timestr dedications are not supported '"
-      << dedications.timestr << "' "
-      << driveName << "@" << serverName << std::endl;
-    throw ex;
-  }
-  if((dedications.age != ".*") && (dedications.age != "")) {
-    castor::exception::Exception ex(EINVAL);
-    ex.getMessage()
-      << "age dedications are not supported '"
-      << dedications.age << "' "
-      << driveName << "@" << serverName << std::endl;
-    throw ex;
-  }
-
-  // Reject invalid uid and gid dedications
-  if(dedications.uid != "" && dedications.uid != ".*" &&
-    !isValidUInt(dedications.uid)) {
-    castor::exception::Exception ex(EINVAL);
-    ex.getMessage()
-      << "Invalid uid dedication '"
-      << dedications.uid << "' "
-      << driveName << "@" << serverName << std::endl;
-    throw ex;
-  }
-  if(dedications.gid != "" && dedications.gid != ".*" &&
-    !isValidUInt(dedications.gid)) {
-    castor::exception::Exception ex(EINVAL);
-    ex.getMessage()
-      << "Invalid gid dedication '"
-      << dedications.gid << "' "
-      << driveName << "@" << serverName << std::endl;
-    throw ex;
-  }
-
-  // Reject invalid host and vid dedications
-  try {
-    checkRegExp(dedications.host);
-  } catch(castor::exception::Exception &e) {
-    castor::exception::Exception ex(EINVAL);
-    ex.getMessage()
-      << "Invalid host dedication '"
-      << dedications.host << "' "
-      << driveName << "@" << serverName << std::endl;
-    throw ex;
-  }
-  try {
-    checkRegExp(dedications.vid);
-  } catch(castor::exception::Exception &e) {
-    castor::exception::Exception ex(EINVAL);
-    ex.getMessage()
-      << "Invalid vid dedication '"
-      << dedications.vid << "' "
-      << driveName << "@" << serverName << std::endl;
-    throw ex;
-  }
-
-  // Reject invalid mode dedications
-  if((dedications.mode != ".*") && (dedications.mode != "0") &&
-    (dedications.mode != "")) {
-    castor::exception::Exception ex(EINVAL);
-    ex.getMessage()
-      << "Invalid mode dedication '"
-      << dedications.mode << "' "
-      << driveName << "@" << serverName << std::endl;
-    throw ex;
-  }
-}
-
-
-// -----------------------------------------------------------------------
-// isValidUInt
-// -----------------------------------------------------------------------
-bool castor::db::ora::OraVdqmSvc::isValidUInt(std::string &s) {
-  // If the string is empty
-  if(s.length() < 1) {
-    return false;
-  }
-
-  // For each character in the specified string
-  for(std::string::iterator itor=s.begin(); itor != s.end(); itor++) {
-
-    // If the character is not a numerical digit
-    if( (*itor < '0') || (*itor > '9') ) {
-      return false;
-    }
-  }
-
-  return true;
 }

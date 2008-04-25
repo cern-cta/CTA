@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.102 $ $Release$ $Date: 2008/04/25 13:06:19 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.103 $ $Release$ $Date: 2008/04/25 15:03:18 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -717,6 +717,36 @@ CREATE OR REPLACE PACKAGE BODY castorVdqmView AS
       buf := buf || 'host=' || clientHostDedication.clientHost;
     END LOOP;
 
+    FOR egidDedication IN (
+      SELECT egid
+        FROM TapeDriveDedication
+        WHERE tapeDrive = driveIdVar AND egid IS NOT NULL
+        ORDER BY egid)
+    LOOP
+      -- Add a comma if there is already a dedication in the buffer
+      IF LENGTH(buf) > 0 THEN
+        buf := buf || ',';
+      END IF;
+
+      -- Add dedication to buffer
+      buf := buf || 'gid=' || egidDedication.egid;
+    END LOOP;
+
+    FOR euidDedication IN (
+      SELECT euid
+        FROM TapeDriveDedication
+        WHERE tapeDrive = driveIdVar AND euid IS NOT NULL
+        ORDER BY euid)
+    LOOP
+      -- Add a comma if there is already a dedication in the buffer
+      IF LENGTH(buf) > 0 THEN
+        buf := buf || ',';
+      END IF;
+
+      -- Add dedication to buffer
+      buf := buf || 'uid=' || euidDedication.euid;
+    END LOOP;
+
     FOR vidDedication IN (
       SELECT vid
         FROM TapeDriveDedication
@@ -1276,7 +1306,7 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     TYPE NameValueList IS TABLE OF NameValue INDEX BY BINARY_INTEGER;
     dedicationsVar    NameValueList;
     indexVar          NUMBER := 1;
-    dummyStrVar       VARCHAR2(256) := NULL;
+    dummyNumVar       NUMBER := NULL;
   BEGIN
     gidVar  := NULL;
     hostVar := NULL;
@@ -1315,95 +1345,144 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     -- application error if there is an invalid dedication
     FOR indexVar IN dedicationsVar.FIRST .. dedicationsVar.LAST LOOP
       CASE
+        WHEN dedicationsVar(indexVar).name = 'age' THEN
+          IF dedicationsVar(indexVar).val != '.*' THEN
+            castorVdqmException.throw(
+              castorVdqmException.invalid_drive_dedicate_cd,
+              'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
+              || ' ''age'' dedications are not supported');
+          END IF;
+        WHEN dedicationsVar(indexVar).name = 'datestr' THEN
+          IF dedicationsVar(indexVar).val != '.*' THEN
+            castorVdqmException.throw(
+              castorVdqmException.invalid_drive_dedicate_cd,
+              'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
+              || ' ''datestr'' dedications are not supported');
+          END IF;
         WHEN dedicationsVar(indexVar).name = 'gid' THEN
           IF gidVar IS NOT NULL THEN
             castorVdqmException.throw(
               castorVdqmException.invalid_drive_dedicate_cd,
-              'Invalid drive dedicate string.  More than one gid dedication.');
+              'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
+              || '  More than one gid dedication. ''');
           END IF;
 
-          BEGIN
-            gidVar := TO_NUMBER(dedicationsVar(indexVar).val);
-          EXCEPTION
-            WHEN VALUE_ERROR THEN
-              castorVdqmException.throw(
-                castorVdqmException.invalid_drive_dedicate_cd,
-                'Invalid drive dedicate string.  Invalid gid dedication ''' ||
-                dedicationsVar(indexVar).val || ''' ' || SQLERRM);
-          END;
+          IF dedicationsVar(indexVar).val != '.*' THEN
+            BEGIN
+              gidVar := TO_NUMBER(dedicationsVar(indexVar).val);
+            EXCEPTION
+              WHEN VALUE_ERROR THEN
+                castorVdqmException.throw(
+                  castorVdqmException.invalid_drive_dedicate_cd,
+                  'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
+                  || '  Invalid gid dedication ''' ||
+                  dedicationsVar(indexVar).val || ''' ' || SQLERRM);
+            END;
+          END IF;
         WHEN dedicationsVar(indexVar).name = 'host' THEN
           IF hostVar IS NOT NULL THEN
             castorVdqmException.throw(
               castorVdqmException.invalid_drive_dedicate_cd,
-              'Invalid drive dedicate string.  More than one host dedication.');
+              'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
+              || '  More than one host dedication.');
           END IF;
 
-          BEGIN
-            SELECT dummy INTO dummyStrVar
-              FROM DUAL WHERE REGEXP_LIKE(dummy, dedicationsVar(indexVar).val);
-            hostVar := dedicationsVar(indexVar).val;
-          EXCEPTION
-            WHEN OTHERS THEN
-              castorVdqmException.throw(
-                castorVdqmException.invalid_drive_dedicate_cd,
-                'Invalid drive dedicate string.  Invalid host dedication ''' ||
-                dedicationsVar(indexVar).val || ''' ' || SQLERRM);
-          END;
+          IF dedicationsVar(indexVar).val != '.*' THEN
+            BEGIN
+              SELECT COUNT(*) INTO dummyNumVar
+                FROM DUAL WHERE REGEXP_LIKE(dummy,dedicationsVar(indexVar).val);
+              hostVar := dedicationsVar(indexVar).val;
+            EXCEPTION
+              WHEN OTHERS THEN
+                castorVdqmException.throw(
+                  castorVdqmException.invalid_drive_dedicate_cd,
+                  'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
+                  || '  Invalid host dedication ''' ||
+                  dedicationsVar(indexVar).val || ''' ' || SQLERRM);
+            END;
+          END IF;
         WHEN dedicationsVar(indexVar).name = 'mode' THEN
           IF modeVar IS NOT NULL THEN
             castorVdqmException.throw(
               castorVdqmException.invalid_drive_dedicate_cd,
-              'Invalid drive dedicate string.  More than one mode dedication.');
+              'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
+              || '  More than one mode dedication.');
           END IF;
 
-          BEGIN
-            modeVar := TO_NUMBER(dedicationsVar(indexVar).val);
-          EXCEPTION
-            WHEN VALUE_ERROR THEN
-              castorVdqmException.throw(
-                castorVdqmException.invalid_drive_dedicate_cd,
-                'Invalid drive dedicate string.  Invalid mode dedication ''' ||
-                dedicationsVar(indexVar).val || ''' ' || SQLERRM);
-          END;
+          IF dedicationsVar(indexVar).val != '.*' THEN
+            BEGIN
+              modeVar := TO_NUMBER(dedicationsVar(indexVar).val);
+            EXCEPTION
+              WHEN VALUE_ERROR THEN
+                castorVdqmException.throw(
+                  castorVdqmException.invalid_drive_dedicate_cd,
+                  'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
+                  || '  Invalid mode dedication ''' ||
+                  dedicationsVar(indexVar).val || ''' ' || SQLERRM);
+            END;
+          END IF;
+        WHEN dedicationsVar(indexVar).name = 'name' THEN
+          IF dedicationsVar(indexVar).val != '.*' THEN
+            castorVdqmException.throw(
+              castorVdqmException.invalid_drive_dedicate_cd,
+              'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
+              || ' ''name'' dedications are not supported');
+          END IF;
+        WHEN dedicationsVar(indexVar).name = 'timestr' THEN
+          IF dedicationsVar(indexVar).val != '.*' THEN
+            castorVdqmException.throw(
+              castorVdqmException.invalid_drive_dedicate_cd,
+              'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
+              || ' ''timestr'' dedications are not supported');
+          END IF;
         WHEN dedicationsVar(indexVar).name = 'uid' THEN
           IF uidVar Is NOT NULL THEN
             castorVdqmException.throw(
               castorVdqmException.invalid_drive_dedicate_cd,
-              'Invalid drive dedicate string.  More than one uid dedication.');
+              'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
+              || '  More than one uid dedication.');
           END IF;
 
-          BEGIN
-            uidVar := TO_NUMBER(dedicationsVar(indexVar).val);
-          EXCEPTION
-            WHEN VALUE_ERROR THEN
-              castorVdqmException.throw(
-                castorVdqmException.invalid_drive_dedicate_cd,
-                'Invalid drive dedicate string.  Invalid uid dedication ''' ||
-                dedicationsVar(indexVar).val || ''' ' || SQLERRM);
-          END;
+          IF dedicationsVar(indexVar).val != '.*' THEN
+            BEGIN
+              uidVar := TO_NUMBER(dedicationsVar(indexVar).val);
+            EXCEPTION
+              WHEN VALUE_ERROR THEN
+                castorVdqmException.throw(
+                  castorVdqmException.invalid_drive_dedicate_cd,
+                  'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
+                  || '  Invalid uid dedication ''' ||
+                  dedicationsVar(indexVar).val || ''' ' || SQLERRM);
+            END;
+          END IF;
         WHEN dedicationsVar(indexVar).name = 'vid' THEN
           IF vidVar Is NOT NULL THEN
             castorVdqmException.throw(
               castorVdqmException.invalid_drive_dedicate_cd,
-              'Invalid drive dedicate string.  More than one vid dedication.');
+              'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
+              || '  More than one vid dedication.');
           END IF;
 
-          BEGIN
-            SELECT dummy INTO dummyStrVar
-              FROM DUAL WHERE REGEXP_LIKE(dummy, dedicationsVar(indexVar).val);
-            vidVar := dedicationsVar(indexVar).val;
-          EXCEPTION
-            WHEN OTHERS THEN
-              castorVdqmException.throw(
-              castorVdqmException.invalid_drive_dedicate_cd,
-              'Invalid drive dedicate string.  Invalid vid dedication ''' ||
-                dedicationsVar(indexVar).val || ''' ' || SQLERRM);
-          END;
+          IF dedicationsVar(indexVar).val != '.*' THEN
+            BEGIN
+              SELECT COUNT(*) INTO dummyNumVar
+                FROM DUAL WHERE REGEXP_LIKE(dummy,dedicationsVar(indexVar).val);
+              vidVar := dedicationsVar(indexVar).val;
+            EXCEPTION
+              WHEN OTHERS THEN
+                castorVdqmException.throw(
+                castorVdqmException.invalid_drive_dedicate_cd,
+                'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
+                || '  Invalid vid dedication ''' || dedicationsVar(indexVar).val
+                || ''' ' || SQLERRM);
+            END;
+          END IF;
         ELSE
           castorVdqmException.throw(
             castorVdqmException.invalid_drive_dedicate_cd,
-            'Invalid drive dedicate string.  Invalid dedication name ''' ||
-            dedicationsVar(indexVar).name || '''');
+            'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
+            || '  Uknown dedication type ''' || dedicationsVar(indexVar).name
+            || '''');
       END CASE;
     END LOOP;
 

@@ -55,6 +55,20 @@ namespace castor {
 
       public:
 
+        class DbExceptions {
+
+          public:
+            enum Constants {
+              NOT_IMPLEMENTED        = 20001,
+              NULL_IS_INVALID        = 20002,
+              INVALID_DRIVE_DEDICATE = 20003,
+              DRIVE_NOT_FOUND        = 20004,
+              DRIVE_SERVER_NOT_FOUND = 20005,
+              DRIVE_DGN_NOT_FOUND    = 20006
+            };
+        };
+
+
         /**
          * Inner class used to help manage the allocated memory associated with
          * a list of volume requests for showqueues
