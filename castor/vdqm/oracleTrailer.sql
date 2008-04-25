@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.103 $ $Release$ $Date: 2008/04/25 15:03:18 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.104 $ $Release$ $Date: 2008/04/25 15:18:50 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1508,10 +1508,6 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     dedicationsToDelete  dedicationList_t;
     dedicationIdVar      NUMBER;
   BEGIN
-    -- Parse the dedication string raising an application error with an error
-    -- number of -20001 if there is an error in the dedicate string
-    parseDedicateStr(dedicateVar, gidVar, hostVar, modeVar, uidVar, vidVar);
-
     -- Lock the tape drive row
     BEGIN
       SELECT
@@ -1555,6 +1551,10 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
         ''' combination not found in database.');
       RETURN;
     END IF;
+
+    -- Parse the dedication string raising an application error with an error
+    -- number of -20001 if there is an error in the dedicate string
+    parseDedicateStr(dedicateVar, gidVar, hostVar, modeVar, uidVar, vidVar);
 
     -- Delete all existing dedications associated with tape drive
     SELECT id BULK COLLECT INTO dedicationsToDelete
