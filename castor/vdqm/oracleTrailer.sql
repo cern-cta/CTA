@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.101 $ $Release$ $Date: 2008/04/24 16:25:20 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.102 $ $Release$ $Date: 2008/04/25 13:06:19 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -296,8 +296,88 @@ ALTER TABLE VdqmTape
     INITIALLY DEFERRED
     ENABLE;
 
+
 /**
- * castorVdqmCommon package specification.
+ * This package puts all of the exception declarations of the castorVdqm...
+ * packages in one place.
+ */
+CREATE OR REPLACE PACKAGE castorVdqmException AS
+
+  not_implemented EXCEPTION;
+  not_implemented_cd CONSTANT PLS_INTEGER := -20001;
+  PRAGMA EXCEPTION_INIT(not_implemented, -20001);
+
+  null_is_invalid EXCEPTION;
+  null_is_invalid_cd CONSTANT PLS_INTEGER := -20002;
+  PRAGMA EXCEPTION_INIT(null_is_invalid, -20002);
+
+  invalid_drive_dedicate EXCEPTION;
+  invalid_drive_dedicate_cd CONSTANT PLS_INTEGER := -20003;
+  PRAGMA EXCEPTION_INIT(invalid_drive_dedicate, -20003);
+
+  drive_not_found EXCEPTION;
+  drive_not_found_cd CONSTANT PLS_INTEGER := -20004;
+  PRAGMA EXCEPTION_INIT(drive_not_found, -20004);
+
+  drive_server_not_found EXCEPTION;
+  drive_server_not_found_cd CONSTANT PLS_INTEGER := -20005;
+  PRAGMA EXCEPTION_INIT(drive_server_not_found, -20005);
+
+  drive_dgn_not_found EXCEPTION;
+  drive_dgn_not_found_cd CONSTANT PLS_INTEGER := -20006;
+  PRAGMA EXCEPTION_INIT(drive_dgn_not_found, -20006);
+
+  PROCEDURE throw(exceptionNumberVar IN PLS_INTEGER,
+    messageVar IN VARCHAR2 DEFAULT NULL);
+
+END castorVdqmException;
+
+
+/**
+ * See the castorVdqmException package specification for dcoumentation.
+ */
+CREATE OR REPLACE PACKAGE BODY castorVdqmException AS
+
+  TYPE Varchar256List IS TABLE OF VARCHAR2(256) INDEX BY BINARY_INTEGER;
+  errorMessagesVar Varchar256List;
+
+  PROCEDURE throw(exceptionNumberVar IN PLS_INTEGER,
+    messageVar IN VARCHAR2 DEFAULT NULL) AS
+  BEGIN
+    IF exceptionNumberVar IS NULL THEN
+      RAISE_APPLICATION_ERROR(null_is_invalid_cd,
+        'castorVdqmException.throw called with NULL exceptionNumberVar');
+    END IF;
+
+    IF messageVar IS NULL AND errorMessagesVar.EXISTS(exceptionNumberVar) THEN
+      RAISE_APPLICATION_ERROR(exceptionNumberVar,
+        errorMessagesVar(exceptionNumberVar));
+    ELSE
+      RAISE_APPLICATION_ERROR(exceptionNumberVar, messageVar);
+    END IF;
+  END throw;
+
+-- Package initialization section
+BEGIN
+
+  errorMessagesVar(not_implemented_cd) :=
+    'Feature not implemented.';
+  errorMessagesVar(null_is_invalid_cd) :=
+    'A NULL value is invalid.';
+  errorMessagesVar(invalid_drive_dedicate_cd) :=
+    'Invalid drive dedicate string.';
+  errorMessagesVar(drive_not_found_cd) :=
+    'Drive not found.';
+  errorMessagesVar(drive_server_not_found_cd) :=
+    'Drive and server combination not found.';
+  errorMessagesVar(drive_dgn_not_found_cd) :=
+    'Drive and DGN combination not found.';
+
+END castorVdqmException;
+
+
+/**
+ * This package contains common code used by the other VDQM packages.
  */
 CREATE OR REPLACE PACKAGE castorVdqmCommon AS
 
@@ -327,7 +407,7 @@ END castorVdqmCommon;
 
 
 /**
- * castorVdqmCommon package body.
+ * See the castorVdqmCommon package specification for documentation.
  */
 CREATE OR REPLACE PACKAGE BODY castorVdqmCommon AS
 
@@ -384,9 +464,7 @@ END castorVdqmCommon;
 
 
 /**
- * castorVdqmView package specification.
- *
- * This package contains functionsused by some of the VDQM database views.
+ * This package contains functions used by some of the VDQM database views.
  */
 CREATE OR REPLACE PACKAGE castorVdqmView AS
 
@@ -415,7 +493,7 @@ END castorVdqmView;
 
 
 /**
- * castorVdqmView package body.
+ * See the castorVdqmView package specification for documentation.
  */
 CREATE OR REPLACE PACKAGE BODY castorVdqmView AS
 
@@ -831,7 +909,7 @@ ORDER BY
 
 
 /**
- * castorVdqm package specification.
+ * This package provides the API to be used by the VDQM server application.
  */
 CREATE OR REPLACE PACKAGE castorVdqm AS
 
@@ -889,44 +967,18 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
    * @param driveNameVar the name of the tape drive to be dedicated
    * @param serverNameVar the name of the tape server of the tape drive
    * @param dgNameVar the name of the device group of the tape drive
-   * @param accessModeVar the access mode dedication
-   * @param clientHostVar the client host dedication
-   * @param vidVar the vid dedication
-   * @param euidVar the euid dedication
-   * @param egidVar the egid dedication
-   * @param resultVar is 0 if the dedications were successfully inserted into
-   * the database, -1 if the specified tape drive does not exist, -2 if the
-   * specified tape server is not associated with the specified tape drive and
-   * -3 if the specified dgn is not associated with the specified tape drive.
-   */
-  PROCEDURE dedicateDrive(driveNameVar IN VARCHAR2, serverNameVar IN  VARCHAR2,
-    dgNameVar IN  VARCHAR2, accessModeVar IN  NUMBER,
-    clientHostVar IN VARCHAR2, vidVar IN VARCHAR2, euidVar IN NUMBER,
-    egidVar IN NUMBER , resultVar OUT INTEGER);
-
-  /**
-   * This procedure inserts the specified drive dedications into the database.
-   *
-   * This procedure raises an application error with an error number of -20001
-   * if it detects an error in the dedicate string.
-   *
-   * This procedure raises an application error with an error number of -20002
-   * if the specified tape drive does not exist.
-   *
-   * This procedure raises an application error with an error number of -20003
-   * if the specified tape drive is not associated with the specified tape
-   * server.
-   *
-   * This procedure raises an application error with an error number of -20004
-   * if the specified tape drive is not associated with the specified DGN.
-   *
-   * @param driveNameVar the name of the tape drive to be dedicated
-   * @param serverNameVar the name of the tape server of the tape drive
-   * @param dgNameVar the name of the device group of the tape drive
    * @param dedicateVar the dedication string
+   * @exception castorVdqmException.invalid_drive_dedicate if an error is
+   * detected in the drive dedicate string.
+   * @exception castorVdqmException.drive_not_found_application if the
+   * specified tape drive cannot be found in the database.
+   * @exception castorVdqmException.drive_server_not_found if the specified
+   * tape drive and tape server combination cannot be found in the database.
+   * @exception castorVdqmException.drive_dgn_not_found if the specified tape
+   * drive and DGN combination cannot be found in the database.
    */
-  PROCEDURE dedicateDrive2(driveNameVar IN VARCHAR2, serverNameVar IN VARCHAR2,
-    dgNameVar IN  VARCHAR2, dedicateVar IN  VARCHAR2);
+  PROCEDURE dedicateDrive(driveNameVar IN VARCHAR2, serverNameVar IN VARCHAR2,
+    dgNameVar IN VARCHAR2, dedicateVar IN VARCHAR2);
 
   /**
    * This procedure deletes the specified drive from the database.
@@ -978,21 +1030,9 @@ END castorVdqm;
 
 
 /**
- * castorVdqm package body.
+ * See the castorVdqm package specification for documentation.
  */
 CREATE OR REPLACE PACKAGE BODY castorVdqm AS
-
-  /**
-   * Datatype for a name value pair.
-   */
-  TYPE NameValue is RECORD (name VARCHAR2(256), val VARCHAR2(256));
-
-
-  /**
-   * Datatype for a list of name value pairs.
-   */
-  TYPE NameValueList IS TABLE OF NameValue INDEX BY BINARY_INTEGER;
-
 
   /**
    * See the castorVdqm package specification for documentation.
@@ -1218,6 +1258,8 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
    * @param modeVar the extracted mode if there was one, else NULL.
    * @param uidVar the extracted uid if there was one, else NULL.
    * @param vidVar the extracted VID if there was one, else NULL
+   * @exception castorVdqmException.invalid_drive_dedicate if an error is
+   * detected in the drive dedicate string.
    */
   PROCEDURE parseDedicateStr(
     dedicateStrVar  IN VARCHAR2,
@@ -1229,7 +1271,9 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     ) AS
     dedicationStrsVar castorVdqmCommon.Varchar256List;
     nameValueListVar  castorVdqmCommon.Varchar256List;
+    TYPE NameValue is RECORD (name VARCHAR2(256), val VARCHAR2(256));
     nameValueVar      NameValue;
+    TYPE NameValueList IS TABLE OF NameValue INDEX BY BINARY_INTEGER;
     dedicationsVar    NameValueList;
     indexVar          NUMBER := 1;
     dummyStrVar       VARCHAR2(256) := NULL;
@@ -1239,6 +1283,11 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     modeVar := NULL;
     uidVar  := NULL;
     vidVar  := NULL;
+
+    -- Return if the dedicate string is NULL or empty
+    IF dedicateStrVar IS NULL OR dedicateStrVar = '' THEN
+      RETURN;
+    END IF;
 
     -- Split the dedicate string into the individual dedications
     dedicationStrsVar := castorVdqmCommon.tokenize(dedicateStrVar, ',');
@@ -1250,7 +1299,9 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
 
       -- Raise an application error if the dedication is not a name value pair
       IF nameValueListVar.count != 2 THEN
-        RAISE_APPLICATION_ERROR(-20001, 'Invalid dedication ''' ||
+        castorVdqmException.throw(castorVdqmException.invalid_drive_dedicate_cd,
+          'Invalid drive dedicate string.  ' ||
+          'Dedication is not a valid name value pair ''' ||
           dedicationStrsVar(indexVar) || '''');
       END IF;
 
@@ -1266,21 +1317,25 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
       CASE
         WHEN dedicationsVar(indexVar).name = 'gid' THEN
           IF gidVar IS NOT NULL THEN
-            RAISE_APPLICATION_ERROR(-20001,
-              'Invalid dedication.  More than one gid dedication.');
+            castorVdqmException.throw(
+              castorVdqmException.invalid_drive_dedicate_cd,
+              'Invalid drive dedicate string.  More than one gid dedication.');
           END IF;
 
           BEGIN
             gidVar := TO_NUMBER(dedicationsVar(indexVar).val);
           EXCEPTION
             WHEN VALUE_ERROR THEN
-              RAISE_APPLICATION_ERROR(-20001, 'Invalid gid dedication ''' ||
+              castorVdqmException.throw(
+                castorVdqmException.invalid_drive_dedicate_cd,
+                'Invalid drive dedicate string.  Invalid gid dedication ''' ||
                 dedicationsVar(indexVar).val || ''' ' || SQLERRM);
           END;
         WHEN dedicationsVar(indexVar).name = 'host' THEN
           IF hostVar IS NOT NULL THEN
-            RAISE_APPLICATION_ERROR(-20001,
-              'Invalid dedication.  More than one host dedication.');
+            castorVdqmException.throw(
+              castorVdqmException.invalid_drive_dedicate_cd,
+              'Invalid drive dedicate string.  More than one host dedication.');
           END IF;
 
           BEGIN
@@ -1289,39 +1344,48 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
             hostVar := dedicationsVar(indexVar).val;
           EXCEPTION
             WHEN OTHERS THEN
-              RAISE_APPLICATION_ERROR(-20001, 'Invalid host dedication ''' ||
+              castorVdqmException.throw(
+                castorVdqmException.invalid_drive_dedicate_cd,
+                'Invalid drive dedicate string.  Invalid host dedication ''' ||
                 dedicationsVar(indexVar).val || ''' ' || SQLERRM);
           END;
         WHEN dedicationsVar(indexVar).name = 'mode' THEN
           IF modeVar IS NOT NULL THEN
-            RAISE_APPLICATION_ERROR(-20001,
-              'Invalid dedication.  More than one mode dedication.');
+            castorVdqmException.throw(
+              castorVdqmException.invalid_drive_dedicate_cd,
+              'Invalid drive dedicate string.  More than one mode dedication.');
           END IF;
 
           BEGIN
             modeVar := TO_NUMBER(dedicationsVar(indexVar).val);
           EXCEPTION
             WHEN VALUE_ERROR THEN
-              RAISE_APPLICATION_ERROR(-20001, 'Invalid mode dedication ''' ||
+              castorVdqmException.throw(
+                castorVdqmException.invalid_drive_dedicate_cd,
+                'Invalid drive dedicate string.  Invalid mode dedication ''' ||
                 dedicationsVar(indexVar).val || ''' ' || SQLERRM);
           END;
         WHEN dedicationsVar(indexVar).name = 'uid' THEN
           IF uidVar Is NOT NULL THEN
-            RAISE_APPLICATION_ERROR(-20001,
-              'Invalid dedication.  More than one uid dedication.');
+            castorVdqmException.throw(
+              castorVdqmException.invalid_drive_dedicate_cd,
+              'Invalid drive dedicate string.  More than one uid dedication.');
           END IF;
 
           BEGIN
             uidVar := TO_NUMBER(dedicationsVar(indexVar).val);
           EXCEPTION
             WHEN VALUE_ERROR THEN
-              RAISE_APPLICATION_ERROR(-20001, 'Invalid uid dedication ''' ||
+              castorVdqmException.throw(
+                castorVdqmException.invalid_drive_dedicate_cd,
+                'Invalid drive dedicate string.  Invalid uid dedication ''' ||
                 dedicationsVar(indexVar).val || ''' ' || SQLERRM);
           END;
         WHEN dedicationsVar(indexVar).name = 'vid' THEN
           IF vidVar Is NOT NULL THEN
-            RAISE_APPLICATION_ERROR(-20001,
-              'Invalid dedication.  More than one vid dedication.');
+            castorVdqmException.throw(
+              castorVdqmException.invalid_drive_dedicate_cd,
+              'Invalid drive dedicate string.  More than one vid dedication.');
           END IF;
 
           BEGIN
@@ -1330,11 +1394,15 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
             vidVar := dedicationsVar(indexVar).val;
           EXCEPTION
             WHEN OTHERS THEN
-              RAISE_APPLICATION_ERROR(-20001, 'Invalid vid dedication ''' ||
+              castorVdqmException.throw(
+              castorVdqmException.invalid_drive_dedicate_cd,
+              'Invalid drive dedicate string.  Invalid vid dedication ''' ||
                 dedicationsVar(indexVar).val || ''' ' || SQLERRM);
           END;
         ELSE
-          RAISE_APPLICATION_ERROR(-20001, 'Invalid dedication name ''' ||
+          castorVdqmException.throw(
+            castorVdqmException.invalid_drive_dedicate_cd,
+            'Invalid drive dedicate string.  Invalid dedication name ''' ||
             dedicationsVar(indexVar).name || '''');
       END CASE;
     END LOOP;
@@ -1345,126 +1413,7 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
   /**
    * See the castorVdqm package specification for documentation.
    */
-  PROCEDURE dedicateDrive
-  ( driveNameVar  IN  VARCHAR2
-  , serverNameVar IN  VARCHAR2
-  , dgNameVar     IN  VARCHAR2
-  , accessModeVar IN  NUMBER
-  , clientHostVar IN  VARCHAR2
-  , vidVar        IN  VARCHAR2
-  , euidVar       IN  NUMBER
-  , egidVar       IN  NUMBER
-  , resultVar     OUT INTEGER
-  ) AS
-    driveIdVar           NUMBER;
-    dgnIdVar             NUMBER;
-    serverIdVar          NUMBER;
-    nbMatchingServersVar NUMBER;
-    nbMatchingDgnsVar    NUMBER;
-    TYPE dedicationList_t IS TABLE OF NUMBER INDEX BY BINARY_INTEGER;
-    dedicationsToDelete  dedicationList_t;
-    dedicationIdVar      NUMBER;
-  BEGIN
-    resultVar := 0;
-
-    -- Lock the tape drive row
-    BEGIN
-      SELECT
-        TapeDrive.id, TapeDrive.deviceGroupName, TapeDrive.tapeServer
-        INTO driveIdVar, dgnIdVar, serverIdVar
-        FROM TapeDrive
-        INNER JOIN TapeServer ON
-          TapeDrive.tapeServer = TapeServer.id
-        WHERE
-          TapeDrive.driveName = driveNameVar
-        FOR UPDATE;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      resultVar := -1; -- No such tape drive
-      RETURN;
-    END;
-
-    -- Check the specified tape drive is associated with the tape server
-    SELECT count(*) INTO nbMatchingServersVar
-      FROM TapeServer
-      WHERE
-            TapeServer.id         = serverIdVar
-        AND TapeServer.serverName = serverNameVar;
-
-    IF nbMatchingServersVar = 0 THEN
-      resultVar := -2; -- Tape server is not associated with tape drive
-      RETURN;
-    END IF;
-
-    -- Check the specified dgn is associated with the tape server
-    SELECT count(*) INTO nbMatchingDgnsVar
-      FROM DeviceGroupName
-      WHERE
-            DeviceGroupName.id     = dgnIdVar
-        AND DeviceGroupName.dgName = dgNameVar;
-
-    IF nbMatchingDgnsVar = 0 THEN
-      resultVar := -3; -- Tape server is not associated with dgn
-      RETURN;
-    END IF;
-
-    -- Delete all existing dedications associated with tape drive
-    SELECT id BULK COLLECT INTO dedicationsToDelete
-      FROM TapeDriveDedication
-      WHERE TapeDriveDedication.tapeDrive = driveIdVar;
-
-    IF dedicationsToDelete.COUNT > 0 THEN
-      FOR i IN dedicationsToDelete.FIRST .. dedicationsToDelete.LAST LOOP
-        DELETE FROM TapeDriveDedication
-          WHERE TapeDriveDedication.id = dedicationsToDelete(i);
-        DELETE FROM Id2Type
-          WHERE Id2Type.id = dedicationsToDelete(i);
-      END LOOP;
-    END IF;
-
-    -- Insert new dedications
-    IF accessModeVar = 0 THEN
-      INSERT INTO TapeDriveDedication(id, tapeDrive, accessMode)
-        VALUES(ids_seq.nextval, driveIdVar, accessModeVar)
-      RETURNING id INTO dedicationIdVar;
-      INSERT INTO Id2Type (id, type)
-        VALUES (dedicationIdVar, 90);
-    END IF;
-    IF clientHostVar IS NOT NULL THEN
-      INSERT INTO TapeDriveDedication(id, tapeDrive, clientHost)
-        VALUES(ids_seq.nextval, driveIdVar, clientHostVar)
-      RETURNING id INTO dedicationIdVar;
-      INSERT INTO Id2Type (id, type)
-        VALUES (dedicationIdVar, 90);
-    END IF;
-    IF vidVar IS NOT NULL THEN
-      INSERT INTO TapeDriveDedication(id, tapeDrive, vid)
-        VALUES(ids_seq.nextval, driveIdVar, vidVar)
-      RETURNING id INTO dedicationIdVar;
-      INSERT INTO Id2Type (id, type)
-        VALUES (dedicationIdVar, 90);
-    END IF;
-    IF euidVar IS NOT NULL THEN
-      INSERT INTO TapeDriveDedication(id, tapeDrive, euid)
-        VALUES(ids_seq.nextval, driveIdVar, euidVar)
-      RETURNING id INTO dedicationIdVar;
-      INSERT INTO Id2Type (id, type)
-        VALUES (dedicationIdVar, 90);
-    END IF;
-    IF egidVar IS NOT NULL THEN
-      INSERT INTO TapeDriveDedication(id, tapeDrive, egid)
-        VALUES(ids_seq.nextval, driveIdVar, egidVar)
-      RETURNING id INTO dedicationIdVar;
-      INSERT INTO Id2Type (id, type)
-        VALUES (dedicationIdVar, 90);
-    END IF;
-
-  END dedicateDrive;
-
-
-  /**
-   * See the castorVdqm package specification for documentation.
-   */
-  PROCEDURE dedicateDrive2(driveNameVar IN VARCHAR2, serverNameVar IN  VARCHAR2,
+  PROCEDURE dedicateDrive(driveNameVar IN VARCHAR2, serverNameVar IN  VARCHAR2,
     dgNameVar IN  VARCHAR2, dedicateVar IN  VARCHAR2) AS
     gidVar               NUMBER;
     hostVar              VARCHAR2(256);
@@ -1480,7 +1429,7 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     dedicationsToDelete  dedicationList_t;
     dedicationIdVar      NUMBER;
   BEGIN
-    -- Parse the dedication string rasing an application error with an error
+    -- Parse the dedication string raising an application error with an error
     -- number of -20001 if there is an error in the dedicate string
     parseDedicateStr(dedicateVar, gidVar, hostVar, modeVar, uidVar, vidVar);
 
@@ -1496,7 +1445,8 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
           TapeDrive.driveName = driveNameVar
         FOR UPDATE;
     EXCEPTION WHEN NO_DATA_FOUND THEN
-      RAISE_APPLICATION_ERROR(-20002, 'No such tape drive ''' || driveNameVar);
+      castorVdqmException.throw(castorVdqmException.drive_not_found_cd,
+        'Tape drive ''' || driveNameVar || ''' not found in database.');
     END;
 
     -- Check the specified tape drive is associated with the specified tape
@@ -1508,8 +1458,9 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
         AND TapeServer.serverName = serverNameVar;
 
     IF nbMatchingServersVar = 0 THEN
-      RAISE_APPLICATION_ERROR(-20003, 'Tape drive ''' || driveNameVar ||
-        ''' is not associated with tape server ''' || serverNameVar || '''');
+      castorVdqmException.throw(castorVdqmException.drive_server_not_found_cd,
+        'Tape drive ''' || driveNameVar || ''', server ''' || serverNameVar ||
+        ''' combination not found in database.');
     END IF;
 
     -- Check the specified tape drive is associated with the specified dgn
@@ -1520,8 +1471,9 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
         AND DeviceGroupName.dgName = dgNameVar;
 
     IF nbMatchingDgnsVar = 0 THEN
-      RAISE_APPLICATION_ERROR(-20004, 'Tape drive ''' || driveNameVar ||
-        ''' is not associated with DGN ''' || dgNameVar || '''');
+      castorVdqmException.throw(castorVdqmException.drive_dgn_not_found_cd,
+        'Tape drive ''' || driveNameVar || ''', DGN ''' || dgNameVar ||
+        ''' combination not found in database.');
       RETURN;
     END IF;
 
@@ -1576,7 +1528,7 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
         VALUES (dedicationIdVar, 90);
     END IF;
 
-  END dedicateDrive2;
+  END dedicateDrive;
 
 
   /**
