@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.48 $ $Date: 2008/04/18 09:22:40 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.49 $ $Date: 2008/04/25 15:19:23 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -195,7 +195,7 @@ char	**argv;
                        mediaerror, 
                        readfailure,
                        writefailure);
-              tl_tpdaemon.tl_log( &tl_tpdaemon, (harderror || mediaerror || mediaerror || writefailure) ? 80 : 82, 8,
+              tl_tpdaemon.tl_log( &tl_tpdaemon, (harderror || mediaerror || readfailure || writefailure) ? 80 : 82, 8,
                                   "func"          , TL_MSG_PARAM_STR,   func,
                                   "Message"       , TL_MSG_PARAM_STR,   "tape alerts",
                                   "hardware error", TL_MSG_PARAM_INT,   harderror,
