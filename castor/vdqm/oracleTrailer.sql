@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.104 $ $Release$ $Date: 2008/04/25 15:18:50 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.105 $ $Release$ $Date: 2008/04/28 08:54:29 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -473,11 +473,16 @@ CREATE OR REPLACE PACKAGE castorVdqmView AS
    * dedications of the drive.
    *
    * @param driveIdVar the ID of the drive.
+   * @param gidVar     the gid of the client.
+   * @param hostVar    the host of the client.
+   * @param modeVar    the tape access mode.
+   * @param uidVar     the uid of the client.
    * @param vidVar     the vid of the volume request.
    * @return 1 if the specified drive passes all of its dedications, else 0.
    */
-  FUNCTION passesDedications(driveIdVar IN NUMBER, clientHostVar IN VARCHAR2,
-    accessModeVar IN NUMBER, vidVar IN VARCHAR2) RETURN NUMBER;
+  FUNCTION passesDedications(driveIdVar IN NUMBER, gidVar IN NUMBER,
+    hostVar IN VARCHAR2, modeVar IN NUMBER, uidVar IN NUMBER,
+    vidVar IN VARCHAR2) RETURN NUMBER;
 
   /**
    * This function returns the dedications of the specified drive in the format
@@ -499,12 +504,55 @@ CREATE OR REPLACE PACKAGE BODY castorVdqmView AS
 
   /**
    * This private function determines whether or not the specified drive and
-   * access mode pass the mode dedications of the drive.
+   * GID pass the dedications of the drive.
+   *
+   * @param driveIdVar the ID of the drive.
+   * @param gidVar     the GID of the client.
+   * @return 1 if the dedications are passed, else 0.
+   */
+  FUNCTION passesGidDedications(
+    driveIdVar IN NUMBER,
+    gidVar     IN NUMBER)
+    RETURN NUMBER AS
+    nbGidDedicationsVar NUMBER;
+  BEGIN
+    -- Count the number of GID dedications for the drive
+    -- (there should only be one)
+    SELECT COUNT(*) INTO nbGidDedicationsVar
+      FROM TapeDriveDedication
+      WHERE tapeDrive = driveIdVar AND egid IS NOT NULL;
+
+    -- Drive passes if there are no GID dedications for it
+    IF nbGidDedicationsVar = 0 THEN
+      RETURN 1;
+    END IF;
+
+    -- Drive has one or more GID dedications
+
+    -- Count the number of matching GID dedications
+    SELECT COUNT(*) INTO nbGidDedicationsVar
+      FROM TapeDriveDedication
+      WHERE
+            TapeDriveDedication.tapeDrive = driveIdVar
+        AND gidVar = TapeDriveDedication.egid;
+
+    -- As there are GID dedications for the drive, it only passes if at least
+    -- one matches
+    IF nbGidDedicationsVar > 0 THEN
+      RETURN 1;
+    ELSE
+      RETURN 0;
+    END IF;
+  END passesGidDedications;
+
+
+  /**
+   * This private function determines whether or not the specified drive and
+   * access mode pass the dedications of the drive.
    *
    * @param driveIdVar    the ID of the drive.
    * @param accessModeVar the access mode of the volume request.
-   * @return 1 if the specified drive and access mode pass the dedications,
-   * else 0.
+   * @return 1 if the dedications are passed, else 0.
    */
   FUNCTION passesModeDedication(
     driveIdVar    IN NUMBER,
@@ -545,11 +593,11 @@ CREATE OR REPLACE PACKAGE BODY castorVdqmView AS
 
   /**
    * This private function determines whether or not the specified drive and
-   * host pass the host dedications of the drive.
+   * host pass the dedications of the drive.
    *
    * @param driveIdVar    the ID of the drive.
    * @param clientHostVar the client host of the volume request.
-   * @return 1 if the specified drive and host pass the dedications, else 0.
+   * @return 1 if the dedications are passed, else 0.
    */
   FUNCTION passesHostDedications(
     driveIdVar    IN NUMBER,
@@ -599,11 +647,55 @@ CREATE OR REPLACE PACKAGE BODY castorVdqmView AS
 
   /**
    * This private function determines whether or not the specified drive and
-   * VID pass the VID dedications of the drive.
+   * UID pass the dedications of the drive.
+   *
+   * @param driveIdVar the ID of the drive.
+   * @param uidVar     the UID of the volume request.
+   * @return 1 if the dedications are passed, else 0.
+   */
+  FUNCTION passesUidDedications(
+    driveIdVar IN NUMBER,
+    uidVar     IN NUMBER)
+    RETURN NUMBER AS
+    nbUidDedicationsVar NUMBER;
+  BEGIN
+    -- Count the number of UID dedications for the drive
+    -- (there should only be one)
+    SELECT COUNT(*) INTO nbUidDedicationsVar
+      FROM TapeDriveDedication
+      WHERE tapeDrive = driveIdVar AND euid IS NOT NULL;
+
+    -- Drive passes if there are no UID dedications for it
+    IF nbUidDedicationsVar = 0 THEN
+      RETURN 1;
+    END IF;
+
+    -- Drive has one or more UID dedications
+
+    -- Count the number of matching UID dedications
+    SELECT COUNT(*) INTO nbUidDedicationsVar
+      FROM TapeDriveDedication
+      WHERE
+            TapeDriveDedication.tapeDrive = driveIdVar
+        AND uidVar = TapeDriveDedication.euid;
+
+    -- As there are UID dedications for the drive, it only passes if at least
+    -- one matches
+    IF nbUidDedicationsVar > 0 THEN
+      RETURN 1;
+    ELSE
+      RETURN 0;
+    END IF;
+  END passesUidDedications;
+
+
+  /**
+   * This private function determines whether or not the specified drive and
+   * VID pass the dedications of the drive.
    *
    * @param driveIdVar the ID of the drive.
    * @param vidVar     the vid of the volume request.
-   * @return 1 if the specified drive and VID pass the dedications, else 0.
+   * @return 1 if the dedications are passed, else 0.
    */
   FUNCTION passesVidDedications(
     driveIdVar IN NUMBER,
@@ -655,18 +747,28 @@ CREATE OR REPLACE PACKAGE BODY castorVdqmView AS
    * See the castorVdqmView package specification for documentation.
    */
   FUNCTION passesDedications(
-    driveIdVar    IN NUMBER,
-    clientHostVar IN VARCHAR2,
-    accessModeVar IN NUMBER,
-    vidVar        IN VARCHAR2)
+    driveIdVar IN NUMBER,
+    gidVar     IN NUMBER,
+    hostVar    IN VARCHAR2,
+    modeVar    IN NUMBER,
+    uidVar     IN NUMBER,
+    vidVar     IN VARCHAR2)
     RETURN NUMBER AS
     nbVidDedicationsVar NUMBER;
   BEGIN
-    IF passesHostDedications(driveIdVar, clientHostVar) = 0 THEN
+    IF passesGidDedications(driveIdVar, gidVar) = 0 THEN
       RETURN 0;
     END IF;
 
-    IF passesModeDedication(driveIdVar, accessModeVar) = 0 THEN
+    IF passesHostDedications(driveIdVar, hostVar) = 0 THEN
+      RETURN 0;
+    END IF;
+
+    IF passesModeDedication(driveIdVar, modeVar) = 0 THEN
+      RETURN 0;
+    END IF;
+
+    IF passesUidDedications(driveIdVar, uidVar) = 0 THEN
       RETURN 0;
     END IF;
 
@@ -816,9 +918,9 @@ WHERE
   )
   AND TapeServer.actingMode=0 -- TAPE_SERVER_ACTIVE
   AND TapeRequest.status=0 -- REQUEST_PENDING
-  AND castorVdqmView.passesDedications(tapeDrive.id,
+  AND castorVdqmView.passesDedications(tapeDrive.id, ClientIdentification.egid,
     ClientIdentification.machine, TapeAccessSpecification.accessMode,
-    VdqmTape.vid)=1
+    ClientIdentification.euid, VdqmTape.vid)=1
 ORDER BY
   TapeAccessSpecification.accessMode DESC,
   TapeRequest.modificationTime ASC;
@@ -851,9 +953,9 @@ INNER JOIN TapeServer ON
 WHERE
       TapeServer.actingMode=0 -- ACTIVE
   AND TapeRequest.tapeDrive=0 -- Request has not already been allocated a drive
-  AND castorVdqmView.passesDedications(tapeDrive.id,
+  AND castorVdqmView.passesDedications(tapeDrive.id, ClientIdentification.egid,
     ClientIdentification.machine, TapeAccessSpecification.accessMode,
-    VdqmTape.vid)=1
+    ClientIdentification.euid, VdqmTape.vid)=1
 ORDER BY
   TapeAccessSpecification.accessMode DESC,
   TapeRequest.modificationTime ASC;
@@ -1307,6 +1409,15 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     dedicationsVar    NameValueList;
     indexVar          NUMBER := 1;
     dummyNumVar       NUMBER := NULL;
+    numAgeVar         NUMBER := 0; -- Number of     age dedications found so far
+    numDateStrVar     NUMBER := 0; -- Number of dateStr dedications found so far
+    numGidVar         NUMBER := 0; -- Number of     GID dedications found so far
+    numHostVar        NUMBER := 0; -- Number of    host dedications found so far
+    numModeVar        NUMBER := 0; -- Number of    mode dedications found so far
+    numNameVar        NUMBER := 0; -- Number of    name dedications found so far
+    numTimeStrVar     NUMBER := 0; -- Number of timeStr dedications found so far
+    numUidVar         NUMBER := 0; -- Number of     UID dedications found so far
+    numVidVar         NUMBER := 0; -- Number of     VID dedications found so far
   BEGIN
     gidVar  := NULL;
     hostVar := NULL;
@@ -1346,6 +1457,14 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     FOR indexVar IN dedicationsVar.FIRST .. dedicationsVar.LAST LOOP
       CASE
         WHEN dedicationsVar(indexVar).name = 'age' THEN
+          IF numAgeVar > 0 THEN
+            castorVdqmException.throw(
+              castorVdqmException.invalid_drive_dedicate_cd,
+              'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
+              || '  More than one age dedication. ''');
+          END IF;
+          numAgeVar := numAgeVar + 1;
+
           IF dedicationsVar(indexVar).val != '.*' THEN
             castorVdqmException.throw(
               castorVdqmException.invalid_drive_dedicate_cd,
@@ -1353,6 +1472,14 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
               || ' ''age'' dedications are not supported');
           END IF;
         WHEN dedicationsVar(indexVar).name = 'datestr' THEN
+          IF numDateStrVar > 0 THEN
+            castorVdqmException.throw(
+              castorVdqmException.invalid_drive_dedicate_cd,
+              'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
+              || '  More than one datestr dedication. ''');
+          END IF;
+          numDateStrVar := numDateStrVar + 1;
+
           IF dedicationsVar(indexVar).val != '.*' THEN
             castorVdqmException.throw(
               castorVdqmException.invalid_drive_dedicate_cd,
@@ -1360,12 +1487,13 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
               || ' ''datestr'' dedications are not supported');
           END IF;
         WHEN dedicationsVar(indexVar).name = 'gid' THEN
-          IF gidVar IS NOT NULL THEN
+          IF numGidVar > 0 THEN
             castorVdqmException.throw(
               castorVdqmException.invalid_drive_dedicate_cd,
               'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
               || '  More than one gid dedication. ''');
           END IF;
+          numGidVar := numGidVar + 1;
 
           IF dedicationsVar(indexVar).val != '.*' THEN
             BEGIN
@@ -1380,12 +1508,13 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
             END;
           END IF;
         WHEN dedicationsVar(indexVar).name = 'host' THEN
-          IF hostVar IS NOT NULL THEN
+          IF numhostVar > 0 THEN
             castorVdqmException.throw(
               castorVdqmException.invalid_drive_dedicate_cd,
               'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
               || '  More than one host dedication.');
           END IF;
+          numHostVar := numHostVar + 1;
 
           IF dedicationsVar(indexVar).val != '.*' THEN
             BEGIN
@@ -1402,12 +1531,13 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
             END;
           END IF;
         WHEN dedicationsVar(indexVar).name = 'mode' THEN
-          IF modeVar IS NOT NULL THEN
+          IF numModeVar > 0 THEN
             castorVdqmException.throw(
               castorVdqmException.invalid_drive_dedicate_cd,
               'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
               || '  More than one mode dedication.');
           END IF;
+          numModeVar := numModeVar + 1;
 
           IF dedicationsVar(indexVar).val != '.*' THEN
             BEGIN
@@ -1422,6 +1552,14 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
             END;
           END IF;
         WHEN dedicationsVar(indexVar).name = 'name' THEN
+          IF numNameVar > 0 THEN
+            castorVdqmException.throw(
+              castorVdqmException.invalid_drive_dedicate_cd,
+              'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
+              || '  More than one name dedication.');
+          END IF;
+          numNameVar := numNameVar + 1;
+
           IF dedicationsVar(indexVar).val != '.*' THEN
             castorVdqmException.throw(
               castorVdqmException.invalid_drive_dedicate_cd,
@@ -1429,6 +1567,14 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
               || ' ''name'' dedications are not supported');
           END IF;
         WHEN dedicationsVar(indexVar).name = 'timestr' THEN
+          IF numTimeStrVar > 0 THEN
+            castorVdqmException.throw(
+              castorVdqmException.invalid_drive_dedicate_cd,
+              'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
+              || '  More than one timestr dedication.');
+          END IF;
+          numTimeStrVar := numTimeStrVar + 1;
+
           IF dedicationsVar(indexVar).val != '.*' THEN
             castorVdqmException.throw(
               castorVdqmException.invalid_drive_dedicate_cd,
@@ -1436,12 +1582,13 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
               || ' ''timestr'' dedications are not supported');
           END IF;
         WHEN dedicationsVar(indexVar).name = 'uid' THEN
-          IF uidVar Is NOT NULL THEN
+          IF numUidVar > 0 THEN
             castorVdqmException.throw(
               castorVdqmException.invalid_drive_dedicate_cd,
               'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
               || '  More than one uid dedication.');
           END IF;
+          numUidVar := numUidVar + 1;
 
           IF dedicationsVar(indexVar).val != '.*' THEN
             BEGIN
@@ -1456,12 +1603,13 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
             END;
           END IF;
         WHEN dedicationsVar(indexVar).name = 'vid' THEN
-          IF vidVar Is NOT NULL THEN
+          IF numVidVar > 0 THEN
             castorVdqmException.throw(
               castorVdqmException.invalid_drive_dedicate_cd,
               'Invalid drive dedicate string ''' || dedicateStrVar || '''.'
               || '  More than one vid dedication.');
           END IF;
+          numVidVar := numVidVar + 1;
 
           IF dedicationsVar(indexVar).val != '.*' THEN
             BEGIN
