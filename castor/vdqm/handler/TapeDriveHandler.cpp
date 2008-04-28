@@ -115,7 +115,8 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
      castor::dlf::Param("usecount", ptr_driveRequest->usecount),
      castor::dlf::Param("volid", ptr_driveRequest->volid),
      castor::dlf::Param("VolReqID", ptr_driveRequest->VolReqID)};
-  castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, VDQM_OLD_VDQM_DRV_REQ_PARAMS, 16, params);
+  castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, VDQM_OLD_VDQM_DRV_REQ_PARAMS,
+    16, params);
 
 
   try {

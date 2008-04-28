@@ -219,14 +219,21 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
       throw ex;                    
     }
     
-     if(ptr_IVdqmService->existTapeDriveWithTapeInUse(ptr_driveRequest->volid)||
-       ptr_IVdqmService->existTapeDriveWithTapeMounted(ptr_driveRequest->volid))
-       {
+    if(ptr_IVdqmService->existTapeDriveWithTapeInUse(ptr_driveRequest->volid)||
+      ptr_IVdqmService->existTapeDriveWithTapeMounted(ptr_driveRequest->volid))
+      {
       castor::exception::Exception ex(EBUSY);
       ex.getMessage() << "TapeDriveStatusHandler::handleVolMountStatus(): "
-                      << "TapeDrive is busy with another request" << std::endl;
+                     << "TapeDrive is busy with another request" << std::endl;
       throw ex;        
     }
+
+    castor::dlf::Param param[] = {
+      castor::dlf::Param("reqhost", ptr_driveRequest->reqhost),
+      castor::dlf::Param("volid"  , ptr_driveRequest->volid),
+      castor::dlf::Param("drive"  , ptr_driveRequest->drive)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      VDQM_MOUNT_WITHOUT_VOL_REQ, 3, param);
   } 
 
   if(tapeRequest != NULL) {
@@ -260,7 +267,6 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
   
   // Update usage counter
   ptr_tapeDrive->setUsecount(ptr_tapeDrive->usecount() + 1);
-  
   
   if(tapeRequest != NULL) {
     // "TapeDriveStatusHandler::handleVolMountStatus(): Tape mounted in
