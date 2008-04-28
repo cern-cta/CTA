@@ -33,12 +33,12 @@
 namespace castor {
 
   namespace vdqm {
-  	
-  	//Forward declaration
-  	class OldProtocolInterpreter;
-		typedef struct newVdqmVolReq newVdqmVolReq_t;
-		typedef struct newVdqmDrvReq newVdqmDrvReq_t;
-		typedef struct newVdqmHdr newVdqmHdr_t;  	
+    
+    //Forward declaration
+    class OldProtocolInterpreter;
+    typedef struct newVdqmVolReq newVdqmVolReq_t;
+    typedef struct newVdqmDrvReq newVdqmDrvReq_t;
+    typedef struct newVdqmHdr newVdqmHdr_t;    
 
     /**
      * This class provides functions to handle the old VDQM protocol.
@@ -46,41 +46,51 @@ namespace castor {
      */
     class OldRequestFacade : public BaseObject {
 
-    	public:
+      public:
        
-      /**
-			 * Constructor
-			 */
-       OldRequestFacade(newVdqmVolReq_t *volumeRequest,
-												newVdqmDrvReq_t *driveRequest,
-										  	newVdqmHdr_t *header);
-			
-       
+        /**
+         * Constructor
+         */
+        OldRequestFacade(newVdqmVolReq_t *volumeRequest,
+          newVdqmDrvReq_t *driveRequest, newVdqmHdr_t *header);
+      
        /**
         * Calls the right function for the request.
         * @parameter socket The Socket instance to communicate with the client
         * @return true, if there were no complications
         * @exception In case of errors
         */
-       bool handleRequestType(OldProtocolInterpreter* oldProtInterpreter, Cuuid_t cuuid) 
-       	throw (castor::exception::Exception);
+       bool handleRequestType(OldProtocolInterpreter* oldProtInterpreter,
+         Cuuid_t cuuid) throw (castor::exception::Exception);
        
        /**
         * Checks the reqtype and returns an error, if it is a 
         * wrong number. Throws an exception, if an error occures.
         */
        bool checkRequestType(Cuuid_t cuuid) 
-       	throw (castor::exception::Exception);
+         throw (castor::exception::Exception);
       
       
       private:
       
-      	newVdqmVolReq_t *ptr_volumeRequest;
-		  	newVdqmDrvReq_t *ptr_driveRequest;
-  			newVdqmHdr_t *ptr_header;
-				int m_reqtype;
-				
-		}; // class VdqmServer
+        newVdqmVolReq_t *ptr_volumeRequest;
+        newVdqmDrvReq_t *ptr_driveRequest;
+        newVdqmHdr_t    *ptr_header;
+        int             m_reqtype;
+
+        /**
+         * Logs the reception of a drive request message.
+         */
+        void logDriveRequest(newVdqmHdr_t *header, newVdqmDrvReq_t *request,
+          Cuuid_t cuuid);
+
+        /**
+         * Logs the reception of a volume request message.
+         */
+        void logVolumeRequest(newVdqmHdr_t *header, newVdqmVolReq_t *request,
+          Cuuid_t cuuid);
+
+    }; // class VdqmServer
 
   } // end of namespace vdqm
 

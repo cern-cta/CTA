@@ -96,6 +96,35 @@ namespace castor {
        */
       static const char *tapeDriveStatus2Str(
         const TapeDriveStatusCodes status);
+
+      /**
+       * Returns the string form of the specified CASTOR-message magic-number.
+       *
+       * @param magic the CASTOR-message magic-number.
+       */
+      static const char *castorMagicNb2Str(const uint32_t magic);
+
+      /**
+       * Returns the string form of the specified RTCP-message request-type.
+       *
+       * @param type the RTCP-message request-type.
+       */
+      static const char *rtcpReqTypeToStr(const uint32_t type);
+
+      /**
+       * Returns the string form of the specified VDQM-message request-type.
+       *
+       * @param type the VDQM-message request-type.
+       */
+      static const char *vdqmReqTypeToStr(const uint32_t type);
+
+      /**
+       * Returns the string form of the specified CASTOR-message request-type.
+       *
+       * @param type the CASTOR-message request-type.
+       */
+      static const char *castorReqTypeToStr(const uint32_t magic,
+        const uint32_t type);
     
     private:
 

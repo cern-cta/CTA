@@ -170,3 +170,36 @@ const char *castor::vdqm::DevTools::tapeDriveStatus2Str(
   default                            : return "UNKNOWN";
   };
 }
+
+
+//------------------------------------------------------------------------------
+// castorMagicNb2Str
+//------------------------------------------------------------------------------
+const char *castor::vdqm::DevTools::castorMagicNb2Str(const uint32_t magic) {
+  return ::castorMagicNb2Str(magic); // CDevTools
+}
+
+
+//------------------------------------------------------------------------------
+// rtcpReqTypeToStr
+//------------------------------------------------------------------------------
+const char *castor::vdqm::DevTools::rtcpReqTypeToStr(const uint32_t type) {
+  return ::rtcpReqTypeToStr(type); // CDevTools
+}
+
+
+//------------------------------------------------------------------------------
+// vdqmReqTypeToStr
+//------------------------------------------------------------------------------
+const char *castor::vdqm::DevTools::vdqmReqTypeToStr(const uint32_t type) {
+  return ::vdqmReqTypeToStr(type); // CDevTools
+}
+
+
+//------------------------------------------------------------------------------
+// castorReqTypeToStr
+//------------------------------------------------------------------------------
+const char *castor::vdqm::DevTools::castorReqTypeToStr(const uint32_t magic,
+  const uint32_t type) {
+  return ::castorReqTypeToStr(magic, type); //CDevTools
+}

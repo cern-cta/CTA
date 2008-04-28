@@ -369,11 +369,8 @@ int castor::vdqm::handler::TapeRequestHandler::getQueuePosition(
 // sendTapeRequestQueue
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
-  newVdqmHdr_t *header, 
-  newVdqmVolReq_t *volumeRequest,
-  newVdqmDrvReq_t *driveRequest, 
-  castor::vdqm::OldProtocolInterpreter* oldProtInterpreter,
-  Cuuid_t cuuid) 
+  newVdqmHdr_t *header, newVdqmVolReq_t *volumeRequest,
+  castor::vdqm::OldProtocolInterpreter* oldProtInterpreter, Cuuid_t cuuid) 
   throw (castor::exception::Exception) {
 
   std::string dgn    = "";
