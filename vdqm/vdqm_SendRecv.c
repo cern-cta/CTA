@@ -962,7 +962,7 @@ int vdqm_RecvVolPriority_Transfer(vdqmnw_t *nw, vdqmVolPriority_t *volpriority)
         sizeof(volpriority->client_host));
     DO_MARSHALL_STRING(p,volpriority->volid,ReceiveFrom,
         sizeof(volpriority->volid));
-    DO_MARSHALL(LONG,p,volpriority->nbVolRequests,ReceiveFrom);
+    DO_MARSHALL(LONG,p,volpriority->lifespantype,ReceiveFrom);
  
     return(reqtype);
 }

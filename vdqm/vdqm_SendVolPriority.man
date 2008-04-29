@@ -1,9 +1,9 @@
 .\"
-.\" @(#)$RCSfile: vdqm_SendVolPriority.man,v $ $Revision: 1.1 $ $Date: 2008/03/11 09:30:16 $ CERN IT-PDP/DM O.Barring
+.\" @(#)$RCSfile: vdqm_SendVolPriority.man,v $ $Revision: 1.2 $ $Date: 2008/04/29 16:05:18 $ CERN IT-PDP/DM O.Barring
 .\"
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\"
-.TH VDQM_SENDVOLPRIORITY l "$Date: 2008/03/11 09:30:16 $" "CASTOR" "VDQM Library Functions"
+.TH VDQM_SENDVOLPRIORITY l "$Date: 2008/04/29 16:05:18 $" "CASTOR" "VDQM Library Functions"
 .SH NAME
 .PP
 vdqm_SendVolPriority \- send the priority of a volume to the VDQM
@@ -17,49 +17,52 @@ vdqm_SendVolPriority \- send the priority of a volume to the VDQM
 .br
 \fB#include "vdqm_api.h"\fR
 .sp
-.BI "int vdqm_SendVolPriority ("
-.br
-.BI "                const vdqmnw_t *" nw ,
+.BI "void vdqm_SendVolPriority ("
 .br
 .BI "                char *" VID ,
 .br
-.BI "                int " priority );
-.SH PARAMETERS
-.I nw
-\- points to a structure containing internal VDQM API network information returned
-by a prior call to 
-.B vdqm_Connect(3).
-If this parameter is NULL, which is the recommended usage,
+.BI "                int " tpmode ,
+.br
+.BI "                int " priority ,
+.br
+.BI "                int " lifespantype );
+.SH DESCRIPTION
 .B vdqm_SendVolPriority
-will internally call 
-.B vdqm_Connect(3)
-and
-.B vdqm_Disconnect(3)
-to open and close the connection with the VDQM server.
-.PP
+sends to the VDQM the priority to be given to requests with a specific volume
+visual identifier (VID).  A priority is a positive number in the range 0 to
+INT_MAX.  The INT_MAX macro is defined in <limits.h> or <climits>.  A priority
+value of 0 is the lowest and default priority.  There are two types of lifespan
+that can be assigned to a priority.  These types are named single-shot and
+unlimited.  A priority with a single-shot lifespan will be applied to either
+all the requests in memory for the specified tape, or if no such requests exist
+then to the first such request received in the future.  A priority with an
+unlimited lifespan will be remembered and applied to all current and future
+requests with the specified tape.
+.SH PARAMETERS
 .I VID
 \- character string specifying the volume visual identifier.
 .PP
-.I priority
-\- integer value specifying the priority.
+.I tpmode
+\- integer value specifying the tape access mode.  Valid values are either 0
+meaning write-disabled or 1 meaning write-enabled.
 .PP
-.SH DESCRIPTION
-.B vdqm_SendVolPriority
-sends the specified volume priority (
-.I VID
-and
 .I priority
-) to the VDQM server. When successful the number
-of volume requests modified by the change of priority is returned to the client.
+\- integer value specifying the priority. 0 is the lowest priority and INT_MAX
+is the highest.
+.PP
+.I lifespantype
+\- integer value specifying the type of lifespan to be assigned to the priority
+setting.  Valid values are either 0 meaning single-shot or 1 meaning unlimited.
+.PP
 
 .SH RETURN VALUES
 .PP
 On successful completion, the
 .B vdqm_SendVolPriority
-function returns the number of volume requests modified by the change of
-priority. Otherwise, a value of \-1 is returned and
+function returns 0. Otherwise, a value of \-1 is returned and
 .B serrno
 is set to indicate the error.
+
 .SH ERRORS
 .PP
 If the
@@ -108,18 +111,22 @@ the VDQM server.
 
 
 int main(int argc, char **argv) {
-  int priority, nbRqsts, rc, len, sock, port, VolReqID;
+  int tpmode, priority, lifespantype, nbRqsts, rc, len, sock, port,
+    VolReqID;
   char *VID;
 
-  if ( argc < 3 ) {
-    fprintf(stderr,"Usage: %s vid priority\\n",argv[0]);
+  if ( argc != 5 ) {
+    fprintf(stderr,"Usage: %s vid tpmode priority lifespantype\\n",
+      argv[0]);
     exit(2);
   }
 
-  VID      = argv[1];
-  priority = atoi(argv[2]);
+  VID          = argv[1];
+  tpmode       = atoi(argv[2]);
+  priority     = atoi(argv[3]);
+  lifespantype = atoi(argv[4]);
 
-  rc = vdqm_SendVolPriority(NULL,VID,priority);
+  rc = vdqm_SendVolPriority(VID, tpmode, priority, lifespantype);
 
   if ( rc == -1 ) {
     fprintf(stderr,"vdqm_SendVolPriority(): %s\\n", sstrerror(serrno));
@@ -129,10 +136,6 @@ int main(int argc, char **argv) {
   return 0;
 }
 .fi
-
-.SH SEE ALSO
-.BR vdqm_Connect(3), 
-.BR vdqm_Disconnect(3)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
