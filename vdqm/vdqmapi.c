@@ -1,5 +1,5 @@
 /*
- * $Id: vdqmapi.c,v 1.10 2008/04/29 16:05:18 murrayc3 Exp $
+ * $Id: vdqmapi.c,v 1.11 2008/04/29 16:14:44 murrayc3 Exp $
  *
  * Copyright (C) 1999 by CERN IT-PDP/DM
  * All rights reserved
@@ -885,7 +885,7 @@ int DLL_DECL vdqm_PingServer(vdqmnw_t *nw, char *dgn, int reqID) {
     VDQM_API_RETURN(rc);
 }
 
-void DLL_DECL vdqm_SendVolPriority(char *VID, int tpmode, int priority,
+int DLL_DECL vdqm_SendVolPriority(char *VID, int tpmode, int priority,
   int lifespantype) {
     vdqmnw_t *nw = NULL;
     vdqmVolPriority_t volpriority;
