@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.105 $ $Release$ $Date: 2008/04/28 08:54:29 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.106 $ $Release$ $Date: 2008/04/29 08:42:54 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -327,6 +327,14 @@ CREATE OR REPLACE PACKAGE castorVdqmException AS
   drive_dgn_not_found_cd CONSTANT PLS_INTEGER := -20006;
   PRAGMA EXCEPTION_INIT(drive_dgn_not_found, -20006);
 
+  invalid_regexp_host EXCEPTION;
+  invalid_regexp_host_cd CONSTANT PLS_INTEGER := -20007;
+  PRAGMA EXCEPTION_INIT(invalid_regexp_host, -20007);
+
+  invalid_regexp_vid EXCEPTION;
+  invalid_regexp_vid_cd CONSTANT PLS_INTEGER := -20008;
+  PRAGMA EXCEPTION_INIT(invalid_regexp_vid, -20008);
+
   PROCEDURE throw(exceptionNumberVar IN PLS_INTEGER,
     messageVar IN VARCHAR2 DEFAULT NULL);
 
@@ -372,6 +380,10 @@ BEGIN
     'Drive and server combination not found.';
   errorMessagesVar(drive_dgn_not_found_cd) :=
     'Drive and DGN combination not found.';
+  errorMessagesVar(invalid_regexp_host_cd) :=
+    'Client host value is not a valid regular expression.';
+  errorMessagesVar(invalid_regexp_vid_cd) :=
+    'VID value is not a valid regular expression.';
 
 END castorVdqmException;
 
@@ -1989,8 +2001,7 @@ END;
 
 
 /**
- * PL/SQL trigger responsible for updating the modification time of a tape
- * request.
+ * Updates the modification time of a tape request.
  */
 CREATE OR REPLACE TRIGGER TR_U_TapeRequest
   BEFORE UPDATE OF modificationTime, status ON TapeRequest
@@ -2000,4 +2011,43 @@ WHEN
 BEGIN
   -- Update the modification time
   :NEW.modificationTime := castorVdqmCommon.getTime();
+END;
+
+
+/**
+ * Enforces two integrity constraints of the TapeDriveDedication table.  A
+ * client host entry must be a valid regular expression and a VID entry must
+ * also be a valid regular expression.
+ *
+ * @exception invalid_regexp_host if the client host value is not a valid
+ * regular expression.
+ * @exception invalid_regexp_vid if the VID value is not a valid regular
+ * expression.
+ */
+CREATE OR REPLACE TRIGGER TR_I_TapeDriveDedication
+  BEFORE INSERT ON TapeDriveDedication
+FOR EACH ROW
+DECLARE
+  dummyVar NUMBER;
+BEGIN
+  BEGIN
+    SELECT COUNT(*) INTO dummyVar
+      FROM DUAL
+      WHERE REGEXP_LIKE(dummy, :NEW.clientHost);
+  EXCEPTION
+    WHEN OTHERS THEN
+      castorVdqmException.throw(castorVdqmException.invalid_regexp_host_cd,
+        'Client host value is not a valid regular expression ''' ||
+        :NEW.clientHost || '''');
+  END;
+
+  BEGIN
+    SELECT COUNT(*) INTO dummyVar
+      FROM DUAL
+      WHERE REGEXP_LIKE(dummy, :NEW.vid);
+  EXCEPTION
+    WHEN OTHERS THEN
+      castorVdqmException.throw(castorVdqmException.invalid_regexp_vid_cd,
+        'VID value is not a valid regular expression ''' || :NEW.vid || '''');
+  END;
 END;

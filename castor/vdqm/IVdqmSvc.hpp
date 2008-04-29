@@ -64,7 +64,9 @@ namespace castor {
               INVALID_DRIVE_DEDICATE = 20003,
               DRIVE_NOT_FOUND        = 20004,
               DRIVE_SERVER_NOT_FOUND = 20005,
-              DRIVE_DGN_NOT_FOUND    = 20006
+              DRIVE_DGN_NOT_FOUND    = 20006,
+              INVALID_REGEXP_HOST    = 20007,
+              INVALID_REGEXP_VID     = 20008
             };
         };
 
