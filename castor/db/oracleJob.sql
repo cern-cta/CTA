@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.651 $ $Date: 2008/04/21 11:47:15 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.652 $ $Date: 2008/05/05 08:38:42 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -299,7 +299,7 @@ BEGIN
            CastorFile.fileId, CastorFile.nsHost, SvcClass.name
       INTO srcDiskServer, srcMountPoint, srcPath, cfId, cfNsHost, srcSvcClass
       FROM DiskCopy, CastorFile, DiskServer, FileSystem, DiskPool2SvcClass, 
-           DiskPool, SvcClass
+           SvcClass, StageDiskCopyReplicaRequest
      WHERE DiskCopy.id = srcDcId
        AND DiskCopy.castorfile = Castorfile.id
        AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
@@ -307,9 +307,13 @@ BEGIN
        AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
        AND FileSystem.diskPool = DiskPool2SvcClass.parent
        AND DiskPool2SvcClass.child = SvcClass.id
-       AND DiskPool2SvcClass.parent = DiskPool.id
        AND DiskServer.id = FileSystem.diskserver
-       AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
+       AND DiskServer.status IN (0, 1)
+       -- For diskpools which belong to multiple service classes, make sure
+       -- we are checking for the file in the correct service class!
+       AND StageDiskCopyReplicaRequest.sourceDiskCopy = DiskCopy.id
+       AND StageDiskCopyReplicaRequest.sourceSvcClass = SvcClass.id
+       AND StageDiskCopyReplicaRequest.destDiskCopy = dcId;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     raise_application_error(-20109, 'The source DiskCopy to be replicated is no longer available.');
   END;
@@ -722,18 +726,18 @@ END;
 
 
 /* PL/SQL method implementing jobToSchedule */
-CREATE OR REPLACE
+create or replace
 PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCHAR2, srProtocol OUT VARCHAR2,
                         srXsize OUT INTEGER, srRfs OUT VARCHAR2, reqId OUT VARCHAR2,
                         cfFileId OUT INTEGER, cfNsHost OUT VARCHAR2, reqSvcClass OUT VARCHAR2,
                         reqType OUT INTEGER, reqEuid OUT INTEGER, reqEgid OUT INTEGER,
                         reqUsername OUT VARCHAR2, srOpenFlags OUT VARCHAR2, clientIp OUT INTEGER,
                         clientPort OUT INTEGER, clientVersion OUT INTEGER, clientType OUT INTEGER,
-                        reqSourceDiskCopyId OUT INTEGER, reqDestDiskCopyId OUT INTEGER, 
+                        reqSourceDiskCopy OUT INTEGER, reqDestDiskCopy OUT INTEGER, 
                         clientSecure OUT INTEGER, reqSourceSvcClass OUT VARCHAR2, 
                         reqCreationTime OUT INTEGER, reqDefaultFileSize OUT INTEGER) AS
   dsId INTEGER;
-  unused INTEGER;                   
+  unused INTEGER;           
 BEGIN
   -- Get the next subrequest to be scheduled.
   UPDATE SubRequest 
@@ -747,30 +751,35 @@ BEGIN
   -- scheduler through the job manager.
   SELECT CastorFile.fileId, CastorFile.nsHost, SvcClass.name, Id2type.type,
          Request.reqId, Request.euid, Request.egid, Request.username, 
-	 Request.direction, Request.sourceDiskCopyId, Request.destDiskCopyId,
-	 Client.ipAddress, Client.port, Client.version, 
+	 Request.direction, Request.sourceDiskCopy, Request.destDiskCopy,
+         Request.sourceSvcClass, Client.ipAddress, Client.port, Client.version, 
 	 (SELECT type 
             FROM Id2type 
            WHERE id = Client.id) clientType, Client.secure, Request.creationTime, 
          decode(SvcClass.defaultFileSize, 0, 2000000000, SvcClass.defaultFileSize)
     INTO cfFileId, cfNsHost, reqSvcClass, reqType, reqId, reqEuid, reqEgid, reqUsername, 
-         srOpenFlags, reqSourceDiskCopyId, reqDestDiskCopyId, clientIp, clientPort, 
-         clientVersion, clientType, clientSecure, reqCreationTime, reqDefaultFileSize
+         srOpenFlags, reqSourceDiskCopy, reqDestDiskCopy, reqSourceSvcClass, 
+         clientIp, clientPort, clientVersion, clientType, clientSecure, reqCreationTime, 
+         reqDefaultFileSize
     FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
          (SELECT id, username, euid, egid, reqid, client, creationTime,
-                 'w' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
+                 'w' direction, svcClass, NULL sourceDiskCopy, NULL destDiskCopy, 
+                 NULL sourceSvcClass
             FROM StagePutRequest 
            UNION ALL
           SELECT id, username, euid, egid, reqid, client, creationTime,
-                 'r' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
+                 'r' direction, svcClass, NULL sourceDiskCopy, NULL destDiskCopy, 
+                 NULL sourceSvcClass
             FROM StageGetRequest 
            UNION ALL
           SELECT id, username, euid, egid, reqid, client, creationTime,
-                 'o' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
+                 'o' direction, svcClass, NULL sourceDiskCopy, NULL destDiskCopy, 
+                 NULL sourceSvcClass
             FROM StageUpdateRequest
            UNION ALL
           SELECT id, username, euid, egid, reqid, client, creationTime - 3600,
-                 'w' direction, svcClass, sourceDiskCopyId, destDiskCopyId
+                 'w' direction, svcClass, sourceDiskCopy, destDiskCopy, 
+                 (SELECT name FROM SvcClass WHERE id = sourceSvcClass)
             FROM StageDiskCopyReplicaRequest) Request
    WHERE SubRequest.id = srId
      AND SubRequest.castorFile = CastorFile.id
@@ -785,11 +794,10 @@ BEGIN
     -- source disk copy. The scheduler plugin needs this information to correctly
     -- schedule access to the filesystem.
     BEGIN 
-      SELECT CONCAT(CONCAT(DiskServer.name, ':'), FileSystem.mountpoint), 
-             DiskServer.id, SvcClass.name
-        INTO srRfs, dsId, reqSourceSvcClass
-        FROM DiskServer, FileSystem, DiskCopy, DiskPool2SvcClass, DiskPool, SvcClass
-       WHERE DiskCopy.id = reqSourceDiskCopyId
+      SELECT CONCAT(CONCAT(DiskServer.name, ':'), FileSystem.mountpoint), DiskServer.id
+        INTO srRfs, dsId
+        FROM DiskServer, FileSystem, DiskCopy, DiskPool2SvcClass, SvcClass
+       WHERE DiskCopy.id = reqSourceDiskCopy
          AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
          AND DiskCopy.filesystem = FileSystem.id
          AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
@@ -797,12 +805,12 @@ BEGIN
          AND DiskServer.status IN (0, 1)  -- PRODUCTION, DRAINING
          AND FileSystem.diskPool = DiskPool2SvcClass.parent
          AND DiskPool2SvcClass.child = SvcClass.id
-         AND DiskPool2SvcClass.parent = DiskPool.id;
+         AND SvcClass.name = reqSourceSvcClass;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- The source diskcopy has been removed before the jobManager could enter
       -- the job into LSF. Under this circumstance fail the diskcopy transfer.
       -- This will restart the subrequest and trigger a tape recall if possible
-      disk2DiskCopyFailed(reqDestDiskCopyId, unused);
+      disk2DiskCopyFailed(reqDestDiskCopy, unused);
       COMMIT;
       RAISE;
     END;
