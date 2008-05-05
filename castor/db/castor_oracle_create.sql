@@ -5390,7 +5390,7 @@ END;
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleGC.sql,v  Revision: 1.648  Date: 2008/04/02 08:18:58  Author: itglp 
+ * @(#)RCSfile: oracleGC.sql,v  Revision: 1.649  Date: 2008/05/05 13:01:44  Author: waldron 
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -5705,11 +5705,13 @@ BEGIN
     FROM SubRequest
    WHERE status IN (9, 11)  -- FAILED_FINISHED, ARCHIVED
      AND lastModificationTime > getTime() - 1800;
-  timeOut := 500000/rate*1800;    -- try to keep 500k requests max
-  IF timeOut > maxTimeOut THEN
-    timeOut := maxTimeOut;    -- anyway, don't keep very old requests
+  IF rate > 0 THEN
+    timeOut := 500000 / rate * 1800;  -- try to keep 500k requests max
+    IF timeOut > maxTimeOut THEN
+      timeOut := maxTimeOut;  -- anyway, don't keep very old requests
+    END IF;
   END IF;
-  
+
   -- now delete the SubRequests
   bulkDelete('SELECT id FROM SubRequest WHERE status IN (9, 11)
                 AND lastModificationTime < getTime() - '|| timeOut ||';',
