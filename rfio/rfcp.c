@@ -296,27 +296,37 @@ int main(argc, argv)
 #endif
 	/* We remove double slashes in both inpfile and outfile */
 	//cleanpath(inpfile,inpfile);
-	
-	if ( rfio_stat64( outfile, &sbuf2) == 0 &&  
-		 S_ISDIR(sbuf2.st_mode) ) {
-		/* Not allowed if inpfile is stdin */
-		if (strcmp(inpfile,"-") == 0) {
-			fprintf (stderr, "Not valid output when input is the stdin\n");
-			exit (USERR);
-		}
-		if ( (cp = strrchr(inpfile,'/'))  != NULL  ) {
-			cp++;
+	if (rfio_stat64(outfile, &sbuf2) == 0) {
+		if (S_ISDIR(sbuf2.st_mode)) {
+			/* Not allowed if inpfile is stdin */
+			if (strcmp(inpfile,"-") == 0) {
+				fprintf (stderr, "Not valid output when input is the stdin\n");
+				exit (USERR);
+			}
+			if ( (cp = strrchr(inpfile,'/'))  != NULL  ) {
+				cp++;
+			} else {
+				cp = inpfile;
+			}
+			sprintf(filename, "%s/%s", outfile, cp);
 		} else {
-			cp = inpfile;
+			strcpy(filename,outfile);
 		}
-		sprintf(filename, "%s/%s", outfile, cp);
+	} 
+	/* Exit if there was a communication error with the name server */
+	else if ((serrno == SENOSHOST) ||
+		 (serrno == SENOSSERV) ||
+		 (serrno == SECOMERR)) {
+		fprintf(stderr,"Error on rfio_stat64(%s): %s\n", outfile, sstrerror(serrno));
+		exit (USERR);
 	} else {
 		strcpy(filename,outfile);
 	}
+
 	/* We remove double slashes in renegerated outfile */
 	//cleanpath(filename,filename);
 	strcpy(filename_sav,filename);
-
+	
 	l1 = rfio_parseln( inpfile , &host1, &path1, NORDLINKS ) ;
 	if (l1 < 0) {
 		fprintf(stderr,"%s\n",sstrerror(serrno));
@@ -383,33 +393,31 @@ int main(argc, argv)
 	stage_setlog((void (*) _PROTO((int,char *)))&copyfile_stglog);
 
 	if (! use_castor2_api()) {
-
-	  if (rfio_HsmIf_IsHsmFile(filename) && (! input_is_local)) {
-		/* We switch to the explicit STAGE mode */
-		int rc = copyfile_stage((char *) inpfile, (char *) (filename), (mode_t) (sbuf.st_mode & 0777), (((have_maxsize > 0) && (inpfile_size > maxsize)) ? maxsize : inpfile_size), (int) (( sbuf.st_dev  == 0 && sbuf.st_ino  == 1 ) ? 1 : 0));
-		if (rc >= 0) {
-		 exit(rc);
+	  	if (rfio_HsmIf_IsHsmFile(filename) && (! input_is_local)) {
+			/* We switch to the explicit STAGE mode */
+			int rc = copyfile_stage((char *) inpfile, (char *) (filename), (mode_t) (sbuf.st_mode & 0777), (((have_maxsize > 0) && (inpfile_size > maxsize)) ? maxsize : inpfile_size), (int) (( sbuf.st_dev  == 0 && sbuf.st_ino  == 1 ) ? 1 : 0));
+			if (rc >= 0) {
+				exit(rc);
+			}
+			/* When rc < 0 this means we switch to the old buf inefficient method */
+			/* The user would not accept we always fail just because the input filename is too long */
+			/* Note that this switch requires anyway the output filename to be in the limits */
+		} else if (rfio_HsmIf_IsHsmFile(filename)) {
+			/* The output is in CASTOR, and input is local or maxsize possibly not bound exactly to the MB unit */
+	 		int rc = copyfile_stage_from_local((char *) inpfile, (char *)filename, (mode_t) (sbuf.st_mode & 0777), (((have_maxsize > 0) && (inpfile_size > maxsize)) ? maxsize : inpfile_size), (int) (( sbuf.st_dev  == 0 && sbuf.st_ino  == 1 ) ? 1 : 0));
+			if (rc >= 0) {
+				exit(rc);
+			}
+			/* In theory it cannot happen (!) copyfile_stage_from_local() returns >= 0 always */
+			/* When rc < 0 this means we switch to the old buf inefficient method */
+			/* The user would not accept we always fail just because the input filename is too long */
+			/* Note that this switch requires anyway the output filename to be in the limits */
+		} else if (rfio_HsmIf_IsHsmFile(inpfile)) {
+			/* Output is not CASTOR but input is : we will follow the classic rfcp behaviour */
+			/* but we want neverthless to handle the termination signals v.s. stager */
+		  	TRACE(2,"rfio","Instructing signal handler to exit");
+	 		copyfile_stgcleanup_instruction = CLEANER_EXIT;
 		}
-		/* When rc < 0 this means we switch to the old buf inefficient method */
-		/* The user would not accept we always fail just because the input filename is too long */
-		/* Note that this switch requires anyway the output filename to be in the limits */
-	  } else if (rfio_HsmIf_IsHsmFile(filename)) {
-		/* The output is in CASTOR, and input is local or maxsize possibly not bound exactly to the MB unit */
-		int rc = copyfile_stage_from_local((char *) inpfile, (char *)filename, (mode_t) (sbuf.st_mode & 0777), (((have_maxsize > 0) && (inpfile_size > maxsize)) ? maxsize : inpfile_size), (int) (( sbuf.st_dev  == 0 && sbuf.st_ino  == 1 ) ? 1 : 0));
-		if (rc >= 0) {
-		 exit(rc);
-		}
-		/* In theory it cannot happen (!) copyfile_stage_from_local() returns >= 0 always */
-		/* When rc < 0 this means we switch to the old buf inefficient method */
-		/* The user would not accept we always fail just because the input filename is too long */
-		/* Note that this switch requires anyway the output filename to be in the limits */
-	  } else if (rfio_HsmIf_IsHsmFile(inpfile)) {
-		/* Output is not CASTOR but input is : we will follow the classic rfcp behaviour */
-		/* but we want neverthless to handle the termination signals v.s. stager */
-		TRACE(2,"rfio","Instructing signal handler to exit");
-		
-		copyfile_stgcleanup_instruction = CLEANER_EXIT;
-	  }
 	}
 #endif
 
@@ -673,22 +681,25 @@ int main(argc, argv)
 	}
 
 	time(&endtime);
-	if (size>0)  {
+	if (size > 0) {
 		char tmpbuf[21];
 		char tmpbuf2[21];
 		fprintf(stdout,"%s bytes in %d seconds through %s (in) and %s (out)", u64tostr(size, tmpbuf, 0), (int) (endtime-starttime),ifce1,ifce2);
 		l1 = endtime-starttime ;
-		if ( l1 > 0) {
+		if (l1 > 0) {
 			fprintf(stdout," (%d KB/sec)\n",(int) (size/(1024*l1)) );
 		} else {
 			fprintf(stdout,"\n");
 		}
-    {
-      struct stat64 st;
-      int rc = rfio_stat64(filename,&st);
-      if (rc < 0) fprintf(stdout, "Error\n");
-      fprintf(stdout,"%s bytes in remote file\n", u64tostr(st.st_size, tmpbuf, 0));
-    }
+    
+		struct stat64 st;
+		int rc = rfio_stat64(filename,&st);
+		if (rc < 0) {
+			fprintf(stdout, "Error on rfio_stat(%s): %s\n", filename, sstrerror(serrno));
+		} else {
+			fprintf(stdout,"%s bytes in remote file\n", u64tostr(st.st_size, tmpbuf, 0));
+		}
+
 		if (have_maxsize < 0) {
 			rc2 = (inpfile_size == size ? OK : ((strcmp(inpfile,"-") == 0) ? OK : SYERR));
 			if (rc2 == SYERR) {
@@ -1286,99 +1297,98 @@ int copyfile_stager(input,output,mode,input_size,input_is_hpss)
 
 	TRACE(2,"rfio","copyfile_stager: Calling stage_get of %s", input);
 	for(;;) {
-	  rc = stage_open(NULL,
-			  MOVER_PROTOCOL_RFIO,
-			  input,
-			  O_RDONLY,
-			  0,
-			  0,
-			  &response,
-			  NULL,
-			  &opts);
-	  
-	  if (rc != 0) {
-	    /* Unless EBUSY or ENOSPC we do not retry, especially if the error is USERR */
-	    if ((serrno == EBUSY) || (serrno == ENOSPC)) {
-	      fprintf(stderr,"%s: %s - Retry in 60 seconds\n", input, sstrerror(serrno));
-	      sleep(60);
-	      continue;
-	    } else {
-	      fprintf(stderr,"%s: %s\n", input, sstrerror(serrno));
-	      if (response != NULL) free(response);
-	      return(rc_castor2shift(serrno));
-	    }
-	  }
-	  break;
+		rc = stage_open(NULL,
+				MOVER_PROTOCOL_RFIO,
+				input,
+				O_RDONLY,
+				0,
+				0,
+				&response,
+				NULL,
+				&opts);
+		
+		if (rc != 0) {
+			/* Unless EBUSY or ENOSPC we do not retry, especially if the error is USERR */
+			if ((serrno == EBUSY) || (serrno == ENOSPC)) {
+				fprintf(stderr,"%s: %s - Retry in 60 seconds\n", input, sstrerror(serrno));
+				sleep(60);
+				continue;
+			} else {
+				fprintf(stderr,"%s: %s\n", input, sstrerror(serrno));
+				if (response != NULL) free(response);
+				return(rc_castor2shift(serrno));
+			}
+		}
+		break;
 	}  
 
 	if (response == NULL) {
-	  TRACE(3,"rfio","Received NULL response");
-	  serrno = SEINTERNAL;
-	  return -1;
+		TRACE(3,"rfio","Received NULL response");
+		serrno = SEINTERNAL;
+		return -1;
 	}
           
 	if (response->errorCode != 0) {
-	  TRACE(3,"rfio","stage_open error: %d/%s",
-		response->errorCode, response->errorMessage);
-	  serrno = response->errorCode;
-	  return -1;
+		TRACE(3,"rfio","stage_open error: %d/%s",
+		      response->errorCode, response->errorMessage);
+		serrno = response->errorCode;
+		return -1;
 	}
-
+	
 	url = stage_geturl(response);
 	if (url == 0) {
-	  free(response);
-	  return -1;
+		free(response);
+		return -1;
 	}
-
+	
 	/* Stage get successfull*/
 	TRACE(2,"rfio","copyfile_stager: Calling stage_put of %s", output);
 	for(;;) {
-	  rc = stage_open(NULL,
-			  MOVER_PROTOCOL_RFIO,
-			  output,
-			  O_WRONLY | O_TRUNC,
-			  mode,
-			  input_size,
-			  &putResponse,
-			  NULL,
-			  &opts);
-	  
-	  if (rc != 0) {
-	    /* Unless EBUSY or ENOSPC we do not retry, especially if the error is USERR */
-	    if ((serrno == EBUSY) || (serrno == ENOSPC)) {
-	      fprintf(stderr,"%s: %s - Retry in 60 seconds\n", input, sstrerror(serrno));
-	      sleep(60);
-	      continue;
-	    } else {
-	      fprintf(stderr,"%s: %s\n", input, sstrerror(serrno));
-	      if (response != NULL) free(response);
-	      return(rc_castor2shift(serrno));
-	    }
-	  }
-	  break;
+		rc = stage_open(NULL,
+				MOVER_PROTOCOL_RFIO,
+				output,
+				O_WRONLY | O_TRUNC,
+				mode,
+				input_size,
+				&putResponse,
+				NULL,
+				&opts);
+		
+		if (rc != 0) {
+			/* Unless EBUSY or ENOSPC we do not retry, especially if the error is USERR */
+			if ((serrno == EBUSY) || (serrno == ENOSPC)) {
+				fprintf(stderr,"%s: %s - Retry in 60 seconds\n", input, sstrerror(serrno));
+				sleep(60);
+				continue;
+			} else {
+				fprintf(stderr,"%s: %s\n", input, sstrerror(serrno));
+				if (response != NULL) free(response);
+				return(rc_castor2shift(serrno));
+			}
+		}
+		break;
 	}  
-
+	
 	if (response == NULL) {
-	  TRACE(3,"rfio","Received NULL response");
-	  serrno = SEINTERNAL;
-	  return -1;
+		TRACE(3,"rfio","Received NULL response");
+		serrno = SEINTERNAL;
+		return -1;
 	}
-          
+	
 	if (response->errorCode != 0) {
-	  TRACE(3,"rfio","stage_open error: %d/%s",
-		response->errorCode, response->errorMessage);
-	  serrno = response->errorCode;
-	  return -1;
+		TRACE(3,"rfio","stage_open error: %d/%s",
+		      response->errorCode, response->errorMessage);
+		serrno = response->errorCode;
+		return -1;
 	}
-
+	
 	url = stage_geturl(response);
 	if (url == 0) {
-	  free(response);
-	  return -1;
+		free(response);
+		return -1;
 	}
-
-	return(OK);
 	
+	return(OK);
 }
 
 
@@ -1500,17 +1510,17 @@ int copyfile_stage_from_local(input,output,mode,input_size,input_is_hpss)
 	stcp_input.size = input_size;
 	TRACE(2,"rfio","copyfile_stage_from_local: Calling stage_out_hsm on %s", output);
 	rc = stage_out_hsm((u_signed64) STAGE_NOLINKCHECK,
-					   (int) 0,                 /* open flags */
-					   (mode_t) mode,           /* open mode (c.f. also umask) */
-					   (char *) NULL,           /* hostname */
-					   (char *) NULL,           /* pooluser */
-					   (int) 1,                 /* nstcp_input */
-					   (struct stgcat_entry *) &stcp_input, /* stcp_input */
-					   (int *) &nstcp_output,   /* nstcp_output */
-					   (struct stgcat_entry **) &stcp_output, /* stcp_output */
-					   (int) 0,                 /* nstpp_input */
-					   (struct stgpath_entry *) NULL /* stpp_input */
-		);
+			   (int) 0,                 /* open flags */
+			   (mode_t) mode,           /* open mode (c.f. also umask) */
+			   (char *) NULL,           /* hostname */
+			   (char *) NULL,           /* pooluser */
+			   (int) 1,                 /* nstcp_input */
+			   (struct stgcat_entry *) &stcp_input, /* stcp_input */
+			   (int *) &nstcp_output,   /* nstcp_output */
+			   (struct stgcat_entry **) &stcp_output, /* stcp_output */
+			   (int) 0,                 /* nstpp_input */
+			   (struct stgpath_entry *) NULL /* stpp_input */
+			   );
 
 	if (do_sleep) {
 		fprintf(stderr,"%s: Retry in 60 seconds\n", output);
@@ -1950,9 +1960,9 @@ int cleanpath(output,input)
 	char *dup, *p;
 
 	if (use_castor2_api()) {
-	  /* BC 2005-01-05 */
-	  /* Disabling this function as it clashes with the TURL parsing: rfio://.... */
-	  return 0;
+		/* BC 2005-01-05 */
+		/* Disabling this function as it clashes with the TURL parsing: rfio://.... */
+		return 0;
 	}
 
 
