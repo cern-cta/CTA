@@ -1,10 +1,76 @@
 -----------
+- 2.1.7-5 -
+-----------
+
+  - #35568: stager_qry -s without service class should respect black/white list authorization
+  - #35851: mighunter memory leak in 2.1.7
+  - #35960: rfcp with wrong cns host fails...with 'success'!?
+  - #35977: Disk2Disk copy failures between service classes using shared diskpools
+  - #36013: stager_qry -s
+  - #36011: stager_qry -s: SI units
+  - #36060: Client gets no reply in case of 'Invalid user'
+  - #36068: stagerDaemon has (too?) many file descriptors
+
+  - Added support for checking the black and white list for `stager_qry -s` with no
+    service class defined. If the user issuing the command does not have DiskPoolQuery
+    rights (103) on the service class to be listed it will not be visible to them. (#35568)
+
+  - Added support for preventing non ADMIN users from viewing diskserver and filesystem
+    information in `stager_qry -s`. (#36013) To be able to view this information you will
+    need to have ADMIN privileges in CUPV from the stager machine to the stager machine.
+
+  - Fixed `stager_qry -s` with an explicit diskpool defined (-d option) not respecting the
+    service class attribute.
+ 
+  - Fixed `stager_qry -s` returning the wrong error message in cases where no diskservers
+    are attached to a diskpool.
+
+  - Added replication statistics to DLF to provide a high level summary of how many files
+    are being replicated both within a service class and across service classes.
+
+  - Improved the QueueTime statistics so that the high level summary is broken down by the
+    type of request queued and the service class it belongs too.
+
+  - Modified the GcDaemon to including the FileSize and FileAge of files been deleted by
+    the stager and name server synchronizations. These fields are later used to create a
+    summary of the garbage collection process broken down by type of Gc'ing being
+    performed. E.g normal, stager and name server sych.
+
+  - Added an elapsed time statistic to the CNS and CUPV daemons to provide an indication of
+    how long each request has taken to process.
+
+
+  Upgrading from 2.1.7-4
+  ----------------------
+
+  Before upgrading to a 2.1.7-5 instance of CASTOR2 please make sure to read the upgrade
+  instructions fully before proceeding. Note: this upgrade does not require stopping of the
+  instance and should be transparent to the end users.
+
+  Instructions
+  ------------
+  1. Stop the stager and jobManager daemons. This is because of a schema change that is
+     non backwards compatible.
+
+  2. Upgrade the stager and dlf databases using the correct upgrade scripts from
+     - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-5/upgrades
+
+  3. Upgrade the software on the headnodes and diskservers to 2.1.7-5. Daemons will
+     automatically be restarted on upgrade.
+
+  4. Start the stager and jobManager daemons
+
+  5. Upgrade the CNS and CUPV services to 2.1.7-5 (This step is not mandatory)
+
+
+-----------
 - 2.1.7-4 -
 -----------
 
   Bug Fixes
   ---------
   - #25996: Inconsistently linked DLF records
+  - #29786: Add support for CLOB in the CASTOR code generation
   - #29787: Improve overview of disk-cache use
   - #31342: Cupv GRP_ADMIN privileges for the stager are not respected
   - #34607: RFE: "STAGER SVCCLASS" directive to added to castor.conf example file
@@ -35,7 +101,8 @@
   - Fixed the post install script of the castor-gridftp-dsi-int package which was trying 
     to change the ownership of a file that did not exist.
  
-  - Fixed the totalWaitTime statistic for disk2disk copy transfers.
+  - Fixed the totalWaitTime statistic for disk2disk copy transfers which was offset by one
+    hour.
 
   - Fixed the update of the GcWeight of a diskcopy when opening a file for read.
 
@@ -44,6 +111,7 @@
   - Changed the default value for the heartbeat timeout of diskservers in castor.conf from
     20 to 60 seconds. Prior to this change a single lost message from a diskserver to the 
     rmMasterDaemon was enough to cause the diskserver to be disabled in Castor.
+
 
   Upgrading from 2.1.7-3
   ----------------------
@@ -58,26 +126,26 @@
       Instructions
       ------------
       1. Upgrade the castor name server database using the correct upgrade scripts from
-         - http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-4/upgrades
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-4/upgrades
          - Note: the schema modification which is made in this script does not require
            any downtime.
 
-      2. Upgrade the software on the headnodes and diskservers to 2.1.7. Daemons will
+      2. Upgrade the software on the headnodes and diskservers to 2.1.7-4. Daemons will
          automatically be restarted on upgrade.
  
     Stager
     ------
 
-    Before upgrading to a 2.1.7 stager instance of CASTOR2 please make sure to read the 
+    Before upgrading to a 2.1.7-4 stager instance of CASTOR2 please make sure to read the 
     upgrade instructions fully before proceeding. Note: this upgrade does not require
     stopping of the instance and should be transparent to the end users.
 
       Instructions
       ------------
       1. Upgrade the stager and dlf databases using the correct upgrade scripts from
-         - http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-4/upgrades
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-4/upgrades
 
-      2. Upgrade the software on the headnodes and diskservers to 2.1.7. Daemons will
+      2. Upgrade the software on the headnodes and diskservers to 2.1.7-4. Daemons will
          automatically be restarted on upgrade.
 
       3. If you are using the dlfserver.sysconfig file, please regenerate it using the
@@ -329,7 +397,7 @@
       4. Ask your DBA to create a backup of the database (better to be safe then sorry)
 
       5. Upgrade the stager and dlf databases using the correct upgrade scripts from
-         - http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-3/upgrades
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-3/upgrades
          - Note: If you are not running 2.1.6-11 or newer you must first upgrade the
                  stager database schema to 2.1.6-11 perform proceeding.
 
@@ -411,7 +479,7 @@
          interference.
 
      18. Test the instance by running the test suite available from:
-         - http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-3/fastTest
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-3/fastTest
 
      19. Start the public rhserver (if applicable)
 
