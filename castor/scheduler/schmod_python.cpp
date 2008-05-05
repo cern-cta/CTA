@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/03/25 12:28:55 $ $Author: waldron $
+ * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/05/05 08:20:02 $ $Author: waldron $
  *
  * Castor LSF External Plugin - Phase 2 (Python)
  *
@@ -880,10 +880,12 @@ extern "C" {
        castor::dlf::Param("OpenFlags", handler->openFlags),
        castor::dlf::Param("Content", ipath.str()),
        castor::dlf::Param("Matches", handler->matches),
+       castor::dlf::Param("Type", castor::ObjectsIdStrings[handler->requestType]),
+       castor::dlf::Param("SvcClass", handler->svcClass),
        castor::dlf::Param("QueueTime", 
 			  queueTime > 0 ? queueTime * 0.000001 : 0),
        castor::dlf::Param(handler->subReqId)};
-    castor::dlf::dlf_writep(handler->reqId, DLF_LVL_SYSTEM, 34, 7, param, 
+    castor::dlf::dlf_writep(handler->reqId, DLF_LVL_SYSTEM, 34, 9, param, 
 			    &handler->fileId);
 
     return 0;
