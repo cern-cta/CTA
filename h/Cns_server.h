@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_server.h,v 1.13 2008/02/27 07:18:11 waldron Exp $
+ * $Id: Cns_server.h,v 1.14 2008/05/05 08:56:53 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 /*
- * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.13 $ $Date: 2008/02/27 07:18:11 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.14 $ $Date: 2008/05/05 08:56:53 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
  
 #ifndef _CNS_SERVER_H
@@ -34,7 +34,11 @@
 	}
 #define RETURN(x) \
 	{ \
-	nslogit (func, "returns %d\n", (x)); \
+	struct timeval end; \
+	gettimeofday(&end, NULL); \
+	nslogit (func, "returns %d - elapsed: %.3f\n", (x), \
+                 (((((double)end.tv_sec * 1000) + \
+		    ((double)end.tv_usec / 1000))) - thip->starttime) * 0.001);	\
 	if (thip->dbfd.tr_started) { \
 		if (x) { \
 			(void) Cns_abort_tr (&thip->dbfd); \
@@ -46,7 +50,11 @@
 	}
 #define RETURNQ(x) \
 	{ \
-	nslogit (func, "returns %d\n", (x)); \
+	struct timeval end; \
+	gettimeofday(&end, NULL); \
+	nslogit (func, "returns %d - elapsed: %.3f\n", (x), \
+                 (((((double)end.tv_sec * 1000) + \
+		    ((double)end.tv_usec / 1000))) - thip->starttime) * 0.001);	\
 	return ((x)); \
 	}
 
@@ -133,6 +141,7 @@ struct Cns_srv_thread_info {
 	char		*Csec_mech;
 	char		*Csec_auth_id;
 #endif
+        u_signed64      starttime;
 };
 
 struct Cns_seg_metadata {

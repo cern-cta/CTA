@@ -1,5 +1,5 @@
 /*
- * $Id: Cupv_main.c,v 1.9 2008/02/26 16:31:47 waldron Exp $
+ * $Id: Cupv_main.c,v 1.10 2008/05/05 08:57:58 waldron Exp $
  *
  * Copyright (C) 1999-2002 by CERN IT-DS/HSM
  * All rights reserved
@@ -241,8 +241,8 @@ main(argc, argv)
 	}
 }
 
-int getreq(s, magic, req_type, req_data, clienthost)
-int s;
+int getreq(thip, magic, req_type, req_data, clienthost)
+struct Cupv_srv_thread_info *thip;
 int *magic;
 int *req_type;
 char *req_data;
@@ -251,13 +251,19 @@ char **clienthost;
 	struct sockaddr_in from;
 	socklen_t fromlen = sizeof(from);
 	struct hostent *hp;
+	struct timeval tv;
 	int l;
 	int msglen;
 	int n;
 	char *rbp;
 	char req_hdr[3*LONGSIZE];
-	
-	l = netread_timeout (s, req_hdr, sizeof(req_hdr), CUPV_TIMEOUT);
+
+	/* record the start time of this request */
+
+	gettimeofday(&tv, NULL);
+	thip->starttime = ((double)tv.tv_sec * 1000) + ((double)tv.tv_usec / 1000);
+
+	l = netread_timeout (thip->s, req_hdr, sizeof(req_hdr), CUPV_TIMEOUT);
 	if (l == sizeof(req_hdr)) {
 		rbp = req_hdr;
 		unmarshall_LONG (rbp, n);
@@ -270,11 +276,11 @@ char **clienthost;
 			return (-1);
 		}
 		l = msglen - sizeof(req_hdr);
-		n = netread_timeout (s, req_data, l, CUPV_TIMEOUT);
+		n = netread_timeout (thip->s, req_data, l, CUPV_TIMEOUT);
 		if (being_shutdown) {
 			return (ECUPVNACT);
 		}
-		if (getpeername (s, (struct sockaddr *) &from, &fromlen) < 0) {
+		if (getpeername (thip->s, (struct sockaddr *) &from, &fromlen) < 0) {
 			Cupvlogit (func, CUP02, "getpeername", neterror());
 			return (SEINTERNAL);
 		}
@@ -332,8 +338,8 @@ struct Cupv_srv_thread_info *thip;
 			continue;
 		}
 		
-		if ((c = getreq (thip->s, &magic, &new_req_type, req_data, &clienthost) < 0)) {
-			endlist =1;
+		if ((c = getreq (thip, &magic, &new_req_type, req_data, &clienthost) < 0)) {
+			endlist = 1;
 			continue;
 		}
 		
@@ -429,7 +435,7 @@ void *arg;
 	}
 #endif
 	
-	if ((c = getreq (thip->s, &magic, &req_type, req_data, &clienthost)) == 0)
+	if ((c = getreq (thip, &magic, &req_type, req_data, &clienthost)) == 0)
 		procreq (magic, req_type, req_data, clienthost, thip);
 	else if (c > 0)
 		sendrep (thip->s, CUPV_RC, c);

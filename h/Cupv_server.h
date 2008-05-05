@@ -53,7 +53,11 @@
 
 #define RETURN(x) \
 	{ \
-    	Cupvlogit (func, "returns %d\n", (x)); \
+	struct timeval end; \
+	gettimeofday(&end, NULL); \
+	Cupvlogit (func, "returns %d - elapsed: %.3f\n", (x), \
+		   (((((double)end.tv_sec * 1000) + \
+		      ((double)end.tv_usec / 1000))) - thip->starttime) * 0.001); \
 	if (thip->dbfd.tr_started) { \
 		if (x) { \
 			(void) Cupv_abort_tr (&thip->dbfd); \
@@ -107,15 +111,16 @@ typedef Cdb_off_t DBLISTPTR;
 #endif
 
 struct Cupv_srv_thread_info {
-        int		s;		/* socket for communication with client */
+        int		s;		   /* socket for communication with client */
         int		db_open_done;
-        struct Cupv_dbfd dbfd;
+        struct          Cupv_dbfd dbfd;
 #ifdef CSEC
-        Csec_context_t sec_ctx;
-        uid_t Csec_uid;
-        gid_t Csec_gid;
-        int Csec_service_type;    /* Type of the service if client is another Castor server */
+        Csec_context_t  sec_ctx;
+        uid_t           Csec_uid;
+        gid_t           Csec_gid;
+        int             Csec_service_type; /* Type of the service if client is another Castor server */
 #endif
+        u_signed64      starttime;
 };
 
 			/* upv function prototypes */
