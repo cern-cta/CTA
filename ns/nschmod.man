@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: nschmod.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:21 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: nschmod.man,v $ $Revision: 1.3 $ $Date: 2008/05/05 13:08:53 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSCHMOD 1 "$Date: 2006/01/26 15:36:21 $" CASTOR "Cns User Commands"
+.TH NSCHMOD 1 "$Date: 2008/05/05 13:08:53 $" CASTOR "Cns User Commands"
 .SH NAME
 nschmod \- change access mode of a CASTOR directory/file in the name server
 .SH SYNOPSIS
@@ -17,7 +17,7 @@ value in
 Symbolic mode changes are not supported yet.
 .LP
 The effective user ID of the process must match the owner of the file or
-the caller must have ADMIN privilege in the Cupv database.
+the caller must have GRP_ADMIN or ADMIN privileges in the Cupv database.
 .TP
 .I path
 specifies the CASTOR pathname.

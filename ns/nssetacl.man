@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: nssetacl.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:23 $ CERN IT-ADC/CA Jean-Philippe Baud
+.\" @(#)$RCSfile: nssetacl.man,v $ $Revision: 1.3 $ $Date: 2008/05/05 13:08:53 $ CERN IT-ADC/CA Jean-Philippe Baud
 .\" Copyright (C) 2003 by CERN/IT/ADC/CA
 .\" All rights reserved
 .\"
-.TH NSSETACL 1 "$Date: 2006/01/26 15:36:23 $" CASTOR "Cns User Commands"
+.TH NSSETACL 1 "$Date: 2008/05/05 13:08:53 $" CASTOR "Cns User Commands"
 .SH NAME
 nssetacl \- set CASTOR directory/file access control lists
 .SH SYNOPSIS
@@ -62,7 +62,7 @@ As soon as there is one default ACL entry, the 3 default ACL base entries
 The entry processing conforms to the Posix 1003.1e draft standard 17.
 .LP
 The effective user ID of the process must match the owner of the file or
-the caller must have ADMIN privilege in the Cupv database.
+the caller must have GRP_ADMIN or ADMIN privileges in the Cupv database.
 .TP
 .I path
 specifies the CASTOR pathname.

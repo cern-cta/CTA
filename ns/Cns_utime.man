@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_utime.man,v $ $Revision: 1.3 $ $Date: 2008/04/17 12:10:03 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_utime.man,v $ $Revision: 1.4 $ $Date: 2008/05/05 13:08:53 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2001-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_UTIME 3 "$Date: 2008/04/17 12:10:03 $" CASTOR "Cns Library Functions"
+.TH CNS_UTIME 3 "$Date: 2008/05/05 13:08:53 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_utime \- set last access and modification times
 .SH SYNOPSIS
@@ -37,7 +37,7 @@ is set appropriately.
 .B EPERM
 .I times
 is not NULL and the caller effective user ID does not match the owner ID of the
-file and the caller does not have ADMIN privilege in the Cupv database.
+file and the caller does not have GRP_ADMIN or ADMIN privileges in the Cupv database.
 .TP
 .B ENOENT
 A component of

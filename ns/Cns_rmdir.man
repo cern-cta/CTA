@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_rmdir.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:20 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_rmdir.man,v $ $Revision: 1.3 $ $Date: 2008/05/05 13:08:53 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_RMDIR 3 "$Date: 2006/01/26 15:36:20 $" CASTOR "Cns Library Functions"
+.TH CNS_RMDIR 3 "$Date: 2008/05/05 13:08:53 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_rmdir \- remove a CASTOR directory in the name server
 .SH SYNOPSIS
@@ -40,7 +40,7 @@ the effective user ID of the requestor does not match the owner ID of the direct
 the effective user ID of the requestor does not match the owner ID of the
 parent directory and
 .LP
-the requestor does not have ADMIN privilege in the Cupv database.
+the requestor does not have GRP_ADMIN or ADMIN privileges in the Cupv database.
 .RE
 .TP
 .B EFAULT

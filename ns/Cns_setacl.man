@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_setacl.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:20 $ CERN IT-ADC/CA Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_setacl.man,v $ $Revision: 1.3 $ $Date: 2008/05/05 13:08:53 $ CERN IT-ADC/CA Jean-Philippe Baud
 .\" Copyright (C) 2003 by CERN/IT/ADC/CA
 .\" All rights reserved
 .\"
-.TH CNS_SETACL 3 "$Date: 2006/01/26 15:36:20 $" CASTOR "Cns Library Functions"
+.TH CNS_SETACL 3 "$Date: 2008/05/05 13:08:53 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_setacl \- set CASTOR directory/file access control lists
 .SH SYNOPSIS
@@ -51,7 +51,7 @@ is the access permission in numeric form obtained by OR'ing some of the bits
 S_IROTH, S_IWOTH, S_IXOTH.
 .LP
 The effective user ID of the process must match the owner of the file or
-the caller must have ADMIN privilege in the Cupv database.
+the caller must have GRP_ADMIN or ADMIN privileges in the Cupv database.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation failed. In the latter case,
 .B serrno
@@ -60,7 +60,7 @@ is set appropriately.
 .TP 1.3i
 .B EPERM
 The effective user ID does not match the owner of the file and
-the caller does not have ADMIN privilege in the Cupv database.
+the caller does not have GRP_ADMIN or ADMIN privileges in the Cupv database.
 .TP
 .B ENOENT
 The named file/directory does not exist or is a null pathname.
