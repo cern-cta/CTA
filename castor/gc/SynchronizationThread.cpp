@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/03/27 13:27:21 $ $Author: waldron $
+ * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/05/05 08:36:41 $ $Author: waldron $
  *
  * Synchronization thread used to check periodically whether files need to be
  * deleted
@@ -188,7 +188,7 @@ void castor::gc::SynchronizationThread::run(void *param) {
               castor::dlf::Param params[] =
                 {castor::dlf::Param("NbFiles", diskCopyIds[fid.first].size()),
                  castor::dlf::Param("Nameserver", fid.first)};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 31, 2, params);
+	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 31, 2, params);
 	      
 	      synchronizeFiles(fid.first, diskCopyIds[fid.first], paths[fid.first]);
 	      diskCopyIds[fid.first].clear();
@@ -218,7 +218,7 @@ void castor::gc::SynchronizationThread::run(void *param) {
 	  castor::dlf::Param params[] =
 	    {castor::dlf::Param("NbFiles", it2->second.size()),
 	     castor::dlf::Param("Nameserver", it2->first)};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 31, 2, params);
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 31, 2, params);
 
 	  synchronizeFiles(it2->first, it2->second, paths[it2->first]);
 	  sleep(chunkInterval);
@@ -461,10 +461,24 @@ void castor::gc::SynchronizationThread::synchronizeFiles
   memset(&fileId, 0, sizeof(fileId));
   strncpy(fileId.server, nameServer.c_str(), sizeof(fileId.server));
   u_signed64 nbOrphanFiles = 0;
+  u_signed64 spaceFreed = 0;
+
   for (std::vector<u_signed64>::const_iterator it = orphans.begin();
        it != orphans.end();
        it++) {
     fileId.fileid = fileIdFromFilePath(filePaths.find(*it)->second);
+    
+    // Get information about the file before unlinking
+    struct stat64 fileinfo;
+    if (stat64(filePaths.find(*it)->second.c_str(), &fileinfo) < 0) {
+      if (errno != ENOENT) {
+	// "Failed to stat file"
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("Fileanem", filePaths.find(*it)->second),
+	   castor::dlf::Param("Error", strerror(errno))};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 41, 2, params, &fileId);
+      }
+    }
 
     if (unlink(filePaths.find(*it)->second.c_str()) < 0) {
       if (errno != ENOENT) {
@@ -475,10 +489,14 @@ void castor::gc::SynchronizationThread::synchronizeFiles
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28, 2, params, &fileId);
       }
     } else {
+
       // "Deleting local file which is no longer in the stager catalog"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Filename", filePaths.find(*it)->second)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 36, 1, params, &fileId);
+	{castor::dlf::Param("Filename", filePaths.find(*it)->second),
+	 castor::dlf::Param("FileSize", (u_signed64)fileinfo.st_size),
+	 castor::dlf::Param("FileAge", time(NULL) - fileinfo.st_ctime)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 36, 3, params, &fileId);
+      spaceFreed += fileinfo.st_size;
       nbOrphanFiles++;
     }
 
@@ -489,8 +507,9 @@ void castor::gc::SynchronizationThread::synchronizeFiles
   // "Summary of files removed by stager synchronization"
   if (nbOrphanFiles) {
     castor::dlf::Param params[] =
-      {castor::dlf::Param("NbOrphanFiles", nbOrphanFiles)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_MONITORING, 33, 1, params);
+      {castor::dlf::Param("NbOrphanFiles", nbOrphanFiles),
+       castor::dlf::Param("SpaceFreed", spaceFreed)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_MONITORING, 33, 2, params);
   }
 
   // During the unlinking of the files in the diskserver to stager catalog
@@ -553,15 +572,23 @@ void castor::gc::SynchronizationThread::synchronizeFiles
   orphans = gcSvc->nsFilesDeleted(delFileIds, nameServer);
 
   // Remove orphaned files
+  spaceFreed = 0, nbOrphanFiles = 0;
   for (std::vector<u_signed64>::const_iterator it = orphans.begin();
        it != orphans.end();
        it++) {
     fileId.fileid = fileIdFromFilePath(cnsFilePaths.find(*it)->second);
 
-    // "Deleting local file which is no longer in the nameserver"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Filename", cnsFilePaths.find(*it)->second)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 27, 1, params, &fileId);
+    // Get information about the file before unlinking
+    struct stat64 fileinfo;
+    if (stat64(cnsFilePaths.find(*it)->second.c_str(), &fileinfo) < 0) {
+      if (errno != ENOENT) {
+	// "Failed to stat file"
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("Fileanem", cnsFilePaths.find(*it)->second),
+	   castor::dlf::Param("Error", strerror(errno))};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 41, 2, params, &fileId);
+      }
+    }
 
     if (unlink(cnsFilePaths.find(*it)->second.c_str()) < 0) {
       if (errno != ENOENT) {
@@ -571,13 +598,23 @@ void castor::gc::SynchronizationThread::synchronizeFiles
 	   castor::dlf::Param("Error", strerror(errno))};
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28, 2, params, &fileId);
       }
+    } else {
+      // "Deleting local file which is no longer in the nameserver"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Filename", cnsFilePaths.find(*it)->second),
+	 castor::dlf::Param("FileSize", (u_signed64)fileinfo.st_size),
+	 castor::dlf::Param("FileAge", time(NULL) - fileinfo.st_ctime)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 27, 3, params, &fileId);
+      spaceFreed += fileinfo.st_size;
+      nbOrphanFiles++;
     }
   }
 
   // "Summary of files removed by nameserver synchronization"
-  if (orphans.size()) {
+  if (nbOrphanFiles) {
     castor::dlf::Param params[] =
-      {castor::dlf::Param("NbOrphanFiles", orphans.size())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_MONITORING, 35, 1, params);
+      {castor::dlf::Param("NbOrphanFiles", nbOrphanFiles),
+       castor::dlf::Param("SpaceFreed", spaceFreed)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_MONITORING, 35, 2, params);
   }
 }

@@ -146,6 +146,7 @@ castor::gc::GcDaemon::GcDaemon(): castor::server::BaseDaemon("GC") {
     { 38, "Invalid GC/ChunkInterval option, using default" },
     { 39, "Ignoring filename that does not conform to castor naming conventions" },
     { 40, "Unexpected exception caught in synchronizeFiles" },
+    { 41, "Failed to stat file" },
     { -1, "" }};
   dlfInit(messages);
 }
