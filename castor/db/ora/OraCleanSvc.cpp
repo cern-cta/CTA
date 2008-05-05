@@ -22,9 +22,7 @@
  * @author Giulia Taurelli
  *****************************************************************************/
 
-
 // Include Files
-
 #include "castor/IAddress.hpp"
 #include "castor/IObject.hpp"
 #include "castor/IFactory.hpp"
@@ -44,7 +42,6 @@
 #include <vector>
 #include <Cns_api.h>
 #include <serrno.h>
-
 
 
 // -----------------------------------------------------------------------
@@ -126,7 +123,7 @@ void castor::db::ora::OraCleanSvc::reset() throw() {
   } catch (oracle::occi::SQLException e) {
     // "Cleaning Service not available"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("message", e.getMessage())};
+      {castor::dlf::Param("Message", e.getMessage())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_ORACLELIB + 7, 1, params);
   };
   // Now reset all pointers to 0
@@ -164,7 +161,7 @@ void castor::db::ora::OraCleanSvc::removeOutOfDateRequests(int timeout)
     castor::exception::Internal ex;
     // "Cleaning of out of date requests failed"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("message",e.getMessage())};
+      {castor::dlf::Param("Message",e.getMessage())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_ORACLELIB + 4, 1, params);
     throw ex;
   }
@@ -197,7 +194,7 @@ void castor::db::ora::OraCleanSvc::removeArchivedRequests(int timeout)
     castor::exception::Internal ex;
     // "Cleaning of archived requests failed"
     castor::dlf::Param params[] =
-      {castor::dlf::Param(castor::dlf::Param("message",e.getMessage()))};
+      {castor::dlf::Param(castor::dlf::Param("Message",e.getMessage()))};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_ORACLELIB + 6, 1, params);
     throw ex;
   }
@@ -225,14 +222,14 @@ void castor::db::ora::OraCleanSvc::removeFailedDiskCopies(int timeout)
     }
     // "Cleaning of failed diskCopies done"
     castor::dlf::Param logParams[] =
-      {castor::dlf::Param("message", "Removed out of date request.")};
+      {castor::dlf::Param("Message", "Removed out of date request.")};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, DLF_BASE_ORACLELIB + 2, 1, logParams);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
     // "Cleaning of failed diskCopies failed"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("message",e.getMessage())};
+      {castor::dlf::Param("Message",e.getMessage())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_ORACLELIB + 5, 1, params);
     throw ex;
   }
@@ -306,7 +303,7 @@ void castor::db::ora::OraCleanSvc::removeOutOfDateStageOutDCs(int timeout)
     castor::exception::Internal ex;
     // "Cleaning of out of date STAGEOUT diskCopies done"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("message",e.getMessage())};
+      {castor::dlf::Param("Message",e.getMessage())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_ORACLELIB + 10, 1, params);
     throw ex;
   }
@@ -365,7 +362,7 @@ void castor::db::ora::OraCleanSvc::removeOutOfDateRecallDCs(int timeout)
     castor::exception::Internal ex;
     // "Cleaning of out of date recalls failed"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("message",e.getMessage())};
+      {castor::dlf::Param("Message",e.getMessage())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_ORACLELIB + 11, 1, params);
     throw ex;
   }
