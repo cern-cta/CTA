@@ -146,7 +146,7 @@ CREATE TABLE SetFileGCWeight (flags INTEGER, userName VARCHAR2(2048), euid NUMBE
 CREATE TABLE StageRepackRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, repackVid VARCHAR2(2048), id INTEGER CONSTRAINT I_StageRepackRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StageDiskCopyReplicaRequest */
-CREATE TABLE StageDiskCopyReplicaRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, sourceDiskCopyId INTEGER, destDiskCopyId INTEGER, id INTEGER CONSTRAINT I_StageDiskCopyReplicaReque_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StageDiskCopyReplicaRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StageDiskCopyReplicaReque_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, sourceSvcClass INTEGER, destDiskCopy INTEGER, sourceDiskCopy INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type NsFilesDeleted */
 CREATE TABLE NsFilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT I_NsFilesDeleted_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -180,7 +180,7 @@ ALTER TABLE Stream2TapeCopy
   ADD CONSTRAINT fk_Stream2TapeCopy_C FOREIGN KEY (Child) REFERENCES TapeCopy (id);
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_7_4');
+INSERT INTO CastorVersion VALUES ('-', '2_1_7_5');
 
 /* Fill Type2Obj metatable */
 CREATE TABLE Type2Obj (type INTEGER PRIMARY KEY NOT NULL, object VARCHAR2(100) NOT NULL, svcHandler VARCHAR2(100));
@@ -314,7 +314,7 @@ INSERT INTO Type2Obj (type, object) VALUES (150, 'StgFilesDeletedResponse');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleCommon.sql,v  Revision: 1.646  Date: 2008/04/21 11:48:48  Author: waldron 
+ * @(#)RCSfile: oracleCommon.sql,v  Revision: 1.647  Date: 2008/05/05 08:17:38  Author: waldron 
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -323,7 +323,7 @@ INSERT INTO Type2Obj (type, object) VALUES (150, 'StgFilesDeletedResponse');
  *******************************************************************/
 
 /* A small table used to cross check code and DB versions */
-UPDATE CastorVersion SET schemaVersion = '2_1_7_0';
+UPDATE CastorVersion SET schemaVersion = '2_1_7_5';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -746,7 +746,7 @@ BEGIN
 END;
 /*******************************************************************
  *
- * @(#)RCSfile: oraclePerm.sql,v  Revision: 1.637  Date: 2008/03/19 10:52:18  Author: sponcec3 
+ * @(#)RCSfile: oraclePerm.sql,v  Revision: 1.638  Date: 2008/05/05 08:37:22  Author: waldron 
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -754,7 +754,7 @@ END;
  *******************************************************************/
 
 
-/* Check permissions */
+/* PL/SQL method implementing checkPermission */
 CREATE OR REPLACE PROCEDURE checkPermission(isvcClass IN VARCHAR2,
                                             ieuid IN NUMBER,
                                             iegid IN NUMBER,
@@ -784,10 +784,31 @@ BEGIN
       -- Not Found in Black list -> access
       res := 0;
     ELSE
-      -- found in Black list -> no access
+      -- Found in Black list -> no access
       res := -1;
     END IF;
   END IF;
+END;
+
+
+/* Function to wrap the checkPermission procedure so that is can be
+   used within SQL queries. The function returns 0 if the user has
+   access on the service class for the given request type otherwise
+   1 if access is denied */
+CREATE OR REPLACE 
+FUNCTION checkPermissionOnSvcClass(reqSvcClass IN VARCHAR2,
+                                   reqEuid IN NUMBER,
+                                   reqEgid IN NUMBER,
+                                   reqType IN NUMBER)
+RETURN NUMBER AS
+  res NUMBER;
+BEGIN
+  -- Check the users access rights */
+  checkPermission(reqSvcClass, reqEuid, reqEgid, reqType, res);
+  IF res = 0 THEN
+    RETURN 0;
+  END IF;
+  RETURN 1;
 END;
 
 
@@ -1131,7 +1152,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
 END castorBW;
 /*******************************************************************
  *
- * @(#)RCSfile: oracleStager.sql,v  Revision: 1.663  Date: 2008/04/21 11:48:48  Author: waldron 
+ * @(#)RCSfile: oracleStager.sql,v  Revision: 1.664  Date: 2008/05/05 08:40:43  Author: waldron 
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1612,10 +1633,9 @@ END;
 /* Internally used by getDiskCopiesForJob and processPrepareRequest */
 CREATE OR REPLACE
 PROCEDURE checkForD2DCopyOrRecall(cfId IN NUMBER, srId IN NUMBER, reuid IN NUMBER, regid IN NUMBER,
-                                  svcClassId IN NUMBER, dcId OUT NUMBER) AS
+                                  svcClassId IN NUMBER, dcId OUT NUMBER, srvSvcClassId OUT NUMBER) AS
   destSvcClass VARCHAR2(2048);
   authDest NUMBER;
-  authSource NUMBER;
 BEGIN
   -- First check whether we are a disk only pool that is already full.
   -- In such a case, we should fail the request with an ENOSPACE error
@@ -1637,41 +1657,40 @@ BEGIN
   IF authDest = 0 THEN
     -- The user has the rights to create files so check if there are possible 
     -- diskcopies which could be replicated.
-    FOR a IN (SELECT DiskCopy.id, SvcClass.name sourceSvcClass
-                FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
-               WHERE DiskCopy.castorfile = cfId
-                 AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
-                 AND FileSystem.id = DiskCopy.fileSystem
-                 AND FileSystem.diskpool = DiskPool2SvcClass.parent
-                 AND DiskPool2SvcClass.child = SvcClass.id
-                 AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
-                 AND DiskServer.id = FileSystem.diskserver
-                 AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
-                 AND NOT EXISTS (
-                   -- Don't select source diskcopies which already failed more than 10 times
-                   SELECT 'x'
-                     FROM StageDiskCopyReplicaRequest R, SubRequest
-                    WHERE SubRequest.request = R.id
-                      AND R.sourceDiskCopyId = DiskCopy.id
-                      AND SubRequest.status = 9 -- FAILED
-                   HAVING COUNT(*) >= 10)
-               ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
-                                       FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
-                                       FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC)
-    LOOP
-      -- Check that the user has the necessary access rights to replicate a file
-      -- from the source service class. Note: instead of using a StageGetRequest
-      -- type here we use a StageDiskCopyReplicaRequest type to be able to 
-      -- distinguish between a read and replication request.
-      checkPermission(a.sourceSvcClass, reuid, regid, 133, authSource);
-      IF authSource = 0 THEN
-        -- The user is authorized on both the source and destination service
-        -- classes so a disk2disk replication can be scheduled.
-        dcId := a.id;
-        RETURN;
-      END IF;
-    END LOOP;
+    SELECT id, sourceSvcClassId INTO dcId, srvSvcClassId
+      FROM (
+        SELECT DiskCopy.id, SvcClass.name sourceSvcClass, SvcClass.id sourceSvcClassId
+          FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
+         WHERE DiskCopy.castorfile = cfId
+           AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
+           AND FileSystem.id = DiskCopy.fileSystem
+           AND FileSystem.diskpool = DiskPool2SvcClass.parent
+           AND DiskPool2SvcClass.child = SvcClass.id
+           AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+           AND DiskServer.id = FileSystem.diskserver
+           AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+           -- Check that the user has the necessary access rights to replicate a
+           -- file from the source service class. Note: instead of using a
+           -- StageGetRequest type here we use a StagDiskCopyReplicaRequest type
+           -- to be able to distinguish between and read and replication requst.
+           AND checkPermissionOnSvcClass(SvcClass.name, reuid, regid, 133) = 0
+           AND NOT EXISTS (
+             -- Don't select source diskcopies which already failed more than 10 times
+             SELECT 'x'
+               FROM StageDiskCopyReplicaRequest R, SubRequest
+              WHERE SubRequest.request = R.id
+                AND R.sourceDiskCopy = DiskCopy.id
+                AND SubRequest.status = 9 -- FAILED
+             HAVING COUNT(*) >= 10)
+         ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
+                                 FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
+                                 FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC
+      )
+    WHERE ROWNUM < 2;
   END IF;
+  -- We found at least one, therefore we schedule a disk2disk
+  -- copy from the existing diskcopy not available to this svcclass
+EXCEPTION WHEN NO_DATA_FOUND THEN
   -- We found no diskcopies at all. We should not schedule
   -- and make a tape recall... except ... in 2 cases :
   --   - if there is some temporarily unavailable diskcopy
@@ -1752,7 +1771,8 @@ END;
 
 /* PL/SQL method implementing createDiskCopyReplicaRequest */
 CREATE OR REPLACE PROCEDURE createDiskCopyReplicaRequest
-(sourceSrId IN INTEGER, sourceDcId IN INTEGER, destSvcId IN INTEGER) AS
+(sourceSrId IN INTEGER, sourceDcId IN INTEGER, sourceSvcId IN INTEGER, 
+ destSvcId IN INTEGER) AS
   srId NUMBER;
   cfId NUMBER;
   destDcId NUMBER;
@@ -1795,9 +1815,9 @@ BEGIN
   SELECT ids_seq.nextval INTO destDcId FROM Dual;
   INSERT INTO StageDiskCopyReplicaRequest 
     (svcclassname, reqid, creationtime, lastmodificationtime, id, svcclass, 
-     client, sourcediskcopyid, destdiskcopyid)
+     client, sourcediskcopy, destdiskcopy, sourceSvcClass)
   VALUES ((SELECT name FROM SvcClass WHERE id = destSvcId), uuidgen(), gettime(), 
-     gettime(), ids_seq.nextval, destSvcId, clientId, sourceDcId,  destDcId)
+     gettime(), ids_seq.nextval, destSvcId, clientId, sourceDcId, destDcId, sourceSvcId)
   RETURNING id INTO reqId;
   INSERT INTO Id2Type (id, type) VALUES (reqId, 133);  -- OBJ_StageDiskCopyReplicaRequest;
  
@@ -1831,6 +1851,7 @@ CREATE OR REPLACE PROCEDURE getDiskCopiesForJob
   upd INTEGER;
   dcIds "numList";
   svcClassId NUMBER;
+  srcSvcClassId NUMBER;
   cfId NUMBER;
   srcDcId NUMBER;
   d2dsrId NUMBER;
@@ -1895,22 +1916,36 @@ BEGIN
     -- Yes, we have some
     -- List available diskcopies for job scheduling
     OPEN sources
-      FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
-                 FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
-                                FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, 
-                                FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) fsRate,
-                 FileSystem.mountPoint, DiskServer.name
-            FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
-           WHERE SubRequest.id = srId
-             AND SubRequest.castorfile = DiskCopy.castorfile
-             AND FileSystem.diskpool = DiskPool2SvcClass.parent
-             AND DiskPool2SvcClass.child = svcClassId
-             AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
-             AND FileSystem.id = DiskCopy.fileSystem
-             AND FileSystem.status = 0  -- PRODUCTION
-             AND DiskServer.id = FileSystem.diskServer
-             AND DiskServer.status = 0  -- PRODUCTION
-           ORDER BY fsRate DESC;
+      FOR SELECT id, path, status, fsRate, mountPoint, name FROM (
+            SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
+                   FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
+                                  FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, 
+                                  FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) fsRate,
+                   FileSystem.mountPoint, DiskServer.name,
+                   -- Use the power of analytics to create a cumulative value of the length
+                   -- of the diskserver name and filesystem mountpoint. We do this because
+                   -- when there are many many copies of a file the requested filesystems
+                   -- string created by the stager from these results e.g. ds1:fs1|ds2:fs2|
+                   -- can exceed the maximum length allowed by LSF causing the submission
+                   -- process to fail.
+                   SUM(LENGTH(DiskServer.name) + LENGTH(FileSystem.mountPoint) + 2)
+                   OVER (ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, 
+                                                 FileSystem.nbReadStreams,
+                                                 FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, 
+                                                 FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams)
+                          DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) bytes
+              FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
+             WHERE SubRequest.id = srId
+               AND SubRequest.castorfile = DiskCopy.castorfile
+               AND FileSystem.diskpool = DiskPool2SvcClass.parent
+               AND DiskPool2SvcClass.child = svcClassId
+               AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
+               AND FileSystem.id = DiskCopy.fileSystem
+               AND FileSystem.status = 0  -- PRODUCTION
+               AND DiskServer.id = FileSystem.diskServer
+               AND DiskServer.status = 0  -- PRODUCTION         
+             ORDER BY fsRate DESC)
+         WHERE bytes <= 200;
     -- Give an hint to the stager whether internal replication can happen or not:
     -- count the number of diskservers which DON'T contain a diskCopy for this castorFile
     -- and are hence eligible for replication should it need to be done
@@ -1954,10 +1989,10 @@ BEGIN
       RETURN;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- not found, we may have to schedule a disk to disk copy or trigger a recall
-      checkForD2DCopyOrRecall(cfId, srId, reuid, regid, svcClassId, srcDcId);
+      checkForD2DCopyOrRecall(cfId, srId, reuid, regid, svcClassId, srcDcId, srcSvcClassId);
       IF srcDcId > 0 THEN
         -- create DiskCopyReplica request and make this subRequest wait on it
-        createDiskCopyReplicaRequest(srId, srcDcId, svcClassId);
+        createDiskCopyReplicaRequest(srId, srcDcId, srcSvcClassId, svcClassId);
         result := -3; -- return code is different here for logging purposes
       ELSIF srcDcId = 0 THEN
         -- no diskcopy found at all, go for recall
@@ -2100,6 +2135,7 @@ CREATE OR REPLACE PROCEDURE processPrepareRequest
         (srId IN INTEGER, result OUT INTEGER) AS
   nbDCs INTEGER;
   svcClassId NUMBER;
+  srvSvcClassId NUMBER;
   repack INTEGER;
   cfId NUMBER;
   srcDcId NUMBER;
@@ -2141,7 +2177,7 @@ BEGIN
   IF nbDCs = 0 THEN
     SELECT COUNT(DiskCopy.id) INTO nbDCs
       FROM DiskCopy, StageDiskCopyReplicaRequest
-     WHERE DiskCopy.id = StageDiskCopyReplicaRequest.destDiskCopyId
+     WHERE DiskCopy.id = StageDiskCopyReplicaRequest.destDiskCopy
        AND StageDiskCopyReplicaRequest.svcclass = svcClassId
        AND DiskCopy.castorfile = cfId
        AND DiskCopy.status = 1; -- WAITDISK2DISKCOPY
@@ -2213,13 +2249,13 @@ BEGIN
   
   -- No diskcopies available for this service class:
   -- we may have to schedule a disk to disk copy or trigger a recall
-  checkForD2DCopyOrRecall(cfId, srId, reuid, regid, svcClassId, srcDcId);
+  checkForD2DCopyOrRecall(cfId, srId, reuid, regid, svcClassId, srcDcId, srvSvcClassId);
   IF srcDcId > 0 THEN  -- disk to disk copy
     IF repack = 1 THEN
-      createDiskCopyReplicaRequest(srId, srcDcId, svcClassId);
+      createDiskCopyReplicaRequest(srId, srcDcId, srvSvcClassId, svcClassId);
       result := -2;  -- Repack waits on the disk to disk copy
     ELSE
-      createDiskCopyReplicaRequest(0, srcDcId, svcClassId);
+      createDiskCopyReplicaRequest(0, srcDcId, srvSvcClassId, svcClassId);
       result := 1;  -- DISKCOPY_WAITDISK2DISKCOPY, for logging purposes
     END IF;
   ELSIF srcDcId = 0 THEN  -- recall
@@ -3069,7 +3105,7 @@ BEGIN
 END;
 /*******************************************************************
  *
- * @(#)RCSfile: oracleJob.sql,v  Revision: 1.651  Date: 2008/04/21 11:47:15  Author: waldron 
+ * @(#)RCSfile: oracleJob.sql,v  Revision: 1.652  Date: 2008/05/05 08:38:42  Author: waldron 
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -3368,7 +3404,7 @@ BEGIN
            CastorFile.fileId, CastorFile.nsHost, SvcClass.name
       INTO srcDiskServer, srcMountPoint, srcPath, cfId, cfNsHost, srcSvcClass
       FROM DiskCopy, CastorFile, DiskServer, FileSystem, DiskPool2SvcClass, 
-           DiskPool, SvcClass
+           SvcClass, StageDiskCopyReplicaRequest
      WHERE DiskCopy.id = srcDcId
        AND DiskCopy.castorfile = Castorfile.id
        AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
@@ -3376,9 +3412,13 @@ BEGIN
        AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
        AND FileSystem.diskPool = DiskPool2SvcClass.parent
        AND DiskPool2SvcClass.child = SvcClass.id
-       AND DiskPool2SvcClass.parent = DiskPool.id
        AND DiskServer.id = FileSystem.diskserver
-       AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
+       AND DiskServer.status IN (0, 1)
+       -- For diskpools which belong to multiple service classes, make sure
+       -- we are checking for the file in the correct service class!
+       AND StageDiskCopyReplicaRequest.sourceDiskCopy = DiskCopy.id
+       AND StageDiskCopyReplicaRequest.sourceSvcClass = SvcClass.id
+       AND StageDiskCopyReplicaRequest.destDiskCopy = dcId;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     raise_application_error(-20109, 'The source DiskCopy to be replicated is no longer available.');
   END;
@@ -3791,18 +3831,18 @@ END;
 
 
 /* PL/SQL method implementing jobToSchedule */
-CREATE OR REPLACE
+create or replace
 PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCHAR2, srProtocol OUT VARCHAR2,
                         srXsize OUT INTEGER, srRfs OUT VARCHAR2, reqId OUT VARCHAR2,
                         cfFileId OUT INTEGER, cfNsHost OUT VARCHAR2, reqSvcClass OUT VARCHAR2,
                         reqType OUT INTEGER, reqEuid OUT INTEGER, reqEgid OUT INTEGER,
                         reqUsername OUT VARCHAR2, srOpenFlags OUT VARCHAR2, clientIp OUT INTEGER,
                         clientPort OUT INTEGER, clientVersion OUT INTEGER, clientType OUT INTEGER,
-                        reqSourceDiskCopyId OUT INTEGER, reqDestDiskCopyId OUT INTEGER, 
+                        reqSourceDiskCopy OUT INTEGER, reqDestDiskCopy OUT INTEGER, 
                         clientSecure OUT INTEGER, reqSourceSvcClass OUT VARCHAR2, 
                         reqCreationTime OUT INTEGER, reqDefaultFileSize OUT INTEGER) AS
   dsId INTEGER;
-  unused INTEGER;                   
+  unused INTEGER;           
 BEGIN
   -- Get the next subrequest to be scheduled.
   UPDATE SubRequest 
@@ -3816,30 +3856,35 @@ BEGIN
   -- scheduler through the job manager.
   SELECT CastorFile.fileId, CastorFile.nsHost, SvcClass.name, Id2type.type,
          Request.reqId, Request.euid, Request.egid, Request.username, 
-	 Request.direction, Request.sourceDiskCopyId, Request.destDiskCopyId,
-	 Client.ipAddress, Client.port, Client.version, 
+	 Request.direction, Request.sourceDiskCopy, Request.destDiskCopy,
+         Request.sourceSvcClass, Client.ipAddress, Client.port, Client.version, 
 	 (SELECT type 
             FROM Id2type 
            WHERE id = Client.id) clientType, Client.secure, Request.creationTime, 
          decode(SvcClass.defaultFileSize, 0, 2000000000, SvcClass.defaultFileSize)
     INTO cfFileId, cfNsHost, reqSvcClass, reqType, reqId, reqEuid, reqEgid, reqUsername, 
-         srOpenFlags, reqSourceDiskCopyId, reqDestDiskCopyId, clientIp, clientPort, 
-         clientVersion, clientType, clientSecure, reqCreationTime, reqDefaultFileSize
+         srOpenFlags, reqSourceDiskCopy, reqDestDiskCopy, reqSourceSvcClass, 
+         clientIp, clientPort, clientVersion, clientType, clientSecure, reqCreationTime, 
+         reqDefaultFileSize
     FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
          (SELECT id, username, euid, egid, reqid, client, creationTime,
-                 'w' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
+                 'w' direction, svcClass, NULL sourceDiskCopy, NULL destDiskCopy, 
+                 NULL sourceSvcClass
             FROM StagePutRequest 
            UNION ALL
           SELECT id, username, euid, egid, reqid, client, creationTime,
-                 'r' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
+                 'r' direction, svcClass, NULL sourceDiskCopy, NULL destDiskCopy, 
+                 NULL sourceSvcClass
             FROM StageGetRequest 
            UNION ALL
           SELECT id, username, euid, egid, reqid, client, creationTime,
-                 'o' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
+                 'o' direction, svcClass, NULL sourceDiskCopy, NULL destDiskCopy, 
+                 NULL sourceSvcClass
             FROM StageUpdateRequest
            UNION ALL
           SELECT id, username, euid, egid, reqid, client, creationTime - 3600,
-                 'w' direction, svcClass, sourceDiskCopyId, destDiskCopyId
+                 'w' direction, svcClass, sourceDiskCopy, destDiskCopy, 
+                 (SELECT name FROM SvcClass WHERE id = sourceSvcClass)
             FROM StageDiskCopyReplicaRequest) Request
    WHERE SubRequest.id = srId
      AND SubRequest.castorFile = CastorFile.id
@@ -3854,11 +3899,10 @@ BEGIN
     -- source disk copy. The scheduler plugin needs this information to correctly
     -- schedule access to the filesystem.
     BEGIN 
-      SELECT CONCAT(CONCAT(DiskServer.name, ':'), FileSystem.mountpoint), 
-             DiskServer.id, SvcClass.name
-        INTO srRfs, dsId, reqSourceSvcClass
-        FROM DiskServer, FileSystem, DiskCopy, DiskPool2SvcClass, DiskPool, SvcClass
-       WHERE DiskCopy.id = reqSourceDiskCopyId
+      SELECT CONCAT(CONCAT(DiskServer.name, ':'), FileSystem.mountpoint), DiskServer.id
+        INTO srRfs, dsId
+        FROM DiskServer, FileSystem, DiskCopy, DiskPool2SvcClass, SvcClass
+       WHERE DiskCopy.id = reqSourceDiskCopy
          AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
          AND DiskCopy.filesystem = FileSystem.id
          AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
@@ -3866,12 +3910,12 @@ BEGIN
          AND DiskServer.status IN (0, 1)  -- PRODUCTION, DRAINING
          AND FileSystem.diskPool = DiskPool2SvcClass.parent
          AND DiskPool2SvcClass.child = SvcClass.id
-         AND DiskPool2SvcClass.parent = DiskPool.id;
+         AND SvcClass.name = reqSourceSvcClass;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- The source diskcopy has been removed before the jobManager could enter
       -- the job into LSF. Under this circumstance fail the diskcopy transfer.
       -- This will restart the subrequest and trigger a tape recall if possible
-      disk2DiskCopyFailed(reqDestDiskCopyId, unused);
+      disk2DiskCopyFailed(reqDestDiskCopy, unused);
       COMMIT;
       RAISE;
     END;
@@ -3879,7 +3923,7 @@ BEGIN
 END;
 /*******************************************************************
  *
- * @(#)RCSfile: oracleQuery.sql,v  Revision: 1.636  Date: 2008/02/26 16:14:15  Author: waldron 
+ * @(#)RCSfile: oracleQuery.sql,v  Revision: 1.637  Date: 2008/05/05 08:38:11  Author: waldron 
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -4201,27 +4245,27 @@ END;
  * PL/SQL method implementing the diskPoolQuery when listing pools
  */
 CREATE OR REPLACE PROCEDURE describeDiskPools
-(svcClassName IN VARCHAR2,
- result OUT castor.DiskPoolsQueryLine_Cur) AS
+(svcClassName IN VARCHAR2, reqEuid IN INTEGER, reqEgid IN INTEGER,
+ res OUT NUMBER, result OUT castor.DiskPoolsQueryLine_Cur) AS
 BEGIN
-  -- We use here analytic functions and the grouping sets
-  -- functionnality to get both the list of filesystems
-  -- and a summary per diskserver and per diskpool
-  -- The grouping analytic function also allows to mark
-  -- the summary lines for easy detection in the C++ code
+  -- We use here analytic functions and the grouping sets functionnality to 
+  -- get both the list of filesystems and a summary per diskserver and per 
+  -- diskpool. The grouping analytic function also allows to mark the summary 
+  -- lines for easy detection in the C++ code
   OPEN result FOR
-    SELECT grouping(ds.name) as IsDSGrouped,
-           grouping(fs.mountPoint) as IsFSGrouped,
+    SELECT grouping(ds.name) AS IsDSGrouped,
+           grouping(fs.mountPoint) AS IsFSGrouped,
            dp.name,
            ds.name, ds.status, fs.mountPoint,
            sum(decode(sign(fs.free - fs.minAllowedFreeSpace * fs.totalSize), -1, 0,
-	       fs.free - fs.minAllowedFreeSpace * fs.totalSize)) as freeSpace,
+	       fs.free - fs.minAllowedFreeSpace * fs.totalSize)) AS freeSpace,
            sum(fs.totalSize),
            fs.minFreeSpace, fs.maxFreeSpace, fs.status
       FROM FileSystem fs, DiskServer ds, DiskPool dp,
            DiskPool2SvcClass d2s, SvcClass sc
-     WHERE (sc.name = svcClassName OR svcClassName is NULL)
+     WHERE (sc.name = svcClassName OR svcClassName IS NULL)
        AND sc.id = d2s.child
+       AND checkPermissionOnSvcClass(sc.name, reqEuid, reqEgid, 103) = 0
        AND d2s.parent = dp.id
        AND dp.id = fs.diskPool
        AND ds.id = fs.diskServer
@@ -4234,33 +4278,49 @@ BEGIN
            (dp.name, ds.name, ds.status),
            (dp.name)
           )
-       ORDER BY dp.name, IsDSGrouped desc, ds.name, IsFSGrouped desc, fs.mountpoint;
+       ORDER BY dp.name, IsDSGrouped DESC, ds.name, IsFSGrouped DESC, fs.mountpoint;
+
+  -- If no results are available, check to see if any diskpool exists and if 
+  -- access to view all the diskpools has been revoked. The information extracted
+  -- here will be used to send an appropriate error message to the client.
+  IF result%ROWCOUNT = 0 THEN
+    SELECT CASE COUNT(*)
+           WHEN sum(checkPermissionOnSvcClass(sc.name, reqEuid, reqEgid, 103)) THEN -1 END
+      INTO res
+      FROM DiskPool2SvcClass d2s, SvcClass sc
+     WHERE d2s.child = sc.id
+       AND (sc.name = svcClassName OR svcClassName IS NULL);
+  END IF;
 END;
+
 
 
 /*
  * PL/SQL method implementing the diskPoolQuery for a given pool
  */
 CREATE OR REPLACE PROCEDURE describeDiskPool
-(diskPoolName IN VARCHAR2,
- result OUT castor.DiskPoolQueryLine_Cur) AS
+(diskPoolName IN VARCHAR2, svcClassName IN VARCHAR2,
+ res OUT NUMBER, result OUT castor.DiskPoolQueryLine_Cur) AS
 BEGIN
-  -- We use here analytic functions and the grouping sets
-  -- functionnality to get both the list of filesystems
-  -- and a summary per diskserver and per diskpool
-  -- The grouping analytic function also allows to mark
-  -- the summary lines for easy detection in the C++ code
+  -- We use here analytic functions and the grouping sets functionnality to 
+  -- get both the list of filesystems and a summary per diskserver and per 
+  -- diskpool. The grouping analytic function also allows to mark the summary 
+  -- lines for easy detection in the C++ code
   OPEN result FOR 
-    SELECT grouping(ds.name) as IsDSGrouped,
-           grouping(fs.mountPoint) as IsGrouped,
+    SELECT grouping(ds.name) AS IsDSGrouped,
+           grouping(fs.mountPoint) AS IsGrouped,
            ds.name, ds.status, fs.mountPoint,
-           sum(fs.free - fs.minAllowedFreeSpace * fs.totalSize) as freeSpace,
+           sum(fs.free - fs.minAllowedFreeSpace * fs.totalSize) AS freeSpace,
            sum(fs.totalSize),
            fs.minFreeSpace, fs.maxFreeSpace, fs.status
-      FROM FileSystem fs, DiskServer ds, DiskPool dp
-     WHERE dp.id = fs.diskPool
-       AND dp.name = diskPoolName
+      FROM FileSystem fs, DiskServer ds, DiskPool dp,
+           DiskPool2SvcClass d2s, SvcClass sc
+     WHERE (sc.name = svcClassName OR svcClassName IS NULL)
+       AND sc.id = d2s.child
+       AND d2s.parent = dp.id
+       AND dp.id = fs.diskPool
        AND ds.id = fs.diskServer
+       AND dp.name = diskPoolName
        group by grouping sets(
            (ds.name, ds.status, fs.mountPoint,
              fs.free - fs.minAllowedFreeSpace * fs.totalSize,
@@ -4269,7 +4329,19 @@ BEGIN
            (ds.name, ds.status),
            (dp.name)
           )
-       order by IsDSGrouped desc, ds.name, IsGrouped desc, fs.mountpoint;
+       order by IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint;
+
+  -- If no results are available, check to see if any diskpool exists and if 
+  -- access to view all the diskpools has been revoked. The information extracted
+  -- here will be used to send an appropriate error message to the client.
+  IF result%ROWCOUNT = 0 THEN
+    SELECT COUNT(*) INTO res
+      FROM DiskPool dp, DiskPool2SvcClass d2s, SvcClass sc
+     WHERE d2s.child = sc.id
+       AND d2s.parent = dp.id
+       AND dp.name = diskPoolName
+       AND (sc.name = svcClassName OR svcClassName IS NULL);
+  END IF;
 END;
 /*******************************************************************
  *
