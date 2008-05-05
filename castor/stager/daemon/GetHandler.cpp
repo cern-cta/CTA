@@ -225,7 +225,7 @@ namespace castor{
         if(replicate) {
           // We need to replicate, create a diskCopyReplica request
           stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_GET_REPLICATION, &(stgCnsHelper->cnsFileid));
-          stgRequestHelper->stagerService->createDiskCopyReplicaRequest(0, sources.front(), stgRequestHelper->svcClass);
+          stgRequestHelper->stagerService->createDiskCopyReplicaRequest(0, sources.front(), stgRequestHelper->svcClass, stgRequestHelper->svcClass);
         }
       }
 
