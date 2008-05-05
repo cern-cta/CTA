@@ -99,6 +99,9 @@ namespace castor{
 	STAGER_QRYSVC_FQUERY = 98, /* "Processing File Query by fileName" */
 	STAGER_QRYSVC_IQUERY = 99, /* "Processing File Query by fileId" */
 	STAGER_QRYSVC_RQUERY = 100, /* "Processing File Query by Request" */
+	STAGER_QRYSVC_DSQUERY = 101, /* "Processing DiskPoolQuery by SvcClass" */
+	STAGER_QRYSVC_DDQUERY = 102, /* "Processing DiskPoolQuery by DiskPool" */
+	STAGER_QRYSVC_DFAILED = 103, /* "Failed to process DiskPoolQuery" */
 	
 	/*********/
 	/* GcSvc */

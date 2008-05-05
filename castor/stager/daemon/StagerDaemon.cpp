@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.51 $ $Release$ $Date: 2008/03/10 09:38:59 $ $Author: waldron $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.52 $ $Release$ $Date: 2008/05/05 08:25:40 $ $Author: waldron $
  *
  * Main stager daemon
  *
@@ -205,6 +205,7 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_REQUESTUUID_EXCEPTION, "Impossible to get the request Uuid"},
     { STAGER_CASTORFILE_EXCEPTION, "Impossible to get the CastorFile"},
     { STAGER_INVALID_TYPE, "Request type not valid for this thread pool"},
+    { STAGER_QRYSVC_DFAILED, "Failed to process DiskPoolQuery"},
 
     /*******************/
     /* QueryRequestSvc */
@@ -215,9 +216,11 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_QRYSVC_UNKREQ, "Unknown request type"},
     { STAGER_QRYSVC_INVARG, "Invalid argument"},
     { STAGER_QRYSVC_FQNOPAR,"StageFileQueryRequest has no parameters"},
-    { STAGER_QRYSVC_FQUERY ,"Processing File Query by filename"},
-    { STAGER_QRYSVC_IQUERY ,"Processing File Query by fileid"},
-    { STAGER_QRYSVC_RQUERY ,"Processing File Query by Request"},
+    { STAGER_QRYSVC_FQUERY, "Processing File Query by filename"},
+    { STAGER_QRYSVC_IQUERY, "Processing File Query by fileid"},
+    { STAGER_QRYSVC_RQUERY, "Processing File Query by Request"},
+    { STAGER_QRYSVC_DSQUERY, "Processing DiskPoolQuery by SvcClass"},
+    { STAGER_QRYSVC_DDQUERY, "Processing DiskPoolQuery by DiskPool"}, 
 
     /*********/
     /* GcSvc */
