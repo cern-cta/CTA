@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: template.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/03/13 13:19:09 $ $Author: itglp $
+ * @(#)$RCSfile: template.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/05 09:02:08 $ $Author: waldron $
  *
  * This script upgrades a CASTOR vprevRelease database into vnewRelease
  *
@@ -39,6 +39,21 @@ END;
 
 UPDATE CastorVersion SET release = 'newRelTag';
 COMMIT;
+
+/* Job management */
+BEGIN
+  FOR a IN (SELECT * FROM user_scheduler_jobs)
+  LOOP
+    -- Stop any running jobs
+    IF a.state = 'RUNNING' THEN
+      dbms_scheduler.stop_job(a.job_name);
+    END IF;
+    -- Schedule the start date of the job to 15 minutes from now. This
+    -- basically pauses the job for 15 minutes so that the upgrade can
+    -- go through as quickly as possible.
+    dbms_scheduler.set_attribute(a.job_name, 'START_DATE', SYSDATE + 15/1440);
+  END LOOP;
+END;
 
 /* Schema changes go here */
 
