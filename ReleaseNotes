@@ -61,7 +61,9 @@
 
   4. Start the stager and jobManager daemons
 
-  5. Upgrade the CNS and CUPV services to 2.1.7-5 (This step is not mandatory)
+  5. Reload the LSF plugin. `badmin reconfig`
+
+  6. Upgrade the CNS and CUPV services to 2.1.7-5 (This step is not mandatory)
 
 
 -----------
