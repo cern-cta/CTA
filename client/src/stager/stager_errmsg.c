@@ -134,6 +134,7 @@ int DLL_DECL stager_errmsg(const char *func, const char *msg, ...) {
 	int save_errno;
 	char *errbufp;
 	int errbuflen;
+	int len;
 	void (*logfunction) _PROTO((int, char *));
 
 	if (stager_geterrbuf(&errbufp,&errbuflen) != 0 || stager_getlog(&logfunction) != 0) {
@@ -147,14 +148,17 @@ int DLL_DECL stager_errmsg(const char *func, const char *msg, ...) {
 		prtbuf[STAGER_PRTBUFSZ-1] = '\0';
 	} else {
 		*prtbuf = '\0';
-    }
+	}
 	if ((strlen(prtbuf) + 1) < STAGER_PRTBUFSZ) {
 		Cvsnprintf (prtbuf + strlen(prtbuf), STAGER_PRTBUFSZ - strlen(prtbuf), msg, args);
 		prtbuf[STAGER_PRTBUFSZ-1] = '\0';
 	}
-
+	len = strlen(prtbuf);
+	if ((len > 1) && (prtbuf[len - 1] == '\n')) {
+		prtbuf[len - 1] = '\0';
+	}
 	if (logfunction != NULL) {
-		logfunction(STAGER_MSG_ERR,prtbuf);
+		logfunction(STAGER_MSG_ERR, prtbuf);
 	} else {
 		if (errbufp != NULL && errbuflen > 0) {
 			if (strlen (prtbuf) < errbuflen) {
@@ -167,7 +171,6 @@ int DLL_DECL stager_errmsg(const char *func, const char *msg, ...) {
 			fprintf (stderr, (prtbuf[strlen(prtbuf)-1] == '\n' ? "%s" : "%s\n"), prtbuf);
 		}
 	}
-
 	va_end (args);
 	errno = save_errno;
 	return (0);
@@ -181,6 +184,7 @@ int DLL_DECL stager_outmsg(const char *func, const char *msg, ...) {
 	int save_errno;
 	char *outbufp;
 	int outbuflen;
+	int len;
 	void (*logfunction) _PROTO((int, char *));
 
 	if (stager_getoutbuf(&outbufp,&outbuflen) != 0 || stager_getlog(&logfunction) != 0) {
@@ -195,14 +199,17 @@ int DLL_DECL stager_outmsg(const char *func, const char *msg, ...) {
 		prtbuf[STAGER_PRTBUFSZ-1] = '\0';
 	} else {
 		*prtbuf = '\0';
-    }
+	}
 	if ((strlen(prtbuf) + 1) < STAGER_PRTBUFSZ) {
 		Cvsnprintf (prtbuf + strlen(prtbuf), STAGER_PRTBUFSZ - strlen(prtbuf), msg, args);
 		prtbuf[STAGER_PRTBUFSZ-1] = '\0';
 	}
-
+	len = strlen(prtbuf);
+	if ((len > 1) && (prtbuf[len - 1] == '\n')) {
+		prtbuf[len - 1] = '\0';
+	}
 	if (logfunction != NULL) {
-		logfunction(STAGER_MSG_OUT,prtbuf);
+		logfunction(STAGER_MSG_OUT, prtbuf);
 	} else {
 		if (outbufp != NULL && outbuflen > 0) {
 			if (strlen (prtbuf) < outbuflen) {
