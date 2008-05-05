@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.12 $ $Release$ $Date: 2008/02/26 17:54:57 $ $Author: waldron $
+# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.13 $ $Release$ $Date: 2008/05/05 14:40:04 $ $Author: waldron $
 #
 # chkconfig: 345 63 52
 # description: Request Handler Initialisation Script
@@ -106,6 +106,7 @@ execute() {
         fi
 
         # Start the daemon
+        cd /var/spool/rhserver
         if [ "$1" == "public" ]; then
                 daemon /usr/bin/rhserver $RHSERVER_OPTION
         else

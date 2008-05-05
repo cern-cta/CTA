@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rfiod.init,v $ $Revision: 1.9 $ $Release$ $Date: 2008/02/26 17:54:56 $ $Author: waldron $
+# @(#)$RCSfile: rfiod.init,v $ $Revision: 1.10 $ $Release$ $Date: 2008/05/05 14:39:59 $ $Author: waldron $
 #
 # chkconfig: 345 65 40
 # description: RFIO Server Daemon Initialisation Script
@@ -47,6 +47,7 @@ start() {
         # Run daemon
         echo -n $"Starting $prog: "
 
+        cd /var/spool/rfio
         daemon /usr/bin/$prog $OPTIONS $RFIOD_OPTIONS
         
         # Write the pid to a file. This way when we stop() the rfiod daemon

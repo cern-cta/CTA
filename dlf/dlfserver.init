@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: dlfserver.init,v $ $Revision: 1.19 $ $Release$ $Date: 2008/02/26 17:54:56 $ $Author: waldron $
+# @(#)$RCSfile: dlfserver.init,v $ $Revision: 1.20 $ $Release$ $Date: 2008/05/05 14:40:01 $ $Author: waldron $
 #
 # chkconfig: 345 67 38
 # description: Distributed Logging Facility Initialisation Script
@@ -46,6 +46,7 @@ start() {
         # Run daemon
         echo -n $"Starting $prog: "
 
+        cd /var/spool/dlf
         daemon /usr/bin/$prog $DLFSERVER_OPTIONS
 
         # Write the pid to a file.

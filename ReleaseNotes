@@ -10,6 +10,7 @@
   - #36011: stager_qry -s: SI units
   - #36060: Client gets no reply in case of 'Invalid user'
   - #36068: stagerDaemon has (too?) many file descriptors
+  - #36255: RFE: Core dumping to be enabled by default
 
   - Added support for checking the black and white list for `stager_qry -s` with no
     service class defined. If the user issuing the command does not have DiskPoolQuery

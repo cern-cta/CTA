@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rmcdaemon.init,v $ $Revision: 1.4 $ $Release$ $Date: 2008/02/26 17:54:57 $ $Author: waldron $
+# @(#)$RCSfile: rmcdaemon.init,v $ $Revision: 1.5 $ $Release$ $Date: 2008/05/05 14:39:59 $ $Author: waldron $
 #
 # chkconfig: 345 71 34
 # description: RMC server daemon
@@ -46,6 +46,7 @@ start() {
         # Run daemon
         echo -n $"Starting $prog: "
 
+        cd /var/spool/rmc
         daemon /usr/bin/$prog $RMCDAEMON_OPTIONS
 
         # Write the pid to a file.

@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: nsdaemon.init,v $ $Revision: 1.7 $ $Release$ $Date: 2008/02/26 17:54:56 $ $Author: waldron $
+# @(#)$RCSfile: nsdaemon.init,v $ $Revision: 1.8 $ $Release$ $Date: 2008/05/05 14:40:00 $ $Author: waldron $
 #
 # chkconfig: 345 66 39
 # description: NS server daemo
@@ -46,6 +46,7 @@ start() {
         # Run daemon
         echo -n $"Starting $prog: "
 
+        cd /var/spool/ns
         daemon /usr/bin/$prog $NSDAEMON_OPTIONS
 
         # Write the pid to a file.
