@@ -172,6 +172,7 @@ int *nbstruct;
 						}
 					}
 				}
+				(void) netclose (s);
 			} else {
 #ifdef CSEC
 				Csec_client_initContext (&ctx, CSEC_SERVICE_TYPE_HOST, NULL);
