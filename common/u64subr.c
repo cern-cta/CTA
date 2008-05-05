@@ -9,8 +9,8 @@
 #include <osdep.h>
 #include "u64subr.h"
 
-/* i64tostr - convert a signed 64 bits integer to a string */
-/*	buf must be long enough to contain the result
+/* i64tostr - convert a signed 64 bits integer to a string
+ *	buf must be long enough to contain the result
  *	if fldsize <= 0, the result is left adjusted in buf
  *	if fldsize > 0, the result is right adjusted
  *		leading spaces are inserted if needed
@@ -39,8 +39,8 @@ char DLL_DECL *i64tostr(i64, buf, fldsize)
 	return (buf);
 }
 
-/* i64tohexstr - convert a signed 64 bits integer to an hex string */
-/*	buf must be long enough to contain the result
+/* i64tohexstr - convert a signed 64 bits integer to an hex string
+ *	buf must be long enough to contain the result
  *	if fldsize <= 0, the result is left adjusted in buf
  *	if fldsize > 0, the result is right adjusted
  *		leading spaces are inserted if needed
@@ -79,7 +79,7 @@ u_signed64 DLL_DECL strtou64(str)
 	while (isspace (*p)) p++;	/* skip leading spaces */
 	while (*p) {
 		if (! isdigit (*p)) break;
-			u64 = u64 * 10 + (*p++ - '0');
+		u64 = u64 * 10 + (*p++ - '0');
 	}
 	return (u64);
 }
@@ -94,12 +94,12 @@ u_signed64 DLL_DECL hexstrtou64(str)
 	while (isspace (*p)) p++;	/* skip leading spaces */
 	while (*p) {
 		if ((! isdigit (*p)) &&
-			(*p != 'A')      && (*p != 'a') &&
-			(*p != 'B')      && (*p != 'b') &&
-			(*p != 'C')      && (*p != 'c') &&
-			(*p != 'D')      && (*p != 'd') &&
-			(*p != 'E')      && (*p != 'e') &&
-			(*p != 'F')      && (*p != 'f')
+			(*p != 'A') && (*p != 'a') &&
+			(*p != 'B') && (*p != 'b') &&
+			(*p != 'C') && (*p != 'c') &&
+			(*p != 'D') && (*p != 'd') &&
+			(*p != 'E') && (*p != 'e') &&
+			(*p != 'F') && (*p != 'f')
 			) break;
 		if (isdigit(*p)) {
 			u64 = u64 * 10 + (*p++ - '0');
@@ -147,8 +147,8 @@ char DLL_DECL *u64tostr(u64, buf, fldsize)
 	return (buf);
 }
 
-/* u64tohexstr - convert an unsigned 64 bits integer to an hex string */
-/*	buf must be long enough to contain the result
+/* u64tohexstr - convert an unsigned 64 bits integer to an hex string
+ *	buf must be long enough to contain the result
  *	if fldsize <= 0, the result is left adjusted in buf
  *	if fldsize > 0, the result is right adjusted
  *		leading spaces are inserted if needed
@@ -215,7 +215,7 @@ u_signed64 DLL_DECL strutou64(str)
 	while (isspace (*p)) p++;	/* skip leading spaces */
 	while (*p) {
 		if (! isdigit (*p)) break;
-			u64 = u64 * 10 + (*p++ - '0');
+		u64 = u64 * 10 + (*p++ - '0');
 	}
 	if (*p && ! *(p + 1)) {
 		if (*p == 'k') u64 *= ONE_KB;
@@ -237,12 +237,12 @@ u_signed64 DLL_DECL hexstrutou64(str)
 	while (isspace (*p)) p++;	/* skip leading spaces */
 	while (*p) {
 		if ((! isdigit (*p)) &&
-			(*p != 'A')      && (*p != 'a') &&
-			(*p != 'B')      && (*p != 'b') &&
-			(*p != 'C')      && (*p != 'c') &&
-			(*p != 'D')      && (*p != 'd') &&
-			(*p != 'E')      && (*p != 'e') &&
-			(*p != 'F')      && (*p != 'f')
+			(*p != 'A') && (*p != 'a') &&
+			(*p != 'B') && (*p != 'b') &&
+			(*p != 'C') && (*p != 'c') &&
+			(*p != 'D') && (*p != 'd') &&
+			(*p != 'E') && (*p != 'e') &&
+			(*p != 'F') && (*p != 'f')
 			) break;
 		if (isdigit(*p)) {
 			u64 = u64 * 10 + (*p++ - '0');
@@ -260,8 +260,9 @@ u_signed64 DLL_DECL hexstrutou64(str)
 	return (u64);
 }
 
-/* u64tostru - convert an unsigned 64 bits integer to a string  with unit*/
-/*	buf must be long enough to contain the result
+/* u64tostru - convert an unsigned 64 bits integer to a string with unit using powers
+ * of 1024
+ *	buf must be long enough to contain the result
  *	if fldsize <= 0, the result is left adjusted in buf
  *	if fldsize > 0, the result is right adjusted
  *		leading spaces are inserted if needed
@@ -310,6 +311,61 @@ char DLL_DECL *u64tostru(u64, buf, fldsize)
 		if (n > 0) {
 			memset (buf, ' ', n);
 	        }
+		strcpy (buf + n, tmpbuf);
+	}
+		
+	return (buf);
+}
+
+/* u64tostru - convert an unsigned 64 bits integer to a string with unit using powers 
+ * of 1000
+*	buf must be long enough to contain the result
+ *	if fldsize <= 0, the result is left adjusted in buf
+ *	if fldsize > 0, the result is right adjusted
+ *		leading spaces are inserted if needed
+ */
+char DLL_DECL *u64tostrsi(u64, buf, fldsize)
+	u_signed64 u64;
+	char *buf;
+	int fldsize;
+{
+	float fnum;
+	int inum;
+	int n;
+	signed64 t64;
+	char tmpbuf[21];
+	char unit;
+
+	t64 = u64;
+	if (u64 > CONSTLL(1000000000000000)) {
+		fnum = (double) t64 / (double) CONSTLL(1000000000000000);
+		unit = 'P';
+	} else if (u64 > CONSTLL(1000000000000)) {
+		fnum = (double) t64 / (double) CONSTLL(1000000000000);
+		unit = 'T';
+	} else if (u64 > 1000000000) {
+		fnum = (double) t64 / (double) 1000000000;
+		unit = 'G';
+	} else if (u64 > 1000000) {
+		fnum = (double) t64 / (double) 1000000;
+		unit = 'M';
+	} else if (u64 > 1000) {
+		fnum = (double) t64 / (double) 1000;
+		unit = 'k';
+	} else {
+		inum = (int) u64;
+		unit = ' ';
+	}
+	if (unit != ' ')
+		sprintf (tmpbuf, "%.2f%c", fnum, unit);
+	else
+		sprintf (tmpbuf, "%d", inum);
+
+	if (fldsize <= 0) {
+		strcpy (buf, tmpbuf);
+	} else {
+		n = fldsize - strlen (tmpbuf);
+		memset (buf, ' ', n);
 		strcpy (buf + n, tmpbuf);
 	}
 		

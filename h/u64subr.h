@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: u64subr.h,v $ $Revision: 1.1 $ $Date: 2004/10/05 13:19:21 $ CERN/IT/ADC/CA Jean-Damien Durand
+ * @(#)$RCSfile: u64subr.h,v $ $Revision: 1.2 $ $Date: 2008/05/05 08:51:59 $ CERN/IT/ADC/CA Jean-Damien Durand
  */
 
 #ifndef __u64subr_h
@@ -21,5 +21,6 @@ EXTERN_C char * DLL_DECL u64tohexstr _PROTO((U_HYPER, char *, int));
 EXTERN_C U_HYPER DLL_DECL strutou64 _PROTO((CONST char *));
 EXTERN_C U_HYPER DLL_DECL hexstrutou64 _PROTO((CONST char *));
 EXTERN_C char * DLL_DECL u64tostru _PROTO((U_HYPER, char *, int));
+EXTERN_C char * DLL_DECL u64tostrsi _PROTO((U_HYPER, char *, int));
 
 #endif /* __u64subr_h */
