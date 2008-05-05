@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.636 $ $Date: 2008/02/26 16:14:15 $ $Author: waldron $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.637 $ $Date: 2008/05/05 08:38:11 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -322,27 +322,27 @@ END;
  * PL/SQL method implementing the diskPoolQuery when listing pools
  */
 CREATE OR REPLACE PROCEDURE describeDiskPools
-(svcClassName IN VARCHAR2,
- result OUT castor.DiskPoolsQueryLine_Cur) AS
+(svcClassName IN VARCHAR2, reqEuid IN INTEGER, reqEgid IN INTEGER,
+ res OUT NUMBER, result OUT castor.DiskPoolsQueryLine_Cur) AS
 BEGIN
-  -- We use here analytic functions and the grouping sets
-  -- functionnality to get both the list of filesystems
-  -- and a summary per diskserver and per diskpool
-  -- The grouping analytic function also allows to mark
-  -- the summary lines for easy detection in the C++ code
+  -- We use here analytic functions and the grouping sets functionnality to 
+  -- get both the list of filesystems and a summary per diskserver and per 
+  -- diskpool. The grouping analytic function also allows to mark the summary 
+  -- lines for easy detection in the C++ code
   OPEN result FOR
-    SELECT grouping(ds.name) as IsDSGrouped,
-           grouping(fs.mountPoint) as IsFSGrouped,
+    SELECT grouping(ds.name) AS IsDSGrouped,
+           grouping(fs.mountPoint) AS IsFSGrouped,
            dp.name,
            ds.name, ds.status, fs.mountPoint,
            sum(decode(sign(fs.free - fs.minAllowedFreeSpace * fs.totalSize), -1, 0,
-	       fs.free - fs.minAllowedFreeSpace * fs.totalSize)) as freeSpace,
+	       fs.free - fs.minAllowedFreeSpace * fs.totalSize)) AS freeSpace,
            sum(fs.totalSize),
            fs.minFreeSpace, fs.maxFreeSpace, fs.status
       FROM FileSystem fs, DiskServer ds, DiskPool dp,
            DiskPool2SvcClass d2s, SvcClass sc
-     WHERE (sc.name = svcClassName OR svcClassName is NULL)
+     WHERE (sc.name = svcClassName OR svcClassName IS NULL)
        AND sc.id = d2s.child
+       AND checkPermissionOnSvcClass(sc.name, reqEuid, reqEgid, 103) = 0
        AND d2s.parent = dp.id
        AND dp.id = fs.diskPool
        AND ds.id = fs.diskServer
@@ -355,33 +355,49 @@ BEGIN
            (dp.name, ds.name, ds.status),
            (dp.name)
           )
-       ORDER BY dp.name, IsDSGrouped desc, ds.name, IsFSGrouped desc, fs.mountpoint;
+       ORDER BY dp.name, IsDSGrouped DESC, ds.name, IsFSGrouped DESC, fs.mountpoint;
+
+  -- If no results are available, check to see if any diskpool exists and if 
+  -- access to view all the diskpools has been revoked. The information extracted
+  -- here will be used to send an appropriate error message to the client.
+  IF result%ROWCOUNT = 0 THEN
+    SELECT CASE COUNT(*)
+           WHEN sum(checkPermissionOnSvcClass(sc.name, reqEuid, reqEgid, 103)) THEN -1 END
+      INTO res
+      FROM DiskPool2SvcClass d2s, SvcClass sc
+     WHERE d2s.child = sc.id
+       AND (sc.name = svcClassName OR svcClassName IS NULL);
+  END IF;
 END;
+
 
 
 /*
  * PL/SQL method implementing the diskPoolQuery for a given pool
  */
 CREATE OR REPLACE PROCEDURE describeDiskPool
-(diskPoolName IN VARCHAR2,
- result OUT castor.DiskPoolQueryLine_Cur) AS
+(diskPoolName IN VARCHAR2, svcClassName IN VARCHAR2,
+ res OUT NUMBER, result OUT castor.DiskPoolQueryLine_Cur) AS
 BEGIN
-  -- We use here analytic functions and the grouping sets
-  -- functionnality to get both the list of filesystems
-  -- and a summary per diskserver and per diskpool
-  -- The grouping analytic function also allows to mark
-  -- the summary lines for easy detection in the C++ code
+  -- We use here analytic functions and the grouping sets functionnality to 
+  -- get both the list of filesystems and a summary per diskserver and per 
+  -- diskpool. The grouping analytic function also allows to mark the summary 
+  -- lines for easy detection in the C++ code
   OPEN result FOR 
-    SELECT grouping(ds.name) as IsDSGrouped,
-           grouping(fs.mountPoint) as IsGrouped,
+    SELECT grouping(ds.name) AS IsDSGrouped,
+           grouping(fs.mountPoint) AS IsGrouped,
            ds.name, ds.status, fs.mountPoint,
-           sum(fs.free - fs.minAllowedFreeSpace * fs.totalSize) as freeSpace,
+           sum(fs.free - fs.minAllowedFreeSpace * fs.totalSize) AS freeSpace,
            sum(fs.totalSize),
            fs.minFreeSpace, fs.maxFreeSpace, fs.status
-      FROM FileSystem fs, DiskServer ds, DiskPool dp
-     WHERE dp.id = fs.diskPool
-       AND dp.name = diskPoolName
+      FROM FileSystem fs, DiskServer ds, DiskPool dp,
+           DiskPool2SvcClass d2s, SvcClass sc
+     WHERE (sc.name = svcClassName OR svcClassName IS NULL)
+       AND sc.id = d2s.child
+       AND d2s.parent = dp.id
+       AND dp.id = fs.diskPool
        AND ds.id = fs.diskServer
+       AND dp.name = diskPoolName
        group by grouping sets(
            (ds.name, ds.status, fs.mountPoint,
              fs.free - fs.minAllowedFreeSpace * fs.totalSize,
@@ -390,5 +406,17 @@ BEGIN
            (ds.name, ds.status),
            (dp.name)
           )
-       order by IsDSGrouped desc, ds.name, IsGrouped desc, fs.mountpoint;
+       order by IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint;
+
+  -- If no results are available, check to see if any diskpool exists and if 
+  -- access to view all the diskpools has been revoked. The information extracted
+  -- here will be used to send an appropriate error message to the client.
+  IF result%ROWCOUNT = 0 THEN
+    SELECT COUNT(*) INTO res
+      FROM DiskPool dp, DiskPool2SvcClass d2s, SvcClass sc
+     WHERE d2s.child = sc.id
+       AND d2s.parent = dp.id
+       AND dp.name = diskPoolName
+       AND (sc.name = svcClassName OR svcClassName IS NULL);
+  END IF;
 END;
