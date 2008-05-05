@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.37 2008/03/25 14:35:21 itglp Exp $
+ * $Id: stager_client_api_query.cpp,v 1.38 2008/05/05 08:49:56 waldron Exp $
  */
 
 /*
@@ -40,18 +40,15 @@
 /* ================= */
 
 
-
 ////////////////////////////////////////////////////////////
 //    stage_filequery                                     //
 ////////////////////////////////////////////////////////////
-
 
 EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
 				      int nbreqs,
 				      struct stage_filequery_resp **responses,
 				      int *nbresps,
 				      struct stage_options* opts){
-
   
   const char *func = "stage_filequery";
   int ret;
@@ -181,7 +178,6 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
 					 int *nbresps,
 					 struct stage_options* opts) {
 
-
   const char *func = "stage_requestquery";
   int ret=0;
  
@@ -271,15 +267,12 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
     return -1;
   }
   return 0;
-
 }
-
 
 
 ////////////////////////////////////////////////////////////
 //    stage_findrequest                                   //
 ////////////////////////////////////////////////////////////
-
 
 EXTERN_C int DLL_DECL stage_findrequest(struct stage_query_req *requests,
 					int nbreqs,
@@ -292,7 +285,7 @@ EXTERN_C int DLL_DECL stage_findrequest(struct stage_query_req *requests,
 
 
 ////////////////////////////////////////////////////////////
-//    stage_translateDiskPoolResponse
+//    stage_translateDiskPoolResponse                     //
 ////////////////////////////////////////////////////////////
 
 void stage_translateDiskPoolResponse
@@ -332,8 +325,9 @@ void stage_translateDiskPoolResponse
   }
 }
 
+
 ////////////////////////////////////////////////////////////
-//    stage_diskpoolquery                                  //
+//    stage_diskpoolquery                                 //
 ////////////////////////////////////////////////////////////
 
 EXTERN_C int DLL_DECL stage_diskpoolquery
@@ -405,11 +399,11 @@ EXTERN_C int DLL_DECL stage_diskpoolquery
     return -1;
   }
   return 0;
-
 }
 
+
 ////////////////////////////////////////////////////////////
-//    stage_diskpoolsquery                                  //
+//    stage_diskpoolsquery                                //
 ////////////////////////////////////////////////////////////
 
 EXTERN_C int DLL_DECL stage_diskpoolsquery
@@ -507,11 +501,11 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
     return -1;
   }
   return 0;
-
 }
 
+
 ////////////////////////////////////////////////////////////
-//    stage_delete_diskpoolquery_resp                    //
+//    stage_delete_diskpoolquery_resp                     //
 ////////////////////////////////////////////////////////////
 
 EXTERN_C void DLL_DECL stage_delete_diskpoolquery_resp
@@ -528,18 +522,24 @@ EXTERN_C void DLL_DECL stage_delete_diskpoolquery_resp
   free(response->diskServers);
 }
 
+
 ////////////////////////////////////////////////////////////
-//    stage_print_diskpoolsquery_resp                     //
+//    stage_print_diskpoolquery_resp                     //
 ////////////////////////////////////////////////////////////
 
 EXTERN_C void DLL_DECL stage_print_diskpoolquery_resp
-(FILE* stream, struct stage_diskpoolquery_resp *response) {
+(FILE* stream, struct stage_diskpoolquery_resp *response, int siflag) {
   char freeBuf[21];
   char totalBuf[21];
   char freepBuf[21];
   if (0 == response) return;
-  u64tostru(response->freeSpace, freeBuf, 0);
-  u64tostru(response->totalSpace, totalBuf, 0);
+  if (siflag) {
+    u64tostrsi(response->freeSpace, freeBuf, 0);
+    u64tostrsi(response->totalSpace, totalBuf, 0);
+  } else {
+    u64tostru(response->freeSpace, freeBuf, 0);
+    u64tostru(response->totalSpace, totalBuf, 0);
+  }
   if (0 == response->totalSpace) {
     strncpy(freepBuf, " -", 3);
   } else {
@@ -550,8 +550,13 @@ EXTERN_C void DLL_DECL stage_print_diskpoolquery_resp
   freepBuf);
   for (int i = 0; i < response->nbDiskServers; i++) {
     struct stage_diskServerDescription& dsd = response->diskServers[i];
-    u64tostru(dsd.freeSpace, freeBuf, 0);
-    u64tostru(dsd.totalSpace, totalBuf, 0);
+    if (siflag) {
+      u64tostrsi(dsd.freeSpace, freeBuf, 0);
+      u64tostrsi(dsd.totalSpace, totalBuf, 0);
+    } else {
+      u64tostru(dsd.freeSpace, freeBuf, 0);
+      u64tostru(dsd.totalSpace, totalBuf, 0);
+    }
     if (0 == dsd.totalSpace) {
       strncpy(freepBuf, " -", 3);
     } else {
@@ -564,8 +569,13 @@ EXTERN_C void DLL_DECL stage_print_diskpoolquery_resp
     fprintf(stream, "     %-33s %-23s %-10s    FREE       GCBOUNDS\n", "FileSystems", "STATUS", "CAPACITY");
     for (int j = 0; j < dsd.nbFileSystems; j++) {
       struct stage_fileSystemDescription& fsd = dsd.fileSystems[j];
-      u64tostru(fsd.freeSpace, freeBuf, 0);
-      u64tostru(fsd.totalSpace, totalBuf, 0);
+      if (siflag) {
+	u64tostrsi(fsd.freeSpace, freeBuf, 0);
+	u64tostrsi(fsd.totalSpace, totalBuf, 0);
+      } else {
+	u64tostru(fsd.freeSpace, freeBuf, 0);
+	u64tostru(fsd.totalSpace, totalBuf, 0);
+      }
       if (0 == fsd.totalSpace) {
         strncpy(freepBuf, " -", 3);
       } else {

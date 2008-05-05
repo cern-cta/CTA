@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.39 $ $Release$ $Date: 2008/02/21 17:29:10 $ $Author: waldron $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.40 $ $Release$ $Date: 2008/05/05 08:52:35 $ $Author: waldron $
  *
  * the client API to the castor stager
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.39 $
- * @date $Date: 2008/02/21 17:29:10 $
+ * @version $Revision: 1.40 $
+ * @date $Date: 2008/05/05 08:52:35 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.39 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.40 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -1181,9 +1181,11 @@ EXTERN_C void DLL_DECL stage_delete_diskpoolquery_resp _PROTO
  *
  * @param stream the stream where to print the diskPool
  * @param response the structure to free
+ * @param siflag flag to indicate whether to display size
+ * related information in powers of 1000 not 1024
  */
 EXTERN_C void DLL_DECL stage_print_diskpoolquery_resp _PROTO
-((FILE *stream, struct stage_diskpoolquery_resp *response));
+((FILE *stream, struct stage_diskpoolquery_resp *response, int siflag));
 
 /**********************************************************
  *    stage_requestquery                                  *

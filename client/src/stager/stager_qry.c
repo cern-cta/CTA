@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.27 2008/03/13 16:37:03 itglp Exp $
+ * $Id: stager_qry.c,v 1.28 2008/05/05 08:48:20 waldron Exp $
  */
 
 /*
@@ -45,7 +45,8 @@ static struct Coptions longopts[] =
     {"statistic",          NO_ARGUMENT,        NULL,      's'},
     {"svcClass",           REQUIRED_ARGUMENT,  NULL,      'S'},
     {"help",               NO_ARGUMENT,        NULL,      'h'},
-    {NULL,                 0,                  NULL,        0}
+    {"si",                 NO_ARGUMENT,        NULL,      'i' },
+    {NULL,                 0,                  NULL,       0 }
   };
 
 /**
@@ -60,7 +61,7 @@ static struct Coptions longopts_fileQuery[] =
     {"requestid",          REQUIRED_ARGUMENT,  NULL,      'r'},
     {"next",               NO_ARGUMENT,        NULL,      'n'},
     {"svcClass",           REQUIRED_ARGUMENT,  NULL,      'S'},
-    {NULL,                 0,                  NULL,        0}
+    {NULL,                 0,                  NULL,       0 }
   };
 
 /**
@@ -68,10 +69,11 @@ static struct Coptions longopts_fileQuery[] =
  */
 static struct Coptions longopts_diskPoolQuery[] =
   {
-    {"statistic",          NO_ARGUMENT,        NULL,      's'},
-    {"diskPool",           REQUIRED_ARGUMENT,  NULL,      'd'},
-    {"svcClass",           REQUIRED_ARGUMENT,  NULL,      'S'}, 
-   {NULL,                 0,                  NULL,        0}
+    {"statistic",         NO_ARGUMENT,        NULL,      's'},
+    {"diskPool",          REQUIRED_ARGUMENT,  NULL,      'd'},
+    {"svcClass",          REQUIRED_ARGUMENT,  NULL,      'S'},
+    {"si",                NO_ARGUMENT,        NULL,      'i'}, 
+    {NULL,                0,                  NULL,       0 }
   };
 
 /**
@@ -131,10 +133,13 @@ int parseCmdLineFileQuery(int argc, char *argv[], struct cmd_args *args);
  * @param argv the command line
  * @param diksPool the diskPool given (if any), or NULL
  * @param svcClass the svcClass specified (if any), or NULL
+ * @param siflag flag to indicate whether to display size
+ * related information in powers of 1000 not 1024
  * @return 0 if parsing succeeded
  */
 int parseCmdLineDiskPoolQuery(int argc, char *argv[],
-			      char** diskpool, char** svcClass);
+			      char** diskpool, char** svcClass,
+			      int* siflag);
 
 // -----------------------------------------------------------------------
 // main
@@ -182,8 +187,8 @@ void handleFileQuery(int argc, char *argv[], int nbArgs) {
 #endif
   args.opts.stage_host = NULL;
   args.opts.service_class = NULL;
-  args.opts.stage_version=2;
-  args.opts.stage_port=0;
+  args.opts.stage_version = 2;
+  args.opts.stage_port = 0;
   args.nbreqs = nbArgs;
 
   create_query_req(&(args.requests), args.nbreqs);
@@ -251,15 +256,16 @@ void handleDiskPoolQuery(int argc, char *argv[], int nbArgs) {
   int errflg;
   char errbuf[BUFSIZE];
   char *diskPool = NULL;
+  int siflag = 0;
   struct stage_options opts;
   
   // parsing the commane line
   opts.stage_host = NULL;
   opts.stage_port = 0;
   opts.service_class = NULL;
-  opts.stage_version=2;
+  opts.stage_version = 2;
   errflg = parseCmdLineDiskPoolQuery
-    (argc, argv, &diskPool, &(opts.service_class));
+    (argc, argv, &diskPool, &(opts.service_class), &siflag);
   if (errflg != 0) {
     usage (argv[0]);
     exit (EXIT_FAILURE);
@@ -291,7 +297,7 @@ void handleDiskPoolQuery(int argc, char *argv[], int nbArgs) {
     }
     // display and cleanup memory
     for (i = 0; i < nbresps; i++) {
-      stage_print_diskpoolquery_resp(stdout, &(responses[i]));
+      stage_print_diskpoolquery_resp(stdout, &(responses[i]), siflag);
       stage_delete_diskpoolquery_resp(&(responses[i]));
     }
   } else {
@@ -306,7 +312,7 @@ void handleDiskPoolQuery(int argc, char *argv[], int nbArgs) {
       exit(EXIT_FAILURE);
     }
     // display and cleanup memory
-    stage_print_diskpoolquery_resp(stdout, &response);
+    stage_print_diskpoolquery_resp(stdout, &response, siflag);
     stage_delete_diskpoolquery_resp(&response);
   }
   // end
@@ -396,7 +402,8 @@ int parseCmdLineFileQuery(int argc, char *argv[],
 // parseCmdLineDiskPoolQuery
 // -----------------------------------------------------------------------
 int parseCmdLineDiskPoolQuery(int argc, char *argv[],
-                              char** diskPool, char** svcClass) {
+			      char** diskPool, char** svcClass,
+			      int *siflag) {
   int Coptind, Copterr, errflg;
   char c;
 
@@ -404,7 +411,7 @@ int parseCmdLineDiskPoolQuery(int argc, char *argv[],
   Copterr = 1;
   errflg = 0;
   while ((c = Cgetopt_long (argc, argv,
-                            "sd:S:",
+                            "sd:S:i",
                             longopts_diskPoolQuery, NULL)) != -1) {
     switch (c) {
     case 'd':
@@ -412,6 +419,9 @@ int parseCmdLineDiskPoolQuery(int argc, char *argv[],
       break;
     case 'S':
       *svcClass = (char *)strdup(Coptarg);
+      break;
+    case 'i':
+      *siflag = 1;
       break;
     case 's':
       break;
@@ -438,7 +448,7 @@ int checkAndCountArguments(int argc, char *argv[],
   *count = 0;
   *type = FILEQUERY;
   while ((c = Cgetopt_long
-          (argc, argv, "M:E:F:U:r:nhsd:S:", longopts, NULL)) != -1) {
+          (argc, argv, "M:E:F:U:r:nhsd:S:i", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
     case 'E':
@@ -451,6 +461,7 @@ int checkAndCountArguments(int argc, char *argv[],
       *type = DISKPOOLQUERY;
       break;
     case 'S':
+    case 'i':
     case 'n':
     case 'd':
       break;
@@ -476,5 +487,5 @@ void usage(char *cmd) {
            "[-M hsmfile [-M ...]] [-E regular_expression [-E ...]] ",
            "[-F fileid@nshost] [-S svcClass] [-U usertag] [-r requestid] [-n] [-h]\n");
   fprintf (stderr, "       %s ", cmd);
-  fprintf (stderr, "%s", "-s [-S svcClass] [-d diskPool] [-h]\n");
+  fprintf (stderr, "%s", "-s [-S svcClass] [-d diskPool] [-i] [-h]\n");
 }

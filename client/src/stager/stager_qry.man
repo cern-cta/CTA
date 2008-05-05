@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.19 $ $Date: 2008/03/19 14:25:54 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.20 $ $Date: 2008/05/05 08:48:20 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_QRY 1castor "$Date: 2008/03/19 14:25:54 $" CASTOR "STAGER Commands"
+.TH STAGER_QRY 1castor "$Date: 2008/05/05 08:48:20 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_qry \- query the CASTOR stager for files and requests
 .SH SYNOPSIS
@@ -48,6 +48,9 @@ stager_qry \- query the CASTOR stager for files and requests
 [
 .BI -d
 .BI diskPool
+]
+[
+.BI -i
 ]
 [
 .BI -h
@@ -171,6 +174,9 @@ Specifies the disk pool for which statistics should be displayed. It has to be u
 .BI \-s
 and takes precedence over
 .BI \-S
+.TP
+.BI \-i,\ \-\-si
+Print size related information in powers of 1000 not 1024.
 .TP
 .BI \-h,\ \-\-help
 display command usage help
