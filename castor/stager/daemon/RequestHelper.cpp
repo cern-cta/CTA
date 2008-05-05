@@ -158,34 +158,33 @@ namespace castor{
           uid_t euid = fileRequest->euid();
           uid_t egid = fileRequest->egid();
 
-          if((this_passwd = Cgetpwuid(euid)) == NULL){
-            castor::exception::Exception ex(SEUSERUNKN);
+          if ((this_passwd = Cgetpwuid(euid)) == NULL) {
+            castor::exception::Exception ex(serrno);
             throw ex;
           }
 
-          if(egid != this_passwd->pw_gid){
+          if (egid != this_passwd->pw_gid) {
             castor::exception::Exception ex(SEINTERNAL);
             throw ex;
           }
 
-          if((this_gr=Cgetgrgid(egid))==NULL){
-            castor::exception::Exception ex(SEUSERUNKN);
+          if ((this_gr = Cgetgrgid(egid)) == NULL) {
+            castor::exception::Exception ex(serrno);
             throw ex;
-
           }
 
           username = this_passwd->pw_name;
           groupname = this_gr->gr_name;
-        }catch(castor::exception::Exception e){
-          castor::dlf::Param params[]={ castor::dlf::Param("Filename",subrequest->fileName()),
-            castor::dlf::Param("Function", "RequestHelper->setUsernameAndGroupname")
-          };
-          castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_INVALID, 2 ,params);
-
-          e.getMessage()<< "Invalid user";
+        } catch(castor::exception::Exception e) {
+          castor::dlf::Param params[]= 
+	    {castor::dlf::Param("Filename", subrequest->fileName()),
+	     castor::dlf::Param("Euid", fileRequest->euid()),
+	     castor::dlf::Param("Egid", fileRequest->egid()),
+	     castor::dlf::Param("Function", "RequestHelper->setUsernameAndGroupname")};
+          castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_INVALID, 4, params);
+          e.getMessage() << "Invalid user";
           throw e;
         }
-
       }
 
 
@@ -355,19 +354,20 @@ namespace castor{
 
             case OBJ_SetFileGCWeight: {
 	      // Get the name of the localhost to pass into the Cupv interface.
-	      std::string hostName;
+	      std::string localHost;
 	      try {
-		hostName = castor::System::getHostName();
+		localHost = castor::System::getHostName();
 	      } catch (castor::exception::Exception e) {
                 castor::exception::Exception ex(SEINTERNAL);
+		ex.getMessage() << "Failed to determine the name of the localhost";
                 throw ex;
 	      }
 	      // Check if the user has GRP_ADMIN or ADMIN privileges.
 	      if ((stgCnsHelper->cnsFilestat.gid == egid) &&
-		  (Cupv_check(euid, egid, hostName.c_str(), hostName.c_str(), P_GRP_ADMIN) == 0)) {
+		  (Cupv_check(euid, egid, localHost.c_str(), localHost.c_str(), P_GRP_ADMIN) == 0)) {
         	return;
 	      }
-	      if (Cupv_check(euid, egid, hostName.c_str(), hostName.c_str(), P_ADMIN) == -1) {
+	      if (Cupv_check(euid, egid, localHost.c_str(), localHost.c_str(), P_ADMIN) == -1) {
 		castor::exception::Exception ex(serrno);
                 throw ex;
 	      }
