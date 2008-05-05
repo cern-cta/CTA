@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.646 $ $Date: 2008/04/21 11:48:48 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.647 $ $Date: 2008/05/05 08:17:38 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -9,7 +9,7 @@
  *******************************************************************/
 
 /* A small table used to cross check code and DB versions */
-UPDATE CastorVersion SET schemaVersion = '2_1_7_0';
+UPDATE CastorVersion SET schemaVersion = '2_1_7_5';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
