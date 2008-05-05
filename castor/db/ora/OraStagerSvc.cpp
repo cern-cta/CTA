@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.249 $ $Release$ $Date: 2008/04/16 09:43:02 $ $Author: gtaur $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.250 $ $Release$ $Date: 2008/05/05 08:34:54 $ $Author: waldron $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -118,7 +118,7 @@ const std::string castor::db::ora::OraStagerSvc::s_processPutDoneRequestStatemen
 
 /// SQL statement for createDiskCopyReplicaRequest
 const std::string castor::db::ora::OraStagerSvc::s_createDiskCopyReplicaRequestStatementString =
-  "BEGIN createDiskCopyReplicaRequest(:1, :2, :3); END;";
+  "BEGIN createDiskCopyReplicaRequest(:1, :2, :3, :4); END;";
 
 /// SQL statement for selectCastorFile
 const std::string castor::db::ora::OraStagerSvc::s_selectCastorFileStatementString =
@@ -583,7 +583,7 @@ int castor::db::ora::OraStagerSvc::processPutDoneRequest
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStagerSvc::createDiskCopyReplicaRequest
 (castor::stager::SubRequest* subreq, castor::stager::DiskCopyForRecall* srcDiskCopy,
- castor::stager::SvcClass* destSc)
+ castor::stager::SvcClass* srcSc, castor::stager::SvcClass* destSc)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statement is ok
@@ -595,7 +595,8 @@ void castor::db::ora::OraStagerSvc::createDiskCopyReplicaRequest
     // execute the statement
     m_createDiskCopyReplicaRequestStatement->setDouble(1, (subreq ? subreq->id() : 0));
     m_createDiskCopyReplicaRequestStatement->setDouble(2, srcDiskCopy->id());
-    m_createDiskCopyReplicaRequestStatement->setDouble(3, destSc->id());
+    m_createDiskCopyReplicaRequestStatement->setDouble(3, srcSc->id());
+    m_createDiskCopyReplicaRequestStatement->setDouble(4, destSc->id());
     unsigned int rc =
       m_createDiskCopyReplicaRequestStatement->executeUpdate();
     if (0 == rc) {

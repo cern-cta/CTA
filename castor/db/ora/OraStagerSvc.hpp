@@ -164,12 +164,14 @@ namespace castor {
          * Create an internal request to trigger a diskcopy replication.
          * @param subreq the SubRequest which has to wait for the replication
          * @param srcDiskCopy the source diskCopy
+	 * @param srcSc the source service class
          * @param destSc the destination service class
          * @exception Exception in case of system error
          */
         virtual void createDiskCopyReplicaRequest
         (castor::stager::SubRequest* subreq,
-         castor::stager::DiskCopyForRecall* srcDiskCopy, 
+         castor::stager::DiskCopyForRecall* srcDiskCopy,
+	 castor::stager::SvcClass* srcSc,
          castor::stager::SvcClass* destSc)
           throw (castor::exception::Exception);
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.92 $ $Release$ $Date: 2008/04/11 12:28:11 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.93 $ $Release$ $Date: 2008/05/05 08:34:53 $ $Author: waldron $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -158,12 +158,14 @@ namespace castor {
        * Create an internal request to trigger a diskcopy replication.
        * @param subreq the SubRequest which has to wait for the replication
        * @param srcDiskCopy the source diskCopy
+       * @param srcSc the source service class
        * @param destSc the destination service class
        * @exception Exception in case of system error
        */
       virtual void createDiskCopyReplicaRequest
       (castor::stager::SubRequest* subreq,
-       castor::stager::DiskCopyForRecall* srcDiskCopy, 
+       castor::stager::DiskCopyForRecall* srcDiskCopy,
+       castor::stager::SvcClass* srcSc,
        castor::stager::SvcClass* destSc)
         throw (castor::exception::Exception) = 0;
 
