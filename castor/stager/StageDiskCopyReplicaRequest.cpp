@@ -30,8 +30,10 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StageDiskCopyReplicaRequest.hpp"
+#include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -41,9 +43,10 @@
 //------------------------------------------------------------------------------
 castor::stager::StageDiskCopyReplicaRequest::StageDiskCopyReplicaRequest() throw() :
   FileRequest(),
-  m_sourceDiskCopyId(0),
-  m_destDiskCopyId(0),
-  m_id(0) {
+  m_id(0),
+  m_sourceSvcClass(0),
+  m_destDiskCopy(0),
+  m_sourceDiskCopy(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -67,10 +70,26 @@ void castor::stager::StageDiskCopyReplicaRequest::print(std::ostream& stream,
   // Call print on the parent class(es)
   this->FileRequest::print(stream, indent, alreadyPrinted);
   // Output of all members
-  stream << indent << "sourceDiskCopyId : " << m_sourceDiskCopyId << std::endl;
-  stream << indent << "destDiskCopyId : " << m_destDiskCopyId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "SourceSvcClass : " << std::endl;
+  if (0 != m_sourceSvcClass) {
+    m_sourceSvcClass->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
+  stream << indent << "DestDiskCopy : " << std::endl;
+  if (0 != m_destDiskCopy) {
+    m_destDiskCopy->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
+  stream << indent << "SourceDiskCopy : " << std::endl;
+  if (0 != m_sourceDiskCopy) {
+    m_sourceDiskCopy->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
 }
 
 //------------------------------------------------------------------------------

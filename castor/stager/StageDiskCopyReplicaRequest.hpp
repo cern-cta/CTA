@@ -43,6 +43,10 @@ namespace castor {
 
   namespace stager {
 
+    // Forward declarations
+    class SvcClass;
+    class DiskCopy;
+
     /**
      * class StageDiskCopyReplicaRequest
      */
@@ -98,42 +102,6 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
-       * Get the value of m_sourceDiskCopyId
-       * The id of the source diskcopy
-       * @return the value of m_sourceDiskCopyId
-       */
-      u_signed64 sourceDiskCopyId() const {
-        return m_sourceDiskCopyId;
-      }
-
-      /**
-       * Set the value of m_sourceDiskCopyId
-       * The id of the source diskcopy
-       * @param new_var the new value of m_sourceDiskCopyId
-       */
-      void setSourceDiskCopyId(u_signed64 new_var) {
-        m_sourceDiskCopyId = new_var;
-      }
-
-      /**
-       * Get the value of m_destDiskCopyId
-       * The id of the destination diskcopy
-       * @return the value of m_destDiskCopyId
-       */
-      u_signed64 destDiskCopyId() const {
-        return m_destDiskCopyId;
-      }
-
-      /**
-       * Set the value of m_destDiskCopyId
-       * The id of the destination diskcopy
-       * @param new_var the new value of m_destDiskCopyId
-       */
-      void setDestDiskCopyId(u_signed64 new_var) {
-        m_destDiskCopyId = new_var;
-      }
-
-      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -151,16 +119,73 @@ namespace castor {
         m_id = new_var;
       }
 
+      /**
+       * Get the value of m_sourceSvcClass
+       * The service class the source diskcopy belongs too
+       * @return the value of m_sourceSvcClass
+       */
+      SvcClass* sourceSvcClass() const {
+        return m_sourceSvcClass;
+      }
+
+      /**
+       * Set the value of m_sourceSvcClass
+       * The service class the source diskcopy belongs too
+       * @param new_var the new value of m_sourceSvcClass
+       */
+      void setSourceSvcClass(SvcClass* new_var) {
+        m_sourceSvcClass = new_var;
+      }
+
+      /**
+       * Get the value of m_destDiskCopy
+       * The destination diskcopy to create
+       * @return the value of m_destDiskCopy
+       */
+      DiskCopy* destDiskCopy() const {
+        return m_destDiskCopy;
+      }
+
+      /**
+       * Set the value of m_destDiskCopy
+       * The destination diskcopy to create
+       * @param new_var the new value of m_destDiskCopy
+       */
+      void setDestDiskCopy(DiskCopy* new_var) {
+        m_destDiskCopy = new_var;
+      }
+
+      /**
+       * Get the value of m_sourceDiskCopy
+       * The source diskcopy to be replicated
+       * @return the value of m_sourceDiskCopy
+       */
+      DiskCopy* sourceDiskCopy() const {
+        return m_sourceDiskCopy;
+      }
+
+      /**
+       * Set the value of m_sourceDiskCopy
+       * The source diskcopy to be replicated
+       * @param new_var the new value of m_sourceDiskCopy
+       */
+      void setSourceDiskCopy(DiskCopy* new_var) {
+        m_sourceDiskCopy = new_var;
+      }
+
     private:
-
-      /// The id of the source diskcopy
-      u_signed64 m_sourceDiskCopyId;
-
-      /// The id of the destination diskcopy
-      u_signed64 m_destDiskCopyId;
 
       /// The id of this object
       u_signed64 m_id;
+
+      /// The service class the source diskcopy belongs too
+      SvcClass* m_sourceSvcClass;
+
+      /// The destination diskcopy to create
+      DiskCopy* m_destDiskCopy;
+
+      /// The source diskcopy to be replicated
+      DiskCopy* m_sourceDiskCopy;
 
     }; /* end of class StageDiskCopyReplicaRequest */
 

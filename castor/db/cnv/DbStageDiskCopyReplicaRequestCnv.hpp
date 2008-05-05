@@ -196,6 +196,30 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type SvcClass refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepSvcClass(castor::stager::StageDiskCopyReplicaRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Fill the database with objects of type DiskCopy refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepDiskCopy(castor::stager::StageDiskCopyReplicaRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Fill the database with objects of type DiskCopy refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepDiskCopy(castor::stager::StageDiskCopyReplicaRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Retrieve from the database some of the objects refered by a given object.
          * @param object the original object
          * @param type the type of the refered objects to retrieve
@@ -230,6 +254,30 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjIClient(castor::stager::StageDiskCopyReplicaRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type SvcClass refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjSvcClass(castor::stager::StageDiskCopyReplicaRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type DiskCopy refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjDiskCopy(castor::stager::StageDiskCopyReplicaRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type DiskCopy refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjDiskCopy(castor::stager::StageDiskCopyReplicaRequest* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -311,6 +359,42 @@ namespace castor {
 
         /// SQL update statement object for member client
         castor::db::IDbStatement *m_updateIClientStatement;
+
+        /// SQL checkExist statement for member sourceSvcClass
+        static const std::string s_checkSvcClassExistStatementString;
+
+        /// SQL checkExist statement object for member sourceSvcClass
+        castor::db::IDbStatement *m_checkSvcClassExistStatement;
+
+        /// SQL update statement for member sourceSvcClass
+        static const std::string s_updateSvcClassStatementString;
+
+        /// SQL update statement object for member sourceSvcClass
+        castor::db::IDbStatement *m_updateSvcClassStatement;
+
+        /// SQL checkExist statement for member destDiskCopy
+        static const std::string s_checkDiskCopyExistStatementString;
+
+        /// SQL checkExist statement object for member destDiskCopy
+        castor::db::IDbStatement *m_checkDiskCopyExistStatement;
+
+        /// SQL update statement for member destDiskCopy
+        static const std::string s_updateDiskCopyStatementString;
+
+        /// SQL update statement object for member destDiskCopy
+        castor::db::IDbStatement *m_updateDiskCopyStatement;
+
+        /// SQL checkExist statement for member sourceDiskCopy
+        static const std::string s_checkDiskCopyExistStatementString;
+
+        /// SQL checkExist statement object for member sourceDiskCopy
+        castor::db::IDbStatement *m_checkDiskCopyExistStatement;
+
+        /// SQL update statement for member sourceDiskCopy
+        static const std::string s_updateDiskCopyStatementString;
+
+        /// SQL update statement object for member sourceDiskCopy
+        castor::db::IDbStatement *m_updateDiskCopyStatement;
 
       }; // end of class DbStageDiskCopyReplicaRequestCnv
 

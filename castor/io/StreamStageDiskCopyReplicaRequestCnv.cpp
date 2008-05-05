@@ -40,6 +40,7 @@
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
+#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/StageDiskCopyReplicaRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
@@ -104,8 +105,6 @@ void castor::io::StreamStageDiskCopyReplicaRequestCnv::createRep(castor::IAddres
   ad->stream() << obj->reqId();
   ad->stream() << obj->creationTime();
   ad->stream() << obj->lastModificationTime();
-  ad->stream() << obj->sourceDiskCopyId();
-  ad->stream() << obj->destDiskCopyId();
   ad->stream() << obj->id();
 }
 
@@ -155,12 +154,6 @@ castor::IObject* castor::io::StreamStageDiskCopyReplicaRequestCnv::createObj(cas
   u_signed64 lastModificationTime;
   ad->stream() >> lastModificationTime;
   object->setLastModificationTime(lastModificationTime);
-  u_signed64 sourceDiskCopyId;
-  ad->stream() >> sourceDiskCopyId;
-  object->setSourceDiskCopyId(sourceDiskCopyId);
-  u_signed64 destDiskCopyId;
-  ad->stream() >> destDiskCopyId;
-  object->setDestDiskCopyId(destDiskCopyId);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
@@ -192,6 +185,9 @@ void castor::io::StreamStageDiskCopyReplicaRequestCnv::marshalObject(castor::IOb
     }
     cnvSvc()->marshalObject(obj->svcClass(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->client(), address, alreadyDone);
+    cnvSvc()->marshalObject(obj->sourceSvcClass(), address, alreadyDone);
+    cnvSvc()->marshalObject(obj->destDiskCopy(), address, alreadyDone);
+    cnvSvc()->marshalObject(obj->sourceDiskCopy(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -224,6 +220,15 @@ castor::IObject* castor::io::StreamStageDiskCopyReplicaRequestCnv::unmarshalObje
   ad.setObjType(castor::OBJ_INVALID);
   castor::IObject* objClient = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setClient(dynamic_cast<castor::IClient*>(objClient));
+  ad.setObjType(castor::OBJ_INVALID);
+  castor::IObject* objSourceSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setSourceSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSourceSvcClass));
+  ad.setObjType(castor::OBJ_INVALID);
+  castor::IObject* objDestDiskCopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setDestDiskCopy(dynamic_cast<castor::stager::DiskCopy*>(objDestDiskCopy));
+  ad.setObjType(castor::OBJ_INVALID);
+  castor::IObject* objSourceDiskCopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setSourceDiskCopy(dynamic_cast<castor::stager::DiskCopy*>(objSourceDiskCopy));
   return object;
 }
 
