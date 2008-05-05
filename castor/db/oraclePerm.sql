@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.637 $ $Date: 2008/03/19 10:52:18 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.638 $ $Date: 2008/05/05 08:37:22 $ $Author: waldron $
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -8,7 +8,7 @@
  *******************************************************************/
 
 
-/* Check permissions */
+/* PL/SQL method implementing checkPermission */
 CREATE OR REPLACE PROCEDURE checkPermission(isvcClass IN VARCHAR2,
                                             ieuid IN NUMBER,
                                             iegid IN NUMBER,
@@ -38,10 +38,31 @@ BEGIN
       -- Not Found in Black list -> access
       res := 0;
     ELSE
-      -- found in Black list -> no access
+      -- Found in Black list -> no access
       res := -1;
     END IF;
   END IF;
+END;
+
+
+/* Function to wrap the checkPermission procedure so that is can be
+   used within SQL queries. The function returns 0 if the user has
+   access on the service class for the given request type otherwise
+   1 if access is denied */
+CREATE OR REPLACE 
+FUNCTION checkPermissionOnSvcClass(reqSvcClass IN VARCHAR2,
+                                   reqEuid IN NUMBER,
+                                   reqEgid IN NUMBER,
+                                   reqType IN NUMBER)
+RETURN NUMBER AS
+  res NUMBER;
+BEGIN
+  -- Check the users access rights */
+  checkPermission(reqSvcClass, reqEuid, reqEgid, reqType, res);
+  IF res = 0 THEN
+    RETURN 0;
+  END IF;
+  RETURN 1;
 END;
 
 
