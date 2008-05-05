@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dlf_2.1.7-4_to_2.1.7-6.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/05 09:05:32 $ $Author: waldron $
+ * @(#)$RCSfile: dlf_2.1.7-4_to_2.1.7-6.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/05 13:07:20 $ $Author: waldron $
  *
  * This script upgrades a CASTOR v2.1.7-4 DLF database to 2.1.7-5
  *
@@ -56,15 +56,15 @@ DROP TABLE RequestStats;
 ALTER TABLE FilesMigratedStats RENAME COLUMN Files TO TotalFiles;
 
 /* SQL statement for table LatencyStats */
-CREATE TABLE LatencyStats (timestamp DATE NOT NULL, interval NUMBER, type VARCHAR2(255), started NUMBER, minimum NUMBER(*,4), maximum NUMBER(*,4), average NUMBER(*,4), stddev NUMBER(*,4), median NUMBER(*,4)) 
+CREATE TABLE LatencyStats (timestamp DATE NOT NULL, interval NUMBER, type VARCHAR2(255), started NUMBER, minTime NUMBER(*,4), maxTime NUMBER(*,4), avgTime NUMBER(*,4), stddevTime NUMBER(*,4), medianTime NUMBER(*,4)) 
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statement for table QueueTimeStats */
-CREATE TABLE QueueTimeStats (timestamp DATE NOT NULL, interval NUMBER, type VARCHAR2(255), svcclass VARCHAR2(255), dispatched NUMBER, minimum NUMBER(*,4), maximum NUMBER(*,4), average NUMBER(*,4), stddev NUMBER(*,4), median NUMBER(*,4))
+CREATE TABLE QueueTimeStats (timestamp DATE NOT NULL, interval NUMBER, type VARCHAR2(255), svcclass VARCHAR2(255), dispatched NUMBER, minTime NUMBER(*,4), maxTime NUMBER(*,4), avgTime NUMBER(*,4), stddevTime NUMBER(*,4), medianTime NUMBER(*,4))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statement for table GarbageCollectionStats */
-CREATE TABLE GarbageCollectionStats (timestamp DATE NOT NULL, interval NUMBER, diskserver VARCHAR(255), type VARCHAR2(255), deleted NUMBER, totalSize NUMBER, minimum NUMBER(*,4), maximum NUMBER(*,4), average NUMBER(*,4), stddev NUMBER(*,4), median NUMBER(*,4))
+CREATE TABLE GarbageCollectionStats (timestamp DATE NOT NULL, interval NUMBER, diskserver VARCHAR2(255), type VARCHAR2(255), deleted NUMBER, totalSize NUMBER, minFileAge NUMBER(*,4), maxFileAge NUMBER(*,4), avgFileAge NUMBER(*,4), stddevFileAge NUMBER(*,4), medianFileAge NUMBER(*,4))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statement for table RequestStats */
@@ -72,8 +72,9 @@ CREATE TABLE RequestStats (timestamp DATE NOT NULL, interval NUMBER, type VARCHA
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statement for table ReplicationStats */
-CREATE TABLE ReplicationStats (timestamp DATE NOT NULL, interval NUMBER, sourceSvcClass VARCHAR2(255), destSvcClass VARCHAR2(255), transferred NUMBER, totalSize NUMBER, minimum NUMBER(*,4), maximum NUMBER(*,4), average NUMBER(*,4), stddev NUMBER(*,4), median NUMBER(*,4))
+CREATE TABLE ReplicationStats (timestamp DATE NOT NULL, interval NUMBER, sourceSvcClass VARCHAR2(255), destSvcClass VARCHAR2(255), transferred NUMBER, totalSize NUMBER, minSize NUMBER(*,4), maxSize NUMBER(*,4), avgSize NUMBER(*,4), stddevSize NUMBER(*,4), medianSize NUMBER(*,4))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
 
 /* PL/SQL method implementing statsLatency */
 CREATE OR REPLACE PROCEDURE statsLatency (now IN DATE) AS
@@ -121,7 +122,7 @@ BEGIN
   )
   LOOP
     INSERT INTO LatencyStats 
-      (timestamp, interval, type, started, minimum, maximum, average, stddev, median)
+      (timestamp, interval, type, started, minTime, maxTime, avgTime, stddevTime, medianTime)
     VALUES (now - 5/1440, 300, a.type, a.started, a.min, a.max, a.avg, a.stddev, a.median);
   END LOOP;
 END;
@@ -170,7 +171,7 @@ BEGIN
   )
   LOOP
     INSERT INTO QueueTimeStats 
-      (timestamp, interval, type, svcclass, dispatched, minimum, maximum, average, stddev, median)
+      (timestamp, interval, type, svcclass, dispatched, minTime, maxTime, avgTime, stddevTime, medianTime)
     VALUES (now - 5/1440, 300, a.type, a.svcclass, a.dispatched, a.min, a.max, a.avg, a.stddev, a.median);
   END LOOP;
 END;
@@ -184,11 +185,11 @@ BEGIN
   FOR a IN (
     SELECT hostname diskserver, type, count(*) deleted,
            sum(params.value) totalSize, 
-           min(params.value) min,
-           max(params.value) max, 
-           avg(params.value) avg, 
-           stddev_pop(params.value) stddev, 
-           median(params.value) median
+           min(fileAge) min,
+           max(fileAge) max, 
+           avg(fileAge) avg, 
+           stddev_pop(fileAge) stddev, 
+           median(fileAge) median
      FROM (
        -- Extract the file age of all files successfully removed across all
        -- diskservers.
@@ -225,7 +226,7 @@ BEGIN
   )
   LOOP
     INSERT INTO GarbageCollectionStats
-      (timestamp, interval, diskserver, type, deleted, totalSize, minimum, maximum, average, stddev, median)
+      (timestamp, interval, diskserver, type, deleted, totalSize, minFileAge, maxFileAge, avgFileAge, stddevFileAge, medianFileAge)
     VALUES (now - 5/1440, 300, a.diskserver, a.type, a.deleted, a.totalSize, a.min, a.max, a.avg, a.stddev, a.median);
   END LOOP;
 END;
@@ -430,7 +431,7 @@ BEGIN
   )
   LOOP
     INSERT INTO ReplicationStats
-      (timestamp, interval, sourceSvcClass, destSvcClass, transferred, totalSize, minimum, maximum, average, stddev, median)
+      (timestamp, interval, sourceSvcClass, destSvcClass, transferred, totalSize, minSize, maxSize, avgSize, stddevSize, medianSize)
     VALUES (now - 5/1440, 300, a.src, a.dest, a.transferred, a.totalSize, a.min, a.max, a.avg, a.stddev, a.median);
   END LOOP;
 END;

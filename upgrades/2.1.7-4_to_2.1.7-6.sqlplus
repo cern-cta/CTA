@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.7-4_to_2.1.7-6.sqlplus,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/05 09:05:32 $ $Author: waldron $
+ * @(#)$RCSfile: 2.1.7-4_to_2.1.7-6.sqlplus,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/05 13:07:20 $ $Author: waldron $
  *
  * This script upgrades a CASTOR v2.1.7-4 database into v2.1.7-5
  *
@@ -5297,11 +5297,13 @@ BEGIN
     FROM SubRequest
    WHERE status IN (9, 11)  -- FAILED_FINISHED, ARCHIVED
      AND lastModificationTime > getTime() - 1800;
-  timeOut := 500000/rate*1800;    -- try to keep 500k requests max
-  IF timeOut > maxTimeOut THEN
-    timeOut := maxTimeOut;    -- anyway, don't keep very old requests
+  IF rate > 0 THEN
+    timeOut := 500000 / rate * 1800;  -- try to keep 500k requests max
+    IF timeOut > maxTimeOut THEN
+      timeOut := maxTimeOut;  -- anyway, don't keep very old requests
+    END IF;
   END IF;
-  
+
   -- now delete the SubRequests
   bulkDelete('SELECT id FROM SubRequest WHERE status IN (9, 11)
                 AND lastModificationTime < getTime() - '|| timeOut ||';',
