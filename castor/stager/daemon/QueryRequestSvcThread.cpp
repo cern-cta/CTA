@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.75 $ $Release$ $Date: 2008/04/21 09:29:22 $ $Author: sponcec3 $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.76 $ $Release$ $Date: 2008/05/05 08:29:39 $ $Author: waldron $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -31,6 +31,7 @@
 #include <vector>
 #include <sys/stat.h>
 
+#include "castor/System.hpp"
 #include "castor/Services.hpp"
 #include "castor/Constants.hpp"
 #include "castor/BaseAddress.hpp"
@@ -65,6 +66,7 @@
 #include "castor/stager/daemon/DlfMessages.hpp"
 #include "stager_client_api.h"
 #include "Cns_api.h"
+#include "Cupv_api.h"
 #include "u64subr.h"
 #include "patchlevel.h"    // to get the default version
 
@@ -428,14 +430,13 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
           if (Cns_getpath((char*)nshost.c_str(),
                           strtou64(fid.c_str()), cfn) < 0) {
             castor::exception::Exception e(serrno);
-            e.getMessage() << "fileid " << fid;
+            e.getMessage() << "Fileid " << fid;
             throw e;
           }
           pval = cfn;
         }
 
         // check if the filename is valid (it has to start with /)
-
 	if (pval.empty() || pval.at(0)!='/'){
 	  castor::exception::Exception ex(EINVAL);
             ex.getMessage() << "Invalid file path";
@@ -445,10 +446,10 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
         struct Cns_filestat Cnsfilestat;
         if (Cns_stat(pval.c_str(), &Cnsfilestat) < 0) {
           castor::exception::Exception e(serrno);
-          e.getMessage() << "file " << pval;
+          e.getMessage() << "Filename " << pval;
           throw e;
         }
-        if((Cnsfilestat.filemode & S_IFDIR) == S_IFDIR) {
+        if ((Cnsfilestat.filemode & S_IFDIR) == S_IFDIR) {
           // it is a directory, query for the content (don't perform a query by ID)
           ptype = REQUESTQUERYTYPE_FILENAME;
           if(pval[pval.length()-1] != '/')
@@ -513,7 +514,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
       res.setErrorMessage(e.getMessage().str());
       // Reply To Client
       castor::replier::RequestReplier::getInstance()->
-        sendResponse(client, &res);
+	sendResponse(client, &res);
     } // End catch
   } // End loop on all diskcopies
   castor::replier::RequestReplier::getInstance()->
@@ -533,20 +534,40 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
   throw (castor::exception::Exception) {
   castor::query::DiskPoolQuery *uReq;
   try {
-    // get the StageFileQueryRequest
+    // Get the StageFileQueryRequest
     // cannot return 0 since we check the type before calling this method
     uReq = dynamic_cast<castor::query::DiskPoolQuery*> (req);
-    if ("" == uReq->diskPoolName()) { // list all DiskPools for a given svcclass
-      // Get the SvcClass associated to the request
-      std::string svcClassName;
-      castor::stager::SvcClass* svcClass = uReq->svcClass();
-      if (0 != svcClass) {
-        svcClassName = svcClass->name();
-      }
+    // Get the SvcClass associated to the request
+    castor::stager::SvcClass* svcClass = uReq->svcClass();
+    std::string svcClassName;
+    if (0 != svcClass) {
+      svcClassName = svcClass->name();
+    }
+    
+    // Get the name of the localhost to pass into the Cupv interface.
+    std::string localHost = castor::System::getHostName();
+    
+    // Check if the user has ADMIN privileges so that they can see detailed
+    // information about the diskservers and filesystems within a given pool
+    // and/or svcclass
+    bool detailed = false;
+    if (Cupv_check(req->euid(), req->egid(), localHost.c_str(), 
+		   localHost.c_str(), P_ADMIN) == 0) {
+      detailed = true;
+    }
+
+    // List all DiskPools for a given svcclass
+    if ("" == uReq->diskPoolName()) {
+
+      // "Processing DiskPoolQuery by SvcClass"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("SvcClass", svcClassName)};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_DSQUERY, 1, params);
+  
       // Invoking the method
       std::vector<castor::query::DiskPoolQueryResponse*>* result =
-        qrySvc->describeDiskPools(svcClassName);
-      if(result == 0) {   // sanity check, result always is != 0
+        qrySvc->describeDiskPools(svcClassName, req->euid(), req->egid(), detailed);
+      if (result == 0) {
         castor::exception::NoEntry e;
         e.getMessage() << " describeDiskPools returned NULL";
         throw e;
@@ -560,14 +581,21 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
           sendResponse(client, *it);
         delete (*it);
       }
-      // Cleanup
       delete result;
-    } else { // list all DiskPools for a given svcclass
+    } 
+
+    // List all DiskPools for a given svcclass
+    else {
+      // "Processing DiskPoolQuery by DiskPool"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("DiskPool", uReq->diskPoolName()),
+	 castor::dlf::Param("SvcClass", svcClassName)};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_DDQUERY, 2, params);
 
       // Invoking the method
       castor::query::DiskPoolQueryResponse* result =
-        qrySvc->describeDiskPool(uReq->diskPoolName());
-      if(result == 0) {   // sanity check, result always is != 0
+        qrySvc->describeDiskPool(uReq->diskPoolName(), svcClassName, true);
+      if (result == 0) {
         castor::exception::NoEntry e;
         e.getMessage() << " describeDiskPool returned NULL";
         throw e;
@@ -575,21 +603,29 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
       result->setReqAssociated(req->reqId());
       castor::replier::RequestReplier::getInstance()->
         sendResponse(client, result);
-      // Cleanup
       delete result;
     }
   } catch (castor::exception::Exception e) {
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Function", "QueryRequestSvcThread::handleDiskPoolQuery"),
-       castor::dlf::Param("Code", e.code()),
-       castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 3, params);
-    // try/catch this as well ?
+    if (e.code() == EINVAL) {
+      // "Failed to process DiskPoolQuery"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Message", e.getMessage().str())};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_QRYSVC_DFAILED, 1, params);
+    } else {
+      // "Unexpected exception caught"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Function", "QueryRequestSvcThread::handleDiskPoolQuery"),
+	 castor::dlf::Param("Code", e.code()),
+	 castor::dlf::Param("Message", e.getMessage().str())};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 3, params);
+    }
+
     // Send the exception to the client
     castor::query::DiskPoolQueryResponse res;
     res.setReqAssociated(req->reqId());
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
+
     // Reply To Client
     castor::replier::RequestReplier::getInstance()->
       sendResponse(client, &res);

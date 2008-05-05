@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2007/12/14 16:56:20 $ $Author: itglp $
+ * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/05/05 08:33:54 $ $Author: waldron $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -150,23 +150,35 @@ namespace castor {
         /**
          * Lists diskpools and give details on their machine/filesystems
          * @param svcClass the Service class to consider, or empty string if none
+	 * @param euid the uid of the user issuing the command
+	 * @param egid the gid of the user issuing the command
+	 * @param detailed flag to indicate whether the diskserver and
+	 * filesystem related information should be included in response
          * @return a vector of diskpool descriptions. Note that the caller
          * is responsible for freeing the allocated memory
          * @exception Exception in case of error
          */
         virtual std::vector<castor::query::DiskPoolQueryResponse*>*
-        describeDiskPools (std::string svcClass)
+	describeDiskPools(std::string svcClass,
+			  unsigned long euid,
+			  unsigned long egid,
+			  bool detailed)
           throw (castor::exception::Exception);
         
         /**
          * Give details on the machines/filesystems of a given diskpool
          * @param diskPool the DiskPool name
+	 * @param svcClass the Service class to consider, or empty string if none
+	 * @param detailed flag to indicate whether the diskserver and
+	 * filesystem related information should be included in response
          * @return the descriptions of the DiksPool. Note that the caller
          * is responsible for freeing the allocated memory
          * @exception Exception in case of error
          */
         virtual castor::query::DiskPoolQueryResponse*
-        describeDiskPool(std::string diskPool)
+	describeDiskPool(std::string diskPool,
+			 std::string svcClass,
+			 bool detailed)
           throw (castor::exception::Exception);
 
       private:
