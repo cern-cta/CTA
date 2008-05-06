@@ -5,13 +5,13 @@
 ## Author: Andreas Joachim Peters <andreas.joachim.peters@cern.ch>
 ## Initial version: 13.4.2007
 ##
-## Version info: $Id: Makefile.am,v 1.2 2008/04/03 15:11:22 apeters Exp $
+## Version info: $Id: Makefile.am,v 1.3 2008/05/06 13:38:27 apeters Exp $
 ## Checked in by $Author: apeters $
 #######################################################################
 
 XRDCS2 = `if test -L XrdCS2; then unlink XrdCS2; fi; if ! test -L XrdCS2; then ln -s $(top_srcdir) XrdCS2; fi `
 
-lib_LTLIBRARIES = libXrdCS2.la
+lib_LTLIBRARIES = libXrdCS2.la libXrdCS2Ofs.la
 
 INCLUDES = -I$(CASTOR_INCDIR) -I$(CASTOR_INCDIR)/h -I$(XROOTD_LOCATION)/include/xrootd/ -I../ $(XRDCS2) -DCASTOR_217
 
@@ -38,6 +38,18 @@ XrdCS2d_SOURCES = XrdCS2DCM.cc \
 XrdCS2d_LDADD = -L$(CASTOR_LIBDIR) -lshift -L$(XROOTD_LOCATION)/lib/ -lXrd  -lXrdNet -lXrdOuc -lXrdSys -lpthread -lnsl -lrt -ldl
 
 XrdCS2d_LDFLAGS = -static -export-dynamic
+
+
+
+libXrdCS2Ofs_la_SOURCES = \
+	XrdCS2Ofs.cc \
+	XrdCS2Ofs.hh \
+	XrdCS2OfsProc.cc \
+	XrdCS2OfsRateLimit.cc  \
+	XrdCS2OfsRateLimit.hh 
+
+libXrdCS2Ofs_la_LIBADD = -L$(XROOTD_LOCATION)/lib  -lXrdSys -lXrdOuc -lXrdClient -lXrdOfs
+
 
 EXTRA_DIST = 	XrdCS2e \
 		xrootd-castor2.spec

@@ -39,6 +39,11 @@ then
    AC_MSG_ERROR([xrootd header files could not be found in prefix directory ${prefix}])
 fi
 
+if ! test -L ./XrdCS2Fs
+then
+   ln -s ./ XrdCS2Fs
+fi
+
 AC_SUBST(CASTOR_INCDIR)
 AC_SUBST(CASTOR_LIBDIR)
 AC_SUBST(XROOTD_LOCATION)

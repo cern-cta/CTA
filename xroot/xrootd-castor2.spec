@@ -1,7 +1,7 @@
 Summary: xrootd-castor interface
 Name: xrootd-castor2
 Version: 20070802cvs_8_v2.1.7.1
-Release: 1
+Release: 2
 URL: none
 Source0: %{name}-%{version}.tar.gz
 License: OpenSource
@@ -60,6 +60,7 @@ V2.1.46
 - unification of castor 2.1.4 and 2.1.6 compatible plugin
 V2.1.7
 - fixes for CASTOR API changes
+- added CS2Ofs with rate limiter
 
 %post
 %preun
