@@ -8,6 +8,7 @@ License: OpenSource
 #Prefix: /
 Group: CERN
 BuildRoot: %{_tmppath}/%{name}-root
+Requires: castor-lib > 2.1.7
 #AutoReqProv: no
 #%_enable_debug_packages %{nil}
 %description
