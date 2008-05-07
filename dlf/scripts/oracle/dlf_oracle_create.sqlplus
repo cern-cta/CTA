@@ -26,7 +26,7 @@
 
 /* SQL statements for table dlf_version */
 CREATE TABLE dlf_version(schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO dlf_version VALUES ('2_1_2_0', '2_1_7_5');
+INSERT INTO dlf_version VALUES ('2_1_2_0', '2_1_7_6');
 
 /* SQL statements for table dlf_sequences */
 CREATE TABLE dlf_sequences(seq_name CHAR(15), seq_no NUMBER);

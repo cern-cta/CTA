@@ -180,7 +180,7 @@ ALTER TABLE Stream2TapeCopy
   ADD CONSTRAINT fk_Stream2TapeCopy_C FOREIGN KEY (Child) REFERENCES TapeCopy (id);
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_7_5');
+INSERT INTO CastorVersion VALUES ('-', '2_1_7_6');
 
 /* Fill Type2Obj metatable */
 CREATE TABLE Type2Obj (type INTEGER PRIMARY KEY NOT NULL, object VARCHAR2(100) NOT NULL, svcHandler VARCHAR2(100));
