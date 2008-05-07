@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: schmod_shmem.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/03/25 10:28:55 $ $Author: waldron $
+ * @(#)$RCSfile: schmod_shmem.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/05/07 14:57:53 $ $Author: waldron $
  *
  * Castor LSF External Plugin - Phase 1 (Shared Memory)
  *
@@ -166,6 +166,8 @@ extern "C" {
 	// exclude any diskserver not in the list.
 	std::vector<std::string>::const_iterator it2 =
 	  std::find(handler->rfs.begin(), handler->rfs.end(), diskServer);
+
+	reason = 0;
 	if (handler->rfs.size() && (it2 == handler->rfs.end())) {
 	  reason = PEND_HOST_CNOTRFS;  // Diskserver is not in the list of RFS
 	}
@@ -202,7 +204,7 @@ extern "C" {
 		 (handler->sourceDiskServer != diskServer) &&
 		 (it->second.status() !=
 		  castor::stager::DISKSERVER_PRODUCTION)) {
-	  reason = PEND_HOST_CSTATE;   // Diskserver status incorrect
+	  reason = PEND_HOST_CSTATE;   // Diskserver status incorrect 
 	}
 
 	// Up to this point we have only processed information about the

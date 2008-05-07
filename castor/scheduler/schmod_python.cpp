@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/05/05 08:20:02 $ $Author: waldron $
+ * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/05/07 14:57:53 $ $Author: waldron $
  *
  * Castor LSF External Plugin - Phase 2 (Python)
  *
@@ -520,6 +520,7 @@ extern "C" {
 	castor::monitoring::ClusterStatus::const_iterator it =
 	  clusterStatus->find(*smDiskServer);
 
+	reason = 0;
 	if (it == clusterStatus->end()) {
 	  reason = PEND_HOST_CUNKNOWN; // Host not listed in shared memory
 	} else if (python == NULL) {
