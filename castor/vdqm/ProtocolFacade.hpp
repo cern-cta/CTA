@@ -85,7 +85,13 @@ namespace castor {
        */
       void handleOldVdqmRequest(unsigned int magicNumber)
       throw (castor::exception::Exception);
-          
+
+      /**
+       * Handles a VDQM message with a magic number of VDQM_MAGIC2.
+       */
+      void handleVdqmMagic2Request()
+      throw (castor::exception::Exception);
+
       /**
        * The object which includes the socket connection to the client
        */

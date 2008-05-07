@@ -24,24 +24,23 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
-#include <errno.h>
-#include <serrno.h>
-#include <net.h>
-#include <unistd.h>
-#include <rtcp_constants.h> /* Definition of RTCOPY_MAGIC   */
-
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/vdqm/ClientIdentification.hpp"
 #include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
-#include "castor/vdqm/newVdqm.h"
 #include "castor/vdqm/RTCopyDConnection.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/vdqmMacros.h"  // Needed for marshalling
+#include "h/net.h"
+#include "h/osdep.h" //for LONGSIZE
+#include "h/rtcp_constants.h" /* Definition of RTCOPY_MAGIC   */
+#include "h/serrno.h"
+#include "h/vdqm_messages.h"
 
-#include "osdep.h" //for LONGSIZE
+#include <errno.h>
+#include <unistd.h>
 
 
 //------------------------------------------------------------------------------
@@ -126,8 +125,8 @@ bool castor::vdqm::RTCopyDConnection::sendJobToRTCPD(
 
   bool acknSucc = true; // The return value
 
-  newVdqmDrvReq_t vdqmDrvReq;
-  newVdqmVolReq_t vdqmVolReq;
+  vdqmDrvReq_t vdqmDrvReq;
+  vdqmVolReq_t vdqmVolReq;
 
   char buf[VDQM_MSGBUFSIZ];
   int len, rc;

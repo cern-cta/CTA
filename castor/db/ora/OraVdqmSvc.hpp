@@ -29,13 +29,12 @@
 #include "castor/db/DbBaseObj.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
+#include "h/vdqm_messages.h"
 
 #include <string>
 #include <vector>
 #include "occi.h"
 
-
-typedef struct newVdqmDrvReq newVdqmDrvReq_t;
 
 namespace castor {
   
@@ -160,7 +159,7 @@ namespace castor {
         /**
          * See the documentation for castor::vdqm::IVdqmSvc.
          */
-        virtual std::list<newVdqmDrvReq_t>*
+        virtual std::list<vdqmDrvReq_t>*
           selectTapeDriveQueue(const std::string dgn,
           const std::string requestedSrv)
           throw (castor::exception::Exception);     
@@ -268,7 +267,7 @@ namespace castor {
          * DB problem, etc...)
          */
         virtual castor::vdqm::TapeDrive* selectTapeDrive
-        (const newVdqmDrvReq_t* driveRequest,
+        (const vdqmDrvReq_t* driveRequest,
          castor::vdqm::TapeServer* tapeServer)
           throw (castor::exception::Exception);      
   

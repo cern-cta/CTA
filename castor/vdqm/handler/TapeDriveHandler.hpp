@@ -29,10 +29,8 @@
 
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/handler/BaseRequestHandler.hpp"
+#include "h/vdqm_messages.h"
 
-typedef struct newVdqmHdr    newVdqmHdr_t;
-typedef struct newVdqmVolReq newVdqmVolReq_t;
-typedef struct newVdqmDrvReq newVdqmDrvReq_t;
 
 namespace castor {
 
@@ -59,10 +57,10 @@ namespace castor {
          * @param header The header of the old Protocol
          * @param driveRequest The TapeDriveRequest from the old protocol
          * @param cuuid The unique id of the request. Needed for dlf
-         * @exception In case of error
          */
-        TapeDriveHandler(newVdqmHdr_t* header, newVdqmDrvReq_t* driveRequest,
-          Cuuid_t cuuid) throw(castor::exception::Exception);
+        TapeDriveHandler(vdqmHdr_t *const header,
+          vdqmDrvReq_t *const driveRequest, const Cuuid_t cuuid)
+          throw(castor::exception::Exception);
         
         /**
          * Destructor
@@ -74,8 +72,6 @@ namespace castor {
          * called, when a VDQM_DRV_REQ message comes from a client. It stores
          * the request into the data Base or updates the status of existing
          * TapeDrives in the db.
-         * 
-         * @exception In case of error
          */
         void newTapeDriveRequest() throw (castor::exception::Exception);
         
@@ -83,8 +79,6 @@ namespace castor {
          * This function replaces the old vdqm_DelDrvReq() C-function and is
          * called, when a VDQM_DEL_DRVREQ message comes from a client. It 
          * deletes the TapeDrive with the specified ID in the db.
-         * 
-         * @exception In case of error
          */
         void deleteTapeDrive() throw (castor::exception::Exception);
         
@@ -96,10 +90,9 @@ namespace castor {
          * @param volumeRequest The TapeRequest in the old protocol
          * @param oldProtInterpreter The interface to send the queue to the
          * client
-         * @exception In case of error
          */
-        void sendTapeDriveQueue(newVdqmVolReq_t *volumeRequest,
-                                OldProtocolInterpreter* oldProtInterpreter) 
+        void sendTapeDriveQueue(const vdqmVolReq_t *const volumeRequest,
+          OldProtocolInterpreter *const oldProtInterpreter) 
           throw (castor::exception::Exception);  
 
         /**
@@ -114,9 +107,9 @@ namespace castor {
       private:
 
         // Private variables
-        newVdqmHdr_t* ptr_header;
-        newVdqmDrvReq_t* ptr_driveRequest;
-        Cuuid_t m_cuuid;
+        vdqmHdr_t    *const ptr_header;
+        vdqmDrvReq_t *const ptr_driveRequest;
+        const Cuuid_t          m_cuuid;
         
         /**
          * Deletes all TapeDrives and their old TapeRequests (if any)

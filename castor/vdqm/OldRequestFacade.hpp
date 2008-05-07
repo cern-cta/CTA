@@ -29,6 +29,7 @@
 
 //Include files
 #include "castor/BaseObject.hpp"
+#include "h/vdqm_messages.h"
 
 namespace castor {
 
@@ -36,9 +37,6 @@ namespace castor {
     
     //Forward declaration
     class OldProtocolInterpreter;
-    typedef struct newVdqmVolReq newVdqmVolReq_t;
-    typedef struct newVdqmDrvReq newVdqmDrvReq_t;
-    typedef struct newVdqmHdr newVdqmHdr_t;    
 
     /**
      * This class provides functions to handle the old VDQM protocol.
@@ -51,8 +49,8 @@ namespace castor {
         /**
          * Constructor
          */
-        OldRequestFacade(newVdqmVolReq_t *volumeRequest,
-          newVdqmDrvReq_t *driveRequest, newVdqmHdr_t *header);
+        OldRequestFacade(vdqmVolReq_t *const volumeRequest,
+          vdqmDrvReq_t *const driveRequest, vdqmHdr_t *const header);
       
        /**
         * Calls the right function for the request.
@@ -61,34 +59,34 @@ namespace castor {
         * @exception In case of errors
         */
        bool handleRequestType(OldProtocolInterpreter* oldProtInterpreter,
-         Cuuid_t cuuid) throw (castor::exception::Exception);
+         const Cuuid_t cuuid) throw (castor::exception::Exception);
        
        /**
         * Checks the reqtype and returns an error, if it is a 
         * wrong number. Throws an exception, if an error occures.
         */
-       bool checkRequestType(Cuuid_t cuuid) 
+       bool checkRequestType(const Cuuid_t cuuid) 
          throw (castor::exception::Exception);
       
       
       private:
       
-        newVdqmVolReq_t *ptr_volumeRequest;
-        newVdqmDrvReq_t *ptr_driveRequest;
-        newVdqmHdr_t    *ptr_header;
-        int             m_reqtype;
+        vdqmVolReq_t *const ptr_volumeRequest;
+        vdqmDrvReq_t *const ptr_driveRequest;
+        vdqmHdr_t    *const ptr_header;
+        const int           m_reqtype;
 
         /**
          * Logs the reception of a drive request message.
          */
-        void logDriveRequest(newVdqmHdr_t *header, newVdqmDrvReq_t *request,
-          Cuuid_t cuuid);
+        void logDriveRequest(const vdqmHdr_t *const header,
+          const vdqmDrvReq_t *const request, const Cuuid_t cuuid);
 
         /**
          * Logs the reception of a volume request message.
          */
-        void logVolumeRequest(newVdqmHdr_t *header, newVdqmVolReq_t *request,
-          Cuuid_t cuuid);
+        void logVolumeRequest(const vdqmHdr_t *const header,
+          const vdqmVolReq_t *const request, const Cuuid_t cuuid);
 
     }; // class VdqmServer
 

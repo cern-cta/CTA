@@ -27,7 +27,6 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/vdqm/DatabaseHelper.hpp"
 #include "castor/vdqm/DevTools.hpp"
-#include "castor/vdqm/newVdqm.h"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
@@ -44,20 +43,15 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::vdqm::handler::TapeDriveConsistencyChecker::TapeDriveConsistencyChecker(
-  castor::vdqm::TapeDrive* tapeDrive, 
-  newVdqmDrvReq_t* driveRequest, 
-  Cuuid_t cuuid) throw(castor::exception::Exception) {
-    
-  m_cuuid = cuuid;
+  castor::vdqm::TapeDrive *const tapeDrive, 
+  vdqmDrvReq_t *const driveRequest, const Cuuid_t cuuid)
+  throw(castor::exception::Exception) : ptr_tapeDrive(tapeDrive),
+  ptr_driveRequest(driveRequest), m_cuuid(cuuid) {
   
   if ( tapeDrive == NULL || driveRequest == NULL ) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "One of the arguments is NULL";
     throw ex;
-  }
-  else {
-    ptr_tapeDrive = tapeDrive;
-    ptr_driveRequest = driveRequest;
   }
 }
 
@@ -65,8 +59,8 @@ castor::vdqm::handler::TapeDriveConsistencyChecker::TapeDriveConsistencyChecker(
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::vdqm::handler::TapeDriveConsistencyChecker::~TapeDriveConsistencyChecker() 
-  throw() {
+castor::vdqm::handler::TapeDriveConsistencyChecker::
+  ~TapeDriveConsistencyChecker() throw() {
 
 }
 
@@ -85,17 +79,13 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency()
     throw ex;
   }
   
-  /*
-   * Verify that new unit status is consistent with the
-   * current status of the drive.
-   */
+  // Verify that new unit status is consistent with the
+  // current status of the drive.
   if ( ptr_driveRequest->status & VDQM_UNIT_DOWN ) {
-    /*
-     * Unit configured down. No other status possible.
-     * For security this status can only be set from
-     * tape server.
-     */
-    if ( strcmp(ptr_driveRequest->reqhost, tapeServer->serverName().c_str()) != 0 ) {
+    // Unit configured down. No other status possible.
+    // For security this status can only be set from
+    // tape server.
+    if(strcmp(ptr_driveRequest->reqhost, tapeServer->serverName().c_str())!=0) {
       castor::exception::Exception ex(EPERM);
       ex.getMessage() << "TapeDriveConsistencyChecker::checkConsistency(): "
                       << "unauthorized " << ptr_tapeDrive->driveName() << "@"
@@ -104,9 +94,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency()
       throw ex;
     }
     
-    /*
-     * Remove running request (if any). Client will normally retry
-     */
+    // Remove running request (if any). Client will normally retry
     if ( ptr_tapeDrive->status() != UNIT_UP && 
          ptr_tapeDrive->status() != UNIT_DOWN) {
         // If we are here, the tapeDrive info in the db is still "busy" 
@@ -128,17 +116,15 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency()
     ptr_tapeDrive->setStatus(UNIT_DOWN);
   } 
   else if ( ptr_driveRequest->status & VDQM_UNIT_UP ) {
-    /*
-     * Unit configured up. Make sure that "down" status is reset.
-     * We also mark drive free if input request doesn't specify
-     * otherwise.
-     * If the input request is a plain config up and the unit was not 
-     * down there is a job assigned it probably  means that the tape 
-     * server has been rebooted. It does then not make sense
-     * to keep the job because client has lost connection long ago and
-     * has normally issued a retry. We can therefore remove the 
-     * job from queue.
-     */
+    // Unit configured up. Make sure that "down" status is reset.
+    // We also mark drive free if input request doesn't specify
+    // otherwise.
+    // If the input request is a plain config up and the unit was not 
+    // down there is a job assigned it probably  means that the tape 
+    // server has been rebooted. It does then not make sense
+    // to keep the job because client has lost connection long ago and
+    // has normally issued a retry. We can therefore remove the 
+    // job from queue.
     if ( (ptr_driveRequest->status == VDQM_UNIT_UP ||
           ptr_driveRequest->status == (VDQM_UNIT_UP | VDQM_UNIT_FREE)) &&
           ptr_tapeDrive->status() != UNIT_DOWN ) {
@@ -172,14 +158,11 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency()
 
       ptr_tapeDrive->setStatus(UNIT_UP);
     }
-  } 
-  else {
+  } else {
     
     if ( ptr_tapeDrive->status() == UNIT_DOWN ) {
-      /*
-       * Unit must be up before anything else is allowed
-       */
-       castor::exception::Exception ex(EVQUNNOTUP);
+      // Unit must be up before anything else is allowed
+      castor::exception::Exception ex(EVQUNNOTUP);
       ex.getMessage() << "TapeDriveConsistencyChecker::checkConsistency(): "
                       << "unit is not UP" << std::endl;      
       throw ex;
@@ -187,24 +170,20 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency()
     
     
     if ( ptr_driveRequest->status & VDQM_UNIT_BUSY ) {
-      /**
-       * If we are here, the tpdaemon has sent a busy status 
-       * which must be checked. If this method succeed, we switched to
-       * UNIT_STARTING mode.
-       */
+      // If we are here, the tpdaemon has sent a busy status 
+      // which must be checked. If this method succeed, we switched to
+      // UNIT_STARTING mode.
       checkBusyConsistency();
-    }
-    else if ( ptr_driveRequest->status & VDQM_UNIT_FREE ) {
+    } else if ( ptr_driveRequest->status & VDQM_UNIT_FREE ) {
       checkFreeConsistency();
-    } 
-    else {
+    } else {
       checkAssignConsistency();
     }
     
     
   }
   
-  //Clean pointer;
+  // Clean pointer;
   tapeServer = 0;
 }
 
@@ -217,9 +196,11 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::deleteOldRequest()
   
   if ( ptr_tapeDrive->runningTapeReq() ) {
     // "Remove old TapeRequest from db" message
-    castor::dlf::Param param[] =
-      {castor::dlf::Param("tapeRequestID", ptr_tapeDrive->runningTapeReq()->id())};
-    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, VDQM_REMOVE_OLD_TAPE_REQUEST_FROM_DB, 1, param);
+    castor::dlf::Param param[] = {
+      castor::dlf::Param("tapeRequestID",
+        ptr_tapeDrive->runningTapeReq()->id())};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      VDQM_REMOVE_OLD_TAPE_REQUEST_FROM_DB, 1, param);
 
     //Delete the tape request from the db and from the tapeDrive Object
     castor::vdqm::DatabaseHelper::deleteRepresentation(
@@ -285,8 +266,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkBusyConsistency()
     
     castor::exception::Exception ex(EVQBADSTAT);
     ex.getMessage() << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
-                    << "Cannot put tape drive into UNIT_STARTING mode" 
-                    << std::endl;      
+      "Cannot put tape drive into UNIT_STARTING mode" << std::endl;      
     throw ex;      
   }
 }
@@ -301,9 +281,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkFreeConsistency()
   castor::vdqm::VdqmTape* tape = ptr_tapeDrive->tape();
    TapeServer* tapeServer = ptr_tapeDrive->tapeServer(); 
   
-  /*
-   * Cannot free an assigned unit, it must be released first
-   */
+  // Cannot free an assigned unit, it must be released first
   if ( !(ptr_driveRequest->status & VDQM_UNIT_RELEASE) &&
        ( ptr_tapeDrive->status() == UNIT_ASSIGNED ||
           ptr_tapeDrive->status() == VOL_MOUNTED )) {
@@ -316,14 +294,10 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkFreeConsistency()
     throw ex;
   }
   
-  /**
-   * The mounted tape, if any
-   */
+  // The mounted tape, if any
   tape = ptr_tapeDrive->tape();
   
-  /*
-   * Cannot free an unit with tape mounted
-   */
+  // Cannot free an unit with tape mounted
   if ( !(ptr_driveRequest->status & VDQM_VOL_UNMOUNT) &&
       (tape != NULL) ) {
       
@@ -343,17 +317,15 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkFreeConsistency()
 //------------------------------------------------------------------------------
 // checkAssignConsistency
 //------------------------------------------------------------------------------
-void castor::vdqm::handler::TapeDriveConsistencyChecker::checkAssignConsistency() 
-  throw (castor::exception::Exception) {
+void castor::vdqm::handler::TapeDriveConsistencyChecker::
+  checkAssignConsistency() throw (castor::exception::Exception) {
   
   TapeRequest* tapeRequest = ptr_tapeDrive->runningTapeReq();
-   TapeServer* tapeServer = ptr_tapeDrive->tapeServer(); 
+  TapeServer* tapeServer = ptr_tapeDrive->tapeServer(); 
   
-  /*
-   * If unit is busy and being assigned the VolReqIDs must
-   * be the same. If so, assign the jobID (normally the
-   * process ID of the RTCOPY process on the tape server).
-   */
+  // If unit is busy and being assigned the VolReqIDs must
+  // be the same. If so, assign the jobID (normally the
+  // process ID of the RTCOPY process on the tape server).
   if ( (ptr_tapeDrive->status() != UNIT_UP)   &&
        (ptr_tapeDrive->status() != UNIT_DOWN) &&
        (ptr_driveRequest->status & VDQM_UNIT_ASSIGN) ) { 

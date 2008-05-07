@@ -31,7 +31,6 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NotSupported.hpp"
 #include "castor/vdqm/DevTools.hpp"
-#include "castor/vdqm/newVdqm.h"
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
 #include "castor/vdqm/OldRequestFacade.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
@@ -46,16 +45,11 @@ using namespace castor::vdqm::handler;
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::vdqm::OldRequestFacade::OldRequestFacade(newVdqmVolReq_t *volumeRequest,
-                                                newVdqmDrvReq_t *driveRequest,
-                                                newVdqmHdr_t *header) {
-  
-  ptr_volumeRequest = volumeRequest;
-  ptr_driveRequest = driveRequest;
-  ptr_header = header;
-  
-  // The Request Type
-  m_reqtype = header->reqtype;
+castor::vdqm::OldRequestFacade::OldRequestFacade(
+  vdqmVolReq_t *const volumeRequest, vdqmDrvReq_t *const driveRequest,
+  vdqmHdr_t *const header) : ptr_volumeRequest(volumeRequest),
+  ptr_driveRequest(driveRequest), ptr_header(header),
+  m_reqtype(header->reqtype) {
 }
 
 
@@ -64,7 +58,7 @@ castor::vdqm::OldRequestFacade::OldRequestFacade(newVdqmVolReq_t *volumeRequest,
 //------------------------------------------------------------------------------
 bool castor::vdqm::OldRequestFacade::checkRequestType(Cuuid_t cuuid) 
   throw (castor::exception::Exception) {
-  
+
   int i;
   int req_values[] = VDQM_REQ_VALUES;
   std::string req_strings[] = VDQM_REQ_STRINGS;
@@ -97,7 +91,7 @@ bool castor::vdqm::OldRequestFacade::checkRequestType(Cuuid_t cuuid)
 }
 
 bool castor::vdqm::OldRequestFacade::handleRequestType(
-  OldProtocolInterpreter* oldProtInterpreter, Cuuid_t cuuid) 
+  OldProtocolInterpreter* oldProtInterpreter, const Cuuid_t cuuid)
   throw (castor::exception::Exception) {
   
   bool handleRequest = true;
@@ -202,8 +196,9 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
 }
 
 
-void castor::vdqm::OldRequestFacade::logDriveRequest(newVdqmHdr_t *header,
-  newVdqmDrvReq_t * request, Cuuid_t cuuid) {
+void castor::vdqm::OldRequestFacade::logDriveRequest(
+  const vdqmHdr_t *const header, const vdqmDrvReq_t *const request,
+  const Cuuid_t cuuid) {
 
   std::stringstream status;
 
@@ -237,8 +232,9 @@ void castor::vdqm::OldRequestFacade::logDriveRequest(newVdqmHdr_t *header,
 }
 
 
-void castor::vdqm::OldRequestFacade::logVolumeRequest(newVdqmHdr_t *header,
-  newVdqmVolReq_t * request, Cuuid_t cuuid) {
+void castor::vdqm::OldRequestFacade::logVolumeRequest(
+  const vdqmHdr_t *const header,
+  const vdqmVolReq_t *const request, const Cuuid_t cuuid) {
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("magic"      ,

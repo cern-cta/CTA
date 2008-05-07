@@ -43,7 +43,6 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
-#include "castor/vdqm/newVdqm.h"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/vdqmMacros.h"  // Needed for marshalling
 #include "castor/vdqm/VdqmSocketHelper.hpp"
@@ -53,9 +52,8 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::vdqm::OldProtocolInterpreter::OldProtocolInterpreter(
-  castor::io::ServerSocket* serverSocket,
-  const Cuuid_t* cuuid)
-throw(castor::exception::Exception) {
+  castor::io::ServerSocket* serverSocket, const Cuuid_t* cuuid)
+  throw(castor::exception::Exception) {
   
   if ( 0 == serverSocket || 0 == cuuid) {
     castor::exception::InvalidArgument ex;
@@ -68,6 +66,7 @@ throw(castor::exception::Exception) {
   }
 }
 
+
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
@@ -79,9 +78,8 @@ throw() {
 //------------------------------------------------------------------------------
 // readProtocol
 //------------------------------------------------------------------------------
-int castor::vdqm::OldProtocolInterpreter::readProtocol(newVdqmHdr_t *header, 
-                                                newVdqmVolReq_t *volumeRequest, 
-                                                newVdqmDrvReq_t *driveRequest) 
+int castor::vdqm::OldProtocolInterpreter::readProtocol(vdqmHdr_t *header, 
+  vdqmVolReq_t *volumeRequest, vdqmDrvReq_t *driveRequest) 
 throw (castor::exception::Exception) {
 
   // header buffer is shorter, 
@@ -296,9 +294,8 @@ throw (castor::exception::Exception) {
 //------------------------------------------------------------------------------
 // sendToOldClient
 //------------------------------------------------------------------------------
-int castor::vdqm::OldProtocolInterpreter::sendToOldClient(newVdqmHdr_t *header, 
-                                                newVdqmVolReq_t *volumeRequest, 
-                                                 newVdqmDrvReq_t *driveRequest) 
+int castor::vdqm::OldProtocolInterpreter::sendToOldClient(vdqmHdr_t *header, 
+  vdqmVolReq_t *volumeRequest, vdqmDrvReq_t *driveRequest) 
 throw (castor::exception::Exception) {
 
   char hdrbuf[VDQM_HDRBUFSIZ];
@@ -387,10 +384,10 @@ throw (castor::exception::Exception) {
   
   len = 0;
   if ( REQTYPE(VOL,reqtype)) {
-    len = NEWVDQM_VOLREQLEN(volumeRequest);
+    len = VDQM_VOLREQLEN(volumeRequest);
   }
   else if ( REQTYPE(DRV,reqtype) ) {
-    len = NEWVDQM_DRVREQLEN(driveRequest);
+    len = VDQM_DRVREQLEN(driveRequest);
   }
   else if ( ADMINREQ(reqtype) ) {
     len = 0;

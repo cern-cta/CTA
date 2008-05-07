@@ -40,7 +40,6 @@
 #include "castor/vdqm/TapeDriveCompatibility.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
-#include "castor/vdqm/newVdqm.h"
 #include "h/vdqm_constants.h"
 
 #include "occi.h"
@@ -756,7 +755,7 @@ int castor::db::ora::OraVdqmSvc::getQueuePosition(
 // -----------------------------------------------------------------------
 castor::vdqm::TapeDrive* 
   castor::db::ora::OraVdqmSvc::selectTapeDrive(
-  const newVdqmDrvReq_t* driveRequest,
+  const vdqmDrvReq_t* driveRequest,
   castor::vdqm::TapeServer* tapeServer)
   throw (castor::exception::Exception) {
     
@@ -1496,11 +1495,11 @@ castor::vdqm::IVdqmSvc::VolReqList*
     castor::vdqm::IVdqmSvc::VolReqList* volReqs =
       new castor::vdqm::IVdqmSvc::VolReqList();
 
-    newVdqmVolReq_t *volReq = NULL;
+    vdqmVolReq_t *volReq = NULL;
 
     while(rs->next())
     {
-      volReqs->push_back(volReq = new newVdqmVolReq_t());
+      volReqs->push_back(volReq = new vdqmVolReq_t());
 
       volReq->VolReqID = rs->getInt(1);
 
@@ -1558,7 +1557,7 @@ castor::vdqm::IVdqmSvc::VolReqList*
 // -----------------------------------------------------------------------
 // selectTapeDriveQueue
 // -----------------------------------------------------------------------
-std::list<newVdqmDrvReq_t>*
+std::list<vdqmDrvReq_t>*
   castor::db::ora::OraVdqmSvc::selectTapeDriveQueue(const std::string dgn,
   const std::string requestedSrv) throw (castor::exception::Exception) {
 
@@ -1585,18 +1584,16 @@ std::list<newVdqmDrvReq_t>*
   }
  
   // Execute statement and get result
-  try
-  {
+  try {
     oracle::occi::ResultSet *rs =
       m_selectTapeDriveQueueStatement->executeQuery();
 
     // The result of the search in the database.
-    std::list<newVdqmDrvReq_t>* drvReqs = new std::list<newVdqmDrvReq_t>;
+    std::list<vdqmDrvReq_t>* drvReqs = new std::list<vdqmDrvReq_t>;
 
-    newVdqmDrvReq_t drvReq;
+    vdqmDrvReq_t drvReq;
 
-    while(rs->next())
-    {
+    while(rs->next()) {
       drvReq.status    =
         translateNewStatus((castor::vdqm::TapeDriveStatusCodes)rs->getInt(1));
       drvReq.DrvReqID  = rs->getInt(2);

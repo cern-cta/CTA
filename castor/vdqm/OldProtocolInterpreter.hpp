@@ -29,11 +29,7 @@
 
 #include "castor/BaseObject.hpp"
 #include "castor/io/ServerSocket.hpp"
-
-// Forward declaration
-typedef struct newVdqmHdr newVdqmHdr_t; 
-typedef struct newVdqmVolReq newVdqmVolReq_t; 
-typedef struct newVdqmDrvReq newVdqmDrvReq_t;
+#include "h/vdqm_messages.h"
 
 
 namespace castor {
@@ -83,8 +79,8 @@ namespace castor {
        * to the TapeDrive
        * @exception In case of error
        */
-      int readProtocol(newVdqmHdr_t *header, newVdqmVolReq_t *volumeRequest, 
-        newVdqmDrvReq_t *driveRequest) 
+      int readProtocol(vdqmHdr_t *header, vdqmVolReq_t *volumeRequest, 
+        vdqmDrvReq_t *driveRequest) 
       throw (castor::exception::Exception);
                   
       /**
@@ -93,8 +89,8 @@ namespace castor {
        * @return The request Type number of the old vdqm Protocol
        * @exception In case of error
        */        
-      int sendToOldClient(newVdqmHdr_t *header, newVdqmVolReq_t *volumeRequest,
-        newVdqmDrvReq_t *driveRequest) 
+      int sendToOldClient(vdqmHdr_t *header, vdqmVolReq_t *volumeRequest,
+        vdqmDrvReq_t *driveRequest) 
       throw (castor::exception::Exception);
                           
       /**

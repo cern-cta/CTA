@@ -29,10 +29,8 @@
 
 #include "BaseRequestHandler.hpp"
 
-typedef struct newVdqmDrvReq newVdqmDrvReq_t;
 
 namespace castor {
-  //Forward declaration
 
   namespace vdqm {
 
@@ -82,7 +80,7 @@ namespace castor {
            * @exception In case of error
            */
           TapeDriveStatusHandler(castor::vdqm::TapeDrive* tapeDrive, 
-            newVdqmDrvReq_t* driveRequest, Cuuid_t cuuid,
+            vdqmDrvReq_t* driveRequest, Cuuid_t cuuid,
             u_signed64* newRequestId) 
             throw(castor::exception::Exception);
           
@@ -95,7 +93,7 @@ namespace castor {
         private:
           // Private variables
           castor::vdqm::TapeDrive* ptr_tapeDrive;
-          newVdqmDrvReq_t* ptr_driveRequest;
+          vdqmDrvReq_t* ptr_driveRequest;
           Cuuid_t m_cuuid;
           u_signed64* ptr_newRequestId;
           

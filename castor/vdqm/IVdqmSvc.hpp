@@ -28,7 +28,7 @@
 #define VDQM_IVDQMSVC_HPP 1
 
 #include "castor/IService.hpp"
-#include "castor/vdqm/newVdqm.h"
+#include "h/vdqm_messages.h"
 
 #include <list>
 #include <string>
@@ -75,15 +75,15 @@ namespace castor {
          * Inner class used to help manage the allocated memory associated with
          * a list of volume requests for showqueues
          */
-        class VolReqList : public std::list<newVdqmVolReq_t*> {
+        class VolReqList : public std::list<vdqmVolReq_t*> {
         public:
 
           /**
-           * Destructor which deletes each of the newVdqmVolReq_t messages
+           * Destructor which deletes each of the vdqmVolReq_t messages
            * pointed to by the pointers within this container.
            */
           ~VolReqList() {
-            for(std::list<newVdqmVolReq_t*>::iterator itor=begin();
+            for(std::list<vdqmVolReq_t*>::iterator itor=begin();
               itor != end(); itor++) {
               delete *itor;
             }
@@ -251,7 +251,7 @@ namespace castor {
          * drives to the showqueues comman-line application.
          * Note that the returned vector should be deallocated by the caller.
          */
-        virtual std::list<newVdqmDrvReq_t>* selectTapeDriveQueue(
+        virtual std::list<vdqmDrvReq_t>* selectTapeDriveQueue(
           const std::string dgn, const std::string requestedSrv)
           throw (castor::exception::Exception) = 0;    
                                        
@@ -282,7 +282,7 @@ namespace castor {
          * DB problem, etc...)
          */
         virtual TapeDrive* selectTapeDrive(
-          const newVdqmDrvReq_t* driveRequest,
+          const vdqmDrvReq_t* driveRequest,
           TapeServer* tapeServer)
           throw (castor::exception::Exception) = 0;  
 

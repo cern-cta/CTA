@@ -42,7 +42,6 @@
 #include "castor/vdqm/DatabaseHelper.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/DevTools.hpp"
-#include "castor/vdqm/newVdqm.h"
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
@@ -85,8 +84,8 @@ castor::vdqm::handler::TapeRequestHandler::~TapeRequestHandler() throw() {
 // newTapeRequest
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
-  newVdqmHdr_t *header, newVdqmVolReq_t *volumeRequest, Cuuid_t cuuid) 
-  throw (castor::exception::Exception) {
+  const vdqmHdr_t *const header, vdqmVolReq_t *const volumeRequest,
+  const Cuuid_t cuuid) throw (castor::exception::Exception) {
   
   struct vmgr_tape_info tape_info; // used to get information about the tape
   
@@ -249,7 +248,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
 // deleteTapeRequest
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
-  newVdqmVolReq_t *volumeRequest, Cuuid_t cuuid) 
+  const vdqmVolReq_t *const volumeRequest, const Cuuid_t cuuid) 
   throw (castor::exception::Exception) {
   
   // Get the tapeReq from its id
@@ -339,7 +338,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 // getQueuePosition
 //------------------------------------------------------------------------------
 int castor::vdqm::handler::TapeRequestHandler::getQueuePosition(
-  newVdqmVolReq_t *volumeRequest, Cuuid_t cuuid) 
+  const vdqmVolReq_t *const volumeRequest, const Cuuid_t cuuid) 
   throw (castor::exception::Exception) {
     
   //To store the db related informations
@@ -369,9 +368,9 @@ int castor::vdqm::handler::TapeRequestHandler::getQueuePosition(
 // sendTapeRequestQueue
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
-  newVdqmHdr_t *header, newVdqmVolReq_t *volumeRequest,
-  castor::vdqm::OldProtocolInterpreter* oldProtInterpreter, Cuuid_t cuuid) 
-  throw (castor::exception::Exception) {
+  vdqmHdr_t *const header, vdqmVolReq_t *const volumeRequest,
+  castor::vdqm::OldProtocolInterpreter *const oldProtInterpreter,
+  const Cuuid_t cuuid) throw (castor::exception::Exception) {
 
   std::string dgn    = "";
   std::string server = "";
@@ -419,4 +418,14 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
   volumeRequest->VolReqID = -1;
   
   oldProtInterpreter->sendToOldClient(header, volumeRequest, NULL);
+}
+
+
+//------------------------------------------------------------------------------
+// setVolumePriority
+//------------------------------------------------------------------------------
+void castor::vdqm::handler::TapeRequestHandler::setVolumePriority(
+  vdqmHdr_t *const header, vdqmVolReq_t *const volumeRequest,
+  const Cuuid_t cuuid) throw (castor::exception::Exception) {
+std::cout << "castor::vdqm::handler::TapeRequestHandler::setVolumePriority" << std::endl;
 }

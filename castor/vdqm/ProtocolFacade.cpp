@@ -28,17 +28,15 @@
 #include "castor/Constants.hpp"
 #include "castor/Services.hpp"
 #include "castor/exception/InvalidArgument.hpp"
-
-#include <vdqm_constants.h>  //e.g. Magic Number of old vdqm protocol
- 
 #include "castor/server/NotifierThread.hpp"
 #include "castor/vdqm/DevTools.hpp"
-#include "castor/vdqm/newVdqm.h" //Needed for the client_connection
 #include "castor/vdqm/OldRequestFacade.hpp"
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
 #include "castor/vdqm/ProtocolFacade.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/VdqmSocketHelper.hpp"
+#include "h/vdqm_constants.h"  //e.g. Magic Number of old vdqm protocol
+
 
 //------------------------------------------------------------------------------
 // constructor
@@ -56,6 +54,7 @@ castor::vdqm::ProtocolFacade::ProtocolFacade(
     m_cuuid = cuuid;
   }
 }
+
 
 //------------------------------------------------------------------------------
 // destructor
@@ -76,7 +75,7 @@ void castor::vdqm::ProtocolFacade::handleProtocolVersion()
   
   // get the incoming request
   try {
-    //First check of the Protocol
+    // First check of the Protocol
     magicNumber =
           VdqmSocketHelper::readMagicNumber(ptr_serverSocket->socket());
   } catch (castor::exception::Exception &e) {  
@@ -90,7 +89,7 @@ void castor::vdqm::ProtocolFacade::handleProtocolVersion()
 
   switch (magicNumber) {
     case VDQM_MAGIC:
-      //Request has MagicNumber from old VDQM Protocol
+      // Request has MagicNumber from old VDQM Protocol
       castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_DEBUG,
         VDQM_REQUEST_HAS_OLD_PROTOCOL_MAGIC_NB);
       
@@ -107,7 +106,20 @@ void castor::vdqm::ProtocolFacade::handleProtocolVersion()
           params);        
       }
       break;
-    
+
+    case VDQM_MAGIC2:
+      try {
+        handleVdqmMagic2Request();
+      } catch (castor::exception::Exception &e) {
+        // "Exception caught" message
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("Message", e.getMessage().str()),
+          castor::dlf::Param("errorCode", e.code())};
+        castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, VDQM_EXCEPTION, 2,
+          params);
+      }
+      break;
+
     default:
       //Wrong Magic number
       castor::dlf::Param params[] = {
@@ -126,9 +138,9 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
   unsigned int magicNumber) throw (castor::exception::Exception) {
    
   // Message of the old Protocol
-  newVdqmVolReq_t volumeRequest;
-  newVdqmDrvReq_t driveRequest;
-  newVdqmHdr_t    header;
+  vdqmVolReq_t volumeRequest;
+  vdqmDrvReq_t driveRequest;
+  vdqmHdr_t    header;
   int reqtype; // Request type of the message
   int rc = 0; // For checking purpose
   bool reqHandled = false;
@@ -279,4 +291,12 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
       VDQM_HANDLE_OLD_VDQM_REQUEST_ROLLBACK);        
     svcs()->rollback(&ad);
   }
+}
+
+
+//------------------------------------------------------------------------------
+// handleVdqmMagic2Request
+//------------------------------------------------------------------------------
+void castor::vdqm::ProtocolFacade::handleVdqmMagic2Request()
+  throw (castor::exception::Exception) {
 }

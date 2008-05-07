@@ -30,10 +30,6 @@
 // Local include
 #include "BaseRequestHandler.hpp"
 
-typedef struct newVdqmHdr newVdqmHdr_t;
-typedef struct newVdqmVolReq newVdqmVolReq_t;
-typedef struct newVdqmDrvReq newVdqmDrvReq_t;
-
 namespace castor {
 
   namespace vdqm {
@@ -69,11 +65,9 @@ namespace castor {
            * @param header The header of the old Protocol
            * @param volumeRequest The TapeRequest in the old protocol
            * @param cuuid The unique id of the request. Needed for dlf
-           * @exception In case of error
            */
-          void newTapeRequest(newVdqmHdr_t *header, 
-                              newVdqmVolReq_t *volumeRequest,
-                              Cuuid_t cuuid) 
+          void newTapeRequest(const vdqmHdr_t *const header, 
+            vdqmVolReq_t *const volumeRequest, const Cuuid_t cuuid) 
             throw (castor::exception::Exception);
             
           /**
@@ -82,12 +76,9 @@ namespace castor {
            * 
            * @param volumeRequest The TapeRequest in the old protocol
            * @param cuuid The unique id of the request. Needed for dlf
-           * @exception In case of error
            */
-          void deleteTapeRequest(newVdqmVolReq_t *volumeRequest, Cuuid_t cuuid) 
-            throw (castor::exception::Exception);
-            
-          
+          void deleteTapeRequest(const vdqmVolReq_t *volumeRequest,
+            const Cuuid_t cuuid) throw (castor::exception::Exception);
             
           /**
            * This function replaces the old vdqm_GetQueuePos() C-function. It
@@ -98,12 +89,10 @@ namespace castor {
            * @return 0<: The row number, 
            *         0 : The request is handled at the moment from a TapeDrive, 
            *         -1: if there is no entry for it.
-           * @exception In case of error
            */
-          int getQueuePosition(newVdqmVolReq_t *VolReq, Cuuid_t cuuid) 
-            throw (castor::exception::Exception);
+          int getQueuePosition(const vdqmVolReq_t *const VolReq,
+            const Cuuid_t cuuid) throw (castor::exception::Exception);
 
-            
           /**
            * This function replaces the old vdqm_GetVolQueue() C-function. 
            * I looks into the data base for all stored tapeRequests and sends
@@ -113,12 +102,21 @@ namespace castor {
            * @param oldProtInterpreter The interface to send the queue to the
            * client
            * @param cuuid The unique id of the request. Needed for dlf 
-           * @exception In case of error
            */
-          void sendTapeRequestQueue(newVdqmHdr_t *header,
-            newVdqmVolReq_t *volumeRequest,
-            OldProtocolInterpreter* oldProtInterpreter, Cuuid_t cuuid) 
-            throw (castor::exception::Exception);            
+          void sendTapeRequestQueue(vdqmHdr_t *const header,
+            vdqmVolReq_t *const volumeRequest,
+            OldProtocolInterpreter *const oldProtInterpreter,
+            const Cuuid_t cuuid) throw (castor::exception::Exception);            
+          /**
+           * Sets the priority of a volume.
+           *
+           * @param header The header of the old Protocol
+           * @param volumeRequest The TapeRequest in the old protocol
+           * @param cuuid The unique id of the request. Needed for dlf
+           */
+          void setVolumePriority(vdqmHdr_t *const header,
+            vdqmVolReq_t *const volumeRequest, const Cuuid_t cuuid)
+            throw (castor::exception::Exception);
   
       }; // class TapeRequestHandler
     

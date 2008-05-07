@@ -24,7 +24,6 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
-#include <rtcp_constants.h> /* RTCOPY_PORT  */
  
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
@@ -33,7 +32,6 @@
 #include "castor/vdqm/DatabaseHelper.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/DevTools.hpp"
-#include "castor/vdqm/newVdqm.h"
 #include "castor/vdqm/RTCopyDConnection.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
@@ -42,16 +40,16 @@
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/handler/TapeDriveStatusHandler.hpp"
-
-#include <net.h>
-#include <vdqm_constants.h>
+#include "h/net.h"
+#include "h/rtcp_constants.h" /* RTCOPY_PORT  */
+#include "h/vdqm_constants.h"
 
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
 castor::vdqm::handler::TapeDriveStatusHandler::TapeDriveStatusHandler(
-  castor::vdqm::TapeDrive* tapeDrive, newVdqmDrvReq_t* driveRequest, 
+  castor::vdqm::TapeDrive* tapeDrive, vdqmDrvReq_t* driveRequest, 
   Cuuid_t cuuid, u_signed64* newRequestId) throw(castor::exception::Exception) {
     
   m_cuuid = cuuid;
@@ -303,9 +301,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolUnmountStatus()
 
   
   if ( ptr_tapeDrive->status() == WAIT_FOR_UNMOUNT ) {
-    /*
-     * Set status to FREE if there is no job assigned to the unit
-     */
+    // Set status to FREE if there is no job assigned to the unit
     if ( ptr_tapeDrive->runningTapeReq() == NULL ) {
       castor::dlf::Param param[] = {
         castor::dlf::Param("Function", __PRETTY_FUNCTION__),
@@ -344,8 +340,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolUnmountStatus()
       ptr_tapeDrive->setStatus(UNIT_ASSIGNED);
     }
       
-  }
-  else if ( ptr_tapeDrive->status() == FORCED_UNMOUNT ) {
+  } else if ( ptr_tapeDrive->status() == FORCED_UNMOUNT ) {
     castor::dlf::Param param[] = {
       castor::dlf::Param("Function", __PRETTY_FUNCTION__),
       castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
@@ -357,8 +352,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolUnmountStatus()
     VDQM_DRIVE_STATE_TRANSITION, 4, param);
 
     ptr_tapeDrive->setStatus(UNIT_UP);
-  }
-  else {
+  } else {
     castor::dlf::Param param[] = {
       castor::dlf::Param("Function", __PRETTY_FUNCTION__),
       castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
@@ -369,10 +363,8 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolUnmountStatus()
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
     VDQM_DRIVE_STATE_TRANSITION, 4, param);
 
-    /**
-     * The status of the tape drive must be WAIT_FOR_UNMOUNT or
-     * FORCED_UNMOUNT. If it is not the case, we throw an error!
-     */
+    // The status of the tape drive must be WAIT_FOR_UNMOUNT or
+    // FORCED_UNMOUNT. If it is not the case, we throw an error!
     ptr_tapeDrive->setStatus(STATUS_UNKNOWN);
     
     castor::exception::Exception ex(EVQBADSTAT);
@@ -585,10 +577,8 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitFreeStatus()
   
   
   tapeRequest = ptr_tapeDrive->runningTapeReq();
-  /*
-   * Dequeue request and free memory allocated for previous 
-   * volume request for this drive
-   */
+  // Dequeue request and free memory allocated for previous 
+  // volume request for this drive
   if ( tapeRequest != NULL ) {
     
       castor::vdqm::DatabaseHelper::deleteRepresentation(tapeRequest,
@@ -599,8 +589,6 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitFreeStatus()
       ptr_tapeDrive->setRunningTapeReq(NULL);
   }
   
-  /*
-   * Reset job IDs
-   */
+  // Reset job IDs
   ptr_tapeDrive->setJobID(0);    
 }
