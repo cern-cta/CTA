@@ -1,5 +1,5 @@
 /******************************************************************************
- *              dlf_2.1.7-4_to_2.1.7-5.sql
+ *              dlf_2.1.7-4_to_2.1.7-6.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dlf_2.1.7-4_to_2.1.7-6.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/05 13:07:20 $ $Author: waldron $
+ * @(#)$RCSfile: dlf_2.1.7-4_to_2.1.7-6.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/07 15:04:50 $ $Author: waldron $
  *
- * This script upgrades a CASTOR v2.1.7-4 DLF database to 2.1.7-5
+ * This script upgrades a CASTOR v2.1.7-4 DLF database to 2.1.7-6
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -37,7 +37,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   raise_application_error(-20000, 'PL/SQL revision mismatch. Please run previous upgrade scripts before this one.');
 END;
 
-UPDATE dlf_version SET release = '2_1_7_5';
+UPDATE dlf_version SET release = '2_1_7_6';
 COMMIT;
 
 /* Remove scheduler jobs before recreation */

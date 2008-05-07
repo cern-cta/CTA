@@ -1,5 +1,5 @@
 /******************************************************************************
- *              2.1.7-4_to_2.1.7-5.sql
+ *              2.1.7-4_to_2.1.7-6.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.7-4_to_2.1.7-6.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/05 13:07:20 $ $Author: waldron $
+ * @(#)$RCSfile: 2.1.7-4_to_2.1.7-6.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/07 15:04:49 $ $Author: waldron $
  *
- * This script upgrades a CASTOR v2.1.7-4 database into v2.1.7-5
+ * This script upgrades a CASTOR v2.1.7-4 database into v2.1.7-6
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -37,7 +37,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts before this one.');
 END;
 
-UPDATE CastorVersion SET schemaVersion = '2_1_7_5', release = '2_1_7_5';
+UPDATE CastorVersion SET schemaVersion = '2_1_7_5', release = '2_1_7_6';
 COMMIT;
 
 /* Job management */
@@ -126,7 +126,11 @@ END;
 /* compute the impact of a file's size in its gcweight */
 CREATE OR REPLACE FUNCTION size2gcweight(s NUMBER) RETURN NUMBER IS
 BEGIN
-  RETURN 1073741824/(s+1)*86400 + getTime();  -- 1GB/filesize (days) + current time as lastAccessTime
+  IF s < 1073741824 THEN
+    RETURN 1073741824/(s+1)*86400 + getTime();  -- 1GB/filesize (days) + current time as lastAccessTime
+  ELSE
+    RETURN 86400 + getTime();  -- the value for 1G file. We do not make any difference for big files and privilege FIFO
+  END IF;
 END;
 
 
