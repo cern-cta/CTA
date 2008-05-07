@@ -1,5 +1,5 @@
 -----------
-- 2.1.7-5 -
+- 2.1.7-6 -
 -----------
 
   - #35568: stager_qry -s without service class should respect black/white list authorization
@@ -11,6 +11,13 @@
   - #36060: Client gets no reply in case of 'Invalid user'
   - #36068: stagerDaemon has (too?) many file descriptors
   - #36255: RFE: Core dumping to be enabled by default
+  - #36296: reclaim gives send2nsd error
+
+  - Fixed a bug in the LSF plugins which prevented jobs from being scheduled even though
+    resources/slots were available.
+
+  - Modified the size2gcweight function in the PL/SQL code to improve the garbage 
+    collection decisions made with respect to large files.
 
   - Added support for checking the black and white list for `stager_qry -s` with no
     service class defined. If the user issuing the command does not have DiskPoolQuery
@@ -44,7 +51,7 @@
   Upgrading from 2.1.7-4
   ----------------------
 
-  Before upgrading to a 2.1.7-5 instance of CASTOR2 please make sure to read the upgrade
+  Before upgrading to a 2.1.7-6 instance of CASTOR2 please make sure to read the upgrade
   instructions fully before proceeding. Note: this upgrade does not require stopping of the
   instance and should be transparent to the end users.
 
@@ -54,16 +61,16 @@
      non backwards compatible.
 
   2. Upgrade the stager and dlf databases using the correct upgrade scripts from
-     - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-5/upgrades
+     - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-6/upgrades
 
-  3. Upgrade the software on the headnodes and diskservers to 2.1.7-5. Daemons will
+  3. Upgrade the software on the headnodes and diskservers to 2.1.7-6. Daemons will
      automatically be restarted on upgrade.
 
   4. Start the stager and jobManager daemons
 
   5. Reload the LSF plugin. `badmin reconfig`
 
-  6. Upgrade the CNS and CUPV services to 2.1.7-5 (This step is not mandatory)
+  6. Upgrade the CNS and CUPV services to 2.1.7-6 (This step is not mandatory)
 
 
 -----------
