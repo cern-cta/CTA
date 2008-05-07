@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_listtape.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:18 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_listtape.man,v $ $Revision: 1.3 $ $Date: 2008/05/07 14:56:02 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_LISTTAPE 3 "$Date: 2006/01/26 15:36:18 $" CASTOR "Cns Library Functions"
+.TH CNS_LISTTAPE 3 "$Date: 2008/05/07 14:56:02 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_listtape \- list the file segments residing on a volume
 .SH SYNOPSIS
@@ -37,7 +37,9 @@ initialize pointers.
 all the following calls must have this flag set.
 .TP
 .B CNS_LIST_END
-final call to terminate the list and free resources.
+final call to terminate the list and free resources. If an error occurred in a previous
+.B Cns_listtape
+call, the termination call should not be performed!
 .RE
 .SH RETURN VALUE
 This routine returns a pointer to a structure containing the current tape segment

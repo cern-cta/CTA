@@ -222,7 +222,7 @@ int *nbstruct;
 	}
 
 	/* send request to name server */
-
+	serrno = 0;
 	if ((n = netwrite (s, reqp, reql)) <= 0) {
 		if (n == 0)
 			Cns_errmsg (func, NS002, "send", sys_serrlist[SERRNO]);

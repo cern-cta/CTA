@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: reclaim.c,v $ $Revision: 1.8 $ $Date: 2008/02/28 16:33:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*      reclaim - reset information concerning a volume */
 #include <errno.h>
 #include <getopt.h>
@@ -20,6 +16,7 @@ static char sccsid[] = "@(#)$RCSfile: reclaim.c,v $ $Revision: 1.8 $ $Date: 2008
 extern	char	*getconfent();
 extern	char	*optarg;
 extern	int	optind;
+
 int main(argc, argv)
 int argc;
 char **argv;
@@ -117,7 +114,9 @@ char **argv;
 			    sstrerror(serrno));
 			exit (SYERR);
 		}
-		(void) Cns_listtape (host, vid, CNS_LIST_END, &list, 0);
+		if (serrno == 0) {
+			(void) Cns_listtape (host, vid, CNS_LIST_END, &list, 0);
+		}
 		if (! Cns_hosts) break;
 		host = Cns_hosts;
 		if ((p = strpbrk (Cns_hosts, " \t\n"))) {
