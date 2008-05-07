@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.647 $ $Date: 2008/05/05 08:17:38 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.648 $ $Date: 2008/05/07 14:39:18 $ $Author: sponcec3 $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -335,7 +335,11 @@ END;
 /* compute the impact of a file's size in its gcweight */
 CREATE OR REPLACE FUNCTION size2gcweight(s NUMBER) RETURN NUMBER IS
 BEGIN
-  RETURN 1073741824/(s+1)*86400 + getTime();  -- 1GB/filesize (days) + current time as lastAccessTime
+  IF s < 1073741824 THEN
+    RETURN 1073741824/(s+1)*86400 + getTime();  -- 1GB/filesize (days) + current time as lastAccessTime
+  ELSE
+    RETURN 86400 + getTime();  -- the value for 1G file. We do not make any difference for big files and privilege FIFO
+  END IF;
 END;
 
 
