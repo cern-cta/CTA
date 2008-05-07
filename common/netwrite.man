@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: netwrite.man,v $ $Revision: 1.1 $ $Date: 2001/10/23 08:46:52 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: netwrite.man,v $ $Revision: 1.2 $ $Date: 2008/05/07 14:53:22 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1991-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NETWRITE 3 "$Date: 2001/10/23 08:46:52 $" CASTOR "Common Library Functions"
+.TH NETWRITE 3 "$Date: 2008/05/07 14:53:22 $" CASTOR "Common Library Functions"
 .SH NAME
 netwrite \- send a message on a socket
 .SH SYNOPSIS
@@ -56,7 +56,6 @@ Connection closed by remote end.
 .B SETIMEDOUT
 Timed out.
 .SH SEE ALSO
-.BR send(2) ,
-.B neterror(3)
+.BR send(2)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

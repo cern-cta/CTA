@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: netclose.man,v $ $Revision: 1.1 $ $Date: 2001/10/23 08:46:51 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: netclose.man,v $ $Revision: 1.2 $ $Date: 2008/05/07 14:53:22 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1991-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NETCLOSE 3 "$Date: 2001/10/23 08:46:51 $" CASTOR "Common Library Functions"
+.TH NETCLOSE 3 "$Date: 2008/05/07 14:53:22 $" CASTOR "Common Library Functions"
 .SH NAME
 netclose \- close an existing socket
 .SH SYNOPSIS
@@ -31,7 +31,6 @@ is not a valid descriptor.
 is not a socket.
 .SH SEE ALSO
 .BR close(2) ,
-.BR closesocket(WNT) ,
-.B neterror(3)
+.BR closesocket(WNT)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
