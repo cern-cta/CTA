@@ -121,16 +121,16 @@ namespace castor {
       void sendAcknPing(int queuePosition) 
       throw (castor::exception::Exception);
         
-       /**
-        * This funtion is used in case of errors to send back the error code
-        * to the client. The similar function in the old vdqm part is 
-        * vdqm_AcknRollback().
-        * 
-        * @param errorCode The errorCode which has been thrown
-        * @exception In case of error
-        */
-       void sendAcknRollback(int errorCode) 
-       throw (castor::exception::Exception);          
+      /**
+       * This funtion is used in case of errors to send back the error code
+       * to the client. The similar function in the old vdqm part is 
+       * vdqm_AcknRollback().
+       * 
+       * @param errorCode The errorCode which has been thrown
+       * @exception In case of error
+       */
+      void sendAcknRollback(int errorCode) 
+      throw (castor::exception::Exception);          
           
 
       private:      

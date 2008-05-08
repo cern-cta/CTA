@@ -34,6 +34,8 @@
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
 #include "castor/vdqm/ProtocolFacade.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
+#include "castor/vdqm/VdqmMagic2RequestFacade.hpp"
+#include "castor/vdqm/VdqmMagic2ProtocolInterpreter.hpp"
 #include "castor/vdqm/VdqmSocketHelper.hpp"
 #include "h/vdqm_constants.h"  //e.g. Magic Number of old vdqm protocol
 
@@ -109,7 +111,7 @@ void castor::vdqm::ProtocolFacade::handleProtocolVersion()
 
     case VDQM_MAGIC2:
       try {
-        handleVdqmMagic2Request();
+        handleVdqmMagic2Request(magicNumber);
       } catch (castor::exception::Exception &e) {
         // "Exception caught" message
         castor::dlf::Param params[] = {
@@ -135,7 +137,7 @@ void castor::vdqm::ProtocolFacade::handleProtocolVersion()
 // handleOldVdqmRequest
 //------------------------------------------------------------------------------
 void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
-  unsigned int magicNumber) throw (castor::exception::Exception) {
+  const unsigned int magicNumber) throw (castor::exception::Exception) {
    
   // Message of the old Protocol
   vdqmVolReq_t volumeRequest;
@@ -150,7 +152,7 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);   
   
-  // handles the connection to the client
+  // Handles the connection to the client
   OldProtocolInterpreter oldProtInterpreter(ptr_serverSocket, m_cuuid);
   
   // The socket read out phase
@@ -159,10 +161,10 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
     memset(&volumeRequest,'\0',sizeof(volumeRequest));
     memset(&driveRequest ,'\0',sizeof(driveRequest));
     memset(&header       ,'\0',sizeof(header));
-    
+
     // Put the magic number into the header struct
     header.magic = magicNumber;
-    
+
     // read the rest of the vdqm message    
     reqtype = oldProtInterpreter.readProtocol(&header, &volumeRequest, 
       &driveRequest);                            
@@ -297,6 +299,65 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
 //------------------------------------------------------------------------------
 // handleVdqmMagic2Request
 //------------------------------------------------------------------------------
-void castor::vdqm::ProtocolFacade::handleVdqmMagic2Request()
-  throw (castor::exception::Exception) {
+void castor::vdqm::ProtocolFacade::handleVdqmMagic2Request(
+  const unsigned int magicNumber) throw (castor::exception::Exception) {
+
+  vdqmHdr_t header;
+
+  // The following protocol interpreters handle the connection to the client
+  OldProtocolInterpreter oldProtInterpreter(ptr_serverSocket, m_cuuid);
+  VdqmMagic2ProtocolInterpreter vdqmMagic2ProtInterpreter(ptr_serverSocket,
+    m_cuuid);
+
+  // Needed for commit and rollback actions on the database
+  castor::BaseAddress ad;
+  ad.setCnvSvcName("DbCnvSvc");
+  ad.setCnvSvcType(castor::SVC_DBCNV);
+
+
+  // The socket read out phase
+  try {
+    vdqmMagic2ProtInterpreter.readHeader(magicNumber, &header);
+  } catch (castor::exception::Exception &e) {
+    // "Unable to read Request from socket" message
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", "Failed to read request type: " +
+        e.getMessage().str())};
+    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, VDQM_FAILED_SOCK_READ, 1,
+      params);
+
+    return;
+  }
+
+
+  // The request handling phase
+  try {
+    VdqmMagic2RequestFacade::checkRequestType(header.reqtype);
+  } catch (castor::exception::Exception &e) {
+    castor::dlf::Param params2[] = {
+      castor::dlf::Param("Message", e.getMessage().str()),
+      castor::dlf::Param("errorCode", e.code())};
+
+      castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, VDQM_EXCEPTION, 2,
+        params2);
+
+    // Rollback of the whole request message
+    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM,
+      VDQM_HANDLE_OLD_VDQM_REQUEST_ROLLBACK);
+    svcs()->rollback(&ad);
+
+    // Tell the client about the error
+    try {
+      oldProtInterpreter.sendAcknRollback(e.code());
+    } catch (castor::exception::Exception &e) {
+      // "Exception caught" message
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("Message", e.getMessage().str())};
+      castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, VDQM_EXCEPTION, 1,
+        params);
+    }
+
+    // Now, we don't need to make a handshake
+    return;
+  }
 }

@@ -64,8 +64,10 @@ namespace castor {
        /**
         * Checks the reqtype and returns an error, if it is a 
         * wrong number. Throws an exception, if an error occures.
+        *
+        * @param cuuid The unique id of the request. Needed for dlf.
         */
-       bool checkRequestType(const Cuuid_t cuuid) 
+       void checkRequestType(const Cuuid_t cuuid) 
          throw (castor::exception::Exception);
       
       

@@ -82,8 +82,8 @@ int castor::vdqm::OldProtocolInterpreter::readProtocol(vdqmHdr_t *header,
   vdqmVolReq_t *volumeRequest, vdqmDrvReq_t *driveRequest) 
 throw (castor::exception::Exception) {
 
-  // header buffer is shorter, 
-  //because the magic number should already be read out
+  // Header buffer is shorter, because the magic number should already be read
+  // out
   int headerBufSize = VDQM_HDRBUFSIZ - LONGSIZE;
   char hdrbuf[VDQM_HDRBUFSIZ - LONGSIZE];
   
@@ -101,7 +101,7 @@ throw (castor::exception::Exception) {
   magic = len = 0;
 
   
-  //read rest of header. The magic number is already read out
+  // Read rest of header. The magic number is already read out
   rc = netread_timeout(ptr_serverSocket->socket(), hdrbuf, headerBufSize, VDQM_TIMEOUT);
   
   if (rc == -1) {

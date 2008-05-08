@@ -24,9 +24,6 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
-#include <sstream>
-#include <string>
-
 #include "castor/Constants.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NotSupported.hpp"
@@ -39,8 +36,12 @@
 #include "h/net.h"
 #include "h/vdqm_constants.h"
 
+#include <sstream>
+#include <string>
+
 // To make the code more readable
 using namespace castor::vdqm::handler;
+
  
 //------------------------------------------------------------------------------
 // Constructor
@@ -56,7 +57,7 @@ castor::vdqm::OldRequestFacade::OldRequestFacade(
 //------------------------------------------------------------------------------
 // checkRequestType
 //------------------------------------------------------------------------------
-bool castor::vdqm::OldRequestFacade::checkRequestType(Cuuid_t cuuid) 
+void castor::vdqm::OldRequestFacade::checkRequestType(const Cuuid_t cuuid) 
   throw (castor::exception::Exception) {
 
   int i;
@@ -86,10 +87,12 @@ bool castor::vdqm::OldRequestFacade::checkRequestType(Cuuid_t cuuid)
                     << std::hex << m_reqtype << "\n";
     throw ex;
   } 
-  
-  return true;
 }
 
+
+//------------------------------------------------------------------------------
+// handleRequestType
+//------------------------------------------------------------------------------
 bool castor::vdqm::OldRequestFacade::handleRequestType(
   OldProtocolInterpreter* oldProtInterpreter, const Cuuid_t cuuid)
   throw (castor::exception::Exception) {
@@ -196,6 +199,9 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
 }
 
 
+//------------------------------------------------------------------------------
+// logDriveRequest
+//------------------------------------------------------------------------------
 void castor::vdqm::OldRequestFacade::logDriveRequest(
   const vdqmHdr_t *const header, const vdqmDrvReq_t *const request,
   const Cuuid_t cuuid) {

@@ -80,16 +80,19 @@ namespace castor {
        * the old structs and reads out the request typr number, to delegates
        * them to the right function.
        * 
-       * @param magicNumber The magic Number of the used protocol
-       * @exception Throws an exception in case of errors
+       * @param magicNumber The magic Number of the used protocol.  This is used
+       * to complete the message header.
        */
-      void handleOldVdqmRequest(unsigned int magicNumber)
+      void handleOldVdqmRequest(const unsigned int magicNumber)
       throw (castor::exception::Exception);
 
       /**
        * Handles a VDQM message with a magic number of VDQM_MAGIC2.
+       *
+       * @param magicNumber The magic Number of the used protocol.  This is used
+       * to complete the message header.
        */
-      void handleVdqmMagic2Request()
+      void handleVdqmMagic2Request(const unsigned int magicNumber)
       throw (castor::exception::Exception);
 
       /**
