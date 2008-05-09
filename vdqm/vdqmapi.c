@@ -1,5 +1,5 @@
 /*
- * $Id: vdqmapi.c,v 1.11 2008/04/29 16:14:44 murrayc3 Exp $
+ * $Id: vdqmapi.c,v 1.12 2008/05/09 14:33:27 murrayc3 Exp $
  *
  * Copyright (C) 1999 by CERN IT-PDP/DM
  * All rights reserved
@@ -906,12 +906,12 @@ int DLL_DECL vdqm_SendVolPriority(char *VID, int tpmode, int priority,
         if ( rc < 0 ) VDQM_API_RETURN(rc);
     } else tmpnw = nw;
     volpriority.priority = priority;
+    volpriority.clientUID = geteuid();
+    volpriority.clientGID = getegid();
     strncpy(volpriority.volid, VID, sizeof(volpriority.volid));
     volpriority.volid[sizeof(volpriority.volid)-1] = '\0';
     volpriority.tpmode = tpmode;
     volpriority.lifespantype = lifespantype;
-    volpriority.clientUID = geteuid();
-    volpriority.clientGID = getegid();
     rc = vdqm_SendVolPriority_Transfer(tmpnw,&volpriority);
     if ( rc != -1 ) {
         rc = vdqm_RecvAckn(tmpnw);

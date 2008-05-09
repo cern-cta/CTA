@@ -806,6 +806,8 @@ int vdqm_SendVolPriority_Transfer(vdqmnw_t *nw, vdqmVolPriority_t *volpriority)
     DO_MARSHALL_STRING(p,volpriority->client_host,SendTo,
         sizeof(volpriority->client_host));
     DO_MARSHALL_STRING(p,volpriority->volid,SendTo, sizeof(volpriority->volid));
+    DO_MARSHALL(LONG,p,volpriority->tpmode,SendTo);
+    DO_MARSHALL(LONG,p,volpriority->lifespantype,SendTo);
  
     magic   = VDQM_MAGIC2;
     reqtype = VDQM2_SET_VOL_PRIORITY;
