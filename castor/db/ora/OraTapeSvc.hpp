@@ -211,7 +211,7 @@ namespace castor {
          * Get an array of the tapes to be processed.
          * This method searches the request catalog for all tapes that are
          * in TAPE_PENDING status. It atomically updates the status to
-         * TAPE_WAITVDQM and returns the corresponding Tape objects.
+         * TAPE_WAITDRIVE and returns the corresponding Tape objects.
          * This means that a subsequent call to this method will not return
          * the same entries. Objects may be present n times in the returned
          * vector of tapes. The rtcpclientd will notice multiple identical

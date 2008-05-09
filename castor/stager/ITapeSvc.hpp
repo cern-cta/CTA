@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/08/13 15:20:17 $ $Author: waldron $
+ * @(#)$RCSfile: ITapeSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/05/09 15:17:02 $ $Author: murrayc3 $
  *
  * This class provides methods related to tape handling
  *
@@ -203,7 +203,7 @@ namespace castor {
        * Get an array of the tapes to be processed.
        * This method searches the request catalog for all tapes that are
        * in TAPE_PENDING status. It atomically updates the status to
-       * TAPE_WAITVDQM and returns the corresponding Tape objects.
+       * TAPE_WAITDRIVE and returns the corresponding Tape objects.
        * This means that a subsequent call to this method will not return
        * the same entries. Objects may be present n times in the returned
        * vector of tapes. The rtcpclientd will notice multiple identical
