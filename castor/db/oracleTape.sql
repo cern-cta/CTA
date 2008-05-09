@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.654 $ $Date: 2008/04/16 09:46:34 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.655 $ $Date: 2008/05/09 15:09:31 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -832,6 +832,7 @@ BEGIN
 END;
 
 /* createOrUpdateStream */
+
 CREATE OR REPLACE PROCEDURE createOrUpdateStream
 (svcClassName IN VARCHAR2,
  initialSizeToTransfer IN NUMBER, -- total initialSizeToTransfer for the svcClass
@@ -891,16 +892,21 @@ BEGIN
     IF nbOldStream < nbDrives THEN
       LOOP   
         -- get the tape pool with less stream
-        BEGIN        	   
-          SELECT TapePool.id INTO tpId FROM TapePool,SvcClass2TapePool  
-           WHERE TapePool.id NOT IN (SELECT TapePool FROM Stream) AND TapePool.id= SvcClass2TapePool.child
-	       AND  SvcClass2TapePool.parent=svcId AND ROWNUM <2;
+        BEGIN    
+         -- tapepool without stream randomly chosen    
+          SELECT a INTO tpId
+            FROM 
+            ( SELECT TapePool.id AS a FROM TapePool,SvcClass2TapePool  
+           	WHERE TapePool.id NOT IN (SELECT TapePool FROM Stream) AND TapePool.id= SvcClass2TapePool.child
+	        AND  SvcClass2TapePool.parent=svcId ORDER BY dbms_random.value
+	    ) WHERE ROWNUM<2;
         EXCEPTION WHEN NO_DATA_FOUND THEN
           -- at least one stream foreach tapepool
            SELECT tapepool INTO tpId 
             FROM (SELECT tapepool, count(*) AS c FROM Stream WHERE tapepool IN
-	    (SELECT SvcClass2TapePool.child FROM SvcClass2TapePool WHERE SvcClass2TapePool.parent=svcId) GROUP BY tapepool ORDER BY c ASC)
-           WHERE ROWNUM < 2;  	         
+	    (SELECT SvcClass2TapePool.child FROM SvcClass2TapePool WHERE SvcClass2TapePool.parent=svcId) GROUP BY tapepool ORDER BY c ASC, dbms_random.value)
+           WHERE ROWNUM < 2; 
+            	         
 	END;
 	           
         -- STREAM_CREATED
@@ -929,6 +935,7 @@ END;
 
 
 /* attach tapecopies to stream */
+
 CREATE OR REPLACE PROCEDURE attachTapeCopiesToStreams
 (tapeCopyIds IN castor."cnumList",
  tapePoolIds IN castor."cnumList")
@@ -936,35 +943,46 @@ AS
   streamId NUMBER; -- stream attached to the tapepool
   counter NUMBER := 0;
   unused NUMBER;
+  nbStream NUMBER;
 BEGIN
   -- add choosen tapecopies to all Streams associated to the tapepool used by the policy 
   FOR i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST LOOP
-    BEGIN 
-      UPDATE TapeCopy SET Status=2 WHERE Status=7 AND id = tapeCopyIds(i) RETURNING id into unused;
-      FOR streamId IN (SELECT id FROM Stream WHERE Stream.tapepool= tapePoolIds(i)) LOOP
-      	  DECLARE CONSTRAINT_VIOLATED EXCEPTION;
-          PRAGMA EXCEPTION_INIT (CONSTRAINT_VIOLATED,-1);
-          BEGIN 
-          -- check if it is not been resurrected by the start of a new mighunter on the same svcclass
-             INSERT INTO stream2tapecopy (parent ,child) VALUES (streamId.id, tapeCopyIds(i));
-          EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-      	     UPDATE tapecopy set status=1 where id=tapeCopyIds(i);
-          END;
-      END LOOP;
+    BEGIN
+	SELECT count(id) into nbStream FROM Stream WHERE Stream.tapepool=tapePoolIds(i);
+      	IF nbStream <> 0 THEN 
+      		 -- we have at least a stream for that tapepool
+        	SELECT id INTO unused FROM TapeCopy WHERE Status=7 AND id = tapeCopyIds(i) FOR UPDATE;
+      		-- let's attach it to the different streams
+      		FOR streamId IN (SELECT id FROM Stream WHERE Stream.tapepool= tapePoolIds(i)) LOOP
+      			UPDATE TapeCopy SET Status=2 WHERE Status=7 AND id = tapeCopyIds(i);
+      	  		DECLARE CONSTRAINT_VIOLATED EXCEPTION;
+          		PRAGMA EXCEPTION_INIT (CONSTRAINT_VIOLATED,-1);
+          		BEGIN 
+         	        	INSERT INTO stream2tapecopy (parent ,child) VALUES (streamId.id, tapeCopyIds(i));
+         	 	EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+         	 	        -- if the stream does not exist anymore
+      	 	    		UPDATE tapecopy SET status=7 where id=tapeCopyIds(i);
+      	 	  		-- it might also be that the tapecopy does not exist anymore
+         	 	END;
+          	END LOOP; -- stream loop	
+      	END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
      -- Go on the tapecopy has been resurrected or migrated
-      NULL;
-    END;
-     
+      	NULL;
+    END;   
     counter := counter + 1;
     IF counter = 100 THEN
          counter := 0;
          COMMIT;
     END IF;
-  END LOOP;
+  END LOOP; -- loop tapecopies
+      	  
+  -- resurrect the one never attached
+  FOR i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST LOOP
+  	UPDATE TapeCopy SET Status=1 WHERE id=tapeCopyIds(i) AND Status=7;
+  END LOOP;  
   COMMIT;
 END;
-
 
 /* start choosen stream */
 CREATE OR REPLACE PROCEDURE startChosenStreams
@@ -983,13 +1001,27 @@ END;
 
 /* stop chosen stream */
 
-CREATE OR REPLACE PROCEDURE stopChosenStreams
-        (streamIds IN castor."cnumList") AS
+CREATE OR REPLACE PROCEDURE startChosenStreams
+        (streamIds IN castor."cnumList",
+	initSize IN NUMBER) AS
+	nbTc NUMBER;
 BEGIN	
-  FORALL i IN streamIds.FIRST .. streamIds.LAST
-    UPDATE Stream SET Stream.status = 6 -- STOPPED
-     WHERE id = streamIds(i) AND Stream.status=7; -- WAITPOLICY
-  COMMIT;
+  FOR i IN streamIds.FIRST .. streamIds.LAST LOOP
+    BEGIN  
+    	SELECT count(*) INTO nbTc FROM stream2tapecopy WHERE parent=streamIds(i); 
+    	IF nbTc = 0 THEN
+    		DELETE FROM Stream where id=streamIds(i);
+    	ELSE
+    		UPDATE Stream 
+       		SET status = 0, -- PENDING
+        	   -- initialSize overwritten to initSize only if it is 0
+        	   initialSizeToTransfer = decode(initialSizeToTransfer, 0, initSize, initialSizeToTransfer)
+     		WHERE Stream.status = 7 -- WAITPOLICY
+       		AND id = streamIds(i);
+    	END IF;
+    	COMMIT;
+   END;  
+  END LOOP;
 END;
 
 /* resurrect Candidates */
