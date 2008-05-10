@@ -86,8 +86,8 @@ typedef struct vdqmdDrvReq {
 } vdqmDrvReq_t;
 
 /*
- * Length of marshalled structure. Don't forget to update
- * if entries are added
+ * Length of marshalled structure. Don't forget to update if entries are added.
+ * Note that a string requires strlen + 1 bytes of storage.
  */
 #define VDQM_DRVREQLEN(X) ( 10 * LONGSIZE + QUADSIZE + strlen(X->volid) + \
     strlen(X->server) + strlen(X->drive) + strlen(X->dgn) + \
@@ -112,10 +112,10 @@ typedef struct vdqmVolPriority {
     int  lifespantype;
 } vdqmVolPriority_t;
 /*
- * Length of marshalled structure. Don't forget to update
- * if entries are added
+ * Length of marshalled structure. Don't forget to update if entries are added.
+ * Note that a string requires strlen + 1 bytes of storage.
  */
 #define VDQM_VOLPRIORITYLEN(X) ( 5*LONGSIZE + \
-    strlen(X->client_host) + strlen(X->volid))
+    strlen(X->client_host) + strlen(X->volid) + 2 )
 
 #endif /* VDQM_MESSAGES_H */
