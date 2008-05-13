@@ -32,6 +32,6 @@
 void castor::vdqm::handler::VdqmMagic2RequestHandler::handleVolPriority(
   vdqmVolPriority_t *const msg) throw (castor::exception::Exception) {
   ptr_IVdqmService->setVolPriority(msg->priority, msg->clientUID,
-    msg->clientGID, msg->client_host, msg->volid, msg->tpmode,
-    msg->lifespantype);
+    msg->clientGID, msg->clientHost, msg->vid, msg->tpMode,
+    msg->lifespanType);
 }

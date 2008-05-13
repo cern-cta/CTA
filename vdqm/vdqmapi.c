@@ -1,5 +1,5 @@
 /*
- * $Id: vdqmapi.c,v 1.12 2008/05/09 14:33:27 murrayc3 Exp $
+ * $Id: vdqmapi.c,v 1.13 2008/05/13 20:24:09 murrayc3 Exp $
  *
  * Copyright (C) 1999 by CERN IT-PDP/DM
  * All rights reserved
@@ -885,8 +885,8 @@ int DLL_DECL vdqm_PingServer(vdqmnw_t *nw, char *dgn, int reqID) {
     VDQM_API_RETURN(rc);
 }
 
-int DLL_DECL vdqm_SendVolPriority(char *VID, int tpmode, int priority,
-  int lifespantype) {
+int DLL_DECL vdqm_SendVolPriority(char *vid, int tpMode, int priority,
+  int lifespanType) {
     vdqmnw_t *nw = NULL;
     vdqmVolPriority_t volpriority;
     vdqmnw_t *tmpnw = NULL;
@@ -896,7 +896,7 @@ int DLL_DECL vdqm_SendVolPriority(char *VID, int tpmode, int priority,
 
     memset(&volpriority,'\0',sizeof(volpriority));
     if ( (nw != NULL && nw->connect_socket == INVALID_SOCKET) ||
-        VID == NULL) {
+        vid == NULL) {
         TRACE(1,"vdqm","vdqm_SetVolPriority() called with invalid argument");
         serrno = EINVAL;
         VDQM_API_RETURN(-1);
@@ -908,10 +908,10 @@ int DLL_DECL vdqm_SendVolPriority(char *VID, int tpmode, int priority,
     volpriority.priority = priority;
     volpriority.clientUID = geteuid();
     volpriority.clientGID = getegid();
-    strncpy(volpriority.volid, VID, sizeof(volpriority.volid));
-    volpriority.volid[sizeof(volpriority.volid)-1] = '\0';
-    volpriority.tpmode = tpmode;
-    volpriority.lifespantype = lifespantype;
+    strncpy(volpriority.vid, vid, sizeof(volpriority.vid));
+    volpriority.vid[sizeof(volpriority.vid)-1] = '\0';
+    volpriority.tpMode = tpMode;
+    volpriority.lifespanType = lifespanType;
     rc = vdqm_SendVolPriority_Transfer(tmpnw,&volpriority);
     if ( rc != -1 ) {
         rc = vdqm_RecvAckn(tmpnw);

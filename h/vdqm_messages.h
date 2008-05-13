@@ -106,16 +106,16 @@ typedef struct vdqmVolPriority {
     int  priority;
     int  clientUID;
     int  clientGID;
-    char client_host[CA_MAXHOSTNAMELEN+1];
-    char volid[CA_MAXVIDLEN+1];
-    int  tpmode;
-    int  lifespantype;
+    char clientHost[CA_MAXHOSTNAMELEN+1];
+    char vid[CA_MAXVIDLEN+1];
+    int  tpMode;
+    int  lifespanType;
 } vdqmVolPriority_t;
 /*
  * Length of marshalled structure. Don't forget to update if entries are added.
  * Note that a string requires strlen + 1 bytes of storage.
  */
 #define VDQM_VOLPRIORITYLEN(X) ( 5*LONGSIZE + \
-    strlen(X->client_host) + strlen(X->volid) + 2 )
+    strlen(X->clientHost) + strlen(X->vid) + 2 )
 
 #endif /* VDQM_MESSAGES_H */

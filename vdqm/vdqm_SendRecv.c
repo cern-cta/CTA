@@ -794,20 +794,20 @@ int vdqm_SendVolPriority_Transfer(vdqmnw_t *nw, vdqmVolPriority_t *volpriority)
     }
     
     if ( *servername != '\0' ) {
-        strncpy(volpriority->client_host, servername,
-            sizeof(volpriority->client_host));
-        volpriority->client_host[sizeof(volpriority->client_host)-1] = '\0';
+        strncpy(volpriority->clientHost, servername,
+            sizeof(volpriority->clientHost));
+        volpriority->clientHost[sizeof(volpriority->clientHost)-1] = '\0';
     }
 
     p = buf;
     DO_MARSHALL(LONG,p,volpriority->priority,SendTo);
     DO_MARSHALL(LONG,p,volpriority->clientUID,SendTo);
     DO_MARSHALL(LONG,p,volpriority->clientGID,SendTo);
-    DO_MARSHALL_STRING(p,volpriority->client_host,SendTo,
-        sizeof(volpriority->client_host));
-    DO_MARSHALL_STRING(p,volpriority->volid,SendTo, sizeof(volpriority->volid));
-    DO_MARSHALL(LONG,p,volpriority->tpmode,SendTo);
-    DO_MARSHALL(LONG,p,volpriority->lifespantype,SendTo);
+    DO_MARSHALL_STRING(p,volpriority->clientHost,SendTo,
+        sizeof(volpriority->clientHost));
+    DO_MARSHALL_STRING(p,volpriority->vid,SendTo, sizeof(volpriority->vid));
+    DO_MARSHALL(LONG,p,volpriority->tpMode,SendTo);
+    DO_MARSHALL(LONG,p,volpriority->lifespanType,SendTo);
  
     magic   = VDQM_MAGIC2;
     reqtype = VDQM2_SET_VOL_PRIORITY;
@@ -960,11 +960,11 @@ int vdqm_RecvVolPriority_Transfer(vdqmnw_t *nw, vdqmVolPriority_t *volpriority)
     DO_MARSHALL(LONG,p,volpriority->priority,ReceiveFrom);
     DO_MARSHALL(LONG,p,volpriority->clientUID,ReceiveFrom);
     DO_MARSHALL(LONG,p,volpriority->clientGID,ReceiveFrom);
-    DO_MARSHALL_STRING(p,volpriority->client_host,ReceiveFrom,
-        sizeof(volpriority->client_host));
-    DO_MARSHALL_STRING(p,volpriority->volid,ReceiveFrom,
-        sizeof(volpriority->volid));
-    DO_MARSHALL(LONG,p,volpriority->lifespantype,ReceiveFrom);
+    DO_MARSHALL_STRING(p,volpriority->clientHost,ReceiveFrom,
+        sizeof(volpriority->clientHost));
+    DO_MARSHALL_STRING(p,volpriority->vid,ReceiveFrom,
+        sizeof(volpriority->vid));
+    DO_MARSHALL(LONG,p,volpriority->lifespanType,ReceiveFrom);
  
     return(reqtype);
 }

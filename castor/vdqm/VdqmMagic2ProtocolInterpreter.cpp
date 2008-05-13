@@ -133,18 +133,18 @@ void castor::vdqm::VdqmMagic2ProtocolInterpreter::readVolPriority(const int len,
   DO_MARSHALL(LONG,p,vdqmVolPriority->priority,ReceiveFrom);
   DO_MARSHALL(LONG,p,vdqmVolPriority->clientUID,ReceiveFrom);
   DO_MARSHALL(LONG,p,vdqmVolPriority->clientGID,ReceiveFrom);
-  if(unmarshall_STRINGN(p,vdqmVolPriority->client_host,
-    sizeof(vdqmVolPriority->client_host))) {
+  if(unmarshall_STRINGN(p,vdqmVolPriority->clientHost,
+    sizeof(vdqmVolPriority->clientHost))) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage() << "VdqmMagic2ProtocolInterpreter::readVolPriority() "
       "unmarshall_STRINGN( client_host )" << std::endl;
   }
-  if(unmarshall_STRINGN(p,vdqmVolPriority->volid,
-    sizeof(vdqmVolPriority->volid))) {
+  if(unmarshall_STRINGN(p,vdqmVolPriority->vid,
+    sizeof(vdqmVolPriority->vid))) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage() << "VdqmMagic2ProtocolInterpreter::readVolPriority() "
       "unmarshall_STRINGN( volid )" << std::endl;
   }
-  DO_MARSHALL(LONG,p,vdqmVolPriority->tpmode,ReceiveFrom);
-  DO_MARSHALL(LONG,p,vdqmVolPriority->lifespantype,ReceiveFrom);
+  DO_MARSHALL(LONG,p,vdqmVolPriority->tpMode,ReceiveFrom);
+  DO_MARSHALL(LONG,p,vdqmVolPriority->lifespanType,ReceiveFrom);
 }
