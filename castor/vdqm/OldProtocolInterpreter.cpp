@@ -102,7 +102,8 @@ throw (castor::exception::Exception) {
 
   
   // Read rest of header. The magic number is already read out
-  rc = netread_timeout(ptr_serverSocket->socket(), hdrbuf, headerBufSize, VDQM_TIMEOUT);
+  rc = netread_timeout(ptr_serverSocket->socket(), hdrbuf, headerBufSize,
+    VDQM_TIMEOUT);
   
   if (rc == -1) {
     serrno = SECOMERR;
@@ -148,8 +149,7 @@ throw (castor::exception::Exception) {
                             << "netread(REQ): "
                             << neterror() << std::endl;
             throw ex;
-    }
-    else if (rc == 0) {
+    } else if (rc == 0) {
             serrno = SECONNDROP;
             castor::exception::Exception ex(serrno);            
             ex.getMessage() << "OldProtocolInterpreter::readProtocol() "
@@ -157,8 +157,7 @@ throw (castor::exception::Exception) {
                             << "connection dropped" << std::endl;
             throw ex;
     }
-  } 
-  else if ( len > 0 ) {
+  } else if ( len > 0 ) {
     serrno = SEUMSG2LONG;
     castor::exception::Exception ex(serrno);            
     ex.getMessage() << "OldProtocolInterpreter::readProtocol() netread(REQ): "
@@ -168,7 +167,8 @@ throw (castor::exception::Exception) {
   }
         
   fromlen = sizeof(from);
-  rc = getpeername(ptr_serverSocket->socket(), (struct sockaddr *)&from, (socklen_t *)&fromlen);
+  rc = getpeername(ptr_serverSocket->socket(), (struct sockaddr *)&from,
+    (socklen_t *)&fromlen);
   if ( rc == SOCKET_ERROR ) {
     castor::exception::Internal ex;
     ex.getMessage() << "OldProtocolInterpreter::readProtocol() getpeername(): "
@@ -193,11 +193,9 @@ throw (castor::exception::Exception) {
                     << "no buffer for reqtype = 0x" 
                     << std::hex << reqtype << std::endl;
     throw ex;   
-  } 
-  else if ( REQTYPE(DRV, reqtype) ) {
-    /* 
-     * We need to authorize request host if not same as server name.
-     */
+  } else if ( REQTYPE(DRV, reqtype) ) {
+
+    // We need to authorize request host if not same as server name.
     strcpy(driveRequest->reqhost,hp->h_name);
     if ( isremote(from.sin_addr, driveRequest->reqhost) == 1 &&
           getconfent("VDQM", "REMOTE_ACCESS", 1) == NULL ) {
@@ -219,7 +217,8 @@ throw (castor::exception::Exception) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("reqtype", reqtype),
         castor::dlf::Param("h_name", hp->h_name)};
-    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, VDQM_ADMIN_REQUEST, 2, params);
+    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, VDQM_ADMIN_REQUEST, 2,
+      params);
 
     if ( (isadminhost(ptr_serverSocket->socket(),hp->h_name) != 0) ) {
       serrno = EPERM;
@@ -335,21 +334,27 @@ throw (castor::exception::Exception) {
 
     
   p = buf;
-  if ( REQTYPE(VOL,reqtype) && volumeRequest != NULL ) {
-      DO_MARSHALL(LONG,p,volumeRequest->VolReqID,SendTo);
-      DO_MARSHALL(LONG,p,volumeRequest->DrvReqID,SendTo);
-      DO_MARSHALL(LONG,p,volumeRequest->priority,SendTo);
-      DO_MARSHALL(LONG,p,volumeRequest->client_port,SendTo);
-      DO_MARSHALL(LONG,p,volumeRequest->clientUID,SendTo);
-      DO_MARSHALL(LONG,p,volumeRequest->clientGID,SendTo);
-      DO_MARSHALL(LONG,p,volumeRequest->mode,SendTo);
-      DO_MARSHALL(LONG,p,volumeRequest->recvtime,SendTo);
-      DO_MARSHALL_STRING(p,volumeRequest->client_host,SendTo, sizeof(volumeRequest->client_host));
-      DO_MARSHALL_STRING(p,volumeRequest->volid,SendTo, sizeof(volumeRequest->volid));
-      DO_MARSHALL_STRING(p,volumeRequest->server,SendTo, sizeof(volumeRequest->server));
-      DO_MARSHALL_STRING(p,volumeRequest->drive,SendTo, sizeof(volumeRequest->drive));
-      DO_MARSHALL_STRING(p,volumeRequest->dgn,SendTo, sizeof(volumeRequest->dgn));
-      DO_MARSHALL_STRING(p,volumeRequest->client_name,SendTo, sizeof(volumeRequest->client_name));
+  if(REQTYPE(VOL,reqtype) && volumeRequest != NULL) {
+    DO_MARSHALL(LONG,p,volumeRequest->VolReqID,SendTo);
+    DO_MARSHALL(LONG,p,volumeRequest->DrvReqID,SendTo);
+    DO_MARSHALL(LONG,p,volumeRequest->priority,SendTo);
+    DO_MARSHALL(LONG,p,volumeRequest->client_port,SendTo);
+    DO_MARSHALL(LONG,p,volumeRequest->clientUID,SendTo);
+    DO_MARSHALL(LONG,p,volumeRequest->clientGID,SendTo);
+    DO_MARSHALL(LONG,p,volumeRequest->mode,SendTo);
+    DO_MARSHALL(LONG,p,volumeRequest->recvtime,SendTo);
+    DO_MARSHALL_STRING(p,volumeRequest->client_host,SendTo,
+      sizeof(volumeRequest->client_host));
+    DO_MARSHALL_STRING(p,volumeRequest->volid,SendTo,
+      sizeof(volumeRequest->volid));
+    DO_MARSHALL_STRING(p,volumeRequest->server,SendTo,
+      sizeof(volumeRequest->server));
+    DO_MARSHALL_STRING(p,volumeRequest->drive,SendTo,
+      sizeof(volumeRequest->drive));
+    DO_MARSHALL_STRING(p,volumeRequest->dgn,SendTo,
+      sizeof(volumeRequest->dgn));
+    DO_MARSHALL_STRING(p,volumeRequest->client_name,SendTo,
+      sizeof(volumeRequest->client_name));
   }
   if ( REQTYPE(DRV,reqtype) && driveRequest != NULL ) {
       DO_MARSHALL(LONG,p,driveRequest->status,SendTo);
@@ -376,9 +381,7 @@ throw (castor::exception::Exception) {
   }
  
   
-  /**
-   * reqtype has already been determined above
-   */
+  // reqtype has already been determined above
   if ( header != NULL && header->magic != 0 ) magic = header->magic;
   else magic = VDQM_MAGIC;
   
@@ -401,7 +404,7 @@ throw (castor::exception::Exception) {
   DO_MARSHALL(LONG,p,reqtype,SendTo);
   DO_MARSHALL(LONG,p,len,SendTo);
 
-  //send buffer to the client
+  // Send buffer to the client
   VdqmSocketHelper::vdqmNetwrite(ptr_serverSocket->socket(), hdrbuf);
    
   if ( len > 0 ) {
@@ -422,8 +425,7 @@ throw (castor::exception::Exception) {
       throw ex;  
     }
   }
-  
-    
+
   return(reqtype); 
 }
 

@@ -139,12 +139,9 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
   clientData->setEgid(volumeRequest->clientGID);
   clientData->setMagic(header->magic);
    
-  // Annotation: The side of the Tape is not necesserally needed
-  // by the vdqmDaemon. Normaly the RTCopy daemon should already 
-  // have created an entry to the Tape table. So, we just give 0 as parameter 
-  // at this place.
+  // Select the tape or create one if it does not already exist
   std::auto_ptr<VdqmTape> tape(ptr_IVdqmService->selectTape(
-    volumeRequest->volid, 0, volumeRequest->mode));                                     
+    volumeRequest->volid));                                     
   // The requested tape server: Return value is NULL if the server name is
   // empty
   std::auto_ptr<TapeServer> reqTapeServer(

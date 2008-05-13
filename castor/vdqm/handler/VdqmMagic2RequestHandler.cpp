@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      VdqmMagic2RequestFacade.hpp
+ *                      VdqmMagic2RequestHandler.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,17 +23,15 @@
  *****************************************************************************/
 
 #include "castor/exception/NotSupported.hpp"
-#include "castor/vdqm/VdqmMagic2RequestFacade.hpp"
+#include "castor/vdqm/handler/VdqmMagic2RequestHandler.hpp"
 #include "h/vdqm_constants.h"
 
+#include <iostream>
 
-void castor::vdqm::VdqmMagic2RequestFacade::checkRequestType(
-  const int reqType) throw (castor::exception::Exception) {
 
-  if (!VDQM2_VALID_REQTYPE(reqType)) {
-    castor::exception::NotSupported ex;
-    ex.getMessage() << "Invalid Request 0x" << std::hex << reqType << std::dec
-      << std::endl;
-    throw ex;
-  }
+void castor::vdqm::handler::VdqmMagic2RequestHandler::handleVolPriority(
+  vdqmVolPriority_t *const msg) throw (castor::exception::Exception) {
+  ptr_IVdqmService->setVolPriority(msg->priority, msg->clientUID,
+    msg->clientGID, msg->client_host, msg->volid, msg->tpmode,
+    msg->lifespantype);
 }

@@ -68,6 +68,19 @@ namespace castor {
         const unsigned int magic, vdqmHdr_t *const header)
         throw(castor::exception::Exception);
 
+      /**
+       * Reads the message body of vdqmVolPriority message from the socket of
+       * this protocol interpreter.  Please note that this method assumes the
+       * message header has already been read from the socket.
+       *
+       * @param len The length of the message body
+       * @param vdqmVolPriority Pointer to the memory which the message body
+       * should be read out into
+       */
+      void castor::vdqm::VdqmMagic2ProtocolInterpreter::readVolPriority(
+        const int len, vdqmVolPriority_t *const vdqmVolPriority)
+        throw(castor::exception::Exception);
+
 
     private:
 

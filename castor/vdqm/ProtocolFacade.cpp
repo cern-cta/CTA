@@ -34,10 +34,12 @@
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
 #include "castor/vdqm/ProtocolFacade.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
-#include "castor/vdqm/VdqmMagic2RequestFacade.hpp"
 #include "castor/vdqm/VdqmMagic2ProtocolInterpreter.hpp"
 #include "castor/vdqm/VdqmSocketHelper.hpp"
+#include "castor/vdqm/handler/VdqmMagic2RequestHandler.hpp"
 #include "h/vdqm_constants.h"  //e.g. Magic Number of old vdqm protocol
+
+#include <sstream>
 
 
 //------------------------------------------------------------------------------
@@ -315,8 +317,10 @@ void castor::vdqm::ProtocolFacade::handleVdqmMagic2Request(
   ad.setCnvSvcType(castor::SVC_DBCNV);
 
 
-  // The socket read out phase
+  // Read out the message header
   try {
+    memset(&header, '\0', sizeof(header));
+
     vdqmMagic2ProtInterpreter.readHeader(magicNumber, &header);
   } catch (castor::exception::Exception &e) {
     // "Unable to read Request from socket" message
@@ -329,17 +333,27 @@ void castor::vdqm::ProtocolFacade::handleVdqmMagic2Request(
     return;
   }
 
+  switch(header.reqtype) {
+  case VDQM2_SET_VOL_PRIORITY:
+  {
+    vdqmVolPriority_t vdqmVolPriority;
 
-  // The request handling phase
-  try {
-    VdqmMagic2RequestFacade::checkRequestType(header.reqtype);
-  } catch (castor::exception::Exception &e) {
+    vdqmMagic2ProtInterpreter.readVolPriority(header.len, &vdqmVolPriority);
+    handler::VdqmMagic2RequestHandler requestHandler;
+    requestHandler.handleVolPriority(&vdqmVolPriority);
+
+    break;
+  }
+  default: // Invalid request type
+    std::stringstream oss;
+    oss << "Invalid Request 0x" << std::hex << header.reqtype << std::endl;
+
     castor::dlf::Param params2[] = {
-      castor::dlf::Param("Message", e.getMessage().str()),
-      castor::dlf::Param("errorCode", e.code())};
+    castor::dlf::Param("Message", oss.str()),
+    castor::dlf::Param("errorCode", SEOPNOTSUP)};
 
-      castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, VDQM_EXCEPTION, 2,
-        params2);
+    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, VDQM_EXCEPTION, 2,
+      params2);
 
     // Rollback of the whole request message
     castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM,
@@ -348,7 +362,7 @@ void castor::vdqm::ProtocolFacade::handleVdqmMagic2Request(
 
     // Tell the client about the error
     try {
-      oldProtInterpreter.sendAcknRollback(e.code());
+      oldProtInterpreter.sendAcknRollback(SEOPNOTSUP);
     } catch (castor::exception::Exception &e) {
       // "Exception caught" message
       castor::dlf::Param params[] = {

@@ -27,8 +27,8 @@
 #ifndef _TAPEREQUESTHANDLER_HPP_
 #define _TAPEREQUESTHANDLER_HPP_
 
-// Local include
-#include "BaseRequestHandler.hpp"
+#include "castor/vdqm/handler/BaseRequestHandler.hpp"
+
 
 namespace castor {
 

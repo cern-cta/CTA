@@ -395,9 +395,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
 // selectTape
 // -----------------------------------------------------------------------
 castor::vdqm::VdqmTape*
-castor::db::ora::OraVdqmSvc::selectTape(const std::string vid,
-                                          const int side,
-                                          const int tpmode)
+castor::db::ora::OraVdqmSvc::selectTape(const std::string vid)
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_selectTapeStatement) {
@@ -423,7 +421,8 @@ castor::db::ora::OraVdqmSvc::selectTape(const std::string vid,
         return tape;
       } catch (castor::exception::Exception e) {
         delete tape;
-        // XXX  Change createRep in CodeGenerator to forward the oracle errorcode 
+        // XXX  Change createRep in CodeGenerator to forward the oracle
+        // errorcode 
         if ( e.getMessage().str().find("ORA-00001", 0) != std::string::npos ) {
           // if violation of unique constraint, ie means that
           // some other thread was quicker than us on the insertion
@@ -446,7 +445,7 @@ castor::db::ora::OraVdqmSvc::selectTape(const std::string vid,
 	  // Else, "standard" error, throw exception
 	  castor::exception::Internal ex;
 	  ex.getMessage()
-	    << "Exception while inserting new tape in the DB :"
+	    << "Exception while inserting new tape in the DB:"
 	    << std::endl << e.getMessage().str();
 	  throw ex;
 	}
@@ -459,7 +458,7 @@ castor::db::ora::OraVdqmSvc::selectTape(const std::string vid,
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Unable to select tape by vid, side and tpmode :"
+      << "Unable to select tape by vid :"
       << std::endl << e.getMessage();
     throw ex;
   }
@@ -489,6 +488,7 @@ castor::db::ora::OraVdqmSvc::selectTape(const std::string vid,
   }
   // We should never reach this point
 }
+
 
 // -----------------------------------------------------------------------
 // selectTapeServer
@@ -751,6 +751,25 @@ int castor::db::ora::OraVdqmSvc::getQueuePosition(
 
 
 // -----------------------------------------------------------------------
+// setVolPriority
+// -----------------------------------------------------------------------
+void castor::db::ora::OraVdqmSvc::setVolPriority(const int priority,
+  const int clientUID, const int clientGID, const std::string clientHost,
+  const std::string vid, const int tpMode, const int lifespanType) {
+  std::cout << std::endl;
+  std::cout << "OraVdqmSvc::setVolPriority" << std::endl;
+  std::cout << "==========================================" << std::endl;
+  std::cout << "priority    : " << priority     << std::endl;
+  std::cout << "clientUID   : " << clientUID    << std::endl;
+  std::cout << "clientGID   : " << clientGID    << std::endl;
+  std::cout << "clientHost  : " << clientHost   << std::endl;
+  std::cout << "vid         : " << vid          << std::endl;
+  std::cout << "tpMode      : " << tpMode       << std::endl;
+  std::cout << "lifespanType: " << lifespanType << std::endl;
+}
+
+
+// -----------------------------------------------------------------------
 // selectTapeDrive
 // -----------------------------------------------------------------------
 castor::vdqm::TapeDrive* 
@@ -761,7 +780,8 @@ castor::vdqm::TapeDrive*
     
   // Check whether the statements are ok
   if (0 == m_selectTapeDriveStatement) {
-    m_selectTapeDriveStatement = createStatement(s_selectTapeDriveStatementString);
+    m_selectTapeDriveStatement =
+      createStatement(s_selectTapeDriveStatementString);
   }
   // Execute statement and get result
   u_signed64 id;

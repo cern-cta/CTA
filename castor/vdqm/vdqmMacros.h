@@ -27,8 +27,11 @@
 #ifndef _VDQMMACROS_H_
 #define _VDQMMACROS_H_
 
-#include <vdqm_constants.h>
-#include "marshall.h"
+#include "h/vdqm_constants.h"
+#include "h/marshall.h"
+
+#include <errno.h>
+
 
 /**
  * Some useful macros, taken from the old vdqm code, 

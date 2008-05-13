@@ -24,6 +24,7 @@
 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/vdqm/vdqmMacros.h"
 #include "castor/vdqm/VdqmMagic2ProtocolInterpreter.hpp"
 #include "h/vdqm_constants.h"
 
@@ -50,10 +51,6 @@ void castor::vdqm::VdqmMagic2ProtocolInterpreter::readHeader(
   const unsigned int magic, vdqmHdr_t *const header)
   throw(castor::exception::Exception) {
 
-  // Header buffer is shorter, because the magic number should already be read
-  // out
-  char hdrbuf[VDQM_HDRBUFSIZ - LONGSIZE];
-
   if(header == NULL) {
     castor::exception::Internal ex;
     ex.getMessage() << "VdqmMagic2ProtocolInterpreter::readHeader(): header "
@@ -61,21 +58,93 @@ void castor::vdqm::VdqmMagic2ProtocolInterpreter::readHeader(
     throw ex;
   }
 
+  // Fill in the magic number which has already been read out from the socket
+  header->magic = magic;
+
+  // Header buffer is shorter, because the magic number should already be read
+  // out
+  char buf[VDQM_HDRBUFSIZ - LONGSIZE];
+
   // Read rest of header. The magic number is already read out
-  const int rc = netread_timeout(m_sock->socket(), hdrbuf, sizeof(hdrbuf),
+  const int rc = netread_timeout(m_sock->socket(), buf, sizeof(buf),
     VDQM_TIMEOUT);
 
   if(rc == -1) {
-    serrno = SECOMERR;
-    castor::exception::Exception ex(serrno);
+    castor::exception::Exception ex(SECOMERR);
     ex.getMessage() << "VdqmMagic2ProtocolInterpreter::readHeader() "
       "netread_timeout: " << neterror() << std::endl;
     throw ex;
   } else if(rc == 0) {
-    serrno = SECONNDROP;
-    castor::exception::Exception ex(serrno);
+    castor::exception::Exception ex(SECONNDROP);
     ex.getMessage() << "VdqmMagic2ProtocolInterpreter::readHeader() "
       "netread_timeout: " << "connection dropped" << std::endl;
     throw ex;
   }
+
+  // Un-marshall the message request type and length
+  char *p = buf;
+  DO_MARSHALL(LONG, p, header->reqtype, ReceiveFrom);
+  DO_MARSHALL(LONG, p, header->len    , ReceiveFrom);
+}
+
+
+//------------------------------------------------------------------------------
+// readVolPriority
+//------------------------------------------------------------------------------
+void castor::vdqm::VdqmMagic2ProtocolInterpreter::readVolPriority(const int len,
+  vdqmVolPriority_t *const vdqmVolPriority)
+  throw(castor::exception::Exception) {
+
+  if(vdqmVolPriority == NULL) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "VdqmMagic2ProtocolInterpreter::readVolPriority(): "
+      "vdqmVolPriority argument is NULL" << std::endl;
+    throw ex;
+  }
+
+  if(!VALID_VDQM_MSGLEN(len)) {
+    castor::exception::Exception ex(SECONNDROP);
+    ex.getMessage() << "OldProtocolInterpreter::readProtocol() "
+      "netread(REQ): connection dropped" << std::endl;
+    throw ex;
+  }
+
+  char buf[VDQM_MSGBUFSIZ];
+  int rc = 0;
+
+  // Read the message body
+  rc = netread_timeout(m_sock->socket(), buf, len, VDQM_TIMEOUT);
+
+  if(rc == -1) {
+    castor::exception::Exception ex(SECOMERR);
+    ex.getMessage() << "VdqmMagic2ProtocolInterpreter::readVolPriority() "
+      "netread_timeout: " << neterror() << std::endl;
+    throw ex;
+  } else if(rc == 0) {
+    castor::exception::Exception ex(SECONNDROP);
+    ex.getMessage() << "VdqmMagic2ProtocolInterpreter::readVolPriority() "
+      "netread_timeout: " << "connection dropped" << std::endl;
+    throw ex;
+  }
+
+  // Un-marshall the message body
+  char *p = buf;
+
+  DO_MARSHALL(LONG,p,vdqmVolPriority->priority,ReceiveFrom);
+  DO_MARSHALL(LONG,p,vdqmVolPriority->clientUID,ReceiveFrom);
+  DO_MARSHALL(LONG,p,vdqmVolPriority->clientGID,ReceiveFrom);
+  if(unmarshall_STRINGN(p,vdqmVolPriority->client_host,
+    sizeof(vdqmVolPriority->client_host))) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "VdqmMagic2ProtocolInterpreter::readVolPriority() "
+      "unmarshall_STRINGN( client_host )" << std::endl;
+  }
+  if(unmarshall_STRINGN(p,vdqmVolPriority->volid,
+    sizeof(vdqmVolPriority->volid))) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "VdqmMagic2ProtocolInterpreter::readVolPriority() "
+      "unmarshall_STRINGN( volid )" << std::endl;
+  }
+  DO_MARSHALL(LONG,p,vdqmVolPriority->tpmode,ReceiveFrom);
+  DO_MARSHALL(LONG,p,vdqmVolPriority->lifespantype,ReceiveFrom);
 }

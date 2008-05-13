@@ -52,23 +52,22 @@ namespace castor {
         OldRequestFacade(vdqmVolReq_t *const volumeRequest,
           vdqmDrvReq_t *const driveRequest, vdqmHdr_t *const header);
       
-       /**
-        * Calls the right function for the request.
-        * @parameter socket The Socket instance to communicate with the client
-        * @return true, if there were no complications
-        * @exception In case of errors
-        */
-       bool handleRequestType(OldProtocolInterpreter* oldProtInterpreter,
-         const Cuuid_t cuuid) throw (castor::exception::Exception);
+        /**
+         * Calls the right function for the request.
+         *
+         * @param cuuid The unique id of the request. Needed for dlf.
+         * @return true, if there were no complications
+         */
+        bool handleRequestType(OldProtocolInterpreter* oldProtInterpreter,
+          const Cuuid_t cuuid) throw (castor::exception::Exception);
        
-       /**
-        * Checks the reqtype and returns an error, if it is a 
-        * wrong number. Throws an exception, if an error occures.
-        *
-        * @param cuuid The unique id of the request. Needed for dlf.
-        */
-       void checkRequestType(const Cuuid_t cuuid) 
-         throw (castor::exception::Exception);
+        /**
+         * Throws an exception if the request type is invalid.
+         *
+         * @param cuuid The unique id of the request. Needed for dlf.
+         */
+        void checkRequestType(const Cuuid_t cuuid) 
+          throw (castor::exception::Exception);
       
       
       private:

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      VdqmMagic2RequestFacade.hpp
+ *                      VdqmMagic2RequestHandler.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,11 +22,12 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef _VDQMMAGIC2REQUESTFACADE_HPP_
-#define _VDQMMAGIC2REQUESTFACADE_HPP_ 1
+#ifndef _VDQMMAGIC2REQUESTHANDLER_HPP_
+#define _VDQMMAGIC2REQUESTHANDLER_HPP_ 1
 
 
 #include "castor/exception/Exception.hpp"
+#include "castor/vdqm/handler/BaseRequestHandler.hpp"
 #include "h/vdqm_messages.h"
 
 
@@ -34,26 +35,30 @@ namespace castor {
 
   namespace vdqm {
 
-    /**
-     * This class provides functions to handle VDQM messages with the magic
-     * number VDQM_MAGIC2.
-     */
-    class VdqmMagic2RequestFacade {
-
-    public:
+    namespace handler {
 
       /**
-       * Throws an exception if the specified request type is invalid.
-       *
-       * @param reqType The request type
+       * This class provides functions to handle VDQM messages with the magic
+       * number VDQM_MAGIC2.
        */
-      static void checkRequestType(const int reqType)
-        throw (castor::exception::Exception);
+      class VdqmMagic2RequestHandler : public BaseRequestHandler {
 
-    }; // class VdqmMagic2RequestFacade
+      public:
+
+        /**
+         * Handles the specified vdqmVolPriority message.
+         *
+         * @param vdqmVolPriority the vdqmVolPriority message.
+         */
+        void handleVolPriority(vdqmVolPriority_t *const vdqmVolPriority)
+          throw (castor::exception::Exception);
+
+      }; // class VdqmMagic2RequestHandler
+
+    };  // namespace handler
 
   } // namespace vdqm
 
 } // namespace castor
 
-#endif // _VDQMMAGIC2REQUESTFACADE_HPP_
+#endif // _VDQMMAGIC2REQUESTHANDLER_HPP_

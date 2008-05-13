@@ -123,6 +123,26 @@ namespace castor {
          */  
         virtual int getQueuePosition(const u_signed64 tapeRequestId)
           throw (castor::exception::Exception) = 0;
+
+        /**
+         * Sets the priority of a volume.
+         *
+         * @param priority the priority where 0 is the lowest priority and
+         * INT_MAX is the highest.
+         * @param clientUID the user id of the client.
+         * @param clientGID the group id fo the client.
+         * @param clientHost the host of the client.
+         * @param vid the visual identifier of the volume.
+         * @param tpmode the tape access mode.  Valid values are either 0
+         * meaning write-disabled or 1 meaning write-enabled.
+         * @param lifespanType the type of lifespan to be assigned to the
+         * priority setting.  Valid values are either 0 meaning single-shot or
+         * 1 meaning unlimited.
+         */
+        virtual void setVolPriority(const int priority, const int clientUID,
+          const int clientGID, const std::string clientHost,
+          const std::string vid, const int tpMode, const int lifespanType)
+          = 0;
         
         /**
          * Tries to allocate in the database a free tape drive to a pending
@@ -312,23 +332,20 @@ namespace castor {
 //---------------- functions for TapeDriveStatusHandler ------------------------
 
         /**
-         * Retrieves a tape from the database based on its vid,
-         * side and tpmode. If no tape is found, creates one.
-         * Note that this method creates a lock on the row of the
-         * given tape and does not release it. It is the
-         * responsability of the caller to commit the transaction.
-         * The caller is also responsible for the deletion of the
-         * allocated object
-         * @param vid the vid of the tape
-         * @param side the side of the tape
-         * @param tpmode the tpmode of the tape
+         * Retrieves a tape from the database based on its vid.  If no tape is
+         * found, then one is created.
+         *
+         * Note that this method creates a lock on the row of the given tape
+         * and does not release it. It is the responsability of the caller to
+         * commit the transaction.  The caller is also responsible for the
+         * deletion of the allocated object.
+         *
+         * @param vid the VID of the tape
          * @return the tape. the return value can never be 0
          * @exception Exception in case of error (no tape found,
          * several tapes found, DB problem, etc...)
          */
-        virtual castor::vdqm::VdqmTape* selectTape(const std::string vid,
-                                                   const int side,
-                                                   const int tpmode)
+        virtual castor::vdqm::VdqmTape* selectTape(const std::string vid)
           throw (castor::exception::Exception) = 0;
 
         /**
