@@ -107,17 +107,6 @@ namespace castor {
             vdqmVolReq_t *const volumeRequest,
             OldProtocolInterpreter *const oldProtInterpreter,
             const Cuuid_t cuuid) throw (castor::exception::Exception);            
-          /**
-           * Sets the priority of a volume.
-           *
-           * @param header The header of the old Protocol
-           * @param volumeRequest The TapeRequest in the old protocol
-           * @param cuuid The unique id of the request. Needed for dlf
-           */
-          void setVolumePriority(vdqmHdr_t *const header,
-            vdqmVolReq_t *const volumeRequest, const Cuuid_t cuuid)
-            throw (castor::exception::Exception);
-  
       }; // class TapeRequestHandler
     
     } // end of namespace handler

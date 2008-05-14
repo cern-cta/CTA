@@ -416,13 +416,3 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
   
   oldProtInterpreter->sendToOldClient(header, volumeRequest, NULL);
 }
-
-
-//------------------------------------------------------------------------------
-// setVolumePriority
-//------------------------------------------------------------------------------
-void castor::vdqm::handler::TapeRequestHandler::setVolumePriority(
-  vdqmHdr_t *const header, vdqmVolReq_t *const volumeRequest,
-  const Cuuid_t cuuid) throw (castor::exception::Exception) {
-std::cout << "castor::vdqm::handler::TapeRequestHandler::setVolumePriority" << std::endl;
-}
