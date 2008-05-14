@@ -131,8 +131,12 @@ namespace castor{
             stgReplyHelper = NULL;
             stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
           }
-          else {  // user error, log it
-            stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
+          else {
+	    // user error, log it, only in case the file existed
+	    // Otherwise, it is an internal double check that failed and this is not really relevant
+	    if (stgCnsHelper->cnsFileid.fileid > 0) {
+	      stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
+	    }
           }
         }
         catch(castor::exception::Exception e){
