@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.108 $ $Release$ $Date: 2008/05/15 15:19:07 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.109 $ $Release$ $Date: 2008/05/15 16:29:00 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1999,10 +1999,30 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
       WHEN NO_DATA_FOUND priorityIdVar := NULL;
     END;
 
-    -- If the priority does not exit
+    -- If a row for the priority does not yet exist
     IF priorityIdVar IS NULL THEN
+      -- Try to create one
       BEGIN
-        ;
+        INSERT INTO VolumePriority(id, priority, clientUID, clientGID,
+          clientHost, vid, tpMode, lifespanType)
+        VALUES(ids_seq.nextval, priorityVar, clientUIDVar, clientGIDVar,
+          clientHostVar, vidVar, tpModeVar, lifespanTypeVar)
+        RETURNING id INTO priorityIdVar;
+      EXCEPTION
+        WHEN OTHER THEN
+          -- If another competing thread created the row first
+          IF SQLCODE = -1 THEN -- ORA-00001: unique constraint violated
+            priorityVar := NULL:
+          END IF;
+      END;
+
+      -- If a row for the priority was successfully created then
+      IF priorityIdVar IS NOT NULL THEN
+        -- Update Id2Type
+        INSERT INTO Id2Type (id, type) VALUES(priorityIdVar, );
+      END IF;
+        INSERT INTO Id2Type (id, type)
+        VALUES (priorityIdVar, 90); -- WRONG ID TYPE, WAITING FOR NEW MODEL
       EXCEPTION
       END
     END IF;

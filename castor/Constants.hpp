@@ -182,7 +182,10 @@ namespace castor {
 
     /* Stager GC synchronization */
     OBJ_StgFilesDeleted = 149,
-    OBJ_StgFilesDeletedResponse = 150
+    OBJ_StgFilesDeletedResponse = 150,
+
+    /* More VDQM objects */
+    OBJ_VolumePriority = 151
   };
 
   /**
@@ -254,7 +257,7 @@ namespace castor {
   /**
    * Nb of objectIds currently existing
    */
-  static const unsigned int ObjectsIdsNb = 151;
+  static const unsigned int ObjectsIdsNb = 152;
 
   /**
    * Nb of ServicesIds currently existing
@@ -270,19 +273,19 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[151];
+  extern const char* ObjectsIdStrings[ObjectsIdsNb];
 
   /**
    * Names of the differents Services, used to display
    * correctly the ServicesIds enum
    */
-  extern const char* ServicesIdStrings[44];
+  extern const char* ServicesIdStrings[ServicesIdsNb];
 
   /**
    * Names of the differents representations, used to display
    * correctly the RepresentationsIds enum
    */
-  extern const char* RepresentationsIdStrings[6];
+  extern const char* RepresentationsIdStrings[RepresentationsIdsNb];
 
 #ifdef __cplusplus
 } /* end of namespace castor */
