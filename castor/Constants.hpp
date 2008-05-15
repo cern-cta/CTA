@@ -256,36 +256,51 @@ namespace castor {
 
   /**
    * Nb of objectIds currently existing
+   *
+   * Note that both a macro and a constant are required because the C compiler,
+   * as opposed to the C++ compiler, does not allow a variable-size type
+   * declared outside of any function.
    */
-  static const unsigned int ObjectsIdsNb = 152;
+#define OBJECT_IDS_NB 152
+  static const unsigned int ObjectsIdsNb = OBJECT_IDS_NB;
 
   /**
    * Nb of ServicesIds currently existing
+   *
+   * Note that both a macro and a constant are required because the C compiler,
+   * as opposed to the C++ compiler, does not allow a variable-size type
+   * declared outside of any function.
    */
-  static const unsigned int ServicesIdsNb = 44;
+#define SERVICES_IDS_NB 44
+  static const unsigned int ServicesIdsNb = SERVICES_IDS_NB;
 
   /**
    * Nb of RepresentationsIds currently existing
+   *
+   * Note that both a macro and a constant are required because the C compiler,
+   * as opposed to the C++ compiler, does not allow a variable-size type
+   * declared outside of any function.
    */
-  static const unsigned int RepresentationsIdsNb = 6;
+#define REPRESENTATIONS_IDS_NB 6
+  static const unsigned int RepresentationsIdsNb = REPRESENTATIONS_IDS_NB;
 
   /**
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[ObjectsIdsNb];
+  extern const char* ObjectsIdStrings[OBJECT_IDS_NB];
 
   /**
    * Names of the differents Services, used to display
    * correctly the ServicesIds enum
    */
-  extern const char* ServicesIdStrings[ServicesIdsNb];
+  extern const char* ServicesIdStrings[SERVICES_IDS_NB];
 
   /**
    * Names of the differents representations, used to display
    * correctly the RepresentationsIds enum
    */
-  extern const char* RepresentationsIdStrings[RepresentationsIdsNb];
+  extern const char* RepresentationsIdStrings[REPRESENTATIONS_IDS_NB];
 
 #ifdef __cplusplus
 } /* end of namespace castor */
