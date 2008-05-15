@@ -133,7 +133,7 @@ namespace castor {
          * @param clientGID the group id fo the client.
          * @param clientHost the host of the client.
          * @param vid the visual identifier of the volume.
-         * @param tpmode the tape access mode.  Valid values are either 0
+         * @param tpMode the tape access mode.  Valid values are either 0
          * meaning write-disabled or 1 meaning write-enabled.
          * @param lifespanType the type of lifespan to be assigned to the
          * priority setting.  Valid values are either 0 meaning single-shot or
