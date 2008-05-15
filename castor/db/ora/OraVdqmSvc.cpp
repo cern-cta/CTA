@@ -400,7 +400,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
 
 
 // -----------------------------------------------------------------------
-// selectTape
+// selectOrCreateTape
 // -----------------------------------------------------------------------
 castor::vdqm::VdqmTape*
 castor::db::ora::OraVdqmSvc::selectOrCreateTape(const std::string vid)
