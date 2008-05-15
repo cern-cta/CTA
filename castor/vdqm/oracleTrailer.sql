@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.109 $ $Release$ $Date: 2008/05/15 16:29:00 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.110 $ $Release$ $Date: 2008/05/15 18:11:22 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -295,6 +295,14 @@ CREATE INDEX I_FK_TapeServer_actingMode ON TapeServer (actingMode);
 
 ALTER TABLE VdqmTape
   ADD CONSTRAINT FK_VdqmTape_id
+    FOREIGN KEY (id)
+    REFERENCES Id2Type (id)
+    DEFERRABLE
+    INITIALLY DEFERRED
+    ENABLE;
+
+ALTER TABLE VolumePriority
+  ADD CONSTRAINT FK_VolumePriority_id
     FOREIGN KEY (id)
     REFERENCES Id2Type (id)
     DEFERRABLE
@@ -1989,18 +1997,32 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
   AS
     priorityIdVar NUMBER;
   BEGIN
+    -- Try to select and get a lock on the row representing the priority if one
+    -- already exists
     BEGIN
       SELECT id INTO priorityIdVar FROM VolumePriority WHERE
-            VolumePriority.vid = vidVar
-        AND VolumePriority.tpMode = tpModeVar
-        AND VolumePrioritylifespanType = lifespanTypeVar
+            VolumePriority.vid          = vidVar
+        AND VolumePriority.tpMode       = tpModeVar
+        AND VolumePriority.lifespanType = lifespanTypeVar
         FOR UPDATE;
     EXCEPTION
-      WHEN NO_DATA_FOUND priorityIdVar := NULL;
+      WHEN NO_DATA_FOUND THEN
+        priorityIdVar := NULL;
     END;
 
-    -- If a row for the priority does not yet exist
-    IF priorityIdVar IS NULL THEN
+    -- If a row for the priority already exists
+    IF priorityIdVar IS NOT NULL THEN
+
+      -- Update it
+      UPDATE VolumePriority SET
+        priority   = priorityVar,
+        clientUID  = clientUIDVar,
+        clientGID  = clientGIDVar,
+        clientHost = clientHostVar;
+
+    -- Else a row for the priority does not yet exist
+    ELSE
+
       -- Try to create one
       BEGIN
         INSERT INTO VolumePriority(id, priority, clientUID, clientGID,
@@ -2009,23 +2031,48 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
           clientHostVar, vidVar, tpModeVar, lifespanTypeVar)
         RETURNING id INTO priorityIdVar;
       EXCEPTION
-        WHEN OTHER THEN
+        WHEN OTHERS THEN
           -- If another competing thread created the row first
           IF SQLCODE = -1 THEN -- ORA-00001: unique constraint violated
-            priorityVar := NULL:
+
+            -- Ensure priorityIdVar is NULL
+            priorityIdVar := NULL;
+
+          -- Else an unforeseen error has occured
+          ELSE
+
+            -- Reraise the current exception
+            RAISE;
+
           END IF;
       END;
 
       -- If a row for the priority was successfully created then
       IF priorityIdVar IS NOT NULL THEN
+
         -- Update Id2Type
-        INSERT INTO Id2Type (id, type) VALUES(priorityIdVar, );
-      END IF;
         INSERT INTO Id2Type (id, type)
-        VALUES (priorityIdVar, 90); -- WRONG ID TYPE, WAITING FOR NEW MODEL
-      EXCEPTION
-      END
-    END IF;
+        VALUES (priorityIdVar, 151); -- 151=OBJ_VolumePriority
+
+      -- Else a competing thread created the row first
+      ELSE
+
+        -- Select and get a lock on the row
+        SELECT id INTO priorityIdVar FROM VolumePriority WHERE
+            VolumePriority.vid          = vidVar
+        AND VolumePriority.tpMode       = tpModeVar
+        AND VolumePriority.lifespanType = lifespanTypeVar
+        FOR UPDATE;
+
+        -- Update the row
+        UPDATE VolumePriority SET
+          priority   = priorityVar,
+          clientUID  = clientUIDVar,
+          clientGID  = clientGIDVar,
+          clientHost = clientHostVar;
+      END IF;
+
+    END IF; -- If a row for the priority already exists
 
   END setVolPriority;
 
