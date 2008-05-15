@@ -1,5 +1,5 @@
 /*
- * $Id: vdqmapi.c,v 1.13 2008/05/13 20:24:09 murrayc3 Exp $
+ * $Id: vdqmapi.c,v 1.14 2008/05/15 20:07:19 murrayc3 Exp $
  *
  * Copyright (C) 1999 by CERN IT-PDP/DM
  * All rights reserved
@@ -917,12 +917,8 @@ int DLL_DECL vdqm_SendVolPriority(char *vid, int tpMode, int priority,
         rc = vdqm_RecvAckn(tmpnw);
         TRACE(1,"vdqm","vdqm_setVolPriority() vdqm_RecvAckn() rc = 0x%x",rc);
         if ( rc == VDQM_COMMIT ) {
-            memset(&volpriority,'\0',sizeof(volpriority));
-            rc = vdqm_RecvVolPriority_Transfer(tmpnw,&volpriority);
-            if ( rc != -1 ) {
-                rc = vdqm_AcknCommit(tmpnw);
-                rc = 0;
-            }
+            rc = vdqm_AcknCommit(tmpnw);
+            rc = 0;
         } else {
             if ( rc > 0 ) save_serrno = rc;
             rc = -1;

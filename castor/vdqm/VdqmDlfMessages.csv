@@ -80,3 +80,4 @@ VDQM_IGNORED_RTCPD_JOB_SUBMISSION,78,"Ignored successful submission of RTCPD job
 VDQM_IGNORED_FAILED_RTCPD_JOB_SUBMISSION,79,"Ignored failed submission of RTCPD job"
 VDQM_TAPE_REQUEST_NOT_IN_QUEUE,80,"Tape request not in queue"
 VDQM_MOUNT_WITHOUT_VOL_REQ,81,"Volume mounted without a corresponding volume request"
+VDQM_MAGIC2_VOL_PRIORITY_ROLLBACK,82,"Rollback of whole VDQM_MAGIC2 vdqmVolPriority request"

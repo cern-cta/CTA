@@ -245,13 +245,13 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
   }
   
   
-  //  The Handshake phase !!!
+  // Handshake phase
   try {
 
     // Ping requests don't need a handshake! It is already handled in 
     // OldRequestFacade.
     if (reqHandled && reqtype != VDQM_PING) {
-      //Sending reply to client
+      // Sending reply to client
       castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_DEBUG,
         VDQM_SEND_REPLY_TO_CLIENT);
       
@@ -357,7 +357,7 @@ void castor::vdqm::ProtocolFacade::handleVdqmMagic2Request(
 
     // Rollback of the whole request message
     castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM,
-      VDQM_HANDLE_OLD_VDQM_REQUEST_ROLLBACK);
+      VDQM_MAGIC2_VOL_PRIORITY_ROLLBACK);
     svcs()->rollback(&ad);
 
     // Tell the client about the error
@@ -373,5 +373,36 @@ void castor::vdqm::ProtocolFacade::handleVdqmMagic2Request(
 
     // Now, we don't need to make a handshake
     return;
+  }
+
+  // Handshake phase
+  try {
+
+    // Send acknowledge to client
+    oldProtInterpreter.sendAcknCommit();
+
+    // Waiting for client acknowledge
+    int rc = oldProtInterpreter.recvAcknFromOldClient();
+
+    // Now we can commit everything for the database... or not
+    if ( rc  == VDQM_COMMIT) {
+      svcs()->commit(&ad);
+    } else {
+      // "Client didn't send a VDQM_COMMIT => Rollback of request in db"
+      svcs()->rollback(&ad);
+
+      castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM,
+        VDQM_NO_VDQM_COMMIT_FROM_CLIENT);
+    }
+  } catch (castor::exception::Exception &e) {
+    // "Exception caught" message
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, VDQM_EXCEPTION, 1, params);
+
+    // Rollback of the whole request message
+    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM,
+      VDQM_MAGIC2_VOL_PRIORITY_ROLLBACK);
+    svcs()->rollback(&ad);
   }
 }
