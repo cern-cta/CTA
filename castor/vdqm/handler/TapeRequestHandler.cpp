@@ -140,7 +140,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
   clientData->setMagic(header->magic);
    
   // Select the tape or create one if it does not already exist
-  std::auto_ptr<VdqmTape> tape(ptr_IVdqmService->selectTape(
+  std::auto_ptr<VdqmTape> tape(ptr_IVdqmService->selectOrCreateTape(
     volumeRequest->volid));                                     
   // The requested tape server: Return value is NULL if the server name is
   // empty

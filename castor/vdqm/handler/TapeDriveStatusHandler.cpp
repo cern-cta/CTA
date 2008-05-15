@@ -238,7 +238,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
     if(strcmp(tapeRequest->tape()->vid().c_str(),ptr_driveRequest->volid)==0) {
       // The tape, which is now in the tape drive
       castor::vdqm::VdqmTape* mountedTape =
-        ptr_IVdqmService->selectTape(ptr_driveRequest->volid);
+        ptr_IVdqmService->selectOrCreateTape(ptr_driveRequest->volid);
       ptr_tapeDrive->setTape(mountedTape);
     } else {
       // Normally, this is not needed any more!

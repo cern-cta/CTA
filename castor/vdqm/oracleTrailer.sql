@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.107 $ $Release$ $Date: 2008/05/15 13:38:15 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.108 $ $Release$ $Date: 2008/05/15 15:19:07 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -107,7 +107,12 @@ ALTER TABLE TAPESERVER MODIFY (ACTINGMODE NOT NULL);
 -- Tape VIDs are unique
 ALTER TABLE VdqmTape
   ADD CONSTRAINT I_U_VdqmTape_vid
-    UNIQUE (VID);
+    UNIQUE (vid);
+
+-- A volume priority is identified by vid, tapeMode and lifespanType
+ALTER TABLE VolumePriority
+  ADD CONSTRAINT I_U_VolPriority_vid_mode_life
+    UNIQUE (vid, tpMode, lifespanType);
 
 
 /* Check constraints */
@@ -1185,9 +1190,9 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
    * setting.  Valid values are either 0 meaning single-shot or 1 meaning
    * unlimited.
    */
-  PROCEDURE setVolPriority(priorityVar IN NUMBER, clientUID IN NUMBER,
-    clientGID IN NUMBER, clientHost IN VARCHAR, vid IN VARCHAR,
-    tpMode IN NUMBER, lifespanType IN NUMBER);
+  PROCEDURE setVolPriority(priorityVar IN NUMBER, clientUIDVar IN NUMBER,
+    clientGIDVar IN NUMBER, clientHostVar IN VARCHAR2, vidVar IN VARCHAR2,
+    tpModeVar IN NUMBER, lifespanTypeVar IN NUMBER);
 
 END castorVdqm;
 
@@ -1977,27 +1982,31 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     priorityVar     IN NUMBER,
     clientUIDVar    IN NUMBER,
     clientGIDVar    IN NUMBER,
-    clientHostVar   IN VARCHAR,
-    vidVar          IN VARCHAR,
+    clientHostVar   IN VARCHAR2,
+    vidVar          IN VARCHAR2,
     tpModeVar       IN NUMBER,
     lifespanTypeVar IN NUMBER)
   AS
     priorityIdVar NUMBER;
   BEGIN
-    LOCK TABLE VolumePriority IN EXCLUSIVE MODE;
+    BEGIN
+      SELECT id INTO priorityIdVar FROM VolumePriority WHERE
+            VolumePriority.vid = vidVar
+        AND VolumePriority.tpMode = tpModeVar
+        AND VolumePrioritylifespanType = lifespanTypeVar
+        FOR UPDATE;
+    EXCEPTION
+      WHEN NO_DATA_FOUND priorityIdVar := NULL;
+    END;
 
-    DELETE FROM VolumePriority WHERE
-          VolumePriority.vid = vidVar
-      AND VolumePriority.tpMode = tpModeVar
-      AND VolumePrioritylifespanType = lifespanTypeVar;
+    -- If the priority does not exit
+    IF priorityIdVar IS NULL THEN
+      BEGIN
+        ;
+      EXCEPTION
+      END
+    END IF;
 
-    INSERT INTO VolumePriority(id, priority, clientUID, clientGID, clientHost,
-      vid, tpMode, lifespanType)
-      VALUES(ids_seq.nextval, priorityVar, clientUIDVar, clientGIDVar,
-      clientHostVar, vidVar, tpModeVar, lifespanTypeVar)
-      RETURNING id INTO priorityIdVar;
-    INSERT INTO Id2Type (id, type)
-      VALUES (priorityIdVar, 90); -- WRONG ID TYPE, WAITING FOR NEW MODEL
   END setVolPriority;
 
 END castorVdqm;

@@ -345,8 +345,8 @@ namespace castor {
          * @exception Exception in case of error (no tape found,
          * several tapes found, DB problem, etc...)
          */
-        virtual castor::vdqm::VdqmTape* selectTape(const std::string vid)
-          throw (castor::exception::Exception) = 0;
+        virtual castor::vdqm::VdqmTape* selectOrCreateTape(
+          const std::string vid) throw (castor::exception::Exception) = 0;
 
         /**
          * Check whether another request is currently

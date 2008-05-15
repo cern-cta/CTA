@@ -282,8 +282,8 @@ namespace castor {
         /**
          * See castor::vdqm::IVdqmSvc documentation.
          */
-        virtual castor::vdqm::VdqmTape* selectTape(const std::string vid)
-          throw (castor::exception::Exception);
+        virtual castor::vdqm::VdqmTape* selectOrCreateTape(
+          const std::string vid) throw (castor::exception::Exception);
 
         /**
          * Check whether another request is currently
@@ -367,6 +367,12 @@ namespace castor {
   
         /// SQL statement object for function getQueuePosition
         oracle::occi::Statement *m_getQueuePositionStatement;  
+
+        /// SQL statement for function setVolPriority
+        static const std::string s_setVolPriorityStatementString;
+
+        /// SQL statement object for function setVolPriority
+        oracle::occi::Statement *m_setVolPriorityStatement;
           
         /// SQL statement for function selectTapeDrive
         static const std::string s_selectTapeDriveStatementString;

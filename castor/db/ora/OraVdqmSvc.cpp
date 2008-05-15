@@ -107,6 +107,11 @@ const std::string
   "      tr1.id = :1 "
   "  AND tr1.deviceGroupName = tr2.deviceGroupName"
   "  AND tr2.modificationTime <= tr1.modificationTime";
+
+/// SQL statement for function setVolPriority
+const std::string
+  castor::db::ora::OraVdqmSvc::s_setVolPriorityStatementString =
+  "BEGIN castorVdqm.setVolPriority(:1, :2, :3, :4, :5, :6, :7); END;";
   
 /// SQL statement for function deleteAllTapeDrvsFromSrv
 const std::string
@@ -287,6 +292,7 @@ castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   m_checkTapeRequestStatement1(0),
   m_checkTapeRequestStatement2(0),
   m_getQueuePositionStatement(0),
+  m_setVolPriorityStatement(0),
   m_selectTapeDriveStatement(0),
   m_dedicateDriveStatement(0),
   m_deleteDriveStatement(0),
@@ -342,6 +348,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
     if (m_checkTapeRequestStatement1) deleteStatement(m_checkTapeRequestStatement1);
     if (m_checkTapeRequestStatement2) deleteStatement(m_checkTapeRequestStatement2);
     if (m_getQueuePositionStatement) deleteStatement(m_getQueuePositionStatement);
+    if (m_setVolPriorityStatement) deleteStatement(m_setVolPriorityStatement);
     if (m_selectTapeDriveStatement) deleteStatement(m_selectTapeDriveStatement);
     if (m_dedicateDriveStatement) deleteStatement(m_dedicateDriveStatement);
     if (m_deleteDriveStatement) deleteStatement(m_deleteDriveStatement);
@@ -369,6 +376,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   m_checkTapeRequestStatement1 = 0;
   m_checkTapeRequestStatement2 = 0;
   m_getQueuePositionStatement = 0;
+  m_setVolPriorityStatement = 0;
   m_selectTapeDriveStatement = 0;
   m_dedicateDriveStatement = 0;
   m_deleteDriveStatement = 0;
@@ -395,7 +403,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
 // selectTape
 // -----------------------------------------------------------------------
 castor::vdqm::VdqmTape*
-castor::db::ora::OraVdqmSvc::selectTape(const std::string vid)
+castor::db::ora::OraVdqmSvc::selectOrCreateTape(const std::string vid)
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_selectTapeStatement) {
@@ -738,12 +746,11 @@ int castor::db::ora::OraVdqmSvc::getQueuePosition(
     // XXX: Maybe in future the return value should be double!
     // -1 means not found
     return queuePosition == 0 ? -1 : queuePosition;
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException &e) {
     handleException(e);
     castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in getQueuePosition."
-      << std::endl << e.what();
+    ex.getMessage() << "Error caught in getQueuePosition." << std::endl
+      << e.what();
     throw ex;
   }
   // We should never reach this point.
@@ -766,6 +773,29 @@ void castor::db::ora::OraVdqmSvc::setVolPriority(const int priority,
   std::cout << "vid         : " << vid          << std::endl;
   std::cout << "tpMode      : " << tpMode       << std::endl;
   std::cout << "lifespanType: " << lifespanType << std::endl;
+
+  try {
+    // Check whether the statements are ok
+    if (0 == m_setVolPriorityStatement) {
+      m_setVolPriorityStatement =
+        createStatement(s_setVolPriorityStatementString);
+    }
+
+    // Execute the statement
+    m_setVolPriorityStatement->setInt(1, priority);
+    m_setVolPriorityStatement->setInt(2, clientUID);
+    m_setVolPriorityStatement->setInt(3, clientGID);
+    m_setVolPriorityStatement->setString(4, clientHost);
+    m_setVolPriorityStatement->setString(5, vid);
+    m_setVolPriorityStatement->setInt(6, tpMode);
+    m_setVolPriorityStatement->setInt(7, lifespanType);
+  } catch (oracle::occi::SQLException &e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage() << "Error caught in setVolPriority." << std::endl
+      << e.what();
+    throw ex;
+  }
 }
 
 
