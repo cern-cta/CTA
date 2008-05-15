@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.106 $ $Release$ $Date: 2008/04/29 08:42:54 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.107 $ $Release$ $Date: 2008/05/15 13:38:15 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1170,6 +1170,25 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
   PROCEDURE writeFailedRTPCDJobSubmission(tapeDriveIdVar IN NUMBER,
     tapeRequestIdVar IN NUMBER, returnVar OUT NUMBER);
 
+  /**
+   * This procedure sets the priority of a volume.
+   *
+   * @param priority the priority where 0 is the lowest priority and INT_MAX is
+   * the highest.
+   * @param clientUID the user id of the client.
+   * @param clientGID the group id fo the client.
+   * @param clientHost the host of the client.
+   * @param vid the visual identifier of the volume.
+   * @param tpMode the tape access mode.  Valid values are either 0 meaning
+   * write-disabled or 1 meaning write-enabled.
+   * @param lifespanType the type of lifespan to be assigned to the priority
+   * setting.  Valid values are either 0 meaning single-shot or 1 meaning
+   * unlimited.
+   */
+  PROCEDURE setVolPriority(priorityVar IN NUMBER, clientUID IN NUMBER,
+    clientGID IN NUMBER, clientHost IN VARCHAR, vid IN VARCHAR,
+    tpMode IN NUMBER, lifespanType IN NUMBER);
+
 END castorVdqm;
 
 
@@ -1949,6 +1968,37 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     WHEN NO_DATA_FOUND THEN NULL;
 
   END writeFailedRTPCDJobSubmission;
+
+
+  /**
+   * See the castorVdqm package specification for documentation.
+   */
+  PROCEDURE setVolPriority(
+    priorityVar     IN NUMBER,
+    clientUIDVar    IN NUMBER,
+    clientGIDVar    IN NUMBER,
+    clientHostVar   IN VARCHAR,
+    vidVar          IN VARCHAR,
+    tpModeVar       IN NUMBER,
+    lifespanTypeVar IN NUMBER)
+  AS
+    priorityIdVar NUMBER;
+  BEGIN
+    LOCK TABLE VolumePriority IN EXCLUSIVE MODE;
+
+    DELETE FROM VolumePriority WHERE
+          VolumePriority.vid = vidVar
+      AND VolumePriority.tpMode = tpModeVar
+      AND VolumePrioritylifespanType = lifespanTypeVar;
+
+    INSERT INTO VolumePriority(id, priority, clientUID, clientGID, clientHost,
+      vid, tpMode, lifespanType)
+      VALUES(ids_seq.nextval, priorityVar, clientUIDVar, clientGIDVar,
+      clientHostVar, vidVar, tpModeVar, lifespanTypeVar)
+      RETURNING id INTO priorityIdVar;
+    INSERT INTO Id2Type (id, type)
+      VALUES (priorityIdVar, 90); -- WRONG ID TYPE, WAITING FOR NEW MODEL
+  END setVolPriority;
 
 END castorVdqm;
 
