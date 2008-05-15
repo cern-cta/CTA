@@ -763,22 +763,13 @@ int castor::db::ora::OraVdqmSvc::getQueuePosition(
 void castor::db::ora::OraVdqmSvc::setVolPriority(const int priority,
   const int clientUID, const int clientGID, const std::string clientHost,
   const std::string vid, const int tpMode, const int lifespanType) {
-  std::cout << std::endl;
-  std::cout << "OraVdqmSvc::setVolPriority" << std::endl;
-  std::cout << "==========================================" << std::endl;
-  std::cout << "priority    : " << priority     << std::endl;
-  std::cout << "clientUID   : " << clientUID    << std::endl;
-  std::cout << "clientGID   : " << clientGID    << std::endl;
-  std::cout << "clientHost  : " << clientHost   << std::endl;
-  std::cout << "vid         : " << vid          << std::endl;
-  std::cout << "tpMode      : " << tpMode       << std::endl;
-  std::cout << "lifespanType: " << lifespanType << std::endl;
 
   try {
     // Check whether the statements are ok
     if (0 == m_setVolPriorityStatement) {
       m_setVolPriorityStatement =
         createStatement(s_setVolPriorityStatementString);
+      m_setVolPriorityStatement->setAutoCommit(true);
     }
 
     // Execute the statement
@@ -789,6 +780,8 @@ void castor::db::ora::OraVdqmSvc::setVolPriority(const int priority,
     m_setVolPriorityStatement->setString(5, vid);
     m_setVolPriorityStatement->setInt(6, tpMode);
     m_setVolPriorityStatement->setInt(7, lifespanType);
+
+    m_setVolPriorityStatement->executeUpdate();
   } catch (oracle::occi::SQLException &e) {
     handleException(e);
     castor::exception::Internal ex;
