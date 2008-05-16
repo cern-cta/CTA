@@ -111,7 +111,7 @@ void castor::job::stagerjob::RootPlugin::execMover
     dlf_shutdown(5);
     exit(EXIT_FAILURE);
   }
-  // Duplicate socket on stdin/stdout/stdout and close the others
+  // Duplicate socket on stdin/stdout/stderr and close the others
   if (dup2(context.socket, 0) < 0 || dup2(context.socket, 1) < 0 || dup2(context.socket, 2) < 0) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode", errno),
