@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.110 $ $Release$ $Date: 2008/05/15 18:11:22 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.111 $ $Release$ $Date: 2008/05/16 14:48:36 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -57,41 +57,48 @@ COMMIT;
 
 
 /* Not null column constraints */
-ALTER TABLE CLIENTIDENTIFICATION MODIFY (EGID NOT NULL);
-ALTER TABLE CLIENTIDENTIFICATION MODIFY (EUID NOT NULL);
-ALTER TABLE CLIENTIDENTIFICATION MODIFY (MAGIC NOT NULL);
-ALTER TABLE CLIENTIDENTIFICATION MODIFY (PORT NOT NULL);
-ALTER TABLE ID2TYPE MODIFY (TYPE NOT NULL);
-ALTER TABLE TAPEACCESSSPECIFICATION MODIFY (ACCESSMODE NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (DEVICEGROUPNAME NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (ERRCOUNT NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (JOBID NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (MODIFICATIONTIME NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (RESETTIME NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (RUNNINGTAPEREQ NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (STATUS NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (TAPE NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (TAPESERVER NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (TOTALMB NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (TRANSFERREDMB NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (USECOUNT NOT NULL);
-ALTER TABLE TAPEDRIVE2TAPEDRIVECOMP MODIFY (CHILD NOT NULL);
-ALTER TABLE TAPEDRIVE2TAPEDRIVECOMP MODIFY (PARENT NOT NULL);
-ALTER TABLE TAPEDRIVECOMPATIBILITY MODIFY (PRIORITYLEVEL NOT NULL);
-ALTER TABLE TAPEDRIVECOMPATIBILITY MODIFY (TAPEACCESSSPECIFICATION NOT NULL);
-ALTER TABLE TAPEDRIVEDEDICATION MODIFY (TAPEDRIVE NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (CLIENT NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (CREATIONTIME NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (DEVICEGROUPNAME NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (ERRORCODE NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (MODIFICATIONTIME NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (PRIORITY NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (REQUESTEDSRV NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (STATUS NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (TAPE NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (TAPEACCESSSPECIFICATION NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (TAPEDRIVE NOT NULL);
-ALTER TABLE TAPESERVER MODIFY (ACTINGMODE NOT NULL);
+ALTER TABLE ClientIdentification MODIFY (egid NOT NULL);
+ALTER TABLE ClientIdentification MODIFY (euid NOT NULL);
+ALTER TABLE ClientIdentification MODIFY (magic NOT NULL);
+ALTER TABLE ClientIdentification MODIFY (port NOT NULL);
+ALTER TABLE Id2Type MODIFY (type NOT NULL);
+ALTER TABLE TapeAccessSpecification MODIFY (accessMode NOT NULL);
+ALTER TABLE TapeDrive MODIFY (deviceGroupName NOT NULL);
+ALTER TABLE TapeDrive MODIFY (errCount NOT NULL);
+ALTER TABLE TapeDrive MODIFY (jobId NOT NULL);
+ALTER TABLE TapeDrive MODIFY (modificationTime NOT NULL);
+ALTER TABLE TapeDrive MODIFY (resetTime NOT NULL);
+ALTER TABLE TapeDrive MODIFY (runningTapeReq NOT NULL);
+ALTER TABLE TapeDrive MODIFY (status NOT NULL);
+ALTER TABLE TapeDrive MODIFY (tape NOT NULL);
+ALTER TABLE TapeDrive MODIFY (tapeServer NOT NULL);
+ALTER TABLE TapeDrive MODIFY (totalMB NOT NULL);
+ALTER TABLE TapeDrive MODIFY (transferredMB NOT NULL);
+ALTER TABLE TapeDrive MODIFY (useCount NOT NULL);
+ALTER TABLE TapeDrive2TapeDriveComp MODIFY (child NOT NULL);
+ALTER TABLE TapeDrive2TapeDriveComp MODIFY (parent NOT NULL);
+ALTER TABLE TapeDriveCompatibility MODIFY (priorityLevel NOT NULL);
+ALTER TABLE TapeDriveCompatibility MODIFY (tapeAccessSpecification NOT NULL);
+ALTER TABLE TapeDriveDedication MODIFY (TAPEDRIVE NOT NULL);
+ALTER TABLE TapeRequest MODIFY (client NOT NULL);
+ALTER TABLE TapeRequest MODIFY (creationTime NOT NULL);
+ALTER TABLE TapeRequest MODIFY (deviceGroupName NOT NULL);
+ALTER TABLE TapeRequest MODIFY (errorCode NOT NULL);
+ALTER TABLE TapeRequest MODIFY (modificationTime NOT NULL);
+ALTER TABLE TapeRequest MODIFY (priority NOT NULL);
+ALTER TABLE TapeRequest MODIFY (requestedSrv NOT NULL);
+ALTER TABLE TapeRequest MODIFY (status NOT NULL);
+ALTER TABLE TapeRequest MODIFY (tape NOT NULL);
+ALTER TABLE TapeRequest MODIFY (tapeAccessSpecification NOT NULL);
+ALTER TABLE TapeRequest MODIFY (tapeDrive NOT NULL);
+ALTER TABLE TapeServer MODIFY (actingMode NOT NULL);
+ALTER TABLE VolumePriority MODIFY (priority NOT NULL);
+ALTER TABLE VolumePriority MODIFY (clientUID NOT NULL);
+ALTER TABLE VolumePriority MODIFY (clientGID NOT NULL);
+ALTER TABLE VolumePriority MODIFY (clientHost NOT NULL);
+ALTER TABLE VolumePriority MODIFY (vid NOT NULL);
+ALTER TABLE VolumePriority MODIFY (tpMode NOT NULL);
+ALTER TABLE VolumePriority MODIFY (lifespanType NOT NULL);
 
 /* Unique constraints */
 -- A client host can only be dedicated to one drive
@@ -2134,6 +2141,45 @@ CREATE OR REPLACE TRIGGER TR_U_TapeRequest
 FOR EACH ROW
 WHEN
   ((NEW.modificationTime != OLD.modificationTime) OR (NEW.status != OLD.status))
+BEGIN
+  -- Update the modification time
+  :NEW.modificationTime := castorVdqmCommon.getTime();
+END;
+
+
+/**
+ * PL/SQL trigger responsible for setting the creation time and initial
+ * modification time of a volume priority when it is inserted into the
+ * VolumePriority table.
+ */
+CREATE OR REPLACE TRIGGER TR_I_VolumePriority
+  BEFORE INSERT ON VolumePriority
+FOR EACH ROW
+DECLARE
+  timeVar NUMBER := castorVdqmCommon.getTime();
+BEGIN
+  -- Set creation time
+  :NEW.creationTime := timeVar;
+
+  -- Set modification time
+  :NEW.modificationTime := timeVar;
+END;
+
+
+/**
+ * Updates the modification time of a volume priority when the priority is
+ * updated.
+ */
+CREATE OR REPLACE TRIGGER TR_U_VolumePriority
+  BEFORE UPDATE OF priority, clientUID, clientGID, clientHost, modificationTime
+    ON VolumePriority
+FOR EACH ROW
+WHEN
+  (   (NEW.priority   != OLD.priority)
+   OR (NEW.clientUID  != OLD.clientGID)
+   OR (NEW.clientGID  != OLD.clientGID)
+   OR (NEW.clientHost != OLD.clientHost)
+   OR (NEW.modificationTime != OLD.modificationTime))
 BEGIN
   -- Update the modification time
   :NEW.modificationTime := castorVdqmCommon.getTime();
