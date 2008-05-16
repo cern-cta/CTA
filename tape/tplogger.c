@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger.c,v 1.11 2008/04/18 09:28:56 wiebalck Exp $
+** $Id: tplogger.c,v 1.12 2008/05/16 09:46:20 wiebalck Exp $
 */
 
 #include <string.h>
@@ -811,6 +811,14 @@ static int loglevel_2_syslogpriority(int lvl) {
         return prio;
 }
 
+/**
+ * Convert to upper string 
+ *
+ * @param str : pointer to the string to be converted
+ *
+ * @returns   : 0 on success
+ *             -1 otherwise
+ */
 static int convert2upper(char *str) {
         
         int i;
@@ -824,6 +832,25 @@ static int convert2upper(char *str) {
         }
 
         return 0;
+}
+
+/**
+ * Remove trailing blanks
+ *
+ * @param str : pointer to the string to be trimmed
+ *
+ * @returns   : pointer to str
+ */
+static char *trimString(char *str) {
+
+        int last = strlen(str)-1;
+
+        while ((last>=0) && isspace((int)str[last])) {
+                str[last] = '\0';
+                last--;
+        }
+
+        return str;    
 }
 
 /**
@@ -879,8 +906,6 @@ int DLL_DECL tl_log_syslog( tplogger_t *self, unsigned short msg_no, int num_par
        	va_start(ap, num_params);
 	for( i = 0; i<num_params; i++ ) {
 
-                int ret;
-
                 /* get the name */
 		name = va_arg(ap, char *);                
 		if (name == NULL) {
@@ -911,9 +936,11 @@ int DLL_DECL tl_log_syslog( tplogger_t *self, unsigned short msg_no, int num_par
                                         strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN-strndx-1, "\"%s\", ", "(nil)");
                                 }
 			} else {
+                                char *string2 = strdup(string);                                
                                 if (strndx < (MAX_SYSLOG_MSG_LEN-2)) {
-                                        strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN-strndx-1, "\"%s\", ", string);
+                                        strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN-strndx-1, "\"%s\", ", trimString(string2));
                                 }
+                                free(string2);
 			}
 
 		} else if ((type == TL_MSG_PARAM_INT) || 
