@@ -304,6 +304,18 @@ void switchToCastorSuperuser(castor::job::stagerjob::InputArguments *args)
                    << stage_passwd->pw_gid;
     throw e;
   }
+  // Undo group privilege
+  if (setregid (egid, rgid) < 0) {
+    castor::exception::Internal e;
+    e.getMessage() << "Unable to undo group privilege";
+    throw e;
+  }
+  // Undo user privilege 
+  if (setreuid (euid, ruid) < 0) {
+    castor::exception::Internal e;
+    e.getMessage() << "Unable to undo user privilege";
+    throw e;
+  }
   // set the effective privileges to superuser
   if (setegid(stage_passwd->pw_gid) < 0) {
     castor::exception::Internal e;
