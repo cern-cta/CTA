@@ -51,7 +51,7 @@ static castor::CnvFactory<castor::db::cnv::DbVolumePriorityCnv>* s_factoryDbVolu
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbVolumePriorityCnv::s_insertStatementString =
-"INSERT INTO VolumePriority (priority, clientUID, clientGID, clientHost, vid, tpMode, lifespanType, id) VALUES (:1,:2,:3,:4,:5,:6,:7,ids_seq.nextval) RETURNING id INTO :8";
+"INSERT INTO VolumePriority (priority, clientUID, clientGID, clientHost, vid, tpMode, lifespanType, creationTime, modificationTime, id) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,ids_seq.nextval) RETURNING id INTO :10";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbVolumePriorityCnv::s_deleteStatementString =
@@ -59,11 +59,11 @@ const std::string castor::db::cnv::DbVolumePriorityCnv::s_deleteStatementString 
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbVolumePriorityCnv::s_selectStatementString =
-"SELECT priority, clientUID, clientGID, clientHost, vid, tpMode, lifespanType, id FROM VolumePriority WHERE id = :1";
+"SELECT priority, clientUID, clientGID, clientHost, vid, tpMode, lifespanType, creationTime, modificationTime, id FROM VolumePriority WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbVolumePriorityCnv::s_updateStatementString =
-"UPDATE VolumePriority SET priority = :1, clientUID = :2, clientGID = :3, clientHost = :4, vid = :5, tpMode = :6, lifespanType = :7 WHERE id = :8";
+"UPDATE VolumePriority SET priority = :1, clientUID = :2, clientGID = :3, clientHost = :4, vid = :5, tpMode = :6, lifespanType = :7, modificationTime = :8 WHERE id = :9";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbVolumePriorityCnv::s_storeTypeStatementString =
@@ -198,7 +198,7 @@ void castor::db::cnv::DbVolumePriorityCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(8, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(10, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -211,8 +211,10 @@ void castor::db::cnv::DbVolumePriorityCnv::createRep(castor::IAddress* address,
     m_insertStatement->setString(5, obj->vid());
     m_insertStatement->setInt(6, obj->tpMode());
     m_insertStatement->setInt(7, obj->lifespanType());
+    m_insertStatement->setInt(8, time(0));
+    m_insertStatement->setUInt64(9, obj->modificationTime());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(8));
+    obj->setId(m_insertStatement->getUInt64(10));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -236,6 +238,8 @@ void castor::db::cnv::DbVolumePriorityCnv::createRep(castor::IAddress* address,
                     << "  vid : " << obj->vid() << std::endl
                     << "  tpMode : " << obj->tpMode() << std::endl
                     << "  lifespanType : " << obj->lifespanType() << std::endl
+                    << "  creationTime : " << obj->creationTime() << std::endl
+                    << "  modificationTime : " << obj->modificationTime() << std::endl
                     << "  id : " << obj->id() << std::endl;
     throw ex;
   }
@@ -265,7 +269,8 @@ void castor::db::cnv::DbVolumePriorityCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setString(5, obj->vid());
     m_updateStatement->setInt(6, obj->tpMode());
     m_updateStatement->setInt(7, obj->lifespanType());
-    m_updateStatement->setUInt64(8, obj->id());
+    m_updateStatement->setUInt64(8, obj->modificationTime());
+    m_updateStatement->setUInt64(9, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
@@ -355,7 +360,9 @@ castor::IObject* castor::db::cnv::DbVolumePriorityCnv::createObj(castor::IAddres
     object->setVid(rset->getString(5));
     object->setTpMode(rset->getInt(6));
     object->setLifespanType(rset->getInt(7));
-    object->setId(rset->getUInt64(8));
+    object->setCreationTime(rset->getUInt64(8));
+    object->setModificationTime(rset->getUInt64(9));
+    object->setId(rset->getUInt64(10));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -397,7 +404,9 @@ void castor::db::cnv::DbVolumePriorityCnv::updateObj(castor::IObject* obj)
     object->setVid(rset->getString(5));
     object->setTpMode(rset->getInt(6));
     object->setLifespanType(rset->getInt(7));
-    object->setId(rset->getUInt64(8));
+    object->setCreationTime(rset->getUInt64(8));
+    object->setModificationTime(rset->getUInt64(9));
+    object->setId(rset->getUInt64(10));
     delete rset;
   } catch (castor::exception::SQLError e) {
     castor::exception::InvalidArgument ex;
