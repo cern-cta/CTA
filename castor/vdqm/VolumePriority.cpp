@@ -46,6 +46,8 @@ castor::vdqm::VolumePriority::VolumePriority() throw() :
   m_vid(""),
   m_tpMode(0),
   m_lifespanType(0),
+  m_creationTime(0),
+  m_modificationTime(0),
   m_id(0) {
 }
 
@@ -75,6 +77,8 @@ void castor::vdqm::VolumePriority::print(std::ostream& stream,
   stream << indent << "vid : " << m_vid << std::endl;
   stream << indent << "tpMode : " << m_tpMode << std::endl;
   stream << indent << "lifespanType : " << m_lifespanType << std::endl;
+  stream << indent << "creationTime : " << m_creationTime << std::endl;
+  stream << indent << "modificationTime : " << m_modificationTime << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }
