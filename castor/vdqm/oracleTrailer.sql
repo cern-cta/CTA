@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.111 $ $Release$ $Date: 2008/05/16 14:48:36 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.112 $ $Release$ $Date: 2008/05/17 08:50:57 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1195,19 +1195,32 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
    *
    * @param priority the priority where 0 is the lowest priority and INT_MAX is
    * the highest.
-   * @param clientUID the user id of the client.
-   * @param clientGID the group id fo the client.
-   * @param clientHost the host of the client.
-   * @param vid the visual identifier of the volume.
-   * @param tpMode the tape access mode.  Valid values are either 0 meaning
+   * @param clientUIDVar the user id of the client.
+   * @param clientGIDVar the group id fo the client.
+   * @param clientHostVar the host of the client.
+   * @param vidVar the visual identifier of the volume.
+   * @param tpModeVar the tape access mode.  Valid values are either 0 meaning
    * write-disabled or 1 meaning write-enabled.
-   * @param lifespanType the type of lifespan to be assigned to the priority
+   * @param lifespanTypeVar the type of lifespan to be assigned to the priority
    * setting.  Valid values are either 0 meaning single-shot or 1 meaning
    * unlimited.
    */
   PROCEDURE setVolPriority(priorityVar IN NUMBER, clientUIDVar IN NUMBER,
     clientGIDVar IN NUMBER, clientHostVar IN VARCHAR2, vidVar IN VARCHAR2,
     tpModeVar IN NUMBER, lifespanTypeVar IN NUMBER);
+
+  /**
+   * This procedure delete the specified volume priority.
+   *
+   * @param vidVar the visual identifier of the volume.
+   * @param tpModeVar the tape access mode.  Valid values are either 0 meaning
+   * write-disabled or 1 meaning write-enabled.
+   * @param lifespanTypeVar the type of lifespan to be assigned to the priority
+   * setting.  Valid values are either 0 meaning single-shot or 1 meaning
+   * unlimited.
+   */
+  PROCEDURE deleteVolPriority(vidVar IN VARCHAR2, tpModeVar IN NUMBER,
+    lifespanTypeVar IN NUMBER);
 
 END castorVdqm;
 
@@ -2082,6 +2095,26 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     END IF; -- If a row for the priority already exists
 
   END setVolPriority;
+
+
+  /**
+   * See the castorVdqm package specification for documentation.
+   */
+  PROCEDURE deleteVolPriority(
+    vidVar IN VARCHAR2,
+    tpModeVar IN NUMBER,
+    lifespanTypeVar IN NUMBER)
+  AS
+    priorityIdVar NUMBER;
+  BEGIN
+    SELECT id INTO priorityIdVar FROM VolumePriority WHERE
+          VolumePriority.vid          = vidVar
+      AND VolumePriority.tpMode       = tpModeVar
+      AND VolumePriority.lifespanType = lifespanTypeVar;
+
+    DELETE FROM VolumePriority WHERE VolumePriority.id = priorityIdVar;
+    DELETE FROM Id2Type WHERE Id2Type.id = priorityIdVar;
+  END deleteVolPriority;
 
 END castorVdqm;
 

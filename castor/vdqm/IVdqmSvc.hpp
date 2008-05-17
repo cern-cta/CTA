@@ -142,7 +142,20 @@ namespace castor {
         virtual void setVolPriority(const int priority, const int clientUID,
           const int clientGID, const std::string clientHost,
           const std::string vid, const int tpMode, const int lifespanType)
-          = 0;
+          throw (castor::exception::Exception) = 0;
+
+        /**
+         * Deletes the specified volume priority.
+         *
+         * @param vid the visual identifier of the volume.
+         * @param tpMode the tape access mode.  Valid values are either 0
+         * meaning write-disabled or 1 meaning write-enabled.
+         * @param lifespanType the type of lifespan to be assigned to the
+         * priority setting.  Valid values are either 0 meaning single-shot or
+         * 1 meaning unlimited.
+         */
+        virtual void deleteVolPriority(const std::string vid, const int tpMode,
+          const int lifespanType) throw (castor::exception::Exception) = 0;
         
         /**
          * Tries to allocate in the database a free tape drive to a pending

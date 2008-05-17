@@ -124,7 +124,14 @@ namespace castor {
          */
         virtual void setVolPriority(const int priority, const int clientUID,
           const int clientGID, const std::string clientHost,
-          const std::string vid, const int tpMode, const int lifespanType);
+          const std::string vid, const int tpMode, const int lifespanType)
+          throw (castor::exception::Exception);
+
+        /**
+         * See the documentation for castor::vdqm::IVdqmSvc.
+         */
+        virtual void deleteVolPriority(const std::string vid, const int tpMode,
+          const int lifespanType) throw (castor::exception::Exception);
   
         /**
          * Looks, wether the specific tape access exist in the db. If not the
@@ -373,6 +380,12 @@ namespace castor {
 
         /// SQL statement object for function setVolPriority
         oracle::occi::Statement *m_setVolPriorityStatement;
+
+        /// SQL statement for function deleteVolPriority
+        static const std::string s_deleteVolPriorityStatementString;
+
+        /// SQL statement object for function deleteVolPriority
+        oracle::occi::Statement *m_deleteVolPriorityStatement;
           
         /// SQL statement for function selectTapeDrive
         static const std::string s_selectTapeDriveStatementString;
