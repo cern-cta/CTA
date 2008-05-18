@@ -23,6 +23,7 @@
  *****************************************************************************/
 
 #include "castor/exception/NotSupported.hpp"
+#include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/handler/VdqmMagic2RequestHandler.hpp"
 #include "h/vdqm_constants.h"
 
@@ -31,6 +32,17 @@
 
 void castor::vdqm::handler::VdqmMagic2RequestHandler::handleVolPriority(
   vdqmVolPriority_t *const msg) throw (castor::exception::Exception) {
+  castor::dlf::Param param[] = {
+    castor::dlf::Param("priority"    , msg->priority),
+    castor::dlf::Param("clientUID"   , msg->clientUID),
+    castor::dlf::Param("clientGID"   , msg->clientGID),
+    castor::dlf::Param("clientHost"  , msg->clientHost),
+    castor::dlf::Param("vid"         , msg->vid),
+    castor::dlf::Param("tpMode"      , msg->tpMode),
+    castor::dlf::Param("lifespanType", msg->lifespanType)};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+    VDQM_HANDLE_VDQM2_VOL_PRIORITY, 7, param);
+
   ptr_IVdqmService->setVolPriority(msg->priority, msg->clientUID,
     msg->clientGID, msg->clientHost, msg->vid, msg->tpMode,
     msg->lifespanType);

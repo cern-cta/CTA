@@ -267,6 +267,8 @@ void castor::vdqm::VdqmServer::initDlf()
     {VDQM_TAPE_REQUEST_NOT_IN_QUEUE, "Tape request not in queue"},
     {VDQM_MOUNT_WITHOUT_VOL_REQ, "Volume mounted without a corresponding volume request"},
     {VDQM_MAGIC2_VOL_PRIORITY_ROLLBACK, "Rollback of whole VDQM_MAGIC2 vdqmVolPriority request"},
+    {VDQM_HANDLE_VDQM2_VOL_PRIORITY, "Handle VDQM2_VOL_PRIORITY"},
+    {VDQM_DELETE_VOL_PRIORITY, "Delete volume priority"},
     {-1, ""}
   }; // castor::dlf::Message messages[]
 

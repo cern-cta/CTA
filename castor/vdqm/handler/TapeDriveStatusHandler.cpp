@@ -386,6 +386,18 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
   TapeRequest*            tapeRequest = ptr_tapeDrive->runningTapeReq();
   castor::vdqm::VdqmTape* tape        = ptr_tapeDrive->tape();
 
+  // Remember the VID, tape access mode of the now finished tape request
+  bool        rememberedFinishedTapeRequest = false;
+  std::string finishedTapeRequestVid        = "";
+  int         finishedTapeRequestTpMode     = 0;
+  if((tapeRequest != NULL) && (tapeRequest->tape() != NULL) &&
+    (tapeRequest->tapeAccessSpecification() != NULL)) {
+      finishedTapeRequestVid = tapeRequest->tape()->vid();
+      finishedTapeRequestTpMode =
+        tapeRequest->tapeAccessSpecification()->accessMode();
+      rememberedFinishedTapeRequest = true;
+  }
+
   // Reset request
   if(tapeRequest != NULL) {
     castor::dlf::Param params[] = {
@@ -502,6 +514,35 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
       // request from being assigned.
       ptr_driveRequest->status = VDQM_VOL_UNMOUNT;
       ptr_tapeDrive->setStatus(WAIT_FOR_UNMOUNT); 
+
+      // If a tape request was finished
+      if(rememberedFinishedTapeRequest) {
+        // If there is a "single-shot" volume priority for the drive
+        // allocation, then delete it
+        // Third parameter = 0 = single-shot lifespanType
+        int priority;
+        int clientUID;
+        int clientGID;
+        std::string clientHost;
+        const u_signed64 volPriorityId = ptr_IVdqmService->deleteVolPriority(
+          finishedTapeRequestVid, finishedTapeRequestTpMode, 0, &priority,
+          &clientUID, &clientGID, &clientHost);
+
+        // Log a message if a volume priority was deleted
+        if(volPriorityId != 0) {
+          castor::dlf::Param param[] = {
+            castor::dlf::Param("volPriorityId", volPriorityId),
+            castor::dlf::Param("vid"          , finishedTapeRequestVid),
+            castor::dlf::Param("tpMode"       , finishedTapeRequestTpMode),
+            castor::dlf::Param("lifespanType" , 0),
+            castor::dlf::Param("priority"     , priority),
+            castor::dlf::Param("clientUID"    , clientUID),
+            castor::dlf::Param("clientGID"    , clientGID),
+            castor::dlf::Param("clientHost"   , clientHost)};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+            VDQM_DELETE_VOL_PRIORITY, 8, param);
+        }
+      }
     }
 
   // Else there is no tape in the drive
@@ -537,7 +578,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
         castor::dlf::Param("newStatus",
           castor::vdqm::DevTools::tapeDriveStatus2Str(FORCED_UNMOUNT))};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-      VDQM_DRIVE_STATE_TRANSITION, 4, param);
+        VDQM_DRIVE_STATE_TRANSITION, 4, param);
 
       // Switch tape Drive to status FORCED_UNMOUNT
       // If client specified FORCE_UNMOUNT it means that there is "something"

@@ -116,7 +116,7 @@ const std::string
 /// SQL statement for function deleteVolPriority
 const std::string
   castor::db::ora::OraVdqmSvc::s_deleteVolPriorityStatementString =
-  "BEGIN castorVdqm.deleteVolPriority(:1, :2, :3); END;";
+  "BEGIN castorVdqm.deleteVolPriority(:1, :2, :3, :4, :5, :6, :7, :8); END;";
   
 /// SQL statement for function deleteAllTapeDrvsFromSrv
 const std::string
@@ -804,15 +804,30 @@ void castor::db::ora::OraVdqmSvc::setVolPriority(const int priority,
 // -----------------------------------------------------------------------
 // deleteVolPriority
 // -----------------------------------------------------------------------
-void castor::db::ora::OraVdqmSvc::deleteVolPriority(const std::string vid,
-  const int tpMode, const int lifespanType)
+u_signed64 castor::db::ora::OraVdqmSvc::deleteVolPriority(
+  const std::string vid, const int tpMode, const int lifespanType,
+  int *priority, int *clientUID, int *clientGID, std::string *clientHost)
   throw (castor::exception::Exception) {
+
+  u_signed64 id = 0;
+
 
   try {
     // Check whether the statements are ok
     if (0 == m_deleteVolPriorityStatement) {
       m_deleteVolPriorityStatement =
         createStatement(s_deleteVolPriorityStatementString);
+      m_deleteVolPriorityStatement->registerOutParam
+        (4, oracle::occi::OCCIDOUBLE); // returnVar
+      m_deleteVolPriorityStatement->registerOutParam
+        (5, oracle::occi::OCCIINT); // priorityVar
+      m_deleteVolPriorityStatement->registerOutParam
+        (6, oracle::occi::OCCIINT); // clientUIDVar
+      m_deleteVolPriorityStatement->registerOutParam
+        (7, oracle::occi::OCCIINT); // clientGIDVar
+      m_deleteVolPriorityStatement->registerOutParam
+        (8, oracle::occi::OCCISTRING); // clientHostVar
+
       m_deleteVolPriorityStatement->setAutoCommit(true);
     }
 
@@ -822,6 +837,13 @@ void castor::db::ora::OraVdqmSvc::deleteVolPriority(const std::string vid,
     m_deleteVolPriorityStatement->setInt(3, lifespanType);
 
     m_deleteVolPriorityStatement->executeUpdate();
+
+    id          = (u_signed64)m_reuseDriveAllocationStatement->getDouble(4);
+    *priority   = m_reuseDriveAllocationStatement->getInt(5);
+    *clientUID  = m_reuseDriveAllocationStatement->getInt(6);
+    *clientGID  = m_reuseDriveAllocationStatement->getInt(7);
+    *clientHost = m_reuseDriveAllocationStatement->getString(8);
+
   } catch (oracle::occi::SQLException &e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -829,6 +851,8 @@ void castor::db::ora::OraVdqmSvc::deleteVolPriority(const std::string vid,
       << e.what();
     throw ex;
   }
+
+  return id;
 }
 
 
@@ -1481,13 +1505,15 @@ castor::vdqm::DeviceGroupName*
 
   // Check whether the statements are ok
   if (0 == m_selectDeviceGroupNameStatement) {
-    m_selectDeviceGroupNameStatement = createStatement(s_selectDeviceGroupNameStatementString);
+    m_selectDeviceGroupNameStatement =
+      createStatement(s_selectDeviceGroupNameStatementString);
   }
   // Execute statement and get result
   u_signed64 id;
   try {
     m_selectDeviceGroupNameStatement->setString(1, dgName);
-    oracle::occi::ResultSet *rset = m_selectDeviceGroupNameStatement->executeQuery();
+    oracle::occi::ResultSet *rset =
+      m_selectDeviceGroupNameStatement->executeQuery();
     
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       m_selectDeviceGroupNameStatement->closeResultSet(rset);
@@ -1798,13 +1824,15 @@ castor::vdqm::TapeRequest*
     
    // Check whether the statements are ok
   if (0 == m_selectTapeRequestStatement) {
-    m_selectTapeRequestStatement = createStatement(s_selectTapeRequestStatementString);
+    m_selectTapeRequestStatement =
+      createStatement(s_selectTapeRequestStatementString);
   }
   // Execute statement and get result
   u_signed64 id;
   try {
     m_selectTapeRequestStatement->setInt(1, VolReqID);
-    oracle::occi::ResultSet *rset = m_selectTapeRequestStatement->executeQuery();
+    oracle::occi::ResultSet *rset =
+      m_selectTapeRequestStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       m_selectTapeRequestStatement->closeResultSet(rset);
       // we found nothing, so let's return NULL

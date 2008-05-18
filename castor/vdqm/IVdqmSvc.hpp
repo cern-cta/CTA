@@ -145,7 +145,8 @@ namespace castor {
           throw (castor::exception::Exception) = 0;
 
         /**
-         * Deletes the specified volume priority.
+         * Deletes the specified volume priority if it exists, else does
+         * nothing.
          *
          * @param vid the visual identifier of the volume.
          * @param tpMode the tape access mode.  Valid values are either 0
@@ -154,8 +155,10 @@ namespace castor {
          * priority setting.  Valid values are either 0 meaning single-shot or
          * 1 meaning unlimited.
          */
-        virtual void deleteVolPriority(const std::string vid, const int tpMode,
-          const int lifespanType) throw (castor::exception::Exception) = 0;
+        virtual u_signed64 deleteVolPriority(const std::string vid,
+          const int tpMode, const int lifespanType, int *priority,
+          int *clientUID, int *clientGID, std::string *clientHost)
+          throw (castor::exception::Exception) = 0;
         
         /**
          * Tries to allocate in the database a free tape drive to a pending

@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.112 $ $Release$ $Date: 2008/05/17 08:50:57 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.113 $ $Release$ $Date: 2008/05/18 10:36:29 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1210,7 +1210,8 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
     tpModeVar IN NUMBER, lifespanTypeVar IN NUMBER);
 
   /**
-   * This procedure delete the specified volume priority.
+   * This procedure deletes the specified volume priority if it exist, else
+   * does nothing.
    *
    * @param vidVar the visual identifier of the volume.
    * @param tpModeVar the tape access mode.  Valid values are either 0 meaning
@@ -1218,9 +1219,21 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
    * @param lifespanTypeVar the type of lifespan to be assigned to the priority
    * setting.  Valid values are either 0 meaning single-shot or 1 meaning
    * unlimited.
+   * @param returnVar the ID id of the volume priority row if one was deleted,
+   * else 0.
+   * @param priorityVar the priority of the deleted volume priority if one was
+   * deleted, else undefined.
+   * @param clientUIDVar the client UID of the deleted volume priority if one
+   * was deleted, else undefined.
+   * @param clientGIDVar the client GID of the deleted volume priority if one
+   * was deleted, else undefined.
+   * @param clientHostVar the client host of the deleted volume priority if one
+   * was deleted, else undefined.
    */
   PROCEDURE deleteVolPriority(vidVar IN VARCHAR2, tpModeVar IN NUMBER,
-    lifespanTypeVar IN NUMBER);
+    lifespanTypeVar IN NUMBER, returnVar OUT NUMBER, priorityVar OUT NUMBER,
+    clientUIDVar OUT NUMBER, clientGIDVar OUT NUMBER,
+    clientHostVar OUT NOCOPY VARCHAR2);
 
 END castorVdqm;
 
@@ -2101,19 +2114,40 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
    * See the castorVdqm package specification for documentation.
    */
   PROCEDURE deleteVolPriority(
-    vidVar IN VARCHAR2,
-    tpModeVar IN NUMBER,
-    lifespanTypeVar IN NUMBER)
+    vidVar           IN VARCHAR2,
+    tpModeVar        IN NUMBER,
+    lifespanTypeVar  IN NUMBER,
+    returnVar       OUT NUMBER,
+    priorityVar     OUT NUMBER,
+    clientUIDVar    OUT NUMBER,
+    clientGIDVar    OUT NUMBER,
+    clientHostVar   OUT NOCOPY VARCHAR2)
   AS
     priorityIdVar NUMBER;
   BEGIN
-    SELECT id INTO priorityIdVar FROM VolumePriority WHERE
-          VolumePriority.vid          = vidVar
-      AND VolumePriority.tpMode       = tpModeVar
-      AND VolumePriority.lifespanType = lifespanTypeVar;
+    returnVar := 0;
 
+    -- Try to get the ID of the volume priority row
+    BEGIN
+      SELECT id, priority, clientUID, clientGID, clientHost
+        INTO priorityIdVar, priorityVar, clientUIDVar, clientGIDVar,
+          clientHostVar
+        FROM VolumePriority WHERE
+            VolumePriority.vid          = vidVar
+        AND VolumePriority.tpMode       = tpModeVar
+        AND VolumePriority.lifespanType = lifespanTypeVar
+        FOR UPDATE;
+    EXCEPTION
+      -- Do nothing if the specified volume priority row does not exist
+      WHEN NO_DATA_FOUND THEN RETURN;
+    END;
+
+    -- Delete the volume priority row
     DELETE FROM VolumePriority WHERE VolumePriority.id = priorityIdVar;
-    DELETE FROM Id2Type WHERE Id2Type.id = priorityIdVar;
+    DELETE FROM Id2Type        WHERE Id2Type.id        = priorityIdVar;
+
+    -- Give the ID of the volume priority row that was deleted
+    returnVar := priorityIdVar;
   END deleteVolPriority;
 
 END castorVdqm;
