@@ -838,11 +838,11 @@ u_signed64 castor::db::ora::OraVdqmSvc::deleteVolPriority(
 
     m_deleteVolPriorityStatement->executeUpdate();
 
-    id          = (u_signed64)m_reuseDriveAllocationStatement->getDouble(4);
-    *priority   = m_reuseDriveAllocationStatement->getInt(5);
-    *clientUID  = m_reuseDriveAllocationStatement->getInt(6);
-    *clientGID  = m_reuseDriveAllocationStatement->getInt(7);
-    *clientHost = m_reuseDriveAllocationStatement->getString(8);
+    id          = (u_signed64)m_deleteVolPriorityStatement->getDouble(4);
+    *priority   = m_deleteVolPriorityStatement->getInt(5);
+    *clientUID  = m_deleteVolPriorityStatement->getInt(6);
+    *clientGID  = m_deleteVolPriorityStatement->getInt(7);
+    *clientHost = m_deleteVolPriorityStatement->getString(8);
 
   } catch (oracle::occi::SQLException &e) {
     handleException(e);
