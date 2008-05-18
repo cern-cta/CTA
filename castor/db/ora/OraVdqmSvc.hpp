@@ -347,10 +347,10 @@ namespace castor {
 
       private:
   
-        /// SQL statement for function selectTape
+        /// SQL statement for function selectOrCreateTape
         static const std::string s_selectTapeStatementString;
 
-        /// SQL statement object for function selectTape
+        /// SQL statement object for function selectOrCreateTape
         oracle::occi::Statement *m_selectTapeStatement;
         
         /// SQL statement for function getTapeServer
