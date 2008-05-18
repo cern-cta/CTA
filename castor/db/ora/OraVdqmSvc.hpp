@@ -131,9 +131,9 @@ namespace castor {
          * See the documentation for castor::vdqm::IVdqmSvc.
          */
         virtual u_signed64 deleteVolPriority(const std::string vid,
-          const int tpMode, const int lifespanType, int *priority,
-          int *clientUID, int *clientGID, std::string *clientHost)
-          throw (castor::exception::Exception);
+          const int tpMode, const int lifespanType, int *const priority,
+          int *const clientUID, int *const clientGID,
+          std::string *const clientHost) throw (castor::exception::Exception);
   
         /**
          * Looks, wether the specific tape access exist in the db. If not the

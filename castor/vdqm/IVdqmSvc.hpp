@@ -156,8 +156,9 @@ namespace castor {
          * 1 meaning unlimited.
          */
         virtual u_signed64 deleteVolPriority(const std::string vid,
-          const int tpMode, const int lifespanType, int *priority,
-          int *clientUID, int *clientGID, std::string *clientHost)
+          const int tpMode, const int lifespanType, int *const priority,
+          int *const clientUID, int *const clientGID,
+          std::string *const clientHost)
           throw (castor::exception::Exception) = 0;
         
         /**

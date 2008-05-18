@@ -806,8 +806,8 @@ void castor::db::ora::OraVdqmSvc::setVolPriority(const int priority,
 // -----------------------------------------------------------------------
 u_signed64 castor::db::ora::OraVdqmSvc::deleteVolPriority(
   const std::string vid, const int tpMode, const int lifespanType,
-  int *priority, int *clientUID, int *clientGID, std::string *clientHost)
-  throw (castor::exception::Exception) {
+  int *const priority, int *const clientUID, int *const clientGID,
+  std::string *const clientHost) throw (castor::exception::Exception) {
 
   u_signed64 id = 0;
 
