@@ -181,7 +181,7 @@ void castor::infoPolicy::ora::OraPolicySvc::reset() throw() {
     if  (m_createOrUpdateStreamStatement) deleteStatement(m_createOrUpdateStreamStatement);
     if  (m_inputForStreamPolicyStatement) deleteStatement(m_inputForStreamPolicyStatement);
     if  (m_startChosenStreamsStatement) deleteStatement(m_startChosenStreamsStatement);
-    if  (m_stopChosenStreamsStatement) deleteStatement(m_startChosenStreamsStatement);
+    if  (m_stopChosenStreamsStatement) deleteStatement(m_stopChosenStreamsStatement);
     if  (m_inputForRecallPolicyStatement)deleteStatement(m_inputForRecallPolicyStatement);
     if  (m_resurrectTapesStatement) deleteStatement(m_resurrectTapesStatement);
     if (m_resurrectCandidatesStatement) deleteStatement(m_resurrectCandidatesStatement);
