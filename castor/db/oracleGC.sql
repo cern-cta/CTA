@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.649 $ $Date: 2008/05/05 13:01:44 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.650 $ $Date: 2008/05/19 15:59:34 $ $Author: sponcec3 $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -139,21 +139,22 @@ END;
 CREATE OR REPLACE PROCEDURE filesDeletedProc
 (dcIds IN castor."cnumList",
  fileIds OUT castor.FileList_Cur) AS
-  cfId NUMBER;
 BEGIN
   IF dcIds.COUNT > 0 THEN
-    -- then use a normal loop to clean castorFiles
-    FOR i IN dcIds.FIRST .. dcIds.LAST LOOP
-      SELECT castorFile INTO cfId
-        FROM DiskCopy
-       WHERE id = dcIds(i);
-      deleteCastorFile(cfId);
-    END LOOP;
+    -- list the castorfiles to be cleaned up afterwards
+    FORALL i IN dcIds.FIRST .. dcIds.LAST
+      INSERT INTO filesDeletedProcHelper VALUES
+           ((SELECT castorFile FROM DiskCopy
+              WHERE id = dcIds(i)));
     -- Loop over the deleted files; first use FORALL for bulk operation
     FORALL i IN dcIds.FIRST .. dcIds.LAST
       DELETE FROM Id2Type WHERE id = dcIds(i);
     FORALL i IN dcIds.FIRST .. dcIds.LAST
       DELETE FROM DiskCopy WHERE id = dcIds(i);
+    -- then use a normal loop to clean castorFiles
+    FOR cf IN (SELECT * FROM filesDeletedProcHelper) LOOP
+      deleteCastorFile(cf.cfId);
+    END LOOP;
   END IF;
   OPEN fileIds FOR SELECT * FROM FilesDeletedProcOutput;
 END;
