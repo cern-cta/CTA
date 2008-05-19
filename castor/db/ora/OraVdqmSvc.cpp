@@ -826,7 +826,7 @@ u_signed64 castor::db::ora::OraVdqmSvc::deleteVolPriority(
       m_deleteVolPriorityStatement->registerOutParam
         (7, oracle::occi::OCCIINT); // clientGIDVar
       m_deleteVolPriorityStatement->registerOutParam
-        (8, oracle::occi::OCCISTRING); // clientHostVar
+        (8, oracle::occi::OCCISTRING, 2048); // clientHostVar
 
       m_deleteVolPriorityStatement->setAutoCommit(true);
     }
