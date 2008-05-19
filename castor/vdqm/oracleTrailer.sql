@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.113 $ $Release$ $Date: 2008/05/18 10:36:29 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.114 $ $Release$ $Date: 2008/05/19 16:03:04 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -911,7 +911,8 @@ AS SELECT UNIQUE
   TapeDrive.id as tapeDriveId,
   TapeRequest.id as tapeRequestId,
   TapeAccessSpecification.accessMode,
-  TapeRequest.modificationTime
+  TapeRequest.modificationTime,
+  NVL(VolumePriority.priority,0) AS volumePriority
 FROM
   TapeRequest
 INNER JOIN TapeAccessSpecification ON
@@ -925,6 +926,8 @@ INNER JOIN TapeDrive ON
 INNER JOIN TapeServer ON
      TapeRequest.requestedSrv = TapeServer.id
   OR TapeRequest.requestedSrv = 0
+LEFT OUTER JOIN VolumePriority ON
+  VdqmTape.vid = VolumePriority.vid
 WHERE
       TapeDrive.status=0 -- UNIT_UP
   -- Exclude a request if its tape is associated with an on-going request
@@ -955,6 +958,7 @@ WHERE
     ClientIdentification.euid, VdqmTape.vid)=1
 ORDER BY
   TapeAccessSpecification.accessMode DESC,
+  VolumePriority DESC,
   TapeRequest.modificationTime ASC;
 
 
