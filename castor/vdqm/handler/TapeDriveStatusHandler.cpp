@@ -270,7 +270,8 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
     // tapeDrive"
     castor::dlf::Param params[] = {
       castor::dlf::Param("tapeDriveID", ptr_tapeDrive->id()),
-      castor::dlf::Param("tapeID", ptr_tapeDrive->tape()),
+      castor::dlf::Param("tapeID",
+        ptr_tapeDrive->tape() != NULL ? ptr_tapeDrive->tape()->id() : 0),
       castor::dlf::Param("tapeRequestID", tapeRequest->id())};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       VDQM_HANDLE_VOL_MOUNT_STATUS_MOUNTED, 3, params);
@@ -520,16 +521,16 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
         // If there is a "single-shot" volume priority for the drive
         // allocation, then delete it
         // Third parameter = 0 = single-shot lifespanType
-        int priority;
-        int clientUID;
-        int clientGID;
-        std::string clientHost;
+        int priority           = 0;
+        int clientUID          = 0;
+        int clientGID          = 0;
+        std::string clientHost = "";
         const u_signed64 volPriorityId = ptr_IVdqmService->deleteVolPriority(
           finishedTapeRequestVid, finishedTapeRequestTpMode, 0, &priority,
           &clientUID, &clientGID, &clientHost);
 
-        // Log a message if a volume priority was deleted
-        if(volPriorityId != 0) {
+        // Log a message about the delete
+        if(volPriorityId != 0) { // A delete took place
           castor::dlf::Param param[] = {
             castor::dlf::Param("volPriorityId", volPriorityId),
             castor::dlf::Param("vid"          , finishedTapeRequestVid),
@@ -541,6 +542,15 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
             castor::dlf::Param("clientHost"   , clientHost)};
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
             VDQM_DELETE_VOL_PRIORITY, 8, param);
+
+        // Else no delete took place
+        } else {
+          castor::dlf::Param param[] = {
+            castor::dlf::Param("vid"         , finishedTapeRequestVid),
+            castor::dlf::Param("tpMode"      , finishedTapeRequestTpMode),
+            castor::dlf::Param("lifespanType", 0)};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+            VDQM_NO_VOL_PRIORITY_DELETED, 3, param);
         }
       }
     }

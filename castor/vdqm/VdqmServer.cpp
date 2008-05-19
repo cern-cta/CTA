@@ -269,6 +269,7 @@ void castor::vdqm::VdqmServer::initDlf()
     {VDQM_MAGIC2_VOL_PRIORITY_ROLLBACK, "Rollback of whole VDQM_MAGIC2 vdqmVolPriority request"},
     {VDQM_HANDLE_VDQM2_VOL_PRIORITY, "Handle VDQM2_VOL_PRIORITY"},
     {VDQM_DELETE_VOL_PRIORITY, "Delete volume priority"},
+    {VDQM_NO_VOL_PRIORITY_DELETED, "No volume priority was found and deleted"},
     {-1, ""}
   }; // castor::dlf::Message messages[]
 
