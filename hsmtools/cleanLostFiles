@@ -18,7 +18,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: cleanLostFiles,v $ $Revision: 1.10 $ $Release$ $Date: 2008/05/19 08:14:05 $ $Author: sponcec3 $
+# * @(#)$RCSfile: cleanLostFiles,v $ $Revision: 1.11 $ $Release$ $Date: 2008/05/19 15:58:27 $ $Author: sponcec3 $
 # *
 # * cleanup files in the DB when they were lost on the disk.
 # * this basically does the second part of the garbage collection
@@ -119,8 +119,8 @@ $sth->finish;
 $dbh->disconnect;
 
 # Remove files from the nameserver
-while (my $fileid = pop(@fileList)) {
-  my $nshost = pop(@fileList);
+while (my $nshost = pop(@fileList)) {
+  my $fileid = pop(@fileList);
   $comm = "nsgetpath " . $nshost . " " . $fileid;
   chomp($fileName = `$comm`);
   $comm = "nsrm " . $fileName;
