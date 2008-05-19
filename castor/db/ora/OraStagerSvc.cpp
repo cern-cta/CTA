@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.250 $ $Release$ $Date: 2008/05/05 08:34:54 $ $Author: waldron $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.251 $ $Release$ $Date: 2008/05/19 15:17:15 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -154,7 +154,7 @@ const std::string castor::db::ora::OraStagerSvc::s_stageForcedRmStatementString 
 
 /// SQL statement for getCFByName
 const std::string castor::db::ora::OraStagerSvc::s_getCFByNameStatementString =
-  "SELECT id FROM CastorFile WHERE lastKnownFileName = :1";
+  "SELECT /*+ INDEX(CastorFile I_CastorFile_LastKnownFileName) */ id FROM CastorFile WHERE lastKnownFileName = :1";
 
 /// SQL statement for setFileGCWeight
 const std::string castor::db::ora::OraStagerSvc::s_setFileGCWeightStatementString =
