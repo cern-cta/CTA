@@ -134,8 +134,10 @@ namespace castor {
       /**
        * Set the Authorization mechanism.
        */
-      void setAuthorization() throw (castor::exception::Exception );
-      void setAuthorization(char *mech, char *id) throw (castor::exception::Exception );
+      void setAuthorization() 
+	throw (castor::exception::Exception);
+      void setAuthorization(char *mech, char *id) 
+	throw (castor::exception::Exception);
 
       /**
        * gets the request handler port to use and put it
@@ -145,8 +147,10 @@ namespace castor {
        * May be overwritten in case this behavior should be
        * modified.
        */
-      virtual void setRhPort(int optPort) throw (castor::exception::Exception);
-      virtual void setRhPort() throw (castor::exception::Exception);
+      virtual void setRhPort(int optPort) 
+	throw (castor::exception::Exception);
+      virtual void setRhPort() 
+	throw (castor::exception::Exception);
 
       /**
        * gets the request handler host to use and put it
@@ -156,15 +160,19 @@ namespace castor {
        * May be overwritten in case this behavior should be
        * modified.
        */
-      virtual void setRhHost(std::string optHost) throw (castor::exception::Exception);
-      virtual void setRhHost() throw (castor::exception::Exception);
+      virtual void setRhHost(std::string optHost) 
+	throw (castor::exception::Exception);
+      virtual void setRhHost() 
+	throw (castor::exception::Exception);
 
       /**
        * Gets the service class to be used with a similar
        * strategy as above.
        */
-      virtual void setRhSvcClass(std::string optSvcClass) throw (castor::exception::Exception);
-      virtual void setRhSvcClass() throw (castor::exception::Exception);
+      virtual void setRhSvcClass(std::string optSvcClass) 
+	throw (castor::exception::Exception);
+      virtual void setRhSvcClass() 
+	throw (castor::exception::Exception);
 
       /**
        * Gathers options from the parameter and calls the
@@ -194,7 +202,7 @@ namespace castor {
        * @exception in case of an error 
        */
       void pollAnswersFromStager(castor::stager::Request* req,
-				castor::client::IResponseHandler* rh)
+				 castor::client::IResponseHandler* rh)
         throw (castor::exception::Exception);
       
       /**
