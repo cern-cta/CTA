@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.664 $ $Date: 2008/05/05 08:40:43 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.665 $ $Date: 2008/05/20 08:22:43 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -481,7 +481,7 @@ END;
 /* Internally used by getDiskCopiesForJob and processPrepareRequest */
 CREATE OR REPLACE
 PROCEDURE checkForD2DCopyOrRecall(cfId IN NUMBER, srId IN NUMBER, reuid IN NUMBER, regid IN NUMBER,
-                                  svcClassId IN NUMBER, dcId OUT NUMBER, srvSvcClassId OUT NUMBER) AS
+                                  svcClassId IN NUMBER, dcId OUT NUMBER, srcSvcClassId OUT NUMBER) AS
   destSvcClass VARCHAR2(2048);
   authDest NUMBER;
 BEGIN
@@ -502,40 +502,38 @@ BEGIN
   -- Check that the user has the necessary access rights to create a file in the
   -- destination service class. I.e Check for StagePutRequest access rights.
   checkPermission(destSvcClass, reuid, regid, 40, authDest);
-  IF authDest = 0 THEN
-    -- The user has the rights to create files so check if there are possible 
-    -- diskcopies which could be replicated.
-    SELECT id, sourceSvcClassId INTO dcId, srvSvcClassId
-      FROM (
-        SELECT DiskCopy.id, SvcClass.name sourceSvcClass, SvcClass.id sourceSvcClassId
-          FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
-         WHERE DiskCopy.castorfile = cfId
-           AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
-           AND FileSystem.id = DiskCopy.fileSystem
-           AND FileSystem.diskpool = DiskPool2SvcClass.parent
-           AND DiskPool2SvcClass.child = SvcClass.id
-           AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
-           AND DiskServer.id = FileSystem.diskserver
-           AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
-           -- Check that the user has the necessary access rights to replicate a
-           -- file from the source service class. Note: instead of using a
-           -- StageGetRequest type here we use a StagDiskCopyReplicaRequest type
-           -- to be able to distinguish between and read and replication requst.
-           AND checkPermissionOnSvcClass(SvcClass.name, reuid, regid, 133) = 0
-           AND NOT EXISTS (
-             -- Don't select source diskcopies which already failed more than 10 times
-             SELECT 'x'
-               FROM StageDiskCopyReplicaRequest R, SubRequest
-              WHERE SubRequest.request = R.id
-                AND R.sourceDiskCopy = DiskCopy.id
-                AND SubRequest.status = 9 -- FAILED
-             HAVING COUNT(*) >= 10)
-         ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
-                                 FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
-                                 FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC
-      )
-    WHERE ROWNUM < 2;
-  END IF;
+  -- Check whether there are any diskcopies available for a disk2disk copy
+  SELECT id, sourceSvcClassId INTO dcId, srcSvcClassId
+    FROM (
+      SELECT DiskCopy.id, SvcClass.name sourceSvcClass, SvcClass.id sourceSvcClassId
+        FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
+       WHERE DiskCopy.castorfile = cfId
+         AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
+         AND FileSystem.id = DiskCopy.fileSystem
+         AND FileSystem.diskpool = DiskPool2SvcClass.parent
+         AND DiskPool2SvcClass.child = SvcClass.id
+         AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+         AND DiskServer.id = FileSystem.diskserver
+         AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+         -- Check that the user has the necessary access rights to replicate a
+         -- file from the source service class. Note: instead of using a
+         -- StageGetRequest type here we use a StagDiskCopyReplicaRequest type
+         -- to be able to distinguish between and read and replication requst.
+         AND checkPermissionOnSvcClass(SvcClass.name, reuid, regid, 133) = 0
+         AND NOT EXISTS (
+           -- Don't select source diskcopies which already failed more than 10 times
+           SELECT 'x'
+             FROM StageDiskCopyReplicaRequest R, SubRequest
+            WHERE SubRequest.request = R.id
+              AND R.sourceDiskCopy = DiskCopy.id
+              AND SubRequest.status = 9 -- FAILED
+           HAVING COUNT(*) >= 10)
+       ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
+                               FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
+                               FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC
+    )
+  WHERE authDest = 0
+    AND ROWNUM < 2;
   -- We found at least one, therefore we schedule a disk2disk
   -- copy from the existing diskcopy not available to this svcclass
 EXCEPTION WHEN NO_DATA_FOUND THEN
