@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/05/05 08:36:41 $ $Author: waldron $
+ * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/05/20 08:04:46 $ $Author: waldron $
  *
  * Synchronization thread used to check periodically whether files need to be
  * deleted
@@ -47,7 +47,7 @@
 
 // Definitions
 #define DEFAULT_SYNCINTERVAL  1800
-#define DEFAULT_CHUNKINTERVAL 10
+#define DEFAULT_CHUNKINTERVAL 120
 #define DEFAULT_CHUNKSIZE     2000
 
 
@@ -355,8 +355,8 @@ castor::gc::SynchronizationThread::diskCopyIdFromFileName(std::string fileName)
     throw e;
   }
 
-  // Now extract the nameserver host, everything up to the '.'
-  std::string::size_type q = fileName.find('.', p + 1);
+  // Now extract the nameserver host, everything up to the last '.'
+  std::string::size_type q = fileName.find_last_of('.', fileName.length());
   if (q == std::string::npos) {
     castor::exception::Internal e;
     e.getMessage() << "Unable to parse filename : '" << fileName << "'";
@@ -379,7 +379,7 @@ castor::gc::SynchronizationThread::diskCopyIdFromFileName(std::string fileName)
 
 
 //-----------------------------------------------------------------------------
-// FileCopyIdFromFilePath
+// FileIdFromFilePath
 //-----------------------------------------------------------------------------
 u_signed64
 castor::gc::SynchronizationThread::fileIdFromFilePath(std::string filePath)
