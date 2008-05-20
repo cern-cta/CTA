@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rmNodeDaemon.init,v $ $Revision: 1.10 $ $Release$ $Date: 2008/05/05 14:40:05 $ $Author: waldron $
+# @(#)$RCSfile: rmNodeDaemon.init,v $ $Revision: 1.11 $ $Release$ $Date: 2008/05/20 07:53:11 $ $Author: waldron $
 #
 # chkconfig: 345 74 31
 # description: Resource Monitoring Daemon Initialisation Script
@@ -75,7 +75,6 @@ stop() {
         RETVAL=$?
         echo
         [ -f /var/lock/subsys/$prog ] && rm -f /var/lock/subsys/$prog
-        [ -f /var/run/$prog.pid ] && rm -f /var/run/$prog.pid
         return $RETVAL
 }
 

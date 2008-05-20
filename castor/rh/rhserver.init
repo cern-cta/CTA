@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.13 $ $Release$ $Date: 2008/05/05 14:40:04 $ $Author: waldron $
+# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.14 $ $Release$ $Date: 2008/05/20 07:53:12 $ $Author: waldron $
 #
 # chkconfig: 345 63 52
 # description: Request Handler Initialisation Script
@@ -157,7 +157,6 @@ stop() {
     
         echo
         [ -f /var/lock/subsys/$prog.$1 ] && rm -f /var/lock/subsys/$prog.$1
-        [ -f /var/run/$prog.$1.pid ] && rm -f /var/run/$prog.$1.pid   
         return $RETVAL
 }
 
