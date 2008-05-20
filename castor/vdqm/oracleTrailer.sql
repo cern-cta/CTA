@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.115 $ $Release$ $Date: 2008/05/20 08:54:28 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.116 $ $Release$ $Date: 2008/05/20 10:04:37 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -903,6 +903,41 @@ END castorVdqmView;
 
 
 /**
+ * This view shows the effective volume priorities.  This view is required
+ * because there can be two priorities for a given VID and tape access mode,
+ * a single-shot lifespan priority from the RecallHandler and an unlimited
+ * lifespan priority from a tape operator.  The unlimited priority from the
+ * tape operator would be the effective priority in such a case, in other
+ * words, operator priorities overrule RecallHandler priorities.
+ */
+CREATE OR REPLACE VIEW EffectiveVolumePriority_VIEW
+  AS WITH EffectiveLifespanType AS (
+    SELECT
+      VolumePriority.vid,
+      VolumePriority.tpMode,
+      MAX(VolumePriority.lifespanType) AS lifespanType
+    FROM VolumePriority
+    GROUP BY VolumePriority.vid, tpMode)
+SELECT
+  VolumePriority.priority,
+  VolumePriority.clientUID,
+  VolumePriority.clientGID,
+  VolumePriority.clientHost,
+  VolumePriority.vid,
+  VolumePriority.tpMode,
+  VolumePriority.lifespanType,
+  VolumePriority.creationTime,
+  VolumePriority.modificationTime,
+  VolumePriority.id
+FROM
+  VolumePriority
+INNER JOIN EffectiveLifespanType ON
+      VolumePriority.vid          = EffectiveLifespanType.vid
+  AND VolumePriority.tpMode       = EffectiveLifespanType.tpMode
+  AND VolumePriority.lifespanType = EffectiveLifespanType.lifespanType;
+
+
+/**
  * This view shows candidate "free tape drive to pending tape request"
  * allocations.
  */
@@ -911,7 +946,7 @@ CREATE OR REPLACE VIEW CandidateDriveAllocations_VIEW AS SELECT UNIQUE
   TapeRequest.id as tapeRequestId,
   TapeAccessSpecification.accessMode,
   TapeRequest.modificationTime,
-  NVL(VolumePriority.priority,0) AS volumePriority
+  NVL(EffectiveVolumePriority_VIEW.priority,0) AS volumePriority
 FROM
   TapeRequest
 INNER JOIN TapeAccessSpecification ON
@@ -925,9 +960,9 @@ INNER JOIN TapeDrive ON
 INNER JOIN TapeServer ON
      TapeRequest.requestedSrv = TapeServer.id
   OR TapeRequest.requestedSrv = 0
-LEFT OUTER JOIN VolumePriority ON
-      VdqmTape.vid = VolumePriority.vid
-  AND TapeAccessSpecification.accessMode = VolumePriority.tpMode
+LEFT OUTER JOIN EffectiveVolumePriority_VIEW ON
+      VdqmTape.vid = EffectiveVolumePriority_VIEW.vid
+  AND TapeAccessSpecification.accessMode = EffectiveVolumePriority_VIEW.tpMode
 WHERE
       TapeDrive.status=0 -- UNIT_UP
   -- Exclude a request if its tape is associated with an on-going request
