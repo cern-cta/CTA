@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_server.h,v 1.14 2008/05/05 08:56:53 waldron Exp $
+ * $Id: Cns_server.h,v 1.15 2008/05/20 08:29:49 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 /*
- * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.14 $ $Date: 2008/05/05 08:56:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.15 $ $Date: 2008/05/20 08:29:49 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
  
 #ifndef _CNS_SERVER_H
@@ -199,6 +199,7 @@ EXTERN_C int Cns_chkaclperm _PROTO((struct Cns_file_metadata *, int, uid_t, gid_
 EXTERN_C int Cns_chkbackperm _PROTO((struct Cns_dbfd *, u_signed64, int, uid_t, gid_t, const char *));
 EXTERN_C int Cns_chkentryperm _PROTO((struct Cns_file_metadata *, int, uid_t, gid_t, const char *));
 EXTERN_C int Cns_closedb _PROTO((struct Cns_dbfd *));
+EXTERN_C int Cns_count_long_ops _PROTO((struct Cns_dbfd *, int *, int));
 EXTERN_C int Cns_delete_class_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *));
 EXTERN_C int Cns_delete_fmd_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *));
 EXTERN_C int Cns_delete_lnk_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *));

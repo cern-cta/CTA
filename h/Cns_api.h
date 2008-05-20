@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_api.h,v 1.10 2008/02/27 07:18:11 waldron Exp $
+ * $Id: Cns_api.h,v 1.11 2008/05/20 08:29:49 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.10 $ $Date: 2008/02/27 07:18:11 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.11 $ $Date: 2008/05/20 08:29:49 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_API_H
@@ -137,7 +137,7 @@ struct Cns_direntape {
 	char		s_status;	/* 'd' --> deleted */
 	char		vid[CA_MAXVIDLEN+1];
 	char		checksum_name[CA_MAXCKSUMNAMELEN+1];
-	unsigned long		checksum;
+	unsigned long	checksum;
 	int		side;
 	int		fseq;		/* file sequence number */
 	unsigned char	blockid[4];	/* for positionning with locate command */
@@ -165,21 +165,21 @@ struct Cns_direnstatg {
 };
 
 struct Cns_fileclass {
-	int 	classid;
-	char	name[CA_MAXCLASNAMELEN+1];
-	uid_t	uid;
-	gid_t	gid;
-	int	min_filesize;	/* in Mbytes */
-	int	max_filesize;	/* in Mbytes */
-	int	flags;
-	int	maxdrives;
-	int	max_segsize;	/* in Mbytes */
-	int	migr_time_interval;
-	int	mintime_beforemigr;
-	int	nbcopies;
-	int	retenp_on_disk;
-	int	nbtppools;
-	char	*tppools;
+	int		classid;
+	char		name[CA_MAXCLASNAMELEN+1];
+	uid_t		uid;
+	gid_t		gid;
+	int		min_filesize;	/* in Mbytes */
+	int		max_filesize;	/* in Mbytes */
+	int		flags;
+	int		maxdrives;
+	int		max_segsize;	/* in Mbytes */
+	int		migr_time_interval;
+	int		mintime_beforemigr;
+	int		nbcopies;
+	int		retenp_on_disk;
+	int		nbtppools;
+	char		*tppools;
 };
 
 struct Cns_fileid {
@@ -232,7 +232,7 @@ struct Cns_filestatg {
 };
 
 struct Cns_linkinfo {
-	char	path[CA_MAXPATHLEN+1];
+	char		path[CA_MAXPATHLEN+1];
 };
 
 typedef struct {
@@ -254,7 +254,7 @@ struct Cns_segattrs {
 	int		fseq;		/* file sequence number */
 	unsigned char	blockid[4];	/* for positionning with locate command */
 	char		checksum_name[CA_MAXCKSUMNAMELEN+1];
-	unsigned long		checksum;
+	unsigned long	checksum;
 };
 
 			/* function prototypes */

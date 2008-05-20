@@ -2762,7 +2762,7 @@ char *req_data;
 const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
-	char  logbuf[12+21];
+	char  logbuf[12+21+22];
 	char  func[19];
 	char  *repbuf;
 	char  *rbp;
@@ -2771,7 +2771,7 @@ struct Cns_srv_thread_info *thip;
 	gid_t gid;
 	uid_t uid;
 	u_signed64 *fileIds;
-	int nbFileIds, i, c;
+	int nbFileIds, i, c, count = 0;
 	
 	strcpy(func, "Cns_srv_bulkexist");
 	
@@ -2786,8 +2786,8 @@ struct Cns_srv_thread_info *thip;
 	unmarshall_LONG(rbp, nbFileIds);
 
 	sprintf(logbuf, "bulkexist %d", nbFileIds);
-	Cns_logreq(func, logbuf);
 	if (nbFileIds > 3000) {
+		Cns_logreq(func, logbuf);
 		RETURN (EINVAL);
 	}
 	fileIds = (u_signed64*) malloc(nbFileIds * HYPERSIZE);
@@ -2795,12 +2795,25 @@ struct Cns_srv_thread_info *thip;
 		unmarshall_HYPER(rbp, fileIds[i]);
 	}
 	
-	/* Check file existence */
-	c = Cns_check_files_exist(&thip->dbfd, fileIds, &nbFileIds);
+	/* Check for long database operations e.g. backups */
+	c = Cns_count_long_ops(&thip->dbfd, &count, 1);
 	if (c < 0) {
+		Cns_logreq(func, logbuf);
 		free(fileIds);
-		RETURN (serrno);
+		RETURN (serrno);	  
+	} else if (count == 0) {
+		/* Check file existence */
+		c = Cns_check_files_exist(&thip->dbfd, fileIds, &nbFileIds);
+		if (c < 0) {
+			Cns_logreq(func, logbuf);
+			free(fileIds);
+			RETURN (serrno);
+		}
+	} else {
+		sprintf(logbuf, "bulkexist %d (disabled/longops)", nbFileIds);
+		nbFileIds = 0;
 	}
+	Cns_logreq(func, logbuf);
 	
 	/* Marshall list of non existent files */
 	repbuf = (char*) malloc(LONGSIZE + nbFileIds * HYPERSIZE);
