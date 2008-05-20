@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.657 $ $Date: 2008/05/20 09:22:20 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.658 $ $Date: 2008/05/20 09:31:52 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -925,17 +925,22 @@ BEGIN
         VALUES (ids_seq.nextval, initSize, 0, 0, 0, 0, tpId, 5) RETURN id INTO strId;
         INSERT INTO Id2Type (id, type) values (strId,26); -- Stream type
     	IF doClone = 1 THEN
+	  BEGIN
 	  -- clone the new stream with one from the same tapepool
-	  SELECT id, initialsizetotransfer INTO streamToClone, oldSize 
-            FROM Stream WHERE tapepool = tpId AND id != strId AND ROWNUM < 2; 
-          FOR tcId IN (SELECT child FROM Stream2TapeCopy 
+	  	SELECT id, initialsizetotransfer INTO streamToClone, oldSize 
+            	FROM Stream WHERE tapepool = tpId AND id != strId AND ROWNUM < 2; 
+          	FOR tcId IN (SELECT child FROM Stream2TapeCopy 
                         WHERE Stream2TapeCopy.parent = streamToClone) 
-          LOOP
+          	LOOP
             -- a take the first one, they are supposed to be all the same
-            INSERT INTO stream2tapecopy (parent, child) VALUES (strId, tcId.child); 
-          END LOOP;
-          UPDATE Stream set initialSizeToTransfer=oldSize WHERE id=strId;        
-        END IF;
+          	  INSERT INTO stream2tapecopy (parent, child) VALUES (strId, tcId.child); 
+          	END LOOP;
+          	UPDATE Stream set initialSizeToTransfer=oldSize WHERE id=strId;        
+           EXCEPTION WHEN NO_DATA_FOUND THEN
+  		-- no stream to clone for this tapepool
+  		NULL;
+	   END;     	
+	END IF;
         nbOldStream := nbOldStream + 1;
         EXIT WHEN nbOldStream >= nbDrives;
       END LOOP;
