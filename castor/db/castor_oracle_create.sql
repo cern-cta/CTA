@@ -180,7 +180,7 @@ ALTER TABLE Stream2TapeCopy
   ADD CONSTRAINT fk_Stream2TapeCopy_C FOREIGN KEY (Child) REFERENCES TapeCopy (id);
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_7_6');
+INSERT INTO CastorVersion VALUES ('-', '2_1_7_7');
 
 /* Fill Type2Obj metatable */
 CREATE TABLE Type2Obj (type INTEGER PRIMARY KEY NOT NULL, object VARCHAR2(100) NOT NULL, svcHandler VARCHAR2(100));
@@ -314,7 +314,7 @@ INSERT INTO Type2Obj (type, object) VALUES (150, 'StgFilesDeletedResponse');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleCommon.sql,v  Revision: 1.647  Date: 2008/05/05 08:17:38  Author: waldron 
+ * @(#)RCSfile: oracleCommon.sql,v  Revision: 1.649  Date: 2008/05/20 08:23:16  Author: waldron 
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -477,6 +477,11 @@ ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT I_DiskPool2SvcCla_ParentChild PRIMA
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
   (fileid NUMBER, nshost VARCHAR2(2048))
   ON COMMIT PRESERVE ROWS;
+
+/* Global temporary table to store castor file ids temporarily in the filesDeletedProc procedure */
+CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcHelper
+  (cfId NUMBER)
+  ON COMMIT DELETE ROWS;
 
 /* Global temporary table to handle output of the nsFilesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE NsFilesDeletedOrphans
@@ -649,7 +654,11 @@ END;
 /* compute the impact of a file's size in its gcweight */
 CREATE OR REPLACE FUNCTION size2gcweight(s NUMBER) RETURN NUMBER IS
 BEGIN
-  RETURN 1073741824/(s+1)*86400 + getTime();  -- 1GB/filesize (days) + current time as lastAccessTime
+  IF s < 1073741824 THEN
+    RETURN 1073741824/(s+1)*86400 + getTime();  -- 1GB/filesize (days) + current time as lastAccessTime
+  ELSE
+    RETURN 86400 + getTime();  -- the value for 1G file. We do not make any difference for big files and privilege FIFO
+  END IF;
 END;
 
 
@@ -1152,7 +1161,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
 END castorBW;
 /*******************************************************************
  *
- * @(#)RCSfile: oracleStager.sql,v  Revision: 1.664  Date: 2008/05/05 08:40:43  Author: waldron 
+ * @(#)RCSfile: oracleStager.sql,v  Revision: 1.665  Date: 2008/05/20 08:22:43  Author: waldron 
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1633,7 +1642,7 @@ END;
 /* Internally used by getDiskCopiesForJob and processPrepareRequest */
 CREATE OR REPLACE
 PROCEDURE checkForD2DCopyOrRecall(cfId IN NUMBER, srId IN NUMBER, reuid IN NUMBER, regid IN NUMBER,
-                                  svcClassId IN NUMBER, dcId OUT NUMBER, srvSvcClassId OUT NUMBER) AS
+                                  svcClassId IN NUMBER, dcId OUT NUMBER, srcSvcClassId OUT NUMBER) AS
   destSvcClass VARCHAR2(2048);
   authDest NUMBER;
 BEGIN
@@ -1654,40 +1663,38 @@ BEGIN
   -- Check that the user has the necessary access rights to create a file in the
   -- destination service class. I.e Check for StagePutRequest access rights.
   checkPermission(destSvcClass, reuid, regid, 40, authDest);
-  IF authDest = 0 THEN
-    -- The user has the rights to create files so check if there are possible 
-    -- diskcopies which could be replicated.
-    SELECT id, sourceSvcClassId INTO dcId, srvSvcClassId
-      FROM (
-        SELECT DiskCopy.id, SvcClass.name sourceSvcClass, SvcClass.id sourceSvcClassId
-          FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
-         WHERE DiskCopy.castorfile = cfId
-           AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
-           AND FileSystem.id = DiskCopy.fileSystem
-           AND FileSystem.diskpool = DiskPool2SvcClass.parent
-           AND DiskPool2SvcClass.child = SvcClass.id
-           AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
-           AND DiskServer.id = FileSystem.diskserver
-           AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
-           -- Check that the user has the necessary access rights to replicate a
-           -- file from the source service class. Note: instead of using a
-           -- StageGetRequest type here we use a StagDiskCopyReplicaRequest type
-           -- to be able to distinguish between and read and replication requst.
-           AND checkPermissionOnSvcClass(SvcClass.name, reuid, regid, 133) = 0
-           AND NOT EXISTS (
-             -- Don't select source diskcopies which already failed more than 10 times
-             SELECT 'x'
-               FROM StageDiskCopyReplicaRequest R, SubRequest
-              WHERE SubRequest.request = R.id
-                AND R.sourceDiskCopy = DiskCopy.id
-                AND SubRequest.status = 9 -- FAILED
-             HAVING COUNT(*) >= 10)
-         ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
-                                 FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
-                                 FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC
-      )
-    WHERE ROWNUM < 2;
-  END IF;
+  -- Check whether there are any diskcopies available for a disk2disk copy
+  SELECT id, sourceSvcClassId INTO dcId, srcSvcClassId
+    FROM (
+      SELECT DiskCopy.id, SvcClass.name sourceSvcClass, SvcClass.id sourceSvcClassId
+        FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
+       WHERE DiskCopy.castorfile = cfId
+         AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
+         AND FileSystem.id = DiskCopy.fileSystem
+         AND FileSystem.diskpool = DiskPool2SvcClass.parent
+         AND DiskPool2SvcClass.child = SvcClass.id
+         AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+         AND DiskServer.id = FileSystem.diskserver
+         AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+         -- Check that the user has the necessary access rights to replicate a
+         -- file from the source service class. Note: instead of using a
+         -- StageGetRequest type here we use a StagDiskCopyReplicaRequest type
+         -- to be able to distinguish between and read and replication requst.
+         AND checkPermissionOnSvcClass(SvcClass.name, reuid, regid, 133) = 0
+         AND NOT EXISTS (
+           -- Don't select source diskcopies which already failed more than 10 times
+           SELECT 'x'
+             FROM StageDiskCopyReplicaRequest R, SubRequest
+            WHERE SubRequest.request = R.id
+              AND R.sourceDiskCopy = DiskCopy.id
+              AND SubRequest.status = 9 -- FAILED
+           HAVING COUNT(*) >= 10)
+       ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
+                               FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
+                               FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC
+    )
+  WHERE authDest = 0
+    AND ROWNUM < 2;
   -- We found at least one, therefore we schedule a disk2disk
   -- copy from the existing diskcopy not available to this svcclass
 EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -4345,7 +4352,7 @@ BEGIN
 END;
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTape.sql,v  Revision: 1.654  Date: 2008/04/16 09:46:34  Author: gtaur 
+ * @(#)RCSfile: oracleTape.sql,v  Revision: 1.658  Date: 2008/05/20 09:31:52  Author: gtaur 
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -5177,6 +5184,7 @@ BEGIN
 END;
 
 /* createOrUpdateStream */
+
 CREATE OR REPLACE PROCEDURE createOrUpdateStream
 (svcClassName IN VARCHAR2,
  initialSizeToTransfer IN NUMBER, -- total initialSizeToTransfer for the svcClass
@@ -5194,6 +5202,7 @@ AS
   streamToClone NUMBER; -- stream id to clone
   svcId NUMBER; --svcclass id
   tcId NUMBER; -- tape copy id
+  oldSize NUMBER; -- value for a cloned stream
 BEGIN
   retCode := 0;
   -- get streamFromSvcClass
@@ -5236,16 +5245,29 @@ BEGIN
     IF nbOldStream < nbDrives THEN
       LOOP   
         -- get the tape pool with less stream
-        BEGIN        	   
-          SELECT TapePool.id INTO tpId FROM TapePool,SvcClass2TapePool  
-           WHERE TapePool.id NOT IN (SELECT TapePool FROM Stream) AND TapePool.id= SvcClass2TapePool.child
-	       AND  SvcClass2TapePool.parent=svcId AND ROWNUM <2;
+        BEGIN    
+         -- tapepool without stream randomly chosen    
+          SELECT a INTO tpId
+            FROM ( 
+              SELECT TapePool.id AS a FROM TapePool,SvcClass2TapePool  
+               WHERE TapePool.id NOT IN (SELECT TapePool FROM Stream)
+                 AND TapePool.id = SvcClass2TapePool.child
+	         AND SvcClass2TapePool.parent = svcId 
+            ORDER BY dbms_random.value
+	    ) WHERE ROWNUM < 2;
         EXCEPTION WHEN NO_DATA_FOUND THEN
           -- at least one stream foreach tapepool
            SELECT tapepool INTO tpId 
-            FROM (SELECT tapepool, count(*) AS c FROM Stream WHERE tapepool IN
-	    (SELECT SvcClass2TapePool.child FROM SvcClass2TapePool WHERE SvcClass2TapePool.parent=svcId) GROUP BY tapepool ORDER BY c ASC)
-           WHERE ROWNUM < 2;  	         
+             FROM (
+               SELECT tapepool, count(*) AS c 
+                 FROM Stream 
+                WHERE tapepool IN (
+                  SELECT SvcClass2TapePool.child 
+                    FROM SvcClass2TapePool 
+                   WHERE SvcClass2TapePool.parent = svcId)
+             GROUP BY tapepool 
+             ORDER BY c ASC, dbms_random.value)
+           WHERE ROWNUM < 2;
 	END;
 	           
         -- STREAM_CREATED
@@ -5255,23 +5277,28 @@ BEGIN
         VALUES (ids_seq.nextval, initSize, 0, 0, 0, 0, tpId, 5) RETURN id INTO strId;
         INSERT INTO Id2Type (id, type) values (strId,26); -- Stream type
     	IF doClone = 1 THEN
+	  BEGIN
 	  -- clone the new stream with one from the same tapepool
-	  SELECT id INTO streamToClone 
-            FROM Stream WHERE tapepool = tpId AND ROWNUM < 2; 
-          FOR tcId IN (SELECT child FROM Stream2TapeCopy 
+	  	SELECT id, initialsizetotransfer INTO streamToClone, oldSize 
+            	FROM Stream WHERE tapepool = tpId AND id != strId AND ROWNUM < 2; 
+          	FOR tcId IN (SELECT child FROM Stream2TapeCopy 
                         WHERE Stream2TapeCopy.parent = streamToClone) 
-          LOOP
+          	LOOP
             -- a take the first one, they are supposed to be all the same
-            INSERT INTO stream2tapecopy (parent, child) VALUES (strId, tpId); 
-          END LOOP;
-        END IF;
+          	  INSERT INTO stream2tapecopy (parent, child) VALUES (strId, tcId.child); 
+          	END LOOP;
+          	UPDATE Stream set initialSizeToTransfer=oldSize WHERE id=strId;        
+           EXCEPTION WHEN NO_DATA_FOUND THEN
+  		-- no stream to clone for this tapepool
+  		NULL;
+	   END;     	
+	END IF;
         nbOldStream := nbOldStream + 1;
         EXIT WHEN nbOldStream >= nbDrives;
       END LOOP;
     END IF;
   END IF;
 END;
-
 
 /* attach tapecopies to stream */
 CREATE OR REPLACE PROCEDURE attachTapeCopiesToStreams
@@ -5281,40 +5308,53 @@ AS
   streamId NUMBER; -- stream attached to the tapepool
   counter NUMBER := 0;
   unused NUMBER;
+  nbStream NUMBER;
 BEGIN
   -- add choosen tapecopies to all Streams associated to the tapepool used by the policy 
   FOR i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST LOOP
-    BEGIN 
-      UPDATE TapeCopy SET Status=2 WHERE Status=7 AND id = tapeCopyIds(i) RETURNING id into unused;
-      FOR streamId IN (SELECT id FROM Stream WHERE Stream.tapepool= tapePoolIds(i)) LOOP
-      	  DECLARE CONSTRAINT_VIOLATED EXCEPTION;
-          PRAGMA EXCEPTION_INIT (CONSTRAINT_VIOLATED,-1);
+    BEGIN
+      SELECT count(id) into nbStream FROM Stream 
+       WHERE Stream.tapepool = tapePoolIds(i);
+      IF nbStream <> 0 THEN 
+        -- we have at least a stream for that tapepool
+        SELECT id INTO unused 
+          FROM TapeCopy 
+         WHERE Status = 7 AND id = tapeCopyIds(i) FOR UPDATE;
+        -- let's attach it to the different streams
+        FOR streamId IN (SELECT id FROM Stream WHERE Stream.tapepool = tapePoolIds(i)) LOOP
+          UPDATE TapeCopy SET Status = 2 WHERE Status = 7 AND id = tapeCopyIds(i);
+          DECLARE CONSTRAINT_VIOLATED EXCEPTION;
+          PRAGMA EXCEPTION_INIT (CONSTRAINT_VIOLATED, -1);
           BEGIN 
-          -- check if it is not been resurrected by the start of a new mighunter on the same svcclass
-             INSERT INTO stream2tapecopy (parent ,child) VALUES (streamId.id, tapeCopyIds(i));
+            INSERT INTO stream2tapecopy (parent ,child) VALUES (streamId.id, tapeCopyIds(i));
           EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-      	     UPDATE tapecopy set status=1 where id=tapeCopyIds(i);
+            -- if the stream does not exist anymore
+            UPDATE tapecopy SET status = 7 where id = tapeCopyIds(i);
+            -- it might also be that the tapecopy does not exist anymore
           END;
-      END LOOP;
+        END LOOP; -- stream loop	
+      END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
-     -- Go on the tapecopy has been resurrected or migrated
+      -- Go on the tapecopy has been resurrected or migrated
       NULL;
-    END;
-     
+    END;   
     counter := counter + 1;
     IF counter = 100 THEN
-         counter := 0;
-         COMMIT;
+      counter := 0;
+      COMMIT;
     END IF;
-  END LOOP;
+  END LOOP; -- loop tapecopies
+      	  
+  -- resurrect the one never attached
+  FOR i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST LOOP
+    UPDATE TapeCopy SET Status = 1 WHERE id = tapeCopyIds(i) AND Status = 7;
+  END LOOP;  
   COMMIT;
 END;
 
-
 /* start choosen stream */
 CREATE OR REPLACE PROCEDURE startChosenStreams
-        (streamIds IN castor."cnumList",
-	initSize IN NUMBER) AS
+        (streamIds IN castor."cnumList", initSize IN NUMBER) AS
 BEGIN	
   FORALL i IN streamIds.FIRST .. streamIds.LAST
     UPDATE Stream 
@@ -5327,14 +5367,26 @@ BEGIN
 END;
 
 /* stop chosen stream */
-
-CREATE OR REPLACE PROCEDURE stopChosenStreams
-        (streamIds IN castor."cnumList") AS
+CREATE OR REPLACE PROCEDURE startChosenStreams
+        (streamIds IN castor."cnumList", initSize IN NUMBER) AS
+  nbTc NUMBER;
 BEGIN	
-  FORALL i IN streamIds.FIRST .. streamIds.LAST
-    UPDATE Stream SET Stream.status = 6 -- STOPPED
-     WHERE id = streamIds(i) AND Stream.status=7; -- WAITPOLICY
-  COMMIT;
+  FOR i IN streamIds.FIRST .. streamIds.LAST LOOP
+    BEGIN  
+      SELECT count(*) INTO nbTc FROM stream2tapecopy WHERE parent = streamIds(i); 
+      IF nbTc = 0 THEN
+        DELETE FROM Stream where id = streamIds(i);
+      ELSE
+        UPDATE Stream 
+           SET status = 0, -- PENDING
+                -- initialSize overwritten to initSize only if it is 0
+                initialSizeToTransfer = decode(initialSizeToTransfer, 0, initSize, initialSizeToTransfer)
+         WHERE Stream.status = 7 -- WAITPOLICY
+           AND id = streamIds(i);
+      END IF;
+      COMMIT;
+   END;  
+  END LOOP;
 END;
 
 /* resurrect Candidates */
@@ -5390,7 +5442,7 @@ END;
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleGC.sql,v  Revision: 1.649  Date: 2008/05/05 13:01:44  Author: waldron 
+ * @(#)RCSfile: oracleGC.sql,v  Revision: 1.650  Date: 2008/05/19 15:59:34  Author: sponcec3 
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -5529,21 +5581,22 @@ END;
 CREATE OR REPLACE PROCEDURE filesDeletedProc
 (dcIds IN castor."cnumList",
  fileIds OUT castor.FileList_Cur) AS
-  cfId NUMBER;
 BEGIN
   IF dcIds.COUNT > 0 THEN
-    -- then use a normal loop to clean castorFiles
-    FOR i IN dcIds.FIRST .. dcIds.LAST LOOP
-      SELECT castorFile INTO cfId
-        FROM DiskCopy
-       WHERE id = dcIds(i);
-      deleteCastorFile(cfId);
-    END LOOP;
+    -- list the castorfiles to be cleaned up afterwards
+    FORALL i IN dcIds.FIRST .. dcIds.LAST
+      INSERT INTO filesDeletedProcHelper VALUES
+           ((SELECT castorFile FROM DiskCopy
+              WHERE id = dcIds(i)));
     -- Loop over the deleted files; first use FORALL for bulk operation
     FORALL i IN dcIds.FIRST .. dcIds.LAST
       DELETE FROM Id2Type WHERE id = dcIds(i);
     FORALL i IN dcIds.FIRST .. dcIds.LAST
       DELETE FROM DiskCopy WHERE id = dcIds(i);
+    -- then use a normal loop to clean castorFiles
+    FOR cf IN (SELECT * FROM filesDeletedProcHelper) LOOP
+      deleteCastorFile(cf.cfId);
+    END LOOP;
   END IF;
   OPEN fileIds FOR SELECT * FROM FilesDeletedProcOutput;
 END;

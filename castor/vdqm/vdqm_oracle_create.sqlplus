@@ -28,16 +28,19 @@ CREATE TABLE VdqmTape (vid VARCHAR2(2048), id INTEGER CONSTRAINT I_VdqmTape_Id P
 /* SQL statements for type ClientIdentification */
 CREATE TABLE ClientIdentification (machine VARCHAR2(2048), userName VARCHAR2(2048), port NUMBER, euid NUMBER, egid NUMBER, magic NUMBER, id INTEGER CONSTRAINT I_ClientIdentification_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
+/* SQL statements for type VolumePriority */
+CREATE TABLE VolumePriority (priority NUMBER, clientUID NUMBER, clientGID NUMBER, clientHost VARCHAR2(2048), vid VARCHAR2(2048), tpMode NUMBER, lifespanType NUMBER, creationTime INTEGER, modificationTime INTEGER, id INTEGER CONSTRAINT I_VolumePriority_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
 ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_P FOREIGN KEY (Parent) REFERENCES TapeDrive (id)
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_7_6');
+INSERT INTO CastorVersion VALUES ('-', '2_1_7_7');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.106  Release Date: 2008/04/29 08:42:54  Author: murrayc3 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.115  Release Date: 2008/05/20 08:54:28  Author: murrayc3 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -94,41 +97,48 @@ COMMIT;
 
 
 /* Not null column constraints */
-ALTER TABLE CLIENTIDENTIFICATION MODIFY (EGID NOT NULL);
-ALTER TABLE CLIENTIDENTIFICATION MODIFY (EUID NOT NULL);
-ALTER TABLE CLIENTIDENTIFICATION MODIFY (MAGIC NOT NULL);
-ALTER TABLE CLIENTIDENTIFICATION MODIFY (PORT NOT NULL);
-ALTER TABLE ID2TYPE MODIFY (TYPE NOT NULL);
-ALTER TABLE TAPEACCESSSPECIFICATION MODIFY (ACCESSMODE NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (DEVICEGROUPNAME NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (ERRCOUNT NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (JOBID NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (MODIFICATIONTIME NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (RESETTIME NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (RUNNINGTAPEREQ NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (STATUS NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (TAPE NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (TAPESERVER NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (TOTALMB NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (TRANSFERREDMB NOT NULL);
-ALTER TABLE TAPEDRIVE MODIFY (USECOUNT NOT NULL);
-ALTER TABLE TAPEDRIVE2TAPEDRIVECOMP MODIFY (CHILD NOT NULL);
-ALTER TABLE TAPEDRIVE2TAPEDRIVECOMP MODIFY (PARENT NOT NULL);
-ALTER TABLE TAPEDRIVECOMPATIBILITY MODIFY (PRIORITYLEVEL NOT NULL);
-ALTER TABLE TAPEDRIVECOMPATIBILITY MODIFY (TAPEACCESSSPECIFICATION NOT NULL);
-ALTER TABLE TAPEDRIVEDEDICATION MODIFY (TAPEDRIVE NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (CLIENT NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (CREATIONTIME NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (DEVICEGROUPNAME NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (ERRORCODE NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (MODIFICATIONTIME NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (PRIORITY NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (REQUESTEDSRV NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (STATUS NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (TAPE NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (TAPEACCESSSPECIFICATION NOT NULL);
-ALTER TABLE TAPEREQUEST MODIFY (TAPEDRIVE NOT NULL);
-ALTER TABLE TAPESERVER MODIFY (ACTINGMODE NOT NULL);
+ALTER TABLE ClientIdentification MODIFY (egid NOT NULL);
+ALTER TABLE ClientIdentification MODIFY (euid NOT NULL);
+ALTER TABLE ClientIdentification MODIFY (magic NOT NULL);
+ALTER TABLE ClientIdentification MODIFY (port NOT NULL);
+ALTER TABLE Id2Type MODIFY (type NOT NULL);
+ALTER TABLE TapeAccessSpecification MODIFY (accessMode NOT NULL);
+ALTER TABLE TapeDrive MODIFY (deviceGroupName NOT NULL);
+ALTER TABLE TapeDrive MODIFY (errCount NOT NULL);
+ALTER TABLE TapeDrive MODIFY (jobId NOT NULL);
+ALTER TABLE TapeDrive MODIFY (modificationTime NOT NULL);
+ALTER TABLE TapeDrive MODIFY (resetTime NOT NULL);
+ALTER TABLE TapeDrive MODIFY (runningTapeReq NOT NULL);
+ALTER TABLE TapeDrive MODIFY (status NOT NULL);
+ALTER TABLE TapeDrive MODIFY (tape NOT NULL);
+ALTER TABLE TapeDrive MODIFY (tapeServer NOT NULL);
+ALTER TABLE TapeDrive MODIFY (totalMB NOT NULL);
+ALTER TABLE TapeDrive MODIFY (transferredMB NOT NULL);
+ALTER TABLE TapeDrive MODIFY (useCount NOT NULL);
+ALTER TABLE TapeDrive2TapeDriveComp MODIFY (child NOT NULL);
+ALTER TABLE TapeDrive2TapeDriveComp MODIFY (parent NOT NULL);
+ALTER TABLE TapeDriveCompatibility MODIFY (priorityLevel NOT NULL);
+ALTER TABLE TapeDriveCompatibility MODIFY (tapeAccessSpecification NOT NULL);
+ALTER TABLE TapeDriveDedication MODIFY (TAPEDRIVE NOT NULL);
+ALTER TABLE TapeRequest MODIFY (client NOT NULL);
+ALTER TABLE TapeRequest MODIFY (creationTime NOT NULL);
+ALTER TABLE TapeRequest MODIFY (deviceGroupName NOT NULL);
+ALTER TABLE TapeRequest MODIFY (errorCode NOT NULL);
+ALTER TABLE TapeRequest MODIFY (modificationTime NOT NULL);
+ALTER TABLE TapeRequest MODIFY (priority NOT NULL);
+ALTER TABLE TapeRequest MODIFY (requestedSrv NOT NULL);
+ALTER TABLE TapeRequest MODIFY (status NOT NULL);
+ALTER TABLE TapeRequest MODIFY (tape NOT NULL);
+ALTER TABLE TapeRequest MODIFY (tapeAccessSpecification NOT NULL);
+ALTER TABLE TapeRequest MODIFY (tapeDrive NOT NULL);
+ALTER TABLE TapeServer MODIFY (actingMode NOT NULL);
+ALTER TABLE VolumePriority MODIFY (priority NOT NULL);
+ALTER TABLE VolumePriority MODIFY (clientUID NOT NULL);
+ALTER TABLE VolumePriority MODIFY (clientGID NOT NULL);
+ALTER TABLE VolumePriority MODIFY (clientHost NOT NULL);
+ALTER TABLE VolumePriority MODIFY (vid NOT NULL);
+ALTER TABLE VolumePriority MODIFY (tpMode NOT NULL);
+ALTER TABLE VolumePriority MODIFY (lifespanType NOT NULL);
 
 /* Unique constraints */
 -- A client host can only be dedicated to one drive
@@ -144,7 +154,12 @@ ALTER TABLE TAPESERVER MODIFY (ACTINGMODE NOT NULL);
 -- Tape VIDs are unique
 ALTER TABLE VdqmTape
   ADD CONSTRAINT I_U_VdqmTape_vid
-    UNIQUE (VID);
+    UNIQUE (vid);
+
+-- A volume priority is identified by vid, tapeMode and lifespanType
+ALTER TABLE VolumePriority
+  ADD CONSTRAINT I_U_VolPriority_vid_mode_life
+    UNIQUE (vid, tpMode, lifespanType);
 
 
 /* Check constraints */
@@ -327,6 +342,14 @@ CREATE INDEX I_FK_TapeServer_actingMode ON TapeServer (actingMode);
 
 ALTER TABLE VdqmTape
   ADD CONSTRAINT FK_VdqmTape_id
+    FOREIGN KEY (id)
+    REFERENCES Id2Type (id)
+    DEFERRABLE
+    INITIALLY DEFERRED
+    ENABLE;
+
+ALTER TABLE VolumePriority
+  ADD CONSTRAINT FK_VolumePriority_id
     FOREIGN KEY (id)
     REFERENCES Id2Type (id)
     DEFERRABLE
@@ -929,12 +952,12 @@ END castorVdqmView;
  * This view shows candidate "free tape drive to pending tape request"
  * allocations.
  */
-CREATE OR REPLACE VIEW CandidateDriveAllocations_VIEW
-AS SELECT UNIQUE
+CREATE OR REPLACE VIEW CandidateDriveAllocations_VIEW AS SELECT UNIQUE
   TapeDrive.id as tapeDriveId,
   TapeRequest.id as tapeRequestId,
   TapeAccessSpecification.accessMode,
-  TapeRequest.modificationTime
+  TapeRequest.modificationTime,
+  NVL(VolumePriority.priority,0) AS volumePriority
 FROM
   TapeRequest
 INNER JOIN TapeAccessSpecification ON
@@ -948,6 +971,9 @@ INNER JOIN TapeDrive ON
 INNER JOIN TapeServer ON
      TapeRequest.requestedSrv = TapeServer.id
   OR TapeRequest.requestedSrv = 0
+LEFT OUTER JOIN VolumePriority ON
+      VdqmTape.vid = VolumePriority.vid
+  AND TapeAccessSpecification.accessMode = VolumePriority.tpMode
 WHERE
       TapeDrive.status=0 -- UNIT_UP
   -- Exclude a request if its tape is associated with an on-going request
@@ -978,6 +1004,7 @@ WHERE
     ClientIdentification.euid, VdqmTape.vid)=1
 ORDER BY
   TapeAccessSpecification.accessMode DESC,
+  VolumePriority DESC,
   TapeRequest.modificationTime ASC;
 
 
@@ -985,8 +1012,7 @@ ORDER BY
  * This view shows candidate drive allocations that will reuse a current drive
  * allocation.
  */
-CREATE OR REPLACE VIEW DriveAllocationsForReuse_VIEW
-AS SELECT UNIQUE
+CREATE OR REPLACE VIEW DriveAllocationsForReuse_VIEW AS SELECT UNIQUE
   TapeDrive.id as tapeDriveId,
   TapeDrive.tape as tapeId,
   TapeRequest.id as tapeRequestId,
@@ -1212,6 +1238,51 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
    */
   PROCEDURE writeFailedRTPCDJobSubmission(tapeDriveIdVar IN NUMBER,
     tapeRequestIdVar IN NUMBER, returnVar OUT NUMBER);
+
+  /**
+   * This procedure sets the priority of a volume.
+   *
+   * @param priority the priority where 0 is the lowest priority and INT_MAX is
+   * the highest.
+   * @param clientUIDVar the user id of the client.
+   * @param clientGIDVar the group id fo the client.
+   * @param clientHostVar the host of the client.
+   * @param vidVar the visual identifier of the volume.
+   * @param tpModeVar the tape access mode.  Valid values are either 0 meaning
+   * write-disabled or 1 meaning write-enabled.
+   * @param lifespanTypeVar the type of lifespan to be assigned to the priority
+   * setting.  Valid values are either 0 meaning single-shot or 1 meaning
+   * unlimited.
+   */
+  PROCEDURE setVolPriority(priorityVar IN NUMBER, clientUIDVar IN NUMBER,
+    clientGIDVar IN NUMBER, clientHostVar IN VARCHAR2, vidVar IN VARCHAR2,
+    tpModeVar IN NUMBER, lifespanTypeVar IN NUMBER);
+
+  /**
+   * This procedure deletes the specified volume priority if it exist, else
+   * does nothing.
+   *
+   * @param vidVar the visual identifier of the volume.
+   * @param tpModeVar the tape access mode.  Valid values are either 0 meaning
+   * write-disabled or 1 meaning write-enabled.
+   * @param lifespanTypeVar the type of lifespan to be assigned to the priority
+   * setting.  Valid values are either 0 meaning single-shot or 1 meaning
+   * unlimited.
+   * @param returnVar the ID id of the volume priority row if one was deleted,
+   * else 0.
+   * @param priorityVar the priority of the deleted volume priority if one was
+   * deleted, else undefined.
+   * @param clientUIDVar the client UID of the deleted volume priority if one
+   * was deleted, else undefined.
+   * @param clientGIDVar the client GID of the deleted volume priority if one
+   * was deleted, else undefined.
+   * @param clientHostVar the client host of the deleted volume priority if one
+   * was deleted, else undefined.
+   */
+  PROCEDURE deleteVolPriority(vidVar IN VARCHAR2, tpModeVar IN NUMBER,
+    lifespanTypeVar IN NUMBER, returnVar OUT NUMBER, priorityVar OUT NUMBER,
+    clientUIDVar OUT NUMBER, clientGIDVar OUT NUMBER,
+    clientHostVar OUT NOCOPY VARCHAR2);
 
 END castorVdqm;
 /
@@ -1994,6 +2065,141 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
 
   END writeFailedRTPCDJobSubmission;
 
+
+  /**
+   * See the castorVdqm package specification for documentation.
+   */
+  PROCEDURE setVolPriority(
+    priorityVar     IN NUMBER,
+    clientUIDVar    IN NUMBER,
+    clientGIDVar    IN NUMBER,
+    clientHostVar   IN VARCHAR2,
+    vidVar          IN VARCHAR2,
+    tpModeVar       IN NUMBER,
+    lifespanTypeVar IN NUMBER)
+  AS
+    priorityIdVar NUMBER;
+  BEGIN
+    -- Try to select and get a lock on the row representing the priority if one
+    -- already exists
+    BEGIN
+      SELECT id INTO priorityIdVar FROM VolumePriority WHERE
+            VolumePriority.vid          = vidVar
+        AND VolumePriority.tpMode       = tpModeVar
+        AND VolumePriority.lifespanType = lifespanTypeVar
+        FOR UPDATE;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        priorityIdVar := NULL;
+    END;
+
+    -- If a row for the priority already exists
+    IF priorityIdVar IS NOT NULL THEN
+
+      -- Update it
+      UPDATE VolumePriority SET
+        priority   = priorityVar,
+        clientUID  = clientUIDVar,
+        clientGID  = clientGIDVar,
+        clientHost = clientHostVar;
+
+    -- Else a row for the priority does not yet exist
+    ELSE
+
+      -- Try to create one
+      BEGIN
+        INSERT INTO VolumePriority(id, priority, clientUID, clientGID,
+          clientHost, vid, tpMode, lifespanType)
+        VALUES(ids_seq.nextval, priorityVar, clientUIDVar, clientGIDVar,
+          clientHostVar, vidVar, tpModeVar, lifespanTypeVar)
+        RETURNING id INTO priorityIdVar;
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- If another competing thread created the row first
+          IF SQLCODE = -1 THEN -- ORA-00001: unique constraint violated
+
+            -- Ensure priorityIdVar is NULL
+            priorityIdVar := NULL;
+
+          -- Else an unforeseen error has occured
+          ELSE
+
+            -- Reraise the current exception
+            RAISE;
+
+          END IF;
+      END;
+
+      -- If a row for the priority was successfully created then
+      IF priorityIdVar IS NOT NULL THEN
+
+        -- Update Id2Type
+        INSERT INTO Id2Type (id, type)
+        VALUES (priorityIdVar, 151); -- 151=OBJ_VolumePriority
+
+      -- Else a competing thread created the row first
+      ELSE
+
+        -- Select and get a lock on the row
+        SELECT id INTO priorityIdVar FROM VolumePriority WHERE
+            VolumePriority.vid          = vidVar
+        AND VolumePriority.tpMode       = tpModeVar
+        AND VolumePriority.lifespanType = lifespanTypeVar
+        FOR UPDATE;
+
+        -- Update the row
+        UPDATE VolumePriority SET
+          priority   = priorityVar,
+          clientUID  = clientUIDVar,
+          clientGID  = clientGIDVar,
+          clientHost = clientHostVar;
+      END IF;
+
+    END IF; -- If a row for the priority already exists
+
+  END setVolPriority;
+
+
+  /**
+   * See the castorVdqm package specification for documentation.
+   */
+  PROCEDURE deleteVolPriority(
+    vidVar           IN VARCHAR2,
+    tpModeVar        IN NUMBER,
+    lifespanTypeVar  IN NUMBER,
+    returnVar       OUT NUMBER,
+    priorityVar     OUT NUMBER,
+    clientUIDVar    OUT NUMBER,
+    clientGIDVar    OUT NUMBER,
+    clientHostVar   OUT NOCOPY VARCHAR2)
+  AS
+    priorityIdVar NUMBER;
+  BEGIN
+    returnVar := 0;
+
+    -- Try to get the ID of the volume priority row
+    BEGIN
+      SELECT id, priority, clientUID, clientGID, clientHost
+        INTO priorityIdVar, priorityVar, clientUIDVar, clientGIDVar,
+          clientHostVar
+        FROM VolumePriority WHERE
+            VolumePriority.vid          = vidVar
+        AND VolumePriority.tpMode       = tpModeVar
+        AND VolumePriority.lifespanType = lifespanTypeVar
+        FOR UPDATE;
+    EXCEPTION
+      -- Do nothing if the specified volume priority row does not exist
+      WHEN NO_DATA_FOUND THEN RETURN;
+    END;
+
+    -- Delete the volume priority row
+    DELETE FROM VolumePriority WHERE VolumePriority.id = priorityIdVar;
+    DELETE FROM Id2Type        WHERE Id2Type.id        = priorityIdVar;
+
+    -- Give the ID of the volume priority row that was deleted
+    returnVar := priorityIdVar;
+  END deleteVolPriority;
+
 END castorVdqm;
 /
 
@@ -2056,6 +2262,47 @@ CREATE OR REPLACE TRIGGER TR_U_TapeRequest
 FOR EACH ROW
 WHEN
   ((NEW.modificationTime != OLD.modificationTime) OR (NEW.status != OLD.status))
+BEGIN
+  -- Update the modification time
+  :NEW.modificationTime := castorVdqmCommon.getTime();
+END;
+/
+
+
+/**
+ * PL/SQL trigger responsible for setting the creation time and initial
+ * modification time of a volume priority when it is inserted into the
+ * VolumePriority table.
+ */
+CREATE OR REPLACE TRIGGER TR_I_VolumePriority
+  BEFORE INSERT ON VolumePriority
+FOR EACH ROW
+DECLARE
+  timeVar NUMBER := castorVdqmCommon.getTime();
+BEGIN
+  -- Set creation time
+  :NEW.creationTime := timeVar;
+
+  -- Set modification time
+  :NEW.modificationTime := timeVar;
+END;
+/
+
+
+/**
+ * Updates the modification time of a volume priority when the priority is
+ * updated.
+ */
+CREATE OR REPLACE TRIGGER TR_U_VolumePriority
+  BEFORE UPDATE OF priority, clientUID, clientGID, clientHost, modificationTime
+    ON VolumePriority
+FOR EACH ROW
+WHEN
+  (   (NEW.priority   != OLD.priority)
+   OR (NEW.clientUID  != OLD.clientGID)
+   OR (NEW.clientGID  != OLD.clientGID)
+   OR (NEW.clientHost != OLD.clientHost)
+   OR (NEW.modificationTime != OLD.modificationTime))
 BEGIN
   -- Update the modification time
   :NEW.modificationTime := castorVdqmCommon.getTime();
