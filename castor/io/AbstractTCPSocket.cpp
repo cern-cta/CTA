@@ -100,7 +100,7 @@ void castor::io::AbstractTCPSocket::createSocket()
     throw ex;
   }
   int yes = 1;
-  if (setsockopt(m_socket,IPPROTO_TCP,TCP_NODELAY,(char *)&yes,sizeof(yes)) < 0) {
+  if (setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, (char *)&yes, sizeof(yes)) < 0) {
     castor::exception::Exception ex(errno);
     ex.getMessage() << "Can't set socket in TCP_NODELAY mode.";
     throw ex;
@@ -141,11 +141,11 @@ void castor::io::AbstractTCPSocket::readBuffer(const unsigned int magic,
   unsigned int header[2];
   int ret = netread_timeout(m_socket,
 			    (char*)&header,
-			    2*sizeof(unsigned int),
+			    2 * sizeof(unsigned int),
 			    m_timeout);
-  if (ret != 2*sizeof(unsigned int)) {
+  if (ret != 2 * sizeof(unsigned int)) {
     if (0 == ret) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex(serrno);
       ex.getMessage() << "Unable to receive header\n"
                       << "The connection was closed by remote end";
       throw ex;
