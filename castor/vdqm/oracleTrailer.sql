@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.114 $ $Release$ $Date: 2008/05/19 16:03:04 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.115 $ $Release$ $Date: 2008/05/20 08:54:28 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -906,8 +906,7 @@ END castorVdqmView;
  * This view shows candidate "free tape drive to pending tape request"
  * allocations.
  */
-CREATE OR REPLACE VIEW CandidateDriveAllocations_VIEW
-AS SELECT UNIQUE
+CREATE OR REPLACE VIEW CandidateDriveAllocations_VIEW AS SELECT UNIQUE
   TapeDrive.id as tapeDriveId,
   TapeRequest.id as tapeRequestId,
   TapeAccessSpecification.accessMode,
@@ -927,7 +926,8 @@ INNER JOIN TapeServer ON
      TapeRequest.requestedSrv = TapeServer.id
   OR TapeRequest.requestedSrv = 0
 LEFT OUTER JOIN VolumePriority ON
-  VdqmTape.vid = VolumePriority.vid
+      VdqmTape.vid = VolumePriority.vid
+  AND TapeAccessSpecification.accessMode = VolumePriority.tpMode
 WHERE
       TapeDrive.status=0 -- UNIT_UP
   -- Exclude a request if its tape is associated with an on-going request
@@ -966,8 +966,7 @@ ORDER BY
  * This view shows candidate drive allocations that will reuse a current drive
  * allocation.
  */
-CREATE OR REPLACE VIEW DriveAllocationsForReuse_VIEW
-AS SELECT UNIQUE
+CREATE OR REPLACE VIEW DriveAllocationsForReuse_VIEW AS SELECT UNIQUE
   TapeDrive.id as tapeDriveId,
   TapeDrive.tape as tapeId,
   TapeRequest.id as tapeRequestId,
