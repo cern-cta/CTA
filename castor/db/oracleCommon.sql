@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.648 $ $Date: 2008/05/07 14:39:18 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.649 $ $Date: 2008/05/20 08:23:16 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -163,6 +163,11 @@ ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT I_DiskPool2SvcCla_ParentChild PRIMA
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
   (fileid NUMBER, nshost VARCHAR2(2048))
   ON COMMIT PRESERVE ROWS;
+
+/* Global temporary table to store castor file ids temporarily in the filesDeletedProc procedure */
+CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcHelper
+  (cfId NUMBER)
+  ON COMMIT DELETE ROWS;
 
 /* Global temporary table to handle output of the nsFilesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE NsFilesDeletedOrphans
