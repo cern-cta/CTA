@@ -47,7 +47,7 @@ namespace castor {
       TAPECOPY_TOBERECALLED = 4,
       TAPECOPY_STAGED = 5,
       TAPECOPY_FAILED = 6,
-      TAPECOPY_WAITPOLICY
+      TAPECOPY_WAITPOLICY = 7
     }; /* end of enum TapeCopyStatusCodes */
 
     /**
