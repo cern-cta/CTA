@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.656 $ $Date: 2008/05/20 08:20:21 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.657 $ $Date: 2008/05/20 09:22:20 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -832,6 +832,7 @@ BEGIN
 END;
 
 /* createOrUpdateStream */
+
 CREATE OR REPLACE PROCEDURE createOrUpdateStream
 (svcClassName IN VARCHAR2,
  initialSizeToTransfer IN NUMBER, -- total initialSizeToTransfer for the svcClass
@@ -849,6 +850,7 @@ AS
   streamToClone NUMBER; -- stream id to clone
   svcId NUMBER; --svcclass id
   tcId NUMBER; -- tape copy id
+  oldSize NUMBER; -- value for a cloned stream
 BEGIN
   retCode := 0;
   -- get streamFromSvcClass
@@ -924,14 +926,15 @@ BEGIN
         INSERT INTO Id2Type (id, type) values (strId,26); -- Stream type
     	IF doClone = 1 THEN
 	  -- clone the new stream with one from the same tapepool
-	  SELECT id INTO streamToClone 
-            FROM Stream WHERE tapepool = tpId AND ROWNUM < 2; 
+	  SELECT id, initialsizetotransfer INTO streamToClone, oldSize 
+            FROM Stream WHERE tapepool = tpId AND id != strId AND ROWNUM < 2; 
           FOR tcId IN (SELECT child FROM Stream2TapeCopy 
                         WHERE Stream2TapeCopy.parent = streamToClone) 
           LOOP
             -- a take the first one, they are supposed to be all the same
-            INSERT INTO stream2tapecopy (parent, child) VALUES (strId, tpId); 
+            INSERT INTO stream2tapecopy (parent, child) VALUES (strId, tcId.child); 
           END LOOP;
+          UPDATE Stream set initialSizeToTransfer=oldSize WHERE id=strId;        
         END IF;
         nbOldStream := nbOldStream + 1;
         EXIT WHEN nbOldStream >= nbDrives;
@@ -939,7 +942,6 @@ BEGIN
     END IF;
   END IF;
 END;
-
 
 /* attach tapecopies to stream */
 CREATE OR REPLACE PROCEDURE attachTapeCopiesToStreams
