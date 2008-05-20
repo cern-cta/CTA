@@ -78,7 +78,7 @@ namespace castor{
         egid = fileRequest->egid();
         if (Cns_setid(euid,egid) != 0) {
           castor::dlf::Param params[]={
-            castor::dlf::Param("Function","Cns_umask"),
+            castor::dlf::Param("Function","Cns_setid"),
             castor::dlf::Param("Error", sstrerror(serrno))};
           castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 2, params);	  
           
