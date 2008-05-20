@@ -394,7 +394,7 @@ int _net_isclosed(fd)
 	char buf[1];
 	
 	/* Will return > 0 if the descriptor is closed */
-	if (poll(&pollit,1,0) > 0) {
+	if (poll(&pollit, 1, 0) > 0) {
 		if (recv(fd, buf, sizeof(buf), MSG_PEEK | MSG_DONTWAIT) == 0) {
 			serrno = SECONNDROP;
 			return 1;
@@ -412,8 +412,8 @@ int _net_isclosed(fd)
 	FD_ZERO(&rset);
 	FD_SET(fd,&rset);
 	
-	tv.tv_sec = timeout;
-	tv.tv_usec = 10 * 1000;
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
 
 	char buf[1];
 	
@@ -441,7 +441,7 @@ int _net_writable(fd, timeout)
 	pollit.revents = 0;
 
 	/* Will return > 0 if the descriptor is writable */
-	return(poll(&pollit,1,timeout*1000));
+	return(poll(&pollit, 1, timeout * 1000));
 }
 #else
 int _net_writable(fd, timeout)
@@ -454,7 +454,7 @@ int _net_writable(fd, timeout)
 	FD_ZERO(&rset);
 	FD_SET(fd,&rset);
 	
-	tv.tv_sec = timeout;
+	tv.tv_sec  = timeout;
 	tv.tv_usec = 0;
 	
 	/* Will return > 0 if the descriptor is writable */
@@ -474,7 +474,7 @@ int _net_readable(fd, timeout)
 	pollit.revents = 0;
 
 	/* Will return > 0 if the descriptor is readable */
-	return(poll(&pollit,1,timeout*1000));
+	return(poll(&pollit, 1, timeout * 1000));
 }
 #else
 int _net_readable(fd, timeout)
@@ -487,7 +487,7 @@ int _net_readable(fd, timeout)
 	FD_ZERO(&rset);
 	FD_SET(fd,&rset);
   
-	tv.tv_sec = timeout;
+	tv.tv_sec  = timeout;
 	tv.tv_usec = 0;
   
 	/* Will return > 0 if the descriptor is readable */
