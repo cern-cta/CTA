@@ -23,11 +23,8 @@ for m in ['BUILD', 'RPMS', 'SOURCES', 'SPECS', 'SRPMS', 'RPMS/i386', 'RPMS/x86_6
 # build RPMs
 print 'Building RPMs for ' + targetOs + '/' + targetArch + ' ...'
 nbRpms = 54
-if targetOs == 'SLC3':
-    oraPath = '/afs/cern.ch/project/oracle/@sys/10201'
-else:
-    oraPath = '/afs/cern.ch/project/oracle/@sys/10203'
-    nbRpms = nbRpms + 3  # gridftp2 ones
+oraPath = '/afs/cern.ch/project/oracle/@sys/10203'
+nbRpms = nbRpms + 3  # gridftp2 ones
 basecmd = "ORACLE_HOME=" + oraPath + " LD_LIBRARY_PATH=" + oraPath + "/lib PATH=" + oraPath + "/bin:/usr/X11R6/bin:$PATH rpmbuild --define '_topdir " + workDir + "' --define '_specdir " + workDir + os.sep + "SPECS" + os.sep + "' --define '_sourcedir " + workDir + os.sep + "SOURCES" + os.sep + "' --define '_srcrpmdir " + workDir + os.sep + "SRPMS" + os.sep + "' --define '_rpmdir " + workDir + os.sep + "RPMS" + os.sep + "' --define '_buildroot " + workDir + os.sep + "BUILD" + os.sep + "' --define '_tmppath " + workDir + os.sep + "BUILD" + os.sep
 cmd = basecmd + "' -ta " + tarball
 rpmOutput = os.popen4(cmd)[1].read()
@@ -58,7 +55,7 @@ if len(rpmList) != nbRpms:
     print 'Warning, not all RPMs were correctly generated'
 for p in rpmList:
     shutil.copyfile(rpmDir + os.sep + p, intReleaseDir + os.sep + targetOs + os.sep + targetArch + os.sep + p)
-if targetOs == 'SLC3' and targetArch == 'i386':
+if targetOs == 'SLC4' and targetArch == 'i386':
     print 'Copying source RPM to internal release area ...'
     # here we also copy the source RPM
     shutil.copyfile(rpmDir + '/../../SRPMS/castor-' + fullVersion + '.src.rpm', intReleaseDir + os.sep + 'castor-' + fullVersion + '.src.rpm')

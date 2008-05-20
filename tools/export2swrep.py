@@ -6,7 +6,6 @@ def usage():
 
 # list of platforms as a tuple (OS, arch)
 platforms = (('SLC4', 'x86_64', 'x86_64_slc4'),
-             ('SLC3', 'i386', 'i386_slc3'),
              ('SLC4', 'i386', 'i386_slc4'))
 
 # First check the arguments
