@@ -34,6 +34,7 @@
 
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/SubRequestGetNextStatusCodes.hpp"
+#include "castor/stager/Tape.hpp"
 #include "castor/exception/Exception.hpp"
 
 #include "castor/ObjectSet.hpp"

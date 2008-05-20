@@ -89,16 +89,31 @@ namespace castor{
             break;
           
           case DISKCOPY_WAITTAPERECALL:   // trigger a recall
-            // answer client only if success
-            reply = stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest, stgRequestHelper->svcClass);
-            if(reply) {
-              stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, &(stgCnsHelper->cnsFileid));
-            }
-            else {
-              // no tape copy found because of Tape0 file, log it
-              // any other tape error will throw an exception and will be classified as LVL_ERROR 
-              stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
-            }
+	    {
+	      // answer client only if success
+	      castor::stager::Tape *tape = 0;
+	      reply = stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest, stgRequestHelper->svcClass, tape);
+	      if (reply) {
+		// "Triggering Tape Recall"
+		castor::dlf::Param params[] = {
+		  castor::dlf::Param("Type", castor::ObjectsIdStrings[stgRequestHelper->fileRequest->type()]),
+		  castor::dlf::Param("Filename", stgRequestHelper->subrequest->fileName()),
+		  castor::dlf::Param("Username", stgRequestHelper->username),
+		  castor::dlf::Param("Groupname", stgRequestHelper->groupname),
+		  castor::dlf::Param("SvcClass", stgRequestHelper->svcClassName),
+		  castor::dlf::Param("TPVID", tape->vid()),
+		  castor::dlf::Param("TapeStatus", castor::stager::TapeStatusCodesStrings[tape->status()]),
+		  castor::dlf::Param("FileSize", stgRequestHelper->subrequest->castorFile()->fileSize()),
+		  castor::dlf::Param(stgRequestHelper->subrequestUuid)};
+		castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, 9, params, &(stgCnsHelper->cnsFileid));
+	      } else {
+		// no tape copy found because of Tape0 file, log it
+		// any other tape error will throw an exception and will be classified as LVL_ERROR 
+		stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
+	      }
+	      if (tape != 0)
+	      	delete tape;
+	    }
             break;
         }
         return reply;
@@ -133,11 +148,10 @@ namespace castor{
           /* we don t execute: dbSvc->updateRep ..*/
           if(stgReplyHelper != NULL) delete stgReplyHelper;
           
-          castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
-            castor::dlf::Param("Error Message",e.getMessage().str())
-          };
-          
-          castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_PREPARETOGET, 2 ,params, &(stgCnsHelper->cnsFileid));
+          castor::dlf::Param params[] = {
+	    castor::dlf::Param("Error Code", sstrerror(e.code())),
+            castor::dlf::Param("Error Message", e.getMessage().str())};
+	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_PREPARETOGET, 2, params, &(stgCnsHelper->cnsFileid));
           throw(e);
         }        
         

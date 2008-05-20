@@ -37,18 +37,33 @@ namespace castor{
             break;
           
           case DISKCOPY_WAITTAPERECALL:
-            // trigger recall, the repack migration will be started at the end of it; answer client only if success
-            result = stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest, stgRequestHelper->svcClass);
-            if(result) {
-              stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, &(stgCnsHelper->cnsFileid));
-            }
-            else {
-              // no tape copy found because of Tape0 file, log it
-              // any other tape error will throw an exception and will be classified as LVL_ERROR 
-              stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
-            }
+	    {
+	      // trigger recall, the repack migration will be started at the end of it; answer client only if success
+	      castor::stager::Tape *tape = 0;
+	      result = stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest, stgRequestHelper->svcClass, tape);
+	      if (result) {
+		// "Triggering Tape Recall"
+		castor::dlf::Param params[] = {
+		  castor::dlf::Param("Type", castor::ObjectsIdStrings[stgRequestHelper->fileRequest->type()]),
+		  castor::dlf::Param("Filename", stgRequestHelper->subrequest->fileName()),
+		  castor::dlf::Param("Username", stgRequestHelper->username),
+		  castor::dlf::Param("Groupname", stgRequestHelper->groupname),
+		  castor::dlf::Param("SvcClass", stgRequestHelper->svcClassName),
+		  castor::dlf::Param("TPVID", tape->vid()),
+		  castor::dlf::Param("TapeStatus", castor::stager::TapeStatusCodesStrings[tape->status()]),
+		  castor::dlf::Param("FileSize", stgRequestHelper->subrequest->castorFile()->fileSize()),
+		  castor::dlf::Param(stgRequestHelper->subrequestUuid)};
+		castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, 9, params, &(stgCnsHelper->cnsFileid));
+	      } else {
+		// no tape copy found because of Tape0 file, log it
+		// any other tape error will throw an exception and will be classified as LVL_ERROR 
+		stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
+	      }
+	      if (tape != 0)
+		delete tape;
+	    }
             break;
-          
+	    
           default:
             break;
         }
