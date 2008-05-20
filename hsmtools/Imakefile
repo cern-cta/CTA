@@ -129,6 +129,10 @@ PROGS_TO_CLEAN =  ProgramTargetName(reclaim) \
 MANPAGES += $(MANDIR)/vdqmDBInit.$(MANSUFFIX)
 EXPORTMANPAGES += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),vdqmDBInit.$(MANSUFFIX)))
 PROGS_TO_CLEAN += ProgramTargetName(vdqmDBInit)
+
+MANPAGES += $(MANDIR)/vdqmsetvolpriority.$(MANSUFFIX)
+EXPORTMANPAGES += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),vdqmsetvolpriority.$(MANSUFFIX)))
+PROGS_TO_CLEAN += ProgramTargetName(vdqmsetvolpriority)
 #endif
 
 #if !defined(_WIN32)
@@ -166,6 +170,7 @@ IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 
 #if BuildVDQMCpp
 IPROGS += FileName($(BIN),ProgramTargetName(vdqmDBInit))
+IPROGS += FileName($(BIN),ProgramTargetName(vdqmsetvolpriority))
 #endif
 
 EPROGS = $(EXPORTBIN)/reclaim \
@@ -192,6 +197,7 @@ EPROGS = $(EXPORTBIN)/reclaim \
 
 #if BuildVDQMCpp
 EPROGS +=	$(EXPORTBIN)/vdqmDBInit
+EPROGS +=	$(EXPORTBIN)/vdqmsetvolpriority
 #endif
 
 IPERL = FileName($(PERLLIBDIR),castor_tools.pm)
@@ -227,6 +233,7 @@ NormalProgramTarget(rfcpupd,rfcpupd.Osuf,DepSharedLibraryTargetName(shlib,shift)
 
 #if BuildVDQMCpp
 NormalProgramTarget(vdqmDBInit,vdqmDBInit.Osuf,$(DEPLIB2),$(LIBS2))
+NormalProgramTarget(vdqmsetvolpriority,vdqmsetvolpriority.Osuf,$(DEPLIB2),$(LIBS2))
 #endif
 
 MakeDepSharedLibrary(shlib,shift)
@@ -287,6 +294,9 @@ IEXPORT(adler32,$(EXPORTBIN),755);
 #if BuildVDQMCpp
 InstallProgram(vdqmDBInit,$(BIN),root,bin,755)
 IEXPORT(vdqmDBInit,$(EXPORTBIN),755);
+
+InstallProgram(vdqmsetvolpriority,$(BIN),root,bin,755)
+IEXPORT(vdqmsetvolpriority,$(EXPORTBIN),755);
 #endif
 
 InstallProgram(printSvcClass,$(BIN),root,bin,755)
@@ -352,6 +362,9 @@ EMANPAGE(adminMultiInstance,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 #if BuildVDQMCpp
 IMANPAGE(vdqmDBInit,$(MANDIR),$(MANSUFFIX))
 EMANPAGE(vdqmDBInit,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+
+IMANPAGE(vdqmsetvolpriority,$(MANDIR),$(MANSUFFIX))
+EMANPAGE(vdqmsetvolpriority,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 #endif
 
 export: $(EPROGS) $(EXPORTPERL) $(EPERL)
