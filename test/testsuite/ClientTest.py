@@ -1038,17 +1038,6 @@ class StagerSpecialQueryCase(unittest.TestCase):
         assert buffOut.find("Error") == -1, "stager_qry -s doesn't work"
         
         
-    def queryE(self):
-        cmd=["stager_put -M "+dirCastor+"fileClientQueryE"+ticket+"TEXT1","stager_put -M "+dirCastor+"fileClientQueryE"+ticket+"TEXT2","stager_qry -E "+dirCastor+"fileClientQueryE"+ticket+"*"]
-
-        myScenE=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,[["STAGER_TRACE","3"]])
-        
-        UtilityForCastorTest.saveOnFile(localDir+"ClientQueryE",cmd,myScenE)
-        fi=open(localDir+"ClientQueryE2","r")
-        buffOut=fi.read()
-        fi.close()   
-        assert buffOut.find("STAGEOUT") != -1 or buffOut.find("Operation not permitted") != -1, "stager_qry -E doesn't work"
-        
 class StagerDiskOnlyCase(unittest.TestCase):
     def forceFileClass(self):
         cmd=["stager_put -M "+dirCastor+"fileForceFileClass"+ticket+" -S "+stagerDiskOnlySvcClass,"nsls --class "+dirCastor+"fileForceFileClass"+ticket,"nslistclass --name "+stagerForcedFileClass+" | grep CLASS_ID"]
@@ -1138,7 +1127,7 @@ casesPutDone=("basicPutDone","putDoneAndRfcp","putDoneManyFiles","putDoneR")
 casesGet=("getAndRfcp","getManyFiles","getTag","getSvcClass","getR","getStageOut")
 casesUpd=("pupdExistingFile", "pupdNonExistingFile", "pupdExistingFileReplicated", "updExistingFile", "updNonExistingFile", "updExistingFileReplicated", "pupdUpdPutDone", "pputUpdPutDone", "pupdPutPutDone", "pPutUpdPutPutDone", "pPutPUpd", "pUpdpPut", "pUpdpPutNonExist")
 casesRm=("basicRm","rmAndRfcp","rmManyFiles","rmSvcClass","rmDualSvcClass")
-casesQuery=("queryS","queryE")
+casesQuery=("queryS",)
 casesDiskOnly=("forceFileClass",)
 casesExtraTest=("putDoneAndLongFile","srmSimulation","putSizeCheck")
 
