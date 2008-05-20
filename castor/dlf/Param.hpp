@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Param.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/04/09 10:31:06 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Param.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/05/20 08:02:55 $ $Author: waldron $
  *
  * A parameter for the DLF (Distributed Logging System)
  *
@@ -51,7 +51,10 @@ namespace castor {
       Param(const char* name, std::string value) :
         m_deallocate(true) {
         m_cParam.name = (char*) name;
-        m_cParam.type = DLF_MSG_PARAM_STR;
+	m_cParam.type = DLF_MSG_PARAM_STR;
+	if (!strcmp(name, "TPVID")) {
+	  m_cParam.type = DLF_MSG_PARAM_TPVID;
+	}
         m_cParam.par.par_string = strdup(value.c_str());
       };
 
@@ -61,7 +64,10 @@ namespace castor {
       Param(const char* name, const char* value) :
         m_deallocate(true) {
         m_cParam.name = (char*) name;
-        m_cParam.type = DLF_MSG_PARAM_STR;
+	m_cParam.type = DLF_MSG_PARAM_STR;
+	if (!strcmp(name, "TPVID")) {
+	  m_cParam.type = DLF_MSG_PARAM_TPVID;
+	}
         if (0 != value) {
           m_cParam.par.par_string = strdup(value);
         } else {
@@ -166,7 +172,11 @@ namespace castor {
         m_deallocate(false) {
         m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_TPVID;
-        m_cParam.par.par_string = value.vid();
+        if (0 != value.vid()) {
+          m_cParam.par.par_string = strdup(value.vid());
+        } else {
+          m_cParam.par.par_string = 0;
+        }
       };
 
       /**

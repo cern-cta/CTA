@@ -129,7 +129,7 @@ void castor::dlf::dlf_writep
   // Place holder for the C version of the parameters
   // dlf_write_param_t cparams[numparams]; // Doesn't work on windows compiler!!!
   dlf_write_param_t* cparams = new dlf_write_param_t[numparams];
-  // Translate paramters from C++ to C
+  // Translate parameters from C++ to C
   for (int i = 0; i < numparams; i++) {
     cparams[i] = params[i].cParam();
   }
