@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.93 $ $Release$ $Date: 2008/05/05 08:34:53 $ $Author: waldron $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.94 $ $Release$ $Date: 2008/05/20 08:16:35 $ $Author: waldron $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -336,13 +336,23 @@ namespace castor {
        * its Segment(s), a DiskCopy and a SubRequest in WAITTAPERECALL. 
        * @param subreq the subreq of the file to recall
        * @param svcClass svc class for recall policy
+       * @param tape a pointer to a location of where to store the tape 
+       * information associated with the recall. Note: if the file has 
+       * multiple segments spread across multiple tapes only the last 
+       * Tape processed will be returned. We could of course return a
+       * vector of Tape objects but this is overkill as multi segment,
+       * multi tape recalls are extremely rare and can only happen when
+       * recalling a file which was written under Castor1. It is the
+       * responsibility of the calling function to delete the Tape object
+       * if necessary.
        * @return 0: error (e.g. no valid segments)
        *         1: success
-       * @exception in case of system error
+       * @exception Exception in case of error.
        */
      virtual int createRecallCandidate
-     (castor::stager::SubRequest *subreq,
-      castor::stager::SvcClass *svcClass) 
+     (castor::stager::SubRequest* subreq,
+      castor::stager::SvcClass* svcClass,
+      castor::stager::Tape* &tape) 
         throw (castor::exception::Exception) = 0;
 
       /**

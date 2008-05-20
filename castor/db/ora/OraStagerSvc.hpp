@@ -337,19 +337,28 @@ namespace castor {
          const u_signed64 svcClassId, const float weight)
           throw (castor::exception::Exception);
        
-        /**
-         * Creates a candidate for a recall. This includes TapeCopy with
-         * its Segment(s), a DiskCopy and a SubRequest in WAITTAPERECALL.
-         * @param subreq the subreq of the file to recall
-         * @param svcClass the svcClass to be used for the recall policy
-         * @return 0: error (e.g. no valid segments)
-         *         1: success
-         * @exception in case of system error
-         */
-        virtual int createRecallCandidate
-        (castor::stager::SubRequest* subreq,
-         castor::stager::SvcClass* svcClass)
-           throw (castor::exception::Exception);
+	/**
+	 * Creates a candidate for a recall. This includes TapeCopy with
+	 * its Segment(s), a DiskCopy and a SubRequest in WAITTAPERECALL. 
+	 * @param subreq the subreq of the file to recall
+	 * @param svcClass svc class for recall policy
+	 * @param tape a pointer to a location of where to store the tape 
+	 * information associated with the recall. Note: if the file has 
+	 * multiple segments spread across multiple tapes only the last 
+	 * Tape processed will be returned. We could of course return a
+	 * vector of Tape objects but this is overkill as multi segment,
+	 * multi tape recalls are extremely rare and can only happen when
+	 * recalling a file which was written under Castor1. It is the
+	 * responsibility of the calling function to delete the Tape object
+	 * @return 0: error (e.g. no valid segments)
+	 *         1: success
+	 * @exception Exception in case of error
+	 */
+	virtual int createRecallCandidate
+	(castor::stager::SubRequest* subreq,
+	 castor::stager::SvcClass* svcClass,
+	 castor::stager::Tape* &tape) 
+	  throw (castor::exception::Exception);
           
         /**
          * Retrieves a DiskPool from the database based on name.
@@ -381,19 +390,30 @@ namespace castor {
          * Creates a TapeCopy and corresponding Segment objects in the
          * Stager catalogue. The segment information is fetched from the
          * Nameserver and vmgr with the given uid, gid.
-         * @castorFile the Castorfile, from wich the fileid is taken for the segments
+         * @castorFile the Castorfile, from wich the fileid is taken for 
+	 * the segments
          * @param euid the userid from the user
          * @param guid the groupid from the user
-         * @param svcClass the id of the used svcclass 
-         *  
+         * @param svcClass the id of the used svcclass
+	 * @param tape a pointer to a location of where to store the tape 
+	 * information associated with the recall. Note: if the file has 
+	 * multiple segments spread across multiple tapes only the last 
+	 * Tape processed will be returned. We could of course return a
+	 * vector of Tape objects but this is overkill as multi segment,
+	 * multi tape recalls are extremely rare and can only happen when
+	 * recalling a file which was written under Castor1. It is the
+	 * responsibility of the calling function to delete the Tape object
+	 * if necessary.
+         * @exception Exception in case of error
          */
         int createTapeCopySegmentsForRecall
-        (castor::stager::CastorFile *castorFile, 
+        (castor::stager::CastorFile* castorFile, 
          unsigned long euid, 
          unsigned long egid,
-         castor::stager::SvcClass* svcClass)
+         castor::stager::SvcClass* svcClass,
+	 castor::stager::Tape* &tape)
           throw (castor::exception::Exception);
-
+	
         /// SQL statement for function subRequestToDo
         static const std::string s_subRequestToDoStatementString;
 

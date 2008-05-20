@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.251 $ $Release$ $Date: 2008/05/19 15:17:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.252 $ $Release$ $Date: 2008/05/20 08:16:36 $ $Author: waldron $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -218,7 +218,7 @@ const unsigned int castor::db::ora::OraStagerSvc::ID() {
 // reset
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStagerSvc::reset() throw() {
-  //Here we attempt to delete the statements correctly
+  // Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   OraCommonSvc::reset();
   try {
@@ -619,67 +619,71 @@ void castor::db::ora::OraStagerSvc::createDiskCopyReplicaRequest
 // createRecallCandidate
 //------------------------------------------------------------------------------
 int castor::db::ora::OraStagerSvc::createRecallCandidate
-(castor::stager::SubRequest *subreq,
- castor::stager::SvcClass *svcClass)
+(castor::stager::SubRequest* subreq,
+ castor::stager::SvcClass* svcClass,
+ castor::stager::Tape* &tape)
   throw (castor::exception::Exception) {
 
   castor::BaseAddress ad;
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
   ad.setTarget(subreq->id());
-  castor::stager::DiskCopy* dc = 0;
+  castor::stager::DiskCopy *dc = 0;
+  tape = 0;
 
   try {
       castor::stager::CastorFile* cf = subreq->castorFile();
 
-      // create needed TapeCopy(ies) and Segment(s). We already
+      // Create needed TapeCopy(ies) and Segment(s). We already
       // have a lock on the castorfile and so we prevent the
       // concurrent creation of 2 recalls for a single file
-      if(!subreq->request()) {
+      if (!subreq->request()) {
         cnvSvc()->fillObj(&ad, subreq, OBJ_FileRequest, false);
       }
       createTapeCopySegmentsForRecall(cf, subreq->request()->euid(),
-        subreq->request()->egid(), svcClass);
+				      subreq->request()->egid(), svcClass, tape);
 
-      // if we are here, we do have segments to recall
+      // If we are here, we do have segments to recall
       // create DiskCopy
       dc = new castor::stager::DiskCopy();
       dc->setCastorFile(cf);
 
-      // we need to create this object now, so we have the DB id for
+      // We need to create this object now, so we have the DB id for
       // the following operation
       cnvSvc()->createRep(&ad, dc, false);
       cnvSvc()->fillRep(&ad, dc, OBJ_CastorFile, false);
-      // build the path, since we now have the DB id from the DiskCopy;
+
+      // Build the path, since we now have the DB id from the DiskCopy;
       // note that this line duplicates the buildPathFromFileId PL/SQL
       // procedure, but we don't want to call Oracle only for it
       std::ostringstream spath;
-      if ( cf->fileId() % 100 < 10 )
+      if (cf->fileId() % 100 < 10)
         spath << "0";
       spath << cf->fileId() % 100 << "/" << cf->fileId()
             << "@" << cf->nsHost() << "." << dc->id();
 
-      // set the diskcopy to WAITTAPERECALL and the creationtime
+      // Set the diskcopy to WAITTAPERECALL and the creationtime
       dc->setPath(spath.str());
       dc->setStatus(castor::stager::DISKCOPY_WAITTAPERECALL);
       dc->setCreationTime(time(NULL));
       cnvSvc()->updateRep(&ad, dc, false);
 
-      // we link the subreq with the diskcopy
+      // We link the subreq with the diskcopy
       subreq->setDiskcopy(dc);
       cnvSvc()->fillRep(&ad, subreq, OBJ_DiskCopy, false);
 
-      // set SubRequest to WAITTAPERECALL
+      // Set SubRequest to WAITTAPERECALL
       subreq->setStatus(castor::stager::SUBREQUEST_WAITTAPERECALL);
       cnvSvc()->updateRep(&ad, subreq, false);
 
       cnvSvc()->commit();
       subreq->setDiskcopy(0);
+
+      // Cleanup
       delete dc;
 
       return 1;
-  }
-  catch (castor::exception::NoSegmentFound& e) {
+  } catch (castor::exception::NoSegmentFound& e) {
     // File has no copy on tape. In such a case we set the
     // subrequest to failed and we commit the transaction
     try {
@@ -689,20 +693,27 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
       return 0;
     }
     catch(castor::exception::Exception& e) {
-      // should never happen
+      if (tape) { 
+	delete tape; 
+	tape = 0;
+      }
+      // Should never happen
       castor::exception::Internal ex2;
       ex2.getMessage() << "Couldn't fail subrequest in createRecallCandidate: "
-      << std::endl << e.getMessage().str();
+		       << std::endl << e.getMessage().str();
       throw ex2;
     }
-  }
-  catch(castor::exception::Exception& forward) {
-    // any other exception is forwarded, the stager will reply to the client,
+  } catch(castor::exception::Exception& forward) {
+    // Any other exception is forwarded, the stager will reply to the client,
     // log the error and close the db transaction.
     // SegmentNotAccessible and TapeOffline errors are included here.
     if(dc) {
       delete dc;
       subreq->setDiskcopy(0);
+    }
+    if (tape) {
+      delete tape;
+      tape = 0;
     }
     throw(forward);
   }
@@ -1184,12 +1195,14 @@ extern "C" {
 // createTapeCopySegmentsForRecall (private)
 //------------------------------------------------------------------------------
 int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
-(castor::stager::CastorFile *castorFile,
+(castor::stager::CastorFile* castorFile,
  unsigned long euid,
  unsigned long egid,
- castor::stager::SvcClass *svcClass)
+ castor::stager::SvcClass* svcClass,
+ castor::stager::Tape* &tape)
   throw (castor::exception::Exception) {
-  // check argument
+
+  // Check argument
   if (0 == castorFile) {
     castor::exception::InvalidArgument e;
     e.getMessage() << "createTapeCopySegmentsForRecall "
@@ -1200,13 +1213,14 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   // Prepare access to name server
   char cns_error_buffer[512];
   *cns_error_buffer = 0;
-  if (Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0) {
+  if (Cns_seterrbuf(cns_error_buffer, sizeof(cns_error_buffer)) != 0) {
     castor::exception::Internal ex;
     ex.getMessage()
       << "createTapeCopySegmentsForRecall : Cns_seterrbuf failed";
     throw ex;
   }
-  if (Cns_setid(euid,egid) != 0) {
+
+  if (Cns_setid(euid, egid) != 0) {
     castor::exception::Internal ex;
     ex.getMessage()
       << "createTapeCopySegmentsForRecall : Cns_setid failed : ";
@@ -1217,14 +1231,16 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     }
     throw ex;
   }
+
   // Get segments for castorFile
   struct Cns_fileid fileid;
   fileid.fileid = castorFile->fileId();
   strncpy(fileid.server,
           castorFile->nsHost().c_str(),
           CA_MAXHOSTNAMELEN+1);
+
   struct Cns_segattrs *nsSegmentAttrs = 0;
-  int nbNsSegments=0;
+  int nbNsSegments = 0;
 
   int rc = Cns_getsegattrs
     (0, &fileid, &nbNsSegments, &nsSegmentAttrs);
@@ -1234,28 +1250,31 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
                    << "Cns_getsegattrs failed";
     throw e;
   }
-  if(nbNsSegments == 0) {
+
+  if (nbNsSegments == 0) {
     // This file has no copy on tape. This is considered user error
     castor::exception::NoSegmentFound e;
     throw e;
   }
 
   // Sort segments
-  if(nbNsSegments > 1) {
+  if (nbNsSegments > 1) {
     qsort((void *)nsSegmentAttrs,
           (size_t)nbNsSegments,
           sizeof(struct Cns_segattrs),
           compareSegments);
   }
+
   // Validate all segments and get the copy to be used for recall;
-  //this may throw an exception, in such a case nsSegmentAttrs is freed
+  // this may throw an exception, in such a case nsSegmentAttrs is freed
   int useCopyNb = validateNsSegments(nsSegmentAttrs, nbNsSegments);
 
   // Store info on DB
   castor::BaseAddress ad;
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
-  // create TapeCopy
+
+  // Create TapeCopy
   castor::stager::TapeCopy tapeCopy;
   tapeCopy.setCopyNb(useCopyNb);
   tapeCopy.setStatus(castor::stager::TAPECOPY_TOBERECALLED);
@@ -1263,12 +1282,16 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   castorFile->addTapeCopies(&tapeCopy);
   cnvSvc()->fillRep(&ad, castorFile,
                     castor::OBJ_TapeCopy, false);
+
   // Go through Segments
   u_signed64 totalSize = 0;
+  castor::stager::Tape *tp = 0;
   for (int i = 0; i < nbNsSegments; i++) {
+
     // Only deal with segments of the copy we choose
     if (nsSegmentAttrs[i].copyno != useCopyNb) continue;
-    // create Segment
+
+    // Create Segment
     castor::stager::Segment *segment =
       new castor::stager::Segment();
     segment->setBlockId0(nsSegmentAttrs[i].blockid[0]);
@@ -1277,52 +1300,61 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     segment->setBlockId3(nsSegmentAttrs[i].blockid[3]);
     segment->setFseq(nsSegmentAttrs[i].fseq);
     segment->setOffset(totalSize);
-    segment->setCreationTime(time(NULL)+ 3600); // offset due to the database convention of using UTC+1
+    segment->setCreationTime(time(NULL) + 3600); // Offset due to the database convention of using UTC+1
     segment->setStatus(castor::stager::SEGMENT_UNPROCESSED);
     totalSize += nsSegmentAttrs[i].segsize;
-    // get tape for this segment
-    castor::stager::Tape *tape =
-      selectTape(nsSegmentAttrs[i].vid,
-                 nsSegmentAttrs[i].side,
-                 WRITE_DISABLE);
+  
+    // Get tape for this segment
+    tp = selectTape(nsSegmentAttrs[i].vid,
+		    nsSegmentAttrs[i].side,
+		    WRITE_DISABLE);
 
-    //  recaller policy retrieved
-    //  in case it is given the tape status won't change into TAPE_PENDING
+    // Recaller policy retrieved
+    // In case it is given the tape status won't change into TAPE_PENDING
     std::string recallerPolicyStr = svcClass->recallerPolicy();
-    switch (tape->status()) {
+    switch (tp->status()) {
       case castor::stager::TAPE_UNUSED:
       case castor::stager::TAPE_FINISHED:
       case castor::stager::TAPE_FAILED:
       case castor::stager::TAPE_UNKNOWN:
       case castor::stager::TAPE_WAITPOLICY:
         if (recallerPolicyStr.empty())
-          tape->setStatus(castor::stager::TAPE_PENDING);
+          tp->setStatus(castor::stager::TAPE_PENDING);
         else
-          tape->setStatus(castor::stager::TAPE_WAITPOLICY);
+          tp->setStatus(castor::stager::TAPE_WAITPOLICY);
         break;
       default:
         break;
     }
-    cnvSvc()->updateRep(&ad, tape, false);
+    cnvSvc()->updateRep(&ad, tp, false);
 
     // In any case with or without recaller policy the following operation are executed
     // Link Tape with Segment
-    segment->setTape(tape);
-    tape->addSegments(segment);
+    segment->setTape(tp);
+    tp->addSegments(segment);
+
     // Link Segment with TapeCopy
     segment->setCopy(&tapeCopy);
     tapeCopy.addSegments(segment);
   }
-  // create Segments in DataBase
+
+  // Set the tape VID and status of the tape to be returned to the calling
+  // function
+  tape = new castor::stager::Tape();
+  tape->setVid(tp->vid());
+  tape->setStatus(tp->status());
+
+  // Create Segments in DataBase
   cnvSvc()->fillRep(&ad, &tapeCopy, castor::OBJ_Segment, false);
+
   // Fill Segment to Tape link
   for (unsigned i = 0; i < tapeCopy.segments().size(); i++) {
     castor::stager::Segment* seg = tapeCopy.segments()[i];
     cnvSvc()->fillRep(&ad, seg, castor::OBJ_Tape, false);
   }
   
-  // cleanup
-  for(unsigned i = 0;i<tapeCopy.segments().size();i++)
+  // Cleanup
+  for (unsigned i = 0; i < tapeCopy.segments().size(); i++)
     delete tapeCopy.segments()[i]->tape();
   if (nsSegmentAttrs != NULL) free(nsSegmentAttrs);
 
