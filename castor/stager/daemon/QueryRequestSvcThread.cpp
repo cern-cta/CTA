@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.76 $ $Release$ $Date: 2008/05/05 08:29:39 $ $Author: waldron $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.77 $ $Release$ $Date: 2008/05/20 08:12:00 $ $Author: waldron $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -69,6 +69,7 @@
 #include "Cupv_api.h"
 #include "u64subr.h"
 #include "patchlevel.h"    // to get the default version
+#include "getconfent.h"
 
 //-----------------------------------------------------------------------------
 // constructor
@@ -163,6 +164,22 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileName
   castor::dlf::Param params[] =
     {castor::dlf::Param("Filename", fileName)};
   castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_FQUERY, 1, params);
+  // Check to see if regular expression support is enabled
+  if (fileName.compare(0, 7, "regexp:") == 0) {
+    bool enabled = false;
+    char *p = getconfent("FILEQUERY", "ENABLEREGEXP", 0);
+    if (p) {
+      if (!strcasecmp(p, "yes")) {
+	enabled = true;
+      }
+    }
+    // Regexp support is disabled!
+    if (!enabled) {
+      castor::exception::Exception ex(EPERM);
+      ex.getMessage() << "Support for regular expressions has been disabled";
+      throw ex;
+    }
+  }
   // List diskCopies
   std::list<castor::stager::DiskCopyInfo*>* result =
     qrySvc->diskCopies4FileName(fileName, svcClassId);
@@ -421,11 +438,13 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
                        << pval;
         throw e;
       }
+
       // Verify whether we are querying a directory (if not regexp)
-      if(ptype == REQUESTQUERYTYPE_FILEID ||
-         (ptype == REQUESTQUERYTYPE_FILENAME && 0 != pval.compare(0, 7, "regexp:"))) {
+      if (ptype == REQUESTQUERYTYPE_FILEID ||
+         (ptype == REQUESTQUERYTYPE_FILENAME && (0 != pval.compare(0, 7, "regexp:")))) {
+
         // Get PATH for queries by fileId
-        if(ptype == REQUESTQUERYTYPE_FILEID) {
+        if (ptype == REQUESTQUERYTYPE_FILEID) {
           char cfn[CA_MAXPATHLEN+1];     // XXX unchecked string length in Cns_getpath() call
           if (Cns_getpath((char*)nshost.c_str(),
                           strtou64(fid.c_str()), cfn) < 0) {
@@ -437,10 +456,10 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
         }
 
         // check if the filename is valid (it has to start with /)
-	if (pval.empty() || pval.at(0)!='/'){
+	if (pval.empty() || (pval.at(0) != '/')) {
 	  castor::exception::Exception ex(EINVAL);
-            ex.getMessage() << "Invalid file path";
-            throw ex;
+	  ex.getMessage() << "Invalid file path";
+	  throw ex;
 	}
 
         struct Cns_filestat Cnsfilestat;
@@ -452,7 +471,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
         if ((Cnsfilestat.filemode & S_IFDIR) == S_IFDIR) {
           // it is a directory, query for the content (don't perform a query by ID)
           ptype = REQUESTQUERYTYPE_FILENAME;
-          if(pval[pval.length()-1] != '/')
+          if (pval[pval.length()-1] != '/')
             pval = pval + "/";
         }
       }
@@ -463,7 +482,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
         svcClassId = svcClass->id();
       }
       // call the proper handling request
-      if(ptype == REQUESTQUERYTYPE_FILENAME) {
+      if (ptype == REQUESTQUERYTYPE_FILENAME) {
         handleFileQueryRequestByFileName(qrySvc,
                                          client,
                                          pval,
@@ -551,8 +570,14 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
     // information about the diskservers and filesystems within a given pool
     // and/or svcclass
     bool detailed = false;
-    if (Cupv_check(req->euid(), req->egid(), localHost.c_str(), 
-		   localHost.c_str(), P_ADMIN) == 0) {
+    int rc = Cupv_check(req->euid(), req->egid(), localHost.c_str(), 
+			localHost.c_str(), P_ADMIN);
+    if ((rc < 0) && (serrno != EACCES)) {
+      castor::exception::Exception e(serrno);
+      e.getMessage() << "Failed Cupv_check call for " 
+		     << req->euid() << ":" << req->egid() << " (ADMIN)";
+      throw e;
+    } else if (rc == 0) {
       detailed = true;
     }
 
