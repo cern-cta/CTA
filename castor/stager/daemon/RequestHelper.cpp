@@ -363,12 +363,23 @@ namespace castor{
                 throw ex;
 	      }
 	      // Check if the user has GRP_ADMIN or ADMIN privileges.
-	      if ((stgCnsHelper->cnsFilestat.gid == egid) &&
-		  (Cupv_check(euid, egid, localHost.c_str(), localHost.c_str(), P_GRP_ADMIN) == 0)) {
+	      int rc = Cupv_check(euid, egid, localHost.c_str(), localHost.c_str(), P_GRP_ADMIN);
+	      if ((rc < 0) && (serrno != EACCES)) {
+		castor::exception::Exception ex(serrno);
+		ex.getMessage() << "Failed Cupv_check call for " 
+				<< euid << ":" << egid << " (GRP_ADMIN)";
+		throw ex;
+	      } else if ((stgCnsHelper->cnsFilestat.gid == egid) && (rc == 0)) {
         	return;
 	      }
-	      if (Cupv_check(euid, egid, localHost.c_str(), localHost.c_str(), P_ADMIN) == -1) {
+
+	      rc = Cupv_check(euid, egid, localHost.c_str(), localHost.c_str(), P_ADMIN);
+	      if (rc == -1) {
 		castor::exception::Exception ex(serrno);
+		if (serrno != EACCES) {
+		  ex.getMessage() << "Failed Cupv_check call for " 
+				  << euid << ":" << egid << " (ADMIN)";
+		}
                 throw ex;
 	      }
 	    }
@@ -379,7 +390,7 @@ namespace castor{
           }
         }
         catch(castor::exception::Exception e){
-	  if (e.code() == SEINTERNAL) {
+	  if ((e.code() == SEINTERNAL) || (e.code() != EACCES)) {
 	    logToDlf(DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT);
 	  } else {
 	    logToDlf(DLF_LVL_USER_ERROR, STAGER_USER_PERMISSION);
