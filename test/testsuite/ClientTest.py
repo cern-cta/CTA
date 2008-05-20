@@ -1046,8 +1046,8 @@ class StagerSpecialQueryCase(unittest.TestCase):
         UtilityForCastorTest.saveOnFile(localDir+"ClientQueryE",cmd,myScenE)
         fi=open(localDir+"ClientQueryE2","r")
         buffOut=fi.read()
-        fi.close()        
-        assert buffOut.find("STAGEOUT") != -1, "stager_qry -E doesn't work"
+        fi.close()   
+        assert buffOut.find("STAGEOUT") != -1 or buffOut.find("Operation not permitted") != -1, "stager_qry -E doesn't work"
         
 class StagerDiskOnlyCase(unittest.TestCase):
     def forceFileClass(self):
