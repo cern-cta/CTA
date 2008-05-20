@@ -369,11 +369,11 @@ void castor::vdqm::VdqmServer::help(std::string programName)
     "\n"
     "where options can be:\n"
     "\n"
-    "\t--foreground              or -f     \tRemain in the Foreground\n"
-    "\t--config <config-file>    or -c     \tConfiguration file\n"
-    "\t--help                    or -h     \tPrint this help and exit\n"
-    "\t--requestHandlerThreads   or -r num \tDefault 1\n"
-    "\t--RTCPJobSubmitterThreads or -j num \tDefault 1\n"
+    "\t-f, --foreground                  Remain in the Foreground\n"
+    "\t-c, --config config-file          Configuration file\n"
+    "\t-h, --help                        Print this help and exit\n"
+    "\t-r, --requestHandlerThreads num   Default 1\n"
+    "\t-j, --RTCPJobSubmitterThreads num Default 1\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
 }
