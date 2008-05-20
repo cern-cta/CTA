@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/04/21 11:50:14 $ $Author: waldron $
+ * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/05/20 08:09:26 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -578,15 +578,15 @@ void castor::job::diskcopy::MainThread::changeUidGid
     return;
   }
 
-  // Undo group privileges
+  // Undo group and user privileges
   if ((setregid(getegid(), getgid()) < 0) ||
-      (setregid(geteuid(), getuid()) < 0)) {
+      (setreuid(geteuid(), getuid()) < 0)) {
     castor::exception::Exception e(errno);
     e.getMessage() << "Failed to undo group privileges" << std::endl;
     throw e;
   }
 
-  // Undo user privileges
+  // Set user privileges
   if ((setegid(usr->pw_gid) < 0) || (seteuid(usr->pw_uid) < 0)) {
     castor::exception::Exception e(errno);
     e.getMessage() << "Failed to undo user privileges" << std::endl;
