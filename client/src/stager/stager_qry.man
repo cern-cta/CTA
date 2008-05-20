@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.20 $ $Date: 2008/05/05 08:48:20 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.21 $ $Date: 2008/05/20 08:31:50 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_QRY 1castor "$Date: 2008/05/05 08:48:20 $" CASTOR "STAGER Commands"
+.TH STAGER_QRY 1castor "$Date: 2008/05/20 08:31:50 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_qry \- query the CASTOR stager for files and requests
 .SH SYNOPSIS
@@ -103,21 +103,10 @@ Finally for each pool, the aggregated capacity, free and reserved space are give
 specifies the CASTOR HSM file to be queried for. The
 .B \-M
 option can be repeated, which allows for querying the status of many files with a single command.
-If the hsmfile begins with 'regexp:', it is considered as a POSIX regular expression.
 If the hsmfile ends with '/', or if it's a directory according to the nameserver, the query is performed recursively on the status of all files into it.
 Note that the number of responses for a given file is limited on the server side. In case the limitation
 is reached, nothing is returned and an error message is displayed.
 Also note that you may have more files listed here than in the nameserver in case the stager still has a copy of a file that was manually removed from the nameserver using the nsrm or rfrm command.
-.TP
-.BI \-E,\ \-\-regexp " regular_expression"
-specifies the CASTOR HSM file to be queried for. This option is equivalent to the
-.B \-M
-option when the file name begins with 'regexp:'. regular_expression is considered as a POSIX regular expression.
-The
-.B \-E
-option can be repeated, which allows for querying the status of many files with a single command.
-Note that the number of responses for a given file is limited on the server side. In case the limitation
-is reached, nothing is returned and an error message is displayed.
 .TP
 .BI \-F,\ \-\-fileid " fileid@nshost"
 query by CASTOR fileid and nshost. The fileid is a unique 64bit number assigned by the CASTOR name server to each file in its namespace. The fileid can be retrieved using the

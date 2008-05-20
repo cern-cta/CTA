@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.28 2008/05/05 08:48:20 waldron Exp $
+ * $Id: stager_qry.c,v 1.29 2008/05/20 08:31:50 waldron Exp $
  */
 
 /*
@@ -36,7 +36,6 @@ struct cmd_args {
 static struct Coptions longopts[] =
   {
     {"hsm_filename",       REQUIRED_ARGUMENT,  NULL,      'M'},
-    {"regexp",             REQUIRED_ARGUMENT,  NULL,      'E'},
     {"fileid",             REQUIRED_ARGUMENT,  NULL,      'F'},
     {"usertag",            REQUIRED_ARGUMENT,  NULL,      'U'},
     {"requestid",          REQUIRED_ARGUMENT,  NULL,      'r'},
@@ -55,7 +54,6 @@ static struct Coptions longopts[] =
 static struct Coptions longopts_fileQuery[] =
   {
     {"hsm_filename",       REQUIRED_ARGUMENT,  NULL,      'M'},
-    {"regexp",             REQUIRED_ARGUMENT,  NULL,      'E'},
     {"fileid",             REQUIRED_ARGUMENT,  NULL,      'F'},
     {"usertag",            REQUIRED_ARGUMENT,  NULL,      'U'},
     {"requestid",          REQUIRED_ARGUMENT,  NULL,      'r'},
@@ -341,18 +339,6 @@ int parseCmdLineFileQuery(int argc, char *argv[],
       args->requests[nbargs].param = (char *)strdup(Coptarg);
       nbargs++;
       break;
-    case 'E':
-      args->requests[nbargs].type = BY_FILENAME;
-      args->requests[nbargs].param = 
-        (char *)malloc(strlen("regexp:") + strlen(Coptarg) + 1);
-      if(args->requests[nbargs].param == NULL) {
-        errflg++;
-        break;
-      }
-      strcpy(args->requests[nbargs].param, "regexp:");
-      strcat(args->requests[nbargs].param, Coptarg);
-      nbargs++;
-      break;
     case 'F':
       args->requests[nbargs].type = BY_FILEID;
       args->requests[nbargs].param = (char *)strdup(Coptarg);
@@ -448,10 +434,9 @@ int checkAndCountArguments(int argc, char *argv[],
   *count = 0;
   *type = FILEQUERY;
   while ((c = Cgetopt_long
-          (argc, argv, "M:E:F:U:r:nhsd:S:i", longopts, NULL)) != -1) {
+          (argc, argv, "M:F:U:r:nhsd:S:i", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
-    case 'E':
     case 'F':
     case 'U':
     case 'r':
@@ -484,8 +469,7 @@ int checkAndCountArguments(int argc, char *argv[],
 void usage(char *cmd) {
   fprintf (stderr, "usage: %s ", cmd);
   fprintf (stderr, "%s%s",
-           "[-M hsmfile [-M ...]] [-E regular_expression [-E ...]] ",
-           "[-F fileid@nshost] [-S svcClass] [-U usertag] [-r requestid] [-n] [-h]\n");
+           "[-M hsmfile [-M ...]] [-F fileid@nshost] [-S svcClass] [-U usertag] [-r requestid] [-n] [-h]\n");
   fprintf (stderr, "       %s ", cmd);
   fprintf (stderr, "%s", "-s [-S svcClass] [-d diskPool] [-i] [-h]\n");
 }
