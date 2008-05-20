@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: gtaur $
+ * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: waldron $
  *
  *
  *
@@ -409,14 +409,13 @@ castor::infoPolicy::CnsInfoMigrationPolicy* castor::rtcopy::mighunter::MigHunter
   char castorFileName[CA_MAXPATHLEN+1];
   castorFileName[0] = '\0';
   strncpy(cnsFile.server,nsHost.c_str(),sizeof(cnsFile.server)-1);
+  
   int rc = Cns_statx(castorFileName,&cnsFile,&statbuf);
-
   if (rc == -1){
     castor::dlf::Param params2[]={
-      castor::dlf::Param("Filename", castorFileName),
       castor::dlf::Param("Function", "Cns_statx"),
       castor::dlf::Param("Error", sstrerror(serrno))};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6, 3, params2, &cnsFile);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6, 2, params2, &cnsFile);
     return NULL;
   }  
 
