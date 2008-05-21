@@ -10,7 +10,7 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH VDQMSETVOLPRIORITY 1 "$Date: 2008/05/20 20:52:00 $" CASTOR "Set a volume priority"
+.TH VDQMSETVOLPRIORITY 1 "$Date: 2008/05/21 16:12:38 $" CASTOR "Set a volume priority"
 .SH NAME
 vdqmsetvolpriority \- set a VDQM unlimited lifespan volume priority
 .SH SYNOPSIS
@@ -29,7 +29,7 @@ volume visual Identifier
 tape access mode 0 for read-only or 1 for write-enabled
 .TP
 \fB\-p, \-\-priority priority
-volume priority
+volume priority between 0 and INT_MAX
 .TP
 \fB\-h, \-\-help
 get usage information
