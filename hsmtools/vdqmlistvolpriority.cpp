@@ -8,45 +8,27 @@ void usage(const std::string programName) {
     "\n"
     "where options can be:\n"
     "\n"
-    "\t-v, --vid VID             Volume visual Identifier\n"
-    "\t-a, --tapeAccessMode mode Tape access mode 0 or 1\n"
-    "\t-p, --priority priority   Volume priority\n"
-    "\t-h, --help                Print this help and exit\n"
+    "\t-h, --help Print this help and exit\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
 }
 
 
 static struct Coptions longopts[] = {
-  {"vid"           , REQUIRED_ARGUMENT, NULL, 'v'},
-  {"tapeAccessMode", REQUIRED_ARGUMENT, NULL, 'a'},
-  {"priority"      , REQUIRED_ARGUMENT, NULL, 'p'},
-  {"help"          , NO_ARGUMENT      , NULL, 'h'}
+  {"help", NO_ARGUMENT, NULL, 'h'}
 };
 
 
 void parseCommandLine(int argc, char **argv) {
 
-  bool vidSet      = false;
-  bool tpModeSet   = false;
-  bool prioritySet = false;
   char c;
 
 
   Coptind = 1;
   Copterr = 0;
 
-  while ((c = Cgetopt_long (argc, argv, "v:a:p:h", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "h", longopts, NULL)) != -1) {
     switch (c) {
-    case 'v':
-      vidSet = true;
-      break;
-    case 'a':
-      tpModeSet = true;
-      break;
-    case 'p':
-      prioritySet = true;
-      break;
     case 'h':
       usage(argv[0]);
       exit(0);
@@ -94,22 +76,9 @@ void parseCommandLine(int argc, char **argv) {
     usage(argv[0]);
     exit(1);
   }
-
-  if(!(vidSet && tpModeSet && prioritySet)) {
-    std::cerr
-      << std::endl
-      << "Error:  VID, tape access mode and priority must be provided"
-      << std::endl << std::endl;
-    usage(argv[0]);
-    exit(1);
-  }
 }
 
 
 int main(int argc, char **argv) {
-//std::string vid      = "";
-//int         tpMode   = 0;
-//int         priority = 0;
-
   parseCommandLine(argc, argv);
 }
