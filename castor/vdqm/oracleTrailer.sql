@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.117 $ $Release$ $Date: 2008/05/21 08:42:03 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.118 $ $Release$ $Date: 2008/05/21 09:33:44 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -128,6 +128,18 @@ ALTER TABLE VolumePriority
 ALTER TABLE TapeAccessSpecification
   ADD CONSTRAINT CH_TapeAccessSpec_accessMode
     CHECK ((accessMode=0) OR (accessMode=1));
+
+-- The tpMode column of the VolumePriority table has 2 possible
+-- values: 0=write-disabled or 1=write-enabled
+ALTER TABLE VolumePriority
+  ADD CONSTRAINT CH_VolumePriority_tpMode
+    CHECK ((tpMode=0) OR (tpMode=1));
+
+-- The lifespanType column of the VolumePriority table has 2 possible
+-- values: 0=single-shot or 1=unlimited
+ALTER TABLE VolumePriority
+  ADD CONSTRAINT CH_VolumePriority_lifespanType
+    CHECK ((lifespanType=0) OR (lifespanType=1));
 
 
 /* Foreign key constraints with an index for each */
