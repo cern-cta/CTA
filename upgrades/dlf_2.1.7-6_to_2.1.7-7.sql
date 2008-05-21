@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dlf_2.1.7-6_to_2.1.7-7.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/20 09:37:23 $ $Author: waldron $
+ * @(#)$RCSfile: dlf_2.1.7-6_to_2.1.7-7.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/21 08:45:45 $ $Author: waldron $
  *
  * This script upgrades a CASTOR v2.1.7-6 DLF database to 2.1.7-7
  *
@@ -385,8 +385,8 @@ BEGIN
   )
   LOOP
     INSERT INTO DiskCacheEfficiencyStats
-      (timestamp, interval, wait, d2d, recall, staged, total)
-    VALUES (now - 5/1440, 300, a.wait, a.d2d, a.recall, a.staged, a.total);
+      (timestamp, interval, wait, type, svcclass, d2d, recall, staged, total)
+    VALUES (now - 5/1440, 300, a.wait, a.type, a.svcclass, a.d2d, a.recall, a.staged, a.total);
   END LOOP;
 END;
 
