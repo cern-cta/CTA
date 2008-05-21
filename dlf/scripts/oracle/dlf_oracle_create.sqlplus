@@ -513,8 +513,8 @@ BEGIN
   )
   LOOP
     INSERT INTO DiskCacheEfficiencyStats
-      (timestamp, interval, wait, d2d, recall, staged, total)
-    VALUES (now - 5/1440, 300, a.wait, a.d2d, a.recall, a.staged, a.total);
+      (timestamp, interval, wait, type, svcclass, d2d, recall, staged, total)
+    VALUES (now - 5/1440, 300, a.wait, a.type, a.svcclass, a.d2d, a.recall, a.staged, a.total);
   END LOOP;
 END;
 /
