@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.116 $ $Release$ $Date: 2008/05/20 10:04:37 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.117 $ $Release$ $Date: 2008/05/21 08:42:03 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -946,6 +946,7 @@ CREATE OR REPLACE VIEW CandidateDriveAllocations_VIEW AS SELECT UNIQUE
   TapeRequest.id as tapeRequestId,
   TapeAccessSpecification.accessMode,
   TapeRequest.modificationTime,
+  TapeRequest.creationTime,
   NVL(EffectiveVolumePriority_VIEW.priority,0) AS volumePriority
 FROM
   TapeRequest
@@ -994,7 +995,7 @@ WHERE
 ORDER BY
   TapeAccessSpecification.accessMode DESC,
   VolumePriority DESC,
-  TapeRequest.modificationTime ASC;
+  TapeRequest.creationTime ASC;
 
 
 /**
@@ -1091,7 +1092,8 @@ SELECT
   VdqmTape.vid,
   TapeServer.serverName AS tapeServer,
   DeviceGroupName.dgName,
-  ClientIdentification.username AS clientUsername
+  ClientIdentification.username AS clientUsername,
+  NVL(EffectiveVolumePriority_VIEW.priority,0) AS volumePriority
 FROM
   TapeRequest
 LEFT OUTER JOIN TapeDrive ON
@@ -1106,8 +1108,13 @@ LEFT OUTER JOIN TapeServer ON
   TapeRequest.requestedSrv = TapeServer.id
 LEFT OUTER JOIN DeviceGroupName ON
   TapeRequest.deviceGroupName = DeviceGroupName.id
+LEFT OUTER JOIN EffectiveVolumePriority_VIEW ON
+      VdqmTape.vid = EffectiveVolumePriority_VIEW.vid
+  AND TapeAccessSpecification.accessMode = EffectiveVolumePriority_VIEW.tpMode
 ORDER BY
-  TapeRequest.creationTime;
+  TapeAccessSpecification.accessMode DESC,
+  VolumePriority DESC,
+  TapeRequest.creationTime ASC;
 
 
 /**
