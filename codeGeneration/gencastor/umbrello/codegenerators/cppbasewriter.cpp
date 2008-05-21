@@ -373,7 +373,12 @@ QString CppBaseWriter::fixTypeName(QString string,
          it != m_stdMembers.end();
          it++) {
       int pos = string.find(it->first, curPos);
-      if (pos >= 0 && pos < tempPos) {
+      if (pos >= 0 && pos < tempPos &&
+	  (pos == 0 |
+	   // check previous char is not a letter. This would only
+	   // mean that a word ends with the name of a std type
+	   (!((string[pos-1] >= 'a' && string[pos-1] <= 'z') |
+	      (string[pos-1] >= 'A' && string[pos-1] <= 'Z'))))) {
         tempPos = pos;
         winner = it;
       }
