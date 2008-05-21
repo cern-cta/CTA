@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.650 $ $Date: 2008/05/19 15:59:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.651 $ $Date: 2008/05/21 10:02:56 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -152,7 +152,7 @@ BEGIN
     FORALL i IN dcIds.FIRST .. dcIds.LAST
       DELETE FROM DiskCopy WHERE id = dcIds(i);
     -- then use a normal loop to clean castorFiles
-    FOR cf IN (SELECT * FROM filesDeletedProcHelper) LOOP
+    FOR cf IN (SELECT DISTINCT(cfId) FROM filesDeletedProcHelper) LOOP
       deleteCastorFile(cf.cfId);
     END LOOP;
   END IF;
@@ -321,6 +321,8 @@ BEGIN
     IF timeOut > maxTimeOut THEN
       timeOut := maxTimeOut;  -- anyway, don't keep very old requests
     END IF;
+  ELSE
+    timeOut := maxTimeOut;
   END IF;
 
   -- now delete the SubRequests
