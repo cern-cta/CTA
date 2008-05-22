@@ -32,6 +32,9 @@
 #include "h/vdqm_messages.h"
 
 #include "occi.h"
+#include <map>
+#include <string>
+#include <utility>
 
 
 namespace castor {
@@ -50,7 +53,7 @@ namespace castor {
       public:
 
         /**
-         * default constructor
+         * Constructor
          */
         OraVdqmSvc(const std::string name);
   
@@ -349,174 +352,75 @@ namespace castor {
         (const castor::vdqm::TapeDrive* tapeDrive)
           throw (castor::exception::Exception);            
 
-      private:
-  
-        /// SQL statement for function selectOrCreateTape
-        static const std::string s_selectTapeStatementString;
+        /**
+         * Enumeration of constants used to identify the SQL statements
+         */
+        enum StatementId {
+          SELECT_TAPE_SQL_STMT,
+          SELECT_TAPE_SERVER_SQL_STMT,
+          CHECK_TAPE_REQUEST1_SQL_STMT,
+          CHECK_TAPE_REQUEST2_SQL_STMT,
+          GET_QUEUE_POSITION_SQL_STMT,
+          SET_VOL_PRIORITY_SQL_STMT,
+          DELETE_VOL_PRIORITY_SQL_STMT,
+          LIST_VOL_PRIORITIES_SQL_STMT,
+          SELECT_TAPE_DRIVE_SQL_STMT,
+          DEDICATE_DRIVE_SQL_STMT,
+          DELETE_DRIVE_SQL_STMT,
+          WRITE_RTCPD_JOB_SUBMISSION_SQL_STMT,
+          WRITE_FAILED_RTCPD_JOB_SUBMISSION_SQL_STMT,
+          EXIST_TAPE_DRIVE_WITH_TAPE_IN_USE_SQL_STMT,
+          EXIST_TAPE_DRIVE_WITH_TAPE_MOUNTED_SQL_STMT,
+          SELECT_TAPE_BY_VID_SQL_STMT,
+          SELECT_TAPE_REQ_FOR_MOUNTED_TAPE_SQL_STMT,
+          SELECT_TAPE_ACCESS_SPECIFICATION_SQL_STMT,
+          SELECT_DEVICE_GROUP_NAME_SQL_STMT,
+          SELECT_TAPE_REQUEST_QUEUE_SQL_STMT,
+          SELECT_TAPE_DRIVE_QUEUE_SQL_STMT,
+          SELECT_TAPE_REQUEST_SQL_STMT,
+          SELECT_COMPATIBILITIES_FOR_DRIVE_MODEL_SQL_STMT,
+          SELECT_TAPE_ACCESS_SPECIFICATIONS_SQL_STMT,
+          ALLOCATE_DRIVE_SQL_STMT,
+          REUSE_DRIVE_ALLOCATION_SQL_STMT,
+          REQUEST_TO_SUBMIT_SQL_STMT,
+        };
 
-        /// SQL statement object for function selectOrCreateTape
-        oracle::occi::Statement *m_selectTapeStatement;
-        
-        /// SQL statement for function getTapeServer
-        static const std::string s_selectTapeServerStatementString;
-  
-        /// SQL statement object for function getTapeServer
-        oracle::occi::Statement *m_selectTapeServerStatement; 
-  
-        /// SQL statement for function checkTapeRequest
-        static const std::string s_checkTapeRequestStatement1String;
-  
-        /// SQL statement object for function checkTapeRequest
-        oracle::occi::Statement *m_checkTapeRequestStatement1;
-  
-        /// SQL statement for function checkTapeRequest
-        static const std::string s_checkTapeRequestStatement2String;
-  
-        /// SQL statement object for function checkTapeRequest
-        oracle::occi::Statement *m_checkTapeRequestStatement2; 
-  
-        /// SQL statement for function getQueuePosition
-        static const std::string s_getQueuePositionStatementString;
-  
-        /// SQL statement object for function getQueuePosition
-        oracle::occi::Statement *m_getQueuePositionStatement;  
+        /**
+         * Inner class used to store a map of the SQL statment strings.
+         */
+        class StatementStringMap : public std::map<int, std::string> {
+        public:
 
-        /// SQL statement for function setVolPriority
-        static const std::string s_setVolPriorityStatementString;
+          /**
+           * Constructor which fills the map
+           */
+          StatementStringMap();
 
-        /// SQL statement object for function setVolPriority
-        oracle::occi::Statement *m_setVolPriorityStatement;
+          /**
+           * Helper method to add SQL statement strings.
+           */
+          void addStmtStr(const StatementId stmtId, const char *stmt);
 
-        /// SQL statement for function deleteVolPriority
-        static const std::string s_deleteVolPriorityStatementString;
+        private:
 
-        /// SQL statement object for function deleteVolPriority
-        oracle::occi::Statement *m_deleteVolPriorityStatement;
-
-        /// SQL statement for function listVolPriorities
-        static const std::string s_listVolPrioritiesStatementString;
-
-        /// SQL statement object for function listVolPriorities
-        oracle::occi::Statement *m_listVolPrioritiesStatement;
-          
-        /// SQL statement for function selectTapeDrive
-        static const std::string s_selectTapeDriveStatementString;
-  
-        /// SQL statement object for function selectTapeDrive
-        oracle::occi::Statement *m_selectTapeDriveStatement;
-
-        /// SQL statement for function dedicateDrive
-        static const std::string s_dedicateDriveStatementString;
-
-        /// SQL statement object for function dedicateDrive
-        oracle::occi::Statement *m_dedicateDriveStatement;
-
-        /// SQL statement for function deleteDrive
-        static const std::string s_deleteDriveStatementString;
-
-        /// SQL statement object for function deleteDrive
-        oracle::occi::Statement *m_deleteDriveStatement;
-
-        /// SQL statement for function writeRTPCDJobSubmission
-        static const std::string s_writeRTPCDJobSubmissionStatementString;
-
-        /// SQL statement object for function writeFailedRTPCDJobSubmission
-        oracle::occi::Statement *m_writeRTPCDJobSubmissionStatement;
-
-        /// SQL statement for function writeFailedRTPCDJobSubmission
-        static const std::string s_writeFailedRTPCDJobSubmissionStatementString;
-
-        /// SQL statement object for function writeFailedRTPCDJobSubmission
-        oracle::occi::Statement *m_writeFailedRTPCDJobSubmissionStatement;
-  
-        /// SQL statement for function existTapeDriveWithTapeInUse
-        static const std::string s_existTapeDriveWithTapeInUseStatementString;
-  
-        /// SQL statement object for function existTapeDriveWithTapeInUse
-        oracle::occi::Statement *m_existTapeDriveWithTapeInUseStatement;
-  
-        /// SQL statement for function existTapeDriveWithTapeMounted
-        static const std::string s_existTapeDriveWithTapeMountedStatementString;
-  
-        /// SQL statement object for function existTapeDriveWithTapeMounted
-        oracle::occi::Statement *m_existTapeDriveWithTapeMountedStatement;
-  
-        /// SQL statement for function selectTapeByVid
-        static const std::string s_selectTapeByVidStatementString;
-  
-        /// SQL statement object for function selectTapeByVid
-        oracle::occi::Statement *m_selectTapeByVidStatement;
-  
-        /// SQL statement for function selectTapeReqForMountedTape
-        static const std::string s_selectTapeReqForMountedTapeStatementString;
-  
-        /// SQL statement object for function selectTapeReqForMountedTape
-        oracle::occi::Statement *m_selectTapeReqForMountedTapeStatement;
-  
-        /// SQL statement for function selectTapeAccessSpecification
-        static const std::string s_selectTapeAccessSpecificationStatementString;
-  
-        /// SQL statement object for function selectTapeAccessSpecification
-        oracle::occi::Statement *m_selectTapeAccessSpecificationStatement;
-  
-        /// SQL statement for function selectDeviceGroupName
-        static const std::string s_selectDeviceGroupNameStatementString;
-  
-        /// SQL statement object for function selectDeviceGroupName
-        oracle::occi::Statement *m_selectDeviceGroupNameStatement;
-  
-        /// SQL statement for function selectTapeRequestQueue
-        static const std::string s_selectTapeRequestQueueStatementString;
-  
-        /// SQL statement object for function selectTapeRequestQueue
-        oracle::occi::Statement *m_selectTapeRequestQueueStatement;
-  
-        /// SQL statement for function selectTapeDriveQueue
-        static const std::string s_selectTapeDriveQueueStatementString;
-  
-        /// SQL statement object for function selectTapeDriveQueue
-        oracle::occi::Statement *m_selectTapeDriveQueueStatement;
-  
-        /// SQL statement for function allocateDrive
-        static const std::string s_allocateDriveStatementString;
-  
-        /// SQL statement object for function allocateDrive
-        oracle::occi::Statement *m_allocateDriveStatement;
-  
-        /// SQL statement for function reuseDriveAllocation
-        static const std::string s_reuseDriveAllocationStatementString;
-  
-        /// SQL statement object for function reuseDiveAllocation
-        oracle::occi::Statement *m_reuseDriveAllocationStatement;
-  
-        /// SQL statement for function requestToSubmit
-        static const std::string s_requestToSubmitStatementString;
-  
-        /// SQL statement object for function requestToSubmit
-        oracle::occi::Statement *m_requestToSubmitStatement;
-  
-        /// SQL statement for function selectCompatibilitiesForDriveModel
-        static const std::string
-          s_selectCompatibilitiesForDriveModelStatementString;
-  
-        /// SQL statement object for function selectCompatibilitiesForDriveModel
-        oracle::occi::Statement *m_selectCompatibilitiesForDriveModelStatement;
-  
-        /// SQL statement for function selectTapeAccessSpecifications
-        static const std::string
-          s_selectTapeAccessSpecificationsStatementString;
-  
-        /// SQL statement object for function selectTapeAccessSpecifications
-        oracle::occi::Statement *m_selectTapeAccessSpecificationsStatement;
-  
-        /// SQL statement for function selectTapeRequest
-        static const std::string s_selectTapeRequestStatementString;
-  
-        /// SQL statement object for function selectTapeRequest
-        oracle::occi::Statement *m_selectTapeRequestStatement;
+          /**
+           * Map of statment IDs to statement strings.
+           */
+          std::map<int, std::string> m_stmtStrs;
+        };
 
 
       private:
+
+        /**
+         * The static map of SQL statement strings
+         */
+        static StatementStringMap s_statementStrings;
+
+        /**
+         * The map of statement objects
+         */
+        std::map<int, oracle::occi::Statement* > m_statements;
 
         /**
          * XXX to be removed when all statements are converted using
@@ -553,6 +457,22 @@ namespace castor {
          */
         int translateNewStatus(castor::vdqm::TapeDriveStatusCodes newStatusCode)
           throw (castor::exception::Exception);
+
+        /**
+         * Returns the Statement object corresponding to the specified
+         * statement ID if one exists else NULL.
+         *
+         * @param stmtId the statement ID
+         * @return the Statement object if one exists else NULL
+         */
+        oracle::occi::Statement *getStatement(const StatementId stmtId);
+
+        /**
+         * Stores the specified Statement object, ready for retreival by the
+         * getStatement() method.
+         */
+        void storeStatement(const StatementId stmtId,
+          oracle::occi::Statement *const stmt);
 
       }; // class OraVdqmSvc
 

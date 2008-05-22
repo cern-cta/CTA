@@ -55,72 +55,58 @@
 static castor::SvcFactory<castor::db::ora::OraVdqmSvc>* s_factoryOraVdqmSvc =
   new castor::SvcFactory<castor::db::ora::OraVdqmSvc>();
 
-//------------------------------------------------------------------------------
-// Static constants initialization
-//------------------------------------------------------------------------------
-/// SQL statement for selectTape
-const std::string castor::db::ora::OraVdqmSvc::s_selectTapeStatementString =
-  "SELECT id FROM VdqmTape WHERE vid = :1 FOR UPDATE";
+// -----------------------------------------------------------------------
+// Static map of SQL statement strings
+// -----------------------------------------------------------------------
+castor::db::ora::OraVdqmSvc::StatementStringMap
+  castor::db::ora::OraVdqmSvc::s_statementStrings;
 
-/// SQL statement for function getTapeServer
-const std::string
-  castor::db::ora::OraVdqmSvc::s_selectTapeServerStatementString =
-  "SELECT id FROM TapeServer WHERE serverName = :1 FOR UPDATE";
 
-/// SQL statement for function checkTapeRequest
-const std::string
-  castor::db::ora::OraVdqmSvc::s_checkTapeRequestStatement1String =
-  "SELECT"
-  "  id "
-  "FROM"
-  "  ClientIdentification "
-  "WHERE"
-  "      ClientIdentification.machine = :1"
-  "  AND userName = :2"
-  "  AND port = :3"
-  "  AND euid = :4"
-  "  AND egid = :5"
-  "  AND magic = :6";
-
-/// SQL statement for function checkTapeRequest
-const std::string
-  castor::db::ora::OraVdqmSvc::s_checkTapeRequestStatement2String =
-  "SELECT"
-  "  id "
-  "FROM"
-  "  TapeRequest "
-  "WHERE"
-  "      TapeRequest.tapeAccessSpecification = :1"
-  "  AND TapeRequest.tape = :2"
-  "  AND TapeRequest.requestedSrv = :3"
-  "  AND TapeRequest.client = :4";
-
-/// SQL statement for function getQueuePosition
-const std::string
-  castor::db::ora::OraVdqmSvc::s_getQueuePositionStatementString =
-  "SELECT"
-  "  count(*) "
-  "FROM"
-  "  TapeRequest tr1,"
-  "  TapeRequest tr2 "
-  "WHERE"
-  "      tr1.id = :1 "
-  "  AND tr1.deviceGroupName = tr2.deviceGroupName"
-  "  AND tr2.modificationTime <= tr1.modificationTime";
-
-/// SQL statement for function setVolPriority
-const std::string
-  castor::db::ora::OraVdqmSvc::s_setVolPriorityStatementString =
-  "BEGIN castorVdqm.setVolPriority(:1, :2, :3, :4, :5, :6, :7); END;";
-
-/// SQL statement for function deleteVolPriority
-const std::string
-  castor::db::ora::OraVdqmSvc::s_deleteVolPriorityStatementString =
-  "BEGIN castorVdqm.deleteVolPriority(:1, :2, :3, :4, :5, :6, :7, :8); END;";
-
-/// SQL statement for function listVolPriorities
-const std::string
-  castor::db::ora::OraVdqmSvc::s_listVolPrioritiesStatementString =
+// -----------------------------------------------------------------------
+// StatementStringMap::StatementStringMap
+// -----------------------------------------------------------------------
+castor::db::ora::OraVdqmSvc::StatementStringMap::StatementStringMap() {
+  addStmtStr(SELECT_TAPE_SQL_STMT,
+    "SELECT id FROM VdqmTape WHERE vid = :1 FOR UPDATE");
+  addStmtStr(SELECT_TAPE_SERVER_SQL_STMT,
+    "SELECT id FROM TapeServer WHERE serverName = :1 FOR UPDATE");
+  addStmtStr(CHECK_TAPE_REQUEST1_SQL_STMT,
+    "SELECT"
+    "  id "
+    "FROM"
+    "  ClientIdentification "
+    "WHERE"
+    "      ClientIdentification.machine = :1"
+    "  AND userName = :2"
+    "  AND port = :3"
+    "  AND euid = :4"
+    "  AND egid = :5"
+    "  AND magic = :6");
+  addStmtStr(CHECK_TAPE_REQUEST2_SQL_STMT,
+    "SELECT"
+    "  id "
+    "FROM"
+    "  TapeRequest "
+    "WHERE"
+    "      TapeRequest.tapeAccessSpecification = :1"
+    "  AND TapeRequest.tape = :2"
+    "  AND TapeRequest.requestedSrv = :3"
+    "  AND TapeRequest.client = :4");
+  addStmtStr(GET_QUEUE_POSITION_SQL_STMT,
+    "SELECT"
+    "  count(*) "
+    "FROM"
+    "  TapeRequest tr1,"
+    "  TapeRequest tr2 "
+    "WHERE"
+    "      tr1.id = :1 "
+    "  AND tr1.deviceGroupName = tr2.deviceGroupName"
+    "  AND tr2.modificationTime <= tr1.modificationTime");
+  addStmtStr(SET_VOL_PRIORITY_SQL_STMT,
+    "BEGIN castorVdqm.setVolPriority(:1, :2, :3, :4, :5, :6, :7); END;");
+  addStmtStr(DELETE_VOL_PRIORITY_SQL_STMT,
+    "BEGIN castorVdqm.deleteVolPriority(:1, :2, :3, :4, :5, :6, :7, :8); END;");
+  addStmtStr(LIST_VOL_PRIORITIES_SQL_STMT,
     "SELECT"
     "  priority,"
     "  clientUID,"
@@ -135,209 +121,148 @@ const std::string
     "FROM"
     " EffectiveVolumePriority_VIEW "
     "ORDER BY"
-    " vid, tpMode, lifespanType";
-  
-/// SQL statement for function deleteAllTapeDrvsFromSrv
-const std::string
-  castor::db::ora::OraVdqmSvc::s_selectTapeDriveStatementString =
-  "SELECT"
-  "  id "
-  "FROM"
-  "  TapeDrive "
-  "WHERE"
-  "      driveName = :1"
-  "  AND tapeServer = :2 "
-  "FOR UPDATE";
+    " vid, tpMode, lifespanType");
+  addStmtStr(SELECT_TAPE_DRIVE_SQL_STMT,
+    "SELECT"
+    "  id "
+    "FROM"
+    "  TapeDrive "
+    "WHERE"
+    "      driveName = :1"
+    "  AND tapeServer = :2 "
+    "FOR UPDATE");
+  addStmtStr(DEDICATE_DRIVE_SQL_STMT,
+    "BEGIN castorVdqm.dedicateDrive(:1, :2, :3, :4); END;");
+  addStmtStr(DELETE_DRIVE_SQL_STMT,
+    "BEGIN castorVdqm.deleteDrive(:1, :2, :3, :4); END;");
+  addStmtStr(WRITE_RTCPD_JOB_SUBMISSION_SQL_STMT,
+    "BEGIN castorVdqm.writeRTPCDJobSubmission(:1, :2, :3); END;");
+  addStmtStr(WRITE_FAILED_RTCPD_JOB_SUBMISSION_SQL_STMT,
+    "BEGIN castorVdqm.writeFailedRTPCDJobSubmission(:1, :2, :3); END;");
+  addStmtStr(EXIST_TAPE_DRIVE_WITH_TAPE_IN_USE_SQL_STMT,
+    "SELECT"
+    "  td.id "
+    "FROM"
+    "  TapeDrive td,"
+    "  TapeRequest tr,"
+    "  VdqmTape "
+    "WHERE"
+    "      td.runningTapeReq = tr.id"
+    "  AND tr.tape = VdqmTape.id"
+    "  AND VdqmTape.vid = :1");
+  addStmtStr(EXIST_TAPE_DRIVE_WITH_TAPE_MOUNTED_SQL_STMT,
+    "SELECT"
+    "  td.id "
+    "FROM"
+    "  TapeDrive td,"
+    "  VdqmTape "
+    "WHERE"
+    "      td.tape = VdqmTape.id"
+    "  AND VdqmTape.vid = :1");
+  addStmtStr(SELECT_TAPE_BY_VID_SQL_STMT,
+    "SELECT id FROM VdqmTape WHERE vid = :1");
+  addStmtStr(SELECT_TAPE_REQ_FOR_MOUNTED_TAPE_SQL_STMT,
+    "SELECT"
+    "  id "
+    "FROM"
+    "  TapeRequest "
+    "WHERE"
+    "      tapeDrive = 0"
+    "  AND tape = :1"
+    "  AND (requestedSrv = :2"
+    "   OR requestedSrv = 0) "
+    "FOR UPDATE");
+  addStmtStr(SELECT_TAPE_ACCESS_SPECIFICATION_SQL_STMT,
+    "SELECT"
+    "  id "
+    "FROM"
+    "  TapeAccessSpecification "
+    "WHERE"
+    "      accessMode = :1"
+    "  AND density = :2"
+    "  AND tapeModel = :3");
+  addStmtStr(SELECT_DEVICE_GROUP_NAME_SQL_STMT,
+    "SELECT id FROM DeviceGroupName WHERE dgName = :1");
+  addStmtStr(SELECT_TAPE_REQUEST_QUEUE_SQL_STMT,
+    "SELECT"
+    "  id,"
+    "  driveName,"
+    "  tapeDriveId,"
+    "  priority,"
+    "  clientPort,"
+    "  clientEuid,"
+    "  clientEgid,"
+    "  accessMode,"
+    "  creationTime,"
+    "  clientMachine,"
+    "  vid,"
+    "  tapeServer,"
+    "  dgName,"
+    "  clientUsername "
+    "FROM"
+    "  tapeRequestShowqueues_VIEW "
+    "WHERE"
+    "      (:1 IS NULL OR :2 = dgName)"
+    "  AND (:3 IS NULL OR :4 = tapeServer)");
+  addStmtStr(SELECT_TAPE_DRIVE_QUEUE_SQL_STMT,
+    "SELECT"
+    "  status,"
+    "  id,"
+    "  runningTapeReq,"
+    "  jobId,"
+    "  modificationTime,"
+    "  resetTime,"
+    "  useCount,"
+    "  errCount,"
+    "  transferredMB,"
+    "  tapeAccessMode,"
+    "  totalMB,"
+    "  serverName,"
+    "  vid,"
+    "  driveName,"
+    "  DGName,"
+    "  dedicate "
+    "FROM"
+    "  TapeDriveShowqueues_VIEW "
+    "WHERE"
+    "      (:1 IS NULL OR :2 = DGName)"
+    "  AND (:3 IS NULL OR :4 = serverName)");
+  addStmtStr(SELECT_TAPE_REQUEST_SQL_STMT,
+    "SELECT id FROM TapeRequest WHERE CAST(id AS INT) = :1");
+  addStmtStr(SELECT_COMPATIBILITIES_FOR_DRIVE_MODEL_SQL_STMT,
+    "SELECT id FROM TapeDriveCompatibility WHERE tapeDriveModel = :1");
+  addStmtStr(SELECT_TAPE_ACCESS_SPECIFICATIONS_SQL_STMT,
+    "SELECT"
+    "  id "
+    "FROM"
+    "  TapeAccessSpecification "
+    "WHERE"
+    "  tapeModel = :1 "
+    "ORDER BY"
+    "  accessMode DESC");
+  addStmtStr(ALLOCATE_DRIVE_SQL_STMT,
+    "BEGIN castorVdqm.allocateDrive(:1, :2, :3, :4, :5); END;");
+  addStmtStr(REUSE_DRIVE_ALLOCATION_SQL_STMT,
+    "BEGIN castorVdqm.reuseDriveAllocation(:1, :2, :3, :4); END;");
+  addStmtStr(REQUEST_TO_SUBMIT_SQL_STMT,
+    "BEGIN castorVdqm.getRequestToSubmit(:1); END;");
+}
 
-/// SQL statement for function dedicateDrive
-const std::string castor::db::ora::OraVdqmSvc::s_dedicateDriveStatementString
-  = "BEGIN castorVdqm.dedicateDrive(:1, :2, :3, :4); END;";
 
-/// SQL statement for function deleteDrive
-const std::string castor::db::ora::OraVdqmSvc::s_deleteDriveStatementString
-  = "BEGIN castorVdqm.deleteDrive(:1, :2, :3, :4); END;";
-
-/// SQL statement for function writeRTPCDJobSubmission
-const std::string castor::db::ora::OraVdqmSvc::
-  s_writeRTPCDJobSubmissionStatementString
-  = "BEGIN castorVdqm.writeRTPCDJobSubmission(:1, :2, :3); END;";
-
-/// SQL statement for function writeFailedRTPCDJobSubmission
-const std::string castor::db::ora::OraVdqmSvc::
-  s_writeFailedRTPCDJobSubmissionStatementString
-  = "BEGIN castorVdqm.writeFailedRTPCDJobSubmission(:1, :2, :3); END;";
-  
-/// SQL statement for function existTapeDriveWithTapeInUse
-const std::string
-  castor::db::ora::OraVdqmSvc::s_existTapeDriveWithTapeInUseStatementString =
-  "SELECT"
-  "  td.id "
-  "FROM"
-  "  TapeDrive td,"
-  "  TapeRequest tr,"
-  "  VdqmTape "
-  "WHERE"
-  "      td.runningTapeReq = tr.id"
-  "  AND tr.tape = VdqmTape.id"
-  "  AND VdqmTape.vid = :1";
-  
-/// SQL statement for function existTapeDriveWithTapeMounted
-const std::string
-  castor::db::ora::OraVdqmSvc::s_existTapeDriveWithTapeMountedStatementString =
-  "SELECT"
-  "  td.id "
-  "FROM"
-  "  TapeDrive td,"
-  "  VdqmTape "
-  "WHERE"
-  "      td.tape = VdqmTape.id"
-  "  AND VdqmTape.vid = :1";
-  
-/// SQL statement for function selectTapeByVid
-const std::string
-  castor::db::ora::OraVdqmSvc::s_selectTapeByVidStatementString =
-  "SELECT id FROM VdqmTape WHERE vid = :1";      
-  
-/// SQL statement for function selectTapeReqForMountedTape
-const std::string
-  castor::db::ora::OraVdqmSvc::s_selectTapeReqForMountedTapeStatementString =
-  "SELECT"
-  "  id "
-  "FROM"
-  "  TapeRequest "
-  "WHERE"
-  "      tapeDrive = 0"
-  "  AND tape = :1"
-  "  AND (requestedSrv = :2"
-  "   OR requestedSrv = 0) "
-  "FOR UPDATE";
-  
-/// SQL statement for function selectTapeAccessSpecification
-const std::string
-  castor::db::ora::OraVdqmSvc::s_selectTapeAccessSpecificationStatementString =
-  "SELECT"
-  "  id "
-  "FROM"
-  "  TapeAccessSpecification "
-  "WHERE"
-  "      accessMode = :1"
-  "  AND density = :2"
-  "  AND tapeModel = :3";
-  
-/// SQL statement for function selectDeviceGroupName
-const std::string
-  castor::db::ora::OraVdqmSvc::s_selectDeviceGroupNameStatementString =
-  "SELECT id FROM DeviceGroupName WHERE dgName = :1";
-  
-/// SQL statement for function selectTapeRequestQueue
-const std::string
-  castor::db::ora::OraVdqmSvc::s_selectTapeRequestQueueStatementString =
-  "SELECT"
-  "  id,"
-  "  driveName,"
-  "  tapeDriveId,"
-  "  priority,"
-  "  clientPort,"
-  "  clientEuid,"
-  "  clientEgid,"
-  "  accessMode,"
-  "  creationTime,"
-  "  clientMachine,"
-  "  vid,"
-  "  tapeServer,"
-  "  dgName,"
-  "  clientUsername "
-  "FROM"
-  "  tapeRequestShowqueues_VIEW "
-  "WHERE"
-  "      (:1 IS NULL OR :2 = dgName)"
-  "  AND (:3 IS NULL OR :4 = tapeServer)";
-
-/// SQL statement for function selectTapeDriveQueue
-const std::string
-  castor::db::ora::OraVdqmSvc::s_selectTapeDriveQueueStatementString =
-  "SELECT"
-  "  STATUS, ID, RUNNINGTAPEREQ, JOBID, MODIFICATIONTIME, RESETTIME, USECOUNT,"
-  "  ERRCOUNT, TRANSFERREDMB, TAPEACCESSMODE, TOTALMB, SERVERNAME, VID,"
-  "  DRIVENAME, DGNAME, DEDICATE "
-  "FROM"
-  "  TAPEDRIVESHOWQUEUES_VIEW "
-  "WHERE"
-  "      (:1 IS NULL OR :2 = DGNAME)"
-  "  AND (:3 IS NULL OR :4 = SERVERNAME)";
-
-/// SQL statement for function selectDeviceGroupName
-const std::string
-  castor::db::ora::OraVdqmSvc::s_selectTapeRequestStatementString =
-  "SELECT id FROM TapeRequest WHERE CAST(id AS INT) = :1";
-  
-/// SQL statement for function selectCompatibilitiesForDriveModel
-const std::string castor::db::ora::OraVdqmSvc::
-  s_selectCompatibilitiesForDriveModelStatementString =
-  "SELECT id FROM TapeDriveCompatibility WHERE tapeDriveModel = :1";
-  
-/// SQL statement for function selectTapeAccessSpecifications
-const std::string
-  castor::db::ora::OraVdqmSvc::s_selectTapeAccessSpecificationsStatementString =
-  "SELECT"
-  "  id "
-  "FROM"
-  "  TapeAccessSpecification "
-  "WHERE"
-  "  tapeModel = :1 "
-  "ORDER BY"
-  "  accessMode DESC";  
-
-/**
- * The drive scheduler algorithm.
- */  
-/// SQL statement for function allocateDrive
-const std::string castor::db::ora::OraVdqmSvc::s_allocateDriveStatementString =
-  "BEGIN castorVdqm.allocateDrive(:1, :2, :3, :4, :5); END;";
-
-/// SQL statement for function reuseDriveAllocation
-const std::string
-  castor::db::ora::OraVdqmSvc::s_reuseDriveAllocationStatementString =
-  "BEGIN castorVdqm.reuseDriveAllocation(:1, :2, :3, :4); END;";
-
-/// SQL statement for function requestToSubmit
-const std::string
-  castor::db::ora::OraVdqmSvc::s_requestToSubmitStatementString =
-  "BEGIN castorVdqm.getRequestToSubmit(:1); END;";
+// -----------------------------------------------------------------------
+// StatementStringMap::addStmtStr
+// -----------------------------------------------------------------------
+void castor::db::ora::OraVdqmSvc::StatementStringMap::addStmtStr(
+  const StatementId stmtId, const char *stmt) {
+  insert(std::make_pair(stmtId, stmt));
+}
 
 
 // -----------------------------------------------------------------------
 // OraVdqmSvc
 // -----------------------------------------------------------------------
 castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
-  BaseSvc(name), DbBaseObj(0),
-  m_selectTapeStatement(0),
-  m_selectTapeServerStatement(0),
-  m_checkTapeRequestStatement1(0),
-  m_checkTapeRequestStatement2(0),
-  m_getQueuePositionStatement(0),
-  m_setVolPriorityStatement(0),
-  m_deleteVolPriorityStatement(0),
-  m_listVolPrioritiesStatement(0),
-  m_selectTapeDriveStatement(0),
-  m_dedicateDriveStatement(0),
-  m_deleteDriveStatement(0),
-  m_writeRTPCDJobSubmissionStatement(0),
-  m_writeFailedRTPCDJobSubmissionStatement(0),
-  m_existTapeDriveWithTapeInUseStatement(0),
-  m_existTapeDriveWithTapeMountedStatement(0),
-  m_selectTapeByVidStatement(0),
-  m_selectTapeReqForMountedTapeStatement(0),
-  m_selectTapeAccessSpecificationStatement(0),
-  m_selectDeviceGroupNameStatement(0),
-  m_selectTapeRequestQueueStatement(0),
-  m_selectTapeDriveQueueStatement(0),
-  m_allocateDriveStatement(0),
-  m_reuseDriveAllocationStatement(0),
-  m_requestToSubmitStatement(0),
-  m_selectCompatibilitiesForDriveModelStatement(0),
-  m_selectTapeAccessSpecificationsStatement(0),
-  m_selectTapeRequestStatement(0) {
+  BaseSvc(name), DbBaseObj(0) {
 }
 
 
@@ -366,66 +291,19 @@ const unsigned int castor::db::ora::OraVdqmSvc::ID() {
 // reset
 //------------------------------------------------------------------------------
 void castor::db::ora::OraVdqmSvc::reset() throw() {
-  //Here we attempt to delete the statements correctly
+  // Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
-  try {
-    if (m_selectTapeStatement) deleteStatement(m_selectTapeStatement);
-    if (m_selectTapeServerStatement) deleteStatement(m_selectTapeServerStatement);
-    if (m_checkTapeRequestStatement1) deleteStatement(m_checkTapeRequestStatement1);
-    if (m_checkTapeRequestStatement2) deleteStatement(m_checkTapeRequestStatement2);
-    if (m_getQueuePositionStatement) deleteStatement(m_getQueuePositionStatement);
-    if (m_setVolPriorityStatement) deleteStatement(m_setVolPriorityStatement);
-    if (m_deleteVolPriorityStatement) deleteStatement(m_deleteVolPriorityStatement);
-    if (m_listVolPrioritiesStatement) deleteStatement(m_listVolPrioritiesStatement);
-    if (m_selectTapeDriveStatement) deleteStatement(m_selectTapeDriveStatement);
-    if (m_dedicateDriveStatement) deleteStatement(m_dedicateDriveStatement);
-    if (m_deleteDriveStatement) deleteStatement(m_deleteDriveStatement);
-    if (m_writeRTPCDJobSubmissionStatement) deleteStatement(m_writeRTPCDJobSubmissionStatement);
-    if (m_writeFailedRTPCDJobSubmissionStatement) deleteStatement(m_writeFailedRTPCDJobSubmissionStatement);
-    if (m_existTapeDriveWithTapeInUseStatement) deleteStatement(m_existTapeDriveWithTapeInUseStatement);
-    if (m_existTapeDriveWithTapeMountedStatement) deleteStatement(m_existTapeDriveWithTapeMountedStatement);
-    if (m_selectTapeByVidStatement) deleteStatement(m_selectTapeByVidStatement);
-    if (m_selectTapeReqForMountedTapeStatement) deleteStatement(m_selectTapeReqForMountedTapeStatement);
-    if (m_selectTapeAccessSpecificationStatement) deleteStatement(m_selectTapeAccessSpecificationStatement);
-    if (m_selectDeviceGroupNameStatement) deleteStatement(m_selectDeviceGroupNameStatement);
-    if (m_selectTapeRequestQueueStatement) deleteStatement(m_selectTapeRequestQueueStatement);
-    if (m_selectTapeRequestStatement) deleteStatement(m_selectTapeRequestStatement);
-    if (m_selectTapeDriveQueueStatement) deleteStatement(m_selectTapeDriveQueueStatement);
-    if (m_allocateDriveStatement) deleteStatement(m_allocateDriveStatement);
-    if (m_reuseDriveAllocationStatement) deleteStatement(m_reuseDriveAllocationStatement);
-    if (m_requestToSubmitStatement) deleteStatement(m_requestToSubmitStatement);
-    if (m_selectCompatibilitiesForDriveModelStatement) deleteStatement(m_selectCompatibilitiesForDriveModelStatement);
-    if (m_selectTapeAccessSpecificationsStatement) deleteStatement(m_selectTapeAccessSpecificationsStatement);
-  } catch (oracle::occi::SQLException e) {};
-  
-  // Now reset all pointers to 0
-  m_selectTapeStatement = 0;
-  m_selectTapeServerStatement = 0;
-  m_checkTapeRequestStatement1 = 0;
-  m_checkTapeRequestStatement2 = 0;
-  m_getQueuePositionStatement = 0;
-  m_setVolPriorityStatement = 0;
-  m_deleteVolPriorityStatement = 0;
-  m_listVolPrioritiesStatement = 0;
-  m_selectTapeDriveStatement = 0;
-  m_dedicateDriveStatement = 0;
-  m_deleteDriveStatement = 0;
-  m_writeRTPCDJobSubmissionStatement = 0;
-  m_writeFailedRTPCDJobSubmissionStatement = 0;
-  m_existTapeDriveWithTapeInUseStatement = 0;
-  m_existTapeDriveWithTapeMountedStatement = 0;
-  m_selectTapeByVidStatement = 0;
-  m_selectTapeReqForMountedTapeStatement = 0;
-  m_selectTapeAccessSpecificationStatement = 0;
-  m_selectDeviceGroupNameStatement = 0;
-  m_selectTapeRequestQueueStatement = 0;
-  m_selectTapeDriveQueueStatement = 0;
-  m_selectTapeRequestStatement = 0;
-  m_allocateDriveStatement = 0;
-  m_reuseDriveAllocationStatement = 0;
-  m_requestToSubmitStatement = 0;
-  m_selectCompatibilitiesForDriveModelStatement = 0;
-  m_selectTapeAccessSpecificationsStatement = 0;
+  for(std::map<int, oracle::occi::Statement *>::iterator itor =
+    m_statements.begin(); itor != m_statements.end(); itor++) {
+    try {
+      deleteStatement(itor->second);
+    } catch(oracle::occi::SQLException e) {
+      // Do nothing
+    }
+  }
+
+  // Reset the stored statements
+  m_statements.clear();
 }
 
 
@@ -435,18 +313,24 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
 castor::vdqm::VdqmTape*
 castor::db::ora::OraVdqmSvc::selectOrCreateTape(const std::string vid)
   throw (castor::exception::Exception) {
-  // Check whether the statements are ok
-  if (0 == m_selectTapeStatement) {
-    m_selectTapeStatement = createStatement(s_selectTapeStatementString);
+
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = SELECT_TAPE_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      storeStatement(stmtId, stmt);
+    }
   }
-  
+
   // Execute statement and get result
   unsigned long id;
   try {
-    m_selectTapeStatement->setString(1, vid);
-    oracle::occi::ResultSet *rset = m_selectTapeStatement->executeQuery();
+    stmt->setString(1, vid);
+    oracle::occi::ResultSet *rset = stmt->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      m_selectTapeStatement->closeResultSet(rset);
+      stmt->closeResultSet(rset);
       // we found nothing, so let's create the tape
 
       castor::vdqm::VdqmTape* tape = new castor::vdqm::VdqmTape();
@@ -468,10 +352,10 @@ castor::db::ora::OraVdqmSvc::selectOrCreateTape(const std::string vid)
        
           // set again the parameters
 
-          rset = m_selectTapeStatement->executeQuery();
+          rset = stmt->executeQuery();
           if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
             // Still nothing ! Here it's a real error
-            m_selectTapeStatement->closeResultSet(rset);
+            stmt->closeResultSet(rset);
             castor::exception::Internal ex;
             ex.getMessage()
               << "Unable to select tape while inserting "
@@ -492,7 +376,7 @@ castor::db::ora::OraVdqmSvc::selectOrCreateTape(const std::string vid)
     // If we reach this point, then we selected successfully
     // a tape and it's id is in rset
     id = rset->getInt(1);
-    m_selectTapeStatement->closeResultSet(rset);
+    stmt->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
     ex.getMessage()
@@ -536,24 +420,30 @@ castor::vdqm::TapeServer*
   const std::string serverName,
   bool withTapeDrives)
   throw (castor::exception::Exception) {
-  
-  //Check, if the parameter isn't empty 
-  if ( std::strlen(serverName.c_str()) == 0 )
+
+  // Check if the parameter is empty 
+  if(serverName == "") {
     return NULL;
-    
-  // Check whether the statements are ok
-  if (0 == m_selectTapeServerStatement) {
-    m_selectTapeServerStatement =
-      createStatement(s_selectTapeServerStatementString);
   }
+
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = SELECT_TAPE_SERVER_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      storeStatement(stmtId, stmt);
+    }
+  }
+
   // Execute statement and get result
   u_signed64 id;
   try {
-    m_selectTapeServerStatement->setString(1, serverName);
-    oracle::occi::ResultSet *rset = m_selectTapeServerStatement->executeQuery();
+    stmt->setString(1, serverName);
+    oracle::occi::ResultSet *rset = stmt->executeQuery();
     
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      m_selectTapeServerStatement->closeResultSet(rset);
+      stmt->closeResultSet(rset);
       
       // we found nothing, so let's create the tape sever
       castor::vdqm::TapeServer* tapeServer = new castor::vdqm::TapeServer();
@@ -570,10 +460,10 @@ castor::vdqm::TapeServer*
           // if violation of unique constraint, ie means that
           // some other thread was quicker than us on the insertion
           // So let's select what was inserted
-          rset = m_selectTapeServerStatement->executeQuery();
+          rset = stmt->executeQuery();
           if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
             // Still nothing ! Here it's a real error
-            m_selectTapeServerStatement->closeResultSet(rset);
+            stmt->closeResultSet(rset);
             castor::exception::Internal ex;
             ex.getMessage()
               << "Unable to select tapeServer while inserting "
@@ -582,7 +472,7 @@ castor::vdqm::TapeServer*
             throw ex;
           }
         }
-        m_selectTapeServerStatement->closeResultSet(rset);
+        stmt->closeResultSet(rset);
         // Else, "standard" error, throw exception
         castor::exception::Internal ex;
         ex.getMessage()
@@ -595,7 +485,7 @@ castor::vdqm::TapeServer*
     // If we reach this point, then we selected successfully
     // a tapeServer and it's id is in rset
     id = (u_signed64)rset->getDouble(1);
-    m_selectTapeServerStatement->closeResultSet(rset);
+    stmt->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -626,20 +516,17 @@ castor::vdqm::TapeServer*
     if ( withTapeDrives ) {
       cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeDrive);
           
-      /**
-       * For existing TapeDrives, we want also the corresponding TapeRequest
-       */
-      for (std::vector<castor::vdqm::TapeDrive*>::iterator it = tapeServer->tapeDrives().begin();
-           it != tapeServer->tapeDrives().end();
-           it++) {
+      // For existing TapeDrives, we want also the corresponding TapeRequest
+      for (std::vector<castor::vdqm::TapeDrive*>::iterator it =
+        tapeServer->tapeDrives().begin(); it != tapeServer->tapeDrives().end();
+        it++) {
         if ((*it) != NULL) {
           cnvSvc()->fillObj(&ad, (*it), castor::OBJ_TapeRequest);
         }
       }
     }
-   
     
-    //reset Pointer
+    // Reset Pointer
     obj = 0;
     
     return tapeServer;
@@ -661,50 +548,53 @@ castor::vdqm::TapeServer*
 bool castor::db::ora::OraVdqmSvc::checkTapeRequest(
   const castor::vdqm::TapeRequest *newTapeRequest) 
   throw (castor::exception::Exception) {
-    
+
   try {
-    // Check whether the statements are ok
-    if (0 == m_checkTapeRequestStatement1) {
-      m_checkTapeRequestStatement1 =
-        createStatement(s_checkTapeRequestStatement1String);
+    // Get the Statement objects, creating them if necessary
+    oracle::occi::Statement *stmt1 = NULL;
+    {
+      const StatementId stmtId = CHECK_TAPE_REQUEST1_SQL_STMT;
+      if(!(stmt1 = getStatement(stmtId))) {
+        stmt1 = createStatement(s_statementStrings[stmtId]);
+        storeStatement(stmtId, stmt1);
+      }
     }
-    
-    if (0 == m_checkTapeRequestStatement2) {
-      m_checkTapeRequestStatement2 =
-        createStatement(s_checkTapeRequestStatement2String);
+    oracle::occi::Statement *stmt2 = NULL;
+    {
+      const StatementId stmtId = CHECK_TAPE_REQUEST2_SQL_STMT;
+      if(!(stmt2 = getStatement(stmtId))) {
+        stmt2 = createStatement(s_statementStrings[stmtId]);
+        storeStatement(stmtId, stmt2);
+      }
     }
-    
+
     castor::vdqm::ClientIdentification *client = newTapeRequest->client();
     
-    m_checkTapeRequestStatement1->setString(1, client->machine());
-    m_checkTapeRequestStatement1->setString(2, client->userName());
-    m_checkTapeRequestStatement1->setInt(3, client->port());
-    m_checkTapeRequestStatement1->setInt(4, client->euid());
-    m_checkTapeRequestStatement1->setInt(5, client->egid());
-    m_checkTapeRequestStatement1->setInt(6, client->magic());
+    stmt1->setString(1, client->machine());
+    stmt1->setString(2, client->userName());
+    stmt1->setInt(3, client->port());
+    stmt1->setInt(4, client->euid());
+    stmt1->setInt(5, client->egid());
+    stmt1->setInt(6, client->magic());
     client = 0;
     
     // execute the statement
-    oracle::occi::ResultSet *rset = m_checkTapeRequestStatement1->executeQuery();
+    oracle::occi::ResultSet *rset = stmt1->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       // Nothing found
-      m_checkTapeRequestStatement1->closeResultSet(rset);
+      stmt1->closeResultSet(rset);
       return true;
     }
     
-    /**
-     * For every found ClientIdentification has to be checked whether
-     * a tape request can be found, with the matching values. If yes, 
-     * we return false, because we don't want to queue twice the same
-     * request!
-     */
+    // For every found ClientIdentification has to be checked whether
+    // a tape request can be found, with the matching values. If yes, 
+    // we return false, because we don't want to queue twice the same
+    // request!
     
-    m_checkTapeRequestStatement2->setDouble
-      (1, newTapeRequest->tapeAccessSpecification()->id());
-    m_checkTapeRequestStatement2->setDouble
-      (2, newTapeRequest->tape()->id());
-    m_checkTapeRequestStatement2->setDouble
-      (3, newTapeRequest->requestedSrv() == 0 ? 0 : newTapeRequest->requestedSrv()->id());
+    stmt2->setDouble(1, newTapeRequest->tapeAccessSpecification()->id());
+    stmt2->setDouble(2, newTapeRequest->tape()->id());
+    stmt2->setDouble(3, newTapeRequest->requestedSrv() ==
+      0 ? 0 : newTapeRequest->requestedSrv()->id());
     
     oracle::occi::ResultSet *rset2 = NULL;
     u_signed64 clientId = 0;
@@ -713,24 +603,22 @@ bool castor::db::ora::OraVdqmSvc::checkTapeRequest(
       // a ClientIdentification and it's id is in rset
       clientId = (u_signed64)rset->getDouble(1);
       
-      m_checkTapeRequestStatement2->setDouble(4, clientId);
-      rset2 = m_checkTapeRequestStatement2->executeQuery();
+      stmt2->setDouble(4, clientId);
+      rset2 = stmt2->executeQuery();
       if (oracle::occi::ResultSet::END_OF_FETCH == rset2->next()) {
         // Nothing found
-        m_checkTapeRequestStatement2->closeResultSet(rset2);
+        stmt2->closeResultSet(rset2);
       }
       else {
         // We found the same request in the database!
-        m_checkTapeRequestStatement1->closeResultSet(rset);
-        m_checkTapeRequestStatement2->closeResultSet(rset2);
+        stmt1->closeResultSet(rset);
+        stmt2->closeResultSet(rset2);
         return false;
       } 
     } while (oracle::occi::ResultSet::END_OF_FETCH != rset->next());
     
-    /**
-     * If we are here, the request doesn't yet exist.
-     */
-    m_checkTapeRequestStatement1->closeResultSet(rset);
+    // If we are here, the request doesn't yet exist.
+    stmt1->closeResultSet(rset);
     return true;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -753,25 +641,29 @@ int castor::db::ora::OraVdqmSvc::getQueuePosition(
   const u_signed64 tapeRequestId) throw (castor::exception::Exception) {
     
   try {
-    // Check whether the statements are ok
-    if (0 == m_getQueuePositionStatement) {
-      m_getQueuePositionStatement =
-        createStatement(s_getQueuePositionStatementString);
+    // Get the Statement object, creating one if necessary
+    oracle::occi::Statement *stmt = NULL;
+    {
+      const StatementId stmtId = GET_QUEUE_POSITION_SQL_STMT;
+      if(!(stmt = getStatement(stmtId))) {
+        stmt = createStatement(s_statementStrings[stmtId]);
+        storeStatement(stmtId, stmt);
+      }
     }
-    
+
     // execute the statement
-    m_getQueuePositionStatement->setDouble(1, tapeRequestId);
-    oracle::occi::ResultSet *rset = m_getQueuePositionStatement->executeQuery();
+    stmt->setDouble(1, tapeRequestId);
+    oracle::occi::ResultSet *rset = stmt->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       // Nothing found, return -1
       //Normally, the statement should always find something!
-      m_getQueuePositionStatement->closeResultSet(rset);
+      stmt->closeResultSet(rset);
       return -1;
     }
     
     // Return the TapeRequest queue position
     int queuePosition = (int)rset->getInt(1);
-    m_getQueuePositionStatement->closeResultSet(rset);
+    stmt->closeResultSet(rset);
     
     // XXX: Maybe in future the return value should be double!
     // -1 means not found
@@ -796,23 +688,27 @@ void castor::db::ora::OraVdqmSvc::setVolPriority(const int priority,
   throw (castor::exception::Exception) {
 
   try {
-    // Check whether the statements are ok
-    if (0 == m_setVolPriorityStatement) {
-      m_setVolPriorityStatement =
-        createStatement(s_setVolPriorityStatementString);
-      m_setVolPriorityStatement->setAutoCommit(true);
+    // Get the Statement object, creating one if necessary
+    oracle::occi::Statement *stmt = NULL;
+    {
+      const StatementId stmtId = SET_VOL_PRIORITY_SQL_STMT;
+      if(!(stmt = getStatement(stmtId))) {
+        stmt = createStatement(s_statementStrings[stmtId]);
+        stmt->setAutoCommit(true);
+        storeStatement(stmtId, stmt);
+      }
     }
 
     // Execute the statement
-    m_setVolPriorityStatement->setInt(1, priority);
-    m_setVolPriorityStatement->setInt(2, clientUID);
-    m_setVolPriorityStatement->setInt(3, clientGID);
-    m_setVolPriorityStatement->setString(4, clientHost);
-    m_setVolPriorityStatement->setString(5, vid);
-    m_setVolPriorityStatement->setInt(6, tpMode);
-    m_setVolPriorityStatement->setInt(7, lifespanType);
+    stmt->setInt(1, priority);
+    stmt->setInt(2, clientUID);
+    stmt->setInt(3, clientGID);
+    stmt->setString(4, clientHost);
+    stmt->setString(5, vid);
+    stmt->setInt(6, tpMode);
+    stmt->setInt(7, lifespanType);
 
-    m_setVolPriorityStatement->executeUpdate();
+    stmt->executeUpdate();
   } catch (oracle::occi::SQLException &e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -835,36 +731,35 @@ u_signed64 castor::db::ora::OraVdqmSvc::deleteVolPriority(
 
 
   try {
-    // Check whether the statements are ok
-    if (0 == m_deleteVolPriorityStatement) {
-      m_deleteVolPriorityStatement =
-        createStatement(s_deleteVolPriorityStatementString);
-      m_deleteVolPriorityStatement->registerOutParam
-        (4, oracle::occi::OCCIDOUBLE); // returnVar
-      m_deleteVolPriorityStatement->registerOutParam
-        (5, oracle::occi::OCCIINT); // priorityVar
-      m_deleteVolPriorityStatement->registerOutParam
-        (6, oracle::occi::OCCIINT); // clientUIDVar
-      m_deleteVolPriorityStatement->registerOutParam
-        (7, oracle::occi::OCCIINT); // clientGIDVar
-      m_deleteVolPriorityStatement->registerOutParam
-        (8, oracle::occi::OCCISTRING, 2048); // clientHostVar
-
-      m_deleteVolPriorityStatement->setAutoCommit(true);
+    // Get the Statement object, creating one if necessary
+    oracle::occi::Statement *stmt = NULL;
+    {
+      const StatementId stmtId = DELETE_VOL_PRIORITY_SQL_STMT;
+      if(!(stmt = getStatement(stmtId))) {
+        stmt = createStatement(s_statementStrings[stmtId]);
+        stmt->registerOutParam(4, oracle::occi::OCCIDOUBLE); // returnVar
+        stmt->registerOutParam(5, oracle::occi::OCCIINT); // priorityVar
+        stmt->registerOutParam(6, oracle::occi::OCCIINT); // clientUIDVar
+        stmt->registerOutParam(7, oracle::occi::OCCIINT); // clientGIDVar
+        stmt->registerOutParam(8, oracle::occi::OCCISTRING,
+          2048); // clientHostVar
+        stmt->setAutoCommit(true);
+        storeStatement(stmtId, stmt);
+      }
     }
 
     // Execute the statement
-    m_deleteVolPriorityStatement->setString(1, vid);
-    m_deleteVolPriorityStatement->setInt(2, tpMode);
-    m_deleteVolPriorityStatement->setInt(3, lifespanType);
+    stmt->setString(1, vid);
+    stmt->setInt(2, tpMode);
+    stmt->setInt(3, lifespanType);
 
-    m_deleteVolPriorityStatement->executeUpdate();
+    stmt->executeUpdate();
 
-    id          = (u_signed64)m_deleteVolPriorityStatement->getDouble(4);
-    *priority   = m_deleteVolPriorityStatement->getInt(5);
-    *clientUID  = m_deleteVolPriorityStatement->getInt(6);
-    *clientGID  = m_deleteVolPriorityStatement->getInt(7);
-    *clientHost = m_deleteVolPriorityStatement->getString(8);
+    id          = (u_signed64)stmt->getDouble(4);
+    *priority   = stmt->getInt(5);
+    *clientUID  = stmt->getInt(6);
+    *clientGID  = stmt->getInt(7);
+    *clientHost = stmt->getString(8);
 
   } catch (oracle::occi::SQLException &e) {
     handleException(e);
@@ -888,16 +783,19 @@ std::list<castor::vdqm::IVdqmSvc::VolPriority>
   std::list<castor::vdqm::IVdqmSvc::VolPriority> *priorities =
     new std::list<castor::vdqm::IVdqmSvc::VolPriority>;;
 
-
-  // Check whether the statements are ok
-  if (0 == m_listVolPrioritiesStatement) {
-    m_listVolPrioritiesStatement =
-      createStatement(s_listVolPrioritiesStatementString);
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = LIST_VOL_PRIORITIES_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      storeStatement(stmtId, stmt);
+    }
   }
 
   // Execute statement and get result
   try {
-    oracle::occi::ResultSet *rs = m_listVolPrioritiesStatement->executeQuery();
+    oracle::occi::ResultSet *rs = stmt->executeQuery();
 
     VolPriority p;
 
@@ -920,7 +818,7 @@ std::list<castor::vdqm::IVdqmSvc::VolPriority>
       priorities->push_back(p);
     }
 
-    m_listVolPrioritiesStatement->closeResultSet(rs);
+    stmt->closeResultSet(rs);
   } catch(oracle::occi::SQLException &e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -951,30 +849,35 @@ castor::vdqm::TapeDrive*
   const vdqmDrvReq_t* driveRequest,
   castor::vdqm::TapeServer* tapeServer)
   throw (castor::exception::Exception) {
-    
-  // Check whether the statements are ok
-  if (0 == m_selectTapeDriveStatement) {
-    m_selectTapeDriveStatement =
-      createStatement(s_selectTapeDriveStatementString);
+
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = SELECT_TAPE_DRIVE_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      storeStatement(stmtId, stmt);
+    }
   }
+
   // Execute statement and get result
   u_signed64 id;
   try {
-    m_selectTapeDriveStatement->setString(1, driveRequest->drive);
-    m_selectTapeDriveStatement->setDouble(2, tapeServer->id());
-    oracle::occi::ResultSet *rset = m_selectTapeDriveStatement->executeQuery();
+    stmt->setString(1, driveRequest->drive);
+    stmt->setDouble(2, tapeServer->id());
+    oracle::occi::ResultSet *rset = stmt->executeQuery();
     
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      m_selectTapeDriveStatement->closeResultSet(rset);
+      stmt->closeResultSet(rset);
       
-      // we found nothing, so return NULL
+      // We found nothing, so return NULL
       return NULL;
     }
     
     // If we reach this point, then we selected successfully
     // a tapeDrive and it's id is in rset
     id = (u_signed64)rset->getDouble(1);
-    m_selectTapeDriveStatement->closeResultSet(rset);
+    stmt->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -1010,19 +913,17 @@ castor::vdqm::TapeDrive*
     
     tapeDrive->setTapeServer(tapeServer);
 
-    /**
-     * If there is already an assigned tapeRequest, we want also its objects
-     */
+    // If there is already an assigned tapeRequest, we want also its objects
     castor::vdqm::TapeRequest* tapeRequest = tapeDrive->runningTapeReq();
     if (tapeRequest != NULL) {
-        cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_ClientIdentification);
-        cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_VdqmTape);
-        cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_DeviceGroupName);
-        cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_TapeAccessSpecification);        
-        cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_TapeServer);
+      cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_ClientIdentification);
+      cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_VdqmTape);
+      cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_DeviceGroupName);
+      cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_TapeAccessSpecification);        
+      cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_TapeServer);
     }
      
-    //Reset pointer
+    // Reset pointer
     obj = 0;
     tapeRequest = 0;
     
@@ -1046,22 +947,26 @@ void castor::db::ora::OraVdqmSvc::dedicateDrive(const std::string driveName,
   const std::string serverName, const std::string dgName,
   const std::string dedicate) throw (castor::exception::Exception) {
 
-  // Check whether the statements are ok
-  if (0 == m_dedicateDriveStatement) {
-    m_dedicateDriveStatement =
-      createStatement(s_dedicateDriveStatementString);
-    m_dedicateDriveStatement->setAutoCommit(false);
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = DEDICATE_DRIVE_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
+      storeStatement(stmtId, stmt);
+    }
   }
 
   // Set the parameters of the SQL statement
-  m_dedicateDriveStatement->setString(1, driveName );
-  m_dedicateDriveStatement->setString(2, serverName);
-  m_dedicateDriveStatement->setString(3, dgName    );
-  m_dedicateDriveStatement->setString(4, dedicate  );
+  stmt->setString(1, driveName );
+  stmt->setString(2, serverName);
+  stmt->setString(3, dgName    );
+  stmt->setString(4, dedicate  );
 
   // Execute statement and get result
   try {
-    m_dedicateDriveStatement->executeUpdate();
+    stmt->executeUpdate();
   } catch(oracle::occi::SQLException &e) {
     handleException(e);
 
@@ -1103,24 +1008,27 @@ void castor::db::ora::OraVdqmSvc::deleteDrive(std::string driveName,
   std::string serverName, std::string dgName)
   throw (castor::exception::Exception){
 
-  // Check whether the statements are ok
-  if (0 == m_deleteDriveStatement) {
-    m_deleteDriveStatement =
-      createStatement(s_deleteDriveStatementString);
-    m_deleteDriveStatement->setAutoCommit(false);
-
-    m_deleteDriveStatement->registerOutParam(4, oracle::occi::OCCIINT);
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = DELETE_DRIVE_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
+      stmt->registerOutParam(4, oracle::occi::OCCIINT);
+      storeStatement(stmtId, stmt);
+    }
   }
 
-  m_deleteDriveStatement->setString(1, driveName );
-  m_deleteDriveStatement->setString(2, serverName);
-  m_deleteDriveStatement->setString(3, dgName    );
+  stmt->setString(1, driveName );
+  stmt->setString(2, serverName);
+  stmt->setString(3, dgName    );
 
   // Execute statement and get result
   int result = 0;
   try {
-    m_deleteDriveStatement->executeUpdate();
-    result = m_deleteDriveStatement->getInt(4);
+    stmt->executeUpdate();
+    result = stmt->getInt(4);
   } catch(oracle::occi::SQLException &e) {
     handleException(e);
 
@@ -1208,23 +1116,25 @@ bool castor::db::ora::OraVdqmSvc::writeRTPCDJobSubmission(
   bool result = false;
 
 
-  // Check whether the statements are ok
-  if (0 == m_writeRTPCDJobSubmissionStatement) {
-    m_writeRTPCDJobSubmissionStatement =
-      createStatement(s_writeRTPCDJobSubmissionStatementString);
-    m_writeRTPCDJobSubmissionStatement->setAutoCommit(false);
-
-    m_writeRTPCDJobSubmissionStatement->registerOutParam(3,
-      oracle::occi::OCCIINT);
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = WRITE_RTCPD_JOB_SUBMISSION_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
+      stmt->registerOutParam(3, oracle::occi::OCCIINT);
+      storeStatement(stmtId, stmt);
+    }
   }
 
-  m_writeRTPCDJobSubmissionStatement->setDouble(1, tapeDriveId);
-  m_writeRTPCDJobSubmissionStatement->setDouble(2, tapeRequestId);
+  stmt->setDouble(1, tapeDriveId);
+  stmt->setDouble(2, tapeRequestId);
 
   // Execute statement and get result
   try {
-    m_writeRTPCDJobSubmissionStatement->executeUpdate();
-    result = m_writeRTPCDJobSubmissionStatement->getInt(3);
+    stmt->executeUpdate();
+    result = stmt->getInt(3);
   } catch(oracle::occi::SQLException &e) {
     handleException(e);
 
@@ -1249,23 +1159,25 @@ bool castor::db::ora::OraVdqmSvc::writeFailedRTPCDJobSubmission(
   bool result = false;
 
 
-  // Check whether the statements are ok
-  if (0 == m_writeFailedRTPCDJobSubmissionStatement) {
-    m_writeFailedRTPCDJobSubmissionStatement =
-      createStatement(s_writeFailedRTPCDJobSubmissionStatementString);
-    m_writeFailedRTPCDJobSubmissionStatement->setAutoCommit(false);
-
-    m_writeFailedRTPCDJobSubmissionStatement->registerOutParam(3,
-      oracle::occi::OCCIINT);
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = WRITE_FAILED_RTCPD_JOB_SUBMISSION_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
+      stmt->registerOutParam(3, oracle::occi::OCCIINT);
+      storeStatement(stmtId, stmt);
+    }
   }
 
-  m_writeFailedRTPCDJobSubmissionStatement->setDouble(1, tapeDriveId);
-  m_writeFailedRTPCDJobSubmissionStatement->setDouble(2, tapeRequestId);
+  stmt->setDouble(1, tapeDriveId);
+  stmt->setDouble(2, tapeRequestId);
 
   // Execute statement and get result
   try {
-    m_writeFailedRTPCDJobSubmissionStatement->executeUpdate();
-    result = m_writeFailedRTPCDJobSubmissionStatement->getInt(3);
+    stmt->executeUpdate();
+    result = stmt->getInt(3);
   } catch(oracle::occi::SQLException &e) {
     handleException(e);
 
@@ -1291,24 +1203,28 @@ bool
   // Execute statement and get result
   u_signed64 id;
     
-  // Check whether the statements are ok
-  if (0 == m_existTapeDriveWithTapeInUseStatement) {
-    m_existTapeDriveWithTapeInUseStatement = 
-      createStatement(s_existTapeDriveWithTapeInUseStatementString);
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = EXIST_TAPE_DRIVE_WITH_TAPE_IN_USE_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      storeStatement(stmtId, stmt);
+    }
   }
 
   try {
-    m_existTapeDriveWithTapeInUseStatement->setString(1, volid);
-    oracle::occi::ResultSet *rset = m_existTapeDriveWithTapeInUseStatement->executeQuery();
+    stmt->setString(1, volid);
+    oracle::occi::ResultSet *rset = stmt->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      m_existTapeDriveWithTapeInUseStatement->closeResultSet(rset);
+      stmt->closeResultSet(rset);
       // we found nothing, so let's return false
       return false;
     }
     // If we reach this point, then we selected successfully
     // a tape drive and it's id is in rset
     id = (u_signed64)rset->getDouble(1);
-    m_existTapeDriveWithTapeInUseStatement->closeResultSet(rset);
+    stmt->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -1332,25 +1248,29 @@ bool
 
   // Execute statement and get result
   u_signed64 id;
-    
-  // Check whether the statements are ok
-  if (0 == m_existTapeDriveWithTapeMountedStatement) {
-    m_existTapeDriveWithTapeMountedStatement = 
-      createStatement(s_existTapeDriveWithTapeMountedStatementString);
+
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = EXIST_TAPE_DRIVE_WITH_TAPE_MOUNTED_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      storeStatement(stmtId, stmt);
+    }
   }
 
   try {
-    m_existTapeDriveWithTapeMountedStatement->setString(1, volid);
-    oracle::occi::ResultSet *rset = m_existTapeDriveWithTapeMountedStatement->executeQuery();
+    stmt->setString(1, volid);
+    oracle::occi::ResultSet *rset = stmt->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      m_existTapeDriveWithTapeMountedStatement->closeResultSet(rset);
+      stmt->closeResultSet(rset);
       // we found nothing, so let's return false
       return false;
     }
     // If we reach this point, then we selected successfully
     // a tape drive and it's id is in rset
     id = (u_signed64)rset->getDouble(1);
-    m_existTapeDriveWithTapeMountedStatement->closeResultSet(rset);
+    stmt->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -1372,24 +1292,30 @@ castor::vdqm::VdqmTape*
   const std::string volid)
   throw (castor::exception::Exception) {
     
-  // Check whether the statements are ok
-  if (0 == m_selectTapeByVidStatement) {
-    m_selectTapeByVidStatement = createStatement(s_selectTapeByVidStatementString);
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = SELECT_TAPE_BY_VID_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      storeStatement(stmtId, stmt);
+    }
   }
+
   // Execute statement and get result
   u_signed64 id;
   try {
-    m_selectTapeByVidStatement->setString(1, volid);
-    oracle::occi::ResultSet *rset = m_selectTapeByVidStatement->executeQuery();
+    stmt->setString(1, volid);
+    oracle::occi::ResultSet *rset = stmt->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      m_selectTapeByVidStatement->closeResultSet(rset);
+      stmt->closeResultSet(rset);
       // we found nothing, so let's return NULL
       return NULL;
     }
     // If we reach this point, then we selected successfully
     // a tape and it's id is in rset
     id = (u_signed64)rset->getDouble(1);
-    m_selectTapeByVidStatement->closeResultSet(rset);
+    stmt->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -1435,23 +1361,25 @@ castor::vdqm::TapeRequest*
   const castor::vdqm::TapeDrive* tapeDrive)
   throw (castor::exception::Exception) {
   
-  // Check whether the statements are ok
-  if (0 == m_selectTapeReqForMountedTapeStatement) {
-    m_selectTapeReqForMountedTapeStatement = 
-      createStatement(s_selectTapeReqForMountedTapeStatementString);
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = SELECT_TAPE_REQ_FOR_MOUNTED_TAPE_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      storeStatement(stmtId, stmt);
+    }
   }
+
   // Execute statement and get result
   u_signed64 id;
   try {
-    m_selectTapeReqForMountedTapeStatement->setDouble
-      (1, tapeDrive->tape() == 0 ? 0 : tapeDrive->tape()->id());
-    m_selectTapeReqForMountedTapeStatement->setDouble
-      (2, tapeDrive->tapeServer()->id());
-    oracle::occi::ResultSet *rset =
-      m_selectTapeReqForMountedTapeStatement->executeQuery();
+    stmt->setDouble(1, tapeDrive->tape() == 0 ? 0 : tapeDrive->tape()->id());
+    stmt->setDouble(2, tapeDrive->tapeServer()->id());
+    oracle::occi::ResultSet *rset = stmt->executeQuery();
     
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      m_selectTapeReqForMountedTapeStatement->closeResultSet(rset);
+      stmt->closeResultSet(rset);
       
       // we found nothing, so return NULL
       return NULL;
@@ -1460,7 +1388,7 @@ castor::vdqm::TapeRequest*
     // If we reach this point, then we selected successfully
     // a tapeDrive and it's id is in rset
     id = (u_signed64)rset->getDouble(1);
-    m_selectTapeReqForMountedTapeStatement->closeResultSet(rset);
+    stmt->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -1515,27 +1443,30 @@ castor::vdqm::TapeRequest*
 // selectTapeAccessSpecification
 // -----------------------------------------------------------------------
 castor::vdqm::TapeAccessSpecification* 
-  castor::db::ora::OraVdqmSvc::selectTapeAccessSpecification
-  (const int accessMode,
-   const std::string density,
-   const std::string tapeModel)
+  castor::db::ora::OraVdqmSvc::selectTapeAccessSpecification(
+  const int accessMode, const std::string density, const std::string tapeModel)
   throw (castor::exception::Exception) {
     
-  // Check whether the statements are ok
-  if (0 == m_selectTapeAccessSpecificationStatement) {
-    m_selectTapeAccessSpecificationStatement = 
-      createStatement(s_selectTapeAccessSpecificationStatementString);
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = SELECT_TAPE_ACCESS_SPECIFICATION_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      storeStatement(stmtId, stmt);
+    }
   }
+
   // Execute statement and get result
   u_signed64 id;
   try {
-    m_selectTapeAccessSpecificationStatement->setInt(1, accessMode);
-    m_selectTapeAccessSpecificationStatement->setString(2, density);
-    m_selectTapeAccessSpecificationStatement->setString(3, tapeModel);    
-    oracle::occi::ResultSet *rset = m_selectTapeAccessSpecificationStatement->executeQuery();
+    stmt->setInt(1, accessMode);
+    stmt->setString(2, density);
+    stmt->setString(3, tapeModel);    
+    oracle::occi::ResultSet *rset = stmt->executeQuery();
     
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      m_selectTapeAccessSpecificationStatement->closeResultSet(rset);
+      stmt->closeResultSet(rset);
       // we found nothing, so let's return the NULL pointer  
       return NULL;
     }
@@ -1543,13 +1474,14 @@ castor::vdqm::TapeAccessSpecification*
     // If we reach this point, then we selected successfully
     // a dgName and it's id is in rset
     id = (u_signed64)rset->getDouble(1);
-    m_selectTapeAccessSpecificationStatement->closeResultSet(rset);
+    stmt->closeResultSet(rset);
   
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Unable to select TapeAccessSpecification by accessMode, density, tapeModel:"
+      << "Unable to select TapeAccessSpecification by accessMode, density,"
+         " tapeModel:"
       << std::endl << e.getMessage();
     throw ex;
   }
@@ -1590,20 +1522,24 @@ castor::vdqm::DeviceGroupName*
   (const std::string dgName)
   throw (castor::exception::Exception) {
 
-  // Check whether the statements are ok
-  if (0 == m_selectDeviceGroupNameStatement) {
-    m_selectDeviceGroupNameStatement =
-      createStatement(s_selectDeviceGroupNameStatementString);
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = SELECT_DEVICE_GROUP_NAME_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      storeStatement(stmtId, stmt);
+    }
   }
+
   // Execute statement and get result
   u_signed64 id;
   try {
-    m_selectDeviceGroupNameStatement->setString(1, dgName);
-    oracle::occi::ResultSet *rset =
-      m_selectDeviceGroupNameStatement->executeQuery();
+    stmt->setString(1, dgName);
+    oracle::occi::ResultSet *rset = stmt->executeQuery();
     
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      m_selectDeviceGroupNameStatement->closeResultSet(rset);
+      stmt->closeResultSet(rset);
       // we found nothing, so let's return NULL
       
       return NULL;
@@ -1611,7 +1547,7 @@ castor::vdqm::DeviceGroupName*
     // If we reach this point, then we selected successfully
     // a DeviceGroupName and it's id is in rset
     id = (u_signed64)rset->getDouble(1);
-    m_selectDeviceGroupNameStatement->closeResultSet(rset);
+    stmt->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -1657,20 +1593,24 @@ castor::vdqm::IVdqmSvc::VolReqList*
   const std::string requestedSrv)
   throw (castor::exception::Exception) {
 
-  // Check whether the statements are ok
-  if (0 == m_selectTapeRequestQueueStatement) {
-    m_selectTapeRequestQueueStatement =
-      createStatement(s_selectTapeRequestQueueStatementString);
-    m_selectTapeRequestQueueStatement->setPrefetchMemorySize(0);
-    m_selectTapeRequestQueueStatement->setPrefetchRowCount(100);
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = SELECT_TAPE_REQUEST_QUEUE_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setPrefetchMemorySize(0);
+      stmt->setPrefetchRowCount(100);
+      storeStatement(stmtId, stmt);
+    }
   }
 
   // Set the query statements parameters
   try {
-    m_selectTapeRequestQueueStatement->setString(1, dgn);
-    m_selectTapeRequestQueueStatement->setString(2, dgn);
-    m_selectTapeRequestQueueStatement->setString(3, requestedSrv);
-    m_selectTapeRequestQueueStatement->setString(4, requestedSrv);
+    stmt->setString(1, dgn);
+    stmt->setString(2, dgn);
+    stmt->setString(3, requestedSrv);
+    stmt->setString(4, requestedSrv);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -1684,11 +1624,10 @@ castor::vdqm::IVdqmSvc::VolReqList*
   // Execute statement and get result
   try
   {
-    oracle::occi::ResultSet *rs =
-      m_selectTapeRequestQueueStatement->executeQuery();
+    oracle::occi::ResultSet *const rs = stmt->executeQuery();
 
     // The result of the search in the database.
-    castor::vdqm::IVdqmSvc::VolReqList* volReqs =
+    castor::vdqm::IVdqmSvc::VolReqList *const volReqs =
       new castor::vdqm::IVdqmSvc::VolReqList();
 
     vdqmVolReq_t *volReq = NULL;
@@ -1734,7 +1673,7 @@ castor::vdqm::IVdqmSvc::VolReqList*
       volReq->client_name[sizeof(volReq->client_name) - 1] = '\0';
     }
 
-    m_selectTapeRequestQueueStatement->closeResultSet(rs);
+    stmt->closeResultSet(rs);
 
     return volReqs;
 
@@ -1757,18 +1696,22 @@ std::list<vdqmDrvReq_t>*
   castor::db::ora::OraVdqmSvc::selectTapeDriveQueue(const std::string dgn,
   const std::string requestedSrv) throw (castor::exception::Exception) {
 
-  // Check whether the statements are ok
-  if (0 == m_selectTapeDriveQueueStatement) {
-    m_selectTapeDriveQueueStatement = 
-      createStatement(s_selectTapeDriveQueueStatementString);
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = SELECT_TAPE_DRIVE_QUEUE_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      storeStatement(stmtId, stmt);
+    }
   }
 
   // Set the query statements parameters
   try {
-    m_selectTapeDriveQueueStatement->setString(1, dgn);
-    m_selectTapeDriveQueueStatement->setString(2, dgn);
-    m_selectTapeDriveQueueStatement->setString(3, requestedSrv);
-    m_selectTapeDriveQueueStatement->setString(4, requestedSrv);
+    stmt->setString(1, dgn);
+    stmt->setString(2, dgn);
+    stmt->setString(3, requestedSrv);
+    stmt->setString(4, requestedSrv);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -1781,8 +1724,7 @@ std::list<vdqmDrvReq_t>*
  
   // Execute statement and get result
   try {
-    oracle::occi::ResultSet *rs =
-      m_selectTapeDriveQueueStatement->executeQuery();
+    oracle::occi::ResultSet *rs = stmt->executeQuery();
 
     // The result of the search in the database.
     std::list<vdqmDrvReq_t>* drvReqs = new std::list<vdqmDrvReq_t>;
@@ -1831,7 +1773,7 @@ std::list<vdqmDrvReq_t>*
       drvReqs->push_back(drvReq);
     }
 
-    m_selectTapeDriveQueueStatement->closeResultSet(rs);
+    stmt->closeResultSet(rs);
 
     return drvReqs;
 
@@ -1909,26 +1851,30 @@ castor::vdqm::TapeRequest*
   const int VolReqID)
   throw (castor::exception::Exception) {
     
-   // Check whether the statements are ok
-  if (0 == m_selectTapeRequestStatement) {
-    m_selectTapeRequestStatement =
-      createStatement(s_selectTapeRequestStatementString);
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = SELECT_TAPE_REQUEST_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      storeStatement(stmtId, stmt);
+    }
   }
+
   // Execute statement and get result
   u_signed64 id;
   try {
-    m_selectTapeRequestStatement->setInt(1, VolReqID);
-    oracle::occi::ResultSet *rset =
-      m_selectTapeRequestStatement->executeQuery();
+    stmt->setInt(1, VolReqID);
+    oracle::occi::ResultSet *rset = stmt->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      m_selectTapeRequestStatement->closeResultSet(rset);
+      stmt->closeResultSet(rset);
       // we found nothing, so let's return NULL
       return NULL;
     }
     // If we reach this point, then we selected successfully
     // a tape and it's id is in rset
     id = (u_signed64)rset->getDouble(1);
-    m_selectTapeRequestStatement->closeResultSet(rset);
+    stmt->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -1986,29 +1932,32 @@ int castor::db::ora::OraVdqmSvc::allocateDrive(u_signed64 *tapeDriveId,
   int allocationResult = 0;
   
 
-  // Check whether the statements are ok
-  if (0 == m_allocateDriveStatement) {
-    m_allocateDriveStatement =
-      createStatement(s_allocateDriveStatementString);
-    
-    m_allocateDriveStatement->registerOutParam(1, oracle::occi::OCCIINT);
-    m_allocateDriveStatement->registerOutParam(2, oracle::occi::OCCIDOUBLE);
-    m_allocateDriveStatement->registerOutParam(3, oracle::occi::OCCISTRING,256);
-    m_allocateDriveStatement->registerOutParam(4, oracle::occi::OCCIDOUBLE);
-    m_allocateDriveStatement->registerOutParam(5, oracle::occi::OCCISTRING,256);
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = ALLOCATE_DRIVE_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->registerOutParam(1, oracle::occi::OCCIINT);
+      stmt->registerOutParam(2, oracle::occi::OCCIDOUBLE);
+      stmt->registerOutParam(3, oracle::occi::OCCISTRING,256);
+      stmt->registerOutParam(4, oracle::occi::OCCIDOUBLE);
+      stmt->registerOutParam(5, oracle::occi::OCCISTRING,256);
 
-    m_allocateDriveStatement->setAutoCommit(true);
+      stmt->setAutoCommit(true);
+      storeStatement(stmtId, stmt);
+    }
   }
-  
+
   // Execute statement and get result
   try {
-    m_allocateDriveStatement->executeUpdate();
+    stmt->executeUpdate();
     
-    allocationResult   = m_allocateDriveStatement->getInt(1);
-    *tapeDriveId       = (u_signed64)m_allocateDriveStatement->getDouble(2);
-    *tapeDriveName     = m_allocateDriveStatement->getString(3);
-    *tapeRequestId     = (u_signed64)m_allocateDriveStatement->getDouble(4);
-    *tapeRequestVid    = m_allocateDriveStatement->getString(5);
+    allocationResult   = stmt->getInt(1);
+    *tapeDriveId       = (u_signed64)stmt->getDouble(2);
+    *tapeDriveName     = stmt->getString(3);
+    *tapeRequestId     = (u_signed64)stmt->getDouble(4);
+    *tapeRequestVid    = stmt->getString(5);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -2034,30 +1983,28 @@ int castor::db::ora::OraVdqmSvc::reuseDriveAllocation(
   // reuse found, but invalidated by other threads
   int reuseResult = 0;
 
-
-  // Check whether the statements are ok
-  if (0 == m_reuseDriveAllocationStatement) {
-    m_reuseDriveAllocationStatement =
-      createStatement(s_reuseDriveAllocationStatementString);
-
-    m_reuseDriveAllocationStatement->registerOutParam
-        (3, oracle::occi::OCCIINT);
-
-    m_reuseDriveAllocationStatement->registerOutParam
-        (4, oracle::occi::OCCIDOUBLE);
-
-    m_reuseDriveAllocationStatement->setAutoCommit(false);
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = REUSE_DRIVE_ALLOCATION_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->registerOutParam(3, oracle::occi::OCCIINT);
+      stmt->registerOutParam(4, oracle::occi::OCCIDOUBLE);
+      stmt->setAutoCommit(false);
+      storeStatement(stmtId, stmt);
+    }
   }
 
-  m_reuseDriveAllocationStatement->setDouble(1, tape->id());
-  m_reuseDriveAllocationStatement->setDouble(2, drive->id());
+  stmt->setDouble(1, tape->id());
+  stmt->setDouble(2, drive->id());
   
   // Execute statement and get result
   try {
-    m_reuseDriveAllocationStatement->executeUpdate();
+    stmt->executeUpdate();
     
-    reuseResult    = m_reuseDriveAllocationStatement->getInt(3);
-    *tapeRequestId = (u_signed64)m_reuseDriveAllocationStatement->getDouble(4);
+    reuseResult    = stmt->getInt(3);
+    *tapeRequestId = (u_signed64)stmt->getDouble(4);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -2081,23 +2028,23 @@ castor::vdqm::TapeRequest *castor::db::ora::OraVdqmSvc::requestToSubmit()
   castor::vdqm::TapeRequest *tapeRequest  = NULL;
 
 
-  // Check whether the statements are ok
-  if (0 == m_requestToSubmitStatement) {
-    m_requestToSubmitStatement =
-      createStatement(s_requestToSubmitStatementString);
-
-    m_requestToSubmitStatement->registerOutParam
-        (1, oracle::occi::OCCIDOUBLE);
-
-    m_requestToSubmitStatement->setAutoCommit(true);
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = REQUEST_TO_SUBMIT_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->registerOutParam(1, oracle::occi::OCCIDOUBLE);
+      stmt->setAutoCommit(true);
+      storeStatement(stmtId, stmt);
+    }
   }
-
 
   // Execute statement and get result
   try {
-    m_requestToSubmitStatement->executeUpdate();
+    stmt->executeUpdate();
 
-    idTapeRequest = (u_signed64)m_requestToSubmitStatement->getDouble(1);
+    idTapeRequest = (u_signed64)stmt->getDouble(1);
 
     if (idTapeRequest == 0 ) {
       // We found nothing, so return NULL
@@ -2190,18 +2137,22 @@ std::vector<castor::vdqm::TapeDriveCompatibility*>*
   // Execute statement and get result
   u_signed64 id;
   
-  // Check whether the statements are ok
-  if (0 == m_selectCompatibilitiesForDriveModelStatement) {
-    m_selectCompatibilitiesForDriveModelStatement = createStatement(
-      s_selectCompatibilitiesForDriveModelStatementString);
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = SELECT_COMPATIBILITIES_FOR_DRIVE_MODEL_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      storeStatement(stmtId, stmt);
+    }
   }
  
   try {
-    m_selectCompatibilitiesForDriveModelStatement->setString(1, tapeDriveModel);
-    rset = m_selectCompatibilitiesForDriveModelStatement->executeQuery();
+    stmt->setString(1, tapeDriveModel);
+    rset = stmt->executeQuery();
     
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      m_selectCompatibilitiesForDriveModelStatement->closeResultSet(rset);
+      stmt->closeResultSet(rset);
       // we found nothing, so let's return NULL
       
       return NULL;
@@ -2248,7 +2199,7 @@ std::vector<castor::vdqm::TapeDriveCompatibility*>*
       result->push_back(driveCompatibility);
     } while (oracle::occi::ResultSet::END_OF_FETCH != rset->next());
     
-    m_selectCompatibilitiesForDriveModelStatement->closeResultSet(rset);
+    stmt->closeResultSet(rset);
     return result;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -2283,18 +2234,22 @@ std::vector<castor::vdqm::TapeAccessSpecification*>*
   // Execute statement and get result
   u_signed64 id;
   
-  // Check whether the statements are ok
-  if (0 == m_selectTapeAccessSpecificationsStatement) {
-    m_selectTapeAccessSpecificationsStatement = createStatement(
-      s_selectTapeAccessSpecificationsStatementString);
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  {
+    const StatementId stmtId = SELECT_TAPE_ACCESS_SPECIFICATIONS_SQL_STMT;
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      storeStatement(stmtId, stmt);
+    }
   }
  
   try {
-    m_selectTapeAccessSpecificationsStatement->setString(1, tapeModel);
-    rset = m_selectTapeAccessSpecificationsStatement->executeQuery();
+    stmt->setString(1, tapeModel);
+    rset = stmt->executeQuery();
     
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      m_selectTapeAccessSpecificationsStatement->closeResultSet(rset);
+      stmt->closeResultSet(rset);
       // we found nothing, so let's return NULL
       
       return NULL;
@@ -2341,7 +2296,7 @@ std::vector<castor::vdqm::TapeAccessSpecification*>*
       result->push_back(tapeAccessSpec);
     } while (oracle::occi::ResultSet::END_OF_FETCH != rset->next());
     
-    m_selectTapeAccessSpecificationsStatement->closeResultSet(rset);
+    stmt->closeResultSet(rset);
     return result;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -2391,4 +2346,33 @@ castor::db::ora::OraVdqmSvc::deleteStatement(oracle::occi::Statement* stmt)
     castor::db::ora::OraStatement* oraStmt =
         new castor::db::ora::OraStatement(stmt, dynamic_cast<castor::db::ora::OraCnvSvc*>(cnvSvc()));
     delete oraStmt;
+}
+
+
+// -----------------------------------------------------------------------
+// getStatement
+// -----------------------------------------------------------------------
+oracle::occi::Statement *castor::db::ora::OraVdqmSvc::getStatement(
+  const StatementId stmtId) {
+
+  std::map<int, oracle::occi::Statement* >::iterator p =
+    m_statements.find(stmtId);
+
+  if(p != m_statements.end()) {
+    return p->second;
+  } else {
+    return NULL;
+  }
+
+  return NULL;
+}
+
+
+// -----------------------------------------------------------------------
+// storeStatement
+// -----------------------------------------------------------------------
+void castor::db::ora::OraVdqmSvc::storeStatement(const StatementId stmtId,
+  oracle::occi::Statement *const stmt) {
+
+  m_statements[stmtId] = stmt;
 }
