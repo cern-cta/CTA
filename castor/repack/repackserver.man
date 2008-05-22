@@ -54,7 +54,7 @@ REPACK_POLLTIME=<time in seconds>
 .SH "REQUIREMENTS"
 The repackserver needs a configured Oracle/MySQL Database with the database 
 connection username/password specified as the following in the 
-/etc/castor/ORASTAGERCONFIG:
+/etc/castor/ORAREPACKCONFIG:
 .br
 DbCnvSvc        user repack
 .br
@@ -70,7 +70,7 @@ seperated through the environment variable CASTOR_INSTANCE.
 
 
 e.g. in case CASTOR_INSTANCE=Repack the corresponding entry in the
-ORASTAGERCONFIG looks like:
+ORAREPACKCONFIG looks like:
 .br
 DbCnvSvc_Repack        user repack
 .br
