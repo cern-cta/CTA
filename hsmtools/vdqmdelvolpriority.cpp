@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      vdqmsetvolpriority.cpp
+ *                      vdqmdelvolpriority.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,9 +22,21 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/BaseObject.hpp"
+#include "castor/Constants.hpp"
+#include "castor/Services.hpp"
+#include "castor/Services.hpp"
+#include "castor/db/DbParamsSvc.hpp"
+#include "castor/vdqm/IVdqmSvc.hpp"
+#include "h/Castor_limits.h"
+
 #include <Cgetopt.h>
 #include <iostream>
 #include <string>
+#include <string.h>
+
+
+const std::string VDQMSCHEMAVERSION = "2_1_7_4";
 
 
 void usage(const std::string programName) {
@@ -47,7 +59,7 @@ static struct Coptions longopts[] = {
 };
 
 
-void parseCommandLine(int argc, char **argv) {
+void parseCommandLine(int argc, char **argv, std::string &vid, int &tpMode) {
 
   bool vidSet    = false;
   bool tpModeSet = false;
@@ -60,9 +72,19 @@ void parseCommandLine(int argc, char **argv) {
   while ((c = Cgetopt_long (argc, argv, "v:a:h", longopts, NULL)) != -1) {
     switch (c) {
     case 'v':
+      vid    = Coptarg;
       vidSet = true;
       break;
     case 'a':
+      if((strcmp(Coptarg,"0") != 0) && (strcmp(Coptarg,"1") != 0)) {
+        std::cerr
+          << std::endl
+          << "Error: Invalid tape access mode: " << Coptarg
+          << std::endl << std::endl;
+        usage(argv[0]);
+        exit(1);
+      }
+      tpMode = atoi(Coptarg);
       tpModeSet = true;
       break;
     case 'h':
@@ -124,9 +146,103 @@ void parseCommandLine(int argc, char **argv) {
 }
 
 
-int main(int argc, char **argv) {
-//std::string vid      = "";
-//int         tpMode   = 0;
+castor::vdqm::IVdqmSvc *retrieveVdqmSvc() {
+  // Retrieve a Services object
+  castor::Services *svcs = castor::BaseObject::sharedServices();
+  if(svcs == NULL) {
+    std::cerr
+      << std::endl
+      << "Failed to retrieve Services object"
+      << std::endl << std::endl;
+    exit(1);
+  }
 
-  parseCommandLine(argc, argv);
+  // General purpose pointer to a service
+  castor::IService* svc = NULL;
+
+  // Retrieve a DB parameters service
+  svc = svcs->service("DbParamsSvc", castor::SVC_DBPARAMSSVC);
+  if(svc == NULL) {
+    std::cerr
+      << std::endl
+      << "Failed to retrieve DB parameters service"
+      << std::endl << std::endl;
+    exit(1);
+  }
+  castor::db::DbParamsSvc* paramsSvc =
+    dynamic_cast<castor::db::DbParamsSvc*>(svc);
+  if(paramsSvc == NULL) {
+    std::cerr
+      << std::endl
+      << "Failed to dynamic cast the DB parameters service"
+      << std::endl << std::endl;
+    exit(1);
+  }
+
+  // Tell the DB parameter service of the VDQM schema version and the DB
+  // connection details file
+  paramsSvc->setSchemaVersion(VDQMSCHEMAVERSION);
+  paramsSvc->setDbAccessConfFile(ORAVDQMCONFIGFILE);
+
+  // Retrieve the VDQM DB service
+  svc = svcs->service("DbVdqmSvc", castor::SVC_DBVDQMSVC);
+  if(svc == NULL) {
+    std::cerr
+      << std::endl
+      << "Failed to retrieve the VDQM DB service"
+      << std::endl << std::endl;
+    exit(1);
+  }
+  castor::vdqm::IVdqmSvc *vdqmSvc = dynamic_cast<castor::vdqm::IVdqmSvc*>(svc);
+  if(vdqmSvc == NULL) {
+    std::cerr
+      << std::endl
+      << "Failed to dynamic cast the VDQM DB service."
+      << std::endl << std::endl;
+    exit(1);
+  }
+
+  return vdqmSvc;
+}
+
+
+int main(int argc, char **argv) {
+  std::string vid      = "";
+  int         tpMode   = 0;
+
+
+  parseCommandLine(argc, argv, vid, tpMode);
+
+  // Initializing the log
+  castor::BaseObject::initLog(argv[0], castor::SVC_NOMSG);
+
+  // Retrieve the VDQM DB service
+  castor::vdqm::IVdqmSvc *vdqmSvc = retrieveVdqmSvc();
+
+  try {
+    int priority           = 0;
+    int clientUID          = 0;
+    int clientGID          = 0;
+    std::string clientHost = "";
+
+    // Third parameter = unlimited lifespanType = 1
+    const u_signed64 volPriorityId = vdqmSvc->deleteVolPriority(vid, tpMode, 1,
+      &priority, &clientUID, &clientGID, &clientHost);
+
+    // If no volume priority was deleted
+    if(volPriorityId == 0) {
+      std::cerr
+        << std::endl
+        << "No volume priority was deleted"
+        << std::endl << std::endl;
+      exit(1);
+    }
+  } catch(castor::exception::Exception &e) {
+    std::cerr
+      << std::endl
+      << "Failed to delete volume priority: " << e.getMessage().str()
+      << std::endl << std::endl;
+  }
+
+  return 0;
 }

@@ -254,4 +254,6 @@ int main(int argc, char **argv) {
       << "Failed to set volume priority: " << e.getMessage().str()
       << std::endl << std::endl;
   }
+
+  return 0;
 }

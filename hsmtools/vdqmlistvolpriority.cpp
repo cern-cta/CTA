@@ -22,9 +22,21 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/BaseObject.hpp"
+#include "castor/Constants.hpp"
+#include "castor/Services.hpp"
+#include "castor/Services.hpp"
+#include "castor/db/DbParamsSvc.hpp"
+#include "castor/vdqm/IVdqmSvc.hpp"
+#include "h/Castor_limits.h"
+
 #include <Cgetopt.h>
 #include <iostream>
 #include <string>
+#include <string.h>
+
+
+const std::string VDQMSCHEMAVERSION = "2_1_7_4";
 
 
 void usage(const std::string programName) {
@@ -103,6 +115,74 @@ void parseCommandLine(int argc, char **argv) {
 }
 
 
+castor::vdqm::IVdqmSvc *retrieveVdqmSvc() {
+  // Retrieve a Services object
+  castor::Services *svcs = castor::BaseObject::sharedServices();
+  if(svcs == NULL) {
+    std::cerr
+      << std::endl
+      << "Failed to retrieve Services object"
+      << std::endl << std::endl;
+    exit(1);
+  }
+
+  // General purpose pointer to a service
+  castor::IService* svc = NULL;
+
+  // Retrieve a DB parameters service
+  svc = svcs->service("DbParamsSvc", castor::SVC_DBPARAMSSVC);
+  if(svc == NULL) {
+    std::cerr
+      << std::endl
+      << "Failed to retrieve DB parameters service"
+      << std::endl << std::endl;
+    exit(1);
+  }
+  castor::db::DbParamsSvc* paramsSvc =
+    dynamic_cast<castor::db::DbParamsSvc*>(svc);
+  if(paramsSvc == NULL) {
+    std::cerr
+      << std::endl
+      << "Failed to dynamic cast the DB parameters service"
+      << std::endl << std::endl;
+    exit(1);
+  }
+
+  // Tell the DB parameter service of the VDQM schema version and the DB
+  // connection details file
+  paramsSvc->setSchemaVersion(VDQMSCHEMAVERSION);
+  paramsSvc->setDbAccessConfFile(ORAVDQMCONFIGFILE);
+
+  // Retrieve the VDQM DB service
+  svc = svcs->service("DbVdqmSvc", castor::SVC_DBVDQMSVC);
+  if(svc == NULL) {
+    std::cerr
+      << std::endl
+      << "Failed to retrieve the VDQM DB service"
+      << std::endl << std::endl;
+    exit(1);
+  }
+  castor::vdqm::IVdqmSvc *vdqmSvc = dynamic_cast<castor::vdqm::IVdqmSvc*>(svc);
+  if(vdqmSvc == NULL) {
+    std::cerr
+      << std::endl
+      << "Failed to dynamic cast the VDQM DB service."
+      << std::endl << std::endl;
+    exit(1);
+  }
+
+  return vdqmSvc;
+}
+
+
 int main(int argc, char **argv) {
   parseCommandLine(argc, argv);
+
+  // Initializing the log
+  castor::BaseObject::initLog(argv[0], castor::SVC_NOMSG);
+
+  // Retrieve the VDQM DB service
+//castor::vdqm::IVdqmSvc *vdqmSvc = retrieveVdqmSvc();
+
+  return 0;
 }
