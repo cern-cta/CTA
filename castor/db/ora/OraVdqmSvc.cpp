@@ -117,6 +117,25 @@ const std::string
 const std::string
   castor::db::ora::OraVdqmSvc::s_deleteVolPriorityStatementString =
   "BEGIN castorVdqm.deleteVolPriority(:1, :2, :3, :4, :5, :6, :7, :8); END;";
+
+/// SQL statement for function listVolPriorities
+const std::string
+  castor::db::ora::OraVdqmSvc::s_listVolPrioritiesStatementString =
+    "SELECT"
+    "  priority,"
+    "  clientUID,"
+    "  clientGID,"
+    "  clientHost,"
+    "  vid,"
+    "  tpMode,"
+    "  lifespanType,"
+    "  id,"
+    "  creationTime,"
+    "  modificationTime "
+    "FROM"
+    " EffectiveVolumePriority_VIEW "
+    "ORDER BY"
+    " vid, tpMode, lifespanType";
   
 /// SQL statement for function deleteAllTapeDrvsFromSrv
 const std::string
@@ -299,6 +318,7 @@ castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   m_getQueuePositionStatement(0),
   m_setVolPriorityStatement(0),
   m_deleteVolPriorityStatement(0),
+  m_listVolPrioritiesStatement(0),
   m_selectTapeDriveStatement(0),
   m_dedicateDriveStatement(0),
   m_deleteDriveStatement(0),
@@ -356,6 +376,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
     if (m_getQueuePositionStatement) deleteStatement(m_getQueuePositionStatement);
     if (m_setVolPriorityStatement) deleteStatement(m_setVolPriorityStatement);
     if (m_deleteVolPriorityStatement) deleteStatement(m_deleteVolPriorityStatement);
+    if (m_listVolPrioritiesStatement) deleteStatement(m_listVolPrioritiesStatement);
     if (m_selectTapeDriveStatement) deleteStatement(m_selectTapeDriveStatement);
     if (m_dedicateDriveStatement) deleteStatement(m_dedicateDriveStatement);
     if (m_deleteDriveStatement) deleteStatement(m_deleteDriveStatement);
@@ -385,6 +406,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   m_getQueuePositionStatement = 0;
   m_setVolPriorityStatement = 0;
   m_deleteVolPriorityStatement = 0;
+  m_listVolPrioritiesStatement = 0;
   m_selectTapeDriveStatement = 0;
   m_dedicateDriveStatement = 0;
   m_deleteDriveStatement = 0;
@@ -853,6 +875,71 @@ u_signed64 castor::db::ora::OraVdqmSvc::deleteVolPriority(
   }
 
   return id;
+}
+
+
+// -----------------------------------------------------------------------
+// listVolPriorities
+// -----------------------------------------------------------------------
+std::list<castor::vdqm::IVdqmSvc::VolPriority>
+  *castor::db::ora::OraVdqmSvc::getVolPriorities()
+  throw (castor::exception::Exception) {
+
+  std::list<castor::vdqm::IVdqmSvc::VolPriority> *priorities =
+    new std::list<castor::vdqm::IVdqmSvc::VolPriority>;;
+
+
+  // Check whether the statements are ok
+  if (0 == m_listVolPrioritiesStatement) {
+    m_listVolPrioritiesStatement =
+      createStatement(s_listVolPrioritiesStatementString);
+  }
+
+  // Execute statement and get result
+  try {
+    oracle::occi::ResultSet *rs = m_listVolPrioritiesStatement->executeQuery();
+
+    VolPriority p;
+
+    while(rs->next()) {
+      p.priority         = rs->getInt(1);;
+      p.clientUID        = rs->getInt(2);;
+      p.clientGID        = rs->getInt(3);
+      strncpy(p.clientHost, rs->getString(4).c_str(), sizeof(p.clientHost));
+      // Null-terminate in case source string is longer than destination
+      p.clientHost[sizeof(p.clientHost) - 1] = '\0';
+      strncpy(p.vid, rs->getString(5).c_str(), sizeof(p.vid));
+      // Null-terminate in case source string is longer than destination
+      p.clientHost[sizeof(p.clientHost) - 1] = '\0';
+      p.tpMode           = rs->getInt(6);
+      p.lifespanType     = rs->getInt(7);
+      p.id               = (u_signed64)rs->getDouble(8);
+      p.creationTime     = (u_signed64)rs->getDouble(9);
+      p.modificationTime = (u_signed64)rs->getDouble(10);
+
+      priorities->push_back(p);
+    }
+
+    m_listVolPrioritiesStatement->closeResultSet(rs);
+  } catch(oracle::occi::SQLException &e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Failed to get list of volume priorities:"
+      << std::endl << e.getMessage();
+
+    throw ex;
+
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Failed to get list of volume priorities:"
+      << std::endl << e.getMessage().str();
+
+    throw ex;
+  }
+
+  return priorities;
 }
 
 

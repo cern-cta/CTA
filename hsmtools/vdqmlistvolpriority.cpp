@@ -32,6 +32,7 @@
 
 #include <Cgetopt.h>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <string.h>
 
@@ -182,7 +183,29 @@ int main(int argc, char **argv) {
   castor::BaseObject::initLog(argv[0], castor::SVC_NOMSG);
 
   // Retrieve the VDQM DB service
-//castor::vdqm::IVdqmSvc *vdqmSvc = retrieveVdqmSvc();
+  castor::vdqm::IVdqmSvc *const vdqmSvc = retrieveVdqmSvc();
+
+  try {
+    // Get the list of volume priorities
+    std::auto_ptr< std::list<castor::vdqm::IVdqmSvc::VolPriority> > priorities(
+      vdqmSvc->getVolPriorities());
+
+    // Print the list of volume priorities
+    for(std::list<castor::vdqm::IVdqmSvc::VolPriority>::iterator itor =
+      priorities->begin(); itor != priorities->end(); itor++) {
+      std::cout
+        <<  "vid="            << itor->vid
+        << " tapeAccessMode=" << itor->tpMode
+        << " lifespanType="   << itor->lifespanType
+        << " priority="       << itor->priority
+        << std::endl;
+    }
+  } catch(castor::exception::Exception &e) {
+    std::cerr
+      << std::endl
+      << "Failed to get the list of volume priorities: " << e.getMessage().str()
+      << std::endl << std::endl;
+  }
 
   return 0;
 }

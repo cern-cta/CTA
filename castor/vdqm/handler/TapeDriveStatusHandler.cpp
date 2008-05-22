@@ -520,7 +520,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
       if(rememberedFinishedTapeRequest) {
         // If there is a "single-shot" volume priority for the drive
         // allocation, then delete it
-        // Third parameter = 0 = single-shot lifespanType
+        // Third parameter = single-shot lifespanType = 0
         int priority           = 0;
         int clientUID          = 0;
         int clientGID          = 0;

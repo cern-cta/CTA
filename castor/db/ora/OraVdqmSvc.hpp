@@ -31,8 +31,6 @@
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "h/vdqm_messages.h"
 
-#include <string>
-#include <vector>
 #include "occi.h"
 
 
@@ -134,6 +132,12 @@ namespace castor {
           const int tpMode, const int lifespanType, int *const priority,
           int *const clientUID, int *const clientGID,
           std::string *const clientHost) throw (castor::exception::Exception);
+
+        /**
+         * See the documentation for castor::vdqm::IVdqmSvc.
+         */
+        virtual std::list<castor::vdqm::IVdqmSvc::VolPriority>
+          *getVolPriorities() throw (castor::exception::Exception);
   
         /**
          * Looks, wether the specific tape access exist in the db. If not the
@@ -388,6 +392,12 @@ namespace castor {
 
         /// SQL statement object for function deleteVolPriority
         oracle::occi::Statement *m_deleteVolPriorityStatement;
+
+        /// SQL statement for function listVolPriorities
+        static const std::string s_listVolPrioritiesStatementString;
+
+        /// SQL statement object for function listVolPriorities
+        oracle::occi::Statement *m_listVolPrioritiesStatement;
           
         /// SQL statement for function selectTapeDrive
         static const std::string s_selectTapeDriveStatementString;

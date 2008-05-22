@@ -234,7 +234,7 @@ int main(int argc, char **argv) {
   castor::BaseObject::initLog(argv[0], castor::SVC_NOMSG);
 
   // Retrieve the VDQM DB service
-  castor::vdqm::IVdqmSvc *vdqmSvc = retrieveVdqmSvc();
+  castor::vdqm::IVdqmSvc *const vdqmSvc = retrieveVdqmSvc();
 
   try {
     // Get the standard host name for the current machine

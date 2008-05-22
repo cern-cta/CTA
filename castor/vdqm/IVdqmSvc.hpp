@@ -70,7 +70,6 @@ namespace castor {
             };
         };
 
-
         /**
          * Inner class used to help manage the allocated memory associated with
          * a list of volume requests for showqueues
@@ -89,6 +88,24 @@ namespace castor {
             }
           }
         };
+
+        /**
+         * Inner class used to return the result of listVolPriorities.
+         */
+        class VolPriority {
+        public:
+          int        priority;
+          int        clientUID;
+          int        clientGID;
+          char       clientHost[CA_MAXHOSTNAMELEN+1];
+          char       vid[CA_MAXVIDLEN+1];
+          int        tpMode;
+          int        lifespanType;
+          u_signed64 id;
+          u_signed64 creationTime;
+          u_signed64 modificationTime;
+        };
+
 
         /**
          * Retrieves a TapeServer from the database based on its serverName. 
@@ -154,11 +171,24 @@ namespace castor {
          * @param lifespanType the type of lifespan to be assigned to the
          * priority setting.  Valid values are either 0 meaning single-shot or
          * 1 meaning unlimited.
+         *
+         * @return the ID of the deleted priority if one was deleted, else 0
          */
         virtual u_signed64 deleteVolPriority(const std::string vid,
           const int tpMode, const int lifespanType, int *const priority,
           int *const clientUID, int *const clientGID,
           std::string *const clientHost)
+          throw (castor::exception::Exception) = 0;
+
+        /**
+         * Returns the list of effective volume priorities.
+         * Please note: The caller is responsible for the deletion of the
+         * allocated list!
+         *
+         * @return the list of all volume priorities.
+         * Note that the returned list should be deallocated by the caller.
+         */
+        virtual std::list<VolPriority> *getVolPriorities()
           throw (castor::exception::Exception) = 0;
         
         /**
@@ -257,16 +287,17 @@ namespace castor {
          * If you don't want to specify one of the arguments, just give an
          * empty string instead.
          * Please note: The caller is responsible for the deletion of the
-         * allocated vector!
+         * allocated VolReqList!
          * @param dgn The device group name to be used to restrict the queue
          * of requests returned.  If the list should not be restricted by device
          * group name then set this parameter to be an empty string.
          * @param requestedSrv The server name to be used to restrict the queue
          * of tape requests returned.  If the list should not be restricted by
          * server name then set this parameter to be an empty string.
-         * @return vector of messages to be used to send the queue of tape
+         * @return VolReqList of messages to be used to send the queue of tape
          * requests to the showqueues comman-line application.
-         * Note that the returned vector should be deallocated by the caller.
+         * Note that the returned VolReqList should be deallocated by the
+         * caller.
          */
         virtual VolReqList* selectTapeRequestQueue(
           const std::string dgn, const std::string requestedSrv)
@@ -277,16 +308,16 @@ namespace castor {
          * If you don't want to specify one of the arguments, just give an
          * empty string instead.
          * Please note: The caller is responsible for the deletion of the
-         * allocated vector!
+         * allocated list!
          * @param dgn The device group name to be used to restrict the queue
          * of drives returned.  If the list should not be restricted by device
          * group name then set this parameter to be an empty string.
          * @param requestedSrv The server name to be used to restrict the queue
          * of tape drives returned.  If the list should not be restricted by
          * server name then set this parameter to be an empty string.
-         * @return vector of messages to be used to send the queue of tape
+         * @return list of messages to be used to send the queue of tape
          * drives to the showqueues comman-line application.
-         * Note that the returned vector should be deallocated by the caller.
+         * Note that the returned list should be deallocated by the caller.
          */
         virtual std::list<vdqmDrvReq_t>* selectTapeDriveQueue(
           const std::string dgn, const std::string requestedSrv)
