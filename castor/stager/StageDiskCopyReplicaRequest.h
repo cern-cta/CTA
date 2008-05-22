@@ -33,6 +33,7 @@
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
+struct Cstager_DiskCopy_t;
 struct Cstager_FileRequest_t;
 struct Cstager_Request_t;
 struct Cstager_StageDiskCopyReplicaRequest_t;
@@ -297,30 +298,6 @@ int Cstager_StageDiskCopyReplicaRequest_clone(struct Cstager_StageDiskCopyReplic
                                               struct C_IObject_t* ret);
 
 /**
- * Get the value of sourceDiskCopyId
- * The id of the source diskcopy
- */
-int Cstager_StageDiskCopyReplicaRequest_sourceDiskCopyId(struct Cstager_StageDiskCopyReplicaRequest_t* instance, u_signed64* var);
-
-/**
- * Set the value of sourceDiskCopyId
- * The id of the source diskcopy
- */
-int Cstager_StageDiskCopyReplicaRequest_setSourceDiskCopyId(struct Cstager_StageDiskCopyReplicaRequest_t* instance, u_signed64 new_var);
-
-/**
- * Get the value of destDiskCopyId
- * The id of the destination diskcopy
- */
-int Cstager_StageDiskCopyReplicaRequest_destDiskCopyId(struct Cstager_StageDiskCopyReplicaRequest_t* instance, u_signed64* var);
-
-/**
- * Set the value of destDiskCopyId
- * The id of the destination diskcopy
- */
-int Cstager_StageDiskCopyReplicaRequest_setDestDiskCopyId(struct Cstager_StageDiskCopyReplicaRequest_t* instance, u_signed64 new_var);
-
-/**
  * Get the value of id
  * The id of this object
  */
@@ -331,5 +308,41 @@ int Cstager_StageDiskCopyReplicaRequest_id(struct Cstager_StageDiskCopyReplicaRe
  * The id of this object
  */
 int Cstager_StageDiskCopyReplicaRequest_setId(struct Cstager_StageDiskCopyReplicaRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of sourceSvcClass
+ * The service class the source diskcopy belongs too
+ */
+int Cstager_StageDiskCopyReplicaRequest_sourceSvcClass(struct Cstager_StageDiskCopyReplicaRequest_t* instance, struct Cstager_SvcClass_t** var);
+
+/**
+ * Set the value of sourceSvcClass
+ * The service class the source diskcopy belongs too
+ */
+int Cstager_StageDiskCopyReplicaRequest_setSourceSvcClass(struct Cstager_StageDiskCopyReplicaRequest_t* instance, struct Cstager_SvcClass_t* new_var);
+
+/**
+ * Get the value of destDiskCopy
+ * The destination diskcopy to create
+ */
+int Cstager_StageDiskCopyReplicaRequest_destDiskCopy(struct Cstager_StageDiskCopyReplicaRequest_t* instance, struct Cstager_DiskCopy_t** var);
+
+/**
+ * Set the value of destDiskCopy
+ * The destination diskcopy to create
+ */
+int Cstager_StageDiskCopyReplicaRequest_setDestDiskCopy(struct Cstager_StageDiskCopyReplicaRequest_t* instance, struct Cstager_DiskCopy_t* new_var);
+
+/**
+ * Get the value of sourceDiskCopy
+ * The source diskcopy to be replicated
+ */
+int Cstager_StageDiskCopyReplicaRequest_sourceDiskCopy(struct Cstager_StageDiskCopyReplicaRequest_t* instance, struct Cstager_DiskCopy_t** var);
+
+/**
+ * Set the value of sourceDiskCopy
+ * The source diskcopy to be replicated
+ */
+int Cstager_StageDiskCopyReplicaRequest_setSourceDiskCopy(struct Cstager_StageDiskCopyReplicaRequest_t* instance, struct Cstager_DiskCopy_t* new_var);
 
 #endif /* CASTOR_STAGER_STAGEDISKCOPYREPLICAREQUEST_H */

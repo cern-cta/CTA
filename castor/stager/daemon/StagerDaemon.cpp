@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.52 $ $Release$ $Date: 2008/05/05 08:25:40 $ $Author: waldron $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.53 $ $Release$ $Date: 2008/05/22 16:40:08 $ $Author: sponcec3 $
  *
  * Main stager daemon
  *
@@ -175,6 +175,7 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_RM, "Rm Request"},
     { STAGER_RM_DETAILS, "Rm details"},/* SYSTEM LEVEL ALSO */
     { STAGER_PUTDONE,"PutDone Request"},
+    { STAGER_CHGPRIV,"ChangePrivilege Request"},
 
     /*  SYSTEM LEVEL */
     /* after calling the corresponding stagerService function, to show the decision taken */

@@ -185,7 +185,12 @@ namespace castor {
     OBJ_StgFilesDeletedResponse = 150,
 
     /* More VDQM objects */
-    OBJ_VolumePriority = 151
+    OBJ_VolumePriority = 151,
+
+    /* B/W list related objects */
+    OBJ_ChangePrivilege = 152,
+    OBJ_User = 153,
+    OBJ_RequestType = 154
   };
 
   /**
@@ -261,7 +266,7 @@ namespace castor {
    * as opposed to the C++ compiler, does not allow a variable-size type
    * declared outside of any function.
    */
-#define OBJECT_IDS_NB 152
+#define OBJECT_IDS_NB 155
   static const unsigned int ObjectsIdsNb = OBJECT_IDS_NB;
 
   /**

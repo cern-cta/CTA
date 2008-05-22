@@ -215,6 +215,15 @@ DROP TABLE DiskPoolQuery;
 /* SQL statements for type VersionQuery */
 DROP TABLE VersionQuery;
 
+/* SQL statements for type ChangePrivilege */
+DROP TABLE ChangePrivilege;
+
+/* SQL statements for type User */
+DROP TABLE User;
+
+/* SQL statements for type RequestType */
+DROP TABLE RequestType;
+
 DROP FUNCTION getTime;
 DROP FUNCTION FileSystemRate;
 DROP PROCEDURE makeSubRequestWait;

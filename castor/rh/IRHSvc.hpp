@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IRHSvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/08/20 10:23:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IRHSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/05/22 16:40:07 $ $Author: sponcec3 $
  *
  * This class provides specific request handler methods
  *
@@ -36,6 +36,10 @@
 namespace castor {
 
   // Forward declaration
+  namespace bwlist {
+    class User;
+    class RequestType;
+  }
 
   namespace rh {
 
@@ -60,6 +64,27 @@ namespace castor {
       virtual void checkPermission
       (const std::string svcClassName, unsigned long euid,
        unsigned long egid, int type)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * change privileges for some users
+       * @param svcClassId the service class to be affected.
+       * The special value 0 can be used to target all service
+       * classes
+       * @param users the list of affected users. An empty list
+       * can be used to target all users. Similarly, an entry
+       * containing a -1 as uid or gid means repectively that
+       * all uid or all gid are targeted
+       * @param requestTypes the list of affected request types.
+       * An empty list can be used to target all types
+       * @param isAdd do we add (or delete) these privileges ?
+       * @exception in case of error
+       */
+      virtual void changePrivilege
+      (const u_signed64 svcClassId,
+       std::vector<castor::bwlist::User*> users,
+       std::vector<castor::bwlist::RequestType*> requestTypes,
+       bool isAdd)
         throw (castor::exception::Exception) = 0;
 
     }; // end of class IRHSvc

@@ -29,6 +29,7 @@
 // Include Files
 #include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
+#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/StageDiskCopyReplicaRequest.hpp"
@@ -389,38 +390,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_StageDiskCopyReplicaRequest_sourceDiskCopyId
-  //----------------------------------------------------------------------------
-  int Cstager_StageDiskCopyReplicaRequest_sourceDiskCopyId(castor::stager::StageDiskCopyReplicaRequest* instance, u_signed64* var) {
-    *var = instance->sourceDiskCopyId();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageDiskCopyReplicaRequest_setSourceDiskCopyId
-  //----------------------------------------------------------------------------
-  int Cstager_StageDiskCopyReplicaRequest_setSourceDiskCopyId(castor::stager::StageDiskCopyReplicaRequest* instance, u_signed64 new_var) {
-    instance->setSourceDiskCopyId(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageDiskCopyReplicaRequest_destDiskCopyId
-  //----------------------------------------------------------------------------
-  int Cstager_StageDiskCopyReplicaRequest_destDiskCopyId(castor::stager::StageDiskCopyReplicaRequest* instance, u_signed64* var) {
-    *var = instance->destDiskCopyId();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageDiskCopyReplicaRequest_setDestDiskCopyId
-  //----------------------------------------------------------------------------
-  int Cstager_StageDiskCopyReplicaRequest_setDestDiskCopyId(castor::stager::StageDiskCopyReplicaRequest* instance, u_signed64 new_var) {
-    instance->setDestDiskCopyId(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_StageDiskCopyReplicaRequest_id
   //----------------------------------------------------------------------------
   int Cstager_StageDiskCopyReplicaRequest_id(castor::stager::StageDiskCopyReplicaRequest* instance, u_signed64* var) {
@@ -433,6 +402,54 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_StageDiskCopyReplicaRequest_setId(castor::stager::StageDiskCopyReplicaRequest* instance, u_signed64 new_var) {
     instance->setId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageDiskCopyReplicaRequest_sourceSvcClass
+  //----------------------------------------------------------------------------
+  int Cstager_StageDiskCopyReplicaRequest_sourceSvcClass(castor::stager::StageDiskCopyReplicaRequest* instance, castor::stager::SvcClass** var) {
+    *var = instance->sourceSvcClass();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageDiskCopyReplicaRequest_setSourceSvcClass
+  //----------------------------------------------------------------------------
+  int Cstager_StageDiskCopyReplicaRequest_setSourceSvcClass(castor::stager::StageDiskCopyReplicaRequest* instance, castor::stager::SvcClass* new_var) {
+    instance->setSourceSvcClass(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageDiskCopyReplicaRequest_destDiskCopy
+  //----------------------------------------------------------------------------
+  int Cstager_StageDiskCopyReplicaRequest_destDiskCopy(castor::stager::StageDiskCopyReplicaRequest* instance, castor::stager::DiskCopy** var) {
+    *var = instance->destDiskCopy();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageDiskCopyReplicaRequest_setDestDiskCopy
+  //----------------------------------------------------------------------------
+  int Cstager_StageDiskCopyReplicaRequest_setDestDiskCopy(castor::stager::StageDiskCopyReplicaRequest* instance, castor::stager::DiskCopy* new_var) {
+    instance->setDestDiskCopy(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageDiskCopyReplicaRequest_sourceDiskCopy
+  //----------------------------------------------------------------------------
+  int Cstager_StageDiskCopyReplicaRequest_sourceDiskCopy(castor::stager::StageDiskCopyReplicaRequest* instance, castor::stager::DiskCopy** var) {
+    *var = instance->sourceDiskCopy();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageDiskCopyReplicaRequest_setSourceDiskCopy
+  //----------------------------------------------------------------------------
+  int Cstager_StageDiskCopyReplicaRequest_setSourceDiskCopy(castor::stager::StageDiskCopyReplicaRequest* instance, castor::stager::DiskCopy* new_var) {
+    instance->setSourceDiskCopy(new_var);
     return 0;
   }
 

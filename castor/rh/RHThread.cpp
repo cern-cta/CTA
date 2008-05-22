@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2008/03/27 07:36:36 $ $Author: waldron $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2008/05/22 16:40:07 $ $Author: sponcec3 $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -40,6 +40,7 @@
 #include "castor/stager/QryRequest.hpp"
 #include "castor/stager/GCFileList.hpp"
 #include "castor/rh/Client.hpp"
+#include "castor/bwlist/ChangePrivilege.hpp"
 #include "castor/io/biniostream.h"
 #include "castor/rh/Server.hpp"
 #include "castor/MessageAck.hpp"
@@ -334,6 +335,15 @@ unsigned int castor::rh::RHThread::handleRequest
     if (0 != fdReq) {
       svcs()->fillRep(&ad, fdReq, OBJ_GCFile, false);
     }
+
+    // Store users and types for changePrivilege requests
+    castor::bwlist::ChangePrivilege* cpReq =
+      dynamic_cast<castor::bwlist::ChangePrivilege*>(fr);
+    if (0 != cpReq) {
+      svcs()->fillRep(&ad, cpReq, OBJ_User, false);
+      svcs()->fillRep(&ad, cpReq, OBJ_RequestType, false);
+    }
+
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);
     throw e;
@@ -375,6 +385,7 @@ void castor::rh::RHThread::sendNotification
   case OBJ_StageRequestQueryRequest:
   case OBJ_DiskPoolQuery:
   case OBJ_VersionQuery:
+  case OBJ_ChangePrivilege:
     // QueryRequest Service
     castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'Q');
     break;

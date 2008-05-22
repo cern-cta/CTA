@@ -41,6 +41,7 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbBaseCnv.cpp \
      DbCastorFileCnv.cpp \
+     DbChangePrivilegeCnv.cpp \
      DbClientCnv.cpp \
      DbClientIdentificationCnv.cpp \
      DbDeviceGroupNameCnv.cpp \
@@ -67,6 +68,7 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbPutFailedCnv.cpp \
      DbPutStartRequestCnv.cpp \
      DbQueryParameterCnv.cpp \
+     DbRequestTypeCnv.cpp \
      DbSegmentCnv.cpp \
      DbSetFileGCWeightCnv.cpp \
      DbStageAbortRequestCnv.cpp \
@@ -99,6 +101,7 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbTapePoolCnv.cpp \
      DbTapeRequestCnv.cpp \
      DbTapeServerCnv.cpp \
+     DbUserCnv.cpp \
      DbVdqmTapeCnv.cpp \
      DbVersionQueryCnv.cpp \
      ../DbBaseObj.cpp \

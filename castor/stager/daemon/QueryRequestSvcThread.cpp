@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.77 $ $Release$ $Date: 2008/05/20 08:12:00 $ $Author: waldron $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.78 $ $Release$ $Date: 2008/05/22 16:40:08 $ $Author: sponcec3 $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -61,9 +61,11 @@
 #include "castor/stager/SvcClass.hpp"
 #include "castor/rh/BasicResponse.hpp"
 #include "castor/rh/FileQryResponse.hpp"
+#include "castor/rh/IRHSvc.hpp"
 #include "castor/query/IQuerySvc.hpp"
 #include "castor/stager/daemon/QueryRequestSvcThread.hpp"
 #include "castor/stager/daemon/DlfMessages.hpp"
+#include "castor/bwlist/ChangePrivilege.hpp"
 #include "stager_client_api.h"
 #include "Cns_api.h"
 #include "Cupv_api.h"
@@ -384,9 +386,7 @@ void
 castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
 (castor::stager::Request* req,
  castor::IClient *client,
- castor::Services* svcs,
  castor::query::IQuerySvc* qrySvc,
- castor::BaseAddress &ad,
  Cuuid_t uuid)
   throw (castor::exception::Exception) {
   // Useful Variables
@@ -546,9 +546,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
 void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
 (castor::stager::Request* req,
  castor::IClient *client,
- castor::Services* svcs,
  castor::query::IQuerySvc* qrySvc,
- castor::BaseAddress &ad,
  Cuuid_t uuid)
   throw (castor::exception::Exception) {
   castor::query::DiskPoolQuery *uReq;
@@ -660,6 +658,46 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
 }
 
 //-----------------------------------------------------------------------------
+// handleChangePrivilege
+//-----------------------------------------------------------------------------
+void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
+(castor::stager::Request* req,
+ castor::IClient *client,
+ castor::rh::IRHSvc* rhSvc,
+ Cuuid_t uuid)
+  throw (castor::exception::Exception) {
+  castor::bwlist::ChangePrivilege *uReq;
+  castor::rh::BasicResponse res;
+  try {
+    // prepare response first in case we fail
+    res.setReqAssociated(req->reqId());
+    // Get the ChangePrivilege
+    // cannot return 0 since we check the type before calling this method
+    uReq = dynamic_cast<castor::bwlist::ChangePrivilege*> (req);
+    // Get the SvcClass associated to the request
+    castor::stager::SvcClass* svcClass = uReq->svcClass();
+    u_signed64 svcClassId =
+      ((svcClass == 0) ? 0 : svcClass->id()) ;
+    // call method
+    rhSvc->changePrivilege(svcClassId, uReq->users(),
+			   uReq->requestTypes(),uReq->isAdd());
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Function", "QueryRequestSvcThread::handleChangePrivilege"),
+       castor::dlf::Param("Code", e.code()),
+       castor::dlf::Param("Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 3, params);
+    // Fill the reponse with the error
+    res.setErrorCode(e.code());
+    res.setErrorMessage(e.getMessage().str());
+  }
+  // Reply To Client
+  castor::replier::RequestReplier::getInstance()->
+    sendResponse(client, &res, true);
+}
+    
+//-----------------------------------------------------------------------------
 // handleVersionQuery
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::QueryRequestSvcThread::handleVersionQuery
@@ -679,7 +717,8 @@ void castor::stager::daemon::QueryRequestSvcThread::handleVersionQuery
 // cleanup
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::QueryRequestSvcThread::cleanup
-(castor::stager::Request* req, castor::IService *svc) throw() {
+(castor::stager::Request* req,
+ castor::IService *svc, castor::IService *extraSvc) throw() {
   if (0 != req) {
     castor::stager::SvcClass *svcClass = req->svcClass();
     if (0 != svcClass) {
@@ -688,6 +727,7 @@ void castor::stager::daemon::QueryRequestSvcThread::cleanup
     delete req;
   }
   if (svc) svc->release();
+  if (extraSvc) extraSvc->release();
 }
 
 //-----------------------------------------------------------------------------
@@ -698,6 +738,7 @@ void castor::stager::daemon::QueryRequestSvcThread::process
   // Useful variables
   castor::stager::Request* req = 0;
   castor::query::IQuerySvc *qrySvc = 0;
+  castor::rh::IRHSvc *rhSvc = 0;
   castor::Services *svcs = 0;
   Cuuid_t uuid = nullCuuid;
   castor::IClient *client = 0;
@@ -711,6 +752,8 @@ void castor::stager::daemon::QueryRequestSvcThread::process
     svcs = castor::BaseObject::services();
     castor::IService *svc = svcs->service("DbQuerySvc", castor::SVC_DBQUERYSVC);
     qrySvc = dynamic_cast<castor::query::IQuerySvc*>(svc);
+    svc = svcs->service("DbRHSvc", castor::SVC_DBRHSVC);
+    rhSvc = dynamic_cast<castor::rh::IRHSvc*>(svc);
     // Retrieving request and client from the database
     // Note that casting the request will never give 0
     // since select does return a request for sure
@@ -722,7 +765,7 @@ void castor::stager::daemon::QueryRequestSvcThread::process
     if (0 == client) {
       // "No client associated with request ! Cannot answer !"
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_NOCLI);
-      cleanup(req, qrySvc);
+      cleanup(req, qrySvc, rhSvc);
       return;
     }
   } catch (castor::exception::Exception e) {
@@ -734,7 +777,7 @@ void castor::stager::daemon::QueryRequestSvcThread::process
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 3, params);
-    cleanup(req, qrySvc);
+    cleanup(req, qrySvc, rhSvc);
     return;
   }
 
@@ -787,7 +830,7 @@ void castor::stager::daemon::QueryRequestSvcThread::process
     castor::replier::RequestReplier::getInstance()->
       sendEndResponse(client, req->reqId());
     // Cleanup
-    cleanup(req, qrySvc);
+    cleanup(req, qrySvc, rhSvc);
     return;
   }
 
@@ -796,23 +839,27 @@ void castor::stager::daemon::QueryRequestSvcThread::process
     switch (req->type()) {
     case castor::OBJ_StageFileQueryRequest:
       castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
-        (req, client, svcs, qrySvc, ad, uuid);
+        (req, client, qrySvc, uuid);
       break;
     case castor::OBJ_StageFindRequestRequest:
       //castor::stager::daemon::QueryRequestSvcThread::handle_findRequestRequest
-      //  (req, client, svcs, qrySvc, ad, uuid);
+      //  (req, client, qrySvc, uuid);
       break;
     case castor::OBJ_StageRequestQueryRequest:
       //castor::stager::daemon::QueryRequestSvcThread::handle_requestQueryRequest
-      //  (req, client, svcs, qrySvc, ad, uuid);
+      //  (req, client, qrySvc, uuid);
       break;
     case castor::OBJ_DiskPoolQuery:
       castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
-        (req, client, svcs, qrySvc, ad, uuid);
+        (req, client, qrySvc, uuid);
       break;
     case castor::OBJ_VersionQuery:
       castor::stager::daemon::QueryRequestSvcThread::handleVersionQuery
         (req, client);
+      break;
+    case OBJ_ChangePrivilege:
+      castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
+        (req, client, rhSvc, uuid);
       break;
     default:
       // "Unknown Request type"
@@ -833,6 +880,6 @@ void castor::stager::daemon::QueryRequestSvcThread::process
   }
 
   // final cleanup
-  cleanup(req, qrySvc);
+  cleanup(req, qrySvc, rhSvc);
   return;
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/09/11 08:50:31 $ $Author: waldron $
+ * @(#)$RCSfile: OraRHSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/05/22 16:40:07 $ $Author: sponcec3 $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -34,9 +34,17 @@
 #include "castor/db/ora/OraCommonSvc.hpp"
 #endif
 #include "castor/rh/IRHSvc.hpp"
+#include <vector>
 #include "occi.h"
+#include "osdep.h"
 
 namespace castor {
+
+  // Froward Declarations
+  namespace bwlist {
+    class User;
+    class RequestType;
+  }
 
   namespace db {
 
@@ -92,6 +100,27 @@ namespace castor {
         (const std::string svcClassName, unsigned long euid,
          unsigned long egid, int type)
           throw (castor::exception::Exception);
+       
+	/**
+	 * change privileges for some users
+	 * @param svcClassId the service class to be affected.
+	 * The special value 0 can be used to target all service
+	 * classes
+	 * @param users the list of affected users. An empty list
+	 * can be used to target all users. Similarly, an entry
+	 * containing a -1 as uid or gid means repectively that
+	 * all uid or all gid are targeted
+	 * @param requestTypes the list of affected request types.
+	 * An empty list can be used to target all types
+	 * @param isAdd do we add (or delete) these privileges ?
+	 * @exception in case of error
+	 */
+	virtual void changePrivilege
+	(const u_signed64 svcClassId,
+	 std::vector<castor::bwlist::User*> users,
+	 std::vector<castor::bwlist::RequestType*> requestTypes,
+	 bool isAdd)
+	  throw (castor::exception::Exception);
 
       private:
 
@@ -100,6 +129,18 @@ namespace castor {
 
         /// SQL statement object for function checkPermission
         oracle::occi::Statement *m_checkPermissionStatement;
+
+        /// SQL statement for function changePrivilege
+        static const std::string s_addPrivilegeStatementString;
+
+        /// SQL statement object for function changePrivilege
+        oracle::occi::Statement *m_addPrivilegeStatement;
+
+        /// SQL statement for function changePrivilege
+        static const std::string s_removePrivilegeStatementString;
+
+        /// SQL statement object for function changePrivilege
+        oracle::occi::Statement *m_removePrivilegeStatement;
 
       }; // end of class OraRHSvc
 

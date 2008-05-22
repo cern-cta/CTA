@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.638 $ $Date: 2008/05/05 08:37:22 $ $Author: waldron $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.639 $ $Date: 2008/05/22 16:40:06 $ $Author: sponcec3 $
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -109,6 +109,10 @@ CREATE OR REPLACE PACKAGE castorBW AS
   PROCEDURE addPrivilege(P Privilege);
   -- Remove priviledge P
   PROCEDURE removePrivilege(P Privilege);
+  -- Add priviledge
+  PROCEDURE addPrivilege(svcClassId NUMBER, euid NUMBER, egid NUMBER, reqType NUMBER);
+  -- Remove priviledge
+  PROCEDURE removePrivilege(svcClassId NUMBER, euid NUMBER, egid NUMBER, reqType NUMBER);
 END castorBW;
 
 CREATE OR REPLACE PACKAGE BODY castorBW AS
@@ -402,5 +406,27 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
       addPrivilegeToBL(wlr);
     END LOOP;
   END;
-    
+
+  -- Add priviledge
+  PROCEDURE addPrivilege(svcClassId NUMBER, euid NUMBER, egid NUMBER, reqType NUMBER) AS
+    p castorBW.Privilege;
+  BEGIN
+    p.svcClass = svcClassId;
+    p.euid = euid;
+    p.egid = egid;
+    p.reqType = reqType;
+    addPrivilege(p);
+  END;
+
+  -- Remove priviledge
+  PROCEDURE removePrivilege(svcClassId NUMBER, euid NUMBER, egid NUMBER, reqType NUMBER) AS
+    p castorBW.Privilege;
+  BEGIN
+    p.svcClass = svcClassId;
+    p.euid = euid;
+    p.egid = egid;
+    p.reqType = reqType;
+    removePrivilege(p);
+  END;
+
 END castorBW;

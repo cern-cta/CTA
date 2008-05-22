@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/01/15 14:50:46 $ $Author: itglp $
+ * @(#)$RCSfile: QueryRequestSvcThread.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/05/22 16:40:08 $ $Author: sponcec3 $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -27,17 +27,21 @@
 #ifndef STAGER_DAEMON_QUERYREQUESTSVCTHREAD_HPP
 #define STAGER_DAEMON_QUERYREQUESTSVCTHREAD_HPP 1
 
-#include "castor/IObject.hpp"
-#include "castor/IClient.hpp"
-#include "castor/Services.hpp"
-#include "castor/BaseAddress.hpp"
-#include "castor/exception/Exception.hpp"
-#include "castor/query/IQuerySvc.hpp"
-#include "castor/rh/FileQryResponse.hpp"
 #include "castor/stager/daemon/BaseRequestSvcThread.hpp"
-
+#include "castor/exception/Exception.hpp"
 
 namespace castor {
+
+  // Forward declarations
+  class IObject;
+  class IClient;
+  namespace query {
+    class IQuerySvc;
+  }
+  namespace rh {
+    class IRHSvc;
+    class FileQryResponse;
+  }
 
   namespace stager {
 
@@ -111,15 +115,12 @@ namespace castor {
          * Handles a fileQueryRequest and replies to client.
          * @param req the request to handle
          * @param client the client where to send the response
-         * @param svcs the Services object to use
          * @param qrySvc the stager service to use
-         * @param ad the address where to load/store objects in the DB
+         * @param uuid the uuid of the request, for logging purposes
          */
         void handleFileQueryRequest(castor::stager::Request* req,
                                     castor::IClient *client,
-                                    castor::Services* svcs,
                                     castor::query::IQuerySvc* qrySvc,
-                                    castor::BaseAddress &ad,
                                     Cuuid_t uuid)
           throw (castor::exception::Exception);
 
@@ -127,16 +128,26 @@ namespace castor {
          * Handles a DiskPoolQuery and replies to client.
          * @param req the request to handle
          * @param client the client where to send the response
-         * @param svcs the Services object to use
          * @param qrySvc the stager service to use
-         * @param ad the address where to load/store objects in the DB
+         * @param uuid the uuid of the request, for logging purposes
          */
         void handleDiskPoolQuery(castor::stager::Request* req,
                                  castor::IClient *client,
-                                 castor::Services* svcs,
                                  castor::query::IQuerySvc* qrySvc,
-                                 castor::BaseAddress &ad,
                                  Cuuid_t uuid)
+          throw (castor::exception::Exception);
+
+        /**
+         * Handles a ChangePrivilege Request and replies to client.
+         * @param req the request to handle
+         * @param client the client where to send the response
+         * @param rhSvc the RH service to use
+         * @param uuid the uuid of the request, for logging purposes
+         */
+        void handleChangePrivilege(castor::stager::Request* req,
+				   castor::IClient *client,
+				   castor::rh::IRHSvc* rhSvc,
+				   Cuuid_t uuid)
           throw (castor::exception::Exception);
 
         /**
@@ -150,12 +161,14 @@ namespace castor {
 
         /**
          * helper method for cleaning up a request and releasing
-         * a service if not null
+         * services (only if not null)
          * @param req the request to clean
-         * @param svc the service to release
+         * @param svc a service to release
+         * @param extraSvc another service to release
          */
         void cleanup (castor::stager::Request* req,
-                      castor::IService *svc) throw();
+                      castor::IService *svc,
+                      castor::IService *extraSvc) throw();
 
       };
 
