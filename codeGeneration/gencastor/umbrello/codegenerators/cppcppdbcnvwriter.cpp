@@ -2484,7 +2484,8 @@ void CppCppDbCnvWriter::writeDeleteRepContent() {
         m_indent--;
         *m_stream << getIndent() << "}" << endl;
       } else {
-        *m_stream << getIndent() << "UNKNOWN MULT" << endl;
+        *m_stream << getIndent() << "UNKNOWN MULT for association to "
+		  << as->remotePart.typeName << endl;
       }
     }
   }
