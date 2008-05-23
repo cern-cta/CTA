@@ -172,8 +172,8 @@ CREATE TABLE VersionQuery (flags INT8, userName VARCHAR(2048), euid INT4, egid I
 /* SQL statements for type ChangePrivilege */
 CREATE TABLE ChangePrivilege (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, isAdd INT4, id INT8 CONSTRAINT I_ChangePrivilege_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
-/* SQL statements for type User */
-CREATE TABLE User (uid INT4, gid INT4, id INT8 CONSTRAINT I_User_Id PRIMARY KEY, request INTEGER);
+/* SQL statements for type BWUser */
+CREATE TABLE BWUser (uid INT4, gid INT4, id INT8 CONSTRAINT I_BWUser_Id PRIMARY KEY, request INTEGER);
 
 /* SQL statements for type RequestType */
 CREATE TABLE RequestType (reqType INT4, id INT8 CONSTRAINT I_RequestType_Id PRIMARY KEY, request INTEGER);

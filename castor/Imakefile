@@ -109,7 +109,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               logbuf.cpp \
               stdbuf.cpp \
               bwlist/ChangePrivilege.cpp \
-              bwlist/User.cpp \
+              bwlist/BWUser.cpp \
               bwlist/RequestType.cpp \
               client/BaseClient.cpp \
               client/BasicResponseHandler.cpp \

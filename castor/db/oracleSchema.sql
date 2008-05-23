@@ -172,8 +172,8 @@ CREATE TABLE VersionQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, 
 /* SQL statements for type ChangePrivilege */
 CREATE TABLE ChangePrivilege (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, isAdd NUMBER, id INTEGER CONSTRAINT I_ChangePrivilege_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
-/* SQL statements for type User */
-CREATE TABLE User (uid NUMBER, gid NUMBER, id INTEGER CONSTRAINT I_User_Id PRIMARY KEY, request INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+/* SQL statements for type BWUser */
+CREATE TABLE BWUser (uid NUMBER, gid NUMBER, id INTEGER CONSTRAINT I_BWUser_Id PRIMARY KEY, request INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type RequestType */
 CREATE TABLE RequestType (reqType NUMBER, id INTEGER CONSTRAINT I_RequestType_Id PRIMARY KEY, request INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;

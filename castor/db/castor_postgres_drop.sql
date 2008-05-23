@@ -218,8 +218,8 @@ DROP TABLE VersionQuery;
 /* SQL statements for type ChangePrivilege */
 DROP TABLE ChangePrivilege;
 
-/* SQL statements for type User */
-DROP TABLE User;
+/* SQL statements for type BWUser */
+DROP TABLE BWUser;
 
 /* SQL statements for type RequestType */
 DROP TABLE RequestType;
