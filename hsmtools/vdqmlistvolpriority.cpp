@@ -39,13 +39,24 @@
 
 const std::string VDQMSCHEMAVERSION = "2_1_7_4";
 
+// Possible types of volume priority list that can be displayed
+enum PriorityListType {
+  NONE_PRIO_LIST_TYPE,
+  ALL_PRIO_LIST_TYPE,
+  EFFECTIVE_PRIO_LIST_TYPE,
+  LIFESPAN_TYPE_PRIO_LIST_TYPE
+};
+  
 
 void usage(const std::string programName) {
-  std::cerr << "Usage: " << programName << " [options]\n"
+  std::cerr << "Usage: " << programName << " [ -a i| -e | -l type ] [ -h ]\n"
     "\n"
     "where options can be:\n"
     "\n"
-    "\t-h, --help Print this help and exit\n"
+    "\t-a, --all (Default)     List all priorities\n"
+    "\t-e, --effective         List effective priorities\n"
+    "\t-l, --lifespanType type List priorioties with specified lifespan type\n"
+    "\t-h, --help              Print this help and exit\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
 }
@@ -56,16 +67,32 @@ static struct Coptions longopts[] = {
 };
 
 
-void parseCommandLine(int argc, char **argv) {
+void parseCommandLine(int argc, char **argv, PriorityListType &listType,
+  int &lifespanType) {
 
+  int nbListTypesSet = 0;
   char c;
 
 
-  Coptind = 1;
-  Copterr = 0;
+  listType = NONE_PRIO_LIST_TYPE;
+  Coptind  = 1;
+  Copterr  = 0;
 
-  while ((c = Cgetopt_long (argc, argv, "h", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "ael:h", longopts, NULL)) != -1) {
     switch (c) {
+    case 'a':
+      listType = ALL_PRIO_LIST_TYPE;
+      nbListTypesSet++;
+      break;
+    case 'e':
+      listType = EFFECTIVE_PRIO_LIST_TYPE;
+      nbListTypesSet++;
+      break;
+    case 'l':
+      listType = LIFESPAN_TYPE_PRIO_LIST_TYPE;
+      nbListTypesSet++;
+      lifespanType = atoi(Coptarg);
+      break;
     case 'h':
       usage(argv[0]);
       exit(0);
@@ -109,6 +136,18 @@ void parseCommandLine(int argc, char **argv) {
       << std::endl
       << "Error:  Unexpected command-line argument: "
       << argv[Coptind]
+      << std::endl << std::endl;
+    usage(argv[0]);
+    exit(1);
+  }
+
+  // List types are mutually exclusive, i.e. only one type of list can be
+  // printed
+  if(nbListTypesSet > 1) {
+    std::cerr
+      << std::endl
+      << "Error:  More than one type of list. -a, -e and -l are mutually"
+         " exclusive"
       << std::endl << std::endl;
     usage(argv[0]);
     exit(1);
@@ -176,15 +215,33 @@ castor::vdqm::IVdqmSvc *retrieveVdqmSvc() {
 }
 
 
-int main(int argc, char **argv) {
-  parseCommandLine(argc, argv);
+void printAllPriorities(castor::vdqm::IVdqmSvc *const vdqmSvc) {
+  try {
+    // Get the list of volume priorities
+    std::auto_ptr< std::list<castor::vdqm::IVdqmSvc::VolPriority> > priorities(
+      vdqmSvc->getAllVolPriorities());
 
-  // Initializing the log
-  castor::BaseObject::initLog(argv[0], castor::SVC_NOMSG);
+    // Print the list of volume priorities
+    for(std::list<castor::vdqm::IVdqmSvc::VolPriority>::iterator itor =
+      priorities->begin(); itor != priorities->end(); itor++) {
+      std::cout
+        <<  "vid="            << itor->vid
+        << " tapeAccessMode=" << itor->tpMode
+        << " lifespanType="   << itor->lifespanType
+        << " priority="       << itor->priority
+        << std::endl;
+    }
+  } catch(castor::exception::Exception &e) {
+    std::cerr
+      << std::endl
+      << "Failed to get the list of volume priorities: " << e.getMessage().str()
+      << std::endl << std::endl;
+    exit(1);
+  }
+}
 
-  // Retrieve the VDQM DB service
-  castor::vdqm::IVdqmSvc *const vdqmSvc = retrieveVdqmSvc();
 
+void printEffectivePriorities(castor::vdqm::IVdqmSvc *const vdqmSvc) {
   try {
     // Get the list of volume priorities
     std::auto_ptr< std::list<castor::vdqm::IVdqmSvc::VolPriority> > priorities(
@@ -205,6 +262,68 @@ int main(int argc, char **argv) {
       << std::endl
       << "Failed to get the list of volume priorities: " << e.getMessage().str()
       << std::endl << std::endl;
+    exit(1);
+  }
+}
+
+
+void printPriorities(castor::vdqm::IVdqmSvc *const vdqmSvc,
+  const int lifespanType) {
+  try {
+    // Get the list of volume priorities
+    std::auto_ptr< std::list<castor::vdqm::IVdqmSvc::VolPriority> > priorities(
+      vdqmSvc->getVolPriorities(lifespanType));
+
+    // Print the list of volume priorities
+    for(std::list<castor::vdqm::IVdqmSvc::VolPriority>::iterator itor =
+      priorities->begin(); itor != priorities->end(); itor++) {
+      std::cout
+        <<  "vid="            << itor->vid
+        << " tapeAccessMode=" << itor->tpMode
+        << " lifespanType="   << itor->lifespanType
+        << " priority="       << itor->priority
+        << std::endl;
+    }
+  } catch(castor::exception::Exception &e) {
+    std::cerr
+      << std::endl
+      << "Failed to get the list of volume priorities: " << e.getMessage().str()
+      << std::endl << std::endl;
+    exit(1);
+  }
+}
+
+
+int main(int argc, char **argv) {
+  PriorityListType listType     = NONE_PRIO_LIST_TYPE;
+  int              lifespanType = 0; // 0 = single-shot
+
+
+  parseCommandLine(argc, argv, listType, lifespanType);
+
+  // Initializing the log
+  castor::BaseObject::initLog(argv[0], castor::SVC_NOMSG);
+
+  // Retrieve the VDQM DB service
+  castor::vdqm::IVdqmSvc *const vdqmSvc = retrieveVdqmSvc();
+
+  switch(listType) {
+  case NONE_PRIO_LIST_TYPE:
+  case ALL_PRIO_LIST_TYPE:
+    printAllPriorities(vdqmSvc);
+    break;
+  case EFFECTIVE_PRIO_LIST_TYPE:
+    printEffectivePriorities(vdqmSvc);
+    break;
+  case LIFESPAN_TYPE_PRIO_LIST_TYPE:
+    printPriorities(vdqmSvc, lifespanType);
+    break;
+  default:
+    std::cerr
+      << std::endl
+      << "Internal error: Unknown listType: " << listType
+      << std::endl << std::endl;
+    exit(1);
   }
 
   return 0;
