@@ -64,8 +64,7 @@ namespace castor {
        * @param header Pointer to the memory which the message header should be
        * read out into
        */
-      void castor::vdqm::VdqmMagic2ProtocolInterpreter::readHeader(
-        const unsigned int magic, vdqmHdr_t *const header)
+      void readHeader(const unsigned int magic, vdqmHdr_t *const header)
         throw(castor::exception::Exception);
 
       /**
@@ -77,8 +76,7 @@ namespace castor {
        * @param vdqmVolPriority Pointer to the memory which the message body
        * should be read out into
        */
-      void castor::vdqm::VdqmMagic2ProtocolInterpreter::readVolPriority(
-        const int len, vdqmVolPriority_t *const vdqmVolPriority)
+      void readVolPriority(const int len, vdqmVolPriority_t *const vdqmVolPriority)
         throw(castor::exception::Exception);
 
 
