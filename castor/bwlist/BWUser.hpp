@@ -101,39 +101,39 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
-       * Get the value of m_uid
+       * Get the value of m_euid
        * the user id of this user
-       * @return the value of m_uid
+       * @return the value of m_euid
        */
-      int uid() const {
-        return m_uid;
+      int euid() const {
+        return m_euid;
       }
 
       /**
-       * Set the value of m_uid
+       * Set the value of m_euid
        * the user id of this user
-       * @param new_var the new value of m_uid
+       * @param new_var the new value of m_euid
        */
-      void setUid(int new_var) {
-        m_uid = new_var;
+      void setEuid(int new_var) {
+        m_euid = new_var;
       }
 
       /**
-       * Get the value of m_gid
+       * Get the value of m_egid
        * The group id of this user
-       * @return the value of m_gid
+       * @return the value of m_egid
        */
-      int gid() const {
-        return m_gid;
+      int egid() const {
+        return m_egid;
       }
 
       /**
-       * Set the value of m_gid
+       * Set the value of m_egid
        * The group id of this user
-       * @param new_var the new value of m_gid
+       * @param new_var the new value of m_egid
        */
-      void setGid(int new_var) {
-        m_gid = new_var;
+      void setEgid(int new_var) {
+        m_egid = new_var;
       }
 
       /**
@@ -173,10 +173,10 @@ namespace castor {
     private:
 
       /// the user id of this user
-      int m_uid;
+      int m_euid;
 
       /// The group id of this user
-      int m_gid;
+      int m_egid;
 
       /// The id of this object
       u_signed64 m_id;

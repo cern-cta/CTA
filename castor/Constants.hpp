@@ -189,7 +189,7 @@ namespace castor {
 
     /* B/W list related objects */
     OBJ_ChangePrivilege = 152,
-    OBJ_User = 153,
+    OBJ_BWUser = 153,
     OBJ_RequestType = 154
   };
 

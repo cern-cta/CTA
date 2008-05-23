@@ -206,7 +206,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamVersionQueryCnv.cpp \
               io/StreamVersionResponseCnv.cpp \
               io/StreamChangePrivilegeCnv.cpp \
-              io/StreamUserCnv.cpp \
+              io/StreamBWUserCnv.cpp \
               io/StreamRequestTypeCnv.cpp \
               replier/ClientConnection.cpp \
               replier/RequestReplier.cpp \

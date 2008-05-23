@@ -53,7 +53,7 @@ static castor::CnvFactory<castor::db::cnv::DbBWUserCnv>* s_factoryDbBWUserCnv =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbBWUserCnv::s_insertStatementString =
-"INSERT INTO BWUser (uid, gid, id, request) VALUES (:1,:2,ids_seq.nextval,:3) RETURNING id INTO :4";
+"INSERT INTO BWUser (euid, egid, id, request) VALUES (:1,:2,ids_seq.nextval,:3) RETURNING id INTO :4";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbBWUserCnv::s_deleteStatementString =
@@ -61,11 +61,11 @@ const std::string castor::db::cnv::DbBWUserCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbBWUserCnv::s_selectStatementString =
-"SELECT uid, gid, id, request FROM BWUser WHERE id = :1";
+"SELECT euid, egid, id, request FROM BWUser WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbBWUserCnv::s_updateStatementString =
-"UPDATE BWUser SET uid = :1, gid = :2 WHERE id = :3";
+"UPDATE BWUser SET euid = :1, egid = :2 WHERE id = :3";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbBWUserCnv::s_storeTypeStatementString =
@@ -298,8 +298,8 @@ void castor::db::cnv::DbBWUserCnv::createRep(castor::IAddress* address,
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // Now Save the current object
-    m_insertStatement->setInt(1, obj->uid());
-    m_insertStatement->setInt(2, obj->gid());
+    m_insertStatement->setInt(1, obj->euid());
+    m_insertStatement->setInt(2, obj->egid());
     m_insertStatement->setUInt64(3, (type == OBJ_ChangePrivilege && obj->request() != 0) ? obj->request()->id() : 0);
     m_insertStatement->execute();
     obj->setId(m_insertStatement->getUInt64(4));
@@ -319,8 +319,8 @@ void castor::db::cnv::DbBWUserCnv::createRep(castor::IAddress* address,
                     << "Statement was :" << std::endl
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
-                    << "  uid : " << obj->uid() << std::endl
-                    << "  gid : " << obj->gid() << std::endl
+                    << "  euid : " << obj->euid() << std::endl
+                    << "  egid : " << obj->egid() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  request : " << obj->request() << std::endl;
     throw ex;
@@ -344,8 +344,8 @@ void castor::db::cnv::DbBWUserCnv::updateRep(castor::IAddress* address,
       m_updateStatement = createStatement(s_updateStatementString);
     }
     // Update the current object
-    m_updateStatement->setInt(1, obj->uid());
-    m_updateStatement->setInt(2, obj->gid());
+    m_updateStatement->setInt(1, obj->euid());
+    m_updateStatement->setInt(2, obj->egid());
     m_updateStatement->setUInt64(3, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
@@ -432,8 +432,8 @@ castor::IObject* castor::db::cnv::DbBWUserCnv::createObj(castor::IAddress* addre
     // create the new Object
     castor::bwlist::BWUser* object = new castor::bwlist::BWUser();
     // Now retrieve and set members
-    object->setUid(rset->getInt(1));
-    object->setGid(rset->getInt(2));
+    object->setEuid(rset->getInt(1));
+    object->setEgid(rset->getInt(2));
     object->setId(rset->getUInt64(3));
     delete rset;
     return object;
@@ -469,8 +469,8 @@ void castor::db::cnv::DbBWUserCnv::updateObj(castor::IObject* obj)
     // Now retrieve and set members
     castor::bwlist::BWUser* object = 
       dynamic_cast<castor::bwlist::BWUser*>(obj);
-    object->setUid(rset->getInt(1));
-    object->setGid(rset->getInt(2));
+    object->setEuid(rset->getInt(1));
+    object->setEgid(rset->getInt(2));
     object->setId(rset->getUInt64(3));
     delete rset;
   } catch (castor::exception::SQLError e) {

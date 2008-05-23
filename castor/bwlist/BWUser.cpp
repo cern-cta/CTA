@@ -40,8 +40,8 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::bwlist::BWUser::BWUser() throw() :
-  m_uid(0),
-  m_gid(0),
+  m_euid(0),
+  m_egid(0),
   m_id(0),
   m_request(0) {
 }
@@ -70,8 +70,8 @@ void castor::bwlist::BWUser::print(std::ostream& stream,
     return;
   }
   // Output of all members
-  stream << indent << "uid : " << m_uid << std::endl;
-  stream << indent << "gid : " << m_gid << std::endl;
+  stream << indent << "euid : " << m_euid << std::endl;
+  stream << indent << "egid : " << m_egid << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Request : " << std::endl;

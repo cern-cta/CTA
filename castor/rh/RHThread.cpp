@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2008/05/22 16:40:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2008/05/23 09:25:36 $ $Author: sponcec3 $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -340,7 +340,7 @@ unsigned int castor::rh::RHThread::handleRequest
     castor::bwlist::ChangePrivilege* cpReq =
       dynamic_cast<castor::bwlist::ChangePrivilege*>(fr);
     if (0 != cpReq) {
-      svcs()->fillRep(&ad, cpReq, OBJ_User, false);
+      svcs()->fillRep(&ad, cpReq, OBJ_BWUser, false);
       svcs()->fillRep(&ad, cpReq, OBJ_RequestType, false);
     }
 

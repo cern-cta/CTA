@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/05/22 16:40:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRHSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/05/23 09:25:35 $ $Author: sponcec3 $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -42,7 +42,7 @@ namespace castor {
 
   // Froward Declarations
   namespace bwlist {
-    class User;
+    class BWUser;
     class RequestType;
   }
 
@@ -117,7 +117,7 @@ namespace castor {
 	 */
 	virtual void changePrivilege
 	(const u_signed64 svcClassId,
-	 std::vector<castor::bwlist::User*> users,
+	 std::vector<castor::bwlist::BWUser*> users,
 	 std::vector<castor::bwlist::RequestType*> requestTypes,
 	 bool isAdd)
 	  throw (castor::exception::Exception);

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/05/22 16:40:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/05/23 09:25:35 $ $Author: sponcec3 $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -31,7 +31,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/PermissionDenied.hpp"
-#include "castor/bwlist/User.hpp"
+#include "castor/bwlist/BWUser.hpp"
 #include "castor/bwlist/RequestType.hpp"
 #include <string>
 #include <vector>
@@ -188,7 +188,7 @@ void handleChangePrivilegeTypeLoop
 //------------------------------------------------------------------------------
 void castor::db::ora::OraRHSvc::changePrivilege
 (const u_signed64 svcClassId,
- std::vector<castor::bwlist::User*> users,
+ std::vector<castor::bwlist::BWUser*> users,
  std::vector<castor::bwlist::RequestType*> requestTypes,
  bool isAdd)
   throw (castor::exception::Exception) {
@@ -216,17 +216,17 @@ void castor::db::ora::OraRHSvc::changePrivilege
     }
     // loop over users if any
     if (users.size() > 0) {
-      for (std::vector<castor::bwlist::User*>::const_iterator userIt =
+      for (std::vector<castor::bwlist::BWUser*>::const_iterator userIt =
 	     users.begin();
 	   userIt != users.end();
 	   userIt++) {
-	if ((*userIt)->uid() >= 0) {
-	  stmt->setInt(2, (*userIt)->uid());
+	if ((*userIt)->euid() >= 0) {
+	  stmt->setInt(2, (*userIt)->euid());
 	} else {
 	  stmt->setNull(2, oracle::occi::OCCINUMBER);
 	}
-	if ((*userIt)->gid() >= 0) {
-	  stmt->setInt(3, (*userIt)->gid());
+	if ((*userIt)->egid() >= 0) {
+	  stmt->setInt(3, (*userIt)->egid());
 	} else {
 	  stmt->setNull(3, oracle::occi::OCCINUMBER);
 	}

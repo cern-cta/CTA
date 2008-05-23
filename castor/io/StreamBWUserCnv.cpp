@@ -88,8 +88,8 @@ void castor::io::StreamBWUserCnv::createRep(castor::IAddress* address,
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
-  ad->stream() << obj->uid();
-  ad->stream() << obj->gid();
+  ad->stream() << obj->euid();
+  ad->stream() << obj->egid();
   ad->stream() << obj->id();
 }
 
@@ -103,12 +103,12 @@ castor::IObject* castor::io::StreamBWUserCnv::createObj(castor::IAddress* addres
   // create the new Object
   castor::bwlist::BWUser* object = new castor::bwlist::BWUser();
   // Now retrieve and set members
-  int uid;
-  ad->stream() >> uid;
-  object->setUid(uid);
-  int gid;
-  ad->stream() >> gid;
-  object->setGid(gid);
+  int euid;
+  ad->stream() >> euid;
+  object->setEuid(euid);
+  int egid;
+  ad->stream() >> egid;
+  object->setEgid(egid);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
