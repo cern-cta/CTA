@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/21 08:44:36 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/23 08:19:23 $ $Author: waldron $
  *
  * This script create a new DLF schema
  *
@@ -185,6 +185,15 @@ CREATE TABLE TapeRecalledStats (timestamp DATE NOT NULL, interval NUMBER, type V
 
 /* SQL statement for table ProcessingTimeStats */
 CREATE TABLE ProcessingTimeStats (timestamp DATE NOT NULL, interval NUMBER, daemon VARCHAR2(255), type VARCHAR2(255), requests NUMBER, minTime NUMBER(*,4), maxTime NUMBER(*,4), avgTime NUMBER(*,4), stddevTime NUMBER(*,4), medianTime NUMBER(*,4))
+  PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
+
+/* SQL statement for temporary table CacheEfficiencyHelper */
+CREATE GLOBAL TEMPORARY TABLE CacheEfficiencyHelper (reqid CHAR(36))
+  ON COMMIT DELETE ROWS;
+
+/* SQL statement for table TapeMountsHelper */
+CREATE TABLE TapeMountsHelper (timestamp DATE NOT NULL, tapevid VARCHAR2(20))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 
@@ -446,6 +455,19 @@ CREATE OR REPLACE PROCEDURE statsDiskCacheEfficiency (now IN DATE) AS
 BEGIN
   -- Stats table: DiskCacheEfficiencyStats
   -- Frequency: 5 minutes
+
+  -- Collect a list of request ids that we are interested in. We dump this list into
+  -- a temporary table so that the execution plan of the query afterwards is optimized
+  INSERT INTO CacheEfficiencyHelper
+    SELECT messages.reqid
+      FROM dlf_messages messages
+     WHERE messages.severity = 10 -- Monitoring
+       AND messages.facility = 4  -- RequestHandler
+       AND messages.msg_no = 10   -- Reply sent to client
+       AND messages.timestamp >  now - 10/1440
+       AND messages.timestamp <= now - 5/1440;  
+
+  -- Record results
   FOR a IN (
     SELECT type, svcclass, 
            nvl(sum(decode(msg_no, 53, requests, 0)), 0) Wait,
@@ -454,58 +476,41 @@ BEGIN
            nvl(sum(decode(msg_no, 60, requests, 0)), 0) Staged,
            nvl(sum(requests), 0) total
       FROM (
-        SELECT type, svcclass, msg_no, count(*) requests
-          FROM (
+        SELECT type, svcclass, msg_no, count(*) requests FROM (
+          SELECT * FROM (
             -- Get the first message issued for all subrequests of interest. This
-            -- will indicate to us whether the request was a hit or a miss.
-            SELECT sum(id) KEEP (DENSE_RANK FIRST
-                   ORDER BY messages.timestamp ASC, messages.timeusec ASC) id,
-                   type, svcclass
+            -- will indicate to us whether the request was a hit or a miss
+            SELECT msg_no, type, svcclass,
+                   RANK() OVER (PARTITION BY subreqid 
+                          ORDER BY timestamp ASC, timeusec ASC) rank
               FROM (
-                 -- From this select statement we have a line for every new
-                 -- request entering the system that resulted in a read style
-                 -- access, along with its type and associated service class
-                 SELECT results.reqid, results.value type, params.value svcclass
-                   FROM (
-                     -- Extract all new requests processed by the request handler
-                     -- for types which will involve a read.
-                     SELECT messages.id, messages.reqid, params.value
-                       FROM dlf_messages messages, dlf_str_param_values params
-                      WHERE messages.id = params.id
-                        AND messages.severity = 10 -- Monitoring
-                        AND messages.facility = 4  -- RequestHandler
-                        AND messages.msg_no = 10   -- Reply sent to client
-                        AND messages.timestamp >  now - 10/1440
-                        AND messages.timestamp <= now - 5/1440
-                        AND params.name = 'Type'
-                        AND params.value IN ('StageGetRequest', 
-                                             'StagePrepareToGetRequest', 
-                                             'StageUpdateRequest')
-                        AND params.timestamp >  now - 10/1440
-                        AND params.timestamp <= now - 5/1440
-                   ) results
-                 -- Join the service class to the previously collected results
-                 INNER JOIN dlf_str_param_values params
-                    ON results.id = params.id
-                   AND params.name = 'SvcClass'
+                -- Extract all subrequests processed by the stager that resulted in
+                -- read type access
+                SELECT messages.reqid, messages.subreqid, messages.timestamp, 
+                       messages.timeusec, messages.msg_no, 
+                       max(decode(params.name, 'Type',     params.value, NULL)) type,
+                       max(decode(params.name, 'SvcClass', params.value, 'default')) svcclass
+                  FROM dlf_messages messages, dlf_str_param_values params
+                 WHERE messages.id = params.id
+                   AND messages.severity = 8  -- System
+                   AND messages.facility = 22 -- Stager
+                   AND messages.msg_no IN (53, 56, 57, 60)
+                   AND messages.timestamp >  now - 10/1440
+                   AND messages.timestamp <= now - 3/1440
+                   AND params.name IN ('Type', 'SvcClass')
                    AND params.timestamp >  now - 10/1440
-                   AND params.timestamp <= now - 5/1440
-              ) requests
-            -- For the request ids extracted above work out the subrequests which
-            -- were processed by the stager.
-            INNER JOIN dlf_messages messages
-               ON messages.reqid = requests.reqid
-              AND messages.severity = 8  -- System
-              AND messages.facility = 22 -- Stager
-              AND messages.msg_no IN (53, 56, 57, 60)
-              AND messages.timestamp > now - 10/1440
-            GROUP BY messages.subreqid, type, svcclass
-          ) subreqs
-        INNER JOIN dlf_messages messages
-           ON subreqs.id = messages.id
-          AND messages.timestamp > now - 10/1440
-        GROUP BY type, svcclass, msg_no)
-        GROUP BY type, svcclass
+                   AND params.timestamp <= now - 3/1440
+                 GROUP BY messages.reqid, messages.subreqid, messages.timestamp, 
+                          messages.timeusec, messages.msg_no
+              ) results
+             -- Filter the subrequests so that we only process requests which entered
+             -- the system through the request handler in the last sampling interval.
+             -- This stops us from recounting subrequests that were restarted
+             INNER JOIN CacheEfficiencyHelper helper
+                ON results.reqid = helper.reqid)
+         ) WHERE rank = 1
+       GROUP BY type, svcclass, msg_no)
+     GROUP BY type, svcclass
   )
   LOOP
     INSERT INTO DiskCacheEfficiencyStats
@@ -622,6 +627,20 @@ CREATE OR REPLACE PROCEDURE statsTapeRecalled (now IN DATE) AS
 BEGIN
   -- Stats table: TapeRecalledStats
   -- Frequency: 5 minutes
+
+  -- Populate the TapeMountsHelper table with a line for every recaller that has
+  -- been started in the last sampling interval. This will act as a summary table
+  INSERT INTO TapeMountsHelper
+    SELECT messages.timestamp, messages.tapevid
+      FROM dlf_messages messages
+     WHERE messages.severity = 8 -- System
+       AND messages.facility = 2 -- Recaller
+       AND messages.msg_no = 13  -- Recaller started
+       AND messages.subreqid <> '00000000-0000-0000-0000-000000000000'
+       AND messages.timestamp >  now - 10/1440
+       AND messages.timestamp <= now - 5/1440;  
+
+  -- Record results
   FOR a IN (
     SELECT type, username, groupname, results.tapevid, tapestatus, 
            count(*) files, sum(params.value) totalsize, 
@@ -643,8 +662,8 @@ BEGIN
            AND messages.timestamp >  now - 10/1440
            AND messages.timestamp <= now - 5/1440
            AND params.name IN ('Type', 'Username', 'Groupname', 'TapeStatus')
-           AND params.timestamp >  sysdate - 10/1440
-           AND params.timestamp <= sysdate - 5/1440
+           AND params.timestamp >  now - 10/1440
+           AND params.timestamp <= now - 5/1440
          GROUP BY messages.id, messages.tapevid
       ) results
      -- Attach the file size to be recalled
@@ -656,14 +675,10 @@ BEGIN
      -- Attached the number of mounts which took place for the tape over the
      -- last 24 hours
      LEFT JOIN (
-       SELECT messages.tapevid, count(*) mounted
-         FROM dlf_messages messages
-        WHERE messages.severity = 8 -- System
-          AND messages.facility = 2 -- Recaller
-          AND messages.msg_no = 13  -- Recaller started
-          AND messages.subreqid <> '00000000-0000-0000-0000-000000000000'
-          AND messages.timestamp >  (now - 1) - 5/1440
-        GROUP BY messages.tapevid) mounts
+       SELECT helper.tapevid, count(*) mounted
+         FROM TapeMountsHelper helper
+        WHERE helper.timestamp > (now - 1) - 5/1440
+        GROUP BY helper.tapevid) mounts
         ON results.tapevid = mounts.tapevid
      GROUP BY type, username, groupname, results.tapevid, tapestatus
   )
