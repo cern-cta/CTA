@@ -53,6 +53,41 @@ namespace castor {
       public:
 
         /**
+         * Enumeration of constants used to identify the SQL statements
+         */
+        enum StatementId {
+          SELECT_TAPE_SQL_STMT,
+          SELECT_TAPE_SERVER_SQL_STMT,
+          CHECK_TAPE_REQUEST1_SQL_STMT,
+          CHECK_TAPE_REQUEST2_SQL_STMT,
+          GET_QUEUE_POSITION_SQL_STMT,
+          SET_VOL_PRIORITY_SQL_STMT,
+          DELETE_VOL_PRIORITY_SQL_STMT,
+          GET_ALL_VOL_PRIORITIES_SQL_STMT,
+          GET_EFFECTIVE_VOL_PRIORITIES_SQL_STMT,
+          GET_VOL_PRIORITIES_SQL_STMT,
+          SELECT_TAPE_DRIVE_SQL_STMT,
+          DEDICATE_DRIVE_SQL_STMT,
+          DELETE_DRIVE_SQL_STMT,
+          WRITE_RTCPD_JOB_SUBMISSION_SQL_STMT,
+          WRITE_FAILED_RTCPD_JOB_SUBMISSION_SQL_STMT,
+          EXIST_TAPE_DRIVE_WITH_TAPE_IN_USE_SQL_STMT,
+          EXIST_TAPE_DRIVE_WITH_TAPE_MOUNTED_SQL_STMT,
+          SELECT_TAPE_BY_VID_SQL_STMT,
+          SELECT_TAPE_REQ_FOR_MOUNTED_TAPE_SQL_STMT,
+          SELECT_TAPE_ACCESS_SPECIFICATION_SQL_STMT,
+          SELECT_DEVICE_GROUP_NAME_SQL_STMT,
+          SELECT_TAPE_REQUEST_QUEUE_SQL_STMT,
+          SELECT_TAPE_DRIVE_QUEUE_SQL_STMT,
+          SELECT_TAPE_REQUEST_SQL_STMT,
+          SELECT_COMPATIBILITIES_FOR_DRIVE_MODEL_SQL_STMT,
+          SELECT_TAPE_ACCESS_SPECIFICATIONS_SQL_STMT,
+          ALLOCATE_DRIVE_SQL_STMT,
+          REUSE_DRIVE_ALLOCATION_SQL_STMT,
+          REQUEST_TO_SUBMIT_SQL_STMT,
+        };
+
+        /**
          * Constructor
          */
         OraVdqmSvc(const std::string name);
@@ -140,7 +175,20 @@ namespace castor {
          * See the documentation for castor::vdqm::IVdqmSvc.
          */
         virtual std::list<castor::vdqm::IVdqmSvc::VolPriority>
-          *getVolPriorities() throw (castor::exception::Exception);
+          *getAllVolPriorities() throw (castor::exception::Exception);
+
+        /**
+         * See the documentation for castor::vdqm::IVdqmSvc.
+         */
+        virtual std::list<castor::vdqm::IVdqmSvc::VolPriority>
+          *getEffectiveVolPriorities() throw (castor::exception::Exception);
+
+        /**
+         * See the documentation for castor::vdqm::IVdqmSvc.
+         */
+        virtual std::list<castor::vdqm::IVdqmSvc::VolPriority>
+          *getVolPriorities(const int lifespanType)
+          throw (castor::exception::Exception);
   
         /**
          * Looks, wether the specific tape access exist in the db. If not the
@@ -351,39 +399,6 @@ namespace castor {
         virtual castor::vdqm::TapeRequest* selectTapeReqForMountedTape
         (const castor::vdqm::TapeDrive* tapeDrive)
           throw (castor::exception::Exception);            
-
-        /**
-         * Enumeration of constants used to identify the SQL statements
-         */
-        enum StatementId {
-          SELECT_TAPE_SQL_STMT,
-          SELECT_TAPE_SERVER_SQL_STMT,
-          CHECK_TAPE_REQUEST1_SQL_STMT,
-          CHECK_TAPE_REQUEST2_SQL_STMT,
-          GET_QUEUE_POSITION_SQL_STMT,
-          SET_VOL_PRIORITY_SQL_STMT,
-          DELETE_VOL_PRIORITY_SQL_STMT,
-          LIST_VOL_PRIORITIES_SQL_STMT,
-          SELECT_TAPE_DRIVE_SQL_STMT,
-          DEDICATE_DRIVE_SQL_STMT,
-          DELETE_DRIVE_SQL_STMT,
-          WRITE_RTCPD_JOB_SUBMISSION_SQL_STMT,
-          WRITE_FAILED_RTCPD_JOB_SUBMISSION_SQL_STMT,
-          EXIST_TAPE_DRIVE_WITH_TAPE_IN_USE_SQL_STMT,
-          EXIST_TAPE_DRIVE_WITH_TAPE_MOUNTED_SQL_STMT,
-          SELECT_TAPE_BY_VID_SQL_STMT,
-          SELECT_TAPE_REQ_FOR_MOUNTED_TAPE_SQL_STMT,
-          SELECT_TAPE_ACCESS_SPECIFICATION_SQL_STMT,
-          SELECT_DEVICE_GROUP_NAME_SQL_STMT,
-          SELECT_TAPE_REQUEST_QUEUE_SQL_STMT,
-          SELECT_TAPE_DRIVE_QUEUE_SQL_STMT,
-          SELECT_TAPE_REQUEST_SQL_STMT,
-          SELECT_COMPATIBILITIES_FOR_DRIVE_MODEL_SQL_STMT,
-          SELECT_TAPE_ACCESS_SPECIFICATIONS_SQL_STMT,
-          ALLOCATE_DRIVE_SQL_STMT,
-          REUSE_DRIVE_ALLOCATION_SQL_STMT,
-          REQUEST_TO_SUBMIT_SQL_STMT,
-        };
 
         /**
          * Inner class used to store a map of the SQL statment strings.

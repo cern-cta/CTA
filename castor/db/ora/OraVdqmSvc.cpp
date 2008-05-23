@@ -106,7 +106,7 @@ castor::db::ora::OraVdqmSvc::StatementStringMap::StatementStringMap() {
     "BEGIN castorVdqm.setVolPriority(:1, :2, :3, :4, :5, :6, :7); END;");
   addStmtStr(DELETE_VOL_PRIORITY_SQL_STMT,
     "BEGIN castorVdqm.deleteVolPriority(:1, :2, :3, :4, :5, :6, :7, :8); END;");
-  addStmtStr(LIST_VOL_PRIORITIES_SQL_STMT,
+  addStmtStr(GET_ALL_VOL_PRIORITIES_SQL_STMT,
     "SELECT"
     "  priority,"
     "  clientUID,"
@@ -119,9 +119,43 @@ castor::db::ora::OraVdqmSvc::StatementStringMap::StatementStringMap() {
     "  creationTime,"
     "  modificationTime "
     "FROM"
-    " EffectiveVolumePriority_VIEW "
+    "  VolumePriority "
     "ORDER BY"
-    " vid, tpMode, lifespanType");
+    "  vid, tpMode, lifespanType");
+  addStmtStr(GET_EFFECTIVE_VOL_PRIORITIES_SQL_STMT,
+    "SELECT"
+    "  priority,"
+    "  clientUID,"
+    "  clientGID,"
+    "  clientHost,"
+    "  vid,"
+    "  tpMode,"
+    "  lifespanType,"
+    "  id,"
+    "  creationTime,"
+    "  modificationTime "
+    "FROM"
+    "  EffectiveVolumePriority_VIEW "
+    "ORDER BY"
+    "  vid, tpMode");
+  addStmtStr(GET_VOL_PRIORITIES_SQL_STMT,
+    "SELECT"
+    "  priority,"
+    "  clientUID,"
+    "  clientGID,"
+    "  clientHost,"
+    "  vid,"
+    "  tpMode,"
+    "  lifespanType,"
+    "  id,"
+    "  creationTime,"
+    "  modificationTime "
+    "FROM"
+    "  VolumePriority "
+    "WHERE"
+    "  lifespanType = :1 "
+    "ORDER BY"
+    "  vid, tpMode, lifespanType");
   addStmtStr(SELECT_TAPE_DRIVE_SQL_STMT,
     "SELECT"
     "  id "
@@ -316,12 +350,23 @@ castor::db::ora::OraVdqmSvc::selectOrCreateTape(const std::string vid)
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = SELECT_TAPE_SQL_STMT;
+  const StatementId stmtId = SELECT_TAPE_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
 
   // Execute statement and get result
@@ -377,12 +422,13 @@ castor::db::ora::OraVdqmSvc::selectOrCreateTape(const std::string vid)
     // a tape and it's id is in rset
     id = rset->getInt(1);
     stmt->closeResultSet(rset);
-  } catch (oracle::occi::SQLException e) {
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Unable to select tape by vid :"
-      << std::endl << e.getMessage();
-    throw ex;
+      << std::endl << oe.getMessage();
+    throw ie;
   }
   // Now get the tape from its id
   try {
@@ -401,12 +447,13 @@ castor::db::ora::OraVdqmSvc::selectOrCreateTape(const std::string vid)
       throw e;
     }
     return tape;
-  } catch (oracle::occi::SQLException e) {
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Unable to select tape for id " << id  << " :"
-      << std::endl << e.getMessage();
-    throw ex;
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
+      << "Unable to select tape for id " << id << " :"
+      << std::endl << oe.getMessage();
+    throw ie;
   }
   // We should never reach this point
 }
@@ -428,12 +475,23 @@ castor::vdqm::TapeServer*
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = SELECT_TAPE_SERVER_SQL_STMT;
+  const StatementId stmtId = SELECT_TAPE_SERVER_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
 
   // Execute statement and get result
@@ -454,9 +512,10 @@ castor::vdqm::TapeServer*
       try {
         cnvSvc()->createRep(&ad, tapeServer, false);
         return tapeServer;
-      } catch (oracle::occi::SQLException e) {
+      } catch (oracle::occi::SQLException &oe) {
+        handleException(oe);
         delete tapeServer;
-        if (1 == e.getErrorCode()) {
+        if (1 == oe.getErrorCode()) {
           // if violation of unique constraint, ie means that
           // some other thread was quicker than us on the insertion
           // So let's select what was inserted
@@ -468,7 +527,7 @@ castor::vdqm::TapeServer*
             ex.getMessage()
               << "Unable to select tapeServer while inserting "
               << "violated unique constraint :"
-              << std::endl << e.getMessage();
+              << std::endl << oe.getMessage();
             throw ex;
           }
         }
@@ -477,7 +536,7 @@ castor::vdqm::TapeServer*
         castor::exception::Internal ex;
         ex.getMessage()
           << "Exception while inserting new tapeServer in the DB :"
-          << std::endl << e.getMessage();
+          << std::endl << oe.getMessage();
         throw ex;
       }
     }
@@ -486,13 +545,13 @@ castor::vdqm::TapeServer*
     // a tapeServer and it's id is in rset
     id = (u_signed64)rset->getDouble(1);
     stmt->closeResultSet(rset);
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Unable to select tapeServer by vid, side and tpmode :"
-      << std::endl << e.getMessage();
-    throw ex;
+      << std::endl << oe.getMessage();
+    throw ie;
   }
   
   // Now get the tapeServer from its id
@@ -530,13 +589,13 @@ castor::vdqm::TapeServer*
     obj = 0;
     
     return tapeServer;
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Unable to select tapeServer for id " << id  << " :"
-      << std::endl << e.getMessage();
-    throw ex;
+      << std::endl << oe.getMessage();
+    throw ie;
   }
   // We should never reach this point
 }
@@ -549,25 +608,47 @@ bool castor::db::ora::OraVdqmSvc::checkTapeRequest(
   const castor::vdqm::TapeRequest *newTapeRequest) 
   throw (castor::exception::Exception) {
 
+  // Get the Statement objects, creating them if necessary
+  oracle::occi::Statement *stmt1 = NULL;
+  const StatementId stmtId1 = CHECK_TAPE_REQUEST1_SQL_STMT;
   try {
-    // Get the Statement objects, creating them if necessary
-    oracle::occi::Statement *stmt1 = NULL;
-    {
-      const StatementId stmtId = CHECK_TAPE_REQUEST1_SQL_STMT;
-      if(!(stmt1 = getStatement(stmtId))) {
-        stmt1 = createStatement(s_statementStrings[stmtId]);
-        storeStatement(stmtId, stmt1);
-      }
+    if(!(stmt1 = getStatement(stmtId1))) {
+      stmt1 = createStatement(s_statementStrings[stmtId1]);
+      storeStatement(stmtId1, stmt1);
     }
-    oracle::occi::Statement *stmt2 = NULL;
-    {
-      const StatementId stmtId = CHECK_TAPE_REQUEST2_SQL_STMT;
-      if(!(stmt2 = getStatement(stmtId))) {
-        stmt2 = createStatement(s_statementStrings[stmtId]);
-        storeStatement(stmtId, stmt2);
-      }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId1 << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId1 << ": " << e.getMessage().str();
+    throw ie;
+  }
+  oracle::occi::Statement *stmt2 = NULL;
+  const StatementId stmtId2 = CHECK_TAPE_REQUEST2_SQL_STMT;
+  try {
+    if(!(stmt2 = getStatement(stmtId2))) {
+      stmt2 = createStatement(s_statementStrings[stmtId2]);
+      storeStatement(stmtId2, stmt2);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId2 << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId2 << ": " << e.getMessage().str();
+    throw ie;
+  }
 
+  try {
     castor::vdqm::ClientIdentification *client = newTapeRequest->client();
     
     stmt1->setString(1, client->machine());
@@ -620,13 +701,13 @@ bool castor::db::ora::OraVdqmSvc::checkTapeRequest(
     // If we are here, the request doesn't yet exist.
     stmt1->closeResultSet(rset);
     return true;
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Error caught in checkTapeRequest."
-      << std::endl << e.what();
-    throw ex;
+      << std::endl << oe.what();
+    throw ie;
   }
   // We should never reach this point.
     
@@ -640,23 +721,34 @@ bool castor::db::ora::OraVdqmSvc::checkTapeRequest(
 int castor::db::ora::OraVdqmSvc::getQueuePosition(
   const u_signed64 tapeRequestId) throw (castor::exception::Exception) {
     
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  const StatementId stmtId = GET_QUEUE_POSITION_SQL_STMT;
   try {
-    // Get the Statement object, creating one if necessary
-    oracle::occi::Statement *stmt = NULL;
-    {
-      const StatementId stmtId = GET_QUEUE_POSITION_SQL_STMT;
-      if(!(stmt = getStatement(stmtId))) {
-        stmt = createStatement(s_statementStrings[stmtId]);
-        storeStatement(stmtId, stmt);
-      }
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
+  }
 
-    // execute the statement
+  try {
+    // Execute the statement
     stmt->setDouble(1, tapeRequestId);
     oracle::occi::ResultSet *rset = stmt->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       // Nothing found, return -1
-      //Normally, the statement should always find something!
+      // Normally, the statement should always find something!
       stmt->closeResultSet(rset);
       return -1;
     }
@@ -668,12 +760,12 @@ int castor::db::ora::OraVdqmSvc::getQueuePosition(
     // XXX: Maybe in future the return value should be double!
     // -1 means not found
     return queuePosition == 0 ? -1 : queuePosition;
-  } catch (oracle::occi::SQLException &e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage() << "Error caught in getQueuePosition." << std::endl
-      << e.what();
-    throw ex;
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Error caught in getQueuePosition." << std::endl
+      << oe.what();
+    throw ie;
   }
   // We should never reach this point.
 }
@@ -687,18 +779,29 @@ void castor::db::ora::OraVdqmSvc::setVolPriority(const int priority,
   const std::string vid, const int tpMode, const int lifespanType)
   throw (castor::exception::Exception) {
 
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  const StatementId stmtId = SET_VOL_PRIORITY_SQL_STMT;
   try {
-    // Get the Statement object, creating one if necessary
-    oracle::occi::Statement *stmt = NULL;
-    {
-      const StatementId stmtId = SET_VOL_PRIORITY_SQL_STMT;
-      if(!(stmt = getStatement(stmtId))) {
-        stmt = createStatement(s_statementStrings[stmtId]);
-        stmt->setAutoCommit(true);
-        storeStatement(stmtId, stmt);
-      }
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(true);
+      storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
+  }
 
+  try {
     // Execute the statement
     stmt->setInt(1, priority);
     stmt->setInt(2, clientUID);
@@ -709,12 +812,12 @@ void castor::db::ora::OraVdqmSvc::setVolPriority(const int priority,
     stmt->setInt(7, lifespanType);
 
     stmt->executeUpdate();
-  } catch (oracle::occi::SQLException &e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage() << "Error caught in setVolPriority." << std::endl
-      << e.what();
-    throw ex;
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Error caught in setVolPriority." << std::endl
+      << oe.what();
+    throw ie;
   }
 }
 
@@ -730,24 +833,35 @@ u_signed64 castor::db::ora::OraVdqmSvc::deleteVolPriority(
   u_signed64 id = 0;
 
 
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  const StatementId stmtId = DELETE_VOL_PRIORITY_SQL_STMT;
   try {
-    // Get the Statement object, creating one if necessary
-    oracle::occi::Statement *stmt = NULL;
-    {
-      const StatementId stmtId = DELETE_VOL_PRIORITY_SQL_STMT;
-      if(!(stmt = getStatement(stmtId))) {
-        stmt = createStatement(s_statementStrings[stmtId]);
-        stmt->registerOutParam(4, oracle::occi::OCCIDOUBLE); // returnVar
-        stmt->registerOutParam(5, oracle::occi::OCCIINT); // priorityVar
-        stmt->registerOutParam(6, oracle::occi::OCCIINT); // clientUIDVar
-        stmt->registerOutParam(7, oracle::occi::OCCIINT); // clientGIDVar
-        stmt->registerOutParam(8, oracle::occi::OCCISTRING,
-          2048); // clientHostVar
-        stmt->setAutoCommit(true);
-        storeStatement(stmtId, stmt);
-      }
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->registerOutParam(4, oracle::occi::OCCIDOUBLE); // returnVar
+      stmt->registerOutParam(5, oracle::occi::OCCIINT); // priorityVar
+      stmt->registerOutParam(6, oracle::occi::OCCIINT); // clientUIDVar
+      stmt->registerOutParam(7, oracle::occi::OCCIINT); // clientGIDVar
+      stmt->registerOutParam(8, oracle::occi::OCCISTRING,
+        2048); // clientHostVar
+      stmt->setAutoCommit(true);
+      storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
+  }
 
+  try {
     // Execute the statement
     stmt->setString(1, vid);
     stmt->setInt(2, tpMode);
@@ -761,12 +875,12 @@ u_signed64 castor::db::ora::OraVdqmSvc::deleteVolPriority(
     *clientGID  = stmt->getInt(7);
     *clientHost = stmt->getString(8);
 
-  } catch (oracle::occi::SQLException &e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage() << "Error caught in deleteVolPriority." << std::endl
-      << e.what();
-    throw ex;
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Error caught in deleteVolPriority." << std::endl
+      << oe.what();
+    throw ie;
   }
 
   return id;
@@ -774,10 +888,10 @@ u_signed64 castor::db::ora::OraVdqmSvc::deleteVolPriority(
 
 
 // -----------------------------------------------------------------------
-// listVolPriorities
+// getAllVolPriorities
 // -----------------------------------------------------------------------
 std::list<castor::vdqm::IVdqmSvc::VolPriority>
-  *castor::db::ora::OraVdqmSvc::getVolPriorities()
+  *castor::db::ora::OraVdqmSvc::getAllVolPriorities()
   throw (castor::exception::Exception) {
 
   std::list<castor::vdqm::IVdqmSvc::VolPriority> *priorities =
@@ -785,12 +899,23 @@ std::list<castor::vdqm::IVdqmSvc::VolPriority>
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = LIST_VOL_PRIORITIES_SQL_STMT;
+  const StatementId stmtId = GET_ALL_VOL_PRIORITIES_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
 
   // Execute statement and get result
@@ -819,22 +944,181 @@ std::list<castor::vdqm::IVdqmSvc::VolPriority>
     }
 
     stmt->closeResultSet(rs);
-  } catch(oracle::occi::SQLException &e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Failed to get list of volume priorities:"
-      << std::endl << e.getMessage();
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
+      << "Failed to get list of all volume priorities:"
+      << std::endl << oe.getMessage();
 
-    throw ex;
+    throw ie;
 
   } catch(castor::exception::Exception &e) {
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Failed to get list of volume priorities:"
+    castor::exception::Internal ie;
+    ie.getMessage()
+      << "Failed to get list of all volume priorities:"
       << std::endl << e.getMessage().str();
 
-    throw ex;
+    throw ie;
+  }
+
+  return priorities;
+}
+
+
+// -----------------------------------------------------------------------
+// getEffectiveVolPriorities
+// -----------------------------------------------------------------------
+std::list<castor::vdqm::IVdqmSvc::VolPriority>
+  *castor::db::ora::OraVdqmSvc::getEffectiveVolPriorities()
+  throw (castor::exception::Exception) {
+
+  std::list<castor::vdqm::IVdqmSvc::VolPriority> *priorities =
+    new std::list<castor::vdqm::IVdqmSvc::VolPriority>;;
+
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  const StatementId stmtId = GET_EFFECTIVE_VOL_PRIORITIES_SQL_STMT;
+  try {
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      storeStatement(stmtId, stmt);
+    }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
+  }
+
+  // Execute statement and get result
+  try {
+    oracle::occi::ResultSet *rs = stmt->executeQuery();
+
+    VolPriority p;
+
+    while(rs->next()) {
+      p.priority         = rs->getInt(1);;
+      p.clientUID        = rs->getInt(2);;
+      p.clientGID        = rs->getInt(3);
+      strncpy(p.clientHost, rs->getString(4).c_str(), sizeof(p.clientHost));
+      // Null-terminate in case source string is longer than destination
+      p.clientHost[sizeof(p.clientHost) - 1] = '\0';
+      strncpy(p.vid, rs->getString(5).c_str(), sizeof(p.vid));
+      // Null-terminate in case source string is longer than destination
+      p.clientHost[sizeof(p.clientHost) - 1] = '\0';
+      p.tpMode           = rs->getInt(6);
+      p.lifespanType     = rs->getInt(7);
+      p.id               = (u_signed64)rs->getDouble(8);
+      p.creationTime     = (u_signed64)rs->getDouble(9);
+      p.modificationTime = (u_signed64)rs->getDouble(10);
+
+      priorities->push_back(p);
+    }
+
+    stmt->closeResultSet(rs);
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
+      << "Failed to get list of effective volume priorities:"
+      << std::endl << oe.getMessage();
+
+    throw ie;
+
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage()
+      << "Failed to get list of effective volume priorities:"
+      << std::endl << e.getMessage().str();
+
+    throw ie;
+  }
+
+  return priorities;
+}
+
+
+// -----------------------------------------------------------------------
+// getVolPriorities
+// -----------------------------------------------------------------------
+std::list<castor::vdqm::IVdqmSvc::VolPriority>
+  *castor::db::ora::OraVdqmSvc::getVolPriorities(const int lifespanType)
+  throw (castor::exception::Exception) {
+
+  std::list<castor::vdqm::IVdqmSvc::VolPriority> *priorities =
+    new std::list<castor::vdqm::IVdqmSvc::VolPriority>;;
+
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  const StatementId stmtId = GET_VOL_PRIORITIES_SQL_STMT;
+  try {
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      storeStatement(stmtId, stmt);
+    }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
+  }
+
+  // Execute statement and get result
+  try {
+    stmt->setInt(1, lifespanType);
+    oracle::occi::ResultSet *rs = stmt->executeQuery();
+
+    VolPriority p;
+
+    while(rs->next()) {
+      p.priority         = rs->getInt(1);;
+      p.clientUID        = rs->getInt(2);;
+      p.clientGID        = rs->getInt(3);
+      strncpy(p.clientHost, rs->getString(4).c_str(), sizeof(p.clientHost));
+      // Null-terminate in case source string is longer than destination
+      p.clientHost[sizeof(p.clientHost) - 1] = '\0';
+      strncpy(p.vid, rs->getString(5).c_str(), sizeof(p.vid));
+      // Null-terminate in case source string is longer than destination
+      p.clientHost[sizeof(p.clientHost) - 1] = '\0';
+      p.tpMode           = rs->getInt(6);
+      p.lifespanType     = rs->getInt(7);
+      p.id               = (u_signed64)rs->getDouble(8);
+      p.creationTime     = (u_signed64)rs->getDouble(9);
+      p.modificationTime = (u_signed64)rs->getDouble(10);
+
+      priorities->push_back(p);
+    }
+
+    stmt->closeResultSet(rs);
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
+      << "Failed to get list of effective volume priorities:"
+      << std::endl << oe.getMessage();
+
+    throw ie;
+
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage()
+      << "Failed to get list of effective volume priorities:"
+      << std::endl << e.getMessage().str();
+
+    throw ie;
   }
 
   return priorities;
@@ -852,12 +1136,23 @@ castor::vdqm::TapeDrive*
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = SELECT_TAPE_DRIVE_SQL_STMT;
+  const StatementId stmtId = SELECT_TAPE_DRIVE_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
 
   // Execute statement and get result
@@ -878,13 +1173,13 @@ castor::vdqm::TapeDrive*
     // a tapeDrive and it's id is in rset
     id = (u_signed64)rset->getDouble(1);
     stmt->closeResultSet(rset);
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Unable to select tapeDrive by driveName and tapeServer id: "
-      << std::endl << e.getMessage();
-    throw ex;
+      << std::endl << oe.getMessage();
+    throw ie;
   }
   
   // Now get the tapeDrive from its id
@@ -928,13 +1223,13 @@ castor::vdqm::TapeDrive*
     tapeRequest = 0;
     
     return tapeDrive;
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Unable to select tapeDrive for id " << id  << " :"
-      << std::endl << e.getMessage();
-    throw ex;
+      << std::endl << oe.getMessage();
+    throw ie;
   }
   // We should never reach this point
 }
@@ -949,33 +1244,42 @@ void castor::db::ora::OraVdqmSvc::dedicateDrive(const std::string driveName,
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = DEDICATE_DRIVE_SQL_STMT;
+  const StatementId stmtId = DEDICATE_DRIVE_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
-
-  // Set the parameters of the SQL statement
-  stmt->setString(1, driveName );
-  stmt->setString(2, serverName);
-  stmt->setString(3, dgName    );
-  stmt->setString(4, dedicate  );
 
   // Execute statement and get result
   try {
+    stmt->setString(1, driveName );
+    stmt->setString(2, serverName);
+    stmt->setString(3, dgName    );
+    stmt->setString(4, dedicate  );
     stmt->executeUpdate();
-  } catch(oracle::occi::SQLException &e) {
-    handleException(e);
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
 
-    switch(e.getErrorCode()) {
+    switch(oe.getErrorCode()) {
     case castor::vdqm::IVdqmSvc::DbExceptions::INVALID_DRIVE_DEDICATE:
       {
         castor::exception::Exception ex(EINVAL);
         ex.getMessage() << "Failed to try to dedicate a drive: "
-          << std::endl << e.getMessage();
+          << std::endl << oe.getMessage();
         throw ex;
         break;
       }
@@ -985,7 +1289,7 @@ void castor::db::ora::OraVdqmSvc::dedicateDrive(const std::string driveName,
       {
         castor::exception::Exception ex(EVQNOSDRV);
         ex.getMessage() << "Failed to try to dedicate a drive: "
-          << std::endl << e.getMessage();
+          << std::endl << oe.getMessage();
         throw ex;
         break;
       }
@@ -993,7 +1297,7 @@ void castor::db::ora::OraVdqmSvc::dedicateDrive(const std::string driveName,
       {
         castor::exception::Internal ie;
         ie.getMessage() << "Failed to try to dedicate a drive: "
-          << std::endl << e.getMessage();
+          << std::endl << oe.getMessage();
         throw ie;
       }
     }
@@ -1010,33 +1314,42 @@ void castor::db::ora::OraVdqmSvc::deleteDrive(std::string driveName,
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = DELETE_DRIVE_SQL_STMT;
+  const StatementId stmtId = DELETE_DRIVE_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       stmt->setAutoCommit(false);
       stmt->registerOutParam(4, oracle::occi::OCCIINT);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
-
-  stmt->setString(1, driveName );
-  stmt->setString(2, serverName);
-  stmt->setString(3, dgName    );
 
   // Execute statement and get result
   int result = 0;
   try {
+    stmt->setString(1, driveName );
+    stmt->setString(2, serverName);
+    stmt->setString(3, dgName    );
     stmt->executeUpdate();
     result = stmt->getInt(4);
-  } catch(oracle::occi::SQLException &e) {
-    handleException(e);
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
 
     castor::exception::Internal ie;
-
     ie.getMessage()
       << "Failed to try to delete a drive: "
-      << std::endl << e.getMessage();
+      << std::endl << oe.getMessage();
 
     throw ie;
   }
@@ -1118,29 +1431,39 @@ bool castor::db::ora::OraVdqmSvc::writeRTPCDJobSubmission(
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = WRITE_RTCPD_JOB_SUBMISSION_SQL_STMT;
+  const StatementId stmtId = WRITE_RTCPD_JOB_SUBMISSION_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       stmt->setAutoCommit(false);
       stmt->registerOutParam(3, oracle::occi::OCCIINT);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
-
-  stmt->setDouble(1, tapeDriveId);
-  stmt->setDouble(2, tapeRequestId);
 
   // Execute statement and get result
   try {
+    stmt->setDouble(1, tapeDriveId);
+    stmt->setDouble(2, tapeRequestId);
     stmt->executeUpdate();
     result = stmt->getInt(3);
-  } catch(oracle::occi::SQLException &e) {
-    handleException(e);
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
 
     castor::exception::Internal ie;
-
-    ie.getMessage() << e.getMessage();
+    ie.getMessage() << "Failed to execute writeRTPCDJobSubmission statement: "
+      << oe.getMessage();
 
     throw ie;
   }
@@ -1161,29 +1484,40 @@ bool castor::db::ora::OraVdqmSvc::writeFailedRTPCDJobSubmission(
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = WRITE_FAILED_RTCPD_JOB_SUBMISSION_SQL_STMT;
+  const StatementId stmtId = WRITE_FAILED_RTCPD_JOB_SUBMISSION_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       stmt->setAutoCommit(false);
       stmt->registerOutParam(3, oracle::occi::OCCIINT);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
-
-  stmt->setDouble(1, tapeDriveId);
-  stmt->setDouble(2, tapeRequestId);
 
   // Execute statement and get result
   try {
+    stmt->setDouble(1, tapeDriveId);
+    stmt->setDouble(2, tapeRequestId);
     stmt->executeUpdate();
     result = stmt->getInt(3);
-  } catch(oracle::occi::SQLException &e) {
-    handleException(e);
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
 
     castor::exception::Internal ie;
-
-    ie.getMessage() << e.getMessage();
+    ie.getMessage()
+      << "Failed to execute writeFailedRTPCDJobSubmission statement: "
+      << oe.getMessage();
 
     throw ie;
   }
@@ -1205,12 +1539,23 @@ bool
     
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = EXIST_TAPE_DRIVE_WITH_TAPE_IN_USE_SQL_STMT;
+  const StatementId stmtId = EXIST_TAPE_DRIVE_WITH_TAPE_IN_USE_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
 
   try {
@@ -1225,13 +1570,13 @@ bool
     // a tape drive and it's id is in rset
     id = (u_signed64)rset->getDouble(1);
     stmt->closeResultSet(rset);
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Unable to select tape by vid: "
-      << std::endl << e.getMessage();
-    throw ex;
+      << std::endl << oe.getMessage();
+    throw ie;
   }  
   
   return true;
@@ -1251,12 +1596,23 @@ bool
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = EXIST_TAPE_DRIVE_WITH_TAPE_MOUNTED_SQL_STMT;
+  const StatementId stmtId = EXIST_TAPE_DRIVE_WITH_TAPE_MOUNTED_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
 
   try {
@@ -1271,13 +1627,13 @@ bool
     // a tape drive and it's id is in rset
     id = (u_signed64)rset->getDouble(1);
     stmt->closeResultSet(rset);
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Unable to select tape by vid: "
-      << std::endl << e.getMessage();
-    throw ex;
+      << std::endl << oe.getMessage();
+    throw ie;
   }
    
    return true;    
@@ -1294,12 +1650,23 @@ castor::vdqm::VdqmTape*
     
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = SELECT_TAPE_BY_VID_SQL_STMT;
+  const StatementId stmtId = SELECT_TAPE_BY_VID_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
 
   // Execute statement and get result
@@ -1316,13 +1683,13 @@ castor::vdqm::VdqmTape*
     // a tape and it's id is in rset
     id = (u_signed64)rset->getDouble(1);
     stmt->closeResultSet(rset);
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Unable to select tape by vid: "
-      << std::endl << e.getMessage();
-    throw ex;
+      << std::endl << oe.getMessage();
+    throw ie;
   }
   // Now get the tape from its id
   try {
@@ -1341,13 +1708,13 @@ castor::vdqm::VdqmTape*
       throw e;
     }
     return tape;
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Unable to select tape for id " << id  << " :"
-      << std::endl << e.getMessage();
-    throw ex;
+      << std::endl << oe.getMessage();
+    throw ie;
   }
   // We should never reach this point  
 }
@@ -1363,12 +1730,23 @@ castor::vdqm::TapeRequest*
   
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = SELECT_TAPE_REQ_FOR_MOUNTED_TAPE_SQL_STMT;
+  const StatementId stmtId = SELECT_TAPE_REQ_FOR_MOUNTED_TAPE_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
 
   // Execute statement and get result
@@ -1389,13 +1767,13 @@ castor::vdqm::TapeRequest*
     // a tapeDrive and it's id is in rset
     id = (u_signed64)rset->getDouble(1);
     stmt->closeResultSet(rset);
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Unable to select tapeDrive by vid, side and tpmode :"
-      << std::endl << e.getMessage();
-    throw ex;
+      << std::endl << oe.getMessage();
+    throw ie;
   }
   
   // Now get the tapeRequest from its id
@@ -1427,13 +1805,13 @@ castor::vdqm::TapeRequest*
     obj = 0;
     
     return tapeRequest;
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Unable to select tapeRequest for id " << id  << " :"
-      << std::endl << e.getMessage();
-    throw ex;
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
+      << "Unable to select tapeRequest for id " << id << " :"
+      << std::endl << oe.getMessage();
+    throw ie;
   }
   // We should never reach this point  
 }
@@ -1449,12 +1827,23 @@ castor::vdqm::TapeAccessSpecification*
     
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = SELECT_TAPE_ACCESS_SPECIFICATION_SQL_STMT;
+  const StatementId stmtId = SELECT_TAPE_ACCESS_SPECIFICATION_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
 
   // Execute statement and get result
@@ -1476,14 +1865,14 @@ castor::vdqm::TapeAccessSpecification*
     id = (u_signed64)rset->getDouble(1);
     stmt->closeResultSet(rset);
   
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Unable to select TapeAccessSpecification by accessMode, density,"
          " tapeModel:"
-      << std::endl << e.getMessage();
-    throw ex;
+      << std::endl << oe.getMessage();
+    throw ie;
   }
   // Now get the DeviceGroupName from its id
   try {
@@ -1502,13 +1891,13 @@ castor::vdqm::TapeAccessSpecification*
       throw e;
     }
     return tapeAccessSpec;
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Unable to select TapeAccessSpecification for id " << id  << " :"
-      << std::endl << e.getMessage();
-    throw ex;
+      << std::endl << oe.getMessage();
+    throw ie;
   }
   // We should never reach this point   
 }
@@ -1524,12 +1913,23 @@ castor::vdqm::DeviceGroupName*
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = SELECT_DEVICE_GROUP_NAME_SQL_STMT;
+  const StatementId stmtId = SELECT_DEVICE_GROUP_NAME_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
 
   // Execute statement and get result
@@ -1548,13 +1948,13 @@ castor::vdqm::DeviceGroupName*
     // a DeviceGroupName and it's id is in rset
     id = (u_signed64)rset->getDouble(1);
     stmt->closeResultSet(rset);
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Unable to select DeviceGroupName by dgName :"
-      << std::endl << e.getMessage();
-    throw ex;
+      << std::endl << oe.getMessage();
+    throw ie;
   }
   // Now get the DeviceGroupName from its id
   try {
@@ -1573,13 +1973,13 @@ castor::vdqm::DeviceGroupName*
       throw e;
     }
     return deviceGroupName;
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Unable to select DeviceGroupName for id " << id  << " :"
-      << std::endl << e.getMessage();
-    throw ex;
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
+      << "Unable to select DeviceGroupName for id " << id << " :"
+      << std::endl << oe.getMessage();
+    throw ie;
   }
   // We should never reach this point   
 }
@@ -1595,14 +1995,25 @@ castor::vdqm::IVdqmSvc::VolReqList*
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = SELECT_TAPE_REQUEST_QUEUE_SQL_STMT;
+  const StatementId stmtId = SELECT_TAPE_REQUEST_QUEUE_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       stmt->setPrefetchMemorySize(0);
       stmt->setPrefetchRowCount(100);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
 
   // Set the query statements parameters
@@ -1611,14 +2022,14 @@ castor::vdqm::IVdqmSvc::VolReqList*
     stmt->setString(2, dgn);
     stmt->setString(3, requestedSrv);
     stmt->setString(4, requestedSrv);
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Failed to set the parameters of selectTapeRequestQueueStatement:"
-      << std::endl << e.getMessage();
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
+      << "Failed to set the parameters of selectTapeRequestQueue statement:"
+      << std::endl << oe.getMessage();
 
-    throw ex;
+    throw ie;
   }
 
   // Execute statement and get result
@@ -1677,14 +2088,14 @@ castor::vdqm::IVdqmSvc::VolReqList*
 
     return volReqs;
 
-  } catch(oracle::occi::SQLException &e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Failed to query tape drive queue:"
-      << std::endl << e.getMessage();
+      << std::endl << oe.getMessage();
 
-    throw ex;
+    throw ie;
   }
 }
 
@@ -1698,12 +2109,23 @@ std::list<vdqmDrvReq_t>*
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = SELECT_TAPE_DRIVE_QUEUE_SQL_STMT;
+  const StatementId stmtId = SELECT_TAPE_DRIVE_QUEUE_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
 
   // Set the query statements parameters
@@ -1712,14 +2134,14 @@ std::list<vdqmDrvReq_t>*
     stmt->setString(2, dgn);
     stmt->setString(3, requestedSrv);
     stmt->setString(4, requestedSrv);
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Failed to set the parameters of selectTapeDriveQueueStatement:"
-      << std::endl << e.getMessage();
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
+      << "Failed to set the parameters of selectTapeDriveQueue statement:"
+      << std::endl << oe.getMessage();
 
-    throw ex;
+    throw ie;
   }
  
   // Execute statement and get result
@@ -1777,22 +2199,22 @@ std::list<vdqmDrvReq_t>*
 
     return drvReqs;
 
-  } catch(oracle::occi::SQLException &e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Failed to query tape drive queue:"
-      << std::endl << e.getMessage();
+      << std::endl << oe.getMessage();
 
-    throw ex;
+    throw ie;
 
   } catch(castor::exception::Exception &e) {
-    castor::exception::Internal ex;
-    ex.getMessage()
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Failed to query tape drive queue:"
       << std::endl << e.getMessage().str();
 
-    throw ex;
+    throw ie;
   }
 }
 
@@ -1807,36 +2229,36 @@ int castor::db::ora::OraVdqmSvc::translateNewStatus(
   int oldStatus = 0;
 
   switch (newStatusCode) {
-    case castor::vdqm::UNIT_UP:
-        oldStatus = VDQM_UNIT_UP | VDQM_UNIT_FREE;
-        break;
-    case castor::vdqm::UNIT_STARTING:
-        oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY;
-        break;
-    case castor::vdqm::UNIT_ASSIGNED:
-        oldStatus = VDQM_UNIT_UP | VDQM_UNIT_ASSIGN | VDQM_UNIT_BUSY;
-        break;
-    case castor::vdqm::VOL_MOUNTED:
-        oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_ASSIGN;
-        break;
-    case castor::vdqm::FORCED_UNMOUNT:
-        oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE |
-                     VDQM_FORCE_UNMOUNT | VDQM_UNIT_UNKNOWN;
-        break;
-    case castor::vdqm::UNIT_DOWN:
-        oldStatus = VDQM_UNIT_DOWN;
-        break;
-    case castor::vdqm::WAIT_FOR_UNMOUNT:
-        oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE |
-                     VDQM_UNIT_UNKNOWN;
-        break;
-    case castor::vdqm::STATUS_UNKNOWN:
-        oldStatus = VDQM_UNIT_UNKNOWN;
-        break;
-    default:
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() << "The tapeDrive is in a wrong status" << std::endl;
-        throw ex;
+  case castor::vdqm::UNIT_UP:
+    oldStatus = VDQM_UNIT_UP | VDQM_UNIT_FREE;
+    break;
+  case castor::vdqm::UNIT_STARTING:
+    oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY;
+    break;
+  case castor::vdqm::UNIT_ASSIGNED:
+    oldStatus = VDQM_UNIT_UP | VDQM_UNIT_ASSIGN | VDQM_UNIT_BUSY;
+    break;
+  case castor::vdqm::VOL_MOUNTED:
+    oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_ASSIGN;
+    break;
+  case castor::vdqm::FORCED_UNMOUNT:
+    oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE |
+      VDQM_FORCE_UNMOUNT | VDQM_UNIT_UNKNOWN;
+    break;
+  case castor::vdqm::UNIT_DOWN:
+    oldStatus = VDQM_UNIT_DOWN;
+    break;
+  case castor::vdqm::WAIT_FOR_UNMOUNT:
+    oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE |
+      VDQM_UNIT_UNKNOWN;
+    break;
+  case castor::vdqm::STATUS_UNKNOWN:
+    oldStatus = VDQM_UNIT_UNKNOWN;
+    break;
+  default:
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "The tapeDrive is in a wrong status" << std::endl;
+    throw ex;
   }
 
   return oldStatus;
@@ -1853,12 +2275,23 @@ castor::vdqm::TapeRequest*
     
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = SELECT_TAPE_REQUEST_SQL_STMT;
+  const StatementId stmtId = SELECT_TAPE_REQUEST_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
 
   // Execute statement and get result
@@ -1875,13 +2308,13 @@ castor::vdqm::TapeRequest*
     // a tape and it's id is in rset
     id = (u_signed64)rset->getDouble(1);
     stmt->closeResultSet(rset);
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Unable to select tape request by VolReqID: "
-      << std::endl << e.getMessage();
-    throw ex;
+      << std::endl << oe.getMessage();
+    throw ie;
   }
   // Now get the tape from its id
   try {
@@ -1907,13 +2340,13 @@ castor::vdqm::TapeRequest*
     obj = 0;
     
     return tapeRequest;
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Unable to select tape request for id " << id  << " :"
-      << std::endl << e.getMessage();
-    throw ex;
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
+      << "Unable to select tape request for id " << id << " :"
+      << std::endl << oe.getMessage();
+    throw ie;
   }
   // We should never reach this point
 }
@@ -1934,8 +2367,8 @@ int castor::db::ora::OraVdqmSvc::allocateDrive(u_signed64 *tapeDriveId,
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = ALLOCATE_DRIVE_SQL_STMT;
+  const StatementId stmtId = ALLOCATE_DRIVE_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       stmt->registerOutParam(1, oracle::occi::OCCIINT);
@@ -1947,6 +2380,17 @@ int castor::db::ora::OraVdqmSvc::allocateDrive(u_signed64 *tapeDriveId,
       stmt->setAutoCommit(true);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
 
   // Execute statement and get result
@@ -1958,13 +2402,13 @@ int castor::db::ora::OraVdqmSvc::allocateDrive(u_signed64 *tapeDriveId,
     *tapeDriveName     = stmt->getString(3);
     *tapeRequestId     = (u_signed64)stmt->getDouble(4);
     *tapeRequestVid    = stmt->getString(5);
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Unable to find a TapeRequest for a free TapeDrive: "
-      << std::endl << e.getMessage();
-    throw ex;
+      << std::endl << oe.getMessage();
+    throw ie;
   }
   
   return allocationResult;
@@ -1985,8 +2429,8 @@ int castor::db::ora::OraVdqmSvc::reuseDriveAllocation(
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = REUSE_DRIVE_ALLOCATION_SQL_STMT;
+  const StatementId stmtId = REUSE_DRIVE_ALLOCATION_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       stmt->registerOutParam(3, oracle::occi::OCCIINT);
@@ -1994,24 +2438,34 @@ int castor::db::ora::OraVdqmSvc::reuseDriveAllocation(
       stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
 
-  stmt->setDouble(1, tape->id());
-  stmt->setDouble(2, drive->id());
-  
   // Execute statement and get result
   try {
+    stmt->setDouble(1, tape->id());
+    stmt->setDouble(2, drive->id());
     stmt->executeUpdate();
     
     reuseResult    = stmt->getInt(3);
     *tapeRequestId = (u_signed64)stmt->getDouble(4);
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Failed to try to reuse drive allocation: "
-      << std::endl << e.getMessage();
-    throw ex;
+      << std::endl << oe.getMessage();
+    throw ie;
   }
   
   return reuseResult;
@@ -2030,14 +2484,25 @@ castor::vdqm::TapeRequest *castor::db::ora::OraVdqmSvc::requestToSubmit()
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = REQUEST_TO_SUBMIT_SQL_STMT;
+  const StatementId stmtId = REQUEST_TO_SUBMIT_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       stmt->registerOutParam(1, oracle::occi::OCCIDOUBLE);
       stmt->setAutoCommit(true);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
 
   // Execute statement and get result
@@ -2050,13 +2515,13 @@ castor::vdqm::TapeRequest *castor::db::ora::OraVdqmSvc::requestToSubmit()
       // We found nothing, so return NULL
       return NULL;
     }
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Unable to find a TapeRequest for a free TapeDrive: "
-      << std::endl << e.getMessage();
-    throw ex;
+      << std::endl << oe.getMessage();
+    throw ie;
   }
 
   // Needed to get the create objects from the database IDs
@@ -2139,12 +2604,23 @@ std::vector<castor::vdqm::TapeDriveCompatibility*>*
   
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = SELECT_COMPATIBILITIES_FOR_DRIVE_MODEL_SQL_STMT;
+  const StatementId stmtId = SELECT_COMPATIBILITIES_FOR_DRIVE_MODEL_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
  
   try {
@@ -2160,13 +2636,13 @@ std::vector<castor::vdqm::TapeDriveCompatibility*>*
     
     // If we reach this point, then we selected successfully
     // a TapeDriveCompatibility object and it's id is in rset
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Unable to select TapeDriveCompatibility by tapeDriveModel :"
-      << std::endl << e.getMessage();
-    throw ex;
+      << std::endl << oe.getMessage();
+    throw ie;
   }
   
   // Now get the TapeDriveCompatibility from its id
@@ -2176,7 +2652,7 @@ std::vector<castor::vdqm::TapeDriveCompatibility*>*
     ad.setCnvSvcName("DbCnvSvc");
     ad.setCnvSvcType(castor::SVC_DBCNV);
     
-     // create result
+    // create result
     result = new std::vector<castor::vdqm::TapeDriveCompatibility*>; 
     castor::vdqm::TapeDriveCompatibility* driveCompatibility = NULL;
     
@@ -2201,12 +2677,12 @@ std::vector<castor::vdqm::TapeDriveCompatibility*>*
     
     stmt->closeResultSet(rset);
     return result;
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Unable to select TapeDriveCompatibility for id " << id  << " :"
-      << std::endl << e.getMessage();
+      << std::endl << oe.getMessage();
       
     for (unsigned int i = 0; i < result->size(); i++) {
       delete (*result)[i];
@@ -2215,7 +2691,7 @@ std::vector<castor::vdqm::TapeDriveCompatibility*>*
     delete result;
     result = 0;
       
-    throw ex;
+    throw ie;
   }
   // We should never reach this point 
 }
@@ -2236,12 +2712,23 @@ std::vector<castor::vdqm::TapeAccessSpecification*>*
   
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  {
-    const StatementId stmtId = SELECT_TAPE_ACCESS_SPECIFICATIONS_SQL_STMT;
+  const StatementId stmtId = SELECT_TAPE_ACCESS_SPECIFICATIONS_SQL_STMT;
+  try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       storeStatement(stmtId, stmt);
     }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
   }
  
   try {
@@ -2257,13 +2744,13 @@ std::vector<castor::vdqm::TapeAccessSpecification*>*
     
     // If we reach this point, then we selected successfully
     // a TapeAccessSpecification object and it's id is in rset
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Unable to select TapeAccessSpecification by tapeModel :"
-      << std::endl << e.getMessage();
-    throw ex;
+      << std::endl << oe.getMessage();
+    throw ie;
   }
   
   // Now get the TapeAccessSpecification from its id
@@ -2298,12 +2785,12 @@ std::vector<castor::vdqm::TapeAccessSpecification*>*
     
     stmt->closeResultSet(rset);
     return result;
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
       << "Unable to select TapeAccessSpecification for id " << id  << " :"
-      << std::endl << e.getMessage();
+      << std::endl << oe.getMessage();
       
     for (unsigned int i = 0; i < result->size(); i++) {
       delete (*result)[i];
@@ -2312,7 +2799,7 @@ std::vector<castor::vdqm::TapeAccessSpecification*>*
     delete result;
     result = 0;
       
-    throw ex;
+    throw ie;
   }
   // We should never reach this point
 }

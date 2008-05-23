@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
   try {
     // Get the list of volume priorities
     std::auto_ptr< std::list<castor::vdqm::IVdqmSvc::VolPriority> > priorities(
-      vdqmSvc->getVolPriorities());
+      vdqmSvc->getEffectiveVolPriorities());
 
     // Print the list of volume priorities
     for(std::list<castor::vdqm::IVdqmSvc::VolPriority>::iterator itor =

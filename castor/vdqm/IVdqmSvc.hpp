@@ -181,14 +181,39 @@ namespace castor {
           throw (castor::exception::Exception) = 0;
 
         /**
-         * Returns the list of effective volume priorities.
+         * Returns the list of all volume priorities.
          * Please note: The caller is responsible for the deletion of the
          * allocated list!
          *
          * @return the list of all volume priorities.
          * Note that the returned list should be deallocated by the caller.
          */
-        virtual std::list<VolPriority> *getVolPriorities()
+        virtual std::list<VolPriority> *getAllVolPriorities()
+          throw (castor::exception::Exception) = 0;
+
+        /**
+         * Returns the list of effective volume priorities.
+         * Please note: The caller is responsible for the deletion of the
+         * allocated list!
+         *
+         * @return the list of effective volume priorities.
+         * Note that the returned list should be deallocated by the caller.
+         */
+        virtual std::list<VolPriority> *getEffectiveVolPriorities()
+          throw (castor::exception::Exception) = 0;
+
+        /**
+         * Returns the list of volume priorities withe the specified lifespan
+         * type.
+         * Please note: The caller is responsible for the deletion of the
+         * allocated list!
+         *
+         * @param lifespanType the lifespan type of the volume priorities to be
+         * retrieved.  Valid values are 0 for single-shot and 1 for unlimited.
+         * @return the list of volume priorities.
+         * Note that the returned list should be deallocated by the caller.
+         */
+        virtual std::list<VolPriority> *getVolPriorities(const int lifespanType)
           throw (castor::exception::Exception) = 0;
         
         /**
