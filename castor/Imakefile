@@ -108,7 +108,10 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               logstream.cpp \
               logbuf.cpp \
               stdbuf.cpp \
+              bwlist/Privilege.cpp \
               bwlist/ChangePrivilege.cpp \
+              bwlist/ListPrivileges.cpp \
+              bwlist/ListPrivilegesResponse.cpp \
               bwlist/BWUser.cpp \
               bwlist/RequestType.cpp \
               client/BaseClient.cpp \
@@ -205,6 +208,9 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamDiskPoolQueryCnv.cpp \
               io/StreamVersionQueryCnv.cpp \
               io/StreamVersionResponseCnv.cpp \
+              io/StreamPrivilegeCnv.cpp \
+              io/StreamListPrivilegesCnv.cpp \
+              io/StreamListPrivilegesResponseCnv.cpp \
               io/StreamChangePrivilegeCnv.cpp \
               io/StreamBWUserCnv.cpp \
               io/StreamRequestTypeCnv.cpp \

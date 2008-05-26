@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/05/23 09:25:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/05/26 15:40:00 $ $Author: sponcec3 $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -33,6 +33,7 @@
 #include "castor/exception/PermissionDenied.hpp"
 #include "castor/bwlist/BWUser.hpp"
 #include "castor/bwlist/RequestType.hpp"
+#include "castor/bwlist/Privilege.hpp"
 #include <string>
 #include <vector>
 #include "occi.h"
@@ -60,6 +61,10 @@ const std::string castor::db::ora::OraRHSvc::s_addPrivilegeStatementString =
 const std::string castor::db::ora::OraRHSvc::s_removePrivilegeStatementString =
   "DECLARE removePrivilege(:1, :2, :3, :4) END;";
 
+/// SQL statement for listPrivileges
+const std::string castor::db::ora::OraRHSvc::s_listPrivilegesStatementString =
+  "DECLARE listPrivileges(:1, :2, :3, :4 ,:5, :6) END;";
+
 //------------------------------------------------------------------------------
 // OraRHSvc
 //------------------------------------------------------------------------------
@@ -67,7 +72,8 @@ castor::db::ora::OraRHSvc::OraRHSvc(const std::string name) :
   OraCommonSvc(name),
   m_checkPermissionStatement(0),
   m_addPrivilegeStatement(0),
-  m_removePrivilegeStatement(0) {
+  m_removePrivilegeStatement(0),
+  m_listPrivilegesStatement(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -102,11 +108,13 @@ void castor::db::ora::OraRHSvc::reset() throw() {
     if (m_checkPermissionStatement) deleteStatement(m_checkPermissionStatement);
     if (m_addPrivilegeStatement) deleteStatement(m_addPrivilegeStatement);
     if (m_removePrivilegeStatement) deleteStatement(m_removePrivilegeStatement);
+    if (m_listPrivilegesStatement) deleteStatement(m_listPrivilegesStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_checkPermissionStatement = 0;
   m_addPrivilegeStatement = 0;
   m_removePrivilegeStatement = 0;
+  m_listPrivilegesStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -246,6 +254,89 @@ void castor::db::ora::OraRHSvc::changePrivilege
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in changePrivilege."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// listPrivileges
+//------------------------------------------------------------------------------
+std::vector<castor::bwlist::Privilege*>
+castor::db::ora::OraRHSvc::listPrivileges
+(const u_signed64 svcClassId, const int user,
+ const int group, const int requestType)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statement is ok
+    if (0 == m_listPrivilegesStatement) {
+      m_listPrivilegesStatement =
+        createStatement(s_listPrivilegesStatementString);
+      m_listPrivilegesStatement->registerOutParam
+        (5, oracle::occi::OCCICURSOR);
+      m_listPrivilegesStatement->registerOutParam
+        (6, oracle::occi::OCCICURSOR);
+    }
+    // deal with the service class if any
+    if (svcClassId > 0) {
+      m_listPrivilegesStatement->setDouble(1, svcClassId);
+    } else {
+      m_listPrivilegesStatement->setNull(1, oracle::occi::OCCINUMBER);
+    }
+    // deal with user
+    if (user >= 0) {
+      m_listPrivilegesStatement->setInt(2, group);
+    } else {
+      m_listPrivilegesStatement->setNull(2, oracle::occi::OCCINUMBER);
+    }
+    // deal with group
+    if (group >= 0) {
+      m_listPrivilegesStatement->setInt(3, group);
+    } else {
+      m_listPrivilegesStatement->setNull(3, oracle::occi::OCCINUMBER);
+    }
+    // deal with request Type
+    if (requestType > 0) {
+      m_listPrivilegesStatement->setInt(4, requestType);
+    } else {
+      m_listPrivilegesStatement->setNull(4, oracle::occi::OCCINUMBER);
+    }
+    // Call DB
+    m_listPrivilegesStatement->executeUpdate();
+    // Extract white list part
+    std::vector<castor::bwlist::Privilege*> result;    
+    oracle::occi::ResultSet *wrs =
+      m_listPrivilegesStatement->getCursor(5);
+    oracle::occi::ResultSet::Status status = wrs->next();
+    while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      castor::bwlist::Privilege* p = new castor::bwlist::Privilege();
+      p->setServiceClass(wrs->getString(1));
+      p->setEuid(wrs->getInt(2));
+      p->setEgid(wrs->getInt(3));
+      p->setRequestType(wrs->getInt(4));
+      p->setGranted(true);
+      result.push_back(p);
+    }
+    // Extract black list part
+    oracle::occi::ResultSet *brs =
+      m_listPrivilegesStatement->getCursor(6);
+    status = brs->next();
+    while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      castor::bwlist::Privilege* p = new castor::bwlist::Privilege();
+      p->setServiceClass(brs->getString(1));
+      p->setEuid(brs->getInt(2));
+      p->setEgid(brs->getInt(3));
+      p->setRequestType(brs->getInt(4));
+      p->setGranted(false);
+      result.push_back(p);
+    }
+    // return result
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in listPrivileges."
       << std::endl << e.what();
     throw ex;
   }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/05/23 09:25:20 $ $Author: sponcec3 $
+ * @(#)$RCSfile: QueryRequestSvcThread.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/05/26 15:40:01 $ $Author: sponcec3 $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -152,6 +152,19 @@ namespace castor {
 				   castor::IClient *client,
 				   castor::rh::IRHSvc* rhSvc,
 				   Cuuid_t uuid)
+          throw (castor::exception::Exception);
+
+        /**
+         * Handles a ListPrivilege Request and replies to client.
+         * @param req the request to handle
+         * @param client the client where to send the response
+         * @param rhSvc the RH service to use
+         * @param uuid the uuid of the request, for logging purposes
+         */
+        void handleListPrivileges(castor::stager::Request* req,
+				  castor::IClient *client,
+				  castor::rh::IRHSvc* rhSvc,
+				  Cuuid_t uuid)
           throw (castor::exception::Exception);
 
         /**

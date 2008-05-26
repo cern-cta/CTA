@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IRHSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/05/23 09:25:36 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IRHSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/05/26 15:40:01 $ $Author: sponcec3 $
  *
  * This class provides specific request handler methods
  *
@@ -32,6 +32,7 @@
 #include "castor/stager/ICommonSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include <string>
+#include <vector>
 
 namespace castor {
 
@@ -39,6 +40,7 @@ namespace castor {
   namespace bwlist {
     class BWUser;
     class RequestType;
+    class Privilege;
   }
 
   namespace rh {
@@ -86,6 +88,27 @@ namespace castor {
        std::vector<castor::bwlist::RequestType*> requestTypes,
        bool isAdd)
         throw (castor::exception::Exception) = 0;
+
+      /**
+       * list privileges
+       * @param svcClassId if not 0, restricts the listing to
+       * privileges for this service class
+       * @param user if not -1, restricts the listing to privileges
+       * concerning this user
+       * @param group if not -1, restricts the listing to privileges
+       * concerning this group
+       * @param requestType if not 0, restricts the listing to
+       * privileges concerning this request type
+       * @return the list of privileges, as a vectors of individual
+       * privileges. Note that it is the responsibility of the caller
+       * to deallocate all these privileges
+       * @exception in case of error
+       */
+      virtual std::vector<castor::bwlist::Privilege*>
+      listPrivileges
+      (const u_signed64 svcClassId, const int user,
+       const int group, const int requestType)
+	throw (castor::exception::Exception) = 0;
 
     }; // end of class IRHSvc
 

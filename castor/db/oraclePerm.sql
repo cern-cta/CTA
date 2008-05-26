@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.639 $ $Date: 2008/05/22 16:40:06 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.640 $ $Date: 2008/05/26 15:40:00 $ $Author: sponcec3 $
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -83,6 +83,8 @@ CREATE OR REPLACE PACKAGE castorBW AS
     euid NUMBER,
     egid NUMBER,
     reqType NUMBER);
+  -- a cursor of privileges
+  TYPE Privilege_Cur IS REF CURSOR RETURN Privilege;
   -- Intersection of 2 priviledges
   -- raises -20109, "Empty privilege" in case the intersection is empty
   FUNCTION intersection(p1 IN Privilege, p2 IN Privilege) RETURN Privilege;
@@ -109,10 +111,14 @@ CREATE OR REPLACE PACKAGE castorBW AS
   PROCEDURE addPrivilege(P Privilege);
   -- Remove priviledge P
   PROCEDURE removePrivilege(P Privilege);
-  -- Add priviledge
+  -- Add priviledge(s)
   PROCEDURE addPrivilege(svcClassId NUMBER, euid NUMBER, egid NUMBER, reqType NUMBER);
-  -- Remove priviledge
+  -- Remove priviledge(S)
   PROCEDURE removePrivilege(svcClassId NUMBER, euid NUMBER, egid NUMBER, reqType NUMBER);
+  -- List priviledge(s)
+  PROCEDURE listPrivilege(svcClassId IN NUMBER, euid IN NUMBER,
+                          egid IN NUMBER, reqType IN NUMBER,
+                          wlist OUT Privilege_Cur, blist OUT Privilege_Cur);
 END castorBW;
 
 CREATE OR REPLACE PACKAGE BODY castorBW AS
@@ -411,10 +417,10 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
   PROCEDURE addPrivilege(svcClassId NUMBER, euid NUMBER, egid NUMBER, reqType NUMBER) AS
     p castorBW.Privilege;
   BEGIN
-    p.svcClass = svcClassId;
-    p.euid = euid;
-    p.egid = egid;
-    p.reqType = reqType;
+    p.svcClass := svcClassId;
+    p.euid := euid;
+    p.egid := egid;
+    p.reqType := reqType;
     addPrivilege(p);
   END;
 
@@ -422,11 +428,34 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
   PROCEDURE removePrivilege(svcClassId NUMBER, euid NUMBER, egid NUMBER, reqType NUMBER) AS
     p castorBW.Privilege;
   BEGIN
-    p.svcClass = svcClassId;
-    p.euid = euid;
-    p.egid = egid;
-    p.reqType = reqType;
+    p.svcClass := svcClassId;
+    p.euid := euid;
+    p.egid := egid;
+    p.reqType := reqType;
     removePrivilege(p);
+  END;
+
+  -- Remove priviledge
+  PROCEDURE listPrivilege(svcClassId IN NUMBER, euid IN NUMBER,
+                          egid IN NUMBER, reqType IN NUMBER,
+                          wlist OUT Privilege_Cur, blist OUT Privilege_Cur) AS
+  BEGIN
+    OPEN wlist FOR
+      SELECT svcClass.name, euid, egid, reqType
+        FROM WhiteList, SvcClass
+       WHERE WhiteList.svcClass = svcClass.id
+         AND (WhiteList.svcClass = svcClassId OR svcClassId = 0)
+         AND (WhiteList.euid = euid OR euid = -1)
+         AND (WhiteList.egid = egid OR egid = -1)
+         AND (WhiteList.reqType = reqType OR reqType = 0);
+    OPEN blist FOR
+      SELECT svcClass.name, euid, egid, reqType
+        FROM BlackList, SvcClass
+       WHERE BlackList.svcClass = svcClass.id
+         AND (BlackList.svcClass = svcClassId OR svcClassId = 0)
+         AND (BlackList.euid = euid OR euid = -1)
+         AND (BlackList.egid = egid OR egid = -1)
+         AND (BlackList.reqType = reqType OR reqType = 0);
   END;
 
 END castorBW;

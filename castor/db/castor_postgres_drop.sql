@@ -224,6 +224,9 @@ DROP TABLE BWUser;
 /* SQL statements for type RequestType */
 DROP TABLE RequestType;
 
+/* SQL statements for type ListPrivileges */
+DROP TABLE ListPrivileges;
+
 DROP FUNCTION getTime;
 DROP FUNCTION FileSystemRate;
 DROP PROCEDURE makeSubRequestWait;

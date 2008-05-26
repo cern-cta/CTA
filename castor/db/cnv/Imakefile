@@ -42,6 +42,7 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbBaseCnv.cpp \
      DbCastorFileCnv.cpp \
      DbChangePrivilegeCnv.cpp \
+     DbListPrivilegesCnv.cpp \
      DbClientCnv.cpp \
      DbClientIdentificationCnv.cpp \
      DbDeviceGroupNameCnv.cpp \

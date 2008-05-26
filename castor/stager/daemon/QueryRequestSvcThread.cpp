@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.78 $ $Release$ $Date: 2008/05/22 16:40:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.79 $ $Release$ $Date: 2008/05/26 15:40:01 $ $Author: sponcec3 $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -42,6 +42,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/InvalidArgument.hpp"
+#include "castor/exception/PermissionDenied.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/replier/RequestReplier.hpp"
 #include "castor/query/VersionQuery.hpp"
@@ -66,6 +67,8 @@
 #include "castor/stager/daemon/QueryRequestSvcThread.hpp"
 #include "castor/stager/daemon/DlfMessages.hpp"
 #include "castor/bwlist/ChangePrivilege.hpp"
+#include "castor/bwlist/ListPrivileges.hpp"
+#include "castor/bwlist/ListPrivilegesResponse.hpp"
 #include "stager_client_api.h"
 #include "Cns_api.h"
 #include "Cupv_api.h"
@@ -671,6 +674,22 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
   try {
     // prepare response first in case we fail
     res.setReqAssociated(req->reqId());
+    // Get the name of the localhost to pass into the Cupv interface.
+    std::string localHost = castor::System::getHostName();
+    // cheack privileges of the caller. He must be GROUP_ADMIN
+    int rc = Cupv_check(req->euid(), req->egid(),
+                        localHost.c_str(), 
+			localHost.c_str(), P_GRP_ADMIN);
+    if ((rc < 0) && (serrno != EACCES)) {
+      castor::exception::Exception e(serrno);
+      e.getMessage() << "Failed Cupv_check call for " 
+		     << req->euid() << ":" << req->egid() << " (GROUP_ADMIN)";
+      throw e;
+    } else if (rc < 0) {
+      castor::exception::PermissionDenied e;
+      e.getMessage() << "Not authorized to change permissions. Please ask your group admin";
+      throw e;
+    }
     // Get the ChangePrivilege
     // cannot return 0 since we check the type before calling this method
     uReq = dynamic_cast<castor::bwlist::ChangePrivilege*> (req);
@@ -680,7 +699,10 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
       ((svcClass == 0) ? 0 : svcClass->id()) ;
     // call method
     rhSvc->changePrivilege(svcClassId, uReq->users(),
-			   uReq->requestTypes(),uReq->isAdd());
+			   uReq->requestTypes(),uReq->isGranted());
+    // Reply To Client
+    castor::replier::RequestReplier::getInstance()->
+      sendResponse(client, &res, true);
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
@@ -691,10 +713,69 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
     // Fill the reponse with the error
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
+    // and try to answer the client
+    try {
+      castor::replier::RequestReplier::getInstance()->
+	sendResponse(client, &res, true);
+    } catch (castor::exception::Exception e) {
+      // nothing that can really be done here
+    } 
   }
-  // Reply To Client
-  castor::replier::RequestReplier::getInstance()->
-    sendResponse(client, &res, true);
+}
+    
+//-----------------------------------------------------------------------------
+// handleListPrivileges
+//-----------------------------------------------------------------------------
+void castor::stager::daemon::QueryRequestSvcThread::handleListPrivileges
+(castor::stager::Request* req,
+ castor::IClient *client,
+ castor::rh::IRHSvc* rhSvc,
+ Cuuid_t uuid)
+  throw (castor::exception::Exception) {
+  castor::bwlist::ListPrivileges *uReq;
+  castor::bwlist::ListPrivilegesResponse res;
+  try {
+    // prepare response first in case we fail
+    res.setReqAssociated(req->reqId());
+    // Get the ListPrivileges
+    // cannot return 0 since we check the type before calling this method
+    uReq = dynamic_cast<castor::bwlist::ListPrivileges*> (req);
+    // Get the SvcClass associated to the request
+    castor::stager::SvcClass* svcClass = uReq->svcClass();
+    u_signed64 svcClassId =
+      ((svcClass == 0) ? 0 : svcClass->id()) ;
+    // call method
+    std::vector<castor::bwlist::Privilege*> privList =
+      rhSvc->listPrivileges(svcClassId, uReq->user(),
+			    uReq->group(), uReq->requestType());
+    // fill reponse with white list part
+    for (std::vector<castor::bwlist::Privilege*>::const_iterator it =
+	   privList.begin();
+	 it != privList.end();
+	 it++) {
+      res.addPrivileges(*it);
+    }
+    // Reply To Client
+    castor::replier::RequestReplier::getInstance()->
+      sendResponse(client, &res, true);
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Function", "QueryRequestSvcThread::handleChangePrivilege"),
+       castor::dlf::Param("Code", e.code()),
+       castor::dlf::Param("Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 3, params);
+    // Fill the reponse with the error
+    res.setErrorCode(e.code());
+    res.setErrorMessage(e.getMessage().str());
+    // and try to answer the client
+    try {
+      castor::replier::RequestReplier::getInstance()->
+	sendResponse(client, &res, true);
+    } catch (castor::exception::Exception e) {
+      // nothing that can really be done here
+    } 
+  }
 }
     
 //-----------------------------------------------------------------------------
@@ -859,6 +940,10 @@ void castor::stager::daemon::QueryRequestSvcThread::process
       break;
     case OBJ_ChangePrivilege:
       castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
+        (req, client, rhSvc, uuid);
+      break;
+    case OBJ_ListPrivileges:
+      castor::stager::daemon::QueryRequestSvcThread::handleListPrivileges
         (req, client, rhSvc, uuid);
       break;
     default:

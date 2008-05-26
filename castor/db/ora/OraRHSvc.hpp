@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/05/23 09:25:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRHSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/05/26 15:40:00 $ $Author: sponcec3 $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -44,6 +44,7 @@ namespace castor {
   namespace bwlist {
     class BWUser;
     class RequestType;
+    class Privilege;
   }
 
   namespace db {
@@ -100,7 +101,7 @@ namespace castor {
         (const std::string svcClassName, unsigned long euid,
          unsigned long egid, int type)
           throw (castor::exception::Exception);
-       
+
 	/**
 	 * change privileges for some users
 	 * @param svcClassId the service class to be affected.
@@ -122,6 +123,27 @@ namespace castor {
 	 bool isAdd)
 	  throw (castor::exception::Exception);
 
+	/**
+	 * list privileges
+	 * @param svcClassId if not 0, restricts the listing to
+         * privileges for this service class
+	 * @param user if not -1, restricts the listing to privileges
+         * concerning this user
+	 * @param group if not -1, restricts the listing to privileges
+         * concerning this group
+	 * @param requestType if not 0, restricts the listing to
+         * privileges concerning this request type
+         * @return the list of privileges, as a vectors of individual
+         * privileges. Note that it is the responsibility of the caller
+         * to deallocate all these privileges
+	 * @exception in case of error
+	 */
+	virtual std::vector<castor::bwlist::Privilege*>
+	listPrivileges
+	(const u_signed64 svcClassId, const int user,
+         const int group, const int requestType)
+	  throw (castor::exception::Exception);
+
       private:
 
         /// SQL statement for function checkPermission
@@ -141,6 +163,12 @@ namespace castor {
 
         /// SQL statement object for function changePrivilege
         oracle::occi::Statement *m_removePrivilegeStatement;
+
+        /// SQL statement for function listPrivilege
+        static const std::string s_listPrivilegesStatementString;
+
+        /// SQL statement object for function listPrivilege
+        oracle::occi::Statement *m_listPrivilegesStatement;
 
       }; // end of class OraRHSvc
 

@@ -190,7 +190,10 @@ namespace castor {
     /* B/W list related objects */
     OBJ_ChangePrivilege = 152,
     OBJ_BWUser = 153,
-    OBJ_RequestType = 154
+    OBJ_RequestType = 154,
+    OBJ_ListPrivileges = 155,
+    OBJ_Privilege = 156,
+    OBJ_ListPrivilegesResponse = 157
   };
 
   /**
@@ -266,7 +269,7 @@ namespace castor {
    * as opposed to the C++ compiler, does not allow a variable-size type
    * declared outside of any function.
    */
-#define OBJECT_IDS_NB 155
+#define OBJECT_IDS_NB 158
   static const unsigned int ObjectsIdsNb = OBJECT_IDS_NB;
 
   /**
