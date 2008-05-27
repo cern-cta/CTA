@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.650 $ $Date: 2008/05/20 11:20:08 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.651 $ $Date: 2008/05/27 12:47:01 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -385,7 +385,7 @@ BEGIN
   UPDATE SubRequest
      SET status = newSubReqStatus, parent = 0 -- FAILED
    WHERE status = 5 -- WAITSUBREQ
-     AND parent IN (SELECT * FROM TABLE(srIds))
+     AND parent IN (SELECT /*+ CARDINALITY(sridTable 5) */ * FROM TABLE(srIds) sridTable)
      AND castorfile = cfId;
 END;
 

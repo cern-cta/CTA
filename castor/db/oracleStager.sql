@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.665 $ $Date: 2008/05/20 08:22:43 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.666 $ $Date: 2008/05/27 12:47:02 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -174,7 +174,9 @@ BEGIN
   FOR cf IN (SELECT UNIQUE d.castorfile, e.id
                FROM DiskCopy d, DiskCopy e 
               WHERE d.castorfile = e.castorfile
-                AND d.fileSystem IN (SELECT * FROM TABLE(fsIds))
+                AND d.fileSystem IN 
+                  (SELECT /*+ CARDINALITY(fsidTable 5) */ * 
+                     FROM TABLE(fsIds) fsidTable)
                 AND d.status IN (0, 10)
                 AND e.status = 2) LOOP
     -- Cancel recall and restart subrequests
@@ -1559,19 +1561,21 @@ BEGIN
   -- and the ones waiting on them as failed
   -- so that clients eventually get an answer
   FOR sr IN (SELECT id, status FROM SubRequest
-              WHERE diskcopy IN (SELECT * FROM TABLE(dcsToRm))) LOOP
-    IF sr.status IN (0, 1, 2, 3, 5, 6, 10, 13, 14) THEN  -- All but FAILED, FINISHED, FAILED_FINISHED, ARCHIVED
-      UPDATE SubRequest
-         SET status = 7,  -- FAILED
-             errorCode = 4,  -- EINTR
-             errorMessage = 'Canceled by another user request',
-             parent = 0
-       WHERE (id = sr.id) OR (parent = sr.id);
-    END IF;
+              WHERE diskcopy IN 
+                (SELECT /*+ CARDINALITY(dcidTable 5) */ * 
+                   FROM TABLE(dcsToRm) dcidTable)
+                AND status IN (0, 1, 2, 5, 6, 13)) LOOP   -- START, WAITSUBREQ, READY, READYFORSCHED
+    UPDATE SubRequest
+       SET status = 7,  -- FAILED
+           errorCode = 4,  -- EINTR
+           errorMessage = 'Canceled by another user request',
+           parent = 0
+     WHERE (id = sr.id) OR (parent = sr.id);
   END LOOP;
   -- Set selected DiskCopies to INVALID
-  UPDATE DiskCopy SET status = 7 -- INVALID
-   WHERE id IN (SELECT * FROM TABLE(dcsToRm));
+  FORALL i IN dcsToRm.FIRST .. dcsToRm.LAST
+    UPDATE DiskCopy SET status = 7 -- INVALID
+     WHERE id = dcsToRm(i);
 END;
 
 /* PL/SQL method implementing stageRm */
@@ -1640,7 +1644,8 @@ BEGIN
     SELECT count(*) INTO nbRes FROM DiskCopy
      WHERE castorFile = cfId
        AND status IN (0, 1, 2, 5, 6, 10, 11)  -- WAITDISK2DISKCOPY, WAITTAPERECALL, STAGED, STAGEOUT, CANBEMIGR, WAITFS, WAITFS_SCHEDULING
-       AND id NOT IN (SELECT * FROM TABLE(dcsToRm));
+       AND id NOT IN (SELECT /*+ CARDINALITY(dcidTable 5) */ * 
+                        FROM TABLE(dcsToRm) dcidTable);
     IF nbRes = 0 THEN
       scId := 0;
     END IF;
@@ -1732,7 +1737,8 @@ BEGIN
   -- and the ones waiting on them as failed
   -- so that clients eventually get an answer
   FOR sr IN (SELECT id FROM SubRequest
-              WHERE diskcopy IN (SELECT * FROM TABLE(dcsToRm))
+              WHERE diskcopy IN (SELECT /*+ CARDINALITY(dcidTable 5) */ * 
+                                   FROM TABLE(dcsToRm) dcidTable)
                 AND status IN (0, 1, 2, 5, 6, 13)) LOOP   -- START, WAITSUBREQ, READY, READYFORSCHED
     UPDATE SubRequest 
        SET status = 7, parent = 0,  -- FAILED
@@ -1744,8 +1750,9 @@ BEGIN
   -- WAITTAPERECALL diskcopies so that recalls can continue.
   -- Note that WAITFS and WAITFS_SCHEDULING DiskCopies don't exist on disk
   -- so they will only be taken by the cleaning daemon for the failed DCs.
-  UPDATE DiskCopy SET status = 7 -- INVALID
-   WHERE id IN (SELECT * FROM TABLE(dcsToRm));
+  FORALL i IN dcsToRm.FIRST .. dcsToRm.LAST
+    UPDATE DiskCopy SET status = 7 -- INVALID
+     WHERE id = dcsToRm(i);
   ret := 1;  -- ok
 END;
 

@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.651 $ $Date: 2008/05/21 10:02:56 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.652 $ $Date: 2008/05/27 12:47:01 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -78,7 +78,9 @@ BEGIN
         SELECT SUM(fileSize) INTO freed
           FROM CastorFile, DiskCopy
          WHERE DiskCopy.castorFile = CastorFile.id
-           AND DiskCopy.id IN (SELECT * FROM TABLE(dcIds));
+           AND DiskCopy.id IN 
+             (SELECT /*+ CARDINALITY(fsidTable 5) */ * 
+                FROM TABLE(dcIds) dcidTable);
       ELSE
         freed := 0;
       END IF;
@@ -381,10 +383,10 @@ BEGIN
   SELECT /*+ INDEX(DC I_DiskCopy_ID) */ UNIQUE castorFile
     BULK COLLECT INTO cfIds
     FROM DiskCopy DC
-   WHERE id IN (SELECT /*+ cardinality(ids 5) */ * FROM TABLE(dcIds) ids);
+   WHERE id IN (SELECT /*+ CARDINALITY(ids 5) */ * FROM TABLE(dcIds) ids);
   -- drop the DiskCopies
-  DELETE FROM Id2Type WHERE id IN (SELECT * FROM TABLE(dcIds));
-  DELETE FROM DiskCopy WHERE id IN (SELECT * FROM TABLE(dcIds));
+  DELETE FROM Id2Type WHERE id IN (SELECT /*+ CARDINALITY(ids 5) */ * FROM TABLE(dcIds) ids);
+  DELETE FROM DiskCopy WHERE id IN (SELECT /*+ CARDINALITY(ids 5) */ * FROM TABLE(dcIds) ids);
   COMMIT;
   -- maybe delete the CastorFiles if nothing is left for them
   IF cfIds.COUNT > 0 THEN
