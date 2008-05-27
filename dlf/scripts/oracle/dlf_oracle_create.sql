@@ -644,7 +644,7 @@ BEGIN
   FOR a IN (
     SELECT type, username, groupname, results.tapevid, tapestatus, 
            count(*) files, sum(params.value) totalsize, 
-           nvl(sum(mounts.mounted), 0) mounted
+           max(nvl(mounts.mounted, 0)) mounted
       FROM (
         -- Extract all requests from the stager which triggered a tape recall
         -- including the request type, username and groupname associated with
