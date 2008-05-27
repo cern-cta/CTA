@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/23 08:19:23 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/27 15:33:39 $ $Author: waldron $
  *
  * This script create a new DLF schema
  *
@@ -644,7 +644,7 @@ BEGIN
   FOR a IN (
     SELECT type, username, groupname, results.tapevid, tapestatus, 
            count(*) files, sum(params.value) totalsize, 
-           nvl(sum(mounts.mounted), 0) mounted
+           max(nvl(mounts.mounted, 0)) mounted
       FROM (
         -- Extract all requests from the stager which triggered a tape recall
         -- including the request type, username and groupname associated with
