@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.658 $ $Date: 2008/05/20 09:31:52 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.659 $ $Date: 2008/05/27 15:38:39 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -240,21 +240,22 @@ BEGIN
            AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
         -- we are within the time range, so we try to reuse the filesystem
         SELECT P.path, P.diskcopy_id, P.castorfile,
-             C.fileId, C.nsHost, C.fileSize, P.id
-        INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
-        FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
-              D.path, D.diskcopy_id, D.castorfile, T.id
-                FROM (SELECT /*+ INDEX(DK I_DISKCOPY_FS_STATUS_10) */
-                             DiskCopy.path path, DiskCopy.id diskcopy_id, DiskCopy.castorfile
-                        FROM DiskCopy
-                       WHERE decode(DiskCopy.status,10,DiskCopy.status,null) = 10 -- CANBEMIGR
-                         AND DiskCopy.filesystem = lastButOneFSUsed) D,
-                      TapeCopy T, Stream2TapeCopy ST
-               WHERE T.castorfile = D.castorfile
-                 AND ST.child = T.id
-                 AND ST.parent = streamId
-                 AND decode(T.status,2,T.status,null) = 2 -- WAITINSTREAMS
-                 AND ROWNUM < 2) P, castorfile C
+               C.fileId, C.nsHost, C.fileSize, P.id
+          INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
+          FROM (SELECT /*+ USE_NL(D) USE_NL(T) USE_NL(ST) INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
+                D.path, D.diskcopy_id, D.castorfile, T.id
+                  FROM (SELECT /*+ INDEX(DK I_DISKCOPY_FS_STATUS_10) */
+                               DiskCopy.path path, DiskCopy.id diskcopy_id, DiskCopy.castorfile
+                          FROM DiskCopy
+                         WHERE decode(DiskCopy.status,10,DiskCopy.status,null) = 10 -- CANBEMIGR
+                           AND DiskCopy.filesystem = lastButOneFSUsed) D,
+                        TapeCopy T, Stream2TapeCopy ST
+                 WHERE T.castorfile = D.castorfile
+                   AND ST.child = T.id
+                   AND ST.parent = streamId
+                   AND decode(T.status,2,T.status,null) = 2 -- WAITINSTREAMS
+                   AND ROWNUM < 2
+             ) P, castorfile C
          WHERE P.castorfile = C.id;
         -- we found one, no need to go for new filesystem
         findNewFS := 0;
@@ -290,7 +291,8 @@ BEGIN
                    AND Stream.status IN (3)   -- SELECTED
                    AND optimized = 1
               )
-            ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
+            ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, 
+                     FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
             ) DS
         WHERE ROWNUM < 2)
     RETURNING diskServerId INTO dsid;
@@ -308,13 +310,14 @@ BEGIN
            AND NbTapeCopiesInFS.Stream = StreamId
            AND FS.status IN (0, 1)    -- PRODUCTION, DRAINING
            AND FS.diskserver = dsId
-         ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
+         ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
+                  FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
          ) FN
      WHERE ROWNUM < 2;
     SELECT P.path, P.diskcopy_id, P.castorfile,
            C.fileId, C.nsHost, C.fileSize, P.id
       INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
-      FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
+      FROM (SELECT /*+ USE_NL(D) USE_NL(T) USE_NL(ST) INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
             D.path, D.diskcopy_id, D.castorfile, T.id
               FROM (SELECT /*+ INDEX(DK I_DISKCOPY_FS_STATUS_10) */
                            DiskCopy.path path, DiskCopy.id diskcopy_id, DiskCopy.castorfile
