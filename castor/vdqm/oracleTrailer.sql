@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.118 $ $Release$ $Date: 2008/05/21 09:33:44 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.119 $ $Release$ $Date: 2008/05/27 20:37:22 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1124,8 +1124,6 @@ LEFT OUTER JOIN EffectiveVolumePriority_VIEW ON
       VdqmTape.vid = EffectiveVolumePriority_VIEW.vid
   AND TapeAccessSpecification.accessMode = EffectiveVolumePriority_VIEW.tpMode
 ORDER BY
-  TapeAccessSpecification.accessMode DESC,
-  VolumePriority DESC,
   TapeRequest.creationTime ASC;
 
 
