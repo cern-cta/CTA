@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.666 $ $Date: 2008/05/27 12:47:02 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.667 $ $Date: 2008/05/28 08:07:11 $ $Author: gtaur $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -100,8 +100,10 @@ CREATE OR REPLACE PACKAGE castor AS
     tapeId NUMBER,
     dataVolume NUMBER,
     numbFiles NUMBER,
-    expireTime NUMBER);
+    expireTime NUMBER,
+    priority NUMBER);
   TYPE DbRecallInfo_Cur IS REF CURSOR RETURN DbRecallInfo;
+  TYPE PriorityMap_Cur IS REF CURSOR RETURN PriorityMap%ROWTYPE;
 END castor;
 
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
@@ -1955,4 +1957,47 @@ BEGIN
     -- deadlocks with other activities e.g. recaller
     COMMIT;
   END LOOP;
+END;
+
+/* Constraint for priority table */
+
+ALTER TABLE prioritymap
+add CONSTRAINT uniquepriority UNIQUE (euid,egid);
+
+/* PL/SQL method implementing selectPriority */
+
+CREATE OR REPLACE PROCEDURE selectPriority(
+ inUid IN INTEGER, 
+ inGid IN INTEGER, 
+ inPriority IN INTEGER, 
+ dbInfo OUT castor.PriorityMap_Cur)
+ AS
+ BEGIN
+  OPEN dbInfo FOR 
+    SELECT euid,egid, priority FROM PriorityMap WHERE 
+    	(euid=inUid OR inUid=-1) AND (egid=inGid OR inGid=-1) AND (priority=inPriority OR inPriority=-1);
+END;
+
+/* PL/SQL method implementing enterPriority */
+
+/* it can raise constraint violation exception */
+
+CREATE OR REPLACE PROCEDURE enterPriority(
+ inUid IN NUMBER, 
+ inGid IN NUMBER, 
+ inPriority IN INTEGER)
+ AS BEGIN
+   INSERT INTO PriorityMap (euid,egid,priority) VALUES (inUid,inGid,inPriority);
+END;
+
+
+/* PL/SQL method implementing deletePriority */
+
+CREATE OR REPLACE PROCEDURE deletePriority(
+ inUid IN INTEGER, 
+ inGid IN INTEGER)
+ AS
+ BEGIN
+  DELETE FROM PriorityMap WHERE 
+    	(euid=inUid OR inUid=-1) AND (egid=inGid OR inGid=-1); 
 END;

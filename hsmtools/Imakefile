@@ -89,7 +89,10 @@ MANPAGES = $(MANDIR)/reclaim.$(MANSUFFIX) \
 	   $(MANDIR)/moveDiskServer.$(MANSUFFIX) \
 	   $(MANDIR)/c2probe.$(MANSUFFIX) \
 	   $(MANDIR)/adler32.$(MANSUFFIX) \
-	   $(MANDIR)/adminMultiInstance.$(MANSUFFIX)
+	   $(MANDIR)/adminMultiInstance.$(MANSUFFIX) \
+           $(MANDIR)/showPriority.$(MANSUFFIX) \
+	   $(MANDIR)/enterPriority.$(MANSUFFIX) \
+           $(MANDIR)/deletePriority.$(MANSUFFIX)
 EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tapetohsm.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),cleanLostFiles.$(MANSUFFIX))) \
@@ -107,7 +110,10 @@ EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUF
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),moveDiskServer.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),c2probe.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),adler32.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),adminMultiInstance.$(MANSUFFIX)))
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),adminMultiInstance.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),showPriority.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),enterPriority.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),deletePriority.$(MANSUFFIX)))
 
 COMM Warning Warning, our default clean rule deletes PROGS... Changed it to use PROGS_TO_CLEAN
 
@@ -123,7 +129,10 @@ PROGS_TO_CLEAN =  ProgramTargetName(reclaim) \
 	 ProgramTargetName(printSvcClass) \
 	 ProgramTargetName(c2probe) \
 	 ProgramTargetName(adler32) \
-	 ProgramTargetName(rfcpupd)
+	 ProgramTargetName(rfcpupd) \
+         ProgramTargetName(showPriority) \
+         ProgramTargetName(enterPriority)\
+  	 ProgramTargetName(deletePriority)
 
 #if BuildVDQMCpp
 MANPAGES += $(MANDIR)/vdqmDBInit.$(MANSUFFIX)
@@ -174,8 +183,10 @@ IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(c2probe)) \
 	 FileName($(BIN),ProgramTargetName(adler32)) \
 	 FileName($(BIN),ProgramTargetName(checkreplicas)) \
-	 FileName($(BIN),ProgramTargetName(rfcpupd))
-
+	 FileName($(BIN),ProgramTargetName(rfcpupd)) \
+	 FileName($(BIN),ProgramTargetName(showPriority)) \
+         FileName($(BIN),ProgramTargetName(enterPriority)) \
+         FileName($(BIN),ProgramTargetName(deletePriority))
 #if BuildVDQMCpp
 IPROGS += FileName($(BIN),ProgramTargetName(vdqmDBInit))
 IPROGS += FileName($(BIN),ProgramTargetName(vdqmsetvolpriority))
@@ -230,6 +241,9 @@ NormalProgramTarget(printFileClass,printFileClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(printSvcClass,printSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(adler32,adler32.Osuf,$(DEPLIB2),$(LIBS2) $(CKSUMLIB))
 NormalProgramTarget(c2probe,c2probe.Osuf,$(DEPLIB2),-pthread $(LIBS2))
+NormalProgramTarget(showPriority,showPriority.Osuf,$(DEPLIB2),$(LIBS2))
+NormalProgramTarget(enterPriority,enterPriority.Osuf,$(DEPLIB2),$(LIBS2))
+NormalProgramTarget(deletePriority,deletePriority.Osuf,$(DEPLIB2),$(LIBS2))
 
 RFIOFLAGS=-DNOMORERFIO=\"$(NOMORERFIO)\" $(FOLLOWLINKS) \
 	  -DDOMAINNAME=\"$(DOMAINNAME)\" -DLOGFILE=\"$(LOGFILE)\" \
@@ -334,6 +348,15 @@ IEXPORT(listDedications,$(EXPORTBIN),755);
 InstallProgram(rfcpupd,$(BIN),root,bin,755)
 IEXPORT(rfcpupd,$(EXPORTBIN),755);
 
+InstallProgram(showPriority,$(BIN),root,bin,755)
+IEXPORT(showPriority,$(EXPORTBIN),755);
+
+InstallProgram(enterPriority,$(BIN),root,bin,755)
+IEXPORT(enterPriority,$(EXPORTBIN),755);
+
+InstallProgram(deletePriority,$(BIN),root,bin,755)
+IEXPORT(deletePriority,$(EXPORTBIN),755);
+
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(SPOOL),root,bin,0755)
 MakeDir($(PERLLIBDIR),root,bin,0755)
@@ -378,6 +401,9 @@ EMANPAGE(moveDiskServer,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(c2probe,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(adler32,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(adminMultiInstance,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(showPriority,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(enterPriority,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(deletePriority,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 
 #if BuildVDQMCpp
 IMANPAGE(vdqmDBInit,$(MANDIR),$(MANSUFFIX))

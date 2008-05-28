@@ -208,6 +208,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamDiskPoolQueryCnv.cpp \
               io/StreamVersionQueryCnv.cpp \
               io/StreamVersionResponseCnv.cpp \
+              io/StreamPriorityMapCnv.cpp \
               io/StreamPrivilegeCnv.cpp \
               io/StreamListPrivilegesCnv.cpp \
               io/StreamListPrivilegesResponseCnv.cpp \
@@ -308,6 +309,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/ITapeSvcCInt.cpp \
               stager/MoverCloseRequest.cpp \
               stager/MoverCloseRequestCInt.cpp \
+	      stager/PriorityMap.cpp \
               stager/PutStartRequest.cpp \
               stager/PutStartRequestCInt.cpp \
               stager/QryRequest.cpp \

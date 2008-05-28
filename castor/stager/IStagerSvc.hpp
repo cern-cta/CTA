@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.94 $ $Release$ $Date: 2008/05/20 08:16:35 $ $Author: waldron $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.95 $ $Release$ $Date: 2008/05/28 08:07:13 $ $Author: gtaur $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -33,6 +33,7 @@
 #include "castor/stager/ICommonSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
+#include "castor/stager/PriorityMap.hpp"
 #include <vector>
 #include <string>
 #include <list>
@@ -64,6 +65,7 @@ namespace castor {
     class GCLocalFile;
     class TapeCopyForMigration;
     class DiskCopyForRecall;
+    class PriorityMap;
 
     /**
      * This class provides specific stager methods and includes
@@ -378,6 +380,26 @@ namespace castor {
       virtual castor::stager::TapePool* selectTapePool
       (const std::string name)
         throw (castor::exception::Exception) = 0;
+
+      /*
+       * To access the PriorityMap Table
+       */
+   
+      virtual std::vector<castor::stager::PriorityMap*> selectPriority(int  euid,int egid,int priority)throw (castor::exception::Exception)=0;
+
+
+      /* 
+       * To insert into the PriorityMap Table
+       */
+
+      virtual void  enterPriority(u_signed64  euid,u_signed64 egid,u_signed64 priority)throw (castor::exception::Exception)=0;	
+
+      /** 
+       * To delete from the PriorityMap table
+       **/
+
+      virtual void  deletePriority(int euid, int egid)throw (castor::exception::Exception)=0;
+
 
     }; // end of class IStagerSvc
 

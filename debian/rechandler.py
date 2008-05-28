@@ -9,7 +9,7 @@
 import sys
 import os
 
-def globalRecallPolicy(vid, numFiles, dataVolume, oldestTime):
+def globalRecallPolicy(vid, numFiles, dataVolume, oldestTime, priority):
     return 1
 
 # End-of-File

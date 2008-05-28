@@ -153,6 +153,7 @@ const std::string castor::db::ora::OraTapeSvc::s_getNumFilesByStreamStatementStr
   "BEGIN getNumFilesByStream(:1,:2); END;";
 
 
+
 // -----------------------------------------------------------------------
 // OraTapeSvc
 // -----------------------------------------------------------------------
@@ -220,6 +221,8 @@ void castor::db::ora::OraTapeSvc::reset() throw() {
     if (m_failedSegmentsStatement) deleteStatement(m_failedSegmentsStatement);
     if (m_checkFileForRepackStatement) deleteStatement(m_checkFileForRepackStatement);
     if (m_getNumFilesByStreamStatement) deleteStatement(m_getNumFilesByStreamStatement);
+    
+
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_tapesToDoStatement = 0;
@@ -237,6 +240,7 @@ void castor::db::ora::OraTapeSvc::reset() throw() {
   m_failedSegmentsStatement = 0;
   m_checkFileForRepackStatement = 0;
   m_getNumFilesByStreamStatement = 0;
+
 }
 
 // -----------------------------------------------------------------------
@@ -319,6 +323,7 @@ castor::db::ora::OraTapeSvc::segmentsForTape
       item->setCreationTime((u_signed64)rs->getDouble(15));
       item->setId((u_signed64)rs->getDouble(16));
       item->setStatus((enum castor::stager::SegmentStatusCodes)rs->getInt(19));
+      item->setPriority((u_signed64)rs->getDouble(20));
       result.push_back(item);
       status = rs->next();
     }
@@ -878,6 +883,7 @@ castor::db::ora::OraTapeSvc::failedSegments ()
       item->setCreationTime(rs->getInt(15));
       item->setId((u_signed64)rs->getDouble(16));
       item->setStatus((enum castor::stager::SegmentStatusCodes)rs->getInt(19));
+      item->setPriority((u_signed64)rs->getDouble(20));
       result.push_back(item);
       status = rs->next();
     }
@@ -956,3 +962,5 @@ u_signed64 castor::db::ora::OraTapeSvc::getNumFilesByStream
   }
   return numFile;
 }
+
+

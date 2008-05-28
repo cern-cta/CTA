@@ -1,0 +1,34 @@
+.\" @(#)$RCSfile: deletePriority.man,v $ $Revision: 1.1 $ $Date: 2008/05/28 08:07:11 $ CERN IT/ADC Olof Barring
+.\" Copyright (C) 2005 by CERN IT/ADC
+.\" All rights reserved
+.\"
+.TH DELETEPRIORITY 1 "$Date: 2008/05/28 08:07:11 $" CASTOR "delete entries in the priority map table used by vdqm"
+.SH NAME
+deletePriority
+.SH SYNOPSIS
+.B deletePriority
+[
+.BI -u 
+.BID uid
+.BI -g 
+.BID gid
+.BI -h 
+]
+deletePriority
+.SH DESCRIPTION
+.B deletePriority
+delete entries from the Priority Map Table.
+
+.SH EXAMPLES
+.fi
+
+deletePriority -u 444, to delete all the entries associated to the user 
+
+deletePriority -g 999, to delete all the entries associated to the group
+ 
+.SH NOTES
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from castor.conf.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

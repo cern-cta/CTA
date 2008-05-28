@@ -193,7 +193,11 @@ namespace castor {
     OBJ_RequestType = 154,
     OBJ_ListPrivileges = 155,
     OBJ_Privilege = 156,
-    OBJ_ListPrivilegesResponse = 157
+    OBJ_ListPrivilegesResponse = 157,
+
+    /* object for segment priority */
+    OBJ_PriorityMap = 158
+
   };
 
   /**
@@ -269,7 +273,8 @@ namespace castor {
    * as opposed to the C++ compiler, does not allow a variable-size type
    * declared outside of any function.
    */
-#define OBJECT_IDS_NB 158
+
+#define OBJECT_IDS_NB 159
   static const unsigned int ObjectsIdsNb = OBJECT_IDS_NB;
 
   /**
@@ -296,7 +301,9 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
+
   extern const char* ObjectsIdStrings[OBJECT_IDS_NB];
+
 
   /**
    * Names of the differents Services, used to display

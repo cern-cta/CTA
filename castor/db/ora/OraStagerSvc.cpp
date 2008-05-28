@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.252 $ $Release$ $Date: 2008/05/20 08:16:36 $ $Author: waldron $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.253 $ $Release$ $Date: 2008/05/28 08:07:12 $ $Author: gtaur $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -71,6 +71,7 @@
 #include "castor/stager/SegmentStatusCodes.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
+#include "castor/stager/PriorityMap.hpp"
 #include "castor/BaseAddress.hpp"
 #include "OraStagerSvc.hpp"
 #include "occi.h"
@@ -168,6 +169,18 @@ const std::string castor::db::ora::OraStagerSvc::s_selectDiskPoolStatementString
 const std::string castor::db::ora::OraStagerSvc::s_selectTapePoolStatementString =
   "SELECT id FROM TapePool WHERE name = :1";
 
+/// SQL statement for selectPriority
+const std::string castor::db::ora::OraStagerSvc::s_selectPriorityStatementString = 
+  "BEGIN selectPriority(:1,:2,:3,:4); END;";
+
+/// SQL statement for enterPriority
+const std::string castor::db::ora::OraStagerSvc::s_enterPriorityStatementString = 
+  "BEGIN enterPriority(:1,:2,:3); END;";
+
+/// SQL statement for deletePriority
+const std::string castor::db::ora::OraStagerSvc::s_deletePriorityStatementString = 
+  "BEGIN deletePriority(:1,:2); END;";
+
 //------------------------------------------------------------------------------
 // OraStagerSvc
 //------------------------------------------------------------------------------
@@ -190,7 +203,10 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_getCFByNameStatement(0),
   m_setFileGCWeightStatement(0),
   m_selectDiskPoolStatement(0),
-  m_selectTapePoolStatement(0) {
+  m_selectTapePoolStatement(0),
+  m_selectPriorityStatement(0),
+  m_enterPriorityStatement(0),
+  m_deletePriorityStatement(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -240,6 +256,10 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     if (m_setFileGCWeightStatement) deleteStatement(m_setFileGCWeightStatement);
     if (m_selectDiskPoolStatement) deleteStatement(m_selectDiskPoolStatement);
     if (m_selectTapePoolStatement) deleteStatement(m_selectTapePoolStatement);
+    if (m_selectPriorityStatement) deleteStatement(m_selectPriorityStatement);
+    if (m_enterPriorityStatement) deleteStatement(m_enterPriorityStatement);   
+    if (m_deletePriorityStatement) deleteStatement(m_deletePriorityStatement); 
+
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_subRequestToDoStatement = 0;
@@ -260,6 +280,9 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_setFileGCWeightStatement = 0;
   m_selectDiskPoolStatement = 0;
   m_selectTapePoolStatement = 0;
+  m_selectPriorityStatement = 0;
+  m_enterPriorityStatement = 0;
+  m_deletePriorityStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -680,6 +703,7 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
       subreq->setDiskcopy(0);
 
       // Cleanup
+
       delete dc;
 
       return 1;
@@ -1309,8 +1333,19 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
 		    nsSegmentAttrs[i].side,
 		    WRITE_DISABLE);
 
-    // Recaller policy retrieved
-    // In case it is given the tape status won't change into TAPE_PENDING
+    // update priority
+
+    std::vector<castor::stager::PriorityMap*> listPriority=selectPriority(euid,egid,-1);
+    // never more than one for the same uig-gid
+    u_signed64 priority=0;  
+    if (!listPriority.empty())
+      priority=listPriority.at(0)->priority();
+
+    segment->setPriority(priority);
+
+    //  recaller policy retrieved
+    //  in case it is given the tape status won't change into TAPE_PENDING
+
     std::string recallerPolicyStr = svcClass->recallerPolicy();
     switch (tp->status()) {
       case castor::stager::TAPE_UNUSED:
@@ -1431,6 +1466,115 @@ castor::db::ora::OraStagerSvc::selectTapePool
     ex.getMessage()
       << "Unable to select TapePool by name :"
       << std::endl << e.getMessage();
+    throw ex;
+  }
+}
+
+
+//------------------------------------------------------------------------
+//  selectPriority
+//------------------------------------------------------------------------
+
+std::vector<castor::stager::PriorityMap*> castor::db::ora::OraStagerSvc::selectPriority(int  euid,int egid,int priority)throw (castor::exception::Exception) {
+  try {
+
+    // Check whether the statements are ok
+    if (0 == m_selectPriorityStatement) {
+      m_selectPriorityStatement =
+        createStatement(s_selectPriorityStatementString);
+      m_selectPriorityStatement->registerOutParam
+        (4, oracle::occi::OCCICURSOR);
+    }
+    // execute the statement 
+    m_selectPriorityStatement->setInt(1,euid);
+    m_selectPriorityStatement->setInt(2,egid);
+    m_selectPriorityStatement->setInt(3,priority);
+
+    m_selectPriorityStatement->executeUpdate();
+    //return value
+    std::vector<castor::stager::PriorityMap*> priorityList;
+    
+    oracle::occi::ResultSet *rs = 
+          m_selectPriorityStatement->getCursor(4);
+   // Run through the cursor
+    oracle::occi::ResultSet::Status status = rs->next();
+    while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+          castor::stager::PriorityMap* item =
+            new castor::stager::PriorityMap();
+          item->setId((u_signed64) rs->getDouble(1));
+          item->setEuid((u_signed64)rs->getDouble(2));
+          item->setEgid((u_signed64)rs->getDouble(3));
+          item->setPriority((u_signed64)rs->getDouble(4));
+          priorityList.push_back(item);
+          status = rs->next();
+   }
+   return priorityList;
+ 
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in  selectPriority(): uid (" 
+      << euid <<")"<<" gid ("<<egid<<")"
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+
+//------------------------------------------------------------------------
+//  enterPriority
+//------------------------------------------------------------------------
+
+void  castor::db::ora::OraStagerSvc::enterPriority(u_signed64  euid,u_signed64 egid,u_signed64 priority)throw (castor::exception::Exception) {
+  try {
+
+    // Check whether the statements are ok
+    if (0 == m_enterPriorityStatement) {
+      m_enterPriorityStatement =
+        createStatement(s_enterPriorityStatementString);
+    }
+    // execute the statement 
+    m_enterPriorityStatement->setDouble(1,euid);
+    m_enterPriorityStatement->setDouble(2,egid);
+    m_enterPriorityStatement->setDouble(3,priority);
+    m_enterPriorityStatement->executeUpdate();
+ 
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Invalid input: uid (" 
+      << euid <<")"<<" gid ("<<egid<<")"
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------
+//  deletePriority
+//------------------------------------------------------------------------
+
+void  castor::db::ora::OraStagerSvc::deletePriority(int euid, int egid)throw (castor::exception::Exception) {
+  try {
+
+    // Check whether the statements are ok
+    if (0 == m_deletePriorityStatement) {
+      m_deletePriorityStatement =
+        createStatement(s_deletePriorityStatementString);
+    }
+    // execute the statement 
+    m_deletePriorityStatement->setInt(1,euid);
+    m_deletePriorityStatement->setInt(2,egid);
+    m_deletePriorityStatement->executeUpdate();
+ 
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in  deletePriority(): uid (" 
+      << euid <<")"<<" gid ("<<egid<<")"
+      << std::endl << e.what();
     throw ex;
   }
 }
