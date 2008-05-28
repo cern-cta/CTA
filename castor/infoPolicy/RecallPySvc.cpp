@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RecallPySvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/11/14 16:53:31 $ $Author: gtaur $
+ * @(#)$RCSfile: RecallPySvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/05/28 08:07:46 $ $Author: gtaur $
  *
  * @author Giulia Taurelli
  *****************************************************************************/
@@ -32,7 +32,7 @@
 #include "castor/infoPolicy/PolicyObj.hpp"
 
 
-bool castor::infoPolicy::RecallPySvc::applyPolicy(castor::infoPolicy::PolicyObj* pObj) throw(castor::exception::Exception){
+int castor::infoPolicy::RecallPySvc::applyPolicy(castor::infoPolicy::PolicyObj* pObj) throw(castor::exception::Exception){
   
   // Python initialised correctly
 
@@ -47,9 +47,9 @@ bool castor::infoPolicy::RecallPySvc::applyPolicy(castor::infoPolicy::PolicyObj*
   // python-Bugs-1308740  Py_BuildValue (C/API): "K" format
   // K must be used for unsigned (feature not documented at all but available)
 
-  PyObject *inputScript= Py_BuildValue("(s,K,K,K)", (myInfoDb->vid()).c_str(),myInfoDb->numFiles(),myInfoDb->numBytes(),myInfoDb->oldest());
-  
-  bool ret= castor::infoPolicy::PySvc::callPolicyFunction(m_functionName,inputScript);
+  PyObject *inputScript= Py_BuildValue("(s,K,K,K,K)", (myInfoDb->vid()).c_str(),myInfoDb->numFiles(),myInfoDb->numBytes(),myInfoDb->oldest(),myInfoDb->priority());
+  // the policy return -1 as priority if we don't want to recall at all
+  int ret= castor::infoPolicy::PySvc::callPolicyFunction(m_functionName,inputScript);
 
   return ret;
   

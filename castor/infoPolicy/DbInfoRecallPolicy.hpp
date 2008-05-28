@@ -178,6 +178,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_priority
+       * @return the value of m_priority
+       */
+      u_signed64 priority() const {
+        return m_priority;
+      }
+
+      /**
+       * Set the value of m_priority
+       * @param new_var the new value of m_priority
+       */
+      void setPriority(u_signed64 new_var) {
+        m_priority = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -206,6 +222,8 @@ namespace castor {
       std::string m_vid;
 
       u_signed64 m_tapeId;
+
+      u_signed64 m_priority;
 
       /// The id of this object
       u_signed64 m_id;

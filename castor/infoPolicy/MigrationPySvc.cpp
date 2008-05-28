@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigrationPySvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/14 10:41:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: MigrationPySvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/05/28 08:07:46 $ $Author: gtaur $
  *
  * @author Giulia Taurelli
  *****************************************************************************/
@@ -33,7 +33,7 @@
 #include "castor/infoPolicy/PolicyObj.hpp"
 
 
-bool castor::infoPolicy::MigrationPySvc::applyPolicy(castor::infoPolicy::PolicyObj* pObj) throw(castor::exception::Exception){
+int castor::infoPolicy::MigrationPySvc::applyPolicy(castor::infoPolicy::PolicyObj* pObj) throw(castor::exception::Exception){
   
   // Python initialised correctly
   if (m_pyDict == NULL) {
@@ -49,7 +49,7 @@ bool castor::infoPolicy::MigrationPySvc::applyPolicy(castor::infoPolicy::PolicyO
   // K must be used for unsigned (feature not documented at all but available)
 
   PyObject *inputScript= Py_BuildValue((char*)"(s,s,K,K,K,K,K,K,K,K,K,l)", (myInfoDb->tapePoolName()).c_str(), (myInfoDb->castorFileName()).c_str(),myInfoDb->copyNb(),myInfoCns->fileId(),myInfoCns->fileSize(),myInfoCns->fileMode(),myInfoCns->uid(),myInfoCns->gid(),myInfoCns->aTime(),myInfoCns->mTime(),myInfoCns->cTime(),myInfoCns->fileClass());
-  bool ret = castor::infoPolicy::PySvc::callPolicyFunction(pObj->policyName(),inputScript);
+  int ret = castor::infoPolicy::PySvc::callPolicyFunction(pObj->policyName(),inputScript);
 
   return ret;
   

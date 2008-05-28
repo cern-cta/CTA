@@ -44,6 +44,7 @@ castor::infoPolicy::DbInfoRecallPolicy::DbInfoRecallPolicy() throw() :
   m_oldest(0),
   m_vid(""),
   m_tapeId(0),
+  m_priority(0),
   m_id(0) {
 }
 
@@ -71,6 +72,7 @@ void castor::infoPolicy::DbInfoRecallPolicy::print(std::ostream& stream,
   stream << indent << "oldest : " << m_oldest << std::endl;
   stream << indent << "vid : " << m_vid << std::endl;
   stream << indent << "tapeId : " << m_tapeId << std::endl;
+  stream << indent << "priority : " << m_priority << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

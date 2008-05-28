@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamPySvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/02/29 10:49:21 $ $Author: gtaur $
+ * @(#)$RCSfile: StreamPySvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/05/28 08:07:46 $ $Author: gtaur $
  *
  * @author Giulia Taurelli
  *****************************************************************************/
@@ -31,7 +31,7 @@
 #include "castor/infoPolicy/PolicyObj.hpp"
 
 
-bool castor::infoPolicy::StreamPySvc::applyPolicy(castor::infoPolicy::PolicyObj* pObj) throw(castor::exception::Exception){
+int castor::infoPolicy::StreamPySvc::applyPolicy(castor::infoPolicy::PolicyObj* pObj) throw(castor::exception::Exception){
   
   // Python initialised correctly
   if (m_pyDict == NULL) {
@@ -49,7 +49,7 @@ bool castor::infoPolicy::StreamPySvc::applyPolicy(castor::infoPolicy::PolicyObj*
   PyObject *inputScript;
   inputScript = Py_BuildValue("(K,K,K,K)",dbObj->runningStream(),dbObj->numFiles(),dbObj->numBytes(),dbObj->maxNumStreams());
 
-  bool ret=callPolicyFunction( pObj->policyName().c_str(), inputScript);
+  int ret=callPolicyFunction( pObj->policyName().c_str(), inputScript);
   return ret;
 }
 

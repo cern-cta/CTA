@@ -50,7 +50,11 @@
 #include "castor/infoPolicy/DbInfoPolicy.hpp"
 #include "castor/infoPolicy/PolicyObj.hpp"
 
+// to implement the priority hack
 
+extern "C" {
+  int vdqm_SendVolPriority(char*, int, int);
+};
 
 namespace castor {
 
@@ -114,20 +118,31 @@ void RecHandlerThread::run(void* par)
 	}
 
 	try {
-	  if ( m_recallPolicy == NULL || 
-	       m_recallPolicy->applyPolicy(*infoCandidate)){
-
-	    eligibleTapeIds.push_back(realInfo->tapeId()); // tape to resurrect
+          if ( m_recallPolicy == NULL ) {
+	    //no priority sent
+	     eligibleTapeIds.push_back(realInfo->tapeId()); // tape to resurrect
 	    castor::dlf::Param params[] =
 	      {castor::dlf::Param("Tape", realInfo->vid())};
 	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 5, 1, params);
-
 	  } else {
-	     castor::dlf::Param params[] =
-	      {castor::dlf::Param("Tape", realInfo->vid())};
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 11, 1, params);
-	  }
+	     int priorityChosen=m_recallPolicy->applyPolicy(*infoCandidate);
+	    
+	     if (priorityChosen>=0) {
+	       eligibleTapeIds.push_back(realInfo->tapeId()); // tape to resurrect
+	       castor::dlf::Param params[] =
+		 {castor::dlf::Param("Tape", realInfo->vid())};
+	       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 5, 1, params);
 
+	       // call to VDQM with the priority (temporary hack)
+
+	       vdqm_SendVolPriority((char*)realInfo->vid().c_str(),0,priorityChosen);
+
+	     } else {
+	       castor::dlf::Param params[] =
+		 {castor::dlf::Param("Tape", realInfo->vid())};
+	       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 11, 1, params);
+	     }
+	  }
 	} catch (castor::exception::Exception e) {
 	  castor::dlf::Param params[] =
 	    {castor::dlf::Param("code", sstrerror(e.code())),
@@ -162,8 +177,6 @@ void RecHandlerThread::run(void* par)
       if (!eligibleTapeIds.empty()){
 	 m_policySvc->resurrectTapes(eligibleTapeIds);
       }
-
-      m_policySvc->resurrectTapes(eligibleTapeIds);
 
   }
   catch(castor::exception::Exception e) {

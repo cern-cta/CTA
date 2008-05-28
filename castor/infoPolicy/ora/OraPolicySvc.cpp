@@ -632,6 +632,7 @@ std::vector<castor::infoPolicy::PolicyObj*>  castor::infoPolicy::ora::OraPolicyS
       item->setNumFiles((u_signed64)rs->getDouble(3));
       item->setNumBytes((u_signed64)rs->getDouble(4));
       item->setOldest((u_signed64)rs->getDouble(5));
+      item->setPriority((u_signed64)rs->getDouble(6));     
 
       resultItem->addDbInfoPolicy(item); 
       result.push_back(resultItem);

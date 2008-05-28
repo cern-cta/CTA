@@ -38,6 +38,7 @@
 #include "occi.h"
 #include <vector>
 
+
 namespace castor {
 
   namespace db {
@@ -384,6 +385,37 @@ namespace castor {
         (const std::string name)
           throw (castor::exception::Exception);
 
+
+	/**
+         * select priority for recall  
+	 * @param uid
+         * @param gid
+         * @return priority value
+	 * @exception in case of an error
+         */
+
+        std::vector<castor::stager::PriorityMap*>  selectPriority(int  euid,int  egid, int priority)throw (castor::exception::Exception);
+
+	/**
+         * enter priority for recall  
+	 * @param uid
+         * @param gid
+         * @param priority value
+	 * @exception in case of an error
+         */
+
+        void  enterPriority(u_signed64 euid,u_signed64 egid,u_signed64 priority)throw (castor::exception::Exception);
+
+	/**
+         * delete priority for recall  
+	 * @param uid
+         * @param gid
+	 * @exception in case of an error
+         */
+
+        void  deletePriority(int euid,int egid) throw (castor::exception::Exception);
+
+
       private:
 
         /**
@@ -406,6 +438,7 @@ namespace castor {
 	 * if necessary.
          * @exception Exception in case of error
          */
+
         int createTapeCopySegmentsForRecall
         (castor::stager::CastorFile* castorFile, 
          unsigned long euid, 
@@ -413,7 +446,7 @@ namespace castor {
          castor::stager::SvcClass* svcClass,
 	 castor::stager::Tape* &tape)
           throw (castor::exception::Exception);
-	
+
         /// SQL statement for function subRequestToDo
         static const std::string s_subRequestToDoStatementString;
 
@@ -527,6 +560,26 @@ namespace castor {
 
         /// SQL statement object for function selectTapePool
         oracle::occi::Statement *m_selectTapePoolStatement;
+
+	/// SQL statement to selectTapePriority
+        static const std::string s_selectPriorityStatementString;
+
+        /// SQL statement object for function selectPriority 
+        oracle::occi::Statement *m_selectPriorityStatement;
+
+	/// SQL statement to enterTapePriority
+        static const std::string s_enterPriorityStatementString;
+
+        /// SQL statement object for function enterPriority 
+        oracle::occi::Statement *m_enterPriorityStatement;
+
+	
+	/// SQL statement to deleteTapePriority
+        static const std::string s_deletePriorityStatementString;
+
+        /// SQL statement object for function deletePriority 
+        oracle::occi::Statement *m_deletePriorityStatement;
+
 
       }; // end of class OraStagerSvc
 

@@ -295,6 +295,7 @@ namespace castor {
          */
 	virtual u_signed64 getNumFilesByStream(const u_signed64 streamId)
           throw (castor::exception::Exception);
+	
 
       private:
 
@@ -387,6 +388,8 @@ namespace castor {
 
         /// SQL statement object for function getNumFilesByStream 
         oracle::occi::Statement *m_getNumFilesByStreamStatement;
+
+
 
       }; // end of class OraTapeSvc
 

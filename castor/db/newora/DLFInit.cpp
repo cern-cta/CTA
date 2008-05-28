@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DLFInit.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/02/22 14:56:54 $ $Author: mmartins $
+ * @(#)$RCSfile: DLFInit.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/05/28 08:14:46 $ $Author: gtaur $
  *
  * Initialization of the DLF messages for the ORACLE part
  *
@@ -68,6 +68,7 @@ castor::db::ora::DLFInit::DLFInit() {
      { 14, "Recall canceled by Cleaning Daemon"},
      { 15, "Error caught in nsFilesDeleted"},
      { 16, "Error caught in stgFilesDeleted"},
+     { 17, "rollback called"},
      { -1, ""} };
   try {
     castor::dlf::dlf_addMessages(DLF_BASE_ORACLELIB, messages);

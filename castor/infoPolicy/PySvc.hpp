@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: PySvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/11/14 16:53:31 $ $Author: gtaur $
+ * @(#)$RCSfile: PySvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/05/28 08:07:46 $ $Author: gtaur $
  *
  * @author Giulia Taurelli
  *****************************************************************************/
@@ -59,14 +59,14 @@ namespace castor {
       PySvc(std::string module)
 	throw(castor::exception::Exception);
 
-      virtual bool applyPolicy(castor::infoPolicy::PolicyObj* pObj)=0;
+      virtual int applyPolicy(castor::infoPolicy::PolicyObj* pObj)=0;
       virtual ~PySvc();
 
     protected:
    
       // internal function used by applyPolicy
 
-      bool callPolicyFunction(std::string functionName, PyObject* inputObj);
+      int callPolicyFunction(std::string functionName, PyObject* inputObj);
 
       /// The location of the module loaded by the Python interpreter
       std::string m_moduleFile;

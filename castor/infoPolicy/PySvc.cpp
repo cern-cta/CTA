@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: PySvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/03/14 10:41:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: PySvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/05/28 08:07:46 $ $Author: gtaur $
  *
  * CPP Wrapper for Python 
  *
@@ -82,7 +82,7 @@ castor::infoPolicy::PySvc::PySvc(std::string module)
 
 //------------------------------------------------------------------------------// callPolicyFunction
 //------------------------------------------------------------------------------
-bool castor::infoPolicy::PySvc::callPolicyFunction(std::string functionName, PyObject* inputObj){
+int castor::infoPolicy::PySvc::callPolicyFunction(std::string functionName, PyObject* inputObj){
 
   // Attempt to find the function in the Python modules dictionary with the
   // function name. If the function cannot be found revert to the default.
@@ -108,7 +108,7 @@ bool castor::infoPolicy::PySvc::callPolicyFunction(std::string functionName, PyO
     throw ex;
   } 
 
-  bool  ret = PyInt_AsLong(pyValue) !=0 ? true : false;
+  int  ret = PyInt_AsLong(pyValue);
   Py_XDECREF(pyValue);
 
   return ret;

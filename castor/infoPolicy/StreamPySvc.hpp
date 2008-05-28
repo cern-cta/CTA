@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamPySvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/06 12:56:29 $ $Author: gtaur $
+ * @(#)$RCSfile: StreamPySvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/05/28 08:07:46 $ $Author: gtaur $
  *
  * @author Giulia Taurelli
  *****************************************************************************/
@@ -34,7 +34,7 @@ namespace castor{
       public:
 	StreamPySvc(): PySvc(){};
 	StreamPySvc(std::string module):PySvc(module){};
-	virtual bool applyPolicy(castor::infoPolicy::PolicyObj* pObj) throw(castor::exception::Exception);
+	virtual int applyPolicy(castor::infoPolicy::PolicyObj* pObj) throw(castor::exception::Exception);
       };
      
   } // end namespace infoPolicy
