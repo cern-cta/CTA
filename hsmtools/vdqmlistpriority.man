@@ -1,0 +1,97 @@
+.\" Copyright (C) 2003  CERN
+.\" This program is free software; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License
+.\" as published by the Free Software Foundation; either version 2
+.\" of the License, or (at your option) any later version.
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+.TH VDQMLISTPRIORITY 1 "$Date: 2008/05/28 15:12:16 $" CASTOR "List volume priorities"
+.SH NAME
+vdqmlistpriority \- list volume priorities
+.SH SYNOPSIS
+.BI "vdqmlistpriority [ -a | -l lifespanType | -e ] [ -h ]"
+
+.SH DESCRIPTION
+.B vdqmlistpriority
+lists the volume access priorities within the VDQM database.
+The RecallHandler daemon and the tape operator command-line tools send volume
+access priorities to the VDQM. A volume access priority sent from the
+RecallHandler will exist in the VDQM database for a single-mount of the tape in
+question.  A volume access priority sent from the tape operator command-line
+tools will by default have an unlimited lifespan within the VDQM database.  The
+priority will stay active until it is explicitly removed by the tape operator
+command-line tools.
+A volume access priority is a quadruple of:
+.RS
+.P
+*
+.B VID
+.br
+Volume visual identifier
+.P
+*
+.B
+Access mode
+.br
+Either read or write
+.P
+*
+.B
+Lifespan type
+.br
+Either single-mount or unlimited
+.P
+*
+.B
+Priority number
+.br
+A positive integer , where 0 is the lowest and default priority
+.RE
+.P
+A volume access priority quadruple is uniquely identified or named by the inner
+triplet of VID, access mode and lifespan type.  The priority number of the
+quadruple is the value of the volume access priority.  This means a given VID
+and access mode can have at most one "single-mount priority" and one "unlimited
+priority".  The effective priority in this case would be the unlimited priority.
+In other words, unlimited priorities overide single-mount priorities.
+.P
+Depending on its command-line options,
+.B vdqmlistpriority
+will display one of the following four types of list:
+
+.RS
+.P
+* All priorities
+.P
+* Only priorities that have a single-mount lifespan
+.P
+* Only priorities that have an unlimited lifespan
+.P
+* The effective priorities
+.RE
+
+.SH OPTIONS
+.TP
+\fB\-a, \-\-all
+List all priorities.
+Options -a, -l and -e are mutually exclusive.
+.TP
+\fB\-l, \-\-lifespan singleMount | unlimited
+List only priorities with the specified lifespan.  Valid values are
+"singleMount" and "unlimited".
+Options -a, -l and -e are mutually exclusive.
+.TP
+\fB\-e, \-\-effective (default)
+List effective priorities.  This is the default type of list to be displayed.
+Options -a, -l and -e are mutually exclusive.
+.TP
+\fB\-h, \-\-help
+Get usage information.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
