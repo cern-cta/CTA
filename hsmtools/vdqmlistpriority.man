@@ -10,7 +10,7 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH VDQMLISTPRIORITY 1 "$Date: 2008/05/28 15:12:16 $" CASTOR "List volume priorities"
+.TH VDQMLISTPRIORITY 1 "$Date: 2008/05/28 15:25:00 $" CASTOR "List volume priorities"
 .SH NAME
 vdqmlistpriority \- list volume priorities
 .SH SYNOPSIS
@@ -81,7 +81,7 @@ will display one of the following four types of list:
 List all priorities.
 Options -a, -l and -e are mutually exclusive.
 .TP
-\fB\-l, \-\-lifespan singleMount | unlimited
+\fB\-l, \-\-lifespanType singleMount | unlimited
 List only priorities with the specified lifespan.  Valid values are
 "singleMount" and "unlimited".
 Options -a, -l and -e are mutually exclusive.
