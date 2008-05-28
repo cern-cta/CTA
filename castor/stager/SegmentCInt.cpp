@@ -342,6 +342,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_Segment_priority
+  //----------------------------------------------------------------------------
+  int Cstager_Segment_priority(castor::stager::Segment* instance, u_signed64* var) {
+    *var = instance->priority();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Segment_setPriority
+  //----------------------------------------------------------------------------
+  int Cstager_Segment_setPriority(castor::stager::Segment* instance, u_signed64 new_var) {
+    instance->setPriority(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_Segment_id
   //----------------------------------------------------------------------------
   int Cstager_Segment_id(castor::stager::Segment* instance, u_signed64* var) {

@@ -260,6 +260,16 @@ int Cstager_Segment_creationTime(struct Cstager_Segment_t* instance, u_signed64*
 int Cstager_Segment_setCreationTime(struct Cstager_Segment_t* instance, u_signed64 new_var);
 
 /**
+ * Get the value of priority
+ */
+int Cstager_Segment_priority(struct Cstager_Segment_t* instance, u_signed64* var);
+
+/**
+ * Set the value of priority
+ */
+int Cstager_Segment_setPriority(struct Cstager_Segment_t* instance, u_signed64 new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

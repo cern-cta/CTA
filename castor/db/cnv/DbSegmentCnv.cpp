@@ -55,7 +55,7 @@ static castor::CnvFactory<castor::db::cnv::DbSegmentCnv>* s_factoryDbSegmentCnv 
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbSegmentCnv::s_insertStatementString =
-"INSERT INTO Segment (fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, blockId0, blockId1, blockId2, blockId3, creationTime, id, tape, copy, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,ids_seq.nextval,:16,:17,:18) RETURNING id INTO :19";
+"INSERT INTO Segment (fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, blockId0, blockId1, blockId2, blockId3, creationTime, priority, id, tape, copy, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,:16,ids_seq.nextval,:17,:18,:19) RETURNING id INTO :20";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbSegmentCnv::s_deleteStatementString =
@@ -63,11 +63,11 @@ const std::string castor::db::cnv::DbSegmentCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbSegmentCnv::s_selectStatementString =
-"SELECT fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, blockId0, blockId1, blockId2, blockId3, creationTime, id, tape, copy, status FROM Segment WHERE id = :1";
+"SELECT fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, blockId0, blockId1, blockId2, blockId3, creationTime, priority, id, tape, copy, status FROM Segment WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbSegmentCnv::s_updateStatementString =
-"UPDATE Segment SET fseq = :1, offset = :2, bytes_in = :3, bytes_out = :4, host_bytes = :5, segmCksumAlgorithm = :6, segmCksum = :7, errMsgTxt = :8, errorCode = :9, severity = :10, blockId0 = :11, blockId1 = :12, blockId2 = :13, blockId3 = :14, status = :15 WHERE id = :16";
+"UPDATE Segment SET fseq = :1, offset = :2, bytes_in = :3, bytes_out = :4, host_bytes = :5, segmCksumAlgorithm = :6, segmCksum = :7, errMsgTxt = :8, errorCode = :9, severity = :10, blockId0 = :11, blockId1 = :12, blockId2 = :13, blockId3 = :14, priority = :15, status = :16 WHERE id = :17";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbSegmentCnv::s_storeTypeStatementString =
@@ -306,7 +306,7 @@ void castor::db::cnv::DbSegmentCnv::fillObjTape(castor::stager::Segment* obj)
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapeId = rset->getInt64(17);
+  u_signed64 tapeId = rset->getInt64(18);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -346,7 +346,7 @@ void castor::db::cnv::DbSegmentCnv::fillObjTapeCopy(castor::stager::Segment* obj
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 copyId = rset->getInt64(18);
+  u_signed64 copyId = rset->getInt64(19);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -386,7 +386,7 @@ void castor::db::cnv::DbSegmentCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(19, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(20, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -407,11 +407,12 @@ void castor::db::cnv::DbSegmentCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(13, obj->blockId2());
     m_insertStatement->setInt(14, obj->blockId3());
     m_insertStatement->setInt(15, time(0));
-    m_insertStatement->setUInt64(16, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
-    m_insertStatement->setUInt64(17, (type == OBJ_TapeCopy && obj->copy() != 0) ? obj->copy()->id() : 0);
-    m_insertStatement->setInt(18, (int)obj->status());
+    m_insertStatement->setUInt64(16, obj->priority());
+    m_insertStatement->setUInt64(17, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
+    m_insertStatement->setUInt64(18, (type == OBJ_TapeCopy && obj->copy() != 0) ? obj->copy()->id() : 0);
+    m_insertStatement->setInt(19, (int)obj->status());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(19));
+    obj->setId(m_insertStatement->getUInt64(20));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -443,6 +444,7 @@ void castor::db::cnv::DbSegmentCnv::createRep(castor::IAddress* address,
                     << "  blockId2 : " << obj->blockId2() << std::endl
                     << "  blockId3 : " << obj->blockId3() << std::endl
                     << "  creationTime : " << obj->creationTime() << std::endl
+                    << "  priority : " << obj->priority() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  tape : " << obj->tape() << std::endl
                     << "  copy : " << obj->copy() << std::endl
@@ -482,8 +484,9 @@ void castor::db::cnv::DbSegmentCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt(12, obj->blockId1());
     m_updateStatement->setInt(13, obj->blockId2());
     m_updateStatement->setInt(14, obj->blockId3());
-    m_updateStatement->setInt(15, (int)obj->status());
-    m_updateStatement->setUInt64(16, obj->id());
+    m_updateStatement->setUInt64(15, obj->priority());
+    m_updateStatement->setInt(16, (int)obj->status());
+    m_updateStatement->setUInt64(17, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
@@ -581,8 +584,9 @@ castor::IObject* castor::db::cnv::DbSegmentCnv::createObj(castor::IAddress* addr
     object->setBlockId2(rset->getInt(13));
     object->setBlockId3(rset->getInt(14));
     object->setCreationTime(rset->getUInt64(15));
-    object->setId(rset->getUInt64(16));
-    object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(19));
+    object->setPriority(rset->getUInt64(16));
+    object->setId(rset->getUInt64(17));
+    object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(20));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -632,8 +636,9 @@ void castor::db::cnv::DbSegmentCnv::updateObj(castor::IObject* obj)
     object->setBlockId2(rset->getInt(13));
     object->setBlockId3(rset->getInt(14));
     object->setCreationTime(rset->getUInt64(15));
-    object->setId(rset->getUInt64(16));
-    object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(19));
+    object->setPriority(rset->getUInt64(16));
+    object->setId(rset->getUInt64(17));
+    object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(20));
     delete rset;
   } catch (castor::exception::SQLError e) {
     castor::exception::InvalidArgument ex;
