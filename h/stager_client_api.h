@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.40 $ $Release$ $Date: 2008/05/05 08:52:35 $ $Author: waldron $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.41 $ $Release$ $Date: 2008/05/29 11:42:39 $ $Author: sponcec3 $
  *
  * the client API to the castor stager
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.40 $
- * @date $Date: 2008/05/05 08:52:35 $
+ * @version $Revision: 1.41 $
+ * @date $Date: 2008/05/29 11:42:39 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.40 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.41 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -876,6 +876,101 @@ EXTERN_C int DLL_DECL stage_setFileGCWeight _PROTO ((struct stage_filereq *reque
                                                      char **requestId,
                                                      struct stage_options* opts));
 
+
+
+/**********************************************************
+ *    stage_addPrivilege                                  *
+ **********************************************************/
+
+/**
+ * stage_addPrivilege
+ * adds one or many privileges by modifying the black and white list
+ * \ingroup Functions
+ * 
+ * @param users the list of users concerned, as a comma separated
+ * string of username[:groupname]. Note that the user name may
+ * be empty to specify that any user is concerned, e.g. ":c3"
+ * @param requestTypes the list of requestTypes concerned, as a
+ * comma separated list of type names. An empty list can be used
+ * to specify that all request types are concerned
+ * @param opts CASTOR stager specific options
+ *
+ * @returns 0 in case of success, -1 otherwise
+ */
+EXTERN_C int DLL_DECL stage_addPrivilege _PROTO ((char* users,
+                                                  char* requestTypes,
+                                                  struct stage_options* opts));
+
+
+
+/**********************************************************
+ *    stage_removePrivilege                               *
+ **********************************************************/
+
+/**
+ * stage_removePrivilege
+ * removes one or many privileges by modifying the black and white list
+ * \ingroup Functions
+ * 
+ * @param users the list of users concerned, as a comma separated
+ * string of username[:groupname]. Note that the user name may
+ * be empty to specify that any user is concerned, e.g. ":"
+ * @param requestTypes the list of requestTypes concerned, as a
+ * comma separated list of type names. An empty list can be used
+ * to specify that all request types are concerned
+ * @param opts CASTOR stager specific options
+ *
+ * @returns 0 in case of success, -1 otherwise
+ */
+EXTERN_C int DLL_DECL stage_removePrivilege _PROTO ((char* users,
+                                                     char* requestTypes,
+                                                     struct stage_options* opts));
+
+
+/**********************************************************
+ *    stage_listPrivileges                                *
+ **********************************************************/
+
+/**
+ * Response structure for list privileges
+ */
+struct stage_listpriv_resp {
+  /// service class, null means any
+  char* svcClass;
+  /// user, -1 means any
+  int uid;
+  /// group, -1 means any
+  int gid;
+  /// request type, 0 means any
+  unsigned int requestType;
+  /// whether it's granted or denied
+  int isGranted;
+ };
+
+/**
+ * stage_listPrivileges
+ * list privileges hold by the black and white list
+ * \ingroup Functions
+ * 
+ * @param user if not -1, restricts the listing to privileges
+ * concerning this user
+ * @param group if not -1, restricts the listing to privileges
+ * concerning this group
+ * @param requestType if not 0, restricts the listing to
+ * privileges concerning this request type
+ * @param privileges list of privileges, created by the call itself.
+ * The caller is responsible for memory deallocation
+ * @param nbPrivs number of privileges in the list
+ * @param opts CASTOR stager specific options
+ *
+ * @returns 0 in case of success, -1 otherwise
+ */
+EXTERN_C int DLL_DECL stage_listPrivileges _PROTO ((int user,
+                                                    int group,
+                                                    unsigned int requestType,
+                                                    struct stage_listpriv_resp** privileges,
+                                                    int* nbPrivs,
+                                                    struct stage_options* opts));
 
 
 /**********************************************************
