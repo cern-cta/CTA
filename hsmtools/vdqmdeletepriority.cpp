@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      vdqmdelvolpriority.cpp
+ *                      vdqmdeletepriority.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -40,12 +40,17 @@ const std::string VDQMSCHEMAVERSION = "2_1_7_4";
 
 
 void usage(const std::string programName) {
-  std::cerr << "Usage: " << programName << " [options]\n"
+  std::cerr << "Usage: " << programName <<
+    " -v VID -a mode [ -l type ] [ -h ]\n"
     "\n"
     "where options can be:\n"
     "\n"
     "\t-v, --vid VID             Volume visual Identifier\n"
-    "\t-a, --tapeAccessMode mode Tape access mode 0 or 1\n"
+    "\t-a, --tapeAccessMode mode Tape access mode. Valid values are \"read\"\n"
+    "\t                          and \"write\"\n"
+    "\t-l, --lifespanType type   Lifespan type. Valid values are\n"
+    "\t                          \"singleMount\" and \"unlimited\".\n"
+    "\t                          The default value is \"unlimited\".\n"
     "\t-h, --help                Print this help and exit\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
@@ -55,12 +60,14 @@ void usage(const std::string programName) {
 static struct Coptions longopts[] = {
   {"vid"           , REQUIRED_ARGUMENT, NULL, 'v'},
   {"tapeAccessMode", REQUIRED_ARGUMENT, NULL, 'a'},
+  {"lifespanType"  , REQUIRED_ARGUMENT, NULL, 'l'},
   {"help"          , NO_ARGUMENT      , NULL, 'h'},
   {0, 0, 0, 0}
 };
 
 
-void parseCommandLine(int argc, char **argv, std::string &vid, int &tpMode) {
+void parseCommandLine(int argc, char **argv, std::string &vid, int &tpMode,
+  int &lifespanType) {
 
   bool vidSet    = false;
   bool tpModeSet = false;
@@ -70,14 +77,20 @@ void parseCommandLine(int argc, char **argv, std::string &vid, int &tpMode) {
   Coptind = 1;
   Copterr = 0;
 
-  while ((c = Cgetopt_long (argc, argv, "v:a:h", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "v:a:l:h", longopts, NULL)) != -1) {
     switch (c) {
     case 'v':
       vid    = Coptarg;
       vidSet = true;
       break;
     case 'a':
-      if((strcmp(Coptarg,"0") != 0) && (strcmp(Coptarg,"1") != 0)) {
+      if(strcmp(Coptarg,"read") == 0) {
+        tpMode = 0;
+        tpModeSet = true;
+      } else if (strcmp(Coptarg,"write") == 0) {
+        tpMode = 1;
+        tpModeSet = true;
+      } else {
         std::cerr
           << std::endl
           << "Error: Invalid tape access mode: " << Coptarg
@@ -85,8 +98,20 @@ void parseCommandLine(int argc, char **argv, std::string &vid, int &tpMode) {
         usage(argv[0]);
         exit(1);
       }
-      tpMode = atoi(Coptarg);
-      tpModeSet = true;
+      break;
+    case 'l':
+      if(strcmp(Coptarg, "singleMount") == 0) {
+        lifespanType = 0; // single-mount
+      } else if(strcmp(Coptarg, "unlimited") == 0) {
+        lifespanType = 1; // unlimited
+      } else {
+        std::cerr
+          << std::endl
+          << "Error: Invalid lifespanType: " << Coptarg
+          << std::endl << std::endl;
+        usage(argv[0]);
+        exit(1);
+      }
       break;
     case 'h':
       usage(argv[0]);
@@ -94,7 +119,7 @@ void parseCommandLine(int argc, char **argv, std::string &vid, int &tpMode) {
     case '?':
       std::cerr
         << std::endl
-        << "Error: Unknown command-line option: " << (char)Coptopt
+        << "Error: Unknown command-line option"
         << std::endl << std::endl;
       usage(argv[0]);
       exit(1);
@@ -210,9 +235,10 @@ castor::vdqm::IVdqmSvc *retrieveVdqmSvc() {
 int main(int argc, char **argv) {
   std::string vid      = "";
   int         tpMode   = 0;
+  int         lifespanType = 1; // Default = unlimited = 1
 
 
-  parseCommandLine(argc, argv, vid, tpMode);
+  parseCommandLine(argc, argv, vid, tpMode, lifespanType);
 
   // Initializing the log
   castor::BaseObject::initLog(argv[0], castor::SVC_NOMSG);
@@ -226,9 +252,8 @@ int main(int argc, char **argv) {
     int clientGID          = 0;
     std::string clientHost = "";
 
-    // Third parameter = unlimited lifespanType = 1
-    const u_signed64 volPriorityId = vdqmSvc->deleteVolPriority(vid, tpMode, 1,
-      &priority, &clientUID, &clientGID, &clientHost);
+    const u_signed64 volPriorityId = vdqmSvc->deleteVolPriority(vid, tpMode,
+      lifespanType, &priority, &clientUID, &clientGID, &clientHost);
 
     // If no volume priority was deleted
     if(volPriorityId == 0) {

@@ -51,6 +51,7 @@ void usage(const std::string programName) {
     "\t                          and \"write\"\n"
     "\t-l, --lifespanType type   Lifespan type. Valid values are\n"
     "\t                          \"singleMount\" and \"unlimited\".\n"
+    "\t                          The default value is \"unlimited\".\n"
     "\t-p, --priority priority   Volume priority, where 0 is the lowest\n"
     "\t-h, --help                Print this help and exit\n"
     "\n"
