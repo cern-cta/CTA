@@ -237,7 +237,7 @@ castor::vdqm::IVdqmSvc *retrieveVdqmSvc() {
 
 void printPriorityList(std::list<castor::vdqm::IVdqmSvc::VolPriority>
   &priorities) {
-    std::cout << "VID\tMode\tLifespan\tPriority" << std::endl;
+    std::cout << "VID\tMODE\tLIFESPAN\tPRIORITY" << std::endl;
     for(std::list<castor::vdqm::IVdqmSvc::VolPriority>::iterator itor =
       priorities.begin(); itor != priorities.end(); itor++) {
       std::cout << itor->vid;
