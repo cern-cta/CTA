@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      stager_client_api_listPrivilege.cpp
+ *                      stager_client_api_listPrivileges.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api_listPrivileges.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/05/29 07:47:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_client_api_listPrivileges.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/05/29 11:45:30 $ $Author: sponcec3 $
  *
  * api to list privileges i.e. the content of the black and white list
  *
@@ -40,15 +40,15 @@
 #include <vector>
 
 //------------------------------------------------------------------------------
-// ListPrivilegeResponseHandler
+// ListPrivilegesResponseHandler
 //------------------------------------------------------------------------------
 /**
- * A dedicated little response handler for the ListPrivilege
+ * A dedicated little response handler for the ListPrivileges
  * requests
  */
-class ListPrivilegeResponseHandler : public castor::client::IResponseHandler {
+class ListPrivilegesResponseHandler : public castor::client::IResponseHandler {
 public:
-  ListPrivilegeResponseHandler
+  ListPrivilegesResponseHandler
   (std::vector<castor::bwlist::Privilege*>* result) :
     m_result(result) {}
 
@@ -70,7 +70,7 @@ public:
            it = resp->privileges().begin();
          it != resp->privileges().end();
          it++) {
-      // Here we transfer the ownership of the ListPrivilege
+      // Here we transfer the ownership of the ListPrivileges
       // from resp to m_result. So the resp can be cleared
       // without any memory leak. It is even mandatory.
       m_result->push_back(*it);
@@ -86,9 +86,9 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-// stage_listPrivilege
+// stage_listPrivileges
 //-----------------------------------------------------------------------------
-EXTERN_C int DLL_DECL stage_listPrivilege
+EXTERN_C int DLL_DECL stage_listPrivileges
 (int user,
  int group,
  unsigned int requestType,
@@ -113,7 +113,7 @@ EXTERN_C int DLL_DECL stage_listPrivilege
 
     // Send request
     std::vector<castor::bwlist::Privilege *>respvec;    
-    ListPrivilegeResponseHandler rh(&respvec);
+    ListPrivilegesResponseHandler rh(&respvec);
     client.sendRequest(&req, &rh);
 
     // Parsing the responses which have been stored in the vector
@@ -125,7 +125,7 @@ EXTERN_C int DLL_DECL stage_listPrivilege
         (sizeof(struct stage_listpriv_resp) * nbResponses);
       if (*privileges == NULL) {
         serrno = ENOMEM;
-        stager_errmsg("stage_listPrivilege",
+        stager_errmsg("stage_listPrivileges",
                       "Could not allocate memory for privileges");
         return -1;
       }
@@ -140,7 +140,7 @@ EXTERN_C int DLL_DECL stage_listPrivilege
     }
   } catch (castor::exception::Exception e) {
     serrno = e.code();
-    stager_errmsg("stage_listPrivilege", (e.getMessage().str().c_str()));
+    stager_errmsg("stage_listPrivileges", (e.getMessage().str().c_str()));
     return -1;
   }
   return 0;
