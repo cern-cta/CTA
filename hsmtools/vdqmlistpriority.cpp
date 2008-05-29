@@ -50,7 +50,7 @@ enum PriorityListType {
 
 void usage(const std::string programName) {
   std::cerr << "Usage: " << programName <<
-    " [ -a | -l lifespanType | -e ] [ -h ]\n"
+    " [ -a | -l lifespanType | -e ] [ -v ] [ -h ]\n"
     "\n"
     "where options can be:\n"
     "\n"
@@ -59,6 +59,7 @@ void usage(const std::string programName) {
     "\t                        Valid values are \"singleMount\" and "
     "\"unlimited\".\n"
     "\t-e, --effective         List effective priorities.\n"
+    "\t-v, --verbose           Display column heads.\n"
     "\t-h, --help              Print this help and exit.\n"
     "\n"
     "Please note that options -a, -l and -e are mutually exclusive\n"
@@ -71,13 +72,14 @@ static struct Coptions longopts[] = {
   {"all"         , NO_ARGUMENT      , NULL, 'a'},
   {"lifespanType", REQUIRED_ARGUMENT, NULL, 'l'},
   {"effective"   , NO_ARGUMENT      , NULL, 'e'},
+  {"verbose"     , NO_ARGUMENT      , NULL, 'v'},
   {"help"        , NO_ARGUMENT      , NULL, 'h'},
   {0, 0, 0, 0}
 };
 
 
 void parseCommandLine(int argc, char **argv, PriorityListType &listType,
-  int &lifespanType) {
+  int &lifespanType, bool &displayColumnHeadings) {
 
   int nbListTypesSet = 0;
   char c;
@@ -87,7 +89,7 @@ void parseCommandLine(int argc, char **argv, PriorityListType &listType,
   Coptind  = 1;
   Copterr  = 0;
 
-  while ((c = Cgetopt_long (argc, argv, "al:eh", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "al:evh", longopts, NULL)) != -1) {
     switch (c) {
     case 'a':
       listType = ALL_PRIO_LIST_TYPE;
@@ -113,13 +115,16 @@ void parseCommandLine(int argc, char **argv, PriorityListType &listType,
       listType = EFFECTIVE_PRIO_LIST_TYPE;
       nbListTypesSet++;
       break;
+    case 'v':
+      displayColumnHeadings = true;
+      break;
     case 'h':
       usage(argv[0]);
       exit(0);
     case '?':
       std::cerr
         << std::endl
-        << "Error: Unknown command-line option: " << (char)Coptopt
+        << "Error: Unknown command-line option"
         << std::endl << std::endl;
       usage(argv[0]);
       exit(1);
@@ -236,8 +241,11 @@ castor::vdqm::IVdqmSvc *retrieveVdqmSvc() {
 
 
 void printPriorityList(std::list<castor::vdqm::IVdqmSvc::VolPriority>
-  &priorities) {
-    std::cout << "VID\tMODE\tLIFESPAN\tPRIORITY" << std::endl;
+  &priorities, const bool displayColumnHeadings) {
+    if(displayColumnHeadings) {
+      std::cout << "VID\tMODE\tLIFESPAN\tPRIORITY" << std::endl;
+    }
+
     for(std::list<castor::vdqm::IVdqmSvc::VolPriority>::iterator itor =
       priorities.begin(); itor != priorities.end(); itor++) {
       std::cout << itor->vid;
@@ -270,12 +278,13 @@ void printPriorityList(std::list<castor::vdqm::IVdqmSvc::VolPriority>
 }
 
 
-void printAllPriorities(castor::vdqm::IVdqmSvc *const vdqmSvc) {
+void printAllPriorities(castor::vdqm::IVdqmSvc *const vdqmSvc,
+  const bool displayColumnHeadings) {
   try {
     // Get and print the list of volume priorities
     std::auto_ptr< std::list<castor::vdqm::IVdqmSvc::VolPriority> > priorities(
       vdqmSvc->getAllVolPriorities());
-    printPriorityList(*priorities);
+    printPriorityList(*priorities, displayColumnHeadings);
   } catch(castor::exception::Exception &e) {
     std::cerr
       << std::endl
@@ -286,12 +295,13 @@ void printAllPriorities(castor::vdqm::IVdqmSvc *const vdqmSvc) {
 }
 
 
-void printEffectivePriorities(castor::vdqm::IVdqmSvc *const vdqmSvc) {
+void printEffectivePriorities(castor::vdqm::IVdqmSvc *const vdqmSvc,
+  const bool displayColumnHeadings) {
   try {
     // Get and print the list of volume priorities
     std::auto_ptr< std::list<castor::vdqm::IVdqmSvc::VolPriority> > priorities(
       vdqmSvc->getEffectiveVolPriorities());
-    printPriorityList(*priorities);
+    printPriorityList(*priorities, displayColumnHeadings);
   } catch(castor::exception::Exception &e) {
     std::cerr
       << std::endl
@@ -302,13 +312,13 @@ void printEffectivePriorities(castor::vdqm::IVdqmSvc *const vdqmSvc) {
 }
 
 
-void printPriorities(castor::vdqm::IVdqmSvc *const vdqmSvc,
-  const int lifespanType) {
+void printLifespanTypePriorities(castor::vdqm::IVdqmSvc *const vdqmSvc,
+  const int lifespanType, const bool displayColumnHeadings) {
   try {
     // Get and print the list of volume priorities
     std::auto_ptr< std::list<castor::vdqm::IVdqmSvc::VolPriority> > priorities(
       vdqmSvc->getVolPriorities(lifespanType));
-    printPriorityList(*priorities);
+    printPriorityList(*priorities, displayColumnHeadings);
   } catch(castor::exception::Exception &e) {
     std::cerr
       << std::endl
@@ -322,9 +332,10 @@ void printPriorities(castor::vdqm::IVdqmSvc *const vdqmSvc,
 int main(int argc, char **argv) {
   PriorityListType listType     = NONE_PRIO_LIST_TYPE;
   int              lifespanType = 0; // 0 = single-mount
+  bool             displayColumnHeadings = false;
 
 
-  parseCommandLine(argc, argv, listType, lifespanType);
+  parseCommandLine(argc, argv, listType, lifespanType, displayColumnHeadings);
 
   // Initializing the log
   castor::BaseObject::initLog(argv[0], castor::SVC_NOMSG);
@@ -335,13 +346,13 @@ int main(int argc, char **argv) {
   switch(listType) {
   case NONE_PRIO_LIST_TYPE:
   case ALL_PRIO_LIST_TYPE:
-    printAllPriorities(vdqmSvc);
+    printAllPriorities(vdqmSvc, displayColumnHeadings);
     break;
   case EFFECTIVE_PRIO_LIST_TYPE:
-    printEffectivePriorities(vdqmSvc);
+    printEffectivePriorities(vdqmSvc, displayColumnHeadings);
     break;
   case LIFESPAN_TYPE_PRIO_LIST_TYPE:
-    printPriorities(vdqmSvc, lifespanType);
+    printLifespanTypePriorities(vdqmSvc, lifespanType, displayColumnHeadings);
     break;
   default:
     std::cerr

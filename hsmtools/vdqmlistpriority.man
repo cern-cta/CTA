@@ -10,11 +10,11 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH VDQMLISTPRIORITY 1 "$Date: 2008/05/28 15:25:00 $" CASTOR "List volume priorities"
+.TH VDQMLISTPRIORITY 1 "$Date: 2008/05/29 14:22:04 $" CASTOR "List volume priorities"
 .SH NAME
 vdqmlistpriority \- list volume priorities
 .SH SYNOPSIS
-.BI "vdqmlistpriority [ -a | -l lifespanType | -e ] [ -h ]"
+.BI "vdqmlistpriority [ -a | -l lifespanType | -e ] [ -v ] [ -h ]"
 
 .SH DESCRIPTION
 .B vdqmlistpriority
@@ -89,6 +89,9 @@ Options -a, -l and -e are mutually exclusive.
 \fB\-e, \-\-effective (default)
 List effective priorities.  This is the default type of list to be displayed.
 Options -a, -l and -e are mutually exclusive.
+.TP
+\fB\-v, \-\-verbose
+Verbose.  Display the column headings.
 .TP
 \fB\-h, \-\-help
 Get usage information.

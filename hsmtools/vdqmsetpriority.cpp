@@ -178,7 +178,7 @@ void parseCommandLine(int argc, char **argv, std::string &vid, int &tpMode,
     case '?':
       std::cerr
         << std::endl
-        << "Error: Unknown command-line option: " << (char)Coptopt
+        << "Error: Unknown command-line option"
         << std::endl << std::endl;
       usage(argv[0]);
       exit(1);
