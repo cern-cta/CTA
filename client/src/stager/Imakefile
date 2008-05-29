@@ -54,6 +54,7 @@ GLOBLIB += -ldl
 STAGERLIB_OBJS = \
 		stager_client_api_common.Osuf \
 		stager_client_commandline.Osuf \
+		stager_client_changePrivilege.Osuf \
 		stager_client_api_get.Osuf \
 		stager_client_api_put.Osuf \
 		stager_client_api_update.Osuf \
@@ -64,20 +65,23 @@ STAGERLIB_OBJS = \
 		stager_client_api_next.Osuf \
 		stager_client_api_version.Osuf \
 		stager_client_api_changePrivilege.Osuf \
-		stager_client_api_listPrivilege.Osuf \
+		stager_client_api_listPrivileges.Osuf \
 		stager_errmsg.Osuf \
 		stager_mapper.Osuf
 
 PROGS_STAGERCLIENT=ProgramTargetName(stager_get) ProgramTargetName(stager_update) ProgramTargetName(stager_put) ProgramTargetName(stager_qry) \
-        ProgramTargetName(stager_putdone) ProgramTargetName(stager_rm) ProgramTargetName(stager_setfilegcweight) ProgramTargetName(castor) ProgramTargetName(newacct)
+        ProgramTargetName(stager_putdone) ProgramTargetName(stager_rm) ProgramTargetName(stager_setfilegcweight) ProgramTargetName(castor) ProgramTargetName(newacct) \
+        ProgramTargetName(stager_addPrivilege) ProgramTargetName(stager_removePrivilege) ProgramTargetName(stager_listPrivileges)
 IPROGS_STAGERCLIENT = FileName($(BIN),ProgramTargetName(stager_get)) FileName($(BIN),ProgramTargetName(stager_update)) FileName($(BIN),ProgramTargetName(stager_qry)) \
         FileName($(BIN),ProgramTargetName(stager_put)) FileName($(BIN),ProgramTargetName(stager_putdone)) \
         FileName($(BIN),ProgramTargetName(stager_rm)) FileName($(BIN),ProgramTargetName(stager_setfilegcweight)) \
-        FileName($(BIN),ProgramTargetName(castor)) FileName($(BIN),ProgramTargetName(newacct))
+        FileName($(BIN),ProgramTargetName(castor)) FileName($(BIN),ProgramTargetName(newacct)) \
+        FileName($(BIN),ProgramTargetName(stager_addPrivilege)) FileName($(BIN),ProgramTargetName(stager_removePrivilege)) FileName($(BIN),ProgramTargetName(stager_listPrivileges))
 EPROGS_STAGERCLIENT = FileName($(EXPORTBIN),stager_get) FileName($(EXPORTBIN),stager_update) FileName($(EXPORTBIN),stager_qry) \
         FileName($(EXPORTBIN),stager_put) FileName($(EXPORTBIN),stager_putdone) \
         FileName($(EXPORTBIN),stager_rm) FileName($(EXPORTBIN),stager_setfilegcweight) \
-        FileName($(EXPORTBIN),castor) FileName($(EXPORTBIN),newacct)
+        FileName($(EXPORTBIN),castor) FileName($(EXPORTBIN),newacct) \
+        FileName($(EXPORTBIN),stager_addPrivilege) FileName($(EXPORTBIN),stager_removePrivilege) FileName($(EXPORTBIN),stager_listPrivileges)
 
 all: $(PROGS_STAGERCLIENT)
 
@@ -90,6 +94,9 @@ NormalProgramTarget(stager_rm,stager_rm.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 NormalProgramTarget(stager_setfilegcweight,stager_setFileGCWeight.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 NormalProgramTarget(castor,castor.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 NormalProgramTarget(newacct,newacct.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
+NormalProgramTarget(stager_addPrivilege,stager_get.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
+NormalProgramTarget(stager_removePrivilege,stager_get.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
+NormalProgramTarget(stager_listPrivileges,stager_get.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 
 NormalLibraryTarget(stager,$(STAGERLIB_OBJS))
 
@@ -106,6 +113,9 @@ InstallProgram(stager_rm,$(BIN),root,bin,0755)
 InstallProgram(stager_setfilegcweight,$(BIN),root,bin,0755)
 InstallProgram(castor,$(BIN),root,bin,755)
 InstallProgram(newacct,$(BIN),root,bin,4755)
+InstallProgram(stager_addPrivilege,$(BIN),root,bin,0755)
+InstallProgram(stager_removePrivilege,$(BIN),root,bin,0755)
+InstallProgram(stager_listPrivileges,$(BIN),root,bin,0755)
 
 install.man: $(MANDIR) $(MANPAGES_STAGER)
 
@@ -129,6 +139,9 @@ IEXPORT(stager_rm,$(EXPORTBIN),755)
 IEXPORT(stager_setfilegcweight,$(EXPORTBIN),755)
 IEXPORT(castor,$(EXPORTBIN),755);
 IEXPORT(newacct,$(EXPORTBIN),755);
+IEXPORT(stager_addPrivilege,$(EXPORTBIN),755)
+IEXPORT(stager_removePrivilege,$(EXPORTBIN),755)
+IEXPORT(stager_listPrivileges,$(EXPORTBIN),755)
 
 exportman: $(EMANPAGES_STAGER)
 
