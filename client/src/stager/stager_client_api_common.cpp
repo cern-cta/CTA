@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.34 2008/03/10 17:27:14 itglp Exp $
+ * $Id: stager_client_api_common.cpp,v 1.35 2008/05/29 07:46:35 sponcec3 Exp $
  */
 
 /*
@@ -370,13 +370,13 @@ int DLL_DECL setDefaultOption(struct stage_options* opts) {
 
   if (!opts){
     opts=(struct stage_options*)malloc(sizeof(struct stage_options));
-    opts->stage_host=DEFAULT_HOST;
-    opts->stage_port =DEFAULT_PORT2;
-    opts->service_class =DEFAULT_SVCCLASS;
+    opts->stage_host= (char*)DEFAULT_HOST;
+    opts->stage_port = DEFAULT_PORT2;
+    opts->service_class = (char*)DEFAULT_SVCCLASS;
     return -1;
   }
-  if (!opts->stage_host){opts->stage_host=DEFAULT_HOST;}
-  if (!opts->stage_port){ opts->stage_port =DEFAULT_PORT2;}
-  if (!opts->service_class){ opts->service_class =DEFAULT_SVCCLASS;}
+  if (!opts->stage_host){opts->stage_host = (char*)DEFAULT_HOST;}
+  if (!opts->stage_port){ opts->stage_port = DEFAULT_PORT2;}
+  if (!opts->service_class){ opts->service_class = (char*)DEFAULT_SVCCLASS;}
   return 0;
 }
