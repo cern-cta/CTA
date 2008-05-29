@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      vdqmlistvolpriority.cpp
+ *                      vdqmlistpriority.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -49,21 +49,29 @@ enum PriorityListType {
   
 
 void usage(const std::string programName) {
-  std::cerr << "Usage: " << programName << " [ -a i| -e | -l type ] [ -h ]\n"
+  std::cerr << "Usage: " << programName <<
+    " [ -a | -l lifespanType | -e ] [ -h ]\n"
     "\n"
     "where options can be:\n"
     "\n"
-    "\t-a, --all (Default)     List all priorities\n"
-    "\t-e, --effective         List effective priorities\n"
-    "\t-l, --lifespanType type List priorioties with specified lifespan type\n"
-    "\t-h, --help              Print this help and exit\n"
+    "\t-a, --all               List all priorities.\n"
+    "\t-l, --lifespanType type List priorities with specified lifespan type.\n"
+    "\t                        Valid values are \"singleMount\" and "
+    "\"unlimited\".\n"
+    "\t-e, --effective         List effective priorities.\n"
+    "\t-h, --help              Print this help and exit.\n"
+    "\n"
+    "Please note that options -a, -l and -e are mutually exclusive\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
 }
 
 
 static struct Coptions longopts[] = {
-  {"help", NO_ARGUMENT, NULL, 'h'},
+  {"all"         , NO_ARGUMENT      , NULL, 'a'},
+  {"lifespanType", REQUIRED_ARGUMENT, NULL, 'l'},
+  {"effective"   , NO_ARGUMENT      , NULL, 'e'},
+  {"help"        , NO_ARGUMENT      , NULL, 'h'},
   {0, 0, 0, 0}
 };
 
@@ -79,20 +87,31 @@ void parseCommandLine(int argc, char **argv, PriorityListType &listType,
   Coptind  = 1;
   Copterr  = 0;
 
-  while ((c = Cgetopt_long (argc, argv, "ael:h", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "al:eh", longopts, NULL)) != -1) {
     switch (c) {
     case 'a':
       listType = ALL_PRIO_LIST_TYPE;
       nbListTypesSet++;
       break;
-    case 'e':
-      listType = EFFECTIVE_PRIO_LIST_TYPE;
-      nbListTypesSet++;
-      break;
     case 'l':
       listType = LIFESPAN_TYPE_PRIO_LIST_TYPE;
       nbListTypesSet++;
-      lifespanType = atoi(Coptarg);
+      if(strcmp(Coptarg, "singleMount") == 0) {
+        lifespanType = 0; // single-mount
+      } else if(strcmp(Coptarg, "unlimited") == 0) {
+        lifespanType = 1; // unlimited
+      } else {
+        std::cerr
+          << std::endl
+          << "Error: Invalid lifespanType: " << Coptarg
+          << std::endl << std::endl;
+        usage(argv[0]);
+        exit(1);
+      }
+      break;
+    case 'e':
+      listType = EFFECTIVE_PRIO_LIST_TYPE;
+      nbListTypesSet++;
       break;
     case 'h':
       usage(argv[0]);
@@ -216,22 +235,47 @@ castor::vdqm::IVdqmSvc *retrieveVdqmSvc() {
 }
 
 
+void printPriorityList(std::list<castor::vdqm::IVdqmSvc::VolPriority>
+  &priorities) {
+    std::cout << "VID\tMode\tLifespan\tPriority" << std::endl;
+    for(std::list<castor::vdqm::IVdqmSvc::VolPriority>::iterator itor =
+      priorities.begin(); itor != priorities.end(); itor++) {
+      std::cout << itor->vid;
+      std::cout << "\t";
+      switch(itor->tpMode) {
+      case 0:
+        std::cout << "read";
+        break;
+      case 1:
+        std::cout << "write";
+        break;
+      default:
+        std::cout << "UNKNOWN";
+      }
+      std::cout << "\t";
+      switch(itor->lifespanType) {
+      case 0:
+        std::cout << "singleMount";
+        break;
+      case 1:
+        std::cout << "unlimited";
+        break;
+      default:
+        std::cout << "UNKNOWN";
+      }
+      std::cout << "\t";
+      std::cout << itor->priority;
+      std::cout << std::endl;
+    }
+}
+
+
 void printAllPriorities(castor::vdqm::IVdqmSvc *const vdqmSvc) {
   try {
-    // Get the list of volume priorities
+    // Get and print the list of volume priorities
     std::auto_ptr< std::list<castor::vdqm::IVdqmSvc::VolPriority> > priorities(
       vdqmSvc->getAllVolPriorities());
-
-    // Print the list of volume priorities
-    for(std::list<castor::vdqm::IVdqmSvc::VolPriority>::iterator itor =
-      priorities->begin(); itor != priorities->end(); itor++) {
-      std::cout
-        <<  "vid="            << itor->vid
-        << " tapeAccessMode=" << itor->tpMode
-        << " lifespanType="   << itor->lifespanType
-        << " priority="       << itor->priority
-        << std::endl;
-    }
+    printPriorityList(*priorities);
   } catch(castor::exception::Exception &e) {
     std::cerr
       << std::endl
@@ -244,20 +288,10 @@ void printAllPriorities(castor::vdqm::IVdqmSvc *const vdqmSvc) {
 
 void printEffectivePriorities(castor::vdqm::IVdqmSvc *const vdqmSvc) {
   try {
-    // Get the list of volume priorities
+    // Get and print the list of volume priorities
     std::auto_ptr< std::list<castor::vdqm::IVdqmSvc::VolPriority> > priorities(
       vdqmSvc->getEffectiveVolPriorities());
-
-    // Print the list of volume priorities
-    for(std::list<castor::vdqm::IVdqmSvc::VolPriority>::iterator itor =
-      priorities->begin(); itor != priorities->end(); itor++) {
-      std::cout
-        <<  "vid="            << itor->vid
-        << " tapeAccessMode=" << itor->tpMode
-        << " lifespanType="   << itor->lifespanType
-        << " priority="       << itor->priority
-        << std::endl;
-    }
+    printPriorityList(*priorities);
   } catch(castor::exception::Exception &e) {
     std::cerr
       << std::endl
@@ -271,20 +305,10 @@ void printEffectivePriorities(castor::vdqm::IVdqmSvc *const vdqmSvc) {
 void printPriorities(castor::vdqm::IVdqmSvc *const vdqmSvc,
   const int lifespanType) {
   try {
-    // Get the list of volume priorities
+    // Get and print the list of volume priorities
     std::auto_ptr< std::list<castor::vdqm::IVdqmSvc::VolPriority> > priorities(
       vdqmSvc->getVolPriorities(lifespanType));
-
-    // Print the list of volume priorities
-    for(std::list<castor::vdqm::IVdqmSvc::VolPriority>::iterator itor =
-      priorities->begin(); itor != priorities->end(); itor++) {
-      std::cout
-        <<  "vid="            << itor->vid
-        << " tapeAccessMode=" << itor->tpMode
-        << " lifespanType="   << itor->lifespanType
-        << " priority="       << itor->priority
-        << std::endl;
-    }
+    printPriorityList(*priorities);
   } catch(castor::exception::Exception &e) {
     std::cerr
       << std::endl
@@ -297,7 +321,7 @@ void printPriorities(castor::vdqm::IVdqmSvc *const vdqmSvc,
 
 int main(int argc, char **argv) {
   PriorityListType listType     = NONE_PRIO_LIST_TYPE;
-  int              lifespanType = 0; // 0 = single-shot
+  int              lifespanType = 0; // 0 = single-mount
 
 
   parseCommandLine(argc, argv, listType, lifespanType);

@@ -147,9 +147,9 @@ MANPAGES += $(MANDIR)/vdqmdelvolpriority.$(MANSUFFIX)
 EXPORTMANPAGES += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),vdqmdelvolpriority.$(MANSUFFIX)))
 PROGS_TO_CLEAN += ProgramTargetName(vdqmdelvolpriority)
 
-MANPAGES += $(MANDIR)/vdqmlistvolpriority.$(MANSUFFIX)
-EXPORTMANPAGES += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),vdqmlistvolpriority.$(MANSUFFIX)))
-PROGS_TO_CLEAN += ProgramTargetName(vdqmlistvolpriority)
+MANPAGES += $(MANDIR)/vdqmlistpriority.$(MANSUFFIX)
+EXPORTMANPAGES += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),vdqmlistpriority.$(MANSUFFIX)))
+PROGS_TO_CLEAN += ProgramTargetName(vdqmlistpriority)
 #endif
 
 #if !defined(_WIN32)
@@ -191,7 +191,7 @@ IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 IPROGS += FileName($(BIN),ProgramTargetName(vdqmDBInit))
 IPROGS += FileName($(BIN),ProgramTargetName(vdqmsetvolpriority))
 IPROGS += FileName($(BIN),ProgramTargetName(vdqmdelvolpriority))
-IPROGS += FileName($(BIN),ProgramTargetName(vdqmlistvolpriority))
+IPROGS += FileName($(BIN),ProgramTargetName(vdqmlistpriority))
 #endif
 
 EPROGS = $(EXPORTBIN)/reclaim \
@@ -220,7 +220,7 @@ EPROGS = $(EXPORTBIN)/reclaim \
 EPROGS +=	$(EXPORTBIN)/vdqmDBInit
 EPROGS +=	$(EXPORTBIN)/vdqmsetvolpriority
 EPROGS +=	$(EXPORTBIN)/vdqmdelvolpriority
-EPROGS +=	$(EXPORTBIN)/vdqmlistvolpriority
+EPROGS +=	$(EXPORTBIN)/vdqmlistpriority
 #endif
 
 IPERL = FileName($(PERLLIBDIR),castor_tools.pm)
@@ -261,7 +261,7 @@ NormalProgramTarget(rfcpupd,rfcpupd.Osuf,DepSharedLibraryTargetName(shlib,shift)
 NormalProgramTarget(vdqmDBInit,vdqmDBInit.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(vdqmsetvolpriority,vdqmsetvolpriority.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(vdqmdelvolpriority,vdqmdelvolpriority.Osuf,$(DEPLIB2),$(LIBS2))
-NormalProgramTarget(vdqmlistvolpriority,vdqmlistvolpriority.Osuf,$(DEPLIB2),$(LIBS2))
+NormalProgramTarget(vdqmlistpriority,vdqmlistpriority.Osuf,$(DEPLIB2),$(LIBS2))
 #endif
 
 MakeDepSharedLibrary(shlib,shift)
@@ -329,8 +329,8 @@ IEXPORT(vdqmsetvolpriority,$(EXPORTBIN),755);
 InstallProgram(vdqmdelvolpriority,$(BIN),root,bin,755)
 IEXPORT(vdqmdelvolpriority,$(EXPORTBIN),755);
 
-InstallProgram(vdqmlistvolpriority,$(BIN),root,bin,755)
-IEXPORT(vdqmlistvolpriority,$(EXPORTBIN),755);
+InstallProgram(vdqmlistpriority,$(BIN),root,bin,755)
+IEXPORT(vdqmlistpriority,$(EXPORTBIN),755);
 #endif
 
 InstallProgram(printSvcClass,$(BIN),root,bin,755)
@@ -415,8 +415,8 @@ EMANPAGE(vdqmsetvolpriority,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 IMANPAGE(vdqmdelvolpriority,$(MANDIR),$(MANSUFFIX))
 EMANPAGE(vdqmdelvolpriority,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 
-IMANPAGE(vdqmlistvolpriority,$(MANDIR),$(MANSUFFIX))
-EMANPAGE(vdqmlistvolpriority,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+IMANPAGE(vdqmlistpriority,$(MANDIR),$(MANSUFFIX))
+EMANPAGE(vdqmlistpriority,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 #endif
 
 export: $(EPROGS) $(EXPORTPERL) $(EPERL)
