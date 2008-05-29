@@ -63,7 +63,8 @@ void usage(const std::string programName) {
 
 
 static struct Coptions longopts[] = {
-  {"help", NO_ARGUMENT, NULL, 'h'}
+  {"help", NO_ARGUMENT, NULL, 'h'},
+  {0, 0, 0, 0}
 };
 
 

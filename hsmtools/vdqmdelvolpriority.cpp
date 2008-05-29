@@ -55,7 +55,8 @@ void usage(const std::string programName) {
 static struct Coptions longopts[] = {
   {"vid"           , REQUIRED_ARGUMENT, NULL, 'v'},
   {"tapeAccessMode", REQUIRED_ARGUMENT, NULL, 'a'},
-  {"help"          , NO_ARGUMENT      , NULL, 'h'}
+  {"help"          , NO_ARGUMENT      , NULL, 'h'},
+  {0, 0, 0, 0}
 };
 
 

@@ -58,7 +58,8 @@ static struct Coptions longopts[] = {
   {"vid"           , REQUIRED_ARGUMENT, NULL, 'v'},
   {"tapeAccessMode", REQUIRED_ARGUMENT, NULL, 'a'},
   {"priority"      , REQUIRED_ARGUMENT, NULL, 'p'},
-  {"help"          , NO_ARGUMENT      , NULL, 'h'}
+  {"help"          , NO_ARGUMENT      , NULL, 'h'},
+  {0, 0, 0, 0}
 };
 
 
