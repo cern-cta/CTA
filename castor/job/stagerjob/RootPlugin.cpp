@@ -63,7 +63,7 @@ void castor::job::stagerjob::RootPlugin::postForkHook
   std::string progfullpath = rootsys;
   progfullpath += "/rootd";
   std::ostringstream cmdLine;
-  cmdLine << "Executed " << progfullpath << " -i -d 0 "
+  cmdLine << progfullpath << " -i -d 0 "
           << " -F " << context.fullDestPath
           << " -H " << args.rawRequestUuid
           << " (pid=" << context.childPid << ")";
