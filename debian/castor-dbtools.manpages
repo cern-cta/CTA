@@ -12,4 +12,5 @@ debian/castor/usr/share/man/man1/moveDiskServer.1castor
 debian/castor/usr/share/man/man1/printFileClass.1castor
 debian/castor/usr/share/man/man1/printSvcClass.1castor
 debian/castor/usr/share/man/man1/vdqmDBInit.1castor
+debian/castor/usr/share/man/man1/vdqmlistpriority.1castor
 debian/castor/usr/share/man/man1/adminMultiInstance.1castor
