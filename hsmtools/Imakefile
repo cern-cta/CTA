@@ -139,9 +139,9 @@ MANPAGES += $(MANDIR)/vdqmDBInit.$(MANSUFFIX)
 EXPORTMANPAGES += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),vdqmDBInit.$(MANSUFFIX)))
 PROGS_TO_CLEAN += ProgramTargetName(vdqmDBInit)
 
-MANPAGES += $(MANDIR)/vdqmsetvolpriority.$(MANSUFFIX)
-EXPORTMANPAGES += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),vdqmsetvolpriority.$(MANSUFFIX)))
-PROGS_TO_CLEAN += ProgramTargetName(vdqmsetvolpriority)
+MANPAGES += $(MANDIR)/vdqmsetpriority.$(MANSUFFIX)
+EXPORTMANPAGES += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),vdqmsetpriority.$(MANSUFFIX)))
+PROGS_TO_CLEAN += ProgramTargetName(vdqmsetpriority)
 
 MANPAGES += $(MANDIR)/vdqmdelvolpriority.$(MANSUFFIX)
 EXPORTMANPAGES += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),vdqmdelvolpriority.$(MANSUFFIX)))
@@ -189,7 +189,7 @@ IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
          FileName($(BIN),ProgramTargetName(deletePriority))
 #if BuildVDQMCpp
 IPROGS += FileName($(BIN),ProgramTargetName(vdqmDBInit))
-IPROGS += FileName($(BIN),ProgramTargetName(vdqmsetvolpriority))
+IPROGS += FileName($(BIN),ProgramTargetName(vdqmsetpriority))
 IPROGS += FileName($(BIN),ProgramTargetName(vdqmdelvolpriority))
 IPROGS += FileName($(BIN),ProgramTargetName(vdqmlistpriority))
 #endif
@@ -218,7 +218,7 @@ EPROGS = $(EXPORTBIN)/reclaim \
 
 #if BuildVDQMCpp
 EPROGS +=	$(EXPORTBIN)/vdqmDBInit
-EPROGS +=	$(EXPORTBIN)/vdqmsetvolpriority
+EPROGS +=	$(EXPORTBIN)/vdqmsetpriority
 EPROGS +=	$(EXPORTBIN)/vdqmdelvolpriority
 EPROGS +=	$(EXPORTBIN)/vdqmlistpriority
 #endif
@@ -259,7 +259,7 @@ NormalProgramTarget(rfcpupd,rfcpupd.Osuf,DepSharedLibraryTargetName(shlib,shift)
 
 #if BuildVDQMCpp
 NormalProgramTarget(vdqmDBInit,vdqmDBInit.Osuf,$(DEPLIB2),$(LIBS2))
-NormalProgramTarget(vdqmsetvolpriority,vdqmsetvolpriority.Osuf,$(DEPLIB2),$(LIBS2))
+NormalProgramTarget(vdqmsetpriority,vdqmsetpriority.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(vdqmdelvolpriority,vdqmdelvolpriority.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(vdqmlistpriority,vdqmlistpriority.Osuf,$(DEPLIB2),$(LIBS2))
 #endif
@@ -323,8 +323,8 @@ IEXPORT(adler32,$(EXPORTBIN),755);
 InstallProgram(vdqmDBInit,$(BIN),root,bin,755)
 IEXPORT(vdqmDBInit,$(EXPORTBIN),755);
 
-InstallProgram(vdqmsetvolpriority,$(BIN),root,bin,755)
-IEXPORT(vdqmsetvolpriority,$(EXPORTBIN),755);
+InstallProgram(vdqmsetpriority,$(BIN),root,bin,755)
+IEXPORT(vdqmsetpriority,$(EXPORTBIN),755);
 
 InstallProgram(vdqmdelvolpriority,$(BIN),root,bin,755)
 IEXPORT(vdqmdelvolpriority,$(EXPORTBIN),755);
@@ -409,8 +409,8 @@ EMANPAGE(deletePriority,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 IMANPAGE(vdqmDBInit,$(MANDIR),$(MANSUFFIX))
 EMANPAGE(vdqmDBInit,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 
-IMANPAGE(vdqmsetvolpriority,$(MANDIR),$(MANSUFFIX))
-EMANPAGE(vdqmsetvolpriority,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+IMANPAGE(vdqmsetpriority,$(MANDIR),$(MANSUFFIX))
+EMANPAGE(vdqmsetpriority,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 
 IMANPAGE(vdqmdelvolpriority,$(MANDIR),$(MANSUFFIX))
 EMANPAGE(vdqmdelvolpriority,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))

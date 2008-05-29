@@ -41,13 +41,17 @@ const std::string VDQMSCHEMAVERSION = "2_1_7_4";
 
 
 void usage(const std::string programName) {
-  std::cerr << "Usage: " << programName << " [options]\n"
+  std::cerr << "Usage: " << programName <<
+    " -v VID -a mode [ -l type ] -p priority [ -h ]\n"
     "\n"
     "where options can be:\n"
     "\n"
     "\t-v, --vid VID             Volume visual Identifier\n"
-    "\t-a, --tapeAccessMode mode Tape access mode 0 or 1\n"
-    "\t-p, --priority priority   Volume priority between 0 and INT_MAX\n"
+    "\t-a, --tapeAccessMode mode Tape access mode. Valid values are \"read\"\n"
+    "\t                          and \"write\"\n"
+    "\t-l, --lifespanType type   Lifespan type. Valid values are\n"
+    "\t                          \"singleMount\" and \"unlimited\".\n"
+    "\t-p, --priority priority   Volume priority, where 0 is the lowest\n"
     "\t-h, --help                Print this help and exit\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
@@ -57,14 +61,41 @@ void usage(const std::string programName) {
 static struct Coptions longopts[] = {
   {"vid"           , REQUIRED_ARGUMENT, NULL, 'v'},
   {"tapeAccessMode", REQUIRED_ARGUMENT, NULL, 'a'},
+  {"lifespanType"  , REQUIRED_ARGUMENT, NULL, 'l'},
   {"priority"      , REQUIRED_ARGUMENT, NULL, 'p'},
   {"help"          , NO_ARGUMENT      , NULL, 'h'},
   {0, 0, 0, 0}
 };
 
 
+bool isAPositiveInteger(char *str) {
+  if(*str == '\0') {
+    return false;
+  }
+
+  // Allow a plus sign at the beginning of the number
+  if(*str == '+') {
+    str++;
+
+    if(*str == '\0') {
+      return false;
+    }
+  }
+
+  while(*str != '\0') {
+    if((*str < '0') || (*str > '9')) {
+      return false;
+    }
+
+    str++;
+  }
+
+  return true;
+}
+
+
 void parseCommandLine(int argc, char **argv, std::string &vid, int &tpMode,
-  int &priority) {
+  int &lifespanType, int &priority) {
 
   bool vidSet      = false;
   bool tpModeSet   = false;
@@ -75,7 +106,7 @@ void parseCommandLine(int argc, char **argv, std::string &vid, int &tpMode,
   Coptind = 1;
   Copterr = 0;
 
-  while ((c = Cgetopt_long (argc, argv, "v:a:p:h", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "v:a:l:p:h", longopts, NULL)) != -1) {
     switch (c) {
     case 'v':
       if(strlen(Coptarg) > CA_MAXVIDLEN) {
@@ -91,7 +122,13 @@ void parseCommandLine(int argc, char **argv, std::string &vid, int &tpMode,
       vidSet = true;
       break;
     case 'a':
-      if((strcmp(Coptarg,"0") != 0) && (strcmp(Coptarg,"1") != 0)) {
+      if(strcmp(Coptarg,"read") == 0) {
+        tpMode = 0;
+        tpModeSet = true;
+      } else if (strcmp(Coptarg,"write") == 0) {
+        tpMode = 1;
+        tpModeSet = true;
+      } else {
         std::cerr
           << std::endl
           << "Error: Invalid tape access mode: " << Coptarg
@@ -99,15 +136,36 @@ void parseCommandLine(int argc, char **argv, std::string &vid, int &tpMode,
         usage(argv[0]);
         exit(1);
       }
-      tpMode = atoi(Coptarg);
-      tpModeSet = true;
+      break;
+    case 'l':
+      if(strcmp(Coptarg, "singleMount") == 0) {
+        lifespanType = 0; // single-mount
+      } else if(strcmp(Coptarg, "unlimited") == 0) {
+        lifespanType = 1; // unlimited
+      } else {
+        std::cerr
+          << std::endl
+          << "Error: Invalid lifespanType: " << Coptarg
+          << std::endl << std::endl;
+        usage(argv[0]);
+        exit(1);
+      }
       break;
     case 'p':
+      if(!isAPositiveInteger(Coptarg)) {
+        std::cerr
+          << std::endl
+          << "Error: Priority is not a positive integer: " << Coptarg
+          << std::endl << std::endl;
+        usage(argv[0]);
+        exit(1);
+      }
       priority = atoi(Coptarg);
+      // Double check
       if(priority < 0) {
         std::cerr
           << std::endl
-          << "Error: Invalid priority: " << priority
+          << "Error: Priority is not a positive integer: " << Coptarg
           << std::endl << std::endl;
         usage(argv[0]);
         exit(1);
@@ -234,11 +292,12 @@ castor::vdqm::IVdqmSvc *retrieveVdqmSvc() {
 
 
 int main(int argc, char **argv) {
-  std::string vid      = "";
-  int         tpMode   = 0;
-  int         priority = 0;
+  std::string vid          = "";
+  int         tpMode       = 0;
+  int         lifespanType = 1; // Default = unlimited = 1
+  int         priority     = 0;
 
-  parseCommandLine(argc, argv, vid, tpMode, priority);
+  parseCommandLine(argc, argv, vid, tpMode, lifespanType, priority);
 
   // Initializing the log
   castor::BaseObject::initLog(argv[0], castor::SVC_NOMSG);
@@ -255,9 +314,8 @@ int main(int argc, char **argv) {
     hostname[sizeof(hostname)-1] = '\0';
 
     // Set the volume priority
-    // Last parameter = lifespanType = unlimited = 1
     vdqmSvc->setVolPriority(priority, geteuid(), getegid(), hostname, vid,
-      tpMode, 1);
+      tpMode, lifespanType);
   } catch(castor::exception::Exception &e) {
     std::cerr
       << std::endl
