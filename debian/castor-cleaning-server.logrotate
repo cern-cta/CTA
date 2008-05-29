@@ -1,6 +1,0 @@
-/var/log/cleaning /var/spool/cleaning/log {
-    compress
-    daily
-    missingok
-    rotate 15
-}

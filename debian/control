@@ -39,12 +39,6 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  Distributed Logging Facility server
 
-Package: castor-db-config
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: castor (Cern Advanced STORage system)
- Template Configuration File for CASTOR DB interface
-
 Package: castor-doc
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
@@ -224,17 +218,11 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-oracle
 Description: castor (Cern Advanced STORage system)
  Stager server
 
-Package: castor-cleaning-server
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-oracle
-Description: castor (Cern Advanced STORage system)
- Cleaning daemon
-
 Package: castor-sysconfig
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
- Configuration files readed by every server
+ Configuration files read by every server
 
 Package: castor-tape-client
 Architecture: any

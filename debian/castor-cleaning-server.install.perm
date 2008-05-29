@@ -1,2 +1,0 @@
-%attr(0755,root,bin) etc/init.d/cleaning
-%attr(0750,root,bin) usr/bin/cleaningDaemon
