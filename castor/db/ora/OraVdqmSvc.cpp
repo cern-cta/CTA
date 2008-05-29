@@ -1092,7 +1092,7 @@ std::list<castor::vdqm::IVdqmSvc::VolPriority>
       p.clientHost[sizeof(p.clientHost) - 1] = '\0';
       strncpy(p.vid, rs->getString(5).c_str(), sizeof(p.vid));
       // Null-terminate in case source string is longer than destination
-      p.clientHost[sizeof(p.clientHost) - 1] = '\0';
+      p.vid[sizeof(p.vid) - 1] = '\0';
       p.tpMode           = rs->getInt(6);
       p.lifespanType     = rs->getInt(7);
       p.id               = (u_signed64)rs->getDouble(8);
