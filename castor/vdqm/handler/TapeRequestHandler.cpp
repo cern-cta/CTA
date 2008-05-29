@@ -308,20 +308,10 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
     castor::vdqm::DatabaseHelper::updateRepresentation(tapeReq.get(), cuuid);
 
     castor::exception::Exception ex(EVQREQASS);
-    {
-      std::string vid = "UNKNOWN";
-
-      if(tapeReq->tape() != NULL) {
-        vid = tapeReq->tape()->vid();
-      }
-
-      ex.getMessage() <<
-        "TapeRequest is assigned to a TapeDrive. Can't delete it at the moment."
-        << " tapeRequestID=" << tapeReq->id()
-        << " tapeVID="       << vid
-        << " driveName="     << tapeDrive->driveName()
-        << std::endl;
-    }
+    ex.getMessage() <<
+      "TapeRequest is assigned to a TapeDrive. Can't delete it at the moment."
+      << " drive=" << tapeDrive->driveName()
+      << std::endl;
     throw ex;
 
   // Else the TapeRequest is not assigned to a TapeDrive
