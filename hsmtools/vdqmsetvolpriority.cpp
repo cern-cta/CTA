@@ -77,6 +77,15 @@ void parseCommandLine(int argc, char **argv, std::string &vid, int &tpMode,
   while ((c = Cgetopt_long (argc, argv, "v:a:p:h", longopts, NULL)) != -1) {
     switch (c) {
     case 'v':
+      if(strlen(Coptarg) > CA_MAXVIDLEN) {
+        std::cerr
+          << std::endl
+          << "Error: VID has more than " << CA_MAXVIDLEN << " characters: "
+          << Coptarg
+          << std::endl << std::endl;
+        usage(argv[0]);
+        exit(1);
+      }
       vid    = Coptarg;
       vidSet = true;
       break;
