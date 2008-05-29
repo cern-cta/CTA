@@ -63,6 +63,8 @@ STAGERLIB_OBJS = \
 		stager_client_api_setFileGCWeight.Osuf \
 		stager_client_api_next.Osuf \
 		stager_client_api_version.Osuf \
+		stager_client_api_changePrivilege.Osuf \
+		stager_client_api_listPrivilege.Osuf \
 		stager_errmsg.Osuf \
 		stager_mapper.Osuf
 
