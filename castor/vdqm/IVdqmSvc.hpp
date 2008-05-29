@@ -153,7 +153,7 @@ namespace castor {
          * @param tpMode the tape access mode.  Valid values are either 0
          * meaning write-disabled or 1 meaning write-enabled.
          * @param lifespanType the type of lifespan to be assigned to the
-         * priority setting.  Valid values are either 0 meaning single-shot or
+         * priority setting.  Valid values are either 0 meaning single-mount or
          * 1 meaning unlimited.
          */
         virtual void setVolPriority(const int priority, const int clientUID,
@@ -169,7 +169,7 @@ namespace castor {
          * @param tpMode the tape access mode.  Valid values are either 0
          * meaning write-disabled or 1 meaning write-enabled.
          * @param lifespanType the type of lifespan to be assigned to the
-         * priority setting.  Valid values are either 0 meaning single-shot or
+         * priority setting.  Valid values are either 0 meaning single-mount or
          * 1 meaning unlimited.
          *
          * @return the ID of the deleted priority if one was deleted, else 0
@@ -209,7 +209,7 @@ namespace castor {
          * allocated list!
          *
          * @param lifespanType the lifespan type of the volume priorities to be
-         * retrieved.  Valid values are 0 for single-shot and 1 for unlimited.
+         * retrieved.  Valid values are 0 for single-mount and 1 for unlimited.
          * @return the list of volume priorities.
          * Note that the returned list should be deallocated by the caller.
          */
