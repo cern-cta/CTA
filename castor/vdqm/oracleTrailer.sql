@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.119 $ $Release$ $Date: 2008/05/27 20:37:22 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.120 $ $Release$ $Date: 2008/05/29 13:36:04 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2103,10 +2103,12 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
 
       -- Update it
       UPDATE VolumePriority SET
-        priority   = priorityVar,
-        clientUID  = clientUIDVar,
-        clientGID  = clientGIDVar,
-        clientHost = clientHostVar;
+        VolumePriority.priority   = priorityVar,
+        VolumePriority.clientUID  = clientUIDVar,
+        VolumePriority.clientGID  = clientGIDVar,
+        VolumePriority.clientHost = clientHostVar
+      WHERE
+        VolumePriority.id = priorityIdVar;
 
     -- Else a row for the priority does not yet exist
     ELSE
