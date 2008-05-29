@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2008/05/29 14:05:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2008/05/29 17:00:30 $ $Author: itglp $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -386,7 +386,7 @@ void castor::rh::RHThread::sendNotification
   case OBJ_DiskPoolQuery:
   case OBJ_VersionQuery:
   case OBJ_ChangePrivilege:
-  case OBJ_ListPrivilege:
+  case OBJ_ListPrivileges:
     // QueryRequest Service
     castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'Q');
     break;
