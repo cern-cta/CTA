@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.640 $ $Date: 2008/05/26 15:40:00 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.641 $ $Date: 2008/05/30 15:44:21 $ $Author: sponcec3 $
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -116,9 +116,9 @@ CREATE OR REPLACE PACKAGE castorBW AS
   -- Remove priviledge(S)
   PROCEDURE removePrivilege(svcClassId NUMBER, euid NUMBER, egid NUMBER, reqType NUMBER);
   -- List priviledge(s)
-  PROCEDURE listPrivilege(svcClassId IN NUMBER, euid IN NUMBER,
-                          egid IN NUMBER, reqType IN NUMBER,
-                          wlist OUT Privilege_Cur, blist OUT Privilege_Cur);
+  PROCEDURE listPrivileges(svcClassId IN NUMBER, ieuid IN NUMBER,
+                           iegid IN NUMBER, ireqType IN NUMBER,
+                           wlist OUT Privilege_Cur, blist OUT Privilege_Cur);
 END castorBW;
 
 CREATE OR REPLACE PACKAGE BODY castorBW AS
@@ -436,26 +436,32 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
   END;
 
   -- Remove priviledge
-  PROCEDURE listPrivilege(svcClassId IN NUMBER, euid IN NUMBER,
-                          egid IN NUMBER, reqType IN NUMBER,
-                          wlist OUT Privilege_Cur, blist OUT Privilege_Cur) AS
+  PROCEDURE listPrivileges(svcClassId IN NUMBER, ieuid IN NUMBER,
+                           iegid IN NUMBER, ireqType IN NUMBER,
+                           wlist OUT Privilege_Cur, blist OUT Privilege_Cur) AS
   BEGIN
     OPEN wlist FOR
-      SELECT svcClass.name, euid, egid, reqType
-        FROM WhiteList, SvcClass
-       WHERE WhiteList.svcClass = svcClass.id
-         AND (WhiteList.svcClass = svcClassId OR svcClassId = 0)
-         AND (WhiteList.euid = euid OR euid = -1)
-         AND (WhiteList.egid = egid OR egid = -1)
-         AND (WhiteList.reqType = reqType OR reqType = 0);
+      SELECT decode(svcClass, NULL, '*',
+                    nvl((SELECT name FROM SvcClass
+                          WHERE id = svcClass),
+                        '['||TO_CHAR(svcClass)||']')),
+             euid, egid, reqType
+        FROM WhiteList
+       WHERE (WhiteList.svcClass = svcClassId OR svcClassId = 0)
+         AND (WhiteList.euid = ieuid OR ieuid = -1)
+         AND (WhiteList.egid = iegid OR iegid = -1)
+         AND (WhiteList.reqType = ireqType OR ireqType = 0);
     OPEN blist FOR
-      SELECT svcClass.name, euid, egid, reqType
-        FROM BlackList, SvcClass
-       WHERE BlackList.svcClass = svcClass.id
-         AND (BlackList.svcClass = svcClassId OR svcClassId = 0)
-         AND (BlackList.euid = euid OR euid = -1)
-         AND (BlackList.egid = egid OR egid = -1)
-         AND (BlackList.reqType = reqType OR reqType = 0);
+      SELECT decode(svcClass, NULL, '*',
+                    nvl((SELECT name FROM SvcClass
+                          WHERE id = svcClass),
+                        '['||TO_CHAR(svcClass)||']')),
+             euid, egid, reqType
+        FROM BlackList
+       WHERE (BlackList.svcClass = svcClassId OR svcClassId = 0)
+         AND (BlackList.euid = ieuid OR ieuid = -1)
+         AND (BlackList.egid = iegid OR iegid = -1)
+         AND (BlackList.reqType = ireqType OR ireqType = 0);
   END;
 
 END castorBW;
