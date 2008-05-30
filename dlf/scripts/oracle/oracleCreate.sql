@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/30 08:59:04 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/30 13:30:30 $ $Author: waldron $
  *
  * This script create a new DLF schema
  *
@@ -142,7 +142,6 @@ INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (12, 'rfio');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (13, 'SRMServer');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (14, 'SRMDaemon');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (15, 'Repack');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (16, 'Cleaning');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (17, 'tpdaemon');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (18, 'rtcpd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (19, 'RmMaster');
