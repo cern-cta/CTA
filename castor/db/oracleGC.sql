@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.652 $ $Date: 2008/05/27 12:47:01 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.653 $ $Date: 2008/05/30 08:59:31 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -10,15 +10,17 @@
 
 /* PL/SQL declaration for the castorGC package */
 CREATE OR REPLACE PACKAGE castorGC AS
-  TYPE GCItem IS RECORD (dcId INTEGER, fileSize NUMBER, utility NUMBER);
-  TYPE GCItem_Table is TABLE OF GCItem;
-  TYPE GCItem_Cur IS REF CURSOR RETURN GCItem;
   TYPE SelectFiles2DeleteLine IS RECORD (
         path VARCHAR2(2048),
         id NUMBER,
-	fileId NUMBER,
-	nsHost VARCHAR2(2048));
+        fileId NUMBER,
+        nsHost VARCHAR2(2048));
   TYPE SelectFiles2DeleteLine_Cur IS REF CURSOR RETURN SelectFiles2DeleteLine;
+  TYPE JobLogEntry IS RECORD (
+    fileid NUMBER,
+    nshost VARCHAR2(2048),
+    operation INTEGER);
+  TYPE JobLogEntry_Cur IS REF CURSOR RETURN JobLogEntry; 
 END castorGC;
 
 
@@ -309,22 +311,21 @@ BEGIN
 END;
 
 /* Search and delete old archived/failed subrequests and their requests */
-CREATE OR REPLACE PROCEDURE deleteArchivedRequests(maxTimeOut IN NUMBER) AS
+CREATE OR REPLACE PROCEDURE deleteTerminatedRequests AS
   timeOut INTEGER;
   rate INTEGER;
 BEGIN
+  -- select requested timeout from configuration table
+  SELECT TO_NUMBER(value) INTO timeOut FROM CastorConfig
+   WHERE class = 'cleaning' AND key = 'terminatedRequestsTimeout' AND ROWNUM < 2;
+  timeOut := timeOut*3600;
   -- get a rough estimate of the current request processing rate
   SELECT count(*) INTO rate
     FROM SubRequest
    WHERE status IN (9, 11)  -- FAILED_FINISHED, ARCHIVED
      AND lastModificationTime > getTime() - 1800;
-  IF rate > 0 THEN
-    timeOut := 500000 / rate * 1800;  -- try to keep 500k requests max
-    IF timeOut > maxTimeOut THEN
-      timeOut := maxTimeOut;  -- anyway, don't keep very old requests
-    END IF;
-  ELSE
-    timeOut := maxTimeOut;
+  IF rate > 0 AND (500000 / rate * 1800) < timeOut THEN
+    timeOut := 500000 / rate * 1800;  -- keep 500k requests max
   END IF;
 
   -- now delete the SubRequests
@@ -333,7 +334,7 @@ BEGIN
              'SubRequest');
   COMMIT;
   
-  -- and then the related Requests + Clients
+  -- and then related Requests + Clients
     ---- Get ----
   bulkDeleteRequests('StageGetRequest');
     ---- Put ----
@@ -354,13 +355,6 @@ BEGIN
   bulkDeleteRequests('StageRepackRequest');
     ---- DiskCopyReplica ----
   bulkDeleteRequests('StageDiskCopyReplicaRequest');
-END;
-
-/* Search and delete "out of date" subrequests and their requests */
-CREATE OR REPLACE PROCEDURE deleteOutOfDateRequests(timeOut IN NUMBER) AS
-BEGIN
-  -- superseded by previous procedure. To be dropped in 2.1.8
-  RETURN;
 END;
 
 
@@ -385,8 +379,10 @@ BEGIN
     FROM DiskCopy DC
    WHERE id IN (SELECT /*+ CARDINALITY(ids 5) */ * FROM TABLE(dcIds) ids);
   -- drop the DiskCopies
-  DELETE FROM Id2Type WHERE id IN (SELECT /*+ CARDINALITY(ids 5) */ * FROM TABLE(dcIds) ids);
-  DELETE FROM DiskCopy WHERE id IN (SELECT /*+ CARDINALITY(ids 5) */ * FROM TABLE(dcIds) ids);
+  FORALL i IN dcIds.FIRST..dcIds.LAST
+    DELETE FROM Id2Type WHERE id = dcIds(i);
+  FORALL i IN dcIds.FIRST..dcIds.LAST
+    DELETE FROM DiskCopy WHERE id = dcIds(i);
   COMMIT;
   -- maybe delete the CastorFiles if nothing is left for them
   IF cfIds.COUNT > 0 THEN
@@ -405,66 +401,83 @@ BEGIN
 END;
 
 /* Deal with old diskCopies in STAGEOUT */
-CREATE OR REPLACE PROCEDURE deleteOutOfDateStageOutDcs
-(timeOut IN NUMBER,
- dropped OUT castor.FileEntry_Cur,
- putDones OUT castor.FileEntry_Cur) AS
+CREATE OR REPLACE PROCEDURE deleteOutOfDateStageOutDcs(timeOut IN NUMBER) AS
 BEGIN
-  -- Deal with old DiskCopies in STAGEOUT/WAITFS that have a
-  -- prepareToPut. The rule is to drop the ones with 0 fileSize
-  -- and issue a putDone for the others
+  -- Deal with old DiskCopies in STAGEOUT/WAITFS. The rule is to drop
+  -- the ones with 0 fileSize and issue a putDone for the others
   FOR cf IN (SELECT c.filesize, c.id, c.fileId, c.nsHost, d.fileSystem, d.id AS dcid
-               FROM DiskCopy d, SubRequest s, StagePrepareToPutRequest r, Castorfile c
-              WHERE d.castorfile = s.castorfile
-                AND s.request = r.id
-                AND c.id = d.castorfile
-                AND d.creationtime < getTime() - timeOut
-                AND d.status IN (5, 6, 11)) LOOP -- WAITFS, STAGEOUT, WAITFS_SCHEDULING
+               FROM DiskCopy d, Castorfile c
+              WHERE c.id = d.castorFile
+                AND d.creationTime < getTime() - timeOut
+                AND d.status IN (5, 6, 11)) LOOP   -- WAITFS, STAGEOUT, WAITFS_SCHEDULING
     IF 0 = cf.fileSize THEN
       -- here we invalidate the diskcopy and let the GC run
       UPDATE DiskCopy SET status = 7 WHERE id = cf.dcid;
-      INSERT INTO OutOfDateStageOutDropped VALUES (cf.fileId, cf.nsHost);
+      INSERT INTO CleanupJobLog VALUES (cf.fileId, cf.nsHost, 0);
     ELSE
       -- here we issue a putDone
-      putDoneFunc(cf.id, cf.fileSize, 2); -- context 2 : real putDone
-      INSERT INTO OutOfDateStageOutPutDone VALUES (cf.fileId, cf.nsHost);
+      putDoneFunc(cf.id, cf.fileSize, 2); -- context 2 : real putDone. Missing PPut requests are ignored.
+      INSERT INTO CleanupJobLog VALUES (cf.fileId, cf.nsHost, 1);
     END IF;
   END LOOP;
-  OPEN dropped FOR SELECT * FROM OutOfDateStageOutDropped;
-  OPEN putDones FOR SELECT * FROM OutOfDateStageOutPutDone;
+  COMMIT;
 END;
 
-/* Deal with old diskCopies in WAITTAPERECALL */
-CREATE OR REPLACE PROCEDURE deleteOutOfDateRecallDcs
-(timeOut IN NUMBER,
- dropped OUT castor.FileEntry_Cur) AS
+/* Deal with stuck recalls */
+CREATE OR REPLACE PROCEDURE restartStuckRecalls AS
 BEGIN
-  -- this was a workaround, a priori no longer needed. To be dropped
-  RETURN;
+  UPDATE Segment SET status = 0 WHERE status = 7 and tape IN
+    (SELECT id from Tape WHERE tpmode = 0 AND status IN (0,6) AND id IN
+      (SELECT tape FROM Segment WHERE status = 7));
+  UPDATE Tape SET status = 1 WHERE tpmode = 0 AND status IN (0,6) AND id IN
+    (SELECT tape FROM Segment WHERE status in (0,7));
 END;
 
 
-
-/*
- * Runs a table shrink operation for maintenance purposes 
- */
-CREATE OR REPLACE PROCEDURE tableShrink AS
+/* Runs cleanup operations and a table shrink for maintenance purposes */
+CREATE OR REPLACE PROCEDURE cleanup AS
+  t INTEGER;
 BEGIN
+  -- First perform some cleanup of old stuff:
+  -- for each, read relevant timeout from configuration table
+  SELECT TO_NUMBER(value) INTO t FROM CastorConfig
+   WHERE class = 'cleaning' AND key = 'outOfDateStageOutDCsTimeout' AND ROWNUM < 2;
+  deleteOutOfDateStageOutDCs(t*3600);
+  SELECT TO_NUMBER(value) INTO t FROM CastorConfig
+   WHERE class = 'cleaning' AND key = 'failedDCsTimeout' AND ROWNUM < 2;
+  deleteFailedDiskCopies(t*3600);
+  restartStuckRecalls();
+  
   -- Loop over all tables which support row movement and recover space from 
   -- the object and all dependant objects. We deliberately ignore tables 
   -- with function based indexes here as the 'shrink space' option is not 
   -- supported.
-  FOR a IN (SELECT table_name FROM user_tables
+  FOR t IN (SELECT table_name FROM user_tables
              WHERE row_movement = 'ENABLED'
                AND table_name NOT IN (
                  SELECT table_name FROM user_indexes
                   WHERE index_type LIKE 'FUNCTION-BASED%')
                AND temporary = 'N')
   LOOP
-    EXECUTE IMMEDIATE 'ALTER TABLE '||a.table_name||' SHRINK SPACE CASCADE';
+    EXECUTE IMMEDIATE 'ALTER TABLE '|| t.table_name ||' SHRINK SPACE CASCADE';
   END LOOP;
 END;
-  
+
+
+/* PL/SQL method used by the stager to log what it has been done by the cleanup job */
+CREATE OR REPLACE PROCEDURE dumpCleanupLogs(jobLog OUT castorGC.JobLogEntry_Cur) AS
+  unused NUMBER;
+BEGIN
+  SELECT fileid INTO unused FROM CleanupJobLog WHERE ROWNUM < 2;
+  -- if we got here, we have something in the log table, let's lock it and dump it
+  LOCK TABLE CleanupJobLog IN EXCLUSIVE MODE;
+  OPEN jobLog FOR
+    SELECT * FROM CleanupJobLog;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- nothing to do
+  NULL;
+END;
+
 
 
 /*
@@ -472,25 +485,33 @@ END;
  */
 BEGIN
   -- Remove database jobs before recreating them
-  FOR a IN (SELECT job_name FROM user_scheduler_jobs
-             WHERE job_name IN ('TABLESHRINKJOB', 
-	                        'BULKCHECKFSBACKINPRODJOB'))
+  FOR j IN (SELECT job_name FROM user_scheduler_jobs
+             WHERE job_name IN ('HOUSEKEEPINGJOB', 'CLEANUPJOB', 'BULKCHECKFSBACKINPRODJOB'))
   LOOP
-    DBMS_SCHEDULER.DROP_JOB(a.job_name, TRUE);
+    DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
   END LOOP;
-
-  -- Creates a db job to be run every day executing the tableShrink procedure
+  
+  -- Creates a db job to be run every 20 minutes executing the deleteTerminatedRequests procedure
   DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'tableShrinkJob',
+      JOB_NAME        => 'houseKeepingJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN tableShrink(); END;',
+      JOB_ACTION      => 'BEGIN deleteTerminatedRequests(); END;',
       START_DATE      => SYSDATE,
-      REPEAT_INTERVAL => 'FREQ=DAILY; INTERVAL=1',
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=20',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Cleaning of terminated requests');
+
+  -- Creates a db job to be run twice a day executing the cleanup procedure
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'cleanupJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN cleanup(); END;',
+      START_DATE      => SYSDATE,
+      REPEAT_INTERVAL => 'FREQ=HOURLY; INTERVAL=12',
       ENABLED         => TRUE,
       COMMENTS        => 'Database maintenance');
 
-  -- Creates a db job to be run every 5 minutes executing the bulkCheckFSBackInProd
-  -- procedure
+  -- Creates a db job to be run every 5 minutes executing the bulkCheckFSBackInProd procedure
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'bulkCheckFSBackInProdJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
