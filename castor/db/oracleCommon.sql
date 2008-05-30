@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.653 $ $Date: 2008/05/30 07:29:27 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.654 $ $Date: 2008/05/30 08:25:17 $ $Author: itglp $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -117,6 +117,7 @@ CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
 CREATE INDEX I_SubRequest_Request on SubRequest (request);
 CREATE INDEX I_SubRequest_Parent on SubRequest (parent);
 CREATE INDEX I_SubRequest_SubReqId on SubRequest (subReqId);
+CREATE INDEX I_SubRequest_LastModTime on SubRequest (lastModificationTime) LOCAL;
 
 CREATE INDEX I_StagePTGRequest_ReqId on StagePrepareToGetRequest (reqId);
 CREATE INDEX I_StagePTPRequest_ReqId on StagePrepareToPutRequest (reqId);
@@ -129,10 +130,10 @@ CREATE INDEX I_StageRepackRequest_ReqId on StageRepackRequest (reqId);
 CREATE UNIQUE INDEX I_pk_Stream2TapeCopy ON Stream2TapeCopy (parent, child);
 
 /* Some index on the GCFile table to speed up garbage collection */
-CREATE INDEX I_GCFILE_REQUEST ON GCFILE(REQUEST);
+CREATE INDEX I_GCFile_Request ON GCFile (request);
 
 /* Indexing segments by Tape */
-CREATE INDEX I_SEGMENT_TAPE ON SEGMENT (TAPE);
+CREATE INDEX I_Segment_Tape ON Segment (tape);
 
 /* Some constraints */
 ALTER TABLE FileSystem ADD CONSTRAINT diskserver_fk FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
@@ -172,6 +173,11 @@ CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcHelper
   (cfId NUMBER)
   ON COMMIT DELETE ROWS;
 
+/* Global temporary table for the filesClearedProc procedure */
+CREATE GLOBAL TEMPORARY TABLE FilesClearedProcHelper
+  (cfId NUMBER)
+  ON COMMIT DELETE ROWS;
+
 /* Global temporary table to handle output of the nsFilesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE NsFilesDeletedOrphans
   (fileid NUMBER)
@@ -181,23 +187,13 @@ CREATE GLOBAL TEMPORARY TABLE NsFilesDeletedOrphans
 CREATE GLOBAL TEMPORARY TABLE StgFilesDeletedOrphans
   (diskCopyId NUMBER)
   ON COMMIT DELETE ROWS;
-  
-/* Global temporary table for the filesClearedProc procedure */
-CREATE GLOBAL TEMPORARY TABLE FilesClearedProcHelper
-  (cfId NUMBER)
-  ON COMMIT DELETE ROWS;
 
-/* Global temporary table for dropped out of date StageOut diskCopies */
-CREATE GLOBAL TEMPORARY TABLE OutOfDateStageOutDropped
-  (fileId NUMBER, nsHost VARCHAR2(2048))
-  ON COMMIT DELETE ROWS;
+/* Tables to log the activity performed by the cleanup job */
+CREATE TABLE CleanupJobLog
+  (fileId NUMBER NOT NULL, nsHost VARCHAR2(2048) NOT NULL, 
+   operation INTEGER NOT NULL);
 
-/* Global temporary table for out of date StageOut diskCopies
-   where putdone was issued */
-CREATE GLOBAL TEMPORARY TABLE OutOfDateStageOutPutDone
-  (fileId NUMBER, nsHost VARCHAR2(2048))
-  ON COMMIT DELETE ROWS;
-
+   
 /* Temporary table to handle removing of priviledges */
 CREATE GLOBAL TEMPORARY TABLE removePrivilegeTmpTable
   (svcClass VARCHAR2(2048),
@@ -205,7 +201,6 @@ CREATE GLOBAL TEMPORARY TABLE removePrivilegeTmpTable
    egid NUMBER,
    reqType NUMBER)
   ON COMMIT DELETE ROWS;
-
 
 /**
   * Black and while list mechanism
@@ -242,7 +237,23 @@ ALTER TABLE StageDiskCopyReplicaRequest MODIFY mask DEFAULT 0;
 ALTER TABLE StageDiskCopyReplicaRequest MODIFY pid DEFAULT 0;
 ALTER TABLE StageDiskCopyReplicaRequest MODIFY machine DEFAULT 'stager';
 
+
+/* Define a table for some configuration key-value pairs and populate it */
+CREATE TABLE CastorConfig
+  (class VARCHAR2(2048) NOT NULL, key VARCHAR2(2048) NOT NULL, value VARCHAR2(2048) NOT NULL, description VARCHAR2(2048));
+
+INSERT INTO CastorConfig
+  VALUES ('general', 'instance', 'castorstager', 'Name of this Castor instance');  -- to be overridden
+
+INSERT INTO CastorConfig
+  VALUES ('cleaning', 'terminatedRequestsTimeout', '120', 'Maximum timeout for successful and failed requests in hours');
+INSERT INTO CastorConfig
+  VALUES ('cleaning', 'outOfDateStageOutDCsTimeout', '72', 'Timeout for STAGEOUT diskCopies in hours');
+INSERT INTO CastorConfig
+  VALUES ('cleaning', 'failedDCsTimeout', '72', 'Timeout for failed diskCopies in hour');
+
 COMMIT;
+
 
 /****************************************************************/
 /* NbTapeCopiesInFS to work around ORACLE missing optimizations */
