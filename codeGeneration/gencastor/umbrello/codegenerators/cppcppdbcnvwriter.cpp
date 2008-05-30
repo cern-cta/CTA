@@ -47,7 +47,7 @@ void CppCppDbCnvWriter::startSQLFile() {
            IO_WriteOnly | IO_Truncate);
   file.close();  
 
-  openFile(file, s_topNS + "/db/postgresSchema.sql",
+  /*  openFile(file, s_topNS + "/db/postgresSchema.sql",
            IO_WriteOnly | IO_Truncate);
   file.close();
   openFile(file, s_topNS + "/db/postgresGeneratedCore_create.sql",
@@ -65,7 +65,7 @@ void CppCppDbCnvWriter::startSQLFile() {
   file.close();
   openFile(file, s_topNS + "/db/postgresGeneratedCore_drop.sql",
            IO_WriteOnly | IO_Truncate);
-  file.close();
+	   file.close();*/
 }
 
 //=============================================================================
@@ -98,7 +98,7 @@ void CppCppDbCnvWriter::endSQLFile() {
   // don't append oracleTrailer, this will be done at release time
   file.close();
 
-  openFile(file, s_topNS + "/db/postgresSchema.sql",
+  /*openFile(file, s_topNS + "/db/postgresSchema.sql",
            IO_WriteOnly | IO_Append);
   QTextStream streamP(&file);
   insertFileintoStream(streamP, s_topNS + "/db/postgresGeneratedCore_create.sql");
@@ -112,7 +112,7 @@ void CppCppDbCnvWriter::endSQLFile() {
   insertFileintoStream(streamPD, s_topNS + "/db/postgresGeneratedHeader_drop.sql");
   insertFileintoStream(streamPD, s_topNS + "/db/postgresGeneratedCore_drop.sql");
   insertFileintoStream(streamPD, s_topNS + "/db/postgresTrailer_drop.sql");
-  file.close();
+  file.close();*/
 }
 
 //=============================================================================
@@ -148,7 +148,7 @@ void CppCppDbCnvWriter::writeClass(UMLClassifier */*c*/) {
   writeConstants();
   // creation/deletion of the databases
   writeOraSqlStatements();
-  writePgSqlStatements();
+  //writePgSqlStatements();
   // constructor and destructor
   writeConstructors();
   // reset method
@@ -665,151 +665,151 @@ void CppCppDbCnvWriter::writeOraSqlStatements() {
 //=============================================================================
 // writePgSqlStatements
 //=============================================================================
-void CppCppDbCnvWriter::writePgSqlStatements() {
-  QFile file, tFile, fileD, hFileD;
-  openFile(file,
-           s_topNS + "/db/postgresGeneratedCore_create.sql",
-           IO_WriteOnly | IO_Append);
-  QTextStream stream(&file);
-  openFile(tFile,
-           s_topNS + "/db/postgresGeneratedTrailer_create.sql",
-           IO_WriteOnly | IO_Append);
-  QTextStream tStream(&tFile);
-  openFile(hFileD,
-           s_topNS + "/db/postgresGeneratedHeader_drop.sql",
-           IO_WriteOnly | IO_Append);
-  QTextStream hStreamD(&hFileD);
-  openFile(fileD,
-           s_topNS + "/db/postgresGeneratedCore_drop.sql",
-           IO_WriteOnly | IO_Append);
-  QTextStream streamD(&fileD);
-
-  streamD << "/* SQL statements for type "
-         << m_classInfo->className
-         << " */"
-         << endl
-         << "DROP TABLE "
-         << m_classInfo->className
-         << ";" << endl;
-
-  stream << "/* SQL statements for type "
-         << m_classInfo->className
-         << " */"
-         << endl
-         << "CREATE TABLE "
-         << m_classInfo->className
-         << " (";
-  int n = 0;
-  // create a list of members
-  MemberList members = createMembersList();
-  // Go through the members
-  for (Member* mem = members.first();
-       0 != mem;
-       mem = members.next()) {
-    if (n > 0) stream << ", ";
-    stream << mem->name << " "
-           << getPgSQLType(mem->typeName);
-    if (mem->name == "id") {
-      stream << " CONSTRAINT I_"
-	     << m_classInfo->className.left(25)
-	     << "_Id PRIMARY KEY";
-    }
-    n++;
-  }
-  // create a list of associations
-  AssocList assocs = createAssocsList();
-  // Go through the associations
-  for (Assoc* as = assocs.first();
-       0 != as;
-       as = assocs.next()) {
-    if (as->type.multiRemote == MULT_ONE &&
-        as->remotePart.name != "") {
-      // One to One associations
-      if (n > 0) stream << ", ";
-      stream << as->remotePart.name << " INTEGER";
-      n++;
-    }
-  }
-  stream << ");" << endl;
-  // Associations dedicated statements
-  for (Assoc* as = assocs.first();
-       0 != as;
-       as = assocs.next()) {
-    if (as->remotePart.name == "" ||
-        isEnum(as->remotePart.typeName)) continue;
-    if (as->type.multiRemote == MULT_N &&
-        as->type.multiLocal == MULT_N) {
-      // N to N association
-      // Here we will use a dedicated table for the association
-      // Find out the parent and child in this table
-      Member* firstMember = 0;
-      Member* secondMember = 0;
-      ordonnateMembersInAssoc(as, &firstMember, &secondMember);
-      if (firstMember == &as->localPart) {
-        QString compoundName =
-			capitalizeFirstLetter(firstMember->typeName).mid(0, 12) + QString("2")
-			+ capitalizeFirstLetter(secondMember->typeName).mid(0, 13);
-        streamD << getIndent()
-               << "DROP INDEX I_"
-               << compoundName
-               << "_C;"
-               << endl << getIndent()
-               << "DROP INDEX I_"
-               << compoundName
-               << "_P;"
-               << endl << "DROP TABLE "
-               << compoundName
-               << ";" << endl;
-	    stream << "CREATE TABLE "
-               << compoundName
-               << " (Parent INTEGER, Child INTEGER);"
-               << endl << getIndent()
-               << "CREATE INDEX I_"
-               << compoundName
-               << "_C on "
-               << compoundName
-               << " (child);"
-               << endl << getIndent()
-               << "CREATE INDEX I_"
-               << compoundName
-               << "_P on "
-               << compoundName
-               << " (parent);"
-               << endl;
-        hStreamD << getIndent()
-                << "ALTER TABLE "
-                << compoundName
-                << endl << getIndent()
-                << "  DROP CONSTRAINT fk_"
-                << compoundName
-                << "_P" << endl << getIndent()
-                << "  DROP CONSTRAINT fk_"
-                << compoundName
-                << "_C;" << endl;
-        tStream << getIndent()
-                << "ALTER TABLE "
-                << compoundName
-                << endl << getIndent()
-                << "  ADD CONSTRAINT fk_"
-                << compoundName
-                << "_P FOREIGN KEY (Parent) REFERENCES "
-                << capitalizeFirstLetter(firstMember->typeName)
-                << " (id)" << endl << getIndent()
-                << "  ADD CONSTRAINT fk_"
-                << compoundName
-                << "_C FOREIGN KEY (Child) REFERENCES "
-                << capitalizeFirstLetter(secondMember->typeName)
-                << " (id);" << endl;
-      }
-    }
-  }
-  stream << endl;
-  streamD << endl;
-  file.close();
-  tFile.close();
-  hFileD.close();
-  fileD.close();
-}
+//void CppCppDbCnvWriter::writePgSqlStatements() {
+//  QFile file, tFile, fileD, hFileD;
+//  openFile(file,
+//           s_topNS + "/db/postgresGeneratedCore_create.sql",
+//           IO_WriteOnly | IO_Append);
+//  QTextStream stream(&file);
+//  openFile(tFile,
+//           s_topNS + "/db/postgresGeneratedTrailer_create.sql",
+//           IO_WriteOnly | IO_Append);
+//  QTextStream tStream(&tFile);
+//  openFile(hFileD,
+//           s_topNS + "/db/postgresGeneratedHeader_drop.sql",
+//           IO_WriteOnly | IO_Append);
+//  QTextStream hStreamD(&hFileD);
+//  openFile(fileD,
+//           s_topNS + "/db/postgresGeneratedCore_drop.sql",
+//           IO_WriteOnly | IO_Append);
+//  QTextStream streamD(&fileD);
+//
+//  streamD << "/* SQL statements for type "
+//         << m_classInfo->className
+//         << " */"
+//         << endl
+//         << "DROP TABLE "
+//         << m_classInfo->className
+//         << ";" << endl;
+//
+//  stream << "/* SQL statements for type "
+//         << m_classInfo->className
+//         << " */"
+//         << endl
+//         << "CREATE TABLE "
+//         << m_classInfo->className
+//         << " (";
+//  int n = 0;
+//  // create a list of members
+//  MemberList members = createMembersList();
+//  // Go through the members
+//  for (Member* mem = members.first();
+//       0 != mem;
+//       mem = members.next()) {
+//    if (n > 0) stream << ", ";
+//    stream << mem->name << " "
+//           << getPgSQLType(mem->typeName);
+//    if (mem->name == "id") {
+//      stream << " CONSTRAINT I_"
+//	     << m_classInfo->className.left(25)
+//	     << "_Id PRIMARY KEY";
+//    }
+//    n++;
+//  }
+//  // create a list of associations
+//  AssocList assocs = createAssocsList();
+//  // Go through the associations
+//  for (Assoc* as = assocs.first();
+//       0 != as;
+//       as = assocs.next()) {
+//    if (as->type.multiRemote == MULT_ONE &&
+//        as->remotePart.name != "") {
+//      // One to One associations
+//      if (n > 0) stream << ", ";
+//      stream << as->remotePart.name << " INTEGER";
+//      n++;
+//    }
+//  }
+//  stream << ");" << endl;
+//  // Associations dedicated statements
+//  for (Assoc* as = assocs.first();
+//       0 != as;
+//       as = assocs.next()) {
+//    if (as->remotePart.name == "" ||
+//        isEnum(as->remotePart.typeName)) continue;
+//    if (as->type.multiRemote == MULT_N &&
+//        as->type.multiLocal == MULT_N) {
+//      // N to N association
+//      // Here we will use a dedicated table for the association
+//      // Find out the parent and child in this table
+//      Member* firstMember = 0;
+//      Member* secondMember = 0;
+//      ordonnateMembersInAssoc(as, &firstMember, &secondMember);
+//      if (firstMember == &as->localPart) {
+//        QString compoundName =
+//			capitalizeFirstLetter(firstMember->typeName).mid(0, 12) + QString("2")
+//			+ capitalizeFirstLetter(secondMember->typeName).mid(0, 13);
+//        streamD << getIndent()
+//               << "DROP INDEX I_"
+//               << compoundName
+//               << "_C;"
+//               << endl << getIndent()
+//               << "DROP INDEX I_"
+//               << compoundName
+//               << "_P;"
+//               << endl << "DROP TABLE "
+//               << compoundName
+//               << ";" << endl;
+//	    stream << "CREATE TABLE "
+//               << compoundName
+//               << " (Parent INTEGER, Child INTEGER);"
+//               << endl << getIndent()
+//               << "CREATE INDEX I_"
+//               << compoundName
+//               << "_C on "
+//               << compoundName
+//               << " (child);"
+//               << endl << getIndent()
+//               << "CREATE INDEX I_"
+//               << compoundName
+//               << "_P on "
+//               << compoundName
+//               << " (parent);"
+//               << endl;
+//        hStreamD << getIndent()
+//                << "ALTER TABLE "
+//                << compoundName
+//                << endl << getIndent()
+//                << "  DROP CONSTRAINT fk_"
+//                << compoundName
+//                << "_P" << endl << getIndent()
+//                << "  DROP CONSTRAINT fk_"
+//                << compoundName
+//                << "_C;" << endl;
+//        tStream << getIndent()
+//                << "ALTER TABLE "
+//                << compoundName
+//                << endl << getIndent()
+//                << "  ADD CONSTRAINT fk_"
+//                << compoundName
+//                << "_P FOREIGN KEY (Parent) REFERENCES "
+//                << capitalizeFirstLetter(firstMember->typeName)
+//                << " (id)" << endl << getIndent()
+//                << "  ADD CONSTRAINT fk_"
+//                << compoundName
+//                << "_C FOREIGN KEY (Child) REFERENCES "
+//                << capitalizeFirstLetter(secondMember->typeName)
+//                << " (id);" << endl;
+//      }
+//    }
+//  }
+//  stream << endl;
+//  streamD << endl;
+//  file.close();
+//  tFile.close();
+//  hFileD.close();
+//  fileD.close();
+//}
 
 //=============================================================================
 // writeConstructors
