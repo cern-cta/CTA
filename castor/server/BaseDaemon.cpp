@@ -66,6 +66,8 @@ void castor::server::BaseDaemon::init() throw (castor::exception::Exception)
   // Initialize errno, serrno 
   errno = serrno = 0;
 
+  // Mask all signals so that user threads are not unpredictably
+  // interrupted by them  
   sigemptyset(&m_signalSet);
   sigaddset(&m_signalSet, SIGINT);
   sigaddset(&m_signalSet, SIGTERM);
@@ -75,7 +77,7 @@ void castor::server::BaseDaemon::init() throw (castor::exception::Exception)
   sigaddset(&m_signalSet, SIGPIPE);
 
   int c;
-  if ((c = pthread_sigmask(SIG_BLOCK,&m_signalSet,NULL)) != 0) {
+  if ((c = pthread_sigmask(SIG_BLOCK, &m_signalSet, NULL)) != 0) {
     errno = c;
     castor::exception::Internal ex;
     ex.getMessage() << "Failed pthread_sigmask" << std::endl;
@@ -183,7 +185,7 @@ void castor::server::BaseDaemon::handleSignals()
         }
         
         default:
-          clog() << ERROR << "Signal caught but not handled (" << (-1*sigValue) << ") - IMMEDIATE STOP" << std::endl;
+          clog() << ERROR << "Signal caught but not handled [" << (-1*sigValue) << "] - IMMEDIATE STOP" << std::endl;
           dlf_shutdown(1);
           exit(EXIT_FAILURE);
       }
@@ -220,7 +222,7 @@ void castor::server::BaseDaemon::waitAllThreads(bool beGraceful) throw()
   
   // Reap child processes
   pid_t pid;
-  while (( pid = waitpid(-1, NULL, WNOHANG)) > 0) {}
+  while( (pid = waitpid(-1, NULL, WNOHANG)) > 0) {}
 
   if(!beGraceful) {
     // on a SIGINT we want to stop as soon as possible
