@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/30 08:16:45 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/30 08:59:04 $ $Author: waldron $
  *
  * This script create a new DLF schema
  *
@@ -36,7 +36,7 @@ CREATE TABLE dlf_monitoring(timestamp DATE NOT NULL, h_threads NUMBER, h_message
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statement for table dlf_config */
-CREATE TABLE dlf_config(name VARCHAR2(255) NOT NULL, value VARCHAR2(255));
+CREATE TABLE dlf_config(name VARCHAR2(255) NOT NULL, value VARCHAR2(255), description VARCHAR2(255));
 ALTER TABLE dlf_config ADD CONSTRAINT i_config_name UNIQUE (name) ENABLE;
 
 /* SQL statements for table dlf_messages */
@@ -111,7 +111,7 @@ ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostid UNIQUE (nshostid) ENABLE;
 ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostname UNIQUE (nshostname) ENABLE;
 
 /* Fill the dlf_config table */
-INSERT INTO dlf_config (name, value) VALUES ('Instance', 'castordlf');
+INSERT INTO dlf_config (name, value, description) VALUES ('instance', 'castordlf', 'The name of the castor2 instance');
 
 /* Fill the dlf_severities table */
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('1', 'Emergency');
