@@ -182,39 +182,49 @@ int main(int argc, char *argv[]) {
   }
 
   /* success, print output */
-  for (i = 0; i < nbPrivs; i++) {
-    char* user;
-    char* group;
-    // get user name
-    if (privileges[i].uid == -1) {
-      sprintf(user, "*");
-    } else {
-      struct passwd *pass = getpwuid(privileges[i].uid);
-      if (0 == pass) {
-        sprintf(user, "[%d]", privileges[i].uid);
+  if (0 == nbPrivs) {
+    fprintf(stdout, "No privileges found\n");
+  } else {
+    fprintf(stdout, "%-15s %-8s %-8s %-20s %s\n",
+	    "ServiceClass", "User", "Group", "RequesType", "Status");
+    for (i = 0; i < nbPrivs; i++) {
+      char* user;
+      char* group;
+      // get user name
+      if (privileges[i].uid == -1) {
+	user = (char*) malloc(2);
+	sprintf(user, "*");
       } else {
-        user = strdup(pass->pw_name);
+	struct passwd *pass = getpwuid(privileges[i].uid);
+	if (0 == pass) {
+	  user = (char*) malloc(13);
+	  sprintf(user, "[%d]", privileges[i].uid);
+	} else {
+	  user = strdup(pass->pw_name);
+	}
       }
-    }
-    // get group name
-    if (privileges[i].gid == -1) {
-      sprintf(group, "*");
-    } else {
-      struct group *grp = getgrgid(privileges[i].gid);
-      if (0 == grp) {
-        sprintf(group, "[%d]", privileges[i].gid);
+      // get group name
+      if (privileges[i].gid == -1) {
+	group = (char*) malloc(2);
+	sprintf(group, "*");
       } else {
-        group = strdup(grp->gr_name);
+	struct group *grp = getgrgid(privileges[i].gid);
+	if (0 == grp) {
+	  group = (char*) malloc(13);
+	  sprintf(group, "[%d]", privileges[i].gid);
+	} else {
+	  group = strdup(grp->gr_name);
+	}
       }
+      fprintf(stdout, "%-15s %-8s %-8s %-20s %s\n",
+	      privileges[i].svcClass,
+	      user,
+	      group,
+	      privileges[i].requestType == 0 ? "*" :
+	      C_ObjectsIdsStrings(privileges[i].requestType),
+	      privileges[i].isGranted ? "Granted" : "Denied");
     }
-    fprintf(stdout, "%15s %8s %8s %20s %s\n",
-            privileges[i].svcClass,
-            user,
-            group,
-            C_ObjectsIdsStrings(privileges[i].requestType),
-            privileges[i].isGranted ? "Granted" : "Denied");
   }
-
   return 0;
 }
 

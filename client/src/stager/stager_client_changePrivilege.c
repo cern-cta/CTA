@@ -137,7 +137,7 @@ int changePrivilege(int argc, char *argv[], int isAdd) {
   }
   if (rc < 0) {
     fprintf(stderr, "Error: %s\n", sstrerror(serrno));
-    fprintf(stderr, "<%s>\n", errbuf);
+    fprintf(stderr, "%s\n", errbuf);
     exit(EXIT_FAILURE);
   }
 

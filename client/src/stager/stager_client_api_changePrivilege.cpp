@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api_changePrivilege.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/05/29 07:47:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_client_api_changePrivilege.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/05/30 10:54:09 $ $Author: sponcec3 $
  *
  * api to handle privileges i.e. modify the black and white list
  *
@@ -37,91 +37,102 @@
 #include "castor/bwlist/RequestType.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include <sstream>
+#include <sys/types.h>
+#include <pwd.h>
+#include <grp.h>
 
 //-----------------------------------------------------------------------------
-// >> operator for BWUsers
+// getUserId
 //-----------------------------------------------------------------------------
-std::istream& operator>>(std::istream &s, castor::bwlist::BWUser &u) {
-  // set default values
-  u.setEuid(-1);
-  u.setEgid(-1);
-  // Do we have a user id ?
-  char c = 0;
-  s >> c;
-  if (c == ':') {
-    // No user id, do we have a group id ?
-    c = 0;
-    s >> c;
-    s.putback(c);
-    if (c != ',' and c != 0) {
-      int gid = -1;
-      s >> gid;
-      if (gid == -1) {
-        s.clear(std::ios_base::badbit);
-      } else {
-        u.setEgid(gid);
-      }
-    }
-  } else {
-    // Yes, get the uid
-    s.putback(c);
-    int uid = -1;
-    s >> uid;
-    if (uid == -1) {
-      s.clear(std::ios_base::badbit);
-    } else {
-      u.setEuid(uid);
-      // And do we have a group id ?
-      c = 0;
-      s >> c;
-      if (c == ':') {
-        // at least we have a ':', let's see for a value
-        c = 0;
-        s >> c;
-        s.putback(c);
-        if (c != ',' && c != 0) {
-          int gid = -1;
-          s >> gid;
-          if (gid == -1) {
-            s.clear(std::ios_base::badbit);
-          } else {
-            u.setEgid(gid);
-          }
-        }
-      }
-    }
+int getUserId(std::string name)
+  throw (castor::exception::InvalidArgument) {
+  // empty user name means any and is thus mapped to -1
+  if (name.size() == 0) return -1;
+  // get user id
+  struct passwd *pass = getpwnam(name.c_str());
+  if (0 == pass) {
+    castor::exception::InvalidArgument e;
+    e.getMessage() << "Unknown user " << name;
+    throw e;
   }
-  return s;
+  return pass->pw_uid;
 }
 
 //-----------------------------------------------------------------------------
-// >> operator for a vector of BWUsers
+// getGroupId
 //-----------------------------------------------------------------------------
-std::istream& operator>>(std::istream &s,
-                         std::vector<castor::bwlist::BWUser*> &users) {
-  while (!s.eof() && !s.bad()) {
-    // get one user
-    castor::bwlist::BWUser *u = new castor::bwlist::BWUser();
-    s >> *u;
-    users.push_back(u);
-    // check whether there is more
-    char c = 0;
-    s >> c;
-    if (c != ',' && c != 0) {
-      s.clear(std::ios_base::badbit);
+int getGroupId(std::string name)
+  throw (castor::exception::InvalidArgument) {
+  // empty group name means any and is thus mapped to -1
+  if (name.size() == 0) return -1;
+  // get group id
+  struct group *grp = getgrnam(name.c_str());
+  if (0 == grp) {
+    castor::exception::InvalidArgument e;
+    e.getMessage() << "Unknown group " << name;
+    throw e;
+  }
+  return grp->gr_gid;
+}
+
+//-----------------------------------------------------------------------------
+// getRequestTypeId
+//-----------------------------------------------------------------------------
+int getRequestTypeId(std::string type)
+  throw (castor::exception::InvalidArgument) {
+  // empty type name means any and is thus mapped to 0
+  if (type.size() == 0) return 0;
+  // get type id, here we go for a dummy O(n) listing
+  for (unsigned int i = 1; i < castor::ObjectsIdsNb; i++) {
+    if (type == castor::ObjectsIdStrings[i]) {
+      return i;
     }
   }
-  return s;
+  castor::exception::InvalidArgument e;
+  e.getMessage() << "Unknown requestType " << type;
+  throw e;  
 }
 
 //-----------------------------------------------------------------------------
 // parseUsers
 //-----------------------------------------------------------------------------
 void parseUsers(char *susers,
+		castor::bwlist::ChangePrivilege * req,
                 std::vector<castor::bwlist::BWUser*> &users)
   throw (castor::exception::Exception) {
+  // check for empty user list
+  if (strlen(susers) == 0) {
+    castor::exception::InvalidArgument e;
+    e.getMessage() << "Empty list of users, please specify one\nIn order target all users, please use ':'";
+    throw e;
+  }
+  // parse the list
   std::stringstream s(susers);
-  s >> users;
+  while (!s.eof() && ! s.bad()) {
+    // get next couple user[:group]
+    std::string couple;
+    getline(s, couple, ',');
+    if (s.bad()) break;
+    // default values
+    castor::bwlist::BWUser *u = new castor::bwlist::BWUser();
+    // split it
+    try {
+      unsigned int colonPos = couple.find_first_of(':');
+      if (colonPos == couple.npos) {
+        u->setEuid(getUserId(couple));
+        u->setEgid(-1);
+      } else {
+        u->setEuid(getUserId(couple.substr(0, colonPos)));
+        u->setEgid(getGroupId(couple.substr(colonPos+1)));
+      }
+      u->setRequest(req);
+      users.push_back(u);
+    } catch (castor::exception::InvalidArgument e) {
+      delete u;
+      throw e;
+    }
+  }
+  // cleanup in case things went bad
   if (s.bad()) {
     for (std::vector<castor::bwlist::BWUser*>::const_iterator it =
            users.begin();
@@ -137,37 +148,30 @@ void parseUsers(char *susers,
 }
 
 //-----------------------------------------------------------------------------
-// >> operator for a vector of RequestTypes
-//-----------------------------------------------------------------------------
-std::istream& operator>>(std::istream &s,
-                         std::vector<castor::bwlist::RequestType*> &reqTypes) {
-  while (!s.eof() && !s.bad()) {
-    unsigned int rt = 0;
-    s >> rt;
-    if (rt == 0) {
-      s.clear(std::ios_base::badbit);
-      break;
-    }
-    castor::bwlist::RequestType *r = new castor::bwlist::RequestType();
-    r->setReqType(rt);
-    reqTypes.push_back(r);
-    char c = 0;
-    s >> c;
-    if (c != ',' && c != 0) {
-      s.clear(std::ios_base::badbit);
-    }
-  }
-  return s;
-}
-
-//-----------------------------------------------------------------------------
 // parseRequestTypes
 //-----------------------------------------------------------------------------
 void parseRequestTypes(char *sreqTypes,
+		       castor::bwlist::ChangePrivilege * req,
                        std::vector<castor::bwlist::RequestType*> &reqTypes)
   throw (castor::exception::Exception) {
   std::stringstream s(sreqTypes);
-  s >> reqTypes;
+  while (!s.eof() && ! s.bad()) {
+    // get next type
+    std::string type;
+    getline(s, type, ',');
+    if (s.bad()) break;
+    // convert it to integer
+    castor::bwlist::RequestType *r = new castor::bwlist::RequestType();
+    try {
+      r->setReqType(getRequestTypeId(type));
+      r->setRequest(req);
+      reqTypes.push_back(r);
+    } catch (castor::exception::InvalidArgument e) {
+      delete r;
+      throw e;
+    }
+  }    
+  // cleanup in case things went bad
   if (s.bad()) {
     for (std::vector<castor::bwlist::RequestType*>::const_iterator it =
            reqTypes.begin();
@@ -200,9 +204,9 @@ void stage_changePrivilege(char* users,
 
     // create request
     castor::bwlist::ChangePrivilege req;
-    req.setIsGranted(true);
-    parseUsers(users, req.users());
-    parseRequestTypes(requestTypes, req.requestTypes());
+    req.setIsGranted(isAdd);
+    parseUsers(users, &req, req.users());
+    parseRequestTypes(requestTypes, &req, req.requestTypes());
 
     // Send request
     castor::client::BasicResponseHandler rh;

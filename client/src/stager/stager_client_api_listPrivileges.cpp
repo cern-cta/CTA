@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api_listPrivileges.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/05/29 11:45:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_client_api_listPrivileges.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/05/30 10:54:09 $ $Author: sponcec3 $
  *
  * api to list privileges i.e. the content of the black and white list
  *
@@ -107,8 +107,8 @@ EXTERN_C int DLL_DECL stage_listPrivileges
 
     // create request
     castor::bwlist::ListPrivileges req;
-    req.setUser(user);
-    req.setGroup(group);
+    req.setUserId(user);
+    req.setGroupId(group);
     req.setRequestType(requestType);
 
     // Send request

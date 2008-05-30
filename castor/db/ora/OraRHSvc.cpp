@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/05/26 15:40:00 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/05/30 10:54:08 $ $Author: sponcec3 $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -55,15 +55,15 @@ const std::string castor::db::ora::OraRHSvc::s_checkPermissionStatementString =
 
 /// SQL statement for addPrivilege
 const std::string castor::db::ora::OraRHSvc::s_addPrivilegeStatementString =
-  "DECLARE addPrivilege(:1, :2, :3, :4) END;";
+  "BEGIN castorbw.addPrivilege(:1, :2, :3, :4); END;";
 
 /// SQL statement for removePrivilege
 const std::string castor::db::ora::OraRHSvc::s_removePrivilegeStatementString =
-  "DECLARE removePrivilege(:1, :2, :3, :4) END;";
+  "BEGIN castorbw.removePrivilege(:1, :2, :3, :4); END;";
 
 /// SQL statement for listPrivileges
 const std::string castor::db::ora::OraRHSvc::s_listPrivilegesStatementString =
-  "DECLARE listPrivileges(:1, :2, :3, :4 ,:5, :6) END;";
+  "BEGIN castorbw.listPrivileges(:1, :2, :3, :4 ,:5, :6); END;";
 
 //------------------------------------------------------------------------------
 // OraRHSvc
@@ -206,11 +206,13 @@ void castor::db::ora::OraRHSvc::changePrivilege
       if (0 == m_addPrivilegeStatement) {
 	m_addPrivilegeStatement =
 	  createStatement(s_addPrivilegeStatementString);
+	m_addPrivilegeStatement->setAutoCommit(true);
       }
     } else {
       if (0 == m_removePrivilegeStatement) {
 	m_removePrivilegeStatement =
 	  createStatement(s_removePrivilegeStatementString);
+	m_removePrivilegeStatement->setAutoCommit(true);
       }
     }
     // deal with the type of change
@@ -277,30 +279,11 @@ castor::db::ora::OraRHSvc::listPrivileges
       m_listPrivilegesStatement->registerOutParam
         (6, oracle::occi::OCCICURSOR);
     }
-    // deal with the service class if any
-    if (svcClassId > 0) {
-      m_listPrivilegesStatement->setDouble(1, svcClassId);
-    } else {
-      m_listPrivilegesStatement->setNull(1, oracle::occi::OCCINUMBER);
-    }
-    // deal with user
-    if (user >= 0) {
-      m_listPrivilegesStatement->setInt(2, group);
-    } else {
-      m_listPrivilegesStatement->setNull(2, oracle::occi::OCCINUMBER);
-    }
-    // deal with group
-    if (group >= 0) {
-      m_listPrivilegesStatement->setInt(3, group);
-    } else {
-      m_listPrivilegesStatement->setNull(3, oracle::occi::OCCINUMBER);
-    }
-    // deal with request Type
-    if (requestType > 0) {
-      m_listPrivilegesStatement->setInt(4, requestType);
-    } else {
-      m_listPrivilegesStatement->setNull(4, oracle::occi::OCCINUMBER);
-    }
+    // deal with the service class, user, group and type
+    m_listPrivilegesStatement->setDouble(1, svcClassId);
+    m_listPrivilegesStatement->setInt(2, user);
+    m_listPrivilegesStatement->setInt(3, group);
+    m_listPrivilegesStatement->setInt(4, requestType );
     // Call DB
     m_listPrivilegesStatement->executeUpdate();
     // Extract white list part
@@ -312,10 +295,13 @@ castor::db::ora::OraRHSvc::listPrivileges
       castor::bwlist::Privilege* p = new castor::bwlist::Privilege();
       p->setServiceClass(wrs->getString(1));
       p->setEuid(wrs->getInt(2));
+      if (wrs->isNull(2)) p->setEuid(-1);
       p->setEgid(wrs->getInt(3));
+      if (wrs->isNull(3)) p->setEgid(-1);
       p->setRequestType(wrs->getInt(4));
       p->setGranted(true);
       result.push_back(p);
+      status = wrs->next();
     }
     // Extract black list part
     oracle::occi::ResultSet *brs =
@@ -325,10 +311,13 @@ castor::db::ora::OraRHSvc::listPrivileges
       castor::bwlist::Privilege* p = new castor::bwlist::Privilege();
       p->setServiceClass(brs->getString(1));
       p->setEuid(brs->getInt(2));
+      if (brs->isNull(2)) p->setEuid(-1);
       p->setEgid(brs->getInt(3));
+      if (brs->isNull(3)) p->setEgid(-1);
       p->setRequestType(brs->getInt(4));
       p->setGranted(false);
       result.push_back(p);
+      status = brs->next();
     }
     // return result
     return result;

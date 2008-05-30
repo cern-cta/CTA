@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.80 $ $Release$ $Date: 2008/05/30 07:58:05 $ $Author: itglp $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.81 $ $Release$ $Date: 2008/05/30 10:54:09 $ $Author: sponcec3 $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -676,7 +676,9 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
     res.setReqAssociated(req->reqId());
     // Get the name of the localhost to pass into the Cupv interface.
     std::string localHost = castor::System::getHostName();
-    // cheack privileges of the caller. He must be GROUP_ADMIN
+    // check privileges of the caller. He must be ADMIN in general
+    // or GROUP_ADMIN for user operations
+    
     int rc = Cupv_check(req->euid(), req->egid(),
                         localHost.c_str(), 
 			localHost.c_str(), P_GRP_ADMIN);
@@ -866,8 +868,16 @@ void castor::stager::daemon::QueryRequestSvcThread::process
   bool failed = false;
   try {
     // Getting the parameters
-    if (req->type() != castor::OBJ_DiskPoolQuery) {
+    if (req->type() == OBJ_StageFileQueryRequest ||
+        req->type() == OBJ_StageFindRequestRequest ||
+        req->type() == OBJ_StageRequestQueryRequest ||
+        req->type() == OBJ_VersionQuery) {
       svcs->fillObj(&ad, req, castor::OBJ_QueryParameter);
+    }
+    // Getting users and requesttypes
+    if (req->type() == OBJ_ChangePrivilege) {
+      svcs->fillObj(&ad, req, castor::OBJ_BWUser);
+      svcs->fillObj(&ad, req, castor::OBJ_RequestType);
     }
     // Getting the svcClass
     // We take an empty svcClass or '*' as a wildcard
