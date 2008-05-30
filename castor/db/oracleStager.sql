@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.667 $ $Date: 2008/05/28 08:07:11 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.668 $ $Date: 2008/05/30 07:31:41 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1959,45 +1959,39 @@ BEGIN
   END LOOP;
 END;
 
-/* Constraint for priority table */
-
-ALTER TABLE prioritymap
-add CONSTRAINT uniquepriority UNIQUE (euid,egid);
 
 /* PL/SQL method implementing selectPriority */
-
 CREATE OR REPLACE PROCEDURE selectPriority(
- inUid IN INTEGER, 
- inGid IN INTEGER, 
- inPriority IN INTEGER, 
- dbInfo OUT castor.PriorityMap_Cur)
- AS
- BEGIN
+  inUid IN INTEGER, 
+  inGid IN INTEGER, 
+  inPriority IN INTEGER, 
+  dbInfo OUT castor.PriorityMap_Cur) AS
+BEGIN
   OPEN dbInfo FOR 
-    SELECT euid,egid, priority FROM PriorityMap WHERE 
-    	(euid=inUid OR inUid=-1) AND (egid=inGid OR inGid=-1) AND (priority=inPriority OR inPriority=-1);
+    SELECT euid, egid, priority FROM PriorityMap 
+     WHERE (euid = inUid OR inUid = -1) 
+       AND (egid = inGid OR inGid = -1)
+       AND (priority = inPriority OR inPriority = -1);
 END;
 
-/* PL/SQL method implementing enterPriority */
-
-/* it can raise constraint violation exception */
-
+/* PL/SQL method implementing enterPriority
+   it can raise constraint violation exception */
 CREATE OR REPLACE PROCEDURE enterPriority(
- inUid IN NUMBER, 
- inGid IN NUMBER, 
- inPriority IN INTEGER)
- AS BEGIN
-   INSERT INTO PriorityMap (euid,egid,priority) VALUES (inUid,inGid,inPriority);
+  inUid IN NUMBER, 
+  inGid IN NUMBER, 
+  inPriority IN INTEGER) AS
+BEGIN
+  INSERT INTO PriorityMap (euid, egid, priority) 
+  VALUES (inUid, inGid, inPriority);
 END;
 
 
 /* PL/SQL method implementing deletePriority */
-
 CREATE OR REPLACE PROCEDURE deletePriority(
- inUid IN INTEGER, 
- inGid IN INTEGER)
- AS
- BEGIN
-  DELETE FROM PriorityMap WHERE 
-    	(euid=inUid OR inUid=-1) AND (egid=inGid OR inGid=-1); 
+  inUid IN INTEGER, 
+  inGid IN INTEGER) AS
+BEGIN
+  DELETE FROM PriorityMap 
+   WHERE (euid = inUid OR inUid = -1) 
+     AND (egid = inGid OR inGid = -1); 
 END;
