@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.53 $ $Release$ $Date: 2008/05/22 16:40:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.54 $ $Release$ $Date: 2008/05/30 07:33:44 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -46,6 +46,7 @@
 #include "castor/stager/daemon/ErrorSvcThread.hpp"
 #include "castor/stager/daemon/JobSvcThread.hpp"
 #include "castor/stager/daemon/GcSvcThread.hpp"
+#include "castor/stager/daemon/CleaningThread.hpp"
 
 #include "castor/stager/daemon/DlfMessages.hpp"
 
@@ -95,14 +96,19 @@ int main(int argc, char* argv[]){
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("GcSvcThread",
         new castor::stager::daemon::GcSvcThread()));
+        
+    stagerDaemon.addThreadPool(
+      new castor::server::SignalThreadPool("CleaningThread",
+        new castor::stager::daemon::CleaningThread(), 4000));   // this thread only dumps logs from cleanup
 
     stagerDaemon.getThreadPool('J')->setNbThreads(10);
     stagerDaemon.getThreadPool('P')->setNbThreads(6);
-    stagerDaemon.getThreadPool('S')->setNbThreads(3);
+    stagerDaemon.getThreadPool('S')->setNbThreads(4);
     stagerDaemon.getThreadPool('Q')->setNbThreads(10);
     stagerDaemon.getThreadPool('E')->setNbThreads(3);
     stagerDaemon.getThreadPool('j')->setNbThreads(10);
     stagerDaemon.getThreadPool('G')->setNbThreads(6);
+    stagerDaemon.getThreadPool('C')->setNbThreads(1);
 
     stagerDaemon.addNotifierThreadPool(
       castor::PortsConfig::getInstance()->getNotifPort(castor::CASTOR_STAGER));

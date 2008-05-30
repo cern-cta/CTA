@@ -59,7 +59,8 @@ DBSERVICEDAEMONBIN_SRCS = \
 	QueryRequestSvcThread.cpp \
 	GcSvcThread.cpp \
 	ErrorSvcThread.cpp \
-        JobSvcThread.cpp
+        JobSvcThread.cpp \
+	CleaningThread.cpp
 
 DBSERVICEDAEMONBIN_OBJS = $(DBSERVICEDAEMONBIN_SRCS:.cpp=.Osuf)
 
