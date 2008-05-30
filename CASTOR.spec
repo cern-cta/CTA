@@ -80,7 +80,7 @@ export MINOR_CASTOR_VERSION
 echo "### Warning, no ORACLE environment"
 echo "The following packages will NOT be built:"
 echo "castor-devel-oracle, castor-dlf-server, castor-lib-oracle, castor-lsf-plugin, castor-ns-server, castor-rh-server, castor-repack-server, castor-rtcopy-clientserver, castor-stager-server, castor-upv-server, castor-vmgr-server, castor-rmmaster-server, castor-jobmanager-server castor-lib-policy castor-mighunter-server"
-for this in BuildCupvDaemon BuildDlfDaemon BuildNameServerDaemon BuildRHCpp BuildRepack BuildRtcpclientd BuildSchedPlugin BuildVolumeMgrDaemon UseOracle UseScheduler BuildOraCpp BuildStageDaemonCpp BuildVDQMCpp BuildDbTools BuildCleaning BuildRmMasterCpp BuildJobManagerCpp BuildInfoPolicyLibrary BuildMigHunterDaemon BuildRecHandlerDaemon; do
+for this in BuildCupvDaemon BuildDlfDaemon BuildNameServerDaemon BuildRHCpp BuildRepack BuildRtcpclientd BuildSchedPlugin BuildVolumeMgrDaemon UseOracle UseScheduler BuildOraCpp BuildStageDaemonCpp BuildVDQMCpp BuildDbTools BuildRmMasterCpp BuildJobManagerCpp BuildInfoPolicyLibrary BuildMigHunterDaemon BuildRecHandlerDaemon; do
 	perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tNO/g" config/site.def
 done
 %else
@@ -106,7 +106,7 @@ done
 %endif
 %if %compiling_nostk
 echo "### Warning, compiling only castor-tape-server-nostk"
-for this in BuildCleaning BuildCommands BuildCupvClient BuildCupvDaemon BuildCupvLibrary BuildDlfDaemon BuildDlfLibrary BuildDlfWeb BuildExpertClient BuildExpertDaemon BuildExpertLibrary BuildGCCpp BuildHsmTools BuildJob BuildJobManagerCpp BuildNameServerClient BuildNameServerDaemon BuildNameServerLibrary BuildRHCpp BuildRfioClient BuildRfioLibrary BuildRfioServer BuildRmMasterCpp BuildRmNodeCpp BuildRmcLibrary BuildRmcServer BuildRtcopyClient BuildRtcopyLibrary BuildRtcopyServer BuildRtcpclientd BuildRtstat BuildSchedPlugin BuildSecureCns BuildSecureCupv BuildSecureRfio BuildSecureRtcopy BuildSecureStage BuildSecureTape BuildSecureVdqm BuildSecureVmgr BuildStageClient BuildStageClientOld BuildStageDaemonCpp BuildTapeClient BuildTapeLibrary BuildTpusage BuildVdqmClient BuildVdqmLibrary BuildVdqmServer BuildVolumeMgrClient BuildVolumeMgrDaemon BuildVolumeMgrLibrary BuildVDQMCpp BuildRepack BuildMigHunterDaemon BuildRecHandlerDaemon BuildInfoPolicyLibrary BuildGridFTP HasCDK; do
+for this in BuildCommands BuildCupvClient BuildCupvDaemon BuildCupvLibrary BuildDlfDaemon BuildDlfLibrary BuildDlfWeb BuildExpertClient BuildExpertDaemon BuildExpertLibrary BuildGCCpp BuildHsmTools BuildJob BuildJobManagerCpp BuildNameServerClient BuildNameServerDaemon BuildNameServerLibrary BuildRHCpp BuildRfioClient BuildRfioLibrary BuildRfioServer BuildRmMasterCpp BuildRmNodeCpp BuildRmcLibrary BuildRmcServer BuildRtcopyClient BuildRtcopyLibrary BuildRtcopyServer BuildRtcpclientd BuildRtstat BuildSchedPlugin BuildSecureCns BuildSecureCupv BuildSecureRfio BuildSecureRtcopy BuildSecureStage BuildSecureTape BuildSecureVdqm BuildSecureVmgr BuildStageClient BuildStageClientOld BuildStageDaemonCpp BuildTapeClient BuildTapeLibrary BuildTpusage BuildVdqmClient BuildVdqmLibrary BuildVdqmServer BuildVolumeMgrClient BuildVolumeMgrDaemon BuildVolumeMgrLibrary BuildVDQMCpp BuildRepack BuildMigHunterDaemon BuildRecHandlerDaemon BuildInfoPolicyLibrary BuildGridFTP HasCDK; do
 	perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tNO/g" config/site.def
 done
 %endif
@@ -147,7 +147,6 @@ mkdir -p ${RPM_BUILD_ROOT}/etc/init.d
 mkdir -p ${RPM_BUILD_ROOT}/etc/logrotate.d
 mkdir -p ${RPM_BUILD_ROOT}/usr/lsf/%{LIB}
 mkdir -p ${RPM_BUILD_ROOT}/usr/lsf/etc
-mkdir -p ${RPM_BUILD_ROOT}/var/spool/cleaning
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/dlf
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/expert
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/gc
