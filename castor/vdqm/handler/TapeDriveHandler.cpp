@@ -701,9 +701,6 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
   castor::vdqm::OldProtocolInterpreter *const oldProtInterpreter) 
   throw (castor::exception::Exception) {
 
-  // The result of the search in the database.
-  std::list<vdqmDrvReq_t>* drvReqs = 0;
-  
   std::string dgn    = "";
   std::string server = "";
 
@@ -711,15 +708,18 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
   if ( *(ptr_driveRequest->server) != '\0' ) server = ptr_driveRequest->server;
 
   try {
+    // The result of the search in the database.
+    std::list<vdqmDrvReq_t> drvReqs;
+
     // This method call retrieves the drive queue from the database.  The
     // result depends on the parameters. If the paramters are not specified,
     // then information about all tape drives is returned.
-    drvReqs = ptr_IVdqmService->selectTapeDriveQueue(dgn, server);
+    ptr_IVdqmService->getTapeDriveQueue(drvReqs, dgn, server);
 
     // If there is a result to send to the client
-    if (drvReqs != NULL && drvReqs->size() > 0 ) {
-      for(std::list<vdqmDrvReq_t>::iterator it = drvReqs->begin();
-        it != drvReqs->end(); it++) {
+    if(drvReqs.size() > 0 ) {
+      for(std::list<vdqmDrvReq_t>::iterator it = drvReqs.begin();
+        it != drvReqs.end(); it++) {
         
         //"Send information for showqueues command" message
         castor::dlf::Param param[] = {
@@ -733,11 +733,6 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
       }
     }
   } catch (castor::exception::Exception ex) {  
-    // Clean up the memory
-    if(drvReqs != NULL) {
-      delete drvReqs;
-    }
-
     // To inform the client about the end of the queue, we send again a 
     // ptr_driveRequest with the VolReqID = -1
     ptr_driveRequest->DrvReqID = -1;
@@ -745,11 +740,6 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
     oldProtInterpreter->sendToOldClient(ptr_header, NULL, ptr_driveRequest);
           
     throw ex;
-  }
-  
-  // Clean up the memory
-  if(drvReqs != NULL) {
-    delete drvReqs;
   }
   
   // To inform the client about the end of the queue, we send again a 

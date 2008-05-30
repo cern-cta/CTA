@@ -217,7 +217,7 @@ castor::db::ora::OraVdqmSvc::StatementStringMap::StatementStringMap() {
     "  AND tapeModel = :3");
   addStmtStr(SELECT_DEVICE_GROUP_NAME_SQL_STMT,
     "SELECT id FROM DeviceGroupName WHERE dgName = :1");
-  addStmtStr(SELECT_TAPE_REQUEST_QUEUE_SQL_STMT,
+  addStmtStr(SELECT_VOL_REQS_CREATION_TIME_ORDER_SQL_STMT,
     "SELECT"
     "  id,"
     "  driveName,"
@@ -237,7 +237,35 @@ castor::db::ora::OraVdqmSvc::StatementStringMap::StatementStringMap() {
     "  tapeRequestShowqueues_VIEW "
     "WHERE"
     "      (:1 IS NULL OR :2 = dgName)"
-    "  AND (:3 IS NULL OR :4 = tapeServer)");
+    "  AND (:3 IS NULL OR :4 = tapeServer) "
+    "ORDER BY"
+    "  creationTime ASC");
+  addStmtStr(SELECT_VOL_REQS_PRIORITY_ORDER_SQL_STMT,
+    "SELECT"
+    "  id,"
+    "  driveName,"
+    "  tapeDriveId,"
+    "  priority,"
+    "  clientPort,"
+    "  clientEuid,"
+    "  clientEgid,"
+    "  accessMode,"
+    "  creationTime,"
+    "  clientMachine,"
+    "  vid,"
+    "  tapeServer,"
+    "  dgName,"
+    "  clientUsername,"
+    "  volumePriority "
+    "FROM"
+    "  tapeRequestShowqueues_VIEW "
+    "WHERE"
+    "      (:1 IS NULL OR :2 = dgName)"
+    "  AND (:3 IS NULL OR :4 = tapeServer) "
+    "ORDER BY"
+    "  accessMode DESC,"
+    "  volumePriority DESC,"
+    "  creationTime ASC");
   addStmtStr(SELECT_TAPE_DRIVE_QUEUE_SQL_STMT,
     "SELECT"
     "  status,"
@@ -890,12 +918,9 @@ u_signed64 castor::db::ora::OraVdqmSvc::deleteVolPriority(
 // -----------------------------------------------------------------------
 // getAllVolPriorities
 // -----------------------------------------------------------------------
-std::list<castor::vdqm::IVdqmSvc::VolPriority>
-  *castor::db::ora::OraVdqmSvc::getAllVolPriorities()
+void castor::db::ora::OraVdqmSvc::getAllVolPriorities(
+  std::list<castor::vdqm::IVdqmSvc::VolPriority> &priorities)
   throw (castor::exception::Exception) {
-
-  std::list<castor::vdqm::IVdqmSvc::VolPriority> *priorities =
-    new std::list<castor::vdqm::IVdqmSvc::VolPriority>;;
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -940,7 +965,7 @@ std::list<castor::vdqm::IVdqmSvc::VolPriority>
       p.creationTime     = (u_signed64)rs->getDouble(9);
       p.modificationTime = (u_signed64)rs->getDouble(10);
 
-      priorities->push_back(p);
+      priorities.push_back(p);
     }
 
     stmt->closeResultSet(rs);
@@ -961,20 +986,15 @@ std::list<castor::vdqm::IVdqmSvc::VolPriority>
 
     throw ie;
   }
-
-  return priorities;
 }
 
 
 // -----------------------------------------------------------------------
 // getEffectiveVolPriorities
 // -----------------------------------------------------------------------
-std::list<castor::vdqm::IVdqmSvc::VolPriority>
-  *castor::db::ora::OraVdqmSvc::getEffectiveVolPriorities()
+void castor::db::ora::OraVdqmSvc::getEffectiveVolPriorities(
+  std::list<castor::vdqm::IVdqmSvc::VolPriority> &priorities)
   throw (castor::exception::Exception) {
-
-  std::list<castor::vdqm::IVdqmSvc::VolPriority> *priorities =
-    new std::list<castor::vdqm::IVdqmSvc::VolPriority>;;
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -1019,7 +1039,7 @@ std::list<castor::vdqm::IVdqmSvc::VolPriority>
       p.creationTime     = (u_signed64)rs->getDouble(9);
       p.modificationTime = (u_signed64)rs->getDouble(10);
 
-      priorities->push_back(p);
+      priorities.push_back(p);
     }
 
     stmt->closeResultSet(rs);
@@ -1040,20 +1060,15 @@ std::list<castor::vdqm::IVdqmSvc::VolPriority>
 
     throw ie;
   }
-
-  return priorities;
 }
 
 
 // -----------------------------------------------------------------------
 // getVolPriorities
 // -----------------------------------------------------------------------
-std::list<castor::vdqm::IVdqmSvc::VolPriority>
-  *castor::db::ora::OraVdqmSvc::getVolPriorities(const int lifespanType)
-  throw (castor::exception::Exception) {
-
-  std::list<castor::vdqm::IVdqmSvc::VolPriority> *priorities =
-    new std::list<castor::vdqm::IVdqmSvc::VolPriority>;;
+void castor::db::ora::OraVdqmSvc::getVolPriorities(
+  std::list<castor::vdqm::IVdqmSvc::VolPriority> &priorities,
+  const int lifespanType) throw (castor::exception::Exception) {
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -1099,7 +1114,7 @@ std::list<castor::vdqm::IVdqmSvc::VolPriority>
       p.creationTime     = (u_signed64)rs->getDouble(9);
       p.modificationTime = (u_signed64)rs->getDouble(10);
 
-      priorities->push_back(p);
+      priorities.push_back(p);
     }
 
     stmt->closeResultSet(rs);
@@ -1120,8 +1135,95 @@ std::list<castor::vdqm::IVdqmSvc::VolPriority>
 
     throw ie;
   }
+}
 
-  return priorities;
+
+// -----------------------------------------------------------------------
+// getVolRequestsPriorityOrder
+// -----------------------------------------------------------------------
+void castor::db::ora::OraVdqmSvc::getVolRequestsPriorityOrder(
+  castor::vdqm::IVdqmSvc::VolRequestList &requests,
+  const std::string dgn, const std::string requestedSrv)
+  throw (castor::exception::Exception) {
+
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  const StatementId stmtId = SELECT_VOL_REQS_PRIORITY_ORDER_SQL_STMT;
+  try {
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setPrefetchMemorySize(0);
+      stmt->setPrefetchRowCount(100);
+      storeStatement(stmtId, stmt);
+    }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
+  }
+
+  // Set the query statements parameters
+  try {
+    stmt->setString(1, dgn);
+    stmt->setString(2, dgn);
+    stmt->setString(3, requestedSrv);
+    stmt->setString(4, requestedSrv);
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() <<
+      "Failed to set the parameters of getVolRequestsPriorityOrder statement:"
+      << std::endl << oe.getMessage();
+
+    throw ie;
+  }
+
+  // Execute statement and get result
+  try
+  {
+    oracle::occi::ResultSet *const rs = stmt->executeQuery();
+
+    castor::vdqm::IVdqmSvc::VolRequest *request = NULL;
+
+    while(rs->next())
+    {
+      requests.push_back(request = new castor::vdqm::IVdqmSvc::VolRequest());
+
+      request->id             = (u_signed64)rs->getDouble(1);
+      request->driveName      = rs->getString(2);
+      request->tapeDriveId    = (u_signed64)rs->getDouble(3);
+      request->priority       = rs->getInt(4);
+      request->clientPort     = rs->getInt(5);
+      request->clientEuid     = rs->getInt(6);
+      request->clientEgid     = rs->getInt(7);
+      request->accessMode     = rs->getInt(8);
+      request->creationTime   = rs->getInt(9);
+      request->clientMachine  = rs->getString(10);
+      request->vid            = rs->getString(11);
+      request->tapeServer     = rs->getString(12);
+      request->dgName         = rs->getString(13);
+      request->clientUsername = rs->getString(14);
+      request->volumePriority = rs->getInt(15);
+    }
+
+    stmt->closeResultSet(rs);
+
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
+      << "Failed to query tape drive queue:"
+      << std::endl << oe.getMessage();
+
+    throw ie;
+  }
 }
 
 
@@ -1986,16 +2088,16 @@ castor::vdqm::DeviceGroupName*
 
 
 // -----------------------------------------------------------------------
-// selectTapeRequestQueue
+// getTapeRequestQueue
 // -----------------------------------------------------------------------
-castor::vdqm::IVdqmSvc::VolReqList*
-  castor::db::ora::OraVdqmSvc::selectTapeRequestQueue(const std::string dgn,
+void castor::db::ora::OraVdqmSvc::getTapeRequestQueue(
+  castor::vdqm::IVdqmSvc::VolReqMsgList &requests, const std::string dgn,
   const std::string requestedSrv)
   throw (castor::exception::Exception) {
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  const StatementId stmtId = SELECT_TAPE_REQUEST_QUEUE_SQL_STMT;
+  const StatementId stmtId = SELECT_VOL_REQS_CREATION_TIME_ORDER_SQL_STMT;
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
@@ -2026,7 +2128,7 @@ castor::vdqm::IVdqmSvc::VolReqList*
     handleException(oe);
     castor::exception::Internal ie;
     ie.getMessage()
-      << "Failed to set the parameters of selectTapeRequestQueue statement:"
+      << "Failed to set the parameters of getTapeRequestQueue statement:"
       << std::endl << oe.getMessage();
 
     throw ie;
@@ -2037,15 +2139,11 @@ castor::vdqm::IVdqmSvc::VolReqList*
   {
     oracle::occi::ResultSet *const rs = stmt->executeQuery();
 
-    // The result of the search in the database.
-    castor::vdqm::IVdqmSvc::VolReqList *const volReqs =
-      new castor::vdqm::IVdqmSvc::VolReqList();
-
     vdqmVolReq_t *volReq = NULL;
 
     while(rs->next())
     {
-      volReqs->push_back(volReq = new vdqmVolReq_t());
+      requests.push_back(volReq = new vdqmVolReq_t());
 
       volReq->VolReqID = rs->getInt(1);
 
@@ -2086,13 +2184,11 @@ castor::vdqm::IVdqmSvc::VolReqList*
 
     stmt->closeResultSet(rs);
 
-    return volReqs;
-
   } catch(oracle::occi::SQLException &oe) {
     handleException(oe);
     castor::exception::Internal ie;
     ie.getMessage()
-      << "Failed to query tape drive queue:"
+      << "Failed to query tape request queue:"
       << std::endl << oe.getMessage();
 
     throw ie;
@@ -2101,11 +2197,11 @@ castor::vdqm::IVdqmSvc::VolReqList*
 
 
 // -----------------------------------------------------------------------
-// selectTapeDriveQueue
+// getTapeDriveQueue
 // -----------------------------------------------------------------------
-std::list<vdqmDrvReq_t>*
-  castor::db::ora::OraVdqmSvc::selectTapeDriveQueue(const std::string dgn,
-  const std::string requestedSrv) throw (castor::exception::Exception) {
+void castor::db::ora::OraVdqmSvc::getTapeDriveQueue(std::list<vdqmDrvReq_t>
+  &drvReqs, const std::string dgn, const std::string requestedSrv)
+  throw (castor::exception::Exception) {
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -2148,9 +2244,6 @@ std::list<vdqmDrvReq_t>*
   try {
     oracle::occi::ResultSet *rs = stmt->executeQuery();
 
-    // The result of the search in the database.
-    std::list<vdqmDrvReq_t>* drvReqs = new std::list<vdqmDrvReq_t>;
-
     vdqmDrvReq_t drvReq;
 
     while(rs->next()) {
@@ -2192,12 +2285,10 @@ std::list<vdqmDrvReq_t>*
       // Null-terminate in case source string is longer than destination
       drvReq.dedicate[sizeof(drvReq.dedicate) - 1] = '\0';
 
-      drvReqs->push_back(drvReq);
+      drvReqs.push_back(drvReq);
     }
 
     stmt->closeResultSet(rs);
-
-    return drvReqs;
 
   } catch(oracle::occi::SQLException &oe) {
     handleException(oe);
@@ -2268,10 +2359,8 @@ int castor::db::ora::OraVdqmSvc::translateNewStatus(
 // -----------------------------------------------------------------------
 // selectTapeRequest
 // -----------------------------------------------------------------------
-castor::vdqm::TapeRequest* 
-  castor::db::ora::OraVdqmSvc::selectTapeRequest(
-  const int VolReqID)
-  throw (castor::exception::Exception) {
+castor::vdqm::TapeRequest* castor::db::ora::OraVdqmSvc::selectTapeRequest(
+  const int VolReqID) throw (castor::exception::Exception) {
     
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;

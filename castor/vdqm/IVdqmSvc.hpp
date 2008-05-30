@@ -55,6 +55,9 @@ namespace castor {
 
       public:
 
+        /**
+         * Inner class used to specifiy the database exception constants.
+         */
         class DbExceptions {
 
           public:
@@ -69,43 +72,6 @@ namespace castor {
               INVALID_REGEXP_VID     = 20008
             };
         };
-
-        /**
-         * Inner class used to help manage the allocated memory associated with
-         * a list of volume requests for showqueues
-         */
-        class VolReqList : public std::list<vdqmVolReq_t*> {
-        public:
-
-          /**
-           * Destructor which deletes each of the vdqmVolReq_t messages
-           * pointed to by the pointers within this container.
-           */
-          ~VolReqList() {
-            for(std::list<vdqmVolReq_t*>::iterator itor=begin();
-              itor != end(); itor++) {
-              delete *itor;
-            }
-          }
-        };
-
-        /**
-         * Inner class used to return the result of listVolPriorities.
-         */
-        class VolPriority {
-        public:
-          int        priority;
-          int        clientUID;
-          int        clientGID;
-          char       clientHost[CA_MAXHOSTNAMELEN+1];
-          char       vid[CA_MAXVIDLEN+1];
-          int        tpMode;
-          int        lifespanType;
-          u_signed64 id;
-          u_signed64 creationTime;
-          u_signed64 modificationTime;
-        };
-
 
         /**
          * Retrieves a TapeServer from the database based on its serverName. 
@@ -181,41 +147,112 @@ namespace castor {
           throw (castor::exception::Exception) = 0;
 
         /**
-         * Returns the list of all volume priorities.
-         * Please note: The caller is responsible for the deletion of the
-         * allocated list!
+         * Inner class used to return the result of listVolPriorities.
+         */
+        struct VolPriority {
+          int        priority;
+          int        clientUID;
+          int        clientGID;
+          char       clientHost[CA_MAXHOSTNAMELEN+1];
+          char       vid[CA_MAXVIDLEN+1];
+          int        tpMode;
+          int        lifespanType;
+          u_signed64 id;
+          u_signed64 creationTime;
+          u_signed64 modificationTime;
+        };
+
+        /**
+         * Gets the list of all volume priorities.
          *
+         * @param priorities The list of priorities to be filled.
          * @return the list of all volume priorities.
          * Note that the returned list should be deallocated by the caller.
          */
-        virtual std::list<VolPriority> *getAllVolPriorities()
+        virtual void getAllVolPriorities(std::list<VolPriority> &priorities)
           throw (castor::exception::Exception) = 0;
 
         /**
-         * Returns the list of effective volume priorities.
-         * Please note: The caller is responsible for the deletion of the
-         * allocated list!
+         * Gets the list of effective volume priorities.
          *
+         * @param priorities The list of priorities to be filled.
          * @return the list of effective volume priorities.
          * Note that the returned list should be deallocated by the caller.
          */
-        virtual std::list<VolPriority> *getEffectiveVolPriorities()
+        virtual void getEffectiveVolPriorities(
+          std::list<VolPriority> &priorities)
           throw (castor::exception::Exception) = 0;
 
         /**
-         * Returns the list of volume priorities withe the specified lifespan
-         * type.
-         * Please note: The caller is responsible for the deletion of the
-         * allocated list!
+         * Gets the list of volume priorities with the specified lifespan type.
          *
+         * @param priorities The list of priorities to be filled.
          * @param lifespanType the lifespan type of the volume priorities to be
          * retrieved.  Valid values are 0 for single-mount and 1 for unlimited.
          * @return the list of volume priorities.
          * Note that the returned list should be deallocated by the caller.
          */
-        virtual std::list<VolPriority> *getVolPriorities(const int lifespanType)
+        virtual void getVolPriorities(std::list<VolPriority> &priorities,
+          const int lifespanType) throw (castor::exception::Exception) = 0;
+
+        /**
+         * Inner class used together with VolRequestList to return the result
+         * of getVolRequestsPriorityOrder.
+         */
+        struct VolRequest {
+          u_signed64  id;
+          std::string driveName;
+          u_signed64  tapeDriveId;
+          int         priority; // Not the priority used for ordering requests
+          int         clientPort;
+          int         clientEuid;
+          int         clientEgid;
+          int         accessMode;
+          int         creationTime;
+          std::string clientMachine;
+          std::string vid;
+          std::string tapeServer;
+          std::string dgName;
+          std::string clientUsername;
+          int         volumePriority;  // Priority used for ordering requests
+        };
+
+        /**
+         * Inner class used to help manage the allocated memory associated with
+         * a list of volume requests returned from getVolRequestsPriorityOrder.
+         */
+        class VolRequestList : public std::list<VolRequest*> {
+        public:
+
+          /**
+           * Destructor which deletes each of the VolRequest objects
+           * pointed to by the pointers within this container.
+           */
+          ~VolRequestList() {
+            for(std::list<VolRequest*>::iterator itor=begin();
+              itor != end(); itor++) {
+              delete *itor;
+            }
+          }
+        };
+
+        /**
+         * Gets the list of volume requests ordered by priority.
+         * If you don't want to specify a DGN and or a request server, then
+         * just give empty strings.
+         *
+         * @param requests The list of requests to be filled.
+         * @param dgn The device group name to be used to restrict the queue
+         * of requests returned.  If the list should not be restricted by device
+         * group name then set this parameter to be an empty string.
+         * @param requestedSrv The server name to be used to restrict the queue
+         * of tape requests returned.  If the list should not be restricted by
+         * server name then set this parameter to be an empty string.
+         */
+        virtual void getVolRequestsPriorityOrder(VolRequestList &requests,
+          const std::string dgn, const std::string requestedSrv)
           throw (castor::exception::Exception) = 0;
-        
+
         /**
          * Tries to allocate in the database a free tape drive to a pending
          * request.
@@ -280,7 +317,7 @@ namespace castor {
          throw (castor::exception::Exception) = 0;
 
         /**
-         * Looks, wether the specific tape access exist in the db. If not the
+         * Looks, whether the specific tape access exist in the db. If not the
          * return value is NULL.
          * Please notice that caller is responsible for deleting the object.
          * @parameter accessMode the access mode for the tape
@@ -306,34 +343,51 @@ namespace castor {
         virtual DeviceGroupName* selectDeviceGroupName(
           const std::string dgName) 
           throw (castor::exception::Exception) = 0;
-          
+
         /**
-         * Returns the tape requests queue with the specified dgn an server.
-         * If you don't want to specify one of the arguments, just give an
-         * empty string instead.
-         * Please note: The caller is responsible for the deletion of the
-         * allocated VolReqList!
+         * Inner class used to help manage the allocated memory associated with
+         * a list of volume request messages for showqueues
+         */
+        class VolReqMsgList : public std::list<vdqmVolReq_t*> {
+        public:
+
+          /**
+           * Destructor which deletes each of the vdqmVolReq_t messages
+           * pointed to by the pointers within this container.
+           */
+          ~VolReqMsgList() {
+            for(std::list<vdqmVolReq_t*>::iterator itor=begin();
+              itor != end(); itor++) {
+              delete *itor;
+            }
+          }
+        };
+
+        /**
+         * Gets the tape requests queue with the specified dgn an server.
+         * If you don't want to specify a DGN and or a request server, then
+         * just give empty strings.
+         * @param requests The list of request messages to be filled.
          * @param dgn The device group name to be used to restrict the queue
          * of requests returned.  If the list should not be restricted by device
          * group name then set this parameter to be an empty string.
          * @param requestedSrv The server name to be used to restrict the queue
          * of tape requests returned.  If the list should not be restricted by
          * server name then set this parameter to be an empty string.
-         * @return VolReqList of messages to be used to send the queue of tape
-         * requests to the showqueues comman-line application.
-         * Note that the returned VolReqList should be deallocated by the
+         * @return VolReqMsgList of messages to be used to send the queue of
+         * tape requests to the showqueues comman-line application.
+         * Note that the returned VolReqMsgList should be deallocated by the
          * caller.
          */
-        virtual VolReqList* selectTapeRequestQueue(
+        virtual void getTapeRequestQueue(VolReqMsgList &requests,
           const std::string dgn, const std::string requestedSrv)
           throw (castor::exception::Exception) = 0;   
           
         /**
-         * Returns the tape drives queue with the specified dgn and server.
-         * If you don't want to specify one of the arguments, just give an
-         * empty string instead.
-         * Please note: The caller is responsible for the deletion of the
-         * allocated list!
+         * Gets the tape drives queue with the specified dgn and server.
+         * If you don't want to specify a DGN and or a requested server, then
+         * just give empty strings.
+         * @param drvReqs The list of requests to be filled.
          * @param dgn The device group name to be used to restrict the queue
          * of drives returned.  If the list should not be restricted by device
          * group name then set this parameter to be an empty string.
@@ -344,7 +398,7 @@ namespace castor {
          * drives to the showqueues comman-line application.
          * Note that the returned list should be deallocated by the caller.
          */
-        virtual std::list<vdqmDrvReq_t>* selectTapeDriveQueue(
+        virtual void getTapeDriveQueue(std::list<vdqmDrvReq_t> &drvReqs,
           const std::string dgn, const std::string requestedSrv)
           throw (castor::exception::Exception) = 0;    
                                        
@@ -356,10 +410,7 @@ namespace castor {
          * @return The tape request and its ClientIdentification, or NULL
          */
         virtual TapeRequest* selectTapeRequest(const int VolReqID) 
-          throw (castor::exception::Exception) = 0;                                       
-   
-          
-//------------------ functions for TapeDriveHandler -------------------------
+          throw (castor::exception::Exception) = 0;
 
         /**
          * Retrieves a tapeDrive from the database based on its struct 
@@ -402,8 +453,6 @@ namespace castor {
         virtual void deleteDrive(std::string driveName, std::string serverName,
           std::string dgName) throw (castor::exception::Exception) = 0;
                   
-//---------------- functions for TapeDriveStatusHandler ------------------------
-
         /**
          * Retrieves a tape from the database based on its vid.  If no tape is
          * found, then one is created.
@@ -454,14 +503,13 @@ namespace castor {
          * Returns the tape with this vid
          * 
          * @param vid the vid of the Tape
-         * @exception Exception in case of error (several tapes or no tape found, 
-         * DB problem, etc...)  
+         * @exception Exception in case of error (several tapes or no tape
+         * found, DB problem, etc...)  
          * @return The found TapeDrive             
          */  
         virtual castor::vdqm::VdqmTape* selectTapeByVid(
           const std::string vid)
           throw (castor::exception::Exception) = 0;
-          
           
         /**
          * Looks through the tape requests, whether there is one for the
@@ -476,7 +524,6 @@ namespace castor {
           const TapeDrive* tapeDrive)
           throw (castor::exception::Exception) = 0;  
           
-        
         /**
          * Selects from the TapeDriveCompatibility table all entries for the
          * specified drive model.

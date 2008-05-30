@@ -150,6 +150,10 @@ PROGS_TO_CLEAN += ProgramTargetName(vdqmdeletepriority)
 MANPAGES += $(MANDIR)/vdqmlistpriority.$(MANSUFFIX)
 EXPORTMANPAGES += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),vdqmlistpriority.$(MANSUFFIX)))
 PROGS_TO_CLEAN += ProgramTargetName(vdqmlistpriority)
+
+MANPAGES += $(MANDIR)/vdqmlistrequest.$(MANSUFFIX)
+EXPORTMANPAGES += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),vdqmlistrequest.$(MANSUFFIX)))
+PROGS_TO_CLEAN += ProgramTargetName(vdqmlistrequest)
 #endif
 
 #if !defined(_WIN32)
@@ -192,6 +196,7 @@ IPROGS += FileName($(BIN),ProgramTargetName(vdqmDBInit))
 IPROGS += FileName($(BIN),ProgramTargetName(vdqmsetpriority))
 IPROGS += FileName($(BIN),ProgramTargetName(vdqmdeletepriority))
 IPROGS += FileName($(BIN),ProgramTargetName(vdqmlistpriority))
+IPROGS += FileName($(BIN),ProgramTargetName(vdqmlistrequest))
 #endif
 
 EPROGS = $(EXPORTBIN)/reclaim \
@@ -221,6 +226,7 @@ EPROGS +=	$(EXPORTBIN)/vdqmDBInit
 EPROGS +=	$(EXPORTBIN)/vdqmsetpriority
 EPROGS +=	$(EXPORTBIN)/vdqmdeletepriority
 EPROGS +=	$(EXPORTBIN)/vdqmlistpriority
+EPROGS +=	$(EXPORTBIN)/vdqmlistrequest
 #endif
 
 IPERL = FileName($(PERLLIBDIR),castor_tools.pm)
@@ -262,6 +268,7 @@ NormalProgramTarget(vdqmDBInit,vdqmDBInit.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(vdqmsetpriority,vdqmsetpriority.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(vdqmdeletepriority,vdqmdeletepriority.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(vdqmlistpriority,vdqmlistpriority.Osuf,$(DEPLIB2),$(LIBS2))
+NormalProgramTarget(vdqmlistrequest,vdqmlistrequest.Osuf,$(DEPLIB2),$(LIBS2))
 #endif
 
 MakeDepSharedLibrary(shlib,shift)
@@ -331,6 +338,9 @@ IEXPORT(vdqmdeletepriority,$(EXPORTBIN),755);
 
 InstallProgram(vdqmlistpriority,$(BIN),root,bin,755)
 IEXPORT(vdqmlistpriority,$(EXPORTBIN),755);
+
+InstallProgram(vdqmlistrequest,$(BIN),root,bin,755)
+IEXPORT(vdqmlistrequest,$(EXPORTBIN),755);
 #endif
 
 InstallProgram(printSvcClass,$(BIN),root,bin,755)
@@ -417,6 +427,9 @@ EMANPAGE(vdqmdeletepriority,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 
 IMANPAGE(vdqmlistpriority,$(MANDIR),$(MANSUFFIX))
 EMANPAGE(vdqmlistpriority,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+
+IMANPAGE(vdqmlistrequest,$(MANDIR),$(MANSUFFIX))
+EMANPAGE(vdqmlistrequest,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 #endif
 
 export: $(EPROGS) $(EXPORTPERL) $(EPERL)

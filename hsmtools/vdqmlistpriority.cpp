@@ -282,9 +282,9 @@ void printAllPriorities(castor::vdqm::IVdqmSvc *const vdqmSvc,
   const bool displayColumnHeadings) {
   try {
     // Get and print the list of volume priorities
-    std::auto_ptr< std::list<castor::vdqm::IVdqmSvc::VolPriority> > priorities(
-      vdqmSvc->getAllVolPriorities());
-    printPriorityList(*priorities, displayColumnHeadings);
+    std::list<castor::vdqm::IVdqmSvc::VolPriority> priorities;
+    vdqmSvc->getAllVolPriorities(priorities);
+    printPriorityList(priorities, displayColumnHeadings);
   } catch(castor::exception::Exception &e) {
     std::cerr
       << std::endl
@@ -299,9 +299,9 @@ void printEffectivePriorities(castor::vdqm::IVdqmSvc *const vdqmSvc,
   const bool displayColumnHeadings) {
   try {
     // Get and print the list of volume priorities
-    std::auto_ptr< std::list<castor::vdqm::IVdqmSvc::VolPriority> > priorities(
-      vdqmSvc->getEffectiveVolPriorities());
-    printPriorityList(*priorities, displayColumnHeadings);
+    std::list<castor::vdqm::IVdqmSvc::VolPriority> priorities;
+    vdqmSvc->getEffectiveVolPriorities(priorities);
+    printPriorityList(priorities, displayColumnHeadings);
   } catch(castor::exception::Exception &e) {
     std::cerr
       << std::endl
@@ -316,9 +316,9 @@ void printLifespanTypePriorities(castor::vdqm::IVdqmSvc *const vdqmSvc,
   const int lifespanType, const bool displayColumnHeadings) {
   try {
     // Get and print the list of volume priorities
-    std::auto_ptr< std::list<castor::vdqm::IVdqmSvc::VolPriority> > priorities(
-      vdqmSvc->getVolPriorities(lifespanType));
-    printPriorityList(*priorities, displayColumnHeadings);
+    std::list<castor::vdqm::IVdqmSvc::VolPriority> priorities;
+    vdqmSvc->getVolPriorities(priorities, lifespanType);
+    printPriorityList(priorities, displayColumnHeadings);
   } catch(castor::exception::Exception &e) {
     std::cerr
       << std::endl

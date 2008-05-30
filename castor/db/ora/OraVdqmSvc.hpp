@@ -77,7 +77,8 @@ namespace castor {
           SELECT_TAPE_REQ_FOR_MOUNTED_TAPE_SQL_STMT,
           SELECT_TAPE_ACCESS_SPECIFICATION_SQL_STMT,
           SELECT_DEVICE_GROUP_NAME_SQL_STMT,
-          SELECT_TAPE_REQUEST_QUEUE_SQL_STMT,
+          SELECT_VOL_REQS_CREATION_TIME_ORDER_SQL_STMT,
+          SELECT_VOL_REQS_PRIORITY_ORDER_SQL_STMT,
           SELECT_TAPE_DRIVE_QUEUE_SQL_STMT,
           SELECT_TAPE_REQUEST_SQL_STMT,
           SELECT_COMPATIBILITIES_FOR_DRIVE_MODEL_SQL_STMT,
@@ -131,7 +132,6 @@ namespace castor {
         (const std::string serverName, bool withTapeDrives)
           throw (castor::exception::Exception);
   
-  
         /**
          * Checks, if there is already an entry for that tapeRequest. The entry
          * must have exactly the same associations!
@@ -142,7 +142,6 @@ namespace castor {
         virtual bool checkTapeRequest
         (const castor::vdqm::TapeRequest *newTapeRequest)
           throw (castor::exception::Exception);
-  
   
         /**
          * Returns the queue position of the tape request.
@@ -174,20 +173,29 @@ namespace castor {
         /**
          * See the documentation for castor::vdqm::IVdqmSvc.
          */
-        virtual std::list<castor::vdqm::IVdqmSvc::VolPriority>
-          *getAllVolPriorities() throw (castor::exception::Exception);
+        virtual void getAllVolPriorities(
+          std::list<castor::vdqm::IVdqmSvc::VolPriority> &priorities)
+          throw (castor::exception::Exception);
 
         /**
          * See the documentation for castor::vdqm::IVdqmSvc.
          */
-        virtual std::list<castor::vdqm::IVdqmSvc::VolPriority>
-          *getEffectiveVolPriorities() throw (castor::exception::Exception);
+        virtual void getEffectiveVolPriorities(
+          std::list<castor::vdqm::IVdqmSvc::VolPriority> &priorities)
+          throw (castor::exception::Exception);
 
         /**
          * See the documentation for castor::vdqm::IVdqmSvc.
          */
-        virtual std::list<castor::vdqm::IVdqmSvc::VolPriority>
-          *getVolPriorities(const int lifespanType)
+        virtual void getVolPriorities(
+          std::list<castor::vdqm::IVdqmSvc::VolPriority> &priorities,
+          const int lifespanType) throw (castor::exception::Exception);
+
+        /**
+         * See the documentation for castor::vdqm::IVdqmSvc.
+         */
+        virtual void getVolRequestsPriorityOrder(VolRequestList &requests,
+          const std::string dgn, const std::string requestedSrv)
           throw (castor::exception::Exception);
   
         /**
@@ -206,7 +214,6 @@ namespace castor {
           const std::string density, const std::string tapeModel) 
           throw (castor::exception::Exception);
   
-  
         /**
          * Looks, if the specified dgName exists in the database. 
          * If it is the case, it will return the object. If not, a new entry
@@ -223,15 +230,16 @@ namespace castor {
         /**
          * See the documentation for castor::vdqm::IVdqmSvc.
          */
-        virtual castor::vdqm::IVdqmSvc::VolReqList *
-          selectTapeRequestQueue(const std::string dgn, 
-          const std::string requestedSrv) throw (castor::exception::Exception);        
+        virtual void getTapeRequestQueue(
+          castor::vdqm::IVdqmSvc::VolReqMsgList &requests,
+          const std::string dgn, const std::string requestedSrv)
+          throw (castor::exception::Exception);        
+
         /**
          * See the documentation for castor::vdqm::IVdqmSvc.
          */
-        virtual std::list<vdqmDrvReq_t>*
-          selectTapeDriveQueue(const std::string dgn,
-          const std::string requestedSrv)
+        virtual void getTapeDriveQueue(std::list<vdqmDrvReq_t> &drvReqs,
+          const std::string dgn, const std::string requestedSrv)
           throw (castor::exception::Exception);     
 
         /**

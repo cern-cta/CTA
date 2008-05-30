@@ -378,16 +378,18 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
   if ( *(volumeRequest->server) != '\0' ) server = volumeRequest->server;
 
   try {
-    // This method call retirves the request queue from the database. The
+    // Results from the database
+    castor::vdqm::IVdqmSvc::VolReqMsgList volReqs;
+
+    // This method call retrieves the request queue from the database. The
     // result depends on the parameters. If the paramters are not specified,
-    // then information about all oft the requests is returned.
-    std::auto_ptr<castor::vdqm::IVdqmSvc::VolReqList> volReqs(
-      ptr_IVdqmService->selectTapeRequestQueue(dgn, server));
+    // then information about all of the requests is returned.
+    ptr_IVdqmService->getTapeRequestQueue(volReqs, dgn, server);
 
     // If there is a result to send to the client
-    if (volReqs.get() != NULL && volReqs->size() > 0 ) {
-      for(castor::vdqm::IVdqmSvc::VolReqList::iterator it = volReqs->begin();
-        it != volReqs->end(); it++) {
+    if(volReqs.size() > 0 ) {
+      for(castor::vdqm::IVdqmSvc::VolReqMsgList::iterator it = volReqs.begin();
+        it != volReqs.end(); it++) {
 
 /*
         //"Send information for showqueues command" message
