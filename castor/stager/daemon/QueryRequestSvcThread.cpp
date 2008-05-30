@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.79 $ $Release$ $Date: 2008/05/26 15:40:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.80 $ $Release$ $Date: 2008/05/30 07:58:05 $ $Author: itglp $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -270,9 +270,9 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileId
   if(result == 0 || result->size() != 1) {   // sanity check, result.size() must be == 1
     castor::exception::Exception e(ENOENT);
     if(svcClassId > 0)
-      e.getMessage() << "File " << fid << "@" << nshost << " not in given svcClass";
+      e.getMessage() << "File " << fid << "@" << nshost << " not on this service class";
     else
-      e.getMessage() << "File " << fid << "@" << nshost << " not in stager";
+      e.getMessage() << "File " << fid << "@" << nshost << " not on disk cache";
     if(result != 0)
       delete result;
     throw e;
