@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.660 $ $Date: 2008/05/28 08:07:11 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.661 $ $Date: 2008/05/30 07:31:05 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -702,8 +702,12 @@ BEGIN
        WHERE id = segs(j);
   END IF;
 
-  OPEN segments FOR SELECT fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, blockId0, blockId1, blockId2, blockId3, creationTime, id, tape, copy, status, priority FROM Segment
-                     where id in (select * from table(segs));
+  OPEN segments FOR
+    SELECT fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum,
+           errMsgTxt, errorCode, severity, blockId0, blockId1, blockId2, blockId3,
+           creationTime, id, tape, copy, status, priority
+      FROM Segment
+     WHERE id IN (SELECT /*+ CARDINALITY(segsTable 5) */ * FROM TABLE(segs) segsTable);
 END;
 
 
@@ -725,8 +729,12 @@ END;
 CREATE OR REPLACE PROCEDURE failedSegments
 (segments OUT castor.Segment_Cur) AS
 BEGIN
-  OPEN segments FOR SELECT fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, blockId0, blockId1, blockId2, blockId3, creationTime, id, tape, copy, status, priority FROM Segment
-                     WHERE Segment.status = 6; -- SEGMENT_FAILED
+  OPEN segments FOR
+    SELECT fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, 
+           errMsgTxt, errorCode, severity, blockId0, blockId1, blockId2, blockId3, 
+           creationTime, id, tape, copy, status, priority 
+      FROM Segment
+     WHERE Segment.status = 6; -- SEGMENT_FAILED
 END;
 
 
@@ -1064,9 +1072,7 @@ END;
 /** Functions for the RecHandlerDaemon **/
 
 /* Get input for python recall policy */
-
-
-CREATE OR REPLACE PROCEDURE main_dev10.inputForRecallPolicy(dbInfo OUT castor.DbRecallInfo_Cur) AS
+CREATE OR REPLACE PROCEDURE inputForRecallPolicy(dbInfo OUT castor.DbRecallInfo_Cur) AS
   svcId NUMBER;
 BEGIN  
   OPEN dbInfo FOR 
@@ -1076,8 +1082,10 @@ BEGIN
      WHERE Tape.id = Segment.tape(+) 
        AND TapeCopy.id(+) = Segment.copy
        AND CastorFile.id(+) = TapeCopy.castorfile 
-       AND Tape.status IN (8,1,2,3) AND Segment.status=0
-     GROUP BY Tape.id, Tape.vid having count(distinct segment.id)>0;
+       AND Tape.status IN (1, 2, 3, 8)  -- PENDING, WAITDRIVE, WAITMOUNT, WAITPOLICY 
+       AND Segment.status = 0  -- SEGMENT_UNPROCESSED 
+     GROUP BY Tape.id, Tape.vid
+     HAVING count(distinct segment.id) > 0;
 END;
 
 /* resurrect tapes */
