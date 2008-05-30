@@ -81,19 +81,27 @@ namespace castor{
       
       void RmHandler::handle() throw(castor::exception::Exception)
       {
-        // check the existence of the file. Don't stop if ENOENT
+        // Check the existence of the file. Don't stop if ENOENT
         try {
           stgCnsHelper->checkFileOnNameServer(stgRequestHelper->subrequest, stgRequestHelper->svcClass);
 
-          // check if the user (euid,egid) has the right permission for the request's type. otherwise throw exception
-          stgRequestHelper->checkFilePermission(false, stgCnsHelper);
+          // Check if the user (euid,egid) has the right permission for the rm, otherwise throw exception.
+          // This check overrides the default one provided in RequestHelper::checkFilePermission because
+          // we need to check write access to the parent directory.
+          std::string dirName = stgRequestHelper->subrequest->fileName();
+          dirName = dirName.substr(0, dirName.rfind('/')-1);
+          if(0 != Cns_accessUser(dirName.c_str(), W_OK, 
+             stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid())) {
+            castor::exception::Exception ex(serrno);
+            throw ex;
+          }
         }
         catch(castor::exception::Exception e) {
           if(serrno != ENOENT) {
             throw e;
           }
           // else the file does not exist, go on and try to cleanup stager db.
-          // Note that in this case we don't check permissions, but that's fine as
+          // Note that in this case we override the permission check, but that's fine as
           // the cleanup would anyway need to be done
         }
 

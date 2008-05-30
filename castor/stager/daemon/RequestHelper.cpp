@@ -343,7 +343,6 @@ namespace castor{
             case OBJ_StagePrepareToPutRequest:
             case OBJ_StagePrepareToUpdateRequest:
             case OBJ_StagePutRequest:
-            case OBJ_StageRmRequest:
             case OBJ_StageUpdateRequest:
             case OBJ_StagePutDoneRequest:
               if ( Cns_accessUser(filename.c_str(), (fileCreated ? R_OK : W_OK), euid, egid) == -1 ) {
