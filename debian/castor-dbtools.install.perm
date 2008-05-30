@@ -17,3 +17,6 @@
 %attr(0755,root,bin) usr/bin/vdqmlistpriority
 %attr(0755,root,bin) usr/bin/vdqmsetpriority
 %attr(0755,root,bin) usr/bin/checkreplicas
+%attr(0755,root,bin) usr/bin/deletePriority
+%attr(0755,root,bin) usr/bin/enterPriority
+%attr(0755,root,bin) usr/bin/listPriority
