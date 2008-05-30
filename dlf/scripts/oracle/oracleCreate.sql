@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/27 15:33:39 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/30 08:16:45 $ $Author: waldron $
  *
  * This script create a new DLF schema
  *
@@ -34,6 +34,10 @@ CREATE TABLE dlf_sequences(seq_name CHAR(15), seq_no NUMBER);
 /* SQL statement for table dlf_monitoring */
 CREATE TABLE dlf_monitoring(timestamp DATE NOT NULL, h_threads NUMBER, h_messages NUMBER, h_inits NUMBER, h_errors NUMBER, h_connections NUMBER, h_clientpeak NUMBER, h_timeouts NUMBER, db_threads NUMBER, db_commits NUMBER, db_errors NUMBER, db_inserts NUMBER, db_rollbacks NUMBER, db_selects NUMBER, db_updates NUMBER, db_cursors NUMBER, db_messages NUMBER, db_inits NUMBER, db_hashstats NUMBER, s_uptime NUMBER, s_mode NUMBER, s_queued NUMBER, s_response NUMBER(*,4), interval NUMBER)
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
+/* SQL statement for table dlf_config */
+CREATE TABLE dlf_config(name VARCHAR2(255) NOT NULL, value VARCHAR2(255));
+ALTER TABLE dlf_config ADD CONSTRAINT i_config_name UNIQUE (name) ENABLE;
 
 /* SQL statements for table dlf_messages */
 CREATE TABLE dlf_messages(id NUMBER, timestamp DATE NOT NULL, timeusec NUMBER, reqid CHAR(36), subreqid CHAR(36), hostid NUMBER, facility NUMBER(3), severity NUMBER(3), msg_no NUMBER(5), pid NUMBER(10), tid NUMBER(10), nshostid NUMBER, nsfileid NUMBER, tapevid VARCHAR2(20), userid NUMBER(10), groupid NUMBER(10), sec_type VARCHAR2(20), sec_name VARCHAR2(255))
@@ -105,6 +109,9 @@ CREATE UNIQUE INDEX i_nshostname ON dlf_nshost_map (nshostname);
 
 ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostid UNIQUE (nshostid) ENABLE;
 ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostname UNIQUE (nshostname) ENABLE;
+
+/* Fill the dlf_config table */
+INSERT INTO dlf_config (name, value) VALUES ('Instance', 'castordlf');
 
 /* Fill the dlf_severities table */
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('1', 'Emergency');
