@@ -41,8 +41,8 @@
 //------------------------------------------------------------------------------
 castor::bwlist::ListPrivileges::ListPrivileges() throw() :
   Request(),
-  m_user(0),
-  m_group(0),
+  m_userId(0),
+  m_groupId(0),
   m_requestType(0),
   m_id(0) {
 }
@@ -68,8 +68,8 @@ void castor::bwlist::ListPrivileges::print(std::ostream& stream,
   // Call print on the parent class(es)
   this->castor::stager::Request::print(stream, indent, alreadyPrinted);
   // Output of all members
-  stream << indent << "user : " << m_user << std::endl;
-  stream << indent << "group : " << m_group << std::endl;
+  stream << indent << "userId : " << m_userId << std::endl;
+  stream << indent << "groupId : " << m_groupId << std::endl;
   stream << indent << "requestType : " << m_requestType << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);

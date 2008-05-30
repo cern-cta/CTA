@@ -54,7 +54,7 @@ static castor::CnvFactory<castor::db::cnv::DbListPrivilegesCnv>* s_factoryDbList
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbListPrivilegesCnv::s_insertStatementString =
-"INSERT INTO ListPrivileges (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, user, group, requestType, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,ids_seq.nextval,:16,:17) RETURNING id INTO :18";
+"INSERT INTO ListPrivileges (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, userId, groupId, requestType, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,ids_seq.nextval,:16,:17) RETURNING id INTO :18";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbListPrivilegesCnv::s_deleteStatementString =
@@ -62,11 +62,11 @@ const std::string castor::db::cnv::DbListPrivilegesCnv::s_deleteStatementString 
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbListPrivilegesCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, user, group, requestType, id, svcClass, client FROM ListPrivileges WHERE id = :1";
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, userId, groupId, requestType, id, svcClass, client FROM ListPrivileges WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbListPrivilegesCnv::s_updateStatementString =
-"UPDATE ListPrivileges SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, lastModificationTime = :11, user = :12, group = :13, requestType = :14 WHERE id = :15";
+"UPDATE ListPrivileges SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, lastModificationTime = :11, userId = :12, groupId = :13, requestType = :14 WHERE id = :15";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbListPrivilegesCnv::s_storeTypeStatementString =
@@ -385,8 +385,8 @@ void castor::db::cnv::DbListPrivilegesCnv::createRep(castor::IAddress* address,
     m_insertStatement->setString(10, obj->reqId());
     m_insertStatement->setInt(11, time(0));
     m_insertStatement->setInt(12, time(0));
-    m_insertStatement->setInt(13, obj->user());
-    m_insertStatement->setInt(14, obj->group());
+    m_insertStatement->setInt(13, obj->userId());
+    m_insertStatement->setInt(14, obj->groupId());
     m_insertStatement->setInt(15, obj->requestType());
     m_insertStatement->setUInt64(16, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
     m_insertStatement->setUInt64(17, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
@@ -423,8 +423,8 @@ void castor::db::cnv::DbListPrivilegesCnv::createRep(castor::IAddress* address,
                     << "  reqId : " << obj->reqId() << std::endl
                     << "  creationTime : " << obj->creationTime() << std::endl
                     << "  lastModificationTime : " << obj->lastModificationTime() << std::endl
-                    << "  user : " << obj->user() << std::endl
-                    << "  group : " << obj->group() << std::endl
+                    << "  userId : " << obj->userId() << std::endl
+                    << "  groupId : " << obj->groupId() << std::endl
                     << "  requestType : " << obj->requestType() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  svcClass : " << obj->svcClass() << std::endl
@@ -461,8 +461,8 @@ void castor::db::cnv::DbListPrivilegesCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setString(9, obj->userTag());
     m_updateStatement->setString(10, obj->reqId());
     m_updateStatement->setInt(11, time(0));
-    m_updateStatement->setInt(12, obj->user());
-    m_updateStatement->setInt(13, obj->group());
+    m_updateStatement->setInt(12, obj->userId());
+    m_updateStatement->setInt(13, obj->groupId());
     m_updateStatement->setInt(14, obj->requestType());
     m_updateStatement->setUInt64(15, obj->id());
     m_updateStatement->execute();
@@ -562,8 +562,8 @@ castor::IObject* castor::db::cnv::DbListPrivilegesCnv::createObj(castor::IAddres
     object->setReqId(rset->getString(10));
     object->setCreationTime(rset->getUInt64(11));
     object->setLastModificationTime(rset->getUInt64(12));
-    object->setUser(rset->getInt(13));
-    object->setGroup(rset->getInt(14));
+    object->setUserId(rset->getInt(13));
+    object->setGroupId(rset->getInt(14));
     object->setRequestType(rset->getInt(15));
     object->setId(rset->getUInt64(16));
     delete rset;
@@ -612,8 +612,8 @@ void castor::db::cnv::DbListPrivilegesCnv::updateObj(castor::IObject* obj)
     object->setReqId(rset->getString(10));
     object->setCreationTime(rset->getUInt64(11));
     object->setLastModificationTime(rset->getUInt64(12));
-    object->setUser(rset->getInt(13));
-    object->setGroup(rset->getInt(14));
+    object->setUserId(rset->getInt(13));
+    object->setGroupId(rset->getInt(14));
     object->setRequestType(rset->getInt(15));
     object->setId(rset->getUInt64(16));
     delete rset;

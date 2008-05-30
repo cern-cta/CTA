@@ -100,39 +100,39 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
-       * Get the value of m_user
+       * Get the value of m_userId
        * the user for which t privileges. -1 means all users
-       * @return the value of m_user
+       * @return the value of m_userId
        */
-      int user() const {
-        return m_user;
+      int userId() const {
+        return m_userId;
       }
 
       /**
-       * Set the value of m_user
+       * Set the value of m_userId
        * the user for which t privileges. -1 means all users
-       * @param new_var the new value of m_user
+       * @param new_var the new value of m_userId
        */
-      void setUser(int new_var) {
-        m_user = new_var;
+      void setUserId(int new_var) {
+        m_userId = new_var;
       }
 
       /**
-       * Get the value of m_group
+       * Get the value of m_groupId
        * the group for which t privileges. -1 means all groups
-       * @return the value of m_group
+       * @return the value of m_groupId
        */
-      int group() const {
-        return m_group;
+      int groupId() const {
+        return m_groupId;
       }
 
       /**
-       * Set the value of m_group
+       * Set the value of m_groupId
        * the group for which t privileges. -1 means all groups
-       * @param new_var the new value of m_group
+       * @param new_var the new value of m_groupId
        */
-      void setGroup(int new_var) {
-        m_group = new_var;
+      void setGroupId(int new_var) {
+        m_groupId = new_var;
       }
 
       /**
@@ -174,10 +174,10 @@ namespace castor {
     private:
 
       /// the user for which t privileges. -1 means all users
-      int m_user;
+      int m_userId;
 
       /// the group for which t privileges. -1 means all groups
-      int m_group;
+      int m_groupId;
 
       /// the request type for which t privileges. 0 means all request types
       int m_requestType;

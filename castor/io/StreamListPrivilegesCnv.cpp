@@ -102,8 +102,8 @@ void castor::io::StreamListPrivilegesCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->reqId();
   ad->stream() << obj->creationTime();
   ad->stream() << obj->lastModificationTime();
-  ad->stream() << obj->user();
-  ad->stream() << obj->group();
+  ad->stream() << obj->userId();
+  ad->stream() << obj->groupId();
   ad->stream() << obj->requestType();
   ad->stream() << obj->id();
 }
@@ -154,12 +154,12 @@ castor::IObject* castor::io::StreamListPrivilegesCnv::createObj(castor::IAddress
   u_signed64 lastModificationTime;
   ad->stream() >> lastModificationTime;
   object->setLastModificationTime(lastModificationTime);
-  int user;
-  ad->stream() >> user;
-  object->setUser(user);
-  int group;
-  ad->stream() >> group;
-  object->setGroup(group);
+  int userId;
+  ad->stream() >> userId;
+  object->setUserId(userId);
+  int groupId;
+  ad->stream() >> groupId;
+  object->setGroupId(groupId);
   int requestType;
   ad->stream() >> requestType;
   object->setRequestType(requestType);
