@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.82 $ $Release$ $Date: 2008/05/30 10:56:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.83 $ $Release$ $Date: 2008/05/30 15:44:45 $ $Author: sponcec3 $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -763,7 +763,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleListPrivileges
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Function", "QueryRequestSvcThread::handleChangePrivilege"),
+      {castor::dlf::Param("Function", "QueryRequestSvcThread::handleListPrivilege"),
        castor::dlf::Param("Code", e.code()),
        castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 3, params);
