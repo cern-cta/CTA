@@ -5,5 +5,8 @@
 %attr(0755,root,bin) usr/bin/stager_qry
 %attr(0755,root,bin) usr/bin/stager_rm
 %attr(0755,root,bin) usr/bin/stager_setfilegcweight
+%attr(0755,root,bin) usr/bin/stager_addprivilege
+%attr(0755,root,bin) usr/bin/stager_removeprivilege
+%attr(0755,root,bin) usr/bin/stager_listprivileges
 %attr(0755,root,bin) usr/bin/castor
 %attr(4755,root,bin) usr/bin/newacct
