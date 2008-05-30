@@ -17,10 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDbThread.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/04/15 07:59:44 $ $Author: murrayc3 $
+ * @(#)$RCSfile: BaseDbThread.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/05/30 14:08:25 $ $Author: itglp $
  *
  * Base class for a database oriented thread. It correctly implements the stop
- * method, but it can be used only for a pool with a single thread.
+ * method by dropping the db connection for each thread in the pool.
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -32,7 +32,6 @@
 #include <string>
 #include "castor/server/IThread.hpp"
 #include "castor/BaseObject.hpp"
-#include "castor/db/DbCnvSvc.hpp"
 
 namespace castor {
 
@@ -47,10 +46,10 @@ namespace castor {
     /**
      * Empty constructor
      */
-    BaseDbThread() { m_cnvSvc = 0; };
-
+     BaseDbThread() : BaseObject() {};
+    
     /**
-     * Init method. Creates a db connection
+     * Init method. Creates a thread-specific db connection
      */
     virtual void init();
 
@@ -58,14 +57,6 @@ namespace castor {
      * Stops the thread and drops its db connection
      */
     virtual void stop();
-    
-  private:
-    /** pointer to the db conversion service. This is shared,
-     * and it is used inside stop() to interrupt this thread's activity.
-     * Note that a thread pool running this thread must have nbThreads = 1
-     * to be thread-safe.
-     */
-    castor::db::DbCnvSvc* m_cnvSvc;
 
   };
 

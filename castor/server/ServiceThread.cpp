@@ -17,14 +17,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServiceThread.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/04/15 07:59:44 $ $Author: murrayc3 $
+ * @(#)$RCSfile: ServiceThread.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/05/30 14:08:25 $ $Author: itglp $
  *
  * Internal thread to allow user service threads running forever
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-// Include Files
 #include "castor/server/ServiceThread.hpp"
 #include "castor/exception/Internal.hpp"
 
@@ -32,7 +31,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::server::ServiceThread::ServiceThread(IThread* userThread) :
-  m_owner(0), m_userThread(userThread) {}
+  m_owner(0), m_stopped(false), m_userThread(userThread) {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -42,6 +41,18 @@ castor::server::ServiceThread::~ServiceThread() throw() {
     delete m_userThread;
     m_userThread = 0;
   }
+}
+
+//------------------------------------------------------------------------------
+// stop
+//------------------------------------------------------------------------------
+void castor::server::ServiceThread::stop() {
+  if(m_stopped) {
+    // Already stopped: this means that the user thread didn't terminate
+    // yet the run() method. Let's try to tell it to stop directly.
+    m_userThread->stop();
+  }
+  m_stopped = true;
 }
 
 //------------------------------------------------------------------------------
@@ -56,39 +67,44 @@ void castor::server::ServiceThread::run(void* param) {
   try {
     m_owner = (SignalThreadPool*)param;
 
-    /* Notify the pool that we are starting */
+    // Notify the pool that we are starting and perform user initialization
     m_owner->commitRun();
-
-    /* Perform the user initialization */
     m_userThread->init();
     
-    while (true) {
-
-      /* wait to be woken up by a signal or for a timeout */
+    while (!m_stopped) {
+      // wait to be woken up by a signal or for a timeout
       m_owner->waitSignalOrTimeout();
 
-      /* Reset errno and serrno */
+      // reset errno and serrno
       errno = 0;
       serrno = 0;
 
-      /* Do the user job */
+      // do the user job: catch any exception for logging purposes
       try {
-        m_userThread->run(m_owner);
+        // we pass ourselves as parameter to allow e.g.
+        // SelectProcessThreads to call our stopped() method
+        m_userThread->run(this);
       } catch (castor::exception::Exception e) {
-        m_owner->clog() << ERROR << "Exception caught in the user thread: " << e.getMessage().str() << std::endl;
+        m_owner->clog() << ERROR << "Exception caught in the user thread: "
+          << e.getMessage().str() << std::endl;
       }
 
-      /* Notify that we are not anymore a running service */
+      // notify that we are not anymore a running service
       m_owner->commitRelease();
 
-      /* And continue forever */
+      // and continue forever until a SIGTERM is caught
     }
+    
+    // notify the user thread that we are over,
+    // e.g. for dropping a db connection
+    m_userThread->stop();
   }
   catch (castor::exception::Exception any) {
     try {
       m_owner->getMutex()->release();
     } catch(...) {}
-    m_owner->clog() << ERROR << "Thread run error: " << any.getMessage().str() << std::endl;
+    m_owner->clog() << ERROR << "Thread run error: "
+      << any.getMessage().str() << std::endl;
   }
 }
 

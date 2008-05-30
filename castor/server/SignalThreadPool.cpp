@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2007/11/20 15:31:13 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2008/05/30 14:08:25 $ $Author: itglp $
  *
  * Thread pool supporting wakeup on signals and periodical run after timeout
  *
@@ -75,9 +75,9 @@ bool castor::server::SignalThreadPool::shutdown() throw()
   try {
     m_poolMutex->lock();
     if(m_nbActiveThreads > 0) {
-      // This is advisory, but SelectProcessThread and BaseDbThread implement it.
-      // It is recommended that db-oriented threads implement it to
-      // properly cleanup the db connection.
+      // This is generally advisory, but BaseDbThread respects it.
+      // It is recommended that db-oriented threads inherit from BaseDbThread
+      // in order to properly cleanup the db connection.
       m_thread->stop();
       m_poolMutex->release();
       return false;

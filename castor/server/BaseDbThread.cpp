@@ -17,10 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDbThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/04/15 08:32:25 $ $Author: murrayc3 $
+ * @(#)$RCSfile: BaseDbThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/05/30 14:08:25 $ $Author: itglp $
  *
  * Base class for a database oriented thread. It correctly implements the stop
- * method, but it can be used only for a pool with a single thread.
+ * method by dropping the db connection for each thread in the pool.
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -29,20 +29,24 @@
 #include <string>
 #include "castor/server/BaseDbThread.hpp"
 #include "castor/Services.hpp"
+#include "castor/db/DbCnvSvc.hpp"
 
 //------------------------------------------------------------------------------
 // init
 //------------------------------------------------------------------------------
 void castor::server::BaseDbThread::init() {
-  castor::IService* s = svcs()->service("DbCnvSvc", castor::SVC_DBCNV);
-  m_cnvSvc = dynamic_cast<castor::db::DbCnvSvc*>(s);
+  svcs()->service("DbCnvSvc", castor::SVC_DBCNV);
 }
 
 //------------------------------------------------------------------------------
 // stop
 //------------------------------------------------------------------------------
 void castor::server::BaseDbThread::stop() {
-  if(m_cnvSvc) {
-    m_cnvSvc->dropConnection();
+  // this method is called on SIGTERM
+  castor::IService* s = svcs()->service("DbCnvSvc", 0);
+  castor::db::DbCnvSvc* dbs = dynamic_cast<castor::db::DbCnvSvc*>(s);
+  if(dbs) {
+    dbs->dropConnection();
+    dbs->release();
   }
 }
