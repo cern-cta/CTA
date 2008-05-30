@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.652 $ $Date: 2008/05/29 13:09:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.653 $ $Date: 2008/05/30 07:29:27 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -158,6 +158,9 @@ ALTER TABLE SvcClass ADD CONSTRAINT I_SvcClass_Name UNIQUE (NAME);
 
 /* The primary key in this table allows for materialized views */
 ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT I_DiskPool2SvcCla_ParentChild PRIMARY KEY (parent, child);
+
+/* Add unigue constraint on the priorityMap table */
+ALTER TABLE PriorityMap ADD CONSTRAINT I_Unique_Priority UNIQUE (euid, egid);
 
 /* Global temporary table to handle output of the filesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
