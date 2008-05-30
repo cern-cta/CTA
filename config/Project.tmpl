@@ -532,29 +532,6 @@
 #endif
 #endif
 
-
-/* ----------------- */
-/* Cleaning          */
-/* ----------------- */
-#if BuildCleaning
-#if !BuildOraCpp && !BuildPgCpp && !BuildMyCpp
-#undef BuildOraCpp
-#define BuildOraCpp YES
-#endif
-#if !BuildStageLibrary
-#undef BuildStageLibrary
-#define BuildStageLibrary YES
-#endif
-#if !BuildCastorClientCPPLibrary
-#undef BuildCastorClientCPPLibrary
-#define BuildCastorClientCPPLibrary YES
-#endif
-#if BuildDlfLibrary != YES
-#undef BuildDlfLibrary
-#define BuildDlfLibrary YES
-#endif
-#endif
-
 /* ------------------ */
 /* Garbage Collection */
 /* ------------------ */
@@ -705,7 +682,7 @@ INFOPOLICYDIR = infoPolicy
 #if BuildGCCpp
 GCCPPDIR = gc
 #endif
-#if BuildCastorClientCPPLibrary || BuildRHCpp || BuildVDQMCpp || BuildCleaning || BuildGCCpp || BuildOraCpp || BuildPgCpp || BuildMyCpp || BuildStageDaemonCpp || BuildRmMasterCpp || BuildRmNodeCpp
+#if BuildCastorClientCPPLibrary || BuildRHCpp || BuildVDQMCpp || BuildGCCpp || BuildOraCpp || BuildPgCpp || BuildMyCpp || BuildStageDaemonCpp || BuildRmMasterCpp || BuildRmNodeCpp
 COMMONCPPDIR = castor
 #endif
 #if BuildOraCpp
