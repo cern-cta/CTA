@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.7-7_to_2.1.7-10.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/29 13:22:22 $ $Author: sponcec3 $
+ * @(#)$RCSfile: 2.1.7-7_to_2.1.7-10.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/30 09:05:18 $ $Author: itglp $
  *
  * This script upgrades a CASTOR v2.1.7-7 database into v2.1.7-8
  *
@@ -63,6 +63,9 @@ BEGIN
   END IF;
 END;
 
+/* New index to speedup SubRequest cleanup procedure */
+CREATE INDEX I_SubRequest_LastModTime on SubRequest (lastModificationTime) LOCAL;
+
 /* Modifications to the segment table to support prioritisations */
 ALTER TABLE Segment ADD priority INTEGER;
 
@@ -85,3 +88,29 @@ CREATE TABLE RequestType (reqType NUMBER, id INTEGER CONSTRAINT I_RequestType_Id
 
 /* SQL statements for type ListPrivileges */
 CREATE TABLE ListPrivileges (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, user NUMBER, group NUMBER, requestType NUMBER, id INTEGER CONSTRAINT I_ListPrivileges_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* Drop cleaningDaemon related objects not used any longer */
+DROP PROCEDURE deleteOutOfDateRequests;
+DROP PROCEDURE deleteArchivedRequests;
+DROP TABLE OutOfDateStageOutDropped;
+DROP TABLE OutOfDateStageOutPutDone;
+
+/* Table to log the activity performed by the cleanup procedure */ 
+CREATE TABLE CleanupJobLog
+  (fileId NUMBER NOT NULL, nsHost VARCHAR2(2048) NOT NULL, 
+   operation INTEGER NOT NULL);
+
+/* Define a table for some configuration key-value pairs and populate it */
+CREATE TABLE CastorConfig
+  (class VARCHAR2(2048) NOT NULL, key VARCHAR2(2048) NOT NULL, value VARCHAR2(2048) NOT NULL, description VARCHAR2(2048));
+
+-- Service managers are requested to override this entry with a meaningful value reflecting the instance
+INSERT INTO CastorConfig
+  VALUES ('general', 'instance', 'castorstager', 'Name of this Castor instance');
+
+INSERT INTO CastorConfig
+  VALUES ('cleaning', 'terminatedRequestsTimeout', '120', 'Maximum timeout for successful and failed requests in hours');
+INSERT INTO CastorConfig
+  VALUES ('cleaning', 'outOfDateStageOutDCsTimeout', '72', 'Timeout for STAGEOUT diskCopies in hours');
+INSERT INTO CastorConfig
+  VALUES ('cleaning', 'failedDCsTimeout', '72', 'Timeout for failed diskCopies in hour');
