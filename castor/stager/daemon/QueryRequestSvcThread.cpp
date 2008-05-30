@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.81 $ $Release$ $Date: 2008/05/30 10:54:09 $ $Author: sponcec3 $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.82 $ $Release$ $Date: 2008/05/30 10:56:51 $ $Author: sponcec3 $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -748,8 +748,8 @@ void castor::stager::daemon::QueryRequestSvcThread::handleListPrivileges
       ((svcClass == 0) ? 0 : svcClass->id()) ;
     // call method
     std::vector<castor::bwlist::Privilege*> privList =
-      rhSvc->listPrivileges(svcClassId, uReq->user(),
-			    uReq->group(), uReq->requestType());
+      rhSvc->listPrivileges(svcClassId, uReq->userId(),
+			    uReq->groupId(), uReq->requestType());
     // fill reponse with white list part
     for (std::vector<castor::bwlist::Privilege*>::const_iterator it =
 	   privList.begin();
