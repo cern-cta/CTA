@@ -385,36 +385,37 @@ namespace castor {
         (const std::string name)
           throw (castor::exception::Exception);
 
-
 	/**
-         * select priority for recall  
-	 * @param uid
-         * @param gid
+         * Select priority for recall  
+	 * @param euid the userid of the user
+         * @param egid the groupid of the user
          * @return priority value
 	 * @exception in case of an error
          */
-
-        std::vector<castor::stager::PriorityMap*>  selectPriority(int  euid,int  egid, int priority)throw (castor::exception::Exception);
-
-	/**
-         * enter priority for recall  
-	 * @param uid
-         * @param gid
-         * @param priority value
-	 * @exception in case of an error
-         */
-
-        void  enterPriority(u_signed64 euid,u_signed64 egid,u_signed64 priority)throw (castor::exception::Exception);
+	std::vector<castor::stager::PriorityMap*>
+	selectPriority(int euid, int egid, int priority)
+	  throw (castor::exception::Exception);
 
 	/**
-         * delete priority for recall  
-	 * @param uid
-         * @param gid
+         * Enter priority for recall  
+	 * @param euid the userid of the user
+         * @param egid the groupid of the user
+         * @param priority  rating
 	 * @exception in case of an error
          */
-
-        void  deletePriority(int euid,int egid) throw (castor::exception::Exception);
-
+        void enterPriority(u_signed64 euid,
+			   u_signed64 egid,
+			   u_signed64 priority)
+	  throw (castor::exception::Exception);
+	
+	/**
+         * Delete priority for recall  
+	 * @param euid the userid of the user
+         * @param egid the groupid of the user
+	 * @exception in case of an error
+         */
+        void deletePriority(int euid, int egid)
+	  throw (castor::exception::Exception);
 
       private:
 
@@ -438,7 +439,6 @@ namespace castor {
 	 * if necessary.
          * @exception Exception in case of error
          */
-
         int createTapeCopySegmentsForRecall
         (castor::stager::CastorFile* castorFile, 
          unsigned long euid, 
@@ -573,13 +573,11 @@ namespace castor {
         /// SQL statement object for function enterPriority 
         oracle::occi::Statement *m_enterPriorityStatement;
 
-	
 	/// SQL statement to deleteTapePriority
         static const std::string s_deletePriorityStatementString;
 
         /// SQL statement object for function deletePriority 
         oracle::occi::Statement *m_deletePriorityStatement;
-
 
       }; // end of class OraStagerSvc
 

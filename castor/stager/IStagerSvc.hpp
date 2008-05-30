@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.95 $ $Release$ $Date: 2008/05/28 08:07:13 $ $Author: gtaur $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.96 $ $Release$ $Date: 2008/05/30 14:03:05 $ $Author: waldron $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -381,25 +381,37 @@ namespace castor {
       (const std::string name)
         throw (castor::exception::Exception) = 0;
 
-      /*
-       * To access the PriorityMap Table
+      /**
+       * Select priority for recall  
+       * @param euid the userid of the user
+       * @param egid the groupid of the user
+       * @return priority value
+       * @exception in case of an error
        */
-   
-      virtual std::vector<castor::stager::PriorityMap*> selectPriority(int  euid,int egid,int priority)throw (castor::exception::Exception)=0;
-
-
-      /* 
-       * To insert into the PriorityMap Table
+      virtual std::vector<castor::stager::PriorityMap*>
+      selectPriority(int euid, int egid, int priority)
+	throw (castor::exception::Exception) = 0;
+      
+      /**
+       * Enter priority for recall  
+       * @param euid the userid of the user
+       * @param egid the groupid of the user
+       * @param priority value
+       * @exception in case of an error
        */
-
-      virtual void  enterPriority(u_signed64  euid,u_signed64 egid,u_signed64 priority)throw (castor::exception::Exception)=0;	
-
-      /** 
-       * To delete from the PriorityMap table
-       **/
-
-      virtual void  deletePriority(int euid, int egid)throw (castor::exception::Exception)=0;
-
+      virtual void enterPriority(u_signed64 euid,
+				 u_signed64 egid,
+				 u_signed64 priority)
+	throw (castor::exception::Exception) = 0;
+      
+      /**
+       * Delete priority for recall  
+       * @param euid the userid of the user
+       * @param egid the groupid of the user
+       * @exception in case of an error
+       */
+      virtual void deletePriority(int euid, int egid)
+	throw (castor::exception::Exception) = 0;
 
     }; // end of class IStagerSvc
 
