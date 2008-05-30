@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IThread.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/07/09 17:03:32 $ $Author: itglp $
+ * @(#)$RCSfile: IThread.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/05/30 09:32:20 $ $Author: itglp $
  *
  * Abstract interface for the CASTOR multithread framework
  *
@@ -51,7 +51,9 @@ namespace castor {
 
     /**
      * Initialization of the thread.
-     * This method will be called when the thread is just spawned.
+     * This method will be called by each spawned threads at their startup;
+     * however for pools attached to a ListenerThreadPool, this method is
+     * called only once by the dispatcher thread.
      * @throw any exception thrown here is handled in the BaseThreadPool. 
      */
     virtual void init() = 0;
@@ -70,7 +72,10 @@ namespace castor {
     virtual void run(void *param) = 0;
     
     /**
-     * Convenience method to stop the thread.
+     * Stop of the thread. This method is called for each thread
+     * when the daemon is requested to terminate (e.g. upon SIGTERM).
+     * It may happen that the method is called more than once for the same
+     * thread as a result of different attempts to perform the shutdown.
      * It is up to the inherited classes to implement
      * the expected behaviour.
      */
