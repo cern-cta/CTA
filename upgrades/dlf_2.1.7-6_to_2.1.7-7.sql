@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dlf_2.1.7-6_to_2.1.7-7.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/27 15:36:00 $ $Author: waldron $
+ * @(#)$RCSfile: dlf_2.1.7-6_to_2.1.7-7.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/30 08:28:44 $ $Author: waldron $
  *
  * This script upgrades a CASTOR v2.1.7-6 DLF database to 2.1.7-7
  *
@@ -64,9 +64,18 @@ CREATE TABLE ProcessingTimeStats (timestamp DATE NOT NULL, interval NUMBER, daem
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 
+/* SQL statement for table dlf_config */
+CREATE TABLE dlf_config(name VARCHAR2(255) NOT NULL, value VARCHAR2(255), description VARCHAR2(255));
+ALTER TABLE dlf_config ADD CONSTRAINT i_config_name UNIQUE (name) ENABLE;
+
+/* Fill the dlf_config table */
+INSERT INTO dlf_config (name, value, description) VALUES ('instance', 'castordlf', 'The name of the castor2 instance');
+
+
 /* SQL statement for temporary table CacheEfficiencyHelper */
 CREATE GLOBAL TEMPORARY TABLE CacheEfficiencyHelper (reqid CHAR(36))
   ON COMMIT DELETE ROWS;
+
 
 /* SQL statement for table TapeMountsHelper */
 CREATE TABLE TapeMountsHelper (timestamp DATE NOT NULL, tapevid VARCHAR2(20))
