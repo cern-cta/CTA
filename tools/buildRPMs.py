@@ -22,7 +22,7 @@ for m in ['BUILD', 'RPMS', 'SOURCES', 'SPECS', 'SRPMS', 'RPMS/i386', 'RPMS/x86_6
 
 # build RPMs
 print 'Building RPMs for ' + targetOs + '/' + targetArch + ' ...'
-nbRpms = 54
+nbRpms = 52
 oraPath = '/afs/cern.ch/project/oracle/@sys/10203'
 nbRpms = nbRpms + 3  # gridftp2 ones
 basecmd = "ORACLE_HOME=" + oraPath + " LD_LIBRARY_PATH=" + oraPath + "/lib PATH=" + oraPath + "/bin:/usr/X11R6/bin:$PATH rpmbuild --define '_topdir " + workDir + "' --define '_specdir " + workDir + os.sep + "SPECS" + os.sep + "' --define '_sourcedir " + workDir + os.sep + "SOURCES" + os.sep + "' --define '_srcrpmdir " + workDir + os.sep + "SRPMS" + os.sep + "' --define '_rpmdir " + workDir + os.sep + "RPMS" + os.sep + "' --define '_buildroot " + workDir + os.sep + "BUILD" + os.sep + "' --define '_tmppath " + workDir + os.sep + "BUILD" + os.sep
