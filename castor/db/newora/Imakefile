@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.18 $ $Release$ $Date: 2007/12/03 10:51:34 $ $Author: murrayc3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.19 $ $Release$ $Date: 2008/05/30 08:22:23 $ $Author: itglp $
 #
 # Make Castor Oracle library for CDBC API
 #
@@ -47,7 +47,6 @@ ORALIB_SRCS = OraCnvSvc.cpp \
             ../ora/OraJobSvc.cpp \
             ../ora/OraGCSvc.cpp \
             ../ora/OraQuerySvc.cpp \
-            ../ora/OraCleanSvc.cpp \
             DLFInit.cpp
 
 ORALIB_OBJS = $(ORALIB_SRCS:.cpp=.Osuf)

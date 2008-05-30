@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/03/25 14:35:41 $ $Author: itglp $
+ * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/05/30 08:21:45 $ $Author: itglp $
  *
  *
  *
@@ -501,3 +501,28 @@ std::vector<u_signed64> castor::stager::RemoteGCSvc::stgFilesDeleted
   // was transmitted to req and the deletion of req will delete it !
   return result;
 }
+
+// -----------------------------------------------------------------------
+// dumpCleanupLogs
+// -----------------------------------------------------------------------
+void castor::stager::RemoteGCSvc::dumpCleanupLogs()
+  throw (castor::exception::Exception) {
+  castor::exception::NotSupported ex;
+  ex.getMessage()
+    << "RemoteGCSvc implementation is not complete"
+    << std::endl << "This method is not supported.";
+  throw ex;
+}
+    
+// -----------------------------------------------------------------------
+// removeTerminatedRequests
+// -----------------------------------------------------------------------
+void castor::stager::RemoteGCSvc::removeTerminatedRequests()
+  throw (castor::exception::Exception) {
+  castor::exception::NotSupported ex;
+  ex.getMessage()
+    << "RemoteGCSvc implementation is not complete"
+    << std::endl << "This method is not supported.";
+  throw ex;
+}
+

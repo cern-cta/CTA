@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2008/03/18 07:12:54 $ $Author: waldron $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2008/05/30 08:21:48 $ $Author: itglp $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -123,6 +123,19 @@ const std::string castor::db::ora::OraGCSvc::s_nsFilesDeletedStatementString =
 const std::string castor::db::ora::OraGCSvc::s_stgFilesDeletedStatementString =
   "BEGIN stgFilesDeletedProc(:1, :2); END;";
 
+/// SQL statements for function dumpCleanupLogs
+const std::string castor::db::ora::OraGCSvc::s_dumpCleanupLogsString =
+  "BEGIN dumpCleanupLogs(:1); END;";
+
+const std::string castor::db::ora::OraGCSvc::s_truncateCleanupLogsString =
+  "DELETE FROM CleanupJobLog";
+  // here a TRUNCATE statement won't work because we locked the table
+
+/// SQL statement for function removeTerminatedRequests
+const std::string castor::db::ora::OraGCSvc::s_removeTerminatedRequestsString =
+  "BEGIN removeTerminatedRequests(); END;";
+
+
 //------------------------------------------------------------------------------
 // OraGCSvc
 //------------------------------------------------------------------------------
@@ -133,8 +146,10 @@ castor::db::ora::OraGCSvc::OraGCSvc(const std::string name) :
   m_filesDeletedTruncateStatement(0),
   m_filesDeletionFailedStatement(0),
   m_nsFilesDeletedStatement(0),
-  m_stgFilesDeletedStatement(0){
-}
+  m_stgFilesDeletedStatement(0),
+  m_dumpCleanupLogsStatement(0),
+  m_truncateCleanupLogsStatement(0),
+  m_removeTerminatedRequestsStatement(0) {}
 
 //------------------------------------------------------------------------------
 // ~OraGCSvc
@@ -171,6 +186,9 @@ void castor::db::ora::OraGCSvc::reset() throw() {
     if (m_filesDeletionFailedStatement) deleteStatement(m_filesDeletionFailedStatement);
     if (m_nsFilesDeletedStatement) deleteStatement(m_nsFilesDeletedStatement);
     if (m_stgFilesDeletedStatement) deleteStatement(m_stgFilesDeletedStatement);
+    if (m_dumpCleanupLogsStatement) deleteStatement(m_dumpCleanupLogsStatement);
+    if (m_truncateCleanupLogsStatement) deleteStatement(m_truncateCleanupLogsStatement);
+    if (m_removeTerminatedRequestsStatement) deleteStatement(m_removeTerminatedRequestsStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_selectFiles2DeleteStatement = 0;
@@ -179,6 +197,9 @@ void castor::db::ora::OraGCSvc::reset() throw() {
   m_filesDeletionFailedStatement = 0;
   m_nsFilesDeletedStatement = 0;
   m_stgFilesDeletedStatement = 0;
+  m_dumpCleanupLogsStatement = 0;
+  m_truncateCleanupLogsStatement = 0;
+  m_removeTerminatedRequestsStatement = 0;  
 }
 
 //------------------------------------------------------------------------------
@@ -598,4 +619,97 @@ std::vector<u_signed64> castor::db::ora::OraGCSvc::stgFilesDeleted
     if (0 != buffer) free(buffer);
   }
   return orphans;
+}
+
+
+// -----------------------------------------------------------------------
+// dumpCleanupLogs
+// -----------------------------------------------------------------------
+void castor::db::ora::OraGCSvc::dumpCleanupLogs()
+  throw (castor::exception::Exception) {
+  try {
+    if (0 == m_dumpCleanupLogsStatement) {
+      m_dumpCleanupLogsStatement = createStatement(s_dumpCleanupLogsString);
+      m_dumpCleanupLogsStatement->registerOutParam(1, oracle::occi::OCCICURSOR);
+      m_truncateCleanupLogsStatement = createStatement(s_truncateCleanupLogsString);
+      m_truncateCleanupLogsStatement->setAutoCommit(true);
+    }
+    // execute the statement
+    unsigned int nb = m_dumpCleanupLogsStatement->executeUpdate();
+    if (nb == 0) {
+      rollback();
+      castor::exception::NoEntry e;
+      e.getMessage() << "dumpCleanupLogs function not found";
+      throw e;
+    }
+    try {
+      // Run through the files that were dropped
+      struct Cns_fileid fileid;
+      memset(&fileid, '\0', sizeof(Cns_fileid));
+      oracle::occi::ResultSet *rs =
+        m_dumpCleanupLogsStatement->getCursor(1);
+      oracle::occi::ResultSet::Status status = rs->next();
+      while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+        // Just log it
+        fileid.fileid = (u_signed64)rs->getDouble(1);
+        strncpy(fileid.server, rs->getString(2).c_str(), CA_MAXHOSTNAMELEN);
+        int op = rs->getInt(3);
+        // "File was dropped by internal cleaning" or "Put Done enforced by internal cleaning"
+        if(op == 0 || op == 1) {
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
+            DLF_BASE_ORACLELIB + 12 + op, 0, 0, &fileid);
+        }
+        status = rs->next();
+      }
+      m_dumpCleanupLogsStatement->closeResultSet(rs);
+      // Now truncate the log table and commit. Note that we're sure
+      // no one else could have picked up data from this table
+      // as the previous statement took a table lock.
+      m_truncateCleanupLogsStatement->executeUpdate();
+    } catch (oracle::occi::SQLException e) {
+      handleException(e);
+      if (e.getErrorCode() != 24338) {
+        // if not "statement handle not executed"
+        // it's really wrong, else, it's normal
+        throw e;
+      }
+    }
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage() << "Oracle exception caught: " << e.what();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// removeTerminatedRequests
+// -----------------------------------------------------------------------
+void castor::db::ora::OraGCSvc::removeTerminatedRequests()
+  throw (castor::exception::Exception) {
+  try {
+    if (0 == m_removeTerminatedRequestsStatement) {
+      m_removeTerminatedRequestsStatement =
+        createStatement(s_removeTerminatedRequestsString);
+      m_removeTerminatedRequestsStatement->setAutoCommit(true);
+    }
+    // execute the statement
+    unsigned int nb = m_removeTerminatedRequestsStatement->executeUpdate();
+    if (nb == 0) {
+      rollback();
+      castor::exception::NoEntry e;
+      e.getMessage() << "deleteTerminatedRequests function not found";
+      throw e;
+    }
+    // "Cleaning of archived requests done"
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, DLF_BASE_ORACLELIB + 3);
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    // "Cleaning of archived requests failed"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param(castor::dlf::Param("message",e.getMessage()))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_ORACLELIB + 6, 1, params);
+    throw ex;
+  }
 }

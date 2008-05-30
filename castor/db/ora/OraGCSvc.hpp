@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/03/18 07:12:54 $ $Author: waldron $
+ * @(#)$RCSfile: OraGCSvc.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/05/30 08:22:54 $ $Author: itglp $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -117,7 +117,7 @@ namespace castor {
          */
         virtual void filesDeletionFailed
         (std::vector<u_signed64*>& diskCopyIds)
-	  throw (castor::exception::Exception);
+          throw (castor::exception::Exception);
 
         /**
          * Handles a set of files that were deleted from
@@ -132,16 +132,30 @@ namespace castor {
         (std::vector<u_signed64> &fileIds,
          std::string nsHost) throw();
 
-	/**
-	 * Find the files which are not anymore in the Stager
-	 * @param diskCopyIds a list of diskcopy ids to be checked
-	 * @param nsHost the nameserver in which they reside
-	 * @return the list of diskcopy ids that were not found in the stager
-	 */
-	virtual std::vector<u_signed64> stgFilesDeleted
-	(std::vector<u_signed64> &diskCopyIds,
+        /**
+         * Find the files which are not anymore in the Stager
+         * @param diskCopyIds a list of diskcopy ids to be checked
+         * @param nsHost the nameserver in which they reside
+         * @return the list of diskcopy ids that were not found in the stager
+         */
+        virtual std::vector<u_signed64> stgFilesDeleted
+        (std::vector<u_signed64> &diskCopyIds,
          std::string nsHost) throw();
 	
+        /**
+         * Dumps the current log table produced by the cleaning db job.
+         * The content is logged in DLF and then deleted.
+         */
+        virtual void dumpCleanupLogs()
+          throw (castor::exception::Exception);
+
+        /**
+         * Removes requests older than a given timeout.
+         * The timeout is retrieved from the configuration table in the db
+         */
+        virtual void removeTerminatedRequests()
+          throw (castor::exception::Exception);
+
       private:
 
         /// SQL statement for function selectFiles2Delete
@@ -174,13 +188,27 @@ namespace castor {
         /// SQL statement object for function nsFilesDeleted
         oracle::occi::Statement *m_nsFilesDeletedStatement;
 
-	/// SQL statement object for function stgFilesDeleted
-	oracle::occi::Statement *m_stgFilesDeletedStatement;
+        /// SQL statement object for function stgFilesDeleted
+        oracle::occi::Statement *m_stgFilesDeletedStatement;
+        
+        /// SQL statement for function stgFilesDeleted
+        static const std::string s_stgFilesDeletedStatementString;
 	
-	/// SQL statement for function stgFilesDeleted
-	static const std::string s_stgFilesDeletedStatementString;
-	
-      }; // end of class OraGCSvc
+        /// SQL statement for dumpCleanupLogs function
+        static const std::string s_dumpCleanupLogsString;
+        static const std::string s_truncateCleanupLogsString;
+
+        /// SQL statement object for dumpCleanupLogs function
+        oracle::occi::Statement *m_dumpCleanupLogsStatement;
+        oracle::occi::Statement *m_truncateCleanupLogsStatement;
+
+        /// SQL statement for removeTerminatedRequests function
+        static const std::string s_removeTerminatedRequestsString;
+
+        /// SQL statement object for removeTerminatedRequests function
+        oracle::occi::Statement *m_removeTerminatedRequestsStatement;
+        
+     }; // end of class OraGCSvc
 
     } // end of namespace ora
 

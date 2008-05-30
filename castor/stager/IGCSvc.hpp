@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IGCSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/03/18 07:12:54 $ $Author: waldron $
+ * @(#)$RCSfile: IGCSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/05/30 08:21:43 $ $Author: itglp $
  *
  * This class provides stager methods related to Garbage Collection
  *
@@ -118,6 +118,22 @@ namespace castor {
       virtual std::vector<u_signed64> stgFilesDeleted
       (std::vector<u_signed64> &diskCopyIds,
        std::string nsHost) throw() = 0;
+       
+      // Formerly in the Cleaning service
+      
+      /**
+       * Removes requests older than a given timeout.
+       * The timeout is retrieved from the configuration table in the db
+       */
+      virtual void removeTerminatedRequests()
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Dumps the current log table produced by the cleaning db job.
+       * The content is logged in DLF and then deleted.
+       */
+      virtual void dumpCleanupLogs()
+        throw (castor::exception::Exception) = 0;
       
     }; // end of class IGCSvc
 

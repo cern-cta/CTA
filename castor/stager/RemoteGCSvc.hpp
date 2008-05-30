@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteGCSvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/03/31 10:29:21 $ $Author: itglp $
+ * @(#)$RCSfile: RemoteGCSvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/05/30 08:21:45 $ $Author: itglp $
  *
  *
  *
@@ -114,6 +114,43 @@ namespace castor {
       (std::vector<u_signed64*>& diskCopyIds)
         throw (castor::exception::Exception);
 
+      /**
+       * Handles a set of files that were deleted from
+       * a nameServer but may still be in the stager.
+       * Proper cleaning will be done both of the diskServers
+       * where copies of these files exist and of the stager DB
+       * @param fileIds the set of files, given by fileids
+       * @param nsHost the nameserver in which they reside
+       * @return the list of fileIds that were not found in the stager
+       */
+      virtual std::vector<u_signed64> nsFilesDeleted
+      (std::vector<u_signed64> &fileIds,
+       std::string nsHost) throw();
+
+      /**
+       * Find the files which are not anymore in the Stager
+       * @param diskCopyIds a list of diskcopy ids to be checked
+       * @param nsHost the nameserver in which they reside
+       * @return the list of diskcopy ids that were not found in the stager
+       */
+      virtual std::vector<u_signed64> stgFilesDeleted
+      (std::vector<u_signed64> &diskCopyIds,
+       std::string nsHost) throw();
+
+      /**
+       * Dumps the current log table produced by the cleaning db job.
+       * The content is logged in DLF and then deleted.
+       */
+      virtual void dumpCleanupLogs()
+        throw (castor::exception::Exception);
+
+      /**
+       * Removes requests older than a given timeout, taken
+       * from the configuration table in the db
+       */
+      virtual void removeTerminatedRequests()
+        throw (castor::exception::Exception);
+
 
       /////// ICommonSvc part (not implemented)
 
@@ -181,29 +218,6 @@ namespace castor {
        */
       virtual castor::stager::Request* requestToDo(std::string service)
         throw (castor::exception::Exception);
-
-      /**
-       * Handles a set of files that were deleted from
-       * a nameServer but may still be in the stager.
-       * Proper cleaning will be done both of the diskServers
-       * where copies of these files exist and of the stager DB
-       * @param fileIds the set of files, given by fileids
-       * @param nsHost the nameserver in which they reside
-       * @return the list of fileIds that were not found in the stager
-       */
-      virtual std::vector<u_signed64> nsFilesDeleted
-      (std::vector<u_signed64> &fileIds,
-       std::string nsHost) throw();
-
-      /**
-       * Find the files which are not anymore in the Stager
-       * @param diskCopyIds a list of diskcopy ids to be checked
-       * @param nsHost the nameserver in which they reside
-       * @return the list of diskcopy ids that were not found in the stager
-       */
-      virtual std::vector<u_signed64> stgFilesDeleted
-      (std::vector<u_signed64> &diskCopyIds,
-       std::string nsHost) throw();
 
     protected:
       
