@@ -35,6 +35,7 @@
 #include <memory>
 #include <string>
 #include <string.h>
+#include <time.h>
 
 
 const std::string VDQMSCHEMAVERSION = "2_1_7_4";
@@ -184,29 +185,41 @@ castor::vdqm::IVdqmSvc *retrieveVdqmSvc() {
 
 void printRequestList(castor::vdqm::IVdqmSvc::VolRequestList &requests,
   const bool displayColumnHeadings) {
-    if(displayColumnHeadings) {
-      std::cout << "REQID\tDGN\tVID\tMODE\tPRIORITY" << std::endl;
-    }
+  time_t t = 0;
+  struct tm *tp = NULL;
+  char strftime_format[] = "%b %d %H:%M:%S";
+  char timestr[64]; // Time in its ASCII format
 
-    for(castor::vdqm::IVdqmSvc::VolRequestList::iterator itor =
-      requests.begin(); itor != requests.end(); itor++) {
-      std::cout << (*itor)->id     << "\t";
-      std::cout << (*itor)->dgName << "\t";
-      std::cout << (*itor)->vid    << "\t";
-      switch((*itor)->accessMode) {
-      case 0: // read
-        std::cout << "read";
-        break;
-      case 1: // write
-        std::cout << "write";
-        break;
-      default:
-        std::cout << "UNKNOWN";
-      }
-      std::cout << "\t";
-      std::cout << (*itor)->volumePriority;
-      std::cout << std::endl;
+
+  if(displayColumnHeadings) {
+    std::cout << "REQID\tDGN\tVID\tMODE\tCREATED\t\tPRIORITY" << std::endl;
+  }
+
+  for(castor::vdqm::IVdqmSvc::VolRequestList::iterator itor =
+    requests.begin(); itor != requests.end(); itor++) {
+    std::cout << (*itor)->id     << "\t";
+    std::cout << (*itor)->dgName << "\t";
+    std::cout << (*itor)->vid    << "\t";
+    switch((*itor)->accessMode) {
+    case 0: // read
+      std::cout << "read";
+      break;
+    case 1: // write
+      std::cout << "write";
+      break;
+    default:
+      std::cout << "UNKNOWN";
     }
+    std::cout << "\t";
+    t = (*itor)->creationTime;
+    tp = localtime(&t);
+    strftime(timestr,sizeof(timestr),strftime_format, tp);
+    timestr[sizeof(timestr)-1] = '\0';
+    std::cout << timestr;
+    std::cout << "\t";
+    std::cout << (*itor)->volumePriority;
+    std::cout << std::endl;
+  }
 }
 
 
