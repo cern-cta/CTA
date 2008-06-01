@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.23 2006/08/02 13:45:15 obarring Exp $
+ * $Id: rfio_serv.c,v 1.24 2008/06/01 22:21:22 dhsmith Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.23 $ $Date: 2006/08/02 13:45:15 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.24 $ $Date: 2008/06/01 22:21:22 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 /* rfio_serv.c  SHIFT remote file access super server                   */
@@ -1435,7 +1435,7 @@ char tmpbuf[21], tmpbuf2[21];
             break;
          case RQST_READLINK:
             log(LOG_DEBUG, "request type <readlink()>\n");
-            status = srreadlink(s) ;
+            status = srreadlink(s,from_host,is_remote) ;
 #if defined(HPSS)
             log(LOG_DEBUG, "srreadlink() returned %d\n", status) ;
             return(rhpss_cleanup(s,&fd,dirp,0));

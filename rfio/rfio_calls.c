@@ -56,6 +56,7 @@ static char sccsid[] = "@(#)rfio_calls.c,v 1.3 2004/03/22 12:11:24 CERN/IT/PDP/D
 #include "log.h"
 #include "u64subr.h"
 #include "Castor_limits.h"
+#include "getconfent.h"
 
 #if defined(_AIX) && defined(_IBMR2)
 #include <sys/select.h>
@@ -289,6 +290,477 @@ extern void *handler_context;
 #endif   /* WIN32 */
 #endif /* HPSS */
 
+const char *rfio_all_perms[] = { "FTRUST", "WTRUST", "RTRUST", "XTRUST", "OPENTRUST", "STATTRUST", 
+                                 "POPENTRUST", "LINKTRUST", "CHMODTRUST", "CHOWNTRUST", "MKDIRTRUST",
+                                 "RMDIRTRUST", "RENAMETRUST", NULL };
+
+/* free elements in a NULL terminated array of character pointers
+ * and the array itself
+ */
+static int l_free_strlist(pathelements)
+char **pathelements;
+{
+  int n = 0;
+
+  if (pathelements == NULL) {
+    errno = EFAULT; return -1;
+  }
+
+  while(pathelements[n] != NULL) {
+    free(pathelements[n]);
+    ++n;
+  }
+
+  free(pathelements);
+  return 0;
+}
+
+
+/* array of file path elements to
+ * a path string.
+ * pathelements: array of character pointers of the elements
+ * type: 0 for unix style, 1 for windows style
+ * prefix: prefix for the path, used for windows style drive or hostname
+ */
+static char *l_path_elements_to_path(pathelements, type, prefix)
+const char **pathelements;
+int type;
+const char *prefix;
+{
+  size_t len;
+  int n;
+  char *result;
+  const char *separator;
+
+  if (pathelements == NULL) {
+    errno = EFAULT; return NULL;
+  }
+
+  n = 0; len = 0;
+  while(pathelements[n] != NULL) {
+    len += strlen(pathelements[n])+1;
+    ++n;
+  }
+  if (len==0) len=1;
+  if (prefix != NULL) len += strlen(prefix);
+
+  switch(type) {
+    case 0:
+      separator = "/";
+      break;
+    default:
+      separator = "\\";
+      break;
+  }
+  
+  result = (char*)malloc(len+1);
+  if (result == NULL) return NULL;
+  *result = '\0';
+  if (prefix != NULL) strcat(result, prefix);
+
+  n=0;
+  while(pathelements[n] != NULL) {
+    strcat(result,separator);
+    strcat(result, pathelements[n]);
+    ++n;
+  }
+  if (n==0) strcat(result,separator);
+
+  return result;
+}
+
+/* create a canonical representation of a path
+ * used in order to compare paths for path white listing.
+ * Similar to realpath() functionality, but without the
+ * PATH_MAX dependency and some provision for windows paths
+ * and avoiding some portability problems with realpath()
+ */
+static char **l_canonicalize_path(inpath,sym_depth,effective_cwd,path_typep,prefixp)
+const char *inpath;
+int sym_depth;
+const char *effective_cwd;
+int *path_typep;
+char **prefixp;
+{
+   char buffer[4096];
+   const char *delineators;
+   char *cp;
+   char **elements = NULL;
+   int n;
+   char *ptr = NULL;
+   char **result = NULL;
+   int save_errno;
+
+   if (inpath == NULL) {
+     errno = EFAULT; goto error;
+   }
+
+   if (*inpath == '\0') {
+     errno = ENOENT; goto error;
+   }
+
+   if (sym_depth>8) {
+     errno = ELOOP; goto error;
+   }
+
+   if (prefixp == NULL) {
+     errno = EINVAL; goto error;
+   }
+
+   if (path_typep == NULL) {
+     errno = EINVAL; goto error;
+   }
+
+   if (*prefixp != NULL) {
+     free(*prefixp);
+     *prefixp = NULL;
+   }
+
+   /* set path_type and prefix */
+#ifdef _WIN32
+   *path_typep=1;
+   if (inpath[0] == '\\' && inpath[1] == '\\') {
+     const char *p = strstr(&inpath[2],"\\");
+     size_t prefixlen;
+     if (p==NULL) {
+       errno = ENOENT;
+       goto error;
+     }
+     prefixlen = p-inpath;
+     *prefixp = (char*)malloc(prefixlen+1);
+     if (*prefixp == NULL) goto error;
+     memcpy(*prefixp, inpath, prefixlen);
+     (*prefixp)[prefixlen] = '\0';
+     inpath += prefixlen;
+   } else if (inpath[0] != '\0' && inpath[1] == ':' && inpath[2] == '\\') {
+     *prefixp=(char*)malloc(3);
+     if (*prefixp == NULL) goto error;
+     memcpy(*prefixp, inpath, 2);
+     (*prefixp)[2] = '\0';
+     inpath += 2;
+   } else if (inpath[0] != '\\') {
+     /* not an absolute path like \path,
+        may be a relative path, but its not handled at the moment and will give an error
+     */
+     errno = ENOENT;
+     goto error;
+   }
+#else
+   *path_typep = 0;
+   *prefixp = NULL;
+#endif
+
+#ifndef _WIN32
+   if (*inpath != '/') {
+     if (effective_cwd != NULL) {
+       if (strlen(effective_cwd)>=sizeof(buffer)) {
+         errno = ENAMETOOLONG;
+         goto error;
+       } else {
+         strcpy(buffer, effective_cwd);
+       }
+     } else {
+       if (getcwd(buffer, sizeof(buffer))==NULL) goto error;
+     }
+
+     if (*buffer != '/') {
+       errno = EINVAL; goto error;
+     }
+
+     ptr = (char*)malloc(strlen(buffer)+1+strlen(inpath)+1);
+     if (ptr == NULL) goto error;
+
+     strcpy(ptr, buffer);
+     strcat(ptr, "/");
+     strcat(ptr, inpath);
+     
+     result = l_canonicalize_path(ptr,sym_depth,buffer,path_typep,prefixp);
+     goto success;
+   }
+#endif
+
+   elements = (char**)calloc(strlen(inpath), sizeof(char *));
+   if (elements == NULL) goto error;
+
+   ptr = (char*)malloc(strlen(inpath)+1);
+   if (ptr == NULL) goto error;
+   strcpy(ptr, inpath);
+
+   if (*path_typep == 0) delineators = "/";
+   else delineators = "\\";
+
+   for (n=0,cp=strtok(ptr,delineators);cp!=NULL;cp=strtok(NULL,delineators)) {
+     if (!strcmp(cp,".")) continue;
+     if (!strcmp(cp,"..")) {
+       if (n>0) {
+         free(elements[--n]);
+         elements[n] = NULL;
+       }
+       continue;
+     }
+     elements[n++] = strdup(cp);
+   }
+   free(ptr); ptr=NULL;
+
+   /* check through for symbolic links */
+   n=0;
+   do {
+     char *ptr2,**e2;
+     int rc,count,count2,n2;
+
+     cp = elements[n];
+     elements[n] = NULL;
+
+     ptr2 = l_path_elements_to_path(elements, *path_typep, *prefixp);
+     elements[n] = cp;
+
+     if (ptr2 == NULL) goto error;
+
+     rc = readlink(ptr2, buffer, sizeof(buffer));
+     if (n==0 || rc<0) {
+       if (ptr != NULL) free(ptr);
+       ptr = ptr2;
+       ++n;
+       continue;
+     }
+     free(ptr2);
+
+     result = l_canonicalize_path(buffer, sym_depth+1, ptr, path_typep, prefixp);
+     if (result == NULL) goto error;
+
+     free(ptr); ptr = NULL;
+
+     count=0; while(result[count] != NULL) ++count;
+     count2=0; while(elements[n+count2] != NULL) ++count2;
+
+     e2 = (char**)realloc(result, sizeof(char*)*(count+count2+1));
+     if (e2 == NULL) goto error;
+     result = e2;
+
+     for(n2=0;n2<count2;n2++) {
+       result[count+n2] = elements[n+n2];
+       elements[n+n2] = NULL;
+     }
+     result[count+count2] = NULL;
+     l_free_strlist(elements);
+
+     elements = result; result = NULL;
+     n = 0; cp = elements[0];
+   } while(cp != NULL);
+
+   result = elements;
+   elements = NULL;
+
+success:
+   if (ptr != NULL) free(ptr);
+   if (elements != NULL) l_free_strlist(elements);
+   return result;
+
+error:
+   save_errno = errno;
+   if (ptr!=NULL) free(ptr);
+   if (elements!=NULL) l_free_strlist(elements);
+   if (result!=NULL) l_free_strlist(result);
+   if (prefixp != NULL && *prefixp != NULL) free(*prefixp);
+   errno = save_errno;
+   return NULL;
+}
+
+/* return the canonical path as string rather than elements
+ * outpath: if set is filled with a pointer to the canonical path
+ * 
+ * the following are equivalent to the canonical path
+ * outtype: if set is filled with the classification type of the path
+ * outprefix: if set is filled with the path prefix
+ * outelements: if set is set to an array of pointers to the path elements
+ */
+static int rfio_canonicalize_path(inpath,outpath,outtype,outprefix,outelements)
+const char *inpath;
+char **outpath;
+int *outtype;
+char **outprefix;
+char ***outelements;
+{
+  char *result_path;
+  char **elements;
+  int p_type;
+  char *prefix=NULL;
+
+  if (outelements != NULL) *outelements = NULL;
+  if (outpath != NULL) *outpath = NULL;
+  if (outprefix != NULL) *outprefix = NULL;
+
+  elements = l_canonicalize_path(inpath, 0, NULL, &p_type, &prefix);
+  if (elements==NULL) return -1;
+  result_path = l_path_elements_to_path(elements, p_type, prefix);
+
+  /* makes it easier to compare the prefixes */
+  if (prefix == NULL) prefix=strdup("");
+
+  if (result_path == NULL || prefix == NULL) {
+    l_free_strlist(elements);
+    if (prefix != NULL) free(prefix);
+    if (result_path != NULL) free(result_path);
+    return -1;
+  }
+
+  if (outelements != NULL) {
+    *outelements = elements;
+  } else {
+    l_free_strlist(elements);
+  }
+
+  if (outpath != NULL) {
+    *outpath = result_path;
+  } else {
+    free(result_path);
+  }
+
+  if (outprefix != NULL) {
+    *outprefix = prefix;
+  } else {
+    if (prefix != NULL) free(prefix);
+  }
+
+  if (outtype != NULL) {
+    *outtype = p_type;
+  }
+
+  return 0;
+}
+
+/* perform path whitelist logic, including checking of
+ * hostname for possible whitelist bypass
+ */
+int check_path_whitelist(hostname,path,rfiod_permstrs)
+const char *hostname;
+const char *path;
+const char **rfiod_permstrs;
+{
+   int found = 0;
+   int n;
+   int save_errno = errno;
+   char **test_path_elements;
+   char *test_path_prefix;
+   int test_path_type;
+   char hostname1[MAXHOSTNAMELEN];
+   char **white_list = NULL, **additional = NULL;
+   int count = 0, count2 = 0;
+
+   if (path == NULL || (hostname == NULL && rfiod_permstrs != NULL)) {
+     log(LOG_ERR, "check_path_whitelist: Invalid host or path, disallowing access\n");
+     errno = EFAULT;
+     return -1;
+   }
+
+   if (rfiod_permstrs != NULL) {
+     const char *permstr, *cp;
+     char *p = NULL;
+     for(n = 0; !found && (permstr = rfiod_permstrs[n]) != NULL; ++n) {
+       if ( (cp=getconfent("RFIOD", permstr, 1)) != NULL ) {
+         p = (char*)malloc(strlen(cp)+1);
+         strcpy(p, cp);
+         for (cp=strtok(p,"\t ");cp!=NULL;cp=strtok(NULL,"\t ")) {
+           if ( !strcmp(hostname,cp) ) {
+             found ++ ;
+             break ;
+           }
+           sprintf(hostname1,"%s.%s",cp,DOMAINNAME);
+           if ( !strcmp(hostname1,hostname) ) {
+             found ++ ;
+             break ;
+           }
+         }
+       }
+     }
+     if (p != NULL) free(p);
+   }
+
+   if (found) {
+     errno = save_errno;
+     return 0;
+   }
+
+   if (rfio_canonicalize_path(path,NULL,&test_path_type,&test_path_prefix,&test_path_elements)<0) {
+     log(LOG_ERR, "check_path_whitelist: Could not canonicalize the path in the request (%s), disallowing access\n", path);
+     /* keep errno from rfio_canonicalize_path() */
+     return -1;
+   }
+
+   if (getconfent_multi("RmNode", "MountPoints", 1, &white_list, &count)<0) {
+     white_list = NULL; count = 0;
+   } else if (count==0) {
+     l_free_strlist(white_list); white_list = NULL;
+   }
+
+   if (getconfent_multi("RFIOD", "PathWhiteList", 1, &additional, &count2)<0) {
+     additional = NULL; count2 = 0;
+   } else if (count2==0) {
+     l_free_strlist(additional); additional = NULL;
+   }
+
+   if (count2>0) {
+     if (count==0) {
+       count = count2;
+       white_list = additional;
+     } else {
+       char **p = (char**)realloc(white_list, sizeof(char *) * (count+count2+1));
+       if (p == NULL) {
+         save_errno = errno;
+         l_free_strlist(white_list);
+         l_free_strlist(additional);
+         l_free_strlist(test_path_elements);
+         if (test_path_prefix != NULL) free(test_path_prefix);
+         log(LOG_ERR, "check_path_whitelist: Problem making the white list, disallowing access\n");
+         errno = save_errno;
+         return -1;
+       }
+       white_list = p;
+       for(n=0;n<count2;++n) {
+         white_list[count+n] = additional[n];
+         additional[n] = NULL;
+       }
+       white_list[count+count2] = NULL;
+       count += count2;
+       l_free_strlist(additional);
+     }
+     additional = NULL;
+   }
+
+   for(n=0;!found && n<count;++n) {
+     int i,match=1;
+     char **p_elem,*p_prefix;
+     int p_type;
+     if (!rfio_canonicalize_path(white_list[n],NULL,&p_type,&p_prefix,&p_elem)) {
+       if (p_type == test_path_type && !strcmp(p_prefix,test_path_prefix)) {
+         for(i=0;1;i++) {
+           if (p_elem[i] == NULL) break;
+           if (test_path_elements[i] == NULL || strcmp(p_elem[i], test_path_elements[i])) {
+             match = 0;
+             break;
+           }
+         }
+         if (match) { found=1; }
+       }
+       l_free_strlist(p_elem);
+       free(p_prefix);
+     }
+   }
+     
+   l_free_strlist(white_list);
+   l_free_strlist(test_path_elements);
+   free(test_path_prefix);
+
+   if (!found) {
+     log(LOG_ERR, "check_path_whitelist: Could not match path %s to white list\n", path);
+     errno = EACCES;
+     return -1;
+   }
+
+   errno = save_errno;
+   return 0;
+}
+
 /************************************************************************/
 /*                                                                      */
 /*                              IO HANDLERS                             */
@@ -489,16 +961,23 @@ char *host; /* Where the request comes from */
          log(LOG_ERR,"srsymlink(): failed, rcode = %d\n",rcode);
      }
      if ( status == 0 ) {
-       if (name1[0]=='\0') {
-         status = unlink(name2) ;
-         rcode = (status < 0 ? errno: 0) ;
-         log(LOG_INFO ,"runlink(): unlink(%s) returned %d, rcode=%d\n",name2,status,rcode);
-       }
-       else {
-         log(LOG_INFO, "unlink for (%d, %d)\n",getuid(), getgid()) ;
-         status = symlink( name1, name2 ) ;
-         rcode = (status < 0 ? errno: 0) ;
-         log(LOG_INFO ,"rsymlink(): symlink(%s,%s) returned %d,rcode=%d\n",name1, name2, status,rcode ) ;
+       const char *perm_array[] = { "WTRUST", "LINKTRUST", NULL };
+       if ((name1[0]=='\0' || !check_path_whitelist(host, name1, perm_array)) &&
+                              !check_path_whitelist(host, name2, perm_array)) {
+         if (name1[0]=='\0') {
+           status = unlink(name2) ;
+           rcode = (status < 0 ? errno: 0) ;
+           log(LOG_INFO ,"runlink(): unlink(%s) returned %d, rcode=%d\n",name2,status,rcode);
+         }
+         else {
+           log(LOG_INFO, "symlink for (%d, %d)\n",getuid(), getgid()) ;
+           status = symlink( name1, name2 ) ;
+           rcode = (status < 0 ? errno: 0) ;
+           log(LOG_INFO ,"rsymlink(): symlink(%s,%s) returned %d,rcode=%d\n",name1, name2, status,rcode ) ;
+         }
+       } else {
+         status = -1;
+         rcode = errno;
        }
      }
    }
@@ -521,9 +1000,10 @@ char *host; /* Where the request comes from */
 }
 
 
-int srreadlink(s)
+int srreadlink(s,host,rt)
 int s ;
-
+char *host ;
+int rt ;
 {
    char * p        ;
    int status=0    ;
@@ -568,7 +1048,11 @@ int s ;
      
      log(LOG_INFO,"srreadlink() : Solving %s\n",path);
      if (status == 0) {
-       rcode = readlink( path, lpath, MAXFILENAMSIZE) ;
+       const char *perm_array[] = { "RTRUST", NULL };
+       rcode = -1;
+       if (!check_path_whitelist(host, path, perm_array)) {
+         rcode = readlink( path, lpath, MAXFILENAMSIZE) ;
+       }
        if (rcode < 0) {
          lpath[0]='\0' ;
          status = -1 ;
@@ -649,10 +1133,16 @@ int rt ;
        unmarshall_WORD(p,group);
        log(LOG_INFO,"rchown: filename: %s, uid: %d ,gid: %d\n",filename,owner,group);
        if (status == 0 ) {
-         if ( (status =  chown(filename,owner,group)) < 0 ) 
-           rcode = errno ;
-         else
-           status = 0 ;
+         const char *perm_array[] = { "WTRUST", "CHOWNTRUST", NULL };
+         if (!check_path_whitelist(host, filename, perm_array)) {
+           if ( (status =  chown(filename,owner,group)) < 0 ) 
+             rcode = errno ;
+           else
+             status = 0 ;
+         } else {
+           status = -1;
+           rcode = errno;
+         }
        }
      }
    }
@@ -736,10 +1226,16 @@ int rt ;
        unmarshall_LONG(p, mode) ;
        log(LOG_INFO,"chmod: filename: %s, mode: %o\n", filename, mode) ;
        if (status == 0 ) {
-         if ( (status =  chmod(filename, mode)) < 0 ) 
-           rcode = errno ;
-         else
-           status = 0 ;
+         const char *perm_array[] = { "WTRUST", "CHMODTRUST", NULL };
+         if (!check_path_whitelist(host, filename, perm_array)) {
+           if ( (status =  chmod(filename, mode)) < 0 ) 
+             rcode = errno ;
+           else
+             status = 0 ;
+         } else {
+           status = -1;
+           rcode = errno;
+         }
        }
      }
    }
@@ -826,10 +1322,16 @@ int rt ;
        unmarshall_LONG(p, mode) ;
        log(LOG_INFO,"rmkdir: filename: %s, mode: %o\n", filename, mode) ;
        if (status == 0 ) {
-         if ( (status =  mkdir(filename, mode)) < 0 ) 
-           rcode = errno ;
-         else
-           status = 0 ;
+         const char *perm_array[] = { "WTRUST", "MKDIRTRUST", NULL };
+         if (!check_path_whitelist(host, filename, perm_array)) {
+           if ( (status =  mkdir(filename, mode)) < 0 ) 
+             rcode = errno ;
+           else
+             status = 0 ;
+         } else {
+           status = -1;
+           rcode = errno;
+         }
        }
      }
    }
@@ -914,10 +1416,16 @@ int rt ;
          rcode = SENAMETOOLONG;
        log(LOG_INFO,"rrmdir: filename: %s\n", filename) ;
        if (status == 0 ) {
-         if ( (status =  rmdir(filename)) < 0 ) 
-           rcode = errno ;
-         else
-           status = 0 ;
+         const char *perm_array[] = { "WTRUST", "RMDIRTRUST", NULL };
+         if (!check_path_whitelist(host, filename, perm_array)) {
+           if ( (status =  rmdir(filename)) < 0 ) 
+             rcode = errno ;
+           else
+             status = 0 ;
+         } else {
+           status = -1;
+           rcode = errno;
+         }
        }
      }
    }
@@ -1006,10 +1514,17 @@ int     rt ;
          rcode = SENAMETOOLONG;
        log(LOG_INFO,"srrename: filenameo %s, filenamen %s\n", filenameo, filenamen);
        if (status == 0 ) {
-         if ( (status =  rename(filenameo, filenamen)) < 0 ) 
-           rcode = errno ;
-         else
-           status = 0 ;
+         const char *perm_array[] = { "WTRUST", "RENAMETRUST", NULL };
+         if (!check_path_whitelist(host, filenameo, perm_array) &&
+             !check_path_whitelist(host, filenamen, perm_array)) {
+           if ( (status =  rename(filenameo, filenamen)) < 0 ) 
+             rcode = errno ;
+           else
+             status = 0 ;
+         } else {
+           status = -1;
+           rcode = errno;
+         }
        }
      }
    }
@@ -1230,7 +1745,11 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
          memset(&statbuf,'\0',sizeof(statbuf));
          status = rcode ;
        } else {
-         status= ( lstat(filename, &statbuf) < 0 ) ? errno : 0 ;
+         if (!check_path_whitelist(host, filename, rfio_all_perms)) {
+           status= ( lstat(filename, &statbuf) < 0 ) ? errno : 0 ;
+          } else {
+           status = errno;
+         }
          log(LOG_INFO,"rlstat: file: %s , status %d\n",filename,status) ;
        }
      }
@@ -1365,7 +1884,12 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
          memset(&statbuf,'\0',sizeof(statbuf));
          status = rcode ;
        } else  {
-         status= ( stat(filename, &statbuf) < 0 ) ? errno : 0 ;
+         if (!check_path_whitelist(host, filename, rfio_all_perms)) {
+           status= ( stat(filename, &statbuf) < 0 ) ? errno : 0 ;
+         } else {
+           status = errno;
+         }
+
          log(LOG_INFO,"rstat: stat(): file: %s for (%d,%d) status %d\n",filename,uid,gid,status) ;
        }
      }
@@ -1414,6 +1938,9 @@ int     rt;
    int  len ,uid, gid; 
    int  mode ;
    int rcode = 0;
+   const char *perm_array[14] = { "OPENTRUST", "STATTRUST", "POPENTRUST", "LINKTRUST", "CHMODTRUST",
+                                 "CHOWNTRUST", "MKDIRTRUST", "RMDIRTRUST", "RENAMETRUST",
+                                 NULL, NULL, NULL, NULL, NULL };
 
    p= rqstbuf + 2*WORDSIZE ;
    unmarshall_LONG(p,len) ;
@@ -1456,6 +1983,7 @@ int     rt;
      if (!status) {
        if ((mode & (R_OK | W_OK | X_OK)) != 0) {
          if ((mode & R_OK) == R_OK) {
+           perm_array[9] = "RTRUST";
            if (
                (status=check_user_perm(&uid,&gid,host,&rcode,"RTRUST")) < 0 &&
                (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
@@ -1475,6 +2003,7 @@ int     rt;
            }
          }
          if ((! status) && ((mode & W_OK) == W_OK)) {
+           perm_array[9] = "WTRUST";
            if (
                (status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0 &&
                (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
@@ -1494,6 +2023,7 @@ int     rt;
            }
          }
          if ((! status) && ((mode & X_OK) == X_OK)) {
+           perm_array[9] = "XTRUST";
            if (
                (status=check_user_perm(&uid,&gid,host,&rcode,"XTRUST")) < 0 &&
                (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
@@ -1513,6 +2043,10 @@ int     rt;
            }
          }
        } else {
+         perm_array[9] = "FTRUST";
+         perm_array[10] = "WTRUST";
+         perm_array[11] = "RTRUST";
+         perm_array[12] = "XTRUST";
          if (
              (status=check_user_perm(&uid,&gid,host,&rcode,"FTRUST")) < 0 &&
              (status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0 &&
@@ -1537,7 +2071,11 @@ int     rt;
        if (status) {
          status = rcode;
        } else {
-         status= ( access(filename, mode) < 0 ) ? errno : 0 ;
+         if (!check_path_whitelist(host, filename, perm_array)) {
+           status= ( access(filename, mode) < 0 ) ? errno : 0 ;
+         } else {
+           status = errno;
+         }
          log(LOG_INFO,"raccess: filen: %s, mode %d for (%d,%d) status %d\n",filename,mode,uid,gid,status) ;
        }
      }
@@ -1854,8 +2392,16 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
 	 }
       else
       {
-         fd = open(CORRECT_FILENAME(filename), ntohopnflg(flags), mode) ;
-         log(LOG_DEBUG, "ropen: open(%s,%d,%d) returned %x (hex)\n", CORRECT_FILENAME(filename), flags, mode, fd);
+         const char *perm_array[3];
+         perm_array[0] = ((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST";
+         perm_array[1] = "OPENTRUST";
+         perm_array[2] = NULL;
+
+         fd = -1;
+         if (forced_filename!=NULL || !check_path_whitelist(host, CORRECT_FILENAME(filename), perm_array)) {
+           fd = open(CORRECT_FILENAME(filename), ntohopnflg(flags), mode) ;
+           log(LOG_DEBUG, "ropen: open(%s,%d,%d) returned %x (hex)\n", CORRECT_FILENAME(filename), flags, mode, fd);
+         }
          if (fd < 0) {
            char alarmbuf[1024];
            sprintf(alarmbuf,"sropen(): %s",CORRECT_FILENAME(filename)) ;
@@ -2461,24 +3007,13 @@ int     rt;
    p= rqstbuf + 2*WORDSIZE ;
    unmarshall_LONG(p ,len );
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
+     log(LOG_ERR,"Denying popen request (with bad request size) from %s\n", host);
      rcode = errno;
    } else {
      if (netread_timeout(s,rqstbuf,len,RFIO_CTRL_TIMEOUT) != len) {
        log(LOG_ERR,"rpopen: read(): %s\n",strerror(errno)) ;
        return NULL ;
      }
-#if (defined(sun) && !defined(SOLARIS)) || defined(ultrix) || defined(_AIX)
-#if (defined(sun) && !defined(SOLARIS))
-     sv.sv_mask = sigmask(SIGCHLD)|sigmask(SIGALRM);
-#else
-     sv.sv_mask = sigmask(SIGCHLD);
-#endif /* sun && !SOLARIS */
-     sv.sv_handler = SIG_DFL;
-     sigvec(SIGCHLD, &sv, (struct sigvec *)0);
-#endif /* sun || ultrix || _AIX */
-#if defined(sgi) || defined (hpux) || defined (SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-     signal(SIGCLD, SIG_DFL) ;
-#endif /* sgi || hpux || SOLARIS || alpha-osf || linux */
      p= rqstbuf ;
      unmarshall_WORD(p, uid);
      unmarshall_WORD(p, gid);
@@ -2488,59 +3023,14 @@ int     rt;
      status += unmarshall_STRINGN (p, username, CA_MAXUSRNAMELEN+1) ;
      username[CA_MAXUSRNAMELEN] = '\0';
      log(LOG_DEBUG,"requestor is (%s, %d, %d) \n",username, uid, gid );
+     log(LOG_ERR,"Denying popen request (%s, %d, %d) from %s for command %s\n", username, uid, gid, host, command);
      if (status) {
        log(LOG_ERR,"message too long\n");
        status = -1;
        rcode = errno = ENAMETOOLONG;
-     }
-     if ( rt ) { 
-       char to[100];
-       int rcd,to_uid,to_gid;
-       
-       log(LOG_DEBUG,"Mapping (%s, %d, %d) \n",username, uid, gid );
-       if ( (rcd = get_user(host,username,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-         log(LOG_ERR,"get_user(): Error opening mapping file\n");
-         status = -1;
-         errno = EINVAL;
-         rcode = errno ;
-       }
-       
-       if ( abs(rcd) == 1 ) {
-         log(LOG_ERR,"No entry found in mapping file for (%s,%s,%d,%d)\n", host,username,uid,gid);
-         status= -1;
-         errno=EACCES;
-         rcode=errno;
-       }
-       else {
-         log(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n", host,username,uid,gid,to,to_uid,to_gid) ;
-         uid = to_uid ;
-         gid = to_gid ;
-       }
-     }
-     if ( status == 0 ) {
-       if ( (((status=check_user_perm(&uid,&gid,host,&rcode,"XTRUST")) < 0) || ((status=check_user_perm(&uid,&gid,host,&rcode,type[0] == 'w' ? "WTRUST" : "RTRUST")) < 0)) && ((status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST")) < 0) ) {
-         if (status == -2)
-           log(LOG_ERR,"rpopen(): uid %d not allowed to popen()\n",uid);
-         else
-           log(LOG_ERR,"rpopen(): failed at check_user_perm(), rcode %d\n",rcode);
-         status = -1 ;
-       }
-     }
-     if ( status == 0 ) {
-#if defined(_WIN32)
-       fs = _popen(command, type);
-#else      
-       fs = popen(command, type);
-#endif
-       if (fs == NULL) {
-         log(LOG_INFO, "rpopen(%s,%s) failed : %s\n",command,type,strerror(errno));
-         rcode = errno ;
-         status = -1 ;
-       }
-       else {
-         log(LOG_INFO, "rpopen(%s,%s) for %s successful\n",command,type,username) ;
-         rcode = 0 ;
-       }
+     } else {
+       status = -1;
+       rcode = errno = EACCES;
      }
    }
    
@@ -3332,7 +3822,12 @@ int bet;
          status = -1 ;
        }
        else {
-         dirp= opendir(filename) ;
+         const char *perm_array[] = { "RTRUST", "OPENTRUST", NULL };
+         dirp = NULL;
+         if (!check_path_whitelist(host, filename, perm_array)) {
+           dirp= opendir(filename) ;
+         }
+
          if ( dirp == NULL ) {
            char alarmbuf[1024];
            status= -1 ;
@@ -3985,11 +4480,19 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
        }  else
 #endif
        {
-         fd = open(CORRECT_FILENAME(filename), flags, mode);
+         const char *perm_array[3];
+         perm_array[0] = ((flags & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST";
+         perm_array[1] = "OPENTRUST";
+         perm_array[2] = NULL;
+
+         fd = -1;
+         if (forced_filename!=NULL || !check_path_whitelist(host, CORRECT_FILENAME(filename), perm_array)) {
+             fd = open(CORRECT_FILENAME(filename), flags, mode);
 #if defined(_WIN32)
-         _setmode( fd, _O_BINARY );        /* default is text mode  */
+             _setmode( fd, _O_BINARY );        /* default is text mode  */
 #endif
-         log(LOG_DEBUG,"ropen_v3: open(%s,%d,%d) returned %x (hex)\n",CORRECT_FILENAME(filename),flags,mode,fd) ;
+             log(LOG_DEBUG,"ropen_v3: open(%s,%d,%d) returned %x (hex)\n",CORRECT_FILENAME(filename),flags,mode,fd) ;
+         }
          if (fd < 0)  {
             char alarmbuf[1024];
             sprintf(alarmbuf,"sropen_v3: %s",CORRECT_FILENAME(filename)) ;

@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_fcalls.c,v 1.4 2007/08/13 15:12:31 waldron Exp $
+ * $Id: rfio_fcalls.c,v 1.5 2008/06/01 22:21:22 dhsmith Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_fcalls.c,v $ $Revision: 1.4 $ $Date: 2007/08/13 15:12:31 $ CERN/IT/PDP/DM Felix Hassine" ;
+static char sccsid[] = "@(#)$RCSfile: rfio_fcalls.c,v $ $Revision: 1.5 $ $Date: 2008/06/01 22:21:22 $ CERN/IT/PDP/DM Felix Hassine" ;
 #endif /* not lint */
 
 /* rfio_fcalls.c        - Remote file I/O - server FORTRAN calls        */
@@ -17,6 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: rfio_fcalls.c,v $ $Revision: 1.4 $ $Date: 
 #define RFIO_KERNEL     1               /* KERNEL part of the programs  */
 
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 #include <Castor_limits.h>
 #include "rfio.h"                       /* Remote file I/O              */
@@ -47,9 +48,6 @@ extern struct global_defs global[];
  * and space allocation.
  */
 extern char     *getconfent();
-#if !defined(_WIN32)
-extern char     *malloc();		/* Some systems forget this	*/
-#endif
 extern int      checkkey();         /* To check passwd provided     */
 
 /*
@@ -128,6 +126,7 @@ extern int switch_close();
 extern int switch_write();
 extern int switch_read();
 extern int srchkreqsize _PROTO((SOCKET, char *, int));
+extern int check_path_whitelist _PROTO((const char *, const char *, const char **));
 
 /************************************************************************/
 /*                                                                      */
@@ -307,7 +306,12 @@ int 	bet ;
        else
 #endif	     
        {         
-         status=switch_open(access, &lun, filename, &filen, &lrecl, (LONG *)&append,(LONG *)&trunc,LLTM);
+         const char *perm_array[] = { "WTRUST", "OPENTRUST", NULL };
+         if (!check_path_whitelist(host, filename, perm_array)) {
+           status=switch_open(access, &lun, filename, &filen, &lrecl, (LONG *)&append,(LONG *)&trunc,LLTM);
+         } else {
+           status=errno;
+         }
          log(LOG_DEBUG, "rxyopen: %d\n", status);
        }
      }
