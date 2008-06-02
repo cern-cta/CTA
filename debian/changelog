@@ -1,3 +1,9 @@
+castor (2.1.7-8) unstable; urgency=low
+
+  * Fifth 2.1.7 production release
+
+-- Dennis Waldron <dennis.waldron@cern.ch>  Tue, 03 Jun 2008 08:00:00 +0100
+
 castor (2.1.7-7) unstable; urgency=low
 
   * Fourth 2.1.7 production release
