@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.60 $ $Release$ $Date: 2008/05/26 15:39:59 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.61 $ $Release$ $Date: 2008/06/02 08:09:49 $ $Author: sponcec3 $
  *
  *
  *
@@ -197,8 +197,9 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "BWUser",
   "RequestType",
   "ListPrivileges",
-  "Privilege"
+  "Privilege",
   "ListPrivilegesResponse",
+  "PriorityMap"
 };
 
 
