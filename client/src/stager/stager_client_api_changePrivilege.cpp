@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api_changePrivilege.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/05/30 10:54:09 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_client_api_changePrivilege.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/06/02 13:28:46 $ $Author: waldron $
  *
  * api to handle privileges i.e. modify the black and white list
  *
@@ -193,24 +193,24 @@ void stage_changePrivilege(char* users,
                            char* requestTypes,
                            struct stage_options* opts,
                            bool isAdd) {
-    castor::BaseObject::initLog("", castor::SVC_NOMSG);
-
-    // Uses a BaseClient to handle the request
-    castor::client::BaseClient client(stage_getClientTimeout());
-    int ret = setDefaultOption(opts);
-    client.setOptions(opts);
-    client.setAuthorizationId(); 
-    if (ret==-1) { free(opts); }
-
-    // create request
-    castor::bwlist::ChangePrivilege req;
-    req.setIsGranted(isAdd);
-    parseUsers(users, &req, req.users());
-    parseRequestTypes(requestTypes, &req, req.requestTypes());
-
-    // Send request
-    castor::client::BasicResponseHandler rh;
-    client.sendRequest(&req, &rh);
+  castor::BaseObject::initLog("", castor::SVC_NOMSG);
+  
+  // Uses a BaseClient to handle the request
+  castor::client::BaseClient client(stage_getClientTimeout());
+  int ret = setDefaultOption(opts);
+  client.setOptions(opts);
+  client.setAuthorizationId(); 
+  if (ret==-1) { free(opts); }
+  
+  // create request
+  castor::bwlist::ChangePrivilege req;
+  req.setIsGranted(isAdd);
+  parseUsers(users, &req, req.users());
+  parseRequestTypes(requestTypes, &req, req.requestTypes());
+  
+  // Send request
+  castor::client::BasicResponseHandler rh;
+  client.sendRequest(&req, &rh);
 }
 
 //-----------------------------------------------------------------------------
