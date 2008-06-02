@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: modifyFileClass.c,v $ $Revision: 1.7 $ $Release$ $Date: 2007/06/13 11:40:43 $ $Author: waldron $
+ * @(#)$RCSfile: modifyFileClass.c,v $ $Revision: 1.8 $ $Release$ $Date: 2008/06/02 13:31:55 $ $Author: waldron $
  *
  * 
  *
@@ -55,8 +55,6 @@ enum FileClassAttributes {
   NsHost,
   GetFromCns,
   NbCopies,
-  MinFileSize,
-  MaxFileSize,
 };
 
 static struct Coptions longopts[] = {
@@ -65,8 +63,6 @@ static struct Coptions longopts[] = {
   {"NsHost",REQUIRED_ARGUMENT,0,NsHost},
   {"GetFromCns",NO_ARGUMENT,&cns_flag,GetFromCns},
   {"NbCopies",REQUIRED_ARGUMENT,0,NbCopies},
-  {"MinFileSize",REQUIRED_ARGUMENT,0,MinFileSize},
-  {"MaxFileSize",REQUIRED_ARGUMENT,0,MaxFileSize},
   {NULL, 0, NULL, 0}
 };
 
@@ -77,7 +73,7 @@ void usage(
 {
   int i;
   fprintf(stdout,"Usage: %s \n",cmd);
-  for (i=0; longopts[i].name != NULL; i++) {
+  for (i = 0; longopts[i].name != NULL; i++) {
     fprintf(stdout,"\t--%s %s\n",longopts[i].name,
             (longopts[i].has_arg == NO_ARGUMENT ? "" : longopts[i].name));
   }
@@ -87,8 +83,7 @@ void usage(
 int main(int argc, char *argv[]) 
 {
   int ch, rc, nbCopies = -1;
-  int nbCopiesSet = 0, minFileSizeSet = 0, maxFileSizeSet = 0;
-  u_signed64 minFileSize = 0, maxFileSize = 0;
+  int nbCopiesSet = 0;
   char *cmd, *name = NULL, *nsHost = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr;
@@ -132,14 +127,6 @@ int main(int argc, char *argv[])
       break;
     case NsHost:
       nsHost = strdup(Coptarg);
-      break;
-    case MinFileSize:
-      minFileSizeSet++;
-      minFileSize = strtou64(Coptarg);
-      break;
-    case MaxFileSize:
-      maxFileSizeSet++;
-      maxFileSizeSet = strtou64(Coptarg);
       break;
     case GetFromCns:
       break;
@@ -185,33 +172,12 @@ int main(int argc, char *argv[])
       nbCopies = nsFileClass.nbcopies;
       nbCopiesSet++;
     }
-    if ( minFileSizeSet == 0 ) {
-      minFileSize = (u_signed64)(nsFileClass.min_filesize)*1024*1024;
-      minFileSizeSet++;
-    }
-    
-    if ( maxFileSizeSet == 0 ) {
-      maxFileSize = (u_signed64)(nsFileClass.max_filesize)*1024*1024;
-      maxFileSizeSet++;
-    }
   }
 
   if ( nbCopiesSet > 0 ) {
     Cstager_FileClass_setNbCopies(
                                   fileClassOld,
                                   nbCopies
-                                  );
-  }
-  if ( minFileSizeSet > 0 ) {
-    Cstager_FileClass_setNbCopies(
-                                  fileClassOld,
-                                  minFileSize
-                                  );
-  }
-  if ( maxFileSizeSet > 0 ) {
-    Cstager_FileClass_setNbCopies(
-                                  fileClassOld,
-                                  maxFileSize
                                   );
   }
 
