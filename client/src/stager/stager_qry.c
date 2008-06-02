@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.30 2008/06/02 15:54:44 sponcec3 Exp $
+ * $Id: stager_qry.c,v 1.31 2008/06/02 16:27:12 sponcec3 Exp $
  */
 
 /*
@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "Castor_limits.h"
 #ifdef _WIN32
 #include <winsock2.h>
 #endif
@@ -36,6 +37,7 @@ struct cmd_args {
 static struct Coptions longopts[] =
   {
     {"hsm_filename",       REQUIRED_ARGUMENT,  NULL,      'M'},
+    {"hsm_filelist",       REQUIRED_ARGUMENT,  NULL,      'f'},
     {"fileid",             REQUIRED_ARGUMENT,  NULL,      'F'},
     {"usertag",            REQUIRED_ARGUMENT,  NULL,      'U'},
     {"requestid",          REQUIRED_ARGUMENT,  NULL,      'r'},
@@ -54,6 +56,7 @@ static struct Coptions longopts[] =
 static struct Coptions longopts_fileQuery[] =
   {
     {"hsm_filename",       REQUIRED_ARGUMENT,  NULL,      'M'},
+    {"hsm_filelist",       REQUIRED_ARGUMENT,  NULL,      'f'},
     {"fileid",             REQUIRED_ARGUMENT,  NULL,      'F'},
     {"usertag",            REQUIRED_ARGUMENT,  NULL,      'U'},
     {"requestid",          REQUIRED_ARGUMENT,  NULL,      'r'},
@@ -331,13 +334,35 @@ int parseCmdLineFileQuery(int argc, char *argv[],
   nbargs = 0;
   getNextMode = 0;
   while ((c = Cgetopt_long (argc, argv,
-                            "M:E:F:U:r:nS:",
+                            "M:f:E:F:U:r:nS:",
                             longopts_fileQuery, NULL)) != -1) {
     switch (c) {
     case 'M':
       args->requests[nbargs].type = BY_FILENAME;
       args->requests[nbargs].param = (char *)strdup(Coptarg);
       nbargs++;
+      break;
+    case 'f':
+      {
+	FILE *infile;
+	char line[CA_MAXPATHLEN+1];
+	infile = fopen(Coptarg, "r");
+	if(NULL == infile) {
+	  fprintf (stderr, "unable to read file %s\n", Coptarg);
+          errflg++;
+          break;
+        }
+	while (fgets(line, sizeof(line), infile) != NULL) {
+	  // drop trailing \n
+	  while (strlen(line) &&
+		 ((line[strlen(line)-1] == '\n') || (line[strlen(line)-1] == '\r'))) {
+	    line[strlen(line) - 1] = 0;
+	  }
+	  args->requests[nbargs].type = BY_FILENAME;
+	  args->requests[nbargs].param = (char *)strdup(line);
+	  nbargs++;
+	}
+      }
       break;
     case 'F':
       args->requests[nbargs].type = BY_FILEID;
@@ -434,13 +459,28 @@ int checkAndCountArguments(int argc, char *argv[],
   *count = 0;
   *type = FILEQUERY;
   while ((c = Cgetopt_long
-          (argc, argv, "M:F:U:r:nhsd:S:i", longopts, NULL)) != -1) {
+          (argc, argv, "M:f:F:U:r:nhsd:S:i", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
     case 'F':
     case 'U':
     case 'r':
       (*count)++;
+      break;
+    case 'f':
+      {
+	FILE *infile;
+	char line[CA_MAXPATHLEN+1];
+	infile = fopen(Coptarg, "r");
+	if(NULL == infile) {
+	  fprintf (stderr, "unable to read file %s\n", Coptarg);
+          errflg++;
+          break;
+        }
+	while (fgets(line, sizeof(line), infile) != NULL) {
+	  (*count)++;
+	}
+      }
       break;
     case 's':
       *type = DISKPOOLQUERY;
@@ -469,7 +509,7 @@ int checkAndCountArguments(int argc, char *argv[],
 void usage(char *cmd) {
   fprintf (stderr, "usage: %s ", cmd);
   fprintf (stderr, "%s",
-           "[-M hsmfile [-M ...]] [-F fileid@nshost] [-S svcClass] [-U usertag] [-r requestid] [-n] [-h]\n");
+           "[-M hsmfile [-M ...]] [-f hsmFileList] [-F fileid@nshost] [-S svcClass] [-U usertag] [-r requestid] [-n] [-h]\n");
   fprintf (stderr, "       %s ", cmd);
   fprintf (stderr, "%s", "-s [-S svcClass] [-d diskPool] [-i] [-h]\n");
 }
