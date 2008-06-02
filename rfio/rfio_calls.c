@@ -671,6 +671,7 @@ const char **rfiod_permstrs;
              break ;
            }
          }
+         if (p != NULL) { free(p); p = NULL; }
        }
      }
      if (p != NULL) free(p);
@@ -710,7 +711,7 @@ const char **rfiod_permstrs;
          l_free_strlist(white_list);
          l_free_strlist(additional);
          l_free_strlist(test_path_elements);
-         if (test_path_prefix != NULL) free(test_path_prefix);
+         free(test_path_prefix);
          log(LOG_ERR, "check_path_whitelist: Problem making the white list, disallowing access\n");
          errno = save_errno;
          return -1;
