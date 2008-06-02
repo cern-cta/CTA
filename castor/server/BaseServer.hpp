@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/11/28 17:59:19 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/06/02 12:10:47 $ $Author: itglp $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -74,6 +74,11 @@ namespace castor {
     void setForeground(bool value) { m_foreground = value; }
     
     /**
+     * Sets the runAsStagerSuperuser flag
+     */
+     void runAsStagerSuperuser() { m_runAsStagerSuperuser = true; }
+    
+    /**
      * Initializes the DLF, both for streaming and regular messages
      * Does not create the DLF thread, this is created after daemonization
      * @param messages the messages to be passed to dlf_init
@@ -126,6 +131,13 @@ namespace castor {
      * run in foreground or background mode.
      */
     bool m_foreground;
+
+    /**
+     * Flag indicating whether the server should
+     * change identity at startup and run as STAGERSUPERUSER
+     * (normally defined as stage:st)
+     */
+    bool m_runAsStagerSuperuser;
 
     /**
      * Name of the server, for logging purposes.

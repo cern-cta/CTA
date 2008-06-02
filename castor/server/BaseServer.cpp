@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2008/02/01 11:21:33 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2008/06/02 12:10:47 $ $Author: itglp $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -30,6 +30,7 @@
 #include "castor/io/UDPSocket.hpp"
 #include "castor/Services.hpp"
 #include "castor/Constants.hpp"
+#include "castor/System.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/dlf/Message.hpp"
 
@@ -42,16 +43,12 @@
 #include <iostream>
 #include <sstream>
 #include <signal.h>
-#if defined(_WIN32)
-#include <time.h>
-#include <winsock2.h>                   /* For struct servent */
-#else
+#include <pwd.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <netdb.h>                      /* For struct servent */
 #include <net.h>
 #include <stdio.h>
-#endif
 
 
 //------------------------------------------------------------------------------
@@ -120,14 +117,17 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
 		      << "/dev/null" << std::endl;
       throw ex;
     }
+    
+    // change identity to Castor superuser if requested
+    if(m_runAsStagerSuperuser) {
+      castor::System::switchToCastorSuperuser();
+    }
   }
   
   // Ignore SIGPIPE (connection lost with client)
   // and SIGXFSZ (a file is too big)
-#if !defined(_WIN32)
   signal(SIGPIPE, SIG_IGN);
   signal(SIGXFSZ, SIG_IGN);
-#endif
 }
 
 //------------------------------------------------------------------------------
