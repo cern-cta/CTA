@@ -6,3 +6,6 @@ debian/castor/usr/share/man/man1/stager_qry.1castor
 debian/castor/usr/share/man/man1/stager_rm.1castor
 debian/castor/usr/share/man/man1/stager_setfilegcweight.1castor
 debian/castor/usr/share/man/man1/newacct.1castor
+debian/castor/usr/share/man/man1/stager_addprivilege.1castor
+debian/castor/usr/share/man/man1/stager_removeprivilege.1castor
+debian/castor/usr/share/man/man1/stager_listprivileges.1castor
