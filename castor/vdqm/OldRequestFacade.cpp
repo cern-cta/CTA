@@ -141,7 +141,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
     if(ptr_header == NULL || ptr_volumeRequest == NULL) {
       handleRequest = false;
     } else {
-      logVolumeRequest(ptr_header, ptr_volumeRequest, cuuid, DLF_LVL_SYSTEM);
+      logVolumeRequest(ptr_header, ptr_volumeRequest, cuuid, DLF_LVL_DEBUG);
       TapeRequestHandler requestHandler;
       // Sends the tape request queue back to the client
       requestHandler.sendTapeRequestQueue(ptr_header, ptr_volumeRequest, 
@@ -152,7 +152,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
     if(ptr_header == NULL || ptr_driveRequest == NULL) {
       handleRequest = false;
     } else {
-      logDriveRequest(ptr_header, ptr_driveRequest, cuuid, DLF_LVL_SYSTEM);
+      logDriveRequest(ptr_header, ptr_driveRequest, cuuid, DLF_LVL_DEBUG);
       TapeDriveHandler tapeDriveHandler(ptr_header, ptr_driveRequest, cuuid);
       tapeDriveHandler.sendTapeDriveQueue(ptr_volumeRequest,
         oldProtInterpreter);
