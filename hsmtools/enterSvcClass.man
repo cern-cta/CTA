@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: enterSvcClass.man,v $ $Revision: 1.5 $ $Date: 2008/03/10 16:12:16 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: enterSvcClass.man,v $ $Revision: 1.6 $ $Date: 2008/06/02 13:33:56 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH ENTERSVCCLASS 1 "$Date: 2008/03/10 16:12:16 $" CASTOR "stager catalogue administrative commands"
+.TH ENTERSVCCLASS 1 "$Date: 2008/06/02 13:33:56 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 enterSvcClass \- define a new service class in the stager catalogue
 .SH SYNOPSIS
@@ -90,7 +90,7 @@ supported values are yes or no, 1 or 0 and are case-insensitive.
 .BI \-\-GcWeightForAccess " gcWeight"
 Specifies the weight in days that is added for each access to any diskCopy belonging
 to diskPools under this service class. This weight reduces the likelihood of diskCopies
-being garbage collected.
+being garbage collected. The default value is 0 days.
 .TP
 .BI \-\-DiskOnlyBehavior " [yes|no]"
 Defines whether or not this service class has disk only behavior. The supported values
