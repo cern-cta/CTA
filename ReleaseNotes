@@ -4,6 +4,7 @@
 
   Bug Fixes
   ---------
+  - #18778: -f option to stager_get to pass a file containing the list of files to prestage
   - #33207: Need admin tools to manage black/white lists for stager ACLs
   - #36804: Inconsistency in permission handling between stager_rm and nsrm (Updated)
   - #37286: Default logrotate should be 90 days
@@ -21,6 +22,10 @@
     These new tools require the user to have GRP_ADMIN privileges or above against the stager.
 
   - Fixed the defaults used by the repack server in castor.conf.example.
+
+  - The follow stager commands: stager_qry, stager_get, stager_putdone, stager_rm and
+    stager_update now support a -f option. The -f option or --filelist specifies a file
+    which can contain a list of CASTOR HSM file(s) to be processed.
 
   Schema Enhancements
   -------------------
