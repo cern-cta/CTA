@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/30 13:30:30 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/02 13:29:46 $ $Author: waldron $
  *
  * This script create a new DLF schema
  *
@@ -191,6 +191,10 @@ CREATE TABLE TapeRecalledStats (timestamp DATE NOT NULL, interval NUMBER, type V
 
 /* SQL statement for table ProcessingTimeStats */
 CREATE TABLE ProcessingTimeStats (timestamp DATE NOT NULL, interval NUMBER, daemon VARCHAR2(255), type VARCHAR2(255), requests NUMBER, minTime NUMBER(*,4), maxTime NUMBER(*,4), avgTime NUMBER(*,4), stddevTime NUMBER(*,4), medianTime NUMBER(*,4))
+  PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
+/* SQL statement for table ClientVersionStats */
+CREATE TABLE ClientVersionStats (timestamp DATE NOT NULL, interval NUMBER, clientVersion VARCHAR2(255), requests NUMBER)
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 
@@ -758,6 +762,38 @@ BEGIN
 END;
 
 
+/* PL/SQL method implementing statsClientVersion 
+ *
+ * Provides statistics on the different client versions seen by the RequestHandler
+ */
+CREATE OR REPLACE PROCEDURE statsClientVersion (now IN DATE) AS
+BEGIN
+  -- Stats table: ClientVersionStats
+  -- Frequency: 5 minutes
+  FOR a IN (
+    SELECT clientVersion, count(*) requests
+      FROM ( 
+        SELECT nvl(params.value, 'Unknown') clientVersion
+          FROM dlf_messages messages, dlf_str_param_values params
+         WHERE messages.id = params.id
+           AND messages.severity = 10 -- Monitoring
+           AND messages.facility = 4  -- RequestHandler
+           AND messages.msg_no = 10   -- Reply sent to client
+           AND messages.timestamp >  now - 10/1440
+           AND messages.timestamp <= now - 5/1440
+           AND params.name = 'ClientVersion'
+           AND params.timestamp >  now - 10/1440
+           AND params.timestamp <= now - 5/1440)
+     GROUP BY clientVersion
+  )
+  LOOP
+    INSERT INTO ClientVersionStats
+      (timestamp, interval, clientVersion, requests)
+    VALUES (now - 5/1440, 300, a.clientVersion, a.requests);
+  END LOOP;
+END;
+
+
 /* PL/SQL method implementing createPartition */
 CREATE OR REPLACE PROCEDURE createPartitions
 AS
@@ -949,6 +985,7 @@ BEGIN
                             statsReplication(now);
                             statsTapeRecalled(now);
                             statsProcessingTime(now);
+                            statsClientVersion(now);
                           END;',
       START_DATE      => SYSDATE,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
