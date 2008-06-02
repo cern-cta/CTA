@@ -1,9 +1,91 @@
 -----------
+- 2.1.7-8 -
+-----------
+
+  Bug Fixes
+  ---------
+  - #33207: Need admin tools to manage black/white lists for stager ACLs
+  - #36804: Inconsistency in permission handling between stager_rm and nsrm (Updated)
+  - #37286: Default logrotate should be 90 days
+
+  - In this release of CASTOR2 the cleaning daemon has been removed and replaced by a pure
+    PL/SQL database job. This removes the danger of running two cleaning daemons for reasons
+    of redundancy which would cause deadlocks inside the stager database.
+
+  - Modified RFIOD to support white listing of directories/paths. By default, RFIOD will now
+    only allow files to be read or written too if the path of the file is listed as a
+    mountpoint in CASTOR (ie. appears in RmNode/MountPoints) or is explicitly defined in the
+    RFIOD/PathWhiteList option in castor.conf. Note: this functionality can not be disabled.
+
+  - Added black and white list tools for manipulating the access control lists of the stager.
+    These new tools require the user to have GRP_ADMIN privileges or above against the stager.
+
+  - Fixed the defaults used by the repack server in castor.conf.example.
+
+  Schema Enhancements
+  -------------------
+  - Added missing index on the Segment table
+  - Enabled row movement on the StageDiskCopyReplicaRequest.
+  - Fixed a full table scan in the stagedForcedRm procedure.
+  - Fixed a full table scan in the bestTapeCopyForStream procedure which caused 'Connection
+    dropped by remote end' errors in the migrator logs.
+
+  Package changes
+  ---------------
+  - Moved the vdqm_admin command from the castor-vdqm1-server to the castor-hsmtools
+    package.
+  - Added the commands enterPriority, deletePriority, listPriority, vdqmsetpriority,
+    vdqmdeletepriority, vdqmlistpriority and vdqmlistrequest commands to the castor-dbtools 
+    package.
+  - Added the commands stager_addprivilege, stager_removeprivilege and stager_listprivileges
+    to the castor-stager-client package.
+  - The castor-cleaning-server and castor-db-config packages have been removed.
+
+  Upgrading from 2.1.7-7
+  ----------------------
+
+  Before upgrading to a 2.1.7-7 instance of CASTOR2 please make sure to read the upgrade
+  instructions fully before proceeding. Note: this upgrade does not require stopping of the
+  instance and should be transparent to the end users.
+
+  Instructions
+  ------------
+
+  1. Stop the stager daemon. This is because of several schema changes which are non
+     backwards compatible.
+
+  2. Upgrade the stager and dlf databases using the correct upgrade scripts from
+     - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-8/upgrades
+
+  3. On the STAGER database execute the following sql statement:
+
+       UPDATE CastorConfig SET value = 'XXXXX' WHERE key = 'instance';
+       COMMIT;
+
+     Where XXXX represents the name of the Castor2 instance e.g. castorcms, castoratlas ...
+
+  4. Update the rechandler.py python policy file for the recall handler based on the
+     rechandler.py.example file in /etc/castor/. The major difference here is that an
+     additional attribute is now passed into each function called 'priority'.
+
+     Note: For this particular release the priority field should be ignored!! It is only
+     meaningful if you are running VDQM2 in production.
+
+  5. Upgrade the software on the headnodes and diskservers to 2.1.7-8. Daemons will
+     automatically be restarted on upgrade.
+
+  6. Start the stager.
+  
+  7. Upgrade the CNS and CUPV services to 2.1.7-6 (This step is not mandatory)
+
+
+-----------
 - 2.1.7-7 -
 -----------
 
   Bug Fixes
   ---------
+  - #22408: Disk only file not removed from name server after a stager_rm
   - #34758: ClientGetManyFiles error: loosing responses in call back to client
   - #35443: tapecopies left orphan when nbDrives < number of tapepools
   - #35954: name server threads pools
@@ -43,7 +125,7 @@
   Upgrading from 2.1.7-6
   ----------------------
 
-  Before upgrading to a 2.1.7-67instance of CASTOR2 please make sure to read the upgrade
+  Before upgrading to a 2.1.7-7 instance of CASTOR2 please make sure to read the upgrade
   instructions fully before proceeding. Note: this upgrade does not require stopping of the
   instance and should be transparent to the end users.
 
@@ -52,10 +134,17 @@
   1. Upgrade the stager and dlf databases using the correct upgrade scripts from
      - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-7/upgrades
 
-  2. Upgrade the software on the headnodes and diskservers to 2.1.7-7. Daemons will
+  2. On the DLF database execute the following sql statement:
+
+       UPDATE dlf_config SET value = 'XXXXX' WHERE name = 'instance';
+       COMMIT;
+
+     Where XXXX represents the name of the Castor2 instance e.g. castorcms, castoratlas ...
+
+  3. Upgrade the software on the headnodes and diskservers to 2.1.7-7. Daemons will
      automatically be restarted on upgrade.
 
-  3. Upgrade the CNS to 2.1.7-7 (This step is not mandatory if you do not wish to benefit
+  4. Upgrade the CNS to 2.1.7-7 (This step is not mandatory if you do not wish to benefit
      from #35954)
 
 
