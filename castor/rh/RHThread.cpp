@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2008/05/29 17:00:30 $ $Author: itglp $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2008/06/02 13:29:24 $ $Author: waldron $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -150,6 +150,8 @@ void castor::rh::RHThread::run(void* param) {
   
   // Process request body
   unsigned int nbThreads = 0;
+  castor::rh::Client *client =
+    dynamic_cast<castor::rh::Client *>(fr->client());
   if (ack.status()) {
     try {
       fr->setReqId(uuid);
@@ -158,8 +160,6 @@ void castor::rh::RHThread::run(void* param) {
       castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 8);
       
       // Complete its client field
-      castor::rh::Client *client =
-        dynamic_cast<castor::rh::Client *>(fr->client());
       if (0 == client) {
         delete fr;
         castor::exception::Internal e;
@@ -238,6 +238,23 @@ void castor::rh::RHThread::run(void* param) {
 	type << fr->type();
       }
 
+      // Convert the client version to a string e.g 2010708 becomes
+      // 2.1.7-8
+      int version = client->version();
+      std::ostringstream clientVersion;
+      if (version < 2000000) { 
+	clientVersion << "Unknown";
+      } else {
+	int majorversion = version / 1000000;
+	int minorversion = (version -= (majorversion * 1000000)) / 10000;
+	int majorrelease = (version -= (minorversion * 10000)) / 100;
+	int minorrelease = (version -= (majorrelease * 100));
+	clientVersion << majorversion << "."
+		      << minorversion << "."
+		      << majorrelease << "-"
+		      << minorrelease;
+      }
+
       castor::dlf::Param params2[] =
 	{castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
 	 castor::dlf::Param("Type", type.str()),
@@ -245,8 +262,9 @@ void castor::rh::RHThread::run(void* param) {
 	 castor::dlf::Param("Egid", fr->egid()),
 	 castor::dlf::Param("SvcClass", fr->svcClassName()),
 	 castor::dlf::Param("SubRequests", nbThreads),
+	 castor::dlf::Param("ClientVersion", clientVersion.str()),
 	 castor::dlf::Param("ElapsedTime", elapsedTime * 0.000001)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_MONITORING, 10, 7, params2);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_MONITORING, 10, 8, params2);
     }
   } catch (castor::exception::Exception e) {
     // "Unable to send Ack to client"
