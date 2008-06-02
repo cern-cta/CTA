@@ -26,6 +26,19 @@ COMM
 
 #include <Project.tmpl>
 
+#ifdef StagerSuperUser
+STAGERSUPERUSER0 = StagerSuperUser
+#else
+STAGERSUPERUSER0 = stage
+#endif
+#ifdef StagerSuperGroup
+STAGERSUPERGROUP0 = StagerSuperGroup
+#else
+STAGERSUPERGROUP0 = st
+#endif
+STAGERSUPERUSER  = -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER0)\"
+STAGERSUPERGROUP = -DSTAGERSUPERGROUP=\"$(STAGERSUPERGROUP0)\"
+
 RH_HOST=RhHost
 
 SUBDIRS = $(DBCPPDIR) $(RHCPPDIR) $(VDQMCPPDIR) $(GCCPPDIR) $(REPACKDIR) $(MONITORINGDIR) $(STAGERDIR) $(JOBMANAGERDIR) $(JOBDIR) $(INFOPOLICYDIR) $(RTCOPYDIR) $(SCHEDULERDIR)
@@ -75,7 +88,7 @@ INCLUDES = -I FileName(..,h) -I ..
 #else
 INCLUDES = -I FileName(..,h) -I .. -I FileName(..,win32)
 #endif
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DRH_HOST=\"$(RH_HOST)\"
+CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DRH_HOST=\"$(RH_HOST)\" $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
 
 STGLIB_SRCS0 = IAddressCInt.cpp \
               BaseAddress.cpp \
@@ -104,7 +117,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               PortsConfig.cpp \
               Services.cpp \
               ServicesCInt.cpp \
-	      System.cpp \
+              System.cpp \
               logstream.cpp \
               logbuf.cpp \
               stdbuf.cpp \
@@ -124,10 +137,10 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               dlf/TimeStamp.cpp \
               io/AbstractSocket.cpp \
               io/AbstractTCPSocket.cpp \
-	      io/AuthServerSocket.cpp \
+              io/AuthServerSocket.cpp \
               io/AuthClientSocket.cpp \
               io/UDPSocket.cpp \
-	      io/PipeSocket.cpp \
+              io/PipeSocket.cpp \
               io/ClientSocket.cpp \
               io/ServerSocket.cpp \
               io/StreamAddress.cpp \
@@ -136,7 +149,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamCastorFileCnv.cpp \
               io/StreamOldClientCnv.cpp \
               io/StreamClientCnv.cpp \
-	      io/StreamStartResponseCnv.cpp \
+              io/StreamStartResponseCnv.cpp \
               io/StreamCnvSvc.cpp \
               io/StreamDiskCopyCnv.cpp \
               io/StreamDiskCopyInfoCnv.cpp \
@@ -192,10 +205,10 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamStageRmRequestCnv.cpp \
               io/StreamStageUpdateNextRequestCnv.cpp \
               io/StreamStageUpdateRequestCnv.cpp \
-	      io/StreamStageRepackRequestCnv.cpp \
-	      io/StreamThreadNotificationCnv.cpp \
-	      io/StreamStgFilesDeletedCnv.cpp \
-	      io/StreamStgFilesDeletedResponseCnv.cpp \
+              io/StreamStageRepackRequestCnv.cpp \
+              io/StreamThreadNotificationCnv.cpp \
+              io/StreamStgFilesDeletedCnv.cpp \
+              io/StreamStgFilesDeletedResponseCnv.cpp \
               io/StreamAbortResponseCnv.cpp \
               io/StreamFileQryResponseCnv.cpp \
               io/StreamFindReqResponseCnv.cpp \
@@ -252,16 +265,16 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               monitoring/StreamReport.cpp \
               stager/BaseTapeSvc.cpp \
               server/AuthListenerThreadPool.cpp \
-	      server/BaseThreadPool.cpp \
+              server/BaseThreadPool.cpp \
               server/ListenerThreadPool.cpp \
               server/TCPListenerThreadPool.cpp \
               server/UDPListenerThreadPool.cpp \
-	      server/ForkedProcessPool.cpp \
+              server/ForkedProcessPool.cpp \
               server/Mutex.cpp \
               server/ServiceThread.cpp \
               server/SignalThreadPool.cpp \
-	      server/NotifierThread.cpp \
-	      server/ThreadNotification.cpp \
+              server/NotifierThread.cpp \
+              server/ThreadNotification.cpp \
               stager/CastorFile.cpp \
               stager/CastorFileCInt.cpp \
               stager/DiskCopy.cpp \
@@ -291,8 +304,8 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/FilesDeleted.cpp \
               stager/NsFilesDeleted.cpp \
               stager/NsFilesDeletedResponse.cpp \
-	      stager/StgFilesDeleted.cpp \
-	      stager/StgFilesDeletedResponse.cpp \
+              stager/StgFilesDeleted.cpp \
+              stager/StgFilesDeletedResponse.cpp \
               stager/FilesDeletionFailed.cpp \
               stager/FirstByteWritten.cpp \
               stager/GetUpdateDone.cpp \
@@ -305,11 +318,11 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/GCFile.cpp \
               stager/GCFileList.cpp \
               stager/IJobSvcCInt.cpp \
-	      stager/IStagerSvcCInt.cpp \
+              stager/IStagerSvcCInt.cpp \
               stager/ITapeSvcCInt.cpp \
               stager/MoverCloseRequest.cpp \
               stager/MoverCloseRequestCInt.cpp \
-	      stager/PriorityMap.cpp \
+              stager/PriorityMap.cpp \
               stager/PutStartRequest.cpp \
               stager/PutStartRequestCInt.cpp \
               stager/QryRequest.cpp \
@@ -320,7 +333,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/PutFailedCInt.cpp \
               stager/ReqIdRequest.cpp \
               stager/ReqIdRequestCInt.cpp \
-	      stager/Request.cpp \
+              stager/Request.cpp \
               stager/RequestCInt.cpp \
               stager/RequestQueryType.cpp \
               stager/RemoteGCSvc.cpp \
@@ -352,8 +365,8 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/StagePrepareToPutRequestCInt.cpp \
               stager/StagePrepareToUpdateRequest.cpp \
               stager/StagePrepareToUpdateRequestCInt.cpp \
-	      stager/StageRepackRequest.cpp \
-	      stager/StageRepackRequestCInt.cpp \
+              stager/StageRepackRequest.cpp \
+              stager/StageRepackRequestCInt.cpp \
               stager/StagePutDoneRequest.cpp \
               stager/StagePutDoneRequestCInt.cpp \
               stager/StagePutNextRequest.cpp \
@@ -388,7 +401,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/TapeStatusCodes.cpp \
               stager/TapeCopyStatusCodes.cpp \
               stager/TapeVid.cpp \
-	      vdqm/ClientIdentification.cpp \
+              vdqm/ClientIdentification.cpp \
               vdqm/TapeDrive.cpp \
               vdqm/DeviceGroupName.cpp \
               vdqm/TapeAccessSpecification.cpp \
@@ -396,10 +409,10 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               vdqm/TapeDriveDedication.cpp \
               vdqm/TapeDriveStatusCodes.cpp \
               vdqm/TapeRequest.cpp \
-	      vdqm/TapeRequestStatusCodes.cpp \
+              vdqm/TapeRequestStatusCodes.cpp \
               vdqm/TapeServer.cpp \
               vdqm/TapeServerStatusCodes.cpp \
-	      vdqm/VdqmTape.cpp \
+              vdqm/VdqmTape.cpp \
               exception/BadVersion.cpp \
               exception/Busy.cpp \
               exception/Exception.cpp \
@@ -416,7 +429,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               exception/TimeOut.cpp \
               exception/TooBig.cpp \
               exception/SegmentNotAccessible.cpp \
-	      exception/TapeOffline.cpp \
+              exception/TapeOffline.cpp \
               query/DiskPoolQueryResponseCInt.cpp \
               query/DiskPoolQueryResponse.cpp \
               query/FileSystemDescriptionCInt.cpp \

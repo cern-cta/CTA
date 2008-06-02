@@ -26,11 +26,14 @@
 
 // Include Files
 #include <errno.h>
-
-// Local includes
 #include <unistd.h>
 #include <stdlib.h>
+
+// Local includes
+#include "Cgrp.h"
+#include "common.h"
 #include "System.hpp"
+#include "castor/exception/Internal.hpp"
 
 //------------------------------------------------------------------------------
 // getHostName
@@ -113,3 +116,75 @@ int castor::System::porttoi(char* str)
   return iport;
 }
 
+//------------------------------------------------------------------------------
+// switchToCastorSuperuser
+//------------------------------------------------------------------------------
+void castor::System::switchToCastorSuperuser()
+  throw (castor::exception::Exception) {
+  struct passwd *stage_passwd;    // password structure pointer
+  struct group  *stage_group;     // group structure pointer
+
+  uid_t ruid, euid;               // Original uid/euid
+  gid_t rgid, egid;               // Original gid/egid
+
+  // Save original values
+  ruid = getuid();
+  euid = geteuid();
+  rgid = getgid();
+  egid = getegid();
+
+  // Get information on generic stage account from password file
+  if ((stage_passwd = Cgetpwnam(STAGERSUPERUSER)) == NULL) {
+    castor::exception::Internal e;
+    e.getMessage() << "Castor super user " << STAGERSUPERUSER
+                   << " not found in password file";
+    throw e;
+  }
+  // verify existence of its primary group id
+  if (Cgetgrgid(stage_passwd->pw_gid) == NULL) {
+    castor::exception::Internal e;
+    e.getMessage() << "Castor super user group does not exist";
+    throw e;
+  }
+  // Get information on generic stage account from group file
+  if ((stage_group = Cgetgrnam(STAGERSUPERGROUP)) == NULL) {
+    castor::exception::Internal e;
+    e.getMessage() << "Castor super user group " << STAGERSUPERGROUP
+                   << " not found in group file";
+    throw e;
+  }
+  // Verify consistency
+  if (stage_group->gr_gid != stage_passwd->pw_gid) {
+    castor::exception::Internal e;
+    e.getMessage() << "Inconsistent password file. The group of the "
+                   << "castor superuser " << STAGERSUPERUSER
+                   << " should be " << stage_group->gr_gid
+                   << "(" << STAGERSUPERGROUP << "), but is "
+                   << stage_passwd->pw_gid;
+    throw e;
+  }
+  // Undo group privilege
+  if (setregid (egid, rgid) < 0) {
+    castor::exception::Internal e;
+    e.getMessage() << "Unable to undo group privilege";
+    throw e;
+  }
+  // Undo user privilege 
+  if (setreuid (euid, ruid) < 0) {
+    castor::exception::Internal e;
+    e.getMessage() << "Unable to undo user privilege";
+    throw e;
+  }
+  // set the effective privileges to superuser
+  if (setegid(stage_passwd->pw_gid) < 0) {
+    castor::exception::Internal e;
+    e.getMessage() << "Unable to set group privileges of Castor Superuser. "
+                   << "You may want to check that the suid bit is set properly";
+    throw e;
+  }
+  if (seteuid(stage_passwd->pw_uid) < 0) {
+    castor::exception::Internal e;
+    e.getMessage() << "Unable to set privileges of Castor Superuser.";
+    throw e;
+  }
+}
