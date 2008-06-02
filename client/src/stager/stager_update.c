@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_update.c,v $ $Revision: 1.3 $ $Release$ $Date: 2008/03/13 16:37:03 $ $Author: itglp $
+ * @(#)$RCSfile: stager_update.c,v $ $Revision: 1.4 $ $Release$ $Date: 2008/06/02 10:18:50 $ $Author: itglp $
  *
  * command line for stage_prepareToUpdate 
  *
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
 
   if (rc < 0) {
     fprintf(stderr, "Error: %s\n", sstrerror(serrno));
-    fprintf(stderr, "<%s>\n", errbuf);
+    fprintf(stderr, "%s\n", errbuf);
     exit(EXIT_FAILURE);
   }
 
