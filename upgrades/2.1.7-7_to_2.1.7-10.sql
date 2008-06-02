@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.7-7_to_2.1.7-10.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/02 08:48:21 $ $Author: sponcec3 $
+ * @(#)$RCSfile: 2.1.7-7_to_2.1.7-10.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/02 09:49:13 $ $Author: sponcec3 $
  *
  * This script upgrades a CASTOR v2.1.7-7 database into v2.1.7-8
  *
@@ -116,6 +116,7 @@ INSERT INTO CastorConfig
   VALUES ('cleaning', 'failedDCsTimeout', '72', 'Timeout for failed diskCopies in hour');
 
 -- new version of the castorbw package
+
 /* PL/SQL method implementing checkPermission */
 CREATE OR REPLACE PROCEDURE checkPermission(isvcClass IN VARCHAR2,
                                             ieuid IN NUMBER,
@@ -186,13 +187,21 @@ END;
   * The permissions can also have a request type. Default is null, that is everything
   */
 CREATE OR REPLACE PACKAGE castorBW AS
+  -- defines a privilege
   TYPE Privilege IS RECORD (
     svcClass VARCHAR2(2048),
     euid NUMBER,
     egid NUMBER,
     reqType NUMBER);
+  -- defines a privilege, plus a "direction"
+  TYPE PrivilegeExt IS RECORD (
+    svcClass VARCHAR2(2048),
+    euid NUMBER,
+    egid NUMBER,
+    reqType NUMBER,
+    isGranted NUMBER);
   -- a cursor of privileges
-  TYPE Privilege_Cur IS REF CURSOR RETURN Privilege;
+  TYPE PrivilegeExt_Cur IS REF CURSOR RETURN PrivilegeExt;
   -- Intersection of 2 priviledges
   -- raises -20109, "Empty privilege" in case the intersection is empty
   FUNCTION intersection(p1 IN Privilege, p2 IN Privilege) RETURN Privilege;
@@ -226,7 +235,7 @@ CREATE OR REPLACE PACKAGE castorBW AS
   -- List priviledge(s)
   PROCEDURE listPrivileges(svcClassId IN NUMBER, ieuid IN NUMBER,
                            iegid IN NUMBER, ireqType IN NUMBER,
-                           wlist OUT Privilege_Cur, blist OUT Privilege_Cur);
+                           plist OUT PrivilegeExt_Cur);
 END castorBW;
 
 CREATE OR REPLACE PACKAGE BODY castorBW AS
@@ -546,25 +555,25 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
   -- Remove priviledge
   PROCEDURE listPrivileges(svcClassId IN NUMBER, ieuid IN NUMBER,
                            iegid IN NUMBER, ireqType IN NUMBER,
-                           wlist OUT Privilege_Cur, blist OUT Privilege_Cur) AS
+                           plist OUT PrivilegeExt_Cur) AS
   BEGIN
-    OPEN wlist FOR
+    OPEN plist FOR
       SELECT decode(svcClass, NULL, '*',
                     nvl((SELECT name FROM SvcClass
                           WHERE id = svcClass),
                         '['||TO_CHAR(svcClass)||']')),
-             euid, egid, reqType
+             euid, egid, reqType, 1
         FROM WhiteList
        WHERE (WhiteList.svcClass = svcClassId OR WhiteList.svcClass IS  NULL OR svcClassId = 0)
          AND (WhiteList.euid = ieuid OR WhiteList.euid IS NULL OR ieuid = -1)
          AND (WhiteList.egid = iegid OR WhiteList.egid IS NULL OR iegid = -1)
-         AND (WhiteList.reqType = ireqType OR WhiteList.reqType IS NULL OR ireqType = 0);
-    OPEN blist FOR
+         AND (WhiteList.reqType = ireqType OR WhiteList.reqType IS NULL OR ireqType = 0)
+    UNION
       SELECT decode(svcClass, NULL, '*',
                     nvl((SELECT name FROM SvcClass
                           WHERE id = svcClass),
                         '['||TO_CHAR(svcClass)||']')),
-             euid, egid, reqType
+             euid, egid, reqType, 0
         FROM BlackList
        WHERE (BlackList.svcClass = svcClassId OR BlackList.svcClass IS  NULL OR svcClassId = 0)
          AND (BlackList.euid = ieuid OR BlackList.euid IS NULL OR ieuid = -1)

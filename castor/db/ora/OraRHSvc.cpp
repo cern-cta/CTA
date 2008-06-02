@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/06/02 08:20:50 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/06/02 09:48:46 $ $Author: sponcec3 $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -63,7 +63,7 @@ const std::string castor::db::ora::OraRHSvc::s_removePrivilegeStatementString =
 
 /// SQL statement for listPrivileges
 const std::string castor::db::ora::OraRHSvc::s_listPrivilegesStatementString =
-  "BEGIN castorbw.listPrivileges(:1, :2, :3, :4 ,:5, :6); END;";
+  "BEGIN castorbw.listPrivileges(:1, :2, :3, :4, :5); END;";
 
 //------------------------------------------------------------------------------
 // OraRHSvc
@@ -280,8 +280,6 @@ castor::db::ora::OraRHSvc::listPrivileges
         createStatement(s_listPrivilegesStatementString);
       m_listPrivilegesStatement->registerOutParam
         (5, oracle::occi::OCCICURSOR);
-      m_listPrivilegesStatement->registerOutParam
-        (6, oracle::occi::OCCICURSOR);
     }
     // deal with the service class, user, group and type
     m_listPrivilegesStatement->setDouble(1, svcClassId);
@@ -290,38 +288,22 @@ castor::db::ora::OraRHSvc::listPrivileges
     m_listPrivilegesStatement->setInt(4, requestType );
     // Call DB
     m_listPrivilegesStatement->executeUpdate();
-    // Extract white list part
+    // Extract list of privileges
     std::vector<castor::bwlist::Privilege*> result;    
-    oracle::occi::ResultSet *wrs =
+    oracle::occi::ResultSet *prs =
       m_listPrivilegesStatement->getCursor(5);
-    oracle::occi::ResultSet::Status status = wrs->next();
+    oracle::occi::ResultSet::Status status = prs->next();
     while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::bwlist::Privilege* p = new castor::bwlist::Privilege();
-      p->setServiceClass(wrs->getString(1));
-      p->setEuid(wrs->getInt(2));
-      if (wrs->isNull(2)) p->setEuid(-1);
-      p->setEgid(wrs->getInt(3));
-      if (wrs->isNull(3)) p->setEgid(-1);
-      p->setRequestType(wrs->getInt(4));
-      p->setGranted(true);
+      p->setServiceClass(prs->getString(1));
+      p->setEuid(prs->getInt(2));
+      if (prs->isNull(2)) p->setEuid(-1);
+      p->setEgid(prs->getInt(3));
+      if (prs->isNull(3)) p->setEgid(-1);
+      p->setRequestType(prs->getInt(4));
+      p->setGranted(prs->getInt(5) != 0);
       result.push_back(p);
-      status = wrs->next();
-    }
-    // Extract black list part
-    oracle::occi::ResultSet *brs =
-      m_listPrivilegesStatement->getCursor(6);
-    status = brs->next();
-    while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      castor::bwlist::Privilege* p = new castor::bwlist::Privilege();
-      p->setServiceClass(brs->getString(1));
-      p->setEuid(brs->getInt(2));
-      if (brs->isNull(2)) p->setEuid(-1);
-      p->setEgid(brs->getInt(3));
-      if (brs->isNull(3)) p->setEgid(-1);
-      p->setRequestType(brs->getInt(4));
-      p->setGranted(false);
-      result.push_back(p);
-      status = brs->next();
+      status = prs->next();
     }
     // return result
     return result;
