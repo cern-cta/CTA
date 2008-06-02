@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_rm.man,v $ $Revision: 1.6 $ $Date: 2008/06/02 16:09:13 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_rm.man,v $ $Revision: 1.7 $ $Date: 2008/06/02 16:27:29 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_RM 1castor "$Date: 2008/06/02 16:09:13 $" CASTOR "STAGER Commands"
+.TH STAGER_RM 1castor "$Date: 2008/06/02 16:27:29 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_rm \- request for removing a file from the CASTOR stager
 .SH SYNOPSIS
@@ -58,7 +58,7 @@ from all service classes.
 .BI \-M,\ \-\-filename " hsmfile"
 specifies the CASTOR HSM file(s) to be removed.
 .TP
-.BI \-f,\ \-\-filename " hsmFileList"
+.BI \-f,\ \-\-filelist " hsmFileList"
 specifies a file containing a list of CASTOR HSM file(s) to be removed, one per line.
 This can be used to avoid the command line restrictions when many files should be removed at once.
 .TP

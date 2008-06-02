@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_putdone.man,v $ $Revision: 1.5 $ $Date: 2008/06/02 15:54:00 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_putdone.man,v $ $Revision: 1.6 $ $Date: 2008/06/02 16:27:29 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_PUTDONE 1castor "$Date: 2008/06/02 15:54:00 $" CASTOR "STAGER Commands"
+.TH STAGER_PUTDONE 1castor "$Date: 2008/06/02 16:27:29 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_putdone \- terminate a CASTOR stager Put or Update session and flag files for tape migration
 .SH SYNOPSIS
@@ -46,7 +46,7 @@ specifies the CASTOR HSM file to be flagged for migration. The
 .B \-M
 option can be repeated, allowing to handle several CASTOR files in the same request.
 .TP
-.BI \-f,\ \-\-filename " hsmFileList"
+.BI \-f,\ \-\-filelist " hsmFileList"
 specifies a file containing a list of CASTOR HSM file(s) to be flagged for migration, one per line.
 This can be used to avoid the command line restrictions when many files should be flagged for migration at once.
 .TP
