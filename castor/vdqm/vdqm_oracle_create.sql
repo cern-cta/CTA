@@ -36,11 +36,11 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_7_7');
+INSERT INTO CastorVersion VALUES ('-', '2_1_7_8');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.115  Release Date: 2008/05/20 08:54:28  Author: murrayc3 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.121  Release Date: 2008/05/30 15:33:41  Author: murrayc3 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -168,6 +168,18 @@ ALTER TABLE VolumePriority
 ALTER TABLE TapeAccessSpecification
   ADD CONSTRAINT CH_TapeAccessSpec_accessMode
     CHECK ((accessMode=0) OR (accessMode=1));
+
+-- The tpMode column of the VolumePriority table has 2 possible
+-- values: 0=write-disabled or 1=write-enabled
+ALTER TABLE VolumePriority
+  ADD CONSTRAINT CH_VolumePriority_tpMode
+    CHECK ((tpMode=0) OR (tpMode=1));
+
+-- The lifespanType column of the VolumePriority table has 2 possible
+-- values: 0=single-shot or 1=unlimited
+ALTER TABLE VolumePriority
+  ADD CONSTRAINT CH_VolumePriority_lifespanType
+    CHECK ((lifespanType=0) OR (lifespanType=1));
 
 
 /* Foreign key constraints with an index for each */
@@ -943,6 +955,41 @@ END castorVdqmView;
 
 
 /**
+ * This view shows the effective volume priorities.  This view is required
+ * because there can be two priorities for a given VID and tape access mode,
+ * a single-shot lifespan priority from the RecallHandler and an unlimited
+ * lifespan priority from a tape operator.  The unlimited priority from the
+ * tape operator would be the effective priority in such a case, in other
+ * words, operator priorities overrule RecallHandler priorities.
+ */
+CREATE OR REPLACE VIEW EffectiveVolumePriority_VIEW
+  AS WITH EffectiveLifespanType AS (
+    SELECT
+      VolumePriority.vid,
+      VolumePriority.tpMode,
+      MAX(VolumePriority.lifespanType) AS lifespanType
+    FROM VolumePriority
+    GROUP BY VolumePriority.vid, tpMode)
+SELECT
+  VolumePriority.priority,
+  VolumePriority.clientUID,
+  VolumePriority.clientGID,
+  VolumePriority.clientHost,
+  VolumePriority.vid,
+  VolumePriority.tpMode,
+  VolumePriority.lifespanType,
+  VolumePriority.creationTime,
+  VolumePriority.modificationTime,
+  VolumePriority.id
+FROM
+  VolumePriority
+INNER JOIN EffectiveLifespanType ON
+      VolumePriority.vid          = EffectiveLifespanType.vid
+  AND VolumePriority.tpMode       = EffectiveLifespanType.tpMode
+  AND VolumePriority.lifespanType = EffectiveLifespanType.lifespanType;
+
+
+/**
  * This view shows candidate "free tape drive to pending tape request"
  * allocations.
  */
@@ -951,7 +998,8 @@ CREATE OR REPLACE VIEW CandidateDriveAllocations_VIEW AS SELECT UNIQUE
   TapeRequest.id as tapeRequestId,
   TapeAccessSpecification.accessMode,
   TapeRequest.modificationTime,
-  NVL(VolumePriority.priority,0) AS volumePriority
+  TapeRequest.creationTime,
+  NVL(EffectiveVolumePriority_VIEW.priority,0) AS volumePriority
 FROM
   TapeRequest
 INNER JOIN TapeAccessSpecification ON
@@ -965,9 +1013,9 @@ INNER JOIN TapeDrive ON
 INNER JOIN TapeServer ON
      TapeRequest.requestedSrv = TapeServer.id
   OR TapeRequest.requestedSrv = 0
-LEFT OUTER JOIN VolumePriority ON
-      VdqmTape.vid = VolumePriority.vid
-  AND TapeAccessSpecification.accessMode = VolumePriority.tpMode
+LEFT OUTER JOIN EffectiveVolumePriority_VIEW ON
+      VdqmTape.vid = EffectiveVolumePriority_VIEW.vid
+  AND TapeAccessSpecification.accessMode = EffectiveVolumePriority_VIEW.tpMode
 WHERE
       TapeDrive.status=0 -- UNIT_UP
   -- Exclude a request if its tape is associated with an on-going request
@@ -999,7 +1047,7 @@ WHERE
 ORDER BY
   TapeAccessSpecification.accessMode DESC,
   VolumePriority DESC,
-  TapeRequest.modificationTime ASC;
+  TapeRequest.creationTime ASC;
 
 
 /**
@@ -1096,7 +1144,8 @@ SELECT
   VdqmTape.vid,
   TapeServer.serverName AS tapeServer,
   DeviceGroupName.dgName,
-  ClientIdentification.username AS clientUsername
+  ClientIdentification.username AS clientUsername,
+  NVL(EffectiveVolumePriority_VIEW.priority,0) AS volumePriority
 FROM
   TapeRequest
 LEFT OUTER JOIN TapeDrive ON
@@ -1111,8 +1160,9 @@ LEFT OUTER JOIN TapeServer ON
   TapeRequest.requestedSrv = TapeServer.id
 LEFT OUTER JOIN DeviceGroupName ON
   TapeRequest.deviceGroupName = DeviceGroupName.id
-ORDER BY
-  TapeRequest.creationTime;
+LEFT OUTER JOIN EffectiveVolumePriority_VIEW ON
+      VdqmTape.vid = EffectiveVolumePriority_VIEW.vid
+  AND TapeAccessSpecification.accessMode = EffectiveVolumePriority_VIEW.tpMode;
 
 
 /**
@@ -2091,10 +2141,12 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
 
       -- Update it
       UPDATE VolumePriority SET
-        priority   = priorityVar,
-        clientUID  = clientUIDVar,
-        clientGID  = clientGIDVar,
-        clientHost = clientHostVar;
+        VolumePriority.priority   = priorityVar,
+        VolumePriority.clientUID  = clientUIDVar,
+        VolumePriority.clientGID  = clientGIDVar,
+        VolumePriority.clientHost = clientHostVar
+      WHERE
+        VolumePriority.id = priorityIdVar;
 
     -- Else a row for the priority does not yet exist
     ELSE
