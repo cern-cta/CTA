@@ -65,7 +65,6 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbGetUpdateFailedCnv.cpp \
      DbGetUpdateStartRequestCnv.cpp \
      DbMoverCloseRequestCnv.cpp \
-     DbPriorityMapCnv.cpp \
      DbPutDoneStartCnv.cpp \
      DbPutFailedCnv.cpp \
      DbPutStartRequestCnv.cpp \
