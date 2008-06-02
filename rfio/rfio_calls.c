@@ -1007,11 +1007,9 @@ char *host; /* Where the request comes from */
 
      if ( status == 0 ) {
        const char *perm_array[] = { "WTRUST", "LINKTRUST", NULL };
-       char oname1[MAXFILENAMSIZE], oname2[MAXFILENAMSIZE];
+       char oname2[MAXFILENAMSIZE];
        strcpy(oname2, name2);
-       if ((name1[0]=='\0' || !check_path_whitelist(host, name1, perm_array, oname1, sizeof(oname1),0)) &&
-           (forced_filename != NULL ||
-                   !check_path_whitelist(host, name2, perm_array, oname2, sizeof(oname2),1))) {
+       if (forced_filename != NULL || !check_path_whitelist(host, name2, perm_array, oname2, sizeof(oname2),1)) {
          if (name1[0]=='\0') {
            status = unlink(CORRECT_FILENAME(oname2));
            rcode = (status < 0 ? errno: 0) ;
@@ -1019,9 +1017,9 @@ char *host; /* Where the request comes from */
          }
          else {
            log(LOG_INFO, "symlink for (%d, %d)\n",getuid(), getgid()) ;
-           status = symlink( oname1, oname2 ) ;
+           status = symlink( name1, oname2 ) ;
            rcode = (status < 0 ? errno: 0) ;
-           log(LOG_INFO ,"rsymlink(): symlink(%s,%s) returned %d,rcode=%d\n",oname1, oname2, status,rcode ) ;
+           log(LOG_INFO ,"rsymlink(): symlink(%s,%s) returned %d,rcode=%d\n",name1, oname2, status,rcode ) ;
          }
        } else {
          status = -1;
