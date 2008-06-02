@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: enterPriority.man,v $ $Revision: 1.1 $ $Date: 2008/05/28 08:07:11 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: enterPriority.man,v $ $Revision: 1.2 $ $Date: 2008/06/02 13:38:11 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH ENTERPRIORITY 1 "$Date: 2008/05/28 08:07:11 $" CASTOR "set the priority for a specific uid-gid couple"
+.TH ENTERPRIORITY 1 "$Date: 2008/06/02 13:38:11 $" CASTOR "set the priority for a specific uid-gid couple"
 .SH NAME
 enterPriority
 .SH SYNOPSIS
@@ -29,6 +29,7 @@ enterPriority -u 333 -g 333 -p 6
 
 .SH NOTES
 This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from /etc/castor/ORASTAGERCONFIG
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
