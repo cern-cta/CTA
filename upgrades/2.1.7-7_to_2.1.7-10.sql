@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.7-7_to_2.1.7-10.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/30 15:48:13 $ $Author: sponcec3 $
+ * @(#)$RCSfile: 2.1.7-7_to_2.1.7-10.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/02 08:48:21 $ $Author: sponcec3 $
  *
  * This script upgrades a CASTOR v2.1.7-7 database into v2.1.7-8
  *
@@ -555,10 +555,10 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
                         '['||TO_CHAR(svcClass)||']')),
              euid, egid, reqType
         FROM WhiteList
-       WHERE (WhiteList.svcClass = svcClassId OR svcClassId = 0)
-         AND (WhiteList.euid = ieuid OR ieuid = -1)
-         AND (WhiteList.egid = iegid OR iegid = -1)
-         AND (WhiteList.reqType = ireqType OR ireqType = 0);
+       WHERE (WhiteList.svcClass = svcClassId OR WhiteList.svcClass IS  NULL OR svcClassId = 0)
+         AND (WhiteList.euid = ieuid OR WhiteList.euid IS NULL OR ieuid = -1)
+         AND (WhiteList.egid = iegid OR WhiteList.egid IS NULL OR iegid = -1)
+         AND (WhiteList.reqType = ireqType OR WhiteList.reqType IS NULL OR ireqType = 0);
     OPEN blist FOR
       SELECT decode(svcClass, NULL, '*',
                     nvl((SELECT name FROM SvcClass
@@ -566,10 +566,10 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
                         '['||TO_CHAR(svcClass)||']')),
              euid, egid, reqType
         FROM BlackList
-       WHERE (BlackList.svcClass = svcClassId OR svcClassId = 0)
-         AND (BlackList.euid = ieuid OR ieuid = -1)
-         AND (BlackList.egid = iegid OR iegid = -1)
-         AND (BlackList.reqType = ireqType OR ireqType = 0);
+       WHERE (BlackList.svcClass = svcClassId OR BlackList.svcClass IS  NULL OR svcClassId = 0)
+         AND (BlackList.euid = ieuid OR BlackList.euid IS NULL OR ieuid = -1)
+         AND (BlackList.egid = iegid OR BlackList.egid IS NULL OR iegid = -1)
+         AND (BlackList.reqType = ireqType OR BlackList.reqType IS NULL OR ireqType = 0);
   END;
 
 END castorBW;

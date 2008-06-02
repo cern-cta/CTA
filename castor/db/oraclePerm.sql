@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.641 $ $Date: 2008/05/30 15:44:21 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.642 $ $Date: 2008/06/02 08:48:21 $ $Author: sponcec3 $
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -447,10 +447,10 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
                         '['||TO_CHAR(svcClass)||']')),
              euid, egid, reqType
         FROM WhiteList
-       WHERE (WhiteList.svcClass = svcClassId OR svcClassId = 0)
-         AND (WhiteList.euid = ieuid OR ieuid = -1)
-         AND (WhiteList.egid = iegid OR iegid = -1)
-         AND (WhiteList.reqType = ireqType OR ireqType = 0);
+       WHERE (WhiteList.svcClass = svcClassId OR WhiteList.svcClass IS  NULL OR svcClassId = 0)
+         AND (WhiteList.euid = ieuid OR WhiteList.euid IS NULL OR ieuid = -1)
+         AND (WhiteList.egid = iegid OR WhiteList.egid IS NULL OR iegid = -1)
+         AND (WhiteList.reqType = ireqType OR WhiteList.reqType IS NULL OR ireqType = 0);
     OPEN blist FOR
       SELECT decode(svcClass, NULL, '*',
                     nvl((SELECT name FROM SvcClass
@@ -458,10 +458,10 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
                         '['||TO_CHAR(svcClass)||']')),
              euid, egid, reqType
         FROM BlackList
-       WHERE (BlackList.svcClass = svcClassId OR svcClassId = 0)
-         AND (BlackList.euid = ieuid OR ieuid = -1)
-         AND (BlackList.egid = iegid OR iegid = -1)
-         AND (BlackList.reqType = ireqType OR ireqType = 0);
+       WHERE (BlackList.svcClass = svcClassId OR BlackList.svcClass IS  NULL OR svcClassId = 0)
+         AND (BlackList.euid = ieuid OR BlackList.euid IS NULL OR ieuid = -1)
+         AND (BlackList.egid = iegid OR BlackList.egid IS NULL OR iegid = -1)
+         AND (BlackList.reqType = ireqType OR BlackList.reqType IS NULL OR ireqType = 0);
   END;
 
 END castorBW;
