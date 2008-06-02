@@ -44,8 +44,8 @@ DEPLIB = DepSharedLibraryTargetName(../../shlib,shift)
 GLOBLIB = -L../../../shlib -lshift
 #endif
 
-MANPAGES_STAGER = FileName($(MANDIR),stager_get.$(MANSUFFIX)) FileName($(MANDIR),stager_update.$(MANSUFFIX)) FileName($(MANDIR),stager_put.$(MANSUFFIX)) FileName($(MANDIR),stager_putdone.$(MANSUFFIX)) FileName($(MANDIR),stager_qry.$(MANSUFFIX)),FileName($(MANDIR),stager_rm.$(MANSUFFIX)),FileName($(MANDIR),stager_setfilegcweight.$(MANSUFFIX)) FileName($(MANDIR),newacct.$(MANSUFFIX))
-EMANPAGES_STAGER = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_get.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_update.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_put.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_putdone.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_qry.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_rm.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_setfilegcweight.$(MANSUFFIX)))  FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),newacct.$(MANSUFFIX)))
+MANPAGES_STAGER = FileName($(MANDIR),stager_get.$(MANSUFFIX)) FileName($(MANDIR),stager_update.$(MANSUFFIX)) FileName($(MANDIR),stager_put.$(MANSUFFIX)) FileName($(MANDIR),stager_putdone.$(MANSUFFIX)) FileName($(MANDIR),stager_qry.$(MANSUFFIX)),FileName($(MANDIR),stager_rm.$(MANSUFFIX)),FileName($(MANDIR),stager_setfilegcweight.$(MANSUFFIX)) FileName($(MANDIR),newacct.$(MANSUFFIX)) FileName($(MANDIR),stager_addprivilege.$(MANSUFFIX)) FileName($(MANDIR),stager_removeprivilege.$(MANSUFFIX)) FileName($(MANDIR),stager_listprivileges.$(MANSUFFIX)) 
+EMANPAGES_STAGER = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_get.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_update.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_put.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_putdone.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_qry.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_rm.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_setfilegcweight.$(MANSUFFIX)))  FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),newacct.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_addprivilege.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_removeprivilege.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_listprivileges.$(MANSUFFIX)))
 
 #if BuildSecurity
 GLOBLIB += -ldl
@@ -127,6 +127,9 @@ IMANPAGE(stager_qry,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(stager_rm,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(stager_setfilegcweight,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(newacct,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(stager_addprivilege,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(stager_removeprivilege,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(stager_listprivileges,$(MANDIR),$(MANSUFFIX))
 
 export: $(EPROGS_STAGERCLIENT)
 
@@ -153,6 +156,9 @@ EMANPAGE(stager_qry,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(stager_rm,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(stager_setfilegcweight,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(newacct,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(stager_addprivilege,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(stager_removeprivilege,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(stager_listprivileges,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(MANDIR),root,bin,0755)
