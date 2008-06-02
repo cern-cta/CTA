@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.6 $ $Date: 2008/01/30 13:33:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.7 $ $Date: 2008/06/02 13:26:36 $ $Author: waldron $
  *
  * Some SQL code to ease support and debugging
  *
@@ -70,10 +70,10 @@ END;
 CREATE OR REPLACE FUNCTION getDCs(ref number) RETURN castor_debug.DiskCopyDebug PIPELINED AS
 BEGIN
   FOR d IN (SELECT diskCopy.id,
-                   diskPool.name as diskpool,
-                   diskServer.name || ':' || fileSystem.mountPoint || diskCopy.path as location,
-                   diskCopy.status as status,
-                   to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationtime as creationtime
+                   diskPool.name AS diskpool,
+                   diskServer.name || ':' || fileSystem.mountPoint || diskCopy.path AS location,
+                   diskCopy.status AS status,
+                   to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationtime AS creationtime
               FROM DiskCopy, FileSystem, DiskServer, DiskPool
              WHERE DiskCopy.fileSystem = FileSystem.id(+)
                AND FileSystem.diskServer = diskServer.id(+)
@@ -87,10 +87,10 @@ END;
 /* Get the tapecopys, segments and streams associated with the reference number */
 CREATE OR REPLACE FUNCTION getTCs(ref number) RETURN castor_debug.TapeCopyDebug PIPELINED AS
 BEGIN
-  FOR t IN (SELECT TapeCopy.id as TCId, TapeCopy.status as TCStatus,
-                   Segment.Id, Segment.status as SegStatus, Segment.errorCode as SegErrCode,
-                   Tape.vid as VID, Tape.tpMode as tpMode, Tape.Status as TapeStatus,
-                   count(*) as nbStreams, Segment.errMsgTxt as SegErr
+  FOR t IN (SELECT TapeCopy.id AS TCId, TapeCopy.status AS TCStatus,
+                   Segment.Id, Segment.status AS SegStatus, Segment.errorCode AS SegErrCode,
+                   Tape.vid AS VID, Tape.tpMode AS tpMode, Tape.Status AS TapeStatus,
+                   count(*) AS nbStreams, Segment.errMsgTxt AS SegErr
               FROM TapeCopy, Segment, Tape, Stream2TapeCopy
              WHERE TapeCopy.id = Segment.copy(+)
                AND Segment.tape = Tape.id(+)
@@ -119,21 +119,22 @@ END;
  */
 CREATE OR REPLACE FUNCTION getRs(ref number) RETURN castor_debug.RequestDebug PIPELINED AS
 BEGIN
-  FOR d IN (SELECT to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationtime as creationtime,
-                   SubRequest.id as SubReqId, SubRequest.parent as SubReqParentId, SubRequest.Status,
-                   username, machine, svcClassName, Request.id as ReqId, Request.type as ReqType
+  FOR d IN (SELECT to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationtime AS creationtime,
+                   SubRequest.id AS SubReqId, SubRequest.parent AS SubReqParentId, SubRequest.Status,
+                   username, machine, svcClassName, Request.id AS ReqId, Request.type AS ReqType
               FROM SubRequest,
-                    (SELECT id, username, machine, svcClassName, 'Get' as type from StageGetRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'PGet' as type from StagePrepareToGetRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'Put' as type from StagePutRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'PPut' as type from StagePrepareToPutRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'Upd' as type from StageUpdateRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'PUpd' as type from StagePrepareToUpdateRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'Repack' as type from StageRepackRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'GetNext' as type from StageGetNextRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'UpdNext' as type from StageUpdateNextRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'PutDone' as type from StagePutDoneRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'DCRepl' as type from StageDiskCopyReplicaRequest) Request
+                    (SELECT id, username, machine, svcClassName, 'Get' AS type FROM StageGetRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'PGet' AS type FROM StagePrepareToGetRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'Put' AS type FROM StagePutRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'PPut' AS type FROM StagePrepareToPutRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'Upd' AS type FROM StageUpdateRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'PUpd' AS type FROM StagePrepareToUpdateRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'Repack' AS type FROM StageRepackRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'GetNext' AS type FROM StageGetNextRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'UpdNext' AS type FROM StageUpdateNextRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'PutDone' AS type FROM StagePutDoneRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'DCRepl' AS type FROM StageDiskCopyReplicaRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'SetFileGCWeight' AS type FROM SetFileGCWeight) Request
              WHERE castorfile = getCF(ref)
                AND Request.id = SubRequest.request) LOOP
      PIPE ROW(d);
