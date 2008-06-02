@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.661 $ $Date: 2008/05/30 07:31:05 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.662 $ $Date: 2008/06/02 13:27:33 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -804,9 +804,8 @@ BEGIN
            CastorFile.nsHost, CastorFile.fileid, CastorFile.filesize 
       FROM Tapecopy,CastorFile
      WHERE CastorFile.id = TapeCopy.castorfile 
-       AND TapeCopy.id IN (SELECT * FROM table(tcIds)); 
+       AND TapeCopy.id IN (SELECT /*+ CARDINALITY(tcidTable 5) */ * FROM table(tcIds) tcidTable); 
 END;
-
 
 /* Get input for python Stream Policy */
 CREATE OR REPLACE PROCEDURE inputForStreamPolicy
@@ -825,25 +824,33 @@ BEGIN
   -- info for policy
   SELECT streamPolicy, nbDrives, id INTO policyName, maxStream, svcId 
     FROM SvcClass WHERE SvcClass.name = svcClassName;
-  SELECT count(*) INTO runningStreams FROM Stream,SvcClass2TapePool WHERE Stream.TapePool = SvcClass2TapePool.child AND SvcClass2TapePool.parent=svcId AND Stream.status = 3;   
-  UPDATE stream SET status=7 WHERE Stream.status IN (4,5,6) AND Stream.id 
-       IN (select Stream.id FROM Stream,SvcClass2TapePool WHERE Stream.Tapepool=SvcClass2TapePool.child AND SvcClass2TapePool.parent= svcId ) returning Stream.id BULK COLLECT INTO strIds; 
+  SELECT count(*) INTO runningStreams 
+    FROM Stream, SvcClass2TapePool 
+   WHERE Stream.TapePool = SvcClass2TapePool.child 
+     AND SvcClass2TapePool.parent = svcId 
+     AND Stream.status = 3;   
+  UPDATE stream SET status = 7 
+   WHERE Stream.status IN (4, 5, 6) 
+     AND Stream.id 
+      IN (SELECT Stream.id FROM Stream,SvcClass2TapePool 
+           WHERE Stream.Tapepool = SvcClass2TapePool.child 
+             AND SvcClass2TapePool.parent = svcId) 
+  RETURNING Stream.id BULK COLLECT INTO strIds; 
   COMMIT;
   --- return for policy
   OPEN dbInfo FOR
     SELECT Stream.id, count(distinct Stream2TapeCopy.child), sum(CastorFile.filesize)
       FROM Stream2TapeCopy, TapeCopy, CastorFile, Stream
      WHERE 
-       Stream.id in (SELECT * FROM table(strIds))
+       Stream.id IN (SELECT /*+ CARDINALITY(stridTable 5) */ * FROM TABLE(strIds) stridTable)
        AND Stream2TapeCopy.child = TapeCopy.id(+)  
        AND TapeCopy.castorfile = CastorFile.id(+) 
        AND Stream.id = Stream2TapeCopy.parent(+)
-       AND Stream.status=7
+       AND Stream.status = 7
      GROUP BY Stream.id;
 END;
 
 /* createOrUpdateStream */
-
 CREATE OR REPLACE PROCEDURE createOrUpdateStream
 (svcClassName IN VARCHAR2,
  initialSizeToTransfer IN NUMBER, -- total initialSizeToTransfer for the svcClass
@@ -937,19 +944,19 @@ BEGIN
         INSERT INTO Id2Type (id, type) values (strId,26); -- Stream type
     	IF doClone = 1 THEN
 	  BEGIN
-	  -- clone the new stream with one from the same tapepool
-	  	SELECT id, initialsizetotransfer INTO streamToClone, oldSize 
-            	FROM Stream WHERE tapepool = tpId AND id != strId AND ROWNUM < 2; 
-          	FOR tcId IN (SELECT child FROM Stream2TapeCopy 
-                        WHERE Stream2TapeCopy.parent = streamToClone) 
-          	LOOP
-            -- a take the first one, they are supposed to be all the same
-          	  INSERT INTO stream2tapecopy (parent, child) VALUES (strId, tcId.child); 
-          	END LOOP;
-          	UPDATE Stream set initialSizeToTransfer=oldSize WHERE id=strId;        
+	    -- clone the new stream with one from the same tapepool
+	    SELECT id, initialsizetotransfer INTO streamToClone, oldSize 
+              FROM Stream WHERE tapepool = tpId AND id != strId AND ROWNUM < 2; 
+            FOR tcId IN (SELECT child FROM Stream2TapeCopy 
+                          WHERE Stream2TapeCopy.parent = streamToClone) 
+            LOOP
+              -- a take the first one, they are supposed to be all the same
+              INSERT INTO stream2tapecopy (parent, child) VALUES (strId, tcId.child); 
+            END LOOP;
+            UPDATE Stream set initialSizeToTransfer=oldSize WHERE id = strId;        
            EXCEPTION WHEN NO_DATA_FOUND THEN
-  		-- no stream to clone for this tapepool
-  		NULL;
+  	    -- no stream to clone for this tapepool
+  	    NULL;
 	   END;     	
 	END IF;
         nbOldStream := nbOldStream + 1;
@@ -1038,8 +1045,8 @@ BEGIN
       ELSE
         UPDATE Stream 
            SET status = 0, -- PENDING
-                -- initialSize overwritten to initSize only if it is 0
-                initialSizeToTransfer = decode(initialSizeToTransfer, 0, initSize, initialSizeToTransfer)
+               -- initialSize overwritten to initSize only if it is 0
+               initialSizeToTransfer = decode(initialSizeToTransfer, 0, initSize, initialSizeToTransfer)
          WHERE Stream.status = 7 -- WAITPOLICY
            AND id = streamIds(i);
       END IF;
@@ -1076,8 +1083,8 @@ CREATE OR REPLACE PROCEDURE inputForRecallPolicy(dbInfo OUT castor.DbRecallInfo_
   svcId NUMBER;
 BEGIN  
   OPEN dbInfo FOR 
-    SELECT tape.id,tape.vid, count(distinct segment.id), sum(castorfile.filesize), 
-           gettime - min(segment.creationtime), max(Segment.priority)
+    SELECT tape.id, tape.vid, count(distinct segment.id), sum(castorfile.filesize), 
+           gettime() - min(segment.creationtime), max(Segment.priority)
       FROM TapeCopy, CastorFile, Segment, Tape
      WHERE Tape.id = Segment.tape(+) 
        AND TapeCopy.id(+) = Segment.copy
