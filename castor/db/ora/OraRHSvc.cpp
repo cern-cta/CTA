@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/05/30 10:54:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/06/02 08:20:50 $ $Author: sponcec3 $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -181,7 +181,11 @@ void handleChangePrivilegeTypeLoop
 	   requestTypes.begin();
 	 typeIt != requestTypes.end();
 	 typeIt++) {
-      stmt->setInt(4, (*typeIt)->reqType());
+      if ((*typeIt)->reqType() > 0) {
+	stmt->setInt(4, (*typeIt)->reqType());
+      } else {
+	stmt->setNull(4, oracle::occi::OCCINUMBER);
+      }
       stmt->executeUpdate();
     }
   } else {
