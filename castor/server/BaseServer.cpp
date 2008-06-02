@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2008/06/02 12:10:47 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2008/06/02 17:08:53 $ $Author: waldron $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -55,7 +55,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::server::BaseServer::BaseServer(const std::string serverName) :
-  m_foreground(false), m_serverName(serverName)
+  m_foreground(false), m_runAsStagerSuperuser(false), m_serverName(serverName)
 {
   m_cmdLineParams.clear();
   m_cmdLineParams << "fc:h";
@@ -119,7 +119,7 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
     }
     
     // change identity to Castor superuser if requested
-    if(m_runAsStagerSuperuser) {
+    if (m_runAsStagerSuperuser) {
       castor::System::switchToCastorSuperuser();
     }
   }
