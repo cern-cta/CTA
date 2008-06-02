@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.29 2008/05/20 08:31:50 waldron Exp $
+ * $Id: stager_qry.c,v 1.30 2008/06/02 15:54:44 sponcec3 Exp $
  */
 
 /*
@@ -468,7 +468,7 @@ int checkAndCountArguments(int argc, char *argv[],
 // -----------------------------------------------------------------------
 void usage(char *cmd) {
   fprintf (stderr, "usage: %s ", cmd);
-  fprintf (stderr, "%s%s",
+  fprintf (stderr, "%s",
            "[-M hsmfile [-M ...]] [-F fileid@nshost] [-S svcClass] [-U usertag] [-r requestid] [-n] [-h]\n");
   fprintf (stderr, "       %s ", cmd);
   fprintf (stderr, "%s", "-s [-S svcClass] [-d diskPool] [-i] [-h]\n");
