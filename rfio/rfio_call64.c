@@ -260,7 +260,7 @@ extern int srchkreqsize _PROTO((SOCKET, char *, int));
 extern char *forced_filename;
 #define CORRECT_FILENAME(filename) (forced_filename != NULL ? forced_filename : filename)
 extern const char *rfio_all_perms[];
-extern int check_path_whitelist _PROTO((const char *, const char *, const char **));
+extern int check_path_whitelist _PROTO((const char *, const char *, const char **, char *, size_t, int));
 
 #if !defined(HPSS)
 /* Warning : the new sequential transfer mode cannot be used with 
@@ -454,12 +454,14 @@ char *host; /* Where the request comes from */
          status = rcode ;
        }
        else {
-         if (!check_path_whitelist(host, filename, rfio_all_perms)) {
-           status= ( lstat64(filename, &statbuf) < 0 ) ? errno : 0 ;
+         char ofilename[MAXFILENAMSIZE];
+         strcpy(ofilename, filename);
+         if (forced_filename != NULL || !check_path_whitelist(host, filename, rfio_all_perms, ofilename, sizeof(ofilename),0)) {
+           status= ( lstat64(CORRECT_FILENAME(ofilename), &statbuf) < 0 ) ? errno : 0 ;
          } else {
            status = errno;
          }
-         log(LOG_INFO, "srlstat64: file: %s , status %d\n", filename, status) ;
+         log(LOG_INFO, "srlstat64: file: %s , status %d\n", CORRECT_FILENAME(filename), status) ;
        }
      }
    }
@@ -598,13 +600,15 @@ char *host; /* Where the request comes from */
          status = rcode ;
        }
        else  {
-         if (!check_path_whitelist(host, filename, rfio_all_perms)) {
-           status= ( stat64(filename, &statbuf) < 0 ) ? errno : 0 ;
+         char ofilename[MAXFILENAMSIZE];
+         strcpy(ofilename, filename);
+         if (forced_filename != NULL || !check_path_whitelist(host, filename, rfio_all_perms, ofilename, sizeof(ofilename),1)) {
+           status= ( stat64(CORRECT_FILENAME(ofilename), &statbuf) < 0 ) ? errno : 0 ;
           } else {
            status = errno;
          }
          log(LOG_INFO, "srstat64: file: %s for (%d,%d) status %d\n",
-             filename, uid, gid, status) ;
+             CORRECT_FILENAME(filename), uid, gid, status) ;
        }
      }
    }
@@ -856,13 +860,15 @@ char tmpbuf[21], tmpbuf2[21];
        else
        {
          const char *perm_array[3];
+         char ofilename[MAXFILENAMSIZE];
          perm_array[0] = ((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST";
          perm_array[1] = "OPENTRUST";
          perm_array[2] = NULL;
+
          errno = 0;
          fd = -1;
-         if (forced_filename!=NULL || !check_path_whitelist(host, CORRECT_FILENAME(filename), perm_array)) {
-           fd = open64(pfn, ntohopnflg(flags), mode) ;
+         if (forced_filename!=NULL || !check_path_whitelist(host, pfn, perm_array, ofilename, sizeof(ofilename),1)) {
+           fd = open64((forced_filename!=NULL)?pfn:ofilename, ntohopnflg(flags), mode) ;
            log(LOG_DEBUG, "sropen64: open64(%s,0%o,0%o) returned %x (hex)\n",
                CORRECT_FILENAME(filename), flags, mode, fd);
          }
@@ -2039,13 +2045,15 @@ char        *host;         /* Where the request comes from        */
          }
          {
             const char *perm_array[3];
+            char ofilename[MAXFILENAMSIZE];
             perm_array[0] = ((flags & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST";
             perm_array[1] = "OPENTRUST";
             perm_array[2] = NULL;
    
+            strcpy(ofilename, filename);
             fd = -1;
-            if (forced_filename!=NULL || !check_path_whitelist(host, CORRECT_FILENAME(filename), perm_array)) {
-               fd = open64(CORRECT_FILENAME(filename), flags, mode);
+            if (forced_filename!=NULL || !check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
+               fd = open64(CORRECT_FILENAME(ofilename), flags, mode);
 #if defined(_WIN32)
                _setmode( fd, _O_BINARY );       /* default is text mode  */
 #endif       

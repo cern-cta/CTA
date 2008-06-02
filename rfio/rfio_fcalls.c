@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_fcalls.c,v 1.5 2008/06/01 22:21:22 dhsmith Exp $
+ * $Id: rfio_fcalls.c,v 1.6 2008/06/02 12:20:54 dhsmith Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_fcalls.c,v $ $Revision: 1.5 $ $Date: 2008/06/01 22:21:22 $ CERN/IT/PDP/DM Felix Hassine" ;
+static char sccsid[] = "@(#)$RCSfile: rfio_fcalls.c,v $ $Revision: 1.6 $ $Date: 2008/06/02 12:20:54 $ CERN/IT/PDP/DM Felix Hassine" ;
 #endif /* not lint */
 
 /* rfio_fcalls.c        - Remote file I/O - server FORTRAN calls        */
@@ -126,7 +126,7 @@ extern int switch_close();
 extern int switch_write();
 extern int switch_read();
 extern int srchkreqsize _PROTO((SOCKET, char *, int));
-extern int check_path_whitelist _PROTO((const char *, const char *, const char **));
+extern int check_path_whitelist _PROTO((const char *, const char *, const char **, char *, size_t, int));
 
 /************************************************************************/
 /*                                                                      */
@@ -307,8 +307,9 @@ int 	bet ;
 #endif	     
        {         
          const char *perm_array[] = { "WTRUST", "OPENTRUST", NULL };
-         if (!check_path_whitelist(host, filename, perm_array)) {
-           status=switch_open(access, &lun, filename, &filen, &lrecl, (LONG *)&append,(LONG *)&trunc,LLTM);
+         char ofilename[MAXFILENAMSIZE];
+         if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
+           status=switch_open(access, &lun, ofilename, &filen, &lrecl, (LONG *)&append,(LONG *)&trunc,LLTM);
          } else {
            status=errno;
          }

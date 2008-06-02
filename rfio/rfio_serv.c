@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.24 2008/06/01 22:21:22 dhsmith Exp $
+ * $Id: rfio_serv.c,v 1.25 2008/06/02 12:20:54 dhsmith Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.24 $ $Date: 2008/06/01 22:21:22 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.25 $ $Date: 2008/06/02 12:20:54 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 /* rfio_serv.c  SHIFT remote file access super server                   */

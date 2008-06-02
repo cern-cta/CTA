@@ -375,12 +375,13 @@ const char *prefix;
  * PATH_MAX dependency and some provision for windows paths
  * and avoiding some portability problems with realpath()
  */
-static char **l_canonicalize_path(inpath,sym_depth,effective_cwd,path_typep,prefixp)
+static char **l_canonicalize_path(inpath,sym_depth,effective_cwd,path_typep,prefixp,travel_sym)
 const char *inpath;
 int sym_depth;
 const char *effective_cwd;
 int *path_typep;
 char **prefixp;
+int travel_sym;
 {
    char buffer[4096];
    const char *delineators;
@@ -474,7 +475,7 @@ char **prefixp;
      strcat(ptr, "/");
      strcat(ptr, inpath);
      
-     result = l_canonicalize_path(ptr,sym_depth,buffer,path_typep,prefixp);
+     result = l_canonicalize_path(ptr,sym_depth,buffer,path_typep,prefixp,travel_sym);
      goto success;
    }
 #endif
@@ -517,7 +518,7 @@ char **prefixp;
      if (ptr2 == NULL) goto error;
 
      rc = readlink(ptr2, buffer, sizeof(buffer));
-     if (n==0 || rc<0) {
+     if (n==0 || rc<0 || (cp == NULL && !travel_sym)) {
        if (ptr != NULL) free(ptr);
        ptr = ptr2;
        ++n;
@@ -525,7 +526,7 @@ char **prefixp;
      }
      free(ptr2);
 
-     result = l_canonicalize_path(buffer, sym_depth+1, ptr, path_typep, prefixp);
+     result = l_canonicalize_path(buffer, sym_depth+1, ptr, path_typep, prefixp,travel_sym);
      if (result == NULL) goto error;
 
      free(ptr); ptr = NULL;
@@ -574,12 +575,13 @@ error:
  * outprefix: if set is filled with the path prefix
  * outelements: if set is set to an array of pointers to the path elements
  */
-static int rfio_canonicalize_path(inpath,outpath,outtype,outprefix,outelements)
+static int rfio_canonicalize_path(inpath,outpath,outtype,outprefix,outelements,travel_sym)
 const char *inpath;
 char **outpath;
 int *outtype;
 char **outprefix;
 char ***outelements;
+int travel_sym;
 {
   char *result_path;
   char **elements;
@@ -590,7 +592,7 @@ char ***outelements;
   if (outpath != NULL) *outpath = NULL;
   if (outprefix != NULL) *outprefix = NULL;
 
-  elements = l_canonicalize_path(inpath, 0, NULL, &p_type, &prefix);
+  elements = l_canonicalize_path(inpath, 0, NULL, &p_type, &prefix, travel_sym);
   if (elements==NULL) return -1;
   result_path = l_path_elements_to_path(elements, p_type, prefix);
 
@@ -630,18 +632,29 @@ char ***outelements;
 }
 
 /* perform path whitelist logic, including checking of
- * hostname for possible whitelist bypass
+ * hostname for possible whitelist bypass:
+ *
+ * hostname which may be used to check for bypass
+ * path to be tested
+ * rfiod_permstrs possible list of permission strings
+ *
+ * opath: if not null is filled with a canonicalized version
+ * opathsize: space available in opath
  */
-int check_path_whitelist(hostname,path,rfiod_permstrs)
+int check_path_whitelist(hostname,path,rfiod_permstrs,opath,opathsize,travel_sym)
 const char *hostname;
 const char *path;
 const char **rfiod_permstrs;
+char *opath;
+size_t opathsize;
+int travel_sym;
 {
    int found = 0;
    int n;
    int save_errno = errno;
    char **test_path_elements;
    char *test_path_prefix;
+   char *test_path;
    int test_path_type;
    char hostname1[MAXHOSTNAMELEN];
    char **white_list = NULL, **additional = NULL;
@@ -678,11 +691,17 @@ const char **rfiod_permstrs;
    }
 
    if (found) {
+     if (opath != NULL && strlen(path)>=opathsize) {
+       log(LOG_ERR, "check_path_whitelist: Host trusted but path (%s) too long to return in output\n", path);
+       errno = ENAMETOOLONG;
+       return -1;
+     }
+     strcpy(opath, path);
      errno = save_errno;
      return 0;
    }
 
-   if (rfio_canonicalize_path(path,NULL,&test_path_type,&test_path_prefix,&test_path_elements)<0) {
+   if (rfio_canonicalize_path(path,&test_path,&test_path_type,&test_path_prefix,&test_path_elements,travel_sym)<0) {
      log(LOG_ERR, "check_path_whitelist: Could not canonicalize the path in the request (%s), disallowing access\n", path);
      /* keep errno from rfio_canonicalize_path() */
      return -1;
@@ -712,6 +731,7 @@ const char **rfiod_permstrs;
          l_free_strlist(additional);
          l_free_strlist(test_path_elements);
          free(test_path_prefix);
+         free(test_path);
          log(LOG_ERR, "check_path_whitelist: Problem making the white list, disallowing access\n");
          errno = save_errno;
          return -1;
@@ -732,7 +752,7 @@ const char **rfiod_permstrs;
      int i,match=1;
      char **p_elem,*p_prefix;
      int p_type;
-     if (!rfio_canonicalize_path(white_list[n],NULL,&p_type,&p_prefix,&p_elem)) {
+     if (!rfio_canonicalize_path(white_list[n],NULL,&p_type,&p_prefix,&p_elem,1)) {
        if (p_type == test_path_type && !strcmp(p_prefix,test_path_prefix)) {
          for(i=0;1;i++) {
            if (p_elem[i] == NULL) break;
@@ -754,9 +774,25 @@ const char **rfiod_permstrs;
 
    if (!found) {
      log(LOG_ERR, "check_path_whitelist: Could not match path %s to white list\n", path);
+     free(test_path);
      errno = EACCES;
      return -1;
    }
+
+   if (opath != NULL && strlen(test_path)>=opathsize) {
+     log(LOG_ERR, "check_path_whitelist: Canonicalized path %s too long to return\n",test_path);
+     free(test_path);
+     errno = ENAMETOOLONG;
+     return -1;
+   }
+
+   log(LOG_INFO, "check_path_whitelist: Granting %s\n", path);
+
+   if (opath != NULL) {
+     strcpy(opath, test_path);
+   }
+
+   free(test_path);
 
    errno = save_errno;
    return 0;
@@ -961,20 +997,31 @@ char *host; /* Where the request comes from */
        else
          log(LOG_ERR,"srsymlink(): failed, rcode = %d\n",rcode);
      }
+
+     if ( !status && name1[0]!='\0' && forced_filename != NULL) {
+       log(LOG_ERR,"Disallowing symlink in forced filename mode\n");
+       status= -1;
+       errno=EACCES;
+       rcode=errno;
+     }
+
      if ( status == 0 ) {
        const char *perm_array[] = { "WTRUST", "LINKTRUST", NULL };
-       if ((name1[0]=='\0' || !check_path_whitelist(host, name1, perm_array)) &&
-                              !check_path_whitelist(host, name2, perm_array)) {
+       char oname1[MAXFILENAMSIZE], oname2[MAXFILENAMSIZE];
+       strcpy(oname2, name2);
+       if ((name1[0]=='\0' || !check_path_whitelist(host, name1, perm_array, oname1, sizeof(oname1),0)) &&
+           (forced_filename != NULL ||
+                   !check_path_whitelist(host, name2, perm_array, oname2, sizeof(oname2),1))) {
          if (name1[0]=='\0') {
-           status = unlink(name2) ;
+           status = unlink(CORRECT_FILENAME(oname2));
            rcode = (status < 0 ? errno: 0) ;
-           log(LOG_INFO ,"runlink(): unlink(%s) returned %d, rcode=%d\n",name2,status,rcode);
+           log(LOG_INFO ,"runlink(): unlink(%s) returned %d, rcode=%d\n",CORRECT_FILENAME(oname2),status,rcode);
          }
          else {
            log(LOG_INFO, "symlink for (%d, %d)\n",getuid(), getgid()) ;
-           status = symlink( name1, name2 ) ;
+           status = symlink( oname1, oname2 ) ;
            rcode = (status < 0 ? errno: 0) ;
-           log(LOG_INFO ,"rsymlink(): symlink(%s,%s) returned %d,rcode=%d\n",name1, name2, status,rcode ) ;
+           log(LOG_INFO ,"rsymlink(): symlink(%s,%s) returned %d,rcode=%d\n",oname1, oname2, status,rcode ) ;
          }
        } else {
          status = -1;
@@ -1050,9 +1097,10 @@ int rt ;
      log(LOG_INFO,"srreadlink() : Solving %s\n",path);
      if (status == 0) {
        const char *perm_array[] = { "RTRUST", NULL };
+       char opath[MAXFILENAMSIZE];
        rcode = -1;
-       if (!check_path_whitelist(host, path, perm_array)) {
-         rcode = readlink( path, lpath, MAXFILENAMSIZE) ;
+       if (!check_path_whitelist(host, path, perm_array, opath, sizeof(opath),0)) {
+         rcode = readlink( opath, lpath, MAXFILENAMSIZE) ;
        }
        if (rcode < 0) {
          lpath[0]='\0' ;
@@ -1121,6 +1169,12 @@ int rt ;
            log(LOG_ERR,"srchown(): failed, rcode = %d\n",rcode);
          status = -1 ;
        }
+       if ( !status && forced_filename != NULL) {
+         log(LOG_ERR,"Disallowing chown in forced filename mode\n");
+         status= -1;
+         errno=EACCES;
+         rcode=errno;
+       }
        if (netread_timeout(s, rqstbuf, len, RFIO_CTRL_TIMEOUT) != len) {
          log(LOG_ERR, "srchown(): read(): %s\n", strerror(errno));
          return -1;
@@ -1135,8 +1189,9 @@ int rt ;
        log(LOG_INFO,"rchown: filename: %s, uid: %d ,gid: %d\n",filename,owner,group);
        if (status == 0 ) {
          const char *perm_array[] = { "WTRUST", "CHOWNTRUST", NULL };
-         if (!check_path_whitelist(host, filename, perm_array)) {
-           if ( (status =  chown(filename,owner,group)) < 0 ) 
+         char ofilename[MAXFILENAMSIZE];
+         if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
+           if ( (status =  chown(ofilename,owner,group)) < 0 ) 
              rcode = errno ;
            else
              status = 0 ;
@@ -1211,6 +1266,12 @@ int rt ;
            log(LOG_ERR,"srchmod(): failed, rcode = %d\n",rcode);
          status = -1 ;
        }
+       if ( !status && forced_filename != NULL) {
+         log(LOG_ERR,"Disallowing chmod in forced filename mode\n");
+         status= -1;
+         errno=EACCES;
+         rcode=errno;
+       }
        if (netread_timeout(s, rqstbuf, len, RFIO_CTRL_TIMEOUT) != len) {
 #if defined(_WIN32)
          log(LOG_ERR, "srchmod(): read(): %s\n", geterr());
@@ -1228,8 +1289,9 @@ int rt ;
        log(LOG_INFO,"chmod: filename: %s, mode: %o\n", filename, mode) ;
        if (status == 0 ) {
          const char *perm_array[] = { "WTRUST", "CHMODTRUST", NULL };
-         if (!check_path_whitelist(host, filename, perm_array)) {
-           if ( (status =  chmod(filename, mode)) < 0 ) 
+         char ofilename[MAXFILENAMSIZE];
+         if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
+           if ( (status =  chmod(ofilename, mode)) < 0 ) 
              rcode = errno ;
            else
              status = 0 ;
@@ -1307,6 +1369,12 @@ int rt ;
            log(LOG_ERR,"srmkdir(): failed, rcode = %d\n",rcode);
          status = -1 ;
        }
+       if ( !status && forced_filename != NULL) {
+         log(LOG_ERR,"Disallowing mkdir in forced filename mode\n");
+         status= -1;
+         errno=EACCES;
+         rcode=errno;
+       }
        if (netread_timeout(s, rqstbuf, len, RFIO_CTRL_TIMEOUT) != len) {
 #if defined(_WIN32)
          log(LOG_ERR, "srmkdir(): read(): %s\n", geterr());
@@ -1324,8 +1392,9 @@ int rt ;
        log(LOG_INFO,"rmkdir: filename: %s, mode: %o\n", filename, mode) ;
        if (status == 0 ) {
          const char *perm_array[] = { "WTRUST", "MKDIRTRUST", NULL };
-         if (!check_path_whitelist(host, filename, perm_array)) {
-           if ( (status =  mkdir(filename, mode)) < 0 ) 
+         char ofilename[MAXFILENAMSIZE];
+         if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
+           if ( (status =  mkdir(ofilename, mode)) < 0 ) 
              rcode = errno ;
            else
              status = 0 ;
@@ -1402,6 +1471,12 @@ int rt ;
            log(LOG_ERR,"srrmdir(): failed, rcode = %d\n",rcode);
          status = -1 ;
        }
+       if ( !status && forced_filename != NULL) {
+         log(LOG_ERR,"Disallowing rmdir in forced filename mode\n");
+         status= -1;
+         errno=EACCES;
+         rcode=errno;
+       }
        if (netread_timeout(s, rqstbuf, len, RFIO_CTRL_TIMEOUT) != len) {
 #if defined(_WIN32)
          log(LOG_ERR, "srrmdir(): read(): %s\n", geterr());
@@ -1418,8 +1493,9 @@ int rt ;
        log(LOG_INFO,"rrmdir: filename: %s\n", filename) ;
        if (status == 0 ) {
          const char *perm_array[] = { "WTRUST", "RMDIRTRUST", NULL };
-         if (!check_path_whitelist(host, filename, perm_array)) {
-           if ( (status =  rmdir(filename)) < 0 ) 
+         char ofilename[MAXFILENAMSIZE];
+         if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
+           if ( (status =  rmdir(ofilename)) < 0 ) 
              rcode = errno ;
            else
              status = 0 ;
@@ -1497,6 +1573,12 @@ int     rt ;
            log(LOG_ERR,"srrename(): failed, rcode = %d\n",rcode);
          status = -1 ;
        }
+       if ( !status && forced_filename != NULL) {
+         log(LOG_ERR,"Disallowing rename in forced filename mode\n");
+         status= -1;
+         errno=EACCES;
+         rcode=errno;
+       }
        if (netread_timeout(s, rqstbuf, len, RFIO_CTRL_TIMEOUT) != len) {
 #if defined(_WIN32)
          log(LOG_ERR, "srrename(): read(): %s\n", geterr());
@@ -1516,9 +1598,10 @@ int     rt ;
        log(LOG_INFO,"srrename: filenameo %s, filenamen %s\n", filenameo, filenamen);
        if (status == 0 ) {
          const char *perm_array[] = { "WTRUST", "RENAMETRUST", NULL };
-         if (!check_path_whitelist(host, filenameo, perm_array) &&
-             !check_path_whitelist(host, filenamen, perm_array)) {
-           if ( (status =  rename(filenameo, filenamen)) < 0 ) 
+         char ofilenameo[MAXFILENAMSIZE], ofilenamen[MAXFILENAMSIZE];
+         if (!check_path_whitelist(host, filenameo, perm_array, ofilenameo, sizeof(ofilenameo),0) &&
+             !check_path_whitelist(host, filenamen, perm_array, ofilenamen, sizeof(ofilenamen),0)) {
+           if ( (status =  rename(ofilenameo, ofilenamen)) < 0 ) 
              rcode = errno ;
            else
              status = 0 ;
@@ -1746,12 +1829,14 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
          memset(&statbuf,'\0',sizeof(statbuf));
          status = rcode ;
        } else {
-         if (!check_path_whitelist(host, filename, rfio_all_perms)) {
-           status= ( lstat(filename, &statbuf) < 0 ) ? errno : 0 ;
+         char ofilename[MAXFILENAMSIZE];
+         strcpy(ofilename, filename);
+         if (forced_filename != NULL || !check_path_whitelist(host, filename, rfio_all_perms, ofilename, sizeof(ofilename),0)) {
+           status= ( lstat(CORRECT_FILENAME(ofilename), &statbuf) < 0 ) ? errno : 0 ;
           } else {
            status = errno;
          }
-         log(LOG_INFO,"rlstat: file: %s , status %d\n",filename,status) ;
+         log(LOG_INFO,"rlstat: file: %s , status %d\n",CORRECT_FILENAME(filename),status) ;
        }
      }
    }
@@ -1885,13 +1970,15 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
          memset(&statbuf,'\0',sizeof(statbuf));
          status = rcode ;
        } else  {
-         if (!check_path_whitelist(host, filename, rfio_all_perms)) {
-           status= ( stat(filename, &statbuf) < 0 ) ? errno : 0 ;
+         char ofilename[MAXFILENAMSIZE];
+         strcpy(ofilename, filename);
+         if (forced_filename != NULL || !check_path_whitelist(host, filename, rfio_all_perms, ofilename, sizeof(ofilename),1)) {
+           status= ( stat(CORRECT_FILENAME(ofilename), &statbuf) < 0 ) ? errno : 0 ;
          } else {
            status = errno;
          }
 
-         log(LOG_INFO,"rstat: stat(): file: %s for (%d,%d) status %d\n",filename,uid,gid,status) ;
+         log(LOG_INFO,"rstat: stat(): file: %s for (%d,%d) status %d\n",CORRECT_FILENAME(filename),uid,gid,status) ;
        }
      }
    }
@@ -2069,11 +2156,18 @@ int     rt;
              log(LOG_ERR,"raccess(): failed at check_user_perm(), rcode %d\n",rcode);
          }
        }
+       if ( !status && forced_filename != NULL) {
+         log(LOG_ERR,"Disallowing access() in forced filename mode\n");
+         status= -1;
+         errno=EACCES;
+         rcode=errno;
+       }
        if (status) {
          status = rcode;
        } else {
-         if (!check_path_whitelist(host, filename, perm_array)) {
-           status= ( access(filename, mode) < 0 ) ? errno : 0 ;
+         char ofilename[MAXFILENAMSIZE];
+         if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
+           status= ( access(ofilename, mode) < 0 ) ? errno : 0 ;
          } else {
            status = errno;
          }
@@ -2394,14 +2488,16 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
       else
       {
          const char *perm_array[3];
+         char ofilename[MAXFILENAMSIZE];
          perm_array[0] = ((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST";
          perm_array[1] = "OPENTRUST";
          perm_array[2] = NULL;
 
+         strcpy(ofilename, filename);
          fd = -1;
-         if (forced_filename!=NULL || !check_path_whitelist(host, CORRECT_FILENAME(filename), perm_array)) {
-           fd = open(CORRECT_FILENAME(filename), ntohopnflg(flags), mode) ;
-           log(LOG_DEBUG, "ropen: open(%s,%d,%d) returned %x (hex)\n", CORRECT_FILENAME(filename), flags, mode, fd);
+         if (forced_filename!=NULL || !check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
+           fd = open(CORRECT_FILENAME(ofilename), ntohopnflg(flags), mode) ;
+           log(LOG_DEBUG, "ropen: open(%s,%d,%d) returned %x (hex)\n", CORRECT_FILENAME(ofilename), flags, mode, fd);
          }
          if (fd < 0) {
            char alarmbuf[1024];
@@ -3822,11 +3918,18 @@ int bet;
            log(LOG_ERR,"ropendir(): failed at check_user_perm(), rcode %d\n",rcode);
          status = -1 ;
        }
-       else {
+       if ( !status && forced_filename != NULL) {
+         log(LOG_ERR,"Disallowing opendir in forced filename mode\n");
+         status= -1;
+         errno=EACCES;
+         rcode=errno;
+       }
+       if ( !status ) {
          const char *perm_array[] = { "RTRUST", "OPENTRUST", NULL };
+         char ofilename[MAXFILENAMSIZE];
          dirp = NULL;
-         if (!check_path_whitelist(host, filename, perm_array)) {
-           dirp= opendir(filename) ;
+         if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
+           dirp= opendir(ofilename) ;
          }
 
          if ( dirp == NULL ) {
@@ -4482,17 +4585,19 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
 #endif
        {
          const char *perm_array[3];
+         char ofilename[MAXFILENAMSIZE];
          perm_array[0] = ((flags & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST";
          perm_array[1] = "OPENTRUST";
          perm_array[2] = NULL;
 
+         strcpy(ofilename, filename);
          fd = -1;
-         if (forced_filename!=NULL || !check_path_whitelist(host, CORRECT_FILENAME(filename), perm_array)) {
-             fd = open(CORRECT_FILENAME(filename), flags, mode);
+         if (forced_filename!=NULL || !check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
+             fd = open(CORRECT_FILENAME(ofilename), flags, mode);
 #if defined(_WIN32)
              _setmode( fd, _O_BINARY );        /* default is text mode  */
 #endif
-             log(LOG_DEBUG,"ropen_v3: open(%s,%d,%d) returned %x (hex)\n",CORRECT_FILENAME(filename),flags,mode,fd) ;
+             log(LOG_DEBUG,"ropen_v3: open(%s,%d,%d) returned %x (hex)\n",CORRECT_FILENAME(ofilename),flags,mode,fd) ;
          }
          if (fd < 0)  {
             char alarmbuf[1024];
