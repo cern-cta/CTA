@@ -1,0 +1,38 @@
+.\" @(#)$RCSfile: listPriority.man,v $ $Revision: 1.1 $ $Date: 2008/06/02 13:35:03 $ CERN IT/ADC Olof Barring
+.\" Copyright (C) 2005 by CERN IT/ADC
+.\" All rights reserved
+.\"
+.TH LISTPRIORITY 1 "$Date: 2008/06/02 13:35:03 $" CASTOR "list entries in the priority map table used by vdqm"
+.SH NAME
+listPriority
+.SH SYNOPSIS
+.B listPriority
+[
+.BI -u 
+.BID uid
+.BI -g 
+.BID gid
+.BI -p 
+.BID priority
+.BI -h 
+]
+listPriority
+.SH DESCRIPTION
+.B listPriority
+list the entries from the Priority Map Table, depending the option given.
+
+.SH EXAMPLES
+.fi
+
+listPriority -u 444, to list all the entries associated to the user 
+
+listPriority -g 999, to list all the entries associated to the group
+
+listPriority -p 5, to list all the entrirs associates to a specific priority
+ 
+.SH NOTES
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from /etc/castor/ORASTAGERCONFIG
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
