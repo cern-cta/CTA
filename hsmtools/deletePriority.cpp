@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      enterPriority.c
+ *                      deletePriority.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,9 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: deletePriority.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/05/28 08:07:11 $ $Author: gtaur $
- *
- * 
+ * @(#)$RCSfile: deletePriority.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/06/02 13:36:40 $ $Author: waldron $
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -33,13 +31,11 @@
 #include <Cgetopt.h>
 #include <castor/BaseObject.hpp>
 
-int help_flag =0;
-
 static struct Coptions longopts[] = {
-  {"help",NO_ARGUMENT,&help_flag,'h'},
-  {"uid",REQUIRED_ARGUMENT, NULL ,'u'},
-  {"guid",REQUIRED_ARGUMENT, NULL ,'g'},
-  {NULL, 0, NULL, 0}
+  { "help", NO_ARGUMENT,       NULL, 'h'},
+  { "uid",  REQUIRED_ARGUMENT, NULL, 'u'},
+  { "gid",  REQUIRED_ARGUMENT, NULL, 'g'},
+  { NULL,   0,                 NULL,  0 }
 };
 
 void usage(char *cmd) {
@@ -49,71 +45,68 @@ void usage(char *cmd) {
 }
 
 int main(int argc, char *argv[]) {
-  int muid=-1;
-  int mgid=-1;
- 
-  try {
+  int muid = -1;
+  int mgid = -1;
     
-    char* progName = argv[0];
-    
-    // Deal with options
-    Coptind = 1;
-    Copterr = 1;
-    int ch;
-    while ((ch = Cgetopt_long(argc,argv,"hu:g:",longopts,NULL)) != EOF) {
-      switch (ch) {
-      case 'h':
-	usage(progName);
-	return 0;
-      case 'u':
-        muid=atoi(Coptarg);
-	break;
-      case 'g':
-	mgid=atoi(Coptarg);
-	break;
-      default:
-	 usage(progName);
-	 return 0;
-         
-      }
-    }
-
-    if (muid==-1 && mgid==-1){
-      std::cout <<" you have to provide the uid and/or gid as input"<< std::endl;;
+  char* progName = argv[0];
+  
+  // Deal with options
+  Coptind = 1;
+  Copterr = 1;
+  int ch;
+  while ((ch = Cgetopt_long(argc, argv, "hu:g:", longopts, NULL)) != EOF) {
+    switch (ch) {
+    case 'h':
       usage(progName);
       return 0;
-
+    case 'u':
+      muid = atoi(Coptarg);
+      break;
+    case 'g':
+      mgid = atoi(Coptarg);
+      break;
+    default:
+      usage(progName);
+      return 0;
     }
-     
+  }
+  
+  // Check parameters
+  if ((muid < 0) || (mgid < 0)) {
+    std::cerr << progName << ": uid and/or gid options missing" << std::endl;
+    usage(progName);
+    return 0;
+  }
+  
+  try {
+    
     // Initializing the log
     castor::BaseObject::initLog("NewStagerLog", castor::SVC_NOMSG);
     // retrieve a Services object
     castor::Services* svcs = castor::BaseObject::services();
     // retrieve the DB service
-    castor::IService* isvc = svcs->service("DB",castor::SVC_DBSTAGERSVC);
-
+    castor::IService* isvc = svcs->service("DB", castor::SVC_DBSTAGERSVC);
+    
     if (0 == isvc) {
       std::cerr << "Unable to retrieve Stager Service." << std::endl
                 << "Please check your configuration." << std::endl;
       exit(1);
     }
-
+    
     castor::stager::IStagerSvc* stgsvc =
       dynamic_cast<castor::stager::IStagerSvc*>(isvc);
-
-    // set the priority
-
-    stgsvc->deletePriority(muid,mgid);
-  
-    // cleanup
     
-    if (0 != stgsvc) stgsvc->release();
-
+    // delete the priority
+    stgsvc->deletePriority(muid, mgid);
+    
+    // cleanup 
+    stgsvc->release();
+    
   } catch (castor::exception::Exception e) {
     std::cerr << "Caught exception :\n"
-              << e.getMessage().str() << std::endl;    
-  }
-  
+              << e.getMessage().str() << std::endl;
+    exit(1);
+  }  
 }
 
 
