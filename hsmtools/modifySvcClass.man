@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: modifySvcClass.man,v $ $Revision: 1.8 $ $Date: 2008/03/10 16:12:16 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: modifySvcClass.man,v $ $Revision: 1.9 $ $Date: 2008/06/02 13:34:25 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH MODIFYSCVCLASS 1 "$Date: 2008/03/10 16:12:16 $" CASTOR "stager catalogue administrative commands"
+.TH MODIFYSCVCLASS 1 "$Date: 2008/06/02 13:34:25 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 modifySvcClass \- modify an existing service class in the stager catalogue
 .SH SYNOPSIS
@@ -23,6 +23,9 @@ modifySvcClass \- modify an existing service class in the stager catalogue
 ]
 [
 .BI --GcEnabled " [yes|no]"
+]
+[
+.BI --GcWeightForAccess " gcWeight"
 ]
 [
 .BI --DiskOnlyBehavior " [yes|no]"
@@ -90,6 +93,11 @@ applied.
 Defines whether or not garbage collection is enabled for this service class. The
 supported values are yes or no, 1 or 0 and are case-insensitive. Note that it is
 not allowed to modify the gcWeightForAccess parameter on an existing service class.
+.TP
+.BI \-\-GcWeightForAccess " gcWeight"
+Specifies the weight in days that is added for each access to any diskCopy belonging
+to diskPools under this service class. This weight reduces the likelihood of diskCopies
+being garbage collected.
 .TP
 .BI \-\-DiskOnlyBehavior " [yes|no]"
 Defines whether or not this service class has disk only behavior. The supported values
