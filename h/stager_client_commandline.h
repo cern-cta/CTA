@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_commandline.h,v 1.3 2008/03/13 16:37:03 itglp Exp $
+ * $Id: stager_client_commandline.h,v 1.4 2008/06/02 15:54:18 sponcec3 Exp $
  *
  * Internal header file for command line stager clients and for the RFIO plugin.
  */
@@ -37,7 +37,7 @@ EXTERN_C int DLL_DECL getDefaultForGlobal _PROTO((
 
 
 /* Common functions for command line executables */
-EXTERN_C int DLL_DECL parseCmdLine _PROTO((int argc, char *argv[], int (*cb)(char *),
+EXTERN_C int DLL_DECL parseCmdLine _PROTO((int argc, char *argv[], int (*cb)(const char *),
                                            char** service_class, char** usertag, int* display_reqid));
 EXTERN_C int DLL_DECL printFileResponses _PROTO((int nbresps, struct stage_fileresp* responses)); 
 EXTERN_C int DLL_DECL printPrepareResponses _PROTO((int nbresps, struct stage_prepareToGet_fileresp *responses));

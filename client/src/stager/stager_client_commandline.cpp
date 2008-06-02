@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_commandline.cpp,v 1.9 2008/04/08 07:40:31 waldron Exp $
+ * $Id: stager_client_commandline.cpp,v 1.10 2008/06/02 15:54:00 sponcec3 Exp $
  *
  * Copyright (C) 2004-2006 by CERN/IT/FIO/FD
  * All rights reserved
@@ -31,6 +31,8 @@
 #include "stager_client_commandline.h"
 #include "Cgetopt.h"
 #include "getconfent.h"
+#include <fstream>
+#include <string>
 
 
 /********************************************************************************************************************
@@ -175,7 +177,7 @@ int DLL_DECL getDefaultForGlobal(
 extern "C" {
 
 /* command line parser for a generic stager command line client */
-int DLL_DECL parseCmdLine(int argc, char *argv[], int (*callback)(char *),
+int DLL_DECL parseCmdLine(int argc, char *argv[], int (*callback)(const char *),
                           char** service_class, char** usertag, int* display_reqid)
 {
   int nargs, Coptind, Copterr, errflg;
@@ -183,6 +185,7 @@ int DLL_DECL parseCmdLine(int argc, char *argv[], int (*callback)(char *),
   static struct Coptions longopts[] =
     {
       {"filename",      REQUIRED_ARGUMENT,  NULL,      'M'},
+      {"filelist",      REQUIRED_ARGUMENT,  NULL,      'f'},
       {"service_class", REQUIRED_ARGUMENT,  NULL,      'S'},
       {"usertag",       REQUIRED_ARGUMENT,  NULL,      'U'},
       {"display_reqid", NO_ARGUMENT,        NULL,      'r'},
@@ -195,10 +198,25 @@ int DLL_DECL parseCmdLine(int argc, char *argv[], int (*callback)(char *),
   Copterr = 1;
   errflg = 0;
 
-  while ((c = Cgetopt_long (argc, argv, "M:S:U:rh", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "f:M:S:U:rh", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
       callback(Coptarg);
+      break;
+    case 'f':
+      {
+        // loop over lines of the input file
+        std::ifstream fin(Coptarg);
+        if (!fin) {
+          fprintf (stderr, "unable to read file %s\n", Coptarg);
+          errflg++;
+          break;
+        }
+        std::string s;
+        while (getline(fin,s)) {
+          callback(s.c_str());
+        }
+      }
       break;
     case 'S':
       *service_class = Coptarg;

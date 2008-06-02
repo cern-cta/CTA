@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_get.c,v $ $Revision: 1.15 $ $Release$ $Date: 2008/06/02 10:18:50 $ $Author: itglp $
+ * @(#)$RCSfile: stager_get.c,v $ $Revision: 1.16 $ $Release$ $Date: 2008/06/02 15:54:00 $ $Author: sponcec3 $
  *
  * command line for stage_prepareToGet 
  *
@@ -43,14 +43,14 @@ static char *protocol = DEFAULT_PROTOCOL;
 
 /* Uses the filenb global variable
    that should be set to 0 before 1st call */
-static int DLL_DECL _countFiles(char *filename) {
+static int DLL_DECL _countFiles(const char *filename) {
   filenb++;
   return 0;
 }
 
 /* uses the requests global variable,
    which should already be initialized */
-static int DLL_DECL _fillStruct(char *filename) {
+static int DLL_DECL _fillStruct(const char *filename) {
   requests[filenb].filename = (char *)strdup(filename);
   requests[filenb].protocol = (char *)strdup(protocol);
   requests[filenb].priority = 0;
@@ -123,5 +123,5 @@ int main(int argc, char *argv[]) {
 void usage(char* cmd) {
   fprintf (stderr, "usage: %s ", cmd);
   fprintf (stderr, "%s",
-           "-M hsmfile [-M hsmfile ...] [-S svcClass] [-U usertag] [-r] [-h]\n");
+           "[-M hsmfile [-M hsmfile ...]] [-f hsmFileList] [-S svcClass] [-U usertag] [-r] [-h]\n");
 }
