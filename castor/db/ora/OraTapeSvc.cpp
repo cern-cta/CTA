@@ -153,7 +153,6 @@ const std::string castor::db::ora::OraTapeSvc::s_getNumFilesByStreamStatementStr
   "BEGIN getNumFilesByStream(:1,:2); END;";
 
 
-
 // -----------------------------------------------------------------------
 // OraTapeSvc
 // -----------------------------------------------------------------------
@@ -221,9 +220,8 @@ void castor::db::ora::OraTapeSvc::reset() throw() {
     if (m_failedSegmentsStatement) deleteStatement(m_failedSegmentsStatement);
     if (m_checkFileForRepackStatement) deleteStatement(m_checkFileForRepackStatement);
     if (m_getNumFilesByStreamStatement) deleteStatement(m_getNumFilesByStreamStatement);
-    
-
   } catch (oracle::occi::SQLException e) {};
+
   // Now reset all pointers to 0
   m_tapesToDoStatement = 0;
   m_streamsToDoStatement = 0;
@@ -240,7 +238,6 @@ void castor::db::ora::OraTapeSvc::reset() throw() {
   m_failedSegmentsStatement = 0;
   m_checkFileForRepackStatement = 0;
   m_getNumFilesByStreamStatement = 0;
-
 }
 
 // -----------------------------------------------------------------------
@@ -955,12 +952,10 @@ u_signed64 castor::db::ora::OraTapeSvc::getNumFilesByStream
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Error caught in  getNumFilesByStream(): Fileid ("
+      << "Error caught in getNumFilesByStream(): StreamId ("
       << streamId <<")"
       << std::endl << e.what();
     throw ex;
   }
   return numFile;
 }
-
-
