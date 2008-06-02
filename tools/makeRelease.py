@@ -1,9 +1,8 @@
 #!/usr/bin/python
-import sys, re, os, shutil
+import sys, re, os, shutil, tempfile
 
 # list of platforms as a tuple (OS, arch, machine where to build)
 platforms = (('SLC4', 'x86_64', 'lxbuild085.cern.ch'),
-             ('SLC3', 'i386',   'lxs5010.cern.ch'),
              ('SLC4', 'i386',   'lxbuild020.cern.ch'))
 
 def usage():
@@ -54,9 +53,8 @@ print "Building a release for CASTOR " + fullVersion
 
 # Then checkout the source code
 os.chdir('/tmp')
-workDir = os.tempnam('/tmp', 'CastorRelease')
+workDir = tempfile.mkdtemp('','CastorRelease', '/tmp')
 print "Checking out code into " + workDir
-os.mkdir(workDir)
 os.chdir(workDir)
 runCommand('cvs -Q -d :kserver:isscvs.cern.ch:2000/local/reps/castor co -r ' + version + ' CASTOR2',
            'Error while checking out source code')

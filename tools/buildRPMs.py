@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import sys, os, shutil, re
+import sys, os, shutil, re, tempfile
 
 def usage():
     print "Usage:", sys.argv[0], "os arch version tarball"
@@ -15,8 +15,7 @@ fullVersion = sys.argv[3]
 tarball = sys.argv[4]
 
 # Prepare directories
-workDir = os.tempnam('/build', 'CastorRelease')
-os.mkdir(workDir)
+workDir = tempfile.mkdtemp('','CastorRelease', '/build')
 os.chdir(workDir)
 for m in ['BUILD', 'RPMS', 'SOURCES', 'SPECS', 'SRPMS', 'RPMS/i386', 'RPMS/x86_64']: os.mkdir(m)
 
