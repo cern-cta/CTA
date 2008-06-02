@@ -5,7 +5,7 @@
 #
 # @author Castor dev team, castor-dev@cern.ch
 #
-# @(#)$RCSfile: gencastor,v $ $Revision: 1.17 $ $Release$ $Date: 2007/07/02 14:32:25 $ $Author: itglp $
+# @(#)$RCSfile: gencastor,v $ $Revision: 1.18 $ $Release$ $Date: 2008/06/02 13:16:53 $ $Author: waldron $
 # 
 
 if ("$1" == "-h") then
@@ -39,7 +39,6 @@ set TMPDIR=`mktemp /tmp/gencastor-XXXXXX`
 rm -rf ${TMPDIR}
 mkdir -p ${TMPDIR}/${TOPNS}/db
 cp ${WORKDIR}/${TOPNS}/db/*.sql ${TMPDIR}/${TOPNS}/db/
-grep 'CREATE OR REPLACE' ${TMPDIR}/${TOPNS}/db/postgresTrailer.sql | grep -v 'TRIGGER' | grep -v I_CastorFile_fileIdNsHost | awk 'BEGIN { FS="[ (]+" } { print "DROP " $4, $5 ";" }' > ${TMPDIR}/${TOPNS}/db/postgresTrailer_drop.sql
 
 (/usr/bin/gencastor.bin -o ${TMPDIR} -c ${TOPNS} --nocrashhandler ${XMIFILE} > /dev/tty) >& /dev/null
 
