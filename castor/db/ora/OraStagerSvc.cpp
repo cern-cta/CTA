@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.254 $ $Release$ $Date: 2008/05/30 14:01:14 $ $Author: waldron $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.255 $ $Release$ $Date: 2008/06/02 13:25:22 $ $Author: waldron $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -171,15 +171,15 @@ const std::string castor::db::ora::OraStagerSvc::s_selectTapePoolStatementString
 
 /// SQL statement for selectPriority
 const std::string castor::db::ora::OraStagerSvc::s_selectPriorityStatementString = 
-  "BEGIN selectPriority(:1,:2,:3,:4); END;";
+  "BEGIN selectPriority(:1, :2, :3, :4); END;";
 
 /// SQL statement for enterPriority
 const std::string castor::db::ora::OraStagerSvc::s_enterPriorityStatementString = 
-  "BEGIN enterPriority(:1,:2,:3); END;";
+  "BEGIN enterPriority(:1, :2, :3); END;";
 
 /// SQL statement for deletePriority
 const std::string castor::db::ora::OraStagerSvc::s_deletePriorityStatementString = 
-  "BEGIN deletePriority(:1,:2); END;";
+  "BEGIN deletePriority(:1, :2); END;";
 
 //------------------------------------------------------------------------------
 // OraStagerSvc
@@ -1498,10 +1498,9 @@ castor::db::ora::OraStagerSvc::selectPriority
     oracle::occi::ResultSet::Status status = rs->next();
     while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::stager::PriorityMap* item = new castor::stager::PriorityMap();
-      item->setId((u_signed64) rs->getDouble(1));
-      item->setEuid((u_signed64)rs->getDouble(2));
+      item->setEuid((u_signed64)rs->getDouble(1));
       item->setEgid((u_signed64)rs->getDouble(3));
-      item->setPriority((u_signed64)rs->getDouble(4));
+      item->setPriority((u_signed64)rs->getDouble(3));
       priorityList.push_back(item);
       status = rs->next();
     }
@@ -1531,6 +1530,7 @@ void castor::db::ora::OraStagerSvc::enterPriority
     if (0 == m_enterPriorityStatement) {
       m_enterPriorityStatement =
         createStatement(s_enterPriorityStatementString);
+      m_enterPriorityStatement->setAutoCommit(true);
     }
 
     // Execute the statement 
@@ -1541,7 +1541,7 @@ void castor::db::ora::OraStagerSvc::enterPriority
  
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex(e.getErrorCode());
     ex.getMessage()
       << "Invalid input: uid (" 
       << euid << ")" << " gid (" << egid << ")"
@@ -1561,6 +1561,7 @@ void  castor::db::ora::OraStagerSvc::deletePriority(int euid, int egid)
     if (0 == m_deletePriorityStatement) {
       m_deletePriorityStatement =
         createStatement(s_deletePriorityStatementString);
+      m_deletePriorityStatement->setAutoCommit(true);
     }
 
     // Execute the statement 
