@@ -51,7 +51,7 @@ static castor::CnvFactory<castor::db::cnv::DbFileClassCnv>* s_factoryDbFileClass
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbFileClassCnv::s_insertStatementString =
-"INSERT INTO FileClass (name, minFileSize, maxFileSize, nbCopies, id) VALUES (:1,:2,:3,:4,ids_seq.nextval) RETURNING id INTO :5";
+"INSERT INTO FileClass (name, nbCopies, id) VALUES (:1,:2,ids_seq.nextval) RETURNING id INTO :3";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbFileClassCnv::s_deleteStatementString =
@@ -59,11 +59,11 @@ const std::string castor::db::cnv::DbFileClassCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbFileClassCnv::s_selectStatementString =
-"SELECT name, minFileSize, maxFileSize, nbCopies, id FROM FileClass WHERE id = :1";
+"SELECT name, nbCopies, id FROM FileClass WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbFileClassCnv::s_updateStatementString =
-"UPDATE FileClass SET name = :1, minFileSize = :2, maxFileSize = :3, nbCopies = :4 WHERE id = :5";
+"UPDATE FileClass SET name = :1, nbCopies = :2 WHERE id = :3";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbFileClassCnv::s_storeTypeStatementString =
@@ -198,18 +198,16 @@ void castor::db::cnv::DbFileClassCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(5, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(3, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // Now Save the current object
     m_insertStatement->setString(1, obj->name());
-    m_insertStatement->setUInt64(2, obj->minFileSize());
-    m_insertStatement->setUInt64(3, obj->maxFileSize());
-    m_insertStatement->setInt(4, obj->nbCopies());
+    m_insertStatement->setInt(2, obj->nbCopies());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(5));
+    obj->setId(m_insertStatement->getUInt64(3));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -227,8 +225,6 @@ void castor::db::cnv::DbFileClassCnv::createRep(castor::IAddress* address,
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
                     << "  name : " << obj->name() << std::endl
-                    << "  minFileSize : " << obj->minFileSize() << std::endl
-                    << "  maxFileSize : " << obj->maxFileSize() << std::endl
                     << "  nbCopies : " << obj->nbCopies() << std::endl
                     << "  id : " << obj->id() << std::endl;
     throw ex;
@@ -253,10 +249,8 @@ void castor::db::cnv::DbFileClassCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setString(1, obj->name());
-    m_updateStatement->setUInt64(2, obj->minFileSize());
-    m_updateStatement->setUInt64(3, obj->maxFileSize());
-    m_updateStatement->setInt(4, obj->nbCopies());
-    m_updateStatement->setUInt64(5, obj->id());
+    m_updateStatement->setInt(2, obj->nbCopies());
+    m_updateStatement->setUInt64(3, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
@@ -340,10 +334,8 @@ castor::IObject* castor::db::cnv::DbFileClassCnv::createObj(castor::IAddress* ad
     castor::stager::FileClass* object = new castor::stager::FileClass();
     // Now retrieve and set members
     object->setName(rset->getString(1));
-    object->setMinFileSize(rset->getUInt64(2));
-    object->setMaxFileSize(rset->getUInt64(3));
-    object->setNbCopies(rset->getInt(4));
-    object->setId(rset->getUInt64(5));
+    object->setNbCopies(rset->getInt(2));
+    object->setId(rset->getUInt64(3));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -379,10 +371,8 @@ void castor::db::cnv::DbFileClassCnv::updateObj(castor::IObject* obj)
     castor::stager::FileClass* object = 
       dynamic_cast<castor::stager::FileClass*>(obj);
     object->setName(rset->getString(1));
-    object->setMinFileSize(rset->getUInt64(2));
-    object->setMaxFileSize(rset->getUInt64(3));
-    object->setNbCopies(rset->getInt(4));
-    object->setId(rset->getUInt64(5));
+    object->setNbCopies(rset->getInt(2));
+    object->setId(rset->getUInt64(3));
     delete rset;
   } catch (castor::exception::SQLError e) {
     castor::exception::InvalidArgument ex;

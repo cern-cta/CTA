@@ -98,6 +98,7 @@ namespace castor {
       /*********************************/
       /**
        * Get the value of m_priority
+       * The priority associated with the user and group
        * @return the value of m_priority
        */
       u_signed64 priority() const {
@@ -106,6 +107,7 @@ namespace castor {
 
       /**
        * Set the value of m_priority
+       * The priority associated with the user and group
        * @param new_var the new value of m_priority
        */
       void setPriority(u_signed64 new_var) {
@@ -114,6 +116,7 @@ namespace castor {
 
       /**
        * Get the value of m_euid
+       * The id of the user concerned
        * @return the value of m_euid
        */
       u_signed64 euid() const {
@@ -122,6 +125,7 @@ namespace castor {
 
       /**
        * Set the value of m_euid
+       * The id of the user concerned
        * @param new_var the new value of m_euid
        */
       void setEuid(u_signed64 new_var) {
@@ -130,6 +134,7 @@ namespace castor {
 
       /**
        * Get the value of m_egid
+       * The id of the group concerned
        * @return the value of m_egid
        */
       u_signed64 egid() const {
@@ -138,6 +143,7 @@ namespace castor {
 
       /**
        * Set the value of m_egid
+       * The id of the group concerned
        * @param new_var the new value of m_egid
        */
       void setEgid(u_signed64 new_var) {
@@ -164,10 +170,13 @@ namespace castor {
 
     private:
 
+      /// The priority associated with the user and group
       u_signed64 m_priority;
 
+      /// The id of the user concerned
       u_signed64 m_euid;
 
+      /// The id of the group concerned
       u_signed64 m_egid;
 
       /// The id of this object

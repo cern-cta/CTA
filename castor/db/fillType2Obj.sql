@@ -127,4 +127,12 @@ INSERT INTO Type2Obj (type, object) VALUES (147, 'FirstByteWritten');
 INSERT INTO Type2Obj (type, object) VALUES (148, 'VdqmTape');
 INSERT INTO Type2Obj (type, object) VALUES (149, 'StgFilesDeleted');
 INSERT INTO Type2Obj (type, object) VALUES (150, 'StgFilesDeletedResponse');
+INSERT INTO Type2Obj (type, object) VALUES (151, 'VolumePriority');
+INSERT INTO Type2Obj (type, object) VALUES (152, 'ChangePrivilege');
+INSERT INTO Type2Obj (type, object) VALUES (153, 'BWUser');
+INSERT INTO Type2Obj (type, object) VALUES (154, 'RequestType');
+INSERT INTO Type2Obj (type, object) VALUES (155, 'ListPrivileges');
+INSERT INTO Type2Obj (type, object) VALUES (156, 'Privilege');
+INSERT INTO Type2Obj (type, object) VALUES (157, 'ListPrivilegesResponse');
+INSERT INTO Type2Obj (type, object) VALUES (158, 'PriorityMap');
 

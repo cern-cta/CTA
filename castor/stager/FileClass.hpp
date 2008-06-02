@@ -117,42 +117,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_minFileSize
-       * The minimum size of a file in this FileClass
-       * @return the value of m_minFileSize
-       */
-      u_signed64 minFileSize() const {
-        return m_minFileSize;
-      }
-
-      /**
-       * Set the value of m_minFileSize
-       * The minimum size of a file in this FileClass
-       * @param new_var the new value of m_minFileSize
-       */
-      void setMinFileSize(u_signed64 new_var) {
-        m_minFileSize = new_var;
-      }
-
-      /**
-       * Get the value of m_maxFileSize
-       * The maximum size of a file in this FileClass
-       * @return the value of m_maxFileSize
-       */
-      u_signed64 maxFileSize() const {
-        return m_maxFileSize;
-      }
-
-      /**
-       * Set the value of m_maxFileSize
-       * The maximum size of a file in this FileClass
-       * @param new_var the new value of m_maxFileSize
-       */
-      void setMaxFileSize(u_signed64 new_var) {
-        m_maxFileSize = new_var;
-      }
-
-      /**
        * Get the value of m_nbCopies
        * The number of copies on tape for a file of this FileClass
        * @return the value of m_nbCopies
@@ -192,12 +156,6 @@ namespace castor {
 
       /// The name of the FileClass
       std::string m_name;
-
-      /// The minimum size of a file in this FileClass
-      u_signed64 m_minFileSize;
-
-      /// The maximum size of a file in this FileClass
-      u_signed64 m_maxFileSize;
 
       /// The number of copies on tape for a file of this FileClass
       unsigned int m_nbCopies;

@@ -40,8 +40,6 @@
 //------------------------------------------------------------------------------
 castor::stager::FileClass::FileClass() throw() :
   m_name(""),
-  m_minFileSize(0),
-  m_maxFileSize(0),
   m_nbCopies(0),
   m_id(0) {
 }
@@ -66,8 +64,6 @@ void castor::stager::FileClass::print(std::ostream& stream,
   }
   // Output of all members
   stream << indent << "name : " << m_name << std::endl;
-  stream << indent << "minFileSize : " << m_minFileSize << std::endl;
-  stream << indent << "maxFileSize : " << m_maxFileSize << std::endl;
   stream << indent << "nbCopies : " << m_nbCopies << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
