@@ -30,9 +30,9 @@
 #include <stdlib.h>
 
 // Local includes
+#include "System.hpp"
 #include "Cgrp.h"
 #include "common.h"
-#include "System.hpp"
 #include "castor/exception/Internal.hpp"
 
 //------------------------------------------------------------------------------
