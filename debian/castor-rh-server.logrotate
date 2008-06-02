@@ -2,5 +2,5 @@
     compress
     daily
     missingok
-    rotate 15
+    rotate 90
 }
