@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_rm.c,v $ $Revision: 1.12 $ $Release$ $Date: 2008/06/02 10:18:50 $ $Author: itglp $
+ * @(#)$RCSfile: stager_rm.c,v $ $Revision: 1.13 $ $Release$ $Date: 2008/06/02 16:09:13 $ $Author: sponcec3 $
  *
  * command line for stager_rm
  *
@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "Castor_limits.h"
 #include "stager_api.h"
 #include "stager_errmsg.h"
 #include "serrno.h"
@@ -36,6 +37,7 @@
 static struct Coptions longopts[] =
   {
     {"filename",      REQUIRED_ARGUMENT,  NULL,      'M'},
+    {"filelist",      REQUIRED_ARGUMENT,  NULL,      'f'},
     {"svcClass",      REQUIRED_ARGUMENT,  NULL,      'S'},
     {"help",          NO_ARGUMENT,        NULL,      'h'},
     {"all",           NO_ARGUMENT,        NULL,      'a'},
@@ -116,11 +118,32 @@ int cmd_parse(int argc,
   errflg = 0;
   nbfiles = 0;
   while ((c = Cgetopt_long
-          (argc, argv, "M:S:ha", longopts, NULL)) != -1) {
+          (argc, argv, "M:f:S:ha", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
       (*reqs)[nbfiles].filename = Coptarg;
       nbfiles++;
+      break;
+    case 'f':
+      {
+	FILE *infile;
+	char line[CA_MAXPATHLEN+1];
+	infile = fopen(Coptarg, "r");
+	if(NULL == infile) {
+	  fprintf (stderr, "unable to read file %s\n", Coptarg);
+          errflg++;
+          break;
+        }
+	while (fgets(line, sizeof(line), infile) != NULL) {
+	  // drop trailing \n
+	  while (strlen(line) &&
+		 ((line[strlen(line)-1] == '\n') || (line[strlen(line)-1] == '\r'))) {
+	    line[strlen(line) - 1] = 0;
+	  }
+	  (*reqs)[nbfiles].filename = strdup(line);
+	  nbfiles++;
+	}
+      }
       break;
     case 'S':
       opts->service_class = (char *)strdup(Coptarg);
@@ -154,10 +177,25 @@ int cmd_countHsmFiles(int argc, char *argv[]) {
   Copterr = 1;
   errflg = 0;
   nbargs = 0;
-  while ((c = Cgetopt_long (argc, argv, "S:M:ha", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "S:M:f:ha", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
       nbargs++;;
+      break;
+    case 'f':
+      {
+	FILE *infile;
+	char line[CA_MAXPATHLEN+1];
+	infile = fopen(Coptarg, "r");
+	if(NULL == infile) {
+	  fprintf (stderr, "unable to read file %s\n", Coptarg);
+          errflg++;
+          break;
+        }
+	while (fgets(line, sizeof(line), infile) != NULL) {
+	  nbargs++;;
+	}
+      }
       break;
     default:
       break;
@@ -178,5 +216,5 @@ int cmd_countHsmFiles(int argc, char *argv[]) {
 void usage(char* cmd) {
   fprintf (stderr, "usage: %s ", cmd);
   fprintf (stderr, "%s",
-           "[-h] [-S svcClass | -a] -M hsmfile [-M ...]\n");
+           "[-h] [-S svcClass | -a] [-M hsmfile [-M ...]] [-f hsmFileList] \n");
 }
