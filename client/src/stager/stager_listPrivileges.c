@@ -100,7 +100,13 @@ int cmd_parse(int argc,
         // find out the request type
         int t;
         for (t = 1; t < ObjectsIdsNb; t++) {
-          if (0 == strcmp(C_ObjectsIdsStrings(t), Coptarg)) {
+	  const char* s = C_ObjectsIdsStrings(t);
+	  if (0 == s) {
+	    errflg++;
+	    fprintf(stderr, "Internal error : unknown type id %d\n", t);
+	    break;
+	  }
+          if (0 == strcmp(s, Coptarg)) {
             *reqType = t;
             break;
           }
@@ -108,8 +114,8 @@ int cmd_parse(int argc,
         if (ObjectsIdsNb == t) {
           errflg++;
           fprintf(stderr, "Unknown request type %s\n", Coptarg);
-          break;
         }
+	break;
       }
     case 'S':
       *serviceClass = Coptarg;
