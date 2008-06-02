@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2008/03/14 10:24:29 $ $Author: waldron $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2008/06/02 13:24:14 $ $Author: waldron $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -83,7 +83,7 @@ const std::string castor::db::ora::OraCommonSvc::s_selectSvcClassStatementString
 
 /// SQL statement for selectFileClass
 const std::string castor::db::ora::OraCommonSvc::s_selectFileClassStatementString =
-  "SELECT id, minFileSize, maxFileSize, nbCopies FROM FileClass WHERE name = :1";
+  "SELECT id, nbCopies FROM FileClass WHERE name = :1";
 
 /// SQL statement for selectFileSystem
 const std::string castor::db::ora::OraCommonSvc::s_selectFileSystemStatementString =
@@ -378,9 +378,7 @@ castor::db::ora::OraCommonSvc::selectFileClass
     castor::stager::FileClass* result =
       new castor::stager::FileClass();
     result->setId((u_signed64)rset->getDouble(1));
-    result->setMinFileSize((u_signed64)rset->getDouble(2));
-    result->setMaxFileSize((u_signed64)rset->getDouble(3));
-    result->setNbCopies(rset->getInt(4));
+    result->setNbCopies(rset->getInt(2));
     result->setName(name);
     m_selectFileClassStatement->closeResultSet(rset);
     return result;
