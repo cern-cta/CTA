@@ -81,13 +81,13 @@ namespace castor {
          * Logs the reception of a drive request message.
          */
         void logDriveRequest(const vdqmHdr_t *const header,
-          const vdqmDrvReq_t *const request, const Cuuid_t cuuid);
+          const vdqmDrvReq_t *const request, const Cuuid_t cuuid, int severity);
 
         /**
          * Logs the reception of a volume request message.
          */
         void logVolumeRequest(const vdqmHdr_t *const header,
-          const vdqmVolReq_t *const request, const Cuuid_t cuuid);
+          const vdqmVolReq_t *const request, const Cuuid_t cuuid, int severity);
 
     }; // class VdqmServer
 
