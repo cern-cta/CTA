@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.654 $ $Date: 2008/05/30 08:25:17 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.655 $ $Date: 2008/06/02 13:25:57 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -9,7 +9,7 @@
  *******************************************************************/
 
 /* A small table used to cross check code and DB versions */
-UPDATE CastorVersion SET schemaVersion = '2_1_7_5';
+UPDATE CastorVersion SET schemaVersion = '2_1_7_8';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -160,9 +160,6 @@ ALTER TABLE SvcClass ADD CONSTRAINT I_SvcClass_Name UNIQUE (NAME);
 /* The primary key in this table allows for materialized views */
 ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT I_DiskPool2SvcCla_ParentChild PRIMARY KEY (parent, child);
 
-/* Add unigue constraint on the priorityMap table */
-ALTER TABLE PriorityMap ADD CONSTRAINT I_Unique_Priority UNIQUE (euid, egid);
-
 /* Global temporary table to handle output of the filesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
   (fileid NUMBER, nshost VARCHAR2(2048))
@@ -192,7 +189,6 @@ CREATE GLOBAL TEMPORARY TABLE StgFilesDeletedOrphans
 CREATE TABLE CleanupJobLog
   (fileId NUMBER NOT NULL, nsHost VARCHAR2(2048) NOT NULL, 
    operation INTEGER NOT NULL);
-
    
 /* Temporary table to handle removing of priviledges */
 CREATE GLOBAL TEMPORARY TABLE removePrivilegeTmpTable
@@ -201,6 +197,10 @@ CREATE GLOBAL TEMPORARY TABLE removePrivilegeTmpTable
    egid NUMBER,
    reqType NUMBER)
   ON COMMIT DELETE ROWS;
+
+/* SQL statements for table PriorityMap */ 
+CREATE TABLE PriorityMap (euid INTEGER, egid INTEGER, priority INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT; 
+ALTER TABLE PriorityMap ADD CONSTRAINT I_Unique_Priority UNIQUE (euid, egid);
 
 /**
   * Black and while list mechanism
