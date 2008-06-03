@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.668 $ $Date: 2008/05/30 07:31:41 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.669 $ $Date: 2008/06/03 13:05:06 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1850,8 +1850,9 @@ BEGIN
     IF machineValues(ind + 1) = 3 THEN -- ADMIN DELETED
       BEGIN
         SELECT id INTO machine FROM DiskServer WHERE name = machines(i);
-        DELETE FROM id2Type WHERE id = machine;
-        DELETE FROM id2Type WHERE id IN (SELECT id FROM FileSystem WHERE diskServer = machine);
+        DELETE FROM id2Type WHERE id IN (SELECT machine from dual
+                                         UNION ALL
+                                         SELECT id FROM FileSystem WHERE diskServer = machine);
         DELETE FROM FileSystem WHERE diskServer = machine;
         DELETE FROM DiskServer WHERE name = machines(i);
       EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -1873,20 +1874,15 @@ BEGIN
                nbRecallerStreams = machineValues(ind + 8)
          WHERE name = machines(i);
       EXCEPTION WHEN NO_DATA_FOUND THEN
-        DECLARE
-          mid INTEGER;
-        BEGIN
-          -- we should insert a new machine here
-          SELECT ids_seq.nextval INTO mId FROM DUAL;
-          INSERT INTO DiskServer (name, id, status, adminStatus, readRate, writeRate, nbReadStreams,
-                   nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams)
-           VALUES (machines(i), mid, machineValues(ind),
-                   machineValues(ind + 1), machineValues(ind + 2),
-                   machineValues(ind + 3), machineValues(ind + 4),
-                   machineValues(ind + 5), machineValues(ind + 6),
-                   machineValues(ind + 7), machineValues(ind + 8));
-          INSERT INTO Id2Type (id, type) VALUES (mid, 8); -- OBJ_DiskServer
-        END;
+        -- we should insert a new machine here
+        INSERT INTO DiskServer (name, id, status, adminStatus, readRate, writeRate, nbReadStreams,
+                 nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams)
+         VALUES (machines(i), ids_seq.nextval, machineValues(ind),
+                 machineValues(ind + 1), machineValues(ind + 2),
+                 machineValues(ind + 3), machineValues(ind + 4),
+                 machineValues(ind + 5), machineValues(ind + 6),
+                 machineValues(ind + 7), machineValues(ind + 8));
+        INSERT INTO Id2Type (id, type) VALUES (ids_seq.currval, 8); -- OBJ_DiskServer
       END;
     END IF;
     -- Release the lock on the DiskServer as soon as possible to prevent
@@ -1930,25 +1926,20 @@ BEGIN
            WHERE mountPoint = fileSystems(i)
              AND diskServer = machine;
         EXCEPTION WHEN NO_DATA_FOUND THEN
-          DECLARE
-            fsid INTEGER;
-          BEGIN
-            -- we should insert a new filesystem here
-            SELECT ids_seq.nextval INTO fsId FROM DUAL;
-            INSERT INTO FileSystem (free, mountPoint,
-                   minFreeSpace, minAllowedFreeSpace, maxFreeSpace,
-                   totalSize, readRate, writeRate, nbReadStreams,
-                   nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams,
-                   id, diskPool, diskserver, status, adminStatus)
-            VALUES (fileSystemValues(ind + 9), fileSystems(i), fileSystemValues(ind+11),
-                    fileSystemValues(ind + 13), fileSystemValues(ind + 12),
-                    fileSystemValues(ind + 10), fileSystemValues(ind + 2),
-                    fileSystemValues(ind + 3), fileSystemValues(ind + 4),
-                    fileSystemValues(ind + 5), fileSystemValues(ind + 6),
-                    fileSystemValues(ind + 7), fileSystemValues(ind + 8),
-                    fsid, 0, machine, 2, 1); -- FILESYSTEM_DISABLED, ADMIN_FORCE
-            INSERT INTO Id2Type (id, type) VALUES (fsid, 12); -- OBJ_FileSystem
-          END;
+          -- we should insert a new filesystem here
+          INSERT INTO FileSystem (free, mountPoint,
+                 minFreeSpace, minAllowedFreeSpace, maxFreeSpace,
+                 totalSize, readRate, writeRate, nbReadStreams,
+                 nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams,
+                 id, diskPool, diskserver, status, adminStatus)
+          VALUES (fileSystemValues(ind + 9), fileSystems(i), fileSystemValues(ind+11),
+                  fileSystemValues(ind + 13), fileSystemValues(ind + 12),
+                  fileSystemValues(ind + 10), fileSystemValues(ind + 2),
+                  fileSystemValues(ind + 3), fileSystemValues(ind + 4),
+                  fileSystemValues(ind + 5), fileSystemValues(ind + 6),
+                  fileSystemValues(ind + 7), fileSystemValues(ind + 8),
+                  ids_seq.nextval, 0, machine, 2, 1); -- FILESYSTEM_DISABLED, ADMIN_FORCE
+          INSERT INTO Id2Type (id, type) VALUES (ids_seq.currval, 12); -- OBJ_FileSystem
         END;
       END IF;
       ind := ind + 14;
