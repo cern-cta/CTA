@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api_changePrivilege.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/06/02 13:28:46 $ $Author: waldron $
+ * @(#)$RCSfile: stager_client_api_changePrivilege.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/06/03 11:56:04 $ $Author: waldron $
  *
  * api to handle privileges i.e. modify the black and white list
  *
@@ -84,7 +84,7 @@ int getRequestTypeId(std::string type)
   if (type.size() == 0) return 0;
   // get type id, here we go for a dummy O(n) listing
   for (unsigned int i = 1; i < castor::ObjectsIdsNb; i++) {
-    if (type == castor::ObjectsIdStrings[i]) {
+    if (!strcasecmp(type.c_str(), castor::ObjectsIdStrings[i])) {
       return i;
     }
   }
