@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.84 $ $Release$ $Date: 2008/06/03 09:58:11 $ $Author: waldron $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.85 $ $Release$ $Date: 2008/06/03 11:01:40 $ $Author: sponcec3 $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -705,12 +705,8 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
     // Get the ChangePrivilege
     // cannot return 0 since we check the type before calling this method
     uReq = dynamic_cast<castor::bwlist::ChangePrivilege*> (req);
-    // Get the SvcClass associated to the request
-    castor::stager::SvcClass* svcClass = uReq->svcClass();
-    u_signed64 svcClassId =
-      ((svcClass == 0) ? 0 : svcClass->id()) ;
     // call method
-    rhSvc->changePrivilege(svcClassId, uReq->users(),
+    rhSvc->changePrivilege(uReq->svcClassName(), uReq->users(),
 			   uReq->requestTypes(),uReq->isGranted());
     // Reply To Client
     castor::replier::RequestReplier::getInstance()->
@@ -752,13 +748,9 @@ void castor::stager::daemon::QueryRequestSvcThread::handleListPrivileges
     // Get the ListPrivileges
     // cannot return 0 since we check the type before calling this method
     uReq = dynamic_cast<castor::bwlist::ListPrivileges*> (req);
-    // Get the SvcClass associated to the request
-    castor::stager::SvcClass* svcClass = uReq->svcClass();
-    u_signed64 svcClassId =
-      ((svcClass == 0) ? 0 : svcClass->id()) ;
     // call method
     std::vector<castor::bwlist::Privilege*> privList =
-      rhSvc->listPrivileges(svcClassId, uReq->userId(),
+      rhSvc->listPrivileges(uReq->svcClassName(), uReq->userId(),
 			    uReq->groupId(), uReq->requestType());
     // fill reponse with white list part
     for (std::vector<castor::bwlist::Privilege*>::const_iterator it =
@@ -891,7 +883,10 @@ void castor::stager::daemon::QueryRequestSvcThread::process
     }
     // Getting the svcClass
     // We take an empty svcClass or '*' as a wildcard
-    if (req->type() != castor::OBJ_VersionQuery) {
+    if (req->type() == OBJ_StageFileQueryRequest ||
+        req->type() == OBJ_StageFindRequestRequest ||
+        req->type() == OBJ_StageRequestQueryRequest ||
+        req->type() == OBJ_DiskPoolQuery) {
       std::string className = req->svcClassName();
       if ("" != className && "*" != className) {
         castor::stager::SvcClass* svcClass = qrySvc->selectSvcClass(className);

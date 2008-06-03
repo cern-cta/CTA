@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.7-7_to_2.1.7-10.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/02 13:43:18 $ $Author: waldron $
+ * @(#)$RCSfile: 2.1.7-7_to_2.1.7-10.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/03 11:05:39 $ $Author: sponcec3 $
  *
  * This script upgrades a CASTOR v2.1.7-7 database into v2.1.7-8
  *
@@ -238,13 +238,13 @@ CREATE OR REPLACE PACKAGE castorBW AS
   -- Remove priviledge P
   PROCEDURE removePrivilege(P Privilege);
   -- Add priviledge(s)
-  PROCEDURE addPrivilege(svcClassId NUMBER, euid NUMBER, egid NUMBER, reqType NUMBER);
+  PROCEDURE addPrivilege(svcClassName VARCHAR2, euid NUMBER, egid NUMBER, reqType NUMBER);
   -- Remove priviledge(S)
-  PROCEDURE removePrivilege(svcClassId NUMBER, euid NUMBER, egid NUMBER, reqType NUMBER);
+  PROCEDURE removePrivilege(svcClassName VARCHAR2, euid NUMBER, egid NUMBER, reqType NUMBER);
   -- List priviledge(s)
-  PROCEDURE listPrivileges(svcClassId IN NUMBER, ieuid IN NUMBER,
+  PROCEDURE listPrivileges(svcClassName IN VARCHAR2, ieuid IN NUMBER,
                            iegid IN NUMBER, ireqType IN NUMBER,
-                           plist OUT PrivilegeExt_Cur); 
+                           plist OUT PrivilegeExt_Cur);
 END castorBW;
 
 CREATE OR REPLACE PACKAGE BODY castorBW AS
@@ -540,10 +540,10 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
   END;
 
   -- Add priviledge
-  PROCEDURE addPrivilege(svcClassId NUMBER, euid NUMBER, egid NUMBER, reqType NUMBER) AS
+  PROCEDURE addPrivilege(svcClassName VARCHAR2, euid NUMBER, egid NUMBER, reqType NUMBER) AS
     p castorBW.Privilege;
   BEGIN
-    p.svcClass := svcClassId;
+    p.svcClass := svcClassName;
     p.euid := euid;
     p.egid := egid;
     p.reqType := reqType;
@@ -551,10 +551,10 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
   END;
 
   -- Remove priviledge
-  PROCEDURE removePrivilege(svcClassId NUMBER, euid NUMBER, egid NUMBER, reqType NUMBER) AS
+  PROCEDURE removePrivilege(svcClassName VARCHAR2, euid NUMBER, egid NUMBER, reqType NUMBER) AS
     p castorBW.Privilege;
   BEGIN
-    p.svcClass := svcClassId;
+    p.svcClass := svcClassName;
     p.euid := euid;
     p.egid := egid;
     p.reqType := reqType;
@@ -562,29 +562,23 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
   END;
 
   -- Remove priviledge
-  PROCEDURE listPrivileges(svcClassId IN NUMBER, ieuid IN NUMBER,
+  PROCEDURE listPrivileges(svcClassName IN VARCHAR2, ieuid IN NUMBER,
                            iegid IN NUMBER, ireqType IN NUMBER,
                            plist OUT PrivilegeExt_Cur) AS
   BEGIN
     OPEN plist FOR
-      SELECT decode(svcClass, NULL, '*',
-                    nvl((SELECT name FROM SvcClass
-                          WHERE id = svcClass),
-                        '['||TO_CHAR(svcClass)||']')),
+      SELECT decode(svcClass, NULL, '*', svcClass),
              euid, egid, reqType, 1
         FROM WhiteList
-       WHERE (WhiteList.svcClass = svcClassId OR WhiteList.svcClass IS  NULL OR svcClassId = 0)
+       WHERE (WhiteList.svcClass = svcClassName OR WhiteList.svcClass IS  NULL OR svcClassName IS NULL)
          AND (WhiteList.euid = ieuid OR WhiteList.euid IS NULL OR ieuid = -1)
          AND (WhiteList.egid = iegid OR WhiteList.egid IS NULL OR iegid = -1)
          AND (WhiteList.reqType = ireqType OR WhiteList.reqType IS NULL OR ireqType = 0)
     UNION
-      SELECT decode(svcClass, NULL, '*',
-                    nvl((SELECT name FROM SvcClass
-                          WHERE id = svcClass),
-                        '['||TO_CHAR(svcClass)||']')),
+      SELECT decode(svcClass, NULL, '*', svcClass),
              euid, egid, reqType, 0
         FROM BlackList
-       WHERE (BlackList.svcClass = svcClassId OR BlackList.svcClass IS  NULL OR svcClassId = 0)
+       WHERE (BlackList.svcClass = svcClassName OR BlackList.svcClass IS  NULL OR svcClassName IS NULL)
          AND (BlackList.euid = ieuid OR BlackList.euid IS NULL OR ieuid = -1)
          AND (BlackList.egid = iegid OR BlackList.egid IS NULL OR iegid = -1)
          AND (BlackList.reqType = ireqType OR BlackList.reqType IS NULL OR ireqType = 0);

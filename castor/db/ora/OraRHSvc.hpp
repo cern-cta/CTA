@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/05/26 15:40:00 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRHSvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/06/03 11:01:39 $ $Author: sponcec3 $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -104,9 +104,9 @@ namespace castor {
 
 	/**
 	 * change privileges for some users
-	 * @param svcClassId the service class to be affected.
-	 * The special value 0 can be used to target all service
-	 * classes
+         * @param svcClassName the service class to be affected.
+         * The special value '*' can be used to target all service
+         * classes
 	 * @param users the list of affected users. An empty list
 	 * can be used to target all users. Similarly, an entry
 	 * containing a -1 as uid or gid means repectively that
@@ -117,7 +117,7 @@ namespace castor {
 	 * @exception in case of error
 	 */
 	virtual void changePrivilege
-	(const u_signed64 svcClassId,
+	(const std::string svcClassName,
 	 std::vector<castor::bwlist::BWUser*> users,
 	 std::vector<castor::bwlist::RequestType*> requestTypes,
 	 bool isAdd)
@@ -125,7 +125,7 @@ namespace castor {
 
 	/**
 	 * list privileges
-	 * @param svcClassId if not 0, restricts the listing to
+         * @param svcClassName if not '*', restricts the listing to
          * privileges for this service class
 	 * @param user if not -1, restricts the listing to privileges
          * concerning this user
@@ -140,7 +140,7 @@ namespace castor {
 	 */
 	virtual std::vector<castor::bwlist::Privilege*>
 	listPrivileges
-	(const u_signed64 svcClassId, const int user,
+	(const std::string svcClassName, const int user,
          const int group, const int requestType)
 	  throw (castor::exception::Exception);
 

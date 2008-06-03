@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/06/02 09:48:46 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/06/03 11:01:39 $ $Author: sponcec3 $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -199,7 +199,7 @@ void handleChangePrivilegeTypeLoop
 // changePrivilege
 //------------------------------------------------------------------------------
 void castor::db::ora::OraRHSvc::changePrivilege
-(const u_signed64 svcClassId,
+(const std::string svcClassName,
  std::vector<castor::bwlist::BWUser*> users,
  std::vector<castor::bwlist::RequestType*> requestTypes,
  bool isAdd)
@@ -223,8 +223,8 @@ void castor::db::ora::OraRHSvc::changePrivilege
     oracle::occi::Statement *stmt =
       isAdd ? m_addPrivilegeStatement : m_removePrivilegeStatement;
     // deal with the service class if any
-    if (svcClassId > 0) {
-      stmt->setDouble(1, svcClassId);
+    if (svcClassName != "*") {
+      stmt->setString(1, svcClassName);
     } else {
       stmt->setNull(1, oracle::occi::OCCINUMBER);
     }
@@ -270,7 +270,7 @@ void castor::db::ora::OraRHSvc::changePrivilege
 //------------------------------------------------------------------------------
 std::vector<castor::bwlist::Privilege*>
 castor::db::ora::OraRHSvc::listPrivileges
-(const u_signed64 svcClassId, const int user,
+(const std::string svcClassName, const int user,
  const int group, const int requestType)
   throw (castor::exception::Exception) {
   try {
@@ -282,7 +282,11 @@ castor::db::ora::OraRHSvc::listPrivileges
         (5, oracle::occi::OCCICURSOR);
     }
     // deal with the service class, user, group and type
-    m_listPrivilegesStatement->setDouble(1, svcClassId);
+    if (svcClassName != "*") {
+      m_listPrivilegesStatement->setString(1, svcClassName);
+    } else {
+      m_listPrivilegesStatement->setNull(1, oracle::occi::OCCINUMBER);
+    }
     m_listPrivilegesStatement->setInt(2, user);
     m_listPrivilegesStatement->setInt(3, group);
     m_listPrivilegesStatement->setInt(4, requestType );
