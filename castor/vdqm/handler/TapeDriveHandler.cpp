@@ -441,44 +441,8 @@ void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
   castor::vdqm::VdqmTape* tape;
   castor::vdqm::TapeServer* tapeServer;
   castor::vdqm::DeviceGroupName* devGrpName;
-  
 
-//  castor::vdqm::ClientIdentification* client;
-
-  switch ( tapeDrive->status() ) {
-    case UNIT_UP:
-      ptr_driveRequest->status = VDQM_UNIT_UP | VDQM_UNIT_FREE;
-      break;
-    case UNIT_STARTING:
-      ptr_driveRequest->status = VDQM_UNIT_UP | VDQM_UNIT_BUSY;
-      break;
-    case UNIT_ASSIGNED:
-      ptr_driveRequest->status = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_ASSIGN;
-      break;
-    case VOL_MOUNTED:
-      ptr_driveRequest->status = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_ASSIGN;
-      break;
-    case FORCED_UNMOUNT:
-      ptr_driveRequest->status = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE 
-                                 | VDQM_UNIT_UNKNOWN | VDQM_FORCE_UNMOUNT;
-      break;
-    case UNIT_DOWN:
-      ptr_driveRequest->status = VDQM_UNIT_DOWN;
-      break;
-    case WAIT_FOR_UNMOUNT:
-      ptr_driveRequest->status = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE 
-                                 | VDQM_UNIT_UNKNOWN;
-      break;
-    case STATUS_UNKNOWN:
-      ptr_driveRequest->status = VDQM_UNIT_UNKNOWN;
-      break;
-    default:
-      castor::exception::Internal ex;
-      ex.getMessage() << "Unknown drive status: "
-                          << tapeDrive->status() << std::endl;
-      throw ex;
-  }
-  
+  ptr_driveRequest->status    = tapeDriveStatus2Bitset(tapeDrive->status());
   ptr_driveRequest->DrvReqID  = (unsigned int)tapeDrive->id();
   ptr_driveRequest->jobID     = tapeDrive->jobID();
   ptr_driveRequest->recvtime  = (int)tapeDrive->modificationTime();
@@ -522,6 +486,47 @@ void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
   devGrpName = tapeDrive->deviceGroupName();
   strcpy(ptr_driveRequest->dgn, devGrpName->dgName().c_str());
   devGrpName = 0;
+}
+
+
+//------------------------------------------------------------------------------
+// tapeDriveStatus2Bitset
+//------------------------------------------------------------------------------
+int castor::vdqm::handler::TapeDriveHandler::tapeDriveStatus2Bitset(
+  const TapeDriveStatusCodes status) throw (castor::exception::Exception) {
+
+  switch(status) {
+  case UNIT_UP:
+    return VDQM_UNIT_UP | VDQM_UNIT_FREE;
+    break;
+  case UNIT_STARTING:
+    return VDQM_UNIT_UP | VDQM_UNIT_BUSY;
+    break;
+  case UNIT_ASSIGNED:
+    return VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_ASSIGN;
+    break;
+  case VOL_MOUNTED:
+    return VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_ASSIGN;
+    break;
+  case FORCED_UNMOUNT:
+    return VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE |
+      VDQM_UNIT_UNKNOWN | VDQM_FORCE_UNMOUNT;
+    break;
+  case UNIT_DOWN:
+    return VDQM_UNIT_DOWN;
+    break;
+  case WAIT_FOR_UNMOUNT:
+    return VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE |
+      VDQM_UNIT_UNKNOWN;
+    break;
+  case STATUS_UNKNOWN:
+    return VDQM_UNIT_UNKNOWN;
+    break;
+  default:
+    castor::exception::Internal ie;
+    ie.getMessage() << "Unknown drive status: " << status << std::endl;
+    throw ie;
+  }
 }
 
 

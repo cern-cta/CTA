@@ -143,6 +143,16 @@ namespace castor {
          */
         void copyTapeDriveInformations(TapeDrive* tapeDrive)
           throw (castor::exception::Exception);  
+
+        /**
+         * Returns the equivalent VDQM1 bitset of the VDQM2 tape drive status.
+         *
+         * @param status the VDQM2 tape drive status
+         * @return the equivalent VDQM1 bitset
+         * @exception if the specified VDQM2 tape drive status is unknown.
+         */
+        int tapeDriveStatus2Bitset(const TapeDriveStatusCodes status)
+          throw (castor::exception::Exception);
         
         /**
          * Creates a log messages for the old and new status code. If the 
@@ -153,8 +163,7 @@ namespace castor {
          * @param newActStatus The current status of the tape drive in the db
          * @exception In case of error
          */  
-        void printStatus(const int oldProtocolStatus, 
-                        const int newActStatus)
+        void printStatus(const int oldProtocolStatus, const int newActStatus)
           throw (castor::exception::Exception);
           
         /**
