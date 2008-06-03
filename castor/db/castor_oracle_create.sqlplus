@@ -334,7 +334,7 @@ INSERT INTO Type2Obj (type, object) VALUES (158, 'PriorityMap');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleCommon.sql,v  Revision: 1.655  Date: 2008/06/02 13:25:57  Author: waldron 
+ * @(#)RCSfile: oracleCommon.sql,v  Revision: 1.656  Date: 2008/06/03 11:42:02  Author: waldron 
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
