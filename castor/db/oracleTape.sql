@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.662 $ $Date: 2008/06/02 13:27:33 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.663 $ $Date: 2008/06/03 07:10:51 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -489,6 +489,13 @@ BEGIN
                     WHERE nbRecallerStreams != 0
                       AND optimized = 1
                  )
+		 -- Ignore filesystems where a migrator is running
+                 AND FileSystem.id NOT IN (
+                   SELECT DISTINCT(FileSystem.id)
+                     FROM FileSystem
+                    WHERE nbMigratorStreams != 0
+                      AND optimized = 1
+                 )
             ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC, dbms_random.value)
     LOOP
       diskServerName := a.name;
@@ -687,7 +694,7 @@ OUT castor.Segment_Cur) AS
   rows PLS_INTEGER := 500;
   CURSOR c1 IS
     SELECT Segment.id FROM Segment
-    WHERE Segment.tape = tapeId AND Segment.status = 0 
+    WHERE Segment.tape = tapeId AND Segment.status = 0 ORDER BY Segment.fseq
     FOR UPDATE;
 BEGIN
   OPEN c1;
