@@ -28,10 +28,12 @@
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <arpa/inet.h>
 
 // Local includes
 #include "System.hpp"
 #include "Cgrp.h"
+#include "Cnetdb.h"
 #include "common.h"
 #include "castor/exception/Internal.hpp"
 
@@ -114,6 +116,31 @@ int castor::System::porttoi(char* str)
     throw e;
   }
   return iport;
+}
+
+//------------------------------------------------------------------------------
+// ipAddressToHostName
+//------------------------------------------------------------------------------
+std::string castor::System::ipAddressToHostname
+(unsigned long long ipAddress)
+  throw (castor::exception::Exception) {
+  std::ostringstream res;
+  res << ((ipAddress & 0xFF000000) >> 24) << "."
+      << ((ipAddress & 0x00FF0000) >> 16) << "."
+      << ((ipAddress & 0x0000FF00) >> 8)  << "."
+      << ((ipAddress & 0x000000FF));
+  
+  // Resolve the ip address to a hostname
+  in_addr_t addr = inet_addr(res.str().c_str());
+  hostent *hp = Cgethostbyaddr((char *)&addr, sizeof(addr), AF_INET);
+  if (hp == NULL) {
+    castor::exception::Exception e(serrno);
+    e.getMessage() << "Failed to resolve ipAddress: " << res.str() 
+		   << " to a hostname" << std::endl;
+    throw e;
+  }
+
+  return hp->h_name;
 }
 
 //------------------------------------------------------------------------------

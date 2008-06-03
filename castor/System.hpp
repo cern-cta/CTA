@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: System.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/06/02 11:57:10 $ $Author: itglp $
+ * @(#)$RCSfile: System.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/06/03 15:54:42 $ $Author: waldron $
  *
  * A class with static methods for system level utilities.
  *
@@ -54,8 +54,18 @@ namespace castor {
     static int porttoi(char* str) throw (castor::exception::Exception);
     
     /**
+     * Converts an ip address to a hostname
+     * @param ipAddress the ip address to be converted.
+     * @exception in case of an error
+     */
+    static std::string ipAddressToHostname
+    (unsigned long long ipAddress)
+      throw (castor::exception::Exception);
+
+    /**
      * Switches the current process to use the Castor superuser
-     * (typically stage:st). Throws exception if any error.
+     * (typically stage:st). 
+     * @exception in case of an error
      */
     static void switchToCastorSuperuser() throw (castor::exception::Exception);
      
