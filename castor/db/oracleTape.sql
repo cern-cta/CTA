@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.663 $ $Date: 2008/06/03 07:10:51 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.664 $ $Date: 2008/06/03 13:17:39 $ $Author: sponcec3 $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -239,24 +239,21 @@ BEGIN
            AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
            AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
         -- we are within the time range, so we try to reuse the filesystem
-        SELECT P.path, P.diskcopy_id, P.castorfile,
-               C.fileId, C.nsHost, C.fileSize, P.id
-          INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
-          FROM (SELECT /*+ USE_NL(D) USE_NL(T) USE_NL(ST) INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
-                D.path, D.diskcopy_id, D.castorfile, T.id
-                  FROM (SELECT /*+ INDEX(DK I_DISKCOPY_FS_STATUS_10) */
-                               DiskCopy.path path, DiskCopy.id diskcopy_id, DiskCopy.castorfile
-                          FROM DiskCopy
-                         WHERE decode(DiskCopy.status,10,DiskCopy.status,null) = 10 -- CANBEMIGR
-                           AND DiskCopy.filesystem = lastButOneFSUsed) D,
-                        TapeCopy T, Stream2TapeCopy ST
-                 WHERE T.castorfile = D.castorfile
-                   AND ST.child = T.id
-                   AND ST.parent = streamId
-                   AND decode(T.status,2,T.status,null) = 2 -- WAITINSTREAMS
-                   AND ROWNUM < 2
-             ) P, castorfile C
-         WHERE P.castorfile = C.id;
+        SELECT /*+ FIRST_ROWS(1)  LEADING(ST T D) */
+               DiskCopy.path, DiskCopy.id, DiskCopy.castorfile, TapeCopy.id
+          INTO path, dci, castorFileId, tapeCopyId
+          FROM DiskCopy, TapeCopy, Stream2TapeCopy
+         WHERE DiskCopy.status = 10 -- CANBEMIGR
+           AND DiskCopy.filesystem = lastButOneFSUsed
+           AND Stream2TapeCopy.parent = streamId
+           AND TapeCopy.status = 2 -- WAITINSTREAMS
+           AND Stream2TapeCopy.child = TapeCopy.id
+           AND TapeCopy.castorfile = DiskCopy.castorfile
+           AND ROWNUM < 2;
+        SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize
+          INTO fileId, nsHost, fileSize
+          FROM CastorFile
+         WHERE Id = castorFileId;
         -- we found one, no need to go for new filesystem
         findNewFS := 0;
       EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -314,23 +311,21 @@ BEGIN
                   FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
          ) FN
      WHERE ROWNUM < 2;
-    SELECT P.path, P.diskcopy_id, P.castorfile,
-           C.fileId, C.nsHost, C.fileSize, P.id
-      INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
-      FROM (SELECT /*+ USE_NL(D) USE_NL(T) USE_NL(ST) INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
-            D.path, D.diskcopy_id, D.castorfile, T.id
-              FROM (SELECT /*+ INDEX(DK I_DISKCOPY_FS_STATUS_10) */
-                           DiskCopy.path path, DiskCopy.id diskcopy_id, DiskCopy.castorfile
-                      FROM DiskCopy
-                     WHERE decode(DiskCopy.status,10,DiskCopy.status,null) = 10 -- CANBEMIGR
-                       AND DiskCopy.filesystem = fileSystemId) D,
-                    TapeCopy T, Stream2TapeCopy ST
-             WHERE T.castorfile = D.castorfile
-               AND ST.child = T.id
-               AND ST.parent = streamId
-               AND decode(T.status,2,T.status,null) = 2 -- WAITINSTREAMS
-               AND ROWNUM < 2) P, castorfile C
-     WHERE P.castorfile = C.id;
+    SELECT /*+ FIRST_ROWS(1)  LEADING(ST T D) */
+           DiskCopy.path, DiskCopy.id, DiskCopy.castorfile, TapeCopy.id
+      INTO path, dci, castorFileId, tapeCopyId
+      FROM DiskCopy, TapeCopy, Stream2TapeCopy
+     WHERE DiskCopy.status = 10 -- CANBEMIGR
+       AND DiskCopy.filesystem = lastButOneFSUsed
+       AND Stream2TapeCopy.parent = streamId
+       AND TapeCopy.status = 2 -- WAITINSTREAMS
+       AND Stream2TapeCopy.child = TapeCopy.id
+       AND TapeCopy.castorfile = DiskCopy.castorfile
+       AND ROWNUM < 2;
+    SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize
+      INTO fileId, nsHost, fileSize
+      FROM CastorFile
+     WHERE id = castorFileId;
   END IF;
   -- update status of selected tapecopy and stream
   UPDATE TapeCopy SET status = 3 -- SELECTED
