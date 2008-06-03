@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.122 $ $Release$ $Date: 2008/06/03 16:31:37 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.123 $ $Release$ $Date: 2008/06/03 19:05:27 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -238,7 +238,7 @@ ALTER TABLE TapeDrive
     REFERENCES TapeRequest (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE
+    ENABLE
   ADD CONSTRAINT FK_TapeDrive_deviceGroupName
     FOREIGN KEY (deviceGroupName)
     REFERENCES DeviceGroupName (id)
