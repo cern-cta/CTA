@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.83 $ $Release$ $Date: 2008/05/30 15:44:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.84 $ $Release$ $Date: 2008/06/03 09:58:11 $ $Author: waldron $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -678,19 +678,29 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
     std::string localHost = castor::System::getHostName();
     // check privileges of the caller. He must be ADMIN in general
     // or GROUP_ADMIN for user operations
-    
     int rc = Cupv_check(req->euid(), req->egid(),
                         localHost.c_str(), 
 			localHost.c_str(), P_GRP_ADMIN);
     if ((rc < 0) && (serrno != EACCES)) {
       castor::exception::Exception e(serrno);
       e.getMessage() << "Failed Cupv_check call for " 
-		     << req->euid() << ":" << req->egid() << " (GROUP_ADMIN)";
+		     << req->euid() << ":" << req->egid() << " (GRP_ADMIN)";
       throw e;
     } else if (rc < 0) {
-      castor::exception::PermissionDenied e;
-      e.getMessage() << "Not authorized to change permissions. Please ask your group admin";
-      throw e;
+      // Check for GRP_ADMIN failed so check if the user is an ADMIN
+      rc = Cupv_check(req->euid(), req->egid(),
+		      localHost.c_str(), 
+		      localHost.c_str(), P_ADMIN);
+      if ((rc < 0) && (serrno != EACCES)){
+	castor::exception::Exception e(serrno);
+	e.getMessage() << "Failed Cupv_check call for " 
+		       << req->euid() << ":" << req->egid() << " (ADMIN)";
+	throw e;
+      } else if (rc < 0) {
+	castor::exception::PermissionDenied e;
+	e.getMessage() << "Not authorized to change permissions. Please ask your group admin";
+	throw e;
+      }
     }
     // Get the ChangePrivilege
     // cannot return 0 since we check the type before calling this method
