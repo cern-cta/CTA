@@ -793,7 +793,7 @@ END;
 /
 /*******************************************************************
  *
- * @(#)RCSfile: oraclePerm.sql,v  Revision: 1.644  Date: 2008/06/03 11:05:06  Author: sponcec3 
+ * @(#)RCSfile: oraclePerm.sql,v  Revision: 1.645  Date: 2008/06/03 14:08:47  Author: sponcec3 
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -1016,7 +1016,10 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     unused Privilege;
   BEGIN
     IF contains(P1, P2) THEN
-      IF P1.euid = P2.euid AND P1.egid = P2.egid AND P1.svcClass = P2.svcClass AND P1.reqType = P2.reqType THEN
+      IF (P1.euid = P2.euid OR (P1.euid IS NULL AND P2.euid IS NULL)) AND
+         (P1.egid = P2.egid OR (P1.egid IS NULL AND P2.egid IS NULL)) AND
+         (P1.svcClass = P2.svcClass OR (P1.svcClass IS NULL AND P2.svcClass IS NULL)) AND
+         (P1.reqType = P2.reqType OR (P1.reqType IS NULL AND P2.reqType IS NULL)) THEN
         raise_application_error(-20109, 'Empty privilege');
       ELSE
         raise_application_error(-20108, 'Invalid privilege intersection');
@@ -1172,10 +1175,6 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
   BEGIN
     removePrivilegeFromBlackList(P);
     addPrivilegeToWL(P);
-    COMMIT;
-  EXCEPTION WHEN OTHERS THEN
-    ROLLBACK;
-    RAISE;
   END;
   
   -- Remove priviledge P
@@ -1266,7 +1265,7 @@ END castorBW;
 /
 /*******************************************************************
  *
- * @(#)RCSfile: oracleStager.sql,v  Revision: 1.668  Date: 2008/05/30 07:31:41  Author: waldron 
+ * @(#)RCSfile: oracleStager.sql,v  Revision: 1.670  Date: 2008/06/03 16:05:27  Author: sponcec3 
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -2885,6 +2884,7 @@ CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
   scId INTEGER;
   nbRes INTEGER;
   dcsToRm "numList";
+  sr "numList";
 BEGIN
   ret := 0;
   BEGIN
@@ -3033,16 +3033,17 @@ BEGIN
   -- mark all get/put requests for those diskcopies
   -- and the ones waiting on them as failed
   -- so that clients eventually get an answer
-  FOR sr IN (SELECT id FROM SubRequest
-              WHERE diskcopy IN (SELECT /*+ CARDINALITY(dcidTable 5) */ * 
-                                   FROM TABLE(dcsToRm) dcidTable)
-                AND status IN (0, 1, 2, 5, 6, 13)) LOOP   -- START, WAITSUBREQ, READY, READYFORSCHED
+  SELECT id BULK COLLECT INTO sr
+    FROM SubRequest
+   WHERE diskcopy IN (SELECT /*+ CARDINALITY(dcidTable 5) */ * 
+                        FROM TABLE(dcsToRm) dcidTable)
+     AND status IN (0, 1, 2, 5, 6, 13); -- START, WAITSUBREQ, READY, READYFORSCHED
+  FORALL i IN sr.FIRST..sr.LAST
     UPDATE SubRequest 
        SET status = 7, parent = 0,  -- FAILED
            errorCode = 4,  -- EINT
            errorMessage = 'Canceled by another user request'
-     WHERE (id = sr.id) OR (parent = sr.id);
-  END LOOP;
+     WHERE id = sr(i) OR parent = sr(i);
   -- Set selected DiskCopies to INVALID. In any case keep
   -- WAITTAPERECALL diskcopies so that recalls can continue.
   -- Note that WAITFS and WAITFS_SCHEDULING DiskCopies don't exist on disk
@@ -3149,8 +3150,9 @@ BEGIN
     IF machineValues(ind + 1) = 3 THEN -- ADMIN DELETED
       BEGIN
         SELECT id INTO machine FROM DiskServer WHERE name = machines(i);
-        DELETE FROM id2Type WHERE id = machine;
-        DELETE FROM id2Type WHERE id IN (SELECT id FROM FileSystem WHERE diskServer = machine);
+        DELETE FROM id2Type WHERE id IN (SELECT machine from dual
+                                         UNION ALL
+                                         SELECT id FROM FileSystem WHERE diskServer = machine);
         DELETE FROM FileSystem WHERE diskServer = machine;
         DELETE FROM DiskServer WHERE name = machines(i);
       EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -3172,20 +3174,15 @@ BEGIN
                nbRecallerStreams = machineValues(ind + 8)
          WHERE name = machines(i);
       EXCEPTION WHEN NO_DATA_FOUND THEN
-        DECLARE
-          mid INTEGER;
-        BEGIN
-          -- we should insert a new machine here
-          SELECT ids_seq.nextval INTO mId FROM DUAL;
-          INSERT INTO DiskServer (name, id, status, adminStatus, readRate, writeRate, nbReadStreams,
-                   nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams)
-           VALUES (machines(i), mid, machineValues(ind),
-                   machineValues(ind + 1), machineValues(ind + 2),
-                   machineValues(ind + 3), machineValues(ind + 4),
-                   machineValues(ind + 5), machineValues(ind + 6),
-                   machineValues(ind + 7), machineValues(ind + 8));
-          INSERT INTO Id2Type (id, type) VALUES (mid, 8); -- OBJ_DiskServer
-        END;
+        -- we should insert a new machine here
+        INSERT INTO DiskServer (name, id, status, adminStatus, readRate, writeRate, nbReadStreams,
+                 nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams)
+         VALUES (machines(i), ids_seq.nextval, machineValues(ind),
+                 machineValues(ind + 1), machineValues(ind + 2),
+                 machineValues(ind + 3), machineValues(ind + 4),
+                 machineValues(ind + 5), machineValues(ind + 6),
+                 machineValues(ind + 7), machineValues(ind + 8));
+        INSERT INTO Id2Type (id, type) VALUES (ids_seq.currval, 8); -- OBJ_DiskServer
       END;
     END IF;
     -- Release the lock on the DiskServer as soon as possible to prevent
@@ -3229,25 +3226,20 @@ BEGIN
            WHERE mountPoint = fileSystems(i)
              AND diskServer = machine;
         EXCEPTION WHEN NO_DATA_FOUND THEN
-          DECLARE
-            fsid INTEGER;
-          BEGIN
-            -- we should insert a new filesystem here
-            SELECT ids_seq.nextval INTO fsId FROM DUAL;
-            INSERT INTO FileSystem (free, mountPoint,
-                   minFreeSpace, minAllowedFreeSpace, maxFreeSpace,
-                   totalSize, readRate, writeRate, nbReadStreams,
-                   nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams,
-                   id, diskPool, diskserver, status, adminStatus)
-            VALUES (fileSystemValues(ind + 9), fileSystems(i), fileSystemValues(ind+11),
-                    fileSystemValues(ind + 13), fileSystemValues(ind + 12),
-                    fileSystemValues(ind + 10), fileSystemValues(ind + 2),
-                    fileSystemValues(ind + 3), fileSystemValues(ind + 4),
-                    fileSystemValues(ind + 5), fileSystemValues(ind + 6),
-                    fileSystemValues(ind + 7), fileSystemValues(ind + 8),
-                    fsid, 0, machine, 2, 1); -- FILESYSTEM_DISABLED, ADMIN_FORCE
-            INSERT INTO Id2Type (id, type) VALUES (fsid, 12); -- OBJ_FileSystem
-          END;
+          -- we should insert a new filesystem here
+          INSERT INTO FileSystem (free, mountPoint,
+                 minFreeSpace, minAllowedFreeSpace, maxFreeSpace,
+                 totalSize, readRate, writeRate, nbReadStreams,
+                 nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams,
+                 id, diskPool, diskserver, status, adminStatus)
+          VALUES (fileSystemValues(ind + 9), fileSystems(i), fileSystemValues(ind+11),
+                  fileSystemValues(ind + 13), fileSystemValues(ind + 12),
+                  fileSystemValues(ind + 10), fileSystemValues(ind + 2),
+                  fileSystemValues(ind + 3), fileSystemValues(ind + 4),
+                  fileSystemValues(ind + 5), fileSystemValues(ind + 6),
+                  fileSystemValues(ind + 7), fileSystemValues(ind + 8),
+                  ids_seq.nextval, 0, machine, 2, 1); -- FILESYSTEM_DISABLED, ADMIN_FORCE
+          INSERT INTO Id2Type (id, type) VALUES (ids_seq.currval, 12); -- OBJ_FileSystem
         END;
       END IF;
       ind := ind + 14;
@@ -4135,7 +4127,7 @@ END;
 /
 /*******************************************************************
  *
- * @(#)RCSfile: oracleQuery.sql,v  Revision: 1.637  Date: 2008/05/05 08:38:11  Author: waldron 
+ * @(#)RCSfile: oracleQuery.sql,v  Revision: 1.638  Date: 2008/06/03 16:05:27  Author: sponcec3 
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -4413,11 +4405,11 @@ BEGIN
            WHERE reqid LIKE rid
           );
   IF reqs.COUNT > 0 THEN
-    UPDATE SubRequest
-       SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED
-     WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
-       AND request in (SELECT * FROM Table(reqs))
-    RETURNING castorfile BULK COLLECT INTO cfs;
+    FORALL i in reqs.FIRST..reqs.LAST
+      UPDATE SubRequest SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED
+       WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
+         AND request = reqs(i)
+      RETURNING castorfile BULK COLLECT INTO cfs;
     internalStageQuery(cfs, svcClassId, result);
   ELSE
     notfound := 1;
@@ -4447,11 +4439,11 @@ BEGIN
            WHERE userTag LIKE tag
           );
   IF reqs.COUNT > 0 THEN
-    UPDATE SubRequest
-       SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED
-     WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
-       AND request in (SELECT * FROM Table(reqs))
-    RETURNING castorfile BULK COLLECT INTO cfs;
+    FORALL i in reqs.FIRST..reqs.LAST
+      UPDATE SubRequest SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED
+       WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
+         AND request = reqs(i)
+      RETURNING castorfile BULK COLLECT INTO cfs;
     internalStageQuery(cfs, svcClassId, result);
   ELSE
     notfound := 1;
@@ -4566,7 +4558,7 @@ END;
 /
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTape.sql,v  Revision: 1.663  Date: 2008/06/03 07:10:51  Author: gtaur 
+ * @(#)RCSfile: oracleTape.sql,v  Revision: 1.668  Date: 2008/06/03 16:10:08  Author: sponcec3 
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -4817,24 +4809,21 @@ BEGIN
            AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
            AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
         -- we are within the time range, so we try to reuse the filesystem
-        SELECT P.path, P.diskcopy_id, P.castorfile,
-               C.fileId, C.nsHost, C.fileSize, P.id
-          INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
-          FROM (SELECT /*+ USE_NL(D) USE_NL(T) USE_NL(ST) INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
-                D.path, D.diskcopy_id, D.castorfile, T.id
-                  FROM (SELECT /*+ INDEX(DK I_DISKCOPY_FS_STATUS_10) */
-                               DiskCopy.path path, DiskCopy.id diskcopy_id, DiskCopy.castorfile
-                          FROM DiskCopy
-                         WHERE decode(DiskCopy.status,10,DiskCopy.status,null) = 10 -- CANBEMIGR
-                           AND DiskCopy.filesystem = lastButOneFSUsed) D,
-                        TapeCopy T, Stream2TapeCopy ST
-                 WHERE T.castorfile = D.castorfile
-                   AND ST.child = T.id
-                   AND ST.parent = streamId
-                   AND decode(T.status,2,T.status,null) = 2 -- WAITINSTREAMS
-                   AND ROWNUM < 2
-             ) P, castorfile C
-         WHERE P.castorfile = C.id;
+        SELECT /*+ FIRST_ROWS(1)  LEADING(D T ST) */
+               DiskCopy.path, DiskCopy.id, DiskCopy.castorfile, TapeCopy.id
+          INTO path, dci, castorFileId, tapeCopyId
+          FROM DiskCopy, TapeCopy, Stream2TapeCopy
+         WHERE DiskCopy.status = 10 -- CANBEMIGR
+           AND DiskCopy.filesystem = lastButOneFSUsed
+           AND Stream2TapeCopy.parent = streamId
+           AND TapeCopy.status = 2 -- WAITINSTREAMS
+           AND Stream2TapeCopy.child = TapeCopy.id
+           AND TapeCopy.castorfile = DiskCopy.castorfile
+           AND ROWNUM < 2;
+        SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize
+          INTO fileId, nsHost, fileSize
+          FROM CastorFile
+         WHERE Id = castorFileId;
         -- we found one, no need to go for new filesystem
         findNewFS := 0;
       EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -4892,23 +4881,21 @@ BEGIN
                   FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
          ) FN
      WHERE ROWNUM < 2;
-    SELECT P.path, P.diskcopy_id, P.castorfile,
-           C.fileId, C.nsHost, C.fileSize, P.id
-      INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
-      FROM (SELECT /*+ USE_NL(D) USE_NL(T) USE_NL(ST) INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
-            D.path, D.diskcopy_id, D.castorfile, T.id
-              FROM (SELECT /*+ INDEX(DK I_DISKCOPY_FS_STATUS_10) */
-                           DiskCopy.path path, DiskCopy.id diskcopy_id, DiskCopy.castorfile
-                      FROM DiskCopy
-                     WHERE decode(DiskCopy.status,10,DiskCopy.status,null) = 10 -- CANBEMIGR
-                       AND DiskCopy.filesystem = fileSystemId) D,
-                    TapeCopy T, Stream2TapeCopy ST
-             WHERE T.castorfile = D.castorfile
-               AND ST.child = T.id
-               AND ST.parent = streamId
-               AND decode(T.status,2,T.status,null) = 2 -- WAITINSTREAMS
-               AND ROWNUM < 2) P, castorfile C
-     WHERE P.castorfile = C.id;
+    SELECT /*+ FIRST_ROWS(1)  LEADING(D T ST) */
+           DiskCopy.path, DiskCopy.id, DiskCopy.castorfile, TapeCopy.id
+      INTO path, dci, castorFileId, tapeCopyId
+      FROM DiskCopy, TapeCopy, Stream2TapeCopy
+     WHERE DiskCopy.status = 10 -- CANBEMIGR
+       AND DiskCopy.filesystem = lastButOneFSUsed
+       AND Stream2TapeCopy.parent = streamId
+       AND TapeCopy.status = 2 -- WAITINSTREAMS
+       AND Stream2TapeCopy.child = TapeCopy.id
+       AND TapeCopy.castorfile = DiskCopy.castorfile
+       AND ROWNUM < 2;
+    SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize
+      INTO fileId, nsHost, fileSize
+      FROM CastorFile
+     WHERE id = castorFileId;
   END IF;
   -- update status of selected tapecopy and stream
   UPDATE TapeCopy SET status = 3 -- SELECTED
@@ -5172,8 +5159,10 @@ BEGIN
      AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
      AND DiskServer.id = FileSystem.DiskServer
      AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
-  UPDATE Stream SET status = 1 -- WAITDRIVE
-   WHERE id MEMBER OF streams;
+  FORALL i in streams.FIRST..streams.LAST
+    UPDATE Stream SET status = 1 -- WAITDRIVE
+    WHERE id = streams(i);
+
   OPEN res FOR
     SELECT Stream.id, Stream.InitialSizeToTransfer, Stream.status,
            TapePool.id, TapePool.name
@@ -5257,8 +5246,9 @@ BEGIN
        AND status = 2 -- TAPECOPY_WAITINSTREAMS
        AND ROWNUM < 2;
     -- We'we found one, update stream status
-    UPDATE Stream SET status = 0, tape = 0, lastFileSystemChange = 0
-     WHERE id = sid; -- STREAM_PENDING
+    UPDATE Stream SET status = 6, tape = 0, lastFileSystemChange = 0
+     WHERE id = sid; -- STREAM_STOPPED
+    -- to avoid to by-pass the stream policy if it is used
   EXCEPTION  WHEN NO_DATA_FOUND THEN
     -- We've found nothing, delete stream
     DELETE FROM Stream2TapeCopy WHERE Parent = sid;
