@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.666 $ $Date: 2008/06/03 15:54:06 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.667 $ $Date: 2008/06/03 16:05:27 $ $Author: sponcec3 $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -586,8 +586,10 @@ BEGIN
      AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
      AND DiskServer.id = FileSystem.DiskServer
      AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
-  UPDATE Stream SET status = 1 -- WAITDRIVE
-   WHERE id MEMBER OF streams;
+  FORALL i in streams.FIRST..streams.LAST
+    UPDATE Stream SET status = 1 -- WAITDRIVE
+    WHERE id = streams(i);
+
   OPEN res FOR
     SELECT Stream.id, Stream.InitialSizeToTransfer, Stream.status,
            TapePool.id, TapePool.name

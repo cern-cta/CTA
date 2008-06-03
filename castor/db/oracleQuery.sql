@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.637 $ $Date: 2008/05/05 08:38:11 $ $Author: waldron $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.638 $ $Date: 2008/06/03 16:05:27 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -273,11 +273,11 @@ BEGIN
            WHERE reqid LIKE rid
           );
   IF reqs.COUNT > 0 THEN
-    UPDATE SubRequest
-       SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED
-     WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
-       AND request in (SELECT * FROM Table(reqs))
-    RETURNING castorfile BULK COLLECT INTO cfs;
+    FORALL i in reqs.FIRST..reqs.LAST
+      UPDATE SubRequest SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED
+       WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
+         AND request = reqs(i)
+      RETURNING castorfile BULK COLLECT INTO cfs;
     internalStageQuery(cfs, svcClassId, result);
   ELSE
     notfound := 1;
@@ -306,11 +306,11 @@ BEGIN
            WHERE userTag LIKE tag
           );
   IF reqs.COUNT > 0 THEN
-    UPDATE SubRequest
-       SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED
-     WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
-       AND request in (SELECT * FROM Table(reqs))
-    RETURNING castorfile BULK COLLECT INTO cfs;
+    FORALL i in reqs.FIRST..reqs.LAST
+      UPDATE SubRequest SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED
+       WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
+         AND request = reqs(i)
+      RETURNING castorfile BULK COLLECT INTO cfs;
     internalStageQuery(cfs, svcClassId, result);
   ELSE
     notfound := 1;

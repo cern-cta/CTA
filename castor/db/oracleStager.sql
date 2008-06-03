@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.669 $ $Date: 2008/06/03 13:05:06 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.670 $ $Date: 2008/06/03 16:05:27 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1590,6 +1590,7 @@ CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
   scId INTEGER;
   nbRes INTEGER;
   dcsToRm "numList";
+  sr "numList";
 BEGIN
   ret := 0;
   BEGIN
@@ -1738,16 +1739,17 @@ BEGIN
   -- mark all get/put requests for those diskcopies
   -- and the ones waiting on them as failed
   -- so that clients eventually get an answer
-  FOR sr IN (SELECT id FROM SubRequest
-              WHERE diskcopy IN (SELECT /*+ CARDINALITY(dcidTable 5) */ * 
-                                   FROM TABLE(dcsToRm) dcidTable)
-                AND status IN (0, 1, 2, 5, 6, 13)) LOOP   -- START, WAITSUBREQ, READY, READYFORSCHED
+  SELECT id BULK COLLECT INTO sr
+    FROM SubRequest
+   WHERE diskcopy IN (SELECT /*+ CARDINALITY(dcidTable 5) */ * 
+                        FROM TABLE(dcsToRm) dcidTable)
+     AND status IN (0, 1, 2, 5, 6, 13); -- START, WAITSUBREQ, READY, READYFORSCHED
+  FORALL i IN sr.FIRST..sr.LAST
     UPDATE SubRequest 
        SET status = 7, parent = 0,  -- FAILED
            errorCode = 4,  -- EINT
            errorMessage = 'Canceled by another user request'
-     WHERE (id = sr.id) OR (parent = sr.id);
-  END LOOP;
+     WHERE id = sr(i) OR parent = sr(i);
   -- Set selected DiskCopies to INVALID. In any case keep
   -- WAITTAPERECALL diskcopies so that recalls can continue.
   -- Note that WAITFS and WAITFS_SCHEDULING DiskCopies don't exist on disk
