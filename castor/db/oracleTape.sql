@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.667 $ $Date: 2008/06/03 16:05:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.668 $ $Date: 2008/06/03 16:10:08 $ $Author: sponcec3 $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -239,7 +239,7 @@ BEGIN
            AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
            AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
         -- we are within the time range, so we try to reuse the filesystem
-        SELECT /*+ FIRST_ROWS(1)  LEADING(ST T D) */
+        SELECT /*+ FIRST_ROWS(1)  LEADING(D T ST) */
                DiskCopy.path, DiskCopy.id, DiskCopy.castorfile, TapeCopy.id
           INTO path, dci, castorFileId, tapeCopyId
           FROM DiskCopy, TapeCopy, Stream2TapeCopy
@@ -311,7 +311,7 @@ BEGIN
                   FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
          ) FN
      WHERE ROWNUM < 2;
-    SELECT /*+ FIRST_ROWS(1)  LEADING(ST T D) */
+    SELECT /*+ FIRST_ROWS(1)  LEADING(D T ST) */
            DiskCopy.path, DiskCopy.id, DiskCopy.castorfile, TapeCopy.id
       INTO path, dci, castorFileId, tapeCopyId
       FROM DiskCopy, TapeCopy, Stream2TapeCopy
