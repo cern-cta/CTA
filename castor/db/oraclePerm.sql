@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.644 $ $Date: 2008/06/03 11:05:06 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.645 $ $Date: 2008/06/03 14:08:47 $ $Author: sponcec3 $
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -220,7 +220,10 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     unused Privilege;
   BEGIN
     IF contains(P1, P2) THEN
-      IF P1.euid = P2.euid AND P1.egid = P2.egid AND P1.svcClass = P2.svcClass AND P1.reqType = P2.reqType THEN
+      IF (P1.euid = P2.euid OR (P1.euid IS NULL AND P2.euid IS NULL)) AND
+         (P1.egid = P2.egid OR (P1.egid IS NULL AND P2.egid IS NULL)) AND
+         (P1.svcClass = P2.svcClass OR (P1.svcClass IS NULL AND P2.svcClass IS NULL)) AND
+         (P1.reqType = P2.reqType OR (P1.reqType IS NULL AND P2.reqType IS NULL)) THEN
         raise_application_error(-20109, 'Empty privilege');
       ELSE
         raise_application_error(-20108, 'Invalid privilege intersection');
@@ -376,10 +379,6 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
   BEGIN
     removePrivilegeFromBlackList(P);
     addPrivilegeToWL(P);
-    COMMIT;
-  EXCEPTION WHEN OTHERS THEN
-    ROLLBACK;
-    RAISE;
   END;
   
   -- Remove priviledge P
