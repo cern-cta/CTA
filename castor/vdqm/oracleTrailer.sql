@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.121 $ $Release$ $Date: 2008/05/30 15:33:41 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.122 $ $Release$ $Date: 2008/06/03 16:31:37 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -57,48 +57,92 @@ COMMIT;
 
 
 /* Not null column constraints */
-ALTER TABLE ClientIdentification MODIFY (egid NOT NULL);
-ALTER TABLE ClientIdentification MODIFY (euid NOT NULL);
-ALTER TABLE ClientIdentification MODIFY (magic NOT NULL);
-ALTER TABLE ClientIdentification MODIFY (port NOT NULL);
-ALTER TABLE Id2Type MODIFY (type NOT NULL);
-ALTER TABLE TapeAccessSpecification MODIFY (accessMode NOT NULL);
-ALTER TABLE TapeDrive MODIFY (deviceGroupName NOT NULL);
-ALTER TABLE TapeDrive MODIFY (errCount NOT NULL);
-ALTER TABLE TapeDrive MODIFY (jobId NOT NULL);
-ALTER TABLE TapeDrive MODIFY (modificationTime NOT NULL);
-ALTER TABLE TapeDrive MODIFY (resetTime NOT NULL);
-ALTER TABLE TapeDrive MODIFY (runningTapeReq NOT NULL);
-ALTER TABLE TapeDrive MODIFY (status NOT NULL);
-ALTER TABLE TapeDrive MODIFY (tape NOT NULL);
-ALTER TABLE TapeDrive MODIFY (tapeServer NOT NULL);
-ALTER TABLE TapeDrive MODIFY (totalMB NOT NULL);
-ALTER TABLE TapeDrive MODIFY (transferredMB NOT NULL);
-ALTER TABLE TapeDrive MODIFY (useCount NOT NULL);
-ALTER TABLE TapeDrive2TapeDriveComp MODIFY (child NOT NULL);
-ALTER TABLE TapeDrive2TapeDriveComp MODIFY (parent NOT NULL);
-ALTER TABLE TapeDriveCompatibility MODIFY (priorityLevel NOT NULL);
-ALTER TABLE TapeDriveCompatibility MODIFY (tapeAccessSpecification NOT NULL);
-ALTER TABLE TapeDriveDedication MODIFY (TAPEDRIVE NOT NULL);
-ALTER TABLE TapeRequest MODIFY (client NOT NULL);
-ALTER TABLE TapeRequest MODIFY (creationTime NOT NULL);
-ALTER TABLE TapeRequest MODIFY (deviceGroupName NOT NULL);
-ALTER TABLE TapeRequest MODIFY (errorCode NOT NULL);
-ALTER TABLE TapeRequest MODIFY (modificationTime NOT NULL);
-ALTER TABLE TapeRequest MODIFY (priority NOT NULL);
-ALTER TABLE TapeRequest MODIFY (requestedSrv NOT NULL);
-ALTER TABLE TapeRequest MODIFY (status NOT NULL);
-ALTER TABLE TapeRequest MODIFY (tape NOT NULL);
-ALTER TABLE TapeRequest MODIFY (tapeAccessSpecification NOT NULL);
-ALTER TABLE TapeRequest MODIFY (tapeDrive NOT NULL);
-ALTER TABLE TapeServer MODIFY (actingMode NOT NULL);
-ALTER TABLE VolumePriority MODIFY (priority NOT NULL);
-ALTER TABLE VolumePriority MODIFY (clientUID NOT NULL);
-ALTER TABLE VolumePriority MODIFY (clientGID NOT NULL);
-ALTER TABLE VolumePriority MODIFY (clientHost NOT NULL);
-ALTER TABLE VolumePriority MODIFY (vid NOT NULL);
-ALTER TABLE VolumePriority MODIFY (tpMode NOT NULL);
-ALTER TABLE VolumePriority MODIFY (lifespanType NOT NULL);
+ALTER TABLE ClientIdentification MODIFY
+  (egid CONSTRAINT NN_ClientIdentification_egid NOT NULL);
+ALTER TABLE ClientIdentification MODIFY
+  (euid CONSTRAINT NN_ClientIdentification_euid NOT NULL);
+ALTER TABLE ClientIdentification MODIFY
+  (magic CONSTRAINT NN_ClientIdentification_magic NOT NULL);
+ALTER TABLE ClientIdentification MODIFY
+  (port CONSTRAINT NN_ClientIdentification_port NOT NULL);
+ALTER TABLE Id2Type MODIFY
+  (type CONSTRAINT NN_Id2Type_type NOT NULL);
+ALTER TABLE TapeAccessSpecification MODIFY
+  (accessMode CONSTRAINT NN_TapeAccessSpec_accessMode NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (deviceGroupName CONSTRAINT NN_TapeDrive_deviceGroupName NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (errCount CONSTRAINT NN_TapeDrive_errCount NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (jobId CONSTRAINT NN_TapeDrive_jobId NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (modificationTime CONSTRAINT NN_TapeDrive_modificationTime NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (resetTime CONSTRAINT NN_TapeDrive_resetTime NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (runningTapeReq CONSTRAINT NN_TapeDrive_runningTapeReq NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (status CONSTRAINT NN_TapeDrive_status NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (tape CONSTRAINT NN_TapeDrive_tape NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (tapeServer CONSTRAINT NN_TapeDrive_tapeServer NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (totalMB CONSTRAINT NN_TapeDrive_totalMB NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (transferredMB CONSTRAINT NN_TapeDrive_transferredMB NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (useCount CONSTRAINT NN_TapeDrive_useCount NOT NULL);
+ALTER TABLE TapeDrive2TapeDriveComp MODIFY
+ (child CONSTRAINT NN_TapeDrv2TapeDrvComp_child NOT NULL);
+ALTER TABLE TapeDrive2TapeDriveComp MODIFY
+ (parent CONSTRAINT NN_TapeDrv2TapeDrvComp_parent NOT NULL);
+ALTER TABLE TapeDriveCompatibility MODIFY
+ (priorityLevel CONSTRAINT NN_TapeDriveComp_priorityLevel NOT NULL);
+ALTER TABLE TapeDriveCompatibility MODIFY
+ (tapeAccessSpecification CONSTRAINT NN_TapeDriveComp_accessSpec NOT NULL);
+ALTER TABLE TapeDriveDedication MODIFY
+ (tapeDrive CONSTRAINT NN_TapeDrvDedic_tapeDrive NOT NULL);
+ALTER TABLE TapeRequest MODIFY
+ (client CONSTRAINT NN_TapeRequest_client NOT NULL);
+ALTER TABLE TapeRequest MODIFY
+ (creationTime CONSTRAINT NN_TapeRequest_creationTime NOT NULL);
+ALTER TABLE TapeRequest MODIFY
+ (deviceGroupName CONSTRAINT NN_TapeRequest_deviceGroupName NOT NULL);
+ALTER TABLE TapeRequest MODIFY
+ (errorCode CONSTRAINT NN_TapeRequest_errorCode NOT NULL);
+ALTER TABLE TapeRequest MODIFY
+ (modificationTime CONSTRAINT NN_TapeRequest_modTime NOT NULL);
+ALTER TABLE TapeRequest MODIFY
+ (priority CONSTRAINT NN_TapeRequest_priority NOT NULL);
+ALTER TABLE TapeRequest MODIFY
+ (requestedSrv CONSTRAINT NN_TapeRequest_requestedSrv NOT NULL);
+ALTER TABLE TapeRequest MODIFY
+ (status CONSTRAINT NN_TapeRequest_status NOT NULL);
+ALTER TABLE TapeRequest MODIFY
+ (tape CONSTRAINT NN_TapeRequest_tape NOT NULL);
+ALTER TABLE TapeRequest MODIFY
+ (tapeAccessSpecification CONSTRAINT NN_TapeRequest_accessSpec NOT NULL);
+ALTER TABLE TapeRequest MODIFY
+ (tapeDrive CONSTRAINT NN_TapeRequest_tapeDrive NOT NULL);
+ALTER TABLE TapeServer MODIFY
+ (actingMode CONSTRAINT NN_TapeServer_actingMode NOT NULL);
+ALTER TABLE TapeServer MODIFY
+ (serverName CONSTRAINT NN_TapeServer_serverName NOT NULL);
+ALTER TABLE VolumePriority MODIFY
+ (priority CONSTRAINT NN_VolumePriority_priority NOT NULL);
+ALTER TABLE VolumePriority MODIFY
+ (clientUID CONSTRAINT NN_VolumePriority_clientUID NOT NULL);
+ALTER TABLE VolumePriority MODIFY
+ (clientGID CONSTRAINT NN_VolumePriority_clientGID NOT NULL);
+ALTER TABLE VolumePriority MODIFY
+ (clientHost CONSTRAINT NN_VolumePriority_clientHost NOT NULL);
+ALTER TABLE VolumePriority MODIFY
+ (vid CONSTRAINT NN_VolumePriority_vid NOT NULL);
+ALTER TABLE VolumePriority MODIFY
+ (tpMode CONSTRAINT NN_VolumePriority_tpMode NOT NULL);
+ALTER TABLE VolumePriority MODIFY
+ (lifespanType CONSTRAINT NN_VolumePriority_lifespanType NOT NULL);
 
 /* Unique constraints */
 -- A client host can only be dedicated to one drive
@@ -121,6 +165,15 @@ ALTER TABLE VolumePriority
   ADD CONSTRAINT I_U_VolPriority_vid_mode_life
     UNIQUE (vid, tpMode, lifespanType);
 
+-- A tape drive is identified by driveName and tapeServer
+ALTER TABLE TapeDrive
+  ADD CONSTRAINT I_U_TapeDrive_name_server 
+  UNIQUE (driveName, tapeServer);
+
+-- A tape server is identified by its name
+ALTER TABLE TapeServer
+  ADD CONSTRAINT I_U_TapeServer_serverName
+  UNIQUE (serverName);
 
 /* Check constraints */
 -- The accessMode column of the TapeAccessSpecification table has 2 possible
