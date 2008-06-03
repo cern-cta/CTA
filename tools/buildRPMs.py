@@ -15,7 +15,7 @@ fullVersion = sys.argv[3]
 tarball = sys.argv[4]
 
 # Prepare directories
-workDir = tempfile.mkdtemp('','CastorRelease', '/build')
+workDir = tempfile.mkdtemp('','CastorRelease', '/tmp')
 os.chdir(workDir)
 for m in ['BUILD', 'RPMS', 'SOURCES', 'SPECS', 'SRPMS', 'RPMS/i386', 'RPMS/x86_64']: os.mkdir(m)
 
