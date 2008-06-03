@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.85 $ $Release$ $Date: 2008/06/03 11:01:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.86 $ $Release$ $Date: 2008/06/03 16:20:24 $ $Author: waldron $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -562,17 +562,20 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
     std::string svcClassName;
     if (0 != svcClass) {
       svcClassName = svcClass->name();
-    }
-    
-    // Get the name of the localhost to pass into the Cupv interface.
-    std::string localHost = castor::System::getHostName();
-    
+    }      
+
+    // Get the name of the client hostname to pass into the Cupv interface.
+    const castor::rh::Client *c =
+      dynamic_cast<const castor::rh::Client*>(client);
+    std::string srcHostName = 
+      castor::System::ipAddressToHostname(c->ipAddress());
+
     // Check if the user has ADMIN privileges so that they can see detailed
     // information about the diskservers and filesystems within a given pool
     // and/or svcclass
     bool detailed = false;
-    int rc = Cupv_check(req->euid(), req->egid(), localHost.c_str(), 
-			localHost.c_str(), P_ADMIN);
+    int rc = Cupv_check(req->euid(), req->egid(), 
+			srcHostName.c_str(), "", P_ADMIN);
     if ((rc < 0) && (serrno != EACCES)) {
       castor::exception::Exception e(serrno);
       e.getMessage() << "Failed Cupv_check call for " 
@@ -674,13 +677,16 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
   try {
     // prepare response first in case we fail
     res.setReqAssociated(req->reqId());
-    // Get the name of the localhost to pass into the Cupv interface.
-    std::string localHost = castor::System::getHostName();
+    // Get the name of the client hostname to pass into the Cupv interface.
+    const castor::rh::Client *c =
+      dynamic_cast<const castor::rh::Client*>(client);
+    std::string srcHostName = 
+      castor::System::ipAddressToHostname(c->ipAddress());
     // check privileges of the caller. He must be ADMIN in general
     // or GROUP_ADMIN for user operations
     int rc = Cupv_check(req->euid(), req->egid(),
-                        localHost.c_str(), 
-			localHost.c_str(), P_GRP_ADMIN);
+                        srcHostName.c_str(), 
+			"", P_GRP_ADMIN);
     if ((rc < 0) && (serrno != EACCES)) {
       castor::exception::Exception e(serrno);
       e.getMessage() << "Failed Cupv_check call for " 
@@ -689,8 +695,8 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
     } else if (rc < 0) {
       // Check for GRP_ADMIN failed so check if the user is an ADMIN
       rc = Cupv_check(req->euid(), req->egid(),
-		      localHost.c_str(), 
-		      localHost.c_str(), P_ADMIN);
+		      srcHostName.c_str(), 
+		      "", P_ADMIN);
       if ((rc < 0) && (serrno != EACCES)){
 	castor::exception::Exception e(serrno);
 	e.getMessage() << "Failed Cupv_check call for " 
