@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.7-7_to_2.1.7-10.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/03 11:05:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: 2.1.7-7_to_2.1.7-10.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/03 12:00:14 $ $Author: waldron $
  *
  * This script upgrades a CASTOR v2.1.7-7 database into v2.1.7-8
  *
@@ -1541,6 +1541,134 @@ BEGIN
     END IF;
 END;
 
+/* PL/SQL method implementing bestFileSystemForSegment */
+CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskServerName OUT VARCHAR2,
+                                                     rmountPoint OUT VARCHAR2, rpath OUT VARCHAR2,
+                                                     dcid OUT INTEGER, optimized IN INTEGER) AS
+  fileSystemId NUMBER;
+  cfid NUMBER;
+  fsDiskServer NUMBER;
+  fileSize NUMBER;
+  nb NUMBER;
+BEGIN
+  -- First get the DiskCopy and see whether it already has a fileSystem
+  -- associated (case of a multi segment file)
+  -- We also select on the DiskCopy status since we know it is
+  -- in WAITTAPERECALL status and there may be other ones
+  -- INVALID, GCCANDIDATE, DELETED, etc...
+  SELECT DiskCopy.fileSystem, DiskCopy.path, DiskCopy.id, DiskCopy.CastorFile
+    INTO fileSystemId, rpath, dcid, cfid
+    FROM TapeCopy, Segment, DiskCopy
+   WHERE Segment.id = segmentId
+     AND Segment.copy = TapeCopy.id
+     AND DiskCopy.castorfile = TapeCopy.castorfile
+     AND DiskCopy.status = 2; -- WAITTAPERECALL
+  -- Check if the DiskCopy had a FileSystem associated
+  IF fileSystemId > 0 THEN
+    BEGIN
+      -- It had one, force filesystem selection, unless it was disabled.
+      SELECT DiskServer.name, DiskServer.id, FileSystem.mountPoint
+        INTO diskServerName, fsDiskServer, rmountPoint
+        FROM DiskServer, FileSystem
+       WHERE FileSystem.id = fileSystemId
+         AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
+         AND DiskServer.id = FileSystem.diskServer
+         AND DiskServer.status = 0; -- DISKSERVER_PRODUCTION
+      updateFsRecallerOpened(fsDiskServer, fileSystemId, 0);
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- Error, the filesystem or the machine was probably disabled in between
+      raise_application_error(-20101, 'In a multi-segment file, FileSystem or Machine was disabled before all segments were recalled');
+    END;
+  ELSE
+    fileSystemId := 0;
+    -- The DiskCopy had no FileSystem associated with it which indicates that
+    -- This is a new recall. We try and select a good FileSystem for it!
+    FOR a IN (SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id,
+                     FileSystem.diskserver, CastorFile.fileSize
+                FROM DiskServer, FileSystem, DiskPool2SvcClass,
+                     (SELECT id, svcClass from StageGetRequest UNION ALL
+                      SELECT id, svcClass from StagePrepareToGetRequest UNION ALL
+                      SELECT id, svcClass from StageRepackRequest UNION ALL
+                      SELECT id, svcClass from StageGetNextRequest UNION ALL
+                      SELECT id, svcClass from StageUpdateRequest UNION ALL
+                      SELECT id, svcClass from StagePrepareToUpdateRequest UNION ALL
+                      SELECT id, svcClass from StageUpdateNextRequest) Request,
+                      SubRequest, CastorFile
+               WHERE CastorFile.id = cfid
+                 AND SubRequest.castorfile = cfid
+                 AND SubRequest.status = 4 
+                 AND Request.id = SubRequest.request
+                 AND Request.svcclass = DiskPool2SvcClass.child
+                 AND FileSystem.diskpool = DiskPool2SvcClass.parent
+                 AND FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > CastorFile.fileSize
+                 AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
+                 AND DiskServer.id = FileSystem.diskServer
+                 AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
+                 -- Ignore diskservers where a recaller already exists
+                 AND DiskServer.id NOT IN (
+                   SELECT DISTINCT(FileSystem.diskServer)
+                     FROM FileSystem
+                    WHERE nbRecallerStreams != 0
+                      AND optimized = 1
+                 )
+		 -- Ignore filesystems where a migrator is running
+                 AND FileSystem.id NOT IN (
+                   SELECT DISTINCT(FileSystem.id)
+                     FROM FileSystem
+                    WHERE nbMigratorStreams != 0
+                      AND optimized = 1
+                 )
+            ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC, dbms_random.value)
+    LOOP
+      diskServerName := a.name;
+      rmountPoint    := a.mountPoint;
+      fileSystemId   := a.id;
+      -- Check that we don't already have a copy of this file on this filesystem.
+      -- This will never happen in normal operations but may be the case if a filesystem
+      -- was disabled and did come back while the tape recall was waiting.
+      -- Even if we could optimize by cancelling remaining unneeded tape recalls when a
+      -- fileSystem comes backs, the ones running at the time of the come back will have     
+      SELECT count(*) INTO nb
+        FROM DiskCopy
+       WHERE fileSystem = a.id
+         AND castorfile = cfid
+         AND status = 0; -- STAGED
+      IF nb != 0 THEN
+        raise_application_error(-20103, 'Recaller could not find a FileSystem in production in the requested SvcClass and without copies of this file');
+      END IF;
+      -- Set the diskcopy's filesystem
+      UPDATE DiskCopy 
+         SET fileSystem = a.id 
+       WHERE id = dcid;
+      updateFsRecallerOpened(a.diskServer, a.id, a.fileSize);
+      RETURN;
+    END LOOP;  
+
+    -- If we didn't find a filesystem rerun with optimization disabled
+    IF fileSystemId = 0 THEN
+      IF optimized = 1 THEN
+        bestFileSystemForSegment(segmentId, diskServerName, rmountPoint, rpath, dcid, 0);
+	RETURN;
+      ELSE
+        RAISE NO_DATA_FOUND; -- we did not find any suitable FS, even without optimization
+      END IF;
+    END IF;
+  END IF;
+
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Just like in bestTapeCopyForStream if we were called with optimization enabled
+    -- and nothing was found, rerun the procedure again with optimization disabled to
+    -- truly make sure nothing is found!
+    IF optimized = 1 THEN
+      bestFileSystemForSegment(segmentId, diskServerName, rmountPoint, rpath, dcid, 0);
+      -- Since we recursively called ourselves, we should not do
+      -- any update in the outer call
+      RETURN;
+    ELSE
+      RAISE;
+    END IF;
+END;
+
 /* PL/SQL method implementing segmentsForTape */
 CREATE OR REPLACE PROCEDURE segmentsForTape (tapeId IN INTEGER, segments
 OUT castor.Segment_Cur) AS
@@ -1548,7 +1676,7 @@ OUT castor.Segment_Cur) AS
   rows PLS_INTEGER := 500;
   CURSOR c1 IS
     SELECT Segment.id FROM Segment
-    WHERE Segment.tape = tapeId AND Segment.status = 0 
+    WHERE Segment.tape = tapeId AND Segment.status = 0 ORDER BY Segment.fseq
     FOR UPDATE;
 BEGIN
   OPEN c1;
