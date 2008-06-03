@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.664 $ $Date: 2008/06/03 13:17:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.665 $ $Date: 2008/06/03 14:18:56 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -669,8 +669,9 @@ BEGIN
        AND status = 2 -- TAPECOPY_WAITINSTREAMS
        AND ROWNUM < 2;
     -- We'we found one, update stream status
-    UPDATE Stream SET status = 0, tape = 0, lastFileSystemChange = 0
-     WHERE id = sid; -- STREAM_PENDING
+    UPDATE Stream SET status = 6, tape = 0, lastFileSystemChange = 0
+     WHERE id = sid; -- STREAM_STOPPED
+	--  to avoid to by-pass the stream policy if it is used
   EXCEPTION  WHEN NO_DATA_FOUND THEN
     -- We've found nothing, delete stream
     DELETE FROM Stream2TapeCopy WHERE Parent = sid;
