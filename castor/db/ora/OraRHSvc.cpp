@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/06/03 11:01:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/06/03 13:54:31 $ $Author: sponcec3 $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -31,6 +31,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/PermissionDenied.hpp"
+#include "castor/exception/InvalidArgument.hpp"
 #include "castor/bwlist/BWUser.hpp"
 #include "castor/bwlist/RequestType.hpp"
 #include "castor/bwlist/Privilege.hpp"
@@ -174,7 +175,7 @@ void castor::db::ora::OraRHSvc::checkPermission
 void handleChangePrivilegeTypeLoop
 (std::vector<castor::bwlist::RequestType*> &requestTypes,
  oracle::occi::Statement *stmt)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
   // loop on the request types
   if (requestTypes.size() > 0) {
     for (std::vector<castor::bwlist::RequestType*>::const_iterator typeIt =
@@ -210,13 +211,11 @@ void castor::db::ora::OraRHSvc::changePrivilege
       if (0 == m_addPrivilegeStatement) {
 	m_addPrivilegeStatement =
 	  createStatement(s_addPrivilegeStatementString);
-	m_addPrivilegeStatement->setAutoCommit(true);
       }
     } else {
       if (0 == m_removePrivilegeStatement) {
 	m_removePrivilegeStatement =
 	  createStatement(s_removePrivilegeStatementString);
-	m_removePrivilegeStatement->setAutoCommit(true);
       }
     }
     // deal with the type of change
@@ -257,11 +256,21 @@ void castor::db::ora::OraRHSvc::changePrivilege
     commit();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in changePrivilege."
-      << std::endl << e.what();
-    throw ex;
+    if (e.getErrorCode() == 20108) {
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() << "The operation you are requesting cannot be expressed "
+		      << "in the privilege table.\nThis means "
+		      << "that you are trying to grant only part of a privilege "
+		      << "that is currently denied.\nConsider granting all of it "
+		      << "and denying the complement afterward";
+      throw ex;
+    } else {
+      castor::exception::Internal ex;
+      ex.getMessage()
+	<< "Error caught in changePrivilege."
+	<< std::endl << e.what();
+      throw ex;
+    }
   }
 }
 
