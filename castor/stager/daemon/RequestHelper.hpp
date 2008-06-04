@@ -77,6 +77,7 @@ namespace castor{
 	castor::stager::IStagerSvc* stagerService;
 	castor::db::DbCnvSvc* dbSvc;
 	
+	// for logging purposes
 	struct Cns_fileid* cnsFileId;
 
 	/* BaseAddress */

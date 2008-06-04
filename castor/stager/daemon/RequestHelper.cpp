@@ -85,15 +85,12 @@ namespace castor{
             service("DbCnvSvc", castor::SVC_DBCNV);
           dbSvc = dynamic_cast<castor::db::DbCnvSvc*>(svc);
 
-          this->baseAddr = new castor::BaseAddress;
-          svcClass = 0;
-          castorFile = 0;
-
+          baseAddr = new castor::BaseAddress;
           baseAddr->setCnvSvcName("DbCnvSvc");
           baseAddr->setCnvSvcType(SVC_DBCNV);
 
-          this->subrequest=subRequestToProcess;
-          this->default_protocol = "rfio";
+          subrequest=subRequestToProcess;
+          default_protocol = "rfio";
 
           dbSvc->fillObj(baseAddr, subrequest, castor::OBJ_FileRequest, false);
           this->fileRequest=subrequest->request();
@@ -128,7 +125,7 @@ namespace castor{
             castor::dlf::Param("SvcClass", svcClassName),
             castor::dlf::Param("ProcessingTime", procTime * 0.000001)
           };
-          castor::dlf::dlf_writep(requestUuid, DLF_LVL_MONITORING, STAGER_REQ_PROCESSED, 7, params, 0);
+          castor::dlf::dlf_writep(requestUuid, DLF_LVL_MONITORING, STAGER_REQ_PROCESSED, 7, params, cnsFileId);
         }
 
         delete baseAddr;
