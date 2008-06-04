@@ -115,7 +115,7 @@ namespace castor {
   
         /**
          * Retrieves a TapeServer from the database based on its serverName. 
-         * If no tapeServer is found, creates one.
+         * If no tapeServer is found, then one is created.
          * Note that this method creates a lock on the row of the
          * given tapeServer and does not release it. It is the
          * responsability of the caller to commit the transaction.
@@ -128,7 +128,7 @@ namespace castor {
          * @exception Exception in case of error (no tape server found,
          * several tape servers found, DB problem, etc...)
          */
-        virtual castor::vdqm::TapeServer* selectTapeServer
+        virtual castor::vdqm::TapeServer* selectOrCreateTapeServer
         (const std::string serverName, bool withTapeDrives)
           throw (castor::exception::Exception);
   

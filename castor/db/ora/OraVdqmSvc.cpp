@@ -491,9 +491,8 @@ castor::db::ora::OraVdqmSvc::selectOrCreateTape(const std::string vid)
 // selectTapeServer
 // -----------------------------------------------------------------------
 castor::vdqm::TapeServer* 
-  castor::db::ora::OraVdqmSvc::selectTapeServer(
-  const std::string serverName,
-  bool withTapeDrives)
+  castor::db::ora::OraVdqmSvc::selectOrCreateTapeServer(
+  const std::string serverName, bool withTapeDrives)
   throw (castor::exception::Exception) {
 
   // Check if the parameter is empty 
