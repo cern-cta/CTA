@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Param.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/05/20 08:02:55 $ $Author: waldron $
+ * @(#)$RCSfile: Param.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/06/04 08:59:15 $ $Author: sponcec3 $
  *
  * A parameter for the DLF (Distributed Logging System)
  *
@@ -151,7 +151,7 @@ namespace castor {
       Param(const char* name, float value) :
         m_deallocate(false) {
         m_cParam.name = (char*) name;
-        m_cParam.type = DLF_MSG_PARAM_FLOAT;
+        m_cParam.type = DLF_MSG_PARAM_DOUBLE;
         m_cParam.par.par_double = value;
       };
 
