@@ -114,8 +114,8 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
 
   try {
     bool withTapeDrives = (ptr_driveRequest->status == VDQM_TPD_STARTED);
-    tapeServer = ptr_IVdqmService->selectTapeServer(ptr_driveRequest->reqhost,
-      withTapeDrives);
+    tapeServer = ptr_IVdqmService->selectOrCreateTapeServer(
+      ptr_driveRequest->reqhost, withTapeDrives);
 
     // If it is a tape daemon startup status we delete all TapeDrives 
     // on that tape server.
@@ -351,8 +351,7 @@ castor::vdqm::TapeDrive*
       tapeDrive->setTotalMB(ptr_driveRequest->TotalMB);
       tapeDrive->setTransferredMB(ptr_driveRequest->MBtransf);
       tapeDrive->setUsecount(ptr_driveRequest->usecount);      
- 
-      
+
       // Make sure it is either up or down. If neither, we put it in
       // UNKNOWN status until further status information is received.
       // This is just for the old protocol.

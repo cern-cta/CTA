@@ -145,7 +145,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
   // The requested tape server: Return value is NULL if the server name is
   // empty
   std::auto_ptr<TapeServer> reqTapeServer(
-    ptr_IVdqmService->selectTapeServer(volumeRequest->server, false));
+    ptr_IVdqmService->selectOrCreateTapeServer(volumeRequest->server, false));
   
   memset(&tape_info,'\0',sizeof(vmgr_tape_info));
   
