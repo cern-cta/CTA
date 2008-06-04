@@ -50,12 +50,26 @@ namespace castor{
       {
         ReplyHelper* stgReplyHelper=NULL;
         try {
-          stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_SETGC, &(stgCnsHelper->cnsFileid));
-          
-          castor::stager::SetFileGCWeight* setGCWeightReq = dynamic_cast<castor::stager::SetFileGCWeight*>(stgRequestHelper->fileRequest);
+          // extract actual request
+          castor::stager::SetFileGCWeight* setGCWeightReq =
+            dynamic_cast<castor::stager::SetFileGCWeight*>(stgRequestHelper->fileRequest);
+          // log the request
+          castor::dlf::Param params[] = {
+            castor::dlf::Param(stgRequestHelper->subrequestUuid),
+            castor::dlf::Param("Type",
+                               ((unsigned)stgRequestHelper->fileRequest->type() < castor::ObjectsIdsNb ?
+                                castor::ObjectsIdStrings[stgRequestHelper->fileRequest->type()] : "Unknown")),
+            castor::dlf::Param("Filename", stgRequestHelper->subrequest->fileName()),
+            castor::dlf::Param("Username", stgRequestHelper->username),
+            castor::dlf::Param("Groupname", stgRequestHelper->groupname),
+            castor::dlf::Param("SvcClass", stgRequestHelper->svcClassName),
+	    castor::dlf::Param("Weight", setGCWeightReq->weight())
+          };
+          castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_SETGC,
+                                  7, params, &(stgCnsHelper->cnsFileid));
+          // execute it
           int rc = stgRequestHelper->stagerService->setFileGCWeight(stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server,
                                                                      stgRequestHelper->svcClass->id(), setGCWeightReq->weight());
-          
           // this method fails only if no diskCopies were found on the given service class. In such a case we answer the client
           // without involving the Error service.
           stgRequestHelper->subrequest->setStatus(rc ? SUBREQUEST_ARCHIVED : SUBREQUEST_FAILED_FINISHED);
