@@ -88,6 +88,7 @@ castor::IObject* castor::vdqm::RTCPJobSubmitterThread::select()
   try
   {
     obj = vdqmSvc->requestToSubmit();
+    vdqmSvc->commit();
   } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("Function",

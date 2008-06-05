@@ -112,6 +112,16 @@ namespace castor {
          * Reset the converter statements.
          */
         void reset() throw ();
+
+        /**
+         * See castor::vdqm::IVdqmSvc documentation.
+         */
+        virtual void commit();
+
+        /**
+         * See castor::vdqm::IVdqmSvc documentation.
+         */
+        virtual void rollback();
   
         /**
          * Retrieves a TapeServer from the database based on its serverName. 

@@ -87,6 +87,7 @@ void castor::vdqm::DriveSchedulerThread::run(void *param) {
 
     allocationResult = vdqmSvc->allocateDrive(&tapeDriveId, &tapeDriveName,
       &tapeRequestId, &tapeRequestVid);
+    vdqmSvc->commit();
 
     // If a drive was allocated or a possible drive allocation was found, but
     // was invalidated by other threads

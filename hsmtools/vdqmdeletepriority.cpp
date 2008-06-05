@@ -254,6 +254,7 @@ int main(int argc, char **argv) {
 
     const u_signed64 volPriorityId = vdqmSvc->deleteVolPriority(vid, tpMode,
       lifespanType, &priority, &clientUID, &clientGID, &clientHost);
+    vdqmSvc->commit();
 
     // If no volume priority was deleted
     if(volPriorityId == 0) {

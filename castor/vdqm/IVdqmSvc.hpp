@@ -74,6 +74,16 @@ namespace castor {
         };
 
         /**
+         * Helper method to commit
+         */
+        virtual void commit() = 0;
+
+        /**
+         * Helper method to rollback
+         */
+        virtual void rollback() = 0;
+
+        /**
          * Retrieves a TapeServer from the database based on its serverName. 
          * If no tapeServer is found, then one is created.
          * Note that this method creates a lock on the row of the

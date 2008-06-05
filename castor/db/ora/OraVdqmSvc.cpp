@@ -370,6 +370,22 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
 
 
 // -----------------------------------------------------------------------
+// commit
+// -----------------------------------------------------------------------
+void castor::db::ora::OraVdqmSvc::commit() {
+  DbBaseObj::commit();
+}
+
+
+// -----------------------------------------------------------------------
+// rollback
+// -----------------------------------------------------------------------
+void castor::db::ora::OraVdqmSvc::rollback() {
+  DbBaseObj::rollback();
+}
+
+
+// -----------------------------------------------------------------------
 // selectOrCreateTape
 // -----------------------------------------------------------------------
 castor::vdqm::VdqmTape*
@@ -382,6 +398,7 @@ castor::db::ora::OraVdqmSvc::selectOrCreateTape(const std::string vid)
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -506,6 +523,7 @@ castor::vdqm::TapeServer*
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -641,6 +659,7 @@ bool castor::db::ora::OraVdqmSvc::checkTapeRequest(
   try {
     if(!(stmt1 = getStatement(stmtId1))) {
       stmt1 = createStatement(s_statementStrings[stmtId1]);
+      stmt1->setAutoCommit(false);
       storeStatement(stmtId1, stmt1);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -660,6 +679,7 @@ bool castor::db::ora::OraVdqmSvc::checkTapeRequest(
   try {
     if(!(stmt2 = getStatement(stmtId2))) {
       stmt2 = createStatement(s_statementStrings[stmtId2]);
+      stmt2->setAutoCommit(false);
       storeStatement(stmtId2, stmt2);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -754,6 +774,7 @@ int castor::db::ora::OraVdqmSvc::getQueuePosition(
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -812,7 +833,7 @@ void castor::db::ora::OraVdqmSvc::setVolPriority(const int priority,
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
-      stmt->setAutoCommit(true);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -872,7 +893,7 @@ u_signed64 castor::db::ora::OraVdqmSvc::deleteVolPriority(
       stmt->registerOutParam(7, oracle::occi::OCCIINT); // clientGIDVar
       stmt->registerOutParam(8, oracle::occi::OCCISTRING,
         2048); // clientHostVar
-      stmt->setAutoCommit(true);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -927,6 +948,7 @@ void castor::db::ora::OraVdqmSvc::getAllVolPriorities(
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -1001,6 +1023,7 @@ void castor::db::ora::OraVdqmSvc::getEffectiveVolPriorities(
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -1075,6 +1098,7 @@ void castor::db::ora::OraVdqmSvc::getVolPriorities(
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -1153,6 +1177,7 @@ void castor::db::ora::OraVdqmSvc::getVolRequestsPriorityOrder(
       stmt = createStatement(s_statementStrings[stmtId]);
       stmt->setPrefetchMemorySize(0);
       stmt->setPrefetchRowCount(100);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -1241,6 +1266,7 @@ castor::vdqm::TapeDrive*
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -1419,8 +1445,8 @@ void castor::db::ora::OraVdqmSvc::deleteDrive(std::string driveName,
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
-      stmt->setAutoCommit(false);
       stmt->registerOutParam(4, oracle::occi::OCCIINT);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -1536,8 +1562,8 @@ bool castor::db::ora::OraVdqmSvc::writeRTPCDJobSubmission(
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
-      stmt->setAutoCommit(false);
       stmt->registerOutParam(3, oracle::occi::OCCIINT);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -1589,8 +1615,8 @@ bool castor::db::ora::OraVdqmSvc::writeFailedRTPCDJobSubmission(
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
-      stmt->setAutoCommit(false);
       stmt->registerOutParam(3, oracle::occi::OCCIINT);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -1644,6 +1670,7 @@ bool
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -1701,6 +1728,7 @@ bool
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -1755,6 +1783,7 @@ castor::vdqm::VdqmTape*
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -1835,6 +1864,7 @@ castor::vdqm::TapeRequest*
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -1932,6 +1962,7 @@ castor::vdqm::TapeAccessSpecification*
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -2018,6 +2049,7 @@ castor::vdqm::DeviceGroupName*
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -2102,6 +2134,7 @@ void castor::db::ora::OraVdqmSvc::getTapeRequestQueue(
       stmt = createStatement(s_statementStrings[stmtId]);
       stmt->setPrefetchMemorySize(0);
       stmt->setPrefetchRowCount(100);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -2208,6 +2241,7 @@ void castor::db::ora::OraVdqmSvc::getTapeDriveQueue(std::list<vdqmDrvReq_t>
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -2367,6 +2401,7 @@ castor::vdqm::TapeRequest* castor::db::ora::OraVdqmSvc::selectTapeRequest(
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -2464,8 +2499,7 @@ int castor::db::ora::OraVdqmSvc::allocateDrive(u_signed64 *tapeDriveId,
       stmt->registerOutParam(3, oracle::occi::OCCISTRING,256);
       stmt->registerOutParam(4, oracle::occi::OCCIDOUBLE);
       stmt->registerOutParam(5, oracle::occi::OCCISTRING,256);
-
-      stmt->setAutoCommit(true);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -2577,7 +2611,7 @@ castor::vdqm::TapeRequest *castor::db::ora::OraVdqmSvc::requestToSubmit()
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
       stmt->registerOutParam(1, oracle::occi::OCCIDOUBLE);
-      stmt->setAutoCommit(true);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -2696,6 +2730,7 @@ std::vector<castor::vdqm::TapeDriveCompatibility*>*
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {
@@ -2804,6 +2839,7 @@ std::vector<castor::vdqm::TapeAccessSpecification*>*
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
   } catch(oracle::occi::SQLException &oe) {

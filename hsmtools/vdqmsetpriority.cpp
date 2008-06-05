@@ -317,6 +317,7 @@ int main(int argc, char **argv) {
     // Set the volume priority
     vdqmSvc->setVolPriority(priority, geteuid(), getegid(), hostname, vid,
       tpMode, lifespanType);
+    vdqmSvc->commit();
   } catch(castor::exception::Exception &e) {
     std::cerr
       << std::endl
