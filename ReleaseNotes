@@ -27,6 +27,12 @@
     stager_update now support a -f option. The -f option or --filelist specifies a file
     which can contain a list of CASTOR HSM file(s) to be processed.
 
+  - Modified the way in which the stager checks to see if a user is authorized to see the
+    diskserver related information when issuing a stager_qry -s. In this release of CASROR2
+    the user must have ADMIN privileges from the machine executing the command to the stager
+    machine in CUPV. Prior to this release the check did not take into consideration the
+    machine executing the command.
+
   Schema Enhancements
   -------------------
   - Added missing index on the Segment table
