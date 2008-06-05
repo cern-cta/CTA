@@ -74,8 +74,11 @@ namespace castor{
           throw e;
         }
 
-        if(cnsFileid)
+        if(cnsFileid) {
           ioResponse->setFileId((u_signed64) cnsFileid->fileid);
+        } else {
+          ioResponse->setFileId(0);
+        }
 
         if(!stgRequestHelper->fileRequest->reqId().empty()){
           this->ioResponse->setReqAssociated(stgRequestHelper->fileRequest->reqId());
