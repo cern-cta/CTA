@@ -36,11 +36,11 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_7_8');
+INSERT INTO CastorVersion VALUES ('-', '2_1_7_7');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.121  Release Date: 2008/05/30 15:33:41  Author: murrayc3 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.124  Release Date: 2008/06/04 15:00:03  Author: murrayc3 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -97,48 +97,84 @@ COMMIT;
 
 
 /* Not null column constraints */
-ALTER TABLE ClientIdentification MODIFY (egid NOT NULL);
-ALTER TABLE ClientIdentification MODIFY (euid NOT NULL);
-ALTER TABLE ClientIdentification MODIFY (magic NOT NULL);
-ALTER TABLE ClientIdentification MODIFY (port NOT NULL);
-ALTER TABLE Id2Type MODIFY (type NOT NULL);
-ALTER TABLE TapeAccessSpecification MODIFY (accessMode NOT NULL);
-ALTER TABLE TapeDrive MODIFY (deviceGroupName NOT NULL);
-ALTER TABLE TapeDrive MODIFY (errCount NOT NULL);
-ALTER TABLE TapeDrive MODIFY (jobId NOT NULL);
-ALTER TABLE TapeDrive MODIFY (modificationTime NOT NULL);
-ALTER TABLE TapeDrive MODIFY (resetTime NOT NULL);
-ALTER TABLE TapeDrive MODIFY (runningTapeReq NOT NULL);
-ALTER TABLE TapeDrive MODIFY (status NOT NULL);
-ALTER TABLE TapeDrive MODIFY (tape NOT NULL);
-ALTER TABLE TapeDrive MODIFY (tapeServer NOT NULL);
-ALTER TABLE TapeDrive MODIFY (totalMB NOT NULL);
-ALTER TABLE TapeDrive MODIFY (transferredMB NOT NULL);
-ALTER TABLE TapeDrive MODIFY (useCount NOT NULL);
-ALTER TABLE TapeDrive2TapeDriveComp MODIFY (child NOT NULL);
-ALTER TABLE TapeDrive2TapeDriveComp MODIFY (parent NOT NULL);
-ALTER TABLE TapeDriveCompatibility MODIFY (priorityLevel NOT NULL);
-ALTER TABLE TapeDriveCompatibility MODIFY (tapeAccessSpecification NOT NULL);
-ALTER TABLE TapeDriveDedication MODIFY (TAPEDRIVE NOT NULL);
-ALTER TABLE TapeRequest MODIFY (client NOT NULL);
-ALTER TABLE TapeRequest MODIFY (creationTime NOT NULL);
-ALTER TABLE TapeRequest MODIFY (deviceGroupName NOT NULL);
-ALTER TABLE TapeRequest MODIFY (errorCode NOT NULL);
-ALTER TABLE TapeRequest MODIFY (modificationTime NOT NULL);
-ALTER TABLE TapeRequest MODIFY (priority NOT NULL);
-ALTER TABLE TapeRequest MODIFY (requestedSrv NOT NULL);
-ALTER TABLE TapeRequest MODIFY (status NOT NULL);
-ALTER TABLE TapeRequest MODIFY (tape NOT NULL);
-ALTER TABLE TapeRequest MODIFY (tapeAccessSpecification NOT NULL);
-ALTER TABLE TapeRequest MODIFY (tapeDrive NOT NULL);
-ALTER TABLE TapeServer MODIFY (actingMode NOT NULL);
-ALTER TABLE VolumePriority MODIFY (priority NOT NULL);
-ALTER TABLE VolumePriority MODIFY (clientUID NOT NULL);
-ALTER TABLE VolumePriority MODIFY (clientGID NOT NULL);
-ALTER TABLE VolumePriority MODIFY (clientHost NOT NULL);
-ALTER TABLE VolumePriority MODIFY (vid NOT NULL);
-ALTER TABLE VolumePriority MODIFY (tpMode NOT NULL);
-ALTER TABLE VolumePriority MODIFY (lifespanType NOT NULL);
+ALTER TABLE ClientIdentification MODIFY
+  (egid CONSTRAINT NN_ClientIdentification_egid NOT NULL);
+ALTER TABLE ClientIdentification MODIFY
+  (euid CONSTRAINT NN_ClientIdentification_euid NOT NULL);
+ALTER TABLE ClientIdentification MODIFY
+  (magic CONSTRAINT NN_ClientIdentification_magic NOT NULL);
+ALTER TABLE ClientIdentification MODIFY
+  (port CONSTRAINT NN_ClientIdentification_port NOT NULL);
+ALTER TABLE Id2Type MODIFY
+  (type CONSTRAINT NN_Id2Type_type NOT NULL);
+ALTER TABLE TapeAccessSpecification MODIFY
+  (accessMode CONSTRAINT NN_TapeAccessSpec_accessMode NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (deviceGroupName CONSTRAINT NN_TapeDrive_deviceGroupName NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (errCount CONSTRAINT NN_TapeDrive_errCount NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (jobId CONSTRAINT NN_TapeDrive_jobId NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (modificationTime CONSTRAINT NN_TapeDrive_modificationTime NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (resetTime CONSTRAINT NN_TapeDrive_resetTime NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (status CONSTRAINT NN_TapeDrive_status NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (tapeServer CONSTRAINT NN_TapeDrive_tapeServer NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (totalMB CONSTRAINT NN_TapeDrive_totalMB NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (transferredMB CONSTRAINT NN_TapeDrive_transferredMB NOT NULL);
+ALTER TABLE TapeDrive MODIFY
+ (useCount CONSTRAINT NN_TapeDrive_useCount NOT NULL);
+ALTER TABLE TapeDrive2TapeDriveComp MODIFY
+ (child CONSTRAINT NN_TapeDrv2TapeDrvComp_child NOT NULL);
+ALTER TABLE TapeDrive2TapeDriveComp MODIFY
+ (parent CONSTRAINT NN_TapeDrv2TapeDrvComp_parent NOT NULL);
+ALTER TABLE TapeDriveCompatibility MODIFY
+ (priorityLevel CONSTRAINT NN_TapeDriveComp_priorityLevel NOT NULL);
+ALTER TABLE TapeDriveCompatibility MODIFY
+ (tapeAccessSpecification CONSTRAINT NN_TapeDriveComp_accessSpec NOT NULL);
+ALTER TABLE TapeDriveDedication MODIFY
+ (tapeDrive CONSTRAINT NN_TapeDrvDedic_tapeDrive NOT NULL);
+ALTER TABLE TapeRequest MODIFY
+ (client CONSTRAINT NN_TapeRequest_client NOT NULL);
+ALTER TABLE TapeRequest MODIFY
+ (creationTime CONSTRAINT NN_TapeRequest_creationTime NOT NULL);
+ALTER TABLE TapeRequest MODIFY
+ (deviceGroupName CONSTRAINT NN_TapeRequest_deviceGroupName NOT NULL);
+ALTER TABLE TapeRequest MODIFY
+ (errorCode CONSTRAINT NN_TapeRequest_errorCode NOT NULL);
+ALTER TABLE TapeRequest MODIFY
+ (modificationTime CONSTRAINT NN_TapeRequest_modTime NOT NULL);
+ALTER TABLE TapeRequest MODIFY
+ (priority CONSTRAINT NN_TapeRequest_priority NOT NULL);
+ALTER TABLE TapeRequest MODIFY
+ (status CONSTRAINT NN_TapeRequest_status NOT NULL);
+ALTER TABLE TapeRequest MODIFY
+ (tape CONSTRAINT NN_TapeRequest_tape NOT NULL);
+ALTER TABLE TapeRequest MODIFY
+ (tapeAccessSpecification CONSTRAINT NN_TapeRequest_accessSpec NOT NULL);
+ALTER TABLE TapeServer MODIFY
+ (actingMode CONSTRAINT NN_TapeServer_actingMode NOT NULL);
+ALTER TABLE TapeServer MODIFY
+ (serverName CONSTRAINT NN_TapeServer_serverName NOT NULL);
+ALTER TABLE VolumePriority MODIFY
+ (priority CONSTRAINT NN_VolumePriority_priority NOT NULL);
+ALTER TABLE VolumePriority MODIFY
+ (clientUID CONSTRAINT NN_VolumePriority_clientUID NOT NULL);
+ALTER TABLE VolumePriority MODIFY
+ (clientGID CONSTRAINT NN_VolumePriority_clientGID NOT NULL);
+ALTER TABLE VolumePriority MODIFY
+ (clientHost CONSTRAINT NN_VolumePriority_clientHost NOT NULL);
+ALTER TABLE VolumePriority MODIFY
+ (vid CONSTRAINT NN_VolumePriority_vid NOT NULL);
+ALTER TABLE VolumePriority MODIFY
+ (tpMode CONSTRAINT NN_VolumePriority_tpMode NOT NULL);
+ALTER TABLE VolumePriority MODIFY
+ (lifespanType CONSTRAINT NN_VolumePriority_lifespanType NOT NULL);
 
 /* Unique constraints */
 -- A client host can only be dedicated to one drive
@@ -161,6 +197,15 @@ ALTER TABLE VolumePriority
   ADD CONSTRAINT I_U_VolPriority_vid_mode_life
     UNIQUE (vid, tpMode, lifespanType);
 
+-- A tape drive is identified by driveName and tapeServer
+ALTER TABLE TapeDrive
+  ADD CONSTRAINT I_U_TapeDrive_name_server 
+  UNIQUE (driveName, tapeServer);
+
+-- A tape server is identified by its name
+ALTER TABLE TapeServer
+  ADD CONSTRAINT I_U_TapeServer_serverName
+  UNIQUE (serverName);
 
 /* Check constraints */
 -- The accessMode column of the TapeAccessSpecification table has 2 possible
@@ -219,19 +264,19 @@ ALTER TABLE TapeDrive
     REFERENCES VdqmTape (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE
+    ENABLE
   ADD CONSTRAINT FK_TapeDrive_runningTapeReq
     FOREIGN KEY (runningTapeReq)
     REFERENCES TapeRequest (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE
+    ENABLE
   ADD CONSTRAINT FK_TapeDrive_deviceGroupName
     FOREIGN KEY (deviceGroupName)
     REFERENCES DeviceGroupName (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE
+    ENABLE
   ADD CONSTRAINT FK_TapeDrive_status
     FOREIGN KEY (status)
     REFERENCES TapeDriveStatusCodes (id)
@@ -243,7 +288,7 @@ ALTER TABLE TapeDrive
     REFERENCES TapeServer (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE;
+    ENABLE;
 CREATE INDEX I_FK_TapeDrive_tape            ON TapeDrive (tape);
 CREATE INDEX I_FK_TapeDrive_runningTapeReq  ON TapeDrive (runningTapeReq);
 CREATE INDEX I_FK_TapeDrive_deviceGroupName ON TapeDrive (deviceGroupName);
@@ -304,19 +349,19 @@ ALTER TABLE TapeRequest
     REFERENCES TapeServer (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE
+    ENABLE
   ADD CONSTRAINT FK_TapeRequest_tapeDrive
     FOREIGN KEY (tapeDrive)
     REFERENCES TapeDrive (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE
+    ENABLE
   ADD CONSTRAINT FK_TapeRequest_dgn
     FOREIGN KEY (deviceGroupName)
     REFERENCES DeviceGroupName (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE
+    ENABLE
   ADD CONSTRAINT FK_TapeRequest_status
     FOREIGN KEY (status)
     REFERENCES TapeRequestStatusCodes (id)
@@ -1012,7 +1057,7 @@ INNER JOIN TapeDrive ON
   TapeRequest.deviceGroupName = TapeDrive.deviceGroupName
 INNER JOIN TapeServer ON
      TapeRequest.requestedSrv = TapeServer.id
-  OR TapeRequest.requestedSrv = 0
+  OR TapeRequest.requestedSrv IS NULL
 LEFT OUTER JOIN EffectiveVolumePriority_VIEW ON
       VdqmTape.vid = EffectiveVolumePriority_VIEW.vid
   AND TapeAccessSpecification.accessMode = EffectiveVolumePriority_VIEW.tpMode
@@ -1026,7 +1071,7 @@ WHERE
       TapeRequest TapeRequest2
     WHERE
           TapeRequest2.tape = TapeRequest.tape
-      AND TapeRequest2.tapeDrive != 0
+      AND TapeRequest2.tapeDrive IS NOT NULL
   )
   -- Exclude a request if its tape is already in a drive, such a request
   -- will be considered upon the release of the drive in question
@@ -1072,10 +1117,11 @@ INNER JOIN TapeDrive ON
   TapeRequest.tape = TapeDrive.tape -- Request is for the tape in the drive
 INNER JOIN TapeServer ON
      TapeRequest.requestedSrv = TapeServer.id
-  OR TapeRequest.requestedSrv = 0
+  OR TapeRequest.requestedSrv IS NULL
 WHERE
       TapeServer.actingMode=0 -- ACTIVE
-  AND TapeRequest.tapeDrive=0 -- Request has not already been allocated a drive
+  AND TapeRequest.tapeDrive IS NULL -- Request has not already been allocated
+                                    -- a drive
   AND castorVdqmView.passesDedications(tapeDrive.id, ClientIdentification.egid,
     ClientIdentification.machine, TapeAccessSpecification.accessMode,
     ClientIdentification.euid, VdqmTape.vid)=1
@@ -1368,7 +1414,7 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
       rownum < 2;
 
     -- If there is a possible drive allocation
-    IF tapeDriveIdVar != 0 AND tapeRequestIdVar != 0 THEN
+    IF tapeDriveIdVar IS NOT NULL AND tapeRequestIdVar IS NOT NULL THEN
 
       -- The status of the drives and requests maybe modified by other scheduler
       -- threads.  The status of the drives may be modified by threads handling
@@ -2082,10 +2128,10 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
 
       -- Unlink the tape drive from the tape request
       UPDATE TapeDrive
-      SET TapeDrive.runningTapeReq = 0
+      SET TapeDrive.runningTapeReq = NULL
       WHERE TapeDrive.id = tapeDriveIdVar;
       UPDATE TapeRequest
-      SET TapeRequest.tapeDrive = 0
+      SET TapeRequest.tapeDrive = NULL
       WHERE TapeRequest.id = tapeRequestIdVar;
 
       -- set the state of the tape drive to STATUS_UNKNOWN (7)
@@ -2249,8 +2295,10 @@ END castorVdqm;
 
 
 /**
- * PL/SQL trigger responsible for setting the modification time of a tape
- * drive when it is inserted into the TapeDrive table.
+ * Sets the modification time of a tape drive when it is inserted into the
+ * TapeDrive table.
+ * Converts an inserted runningtape request id of 0 to NULL.
+ * Converts an inserted tape id of 0 to NULL.
  */
 CREATE OR REPLACE TRIGGER TR_I_TapeDrive
   BEFORE INSERT ON TapeDrive
@@ -2258,28 +2306,51 @@ FOR EACH ROW
 BEGIN
   -- Set modification time
   :NEW.modificationTime := castorVdqmCommon.getTime();
+
+  -- Convert a running tape request id of 0 to NULL
+  IF :NEW.runningTapeReq = 0 THEN
+    :NEW.runningTapeReq := NULL;
+  END IF;
+
+  -- Convert a tape id of 0 to NULL
+  IF :NEW.tape = 0 THEN
+    :NEW.tape := NULL;
+  END IF;
 END;
 
 
 /**
- * PL/SQL trigger responsible for updating the modification time of a tape
- * drive.
+ * Updates the modification time of a tape drive.
+ * Converts an updated runningtape request id of 0 to NULL.
+ * Converts an updated tape id of 0 to NULL.
  */
 CREATE OR REPLACE TRIGGER TR_U_TapeDrive
-  BEFORE UPDATE OF modificationTime, status ON TapeDrive 
+  BEFORE UPDATE ON TapeDrive 
 FOR EACH ROW 
-WHEN
-  ((NEW.modificationTime != OLD.modificationTime) OR (NEW.status != OLD.status))
 BEGIN
   -- Update the modification time
-  :NEW.modificationTime := castorVdqmCommon.getTime();
+  IF (:NEW.modificationTime != :OLD.modificationTime) OR
+    (:NEW.status != :OLD.status) THEN
+    :NEW.modificationTime := castorVdqmCommon.getTime();
+  END IF;
+
+  -- Convert a running tape request id of 0 to NULL
+  IF :NEW.runningTapeReq = 0 THEN
+    :NEW.runningTapeReq := NULL;
+  END IF;
+
+  -- Convert a tape id of 0 to NULL
+  IF :NEW.tape = 0 THEN
+    :NEW.tape := NULL;
+  END IF;
 END;
 
 
 /**
- * PL/SQL trigger responsible for setting the creation time and initial
- * modification time of a tape request when it is inserted into the
- * TapeRequest table.
+ * Sets the creation time and initial modification time of a tape request when
+ * it is inserted into the TapeRequest table.
+ * Converts an inserted requested server id of 0 to NULL.
+ * Converts an inserted tape drive id of 0 to NULL.
  */
 CREATE OR REPLACE TRIGGER TR_I_TapeRequest
   BEFORE INSERT ON TapeRequest
@@ -2292,20 +2363,43 @@ BEGIN
 
   -- Set modification time
   :NEW.modificationTime := timeVar;
+
+  -- Convert a requested server id of 0 to NULL
+  IF :NEW.requestedSrv = 0 THEN
+    :NEW.requestedSrv := NULL;
+  END IF;
+
+  -- Convert a tape drive id of 0 to NULL
+  IF :NEW.tapeDrive = 0 THEN
+    :NEW.tapeDrive := NULL;
+  END IF;
 END;
 
 
 /**
  * Updates the modification time of a tape request.
+ * Converts an updated requested server id of 0 to NULL.
+ * Converts an updated tape drive id of 0 to NULL.
  */
 CREATE OR REPLACE TRIGGER TR_U_TapeRequest
-  BEFORE UPDATE OF modificationTime, status ON TapeRequest
+  BEFORE UPDATE ON TapeRequest
 FOR EACH ROW
-WHEN
-  ((NEW.modificationTime != OLD.modificationTime) OR (NEW.status != OLD.status))
 BEGIN
   -- Update the modification time
-  :NEW.modificationTime := castorVdqmCommon.getTime();
+  IF (:NEW.modificationTime != :OLD.modificationTime) OR
+    (:NEW.status != :OLD.status) THEN
+    :NEW.modificationTime := castorVdqmCommon.getTime();
+  END IF;
+
+  -- Convert requested server id of 0 to NULL
+  IF :NEW.requestedSrv = 0 THEN
+    :NEW.requestedSrv := NULL;
+  END IF;
+
+  -- Convert a tape drive id of 0 to NULL
+  IF :NEW.tapeDrive = 0 THEN
+    :NEW.tapeDrive := NULL;
+  END IF;
 END;
 
 

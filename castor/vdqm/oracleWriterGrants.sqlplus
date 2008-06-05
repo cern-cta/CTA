@@ -1,0 +1,29 @@
+whenever oserror exit failure
+whenever sqlerror exit failure rollback
+
+grant select on ids_seq to vdqm_writer;
+grant select on castorversion to vdqm_writer;
+grant delete, insert, select, update on clientidentification to vdqm_writer;
+grant delete, insert, select, update on devicegroupname to vdqm_writer;
+grant delete, insert, select, update on id2type to vdqm_writer;
+grant delete, insert, select, update on tapeaccessspecification to vdqm_writer;
+grant delete, insert, select, update on tapedrive to vdqm_writer;
+grant delete, insert, select, update on tapedrive2tapedrivecomp to vdqm_writer;
+grant delete, insert, select, update on tapedrivecompatibility to vdqm_writer;
+grant delete, insert, select, update on tapedrivededication to vdqm_writer;
+grant delete, insert, select, update on tapedrivestatuscodes to vdqm_writer;
+grant delete, insert, select, update on taperequest to vdqm_writer;
+grant delete, insert, select, update on taperequeststatuscodes to vdqm_writer;
+grant delete, insert, select, update on tapeserver to vdqm_writer;
+grant delete, insert, select, update on tapeserverstatuscodes to vdqm_writer;
+grant delete, insert, select, update on vdqmtape to vdqm_writer;
+grant delete, insert, select, update on volumepriority to vdqm_writer;
+grant select on candidatedriveallocations_view to vdqm_writer;
+grant select on driveallocationsforreuse_view to vdqm_writer;
+grant select on effectivevolumepriority_view to vdqm_writer;
+grant select on tapedriveshowqueues_view to vdqm_writer;
+grant select on taperequestshowqueues_view to vdqm_writer;
+grant execute on castorvdqm to vdqm_writer;
+grant execute on castorvdqmcommon to vdqm_writer;
+grant execute on castorvdqmexception to vdqm_writer;
+grant execute on castorvdqmview to vdqm_writer;
