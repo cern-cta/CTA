@@ -4484,7 +4484,7 @@ BEGIN
 END;
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTape.sql,v  Revision: 1.668  Date: 2008/06/03 16:10:08  Author: sponcec3 
+ * @(#)RCSfile: oracleTape.sql,v  Revision: 1.669  Date: 2008/06/05 06:33:12  Author: waldron 
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -4772,7 +4772,8 @@ BEGIN
                    AND Stream.status IN (3)   -- SELECTED
                    AND optimized = 1
               )
-            ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, 
+            ORDER BY DiskServer.nbMigratorStreams ASC,
+                     FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, 
                      FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
             ) DS
         WHERE ROWNUM < 2)
@@ -4791,7 +4792,8 @@ BEGIN
            AND NbTapeCopiesInFS.Stream = StreamId
            AND FS.status IN (0, 1)    -- PRODUCTION, DRAINING
            AND FS.diskserver = dsId
-         ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
+         ORDER BY DiskServer.nbMigratorStreams ASC,
+                  FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
                   FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
          ) FN
      WHERE ROWNUM < 2;
@@ -4800,7 +4802,7 @@ BEGIN
       INTO path, dci, castorFileId, tapeCopyId
       FROM DiskCopy, TapeCopy, Stream2TapeCopy
      WHERE DiskCopy.status = 10 -- CANBEMIGR
-       AND DiskCopy.filesystem = lastButOneFSUsed
+       AND DiskCopy.filesystem = fileSystemId
        AND Stream2TapeCopy.parent = streamId
        AND TapeCopy.status = 2 -- WAITINSTREAMS
        AND Stream2TapeCopy.child = TapeCopy.id
