@@ -26,6 +26,8 @@
 
 
 #include "RepackCleaner.hpp"
+#include "castor/Services.hpp"
+#include "RepackUtility.hpp"
 
 namespace castor{
 	namespace repack {
@@ -34,7 +36,7 @@ namespace castor{
 // Constructor
 //------------------------------------------------------------------------------
 RepackCleaner::RepackCleaner(RepackServer* svr){
-  m_dbhelper = NULL;
+  m_dbSvc = NULL;
   ptr_server = svr;
 }
 
@@ -42,78 +44,132 @@ RepackCleaner::RepackCleaner(RepackServer* svr){
 // Destructor
 //------------------------------------------------------------------------------
 RepackCleaner::~RepackCleaner() throw() {
-	delete m_dbhelper;
+    if (m_dbSvc != NULL) delete m_dbSvc;
+    m_dbSvc=NULL;
 }
 		
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------	
 void RepackCleaner::run(void* param) {
-	
-  RepackSubRequest* tape = NULL;
-  Cuuid_t cuuid;
-  if (m_dbhelper==NULL) {
-    m_dbhelper = new DatabaseHelper();
-  }
-
+  std::vector<RepackSubRequest*> tapes;
+  std::vector<RepackSubRequest*>::iterator tape; 
   try {
-    tape = m_dbhelper->checkSubRequestStatus(SUBREQUEST_READYFORCLEANUP);
+    if (m_dbSvc == 0){
+ // service to access the database
+      castor::IService* orasvc = castor::BaseObject::services()->service("OraRepackSvc", castor::SVC_ORAREPACKSVC);
+ 
+      m_dbSvc = dynamic_cast<castor::repack::IRepackSvc*>(orasvc);
 
-    if ( tape != NULL )	{  
-      m_dbhelper->remove(tape);
-      if (checkTape(tape)) {
-	//tape done
-        castor::dlf::Param params[] =
-	  {castor::dlf::Param("VID", tape->vid()),
-	   castor::dlf::Param("STATUS", "SUBREQUEST_DONE" )};
-	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 2, params);
-	
-
-      } else {
-	// tape failed
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("VID", tape->vid()),
-	   castor::dlf::Param("STATUS", "SUBREQUEST_FAILED" )};
-	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 2, params);
-      } 
-      m_dbhelper->updateSubRequest(tape,false,cuuid);
-      freeRepackObj(tape->repackrequest()); 
-      tape = NULL;
+      if (m_dbSvc == 0) {
+	// FATAL ERROR
+	castor::dlf::Param params0[] =
+	  {castor::dlf::Param("Standard Message", "RepackCleaner fatal error")};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3, 1, params0);
+	return;
+      }
+    
     }
-    
+  
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 41, 0, 0);
 
+  // get all the tape
+    tapes = m_dbSvc->getSubRequestsByStatus(RSUBREQUEST_TOBECLEANED,false);
 
-  }catch (castor::exception::Exception e){
-    castor::dlf::Param params[] =
-    {castor::dlf::Param("Message", e.getMessage().str() )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 5, 1, params);
-    
+    if (tapes.empty()) return;
+
+  // loop over the tapes
+    tape=tapes.begin();
+
+    while (tape!=tapes.end()){
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("VID", (*tape)->vid()),
+	 castor::dlf::Param("ID", (*tape)->id()),
+	 castor::dlf::Param("STATUS", (*tape)->status())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 42, 3, params);
+     
+      if ( (*tape) != NULL )	{  
+	checkTape(*tape);
+	m_dbSvc->updateSubRequest((*tape));
+	freeRepackObj((*tape)); 
+	tape++;
+      }
+    } 
+
+  // we check if we are able to restart one of the subrequest on-hold
+
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 43, 0, 0);
+
+    m_dbSvc->resurrectTapesOnHold();
+
+  } catch (...) {
+     if (!tapes.empty()){
+      tape=tapes.begin();
+      while (tape != tapes.end()){
+	freeRepackObj(*tape);
+	tape++;
+      }
+    }
   }
-}
 
+}
 
 //-----------------------------------------------------------------------------
 // checkTape
 //-----------------------------------------------------------------------------
 
 
-bool  RepackCleaner::checkTape(RepackSubRequest* tape){
+void  RepackCleaner::checkTape(RepackSubRequest* tape){
  
 //file list helper get files on tape
- FileListHelper filelisthelper(ptr_server->getNsName());
- u_signed64 fileOnTape=filelisthelper.countFilesOnTape(tape->vid());
- tape->setFilesStaged(tape->files()-fileOnTape);
- tape->setFilesFailed(fileOnTape);
- tape->setFilesFailedSubmit(0);
- tape->setFilesStaging(0);
- tape->setFilesMigrating(0);
+  Cuuid_t cuuid;
 
- if (fileOnTape ==0){
-   tape->setStatus(SUBREQUEST_DONE);
-   return true;
- }
- tape->setStatus(SUBREQUEST_FAILED);
- return false;   
+  FileListHelper filelisthelper(ptr_server->getNsName());
+  u_signed64 fileOnTape=filelisthelper.countFilesOnTape(tape->vid()); 
+  u_signed64 filesDone=0;
+  if (tape->files() > fileOnTape)
+    filesDone=tape->files()-fileOnTape;
+  tape->setFilesStaged(filesDone);
+  tape->setFilesFailed(fileOnTape);
+  tape->setFilesFailedSubmit(0);
+  tape->setFilesStaging(0);
+  tape->setFilesMigrating(0);
+
+  if (fileOnTape == 0){
+   //tape done
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("VID", tape->vid()),
+       castor::dlf::Param("STATUS", "RSUBREQUEST_DONE" )};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 45, 2, params);
+    tape->setStatus(RSUBREQUEST_DONE);
+  } else {
+    // tape failed
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("VID", tape->vid()),
+       castor::dlf::Param("STATUS", "RSUBREQUEST_FAILED" )};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 44, 2, params);
+    tape->setStatus(RSUBREQUEST_FAILED);
+
+    // Retry
+
+     // we faced problem, we need to retry
+     int numRetry= tape->retryNb();
+
+     if (numRetry > 0){
+	  numRetry--;
+	  tape->setRetryNb(numRetry);
+	  tape->setStatus(RSUBREQUEST_TOBERESTARTED);
+	  m_dbSvc->updateSubRequest(tape);
+
+	  castor::dlf::Param params[] =
+	   {castor::dlf::Param("VID", tape->vid()),
+	    castor::dlf::Param("STATUS", tape->status())};
+	    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 38, 2, params);
+	   
+     } 
+
+
+  }   
  }
 
 	

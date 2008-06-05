@@ -30,8 +30,8 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/repack/RepackCommandCode.hpp"
 #include "castor/repack/RepackRequest.hpp"
-#include "castor/repack/RepackResponse.hpp"
 #include "castor/repack/RepackSubRequest.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -48,22 +48,18 @@ castor::repack::RepackRequest::RepackRequest() throw() :
   m_pool(""),
   m_pid(0),
   m_svcclass(""),
-  m_command(0),
   m_stager(""),
   m_userId(0),
   m_groupId(0),
   m_retryMax(0),
-  m_id(0) {
+  m_id(0),
+  m_command(RepackCommandCode(0)) {
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::repack::RepackRequest::~RepackRequest() throw() {
-  for (unsigned int i = 0; i < m_repackresponseVector.size(); i++) {
-    m_repackresponseVector[i]->setRepackrequest(0);
-  }
-  m_repackresponseVector.clear();
   for (unsigned int i = 0; i < m_repacksubrequestVector.size(); i++) {
     m_repacksubrequestVector[i]->setRepackrequest(0);
   }
@@ -89,24 +85,12 @@ void castor::repack::RepackRequest::print(std::ostream& stream,
   stream << indent << "pool : " << m_pool << std::endl;
   stream << indent << "pid : " << m_pid << std::endl;
   stream << indent << "svcclass : " << m_svcclass << std::endl;
-  stream << indent << "command : " << m_command << std::endl;
   stream << indent << "stager : " << m_stager << std::endl;
   stream << indent << "userId : " << m_userId << std::endl;
   stream << indent << "groupId : " << m_groupId << std::endl;
   stream << indent << "retryMax : " << m_retryMax << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  {
-    stream << indent << "Repackresponse : " << std::endl;
-    int i;
-    std::vector<RepackResponse*>::const_iterator it;
-    for (it = m_repackresponseVector.begin(), i = 0;
-         it != m_repackresponseVector.end();
-         it++, i++) {
-      stream << indent << "  " << i << " :" << std::endl;
-      (*it)->print(stream, indent + "    ", alreadyPrinted);
-    }
-  }
   {
     stream << indent << "Repacksubrequest : " << std::endl;
     int i;
@@ -118,6 +102,7 @@ void castor::repack::RepackRequest::print(std::ostream& stream,
       (*it)->print(stream, indent + "    ", alreadyPrinted);
     }
   }
+  stream << indent << "command : " << RepackCommandCodeStrings[m_command] << std::endl;
 }
 
 //------------------------------------------------------------------------------

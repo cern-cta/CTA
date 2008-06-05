@@ -39,11 +39,9 @@
 #include "RepackRequest.hpp"
 #include "RepackSubRequest.hpp"
 #include "RepackResponse.hpp"
-#include "RepackFileQry.hpp"
 #include "RepackSegment.hpp"
+#include "RepackAck.hpp"
 #include "RepackServer.hpp"
-#include "Tools.hpp"
-#include "RepackCommandCodes.hpp"
 
 namespace castor{
   namespace repack {
@@ -54,17 +52,6 @@ namespace castor{
     CSP_REPACKPOLLTIME = 240,       // the standard polling time for cleaner and monitor
 
     DEFAULT_STAGER_PORT = 9002,
-    
-    SUBREQUEST_READYFORSTAGING = 1,
-    SUBREQUEST_STAGING		     = 2,
-    SUBREQUEST_MIGRATING	     = 3,
-    SUBREQUEST_READYFORCLEANUP = 4,
-    SUBREQUEST_DONE            = 5,
-    SUBREQUEST_ARCHIVED        = 6,
-    SUBREQUEST_RESTART         = 7,
-    SUBREQUEST_TOBESTAGED      = 8,
-    SUBREQUEST_FAILED          = 9,
-    SUBREQUEST_TOBEREMOVED     = 10
 
     };
 

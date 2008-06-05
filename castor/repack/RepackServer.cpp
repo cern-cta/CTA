@@ -27,10 +27,11 @@
 
 #include "castor/db/DbParamsSvc.hpp"
 #include "castor/Constants.hpp"
+#include "castor/Services.hpp"
 
 // hardcoded schema version of the Repack database
 
-const std::string REPACKSCHEMAVERSION = "2_1_6_0";
+const std::string REPACKSCHEMAVERSION = "2_1_7_0";
 
 
 //------------------------------------------------------------------------------
@@ -42,45 +43,6 @@ int main(int argc, char *argv[]) {
 
     castor::repack::RepackServer server;
 	
-    /// The Repack Worker Instance
-    server.addThreadPool(
-      new castor::server::TCPListenerThreadPool("Worker", 
-                                              new castor::repack::RepackWorker(&server),
-                                              server.getListenPort()
-                                            ));
-	  server.getThreadPool('W')->setNbThreads(1);
-	
-    /// The Repack File Checker
-    server.addThreadPool(
-      new castor::server::SignalThreadPool("checker",
-                                            new castor::repack::RepackFileChecker(&server)
-                                             ));
-    server.getThreadPool('c')->setNbThreads(1);
-
-    /// The Repack File Stager Instance
-    server.addThreadPool(
-      new castor::server::SignalThreadPool("Stager", 
-                                            new castor::repack::RepackFileStager(&server)
-                                          ));
-	  server.getThreadPool('S')->setNbThreads(1);
-
-    /// The Repack Monitor Instance (only 1 !)
-	  server.addThreadPool(
-      new castor::server::SignalThreadPool("Monitor", 
-                                            new castor::repack::RepackMonitor(&server),
-                                            server.getPollTime()
-                                          ));
-	  server.getThreadPool('M')->setNbThreads(1);
-    
-    /// The Repack Cleaner
-	  server.addThreadPool(
-      new castor::server::SignalThreadPool("Cleaner",
-                                            new castor::repack::RepackCleaner(&server)));
-	  server.getThreadPool('C')->setNbThreads(1);
-
-    /// Read the command line parameters
-    server.parseCommandLine(argc, argv);
-
     // Create a db parameters service and fill with appropriate defaults
     castor::IService* s = castor::BaseObject::sharedServices()->service("DbParamsSvc", castor::SVC_DBPARAMSSVC);
     castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
@@ -92,6 +54,50 @@ int main(int argc, char *argv[]) {
      params->setSchemaVersion(REPACKSCHEMAVERSION);
      params->setDbAccessConfFile(ORAREPACKCONFIGFILE);
 
+
+
+    /// The Repack Worker Instance
+     server.addThreadPool(
+      new castor::server::TCPListenerThreadPool("Worker", 
+                                              new castor::repack::RepackWorker(&server),
+                                              server.getListenPort()
+                                            ));
+     server.getThreadPool('W')->setNbThreads(1); 
+     
+	
+    /// The Repack File Checker
+     server.addThreadPool(
+      new castor::server::SignalThreadPool("checker",
+					   new castor::repack::RepackFileChecker(&server),
+					   10
+                                             ));
+     server.getThreadPool('c')->setNbThreads(1); 
+
+    /// The Repack File Stager Instance
+	  server.addThreadPool(
+      new castor::server::SignalThreadPool("Stager", 
+					   new castor::repack::RepackFileStager(&server),
+					   10
+                                          ));
+	  server.getThreadPool('S')->setNbThreads(1);
+
+    /// The Repack Monitor Instance (only 1 !)
+	  server.addThreadPool(
+      new castor::server::SignalThreadPool("Monitor", 
+                                            new castor::repack::RepackMonitor(&server),
+                                            server.getPollTime()
+                                          ));
+	  server.getThreadPool('M')->setNbThreads(1); 
+    
+    /// The Repack Cleaner
+	  server.addThreadPool(
+      new castor::server::SignalThreadPool("Cleaner",
+                                            new castor::repack::RepackCleaner(&server),10));
+	  server.getThreadPool('C')->setNbThreads(1); 
+
+
+    /// Read the command line parameters
+    server.parseCommandLine(argc, argv);
 
     /// Start the Repack Server
     server.start();
@@ -121,55 +127,69 @@ castor::repack::RepackServer::RepackServer() :
   // Initializes the DLF logging. This includes
   // defining the predefined messages
   castor::dlf::Message messages[] =
-    {{ 1, "New Request Arrival"},
-     { 2, "Could not get Conversion Service for Database"},
-     { 3, "Could not get Conversion Service for Streaming"},
-     { 4, "Exception caught : server is stopping"},
-     { 5, "Exception caught : ignored"},
-     { 6, "Invalid Request"},
-     { 7, "Unable to read Request from socket"},
-     { 8, "Processing Request"},
-     { 9, "Exception caught"},
-     {10, "Sending reply to client"},		// remove ?
-     {11, "Unable to send Ack to client"},
-     {12, "DatabaseHelper: Request stored in DB"},
-     {13, "DatabaseHelper: Unable to store Request in DB"},
-     {14, "FileListHelper: Fetching files from Nameserver"},							// FileListHelper::getFileList()
-     {15, "FileListHelper: Cannot get file pathname"},									// FileListHelper::getFilePathnames
-     {16, "RepackWorker : No such Tape"},													// RepackWorker:getTapeInfo()
-     {17, "RepackWorker : Tape has unkown status, repack abort for this tape"},// RepackWorker:getTapeInfo()
-     {18, "RepackWorker : Tape is marked as FREE, no repack to be done"},		// RepackWorker:getTapeInfo()
-     {19, "RepackWorker : No such pool"},													// RepackWorker:getPoolInfo()
-     {20, "RepackWorker : Adding tapes for pool repacking"},							// RepackWorker:getPoolInfo()
-     {21, "RepackFileStager: Unable to stage files"},									// RepackFileStager:stage_files
-     {22, "RepackFileStager: New request for staging files"},							// RepackFileStager:run()
-     {23, "RepackFileStager: Error during multi-Repack check"},// RepackFileStager:stage_files
-     {24, "FileListHelper: Retrieved segs for SubRequest"},							//FileListHelper:getFileListSegs()
-     {25, "RepackFileStager: Stager request sent and RepackSubRequest updated"},		// RepackFileStager:stage_files
-     {26, "RepackFileStager: Staging files"},												// RepackFileStager:stage_files
-     {27, "DatabaseHelper: Unable to update RepackSubRequest"},
-     {28, "DatabaseHelper: Tape already in repack que!"},
-     {29, "RepackFileChecker: Getting Segs for RepackSubRequest"},
-     {30, "DatabaseHelper: RepackSubRequest updated"},
-     {31, "RepackFileStager: Found same TapeCopy on two tapes"},
-     {33, "RepackFileStager: Changing CUUID to stager one"},
-     {34, "RepackCleaner: No files found for cleanup phase"},
-     {35, "RepackCleaner: Cleaner started"},
-     {36, "There are no more files on tape to repack"},
-     {39, "RepackFileChecker: No files found on tape"},               // RepackFileStager:stage_files
-     {37, "RepackFileChecker: checkExistingTapeCopy failed"}, 
-     {38, "RepackFileStager: Failed to submit recall for file to Stager"},
-     {40, "RepackMonitor: Changing status"},
-     {41, "Stager query failed"},
-     {42, "RepackMonitor: Files in invalid status found"},
-     {43, "Will continue to send new RepackRequest for remaining files"},
-     {44, "There are still files in staging/migrating. Restart abort"},
-     {45, "RepackFileStager: File has already a STAGED diskcopy. To be restarted later"},
-     {46, "FileListHelper: Found same file twice on tape" },
-     {47, "No results yet found for this CUUID. Will try again later." },
-     {48, "RepackMonitor: Stager doesn't know this request id. Assuming it is over."},
-     {99, "TODO::MESSAGE"},
+    {{ 1, "Could not get Conversion Service for Database"},
+     { 2, "Could not get the OraRepackSvc"},
+     { 3, "Exception caught : server is stopping"},
+     { 4, "Exception caught : ignored"},
+     { 5, "RepackWorker: New Request Arrival"},
+     { 6, "RepackWorker: Invalid Request"},
+     { 7, "RepackWorker: Unable to read Request from socket"},
+     { 8, "RepackWorker: Sending reply to client"},
+     { 9, "RepackWorker: Unable to send the response to client "},
+     {10, "RepackWorker : Getting tapes for the input tapepool"},
+     {11, "RepackWorker : No Such tape"},
+     {12, "RepackWorker : Tape not marked ad FULL" },
+     {13, "RepackFileChecker : Getting tapes to check "},
+     {14, "RepackFileChecker : Getting segments for tape"},
+     {15, "RepackFileChecker : No segments for tape"},
+     {16, "RepackFileChecker : Tape can be submitted"},
+     {17, "RepackFileChecker : Tape is kept on-hold"},
+     {18, "RepackFileStager : Getting tapes to handle"},
+     {19, "RepackFileStager : Abort issued for tape"},
+     {20, "RepackFileStager : Restart issued for tape"},
+     {21, "RepackFileStager : Submition issued for tape"},
+     {22, "RepackFileStager : No files on tape to repack"},
+     {23, "RepackFileStager : Staging files"},
+     {24, "RepackFileStager : Not able to send stager_rm request"},
+     {25, "RepackFileStager : Stager_rm request sent"},
+     {26, "RepackFileStager : Restarted of unknow request is impossible"},
+     {27, "RepackFileStager : Restarted failed because of temporary stager problem"},
+     {28, "RepackFileStager :  There are still files in staging/migrating. Restart abort"},
+     {29, "RepackFileStager :  Error sending the repack request to the stager"},     
+     {30, "RepackFileStager : Repack request sent to the stager"},
+     {31, "RepackFileStager : Changing CUUID to stager one"},     
+     {32, "RepackFileStager : Error getting answer from the stager"},
+     {33, "RepackFileStager : Failed to submit recall for file to Stager"},
+     {34, "RepackMonitor : Getting tape to monitor"},
+     {35, "RepackMonitor : Updating tape"},
+     {36, "RepackMonitor : Stager query failed"},
+     {37, "RepackMonitor : Repack completed"},
+     {38, "RepackCleaner : Repack failed and we trigger an automatic retry"},
+     {39, "RepackMonitor : Repack failed"},
+     {40, "RepackMonitor : Updated tape"},
+     {41, "RepackCleaner : Getting finished tapes to check" },
+     {42, "RepackCleaner : Checking tape" },    
+     {43, "RepackCleaner : Resurrecting on-hold tapes" },
+     {44, "RepackCleaner : Files left on the tape" },
+     {45, "RepackCleaner : Success in repacking the tape" },
+     {46, "OraRepackSvc : error in storeRequest" },
+     {47, "OraRepackSvc : error in updateSubRequest" },
+     {48, "OraRepackSvc : error in updateSubRequestSegments" },
+     {49, "OraRepackSvc : error in insertSubRequestSegments" },
+     {50, "OraRepackSvc : error in getSubRequestByVid" },
+     {51, "OraRepackSvc : error in getSubRequestsByStatus" },     
+     {52, "OraRepackSvc : error in getAllSubRequests" },
+     {53, "OraRepackSvc : error in validateRepackSubRequests" }, 
+     {54, "OraRepackSvc : error in resurrectTapesOnHold" }, 
+     {55, "OraRepackSvc : error in restartSubRequest" }, 
+     {56, "OraRepackSvc : error in changeSubRequestsStatus" }, 
+     {57, "OraRepackSvc : error in changeAllSubRequestsStatus" },
+     {58, "OraRepackSvc : commit" },
+     {59, "FileListHelper : error in getting the file path from the nameserver" },
+     {60, "FileListHelper : list of files  retrieved from  the nameserver" },
+
      {-1, ""}};
+
   dlfInit(messages);
 
   /** the Command line parameters */
@@ -306,16 +326,12 @@ castor::repack::RepackServer::~RepackServer() throw()
     m_pollingTime = 0;
 }
 
-
-
-
 //------------------------------------------------------------------------------
 // parseCommandLine
 //------------------------------------------------------------------------------
 void castor::repack::RepackServer::parseCommandLine(int argc, char *argv[])
 {
-  Coptions_t* longopts = new Coptions_t[m_threadPools.size()+4];
-  char tparam[] = "Xthreads";
+  Coptions_t* longopts = new Coptions_t[2];
   
   longopts[0].name = "foreground";
   longopts[0].has_arg = NO_ARGUMENT;
@@ -325,22 +341,10 @@ void castor::repack::RepackServer::parseCommandLine(int argc, char *argv[])
   longopts[1].has_arg = NO_ARGUMENT;
   longopts[1].flag = NULL;
   longopts[1].val = 'h';
-  
-  std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
-  int i = 3;
-  for(tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++, i++) {
-    tparam[0] = tp->first;
-    longopts[i].name = strdup(tparam);
-    longopts[i].has_arg = REQUIRED_ARGUMENT;
-    longopts[i].flag = NULL;
-    longopts[i].val = tp->first;
-  };
-  longopts[i].name = 0;
 
   Coptind = 1;
   Copterr = 0;
   char c;
-  castor::server::BaseThreadPool* p= NULL;
 
   while ((c = Cgetopt_long(argc, argv, (char*)m_cmdLineParams.str().c_str(), longopts, NULL)) != -1) {
     switch (c) {
@@ -350,16 +354,6 @@ void castor::repack::RepackServer::parseCommandLine(int argc, char *argv[])
     case 'h':
       help(argv[0]);
       exit(0);
-      break;
-    case 'W': case 'c': case 'C': case 'M': case 'S':
-      p = m_threadPools[c];
-      if(p != 0) {
-        p->setNbThreads(atoi(Coptarg));
-      }
-      else {
-        help(argv[0]);
-        exit(0);
-      }
       break;
     default:
       help(argv[0]);
@@ -379,11 +373,6 @@ void castor::repack::RepackServer::help(std::string programName)
 	    << "where options can be:\n\n"
             << "\t--foreground      or -f                \tForeground\n"
             << "\t--help            or -h                \tThis help\n"
-            << "\t-M num   \tRepackMonitor threads(default 1)\n"
-            << "\t-C num   \tRepackCleaner threads(default 1)\n"
-            << "\t-c num   \tRepackFileChecker threads(default 1)\n"
-            << "\t-S num   \tRepackFileStager threads(default 1)\n"
-            << "\t-W num   \tRepackWorker threads(default 1)\n\n"
             << "Comments to: Castor.Support@cern.ch "<<std::endl;
 
 }

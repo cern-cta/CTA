@@ -53,7 +53,7 @@ static castor::CnvFactory<castor::db::cnv::DbRepackSegmentCnv>* s_factoryDbRepac
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbRepackSegmentCnv::s_insertStatementString =
-"INSERT INTO RepackSegment (fileid, segsize, compression, filesec, copyno, blockid, fileseq, id, repacksubrequest) VALUES (:1,:2,:3,:4,:5,:6,:7,ids_seq.nextval,:8) RETURNING id INTO :9";
+"INSERT INTO RepackSegment (fileid, segsize, compression, filesec, copyno, blockid, fileseq, errorCode, errorMessage, id, repacksubrequest) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,ids_seq.nextval,:10) RETURNING id INTO :11";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbRepackSegmentCnv::s_deleteStatementString =
@@ -61,11 +61,11 @@ const std::string castor::db::cnv::DbRepackSegmentCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbRepackSegmentCnv::s_selectStatementString =
-"SELECT fileid, segsize, compression, filesec, copyno, blockid, fileseq, id, repacksubrequest FROM RepackSegment WHERE id = :1";
+"SELECT fileid, segsize, compression, filesec, copyno, blockid, fileseq, errorCode, errorMessage, id, repacksubrequest FROM RepackSegment WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbRepackSegmentCnv::s_updateStatementString =
-"UPDATE RepackSegment SET fileid = :1, segsize = :2, compression = :3, filesec = :4, copyno = :5, blockid = :6, fileseq = :7 WHERE id = :8";
+"UPDATE RepackSegment SET fileid = :1, segsize = :2, compression = :3, filesec = :4, copyno = :5, blockid = :6, fileseq = :7, errorCode = :8, errorMessage = :9 WHERE id = :10";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbRepackSegmentCnv::s_storeTypeStatementString =
@@ -252,7 +252,7 @@ void castor::db::cnv::DbRepackSegmentCnv::fillObjRepackSubRequest(castor::repack
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 repacksubrequestId = rset->getInt64(9);
+  u_signed64 repacksubrequestId = rset->getInt64(11);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -292,7 +292,7 @@ void castor::db::cnv::DbRepackSegmentCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(9, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(11, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -305,9 +305,11 @@ void castor::db::cnv::DbRepackSegmentCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(5, obj->copyno());
     m_insertStatement->setUInt64(6, obj->blockid());
     m_insertStatement->setUInt64(7, obj->fileseq());
-    m_insertStatement->setUInt64(8, (type == OBJ_RepackSubRequest && obj->repacksubrequest() != 0) ? obj->repacksubrequest()->id() : 0);
+    m_insertStatement->setInt(8, obj->errorCode());
+    m_insertStatement->setString(9, obj->errorMessage());
+    m_insertStatement->setUInt64(10, (type == OBJ_RepackSubRequest && obj->repacksubrequest() != 0) ? obj->repacksubrequest()->id() : 0);
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(9));
+    obj->setId(m_insertStatement->getUInt64(11));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -331,6 +333,8 @@ void castor::db::cnv::DbRepackSegmentCnv::createRep(castor::IAddress* address,
                     << "  copyno : " << obj->copyno() << std::endl
                     << "  blockid : " << obj->blockid() << std::endl
                     << "  fileseq : " << obj->fileseq() << std::endl
+                    << "  errorCode : " << obj->errorCode() << std::endl
+                    << "  errorMessage : " << obj->errorMessage() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  repacksubrequest : " << obj->repacksubrequest() << std::endl;
     throw ex;
@@ -361,7 +365,9 @@ void castor::db::cnv::DbRepackSegmentCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt(5, obj->copyno());
     m_updateStatement->setUInt64(6, obj->blockid());
     m_updateStatement->setUInt64(7, obj->fileseq());
-    m_updateStatement->setUInt64(8, obj->id());
+    m_updateStatement->setInt(8, obj->errorCode());
+    m_updateStatement->setString(9, obj->errorMessage());
+    m_updateStatement->setUInt64(10, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
@@ -451,13 +457,12 @@ castor::IObject* castor::db::cnv::DbRepackSegmentCnv::createObj(castor::IAddress
     object->setCopyno(rset->getInt(5));
     object->setBlockid(rset->getUInt64(6));
     object->setFileseq(rset->getUInt64(7));
-    object->setId(rset->getUInt64(8));
+    object->setErrorCode(rset->getInt(8));
+    object->setErrorMessage(rset->getString(9));
+    object->setId(rset->getUInt64(10));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
-    // Always try to rollback
-    try { cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -496,12 +501,11 @@ void castor::db::cnv::DbRepackSegmentCnv::updateObj(castor::IObject* obj)
     object->setCopyno(rset->getInt(5));
     object->setBlockid(rset->getUInt64(6));
     object->setFileseq(rset->getUInt64(7));
-    object->setId(rset->getUInt64(8));
+    object->setErrorCode(rset->getInt(8));
+    object->setErrorMessage(rset->getString(9));
+    object->setId(rset->getUInt64(10));
     delete rset;
   } catch (castor::exception::SQLError e) {
-    // Always try to rollback
-    try { cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl

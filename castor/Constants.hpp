@@ -241,7 +241,8 @@ namespace castor {
     SVC_ORAJOBMANAGERSVC = 40,
     SVC_DBRHSVC = 41,
     SVC_ORARHSVC = 42,
-    SVC_ORAPOLICYSVC = 43
+    SVC_ORAPOLICYSVC = 43,
+    SVC_ORAREPACKSVC =44
   };
 
   /**
@@ -284,8 +285,10 @@ namespace castor {
    * as opposed to the C++ compiler, does not allow a variable-size type
    * declared outside of any function.
    */
-#define SERVICES_IDS_NB 44
+
+#define SERVICES_IDS_NB 45
   static const unsigned int ServicesIdsNb = SERVICES_IDS_NB;
+
 
   /**
    * Nb of RepresentationsIds currently existing
@@ -309,6 +312,7 @@ namespace castor {
    * Names of the differents Services, used to display
    * correctly the ServicesIds enum
    */
+
   extern const char* ServicesIdStrings[SERVICES_IDS_NB];
 
   /**

@@ -28,7 +28,9 @@
 #include "castor/rh/FileQryResponse.hpp"
 #include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/StageFileQueryRequest.hpp"
-
+#include "castor/Services.hpp"
+#include "RepackSubRequestStatusCode.hpp"
+#include "RepackUtility.hpp"
 
 namespace castor {
   namespace repack {
@@ -39,7 +41,8 @@ namespace castor {
 // Constructor
 //------------------------------------------------------------------------------
   RepackMonitor::RepackMonitor(RepackServer *svr){
-    m_dbhelper = NULL;
+    m_dbSvc = NULL;
+    
     ptr_server = svr;
   }
 
@@ -48,7 +51,8 @@ namespace castor {
 // Destructor
 //------------------------------------------------------------------------------
   RepackMonitor::~RepackMonitor() throw() {
-    delete m_dbhelper;
+    if (m_dbSvc != NULL) delete m_dbSvc;
+    m_dbSvc=NULL;
   }
 
 
@@ -57,55 +61,55 @@ namespace castor {
 //------------------------------------------------------------------------------
   void RepackMonitor::run(void *param) throw() {
     
-    if ( m_dbhelper == NULL ) {
-      m_dbhelper = new DatabaseHelper();
-    }
-    //TODO: own query for this purpose
-    Cuuid_t cuuid;
-    std::vector<RepackSubRequest*>* tapelist = NULL;
-    std::vector<RepackSubRequest*>* tapelist2 = NULL;
+    std::vector<RepackSubRequest*> tapelist;
+    std::vector<RepackSubRequest*>::iterator tape;
     try {
-      tapelist = m_dbhelper->getAllSubRequestsStatus(SUBREQUEST_STAGING);
-      tapelist2 = m_dbhelper->getAllSubRequestsStatus(SUBREQUEST_MIGRATING);
-    }catch ( castor::exception::Exception e){
-      castor::dlf::Param params[] =
-       {castor::dlf::Param("Error Message", e.getMessage().str() ) };
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 5, 1, params);
-      return;
-    }
+      if (m_dbSvc == 0){
+	// service to access the database
+	castor::IService* orasvc = castor::BaseObject::services()->service("OraRepackSvc", castor::SVC_ORAREPACKSVC);
   
-    try{
-      if (tapelist != NULL ) { 
-        for (unsigned int i=0; i< tapelist->size(); i++){
-          //m_dbhelper->lock(tapelist->at(i));
-          cuuid = stringtoCuuid(tapelist->at(i)->cuuid());
-          updateTape(tapelist->at(i));
-          //m_dbhelper->unlock();
-          freeRepackObj(tapelist->at(i)->repackrequest());
-	      }
-        tapelist->clear();
-        delete tapelist;
+	m_dbSvc = dynamic_cast<castor::repack::IRepackSvc*>(orasvc);
+	if (m_dbSvc == 0) {
+	  // FATAL ERROR
+	  castor::dlf::Param params0[] =
+	    {castor::dlf::Param("Standard Message", "RepackMonitor fatal error"),};
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params0);
+	  return;
+	}
       }
-      if ( tapelist2 != NULL ) {
-        for (unsigned int i=0; i< tapelist2->size(); i++){
-          //m_dbhelper->lock(tapelist2->at(i));
-          cuuid = stringtoCuuid(tapelist2->at(i)->cuuid());
-          updateTape(tapelist2->at(i));
-          //m_dbhelper->unlock();
-          freeRepackObj(tapelist2->at(i)->repackrequest());
-        }
-        tapelist2->clear();
-        delete tapelist2;
+
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 34, 0, 0);
+      tapelist = m_dbSvc->getSubRequestsByStatus(RSUBREQUEST_ONGOING,false);
+      tape=tapelist.begin();
+
+      while (tape != tapelist.end()){ 
+	if (*tape != NULL){
+	  castor::dlf::Param params[] =
+	    {castor::dlf::Param("VID", (*tape)->vid()),
+	     castor::dlf::Param("ID", (*tape)->id()),
+	     castor::dlf::Param("STATUS", (*tape)->status())};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 14, 3, params);
+
+	// get information for this tape querying the stager
+	  updateTape(*tape);
+	  freeRepackObj(*(tape));
+
+	}
+
+	tape++;
       }
-      
-    }
-    catch ( castor::exception::Exception e){
-      castor::dlf::Param params[] =
-       {castor::dlf::Param("Error Message", e.getMessage().str() ),
-        castor::dlf::Param("ErrorCode", e.code() )};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 5, 2, params);
+
+    } catch (...) {
+      if (!tapelist.empty()){
+	tape=tapelist.begin();
+	while (tape != tapelist.end()){
+	  freeRepackObj(*tape);
+	  tape++;
+	}
+      }
     }
   }
+    
 
 //------------------------------------------------------------------------------
 // stop
@@ -123,9 +127,11 @@ void RepackMonitor::getStats(RepackSubRequest* sreq,
 {
   
   // Uses a BaseClient to handle the request
+
   castor::client::BaseClient client(stage_getClientTimeout(),stage_getClientTimeout());
   std::vector<castor::rh::Response*>respvec;
   castor::client::VectorResponseHandler rh(&respvec);
+
   castor::stager::StageFileQueryRequest req;
   struct stage_options opts;
   memset(&opts,0,sizeof(stage_options));
@@ -142,17 +148,18 @@ void RepackMonitor::getStats(RepackSubRequest* sreq,
   stage_trace(3,"Querying the Stager for reqID %s ",sreq->cuuid().c_str());
   req.addParameters(par);
 
-  // send the FileRequest, throws Exception ! 
+  // send the FileRequest, throws Exception (time out)! 
+ 
   client.sendRequest(&req, &rh);
-    
+
   for (int i=0; i<(int)respvec.size(); i++) {
      castor::rh::FileQryResponse* tmp = dynamic_cast<castor::rh::FileQryResponse*>(respvec[i]);
      fr->push_back(tmp);
   }
 
   /* in case of one answer, it might be that the request is unknown 
-   * then we throw an exception with EINVAL
-   */
+   * then we throw an exception with EINVAL */
+   
   if ( fr->size() == 1 ){
     if ( fr->at(0)->errorCode() == EINVAL ) {
       castor::exception::InvalidArgument inval;
@@ -168,11 +175,13 @@ void RepackMonitor::getStats(RepackSubRequest* sreq,
 //------------------------------------------------------------------------------
 // updateTape
 //------------------------------------------------------------------------------
+
 void RepackMonitor::updateTape(RepackSubRequest *sreq)
-                          throw (castor::exception::Exception)
+                          throw ()
 { 
   /** status counters */
-  int canbemig_status,stagein_status,waitingmig_status, stageout_status, staged_status, invalid_status;
+
+  u_signed64 canbemig_status,stagein_status,waitingmig_status, stageout_status, staged_status, invalid_status;
   canbemig_status = stagein_status = waitingmig_status = stageout_status = staged_status = invalid_status = 0;
 
   Cuuid_t cuuid;  
@@ -180,145 +189,128 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
   std::vector<castor::rh::FileQryResponse*> fr;
   std::vector<castor::rh::FileQryResponse*>::iterator response;
 
+
+  /** get the stats by quering the stager */
   try {
-
-    /** get the stats by quering the stager */
-    getStats(sreq, &fr);
-
-  }catch (castor::exception::InvalidArgument inval){
-    castor::dlf::Param params[] =
-    {castor::dlf::Param("New status", SUBREQUEST_READYFORCLEANUP)};
-     castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 48, 1, params);
-    sreq->setStatus(SUBREQUEST_READYFORCLEANUP);
-    m_dbhelper->updateSubRequest(sreq,false,cuuid);
+   getStats(sreq, &fr);
+  } catch (castor::exception::InvalidArgument inval) {
+    // CLEANED BY THE STAGER
+    sreq->setStatus(RSUBREQUEST_TOBECLEANED);
+    m_dbSvc->updateSubRequest(sreq);
     return;
-  }catch (castor::exception::Exception ex){
-    castor::dlf::Param params[] =
-    {castor::dlf::Param("Error Message", ex.getMessage().str() )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 1, params);
-    while ( fr.size() ) delete fr.at(0);
+  } catch (castor::exception::Exception e) {
+    // the stager might time out
+    sreq->setStatus(RSUBREQUEST_ONGOING);
+    m_dbSvc->updateSubRequest(sreq);
     return;
   }
 
-  /** we ignore that we didn't find anything for the Request ID */
-  if ( fr.size() == 0  ){
-    stage_trace(1,"No Results found for CUUID. Will try again later." );
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 47, 0, NULL);
-    return;
-  }
-
-  /* in case of one answer, it might be that the request is unknown */
-  if ( fr.size() == 1 ){
-    if ( fr.at(0)->errorCode() == EINVAL ) {
-      castor::dlf::Param params[] =
-      {castor::dlf::Param("New status", SUBREQUEST_READYFORCLEANUP)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 48, 1, params);
-      sreq->setStatus(SUBREQUEST_READYFORCLEANUP);
-      m_dbhelper->updateSubRequest(sreq,false,cuuid);
-      delete fr.at(0);
-    }
-  }
-
+  
   /// see, in which status the files are 
+
   response = fr.begin();
+
   while ( response != fr.end() ) {
     if ( (*response)->errorCode() > 0 ){
       castor::dlf::Param params[] =
       {castor::dlf::Param("Error Message", (*response)->errorMessage()) };
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 1, params);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 36, 1, params);
     }
+
     switch ( (*response)->status() ){
       case FILE_CANBEMIGR     :
-      case FILE_BEINGMIGR     : canbemig_status++;  break;
-      case FILE_STAGEIN       : stagein_status++;   break;
-      case FILE_WAITINGMIGR   : waitingmig_status++;break;
-      case FILE_STAGEOUT      : stageout_status++;  break;
-      case FILE_STAGED        : staged_status++;    break;
+      case FILE_BEINGMIGR     : 
+	canbemig_status++;  
+	break;
+      case FILE_STAGEIN       : 
+	stagein_status++;   
+	break;
+      case FILE_WAITINGMIGR   : 
+	waitingmig_status++;
+	break;
+      case FILE_STAGEOUT      :
+	stageout_status++;  
+	break;
+      case FILE_STAGED        :   
+	// no sense because the gc can remove the diskcopy
+	break;
       case FILE_INVALID_STATUS:
-      case FILE_PUTFAILED     : invalid_status++;break; 
+      case FILE_PUTFAILED     :
+	invalid_status++;
+	break; 
                            //putfailed should never appeare 
     }
+    delete(*response);
     response++;
   }
 
-  if ( invalid_status ) {
-    stage_trace(3,"Found  %d files in invalid status.", invalid_status);
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Number", invalid_status)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 42, 1, params);
-  }
 
-  /// we only update the subrequest, if something has changed */
+
   if ( (waitingmig_status + canbemig_status) !=  sreq->filesMigrating() 
-        || stagein_status != sreq->filesStaging() ||  invalid_status != sreq->filesFailed() || staged_status != sreq->filesStaged()
+        || stagein_status != sreq->filesStaging() ||  invalid_status != sreq->filesFailed() 
   )
   {
     
-    sreq->setFilesMigrating( waitingmig_status + canbemig_status );
-    sreq->setFilesStaging( stagein_status );
-    sreq->setFilesFailed( invalid_status );
-    sreq->setFilesStaged( staged_status );
-    
-    stage_trace(3,"Updating RepackSubRequest with %d responses: Mig: %d\tStaging: %d\t Invalid: %d\t FailedSubmition: %d\t Staged: %d\n",
-    fr.size(), sreq->filesMigrating(), sreq->filesStaging(),sreq->filesFailed(),sreq->filesFailedSubmit(),sreq->filesStaged());  
-
-    /// if we find migration candidates, we just change the status from staging, 
-    ///    or if all files are staged 
-    
-    if ( waitingmig_status + canbemig_status 
-        && sreq->status() != SUBREQUEST_MIGRATING )
-    {
-      sreq->setStatus(SUBREQUEST_MIGRATING);
-      castor::dlf::Param params[] =
-      {castor::dlf::Param("VID", sreq->vid()),
-      castor::dlf::Param("STATUS", sreq->status())};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 2, params);
-    }
-
-    // no more files to stagein or migrate
+    // UPDATE NEEDED
     
     if ( !(waitingmig_status + canbemig_status + stagein_status + stageout_status)){
+
+      // REPACK is finished
+
       invalid_status+=sreq->filesFailedSubmit();
+      sreq->setStatus(RSUBREQUEST_TOBECLEANED);
+      m_dbSvc->updateSubRequest(sreq);
+
       if (!invalid_status){
+
 	// everything went fine
-	 sreq->setStatus(SUBREQUEST_READYFORCLEANUP);
-	 castor::dlf::Param params[] =
-	   {castor::dlf::Param("VID", sreq->vid()),
+
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("VID", sreq->vid()),
 	    castor::dlf::Param("STATUS", sreq->status())};
-	    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 2, params);
-      }
-      else{
-        // we faced problem, we need to retry
-	int numRetry= sreq->retryNb();
-	if (numRetry > 0){
-	  numRetry--;
-	  sreq->setRetryNb(numRetry);
-	  sreq->setStatus(SUBREQUEST_RESTART);
+	 castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 37, 2, params);
+
+      } else{
+	// we faced some errors
+
 	  castor::dlf::Param params[] =
 	   {castor::dlf::Param("VID", sreq->vid()),
 	    castor::dlf::Param("STATUS", sreq->status())};
-	    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 2, params);
-	} else {
-	   sreq->setStatus(SUBREQUEST_READYFORCLEANUP);
-	 castor::dlf::Param params[] =
-	   {castor::dlf::Param("VID", sreq->vid()),
-	    castor::dlf::Param("STATUS", sreq->status())};
-	    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 2, params);
+	  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 39, 2, params);
+	  return;
 	}	
-      }
-    
-    }
-    /** update the RepackSubRequest with the latest stats */
-      m_dbhelper->updateSubRequest(sreq,false,cuuid);
       
-   }
+    } else {
+    
+    // Still ON_GOING
+  
+      // call to the nameserver
 
-  /* Cleanup : delete the responses */
-  response = fr.begin();
-  while ( response != fr.end() ) {
-    delete (*response);
-    response++;
+      FileListHelper filelisthelper(ptr_server->getNsName());
+      
+      u_signed64 filesOnTape=filelisthelper.countFilesOnTape(sreq->vid());
+
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 0, 0);
+
+      sreq->setFilesMigrating( waitingmig_status + canbemig_status );
+      sreq->setFilesStaging( stagein_status );
+      sreq->setFilesFailed( invalid_status );
+      
+      // compute staged files
+
+      staged_status=sreq->files() - filesOnTape;
+      
+      sreq->setFilesStaged( staged_status );
+      sreq->setStatus(RSUBREQUEST_ONGOING);
+    
+      m_dbSvc->updateSubRequest(sreq);
+
+      stage_trace(3,"Updating RepackSubRequest with %d responses: Mig: %d\tStaging: %d\t Invalid: %d\t FailedSubmition: %d\t Staged: %d\n",
+    fr.size(), sreq->filesMigrating(), sreq->filesStaging(),sreq->filesFailed(),sreq->filesFailedSubmit(),sreq->filesStaged());  
+
+    }
   }
+  fr.clear();
 
 }
 

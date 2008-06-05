@@ -33,6 +33,7 @@
 #include "castor/repack/RepackRequest.hpp"
 #include "castor/repack/RepackSegment.hpp"
 #include "castor/repack/RepackSubRequest.hpp"
+#include "castor/repack/RepackSubRequestStatusCode.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -44,7 +45,6 @@
 castor::repack::RepackSubRequest::RepackSubRequest() throw() :
   m_vid(""),
   m_xsize(0),
-  m_status(0),
   m_filesMigrating(0),
   m_filesStaging(0),
   m_files(0),
@@ -55,20 +55,21 @@ castor::repack::RepackSubRequest::RepackSubRequest() throw() :
   m_filesFailedSubmit(0),
   m_retryNb(0),
   m_id(0),
-  m_repackrequest(0) {
+  m_repackrequest(0),
+  m_status(RepackSubRequestStatusCode(0)) {
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::repack::RepackSubRequest::~RepackSubRequest() throw() {
+  if (0 != m_repackrequest) {
+    m_repackrequest->removeRepacksubrequest(this);
+  }
   for (unsigned int i = 0; i < m_repacksegmentVector.size(); i++) {
     m_repacksegmentVector[i]->setRepacksubrequest(0);
   }
   m_repacksegmentVector.clear();
-  if (0 != m_repackrequest) {
-    m_repackrequest->removeRepacksubrequest(this);
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -86,7 +87,6 @@ void castor::repack::RepackSubRequest::print(std::ostream& stream,
   // Output of all members
   stream << indent << "vid : " << m_vid << std::endl;
   stream << indent << "xsize : " << m_xsize << std::endl;
-  stream << indent << "status : " << m_status << std::endl;
   stream << indent << "filesMigrating : " << m_filesMigrating << std::endl;
   stream << indent << "filesStaging : " << m_filesStaging << std::endl;
   stream << indent << "files : " << m_files << std::endl;
@@ -98,6 +98,12 @@ void castor::repack::RepackSubRequest::print(std::ostream& stream,
   stream << indent << "retryNb : " << m_retryNb << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "Repackrequest : " << std::endl;
+  if (0 != m_repackrequest) {
+    m_repackrequest->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
   {
     stream << indent << "Repacksegment : " << std::endl;
     int i;
@@ -109,12 +115,7 @@ void castor::repack::RepackSubRequest::print(std::ostream& stream,
       (*it)->print(stream, indent + "    ", alreadyPrinted);
     }
   }
-  stream << indent << "Repackrequest : " << std::endl;
-  if (0 != m_repackrequest) {
-    m_repackrequest->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
+  stream << indent << "status : " << RepackSubRequestStatusCodeStrings[m_status] << std::endl;
 }
 
 //------------------------------------------------------------------------------

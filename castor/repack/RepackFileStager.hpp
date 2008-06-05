@@ -1,11 +1,11 @@
 #ifndef _REPACKFILESTAGER_HPP_
 #define _REPACKFILESTAGER_HPP_
 
-#include "RepackCommonHeader.hpp"
 #include "FileListHelper.hpp"
-#include "DatabaseHelper.hpp"
 #include "castor/server/IThread.hpp"
 #include "stager_client_api.h"
+#include "castor/repack/IRepackSvc.hpp"
+
 #include <common.h>
 /* for sending the request to stager */
 #include "castor/stager/StageRepackRequest.hpp"
@@ -14,6 +14,7 @@
 #include "castor/rh/FileResponse.hpp"
 #include "castor/client/VectorResponseHandler.hpp"
 #include "castor/client/BaseClient.hpp"
+
 /*************************************/
 
 namespace castor {
@@ -81,35 +82,26 @@ namespace castor {
        * @returns The Number of files for which the stager request failed.
        * @throws castor::exeption::Internal in case of an error
        */
-      int sendStagerRepackRequest( RepackSubRequest* rsreq,
+
+      void sendStagerRepackRequest( RepackSubRequest* rsreq,
                                    castor::stager::StageRepackRequest* req,
                                    std::string *reqId,
                                    struct stage_options* opts
                                    )
-        throw (castor::exception::Exception);
+        throw ();
 
       /**
        * Excutes stage_files and updates the RepackSubRequest. In case
        * stage_files gives an error the state is set to FAILED.
        */
-      void startRepack(RepackSubRequest* sreq);
+      void startRepack(RepackSubRequest* sreq) throw ();
 
-
-      /**
-       * Restarts a RepackSubRequest. The RepackMonitor is used to get the
-       * latest stats for this repack request and if files in invalid found,
-       * those are send as a new StageRepackRequest.
-       * If no answers are found, the NameServer is contacted for the remaining
-       * files on tape and for those a new StageRepackReques is send.
-       * In both cases the Cuuid is updated and the stats set to '0';
-       */
-      void restartRepack(RepackSubRequest* sreq) throw (castor::exception::Exception);
 
        /**
        * Abort a RepackSubRequest. 
        */
 
-      void abortRepack(RepackSubRequest* sreq) throw (castor::exception::Exception);
+      void abortRepack(RepackSubRequest* sreq) throw ();
 
 
       /** 
@@ -123,8 +115,8 @@ namespace castor {
        * Pointer to DatabaseHelper instance. Created by the contructor.
        * Stores and updates RepackRequest.
        */
-      DatabaseHelper* m_dbhelper;
 
+       castor::repack::IRepackSvc* m_dbSvc;
 
       /**
        * Pointer to a FileListHelper instance. Created by the contructor.

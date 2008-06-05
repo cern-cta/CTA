@@ -27,7 +27,7 @@
 
 #include "RepackCommonHeader.hpp"
 #include "castor/rh/FileQryResponse.hpp"
-#include "DatabaseHelper.hpp"
+#include "castor/repack/IRepackSvc.hpp"
 #include "FileListHelper.hpp"
 #include "castor/server/IThread.hpp"
 #include "stager_client_api.h"
@@ -74,7 +74,7 @@ namespace castor {
        * information of the RepackRequest into account)
        * @throws castor::exception::Exception in case of an error.
        */
-      void updateTape(RepackSubRequest*)   throw (castor::exception::Exception);
+      void updateTape(RepackSubRequest*)throw ();
   
       /** Retrieves the stats from a request (by the given cuuid in the
        *  RepackSubRequest). Beware that the returned objects in the vector
@@ -90,7 +90,7 @@ namespace castor {
 
 
     private:
-      DatabaseHelper* m_dbhelper;
+      castor::repack::IRepackSvc* m_dbSvc;
       RepackServer* ptr_server;
     };
 

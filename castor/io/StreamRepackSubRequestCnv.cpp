@@ -42,6 +42,7 @@
 #include "castor/repack/RepackRequest.hpp"
 #include "castor/repack/RepackSegment.hpp"
 #include "castor/repack/RepackSubRequest.hpp"
+#include "castor/repack/RepackSubRequestStatusCode.hpp"
 #include "osdep.h"
 #include <string>
 #include <vector>
@@ -93,7 +94,6 @@ void castor::io::StreamRepackSubRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->type();
   ad->stream() << obj->vid();
   ad->stream() << obj->xsize();
-  ad->stream() << obj->status();
   ad->stream() << obj->filesMigrating();
   ad->stream() << obj->filesStaging();
   ad->stream() << obj->files();
@@ -104,6 +104,7 @@ void castor::io::StreamRepackSubRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->filesFailedSubmit();
   ad->stream() << obj->retryNb();
   ad->stream() << obj->id();
+  ad->stream() << obj->status();
 }
 
 //------------------------------------------------------------------------------
@@ -122,19 +123,16 @@ castor::IObject* castor::io::StreamRepackSubRequestCnv::createObj(castor::IAddre
   u_signed64 xsize;
   ad->stream() >> xsize;
   object->setXsize(xsize);
-  int status;
-  ad->stream() >> status;
-  object->setStatus(status);
-  int filesMigrating;
+  u_signed64 filesMigrating;
   ad->stream() >> filesMigrating;
   object->setFilesMigrating(filesMigrating);
-  int filesStaging;
+  u_signed64 filesStaging;
   ad->stream() >> filesStaging;
   object->setFilesStaging(filesStaging);
-  int files;
+  u_signed64 files;
   ad->stream() >> files;
   object->setFiles(files);
-  int filesFailed;
+  u_signed64 filesFailed;
   ad->stream() >> filesFailed;
   object->setFilesFailed(filesFailed);
   std::string cuuid;
@@ -143,10 +141,10 @@ castor::IObject* castor::io::StreamRepackSubRequestCnv::createObj(castor::IAddre
   u_signed64 submitTime;
   ad->stream() >> submitTime;
   object->setSubmitTime(submitTime);
-  int filesStaged;
+  u_signed64 filesStaged;
   ad->stream() >> filesStaged;
   object->setFilesStaged(filesStaged);
-  int filesFailedSubmit;
+  u_signed64 filesFailedSubmit;
   ad->stream() >> filesFailedSubmit;
   object->setFilesFailedSubmit(filesFailedSubmit);
   u_signed64 retryNb;
@@ -155,6 +153,9 @@ castor::IObject* castor::io::StreamRepackSubRequestCnv::createObj(castor::IAddre
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
+  int status;
+  ad->stream() >> status;
+  object->setStatus((castor::repack::RepackSubRequestStatusCode)status);
   return object;
 }
 
@@ -175,13 +176,13 @@ void castor::io::StreamRepackSubRequestCnv::marshalObject(castor::IObject* objec
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
+    cnvSvc()->marshalObject(obj->repackrequest(), address, alreadyDone);
     address->stream() << obj->repacksegment().size();
     for (std::vector<castor::repack::RepackSegment*>::iterator it = obj->repacksegment().begin();
          it != obj->repacksegment().end();
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
-    cnvSvc()->marshalObject(obj->repackrequest(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -201,6 +202,9 @@ castor::IObject* castor::io::StreamRepackSubRequestCnv::unmarshalObject(castor::
   // Fill object with associations
   castor::repack::RepackSubRequest* obj = 
     dynamic_cast<castor::repack::RepackSubRequest*>(object);
+  ad.setObjType(castor::OBJ_INVALID);
+  castor::IObject* objRepackrequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setRepackrequest(dynamic_cast<castor::repack::RepackRequest*>(objRepackrequest));
   unsigned int repacksegmentNb;
   ad.stream() >> repacksegmentNb;
   for (unsigned int i = 0; i < repacksegmentNb; i++) {
@@ -208,9 +212,6 @@ castor::IObject* castor::io::StreamRepackSubRequestCnv::unmarshalObject(castor::
     castor::IObject* objRepacksegment = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addRepacksegment(dynamic_cast<castor::repack::RepackSegment*>(objRepacksegment));
   }
-  ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objRepackrequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setRepackrequest(dynamic_cast<castor::repack::RepackRequest*>(objRepackrequest));
   return object;
 }
 

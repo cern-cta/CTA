@@ -30,34 +30,31 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/repack/RepackFileQry.hpp"
-#include "castor/repack/RepackRequest.hpp"
+#include "castor/repack/RepackAck.hpp"
 #include "castor/repack/RepackResponse.hpp"
+#include "castor/repack/RepackSubRequest.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
-#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
 castor::repack::RepackResponse::RepackResponse() throw() :
-  m_vid(""),
+  m_errorCode(0),
+  m_errorMessage(""),
   m_id(0),
-  m_repackrequest(0) {
+  m_repackack(0),
+  m_repacksubrequest(0) {
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::repack::RepackResponse::~RepackResponse() throw() {
-  if (0 != m_repackrequest) {
-    m_repackrequest->removeRepackresponse(this);
+  if (0 != m_repackack) {
+    m_repackack->removeRepackresponse(this);
   }
-  for (unsigned int i = 0; i < m_repackfileqryVector.size(); i++) {
-    m_repackfileqryVector[i]->setRepackresponse(0);
-  }
-  m_repackfileqryVector.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -73,25 +70,21 @@ void castor::repack::RepackResponse::print(std::ostream& stream,
     return;
   }
   // Output of all members
-  stream << indent << "vid : " << m_vid << std::endl;
+  stream << indent << "errorCode : " << m_errorCode << std::endl;
+  stream << indent << "errorMessage : " << m_errorMessage << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "Repackrequest : " << std::endl;
-  if (0 != m_repackrequest) {
-    m_repackrequest->print(stream, indent + "  ", alreadyPrinted);
+  stream << indent << "Repackack : " << std::endl;
+  if (0 != m_repackack) {
+    m_repackack->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
   }
-  {
-    stream << indent << "Repackfileqry : " << std::endl;
-    int i;
-    std::vector<RepackFileQry*>::const_iterator it;
-    for (it = m_repackfileqryVector.begin(), i = 0;
-         it != m_repackfileqryVector.end();
-         it++, i++) {
-      stream << indent << "  " << i << " :" << std::endl;
-      (*it)->print(stream, indent + "    ", alreadyPrinted);
-    }
+  stream << indent << "Repacksubrequest : " << std::endl;
+  if (0 != m_repacksubrequest) {
+    m_repacksubrequest->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
   }
 }
 

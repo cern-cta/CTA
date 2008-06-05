@@ -31,9 +31,11 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/repack/RepackCommandCode.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace castor {
 
@@ -43,7 +45,7 @@ namespace castor {
   namespace repack {
 
     // Forward declarations
-    class RepackRequest;
+    class RepackResponse;
 
     /**
      * class RepackAck
@@ -100,38 +102,6 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
-       * Get the value of m_errorCode
-       * @return the value of m_errorCode
-       */
-      int errorCode() const {
-        return m_errorCode;
-      }
-
-      /**
-       * Set the value of m_errorCode
-       * @param new_var the new value of m_errorCode
-       */
-      void setErrorCode(int new_var) {
-        m_errorCode = new_var;
-      }
-
-      /**
-       * Get the value of m_errorMessage
-       * @return the value of m_errorMessage
-       */
-      std::string errorMessage() const {
-        return m_errorMessage;
-      }
-
-      /**
-       * Set the value of m_errorMessage
-       * @param new_var the new value of m_errorMessage
-       */
-      void setErrorMessage(std::string new_var) {
-        m_errorMessage = new_var;
-      }
-
-      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -150,31 +120,58 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_repackrequest
-       * @return the value of m_repackrequest
+       * Add a RepackResponse* object to the m_repackresponseVector list
        */
-      RepackRequest* repackrequest() const {
-        return m_repackrequest;
+      void addRepackresponse(RepackResponse* add_object) {
+        m_repackresponseVector.push_back(add_object);
       }
 
       /**
-       * Set the value of m_repackrequest
-       * @param new_var the new value of m_repackrequest
+       * Remove a RepackResponse* object from m_repackresponseVector
        */
-      void setRepackrequest(RepackRequest* new_var) {
-        m_repackrequest = new_var;
+      void removeRepackresponse(RepackResponse* remove_object) {
+        for (unsigned int i = 0; i < m_repackresponseVector.size(); i++) {
+          RepackResponse* item = m_repackresponseVector[i];
+          if (item == remove_object) {
+            std::vector<RepackResponse*>::iterator it = m_repackresponseVector.begin() + i;
+            m_repackresponseVector.erase(it);
+            return;
+          }
+        }
+      }
+
+      /**
+       * Get the list of RepackResponse* objects held by m_repackresponseVector
+       * @return list of RepackResponse* objects held by m_repackresponseVector
+       */
+      std::vector<RepackResponse*>& repackresponse() {
+        return m_repackresponseVector;
+      }
+
+      /**
+       * Get the value of m_command
+       * @return the value of m_command
+       */
+      RepackCommandCode command() const {
+        return m_command;
+      }
+
+      /**
+       * Set the value of m_command
+       * @param new_var the new value of m_command
+       */
+      void setCommand(RepackCommandCode new_var) {
+        m_command = new_var;
       }
 
     private:
 
-      int m_errorCode;
-
-      std::string m_errorMessage;
-
       /// The id of this object
       u_signed64 m_id;
 
-      RepackRequest* m_repackrequest;
+      std::vector<RepackResponse*> m_repackresponseVector;
+
+      RepackCommandCode m_command;
 
     }; /* end of class RepackAck */
 

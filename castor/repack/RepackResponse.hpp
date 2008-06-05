@@ -34,7 +34,6 @@
 #include "osdep.h"
 #include <iostream>
 #include <string>
-#include <vector>
 
 namespace castor {
 
@@ -44,8 +43,8 @@ namespace castor {
   namespace repack {
 
     // Forward declarations
-    class RepackRequest;
-    class RepackFileQry;
+    class RepackSubRequest;
+    class RepackAck;
 
     /**
      * class RepackResponse
@@ -102,19 +101,35 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
-       * Get the value of m_vid
-       * @return the value of m_vid
+       * Get the value of m_errorCode
+       * @return the value of m_errorCode
        */
-      std::string vid() const {
-        return m_vid;
+      int errorCode() const {
+        return m_errorCode;
       }
 
       /**
-       * Set the value of m_vid
-       * @param new_var the new value of m_vid
+       * Set the value of m_errorCode
+       * @param new_var the new value of m_errorCode
        */
-      void setVid(std::string new_var) {
-        m_vid = new_var;
+      void setErrorCode(int new_var) {
+        m_errorCode = new_var;
+      }
+
+      /**
+       * Get the value of m_errorMessage
+       * @return the value of m_errorMessage
+       */
+      std::string errorMessage() const {
+        return m_errorMessage;
+      }
+
+      /**
+       * Set the value of m_errorMessage
+       * @param new_var the new value of m_errorMessage
+       */
+      void setErrorMessage(std::string new_var) {
+        m_errorMessage = new_var;
       }
 
       /**
@@ -136,60 +151,49 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_repackrequest
-       * @return the value of m_repackrequest
+       * Get the value of m_repackack
+       * @return the value of m_repackack
        */
-      RepackRequest* repackrequest() const {
-        return m_repackrequest;
+      RepackAck* repackack() const {
+        return m_repackack;
       }
 
       /**
-       * Set the value of m_repackrequest
-       * @param new_var the new value of m_repackrequest
+       * Set the value of m_repackack
+       * @param new_var the new value of m_repackack
        */
-      void setRepackrequest(RepackRequest* new_var) {
-        m_repackrequest = new_var;
+      void setRepackack(RepackAck* new_var) {
+        m_repackack = new_var;
       }
 
       /**
-       * Add a RepackFileQry* object to the m_repackfileqryVector list
+       * Get the value of m_repacksubrequest
+       * @return the value of m_repacksubrequest
        */
-      void addRepackfileqry(RepackFileQry* add_object) {
-        m_repackfileqryVector.push_back(add_object);
+      RepackSubRequest* repacksubrequest() const {
+        return m_repacksubrequest;
       }
 
       /**
-       * Remove a RepackFileQry* object from m_repackfileqryVector
+       * Set the value of m_repacksubrequest
+       * @param new_var the new value of m_repacksubrequest
        */
-      void removeRepackfileqry(RepackFileQry* remove_object) {
-        for (unsigned int i = 0; i < m_repackfileqryVector.size(); i++) {
-          RepackFileQry* item = m_repackfileqryVector[i];
-          if (item == remove_object) {
-            std::vector<RepackFileQry*>::iterator it = m_repackfileqryVector.begin() + i;
-            m_repackfileqryVector.erase(it);
-            return;
-          }
-        }
-      }
-
-      /**
-       * Get the list of RepackFileQry* objects held by m_repackfileqryVector
-       * @return list of RepackFileQry* objects held by m_repackfileqryVector
-       */
-      std::vector<RepackFileQry*>& repackfileqry() {
-        return m_repackfileqryVector;
+      void setRepacksubrequest(RepackSubRequest* new_var) {
+        m_repacksubrequest = new_var;
       }
 
     private:
 
-      std::string m_vid;
+      int m_errorCode;
+
+      std::string m_errorMessage;
 
       /// The id of this object
       u_signed64 m_id;
 
-      RepackRequest* m_repackrequest;
+      RepackAck* m_repackack;
 
-      std::vector<RepackFileQry*> m_repackfileqryVector;
+      RepackSubRequest* m_repacksubrequest;
 
     }; /* end of class RepackResponse */
 

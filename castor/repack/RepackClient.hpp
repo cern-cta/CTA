@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.hpp,v $ $Revision: 1.19 $ $Release$ $Date: 2007/10/10 06:21:38 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.hpp,v $ $Revision: 1.20 $ $Release$ $Date: 2008/06/05 16:25:00 $ $Author: gtaur $
  *
  * The Repack Client. This is the client part of the repack project, which just
  * sends and Request to the server. One Request can have serveral tapes 
@@ -82,6 +82,7 @@ namespace castor {
      * @return bool 
      */
     bool parseInput(int argc, char** argv);
+
     /**
      * Builds the RepackRequest from the given parameters.
      * Either a pool name can be specified OR volume ids seperated by ':'
@@ -101,6 +102,7 @@ namespace castor {
      * Handles the response from the Repack server. In case of an subrequest
 	    query from the client, the queried tapes are printed.
 	  */
+
     void handleResponse(RepackAck* ack);
 
     /**
@@ -128,7 +130,12 @@ namespace castor {
      */
 
     void printTapeDetail(RepackSubRequest *tape);
+    
+    /**
+     * little print helper for nice output and factorisation 
+     */
 
+    void printSegmentDetail(RepackSegment *segment);
 
   private:
     int m_defaultport;

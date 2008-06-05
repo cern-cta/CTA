@@ -31,25 +31,29 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/repack/RepackAck.hpp"
-#include "castor/repack/RepackRequest.hpp"
+#include "castor/repack/RepackCommandCode.hpp"
+#include "castor/repack/RepackResponse.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
 castor::repack::RepackAck::RepackAck() throw() :
-  m_errorCode(0),
-  m_errorMessage(""),
   m_id(0),
-  m_repackrequest(0) {
+  m_command(RepackCommandCode(0)) {
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::repack::RepackAck::~RepackAck() throw() {
+  for (unsigned int i = 0; i < m_repackresponseVector.size(); i++) {
+    m_repackresponseVector[i]->setRepackack(0);
+  }
+  m_repackresponseVector.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -65,16 +69,20 @@ void castor::repack::RepackAck::print(std::ostream& stream,
     return;
   }
   // Output of all members
-  stream << indent << "errorCode : " << m_errorCode << std::endl;
-  stream << indent << "errorMessage : " << m_errorMessage << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "Repackrequest : " << std::endl;
-  if (0 != m_repackrequest) {
-    m_repackrequest->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
+  {
+    stream << indent << "Repackresponse : " << std::endl;
+    int i;
+    std::vector<RepackResponse*>::const_iterator it;
+    for (it = m_repackresponseVector.begin(), i = 0;
+         it != m_repackresponseVector.end();
+         it++, i++) {
+      stream << indent << "  " << i << " :" << std::endl;
+      (*it)->print(stream, indent + "    ", alreadyPrinted);
+    }
   }
+  stream << indent << "command : " << RepackCommandCodeStrings[m_command] << std::endl;
 }
 
 //------------------------------------------------------------------------------

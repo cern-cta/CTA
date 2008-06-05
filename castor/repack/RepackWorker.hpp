@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.26 $ $Release$ $Date: 2007/12/06 18:27:17 $ $Author: itglp $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.27 $ $Release$ $Date: 2008/06/05 16:25:00 $ $Author: gtaur $
  *
  *
  *
@@ -39,6 +39,7 @@
 /* ============= */
 /* Local headers */
 /* ============= */
+
 #include "vmgr_api.h"
 #include "castor/IObject.hpp"
 #include "castor/server/IThread.hpp"
@@ -46,15 +47,13 @@
 #include "castor/BaseObject.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "FileListHelper.hpp"
-#include "DatabaseHelper.hpp"
-#include "RepackAck.hpp"
+#include "castor/repack/IRepackSvc.hpp"
+#include "castor/repack/RepackAck.hpp"
 
 
 namespace castor {
 
   namespace repack {
-
-    class DatabaseHelper;
     class FileListHelper;
     class RepackServer;
     /**
@@ -74,9 +73,9 @@ namespace castor {
       /**
        * Standard destructor
        */
+
       ~RepackWorker() throw();
 
-      ///empty initialization
       virtual void init() {};
 
       virtual void run(void* param);
@@ -84,98 +83,35 @@ namespace castor {
 
     private:
 
-      /**
-       * Retrieves the Information of a tape and returns its status, otherwise -1
-       * It also checks, whether the tape is in a valid repack state (FULL).
-       * @param vid The Volumeid of the tape
-       * @return FULL or -1
-       * @throws castor::exception::Exception in case of an error
-       */
-      int getTapeStatus(std::string tapename) throw (castor::exception::Exception);
+      bool  checkTapeVmgrStatus(std::string) throw ();
 
-      /** executes :
-       * 1. checkTapeForRepack(..)
-       * 2. getTapeStatus(..)
-       * @returns true, if both checks are ok, otherwise false.
-       * @throws castor::exception::Exception in case of an error
-       */
-      bool checkTapeForRepack(std::string) throw (castor::exception::Exception);
+      bool  getPoolVmgrInfo(castor::repack::RepackRequest* rreq) throw ();
 
-      /**
-       * Retrieves information about the tapes in a pool and counts the tape
-       * in the pool.
-       * @param pool the name of the tape pool
-       * @throws castor::exception::Exception if the pool does not exist
-       */
-      int getPoolInfo(castor::repack::RepackRequest* rreq) throw (castor::exception::Exception);
+      RepackAck* handleRepack(RepackRequest* rreq) throw ();
 
-      /**
-       *.Validates the RepackRequest and stores it in the DB. The given tapes (RepackSubRequets)
-       * status are set to SUBREQUEST_READYFORSTAGING
-       * @param RepackRequest The request with the tapes to repack
-       * @throws castor::exception::Exception if an error occurs
-       */
-      void handleRepack(RepackRequest* rreq) throw (castor::exception::Exception);
+      RepackAck* removeRequest(RepackRequest* rreq) throw ();
 
-      /**
-       *.Removes a RepackSubRequest in the given RepackRequest. Note that
-       * it is not checked if the repack process is finished or not.
-       * @param RepackRequest The request with the tapes to remove
-       * @throws castor::exception::Exception if an error occurs
-       */
-      void removeRequest(RepackRequest* rreq) throw (castor::exception::Exception);
+      RepackAck* restartRequest(RepackRequest* rreq) throw ();
 
+      RepackAck* archiveSubRequests(RepackRequest* rreq) throw ();
+
+      RepackAck* archiveAllSubRequests(RepackRequest* rreq) throw ();
+
+      RepackAck*  getNsStatus(RepackRequest* rreq) throw ();
+
+
+      RepackAck* getStatusAll(RepackRequest* rreq) throw ();
+
+      RepackAck* queryForErrors(RepackRequest* rreq) throw ();
+      
+      RepackAck* getStatus(RepackRequest* rreq) throw ();
 
 
       /**
-       *.Restarts a RepackSubRequest in the given RepackRequest. Note that
-       * it is not checked if the repack process is finished or not.
-       * @param RepackRequest The request with the tapes to remove
-       * @throws castor::exception::Exception if an error occurs
+       * the Database Service, which helps to store the Request in the DB.
        */
-      void restart(RepackRequest* rreq) throw (castor::exception::Exception);
 
-      /**
-       *.Archive a RepackSubRequest in the given RepackRequest, if finished.
-       * @param RepackRequest The request with the tapes to be archived
-       * @throws castor::exception::Exception if an error occurs
-       */
-      void archiveSubRequests(RepackRequest* rreq) throw (castor::exception::Exception);
-
-     /**
-       * Archive  all finishedRepackSubRequest in the given RepackRequest.
-       * @param RepackRequest 
-       * @throws castor::exception::Exception if an error occurs
-       */
-      void archiveAllSubRequests(RepackRequest* rreq) throw (castor::exception::Exception);
-
-      /** Gets the status of one RepackSubRequest from the DB. The given tape vid
-       * in the RepackSubRequest (only one is allowed, has to ensured by the
-       * repack cliet is searched in the Repack DB and if it is found, returned.
-       * The existing RepackRequest is replaced and therefore also deleted.
-       * A new one is created and returned.
-       * @param RepackRequest The request with the tape to look for
-       * @return The RepackRequest corresponding to the given vid.
-       * @throws castor::exception::Exception if the tape was not found
-       */
-      void  getStatus(RepackRequest* rreq) throw (castor::exception::Exception);
-
-
-      /** Gets the status of all RepackSubRequests from the DB. The given tape vid
-       * is searched in the Repack DB and if it is found, returned.
-       * The existing RepackSubRequest in the given RepackRequest is replaced
-       * and therefore also deleted.
-       * @param RepackRequest The request with the tape to look for
-       * @throws castor::exception::Exception if the tape was not found
-       */
-      void getStatusAll(RepackRequest* rreq) throw (castor::exception::Exception);
-
-      void queryForErrors(RepackRequest* rreq) throw (castor::exception::Exception);
-
-      /**
-       * the DatabaseHelper, which helps to store the Request in the DB.
-       */
-      DatabaseHelper* m_databasehelper;
+      castor::repack::IRepackSvc* m_dbSvc;
 
       /**
        * The RepackServer instance pointer.

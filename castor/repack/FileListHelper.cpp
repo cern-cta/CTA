@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.34 $ $Release$ 
- * $Date: 2008/02/28 16:24:39 $ $Author: waldron $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.35 $ $Release$ 
+ * $Date: 2008/06/05 16:25:00 $ $Author: gtaur $
  *
  *
  *
@@ -28,6 +28,8 @@
 
 
 #include "castor/repack/FileListHelper.hpp"
+#include "RepackUtility.hpp"
+
 
 namespace castor {
 
@@ -64,10 +66,6 @@ std::vector<u_signed64>* FileListHelper::getFileList(castor::repack::RepackSubRe
   /** pointer to vector of all Segments */
   std::vector<u_signed64>* parentlist = new std::vector<u_signed64>();
   vecsize = subreq->repacksegment().size();
-  
-  /** get the cuuid from RepackSubRequest for DLF logging */
-  Cuuid_t cuuid;
-  cuuid = stringtoCuuid(subreq->cuuid());
 
   if ( vecsize > 0 ) {
     /** make up a new list with all parent_fileids */
@@ -112,11 +110,10 @@ std::vector<std::string>* FileListHelper::getFilePathnames(castor::repack::Repac
                       << sstrerror(serrno) << std::endl;
       castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(ex.code()))};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 15, 1, params);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 59, 1, params);
       throw ex;
     }
     else{
-      std::cout << path << std::endl;
       pathlist->push_back(path);
     }
   }
@@ -208,7 +205,7 @@ void FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
       {castor::dlf::Param("Vid", subreq->vid()),
        castor::dlf::Param("Segments", subreq->repacksegment().size()),
        castor::dlf::Param("DiskSpace", subreq->xsize())};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 24, 3, params);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 60, 3, params);
       
   }
   else{
@@ -256,18 +253,15 @@ void FileListHelper::printFileInfo(u_signed64 fileid, int copyno)
 	total_blockid = total_blockid | (segattrs[i].blockid[2] * 0x10000);
 	total_blockid = total_blockid | (segattrs[i].blockid[1] * 0x100);
 	total_blockid = total_blockid | (segattrs[i].blockid[0] * 0x1);
-        std::cout <<std::setw(15)<<std::left<< file_uniqueid.fileid <<
-          std::setw(10)<<std::left<< segattrs[i].copyno <<
-          std::setw(10)<<std::left<< segattrs[i].fsec << 
-	  std::setw(18)<<std::left<< segattrs[i].segsize <<
-          std::setw(11)<<std::left<<segattrs[i].compression <<        
-	  //    std::setw(10)<<std::left<<segattrs[i].s_status <<
-	  std::setw(10)<<std::left<< segattrs[i].vid <<
-          //    std::setw(10)<<std::left<<segattrs[i].side <<
-          std::setw(10)<<std::left<<segattrs[i].fseq<<
-	  std::setw(17)<<std::left<<total_blockid <<  
-	  //    std::setw(12)<<std::left<<segattrs[i].checksum_name<<
-	  std::setw(10)<<std::left<<std::hex<<segattrs[i].checksum<<std::dec<< std::endl;
+        std::cout <<std::setw(15)<<std::right<< file_uniqueid.fileid <<
+          std::setw(10)<<std::right<< segattrs[i].copyno <<
+          std::setw(10)<<std::right<< segattrs[i].fsec << 
+	  std::setw(18)<<std::right<< segattrs[i].segsize <<
+          std::setw(11)<<std::right<<segattrs[i].compression <<        
+	  std::setw(10)<<std::right<< segattrs[i].vid <<
+          std::setw(10)<<std::right<<segattrs[i].fseq<<
+	  std::setw(17)<<std::right<<total_blockid <<  
+	  std::setw(10)<<std::right<<std::hex<<segattrs[i].checksum<<std::dec<< std::endl;
      
       }
     }

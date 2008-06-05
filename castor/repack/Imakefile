@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.24 $ $Release$ $Date: 2007/12/04 16:01:33 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.25 $ $Release$ $Date: 2008/06/05 16:25:00 $ $Author: gtaur $
 #
 # Make Castor Repack System
 #
@@ -34,39 +34,39 @@ DEBUG  = -g
 #endif
 #endif
 
-INCLUDES = -I FileName(FileName(..,..),h) -I FileName(..,..)
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DDEFAULT_CNS=castorns -DORAREPACKCONFIGFILE=\"/etc/castor/ORAREPACKCONFIG\"
+INCLUDES = -I FileName($(ORACLE_HOME)/rdbms,public) -I FileName(FileName(..,..),h) -I FileName(..,..)
+CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DDEFAULT_CNS=castorns -DORAREPACKCONFIGFILE=\"/etc/castor/ORAREPACKCONFIG\" -DORACDBC=1
 
 REPACKLIB = LibraryTargetName(castorRepack)
 
-LIBS = -lshift -lcastorCnvs -Wl,-rpath-link,../../shlib
+LIBS = -lshift -lcastorCnvs -lcastorCommonOra -Wl,-rpath-link,../../shlib -L$(ORACLE_HOME)/lib -locci
 
 REPACKCOMMON_SRC = ../io/StreamRepackRequestCnv.cpp \
 		../io/StreamRepackSubRequestCnv.cpp \
-		../io/StreamRepackAckCnv.cpp \
 		../io/StreamRepackSegmentCnv.cpp \
 		../io/StreamRepackResponseCnv.cpp \
-		../io/StreamRepackFileQryCnv.cpp \
+                ../io/StreamRepackAckCnv.cpp \
+		RepackSubRequestStatusCode.cpp \
+                RepackCommandCode.cpp \
 		RepackRequest.cpp \
 		RepackSubRequest.cpp \
 		RepackSegment.cpp \
-		RepackAck.cpp \
+                RepackAck.cpp \
 		RepackResponse.cpp \
-		RepackFileQry.cpp \
                 FileListHelper.cpp \
-                Tools.cpp 
+                RepackUtility.cpp 
 
 REPACKDBCNVSRC =../db/cnv/DbRepackRequestCnv.cpp \
 		../db/cnv/DbRepackSegmentCnv.cpp \
 		../db/cnv/DbRepackSubRequestCnv.cpp 
 
 REPACKSERVERBIN_SRCS =  RepackServer.cpp \
-		DatabaseHelper.cpp \
 		RepackWorker.cpp \
 		RepackFileStager.cpp \
 		RepackMonitor.cpp \
 		RepackCleaner.cpp \
 		RepackFileChecker.cpp \
+		ora/OraRepackSvc.cpp \
 		$(REPACKDBCNVSRC) \
 		$(REPACKCOMMON_SRC) 
 

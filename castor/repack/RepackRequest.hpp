@@ -31,6 +31,7 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/repack/RepackCommandCode.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -45,7 +46,6 @@ namespace castor {
 
     // Forward declarations
     class RepackSubRequest;
-    class RepackResponse;
 
     /**
      * class RepackRequest
@@ -198,22 +198,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_command
-       * @return the value of m_command
-       */
-      int command() const {
-        return m_command;
-      }
-
-      /**
-       * Set the value of m_command
-       * @param new_var the new value of m_command
-       */
-      void setCommand(int new_var) {
-        m_command = new_var;
-      }
-
-      /**
        * Get the value of m_stager
        * @return the value of m_stager
        */
@@ -296,35 +280,6 @@ namespace castor {
       }
 
       /**
-       * Add a RepackResponse* object to the m_repackresponseVector list
-       */
-      void addRepackresponse(RepackResponse* add_object) {
-        m_repackresponseVector.push_back(add_object);
-      }
-
-      /**
-       * Remove a RepackResponse* object from m_repackresponseVector
-       */
-      void removeRepackresponse(RepackResponse* remove_object) {
-        for (unsigned int i = 0; i < m_repackresponseVector.size(); i++) {
-          RepackResponse* item = m_repackresponseVector[i];
-          if (item == remove_object) {
-            std::vector<RepackResponse*>::iterator it = m_repackresponseVector.begin() + i;
-            m_repackresponseVector.erase(it);
-            return;
-          }
-        }
-      }
-
-      /**
-       * Get the list of RepackResponse* objects held by m_repackresponseVector
-       * @return list of RepackResponse* objects held by m_repackresponseVector
-       */
-      std::vector<RepackResponse*>& repackresponse() {
-        return m_repackresponseVector;
-      }
-
-      /**
        * Add a RepackSubRequest* object to the m_repacksubrequestVector list
        */
       void addRepacksubrequest(RepackSubRequest* add_object) {
@@ -353,6 +308,22 @@ namespace castor {
         return m_repacksubrequestVector;
       }
 
+      /**
+       * Get the value of m_command
+       * @return the value of m_command
+       */
+      RepackCommandCode command() const {
+        return m_command;
+      }
+
+      /**
+       * Set the value of m_command
+       * @param new_var the new value of m_command
+       */
+      void setCommand(RepackCommandCode new_var) {
+        m_command = new_var;
+      }
+
     private:
 
       std::string m_machine;
@@ -367,8 +338,6 @@ namespace castor {
 
       std::string m_svcclass;
 
-      int m_command;
-
       std::string m_stager;
 
       int m_userId;
@@ -380,9 +349,9 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-      std::vector<RepackResponse*> m_repackresponseVector;
-
       std::vector<RepackSubRequest*> m_repacksubrequestVector;
+
+      RepackCommandCode m_command;
 
     }; /* end of class RepackRequest */
 

@@ -42,6 +42,7 @@
 #include "castor/repack/RepackSegment.hpp"
 #include "castor/repack/RepackSubRequest.hpp"
 #include "osdep.h"
+#include <string>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
@@ -95,6 +96,8 @@ void castor::io::StreamRepackSegmentCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->copyno();
   ad->stream() << obj->blockid();
   ad->stream() << obj->fileseq();
+  ad->stream() << obj->errorCode();
+  ad->stream() << obj->errorMessage();
   ad->stream() << obj->id();
 }
 
@@ -129,6 +132,12 @@ castor::IObject* castor::io::StreamRepackSegmentCnv::createObj(castor::IAddress*
   u_signed64 fileseq;
   ad->stream() >> fileseq;
   object->setFileseq(fileseq);
+  int errorCode;
+  ad->stream() >> errorCode;
+  object->setErrorCode(errorCode);
+  std::string errorMessage;
+  ad->stream() >> errorMessage;
+  object->setErrorMessage(errorMessage);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2008/01/17 14:11:19 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2008/06/05 16:25:00 $ $Author: gtaur $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -38,6 +38,9 @@
 #include "castor/repack/FileListHelper.hpp"
 #include <time.h>
 #include <ios>
+#include <algorithm>
+#include <string>
+#include <vector>
 
 /** 
  * By including the Header file, the Factory is automatically active !! 
@@ -45,10 +48,16 @@
 #include "castor/io/StreamRepackRequestCnv.hpp"
 #include "castor/io/StreamRepackSubRequestCnv.hpp"
 #include "castor/io/StreamRepackAckCnv.hpp"
+#include "castor/repack/RepackAck.hpp"
+#include "castor/repack/RepackSubRequestStatusCode.hpp"
+#include "castor/repack/RepackResponse.hpp"
+#include "RepackUtility.hpp"
+
+
 
 void printTime(time_t* rawtime){
   if (!rawtime || *rawtime==0){
-    std::cout<<"    No_Time         ";
+    std::cout<<"    No_Time      ";
     return;
   }
   tm * timeptr = localtime(rawtime);
@@ -71,7 +80,15 @@ void printTime(time_t* rawtime){
 }
 
 
-
+class sortAnswers{
+public:
+  bool operator()(castor::repack::RepackResponse* resp1, castor::repack::RepackResponse* resp2) const{
+    if (resp1 == NULL && resp2 != NULL) return false;
+    if (resp1 != NULL && resp2 == NULL) return true;
+    if (resp1->errorCode() > resp2->errorCode()) return true;
+    return false;
+  };
+};
 
 
 //------------------------------------------------------------------------------
@@ -96,8 +113,8 @@ namespace castor {
  namespace repack {
 
 
-	 const char* HOST_ENV_ALT = "REPACK_HOST_ALT";
-	 const char* HOST_ENV = "REPACK_HOST";
+  const char* HOST_ENV_ALT = "REPACK_HOST_ALT";
+  const char* HOST_ENV = "REPACK_HOST";
   const char* PORT_ENV_ALT = "REPACK_PORT_ALT";
   const char* PORT_ENV = "REPACK_PORT";
   const char* CATEGORY_CONF = "REPACK";
@@ -155,6 +172,7 @@ bool RepackClient::parseInput(int argc, char** argv)
     std::cout <<"You cannot use repack commands if you are root."<< std::endl; 
     return false;
   }
+
   struct Coptions longopts[] = {
     {"output_svcclass", REQUIRED_ARGUMENT, 0, 'o'},
     {"status", REQUIRED_ARGUMENT, 0, 'S' },
@@ -192,12 +210,12 @@ bool RepackClient::parseInput(int argc, char** argv)
       break;
     case 'R':
       cp.vid = Coptarg;
-      cp.command = REMOVE_TAPE;
+      cp.command = REMOVE;
       if (cp.vid == NULL) return false;
       else return true;
     case 'x' :
       cp.vid = Coptarg;
-      cp.command = GET_STATUS_NS;
+      cp.command = GET_NS_STATUS;
       if (cp.vid == NULL) return false;
       else return true;
     case 's':
@@ -229,7 +247,7 @@ bool RepackClient::parseInput(int argc, char** argv)
       if (cp.retryMax < 0) cp.retryMax=0;
       break;
    case 'e':
-      cp.command = GET_ERRORS;
+      cp.command = GET_ERROR;
       cp.vid = Coptarg;
       if  (cp.vid == NULL) return false;
       return true;
@@ -298,6 +316,7 @@ void RepackClient::help(){
 //------------------------------------------------------------------------------
 // addTapes
 //------------------------------------------------------------------------------
+
 int RepackClient::addTapes(RepackRequest *rreq)
 {
 	char* vid;
@@ -313,8 +332,6 @@ int RepackClient::addTapes(RepackRequest *rreq)
 	}	
 	return -1;
 }
-
-
 
 //------------------------------------------------------------------------------
 // buildRequest
@@ -349,10 +366,9 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
       return NULL;
   }
   
-
   RepackRequest* rreq = new RepackRequest();
   addTapes(rreq);
-  rreq->setCommand(cp.command);
+  rreq->setCommand((castor::repack::RepackCommandCode)cp.command);
   if ( cp.stager ) rreq->setStager(cp.stager);
   
   /* or, we want to repack a pool */
@@ -364,7 +380,7 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
     	std::cerr << "You must specify either a pool name or one or more volumes." 
     			  << std::endl;
     	usage();
-    	delete rreq;
+    	freeRepackObj(rreq);
     	return NULL;  	
      }
   }
@@ -401,8 +417,6 @@ void RepackClient::run(int argc, char** argv)
     	return;
     }
    
-    //req->print();
-
     // creates a socket
     castor::io::ClientSocket s(m_defaultport, m_defaulthost);
     s.connect();
@@ -410,13 +424,14 @@ void RepackClient::run(int argc, char** argv)
     s.sendObject(*req);
     castor::IObject* obj = s.readObject();
 	
-	RepackAck* ack = dynamic_cast<castor::repack::RepackAck*>(obj);
-	if ( ack != 0 ){
-		handleResponse(ack);
-	}
+    RepackAck* ack = dynamic_cast<castor::repack::RepackAck*>(obj);
+    if ( ack != 0 ) handleResponse(ack);
+
     // free memory
-    delete req;
-    delete ack;
+
+    freeRepackObj(req);
+    freeRepackObj(ack);
+
   } catch (castor::exception::Exception ex) {
     	std::cerr << ex.getMessage().str() << std::endl;
   }
@@ -426,142 +441,168 @@ void RepackClient::run(int argc, char** argv)
 //------------------------------------------------------------------------------
 // handleResponse
 //------------------------------------------------------------------------------
-void RepackClient::handleResponse(RepackAck* ack) {
+void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
 	
   time_t submit_time = 0;
-
-  time_t current_time =time(NULL); 
-
-  if ( ack->errorCode() ){
-    std::cerr << "Repackserver respond :" << std::endl
-              << ack->errorMessage() << std::endl;
-    return;
-  }
-
-  if ( ack->repackrequest()!= NULL ){
-    RepackRequest* rreq = ack->repackrequest();
-
-
-    std::vector<RepackSubRequest*>::iterator sreq;
-
-    char* nsStr;
   
-    if ( !(nsStr = getconfent("CNS", "HOST",0)) && !(nsStr = getenv("CNS_HOST")) ){
-	   nsStr=strdup("castorns");
-    }  
+  std::vector<castor::repack::RepackResponse*> resps=ack->repackresponse();
+  if (resps.empty()){
+    switch (ack->command()){
+          case ARCHIVE_ALL:
+	    std::cout<<"No tape to archive"<<std::endl;
+	    break;
+          case GET_STATUS_ALL:
+	    std::cout<<"No tape found"<<std::endl;
+	    break;
+    default:
+      std::cerr << "No Answer from the repackserver" << std::endl;
+      break;
+    }
+    return;
+  } 
 
-    std::string nameServer(nsStr);
-    // if (nsStr != NULL) free(nsStr);
+  std::sort(resps.begin(), resps.end(), sortAnswers());
 
-    FileListHelper m_filehelper(nameServer);
+  std::vector<RepackResponse*>::iterator resp=resps.begin();
+  std::vector<RepackSegment*>::iterator segment;
+  std::vector<RepackSegment*> segments;
+  
+  char* nsStr; 
+  if ( !(nsStr = getconfent("CNS", "HOST",0)) && !(nsStr = getenv("CNS_HOST")) ){
+    nsStr=strdup("castorns");
+  }  
 
-    std::vector<RepackSubRequest*>::iterator tape; 
-    std::vector<RepackResponse*>::iterator resp;
-    RepackResponse* resItem;
-    RepackFileQry* fileItem;
+  std::string nameServer(nsStr);
+  FileListHelper m_filehelper(nameServer);
+  
 
-    switch ( rreq->command() ){
-      case GET_STATUS_NS :
-         std::cout <<"\ncurrent time: ";
-	 printTime(&current_time);
-	 std::cout<<std::endl;
-	 submit_time = (long)rreq->repacksubrequest().at(0)->submitTime();
+  while (resp != resps.end()){
+    RepackSubRequest* sub=(*resp)->repacksubrequest();
+    if ((*resp)->errorCode() !=0){
+      if (sub==NULL) {
+	// global error
+	std::cerr << "Repackserver respond :" << std::endl
+        << (*resp)->errorMessage() << std::endl;
+	return;
+      }
+      
+      // tape related error
 
-        sreq = rreq->repacksubrequest().begin();
-	
+      std::cout<<"Operation for tape "<<sub->vid()
+               <<" reported the following error : "
+	       <<(*resp)->errorMessage()<<std::endl;
+      resp++;
+      continue;
+    }
 
-        while ( sreq != rreq->repacksubrequest().end() ){ 
-          std::cout << "\n   *** Repacking of tape "<<(*sreq)->vid()<<" : details file by file ***\n" << std::endl;
+    switch ( ack->command() ){
+      case GET_NS_STATUS :
+	submit_time = sub->submitTime();
+       
+          std::cout << "\n   *** Repacking of tape "<<sub->vid()<<" : details file by file ***\n" << std::endl;
 
 	  // Query the name server to retrieve more information related with the situation of segment 
 
-	  std::vector<RepackSegment*>::iterator segs = (*sreq)->repacksegment().begin();
-          if (segs == (*sreq)->repacksegment().end()){
-	     std::cout << "  file not found \n" << std::endl;
-	     break;
+	  segments= sub->repacksegment();
+          if (segments.empty()){
+	     std::cout << "no  file for this tape in Repack database \n" << std::endl;
+	    
+	  } else {
+	    std::cout << "================================================================================================================" << std::endl;
+
+	    std::cout <<std::setw(15)<<"Fileid"
+		      <<std::setw(10)<<"Copyno"
+		      <<std::setw(10)<<"Fsec"
+		      <<std::setw(18)<<"Segsize"
+		      <<std::setw(11)<<"Comp"    
+		      <<std::setw(10)<<"Vid"
+		      <<std::setw(10)<<"Fseq"
+		      <<std::setw(17)<<"Blockid"
+		      <<std::setw(10)<<"Checksum"<< std::endl;
+  
+	    std::cout << "================================================================================================================" << std::endl;
+	    segment=segments.begin();
+	    while ( segment != segments.end() ) {
+	      m_filehelper.printFileInfo((*segment)->fileid(),(*segment)->copyno());
+	      segment++;
+	    }
 	  }
-	  std::cout << "==============================================================================================================" << std::endl;
-	  std::cout << " Fileid      Copyno     Fsec        Segsize       Compression    Vid     Fseq       Blockid         Checksum"<< std::endl;  
-	  std::cout << "==============================================================================================================" << std::endl;
-	  
-	  while ( segs != (*sreq)->repacksegment().end() ) {
-	    m_filehelper.printFileInfo((*segs)->fileid(),(*segs)->copyno());
-	    segs++;
-	  }
-	  sreq++;
-	}
-	break;
+	  break;
 
-      case REPACK:
-      case GET_STATUS_ALL: 
-      case ARCHIVE: 
-      case ARCHIVE_ALL:
-      { 
-
-	std::cout << "\n=======================================================================================================================" 
-              << std::endl;
-	std::cout << " CurrentTime        SubmitTime           Vid     Total     Size    toRecall   toMigr   Failed   Migrated     Status" <<std::endl;
-        std::cout << "-----------------------------------------------------------------------------------------------------------------------"
-                  << std::endl;
-
-
-        std::vector<RepackSubRequest*>::iterator tape = rreq->repacksubrequest().begin();
-       
-        while ( tape != rreq->repacksubrequest().end() ){
-          printTapeDetail((*tape));
-          tape++;
-        }
-	std::cout << "=======================================================================================================================" << std::endl;
-        break;
-      }
-    case GET_STATUS:
-
-      	std::cout << "\n=======================================================================================================================" 
-              << std::endl;
-	std::cout << " CurrentTime        SubmitTime           Vid     Total     Size    toRecall   toMigr   Failed   Migrated     Status" <<std::endl;
-        std::cout << "-----------------------------------------------------------------------------------------------------------------------"
-                  << std::endl;
-
-        tape = rreq->repacksubrequest().begin();
-        while ( tape != rreq->repacksubrequest().end() ){
-          printTapeDetail((*tape));
-          tape++;
-        }
-	std::cout << "=======================================================================================================================" << std::endl; 
-    case GET_ERRORS:
-      resp = ack->repackrequest()->repackresponse().begin();
-      while ( resp != ack->repackrequest()->repackresponse().end()){
-        std::vector<RepackFileQry*>::iterator file= (*resp)->repackfileqry().begin();
-        std::cout<<"---------------------------------------------------------------------------"<<std::endl;
-        std::cout<<"  Tape      Castorfile     Fileid     Status   ErrorCode  ErrorMessage        "<<std::endl;
-        std::cout<<"---------------------------------------------------------------------------"<<std::endl;
-        std::cout<<(*resp)->vid()<<std::endl;
-        while (file != (*resp)->repackfileqry().end()) {
-          if ((*file)->errorCode() !=0 ){
-            std::cout<< std::setw(12)  << (*file)->filename() <<
-              std::setw(8) << (*file)->fileid() <<
-              std::setw(8) << (*file)->status() <<
-              std::setw(8) << (*file)->errorCode() <<
-              std::setw(8) << (*file)->errorMessage() << std::endl;
-          }
-          fileItem=(*file);
-          file++;
-          delete fileItem;
-        }
-        resItem=(*resp);
-        resp ++;
-        delete resItem;
-      }
+    case REPACK:
+    case ARCHIVE: 
+    case ARCHIVE_ALL:
+    case REMOVE:
+    case RESTART:
+      std::cout<<"Operation succeeded for tape "<<sub->vid()<<std::endl;
       break;
 
-    }
+    case GET_STATUS_ALL: 
+      if (resp == resps.begin()) {
+	  // tittle just at the begining
+	std::cout << "\n====================================================================================================================" 
+		    << std::endl;
+	std::cout <<std::setw(17)<< "CurrentTime  "<<
+	  std::setw(17)<<"SubmitTime  "<<
+	  std::setw(8)<<"Vid"<<
+	  std::setw(10)<<"Total"<<
+	  std::setw(10)<<"Size"<<
+	  std::setw(10)<<"toRecall"<<
+	  std::setw(10)<<"toMigr"<<
+	  std::setw(10)<<"Failed"<<
+	  std::setw(10)<<"Migrated"<<
+	  std::setw(12)<<"Status" <<std::endl; 
 
-  }
+	std::cout << "--------------------------------------------------------------------------------------------------------------------"<< std::endl;
+      }
+	
+      printTapeDetail(sub);
+      break;
+      
+    case GET_STATUS:
+      if (resp == resps.begin()) {
+	std::cout << "\n====================================================================================================================" << std::endl;
+	std::cout << std::setw(17)<<"CurrentTime  "<<
+	  std::setw(17)<<"SubmitTime  "<<
+	  std::setw(8)<<"Vid"<<
+	  std::setw(10)<<"Total"<<
+	  std::setw(10)<<"Size"<<
+	  std::setw(10)<<"toRecall"<<
+	  std::setw(10)<<"toMigr"<<
+	  std::setw(10)<<"Failed"<<
+	  std::setw(10)<<"Migrated"<<
+	  std::setw(12)<<"Status" <<std::endl; 
+        std::cout << "--------------------------------------------------------------------------------------------------------------------"<< std::endl;
+      }
+      printTapeDetail(sub);
+      break;
+    case GET_ERROR:
+      std::cout<<std::endl<<"     *** Tape  "<< sub->vid() <<"  ***"<<std::endl;
+      segments= sub->repacksegment();
+      if (segments.empty()){
+	std::cout<<"no errors found"<<std::endl<<std::endl;
+      } else {
+	segment=segments.begin();
+	std::cout<<"-------------------------------------------------------------------------------"<<std::endl;
+	std::cout<<std::setw(15)<<std::right<<"Fileid"
+		 <<std::setw(15)<<std::right<<"CopyNo"
+		 <<std::setw(15)<<std::right<<"ErrorCode"
+		 <<std::setw(32)<<std::right<<"ErrorMessage"
+		 <<std::endl;
+	std::cout<<"-------------------------------------------------------------------------------"<<std::endl;
+	while (segment != segments.end()) {
+	  printSegmentDetail((*segment));
+	  segment++;
+	}
+	std::cout<<std::endl;
+      }
+      break;	
 
-}
-
-
-
+    } //end switch
+    resp++;
+  } // end loop for each tape
+  std::cout<<std::endl;
+} 
 
 
 
@@ -574,38 +615,87 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape){
   time_t current_time = time(NULL);
   submit_time = (long)tape->submitTime();
   std::map<int,std::string> statuslist;
-  statuslist[SUBREQUEST_READYFORSTAGING] = "START";
-  statuslist[SUBREQUEST_STAGING] = "STAGING";
-  statuslist[SUBREQUEST_MIGRATING] = "MIGRATING";
-  statuslist[SUBREQUEST_READYFORCLEANUP] = "CLEANUP";
-  statuslist[SUBREQUEST_DONE] = "FINISHED";
-  statuslist[SUBREQUEST_ARCHIVED] = "ARCHIVED";
-  statuslist[SUBREQUEST_TOBESTAGED] = "TOBESTAGED";
-  statuslist[SUBREQUEST_RESTART] = "RESTART";
-  statuslist[SUBREQUEST_FAILED] = "FAILED"; 
-  statuslist[SUBREQUEST_TOBEREMOVED] = "DELETING";  
 
-
+  statuslist[RSUBREQUEST_TOBECHECKED] = "START";
+  statuslist[RSUBREQUEST_TOBESTAGED] = "TOBESTAGED";
+  statuslist[RSUBREQUEST_ONGOING] = "ONGOING";
+  statuslist[RSUBREQUEST_TOBECLEANED] = "CLEANUP";
+  statuslist[RSUBREQUEST_DONE] = "DONE";
+  statuslist[RSUBREQUEST_FAILED] = "FAILED";
+  statuslist[RSUBREQUEST_TOBEREMOVED] = "DELETING";
+  statuslist[RSUBREQUEST_TOBERESTARTED] = "RESTART";
+  statuslist[RSUBREQUEST_ARCHIVED] = "ARCHIVED";
+  statuslist[RSUBREQUEST_ONHOLD] = "ONHOLD";
+  
   u64tostru(tape->xsize(), buf, 0);
   printTime(&current_time);
   printTime(&submit_time);
-  std::cout <<"\t"<<
-        tape->vid() <<	"    "<<
-	std::setw(8) <<std::left <<  tape->files() << 
-        std::setw(10) << std::left << buf <<
-	std::setw(10) << std::left << tape->filesStaging() <<
-	std::setw(10) << std::left << tape->filesMigrating() <<
-	std::setw(10) << std::left << tape->filesFailed() + tape->filesFailedSubmit()   <<
-	std::setw(10) << std::left << tape->filesStaged() <<
-	std::setw(12) << statuslist[tape->status()] <<
+  if (tape->status() == RSUBREQUEST_TOBECHECKED) {
+    // not checked the name server yet
+
+    std::cout<<
+      std::setw(8)  <<std::right <<tape->vid()<<
+      std::setw(10)  <<std::right <<  "N/A"<< 
+      std::setw(10) << std::right << "N/A" <<
+      std::setw(10) << std::right << "N/A" <<
+      std::setw(10) << std::right << "N/A" <<
+      std::setw(10) << std::right << "N/A"  <<
+      std::setw(10) << std::right << "N/A" <<
+      std::setw(12) << statuslist[tape->status()] <<
+      std::endl;
+
+    return;
+  }
+  if (tape->status() == RSUBREQUEST_TOBESTAGED) {
+    // not sent to the stager  yet
+
+    std::cout<< 
+      std::setw(8)  <<std::right <<tape->vid() <<   
+      std::setw(10)  <<std::right <<   tape->files() << 
+      std::setw(10) << std::right << buf <<
+      std::setw(10) << std::right << "N/A" <<
+      std::setw(10) << std::right << "N/A" <<
+      std::setw(10) << std::right << "N/A"  <<
+      std::setw(10) << std::right << "N/A" <<
+      std::setw(12) << statuslist[tape->status()] <<
+      std::endl;
+
+    return;
+  }
+
+  std::cout <<
+    std::setw(8) <<std::right <<tape->vid() <<
+    std::setw(10) <<std::right <<  tape->files() << 
+    std::setw(10) << std::right << buf <<
+    std::setw(10) << std::right << tape->filesStaging() <<
+    std::setw(10) << std::right << tape->filesMigrating() <<
+    std::setw(10) << std::right << tape->filesFailed() + tape->filesFailedSubmit()   <<
+    std::setw(10) << std::right << tape->filesStaged() <<
+    std::setw(12) << statuslist[tape->status()] <<
   std::endl;
 }
 
 
 
 //------------------------------------------------------------------------------
+// printSegmentDetail()
+//------------------------------------------------------------------------------
+void RepackClient::printSegmentDetail(RepackSegment *segment){
+  std::map<int,std::string> statuslist;
+
+  if (segment->errorCode() !=0 ){
+    std::cout << std::setw(15) <<std::right<< segment->fileid() <<
+      std::setw(15) << std::right<<segment->copyno() <<
+      std::setw(15) << std::right <<segment->errorCode() <<
+      std::setw(32)<<std::right << segment->errorMessage() << std::endl;
+  }
+}
+
+
+//------------------------------------------------------------------------------
 // setRemotePort()
 //------------------------------------------------------------------------------
+
 void RepackClient::setRemotePort()
   throw (castor::exception::Exception) {
   char* port;
@@ -638,6 +728,7 @@ void RepackClient::setRemotePort()
 //------------------------------------------------------------------------------
 // setRhHost
 //------------------------------------------------------------------------------
+
 void RepackClient::setRemoteHost()
   throw (castor::exception::Exception) {
   // RH server host. Can be passed given through the

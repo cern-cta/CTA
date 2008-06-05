@@ -31,6 +31,7 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/repack/RepackSubRequestStatusCode.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -134,26 +135,10 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_status
-       * @return the value of m_status
-       */
-      int status() const {
-        return m_status;
-      }
-
-      /**
-       * Set the value of m_status
-       * @param new_var the new value of m_status
-       */
-      void setStatus(int new_var) {
-        m_status = new_var;
-      }
-
-      /**
        * Get the value of m_filesMigrating
        * @return the value of m_filesMigrating
        */
-      int filesMigrating() const {
+      u_signed64 filesMigrating() const {
         return m_filesMigrating;
       }
 
@@ -161,7 +146,7 @@ namespace castor {
        * Set the value of m_filesMigrating
        * @param new_var the new value of m_filesMigrating
        */
-      void setFilesMigrating(int new_var) {
+      void setFilesMigrating(u_signed64 new_var) {
         m_filesMigrating = new_var;
       }
 
@@ -169,7 +154,7 @@ namespace castor {
        * Get the value of m_filesStaging
        * @return the value of m_filesStaging
        */
-      int filesStaging() const {
+      u_signed64 filesStaging() const {
         return m_filesStaging;
       }
 
@@ -177,7 +162,7 @@ namespace castor {
        * Set the value of m_filesStaging
        * @param new_var the new value of m_filesStaging
        */
-      void setFilesStaging(int new_var) {
+      void setFilesStaging(u_signed64 new_var) {
         m_filesStaging = new_var;
       }
 
@@ -185,7 +170,7 @@ namespace castor {
        * Get the value of m_files
        * @return the value of m_files
        */
-      int files() const {
+      u_signed64 files() const {
         return m_files;
       }
 
@@ -193,7 +178,7 @@ namespace castor {
        * Set the value of m_files
        * @param new_var the new value of m_files
        */
-      void setFiles(int new_var) {
+      void setFiles(u_signed64 new_var) {
         m_files = new_var;
       }
 
@@ -201,7 +186,7 @@ namespace castor {
        * Get the value of m_filesFailed
        * @return the value of m_filesFailed
        */
-      int filesFailed() const {
+      u_signed64 filesFailed() const {
         return m_filesFailed;
       }
 
@@ -209,7 +194,7 @@ namespace castor {
        * Set the value of m_filesFailed
        * @param new_var the new value of m_filesFailed
        */
-      void setFilesFailed(int new_var) {
+      void setFilesFailed(u_signed64 new_var) {
         m_filesFailed = new_var;
       }
 
@@ -249,7 +234,7 @@ namespace castor {
        * Get the value of m_filesStaged
        * @return the value of m_filesStaged
        */
-      int filesStaged() const {
+      u_signed64 filesStaged() const {
         return m_filesStaged;
       }
 
@@ -257,7 +242,7 @@ namespace castor {
        * Set the value of m_filesStaged
        * @param new_var the new value of m_filesStaged
        */
-      void setFilesStaged(int new_var) {
+      void setFilesStaged(u_signed64 new_var) {
         m_filesStaged = new_var;
       }
 
@@ -265,7 +250,7 @@ namespace castor {
        * Get the value of m_filesFailedSubmit
        * @return the value of m_filesFailedSubmit
        */
-      int filesFailedSubmit() const {
+      u_signed64 filesFailedSubmit() const {
         return m_filesFailedSubmit;
       }
 
@@ -273,7 +258,7 @@ namespace castor {
        * Set the value of m_filesFailedSubmit
        * @param new_var the new value of m_filesFailedSubmit
        */
-      void setFilesFailedSubmit(int new_var) {
+      void setFilesFailedSubmit(u_signed64 new_var) {
         m_filesFailedSubmit = new_var;
       }
 
@@ -312,6 +297,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_repackrequest
+       * @return the value of m_repackrequest
+       */
+      RepackRequest* repackrequest() const {
+        return m_repackrequest;
+      }
+
+      /**
+       * Set the value of m_repackrequest
+       * @param new_var the new value of m_repackrequest
+       */
+      void setRepackrequest(RepackRequest* new_var) {
+        m_repackrequest = new_var;
+      }
+
+      /**
        * Add a RepackSegment* object to the m_repacksegmentVector list
        */
       void addRepacksegment(RepackSegment* add_object) {
@@ -341,19 +342,19 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_repackrequest
-       * @return the value of m_repackrequest
+       * Get the value of m_status
+       * @return the value of m_status
        */
-      RepackRequest* repackrequest() const {
-        return m_repackrequest;
+      RepackSubRequestStatusCode status() const {
+        return m_status;
       }
 
       /**
-       * Set the value of m_repackrequest
-       * @param new_var the new value of m_repackrequest
+       * Set the value of m_status
+       * @param new_var the new value of m_status
        */
-      void setRepackrequest(RepackRequest* new_var) {
-        m_repackrequest = new_var;
+      void setStatus(RepackSubRequestStatusCode new_var) {
+        m_status = new_var;
       }
 
     private:
@@ -362,32 +363,32 @@ namespace castor {
 
       u_signed64 m_xsize;
 
-      int m_status;
+      u_signed64 m_filesMigrating;
 
-      int m_filesMigrating;
+      u_signed64 m_filesStaging;
 
-      int m_filesStaging;
+      u_signed64 m_files;
 
-      int m_files;
-
-      int m_filesFailed;
+      u_signed64 m_filesFailed;
 
       std::string m_cuuid;
 
       u_signed64 m_submitTime;
 
-      int m_filesStaged;
+      u_signed64 m_filesStaged;
 
-      int m_filesFailedSubmit;
+      u_signed64 m_filesFailedSubmit;
 
       u_signed64 m_retryNb;
 
       /// The id of this object
       u_signed64 m_id;
 
+      RepackRequest* m_repackrequest;
+
       std::vector<RepackSegment*> m_repacksegmentVector;
 
-      RepackRequest* m_repackrequest;
+      RepackSubRequestStatusCode m_status;
 
     }; /* end of class RepackSubRequest */
 

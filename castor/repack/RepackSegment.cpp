@@ -47,6 +47,8 @@ castor::repack::RepackSegment::RepackSegment() throw() :
   m_copyno(0),
   m_blockid(0),
   m_fileseq(0),
+  m_errorCode(0),
+  m_errorMessage(""),
   m_id(0),
   m_repacksubrequest(0) {
 }
@@ -80,6 +82,8 @@ void castor::repack::RepackSegment::print(std::ostream& stream,
   stream << indent << "copyno : " << m_copyno << std::endl;
   stream << indent << "blockid : " << m_blockid << std::endl;
   stream << indent << "fileseq : " << m_fileseq << std::endl;
+  stream << indent << "errorCode : " << m_errorCode << std::endl;
+  stream << indent << "errorMessage : " << m_errorMessage << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Repacksubrequest : " << std::endl;
