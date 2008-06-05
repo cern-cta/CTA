@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.7-7_to_2.1.7-10.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/03 16:22:43 $ $Author: waldron $
+ * @(#)$RCSfile: 2.1.7-7_to_2.1.7-10.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/05 06:35:17 $ $Author: waldron $
  *
  * This script upgrades a CASTOR v2.1.7-7 database into v2.1.7-8
  *
@@ -1412,7 +1412,8 @@ BEGIN
                    AND Stream.status IN (3)   -- SELECTED
                    AND optimized = 1
               )
-            ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, 
+            ORDER BY DiskServer.nbMigratorStreams ASC,
+                     FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, 
                      FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
             ) DS
         WHERE ROWNUM < 2)
@@ -1431,7 +1432,8 @@ BEGIN
            AND NbTapeCopiesInFS.Stream = StreamId
            AND FS.status IN (0, 1)    -- PRODUCTION, DRAINING
            AND FS.diskserver = dsId
-         ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
+         ORDER BY DiskServer.nbMigratorStreams ASC,
+                  FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
                   FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
          ) FN
      WHERE ROWNUM < 2;
@@ -1440,7 +1442,7 @@ BEGIN
       INTO path, dci, castorFileId, tapeCopyId
       FROM DiskCopy, TapeCopy, Stream2TapeCopy
      WHERE DiskCopy.status = 10 -- CANBEMIGR
-       AND DiskCopy.filesystem = lastButOneFSUsed
+       AND DiskCopy.filesystem = fileSystemId
        AND Stream2TapeCopy.parent = streamId
        AND TapeCopy.status = 2 -- WAITINSTREAMS
        AND Stream2TapeCopy.child = TapeCopy.id
