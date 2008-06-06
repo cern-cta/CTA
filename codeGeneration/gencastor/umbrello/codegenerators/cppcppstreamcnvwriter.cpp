@@ -113,6 +113,8 @@ void CppCppStreamCnvWriter::writeCreateRepContent() {
        mem = members.next()) {
     // don't take into account members we don't want to stream
     if (mem->stereotype == "DoNotStream") continue;
+    // don't take into account members that only appear in the DB world
+    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
     // Otherwise, stream the member;
     *m_stream << getIndent() << "ad->stream()";
     if (mem->typeName.find('[') > 0) {
@@ -174,6 +176,8 @@ void CppCppStreamCnvWriter::writeCreateObjContent() {
        mem = members.next()) {
     // don't take into account members we don't want to stream
     if (mem->stereotype == "DoNotStream") continue;
+    // don't take into account members that only appear in the DB world
+    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
     // Otherwise, unstream the member;    
     *m_stream << getIndent()
               << fixTypeName(mem->typeName,
