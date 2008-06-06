@@ -45,6 +45,8 @@ CppCastorWriter::CppCastorWriter(UMLDoc* parent, const char *name) :
   m_ignoreButForDB.insert(QString("lastFileSystemUsed"));
   m_ignoreButForDB.insert(QString("lastButOneFileSystemUsed"));
   m_ignoreButForDB.insert(QString("lastFileSystemChange"));
+  m_ignoreButForDB.insert(QString("diskCopySize"));
+  m_ignoreButForDB.insert(QString("nbCopyAccesses"));
 }
 
 //=============================================================================
