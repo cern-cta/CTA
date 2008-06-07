@@ -19,6 +19,10 @@ select 'alter table ' || table_name || ' drop constraint ' || constraint_name ||
 prompt
 prompt -- Drop tables
 select 'drop table ' || table_name || ';' from user_tables order by table_name;
+prompt
+prompt -- Drop synonyms
+select 'drop synonym ' || synonym_name || ';' from user_synonyms order by synonym_name;
+prompt
 prompt -- Exit
 prompt exit
 exit;
