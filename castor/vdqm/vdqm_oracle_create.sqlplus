@@ -530,7 +530,7 @@ CREATE OR REPLACE PACKAGE castorVdqmCommon AS
   /**
    * This function returns the number of seconds since the EPOCH UTC + 1.
    *
-   * @return number of seconds since the EPOCH UTC + 1.
+   * @return number of seconds since the Epoch (00:00:00 UTC, January 1, 1970).
    */
   FUNCTION getTime RETURN NUMBER;
 
@@ -585,11 +585,25 @@ CREATE OR REPLACE PACKAGE BODY castorVdqmCommon AS
    * See the castorVdqm package specification for documentation.
    */
   FUNCTION getTime RETURN NUMBER AS
-    ret NUMBER;
+    epoch            TIMESTAMP;
+    now              TIMESTAMP;
+    interval         INTERVAL DAY(9) TO SECOND;
+    interval_days    NUMBER;
+    interval_hours   NUMBER;
+    interval_minutes NUMBER;
+    interval_seconds NUMBER;
   BEGIN
-    SELECT (SYSDATE - to_date('01-jan-1970 01:00:00','dd-mon-yyyy HH:MI:SS')) *
-      (24*60*60) INTO ret FROM DUAL;
-    RETURN ret;
+    epoch := TO_TIMESTAMP_TZ('01-JAN-1970 00:00:00 00:00',
+      'DD-MON-YYYY HH24:MI:SS TZH:TZM');
+    now := SYS_EXTRACT_UTC(SYSTIMESTAMP);
+    interval         := now - epoch;
+    interval_days    := EXTRACT(DAY    FROM (interval));
+    interval_hours   := EXTRACT(HOUR   FROM (interval));
+    interval_minutes := EXTRACT(MINUTE FROM (interval));
+    interval_seconds := EXTRACT(SECOND FROM (interval));
+
+    RETURN interval_days * 24 * 60 * 60 + interval_hours * 60 * 60 +
+      interval_minutes * 60 + interval_seconds;
   END getTime;
 
 END castorVdqmCommon;
@@ -1140,20 +1154,23 @@ ORDER BY
  * View used for generating the list of drives when replying to the showqueues
  * command
  */
-CREATE OR REPLACE VIEW tapeDriveShowqueues_VIEW
-AS WITH TimeZoneOffset AS (
-  SELECT
-    (EXTRACT(TIMEZONE_HOUR FROM CURRENT_TIMESTAMP) - 1) * 3600 AS value
-  FROM DUAL)
-SELECT
-  TapeDrive.status, TapeDrive.id, TapeDrive.runningTapeReq, TapeDrive.jobId,
-  TapeDrive.modificationTime -
-    (SELECT TimeZoneOffset.value FROM TimeZoneOffset) AS modificationTime,
-  TapeDrive.resetTime, TapeDrive.useCount, TapeDrive.errCount,
-  TapeDrive.transferredMB, TapeAccessSpecification.accessMode AS tapeAccessMode,
-  TapeDrive.totalMB, TapeServer.serverName, VdqmTape.vid, TapeDrive.driveName,
-  DeviceGroupName.dgName, castorVdqmView.getVdqmDedicate(TapeDrive.Id) AS
-    dedicate
+CREATE OR REPLACE VIEW TapeDriveShowqueues_VIEW AS SELECT
+  TapeDrive.status,
+  TapeDrive.id,
+  TapeDrive.runningTapeReq,
+  TapeDrive.jobId,
+  TapeDrive.modificationTime,
+  TapeDrive.resetTime,
+  TapeDrive.useCount,
+  TapeDrive.errCount,
+  TapeDrive.transferredMB,
+  TapeAccessSpecification.accessMode AS tapeAccessMode,
+  TapeDrive.totalMB,
+  TapeServer.serverName,
+  VdqmTape.vid,
+  TapeDrive.driveName,
+  DeviceGroupName.dgName,
+  castorVdqmView.getVdqmDedicate(TapeDrive.Id) AS dedicate
 FROM
   TapeDrive
 LEFT OUTER JOIN TapeServer ON
@@ -1176,12 +1193,7 @@ ORDER BY
  * View used for generating the list of requests when replying to the
  * showqueues command
  */
-CREATE OR REPLACE VIEW TapeRequestShowqueues_VIEW
-AS WITH TimezoneOffset AS (
-  SELECT
-    (EXTRACT(TIMEZONE_HOUR FROM CURRENT_TIMESTAMP) - 1) * 3600 as value
-  FROM DUAL)
-SELECT
+CREATE OR REPLACE VIEW TapeRequestShowqueues_VIEW AS SELECT
   TapeRequest.id,
   TapeDrive.driveName,
   TapeDrive.id AS tapeDriveId,
@@ -1190,8 +1202,7 @@ SELECT
   ClientIdentification.euid AS clientEuid,
   ClientIdentification.egid AS clientEgid,
   TapeAccessSpecification.accessMode,
-  TapeRequest.creationTime -
-    (SELECT TimezoneOffset.value FROM TimezoneOffset) AS creationTime,
+  TapeRequest.creationTime,
   ClientIdentification.machine AS clientMachine,
   VdqmTape.vid,
   TapeServer.serverName AS tapeServer,
