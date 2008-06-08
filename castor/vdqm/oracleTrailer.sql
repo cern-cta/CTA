@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.125 $ $Release$ $Date: 2008/06/07 22:46:58 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.126 $ $Release$ $Date: 2008/06/08 12:23:39 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -542,8 +542,8 @@ CREATE OR REPLACE PACKAGE BODY castorVdqmCommon AS
    * See the castorVdqm package specification for documentation.
    */
   FUNCTION getTime RETURN NUMBER AS
-    epoch            TIMESTAMP;
-    now              TIMESTAMP;
+    epoch            TIMESTAMP WITH TIME ZONE;
+    now              TIMESTAMP WITH TIME ZONE;
     interval         INTERVAL DAY(9) TO SECOND;
     interval_days    NUMBER;
     interval_hours   NUMBER;
@@ -552,7 +552,7 @@ CREATE OR REPLACE PACKAGE BODY castorVdqmCommon AS
   BEGIN
     epoch := TO_TIMESTAMP_TZ('01-JAN-1970 00:00:00 00:00',
       'DD-MON-YYYY HH24:MI:SS TZH:TZM');
-    now := SYS_EXTRACT_UTC(SYSTIMESTAMP);
+    now := SYSTIMESTAMP AT TIME ZONE '00:00';
     interval         := now - epoch;
     interval_days    := EXTRACT(DAY    FROM (interval));
     interval_hours   := EXTRACT(HOUR   FROM (interval));
