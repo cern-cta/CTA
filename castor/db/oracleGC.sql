@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.653 $ $Date: 2008/05/30 08:59:31 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.654 $ $Date: 2008/06/10 14:36:29 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -401,7 +401,7 @@ BEGIN
 END;
 
 /* Deal with old diskCopies in STAGEOUT */
-CREATE OR REPLACE PROCEDURE deleteOutOfDateStageOutDcs(timeOut IN NUMBER) AS
+CREATE OR REPLACE PROCEDURE deleteOutOfDateStageOutDCs(timeOut IN NUMBER) AS
 BEGIN
   -- Deal with old DiskCopies in STAGEOUT/WAITFS. The rule is to drop
   -- the ones with 0 fileSize and issue a putDone for the others
@@ -409,7 +409,11 @@ BEGIN
                FROM DiskCopy d, Castorfile c
               WHERE c.id = d.castorFile
                 AND d.creationTime < getTime() - timeOut
-                AND d.status IN (5, 6, 11)) LOOP   -- WAITFS, STAGEOUT, WAITFS_SCHEDULING
+                AND d.status IN (5, 6, 11) -- WAITFS, STAGEOUT, WAITFS_SCHEDULING
+		AND NOT EXISTS (
+		  SELECT 'x' FROM SubRequest
+		   WHERE castorFile = c.id
+		     AND status IN (0, 1, 2, 3, 5, 6, 13, 14))) LOOP -- All active
     IF 0 = cf.fileSize THEN
       -- here we invalidate the diskcopy and let the GC run
       UPDATE DiskCopy SET status = 7 WHERE id = cf.dcid;
