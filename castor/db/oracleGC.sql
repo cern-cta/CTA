@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.654 $ $Date: 2008/06/10 14:36:29 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.655 $ $Date: 2008/06/10 14:43:21 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -411,9 +411,12 @@ BEGIN
                 AND d.creationTime < getTime() - timeOut
                 AND d.status IN (5, 6, 11) -- WAITFS, STAGEOUT, WAITFS_SCHEDULING
 		AND NOT EXISTS (
-		  SELECT 'x' FROM SubRequest
+		  SELECT 'x'
+		    FROM SubRequest, Id2Type
 		   WHERE castorFile = c.id
-		     AND status IN (0, 1, 2, 3, 5, 6, 13, 14))) LOOP -- All active
+		     AND SubRequest.request = Id2Type.id
+		     AND status IN (0, 1, 2, 3, 5, 6, 13, 14) -- all active
+		     AND type NOT IN (37, 38))) LOOP -- ignore PrepareToPut, PrepareToUpdate
     IF 0 = cf.fileSize THEN
       -- here we invalidate the diskcopy and let the GC run
       UPDATE DiskCopy SET status = 7 WHERE id = cf.dcid;
