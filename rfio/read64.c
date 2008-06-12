@@ -1,5 +1,5 @@
 /*
- * $Id: read64.c,v 1.3 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: read64.c,v 1.4 2008/06/12 14:22:57 dhsmith Exp $
  */
 
 /*
@@ -403,10 +403,10 @@ int 	 size ;		/* How many bytes do we want to read ?	*/
        * Pointing to the next record.
        */
       if ( status == -1 ) {
-	 rfilefdt[s_index]->_iobuf.ptr += 4*LONGSIZE ;
+	 rfilefdt[s_index]->_iobuf.ptr += HYPERSIZE + 3*LONGSIZE ;
       }
       else	{
-	 rfilefdt[s_index]->_iobuf.ptr += 4*LONGSIZE + status ;
+	 rfilefdt[s_index]->_iobuf.ptr += HYPERSIZE + 3*LONGSIZE + status ;
       }
       rfilefdt[s_index]->nbrecord -- ;
       /*

@@ -562,7 +562,10 @@ error:
    if (ptr!=NULL) free(ptr);
    if (elements!=NULL) l_free_strlist(elements);
    if (result!=NULL) l_free_strlist(result);
-   if (prefixp != NULL && *prefixp != NULL) free(*prefixp);
+   if (prefixp != NULL && *prefixp != NULL) {
+     free(*prefixp);
+     *prefixp = NULL;
+   }
    errno = save_errno;
    return NULL;
 }
