@@ -86,8 +86,7 @@ namespace castor {
        * is the bitset used by the VDQM messages and is not an internal tape
        * drive status value of the VDQM2
        */
-      static void printTapeDriveStatusBitset(std::ostream &os,
-        const int bitset);
+      static void printTapeDriveStatusBitset(std::ostream &os, int bitset);
 
       /**
        * Returns the string form of the specified tape drive status.
@@ -132,6 +131,21 @@ namespace castor {
        * Private constructor to prevent the instantiation of DevTool objects.
        */
       DevTools() throw();
+
+      /**
+       * The element type of the map used to print out the textual
+       * representation of a drive unit status bitset.
+       */
+      struct UnitMaskAndStr {
+        unsigned int mask;
+        const char   *str;
+      };
+
+      /**
+       * Map used to print out the textual representation of a drive unit
+       * status bitset.
+       */
+      static UnitMaskAndStr unitStatusTypes_[];
 
     }; // class DevTools
 

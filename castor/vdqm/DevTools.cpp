@@ -11,6 +11,30 @@
 
 
 //------------------------------------------------------------------------------
+// private static member: unitStatusTypes_
+//------------------------------------------------------------------------------
+castor::vdqm::DevTools::UnitMaskAndStr
+  castor::vdqm::DevTools::unitStatusTypes_[] = {
+    {VDQM_TPD_STARTED  , "TPD_STARTED"  },
+    {VDQM_FORCE_UNMOUNT, "FORCE_UNMOUNT"},
+    {VDQM_UNIT_QUERY   , "UNIT_QUERY"   },
+    {VDQM_UNIT_MBCOUNT , "UNIT_MBCOUNT" },
+    {VDQM_UNIT_ERROR   , "UNIT_ERROR"   },
+    {VDQM_UNIT_UNKNOWN , "UNIT_UNKNOWN" },
+    {VDQM_VOL_UNMOUNT  , "VOL_UNMOUNT"  },
+    {VDQM_VOL_MOUNT    , "VOL_MOUNT"    },
+    {VDQM_UNIT_FREE    , "UNIT_FREE "   },
+    {VDQM_UNIT_BUSY    , "UNIT_BUSY"    },
+    {VDQM_UNIT_RELEASE , "UNIT_RELEASE" },
+    {VDQM_UNIT_ASSIGN  , "UNIT_ASSIGN"  },
+    {VDQM_UNIT_WAITDOWN, "UNIT_WAITDOWN"},
+    {VDQM_UNIT_DOWN    , "UNIT_DOWN"    },
+    {VDQM_UNIT_UP      , "UNIT_UP"      },
+    {0, NULL}
+};
+
+
+//------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::vdqm::DevTools::DevTools() throw() {
@@ -130,25 +154,44 @@ void castor::vdqm::DevTools::printMessage(std::ostream &os,
 // printTapeDriveStatusBitset
 //------------------------------------------------------------------------------
 void castor::vdqm::DevTools::printTapeDriveStatusBitset(std::ostream &os,
-  const int bitset) {
+  int bitset) {
 
-  if(bitset & VDQM_TPD_STARTED)   os << "+TPD_STARTED";
-  if(bitset & VDQM_FORCE_UNMOUNT) os << "+FORCE_UNMOUNT";
-  if(bitset & VDQM_UNIT_QUERY)    os << "+UNIT_QUERY";
-  if(bitset & VDQM_UNIT_MBCOUNT)  os << "+UNIT_MBCOUNT";
-  if(bitset & VDQM_UNIT_ERROR)    os << "+UNIT_ERROR";
-  if(bitset & VDQM_UNIT_UNKNOWN)  os << "+UNIT_UNKNOWN";
-  if(bitset & VDQM_VOL_UNMOUNT)   os << "+VOL_UNMOUNT";
-  if(bitset & VDQM_VOL_MOUNT)     os << "+VOL_MOUNT";
-  if(bitset & VDQM_UNIT_FREE)     os << "+UNIT_FREE";
-  if(bitset & VDQM_UNIT_BUSY)     os << "+UNIT_BUSY";
-  if(bitset & VDQM_UNIT_RELEASE)  os << "+UNIT_RELEASE";
-  if(bitset & VDQM_UNIT_ASSIGN)   os << "+UNIT_ASSIGN";
-  if(bitset & VDQM_UNIT_WAITDOWN) os << "+UNIT_WAITDOWN";
-  if(bitset & VDQM_UNIT_DOWN)     os << "+UNIT_DOWN";
-  if(bitset & VDQM_UNIT_UP)       os << "+UNIT_UP";
+  bool first = true;
 
-  os << std::endl;
+  // For each drive unit status mask
+  for(int i=0; unitStatusTypes_[i].mask != 0; i++) {
+
+    // If the status bit is set
+    if(bitset & unitStatusTypes_[i].mask) {
+
+      // Write a separator to the stream if needed
+      if(first) {
+        first = false;
+      } else {
+        os << "+";
+      }
+
+      // Write the textual representation to the stream
+      os << unitStatusTypes_[i].str;
+
+      // Remove the set bit.  This is done to see if there are any unknown set
+      // bits left over at the end of the conversion
+      bitset &= ~unitStatusTypes_[i].mask;
+    }
+  }
+
+  // If the bitset contained one or more unknown set bits
+  if(bitset != 0) {
+    // Write a separator to the stream if needed
+    if(first) {
+      first = false;
+    } else {
+      os << "+";
+    }
+
+    // Write the unknown bit(s) to the stream
+    os << "UNKNOWN_BITS_0x" << std::hex << bitset << std::dec;
+  }
 }
 
 

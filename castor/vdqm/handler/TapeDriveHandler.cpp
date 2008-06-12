@@ -81,11 +81,6 @@ castor::vdqm::handler::TapeDriveHandler::~TapeDriveHandler() throw() {
 void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest() 
   throw (castor::exception::Exception) {
 
-#ifdef PRINT_NETWORK_MESSAGES
-  castor::vdqm::DevTools::printTapeDriveStatusBitset(std::cout,
-    ptr_driveRequest->status);
-#endif
-
   castor::vdqm::TapeServer* tapeServer = NULL;
   
 

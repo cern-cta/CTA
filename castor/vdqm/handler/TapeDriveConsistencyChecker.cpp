@@ -319,7 +319,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkFreeConsistency()
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveConsistencyChecker::
   checkAssignConsistency() throw (castor::exception::Exception) {
-  
+
   TapeRequest* tapeRequest = ptr_tapeDrive->runningTapeReq();
   TapeServer* tapeServer = ptr_tapeDrive->tapeServer(); 
   
@@ -396,11 +396,14 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::
       (ptr_tapeDrive->status() == UNIT_UP) &&
       (ptr_driveRequest->status & (VDQM_UNIT_RELEASE |
                                    VDQM_VOL_MOUNT | VDQM_VOL_UNMOUNT)) ) {
-        
+    std::stringstream status;
+
+    castor::vdqm::DevTools::printTapeDriveStatusBitset(status,
+      ptr_driveRequest->status);
+
     castor::exception::Exception ex(EVQBADSTAT);
     ex.getMessage() << "TapeDriveConsistencyChecker::checkAssignConsistency(): "
-                    << "Status 0x"
-                    << std::hex << ptr_driveRequest->status 
+                    << "Drive status: " << status.str()
                     << " requested on FREE drive" << std::endl;
     throw ex;
   }
