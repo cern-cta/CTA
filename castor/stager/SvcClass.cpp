@@ -51,7 +51,7 @@ castor::stager::SvcClass::SvcClass() throw() :
   m_migratorPolicy(""),
   m_recallerPolicy(""),
   m_streamPolicy(""),
-  m_gcWeightForAccess(0),
+  m_gcPolicy(""),
   m_gcEnabled(false),
   m_hasDiskOnlyBehavior(false),
   m_id(0),
@@ -93,7 +93,7 @@ void castor::stager::SvcClass::print(std::ostream& stream,
   stream << indent << "migratorPolicy : " << m_migratorPolicy << std::endl;
   stream << indent << "recallerPolicy : " << m_recallerPolicy << std::endl;
   stream << indent << "streamPolicy : " << m_streamPolicy << std::endl;
-  stream << indent << "gcWeightForAccess : " << m_gcWeightForAccess << std::endl;
+  stream << indent << "gcPolicy : " << m_gcPolicy << std::endl;
   stream << indent << "gcEnabled : " << m_gcEnabled << std::endl;
   stream << indent << "hasDiskOnlyBehavior : " << m_hasDiskOnlyBehavior << std::endl;
   stream << indent << "id : " << m_id << std::endl;

@@ -198,18 +198,16 @@ int Cstager_SvcClass_streamPolicy(struct Cstager_SvcClass_t* instance, const cha
 int Cstager_SvcClass_setStreamPolicy(struct Cstager_SvcClass_t* instance, const char* new_var);
 
 /**
- * Get the value of gcWeightForAccess
- * Weight in days that is added for each access to diskCopy.gcWeight for all
- * diskCopies belonging to diskPools under this service class.
+ * Get the value of gcPolicy
+ * Policy ruling the behavior of the garbage collector, when enabled
  */
-int Cstager_SvcClass_gcWeightForAccess(struct Cstager_SvcClass_t* instance, int* var);
+int Cstager_SvcClass_gcPolicy(struct Cstager_SvcClass_t* instance, const char** var);
 
 /**
- * Set the value of gcWeightForAccess
- * Weight in days that is added for each access to diskCopy.gcWeight for all
- * diskCopies belonging to diskPools under this service class.
+ * Set the value of gcPolicy
+ * Policy ruling the behavior of the garbage collector, when enabled
  */
-int Cstager_SvcClass_setGcWeightForAccess(struct Cstager_SvcClass_t* instance, int new_var);
+int Cstager_SvcClass_setGcPolicy(struct Cstager_SvcClass_t* instance, const char* new_var);
 
 /**
  * Get the value of gcEnabled

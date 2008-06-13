@@ -260,23 +260,21 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_gcWeightForAccess
-       * Weight in days that is added for each access to diskCopy.gcWeight for all
-       * diskCopies belonging to diskPools under this service class.
-       * @return the value of m_gcWeightForAccess
+       * Get the value of m_gcPolicy
+       * Policy ruling the behavior of the garbage collector, when enabled
+       * @return the value of m_gcPolicy
        */
-      int gcWeightForAccess() const {
-        return m_gcWeightForAccess;
+      std::string gcPolicy() const {
+        return m_gcPolicy;
       }
 
       /**
-       * Set the value of m_gcWeightForAccess
-       * Weight in days that is added for each access to diskCopy.gcWeight for all
-       * diskCopies belonging to diskPools under this service class.
-       * @param new_var the new value of m_gcWeightForAccess
+       * Set the value of m_gcPolicy
+       * Policy ruling the behavior of the garbage collector, when enabled
+       * @param new_var the new value of m_gcPolicy
        */
-      void setGcWeightForAccess(int new_var) {
-        m_gcWeightForAccess = new_var;
+      void setGcPolicy(std::string new_var) {
+        m_gcPolicy = new_var;
       }
 
       /**
@@ -440,8 +438,8 @@ namespace castor {
       /// Policy ruling the behavior of the streams to migrate files.
       std::string m_streamPolicy;
 
-      /// Weight in days that is added for each access to diskCopy.gcWeight for all diskCopies belonging to diskPools under this service class.
-      int m_gcWeightForAccess;
+      /// Policy ruling the behavior of the garbage collector, when enabled
+      std::string m_gcPolicy;
 
       /// Whether the diskpools under this serviceClass should be garbage collected.
       bool m_gcEnabled;

@@ -234,18 +234,19 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_SvcClass_gcWeightForAccess
+  // Cstager_SvcClass_gcPolicy
   //----------------------------------------------------------------------------
-  int Cstager_SvcClass_gcWeightForAccess(castor::stager::SvcClass* instance, int* var) {
-    *var = instance->gcWeightForAccess();
+  int Cstager_SvcClass_gcPolicy(castor::stager::SvcClass* instance, const char** var) {
+    *var = instance->gcPolicy().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_SvcClass_setGcWeightForAccess
+  // Cstager_SvcClass_setGcPolicy
   //----------------------------------------------------------------------------
-  int Cstager_SvcClass_setGcWeightForAccess(castor::stager::SvcClass* instance, int new_var) {
-    instance->setGcWeightForAccess(new_var);
+  int Cstager_SvcClass_setGcPolicy(castor::stager::SvcClass* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setGcPolicy(snew_var);
     return 0;
   }
 
