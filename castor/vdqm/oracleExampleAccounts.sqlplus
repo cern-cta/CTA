@@ -1,0 +1,50 @@
+create role cern_dev_role;
+
+create role cern_app_role;
+
+grant create role
+,create type
+,create view
+,create table
+,alter session
+,query rewrite
+,create cluster
+,create session
+,create synonym
+,create trigger
+,create sequence
+,create snapshot
+,create procedure
+,create database link to cern_dev_role;
+
+grant create view
+,alter session
+,query rewrite
+,create session
+,create synonym to cern_app_role;
+
+create tablespace vdqm_indx datafile size 100m
+autoextend on next 100m maxsize 10g
+extent management local segment space management auto;
+
+create tablespace vdqm_data datafile size 100m
+autoextend on next 100m maxsize 10g
+extent management local segment space management auto;
+
+create user vdqm identified by change_me default tablespace vdqm_data temporary tablespace temp01 account unlock password expire;
+create user vdqm_writer identified by change_me default tablespace vdqm_data temporary tablespace temp01 account unlock password expire;
+
+create profile vdqm_profile limit sessions_per_user 20;
+create profile vdqm_writer_profile limit sessions_per_user 40;
+
+alter user vdqm profile vdqm_profile;
+alter user vdqm_writer profile vdqm_writer_profile;
+
+alter user vdqm quota unlimited on vdqm_data;
+alter user vdqm quota unlimited on vdqm_indx;
+
+alter user vdqm_writer quota unlimited on vdqm_data;
+alter user vdqm_writer quota unlimited on vdqm_indx;
+
+grant cern_dev_role, debug connect session,debug any procedure to vdqm;
+grant cern_app_role to vdqm_writer;
