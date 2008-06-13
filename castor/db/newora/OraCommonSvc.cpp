@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2008/06/02 13:24:14 $ $Author: waldron $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2008/06/13 14:43:15 $ $Author: sponcec3 $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -79,7 +79,7 @@ const std::string castor::db::ora::OraCommonSvc::s_selectTapeStatementString =
 
 /// SQL statement for selectSvcClass
 const std::string castor::db::ora::OraCommonSvc::s_selectSvcClassStatementString =
-  "SELECT id, nbDrives, defaultFileSize, maxReplicaNb, replicationPolicy, gcEnabled, migratorPolicy, recallerPolicy, hasDiskOnlyBehavior, streamPolicy, gcWeightForAccess FROM SvcClass WHERE name = :1";
+  "SELECT id, nbDrives, defaultFileSize, maxReplicaNb, replicationPolicy, gcEnabled, migratorPolicy, recallerPolicy, hasDiskOnlyBehavior, streamPolicy, gcPolicy FROM SvcClass WHERE name = :1";
 
 /// SQL statement for selectFileClass
 const std::string castor::db::ora::OraCommonSvc::s_selectFileClassStatementString =
@@ -340,7 +340,7 @@ castor::db::ora::OraCommonSvc::selectSvcClass
     result->setRecallerPolicy(rset->getString(8));
     result->setHasDiskOnlyBehavior(rset->getInt(9));
     result->setStreamPolicy(rset->getString(10));
-    result->setGcWeightForAccess(rset->getInt(11));
+    result->setGcPolicy(rset->getString(11));
     result->setName(name);
     m_selectSvcClassStatement->closeResultSet(rset);
     return result;
