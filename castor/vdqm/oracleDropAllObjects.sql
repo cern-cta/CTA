@@ -4,7 +4,7 @@ set linesize 1000
 column cmd format a1000
 set trimspool on
 
-spool dropAllObjects.tmp
+spool oracleDropAllObjects.tmp
 prompt -- Drop triggers
 select unique
   'drop ' || object_type || ' ' || object_name || ';' as cmd
@@ -44,4 +44,4 @@ select unique
   'drop synonym ' || synonym_name || ';' as cmd
   from user_synonyms;
 spool off
-@dropAllObjects.tmp
+@oracleDropAllObjects.tmp

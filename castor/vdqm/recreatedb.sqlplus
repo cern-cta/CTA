@@ -1,6 +1,0 @@
-whenever oserror exit failure
-whenever sqlerror exit failure rollback
-
-@dropAllObjects.sqlplus
-@vdqm_oracle_create.sqlplus
-!$CASTOR_CVS/hsmtools/vdqmDBInit
