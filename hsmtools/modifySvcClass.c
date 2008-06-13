@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.19 $ $Release$ $Date: 2008/06/02 13:34:25 $ $Author: waldron $
+ * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.20 $ $Release$ $Date: 2008/06/13 14:53:20 $ $Author: sponcec3 $
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -57,7 +57,6 @@ enum SvcClassAttributes {
   MaxReplicaNb,
   ReplicationPolicy,
   GcEnabled,
-  GcWeightForAccess,
   MigratorPolicy,
   RecallerPolicy,
   AddTapePools,
@@ -77,7 +76,6 @@ static struct Coptions longopts[] = {
   {"NbDrives",REQUIRED_ARGUMENT,0,NbDrives},
   {"ReplicationPolicy",REQUIRED_ARGUMENT,0,ReplicationPolicy},
   {"GcEnabled",REQUIRED_ARGUMENT,0,GcEnabled},
-  {"GcWeightForAccess",REQUIRED_ARGUMENT,0,GcWeightForAccess},
   {"MigratorPolicy",REQUIRED_ARGUMENT,0,MigratorPolicy},
   {"RecallerPolicy",REQUIRED_ARGUMENT,0,RecallerPolicy},
   {"AddTapePools",REQUIRED_ARGUMENT,0,AddTapePools},
@@ -408,7 +406,7 @@ int main(int argc, char *argv[])
   struct Cstager_TapePool_t **tapePoolsArray = NULL;
   struct Cstager_DiskPool_t **diskPoolsArray = NULL;
   u_signed64 defaultFileSize = 0;
-  int maxReplicaNb = -1, nbDrives = -1, gcWeightForAccess = -1;
+  int maxReplicaNb = -1, nbDrives = -1;
   char *replicationPolicy = NULL, *migratorPolicy = NULL, *recallerPolicy = NULL;
   
   Coptind = 1;
@@ -453,9 +451,6 @@ int main(int argc, char *argv[])
       break;
     case GcEnabled:
       gcEnabled = strdup(Coptarg);
-      break;
-    case GcWeightForAccess:
-      gcWeightForAccess = atoi(Coptarg);
       break;
     case MigratorPolicy:
       migratorPolicy = strdup(Coptarg);
@@ -519,9 +514,6 @@ int main(int argc, char *argv[])
 	      "Invalid option for GcEnabled, value must be 'yes' or 'no'\n");
       return(1);
     }
-  }
-  if ( gcWeightForAccess >= 0 ) {
-    Cstager_SvcClass_setGcWeightForAccess(svcClass,gcWeightForAccess);
   }
   if ( replicationPolicy != NULL ) {
     Cstager_SvcClass_setReplicationPolicy(svcClass,replicationPolicy);
