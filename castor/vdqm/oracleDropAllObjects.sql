@@ -8,7 +8,7 @@ spool oracleDropAllObjects.tmp
 prompt -- Drop triggers
 select unique
   'drop ' || object_type || ' ' || object_name || ';' as cmd
-  from user_procedures
+  from user_objects
   where object_type='TRIGGER';
 prompt
 prompt -- Drop packages
