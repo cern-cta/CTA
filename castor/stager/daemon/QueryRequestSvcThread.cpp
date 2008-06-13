@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.86 $ $Release$ $Date: 2008/06/03 16:20:24 $ $Author: waldron $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.87 $ $Release$ $Date: 2008/06/13 14:42:06 $ $Author: sponcec3 $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -144,8 +144,8 @@ void castor::stager::daemon::QueryRequestSvcThread::setFileResponseStatus
         ((FILE_STAGED == st || FILE_CANBEMIGR == st))) {
       fr->setStatus(st);
       fr->setDiskServer(diskServer);
-      fr->setNbAccesses(dc->nbAccesses());
     }
+    fr->setNbAccesses(fr->nbAccesses()+dc->nbAccesses());
   }
 
   // 3. Set other common attributes from the castorFile
