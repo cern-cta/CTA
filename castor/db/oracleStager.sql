@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.671 $ $Date: 2008/06/13 14:48:36 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.672 $ $Date: 2008/06/13 15:11:40 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -862,20 +862,19 @@ END;
 CREATE OR REPLACE PROCEDURE internalPutDoneFunc (cfId IN INTEGER,
                                                  fs IN INTEGER,
                                                  context IN INTEGER,
-                                                 nbTC IN INTEGER) AS
+                                                 nbTC IN INTEGER,
+                                                 svcClassId IN INTEGER) AS
   tcId INTEGER;
   dcId INTEGER;
   gcwProc VARCHAR2(2048);
+  gcw NUMBER;
 BEGIN
   -- get function to use for computing the gc weight of the brand new diskCopy
-  SELECT userPrecompute INTO gcwProc
-    FROM SvcClass, GcPolicy
-   WHERE SvcClass.id = srSvcClass
-     AND SvcClass.gcPolicy = GcPolicy.name;
+  gcwProc := castorGC.getUserWeight(svcClassId);
   -- if no tape copy or 0 length file, no migration
   -- so we go directly to status STAGED
   IF nbTC = 0 OR fs = 0 THEN
-    EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:fs, 0); END'
+    EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:fs, 0); END;'
       USING OUT gcw, IN fs;
     UPDATE DiskCopy
        SET status = 0, -- STAGED
@@ -884,7 +883,7 @@ BEGIN
 	   diskCopySize = fs
      WHERE castorFile = cfId AND status = 6; -- STAGEOUT
   ELSE
-    EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:fs, 10); END'
+    EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:fs, 10); END;'
       USING OUT gcw, IN fs; 
     -- update the DiskCopy status to CANBEMIGR
     UPDATE DiskCopy 
@@ -928,14 +927,15 @@ END;
 /* PL/SQL method implementing putDoneFunc */
 CREATE OR REPLACE PROCEDURE putDoneFunc (cfId IN INTEGER,
                                          fs IN INTEGER,
-                                         context IN INTEGER) AS
+                                         context IN INTEGER,
+                                         svcClassId IN INTEGER) AS
   nc INTEGER;
 BEGIN
   -- get number of TapeCopies to create
   SELECT nbCopies INTO nc FROM FileClass, CastorFile
    WHERE CastorFile.id = cfId AND CastorFile.fileClass = FileClass.id;
   -- and execute the internal putDoneFunc with the number of TapeCopies to be created
-  internalPutDoneFunc(cfId, fs, context, nc);
+  internalPutDoneFunc(cfId, fs, context, nc, svcClassId);
 END;
 
 
@@ -944,6 +944,7 @@ CREATE OR REPLACE PROCEDURE startRepackMigration(srId IN INTEGER, cfId IN INTEGE
   nbTC NUMBER(2);
   nbTCInFC NUMBER(2);
   fsId NUMBER;
+  svcClassId NUMBER;
 BEGIN
   UPDATE DiskCopy SET status = 6  -- DISKCOPY_STAGEOUT 
    WHERE id = dcId RETURNING fileSystem INTO fsId;
@@ -972,15 +973,15 @@ BEGIN
      AND SubRequest.request IN
        (SELECT id FROM StageRepackRequest); 
   
+  -- get the service class
+  SELECT R.svcClass INTO svcClassId
+    FROM StageRepackRequest R, SubRequest
+   WHERE SubRequest.request = R.id
+     AND SubRequest.id = srId;
   -- create the required number of tapecopies for the files
-  internalPutDoneFunc(cfId, fsId, 0, nbTC);
+  internalPutDoneFunc(cfId, fsId, 0, nbTC, svcClassId);
   -- set svcClass in the CastorFile for the migration
-  UPDATE CastorFile SET svcClass = 
-    (SELECT R.svcClass 
-       FROM StageRepackRequest R, SubRequest
-      WHERE SubRequest.request = R.id
-        AND SubRequest.id = srId)
-   WHERE id = cfId;
+  UPDATE CastorFile SET svcClass = svcClassId WHERE id = cfId;
    
   -- update remaining STAGED diskcopies to CANBEMIGR too
   -- we may have them as result of disk2disk copies, and so far
@@ -1213,7 +1214,7 @@ BEGIN
     IF nbDCs > 0 THEN
       -- we have it
       result := 1;
-      putDoneFunc(cfId, fs, 2);   -- context = PutDone
+      putDoneFunc(cfId, fs, 2, svcClassId);   -- context = PutDone
     ELSE
       -- This is a PutDone without a put (otherwise we would have found
       -- a DiskCopy on a FileSystem), so we fail the subrequest.
@@ -1384,7 +1385,7 @@ BEGIN
     SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
     SELECT ids_seq.nextval INTO dcId FROM DUAL;
     buildPathFromFileId(fid, nh, dcId, rpath);
-    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime, lastAccessTime, gcWeight, diskCopySize, nbCopyAccesses))
+    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime, lastAccessTime, gcWeight, diskCopySize, nbCopyAccesses)
          VALUES (rpath, dcId, 0, cfId, 5, getTime(), getTime(), 0, 0, 0); -- status WAITFS
     INSERT INTO Id2Type (id, type) VALUES (dcId, 5); -- OBJ_DiskCopy
     rstatus := 5; -- WAITFS
@@ -1777,7 +1778,7 @@ CREATE OR REPLACE PROCEDURE setFileGCWeightProc
 (fid IN NUMBER, nh IN VARCHAR2, svcClassId IN NUMBER, weight IN FLOAT, ret OUT INTEGER) AS
   CURSOR dcs IS
     SELECT DiskCopy.id, gcWeight
-      FROM DiksCopy, CastorFile
+      FROM DiskCopy, CastorFile
    WHERE castorFile.id = diskcopy.castorFile
      AND fileid = fid
      AND nshost = nh
@@ -1786,20 +1787,18 @@ CREATE OR REPLACE PROCEDURE setFileGCWeightProc
          FROM FileSystem, DiskPool2SvcClass D2S
         WHERE FileSystem.diskPool = D2S.parent
           AND D2S.child = svcClassId);
+  gcwProc VARCHAR(2048);
   gcw NUMBER;
 BEGIN
   ret := 0;
   -- get gc userSetGCWeight function to be used, if any
-  SELECT userSetGCWeight INTO gcwProc
-    FROM SvcClass, GcPolicy
-   WHERE SvcClass.id = svcClassId
-     AND SvcClass.gcPolicy = GcPolicy.name;
+  gcwProc := castorGC.getUserSetGCWeight(svcClassId);
   -- loop over diskcopies and update them
   FOR dc in dcs LOOP
     gcw := dc.gcWeight;
     -- compute actual gc weight to be used
-    if userSetGCWeight IS NOT NULL THEN
-      EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:oldGcw, :delta); END'
+    if gcwProc IS NOT NULL THEN
+      EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:oldGcw, :delta); END;'
         USING OUT gcw, IN gcw, weight;
     END IF;
     -- update DiskCopy

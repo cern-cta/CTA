@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.670 $ $Date: 2008/06/13 14:48:36 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.671 $ $Date: 2008/06/13 15:11:40 $ $Author: sponcec3 $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -210,6 +210,28 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
                                                   castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                   nsHost OUT VARCHAR2, fileSize OUT INTEGER,
                                                   tapeCopyId OUT INTEGER, optimized IN INTEGER) AS
+  policy VARCHAR(2048);
+BEGIN
+  -- get the policy name
+  BEGIN
+    SELECT migrSelectPolicy INTO policy
+      FROM Stream, TapePool
+     WHERE Stream.id = streamId
+       AND Stream.tapePool = TapePool.id;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    policy := 'defaultMigrSelPolicy';
+  END;
+  EXECUTE IMMEDIATE 'BEGIN ' || policy || '(:streamId, :diskServerName, :mountPoint, :path, :dci, :castorFileId, :fileId, :nsHost, :fileSize, :tapeCopyId, :optimized); END;'
+    USING IN streamId, OUT diskServerName, OUT mountPoint, OUT path, OUT dci, OUT castorFileId, OUT fileId, OUT nsHost, OUT fileSize, OUT tapeCopyId, IN optimized;
+END;
+
+/* default migration candidate selection policy */
+CREATE OR REPLACE PROCEDURE defaultMigrSelPolicy(streamId IN INTEGER,
+                                                 diskServerName OUT VARCHAR2, mountPoint OUT VARCHAR2,
+                                                 path OUT VARCHAR2, dci OUT INTEGER,
+                                                 castorFileId OUT INTEGER, fileId OUT INTEGER,
+                                                 nsHost OUT VARCHAR2, fileSize OUT INTEGER,
+                                                 tapeCopyId OUT INTEGER, optimized IN INTEGER) AS
   fileSystemId INTEGER := 0;
   dsid NUMBER;
   fsDiskServer NUMBER;
@@ -610,6 +632,8 @@ CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
   cfId NUMBER;
   fsId NUMBER;
   fs NUMBER;
+  gcw NUMBER;
+  gcwProc VARCHAR(2048);
 BEGIN
   SELECT SubRequest.id, SubRequest.request, DiskCopy.id, CastorFile.id, DiskCopy.fileSystem, Castorfile.FileSize
     INTO subRequestId, requestId, dci, cfid, fsId, fs
@@ -642,16 +666,13 @@ BEGIN
       gcw VARCHAR2(2048);
     BEGIN
       SELECT Request.svcClass INTO svcClassId
-        FROM (SELECT svcClass FROM StageGetRequest UNION ALL
-              SELECT svcClass FROM StagePrepareToGetRequest UNION ALL
-              SELECT svcClass FROM StageUpdateRequest UNION ALL
-              SELECT svcClass FROM StagePrepareToUpdateRequest) Request
+        FROM (SELECT id, svcClass FROM StageGetRequest UNION ALL
+              SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
+              SELECT id, svcClass FROM StageUpdateRequest UNION ALL
+              SELECT id, svcClass FROM StagePrepareToUpdateRequest) Request
        WHERE Request.id = requestId;
-      SELECT recallPrecompute INTO gcwProc
-        FROM SvcClass, GcPolicy
-       WHERE SvcClass.id = srSvcClass
-         AND SvcClass.gcPolicy = GcPolicy.name;
-      EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:size); END'
+      gcwProc := castorGC.getRecallWeight(svcClassId);
+      EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:size); END;'
         USING OUT gcw, IN fs;
       UPDATE DiskCopy
          SET status = 0,  -- DISKCOPY_STAGED

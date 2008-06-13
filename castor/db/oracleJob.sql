@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.653 $ $Date: 2008/06/13 14:48:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.654 $ $Date: 2008/06/13 15:11:40 $ $Author: sponcec3 $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -156,7 +156,7 @@ BEGIN
    WHERE parent = srId;
   -- link DiskCopy and FileSystem and update DiskCopyStatus
   UPDATE DiskCopy SET status = 6, -- DISKCOPY_STAGEOUT
-                      fileSystem = fileSystemId
+                      fileSystem = fileSystemId,
                       nbCopyAccesses = nbCopyAccesses + 1
    WHERE id = rdcId
    RETURNING status, path
@@ -211,22 +211,16 @@ BEGIN
   -- We don't care and we randomly took the first one.
   -- First we will compute the new gcWeight of the diskcopy
   IF nbac = 0 THEN
-    SELECT firstAccessHook INTO gcwProc
-      FROM SvcClass, GcPolicy
-     WHERE SvcClass.id = srSvcClass
-       AND SvcClass.gcPolicy = GcPolicy.name;
-    IF firstAccessHook IS NOT NULL THEN
-      EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:oldGcw, :cTime); END'
-        USING OUT gcw, IN gcw, cTime;
+    gcwProc := castorGC.getFirstAccessHook(srSvcClass);
+    IF gcwProc IS NOT NULL THEN
+      EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:oldGcw, :cTime); END;'
+        USING OUT gcw, IN gcw, IN cTime;
     END IF;
   ELSE
-    SELECT accessHook INTO gcwProc
-      FROM SvcClass, GcPolicy
-     WHERE SvcClass.id = srSvcClass
-       AND SvcClass.gcPolicy = GcPolicy.name;
-    IF accessHook IS NOT NULL THEN
-      EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:oldGcw, :cTime, :nbAc); END'
-        USING OUT gcw, IN gcw, cTime, nbac;
+    gcwProc := castorGC.getAccessHook(srSvcClass);
+    IF gcwProc IS NOT NULL THEN
+      EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:oldGcw, :cTime, :nbAc); END;'
+        USING OUT gcw, IN gcw, IN cTime, IN nbac;
     END IF;
   END IF;
   -- Here we also update the gcWeight taking into account the new lastAccessTime
@@ -365,7 +359,8 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   proto VARCHAR2(2048);
   reqId NUMBER;
   svcClassId NUMBER;
-  gcw VARCHAR2(2048);
+  gcwProc VARCHAR2(2048);
+  gcw NUMBER;
   fileSize NUMBER;
 BEGIN
   -- try to get the source status
@@ -403,13 +398,9 @@ BEGIN
      AND SubRequest.request = Req.id
      AND Req.svcClass = SvcClass.id;
   -- compute gcWeight
-  SELECT copyPrecompute INTO gcwProc
-    FROM SvcClass, GcPolicy
-   WHERE SvcClass.id = srSvcClass
-     AND SvcClass.gcPolicy = GcPolicy.name;
-  EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:size, :status, :gcw); END'
+  gcwProc := castorGC.getCopyWeight(svcClassId);
+  EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:size, :status, :gcw); END;'
     USING OUT gcw, IN fileSize, srcStatus, gcw;
-  END IF;
   -- update status
   UPDATE DiskCopy
      SET status = srcStatus,
@@ -577,7 +568,7 @@ BEGIN
   IF contextPIPP != 0 THEN
     -- If not a put inside a PrepareToPut/Update, create TapeCopies
     -- and update DiskCopy status
-    putDoneFunc(cfId, realFileSize, contextPIPP);
+    putDoneFunc(cfId, realFileSize, contextPIPP, scId);
   ELSE
     -- If put inside PrepareToPut/Update, restart any PutDone currently
     -- waiting on this put/update

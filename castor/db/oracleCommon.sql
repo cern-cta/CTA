@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.657 $ $Date: 2008/06/13 14:48:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.658 $ $Date: 2008/06/13 15:11:40 $ $Author: sponcec3 $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -309,11 +309,11 @@ INSERT INTO FileSystemsToCheck SELECT id, 0 FROM FileSystem;
 
 /* a table storing the Gc policies and detailing there configuration
    For each policy, identified by a name, parameters are :
-     - userPrecompute : the name of the PL/SQL function to be called to
+     - userWeight : the name of the PL/SQL function to be called to
        precompute the GC weight when a file is written by the user.
-     - recallPrecompute : the name of the PL/SQL function to be called to
+     - recallWeight : the name of the PL/SQL function to be called to
        precompute the GC weight when a file is recalled
-     - copyPrecompute : the name of the PL/SQL function to be called to
+     - copyWeight : the name of the PL/SQL function to be called to
        precompute the GC weight when a file is disk to disk copied
      - firstAccessHook : the name of the PL/SQL function to be called
        when the file is accessed for the first time. Can be NULL.
@@ -323,9 +323,9 @@ INSERT INTO FileSystemsToCheck SELECT id, 0 FROM FileSystem;
        when a setFileGcWeight user request is processed can be NULL.
    All functions return a number that is the new gcWeight.
    In general, here are the signatures :
-     userPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER)
-     recallPrecompute(fileSize NUMBER)
-     copyPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER))
+     userWeight(fileSize NUMBER, DiskCopyStatus NUMBER)
+     recallWeight(fileSize NUMBER)
+     copyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER))
      firstAccessHook(oldGcWeight NUMBER, creationTime NUMBER)
      accessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER)
      userSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER)
@@ -333,32 +333,32 @@ INSERT INTO FileSystemsToCheck SELECT id, 0 FROM FileSystem;
      diskCopyStatus can be STAGED(0) or CANBEMIGR(10)
  */
 CREATE TABLE GcPolicy (name VARCHAR2(2048) NOT NULL PRIMARY KEY,
-                       userPrecompute VARCHAR2(2048) NOT NULL,
-                       recallPrecompure VARCHAR2(2048) NOT NULL,
-                       copyPrecompute VARCHAR2(2048) NOT NULL,
+                       userWeight VARCHAR2(2048) NOT NULL,
+                       recallWeight VARCHAR2(2048) NOT NULL,
+                       copyWeight VARCHAR2(2048) NOT NULL,
                        firstAccessHook VARCHAR2(2048) DEFAULT NULL,
                        accessHook VARCHAR2(2048) DEFAULT NULL,
                        userSetGCWeight VARCHAR2(2048) DEFAULT NULL);
 
 /* Default policy, mainly based on file sizes */
 INSERT INTO GcPolicy VALUES ('default',
-                             'castorGC.sizeRelatedUserPreCompute',
-                             'castorGC.sizeRelatedRecallsPreCompute',
-                             'castorGC.sizeRelatedCopyPreCompute',
+                             'castorGC.sizeRelatedUserWeight',
+                             'castorGC.sizeRelatedRecallsWeight',
+                             'castorGC.sizeRelatedCopyWeight',
                              'castorGC.dayBonusFirstAccessHook',
                              'castorGC.halfHourBonusAccessHook',
                              'castorGc.cappedUserSetGCWeight');
 INSERT INTO GcPolicy VALUES ('FIFO',
-                             'castorGC.creationTimeRelatedUserPreCompute',
-                             'castorGC.creationTimeRelatedRecallsPreCompute',
-                             'castorGC.creationTimeRelatedCopyPreCompute',
+                             'castorGC.creationTimeUserWeight',
+                             'castorGC.creationTimeRecallsWeight',
+                             'castorGC.creationTimeCopyWeight',
                              NULL,
                              NULL,
                              NULL);
 INSERT INTO GcPolicy VALUES ('LRU',
-                             'castorGC.creationTimeRelatedUserPreCompute',
-                             'castorGC.creationTimeRelatedRecallsPreCompute',
-                             'castorGC.creationTimeRelatedCopyPreCompute',
+                             'castorGC.creationTimeUserWeight',
+                             'castorGC.creationTimeRecallsWeight',
+                             'castorGC.creationTimeCopyWeight',
                              'castorGC.LRUFirstAccessHook',
                              'castorGC.LRUAccessHook',
                              NULL);

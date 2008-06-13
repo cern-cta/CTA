@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.656 $ $Date: 2008/06/13 14:48:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.657 $ $Date: 2008/06/13 15:11:40 $ $Author: sponcec3 $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -20,19 +20,26 @@ CREATE OR REPLACE PACKAGE castorGC AS
     nshost VARCHAR2(2048),
     operation INTEGER);
   TYPE JobLogEntry_Cur IS REF CURSOR RETURN JobLogEntry; 
+  -- find out a gc function to be used from a given serviceClass
+  FUNCTION getUserWeight(svcClassId NUMBER) RETURN VARCHAR2;
+  FUNCTION getRecallWeight(svcClassId NUMBER) RETURN VARCHAR2;
+  FUNCTION getCopyWeight(svcClassId NUMBER) RETURN VARCHAR2;
+  FUNCTION getFirstAccessHook(svcClassId NUMBER) RETURN VARCHAR2;
+  FUNCTION getAccessHook(svcClassId NUMBER) RETURN VARCHAR2;
+  FUNCTION getUserSetGCWeight(svcClassId NUMBER) RETURN VARCHAR2;
   -- compute gcWeight from size
   FUNCTION size2GCWeight(s NUMBER) RETURN NUMBER;
   -- Default gc policy
-  FUNCTION sizeRelatedUserPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER) RETURN NUMBER;
-  FUNCTION sizeRelatedRecallPrecompute(fileSize NUMBER) RETURN NUMBER;
-  FUNCTION sizeRelatedCopyPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER)) RETURN NUMBER;
+  FUNCTION sizeRelatedUserWeight(fileSize NUMBER, DiskCopyStatus NUMBER) RETURN NUMBER;
+  FUNCTION sizeRelatedRecallWeight(fileSize NUMBER) RETURN NUMBER;
+  FUNCTION sizeRelatedCopyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER) RETURN NUMBER;
   FUNCTION dayBonusFirstAccessHook(oldGcWeight NUMBER, creationTime NUMBER) RETURN NUMBER;
   FUNCTION halfHourBonusAccessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER) RETURN NUMBER;
   FUNCTION cappedUserSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER) RETURN NUMBER;
   -- FIFO gc policy
-  FUNCTION creationTimeUserPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER) RETURN NUMBER;
-  FUNCTION creationTimeRecallPrecompute(fileSize NUMBER) RETURN NUMBER;
-  FUNCTION creationTimeCopyPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER)) RETURN NUMBER;
+  FUNCTION creationTimeUserWeight(fileSize NUMBER, DiskCopyStatus NUMBER) RETURN NUMBER;
+  FUNCTION creationTimeRecallWeight(fileSize NUMBER) RETURN NUMBER;
+  FUNCTION creationTimeCopyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER) RETURN NUMBER;
   -- LRU gc policy
   FUNCTION LRUFirstAccessHook(oldGcWeight NUMBER, creationTime NUMBER) RETURN NUMBER;
   FUNCTION LRUAccessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER) RETURN NUMBER;
@@ -40,7 +47,91 @@ END castorGC;
 
 CREATE OR REPLACE PACKAGE BODY castorGC AS
 
-  CREATE OR REPLACE FUNCTION size2GCWeight(s NUMBER) RETURN NUMBER IS
+  FUNCTION getUserWeight(svcClassId NUMBER) RETURN VARCHAR2 AS
+    ret VARCHAR2(2048);
+  BEGIN
+    SELECT userWeight INTO ret
+      FROM SvcClass, GcPolicy
+     WHERE SvcClass.id = svcClassId
+       AND SvcClass.gcPolicy = GcPolicy.name;
+    RETURN ret;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- we did not get any policy, let's go for the default
+    SELECT userWeight INTO ret
+      FROM GcPolicy
+     WHERE GcPolicy.name = 'default';
+    RETURN ret;
+  END;
+
+  FUNCTION getRecallWeight(svcClassId NUMBER) RETURN VARCHAR2 AS
+    ret VARCHAR2(2048);
+  BEGIN
+    SELECT recallWeight INTO ret
+      FROM SvcClass, GcPolicy
+     WHERE SvcClass.id = svcClassId
+       AND SvcClass.gcPolicy = GcPolicy.name;
+    RETURN ret;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- we did not get any policy, let's go for the default
+    SELECT recallWeight INTO ret
+      FROM GcPolicy
+     WHERE GcPolicy.name = 'default';
+    RETURN ret;
+  END;
+
+  FUNCTION getCopyWeight(svcClassId NUMBER) RETURN VARCHAR2 AS
+    ret VARCHAR2(2048);
+  BEGIN
+    SELECT copyWeight INTO ret
+      FROM SvcClass, GcPolicy
+     WHERE SvcClass.id = svcClassId
+       AND SvcClass.gcPolicy = GcPolicy.name;
+    RETURN ret;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- we did not get any policy, let's go for the default
+    SELECT copyWeight INTO ret
+      FROM GcPolicy
+     WHERE GcPolicy.name = 'default';
+    RETURN ret;
+  END;
+
+  FUNCTION getFirstAccessHook(svcClassId NUMBER) RETURN VARCHAR2 AS
+    ret VARCHAR2(2048);
+  BEGIN
+    SELECT firstAccessHook INTO ret
+      FROM SvcClass, GcPolicy
+     WHERE SvcClass.id = svcClassId
+       AND SvcClass.gcPolicy = GcPolicy.name;
+    RETURN ret;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    RETURN NULL;
+  END;
+
+  FUNCTION getAccessHook(svcClassId NUMBER) RETURN VARCHAR2 AS
+    ret VARCHAR2(2048);
+  BEGIN
+    SELECT accessHook INTO ret
+      FROM SvcClass, GcPolicy
+     WHERE SvcClass.id = svcClassId
+       AND SvcClass.gcPolicy = GcPolicy.name;
+    RETURN ret;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    RETURN NULL;
+  END;
+
+  FUNCTION getUserSetGCWeight(svcClassId NUMBER) RETURN VARCHAR2 AS
+    ret VARCHAR2(2048);
+  BEGIN
+    SELECT userSetGCWeight INTO ret
+      FROM SvcClass, GcPolicy
+     WHERE SvcClass.id = svcClassId
+       AND SvcClass.gcPolicy = GcPolicy.name;
+    RETURN ret;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    RETURN NULL;
+  END;
+
+  FUNCTION size2GCWeight(s NUMBER) RETURN NUMBER IS
   BEGIN
     IF s < 1073741824 THEN
       RETURN 1073741824/(s+1)*86400 + getTime();  -- 1GB/filesize (days) + current time as lastAccessTime
@@ -49,17 +140,17 @@ CREATE OR REPLACE PACKAGE BODY castorGC AS
     END IF;
   END;
 
-  FUNCTION sizeRelatedUserPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER) RETURN NUMBER AS
+  FUNCTION sizeRelatedUserWeight(fileSize NUMBER, DiskCopyStatus NUMBER) RETURN NUMBER AS
   BEGIN
     RETURN size2GCWeight(fileSize);
   END;
 
-  FUNCTION sizeRelatedRecallPrecompute(fileSize NUMBER) RETURN NUMBER AS
+  FUNCTION sizeRelatedRecallWeight(fileSize NUMBER) RETURN NUMBER AS
   BEGIN
     RETURN size2GCWeight(fileSize);
   END;
 
-  FUNCTION sizeRelatedCopyPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER)) RETURN NUMBER AS
+  FUNCTION sizeRelatedCopyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER) RETURN NUMBER AS
   BEGIN
     RETURN size2GCWeight(fileSize);
   END;
@@ -84,17 +175,17 @@ CREATE OR REPLACE PACKAGE BODY castorGC AS
   END;
 
   -- FIFO gc policy
-  FUNCTION creationTimeUserPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER) RETURN NUMBER AS
+  FUNCTION creationTimeUserWeight(fileSize NUMBER, DiskCopyStatus NUMBER) RETURN NUMBER AS
   BEGIN
     RETURN getTime();
   END;
 
-  FUNCTION creationTimeRecallPrecompute(fileSize NUMBER) RETURN NUMBER AS
+  FUNCTION creationTimeRecallWeight(fileSize NUMBER) RETURN NUMBER AS
   BEGIN
     RETURN getTime();
   END;
 
-  FUNCTION creationTimeCopyPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER)) RETURN NUMBER AS
+  FUNCTION creationTimeCopyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER) RETURN NUMBER AS
   BEGIN
     RETURN getTime();
   END;
@@ -509,7 +600,10 @@ BEGIN
       INSERT INTO CleanupJobLog VALUES (cf.fileId, cf.nsHost, 0);
     ELSE
       -- here we issue a putDone
-      putDoneFunc(cf.id, cf.fileSize, 2); -- context 2 : real putDone. Missing PPut requests are ignored.
+      -- context 2 : real putDone. Missing PPut requests are ignored.
+      -- svcClass 0 since we don't know it. This will trigger a
+      -- default behavior in the putDoneFunc
+      putDoneFunc(cf.id, cf.fileSize, 2, 0);
       INSERT INTO CleanupJobLog VALUES (cf.fileId, cf.nsHost, 1);
     END IF;
   END LOOP;

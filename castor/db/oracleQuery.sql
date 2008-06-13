@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.639 $ $Date: 2008/06/13 14:48:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.640 $ $Date: 2008/06/13 15:11:40 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -45,7 +45,7 @@ BEGIN
              (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name as machine, FileSystem.mountPoint,
                      DiskPool2SvcClass.child as dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile, DiskCopy.nbCopyAccesses
                 FROM FileSystem, DiskServer, DiskPool2SvcClass, 
-                     (SELECT id, status, filesystem, castorFile, path FROM DiskCopy
+                     (SELECT id, status, filesystem, castorFile, path, nbCopyAccesses FROM DiskCopy
                        WHERE CastorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
                          AND status IN (0, 1, 2, 4, 5, 6, 7, 10, 11)
                              -- search for diskCopies not GCCANDIDATE or BEINGDELETED
@@ -98,7 +98,7 @@ BEGIN
             (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name as machine, FileSystem.mountPoint,
                     DiskPool2SvcClass.child as dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile, DiskCopy.nbCopyAccesses
                FROM FileSystem, DiskServer, DiskPool2SvcClass, 
-                    (SELECT id, status, filesystem, castorFile, path FROM DiskCopy
+                    (SELECT id, status, filesystem, castorFile, path, nbCopyAccesses FROM DiskCopy
                       WHERE CastorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
                         AND status IN (0, 1, 2, 4, 5, 6, 7, 10, 11)
                             -- search for diskCopies not GCCANDIDATE or BEINGDELETED
