@@ -45,4 +45,3 @@ select unique
   from user_synonyms;
 spool off
 @dropAllObjects.tmp
-exit;
