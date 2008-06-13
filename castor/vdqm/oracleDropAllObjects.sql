@@ -44,4 +44,7 @@ select unique
   'drop synonym ' || synonym_name || ';' as cmd
   from user_synonyms;
 spool off
+
+set feedback on
+
 @oracleDropAllObjects.tmp

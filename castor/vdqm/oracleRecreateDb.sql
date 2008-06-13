@@ -6,7 +6,7 @@ whenever sqlerror exit failure rollback
 
 prompt Login as the VDQM schema owner
 -- Replace connection string if the schema owner account is different
-connect vdqm2@castordev64
+connect vdqm@castordev64
 
 -- Drop all the exisiting database objects
 @oracleDropAllObjects.sqlplus
@@ -18,13 +18,11 @@ connect vdqm2@castordev64
 -- Note that oracleWriterGrants.sqlplus assumes the writer account name is:
 --    vdqm_writer
 -- Replace this account name if the writer account is different
-!sed 's/vdqm_writer/vdqm2_writer/g' oracleWriterGrants.sqlplus > tmp.sql
-@tmp.sql
-!rm -f tmp.sql
+@oracleWriterGrants.sqlplus
 
 prompt Login as the VDQM writer
 -- Replace connection string if the writer account is different
-connect vdqm2_writer@castordev64
+connect vdqm_writer@castordev64
 
 -- Drop all the exisiting database objects
 @oracleDropAllObjects.sqlplus
