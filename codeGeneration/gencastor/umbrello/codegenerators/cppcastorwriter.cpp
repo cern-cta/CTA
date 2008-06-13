@@ -47,6 +47,7 @@ CppCastorWriter::CppCastorWriter(UMLDoc* parent, const char *name) :
   m_ignoreButForDB.insert(QString("lastFileSystemChange"));
   m_ignoreButForDB.insert(QString("diskCopySize"));
   m_ignoreButForDB.insert(QString("nbCopyAccesses"));
+  m_ignoreButForDB.insert(QString("migrSelectPolicy"));
 }
 
 //=============================================================================
