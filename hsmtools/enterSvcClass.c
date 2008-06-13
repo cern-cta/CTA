@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.13 $ $Release$ $Date: 2008/03/12 15:03:25 $ $Author: waldron $
+ * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.14 $ $Release$ $Date: 2008/06/13 14:52:47 $ $Author: sponcec3 $
  *
  * 
  *
@@ -59,7 +59,7 @@ enum SvcClassAttributes {
   MaxReplicaNb,
   ReplicationPolicy,
   GcEnabled,
-  GcWeightForAccess,
+  GcPolicy,
   MigratorPolicy,
   RecallerPolicy,
   TapePools,
@@ -77,7 +77,7 @@ static struct Coptions longopts[] = {
   {"NbDrives",REQUIRED_ARGUMENT,0,NbDrives},
   {"ReplicationPolicy",REQUIRED_ARGUMENT,0,ReplicationPolicy},
   {"GcEnabled",REQUIRED_ARGUMENT,0,GcEnabled},
-  {"GcWeightForAccess",REQUIRED_ARGUMENT,0,GcWeightForAccess},
+  {"GcPolicy",REQUIRED_ARGUMENT,0,GcPolicy},
   {"MigratorPolicy",REQUIRED_ARGUMENT,0,MigratorPolicy},
   {"RecallerPolicy",REQUIRED_ARGUMENT,0,RecallerPolicy},
   {"TapePools",REQUIRED_ARGUMENT,0,TapePools},
@@ -239,8 +239,8 @@ int main(int argc, char *argv[])
         return(1);
       }
       break;
-    case GcWeightForAccess:
-      Cstager_SvcClass_setGcWeightForAccess(svcClass,strtou64(Coptarg));
+    case GcPolicy:
+      Cstager_SvcClass_setGcPolicy(svcClass,Coptarg);
       break;
     case MigratorPolicy:
       Cstager_SvcClass_setMigratorPolicy(svcClass,Coptarg);
