@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.669 $ $Date: 2008/06/05 06:33:12 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.670 $ $Date: 2008/06/13 14:48:36 $ $Author: sponcec3 $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -604,14 +604,15 @@ END;
 /* PL/SQL method implementing fileRecalled */
 CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
   subRequestId NUMBER;
+  requestId NUMBER;
   dci NUMBER;
   reqType NUMBER;
   cfId NUMBER;
   fsId NUMBER;
   fs NUMBER;
 BEGIN
-  SELECT SubRequest.id, DiskCopy.id, CastorFile.id, DiskCopy.fileSystem, Castorfile.FileSize
-    INTO subRequestId, dci, cfid, fsId, fs
+  SELECT SubRequest.id, SubRequest.request, DiskCopy.id, CastorFile.id, DiskCopy.fileSystem, Castorfile.FileSize
+    INTO subRequestId, requestId, dci, cfid, fsId, fs
     FROM TapeCopy, SubRequest, DiskCopy, CastorFile
    WHERE TapeCopy.id = tapecopyId
      AND CastorFile.id = TapeCopy.castorFile
@@ -636,11 +637,29 @@ BEGIN
   IF reqType = 119 THEN      -- OBJ_StageRepackRequest
     startRepackMigration(subRequestId, cfId, dci);
   ELSE
-    UPDATE DiskCopy
-       SET status = 0,  -- DISKCOPY_STAGED
-           lastAccessTime = getTime(),    -- for the GC, effective lifetime of this diskcopy starts now
-           gcWeight = size2gcweight(fs)
-     WHERE id = dci;
+    DECLARE
+      svcClassId NUMBER;
+      gcw VARCHAR2(2048);
+    BEGIN
+      SELECT Request.svcClass INTO svcClassId
+        FROM (SELECT svcClass FROM StageGetRequest UNION ALL
+              SELECT svcClass FROM StagePrepareToGetRequest UNION ALL
+              SELECT svcClass FROM StageUpdateRequest UNION ALL
+              SELECT svcClass FROM StagePrepareToUpdateRequest) Request
+       WHERE Request.id = requestId;
+      SELECT recallPrecompute INTO gcwProc
+        FROM SvcClass, GcPolicy
+       WHERE SvcClass.id = srSvcClass
+         AND SvcClass.gcPolicy = GcPolicy.name;
+      EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:size); END'
+        USING OUT gcw, IN fs;
+      UPDATE DiskCopy
+         SET status = 0,  -- DISKCOPY_STAGED
+             lastAccessTime = getTime(),    -- for the GC, effective lifetime of this diskcopy starts now
+             gcWeight = gcw,
+             diskCopySize = fs
+       WHERE id = dci;
+    END;
     -- restart this subrequest if it's not a repack one
     UPDATE SubRequest
        SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART

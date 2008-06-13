@@ -1,12 +1,11 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.655 $ $Date: 2008/06/10 14:43:21 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.656 $ $Date: 2008/06/13 14:48:35 $ $Author: sponcec3 $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
-
 
 /* PL/SQL declaration for the castorGC package */
 CREATE OR REPLACE PACKAGE castorGC AS
@@ -21,8 +20,97 @@ CREATE OR REPLACE PACKAGE castorGC AS
     nshost VARCHAR2(2048),
     operation INTEGER);
   TYPE JobLogEntry_Cur IS REF CURSOR RETURN JobLogEntry; 
+  -- compute gcWeight from size
+  FUNCTION size2GCWeight(s NUMBER) RETURN NUMBER;
+  -- Default gc policy
+  FUNCTION sizeRelatedUserPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER) RETURN NUMBER;
+  FUNCTION sizeRelatedRecallPrecompute(fileSize NUMBER) RETURN NUMBER;
+  FUNCTION sizeRelatedCopyPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER)) RETURN NUMBER;
+  FUNCTION dayBonusFirstAccessHook(oldGcWeight NUMBER, creationTime NUMBER) RETURN NUMBER;
+  FUNCTION halfHourBonusAccessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER) RETURN NUMBER;
+  FUNCTION cappedUserSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER) RETURN NUMBER;
+  -- FIFO gc policy
+  FUNCTION creationTimeUserPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER) RETURN NUMBER;
+  FUNCTION creationTimeRecallPrecompute(fileSize NUMBER) RETURN NUMBER;
+  FUNCTION creationTimeCopyPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER)) RETURN NUMBER;
+  -- LRU gc policy
+  FUNCTION LRUFirstAccessHook(oldGcWeight NUMBER, creationTime NUMBER) RETURN NUMBER;
+  FUNCTION LRUAccessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER) RETURN NUMBER;
 END castorGC;
 
+CREATE OR REPLACE PACKAGE BODY castorGC AS
+
+  CREATE OR REPLACE FUNCTION size2GCWeight(s NUMBER) RETURN NUMBER IS
+  BEGIN
+    IF s < 1073741824 THEN
+      RETURN 1073741824/(s+1)*86400 + getTime();  -- 1GB/filesize (days) + current time as lastAccessTime
+    ELSE
+      RETURN 86400 + getTime();  -- the value for 1G file. We do not make any difference for big files and privilege FIFO
+    END IF;
+  END;
+
+  FUNCTION sizeRelatedUserPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER) RETURN NUMBER AS
+  BEGIN
+    RETURN size2GCWeight(fileSize);
+  END;
+
+  FUNCTION sizeRelatedRecallPrecompute(fileSize NUMBER) RETURN NUMBER AS
+  BEGIN
+    RETURN size2GCWeight(fileSize);
+  END;
+
+  FUNCTION sizeRelatedCopyPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER)) RETURN NUMBER AS
+  BEGIN
+    RETURN size2GCWeight(fileSize);
+  END;
+
+  FUNCTION dayBonusFirstAccessHook(oldGcWeight NUMBER, creationTime NUMBER) RETURN NUMBER AS
+  BEGIN
+    RETURN oldGcWeight - 86400;
+  END;
+
+  FUNCTION halfHourBonusAccessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER) RETURN NUMBER AS
+  BEGIN
+    RETURN oldGcWeight + 1800;
+  END;
+
+  FUNCTION cappedUserSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER) RETURN NUMBER AS
+  BEGIN
+    IF userDelta >= 18000 THEN -- 5h max
+      RETURN oldGcWeight + 18000;
+    ELSE
+      RETURN oldGcWeight + userDelta;
+    END IF;
+  END;
+
+  -- FIFO gc policy
+  FUNCTION creationTimeUserPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER) RETURN NUMBER AS
+  BEGIN
+    RETURN getTime();
+  END;
+
+  FUNCTION creationTimeRecallPrecompute(fileSize NUMBER) RETURN NUMBER AS
+  BEGIN
+    RETURN getTime();
+  END;
+
+  FUNCTION creationTimeCopyPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER)) RETURN NUMBER AS
+  BEGIN
+    RETURN getTime();
+  END;
+
+  -- LRU gc policy
+  FUNCTION LRUFirstAccessHook(oldGcWeight NUMBER, creationTime NUMBER) RETURN NUMBER AS
+  BEGIN
+    RETURN getTime();
+  END;
+
+  FUNCTION LRUAccessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER) RETURN NUMBER AS
+  BEGIN
+    RETURN getTime();
+  END;
+
+END castorGC;
 
 /* PL/SQL method implementing selectFiles2Delete
    This is the standard garbage collector: it sorts STAGED
@@ -77,10 +165,9 @@ BEGIN
       -- Determine the space that would be freed if the INVALID files selected above
       -- were to be removed
       IF dcIds.COUNT > 0 THEN
-        SELECT SUM(fileSize) INTO freed
-          FROM CastorFile, DiskCopy
-         WHERE DiskCopy.castorFile = CastorFile.id
-           AND DiskCopy.id IN 
+        SELECT SUM(diskCopySize) INTO freed
+          FROM DiskCopy
+         WHERE DiskCopy.id IN 
              (SELECT /*+ CARDINALITY(fsidTable 5) */ * 
                 FROM TABLE(dcIds) dcidTable);
       ELSE
@@ -105,9 +192,8 @@ BEGIN
                       ORDER BY gcWeight ASC) LOOP
           -- Mark the DiskCopy
           UPDATE DiskCopy SET status = 9 -- BEINGDELETED
-           WHERE id = dc.id;
+           WHERE id = dc.id RETURNING diskCopySize INTO deltaFree;
           -- Update toBeFreed
-          SELECT fileSize INTO deltaFree FROM CastorFile WHERE id = dc.castorFile;
           freed := freed + deltaFree;
           -- Shall we continue ?
           IF toBeFreed <= freed THEN

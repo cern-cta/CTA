@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.638 $ $Date: 2008/06/03 16:05:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.639 $ $Date: 2008/06/13 14:48:35 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -22,7 +22,7 @@ BEGIN
       -- Here we get the status for each cf as follows: if a valid diskCopy is found,
       -- its status is returned, else if a (prepareTo)Get request is found and no diskCopy is there,
       -- WAITTAPERECALL is returned, else -1 (INVALID) is returned
-      SELECT fileId, nsHost, dcId, path, fileSize, status, machine, mountPoint, nbAccesses, lastKnownFileName
+      SELECT fileId, nsHost, dcId, path, fileSize, status, machine, mountPoint, nbCopyAccesses, lastKnownFileName
          FROM (SELECT
              -- we need to give these hints to the optimizer otherwise it goes for a full table scan (!)
              UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id as dcId,
@@ -40,10 +40,10 @@ BEGIN
                             AND request = Req.id), -1)
                   ELSE DC.status END as status,
              DC.machine, DC.mountPoint,
-             CastorFile.nbaccesses, CastorFile.lastKnownFileName
+             DC.nbCopyAccesses, CastorFile.lastKnownFileName
         FROM CastorFile,
              (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name as machine, FileSystem.mountPoint,
-                     DiskPool2SvcClass.child as dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile
+                     DiskPool2SvcClass.child as dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile, DiskCopy.nbCopyAccesses
                 FROM FileSystem, DiskServer, DiskPool2SvcClass, 
                      (SELECT id, status, filesystem, castorFile, path FROM DiskCopy
                        WHERE CastorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
@@ -64,7 +64,7 @@ BEGIN
       -- Here we get the status for each cf as follows: if a valid diskCopy is found,
       -- its status is returned, else if a (prepareTo)Get request is found and no diskCopy is there,
       -- WAITTAPERECALL is returned, else -1 (INVALID) is returned
-      SELECT fileId, nsHost, dcId, path, fileSize, srStatus, machine, mountPoint, nbAccesses, lastKnownFileName
+      SELECT fileId, nsHost, dcId, path, fileSize, srStatus, machine, mountPoint, nbCopyAccesses, lastKnownFileName
         FROM (SELECT
             -- we need to give these hints to the optimizer otherwise it goes for a full table scan (!)
             UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id as dcId,
@@ -93,10 +93,10 @@ BEGIN
                            AND request = Req.id
                            AND svcClass = svcClassId) END as srStatus,
             DC.machine, DC.mountPoint,
-            CastorFile.nbaccesses, CastorFile.lastKnownFileName
+            DC.nbCopyAccesses, CastorFile.lastKnownFileName
        FROM CastorFile,
             (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name as machine, FileSystem.mountPoint,
-                    DiskPool2SvcClass.child as dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile
+                    DiskPool2SvcClass.child as dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile, DiskCopy.nbCopyAccesses
                FROM FileSystem, DiskServer, DiskPool2SvcClass, 
                     (SELECT id, status, filesystem, castorFile, path FROM DiskCopy
                       WHERE CastorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)

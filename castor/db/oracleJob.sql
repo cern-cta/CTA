@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.652 $ $Date: 2008/05/05 08:38:42 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.653 $ $Date: 2008/06/13 14:48:35 $ $Author: sponcec3 $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -157,6 +157,7 @@ BEGIN
   -- link DiskCopy and FileSystem and update DiskCopyStatus
   UPDATE DiskCopy SET status = 6, -- DISKCOPY_STAGEOUT
                       fileSystem = fileSystemId
+                      nbCopyAccesses = nbCopyAccesses + 1
    WHERE id = rdcId
    RETURNING status, path
    INTO rdcStatus, rdcPath;
@@ -170,14 +171,17 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
          reuid OUT INTEGER, regid OUT INTEGER) AS
   cfid INTEGER;
   fid INTEGER;
-  dcIds "numList";
+  dcId INTEGER;
   dcIdInReq INTEGER;
   nh VARCHAR2(2048);
   fileSize INTEGER;
   srSvcClass INTEGER;
   proto VARCHAR2(2048);
   isUpd NUMBER;
-  wAccess NUMBER;
+  nbAc NUMBER;
+  gcw NUMBER;
+  gcwProc VARCHAR2(2048);
+  cTime NUMBER;
 BEGIN
   -- Get data
   SELECT euid, egid, svcClass, upd, diskCopy
@@ -194,63 +198,81 @@ BEGIN
    WHERE CastorFile.id = SubRequest.castorFile
      AND SubRequest.id = srId FOR UPDATE;
   -- Try to find local DiskCopy
-  SELECT /*+ INDEX(DISKCOPY I_DISKCOPY_CASTORFILE) */ id BULK COLLECT INTO dcIds
+  SELECT /*+ INDEX(DISKCOPY I_DISKCOPY_CASTORFILE) */ id, nbCopyAccesses, gcWeight, creationTime
+    INTO dcId, nbac, gcw, cTime
     FROM DiskCopy
    WHERE DiskCopy.castorfile = cfId
      AND DiskCopy.filesystem = fileSystemId
-     AND DiskCopy.status IN (0, 6, 10); -- STAGED, STAGEOUT, CANBEMIGR
-  IF dcIds.COUNT > 0 THEN
-    -- We found it, so we are settled and we'll use the local copy.
-    -- It might happen that we have more than one, because LSF may have
-    -- scheduled a replication on a fileSystem which already had a previous diskcopy.
-    -- We don't care and we randomly take the first one.
-    -- Here we also update the gcWeight taking into account the new lastAccessTime
-    -- and the weightForAccess from our svcClass: this is added as a bonus to 
-    -- the selected diskCopy.
-    SELECT gcWeightForAccess INTO wAccess 
-      FROM SvcClass
-     WHERE id = srSvcClass;
-    UPDATE DiskCopy
-       SET gcWeight = gcWeight + wAccess*86400 + getTime() - lastAccessTime,
-           lastAccessTime = getTime()
-     WHERE id = dcIds(1)
-    RETURNING id, path, status INTO dci, rpath, rstatus;
-    -- Let's update the SubRequest and set the link with the DiskCopy
-    UPDATE SubRequest SET DiskCopy = dci WHERE id = srId RETURNING protocol INTO proto;
-    -- In case of an update, if the protocol used does not support
-    -- updates properly (via firstByteWritten call), we should
-    -- call firstByteWritten now and consider that the file is being
-    -- modified.
-    IF isUpd = 1 THEN
-      handleProtoNoUpd(srId, proto);
+     AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
+     AND ROWNUM < 2;
+  -- We found it, so we are settled and we'll use the local copy.
+  -- It might happen that we have more than one, because LSF may have
+  -- scheduled a replication on a fileSystem which already had a previous diskcopy.
+  -- We don't care and we randomly took the first one.
+  -- First we will compute the new gcWeight of the diskcopy
+  IF nbac = 0 THEN
+    SELECT firstAccessHook INTO gcwProc
+      FROM SvcClass, GcPolicy
+     WHERE SvcClass.id = srSvcClass
+       AND SvcClass.gcPolicy = GcPolicy.name;
+    IF firstAccessHook IS NOT NULL THEN
+      EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:oldGcw, :cTime); END'
+        USING OUT gcw, IN gcw, cTime;
     END IF;
   ELSE
-    -- No disk copy found on selected FileSystem. This can happen in 3 cases :
-    --  + either a diskcopy was available and got disabled before this job
-    --    was scheduled. Bad luck, we restart from scratch
-    --  + or we are an update creating a file and there is a diskcopy in WAITFS
-    --    or WAITFS_SCHEDULING associated to us. Then we have to call putStart
-    --  + or we are recalling a 0-size file
-    -- So we first check the update hypothesis
-    IF isUpd = 1 AND dcIdInReq IS NOT NULL THEN
-      DECLARE
-        stat NUMBER;
-      BEGIN
-        SELECT status INTO stat FROM DiskCopy WHERE id = dcIdInReq;
-        IF stat IN (5, 11) THEN -- WAITFS, WAITFS_SCHEDULING
-          -- it is an update creating a file, let's call putStart
-          putStart(srId, fileSystemId, dci, rstatus, rpath);
-          RETURN;
-        END IF;
-      END;
+    SELECT accessHook INTO gcwProc
+      FROM SvcClass, GcPolicy
+     WHERE SvcClass.id = srSvcClass
+       AND SvcClass.gcPolicy = GcPolicy.name;
+    IF accessHook IS NOT NULL THEN
+      EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:oldGcw, :cTime, :nbAc); END'
+        USING OUT gcw, IN gcw, cTime, nbac;
     END IF;
-    -- Now we check the 0-size file hypothesis
-    -- XXX this is currently broken, to be fixed later
-    -- It was not an update creating a file, so we restart
-    UPDATE SubRequest SET status = 1 WHERE id = srId;
-    dci := 0;
-    rpath := '';
   END IF;
+  -- Here we also update the gcWeight taking into account the new lastAccessTime
+  -- and the weightForAccess from our svcClass: this is added as a bonus to 
+  -- the selected diskCopy.
+  UPDATE DiskCopy
+     SET gcWeight = gcw,
+         lastAccessTime = getTime(),
+         nbCopyAccesses = nbCopyAccesses + 1
+   WHERE id = dcId
+  RETURNING id, path, status INTO dci, rpath, rstatus;
+  -- Let's update the SubRequest and set the link with the DiskCopy
+  UPDATE SubRequest SET DiskCopy = dci WHERE id = srId RETURNING protocol INTO proto;
+  -- In case of an update, if the protocol used does not support
+  -- updates properly (via firstByteWritten call), we should
+  -- call firstByteWritten now and consider that the file is being
+  -- modified.
+  IF isUpd = 1 THEN
+    handleProtoNoUpd(srId, proto);
+  END IF;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- No disk copy found on selected FileSystem. This can happen in 3 cases :
+  --  + either a diskcopy was available and got disabled before this job
+  --    was scheduled. Bad luck, we restart from scratch
+  --  + or we are an update creating a file and there is a diskcopy in WAITFS
+  --    or WAITFS_SCHEDULING associated to us. Then we have to call putStart
+  --  + or we are recalling a 0-size file
+  -- So we first check the update hypothesis
+  IF isUpd = 1 AND dcIdInReq IS NOT NULL THEN
+    DECLARE
+      stat NUMBER;
+    BEGIN
+      SELECT status INTO stat FROM DiskCopy WHERE id = dcIdInReq;
+      IF stat IN (5, 11) THEN -- WAITFS, WAITFS_SCHEDULING
+        -- it is an update creating a file, let's call putStart
+        putStart(srId, fileSystemId, dci, rstatus, rpath);
+        RETURN;
+      END IF;
+    END;
+  END IF;
+  -- Now we check the 0-size file hypothesis
+  -- XXX this is currently broken, to be fixed later
+  -- It was not an update creating a file, so we restart
+  UPDATE SubRequest SET status = 1 WHERE id = srId;
+  dci := 0;
+  rpath := '';
 END;
 
 
@@ -343,9 +365,12 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   proto VARCHAR2(2048);
   reqId NUMBER;
   svcClassId NUMBER;
+  gcw VARCHAR2(2048);
+  fileSize NUMBER;
 BEGIN
   -- try to get the source status
-  SELECT status INTO srcStatus FROM DiskCopy WHERE id = srcDcId;
+  SELECT status, gcWeight, diskCopySize INTO srcStatus, gcw, fileSize
+    FROM DiskCopy WHERE id = srcDcId;
   -- In case the status is null, it means that the source has been GCed
   -- while the disk to disk copy was processed. We will invalidate the
   -- brand new copy as we don't know in which status is should be
@@ -377,10 +402,18 @@ BEGIN
    WHERE SubRequest.id = srId
      AND SubRequest.request = Req.id
      AND Req.svcClass = SvcClass.id;
-  
+  -- compute gcWeight
+  SELECT copyPrecompute INTO gcwProc
+    FROM SvcClass, GcPolicy
+   WHERE SvcClass.id = srSvcClass
+     AND SvcClass.gcPolicy = GcPolicy.name;
+  EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:size, :status, :gcw); END'
+    USING OUT gcw, IN fileSize, srcStatus, gcw;
+  END IF;
   -- update status
   UPDATE DiskCopy
-     SET status = srcStatus
+     SET status = srcStatus,
+         gcWeight = gcw
    WHERE id = dcId
   RETURNING castorFile, fileSystem INTO cfId, fsId;
   -- If the maxReplicaNb is exceeded, update one of the diskcopies in a 

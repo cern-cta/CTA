@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.670 $ $Date: 2008/06/03 16:05:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.671 $ $Date: 2008/06/13 14:48:36 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -683,8 +683,8 @@ BEGIN
   
   -- Create the DiskCopy without filesystem
   buildPathFromFileId(fileId, nsHost, destDcId, rpath);
-  INSERT INTO DiskCopy (path, id, filesystem, castorfile, status, creationTime, lastAccessTime, gcWeight)
-    VALUES (rpath, destDcId, 0, cfId, 1, getTime(), getTime(), size2gcweight(fileSize));  -- WAITDISK2DISKCOPY  
+  INSERT INTO DiskCopy (path, id, filesystem, castorfile, status, creationTime, lastAccessTime, gcWeight, diskCopySize, nbCopyAccesses)
+    VALUES (rpath, destDcId, 0, cfId, 1, getTime(), getTime(), 0, fileSize, 0);  -- WAITDISK2DISKCOPY
   INSERT INTO Id2Type (id, type) VALUES (destDcId, 5);  -- OBJ_DiskCopy
   COMMIT;
 END;
@@ -865,21 +865,33 @@ CREATE OR REPLACE PROCEDURE internalPutDoneFunc (cfId IN INTEGER,
                                                  nbTC IN INTEGER) AS
   tcId INTEGER;
   dcId INTEGER;
+  gcwProc VARCHAR2(2048);
 BEGIN
+  -- get function to use for computing the gc weight of the brand new diskCopy
+  SELECT userPrecompute INTO gcwProc
+    FROM SvcClass, GcPolicy
+   WHERE SvcClass.id = srSvcClass
+     AND SvcClass.gcPolicy = GcPolicy.name;
   -- if no tape copy or 0 length file, no migration
   -- so we go directly to status STAGED
   IF nbTC = 0 OR fs = 0 THEN
+    EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:fs, 0); END'
+      USING OUT gcw, IN fs;
     UPDATE DiskCopy
        SET status = 0, -- STAGED
            lastAccessTime = getTime(),    -- for the GC, effective lifetime of this diskcopy starts now
-           gcWeight = size2gcweight(fs)
+           gcWeight = gcw,
+	   diskCopySize = fs
      WHERE castorFile = cfId AND status = 6; -- STAGEOUT
   ELSE
+    EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:fs, 10); END'
+      USING OUT gcw, IN fs; 
     -- update the DiskCopy status to CANBEMIGR
     UPDATE DiskCopy 
        SET status = 10, -- CANBEMIGR
            lastAccessTime = getTime(),    -- for the GC, effective lifetime of this diskcopy starts now
-           gcWeight = size2gcweight(fs)
+           gcWeight = gcw,
+	   diskCopySize = fs
      WHERE castorFile = cfId AND status = 6 -- STAGEOUT
      RETURNING id INTO dcId;
     -- Create TapeCopies
@@ -1372,8 +1384,8 @@ BEGIN
     SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
     SELECT ids_seq.nextval INTO dcId FROM DUAL;
     buildPathFromFileId(fid, nh, dcId, rpath);
-    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime, lastAccessTime, gcWeight)
-         VALUES (rpath, dcId, 0, cfId, 5, getTime(), getTime(), 0); -- status WAITFS
+    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime, lastAccessTime, gcWeight, diskCopySize, nbCopyAccesses))
+         VALUES (rpath, dcId, 0, cfId, 5, getTime(), getTime(), 0, 0, 0); -- status WAITFS
     INSERT INTO Id2Type (id, type) VALUES (dcId, 5); -- OBJ_DiskCopy
     rstatus := 5; -- WAITFS
     rmountPoint := '';
@@ -1455,14 +1467,13 @@ BEGIN
       WHERE fileId = fid AND nsHost = nh;
     -- update lastAccess time
     UPDATE CastorFile SET LastAccessTime = getTime(),
-                          nbAccesses = nbAccesses + 1,
                           lastKnownFileName = REGEXP_REPLACE(fn,'(/){2,}','/')
       WHERE id = rid;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- insert new row
     INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
-                            creationTime, lastAccessTime, nbAccesses, lastKnownFileName)
-      VALUES (ids_seq.nextval, fId, nh, sc, fc, fs, getTime(), getTime(), 1, REGEXP_REPLACE(fn,'(/){2,}','/'))
+                            creationTime, lastAccessTime, lastKnownFileName)
+      VALUES (ids_seq.nextval, fId, nh, sc, fc, fs, getTime(), getTime(), REGEXP_REPLACE(fn,'(/){2,}','/'))
       RETURNING id, fileSize INTO rid, rfs;
     INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
   END;
@@ -1764,19 +1775,37 @@ END;
 /* PL/SQL method implementing a setFileGCWeight request */
 CREATE OR REPLACE PROCEDURE setFileGCWeightProc
 (fid IN NUMBER, nh IN VARCHAR2, svcClassId IN NUMBER, weight IN FLOAT, ret OUT INTEGER) AS
-BEGIN
-  ret := 0;
-  UPDATE DiskCopy
-     SET gcWeight = gcWeight + weight
-   WHERE castorFile = (SELECT id FROM CastorFile WHERE fileid = fid AND nshost = nh)
+  CURSOR dcs IS
+    SELECT DiskCopy.id, gcWeight
+      FROM DiksCopy, CastorFile
+   WHERE castorFile.id = diskcopy.castorFile
+     AND fileid = fid
+     AND nshost = nh
      AND fileSystem IN (
        SELECT FileSystem.id
          FROM FileSystem, DiskPool2SvcClass D2S
         WHERE FileSystem.diskPool = D2S.parent
           AND D2S.child = svcClassId);
-  IF SQL%ROWCOUNT > 0 THEN
+  gcw NUMBER;
+BEGIN
+  ret := 0;
+  -- get gc userSetGCWeight function to be used, if any
+  SELECT userSetGCWeight INTO gcwProc
+    FROM SvcClass, GcPolicy
+   WHERE SvcClass.id = svcClassId
+     AND SvcClass.gcPolicy = GcPolicy.name;
+  -- loop over diskcopies and update them
+  FOR dc in dcs LOOP
+    gcw := dc.gcWeight;
+    -- compute actual gc weight to be used
+    if userSetGCWeight IS NOT NULL THEN
+      EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:oldGcw, :delta); END'
+        USING OUT gcw, IN gcw, weight;
+    END IF;
+    -- update DiskCopy
+    UPDATE DiskCopy SET gcWeight = gcw WHERE id = dc.id;
     ret := 1;   -- some diskcopies found, ok
-  END IF;
+  END LOOP;
 END;
 
 

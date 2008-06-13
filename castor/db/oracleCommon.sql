@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.656 $ $Date: 2008/06/03 11:42:02 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.657 $ $Date: 2008/06/13 14:48:35 $ $Author: sponcec3 $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -303,6 +303,66 @@ CREATE TABLE FileSystemsToCheck (FileSystem NUMBER PRIMARY KEY, ToBeChecked NUMB
 INSERT INTO FileSystemsToCheck SELECT id, 0 FROM FileSystem;
 
 
+/************************************/
+/* Garbage collection related table */
+/************************************/
+
+/* a table storing the Gc policies and detailing there configuration
+   For each policy, identified by a name, parameters are :
+     - userPrecompute : the name of the PL/SQL function to be called to
+       precompute the GC weight when a file is written by the user.
+     - recallPrecompute : the name of the PL/SQL function to be called to
+       precompute the GC weight when a file is recalled
+     - copyPrecompute : the name of the PL/SQL function to be called to
+       precompute the GC weight when a file is disk to disk copied
+     - firstAccessHook : the name of the PL/SQL function to be called
+       when the file is accessed for the first time. Can be NULL.
+     - accessHook : the name of the PL/SQL function to be called
+       when the file is accessed (except for the first time). Can be NULL.
+     - userSetGCWeight : the name of the PL/SQL function to be called
+       when a setFileGcWeight user request is processed can be NULL.
+   All functions return a number that is the new gcWeight.
+   In general, here are the signatures :
+     userPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER)
+     recallPrecompute(fileSize NUMBER)
+     copyPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER))
+     firstAccessHook(oldGcWeight NUMBER, creationTime NUMBER)
+     accessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER)
+     userSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER)
+   Few notes :
+     diskCopyStatus can be STAGED(0) or CANBEMIGR(10)
+ */
+CREATE TABLE GcPolicy (name VARCHAR2(2048) NOT NULL PRIMARY KEY,
+                       userPrecompute VARCHAR2(2048) NOT NULL,
+                       recallPrecompure VARCHAR2(2048) NOT NULL,
+                       copyPrecompute VARCHAR2(2048) NOT NULL,
+                       firstAccessHook VARCHAR2(2048) DEFAULT NULL,
+                       accessHook VARCHAR2(2048) DEFAULT NULL,
+                       userSetGCWeight VARCHAR2(2048) DEFAULT NULL);
+
+/* Default policy, mainly based on file sizes */
+INSERT INTO GcPolicy VALUES ('default',
+                             'castorGC.sizeRelatedUserPreCompute',
+                             'castorGC.sizeRelatedRecallsPreCompute',
+                             'castorGC.sizeRelatedCopyPreCompute',
+                             'castorGC.dayBonusFirstAccessHook',
+                             'castorGC.halfHourBonusAccessHook',
+                             'castorGc.cappedUserSetGCWeight');
+INSERT INTO GcPolicy VALUES ('FIFO',
+                             'castorGC.creationTimeRelatedUserPreCompute',
+                             'castorGC.creationTimeRelatedRecallsPreCompute',
+                             'castorGC.creationTimeRelatedCopyPreCompute',
+                             NULL,
+                             NULL,
+                             NULL);
+INSERT INTO GcPolicy VALUES ('LRU',
+                             'castorGC.creationTimeRelatedUserPreCompute',
+                             'castorGC.creationTimeRelatedRecallsPreCompute',
+                             'castorGC.creationTimeRelatedCopyPreCompute',
+                             'castorGC.LRUFirstAccessHook',
+                             'castorGC.LRUAccessHook',
+                             NULL);
+
 /*********************/
 /* FileSystem rating */
 /*********************/
@@ -346,16 +406,6 @@ BEGIN
   SELECT lower(regexp_replace(sys_guid(), '(.{8})(.{4})(.{4})(.{4})(.{12})', '\1-\2-\3-\4-\5'))
     INTO ret FROM Dual;
   RETURN ret;
-END;
-
-/* compute the impact of a file's size in its gcweight */
-CREATE OR REPLACE FUNCTION size2gcweight(s NUMBER) RETURN NUMBER IS
-BEGIN
-  IF s < 1073741824 THEN
-    RETURN 1073741824/(s+1)*86400 + getTime();  -- 1GB/filesize (days) + current time as lastAccessTime
-  ELSE
-    RETURN 86400 + getTime();  -- the value for 1G file. We do not make any difference for big files and privilege FIFO
-  END IF;
 END;
 
 
