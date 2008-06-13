@@ -129,12 +129,12 @@ namespace castor{
 	/* and copy to the thread-safe variables (subrequestUuid and requestUuid)               */
 	/***************************************************************************************/
 
-	/* get or create subrequest uuid */
+	/* set or create subrequest uuid */
 	void setSubrequestUuid() throw(castor::exception::Exception);
-	
-      	/* get request uuid (we cannon' t create it!) */ 
+
+      	/* set request uuid (we cannon' t create it!) */ 
 	void setRequestUuid() throw(castor::exception::Exception);
-     
+
 	/*******************************************************************************************************************************************/
 	/*  link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name) ): called in Request.jobOriented()*/
 	/*****************************************************************************************************************************************/
