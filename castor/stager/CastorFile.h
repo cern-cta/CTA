@@ -151,18 +151,6 @@ int Cstager_CastorFile_lastAccessTime(struct Cstager_CastorFile_t* instance, u_s
 int Cstager_CastorFile_setLastAccessTime(struct Cstager_CastorFile_t* instance, u_signed64 new_var);
 
 /**
- * Get the value of nbAccesses
- * Number of accesses to this CastorFile since its creation
- */
-int Cstager_CastorFile_nbAccesses(struct Cstager_CastorFile_t* instance, unsigned int* var);
-
-/**
- * Set the value of nbAccesses
- * Number of accesses to this CastorFile since its creation
- */
-int Cstager_CastorFile_setNbAccesses(struct Cstager_CastorFile_t* instance, unsigned int new_var);
-
-/**
  * Get the value of lastKnownFileName
  * The name of the castorfile at the time it was created in this database. This can
  * very well be different from the current name if the file was renamed.

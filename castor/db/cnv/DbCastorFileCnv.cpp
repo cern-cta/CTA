@@ -58,7 +58,7 @@ static castor::CnvFactory<castor::db::cnv::DbCastorFileCnv>* s_factoryDbCastorFi
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbCastorFileCnv::s_insertStatementString =
-"INSERT INTO CastorFile (fileId, nsHost, fileSize, creationTime, lastAccessTime, nbAccesses, lastKnownFileName, lastUpdateTime, id, svcClass, fileClass) VALUES (:1,:2,:3,:4,NULL,0,:5,:6,ids_seq.nextval,:7,:8) RETURNING id INTO :9";
+"INSERT INTO CastorFile (fileId, nsHost, fileSize, creationTime, lastAccessTime, lastKnownFileName, lastUpdateTime, id, svcClass, fileClass) VALUES (:1,:2,:3,:4,NULL,:5,:6,ids_seq.nextval,:7,:8) RETURNING id INTO :9";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbCastorFileCnv::s_deleteStatementString =
@@ -66,7 +66,7 @@ const std::string castor::db::cnv::DbCastorFileCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbCastorFileCnv::s_selectStatementString =
-"SELECT fileId, nsHost, fileSize, creationTime, lastAccessTime, nbAccesses, lastKnownFileName, lastUpdateTime, id, svcClass, fileClass FROM CastorFile WHERE id = :1";
+"SELECT fileId, nsHost, fileSize, creationTime, lastAccessTime, lastKnownFileName, lastUpdateTime, id, svcClass, fileClass FROM CastorFile WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbCastorFileCnv::s_updateStatementString =
@@ -463,7 +463,7 @@ void castor::db::cnv::DbCastorFileCnv::fillObjSvcClass(castor::stager::CastorFil
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = rset->getInt64(10);
+  u_signed64 svcClassId = rset->getInt64(9);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -501,7 +501,7 @@ void castor::db::cnv::DbCastorFileCnv::fillObjFileClass(castor::stager::CastorFi
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 fileClassId = rset->getInt64(11);
+  u_signed64 fileClassId = rset->getInt64(10);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -676,7 +676,6 @@ void castor::db::cnv::DbCastorFileCnv::createRep(castor::IAddress* address,
                     << "  fileSize : " << obj->fileSize() << std::endl
                     << "  creationTime : " << obj->creationTime() << std::endl
                     << "  lastAccessTime : " << obj->lastAccessTime() << std::endl
-                    << "  nbAccesses : " << obj->nbAccesses() << std::endl
                     << "  lastKnownFileName : " << obj->lastKnownFileName() << std::endl
                     << "  lastUpdateTime : " << obj->lastUpdateTime() << std::endl
                     << "  id : " << obj->id() << std::endl
@@ -801,10 +800,9 @@ castor::IObject* castor::db::cnv::DbCastorFileCnv::createObj(castor::IAddress* a
     object->setFileSize(rset->getUInt64(3));
     object->setCreationTime(rset->getUInt64(4));
     object->setLastAccessTime(rset->getUInt64(5));
-    object->setNbAccesses(rset->getInt(6));
-    object->setLastKnownFileName(rset->getString(7));
-    object->setLastUpdateTime(rset->getUInt64(8));
-    object->setId(rset->getUInt64(9));
+    object->setLastKnownFileName(rset->getString(6));
+    object->setLastUpdateTime(rset->getUInt64(7));
+    object->setId(rset->getUInt64(8));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -844,10 +842,9 @@ void castor::db::cnv::DbCastorFileCnv::updateObj(castor::IObject* obj)
     object->setFileSize(rset->getUInt64(3));
     object->setCreationTime(rset->getUInt64(4));
     object->setLastAccessTime(rset->getUInt64(5));
-    object->setNbAccesses(rset->getInt(6));
-    object->setLastKnownFileName(rset->getString(7));
-    object->setLastUpdateTime(rset->getUInt64(8));
-    object->setId(rset->getUInt64(9));
+    object->setLastKnownFileName(rset->getString(6));
+    object->setLastUpdateTime(rset->getUInt64(7));
+    object->setId(rset->getUInt64(8));
     delete rset;
   } catch (castor::exception::SQLError e) {
     castor::exception::InvalidArgument ex;

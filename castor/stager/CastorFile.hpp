@@ -195,24 +195,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_nbAccesses
-       * Number of accesses to this CastorFile since its creation
-       * @return the value of m_nbAccesses
-       */
-      unsigned int nbAccesses() const {
-        return m_nbAccesses;
-      }
-
-      /**
-       * Set the value of m_nbAccesses
-       * Number of accesses to this CastorFile since its creation
-       * @param new_var the new value of m_nbAccesses
-       */
-      void setNbAccesses(unsigned int new_var) {
-        m_nbAccesses = new_var;
-      }
-
-      /**
        * Get the value of m_lastKnownFileName
        * The name of the castorfile at the time it was created in this database. This can
        * very well be different from the current name if the file was renamed.
@@ -376,9 +358,6 @@ namespace castor {
 
       /// Time of the last access to this CastorFile
       u_signed64 m_lastAccessTime;
-
-      /// Number of accesses to this CastorFile since its creation
-      unsigned int m_nbAccesses;
 
       /*
        * The name of the castorfile at the time it was created in this database. This can very well be different from the current name if the file was renamed.

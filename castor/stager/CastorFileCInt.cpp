@@ -183,22 +183,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_CastorFile_nbAccesses
-  //----------------------------------------------------------------------------
-  int Cstager_CastorFile_nbAccesses(castor::stager::CastorFile* instance, unsigned int* var) {
-    *var = instance->nbAccesses();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_CastorFile_setNbAccesses
-  //----------------------------------------------------------------------------
-  int Cstager_CastorFile_setNbAccesses(castor::stager::CastorFile* instance, unsigned int new_var) {
-    instance->setNbAccesses(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_CastorFile_lastKnownFileName
   //----------------------------------------------------------------------------
   int Cstager_CastorFile_lastKnownFileName(castor::stager::CastorFile* instance, const char** var) {
