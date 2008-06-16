@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: index.php,v 1.6 2007/07/13 08:04:51 waldron Exp $
+ * $Id: index.php,v 1.7 2008/06/16 08:00:19 waldron Exp $
  */
 
 require("utils.php");
@@ -34,84 +34,78 @@ $gen_start = getmicrotime();
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-	<meta name="author" content="Castor Dev" />
-	<meta name="description" content="Distributed Logging Facility" />
-	<meta http-equiv="Content-Type" content="text/html; charset=us-ascii" />
-	<meta http-equiv="Pragma" content="no-cache" />
-	<meta http-equiv="Cache-Control" content="no-cache" />
-	<meta http-equiv="Default-Style" content="compact" />
-	<meta http-equiv="Content-Style-Type" content="text/css" />
-	<title>Distributed Logging Facility - Home</title>
-	<link href="site.css" rel="stylesheet" type="text/css" />
+  <meta name="author" content="Castor Dev" />
+  <meta name="description" content="Distributed Logging Facility" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta http-equiv="Content-Type" content="text/html; charset=us-ascii" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Cache-Control" content="no-cache" />
+  <meta http-equiv="Default-Style" content="compact" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <title>Distributed Logging Facility - Home</title>
+  <link href="site.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
-	<table class="workspace" cellspacing="0" cellpadding="0">
-	
-	<!-- header -->
-  	<tr class="header">
-    	<td colspan="3">CASTOR Distributed Logging Facility</td>
-  	</tr>
-  	<tr>
-    	<td colspan="3"><hr size="1"/></td>
-  	</tr>
-		
-	<!-- content -->
-  	<tr class="content">
-    	<td colspan="3" align="center">
-		
-		<!-- selection box -->
-		<form action="query.php" method="get" name="instance" id="instance">
-		
-		<table class="border" cellspacing="0" cellpadding="4">
-			<tr class="banner">
-				<td>Select Instance:</td>
-			</tr>
-			<tr>
-				<td valign="middle">&nbsp;&nbsp;Use Database:&nbsp;&nbsp;
-					<select name="instance">
-					<?php
-						sort(array_keys($db_instances));
-						foreach (array_keys($db_instances) as $name) {
-							if (isset($HTTP_COOKIE_VARS['instance']) && ($HTTP_COOKIE_VARS['instance'] == $name)) {
-								echo "<option value=\"".$name."\" selected=\"selected\"";
-							} else {
-								echo "<option value=\"".$name."\"";
-							}
-							if (isset($db_instances[$name]['displayname'])) {
-								echo ">".$db_instances[$name]['type']." (".$db_instances[$name]['username']."@".$db_instances[$name]['displayname']."/".$db_instances[$name]['server'].")</option>";
-							} else {
-								echo ">".$db_instances[$name]['type']." (".$db_instances[$name]['username']."@".$db_instances[$name]['server'].")</option>";
-							}
-						}					
-					?>
-					</select>&nbsp;&nbsp;
-					<input type="submit" name="Submit" value="Connect" class="button"/>&nbsp;
-				</td>
-			</tr>
-		</table>
-		
-		</form>
-		
-		</td>
-  	</tr>
-	
-	<tr>
-		<td colspan="3">&nbsp;</td>
-	</tr>
-	
-	<!-- footer -->
-  	<tr>
-    	<td colspan="3"><hr size="1"/></td>
-	</tr>
-  	<tr class="footer">
-    	<td width="33%" align="left"  >DLF interface version: <?php echo $version ?></td>
-    	<td width="33%" align="center">&nbsp;</td>
-    	<td width="33%" align="right" >
-			<a href="http://validator.w3.org/check?uri=referer"><img src="images/xhtml.png" alt="Valid XHTML 1.0 Strict" /></a>&nbsp;
-			<a href="http://jigsaw.w3.org/css-validator/check/referer"><img src="images/css.png" alt="Valid CSS 2.0" /></a>&nbsp;
-			<a href="http://www.php.net/"><img src="images/php.png" alt="Powered by PHP" /></a>		
-		</td>
-  	</tr>
-	</table>
+<table class="workspace" cellspacing="0" cellpadding="0">
+
+  <!-- header -->
+  <tr class="header">
+    <td colspan="3">CASTOR Distributed Logging Facility</td>
+  </tr>
+  <tr>
+    <td colspan="3"><hr size="1"/></td>
+  </tr>
+
+  <!-- content -->
+  <tr class="content">
+    <td colspan="3" align="center">
+
+      <!-- selection box -->
+      <form action="query.php" method="get" name="instance" id="instance">
+        <table class="border" cellspacing="0" cellpadding="4">
+          <tr class="banner">
+            <td>Select Instance:</td>
+          </tr>
+          <tr>
+            <td valign="middle">&nbsp;&nbsp;Use Database:&nbsp;&nbsp;
+              <select name="instance">
+                <?php
+                  sort(array_keys($db_instances));
+                  foreach (array_keys($db_instances) as $name) {
+                    if (isset($HTTP_COOKIE_VARS['instance']) && ($HTTP_COOKIE_VARS['instance'] == $name)) {
+                      echo "<option value=\"".$name."\" selected=\"selected\"";
+                    } else {
+                      echo "<option value=\"".$name."\"";
+                    }
+                    echo ">Oracle (".$db_instances[$name]['username']."@".$name.")</option>";
+                  }
+                ?>
+              </select>&nbsp;&nbsp;
+              <input type="submit" name="Submit" value="Connect" class="button"/>&nbsp;
+            </td>
+          </tr>
+        </table>
+      </form>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="3">&nbsp;</td>
+  </tr>
+
+  <!-- footer -->
+  <tr>
+    <td colspan="3"><hr size="1"/></td>
+  </tr>
+  <tr class="footer">
+    <td width="33%" align="left"  >DLF interface version: <?php echo $version ?></td>
+    <td width="33%" align="center">&nbsp;</td>
+    <td width="33%" align="right" >
+      <a href="http://validator.w3.org/check?uri=referer"><img src="images/xhtml.png" alt="Valid XHTML 1.0 Strict" /></a>&nbsp;
+      <a href="http://jigsaw.w3.org/css-validator/check/referer"><img src="images/css.png" alt="Valid CSS 2.0" /></a>&nbsp;
+      <a href="http://www.php.net/"><img src="images/php.png" alt="Powered by PHP" /></a>
+    </td>
+  </tr>
+</table>
 </body>
 </html>
+

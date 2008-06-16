@@ -20,12 +20,12 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.php,v 1.9 2008/04/21 11:55:25 waldron Exp $
+ * $Id: oracle.php,v 1.10 2008/06/16 08:00:19 waldron Exp $
  */
 
 /* definitions */
 if (!defined("DB_LAYER")) {
-	define("DB_LAYER", "oracle");
+  define("DB_LAYER", "oracle");
 }
 
 
@@ -33,89 +33,96 @@ if (!defined("DB_LAYER")) {
  * Open connection
  */
 function db_connect($instance, $persistency, $stager) {
-	
-	include("config.php");
-	include("/var/www/conf/dlf/login.conf");
 
-	/* variables */
-	$server   = "";
-	$username = "";
-	$password = "";
+  include("config.php");
+  include("/var/www/conf/dlf/login.conf");
 
-	/* lookup the instance name for connection details */
-	if (!$db_instances[$instance]) {
-		trigger_error("Faled to resolve instance name '$instance' to castor instance", E_USER_ERROR);
-		exit;
-	} else if ($stager == 0) { 
-		$server = $db_instances[$instance]['server'];
-		$user	= $db_instances[$instance]['username'];
-		$pass	= $db_instances[$instance]['password'];
-	} else {
-	
-		/* stagerdb exists for this instance of dlf ? */
-		if (!$db_instances[$instance]['stagerdb']) {
-			trigger_error("Failed to resolves instance name '$instance' to castor stager instance", E_USER_ERROR);
-			exit;
-		}
-		
-		$server = $db_instances[$instance]['stagerdb']['server'];
-		$user	= $db_instances[$instance]['stagerdb']['username'];
-		$pass	= $db_instances[$instance]['stagerdb']['password'];		
-	}
-	
-	/* open connection to a oracle database */
-	if ($persistency == true) {
-		$conn = ocilogon($user, $pass, $server);
-	} else {
-		$conn = ociplogon($user, $pass, $server);
-	}
-	
-	/* connection successful ? */
-	if (!$conn) {
-		trigger_error("ocilogin() - ".ocierror(), E_USER_ERROR);
-		exit;
-	}
-	
-	/* set the time format */
-	$stmt = ociparse($conn, "ALTER SESSION SET NLS_DATE_FORMAT = 'dd-mm-yyyy hh24:mi:ss'");
-	if (!$stmt) {
-		trigger_error("ociparse() - ".ocierror(), E_USER_ERROR);
-		exit;
-	}
-	ocisetprefetch($stmt, 1000);
+  /* variables */
+  $server   = "";
+  $username = "";
+  $password = "";
 
-	$rtn = ociexecute($stmt, OCI_DEFAULT);
-	if (!$rtn) {
-		trigger_error("ociexecute() - ".ocierror(), E_USER_ERROR);
-		exit;
-	}
+  /* lookup the instance name for connection details */
+  if (!isset($db_instances[$instance])) {
+    trigger_error("Faled to resolve instance name '$instance' to castor instance", E_USER_ERROR);
+    exit;
+  } else if ($stager == 0) {
+    $server = $db_instances[$instance]['server'];
+    $user   = $db_instances[$instance]['username'];
+    $pass   = $db_instances[$instance]['password'];
+  } else {
 
-	return $conn;
+    /* stagerdb exists for this instance of dlf ? */
+    if (!isset($db_instances[$instance]['stagerdb'])) {
+      trigger_error("Failed to resolves instance name '$instance' to castor stager instance", E_USER_ERROR);
+      exit;
+    }
+
+    $server = $db_instances[$instance]['stagerdb']['server'];
+    $user   = $db_instances[$instance]['stagerdb']['username'];
+    $pass   = $db_instances[$instance]['stagerdb']['password'];
+  }
+
+  /* open connection to a oracle database */
+  if ($persistency == true) {
+    $conn = ocilogon($user, $pass, $server);
+  } else {
+    $conn = ociplogon($user, $pass, $server);
+  }
+
+  /* connection successful ? */
+  if (!$conn) {
+    trigger_error("ocilogin() - ".ocierror(), E_USER_ERROR);
+    exit;
+  }
+
+  /* set the time format */
+  $stmt = ociparse($conn, "ALTER SESSION SET NLS_DATE_FORMAT = 'dd-mm-yyyy hh24:mi:ss'");
+  if (!$stmt) {
+    trigger_error("ociparse() - ".ocierror(), E_USER_ERROR);
+    exit;
+  }
+  ocisetprefetch($stmt, 1000);
+
+  $rtn = ociexecute($stmt, OCI_DEFAULT);
+  if (!$rtn) {
+    trigger_error("ociexecute() - ".ocierror(), E_USER_ERROR);
+    exit;
+  }
+
+  return $conn;
 }
 
 /*
  * Query
  */
-function db_query($query, $conn) {
+function db_query($query, $conn, $bindvars = NULL) {
 
-	/* increment the number of queries executed */
-	global $query_count;
-	$query_count++;
+  /* increment the number of queries executed */
+  global $query_count;
+  $query_count++;
 
-	/* execute query */
-	$stmt = ociparse($conn, $query);
-	if (!$stmt) {
-		trigger_error("ociparse() - ".ocierror($conn), E_USER_ERROR);
-		exit;
-	}
-	ocisetprefetch($stmt, 1000);
+  /* execute query */
+  $stmt = ociparse($conn, $query);
+  if (!$stmt) {
+    trigger_error("ociparse() - ".ocierror($conn), E_USER_ERROR);
+    exit;
+  }
+  ocisetprefetch($stmt, 1000);
 
-	$rtn = ociexecute($stmt, OCI_DEFAULT);
-	if (!$rtn) {
-		trigger_error("ociexecute() - ".ocierror($stmt), E_USER_ERROR);
-		exit;
-	}
-	return $stmt;
+  /* set the bind variables if any */
+  if (is_array($bindvars)) {
+    foreach (array_keys($bindvars) as $varname) {
+      ocibindbyname($stmt, $varname, $bindvars[$varname], 100);
+    }
+  }
+
+  $rtn = ociexecute($stmt, OCI_DEFAULT);
+  if (!$rtn) {
+    trigger_error("ociexecute() - ".ocierror($stmt), E_USER_ERROR);
+    exit;
+  }
+  return $stmt;
 }
 
 /*
@@ -123,57 +130,48 @@ function db_query($query, $conn) {
  */
 function db_fetch_row($results) {
 
-	/* convert the result in to an array */
-	$rtn = ocifetch($results);
-	if($rtn) {
-		for ($i = 1, $j = 0; $i <= ocinumcols($results); $i++, $j++) {
-			$row[$j] = ociresult($results, ocicolumnname($results, $i));
-		}
-		return $row;
-	}
+  /* convert the result in to an array */
+  $rtn = ocifetch($results);
+  if($rtn) {
+    for ($i = 1, $j = 0; $i <= ocinumcols($results); $i++, $j++) {
+      $row[$j] = ociresult($results, ocicolumnname($results, $i));
+    }
+    return $row;
+  }
 }
 
 /*
  * Server version
  */
 function db_server_version($conn) {
-	$db_version = split("-", ociserverversion($conn));
-	return trim("- version: ". $db_version[0]);;
+  $db_version = split("-", ociserverversion($conn));
+  return trim("- version: ". $db_version[0]);;
 }
 
 /*
  * Extract a value by name
  */
 function db_result($results, $field) {
-	return $value = ociresult($results, strtoupper($field));
+  return $value = ociresult($results, strtoupper($field));
 }
 
 /*
  * Partition count
  */
-function db_partition_count($conn) {
-	
-	/* database supports partitioning ? */
-	$version = db_server_version($conn);
-	if (!stristr($version, "Enterprise")) {
-		return;
-	}
+function db_partition_count($conn, $schema) {
 
-	/* execute query */
-	$stmt = db_query("SELECT COUNT(*) FROM USER_TAB_PARTITIONS WHERE PARTITION_NAME != 'MAX_VALUE' AND TABLE_NAME = 'DLF_MESSAGES' AND PARTITION_NAME <= CONCAT('P_', TO_CHAR(SYSDATE, 'YYYYMMDD'))", $conn);
-	$row  = db_fetch_row($stmt);
+  /* database supports partitioning ? */
+  $version = db_server_version($conn);
+  if (!stristr($version, "Enterprise")) {
+    return;
+  }
 
-	return "Partitions online: ".$row[0];
+  /* execute query */
+  $stmt = db_query("SELECT COUNT(*) FROM all_tab_partitions WHERE partition_name != 'MAX_VALUE' AND table_name = 'DLF_MESSAGES' AND table_owner = '".strtoupper($schema)."' AND partition_name <= CONCAT('P_', TO_CHAR(SYSDATE, 'YYYYMMDD'))", $conn);
+  $row  = db_fetch_row($stmt);
+
+  return "Partitions online: ".$row[0];
 }
 
-/*
- * Database schema version
- */
-function db_schema_version($conn) {
-	$stmt = db_query("SELECT COUNT(*) FROM USER_TABLES WHERE TABLE_NAME = 'DLF_TAPE_IDS'", $conn);
-	$row  = db_fetch_row($stmt);
-	
-	return $row[0] ? 1 : 2;
-}
 
 ?>
