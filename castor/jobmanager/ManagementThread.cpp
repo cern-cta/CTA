@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/04/21 11:53:00 $ $Author: waldron $
+ * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/06/16 07:45:10 $ $Author: waldron $
  *
  * Cancellation thread used to cancel jobs in the LSF with have been in a
  * PENDING status for too long
@@ -42,7 +42,7 @@
 castor::jobmanager::ManagementThread::ManagementThread(int timeout)
   throw(castor::exception::Exception) :
   m_cleanPeriod(3600),
-  m_defaultQueue("default"),
+  m_defaultQueue("castor"),
   m_timeout(timeout),
   m_initialized(false),
   m_resReqKill(false),
@@ -96,11 +96,12 @@ void castor::jobmanager::ManagementThread::run(void *param) {
     parameterInfo *paramInfo = lsb_parameterinfo(NULL, NULL, 0);
     if (paramInfo == NULL) {
 
-      // "Failed to extract CLEAN_PERIOD and default queue values from
+      // "Failed to extract CLEAN_PERIOD and DEFAULT_QUEUE values from
       // lsb.params, using defaults"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Default", m_cleanPeriod)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 23, 1, params);
+	{castor::dlf::Param("CleanPeriod", m_cleanPeriod),
+	 castor::dlf::Param("DefaultQueue", m_defaultQueue)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 23, 2, params);
     } else {
       m_cleanPeriod  = paramInfo->cleanPeriod + (m_timeout * 2);
       m_defaultQueue = paramInfo->defaultQueues;
@@ -346,7 +347,7 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
   }
 
   // Determine the name of the service class being used.
-  std::string svcClass =job->submit.queue;
+  std::string svcClass = job->submit.queue;
   if (!strcasecmp(job->submit.queue, m_defaultQueue.c_str())) {
     svcClass = "default";
   }
