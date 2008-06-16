@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.657 $ $Date: 2008/06/13 15:11:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.658 $ $Date: 2008/06/16 10:13:31 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -614,10 +614,11 @@ END;
 CREATE OR REPLACE PROCEDURE restartStuckRecalls AS
 BEGIN
   UPDATE Segment SET status = 0 WHERE status = 7 and tape IN
-    (SELECT id from Tape WHERE tpmode = 0 AND status IN (0,6) AND id IN
+    (SELECT id from Tape WHERE tpmode = 0 AND status IN (0, 6) AND id IN
       (SELECT tape FROM Segment WHERE status = 7));
-  UPDATE Tape SET status = 1 WHERE tpmode = 0 AND status IN (0,6) AND id IN
-    (SELECT tape FROM Segment WHERE status in (0,7));
+  UPDATE Tape SET status = 1 WHERE tpmode = 0 AND status IN (0, 6) AND id IN
+    (SELECT tape FROM Segment WHERE status in (0, 7));
+  COMMIT;
 END;
 
 
