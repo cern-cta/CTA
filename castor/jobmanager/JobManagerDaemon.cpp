@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/04/21 11:53:00 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/06/16 07:46:08 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    // Dispatch ThreadPool daemon.getThreadPool('F')->getThread()
+    // Dispatch ThreadPool
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("DispatchThread",
@@ -226,7 +226,7 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
      { 20, "Invalid JobManager/PendingTimeout option, ignoring entry" },
      { 21, "Failed to retrieve historical LSF job information from batch master" },
      { 22, "Failed to retrieve current LSF job information from batch master" },
-     { 23, "Failed to extract CLEAN_PERIOD value from lsb.params, using default" },
+     { 23, "Failed to extract CLEAN_PERIOD and DEFAULT_QUEUE value from lsb.params, using default" },
      { 24, "Failed to terminate LSF job" },
      { 25, "Job terminated, timeout occurred" },
      { 26, "Job terminated by service administrator" },
