@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2008/06/02 13:29:24 $ $Author: waldron $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2008/06/16 07:42:10 $ $Author: waldron $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -125,12 +125,8 @@ void castor::rh::RHThread::run(void* param) {
        castor::dlf::Param("Port", port),
        castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 7, 3, params);
-    ack.setStatus(false);
-    ack.setErrorCode(EINVAL);
-    std::ostringstream stst;
-    stst << "Unable to read Request object from socket."
-         << std::endl << e.getMessage().str();
-    ack.setErrorMessage(stst.str());
+    delete sock;
+    return;
   }
   
   // If the request comes from a secure connection then set Client values in 
