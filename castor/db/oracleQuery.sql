@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.640 $ $Date: 2008/06/13 15:11:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.641 $ $Date: 2008/06/16 14:59:17 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -49,7 +49,7 @@ BEGIN
                        WHERE CastorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
                          AND status IN (0, 1, 2, 4, 5, 6, 7, 10, 11)
                              -- search for diskCopies not GCCANDIDATE or BEINGDELETED
-                       GROUP BY (id, status, filesystem, castorfile, path)) DiskCopy
+                       GROUP BY (id, status, filesystem, castorfile, path, nbCopyAccesses)) DiskCopy
                WHERE FileSystem.id(+) = DiskCopy.fileSystem
                  AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
                  AND DiskServer.id(+) = FileSystem.diskServer
@@ -102,7 +102,7 @@ BEGIN
                       WHERE CastorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
                         AND status IN (0, 1, 2, 4, 5, 6, 7, 10, 11)
                             -- search for diskCopies not GCCANDIDATE or BEINGDELETED
-                      GROUP BY (id, status, filesystem, castorfile, path)) DiskCopy
+                      GROUP BY (id, status, filesystem, castorfile, path, nbCopyAccesses)) DiskCopy
               WHERE FileSystem.id(+) = DiskCopy.fileSystem
                 AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
                 AND DiskServer.id(+) = FileSystem.diskServer
