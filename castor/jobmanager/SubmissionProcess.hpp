@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/03/18 07:34:43 $ $Author: waldron $
+ * @(#)$RCSfile: SubmissionProcess.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/06/16 07:45:45 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -143,4 +143,4 @@ namespace castor {
 
 } // End of namespace castor
 
-#endif // JOBMANAGER_SUBMISSIONPROCESS_THREAD_HPP
+#endif // JOBMANAGER_SUBMISSION_PROCESS_HPP
