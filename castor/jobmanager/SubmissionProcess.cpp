@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2008/04/22 08:59:59 $ $Author: riojac3 $
+ * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2008/06/16 15:58:43 $ $Author: waldron $
  *
  * The Submission Process is used to submit new jobs into the scheduler. It is
  * run inside a separate process allowing for setuid and setgid calls to take
@@ -329,9 +329,13 @@ void castor::jobmanager::SubmissionProcess::submitJob
   // the job requires
   char resReq[MAXLINELEN];
   if (request->requestType() == OBJ_StageDiskCopyReplicaRequest) {
-    strncpy(resReq, "span[ptile=1] type==any && diskcopy", MAXLINELEN);
+    strncpy(resReq, 
+	    "span[ptile=1] type==any && select[defined(diskcopy)] rusage[diskcopy=1]]",
+	    MAXLINELEN);
   } else {
-    snprintf(resReq, MAXLINELEN, "type==any && %s", request->protocol().c_str());
+    snprintf(resReq, MAXLINELEN,
+	     "type==any && select[defined(%s)] rusage[%s=1]]", 
+	     request->protocol().c_str(), request->protocol().c_str());
   }
   m_job.resReq = resReq;
 
