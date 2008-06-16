@@ -1,5 +1,5 @@
 /******************************************************************************
- *              2.1.7-7_to_2.1.7-8.sql
+ *              2.1.7-7_to_2.1.7-9.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.7-7_to_2.1.7-10.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/05 06:35:17 $ $Author: waldron $
+ * @(#)$RCSfile: 2.1.7-7_to_2.1.7-10.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/16 07:34:39 $ $Author: sponcec3 $
  *
- * This script upgrades a CASTOR v2.1.7-7 database into v2.1.7-8
+ * This script upgrades a CASTOR v2.1.7-7 database into v2.1.7-9
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -51,7 +51,7 @@ BEGIN
     -- Schedule the start date of the job to 15 minutes from now. This
     -- basically pauses the job for 15 minutes so that the upgrade can
     -- go through as quickly as possible.
-    dbms_scheduler.set_attribute(a.job_name, 'START_DATE', SYSDATE + 15/1440);
+    dbms_scheduler.set_attribute(a.job_name, 'START_DATE', SYSDATE + 120/1440);
   END LOOP;
 END;
 
@@ -84,6 +84,92 @@ BEGIN
   IF cnt = 0 THEN
     EXECUTE IMMEDIATE 'DROP PROCEDURE stopChosenStreams';
   END IF;
+END;
+
+
+/************************************/
+/* Garbage collection related table */
+/************************************/
+
+/* a table storing the Gc policies and detailing there configuration
+   For each policy, identified by a name, parameters are :
+     - userPrecompute : the name of the PL/SQL function to be called to
+       precompute the GC weight when a file is written by the user.
+     - recallPrecompute : the name of the PL/SQL function to be called to
+       precompute the GC weight when a file is recalled
+     - copyPrecompute : the name of the PL/SQL function to be called to
+       precompute the GC weight when a file is disk to disk copied
+     - firstAccessHook : the name of the PL/SQL function to be called
+       when the file is accessed for the first time. Can be NULL.
+     - accessHook : the name of the PL/SQL function to be called
+       when the file is accessed (except for the first time). Can be NULL.
+     - userSetGCWeight : the name of the PL/SQL function to be called
+       when a setFileGcWeight user request is processed can be NULL.
+   All functions return a number that is the new gcWeight.
+   In general, here are the signatures :
+     userPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER)
+     recallPrecompute(fileSize NUMBER)
+     copyPrecompute(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER))
+     firstAccessHook(oldGcWeight NUMBER, creationTime NUMBER)
+     accessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER)
+     userSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER)
+   Few notes :
+     diskCopyStatus can be STAGED(0) or CANBEMIGR(10)
+ */
+CREATE TABLE GcPolicy (name VARCHAR2(2048) NOT NULL PRIMARY KEY,
+                       userPrecompute VARCHAR2(2048) NOT NULL,
+                       recallPrecompute VARCHAR2(2048) NOT NULL,
+                       copyPrecompute VARCHAR2(2048) NOT NULL,
+                       firstAccessHook VARCHAR2(2048) DEFAULT NULL,
+                       accessHook VARCHAR2(2048) DEFAULT NULL,
+                       userSetGCWeight VARCHAR2(2048) DEFAULT NULL);
+
+/* Default policy, mainly based on file sizes */
+INSERT INTO GcPolicy VALUES ('default',
+                             'castorGC.sizeRelatedUserPreCompute',
+                             'castorGC.sizeRelatedRecallsPreCompute',
+                             'castorGC.sizeRelatedCopyPreCompute',
+                             'castorGC.dayBonusFirstAccessHook',
+                             'castorGC.halfHourBonusAccessHook',
+                             'castorGc.cappedUserSetGCWeight');
+INSERT INTO GcPolicy VALUES ('FIFO',
+                             'castorGC.creationTimeRelatedUserPreCompute',
+                             'castorGC.creationTimeRelatedRecallsPreCompute',
+                             'castorGC.creationTimeRelatedCopyPreCompute',
+                             NULL,
+                             NULL,
+                             NULL);
+INSERT INTO GcPolicy VALUES ('LRU',
+                             'castorGC.creationTimeRelatedUserPreCompute',
+                             'castorGC.creationTimeRelatedRecallsPreCompute',
+                             'castorGC.creationTimeRelatedCopyPreCompute',
+                             'castorGC.LRUFirstAccessHook',
+                             'castorGC.LRUAccessHook',
+                             NULL);
+COMMIT;
+
+DROP FUNCTION size2gcweight;
+ALTER TABLE CastorFile DROP COLUMN nbAccesses;
+ALTER TABLE DiskCopy ADD (diskCopySize INTEGER, nbCopyAccesses NUMBER DEFAULT 0);
+ALTER TABLE SvcClass DROP COLUMN gcWeightForAccess;
+ALTER TABLE SvcClass ADD (gcPolicy VARCHAR2(2048) DEFAULT 'default');
+ALTER TABLE TapePool ADD (migrSelectPolicy VARCHAR(2048) DEFAULT 'defaultMigrSelPolicy');
+
+-- Fill in the diskCopySize of the DiskCopy table
+DECLARE
+  counter NUMBER := 0;
+BEGIN
+  FOR dc IN (SELECT diskcopy.id, castorfile.filesize
+               FROM diskcopy, castorfile
+              WHERE CastorFile.id = DiskCopy.Castorfile) LOOP
+    UPDATE DiskCopy SET diskCopySize = dc.filesize WHERE id = dc.id;
+    counter := counter + 1;
+    IF counter > 1000 THEN
+      counter := 0;
+      COMMIT;
+    END IF;
+  END LOOP;
+  COMMIT;
 END;
 
 /* New index to speedup SubRequest cleanup procedure */
