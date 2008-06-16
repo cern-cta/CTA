@@ -17,13 +17,13 @@
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 .\"
-.\" @(#)$RCSfile: stager_addprivilege.man,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/03 11:58:13 $ $Author: waldron $
+.\" @(#)$RCSfile: stager_addprivilege.man,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/16 07:44:19 $ $Author: waldron $
 .\"
 .\" man page for stager_add/removeprivilege
 .\"
 .\" @author Castor Dev team, castor-dev@cern.ch
 .\"****************************************************************************"
-.TH STAGER_ADDPRIVILEGE 1castor "$Date: 2008/06/03 11:58:13 $" CASTOR "STAGER Commands"
+.TH STAGER_ADDPRIVILEGE 1castor "$Date: 2008/06/16 07:44:19 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_addprivilege, stager_removeprivilege \- add/remove privileges to/from the B/W list of CASTOR
 .SH SYNOPSIS
@@ -69,7 +69,7 @@ command allows to remove privileges from the CASTOR Black and White list.
 In both cases, the list of privileges is optimized and reduced to the minimum set.
 Results may thus be surprising. As an example, with the following privileges :
 
-ServiceClass    User     Group    RequesType           Status
+ServiceClass    User     Group    RequestType           Status
 .fi
 *               *        st       *                    Granted
 .fi
@@ -136,7 +136,7 @@ Change done successfully
 .fi
 $ stager_listprivileges 
 .fi
-ServiceClass    User     Group    RequesType           Status
+ServiceClass    User     Group    RequestType           Status
 .fi
 *               stage    st       ChangePrivilege      Denied
 .fi

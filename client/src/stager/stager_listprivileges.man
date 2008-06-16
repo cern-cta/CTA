@@ -17,13 +17,13 @@
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 .\"
-.\" @(#)$RCSfile: stager_listprivileges.man,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/03 11:57:53 $ $Author: waldron $
+.\" @(#)$RCSfile: stager_listprivileges.man,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/16 07:44:19 $ $Author: waldron $
 .\"
 .\" man page for stager_listprivileges
 .\"
 .\" @author Castor Dev team, castor-dev@cern.ch
 .\"****************************************************************************
-.TH STAGER_LISTPRIVILEGES 1castor "$Date: 2008/06/03 11:57:53 $" CASTOR "STAGER Commands"
+.TH STAGER_LISTPRIVILEGES 1castor "$Date: 2008/06/16 07:44:19 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_listprivileges \- List the privileges defined in the B/W list of CASTOR
 .SH SYNOPSIS
@@ -145,7 +145,7 @@ Change done successfully
 .fi
 $ stager_listprivileges 
 .fi
-ServiceClass    User     Group    RequesType           Status
+ServiceClass    User     Group    RequestType           Status
 .fi
 *               stage    st       ChangePrivilege      Denied
 .fi

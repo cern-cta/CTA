@@ -192,7 +192,7 @@ int main(int argc, char *argv[]) {
     fprintf(stdout, "No privileges found\n");
   } else {
     fprintf(stdout, "%-15s %-8s %-8s %-20s %s\n",
-	    "ServiceClass", "User", "Group", "RequesType", "Status");
+	    "ServiceClass", "User", "Group", "RequestType", "Status");
     for (i = 0; i < nbPrivs; i++) {
       char* user;
       char* group;
