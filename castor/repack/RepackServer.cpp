@@ -30,8 +30,7 @@
 #include "castor/Services.hpp"
 
 // hardcoded schema version of the Repack database
-
-const std::string REPACKSCHEMAVERSION = "2_1_7_0";
+const std::string REPACKSCHEMAVERSION = "2_1_7_9";
 
 
 //------------------------------------------------------------------------------
