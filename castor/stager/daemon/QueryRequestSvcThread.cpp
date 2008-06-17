@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.87 $ $Release$ $Date: 2008/06/13 14:42:06 $ $Author: sponcec3 $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.88 $ $Release$ $Date: 2008/06/17 13:15:57 $ $Author: sponcec3 $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -531,6 +531,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
       castor::rh::FileQryResponse res;
       res.setReqAssociated(req->reqId());
       res.setStatus(10000); // Dummy status code for non existing files
+      res.setCastorFileName(pval);
       res.setFileName(pval);
       res.setErrorCode(e.code());
       res.setErrorMessage(e.getMessage().str());
