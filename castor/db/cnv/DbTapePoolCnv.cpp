@@ -56,7 +56,7 @@ static castor::CnvFactory<castor::db::cnv::DbTapePoolCnv>* s_factoryDbTapePoolCn
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbTapePoolCnv::s_insertStatementString =
-"INSERT INTO TapePool (name, id) VALUES (:1,ids_seq.nextval) RETURNING id INTO :2";
+"INSERT INTO TapePool (name, migrSelectPolicy, id) VALUES (:1,:2,ids_seq.nextval) RETURNING id INTO :3";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbTapePoolCnv::s_deleteStatementString =
@@ -64,11 +64,11 @@ const std::string castor::db::cnv::DbTapePoolCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbTapePoolCnv::s_selectStatementString =
-"SELECT name, id FROM TapePool WHERE id = :1";
+"SELECT name, migrSelectPolicy, id FROM TapePool WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbTapePoolCnv::s_updateStatementString =
-"UPDATE TapePool SET name = :1 WHERE id = :2";
+"UPDATE TapePool SET name = :1, migrSelectPolicy = :2 WHERE id = :3";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbTapePoolCnv::s_storeTypeStatementString =
@@ -458,15 +458,16 @@ void castor::db::cnv::DbTapePoolCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(2, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(3, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // Now Save the current object
     m_insertStatement->setString(1, obj->name());
+    m_insertStatement->setString(2, obj->migrSelectPolicy());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(2));
+    obj->setId(m_insertStatement->getUInt64(3));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -484,6 +485,7 @@ void castor::db::cnv::DbTapePoolCnv::createRep(castor::IAddress* address,
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
                     << "  name : " << obj->name() << std::endl
+                    << "  migrSelectPolicy : " << obj->migrSelectPolicy() << std::endl
                     << "  id : " << obj->id() << std::endl;
     throw ex;
   }
@@ -507,7 +509,8 @@ void castor::db::cnv::DbTapePoolCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setString(1, obj->name());
-    m_updateStatement->setUInt64(2, obj->id());
+    m_updateStatement->setString(2, obj->migrSelectPolicy());
+    m_updateStatement->setUInt64(3, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
@@ -591,7 +594,8 @@ castor::IObject* castor::db::cnv::DbTapePoolCnv::createObj(castor::IAddress* add
     castor::stager::TapePool* object = new castor::stager::TapePool();
     // Now retrieve and set members
     object->setName(rset->getString(1));
-    object->setId(rset->getUInt64(2));
+    object->setMigrSelectPolicy(rset->getString(2));
+    object->setId(rset->getUInt64(3));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -627,7 +631,8 @@ void castor::db::cnv::DbTapePoolCnv::updateObj(castor::IObject* obj)
     castor::stager::TapePool* object = 
       dynamic_cast<castor::stager::TapePool*>(obj);
     object->setName(rset->getString(1));
-    object->setId(rset->getUInt64(2));
+    object->setMigrSelectPolicy(rset->getString(2));
+    object->setId(rset->getUInt64(3));
     delete rset;
   } catch (castor::exception::SQLError e) {
     castor::exception::InvalidArgument ex;
