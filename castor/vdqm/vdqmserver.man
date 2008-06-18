@@ -1,0 +1,85 @@
+.\" Copyright (C) 2003  CERN
+.\" This program is free software; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License
+.\" as published by the Free Software Foundation; either version 2
+.\" of the License, or (at your option) any later version.
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+.TH VDQMSERVER 1 "$Date: 2008/06/18 15:45:37 $" CASTOR "VDQM server daemon"
+.SH NAME
+vdqmserver \- Volume and Drive Queue Manager (VDQM) server
+.SH SYNOPSIS
+.BI "vdqmserver [ -f ] [ -c ] [ -h ] [ -r num ] [ -j num ]"
+
+.SH DESCRIPTION
+.B vdqmserver
+is the central CASTOR server handling all tape volume and drive queues.
+It runs as a daemon on a host, which must be known to all clients and
+tape servers.  The following methods are tried in sequence by the clients and
+tape servers to determine this connection information: 
+.TP
+1. Read the environment variables:
+\fBVDQM_HOST\fP
+.br
+\fBVDQM_PORT\fP
+.TP
+2. Read the VDQM entries in /etc/castor/castor.conf:
+\fBVDQM HOST\fP
+.br
+\fBVDQM PORT\fP
+.TP
+3. Use compile time constants:
+The VDQM host value is set through the
+\fBVdqmHost\fP macro in the "config/site.def" file in the CASTOR2 build directory.  The VDQM port number is hard coded to be always 5012.
+.P
+Please note that the environment variable \fBVDQM_HOST\fP, the
+\fB/etc/castor/castor.conf\fP entry \fBVDQM HOST\fP and the \fBVdqmHost\fP
+macro contain both the VDQM primary and replica hosts.
+The format can be either of the following:
+.RS
+\fBprimary_host<space>replica\fP
+.br
+\fBprimary_host<tab>replica\fP
+.RE
+.P
+The purpose of the replica server is to reduce the impact of a crash of the
+primary server.  The VDQM clients will always first try to
+contact the primary server and if it is not responding, then they will try
+the replica.
+.P
+The \fBvdqmserver\fP responds to requests from the \fBshowqueues(1)\fP and
+\fBvdqm_admin(1)\fP utilities.
+
+.SH OPTIONS
+.TP
+\fB\-f, \-\-foreground
+Remain in the foreground
+.TP
+\fB\-f, \-\-config config-file
+Set the location of the configuration file.  The default is
+/etc/castor/castor.conf
+.TP
+\fB\-h, \-\-help
+Get usage information.
+.TP
+\fB\-r, \-\-requestHandlerThreads num
+Set the ... TO BE DONE
+
+.SH FILES
+.TP
+.B /etc/castor/castor.conf
+CASTOR configuration file
+.TP
+.B /usr/spool/vdqm/log
+VDQM server log file
+
+.SH SEE ALSO
+.BR showqueues(1) ,
+.BR vdqm_admin(1) ,
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
