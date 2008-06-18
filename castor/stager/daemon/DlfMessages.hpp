@@ -134,10 +134,10 @@ namespace castor{
 	STAGER_JOBSVC_BADSRT = 134, /* "Expected SubRequest in Request but found another type" */
 	STAGER_JOBSVC_NOFSOK = 135, /* "Could not find suitable filesystem" */
 	STAGER_JOBSVC_GETUPDS = 136, /* "Invoking getUpdateStart" */
-	STAGER_JOBSVC_PUTS = 137, /* "Invoking PutStart" */
+	STAGER_JOBSVC_PUTS = 137, /* "Invoking putStart" */
 	STAGER_JOBSVC_D2DCBAD = 138 , /* "Invoking disk2DiskCopyFailed" */
 	STAGER_JOBSVC_D2DCOK = 139, /* "Invoking disk2DiskCopyDone" */
-	STAGER_JOBSVC_PFMIG = 140, /* "Invoking PrepareForMigration" */
+	STAGER_JOBSVC_PFMIG = 140, /* "Invoking prepareForMigration" */
 	STAGER_JOBSVC_GETUPDO = 141, /* "Invoking getUpdateDone" */
 	STAGER_JOBSVC_GETUPFA = 142, /* "Invoking getUpdateFailed" */
 	STAGER_JOBSVC_PUTFAIL = 143, /* "Invoking putFailed" */

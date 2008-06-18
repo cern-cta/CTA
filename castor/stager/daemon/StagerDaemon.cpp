@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.54 $ $Release$ $Date: 2008/05/30 07:33:44 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.55 $ $Release$ $Date: 2008/06/18 06:30:32 $ $Author: waldron $
  *
  * Main stager daemon
  *
@@ -259,10 +259,10 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_JOBSVC_BADSRT,  "Expected SubRequest in Request but found another type"},
     { STAGER_JOBSVC_NOFSOK,  "Could not find suitable filesystem"},
     { STAGER_JOBSVC_GETUPDS, "Invoking getUpdateStart"},
-    { STAGER_JOBSVC_PUTS,    "Invoking PutStart"},
+    { STAGER_JOBSVC_PUTS,    "Invoking putStart"},
     { STAGER_JOBSVC_D2DCBAD, "Invoking disk2DiskCopyFailed"},
     { STAGER_JOBSVC_D2DCOK,  "Invoking disk2DiskCopyDone"},
-    { STAGER_JOBSVC_PFMIG,   "Invoking PrepareForMigration"},
+    { STAGER_JOBSVC_PFMIG,   "Invoking prepareForMigration"},
     { STAGER_JOBSVC_GETUPDO, "Invoking getUpdateDone"},
     { STAGER_JOBSVC_GETUPFA, "Invoking getUpdateFailed"},
     { STAGER_JOBSVC_PUTFAIL, "Invoking putFailed"},
