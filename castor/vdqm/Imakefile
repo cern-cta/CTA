@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.34 $ $Release$ $Date: 2008/06/19 15:17:48 $ $Author: murrayc3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.35 $ $Release$ $Date: 2008/06/19 16:24:40 $ $Author: murrayc3 $
 #
 # Make Castor vdqm library
 #
@@ -92,7 +92,7 @@ install: FileName($(BIN),vdqmserver)
 
 InstallProgram(vdqmserver,$(BIN),root,bin,755)
 
-install.man: $(MANDIR) $(MANPAGES_RH)
+install.man: $(MANDIR) $(MANPAGES_VDQM)
 
 IMANPAGE(vdqmserver,$(MANDIR),$(MANSUFFIX))
 
