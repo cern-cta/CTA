@@ -44,10 +44,9 @@ namespace castor {
 
     /**
      * class TapeAccessSpecification
-     * This table contains all existing tape models, the densities and their
-     * access modes.  A tape drive can be indirectly associated with several
-     * entries, if it is capable to support them. Please note that this table
-     * has only static entries!
+     * This table contains all existing tape models, the densities and their access
+     * modes.  A tape drive can be indirectly associated with several entries, if it is
+     * capable to support them. Please note that this table has only static entries!
      */
     class TapeAccessSpecification : public virtual castor::IObject {
 
