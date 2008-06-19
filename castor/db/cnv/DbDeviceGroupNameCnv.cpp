@@ -258,29 +258,41 @@ void castor::db::cnv::DbDeviceGroupNameCnv::bulkCreateRep(castor::IAddress* addr
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // build the buffers for dgName
-    const char** dgNameBuffer = (const char**) malloc(nb * sizeof(const char*));
+    unsigned int dgNameMaxLen = 0;
+    for (int i = 0; i < nb; i++) {
+      if (objs[i]->dgName().length()+1 > dgNameMaxLen)
+        dgNameMaxLen = objs[i]->dgName().length()+1;
+    }
+    char* dgNameBuffer = (char*) calloc(nb, dgNameMaxLen);
     unsigned short* dgNameBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
     for (int i = 0; i < nb; i++) {
-      dgNameBuffer[i] = objs[i]->dgName().c_str();
-      dgNameBufLens[i] = objs[i]->dgName().length();
+      strncpy(dgNameBuffer+(i*dgNameMaxLen), objs[i]->dgName().c_str(), dgNameMaxLen);
+      dgNameBufLens[i] = objs[i]->dgName().length()+1; // + 1 for the trailing \0
     }
     m_insertStatement->setDataBuffer
-      (1, dgNameBuffer, DBTYPE_STRING, sizeof(dgNameBuffer[0]), &dgNameBufLens);
+      (1, dgNameBuffer, DBTYPE_STRING, dgNameMaxLen, dgNameBufLens);
     // build the buffers for libraryName
-    const char** libraryNameBuffer = (const char**) malloc(nb * sizeof(const char*));
+    unsigned int libraryNameMaxLen = 0;
+    for (int i = 0; i < nb; i++) {
+      if (objs[i]->libraryName().length()+1 > libraryNameMaxLen)
+        libraryNameMaxLen = objs[i]->libraryName().length()+1;
+    }
+    char* libraryNameBuffer = (char*) calloc(nb, libraryNameMaxLen);
     unsigned short* libraryNameBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
     for (int i = 0; i < nb; i++) {
-      libraryNameBuffer[i] = objs[i]->libraryName().c_str();
-      libraryNameBufLens[i] = objs[i]->libraryName().length();
+      strncpy(libraryNameBuffer+(i*libraryNameMaxLen), objs[i]->libraryName().c_str(), libraryNameMaxLen);
+      libraryNameBufLens[i] = objs[i]->libraryName().length()+1; // + 1 for the trailing \0
     }
     m_insertStatement->setDataBuffer
-      (2, libraryNameBuffer, DBTYPE_STRING, sizeof(libraryNameBuffer[0]), &libraryNameBufLens);
+      (2, libraryNameBuffer, DBTYPE_STRING, libraryNameMaxLen, libraryNameBufLens);
     // build the buffers for returned ids
-    u_signed64* idBuffer = (u_signed64*) calloc(nb, sizeof(u_signed64));
+    double* idBuffer = (double*) calloc(nb, sizeof(double));
     unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
+    m_insertStatement->setDataBuffer
+      (5, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
-      objects[i]->setId(idBuffer[i]);
+      objects[i]->setId((u_signed64)idBuffer[i]);
     }
     // release the buffers for dgName
     free(dgNameBuffer);
@@ -290,16 +302,16 @@ void castor::db::cnv::DbDeviceGroupNameCnv::bulkCreateRep(castor::IAddress* addr
     free(libraryNameBufLens);
     // reuse idBuffer for bulk insertion into Id2Type
     m_storeTypeStatement->setDataBuffer
-      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), &idBufLens);
+      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
     // build the buffers for type
-    u_signed64* typeBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    int* typeBuffer = (int*) malloc(nb * sizeof(int));
     unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
     for (int i = 0; i < nb; i++) {
       typeBuffer[i] = objs[i]->type();
-      typeBufLens[i] = sizeof(u_signed64);
+      typeBufLens[i] = sizeof(int);
     }
     m_storeTypeStatement->setDataBuffer
-      (2, typeBuffer, DBTYPE_UINT64, sizeof(typeBuffer[0]), &typeBufLens);
+      (2, typeBuffer, DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
     m_storeTypeStatement->execute(nb);
     // release the buffers for type
     free(typeBuffer);

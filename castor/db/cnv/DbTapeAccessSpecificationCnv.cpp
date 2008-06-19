@@ -267,31 +267,43 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::bulkCreateRep(castor::IAddre
       accessModeBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (1, accessModeBuffer, DBTYPE_INT, sizeof(accessModeBuffer[0]), &accessModeBufLens);
+      (1, accessModeBuffer, DBTYPE_INT, sizeof(accessModeBuffer[0]), accessModeBufLens);
     // build the buffers for density
-    const char** densityBuffer = (const char**) malloc(nb * sizeof(const char*));
+    unsigned int densityMaxLen = 0;
+    for (int i = 0; i < nb; i++) {
+      if (objs[i]->density().length()+1 > densityMaxLen)
+        densityMaxLen = objs[i]->density().length()+1;
+    }
+    char* densityBuffer = (char*) calloc(nb, densityMaxLen);
     unsigned short* densityBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
     for (int i = 0; i < nb; i++) {
-      densityBuffer[i] = objs[i]->density().c_str();
-      densityBufLens[i] = objs[i]->density().length();
+      strncpy(densityBuffer+(i*densityMaxLen), objs[i]->density().c_str(), densityMaxLen);
+      densityBufLens[i] = objs[i]->density().length()+1; // + 1 for the trailing \0
     }
     m_insertStatement->setDataBuffer
-      (2, densityBuffer, DBTYPE_STRING, sizeof(densityBuffer[0]), &densityBufLens);
+      (2, densityBuffer, DBTYPE_STRING, densityMaxLen, densityBufLens);
     // build the buffers for tapeModel
-    const char** tapeModelBuffer = (const char**) malloc(nb * sizeof(const char*));
+    unsigned int tapeModelMaxLen = 0;
+    for (int i = 0; i < nb; i++) {
+      if (objs[i]->tapeModel().length()+1 > tapeModelMaxLen)
+        tapeModelMaxLen = objs[i]->tapeModel().length()+1;
+    }
+    char* tapeModelBuffer = (char*) calloc(nb, tapeModelMaxLen);
     unsigned short* tapeModelBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
     for (int i = 0; i < nb; i++) {
-      tapeModelBuffer[i] = objs[i]->tapeModel().c_str();
-      tapeModelBufLens[i] = objs[i]->tapeModel().length();
+      strncpy(tapeModelBuffer+(i*tapeModelMaxLen), objs[i]->tapeModel().c_str(), tapeModelMaxLen);
+      tapeModelBufLens[i] = objs[i]->tapeModel().length()+1; // + 1 for the trailing \0
     }
     m_insertStatement->setDataBuffer
-      (3, tapeModelBuffer, DBTYPE_STRING, sizeof(tapeModelBuffer[0]), &tapeModelBufLens);
+      (3, tapeModelBuffer, DBTYPE_STRING, tapeModelMaxLen, tapeModelBufLens);
     // build the buffers for returned ids
-    u_signed64* idBuffer = (u_signed64*) calloc(nb, sizeof(u_signed64));
+    double* idBuffer = (double*) calloc(nb, sizeof(double));
     unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
+    m_insertStatement->setDataBuffer
+      (6, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
-      objects[i]->setId(idBuffer[i]);
+      objects[i]->setId((u_signed64)idBuffer[i]);
     }
     // release the buffers for accessMode
     free(accessModeBuffer);
@@ -304,16 +316,16 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::bulkCreateRep(castor::IAddre
     free(tapeModelBufLens);
     // reuse idBuffer for bulk insertion into Id2Type
     m_storeTypeStatement->setDataBuffer
-      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), &idBufLens);
+      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
     // build the buffers for type
-    u_signed64* typeBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    int* typeBuffer = (int*) malloc(nb * sizeof(int));
     unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
     for (int i = 0; i < nb; i++) {
       typeBuffer[i] = objs[i]->type();
-      typeBufLens[i] = sizeof(u_signed64);
+      typeBufLens[i] = sizeof(int);
     }
     m_storeTypeStatement->setDataBuffer
-      (2, typeBuffer, DBTYPE_UINT64, sizeof(typeBuffer[0]), &typeBufLens);
+      (2, typeBuffer, DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
     m_storeTypeStatement->execute(nb);
     // release the buffers for type
     free(typeBuffer);

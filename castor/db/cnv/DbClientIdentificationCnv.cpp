@@ -266,23 +266,33 @@ void castor::db::cnv::DbClientIdentificationCnv::bulkCreateRep(castor::IAddress*
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // build the buffers for machine
-    const char** machineBuffer = (const char**) malloc(nb * sizeof(const char*));
+    unsigned int machineMaxLen = 0;
+    for (int i = 0; i < nb; i++) {
+      if (objs[i]->machine().length()+1 > machineMaxLen)
+        machineMaxLen = objs[i]->machine().length()+1;
+    }
+    char* machineBuffer = (char*) calloc(nb, machineMaxLen);
     unsigned short* machineBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
     for (int i = 0; i < nb; i++) {
-      machineBuffer[i] = objs[i]->machine().c_str();
-      machineBufLens[i] = objs[i]->machine().length();
+      strncpy(machineBuffer+(i*machineMaxLen), objs[i]->machine().c_str(), machineMaxLen);
+      machineBufLens[i] = objs[i]->machine().length()+1; // + 1 for the trailing \0
     }
     m_insertStatement->setDataBuffer
-      (1, machineBuffer, DBTYPE_STRING, sizeof(machineBuffer[0]), &machineBufLens);
+      (1, machineBuffer, DBTYPE_STRING, machineMaxLen, machineBufLens);
     // build the buffers for userName
-    const char** userNameBuffer = (const char**) malloc(nb * sizeof(const char*));
+    unsigned int userNameMaxLen = 0;
+    for (int i = 0; i < nb; i++) {
+      if (objs[i]->userName().length()+1 > userNameMaxLen)
+        userNameMaxLen = objs[i]->userName().length()+1;
+    }
+    char* userNameBuffer = (char*) calloc(nb, userNameMaxLen);
     unsigned short* userNameBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
     for (int i = 0; i < nb; i++) {
-      userNameBuffer[i] = objs[i]->userName().c_str();
-      userNameBufLens[i] = objs[i]->userName().length();
+      strncpy(userNameBuffer+(i*userNameMaxLen), objs[i]->userName().c_str(), userNameMaxLen);
+      userNameBufLens[i] = objs[i]->userName().length()+1; // + 1 for the trailing \0
     }
     m_insertStatement->setDataBuffer
-      (2, userNameBuffer, DBTYPE_STRING, sizeof(userNameBuffer[0]), &userNameBufLens);
+      (2, userNameBuffer, DBTYPE_STRING, userNameMaxLen, userNameBufLens);
     // build the buffers for port
     int* portBuffer = (int*) malloc(nb * sizeof(int));
     unsigned short* portBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -291,7 +301,7 @@ void castor::db::cnv::DbClientIdentificationCnv::bulkCreateRep(castor::IAddress*
       portBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (3, portBuffer, DBTYPE_INT, sizeof(portBuffer[0]), &portBufLens);
+      (3, portBuffer, DBTYPE_INT, sizeof(portBuffer[0]), portBufLens);
     // build the buffers for euid
     int* euidBuffer = (int*) malloc(nb * sizeof(int));
     unsigned short* euidBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -300,7 +310,7 @@ void castor::db::cnv::DbClientIdentificationCnv::bulkCreateRep(castor::IAddress*
       euidBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (4, euidBuffer, DBTYPE_INT, sizeof(euidBuffer[0]), &euidBufLens);
+      (4, euidBuffer, DBTYPE_INT, sizeof(euidBuffer[0]), euidBufLens);
     // build the buffers for egid
     int* egidBuffer = (int*) malloc(nb * sizeof(int));
     unsigned short* egidBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -309,7 +319,7 @@ void castor::db::cnv::DbClientIdentificationCnv::bulkCreateRep(castor::IAddress*
       egidBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (5, egidBuffer, DBTYPE_INT, sizeof(egidBuffer[0]), &egidBufLens);
+      (5, egidBuffer, DBTYPE_INT, sizeof(egidBuffer[0]), egidBufLens);
     // build the buffers for magic
     int* magicBuffer = (int*) malloc(nb * sizeof(int));
     unsigned short* magicBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -318,13 +328,15 @@ void castor::db::cnv::DbClientIdentificationCnv::bulkCreateRep(castor::IAddress*
       magicBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (6, magicBuffer, DBTYPE_INT, sizeof(magicBuffer[0]), &magicBufLens);
+      (6, magicBuffer, DBTYPE_INT, sizeof(magicBuffer[0]), magicBufLens);
     // build the buffers for returned ids
-    u_signed64* idBuffer = (u_signed64*) calloc(nb, sizeof(u_signed64));
+    double* idBuffer = (double*) calloc(nb, sizeof(double));
     unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
+    m_insertStatement->setDataBuffer
+      (8, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
-      objects[i]->setId(idBuffer[i]);
+      objects[i]->setId((u_signed64)idBuffer[i]);
     }
     // release the buffers for machine
     free(machineBuffer);
@@ -346,16 +358,16 @@ void castor::db::cnv::DbClientIdentificationCnv::bulkCreateRep(castor::IAddress*
     free(magicBufLens);
     // reuse idBuffer for bulk insertion into Id2Type
     m_storeTypeStatement->setDataBuffer
-      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), &idBufLens);
+      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
     // build the buffers for type
-    u_signed64* typeBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    int* typeBuffer = (int*) malloc(nb * sizeof(int));
     unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
     for (int i = 0; i < nb; i++) {
       typeBuffer[i] = objs[i]->type();
-      typeBufLens[i] = sizeof(u_signed64);
+      typeBufLens[i] = sizeof(int);
     }
     m_storeTypeStatement->setDataBuffer
-      (2, typeBuffer, DBTYPE_UINT64, sizeof(typeBuffer[0]), &typeBufLens);
+      (2, typeBuffer, DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
     m_storeTypeStatement->execute(nb);
     // release the buffers for type
     free(typeBuffer);

@@ -41,6 +41,7 @@
 #include "castor/exception/NoEntry.hpp"
 #include "castor/repack/RepackSegment.hpp"
 #include "castor/repack/RepackSubRequest.hpp"
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
@@ -323,9 +324,9 @@ void castor::db::cnv::DbRepackSegmentCnv::createRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_insertStatementString << std::endl
-                    << "and parameters' values were :" << std::endl
+                    << " and parameters' values were :" << std::endl
                     << "  fileid : " << obj->fileid() << std::endl
                     << "  segsize : " << obj->segsize() << std::endl
                     << "  compression : " << obj->compression() << std::endl
@@ -337,6 +338,200 @@ void castor::db::cnv::DbRepackSegmentCnv::createRep(castor::IAddress* address,
                     << "  errorMessage : " << obj->errorMessage() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  repacksubrequest : " << obj->repacksubrequest() << std::endl;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bulkCreateRep
+//------------------------------------------------------------------------------
+void castor::db::cnv::DbRepackSegmentCnv::bulkCreateRep(castor::IAddress* address,
+                                                        std::vector<castor::IObject*> &objects,
+                                                        bool endTransaction,
+                                                        unsigned int type)
+  throw (castor::exception::Exception) {
+  // check whether something needs to be done
+  int nb = objects.size();
+  if (0 == nb) return;
+  // Casts all objects
+  std::vector<castor::repack::RepackSegment*> objs;
+  for (int i = 0; i < nb; i++) {
+    objs.push_back(dynamic_cast<castor::repack::RepackSegment*>(objects[i]));
+  }
+  try {
+    // Check whether the statements are ok
+    if (0 == m_insertStatement) {
+      m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(11, castor::db::DBTYPE_UINT64);
+    }
+    if (0 == m_storeTypeStatement) {
+      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
+    }
+    // build the buffers for fileid
+    double* fileidBuffer = (double*) malloc(nb * sizeof(double));
+    unsigned short* fileidBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      fileidBuffer[i] = objs[i]->fileid();
+      fileidBufLens[i] = sizeof(double);
+    }
+    m_insertStatement->setDataBuffer
+      (1, fileidBuffer, DBTYPE_UINT64, sizeof(fileidBuffer[0]), fileidBufLens);
+    // build the buffers for segsize
+    double* segsizeBuffer = (double*) malloc(nb * sizeof(double));
+    unsigned short* segsizeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      segsizeBuffer[i] = objs[i]->segsize();
+      segsizeBufLens[i] = sizeof(double);
+    }
+    m_insertStatement->setDataBuffer
+      (2, segsizeBuffer, DBTYPE_UINT64, sizeof(segsizeBuffer[0]), segsizeBufLens);
+    // build the buffers for compression
+    int* compressionBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* compressionBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      compressionBuffer[i] = objs[i]->compression();
+      compressionBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (3, compressionBuffer, DBTYPE_INT, sizeof(compressionBuffer[0]), compressionBufLens);
+    // build the buffers for filesec
+    int* filesecBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* filesecBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      filesecBuffer[i] = objs[i]->filesec();
+      filesecBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (4, filesecBuffer, DBTYPE_INT, sizeof(filesecBuffer[0]), filesecBufLens);
+    // build the buffers for copyno
+    int* copynoBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* copynoBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      copynoBuffer[i] = objs[i]->copyno();
+      copynoBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (5, copynoBuffer, DBTYPE_INT, sizeof(copynoBuffer[0]), copynoBufLens);
+    // build the buffers for blockid
+    double* blockidBuffer = (double*) malloc(nb * sizeof(double));
+    unsigned short* blockidBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      blockidBuffer[i] = objs[i]->blockid();
+      blockidBufLens[i] = sizeof(double);
+    }
+    m_insertStatement->setDataBuffer
+      (6, blockidBuffer, DBTYPE_UINT64, sizeof(blockidBuffer[0]), blockidBufLens);
+    // build the buffers for fileseq
+    double* fileseqBuffer = (double*) malloc(nb * sizeof(double));
+    unsigned short* fileseqBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      fileseqBuffer[i] = objs[i]->fileseq();
+      fileseqBufLens[i] = sizeof(double);
+    }
+    m_insertStatement->setDataBuffer
+      (7, fileseqBuffer, DBTYPE_UINT64, sizeof(fileseqBuffer[0]), fileseqBufLens);
+    // build the buffers for errorCode
+    int* errorCodeBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* errorCodeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      errorCodeBuffer[i] = objs[i]->errorCode();
+      errorCodeBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (8, errorCodeBuffer, DBTYPE_INT, sizeof(errorCodeBuffer[0]), errorCodeBufLens);
+    // build the buffers for errorMessage
+    unsigned int errorMessageMaxLen = 0;
+    for (int i = 0; i < nb; i++) {
+      if (objs[i]->errorMessage().length()+1 > errorMessageMaxLen)
+        errorMessageMaxLen = objs[i]->errorMessage().length()+1;
+    }
+    char* errorMessageBuffer = (char*) calloc(nb, errorMessageMaxLen);
+    unsigned short* errorMessageBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      strncpy(errorMessageBuffer+(i*errorMessageMaxLen), objs[i]->errorMessage().c_str(), errorMessageMaxLen);
+      errorMessageBufLens[i] = objs[i]->errorMessage().length()+1; // + 1 for the trailing \0
+    }
+    m_insertStatement->setDataBuffer
+      (9, errorMessageBuffer, DBTYPE_STRING, errorMessageMaxLen, errorMessageBufLens);
+    // build the buffers for repacksubrequest
+    double* repacksubrequestBuffer = (double*) malloc(nb * sizeof(double));
+    unsigned short* repacksubrequestBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      repacksubrequestBuffer[i] = (type == OBJ_RepackSubRequest && objs[i]->repacksubrequest() != 0) ? objs[i]->repacksubrequest()->id() : 0;
+      repacksubrequestBufLens[i] = sizeof(double);
+    }
+    m_insertStatement->setDataBuffer
+      (18, repacksubrequestBuffer, DBTYPE_UINT64, sizeof(repacksubrequestBuffer[0]), repacksubrequestBufLens);
+    // build the buffers for returned ids
+    double* idBuffer = (double*) calloc(nb, sizeof(double));
+    unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
+    m_insertStatement->setDataBuffer
+      (19, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
+    m_insertStatement->execute(nb);
+    for (int i = 0; i < nb; i++) {
+      objects[i]->setId((u_signed64)idBuffer[i]);
+    }
+    // release the buffers for fileid
+    free(fileidBuffer);
+    free(fileidBufLens);
+    // release the buffers for segsize
+    free(segsizeBuffer);
+    free(segsizeBufLens);
+    // release the buffers for compression
+    free(compressionBuffer);
+    free(compressionBufLens);
+    // release the buffers for filesec
+    free(filesecBuffer);
+    free(filesecBufLens);
+    // release the buffers for copyno
+    free(copynoBuffer);
+    free(copynoBufLens);
+    // release the buffers for blockid
+    free(blockidBuffer);
+    free(blockidBufLens);
+    // release the buffers for fileseq
+    free(fileseqBuffer);
+    free(fileseqBufLens);
+    // release the buffers for errorCode
+    free(errorCodeBuffer);
+    free(errorCodeBufLens);
+    // release the buffers for errorMessage
+    free(errorMessageBuffer);
+    free(errorMessageBufLens);
+    // release the buffers for repacksubrequest
+    free(repacksubrequestBuffer);
+    free(repacksubrequestBufLens);
+    // reuse idBuffer for bulk insertion into Id2Type
+    m_storeTypeStatement->setDataBuffer
+      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
+    // build the buffers for type
+    int* typeBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      typeBuffer[i] = objs[i]->type();
+      typeBufLens[i] = sizeof(int);
+    }
+    m_storeTypeStatement->setDataBuffer
+      (2, typeBuffer, DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
+    m_storeTypeStatement->execute(nb);
+    // release the buffers for type
+    free(typeBuffer);
+    free(typeBufLens);
+    // release the buffers for returned ids
+    free(idBuffer);
+    free(idBufLens);
+    if (endTransaction) {
+      cnvSvc()->commit();
+    }
+  } catch (castor::exception::SQLError e) {
+    // Always try to rollback
+    try { if (endTransaction) cnvSvc()->rollback(); }
+    catch(castor::exception::Exception ignored) {}
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Error in bulkInsert request :"
+                    << std::endl << e.getMessage().str() << std::endl
+                    << " was called in bulk with "
+                    << nb << " items." << std::endl;
     throw ex;
   }
 }
@@ -379,9 +574,9 @@ void castor::db::cnv::DbRepackSegmentCnv::updateRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }
@@ -420,9 +615,9 @@ void castor::db::cnv::DbRepackSegmentCnv::deleteRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_deleteStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }
@@ -466,9 +661,9 @@ castor::IObject* castor::db::cnv::DbRepackSegmentCnv::createObj(castor::IAddress
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_selectStatementString << std::endl
-                    << "and id was " << ad->target() << std::endl;;
+                    << " and id was " << ad->target() << std::endl;;
     throw ex;
   }
 }
@@ -509,9 +704,9 @@ void castor::db::cnv::DbRepackSegmentCnv::updateObj(castor::IObject* obj)
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }

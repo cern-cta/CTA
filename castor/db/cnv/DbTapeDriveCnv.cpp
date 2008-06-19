@@ -967,25 +967,25 @@ void castor::db::cnv::DbTapeDriveCnv::bulkCreateRep(castor::IAddress* address,
       jobIDBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (1, jobIDBuffer, DBTYPE_INT, sizeof(jobIDBuffer[0]), &jobIDBufLens);
+      (1, jobIDBuffer, DBTYPE_INT, sizeof(jobIDBuffer[0]), jobIDBufLens);
     // build the buffers for modificationTime
-    u_signed64* modificationTimeBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    double* modificationTimeBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* modificationTimeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
     for (int i = 0; i < nb; i++) {
       modificationTimeBuffer[i] = objs[i]->modificationTime();
-      modificationTimeBufLens[i] = sizeof(u_signed64);
+      modificationTimeBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (2, modificationTimeBuffer, DBTYPE_UINT64, sizeof(modificationTimeBuffer[0]), &modificationTimeBufLens);
+      (2, modificationTimeBuffer, DBTYPE_UINT64, sizeof(modificationTimeBuffer[0]), modificationTimeBufLens);
     // build the buffers for resettime
-    u_signed64* resettimeBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    double* resettimeBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* resettimeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
     for (int i = 0; i < nb; i++) {
       resettimeBuffer[i] = objs[i]->resettime();
-      resettimeBufLens[i] = sizeof(u_signed64);
+      resettimeBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (3, resettimeBuffer, DBTYPE_UINT64, sizeof(resettimeBuffer[0]), &resettimeBufLens);
+      (3, resettimeBuffer, DBTYPE_UINT64, sizeof(resettimeBuffer[0]), resettimeBufLens);
     // build the buffers for usecount
     int* usecountBuffer = (int*) malloc(nb * sizeof(int));
     unsigned short* usecountBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -994,7 +994,7 @@ void castor::db::cnv::DbTapeDriveCnv::bulkCreateRep(castor::IAddress* address,
       usecountBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (4, usecountBuffer, DBTYPE_INT, sizeof(usecountBuffer[0]), &usecountBufLens);
+      (4, usecountBuffer, DBTYPE_INT, sizeof(usecountBuffer[0]), usecountBufLens);
     // build the buffers for errcount
     int* errcountBuffer = (int*) malloc(nb * sizeof(int));
     unsigned short* errcountBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -1003,7 +1003,7 @@ void castor::db::cnv::DbTapeDriveCnv::bulkCreateRep(castor::IAddress* address,
       errcountBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (5, errcountBuffer, DBTYPE_INT, sizeof(errcountBuffer[0]), &errcountBufLens);
+      (5, errcountBuffer, DBTYPE_INT, sizeof(errcountBuffer[0]), errcountBufLens);
     // build the buffers for transferredMB
     int* transferredMBBuffer = (int*) malloc(nb * sizeof(int));
     unsigned short* transferredMBBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -1012,52 +1012,57 @@ void castor::db::cnv::DbTapeDriveCnv::bulkCreateRep(castor::IAddress* address,
       transferredMBBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (6, transferredMBBuffer, DBTYPE_INT, sizeof(transferredMBBuffer[0]), &transferredMBBufLens);
+      (6, transferredMBBuffer, DBTYPE_INT, sizeof(transferredMBBuffer[0]), transferredMBBufLens);
     // build the buffers for totalMB
-    u_signed64* totalMBBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    double* totalMBBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* totalMBBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
     for (int i = 0; i < nb; i++) {
       totalMBBuffer[i] = objs[i]->totalMB();
-      totalMBBufLens[i] = sizeof(u_signed64);
+      totalMBBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (7, totalMBBuffer, DBTYPE_UINT64, sizeof(totalMBBuffer[0]), &totalMBBufLens);
+      (7, totalMBBuffer, DBTYPE_UINT64, sizeof(totalMBBuffer[0]), totalMBBufLens);
     // build the buffers for driveName
-    const char** driveNameBuffer = (const char**) malloc(nb * sizeof(const char*));
+    unsigned int driveNameMaxLen = 0;
+    for (int i = 0; i < nb; i++) {
+      if (objs[i]->driveName().length()+1 > driveNameMaxLen)
+        driveNameMaxLen = objs[i]->driveName().length()+1;
+    }
+    char* driveNameBuffer = (char*) calloc(nb, driveNameMaxLen);
     unsigned short* driveNameBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
     for (int i = 0; i < nb; i++) {
-      driveNameBuffer[i] = objs[i]->driveName().c_str();
-      driveNameBufLens[i] = objs[i]->driveName().length();
+      strncpy(driveNameBuffer+(i*driveNameMaxLen), objs[i]->driveName().c_str(), driveNameMaxLen);
+      driveNameBufLens[i] = objs[i]->driveName().length()+1; // + 1 for the trailing \0
     }
     m_insertStatement->setDataBuffer
-      (8, driveNameBuffer, DBTYPE_STRING, sizeof(driveNameBuffer[0]), &driveNameBufLens);
+      (8, driveNameBuffer, DBTYPE_STRING, driveNameMaxLen, driveNameBufLens);
     // build the buffers for tape
-    u_signed64* tapeBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    double* tapeBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* tapeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
     for (int i = 0; i < nb; i++) {
       tapeBuffer[i] = (type == OBJ_VdqmTape && objs[i]->tape() != 0) ? objs[i]->tape()->id() : 0;
-      tapeBufLens[i] = sizeof(u_signed64);
+      tapeBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (9, tapeBuffer, DBTYPE_UINT64, sizeof(tapeBuffer[0]), &tapeBufLens);
+      (9, tapeBuffer, DBTYPE_UINT64, sizeof(tapeBuffer[0]), tapeBufLens);
     // build the buffers for runningTapeReq
-    u_signed64* runningTapeReqBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    double* runningTapeReqBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* runningTapeReqBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
     for (int i = 0; i < nb; i++) {
       runningTapeReqBuffer[i] = (type == OBJ_TapeRequest && objs[i]->runningTapeReq() != 0) ? objs[i]->runningTapeReq()->id() : 0;
-      runningTapeReqBufLens[i] = sizeof(u_signed64);
+      runningTapeReqBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (10, runningTapeReqBuffer, DBTYPE_UINT64, sizeof(runningTapeReqBuffer[0]), &runningTapeReqBufLens);
+      (10, runningTapeReqBuffer, DBTYPE_UINT64, sizeof(runningTapeReqBuffer[0]), runningTapeReqBufLens);
     // build the buffers for deviceGroupName
-    u_signed64* deviceGroupNameBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    double* deviceGroupNameBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* deviceGroupNameBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
     for (int i = 0; i < nb; i++) {
       deviceGroupNameBuffer[i] = (type == OBJ_DeviceGroupName && objs[i]->deviceGroupName() != 0) ? objs[i]->deviceGroupName()->id() : 0;
-      deviceGroupNameBufLens[i] = sizeof(u_signed64);
+      deviceGroupNameBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (13, deviceGroupNameBuffer, DBTYPE_UINT64, sizeof(deviceGroupNameBuffer[0]), &deviceGroupNameBufLens);
+      (13, deviceGroupNameBuffer, DBTYPE_UINT64, sizeof(deviceGroupNameBuffer[0]), deviceGroupNameBufLens);
     // build the buffers for status
     int* statusBuffer = (int*) malloc(nb * sizeof(int));
     unsigned short* statusBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -1066,22 +1071,24 @@ void castor::db::cnv::DbTapeDriveCnv::bulkCreateRep(castor::IAddress* address,
       statusBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (14, statusBuffer, DBTYPE_INT, sizeof(statusBuffer[0]), &statusBufLens);
+      (14, statusBuffer, DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
     // build the buffers for tapeServer
-    u_signed64* tapeServerBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    double* tapeServerBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* tapeServerBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
     for (int i = 0; i < nb; i++) {
       tapeServerBuffer[i] = (type == OBJ_TapeServer && objs[i]->tapeServer() != 0) ? objs[i]->tapeServer()->id() : 0;
-      tapeServerBufLens[i] = sizeof(u_signed64);
+      tapeServerBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (15, tapeServerBuffer, DBTYPE_UINT64, sizeof(tapeServerBuffer[0]), &tapeServerBufLens);
+      (15, tapeServerBuffer, DBTYPE_UINT64, sizeof(tapeServerBuffer[0]), tapeServerBufLens);
     // build the buffers for returned ids
-    u_signed64* idBuffer = (u_signed64*) calloc(nb, sizeof(u_signed64));
+    double* idBuffer = (double*) calloc(nb, sizeof(double));
     unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
+    m_insertStatement->setDataBuffer
+      (16, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
-      objects[i]->setId(idBuffer[i]);
+      objects[i]->setId((u_signed64)idBuffer[i]);
     }
     // release the buffers for jobID
     free(jobIDBuffer);
@@ -1124,16 +1131,16 @@ void castor::db::cnv::DbTapeDriveCnv::bulkCreateRep(castor::IAddress* address,
     free(tapeServerBufLens);
     // reuse idBuffer for bulk insertion into Id2Type
     m_storeTypeStatement->setDataBuffer
-      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), &idBufLens);
+      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
     // build the buffers for type
-    u_signed64* typeBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    int* typeBuffer = (int*) malloc(nb * sizeof(int));
     unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
     for (int i = 0; i < nb; i++) {
       typeBuffer[i] = objs[i]->type();
-      typeBufLens[i] = sizeof(u_signed64);
+      typeBufLens[i] = sizeof(int);
     }
     m_storeTypeStatement->setDataBuffer
-      (2, typeBuffer, DBTYPE_UINT64, sizeof(typeBuffer[0]), &typeBufLens);
+      (2, typeBuffer, DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
     m_storeTypeStatement->execute(nb);
     // release the buffers for type
     free(typeBuffer);
