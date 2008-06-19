@@ -217,7 +217,7 @@ castor::db::ora::OraVdqmSvc::StatementStringMap::StatementStringMap() {
     "  AND tapeModel = :3");
   addStmtStr(SELECT_DEVICE_GROUP_NAME_SQL_STMT,
     "SELECT id FROM DeviceGroupName WHERE dgName = :1");
-  addStmtStr(SELECT_VOL_REQS_CREATION_TIME_ORDER_SQL_STMT,
+  addStmtStr(SELECT_VOL_REQS_DGN_CREATION_TIME_ORDER_SQL_STMT,
     "SELECT"
     "  id,"
     "  driveName,"
@@ -239,6 +239,7 @@ castor::db::ora::OraVdqmSvc::StatementStringMap::StatementStringMap() {
     "      (:1 IS NULL OR :2 = dgName)"
     "  AND (:3 IS NULL OR :4 = tapeServer) "
     "ORDER BY"
+    "  dgName ASC,"
     "  creationTime ASC");
   addStmtStr(SELECT_VOL_REQS_PRIORITY_ORDER_SQL_STMT,
     "SELECT"
@@ -2128,7 +2129,7 @@ void castor::db::ora::OraVdqmSvc::getTapeRequestQueue(
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  const StatementId stmtId = SELECT_VOL_REQS_CREATION_TIME_ORDER_SQL_STMT;
+  const StatementId stmtId = SELECT_VOL_REQS_DGN_CREATION_TIME_ORDER_SQL_STMT;
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
