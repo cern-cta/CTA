@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.126 $ $Release$ $Date: 2008/06/08 12:23:39 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.127 $ $Release$ $Date: 2008/06/19 12:19:00 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1140,7 +1140,8 @@ LEFT OUTER JOIN TapeRequest ON
 LEFT OUTER JOIN TapeAccessSpecification ON
   TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
 ORDER BY
-  DriveName ASC;
+  dgName ASC,
+  driveName ASC;
 
 
 /**
