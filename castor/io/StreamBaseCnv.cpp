@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/03/14 10:40:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/06/19 14:56:43 $ $Author: sponcec3 $
  *
  *
  *
@@ -68,6 +68,20 @@ inline const unsigned int castor::io::StreamBaseCnv::repType() const {
   return RepType();
 }
 
+//------------------------------------------------------------------------------
+// bulkCreateRep
+//------------------------------------------------------------------------------
+void castor::io::StreamBaseCnv::bulkCreateRep(castor::IAddress* address,
+					      std::vector<castor::IObject*> &objects,
+					      bool endTransaction,
+					      unsigned int type)
+  throw (castor::exception::Exception) {
+  castor::exception::Internal ex;
+  ex.getMessage() << "Bulk operations are not supported for streaming."
+                  << std::endl;
+  throw ex;
+}
+    
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------

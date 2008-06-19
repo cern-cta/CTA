@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2008/03/14 10:46:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2008/06/19 14:56:11 $ $Author: sponcec3 $
  *
  *
  *
@@ -152,6 +152,19 @@ void castor::Services::createRep(castor::IAddress* address,
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   cnvSvc->createRep(address, object, endTransaction);
+  cnvSvc->release();
+}
+
+// -----------------------------------------------------------------------
+// bulkCreateRep
+// -----------------------------------------------------------------------
+void castor::Services::bulkCreateRep(castor::IAddress* address,
+                                     std::vector<castor::IObject*> &objects,
+                                     bool endTransaction)
+  throw (castor::exception::Exception) {
+  // Always returns a valid cnvSvc or throws an exception
+  castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
+  cnvSvc->bulkCreateRep(address, objects, endTransaction);
   cnvSvc->release();
 }
 

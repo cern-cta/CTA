@@ -41,6 +41,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
@@ -315,12 +316,105 @@ void castor::db::cnv::DbRequestTypeCnv::createRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_insertStatementString << std::endl
-                    << "and parameters' values were :" << std::endl
+                    << " and parameters' values were :" << std::endl
                     << "  reqType : " << obj->reqType() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  request : " << obj->request() << std::endl;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bulkCreateRep
+//------------------------------------------------------------------------------
+void castor::db::cnv::DbRequestTypeCnv::bulkCreateRep(castor::IAddress* address,
+                                                      std::vector<castor::IObject*> &objects,
+                                                      bool endTransaction,
+                                                      unsigned int type)
+  throw (castor::exception::Exception) {
+  // check whether something needs to be done
+  int nb = objects.size();
+  if (0 == nb) return;
+  // Casts all objects
+  std::vector<castor::bwlist::RequestType*> objs;
+  for (int i = 0; i < nb; i++) {
+    objs.push_back(dynamic_cast<castor::bwlist::RequestType*>(objects[i]));
+  }
+  try {
+    // Check whether the statements are ok
+    if (0 == m_insertStatement) {
+      m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(3, castor::db::DBTYPE_UINT64);
+    }
+    if (0 == m_storeTypeStatement) {
+      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
+    }
+    // build the buffers for reqType
+    int* reqTypeBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* reqTypeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      reqTypeBuffer[i] = objs[i]->reqType();
+      reqTypeBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (1, reqTypeBuffer, DBTYPE_INT, sizeof(reqTypeBuffer[0]), reqTypeBufLens);
+    // build the buffers for request
+    double* requestBuffer = (double*) malloc(nb * sizeof(double));
+    unsigned short* requestBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      requestBuffer[i] = (type == OBJ_ChangePrivilege && objs[i]->request() != 0) ? objs[i]->request()->id() : 0;
+      requestBufLens[i] = sizeof(double);
+    }
+    m_insertStatement->setDataBuffer
+      (2, requestBuffer, DBTYPE_UINT64, sizeof(requestBuffer[0]), requestBufLens);
+    // build the buffers for returned ids
+    double* idBuffer = (double*) calloc(nb, sizeof(double));
+    unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
+    m_insertStatement->setDataBuffer
+      (3, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
+    m_insertStatement->execute(nb);
+    for (int i = 0; i < nb; i++) {
+      objects[i]->setId((u_signed64)idBuffer[i]);
+    }
+    // release the buffers for reqType
+    free(reqTypeBuffer);
+    free(reqTypeBufLens);
+    // release the buffers for request
+    free(requestBuffer);
+    free(requestBufLens);
+    // reuse idBuffer for bulk insertion into Id2Type
+    m_storeTypeStatement->setDataBuffer
+      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
+    // build the buffers for type
+    int* typeBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      typeBuffer[i] = objs[i]->type();
+      typeBufLens[i] = sizeof(int);
+    }
+    m_storeTypeStatement->setDataBuffer
+      (2, typeBuffer, DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
+    m_storeTypeStatement->execute(nb);
+    // release the buffers for type
+    free(typeBuffer);
+    free(typeBufLens);
+    // release the buffers for returned ids
+    free(idBuffer);
+    free(idBufLens);
+    if (endTransaction) {
+      cnvSvc()->commit();
+    }
+  } catch (castor::exception::SQLError e) {
+    // Always try to rollback
+    try { if (endTransaction) cnvSvc()->rollback(); }
+    catch(castor::exception::Exception ignored) {}
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Error in bulkInsert request :"
+                    << std::endl << e.getMessage().str() << std::endl
+                    << " was called in bulk with "
+                    << nb << " items." << std::endl;
     throw ex;
   }
 }
@@ -355,9 +449,9 @@ void castor::db::cnv::DbRequestTypeCnv::updateRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }
@@ -399,9 +493,9 @@ void castor::db::cnv::DbRequestTypeCnv::deleteRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_deleteStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }
@@ -437,9 +531,9 @@ castor::IObject* castor::db::cnv::DbRequestTypeCnv::createObj(castor::IAddress* 
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_selectStatementString << std::endl
-                    << "and id was " << ad->target() << std::endl;;
+                    << " and id was " << ad->target() << std::endl;;
     throw ex;
   }
 }
@@ -472,9 +566,9 @@ void castor::db::cnv::DbRequestTypeCnv::updateObj(castor::IObject* obj)
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2008/03/14 10:46:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2008/06/19 14:56:11 $ $Author: sponcec3 $
  *
  *
  *
@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 // Include Files
+#include <vector>
 #include <map>
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -144,6 +145,25 @@ void castor::BaseCnvSvc::createRep(castor::IAddress* address,
     IConverter* conv = converter(object->type());
     // convert
     conv->createRep(address, object, endTransaction, type);
+  }
+}
+
+// -----------------------------------------------------------------------
+// bulkCreateRep
+// -----------------------------------------------------------------------
+void castor::BaseCnvSvc::bulkCreateRep(castor::IAddress* address,
+                                       std::vector<castor::IObject*> &objects,
+                                       bool endTransaction,
+                                       unsigned int type)
+  throw (castor::exception::Exception) {
+  // If no object, nothing to create
+  if (objects.size() > 0) {
+    // Look for an adapted converter
+    // The converter is always valid if no exception is thrown
+    // Note that we assume that all objects have the same type
+    IConverter* conv = converter(objects[0]->type());
+    // convert
+    conv->bulkCreateRep(address, objects, endTransaction, type);
   }
 }
 

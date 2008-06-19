@@ -41,6 +41,7 @@
 #include "castor/exception/NoEntry.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeDriveCompatibility.hpp"
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
@@ -314,13 +315,116 @@ void castor::db::cnv::DbTapeDriveCompatibilityCnv::createRep(castor::IAddress* a
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_insertStatementString << std::endl
-                    << "and parameters' values were :" << std::endl
+                    << " and parameters' values were :" << std::endl
                     << "  tapeDriveModel : " << obj->tapeDriveModel() << std::endl
                     << "  priorityLevel : " << obj->priorityLevel() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  tapeAccessSpecification : " << obj->tapeAccessSpecification() << std::endl;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bulkCreateRep
+//------------------------------------------------------------------------------
+void castor::db::cnv::DbTapeDriveCompatibilityCnv::bulkCreateRep(castor::IAddress* address,
+                                                                 std::vector<castor::IObject*> &objects,
+                                                                 bool endTransaction,
+                                                                 unsigned int type)
+  throw (castor::exception::Exception) {
+  // check whether something needs to be done
+  int nb = objects.size();
+  if (0 == nb) return;
+  // Casts all objects
+  std::vector<castor::vdqm::TapeDriveCompatibility*> objs;
+  for (int i = 0; i < nb; i++) {
+    objs.push_back(dynamic_cast<castor::vdqm::TapeDriveCompatibility*>(objects[i]));
+  }
+  try {
+    // Check whether the statements are ok
+    if (0 == m_insertStatement) {
+      m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(4, castor::db::DBTYPE_UINT64);
+    }
+    if (0 == m_storeTypeStatement) {
+      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
+    }
+    // build the buffers for tapeDriveModel
+    const char** tapeDriveModelBuffer = (const char**) malloc(nb * sizeof(const char*));
+    unsigned short* tapeDriveModelBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      tapeDriveModelBuffer[i] = objs[i]->tapeDriveModel().c_str();
+      tapeDriveModelBufLens[i] = objs[i]->tapeDriveModel().length();
+    }
+    m_insertStatement->setDataBuffer
+      (1, tapeDriveModelBuffer, DBTYPE_STRING, sizeof(tapeDriveModelBuffer[0]), &tapeDriveModelBufLens);
+    // build the buffers for priorityLevel
+    int* priorityLevelBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* priorityLevelBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      priorityLevelBuffer[i] = objs[i]->priorityLevel();
+      priorityLevelBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (2, priorityLevelBuffer, DBTYPE_INT, sizeof(priorityLevelBuffer[0]), &priorityLevelBufLens);
+    // build the buffers for tapeAccessSpecification
+    u_signed64* tapeAccessSpecificationBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    unsigned short* tapeAccessSpecificationBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      tapeAccessSpecificationBuffer[i] = (type == OBJ_TapeAccessSpecification && objs[i]->tapeAccessSpecification() != 0) ? objs[i]->tapeAccessSpecification()->id() : 0;
+      tapeAccessSpecificationBufLens[i] = sizeof(u_signed64);
+    }
+    m_insertStatement->setDataBuffer
+      (4, tapeAccessSpecificationBuffer, DBTYPE_UINT64, sizeof(tapeAccessSpecificationBuffer[0]), &tapeAccessSpecificationBufLens);
+    // build the buffers for returned ids
+    u_signed64* idBuffer = (u_signed64*) calloc(nb, sizeof(u_signed64));
+    unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
+    m_insertStatement->execute(nb);
+    for (int i = 0; i < nb; i++) {
+      objects[i]->setId(idBuffer[i]);
+    }
+    // release the buffers for tapeDriveModel
+    free(tapeDriveModelBuffer);
+    free(tapeDriveModelBufLens);
+    // release the buffers for priorityLevel
+    free(priorityLevelBuffer);
+    free(priorityLevelBufLens);
+    // release the buffers for tapeAccessSpecification
+    free(tapeAccessSpecificationBuffer);
+    free(tapeAccessSpecificationBufLens);
+    // reuse idBuffer for bulk insertion into Id2Type
+    m_storeTypeStatement->setDataBuffer
+      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), &idBufLens);
+    // build the buffers for type
+    u_signed64* typeBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      typeBuffer[i] = objs[i]->type();
+      typeBufLens[i] = sizeof(u_signed64);
+    }
+    m_storeTypeStatement->setDataBuffer
+      (2, typeBuffer, DBTYPE_UINT64, sizeof(typeBuffer[0]), &typeBufLens);
+    m_storeTypeStatement->execute(nb);
+    // release the buffers for type
+    free(typeBuffer);
+    free(typeBufLens);
+    // release the buffers for returned ids
+    free(idBuffer);
+    free(idBufLens);
+    if (endTransaction) {
+      cnvSvc()->commit();
+    }
+  } catch (castor::exception::SQLError e) {
+    // Always try to rollback
+    try { if (endTransaction) cnvSvc()->rollback(); }
+    catch(castor::exception::Exception ignored) {}
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Error in bulkInsert request :"
+                    << std::endl << e.getMessage().str() << std::endl
+                    << " was called in bulk with "
+                    << nb << " items." << std::endl;
     throw ex;
   }
 }
@@ -356,9 +460,9 @@ void castor::db::cnv::DbTapeDriveCompatibilityCnv::updateRep(castor::IAddress* a
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }
@@ -397,9 +501,9 @@ void castor::db::cnv::DbTapeDriveCompatibilityCnv::deleteRep(castor::IAddress* a
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_deleteStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }
@@ -436,9 +540,9 @@ castor::IObject* castor::db::cnv::DbTapeDriveCompatibilityCnv::createObj(castor:
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_selectStatementString << std::endl
-                    << "and id was " << ad->target() << std::endl;;
+                    << " and id was " << ad->target() << std::endl;;
     throw ex;
   }
 }
@@ -472,9 +576,9 @@ void castor::db::cnv::DbTapeDriveCompatibilityCnv::updateObj(castor::IObject* ob
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }

@@ -39,6 +39,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/GCLocalFile.hpp"
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
@@ -223,14 +224,141 @@ void castor::db::cnv::DbGCLocalFileCnv::createRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_insertStatementString << std::endl
-                    << "and parameters' values were :" << std::endl
+                    << " and parameters' values were :" << std::endl
                     << "  fileName : " << obj->fileName() << std::endl
                     << "  diskCopyId : " << obj->diskCopyId() << std::endl
                     << "  fileId : " << obj->fileId() << std::endl
                     << "  nsHost : " << obj->nsHost() << std::endl
                     << "  id : " << obj->id() << std::endl;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bulkCreateRep
+//------------------------------------------------------------------------------
+void castor::db::cnv::DbGCLocalFileCnv::bulkCreateRep(castor::IAddress* address,
+                                                      std::vector<castor::IObject*> &objects,
+                                                      bool endTransaction,
+                                                      unsigned int type)
+  throw (castor::exception::Exception) {
+  // check whether something needs to be done
+  int nb = objects.size();
+  if (0 == nb) return;
+  // Casts all objects
+  std::vector<castor::stager::GCLocalFile*> objs;
+  for (int i = 0; i < nb; i++) {
+    objs.push_back(dynamic_cast<castor::stager::GCLocalFile*>(objects[i]));
+  }
+  try {
+    // Check whether the statements are ok
+    if (0 == m_insertStatement) {
+      m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(5, castor::db::DBTYPE_UINT64);
+    }
+    if (0 == m_storeTypeStatement) {
+      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
+    }
+    // build the buffers for fileName
+    unsigned int fileNameMaxLen = 0;
+    for (int i = 0; i < nb; i++) {
+      if (objs[i]->fileName().length()+1 > fileNameMaxLen)
+        fileNameMaxLen = objs[i]->fileName().length()+1;
+    }
+    char* fileNameBuffer = (char*) calloc(nb, fileNameMaxLen);
+    unsigned short* fileNameBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      strncpy(fileNameBuffer+(i*fileNameMaxLen), objs[i]->fileName().c_str(), fileNameMaxLen);
+      fileNameBufLens[i] = objs[i]->fileName().length()+1; // + 1 for the trailing \0
+    }
+    m_insertStatement->setDataBuffer
+      (1, fileNameBuffer, DBTYPE_STRING, fileNameMaxLen, fileNameBufLens);
+    // build the buffers for diskCopyId
+    double* diskCopyIdBuffer = (double*) malloc(nb * sizeof(double));
+    unsigned short* diskCopyIdBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      diskCopyIdBuffer[i] = objs[i]->diskCopyId();
+      diskCopyIdBufLens[i] = sizeof(double);
+    }
+    m_insertStatement->setDataBuffer
+      (2, diskCopyIdBuffer, DBTYPE_UINT64, sizeof(diskCopyIdBuffer[0]), diskCopyIdBufLens);
+    // build the buffers for fileId
+    double* fileIdBuffer = (double*) malloc(nb * sizeof(double));
+    unsigned short* fileIdBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      fileIdBuffer[i] = objs[i]->fileId();
+      fileIdBufLens[i] = sizeof(double);
+    }
+    m_insertStatement->setDataBuffer
+      (3, fileIdBuffer, DBTYPE_UINT64, sizeof(fileIdBuffer[0]), fileIdBufLens);
+    // build the buffers for nsHost
+    unsigned int nsHostMaxLen = 0;
+    for (int i = 0; i < nb; i++) {
+      if (objs[i]->nsHost().length()+1 > nsHostMaxLen)
+        nsHostMaxLen = objs[i]->nsHost().length()+1;
+    }
+    char* nsHostBuffer = (char*) calloc(nb, nsHostMaxLen);
+    unsigned short* nsHostBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      strncpy(nsHostBuffer+(i*nsHostMaxLen), objs[i]->nsHost().c_str(), nsHostMaxLen);
+      nsHostBufLens[i] = objs[i]->nsHost().length()+1; // + 1 for the trailing \0
+    }
+    m_insertStatement->setDataBuffer
+      (4, nsHostBuffer, DBTYPE_STRING, nsHostMaxLen, nsHostBufLens);
+    // build the buffers for returned ids
+    double* idBuffer = (double*) calloc(nb, sizeof(double));
+    unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
+    m_insertStatement->setDataBuffer
+      (6, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
+    m_insertStatement->execute(nb);
+    for (int i = 0; i < nb; i++) {
+      objects[i]->setId((u_signed64)idBuffer[i]);
+    }
+    // release the buffers for fileName
+    free(fileNameBuffer);
+    free(fileNameBufLens);
+    // release the buffers for diskCopyId
+    free(diskCopyIdBuffer);
+    free(diskCopyIdBufLens);
+    // release the buffers for fileId
+    free(fileIdBuffer);
+    free(fileIdBufLens);
+    // release the buffers for nsHost
+    free(nsHostBuffer);
+    free(nsHostBufLens);
+    // reuse idBuffer for bulk insertion into Id2Type
+    m_storeTypeStatement->setDataBuffer
+      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
+    // build the buffers for type
+    int* typeBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      typeBuffer[i] = objs[i]->type();
+      typeBufLens[i] = sizeof(int);
+    }
+    m_storeTypeStatement->setDataBuffer
+      (2, typeBuffer, DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
+    m_storeTypeStatement->execute(nb);
+    // release the buffers for type
+    free(typeBuffer);
+    free(typeBufLens);
+    // release the buffers for returned ids
+    free(idBuffer);
+    free(idBufLens);
+    if (endTransaction) {
+      cnvSvc()->commit();
+    }
+  } catch (castor::exception::SQLError e) {
+    // Always try to rollback
+    try { if (endTransaction) cnvSvc()->rollback(); }
+    catch(castor::exception::Exception ignored) {}
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Error in bulkInsert request :"
+                    << std::endl << e.getMessage().str() << std::endl
+                    << " was called in bulk with "
+                    << nb << " items." << std::endl;
     throw ex;
   }
 }
@@ -268,9 +396,9 @@ void castor::db::cnv::DbGCLocalFileCnv::updateRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }
@@ -309,9 +437,9 @@ void castor::db::cnv::DbGCLocalFileCnv::deleteRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_deleteStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }
@@ -350,9 +478,9 @@ castor::IObject* castor::db::cnv::DbGCLocalFileCnv::createObj(castor::IAddress* 
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_selectStatementString << std::endl
-                    << "and id was " << ad->target() << std::endl;;
+                    << " and id was " << ad->target() << std::endl;;
     throw ex;
   }
 }
@@ -388,9 +516,9 @@ void castor::db::cnv::DbGCLocalFileCnv::updateObj(castor::IObject* obj)
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }

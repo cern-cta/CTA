@@ -39,6 +39,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/vdqm/ClientIdentification.hpp"
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
@@ -225,9 +226,9 @@ void castor::db::cnv::DbClientIdentificationCnv::createRep(castor::IAddress* add
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_insertStatementString << std::endl
-                    << "and parameters' values were :" << std::endl
+                    << " and parameters' values were :" << std::endl
                     << "  machine : " << obj->machine() << std::endl
                     << "  userName : " << obj->userName() << std::endl
                     << "  port : " << obj->port() << std::endl
@@ -235,6 +236,145 @@ void castor::db::cnv::DbClientIdentificationCnv::createRep(castor::IAddress* add
                     << "  egid : " << obj->egid() << std::endl
                     << "  magic : " << obj->magic() << std::endl
                     << "  id : " << obj->id() << std::endl;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bulkCreateRep
+//------------------------------------------------------------------------------
+void castor::db::cnv::DbClientIdentificationCnv::bulkCreateRep(castor::IAddress* address,
+                                                               std::vector<castor::IObject*> &objects,
+                                                               bool endTransaction,
+                                                               unsigned int type)
+  throw (castor::exception::Exception) {
+  // check whether something needs to be done
+  int nb = objects.size();
+  if (0 == nb) return;
+  // Casts all objects
+  std::vector<castor::vdqm::ClientIdentification*> objs;
+  for (int i = 0; i < nb; i++) {
+    objs.push_back(dynamic_cast<castor::vdqm::ClientIdentification*>(objects[i]));
+  }
+  try {
+    // Check whether the statements are ok
+    if (0 == m_insertStatement) {
+      m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(7, castor::db::DBTYPE_UINT64);
+    }
+    if (0 == m_storeTypeStatement) {
+      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
+    }
+    // build the buffers for machine
+    const char** machineBuffer = (const char**) malloc(nb * sizeof(const char*));
+    unsigned short* machineBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      machineBuffer[i] = objs[i]->machine().c_str();
+      machineBufLens[i] = objs[i]->machine().length();
+    }
+    m_insertStatement->setDataBuffer
+      (1, machineBuffer, DBTYPE_STRING, sizeof(machineBuffer[0]), &machineBufLens);
+    // build the buffers for userName
+    const char** userNameBuffer = (const char**) malloc(nb * sizeof(const char*));
+    unsigned short* userNameBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      userNameBuffer[i] = objs[i]->userName().c_str();
+      userNameBufLens[i] = objs[i]->userName().length();
+    }
+    m_insertStatement->setDataBuffer
+      (2, userNameBuffer, DBTYPE_STRING, sizeof(userNameBuffer[0]), &userNameBufLens);
+    // build the buffers for port
+    int* portBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* portBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      portBuffer[i] = objs[i]->port();
+      portBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (3, portBuffer, DBTYPE_INT, sizeof(portBuffer[0]), &portBufLens);
+    // build the buffers for euid
+    int* euidBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* euidBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      euidBuffer[i] = objs[i]->euid();
+      euidBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (4, euidBuffer, DBTYPE_INT, sizeof(euidBuffer[0]), &euidBufLens);
+    // build the buffers for egid
+    int* egidBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* egidBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      egidBuffer[i] = objs[i]->egid();
+      egidBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (5, egidBuffer, DBTYPE_INT, sizeof(egidBuffer[0]), &egidBufLens);
+    // build the buffers for magic
+    int* magicBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* magicBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      magicBuffer[i] = objs[i]->magic();
+      magicBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (6, magicBuffer, DBTYPE_INT, sizeof(magicBuffer[0]), &magicBufLens);
+    // build the buffers for returned ids
+    u_signed64* idBuffer = (u_signed64*) calloc(nb, sizeof(u_signed64));
+    unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
+    m_insertStatement->execute(nb);
+    for (int i = 0; i < nb; i++) {
+      objects[i]->setId(idBuffer[i]);
+    }
+    // release the buffers for machine
+    free(machineBuffer);
+    free(machineBufLens);
+    // release the buffers for userName
+    free(userNameBuffer);
+    free(userNameBufLens);
+    // release the buffers for port
+    free(portBuffer);
+    free(portBufLens);
+    // release the buffers for euid
+    free(euidBuffer);
+    free(euidBufLens);
+    // release the buffers for egid
+    free(egidBuffer);
+    free(egidBufLens);
+    // release the buffers for magic
+    free(magicBuffer);
+    free(magicBufLens);
+    // reuse idBuffer for bulk insertion into Id2Type
+    m_storeTypeStatement->setDataBuffer
+      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), &idBufLens);
+    // build the buffers for type
+    u_signed64* typeBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      typeBuffer[i] = objs[i]->type();
+      typeBufLens[i] = sizeof(u_signed64);
+    }
+    m_storeTypeStatement->setDataBuffer
+      (2, typeBuffer, DBTYPE_UINT64, sizeof(typeBuffer[0]), &typeBufLens);
+    m_storeTypeStatement->execute(nb);
+    // release the buffers for type
+    free(typeBuffer);
+    free(typeBufLens);
+    // release the buffers for returned ids
+    free(idBuffer);
+    free(idBufLens);
+    if (endTransaction) {
+      cnvSvc()->commit();
+    }
+  } catch (castor::exception::SQLError e) {
+    // Always try to rollback
+    try { if (endTransaction) cnvSvc()->rollback(); }
+    catch(castor::exception::Exception ignored) {}
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Error in bulkInsert request :"
+                    << std::endl << e.getMessage().str() << std::endl
+                    << " was called in bulk with "
+                    << nb << " items." << std::endl;
     throw ex;
   }
 }
@@ -274,9 +414,9 @@ void castor::db::cnv::DbClientIdentificationCnv::updateRep(castor::IAddress* add
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }
@@ -315,9 +455,9 @@ void castor::db::cnv::DbClientIdentificationCnv::deleteRep(castor::IAddress* add
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_deleteStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }
@@ -358,9 +498,9 @@ castor::IObject* castor::db::cnv::DbClientIdentificationCnv::createObj(castor::I
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_selectStatementString << std::endl
-                    << "and id was " << ad->target() << std::endl;;
+                    << " and id was " << ad->target() << std::endl;;
     throw ex;
   }
 }
@@ -398,9 +538,9 @@ void castor::db::cnv::DbClientIdentificationCnv::updateObj(castor::IObject* obj)
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }

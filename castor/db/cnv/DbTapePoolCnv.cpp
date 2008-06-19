@@ -56,7 +56,7 @@ static castor::CnvFactory<castor::db::cnv::DbTapePoolCnv>* s_factoryDbTapePoolCn
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbTapePoolCnv::s_insertStatementString =
-"INSERT INTO TapePool (name, migrSelectPolicy, id) VALUES (:1,:2,ids_seq.nextval) RETURNING id INTO :3";
+"INSERT INTO TapePool (name, id) VALUES (:1,ids_seq.nextval) RETURNING id INTO :2";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbTapePoolCnv::s_deleteStatementString =
@@ -64,11 +64,11 @@ const std::string castor::db::cnv::DbTapePoolCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbTapePoolCnv::s_selectStatementString =
-"SELECT name, migrSelectPolicy, id FROM TapePool WHERE id = :1";
+"SELECT name, id FROM TapePool WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbTapePoolCnv::s_updateStatementString =
-"UPDATE TapePool SET name = :1, migrSelectPolicy = :2 WHERE id = :3";
+"UPDATE TapePool SET name = :1 WHERE id = :2";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbTapePoolCnv::s_storeTypeStatementString =
@@ -281,11 +281,12 @@ void castor::db::cnv::DbTapePoolCnv::fillRepStream(castor::stager::TapePool* obj
   }
   delete rset;
   // update streams and create new ones
+  std::vector<castor::IObject*> toBeCreated;
   for (std::vector<castor::stager::Stream*>::iterator it = obj->streams().begin();
        it != obj->streams().end();
        it++) {
     if (0 == (*it)->id()) {
-      cnvSvc()->createRep(0, *it, false, OBJ_TapePool);
+      toBeCreated.push_back(*it);
     } else {
       // Check remote update statement
       if (0 == m_remoteUpdateStreamStatement) {
@@ -301,6 +302,8 @@ void castor::db::cnv::DbTapePoolCnv::fillRepStream(castor::stager::TapePool* obj
       }
     }
   }
+  // create new objects
+  cnvSvc()->bulkCreateRep(0, toBeCreated, false, OBJ_TapePool);
   // Delete old links
   for (std::set<int>::iterator it = streamsList.begin();
        it != streamsList.end();
@@ -458,16 +461,15 @@ void castor::db::cnv::DbTapePoolCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(3, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(2, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // Now Save the current object
     m_insertStatement->setString(1, obj->name());
-    m_insertStatement->setString(2, obj->migrSelectPolicy());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(3));
+    obj->setId(m_insertStatement->getUInt64(2));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -481,12 +483,97 @@ void castor::db::cnv::DbTapePoolCnv::createRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_insertStatementString << std::endl
-                    << "and parameters' values were :" << std::endl
+                    << " and parameters' values were :" << std::endl
                     << "  name : " << obj->name() << std::endl
-                    << "  migrSelectPolicy : " << obj->migrSelectPolicy() << std::endl
                     << "  id : " << obj->id() << std::endl;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bulkCreateRep
+//------------------------------------------------------------------------------
+void castor::db::cnv::DbTapePoolCnv::bulkCreateRep(castor::IAddress* address,
+                                                   std::vector<castor::IObject*> &objects,
+                                                   bool endTransaction,
+                                                   unsigned int type)
+  throw (castor::exception::Exception) {
+  // check whether something needs to be done
+  int nb = objects.size();
+  if (0 == nb) return;
+  // Casts all objects
+  std::vector<castor::stager::TapePool*> objs;
+  for (int i = 0; i < nb; i++) {
+    objs.push_back(dynamic_cast<castor::stager::TapePool*>(objects[i]));
+  }
+  try {
+    // Check whether the statements are ok
+    if (0 == m_insertStatement) {
+      m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(2, castor::db::DBTYPE_UINT64);
+    }
+    if (0 == m_storeTypeStatement) {
+      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
+    }
+    // build the buffers for name
+    unsigned int nameMaxLen = 0;
+    for (int i = 0; i < nb; i++) {
+      if (objs[i]->name().length()+1 > nameMaxLen)
+        nameMaxLen = objs[i]->name().length()+1;
+    }
+    char* nameBuffer = (char*) calloc(nb, nameMaxLen);
+    unsigned short* nameBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      strncpy(nameBuffer+(i*nameMaxLen), objs[i]->name().c_str(), nameMaxLen);
+      nameBufLens[i] = objs[i]->name().length()+1; // + 1 for the trailing \0
+    }
+    m_insertStatement->setDataBuffer
+      (1, nameBuffer, DBTYPE_STRING, nameMaxLen, nameBufLens);
+    // build the buffers for returned ids
+    double* idBuffer = (double*) calloc(nb, sizeof(double));
+    unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
+    m_insertStatement->setDataBuffer
+      (4, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
+    m_insertStatement->execute(nb);
+    for (int i = 0; i < nb; i++) {
+      objects[i]->setId((u_signed64)idBuffer[i]);
+    }
+    // release the buffers for name
+    free(nameBuffer);
+    free(nameBufLens);
+    // reuse idBuffer for bulk insertion into Id2Type
+    m_storeTypeStatement->setDataBuffer
+      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
+    // build the buffers for type
+    int* typeBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      typeBuffer[i] = objs[i]->type();
+      typeBufLens[i] = sizeof(int);
+    }
+    m_storeTypeStatement->setDataBuffer
+      (2, typeBuffer, DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
+    m_storeTypeStatement->execute(nb);
+    // release the buffers for type
+    free(typeBuffer);
+    free(typeBufLens);
+    // release the buffers for returned ids
+    free(idBuffer);
+    free(idBufLens);
+    if (endTransaction) {
+      cnvSvc()->commit();
+    }
+  } catch (castor::exception::SQLError e) {
+    // Always try to rollback
+    try { if (endTransaction) cnvSvc()->rollback(); }
+    catch(castor::exception::Exception ignored) {}
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Error in bulkInsert request :"
+                    << std::endl << e.getMessage().str() << std::endl
+                    << " was called in bulk with "
+                    << nb << " items." << std::endl;
     throw ex;
   }
 }
@@ -509,8 +596,7 @@ void castor::db::cnv::DbTapePoolCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setString(1, obj->name());
-    m_updateStatement->setString(2, obj->migrSelectPolicy());
-    m_updateStatement->setUInt64(3, obj->id());
+    m_updateStatement->setUInt64(2, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
@@ -522,9 +608,9 @@ void castor::db::cnv::DbTapePoolCnv::updateRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }
@@ -563,9 +649,9 @@ void castor::db::cnv::DbTapePoolCnv::deleteRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_deleteStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }
@@ -594,17 +680,16 @@ castor::IObject* castor::db::cnv::DbTapePoolCnv::createObj(castor::IAddress* add
     castor::stager::TapePool* object = new castor::stager::TapePool();
     // Now retrieve and set members
     object->setName(rset->getString(1));
-    object->setMigrSelectPolicy(rset->getString(2));
-    object->setId(rset->getUInt64(3));
+    object->setId(rset->getUInt64(2));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_selectStatementString << std::endl
-                    << "and id was " << ad->target() << std::endl;;
+                    << " and id was " << ad->target() << std::endl;;
     throw ex;
   }
 }
@@ -631,16 +716,15 @@ void castor::db::cnv::DbTapePoolCnv::updateObj(castor::IObject* obj)
     castor::stager::TapePool* object = 
       dynamic_cast<castor::stager::TapePool*>(obj);
     object->setName(rset->getString(1));
-    object->setMigrSelectPolicy(rset->getString(2));
-    object->setId(rset->getUInt64(3));
+    object->setId(rset->getUInt64(2));
     delete rset;
   } catch (castor::exception::SQLError e) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }

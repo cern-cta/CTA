@@ -39,6 +39,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/vdqm/VolumePriority.hpp"
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
@@ -228,9 +229,9 @@ void castor::db::cnv::DbVolumePriorityCnv::createRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_insertStatementString << std::endl
-                    << "and parameters' values were :" << std::endl
+                    << " and parameters' values were :" << std::endl
                     << "  priority : " << obj->priority() << std::endl
                     << "  clientUID : " << obj->clientUID() << std::endl
                     << "  clientGID : " << obj->clientGID() << std::endl
@@ -241,6 +242,181 @@ void castor::db::cnv::DbVolumePriorityCnv::createRep(castor::IAddress* address,
                     << "  creationTime : " << obj->creationTime() << std::endl
                     << "  modificationTime : " << obj->modificationTime() << std::endl
                     << "  id : " << obj->id() << std::endl;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bulkCreateRep
+//------------------------------------------------------------------------------
+void castor::db::cnv::DbVolumePriorityCnv::bulkCreateRep(castor::IAddress* address,
+                                                         std::vector<castor::IObject*> &objects,
+                                                         bool endTransaction,
+                                                         unsigned int type)
+  throw (castor::exception::Exception) {
+  // check whether something needs to be done
+  int nb = objects.size();
+  if (0 == nb) return;
+  // Casts all objects
+  std::vector<castor::vdqm::VolumePriority*> objs;
+  for (int i = 0; i < nb; i++) {
+    objs.push_back(dynamic_cast<castor::vdqm::VolumePriority*>(objects[i]));
+  }
+  try {
+    // Check whether the statements are ok
+    if (0 == m_insertStatement) {
+      m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(10, castor::db::DBTYPE_UINT64);
+    }
+    if (0 == m_storeTypeStatement) {
+      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
+    }
+    // build the buffers for priority
+    int* priorityBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* priorityBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      priorityBuffer[i] = objs[i]->priority();
+      priorityBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (1, priorityBuffer, DBTYPE_INT, sizeof(priorityBuffer[0]), &priorityBufLens);
+    // build the buffers for clientUID
+    int* clientUIDBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* clientUIDBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      clientUIDBuffer[i] = objs[i]->clientUID();
+      clientUIDBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (2, clientUIDBuffer, DBTYPE_INT, sizeof(clientUIDBuffer[0]), &clientUIDBufLens);
+    // build the buffers for clientGID
+    int* clientGIDBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* clientGIDBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      clientGIDBuffer[i] = objs[i]->clientGID();
+      clientGIDBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (3, clientGIDBuffer, DBTYPE_INT, sizeof(clientGIDBuffer[0]), &clientGIDBufLens);
+    // build the buffers for clientHost
+    const char** clientHostBuffer = (const char**) malloc(nb * sizeof(const char*));
+    unsigned short* clientHostBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      clientHostBuffer[i] = objs[i]->clientHost().c_str();
+      clientHostBufLens[i] = objs[i]->clientHost().length();
+    }
+    m_insertStatement->setDataBuffer
+      (4, clientHostBuffer, DBTYPE_STRING, sizeof(clientHostBuffer[0]), &clientHostBufLens);
+    // build the buffers for vid
+    const char** vidBuffer = (const char**) malloc(nb * sizeof(const char*));
+    unsigned short* vidBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      vidBuffer[i] = objs[i]->vid().c_str();
+      vidBufLens[i] = objs[i]->vid().length();
+    }
+    m_insertStatement->setDataBuffer
+      (5, vidBuffer, DBTYPE_STRING, sizeof(vidBuffer[0]), &vidBufLens);
+    // build the buffers for tpMode
+    int* tpModeBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* tpModeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      tpModeBuffer[i] = objs[i]->tpMode();
+      tpModeBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (6, tpModeBuffer, DBTYPE_INT, sizeof(tpModeBuffer[0]), &tpModeBufLens);
+    // build the buffers for lifespanType
+    int* lifespanTypeBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* lifespanTypeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      lifespanTypeBuffer[i] = objs[i]->lifespanType();
+      lifespanTypeBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (7, lifespanTypeBuffer, DBTYPE_INT, sizeof(lifespanTypeBuffer[0]), &lifespanTypeBufLens);
+    // build the buffers for creationTime
+    u_signed64* creationTimeBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    unsigned short* creationTimeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      creationTimeBuffer[i] = time(0);
+      creationTimeBufLens[i] = sizeof(u_signed64);
+    }
+    m_insertStatement->setDataBuffer
+      (8, creationTimeBuffer, DBTYPE_UINT64, sizeof(creationTimeBuffer[0]), &creationTimeBufLens);
+    // build the buffers for modificationTime
+    u_signed64* modificationTimeBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    unsigned short* modificationTimeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      modificationTimeBuffer[i] = objs[i]->modificationTime();
+      modificationTimeBufLens[i] = sizeof(u_signed64);
+    }
+    m_insertStatement->setDataBuffer
+      (9, modificationTimeBuffer, DBTYPE_UINT64, sizeof(modificationTimeBuffer[0]), &modificationTimeBufLens);
+    // build the buffers for returned ids
+    u_signed64* idBuffer = (u_signed64*) calloc(nb, sizeof(u_signed64));
+    unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
+    m_insertStatement->execute(nb);
+    for (int i = 0; i < nb; i++) {
+      objects[i]->setId(idBuffer[i]);
+    }
+    // release the buffers for priority
+    free(priorityBuffer);
+    free(priorityBufLens);
+    // release the buffers for clientUID
+    free(clientUIDBuffer);
+    free(clientUIDBufLens);
+    // release the buffers for clientGID
+    free(clientGIDBuffer);
+    free(clientGIDBufLens);
+    // release the buffers for clientHost
+    free(clientHostBuffer);
+    free(clientHostBufLens);
+    // release the buffers for vid
+    free(vidBuffer);
+    free(vidBufLens);
+    // release the buffers for tpMode
+    free(tpModeBuffer);
+    free(tpModeBufLens);
+    // release the buffers for lifespanType
+    free(lifespanTypeBuffer);
+    free(lifespanTypeBufLens);
+    // release the buffers for creationTime
+    free(creationTimeBuffer);
+    free(creationTimeBufLens);
+    // release the buffers for modificationTime
+    free(modificationTimeBuffer);
+    free(modificationTimeBufLens);
+    // reuse idBuffer for bulk insertion into Id2Type
+    m_storeTypeStatement->setDataBuffer
+      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), &idBufLens);
+    // build the buffers for type
+    u_signed64* typeBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      typeBuffer[i] = objs[i]->type();
+      typeBufLens[i] = sizeof(u_signed64);
+    }
+    m_storeTypeStatement->setDataBuffer
+      (2, typeBuffer, DBTYPE_UINT64, sizeof(typeBuffer[0]), &typeBufLens);
+    m_storeTypeStatement->execute(nb);
+    // release the buffers for type
+    free(typeBuffer);
+    free(typeBufLens);
+    // release the buffers for returned ids
+    free(idBuffer);
+    free(idBufLens);
+    if (endTransaction) {
+      cnvSvc()->commit();
+    }
+  } catch (castor::exception::SQLError e) {
+    // Always try to rollback
+    try { if (endTransaction) cnvSvc()->rollback(); }
+    catch(castor::exception::Exception ignored) {}
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Error in bulkInsert request :"
+                    << std::endl << e.getMessage().str() << std::endl
+                    << " was called in bulk with "
+                    << nb << " items." << std::endl;
     throw ex;
   }
 }
@@ -282,9 +458,9 @@ void castor::db::cnv::DbVolumePriorityCnv::updateRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }
@@ -323,9 +499,9 @@ void castor::db::cnv::DbVolumePriorityCnv::deleteRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_deleteStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }
@@ -369,9 +545,9 @@ castor::IObject* castor::db::cnv::DbVolumePriorityCnv::createObj(castor::IAddres
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_selectStatementString << std::endl
-                    << "and id was " << ad->target() << std::endl;;
+                    << " and id was " << ad->target() << std::endl;;
     throw ex;
   }
 }
@@ -412,9 +588,9 @@ void castor::db::cnv::DbVolumePriorityCnv::updateObj(castor::IObject* obj)
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }

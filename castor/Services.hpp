@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/03/14 10:46:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/06/19 14:56:11 $ $Author: sponcec3 $
  *
  *
  *
@@ -28,6 +28,7 @@
 #define CASTOR_SERVICES_HPP 1
 
 //Include Files
+#include <vector>
 #include <map>
 #include "castor/exception/Exception.hpp"
 
@@ -90,6 +91,20 @@ namespace castor {
                    bool endTransaction = true)
       throw (castor::exception::Exception);
 
+    /**
+     * create foreign representations from a set of C++ Object
+     * @param address where to store the representation of
+     * the objects
+     * @param objects the list of objects to deal with
+     * @param endTransaction whether the changes to the database
+     * should be commited or not. Default is yes.
+     * @exception Exception throws an Exception in case of error
+     */
+    virtual void bulkCreateRep(IAddress* address,
+                               std::vector<IObject*> &objects,
+			       bool endTransaction = true)
+      throw (castor::exception::Exception);
+    
     /**
      * Updates foreign representation from a C++ Object.
      * @param address where the representation of

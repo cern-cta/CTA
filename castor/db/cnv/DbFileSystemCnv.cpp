@@ -275,11 +275,12 @@ void castor::db::cnv::DbFileSystemCnv::fillRepDiskCopy(castor::stager::FileSyste
   }
   delete rset;
   // update copies and create new ones
+  std::vector<castor::IObject*> toBeCreated;
   for (std::vector<castor::stager::DiskCopy*>::iterator it = obj->copies().begin();
        it != obj->copies().end();
        it++) {
     if (0 == (*it)->id()) {
-      cnvSvc()->createRep(0, *it, false, OBJ_FileSystem);
+      toBeCreated.push_back(*it);
     } else {
       // Check remote update statement
       if (0 == m_remoteUpdateDiskCopyStatement) {
@@ -295,6 +296,8 @@ void castor::db::cnv::DbFileSystemCnv::fillRepDiskCopy(castor::stager::FileSyste
       }
     }
   }
+  // create new objects
+  cnvSvc()->bulkCreateRep(0, toBeCreated, false, OBJ_FileSystem);
   // Delete old links
   for (std::set<int>::iterator it = copiesList.begin();
        it != copiesList.end();
@@ -555,9 +558,9 @@ void castor::db::cnv::DbFileSystemCnv::createRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_insertStatementString << std::endl
-                    << "and parameters' values were :" << std::endl
+                    << " and parameters' values were :" << std::endl
                     << "  free : " << obj->free() << std::endl
                     << "  mountPoint : " << obj->mountPoint() << std::endl
                     << "  minFreeSpace : " << obj->minFreeSpace() << std::endl
@@ -576,6 +579,284 @@ void castor::db::cnv::DbFileSystemCnv::createRep(castor::IAddress* address,
                     << "  diskserver : " << obj->diskserver() << std::endl
                     << "  status : " << obj->status() << std::endl
                     << "  adminStatus : " << obj->adminStatus() << std::endl;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bulkCreateRep
+//------------------------------------------------------------------------------
+void castor::db::cnv::DbFileSystemCnv::bulkCreateRep(castor::IAddress* address,
+                                                     std::vector<castor::IObject*> &objects,
+                                                     bool endTransaction,
+                                                     unsigned int type)
+  throw (castor::exception::Exception) {
+  // check whether something needs to be done
+  int nb = objects.size();
+  if (0 == nb) return;
+  // Casts all objects
+  std::vector<castor::stager::FileSystem*> objs;
+  for (int i = 0; i < nb; i++) {
+    objs.push_back(dynamic_cast<castor::stager::FileSystem*>(objects[i]));
+  }
+  try {
+    // Check whether the statements are ok
+    if (0 == m_insertStatement) {
+      m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(18, castor::db::DBTYPE_UINT64);
+    }
+    if (0 == m_storeTypeStatement) {
+      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
+    }
+    // build the buffers for free
+    double* freeBuffer = (double*) malloc(nb * sizeof(double));
+    unsigned short* freeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      freeBuffer[i] = objs[i]->free();
+      freeBufLens[i] = sizeof(double);
+    }
+    m_insertStatement->setDataBuffer
+      (1, freeBuffer, DBTYPE_UINT64, sizeof(freeBuffer[0]), freeBufLens);
+    // build the buffers for mountPoint
+    unsigned int mountPointMaxLen = 0;
+    for (int i = 0; i < nb; i++) {
+      if (objs[i]->mountPoint().length()+1 > mountPointMaxLen)
+        mountPointMaxLen = objs[i]->mountPoint().length()+1;
+    }
+    char* mountPointBuffer = (char*) calloc(nb, mountPointMaxLen);
+    unsigned short* mountPointBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      strncpy(mountPointBuffer+(i*mountPointMaxLen), objs[i]->mountPoint().c_str(), mountPointMaxLen);
+      mountPointBufLens[i] = objs[i]->mountPoint().length()+1; // + 1 for the trailing \0
+    }
+    m_insertStatement->setDataBuffer
+      (2, mountPointBuffer, DBTYPE_STRING, mountPointMaxLen, mountPointBufLens);
+    // build the buffers for minFreeSpace
+    float* minFreeSpaceBuffer = (float*) malloc(nb * sizeof(float));
+    unsigned short* minFreeSpaceBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      minFreeSpaceBuffer[i] = objs[i]->minFreeSpace();
+      minFreeSpaceBufLens[i] = sizeof(float);
+    }
+    m_insertStatement->setDataBuffer
+      (3, minFreeSpaceBuffer, DBTYPE_FLOAT, sizeof(minFreeSpaceBuffer[0]), minFreeSpaceBufLens);
+    // build the buffers for minAllowedFreeSpace
+    float* minAllowedFreeSpaceBuffer = (float*) malloc(nb * sizeof(float));
+    unsigned short* minAllowedFreeSpaceBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      minAllowedFreeSpaceBuffer[i] = objs[i]->minAllowedFreeSpace();
+      minAllowedFreeSpaceBufLens[i] = sizeof(float);
+    }
+    m_insertStatement->setDataBuffer
+      (4, minAllowedFreeSpaceBuffer, DBTYPE_FLOAT, sizeof(minAllowedFreeSpaceBuffer[0]), minAllowedFreeSpaceBufLens);
+    // build the buffers for maxFreeSpace
+    float* maxFreeSpaceBuffer = (float*) malloc(nb * sizeof(float));
+    unsigned short* maxFreeSpaceBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      maxFreeSpaceBuffer[i] = objs[i]->maxFreeSpace();
+      maxFreeSpaceBufLens[i] = sizeof(float);
+    }
+    m_insertStatement->setDataBuffer
+      (5, maxFreeSpaceBuffer, DBTYPE_FLOAT, sizeof(maxFreeSpaceBuffer[0]), maxFreeSpaceBufLens);
+    // build the buffers for totalSize
+    double* totalSizeBuffer = (double*) malloc(nb * sizeof(double));
+    unsigned short* totalSizeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      totalSizeBuffer[i] = objs[i]->totalSize();
+      totalSizeBufLens[i] = sizeof(double);
+    }
+    m_insertStatement->setDataBuffer
+      (6, totalSizeBuffer, DBTYPE_UINT64, sizeof(totalSizeBuffer[0]), totalSizeBufLens);
+    // build the buffers for readRate
+    double* readRateBuffer = (double*) malloc(nb * sizeof(double));
+    unsigned short* readRateBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      readRateBuffer[i] = objs[i]->readRate();
+      readRateBufLens[i] = sizeof(double);
+    }
+    m_insertStatement->setDataBuffer
+      (7, readRateBuffer, DBTYPE_UINT64, sizeof(readRateBuffer[0]), readRateBufLens);
+    // build the buffers for writeRate
+    double* writeRateBuffer = (double*) malloc(nb * sizeof(double));
+    unsigned short* writeRateBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      writeRateBuffer[i] = objs[i]->writeRate();
+      writeRateBufLens[i] = sizeof(double);
+    }
+    m_insertStatement->setDataBuffer
+      (8, writeRateBuffer, DBTYPE_UINT64, sizeof(writeRateBuffer[0]), writeRateBufLens);
+    // build the buffers for nbReadStreams
+    int* nbReadStreamsBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* nbReadStreamsBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      nbReadStreamsBuffer[i] = objs[i]->nbReadStreams();
+      nbReadStreamsBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (9, nbReadStreamsBuffer, DBTYPE_INT, sizeof(nbReadStreamsBuffer[0]), nbReadStreamsBufLens);
+    // build the buffers for nbWriteStreams
+    int* nbWriteStreamsBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* nbWriteStreamsBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      nbWriteStreamsBuffer[i] = objs[i]->nbWriteStreams();
+      nbWriteStreamsBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (10, nbWriteStreamsBuffer, DBTYPE_INT, sizeof(nbWriteStreamsBuffer[0]), nbWriteStreamsBufLens);
+    // build the buffers for nbReadWriteStreams
+    int* nbReadWriteStreamsBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* nbReadWriteStreamsBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      nbReadWriteStreamsBuffer[i] = objs[i]->nbReadWriteStreams();
+      nbReadWriteStreamsBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (11, nbReadWriteStreamsBuffer, DBTYPE_INT, sizeof(nbReadWriteStreamsBuffer[0]), nbReadWriteStreamsBufLens);
+    // build the buffers for nbMigratorStreams
+    int* nbMigratorStreamsBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* nbMigratorStreamsBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      nbMigratorStreamsBuffer[i] = objs[i]->nbMigratorStreams();
+      nbMigratorStreamsBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (12, nbMigratorStreamsBuffer, DBTYPE_INT, sizeof(nbMigratorStreamsBuffer[0]), nbMigratorStreamsBufLens);
+    // build the buffers for nbRecallerStreams
+    int* nbRecallerStreamsBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* nbRecallerStreamsBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      nbRecallerStreamsBuffer[i] = objs[i]->nbRecallerStreams();
+      nbRecallerStreamsBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (13, nbRecallerStreamsBuffer, DBTYPE_INT, sizeof(nbRecallerStreamsBuffer[0]), nbRecallerStreamsBufLens);
+    // build the buffers for diskPool
+    double* diskPoolBuffer = (double*) malloc(nb * sizeof(double));
+    unsigned short* diskPoolBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      diskPoolBuffer[i] = (type == OBJ_DiskPool && objs[i]->diskPool() != 0) ? objs[i]->diskPool()->id() : 0;
+      diskPoolBufLens[i] = sizeof(double);
+    }
+    m_insertStatement->setDataBuffer
+      (14, diskPoolBuffer, DBTYPE_UINT64, sizeof(diskPoolBuffer[0]), diskPoolBufLens);
+    // build the buffers for diskserver
+    double* diskserverBuffer = (double*) malloc(nb * sizeof(double));
+    unsigned short* diskserverBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      diskserverBuffer[i] = (type == OBJ_DiskServer && objs[i]->diskserver() != 0) ? objs[i]->diskserver()->id() : 0;
+      diskserverBufLens[i] = sizeof(double);
+    }
+    m_insertStatement->setDataBuffer
+      (18, diskserverBuffer, DBTYPE_UINT64, sizeof(diskserverBuffer[0]), diskserverBufLens);
+    // build the buffers for status
+    int* statusBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* statusBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      statusBuffer[i] = objs[i]->status();
+      statusBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (19, statusBuffer, DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
+    // build the buffers for adminStatus
+    int* adminStatusBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* adminStatusBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      adminStatusBuffer[i] = objs[i]->adminStatus();
+      adminStatusBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (20, adminStatusBuffer, DBTYPE_INT, sizeof(adminStatusBuffer[0]), adminStatusBufLens);
+    // build the buffers for returned ids
+    double* idBuffer = (double*) calloc(nb, sizeof(double));
+    unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
+    m_insertStatement->setDataBuffer
+      (21, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
+    m_insertStatement->execute(nb);
+    for (int i = 0; i < nb; i++) {
+      objects[i]->setId((u_signed64)idBuffer[i]);
+    }
+    // release the buffers for free
+    free(freeBuffer);
+    free(freeBufLens);
+    // release the buffers for mountPoint
+    free(mountPointBuffer);
+    free(mountPointBufLens);
+    // release the buffers for minFreeSpace
+    free(minFreeSpaceBuffer);
+    free(minFreeSpaceBufLens);
+    // release the buffers for minAllowedFreeSpace
+    free(minAllowedFreeSpaceBuffer);
+    free(minAllowedFreeSpaceBufLens);
+    // release the buffers for maxFreeSpace
+    free(maxFreeSpaceBuffer);
+    free(maxFreeSpaceBufLens);
+    // release the buffers for totalSize
+    free(totalSizeBuffer);
+    free(totalSizeBufLens);
+    // release the buffers for readRate
+    free(readRateBuffer);
+    free(readRateBufLens);
+    // release the buffers for writeRate
+    free(writeRateBuffer);
+    free(writeRateBufLens);
+    // release the buffers for nbReadStreams
+    free(nbReadStreamsBuffer);
+    free(nbReadStreamsBufLens);
+    // release the buffers for nbWriteStreams
+    free(nbWriteStreamsBuffer);
+    free(nbWriteStreamsBufLens);
+    // release the buffers for nbReadWriteStreams
+    free(nbReadWriteStreamsBuffer);
+    free(nbReadWriteStreamsBufLens);
+    // release the buffers for nbMigratorStreams
+    free(nbMigratorStreamsBuffer);
+    free(nbMigratorStreamsBufLens);
+    // release the buffers for nbRecallerStreams
+    free(nbRecallerStreamsBuffer);
+    free(nbRecallerStreamsBufLens);
+    // release the buffers for diskPool
+    free(diskPoolBuffer);
+    free(diskPoolBufLens);
+    // release the buffers for diskserver
+    free(diskserverBuffer);
+    free(diskserverBufLens);
+    // release the buffers for status
+    free(statusBuffer);
+    free(statusBufLens);
+    // release the buffers for adminStatus
+    free(adminStatusBuffer);
+    free(adminStatusBufLens);
+    // reuse idBuffer for bulk insertion into Id2Type
+    m_storeTypeStatement->setDataBuffer
+      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
+    // build the buffers for type
+    int* typeBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      typeBuffer[i] = objs[i]->type();
+      typeBufLens[i] = sizeof(int);
+    }
+    m_storeTypeStatement->setDataBuffer
+      (2, typeBuffer, DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
+    m_storeTypeStatement->execute(nb);
+    // release the buffers for type
+    free(typeBuffer);
+    free(typeBufLens);
+    // release the buffers for returned ids
+    free(idBuffer);
+    free(idBufLens);
+    if (endTransaction) {
+      cnvSvc()->commit();
+    }
+  } catch (castor::exception::SQLError e) {
+    // Always try to rollback
+    try { if (endTransaction) cnvSvc()->rollback(); }
+    catch(castor::exception::Exception ignored) {}
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Error in bulkInsert request :"
+                    << std::endl << e.getMessage().str() << std::endl
+                    << " was called in bulk with "
+                    << nb << " items." << std::endl;
     throw ex;
   }
 }
@@ -624,9 +905,9 @@ void castor::db::cnv::DbFileSystemCnv::updateRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }
@@ -665,9 +946,9 @@ void castor::db::cnv::DbFileSystemCnv::deleteRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_deleteStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }
@@ -717,9 +998,9 @@ castor::IObject* castor::db::cnv::DbFileSystemCnv::createObj(castor::IAddress* a
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_selectStatementString << std::endl
-                    << "and id was " << ad->target() << std::endl;;
+                    << " and id was " << ad->target() << std::endl;;
     throw ex;
   }
 }
@@ -766,9 +1047,9 @@ void castor::db::cnv::DbFileSystemCnv::updateObj(castor::IObject* obj)
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }

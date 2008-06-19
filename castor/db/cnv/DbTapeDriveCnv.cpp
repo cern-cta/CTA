@@ -420,11 +420,12 @@ void castor::db::cnv::DbTapeDriveCnv::fillRepTapeDriveDedication(castor::vdqm::T
   }
   delete rset;
   // update tapeDriveDedication and create new ones
+  std::vector<castor::IObject*> toBeCreated;
   for (std::vector<castor::vdqm::TapeDriveDedication*>::iterator it = obj->tapeDriveDedication().begin();
        it != obj->tapeDriveDedication().end();
        it++) {
     if (0 == (*it)->id()) {
-      cnvSvc()->createRep(0, *it, false, OBJ_TapeDrive);
+      toBeCreated.push_back(*it);
     } else {
       // Check remote update statement
       if (0 == m_remoteUpdateTapeDriveDedicationStatement) {
@@ -440,6 +441,8 @@ void castor::db::cnv::DbTapeDriveCnv::fillRepTapeDriveDedication(castor::vdqm::T
       }
     }
   }
+  // create new objects
+  cnvSvc()->bulkCreateRep(0, toBeCreated, false, OBJ_TapeDrive);
   // Delete old links
   for (std::set<int>::iterator it = tapeDriveDedicationList.begin();
        it != tapeDriveDedicationList.end();
@@ -910,9 +913,9 @@ void castor::db::cnv::DbTapeDriveCnv::createRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_insertStatementString << std::endl
-                    << "and parameters' values were :" << std::endl
+                    << " and parameters' values were :" << std::endl
                     << "  jobID : " << obj->jobID() << std::endl
                     << "  modificationTime : " << obj->modificationTime() << std::endl
                     << "  resettime : " << obj->resettime() << std::endl
@@ -927,6 +930,229 @@ void castor::db::cnv::DbTapeDriveCnv::createRep(castor::IAddress* address,
                     << "  deviceGroupName : " << obj->deviceGroupName() << std::endl
                     << "  status : " << obj->status() << std::endl
                     << "  tapeServer : " << obj->tapeServer() << std::endl;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bulkCreateRep
+//------------------------------------------------------------------------------
+void castor::db::cnv::DbTapeDriveCnv::bulkCreateRep(castor::IAddress* address,
+                                                    std::vector<castor::IObject*> &objects,
+                                                    bool endTransaction,
+                                                    unsigned int type)
+  throw (castor::exception::Exception) {
+  // check whether something needs to be done
+  int nb = objects.size();
+  if (0 == nb) return;
+  // Casts all objects
+  std::vector<castor::vdqm::TapeDrive*> objs;
+  for (int i = 0; i < nb; i++) {
+    objs.push_back(dynamic_cast<castor::vdqm::TapeDrive*>(objects[i]));
+  }
+  try {
+    // Check whether the statements are ok
+    if (0 == m_insertStatement) {
+      m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(14, castor::db::DBTYPE_UINT64);
+    }
+    if (0 == m_storeTypeStatement) {
+      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
+    }
+    // build the buffers for jobID
+    int* jobIDBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* jobIDBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      jobIDBuffer[i] = objs[i]->jobID();
+      jobIDBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (1, jobIDBuffer, DBTYPE_INT, sizeof(jobIDBuffer[0]), &jobIDBufLens);
+    // build the buffers for modificationTime
+    u_signed64* modificationTimeBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    unsigned short* modificationTimeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      modificationTimeBuffer[i] = objs[i]->modificationTime();
+      modificationTimeBufLens[i] = sizeof(u_signed64);
+    }
+    m_insertStatement->setDataBuffer
+      (2, modificationTimeBuffer, DBTYPE_UINT64, sizeof(modificationTimeBuffer[0]), &modificationTimeBufLens);
+    // build the buffers for resettime
+    u_signed64* resettimeBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    unsigned short* resettimeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      resettimeBuffer[i] = objs[i]->resettime();
+      resettimeBufLens[i] = sizeof(u_signed64);
+    }
+    m_insertStatement->setDataBuffer
+      (3, resettimeBuffer, DBTYPE_UINT64, sizeof(resettimeBuffer[0]), &resettimeBufLens);
+    // build the buffers for usecount
+    int* usecountBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* usecountBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      usecountBuffer[i] = objs[i]->usecount();
+      usecountBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (4, usecountBuffer, DBTYPE_INT, sizeof(usecountBuffer[0]), &usecountBufLens);
+    // build the buffers for errcount
+    int* errcountBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* errcountBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      errcountBuffer[i] = objs[i]->errcount();
+      errcountBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (5, errcountBuffer, DBTYPE_INT, sizeof(errcountBuffer[0]), &errcountBufLens);
+    // build the buffers for transferredMB
+    int* transferredMBBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* transferredMBBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      transferredMBBuffer[i] = objs[i]->transferredMB();
+      transferredMBBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (6, transferredMBBuffer, DBTYPE_INT, sizeof(transferredMBBuffer[0]), &transferredMBBufLens);
+    // build the buffers for totalMB
+    u_signed64* totalMBBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    unsigned short* totalMBBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      totalMBBuffer[i] = objs[i]->totalMB();
+      totalMBBufLens[i] = sizeof(u_signed64);
+    }
+    m_insertStatement->setDataBuffer
+      (7, totalMBBuffer, DBTYPE_UINT64, sizeof(totalMBBuffer[0]), &totalMBBufLens);
+    // build the buffers for driveName
+    const char** driveNameBuffer = (const char**) malloc(nb * sizeof(const char*));
+    unsigned short* driveNameBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      driveNameBuffer[i] = objs[i]->driveName().c_str();
+      driveNameBufLens[i] = objs[i]->driveName().length();
+    }
+    m_insertStatement->setDataBuffer
+      (8, driveNameBuffer, DBTYPE_STRING, sizeof(driveNameBuffer[0]), &driveNameBufLens);
+    // build the buffers for tape
+    u_signed64* tapeBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    unsigned short* tapeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      tapeBuffer[i] = (type == OBJ_VdqmTape && objs[i]->tape() != 0) ? objs[i]->tape()->id() : 0;
+      tapeBufLens[i] = sizeof(u_signed64);
+    }
+    m_insertStatement->setDataBuffer
+      (9, tapeBuffer, DBTYPE_UINT64, sizeof(tapeBuffer[0]), &tapeBufLens);
+    // build the buffers for runningTapeReq
+    u_signed64* runningTapeReqBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    unsigned short* runningTapeReqBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      runningTapeReqBuffer[i] = (type == OBJ_TapeRequest && objs[i]->runningTapeReq() != 0) ? objs[i]->runningTapeReq()->id() : 0;
+      runningTapeReqBufLens[i] = sizeof(u_signed64);
+    }
+    m_insertStatement->setDataBuffer
+      (10, runningTapeReqBuffer, DBTYPE_UINT64, sizeof(runningTapeReqBuffer[0]), &runningTapeReqBufLens);
+    // build the buffers for deviceGroupName
+    u_signed64* deviceGroupNameBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    unsigned short* deviceGroupNameBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      deviceGroupNameBuffer[i] = (type == OBJ_DeviceGroupName && objs[i]->deviceGroupName() != 0) ? objs[i]->deviceGroupName()->id() : 0;
+      deviceGroupNameBufLens[i] = sizeof(u_signed64);
+    }
+    m_insertStatement->setDataBuffer
+      (13, deviceGroupNameBuffer, DBTYPE_UINT64, sizeof(deviceGroupNameBuffer[0]), &deviceGroupNameBufLens);
+    // build the buffers for status
+    int* statusBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* statusBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      statusBuffer[i] = objs[i]->status();
+      statusBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (14, statusBuffer, DBTYPE_INT, sizeof(statusBuffer[0]), &statusBufLens);
+    // build the buffers for tapeServer
+    u_signed64* tapeServerBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    unsigned short* tapeServerBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      tapeServerBuffer[i] = (type == OBJ_TapeServer && objs[i]->tapeServer() != 0) ? objs[i]->tapeServer()->id() : 0;
+      tapeServerBufLens[i] = sizeof(u_signed64);
+    }
+    m_insertStatement->setDataBuffer
+      (15, tapeServerBuffer, DBTYPE_UINT64, sizeof(tapeServerBuffer[0]), &tapeServerBufLens);
+    // build the buffers for returned ids
+    u_signed64* idBuffer = (u_signed64*) calloc(nb, sizeof(u_signed64));
+    unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
+    m_insertStatement->execute(nb);
+    for (int i = 0; i < nb; i++) {
+      objects[i]->setId(idBuffer[i]);
+    }
+    // release the buffers for jobID
+    free(jobIDBuffer);
+    free(jobIDBufLens);
+    // release the buffers for modificationTime
+    free(modificationTimeBuffer);
+    free(modificationTimeBufLens);
+    // release the buffers for resettime
+    free(resettimeBuffer);
+    free(resettimeBufLens);
+    // release the buffers for usecount
+    free(usecountBuffer);
+    free(usecountBufLens);
+    // release the buffers for errcount
+    free(errcountBuffer);
+    free(errcountBufLens);
+    // release the buffers for transferredMB
+    free(transferredMBBuffer);
+    free(transferredMBBufLens);
+    // release the buffers for totalMB
+    free(totalMBBuffer);
+    free(totalMBBufLens);
+    // release the buffers for driveName
+    free(driveNameBuffer);
+    free(driveNameBufLens);
+    // release the buffers for tape
+    free(tapeBuffer);
+    free(tapeBufLens);
+    // release the buffers for runningTapeReq
+    free(runningTapeReqBuffer);
+    free(runningTapeReqBufLens);
+    // release the buffers for deviceGroupName
+    free(deviceGroupNameBuffer);
+    free(deviceGroupNameBufLens);
+    // release the buffers for status
+    free(statusBuffer);
+    free(statusBufLens);
+    // release the buffers for tapeServer
+    free(tapeServerBuffer);
+    free(tapeServerBufLens);
+    // reuse idBuffer for bulk insertion into Id2Type
+    m_storeTypeStatement->setDataBuffer
+      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), &idBufLens);
+    // build the buffers for type
+    u_signed64* typeBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      typeBuffer[i] = objs[i]->type();
+      typeBufLens[i] = sizeof(u_signed64);
+    }
+    m_storeTypeStatement->setDataBuffer
+      (2, typeBuffer, DBTYPE_UINT64, sizeof(typeBuffer[0]), &typeBufLens);
+    m_storeTypeStatement->execute(nb);
+    // release the buffers for type
+    free(typeBuffer);
+    free(typeBufLens);
+    // release the buffers for returned ids
+    free(idBuffer);
+    free(idBufLens);
+    if (endTransaction) {
+      cnvSvc()->commit();
+    }
+  } catch (castor::exception::SQLError e) {
+    // Always try to rollback
+    try { if (endTransaction) cnvSvc()->rollback(); }
+    catch(castor::exception::Exception ignored) {}
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Error in bulkInsert request :"
+                    << std::endl << e.getMessage().str() << std::endl
+                    << " was called in bulk with "
+                    << nb << " items." << std::endl;
     throw ex;
   }
 }
@@ -969,9 +1195,9 @@ void castor::db::cnv::DbTapeDriveCnv::updateRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }
@@ -1010,9 +1236,9 @@ void castor::db::cnv::DbTapeDriveCnv::deleteRep(castor::IAddress* address,
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_deleteStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }
@@ -1056,9 +1282,9 @@ castor::IObject* castor::db::cnv::DbTapeDriveCnv::createObj(castor::IAddress* ad
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_selectStatementString << std::endl
-                    << "and id was " << ad->target() << std::endl;;
+                    << " and id was " << ad->target() << std::endl;;
     throw ex;
   }
 }
@@ -1099,9 +1325,9 @@ void castor::db::cnv::DbTapeDriveCnv::updateObj(castor::IObject* obj)
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }

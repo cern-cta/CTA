@@ -39,6 +39,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
@@ -222,13 +223,116 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::createRep(castor::IAddress* 
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_insertStatementString << std::endl
-                    << "and parameters' values were :" << std::endl
+                    << " and parameters' values were :" << std::endl
                     << "  accessMode : " << obj->accessMode() << std::endl
                     << "  density : " << obj->density() << std::endl
                     << "  tapeModel : " << obj->tapeModel() << std::endl
                     << "  id : " << obj->id() << std::endl;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bulkCreateRep
+//------------------------------------------------------------------------------
+void castor::db::cnv::DbTapeAccessSpecificationCnv::bulkCreateRep(castor::IAddress* address,
+                                                                  std::vector<castor::IObject*> &objects,
+                                                                  bool endTransaction,
+                                                                  unsigned int type)
+  throw (castor::exception::Exception) {
+  // check whether something needs to be done
+  int nb = objects.size();
+  if (0 == nb) return;
+  // Casts all objects
+  std::vector<castor::vdqm::TapeAccessSpecification*> objs;
+  for (int i = 0; i < nb; i++) {
+    objs.push_back(dynamic_cast<castor::vdqm::TapeAccessSpecification*>(objects[i]));
+  }
+  try {
+    // Check whether the statements are ok
+    if (0 == m_insertStatement) {
+      m_insertStatement = createStatement(s_insertStatementString);
+      m_insertStatement->registerOutParam(4, castor::db::DBTYPE_UINT64);
+    }
+    if (0 == m_storeTypeStatement) {
+      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
+    }
+    // build the buffers for accessMode
+    int* accessModeBuffer = (int*) malloc(nb * sizeof(int));
+    unsigned short* accessModeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      accessModeBuffer[i] = objs[i]->accessMode();
+      accessModeBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (1, accessModeBuffer, DBTYPE_INT, sizeof(accessModeBuffer[0]), &accessModeBufLens);
+    // build the buffers for density
+    const char** densityBuffer = (const char**) malloc(nb * sizeof(const char*));
+    unsigned short* densityBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      densityBuffer[i] = objs[i]->density().c_str();
+      densityBufLens[i] = objs[i]->density().length();
+    }
+    m_insertStatement->setDataBuffer
+      (2, densityBuffer, DBTYPE_STRING, sizeof(densityBuffer[0]), &densityBufLens);
+    // build the buffers for tapeModel
+    const char** tapeModelBuffer = (const char**) malloc(nb * sizeof(const char*));
+    unsigned short* tapeModelBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      tapeModelBuffer[i] = objs[i]->tapeModel().c_str();
+      tapeModelBufLens[i] = objs[i]->tapeModel().length();
+    }
+    m_insertStatement->setDataBuffer
+      (3, tapeModelBuffer, DBTYPE_STRING, sizeof(tapeModelBuffer[0]), &tapeModelBufLens);
+    // build the buffers for returned ids
+    u_signed64* idBuffer = (u_signed64*) calloc(nb, sizeof(u_signed64));
+    unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
+    m_insertStatement->execute(nb);
+    for (int i = 0; i < nb; i++) {
+      objects[i]->setId(idBuffer[i]);
+    }
+    // release the buffers for accessMode
+    free(accessModeBuffer);
+    free(accessModeBufLens);
+    // release the buffers for density
+    free(densityBuffer);
+    free(densityBufLens);
+    // release the buffers for tapeModel
+    free(tapeModelBuffer);
+    free(tapeModelBufLens);
+    // reuse idBuffer for bulk insertion into Id2Type
+    m_storeTypeStatement->setDataBuffer
+      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), &idBufLens);
+    // build the buffers for type
+    u_signed64* typeBuffer = (u_signed64*) malloc(nb * sizeof(u_signed64));
+    unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      typeBuffer[i] = objs[i]->type();
+      typeBufLens[i] = sizeof(u_signed64);
+    }
+    m_storeTypeStatement->setDataBuffer
+      (2, typeBuffer, DBTYPE_UINT64, sizeof(typeBuffer[0]), &typeBufLens);
+    m_storeTypeStatement->execute(nb);
+    // release the buffers for type
+    free(typeBuffer);
+    free(typeBufLens);
+    // release the buffers for returned ids
+    free(idBuffer);
+    free(idBufLens);
+    if (endTransaction) {
+      cnvSvc()->commit();
+    }
+  } catch (castor::exception::SQLError e) {
+    // Always try to rollback
+    try { if (endTransaction) cnvSvc()->rollback(); }
+    catch(castor::exception::Exception ignored) {}
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Error in bulkInsert request :"
+                    << std::endl << e.getMessage().str() << std::endl
+                    << " was called in bulk with "
+                    << nb << " items." << std::endl;
     throw ex;
   }
 }
@@ -265,9 +369,9 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::updateRep(castor::IAddress* 
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }
@@ -306,9 +410,9 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::deleteRep(castor::IAddress* 
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_deleteStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }
@@ -346,9 +450,9 @@ castor::IObject* castor::db::cnv::DbTapeAccessSpecificationCnv::createObj(castor
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in select request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_selectStatementString << std::endl
-                    << "and id was " << ad->target() << std::endl;;
+                    << " and id was " << ad->target() << std::endl;;
     throw ex;
   }
 }
@@ -383,9 +487,9 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::updateObj(castor::IObject* o
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
-                    << "Statement was :" << std::endl
+                    << "Statement was : " << std::endl
                     << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
+                    << " and id was " << obj->id() << std::endl;;
     throw ex;
   }
 }

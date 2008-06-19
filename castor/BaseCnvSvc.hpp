@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/03/14 10:46:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.hpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/06/19 14:56:11 $ $Author: sponcec3 $
  *
  *
  *
@@ -129,6 +129,24 @@ namespace castor {
                            unsigned int type = OBJ_INVALID)
       throw (castor::exception::Exception);
 
+    /**
+     * create foreign representations from a set of C++ Object
+     * @param address where to store the representation of
+     * the objects
+     * @param objects the list of objects to deal with
+     * @param endTransaction whether the changes to the database
+     * should be commited or not
+     * @param type if not OBJ_INVALID, the ids representing
+     * the links to objects of this type will not set to 0
+     * as is the default.
+     * @exception Exception throws an Exception in case of error
+     */
+    virtual void bulkCreateRep(IAddress* address,
+                               std::vector<IObject*> &objects,
+			       bool endTransaction,
+			       unsigned int type)
+      throw (castor::exception::Exception);
+    
     /**
      * Updates foreign representation from a C++ Object.
      * @param address where the representation of

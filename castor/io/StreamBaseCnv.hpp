@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamBaseCnv.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/03/14 10:40:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamBaseCnv.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/06/19 14:56:43 $ $Author: sponcec3 $
  *
- * 
+ *
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef IO_STREAMBASECNV_HPP 
+#ifndef IO_STREAMBASECNV_HPP
 #define IO_STREAMBASECNV_HPP 1
 
 // Include files
@@ -37,6 +37,7 @@
 namespace castor {
 
   // Forward Declarations
+  class IAddress;
   class IObject;
   class ICnvSvc;
 
@@ -51,9 +52,9 @@ namespace castor {
      * into/from streams
      */
     class StreamBaseCnv : public BaseObject, public IStreamConverter {
-      
+
     public:
-      
+
       /**
        * Constructor
        */
@@ -75,7 +76,25 @@ namespace castor {
        * the representation this converter can deal with
        */
       virtual const unsigned int repType() const;
-      
+
+      /**
+       * create foreign representations from a set of C++ Object
+       * @param address where to store the representation of
+       * the objects
+       * @param objects the list of objects to deal with
+       * @param endTransaction whether the changes to the database
+       * should be commited or not
+       * @param type if not OBJ_INVALID, the ids representing
+       * the links to objects of this type will not set to 0
+       * as is the default.
+       * @exception Exception throws an Exception in case of error
+       */
+      virtual void bulkCreateRep(castor::IAddress* address,
+				 std::vector<castor::IObject*> &objects,
+				 bool endTransaction,
+				 unsigned int type)
+	throw (castor::exception::Exception);
+
       /**
        * Updates foreign representation from a C++ Object.
        * This streaming implementation always throws an exception.
@@ -111,7 +130,7 @@ namespace castor {
                            unsigned int type,
                            bool endTransaction = false)
         throw (castor::exception::Exception);
-      
+
       /**
        * Retrieve from the foreign representation some of the
        * objects refered by a given C++ object.
@@ -124,7 +143,7 @@ namespace castor {
         throw (castor::exception::Exception);
 
     protected:
-      
+
       /**
        * Access to the stream conversion service for child classes
        */

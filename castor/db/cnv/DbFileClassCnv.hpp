@@ -34,6 +34,7 @@
 #include "castor/IAddress.hpp"
 #include "castor/db/cnv/DbBaseCnv.hpp"
 #include "castor/exception/Exception.hpp"
+#include <vector>
 
 namespace castor {
 
@@ -89,6 +90,24 @@ namespace castor {
          */
         virtual void createRep(castor::IAddress* address,
                                castor::IObject* object,
+                               bool endTransaction,
+                               unsigned int type = castor::OBJ_INVALID)
+          throw (castor::exception::Exception);
+
+        /**
+         * Creates foreign representation from a set of C++ Objects.
+         * @param address where to store the representation of
+         * the objects
+         * @param objects the list of objects to deal with
+         * @param endTransaction whether the changes to the database
+         * should be commited or not
+         * @param type if not OBJ_INVALID, the ids representing
+         * the links to objects of this type will not set to 0
+         * as is the default.
+         * @exception Exception throws an Exception in cas of error
+         */
+        virtual void bulkCreateRep(castor::IAddress* address,
+                               std::vector<castor::IObject*> &objects,
                                bool endTransaction,
                                unsigned int type = castor::OBJ_INVALID)
           throw (castor::exception::Exception);
