@@ -41,6 +41,9 @@ class CppCppStreamCnvWriter : public CppCppBaseCnvWriter {
   /// writes createRep method's content
   void writeCreateRepContent();
     
+  /// writes bulkCreateRep method's content
+  void writeBulkCreateRepContent() {};
+    
   /// writes updateRep method's content, not used
   void writeUpdateRepContent() {};
     

@@ -161,6 +161,8 @@ void CppCppDbCnvWriter::writeClass(UMLClassifier */*c*/) {
   writeFillObj();
   // createRep method
   writeCreateRep();
+  // bulkCreateRep method
+  writeBulkCreateRep();
   // updateRep method
   writeUpdateRep();
   // deleteRep method
@@ -1741,8 +1743,13 @@ void CppCppDbCnvWriter::writeBasicMultNFillRep(Assoc* as) {
             << endl << getIndent()
             << "// update " << as->remotePart.name
             << " and create new ones"
-            << endl << getIndent() << "for ("
-            << fixTypeName("vector", "", "")
+            << endl << getIndent();
+  if (as->type.multiLocal == MULT_ONE) {
+    *m_stream << fixTypeName("vector", "", "")
+              << "<castor::IObject*> toBeCreated;"
+              << endl << getIndent();
+  }
+  *m_stream << "for (" << fixTypeName("vector", "", "")
             << "<"
             << fixTypeName(as->remotePart.typeName,
                            getNamespace(as->remotePart.typeName),
@@ -1758,12 +1765,14 @@ void CppCppDbCnvWriter::writeBasicMultNFillRep(Assoc* as) {
   *m_stream << getIndent() << "if (0 == (*it)->id()) {"
             << endl;
   m_indent++;
-  *m_stream << getIndent()
-            << "cnvSvc()->createRep(0, *it, false";
   if (as->type.multiLocal == MULT_ONE) {
-    *m_stream << ", OBJ_" << as->localPart.typeName;
+    *m_stream << getIndent()
+              << "toBeCreated.push_back(*it);";
+  } else {
+    *m_stream << getIndent()
+              << "cnvSvc()->createRep(0, *it, false);";
   }
-  *m_stream << ");" << endl;
+  *m_stream << endl;
   if (as->type.multiLocal == MULT_ONE &&
       !as->remotePart.abstract) {
     m_indent--;
@@ -1855,8 +1864,13 @@ void CppCppDbCnvWriter::writeBasicMultNFillRep(Assoc* as) {
     *m_stream << getIndent() << "}" << endl;
   }
   m_indent--;
-  *m_stream << getIndent() << "}" << endl
-            << getIndent() << "// Delete old links"
+  *m_stream << getIndent() << "}" << endl;
+  if (as->type.multiLocal == MULT_ONE) {
+    *m_stream << getIndent() << "// create new objects" << endl
+              << getIndent() << "cnvSvc()->bulkCreateRep(0, toBeCreated, false"
+              << ", OBJ_" << as->localPart.typeName << ");" << endl;
+  }
+  *m_stream << getIndent() << "// Delete old links"
             << endl << getIndent() << "for ("
             << fixTypeName("set", "", "")
             << "<int>::iterator it = "
@@ -2122,19 +2136,10 @@ void CppCppDbCnvWriter::writeBasicMultNFillObj(Assoc* as) {
 }
 
 //=============================================================================
-// writeCreateRepContent
+// writeCreateRepCheckStatements
 //=============================================================================
-void CppCppDbCnvWriter::writeCreateRepContent() {
-  // check whether something needs to be done
-  *m_stream << getIndent()
-            << "// check whether something needs to be done"
-            << endl << getIndent()
-            << "if (0 == obj) return;" << endl
-            << getIndent()
-            << "if (0 != obj->id()) return;" << endl;
-  // Start of try block for database statements
-  *m_stream << getIndent() << "try {" << endl;
-  m_indent++;
+void CppCppDbCnvWriter::writeCreateRepCheckStatements(MemberList &members,
+                                                      AssocList &assocs) {
   // First check the statements
   *m_stream << getIndent()
             << "// Check whether the statements are ok"
@@ -2142,8 +2147,6 @@ void CppCppDbCnvWriter::writeCreateRepContent() {
             << "if (0 == m_insertStatement) {" << endl;
   m_indent++;
   // Go through the members and assoc to find the number for id
-  MemberList members = createMembersList();
-  AssocList assocs = createAssocsList();
   int n = 1;
   for (Member* mem = members.first();
        0 != mem;
@@ -2190,19 +2193,39 @@ void CppCppDbCnvWriter::writeCreateRepContent() {
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
+}
+
+//=============================================================================
+// writeCreateRepContent
+//=============================================================================
+void CppCppDbCnvWriter::writeCreateRepContent() {
+  // check whether something needs to be done
+  *m_stream << getIndent()
+            << "// check whether something needs to be done"
+            << endl << getIndent()
+            << "if (0 == obj) return;" << endl
+            << getIndent()
+            << "if (0 != obj->id()) return;" << endl;
+  // Start of try block for database statements
+  *m_stream << getIndent() << "try {" << endl;
+  m_indent++;
+  // Check the statements
+  MemberList members = createMembersList();
+  AssocList assocs = createAssocsList();
+  writeCreateRepCheckStatements(members, assocs);
   // Insert the object into the database
   *m_stream << getIndent()
             << "// Now Save the current object"
             << endl;
   // create a list of members to be saved
-  n = 1;
+  int n = 1;
   // Go through the members
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
     if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
     if (mem->name != "id" &&
-        mem->name != "nbAccesses" &&
+        mem->name != "nbCopyAccesses" &&
         mem->name != "creationTime" &&
         mem->name != "lastModificationTime" &&
         mem->name != "lastAccessTime") {
@@ -2276,6 +2299,291 @@ void CppCppDbCnvWriter::writeCreateRepContent() {
             << endl;
   m_indent++;
   printSQLError("insert", members, assocs, true);
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+}
+
+//=============================================================================
+// writeCreateBufferForSelect
+//=============================================================================
+void CppCppDbCnvWriter::writeCreateBufferForSelect(QString name,
+                                                   QString typeName,
+                                                   int n,
+                                                   QString stmt,
+                                                   bool isEnum,
+                                                   bool isAssoc,
+                                                   QString remoteTypeName) {
+  QString cTypeName = typeName;
+  if (typeName == "string") cTypeName = "const char*";
+  if (typeName == "u_signed64" || typeName == "signed64") {
+    cTypeName = "double";
+  }
+  *m_stream << getIndent() << "// build the buffers for "
+            << name
+            << endl;
+  if (typeName == "string") {
+    // we need to compute the max len first
+    *m_stream << getIndent() << "unsigned int "
+	      << name << "MaxLen = 0;" << endl << getIndent()
+	      << "for (int i = 0; i < nb; i++) {" << endl;
+    m_indent++;
+    *m_stream << getIndent() << "if (objs[i]->"
+	      << name << "().length()+1 > " << name
+	      << "MaxLen)" << endl << getIndent()
+	      << "  " << name << "MaxLen = objs[i]->"
+	      << name << "().length()+1;" << endl;
+    m_indent--;
+    *m_stream << getIndent() << "}" << endl
+	      << getIndent()
+	      << "char* " << name << "Buffer = (char*) calloc(nb, "
+	      << name << "MaxLen);"
+	      << endl;
+  } else {
+    *m_stream << getIndent()
+	      << cTypeName << "* " << name << "Buffer = ("
+	      << cTypeName << "*) malloc(nb * sizeof("
+	      << cTypeName << "));"
+	      << endl;
+  }
+  *m_stream << getIndent()
+            << "unsigned short* " << name
+            << "BufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));"
+            << endl << getIndent()
+            << "for (int i = 0; i < nb; i++) {" << endl;
+  m_indent++;
+  if (name == "creationTime" ||
+      name == "lastModificationTime") {
+    *m_stream << getIndent()
+	      << name << "Buffer[i] = " << "time(0)";
+  } else {
+    if (isAssoc) {
+      if (isEnum) {
+	*m_stream << getIndent()
+		  << name << "Buffer[i] = "
+		  << "(int) objs[i]->" << name << "()";
+      } else {
+	*m_stream << getIndent()
+		  << name << "Buffer[i] = "
+		  << "(type == OBJ_"
+                  << remoteTypeName
+                  << " && objs[i]->" << name
+                  << "() != 0) ? objs[i]->"
+                  << name
+                  << "()->id() : 0";
+      }
+    } else {
+      if (typeName == "string") {
+	*m_stream << getIndent()
+		  << "strncpy(" << name << "Buffer+(i*"
+		  << name << "MaxLen), objs[i]->"
+		  << name << "().c_str(), "
+		  << name << "MaxLen)";
+      } else {
+	*m_stream << getIndent()
+		  << name << "Buffer[i] = "
+		  << "objs[i]->"
+		  << name << "()";
+      }
+    }
+  }
+  *m_stream << ";" << endl << getIndent()
+            << name << "BufLens[i] = ";
+  if (typeName == "string") {
+    *m_stream << "objs[i]->" << name << "().length()+1; // + 1 for the trailing \\0";
+  } else {
+    *m_stream << "sizeof(" << cTypeName << ");";
+  }
+  *m_stream << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl
+            << getIndent()
+            << stmt << "->setDataBuffer" << endl
+            << getIndent()
+            << "  (" << n << ", "
+            << name << "Buffer, "
+            << getDbTypeConstant(typeName) << ", ";
+  if (typeName == "string") {
+    *m_stream << name << "MaxLen";
+  } else {
+    *m_stream << "sizeof("
+	      << name << "Buffer[0])";
+  }
+  *m_stream << ", " << name << "BufLens);" << endl;
+}
+
+//=============================================================================
+// writeReleaseBufferForSelect
+//=============================================================================
+void CppCppDbCnvWriter::writeReleaseBufferForSelect(QString name) {
+  *m_stream << getIndent() << "// release the buffers for " << name
+            << endl << getIndent()
+            << "free(" << name << "Buffer);"
+            << endl << getIndent()
+            << "free(" << name << "BufLens);"
+            << endl;
+}
+
+//=============================================================================
+// writeBulkCreateRepContent
+//=============================================================================
+void CppCppDbCnvWriter::writeBulkCreateRepContent() {
+  // check whether something needs to be done
+  *m_stream << getIndent()
+            << "// check whether something needs to be done"
+            << endl << getIndent()
+            << "int nb = objects.size();" << endl
+            << getIndent()
+            << "if (0 == nb) return;" << endl;
+  // Cast all objects
+  *m_stream << getIndent()
+            << "// Casts all objects"
+            << endl << getIndent()
+            << fixTypeName("vector", "", "") << "<"
+            << m_originalPackage
+            << m_classInfo->className << "*> objs;" << endl
+            << getIndent()
+            << "for (int i = 0; i < nb; i++) {" << endl;
+  m_indent++;
+  *m_stream << getIndent() << "objs.push_back(dynamic_cast<"
+            << m_originalPackage
+            << m_classInfo->className << "*>(objects[i]));"
+            << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+  // Start of try block for database statements
+  *m_stream << getIndent() << "try {" << endl;
+  m_indent++;
+  // Check the statements
+  MemberList members = createMembersList();
+  AssocList assocs = createAssocsList();
+  writeCreateRepCheckStatements(members, assocs);
+  // Go through members and create buffers for the bulk insertion
+  int n = 1;
+  for (Member* mem = members.first();
+       0 != mem;
+       mem = members.next()) {
+    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+    // declare buffers, one for the data, one for the lengths
+    if (mem->name != "id" &&
+        mem->name != "nbAccesses" &&
+        mem->name != "lastAccessTime") {
+      writeCreateBufferForSelect
+        (mem->name,
+         getDbCType(mem->typeName),
+         n,
+         "m_insertStatement");
+      n++;
+    }
+  }
+  // Go through the associations
+  for (Assoc* as = assocs.first();
+       0 != as;
+       as = assocs.next()) {
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (isEnum(as->remotePart.typeName)) {
+      writeCreateBufferForSelect(as->remotePart.name,
+                                 "int",
+                                 n,
+                                 "m_insertStatement",
+                                 true);
+    } else if (as->type.multiRemote == MULT_ONE &&
+               as->remotePart.name != "") {
+      writeCreateBufferForSelect(as->remotePart.name,
+                                 "u_signed64",
+                                 n,
+                                 "m_insertStatement",
+                                 false,
+                                 true,
+                                 as->remotePart.typeName);
+    }
+    n++;
+  }
+  // Prepare the buffer for the returned ids
+  *m_stream << getIndent() << "// build the buffers for returned ids"
+            << endl << getIndent()
+            << "double* idBuffer = (double*) calloc(nb, sizeof(double));"
+            << endl << getIndent()
+            << "unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));"
+            << endl << getIndent()
+            << "m_insertStatement->setDataBuffer" << endl
+            << getIndent()
+            << "  (" << n << ", "
+            << "idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);" << endl;
+  // Execute bulk insertion
+  *m_stream << getIndent()
+            << "m_insertStatement->execute(nb);"
+            << endl;
+  // Store returned ids into the objects
+  *m_stream << getIndent()
+            << "for (int i = 0; i < nb; i++) {" << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << "objects[i]->setId((u_signed64)idBuffer[i]);"
+            << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+  // Release buffers
+  for (Member* mem = members.first();
+       0 != mem;
+       mem = members.next()) {
+    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+    // declare buffers, one for the data, one for the lengths
+    if (mem->name != "id" &&
+        mem->name != "nbAccesses" &&
+        mem->name != "lastAccessTime") {
+      writeReleaseBufferForSelect(mem->name);
+    }
+  }
+  for (Assoc* as = assocs.first();
+       0 != as;
+       as = assocs.next()) {
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (isEnum(as->remotePart.typeName) ||
+        (as->type.multiRemote == MULT_ONE &&
+         as->remotePart.name != "")) {
+      writeReleaseBufferForSelect(as->remotePart.name);
+    }
+  }
+  // Prepare the buffers for bulk insertion into Id2Type
+  *m_stream  << getIndent()
+             << "// reuse idBuffer for bulk insertion into Id2Type"
+             << endl << getIndent()
+             << "m_storeTypeStatement->setDataBuffer" << endl
+             << getIndent()
+             << "  (1, idBuffer, "
+             << getDbTypeConstant("u_signed64")
+             << ", sizeof(idBuffer[0]), idBufLens);" << endl;
+  writeCreateBufferForSelect("type",
+                             "int",
+                             2,
+                             "m_storeTypeStatement");
+  // Execute bulk insertion into Id2Type
+  *m_stream << getIndent()
+            << "m_storeTypeStatement->execute(nb);"
+            << endl;
+  // Release all buffers
+  writeReleaseBufferForSelect("type");
+  *m_stream << getIndent() << "// release the buffers for returned ids"
+            << endl << getIndent()
+            << "free(idBuffer);"
+            << endl << getIndent()
+            << "free(idBufLens);"
+            << endl;
+  // Commit if needed
+  *m_stream << getIndent()
+            << "if (endTransaction) {" << endl;
+  m_indent++;
+  *m_stream << getIndent() << "cnvSvc()->commit();"
+            << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+  m_indent--;
+  // Catch exceptions if any
+  *m_stream << getIndent()
+            << "} catch (castor::exception::SQLError e) {"
+            << endl;
+  m_indent++;
+  printSQLError("bulkInsert", members, assocs, true);
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
 }
@@ -2867,6 +3175,24 @@ QString CppCppDbCnvWriter::getDbType(QString& type) {
 }
 
 //=============================================================================
+// getDbCType
+//=============================================================================
+QString CppCppDbCnvWriter::getDbCType(QString& type) {
+  QString dbType = getSimpleType(type);
+  if (dbType == "longstring") {
+    dbType = "char*";
+  }
+  if (dbType.startsWith("char")) {
+    if (type.startsWith("unsigned")) {
+      dbType = "unsigned char";
+    } else {
+      dbType = "char*";
+    }
+  }
+  return dbType;
+}
+
+//=============================================================================
 // getOraSQLType
 //=============================================================================
 QString CppCppDbCnvWriter::getOraSQLType(QString& type) {
@@ -2925,6 +3251,40 @@ QString CppCppDbCnvWriter::getPgSQLType(QString& type) {
 }
 
 //=============================================================================
+// getDbTypeConstant
+//=============================================================================
+QString CppCppDbCnvWriter::getDbTypeConstant(QString type) {
+  QString dbType = getSimpleType(type);
+  if (dbType == "short" ||
+      dbType == "long" ||
+      dbType == "bool" ||
+      dbType == "int") {
+    dbType = "DBTYPE_INT";
+  } else if (dbType == "u_signed64") {
+    dbType = "DBTYPE_UINT64";
+  } else if (dbType == "signed64") {
+    dbType = "DBTYPE_INT64";
+  } else if (dbType == "float") {
+    dbType = "DBTYPE_FLOAT";
+  } else if (dbType == "double") {
+    dbType = "DBTYPE_DOUBLE";
+  } else if (dbType == "longstring") {
+    dbType = "DBTYPE_CLOB";
+  } else if (dbType == "string") {
+      dbType = "DBTYPE_STRING";
+  } else if (dbType.startsWith("char")) {
+    if (type.startsWith("unsigned")) {
+      dbType = "DBTYPE_INT";
+    } else {
+      dbType = "DBTYPE_STRING";
+    }
+  } else if (m_castorTypes.find(dbType) != m_castorTypes.end()) {
+    dbType = "DBTYPE_UINT64";
+  }
+  return dbType;
+}
+
+//=============================================================================
 // printSQLError
 //=============================================================================
 void CppCppDbCnvWriter::printSQLError(QString name,
@@ -2950,24 +3310,39 @@ void CppCppDbCnvWriter::printSQLError(QString name,
             << "ex.getMessage() << \"Error in " << name
             << " request :\""
             << endl << getIndent()
-            << "                << std::endl << e.getMessage().str() << std::endl"
-            << endl << getIndent()
-            << "                << \"Statement was :\" << std::endl"
-            << endl << getIndent()
-            << "                << s_" << name
-            << "StatementString << std::endl";
+            << "                << std::endl << e.getMessage().str() << std::endl";
   if (name == "select") {
     *m_stream << endl << getIndent()
-              << "                << \"and id was \" << ad->target() << std::endl;";
+              << "                << \"Statement was : \" << std::endl"
+              << endl << getIndent()
+              << "                << s_" << name
+              << "StatementString << std::endl"
+              << endl << getIndent()
+              << "                << \" and id was \" << ad->target() << std::endl;";
   } else if (name == "delete") {
     *m_stream << endl << getIndent()
-              << "                << \"and id was \" << obj->id() << std::endl;";
+              << "                << \"Statement was : \" << std::endl"
+              << endl << getIndent()
+              << "                << s_" << name
+              << "StatementString << std::endl"
+              << endl << getIndent()
+              << "                << \" and id was \" << obj->id() << std::endl;";
   } else if (name == "update") {
     *m_stream << endl << getIndent()
-              << "                << \"and id was \" << obj->id() << std::endl;";
+              << "                << \"Statement was : \" << std::endl"
+              << endl << getIndent()
+              << "                << s_" << name
+              << "StatementString << std::endl"
+              << endl << getIndent()
+              << "                << \" and id was \" << obj->id() << std::endl;";
   } else if (name == "insert") {
     *m_stream << endl << getIndent()
-              << "                << \"and parameters' values were :\" << std::endl";
+              << "                << \"Statement was : \" << std::endl"
+              << endl << getIndent()
+              << "                << s_" << name
+              << "StatementString << std::endl"
+              << endl << getIndent()
+              << "                << \" and parameters' values were :\" << std::endl";
     for (Member* mem = members.first();
          0 != mem;
          mem = members.next()) {
@@ -2990,6 +3365,11 @@ void CppCppDbCnvWriter::printSQLError(QString name,
                   << as->remotePart.name << "() << std::endl";
       }
     }
+  } else if (name == "bulkInsert") {
+    *m_stream << endl << getIndent()
+              << "                << \" was called in bulk with \""
+              << endl << getIndent()
+              << "                << nb << \" items.\" << std::endl";
   }
   *m_stream << ";" << endl << getIndent()
             << "throw ex;" << endl;

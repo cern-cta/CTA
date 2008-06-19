@@ -89,6 +89,50 @@ void CppHBaseCnvWriter::writeMethods (bool delUpMethods) {
             << endl << endl;
   if (delUpMethods){
     writeDocumentation
+      ("Creates foreign representation from a set of C++ Objects.",
+       "",
+       QString("@param address where to store the representation of\n") +
+       "the objects\n" +
+       "@param objects the list of objects to deal with\n" +
+       "@param endTransaction whether the changes to the database\n" +
+       "should be commited or not\n" +
+       "@param type if not OBJ_INVALID, the ids representing\n" +
+       "the links to objects of this type will not set to 0\n" +
+       "as is the default.\n" +
+       "@exception Exception throws an Exception in cas of error",
+       *m_stream);
+    addInclude("\"castor/Constants.hpp\"");
+    *m_stream << getIndent()
+              << "virtual void bulkCreateRep("
+              << fixTypeName("IAddress*",
+                             "castor",
+                             m_classInfo->packageName)
+              << " address,"
+              << endl
+              << getIndent()
+              << "                       "
+              << fixTypeName("vector", "", "")
+              << "<"
+              << fixTypeName("IObject*",
+                             "castor",
+                             m_classInfo->packageName)
+              << ">"
+              << " &objects,"
+              << endl
+              << getIndent()
+              << "                       bool endTransaction,"
+              << endl
+              << getIndent()
+              << "                       unsigned int type = castor::OBJ_INVALID)"
+              << endl
+              << getIndent()
+              << "  throw ("
+              << fixTypeName("Exception",
+                             "castor.exception",
+                             m_classInfo->packageName)
+              << ");"
+              << endl << endl;
+    writeDocumentation
       ("Updates foreign representation from a C++ Object.",
        "",
        QString("@param address where the representation of\n") +

@@ -111,6 +111,41 @@ void CppCppBaseCnvWriter::writeCreateRep() {
 }
 
 //=============================================================================
+// writeBulkCreateRep
+//=============================================================================
+void CppCppBaseCnvWriter::writeBulkCreateRep() {
+  // Header
+  writeWideHeaderComment("bulkCreateRep", getIndent(), *m_stream);
+  QString str = QString("void ") + m_classInfo->packageName + "::" +
+    m_prefix + m_classInfo->className + "Cnv::bulkCreateRep(";
+  *m_stream << getIndent() << str
+            << fixTypeName ("IAddress*", "castor", m_classInfo->packageName)
+            << " address," << endl;
+  str.replace(QRegExp("."), " ");
+  *m_stream << getIndent() << str
+            << fixTypeName("vector", "", "")
+            << "<"
+            << fixTypeName("IObject*", "castor", m_classInfo->packageName)
+            << ">"
+            << " &objects,"
+            << endl << getIndent() << str
+            << "bool endTransaction,"
+            << endl << getIndent() << str
+            << "unsigned int type)" << endl
+            << getIndent() << "  throw ("
+            << fixTypeName ("Exception",
+                            "castor.exception",
+                            m_classInfo->packageName)
+            << ") {" << endl;
+  m_indent++;
+  // Write the content of the method
+  writeBulkCreateRepContent();
+  // End of the method
+  m_indent--;
+  *m_stream << "}" << endl << endl;
+}
+
+//=============================================================================
 // writeUpdateRep
 //=============================================================================
 void CppCppBaseCnvWriter::writeUpdateRep() {

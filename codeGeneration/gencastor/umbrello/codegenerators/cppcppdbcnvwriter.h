@@ -70,9 +70,28 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
     
   /// writes one basic fillObj method for one to n assoc
   void writeBasicMultNFillObj(Assoc* as);
-    
+
+  /// writes the check statements part of the (bulk)createRep method
+  void writeCreateRepCheckStatements(MemberList &members,
+                                     AssocList &assocs);
+
+  /// writes the buffer creation code for one member in bulkCreateRep
+  void writeCreateBufferForSelect(QString name,
+                                  QString typeName,
+                                  int n,
+                                  QString stmt,
+                                  bool isEnum = false,
+                                  bool isAssoc = false,
+                                  QString remoteTypeName = "");
+
+  /// writes the buffer release code for one member in bulkCreateRep
+  void writeReleaseBufferForSelect(QString name);
+
   /// writes createRep method's content
   void writeCreateRepContent();
+    
+  /// writes bulkCreateRep method's content
+  void writeBulkCreateRepContent();
     
   /// writes updateRep method's content
   void writeUpdateRepContent();
@@ -113,10 +132,17 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
 
   /**
    * Gets the DBCLE type corresponding to a given C++ type.
-   * The Dbcle type is the one used in OCCI to set/get
+   * The Dbcle type is the one used to set/get
    * members into/from statements
    */
   QString getDbType(QString& type);
+    
+  /**
+   * Gets the DBCLE C type corresponding to a given C++ type.
+   * The Dbcle C type is the one used in bulk operations
+   * for handling the buffers
+   */
+  QString getDbCType(QString& type);
     
   /**
    * Gets the SQL type corresponding to a given C++ type.
@@ -127,6 +153,11 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
   QString getOraSQLType(QString& type);
 
   QString getPgSQLType(QString& type);
+
+  /**
+   * Gets the db type constant corresponding to a given C++ type.
+   */
+  QString getDbTypeConstant(QString type);
 
   /**
    * Writes code to display an SQL error with all details
