@@ -244,8 +244,9 @@ castor::repack::RepackServer::RepackServer() :
 
   /** the stager name 
   */
-  if ( !(tmp2 = getconfent("RH", "HOST",0)) &&
-       !(tmp2 = getenv("RH_HOST")) ){
+  if ( !(tmp2 = getenv("RH_HOST")) &&
+       !(tmp2 = getconfent("RH", "HOST",0))
+     ){
     castor::exception::Internal ex;
     ex.getMessage() << "Unable to initialise RepackServer with stager "
                     << "entry in castor config file or enviroment variable" 
