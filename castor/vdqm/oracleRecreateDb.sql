@@ -1,5 +1,5 @@
 -- This script should be ran using:
---     sqlplus /nolog @oracleRecreatedb.sqlplus
+--     sqlplus /nolog @oracleRecreateDb.sqlplus
 
 whenever oserror exit failure
 whenever sqlerror exit failure rollback
