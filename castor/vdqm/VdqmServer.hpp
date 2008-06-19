@@ -75,6 +75,16 @@ namespace castor {
     private:
 
       /**
+       * Default number of request handler threads.
+       */
+      static const int s_requestHandlerDefaultThreadNumber = 20;
+
+      /**
+       * Default number of remote tape copy job submitter threads.
+       */
+      static const int s_RTCPJobSubmitterDefaultThreadNumber = 20;
+
+      /**
        * Number of request handler threads.
        */
       int m_requestHandlerThreadNumber;

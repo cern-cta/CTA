@@ -10,7 +10,7 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH VDQMSERVER 1 "$Date: 2008/06/18 15:45:37 $" CASTOR "VDQM server daemon"
+.TH VDQMSERVER 1 "$Date: 2008/06/19 09:26:01 $" CASTOR "VDQM server daemon"
 .SH NAME
 vdqmserver \- Volume and Drive Queue Manager (VDQM) server
 .SH SYNOPSIS
@@ -68,7 +68,7 @@ Set the location of the configuration file.  The default is
 Get usage information.
 .TP
 \fB\-r, \-\-requestHandlerThreads num
-Set the ... TO BE DONE
+Set the number of request handler threads.  The default is 20.
 
 .SH FILES
 .TP

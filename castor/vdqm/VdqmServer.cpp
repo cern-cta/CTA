@@ -170,8 +170,8 @@ int main(int argc, char *argv[]) {
 castor::vdqm::VdqmServer::VdqmServer()
   throw():
   castor::server::BaseDaemon("Vdqm"),
-  m_requestHandlerThreadNumber(20),
-  m_RTCPJobSubmitterThreadNumber(20)
+  m_requestHandlerThreadNumber(s_requestHandlerDefaultThreadNumber),
+  m_RTCPJobSubmitterThreadNumber(s_RTCPJobSubmitterDefaultThreadNumber)
 {
   initDlf();
 }
@@ -372,8 +372,10 @@ void castor::vdqm::VdqmServer::help(std::string programName)
     "\t-f, --foreground                  Remain in the Foreground\n"
     "\t-c, --config config-file          Configuration file\n"
     "\t-h, --help                        Print this help and exit\n"
-    "\t-r, --requestHandlerThreads num   Default 1\n"
-    "\t-j, --RTCPJobSubmitterThreads num Default 1\n"
+    "\t-r, --requestHandlerThreads num   Default "
+    << s_requestHandlerDefaultThreadNumber << "\n"
+    "\t-j, --RTCPJobSubmitterThreads num Default "
+    << s_RTCPJobSubmitterDefaultThreadNumber << "\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
 }
