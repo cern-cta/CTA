@@ -1,3 +1,46 @@
+------------
+- 2.1.7-10 -
+------------
+
+  Bug Fixes
+  ---------
+
+  - #37936 VDQM2: Added the vdqmserver manual page.
+  - #37968 VDQM2: Changed the order of the requests displayed by showqueues
+    from creation time to DGN and creation time.
+  - Changed the order of the drives displayed by showqueues from drive name to
+    DGN and drive name.
+  - Fixed the usage message (vdqmserver -help).  The default number of request
+    handler threads and the default number of RTCP job sumbitter threads are
+    now correct.
+
+  Upgrading VDQM2 from 2.1.7-9
+  ----------------------------
+
+  Instructions
+  ------------
+
+  1. Download the schema upgrade script for sqlplus:
+
+     wget -O vdqm_2.1.7-9_to_2.1.7-10.sqlplus 'http://isscvs.cern.ch/cgi-bin/viewcvs-all.cgi/CASTOR2/upgrades/vdqm_2.1.7-9_to_2.1.7-10.sqlplus?revision=1.1&root=castor'
+
+  2. Use sqlplus to logon to the database using the schema owner account, e.g.
+     vdqm@c2vdqmdb, and upgrade the schema:
+
+     sqlplus vdqm@c2vdqmdb @vdqm_2.1.7-9_to_2.1.7-10.sqlplus
+
+  3. Upgrade to the new rpms:
+
+     castor-dbtools
+     castor-hsmtools
+     castor-vdqm2-server
+
+  4. Restart the vdqmserver daemon and check its status
+
+     service vdqmserver -restart
+     service vdqmserver -status
+
+
 -----------
 - 2.1.7-8 -
 -----------
