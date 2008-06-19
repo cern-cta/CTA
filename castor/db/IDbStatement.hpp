@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/04/17 09:47:58 $ $Author: itglp $
+ * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/06/19 15:13:11 $ $Author: itglp $
  *
  * 
  *
@@ -36,67 +36,70 @@ namespace castor {
 
 	namespace db { 
 
-/**
- * Interface IDbStatement
- * 
- */
-class IDbStatement {
-	
-    public:
-	
-    virtual ~IDbStatement() {};
-
-    virtual void endTransaction() = 0;
-    
     /**
-     * Sets a parameter in the prepared statement 
-     * @param pos the index position of the parameter
-     * @param value its value
-     */
-    virtual void setInt(int pos, int value) = 0;
-    virtual void setInt64(int pos, signed64 value) = 0;
-    virtual void setUInt64(int pos, u_signed64 value) = 0;
-    virtual void setString(int pos, std::string value) = 0;
-    virtual void setClob(int pos, std::string value) = 0;
-    virtual void setFloat(int pos, float value) = 0;
-    virtual void setDouble(int pos, double value) = 0;
-    
-    virtual void registerOutParam(int pos, int dbType)
-      throw (castor::exception::SQLError) = 0;
-
-    virtual int getInt(int pos) throw (castor::exception::SQLError) = 0;
-    virtual signed64 getInt64(int pos) throw (castor::exception::SQLError) = 0;
-    virtual u_signed64 getUInt64(int pos) = 0;
-    virtual std::string getString(int pos) = 0;
-    virtual std::string getClob(int pos) = 0;
-    virtual float getFloat(int pos) = 0;
-    virtual double getDouble(int pos) = 0;
-
-    /**
+     * Interface IDbStatement
      * 
      */
-    virtual castor::db::IDbResultSet* executeQuery()
-	    throw (castor::exception::SQLError) = 0;
+    class IDbStatement {
+      
+        public:
+      
+        virtual ~IDbStatement() {};
+    
+        virtual void endTransaction() = 0;
+        
+        /**
+         * Sets a parameter in the prepared statement 
+         * @param pos the index position of the parameter
+         * @param value its value
+         */
+        virtual void setInt(int pos, int value) = 0;
+        virtual void setInt64(int pos, signed64 value) = 0;
+        virtual void setUInt64(int pos, u_signed64 value) = 0;
+        virtual void setString(int pos, std::string value) = 0;
+        virtual void setClob(int pos, std::string value) = 0;
+        virtual void setFloat(int pos, float value) = 0;
+        virtual void setDouble(int pos, double value) = 0;
+        
+        virtual void setDataBuffer(int pos, void* buffer, unsigned dbType, unsigned size, void* bufLen)
+          throw (castor::exception::SQLError) = 0;
+        
+        virtual void registerOutParam(int pos, unsigned dbType)
+          throw (castor::exception::SQLError) = 0;
+    
+        virtual int getInt(int pos) throw (castor::exception::SQLError) = 0;
+        virtual signed64 getInt64(int pos) throw (castor::exception::SQLError) = 0;
+        virtual u_signed64 getUInt64(int pos) = 0;
+        virtual std::string getString(int pos) = 0;
+        virtual std::string getClob(int pos) = 0;
+        virtual float getFloat(int pos) = 0;
+        virtual double getDouble(int pos) = 0;
+    
+        /**
+         * 
+         */
+        virtual castor::db::IDbResultSet* executeQuery()
+          throw (castor::exception::SQLError) = 0;
+    
+        /**
+         * 
+         */
+        virtual int execute(int count = 1)
+          throw (castor::exception::SQLError) = 0;
+    
+    };
 
-    /**
-     * 
-     */
-    virtual int execute()
-	    throw (castor::exception::SQLError) = 0;
+    const unsigned DBTYPE_INT = 1;
+    const unsigned DBTYPE_INT64 = 2;
+    const unsigned DBTYPE_UINT64 = 3;
+    const unsigned DBTYPE_FLOAT = 4;
+    const unsigned DBTYPE_DOUBLE = 5;
+    const unsigned DBTYPE_STRING = 6;
+    const unsigned DBTYPE_CLOB = 7;
+    const unsigned DBTYPE_MAXVALUE = 7;
 
-};
-
-const int DBTYPE_INT = 1;
-const int DBTYPE_INT64 = 2;
-const int DBTYPE_UINT64 = 3;
-const int DBTYPE_FLOAT = 4;
-const int DBTYPE_DOUBLE = 5;
-const int DBTYPE_STRING = 6;
-const int DBTYPE_CLOB = 7;
+  }
 
 }
 
-} 
-
 #endif // CASTOR_DB_IDBSTATEMENT_HPP
-

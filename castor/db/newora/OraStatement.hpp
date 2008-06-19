@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/04/17 14:31:08 $ $Author: itglp $
+ * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/06/19 15:12:42 $ $Author: itglp $
  *
  *
  *
@@ -33,9 +33,29 @@
 #include "occi.h"
 
 namespace castor {
+  
   namespace db {
+    
     namespace ora {
 
+      static const oracle::occi::Type oraTypeMap[8] = {(oracle::occi::Type)0, 
+        oracle::occi::OCCIINT, 
+        oracle::occi::OCCIDOUBLE,
+        oracle::occi::OCCIDOUBLE,
+        oracle::occi::OCCIFLOAT,
+        oracle::occi::OCCIDOUBLE,
+        oracle::occi::OCCISTRING, 
+        oracle::occi::OCCICLOB};
+         
+      static const oracle::occi::Type oraBulkTypeMap[8] = {(oracle::occi::Type)0, 
+        oracle::occi::OCCIINT,
+        oracle::occi::OCCIBDOUBLE,
+        oracle::occi::OCCIBDOUBLE,
+        oracle::occi::OCCIBFLOAT,
+        oracle::occi::OCCIBDOUBLE,
+        oracle::occi::OCCI_SQLT_STR,
+        oracle::occi::OCCI_SQLT_CLOB /* but this one is not yet supported */ };
+          
       /**
        * Oracle implementation for IDbStatement
        */
@@ -65,7 +85,10 @@ namespace castor {
         virtual void setFloat(int pos, float value);
         virtual void setDouble(int pos, double value);
 
-        virtual void registerOutParam(int pos, int dbType)
+        virtual void setDataBuffer(int pos, void* buffer, unsigned dbType, unsigned size, void* bufLen)
+          throw (castor::exception::SQLError);
+
+        virtual void registerOutParam(int pos, unsigned dbType)
           throw (castor::exception::SQLError);
 
         /**
@@ -87,7 +110,7 @@ namespace castor {
         virtual IDbResultSet* executeQuery()
           throw (castor::exception::SQLError);
 
-        virtual int execute()
+        virtual int execute(int count = 1)
           throw (castor::exception::SQLError);
 
         inline oracle::occi::Statement* getStatementImpl() {
@@ -103,6 +126,7 @@ namespace castor {
         std::string m_clobBuf;
         
         unsigned m_clobPos;
+        
       };
 
     }

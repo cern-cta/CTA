@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraResultSet.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/12/20 10:36:33 $ $Author: itglp $
+ * @(#)$RCSfile: OraResultSet.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/06/19 15:12:42 $ $Author: itglp $
  *
  *
  *
@@ -25,6 +25,8 @@
  *****************************************************************************/
 
 #include "OraResultSet.hpp"
+#include "OraStatement.hpp"
+
 
 castor::db::ora::OraResultSet::OraResultSet(oracle::occi::ResultSet* rset, oracle::occi::Statement* statement) :
   m_rset(rset),
@@ -39,12 +41,13 @@ castor::db::ora::OraResultSet::~OraResultSet() {
   catch(oracle::occi::SQLException ignored) {}
 }
 
-bool castor::db::ora::OraResultSet::next()
+bool castor::db::ora::OraResultSet::next(int count)
   throw (castor::exception::SQLError) {
   try {
-    return (m_rset->next() != oracle::occi::ResultSet::END_OF_FETCH);
+    return (m_rset->next(count) != oracle::occi::ResultSet::END_OF_FETCH);
   }
   catch(oracle::occi::SQLException e) {
+    //m_cnvSvc->handleException(e);
     castor::exception::SQLError ex;
     ex.getMessage() << "Database error, Oracle code: " << e.getErrorCode()
                     << std::endl << e.what();
@@ -142,7 +145,26 @@ std::string castor::db::ora::OraResultSet::getClob(int i)
     clob.close();
     std::string res(buf);
     free(buf);
-    return std::string(res);
+    return res;
+  }
+  catch(oracle::occi::SQLException e) {
+    castor::exception::SQLError ex;
+    ex.getMessage() << "Database error, Oracle code: " << e.getErrorCode()
+                    << std::endl << e.what();
+    throw ex;
+  }
+}
+
+void castor::db::ora::OraResultSet::setDataBuffer
+  (int pos, void* buffer, unsigned dbType, unsigned size, void* bufLen)
+  throw(castor::exception::SQLError) {
+  if(dbType > DBTYPE_MAXVALUE) {
+    castor::exception::SQLError ex;
+    ex.getMessage() << "Invalid dbType: " << dbType;
+    throw ex;
+  }    
+  try {
+    m_rset->setDataBuffer(pos, buffer, castor::db::ora::oraBulkTypeMap[dbType], size, (ub2*)bufLen);
   }
   catch(oracle::occi::SQLException e) {
     castor::exception::SQLError ex;

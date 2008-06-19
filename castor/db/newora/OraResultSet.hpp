@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraResultSet.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/12/20 10:36:33 $ $Author: itglp $
+ * @(#)$RCSfile: OraResultSet.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/06/19 15:12:42 $ $Author: itglp $
  *
  *
  *
@@ -57,7 +57,7 @@ namespace castor {
         /**
          *
          */
-        virtual bool next() throw (castor::exception::SQLError);
+        virtual bool next(int count = 1) throw (castor::exception::SQLError);
 
         /**
          *
@@ -71,8 +71,16 @@ namespace castor {
         virtual float getFloat(int i) throw (castor::exception::SQLError);
         virtual double getDouble(int i) throw (castor::exception::SQLError);
 
+        /**
+         *
+         */
+        virtual void setDataBuffer(int pos, void* buffer, unsigned dbType, unsigned size, void* bufLen)
+          throw (castor::exception::SQLError);
+        
       private:
+        
         oracle::occi::ResultSet *m_rset;
+        
         oracle::occi::Statement *m_statement;
       };
 
