@@ -1,5 +1,5 @@
 /*
- * $Id: vdqm_api.h,v 1.14 2008/04/29 16:14:43 murrayc3 Exp $
+ * $Id: vdqm_api.h,v 1.15 2008/06/23 21:21:24 murrayc3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vdqm_api.h,v $ $Revision: 1.14 $ $Date: 2008/04/29 16:14:43 $ CERN IT-PDP/DM Olof Barring
+ * @(#)$RCSfile: vdqm_api.h,v $ $Revision: 1.15 $ $Date: 2008/06/23 21:21:24 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -34,6 +34,7 @@ EXTERN_C int DLL_DECL vdqm_GetClientAddr _PROTO((char *, char *, int *, int *, i
 EXTERN_C int DLL_DECL vdqm_AcknClientAddr _PROTO((SOCKET, int, int, char *));
 EXTERN_C int DLL_DECL vdqm_NextDrive _PROTO((vdqmnw_t **, vdqmDrvReq_t *));
 EXTERN_C int DLL_DECL vdqm_NextVol _PROTO((vdqmnw_t **, vdqmVolReq_t *));
+EXTERN_C int DLL_DECL vdqm_DedicateDrive _PROTO((vdqmnw_t *, char *, char *, char *, char *));
 
 /*
  * Functions that use VDQM magic number: VDQM2

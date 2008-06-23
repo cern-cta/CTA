@@ -4,23 +4,24 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_admin.c,v $ $Revision: 1.5 $ $Date: 2003/08/29 08:41:43 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_admin.c,v $ $Revision: 1.6 $ $Date: 2008/06/23 21:21:25 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
  * vdqm_admin.c - VDQM administration utility
  */
 
-#include <stdio.h>
-#include <string.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif /* _WIN32 */
-#include <time.h>
 #include <Castor_limits.h>
-#include <serrno.h>
 #include <net.h>
 #include <osdep.h>
+#include <serrno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include <vdqm_constants.h>
 #include <vdqm.h>
 #include <vdqm_api.h>
@@ -38,7 +39,7 @@ static void usage(char *cmd, char cmds[][20]) {
 }
 
 int main(int argc, char *argv[]) {
-    int rc;
+    int rc = 0;
     int i,j,k;
 
     char cmds[][20] =  {"-ping",
@@ -67,10 +68,15 @@ int main(int argc, char *argv[]) {
                    VDQM_DEL_VOLREQ,
                    -1};
     char dgn[CA_MAXDGNLEN+1];
+    memset(&dgn, '\0', sizeof(dgn));
     char server[CA_MAXHOSTNAMELEN+1];
+    memset(&server, '\0', sizeof(server));
     char drive[CA_MAXUNMLEN+1];
+    memset(&drive, '\0', sizeof(drive));
     char match[CA_MAXLINELEN+1];
+    memset(&match, '\0', sizeof(match));
     char vid[CA_MAXVIDLEN+1];
+    memset(&vid, '\0', sizeof(vid));
     char *keyvalues[] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
     int reqid,jobid,port;
     int *ikeyvalues[] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
