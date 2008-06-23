@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.645 $ $Date: 2008/06/03 14:08:47 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.646 $ $Date: 2008/06/23 07:47:05 $ $Author: sponcec3 $
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -25,7 +25,17 @@ BEGIN
      AND (reqType = ireqType OR reqType IS NULL);
   IF unused = 0 THEN
     -- Not found in White list -> no access
-    res := -1;
+    -- still check whether service class exists
+    BEGIN
+      IF isvcClass IS NOT NULL AND length(isvcClass) IS NOT NULL THEN
+        SELECT id INTO unused FROM SvcClass WHERE name = isvcClass;
+      END IF;
+      -- service class exists, we give permission denied
+      res := -1;
+    EXCEPTION WHEN NO_DATA_FOUND THEN 
+      -- service class does not exist
+      res := -2;
+    END;
   ELSE
     SELECT count(*) INTO unused
       FROM BlackList

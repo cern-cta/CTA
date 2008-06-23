@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/06/03 13:54:31 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/06/23 07:47:50 $ $Author: sponcec3 $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -146,18 +146,28 @@ void castor::db::ora::OraRHSvc::checkPermission
       throw ex;
     }
     // throw exception if access denied
-    if (m_checkPermissionStatement->getInt(5) != 0) {
-      castor::exception::PermissionDenied ex;
-      ex.getMessage() << "Insufficient user privileges to make a request of type "
-                      << castor::ObjectsIdStrings[type]
-                      << " in service class '";
-      if (0 == svcClassName.size()) {
-        ex.getMessage() << "default";
+    int ret = m_checkPermissionStatement->getInt(5);
+    if (ret != 0) {
+      if (ret == -1) {
+	castor::exception::PermissionDenied ex;
+	ex.getMessage() << "Insufficient user privileges to make a request of type "
+			<< castor::ObjectsIdStrings[type]
+			<< " in service class '";
+	if (0 == svcClassName.size()) {
+	  ex.getMessage() << "default";
+	} else {
+	  ex.getMessage() << svcClassName;
+	}
+	ex.getMessage() << "'\n";
+	throw ex;
       } else {
-        ex.getMessage() << svcClassName;
+	// ret == -2 : no existent service class
+	castor::exception::InvalidArgument ex;
+	ex.getMessage() << "Unknown service class '"
+			<< svcClassName
+			<< "'\n";
+	throw ex;
       }
-      ex.getMessage() << "'\n";
-      throw ex;
     }
   } catch (oracle::occi::SQLException e) {
     handleException(e);
