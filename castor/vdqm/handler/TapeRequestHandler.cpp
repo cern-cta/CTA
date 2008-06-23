@@ -326,9 +326,37 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
       
     // Update the data base. To avoid a deadlock, the tape drive has to be 
     // updated first!
-    castor::vdqm::DatabaseHelper::updateRepresentation(tapeDrive.get(),
-      cuuid);
-    castor::vdqm::DatabaseHelper::updateRepresentation(tapeReq.get(), cuuid);
+    try {
+      castor::vdqm::DatabaseHelper::updateRepresentation(tapeDrive.get(),
+        cuuid);
+    }catch(castor::exception::Exception &ex) {
+      // Log an error message and re-throw
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+        castor::dlf::Param("Message", "Failed to update tape drive: "
+          + ex.getMessage().str()),
+        castor::dlf::Param("errorCode", ex.code()),
+        castor::dlf::Param("tapeRequestID", volumeRequest->VolReqID)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, VDQM_EXCEPTION, 4,
+        params);
+
+      throw ex;
+    }
+    try {
+      castor::vdqm::DatabaseHelper::updateRepresentation(tapeReq.get(), cuuid);
+    }catch(castor::exception::Exception &ex) {
+      // Log an error message and re-throw
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+        castor::dlf::Param("Message", "Failed to update tape request: "
+          + ex.getMessage().str()),
+        castor::dlf::Param("errorCode", ex.code()),
+        castor::dlf::Param("tapeRequestID", volumeRequest->VolReqID)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, VDQM_EXCEPTION, 4,
+        params);
+
+      throw ex;
+    }
 
     castor::exception::Exception ex(EVQREQASS);
     ex.getMessage() <<
@@ -352,8 +380,11 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
       // Log an error message and re-throw
       castor::dlf::Param params[] = {
         castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+        castor::dlf::Param("Message", "Failed to delete tape request: "
+          + ex.getMessage().str()),
+        castor::dlf::Param("errorCode", ex.code()),
         castor::dlf::Param("tapeRequestID", volumeRequest->VolReqID)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, VDQM_EXCEPTION, 2,
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, VDQM_EXCEPTION, 4,
         params);
 
       throw ex;
