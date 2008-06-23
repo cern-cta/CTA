@@ -13,6 +13,7 @@
   - Fixed the usage message (vdqmserver -help).  The default number of request
     handler threads and the default number of RTCP job sumbitter threads are
     now correct.
+  - Fixed the double deletion of a tape request bug.
 
   Upgrading VDQM2 from 2.1.7-9
   ----------------------------
