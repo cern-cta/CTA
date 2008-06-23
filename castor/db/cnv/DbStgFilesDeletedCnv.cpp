@@ -745,7 +745,7 @@ void castor::db::cnv::DbStgFilesDeletedCnv::bulkCreateRep(castor::IAddress* addr
       svcClassBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (15, svcClassBuffer, DBTYPE_UINT64, sizeof(svcClassBuffer[0]), svcClassBufLens);
+      (14, svcClassBuffer, DBTYPE_UINT64, sizeof(svcClassBuffer[0]), svcClassBufLens);
     // build the buffers for client
     double* clientBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* clientBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -754,12 +754,12 @@ void castor::db::cnv::DbStgFilesDeletedCnv::bulkCreateRep(castor::IAddress* addr
       clientBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (16, clientBuffer, DBTYPE_UINT64, sizeof(clientBuffer[0]), clientBufLens);
+      (15, clientBuffer, DBTYPE_UINT64, sizeof(clientBuffer[0]), clientBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
     m_insertStatement->setDataBuffer
-      (17, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
+      (16, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);

@@ -990,7 +990,7 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::bulkCreateRep(castor::IA
       svcClassBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (16, svcClassBuffer, DBTYPE_UINT64, sizeof(svcClassBuffer[0]), svcClassBufLens);
+      (13, svcClassBuffer, DBTYPE_UINT64, sizeof(svcClassBuffer[0]), svcClassBufLens);
     // build the buffers for client
     double* clientBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* clientBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -999,7 +999,7 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::bulkCreateRep(castor::IA
       clientBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (17, clientBuffer, DBTYPE_UINT64, sizeof(clientBuffer[0]), clientBufLens);
+      (14, clientBuffer, DBTYPE_UINT64, sizeof(clientBuffer[0]), clientBufLens);
     // build the buffers for sourceSvcClass
     double* sourceSvcClassBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* sourceSvcClassBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -1008,7 +1008,7 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::bulkCreateRep(castor::IA
       sourceSvcClassBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (18, sourceSvcClassBuffer, DBTYPE_UINT64, sizeof(sourceSvcClassBuffer[0]), sourceSvcClassBufLens);
+      (15, sourceSvcClassBuffer, DBTYPE_UINT64, sizeof(sourceSvcClassBuffer[0]), sourceSvcClassBufLens);
     // build the buffers for destDiskCopy
     double* destDiskCopyBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* destDiskCopyBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -1017,7 +1017,7 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::bulkCreateRep(castor::IA
       destDiskCopyBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (19, destDiskCopyBuffer, DBTYPE_UINT64, sizeof(destDiskCopyBuffer[0]), destDiskCopyBufLens);
+      (16, destDiskCopyBuffer, DBTYPE_UINT64, sizeof(destDiskCopyBuffer[0]), destDiskCopyBufLens);
     // build the buffers for sourceDiskCopy
     double* sourceDiskCopyBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* sourceDiskCopyBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -1026,12 +1026,12 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::bulkCreateRep(castor::IA
       sourceDiskCopyBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (20, sourceDiskCopyBuffer, DBTYPE_UINT64, sizeof(sourceDiskCopyBuffer[0]), sourceDiskCopyBufLens);
+      (17, sourceDiskCopyBuffer, DBTYPE_UINT64, sizeof(sourceDiskCopyBuffer[0]), sourceDiskCopyBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
     m_insertStatement->setDataBuffer
-      (21, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
+      (18, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);

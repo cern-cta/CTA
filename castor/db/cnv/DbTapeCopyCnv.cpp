@@ -632,7 +632,7 @@ void castor::db::cnv::DbTapeCopyCnv::bulkCreateRep(castor::IAddress* address,
       castorFileBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (4, castorFileBuffer, DBTYPE_UINT64, sizeof(castorFileBuffer[0]), castorFileBufLens);
+      (2, castorFileBuffer, DBTYPE_UINT64, sizeof(castorFileBuffer[0]), castorFileBufLens);
     // build the buffers for status
     int* statusBuffer = (int*) malloc(nb * sizeof(int));
     unsigned short* statusBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -641,12 +641,12 @@ void castor::db::cnv::DbTapeCopyCnv::bulkCreateRep(castor::IAddress* address,
       statusBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (5, statusBuffer, DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
+      (3, statusBuffer, DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
     m_insertStatement->setDataBuffer
-      (6, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
+      (4, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);

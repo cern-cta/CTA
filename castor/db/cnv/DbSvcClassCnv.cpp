@@ -765,12 +765,12 @@ void castor::db::cnv::DbSvcClassCnv::bulkCreateRep(castor::IAddress* address,
       forcedFileClassBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (17, forcedFileClassBuffer, DBTYPE_UINT64, sizeof(forcedFileClassBuffer[0]), forcedFileClassBufLens);
+      (12, forcedFileClassBuffer, DBTYPE_UINT64, sizeof(forcedFileClassBuffer[0]), forcedFileClassBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
     m_insertStatement->setDataBuffer
-      (18, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
+      (13, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
