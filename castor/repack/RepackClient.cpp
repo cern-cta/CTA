@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2008/06/05 16:25:00 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.41 $ $Release$ $Date: 2008/06/23 08:30:26 $ $Author: gtaur $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -577,19 +577,19 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
       printTapeDetail(sub);
       break;
     case GET_ERROR:
-      std::cout<<std::endl<<"     *** Tape  "<< sub->vid() <<"  ***"<<std::endl;
+      std::cout<<std::endl<<"     *** Tape  "<< sub->vid() <<"  ***"<<std::endl<<std::endl;
       segments= sub->repacksegment();
       if (segments.empty()){
 	std::cout<<"no errors found"<<std::endl<<std::endl;
       } else {
 	segment=segments.begin();
-	std::cout<<"-------------------------------------------------------------------------------"<<std::endl;
+	std::cout<<"--------------------------------------------------------------------------------------------"<<std::endl;
 	std::cout<<std::setw(15)<<std::right<<"Fileid"
 		 <<std::setw(15)<<std::right<<"CopyNo"
 		 <<std::setw(15)<<std::right<<"ErrorCode"
 		 <<std::setw(32)<<std::right<<"ErrorMessage"
 		 <<std::endl;
-	std::cout<<"-------------------------------------------------------------------------------"<<std::endl;
+	std::cout<<"--------------------------------------------------------------------------------------------"<<std::endl;
 	while (segment != segments.end()) {
 	  printSegmentDetail((*segment));
 	  segment++;
@@ -686,8 +686,8 @@ void RepackClient::printSegmentDetail(RepackSegment *segment){
   if (segment->errorCode() !=0 ){
     std::cout << std::setw(15) <<std::right<< segment->fileid() <<
       std::setw(15) << std::right<<segment->copyno() <<
-      std::setw(15) << std::right <<segment->errorCode() <<
-      std::setw(32)<<std::right << segment->errorMessage() << std::endl;
+      std::setw(15) << std::right <<segment->errorCode() <<"   "<<
+      std::setw(50)<<std::left << segment->errorMessage() << std::endl;
   }
 }
 
