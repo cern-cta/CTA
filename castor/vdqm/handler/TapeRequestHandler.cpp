@@ -260,12 +260,11 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
     // "Couldn't find the tape request in db. Maybe it is already deleted?"
     // message
     castor::dlf::Param params[] = {
-      castor::dlf::Param("tapeRequestID", volumeRequest->VolReqID),
-      castor::dlf::Param("function",
-        "castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest()")};
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("tapeRequestID", volumeRequest->VolReqID)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING,
       VDQM_TAPE_REQUEST_NOT_FOUND_IN_DB, 2, params);
-      
+
     return;
   }
 
@@ -322,7 +321,19 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
     castor::BaseAddress ad;
     ad.setCnvSvcName("DbCnvSvc");
     ad.setCnvSvcType(castor::SVC_DBCNV);
-    svcs->deleteRep(&ad, tapeReq.get(), false);
+
+    try {
+      svcs->deleteRep(&ad, tapeReq.get(), false);
+    } catch(castor::exception::Exception &ex) {
+      // Log an error message and re-throw
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+        castor::dlf::Param("tapeRequestID", volumeRequest->VolReqID)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, VDQM_EXCEPTION, 2,
+        params);
+
+      throw ex;
+    }
   
     // "TapeRequest and its ClientIdentification removed" message
     castor::dlf::Param params[] = {
