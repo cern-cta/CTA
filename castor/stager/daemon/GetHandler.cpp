@@ -199,11 +199,13 @@ namespace castor{
           switchDiskCopiesForJob(); 
           
         }catch(castor::exception::Exception e){
-          
-          castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
-            castor::dlf::Param("Error Message",e.getMessage().str())
+          if(e.getMessage().str().empty()) {
+            e.getMessage() << sstrerror(e.code());
+          }
+          castor::dlf::Param params[]={
+            castor::dlf::Param("Error Code", e.code()),
+            castor::dlf::Param("Error Message", e.getMessage().str())
           };
-          
           castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_GET, 2, params, &(stgCnsHelper->cnsFileid));
           throw(e);
         }  
