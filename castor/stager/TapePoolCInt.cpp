@@ -117,23 +117,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_TapePool_migrSelectPolicy
-  //----------------------------------------------------------------------------
-  int Cstager_TapePool_migrSelectPolicy(castor::stager::TapePool* instance, const char** var) {
-    *var = instance->migrSelectPolicy().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_TapePool_setMigrSelectPolicy
-  //----------------------------------------------------------------------------
-  int Cstager_TapePool_setMigrSelectPolicy(castor::stager::TapePool* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setMigrSelectPolicy(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_TapePool_id
   //----------------------------------------------------------------------------
   int Cstager_TapePool_id(castor::stager::TapePool* instance, u_signed64* var) {

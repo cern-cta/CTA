@@ -92,7 +92,6 @@ void castor::io::StreamTapePoolCnv::createRep(castor::IAddress* address,
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->name();
-  ad->stream() << obj->migrSelectPolicy();
   ad->stream() << obj->id();
 }
 
@@ -109,9 +108,6 @@ castor::IObject* castor::io::StreamTapePoolCnv::createObj(castor::IAddress* addr
   std::string name;
   ad->stream() >> name;
   object->setName(name);
-  std::string migrSelectPolicy;
-  ad->stream() >> migrSelectPolicy;
-  object->setMigrSelectPolicy(migrSelectPolicy);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

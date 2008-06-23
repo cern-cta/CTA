@@ -43,7 +43,6 @@
 //------------------------------------------------------------------------------
 castor::stager::TapePool::TapePool() throw() :
   m_name(""),
-  m_migrSelectPolicy(""),
   m_id(0) {
 }
 
@@ -75,7 +74,6 @@ void castor::stager::TapePool::print(std::ostream& stream,
   }
   // Output of all members
   stream << indent << "name : " << m_name << std::endl;
-  stream << indent << "migrSelectPolicy : " << m_migrSelectPolicy << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

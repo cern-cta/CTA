@@ -101,18 +101,6 @@ int Cstager_TapePool_name(struct Cstager_TapePool_t* instance, const char** var)
 int Cstager_TapePool_setName(struct Cstager_TapePool_t* instance, const char* new_var);
 
 /**
- * Get the value of migrSelectPolicy
- * Policy ruling the selection of files during migration.
- */
-int Cstager_TapePool_migrSelectPolicy(struct Cstager_TapePool_t* instance, const char** var);
-
-/**
- * Set the value of migrSelectPolicy
- * Policy ruling the selection of files during migration.
- */
-int Cstager_TapePool_setMigrSelectPolicy(struct Cstager_TapePool_t* instance, const char* new_var);
-
-/**
  * Get the value of id
  * The id of this object
  */

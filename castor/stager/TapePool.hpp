@@ -121,24 +121,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_migrSelectPolicy
-       * Policy ruling the selection of files during migration.
-       * @return the value of m_migrSelectPolicy
-       */
-      std::string migrSelectPolicy() const {
-        return m_migrSelectPolicy;
-      }
-
-      /**
-       * Set the value of m_migrSelectPolicy
-       * Policy ruling the selection of files during migration.
-       * @param new_var the new value of m_migrSelectPolicy
-       */
-      void setMigrSelectPolicy(std::string new_var) {
-        m_migrSelectPolicy = new_var;
-      }
-
-      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -218,9 +200,6 @@ namespace castor {
 
       /// Name of this pool
       std::string m_name;
-
-      /// Policy ruling the selection of files during migration.
-      std::string m_migrSelectPolicy;
 
       /// The id of this object
       u_signed64 m_id;
