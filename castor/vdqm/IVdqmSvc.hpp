@@ -419,7 +419,7 @@ namespace castor {
          * @param VolReqID The id, which has been sent by RTCPCopyD
          * @return The tape request and its ClientIdentification, or NULL
          */
-        virtual TapeRequest* selectTapeRequest(const int VolReqID) 
+        virtual TapeRequest* selectTapeRequestForUpdate(const int VolReqID) 
           throw (castor::exception::Exception) = 0;
 
         /**

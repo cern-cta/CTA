@@ -80,7 +80,7 @@ namespace castor {
           SELECT_VOL_REQS_DGN_CREATION_TIME_ORDER_SQL_STMT,
           SELECT_VOL_REQS_PRIORITY_ORDER_SQL_STMT,
           SELECT_TAPE_DRIVE_QUEUE_SQL_STMT,
-          SELECT_TAPE_REQUEST_SQL_STMT,
+          SELECT_TAPE_REQUEST_FOR_UPDATE_SQL_STMT,
           SELECT_COMPATIBILITIES_FOR_DRIVE_MODEL_SQL_STMT,
           SELECT_TAPE_ACCESS_SPECIFICATIONS_SQL_STMT,
           ALLOCATE_DRIVE_SQL_STMT,
@@ -315,8 +315,8 @@ namespace castor {
          * @return The tape request and its ClientIdentification, or NULL
          * @exception in case of error
          */
-        virtual castor::vdqm::TapeRequest* selectTapeRequest(const int VolReqID)
-          throw (castor::exception::Exception);                         
+        virtual castor::vdqm::TapeRequest* selectTapeRequestForUpdate(
+          const int VolReqID) throw (castor::exception::Exception);                         
   
         /**
          * See castor::vdqm::IVdqmSvc documentation.

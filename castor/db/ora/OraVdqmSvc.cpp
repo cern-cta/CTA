@@ -290,8 +290,8 @@ castor::db::ora::OraVdqmSvc::StatementStringMap::StatementStringMap() {
     "WHERE"
     "      (:1 IS NULL OR :2 = DGName)"
     "  AND (:3 IS NULL OR :4 = serverName)");
-  addStmtStr(SELECT_TAPE_REQUEST_SQL_STMT,
-    "SELECT id FROM TapeRequest WHERE CAST(id AS INT) = :1");
+  addStmtStr(SELECT_TAPE_REQUEST_FOR_UPDATE_SQL_STMT,
+    "SELECT id FROM TapeRequest WHERE CAST(id AS INT) = :1 FOR UPDATE");
   addStmtStr(SELECT_COMPATIBILITIES_FOR_DRIVE_MODEL_SQL_STMT,
     "SELECT id FROM TapeDriveCompatibility WHERE tapeDriveModel = :1");
   addStmtStr(SELECT_TAPE_ACCESS_SPECIFICATIONS_SQL_STMT,
@@ -2391,14 +2391,15 @@ int castor::db::ora::OraVdqmSvc::translateNewStatus(
 
 
 // -----------------------------------------------------------------------
-// selectTapeRequest
+// selectTapeRequestForUpdate
 // -----------------------------------------------------------------------
-castor::vdqm::TapeRequest* castor::db::ora::OraVdqmSvc::selectTapeRequest(
+castor::vdqm::TapeRequest*
+  castor::db::ora::OraVdqmSvc::selectTapeRequestForUpdate(
   const int VolReqID) throw (castor::exception::Exception) {
     
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  const StatementId stmtId = SELECT_TAPE_REQUEST_SQL_STMT;
+  const StatementId stmtId = SELECT_TAPE_REQUEST_FOR_UPDATE_SQL_STMT;
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);

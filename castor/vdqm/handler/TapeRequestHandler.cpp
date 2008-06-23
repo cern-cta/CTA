@@ -249,8 +249,8 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
   throw (castor::exception::Exception) {
   
   // Get the tapeReq from its id
-  std::auto_ptr<TapeRequest> tapeReq(ptr_IVdqmService->selectTapeRequest(
-    volumeRequest->VolReqID));
+  std::auto_ptr<TapeRequest> tapeReq(
+    ptr_IVdqmService->selectTapeRequestForUpdate(volumeRequest->VolReqID));
     
   if ( tapeReq.get() == NULL ) {
     // If we don't find the tapeRequest in the db it is normally not a big
@@ -283,7 +283,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
     // PROBLEM:
     // Can only remove request, if it is not assigned to a drive. Otherwise
     // it should be cleanup by resetting the drive status to RELEASE + FREE.
-    // Mark it as UNKNOWN until an unit status clarifies what has happened.
+    // Mark it as UNKNOWN until a unit status clarifies what has happened.
     //
     
     castor::dlf::Param param[] = {
