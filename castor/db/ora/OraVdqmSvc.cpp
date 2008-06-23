@@ -651,7 +651,7 @@ castor::vdqm::TapeServer*
 // checkTapeRequest
 // -----------------------------------------------------------------------
 bool castor::db::ora::OraVdqmSvc::checkTapeRequest(
-  const castor::vdqm::TapeRequest *newTapeRequest) 
+  const castor::vdqm::TapeRequest *const newTapeRequest) 
   throw (castor::exception::Exception) {
 
   // Get the Statement objects, creating them if necessary

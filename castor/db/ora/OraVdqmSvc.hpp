@@ -150,7 +150,7 @@ namespace castor {
          * @exception in case of error
          */
         virtual bool checkTapeRequest
-        (const castor::vdqm::TapeRequest *newTapeRequest)
+        (const castor::vdqm::TapeRequest *const newTapeRequest)
           throw (castor::exception::Exception);
   
         /**

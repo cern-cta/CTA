@@ -119,15 +119,15 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
   
   //------------------------------------------------------------------------
   //The Tape related informations
-  std::auto_ptr<TapeRequest> newTapeReq(new TapeRequest());
-  newTapeReq->setCreationTime(0); // Will be set by a database trigger
+  TapeRequest newTapeReq;
+  newTapeReq.setCreationTime(0); // Will be set by a database trigger
   // The modification time will only be changed,
   // in case that an error occures during the tape assignment
   // procedure with RTCPD
-  newTapeReq->setModificationTime(newTapeReq->creationTime());
+  newTapeReq.setModificationTime(newTapeReq.creationTime());
 
   // We don't allow client to set priority
-  newTapeReq->setPriority(VDQM_PRIORITY_NORMAL);
+  newTapeReq.setPriority(VDQM_PRIORITY_NORMAL);
    
   //The client related informations
   std::auto_ptr<ClientIdentification>
@@ -189,23 +189,23 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
   }
 
   // Connect the tapeRequest with the additional information
-  newTapeReq->setClient(clientData.release()); // Tape request becomes owner
-  newTapeReq->setTapeAccessSpecification(tapeAccessSpec.get());
-  newTapeReq->setRequestedSrv(reqTapeServer.get());
-  newTapeReq->setTape(tape.get());
-  newTapeReq->setDeviceGroupName(dgName.get());
+  newTapeReq.setClient(clientData.release()); // Tape request becomes owner
+  newTapeReq.setTapeAccessSpecification(tapeAccessSpec.get());
+  newTapeReq.setRequestedSrv(reqTapeServer.get());
+  newTapeReq.setTape(tape.get());
+  newTapeReq.setDeviceGroupName(dgName.get());
   
   // Set priority for tpwrite
   if ( (tapeAccessSpec->accessMode() == WRITE_ENABLE) &&
        ((p = getconfent("VDQM","WRITE_PRIORITY",0)) != NULL) ) {
     if ( strcmp(p,"YES") == 0 ) {
-      newTapeReq->setPriority(VDQM_PRIORITY_MAX);
+      newTapeReq.setPriority(VDQM_PRIORITY_MAX);
     }
   }
     
   // Request priority changed
   castor::dlf::Param params2[] = {
-    castor::dlf::Param("priority", newTapeReq->priority())};
+    castor::dlf::Param("priority", newTapeReq.priority())};
   castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
     VDQM_REQUEST_PRIORITY_CHANGED, 1, params2);
   
@@ -217,7 +217,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
   // Verify that the request doesn't (yet) exist. If it doesn't exist,
   // the return value should be true.
   bool requestNotExists =
-    ptr_IVdqmService->checkTapeRequest(newTapeReq.get());
+    ptr_IVdqmService->checkTapeRequest(&newTapeReq);
   if ( requestNotExists == false ) {
     castor::exception::Exception ex(EVQALREADY);
     ex.getMessage() << "Input request already queued " << std::endl;
@@ -228,7 +228,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
   castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_STORE_REQUEST_IN_DB);
 
   // Add the record to the volume queue
-  castor::vdqm::DatabaseHelper::storeRepresentation(newTapeReq.get(), cuuid);
+  castor::vdqm::DatabaseHelper::storeRepresentation(&newTapeReq, cuuid);
     
   // Now the newTapeReq has the id of its 
   // row representatioon in the db table.
@@ -237,7 +237,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
   // protocol, we must convert the 64bit id into a 32bit number.
   // This is still sufficient to have a unique TapeRequest ID, because
   // the requests don't stay for long time in the db.
-  volumeRequest->VolReqID = (unsigned int)newTapeReq->id();  
+  volumeRequest->VolReqID = (unsigned int)newTapeReq.id();  
 }
 
 

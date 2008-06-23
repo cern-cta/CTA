@@ -56,7 +56,7 @@ namespace castor {
        * @param fr the request
        * @param cuuid its uuid (for logging purposes only)
        */
-      static void storeRepresentation(castor::IObject* fr, Cuuid_t cuuid)
+      static void storeRepresentation(castor::IObject *const fr, Cuuid_t cuuid)
         throw (castor::exception::Exception);
 
       /**

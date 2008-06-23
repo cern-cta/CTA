@@ -50,8 +50,9 @@ castor::vdqm::DatabaseHelper::DatabaseHelper() {
 //------------------------------------------------------------------------------
 // store
 //------------------------------------------------------------------------------
-void castor::vdqm::DatabaseHelper::storeRepresentation(castor::IObject* fr,
-  Cuuid_t cuuid) throw (castor::exception::Exception) {
+void castor::vdqm::DatabaseHelper::storeRepresentation(
+  castor::IObject *const fr, Cuuid_t cuuid)
+  throw (castor::exception::Exception) {
   
   castor::Services* svcs = castor::BaseObject::services();
   castor::BaseAddress ad;  // Stores it into the data base

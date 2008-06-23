@@ -106,7 +106,7 @@ namespace castor {
          * 
          * @return true, if the request does not exist.
          */
-        virtual bool checkTapeRequest(const TapeRequest *newTapeRequest)
+        virtual bool checkTapeRequest(const TapeRequest *const newTapeRequest)
           throw (castor::exception::Exception) = 0;
         
         /**
