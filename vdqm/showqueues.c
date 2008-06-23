@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.28 $ $Date: 2008/02/07 14:01:45 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.29 $ $Date: 2008/06/23 08:16:36 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -195,7 +195,7 @@ int main(int argc, char *argv[]) {
                     (drives_only == 0 ? tmp1->volreq.volid : tmp1->drvreq.volid),
                     (mode == 0 ? "read" : "write"),
                     userstr,
-                    (long) (now - tmp1->drvreq.recvtime));
+                    (long) (now >= tmp1->drvreq.recvtime ? now - tmp1->drvreq.recvtime : 0));
                 if ( *tmp1->drvreq.dedicate != 0 )
                     fprintf(stdout,"Dedicated: %s\n",tmp1->drvreq.dedicate);
             } else if ( tmp1->drvreq.status == (VDQM_UNIT_UP|VDQM_UNIT_BUSY)) { 
@@ -206,7 +206,7 @@ int main(int argc, char *argv[]) {
                     tmp1->volreq.volid,
                     (mode == 0 ? "read" : "write"),
                     userstr,
-                    (long) (now - tmp1->drvreq.recvtime));
+                    (long) (now >= tmp1->drvreq.recvtime ? now - tmp1->drvreq.recvtime : 0));
                 if ( *tmp1->drvreq.dedicate != 0 )
                     fprintf(stdout,"Dedicated: %s\n",tmp1->drvreq.dedicate);
             } else if ( tmp1->drvreq.status == (VDQM_UNIT_UP|VDQM_UNIT_BUSY|VDQM_UNIT_RELEASE|VDQM_UNIT_UNKNOWN) ) {
@@ -217,7 +217,7 @@ int main(int argc, char *argv[]) {
                     tmp1->volreq.volid,
                     (mode == 0 ? "read" : "write"),
                     userstr,
-                    (long) (now - tmp1->drvreq.recvtime));
+                    (long) (now >= tmp1->drvreq.recvtime ? now - tmp1->drvreq.recvtime : 0));
                 if ( *tmp1->drvreq.dedicate != 0 )
                     fprintf(stdout,"Dedicated: %s\n",tmp1->drvreq.dedicate);
             } else {
@@ -228,7 +228,7 @@ int main(int argc, char *argv[]) {
                     tmp1->volreq.volid,
                     (mode == 0 ? "read" : "write"),
                     userstr,
-                    (long) (now - tmp1->drvreq.recvtime));
+                    (long) (now >= tmp1->drvreq.recvtime ? now - tmp1->drvreq.recvtime : 0));
                 if ( *tmp1->drvreq.dedicate != 0 )
                     fprintf(stdout,"Dedicated: %s\n",tmp1->drvreq.dedicate);
             }
@@ -318,7 +318,7 @@ void shq_display_standard(struct vdqm_reqlist *reqlist, int give_jid) {
                     tmp1->drvreq.drive,
                     tmp1->drvreq.server,
                     buf,
-                    (long) (now - tmp1->drvreq.recvtime),
+                    (long) (now >= tmp1->drvreq.recvtime ? now - tmp1->drvreq.recvtime : 0),
                     (*tmp1->drvreq.dedicate != 0)?buf_ded:NO_DEDICATION,
                     buf_volid,
                     (drives_only == 0 ? tmp1->volreq.volid : ""),
@@ -351,7 +351,7 @@ void shq_display_standard(struct vdqm_reqlist *reqlist, int give_jid) {
                     tmp1->drvreq.drive,
                     tmp1->drvreq.server,
                     buf,
-                    (long) (now - tmp1->drvreq.recvtime),
+                    (long) (now >= tmp1->drvreq.recvtime ? now - tmp1->drvreq.recvtime : 0),
                     (*tmp1->drvreq.dedicate != 0)?buf_ded:NO_DEDICATION,
                     buf_volid);           
             
@@ -379,7 +379,7 @@ void shq_display_standard(struct vdqm_reqlist *reqlist, int give_jid) {
                     tmp1->volreq.VolReqID,
                     buf_id,
                     tmp1->volreq.client_host,
-                    (long) (now - tmp1->volreq.recvtime));
+                    (long) (now >= tmp1->drvreq.recvtime ? now - tmp1->volreq.recvtime : 0));
         }
     } CLIST_ITERATE_END(reqlist,tmp1);
 }
