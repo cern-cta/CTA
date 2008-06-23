@@ -771,6 +771,13 @@ void castor::db::cnv::DbStageAbortRequestCnv::bulkCreateRep(castor::IAddress* ad
     m_storeTypeStatement->setDataBuffer
       (2, typeBuffer, DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
     m_storeTypeStatement->execute(nb);
+    // reuse idBuffer for bulk insertion into NewRequest
+    m_insertNewReqStatement->setDataBuffer
+      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
+    // reuse typeBuffer for bulk insertion into NewRequest
+    m_insertNewReqStatement->setDataBuffer
+      (2, typeBuffer, DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
+    m_insertNewReqStatement->execute(nb);
     // release the buffers for type
     free(typeBuffer);
     free(typeBufLens);
