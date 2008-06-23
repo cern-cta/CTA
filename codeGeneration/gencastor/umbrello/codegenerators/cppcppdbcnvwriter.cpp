@@ -2486,6 +2486,7 @@ void CppCppDbCnvWriter::writeBulkCreateRepContent() {
                                  n,
                                  "m_insertStatement",
                                  true);
+      n++;
     } else if (as->type.multiRemote == MULT_ONE &&
                as->remotePart.name != "") {
       writeCreateBufferForSelect(as->remotePart.name,
@@ -2495,8 +2496,8 @@ void CppCppDbCnvWriter::writeBulkCreateRepContent() {
                                  false,
                                  true,
                                  as->remotePart.typeName);
+      n++;
     }
-    n++;
   }
   // Prepare the buffer for the returned ids
   *m_stream << getIndent() << "// build the buffers for returned ids"
@@ -2561,6 +2562,29 @@ void CppCppDbCnvWriter::writeBulkCreateRepContent() {
   *m_stream << getIndent()
             << "m_storeTypeStatement->execute(nb);"
             << endl;
+  if (isNewRequest()) {
+    // Prepare the buffers for bulk insertion into NewRequest
+    *m_stream  << getIndent()
+	       << "// reuse idBuffer for bulk insertion into NewRequest"
+	       << endl << getIndent()
+	       << "m_insertNewReqStatement->setDataBuffer" << endl
+	       << getIndent()
+	       << "  (1, idBuffer, "
+	       << getDbTypeConstant("u_signed64")
+	       << ", sizeof(idBuffer[0]), idBufLens);" << endl;
+    *m_stream  << getIndent()
+	       << "// reuse typeBuffer for bulk insertion into NewRequest"
+	       << endl << getIndent()
+	       << "m_insertNewReqStatement->setDataBuffer" << endl
+	       << getIndent()
+	       << "  (2, typeBuffer, "
+	       << getDbTypeConstant("int")
+	       << ", sizeof(typeBuffer[0]), typeBufLens);" << endl;
+    // Execute bulk insertion into NewRequest
+    *m_stream << getIndent()
+	      << "m_insertNewReqStatement->execute(nb);"
+	      << endl;
+  }
   // Release all buffers
   writeReleaseBufferForSelect("type");
   *m_stream << getIndent() << "// release the buffers for returned ids"
