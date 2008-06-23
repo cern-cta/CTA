@@ -252,9 +252,6 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
   // be required on both the request and the drive.  Care must be taken as
   // locks are to be taken first on a drive and then on its associated tape
   // request, otherwise a deadlock may occur.
-  //
-  // Get the tapeReq from its id without taking a lock on its row, but taking
-  // one on the associated tape drive if there is one.
   std::auto_ptr<TapeRequest> tapeReq(
     ptr_IVdqmService->selectTapeRequest(volumeRequest->VolReqID));
     
@@ -274,6 +271,8 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
     return;
   }
 
+/* TEMPORARILY REMOVED TAKING OF TAPE REQUEST LOCK DUE TO DEADLOCK
+
   // It is now safe to take a lock on the tape request as a lock has already
   // been taken on the associated tape drive if there is one.
   if(!ptr_IVdqmService->selectTapeRequestForUpdate(volumeRequest->VolReqID)) {
@@ -291,6 +290,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 
     return;
   }
+*/
 
   // castor::db::ora::OraVdqmSvc::selectTapeRequest uses fillObj to fill the
   // member TapeRequest::m_tapeDrive, but the memory referenced by this

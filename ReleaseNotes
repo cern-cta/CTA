@@ -13,7 +13,6 @@
   - Fixed the usage message (vdqmserver -help).  The default number of request
     handler threads and the default number of RTCP job sumbitter threads are
     now correct.
-  - Fixed the double deletion of a tape request bug.
   - tpread with no command-line arguments no longer segmentation faults.
   - showqueues no longer displays delta times of -1.
 
