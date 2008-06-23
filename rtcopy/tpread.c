@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.22 $ $Date: 2007/06/11 08:40:27 $ CERN IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.23 $ $Date: 2008/06/23 22:07:23 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -77,6 +77,14 @@ int main(int argc, char *argv[]) {
          * Retry loop to break out of
          */
         for (;;) {
+            /**
+             * Avoid a segmentation fault when calling rtcpc(tape)
+             */
+            if(tape == NULL) {
+                rtcp_log(LOG_ERR,"Cannot call rtcpc(NULL)\n");
+                exit(-1);
+            }
+
             rc = rtcpc(tape);
             save_serrno = serrno;
             if ( AbortFlag != 0 ) break;
