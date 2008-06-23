@@ -415,11 +415,20 @@ namespace castor {
         /**
          * Manages the casting of VolReqID, to find also tape requests, which
          * have an id bigger than 32 bit.
-         * 
+         *
          * @param VolReqID The id, which has been sent by RTCPCopyD
          * @return The tape request and its ClientIdentification, or NULL
          */
-        virtual TapeRequest* selectTapeRequestForUpdate(const int VolReqID) 
+        virtual TapeRequest* selectTapeRequest(const int volReqID)
+          throw (castor::exception::Exception) = 0;
+
+        /**
+         * Selects the tape request with the specified id for update.
+         * 
+         * @param VolReqID The id.
+         * @return true if tape request exists, else false.
+         */
+        virtual bool selectTapeRequestForUpdate(const int volReqID) 
           throw (castor::exception::Exception) = 0;
 
         /**

@@ -80,6 +80,7 @@ namespace castor {
           SELECT_VOL_REQS_DGN_CREATION_TIME_ORDER_SQL_STMT,
           SELECT_VOL_REQS_PRIORITY_ORDER_SQL_STMT,
           SELECT_TAPE_DRIVE_QUEUE_SQL_STMT,
+          SELECT_TAPE_REQUEST_SQL_STMT,
           SELECT_TAPE_REQUEST_FOR_UPDATE_SQL_STMT,
           SELECT_COMPATIBILITIES_FOR_DRIVE_MODEL_SQL_STMT,
           SELECT_TAPE_ACCESS_SPECIFICATIONS_SQL_STMT,
@@ -306,18 +307,18 @@ namespace castor {
         selectTapeAccessSpecifications(const std::string tapeModel)
           throw (castor::exception::Exception);  
   
+        /**
+         * See castor::vdqm::IVdqmSvc documentation.
+         */
+        virtual castor::vdqm::TapeRequest* selectTapeRequest(
+          const int volReqID) throw (castor::exception::Exception);
   
         /**
-         * Manages the casting of VolReqID, to find also tape requests, which
-         * have an id bigger than 32 bit.
-         * 
-         * @param VolReqID The id, which has been sent by RTCPCopyD
-         * @return The tape request and its ClientIdentification, or NULL
-         * @exception in case of error
+         * See castor::vdqm::IVdqmSvc documentation.
          */
-        virtual castor::vdqm::TapeRequest* selectTapeRequestForUpdate(
-          const int VolReqID) throw (castor::exception::Exception);                         
-  
+        virtual bool selectTapeRequestForUpdate(const int volReqID)
+          throw (castor::exception::Exception);                         
+
         /**
          * See castor::vdqm::IVdqmSvc documentation.
          */

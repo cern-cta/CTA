@@ -290,6 +290,8 @@ castor::db::ora::OraVdqmSvc::StatementStringMap::StatementStringMap() {
     "WHERE"
     "      (:1 IS NULL OR :2 = DGName)"
     "  AND (:3 IS NULL OR :4 = serverName)");
+  addStmtStr(SELECT_TAPE_REQUEST_SQL_STMT,
+    "SELECT id FROM TapeRequest WHERE CAST(id AS INT) = :1");
   addStmtStr(SELECT_TAPE_REQUEST_FOR_UPDATE_SQL_STMT,
     "SELECT id FROM TapeRequest WHERE CAST(id AS INT) = :1 FOR UPDATE");
   addStmtStr(SELECT_COMPATIBILITIES_FOR_DRIVE_MODEL_SQL_STMT,
@@ -2391,15 +2393,15 @@ int castor::db::ora::OraVdqmSvc::translateNewStatus(
 
 
 // -----------------------------------------------------------------------
-// selectTapeRequestForUpdate
+// selectTapeRequest
 // -----------------------------------------------------------------------
 castor::vdqm::TapeRequest*
-  castor::db::ora::OraVdqmSvc::selectTapeRequestForUpdate(
-  const int VolReqID) throw (castor::exception::Exception) {
+  castor::db::ora::OraVdqmSvc::selectTapeRequest(
+  const int volReqID) throw (castor::exception::Exception) {
     
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  const StatementId stmtId = SELECT_TAPE_REQUEST_FOR_UPDATE_SQL_STMT;
+  const StatementId stmtId = SELECT_TAPE_REQUEST_SQL_STMT;
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
@@ -2422,7 +2424,7 @@ castor::vdqm::TapeRequest*
   // Execute statement and get result
   u_signed64 id;
   try {
-    stmt->setInt(1, VolReqID);
+    stmt->setInt(1, volReqID);
     oracle::occi::ResultSet *rset = stmt->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       stmt->closeResultSet(rset);
@@ -2437,7 +2439,7 @@ castor::vdqm::TapeRequest*
     handleException(oe);
     castor::exception::Internal ie;
     ie.getMessage()
-      << "Unable to select tape request by VolReqID: "
+      << "Unable to select tape request by volReqID: "
       << std::endl << oe.getMessage();
     throw ie;
   }
@@ -2474,6 +2476,59 @@ castor::vdqm::TapeRequest*
     throw ie;
   }
   // We should never reach this point
+}
+
+
+// -----------------------------------------------------------------------
+// selectTapeRequestForUpdate
+// -----------------------------------------------------------------------
+bool castor::db::ora::OraVdqmSvc::selectTapeRequestForUpdate(
+  const int volReqID) throw (castor::exception::Exception) {
+    
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  const StatementId stmtId = SELECT_TAPE_REQUEST_FOR_UPDATE_SQL_STMT;
+  try {
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->setAutoCommit(false);
+      storeStatement(stmtId, stmt);
+    }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
+  }
+
+  // Execute statement and get result
+  try {
+    stmt->setInt(1, volReqID);
+    oracle::occi::ResultSet *rset = stmt->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      stmt->closeResultSet(rset);
+      // Found nothing
+      return false;
+    }
+
+    stmt->closeResultSet(rset);
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage()
+      << "Unable to select tape request by volReqID: "
+      << std::endl << oe.getMessage();
+    throw ie;
+  }
+
+  // Successful select for update
+  return true;
 }
 
 

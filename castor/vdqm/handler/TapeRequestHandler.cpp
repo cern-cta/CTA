@@ -247,12 +247,36 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
 void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
   const vdqmVolReq_t *const volumeRequest, const Cuuid_t cuuid) 
   throw (castor::exception::Exception) {
-  
-  // Get the tapeReq from its id
+
+  // The tape request may be associated with a drive, and if so a lock will
+  // be required on both the request and the drive.  Care must be taken as
+  // locks are to be taken first on a drive and then on its associated tape
+  // request, otherwise a deadlock may occur.
+  //
+  // Get the tapeReq from its id without taking a lock on its row, but taking
+  // one on the associated tape drive if there is one.
   std::auto_ptr<TapeRequest> tapeReq(
-    ptr_IVdqmService->selectTapeRequestForUpdate(volumeRequest->VolReqID));
+    ptr_IVdqmService->selectTapeRequest(volumeRequest->VolReqID));
     
   if ( tapeReq.get() == NULL ) {
+    // If we don't find the tapeRequest in the db it is normally not a big
+    // deal, because the assigned tape drive has probably already finished
+    // the transfer.
+
+    // "Couldn't find the tape request in db. Maybe it is already deleted?"
+    // message
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("tapeRequestID", volumeRequest->VolReqID)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING,
+      VDQM_TAPE_REQUEST_NOT_FOUND_IN_DB, 2, params);
+
+    return;
+  }
+
+  // It is now safe to take a lock on the tape request as a lock has already
+  // been taken on the associated tape drive if there is one.
+  if(!ptr_IVdqmService->selectTapeRequestForUpdate(volumeRequest->VolReqID)) {
     // If we don't find the tapeRequest in the db it is normally not a big
     // deal, because the assigned tape drive has probably already finished
     // the transfer.
