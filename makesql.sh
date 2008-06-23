@@ -5,16 +5,16 @@ ver=`egrep "^castor" debian/changelog | head -1 | awk '{print $2}' | sed 's/)//'
 tag=`echo $ver | sed 's/\./_/g' | sed 's/-/_/g'`
 
 # generate creation scripts for the db-based CASTOR components
-tools/makeSqlScripts.sh castor castor/db $tag
-tools/makeSqlScripts.sh repack castor/repack $tag
-tools/makeSqlScripts.sh vdqm castor/vdqm $tag
+# if $1 != NULL, it is interpreted as destination directory where to install the generated script
+tools/makeSqlScripts.sh castor castor/db $tag $1
+tools/makeSqlScripts.sh repack castor/repack $tag $1
+tools/makeSqlScripts.sh vdqm castor/vdqm $tag $1
 cd dlf/scripts
-./makeDlfScripts.sh $tag oracle/oracleCreate.sql oracle/dlf_oracle_create.sql
-echo Creation scripts for dlf generated with tag $tag
+./makeDlfScripts.sh $tag oracle/oracleCreate.sql oracle/dlf_oracle_create.sql $1
 cd ../..
 
 # commit and tag in CVS
-sqlscripts='castor/db/castor_oracle_create.sql castor/db/castor_oracle_create.sqlplus castor/repack/repack_oracle_create.sql castor/repack/repack_oracle_create.sqlplus dlf/scripts/oracle/dlf_oracle_create.sql dlf/scripts/oracle/dlf_oracle_create.sqlplus'
+sqlscripts='castor/db/castor_oracle_create.sql castor/db/castor_oracle_create.sqlplus castor/repack/repack_oracle_create.sql castor/repack/repack_oracle_create.sqlplus castor/vdqm/vdqm_oracle_create.sql castor/vdqm/vdqm_oracle_create.sqlplus dlf/scripts/oracle/dlf_oracle_create.sql dlf/scripts/oracle/dlf_oracle_create.sqlplus'
 echo Running CVS diff...
 cvs diff $sqlscripts > /tmp/cvsdiffs
 less /tmp/cvsdiffs
@@ -27,4 +27,4 @@ if [ "$ask" == "y" ]; then
 fi
 rm -rf /tmp/cvsdiffs
 echo
-
+ 
