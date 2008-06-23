@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.672 $ $Date: 2008/06/13 15:20:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.673 $ $Date: 2008/06/23 14:33:52 $ $Author: itglp $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -254,7 +254,7 @@ BEGIN
     IF nbMigrators = 1 THEN
       BEGIN
         -- check states of the diskserver and filesystem and get mountpoint and diskserver name
-	SELECT name, mountPoint, FileSystem.id INTO diskServerName, mountPoint, fileSystemId
+        SELECT name, mountPoint, FileSystem.id INTO diskServerName, mountPoint, fileSystemId
           FROM FileSystem, DiskServer
          WHERE FileSystem.diskServer = DiskServer.id
            AND FileSystem.id = lastButOneFSUsed
