@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.658 $ $Date: 2008/06/13 15:11:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.659 $ $Date: 2008/06/23 14:33:12 $ $Author: itglp $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -200,7 +200,7 @@ CREATE GLOBAL TEMPORARY TABLE removePrivilegeTmpTable
 
 /* SQL statements for table PriorityMap */ 
 CREATE TABLE PriorityMap (euid INTEGER, egid INTEGER, priority INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT; 
-ALTER TABLE PriorityMap ADD CONSTRAINT I_Unique_Priority UNIQUE (euid, egid);
+ALTER TABLE PriorityMap ADD CONSTRAINT U_Priority_euid_egid UNIQUE (euid, egid);
 
 /**
   * Black and while list mechanism
