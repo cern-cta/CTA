@@ -418,7 +418,7 @@ castor::db::ora::OraVdqmSvc::selectOrCreateTape(const std::string vid)
   }
 
   // Execute statement and get result
-  unsigned long id;
+  u_signed64 id;
   try {
     stmt->setString(1, vid);
     oracle::occi::ResultSet *rset = stmt->executeQuery();
@@ -468,7 +468,7 @@ castor::db::ora::OraVdqmSvc::selectOrCreateTape(const std::string vid)
     }
     // If we reach this point, then we selected successfully
     // a tape and it's id is in rset
-    id = rset->getInt(1);
+    id = (u_signed64)rset->getDouble(1);
     stmt->closeResultSet(rset);
   } catch (oracle::occi::SQLException &oe) {
     handleException(oe);

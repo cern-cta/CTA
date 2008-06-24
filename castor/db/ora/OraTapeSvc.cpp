@@ -676,7 +676,7 @@ castor::db::ora::OraTapeSvc::tapesToDo()
   try {
     oracle::occi::ResultSet *rset = m_tapesToDoStatement->executeQuery();
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1));
+      IObject* obj = cnvSvc()->getObjFromId((u_signed64)rset->getDouble(1));
       castor::stager::Tape* tape =
         dynamic_cast<castor::stager::Tape*>(obj);
       if (0 == tape) {
@@ -734,11 +734,11 @@ castor::db::ora::OraTapeSvc::streamsToDo()
     oracle::occi::ResultSet::Status status = rs->next();
     while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::stager::Stream* stream = new castor::stager::Stream();
-      stream->setId(rs->getInt(1));
+      stream->setId((u_signed64)rs->getDouble(1));
       stream->setInitialSizeToTransfer((u_signed64)rs->getDouble(2));
       stream->setStatus((enum castor::stager::StreamStatusCodes)rs->getInt(3));
       castor::stager::TapePool* tapePool = new castor::stager::TapePool();
-      tapePool->setId(rs->getInt(4));
+      tapePool->setId((u_signed64)rs->getDouble(4));
       tapePool->setName(rs->getString(5));
       stream->setTapePool(tapePool);
       tapePool->addStreams(stream);
