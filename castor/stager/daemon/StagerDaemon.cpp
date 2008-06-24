@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.55 $ $Release$ $Date: 2008/06/18 06:30:32 $ $Author: waldron $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.56 $ $Release$ $Date: 2008/06/24 12:46:31 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -269,6 +269,7 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_JOBSVC_NOCLI,   "No client associated with request ! Cannot answer !"},
     { STAGER_JOBSVC_UNKREQ,  "Unknown Request type"},
     { STAGER_JOBSVC_D2DCS,   "Invoking disk2DiskCopyStart"},
+    { STAGER_JOBSVC_1STBWR,  "Invoking firstByteWritten"},
     { STAGER_JOBSVC_DELWWR,  "File was removed by another user while being modified"},
 
     { -1, "" }
