@@ -545,12 +545,12 @@ void castor::db::ora::OraTapeSvc::streamsForTapePool
         createStatement(s_streamsForTapePoolStatementString);
     }
     // retrieve the object from the database
-    std::set<int> streamsList;
+    std::set<u_signed64> streamsList;
     m_streamsForTapePoolStatement->setDouble(1, tapePool->id());
     oracle::occi::ResultSet *rset =
       m_streamsForTapePoolStatement->executeQuery();
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      streamsList.insert(rset->getInt(1));
+      streamsList.insert((u_signed64)rset->getDouble(1));
     }
     // Close ResultSet
     m_streamsForTapePoolStatement->closeResultSet(rset);
@@ -560,7 +560,7 @@ void castor::db::ora::OraTapeSvc::streamsForTapePool
            tapePool->streams().begin();
          it != tapePool->streams().end();
          it++) {
-      std::set<int>::iterator item;
+      std::set<u_signed64>::iterator item;
       if ((item = streamsList.find((*it)->id())) == streamsList.end()) {
         toBeDeleted.push_back(*it);
       } else {
@@ -576,7 +576,7 @@ void castor::db::ora::OraTapeSvc::streamsForTapePool
       (*it)->setTapePool(0);
     }
     // Create new objects
-    for (std::set<int>::iterator it = streamsList.begin();
+    for (std::set<u_signed64>::iterator it = streamsList.begin();
          it != streamsList.end();
          it++) {
       IObject* item = cnvSvc()->getObjFromId(*it);
