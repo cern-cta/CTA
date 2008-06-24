@@ -233,11 +233,11 @@ void castor::db::cnv::DbVersionQueryCnv::fillRepQueryParameter(castor::query::Ve
     m_selectQueryParameterStatement = createStatement(s_selectQueryParameterStatementString);
   }
   // Get current database data
-  std::set<int> parametersList;
+  std::set<u_signed64> parametersList;
   m_selectQueryParameterStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectQueryParameterStatement->executeQuery();
   while (rset->next()) {
-    parametersList.insert(rset->getInt(1));
+    parametersList.insert(rset->getUInt64(1));
   }
   delete rset;
   // update parameters and create new ones
@@ -256,7 +256,7 @@ void castor::db::cnv::DbVersionQueryCnv::fillRepQueryParameter(castor::query::Ve
       m_remoteUpdateQueryParameterStatement->setUInt64(1, obj->id());
       m_remoteUpdateQueryParameterStatement->setUInt64(2, (*it)->id());
       m_remoteUpdateQueryParameterStatement->execute();
-      std::set<int>::iterator item;
+      std::set<u_signed64>::iterator item;
       if ((item = parametersList.find((*it)->id())) != parametersList.end()) {
         parametersList.erase(item);
       }
@@ -265,7 +265,7 @@ void castor::db::cnv::DbVersionQueryCnv::fillRepQueryParameter(castor::query::Ve
   // create new objects
   cnvSvc()->bulkCreateRep(0, toBeCreated, false, OBJ_QryRequest);
   // Delete old links
-  for (std::set<int>::iterator it = parametersList.begin();
+  for (std::set<u_signed64>::iterator it = parametersList.begin();
        it != parametersList.end();
        it++) {
     if (0 == m_deleteQueryParameterStatement) {
@@ -364,11 +364,11 @@ void castor::db::cnv::DbVersionQueryCnv::fillObjQueryParameter(castor::query::Ve
     m_selectQueryParameterStatement = createStatement(s_selectQueryParameterStatementString);
   }
   // retrieve the object from the database
-  std::set<int> parametersList;
+  std::set<u_signed64> parametersList;
   m_selectQueryParameterStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectQueryParameterStatement->executeQuery();
   while (rset->next()) {
-    parametersList.insert(rset->getInt(1));
+    parametersList.insert(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -377,7 +377,7 @@ void castor::db::cnv::DbVersionQueryCnv::fillObjQueryParameter(castor::query::Ve
   for (std::vector<castor::stager::QueryParameter*>::iterator it = obj->parameters().begin();
        it != obj->parameters().end();
        it++) {
-    std::set<int>::iterator item;
+    std::set<u_signed64>::iterator item;
     if ((item = parametersList.find((*it)->id())) == parametersList.end()) {
       toBeDeleted.push_back(*it);
     } else {
@@ -393,7 +393,7 @@ void castor::db::cnv::DbVersionQueryCnv::fillObjQueryParameter(castor::query::Ve
     (*it)->setQuery(0);
   }
   // Create new objects
-  for (std::set<int>::iterator it = parametersList.begin();
+  for (std::set<u_signed64>::iterator it = parametersList.begin();
        it != parametersList.end();
        it++) {
     castor::IObject* item = cnvSvc()->getObjFromId(*it);

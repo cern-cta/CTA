@@ -248,11 +248,11 @@ void castor::db::cnv::DbRepackSubRequestCnv::fillRepRepackSegment(castor::repack
     m_selectRepackSegmentStatement = createStatement(s_selectRepackSegmentStatementString);
   }
   // Get current database data
-  std::set<int> repacksegmentList;
+  std::set<u_signed64> repacksegmentList;
   m_selectRepackSegmentStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectRepackSegmentStatement->executeQuery();
   while (rset->next()) {
-    repacksegmentList.insert(rset->getInt(1));
+    repacksegmentList.insert(rset->getUInt64(1));
   }
   delete rset;
   // update repacksegment and create new ones
@@ -271,7 +271,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::fillRepRepackSegment(castor::repack
       m_remoteUpdateRepackSegmentStatement->setUInt64(1, obj->id());
       m_remoteUpdateRepackSegmentStatement->setUInt64(2, (*it)->id());
       m_remoteUpdateRepackSegmentStatement->execute();
-      std::set<int>::iterator item;
+      std::set<u_signed64>::iterator item;
       if ((item = repacksegmentList.find((*it)->id())) != repacksegmentList.end()) {
         repacksegmentList.erase(item);
       }
@@ -280,7 +280,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::fillRepRepackSegment(castor::repack
   // create new objects
   cnvSvc()->bulkCreateRep(0, toBeCreated, false, OBJ_RepackSubRequest);
   // Delete old links
-  for (std::set<int>::iterator it = repacksegmentList.begin();
+  for (std::set<u_signed64>::iterator it = repacksegmentList.begin();
        it != repacksegmentList.end();
        it++) {
     if (0 == m_deleteRepackSegmentStatement) {
@@ -369,11 +369,11 @@ void castor::db::cnv::DbRepackSubRequestCnv::fillObjRepackSegment(castor::repack
     m_selectRepackSegmentStatement = createStatement(s_selectRepackSegmentStatementString);
   }
   // retrieve the object from the database
-  std::set<int> repacksegmentList;
+  std::set<u_signed64> repacksegmentList;
   m_selectRepackSegmentStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectRepackSegmentStatement->executeQuery();
   while (rset->next()) {
-    repacksegmentList.insert(rset->getInt(1));
+    repacksegmentList.insert(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -382,7 +382,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::fillObjRepackSegment(castor::repack
   for (std::vector<castor::repack::RepackSegment*>::iterator it = obj->repacksegment().begin();
        it != obj->repacksegment().end();
        it++) {
-    std::set<int>::iterator item;
+    std::set<u_signed64>::iterator item;
     if ((item = repacksegmentList.find((*it)->id())) == repacksegmentList.end()) {
       toBeDeleted.push_back(*it);
     } else {
@@ -398,7 +398,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::fillObjRepackSegment(castor::repack
     (*it)->setRepacksubrequest(0);
   }
   // Create new objects
-  for (std::set<int>::iterator it = repacksegmentList.begin();
+  for (std::set<u_signed64>::iterator it = repacksegmentList.begin();
        it != repacksegmentList.end();
        it++) {
     castor::IObject* item = cnvSvc()->getObjFromId(*it);
@@ -623,7 +623,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress* add
       repackrequestBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (20, repackrequestBuffer, DBTYPE_UINT64, sizeof(repackrequestBuffer[0]), repackrequestBufLens);
+      (12, repackrequestBuffer, DBTYPE_UINT64, sizeof(repackrequestBuffer[0]), repackrequestBufLens);
     // build the buffers for status
     int* statusBuffer = (int*) malloc(nb * sizeof(int));
     unsigned short* statusBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -632,12 +632,12 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress* add
       statusBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (22, statusBuffer, DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
+      (13, statusBuffer, DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
     m_insertStatement->setDataBuffer
-      (24, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
+      (14, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);

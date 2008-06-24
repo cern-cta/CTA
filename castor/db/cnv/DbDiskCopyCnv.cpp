@@ -234,11 +234,11 @@ void castor::db::cnv::DbDiskCopyCnv::fillRepSubRequest(castor::stager::DiskCopy*
     m_selectSubRequestStatement = createStatement(s_selectSubRequestStatementString);
   }
   // Get current database data
-  std::set<int> subRequestsList;
+  std::set<u_signed64> subRequestsList;
   m_selectSubRequestStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectSubRequestStatement->executeQuery();
   while (rset->next()) {
-    subRequestsList.insert(rset->getInt(1));
+    subRequestsList.insert(rset->getUInt64(1));
   }
   delete rset;
   // update subRequests and create new ones
@@ -257,7 +257,7 @@ void castor::db::cnv::DbDiskCopyCnv::fillRepSubRequest(castor::stager::DiskCopy*
       m_remoteUpdateSubRequestStatement->setUInt64(1, obj->id());
       m_remoteUpdateSubRequestStatement->setUInt64(2, (*it)->id());
       m_remoteUpdateSubRequestStatement->execute();
-      std::set<int>::iterator item;
+      std::set<u_signed64>::iterator item;
       if ((item = subRequestsList.find((*it)->id())) != subRequestsList.end()) {
         subRequestsList.erase(item);
       }
@@ -266,7 +266,7 @@ void castor::db::cnv::DbDiskCopyCnv::fillRepSubRequest(castor::stager::DiskCopy*
   // create new objects
   cnvSvc()->bulkCreateRep(0, toBeCreated, false, OBJ_DiskCopy);
   // Delete old links
-  for (std::set<int>::iterator it = subRequestsList.begin();
+  for (std::set<u_signed64>::iterator it = subRequestsList.begin();
        it != subRequestsList.end();
        it++) {
     if (0 == m_deleteSubRequestStatement) {
@@ -382,11 +382,11 @@ void castor::db::cnv::DbDiskCopyCnv::fillObjSubRequest(castor::stager::DiskCopy*
     m_selectSubRequestStatement = createStatement(s_selectSubRequestStatementString);
   }
   // retrieve the object from the database
-  std::set<int> subRequestsList;
+  std::set<u_signed64> subRequestsList;
   m_selectSubRequestStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectSubRequestStatement->executeQuery();
   while (rset->next()) {
-    subRequestsList.insert(rset->getInt(1));
+    subRequestsList.insert(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -395,7 +395,7 @@ void castor::db::cnv::DbDiskCopyCnv::fillObjSubRequest(castor::stager::DiskCopy*
   for (std::vector<castor::stager::SubRequest*>::iterator it = obj->subRequests().begin();
        it != obj->subRequests().end();
        it++) {
-    std::set<int>::iterator item;
+    std::set<u_signed64>::iterator item;
     if ((item = subRequestsList.find((*it)->id())) == subRequestsList.end()) {
       toBeDeleted.push_back(*it);
     } else {
@@ -411,7 +411,7 @@ void castor::db::cnv::DbDiskCopyCnv::fillObjSubRequest(castor::stager::DiskCopy*
     (*it)->setDiskcopy(0);
   }
   // Create new objects
-  for (std::set<int>::iterator it = subRequestsList.begin();
+  for (std::set<u_signed64>::iterator it = subRequestsList.begin();
        it != subRequestsList.end();
        it++) {
     castor::IObject* item = cnvSvc()->getObjFromId(*it);

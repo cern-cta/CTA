@@ -257,11 +257,11 @@ void castor::db::cnv::DbStreamCnv::fillRepTapeCopy(castor::stager::Stream* obj)
     m_selectTapeCopyStatement = createStatement(s_selectTapeCopyStatementString);
   }
   // Get current database data
-  std::set<int> tapeCopyList;
+  std::set<u_signed64> tapeCopyList;
   m_selectTapeCopyStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectTapeCopyStatement->executeQuery();
   while (rset->next()) {
-    tapeCopyList.insert(rset->getInt(1));
+    tapeCopyList.insert(rset->getUInt64(1));
   }
   delete rset;
   // update tapeCopy and create new ones
@@ -271,7 +271,7 @@ void castor::db::cnv::DbStreamCnv::fillRepTapeCopy(castor::stager::Stream* obj)
     if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false);
     }
-    std::set<int>::iterator item;
+    std::set<u_signed64>::iterator item;
     if ((item = tapeCopyList.find((*it)->id())) != tapeCopyList.end()) {
       tapeCopyList.erase(item);
     } else {
@@ -284,7 +284,7 @@ void castor::db::cnv::DbStreamCnv::fillRepTapeCopy(castor::stager::Stream* obj)
     }
   }
   // Delete old links
-  for (std::set<int>::iterator it = tapeCopyList.begin();
+  for (std::set<u_signed64>::iterator it = tapeCopyList.begin();
        it != tapeCopyList.end();
        it++) {
     if (0 == m_deleteTapeCopyStatement) {
@@ -431,11 +431,11 @@ void castor::db::cnv::DbStreamCnv::fillObjTapeCopy(castor::stager::Stream* obj)
     m_selectTapeCopyStatement = createStatement(s_selectTapeCopyStatementString);
   }
   // retrieve the object from the database
-  std::set<int> tapeCopyList;
+  std::set<u_signed64> tapeCopyList;
   m_selectTapeCopyStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectTapeCopyStatement->executeQuery();
   while (rset->next()) {
-    tapeCopyList.insert(rset->getInt(1));
+    tapeCopyList.insert(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -444,7 +444,7 @@ void castor::db::cnv::DbStreamCnv::fillObjTapeCopy(castor::stager::Stream* obj)
   for (std::vector<castor::stager::TapeCopy*>::iterator it = obj->tapeCopy().begin();
        it != obj->tapeCopy().end();
        it++) {
-    std::set<int>::iterator item;
+    std::set<u_signed64>::iterator item;
     if ((item = tapeCopyList.find((*it)->id())) == tapeCopyList.end()) {
       toBeDeleted.push_back(*it);
     } else {
@@ -460,7 +460,7 @@ void castor::db::cnv::DbStreamCnv::fillObjTapeCopy(castor::stager::Stream* obj)
     (*it)->removeStream(obj);
   }
   // Create new objects
-  for (std::set<int>::iterator it = tapeCopyList.begin();
+  for (std::set<u_signed64>::iterator it = tapeCopyList.begin();
        it != tapeCopyList.end();
        it++) {
     castor::IObject* item = cnvSvc()->getObjFromId(*it);

@@ -305,11 +305,11 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillRepBWUser(castor::bwlist::Change
     m_selectBWUserStatement = createStatement(s_selectBWUserStatementString);
   }
   // Get current database data
-  std::set<int> usersList;
+  std::set<u_signed64> usersList;
   m_selectBWUserStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectBWUserStatement->executeQuery();
   while (rset->next()) {
-    usersList.insert(rset->getInt(1));
+    usersList.insert(rset->getUInt64(1));
   }
   delete rset;
   // update users and create new ones
@@ -328,7 +328,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillRepBWUser(castor::bwlist::Change
       m_remoteUpdateBWUserStatement->setUInt64(1, obj->id());
       m_remoteUpdateBWUserStatement->setUInt64(2, (*it)->id());
       m_remoteUpdateBWUserStatement->execute();
-      std::set<int>::iterator item;
+      std::set<u_signed64>::iterator item;
       if ((item = usersList.find((*it)->id())) != usersList.end()) {
         usersList.erase(item);
       }
@@ -337,7 +337,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillRepBWUser(castor::bwlist::Change
   // create new objects
   cnvSvc()->bulkCreateRep(0, toBeCreated, false, OBJ_ChangePrivilege);
   // Delete old links
-  for (std::set<int>::iterator it = usersList.begin();
+  for (std::set<u_signed64>::iterator it = usersList.begin();
        it != usersList.end();
        it++) {
     if (0 == m_deleteBWUserStatement) {
@@ -358,11 +358,11 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillRepRequestType(castor::bwlist::C
     m_selectRequestTypeStatement = createStatement(s_selectRequestTypeStatementString);
   }
   // Get current database data
-  std::set<int> requestTypesList;
+  std::set<u_signed64> requestTypesList;
   m_selectRequestTypeStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectRequestTypeStatement->executeQuery();
   while (rset->next()) {
-    requestTypesList.insert(rset->getInt(1));
+    requestTypesList.insert(rset->getUInt64(1));
   }
   delete rset;
   // update requestTypes and create new ones
@@ -381,7 +381,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillRepRequestType(castor::bwlist::C
       m_remoteUpdateRequestTypeStatement->setUInt64(1, obj->id());
       m_remoteUpdateRequestTypeStatement->setUInt64(2, (*it)->id());
       m_remoteUpdateRequestTypeStatement->execute();
-      std::set<int>::iterator item;
+      std::set<u_signed64>::iterator item;
       if ((item = requestTypesList.find((*it)->id())) != requestTypesList.end()) {
         requestTypesList.erase(item);
       }
@@ -390,7 +390,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillRepRequestType(castor::bwlist::C
   // create new objects
   cnvSvc()->bulkCreateRep(0, toBeCreated, false, OBJ_ChangePrivilege);
   // Delete old links
-  for (std::set<int>::iterator it = requestTypesList.begin();
+  for (std::set<u_signed64>::iterator it = requestTypesList.begin();
        it != requestTypesList.end();
        it++) {
     if (0 == m_deleteRequestTypeStatement) {
@@ -521,11 +521,11 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillObjBWUser(castor::bwlist::Change
     m_selectBWUserStatement = createStatement(s_selectBWUserStatementString);
   }
   // retrieve the object from the database
-  std::set<int> usersList;
+  std::set<u_signed64> usersList;
   m_selectBWUserStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectBWUserStatement->executeQuery();
   while (rset->next()) {
-    usersList.insert(rset->getInt(1));
+    usersList.insert(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -534,7 +534,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillObjBWUser(castor::bwlist::Change
   for (std::vector<castor::bwlist::BWUser*>::iterator it = obj->users().begin();
        it != obj->users().end();
        it++) {
-    std::set<int>::iterator item;
+    std::set<u_signed64>::iterator item;
     if ((item = usersList.find((*it)->id())) == usersList.end()) {
       toBeDeleted.push_back(*it);
     } else {
@@ -550,7 +550,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillObjBWUser(castor::bwlist::Change
     (*it)->setRequest(0);
   }
   // Create new objects
-  for (std::set<int>::iterator it = usersList.begin();
+  for (std::set<u_signed64>::iterator it = usersList.begin();
        it != usersList.end();
        it++) {
     castor::IObject* item = cnvSvc()->getObjFromId(*it);
@@ -571,11 +571,11 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillObjRequestType(castor::bwlist::C
     m_selectRequestTypeStatement = createStatement(s_selectRequestTypeStatementString);
   }
   // retrieve the object from the database
-  std::set<int> requestTypesList;
+  std::set<u_signed64> requestTypesList;
   m_selectRequestTypeStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectRequestTypeStatement->executeQuery();
   while (rset->next()) {
-    requestTypesList.insert(rset->getInt(1));
+    requestTypesList.insert(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -584,7 +584,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillObjRequestType(castor::bwlist::C
   for (std::vector<castor::bwlist::RequestType*>::iterator it = obj->requestTypes().begin();
        it != obj->requestTypes().end();
        it++) {
-    std::set<int>::iterator item;
+    std::set<u_signed64>::iterator item;
     if ((item = requestTypesList.find((*it)->id())) == requestTypesList.end()) {
       toBeDeleted.push_back(*it);
     } else {
@@ -600,7 +600,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillObjRequestType(castor::bwlist::C
     (*it)->setRequest(0);
   }
   // Create new objects
-  for (std::set<int>::iterator it = requestTypesList.begin();
+  for (std::set<u_signed64>::iterator it = requestTypesList.begin();
        it != requestTypesList.end();
        it++) {
     castor::IObject* item = cnvSvc()->getObjFromId(*it);

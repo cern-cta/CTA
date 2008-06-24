@@ -289,7 +289,7 @@ void castor::db::cnv::DbDeviceGroupNameCnv::bulkCreateRep(castor::IAddress* addr
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
     m_insertStatement->setDataBuffer
-      (5, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
+      (3, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);

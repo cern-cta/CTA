@@ -224,11 +224,11 @@ void castor::db::cnv::DbDiskPoolCnv::fillRepFileSystem(castor::stager::DiskPool*
     m_selectFileSystemStatement = createStatement(s_selectFileSystemStatementString);
   }
   // Get current database data
-  std::set<int> fileSystemsList;
+  std::set<u_signed64> fileSystemsList;
   m_selectFileSystemStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectFileSystemStatement->executeQuery();
   while (rset->next()) {
-    fileSystemsList.insert(rset->getInt(1));
+    fileSystemsList.insert(rset->getUInt64(1));
   }
   delete rset;
   // update fileSystems and create new ones
@@ -247,7 +247,7 @@ void castor::db::cnv::DbDiskPoolCnv::fillRepFileSystem(castor::stager::DiskPool*
       m_remoteUpdateFileSystemStatement->setUInt64(1, obj->id());
       m_remoteUpdateFileSystemStatement->setUInt64(2, (*it)->id());
       m_remoteUpdateFileSystemStatement->execute();
-      std::set<int>::iterator item;
+      std::set<u_signed64>::iterator item;
       if ((item = fileSystemsList.find((*it)->id())) != fileSystemsList.end()) {
         fileSystemsList.erase(item);
       }
@@ -256,7 +256,7 @@ void castor::db::cnv::DbDiskPoolCnv::fillRepFileSystem(castor::stager::DiskPool*
   // create new objects
   cnvSvc()->bulkCreateRep(0, toBeCreated, false, OBJ_DiskPool);
   // Delete old links
-  for (std::set<int>::iterator it = fileSystemsList.begin();
+  for (std::set<u_signed64>::iterator it = fileSystemsList.begin();
        it != fileSystemsList.end();
        it++) {
     if (0 == m_deleteFileSystemStatement) {
@@ -277,11 +277,11 @@ void castor::db::cnv::DbDiskPoolCnv::fillRepSvcClass(castor::stager::DiskPool* o
     m_selectSvcClassStatement = createStatement(s_selectSvcClassStatementString);
   }
   // Get current database data
-  std::set<int> svcClassesList;
+  std::set<u_signed64> svcClassesList;
   m_selectSvcClassStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectSvcClassStatement->executeQuery();
   while (rset->next()) {
-    svcClassesList.insert(rset->getInt(1));
+    svcClassesList.insert(rset->getUInt64(1));
   }
   delete rset;
   // update svcClasses and create new ones
@@ -291,7 +291,7 @@ void castor::db::cnv::DbDiskPoolCnv::fillRepSvcClass(castor::stager::DiskPool* o
     if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false);
     }
-    std::set<int>::iterator item;
+    std::set<u_signed64>::iterator item;
     if ((item = svcClassesList.find((*it)->id())) != svcClassesList.end()) {
       svcClassesList.erase(item);
     } else {
@@ -304,7 +304,7 @@ void castor::db::cnv::DbDiskPoolCnv::fillRepSvcClass(castor::stager::DiskPool* o
     }
   }
   // Delete old links
-  for (std::set<int>::iterator it = svcClassesList.begin();
+  for (std::set<u_signed64>::iterator it = svcClassesList.begin();
        it != svcClassesList.end();
        it++) {
     if (0 == m_deleteSvcClassStatement) {
@@ -354,11 +354,11 @@ void castor::db::cnv::DbDiskPoolCnv::fillObjFileSystem(castor::stager::DiskPool*
     m_selectFileSystemStatement = createStatement(s_selectFileSystemStatementString);
   }
   // retrieve the object from the database
-  std::set<int> fileSystemsList;
+  std::set<u_signed64> fileSystemsList;
   m_selectFileSystemStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectFileSystemStatement->executeQuery();
   while (rset->next()) {
-    fileSystemsList.insert(rset->getInt(1));
+    fileSystemsList.insert(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -367,7 +367,7 @@ void castor::db::cnv::DbDiskPoolCnv::fillObjFileSystem(castor::stager::DiskPool*
   for (std::vector<castor::stager::FileSystem*>::iterator it = obj->fileSystems().begin();
        it != obj->fileSystems().end();
        it++) {
-    std::set<int>::iterator item;
+    std::set<u_signed64>::iterator item;
     if ((item = fileSystemsList.find((*it)->id())) == fileSystemsList.end()) {
       toBeDeleted.push_back(*it);
     } else {
@@ -383,7 +383,7 @@ void castor::db::cnv::DbDiskPoolCnv::fillObjFileSystem(castor::stager::DiskPool*
     (*it)->setDiskPool(0);
   }
   // Create new objects
-  for (std::set<int>::iterator it = fileSystemsList.begin();
+  for (std::set<u_signed64>::iterator it = fileSystemsList.begin();
        it != fileSystemsList.end();
        it++) {
     castor::IObject* item = cnvSvc()->getObjFromId(*it);
@@ -404,11 +404,11 @@ void castor::db::cnv::DbDiskPoolCnv::fillObjSvcClass(castor::stager::DiskPool* o
     m_selectSvcClassStatement = createStatement(s_selectSvcClassStatementString);
   }
   // retrieve the object from the database
-  std::set<int> svcClassesList;
+  std::set<u_signed64> svcClassesList;
   m_selectSvcClassStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectSvcClassStatement->executeQuery();
   while (rset->next()) {
-    svcClassesList.insert(rset->getInt(1));
+    svcClassesList.insert(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -417,7 +417,7 @@ void castor::db::cnv::DbDiskPoolCnv::fillObjSvcClass(castor::stager::DiskPool* o
   for (std::vector<castor::stager::SvcClass*>::iterator it = obj->svcClasses().begin();
        it != obj->svcClasses().end();
        it++) {
-    std::set<int>::iterator item;
+    std::set<u_signed64>::iterator item;
     if ((item = svcClassesList.find((*it)->id())) == svcClassesList.end()) {
       toBeDeleted.push_back(*it);
     } else {
@@ -433,7 +433,7 @@ void castor::db::cnv::DbDiskPoolCnv::fillObjSvcClass(castor::stager::DiskPool* o
     (*it)->removeDiskPools(obj);
   }
   // Create new objects
-  for (std::set<int>::iterator it = svcClassesList.begin();
+  for (std::set<u_signed64>::iterator it = svcClassesList.begin();
        it != svcClassesList.end();
        it++) {
     castor::IObject* item = cnvSvc()->getObjFromId(*it);

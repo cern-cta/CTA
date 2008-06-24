@@ -244,11 +244,11 @@ void castor::db::cnv::DbSvcClassCnv::fillRepTapePool(castor::stager::SvcClass* o
     m_selectTapePoolStatement = createStatement(s_selectTapePoolStatementString);
   }
   // Get current database data
-  std::set<int> tapePoolsList;
+  std::set<u_signed64> tapePoolsList;
   m_selectTapePoolStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectTapePoolStatement->executeQuery();
   while (rset->next()) {
-    tapePoolsList.insert(rset->getInt(1));
+    tapePoolsList.insert(rset->getUInt64(1));
   }
   delete rset;
   // update tapePools and create new ones
@@ -258,7 +258,7 @@ void castor::db::cnv::DbSvcClassCnv::fillRepTapePool(castor::stager::SvcClass* o
     if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false);
     }
-    std::set<int>::iterator item;
+    std::set<u_signed64>::iterator item;
     if ((item = tapePoolsList.find((*it)->id())) != tapePoolsList.end()) {
       tapePoolsList.erase(item);
     } else {
@@ -271,7 +271,7 @@ void castor::db::cnv::DbSvcClassCnv::fillRepTapePool(castor::stager::SvcClass* o
     }
   }
   // Delete old links
-  for (std::set<int>::iterator it = tapePoolsList.begin();
+  for (std::set<u_signed64>::iterator it = tapePoolsList.begin();
        it != tapePoolsList.end();
        it++) {
     if (0 == m_deleteTapePoolStatement) {
@@ -293,11 +293,11 @@ void castor::db::cnv::DbSvcClassCnv::fillRepDiskPool(castor::stager::SvcClass* o
     m_selectDiskPoolStatement = createStatement(s_selectDiskPoolStatementString);
   }
   // Get current database data
-  std::set<int> diskPoolsList;
+  std::set<u_signed64> diskPoolsList;
   m_selectDiskPoolStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectDiskPoolStatement->executeQuery();
   while (rset->next()) {
-    diskPoolsList.insert(rset->getInt(1));
+    diskPoolsList.insert(rset->getUInt64(1));
   }
   delete rset;
   // update diskPools and create new ones
@@ -307,7 +307,7 @@ void castor::db::cnv::DbSvcClassCnv::fillRepDiskPool(castor::stager::SvcClass* o
     if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false);
     }
-    std::set<int>::iterator item;
+    std::set<u_signed64>::iterator item;
     if ((item = diskPoolsList.find((*it)->id())) != diskPoolsList.end()) {
       diskPoolsList.erase(item);
     } else {
@@ -320,7 +320,7 @@ void castor::db::cnv::DbSvcClassCnv::fillRepDiskPool(castor::stager::SvcClass* o
     }
   }
   // Delete old links
-  for (std::set<int>::iterator it = diskPoolsList.begin();
+  for (std::set<u_signed64>::iterator it = diskPoolsList.begin();
        it != diskPoolsList.end();
        it++) {
     if (0 == m_deleteDiskPoolStatement) {
@@ -405,11 +405,11 @@ void castor::db::cnv::DbSvcClassCnv::fillObjTapePool(castor::stager::SvcClass* o
     m_selectTapePoolStatement = createStatement(s_selectTapePoolStatementString);
   }
   // retrieve the object from the database
-  std::set<int> tapePoolsList;
+  std::set<u_signed64> tapePoolsList;
   m_selectTapePoolStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectTapePoolStatement->executeQuery();
   while (rset->next()) {
-    tapePoolsList.insert(rset->getInt(1));
+    tapePoolsList.insert(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -418,7 +418,7 @@ void castor::db::cnv::DbSvcClassCnv::fillObjTapePool(castor::stager::SvcClass* o
   for (std::vector<castor::stager::TapePool*>::iterator it = obj->tapePools().begin();
        it != obj->tapePools().end();
        it++) {
-    std::set<int>::iterator item;
+    std::set<u_signed64>::iterator item;
     if ((item = tapePoolsList.find((*it)->id())) == tapePoolsList.end()) {
       toBeDeleted.push_back(*it);
     } else {
@@ -434,7 +434,7 @@ void castor::db::cnv::DbSvcClassCnv::fillObjTapePool(castor::stager::SvcClass* o
     (*it)->removeSvcClasses(obj);
   }
   // Create new objects
-  for (std::set<int>::iterator it = tapePoolsList.begin();
+  for (std::set<u_signed64>::iterator it = tapePoolsList.begin();
        it != tapePoolsList.end();
        it++) {
     castor::IObject* item = cnvSvc()->getObjFromId(*it);
@@ -455,11 +455,11 @@ void castor::db::cnv::DbSvcClassCnv::fillObjDiskPool(castor::stager::SvcClass* o
     m_selectDiskPoolStatement = createStatement(s_selectDiskPoolStatementString);
   }
   // retrieve the object from the database
-  std::set<int> diskPoolsList;
+  std::set<u_signed64> diskPoolsList;
   m_selectDiskPoolStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectDiskPoolStatement->executeQuery();
   while (rset->next()) {
-    diskPoolsList.insert(rset->getInt(1));
+    diskPoolsList.insert(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -468,7 +468,7 @@ void castor::db::cnv::DbSvcClassCnv::fillObjDiskPool(castor::stager::SvcClass* o
   for (std::vector<castor::stager::DiskPool*>::iterator it = obj->diskPools().begin();
        it != obj->diskPools().end();
        it++) {
-    std::set<int>::iterator item;
+    std::set<u_signed64>::iterator item;
     if ((item = diskPoolsList.find((*it)->id())) == diskPoolsList.end()) {
       toBeDeleted.push_back(*it);
     } else {
@@ -484,7 +484,7 @@ void castor::db::cnv::DbSvcClassCnv::fillObjDiskPool(castor::stager::SvcClass* o
     (*it)->removeSvcClasses(obj);
   }
   // Create new objects
-  for (std::set<int>::iterator it = diskPoolsList.begin();
+  for (std::set<u_signed64>::iterator it = diskPoolsList.begin();
        it != diskPoolsList.end();
        it++) {
     castor::IObject* item = cnvSvc()->getObjFromId(*it);

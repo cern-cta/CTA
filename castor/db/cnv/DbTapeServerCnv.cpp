@@ -198,11 +198,11 @@ void castor::db::cnv::DbTapeServerCnv::fillRepTapeDrive(castor::vdqm::TapeServer
     m_selectTapeDriveStatement = createStatement(s_selectTapeDriveStatementString);
   }
   // Get current database data
-  std::set<int> tapeDrivesList;
+  std::set<u_signed64> tapeDrivesList;
   m_selectTapeDriveStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectTapeDriveStatement->executeQuery();
   while (rset->next()) {
-    tapeDrivesList.insert(rset->getInt(1));
+    tapeDrivesList.insert(rset->getUInt64(1));
   }
   delete rset;
   // update tapeDrives and create new ones
@@ -221,7 +221,7 @@ void castor::db::cnv::DbTapeServerCnv::fillRepTapeDrive(castor::vdqm::TapeServer
       m_remoteUpdateTapeDriveStatement->setUInt64(1, obj->id());
       m_remoteUpdateTapeDriveStatement->setUInt64(2, (*it)->id());
       m_remoteUpdateTapeDriveStatement->execute();
-      std::set<int>::iterator item;
+      std::set<u_signed64>::iterator item;
       if ((item = tapeDrivesList.find((*it)->id())) != tapeDrivesList.end()) {
         tapeDrivesList.erase(item);
       }
@@ -230,7 +230,7 @@ void castor::db::cnv::DbTapeServerCnv::fillRepTapeDrive(castor::vdqm::TapeServer
   // create new objects
   cnvSvc()->bulkCreateRep(0, toBeCreated, false, OBJ_TapeServer);
   // Delete old links
-  for (std::set<int>::iterator it = tapeDrivesList.begin();
+  for (std::set<u_signed64>::iterator it = tapeDrivesList.begin();
        it != tapeDrivesList.end();
        it++) {
     if (0 == m_deleteTapeDriveStatement) {
@@ -276,11 +276,11 @@ void castor::db::cnv::DbTapeServerCnv::fillObjTapeDrive(castor::vdqm::TapeServer
     m_selectTapeDriveStatement = createStatement(s_selectTapeDriveStatementString);
   }
   // retrieve the object from the database
-  std::set<int> tapeDrivesList;
+  std::set<u_signed64> tapeDrivesList;
   m_selectTapeDriveStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectTapeDriveStatement->executeQuery();
   while (rset->next()) {
-    tapeDrivesList.insert(rset->getInt(1));
+    tapeDrivesList.insert(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -289,7 +289,7 @@ void castor::db::cnv::DbTapeServerCnv::fillObjTapeDrive(castor::vdqm::TapeServer
   for (std::vector<castor::vdqm::TapeDrive*>::iterator it = obj->tapeDrives().begin();
        it != obj->tapeDrives().end();
        it++) {
-    std::set<int>::iterator item;
+    std::set<u_signed64>::iterator item;
     if ((item = tapeDrivesList.find((*it)->id())) == tapeDrivesList.end()) {
       toBeDeleted.push_back(*it);
     } else {
@@ -305,7 +305,7 @@ void castor::db::cnv::DbTapeServerCnv::fillObjTapeDrive(castor::vdqm::TapeServer
     (*it)->setTapeServer(0);
   }
   // Create new objects
-  for (std::set<int>::iterator it = tapeDrivesList.begin();
+  for (std::set<u_signed64>::iterator it = tapeDrivesList.begin();
        it != tapeDrivesList.end();
        it++) {
     castor::IObject* item = cnvSvc()->getObjFromId(*it);
@@ -413,12 +413,12 @@ void castor::db::cnv::DbTapeServerCnv::bulkCreateRep(castor::IAddress* address,
       actingModeBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (4, actingModeBuffer, DBTYPE_INT, sizeof(actingModeBuffer[0]), actingModeBufLens);
+      (2, actingModeBuffer, DBTYPE_INT, sizeof(actingModeBuffer[0]), actingModeBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
     m_insertStatement->setDataBuffer
-      (5, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
+      (3, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);

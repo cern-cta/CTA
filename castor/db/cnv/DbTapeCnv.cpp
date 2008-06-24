@@ -299,11 +299,11 @@ void castor::db::cnv::DbTapeCnv::fillRepSegment(castor::stager::Tape* obj)
     m_selectSegmentStatement = createStatement(s_selectSegmentStatementString);
   }
   // Get current database data
-  std::set<int> segmentsList;
+  std::set<u_signed64> segmentsList;
   m_selectSegmentStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectSegmentStatement->executeQuery();
   while (rset->next()) {
-    segmentsList.insert(rset->getInt(1));
+    segmentsList.insert(rset->getUInt64(1));
   }
   delete rset;
   // update segments and create new ones
@@ -322,7 +322,7 @@ void castor::db::cnv::DbTapeCnv::fillRepSegment(castor::stager::Tape* obj)
       m_remoteUpdateSegmentStatement->setUInt64(1, obj->id());
       m_remoteUpdateSegmentStatement->setUInt64(2, (*it)->id());
       m_remoteUpdateSegmentStatement->execute();
-      std::set<int>::iterator item;
+      std::set<u_signed64>::iterator item;
       if ((item = segmentsList.find((*it)->id())) != segmentsList.end()) {
         segmentsList.erase(item);
       }
@@ -331,7 +331,7 @@ void castor::db::cnv::DbTapeCnv::fillRepSegment(castor::stager::Tape* obj)
   // create new objects
   cnvSvc()->bulkCreateRep(0, toBeCreated, false, OBJ_Tape);
   // Delete old links
-  for (std::set<int>::iterator it = segmentsList.begin();
+  for (std::set<u_signed64>::iterator it = segmentsList.begin();
        it != segmentsList.end();
        it++) {
     if (0 == m_deleteSegmentStatement) {
@@ -420,11 +420,11 @@ void castor::db::cnv::DbTapeCnv::fillObjSegment(castor::stager::Tape* obj)
     m_selectSegmentStatement = createStatement(s_selectSegmentStatementString);
   }
   // retrieve the object from the database
-  std::set<int> segmentsList;
+  std::set<u_signed64> segmentsList;
   m_selectSegmentStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectSegmentStatement->executeQuery();
   while (rset->next()) {
-    segmentsList.insert(rset->getInt(1));
+    segmentsList.insert(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -433,7 +433,7 @@ void castor::db::cnv::DbTapeCnv::fillObjSegment(castor::stager::Tape* obj)
   for (std::vector<castor::stager::Segment*>::iterator it = obj->segments().begin();
        it != obj->segments().end();
        it++) {
-    std::set<int>::iterator item;
+    std::set<u_signed64>::iterator item;
     if ((item = segmentsList.find((*it)->id())) == segmentsList.end()) {
       toBeDeleted.push_back(*it);
     } else {
@@ -449,7 +449,7 @@ void castor::db::cnv::DbTapeCnv::fillObjSegment(castor::stager::Tape* obj)
     (*it)->setTape(0);
   }
   // Create new objects
-  for (std::set<int>::iterator it = segmentsList.begin();
+  for (std::set<u_signed64>::iterator it = segmentsList.begin();
        it != segmentsList.end();
        it++) {
     castor::IObject* item = cnvSvc()->getObjFromId(*it);

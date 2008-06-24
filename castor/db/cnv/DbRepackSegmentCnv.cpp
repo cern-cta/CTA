@@ -461,12 +461,12 @@ void castor::db::cnv::DbRepackSegmentCnv::bulkCreateRep(castor::IAddress* addres
       repacksubrequestBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (18, repacksubrequestBuffer, DBTYPE_UINT64, sizeof(repacksubrequestBuffer[0]), repacksubrequestBufLens);
+      (10, repacksubrequestBuffer, DBTYPE_UINT64, sizeof(repacksubrequestBuffer[0]), repacksubrequestBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
     m_insertStatement->setDataBuffer
-      (19, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
+      (11, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);

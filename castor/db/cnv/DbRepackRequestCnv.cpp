@@ -198,11 +198,11 @@ void castor::db::cnv::DbRepackRequestCnv::fillRepRepackSubRequest(castor::repack
     m_selectRepackSubRequestStatement = createStatement(s_selectRepackSubRequestStatementString);
   }
   // Get current database data
-  std::set<int> repacksubrequestList;
+  std::set<u_signed64> repacksubrequestList;
   m_selectRepackSubRequestStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectRepackSubRequestStatement->executeQuery();
   while (rset->next()) {
-    repacksubrequestList.insert(rset->getInt(1));
+    repacksubrequestList.insert(rset->getUInt64(1));
   }
   delete rset;
   // update repacksubrequest and create new ones
@@ -221,7 +221,7 @@ void castor::db::cnv::DbRepackRequestCnv::fillRepRepackSubRequest(castor::repack
       m_remoteUpdateRepackSubRequestStatement->setUInt64(1, obj->id());
       m_remoteUpdateRepackSubRequestStatement->setUInt64(2, (*it)->id());
       m_remoteUpdateRepackSubRequestStatement->execute();
-      std::set<int>::iterator item;
+      std::set<u_signed64>::iterator item;
       if ((item = repacksubrequestList.find((*it)->id())) != repacksubrequestList.end()) {
         repacksubrequestList.erase(item);
       }
@@ -230,7 +230,7 @@ void castor::db::cnv::DbRepackRequestCnv::fillRepRepackSubRequest(castor::repack
   // create new objects
   cnvSvc()->bulkCreateRep(0, toBeCreated, false, OBJ_RepackRequest);
   // Delete old links
-  for (std::set<int>::iterator it = repacksubrequestList.begin();
+  for (std::set<u_signed64>::iterator it = repacksubrequestList.begin();
        it != repacksubrequestList.end();
        it++) {
     if (0 == m_deleteRepackSubRequestStatement) {
@@ -276,11 +276,11 @@ void castor::db::cnv::DbRepackRequestCnv::fillObjRepackSubRequest(castor::repack
     m_selectRepackSubRequestStatement = createStatement(s_selectRepackSubRequestStatementString);
   }
   // retrieve the object from the database
-  std::set<int> repacksubrequestList;
+  std::set<u_signed64> repacksubrequestList;
   m_selectRepackSubRequestStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectRepackSubRequestStatement->executeQuery();
   while (rset->next()) {
-    repacksubrequestList.insert(rset->getInt(1));
+    repacksubrequestList.insert(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -289,7 +289,7 @@ void castor::db::cnv::DbRepackRequestCnv::fillObjRepackSubRequest(castor::repack
   for (std::vector<castor::repack::RepackSubRequest*>::iterator it = obj->repacksubrequest().begin();
        it != obj->repacksubrequest().end();
        it++) {
-    std::set<int>::iterator item;
+    std::set<u_signed64>::iterator item;
     if ((item = repacksubrequestList.find((*it)->id())) == repacksubrequestList.end()) {
       toBeDeleted.push_back(*it);
     } else {
@@ -305,7 +305,7 @@ void castor::db::cnv::DbRepackRequestCnv::fillObjRepackSubRequest(castor::repack
     (*it)->setRepackrequest(0);
   }
   // Create new objects
-  for (std::set<int>::iterator it = repacksubrequestList.begin();
+  for (std::set<u_signed64>::iterator it = repacksubrequestList.begin();
        it != repacksubrequestList.end();
        it++) {
     castor::IObject* item = cnvSvc()->getObjFromId(*it);
@@ -532,12 +532,12 @@ void castor::db::cnv::DbRepackRequestCnv::bulkCreateRep(castor::IAddress* addres
       commandBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (20, commandBuffer, DBTYPE_INT, sizeof(commandBuffer[0]), commandBufLens);
+      (11, commandBuffer, DBTYPE_INT, sizeof(commandBuffer[0]), commandBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
     m_insertStatement->setDataBuffer
-      (22, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
+      (12, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);

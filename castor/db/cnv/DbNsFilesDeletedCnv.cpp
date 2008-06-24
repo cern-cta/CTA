@@ -233,11 +233,11 @@ void castor::db::cnv::DbNsFilesDeletedCnv::fillRepGCFile(castor::stager::NsFiles
     m_selectGCFileStatement = createStatement(s_selectGCFileStatementString);
   }
   // Get current database data
-  std::set<int> filesList;
+  std::set<u_signed64> filesList;
   m_selectGCFileStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectGCFileStatement->executeQuery();
   while (rset->next()) {
-    filesList.insert(rset->getInt(1));
+    filesList.insert(rset->getUInt64(1));
   }
   delete rset;
   // update files and create new ones
@@ -256,7 +256,7 @@ void castor::db::cnv::DbNsFilesDeletedCnv::fillRepGCFile(castor::stager::NsFiles
       m_remoteUpdateGCFileStatement->setUInt64(1, obj->id());
       m_remoteUpdateGCFileStatement->setUInt64(2, (*it)->id());
       m_remoteUpdateGCFileStatement->execute();
-      std::set<int>::iterator item;
+      std::set<u_signed64>::iterator item;
       if ((item = filesList.find((*it)->id())) != filesList.end()) {
         filesList.erase(item);
       }
@@ -265,7 +265,7 @@ void castor::db::cnv::DbNsFilesDeletedCnv::fillRepGCFile(castor::stager::NsFiles
   // create new objects
   cnvSvc()->bulkCreateRep(0, toBeCreated, false, OBJ_GCFileList);
   // Delete old links
-  for (std::set<int>::iterator it = filesList.begin();
+  for (std::set<u_signed64>::iterator it = filesList.begin();
        it != filesList.end();
        it++) {
     if (0 == m_deleteGCFileStatement) {
@@ -364,11 +364,11 @@ void castor::db::cnv::DbNsFilesDeletedCnv::fillObjGCFile(castor::stager::NsFiles
     m_selectGCFileStatement = createStatement(s_selectGCFileStatementString);
   }
   // retrieve the object from the database
-  std::set<int> filesList;
+  std::set<u_signed64> filesList;
   m_selectGCFileStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectGCFileStatement->executeQuery();
   while (rset->next()) {
-    filesList.insert(rset->getInt(1));
+    filesList.insert(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -377,7 +377,7 @@ void castor::db::cnv::DbNsFilesDeletedCnv::fillObjGCFile(castor::stager::NsFiles
   for (std::vector<castor::stager::GCFile*>::iterator it = obj->files().begin();
        it != obj->files().end();
        it++) {
-    std::set<int>::iterator item;
+    std::set<u_signed64>::iterator item;
     if ((item = filesList.find((*it)->id())) == filesList.end()) {
       toBeDeleted.push_back(*it);
     } else {
@@ -393,7 +393,7 @@ void castor::db::cnv::DbNsFilesDeletedCnv::fillObjGCFile(castor::stager::NsFiles
     (*it)->setRequest(0);
   }
   // Create new objects
-  for (std::set<int>::iterator it = filesList.begin();
+  for (std::set<u_signed64>::iterator it = filesList.begin();
        it != filesList.end();
        it++) {
     castor::IObject* item = cnvSvc()->getObjFromId(*it);
