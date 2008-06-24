@@ -1,3 +1,9 @@
+castor (2.1.7-10) unstable; urgency=low
+
+  * Sixth 2.1.7 production release
+
+-- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Tue, 24 Jun 2008 18:00:00 +0100
+
 castor (2.1.7-8) unstable; urgency=low
 
   * Fifth 2.1.7 production release
