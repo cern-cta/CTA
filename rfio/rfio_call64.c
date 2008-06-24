@@ -683,6 +683,12 @@ char tmpbuf[21], tmpbuf2[21];
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
+   /* Initialization of global variables */
+   /* cf. initialization in sropen64_v3(); here we only
+      initialise what we know about! */
+   first_write = 1;
+   first_read  = 1;
+
    p = rqstbuf + 2*WORDSIZE ;
    unmarshall_LONG(p, len) ;
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
