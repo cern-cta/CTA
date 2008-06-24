@@ -110,7 +110,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency()
         castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
       castor::dlf::Param("newStatus",
         castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_DOWN))};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       VDQM_DRIVE_STATE_TRANSITION, 4, param);
     
     ptr_tapeDrive->setStatus(UNIT_DOWN);
@@ -139,7 +139,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency()
           castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
         castor::dlf::Param("newStatus",
           castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_UP))};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
         VDQM_DRIVE_STATE_TRANSITION, 4, param);
 
       ptr_tapeDrive->setStatus(UNIT_UP);
@@ -153,7 +153,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency()
           castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
         castor::dlf::Param("newStatus",
           castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_UP))};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
         VDQM_DRIVE_STATE_TRANSITION, 4, param);
 
       ptr_tapeDrive->setStatus(UNIT_UP);
@@ -246,7 +246,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkBusyConsistency()
         castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
       castor::dlf::Param("newStatus",
         castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_STARTING))};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       VDQM_DRIVE_STATE_TRANSITION, 4, param);
 
     //The tapeDrive is now in starting mode
@@ -259,7 +259,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkBusyConsistency()
         castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
       castor::dlf::Param("newStatus",
         castor::vdqm::DevTools::tapeDriveStatus2Str(STATUS_UNKNOWN))};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       VDQM_DRIVE_STATE_TRANSITION, 4, param);
 
     ptr_tapeDrive->setStatus(STATUS_UNKNOWN);
@@ -470,7 +470,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::
                 ptr_tapeDrive->status())),
             castor::dlf::Param("newStatus",
               castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_ASSIGNED))};
-            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+            castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
               VDQM_DRIVE_STATE_TRANSITION, 4, param);
         }
         // Switched to unit ASSIGNED status
@@ -489,7 +489,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::
               ptr_tapeDrive->status())),
           castor::dlf::Param("newStatus",
             castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_ASSIGNED))};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+          castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
             VDQM_DRIVE_STATE_TRANSITION, 4, param);
         
         // Switched to unit ASSIGNED status
@@ -503,7 +503,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::
               ptr_tapeDrive->status())),
           castor::dlf::Param("newStatus",
             castor::vdqm::DevTools::tapeDriveStatus2Str(STATUS_UNKNOWN))};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+          castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
             VDQM_DRIVE_STATE_TRANSITION, 4, param);
 
         ptr_tapeDrive->setStatus(STATUS_UNKNOWN);
