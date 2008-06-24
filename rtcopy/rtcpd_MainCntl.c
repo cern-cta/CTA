@@ -1139,6 +1139,7 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
   int Tposition = 0;
   int totFiles = 0;
   char vid[CA_MAXVIDLEN+1] = "N/A";
+  char label[CA_MAXLBLTYPLEN+1] = "N/A";
   int mode,jobID,status,rc;
   int VolReqID;
   int client_uid, client_gid;
@@ -1191,6 +1192,7 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
       strcpy(unit,tapereq->unit);
       strcpy(dgn,tapereq->dgn);
       strcpy(vid,tapereq->vid);
+      strcpy(label,tapereq->label);
       Tservice = ((time_t)tapereq->TEndUnmount - 
                   (time_t)tapereq->TStartRequest);
       if (Tservice<0) {
@@ -1350,11 +1352,12 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
                      "Message", TL_MSG_PARAM_STR, "request successful" );
 
-    tl_rtcpd.tl_log( &tl_rtcpd, 44, 20, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 44, 21, 
                      "func"           , TL_MSG_PARAM_STR   , "rtcpd_FreeResources",
                      "Message"        , TL_MSG_PARAM_STR   , "Request statistics",
                      "RequestType"    , TL_MSG_PARAM_STR   , (mode == WRITE_ENABLE) ? "WRITE" : "READ",
                      "VID"            , TL_MSG_PARAM_STR   , vid, 
+                     "Label"          , TL_MSG_PARAM_STR   , label, 
                      "MountTime"      , TL_MSG_PARAM_INT   , TMount,
                      "ServiceTime"    , TL_MSG_PARAM_INT   , Tservice,
                      "WaitTime"       , TL_MSG_PARAM_INT   , Twait,
@@ -1378,11 +1381,12 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
                      "Message", TL_MSG_PARAM_STR, "request failed" );
     if ( Ttransfer <= 0 ) Ttransfer = 1;
-    tl_rtcpd.tl_log( &tl_rtcpd, 44, 20, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 44, 21, 
                      "func"           , TL_MSG_PARAM_STR   , "rtcpd_FreeResources",
                      "Message"        , TL_MSG_PARAM_STR   , "Request statistics",
                      "RequestType"    , TL_MSG_PARAM_STR   , (mode == WRITE_ENABLE) ? "WRITE" : "READ",
                      "VID"            , TL_MSG_PARAM_STR   , vid, 
+                     "Label"          , TL_MSG_PARAM_STR   , label, 
                      "MountTime"      , TL_MSG_PARAM_INT   , TMount,
                      "ServiceTime"    , TL_MSG_PARAM_INT   , Tservice,
                      "WaitTime"       , TL_MSG_PARAM_INT   , Twait,
