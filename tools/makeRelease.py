@@ -24,7 +24,7 @@ def runCommand(cmd, errorMessage):
 
 def findUpdates(d):
     res = []
-    # take all relevant update scripts (DLF included if needed)
+    # take all relevant update scripts
     updRegExp = re.compile('(\w*_)?\d+.\d+.\d+(-\d+|)_to_' + fullVersion + '.sql(plus)?')
     for f in os.listdir(d):
         if updRegExp.match(f):
@@ -62,8 +62,8 @@ runCommand('cvs -Q -d :kserver:isscvs.cern.ch:2000/local/reps/castor co -r ' + v
 # Create the tar ball
 print "Building the tar ball"
 os.chdir('CASTOR2')
-runCommand('make -f Makefile.ini Makefiles', 'could not create makefiles')
-runCommand('make tar', 'could not create tar ball')
+runCommand('make -f Makefile.ini Makefiles', 'Could not create makefiles')
+runCommand('make tar', 'Could not create tar ball')
 os.chdir(workDir)
 tarBall = 'castor-' + str(majversion) + '.' + str(minversion) + '.' + str(majrelease) + '.tar.gz'
 os.chmod(tarBall, 0664)
@@ -75,14 +75,19 @@ os.mkdir(intReleaseDir)
 os.chdir(intReleaseDir)
 for p in platforms:
     os.makedirs(p[0] + os.sep + p[1])
-os.mkdir('upgrades')
+os.mkdir('dbupgrades')
+os.mkdir('dbcreation')
 
 # Copy some files to internal release space
 shutil.copyfile(workDir + os.sep + tarBall, intReleaseDir + os.sep + tarBall)
 shutil.copyfile(workDir + os.sep + 'CASTOR2' + os.sep + 'ReleaseNotes', intReleaseDir + os.sep + 'ReleaseNotes')
 updDir = workDir + os.sep + 'CASTOR2' + os.sep + 'upgrades'
 for f in findUpdates(updDir):
-    shutil.copyfile(updDir + os.sep + f, intReleaseDir + os.sep + 'upgrades' + os.sep + f)
+    shutil.copyfile(updDir + os.sep + f, intReleaseDir + os.sep + 'dbupgrades' + os.sep + f)
+os.chdir(workDir + os.sep + 'CASTOR2')
+runCommand('makesql.sh ' + intReleaseDir + os.sep + 'dbcreation', 'Could not publish SQL scripts')
+
+sys.exit(0)
 
 # compile on the different architectures
 outputs = []
