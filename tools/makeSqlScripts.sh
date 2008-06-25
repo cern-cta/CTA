@@ -39,7 +39,7 @@ if [ $# == 3 ]; then
   mv tmp.sql $1_oracle_create.sql
 
   # generate sqlplus version
-  sed 's/^END;/END;\n\//' $1_oracle_create.sql | sed 's/^\(END castor[a-zA-Z]*;\)/\1\n\//' | sed 's/\(CREATE OR REPLACE TYPE .*;\)$/\1\n\//'  | sed 's/^);$/);\n\//' > $1_oracle_create.sqlplus
+  sed 's/^END;/END;\n\//' $1_oracle_create.sql | sed 's/^\(END castor[a-zA-Z]*;\)/\1\n\//' | sed 's/^\(END repack[a-zA-Z]*;\)/\1\n\//' | sed 's/\(CREATE OR REPLACE TYPE .*;\)$/\1\n\//'  | sed 's/^);$/);\n\//' | sed 's/.sql$/.sqlplus/' > $1_oracle_create.sqlplus
 
   echo Creation scripts for $1 generated with tag $3
 
