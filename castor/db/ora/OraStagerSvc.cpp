@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.255 $ $Release$ $Date: 2008/06/02 13:25:22 $ $Author: waldron $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.256 $ $Release$ $Date: 2008/06/25 07:05:11 $ $Author: gtaur $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1499,7 +1499,7 @@ castor::db::ora::OraStagerSvc::selectPriority
     while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::stager::PriorityMap* item = new castor::stager::PriorityMap();
       item->setEuid((u_signed64)rs->getDouble(1));
-      item->setEgid((u_signed64)rs->getDouble(3));
+      item->setEgid((u_signed64)rs->getDouble(2));
       item->setPriority((u_signed64)rs->getDouble(3));
       priorityList.push_back(item);
       status = rs->next();
