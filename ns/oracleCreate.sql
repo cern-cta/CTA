@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Revision: 1.4 $ $Date: 2008/04/21 11:44:21 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Revision: 1.5 $ $Date: 2008/06/25 12:44:29 $ $Author: waldron $
  *
  * This file creates the Name Server database schema.
  *
@@ -129,6 +129,10 @@ ALTER TABLE Cns_file_replica
 
 -- Create an index on Cns_file_metadata(PARENT_FILEID)
 CREATE INDEX PARENT_FILEID_IDX on Cns_file_metadata(PARENT_FILEID);
+
+-- Temporary table to support Cns_bulkexist calls
+CREATE GLOBAL TEMPORARY TABLE Cns_files_Exist_tmp
+(tmpFileId NUMBER) ON COMMIT DELETE ROWS;
 
 -- Create the "schema_version" table
 CREATE TABLE schema_version (major NUMBER(1), minor NUMBER(1), patch NUMBER(1));
