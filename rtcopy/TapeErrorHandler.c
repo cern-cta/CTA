@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.24 $ $Release$ $Date: 2008/05/28 08:07:12 $ $Author: gtaur $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.25 $ $Release$ $Date: 2008/06/25 10:01:13 $ $Author: gtaur $
  *
  * 
  *
@@ -324,8 +324,8 @@ static int doRecallRetry(
 
   /* get the old priority */
   
-    Cstager_Segment_creationTime(segment,&priority);
-  Cstager_Segment_setCreationTime(newSegment,priority);
+  Cstager_Segment_priority(segment,&priority);
+  Cstager_Segment_setPriority(newSegment,priority);
 
   Cstager_Segment_offset(segment,&offset);
   Cstager_Segment_setOffset(newSegment,offset);
