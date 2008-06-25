@@ -3,7 +3,7 @@ import sys, re, os, shutil, tempfile
 
 # list of platforms as a tuple (OS, arch, machine where to build)
 platforms = (('SLC4', 'x86_64', 'lxbuild085.cern.ch'),
-             ('SLC4', 'i386',   'lxb1952.cern.ch'))
+             ('SLC4', 'i386',   'lxs5012.cern.ch'))
 
 def usage():
     print sys.argv[0] + " <CVS tag of the release>"
