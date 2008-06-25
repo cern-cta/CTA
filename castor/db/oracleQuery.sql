@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.641 $ $Date: 2008/06/16 14:59:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.642 $ $Date: 2008/06/25 12:26:10 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -361,8 +361,9 @@ BEGIN
   -- access to view all the diskpools has been revoked. The information extracted
   -- here will be used to send an appropriate error message to the client.
   IF result%ROWCOUNT = 0 THEN
-    SELECT CASE COUNT(*)
-           WHEN sum(checkPermissionOnSvcClass(sc.name, reqEuid, reqEgid, 103)) THEN -1 END
+    SELECT CASE count(*)
+           WHEN sum(checkPermissionOnSvcClass(sc.name, reqEuid, reqEgid, 103)) THEN -1 
+           ELSE count(*) END
       INTO res
       FROM DiskPool2SvcClass d2s, SvcClass sc
      WHERE d2s.child = sc.id
@@ -412,7 +413,7 @@ BEGIN
   -- access to view all the diskpools has been revoked. The information extracted
   -- here will be used to send an appropriate error message to the client.
   IF result%ROWCOUNT = 0 THEN
-    SELECT COUNT(*) INTO res
+    SELECT count(*) INTO res
       FROM DiskPool dp, DiskPool2SvcClass d2s, SvcClass sc
      WHERE d2s.child = sc.id
        AND d2s.parent = dp.id
