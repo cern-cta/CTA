@@ -404,8 +404,16 @@ throw (castor::exception::Exception) {
   DO_MARSHALL(LONG,p,reqtype,SendTo);
   DO_MARSHALL(LONG,p,len,SendTo);
 
-  // Send buffer to the client
-  SocketHelper::netWriteVdqmHeader(ptr_serverSocket, hdrbuf);
+  try {
+    SocketHelper::netWriteVdqmHeader(ptr_serverSocket, hdrbuf);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << "Failed to write VDQM header to client: "
+      << ex.getMessage().str();
+
+    throw ie;
+  }
    
   if ( len > 0 ) {
     rc = netwrite_timeout(ptr_serverSocket->socket(), buf, len, VDQM_TIMEOUT);
@@ -456,8 +464,16 @@ throw (castor::exception::Exception) {
   len = 0;
   p = hdrbuf;
   
-  //send buffer to the client
-  SocketHelper::netWriteVdqmHeader(ptr_serverSocket, hdrbuf);
+  try {
+    SocketHelper::netWriteVdqmHeader(ptr_serverSocket, hdrbuf);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << "Failed to send achknowledge to client: "
+      << ex.getMessage().str();
+
+    throw ie;
+  }
 }
 
 
@@ -475,8 +491,16 @@ throw (castor::exception::Exception) {
   len = 0;
   recvreqtype = 0;
   
-  //Reads the header from the socket
-  SocketHelper::netReadVdqmHeader(ptr_serverSocket, hdrbuf);
+  try {
+    SocketHelper::netReadVdqmHeader(ptr_serverSocket, hdrbuf);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << "Failed to read acknowledge from client: "
+      << ex.getMessage().str();
+
+    throw ie;
+  }
   
   p = hdrbuf;
   DO_MARSHALL(LONG, p, magic, ReceiveFrom);
@@ -506,8 +530,16 @@ throw (castor::exception::Exception) {
   DO_MARSHALL(LONG,p,reqtype,SendTo);
   DO_MARSHALL(LONG,p,queuePosition,SendTo);
     
-  //Send buffer to client
-  SocketHelper::netWriteVdqmHeader(ptr_serverSocket, hdrbuf);
+  try {
+    SocketHelper::netWriteVdqmHeader(ptr_serverSocket, hdrbuf);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << "Failed to write acknowledge ping to client: "
+      << ex.getMessage().str();
+
+    throw ex;
+  }
 }
 
 
@@ -537,6 +569,14 @@ throw (castor::exception::Exception) {
   len = 0;
   p = hdrbuf;
   
-  //Send buffer to client
-  SocketHelper::netWriteVdqmHeader(ptr_serverSocket, hdrbuf);
+  try {
+    SocketHelper::netWriteVdqmHeader(ptr_serverSocket, hdrbuf);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << "Failed to write acknowledge rollback to client: "
+      << ex.getMessage().str();
+
+    throw ie;
+  }
 }
