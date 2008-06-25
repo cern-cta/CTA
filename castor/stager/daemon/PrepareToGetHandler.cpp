@@ -143,8 +143,8 @@ namespace castor{
               stgReplyHelper = 0;
             }
             else {
-              // no reply needs to be sent to the client, hence just commit the db transaction
-              stgRequestHelper->dbSvc->commit();
+              // no reply needs to be sent to the client, hence update subRequest and commit the db transaction
+              stgRequestHelper->dbSvc->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
             }
           }	  
           
