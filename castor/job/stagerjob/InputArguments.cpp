@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: InputArguments.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/04/24 13:13:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: InputArguments.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/06/25 12:36:07 $ $Author: waldron $
  *
  * small struct holding the list of arguments passed to stagerJob
  *
@@ -59,8 +59,8 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
 
   // fileid and nshost
   std::string input = argv[1];
-  unsigned int atPos = input.find('@');
-  if (atPos == input.npos) {
+  std::string::size_type atPos = input.find('@');
+  if (atPos == std::string::npos) {
     castor::exception::InvalidArgument e;
     e.getMessage() << "First argument should be <fileid>@<nshost>. "
                    << "No '@' found.";
@@ -106,7 +106,7 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
   // subrequest_id and type
   input = argv[5];
   atPos = input.find('@');
-  if (atPos == input.npos) {
+  if (atPos == std::string::npos) {
     castor::exception::InvalidArgument e;
     e.getMessage() << "Fifth argument should be <subreqId>@<type>. "
                    << "No '@' found.";

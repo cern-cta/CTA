@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api_changePrivilege.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/06/03 11:56:04 $ $Author: waldron $
+ * @(#)$RCSfile: stager_client_api_changePrivilege.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/06/25 12:40:51 $ $Author: waldron $
  *
  * api to handle privileges i.e. modify the black and white list
  *
@@ -117,8 +117,8 @@ void parseUsers(char *susers,
     castor::bwlist::BWUser *u = new castor::bwlist::BWUser();
     // split it
     try {
-      unsigned int colonPos = couple.find_first_of(':');
-      if (colonPos == couple.npos) {
+      std::string::size_type colonPos = couple.find_first_of(':');
+      if (colonPos == std::string::npos) {
         u->setEuid(getUserId(couple));
         u->setEgid(-1);
       } else {
