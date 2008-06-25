@@ -33,9 +33,9 @@
 #include "castor/vdqm/OldRequestFacade.hpp"
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
 #include "castor/vdqm/ProtocolFacade.hpp"
+#include "castor/vdqm/SocketHelper.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/VdqmMagic2ProtocolInterpreter.hpp"
-#include "castor/vdqm/VdqmSocketHelper.hpp"
 #include "castor/vdqm/handler/VdqmMagic2RequestHandler.hpp"
 #include "h/vdqm_constants.h"  //e.g. Magic Number of old vdqm protocol
 
@@ -80,8 +80,7 @@ void castor::vdqm::ProtocolFacade::handleProtocolVersion()
   // get the incoming request
   try {
     // First check of the Protocol
-    magicNumber =
-          VdqmSocketHelper::readMagicNumber(ptr_serverSocket->socket());
+    magicNumber = SocketHelper::readMagicNumber(ptr_serverSocket);
   } catch (castor::exception::Exception &e) {  
     // "Unable to read Request from socket" message
     castor::dlf::Param params[] = {

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      VdqmSocketHelper.hpp
+ *                      SocketHelper.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,12 @@
  * @author castor dev team
  *****************************************************************************/
  
-#ifndef CASTOR_VDQM_VDQMSOCKETHELPER_HPP
-#define CASTOR_VDQM_VDQMSOCKETHELPER_HPP 1
+#ifndef CASTOR_VDQM_SOCKETHELPER_HPP
+#define CASTOR_VDQM_SOCKETHELPER_HPP 1
+
+#include "castor/io/ServerSocket.hpp"
+
+#include <iostream>
 
 
 namespace castor {
@@ -34,45 +38,46 @@ namespace castor {
      * Provides VDQM specific helper functions to work with sockets used by the
      * VDQM.
      */
-    class VdqmSocketHelper {
+    class SocketHelper {
 
     public:
 
       /**
-       * Reads the first four Bytes of the header. This function was added to 
+       * Reads the first four bytes of the header. This function was added to 
        * support also the older VDQM protocol. The magic number defines, which
        * protocol is used.
        * 
-       * @return The magic number
-       * @exception In case of error
+       * @param the socket to be read from.
+       * @return the magic number.
        */
-      static unsigned int readMagicNumber(const int socket)
-      throw (castor::exception::Exception);
+      static unsigned int readMagicNumber(castor::io::ServerSocket *const
+        socket) throw (castor::exception::Exception);
 
       /**
-       * This function is used internally to write the header buffer 
-       * on the socket.
+       * Writes the contents of the specified header buffer to the specified
+       * socket.
        * 
+       * @param socket the socket to be written to.
        * @param hdrbuf The header buffer, which contains the data for the client
        * @exception In case of error
        */
-      static void vdqmNetwrite(const int socket, void* hdrbuf) 
-      throw (castor::exception::Exception);
+      static void netWriteVdqmHeader(castor::io::ServerSocket *const socket,
+        void *hdrbuf) throw (castor::exception::Exception);
           
       /**
-       * This function is used internally to read the header 
-       * from the socket to the overgiven buffer.
+       * Reads the VDQM header from the specified socket into the specified
+       * buffer.
        * 
-       * @param hdrbuf The header buffer, where the data will be written to
-       * @exception In case of error
+       * @param socket the socket to be read from.
+       * @param hdrbuf the header buffer where the data will be written to
        */
-      static void vdqmNetread(const int socket, void* hdrbuf) 
-      throw (castor::exception::Exception);       
+      static void netReadVdqmHeader(castor::io::ServerSocket *const socket,
+        void *hdrbuf) throw (castor::exception::Exception);       
 
-    }; // class VdqmSocketHelper
+    }; // class SocketHelper
 
   } // namespace vdqm
 
 } // namespace castor
 
-#endif // CASTOR_VDQM_VDQMSOCKETHELPER_HPP
+#endif // CASTOR_VDQM_SOCKETHELPER_HPP

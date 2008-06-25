@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.36 $ $Release$ $Date: 2008/06/25 12:40:33 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.37 $ $Release$ $Date: 2008/06/25 16:13:34 $ $Author: murrayc3 $
 #
 # Make Castor vdqm library
 #
@@ -52,9 +52,9 @@ VDQMBIN_SRCS = CDevTools.cpp \
                RequestHandlerThread.cpp \
                RTCopyDConnection.cpp \
                RTCPJobSubmitterThread.cpp \
+               SocketHelper.cpp \
                VdqmMagic2ProtocolInterpreter.cpp \
                VdqmServer.cpp \
-               VdqmSocketHelper.cpp \
                handler/BaseRequestHandler.cpp \
                handler/TapeDriveConsistencyChecker.cpp \
                handler/TapeDriveHandler.cpp \

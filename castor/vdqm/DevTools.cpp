@@ -43,7 +43,7 @@ castor::vdqm::DevTools::DevTools() throw() {
 
 
 //------------------------------------------------------------------------------
-// printVdqmRequestType
+// printIp
 //------------------------------------------------------------------------------
 void castor::vdqm::DevTools::printIp(std::ostream &os, const unsigned long ip)
   throw() {
@@ -51,6 +51,29 @@ void castor::vdqm::DevTools::printIp(std::ostream &os, const unsigned long ip)
        << ((ip >> 16) & 0x000000FF) << "."
        << ((ip >>  8) & 0x000000FF) << "."
        << ( ip        & 0x000000FF);
+}
+
+
+//------------------------------------------------------------------------------
+// printSocketDescription
+//------------------------------------------------------------------------------
+void castor::vdqm::DevTools::printSocketDescription(std::ostream &os,
+  castor::io::ServerSocket *const socket) {
+
+  unsigned short localPort = 0;
+  unsigned long  localIp   = 0;
+  unsigned short peerPort  = 0;
+  unsigned long  peerIp    = 0;
+
+  socket->getPortIp(localPort, localIp);
+  socket->getPeerIp(peerPort , peerIp );
+
+  os << "local=";
+  castor::vdqm::DevTools::printIp(os, localIp);
+  os << ":" << localPort;
+  os << " peer=";
+  castor::vdqm::DevTools::printIp(os, peerIp);
+  os << ":" << peerPort;
 }
 
 

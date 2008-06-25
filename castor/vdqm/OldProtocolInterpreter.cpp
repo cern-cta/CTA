@@ -45,7 +45,7 @@
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/vdqmMacros.h"  // Needed for marshalling
-#include "castor/vdqm/VdqmSocketHelper.hpp"
+#include "castor/vdqm/SocketHelper.hpp"
 
 
 //------------------------------------------------------------------------------
@@ -405,7 +405,7 @@ throw (castor::exception::Exception) {
   DO_MARSHALL(LONG,p,len,SendTo);
 
   // Send buffer to the client
-  VdqmSocketHelper::vdqmNetwrite(ptr_serverSocket->socket(), hdrbuf);
+  SocketHelper::netWriteVdqmHeader(ptr_serverSocket, hdrbuf);
    
   if ( len > 0 ) {
     rc = netwrite_timeout(ptr_serverSocket->socket(), buf, len, VDQM_TIMEOUT);
@@ -457,7 +457,7 @@ throw (castor::exception::Exception) {
   p = hdrbuf;
   
   //send buffer to the client
-  VdqmSocketHelper::vdqmNetwrite(ptr_serverSocket->socket(), hdrbuf);
+  SocketHelper::netWriteVdqmHeader(ptr_serverSocket, hdrbuf);
 }
 
 
@@ -476,7 +476,7 @@ throw (castor::exception::Exception) {
   recvreqtype = 0;
   
   //Reads the header from the socket
-  VdqmSocketHelper::vdqmNetread(ptr_serverSocket->socket(), hdrbuf);
+  SocketHelper::netReadVdqmHeader(ptr_serverSocket, hdrbuf);
   
   p = hdrbuf;
   DO_MARSHALL(LONG, p, magic, ReceiveFrom);
@@ -507,7 +507,7 @@ throw (castor::exception::Exception) {
   DO_MARSHALL(LONG,p,queuePosition,SendTo);
     
   //Send buffer to client
-  VdqmSocketHelper::vdqmNetwrite(ptr_serverSocket->socket(), hdrbuf);
+  SocketHelper::netWriteVdqmHeader(ptr_serverSocket, hdrbuf);
 }
 
 
@@ -538,5 +538,5 @@ throw (castor::exception::Exception) {
   p = hdrbuf;
   
   //Send buffer to client
-  VdqmSocketHelper::vdqmNetwrite(ptr_serverSocket->socket(), hdrbuf);
+  SocketHelper::netWriteVdqmHeader(ptr_serverSocket, hdrbuf);
 }

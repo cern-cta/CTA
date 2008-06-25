@@ -26,11 +26,12 @@
 #ifndef CASTOR_VDQM_DEVTOOLS_HPP
 #define CASTOR_VDQM_DEVTOOLS_HPP 1
 
+#include "castor/exception/Exception.hpp"
+#include "castor/io/ServerSocket.hpp"
+#include "castor/vdqm/TapeDriveStatusCodes.hpp"
+
 #include <stdint.h>
 #include <iostream>
-
-#include "castor/exception/Exception.hpp"
-#include "castor/vdqm/TapeDriveStatusCodes.hpp"
 
 
 namespace castor {
@@ -51,6 +52,17 @@ namespace castor {
        * @param ip the IP address in host byte order.
        */
       static void printIp(std::ostream &os, const unsigned long ip) throw();
+
+      /**
+       * Prints a textual description of the specified socket to the specified
+       * output stream.
+       *
+       * @param os the output stream to which the string is to be printed.
+       * @param the socket whose textual description is to be printed to the
+       * stream.
+       */
+      static void printSocketDescription(std::ostream &os,
+        castor::io::ServerSocket *const socket);
 
       /**
        * Prints the magic number, request type, and IP information of the

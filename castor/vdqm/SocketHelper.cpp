@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      VdqmSocketHelper.cpp
+ *                      SocketHelper.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -41,7 +41,7 @@
 
 // Local Includes
 #include "castor/vdqm/DevTools.hpp"
-#include "castor/vdqm/VdqmSocketHelper.hpp"
+#include "castor/vdqm/SocketHelper.hpp"
 #include "castor/vdqm/vdqmMacros.h"  // Needed for marshalling
 
 // definition of some constants
@@ -52,54 +52,48 @@
 //------------------------------------------------------------------------------
 // readMagicNumber
 //------------------------------------------------------------------------------
-unsigned int castor::vdqm::VdqmSocketHelper::readMagicNumber(const int socket)
+unsigned int castor::vdqm::SocketHelper::readMagicNumber(
+  castor::io::ServerSocket *const socket)
   throw (castor::exception::Exception) {
 
   char buffer[sizeof(unsigned int)];
-  char *p;
-  int ret;
-  unsigned int magic;
 
   // Read the magic number from the socket
-  ret = netread(socket, buffer, sizeof(unsigned int));
+  int rc = netread(socket->socket(), buffer, sizeof(unsigned int));
 
-  if (ret != sizeof(unsigned int)) {
-    if (0 == ret) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "VdqmSocketHelper::readMagicNumber(): "
-                      << "Unable to receive Magic Number" << std::endl
-                      << "The connection was closed by remote end";
-      throw ex;
-    } else if (-1 == ret) {
+  switch(rc) {
+  case -1:
+    {
       castor::exception::Exception ex(serrno);
-      ex.getMessage() << "VdqmSocketHelper::readMagicNumber(): "
-                      << "Unable to receive Magic Number: "
-                      << errno << " - " << strerror(errno) << std::endl;
+      std::ostream &os = ex.getMessage();
+      os << "Failed to read Magic Number from socket: ";
+      castor::vdqm::DevTools::printSocketDescription(os, socket);
+      os << ": " << errno << " - " << strerror(errno);
       throw ex;
-    } else {
+    }
+  case 0:
+    {
       castor::exception::Internal ex;
-      ex.getMessage() << "VdqmSocketHelper::readMagicNumber(): "
-                      << "Received Magic Number is too short : only "
-                      << ret << " bytes";
+      std::ostream &os = ex.getMessage();
+      os << "Failed to read Magic Number from socket: ";
+      castor::vdqm::DevTools::printSocketDescription(os, socket);
+      os << ": connection was closed by the remote end";
+      throw ex;
+    }
+  default:
+    if (rc != sizeof(unsigned int)) {
+      castor::exception::Internal ex;
+      std::ostream &os = ex.getMessage();
+      os << "Failed to read Magic Number from socket: ";
+      castor::vdqm::DevTools::printSocketDescription(os, socket);
+      os << ": received the wrong number of bytes: received: " << rc
+         << " expected: " << sizeof(unsigned int);
       throw ex;
     }
   }
 
-
-  /**
-   * This is code for the C++ world, which is not compatible with the
-   * C Marshalling of the magic number.
-   */
-  //  message = std::string(buffer, sizeof(unsigned int));
-  //  castor::io::biniostream rcvStream(message);
-  // castor::io::biniostream& addrPointer = rcvStream;
-  //
-  // /**
-  //  * Do the unmarshalling of the message
-  //  */
-  //  addrPointer >> magic;
-
-  p = buffer;
+  char *p = buffer;
+  unsigned int magic;
   DO_MARSHALL(LONG, p, magic, ReceiveFrom);
 
   return magic;
@@ -107,71 +101,80 @@ unsigned int castor::vdqm::VdqmSocketHelper::readMagicNumber(const int socket)
 
 
 //------------------------------------------------------------------------------
-// vdqmNetwrite
+// netWriteVdqmHeader
 //------------------------------------------------------------------------------
-void castor::vdqm::VdqmSocketHelper::vdqmNetwrite(const int socket,
-  void* hdrbuf)
+void castor::vdqm::SocketHelper::netWriteVdqmHeader(
+  castor::io::ServerSocket *const socket, void *hdrbuf)
   throw (castor::exception::Exception) {
-  int rc;
 
-#ifdef PRINT_NETWORK_MESSAGES
-  castor::vdqm::DevTools::printMessage(std::cout, true, true, socket, hdrbuf);
-#endif
+  int rc = netwrite_timeout(socket->socket(), hdrbuf, VDQM_HDRBUFSIZ,
+    VDQM_TIMEOUT);
 
-  rc = netwrite_timeout(socket, hdrbuf, VDQM_HDRBUFSIZ, VDQM_TIMEOUT);
   switch (rc) {
   case -1:
     {
       serrno = SECOMERR;
       castor::exception::Exception ex(serrno);
-      ex.getMessage() << "VdqmSocketHelper: "
-                      << "netwrite(HDR): "
-                      << neterror() << std::endl;
+      std::ostream &os = ex.getMessage();
+      os << "Failed to write VDQM header to socket: ";
+      castor::vdqm::DevTools::printSocketDescription(os, socket);
+      os << ": " << neterror();
       throw ex;
     }
-    break;
   case 0:
     {
       serrno = SECONNDROP;
       castor::exception::Exception ex(serrno);
-      ex.getMessage() << "VdqmSocketHelper: "
-                      << "netwrite(HDR): connection dropped"
-                      << std::endl;
+      std::ostream &os = ex.getMessage();
+      os << "Failed to write VDQM header to socket: ";
+      castor::vdqm::DevTools::printSocketDescription(os, socket);
+      os << ": connection was closed by the remote end";
       throw ex;
     }
   }
+
+#ifdef PRINT_NETWORK_MESSAGES
+  castor::vdqm::DevTools::printMessage(std::cout, true, true, socket->socket(),
+    hdrbuf);
+#endif
 }
 
 
 //------------------------------------------------------------------------------
-// vdqmNetread
+// netReadVdqmHeader
 //------------------------------------------------------------------------------
-void castor::vdqm::VdqmSocketHelper::vdqmNetread(const int socket, void* hdrbuf)
+void castor::vdqm::SocketHelper::netReadVdqmHeader(
+  castor::io::ServerSocket *const socket, void* hdrbuf)
   throw (castor::exception::Exception) {
-  int rc;
 
-  rc = netread_timeout(socket, hdrbuf, VDQM_HDRBUFSIZ, VDQM_TIMEOUT);
-#ifdef PRINT_NETWORK_MESSAGES
-  castor::vdqm::DevTools::printMessage(std::cout, false, true, socket, hdrbuf);
-#endif
+  int rc = netread_timeout(socket->socket(), hdrbuf, VDQM_HDRBUFSIZ,
+    VDQM_TIMEOUT);
+
   switch (rc) {
   case -1:
     {
       serrno = SECOMERR;
       castor::exception::Exception ex(serrno);
-      ex.getMessage() << "VdqmSocketHelper: "
-                      << "netread(HDR): "
-                      << neterror() << std::endl;
+      std::ostream &os = ex.getMessage();
+      os << "Failed to read VDQM header from socket: ";
+      castor::vdqm::DevTools::printSocketDescription(os, socket);
+      os << ": " << neterror();
       throw ex;
     }
   case 0:
     {
       serrno = SECONNDROP;
       castor::exception::Exception ex(serrno);
-      ex.getMessage() << "VdqmSocketHelper: "
-                      << "netread(HDR): connection dropped"
-                      << std::endl;
+      std::ostream &os = ex.getMessage();
+      os << "Failed to read VDQM header from socket: ";
+      castor::vdqm::DevTools::printSocketDescription(os, socket);
+      os << ": connection was closed by the remote end";
       throw ex;
     }
   }
+
+#ifdef PRINT_NETWORK_MESSAGES
+  castor::vdqm::DevTools::printMessage(std::cout, false, true, socket->socket(),
+    hdrbuf);
+#endif
 }
