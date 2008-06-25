@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dlf_oracle_drop.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/04/21 12:08:21 $ $Author: waldron $
+ * @(#)$RCSfile: dlf_oracle_drop.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/25 12:50:05 $ $Author: waldron $
  *
  * This script drops a DLF schema
  *
@@ -33,9 +33,7 @@ BEGIN
 
   -- Drop all objects (ignore monitoring ones!)
   FOR rec IN (SELECT object_name, object_type FROM user_objects
-              WHERE  object_name NOT LIKE 'PROC_%'
-              AND    object_name NOT LIKE 'MONITORING_%'
-              ORDER BY object_name, object_type)
+               ORDER BY object_name, object_type)
   LOOP
     IF rec.object_type = 'TABLE' THEN
       EXECUTE IMMEDIATE 'DROP TABLE '||rec.object_name||' CASCADE CONSTRAINTS';
@@ -60,11 +58,13 @@ BEGIN
     FROM dual;
 
   -- Drop tablespaces
-  FOR rec IN (SELECT tablespace_name
+  FOR rec IN (SELECT tablespace_name, status
                 FROM user_tablespaces
                WHERE tablespace_name LIKE CONCAT('DLF_%_', username))
   LOOP
-    EXECUTE IMMEDIATE 'ALTER TABLESPACE '||rec.tablespace_name||' OFFLINE';
+    IF rec.status = 'ONLINE' THEN
+      EXECUTE IMMEDIATE 'ALTER TABLESPACE '||rec.tablespace_name||' OFFLINE';
+    END IF;
     EXECUTE IMMEDIATE 'DROP TABLESPACE '||rec.tablespace_name||'
                        INCLUDING CONTENTS AND DATAFILES';
   END LOOP;
