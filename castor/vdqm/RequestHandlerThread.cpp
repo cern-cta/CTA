@@ -125,7 +125,7 @@ void castor::vdqm::RequestHandlerThread::handleRequest(Cuuid_t *cuuid,
   try {
 
     // The ProtocolFacade manages the analysis of the remaining socket message
-    ProtocolFacade protocolFacade(sock, cuuid);
+    ProtocolFacade protocolFacade(sock, *cuuid);
 
     protocolFacade.handleProtocolVersion();
 

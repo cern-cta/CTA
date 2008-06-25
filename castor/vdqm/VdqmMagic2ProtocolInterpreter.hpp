@@ -51,7 +51,7 @@ namespace castor {
        * @exception In case that one of the parameters is NULL
        */
       VdqmMagic2ProtocolInterpreter(castor::io::ServerSocket *const sock,
-        const Cuuid_t *const cuuid)throw (castor::exception::Exception);
+        const Cuuid_t &cuuid)throw (castor::exception::Exception);
 
       /**
        * Reads the message header of VDQM message with a magic number of
@@ -76,7 +76,8 @@ namespace castor {
        * @param vdqmVolPriority Pointer to the memory which the message body
        * should be read out into
        */
-      void readVolPriority(const int len, vdqmVolPriority_t *const vdqmVolPriority)
+      void readVolPriority(const int len,
+        vdqmVolPriority_t *const vdqmVolPriority)
         throw(castor::exception::Exception);
 
 
@@ -90,7 +91,7 @@ namespace castor {
       /**
        * The cuuid of the request
        */
-      const Cuuid_t *m_cuuid;
+      const Cuuid_t &m_cuuid;
 
     }; // class VdqmMagic2ProtocolInterpreter
 

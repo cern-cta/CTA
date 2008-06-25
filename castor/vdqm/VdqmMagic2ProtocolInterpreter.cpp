@@ -33,12 +33,12 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::vdqm::VdqmMagic2ProtocolInterpreter::VdqmMagic2ProtocolInterpreter(
-  castor::io::ServerSocket *const sock, const Cuuid_t *const cuuid)
+  castor::io::ServerSocket *const sock, const Cuuid_t &cuuid)
   throw(castor::exception::Exception) : m_sock(sock), m_cuuid(cuuid) {
 
-  if(0 == sock || 0 == cuuid) {
+  if(0 == sock) {
     castor::exception::InvalidArgument ex;
-    ex.getMessage() << "One of the arguments is NULL";
+    ex.getMessage() << "sock argument is NULL";
     throw ex;
   }
 }

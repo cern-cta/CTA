@@ -54,7 +54,7 @@ namespace castor {
        * @exception In case that one of the parameter is NULL
        */
       ProtocolFacade(castor::io::ServerSocket* serverSocket,
-        const Cuuid_t* cuuid)
+        const Cuuid_t &cuuid)
       throw (castor::exception::Exception);
       
       /**
@@ -103,7 +103,7 @@ namespace castor {
       /**
        * The cuuid of the request
        */
-      const Cuuid_t* m_cuuid;
+      const Cuuid_t &m_cuuid;
     
     }; // class ProtocolFacade
 

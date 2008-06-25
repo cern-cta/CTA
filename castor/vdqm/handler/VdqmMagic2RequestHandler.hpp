@@ -48,9 +48,11 @@ namespace castor {
         /**
          * Handles the specified vdqmVolPriority message.
          *
+         * @param cuuid the unique id of the request. Needed for dlf.
          * @param vdqmVolPriority the vdqmVolPriority message.
          */
-        void handleVolPriority(vdqmVolPriority_t *const vdqmVolPriority)
+        void handleVolPriority(const Cuuid_t &cuuid,
+          vdqmVolPriority_t *const vdqmVolPriority)
           throw (castor::exception::Exception);
 
       }; // class VdqmMagic2RequestHandler
