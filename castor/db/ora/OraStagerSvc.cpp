@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.256 $ $Release$ $Date: 2008/06/25 07:05:11 $ $Author: gtaur $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.257 $ $Release$ $Date: 2008/06/25 16:00:24 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -667,14 +667,14 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
 				      subreq->request()->egid(), svcClass, tape);
 
       // If we are here, we do have segments to recall
-      // create DiskCopy
-      dc = new castor::stager::DiskCopy();
-      dc->setCastorFile(cf);
-
-      // We need to create this object now, so we have the DB id for
+      // create DiskCopy, and store in the DB so we have the id for
       // the following operation
-      cnvSvc()->createRep(&ad, dc, false);
-      cnvSvc()->fillRep(&ad, dc, OBJ_CastorFile, false);
+      dc = new castor::stager::DiskCopy();
+      dc->setStatus(castor::stager::DISKCOPY_WAITTAPERECALL);
+      dc->setCreationTime(time(NULL));
+      dc->setCastorFile(cf);
+      cf->addDiskCopies(dc);
+      cnvSvc()->fillRep(&ad, cf, OBJ_DiskCopy, false);
 
       // Build the path, since we now have the DB id from the DiskCopy;
       // note that this line duplicates the buildPathFromFileId PL/SQL
@@ -684,11 +684,7 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
         spath << "0";
       spath << cf->fileId() % 100 << "/" << cf->fileId()
             << "@" << cf->nsHost() << "." << dc->id();
-
-      // Set the diskcopy to WAITTAPERECALL and the creationtime
       dc->setPath(spath.str());
-      dc->setStatus(castor::stager::DISKCOPY_WAITTAPERECALL);
-      dc->setCreationTime(time(NULL));
       cnvSvc()->updateRep(&ad, dc, false);
 
       // We link the subreq with the diskcopy
@@ -1175,12 +1171,13 @@ int validateNsSegments(struct Cns_segattrs *nsSegments, int nbNsSegments)
       e.getMessage() << "validateNsSegments : vmgr_querytape failed";
       throw e;
     }
-    // check tape status; here we let requests for DISABLED tapes as they may
-    // come back at the time the request is served by VDQM
-    if(((vmgrTapeInfo.status & ARCHIVED) == ARCHIVED) ||
+    // check tape status; when STANDBY tapes will be supported, they will
+    // be let through, while we consider any of the following as permanent errors
+    if(((vmgrTapeInfo.status & DISABLED) == DISABLED) ||
+       ((vmgrTapeInfo.status & ARCHIVED) == ARCHIVED) ||
        ((vmgrTapeInfo.status & EXPORTED) == EXPORTED)) {
       free(nsSegments);
-      // The tape is not accessible at all (i.e. out of the robot), inform user
+      // The tape is not accessible at all (e.g. out of the robot or in maintenance), inform user
       castor::exception::TapeOffline e;
       e.getMessage() << sstrerror(e.code());
       throw e;
