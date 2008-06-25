@@ -53,7 +53,7 @@
 // to implement the priority hack
 
 extern "C" {
-  int vdqm_SendVolPriority(char*, int, int);
+  int vdqm_SendVolPriority(char*, int, int, int);
 };
 
 namespace castor {
@@ -135,7 +135,7 @@ void RecHandlerThread::run(void* par)
 
 	       // call to VDQM with the priority (temporary hack)
 
-	       vdqm_SendVolPriority((char*)realInfo->vid().c_str(),0,priorityChosen);
+	       vdqm_SendVolPriority((char*)realInfo->vid().c_str(),0,priorityChosen,0);
 
 	     } else {
 	       castor::dlf::Param params[] =
