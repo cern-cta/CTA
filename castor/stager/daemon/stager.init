@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: stager.init,v $ $Revision: 1.17 $ $Release$ $Date: 2008/05/20 07:53:12 $ $Author: waldron $
+# @(#)$RCSfile: stager.init,v $ $Revision: 1.18 $ $Release$ $Date: 2008/06/25 12:39:23 $ $Author: waldron $
 #
 # chkconfig: 345 70 35
 # description: Stager Daemon Initialisation Script
@@ -55,7 +55,7 @@ start() {
                 pid=`ps -eo pid,ppid,comm | egrep " 1 $prog\$" | awk '{print $1}'`
                 rm -f /var/run/$prog.pid
                 if [ -n "$pid" ]; then
-                            echo $pid > /var/run/$prog.pid
+                        echo $pid > /var/run/$prog.pid
                         RETVAL=0
                 else
                         RETVAL=1
