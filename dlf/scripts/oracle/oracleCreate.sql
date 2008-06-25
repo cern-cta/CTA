@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/02 13:29:46 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/25 12:49:17 $ $Author: waldron $
  *
  * This script create a new DLF schema
  *
@@ -112,6 +112,7 @@ ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostname UNIQUE (nshostname) ENABL
 
 /* Fill the dlf_config table */
 INSERT INTO dlf_config (name, value, description) VALUES ('instance', 'castordlf', 'The name of the castor2 instance');
+INSERT INTO dlf_config (name, value, description) VALUES ('expiry', '90', 'The expiry time of the logging data in days');
 
 /* Fill the dlf_severities table */
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('1', 'Emergency');
@@ -812,7 +813,6 @@ BEGIN
   -- Loop over all partitioned tables
   FOR a IN (SELECT DISTINCT(table_name)
               FROM user_tab_partitions
-             WHERE table_name LIKE 'DLF_%'
              ORDER BY table_name)
   LOOP
     -- Determine the high value on which to split the MAX_VALUE partition of all
@@ -893,6 +893,7 @@ END;
 CREATE OR REPLACE PROCEDURE archiveData (expiry IN NUMBER)
 AS
   username VARCHAR2(2048);
+  expiryTime NUMBER;
 BEGIN
   -- Extract the name of the current user running the PL/SQL procedure. This name
   -- will be used within the tablespace names.
@@ -900,7 +901,15 @@ BEGIN
     INTO username
     FROM dual;
 
-  -- Drop partitions across all DLF_ tables
+  -- Extract configurable expiry time
+  expiryTime := expiry;
+  IF expiryTime = -1 THEN
+    SELECT TO_NUMBER(value) INTO expiryTime
+      FROM dlf_config
+     WHERE name = 'expiry';
+  END IF;
+
+  -- Drop partitions across all tables
   FOR a IN (SELECT *
               FROM user_tab_partitions
              WHERE partition_name < concat('P_', TO_CHAR(SYSDATE - expiry, 'YYYYMMDD'))
@@ -962,7 +971,7 @@ BEGIN
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'archiveDataJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN archiveData(90); END;',
+      JOB_ACTION      => 'BEGIN archiveData(-1); END;',
       START_DATE      => TRUNC(SYSDATE) + 2/24,
       REPEAT_INTERVAL => 'FREQ=DAILY',
       ENABLED         => TRUE,
