@@ -3,7 +3,7 @@ import sys, re, os, shutil, tempfile
 
 # list of platforms as a tuple (OS, arch, machine where to build)
 platforms = (('SLC4', 'x86_64', 'lxbuild085.cern.ch'),
-             ('SLC4', 'i386',   'lxbuild020.cern.ch'))
+             ('SLC4', 'i386',   'lxb1952.cern.ch'))
 
 def usage():
     print sys.argv[0] + " <CVS tag of the release>"
@@ -86,8 +86,6 @@ for f in findUpdates(updDir):
     shutil.copyfile(updDir + os.sep + f, intReleaseDir + os.sep + 'dbupgrades' + os.sep + f)
 os.chdir(workDir + os.sep + 'CASTOR2')
 runCommand('makesql.sh ' + intReleaseDir + os.sep + 'dbcreation', 'Could not publish SQL scripts')
-
-sys.exit(0)
 
 # compile on the different architectures
 outputs = []
