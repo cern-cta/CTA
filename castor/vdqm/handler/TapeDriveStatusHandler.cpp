@@ -549,7 +549,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
             castor::dlf::Param("vid"         , finishedTapeRequestVid),
             castor::dlf::Param("tpMode"      , finishedTapeRequestTpMode),
             castor::dlf::Param("lifespanType", 0)};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
             VDQM_NO_VOL_PRIORITY_DELETED, 3, param);
         }
       }
