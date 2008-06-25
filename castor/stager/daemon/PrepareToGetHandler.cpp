@@ -133,13 +133,19 @@ namespace castor{
           
           /* depending on the value returned by getDiskCopiesForJob */
           /* if needed, we update the subrequestStatus internally  */
-          if(switchDiskCopiesForJob() && stgRequestHelper->subrequest->answered() == 0) {
-            stgReplyHelper = new ReplyHelper();
-            stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "");
-            stgReplyHelper->endReplyToClient(stgRequestHelper);
+          if(switchDiskCopiesForJob()) {
+            if(stgRequestHelper->subrequest->answered() == 0) {
+              stgReplyHelper = new ReplyHelper();
+              stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "");
+              stgReplyHelper->endReplyToClient(stgRequestHelper);
             
-            delete stgReplyHelper;
-            stgReplyHelper = 0;
+              delete stgReplyHelper;
+              stgReplyHelper = 0;
+            }
+            else {
+              // no reply needs to be sent to the client, hence just commit the db transaction
+              stgRequestHelper->dbSvc->commit();
+            }
           }	  
           
         }catch(castor::exception::Exception e){
