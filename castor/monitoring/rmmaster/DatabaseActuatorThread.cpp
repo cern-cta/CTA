@@ -96,7 +96,7 @@ void castor::monitoring::rmmaster::DatabaseActuatorThread::run(void* par)
     castor::dlf::Param params[] =
       {castor::dlf::Param("Type", sstrerror(e.code())),
        castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 46, 2, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 46, 2, params);
     return;
   }
 
