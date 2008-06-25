@@ -242,7 +242,7 @@ $stager_sql_tables = array(
     "table"	=> "svcclass",
     "lookup"	=> "id",
     "fields"	=> array(
-      "nbdrives", "name", "defaultfilesize:size", "maxperlicanb", "replicationpolicy", "gcpolicy", "migratorpolicy", "recallerpolicy", "hasdiskonlybehavior", "forcedfileclass", "streampolicy", "gcenabled", "migrselectpolicy"
+      "nbdrives", "name", "defaultfilesize:size", "maxreplicanb", "replicationpolicy", "gcpolicy", "migratorpolicy", "recallerpolicy", "hasdiskonlybehavior", "forcedfileclass", "streampolicy", "gcenabled"
     ),
   ),
 
