@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.659 $ $Date: 2008/06/23 14:33:12 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.660 $ $Date: 2008/06/25 12:37:42 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -9,7 +9,7 @@
  *******************************************************************/
 
 /* A small table used to cross check code and DB versions */
-UPDATE CastorVersion SET schemaVersion = '2_1_7_8';
+UPDATE CastorVersion SET schemaVersion = '2_1_7_10';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -343,11 +343,11 @@ CREATE TABLE GcPolicy (name VARCHAR2(2048) NOT NULL PRIMARY KEY,
 /* Default policy, mainly based on file sizes */
 INSERT INTO GcPolicy VALUES ('default',
                              'castorGC.sizeRelatedUserWeight',
-                             'castorGC.sizeRelatedRecallsWeight',
+                             'castorGC.sizeRelatedRecallWeight',
                              'castorGC.sizeRelatedCopyWeight',
                              'castorGC.dayBonusFirstAccessHook',
                              'castorGC.halfHourBonusAccessHook',
-                             'castorGc.cappedUserSetGCWeight');
+                             'castorGC.cappedUserSetGCWeight');
 INSERT INTO GcPolicy VALUES ('FIFO',
                              'castorGC.creationTimeUserWeight',
                              'castorGC.creationTimeRecallsWeight',
