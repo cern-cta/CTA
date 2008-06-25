@@ -173,8 +173,19 @@ void parseCommandLine(int argc, char **argv, std::string &vid, int &tpMode,
 
 
 castor::vdqm::IVdqmSvc *retrieveVdqmSvc() {
+  castor::Services *svcs = NULL;
+
   // Retrieve a Services object
-  castor::Services *svcs = castor::BaseObject::sharedServices();
+  try {
+    svcs = castor::BaseObject::sharedServices();
+  } catch(castor::exception::Exception &ex) {
+    std::cerr
+      << std::endl
+      << "Failed to retrieve a services object: "
+      << ex.getMessage().str()
+      << std::endl << std::endl;
+    exit(1);
+  }
   if(svcs == NULL) {
     std::cerr
       << std::endl
@@ -187,7 +198,16 @@ castor::vdqm::IVdqmSvc *retrieveVdqmSvc() {
   castor::IService* svc = NULL;
 
   // Retrieve a DB parameters service
-  svc = svcs->service("DbParamsSvc", castor::SVC_DBPARAMSSVC);
+  try {
+    svc = svcs->service("DbParamsSvc", castor::SVC_DBPARAMSSVC);
+  } catch(castor::exception::Exception &ex) {
+    std::cerr
+      << std::endl
+      << "Failed to retrieve a DB parameters service: "
+      << ex.getMessage().str()
+      << std::endl << std::endl;
+    exit(1);
+  }
   if(svc == NULL) {
     std::cerr
       << std::endl
@@ -211,7 +231,16 @@ castor::vdqm::IVdqmSvc *retrieveVdqmSvc() {
   paramsSvc->setDbAccessConfFile(ORAVDQMCONFIGFILE);
 
   // Retrieve the VDQM DB service
-  svc = svcs->service("DbVdqmSvc", castor::SVC_DBVDQMSVC);
+  try {
+    svc = svcs->service("DbVdqmSvc", castor::SVC_DBVDQMSVC);
+  } catch(castor::exception::Exception &ex) {
+    std::cerr
+      << std::endl
+      << "Failed to retrieve the VDQM DB service: "
+      << ex.getMessage().str()
+      << std::endl << std::endl;
+    exit(1);
+  }
   if(svc == NULL) {
     std::cerr
       << std::endl
