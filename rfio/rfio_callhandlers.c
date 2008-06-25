@@ -62,17 +62,18 @@ int *need_user_check) {
       if (cpfn != NULL) {
 	
 	/* Get the filename from the path */
-	if ((cpfn = strrchr(cpfn, '/')) != NULL){
-	  cpfn = cpfn + 1; 
+	char *buf = strrchr(cpfn, '/');
+	if (buf != NULL) {
+	  *buf++ = '\0';
 	  
 	  /* Extract the file id */
-	  char *pnh = strchr(cpfn, '@');
+	  char *pnh = strchr(buf, '@');
 	  if (pnh != NULL) {
 	    *pnh++ = '\0';
-	    internal_context->fileId = strtou64(cpfn);
+	    internal_context->fileId = strtou64(buf);
 	    
 	    /* Extract the name server host */
-	    char *p = strchr(pnh, '.');
+	    char *p = strrchr(pnh, '.');
 	    if (p != NULL) {
 	      *p++ = '\0';
 	      internal_context->nsHost = strdup(pnh);
