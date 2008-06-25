@@ -127,7 +127,7 @@ void RecHandlerThread::run(void* par)
 	  } else {
 	     int priorityChosen=m_recallPolicy->applyPolicy(*infoCandidate);
 	    
-	     if (priorityChosen>=0) {
+	     if (priorityChosen > 0) {
 	       eligibleTapeIds.push_back(realInfo->tapeId()); // tape to resurrect
 	       castor::dlf::Param params[] =
 		 {castor::dlf::Param("Tape", realInfo->vid())};
