@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.41 $ $Release$ $Date: 2008/06/23 08:30:26 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2008/06/26 06:49:12 $ $Author: gtaur $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -646,7 +646,7 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape){
 
     return;
   }
-  if (tape->status() == RSUBREQUEST_TOBESTAGED) {
+  if (tape->status() == RSUBREQUEST_TOBESTAGED || tape->status() == RSUBREQUEST_ONHOLD ) {
     // not sent to the stager  yet
 
     std::cout<< 
