@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.673 $ $Date: 2008/06/23 14:33:52 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.674 $ $Date: 2008/06/26 08:49:45 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1527,7 +1527,7 @@ BEGIN
      WHERE Tape.id = Segment.tape(+) 
        AND TapeCopy.id(+) = Segment.copy
        AND CastorFile.id(+) = TapeCopy.castorfile 
-       AND Tape.status IN (1, 2, 3, 8)  -- PENDING, WAITDRIVE, WAITMOUNT, WAITPOLICY 
+       AND Tape.status IN (1, 2, 8)  -- PENDING, WAITDRIVE, WAITPOLICY 
        AND Segment.status = 0  -- SEGMENT_UNPROCESSED 
      GROUP BY Tape.id, Tape.vid
      HAVING count(distinct segment.id) > 0;
