@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.6 $ $Release$ $Date: 2008/06/25 15:19:52 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.7 $ $Release$ $Date: 2008/06/27 06:38:12 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -105,7 +105,7 @@ CREATE OR REPLACE PROCEDURE getAllSubRequests (rsr OUT repack.RepackSubRequest_C
 BEGIN 
  OPEN rsr FOR
    SELECT vid, xsize, status, filesmigrating, filesstaging, files, filesfailed, cuuid, submittime, filesstaged, filesfailedsubmit, retrynb, id, repackrequest
-     FROM RepackSubRequest WHERE status != 8 ORDER BY submittime; -- not ARCHIVED
+     FROM RepackSubRequest WHERE status != 8 ORDER BY submittime DESC; -- not ARCHIVED
 END;
 
 /* PL/SQL method implementing getSegmentsForSubRequest */
