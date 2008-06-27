@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: HandlerData.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/03/25 12:27:26 $ $Author: waldron $
+ * @(#)$RCSfile: HandlerData.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/06/27 08:24:06 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -98,6 +98,9 @@ namespace castor {
 
       /// A tokenized list of requested filesystems 
       std::vector<std::string> rfs;
+
+      /// A list of diskservers to exclude
+      std::vector<std::string> excludedHosts;
 
       /// The direction of the transfer, e.g. read, write, read/write
       std::string openFlags;

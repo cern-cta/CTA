@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2008/06/16 15:58:43 $ $Author: waldron $
+ * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2008/06/27 08:24:52 $ $Author: waldron $
  *
  * The Submission Process is used to submit new jobs into the scheduler. It is
  * run inside a separate process allowing for setuid and setgid calls to take
@@ -373,18 +373,19 @@ void castor::jobmanager::SubmissionProcess::submitJob
   // scheduling.
   char extSched[MAXLINELEN];
   std::ostringstream oss;
-  oss << "SIZE="         << request->xsize()                << ";"
-      << "DEFSIZE="      << request->defaultFileSize()      << ";"
-      << "RFS="          << request->requestedFileSystems() << ";"
-      << "PROTOCOL="     << request->protocol()             << ";"
-      << "SVCCLASS="     << request->svcClass()             << ";"
-      << "REQUESTID="    << request->reqId()                << ";"
-      << "SUBREQUESTID=" << request->subReqId()             << ";"
-      << "OPENFLAGS="    << request->openFlags()            << ";"
-      << "FILEID="       << request->fileId()               << ";"
-      << "NSHOST="       << request->nsHost()               << ";"
-      << "TYPE="         << request->requestType()          << ";"
-      << "SRCSVCCLASS="  << request->sourceSvcClass();
+  oss << "SIZE="          << request->xsize()                << ";"
+      << "DEFSIZE="       << request->defaultFileSize()      << ";"
+      << "RFS="           << request->requestedFileSystems() << ";"
+      << "PROTOCOL="      << request->protocol()             << ";"
+      << "SVCCLASS="      << request->svcClass()             << ";"
+      << "REQUESTID="     << request->reqId()                << ";"
+      << "SUBREQUESTID="  << request->subReqId()             << ";"
+      << "OPENFLAGS="     << request->openFlags()            << ";"
+      << "FILEID="        << request->fileId()               << ";"
+      << "NSHOST="        << request->nsHost()               << ";"
+      << "TYPE="          << request->requestType()          << ";"
+      << "SRCSVCCLASS="   << request->sourceSvcClass()       << ";"
+      << "EXCLUDEDHOSTS=" << request->excludedHosts();
   strncpy(extSched, oss.str().c_str(), MAXLINELEN);
   m_job.extsched = extSched;
 

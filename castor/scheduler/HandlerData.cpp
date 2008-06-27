@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: HandlerData.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/03/25 12:27:26 $ $Author: waldron $
+ * @(#)$RCSfile: HandlerData.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/06/27 08:24:06 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -72,7 +72,7 @@ castor::scheduler::HandlerData::HandlerData(void *resreq)
   
   // Parse the string
   try {
-    std::string token;
+    std::string token, excludedHostsStr;
     std::getline(extsched, token, '=');                // SIZE
     extsched >> xsize;
     std::getline(extsched, token, '=');                // DEFSIZE
@@ -100,7 +100,9 @@ castor::scheduler::HandlerData::HandlerData(void *resreq)
     std::getline(extsched, token, '=');                // TYPE
     extsched >> requestType;
     std::getline(extsched, token, '=');                // SRCSVCCLASS
-    extsched >> sourceSvcClass;
+    std::getline(extsched, sourceSvcClass, ';');
+    std::getline(extsched, token, '=');                // EXCLUDEDHOSTS
+    extsched >> excludedHostsStr;  
 
     // Convert the list of requested filesystems into a vector for easier
     // processing later
@@ -129,6 +131,21 @@ castor::scheduler::HandlerData::HandlerData(void *resreq)
 	    rfs.push_back(diskServer);
 	    rfs.push_back(key.str());
 	  }
+	}
+      } catch (std::ios_base::failure e) {
+	// End of stream
+      }
+    }
+
+    // Convert the string representing the list of hosts to exclude into
+    // a vector
+    if (excludedHostsStr != "") {
+      std::istringstream buf(excludedHostsStr);
+      buf.exceptions(std::ios_base::failbit);
+      try {
+	std::string diskServer;
+	while (std::getline(buf, diskServer, '|')) {
+	  excludedHosts.push_back(diskServer);
 	}
       } catch (std::ios_base::failure e) {
 	// End of stream

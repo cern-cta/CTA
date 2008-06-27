@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/04/21 11:53:01 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/06/27 08:24:52 $ $Author: waldron $
  *
  * Implementation of the IJobManagerSvc for Oracle
  *
@@ -55,7 +55,7 @@ const std::string castor::jobmanager::ora::OraJobManagerSvc::s_failSchedulerJobS
 
 /// SQL statement for function jobToSchedule
 const std::string castor::jobmanager::ora::OraJobManagerSvc::s_jobToScheduleString =
-  "BEGIN jobToSchedule(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18, :19, :20, :21, :22, :23, :24); END;";
+  "BEGIN jobToSchedule(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18, :19, :20, :21, :22, :23, :24, :25); END;";
 
 /// SQL statement for function updateSchedulerJob
 const std::string castor::jobmanager::ora::OraJobManagerSvc::s_updateSchedulerJobString =
@@ -244,6 +244,8 @@ castor::jobmanager::JobSubmissionRequest
 	(23, oracle::occi::OCCIDOUBLE);
       m_jobToScheduleStatement->registerOutParam
 	(24, oracle::occi::OCCIDOUBLE);
+      m_jobToScheduleStatement->registerOutParam
+	(25, oracle::occi::OCCICURSOR);
       m_jobToScheduleStatement->setAutoCommit(true);
     }
 
@@ -332,6 +334,20 @@ castor::jobmanager::JobSubmissionRequest
     result->setSourceSvcClass(m_jobToScheduleStatement->getString(22));
     result->setRequestCreationTime((u_signed64)m_jobToScheduleStatement->getDouble(23));
     result->setDefaultFileSize((u_signed64)m_jobToScheduleStatement->getDouble(24));
+
+    // Construct the list of excluded hosts
+    if (result->requestType() == OBJ_StageDiskCopyReplicaRequest) { 
+      oracle::occi::ResultSet *rs = m_jobToScheduleStatement->getCursor(25); 
+      while (oracle::occi::ResultSet::END_OF_FETCH != rs->next()) { 
+	result->setExcludedHosts(result->excludedHosts().append(rs->getString(1) + "|")); 
+      }
+      // Remove trailing '|'
+      if (result->excludedHosts() != "") {
+	result->setExcludedHosts(result->excludedHosts().substr(0, 
+                                 result->excludedHosts().length() - 1));
+      }
+      m_jobToScheduleStatement->closeResultSet(rs);
+    } 
 
     // For statistical purposes
     timeval tv;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/25 10:28:55 $ $Author: waldron $
+ * @(#)$RCSfile: Constants.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/06/27 08:24:06 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -54,5 +54,6 @@ static const int HANDLER_PYTHON_ID = 104;
 #define PEND_HOST_CNOTRFS     20005 // Diskserver is not in the list of RFS
 #define PEND_HOST_CNOINTEREST 20006 // Diskserver not of interest e.g no space
 #define PEND_HOST_PYERR       20007 // Embedded python interpreter error
+#define PEND_HOST_CEXCLUDE    20008 // Diskserver in exclusion list
 
 #endif // SCHEDULER_CONSTANTS_HPP

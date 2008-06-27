@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: schmod_shmem.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/05/07 14:57:53 $ $Author: waldron $
+ * @(#)$RCSfile: schmod_shmem.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/06/27 08:24:06 $ $Author: waldron $
  *
  * Castor LSF External Plugin - Phase 1 (Shared Memory)
  *
@@ -167,12 +167,23 @@ extern "C" {
 	std::vector<std::string>::const_iterator it2 =
 	  std::find(handler->rfs.begin(), handler->rfs.end(), diskServer);
 
+	// Check to see if the diskserver is in the exclusion host list
+	std::vector<std::string>::const_iterator it4 =
+	  std::find(handler->excludedHosts.begin(), 
+		    handler->excludedHosts.end(), diskServer);
+
 	reason = 0;
 	if (handler->rfs.size() && (it2 == handler->rfs.end())) {
 	  reason = PEND_HOST_CNOTRFS;  // Diskserver is not in the list of RFS
 	}
 	else if (it == clusterStatus->end()) {
 	  reason = PEND_HOST_CUNKNOWN; // Host not listed in shared memory
+	}
+	else if ((handler->requestType !=
+		  castor::OBJ_StageDiskCopyReplicaRequest) &&
+		 (handler->sourceDiskServer != diskServer) &&
+		 (it4 != handler->excludedHosts.end())) {
+	  reason = PEND_HOST_CEXCLUDE; // Diskserver in exclusion list
 	}
 
 	// For non diskcopy replication requests the diskserver must be in
