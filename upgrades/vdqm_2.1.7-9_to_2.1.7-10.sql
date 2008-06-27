@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: vdqm_2.1.7-9_to_2.1.7-10.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/27 19:41:23 $ $Author: murrayc3 $
+ * @(#)$RCSfile: vdqm_2.1.7-9_to_2.1.7-10.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/27 20:27:30 $ $Author: murrayc3 $
  *
  * This script upgrades a CASTOR VDQM v2.1.7-9 database into v2.1.7-10
  *
@@ -882,7 +882,7 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     -- If a row for the priority already exists
     IF priorityIdVar IS NOT NULL THEN
 
-      -- Update it if it has a lower priority
+      -- Update it if it has an equal or lower priority
       UPDATE VolumePriority SET
         VolumePriority.priority   = priorityVar,
         VolumePriority.clientUID  = clientUIDVar,
@@ -890,7 +890,7 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
         VolumePriority.clientHost = clientHostVar
       WHERE
             VolumePriority.id = priorityIdVar
-        AND VolumePriority.priority < priorityVar;
+        AND VolumePriority.priority <= priorityVar;
 
     -- Else a row for the priority does not yet exist
     ELSE
@@ -936,7 +936,7 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
         AND VolumePriority.lifespanType = lifespanTypeVar
         FOR UPDATE;
 
-        -- Update the row if it has a lower priority
+        -- Update the row if it has an equal or lower priority
         UPDATE VolumePriority SET
           priority   = priorityVar,
           clientUID  = clientUIDVar,
@@ -944,7 +944,7 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
           clientHost = clientHostVar
         WHERE
               VolumePriority.id = priorityIdVar
-          AND VolumePriority.priority < priorityVar;
+          AND VolumePriority.priority <= priorityVar;
       END IF;
 
     END IF; -- If a row for the priority already exists
