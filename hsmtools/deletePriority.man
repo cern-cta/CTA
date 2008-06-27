@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: deletePriority.man,v $ $Revision: 1.2 $ $Date: 2008/06/02 13:38:11 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: deletePriority.man,v $ $Revision: 1.3 $ $Date: 2008/06/27 13:04:16 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH DELETEPRIORITY 1 "$Date: 2008/06/02 13:38:11 $" CASTOR "delete entries in the priority map table used by vdqm"
+.TH DELETEPRIORITY 1 "$Date: 2008/06/27 13:04:16 $" CASTOR "delete entries in the priority map table used by vdqm"
 .SH NAME
 deletePriority
 .SH SYNOPSIS
@@ -10,8 +10,11 @@ deletePriority
 [
 .BI -u 
 .BID uid
+]
+[
 .BI -g 
 .BID gid
+]
 .BI -h 
 ]
 deletePriority
@@ -24,8 +27,10 @@ delete entries from the Priority Map Table.
 
 deletePriority -u 444, to delete all the entries associated to the user 
 
-deletePriority -g 999, to delete all the entries associated to the group
- 
+deletePriority -g 999, to delete all the entries associated to the group 
+
+deletePriority  -u 444 -g 999, to delete all the entry with uid=444 and gid=999
+
 .SH NOTES
 This command requires database client access to the stager catalogue.
 Configuration for the database access is taken from /etc/castor/ORASTAGERCONFIG

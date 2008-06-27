@@ -1,22 +1,28 @@
-.\" @(#)$RCSfile: listPriority.man,v $ $Revision: 1.1 $ $Date: 2008/06/02 13:35:03 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: listPriority.man,v $ $Revision: 1.2 $ $Date: 2008/06/27 13:04:16 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH LISTPRIORITY 1 "$Date: 2008/06/02 13:35:03 $" CASTOR "list entries in the priority map table used by vdqm"
+.TH LISTPRIORITY 1 "$Date: 2008/06/27 13:04:16 $" CASTOR "list entries in the priority map table used by vdqm"
 .SH NAME
 listPriority
 .SH SYNOPSIS
 .B listPriority
 [
 .BI -u 
-.BID uid
+.BI uid
+]
+[
 .BI -g 
-.BID gid
+.BI gid
+]
+[
 .BI -p 
-.BID priority
+.BI priority
+]
+[
 .BI -h 
 ]
-listPriority
+
 .SH DESCRIPTION
 .B listPriority
 list the entries from the Priority Map Table, depending the option given.
