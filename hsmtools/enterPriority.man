@@ -1,8 +1,4 @@
-.\" @(#)$RCSfile: enterPriority.man,v $ $Revision: 1.2 $ $Date: 2008/06/02 13:38:11 $ CERN IT/ADC Olof Barring
-.\" Copyright (C) 2005 by CERN IT/ADC
-.\" All rights reserved
-.\"
-.TH ENTERPRIORITY 1 "$Date: 2008/06/02 13:38:11 $" CASTOR "set the priority for a specific uid-gid couple"
+.TH ENTERPRIORITY 1 "$Date: 2008/06/27 14:05:39 $" CASTOR "Set the priority for a specific uid and gid"
 .SH NAME
 enterPriority
 .SH SYNOPSIS
@@ -18,7 +14,7 @@ enterPriority
 ]
 .SH DESCRIPTION
 .B enterPriority 
-maps a uid-gid to a specific priority, which will be used by vdqm.
+maps a uid-gid to a specific priority, which will be used by VDQM.
 
 uid, gid and priority must be positive intergers.
 

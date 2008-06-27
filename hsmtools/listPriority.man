@@ -1,8 +1,4 @@
-.\" @(#)$RCSfile: listPriority.man,v $ $Revision: 1.2 $ $Date: 2008/06/27 13:04:16 $ CERN IT/ADC Olof Barring
-.\" Copyright (C) 2005 by CERN IT/ADC
-.\" All rights reserved
-.\"
-.TH LISTPRIORITY 1 "$Date: 2008/06/27 13:04:16 $" CASTOR "list entries in the priority map table used by vdqm"
+.TH LISTPRIORITY 1 "$Date: 2008/06/27 14:05:39 $" CASTOR "List the entries in the priority map table used by VDQM"
 .SH NAME
 listPriority
 .SH SYNOPSIS
@@ -25,7 +21,7 @@ listPriority
 
 .SH DESCRIPTION
 .B listPriority
-list the entries from the Priority Map Table, depending the option given.
+lists the entries from the Priority Map Table, depending the option given.
 
 .SH EXAMPLES
 .fi
@@ -34,7 +30,7 @@ listPriority -u 444, to list all the entries associated to the user
 
 listPriority -g 999, to list all the entries associated to the group
 
-listPriority -p 5, to list all the entrirs associates to a specific priority
+listPriority -p 5, to list all the entries associated to a specific priority
  
 .SH NOTES
 This command requires database client access to the stager catalogue.

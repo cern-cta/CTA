@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: deletePriority.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/06/27 13:04:16 $ $Author: gtaur $
+ * @(#)$RCSfile: deletePriority.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/06/27 14:05:39 $ $Author: waldron $
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -39,10 +39,9 @@ static struct Coptions longopts[] = {
 };
 
 void usage(char *cmd) {
-  std::cout << "Usage : "<<std::endl << cmd
-            << " [-h] -u uid [-g gid] "
-            << std::endl<< cmd
-            << " [-h] [-u uid] -g gid ";
+  std::cout << "Usage : " << cmd
+            << " [-h] [-u uid] [-g gid] "
+            << std::endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -74,7 +73,7 @@ int main(int argc, char *argv[]) {
   
   // Check parameters
   if ((muid < 0) && (mgid < 0)) {
-    std::cerr << progName << ": uid and gid options missing" << std::endl;
+    std::cerr << progName << ": uid and/or gid options missing" << std::endl;
     usage(progName);
     return 0;
   }
