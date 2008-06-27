@@ -990,7 +990,7 @@ class StagerRmCase(unittest.TestCase):
         assert buffOut.rfind("STAGEOUT") != -1, "stager_rm doesn't work with svc class option -S"
 
     def rmDualSvcClass(self):
-        cmd=["STAGE_SVCCLASS="+ stagerDiskOnlySvcClass+" rfcp "+inputFile+" "+dirCastor+"fileClientRmDualSvc"+ticket,"stager_get -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass]
+        cmd=["STAGE_SVCCLASS="+ stagerSvcClass+" rfcp "+inputFile+" "+dirCastor+"fileClientRmDualSvc"+ticket,"stager_get -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass]
         
         UtilityForCastorTest.saveOnFile(localDir+"ClientRmDualSvcP1",cmd,myScen)
         
@@ -1004,7 +1004,7 @@ class StagerRmCase(unittest.TestCase):
           time.sleep(10)
           buffOut=UtilityForCastorTest.runOnShell(["stager_qry -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass],myScen)
         
-        cmd=["stager_rm -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerDiskOnlySvcClass,"stager_qry -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_rm -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientGetDualSvc"+ticket+" -S '*'"]
+        cmd=["stager_rm -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerSvcClass,"stager_qry -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_rm -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientGetDualSvc"+ticket+" -S '*'"]
         UtilityForCastorTest.saveOnFile(localDir+"ClientRmDualSvcP2",cmd,myScen)
 
         fi=open(localDir+"ClientRmDualSvcP2","r")
