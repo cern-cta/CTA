@@ -66,6 +66,7 @@ castor::jobmanager::JobSubmissionRequest::JobSubmissionRequest() throw() :
   m_sourceSvcClass(""),
   m_requestCreationTime(0),
   m_defaultFileSize(0),
+  m_excludedHosts(""),
   m_id(0) {
 }
 
@@ -115,6 +116,7 @@ void castor::jobmanager::JobSubmissionRequest::print(std::ostream& stream,
   stream << indent << "sourceSvcClass : " << m_sourceSvcClass << std::endl;
   stream << indent << "requestCreationTime : " << m_requestCreationTime << std::endl;
   stream << indent << "defaultFileSize : " << m_defaultFileSize << std::endl;
+  stream << indent << "excludedHosts : " << m_excludedHosts << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

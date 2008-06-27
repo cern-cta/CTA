@@ -589,6 +589,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_excludedHosts
+       * The diskservers to be excluded in a StageDiskCopyReplicaRequest
+       * @return the value of m_excludedHosts
+       */
+      std::string excludedHosts() const {
+        return m_excludedHosts;
+      }
+
+      /**
+       * Set the value of m_excludedHosts
+       * The diskservers to be excluded in a StageDiskCopyReplicaRequest
+       * @param new_var the new value of m_excludedHosts
+       */
+      void setExcludedHosts(std::string new_var) {
+        m_excludedHosts = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -688,6 +706,9 @@ namespace castor {
 
       /// The default size of the castor file as determined by the settings on the service class
       u_signed64 m_defaultFileSize;
+
+      /// The diskservers to be excluded in a StageDiskCopyReplicaRequest
+      std::string m_excludedHosts;
 
       /// The id of this object
       u_signed64 m_id;

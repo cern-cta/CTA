@@ -115,6 +115,7 @@ void castor::io::StreamJobSubmissionRequestCnv::createRep(castor::IAddress* addr
   ad->stream() << obj->sourceSvcClass();
   ad->stream() << obj->requestCreationTime();
   ad->stream() << obj->defaultFileSize();
+  ad->stream() << obj->excludedHosts();
   ad->stream() << obj->id();
 }
 
@@ -209,6 +210,9 @@ castor::IObject* castor::io::StreamJobSubmissionRequestCnv::createObj(castor::IA
   u_signed64 defaultFileSize;
   ad->stream() >> defaultFileSize;
   object->setDefaultFileSize(defaultFileSize);
+  std::string excludedHosts;
+  ad->stream() >> excludedHosts;
+  object->setExcludedHosts(excludedHosts);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
