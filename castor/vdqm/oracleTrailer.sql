@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.128 $ $Release$ $Date: 2008/06/27 12:56:57 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.129 $ $Release$ $Date: 2008/06/27 19:41:23 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2166,14 +2166,15 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     -- If a row for the priority already exists
     IF priorityIdVar IS NOT NULL THEN
 
-      -- Update it
+      -- Update it if it has a lower priority
       UPDATE VolumePriority SET
         VolumePriority.priority   = priorityVar,
         VolumePriority.clientUID  = clientUIDVar,
         VolumePriority.clientGID  = clientGIDVar,
         VolumePriority.clientHost = clientHostVar
       WHERE
-        VolumePriority.id = priorityIdVar;
+            VolumePriority.id = priorityIdVar
+        AND VolumePriority.priority < priorityVar;
 
     -- Else a row for the priority does not yet exist
     ELSE
@@ -2219,12 +2220,15 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
         AND VolumePriority.lifespanType = lifespanTypeVar
         FOR UPDATE;
 
-        -- Update the row
+        -- Update the row if it has a lower priority
         UPDATE VolumePriority SET
           priority   = priorityVar,
           clientUID  = clientUIDVar,
           clientGID  = clientGIDVar,
-          clientHost = clientHostVar;
+          clientHost = clientHostVar
+        WHERE
+              VolumePriority.id = priorityIdVar
+          AND VolumePriority.priority < priorityVar;
       END IF;
 
     END IF; -- If a row for the priority already exists
