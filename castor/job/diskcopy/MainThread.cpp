@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/05/20 08:09:26 $ $Author: waldron $
+ * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/06/27 06:19:16 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -451,7 +451,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
        castor::dlf::Param("SourceDiskCopy", m_sourceDiskCopyId),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 26, 4, params, &m_fileId);
-    terminate(m_diskCopyId, EXIT_FAILURE);
+    terminate(0, EXIT_FAILURE);
   } catch (...) {
 
     // "Failed to remotely execute disk2DiskCopyStart"
@@ -459,7 +459,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
       {castor::dlf::Param("Message", "General exception caught"),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 27, 2, params, &m_fileId);
-    terminate(m_diskCopyId, EXIT_FAILURE);
+    terminate(0, EXIT_FAILURE);
   }   
 
   // "Starting destination end of mover"
@@ -504,7 +504,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 30, 3, params, &m_fileId);
-    terminate(m_diskCopyId, EXIT_FAILURE);
+    terminate(0, EXIT_FAILURE);
   } catch (...) {
 
     // "Failed to remotely execute disk2DiskCopyDone"
@@ -512,7 +512,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
       {castor::dlf::Param("Message", "General exception caught"),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 31, 2, params, &m_fileId);
-    terminate(m_diskCopyId, EXIT_FAILURE);
+    terminate(0, EXIT_FAILURE);
   }
 
   // Calculate statistics
