@@ -2657,8 +2657,7 @@ int castor::db::ora::OraVdqmSvc::reuseDriveAllocation(
 castor::vdqm::TapeRequest *castor::db::ora::OraVdqmSvc::requestToSubmit()
   throw (castor::exception::Exception) {
 
-  u_signed64                idTapeRequest = 0;
-  castor::vdqm::TapeRequest *tapeRequest  = NULL;
+  u_signed64 idTapeRequest = 0;
 
 
   // Get the Statement object, creating one if necessary
@@ -2711,8 +2710,12 @@ castor::vdqm::TapeRequest *castor::db::ora::OraVdqmSvc::requestToSubmit()
 
   // Create the tape request object
   castor::IObject* obj = cnvSvc()->createObj(&ad);
-  tapeRequest = dynamic_cast<castor::vdqm::TapeRequest*> (obj);
-  if (0 == tapeRequest) {
+
+  // Create an auto pointer to delete the tape request object if an exception
+  // is thrown before the end of this method
+  std::auto_ptr<castor::vdqm::TapeRequest>
+    tapeRequest(dynamic_cast<castor::vdqm::TapeRequest*>(obj));
+  if(tapeRequest.get() == NULL) {
     castor::exception::Internal e;
     e.getMessage() << "createObj returned unexpected type "
                      << obj->type() << " for id " << idTapeRequest;
@@ -2720,51 +2723,50 @@ castor::vdqm::TapeRequest *castor::db::ora::OraVdqmSvc::requestToSubmit()
     throw e;
   }
 
+
+  ////////////////////////////////////////////////////////////////
   // Create the foreign related objects of the tape request
-  cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_ClientIdentification);
+
+  cnvSvc()->fillObj(&ad, tapeRequest.get(), castor::OBJ_ClientIdentification);
   if(tapeRequest->client() == NULL) {
     castor::exception::Internal ie;
-
     ie.getMessage()
       << "Tape request is not linked to a set of client identification data";
-
-    delete tapeRequest;
     throw ie;
   }
-  cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_TapeDrive);
+  cnvSvc()->fillObj(&ad, tapeRequest.get(), castor::OBJ_TapeDrive);
   if(tapeRequest->tapeDrive() == NULL) {
     castor::exception::Internal ie;
-
     ie.getMessage() << "Tape request is not linked to a tape drive";
-
-    delete tapeRequest;
-      throw ie;
+    throw ie;
   }
+  // The destructor of a castor::vdqm::TapeRequest object does not delete the
+  // tape drive it points to.  Therefore create an auto pointer to delete the
+  // tape drive object if an exception is thrown before the end of this method.
+  std::auto_ptr<castor::vdqm::TapeDrive> tapeDrive(tapeRequest->tapeDrive());
+
+  // End of create the foreign related objects of the tape request
+  ////////////////////////////////////////////////////////////////
 
   // Get the foreign related objects of the tape drive of the tape request
-  cnvSvc()->fillObj(&ad, tapeRequest->tapeDrive(),
-    castor::OBJ_DeviceGroupName);
+  cnvSvc()->fillObj(&ad, tapeRequest->tapeDrive(), castor::OBJ_DeviceGroupName);
   if(tapeRequest->tapeDrive()->deviceGroupName() == NULL) {
     castor::exception::Internal ie;
-
     ie.getMessage()
       << "Tape drive of tape request is not linked to a device group name";
-
-    delete tapeRequest;
     throw ie;
   }
   cnvSvc()->fillObj(&ad, tapeRequest->tapeDrive(), castor::OBJ_TapeServer);
   if(tapeRequest->tapeDrive()->tapeServer() == NULL) {
     castor::exception::Internal ie;
-
     ie.getMessage()
       << "Tape drive of tape request is not linked to a tape server";
-
-    delete tapeRequest;
     throw ie;
   }
 
-  return tapeRequest;
+  // Release objects from their auto pointers and return the tape request
+  tapeDrive.release();
+  return tapeRequest.release();
 }
 
 
