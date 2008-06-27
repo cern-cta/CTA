@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.655 $ $Date: 2008/06/27 06:07:03 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.656 $ $Date: 2008/06/27 09:46:14 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -336,7 +336,6 @@ BEGIN
     raise_application_error(-20109, 'The source DiskCopy to be replicated is no longer available.');
   END;
   -- Prevent multiple copies of the file being created on the same diskserver
-  INSERT INTO logt VALUES (dsid, cfid, dcid);
   SELECT count(*) INTO nbCopies
     FROM DiskCopy, FileSystem   
    WHERE DiskCopy.filesystem = FileSystem.id
