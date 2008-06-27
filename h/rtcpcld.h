@@ -15,6 +15,10 @@
 #ifndef RTCPCLD_H
 #define RTCPCLD_H
 
+/* headers */
+#include "castor/stager/TapeCopy.h"
+#include "castor/stager/ITapeSvc.h"
+
 #define LOG_SYSCALL_ERR(func) { \
     int _save_serrno = serrno; \
     (void)dlf_write( \
