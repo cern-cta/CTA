@@ -63,6 +63,7 @@ namespace castor {
           GET_QUEUE_POSITION_SQL_STMT,
           SET_VOL_PRIORITY_SQL_STMT,
           DELETE_VOL_PRIORITY_SQL_STMT,
+          DELETE_OLD_VOL_PRIORITIES_SQL_STMT,
           GET_ALL_VOL_PRIORITIES_SQL_STMT,
           GET_EFFECTIVE_VOL_PRIORITIES_SQL_STMT,
           GET_VOL_PRIORITIES_SQL_STMT,
@@ -180,6 +181,12 @@ namespace castor {
           const int tpMode, const int lifespanType, int *const priority,
           int *const clientUID, int *const clientGID,
           std::string *const clientHost) throw (castor::exception::Exception);
+
+        /**
+         * See the documentation for castor::vdqm::IVdqmSvc.
+         */
+        virtual unsigned int deleteOldVolPriorities(const unsigned int maxAge)
+          throw (castor::exception::Exception);
 
         /**
          * See the documentation for castor::vdqm::IVdqmSvc.

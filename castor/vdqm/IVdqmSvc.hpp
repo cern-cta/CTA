@@ -157,6 +157,16 @@ namespace castor {
           throw (castor::exception::Exception) = 0;
 
         /**
+         * Deletes volume priorities older than the specfied age.
+         *
+         * @param maxAge the maximum age of volume priority in seconds.
+         *
+         * @return the number of volume priorities deleted.
+         */
+        virtual unsigned int deleteOldVolPriorities(const unsigned int maxAge)
+          throw (castor::exception::Exception) = 0;
+
+        /**
          * Inner class used to return the result of listVolPriorities.
          */
         struct VolPriority {

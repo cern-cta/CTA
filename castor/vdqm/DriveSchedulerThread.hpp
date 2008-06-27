@@ -39,7 +39,8 @@ namespace castor {
 
 
     /**
-     * Allocates free tape drives to waiting tape requests.
+     * Allocates free tape drives to waiting tape requests.  This class also
+     * has the secondary role of deleting old volume priorities.
      */
     class DriveSchedulerThread :
     public virtual castor::server::BaseDbThread {
@@ -57,12 +58,20 @@ namespace castor {
       ~DriveSchedulerThread() throw();
 
       /**
-       * Run the tape drive scheduling algorithm.
+       * Run the tape drive scheduling algorithm, plus the secondary activity
+       * of deleting old volume priorities.
        */
       virtual void run(void *param);
 
 
     private:
+
+      /**
+       * The default maximum age of a volume priority in seconds.  This
+       * default is overruled by a "VDQM MAXVOLPRIORITYAGE" entry in the
+       * castor configuration file, e.g. /etc/castor/castor.conf
+       */
+      static const unsigned int s_maxVolPriorityAge = 300; // 5 minutes
 
       /**
        * Returns a pointer to the DbVdqmSvc or throws an exception if it cannot.

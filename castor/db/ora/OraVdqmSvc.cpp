@@ -106,6 +106,8 @@ castor::db::ora::OraVdqmSvc::StatementStringMap::StatementStringMap() {
     "BEGIN castorVdqm.setVolPriority(:1, :2, :3, :4, :5, :6, :7); END;");
   addStmtStr(DELETE_VOL_PRIORITY_SQL_STMT,
     "BEGIN castorVdqm.deleteVolPriority(:1, :2, :3, :4, :5, :6, :7, :8); END;");
+  addStmtStr(DELETE_OLD_VOL_PRIORITIES_SQL_STMT,
+    "BEGIN castorVdqm.deleteOldVolPriorities(:1, :2); END;");
   addStmtStr(GET_ALL_VOL_PRIORITIES_SQL_STMT,
     "SELECT"
     "  priority,"
@@ -935,6 +937,58 @@ u_signed64 castor::db::ora::OraVdqmSvc::deleteVolPriority(
   }
 
   return id;
+}
+
+
+// -----------------------------------------------------------------------
+// deleteOldVolPriorities
+// -----------------------------------------------------------------------
+unsigned int castor::db::ora::OraVdqmSvc::deleteOldVolPriorities(
+  const unsigned int maxAge) throw (castor::exception::Exception) {
+
+  unsigned int prioritiesDeletedVar = 0;
+
+
+  // Get the Statement object, creating one if necessary
+  oracle::occi::Statement *stmt = NULL;
+  const StatementId stmtId = DELETE_OLD_VOL_PRIORITIES_SQL_STMT;
+  try {
+    if(!(stmt = getStatement(stmtId))) {
+      stmt = createStatement(s_statementStrings[stmtId]);
+      stmt->registerOutParam(2, oracle::occi::OCCIINT); // prioritiesDeletedVar
+      stmt->setAutoCommit(false);
+      storeStatement(stmtId, stmt);
+    }
+  } catch(oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << oe.getMessage();
+    throw ie;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+    ie.getMessage() << "Failed to get statement object with ID: "
+      << stmtId << ": " << e.getMessage().str();
+    throw ie;
+  }
+
+  try {
+    // Execute the statement
+    stmt->setInt(1, maxAge);
+
+    stmt->executeUpdate();
+
+    prioritiesDeletedVar = stmt->getInt(2);
+
+  } catch (oracle::occi::SQLException &oe) {
+    handleException(oe);
+    castor::exception::Internal ie;
+    ie.getMessage() << "Error caught in deleteVolPriority." << std::endl
+      << oe.what();
+    throw ie;
+  }
+
+  return prioritiesDeletedVar;
 }
 
 

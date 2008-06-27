@@ -270,6 +270,8 @@ void castor::vdqm::VdqmServer::initDlf()
     {VDQM_HANDLE_VDQM2_VOL_PRIORITY, "Handle VDQM2_VOL_PRIORITY"},
     {VDQM_DELETE_VOL_PRIORITY, "Delete volume priority"},
     {VDQM_NO_VOL_PRIORITY_DELETED, "No volume priority was found and deleted"},
+    {VDQM_DEL_OLD_VOL_PRIORITIES, "Deleted old volume priorities"},
+    {VDQM_DEL_OLD_VOL_PRIORITIES_ERROR, "Error occurred whilst deleting old volume priorities"},
     {-1, ""}
   }; // castor::dlf::Message messages[]
 

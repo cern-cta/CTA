@@ -116,7 +116,9 @@ namespace castor {
       VDQM_MAGIC2_VOL_PRIORITY_ROLLBACK=82, /* "Rollback of whole VDQM_MAGIC2 vdqmVolPriority request" */
       VDQM_HANDLE_VDQM2_VOL_PRIORITY=83, /* "Handle VDQM2_VOL_PRIORITY" */
       VDQM_DELETE_VOL_PRIORITY=84, /* "Delete volume priority" */
-      VDQM_NO_VOL_PRIORITY_DELETED=85 /* "No volume priority was found and deleted" */
+      VDQM_NO_VOL_PRIORITY_DELETED=85, /* "No volume priority was found and deleted" */
+      VDQM_DEL_OLD_VOL_PRIORITIES=86, /* "Deleted old volume priorities" */
+      VDQM_DEL_OLD_VOL_PRIORITIES_ERROR=87 /* "Error occurred whilst deleting old volume priorities" */
     }; // enum VdqmDlfMessages
 
   } // namespace vdqm

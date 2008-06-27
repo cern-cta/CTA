@@ -32,8 +32,11 @@
 #include "castor/vdqm/DriveSchedulerThread.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
+#include "h/getconfent.h"
 #include "h/rtcp_constants.h"
 #include "h/vdqm_constants.h"
+
+#include <stdlib.h>
 
 
 //-----------------------------------------------------------------------------
@@ -106,22 +109,56 @@ void castor::vdqm::DriveSchedulerThread::run(void *param) {
           VDQM_INVALIDATED_DRIVE_ALLOCATION, 4, param);
       }
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", "castor::vdqm::DriveSchedulerThread::run"),
-      castor::dlf::Param("Message", e.getMessage().str()),
-      castor::dlf::Param("Code", e.code())
-    };
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code", ex.code())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
       VDQM_MATCHTAPE2TAPEDRIVE_ERROR, 3, params);
-
-    return;
   }
 
   // If a drive was allocated
   if(allocationResult == 1) {
     // Notiify the RTCP job submitter threads
     castor::server::NotifierThread::getInstance()->doNotify('J');
+  }
+
+  // Delete any old volume priorities
+  try {
+    // Start with the maximum age of a volume priority being the compile-time
+    // default
+    unsigned int maxVolPriorityAge = s_maxVolPriorityAge;
+
+    // Overwrite the compile-time default with the value in the configuration
+    // file if there is one and it is greater than 0
+    char *const maxVolPriorityAgeConfigStr =
+      getconfent("VDQM", "MAXVOLPRIORITYAGE", 0);
+    if(maxVolPriorityAgeConfigStr != NULL) {
+      int const maxVolPriorityAgeConfig = atoi(maxVolPriorityAgeConfigStr);
+
+      if(maxVolPriorityAgeConfig > 0) {
+        maxVolPriorityAge = (unsigned int)maxVolPriorityAgeConfig;
+      }
+    }
+
+    unsigned int prioritiesDeleted =
+      vdqmSvc->deleteOldVolPriorities(maxVolPriorityAge);
+
+    if(prioritiesDeleted > 0) {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("prioritiesDeleted",prioritiesDeleted)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+        VDQM_DEL_OLD_VOL_PRIORITIES, 1, params);;
+    }
+  } catch(castor::exception::Exception &ex) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code", ex.code())
+    };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+      VDQM_DEL_OLD_VOL_PRIORITIES_ERROR, 3, params);
   }
 }
 
