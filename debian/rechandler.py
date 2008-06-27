@@ -10,6 +10,6 @@ import sys
 import os
 
 def globalRecallPolicy(vid, numFiles, dataVolume, oldestTime, priority):
-    return 0
+    return priority
 
 # End-of-File
