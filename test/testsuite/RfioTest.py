@@ -43,7 +43,7 @@ class RfioPreRequisitesCase(unittest.TestCase):
 		assert (UtilityForCastorTest.checkUser() != -1), "you don't have acccess to directory \"" + outputDir + "\" where you wanted to run the test"
                 try:
                         # get needed params
-                        global castorDir, inputFile, inputStressTest, localDir, stageMap, castorConf, castorEnv
+                        global castorDir, inputFile, inputStressTest, localDir, stageMap, castorConf, castorEnv, rfioRemoteDirOk
                         params = UtilityForCastorTest.parseConfigFile(configFile, "Rfio")
                         inputFile = params["INPUT_FILE"]
 			inputStressFiles = params["STRESS_INPUT_DIR"]
@@ -67,7 +67,15 @@ class RfioPreRequisitesCase(unittest.TestCase):
                                     remoteHost=elems[1]
                         global remoteDir
                         remoteDir=remoteHost+":"+"/tmp/tmpRfio"+ticket
-                        os.system("rfmkdir "+remoteDir)
+			cmd=['rfmkdir '+remoteDir]
+			myOut=UtilityForCastorTest.runOnShell(cmd,myScen)[0]
+			rfioRemoteDirOk=1
+			if myOut.find("Permission denied"):
+			    print '\n  Failed to create remote directory: '+remoteDir
+			    print '  Reason: Permission denied - (RFIO directory filtering)'
+			    print '  The following test cases will be skipped:'
+			    print '     localToRemote, remoteToLocal and remoteToRemote ... ',
+			    rfioRemoteDirOk=0
                         
                 except IOError:
                         assert 0==-1, "An error in the preparation of the main setting occurred ... test is not valid"
@@ -93,8 +101,7 @@ class RfioPreRequisitesCase(unittest.TestCase):
                    f=open("/etc/castor/castor.conf","r")
                    buff=f.read()
                    f.close()
-
-                   if buff.find("#RH HOST") == -1  and  buff.find("RH HOST") != -1:
+                   if buff.find("#RH HOST") == -1 and buff.find("RH HOST") != -1:
                            if  castorEnv == "no":
                                    assert castorConf == "yes", "You might use value in /etc/castor/castor.conf even if you don't want."
                    else:
@@ -131,6 +138,8 @@ class RfioRfcpSimpleCase(unittest.TestCase):
                 assert os.stat(localDir+"fileRfioLocalToLocalCopy"+ticket)[6] != 0, "rfio doesn't work local to local"
 
         def localToRemote(self):
+		if not rfioRemoteDirOk:
+			return
                 cmd=[caseScen+"rfcp "+inputFile+" "+remoteDir+"fileRfioLocalToRemote"+ticket]
                 UtilityForCastorTest.saveOnFile(localDir+"RfioSimpleLocalToRemote",cmd)
                 fi=open(localDir+"RfioSimpleLocalToRemote","r")
@@ -138,6 +147,8 @@ class RfioRfcpSimpleCase(unittest.TestCase):
                 fi.close()
                 assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "rfio doesn't work from local to remote"
         def remoteToLocal(self):
+		if not rfioRemoteDirOk:
+			return
                 cmd=["rfcp "+inputFile+" "+remoteDir+"fileRfioRemoteToLocal"+ticket,"rfcp "+remoteDir+"fileRfioRemoteToLocal"+ticket+" "+localDir+"fileRfioRemoteToLocalCopy"+ticket,"diff "+inputFile+" "+localDir+"fileRfioRemoteToLocalCopy"+ticket]
                 UtilityForCastorTest.saveOnFile(localDir+"RfioSimpleRemoteToLocal",cmd)
                 
@@ -155,6 +166,8 @@ class RfioRfcpSimpleCase(unittest.TestCase):
                 assert os.stat(localDir+"RfioSimpleRemoteToLocal2")[6] == 0, "rfio doesn't work from remote to local"
                 
         def remoteToRemote(self):
+		if not rfioRemoteDirOk:
+			return
                 cmd=["rfcp "+inputFile+" "+remoteDir+"fileRfioRemoteToRemote"+ticket,"rfcp "+remoteDir+"fileRfioRemoteToRemote"+ticket+" "+remoteDir+"fileRfioRemoteToRemoteCopy"+ticket,"rfcp "+remoteDir+"fileRfioRemoteToRemoteCopy"+ticket+" "+localDir+"fileRfioRemoteToRemoteCopyCopy"+ticket,"diff "+inputFile+" "+localDir+"fileRfioRemoteToRemoteCopyCopy"+ticket]
 
                 UtilityForCastorTest.saveOnFile(localDir+"RfioSimpleRemoteToRemote",cmd)
