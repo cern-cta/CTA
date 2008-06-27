@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.672 $ $Date: 2008/06/13 15:11:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.673 $ $Date: 2008/06/27 06:04:40 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -68,6 +68,8 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskPoolsQueryLine_Cur IS REF CURSOR RETURN DiskPoolsQueryLine;
   TYPE IDRecord IS RECORD (id INTEGER);
   TYPE IDRecord_Cur IS REF CURSOR RETURN IDRecord;
+  TYPE DiskServerName IS RECORD (diskServer VARCHAR(2048));
+  TYPE DiskServerList_Cur IS REF CURSOR RETURN DiskServerName;
   TYPE SchedulerResourceLine IS RECORD (
     diskServerName VARCHAR(2048),
     diskServerStatus INTEGER,
