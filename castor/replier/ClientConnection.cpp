@@ -281,7 +281,19 @@ void castor::replier::ClientConnection::connect()
   }
   clog() << VERBOSE << SETW func  << this->toString() 
 	 <<" connect syscall ok"
-         << std::endl;   
+         << std::endl;
+  // The socket of the request replier is non-blocking. As a consequence of this
+  // EINPROGRESS (Operation now in progress) is an expected return value of the
+  // connect() call. We reset errno to 0 as this is expected behaviour.
+#if !defined(_WIN32)
+  if (errno == EINPROGRESS) {
+    errno = 0;
+  }
+#else
+  if (WSAGetLastError() != WSAEINPROGRESS) {
+    errno = 0;
+  }
+#endif
   setStatus(CONNECTING);  
 }
 

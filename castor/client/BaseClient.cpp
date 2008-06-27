@@ -703,7 +703,7 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
 //------------------------------------------------------------------------------
 void castor::client::BaseClient::pollAnswersFromStager
 (castor::stager::Request* req, castor::client::IResponseHandler* rh)
-throw (castor::exception::Exception) {
+  throw (castor::exception::Exception) {
 
   // Check parameters
   if ((req == NULL) || (req->client() == NULL)) {
@@ -743,6 +743,8 @@ throw (castor::exception::Exception) {
 	obj = socket->readObject();
       } catch (castor::exception::Exception e) {
 	if (e.code() == 1016) {
+	  // Reset serrno to 0 as this isn't really an error!
+	  serrno = 0;
 	  delete socket;
 	  socket = 0;
 	  break; // Connection closed by remote end

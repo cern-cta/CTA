@@ -81,6 +81,7 @@ castor::io::ClientSocket::ClientSocket(const unsigned short port,
 //------------------------------------------------------------------------------
 void castor::io::ClientSocket::connect()
   throw (castor::exception::Exception) {
+
   // Connects the socket
   if (netconnect_timeout(m_socket, (struct sockaddr *)&m_saddr, sizeof(m_saddr), 
 			 m_connTimeout) < 0) {
@@ -98,5 +99,19 @@ void castor::io::ClientSocket::connect()
     this->close();
     throw ex;
   }
+
+  // If a timeout is defined then the socket must be non-blocking. As a 
+  // consequence of this EINPROGRESS (Operation now in progress) is an expected
+  // return value of the connect() call. We reset errno to 0 as this is expected
+  // behaviour.
+#if !defined(_WIN32)
+  if ((m_connTimeout > 0) && (errno == EINPROGRESS)) {
+    errno = 0;
+  }
+#else
+  if ((m_connTimeout > 0) && (WSAGetLastError() != WSAEINPROGRESS)) {
+    errno = 0;
+  }
+#endif
 }
 
