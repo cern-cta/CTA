@@ -71,7 +71,7 @@ namespace castor {
        * default is overruled by a "VDQM MAXVOLPRIORITYAGE" entry in the
        * castor configuration file, e.g. /etc/castor/castor.conf
        */
-      static const unsigned int s_maxVolPriorityAge = 300; // 5 minutes
+      static const unsigned int s_maxVolPriorityAge = 86400; // 24 hours
 
       /**
        * Returns a pointer to the DbVdqmSvc or throws an exception if it cannot.
