@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.654 $ $Date: 2008/06/13 15:11:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.655 $ $Date: 2008/06/27 06:07:03 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -278,8 +278,10 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyStart
  srcSvcClass OUT VARCHAR2) AS
   fsId NUMBER;
   cfId NUMBER;
+  dsId NUMBER;
   res NUMBER;
   unused NUMBER;
+  nbCopies NUMBER;
   cfNsHost VARCHAR2(2048); 
 BEGIN
   -- Check that we did not cancel the replication request in the mean time
@@ -296,7 +298,7 @@ BEGIN
   -- is done to prevent files being written to an incorrect service class when
   -- diskservers/filesystems are moved.
   BEGIN
-    SELECT FileSystem.id INTO fsId
+    SELECT FileSystem.id, DiskServer.id INTO fsId, dsId
       FROM DiskServer, FileSystem, DiskPool2SvcClass, DiskPool, SvcClass
      WHERE FileSystem.diskserver = DiskServer.id
        AND FileSystem.diskPool = DiskPool2SvcClass.parent
@@ -312,12 +314,12 @@ BEGIN
   -- the case if it got disabled before the job started.
   BEGIN
     SELECT DiskServer.name, FileSystem.mountPoint, DiskCopy.path, 
-           CastorFile.fileId, CastorFile.nsHost, SvcClass.name
+           CastorFile.id, CastorFile.nsHost, SvcClass.name
       INTO srcDiskServer, srcMountPoint, srcPath, cfId, cfNsHost, srcSvcClass
       FROM DiskCopy, CastorFile, DiskServer, FileSystem, DiskPool2SvcClass, 
            SvcClass, StageDiskCopyReplicaRequest
      WHERE DiskCopy.id = srcDcId
-       AND DiskCopy.castorfile = Castorfile.id
+       AND DiskCopy.castorfile = CastorFile.id
        AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
        AND FileSystem.id = DiskCopy.filesystem
        AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
@@ -333,6 +335,18 @@ BEGIN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     raise_application_error(-20109, 'The source DiskCopy to be replicated is no longer available.');
   END;
+  -- Prevent multiple copies of the file being created on the same diskserver
+  INSERT INTO logt VALUES (dsid, cfid, dcid);
+  SELECT count(*) INTO nbCopies
+    FROM DiskCopy, FileSystem   
+   WHERE DiskCopy.filesystem = FileSystem.id
+     AND FileSystem.diskserver = dsId
+     AND DiskCopy.castorfile = cfId
+     AND DiskCopy.id != dcId
+     AND DiskCopy.status IN (0, 1, 2, 10); -- STAGED, DISK2DISKCOPY, WAITTAPERECALL, CANBEMIGR
+  IF nbCopies > 0 THEN
+    raise_application_error(-20112, 'Multiple copies of this file already found on this diskserver'); 
+  END IF;
   -- Update the filesystem of the destination diskcopy. If the update fails
   -- either the diskcopy doesn't exist anymore indicating the cancellation of
   -- the subrequest or another transfer has already started for it.
@@ -750,7 +764,7 @@ END;
 
 
 /* PL/SQL method implementing jobToSchedule */
-create or replace
+CREATE OR REPLACE
 PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCHAR2, srProtocol OUT VARCHAR2,
                         srXsize OUT INTEGER, srRfs OUT VARCHAR2, reqId OUT VARCHAR2,
                         cfFileId OUT INTEGER, cfNsHost OUT VARCHAR2, reqSvcClass OUT VARCHAR2,
@@ -759,9 +773,11 @@ PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCHAR2, srProtocol OU
                         clientPort OUT INTEGER, clientVersion OUT INTEGER, clientType OUT INTEGER,
                         reqSourceDiskCopy OUT INTEGER, reqDestDiskCopy OUT INTEGER, 
                         clientSecure OUT INTEGER, reqSourceSvcClass OUT VARCHAR2, 
-                        reqCreationTime OUT INTEGER, reqDefaultFileSize OUT INTEGER) AS
-  dsId INTEGER;
-  unused INTEGER;           
+                        reqCreationTime OUT INTEGER, reqDefaultFileSize OUT INTEGER,
+                        excludedHosts OUT castor.DiskServerList_Cur) AS
+  dsId NUMBER;
+  cfId NUMBER;
+  unused NUMBER;           
 BEGIN
   -- Get the next subrequest to be scheduled.
   UPDATE SubRequest 
@@ -773,16 +789,16 @@ BEGIN
 
   -- Extract the rest of the information required to submit a job into the
   -- scheduler through the job manager.
-  SELECT CastorFile.fileId, CastorFile.nsHost, SvcClass.name, Id2type.type,
-         Request.reqId, Request.euid, Request.egid, Request.username, 
+  SELECT CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SvcClass.name, 
+         Id2type.type, Request.reqId, Request.euid, Request.egid, Request.username, 
 	 Request.direction, Request.sourceDiskCopy, Request.destDiskCopy,
          Request.sourceSvcClass, Client.ipAddress, Client.port, Client.version, 
 	 (SELECT type 
             FROM Id2type 
            WHERE id = Client.id) clientType, Client.secure, Request.creationTime, 
          decode(SvcClass.defaultFileSize, 0, 2000000000, SvcClass.defaultFileSize)
-    INTO cfFileId, cfNsHost, reqSvcClass, reqType, reqId, reqEuid, reqEgid, reqUsername, 
-         srOpenFlags, reqSourceDiskCopy, reqDestDiskCopy, reqSourceSvcClass, 
+    INTO cfId, cfFileId, cfNsHost, reqSvcClass, reqType, reqId, reqEuid, reqEgid, 
+         reqUsername, srOpenFlags, reqSourceDiskCopy, reqDestDiskCopy, reqSourceSvcClass, 
          clientIp, clientPort, clientVersion, clientType, clientSecure, reqCreationTime, 
          reqDefaultFileSize
     FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
@@ -838,5 +854,19 @@ BEGIN
       COMMIT;
       RAISE;
     END;
+
+    -- Provide the job manager with a list of hosts to exclude as destination
+    -- diskservers.
+    OPEN excludedHosts FOR
+      SELECT distinct(DiskServer.name)
+        FROM DiskCopy, DiskServer, FileSystem, DiskPool2SvcClass, SvcClass
+       WHERE DiskCopy.filesystem = FileSystem.id
+         AND FileSystem.diskserver = DiskServer.id
+         AND FileSystem.diskpool = DiskPool2SvcClass.parent
+         AND DiskPool2SvcClass.child = SvcClass.id
+         AND SvcClass.name = reqSvcClass
+         AND DiskCopy.castorfile = cfId
+         AND DiskCopy.id != reqSourceDiskCopy
+         AND DiskCopy.status IN (0, 1, 2, 10); -- STAGED, DISK2DISKCOPY, WAITTAPERECALL, CANBEMIGR
   END IF;
 END;
