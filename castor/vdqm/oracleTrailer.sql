@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.127 $ $Release$ $Date: 2008/06/19 12:19:00 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.128 $ $Release$ $Date: 2008/06/27 12:56:57 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1346,6 +1346,15 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
     clientUIDVar OUT NUMBER, clientGIDVar OUT NUMBER,
     clientHostVar OUT NOCOPY VARCHAR2);
 
+  /**
+   * This procedure deletes old volume priorities.
+   *
+   * @param maxAgeVar the maximum age of a volume priority in seconds.
+   * @param prioritiesDeletedVar the number of volume priorities deleted.
+   */
+  PROCEDURE deleteOldVolPriorities(maxAgeVar IN NUMBER,
+    prioritiesDeletedVar OUT NUMBER);
+
 END castorVdqm;
 
 
@@ -2262,6 +2271,26 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     -- Give the ID of the volume priority row that was deleted
     returnVar := priorityIdVar;
   END deleteVolPriority;
+
+
+  /**
+   * See the castorVdqm package specification for documentation.
+   */
+  PROCEDURE deleteOldVolPriorities(
+    maxAgeVar             IN NUMBER,
+    prioritiesDeletedVar OUT NUMBER)
+  AS
+    nowVar NUMBER;
+  BEGIN
+    prioritiesDeletedVar := 0;
+
+    nowVar := castorVdqmCommon.getTime();
+
+    DELETE FROM VolumePriority
+    WHERE (nowVar - VolumePriority.modificationTime) > maxAgeVar;
+
+    prioritiesDeletedVar := SQL%ROWCOUNT;
+  END deleteOldVolPriorities;
 
 END castorVdqm;
 

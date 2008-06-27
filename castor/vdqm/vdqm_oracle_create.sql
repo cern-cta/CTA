@@ -36,11 +36,11 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_7_9');
+INSERT INTO CastorVersion VALUES ('-', '2_1_7_8');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.126  Release Date: 2008/06/08 12:23:39  Author: murrayc3 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.127  Release Date: 2008/06/19 12:19:00  Author: murrayc3 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1180,7 +1180,8 @@ LEFT OUTER JOIN TapeRequest ON
 LEFT OUTER JOIN TapeAccessSpecification ON
   TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
 ORDER BY
-  DriveName ASC;
+  dgName ASC,
+  driveName ASC;
 
 
 /**
@@ -1384,6 +1385,15 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
     lifespanTypeVar IN NUMBER, returnVar OUT NUMBER, priorityVar OUT NUMBER,
     clientUIDVar OUT NUMBER, clientGIDVar OUT NUMBER,
     clientHostVar OUT NOCOPY VARCHAR2);
+
+  /**
+   * This procedure deletes old volume priorities.
+   *
+   * @param maxAgeVar the maximum age of a volume priority in seconds.
+   * @param prioritiesDeletedVar the number of volume priorities deleted.
+   */
+  PROCEDURE deleteOldVolPriorities(maxAgeVar IN NUMBER,
+    prioritiesDeletedVar OUT NUMBER);
 
 END castorVdqm;
 
@@ -2301,6 +2311,26 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     -- Give the ID of the volume priority row that was deleted
     returnVar := priorityIdVar;
   END deleteVolPriority;
+
+
+  /**
+   * See the castorVdqm package specification for documentation.
+   */
+  PROCEDURE deleteOldVolPriorities(
+    maxAgeVar             IN NUMBER,
+    prioritiesDeletedVar OUT NUMBER)
+  AS
+    nowVar NUMBER;
+  BEGIN
+    prioritiesDeletedVar := 0;
+
+    nowVar := castorVdqmCommon.getTime();
+
+    DELETE FROM VolumePriority
+    WHERE (nowVar - VolumePriority.modificationTime) > maxAgeVar;
+
+    prioritiesDeletedVar := SQL%ROWCOUNT;
+  END deleteOldVolPriorities;
 
 END castorVdqm;
 
