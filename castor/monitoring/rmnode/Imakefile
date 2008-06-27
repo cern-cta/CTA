@@ -82,7 +82,7 @@ depend:
 
 install: FileName($(BIN),rmNodeDaemon)
 
-InstallProgram(rmNodeDaemon,$(BIN),root,bin,755)
+InstallProgram(rmNodeDaemon,$(BIN),root,bin,750)
 
 install.man: $(MANDIR) $(MANPAGES)
 MakeDir($(MANDIR),root,bin,0755)

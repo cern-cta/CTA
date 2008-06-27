@@ -94,7 +94,7 @@ depend:
 
 install: $(BIN) $(IPROGS_STAGER)
 
-InstallProgram(stagerDaemon,$(BIN),root,bin,0750)
+InstallProgram(stagerDaemon,$(BIN),root,bin,750)
 MakeDir($(BIN),root,bin,0755)
 
 install.man: $(MANDIR) $(MANPAGES)

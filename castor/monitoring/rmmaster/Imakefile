@@ -74,7 +74,7 @@ depend:
 
 install: FileName($(BIN),rmMasterDaemon)
 
-InstallProgram(rmMasterDaemon,$(BIN),root,bin,755)
+InstallProgram(rmMasterDaemon,$(BIN),root,bin,750)
 
 install.man: $(MANDIR) $(MANPAGES)
 MakeDir($(MANDIR),root,bin,0755)

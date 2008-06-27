@@ -121,7 +121,7 @@ depend:
 
 install: FileName($(BIN),rmGetNodes) FileName($(BIN),rmAdminNode)
 
-InstallProgram(rmGetNodes,$(BIN),root,bin,755)
+InstallProgram(rmGetNodes,$(BIN),root,bin,750)
 InstallProgram(rmAdminNode,$(BIN),root,bin,755)
 
 clean0:

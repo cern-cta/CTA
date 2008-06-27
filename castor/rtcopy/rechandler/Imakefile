@@ -76,7 +76,7 @@ depend:
 
 install: FileName($(BIN),recHandlerDaemon)
 
-InstallProgram(recHandlerDaemon,$(BIN),root,bin,755)
+InstallProgram(recHandlerDaemon,$(BIN),root,bin,750)
 
 install.man: $(MANDIR) $(MANPAGES)
 MakeDir($(MANDIR),root,bin,0755)
