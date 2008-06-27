@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.42 $ $Release$ $Date: 2007/10/01 13:21:06 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.43 $ $Release$ $Date: 2008/06/27 06:24:44 $ $Author: waldron $
  *
  *
  *
@@ -61,6 +61,7 @@ WSADATA wsadata;
 #include <rtcpcld_constants.h>
 #include <rtcpcld.h>
 #include <rtcpcld_messages.h>
+#include <sys/prctl.h>
 
 typedef struct rtcpcld_RequestList {
   tape_list_t *tape;
@@ -669,6 +670,16 @@ static void *signal_handler(void *arg) {
 	shutdownService(signal);
       }	else if (signal == SIGCHLD) {
 	checkWorkerExit(shutdownServiceFlag);
+      } else {
+	(void)dlf_write(
+			mainUuid,
+			RTCPCLD_LOG_MSG(RTCPCLD_MSG_IGNORE_SIGNAL),
+			(struct Cns_fileid *)NULL,
+			1,
+			"SIGNAL",
+			DLF_MSG_PARAM_INT,
+			signal
+			);
       }
     }
   }
@@ -1135,7 +1146,14 @@ int rtcpcld_main(
 #endif /* _WIN32 */
   signal(SIGCHLD, sigchld_handler);
 
-  sigfillset(&signalset);
+  sigemptyset(&signalset);
+  sigaddset(&signalset, SIGINT);
+  sigaddset(&signalset, SIGTERM);
+  sigaddset(&signalset, SIGHUP);
+  sigaddset(&signalset, SIGABRT);
+  sigaddset(&signalset, SIGCHLD);
+  sigaddset(&signalset, SIGPIPE);
+
   rc = pthread_sigmask(SIG_BLOCK, &signalset, NULL);
   if (rc != 0) {
     return(1);
@@ -1575,7 +1593,7 @@ static int runAsUser(
     serrno = EPERM;
     return(-1);
   }
-  
+
   return(0);
 }
 
