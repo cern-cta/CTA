@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: vdqm_2.1.7-9_to_2.1.7-10.sqlplus,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/27 20:27:30 $ $Author: murrayc3 $
+ * @(#)$RCSfile: vdqm_2.1.7-9_to_2.1.7-10.sqlplus,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/28 10:08:15 $ $Author: murrayc3 $
  *
  * This script upgrades a CASTOR VDQM v2.1.7-9 database into v2.1.7-10
  *
@@ -1008,7 +1008,9 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     nowVar := castorVdqmCommon.getTime();
 
     DELETE FROM VolumePriority
-    WHERE (nowVar - VolumePriority.modificationTime) > maxAgeVar;
+    WHERE
+          VolumePriority.lifespanType = 0 -- Single-mount
+      AND (nowVar - VolumePriority.modificationTime) > maxAgeVar;
 
     prioritiesDeletedVar := SQL%ROWCOUNT;
   END deleteOldVolPriorities;
@@ -1181,7 +1183,7 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
     clientHostVar OUT NOCOPY VARCHAR2);
 
   /**
-   * This procedure deletes old volume priorities.
+   * This procedure deletes old single-mount volume priorities.
    *
    * @param maxAgeVar the maximum age of a volume priority in seconds.
    * @param prioritiesDeletedVar the number of volume priorities deleted.

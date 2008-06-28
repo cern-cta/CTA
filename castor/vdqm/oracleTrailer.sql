@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.130 $ $Release$ $Date: 2008/06/27 20:27:30 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.131 $ $Release$ $Date: 2008/06/28 10:08:15 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1347,7 +1347,7 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
     clientHostVar OUT NOCOPY VARCHAR2);
 
   /**
-   * This procedure deletes old volume priorities.
+   * This procedure deletes old single-mount volume priorities.
    *
    * @param maxAgeVar the maximum age of a volume priority in seconds.
    * @param prioritiesDeletedVar the number of volume priorities deleted.
@@ -2291,7 +2291,9 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     nowVar := castorVdqmCommon.getTime();
 
     DELETE FROM VolumePriority
-    WHERE (nowVar - VolumePriority.modificationTime) > maxAgeVar;
+    WHERE
+          VolumePriority.lifespanType = 0 -- Single-mount
+      AND (nowVar - VolumePriority.modificationTime) > maxAgeVar;
 
     prioritiesDeletedVar := SQL%ROWCOUNT;
   END deleteOldVolPriorities;
