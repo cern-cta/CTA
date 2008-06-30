@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/25 12:49:17 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/30 15:35:46 $ $Author: waldron $
  *
  * This script create a new DLF schema
  *
@@ -912,7 +912,7 @@ BEGIN
   -- Drop partitions across all tables
   FOR a IN (SELECT *
               FROM user_tab_partitions
-             WHERE partition_name < concat('P_', TO_CHAR(SYSDATE - expiry, 'YYYYMMDD'))
+             WHERE partition_name < concat('P_', TO_CHAR(SYSDATE - expiryTime, 'YYYYMMDD'))
                AND partition_name <> 'MAX_VALUE'
              ORDER BY partition_name DESC)
   LOOP
@@ -925,7 +925,7 @@ BEGIN
               FROM user_tablespaces
              WHERE status <> 'OFFLINE'
                AND tablespace_name LIKE 'DLF_%_'||username
-               AND tablespace_name < 'DLF_'||TO_CHAR(SYSDATE - expiry, 'YYYYMMDD')||'_'||username
+               AND tablespace_name < 'DLF_'||TO_CHAR(SYSDATE - expiryTime, 'YYYYMMDD')||'_'||username
              ORDER BY tablespace_name ASC)
   LOOP
     EXECUTE IMMEDIATE 'ALTER TABLESPACE '||a.tablespace_name||' OFFLINE';
