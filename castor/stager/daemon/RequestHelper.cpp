@@ -128,6 +128,7 @@ namespace castor{
           castor::dlf::dlf_writep(requestUuid, DLF_LVL_MONITORING, STAGER_REQ_PROCESSED, 7, params, cnsFileId);
         }
 
+        if(cnsFileId) free(cnsFileId);
         delete baseAddr;
         if(castorFile) {
           if(castorFile->fileClass())
@@ -185,49 +186,17 @@ namespace castor{
       }
 
 
-      /*****************************************/
-      /* get request uuid needed to log on dlf */
-      /*****************************************/
-      void RequestHelper::setRequestUuid() throw(castor::exception::Exception)
+      void RequestHelper::setUuids() throw ()
       {
-        if(!fileRequest->reqId().empty()){
+        // reqUuid
+        if(fileRequest->reqId().empty() ||
           /*convert to the Cuuid_t version and copy in our thread safe variable */
-          if (string2Cuuid(&(this->requestUuid),(char*) fileRequest->reqId().c_str()) != 0) {
-            requestUuid = nullCuuid;
-          }
-        }
-        else {
+          (string2Cuuid(&requestUuid, (char*) fileRequest->reqId().c_str()) != 0)) {
           requestUuid = nullCuuid;
-          castor::dlf::Param params[]={ castor::dlf::Param("Filename", subrequest->fileName()) };
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, STAGER_REQUESTUUID_EXCEPTION, 1, params);
         }
-      }
-
-      /******************************************************************************************/
-      /* get and (create or initialize) Cuuid_t subrequest and request                         */
-      /* and copy to the thread-safe variables (subrequestUuid and requestUuid)               */
-      /***************************************************************************************/
-      /* get or create subrequest uuid */
-      void RequestHelper::setSubrequestUuid() throw(castor::exception::Exception)
-      {
-        char subrequest_uuid_as_string[CUUID_STRING_LEN+1];
-        subrequestUuid = nullCuuid;
-
-        if (subrequest->subreqId().empty()){/* we create a new Cuuid_t, copy to thread-safe variable, and update it on subrequest...*/
-          Cuuid_create(&(this->subrequestUuid));
-
-          /* convert to the string version, needed to update the subrequest and fill it on DB*/
-          if(Cuuid2string(subrequest_uuid_as_string, CUUID_STRING_LEN+1, &(this->subrequestUuid)) == 0){
-            subrequest_uuid_as_string[CUUID_STRING_LEN] = '\0';
-            /* update on subrequest */
-            subrequest->setSubreqId(subrequest_uuid_as_string);
-            /* update it in DB */
-            dbSvc->updateRep(baseAddr, subrequest, false);
-          }
-        }
-        else {
-          /* translate to the Cuuid_t version and copy to our thread-safe variable */
-          string2Cuuid(&(this->subrequestUuid), (char *)subrequest->subreqId().c_str());
+        // subreqUuid: this is never empty
+        if(string2Cuuid(&subrequestUuid, (char *)subrequest->subreqId().c_str()) != 0) {
+          subrequestUuid = nullCuuid;
         }
       }
 
@@ -288,8 +257,11 @@ namespace castor{
         }
         try{
           u_signed64 fileClassId = fileClass->id();
-          u_signed64 svcClassId = svcClass->id();                              
-          cnsFileId = &(stgCnsHelper->cnsFileid);
+          u_signed64 svcClassId = svcClass->id();
+          // copy the fileid structure for logging purposes
+          // XXX a pointer doesn't work for bad owning relationships. To be redesigned
+          cnsFileId = (struct Cns_fileid*)malloc(sizeof(struct Cns_fileid));
+          memcpy(cnsFileId, &stgCnsHelper->cnsFileid, sizeof(struct Cns_fileid));
 
           // get the castorFile from the stagerService and fill it on the subrequest
           // note that for a Put request we should truncate the size, but this is done later on by
