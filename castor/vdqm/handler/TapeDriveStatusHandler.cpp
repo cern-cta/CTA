@@ -230,7 +230,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
       castor::dlf::Param("reqhost", ptr_driveRequest->reqhost),
       castor::dlf::Param("volid"  , ptr_driveRequest->volid),
       castor::dlf::Param("drive"  , ptr_driveRequest->drive)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       VDQM_MOUNT_WITHOUT_VOL_REQ, 3, param);
   } 
 
@@ -256,7 +256,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
       castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
     castor::dlf::Param("newStatus",
       castor::vdqm::DevTools::tapeDriveStatus2Str(VOL_MOUNTED))};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+  castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
     VDQM_DRIVE_STATE_TRANSITION, 4, param);
 
   // Now we can switch from UNIT_ASSIGNED to the next status 
@@ -310,7 +310,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolUnmountStatus()
           castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
         castor::dlf::Param("newStatus",
           castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_UP))};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       VDQM_DRIVE_STATE_TRANSITION, 4, param);
 
       ptr_tapeDrive->setStatus(UNIT_UP);
@@ -322,7 +322,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolUnmountStatus()
           castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
         castor::dlf::Param("newStatus",
           castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_STARTING))};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       VDQM_DRIVE_STATE_TRANSITION, 4, param);
 
       ptr_tapeDrive->setStatus(UNIT_STARTING);
@@ -334,7 +334,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolUnmountStatus()
           castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
         castor::dlf::Param("newStatus",
           castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_ASSIGNED))};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       VDQM_DRIVE_STATE_TRANSITION, 4, param);
 
       ptr_tapeDrive->setStatus(UNIT_ASSIGNED);
@@ -348,7 +348,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolUnmountStatus()
         castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
       castor::dlf::Param("newStatus",
         castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_UP))};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
     VDQM_DRIVE_STATE_TRANSITION, 4, param);
 
     ptr_tapeDrive->setStatus(UNIT_UP);
@@ -360,7 +360,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolUnmountStatus()
         castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
       castor::dlf::Param("newStatus",
         castor::vdqm::DevTools::tapeDriveStatus2Str(STATUS_UNKNOWN))};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
     VDQM_DRIVE_STATE_TRANSITION, 4, param);
 
     // The status of the tape drive must be WAIT_FOR_UNMOUNT or
@@ -506,7 +506,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
           castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
         castor::dlf::Param("newStatus",
           castor::vdqm::DevTools::tapeDriveStatus2Str(WAIT_FOR_UNMOUNT))};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       VDQM_DRIVE_STATE_TRANSITION, 4, param);
 
       // No, there wasn't any other job for that volume. Tell the
@@ -540,7 +540,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
             castor::dlf::Param("clientUID"    , clientUID),
             castor::dlf::Param("clientGID"    , clientGID),
             castor::dlf::Param("clientHost"   , clientHost)};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+          castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
             VDQM_DELETE_VOL_PRIORITY, 8, param);
 
         // Else no delete took place
@@ -549,7 +549,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
             castor::dlf::Param("vid"         , finishedTapeRequestVid),
             castor::dlf::Param("tpMode"      , finishedTapeRequestTpMode),
             castor::dlf::Param("lifespanType", 0)};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+          castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
             VDQM_NO_VOL_PRIORITY_DELETED, 3, param);
         }
       }
@@ -572,7 +572,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
           castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
         castor::dlf::Param("newStatus",
           castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_UP))};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       VDQM_DRIVE_STATE_TRANSITION, 4, param);
 
       // Switch tape Drive to status UNIT_UP
@@ -587,7 +587,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
           castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
         castor::dlf::Param("newStatus",
           castor::vdqm::DevTools::tapeDriveStatus2Str(FORCED_UNMOUNT))};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
         VDQM_DRIVE_STATE_TRANSITION, 4, param);
 
       // Switch tape Drive to status FORCED_UNMOUNT
@@ -620,7 +620,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitFreeStatus()
       castor::vdqm::DevTools::tapeDriveStatus2Str(ptr_tapeDrive->status())),
     castor::dlf::Param("newStatus",
       castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_UP))};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+  castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
   VDQM_DRIVE_STATE_TRANSITION, 4, param);
 
   ptr_tapeDrive->setStatus(UNIT_UP);
