@@ -316,8 +316,8 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
         castor::vdqm::DevTools::tapeDriveStatus2Str(tapeDrive->status())),
       castor::dlf::Param("newStatus",
         castor::vdqm::DevTools::tapeDriveStatus2Str(STATUS_UNKNOWN))};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-      VDQM_DRIVE_STATE_TRANSITION, 4, param);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_DRIVE_STATE_TRANSITION,
+      4, param);
 
     // Set new TapeDriveStatusCode
     tapeDrive->setStatus(STATUS_UNKNOWN);
