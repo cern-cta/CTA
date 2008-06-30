@@ -49,12 +49,12 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::vdqm::handler::TapeDriveStatusHandler::TapeDriveStatusHandler(
-  castor::vdqm::TapeDrive* tapeDrive, vdqmDrvReq_t* driveRequest, 
-  Cuuid_t cuuid, u_signed64* newRequestId) throw(castor::exception::Exception) {
+  castor::vdqm::TapeDrive *const tapeDrive, vdqmDrvReq_t *const driveRequest, 
+  const Cuuid_t &cuuid, u_signed64 *const newRequestId)
+  throw(castor::exception::Exception) : ptr_tapeDrive(tapeDrive),
+    ptr_driveRequest(driveRequest),  m_cuuid(cuuid),
+    ptr_newRequestId(newRequestId) {
     
-  m_cuuid = cuuid;
-  ptr_newRequestId = newRequestId;
-
   // ptr_newRequestId will get a valid request ID (value > 0) if there is
   // another request for the same tape
   *ptr_newRequestId = 0;
@@ -63,10 +63,6 @@ castor::vdqm::handler::TapeDriveStatusHandler::TapeDriveStatusHandler(
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "One of the arguments is NULL";
     throw ex;
-  }
-  else {
-    ptr_tapeDrive = tapeDrive;
-    ptr_driveRequest = driveRequest;
   }
 }
 

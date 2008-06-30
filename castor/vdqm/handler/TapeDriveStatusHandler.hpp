@@ -79,9 +79,9 @@ namespace castor {
            * the RTCPJobSubmitter threads.
            * @exception In case of error
            */
-          TapeDriveStatusHandler(castor::vdqm::TapeDrive* tapeDrive, 
-            vdqmDrvReq_t* driveRequest, Cuuid_t cuuid,
-            u_signed64* newRequestId) 
+          TapeDriveStatusHandler(castor::vdqm::TapeDrive *const tapeDrive, 
+            vdqmDrvReq_t *const driveRequest, const Cuuid_t &cuuid,
+            u_signed64 *const newRequestId) 
             throw(castor::exception::Exception);
           
           /**
@@ -91,11 +91,10 @@ namespace castor {
           
             
         private:
-          // Private variables
-          castor::vdqm::TapeDrive* ptr_tapeDrive;
-          vdqmDrvReq_t* ptr_driveRequest;
-          Cuuid_t m_cuuid;
-          u_signed64* ptr_newRequestId;
+          castor::vdqm::TapeDrive *const ptr_tapeDrive;
+          vdqmDrvReq_t *const ptr_driveRequest;
+          const Cuuid_t &m_cuuid;
+          u_signed64 *const ptr_newRequestId;
           
           
           /**

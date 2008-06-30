@@ -2652,8 +2652,8 @@ int castor::db::ora::OraVdqmSvc::allocateDrive(u_signed64 *tapeDriveId,
 // reuseDriveAllocation
 // -----------------------------------------------------------------------
 int castor::db::ora::OraVdqmSvc::reuseDriveAllocation(
-  const castor::vdqm::VdqmTape *tape, const castor::vdqm::TapeDrive *drive,
-  u_signed64 *tapeRequestId)
+  castor::vdqm::VdqmTape *const tape, castor::vdqm::TapeDrive *const drive,
+  u_signed64 *const tapeRequestId)
   throw (castor::exception::Exception) {
 
   // 1 = driev allocation reused, 0 = no possible reuse found, -1 possible
