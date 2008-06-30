@@ -185,7 +185,7 @@ namespace castor{
             Cns_unsetid();           // local call, ignore result
             if(Cns_chclass(subReq->fileName().c_str(), 0, (char*)forcedFileClassName.c_str())) {
               castor::dlf::Param params[]={
-		castor::dlf::Param("Filename", subReq->fileName()),
+                castor::dlf::Param("Filename", subReq->fileName()),
                 castor::dlf::Param("Function", "Cns_chclass"),
                 castor::dlf::Param("Error", sstrerror(serrno))};
               castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 3, params);	  
@@ -202,15 +202,15 @@ namespace castor{
           // update cns structures
           if(Cns_statx(subReq->fileName().c_str(), &cnsFileid, &cnsFilestat) != 0) {
             castor::dlf::Param params[]={
-	      castor::dlf::Param("Filename", subReq->fileName()),
+              castor::dlf::Param("Filename", subReq->fileName()),
               castor::dlf::Param("Function","Cns_statx"),
               castor::dlf::Param("Error", sstrerror(serrno))};
-	    if (serrno == ENOTDIR) {
-	      castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_CNS_EXCEPTION, 3, params);	  
+            if (serrno == ENOTDIR) {
+              castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_CNS_EXCEPTION, 3, params);	  
             } else {
-	      castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 3, params);
-	      serrno = SEINTERNAL;
-	    }
+              castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 3, params);
+              serrno = SEINTERNAL;
+            }
 	    
             castor::exception::Exception ex(serrno);
             ex.getMessage() << "Failed to stat the file in the Name Server";
