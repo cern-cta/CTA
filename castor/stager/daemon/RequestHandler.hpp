@@ -58,7 +58,7 @@ namespace castor{
 	
       protected:
 	RequestHelper *stgRequestHelper;	
-	CnsHelper *stgCnsHelper;
+	CnsHelper* stgCnsHelper;
 
 	int typeRequest;
 

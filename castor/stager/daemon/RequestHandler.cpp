@@ -46,29 +46,24 @@ namespace castor{
       /************************************/
       void RequestHandler::preHandle() throw(castor::exception::Exception)
       {
-        
         /* get the uuid request string version and check if it is valid */
-        stgRequestHelper->setRequestUuid();
-        
-        /* we create the CnsHelper inside and we pass the requestUuid needed for logging */
-        this->stgCnsHelper = new CnsHelper(stgRequestHelper->requestUuid);
+        stgRequestHelper->setUuids();
         
         /* set the username and groupname needed to print them on the log */
         stgRequestHelper->setUsernameAndGroupname();
-        
-        /* get the uuid subrequest string version and check if it is valid */
-        /* we can create one !*/
-        stgRequestHelper->setSubrequestUuid();
-        
-        /* set the euid, egid attributes on stgCnsHelper (from fileRequest) */ 
-        stgCnsHelper->cnsSetEuidAndEgid(stgRequestHelper->fileRequest);
-        
+
         /* get the svcClass */
         stgRequestHelper->getSvcClass();
         
         /* create and fill request->svcClass link on DB */
         stgRequestHelper->linkRequestToSvcClassOnDB();
-                
+        
+        /* we create the CnsHelper inside and we pass the requestUuid needed for logging */
+        this->stgCnsHelper = new CnsHelper(stgRequestHelper->requestUuid);
+        
+        /* set the euid, egid attributes on stgCnsHelper (from fileRequest) */ 
+        stgCnsHelper->cnsSetEuidAndEgid(stgRequestHelper->fileRequest);
+        
         /* check the existence of the file, if the user hasTo/can create it and set the fileId and server for the file */
         /* create the file if it is needed/possible */
         bool fileCreated = stgCnsHelper->checkFileOnNameServer(stgRequestHelper->subrequest, stgRequestHelper->svcClass);
@@ -77,13 +72,8 @@ namespace castor{
         stgRequestHelper->checkFilePermission(fileCreated, stgCnsHelper);
       }
       
-      
-      /*******************************************************/
-      /* since the CnsHelper is created in this class */
-      /* it will be deleted in its destructor */
-      RequestHandler:: ~RequestHandler() throw(){
-        if(stgCnsHelper)
-          delete stgCnsHelper;
+      RequestHandler::~RequestHandler() throw(){
+        delete stgCnsHelper;
         stgCnsHelper = 0;
       }
       

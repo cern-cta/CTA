@@ -60,17 +60,13 @@ namespace castor{
       {
         
         /* get the uuid request string version and check if it is valid */
-        stgRequestHelper->setRequestUuid();
+        stgRequestHelper->setUuids();
         
         /* we create the CnsHelper inside and we pass the requestUuid needed for logging */
         this->stgCnsHelper = new CnsHelper(stgRequestHelper->requestUuid);
                 
         /* set the username and groupname needed to print them on the log */
         stgRequestHelper->setUsernameAndGroupname();
-        
-        /* get the uuid subrequest string version and check if it is valid */
-        /* we can create one !*/
-        stgRequestHelper->setSubrequestUuid();
         
         /* set the euid, egid attributes on stgCnsHelper (from fileRequest) */ 
         stgCnsHelper->cnsSetEuidAndEgid(stgRequestHelper->fileRequest);
