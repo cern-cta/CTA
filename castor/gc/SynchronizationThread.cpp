@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/05/20 08:04:46 $ $Author: waldron $
+ * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/06/30 15:34:50 $ $Author: waldron $
  *
  * Synchronization thread used to check periodically whether files need to be
  * deleted
@@ -584,7 +584,7 @@ void castor::gc::SynchronizationThread::synchronizeFiles
       if (errno != ENOENT) {
 	// "Failed to stat file"
 	castor::dlf::Param params[] =
-	  {castor::dlf::Param("Fileanem", cnsFilePaths.find(*it)->second),
+	  {castor::dlf::Param("Filename", cnsFilePaths.find(*it)->second),
 	   castor::dlf::Param("Error", strerror(errno))};
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 41, 2, params, &fileId);
       }
@@ -616,5 +616,28 @@ void castor::gc::SynchronizationThread::synchronizeFiles
       {castor::dlf::Param("NbOrphanFiles", nbOrphanFiles),
        castor::dlf::Param("SpaceFreed", spaceFreed)};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_MONITORING, 35, 2, params);
+  }
+
+  // List all files that will be scheduled for later deletion using the normal
+  // selectFile2Delete logic
+  for (std::vector<u_signed64>::const_iterator it = delFileIds.begin();
+       it != delFileIds.end();
+       it++) {
+
+    // Exclude those files which we already removed above i.e. those which
+    // aren't in the stager catalogue
+    std::vector<u_signed64>::const_iterator it2 =
+      std::find(orphans.begin(), orphans.end(), *it);
+    if (it2 != orphans.end()) {
+      continue;
+    }
+    fileId.fileid = fileIdFromFilePath(cnsFilePaths.find(*it)->second);
+
+    // "File scheduled for deletion as the file no longer exists in the
+    // nameserver but still exists in the stager"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Filename", cnsFilePaths.find(*it)->second)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 42, 1, params, &fileId);
+   
   }
 }
