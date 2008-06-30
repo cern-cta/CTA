@@ -361,7 +361,7 @@ castor::vdqm::TapeDrive*
               tapeDrive->status())),
           castor::dlf::Param("newStatus",
             castor::vdqm::DevTools::tapeDriveStatus2Str(UNIT_UP))};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+          castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
             VDQM_DRIVE_STATE_TRANSITION, 4, param);
 
         // Our new tapeDrive Object is just in status UNIT_UP
