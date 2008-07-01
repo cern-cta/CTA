@@ -4,55 +4,26 @@
 
   Bug Fixes
   ---------
-
-  - #37936 VDQM2: Added the vdqmserver manual page.
-  - #37968 VDQM2: Changed the order of the requests displayed by showqueues
-    from creation time to DGN and creation time.
-  - Changed the order of the drives displayed by showqueues from drive name to
-    DGN and drive name.
-  - Fixed the usage message (vdqmserver -help).  The default number of request
-    handler threads and the default number of RTCP job sumbitter threads are
-    now correct.
-  - tpread with no command-line arguments no longer segmentation faults.
-  - showqueues no longer displays delta times of -1.
-
-  Upgrading VDQM2 from 2.1.7-9
-  ----------------------------
-
-  Instructions
-  ------------
-
-  1. Download the schema upgrade script for sqlplus:
-
-     wget -O vdqm_2.1.7-9_to_2.1.7-10.sqlplus 'http://isscvs.cern.ch/cgi-bin/viewcvs-all.cgi/CASTOR2/upgrades/vdqm_2.1.7-9_to_2.1.7-10.sqlplus?revision=1.1&root=castor'
-
-  2. Use sqlplus to logon to the database using the schema owner account, e.g.
-     vdqm@c2vdqmdb, and upgrade the schema:
-
-     sqlplus vdqm@c2vdqmdb @vdqm_2.1.7-9_to_2.1.7-10.sqlplus
-
-  3. Upgrade to the new rpms:
-
-     castor-dbtools
-     castor-hsmtools
-     castor-vdqm2-server
-
-  4. Restart the vdqmserver daemon and check its status
-
-     service vdqmserver -restart
-     service vdqmserver -status
-
-
------------
-- 2.1.7-8 -
------------
-
-  Bug Fixes
-  ---------
   - #18778: -f option to stager_get to pass a file containing the list of files to prestage
   - #33207: Need admin tools to manage black/white lists for stager ACLs
+  - #34639: consider DISABLED tapes as not available
+  - #34766: stager error messages corrupted?
+  - #34800: stager: request processed missing fileid?
+  - #35084: concurrent repack of two tapecopies of the same file
+  - #35085: minor repack enhancement
+  - #35086: multiple vid given by command line
   - #36804: Inconsistency in permission handling between stager_rm and nsrm (Updated)
+  - #35870: Temporarily move vdqm_admin to another rpm
+  - #36713: RFE: garbage collection
   - #37286: Default logrotate should be 90 days
+  - #37374: stager: setGC does not log the pin value
+  - #37691: RFIO preseek/preread fails on repeated blocks.
+  - #37823: stage_filequery returns empty file name
+  - #37893: test suite not up-to-date after 'rfio filter' in 2.1.7-8
+  - #37936: Write manual page for the VDQM2 server: vdqmserver
+  - #37968: Order VDQM2 showqueues requests by DGN as well as by time
+  - #38027: b/w check of non-existent svcclass returns 'Insufficient user privileges'
+  - #38149: New wrong size problem
 
   - In this release of CASTOR2 the cleaning daemon has been removed and replaced by a pure
     PL/SQL database job. This removes the danger of running two cleaning daemons for reasons
@@ -78,13 +49,56 @@
     machine in CUPV. Prior to this release the check did not take into consideration the
     machine executing the command.
 
-  Schema Enhancements
-  -------------------
-  - Added missing index on the Segment table
-  - Enabled row movement on the StageDiskCopyReplicaRequest.
-  - Fixed a full table scan in the stagedForcedRm procedure.
-  - Fixed a full table scan in the bestTapeCopyForStream procedure which caused 'Connection
-    dropped by remote end' errors in the migrator logs.
+  - Modified the HTML output of the DLF web interface to provide meta instructions to robots
+    and web crawlers to stop them following links and indexing the DLF site.
+
+  - Fixed SQL injection and XSS (Cross-site scripting) vulnerabilities in the DLF web
+    interface.
+
+  - Fixed a segmentation fault in rfiod caused by free'ing invalid memory.
+
+  - Fixed the parsing of physical filenames inside rfiod to support the parsing of fully
+    qualified domain names. Prior to this the logging of the NS host was not fully
+    qualified.
+
+  - Fixed segmentation fault in the request handler when network/communication errors with
+    clients occurred.
+
+  - Modified the way in which jobs are submitted into LSF by the jobManager to support the
+    usage of LSF shared resources. This now allows operations teams to specify through LSF
+    configuration how many jobs slots for each mover/protocol are allowed per diskserver
+    or service class. Therefore, it is now possible to say for example that a diskserver
+    which has 15 slots is allowed to run a maximum of 5 rfio transfers, 2 rfio3 (streaming)
+    transfers, 3 xrootd transfers and 15 gridftp transfers at any one time.
+
+  - Fixed the partitioning of statistic tables in the DLF database. Prior to this
+    modification the statistics tables where not partitioned and where part of the main
+    tablespaces.
+
+  - Fixed `stager_qry -s` returning the wrong error message where there were no diskservers
+    attached to a diskpool
+
+  - Fixed a bug in the rfio code which caused updates using the rfio v2 (non streaming)
+    protocol to have the wrong file size in the nameserver. This prevented the files from
+    being migrated to tape.
+
+  - Fixed incorrect recording of the errno and serrno values in the 'Job exiting' message
+    of stagerJob. Prior to this fix stagerJob would report errno=10 (No child processes) and
+    serrno=1016 (Operation now in progress) for all transfers even if they were successful.
+  
+  - Added support for enabling coredumps in rtcpclientd.
+
+  - Fixed a bug in Disk2Disk copy scheduling which allowed a file to be replicated to a
+    diskserver which already held a copy of the file. Note: this was only possible in the past
+    on service classes where the max replica number was greater the one.
+
+  - Enhanced the GC logic to allow for policy based decision making. Provided with this 
+    release are 3 policies:
+    - default: gcweight based on file size, but with a one day of bonus before the first 
+      access, subsequent accesses after that will only get an extra 30 minutes of weight and
+      setFileGcWeight is capped to 5 hours.
+    - FIFO: first in first out.
+    - LRU: least recently used.
 
   Package changes
   ---------------
@@ -101,38 +115,66 @@
   ----------------------
 
   Before upgrading to a 2.1.7-7 instance of CASTOR2 please make sure to read the upgrade
-  instructions fully before proceeding. Note: this upgrade does not require stopping of the
-  instance and should be transparent to the end users.
+  instructions fully before proceeding. It is highly recommended to have an Oracle DBA on 
+  standby while upgrading the stager database just in case a database restoration is required.
 
-  Instructions
-  ------------
+  Note: 
+    - This upgrade is intrusive and will require the stager and repack instances to be 
+      stopped.
+    - It is not mandatory to upgrade the CNS or CUPV for this release. However, it is always
+      recommended to keep your software up to date.
 
-  1. Stop the stager daemon. This is because of several schema changes which are non
-     backwards compatible.
+  Stager
+  ------
 
-  2. Upgrade the stager and dlf databases using the correct upgrade scripts from
-     - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-8/upgrades
+    1. Stop all daemons on stager headnodes which have direct connections to the stager or
+       DLF databases. This includes: rhserver, stager, cleaning, jobManager, rtcpclientd,
+       mighunter, rechandler, rmMasterDaemon, expertd and dlfserver daemons. Note: it is not
+       necessary to stop any services/daemons on the diskservers themselves.
 
-  3. On the STAGER database execute the following sql statement:
+    2. Verify that all sessions from CASTOR2 related daemons to the database are gone. This
+       step is advised to make sure that modifications are no longer being made to the 
+       database which may interfere or prolong the upgrade process.
+
+    3. Ask your DBA to create a backup of the database.
+
+    4. Upgrade the stager and DLF databases using the correct upgrade scripts from
+       - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-10/upgrades
+
+    5. On the STAGER database execute the following sql statement:
 
        UPDATE CastorConfig SET value = 'XXXXX' WHERE key = 'instance';
        COMMIT;
 
-     Where XXXX represents the name of the Castor2 instance e.g. castorcms, castoratlas ...
+       Where XXXX represents the name of the Castor2 instance e.g. castorcms, castoratlas ...
 
-  4. Update the rechandler.py python policy file for the recall handler based on the
-     rechandler.py.example file in /etc/castor/. The major difference here is that an
-     additional attribute is now passed into each function called 'priority'.
+    6. Update the rechandler.py python policy file for the recall handler based on the
+       rechandler.py.example file in /etc/castor/. The major difference here is that an
+       additional attribute is now passed into each function called 'priority'.
 
-     Note: For this particular release the priority field should be ignored!! It is only
-     meaningful if you are running VDQM2 in production.
+       Note: For this particular release the priority field should be ignored!! It is only
+       meaningful if you are running VDQM2 in production.
 
-  5. Upgrade the software on the headnodes and diskservers to 2.1.7-8. Daemons will
-     automatically be restarted on upgrade.
+    7. Upgrade the software on the headnodes and diskservers to 2.1.7-9. Daemons will
+       automatically be restarted on upgrade.
 
-  6. Start the stager.
-  
-  7. Upgrade the CNS and CUPV services to 2.1.7-6 (This step is not mandatory)
+    8. Start all the daemons which were stopped in step 1. Note: the cleaning daemon no
+       longer exists!
+
+    9. Test the instance by running the test suite available from:
+       - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-10/fastTest 
+
+   10. Congratulations you have successfully upgraded to the 2.1.7-10 release of CASTOR2!!
+
+  Repack
+  ------
+
+    1. Stop the repackserver
+
+    2. Upgrade the repack database using the correct upgrade scripts from
+       - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-10/upgrades
+
+    3. Start the repackserver
 
 
 -----------
