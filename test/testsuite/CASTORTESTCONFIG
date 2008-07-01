@@ -2,7 +2,8 @@
 
 CLIENT          PUT        NO
 CLIENT          GET        NO
-CLIENT          UPD        NO
+CLIENT          UPDV2      NO
+CLIENT          UPDV3      NO
 CLIENT          PUTDONE    NO
 CLIENT          RM         NO
 CLIENT          EXTRAQRY   NO
