@@ -26,7 +26,7 @@ COMM
 
 #include <Project.tmpl>
 
-SUBDIRS = src/rfio src/stager
+SUBDIRS = src/stager
 
 all: $(COMMON_LIB)
 
