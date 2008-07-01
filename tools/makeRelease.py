@@ -119,7 +119,8 @@ os.mkdir('fastTestSuite')
 os.chdir('fastTestSuite')
 targets = [ ('CLIENT', 'PUT'),
             ('CLIENT', 'GET'),
-            ('CLIENT', 'UPD'),
+            ('CLIENT', 'UPDV2'),
+            ('CLIENT', 'UPDV3'),
             ('CLIENT', 'PUTDONE'),
             ('CLIENT', 'RM'),
             ('CLIENT', 'EXTRAQRY'),
