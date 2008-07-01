@@ -78,7 +78,7 @@ namespace castor{
 	castor::db::DbCnvSvc* dbSvc;
 	
 	// for logging purposes
-	struct Cns_fileid* cnsFileId;
+	struct Cns_fileid cnsFileId;
 
 	/* BaseAddress */
 	castor::BaseAddress* baseAddr;
@@ -161,7 +161,7 @@ namespace castor{
 	 * @param messageNb the message number as defined in DlfMessages.hpp
 	 * @param fid the fileId structure if needed
 	 */
-	void logToDlf(int level, int messageNb, Cns_fileid* fid = 0) throw();
+	void logToDlf(int level, int messageNb, struct Cns_fileid* fid = 0) throw();
 	
       }; //end RequestHelper class
     }//end namespace daemon

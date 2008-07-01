@@ -106,6 +106,7 @@ namespace castor{
           h = new GetHandler(stgRequestHelper, stgCnsHelper);
         }      
         h->handle();   // may throw exception, just forward it - logging is done in the callee
+        h->stgCnsHelper = 0;
         delete h;
       }
       

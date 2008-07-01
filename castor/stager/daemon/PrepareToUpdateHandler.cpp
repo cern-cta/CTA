@@ -68,8 +68,8 @@ namespace castor{
           h = new PrepareToGetHandler(stgRequestHelper, stgCnsHelper);
         }      
         h->handle();   // may throw exception, just forward it - logging is done in the callee
+        h->stgCnsHelper = 0;
         delete h;
-        stgCnsHelper = 0;   // the delegated handler has already deleted this object
       }
       
       
