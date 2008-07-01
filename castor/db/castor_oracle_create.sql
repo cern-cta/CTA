@@ -116,7 +116,7 @@ CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight float, creationTime INTEGER
 CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minFreeSpace float, minAllowedFreeSpace float, maxFreeSpace float, totalSize INTEGER, readRate INTEGER, writeRate INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbReadWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT I_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type SvcClass */
-CREATE TABLE SvcClass (nbDrives NUMBER, name VARCHAR2(2048), defaultFileSize INTEGER, maxReplicaNb NUMBER, replicationPolicy VARCHAR2(2048), migratorPolicy VARCHAR2(2048), recallerPolicy VARCHAR2(2048), streamPolicy VARCHAR2(2048), gcPolicy VARCHAR2(2048), gcEnabled NUMBER, hasDiskOnlyBehavior NUMBER, migrSelectPolicy VARCHAR2(2048), id INTEGER CONSTRAINT I_SvcClass_Id PRIMARY KEY, forcedFileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE SvcClass (nbDrives NUMBER, name VARCHAR2(2048), defaultFileSize INTEGER, maxReplicaNb NUMBER, replicationPolicy VARCHAR2(2048), migratorPolicy VARCHAR2(2048), recallerPolicy VARCHAR2(2048), streamPolicy VARCHAR2(2048), gcPolicy VARCHAR2(2048), gcEnabled NUMBER, hasDiskOnlyBehavior NUMBER, id INTEGER CONSTRAINT I_SvcClass_Id PRIMARY KEY, forcedFileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE TABLE SvcClass2TapePool (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
 CREATE INDEX I_SvcClass2TapePool_C on SvcClass2TapePool (child);
 CREATE INDEX I_SvcClass2TapePool_P on SvcClass2TapePool (parent);
@@ -192,7 +192,7 @@ ALTER TABLE Stream2TapeCopy
   ADD CONSTRAINT fk_Stream2TapeCopy_C FOREIGN KEY (Child) REFERENCES TapeCopy (id);
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_7_9');
+INSERT INTO CastorVersion VALUES ('-', '2_1_7_10');
 
 /* Fill Type2Obj metatable */
 CREATE TABLE Type2Obj (type INTEGER PRIMARY KEY NOT NULL, object VARCHAR2(100) NOT NULL, svcHandler VARCHAR2(100));
@@ -334,7 +334,7 @@ INSERT INTO Type2Obj (type, object) VALUES (158, 'PriorityMap');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleCommon.sql,v  Revision: 1.658  Date: 2008/06/13 15:11:40  Author: sponcec3 
+ * @(#)RCSfile: oracleCommon.sql,v  Revision: 1.660  Date: 2008/06/25 12:37:42  Author: waldron 
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -343,7 +343,7 @@ INSERT INTO Type2Obj (type, object) VALUES (158, 'PriorityMap');
  *******************************************************************/
 
 /* A small table used to cross check code and DB versions */
-UPDATE CastorVersion SET schemaVersion = '2_1_7_8';
+UPDATE CastorVersion SET schemaVersion = '2_1_7_10';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -534,7 +534,7 @@ CREATE GLOBAL TEMPORARY TABLE removePrivilegeTmpTable
 
 /* SQL statements for table PriorityMap */ 
 CREATE TABLE PriorityMap (euid INTEGER, egid INTEGER, priority INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT; 
-ALTER TABLE PriorityMap ADD CONSTRAINT I_Unique_Priority UNIQUE (euid, egid);
+ALTER TABLE PriorityMap ADD CONSTRAINT U_Priority_euid_egid UNIQUE (euid, egid);
 
 /**
   * Black and while list mechanism
@@ -677,11 +677,11 @@ CREATE TABLE GcPolicy (name VARCHAR2(2048) NOT NULL PRIMARY KEY,
 /* Default policy, mainly based on file sizes */
 INSERT INTO GcPolicy VALUES ('default',
                              'castorGC.sizeRelatedUserWeight',
-                             'castorGC.sizeRelatedRecallsWeight',
+                             'castorGC.sizeRelatedRecallWeight',
                              'castorGC.sizeRelatedCopyWeight',
                              'castorGC.dayBonusFirstAccessHook',
                              'castorGC.halfHourBonusAccessHook',
-                             'castorGc.cappedUserSetGCWeight');
+                             'castorGC.cappedUserSetGCWeight');
 INSERT INTO GcPolicy VALUES ('FIFO',
                              'castorGC.creationTimeUserWeight',
                              'castorGC.creationTimeRecallsWeight',
@@ -836,7 +836,7 @@ BEGIN
 END;
 /*******************************************************************
  *
- * @(#)RCSfile: oraclePerm.sql,v  Revision: 1.645  Date: 2008/06/03 14:08:47  Author: sponcec3 
+ * @(#)RCSfile: oraclePerm.sql,v  Revision: 1.646  Date: 2008/06/23 07:47:05  Author: sponcec3 
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -861,7 +861,17 @@ BEGIN
      AND (reqType = ireqType OR reqType IS NULL);
   IF unused = 0 THEN
     -- Not found in White list -> no access
-    res := -1;
+    -- still check whether service class exists
+    BEGIN
+      IF isvcClass IS NOT NULL AND length(isvcClass) IS NOT NULL THEN
+        SELECT id INTO unused FROM SvcClass WHERE name = isvcClass;
+      END IF;
+      -- service class exists, we give permission denied
+      res := -1;
+    EXCEPTION WHEN NO_DATA_FOUND THEN 
+      -- service class does not exist
+      res := -2;
+    END;
   ELSE
     SELECT count(*) INTO unused
       FROM BlackList
@@ -1304,7 +1314,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
 END castorBW;
 /*******************************************************************
  *
- * @(#)RCSfile: oracleStager.sql,v  Revision: 1.672  Date: 2008/06/13 15:11:40  Author: sponcec3 
+ * @(#)RCSfile: oracleStager.sql,v  Revision: 1.673  Date: 2008/06/27 06:04:40  Author: waldron 
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1372,6 +1382,8 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskPoolsQueryLine_Cur IS REF CURSOR RETURN DiskPoolsQueryLine;
   TYPE IDRecord IS RECORD (id INTEGER);
   TYPE IDRecord_Cur IS REF CURSOR RETURN IDRecord;
+  TYPE DiskServerName IS RECORD (diskServer VARCHAR(2048));
+  TYPE DiskServerList_Cur IS REF CURSOR RETURN DiskServerName;
   TYPE SchedulerResourceLine IS RECORD (
     diskServerName VARCHAR(2048),
     diskServerStatus INTEGER,
@@ -3322,7 +3334,7 @@ BEGIN
 END;
 /*******************************************************************
  *
- * @(#)RCSfile: oracleJob.sql,v  Revision: 1.654  Date: 2008/06/13 15:11:40  Author: sponcec3 
+ * @(#)RCSfile: oracleJob.sql,v  Revision: 1.656  Date: 2008/06/27 09:46:14  Author: waldron 
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -3600,8 +3612,10 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyStart
  srcSvcClass OUT VARCHAR2) AS
   fsId NUMBER;
   cfId NUMBER;
+  dsId NUMBER;
   res NUMBER;
   unused NUMBER;
+  nbCopies NUMBER;
   cfNsHost VARCHAR2(2048); 
 BEGIN
   -- Check that we did not cancel the replication request in the mean time
@@ -3618,7 +3632,7 @@ BEGIN
   -- is done to prevent files being written to an incorrect service class when
   -- diskservers/filesystems are moved.
   BEGIN
-    SELECT FileSystem.id INTO fsId
+    SELECT FileSystem.id, DiskServer.id INTO fsId, dsId
       FROM DiskServer, FileSystem, DiskPool2SvcClass, DiskPool, SvcClass
      WHERE FileSystem.diskserver = DiskServer.id
        AND FileSystem.diskPool = DiskPool2SvcClass.parent
@@ -3634,12 +3648,12 @@ BEGIN
   -- the case if it got disabled before the job started.
   BEGIN
     SELECT DiskServer.name, FileSystem.mountPoint, DiskCopy.path, 
-           CastorFile.fileId, CastorFile.nsHost, SvcClass.name
+           CastorFile.id, CastorFile.nsHost, SvcClass.name
       INTO srcDiskServer, srcMountPoint, srcPath, cfId, cfNsHost, srcSvcClass
       FROM DiskCopy, CastorFile, DiskServer, FileSystem, DiskPool2SvcClass, 
            SvcClass, StageDiskCopyReplicaRequest
      WHERE DiskCopy.id = srcDcId
-       AND DiskCopy.castorfile = Castorfile.id
+       AND DiskCopy.castorfile = CastorFile.id
        AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
        AND FileSystem.id = DiskCopy.filesystem
        AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
@@ -3655,6 +3669,17 @@ BEGIN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     raise_application_error(-20109, 'The source DiskCopy to be replicated is no longer available.');
   END;
+  -- Prevent multiple copies of the file being created on the same diskserver
+  SELECT count(*) INTO nbCopies
+    FROM DiskCopy, FileSystem   
+   WHERE DiskCopy.filesystem = FileSystem.id
+     AND FileSystem.diskserver = dsId
+     AND DiskCopy.castorfile = cfId
+     AND DiskCopy.id != dcId
+     AND DiskCopy.status IN (0, 1, 2, 10); -- STAGED, DISK2DISKCOPY, WAITTAPERECALL, CANBEMIGR
+  IF nbCopies > 0 THEN
+    raise_application_error(-20112, 'Multiple copies of this file already found on this diskserver'); 
+  END IF;
   -- Update the filesystem of the destination diskcopy. If the update fails
   -- either the diskcopy doesn't exist anymore indicating the cancellation of
   -- the subrequest or another transfer has already started for it.
@@ -4072,7 +4097,7 @@ END;
 
 
 /* PL/SQL method implementing jobToSchedule */
-create or replace
+CREATE OR REPLACE
 PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCHAR2, srProtocol OUT VARCHAR2,
                         srXsize OUT INTEGER, srRfs OUT VARCHAR2, reqId OUT VARCHAR2,
                         cfFileId OUT INTEGER, cfNsHost OUT VARCHAR2, reqSvcClass OUT VARCHAR2,
@@ -4081,9 +4106,11 @@ PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCHAR2, srProtocol OU
                         clientPort OUT INTEGER, clientVersion OUT INTEGER, clientType OUT INTEGER,
                         reqSourceDiskCopy OUT INTEGER, reqDestDiskCopy OUT INTEGER, 
                         clientSecure OUT INTEGER, reqSourceSvcClass OUT VARCHAR2, 
-                        reqCreationTime OUT INTEGER, reqDefaultFileSize OUT INTEGER) AS
-  dsId INTEGER;
-  unused INTEGER;           
+                        reqCreationTime OUT INTEGER, reqDefaultFileSize OUT INTEGER,
+                        excludedHosts OUT castor.DiskServerList_Cur) AS
+  dsId NUMBER;
+  cfId NUMBER;
+  unused NUMBER;           
 BEGIN
   -- Get the next subrequest to be scheduled.
   UPDATE SubRequest 
@@ -4095,16 +4122,16 @@ BEGIN
 
   -- Extract the rest of the information required to submit a job into the
   -- scheduler through the job manager.
-  SELECT CastorFile.fileId, CastorFile.nsHost, SvcClass.name, Id2type.type,
-         Request.reqId, Request.euid, Request.egid, Request.username, 
+  SELECT CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SvcClass.name, 
+         Id2type.type, Request.reqId, Request.euid, Request.egid, Request.username, 
 	 Request.direction, Request.sourceDiskCopy, Request.destDiskCopy,
          Request.sourceSvcClass, Client.ipAddress, Client.port, Client.version, 
 	 (SELECT type 
             FROM Id2type 
            WHERE id = Client.id) clientType, Client.secure, Request.creationTime, 
          decode(SvcClass.defaultFileSize, 0, 2000000000, SvcClass.defaultFileSize)
-    INTO cfFileId, cfNsHost, reqSvcClass, reqType, reqId, reqEuid, reqEgid, reqUsername, 
-         srOpenFlags, reqSourceDiskCopy, reqDestDiskCopy, reqSourceSvcClass, 
+    INTO cfId, cfFileId, cfNsHost, reqSvcClass, reqType, reqId, reqEuid, reqEgid, 
+         reqUsername, srOpenFlags, reqSourceDiskCopy, reqDestDiskCopy, reqSourceSvcClass, 
          clientIp, clientPort, clientVersion, clientType, clientSecure, reqCreationTime, 
          reqDefaultFileSize
     FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
@@ -4160,11 +4187,25 @@ BEGIN
       COMMIT;
       RAISE;
     END;
+
+    -- Provide the job manager with a list of hosts to exclude as destination
+    -- diskservers.
+    OPEN excludedHosts FOR
+      SELECT distinct(DiskServer.name)
+        FROM DiskCopy, DiskServer, FileSystem, DiskPool2SvcClass, SvcClass
+       WHERE DiskCopy.filesystem = FileSystem.id
+         AND FileSystem.diskserver = DiskServer.id
+         AND FileSystem.diskpool = DiskPool2SvcClass.parent
+         AND DiskPool2SvcClass.child = SvcClass.id
+         AND SvcClass.name = reqSvcClass
+         AND DiskCopy.castorfile = cfId
+         AND DiskCopy.id != reqSourceDiskCopy
+         AND DiskCopy.status IN (0, 1, 2, 10); -- STAGED, DISK2DISKCOPY, WAITTAPERECALL, CANBEMIGR
   END IF;
 END;
 /*******************************************************************
  *
- * @(#)RCSfile: oracleQuery.sql,v  Revision: 1.640  Date: 2008/06/13 15:11:40  Author: sponcec3 
+ * @(#)RCSfile: oracleQuery.sql,v  Revision: 1.642  Date: 2008/06/25 12:26:10  Author: waldron 
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -4213,7 +4254,7 @@ BEGIN
                        WHERE CastorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
                          AND status IN (0, 1, 2, 4, 5, 6, 7, 10, 11)
                              -- search for diskCopies not GCCANDIDATE or BEINGDELETED
-                       GROUP BY (id, status, filesystem, castorfile, path)) DiskCopy
+                       GROUP BY (id, status, filesystem, castorfile, path, nbCopyAccesses)) DiskCopy
                WHERE FileSystem.id(+) = DiskCopy.fileSystem
                  AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
                  AND DiskServer.id(+) = FileSystem.diskServer
@@ -4266,7 +4307,7 @@ BEGIN
                       WHERE CastorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
                         AND status IN (0, 1, 2, 4, 5, 6, 7, 10, 11)
                             -- search for diskCopies not GCCANDIDATE or BEINGDELETED
-                      GROUP BY (id, status, filesystem, castorfile, path)) DiskCopy
+                      GROUP BY (id, status, filesystem, castorfile, path, nbCopyAccesses)) DiskCopy
               WHERE FileSystem.id(+) = DiskCopy.fileSystem
                 AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
                 AND DiskServer.id(+) = FileSystem.diskServer
@@ -4525,8 +4566,9 @@ BEGIN
   -- access to view all the diskpools has been revoked. The information extracted
   -- here will be used to send an appropriate error message to the client.
   IF result%ROWCOUNT = 0 THEN
-    SELECT CASE COUNT(*)
-           WHEN sum(checkPermissionOnSvcClass(sc.name, reqEuid, reqEgid, 103)) THEN -1 END
+    SELECT CASE count(*)
+           WHEN sum(checkPermissionOnSvcClass(sc.name, reqEuid, reqEgid, 103)) THEN -1 
+           ELSE count(*) END
       INTO res
       FROM DiskPool2SvcClass d2s, SvcClass sc
      WHERE d2s.child = sc.id
@@ -4576,7 +4618,7 @@ BEGIN
   -- access to view all the diskpools has been revoked. The information extracted
   -- here will be used to send an appropriate error message to the client.
   IF result%ROWCOUNT = 0 THEN
-    SELECT COUNT(*) INTO res
+    SELECT count(*) INTO res
       FROM DiskPool dp, DiskPool2SvcClass d2s, SvcClass sc
      WHERE d2s.child = sc.id
        AND d2s.parent = dp.id
@@ -4586,7 +4628,7 @@ BEGIN
 END;
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTape.sql,v  Revision: 1.672  Date: 2008/06/13 15:20:39  Author: sponcec3 
+ * @(#)RCSfile: oracleTape.sql,v  Revision: 1.674  Date: 2008/06/26 08:49:45  Author: gtaur 
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -4840,7 +4882,7 @@ BEGIN
     IF nbMigrators = 1 THEN
       BEGIN
         -- check states of the diskserver and filesystem and get mountpoint and diskserver name
-	SELECT name, mountPoint, FileSystem.id INTO diskServerName, mountPoint, fileSystemId
+        SELECT name, mountPoint, FileSystem.id INTO diskServerName, mountPoint, fileSystemId
           FROM FileSystem, DiskServer
          WHERE FileSystem.diskServer = DiskServer.id
            AND FileSystem.id = lastButOneFSUsed
@@ -6113,7 +6155,7 @@ BEGIN
      WHERE Tape.id = Segment.tape(+) 
        AND TapeCopy.id(+) = Segment.copy
        AND CastorFile.id(+) = TapeCopy.castorfile 
-       AND Tape.status IN (1, 2, 3, 8)  -- PENDING, WAITDRIVE, WAITMOUNT, WAITPOLICY 
+       AND Tape.status IN (1, 2, 8)  -- PENDING, WAITDRIVE, WAITPOLICY 
        AND Segment.status = 0  -- SEGMENT_UNPROCESSED 
      GROUP BY Tape.id, Tape.vid
      HAVING count(distinct segment.id) > 0;
@@ -6134,7 +6176,7 @@ END;
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleGC.sql,v  Revision: 1.658  Date: 2008/06/16 10:13:31  Author: waldron 
+ * @(#)RCSfile: oracleGC.sql,v  Revision: 1.659  Date: 2008/06/23 14:33:52  Author: itglp 
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -6721,13 +6763,13 @@ BEGIN
               WHERE c.id = d.castorFile
                 AND d.creationTime < getTime() - timeOut
                 AND d.status IN (5, 6, 11) -- WAITFS, STAGEOUT, WAITFS_SCHEDULING
-		AND NOT EXISTS (
-		  SELECT 'x'
-		    FROM SubRequest, Id2Type
-		   WHERE castorFile = c.id
-		     AND SubRequest.request = Id2Type.id
-		     AND status IN (0, 1, 2, 3, 5, 6, 13, 14) -- all active
-		     AND type NOT IN (37, 38))) LOOP -- ignore PrepareToPut, PrepareToUpdate
+                AND NOT EXISTS (
+                  SELECT 'x'
+                    FROM SubRequest, Id2Type
+                   WHERE castorFile = c.id
+                     AND SubRequest.request = Id2Type.id
+                     AND status IN (0, 1, 2, 3, 5, 6, 13, 14) -- all active
+                     AND type NOT IN (37, 38))) LOOP -- ignore PrepareToPut, PrepareToUpdate
     IF 0 = cf.fileSize THEN
       -- here we invalidate the diskcopy and let the GC run
       UPDATE DiskCopy SET status = 7 WHERE id = cf.dcid;

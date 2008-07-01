@@ -36,11 +36,11 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_7_8');
+INSERT INTO CastorVersion VALUES ('-', '2_1_7_10');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.127  Release Date: 2008/06/19 12:19:00  Author: murrayc3 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.131  Release Date: 2008/06/28 10:08:15  Author: murrayc3 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1387,7 +1387,7 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
     clientHostVar OUT NOCOPY VARCHAR2);
 
   /**
-   * This procedure deletes old volume priorities.
+   * This procedure deletes old single-mount volume priorities.
    *
    * @param maxAgeVar the maximum age of a volume priority in seconds.
    * @param prioritiesDeletedVar the number of volume priorities deleted.
@@ -2206,14 +2206,15 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     -- If a row for the priority already exists
     IF priorityIdVar IS NOT NULL THEN
 
-      -- Update it
+      -- Update it if it has an equal or lower priority
       UPDATE VolumePriority SET
         VolumePriority.priority   = priorityVar,
         VolumePriority.clientUID  = clientUIDVar,
         VolumePriority.clientGID  = clientGIDVar,
         VolumePriority.clientHost = clientHostVar
       WHERE
-        VolumePriority.id = priorityIdVar;
+            VolumePriority.id = priorityIdVar
+        AND VolumePriority.priority <= priorityVar;
 
     -- Else a row for the priority does not yet exist
     ELSE
@@ -2259,12 +2260,15 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
         AND VolumePriority.lifespanType = lifespanTypeVar
         FOR UPDATE;
 
-        -- Update the row
+        -- Update the row if it has an equal or lower priority
         UPDATE VolumePriority SET
           priority   = priorityVar,
           clientUID  = clientUIDVar,
           clientGID  = clientGIDVar,
-          clientHost = clientHostVar;
+          clientHost = clientHostVar
+        WHERE
+              VolumePriority.id = priorityIdVar
+          AND VolumePriority.priority <= priorityVar;
       END IF;
 
     END IF; -- If a row for the priority already exists
@@ -2327,7 +2331,9 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     nowVar := castorVdqmCommon.getTime();
 
     DELETE FROM VolumePriority
-    WHERE (nowVar - VolumePriority.modificationTime) > maxAgeVar;
+    WHERE
+          VolumePriority.lifespanType = 0 -- Single-mount
+      AND (nowVar - VolumePriority.modificationTime) > maxAgeVar;
 
     prioritiesDeletedVar := SQL%ROWCOUNT;
   END deleteOldVolPriorities;

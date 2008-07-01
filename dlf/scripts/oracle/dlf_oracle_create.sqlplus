@@ -26,7 +26,7 @@
 
 /* SQL statements for table dlf_version */
 CREATE TABLE dlf_version(schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO dlf_version VALUES ('2_1_2_0', '2_1_7_9');
+INSERT INTO dlf_version VALUES ('2_1_2_0', '2_1_7_10');
 
 /* SQL statements for table dlf_sequences */
 CREATE TABLE dlf_sequences(seq_name CHAR(15), seq_no NUMBER);
@@ -112,6 +112,7 @@ ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostname UNIQUE (nshostname) ENABL
 
 /* Fill the dlf_config table */
 INSERT INTO dlf_config (name, value, description) VALUES ('instance', 'castordlf', 'The name of the castor2 instance');
+INSERT INTO dlf_config (name, value, description) VALUES ('expiry', '90', 'The expiry time of the logging data in days');
 
 /* Fill the dlf_severities table */
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('1', 'Emergency');
@@ -822,7 +823,6 @@ BEGIN
   -- Loop over all partitioned tables
   FOR a IN (SELECT DISTINCT(table_name)
               FROM user_tab_partitions
-             WHERE table_name LIKE 'DLF_%'
              ORDER BY table_name)
   LOOP
     -- Determine the high value on which to split the MAX_VALUE partition of all
@@ -904,6 +904,7 @@ END;
 CREATE OR REPLACE PROCEDURE archiveData (expiry IN NUMBER)
 AS
   username VARCHAR2(2048);
+  expiryTime NUMBER;
 BEGIN
   -- Extract the name of the current user running the PL/SQL procedure. This name
   -- will be used within the tablespace names.
@@ -911,10 +912,18 @@ BEGIN
     INTO username
     FROM dual;
 
-  -- Drop partitions across all DLF_ tables
+  -- Extract configurable expiry time
+  expiryTime := expiry;
+  IF expiryTime = -1 THEN
+    SELECT TO_NUMBER(value) INTO expiryTime
+      FROM dlf_config
+     WHERE name = 'expiry';
+  END IF;
+
+  -- Drop partitions across all tables
   FOR a IN (SELECT *
               FROM user_tab_partitions
-             WHERE partition_name < concat('P_', TO_CHAR(SYSDATE - expiry, 'YYYYMMDD'))
+             WHERE partition_name < concat('P_', TO_CHAR(SYSDATE - expiryTime, 'YYYYMMDD'))
                AND partition_name <> 'MAX_VALUE'
              ORDER BY partition_name DESC)
   LOOP
@@ -927,7 +936,7 @@ BEGIN
               FROM user_tablespaces
              WHERE status <> 'OFFLINE'
                AND tablespace_name LIKE 'DLF_%_'||username
-               AND tablespace_name < 'DLF_'||TO_CHAR(SYSDATE - expiry, 'YYYYMMDD')||'_'||username
+               AND tablespace_name < 'DLF_'||TO_CHAR(SYSDATE - expiryTime, 'YYYYMMDD')||'_'||username
              ORDER BY tablespace_name ASC)
   LOOP
     EXECUTE IMMEDIATE 'ALTER TABLESPACE '||a.tablespace_name||' OFFLINE';
@@ -975,7 +984,7 @@ BEGIN
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'archiveDataJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN archiveData(90); END;',
+      JOB_ACTION      => 'BEGIN archiveData(-1); END;',
       START_DATE      => TRUNC(SYSDATE) + 2/24,
       REPEAT_INTERVAL => 'FREQ=DAILY',
       ENABLED         => TRUE,
