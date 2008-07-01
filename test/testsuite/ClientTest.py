@@ -431,493 +431,493 @@ class StagerGetCase(unittest.TestCase):
 
 class StagerUpdCase(unittest.TestCase):
     def pupdExistingFile(self):
-        cmd=["rfcp "+inputFile+" "+dirCastor+"fileClientpupdExistingFile"+ticket,"stager_update -M "+dirCastor+"fileClientpupdExistingFile"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdExistingFile"+ticket,"stager_update -M "+dirCastor+"fileClientpupdExistingFile"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdExistingFile"+ticket]
-        UtilityForCastorTest.saveOnFile(localDir+"ClientpupdExistingFile",cmd,myScen)
+        cmd=["rfcp "+inputFile+" "+dirCastor+"fileClient"+rfiover+"pupdExistingFile"+ticket,"stager_update -M "+dirCastor+"fileClient"+rfiover+"pupdExistingFile"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pupdExistingFile"+ticket,"stager_update -M "+dirCastor+"fileClient"+rfiover+"pupdExistingFile"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pupdExistingFile"+ticket]
+        UtilityForCastorTest.saveOnFile(localDir+"Client"+rfiover+"pupdExistingFile",cmd,myScen)
 
-        fi=open(localDir+"ClientpupdExistingFile1","r")
+        fi=open(localDir+"Client"+rfiover+"pupdExistingFile1","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "stager_update doesn't work on existing files"
 
-        fi=open(localDir+"ClientpupdExistingFile2","r")
+        fi=open(localDir+"Client"+rfiover+"pupdExistingFile2","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGED") != -1 or  buffOut.find("CANBEMIGR") != -1 , "stager_update doesn't work on existing files"
 
-        fi=open(localDir+"ClientpupdExistingFile3","r")
+        fi=open(localDir+"Client"+rfiover+"pupdExistingFile3","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "stager_update doesn't work on existing files"
 
-        fi=open(localDir+"ClientpupdExistingFile4","r")
+        fi=open(localDir+"Client"+rfiover+"pupdExistingFile4","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGED") != -1 or  buffOut.find("CANBEMIGR") != -1 , "stager_update doesn't work on existing files"
 
     def pupdNonExistingFile(self):
-        cmd=["stager_update -M "+dirCastor+"fileClientpupdNonExistingFile"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdNonExistingFile"+ticket,"stager_update -M "+dirCastor+"fileClientpupdNonExistingFile"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdNonExistingFile"+ticket]
-        UtilityForCastorTest.saveOnFile(localDir+"ClientpupdNonExistingFile",cmd,myScen)
+        cmd=["stager_update -M "+dirCastor+"fileClient"+rfiover+"pupdNonExistingFile"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pupdNonExistingFile"+ticket,"stager_update -M "+dirCastor+"fileClient"+rfiover+"pupdNonExistingFile"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pupdNonExistingFile"+ticket]
+        UtilityForCastorTest.saveOnFile(localDir+"Client"+rfiover+"pupdNonExistingFile",cmd,myScen)
 
-        fi=open(localDir+"ClientpupdNonExistingFile","r")
+        fi=open(localDir+"Client"+rfiover+"pupdNonExistingFile","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "stager_update doesn't work on non existing files"
 
-        fi=open(localDir+"ClientpupdNonExistingFile1","r")
+        fi=open(localDir+"Client"+rfiover+"pupdNonExistingFile1","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "stager_update doesn't work on non existing files"
         
-        fi=open(localDir+"ClientpupdNonExistingFile2","r")
+        fi=open(localDir+"Client"+rfiover+"pupdNonExistingFile2","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_FAILED") != -1, "stager_update doesn't work on non existing files"
         assert buffOut.find("File is being (re)created") != -1, "stager_update doesn't work on non existing files"
 
-        fi=open(localDir+"ClientpupdNonExistingFile3","r")
+        fi=open(localDir+"Client"+rfiover+"pupdNonExistingFile3","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "stager_update doesn't work on non existing files"
         
     def pupdExistingFileReplicated(self):
         replEnv = UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerExtraSvcClass,stagerVersion)
-        cmd=["rfcp "+inputFile+" "+dirCastor+"fileClientpupdExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdExistingFileReplicated"+ticket,replEnv+"rfcp "+dirCastor+"fileClientpupdExistingFileReplicated"+ticket+" "+localDir+"fileClientpupdExistingFileReplicated","stager_qry -M "+dirCastor+"fileClientpupdExistingFileReplicated"+ticket+ " -S "+stagerExtraSvcClass,"stager_update -M "+dirCastor+"fileClientpupdExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdExistingFileReplicated"+ticket]
-        UtilityForCastorTest.saveOnFile(localDir+"ClientpupdExistingFileReplicated",cmd,myScen)
+        cmd=["rfcp "+inputFile+" "+dirCastor+"fileClient"+rfiover+"pupdExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pupdExistingFileReplicated"+ticket,replEnv+"rfcp "+dirCastor+"fileClient"+rfiover+"pupdExistingFileReplicated"+ticket+" "+localDir+"fileClient"+rfiover+"pupdExistingFileReplicated","stager_qry -M "+dirCastor+"fileClient"+rfiover+"pupdExistingFileReplicated"+ticket+ " -S "+stagerExtraSvcClass,"stager_update -M "+dirCastor+"fileClient"+rfiover+"pupdExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pupdExistingFileReplicated"+ticket]
+        UtilityForCastorTest.saveOnFile(localDir+"Client"+rfiover+"pupdExistingFileReplicated",cmd,myScen)
 
-        fi=open(localDir+"ClientpupdExistingFileReplicated","r")
+        fi=open(localDir+"Client"+rfiover+"pupdExistingFileReplicated","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "stager_update doesn't work on replicated files"
 
-        fi=open(localDir+"ClientpupdExistingFileReplicated1","r")
+        fi=open(localDir+"Client"+rfiover+"pupdExistingFileReplicated1","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGED") != -1 or buffOut.find("CANBEMIGR") != -1 , "stager_update doesn't work on replicated files"
 
-        fi=open(localDir+"ClientpupdExistingFileReplicated2","r")
+        fi=open(localDir+"Client"+rfiover+"pupdExistingFileReplicated2","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through eth[0-1] \(in\) and local \(out\)',buffOut) != None, "stager_update doesn't work on replicated files"
 
-        fi=open(localDir+"ClientpupdExistingFileReplicated3","r")
+        fi=open(localDir+"Client"+rfiover+"pupdExistingFileReplicated3","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGED") != -1 or buffOut.find("CANBEMIGR") != -1 , "stager_update doesn't work on replicated files"
 
-        fi=open(localDir+"ClientpupdExistingFileReplicated4","r")
+        fi=open(localDir+"Client"+rfiover+"pupdExistingFileReplicated4","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "stager_update doesn't work on replicated files"
 
-        fi=open(localDir+"ClientpupdExistingFileReplicated5","r")
+        fi=open(localDir+"Client"+rfiover+"pupdExistingFileReplicated5","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGED") != -1 or buffOut.find("CANBEMIGR") != -1 , "stager_update doesn't work on replicated files"
 
     def updExistingFile(self):
-        cmd=["rfcp "+inputFile+" "+dirCastor+"fileClientupdExistingFile"+ticket,"rfcpupd "+rfiover+" "+updInputFile+" "+dirCastor+"fileClientupdExistingFile"+ticket,"stager_qry -M "+dirCastor+"fileClientupdExistingFile"+ticket]
-        UtilityForCastorTest.saveOnFile(localDir+"ClientupdExistingFile",cmd,myScen)
+        cmd=["rfcp "+inputFile+" "+dirCastor+"fileClient"+rfiover+"updExistingFile"+ticket,"rfcpupd "+rfiover+" "+updInputFile+" "+dirCastor+"fileClient"+rfiover+"updExistingFile"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"updExistingFile"+ticket]
+        UtilityForCastorTest.saveOnFile(localDir+"Client"+rfiover+"updExistingFile",cmd,myScen)
 
-        fi=open(localDir+"ClientupdExistingFile1","r")
+        fi=open(localDir+"Client"+rfiover+"updExistingFile1","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "update doesn't work on an existing file"
 
-        fi=open(localDir+"ClientupdExistingFile2","r")
+        fi=open(localDir+"Client"+rfiover+"updExistingFile2","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGED") != -1 or  buffOut.find("CANBEMIGR") != -1 , "update doesn't work on an existing file"
 
     def updNonExistingFile(self):
-        cmd=["rfcpupd "+rfiover+" "+updInputFile+" "+dirCastor+"fileClientupdNonExistingFile"+ticket,"stager_qry -M "+dirCastor+"fileClientupdNonExistingFile"+ticket]
-        UtilityForCastorTest.saveOnFile(localDir+"ClientupdNonExistingFile",cmd,myScen)
+        cmd=["rfcpupd "+rfiover+" "+updInputFile+" "+dirCastor+"fileClient"+rfiover+"updNonExistingFile"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"updNonExistingFile"+ticket]
+        UtilityForCastorTest.saveOnFile(localDir+"Client"+rfiover+"updNonExistingFile",cmd,myScen)
 
-        fi=open(localDir+"ClientupdNonExistingFile","r")
+        fi=open(localDir+"Client"+rfiover+"updNonExistingFile","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "update doesn't work on a non existing file"
 
-        fi=open(localDir+"ClientupdNonExistingFile1","r")
+        fi=open(localDir+"Client"+rfiover+"updNonExistingFile1","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGED") != -1 or  buffOut.find("CANBEMIGR") != -1 , "update doesn't work on a non existing file"
 
     def updExistingFileReplicated(self):
         replEnv = UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerExtraSvcClass,stagerVersion)
-        cmd=["rfcp "+inputFile+" "+dirCastor+"fileClientupdExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClientupdExistingFileReplicated"+ticket,replEnv+"rfcp "+dirCastor+"fileClientupdExistingFileReplicated"+ticket+" "+localDir+"fileClientupdExistingFileReplicated","stager_qry -M "+dirCastor+"fileClientupdExistingFileReplicated"+ticket+" -S "+stagerExtraSvcClass,"rfcpupd "+rfiover+" "+updInputFile+" "+dirCastor+"fileClientupdExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClientupdExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClientupdExistingFileReplicated"+ticket+" -S "+stagerExtraSvcClass]
-        UtilityForCastorTest.saveOnFile(localDir+"ClientupdExistingFileReplicated",cmd,myScen)
+        cmd=["rfcp "+inputFile+" "+dirCastor+"fileClient"+rfiover+"updExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"updExistingFileReplicated"+ticket,replEnv+"rfcp "+dirCastor+"fileClient"+rfiover+"updExistingFileReplicated"+ticket+" "+localDir+"fileClient"+rfiover+"updExistingFileReplicated","stager_qry -M "+dirCastor+"fileClient"+rfiover+"updExistingFileReplicated"+ticket+" -S "+stagerExtraSvcClass,"rfcpupd "+rfiover+" "+updInputFile+" "+dirCastor+"fileClient"+rfiover+"updExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"updExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"updExistingFileReplicated"+ticket+" -S "+stagerExtraSvcClass]
+        UtilityForCastorTest.saveOnFile(localDir+"Client"+rfiover+"updExistingFileReplicated",cmd,myScen)
 
-        fi=open(localDir+"ClientupdExistingFileReplicated","r")
+        fi=open(localDir+"Client"+rfiover+"updExistingFileReplicated","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "update doesn't work on a replicated file"
 
-        fi=open(localDir+"ClientupdExistingFileReplicated1","r")
+        fi=open(localDir+"Client"+rfiover+"updExistingFileReplicated1","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGED") != -1 or buffOut.find("CANBEMIGR") != -1 , "update doesn't work on a replicated file"
 
-        fi=open(localDir+"ClientupdExistingFileReplicated2","r")
+        fi=open(localDir+"Client"+rfiover+"updExistingFileReplicated2","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through eth[0-1] \(in\) and local \(out\)',buffOut) != None, "update doesn't work on a replicated file"
 
-        fi=open(localDir+"ClientupdExistingFileReplicated3","r")
+        fi=open(localDir+"Client"+rfiover+"updExistingFileReplicated3","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGED") != -1 or buffOut.find("CANBEMIGR") != -1 , "update doesn't work on a replicated file"
 
-        fi=open(localDir+"ClientupdExistingFileReplicated4","r")
+        fi=open(localDir+"Client"+rfiover+"updExistingFileReplicated4","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "update doesn't work on a replicated file"
 
-        fi=open(localDir+"ClientupdExistingFileReplicated5","r")
+        fi=open(localDir+"Client"+rfiover+"updExistingFileReplicated5","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGED") != -1 or  buffOut.find("CANBEMIGR") != -1 , "update doesn't work on a replicated file"
 
-        fi=open(localDir+"ClientupdExistingFileReplicated6","r")
+        fi=open(localDir+"Client"+rfiover+"updExistingFileReplicated6","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("INVALID") != -1 , "update doesn't work on a replicated file"
 
     def pupdUpdPutDone(self):
-        cmd=["stager_update -M "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"rfcpupd "+rfiover+" "+updInputFile+" "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"rfcpupd "+rfiover+" "+updInputFile+" "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"stager_putdone -M "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdUpdPutDone"+ticket]
-        UtilityForCastorTest.saveOnFile(localDir+"ClientpupdUpdPutDone",cmd,myScen)
+        cmd=["stager_update -M "+dirCastor+"fileClient"+rfiover+"pupdUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pupdUpdPutDone"+ticket,"rfcpupd "+rfiover+" "+updInputFile+" "+dirCastor+"fileClient"+rfiover+"pupdUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pupdUpdPutDone"+ticket,"rfcpupd "+rfiover+" "+updInputFile+" "+dirCastor+"fileClient"+rfiover+"pupdUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pupdUpdPutDone"+ticket,"stager_putdone -M "+dirCastor+"fileClient"+rfiover+"pupdUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pupdUpdPutDone"+ticket]
+        UtilityForCastorTest.saveOnFile(localDir+"Client"+rfiover+"pupdUpdPutDone",cmd,myScen)
         
-        fi=open(localDir+"ClientpupdUpdPutDone","r")
+        fi=open(localDir+"Client"+rfiover+"pupdUpdPutDone","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "stager_update cycle doesn't work"
 
-        fi=open(localDir+"ClientpupdUpdPutDone1","r")
+        fi=open(localDir+"Client"+rfiover+"pupdUpdPutDone1","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "stager_update cycle doesn't work"
 
-        fi=open(localDir+"ClientpupdUpdPutDone2","r")
+        fi=open(localDir+"Client"+rfiover+"pupdUpdPutDone2","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "stager_update cycle doesn't work"
 
-        fi=open(localDir+"ClientpupdUpdPutDone3","r")
+        fi=open(localDir+"Client"+rfiover+"pupdUpdPutDone3","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "stager_update cycle doesn't work"
 
-        fi=open(localDir+"ClientpupdUpdPutDone4","r")
+        fi=open(localDir+"Client"+rfiover+"pupdUpdPutDone4","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "stager_update cycle doesn't work"
 
-        fi=open(localDir+"ClientpupdUpdPutDone5","r")
+        fi=open(localDir+"Client"+rfiover+"pupdUpdPutDone5","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "stager_update cycle doesn't work"
 
-        fi=open(localDir+"ClientpupdUpdPutDone6","r")
+        fi=open(localDir+"Client"+rfiover+"pupdUpdPutDone6","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "stager_update cycle doesn't work"
 
-        fi=open(localDir+"ClientpupdUpdPutDone7","r")
+        fi=open(localDir+"Client"+rfiover+"pupdUpdPutDone7","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGED") != -1 or  buffOut.find("CANBEMIGR") != -1 , "stager_update cycle doesn't work"
 
     def pputUpdPutDone(self):
-        cmd=["stager_put -M "+dirCastor+"fileClientpputUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpputUpdPutDone"+ticket,"rfcpupd "+rfiover+" "+updInputFile+" "+dirCastor+"fileClientpputUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpputUpdPutDone"+ticket,"rfcpupd "+rfiover+" "+updInputFile+" "+dirCastor+"fileClientpputUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpputUpdPutDone"+ticket,"stager_putdone -M "+dirCastor+"fileClientpputUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpputUpdPutDone"+ticket]
-        UtilityForCastorTest.saveOnFile(localDir+"ClientpputUpdPutDone",cmd,myScen)
+        cmd=["stager_put -M "+dirCastor+"fileClient"+rfiover+"pputUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pputUpdPutDone"+ticket,"rfcpupd "+rfiover+" "+updInputFile+" "+dirCastor+"fileClient"+rfiover+"pputUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pputUpdPutDone"+ticket,"rfcpupd "+rfiover+" "+updInputFile+" "+dirCastor+"fileClient"+rfiover+"pputUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pputUpdPutDone"+ticket,"stager_putdone -M "+dirCastor+"fileClient"+rfiover+"pputUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pputUpdPutDone"+ticket]
+        UtilityForCastorTest.saveOnFile(localDir+"Client"+rfiover+"pputUpdPutDone",cmd,myScen)
         
-        fi=open(localDir+"ClientpputUpdPutDone","r")
+        fi=open(localDir+"Client"+rfiover+"pputUpdPutDone","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "updates on prepareToPut do not work"
 
-        fi=open(localDir+"ClientpputUpdPutDone1","r")
+        fi=open(localDir+"Client"+rfiover+"pputUpdPutDone1","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "updates on prepareToPut do not work"
 
-        fi=open(localDir+"ClientpputUpdPutDone2","r")
+        fi=open(localDir+"Client"+rfiover+"pputUpdPutDone2","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "updates on prepareToPut do not work"
 
-        fi=open(localDir+"ClientpputUpdPutDone3","r")
+        fi=open(localDir+"Client"+rfiover+"pputUpdPutDone3","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "updates on prepareToPut do not work"
 
-        fi=open(localDir+"ClientpputUpdPutDone4","r")
+        fi=open(localDir+"Client"+rfiover+"pputUpdPutDone4","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "updates on prepareToPut do not work"
 
-        fi=open(localDir+"ClientpputUpdPutDone5","r")
+        fi=open(localDir+"Client"+rfiover+"pputUpdPutDone5","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "updates on prepareToPut do not work"
 
-        fi=open(localDir+"ClientpputUpdPutDone6","r")
+        fi=open(localDir+"Client"+rfiover+"pputUpdPutDone6","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "updates on prepareToPut do not work"
 
-        fi=open(localDir+"ClientpputUpdPutDone7","r")
+        fi=open(localDir+"Client"+rfiover+"pputUpdPutDone7","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGED") != -1 or  buffOut.find("CANBEMIGR") != -1 , "updates on prepareToPut do not work"
 
     def pupdPutPutDone(self):
-        cmd=["stager_update -M "+dirCastor+"fileClientpupdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdPutPutDone"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientpupdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdPutPutDone"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientpupdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdPutPutDone"+ticket,"stager_putdone -M "+dirCastor+"fileClientpupdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdPutPutDone"+ticket]
-        UtilityForCastorTest.saveOnFile(localDir+"ClientpupdPutPutDone",cmd,myScen)
+        cmd=["stager_update -M "+dirCastor+"fileClient"+rfiover+"pupdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pupdPutPutDone"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClient"+rfiover+"pupdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pupdPutPutDone"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClient"+rfiover+"pupdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pupdPutPutDone"+ticket,"stager_putdone -M "+dirCastor+"fileClient"+rfiover+"pupdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pupdPutPutDone"+ticket]
+        UtilityForCastorTest.saveOnFile(localDir+"Client"+rfiover+"pupdPutPutDone",cmd,myScen)
         
-        fi=open(localDir+"ClientpupdPutPutDone","r")
+        fi=open(localDir+"Client"+rfiover+"pupdPutPutDone","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "puts on prepareToUpdate do not work"
 
-        fi=open(localDir+"ClientpupdPutPutDone1","r")
+        fi=open(localDir+"Client"+rfiover+"pupdPutPutDone1","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "puts on prepareToUpdate do not work"
 
-        fi=open(localDir+"ClientpupdPutPutDone2","r")
+        fi=open(localDir+"Client"+rfiover+"pupdPutPutDone2","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "puts on prepareToUpdate do not work"
 
-        fi=open(localDir+"ClientpupdPutPutDone3","r")
+        fi=open(localDir+"Client"+rfiover+"pupdPutPutDone3","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "puts on prepareToUpdate do not work"
 
-        fi=open(localDir+"ClientpupdPutPutDone4","r")
+        fi=open(localDir+"Client"+rfiover+"pupdPutPutDone4","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "puts on prepareToUpdate do not work"
 
-        fi=open(localDir+"ClientpupdPutPutDone5","r")
+        fi=open(localDir+"Client"+rfiover+"pupdPutPutDone5","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "puts on prepareToUpdate do not work"
 
-        fi=open(localDir+"ClientpupdPutPutDone6","r")
+        fi=open(localDir+"Client"+rfiover+"pupdPutPutDone6","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "puts on prepareToUpdate do not work"
 
-        fi=open(localDir+"ClientpupdPutPutDone7","r")
+        fi=open(localDir+"Client"+rfiover+"pupdPutPutDone7","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGED") != -1 or  buffOut.find("CANBEMIGR") != -1 , "puts on prepareToUpdate do not work"
 
     def pPutUpdPutPutDone(self):
-        cmd=["stager_put -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"rfcpupd "+rfiover+" "+updInputFile+" "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"rfcpupd "+rfiover+" "+updInputFile+" "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_putdone -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket]
-        UtilityForCastorTest.saveOnFile(localDir+"ClientpPutUpdPutPutDone",cmd,myScen)
+        cmd=["stager_put -M "+dirCastor+"fileClient"+rfiover+"pPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pPutUpdPutPutDone"+ticket,"rfcpupd "+rfiover+" "+updInputFile+" "+dirCastor+"fileClient"+rfiover+"pPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pPutUpdPutPutDone"+ticket,"rfcpupd "+rfiover+" "+updInputFile+" "+dirCastor+"fileClient"+rfiover+"pPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pPutUpdPutPutDone"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClient"+rfiover+"pPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pPutUpdPutPutDone"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClient"+rfiover+"pPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pPutUpdPutPutDone"+ticket,"stager_putdone -M "+dirCastor+"fileClient"+rfiover+"pPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pPutUpdPutPutDone"+ticket]
+        UtilityForCastorTest.saveOnFile(localDir+"Client"+rfiover+"pPutUpdPutPutDone",cmd,myScen)
         
-        fi=open(localDir+"ClientpPutUpdPutPutDone","r")
+        fi=open(localDir+"Client"+rfiover+"pPutUpdPutPutDone","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "mixing puts and updates does not work"
 
-        fi=open(localDir+"ClientpPutUpdPutPutDone1","r")
+        fi=open(localDir+"Client"+rfiover+"pPutUpdPutPutDone1","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "mixing puts and updates does not work"
 
-        fi=open(localDir+"ClientpPutUpdPutPutDone2","r")
+        fi=open(localDir+"Client"+rfiover+"pPutUpdPutPutDone2","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "mixing puts and updates does not work"
 
-        fi=open(localDir+"ClientpPutUpdPutPutDone3","r")
+        fi=open(localDir+"Client"+rfiover+"pPutUpdPutPutDone3","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "mixing puts and updates does not work"
 
-        fi=open(localDir+"ClientpPutUpdPutPutDone4","r")
+        fi=open(localDir+"Client"+rfiover+"pPutUpdPutPutDone4","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "mixing puts and updates does not work"
 
-        fi=open(localDir+"ClientpPutUpdPutPutDone5","r")
+        fi=open(localDir+"Client"+rfiover+"pPutUpdPutPutDone5","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "mixing puts and updates does not work"
 
-        fi=open(localDir+"ClientpPutUpdPutPutDone6","r")
+        fi=open(localDir+"Client"+rfiover+"pPutUpdPutPutDone6","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "mixing puts and updates does not work"
 
-        fi=open(localDir+"ClientpPutUpdPutPutDone7","r")
+        fi=open(localDir+"Client"+rfiover+"pPutUpdPutPutDone7","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "mixing puts and updates does not work"
 
-        fi=open(localDir+"ClientpPutUpdPutPutDone8","r")
+        fi=open(localDir+"Client"+rfiover+"pPutUpdPutPutDone8","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "mixing puts and updates does not work"
 
-        fi=open(localDir+"ClientpPutUpdPutPutDone9","r")
+        fi=open(localDir+"Client"+rfiover+"pPutUpdPutPutDone9","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "mixing puts and updates does not work"
 
-        fi=open(localDir+"ClientpPutUpdPutPutDone10","r")
+        fi=open(localDir+"Client"+rfiover+"pPutUpdPutPutDone10","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "mixing puts and updates does not work"
 
-        fi=open(localDir+"ClientpPutUpdPutPutDone11","r")
+        fi=open(localDir+"Client"+rfiover+"pPutUpdPutPutDone11","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGED") != -1 or  buffOut.find("CANBEMIGR") != -1 , "mixing puts and updates does not work"
 
     def pPutPUpd(self):
-        cmd=["stager_put -M "+dirCastor+"fileClientpPutPUpd"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutPUpd"+ticket,"stager_update -M "+dirCastor+"fileClientpPutPUpd"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutPUpd"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientpPutPUpd"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutPUpd"+ticket,"stager_update -M "+dirCastor+"fileClientpPutPUpd"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutPUpd"+ticket,"stager_putdone -M "+dirCastor+"fileClientpPutPUpd"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutPUpd"+ticket]
-        UtilityForCastorTest.saveOnFile(localDir+"ClientpPutPUpd",cmd,myScen)
+        cmd=["stager_put -M "+dirCastor+"fileClient"+rfiover+"pPutPUpd"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pPutPUpd"+ticket,"stager_update -M "+dirCastor+"fileClient"+rfiover+"pPutPUpd"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pPutPUpd"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClient"+rfiover+"pPutPUpd"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pPutPUpd"+ticket,"stager_update -M "+dirCastor+"fileClient"+rfiover+"pPutPUpd"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pPutPUpd"+ticket,"stager_putdone -M "+dirCastor+"fileClient"+rfiover+"pPutPUpd"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pPutPUpd"+ticket]
+        UtilityForCastorTest.saveOnFile(localDir+"Client"+rfiover+"pPutPUpd",cmd,myScen)
         
-        fi=open(localDir+"ClientpPutPUpd","r")
+        fi=open(localDir+"Client"+rfiover+"pPutPUpd","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "prepareToUpdate on prepareToPut does not work"
 
-        fi=open(localDir+"ClientpPutPUpd1","r")
+        fi=open(localDir+"Client"+rfiover+"pPutPUpd1","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "prepareToUpdate on prepareToPut does not work"
 
-        fi=open(localDir+"ClientpPutPUpd2","r")
+        fi=open(localDir+"Client"+rfiover+"pPutPUpd2","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_FAILED") != -1, "prepareToUpdate on prepareToPut does not work"
         assert buffOut.find("File is being (re)created right now") != -1, "prepareToUpdate on prepareToPut does not work"
 
-        fi=open(localDir+"ClientpPutPUpd3","r")
+        fi=open(localDir+"Client"+rfiover+"pPutPUpd3","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "prepareToUpdate on prepareToPut does not work"
 
-        fi=open(localDir+"ClientpPutPUpd4","r")
+        fi=open(localDir+"Client"+rfiover+"pPutPUpd4","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "prepareToUpdate on prepareToPut does not work"
 
-        fi=open(localDir+"ClientpPutPUpd5","r")
+        fi=open(localDir+"Client"+rfiover+"pPutPUpd5","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "prepareToUpdate on prepareToPut does not work"
 
-        fi=open(localDir+"ClientpPutPUpd6","r")
+        fi=open(localDir+"Client"+rfiover+"pPutPUpd6","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "prepareToUpdate on prepareToPut does not work"
 
-        fi=open(localDir+"ClientpPutPUpd7","r")
+        fi=open(localDir+"Client"+rfiover+"pPutPUpd7","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "prepareToUpdate on prepareToPut does not work"
 
-        fi=open(localDir+"ClientpPutPUpd8","r")
+        fi=open(localDir+"Client"+rfiover+"pPutPUpd8","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "prepareToUpdate on prepareToPut does not work"
 
-        fi=open(localDir+"ClientpPutPUpd9","r")
+        fi=open(localDir+"Client"+rfiover+"pPutPUpd9","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGED") != -1 or  buffOut.find("CANBEMIGR") != -1 , "prepareToUpdate on prepareToPut does not work"
 
     def pUpdpPut(self):
-        cmd=["rfcp "+inputFile+" "+dirCastor+"fileClientpUpdpPut"+ticket,"stager_update -M "+dirCastor+"fileClientpUpdpPut"+ticket,"stager_qry -M "+dirCastor+"fileClientpUpdpPut"+ticket,"stager_put -M "+dirCastor+"fileClientpUpdpPut"+ticket,"stager_qry -M "+dirCastor+"fileClientpUpdpPut"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientpUpdpPut"+ticket,"stager_qry -M "+dirCastor+"fileClientpUpdpPut"+ticket,"stager_putdone -M "+dirCastor+"fileClientpUpdpPut"+ticket,"stager_qry -M "+dirCastor+"fileClientpUpdpPut"+ticket]
-        UtilityForCastorTest.saveOnFile(localDir+"ClientpUpdpPut",cmd,myScen)
+        cmd=["rfcp "+inputFile+" "+dirCastor+"fileClient"+rfiover+"pUpdpPut"+ticket,"stager_update -M "+dirCastor+"fileClient"+rfiover+"pUpdpPut"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pUpdpPut"+ticket,"stager_put -M "+dirCastor+"fileClient"+rfiover+"pUpdpPut"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pUpdpPut"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClient"+rfiover+"pUpdpPut"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pUpdpPut"+ticket,"stager_putdone -M "+dirCastor+"fileClient"+rfiover+"pUpdpPut"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pUpdpPut"+ticket]
+        UtilityForCastorTest.saveOnFile(localDir+"Client"+rfiover+"pUpdpPut",cmd,myScen)
         
-        fi=open(localDir+"ClientpUpdpPut","r")
+        fi=open(localDir+"Client"+rfiover+"pUpdpPut","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "mixing puts and updates does not work"
 
-        fi=open(localDir+"ClientpUpdpPut1","r")
+        fi=open(localDir+"Client"+rfiover+"pUpdpPut1","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "prepareToPut on prepareToUpdate does not work"
 
-        fi=open(localDir+"ClientpUpdpPut2","r")
+        fi=open(localDir+"Client"+rfiover+"pUpdpPut2","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGED") != -1 or  buffOut.find("CANBEMIGR") != -1 , "prepareToPut on prepareToUpdate does not work"
 
-        fi=open(localDir+"ClientpUpdpPut3","r")
+        fi=open(localDir+"Client"+rfiover+"pUpdpPut3","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "prepareToPut on prepareToUpdate does not work"
 
-        fi=open(localDir+"ClientpUpdpPut4","r")
+        fi=open(localDir+"Client"+rfiover+"pUpdpPut4","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 or  buffOut.find("CANBEMIGR") != -1 , "prepareToPut on prepareToUpdate does not work"
 
-        fi=open(localDir+"ClientpUpdpPut5","r")
+        fi=open(localDir+"Client"+rfiover+"pUpdpPut5","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "prepareToPut on prepareToUpdate does not work"
 
-        fi=open(localDir+"ClientpUpdpPut6","r")
+        fi=open(localDir+"Client"+rfiover+"pUpdpPut6","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "prepareToPut on prepareToUpdate does not work"
 
-        fi=open(localDir+"ClientpUpdpPut7","r")
+        fi=open(localDir+"Client"+rfiover+"pUpdpPut7","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "prepareToPut on prepareToUpdate does not work"
 
-        fi=open(localDir+"ClientpUpdpPut8","r")
+        fi=open(localDir+"Client"+rfiover+"pUpdpPut8","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGED") != -1 or  buffOut.find("CANBEMIGR") != -1 , "prepareToPut on prepareToUpdate does not work"
 
     def pUpdpPutNonExist(self):
-        cmd=["stager_update -M "+dirCastor+"fileClientpUpdpPutNonExist"+ticket,"stager_qry -M "+dirCastor+"fileClientpUpdpPutNonExist"+ticket,"stager_put -M "+dirCastor+"fileClientpUpdpPutNonExist"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientpUpdpPutNonExist"+ticket,"stager_qry -M "+dirCastor+"fileClientpUpdpPutNonExist"+ticket,"stager_putdone -M "+dirCastor+"fileClientpUpdpPutNonExist"+ticket,"stager_qry -M "+dirCastor+"fileClientpUpdpPutNonExist"+ticket]
-        UtilityForCastorTest.saveOnFile(localDir+"ClientpUpdpPutNonExist",cmd,myScen)
+        cmd=["stager_update -M "+dirCastor+"fileClient"+rfiover+"pUpdpPutNonExist"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pUpdpPutNonExist"+ticket,"stager_put -M "+dirCastor+"fileClient"+rfiover+"pUpdpPutNonExist"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClient"+rfiover+"pUpdpPutNonExist"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pUpdpPutNonExist"+ticket,"stager_putdone -M "+dirCastor+"fileClient"+rfiover+"pUpdpPutNonExist"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pUpdpPutNonExist"+ticket]
+        UtilityForCastorTest.saveOnFile(localDir+"Client"+rfiover+"pUpdpPutNonExist",cmd,myScen)
         
-        fi=open(localDir+"ClientpUpdpPutNonExist","r")
+        fi=open(localDir+"Client"+rfiover+"pUpdpPutNonExist","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "prepareToPut on prepareToUpdate does not work"
 
-        fi=open(localDir+"ClientpUpdpPutNonExist1","r")
+        fi=open(localDir+"Client"+rfiover+"pUpdpPutNonExist1","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "prepareToPut on prepareToUpdate does not work"
 
-        fi=open(localDir+"ClientpUpdpPutNonExist2","r")
+        fi=open(localDir+"Client"+rfiover+"pUpdpPutNonExist2","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_FAILED") != -1, "prepareToPut on prepareToUpdate does not work"
         assert buffOut.find("Another prepareToPut/Update is ongoing") != -1, "prepareToPut on prepareToUpdate does not work"
 
-        fi=open(localDir+"ClientpUpdpPutNonExist3","r")
+        fi=open(localDir+"Client"+rfiover+"pUpdpPutNonExist3","r")
         buffOut=fi.read()
         fi.close()
         assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "prepareToPut on prepareToUpdate does not work"
 
-        fi=open(localDir+"ClientpUpdpPutNonExist4","r")
+        fi=open(localDir+"Client"+rfiover+"pUpdpPutNonExist4","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1 , "prepareToPut on prepareToUpdate does not work"
 
-        fi=open(localDir+"ClientpUpdpPutNonExist5","r")
+        fi=open(localDir+"Client"+rfiover+"pUpdpPutNonExist5","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "prepareToPut on prepareToUpdate does not work"
 
-        fi=open(localDir+"ClientpUpdpPutNonExist6","r")
+        fi=open(localDir+"Client"+rfiover+"pUpdpPutNonExist6","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGED") != -1 or  buffOut.find("CANBEMIGR") != -1 , "prepareToPut on prepareToUpdate does not work"
