@@ -29,41 +29,42 @@
 namespace castor{
   namespace stager{
     namespace daemon{
-
+      
       class RequestHelper;
       class CnsHelper;
       class ReplyHelper;
-
+      
       class RequestHandler : public virtual castor::BaseObject{
-
-
-      public:
-
+        
+        
+        public:
+        
         RequestHandler() throw() : BaseObject() {};
 	      virtual ~RequestHandler() throw();
-	
-	
-	/* to perfom the common flow for all the subrequest types but StageRm, StageUpdate, StagePrepareToUpdate */
-	/* to be called before the stg____Handler->handle() */
-	virtual void preHandle() throw(castor::exception::Exception);
+        
+        
+        /* to perfom the common flow for all the subrequest types but StageRm, StageUpdate, StagePrepareToUpdate */
+        /* to be called before the stg____Handler->handle() */
+        virtual void preHandle() throw(castor::exception::Exception);
+        
+        virtual void handlerSettings() throw(castor::exception::Exception) {};
+        
+        /* main function for the specific request handler */
+        virtual void handle() throw (castor::exception::Exception) = 0;
+        
+        castor::stager::daemon::CnsHelper* getStgCnsHelper() {
+          return(this->stgCnsHelper);
+        }
 
-	virtual void handlerSettings() throw(castor::exception::Exception) {};
-
-	/* main function for the specific request handler */
-	virtual void handle() throw (castor::exception::Exception) = 0;
-
-	castor::stager::daemon::CnsHelper* getStgCnsHelper(){
-	  return(this->stgCnsHelper);
-	    }
-	
-      protected:
-	RequestHelper *stgRequestHelper;	
-	CnsHelper* stgCnsHelper;
-
-	int typeRequest;
-
+        CnsHelper* stgCnsHelper;
+        
+        protected:
+        RequestHelper *stgRequestHelper;	
+        
+        int typeRequest;
+        
       };/* end RequestHandler class */
-
+      
     }
   }
 }
