@@ -713,7 +713,7 @@ void   castor::infoPolicy::ora::OraPolicySvc::resurrectTapeCopies(std::vector<Po
    if (0 == m_resurrectCandidatesStatement) {
 	m_resurrectCandidatesStatement  =
 	  createStatement(s_resurrectCandidatesStatementString);
-	m_createOrUpdateStreamStatement->setAutoCommit(true);
+	m_resurrectCandidatesStatement->setAutoCommit(true);
 
       }
      
@@ -757,7 +757,7 @@ void   castor::infoPolicy::ora::OraPolicySvc::invalidateTapeCopies(std::vector<P
    if (0 == m_invalidateTapeCopiesStatement) {
 	m_invalidateTapeCopiesStatement  =
 	  createStatement(s_invalidateTapeCopiesStatementString);
-	m_createOrUpdateStreamStatement->setAutoCommit(true);
+	m_invalidateTapeCopiesStatement->setAutoCommit(true);
 
       }
      
