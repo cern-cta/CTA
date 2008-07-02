@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.7 $ $Date: 2008/06/02 13:26:36 $ $Author: waldron $
+ * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.8 $ $Date: 2008/07/02 15:20:07 $ $Author: sponcec3 $
  *
  * Some SQL code to ease support and debugging
  *
@@ -90,14 +90,15 @@ BEGIN
   FOR t IN (SELECT TapeCopy.id AS TCId, TapeCopy.status AS TCStatus,
                    Segment.Id, Segment.status AS SegStatus, Segment.errorCode AS SegErrCode,
                    Tape.vid AS VID, Tape.tpMode AS tpMode, Tape.Status AS TapeStatus,
-                   count(*) AS nbStreams, Segment.errMsgTxt AS SegErr
+                   CASE WHEN Stream2TapeCopy.child IS NULL THEN 0 ELSE count(*) END AS nbStreams,
+                   Segment.errMsgTxt AS SegErr
               FROM TapeCopy, Segment, Tape, Stream2TapeCopy
              WHERE TapeCopy.id = Segment.copy(+)
                AND Segment.tape = Tape.id(+)
                AND TapeCopy.castorfile = getCF(ref)
-               AND Stream2TapeCopy.child = TapeCopy.id
+               AND Stream2TapeCopy.child(+) = TapeCopy.id
               GROUP BY TapeCopy.id, TapeCopy.status, Segment.id, Segment.status, Segment.errorCode,
-                       Tape.vid, Tape.tpMode, Tape.Status, Segment.errMsgTxt) LOOP
+                       Tape.vid, Tape.tpMode, Tape.Status, Segment.errMsgTxt, Stream2TapeCopy.child) LOOP
      PIPE ROW(t);
   END LOOP;
 END;
