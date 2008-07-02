@@ -13,20 +13,3 @@ cd dlf/scripts
 ./makeDlfScripts.sh $tag oracle/oracleCreate.sql oracle/dlf_oracle_create.sql $1
 cd ../..
 
-# commit and tag in CVS
-if [ $# == 0 ]; then
-  sqlscripts='castor/db/castor_oracle_create.sql castor/db/castor_oracle_create.sqlplus castor/repack/repack_oracle_create.sql castor/repack/repack_oracle_create.sqlplus castor/vdqm/vdqm_oracle_create.sql castor/vdqm/vdqm_oracle_create.sqlplus dlf/scripts/oracle/dlf_oracle_create.sql dlf/scripts/oracle/dlf_oracle_create.sqlplus'
-  echo Running CVS diff...
-  cvs diff $sqlscripts > /tmp/cvsdiffs
-  less /tmp/cvsdiffs
-  echo 'Commit and tag in CVS? (y/n)'
-  read ask
-  if [ "$ask" == "y" ]; then
-    cvs commit -m "Regenerated creation scripts" $sqlscripts
-    cvs tag v$tag $sqlscripts
-    echo All SQL creation scripts for release $ver generated and tagged
-  fi
-  rm -rf /tmp/cvsdiffs
-  echo
-fi
- 
