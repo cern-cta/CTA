@@ -90,7 +90,7 @@
 
   - Fixed a bug in Disk2Disk copy scheduling which allowed a file to be replicated to a
     diskserver which already held a copy of the file. Note: this was only possible in the past
-    on service classes where the max replica number was greater the one.
+    on service classes where the max replica number was greater than one.
 
   - Enhanced the GC logic to allow for policy based decision making. Provided with this 
     release are 3 policies:
@@ -132,39 +132,42 @@
        mighunter, rechandler, rmMasterDaemon, expertd and dlfserver daemons. Note: it is not
        necessary to stop any services/daemons on the diskservers themselves.
 
-    2. Verify that all sessions from CASTOR2 related daemons to the database are gone. This
+    2. Remove any cron scripts used to restart stuck tape recalls. This logic is now part
+       of database cleaning jobs.
+
+    3. Verify that all sessions from CASTOR2 related daemons to the database are gone. This
        step is advised to make sure that modifications are no longer being made to the 
        database which may interfere or prolong the upgrade process.
 
-    3. Ask your DBA to create a backup of the database.
+    4. Ask your DBA to create a backup of the database.
 
-    4. Upgrade the stager and DLF databases using the correct upgrade scripts from
-       - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-10/upgrades
+    5. Upgrade the stager and DLF databases using the correct upgrade scripts from
+       - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-10/dbupgrades
 
-    5. On the STAGER database execute the following sql statement:
+    6. On the STAGER database execute the following sql statement:
 
        UPDATE CastorConfig SET value = 'XXXXX' WHERE key = 'instance';
        COMMIT;
 
        Where XXXX represents the name of the Castor2 instance e.g. castorcms, castoratlas ...
 
-    6. Update the rechandler.py python policy file for the recall handler based on the
+    7. Update the rechandler.py python policy file for the recall handler based on the
        rechandler.py.example file in /etc/castor/. The major difference here is that an
        additional attribute is now passed into each function called 'priority'.
 
        Note: For this particular release the priority field should be ignored!! It is only
        meaningful if you are running VDQM2 in production.
 
-    7. Upgrade the software on the headnodes and diskservers to 2.1.7-9. Daemons will
+    8. Upgrade the software on the headnodes and diskservers to 2.1.7-10. Daemons will
        automatically be restarted on upgrade.
 
-    8. Start all the daemons which were stopped in step 1. Note: the cleaning daemon no
+    9. Start all the daemons which were stopped in step 1. Note: the cleaning daemon no
        longer exists!
 
-    9. Test the instance by running the test suite available from:
-       - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-10/fastTest 
+   10. Test the instance by running the test suite available from:
+       - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-10/fastTestSuite 
 
-   10. Congratulations you have successfully upgraded to the 2.1.7-10 release of CASTOR2!!
+   11. Congratulations you have successfully upgraded to the 2.1.7-10 release of CASTOR2!!
 
   Repack
   ------
@@ -172,7 +175,7 @@
     1. Stop the repackserver
 
     2. Upgrade the repack database using the correct upgrade scripts from
-       - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-10/upgrades
+       - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-10/dbupgrades
 
     3. Start the repackserver
 
