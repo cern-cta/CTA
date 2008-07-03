@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.17 2008/04/18 09:26:32 wiebalck Exp $
+ * $Id: tpdaemon.c,v 1.18 2008/07/03 13:55:58 wiebalck Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.17 $ $Date: 2008/04/18 09:26:32 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.18 $ $Date: 2008/07/03 13:55:58 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -1625,10 +1625,11 @@ char *clienthost;
 		else {
 			usrmsg (func, "TP002 - %s : mknod error : %s\n",
 			    path, strerror(errno));
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 4,
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 5,
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "Message", TL_MSG_PARAM_STR, "mknod error",
                                             "path",    TL_MSG_PARAM_STR, path,
+                                            "JobID",   TL_MSG_PARAM_INT, jid,
                                             "Error",   TL_MSG_PARAM_STR, strerror(errno) );                                        
                         
                 }
@@ -1638,10 +1639,11 @@ char *clienthost;
 	if (chown (path, uid, gid) < 0) {
 		usrmsg (func, "TP002 - %s : chown error : %s\n",
 		    path, strerror(errno));
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 4,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 5,
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "Message", TL_MSG_PARAM_STR, "chown error",
                                     "path",    TL_MSG_PARAM_STR, path,
+                                    "JobID",   TL_MSG_PARAM_INT, jid,
                                     "Error",   TL_MSG_PARAM_STR, strerror(errno) );                                        
 		c = errno;
 		goto reply;
@@ -1664,10 +1666,11 @@ char *clienthost;
 
 	if (pid < 0) {
 		usrmsg (func, TP002, "fork", strerror(errno));
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 4,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 5,
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "Message", TL_MSG_PARAM_STR, "fork",
                                     "path",    TL_MSG_PARAM_STR, path,
+                                    "JobID",   TL_MSG_PARAM_INT, jid,
                                     "Error",   TL_MSG_PARAM_STR, strerror(errno) );
 		c = errno;
 	} else if (pid == 0) {	/* we are in the child */
@@ -1715,9 +1718,10 @@ char *clienthost;
 		tplogit (func, "TP002 - mounttape : execlp error : %s\n",
 		    strerror(errno));
 
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 4,
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "Message", TL_MSG_PARAM_STR, "mounttape : execlp error",
+                                    "JobID",   TL_MSG_PARAM_INT, jid,
                                     "Error",   TL_MSG_PARAM_STR, strerror(errno) );
 
                 tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );
@@ -1951,9 +1955,10 @@ char *clienthost;
 	pid = tunp->mntovly_pid;
 	if (pid < 0) {
 		usrmsg (func, TP002, "fork", strerror(errno));
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 4,
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "Message", TL_MSG_PARAM_STR, "fork", 
+                                    "JobID",   TL_MSG_PARAM_INT, jid,
                                     "Error",   TL_MSG_PARAM_STR, strerror(errno) );
 		c = ETSYS;
 	} else if (pid == 0) {	/* we are in the child */
@@ -2004,9 +2009,10 @@ char *clienthost;
 			arg_den, arg_flags, fsid, domainname, NULL);
 		tplogit (func, "TP002 - posovl : execlp error : %s\n",
 		    strerror(errno));
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 4,
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "Message", TL_MSG_PARAM_STR, "posovl : execlp error",
+                                    "JobID",   TL_MSG_PARAM_INT, jid,
                                     "Error",   TL_MSG_PARAM_STR, strerror(errno) );                        
 
                 tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );
@@ -2280,10 +2286,11 @@ char *clienthost;
 	if (mknod (tunp->filp->path, 0020700, tunp->cdevp->majmin) < 0) {
 		usrmsg (func, "TP002 - %s : mknod error : %s\n",
 		    tunp->filp->path, strerror(errno));
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 4,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 5,
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "Message", TL_MSG_PARAM_STR, "mknod error",
                                     "path",    TL_MSG_PARAM_STR, tunp->filp->path,
+                                    "JobID",   TL_MSG_PARAM_INT, tunp->jid,
                                     "Error",   TL_MSG_PARAM_STR, strerror(errno) );
 		c = errno;
 		goto reply;
@@ -2291,10 +2298,11 @@ char *clienthost;
 	if (chown (tunp->filp->path, tunp->uid, tunp->gid) < 0) {
 		usrmsg (func, "TP002 - %s : chown error : %s\n",
 		    tunp->filp->path, strerror(errno));
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 4,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 5,
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "Message", TL_MSG_PARAM_STR, "chown error",
                                     "path",    TL_MSG_PARAM_STR, tunp->filp->path,
+                                    "JobID",   TL_MSG_PARAM_INT, tunp->jid,
                                     "Error",   TL_MSG_PARAM_STR, strerror(errno) );
 		c = ETSYS;
 		goto reply;

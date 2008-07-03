@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.35 $ $Date: 2008/04/18 09:22:41 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.36 $ $Date: 2008/07/03 13:55:58 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -180,10 +180,11 @@ char	**argv;
 			else {
 				usrmsg (func, TP042, path, "open",
 					strerror(errno));
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
                                                     "func"   , TL_MSG_PARAM_STR  , func,
                                                     "path"   , TL_MSG_PARAM_STR  , path,
                                                     "Message", TL_MSG_PARAM_STR  , "open",
+                                                    "JobID"  , TL_MSG_PARAM_INT  , jid,
                                                     "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                         }
 			goto reply;
@@ -230,10 +231,11 @@ char	**argv;
 			else {
 				usrmsg (func, TP042, path, "open",
 					strerror(errno));
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
                                                     "func"   , TL_MSG_PARAM_STR  , func,
                                                     "path"   , TL_MSG_PARAM_STR  , path,
                                                     "Message", TL_MSG_PARAM_STR  , "open",
+                                                    "JobID"  , TL_MSG_PARAM_INT  , jid,
                                                     "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                         }
 			goto reply;

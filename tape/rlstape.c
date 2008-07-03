@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.49 $ $Date: 2008/04/25 15:19:23 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.50 $ $Date: 2008/07/03 13:55:58 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -262,11 +262,12 @@ char	**argv;
 #endif
                         {
                                 tplogit (func, TP042, dvn, "open", strerror(errno));
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 6,
                                                     "func"   , TL_MSG_PARAM_STR  , func,
                                                     "dvn"    , TL_MSG_PARAM_STR  , dvn,
                                                     "Message", TL_MSG_PARAM_STR  , "open",
                                                     "Error"  , TL_MSG_PARAM_STR  , strerror(errno),
+                                                    "JobID"  , TL_MSG_PARAM_INT  , jid,
                                                     "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                         }
  	}
@@ -366,11 +367,12 @@ unload_loop:
 #endif
                         {
                                 tplogit (func, TP042, dvn, "open", strerror(errno));
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 6,
                                                     "func"   , TL_MSG_PARAM_STR  , func,
                                                     "dvn"    , TL_MSG_PARAM_STR  , dvn,
                                                     "Message", TL_MSG_PARAM_STR  , "open",
                                                     "Error"  , TL_MSG_PARAM_STR  , strerror(errno),
+                                                    "JobID"  , TL_MSG_PARAM_INT  , jid,
                                                     "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                         }
 	}
@@ -389,11 +391,12 @@ unload_loop:
 		close (tapefd);
 	} else {
 		tplogit (func, TP042, dvn, "open", strerror(errno));
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 6,
                                     "func"   , TL_MSG_PARAM_STR,   func,
                                     "dvn"    , TL_MSG_PARAM_STR,   dvn,
                                     "Message", TL_MSG_PARAM_STR,   "open",
                                     "Error"  , TL_MSG_PARAM_STR,   strerror(errno),
+                                    "JobID"  , TL_MSG_PARAM_INT  , jid,
                                     "TPVID"  , TL_MSG_PARAM_TPVID, vid );
         }
     }

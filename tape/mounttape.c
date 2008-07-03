@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.68 $ $Date: 2008/04/18 09:22:40 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.69 $ $Date: 2008/07/03 13:55:58 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -432,11 +432,12 @@ remount_loop:
 				else {
 					usrmsg (func, TP042, path, "open",
 						strerror(errno));
-                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 6,
                                                             "func"   , TL_MSG_PARAM_STR  , func,
                                                             "path"   , TL_MSG_PARAM_STR  , path,
                                                             "Message", TL_MSG_PARAM_STR  , "open",
                                                             "Error"  , TL_MSG_PARAM_STR  , strerror(errno),
+                                                            "JobID"  , TL_MSG_PARAM_INT  , jid,
                                                             "TPVID"  , TL_MSG_PARAM_TPVID, vid);
 	                                if (strcmp (devtype, "3592") == 0) {
 #if VDQM
@@ -496,12 +497,13 @@ remount_loop:
 		if (tpmode != mode && tpmode == WRITE_DISABLE && *loader != 'm') {
 			sprintf (msg, TP041, "mount", vid, drive, "write protected");
 			usrmsg (func, "%s\n", msg);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 6,
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 7,
                                             "func"   , TL_MSG_PARAM_STR  , func,
                                             "Message", TL_MSG_PARAM_STR  , msg,
                                             "Command", TL_MSG_PARAM_STR  , "mount",
                                             "VID"    , TL_MSG_PARAM_STR  , vid,
                                             "Drive"  , TL_MSG_PARAM_STR  , drive,
+                                            "JobID"  , TL_MSG_PARAM_INT  , jid,
                                             "TPVID"  , TL_MSG_PARAM_TPVID, vid);
 			c = ETWPROT;
 			goto reply;
@@ -523,11 +525,12 @@ remount_loop:
 			close (tapefd);         /* to avoid errno 22 on read */
 			if ((tapefd = open (path, O_RDONLY)) < 0) {
 				usrmsg (func, TP042, path, "reopen", strerror(errno));
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 6,
                                                     "func"   , TL_MSG_PARAM_STR  , func,
                                                     "path"   , TL_MSG_PARAM_STR  , path,
                                                     "Message", TL_MSG_PARAM_STR  , "reopen",
                                                     "Error"  , TL_MSG_PARAM_STR  , strerror(errno),
+                                                    "JobID"  , TL_MSG_PARAM_INT  , jid,
                                                     "TPVID"  , TL_MSG_PARAM_TPVID, vid);
 				c = errno;
 				goto reply;
@@ -924,11 +927,12 @@ mounted:
 		close (tapefd);
 		if ((tapefd = open (path, O_WRONLY)) < 0) {
 			usrmsg (func, TP042, path, "reopen", strerror(errno));
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 6,
                                             "func"   , TL_MSG_PARAM_STR  , func,
                                             "path"   , TL_MSG_PARAM_STR  , path,
                                             "Message", TL_MSG_PARAM_STR  , "reopen",
                                             "Error"  , TL_MSG_PARAM_STR  , strerror(errno),
+                                            "JobID"  , TL_MSG_PARAM_INT  , jid,
                                             "TPVID"  , TL_MSG_PARAM_TPVID, vid);
 			c = errno;
 			goto reply;
