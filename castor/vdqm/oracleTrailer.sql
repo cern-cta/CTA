@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.132 $ $Release$ $Date: 2008/07/07 21:39:17 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.133 $ $Release$ $Date: 2008/07/07 21:45:37 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1845,8 +1845,6 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     uidVar               NUMBER;
     vidVar               VARCHAR2(256);
     driveIdVar           NUMBER;
-    nbMatchingServersVar NUMBER;
-    nbMatchingDgnsVar    NUMBER;
     TYPE dedicationList_t IS TABLE OF NUMBER INDEX BY BINARY_INTEGER;
     dedicationsToDelete  dedicationList_t;
     dedicationIdVar      NUMBER;
