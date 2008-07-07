@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.133 $ $Release$ $Date: 2008/07/07 21:45:37 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.134 $ $Release$ $Date: 2008/07/07 22:03:13 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1993,9 +1993,11 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
       RETURN;
     END IF;
   
-    DELETE FROM TapeDrive2TapeDriveComp WHERE parent = driveIdVar;
-    DELETE FROM TapeDrive WHERE id = driveIdVar;
-    DELETE FROM Id2Type WHERE id = driveIdVar;
+    DELETE FROM TapeDrive2TapeDriveComp WHERE parent    = driveIdVar;
+    DELETE FROM TapeDrive               WHERE id        = driveIdVar;
+    DELETE FROM TapeDriveDedication     WHERE tapeDrive = driveIdVar;
+    DELETE FROM Id2Type                 WHERE id        = driveIdVar;
+
   END deleteDrive;
 
 
