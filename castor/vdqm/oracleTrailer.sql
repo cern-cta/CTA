@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.131 $ $Release$ $Date: 2008/06/28 10:08:15 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.132 $ $Release$ $Date: 2008/07/07 21:39:17 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1845,57 +1845,47 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     uidVar               NUMBER;
     vidVar               VARCHAR2(256);
     driveIdVar           NUMBER;
-    dgnIdVar             NUMBER;
-    serverIdVar          NUMBER;
     nbMatchingServersVar NUMBER;
     nbMatchingDgnsVar    NUMBER;
     TYPE dedicationList_t IS TABLE OF NUMBER INDEX BY BINARY_INTEGER;
     dedicationsToDelete  dedicationList_t;
     dedicationIdVar      NUMBER;
   BEGIN
-    -- Lock the tape drive row
+
+    -- Get the id of the tape drive
     BEGIN
       SELECT
-        TapeDrive.id, TapeDrive.deviceGroupName, TapeDrive.tapeServer
-        INTO driveIdVar, dgnIdVar, serverIdVar
+        TapeDrive.id
+        INTO driveIdVar
         FROM TapeDrive
         INNER JOIN TapeServer ON
           TapeDrive.tapeServer = TapeServer.id
+        INNER JOIN DeviceGroupName ON
+          TapeDrive.deviceGroupName = DeviceGroupName.id
         WHERE
-          TapeDrive.driveName = driveNameVar
+              TapeDrive.driveName    = driveNameVar
+          AND TapeServer.serverName  = serverNameVar
+          AND DeviceGroupName.dgName = dgNameVar;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      castorVdqmException.throw(castorVdqmException.drive_not_found_cd,
+        'Tape drive ''' || dgNameVar || ' ' || driveNameVar || '@' ||
+        serverNameVar || ''' not found in database.');
+    END;
+
+    -- Lock the tape drive row
+    BEGIN
+      SELECT
+        TapeDrive.id
+        INTO driveIdVar
+        FROM TapeDrive
+        WHERE
+          TapeDrive.id = driveIdVar
         FOR UPDATE;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       castorVdqmException.throw(castorVdqmException.drive_not_found_cd,
-        'Tape drive ''' || driveNameVar || ''' not found in database.');
+        'Tape drive ''' || dgNameVar || ' ' || driveNameVar || '@' ||
+        serverNameVar || ''' not found in database.');
     END;
-
-    -- Check the specified tape drive is associated with the specified tape
-    -- server
-    SELECT count(*) INTO nbMatchingServersVar
-      FROM TapeServer
-      WHERE
-            TapeServer.id         = serverIdVar
-        AND TapeServer.serverName = serverNameVar;
-
-    IF nbMatchingServersVar = 0 THEN
-      castorVdqmException.throw(castorVdqmException.drive_server_not_found_cd,
-        'Tape drive ''' || driveNameVar || ''', server ''' || serverNameVar ||
-        ''' combination not found in database.');
-    END IF;
-
-    -- Check the specified tape drive is associated with the specified dgn
-    SELECT count(*) INTO nbMatchingDgnsVar
-      FROM DeviceGroupName
-      WHERE
-            DeviceGroupName.id     = dgnIdVar
-        AND DeviceGroupName.dgName = dgNameVar;
-
-    IF nbMatchingDgnsVar = 0 THEN
-      castorVdqmException.throw(castorVdqmException.drive_dgn_not_found_cd,
-        'Tape drive ''' || driveNameVar || ''', DGN ''' || dgNameVar ||
-        ''' combination not found in database.');
-      RETURN;
-    END IF;
 
     -- Parse the dedication string raising an application error with an error
     -- number of -20001 if there is an error in the dedicate string
