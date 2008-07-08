@@ -1,5 +1,5 @@
 /******************************************************************************
- *              vdqm_2.1.7-10_to_2.1.7-10-1.sql
+ *              vdqm_2.1.7-10_to_2.1.7-10-1.sqlplus
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -34,6 +34,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Error, we can't apply this script
   raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts before this one.');
 END;
+/
 
 UPDATE CastorVersion SET release = '2_1_7_10_1';
 COMMIT;
@@ -966,3 +967,4 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
   END deleteOldVolPriorities;
 
 END castorVdqm;
+/
