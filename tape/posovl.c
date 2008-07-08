@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.36 $ $Date: 2008/07/03 13:55:58 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.37 $ $Date: 2008/07/08 17:19:37 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -485,9 +485,12 @@ char *drive;
 
 	sprintf (msg, TP033, drive, hostname); /* ops msg */
 	usrmsg ("posovl", "%s\n", msg);
-        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                            "func",    TL_MSG_PARAM_STR, "posovl",
-                            "Message", TL_MSG_PARAM_STR, msg );                        
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 33, 4,
+                            "func",     TL_MSG_PARAM_STR, "posovl",
+                            "Message",  TL_MSG_PARAM_STR, msg,
+                            "Drive",    TL_MSG_PARAM_STR, drive, 
+                            "Hostname", TL_MSG_PARAM_STR, hostname );
+
 	(void) Ctape_config (drive, CONF_DOWN, TPCD_SYS);
 }
 
