@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/06/19 15:12:42 $ $Author: itglp $
+ * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/07/09 16:31:06 $ $Author: sponcec3 $
  *
  *
  *
@@ -38,23 +38,29 @@ namespace castor {
     
     namespace ora {
 
-      static const oracle::occi::Type oraTypeMap[8] = {(oracle::occi::Type)0, 
+      static const oracle::occi::Type oraTypeMap[] = {
+        (oracle::occi::Type)0, 
         oracle::occi::OCCIINT, 
         oracle::occi::OCCIDOUBLE,
         oracle::occi::OCCIDOUBLE,
         oracle::occi::OCCIFLOAT,
         oracle::occi::OCCIDOUBLE,
         oracle::occi::OCCISTRING, 
-        oracle::occi::OCCICLOB};
+        oracle::occi::OCCICLOB,
+	oracle::occi::OCCICURSOR
+      };
          
-      static const oracle::occi::Type oraBulkTypeMap[8] = {(oracle::occi::Type)0, 
+      static const oracle::occi::Type oraBulkTypeMap[] = {
+        (oracle::occi::Type)0, 
         oracle::occi::OCCIINT,
         oracle::occi::OCCIBDOUBLE,
         oracle::occi::OCCIBDOUBLE,
         oracle::occi::OCCIBFLOAT,
         oracle::occi::OCCIBDOUBLE,
         oracle::occi::OCCI_SQLT_STR,
-        oracle::occi::OCCI_SQLT_CLOB /* but this one is not yet supported */ };
+        oracle::occi::OCCI_SQLT_CLOB,  // but this one is not yet supported
+	oracle::occi::OCCICURSOR       // and this is never used for bulk operations
+      };
           
       /**
        * Oracle implementation for IDbStatement
@@ -81,11 +87,18 @@ namespace castor {
         virtual void setInt64(int pos, signed64 value);
         virtual void setUInt64(int pos, u_signed64 value);
         virtual void setString(int pos, std::string value);
-        virtual void setClob(int pos, std::string value);
         virtual void setFloat(int pos, float value);
         virtual void setDouble(int pos, double value);
+        virtual void setClob(int pos, std::string value);
 
-        virtual void setDataBuffer(int pos, void* buffer, unsigned dbType, unsigned size, void* bufLen)
+        virtual void setDataBuffer(int pos, void* buffer, unsigned dbType, unsigned size, void* bufLens)
+          throw (castor::exception::SQLError);
+
+        virtual void setDataBufferArray(int pos, void* buffer, unsigned dbType, 
+          unsigned size, unsigned elementSize, void* bufLens)
+          throw (castor::exception::SQLError);
+        
+        virtual void setDataBufferUInt64Array(int pos, std::vector<u_signed64> data)
           throw (castor::exception::SQLError);
 
         virtual void registerOutParam(int pos, unsigned dbType)
@@ -100,9 +113,10 @@ namespace castor {
         virtual signed64 getInt64(int pos) throw (castor::exception::SQLError);
         virtual u_signed64 getUInt64(int pos) throw (castor::exception::SQLError);
         virtual std::string getString(int pos) throw (castor::exception::SQLError);
-        virtual std::string getClob(int pos) throw (castor::exception::SQLError);
         virtual float getFloat(int pos) throw (castor::exception::SQLError);
         virtual double getDouble(int pos) throw (castor::exception::SQLError);
+        virtual std::string getClob(int pos) throw (castor::exception::SQLError);
+        virtual castor::db::IDbResultSet* getCursor(int pos) throw (castor::exception::SQLError);
 
         /**
          *
@@ -127,6 +141,10 @@ namespace castor {
         
         unsigned m_clobPos;
         
+        void* m_arrayBuf;
+        void* m_arrayBufLens;
+        
+        unsigned m_arrayPos;
       };
 
     }

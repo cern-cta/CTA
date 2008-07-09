@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/06/19 15:13:11 $ $Author: itglp $
+ * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/07/09 16:31:06 $ $Author: sponcec3 $
  *
  * 
  *
@@ -28,6 +28,7 @@
 #define CASTOR_DB_IDBSTATEMENT_HPP
 
 #include <string>
+#include <vector>
 #include "osdep.h"
 #include "castor/db/IDbResultSet.hpp"
 #include "castor/exception/SQLError.hpp"
@@ -57,23 +58,31 @@ namespace castor {
         virtual void setInt64(int pos, signed64 value) = 0;
         virtual void setUInt64(int pos, u_signed64 value) = 0;
         virtual void setString(int pos, std::string value) = 0;
-        virtual void setClob(int pos, std::string value) = 0;
         virtual void setFloat(int pos, float value) = 0;
         virtual void setDouble(int pos, double value) = 0;
+        virtual void setClob(int pos, std::string value) = 0;
         
-        virtual void setDataBuffer(int pos, void* buffer, unsigned dbType, unsigned size, void* bufLen)
+        virtual void setDataBuffer(int pos, void* buffer, unsigned dbType, unsigned size, void* bufLens)
           throw (castor::exception::SQLError) = 0;
         
+        virtual void setDataBufferArray(int pos, void* buffer, unsigned dbType, 
+          unsigned size, unsigned elementSize, void* bufLens)
+          throw (castor::exception::SQLError) = 0;
+
+        virtual void setDataBufferUInt64Array(int pos, std::vector<u_signed64> data)
+          throw (castor::exception::SQLError) = 0;
+
         virtual void registerOutParam(int pos, unsigned dbType)
           throw (castor::exception::SQLError) = 0;
     
         virtual int getInt(int pos) throw (castor::exception::SQLError) = 0;
         virtual signed64 getInt64(int pos) throw (castor::exception::SQLError) = 0;
-        virtual u_signed64 getUInt64(int pos) = 0;
-        virtual std::string getString(int pos) = 0;
-        virtual std::string getClob(int pos) = 0;
-        virtual float getFloat(int pos) = 0;
-        virtual double getDouble(int pos) = 0;
+        virtual u_signed64 getUInt64(int pos) throw (castor::exception::SQLError) = 0;
+        virtual std::string getString(int pos) throw (castor::exception::SQLError) = 0;
+        virtual float getFloat(int pos) throw (castor::exception::SQLError) = 0;
+        virtual double getDouble(int pos) throw (castor::exception::SQLError) = 0;
+        virtual std::string getClob(int pos) throw (castor::exception::SQLError) = 0;
+        virtual castor::db::IDbResultSet* getCursor(int pos) throw (castor::exception::SQLError) = 0;
     
         /**
          * 
@@ -96,7 +105,8 @@ namespace castor {
     const unsigned DBTYPE_DOUBLE = 5;
     const unsigned DBTYPE_STRING = 6;
     const unsigned DBTYPE_CLOB = 7;
-    const unsigned DBTYPE_MAXVALUE = 7;
+    const unsigned DBTYPE_CURSOR = 8;
+    const unsigned DBTYPE_MAXVALUE = 8;
 
   }
 

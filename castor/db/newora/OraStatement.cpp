@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/06/19 15:12:42 $ $Author: itglp $
+ * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/07/09 16:31:06 $ $Author: sponcec3 $
  *
  *
  *
@@ -33,7 +33,7 @@
 // OraStatement
 // -----------------------------------------------------------------------
 castor::db::ora::OraStatement::OraStatement(oracle::occi::Statement* stmt, castor::db::ora::OraCnvSvc* cnvSvc) :
-  m_statement(stmt), m_cnvSvc(cnvSvc), m_clobBuf(""), m_clobPos(0)
+  m_statement(stmt), m_cnvSvc(cnvSvc), m_clobBuf(""), m_clobPos(0), m_arrayBuf(0), m_arrayBufLens(0), m_arrayPos(0)
 {
   m_statement->setAutoCommit(false);
 }
@@ -90,6 +90,22 @@ void castor::db::ora::OraStatement::setString(int pos, std::string value)
 }
 
 // -----------------------------------------------------------------------
+// setFloat
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStatement::setFloat(int pos, float value)
+{
+  m_statement->setFloat(pos, value);
+}
+
+// -----------------------------------------------------------------------
+// setDouble
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStatement::setDouble(int pos, double value)
+{
+  m_statement->setDouble(pos, value);
+}
+
+// -----------------------------------------------------------------------
 // setClob
 // -----------------------------------------------------------------------
 void castor::db::ora::OraStatement::setClob(int pos, std::string value)
@@ -109,27 +125,12 @@ void castor::db::ora::OraStatement::setClob(int pos, std::string value)
   m_clobPos = pos;
 }
 
-// -----------------------------------------------------------------------
-// setFloat
-// -----------------------------------------------------------------------
-void castor::db::ora::OraStatement::setFloat(int pos, float value)
-{
-  m_statement->setFloat(pos, value);
-}
-
-// -----------------------------------------------------------------------
-// setDouble
-// -----------------------------------------------------------------------
-void castor::db::ora::OraStatement::setDouble(int pos, double value)
-{
-  m_statement->setDouble(pos, value);
-}
 
 // -----------------------------------------------------------------------
 // setDataBuffer
 // -----------------------------------------------------------------------
 void castor::db::ora::OraStatement::setDataBuffer
-  (int pos, void* buffer, unsigned dbType, unsigned size, void* bufLen)
+  (int pos, void* buffer, unsigned dbType, unsigned size, void* bufLens)
   throw(castor::exception::SQLError) {
   if(dbType > DBTYPE_MAXVALUE) {
     castor::exception::SQLError ex;
@@ -137,7 +138,7 @@ void castor::db::ora::OraStatement::setDataBuffer
     throw ex;
   }    
   try {
-    m_statement->setDataBuffer(pos, buffer, oraBulkTypeMap[dbType], size, (ub2*)bufLen);
+    m_statement->setDataBuffer(pos, buffer, oraBulkTypeMap[dbType], size, (ub2*)bufLens);
   }
   catch(oracle::occi::SQLException e) {
     castor::exception::SQLError ex;
@@ -145,6 +146,49 @@ void castor::db::ora::OraStatement::setDataBuffer
                     << std::endl << e.what();
     throw ex;
   }
+}
+
+// -----------------------------------------------------------------------
+// setDataBufferArray
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStatement::setDataBufferArray
+  (int pos, void* buffer, unsigned dbType, unsigned size, unsigned elementSize, void* bufLens)
+  throw(castor::exception::SQLError) {
+  try {
+    ub4 unused = size;
+    m_statement->setDataBufferArray(pos, buffer,
+      // yes, Oracle is not that symmetric in data type handling...
+      (dbType == DBTYPE_UINT64 || dbType == DBTYPE_INT64 ? oracle::occi::OCCI_SQLT_NUM : oraBulkTypeMap[dbType]),
+      size, &unused, elementSize, (ub2*)bufLens);
+  }
+  catch(oracle::occi::SQLException e) {
+    castor::exception::SQLError ex;
+    ex.getMessage() << "Database error, Oracle code: " << e.getErrorCode()
+                    << std::endl << e.what();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// setDataBufferUInt64Array
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStatement::setDataBufferUInt64Array
+  (int pos, std::vector<u_signed64> data)
+  throw(castor::exception::SQLError) {
+  // a dedicated method to handle u_signed64 arrays, i.e. arrays of ids
+  unsigned int nb1 = data.size() == 0 ? 1 : data.size();
+  ub2* lens = (ub2*) malloc(nb1 * sizeof(ub2));
+  unsigned char (*buf)[21] = (unsigned char(*)[21]) calloc(nb1*21, sizeof(unsigned char));
+  for(unsigned int i = 0; i < data.size(); i++) {
+    oracle::occi::Number n = (double)data[i];
+    oracle::occi::Bytes b = n.toBytes();
+    lens[i] = b.length();
+    b.getBytes(buf[i], lens[i]);
+  }
+  m_arrayBuf = buf;
+  m_arrayBufLens = lens;
+  m_arrayPos = pos;
+  setDataBufferArray(pos, buf, DBTYPE_UINT64, nb1, 21, lens);
 }
 
 
@@ -233,31 +277,6 @@ std::string castor::db::ora::OraStatement::getString(int pos)
 }
 
 // -----------------------------------------------------------------------
-// getClob
-// -----------------------------------------------------------------------
-std::string castor::db::ora::OraStatement::getClob(int pos)
-  throw (castor::exception::SQLError) {
-  try {
-    oracle::occi::Clob clob = m_statement->getClob(pos);
-    clob.open(oracle::occi::OCCI_LOB_READONLY);
-    int len = clob.length();
-    char* buf = (char*) malloc(len+1);
-    clob.read(len, (unsigned char*)buf, len);
-    buf[len] = 0;
-    clob.close();
-    std::string res(buf);
-    free(buf);
-    return std::string(res);
-  }
-  catch(oracle::occi::SQLException e) {
-    castor::exception::SQLError ex;
-    ex.getMessage() << "Database error, Oracle code: " << e.getErrorCode()
-                    << std::endl << e.what();
-    throw ex;
-  }
-}
-
-// -----------------------------------------------------------------------
 // getFloat
 // -----------------------------------------------------------------------
 float castor::db::ora::OraStatement::getFloat(int pos)
@@ -289,6 +308,46 @@ double castor::db::ora::OraStatement::getDouble(int pos)
   }
 }
 
+// -----------------------------------------------------------------------
+// getClob
+// -----------------------------------------------------------------------
+std::string castor::db::ora::OraStatement::getClob(int pos)
+  throw (castor::exception::SQLError) {
+  try {
+    oracle::occi::Clob clob = m_statement->getClob(pos);
+    clob.open(oracle::occi::OCCI_LOB_READONLY);
+    int len = clob.length();
+    char* buf = (char*) malloc(len+1);
+    clob.read(len, (unsigned char*)buf, len);
+    buf[len] = 0;
+    clob.close();
+    std::string res(buf);
+    free(buf);
+    return std::string(res);
+  }
+  catch(oracle::occi::SQLException e) {
+    castor::exception::SQLError ex;
+    ex.getMessage() << "Database error, Oracle code: " << e.getErrorCode()
+                    << std::endl << e.what();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// getCursor
+// -----------------------------------------------------------------------
+castor::db::IDbResultSet* castor::db::ora::OraStatement::getCursor(int pos)
+  throw (castor::exception::SQLError) {
+  try {
+    return new castor::db::ora::OraResultSet(m_statement->getCursor(pos), m_statement);
+  }
+  catch(oracle::occi::SQLException e) {
+    castor::exception::SQLError ex;
+    ex.getMessage() << "Database error, Oracle code: " << e.getErrorCode()
+                    << std::endl << e.what();
+    throw ex;
+  }
+}
 
 // -----------------------------------------------------------------------
 // executeQuery
@@ -327,6 +386,16 @@ int castor::db::ora::OraStatement::execute(int count)
         throw ex;
       }
       ret = m_statement->executeArrayUpdate(count);
+    }
+    
+    // special handling for array parameters
+    if(m_arrayPos > 0) {
+      // buffers need to be freed after the statement execution
+      if(m_arrayBuf) free(m_arrayBuf);
+      m_arrayBuf = 0;
+      if(m_arrayBufLens) free(m_arrayBufLens);
+      m_arrayBufLens = 0;
+      m_arrayPos = 0;   // reset for next usage
     }
     
     // special handling for clobs: they need to be populated in this weird way...
