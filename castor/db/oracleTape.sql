@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.674 $ $Date: 2008/06/26 08:49:45 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.675 $ $Date: 2008/07/09 08:02:38 $ $Author: sponcec3 $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -218,6 +218,10 @@ BEGIN
       FROM Stream, TapePool
      WHERE Stream.id = streamId
        AND Stream.tapePool = TapePool.id;
+    -- check for NULL value
+    IF policy IS NULL THEN
+      policy := 'defaultMigrSelPolicy';
+    END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     policy := 'defaultMigrSelPolicy';
   END;
