@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.661 $ $Date: 2008/07/09 08:03:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.662 $ $Date: 2008/07/09 16:36:52 $ $Author: sponcec3 $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -206,6 +206,9 @@ CREATE GLOBAL TEMPORARY TABLE removePrivilegeTmpTable
    egid NUMBER,
    reqType NUMBER)
   ON COMMIT DELETE ROWS;
+
+/* Global temporary table to store ids temporarily in the bulkCreateObj procedures */
+CREATE GLOBAL TEMPORARY TABLE bulkSelectHelper(objId NUMBER) ON COMMIT DELETE ROWS;
 
 /* SQL statements for table PriorityMap */ 
 CREATE TABLE PriorityMap (euid INTEGER, egid INTEGER, priority INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT; 
