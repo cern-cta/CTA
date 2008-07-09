@@ -169,6 +169,8 @@ void CppCppDbCnvWriter::writeClass(UMLClassifier */*c*/) {
   writeDeleteRep();
   // createObj method
   writeCreateObj();
+  // bulkCreateObj method
+  writeBulkCreateObj();
   // updateObj method
   writeUpdateObj();
 }
@@ -322,6 +324,68 @@ void CppCppDbCnvWriter::writeConstants() {
   }
   *m_stream << " FROM " << m_classInfo->className
             << " WHERE id = :1\";" << endl << endl
+            << getIndent()
+            << "/// SQL statement for bulk request selection"
+            << endl << getIndent()
+            << "const std::string "
+            << m_classInfo->fullPackageName
+            << "Db" << m_classInfo->className
+            << "Cnv::s_bulkSelectStatementString =" << endl
+            << getIndent()
+            << "\"DECLARE \\" << endl << getIndent()
+	    << "   TYPE CurType IS REF CURSOR RETURN "
+	    << m_classInfo->className << "%ROWTYPE; \\"
+	    << endl << getIndent()
+	    << "   PROCEDURE bulkSelect(ids IN castor.\\\"cnumList\\\", \\"
+	    << endl << getIndent()
+	    << "                        objs OUT CurType) AS \\"
+	    << endl << getIndent()
+	    << "   BEGIN \\"
+	    << endl << getIndent()
+	    << "     FORALL i IN ids.FIRST..ids.LAST \\"
+	    << endl << getIndent()
+	    << "       INSERT INTO bulkSelectHelper VALUES(ids(i)); \\"
+	    << endl << getIndent()
+	    << "     OPEN objs FOR SELECT ";
+  // Go through the members
+  n = 0;
+  for (Member* mem = members.first();
+       0 != mem;
+       mem = members.next()) {
+    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+    if (n > 0) *m_stream << ", ";
+    *m_stream << mem->name;
+    n++;
+  }
+  // Go through the associations
+  for (Assoc* as = assocs.first();
+       0 != as;
+       as = assocs.next()) {
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->type.multiRemote == MULT_ONE &&
+        as->remotePart.name != "") {
+      if (n > 0) *m_stream << ", ";
+      *m_stream << as->remotePart.name;
+      n++;
+    }
+  }
+  *m_stream << " \\"
+	    << endl << getIndent()
+	    << "                     FROM " << m_classInfo->className
+	    << " t, bulkSelectHelper h \\"
+	    << endl << getIndent()
+            << "                    WHERE t.id = h.objId; \\"
+	    << endl << getIndent()
+	    << "     DELETE FROM bulkSelectHelper; \\"
+	    << endl << getIndent()
+	    << "   END; \\"
+	    << endl << getIndent()
+	    << " BEGIN \\"
+	    << endl << getIndent()
+	    << "   bulkSelect(:1, :2); \\"
+	    << endl << getIndent()
+	    << " END;\";"
+	    << endl << endl
             << getIndent()
             << "/// SQL statement for request update"
             << endl << getIndent()
@@ -830,6 +894,7 @@ void CppCppDbCnvWriter::writeConstructors() {
             << getIndent() << "  m_insertStatement(0)," << endl
             << getIndent() << "  m_deleteStatement(0)," << endl
             << getIndent() << "  m_selectStatement(0)," << endl
+            << getIndent() << "  m_bulkSelectStatement(0)," << endl
             << getIndent() << "  m_updateStatement(0)," << endl;
   if (isNewRequest()) {
     *m_stream << getIndent() << "  m_insertNewReqStatement(0)," << endl;
@@ -926,6 +991,8 @@ void CppCppDbCnvWriter::writeReset() {
             << endl << getIndent()
             << "if(m_selectStatement) delete m_selectStatement;"
             << endl << getIndent()
+            << "if(m_bulkSelectStatement) delete m_bulkSelectStatement;"
+            << endl << getIndent()
             << "if(m_updateStatement) delete m_updateStatement;"
             << endl;
   if (isNewRequest()) {
@@ -1019,6 +1086,8 @@ void CppCppDbCnvWriter::writeReset() {
             << "m_deleteStatement = 0;"
             << endl << getIndent()
             << "m_selectStatement = 0;"
+            << endl << getIndent()
+            << "m_bulkSelectStatement = 0;"
             << endl << getIndent()
             << "m_updateStatement = 0;" << endl;
   if (isNewRequest()) {
@@ -1719,7 +1788,7 @@ void CppCppDbCnvWriter::writeBasicMultNFillRep(Assoc* as) {
             << getIndent() << "// Get current database data"
             << endl << getIndent()
             << fixTypeName("set", "", "")
-            << "<int> " << as->remotePart.name
+            << "<u_signed64> " << as->remotePart.name
             << "List;" << endl << getIndent()
             << "m_select"
             << capitalizeFirstLetter(as->remotePart.typeName)
@@ -1735,7 +1804,7 @@ void CppCppDbCnvWriter::writeBasicMultNFillRep(Assoc* as) {
   m_indent++;
   *m_stream << getIndent()
             << as->remotePart.name
-            << "List.insert(rset->getInt(1));"
+            << "List.insert(rset->getUInt64(1));"
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl
@@ -1810,7 +1879,7 @@ void CppCppDbCnvWriter::writeBasicMultNFillRep(Assoc* as) {
   }
   *m_stream << getIndent()
             << fixTypeName("set", "", "")
-            << "<int>::iterator item;" << endl
+            << "<u_signed64>::iterator item;" << endl
             << getIndent() << "if ((item = "
             << as->remotePart.name
             << "List.find((*it)->id())) != "
@@ -1873,7 +1942,7 @@ void CppCppDbCnvWriter::writeBasicMultNFillRep(Assoc* as) {
   *m_stream << getIndent() << "// Delete old links"
             << endl << getIndent() << "for ("
             << fixTypeName("set", "", "")
-            << "<int>::iterator it = "
+            << "<u_signed64>::iterator it = "
             << as->remotePart.name << "List.begin();"
             << endl << getIndent()
             << "     it != "
@@ -1983,8 +2052,8 @@ void CppCppDbCnvWriter::writeBasicMultNFillObj(Assoc* as) {
             << getIndent()
             << "// retrieve the object from the database"
             << endl << getIndent()
-            << fixTypeName("set", "", "")
-            << "<int> " << as->remotePart.name
+            << fixTypeName("vector", "", "")
+            << "<u_signed64> " << as->remotePart.name
             << "List;" << endl << getIndent()
             << "m_select"
             << capitalizeFirstLetter(as->remotePart.typeName)
@@ -2000,7 +2069,7 @@ void CppCppDbCnvWriter::writeBasicMultNFillObj(Assoc* as) {
   m_indent++;
   *m_stream << getIndent()
             << as->remotePart.name
-            << "List.insert(rset->getInt(1));"
+            << "List.push_back(rset->getUInt64(1));"
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl
@@ -2030,11 +2099,14 @@ void CppCppDbCnvWriter::writeBasicMultNFillObj(Assoc* as) {
             << "     it++) {"  << endl;
   m_indent++;
   *m_stream << getIndent()
-            << fixTypeName("set", "", "")
-            << "<int>::iterator item;" << endl
-            << getIndent() << "if ((item = "
+            << fixTypeName("vector", "", "")
+            << "<u_signed64>::iterator item =" << endl
+	    << getIndent() << "  std::find("
             << as->remotePart.name
-            << "List.find((*it)->id())) == "
+            << "List.begin(), "
+            << as->remotePart.name
+            << "List.end(), (*it)->id());" << endl
+            << getIndent() << "if (item == "
             << as->remotePart.name
             << "List.end()) {" << endl;
   m_indent++;
@@ -2088,22 +2160,27 @@ void CppCppDbCnvWriter::writeBasicMultNFillObj(Assoc* as) {
   *m_stream << getIndent() << "}" << endl
             << getIndent()
             << "// Create new objects"
-            << endl << getIndent() << "for ("
-            << fixTypeName("set", "", "")
-            << "<int>::iterator it = "
-            << as->remotePart.name << "List.begin();"
             << endl << getIndent()
-            << "     it != "
-            << as->remotePart.name << "List.end();"
+	    << fixTypeName("vector", "", "")
+	    << "<castor::IObject*> new"
+	    << capitalizeFirstLetter(as->remotePart.name)
+	    << " =" << endl << getIndent()
+	    << "  cnvSvc()->getObjsFromIds("
+	    << as->remotePart.name << "List, OBJ_"
+	    << as->remotePart.typeName << ");"
+	    << endl << getIndent() << "for ("
+	    << fixTypeName("vector", "", "")
+            << "<castor::IObject*>::iterator it = new"
+	    << capitalizeFirstLetter(as->remotePart.name)
+            << ".begin();"
+            << endl << getIndent()
+            << "     it != new"
+	    << capitalizeFirstLetter(as->remotePart.name)
+            << ".end();"
             << endl << getIndent()
             << "     it++) {"  << endl;
   m_indent++;
   *m_stream << getIndent()
-            << fixTypeName("IObject*",
-                           "castor",
-                           m_classInfo->packageName)
-            << " item = cnvSvc()->getObjFromId(*it);"
-            << endl << getIndent()
             << fixTypeName(as->remotePart.typeName,
                            getNamespace(as->remotePart.typeName),
                            m_classInfo->packageName)
@@ -2112,7 +2189,7 @@ void CppCppDbCnvWriter::writeBasicMultNFillObj(Assoc* as) {
             << fixTypeName(as->remotePart.typeName,
                            getNamespace(as->remotePart.typeName),
                            m_classInfo->packageName)
-            << "*>(item);" << endl << getIndent()
+            << "*>(*it);" << endl << getIndent()
             << "obj->add"
             << capitalizeFirstLetter(as->remotePart.name)
             << "(remoteObj);" << endl;
@@ -2899,6 +2976,68 @@ void CppCppDbCnvWriter::writeDeleteRepContent() {
 }
 
 //=============================================================================
+// writeCreateObjCheckStatements
+//=============================================================================
+void CppCppDbCnvWriter::writeCreateObjCheckStatements(QString name) {
+  // First check the select statement
+  *m_stream << getIndent()
+            << "// Check whether the statement is ok"
+            << endl << getIndent()
+            << "if (0 == m_" << name << "Statement) {" << endl;
+  m_indent++;
+  *m_stream << getIndent()
+            << "m_" << name << "Statement = createStatement(s_"
+            << name << "StatementString);"
+            << endl;
+  if (name == "bulkSelect") {
+    *m_stream << getIndent()
+	      << "m_" << name
+              << "Statement->registerOutParam(2, castor::db::DBTYPE_CURSOR);"
+	      << endl;
+  }
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl;
+}
+
+//=============================================================================
+// writeBulkCreateObjCreateObject
+//=============================================================================
+void CppCppDbCnvWriter::writeBulkCreateObjCreateObject(MemberList& members,
+                                                       AssocList& assocs) {
+  *m_stream << getIndent()
+            << "// create the new Object" << endl
+            << getIndent() << m_originalPackage
+            << m_classInfo->className << "* object = new "
+            << m_originalPackage << m_classInfo->className
+            << "();" << endl << getIndent()
+            << "// Now retrieve and set members" << endl;
+  // Go through the members
+  unsigned int n = 1;
+  for (Member* mem = members.first();
+       0 != mem;
+       mem = members.next()) {
+    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+    writeSingleGetFromSelect(*mem, n);
+    n++;
+  }
+  // Go through the one to one associations dealing with enums
+  for (Assoc* as = assocs.first();
+       0 != as;
+       as = assocs.next()) {
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+    if (as->type.multiRemote == MULT_ONE &&
+        as->remotePart.name != "") {
+      bool isenum = isEnum(as->remotePart.typeName);
+      if (isenum) {
+        writeSingleGetFromSelect
+          (as->remotePart, n, !isenum, isenum);
+      }
+      n++;
+    }
+  }
+}
+
+//=============================================================================
 // writeCreateObjContent
 //=============================================================================
 void CppCppDbCnvWriter::writeCreateObjContent() {
@@ -2915,18 +3054,10 @@ void CppCppDbCnvWriter::writeCreateObjContent() {
   // Start of try block for database statements
   *m_stream << getIndent() << "try {" << endl;
   m_indent++;
-  // First check the select statement
-  *m_stream << getIndent()
-            << "// Check whether the statement is ok"
-            << endl << getIndent()
-            << "if (0 == m_selectStatement) {" << endl;
-  m_indent++;
-  *m_stream << getIndent()
-            << "m_selectStatement = createStatement(s_selectStatementString);"
-            << endl;
-  m_indent--;
-  *m_stream << getIndent() << "}" << endl
-            << getIndent() << "// retrieve the object from the database"
+  // Check the statements
+  writeCreateObjCheckStatements("select");
+  // Execute statement
+  *m_stream << getIndent() << "// retrieve the object from the database"
             << endl << getIndent()
             << "m_selectStatement->setUInt64(1, ad->target());"
             << endl << getIndent()
@@ -2944,40 +3075,13 @@ void CppCppDbCnvWriter::writeCreateObjContent() {
             << " << ad->target();" << endl
             << getIndent() << "throw ex;" << endl;
   m_indent--;
-  *m_stream << getIndent() << "}" << endl << getIndent()
-            << "// create the new Object" << endl
-            << getIndent() << m_originalPackage
-            << m_classInfo->className << "* object = new "
-            << m_originalPackage << m_classInfo->className
-            << "();" << endl << getIndent()
-            << "// Now retrieve and set members" << endl;
-  // create a list of members to be saved
+  *m_stream << getIndent() << "}" << endl;
+  // create a list of members
   MemberList members = createMembersList();
-  // Go through the members
-  unsigned int n = 1;
-  for (Member* mem = members.first();
-       0 != mem;
-       mem = members.next()) {
-    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
-    writeSingleGetFromSelect(*mem, n);
-    n++;
-  }
-  // Go through the one to one associations dealing with enums
+  // create a list of associations
   AssocList assocs = createAssocsList();
-  for (Assoc* as = assocs.first();
-       0 != as;
-       as = assocs.next()) {
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
-    if (as->type.multiRemote == MULT_ONE &&
-        as->remotePart.name != "") {
-      bool isenum = isEnum(as->remotePart.typeName);
-      if (isenum) {
-        writeSingleGetFromSelect
-          (as->remotePart, n, !isenum, isenum);
-      }
-      n++;
-    }
-  }
+  // create the object
+  writeBulkCreateObjCreateObject(members, assocs);
   // Close request
   *m_stream << getIndent() << "delete rset;"
             << endl;
@@ -2990,6 +3094,89 @@ void CppCppDbCnvWriter::writeCreateObjContent() {
             << endl;
   m_indent++;
   printSQLError("select", members, assocs, false);
+  m_indent--;
+  *m_stream << getIndent()
+            << "}" << endl;
+}
+
+//=============================================================================
+// writeBulkCreateObjContent
+//=============================================================================
+void CppCppDbCnvWriter::writeBulkCreateObjContent() {
+  // check whether something needs to be done
+  *m_stream << getIndent()
+            << "// Prepare result"
+            << endl << getIndent()
+	    << fixTypeName("vector", "", "")
+	    << "<castor::IObject*> res;"
+	    << endl << getIndent()
+            << "// check whether something needs to be done"
+            << endl << getIndent()
+	    << fixTypeName("VectorAddress",
+			   "castor",
+			   m_classInfo->packageName)
+            << "* ad = " << endl
+            << getIndent() << "  dynamic_cast<"
+            << fixTypeName("VectorAddress",
+                           "castor",
+                           m_classInfo->packageName)
+            << "*>(address);"
+            << endl << getIndent()
+            << "int nb = ad->target().size();" << endl
+            << getIndent()
+            << "if (0 == nb) return res;" << endl;
+  // Cast address
+  // Start of try block for database statements
+  *m_stream << getIndent() << "try {" << endl;
+  m_indent++;
+  // Check the statements
+  writeCreateObjCheckStatements("bulkSelect");
+  // Prepare the buffer for the ids
+  *m_stream << getIndent() << "// set the buffer for input ids"
+            << endl << getIndent()
+            << "m_bulkSelectStatement->setDataBufferUInt64Array(1, ad->target());"
+	    << endl;
+  // Execute statement
+  *m_stream << getIndent() << "// Execute statement"
+            << endl << getIndent()
+            << "m_bulkSelectStatement->execute();"
+            << endl;
+  // Go through the results
+  *m_stream << getIndent()
+	    << "// get the result, that is a cursor on the selected rows"
+	    << endl << getIndent()
+	    << "castor::db::IDbResultSet *rset ="
+	    << endl << getIndent()
+	    << "  m_bulkSelectStatement->getCursor(2);"
+	    << endl << getIndent()
+	    << "// loop and create the new objects"
+	    << endl << getIndent()
+	    << "bool status = rset->next();"
+	    << endl << getIndent()
+	    << "while (status) {"
+	    << endl;
+  m_indent++;
+  // create a list of members to be saved
+  MemberList members = createMembersList();
+  // Go through the one to one associations dealing with enums
+  AssocList assocs = createAssocsList();
+  // Create the object associated to the next row
+  writeBulkCreateObjCreateObject(members, assocs);
+  *m_stream << getIndent() << "// store object in results and loop;" << endl
+	    << getIndent() << "res.push_back(object);" << endl
+	    << getIndent() << "status = rset->next();" << endl;
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl
+	    << getIndent()
+	    << "delete rset;"
+	    << endl << getIndent() << "return res;" << endl;
+  // Catch exceptions if any
+  m_indent--;
+  *m_stream << getIndent()
+            << "} catch (castor::exception::SQLError e) {"
+            << endl;
+  m_indent++;
+  printSQLError("bulkSelect", members, assocs, false);
   m_indent--;
   *m_stream << getIndent()
             << "}" << endl;
@@ -3390,6 +3577,11 @@ void CppCppDbCnvWriter::printSQLError(QString name,
       }
     }
   } else if (name == "bulkInsert") {
+    *m_stream << endl << getIndent()
+              << "                << \" was called in bulk with \""
+              << endl << getIndent()
+              << "                << nb << \" items.\" << std::endl";
+  } else if (name == "bulkSelect") {
     *m_stream << endl << getIndent()
               << "                << \" was called in bulk with \""
               << endl << getIndent()

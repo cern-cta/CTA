@@ -260,6 +260,14 @@ void CppHDbCnvWriter::writeMembers() {
             << endl << getIndent()
             << "castor::db::IDbStatement *m_selectStatement;"
             << endl << endl << getIndent()
+            << "/// SQL statement for request bulk selection"
+            << endl << getIndent()
+            << "static const std::string s_bulkSelectStatementString;"
+            << endl << endl << getIndent()
+            << "/// SQL statement object for request bulk selection"
+            << endl << getIndent()
+            << "castor::db::IDbStatement *m_bulkSelectStatement;"
+            << endl << endl << getIndent()
             << "/// SQL statement for request update"
             << endl << getIndent()
             << "static const std::string s_updateStatementString;"

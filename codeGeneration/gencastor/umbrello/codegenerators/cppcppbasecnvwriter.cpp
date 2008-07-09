@@ -232,6 +232,35 @@ void CppCppBaseCnvWriter::writeCreateObj() {
 }
 
 //=============================================================================
+// writeBulkCreateObj
+//=============================================================================
+void CppCppBaseCnvWriter::writeBulkCreateObj() {
+  // Header
+  writeWideHeaderComment("bulkCreateObj", getIndent(), *m_stream);
+  *m_stream << getIndent()
+            << fixTypeName("vector", "", "")
+            << "<"
+            << fixTypeName("IObject*", "castor", m_classInfo->packageName)
+            << ">" << endl << getIndent()
+	    << m_classInfo->packageName
+            << "::" << m_prefix
+            << m_classInfo->className << "Cnv::bulkCreateObj("
+            << fixTypeName("IAddress*", "castor", m_classInfo->packageName)
+            << " address)" << endl << getIndent()
+            << "  throw ("
+            << fixTypeName("Exception",
+                           "castor.exception",
+                           m_classInfo->packageName)
+            << ") {" << endl;
+  m_indent++;
+  // Write the content of the method
+  writeBulkCreateObjContent();
+  // End of the method
+  m_indent--;
+  *m_stream << getIndent() << "}" << endl << endl;
+}
+
+//=============================================================================
 // writeUpdateObj
 //=============================================================================
 void CppCppBaseCnvWriter::writeUpdateObj() {

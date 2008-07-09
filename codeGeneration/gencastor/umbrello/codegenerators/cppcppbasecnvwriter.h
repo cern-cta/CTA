@@ -48,6 +48,9 @@ class CppCppBaseCnvWriter : public CppCppWriter {
   /// writes createObj method
   void writeCreateObj();
 
+  /// writes bulkCreateObj method
+  void writeBulkCreateObj();
+    
   /// writes updateObj method
   void writeUpdateObj();
     
@@ -66,6 +69,9 @@ class CppCppBaseCnvWriter : public CppCppWriter {
   /// writes createObj method's content
   virtual void writeCreateObjContent() = 0;
 
+  /// writes bulkCreateObj method's content
+  virtual void writeBulkCreateObjContent() = 0;
+    
   /// writes createRep method's content
   virtual void writeUpdateObjContent() = 0;
     

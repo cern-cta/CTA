@@ -75,6 +75,16 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
   void writeCreateRepCheckStatements(MemberList &members,
                                      AssocList &assocs);
 
+  /// writes the check statements part of the (bulk)createObj method
+  void writeCreateObjCheckStatements(QString name);
+
+  /**
+   * writes the creation of an object from a resultSet in
+   * the (bulk)createObj method
+   */
+  void writeBulkCreateObjCreateObject(MemberList& members,
+                                      AssocList& assocs);
+
   /// writes the buffer creation code for one member in bulkCreateRep
   void writeCreateBufferForSelect(QString name,
                                   QString typeName,
@@ -101,6 +111,9 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
     
   /// writes createObj method's content
   void writeCreateObjContent();
+    
+  /// writes bulkCreateObj method's content
+  void writeBulkCreateObjContent();
     
   /// writes updateObj method's content
   void writeUpdateObjContent();

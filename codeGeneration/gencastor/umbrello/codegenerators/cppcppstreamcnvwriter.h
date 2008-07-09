@@ -53,6 +53,9 @@ class CppCppStreamCnvWriter : public CppCppBaseCnvWriter {
   /// writes createObj method's content
   void writeCreateObjContent();
     
+  /// writes bulkCreateObj method's content
+  void writeBulkCreateObjContent() {};
+    
   /// writes updateObj method's content, not used
   void writeUpdateObjContent() {};
     

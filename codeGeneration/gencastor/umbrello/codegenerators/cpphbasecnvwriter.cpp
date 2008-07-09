@@ -57,7 +57,7 @@ void CppHBaseCnvWriter::writeMethods (bool delUpMethods) {
      "@param type if not OBJ_INVALID, the ids representing\n" +
      "the links to objects of this type will not set to 0\n" +
      "as is the default.\n" +
-     "@exception Exception throws an Exception in cas of error",
+     "@exception Exception throws an Exception in case of error",
      *m_stream);
   addInclude("\"castor/Constants.hpp\"");
   *m_stream << getIndent()
@@ -99,7 +99,7 @@ void CppHBaseCnvWriter::writeMethods (bool delUpMethods) {
        "@param type if not OBJ_INVALID, the ids representing\n" +
        "the links to objects of this type will not set to 0\n" +
        "as is the default.\n" +
-       "@exception Exception throws an Exception in cas of error",
+       "@exception Exception throws an Exception in case of error",
        *m_stream);
     addInclude("\"castor/Constants.hpp\"");
     *m_stream << getIndent()
@@ -140,7 +140,7 @@ void CppHBaseCnvWriter::writeMethods (bool delUpMethods) {
        "@param object the object to deal with\n" +
        "@param endTransaction whether the changes to the database\n" +
        "should be commited or not\n" +
-       "@exception Exception throws an Exception in cas of error",
+       "@exception Exception throws an Exception in case of error",
        *m_stream);
     *m_stream << getIndent()
               << "virtual void updateRep("
@@ -174,7 +174,7 @@ void CppHBaseCnvWriter::writeMethods (bool delUpMethods) {
        "@param object the object to deal with\n" +
        "@param endTransaction whether the changes to the database\n" +
        "should be commited or not\n" +
-       "@exception Exception throws an Exception in cas of error",
+       "@exception Exception throws an Exception in case of error",
        *m_stream);
     *m_stream << getIndent()
               << "virtual void deleteRep("
@@ -209,7 +209,7 @@ void CppHBaseCnvWriter::writeMethods (bool delUpMethods) {
      "@return the C++ object created from its reprensentation\n" +
      "or 0 if unsuccessful. Note that the caller is responsible\n" +
      "for the deallocation of the newly created object\n" +
-     "@exception Exception throws an Exception in cas of error",
+     "@exception Exception throws an Exception in case of error",
      *m_stream);
   *m_stream << getIndent()
             << "virtual "
@@ -229,10 +229,38 @@ void CppHBaseCnvWriter::writeMethods (bool delUpMethods) {
             << endl << endl;
   if (delUpMethods) {
     writeDocumentation
+      ("create C++ objects from foreign representations",
+       "",
+       QString("@param address the place where to find the foreign\n") +
+       "representations\n" +
+       "@return the C++ objects created from the representations\n" +
+       "or empty vector if unsuccessful. Note that the caller is\n" +
+       "responsible for the deallocation of the newly created objects\n" +
+       "@exception Exception throws an Exception in case of error",
+       *m_stream);
+    addInclude("\"castor/Constants.hpp\"");
+    *m_stream << getIndent()
+              << "virtual " << fixTypeName("vector", "", "")
+              << "<"
+              << fixTypeName("IObject*",
+                             "castor",
+                             m_classInfo->packageName)
+              << "> bulkCreateObj("
+              << fixTypeName("IAddress*",
+                             "castor",
+                             m_classInfo->packageName)
+              << " address)" << endl << getIndent()
+              << "  throw ("
+              << fixTypeName("Exception",
+                             "castor.exception",
+                             m_classInfo->packageName)
+              << ");"
+              << endl << endl;
+    writeDocumentation
       ("Updates C++ object from its foreign representation.",
        "",
        QString("@param obj the object to deal with\n") +
-       "@exception Exception throws an Exception in cas of error",
+       "@exception Exception throws an Exception in case of error",
        *m_stream);
     *m_stream << getIndent()
               << "virtual void updateObj("
