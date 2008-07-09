@@ -34,6 +34,7 @@
 #include "castor/IAddress.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
+#include "castor/VectorAddress.hpp"
 #include "castor/db/DbCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -65,6 +66,24 @@ const std::string castor::db::cnv::DbSegmentCnv::s_deleteStatementString =
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbSegmentCnv::s_selectStatementString =
 "SELECT fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, blockId0, blockId1, blockId2, blockId3, creationTime, priority, id, tape, copy, status FROM Segment WHERE id = :1";
+
+/// SQL statement for bulk request selection
+const std::string castor::db::cnv::DbSegmentCnv::s_bulkSelectStatementString =
+"DECLARE \
+   TYPE CurType IS REF CURSOR RETURN Segment%ROWTYPE; \
+   PROCEDURE bulkSelect(ids IN castor.\"cnumList\", \
+                        objs OUT CurType) AS \
+   BEGIN \
+     FORALL i IN ids.FIRST..ids.LAST \
+       INSERT INTO bulkSelectHelper VALUES(ids(i)); \
+     OPEN objs FOR SELECT fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, blockId0, blockId1, blockId2, blockId3, creationTime, priority, id, tape, copy, status \
+                     FROM Segment t, bulkSelectHelper h \
+                    WHERE t.id = h.objId; \
+     DELETE FROM bulkSelectHelper; \
+   END; \
+ BEGIN \
+   bulkSelect(:1, :2); \
+ END;";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbSegmentCnv::s_updateStatementString =
@@ -102,6 +121,7 @@ castor::db::cnv::DbSegmentCnv::DbSegmentCnv(castor::ICnvSvc* cnvSvc) :
   m_insertStatement(0),
   m_deleteStatement(0),
   m_selectStatement(0),
+  m_bulkSelectStatement(0),
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
@@ -127,6 +147,7 @@ void castor::db::cnv::DbSegmentCnv::reset() throw() {
     if(m_insertStatement) delete m_insertStatement;
     if(m_deleteStatement) delete m_deleteStatement;
     if(m_selectStatement) delete m_selectStatement;
+    if(m_bulkSelectStatement) delete m_bulkSelectStatement;
     if(m_updateStatement) delete m_updateStatement;
     if(m_storeTypeStatement) delete m_storeTypeStatement;
     if(m_deleteTypeStatement) delete m_deleteTypeStatement;
@@ -139,6 +160,7 @@ void castor::db::cnv::DbSegmentCnv::reset() throw() {
   m_insertStatement = 0;
   m_deleteStatement = 0;
   m_selectStatement = 0;
+  m_bulkSelectStatement = 0;
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
@@ -904,6 +926,72 @@ castor::IObject* castor::db::cnv::DbSegmentCnv::createObj(castor::IAddress* addr
                     << "Statement was : " << std::endl
                     << s_selectStatementString << std::endl
                     << " and id was " << ad->target() << std::endl;;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bulkCreateObj
+//------------------------------------------------------------------------------
+std::vector<castor::IObject*>
+castor::db::cnv::DbSegmentCnv::bulkCreateObj(castor::IAddress* address)
+  throw (castor::exception::Exception) {
+  // Prepare result
+  std::vector<castor::IObject*> res;
+  // check whether something needs to be done
+  castor::VectorAddress* ad = 
+    dynamic_cast<castor::VectorAddress*>(address);
+  int nb = ad->target().size();
+  if (0 == nb) return res;
+  try {
+    // Check whether the statement is ok
+    if (0 == m_bulkSelectStatement) {
+      m_bulkSelectStatement = createStatement(s_bulkSelectStatementString);
+      m_bulkSelectStatement->registerOutParam(2, castor::db::DBTYPE_CURSOR);
+    }
+    // set the buffer for input ids
+    m_bulkSelectStatement->setDataBufferUInt64Array(1, ad->target());
+    // Execute statement
+    m_bulkSelectStatement->execute();
+    // get the result, that is a cursor on the selected rows
+    castor::db::IDbResultSet *rset =
+      m_bulkSelectStatement->getCursor(2);
+    // loop and create the new objects
+    bool status = rset->next();
+    while (status) {
+      // create the new Object
+      castor::stager::Segment* object = new castor::stager::Segment();
+      // Now retrieve and set members
+      object->setFseq(rset->getInt(1));
+      object->setOffset(rset->getUInt64(2));
+      object->setBytes_in(rset->getUInt64(3));
+      object->setBytes_out(rset->getUInt64(4));
+      object->setHost_bytes(rset->getUInt64(5));
+      object->setSegmCksumAlgorithm(rset->getString(6));
+      object->setSegmCksum(rset->getInt(7));
+      object->setErrMsgTxt(rset->getString(8));
+      object->setErrorCode(rset->getInt(9));
+      object->setSeverity(rset->getInt(10));
+      object->setBlockId0(rset->getInt(11));
+      object->setBlockId1(rset->getInt(12));
+      object->setBlockId2(rset->getInt(13));
+      object->setBlockId3(rset->getInt(14));
+      object->setCreationTime(rset->getUInt64(15));
+      object->setPriority(rset->getUInt64(16));
+      object->setId(rset->getUInt64(17));
+      object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(20));
+      // store object in results and loop;
+      res.push_back(object);
+      status = rset->next();
+    }
+    delete rset;
+    return res;
+  } catch (castor::exception::SQLError e) {
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Error in bulkSelect request :"
+                    << std::endl << e.getMessage().str() << std::endl
+                    << " was called in bulk with "
+                    << nb << " items." << std::endl;
     throw ex;
   }
 }

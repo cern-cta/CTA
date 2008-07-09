@@ -35,6 +35,7 @@
 #include "castor/IClient.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
+#include "castor/VectorAddress.hpp"
 #include "castor/bwlist/BWUser.hpp"
 #include "castor/bwlist/ChangePrivilege.hpp"
 #include "castor/bwlist/RequestType.hpp"
@@ -67,6 +68,24 @@ const std::string castor::db::cnv::DbChangePrivilegeCnv::s_deleteStatementString
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbChangePrivilegeCnv::s_selectStatementString =
 "SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, isGranted, id, svcClass, client FROM ChangePrivilege WHERE id = :1";
+
+/// SQL statement for bulk request selection
+const std::string castor::db::cnv::DbChangePrivilegeCnv::s_bulkSelectStatementString =
+"DECLARE \
+   TYPE CurType IS REF CURSOR RETURN ChangePrivilege%ROWTYPE; \
+   PROCEDURE bulkSelect(ids IN castor.\"cnumList\", \
+                        objs OUT CurType) AS \
+   BEGIN \
+     FORALL i IN ids.FIRST..ids.LAST \
+       INSERT INTO bulkSelectHelper VALUES(ids(i)); \
+     OPEN objs FOR SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, isGranted, id, svcClass, client \
+                     FROM ChangePrivilege t, bulkSelectHelper h \
+                    WHERE t.id = h.objId; \
+     DELETE FROM bulkSelectHelper; \
+   END; \
+ BEGIN \
+   bulkSelect(:1, :2); \
+ END;";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbChangePrivilegeCnv::s_updateStatementString =
@@ -128,6 +147,7 @@ castor::db::cnv::DbChangePrivilegeCnv::DbChangePrivilegeCnv(castor::ICnvSvc* cnv
   m_insertStatement(0),
   m_deleteStatement(0),
   m_selectStatement(0),
+  m_bulkSelectStatement(0),
   m_updateStatement(0),
   m_insertNewReqStatement(0),
   m_storeTypeStatement(0),
@@ -159,6 +179,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::reset() throw() {
     if(m_insertStatement) delete m_insertStatement;
     if(m_deleteStatement) delete m_deleteStatement;
     if(m_selectStatement) delete m_selectStatement;
+    if(m_bulkSelectStatement) delete m_bulkSelectStatement;
     if(m_updateStatement) delete m_updateStatement;
     if(m_insertNewReqStatement) delete m_insertNewReqStatement;
     if(m_storeTypeStatement) delete m_storeTypeStatement;
@@ -177,6 +198,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::reset() throw() {
   m_insertStatement = 0;
   m_deleteStatement = 0;
   m_selectStatement = 0;
+  m_bulkSelectStatement = 0;
   m_updateStatement = 0;
   m_insertNewReqStatement = 0;
   m_storeTypeStatement = 0;
@@ -521,11 +543,11 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillObjBWUser(castor::bwlist::Change
     m_selectBWUserStatement = createStatement(s_selectBWUserStatementString);
   }
   // retrieve the object from the database
-  std::set<u_signed64> usersList;
+  std::vector<u_signed64> usersList;
   m_selectBWUserStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectBWUserStatement->executeQuery();
   while (rset->next()) {
-    usersList.insert(rset->getUInt64(1));
+    usersList.push_back(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -534,8 +556,9 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillObjBWUser(castor::bwlist::Change
   for (std::vector<castor::bwlist::BWUser*>::iterator it = obj->users().begin();
        it != obj->users().end();
        it++) {
-    std::set<u_signed64>::iterator item;
-    if ((item = usersList.find((*it)->id())) == usersList.end()) {
+    std::vector<u_signed64>::iterator item =
+      std::find(usersList.begin(), usersList.end(), (*it)->id());
+    if (item == usersList.end()) {
       toBeDeleted.push_back(*it);
     } else {
       usersList.erase(item);
@@ -550,12 +573,13 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillObjBWUser(castor::bwlist::Change
     (*it)->setRequest(0);
   }
   // Create new objects
-  for (std::set<u_signed64>::iterator it = usersList.begin();
-       it != usersList.end();
+  std::vector<castor::IObject*> newUsers =
+    cnvSvc()->getObjsFromIds(usersList, OBJ_BWUser);
+  for (std::vector<castor::IObject*>::iterator it = newUsers.begin();
+       it != newUsers.end();
        it++) {
-    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::bwlist::BWUser* remoteObj = 
-      dynamic_cast<castor::bwlist::BWUser*>(item);
+      dynamic_cast<castor::bwlist::BWUser*>(*it);
     obj->addUsers(remoteObj);
     remoteObj->setRequest(obj);
   }
@@ -571,11 +595,11 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillObjRequestType(castor::bwlist::C
     m_selectRequestTypeStatement = createStatement(s_selectRequestTypeStatementString);
   }
   // retrieve the object from the database
-  std::set<u_signed64> requestTypesList;
+  std::vector<u_signed64> requestTypesList;
   m_selectRequestTypeStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectRequestTypeStatement->executeQuery();
   while (rset->next()) {
-    requestTypesList.insert(rset->getUInt64(1));
+    requestTypesList.push_back(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -584,8 +608,9 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillObjRequestType(castor::bwlist::C
   for (std::vector<castor::bwlist::RequestType*>::iterator it = obj->requestTypes().begin();
        it != obj->requestTypes().end();
        it++) {
-    std::set<u_signed64>::iterator item;
-    if ((item = requestTypesList.find((*it)->id())) == requestTypesList.end()) {
+    std::vector<u_signed64>::iterator item =
+      std::find(requestTypesList.begin(), requestTypesList.end(), (*it)->id());
+    if (item == requestTypesList.end()) {
       toBeDeleted.push_back(*it);
     } else {
       requestTypesList.erase(item);
@@ -600,12 +625,13 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillObjRequestType(castor::bwlist::C
     (*it)->setRequest(0);
   }
   // Create new objects
-  for (std::set<u_signed64>::iterator it = requestTypesList.begin();
-       it != requestTypesList.end();
+  std::vector<castor::IObject*> newRequestTypes =
+    cnvSvc()->getObjsFromIds(requestTypesList, OBJ_RequestType);
+  for (std::vector<castor::IObject*>::iterator it = newRequestTypes.begin();
+       it != newRequestTypes.end();
        it++) {
-    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::bwlist::RequestType* remoteObj = 
-      dynamic_cast<castor::bwlist::RequestType*>(item);
+      dynamic_cast<castor::bwlist::RequestType*>(*it);
     obj->addRequestTypes(remoteObj);
     remoteObj->setRequest(obj);
   }
@@ -1115,6 +1141,68 @@ castor::IObject* castor::db::cnv::DbChangePrivilegeCnv::createObj(castor::IAddre
                     << "Statement was : " << std::endl
                     << s_selectStatementString << std::endl
                     << " and id was " << ad->target() << std::endl;;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bulkCreateObj
+//------------------------------------------------------------------------------
+std::vector<castor::IObject*>
+castor::db::cnv::DbChangePrivilegeCnv::bulkCreateObj(castor::IAddress* address)
+  throw (castor::exception::Exception) {
+  // Prepare result
+  std::vector<castor::IObject*> res;
+  // check whether something needs to be done
+  castor::VectorAddress* ad = 
+    dynamic_cast<castor::VectorAddress*>(address);
+  int nb = ad->target().size();
+  if (0 == nb) return res;
+  try {
+    // Check whether the statement is ok
+    if (0 == m_bulkSelectStatement) {
+      m_bulkSelectStatement = createStatement(s_bulkSelectStatementString);
+      m_bulkSelectStatement->registerOutParam(2, castor::db::DBTYPE_CURSOR);
+    }
+    // set the buffer for input ids
+    m_bulkSelectStatement->setDataBufferUInt64Array(1, ad->target());
+    // Execute statement
+    m_bulkSelectStatement->execute();
+    // get the result, that is a cursor on the selected rows
+    castor::db::IDbResultSet *rset =
+      m_bulkSelectStatement->getCursor(2);
+    // loop and create the new objects
+    bool status = rset->next();
+    while (status) {
+      // create the new Object
+      castor::bwlist::ChangePrivilege* object = new castor::bwlist::ChangePrivilege();
+      // Now retrieve and set members
+      object->setFlags(rset->getUInt64(1));
+      object->setUserName(rset->getString(2));
+      object->setEuid(rset->getInt(3));
+      object->setEgid(rset->getInt(4));
+      object->setMask(rset->getInt(5));
+      object->setPid(rset->getInt(6));
+      object->setMachine(rset->getString(7));
+      object->setSvcClassName(rset->getString(8));
+      object->setUserTag(rset->getString(9));
+      object->setReqId(rset->getString(10));
+      object->setCreationTime(rset->getUInt64(11));
+      object->setLastModificationTime(rset->getUInt64(12));
+      object->setIsGranted(rset->getInt(13));
+      object->setId(rset->getUInt64(14));
+      // store object in results and loop;
+      res.push_back(object);
+      status = rset->next();
+    }
+    delete rset;
+    return res;
+  } catch (castor::exception::SQLError e) {
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Error in bulkSelect request :"
+                    << std::endl << e.getMessage().str() << std::endl
+                    << " was called in bulk with "
+                    << nb << " items." << std::endl;
     throw ex;
   }
 }

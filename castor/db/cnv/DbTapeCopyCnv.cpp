@@ -34,6 +34,7 @@
 #include "castor/IAddress.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
+#include "castor/VectorAddress.hpp"
 #include "castor/db/DbCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -67,6 +68,24 @@ const std::string castor::db::cnv::DbTapeCopyCnv::s_deleteStatementString =
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbTapeCopyCnv::s_selectStatementString =
 "SELECT copyNb, id, castorFile, status FROM TapeCopy WHERE id = :1";
+
+/// SQL statement for bulk request selection
+const std::string castor::db::cnv::DbTapeCopyCnv::s_bulkSelectStatementString =
+"DECLARE \
+   TYPE CurType IS REF CURSOR RETURN TapeCopy%ROWTYPE; \
+   PROCEDURE bulkSelect(ids IN castor.\"cnumList\", \
+                        objs OUT CurType) AS \
+   BEGIN \
+     FORALL i IN ids.FIRST..ids.LAST \
+       INSERT INTO bulkSelectHelper VALUES(ids(i)); \
+     OPEN objs FOR SELECT copyNb, id, castorFile, status \
+                     FROM TapeCopy t, bulkSelectHelper h \
+                    WHERE t.id = h.objId; \
+     DELETE FROM bulkSelectHelper; \
+   END; \
+ BEGIN \
+   bulkSelect(:1, :2); \
+ END;";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbTapeCopyCnv::s_updateStatementString =
@@ -122,6 +141,7 @@ castor::db::cnv::DbTapeCopyCnv::DbTapeCopyCnv(castor::ICnvSvc* cnvSvc) :
   m_insertStatement(0),
   m_deleteStatement(0),
   m_selectStatement(0),
+  m_bulkSelectStatement(0),
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
@@ -151,6 +171,7 @@ void castor::db::cnv::DbTapeCopyCnv::reset() throw() {
     if(m_insertStatement) delete m_insertStatement;
     if(m_deleteStatement) delete m_deleteStatement;
     if(m_selectStatement) delete m_selectStatement;
+    if(m_bulkSelectStatement) delete m_bulkSelectStatement;
     if(m_updateStatement) delete m_updateStatement;
     if(m_storeTypeStatement) delete m_storeTypeStatement;
     if(m_deleteTypeStatement) delete m_deleteTypeStatement;
@@ -167,6 +188,7 @@ void castor::db::cnv::DbTapeCopyCnv::reset() throw() {
   m_insertStatement = 0;
   m_deleteStatement = 0;
   m_selectStatement = 0;
+  m_bulkSelectStatement = 0;
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
@@ -408,11 +430,11 @@ void castor::db::cnv::DbTapeCopyCnv::fillObjStream(castor::stager::TapeCopy* obj
     m_selectStreamStatement = createStatement(s_selectStreamStatementString);
   }
   // retrieve the object from the database
-  std::set<u_signed64> streamList;
+  std::vector<u_signed64> streamList;
   m_selectStreamStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectStreamStatement->executeQuery();
   while (rset->next()) {
-    streamList.insert(rset->getUInt64(1));
+    streamList.push_back(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -421,8 +443,9 @@ void castor::db::cnv::DbTapeCopyCnv::fillObjStream(castor::stager::TapeCopy* obj
   for (std::vector<castor::stager::Stream*>::iterator it = obj->stream().begin();
        it != obj->stream().end();
        it++) {
-    std::set<u_signed64>::iterator item;
-    if ((item = streamList.find((*it)->id())) == streamList.end()) {
+    std::vector<u_signed64>::iterator item =
+      std::find(streamList.begin(), streamList.end(), (*it)->id());
+    if (item == streamList.end()) {
       toBeDeleted.push_back(*it);
     } else {
       streamList.erase(item);
@@ -437,12 +460,13 @@ void castor::db::cnv::DbTapeCopyCnv::fillObjStream(castor::stager::TapeCopy* obj
     (*it)->removeTapeCopy(obj);
   }
   // Create new objects
-  for (std::set<u_signed64>::iterator it = streamList.begin();
-       it != streamList.end();
+  std::vector<castor::IObject*> newStream =
+    cnvSvc()->getObjsFromIds(streamList, OBJ_Stream);
+  for (std::vector<castor::IObject*>::iterator it = newStream.begin();
+       it != newStream.end();
        it++) {
-    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::Stream* remoteObj = 
-      dynamic_cast<castor::stager::Stream*>(item);
+      dynamic_cast<castor::stager::Stream*>(*it);
     obj->addStream(remoteObj);
     remoteObj->addTapeCopy(obj);
   }
@@ -458,11 +482,11 @@ void castor::db::cnv::DbTapeCopyCnv::fillObjSegment(castor::stager::TapeCopy* ob
     m_selectSegmentStatement = createStatement(s_selectSegmentStatementString);
   }
   // retrieve the object from the database
-  std::set<u_signed64> segmentsList;
+  std::vector<u_signed64> segmentsList;
   m_selectSegmentStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectSegmentStatement->executeQuery();
   while (rset->next()) {
-    segmentsList.insert(rset->getUInt64(1));
+    segmentsList.push_back(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -471,8 +495,9 @@ void castor::db::cnv::DbTapeCopyCnv::fillObjSegment(castor::stager::TapeCopy* ob
   for (std::vector<castor::stager::Segment*>::iterator it = obj->segments().begin();
        it != obj->segments().end();
        it++) {
-    std::set<u_signed64>::iterator item;
-    if ((item = segmentsList.find((*it)->id())) == segmentsList.end()) {
+    std::vector<u_signed64>::iterator item =
+      std::find(segmentsList.begin(), segmentsList.end(), (*it)->id());
+    if (item == segmentsList.end()) {
       toBeDeleted.push_back(*it);
     } else {
       segmentsList.erase(item);
@@ -487,12 +512,13 @@ void castor::db::cnv::DbTapeCopyCnv::fillObjSegment(castor::stager::TapeCopy* ob
     (*it)->setCopy(0);
   }
   // Create new objects
-  for (std::set<u_signed64>::iterator it = segmentsList.begin();
-       it != segmentsList.end();
+  std::vector<castor::IObject*> newSegments =
+    cnvSvc()->getObjsFromIds(segmentsList, OBJ_Segment);
+  for (std::vector<castor::IObject*>::iterator it = newSegments.begin();
+       it != newSegments.end();
        it++) {
-    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::stager::Segment* remoteObj = 
-      dynamic_cast<castor::stager::Segment*>(item);
+      dynamic_cast<castor::stager::Segment*>(*it);
     obj->addSegments(remoteObj);
     remoteObj->setCopy(obj);
   }
@@ -814,6 +840,57 @@ castor::IObject* castor::db::cnv::DbTapeCopyCnv::createObj(castor::IAddress* add
                     << "Statement was : " << std::endl
                     << s_selectStatementString << std::endl
                     << " and id was " << ad->target() << std::endl;;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bulkCreateObj
+//------------------------------------------------------------------------------
+std::vector<castor::IObject*>
+castor::db::cnv::DbTapeCopyCnv::bulkCreateObj(castor::IAddress* address)
+  throw (castor::exception::Exception) {
+  // Prepare result
+  std::vector<castor::IObject*> res;
+  // check whether something needs to be done
+  castor::VectorAddress* ad = 
+    dynamic_cast<castor::VectorAddress*>(address);
+  int nb = ad->target().size();
+  if (0 == nb) return res;
+  try {
+    // Check whether the statement is ok
+    if (0 == m_bulkSelectStatement) {
+      m_bulkSelectStatement = createStatement(s_bulkSelectStatementString);
+      m_bulkSelectStatement->registerOutParam(2, castor::db::DBTYPE_CURSOR);
+    }
+    // set the buffer for input ids
+    m_bulkSelectStatement->setDataBufferUInt64Array(1, ad->target());
+    // Execute statement
+    m_bulkSelectStatement->execute();
+    // get the result, that is a cursor on the selected rows
+    castor::db::IDbResultSet *rset =
+      m_bulkSelectStatement->getCursor(2);
+    // loop and create the new objects
+    bool status = rset->next();
+    while (status) {
+      // create the new Object
+      castor::stager::TapeCopy* object = new castor::stager::TapeCopy();
+      // Now retrieve and set members
+      object->setCopyNb(rset->getInt(1));
+      object->setId(rset->getUInt64(2));
+      object->setStatus((enum castor::stager::TapeCopyStatusCodes)rset->getInt(4));
+      // store object in results and loop;
+      res.push_back(object);
+      status = rset->next();
+    }
+    delete rset;
+    return res;
+  } catch (castor::exception::SQLError e) {
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Error in bulkSelect request :"
+                    << std::endl << e.getMessage().str() << std::endl
+                    << " was called in bulk with "
+                    << nb << " items." << std::endl;
     throw ex;
   }
 }

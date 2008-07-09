@@ -34,6 +34,7 @@
 #include "castor/IAddress.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
+#include "castor/VectorAddress.hpp"
 #include "castor/db/DbCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -70,6 +71,24 @@ const std::string castor::db::cnv::DbTapeDriveCnv::s_deleteStatementString =
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbTapeDriveCnv::s_selectStatementString =
 "SELECT jobID, modificationTime, resettime, usecount, errcount, transferredMB, totalMB, driveName, id, tape, runningTapeReq, deviceGroupName, status, tapeServer FROM TapeDrive WHERE id = :1";
+
+/// SQL statement for bulk request selection
+const std::string castor::db::cnv::DbTapeDriveCnv::s_bulkSelectStatementString =
+"DECLARE \
+   TYPE CurType IS REF CURSOR RETURN TapeDrive%ROWTYPE; \
+   PROCEDURE bulkSelect(ids IN castor.\"cnumList\", \
+                        objs OUT CurType) AS \
+   BEGIN \
+     FORALL i IN ids.FIRST..ids.LAST \
+       INSERT INTO bulkSelectHelper VALUES(ids(i)); \
+     OPEN objs FOR SELECT jobID, modificationTime, resettime, usecount, errcount, transferredMB, totalMB, driveName, id, tape, runningTapeReq, deviceGroupName, status, tapeServer \
+                     FROM TapeDrive t, bulkSelectHelper h \
+                    WHERE t.id = h.objId; \
+     DELETE FROM bulkSelectHelper; \
+   END; \
+ BEGIN \
+   bulkSelect(:1, :2); \
+ END;";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbTapeDriveCnv::s_updateStatementString =
@@ -161,6 +180,7 @@ castor::db::cnv::DbTapeDriveCnv::DbTapeDriveCnv(castor::ICnvSvc* cnvSvc) :
   m_insertStatement(0),
   m_deleteStatement(0),
   m_selectStatement(0),
+  m_bulkSelectStatement(0),
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
@@ -199,6 +219,7 @@ void castor::db::cnv::DbTapeDriveCnv::reset() throw() {
     if(m_insertStatement) delete m_insertStatement;
     if(m_deleteStatement) delete m_deleteStatement;
     if(m_selectStatement) delete m_selectStatement;
+    if(m_bulkSelectStatement) delete m_bulkSelectStatement;
     if(m_updateStatement) delete m_updateStatement;
     if(m_storeTypeStatement) delete m_storeTypeStatement;
     if(m_deleteTypeStatement) delete m_deleteTypeStatement;
@@ -224,6 +245,7 @@ void castor::db::cnv::DbTapeDriveCnv::reset() throw() {
   m_insertStatement = 0;
   m_deleteStatement = 0;
   m_selectStatement = 0;
+  m_bulkSelectStatement = 0;
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
@@ -696,11 +718,11 @@ void castor::db::cnv::DbTapeDriveCnv::fillObjTapeDriveDedication(castor::vdqm::T
     m_selectTapeDriveDedicationStatement = createStatement(s_selectTapeDriveDedicationStatementString);
   }
   // retrieve the object from the database
-  std::set<u_signed64> tapeDriveDedicationList;
+  std::vector<u_signed64> tapeDriveDedicationList;
   m_selectTapeDriveDedicationStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectTapeDriveDedicationStatement->executeQuery();
   while (rset->next()) {
-    tapeDriveDedicationList.insert(rset->getUInt64(1));
+    tapeDriveDedicationList.push_back(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -709,8 +731,9 @@ void castor::db::cnv::DbTapeDriveCnv::fillObjTapeDriveDedication(castor::vdqm::T
   for (std::vector<castor::vdqm::TapeDriveDedication*>::iterator it = obj->tapeDriveDedication().begin();
        it != obj->tapeDriveDedication().end();
        it++) {
-    std::set<u_signed64>::iterator item;
-    if ((item = tapeDriveDedicationList.find((*it)->id())) == tapeDriveDedicationList.end()) {
+    std::vector<u_signed64>::iterator item =
+      std::find(tapeDriveDedicationList.begin(), tapeDriveDedicationList.end(), (*it)->id());
+    if (item == tapeDriveDedicationList.end()) {
       toBeDeleted.push_back(*it);
     } else {
       tapeDriveDedicationList.erase(item);
@@ -725,12 +748,13 @@ void castor::db::cnv::DbTapeDriveCnv::fillObjTapeDriveDedication(castor::vdqm::T
     (*it)->setTapeDrive(0);
   }
   // Create new objects
-  for (std::set<u_signed64>::iterator it = tapeDriveDedicationList.begin();
-       it != tapeDriveDedicationList.end();
+  std::vector<castor::IObject*> newTapeDriveDedication =
+    cnvSvc()->getObjsFromIds(tapeDriveDedicationList, OBJ_TapeDriveDedication);
+  for (std::vector<castor::IObject*>::iterator it = newTapeDriveDedication.begin();
+       it != newTapeDriveDedication.end();
        it++) {
-    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::vdqm::TapeDriveDedication* remoteObj = 
-      dynamic_cast<castor::vdqm::TapeDriveDedication*>(item);
+      dynamic_cast<castor::vdqm::TapeDriveDedication*>(*it);
     obj->addTapeDriveDedication(remoteObj);
     remoteObj->setTapeDrive(obj);
   }
@@ -746,11 +770,11 @@ void castor::db::cnv::DbTapeDriveCnv::fillObjTapeDriveCompatibility(castor::vdqm
     m_selectTapeDriveCompatibilityStatement = createStatement(s_selectTapeDriveCompatibilityStatementString);
   }
   // retrieve the object from the database
-  std::set<u_signed64> tapeDriveCompatibilitiesList;
+  std::vector<u_signed64> tapeDriveCompatibilitiesList;
   m_selectTapeDriveCompatibilityStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectTapeDriveCompatibilityStatement->executeQuery();
   while (rset->next()) {
-    tapeDriveCompatibilitiesList.insert(rset->getUInt64(1));
+    tapeDriveCompatibilitiesList.push_back(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -759,8 +783,9 @@ void castor::db::cnv::DbTapeDriveCnv::fillObjTapeDriveCompatibility(castor::vdqm
   for (std::vector<castor::vdqm::TapeDriveCompatibility*>::iterator it = obj->tapeDriveCompatibilities().begin();
        it != obj->tapeDriveCompatibilities().end();
        it++) {
-    std::set<u_signed64>::iterator item;
-    if ((item = tapeDriveCompatibilitiesList.find((*it)->id())) == tapeDriveCompatibilitiesList.end()) {
+    std::vector<u_signed64>::iterator item =
+      std::find(tapeDriveCompatibilitiesList.begin(), tapeDriveCompatibilitiesList.end(), (*it)->id());
+    if (item == tapeDriveCompatibilitiesList.end()) {
       toBeDeleted.push_back(*it);
     } else {
       tapeDriveCompatibilitiesList.erase(item);
@@ -774,12 +799,13 @@ void castor::db::cnv::DbTapeDriveCnv::fillObjTapeDriveCompatibility(castor::vdqm
     obj->removeTapeDriveCompatibilities(*it);
   }
   // Create new objects
-  for (std::set<u_signed64>::iterator it = tapeDriveCompatibilitiesList.begin();
-       it != tapeDriveCompatibilitiesList.end();
+  std::vector<castor::IObject*> newTapeDriveCompatibilities =
+    cnvSvc()->getObjsFromIds(tapeDriveCompatibilitiesList, OBJ_TapeDriveCompatibility);
+  for (std::vector<castor::IObject*>::iterator it = newTapeDriveCompatibilities.begin();
+       it != newTapeDriveCompatibilities.end();
        it++) {
-    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::vdqm::TapeDriveCompatibility* remoteObj = 
-      dynamic_cast<castor::vdqm::TapeDriveCompatibility*>(item);
+      dynamic_cast<castor::vdqm::TapeDriveCompatibility*>(*it);
     obj->addTapeDriveCompatibilities(remoteObj);
   }
 }
@@ -1292,6 +1318,64 @@ castor::IObject* castor::db::cnv::DbTapeDriveCnv::createObj(castor::IAddress* ad
                     << "Statement was : " << std::endl
                     << s_selectStatementString << std::endl
                     << " and id was " << ad->target() << std::endl;;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bulkCreateObj
+//------------------------------------------------------------------------------
+std::vector<castor::IObject*>
+castor::db::cnv::DbTapeDriveCnv::bulkCreateObj(castor::IAddress* address)
+  throw (castor::exception::Exception) {
+  // Prepare result
+  std::vector<castor::IObject*> res;
+  // check whether something needs to be done
+  castor::VectorAddress* ad = 
+    dynamic_cast<castor::VectorAddress*>(address);
+  int nb = ad->target().size();
+  if (0 == nb) return res;
+  try {
+    // Check whether the statement is ok
+    if (0 == m_bulkSelectStatement) {
+      m_bulkSelectStatement = createStatement(s_bulkSelectStatementString);
+      m_bulkSelectStatement->registerOutParam(2, castor::db::DBTYPE_CURSOR);
+    }
+    // set the buffer for input ids
+    m_bulkSelectStatement->setDataBufferUInt64Array(1, ad->target());
+    // Execute statement
+    m_bulkSelectStatement->execute();
+    // get the result, that is a cursor on the selected rows
+    castor::db::IDbResultSet *rset =
+      m_bulkSelectStatement->getCursor(2);
+    // loop and create the new objects
+    bool status = rset->next();
+    while (status) {
+      // create the new Object
+      castor::vdqm::TapeDrive* object = new castor::vdqm::TapeDrive();
+      // Now retrieve and set members
+      object->setJobID(rset->getInt(1));
+      object->setModificationTime(rset->getUInt64(2));
+      object->setResettime(rset->getUInt64(3));
+      object->setUsecount(rset->getInt(4));
+      object->setErrcount(rset->getInt(5));
+      object->setTransferredMB(rset->getInt(6));
+      object->setTotalMB(rset->getUInt64(7));
+      object->setDriveName(rset->getString(8));
+      object->setId(rset->getUInt64(9));
+      object->setStatus((enum castor::vdqm::TapeDriveStatusCodes)rset->getInt(13));
+      // store object in results and loop;
+      res.push_back(object);
+      status = rset->next();
+    }
+    delete rset;
+    return res;
+  } catch (castor::exception::SQLError e) {
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Error in bulkSelect request :"
+                    << std::endl << e.getMessage().str() << std::endl
+                    << " was called in bulk with "
+                    << nb << " items." << std::endl;
     throw ex;
   }
 }

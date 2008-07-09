@@ -34,6 +34,7 @@
 #include "castor/IAddress.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
+#include "castor/VectorAddress.hpp"
 #include "castor/db/DbCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -66,6 +67,24 @@ const std::string castor::db::cnv::DbRepackSubRequestCnv::s_deleteStatementStrin
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_selectStatementString =
 "SELECT vid, xsize, filesMigrating, filesStaging, files, filesFailed, cuuid, submitTime, filesStaged, filesFailedSubmit, retryNb, id, repackrequest, status FROM RepackSubRequest WHERE id = :1";
+
+/// SQL statement for bulk request selection
+const std::string castor::db::cnv::DbRepackSubRequestCnv::s_bulkSelectStatementString =
+"DECLARE \
+   TYPE CurType IS REF CURSOR RETURN RepackSubRequest%ROWTYPE; \
+   PROCEDURE bulkSelect(ids IN castor.\"cnumList\", \
+                        objs OUT CurType) AS \
+   BEGIN \
+     FORALL i IN ids.FIRST..ids.LAST \
+       INSERT INTO bulkSelectHelper VALUES(ids(i)); \
+     OPEN objs FOR SELECT vid, xsize, filesMigrating, filesStaging, files, filesFailed, cuuid, submitTime, filesStaged, filesFailedSubmit, retryNb, id, repackrequest, status \
+                     FROM RepackSubRequest t, bulkSelectHelper h \
+                    WHERE t.id = h.objId; \
+     DELETE FROM bulkSelectHelper; \
+   END; \
+ BEGIN \
+   bulkSelect(:1, :2); \
+ END;";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_updateStatementString =
@@ -107,6 +126,7 @@ castor::db::cnv::DbRepackSubRequestCnv::DbRepackSubRequestCnv(castor::ICnvSvc* c
   m_insertStatement(0),
   m_deleteStatement(0),
   m_selectStatement(0),
+  m_bulkSelectStatement(0),
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
@@ -133,6 +153,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::reset() throw() {
     if(m_insertStatement) delete m_insertStatement;
     if(m_deleteStatement) delete m_deleteStatement;
     if(m_selectStatement) delete m_selectStatement;
+    if(m_bulkSelectStatement) delete m_bulkSelectStatement;
     if(m_updateStatement) delete m_updateStatement;
     if(m_storeTypeStatement) delete m_storeTypeStatement;
     if(m_deleteTypeStatement) delete m_deleteTypeStatement;
@@ -146,6 +167,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::reset() throw() {
   m_insertStatement = 0;
   m_deleteStatement = 0;
   m_selectStatement = 0;
+  m_bulkSelectStatement = 0;
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
@@ -369,11 +391,11 @@ void castor::db::cnv::DbRepackSubRequestCnv::fillObjRepackSegment(castor::repack
     m_selectRepackSegmentStatement = createStatement(s_selectRepackSegmentStatementString);
   }
   // retrieve the object from the database
-  std::set<u_signed64> repacksegmentList;
+  std::vector<u_signed64> repacksegmentList;
   m_selectRepackSegmentStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectRepackSegmentStatement->executeQuery();
   while (rset->next()) {
-    repacksegmentList.insert(rset->getUInt64(1));
+    repacksegmentList.push_back(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
@@ -382,8 +404,9 @@ void castor::db::cnv::DbRepackSubRequestCnv::fillObjRepackSegment(castor::repack
   for (std::vector<castor::repack::RepackSegment*>::iterator it = obj->repacksegment().begin();
        it != obj->repacksegment().end();
        it++) {
-    std::set<u_signed64>::iterator item;
-    if ((item = repacksegmentList.find((*it)->id())) == repacksegmentList.end()) {
+    std::vector<u_signed64>::iterator item =
+      std::find(repacksegmentList.begin(), repacksegmentList.end(), (*it)->id());
+    if (item == repacksegmentList.end()) {
       toBeDeleted.push_back(*it);
     } else {
       repacksegmentList.erase(item);
@@ -398,12 +421,13 @@ void castor::db::cnv::DbRepackSubRequestCnv::fillObjRepackSegment(castor::repack
     (*it)->setRepacksubrequest(0);
   }
   // Create new objects
-  for (std::set<u_signed64>::iterator it = repacksegmentList.begin();
-       it != repacksegmentList.end();
+  std::vector<castor::IObject*> newRepacksegment =
+    cnvSvc()->getObjsFromIds(repacksegmentList, OBJ_RepackSegment);
+  for (std::vector<castor::IObject*>::iterator it = newRepacksegment.begin();
+       it != newRepacksegment.end();
        it++) {
-    castor::IObject* item = cnvSvc()->getObjFromId(*it);
     castor::repack::RepackSegment* remoteObj = 
-      dynamic_cast<castor::repack::RepackSegment*>(item);
+      dynamic_cast<castor::repack::RepackSegment*>(*it);
     obj->addRepacksegment(remoteObj);
     remoteObj->setRepacksubrequest(obj);
   }
@@ -850,6 +874,67 @@ castor::IObject* castor::db::cnv::DbRepackSubRequestCnv::createObj(castor::IAddr
                     << "Statement was : " << std::endl
                     << s_selectStatementString << std::endl
                     << " and id was " << ad->target() << std::endl;;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bulkCreateObj
+//------------------------------------------------------------------------------
+std::vector<castor::IObject*>
+castor::db::cnv::DbRepackSubRequestCnv::bulkCreateObj(castor::IAddress* address)
+  throw (castor::exception::Exception) {
+  // Prepare result
+  std::vector<castor::IObject*> res;
+  // check whether something needs to be done
+  castor::VectorAddress* ad = 
+    dynamic_cast<castor::VectorAddress*>(address);
+  int nb = ad->target().size();
+  if (0 == nb) return res;
+  try {
+    // Check whether the statement is ok
+    if (0 == m_bulkSelectStatement) {
+      m_bulkSelectStatement = createStatement(s_bulkSelectStatementString);
+      m_bulkSelectStatement->registerOutParam(2, castor::db::DBTYPE_CURSOR);
+    }
+    // set the buffer for input ids
+    m_bulkSelectStatement->setDataBufferUInt64Array(1, ad->target());
+    // Execute statement
+    m_bulkSelectStatement->execute();
+    // get the result, that is a cursor on the selected rows
+    castor::db::IDbResultSet *rset =
+      m_bulkSelectStatement->getCursor(2);
+    // loop and create the new objects
+    bool status = rset->next();
+    while (status) {
+      // create the new Object
+      castor::repack::RepackSubRequest* object = new castor::repack::RepackSubRequest();
+      // Now retrieve and set members
+      object->setVid(rset->getString(1));
+      object->setXsize(rset->getUInt64(2));
+      object->setFilesMigrating(rset->getUInt64(3));
+      object->setFilesStaging(rset->getUInt64(4));
+      object->setFiles(rset->getUInt64(5));
+      object->setFilesFailed(rset->getUInt64(6));
+      object->setCuuid(rset->getString(7));
+      object->setSubmitTime(rset->getUInt64(8));
+      object->setFilesStaged(rset->getUInt64(9));
+      object->setFilesFailedSubmit(rset->getUInt64(10));
+      object->setRetryNb(rset->getUInt64(11));
+      object->setId(rset->getUInt64(12));
+      object->setStatus((enum castor::repack::RepackSubRequestStatusCode)rset->getInt(14));
+      // store object in results and loop;
+      res.push_back(object);
+      status = rset->next();
+    }
+    delete rset;
+    return res;
+  } catch (castor::exception::SQLError e) {
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Error in bulkSelect request :"
+                    << std::endl << e.getMessage().str() << std::endl
+                    << " was called in bulk with "
+                    << nb << " items." << std::endl;
     throw ex;
   }
 }

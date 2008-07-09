@@ -94,7 +94,7 @@ namespace castor {
          * @param type if not OBJ_INVALID, the ids representing
          * the links to objects of this type will not set to 0
          * as is the default.
-         * @exception Exception throws an Exception in cas of error
+         * @exception Exception throws an Exception in case of error
          */
         virtual void createRep(castor::IAddress* address,
                                castor::IObject* object,
@@ -112,7 +112,7 @@ namespace castor {
          * @param type if not OBJ_INVALID, the ids representing
          * the links to objects of this type will not set to 0
          * as is the default.
-         * @exception Exception throws an Exception in cas of error
+         * @exception Exception throws an Exception in case of error
          */
         virtual void bulkCreateRep(castor::IAddress* address,
                                std::vector<castor::IObject*> &objects,
@@ -127,7 +127,7 @@ namespace castor {
          * @param object the object to deal with
          * @param endTransaction whether the changes to the database
          * should be commited or not
-         * @exception Exception throws an Exception in cas of error
+         * @exception Exception throws an Exception in case of error
          */
         virtual void updateRep(castor::IAddress* address,
                                castor::IObject* object,
@@ -141,7 +141,7 @@ namespace castor {
          * @param object the object to deal with
          * @param endTransaction whether the changes to the database
          * should be commited or not
-         * @exception Exception throws an Exception in cas of error
+         * @exception Exception throws an Exception in case of error
          */
         virtual void deleteRep(castor::IAddress* address,
                                castor::IObject* object,
@@ -155,15 +155,27 @@ namespace castor {
          * @return the C++ object created from its reprensentation
          * or 0 if unsuccessful. Note that the caller is responsible
          * for the deallocation of the newly created object
-         * @exception Exception throws an Exception in cas of error
+         * @exception Exception throws an Exception in case of error
          */
         virtual castor::IObject* createObj(castor::IAddress* address)
           throw (castor::exception::Exception);
 
         /**
+         * create C++ objects from foreign representations
+         * @param address the place where to find the foreign
+         * representations
+         * @return the C++ objects created from the representations
+         * or empty vector if unsuccessful. Note that the caller is
+         * responsible for the deallocation of the newly created objects
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual std::vector<castor::IObject*> bulkCreateObj(castor::IAddress* address)
+          throw (castor::exception::Exception);
+
+        /**
          * Updates C++ object from its foreign representation.
          * @param obj the object to deal with
-         * @exception Exception throws an Exception in cas of error
+         * @exception Exception throws an Exception in case of error
          */
         virtual void updateObj(castor::IObject* obj)
           throw (castor::exception::Exception);
@@ -268,6 +280,12 @@ namespace castor {
 
         /// SQL statement object for request selection
         castor::db::IDbStatement *m_selectStatement;
+
+        /// SQL statement for request bulk selection
+        static const std::string s_bulkSelectStatementString;
+
+        /// SQL statement object for request bulk selection
+        castor::db::IDbStatement *m_bulkSelectStatement;
 
         /// SQL statement for request update
         static const std::string s_updateStatementString;
