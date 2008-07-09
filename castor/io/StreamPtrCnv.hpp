@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamPtrCnv.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/03/14 10:40:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamPtrCnv.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/07/09 16:18:28 $ $Author: sponcec3 $
  *
  *
  *
@@ -84,7 +84,7 @@ namespace castor {
        * @param type if not OBJ_INVALID, the ids representing
        * the links to objects of this type will not set to 0
        * as is the default.
-       * @exception Exception throws an Exception in cas of error
+       * @exception Exception throws an Exception in case of error
        */
       virtual void createRep(castor::IAddress* address,
                              castor::IObject* object,
@@ -99,7 +99,7 @@ namespace castor {
        * @return the C++ object created from its reprensentation
        * or 0 if unsuccessful. Note that the caller is responsible
        * for the deallocation of the newly created object
-       * @exception Exception throws an Exception in cas of error
+       * @exception Exception throws an Exception in case of error
        */
       virtual castor::IObject* createObj(castor::IAddress* address)
         throw (castor::exception::Exception);

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCnvSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/03/14 10:40:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCnvSvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/07/09 16:18:27 $ $Author: sponcec3 $
  *
  *
  *
@@ -100,7 +100,7 @@ namespace castor {
        * @return the C++ object created from its reprensentation
        * or 0 if unsuccessful. Note that the caller is responsible
        * for the deallocation of the newly created object
-       * @exception Exception throws an Exception in cas of error
+       * @exception Exception throws an Exception in case of error
        */
       IObject* createObj (IAddress* address)
         throw (castor::exception::Exception);
