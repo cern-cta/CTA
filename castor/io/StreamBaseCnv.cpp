@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/06/19 14:56:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/07/09 16:18:07 $ $Author: sponcec3 $
  *
  *
  *
@@ -108,6 +108,18 @@ void castor::io::StreamBaseCnv::deleteRep(castor::IAddress* address,
   throw ex;
 }
 
+//------------------------------------------------------------------------------
+// bulkCreateObj
+//------------------------------------------------------------------------------
+std::vector<castor::IObject*>
+castor::io::StreamBaseCnv::bulkCreateObj(castor::IAddress* address)
+  throw (castor::exception::Exception) {
+  castor::exception::Internal ex;
+  ex.getMessage() << "Bulk operations are not supported for streaming."
+                  << std::endl;
+  throw ex;
+}
+    
 //------------------------------------------------------------------------------
 // updateObj
 //------------------------------------------------------------------------------

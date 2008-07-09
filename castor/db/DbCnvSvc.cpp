@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbCnvSvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/09/11 18:15:39 $ $Author: itglp $
+ * @(#)$RCSfile: DbCnvSvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/07/09 16:16:30 $ $Author: sponcec3 $
  *
  *
  *
@@ -31,6 +31,7 @@
 #include "castor/IObject.hpp"
 #include "castor/SvcFactory.hpp"
 #include "castor/BaseAddress.hpp"
+#include "castor/VectorAddress.hpp"
 #include "castor/db/DbBaseObj.hpp"
 #include "castor/exception/BadVersion.hpp"
 #include "castor/exception/Exception.hpp"
@@ -48,7 +49,7 @@
 //------------------------------------------------------------------------------
 /// SQL statement for type retrieval
 const std::string castor::db::DbCnvSvc::s_getTypeStatementString =
-  "SELECT type FROM Id2Type WHERE id = :1";
+   "SELECT type FROM Id2Type WHERE id = :1";
 
 // -----------------------------------------------------------------------
 // DbCnvSvc
@@ -59,7 +60,7 @@ castor::db::DbCnvSvc::DbCnvSvc(const std::string name) :
   // Add alias for DiskCopyForRecall on DiskCopy
   addAlias(58, 5);
   // Add alias for TapeCopyForMigration on TapeCopy
-  addAlias(59, 30);  
+  addAlias(59, 30);
 }
 
 // -----------------------------------------------------------------------
@@ -163,4 +164,18 @@ castor::IObject* castor::db::DbCnvSvc::getObjFromId(u_signed64 id)
   clientAd.setCnvSvcName("DbCnvSvc");
   clientAd.setCnvSvcType(repType());
   return createObj(&clientAd);
+}
+
+// -----------------------------------------------------------------------
+// getObjsFromIds
+// -----------------------------------------------------------------------
+std::vector<castor::IObject*> castor::db::DbCnvSvc::getObjsFromIds
+(std::vector<u_signed64> &ids, int objType)
+  throw (castor::exception::Exception) {
+  castor::VectorAddress clientAd;
+  clientAd.setTarget(ids);
+  clientAd.setCnvSvcName("DbCnvSvc");
+  clientAd.setCnvSvcType(repType());
+  clientAd.setObjType(objType);
+  return bulkCreateObj(&clientAd);
 }

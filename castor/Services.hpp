@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/06/19 14:56:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.20 $ $Release$ $Date: 2008/07/09 16:19:57 $ $Author: sponcec3 $
  *
  *
  *
@@ -146,12 +146,24 @@ namespace castor {
       throw (castor::exception::Exception);
 
     /**
+     * create C++ objects from foreign representations
+     * @param address the place where to find the foreign
+     * representations
+     * @return the C++ objects created from the representations
+     * or empty vector if unsuccessful. Note that the caller is
+     * responsible for the deallocation of the newly created objects
+     * @exception Exception throws an Exception in case of error
+     */
+    std::vector<IObject*> bulkCreateObj(IAddress* address)
+      throw (castor::exception::Exception);
+
+    /**
      * Updates C++ object from its foreign representation.
      * @param address where to find the object
      * @param object the object to deal with
      * @param alreadyDone the set of objects already updated.
      * This is needed to avoid looping in case of circular dependencies
-     * @exception Exception throws an Exception in cas of error
+     * @exception Exception throws an Exception in case of error
      */
     virtual void updateObj(castor::IAddress* address,
                            castor::IObject* object)

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.62 $ $Release$ $Date: 2008/06/05 16:30:43 $ $Author: gtaur $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.63 $ $Release$ $Date: 2008/07/09 16:19:57 $ $Author: sponcec3 $
  *
  *
  *
@@ -199,7 +199,8 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "ListPrivileges",
   "Privilege",
   "ListPrivilegesResponse",
-  "PriorityMap"
+  "PriorityMap",
+  "VectorAddress"
 };
 
 

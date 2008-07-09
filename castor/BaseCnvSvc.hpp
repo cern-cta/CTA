@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.hpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/06/19 14:56:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.hpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/07/09 16:19:57 $ $Author: sponcec3 $
  *
  *
  *
@@ -154,7 +154,7 @@ namespace castor {
      * @param object the object to deal with
      * @param endTransaction whether the changes to the database
      * should be commited or not
-     * @exception Exception throws an Exception in cas of error
+     * @exception Exception throws an Exception in case of error
      */
     virtual void updateRep(IAddress* address,
                            IObject* object,
@@ -168,7 +168,7 @@ namespace castor {
      * @param object the object to deal with
      * @param endTransaction whether the changes to the database
      * should be commited or not
-     * @exception Exception throws an Exception in cas of error
+     * @exception Exception throws an Exception in case of error
      */
     virtual void deleteRep(castor::IAddress* address,
                            castor::IObject* object,
@@ -182,9 +182,21 @@ namespace castor {
      * @return the C++ object created from its reprensentation
      * or 0 if unsuccessful. Note that the caller is responsible
      * for the deallocation of the newly created object
-     * @exception Exception throws an Exception in cas of error
+     * @exception Exception throws an Exception in case of error
      */
     virtual IObject* createObj (IAddress* address)
+      throw (castor::exception::Exception);
+
+    /**
+     * create C++ objects from foreign representations
+     * @param address the place where to find the foreign
+     * representations
+     * @return the C++ objects created from the representations
+     * or empty vector if unsuccessful. Note that the caller is
+     * responsible for the deallocation of the newly created objects
+     * @exception Exception throws an Exception in case of error
+     */
+    virtual std::vector<IObject*> bulkCreateObj(IAddress* address)
       throw (castor::exception::Exception);
 
     /**
@@ -264,7 +276,7 @@ namespace castor {
      * the object is stored
      * @param endTransaction whether the changes to the database
      * should be commited or not
-     * @exception Exception throws an Exception in cas of error
+     * @exception Exception throws an Exception in case of error
      */
     virtual void deleteRepByAddress (IAddress* address,
                                      bool endTransaction = true)

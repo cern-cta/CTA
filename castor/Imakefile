@@ -92,6 +92,7 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DRH_HOST=\"$(RH_HOST)\" $(STAGERSU
 
 STGLIB_SRCS0 = IAddressCInt.cpp \
               BaseAddress.cpp \
+              VectorAddress.cpp \
               BaseAddressCInt.cpp \
               BaseCnvSvc.cpp \
               BaseObject.cpp \

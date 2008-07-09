@@ -196,7 +196,10 @@ namespace castor {
     OBJ_ListPrivilegesResponse = 157,
 
     /* object for segment priority */
-    OBJ_PriorityMap = 158
+    OBJ_PriorityMap = 158,
+
+    /* vector address for bulk operations */
+    OBJ_VectorAddress =159
 
   };
 
@@ -275,7 +278,7 @@ namespace castor {
    * declared outside of any function.
    */
 
-#define OBJECT_IDS_NB 159
+#define OBJECT_IDS_NB 160
   static const unsigned int ObjectsIdsNb = OBJECT_IDS_NB;
 
   /**

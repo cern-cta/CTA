@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbCnvSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/04/27 10:22:25 $ $Author: itglp $
+ * @(#)$RCSfile: DbCnvSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/07/09 16:16:30 $ $Author: sponcec3 $
  *
  *
  *
@@ -86,13 +86,24 @@ namespace castor {
 
         /**
          * Get an object from its id.
-         * Essentially a wrapper around createObj that
-         * don't call it if the object is in the newlyCreated
-         * vector
+         * Essentially a wrapper around createObj
          * @param id the id of the object to retrieve
          * @exception Exception throws an Exception in case of error
          */
         castor::IObject* getObjFromId (u_signed64 id)
+          throw (castor::exception::Exception);
+
+        /**
+         * Get a set of objects from a set of ids.
+         * Essentially a wrapper around bulkCreateObj
+         * @param ids the ids of the objects to retrieve
+         * @param objType the type of the objects to retrieve
+         * Note that they must all have the same one !
+         * @exception Exception throws an Exception in case of error
+         */
+        std::vector<castor::IObject*>
+        getObjsFromIds(std::vector<u_signed64> &ids,
+                       int objType)
           throw (castor::exception::Exception);
 
         /**

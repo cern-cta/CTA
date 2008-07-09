@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2008/06/19 14:56:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2008/07/09 16:19:57 $ $Author: sponcec3 $
  *
  *
  *
@@ -208,6 +208,18 @@ castor::IObject* castor::BaseCnvSvc::createObj
   // The converter is always valid if no exception is thrown
   castor::IConverter* conv = converter(address->objType());
   return conv->createObj(address);
+}
+
+// -----------------------------------------------------------------------
+// bulkCreateObj
+// -----------------------------------------------------------------------
+std::vector<castor::IObject*> castor::BaseCnvSvc::bulkCreateObj
+(castor::IAddress* address)
+  throw (castor::exception::Exception) {
+  // Look for an adapted converter
+  // The converter is always valid if no exception is thrown
+  castor::IConverter* conv = converter(address->objType());
+  return conv->bulkCreateObj(address);
 }
 
 // -----------------------------------------------------------------------
