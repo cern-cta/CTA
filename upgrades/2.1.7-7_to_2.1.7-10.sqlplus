@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.7-7_to_2.1.7-10.sqlplus,v $ $Release: 1.2 $ $Release$ $Date: 2008/07/01 16:57:16 $ $Author: waldron $
+ * @(#)$RCSfile: 2.1.7-7_to_2.1.7-10.sqlplus,v $ $Release: 1.2 $ $Release$ $Date: 2008/07/10 13:52:45 $ $Author: waldron $
  *
  * This script upgrades a CASTOR v2.1.7-7 database into v2.1.7-10
  *
@@ -164,28 +164,37 @@ COMMIT;
 
 DROP FUNCTION size2gcweight;
 ALTER TABLE CastorFile DROP COLUMN nbAccesses;
-ALTER TABLE DiskCopy ADD (diskCopySize INTEGER, nbCopyAccesses NUMBER DEFAULT 0);
 ALTER TABLE SvcClass DROP COLUMN gcWeightForAccess;
 ALTER TABLE SvcClass ADD (gcPolicy VARCHAR2(2048) DEFAULT 'default');
 ALTER TABLE TapePool ADD (migrSelectPolicy VARCHAR(2048) DEFAULT 'defaultMigrSelPolicy');
 
--- Fill in the diskCopySize of the DiskCopy table
-DECLARE
-  counter NUMBER := 0;
-BEGIN
-  FOR dc IN (SELECT diskcopy.id, castorfile.filesize
-               FROM diskcopy, castorfile
-              WHERE CastorFile.id = DiskCopy.Castorfile) LOOP
-    UPDATE DiskCopy SET diskCopySize = dc.filesize WHERE id = dc.id;
-    counter := counter + 1;
-    IF counter > 1000 THEN
-      counter := 0;
-      COMMIT;
-    END IF;
-  END LOOP;
-  COMMIT;
-END;
-/
+/* Modify the diskcopy table */
+CREATE TABLE TempDiskCopy AS SELECT * FROM DiskCopy WHERE ROWNUM < 1;
+ALTER TABLE TempDiskCopy ADD (diskCopySize INTEGER, nbCopyAccesses NUMBER DEFAULT 0);
+
+INSERT /*+ append */ 
+  INTO TempDiskCopy (path, gcWeight, creationTime, id, filesystem, castorfile,
+                     status, lastAccessTime, diskCopySize, nbCopyAccesses) 
+SELECT dc.path, dc.gcWeight, dc.creationtime, dc.id, dc.filesystem, dc.castorfile, dc.status, 
+       dc.lastAccessTime, cf.filesize, 0
+  FROM diskcopy dc, castorfile cf
+ WHERE cf.id = dc.Castorfile;
+
+COMMIT;
+
+DROP TABLE DiskCopy;
+ALTER TABLE TempDiskCopy RENAME TO DiskCopy;
+
+/* Recreate indexes on DiskCopy table */
+ALTER TABLE DiskCopy ADD CONSTRAINT I_DiskCopy_Id PRIMARY KEY (id);
+CREATE INDEX I_DiskCopy_Castorfile ON DiskCopy (castorFile);
+CREATE INDEX I_DiskCopy_FileSystem ON DiskCopy (fileSystem);
+CREATE INDEX I_DiskCopy_Status ON DiskCopy (status);
+CREATE INDEX I_DiskCopy_GCWeight ON DiskCopy (gcWeight);
+CREATE INDEX I_DiskCopy_FS_Status_10 ON DiskCopy (fileSystem, decode(status, 10, status, NULL));
+
+/* Enable row movement on DiskCopy table */
+ALTER TABLE DISKCOPY ENABLE ROW MOVEMENT;
 
 /* Modifications to the segment table to support prioritisations */
 ALTER TABLE Segment ADD priority INTEGER;
