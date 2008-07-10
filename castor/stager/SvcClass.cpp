@@ -94,8 +94,8 @@ void castor::stager::SvcClass::print(std::ostream& stream,
   stream << indent << "recallerPolicy : " << m_recallerPolicy << std::endl;
   stream << indent << "streamPolicy : " << m_streamPolicy << std::endl;
   stream << indent << "gcPolicy : " << m_gcPolicy << std::endl;
-  stream << indent << "gcEnabled : " << m_gcEnabled << std::endl;
-  stream << indent << "hasDiskOnlyBehavior : " << m_hasDiskOnlyBehavior << std::endl;
+  stream << indent << "gcEnabled : " << (m_gcEnabled ? "Yes" : "No") << std::endl;
+  stream << indent << "hasDiskOnlyBehavior : " << (m_hasDiskOnlyBehavior ? "Yes" : "No") << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

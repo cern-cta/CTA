@@ -120,7 +120,8 @@ class CppCppClassWriter : public CppCppWriter {
    */
   static void writeSimplePrint(QString indent,
                                QString name,
-                               QTextStream &stream);
+                               QTextStream &stream,
+                               bool isBool = false);
   /**
    * writes an enum print statement
    */

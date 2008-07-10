@@ -65,7 +65,7 @@ void castor::MessageAck::print(std::ostream& stream,
     return;
   }
   // Output of all members
-  stream << indent << "status : " << m_status << std::endl;
+  stream << indent << "status : " << (m_status ? "Yes" : "No") << std::endl;
   stream << indent << "errorCode : " << m_errorCode << std::endl;
   stream << indent << "errorMessage : " << m_errorMessage << std::endl;
   stream << indent << "requestId : " << m_requestId << std::endl;

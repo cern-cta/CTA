@@ -77,7 +77,7 @@ void castor::bwlist::ChangePrivilege::print(std::ostream& stream,
   // Call print on the parent class(es)
   this->castor::stager::Request::print(stream, indent, alreadyPrinted);
   // Output of all members
-  stream << indent << "isGranted : " << m_isGranted << std::endl;
+  stream << indent << "isGranted : " << (m_isGranted ? "Yes" : "No") << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

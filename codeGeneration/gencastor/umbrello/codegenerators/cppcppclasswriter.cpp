@@ -514,7 +514,8 @@ void CppCppClassWriter::writeFullPrint(CppBaseWriter* obj,
           continue;
         }
       }
-      writeSimplePrint(obj->getIndent(), at->getName(), stream);
+      writeSimplePrint(obj->getIndent(), at->getName(), stream,
+                       at->getTypeName() == "bool");
     }
   }
   // Mark object as already printed
@@ -627,10 +628,16 @@ void CppCppClassWriter::writeAssocPrint(UMLAssociation* a,
 //=============================================================================
 void CppCppClassWriter::writeSimplePrint(QString indent,
                                          QString name,
-                                         QTextStream &stream) {
+                                         QTextStream &stream,
+                                         bool isBool) {
   stream << indent << "stream << indent << \"" << name
-         << " : \" << m_" << name
-         << " << std::endl;" << endl;
+         << " : \" << ";
+  if (isBool) {
+    stream << "(m_" << name << " ? \"Yes\" : \"No\")";
+  } else {
+    stream << "m_" << name;
+  }
+  stream << " << std::endl;" << endl;
 }
 
 //=============================================================================

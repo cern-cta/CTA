@@ -77,7 +77,7 @@ void castor::bwlist::Privilege::print(std::ostream& stream,
   stream << indent << "euid : " << m_euid << std::endl;
   stream << indent << "egid : " << m_egid << std::endl;
   stream << indent << "requestType : " << m_requestType << std::endl;
-  stream << indent << "granted : " << m_granted << std::endl;
+  stream << indent << "granted : " << (m_granted ? "Yes" : "No") << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Response : " << std::endl;

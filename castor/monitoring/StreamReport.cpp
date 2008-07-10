@@ -66,7 +66,7 @@ void castor::monitoring::StreamReport::print(std::ostream& stream,
     return;
   }
   // Output of all members
-  stream << indent << "created : " << m_created << std::endl;
+  stream << indent << "created : " << (m_created ? "Yes" : "No") << std::endl;
   stream << indent << "diskServerName : " << m_diskServerName << std::endl;
   stream << indent << "mountPoint : " << m_mountPoint << std::endl;
   stream << indent << "id : " << m_id << std::endl;

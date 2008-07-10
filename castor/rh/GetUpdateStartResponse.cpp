@@ -67,7 +67,7 @@ void castor::rh::GetUpdateStartResponse::print(std::ostream& stream,
   // Call print on the parent class(es)
   this->StartResponse::print(stream, indent, alreadyPrinted);
   // Output of all members
-  stream << indent << "emptyFile : " << m_emptyFile << std::endl;
+  stream << indent << "emptyFile : " << (m_emptyFile ? "Yes" : "No") << std::endl;
   alreadyPrinted.insert(this);
   {
     stream << indent << "Sources : " << std::endl;

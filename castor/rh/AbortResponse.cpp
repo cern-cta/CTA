@@ -66,7 +66,7 @@ void castor::rh::AbortResponse::print(std::ostream& stream,
   // Call print on the parent class(es)
   this->Response::print(stream, indent, alreadyPrinted);
   // Output of all members
-  stream << indent << "aborted : " << m_aborted << std::endl;
+  stream << indent << "aborted : " << (m_aborted ? "Yes" : "No") << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }
