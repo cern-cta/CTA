@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.673 $ $Date: 2008/06/27 06:04:40 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.674 $ $Date: 2008/07/14 12:40:23 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -107,8 +107,6 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE DbRecallInfo_Cur IS REF CURSOR RETURN DbRecallInfo;
   TYPE PriorityMap_Cur IS REF CURSOR RETURN PriorityMap%ROWTYPE;
 END castor;
-
-CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 
 
 /* Checks consistency of DiskCopies when a FileSystem comes
