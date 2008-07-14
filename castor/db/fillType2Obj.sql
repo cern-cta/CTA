@@ -1,5 +1,5 @@
 /* Fill Type2Obj metatable */
-CREATE TABLE Type2Obj (type INTEGER PRIMARY KEY NOT NULL, object VARCHAR2(100) NOT NULL, svcHandler VARCHAR2(100));
+CREATE TABLE Type2Obj (type INTEGER CONSTRAINT I_Type2Obj_Type PRIMARY KEY NOT NULL, object VARCHAR2(100) NOT NULL, svcHandler VARCHAR2(100));
 INSERT INTO Type2Obj (type, object) VALUES (0, 'INVALID');
 INSERT INTO Type2Obj (type, object) VALUES (1, 'Ptr');
 INSERT INTO Type2Obj (type, object) VALUES (2, 'CastorFile');
@@ -135,4 +135,5 @@ INSERT INTO Type2Obj (type, object) VALUES (155, 'ListPrivileges');
 INSERT INTO Type2Obj (type, object) VALUES (156, 'Privilege');
 INSERT INTO Type2Obj (type, object) VALUES (157, 'ListPrivilegesResponse');
 INSERT INTO Type2Obj (type, object) VALUES (158, 'PriorityMap');
+INSERT INTO Type2Obj (type, object) VALUES (159, 'VectorAddress');
 
