@@ -199,7 +199,7 @@ namespace castor {
     OBJ_PriorityMap = 158,
 
     /* vector address for bulk operations */
-    OBJ_VectorAddress =159
+    OBJ_VectorAddress = 159
 
   };
 
