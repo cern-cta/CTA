@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dsi_CASTOR2ext.h,v $ $Revision: 1.2 $ $Release$ $Date: 2006/10/26 15:23:26 $ $Author: kotlyar $
+ * @(#)$RCSfile: dsi_CASTOR2ext.h,v $ $Revision: 1.3 $ $Release$ $Date: 2008/07/14 13:00:04 $ $Author: itglp $
  *
  * 
  *
@@ -27,8 +27,9 @@
 #if !defined(DSI_CASTOR2EXT_H)
 #define DSI_CASTOR2EXT_H
 
+#include <serrno.h>
 #include "globus_gridftp_server.h"
-#include <shift.h>
+
 
 typedef struct globus_l_gfs_CASTOR2ext_handle_s
    {

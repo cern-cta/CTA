@@ -30,8 +30,8 @@
 #include "globus_gridftp_server.h"
 #include "dsi_CASTOR2ext.h"
 
-#include <shift.h> 
-#include <shift/Castor_limits.h>
+#include <rfio_api.h> 
+#include <Castor_limits.h>
 
 
 static
