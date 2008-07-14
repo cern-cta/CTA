@@ -24,6 +24,7 @@
   - #37968: Order VDQM2 showqueues requests by DGN as well as by time
   - #38027: b/w check of non-existent svcclass returns 'Insufficient user privileges'
   - #38149: New wrong size problem
+  - #38835: stager_qry -r -n broken when waiting for tape recalls
 
   - In this release of CASTOR2 the cleaning daemon has been removed and replaced by a pure
     PL/SQL database job. This removes the danger of running two cleaning daemons for reasons
