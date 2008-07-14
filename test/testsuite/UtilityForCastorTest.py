@@ -218,7 +218,20 @@ def checkUser():
     if ret.find("No such file or directory") != -1:
         return -1
     return 0
- 
+
+# check if an rfcp output is correct, i.e. it states the transfer went through
+# and the number of bytes written/read is equal to the remote file size
+def checkRfcpOutput(buf, put):
+    if put:
+        s = re.compile('(\d+) bytes through local \(in\) and eth[0-1] \(out\)\n(\d+) bytes in remote file').match(buf)
+    else:
+        s = re.compile('(\d+) bytes through eth[0-1] \(in\) and local \(out\)\n(\d+) bytes in remote file').match(buf)
+    if not s:
+        return 0
+    else:
+        return (s.group(1) == s.group(2))
+
+
 #different scenarium for env
 def createScenarium(host,port,serviceClass,version,useEnv=None,opt=None):
         myShell=os.popen('ls -l /bin/sh').read()
