@@ -550,7 +550,7 @@ void castor::db::cnv::DbDiskCopyCnv::createRep(castor::IAddress* address,
     }
     // Now Save the current object
     m_insertStatement->setString(1, obj->path());
-    m_insertStatement->setFloat(2, obj->gcWeight());
+    m_insertStatement->setDouble(2, obj->gcWeight());
     m_insertStatement->setInt(3, time(0));
     m_insertStatement->setUInt64(4, (type == OBJ_FileSystem && obj->fileSystem() != 0) ? obj->fileSystem()->id() : 0);
     m_insertStatement->setUInt64(5, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
@@ -625,14 +625,14 @@ void castor::db::cnv::DbDiskCopyCnv::bulkCreateRep(castor::IAddress* address,
     m_insertStatement->setDataBuffer
       (1, pathBuffer, DBTYPE_STRING, pathMaxLen, pathBufLens);
     // build the buffers for gcWeight
-    float* gcWeightBuffer = (float*) malloc(nb * sizeof(float));
+    double* gcWeightBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* gcWeightBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
     for (int i = 0; i < nb; i++) {
       gcWeightBuffer[i] = objs[i]->gcWeight();
-      gcWeightBufLens[i] = sizeof(float);
+      gcWeightBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (2, gcWeightBuffer, DBTYPE_FLOAT, sizeof(gcWeightBuffer[0]), gcWeightBufLens);
+      (2, gcWeightBuffer, DBTYPE_DOUBLE, sizeof(gcWeightBuffer[0]), gcWeightBufLens);
     // build the buffers for creationTime
     double* creationTimeBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* creationTimeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -749,7 +749,7 @@ void castor::db::cnv::DbDiskCopyCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setString(1, obj->path());
-    m_updateStatement->setFloat(2, obj->gcWeight());
+    m_updateStatement->setDouble(2, obj->gcWeight());
     m_updateStatement->setInt(3, (int)obj->status());
     m_updateStatement->setUInt64(4, obj->id());
     m_updateStatement->execute();
@@ -835,7 +835,7 @@ castor::IObject* castor::db::cnv::DbDiskCopyCnv::createObj(castor::IAddress* add
     castor::stager::DiskCopy* object = new castor::stager::DiskCopy();
     // Now retrieve and set members
     object->setPath(rset->getString(1));
-    object->setGcWeight(rset->getFloat(2));
+    object->setGcWeight(rset->getDouble(2));
     object->setCreationTime(rset->getUInt64(3));
     object->setLastAccessTime(rset->getUInt64(4));
     object->setId(rset->getUInt64(5));
@@ -886,7 +886,7 @@ castor::db::cnv::DbDiskCopyCnv::bulkCreateObj(castor::IAddress* address)
       castor::stager::DiskCopy* object = new castor::stager::DiskCopy();
       // Now retrieve and set members
       object->setPath(rset->getString(1));
-      object->setGcWeight(rset->getFloat(2));
+      object->setGcWeight(rset->getDouble(2));
       object->setCreationTime(rset->getUInt64(3));
       object->setLastAccessTime(rset->getUInt64(4));
       object->setId(rset->getUInt64(5));
@@ -929,7 +929,7 @@ void castor::db::cnv::DbDiskCopyCnv::updateObj(castor::IObject* obj)
     castor::stager::DiskCopy* object = 
       dynamic_cast<castor::stager::DiskCopy*>(obj);
     object->setPath(rset->getString(1));
-    object->setGcWeight(rset->getFloat(2));
+    object->setGcWeight(rset->getDouble(2));
     object->setCreationTime(rset->getUInt64(3));
     object->setLastAccessTime(rset->getUInt64(4));
     object->setId(rset->getUInt64(5));

@@ -117,7 +117,7 @@ castor::IObject* castor::io::StreamDiskCopyForRecallCnv::createObj(castor::IAddr
   std::string path;
   ad->stream() >> path;
   object->setPath(path);
-  float gcWeight;
+  double gcWeight;
   ad->stream() >> gcWeight;
   object->setGcWeight(gcWeight);
   u_signed64 creationTime;

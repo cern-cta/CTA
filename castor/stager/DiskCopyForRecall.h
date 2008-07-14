@@ -105,14 +105,14 @@ int Cstager_DiskCopyForRecall_setPath(struct Cstager_DiskCopyForRecall_t* instan
  * Weight used by the garbage collector to decide who is the next candidate for
  * removal
  */
-int Cstager_DiskCopyForRecall_gcWeight(struct Cstager_DiskCopyForRecall_t* instance, float* var);
+int Cstager_DiskCopyForRecall_gcWeight(struct Cstager_DiskCopyForRecall_t* instance, double* var);
 
 /**
  * Set the value of gcWeight
  * Weight used by the garbage collector to decide who is the next candidate for
  * removal
  */
-int Cstager_DiskCopyForRecall_setGcWeight(struct Cstager_DiskCopyForRecall_t* instance, float new_var);
+int Cstager_DiskCopyForRecall_setGcWeight(struct Cstager_DiskCopyForRecall_t* instance, double new_var);
 
 /**
  * Get the value of creationTime

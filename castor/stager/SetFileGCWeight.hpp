@@ -104,7 +104,7 @@ namespace castor {
        * The new weight of the file(s)
        * @return the value of m_weight
        */
-      float weight() const {
+      double weight() const {
         return m_weight;
       }
 
@@ -113,7 +113,7 @@ namespace castor {
        * The new weight of the file(s)
        * @param new_var the new value of m_weight
        */
-      void setWeight(float new_var) {
+      void setWeight(double new_var) {
         m_weight = new_var;
       }
 
@@ -138,7 +138,7 @@ namespace castor {
     private:
 
       /// The new weight of the file(s)
-      float m_weight;
+      double m_weight;
 
       /// The id of this object
       u_signed64 m_id;

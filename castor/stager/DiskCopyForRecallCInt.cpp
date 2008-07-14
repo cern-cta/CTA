@@ -118,7 +118,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cstager_DiskCopyForRecall_gcWeight
   //----------------------------------------------------------------------------
-  int Cstager_DiskCopyForRecall_gcWeight(castor::stager::DiskCopyForRecall* instance, float* var) {
+  int Cstager_DiskCopyForRecall_gcWeight(castor::stager::DiskCopyForRecall* instance, double* var) {
     *var = instance->gcWeight();
     return 0;
   }
@@ -126,7 +126,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cstager_DiskCopyForRecall_setGcWeight
   //----------------------------------------------------------------------------
-  int Cstager_DiskCopyForRecall_setGcWeight(castor::stager::DiskCopyForRecall* instance, float new_var) {
+  int Cstager_DiskCopyForRecall_setGcWeight(castor::stager::DiskCopyForRecall* instance, double new_var) {
     instance->setGcWeight(new_var);
     return 0;
   }

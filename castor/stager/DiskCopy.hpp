@@ -128,7 +128,7 @@ namespace castor {
        * removal
        * @return the value of m_gcWeight
        */
-      float gcWeight() const {
+      double gcWeight() const {
         return m_gcWeight;
       }
 
@@ -138,7 +138,7 @@ namespace castor {
        * removal
        * @param new_var the new value of m_gcWeight
        */
-      void setGcWeight(float new_var) {
+      void setGcWeight(double new_var) {
         m_gcWeight = new_var;
       }
 
@@ -281,7 +281,7 @@ namespace castor {
       std::string m_path;
 
       /// Weight used by the garbage collector to decide who is the next candidate for removal
-      float m_gcWeight;
+      double m_gcWeight;
 
       /// Time when this DiskCopy was created
       u_signed64 m_creationTime;

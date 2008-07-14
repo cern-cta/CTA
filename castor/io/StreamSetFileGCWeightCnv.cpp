@@ -154,7 +154,7 @@ castor::IObject* castor::io::StreamSetFileGCWeightCnv::createObj(castor::IAddres
   u_signed64 lastModificationTime;
   ad->stream() >> lastModificationTime;
   object->setLastModificationTime(lastModificationTime);
-  float weight;
+  double weight;
   ad->stream() >> weight;
   object->setWeight(weight);
   u_signed64 id;

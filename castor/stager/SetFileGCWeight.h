@@ -302,13 +302,13 @@ int Cstager_SetFileGCWeight_clone(struct Cstager_SetFileGCWeight_t* instance,
  * Get the value of weight
  * The new weight of the file(s)
  */
-int Cstager_SetFileGCWeight_weight(struct Cstager_SetFileGCWeight_t* instance, float* var);
+int Cstager_SetFileGCWeight_weight(struct Cstager_SetFileGCWeight_t* instance, double* var);
 
 /**
  * Set the value of weight
  * The new weight of the file(s)
  */
-int Cstager_SetFileGCWeight_setWeight(struct Cstager_SetFileGCWeight_t* instance, float new_var);
+int Cstager_SetFileGCWeight_setWeight(struct Cstager_SetFileGCWeight_t* instance, double new_var);
 
 /**
  * Get the value of id

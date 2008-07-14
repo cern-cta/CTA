@@ -532,7 +532,7 @@ void castor::db::cnv::DbSetFileGCWeightCnv::createRep(castor::IAddress* address,
     m_insertStatement->setString(10, obj->reqId());
     m_insertStatement->setInt(11, time(0));
     m_insertStatement->setInt(12, time(0));
-    m_insertStatement->setFloat(13, obj->weight());
+    m_insertStatement->setDouble(13, obj->weight());
     m_insertStatement->setUInt64(14, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
     m_insertStatement->setUInt64(15, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->execute();
@@ -732,14 +732,14 @@ void castor::db::cnv::DbSetFileGCWeightCnv::bulkCreateRep(castor::IAddress* addr
     m_insertStatement->setDataBuffer
       (12, lastModificationTimeBuffer, DBTYPE_UINT64, sizeof(lastModificationTimeBuffer[0]), lastModificationTimeBufLens);
     // build the buffers for weight
-    float* weightBuffer = (float*) malloc(nb * sizeof(float));
+    double* weightBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* weightBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
     for (int i = 0; i < nb; i++) {
       weightBuffer[i] = objs[i]->weight();
-      weightBufLens[i] = sizeof(float);
+      weightBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (13, weightBuffer, DBTYPE_FLOAT, sizeof(weightBuffer[0]), weightBufLens);
+      (13, weightBuffer, DBTYPE_DOUBLE, sizeof(weightBuffer[0]), weightBufLens);
     // build the buffers for svcClass
     double* svcClassBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* svcClassBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -875,7 +875,7 @@ void castor::db::cnv::DbSetFileGCWeightCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setString(9, obj->userTag());
     m_updateStatement->setString(10, obj->reqId());
     m_updateStatement->setInt(11, time(0));
-    m_updateStatement->setFloat(12, obj->weight());
+    m_updateStatement->setDouble(12, obj->weight());
     m_updateStatement->setUInt64(13, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
@@ -979,7 +979,7 @@ castor::IObject* castor::db::cnv::DbSetFileGCWeightCnv::createObj(castor::IAddre
     object->setReqId(rset->getString(10));
     object->setCreationTime(rset->getUInt64(11));
     object->setLastModificationTime(rset->getUInt64(12));
-    object->setWeight(rset->getFloat(13));
+    object->setWeight(rset->getDouble(13));
     object->setId(rset->getUInt64(14));
     delete rset;
     return object;
@@ -1038,7 +1038,7 @@ castor::db::cnv::DbSetFileGCWeightCnv::bulkCreateObj(castor::IAddress* address)
       object->setReqId(rset->getString(10));
       object->setCreationTime(rset->getUInt64(11));
       object->setLastModificationTime(rset->getUInt64(12));
-      object->setWeight(rset->getFloat(13));
+      object->setWeight(rset->getDouble(13));
       object->setId(rset->getUInt64(14));
       // store object in results and loop;
       res.push_back(object);
@@ -1089,7 +1089,7 @@ void castor::db::cnv::DbSetFileGCWeightCnv::updateObj(castor::IObject* obj)
     object->setReqId(rset->getString(10));
     object->setCreationTime(rset->getUInt64(11));
     object->setLastModificationTime(rset->getUInt64(12));
-    object->setWeight(rset->getFloat(13));
+    object->setWeight(rset->getDouble(13));
     object->setId(rset->getUInt64(14));
     delete rset;
   } catch (castor::exception::SQLError e) {
