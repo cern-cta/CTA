@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2007/09/26 14:50:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2008/07/14 13:52:38 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -38,6 +38,7 @@ CHClassWriter::CHClassWriter(UMLDoc *parent, const char *name) :
   m_typeConvertions["string"] = "const char*";
   m_typeConvertions["longstring"] = "const char*";
   m_typeConvertions["bool"] = "int";
+  m_typeConvertions["double"] = "double";
 }
 
 //=============================================================================

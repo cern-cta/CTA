@@ -3411,7 +3411,9 @@ QString CppCppDbCnvWriter::getOraSQLType(QString& type) {
   if (SQLType == "short" ||
       SQLType == "long" ||
       SQLType == "bool" ||
-      SQLType == "int") {
+      SQLType == "int" ||
+      SQLType == "float" ||
+      SQLType == "double") {
     SQLType = "NUMBER";
   } else if ((type == "u_signed64") || (type == "signed64")) {
     SQLType = "INTEGER";
