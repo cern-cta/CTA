@@ -49,7 +49,7 @@ class PreRequisitesCase(unittest.TestCase):
             inputFile = params["INPUT_FILE"]
             updInputFile = localDir+"rfcpupdFile"
             os.system("cat "+inputFile+" > "+updInputFile)
-            os.system("echo 'extra data' > "+updInputFile)
+            os.system("echo 'extra data' >> "+updInputFile)
             myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,None,[["STAGER_TRACE","3"]])
             UtilityForCastorTest.runOnShell(["nsmkdir "+dirCastor],myScen)
         except IOError:
@@ -487,7 +487,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"pupdExistingFileReplicated","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "stager_update doesn't work on replicated files"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1), "stager_update doesn't work on replicated files"
 
         fi=open(localDir+"Client"+rfiover+"pupdExistingFileReplicated1","r")
         buffOut=fi.read()
@@ -497,7 +497,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"pupdExistingFileReplicated2","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through eth[0-1] \(in\) and local \(out\)',buffOut) != None, "stager_update doesn't work on replicated files"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 0), "stager_update doesn't work on replicated files"
 
         fi=open(localDir+"Client"+rfiover+"pupdExistingFileReplicated3","r")
         buffOut=fi.read()
@@ -521,7 +521,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"updExistingFile1","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "update doesn't work on an existing file"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1), "update doesn't work on an existing file"
 
         fi=open(localDir+"Client"+rfiover+"updExistingFile2","r")
         buffOut=fi.read()
@@ -535,7 +535,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"updNonExistingFile","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "update doesn't work on a non existing file"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1), "update doesn't work on a non existing file"
 
         fi=open(localDir+"Client"+rfiover+"updNonExistingFile1","r")
         buffOut=fi.read()
@@ -550,7 +550,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"updExistingFileReplicated","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "update doesn't work on a replicated file"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1), "update doesn't work on a replicated file"
 
         fi=open(localDir+"Client"+rfiover+"updExistingFileReplicated1","r")
         buffOut=fi.read()
@@ -560,7 +560,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"updExistingFileReplicated2","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through eth[0-1] \(in\) and local \(out\)',buffOut) != None, "update doesn't work on a replicated file"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 0), "update doesn't work on a replicated file"
 
         fi=open(localDir+"Client"+rfiover+"updExistingFileReplicated3","r")
         buffOut=fi.read()
@@ -570,7 +570,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"updExistingFileReplicated4","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "update doesn't work on a replicated file"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1), "update doesn't work on a replicated file"
 
         fi=open(localDir+"Client"+rfiover+"updExistingFileReplicated5","r")
         buffOut=fi.read()
@@ -599,7 +599,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"pupdUpdPutDone2","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "stager_update cycle doesn't work"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1), "stager_update cycle doesn't work"
 
         fi=open(localDir+"Client"+rfiover+"pupdUpdPutDone3","r")
         buffOut=fi.read()
@@ -609,7 +609,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"pupdUpdPutDone4","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "stager_update cycle doesn't work"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1), "stager_update cycle doesn't work"
 
         fi=open(localDir+"Client"+rfiover+"pupdUpdPutDone5","r")
         buffOut=fi.read()
@@ -643,7 +643,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"pputUpdPutDone2","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "updates on prepareToPut do not work"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1), "updates on prepareToPut do not work"
 
         fi=open(localDir+"Client"+rfiover+"pputUpdPutDone3","r")
         buffOut=fi.read()
@@ -653,7 +653,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"pputUpdPutDone4","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "updates on prepareToPut do not work"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1), "updates on prepareToPut do not work"
 
         fi=open(localDir+"Client"+rfiover+"pputUpdPutDone5","r")
         buffOut=fi.read()
@@ -687,7 +687,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"pupdPutPutDone2","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "puts on prepareToUpdate do not work"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1), "puts on prepareToUpdate do not work"
 
         fi=open(localDir+"Client"+rfiover+"pupdPutPutDone3","r")
         buffOut=fi.read()
@@ -697,7 +697,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"pupdPutPutDone4","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "puts on prepareToUpdate do not work"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1), "puts on prepareToUpdate do not work"
 
         fi=open(localDir+"Client"+rfiover+"pupdPutPutDone5","r")
         buffOut=fi.read()
@@ -731,7 +731,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"pPutUpdPutPutDone2","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "mixing puts and updates does not work"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1), "mixing puts and updates does not work"
 
         fi=open(localDir+"Client"+rfiover+"pPutUpdPutPutDone3","r")
         buffOut=fi.read()
@@ -741,7 +741,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"pPutUpdPutPutDone4","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "mixing puts and updates does not work"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1), "mixing puts and updates does not work"
 
         fi=open(localDir+"Client"+rfiover+"pPutUpdPutPutDone5","r")
         buffOut=fi.read()
@@ -751,7 +751,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"pPutUpdPutPutDone6","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "mixing puts and updates does not work"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1), "mixing puts and updates does not work"
 
         fi=open(localDir+"Client"+rfiover+"pPutUpdPutPutDone7","r")
         buffOut=fi.read()
@@ -761,7 +761,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"pPutUpdPutPutDone8","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "mixing puts and updates does not work"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1), "mixing puts and updates does not work"
 
         fi=open(localDir+"Client"+rfiover+"pPutUpdPutPutDone9","r")
         buffOut=fi.read()
@@ -806,7 +806,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"pPutPUpd4","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "prepareToUpdate on prepareToPut does not work"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1), "prepareToUpdate on prepareToPut does not work"
 
         fi=open(localDir+"Client"+rfiover+"pPutPUpd5","r")
         buffOut=fi.read()
@@ -840,7 +840,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"pUpdpPut","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "mixing puts and updates does not work"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1), "mixing puts and updates does not work"
 
         fi=open(localDir+"Client"+rfiover+"pUpdpPut1","r")
         buffOut=fi.read()
@@ -865,7 +865,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"pUpdpPut5","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "prepareToPut on prepareToUpdate does not work"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1), "prepareToPut on prepareToUpdate does not work"
 
         fi=open(localDir+"Client"+rfiover+"pUpdpPut6","r")
         buffOut=fi.read()
@@ -905,7 +905,7 @@ class StagerUpdCase(unittest.TestCase):
         fi=open(localDir+"Client"+rfiover+"pUpdpPutNonExist3","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "prepareToPut on prepareToUpdate does not work"
+        assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1), "prepareToPut on prepareToUpdate does not work"
 
         fi=open(localDir+"Client"+rfiover+"pUpdpPutNonExist4","r")
         buffOut=fi.read()

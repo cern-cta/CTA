@@ -40,17 +40,17 @@ inputStressFiles=""
 
 class RfioPreRequisitesCase(unittest.TestCase):
         def mainScenariumSetUp(self):
-		assert (UtilityForCastorTest.checkUser() != -1), "you don't have acccess to directory \"" + outputDir + "\" where you wanted to run the test"
+                assert (UtilityForCastorTest.checkUser() != -1), "you don't have acccess to directory \"" + outputDir + "\" where you wanted to run the test"
                 try:
                         # get needed params
                         global castorDir, inputFile, inputStressTest, localDir, stageMap, castorConf, castorEnv, rfioRemoteDirOk
                         params = UtilityForCastorTest.parseConfigFile(configFile, "Rfio")
                         inputFile = params["INPUT_FILE"]
-			inputStressFiles = params["STRESS_INPUT_DIR"]
+                        inputStressFiles = params["STRESS_INPUT_DIR"]
                         localDir = params["LOG_DIR"]+ticket+"/"
-			stageMap = params["USE_STAGEMAP"].lower()
-			castorConf = params["USE_CASTOR_CONF"].lower()
-			castorEnv = params["USE_CASTOR_ENV"].lower()
+                        stageMap = params["USE_STAGEMAP"].lower()
+                        castorConf = params["USE_CASTOR_CONF"].lower()
+                        castorEnv = params["USE_CASTOR_ENV"].lower()
 
                         os.system("rfmkdir "+castorDir)
                         os.system("mkdir "+localDir)
@@ -67,15 +67,15 @@ class RfioPreRequisitesCase(unittest.TestCase):
                                     remoteHost=elems[1]
                         global remoteDir
                         remoteDir=remoteHost+":"+"/tmp/tmpRfio"+ticket
-			cmd=['rfmkdir '+remoteDir]
-			myOut=UtilityForCastorTest.runOnShell(cmd,myScen)[0]
-			rfioRemoteDirOk=1
-			if myOut.find("Permission denied"):
-			    print '\n  Failed to create remote directory: '+remoteDir
-			    print '  Reason: Permission denied - (RFIO directory filtering)'
-			    print '  The following test cases will be skipped:'
-			    print '     localToRemote, remoteToLocal and remoteToRemote ... ',
-			    rfioRemoteDirOk=0
+                        cmd=['rfmkdir '+remoteDir]
+                        myOut=UtilityForCastorTest.runOnShell(cmd,myScen)[0]
+                        rfioRemoteDirOk=1
+                        if myOut.find("Permission denied"):
+                            print '\n  Failed to create remote directory: '+remoteDir
+                            print '  Reason: Permission denied - (RFIO directory filtering)'
+                            print '  The following test cases will be skipped:'
+                            print '     localToRemote, remoteToLocal and remoteToRemote ... ',
+                            rfioRemoteDirOk=0
                         
                 except IOError:
                         assert 0==-1, "An error in the preparation of the main setting occurred ... test is not valid"
@@ -138,8 +138,8 @@ class RfioRfcpSimpleCase(unittest.TestCase):
                 assert os.stat(localDir+"fileRfioLocalToLocalCopy"+ticket)[6] != 0, "rfio doesn't work local to local"
 
         def localToRemote(self):
-		if not rfioRemoteDirOk:
-			return
+                if not rfioRemoteDirOk:
+                        return
                 cmd=[caseScen+"rfcp "+inputFile+" "+remoteDir+"fileRfioLocalToRemote"+ticket]
                 UtilityForCastorTest.saveOnFile(localDir+"RfioSimpleLocalToRemote",cmd)
                 fi=open(localDir+"RfioSimpleLocalToRemote","r")
@@ -147,8 +147,8 @@ class RfioRfcpSimpleCase(unittest.TestCase):
                 fi.close()
                 assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "rfio doesn't work from local to remote"
         def remoteToLocal(self):
-		if not rfioRemoteDirOk:
-			return
+                if not rfioRemoteDirOk:
+                        return
                 cmd=["rfcp "+inputFile+" "+remoteDir+"fileRfioRemoteToLocal"+ticket,"rfcp "+remoteDir+"fileRfioRemoteToLocal"+ticket+" "+localDir+"fileRfioRemoteToLocalCopy"+ticket,"diff "+inputFile+" "+localDir+"fileRfioRemoteToLocalCopy"+ticket]
                 UtilityForCastorTest.saveOnFile(localDir+"RfioSimpleRemoteToLocal",cmd)
                 
@@ -166,8 +166,8 @@ class RfioRfcpSimpleCase(unittest.TestCase):
                 assert os.stat(localDir+"RfioSimpleRemoteToLocal2")[6] == 0, "rfio doesn't work from remote to local"
                 
         def remoteToRemote(self):
-		if not rfioRemoteDirOk:
-			return
+                if not rfioRemoteDirOk:
+                        return
                 cmd=["rfcp "+inputFile+" "+remoteDir+"fileRfioRemoteToRemote"+ticket,"rfcp "+remoteDir+"fileRfioRemoteToRemote"+ticket+" "+remoteDir+"fileRfioRemoteToRemoteCopy"+ticket,"rfcp "+remoteDir+"fileRfioRemoteToRemoteCopy"+ticket+" "+localDir+"fileRfioRemoteToRemoteCopyCopy"+ticket,"diff "+inputFile+" "+localDir+"fileRfioRemoteToRemoteCopyCopy"+ticket]
 
                 UtilityForCastorTest.saveOnFile(localDir+"RfioSimpleRemoteToRemote",cmd)
@@ -485,7 +485,7 @@ class RfioCastorNewTurl1(unittest.TestCase):
 
 
 class RfioCastorNewTurl2(unittest.TestCase):
-        def setUp(self):		
+        def setUp(self):                
             global myTag
             myTag="Turl2"
             global caseScen
@@ -505,7 +505,7 @@ class RfioCastorNewTurl3(unittest.TestCase):
 
 
 class RfioCastorNewTurl4(unittest.TestCase):
-        def setUp(self):		
+        def setUp(self):                
             global myTag
             myTag="Turl4"
             global caseScen
@@ -515,7 +515,7 @@ class RfioCastorNewTurl4(unittest.TestCase):
 
             
 class RfioCastorNewTurl5(unittest.TestCase):
-        def setUp(self):	
+        def setUp(self):        
             global myTag
             myTag="Turl5"
             global caseScen
@@ -525,7 +525,7 @@ class RfioCastorNewTurl5(unittest.TestCase):
 
             
 class RfioCastorNewTurl6(unittest.TestCase):
-        def setUp(self):	
+        def setUp(self):        
             global myTag
             myTag="Turl6"
             UtilityForCastorTest.createScenarium(-1,-1,stagerSvcClass,stagerVersion,castorEnv)
@@ -534,7 +534,7 @@ class RfioCastorNewTurl6(unittest.TestCase):
           
             
 class RfioCastorNewTurl7(unittest.TestCase):
-        def setUp(self):		
+        def setUp(self):                
             global myTag
             myTag="Turl7"
             global caseScen
@@ -544,7 +544,7 @@ class RfioCastorNewTurl7(unittest.TestCase):
  
 
 class RfioCastorNewTurl8(unittest.TestCase):
-        def setUp(self):		
+        def setUp(self):                
             global myTag
             myTag="Turl8"
             global caseScen
@@ -554,7 +554,7 @@ class RfioCastorNewTurl8(unittest.TestCase):
     
  
 class RfioCastorNewTurl9(unittest.TestCase):
-        def setUp(self):		
+        def setUp(self):                
             global myTag
             myTag="Turl9"
             global caseScen
@@ -564,7 +564,7 @@ class RfioCastorNewTurl9(unittest.TestCase):
 
  
 class RfioCastorNewTurl10(unittest.TestCase):
-        def setUp(self):		
+        def setUp(self):                
             global myTag
             myTag="Turl10"
             global caseScen
@@ -573,7 +573,7 @@ class RfioCastorNewTurl10(unittest.TestCase):
             myTurl=stagerHost+":"+stagerPort+castorDir
 
 class RfioCastorNewTurl11(unittest.TestCase):
-        def setUp(self):		
+        def setUp(self):                
             global myTag
             myTag="Turl11"
             global caseScen
@@ -598,7 +598,7 @@ class RfioRfcpCastor(unittest.TestCase):
                 fi=open(localDir+"RfioRfcpLocalToCastor"+myTag,"r")
                 buffOut=fi.read()
                 fi.close()
-                assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from local to castor"
+                assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1) or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from local to castor"
                 
         def castorToLocal(self):
                 cmd=["rfcp "+inputFile+" "+self.protocol+myTurl+"fileRfioCastorToLocal"+myTag+ticket,"rfcp "+self.protocol+myTurl+"fileRfioCastorToLocal"+myTag+ticket+" "+localDir+"fileRfioCastorToLocalCopy"+myTag+ticket,"diff "+inputFile+" "+localDir+"fileRfioCastorToLocalCopy"+myTag+ticket]
@@ -609,12 +609,12 @@ class RfioRfcpCastor(unittest.TestCase):
                 fi=open(localDir+"RfioRfcpCastorToLocal"+myTag,"r")
                 buffOut=fi.read()
                 fi.close()
-                assert re.search('through local \(in\) and eth[0-1] \(out\)', buffOut) != None or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from local to castor"
+                assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1) or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from local to castor"
 
                 fi=open(localDir+"RfioRfcpCastorToLocal"+myTag+"1","r")
                 buffOut=fi.read()
                 fi.close()
-                assert re.search('through eth[0-1] \(in\) and local \(out\)', buffOut) != None or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  castor to local"
+                assert UtilityForCastorTest.checkRfcpOutput(buffOut, 0) or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  castor to local"
 
                 assert os.stat(localDir+"fileRfioCastorToLocalCopy"+myTag+ticket)[6] != 0, "rfio doesn't work from castor to local"
                 assert os.stat(localDir+"RfioRfcpCastorToLocal"+myTag+"2")[6] == 0, "rfio doesn't work from castor to local"
@@ -637,7 +637,7 @@ class RfioRfcpCastor(unittest.TestCase):
                 fi=open(localDir+"RfioRfcpRemoteToCastor"+myTag+"2","r")
                 buffOut=fi.read()
                 fi.close()
-                assert re.search('through eth[0-1] \(in\) and local \(out\)',buffOut) != None or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  castor  to local"
+                assert UtilityForCastorTest.checkRfcpOutput(buffOut, 0) or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  castor  to local"
 
                 assert os.stat(localDir+"fileRfioRemoteToCastorCopyCopy"+myTag+ticket)[6] != 0, "rfio doesn't work from remote to castor"
                 assert os.stat(localDir+"RfioRfcpRemoteToCastor"+myTag+"3")[6] == 0, "rfio doesn't work from remote to castor"
@@ -651,7 +651,7 @@ class RfioRfcpCastor(unittest.TestCase):
                 fi=open(localDir+"RfioRfcpCastorToRemote"+myTag,"r")
                 buffOut=fi.read()
                 fi.close()
-                assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None or buffOut.rfind(" bytes ready for migration") != -1 , "rfio doesn't work from local to castor"
+                assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1) or buffOut.rfind(" bytes ready for migration") != -1 , "rfio doesn't work from local to castor"
 
                 fi=open(localDir+"RfioRfcpCastorToRemote"+myTag+"1","r")
                 buffOut=fi.read()
@@ -675,7 +675,7 @@ class RfioRfcpCastor(unittest.TestCase):
                 fi=open(localDir+"RfioRfcpCastorToCastor"+myTag,"r")
                 buffOut=fi.read()
                 fi.close()
-                assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None or buffOut.rfind(" bytes ready for migration") != -1 , "rfio doesn't work from local to castor"
+                assert UtilityForCastorTest.checkRfcpOutput(buffOut, 1) != None or buffOut.rfind(" bytes ready for migration") != -1 , "rfio doesn't work from local to castor"
                 
                 fi=open(localDir+"RfioRfcpCastorToCastor"+myTag+"1","r")
                 buffOut=fi.read()
@@ -685,7 +685,7 @@ class RfioRfcpCastor(unittest.TestCase):
                 fi=open(localDir+"RfioRfcpCastorToCastor"+myTag+"2","r")
                 buffOut=fi.read()
                 fi.close()
-                assert re.search('through eth[0-1] \(in\) and local \(out\)', buffOut) != None or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  castor  to local"
+                assert UtilityForCastorTest.checkRfcpOutput(buffOut, 0) != None or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  castor  to local"
 
                 assert os.stat(localDir+"fileRfioCastorToCastorCopyCopy"+myTag+ticket)[6] != 0, "rfio doesn't work from castor to castor"
                 assert os.stat(localDir+"RfioRfcpCastorToCastor"+myTag+"3")[6] == 0, "rfio doesn't work from castor to castor"
@@ -694,97 +694,97 @@ class RfioRfcpCastor(unittest.TestCase):
 
 class RfioRfcpScenarium1(RfioCastorScenarium1,RfioRfcpCastor):
         def __init__(self, methodName):
-		self.protocol=""
-		RfioRfcpCastor.__init__(self, methodName)
+                self.protocol=""
+                RfioRfcpCastor.__init__(self, methodName)
 
     
 class RfioRfcpScenarium2(RfioCastorScenarium2,RfioRfcpCastor):
         def __init__(self, methodName):
-		self.protocol=""
- 		RfioRfcpCastor.__init__(self, methodName)
+                self.protocol=""
+                RfioRfcpCastor.__init__(self, methodName)
 
-		
+                
 class RfioRfcpScenarium3(RfioCastorScenarium3,RfioRfcpCastor):
         def __init__(self, methodName):
-		self.protocol=""
-		RfioRfcpCastor.__init__(self, methodName)
+                self.protocol=""
+                RfioRfcpCastor.__init__(self, methodName)
 
-		
+                
 class RfioRfcpScenarium4(RfioCastorScenarium4,RfioRfcpCastor):
         def __init__(self, methodName):
-		self.protocol=""
-		RfioRfcpCastor.__init__(self, methodName)
-		
+                self.protocol=""
+                RfioRfcpCastor.__init__(self, methodName)
+                
 
 class RfioRfcpScenarium5(RfioCastorScenarium5,RfioRfcpCastor):
         def __init__(self, methodName):
-		self.protocol=""
-		RfioRfcpCastor.__init__(self, methodName)
-		
+                self.protocol=""
+                RfioRfcpCastor.__init__(self, methodName)
+                
             
 class RfioRfcpNewTurl1(RfioCastorNewTurl1,RfioRfcpCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-	        RfioRfcpCastor.__init__(self, methodName)
+                self.protocol="rfio://"
+                RfioRfcpCastor.__init__(self, methodName)
 
 
 class RfioRfcpNewTurl2(RfioCastorNewTurl2,RfioRfcpCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-	        RfioRfcpCastor.__init__(self, methodName)
+                self.protocol="rfio://"
+                RfioRfcpCastor.__init__(self, methodName)
 
-		
+                
 class RfioRfcpNewTurl3(RfioCastorNewTurl3,RfioRfcpCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-	        RfioRfcpCastor.__init__(self, methodName)
+                self.protocol="rfio://"
+                RfioRfcpCastor.__init__(self, methodName)
 
 class RfioRfcpNewTurl4(RfioCastorNewTurl4,RfioRfcpCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-	        RfioRfcpCastor.__init__(self, methodName)
+                self.protocol="rfio://"
+                RfioRfcpCastor.__init__(self, methodName)
 
             
 class RfioRfcpNewTurl5(RfioCastorNewTurl5,RfioRfcpCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-	        RfioRfcpCastor.__init__(self, methodName)
+                self.protocol="rfio://"
+                RfioRfcpCastor.__init__(self, methodName)
 
             
 class RfioRfcpNewTurl6(RfioCastorNewTurl6,RfioRfcpCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-	        RfioRfcpCastor.__init__(self, methodName)
+                self.protocol="rfio://"
+                RfioRfcpCastor.__init__(self, methodName)
 
             
 class RfioRfcpNewTurl7(RfioCastorNewTurl7,RfioRfcpCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-	        RfioRfcpCastor.__init__(self, methodName)
+                self.protocol="rfio://"
+                RfioRfcpCastor.__init__(self, methodName)
 
 
 class RfioRfcpNewTurl8(RfioCastorNewTurl8,RfioRfcpCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-	        RfioRfcpCastor.__init__(self, methodName)
+                self.protocol="rfio://"
+                RfioRfcpCastor.__init__(self, methodName)
 
  
 class RfioRfcpNewTurl9(RfioCastorNewTurl9,RfioRfcpCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-	        RfioRfcpCastor.__init__(self, methodName)
+                self.protocol="rfio://"
+                RfioRfcpCastor.__init__(self, methodName)
 
  
 class RfioRfcpNewTurl10(RfioCastorNewTurl10,RfioRfcpCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-	        RfioRfcpCastor.__init__(self, methodName)
-		
+                self.protocol="rfio://"
+                RfioRfcpCastor.__init__(self, methodName)
+                
 
 class RfioRfcpNewTurl11(RfioCastorNewTurl11,RfioRfcpCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-	        RfioRfcpCastor.__init__(self, methodName)
+                self.protocol="rfio://"
+                RfioRfcpCastor.__init__(self, methodName)
 
 
 
@@ -917,102 +917,102 @@ class RfioOtherCmdCastor(unittest.TestCase):
 ### other cmd with different enviroment ###
  
 class RfioOtherCmdScenarium1(RfioCastorScenarium1,RfioOtherCmdCastor):
-	def __init__(self, methodName):
-		self.protocol=""
-		RfioOtherCmdCastor.__init__(self, methodName)
+        def __init__(self, methodName):
+                self.protocol=""
+                RfioOtherCmdCastor.__init__(self, methodName)
 
-		
-		
+                
+                
     
 class RfioOtherCmdScenarium2(RfioCastorScenarium2,RfioOtherCmdCastor):
-	def __init__(self,methodName):
-		self.protocol=""
-		RfioOtherCmdCastor.__init__(self, methodName)
+        def __init__(self,methodName):
+                self.protocol=""
+                RfioOtherCmdCastor.__init__(self, methodName)
 
         
             
 class RfioOtherCmdScenarium3(RfioCastorScenarium3,RfioOtherCmdCastor):
-	def __init__(self,methodName):
-		self.protocol=""
-		RfioOtherCmdCastor.__init__(self, methodName)
+        def __init__(self,methodName):
+                self.protocol=""
+                RfioOtherCmdCastor.__init__(self, methodName)
 
         
 
 class RfioOtherCmdScenarium4(RfioCastorScenarium4,RfioOtherCmdCastor):
-	def __init__(self,methodName):
-		self.protocol=""
-		RfioOtherCmdCastor.__init__(self, methodName)
+        def __init__(self,methodName):
+                self.protocol=""
+                RfioOtherCmdCastor.__init__(self, methodName)
 
         
 
 class RfioOtherCmdScenarium5(RfioCastorScenarium5,RfioOtherCmdCastor):
-	def __init__(self,methodName):
-		self.protocol=""
-		RfioOtherCmdCastor.__init__(self, methodName)
+        def __init__(self,methodName):
+                self.protocol=""
+                RfioOtherCmdCastor.__init__(self, methodName)
 
             
 class RfioOtherCmdNewTurl1(RfioCastorNewTurl1,RfioOtherCmdCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-		RfioOtherCmdCastor.__init__(self, methodName)
+                self.protocol="rfio://"
+                RfioOtherCmdCastor.__init__(self, methodName)
 
 
 class RfioOtherCmdNewTurl2(RfioCastorNewTurl2,RfioOtherCmdCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-		RfioOtherCmdCastor.__init__(self, methodName)
-	
+                self.protocol="rfio://"
+                RfioOtherCmdCastor.__init__(self, methodName)
+        
 class RfioOtherCmdNewTurl3(RfioCastorNewTurl3,RfioOtherCmdCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-		RfioOtherCmdCastor.__init__(self, methodName)
+                self.protocol="rfio://"
+                RfioOtherCmdCastor.__init__(self, methodName)
 
 
 class RfioOtherCmdNewTurl4(RfioCastorNewTurl4,RfioOtherCmdCastor):
         def __init__(self,methodName):
-		self.protocol="rfio://"
-		RfioOtherCmdCastor.__init__(self, methodName)
+                self.protocol="rfio://"
+                RfioOtherCmdCastor.__init__(self, methodName)
 
 class RfioOtherCmdNewTurl5(RfioCastorNewTurl5,RfioOtherCmdCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-		RfioOtherCmdCastor.__init__(self, methodName)
-	
-		
+                self.protocol="rfio://"
+                RfioOtherCmdCastor.__init__(self, methodName)
+        
+                
 class RfioOtherCmdNewTurl6(RfioCastorNewTurl6,RfioOtherCmdCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-		RfioOtherCmdCastor.__init__(self, methodName)
-			
+                self.protocol="rfio://"
+                RfioOtherCmdCastor.__init__(self, methodName)
+                        
             
 class RfioOtherCmdNewTurl7(RfioCastorNewTurl7,RfioOtherCmdCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-		RfioOtherCmdCastor.__init__(self, methodName)
-		
+                self.protocol="rfio://"
+                RfioOtherCmdCastor.__init__(self, methodName)
+                
 
 class RfioOtherCmdNewTurl8(RfioCastorNewTurl8,RfioOtherCmdCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-		RfioOtherCmdCastor.__init__(self, methodName)
-			
+                self.protocol="rfio://"
+                RfioOtherCmdCastor.__init__(self, methodName)
+                        
  
 class RfioOtherCmdNewTurl9(RfioCastorNewTurl9,RfioOtherCmdCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-		RfioOtherCmdCastor.__init__(self, methodName)
-		
+                self.protocol="rfio://"
+                RfioOtherCmdCastor.__init__(self, methodName)
+                
  
 class RfioOtherCmdNewTurl10(RfioCastorNewTurl10,RfioOtherCmdCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-		RfioOtherCmdCastor.__init__(self, methodName)
-		
+                self.protocol="rfio://"
+                RfioOtherCmdCastor.__init__(self, methodName)
+                
 
 class RfioOtherCmdNewTurl11(RfioCastorNewTurl11,RfioOtherCmdCastor):
         def __init__(self, methodName):
-		self.protocol="rfio://"
-		RfioOtherCmdCastor.__init__(self, methodName)
+                self.protocol="rfio://"
+                RfioOtherCmdCastor.__init__(self, methodName)
 
 
 
@@ -1092,7 +1092,7 @@ class RfioRfcpEnv1Suite(unittest.TestSuite):
     def __init__(self):
         unittest.TestSuite.__init__(self,map(RfioRfcpScenarium1,casesRfcpCastor))
 class RfioRfcpEnv2Suite(unittest.TestSuite):
-    def __init__(self):	    
+    def __init__(self):     
         unittest.TestSuite.__init__(self,map(RfioRfcpScenarium2,casesRfcpCastor))
 
 class RfioRfcpEnv3Suite(unittest.TestSuite):
@@ -1104,29 +1104,29 @@ class RfioRfcpEnv4Suite(unittest.TestSuite):
         unittest.TestSuite.__init__(self,map(RfioRfcpScenarium4,casesRfcpCastor))
         
 class RfioRfcpEnv5Suite(unittest.TestSuite):
-    def __init__(self):	    
+    def __init__(self):     
         unittest.TestSuite.__init__(self,map(RfioRfcpScenarium5,casesRfcpCastor))
 
 
 # Other cmd
 
 class RfioOtherCmdEnv1Suite(unittest.TestSuite):
-    def __init__(self):	    
+    def __init__(self):     
         unittest.TestSuite.__init__(self,map(RfioOtherCmdScenarium1,casesOtherCmdCastor))
 class RfioOtherCmdEnv2Suite(unittest.TestSuite):
-    def __init__(self):	    
+    def __init__(self):     
         unittest.TestSuite.__init__(self,map(RfioOtherCmdScenarium2,casesOtherCmdCastor))
 
 class RfioOtherCmdEnv3Suite(unittest.TestSuite):
-    def __init__(self):	    
+    def __init__(self):     
         unittest.TestSuite.__init__(self,map(RfioOtherCmdScenarium3,casesOtherCmdCastor))
 
 class RfioOtherCmdEnv4Suite(unittest.TestSuite):
-    def __init__(self):	    
+    def __init__(self):     
         unittest.TestSuite.__init__(self,map(RfioOtherCmdScenarium4,casesOtherCmdCastor))
         
 class RfioOtherCmdEnv5Suite(unittest.TestSuite):
-    def __init__(self):	    
+    def __init__(self):     
         unittest.TestSuite.__init__(self,map(RfioOtherCmdScenarium5,casesOtherCmdCastor))
         
 
@@ -1150,49 +1150,49 @@ class RfioRfcpNewTurl1Suite(unittest.TestSuite):
         unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl1,casesRfcpCastor))
 
 class  RfioRfcpNewTurl2Suite(unittest.TestSuite):
-    def __init__(self):	    
+    def __init__(self):     
         unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl2,casesRfcpCastor))
 
 class RfioRfcpNewTurl3Suite(unittest.TestSuite):
-    def __init__(self):		    
+    def __init__(self):             
         unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl3,casesRfcpCastor))
 
 class  RfioRfcpNewTurl4Suite(unittest.TestSuite):
-    def __init__(self):	    
+    def __init__(self):     
         unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl4,casesRfcpCastor))
         
 class  RfioRfcpNewTurl5Suite(unittest.TestSuite):
-    def __init__(self):	    
+    def __init__(self):     
         unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl5,casesRfcpCastor))
 
 class  RfioRfcpNewTurl6Suite(unittest.TestSuite):
-    def __init__(self):	    
+    def __init__(self):     
         unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl6,casesRfcpCastor))
 
 class  RfioRfcpNewTurl7Suite(unittest.TestSuite):
-    def __init__(self):	    
+    def __init__(self):     
         unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl7,casesRfcpCastor))
 
 class  RfioRfcpNewTurl8Suite(unittest.TestSuite):
-    def __init__(self):	    
+    def __init__(self):     
         unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl8,casesRfcpCastor))
 
 class  RfioRfcpNewTurl9Suite(unittest.TestSuite):
-    def __init__(self):	    
+    def __init__(self):     
         unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl9,casesRfcpCastor))
 
 class  RfioRfcpNewTurl10Suite(unittest.TestSuite):
-    def __init__(self):		    
+    def __init__(self):             
         unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl10,casesRfcpCastor))
 
 class  RfioRfcpNewTurl11Suite(unittest.TestSuite):
-    def __init__(self):	    
+    def __init__(self):     
         unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl11,casesRfcpCastor))
 
 # other cmd
 
 class RfioOtherCmdNewTurl1Suite(unittest.TestSuite):
-    def __init__(self):	    
+    def __init__(self):     
         unittest.TestSuite.__init__(self,map(RfioOtherCmdNewTurl1,casesOtherCmdCastor))
         
 class RfioOtherCmdNewTurl2Suite(unittest.TestSuite):
@@ -1204,7 +1204,7 @@ class RfioOtherCmdNewTurl3Suite(unittest.TestSuite):
         unittest.TestSuite.__init__(self,map(RfioOtherCmdNewTurl3,casesOtherCmdCastor))
         
 class RfioOtherCmdNewTurl4Suite(unittest.TestSuite):
-    def __init__(self):	    
+    def __init__(self):     
         unittest.TestSuite.__init__(self,map(RfioOtherCmdNewTurl4,casesOtherCmdCastor))
 
 class RfioOtherCmdNewTurl5Suite(unittest.TestSuite):
@@ -1212,7 +1212,7 @@ class RfioOtherCmdNewTurl5Suite(unittest.TestSuite):
         unittest.TestSuite.__init__(self,map(RfioOtherCmdNewTurl5,casesOtherCmdCastor))
 
 class RfioOtherCmdNewTurl6Suite(unittest.TestSuite):
-    def __init__(self):	    
+    def __init__(self):     
         unittest.TestSuite.__init__(self,map(RfioOtherCmdNewTurl6,casesOtherCmdCastor))
 
 class RfioOtherCmdNewTurl7Suite(unittest.TestSuite):
@@ -1224,7 +1224,7 @@ class RfioOtherCmdNewTurl8Suite(unittest.TestSuite):
         unittest.TestSuite.__init__(self,map(RfioOtherCmdNewTurl8,casesOtherCmdCastor))
 
 class RfioOtherCmdNewTurl9Suite(unittest.TestSuite):
-    def __init__(self):	    
+    def __init__(self):     
         unittest.TestSuite.__init__(self,map(RfioOtherCmdNewTurl9,casesOtherCmdCastor))
 
 class RfioOtherCmdNewTurl10Suite(unittest.TestSuite):
