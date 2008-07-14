@@ -223,9 +223,9 @@ def checkUser():
 # and the number of bytes written/read is equal to the remote file size
 def checkRfcpOutput(buf, put):
     if put:
-        s = re.compile('(\d+) bytes through local \(in\) and eth[0-1] \(out\)\n(\d+) bytes in remote file').match(buf)
+        s = re.compile('(\d+) bytes in [0-9]+ seconds through local \(in\) and eth[0-1] \(out\)\n(\d+) bytes in remote file').search(buf)
     else:
-        s = re.compile('(\d+) bytes through eth[0-1] \(in\) and local \(out\)\n(\d+) bytes in remote file').match(buf)
+        s = re.compile('(\d+) bytes in [0-9]+ seconds through eth[0-1] \(in\) and local \(out\)\n(\d+) bytes in remote file').search(buf)
     if not s:
         return 0
     else:
