@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.135 $ $Release$ $Date: 2008/07/08 08:53:14 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.136 $ $Release$ $Date: 2008/07/17 14:15:42 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1029,14 +1029,17 @@ INNER JOIN ClientIdentification ON
   TapeRequest.client = ClientIdentification.id
 INNER JOIN TapeDrive ON
   TapeRequest.deviceGroupName = TapeDrive.deviceGroupName
+  AND (
+    TapeRequest.requestedSrv IS NULL
+    OR TapeRequest.requestedSrv = TapeDrive.tapeServer
+  )
 INNER JOIN TapeServer ON
-     TapeRequest.requestedSrv = TapeServer.id
-  OR TapeRequest.requestedSrv IS NULL
+  TapeDrive.tapeServer = TapeServer.id
 LEFT OUTER JOIN EffectiveVolumePriority_VIEW ON
-      VdqmTape.vid = EffectiveVolumePriority_VIEW.vid
+  VdqmTape.vid = EffectiveVolumePriority_VIEW.vid
   AND TapeAccessSpecification.accessMode = EffectiveVolumePriority_VIEW.tpMode
 WHERE
-      TapeDrive.status=0 -- UNIT_UP
+  TapeDrive.status=0 -- UNIT_UP
   -- Exclude a request if its tape is associated with an on-going request
   AND NOT EXISTS (
     SELECT
@@ -1044,7 +1047,7 @@ WHERE
     FROM
       TapeRequest TapeRequest2
     WHERE
-          TapeRequest2.tape = TapeRequest.tape
+      TapeRequest2.tape = TapeRequest.tape
       AND TapeRequest2.tapeDrive IS NOT NULL
   )
   -- Exclude a request if its tape is already in a drive, such a request
