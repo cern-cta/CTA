@@ -201,6 +201,8 @@ namespace castor {
     /* vector address for bulk operations */
     OBJ_VectorAddress = 159
 
+    /* VDQM objects to be moved to a different range */
+    OBJ_Tape2DriveDedication = 160,
   };
 
   /**
