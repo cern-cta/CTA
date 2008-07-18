@@ -1,5 +1,5 @@
 /*
- * $Id: vdqm_constants.h,v 1.3 2008/03/10 20:17:16 murrayc3 Exp $
+ * $Id: vdqm_constants.h,v 1.4 2008/07/18 21:15:16 murrayc3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vdqm_constants.h,v $ $Revision: 1.3 $ $Date: 2008/03/10 20:17:16 $ CERN IT-PDP/DM Olof Barring
+ * @(#)$RCSfile: vdqm_constants.h,v $ $Revision: 1.4 $ $Date: 2008/07/18 21:15:16 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -143,14 +143,12 @@
  * if format changes. Any new search criteria must be added to each one 
  * of the constants below.
  */
-#define VDQM_DEDICATE_PREFIX   {"uid=","gid=","name=","host=","vid=", \
-                                "mode=","datestr=","timestr=","age=",""}
-#define VDQM_DEDICATE_DEFAULTS {"uid=.*","gid=.*","name=.*","host=.*", \
-                                "vid=.*","mode=.*","datestr=.*", \
-                                "timestr=.*","age=.*",""}
-#define VDQM_DEDICATE_FORMAT   {"uid=%d","gid=%d","name=%s","host=%s", \
-                                "vid=%s","mode=%d","datestr=%s", \
-                                "timestr=%s","age=%d",""}
+#define VDQM_DEDICATE_PREFIX   {"uid="  , "gid="  , "name="  , "host="  , \
+  "vid="  , "mode="  , "datestr="  , "timestr="  , "age="  , "vid2drv="  , ""}
+#define VDQM_DEDICATE_DEFAULTS {"uid=.*", "gid=.*", "name=.*", "host=.*", \
+  "vid=.*", "mode=.*", "datestr=.*", "timestr=.*", "age=.*", "vid2str=.*", ""}
+#define VDQM_DEDICATE_FORMAT   {"uid=%d", "gid=%d", "name=%s", "host=%s", \
+  "vid=%s", "mode=%d", "datestr=%s", "timestr=%s", "age=%d", "vid2str=%s", ""}
 #define VDQM_DEDICATE_DATEFORM  "%d/%m/%C%y"
 #define VDQM_DEDICATE_TIMEFORM  "%H:%M:%S"
 #define FILL_MATCHSTR(STR,FORM,FORMS)   {int __i = 0; *(STR) = *(FORM) = '\0'; \
@@ -158,7 +156,7 @@
             strcat(FORM,","); __i++;}; \
         if ( strlen(FORM) > 0) (FORM)[strlen(FORM)-1] = '\0'; \
         sprintf(STR,FORM, \
-                uid,gid,name,host,vid,mode,datestr,timestr,age);}
+                uid,gid,name,host,vid,mode,datestr,timestr,age,vid2drv);}
 /*
  * Defaults
  */
