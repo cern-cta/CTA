@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.136 $ $Release$ $Date: 2008/07/17 14:15:42 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.137 $ $Release$ $Date: 2008/07/20 12:08:18 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -135,6 +135,10 @@ ALTER TABLE VolumePriority MODIFY
  (tpMode CONSTRAINT NN_VolumePriority_tpMode NOT NULL);
 ALTER TABLE VolumePriority MODIFY
  (lifespanType CONSTRAINT NN_VolumePriority_lifespanType NOT NULL);
+ALTER TABLE Tape2DriveDedication MODIFY
+  (vid CONSTRAINT NN_Tp2DrvDedic_vid NOT NULL);
+ALTER TABLE Tape2DriveDedication MODIFY
+  (tapeDrive CONSTRAINT NN_Tp2DrvDedic_tapeDrive NOT NULL);
 
 /* Unique constraints */
 -- A client host can only be dedicated to one drive
@@ -166,6 +170,11 @@ ALTER TABLE TapeDrive
 ALTER TABLE TapeServer
   ADD CONSTRAINT I_U_TapeServer_serverName
   UNIQUE (serverName);
+
+-- A tape dedication is made unique by its VID and tape drive
+ALTER TABLE Tape2DriveDedication
+  ADD CONSTRAINT I_U_Tp2DrvDedic_vid_tapeDrive
+    UNIQUE (vid, tapeDrive);
 
 /* Check constraints */
 -- The accessMode column of the TapeAccessSpecification table has 2 possible
@@ -372,6 +381,21 @@ ALTER TABLE VolumePriority
     DEFERRABLE
     INITIALLY DEFERRED
     ENABLE;
+
+ALTER TABLE Tape2DriveDedication
+  ADD CONSTRAINT FK_Tp2DrvDedic_id
+    FOREIGN KEY (id)
+    REFERENCES Id2Type (id)
+    DEFERRABLE
+    INITIALLY DEFERRED
+    ENABLE
+  ADD CONSTRAINT FK_Tp2DrvDedic_tapeDrive
+    FOREIGN KEY (tapeDrive)
+    REFERENCES TapeDrive (id)
+    DEFERRABLE
+    INITIALLY DEFERRED
+    ENABLE;
+CREATE INDEX I_FK_Tp2DrvDedic_tapeDrive ON Tape2DriveDedication (tapeDrive);
 
 
 /**
@@ -2478,4 +2502,32 @@ BEGIN
       castorVdqmException.throw(castorVdqmException.invalid_regexp_vid_cd,
         'VID value is not a valid regular expression ''' || :NEW.vid || '''');
   END;
+END;
+
+
+/**
+ * Converts an updated tape drive id of 0 to NULL.
+ */
+CREATE OR REPLACE TRIGGER TR_I_Tape2DriveDedication
+  BEFORE INSERT ON TapeRequest
+FOR EACH ROW
+BEGIN
+  -- Convert a tape drive id of 0 to NULL
+  IF :NEW.tapeDrive = 0 THEN
+    :NEW.tapeDrive := NULL;
+  END IF;
+END;
+
+
+/**
+ * Converts an updated tape drive id of 0 to NULL.
+ */
+CREATE OR REPLACE TRIGGER TR_U_Tape2DriveDedication
+  BEFORE UPDATE ON Tape2DriveDedication
+FOR EACH ROW
+BEGIN
+  -- Convert a tape drive id of 0 to NULL
+  IF :NEW.tapeDrive = 0 THEN
+    :NEW.tapeDrive := NULL;
+  END IF;
 END;
