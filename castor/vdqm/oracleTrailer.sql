@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.138 $ $Release$ $Date: 2008/07/20 12:13:49 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.139 $ $Release$ $Date: 2008/07/20 12:26:18 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -989,6 +989,21 @@ CREATE OR REPLACE PACKAGE BODY castorVdqmView AS
 
       -- Add dedication to buffer
       buf := buf || 'vid=' || vidDedication.vid;
+    END LOOP;
+
+    FOR vid2DrvDedication IN (
+      SELECT vid
+        FROM Tape2DriveDedication
+        WHERE tapeDrive = driveIdVar
+        ORDER BY vid)
+    LOOP
+      -- Add a comma if there is already a dedication in the buffer
+      IF LENGTH(buf) > 0 THEN
+        buf := buf || ',';
+      END IF;
+
+      -- Add dedication to buffer
+      buf := buf || 'vid2drv=' || vid2DrvDedication.vid;
     END LOOP;
 
     RETURN buf;
