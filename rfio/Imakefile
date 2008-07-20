@@ -18,6 +18,7 @@ NOMORERFIO = FileName(OperatorDir,nomorerfio)
 INCLUDES = FileName(..,h) -I FileName(..,job)
 SPOOL = RfioSpool
 LOGFILE = FileName($(SPOOL),rfiod.log)
+STAGEHOST = StageHost
 
 #if BuildNameServerLibrary
 CNS_ROOT_DIR = NsRoot
