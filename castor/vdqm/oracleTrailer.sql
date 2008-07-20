@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.137 $ $Release$ $Date: 2008/07/20 12:08:18 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.138 $ $Release$ $Date: 2008/07/20 12:13:49 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1090,6 +1090,72 @@ WHERE
   AND castorVdqmView.passesDedications(tapeDrive.id, ClientIdentification.egid,
     ClientIdentification.machine, TapeAccessSpecification.accessMode,
     ClientIdentification.euid, VdqmTape.vid)=1
+ORDER BY
+  TapeAccessSpecification.accessMode DESC,
+  VolumePriority DESC,
+  TapeRequest.creationTime ASC;
+
+
+/**
+ * This view shows candidate tape drive allocations before any dedicatioins
+ * have been taken into account.
+ */
+CREATE OR REPLACE VIEW PotentialDriveAllocations_VIEW AS SELECT UNIQUE
+  TapeDrive.id as driveId,
+  TapeDrive.driveName,
+  TapeRequest.id as tapeRequestId,specification for documentation.
+  ClientIdentification.euid as clientEuid,
+  ClientIdentification.egid as clientEgid,iew AS
+  ClientIdentification.machine as clientMachine,2_to_2.1.7-10-3.sqlplus
+  TapeAccessSpecification.accessMode,
+  VdqmTape.vid,te function determines whether or not the specified drive and
+  TapeRequest.modificationTime,f the drive.
+  TapeRequest.creationTime,
+  NVL(EffectiveVolumePriority_VIEW.priority,0) AS volumePriority
+FROM @param gidVar     the GID of the client.
+  TapeRequest1 if the dedications are passed, else 0.
+INNER JOIN TapeAccessSpecification ON
+  TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
+INNER JOIN VdqmTape ONER,
+  TapeRequest.tape = VdqmTape.id
+INNER JOIN ClientIdentification ON
+  TapeRequest.client = ClientIdentification.id
+INNER JOIN TapeDrive ON
+  TapeRequest.deviceGroupName = TapeDrive.deviceGroupName
+  AND ((there should only be one)
+    TapeRequest.requestedSrv IS NULLqm_2.1.7-10-2_to_2.1.7-10-3.sqlplus
+    OR TapeRequest.requestedSrv = TapeDrive.tapeServer
+  )
+INNER JOIN TapeServer ON
+  TapeDrive.tapeServer = TapeServer.id
+LEFT OUTER JOIN EffectiveVolumePriority_VIEW ON
+  VdqmTape.vid = EffectiveVolumePriority_VIEW.vid
+  AND TapeAccessSpecification.accessMode = EffectiveVolumePriority_VIEW.tpMode
+WHERE
+  TapeDrive.status=0 -- UNIT_UP
+  -- Exclude a request if its tape is associated with an on-going request
+  AND NOT EXISTS (
+    SELECT
+      'x'
+    FROM
+      TapeRequest TapeRequest2
+    WHERE
+      TapeRequest2.tape = TapeRequest.tape
+      AND TapeRequest2.tapeDrive IS NOT NULL
+  )
+  -- Exclude a request if its tape is already in a drive, such a request
+  -- will be considered upon the release of the drive in question
+  -- (cf. TapeDriveStatusHandler)
+  AND NOT EXISTS (
+    SELECT
+      'x'
+    FROM
+      TapeDrive TapeDrive2
+    WHERE
+      TapeDrive2.tape = TapeRequest.tape
+  )
+  AND TapeServer.actingMode=0 -- TAPE_SERVER_ACTIVE
+  AND TapeRequest.status=0 -- REQUEST_PENDING
 ORDER BY
   TapeAccessSpecification.accessMode DESC,
   VolumePriority DESC,
