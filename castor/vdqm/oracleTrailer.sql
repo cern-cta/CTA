@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.140 $ $Release$ $Date: 2008/07/20 15:49:27 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.141 $ $Release$ $Date: 2008/07/20 16:02:45 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1884,6 +1884,103 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     WHEN NO_DATA_FOUND THEN NULL;
 
   END allocateDrive;
+
+
+  /**
+   * Future scheduler algorithm.  This procedure will replace allocateDrive
+   * when it has been fully tested.
+   */
+  PROCEDURE allocateDrive2(
+    returnVar         OUT NUMBER,
+    tapeDriveIdVar    OUT NUMBER,
+    tapeDriveNameVar  OUT NOCOPY VARCHAR2,
+    tapeRequestIdVar  OUT NUMBER,
+    tapeRequestVidVar OUT NOCOPY VARCHAR2
+    ) AS
+
+    tapeDriveStatusVar   NUMBER;
+    tapeRequestStatusVar NUMBER;
+
+  BEGIN
+    returnVar         := 0; -- No possible allocation could be found
+    tapeDriveIdVar    := 0;
+    tapeDriveNameVar  := '';
+    tapeRequestIdVar  := 0;
+    tapeRequestVidVar := '';
+
+    -- For each potential drive allocation, i.e. a drive allocation for which
+    -- no dedications have been taken into account
+    FOR potentialAllocation IN (
+      SELECT driveId, driveName, tapeRequestId, clientEuid, clientEgid,
+        clientMachine, accessMode, vid
+      FROM PotentialDriveAllocations_VIEW
+    ) LOOP
+      -- The status of the drives and requests maybe modified by other scheduler
+      -- threads.  The status of the drives may be modified by threads handling
+      -- drive request messages.  The status of the requests may be modified by
+      -- threads handling tape request messages.  Therefore get a lock on the
+      -- corresponding drive and request rows and retrieve their statuses to see
+      -- if the drive allocation is still valid
+      SELECT TapeDrive.status INTO TapeDriveStatusVar
+      FROM TapeDrive
+      WHERE TapeDrive.id = potentialAllocation.driveId
+      FOR UPDATE;
+      SELECT TapeRequest.status INTO TapeRequestStatusVar
+      FROM TapeRequest
+      WHERE TapeRequest.id = potentialAllocation.tapeRequestId
+      FOR UPDATE;
+
+      -- If the drive allocation is still valid, i.e. drive status is UNIT_UP
+      -- and request status is REQUEST_PENDING
+      IF(TapeDriveStatusVar = 0) AND (TapeRequestStatusVar = 0) THEN
+
+        IF passesDedications(
+          potentialAllocation.driveId,
+          potentialAllocation.clientEgid,
+          potentialAllocation.clientMachine,
+          potentialAllocation.accessMode,
+          potentialAllocation.clientEuid,
+          potentialAllocation.vid) = 1 THEN
+
+          -- Set the drive id for logging
+          tapeDriveIdVar := potentialAllocation.driveId;
+
+          -- Set the drive name for logging
+          TapeDriveNameVar := potentialAllocation.driveName;
+
+          -- Set the request id for logging
+          tapeRequestIdVar := potentialAllocation.tapeRequestId;
+
+          -- Set the VID of the pending request for logging
+          tapeRequestVidVar := potentialAllocation.vid;
+
+          -- Allocate the free drive to the pending request
+          UPDATE TapeDrive SET
+            status           = 1, -- UNIT_STARTING
+            jobId            = 0,
+            modificationTime = castorVdqmCommon.getTime(),
+            runningTapeReq   = potentialAllocation.tapeRequestId
+          WHERE
+            id = potentialAllocation.driveId;
+          UPDATE TapeRequest SET
+            status           = 1, -- MATCHED
+            tapeDrive        = potentialAllocation.driveId,
+            modificationTime = castorVdqmCommon.getTime()
+          WHERE
+            id = potentialAllocation.tapeRequestId;
+
+          -- A free drive has been allocated to a pending request
+          -- Set the return value of the procedure and exit this for loop
+          returnVar := 1;
+          EXIT;
+
+        END IF; -- passesDedications
+
+      END IF; -- The drive allocation is still valid
+
+    END LOOP; -- For each potential drive allocation
+
+  END allocateDrive2;
 
 
   /**
