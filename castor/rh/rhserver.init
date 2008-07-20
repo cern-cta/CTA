@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.14 $ $Release$ $Date: 2008/05/20 07:53:12 $ $Author: waldron $
+# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.15 $ $Release$ $Date: 2008/07/20 16:43:03 $ $Author: waldron $
 #
 # chkconfig: 345 63 52
 # description: Request Handler Initialisation Script
@@ -70,9 +70,9 @@ start() {
                 execute "public"
         fi
 
-               if [ "$type" == "private" ]; then
+        if [ "$type" == "private" ]; then
                 if [ "$port" == "" ]; then
-                            echo -n $"no private port defined"
+                        echo -n $"no private port defined"
                         failure && echo && exit
                 fi
         fi
@@ -95,12 +95,12 @@ execute() {
                 if [ "$1" == "public" ]; then
                         pid=`pgrep -f "$prog\$" | xargs`
                 else
-                        pid=`pgrep -f "$prog $port\$" | xargs`        
+                        pid=`pgrep -f "$prog $port\$" | xargs`
                 fi
                 if [ -n "$pid" ]; then
-                            echo -n $"already running"
+                        echo -n $"already running"
                         failure
-                            echo
+                        echo
                         return 1
                 fi
         fi
@@ -108,11 +108,11 @@ execute() {
         # Start the daemon
         cd /var/spool/rhserver
         if [ "$1" == "public" ]; then
-                daemon /usr/bin/rhserver $RHSERVER_OPTION
+                daemon /usr/bin/rhserver $RHSERVER_OPTIONS
         else
-                daemon /usr/bin/rhserver $port $RHSERVER_OPTION
+                daemon /usr/bin/rhserver $port $RHSERVER_OPTIONS
         fi
-    
+
         ETVAL=$?
         [ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
         echo
@@ -123,19 +123,19 @@ execute() {
 
 stop() {
         local pid
-    
+
         RETVAL=0
         echo -n $"Stopping $prog $1: "
         if [ "$type" == "private" ]; then
                 if [ "$port" == "" ]; then
-                            echo -n $"no private port defined"
+                        echo -n $"no private port defined"
                         failure && echo && return 2
                 fi
         fi
         if [ "$1" == "public" ]; then
                 pid=`pgrep -f "$prog\$" | xargs`
         else
-                pid=`pgrep -f "$prog $port\$" | xargs`        
+                pid=`pgrep -f "$prog $port\$" | xargs`
         fi
 
         # Attempt to stop the process with a TERM first then a KILL
@@ -145,7 +145,7 @@ stop() {
                 if [ "$1" == "public" ]; then
                         pid=`pgrep -f "$prog\$" | xargs`
                 else
-                        pid=`pgrep -f "$prog $port\$" | xargs`        
+                        pid=`pgrep -f "$prog $port\$" | xargs`
                 fi
                 if [ -n "$pid" ]; then
                         kill -KILL $pid >/dev/null 2>&1
@@ -154,7 +154,7 @@ stop() {
         else
                 failure $"$base startup"
         fi
-    
+
         echo
         [ -f /var/lock/subsys/$prog.$1 ] && rm -f /var/lock/subsys/$prog.$1
         return $RETVAL
@@ -175,12 +175,12 @@ restart() {
 
 status() {
         local pid
-    
+
         # First try "ps"
         if [ "$1" == "public" ]; then
                 pid=`pgrep -f "$prog\$" | xargs`
         else
-                pid=`pgrep -f "$prog $port\$" | xargs`        
+                pid=`pgrep -f "$prog $port\$" | xargs`
         fi
         if [ -n "$pid" ]; then
                 echo $"$prog $1 (pid $pid) is running..."
@@ -191,24 +191,24 @@ status() {
         if [ -f /var/run/$prog.$1.pid ]; then
                 read pid < /var/run/$prog.$1.pid
                 if [ -n "$pid" ]; then
-                            echo $"$prog $1: dead but pid file exists"
+                        echo $"$prog $1: dead but pid file exists"
                         return 1
-                fi        
+                fi
         fi
 
         # See if /var/lock/subsys/$prog.$1  exists
         if [ -f /var/lock/subsys/$prog.$1 ]; then
                 echo $"$prog $1: dead but subsys locked"
                 return 2
-        fi    
-    
+        fi
+
         echo $"$prog $1 is stopped"
         return 3
 }
 
 # See how we were called
 case "$1" in
-    
+
         start)
                 start
                 ;;
@@ -242,7 +242,7 @@ case "$1" in
                 ;;
         *)
                 echo $"Usage: $0 {start|stop|status|restart|condrestart} [public|private]"
-                exit 1        
+                exit 1
 esac
 
 exit $RETVAL
