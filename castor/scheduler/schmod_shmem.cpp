@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: schmod_shmem.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/06/27 08:24:06 $ $Author: waldron $
+ * @(#)$RCSfile: schmod_shmem.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/07/20 16:47:23 $ $Author: waldron $
  *
  * Castor LSF External Plugin - Phase 1 (Shared Memory)
  *
@@ -56,7 +56,7 @@ extern "C" {
     // Get pointer to the shared memory
     try {
       bool create = false;
-      clusterStatus = 
+      clusterStatus =
 	castor::monitoring::ClusterStatus::getClusterStatus(create);
     } catch (castor::exception::Exception e) {
       ls_syslog(LOG_ERR, "shmod_shmem: failed to access shared memory: %s",
@@ -107,7 +107,7 @@ extern "C" {
   // shmem_new
   //---------------------------------------------------------------------------
   int shmem_new(void *resreq) {
-    
+
     // Check parameters
     if (resreq == NULL) {
       return 0;
@@ -115,9 +115,9 @@ extern "C" {
 
     // Attempt to create a new HandlerData structure for the job
     try {
-      castor::scheduler::HandlerData *handler = 
+      castor::scheduler::HandlerData *handler =
 	new castor::scheduler::HandlerData(resreq);
-      
+
       // Set the key and handler specific data for this resource requirement
       lsb_resreq_setobject(resreq, HANDLER_SHMEM_ID,
 			   (char *)handler->jobName.c_str(),
@@ -169,7 +169,7 @@ extern "C" {
 
 	// Check to see if the diskserver is in the exclusion host list
 	std::vector<std::string>::const_iterator it4 =
-	  std::find(handler->excludedHosts.begin(), 
+	  std::find(handler->excludedHosts.begin(),
 		    handler->excludedHosts.end(), diskServer);
 
 	reason = 0;
@@ -179,7 +179,7 @@ extern "C" {
 	else if (it == clusterStatus->end()) {
 	  reason = PEND_HOST_CUNKNOWN; // Host not listed in shared memory
 	}
-	else if ((handler->requestType !=
+	else if ((handler->requestType ==
 		  castor::OBJ_StageDiskCopyReplicaRequest) &&
 		 (handler->sourceDiskServer != diskServer) &&
 		 (it4 != handler->excludedHosts.end())) {
@@ -188,17 +188,17 @@ extern "C" {
 
 	// For non diskcopy replication requests the diskserver must be in
 	// PRODUCTION
-	else if ((handler->requestType != 
+	else if ((handler->requestType !=
 		  castor::OBJ_StageDiskCopyReplicaRequest) &&
-		 (it->second.status() != 
+		 (it->second.status() !=
 		  castor::stager::DISKSERVER_PRODUCTION)) {
 	  reason = PEND_HOST_CSTATE;   // Diskserver status incorrect
 	}
 
-	// For diskcopy replication requests where the diskserver being 
+	// For diskcopy replication requests where the diskserver being
 	// processed is the source diskserver the diskserver must be in
 	// PRODUCTION or DRAINING
-	else if ((handler->requestType == 
+	else if ((handler->requestType ==
 		  castor::OBJ_StageDiskCopyReplicaRequest) &&
 		 (handler->sourceDiskServer == diskServer) &&
 		 (it->second.status() ==
@@ -208,14 +208,14 @@ extern "C" {
 
 	// For diskcopy replication requests where the diskserver being
 	// processed is not the source diskserver. I.e it could be the
-	// destination end of the transfer the diskserver must be in 
+	// destination end of the transfer the diskserver must be in
 	// PRODUCTION
 	else if ((handler->requestType ==
 		  castor::OBJ_StageDiskCopyReplicaRequest) &&
 		 (handler->sourceDiskServer != diskServer) &&
 		 (it->second.status() !=
 		  castor::stager::DISKSERVER_PRODUCTION)) {
-	  reason = PEND_HOST_CSTATE;   // Diskserver status incorrect 
+	  reason = PEND_HOST_CSTATE;   // Diskserver status incorrect
 	}
 
 	// Up to this point we have only processed information about the
@@ -226,12 +226,12 @@ extern "C" {
 	  for (castor::monitoring::DiskServerStatus::const_iterator it3 =
 		 it->second.begin();
 	       it3 != it->second.end(); it3++) {
-	    
+
 	    // For non diskcopy replication requests the filesystem must be in
 	    // PRODUCTION
 	    if ((handler->requestType !=
 		 castor::OBJ_StageDiskCopyReplicaRequest) &&
-		(it3->second.status() != 
+		(it3->second.status() !=
 		 castor::stager::FILESYSTEM_PRODUCTION)) {
 	      disabled++;
 	    }
@@ -243,7 +243,7 @@ extern "C" {
 		      castor::OBJ_StageDiskCopyReplicaRequest) &&
 		     (handler->sourceDiskServer == diskServer)) {
 	      if ((handler->sourceFileSystem == it3->first.c_str()) &&
-		  (it3->second.status() == 
+		  (it3->second.status() ==
 		   castor::stager::FILESYSTEM_DISABLED)) {
 		disabled++;
 
@@ -256,7 +256,7 @@ extern "C" {
 	    }
 
 	    // For all other requests the filesystem must be in PRODUCTION
-	    else if (it3->second.status() != 
+	    else if (it3->second.status() !=
 		     castor::stager::FILESYSTEM_PRODUCTION) {
 	      disabled++;
 	    }
@@ -267,7 +267,7 @@ extern "C" {
 	    reason = PEND_HOST_CSTATE; // Diskserver status incorrect
 	  }
 	}
-		  
+
 	// Remove the host from the candidate list if a reason exists
 	if (reason) {
 	  lsb_reason_set(reasonTb, candHost, reason);
@@ -276,14 +276,14 @@ extern "C" {
 	  index++;
 	}
 	free(hInfo);
-      } 
+      }
       candGroupEntry = lsb_cand_getnextgroup(NULL);
     }
 
     return 0;
   }
 
-  
+
   //---------------------------------------------------------------------------
   // shmem_delete
   //---------------------------------------------------------------------------
