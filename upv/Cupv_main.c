@@ -1,5 +1,5 @@
 /*
- * $Id: Cupv_main.c,v 1.10 2008/05/05 08:57:58 waldron Exp $
+ * $Id: Cupv_main.c,v 1.11 2008/07/20 16:30:26 waldron Exp $
  *
  * Copyright (C) 1999-2002 by CERN IT-DS/HSM
  * All rights reserved
@@ -30,7 +30,6 @@
 #include "Cupv_server.h"
 #include "Cregexp.h"
 #include "Cgetopt.h"
-#include "Cdomainname.h"
 #include "patchlevel.h"
 #ifdef CSEC
 #include "Csec_api.h"
@@ -115,7 +114,7 @@ struct main_args *main_args;
 #endif
 	signal (SIGTERM,Cupv_signal_handler);
 	signal (SIGINT,Cupv_signal_handler);
-    
+
 	/* open request socket */
 
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -153,7 +152,7 @@ struct main_args *main_args;
 	FD_SET (s, &readmask);
 
 	/* main loop */
-	
+
 	while (1) {
 		if (being_shutdown) {
 			int nb_active_threads = 0;
@@ -205,12 +204,12 @@ main(argc, argv)
 	int c;
 	int foreground = 0;
 	always_reply_yes = 0;
-	
+
 	Coptind = 1;
 	Copterr = 1;
-	
+
 	strcpy(func, "Cupv_serv");
-	
+
 	while ((c = Cgetopt(argc, argv, "fy")) != EOF) {
 		switch(c) {
 		case 'f':
@@ -226,7 +225,7 @@ main(argc, argv)
 			exit(1);
 		}
 	}
-	
+
 	if (foreground) {
 		exit(Cupv_main());
 	} else {
@@ -323,12 +322,12 @@ struct Cupv_srv_thread_info *thip;
 	        switch (req_type) {
 		case CUPV_LIST:
 			if ((c = Cupv_srv_list (magic, req_data, clienthost, thip, endlist, &dblistptr)))
-				return (c); 
+				return (c);
 			break;
 		}
-		
+
 		if(endlist) break;
-		
+
 		sendrep (thip->s, CUPV_IRC, 0);
 		memcpy (&readfd, &readmask, sizeof(readmask));
 		timeval.tv_sec = CUPV_LISTTIMEOUT;
@@ -337,12 +336,12 @@ struct Cupv_srv_thread_info *thip;
 			endlist = 1;
 			continue;
 		}
-		
+
 		if ((c = getreq (thip, &magic, &new_req_type, req_data, &clienthost) < 0)) {
 			endlist = 1;
 			continue;
 		}
-		
+
 		if (new_req_type != req_type)
 			endlist = 1;
 	}
@@ -434,7 +433,7 @@ void *arg;
 		}
 	}
 #endif
-	
+
 	if ((c = getreq (thip, &magic, &req_type, req_data, &clienthost)) == 0)
 		procreq (magic, req_type, req_data, clienthost, thip);
 	else if (c > 0)
@@ -445,62 +444,37 @@ void *arg;
 	return (NULL);
 }
 
-/* Checks that the machine is in the right domain */
-int Cupv_check_domain(char *host) {
-
-	char domain[MAXDOMAINLEN + 1];
-	char *dotpos;
-	int cmpres;
-	
-	dotpos = strchr(host, '.');
-	if (dotpos == NULL) {
-		/* Not found, we are on the same machine */
-		return(0);
-	} else {
-		
-		Cdomainname(domain, MAXDOMAINLEN);
-		cmpres = strcmp(((char *)dotpos) + 1, domain);
-		
-		if (cmpres == 0) {
-			*dotpos = '\0';
-			return(0);
-		} else {
-			return(-1);
-		}
-	}
-}
-
 /* Checks a regular expression */
 int Cupv_check_regexp_syntax(char *tobechecked) {
 
 	char tmp[CA_MAXREGEXPLEN + 1];
 	int i=0;
 	int beginok = 0, endok =0;
-	
+
 	if (strlen(tobechecked) == 0) {
 		return(0);
 	}
-	
+
 	if (tobechecked[0] == REGEXP_START_CHAR) {
 		beginok = 1;
 	}
-	
+
 	while(tobechecked[i] != 0 && i <= CA_MAXREGEXPLEN) {
 		i++;
 	}
-	
-	if (tobechecked[i-1] == REGEXP_END_CHAR) { 
+
+	if (tobechecked[i-1] == REGEXP_END_CHAR) {
 		endok = 1;
 	}
-	
+
 	Cupvlogit(func, "Check Syntax for <%s>:Beginning OK: %d, End OK:%d\n", tobechecked, beginok, endok);
-	
+
 	/* Checking that the buffer can hold the complete address */
 	if (i + (!beginok) + (!endok) > CA_MAXREGEXPLEN) {
 		serrno = EINVAL;
 		return(-1);
 	}
-	
+
 	if (!beginok) {
 		tmp[0] = REGEXP_START_CHAR;
 		tmp[1] = '\0';
@@ -508,21 +482,21 @@ int Cupv_check_regexp_syntax(char *tobechecked) {
 	} else {
 		strcpy(tmp, tobechecked);
 	}
-	
+
 	if (!endok) {
-		strcat(tmp, REGEXP_END_STR); 
+		strcat(tmp, REGEXP_END_STR);
 	}
 
 	strcpy(tobechecked, tmp);
-	
+
 	return(0);
 }
 
 /* Checks a regular expression */
 int Cupv_check_regexp(char *tobechecked) {
-	
+
 	Cregexp_t *rex;
-	
+
 	if ((rex = Cregexp_comp(tobechecked)) == NULL) {
 		return(-1);
 	} else {
@@ -537,12 +511,12 @@ int Cupv_compare_priv(struct Cupv_userpriv *requested, struct Cupv_userpriv *rul
 
 	Cregexp_t *rex;
 	Cregexp_t *rex2;
-	
+
 	/* Checking uid & gid */
 	if (requested->uid != rule->uid || requested->gid != rule->gid) {
 		return(-1);
 	}
-	
+
 	/* Checking srchost */
 	if ((rex = Cregexp_comp(rule->srchost)) == NULL) {
 		return(-1);
@@ -552,9 +526,9 @@ int Cupv_compare_priv(struct Cupv_userpriv *requested, struct Cupv_userpriv *rul
 			return(-1);
 		}
 	}
-	
+
 	free((char *)rex);
-	
+
 	/* Checking tgthost */
 	if ((rex2 = Cregexp_comp(rule->tgthost)) == NULL) {
 		return(-1);
@@ -564,7 +538,7 @@ int Cupv_compare_priv(struct Cupv_userpriv *requested, struct Cupv_userpriv *rul
 			return(-1);
 		}
 	}
-	
+
 	free((char *)rex2);
 	if ((rule->privcat & requested->privcat) != requested->privcat) {
 		return(-1);
@@ -584,26 +558,16 @@ int Cupv_util_check(struct Cupv_userpriv *requested, struct Cupv_srv_thread_info
 	struct Cupv_userpriv filter;
 	int c;
 	DBLISTPTR dblistptr;
-	
+
 	memset (&dblistptr, 0, sizeof(DBLISTPTR));
-	
-	if (Cupv_check_domain(requested->srchost) != 0) {    
-		Cupvlogit(func, "Access DENIED - SRC Domain is different\n");
-		return(1);
-	}
-	
-	if (Cupv_check_domain(requested->tgthost) != 0) {    
-		Cupvlogit(func, "Access DENIED - TGT Domain is different\n");
-		return(1);
-	}
-	
+
 	/* Action is authorized is the user is root on local machine */
-	if ( requested->uid == 0 
+	if ( requested->uid == 0
 	     && (strcmp(requested->srchost, requested->tgthost) == 0)) {
 		Cupvlogit(func, "Access GRANTED - user is root on local machine\n");
 		return(0);
-	}  
-	
+	}
+
 	/* Initializing the db_entry structure with uid/gid, so that the Cupv_list_privilege
 	   functions returns all the rows for that uid/gid */
 	filter.uid = requested->uid;
@@ -611,33 +575,33 @@ int Cupv_util_check(struct Cupv_userpriv *requested, struct Cupv_srv_thread_info
 	filter.srchost[0] = 0;
 	filter.tgthost[0] = 0;
 	filter.privcat = -1;
-	
+
 	/* Looping on corresponding entries to check authorization */
-	while ((c = Cupv_list_privilege_entry (&thip->dbfd, bol, &db_entry, &filter, 0, &dblistptr )) == 0) { 
-		
+	while ((c = Cupv_list_privilege_entry (&thip->dbfd, bol, &db_entry, &filter, 0, &dblistptr )) == 0) {
+
 		if (c<0) {
 			Cupvlogit(func, "Access DENIED - Problem accessing DB\n");
 			return(-1);
 		}
-		
+
 		/*  Cupvlogit(func, "Scanning row <%d> <%d> <%s> <%s> <%d>\n", db_entry.uid, db_entry.gid, db_entry.srchost, db_entry.tgthost, db_entry.privcat); */
-		
+
 		if (Cupv_compare_priv(requested, &db_entry) == 0) {
 			Cupvlogit(func, "Access GRANTED - Authorization found in DB\n");
-			
-			/* Calling list_privilege_entry with endlist = 1 to free the resources*/ 
+
+			/* Calling list_privilege_entry with endlist = 1 to free the resources*/
 			Cupv_list_privilege_entry (&thip->dbfd, bol, &db_entry, requested, 1, &dblistptr );
-			
+
 			return(0);
 		}
-		
+
 		bol = 0;
 	}
-	
+
 	/* Nothing was found, return 1 */
 	Cupvlogit(func, "Access DENIED - NO Authorization found in DB\n");
-	
-	/* Calling list_privilege_entry with endlist = 1 to free the resources*/ 
+
+	/* Calling list_privilege_entry with endlist = 1 to free the resources*/
 	Cupv_list_privilege_entry (&thip->dbfd, bol, &db_entry, requested, 1, &dblistptr );
 	return(1);
 }

@@ -10,7 +10,7 @@
 /*
  * @(#)Cupv_server.h,v 1.5 2002/06/06 14:18:39 CERN IT-PDP/DM Ben Couturier
  */
- 
+
 #ifndef _CUPV_SERVER_H
 #define _CUPV_SERVER_H
 #ifdef USE_ORACLE
@@ -45,7 +45,7 @@
 
 
 #include "Cupv_struct.h"
-#include "Cupv_util.h" 
+#include "Cupv_util.h"
                         /* UPV constants and macros */
 
 #define CHECKI	5	/* max interval to check for work to be done */
@@ -129,13 +129,12 @@ EXTERN_C int sendrep _PROTO((int, int, ...));
 EXTERN_C int Cupvlogit _PROTO((char *, char *, ...));
 
 EXTERN_C int Cupv_util_check _PROTO ((struct Cupv_userpriv *, struct Cupv_srv_thread_info *thip));
-EXTERN_C int Cupv_check_domain _PROTO((char *));
 EXTERN_C int Cupv_check_regexp _PROTO((char *));
 EXTERN_C int Cupv_check_regexp_syntax _PROTO((char *));
 EXTERN_C int Cupv_compare_priv _PROTO((struct Cupv_userpriv *, struct Cupv_userpriv *));
 EXTERN_C int Cupv_opendb _PROTO((struct Cupv_dbfd *));
 EXTERN_C int Cupv_start_tr _PROTO((int, struct Cupv_dbfd *));
-EXTERN_C int Cupv_end_tr _PROTO((struct Cupv_dbfd *)); 
+EXTERN_C int Cupv_end_tr _PROTO((struct Cupv_dbfd *));
 EXTERN_C int Cupv_init_dbpkg _PROTO (());
 EXTERN_C int Cupv_abort_tr _PROTO ((struct Cupv_dbfd *));
 EXTERN_C int Cupv_closedb  _PROTO ((struct Cupv_dbfd *));
