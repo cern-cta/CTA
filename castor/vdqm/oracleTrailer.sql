@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.141 $ $Release$ $Date: 2008/07/20 16:02:45 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.142 $ $Release$ $Date: 2008/07/20 16:15:52 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1197,9 +1197,12 @@ INNER JOIN ClientIdentification ON
   TapeRequest.client = ClientIdentification.id
 INNER JOIN TapeDrive ON
   TapeRequest.tape = TapeDrive.tape -- Request is for the tape in the drive
+  AND (
+    TapeRequest.requestedSrv IS NULL
+    OR TapeRequest.requestedSrv = TapeDrive.tapeServer
+  )
 INNER JOIN TapeServer ON
-     TapeRequest.requestedSrv = TapeServer.id
-  OR TapeRequest.requestedSrv IS NULL
+  TapeDrive.tapeServer = TapeServer.id
 WHERE
       TapeServer.actingMode=0 -- ACTIVE
   AND TapeRequest.tapeDrive IS NULL -- Request has not already been allocated
