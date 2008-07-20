@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.139 $ $Release$ $Date: 2008/07/20 12:26:18 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.140 $ $Release$ $Date: 2008/07/20 15:49:27 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1470,6 +1470,319 @@ END castorVdqm;
  * See the castorVdqm package specification for documentation.
  */
 CREATE OR REPLACE PACKAGE BODY castorVdqm AS
+
+  /**
+   * Determines whether or not the specified drive and GID pass the dedications
+   * of the drive.
+   *
+   * @param driveIdVar the ID of the drive.
+   * @param gidVar     the GID of the client.
+   * @return 1 if the dedications are passed, else 0.
+   */
+  FUNCTION passesGidDriveDedications(
+    driveIdVar IN NUMBER,
+    gidVar     IN NUMBER)
+    RETURN NUMBER AS
+    nbGidDedicationsVar NUMBER;
+  BEGIN
+    -- Count the number of GID dedications for the drive
+    -- (there should only be one)
+    SELECT COUNT(*) INTO nbGidDedicationsVar
+      FROM TapeDriveDedication
+      WHERE tapeDrive = driveIdVar AND egid IS NOT NULL;
+
+    -- Drive passes if there are no GID dedications for it
+    IF nbGidDedicationsVar = 0 THEN
+      RETURN 1;
+    END IF;
+
+    -- Drive has one or more GID dedications
+
+    -- Count the number of matching GID dedications
+    SELECT COUNT(*) INTO nbGidDedicationsVar
+      FROM TapeDriveDedication
+      WHERE
+            TapeDriveDedication.tapeDrive = driveIdVar
+        AND gidVar = TapeDriveDedication.egid;
+
+    -- As there are GID dedications for the drive, it only passes if at least
+    -- one matches
+    IF nbGidDedicationsVar > 0 THEN
+      RETURN 1;
+    ELSE
+      RETURN 0;
+    END IF;
+  END passesGidDriveDedications;
+
+
+  /**
+   * Determines whether or not the specified drive and access mode pass the
+   * dedications of the drive.
+   *
+   * @param driveIdVar    the ID of the drive.
+   * @param accessModeVar the access mode of the volume request.
+   * @return 1 if the dedications are passed, else 0.
+   */
+  FUNCTION passesModeDriveDedication(
+    driveIdVar    IN NUMBER,
+    accessModeVar IN NUMBER)
+    RETURN NUMBER AS
+    nbModeDedicationsVar NUMBER;
+  BEGIN
+    -- Count the number of mode dedications for the drive
+    -- (there should only be one)
+    SELECT COUNT(*) INTO nbModeDedicationsVar
+      FROM TapeDriveDedication
+      WHERE tapeDrive = driveIdVar AND accessMode IS NOT NULL;
+
+    -- Drive passes if there are no access mode dedications for it
+    IF nbModeDedicationsVar = 0 THEN
+      RETURN 1;
+    END IF;
+
+    -- Drive has a mode dedication
+
+    -- Count the number of matching vid dedications
+    -- (there should be a maximum of one)
+    SELECT COUNT(*) INTO nbModeDedicationsVar
+      FROM TapeDriveDedication
+      WHERE
+            TapeDriveDedication.tapeDrive = driveIdVar
+        AND TapeDriveDedication.accessMode = accessModeVar;
+
+    -- As there is a mode dedication for the drive, the drive only passes if it
+    -- matches
+    IF nbModeDedicationsVar > 0 THEN
+      RETURN 1;
+    ELSE
+      RETURN 0;
+    END IF;
+  END passesModeDriveDedication;
+
+
+  /**
+   * Determines whether or not the specified drive and host pass the
+   * dedications of the drive.
+   *
+   * @param driveIdVar    the ID of the drive.
+   * @param clientHostVar the client host of the volume request.
+   * @return 1 if the dedications are passed, else 0.
+   */
+  FUNCTION passesHostDriveDedications(
+    driveIdVar    IN NUMBER,
+    clientHostVar IN VARCHAR2)
+    RETURN NUMBER AS
+    nbHostDedicationsVar NUMBER;
+  BEGIN
+    -- Count the number of host dedications for the drive
+    SELECT COUNT(*) INTO nbHostDedicationsVar
+      FROM TapeDriveDedication
+      WHERE tapeDrive = driveIdVar AND clientHost IS NOT NULL;
+
+    -- Drive passes if there are no host dedications for it
+    IF nbHostDedicationsVar = 0 THEN
+      RETURN 1;
+    END IF;
+
+    -- Drive has one or more host dedications
+
+    -- Count the number of matching host dedications
+    SELECT COUNT(*) INTO nbHostDedicationsVar
+      FROM TapeDriveDedication
+      WHERE
+            TapeDriveDedication.tapeDrive = driveIdVar
+        AND REGEXP_LIKE(clientHostVar, TapeDriveDedication.clientHost);
+
+    -- As there are host dedications for the drive, it only passes if at least
+    -- one matches
+    IF nbHostDedicationsVar > 0 THEN
+      RETURN 1;
+    ELSE
+      RETURN 0;
+    END IF;
+  END passesHostDriveDedications;
+
+
+  /**
+   * Determines whether or not the specified drive and UID pass the dedications
+   * of the drive.
+   *
+   * @param driveIdVar the ID of the drive.
+   * @param uidVar     the UID of the volume request.
+   * @return 1 if the dedications are passed, else 0.
+   */
+  FUNCTION passesUidDriveDedications(
+    driveIdVar IN NUMBER,
+    uidVar     IN NUMBER)
+    RETURN NUMBER AS
+    nbUidDedicationsVar NUMBER;
+  BEGIN
+    -- Count the number of UID dedications for the drive
+    -- (there should only be one)
+    SELECT COUNT(*) INTO nbUidDedicationsVar
+      FROM TapeDriveDedication
+      WHERE tapeDrive = driveIdVar AND euid IS NOT NULL;
+
+    -- Drive passes if there are no UID dedications for it
+    IF nbUidDedicationsVar = 0 THEN
+      RETURN 1;
+    END IF;
+
+    -- Drive has one or more UID dedications
+
+    -- Count the number of matching UID dedications
+    SELECT COUNT(*) INTO nbUidDedicationsVar
+      FROM TapeDriveDedication
+      WHERE
+            TapeDriveDedication.tapeDrive = driveIdVar
+        AND uidVar = TapeDriveDedication.euid;
+
+    -- As there are UID dedications for the drive, it only passes if at least
+    -- one matches
+    IF nbUidDedicationsVar > 0 THEN
+      RETURN 1;
+    ELSE
+      RETURN 0;
+    END IF;
+  END passesUidDriveDedications;
+
+
+  /**
+   * Determines whether or not the specified drive and VID pass the dedications
+   * of the drive.
+   *
+   * @param driveIdVar the ID of the drive.
+   * @param vidVar     the vid of the volume request.
+   * @return 1 if the dedications are passed, else 0.
+   */
+  FUNCTION passesVidDriveDedications(
+    driveIdVar IN NUMBER,
+    vidVar     IN VARCHAR2)
+    RETURN NUMBER AS
+    nbVidDedicationsVar NUMBER;
+  BEGIN
+    -- Count the number of vid dedications for the drive
+    SELECT COUNT(*) INTO nbVidDedicationsVar
+      FROM TapeDriveDedication
+      WHERE tapeDrive = driveIdVar AND vid IS NOT NULL;
+
+    -- Drive passes if there are no vid dedications for it
+    IF nbVidDedicationsVar = 0 THEN
+      RETURN 1;
+    END IF;
+
+    -- Drive has one or more vid dedications
+
+    -- Count the number of matching vid dedications
+    SELECT COUNT(*) INTO nbVidDedicationsVar
+      FROM TapeDriveDedication
+      WHERE
+            TapeDriveDedication.tapeDrive = driveIdVar
+        AND REGEXP_LIKE(vidVar, TapeDriveDedication.vid);
+
+    -- As there are vid dedications for the drive, it only passes if at least
+    -- one matches
+    IF nbVidDedicationsVar > 0 THEN
+      RETURN 1;
+    ELSE
+      RETURN 0;
+    END IF;
+  END passesVidDriveDedications;
+
+
+  /**
+   * Determines whether or not the specified drive and VID pass the
+   * tape-to-drive dedications.
+   *
+   * @param driveIdVar the ID of the drive.
+   * @param vidVar     the vid of the volume request.
+   * @return 1 if the dedications are passed, else 0.
+   */
+  FUNCTION passesTape2DriveDedications(
+    driveIdVar IN NUMBER,
+    vidVar     IN VARCHAR2)
+    RETURN NUMBER AS
+    nbDedicationsVar NUMBER;
+  BEGIN
+    -- Count the number of dedications for the tape
+    SELECT COUNT(*) INTO nbDedicationsVar
+      FROM Tape2DriveDedication
+      WHERE Tape2DriveDedication.vid = vidVar;
+
+    -- Dedications passed if there are no dedications for the tape
+    IF nbDedicationsVar = 0 THEN
+      RETURN 1;
+    END IF;
+
+    -- Tape has one or more dedications
+
+    -- Count the number of matching dedications
+    SELECT COUNT(*) INTO nbDedicationsVar
+      FROM Tape2DriveDedication
+      WHERE
+        Tape2DriveDedication.vid = vidVar
+        AND Tape2DriveDedication.tapeDrive = driveIdVar;
+
+    -- As there are tape dedications, they are only passed if at least one
+    -- matches
+    IF nbDedicationsVar > 0 THEN
+      RETURN 1;
+    ELSE
+      RETURN 0;
+    END IF;
+  END passesTape2DriveDedications;
+
+
+  /**
+   * This function determines if the specified drive and usage pass all drive
+   * and tape dedications.
+   *
+   * @param driveIdVar the ID of the drive.
+   * @param gidVar     the gid of the client.
+   * @param hostVar    the host of the client.
+   * @param modeVar    the tape access mode.
+   * @param uidVar     the uid of the client.
+   * @param vidVar     the vid of the volume request.
+   * @return 1 if all dedications are passed, else 0.
+   */
+  FUNCTION passesDedications(
+    driveIdVar IN NUMBER,
+    gidVar     IN NUMBER,
+    hostVar    IN VARCHAR2,
+    modeVar    IN NUMBER,
+    uidVar     IN NUMBER,
+    vidVar     IN VARCHAR2)
+    RETURN NUMBER AS
+    nbVidDedicationsVar NUMBER;
+  BEGIN
+    IF passesGidDriveDedications(driveIdVar, gidVar) = 0 THEN
+      RETURN 0;
+    END IF;
+
+    IF passesHostDriveDedications(driveIdVar, hostVar) = 0 THEN
+      RETURN 0;
+    END IF;
+
+    IF passesModeDriveDedication(driveIdVar, modeVar) = 0 THEN
+      RETURN 0;
+    END IF;
+
+    IF passesUidDriveDedications(driveIdVar, uidVar) = 0 THEN
+      RETURN 0;
+    END IF;
+
+    IF passesVidDriveDedications(driveIdVar, vidVar) = 0 THEN
+      RETURN 0;
+    END IF;
+
+    IF passesTape2DriveDedications(driveIdVar, vidVar) = 0 THEN
+      RETURN 0;
+    END IF;
+
+    -- Drive has passed all of its dedications
+    RETURN 1;
+  END passesDedications;
+
 
   /**
    * See the castorVdqm package specification for documentation.
