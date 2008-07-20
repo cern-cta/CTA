@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.142 $ $Release$ $Date: 2008/07/20 16:15:52 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.143 $ $Release$ $Date: 2008/07/20 18:39:37 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1118,27 +1118,27 @@ ORDER BY
 CREATE OR REPLACE VIEW PotentialDriveAllocations_VIEW AS SELECT UNIQUE
   TapeDrive.id as driveId,
   TapeDrive.driveName,
-  TapeRequest.id as tapeRequestId,specification for documentation.
+  TapeRequest.id as tapeRequestId,
   ClientIdentification.euid as clientEuid,
-  ClientIdentification.egid as clientEgid,iew AS
-  ClientIdentification.machine as clientMachine,2_to_2.1.7-10-3.sqlplus
+  ClientIdentification.egid as clientEgid,
+  ClientIdentification.machine as clientMachine,
   TapeAccessSpecification.accessMode,
-  VdqmTape.vid,te function determines whether or not the specified drive and
-  TapeRequest.modificationTime,f the drive.
+  VdqmTape.vid,
+  TapeRequest.modificationTime,
   TapeRequest.creationTime,
   NVL(EffectiveVolumePriority_VIEW.priority,0) AS volumePriority
-FROM @param gidVar     the GID of the client.
-  TapeRequest1 if the dedications are passed, else 0.
+FROM
+  TapeRequest
 INNER JOIN TapeAccessSpecification ON
   TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
-INNER JOIN VdqmTape ONER,
+INNER JOIN VdqmTape ON
   TapeRequest.tape = VdqmTape.id
 INNER JOIN ClientIdentification ON
   TapeRequest.client = ClientIdentification.id
 INNER JOIN TapeDrive ON
   TapeRequest.deviceGroupName = TapeDrive.deviceGroupName
-  AND ((there should only be one)
-    TapeRequest.requestedSrv IS NULLqm_2.1.7-10-2_to_2.1.7-10-3.sqlplus
+  AND (
+    TapeRequest.requestedSrv IS NULL
     OR TapeRequest.requestedSrv = TapeDrive.tapeServer
   )
 INNER JOIN TapeServer ON
