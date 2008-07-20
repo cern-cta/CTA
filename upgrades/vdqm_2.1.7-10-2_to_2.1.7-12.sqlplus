@@ -1,5 +1,5 @@
 /******************************************************************************
- *              vdqm_2.1.7-10-2_to_2.1.7-11.sql
+ *              vdqm_2.1.7-10-2_to_2.1.7-11.sqlplus
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,6 +24,33 @@
 
 /* Stop on errors - this only works from sqlplus */
 WHENEVER SQLERROR EXIT FAILURE;
+
+/* Login as VDQM writer - this only works from sqlplus */
+PROMPT Login as the VDQM writer
+ACCEPT vdqm_writer_conn char PROMPT 'Enter VDQM writer connection string (user@tns): '
+CONNECT &vdqm_writer_conn
+
+/* Version cross check and update */
+DECLARE
+  unused VARCHAR(100);
+BEGIN
+  SELECT release INTO unused FROM CastorVersion WHERE release = '2_1_7_10_2';
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- Error, we can't apply this script
+  raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts before this one.');
+END;
+/
+
+/* Get the username of the VDQM owner account - this only works from sqlplus */
+ACCEPT vdqm char PROMPT 'Enter the username of the vdqm owner: '
+
+CREATE OR REPLACE SYNONYM tape2drivededication FOR "&vdqm".tape2drivededication;
+CREATE OR REPLACE SYNONYM potentialdriveallocations_view for "&vdqm".candidatedriveallocations_view;
+
+/* Login as VDQM schema owner - this only works from sqlplus */
+PROMPT Login as the VDQM schema owner
+ACCEPT vdqm_conn char PROMPT 'Enter connection string (user@tns): '
+CONNECT &vdqm_conn
 
 /* Version cross check and update */
 DECLARE
@@ -562,6 +589,10 @@ ORDER BY
   VolumePriority DESC,
   TapeRequest.creationTime ASC;
 
+/* grant privileges to vdqm writer - this only works from sqlplus */
+ACCEPT vdqm_writer char PROMPT 'Enter the username of the vdqm writer: '
+grant delete, insert, select, update on tape2drivededication to &vdqm_writer;
+grant select on potentialdriveallocations_view to &vdqm_writer;
 
 CREATE OR REPLACE PACKAGE BODY castorVdqm AS
 
