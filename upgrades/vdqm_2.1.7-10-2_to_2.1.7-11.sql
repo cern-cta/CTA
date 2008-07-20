@@ -35,7 +35,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts before this one.');
 END;
 
---UPDATE CastorVersion SET release = '2_1_7_11';
+UPDATE CastorVersion SET release = '2_1_7_11';
 COMMIT;
 
 CREATE TABLE Tape2DriveDedication (vid VARCHAR2(2048), id INTEGER CONSTRAINT I_Tape2DriveDedication_Id PRIMARY KEY, tapeDrive INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
