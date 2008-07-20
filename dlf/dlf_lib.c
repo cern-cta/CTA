@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.30 2008/06/05 06:37:28 waldron Exp $
+ * $Id: dlf_lib.c,v 1.31 2008/07/20 16:38:31 waldron Exp $
  */
 
 /* headers */
@@ -307,7 +307,7 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 	/* update message size */
 	message->size += sizeof(message->hostname) + sizeof(message->reqid) + sizeof(message->nshostname)
 		      +  sizeof(message->nsfileid) + sizeof(unsigned char)  + sizeof(unsigned char)
-		      +  sizeof(unsigned short)    + sizeof(pid_t)          + sizeof(uid_t) 
+		      +  sizeof(unsigned short)    + sizeof(pid_t)          + sizeof(uid_t)
 		      +  sizeof(gid_t)             + sizeof(int)            + 4;
 
        	/* process parameter */
@@ -332,9 +332,13 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 
 		/* process type */
 		if (param->type == DLF_MSG_PARAM_TPVID) {
-			strncpy(value, params[i].par.par_string, DLF_LEN_TAPEID);
 			strncpy(param->name, "TPVID", sizeof(param->name) - 1);
-			value[DLF_LEN_TAPEID] = '\0';
+			if (0 != params[i].par.par_string) {
+				strncpy(value, params[i].par.par_string, DLF_LEN_TAPEID);
+				value[DLF_LEN_TAPEID] = '\0';
+			} else {
+				strcpy(value, "(null)");
+			}
 		}
 		else if (param->type == DLF_MSG_PARAM_STR) {
 			if (0 != params[i].par.par_string) {
@@ -384,7 +388,7 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 			strncpy(param->name, "SEC_NAME", sizeof(param->name) - 1);
 			value[DLF_LEN_SNAME] = '\0';
 		}
-							   
+
 		/* unknown, free resources */
 		else {
 			free_param(param);
@@ -418,7 +422,7 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 			*ptr = ' ';
 		}
 		while ((ptr = strchr(param->value, '\t')) != NULL) {
-			*ptr = ' ';		  
+			*ptr = ' ';
 		}
 		/* name */
 		while ((ptr = strchr(param->name, '\n')) != NULL) {
@@ -434,7 +438,7 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 	for (i = 0; i < API_MAX_TARGETS; i++) {
 		if (targets[i] == NULL)
 			continue;
-		if (!IsFile(targets[i]->mode)) 
+		if (!IsFile(targets[i]->mode))
 			continue;
 		if (!(targets[i]->sevmask & sevmask) &&
 		    !(targets[i]->sevmask & severitylist[12].sevmask))
@@ -467,7 +471,7 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 
 		/* add parameters */
 		for (param = message->plist, error = 0; param != NULL; param = param->next) {
-			if ((param->type == DLF_MSG_PARAM_STR)   || 
+			if ((param->type == DLF_MSG_PARAM_STR)   ||
 			    (param->type == DLF_MSG_PARAM_STYPE) ||
 			    (param->type == DLF_MSG_PARAM_SNAME)) {
 				n = Csnprintf(pos, left, " %s=\"%s\"", param->name, param->value);
@@ -633,7 +637,7 @@ int DLL_DECL dlf_write(Cuuid_t reqid, int severity, int msg_no, struct Cns_filei
 		plist[i].type = va_arg(ap, int);
 
 		/* process type */
-		if ((plist[i].type == DLF_MSG_PARAM_TPVID) || (plist[i].type == DLF_MSG_PARAM_STR) || 
+		if ((plist[i].type == DLF_MSG_PARAM_TPVID) || (plist[i].type == DLF_MSG_PARAM_STR) ||
 		    (plist[i].type == DLF_MSG_PARAM_STYPE) || (plist[i].type == DLF_MSG_PARAM_SNAME)) {
 			string = va_arg(ap, char *);
 			if (string == NULL) {
@@ -642,8 +646,8 @@ int DLL_DECL dlf_write(Cuuid_t reqid, int severity, int msg_no, struct Cns_filei
 				plist[i].par.par_string = strdup(string);
 			}
 		}
-		else if ((plist[i].type == DLF_MSG_PARAM_INT) || 
-			 (plist[i].type == DLF_MSG_PARAM_UID) || 
+		else if ((plist[i].type == DLF_MSG_PARAM_INT) ||
+			 (plist[i].type == DLF_MSG_PARAM_UID) ||
 			 (plist[i].type == DLF_MSG_PARAM_GID)) {
 			plist[i].par.par_int = va_arg(ap, int);
 		}
@@ -786,7 +790,7 @@ void dlf_worker(target_t *t) {
 			/* marshall the facility name */
 			marshall_STRING(sbp, api_facname);
 
-			/* marshall the message texts */			
+			/* marshall the message texts */
 			if (rv != APP_SUCCESS) {
 				free(buffer);
 				Cthread_mutex_unlock(&global_mutex);
@@ -850,7 +854,7 @@ void dlf_worker(target_t *t) {
 			pause = time(NULL) + 3;
 			continue;
 		}
-	
+
 		/* allocate memory for DLF_LOG message
 		 *   - the length of bytes to allocate should have been pre-calculated in dlf_write()
 		 */
@@ -931,7 +935,7 @@ void dlf_worker(target_t *t) {
 	       	free(buffer);
 		free_message(message);
 	}
- 
+
 	/* exit */
 	Cthread_exit(0);
 }
@@ -972,18 +976,18 @@ void DLL_DECL dlf_prepare(void) {
 
 	/* prevent further dlf_write() and dlf_writep() calls */
 	hash_lock(hashtexts);
-		
+
 	/* lock all server queues */
 	for (i = 0; i < API_MAX_TARGETS; i++) {
 		if (targets[i] == NULL)
 			continue;
 		if (!IsServer(targets[i]->mode))
-			continue;     
+			continue;
 		if (targets[i]->queue == NULL)
 			continue;
 		queue_lock(targets[i]->queue);
 		Cthread_mutex_lock(&targets[i]->mutex);
-	}	
+	}
 }
 
 
@@ -1002,19 +1006,19 @@ void DLL_DECL dlf_child(void) {
 	}
 	ClrForking(api_mode);
 
-	/* fork(2) doesn't duplicate threads other then its main calling thread. Therefore, it is 
+	/* fork(2) doesn't duplicate threads other then its main calling thread. Therefore, it is
 	 * neccessary to recreate the thread in the child
 	 */
 	for (i = 0; i < API_MAX_TARGETS; i++) {
 		if (targets[i] == NULL)
 			continue;
 		if (!IsServer(targets[i]->mode))
-			continue;     
+			continue;
 		if (targets[i]->queue == NULL)
 			continue;
 		queue_unlock(targets[i]->queue);
 		Cthread_mutex_unlock(&targets[i]->mutex);
-		if (!api_usethreads) 
+		if (!api_usethreads)
 			continue;
 
 		/* recreate the server's internal queue */
@@ -1030,7 +1034,7 @@ void DLL_DECL dlf_child(void) {
 	hash_unlock(hashtexts);
 
 	/* restore global api mutex */
-	Cthread_mutex_unlock(&global_mutex);	
+	Cthread_mutex_unlock(&global_mutex);
 }
 
 
@@ -1054,7 +1058,7 @@ void DLL_DECL dlf_parent(void) {
 		if (targets[i] == NULL)
 			continue;
 		if (!IsServer(targets[i]->mode))
-			continue;     
+			continue;
 		if (targets[i]->queue == NULL)
 			continue;
 		queue_unlock(targets[i]->queue);
@@ -1105,7 +1109,7 @@ void DLL_DECL dlf_create_threads(int erase) {
 		}
 	}
 
-	Cthread_mutex_unlock(&global_mutex);  
+	Cthread_mutex_unlock(&global_mutex);
 }
 
 
@@ -1203,10 +1207,10 @@ int DLL_DECL dlf_regtext(unsigned short msg_no, const char *msg_text) {
 		if (targets[i] == NULL)
 			continue;
 		if (!IsServer(targets[i]->mode))
-			continue;     
+			continue;
 		if (IsInitialised(targets[i]->mode)) {
 			ClrInitialised(targets[i]->mode);
-		}		
+		}
 	}
 
 	Cthread_mutex_unlock(&global_mutex);
@@ -1346,8 +1350,8 @@ int DLL_DECL dlf_init(const char *facility, char *errptr, int usethreads) {
 				} else {
 					port = DEFAULT_SERVER_PORT;
 				}
-			} 
-			
+			}
+
 			/* determine permissions for files */
 			else {
 				if (sscanf(buffer, "%1023[^:]:%o", tmp, &perm) == 2) {
@@ -1392,7 +1396,7 @@ int DLL_DECL dlf_init(const char *facility, char *errptr, int usethreads) {
 							if ((severitylist[k].sevno == DLF_LVL_USAGE) ||
 							    (severitylist[k].sevno == DLF_LVL_DEBUG)) {
 								continue;
-							}				      
+							}
 						} else if (severitylist[k].sevno == DLF_LVL_DEBUG) {
 							continue;
 						}
@@ -1401,7 +1405,7 @@ int DLL_DECL dlf_init(const char *facility, char *errptr, int usethreads) {
 				} else {
 					targets[j]->sevmask |= severitylist[i].sevmask;
 				}
-				
+
 				found = 1;
 				break;
 			}
@@ -1466,7 +1470,7 @@ int DLL_DECL dlf_init(const char *facility, char *errptr, int usethreads) {
 			t->path[0]    = '\0';
 			t->perm       = perm;
 			t->shutdown   = 0;
-		     
+
 			/* set the type */
 			if (!strcasecmp(uri, "file")) {
 				strncpy(t->path, buffer, sizeof(t->path) - 1);
@@ -1523,7 +1527,7 @@ int DLL_DECL dlf_init(const char *facility, char *errptr, int usethreads) {
 	}
 
 	Cthread_mutex_unlock(&global_mutex);
-	return 0;	
+	return 0;
 }
 
 
@@ -1550,7 +1554,7 @@ int DLL_DECL dlf_shutdown(int wait) {
 	for (i = 0; i < API_MAX_TARGETS; i++) {
 		if (targets[i] == NULL)
 			continue;
-		if (!IsServer(targets[i]->mode)) 
+		if (!IsServer(targets[i]->mode))
 			continue;
 		Cthread_mutex_lock(&targets[i]->mutex);
 		targets[i]->shutdown = 1;
@@ -1564,7 +1568,7 @@ int DLL_DECL dlf_shutdown(int wait) {
 				continue;
 			if (!IsServer(targets[j]->mode))
 				continue;
-			if (queue_size(targets[j]->queue)) 
+			if (queue_size(targets[j]->queue))
 				found++;
 		}
 		if (found == 0) {
@@ -1572,9 +1576,9 @@ int DLL_DECL dlf_shutdown(int wait) {
 		}
 		sleep(1);
 	}
-	
+
 	/* we deliberately don't clear the initialisation and shutdown flags here, once shutdown,
-	 * reinitialisation is not possible, nor do we destroy the messages fifo queues as threads may 
+	 * reinitialisation is not possible, nor do we destroy the messages fifo queues as threads may
 	 * still be using them
 	 */
 
