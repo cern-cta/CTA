@@ -280,7 +280,7 @@ namespace castor {
    * declared outside of any function.
    */
 
-#define OBJECT_IDS_NB 160
+#define OBJECT_IDS_NB 161
   static const unsigned int ObjectsIdsNb = OBJECT_IDS_NB;
 
   /**
