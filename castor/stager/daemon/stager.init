@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: stager.init,v $ $Revision: 1.18 $ $Release$ $Date: 2008/06/25 12:39:23 $ $Author: waldron $
+# @(#)$RCSfile: stager.init,v $ $Revision: 1.19 $ $Release$ $Date: 2008/07/20 16:41:53 $ $Author: waldron $
 #
 # chkconfig: 345 70 35
 # description: Stager Daemon Initialisation Script
@@ -32,14 +32,15 @@
 
 # Variables
 prog="stagerDaemon"
+sysconfigfile="stager"
 RETVAL=0
 
 # Source sysconfig files
 if [ -f /etc/sysconfig/castor ]; then
         . /etc/sysconfig/castor
 fi
-if [ -f /etc/sysconfig/$prog ]; then
-        . /etc/sysconfig/$prog
+if [ -f /etc/sysconfig/$sysconfigfile ]; then
+        . /etc/sysconfig/$sysconfigfile
 fi
 
 start() {
@@ -48,7 +49,7 @@ start() {
 
         cd /var/spool/stager
         daemon /usr/bin/$prog $STAGER_OPTIONS
-        
+
         # Write the pid to a file.
         RETVAL=$?
         if [ $RETVAL -eq 0 ]; then
@@ -71,7 +72,7 @@ start() {
 stop() {
         echo -n $"Stopping $prog: "
         killproc $prog
-        
+
         RETVAL=$?
         echo
         [ -f /var/lock/subsys/$prog ] && rm -f /var/lock/subsys/$prog
@@ -80,12 +81,12 @@ stop() {
 
 restart() {
         stop
-        start 
+        start
 }
 
 # See how we were called
 case "$1" in
-        
+
         start)
                 start
                 ;;
