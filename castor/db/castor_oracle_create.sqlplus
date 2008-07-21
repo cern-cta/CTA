@@ -110,10 +110,10 @@ CREATE TABLE TapeCopy (copyNb NUMBER, id INTEGER CONSTRAINT I_TapeCopy_Id PRIMAR
 CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER, creationTime INTEGER, lastAccessTime INTEGER, lastKnownFileName VARCHAR2(2048), lastUpdateTime INTEGER, id INTEGER CONSTRAINT I_CastorFile_Id PRIMARY KEY, svcClass INTEGER, fileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type DiskCopy */
-CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight float, creationTime INTEGER, lastAccessTime INTEGER, diskCopySize INTEGER, nbCopyAccesses NUMBER, id INTEGER CONSTRAINT I_DiskCopy_Id PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight NUMBER, creationTime INTEGER, lastAccessTime INTEGER, diskCopySize INTEGER, nbCopyAccesses NUMBER, id INTEGER CONSTRAINT I_DiskCopy_Id PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type FileSystem */
-CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minFreeSpace float, minAllowedFreeSpace float, maxFreeSpace float, totalSize INTEGER, readRate INTEGER, writeRate INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbReadWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT I_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minFreeSpace NUMBER, minAllowedFreeSpace NUMBER, maxFreeSpace NUMBER, totalSize INTEGER, readRate INTEGER, writeRate INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbReadWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT I_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type SvcClass */
 CREATE TABLE SvcClass (nbDrives NUMBER, name VARCHAR2(2048), defaultFileSize INTEGER, maxReplicaNb NUMBER, replicationPolicy VARCHAR2(2048), migratorPolicy VARCHAR2(2048), recallerPolicy VARCHAR2(2048), streamPolicy VARCHAR2(2048), gcPolicy VARCHAR2(2048), gcEnabled NUMBER, hasDiskOnlyBehavior NUMBER, id INTEGER CONSTRAINT I_SvcClass_Id PRIMARY KEY, forcedFileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -140,7 +140,7 @@ CREATE TABLE FileClass (name VARCHAR2(2048), nbCopies NUMBER, id INTEGER CONSTRA
 CREATE TABLE DiskServer (name VARCHAR2(2048), readRate INTEGER, writeRate INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbReadWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT I_DiskServer_Id PRIMARY KEY, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type SetFileGCWeight */
-CREATE TABLE SetFileGCWeight (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, weight float, id INTEGER CONSTRAINT I_SetFileGCWeight_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE SetFileGCWeight (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, weight NUMBER, id INTEGER CONSTRAINT I_SetFileGCWeight_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StageRepackRequest */
 CREATE TABLE StageRepackRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, repackVid VARCHAR2(2048), id INTEGER CONSTRAINT I_StageRepackRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -192,10 +192,10 @@ ALTER TABLE Stream2TapeCopy
   ADD CONSTRAINT fk_Stream2TapeCopy_C FOREIGN KEY (Child) REFERENCES TapeCopy (id);
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_7_10');
+INSERT INTO CastorVersion VALUES ('-', '2_1_7_11');
 
 /* Fill Type2Obj metatable */
-CREATE TABLE Type2Obj (type INTEGER PRIMARY KEY NOT NULL, object VARCHAR2(100) NOT NULL, svcHandler VARCHAR2(100));
+CREATE TABLE Type2Obj (type INTEGER CONSTRAINT I_Type2Obj_Type PRIMARY KEY NOT NULL, object VARCHAR2(100) NOT NULL, svcHandler VARCHAR2(100));
 INSERT INTO Type2Obj (type, object) VALUES (0, 'INVALID');
 INSERT INTO Type2Obj (type, object) VALUES (1, 'Ptr');
 INSERT INTO Type2Obj (type, object) VALUES (2, 'CastorFile');
@@ -331,10 +331,12 @@ INSERT INTO Type2Obj (type, object) VALUES (155, 'ListPrivileges');
 INSERT INTO Type2Obj (type, object) VALUES (156, 'Privilege');
 INSERT INTO Type2Obj (type, object) VALUES (157, 'ListPrivilegesResponse');
 INSERT INTO Type2Obj (type, object) VALUES (158, 'PriorityMap');
+INSERT INTO Type2Obj (type, object) VALUES (159, 'VectorAddress');
+INSERT INTO Type2Obj (type, object) VALUES (160, 'Tape2DriveDedication');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleCommon.sql,v  Revision: 1.660  Date: 2008/06/25 12:37:42  Author: waldron 
+ * @(#)RCSfile: oracleCommon.sql,v  Revision: 1.663  Date: 2008/07/14 12:40:23  Author: itglp 
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -474,7 +476,6 @@ ALTER TABLE FileSystem ADD CONSTRAINT diskserver_fk FOREIGN KEY (diskServer) REF
 ALTER TABLE FileSystem MODIFY (status NOT NULL);
 ALTER TABLE FileSystem MODIFY (diskServer NOT NULL);
 ALTER TABLE DiskServer MODIFY (status NOT NULL);
-ALTER TABLE SvcClass MODIFY (name NOT NULL);
 
 /* An index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */
 CREATE INDEX I_QueryParameter_Query on QueryParameter (query);
@@ -493,6 +494,20 @@ ALTER TABLE SvcClass ADD CONSTRAINT I_SvcClass_Name UNIQUE (NAME);
 
 /* The primary key in this table allows for materialized views */
 ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT I_DiskPool2SvcCla_ParentChild PRIMARY KEY (parent, child);
+
+/* Custom type to handle int arrays */
+CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
+/
+
+/* default policy for migration */
+ALTER TABLE TapePool MODIFY (migrSelectPolicy DEFAULT 'defaultMigrSelPolicy');
+
+/* SvcClass constraints */
+ALTER TABLE SvcClass MODIFY (name NOT NULL)
+                     MODIFY (gcPolicy DEFAULT 'default');
+
+/* DiskCopy constraints */
+ALTER TABLE DiskCopy MODIFY (nbCopyAccesses DEFAULT 0);
 
 /* Global temporary table to handle output of the filesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
@@ -531,6 +546,9 @@ CREATE GLOBAL TEMPORARY TABLE removePrivilegeTmpTable
    egid NUMBER,
    reqType NUMBER)
   ON COMMIT DELETE ROWS;
+
+/* Global temporary table to store ids temporarily in the bulkCreateObj procedures */
+CREATE GLOBAL TEMPORARY TABLE bulkSelectHelper(objId NUMBER) ON COMMIT DELETE ROWS;
 
 /* SQL statements for table PriorityMap */ 
 CREATE TABLE PriorityMap (euid INTEGER, egid INTEGER, priority INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT; 
@@ -1324,7 +1342,7 @@ END castorBW;
 /
 /*******************************************************************
  *
- * @(#)RCSfile: oracleStager.sql,v  Revision: 1.673  Date: 2008/06/27 06:04:40  Author: waldron 
+ * @(#)RCSfile: oracleStager.sql,v  Revision: 1.674  Date: 2008/07/14 12:40:23  Author: itglp 
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1431,9 +1449,6 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE DbRecallInfo_Cur IS REF CURSOR RETURN DbRecallInfo;
   TYPE PriorityMap_Cur IS REF CURSOR RETURN PriorityMap%ROWTYPE;
 END castor;
-/
-
-CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 /
 
 
@@ -4701,7 +4716,7 @@ END;
 /
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTape.sql,v  Revision: 1.674  Date: 2008/06/26 08:49:45  Author: gtaur 
+ * @(#)RCSfile: oracleTape.sql,v  Revision: 1.675  Date: 2008/07/09 08:02:38  Author: sponcec3 
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -4931,6 +4946,10 @@ BEGIN
       FROM Stream, TapePool
      WHERE Stream.id = streamId
        AND Stream.tapePool = TapePool.id;
+    -- check for NULL value
+    IF policy IS NULL THEN
+      policy := 'defaultMigrSelPolicy';
+    END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     policy := 'defaultMigrSelPolicy';
   END;
@@ -7012,7 +7031,7 @@ END;
 /
 /*******************************************************************
  *
- * @(#)RCSfile: oracleDebug.sql,v  Revision: 1.7  Date: 2008/06/02 13:26:36  Author: waldron 
+ * @(#)RCSfile: oracleDebug.sql,v  Revision: 1.8  Date: 2008/07/02 15:20:07  Author: sponcec3 
  *
  * Some SQL code to ease support and debugging
  *
@@ -7105,14 +7124,15 @@ BEGIN
   FOR t IN (SELECT TapeCopy.id AS TCId, TapeCopy.status AS TCStatus,
                    Segment.Id, Segment.status AS SegStatus, Segment.errorCode AS SegErrCode,
                    Tape.vid AS VID, Tape.tpMode AS tpMode, Tape.Status AS TapeStatus,
-                   count(*) AS nbStreams, Segment.errMsgTxt AS SegErr
+                   CASE WHEN Stream2TapeCopy.child IS NULL THEN 0 ELSE count(*) END AS nbStreams,
+                   Segment.errMsgTxt AS SegErr
               FROM TapeCopy, Segment, Tape, Stream2TapeCopy
              WHERE TapeCopy.id = Segment.copy(+)
                AND Segment.tape = Tape.id(+)
                AND TapeCopy.castorfile = getCF(ref)
-               AND Stream2TapeCopy.child = TapeCopy.id
+               AND Stream2TapeCopy.child(+) = TapeCopy.id
               GROUP BY TapeCopy.id, TapeCopy.status, Segment.id, Segment.status, Segment.errorCode,
-                       Tape.vid, Tape.tpMode, Tape.Status, Segment.errMsgTxt) LOOP
+                       Tape.vid, Tape.tpMode, Tape.Status, Segment.errMsgTxt, Stream2TapeCopy.child) LOOP
      PIPE ROW(t);
   END LOOP;
 END;
