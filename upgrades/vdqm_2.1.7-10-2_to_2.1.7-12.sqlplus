@@ -2258,10 +2258,7 @@ CREATE OR REPLACE TRIGGER TR_U_Tape2DriveDedication
 FOR EACH ROW
 BEGIN
   -- Update the modification time
-  IF (:NEW.modificationTime != :OLD.modificationTime) OR
-    (:NEW.status != :OLD.status) THEN
-    :NEW.modificationTime := castorVdqmCommon.getTime();
-  END IF;
+  :NEW.modificationTime := castorVdqmCommon.getTime();
 
   -- Convert a tape drive id of 0 to NULL
   IF :NEW.tapeDrive = 0 THEN

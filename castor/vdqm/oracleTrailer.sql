@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.144 $ $Release$ $Date: 2008/07/21 09:03:30 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.145 $ $Release$ $Date: 2008/07/21 09:16:16 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2847,10 +2847,7 @@ CREATE OR REPLACE TRIGGER TR_U_TapeDrive
 FOR EACH ROW 
 BEGIN
   -- Update the modification time
-  IF (:NEW.modificationTime != :OLD.modificationTime) OR
-    (:NEW.status != :OLD.status) THEN
-    :NEW.modificationTime := castorVdqmCommon.getTime();
-  END IF;
+  :NEW.modificationTime := castorVdqmCommon.getTime();
 
   -- Convert a running tape request id of 0 to NULL
   IF :NEW.runningTapeReq = 0 THEN
