@@ -336,7 +336,7 @@ INSERT INTO Type2Obj (type, object) VALUES (160, 'Tape2DriveDedication');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleCommon.sql,v  Revision: 1.664  Date: 2008/07/21 06:36:34  Author: waldron 
+ * @(#)RCSfile: oracleCommon.sql,v  Revision: 1.665  Date: 2008/07/21 12:12:47  Author: waldron 
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -429,38 +429,39 @@ CREATE TABLE SubRequest
 ALTER TABLE SUBREQUEST ADD CONSTRAINT I_SUBREQUEST_PK PRIMARY KEY (ID);
 
 /* Indexes related to most used entities */
-CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
+CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
 
-CREATE UNIQUE INDEX I_CastorFile_FileIdNsHost on CastorFile (fileId, nsHost);
-CREATE INDEX I_CastorFile_LastKnownFileName on CastorFile (lastKnownFileName);
-CREATE INDEX I_CastorFile_SvcClass on CastorFile (svcClass);
+CREATE UNIQUE INDEX I_CastorFile_FileIdNsHost ON CastorFile (fileId, nsHost);
+CREATE INDEX I_CastorFile_LastKnownFileName ON CastorFile (lastKnownFileName);
+CREATE INDEX I_CastorFile_SvcClass ON CastorFile (svcClass);
 
-CREATE INDEX I_DiskCopy_Castorfile on DiskCopy (castorFile);
-CREATE INDEX I_DiskCopy_FileSystem on DiskCopy (fileSystem);
-CREATE INDEX I_DiskCopy_Status on DiskCopy (status);
-CREATE INDEX I_DiskCopy_GCWeight on DiskCopy (gcWeight);
-CREATE INDEX I_DiskCopy_FS_Status_10 on DiskCopy (fileSystem,decode(status,10,status,NULL));
+CREATE INDEX I_DiskCopy_Castorfile ON DiskCopy (castorFile);
+CREATE INDEX I_DiskCopy_FileSystem ON DiskCopy (fileSystem);
+CREATE INDEX I_DiskCopy_Status ON DiskCopy (status);
+CREATE INDEX I_DiskCopy_GCWeight ON DiskCopy (gcWeight);
+CREATE INDEX I_DiskCopy_FS_Status_10 ON DiskCopy (fileSystem,decode(status,10,status,NULL));
+CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
 
-CREATE INDEX I_TapeCopy_Castorfile on TapeCopy (castorFile);
-CREATE INDEX I_TapeCopy_Status on TapeCopy (status);
-CREATE INDEX I_TapeCopy_CF_Status_2 on TapeCopy (castorFile,decode(status,2,status,null));
+CREATE INDEX I_TapeCopy_Castorfile ON TapeCopy (castorFile);
+CREATE INDEX I_TapeCopy_Status ON TapeCopy (status);
+CREATE INDEX I_TapeCopy_CF_Status_2 ON TapeCopy (castorFile,decode(status,2,status,null));
 
-CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
-CREATE INDEX I_FileSystem_DiskServer on FileSystem (diskServer);
+CREATE INDEX I_FileSystem_DiskPool ON FileSystem (diskPool);
+CREATE INDEX I_FileSystem_DiskServer ON FileSystem (diskServer);
 
-CREATE INDEX I_SubRequest_Castorfile on SubRequest (castorFile);
-CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
-CREATE INDEX I_SubRequest_Request on SubRequest (request);
-CREATE INDEX I_SubRequest_Parent on SubRequest (parent);
-CREATE INDEX I_SubRequest_SubReqId on SubRequest (subReqId);
-CREATE INDEX I_SubRequest_LastModTime on SubRequest (lastModificationTime) LOCAL;
+CREATE INDEX I_SubRequest_Castorfile ON SubRequest (castorFile);
+CREATE INDEX I_SubRequest_DiskCopy ON SubRequest (diskCopy);
+CREATE INDEX I_SubRequest_Request ON SubRequest (request);
+CREATE INDEX I_SubRequest_Parent ON SubRequest (parent);
+CREATE INDEX I_SubRequest_SubReqId ON SubRequest (subReqId);
+CREATE INDEX I_SubRequest_LastModTime ON SubRequest (lastModificationTime) LOCAL;
 
-CREATE INDEX I_StagePTGRequest_ReqId on StagePrepareToGetRequest (reqId);
-CREATE INDEX I_StagePTPRequest_ReqId on StagePrepareToPutRequest (reqId);
-CREATE INDEX I_StagePTURequest_ReqId on StagePrepareToUpdateRequest (reqId);
-CREATE INDEX I_StageGetRequest_ReqId on StageGetRequest (reqId);
-CREATE INDEX I_StagePutRequest_ReqId on StagePutRequest (reqId);
-CREATE INDEX I_StageRepackRequest_ReqId on StageRepackRequest (reqId);
+CREATE INDEX I_StagePTGRequest_ReqId ON StagePrepareToGetRequest (reqId);
+CREATE INDEX I_StagePTPRequest_ReqId ON StagePrepareToPutRequest (reqId);
+CREATE INDEX I_StagePTURequest_ReqId ON StagePrepareToUpdateRequest (reqId);
+CREATE INDEX I_StageGetRequest_ReqId ON StageGetRequest (reqId);
+CREATE INDEX I_StagePutRequest_ReqId ON StagePutRequest (reqId);
+CREATE INDEX I_StageRepackRequest_ReqId ON StageRepackRequest (reqId);
 
 /* A primary key index for better scan of Stream2TapeCopy */
 CREATE UNIQUE INDEX I_pk_Stream2TapeCopy ON Stream2TapeCopy (parent, child);
@@ -6195,7 +6196,7 @@ END;
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleGC.sql,v  Revision: 1.659  Date: 2008/06/23 14:33:52  Author: itglp 
+ * @(#)RCSfile: oracleGC.sql,v  Revision: 1.660  Date: 2008/07/21 12:13:20  Author: waldron 
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -6496,7 +6497,7 @@ BEGIN
     SELECT /*+ INDEX(CastorFile I_CastorFile_ID) */ FileSystem.mountPoint || DiskCopy.path, DiskCopy.id,
 	   Castorfile.fileid, Castorfile.nshost
       FROM CastorFile, DiskCopy, FileSystem, DiskServer
-     WHERE DiskCopy.status = 9 -- BEINGDELETED
+     WHERE decode(DiskCopy.status,9,DiskCopy.status,NULL) = 9 -- BEINGDELETED
        AND DiskCopy.castorfile = CastorFile.id
        AND DiskCopy.fileSystem = FileSystem.id
        AND FileSystem.diskServer = DiskServer.id
