@@ -63,7 +63,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
-UPDATE CastorVersion SET release = '2_1_7_11';
+UPDATE CastorVersion SET schemaVersion = '2_1_7_11';
+UPDATE CastorVersion SET release       = '2_1_7_11';
 COMMIT;
 
 CREATE TABLE Tape2DriveDedication (vid VARCHAR2(2048), creationTime INTEGER, modificationTime INTEGER, id INTEGER CONSTRAINT I_Tape2DriveDedication_Id PRIMARY KEY, tapeDrive INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -2224,12 +2225,22 @@ END castorVdqm;
 
 
 /**
+ * Sets the creation time and initial modification time of a tape-to-drive
+ * dedication when it is inserted into the Tape2DriveDedication table.
  * Converts an updated tape drive id of 0 to NULL.
  */
 CREATE OR REPLACE TRIGGER TR_I_Tape2DriveDedication
   BEFORE INSERT ON TapeRequest
 FOR EACH ROW
+DECLARE
+  timeVar NUMBER := castorVdqmCommon.getTime();
 BEGIN
+  -- Set creation time
+  :NEW.creationTime := timeVar;
+
+  -- Set modification time
+  :NEW.modificationTime := timeVar;
+
   -- Convert a tape drive id of 0 to NULL
   IF :NEW.tapeDrive = 0 THEN
     :NEW.tapeDrive := NULL;
@@ -2239,12 +2250,19 @@ END;
 
 
 /**
+ * Updates the modification time of a tape-to-drive dedication.
  * Converts an updated tape drive id of 0 to NULL.
  */
 CREATE OR REPLACE TRIGGER TR_U_Tape2DriveDedication
   BEFORE UPDATE ON Tape2DriveDedication
 FOR EACH ROW
 BEGIN
+  -- Update the modification time
+  IF (:NEW.modificationTime != :OLD.modificationTime) OR
+    (:NEW.status != :OLD.status) THEN
+    :NEW.modificationTime := castorVdqmCommon.getTime();
+  END IF;
+
   -- Convert a tape drive id of 0 to NULL
   IF :NEW.tapeDrive = 0 THEN
     :NEW.tapeDrive := NULL;

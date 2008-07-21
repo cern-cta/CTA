@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.143 $ $Release$ $Date: 2008/07/20 18:39:37 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.144 $ $Release$ $Date: 2008/07/21 09:03:30 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -9,7 +9,7 @@
  *******************************************************************/
 
 /* Update the schema version number */
-UPDATE CastorVersion SET schemaVersion = '2_1_7_4';
+UPDATE CastorVersion SET schemaVersion = '2_1_7_11';
 
 /* Sequence used to generate unique indentifies */
 CREATE SEQUENCE ids_seq CACHE 200;
@@ -3000,12 +3000,22 @@ END;
 
 
 /**
+ * Sets the creation time and initial modification time of a tape-to-drive
+ * dedication when it is inserted into the Tape2DriveDedication table.
  * Converts an updated tape drive id of 0 to NULL.
  */
 CREATE OR REPLACE TRIGGER TR_I_Tape2DriveDedication
   BEFORE INSERT ON TapeRequest
 FOR EACH ROW
+DECLARE
+  timeVar NUMBER := castorVdqmCommon.getTime();
 BEGIN
+  -- Set creation time
+  :NEW.creationTime := timeVar;
+
+  -- Set modification time
+  :NEW.modificationTime := timeVar;
+
   -- Convert a tape drive id of 0 to NULL
   IF :NEW.tapeDrive = 0 THEN
     :NEW.tapeDrive := NULL;
@@ -3014,12 +3024,19 @@ END;
 
 
 /**
+ * Updates the modification time of a tape-to-drive dedication.
  * Converts an updated tape drive id of 0 to NULL.
  */
 CREATE OR REPLACE TRIGGER TR_U_Tape2DriveDedication
   BEFORE UPDATE ON Tape2DriveDedication
 FOR EACH ROW
 BEGIN
+  -- Update the modification time
+  IF (:NEW.modificationTime != :OLD.modificationTime) OR
+    (:NEW.status != :OLD.status) THEN
+    :NEW.modificationTime := castorVdqmCommon.getTime();
+  END IF;
+
   -- Convert a tape drive id of 0 to NULL
   IF :NEW.tapeDrive = 0 THEN
     :NEW.tapeDrive := NULL;
