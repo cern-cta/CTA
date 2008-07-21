@@ -154,8 +154,6 @@ int main(int argc,char **argv)
       fprintf (stderr, "%s: The privilege must be one of: %s\n", argv[0],
                STR_PRIV_LIST);
       exit(USERR);
-
-
   }
 
   filter.uid = uid;
@@ -176,7 +174,7 @@ int main(int argc,char **argv)
     
     /* Prining header if necessary */
     if (nbentry == 0 && verbose != 1) {
-      printf ("       uid        gid               source               target    privilege\n");
+      printf ("       uid        gid                                   source                                   target    privilege\n");
       nbentry = 1;
     }
 
@@ -235,7 +233,7 @@ int displayLine(struct Cupv_userpriv *lp, int verbose) {
     printf("%s %s --src '%s' --tgt '%s' --priv '%s'\n", usr, grp, 
 	   lp->srchost, lp->tgthost, buf); 
   } else {
-    printf ("%10s %10s %20s %20s    %s\n", usr, grp, 
+    printf ("%10s %10s %40s %40s    %s\n", usr, grp, 
 	    lp->srchost, lp->tgthost, buf); 
   }
 
