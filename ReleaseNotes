@@ -34,6 +34,10 @@
   instructions fully before proceeding. Note: this upgrade does not require stopping of the
   instance and should be transparent to the end users.
 
+  Warning
+  -------
+  Do not upgrade CUPV to run 2.1.7-11 unless your CUPV entries are fully qualified!
+
   Instructions
   ------------
   1. Upgrade the stager, dlf and repack databases using the correct upgrade scripts from
@@ -63,21 +67,24 @@
      qualified. If you know that your database already contains fully qualified domain names
      then you can skip this step. Otherwise,
 
-     Execute the following 2 SQL statements on the CUPV database
+     If you are operating in a single domain network, then execute the following 2 SQL 
+     statements on the CUPV database:
 
-     UPDATE user_privilege 
-        SET src_host = substr(src_host, 0, length(src_host) - 1) || '.DOMAIN.COM$'
-      WHERE src_host NOT LIKE '%.DOMAIN.COM$';
+        UPDATE user_privilege 
+           SET src_host = substr(src_host, 0, length(src_host) - 1) || '.DOMAIN.COM$'
+         WHERE src_host NOT LIKE '%.DOMAIN.COM$';
  
-     UPDATE user_privilege 
-        SET tgt_host = substr(tgt_host, 0, length(tgt_host) - 1) || '.DOMAIN.COM$'
-      WHERE tgt_host NOT LIKE '%.DOMAIN.COM$';
+        UPDATE user_privilege 
+           SET tgt_host = substr(tgt_host, 0, length(tgt_host) - 1) || '.DOMAIN.COM$'
+         WHERE tgt_host NOT LIKE '%.DOMAIN.COM$';
 
-     COMMIT;
+        COMMIT;
  
-     Where DOMAIN.COM represents the name of the network domain. Note: the domain is
-     case sensitive.
+        Where DOMAIN.COM represents the name of the network domain. Note: the domain name
+        is case sensitive.
 
+     For network's with multiple domains you will need to modify the entries by hand.
+ 
 
 ------------
 - 2.1.7-10 -
