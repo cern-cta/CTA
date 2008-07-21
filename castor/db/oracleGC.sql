@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.659 $ $Date: 2008/06/23 14:33:52 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.660 $ $Date: 2008/07/21 12:13:20 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -301,7 +301,7 @@ BEGIN
     SELECT /*+ INDEX(CastorFile I_CastorFile_ID) */ FileSystem.mountPoint || DiskCopy.path, DiskCopy.id,
 	   Castorfile.fileid, Castorfile.nshost
       FROM CastorFile, DiskCopy, FileSystem, DiskServer
-     WHERE DiskCopy.status = 9 -- BEINGDELETED
+     WHERE decode(DiskCopy.status,9,DiskCopy.status,NULL) = 9 -- BEINGDELETED
        AND DiskCopy.castorfile = CastorFile.id
        AND DiskCopy.fileSystem = FileSystem.id
        AND FileSystem.diskServer = DiskServer.id
