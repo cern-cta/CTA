@@ -93,7 +93,7 @@ void parseCommandLine(int argc, char **argv, PriorityListType &listType,
 
   while ((c = Cgetopt_long(argc, argv, "c:al:evh", longopts, NULL)) != -1) {
     switch (c) {
-      case 'c':
+    case 'c':
       {
         FILE *fp = fopen(Coptarg,"r");
         if(fp) {
