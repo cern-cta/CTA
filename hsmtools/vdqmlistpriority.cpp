@@ -50,17 +50,18 @@ enum PriorityListType {
 
 void usage(const std::string programName) {
   std::cerr << "Usage: " << programName <<
-    " [ -a | -l lifespanType | -e ] [ -v ] [ -h ]\n"
+    " [-c config-file] [ -a | -l lifespanType | -e ] [ -v ] [ -h ]\n"
     "\n"
     "where options can be:\n"
     "\n"
-    "\t-a, --all               List all priorities.\n"
-    "\t-l, --lifespanType type List priorities with specified lifespan type.\n"
-    "\t                        Valid values are \"singleMount\" and "
+    "\t-c, --config config-file Configuration file\n"
+    "\t-a, --all                List all priorities.\n"
+    "\t-l, --lifespanType type  List priorities with specified lifespan type.\n"
+    "\t                         Valid values are \"singleMount\" and "
     "\"unlimited\".\n"
-    "\t-e, --effective         List effective priorities.\n"
-    "\t-v, --verbose           Display column heads.\n"
-    "\t-h, --help              Print this help and exit.\n"
+    "\t-e, --effective          List effective priorities.\n"
+    "\t-v, --verbose            Display column heads.\n"
+    "\t-h, --help               Print this help and exit.\n"
     "\n"
     "Please note that options -a, -l and -e are mutually exclusive\n"
     "\n"
@@ -69,6 +70,7 @@ void usage(const std::string programName) {
 
 
 static struct Coptions longopts[] = {
+  {"config"      , REQUIRED_ARGUMENT, NULL, 'c'},
   {"all"         , NO_ARGUMENT      , NULL, 'a'},
   {"lifespanType", REQUIRED_ARGUMENT, NULL, 'l'},
   {"effective"   , NO_ARGUMENT      , NULL, 'e'},
@@ -89,8 +91,27 @@ void parseCommandLine(int argc, char **argv, PriorityListType &listType,
   Coptind  = 1;
   Copterr  = 0;
 
-  while ((c = Cgetopt_long (argc, argv, "al:evh", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long(argc, argv, "c:al:evh", longopts, NULL)) != -1) {
     switch (c) {
+      case 'c':
+      {
+        FILE *fp = fopen(Coptarg,"r");
+        if(fp) {
+          // The configuration file exists
+          fclose(fp);
+        } else {
+          // The configuration files does not exist
+          std::cerr
+            << std::endl
+            << "Error: Configuration file \"" << Coptarg
+            << "\" does not exist"
+            << std::endl << std::endl;
+          usage(argv[0]);
+          exit(1);
+        }
+      }
+      setenv("PATH_CONFIG", Coptarg, 1);
+      break;
     case 'a':
       listType = ALL_PRIO_LIST_TYPE;
       nbListTypesSet++;
