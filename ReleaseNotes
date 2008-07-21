@@ -1,10 +1,92 @@
 ------------
+- 2.1.7-11 -
+------------
+
+  Bug Fixes
+  ---------
+  - #35428: GC stager SYNC causes high DB load on 2.1.7
+  - #38611: modifySvcClass vs printSvcClass: setting and displaying parameters
+  - #38825: CUPV does not support multiple domains
+  - #38858: Default STAGE_HOST for 2.1.7 old clients is no longer set for CASTOR1
+  - #38832: GCweight values loosing precision during conversions between C++ and ORACLE
+  - #38984: castor client doesn't allow repack to process tapes with more than ~74 000 file
+
+  - Fixed a segmentation fault in rtcpclientd caused by attempting to log a NULL tape 
+    VID using the DLF API.
+
+  - Fixed the init.d scripts for the stager and rhserver. In the case of the stager, its
+    sysconfig file (/etc/sysconfig/stager) was not sourced correctly and for the rhserver,
+    the RHSERVER_OPTIONS value in the sysconfig file was not passed through to the rhserver
+    binary.
+
+  - Integrated modifications from RAL into the test suite so that it is less CERN specific.
+
+  - Fixed support for the EXCLUDE_HOSTS option on LSF jobs which was ignored for disk2disk
+    copy replication requests, the only request for which the option is actually needed.
+
+  - Added support for bulk selection to reduce the stress on the rhserver and stager for
+    large requests. #35428
+
+  Upgrading from 2.1.7-10
+  -----------------------
+
+  Before upgrading to a 2.1.7-11 instance of CASTOR2 please make sure to read the upgrade
+  instructions fully before proceeding. Note: this upgrade does not require stopping of the
+  instance and should be transparent to the end users.
+
+  Instructions
+  ------------
+  1. Upgrade the stager, dlf and repack databases using the correct upgrade scripts from
+     - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-11/upgrades
+
+  2. Stop rtcpclientd.
+
+  3. Upgrade the software on the headnodes and diskservers to 2.1.7-11. All daemons apart
+     from rtcpclientd will be restarted automatically.
+
+  4. Log onto the stager database and execute:
+
+     TRUNCATE TABLE Stream2TapeCopy;
+     UPDATE TapeCopy SET status = 1 WHERE status IN (2, 3, 7);
+     UPDATE Stream SET status = 0;
+     UPDATE tape SET status = 1 WHERE status IN (2, 3, 4);
+     UPDATE tape SET stream = 0 WHERE stream != 0;
+     UPDATE Stream SET tape = 0 WHERE tape != 0;
+     COMMIT;
+
+  5. Start rtcpclientd.
+
+  6. Upgrade the CUPV and CNS to 2.1.7-11.
+
+  7. Now that CUPV supports multiple network domains (Bug: #38825) it is necessary to update 
+     the contents of the CUPV database so that all source and target entries are fully 
+     qualified. If you know that your database already contains fully qualified domain names
+     then you can skip this step. Otherwise,
+
+     Execute the following 2 SQL statements on the CUPV database
+
+     UPDATE user_privilege 
+        SET src_host = substr(src_host, 0, length(src_host) - 1) || '.DOMAIN.COM$'
+      WHERE src_host NOT LIKE '%.DOMAIN.COM$';
+ 
+     UPDATE user_privilege 
+        SET tgt_host = substr(tgt_host, 0, length(tgt_host) - 1) || '.DOMAIN.COM$'
+      WHERE tgt_host NOT LIKE '%.DOMAIN.COM$';
+
+     COMMIT;
+ 
+     Where DOMAIN.COM represents the name of the network domain. Note: the domain is
+     case sensitive.
+
+
+------------
 - 2.1.7-10 -
 ------------
 
   Bug Fixes
   ---------
   - #18778: -f option to stager_get to pass a file containing the list of files to prestage
+  - #32902: RFE: schedule separately for rfio and gridftp jobs
   - #33207: Need admin tools to manage black/white lists for stager ACLs
   - #34639: consider DISABLED tapes as not available
   - #34766: stager error messages corrupted?
