@@ -41,7 +41,7 @@
 #include <sys/types.h> // For VMGR
 
 // Hardcoded schema version of the VDQM database
-const std::string VDQMSCHEMAVERSION = "2_1_7_4";
+const std::string VDQMSCHEMAVERSION = "2_1_7_11";
 
 int help_flag =0;
 
