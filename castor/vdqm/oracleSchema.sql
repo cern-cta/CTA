@@ -32,7 +32,7 @@ CREATE TABLE ClientIdentification (machine VARCHAR2(2048), userName VARCHAR2(204
 CREATE TABLE VolumePriority (priority NUMBER, clientUID NUMBER, clientGID NUMBER, clientHost VARCHAR2(2048), vid VARCHAR2(2048), tpMode NUMBER, lifespanType NUMBER, creationTime INTEGER, modificationTime INTEGER, id INTEGER CONSTRAINT I_VolumePriority_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type Tape2DriveDedication */
-CREATE TABLE Tape2DriveDedication (vid VARCHAR2(2048), id INTEGER CONSTRAINT I_Tape2DriveDedication_Id PRIMARY KEY, tapeDrive INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE Tape2DriveDedication (vid VARCHAR2(2048), creationTime INTEGER, modificationTime INTEGER, id INTEGER CONSTRAINT I_Tape2DriveDedication_Id PRIMARY KEY, tapeDrive INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_P FOREIGN KEY (Parent) REFERENCES TapeDrive (id)

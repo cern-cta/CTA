@@ -66,7 +66,7 @@ END;
 UPDATE CastorVersion SET release = '2_1_7_11';
 COMMIT;
 
-CREATE TABLE Tape2DriveDedication (vid VARCHAR2(2048), id INTEGER CONSTRAINT I_Tape2DriveDedication_Id PRIMARY KEY, tapeDrive INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE Tape2DriveDedication (vid VARCHAR2(2048), creationTime INTEGER, modificationTime INTEGER, id INTEGER CONSTRAINT I_Tape2DriveDedication_Id PRIMARY KEY, tapeDrive INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* Not null column constraints */
 ALTER TABLE Tape2DriveDedication MODIFY

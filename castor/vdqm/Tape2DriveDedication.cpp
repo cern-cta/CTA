@@ -41,6 +41,8 @@
 //------------------------------------------------------------------------------
 castor::vdqm::Tape2DriveDedication::Tape2DriveDedication() throw() :
   m_vid(""),
+  m_creationTime(0),
+  m_modificationTime(0),
   m_id(0),
   m_tapeDrive(0) {
 }
@@ -65,6 +67,8 @@ void castor::vdqm::Tape2DriveDedication::print(std::ostream& stream,
   }
   // Output of all members
   stream << indent << "vid : " << m_vid << std::endl;
+  stream << indent << "creationTime : " << m_creationTime << std::endl;
+  stream << indent << "modificationTime : " << m_modificationTime << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "TapeDrive : " << std::endl;
