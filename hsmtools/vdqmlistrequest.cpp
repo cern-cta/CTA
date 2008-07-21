@@ -43,10 +43,11 @@ const std::string VDQMSCHEMAVERSION = "2_1_7_11";
 
 void usage(const std::string programName) {
   std::cerr << "Usage: " << programName <<
-    " [ -v ] [ -h ]\n"
+    " [-c config-file] [ -v ] [ -h ]\n"
     "\n"
     "where options can be:\n"
     "\n"
+    "\t-c, --config config-file Configuration file\n"
     "\t-v, --verbose Display column heads.\n"
     "\t-h, --help    Print this help and exit.\n"
     "\n"
@@ -55,8 +56,9 @@ void usage(const std::string programName) {
 
 
 static struct Coptions longopts[] = {
-  {"verbose", NO_ARGUMENT, NULL, 'v'},
-  {"help"   , NO_ARGUMENT, NULL, 'h'},
+  {"config" , REQUIRED_ARGUMENT, NULL, 'c'},
+  {"verbose", NO_ARGUMENT      , NULL, 'v'},
+  {"help"   , NO_ARGUMENT      , NULL, 'h'},
   {0, 0, 0, 0}
 };
 
@@ -68,8 +70,27 @@ void parseCommandLine(int argc, char **argv, bool &displayColumnHeadings) {
   char c;
 
 
-  while ((c = Cgetopt_long (argc, argv, "vh", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "c:vh", longopts, NULL)) != -1) {
     switch (c) {
+    case 'c':
+      {
+        FILE *fp = fopen(Coptarg,"r");
+        if(fp) {
+          // The configuration file exists
+          fclose(fp);
+        } else {
+          // The configuration files does not exist
+          std::cerr
+            << std::endl
+            << "Error: Configuration file \"" << Coptarg
+            << "\" does not exist"
+            << std::endl << std::endl;
+          usage(argv[0]);
+          exit(1);
+        }
+      }
+      setenv("PATH_CONFIG", Coptarg, 1);
+      break;
     case 'v':
       displayColumnHeadings = true;
       break;
