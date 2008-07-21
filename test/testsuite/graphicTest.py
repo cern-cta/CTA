@@ -14,7 +14,7 @@ def timeOut():
     listProc=os.popen("ps").read().split("\n")
 
 # I retrieve and  kill the process that created problems
- 
+
     for item in listProc:
         if item.find("stager_qry") != -1:
             os.system("kill -9 "+item[0:5])
@@ -28,8 +28,8 @@ def timeOut():
         if item.find("nsls") != -1:
             os.system("kill -9 "+item[0:5])
             print "nsls was blocked"
-	    
-    os._exit(0)  
+
+    os._exit(0)
 
 def runSafe(cmdS):
 
@@ -43,7 +43,7 @@ def runSafe(cmdS):
 def prepareStringStager():
 
 # I use information of name file and user tag to built the right string for the stager command
-    
+
     castorDir="/castor/cern.ch/user/"+userId[0]+"/"+userId+"/"
     nameFile1=nameFile1E.get()
     nameTag=nameTagE.get()
@@ -66,11 +66,11 @@ def startQuery():
     myCmd="stager_qry "+myCmd
     runSafe(myCmd)
     return 0
-    
+
 def prepareToPut():
 
 # function executed with the stager_put  button
-    
+
     myCmd=prepareStringStager()
     myCmd="stager_put "+myCmd
     runSafe(myCmd)
@@ -79,12 +79,12 @@ def prepareToPut():
 def prepareToGet():
 
 # function executed with the stager_get button
-    
+
     myCmd=prepareStringStager()
     myCmd="stager_get "+myCmd
     runSafe(myCmd)
     return 0
-    
+
 def toBeGarbageCollected():
 
 # function executed with the stager_rm button
@@ -99,7 +99,7 @@ def toBeGarbageCollected():
 def putDone():
 
 # function executed with the stager_putdone button
-    
+
     myCmd=prepareStringStager()
     myCmd="stager_putdone "+myCmd
     runSafe(myCmd)
@@ -112,11 +112,11 @@ def prepareString(myFile,myOpt):
     if myOpt:
 	myFile=myOpt+" "+myFile
     return myFile
-	    
+
 def execRfcp():
 
 # function executed with the rfcp  button
-    
+
     nameFile1=prepareString(nameFile1E.get(),nameOptionE.get())
     nameFile2=prepareString(nameFile2E.get(),"")
     myCmd="rfcp "+nameFile1+" "+nameFile2
@@ -125,12 +125,12 @@ def execRfcp():
 
 def execRfrm():
 
-# function executed with the Rfrm button    
-    
+# function executed with the Rfrm button
+
     myCmd=prepareString(nameFile1E.get(),nameOptionE.get())
     if myCmd.find("-r") !=-1:
 	myCmd="yes|rfrm "+myCmd
-	   
+
     else:
 	   myCmd="rfrm "+myCmd
     runSafe(myCmd)
@@ -138,73 +138,73 @@ def execRfrm():
 
 def execNsls():
 
-# function executed with the Nsls button 
-    
+# function executed with the Nsls button
+
     myCmd=prepareString(nameFile1E.get(),nameOptionE.get())
     myCmd="nsls "+myCmd
     runSafe(myCmd)
-    
-    
+
+
 def myUsage():
 
-# function executed with the help button 
-    
+# function executed with the help button
+
     myOutput.insert(Tkinter.END,"SYNTAX:\nTo work with a file in your castor dir write castor:nameFile,")
     myOutput.insert(Tkinter.END,"\ne.g. castor:myFile.txt or castor:tmp/MyNewFile.txt.\n")
     myOutput.insert(Tkinter.END,"\nSTAGER_QRY:\nInsert the name of the file in File 1 or the user tag in Tag.\n")
     myOutput.insert(Tkinter.END,"You can add more option with the following syntax.\n")
     nout=os.popen4("stager_qry -h")[1].read()
-    nout=nout[nout.find("[-M"):]  
+    nout=nout[nout.find("[-M"):]
     myOutput.insert(Tkinter.END,nout)
 
     myOutput.insert(Tkinter.END,"\nSTAGER_PUT:\nInsert the name of the file in File 1  and, if you want, the user tag in Tag.\n")
     myOutput.insert(Tkinter.END,"You can add more option with the following syntax.\n")
     nout=os.popen4("stager_put -h")[1].read()
-    nout=nout[nout.find("[-M"):]  
+    nout=nout[nout.find("[-M"):]
     myOutput.insert(Tkinter.END,nout)
 
     myOutput.insert(Tkinter.END,"\nSTAGER_PUTDONE:\nInsert the name of the file in File 1.\n")
     myOutput.insert(Tkinter.END,"You can add more option with the following syntax.\n")
     nout=os.popen4("stager_putdone -h")[1].read()
-    nout=nout[nout.find("[-M"):]  
+    nout=nout[nout.find("[-M"):]
     myOutput.insert(Tkinter.END,nout)
 
 
     myOutput.insert(Tkinter.END,"\nSTAGER_GET:\nInsert the name of the file in File 1 or the user tag in Tag.\n")
     myOutput.insert(Tkinter.END,"You can add more option with the following syntax.\n")
     nout=os.popen4("stager_get -h")[1].read()
-    nout=nout[nout.find("[-M"):]  
+    nout=nout[nout.find("[-M"):]
     myOutput.insert(Tkinter.END,nout)
 
     myOutput.insert(Tkinter.END,"\nSTAGER_RM:\nInsert the name of the file in File 1.\n")
     myOutput.insert(Tkinter.END,"You can add more option with the following syntax.\n")
     nout=os.popen4("stager_rm -h")[1].read()
-    nout=nout[nout.find("-M")+6:]  
+    nout=nout[nout.find("-M")+6:]
     myOutput.insert(Tkinter.END,nout)
 
     myOutput.insert(Tkinter.END,"\nRFCP:\n")
     myOutput.insert(Tkinter.END,"To copy the File 1 into File 2.\n")
-    myOutput.insert(Tkinter.END,"As option you can use [-s maxsize][-v2]. \n") 
+    myOutput.insert(Tkinter.END,"As option you can use [-s maxsize][-v2]. \n")
 
     myOutput.insert(Tkinter.END,"\nRFRM:\n")
     myOutput.insert(Tkinter.END,"To remove File 1. \n")
     myOutput.insert(Tkinter.END,"As option you can use [-r]. \n")
-    
+
     myOutput.insert(Tkinter.END,"\nNSLS:\n")
     myOutput.insert(Tkinter.END,"To look your castor dir or in its folders using the path in File 1.\n")
     myOutput.insert(Tkinter.END,"Possible options are:\n")
     nout=os.popen4("nsls -h")[1].read()
-    nout=nout[nout.find("[-"):nout.find("path")-1]  
+    nout=nout[nout.find("[-"):nout.find("path")-1]
     myOutput.insert(Tkinter.END,nout)
-  
-    
+
+
 def logUser():
-    
-#function to find the right directory on castor 
+
+#function to find the right directory on castor
     myUid= os.geteuid()
-   
+
     strUid=0
-   
+
     fin=open("/etc/passwd",'r')
     for line in fin:
         elem=line.split(":")
@@ -218,10 +218,10 @@ def cleanBoard():
 # to clean the window with the output text
 
       myOutput.delete(1.0,Tkinter.END)
-      
-      
+
+
 def runTestSuite():
-	pathname = os.path.dirname(sys.argv[0]) 
+	pathname = os.path.dirname(sys.argv[0])
         testDir= os.path.abspath(pathname)
 	os.system("python "+testDir+"/test1.py "+"/castor/cern.ch/user/"+userId[0]+"/"+userId+"/")
 	myOutput.insert(Tkinter.END,os.popen4("python "+testDir+"/myTestSuite.py "+userId)[1].read())

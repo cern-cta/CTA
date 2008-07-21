@@ -6,7 +6,7 @@ import sys
 import signal
 
 newTime=time.gmtime()
-ticket=str(((newTime[7]*24+newTime[3])*60 + newTime[4])*60 +newTime[5])  
+ticket=str(((newTime[7]*24+newTime[3])*60 + newTime[4])*60 +newTime[5])
 
 def timeOutTest():
     print "Time Out"
@@ -21,8 +21,8 @@ def timeOutTest():
         if item.find("stager_putdone") != -1:
             os.system("kill -9 "+item[0:5])
             print "stager_putdone is blocked"
-    os._exit(0)  
-        
+    os._exit(0)
+
 
 def saveOnFile(namefile,myCmd):
     t=threading.Timer(120.0,timeOutTest)
@@ -34,7 +34,7 @@ def saveOnFile(namefile,myCmd):
     fin.write(os.popen(myCmd).read())
     fin.close()
     t.cancel()
-      
+
 def runOnShell(cmdS):
     t=threading.Timer(120.0,timeOutTest)
     t.start()
@@ -47,8 +47,8 @@ def runOnShell(cmdS):
 
 if os.popen("ls").read().find("tmpTest") != -1:
     os.system("rm -r ./tmpTest") #delete old test information
-     
-os.mkdir("tmpTest") 
+
+os.mkdir("tmpTest")
 dirCastor=sys.argv[1]
 tmpCastor=dirCastor+"Test"+ticket+"/"
 
@@ -58,7 +58,7 @@ if os.popen("nsls "+dirCastor).read().find("Test"+ticket) == -1:
 else:
     os.system("yes|rfrm -r"+tmpCastor)
     os.system("rfmkdir "+tmpCastor)
-    
+
 
 
 fiS=open("./tmpTest/readMe","wb")
@@ -88,7 +88,7 @@ saveOnFile("query3","stager_qry -U tag"+ticket)
 saveOnFile("rfcp5","rfcp /etc/group "+tmpCastor+"file3"+ticket)
 
 
-# otherwise permission are --- --- --- instead of -rw -r- -r- 
+# otherwise permission are --- --- --- instead of -rw -r- -r-
 
 runOnShell("rfchmod 644 "+tmpCastor+"file3"+ticket)
 
@@ -96,7 +96,7 @@ runOnShell("rfchmod 644 "+tmpCastor+"file3"+ticket)
 saveOnFile("rfcp6","rfcp "+tmpCastor+"file3"+ticket+" ./tmpTest/file3Copy")
 saveOnFile("diff3","diff /etc/group ./tmpTest/file3Copy")
 
-saveOnFile("query4","stager_qry -M "+tmpCastor+"file3"+ticket) 
+saveOnFile("query4","stager_qry -M "+tmpCastor+"file3"+ticket)
 saveOnFile("query5","stager_qry -U tag"+ticket)
 
 saveOnFile("get1","stager_get -M "+tmpCastor+"file3"+ticket+" -U getTag"+ticket)
@@ -133,7 +133,7 @@ if(fi.read().find("being replicated") != -1): # wait that the copy is done
     saveOnFile("rem2","stager_rm -M"+tmpCastor+"file1"+ticket)
 else:
     fi.close()
-    
+
 saveOnFile("query11","stager_qry -M"+tmpCastor+"file1"+ticket)
 saveOnFile("query12","stager_qry -M"+tmpCastor+"file3"+ticket)
 

@@ -9,65 +9,42 @@ import ClientTest
 import RfioTest
 import RootTest
 import TapeTest
-#import DlfTest
-#import CommonTest
-#import CoreTest
-
 
 
 ########################### for each module its own test suite ##########################
 
 
 class ClientSuite(unittest.TestSuite):
-    def __init__(self):    
+    def __init__(self):
         unittest.TestSuite.__init__(self)
 
 class RfioSuite(unittest.TestSuite):
-    def __init__(self):    
+    def __init__(self):
         unittest.TestSuite.__init__(self)
 
 class RootSuite(unittest.TestSuite):
-    def __init__(self):    
+    def __init__(self):
         unittest.TestSuite.__init__(self)
 
 class TapeSuite(unittest.TestSuite):
-    def __init__(self):    
+    def __init__(self):
         unittest.TestSuite.__init__(self)
-
-class DlfSuite(unittest.TestSuite):
-    def __init__(self):    
-        unittest.TestSuite.__init__(self)
-
-class CommonSuite(unittest.TestSuite):
-    def __init__(self):    
-        unittest.TestSuite.__init__(self)
-        
-class CoreSuite(unittest.TestSuite):
-    def __init__(self):    
-        unittest.TestSuite.__init__(self)                
 
 #####  allCastorSuites is a dictonary with a test suite for each module ###########
-        
-allCastorSuites= {'CLIENT':ClientSuite(),'RFIO':RfioSuite(),'ROOT':RootSuite(),'TAPE':TapeSuite(),'DLF':DlfSuite(),'COMMON':CommonSuite(),'CORE':CoreSuite()}
+
+allCastorSuites= {'CLIENT':ClientSuite(),'RFIO':RfioSuite(),'ROOT':RootSuite(),'TAPE':TapeSuite()}
 
 ################ for each module all the possible test suites included #######################
 
 clientTest={'PREREQ': ClientTest.StagerPreClientSuite(),'PUT':ClientTest.StagerPutSuite(),'PUTDONE':ClientTest.StagerPutDoneSuite(),'GET':ClientTest.StagerGetSuite(), 'UPDV2':ClientTest.StagerUpdRfiov2Suite(),'UPDV3':ClientTest.StagerUpdRfiov3Suite(),'RM':ClientTest.StagerRmSuite(),'EXTRAQRY':ClientTest.StagerQuerySpecialSuite(),'DISKONLY':ClientTest.StagerDiskOnlySuite(),'EXTRATEST':ClientTest.StagerExtraTestSuite()}
 
-rfioTest={'PREREQ':RfioTest.RfioPreRequisitesSuite(),'BASIC_RFCP':RfioTest.RfioRfcpSimpleSuite(),'BASIC_OTHERCMD':RfioTest.RfioOtherCmdSimpleSuite(),'CASTOR_RFCP':RfioTest.RfioRfcpEnvSuite() ,'CASTOR_RFCP_NEW_TURL': RfioTest.RfioRfcpNewTurlSuite(),'CASTOR_OTHERCMD':RfioTest.RfioOtherCmdEnvSuite() ,'CASTOR_OTHERCMD_NEW_TURL': RfioTest.RfioOtherCmdNewTurlSuite(),'API': RfioTest.RfioApiSuite(), 'STRESS':RfioTest.RfioApiSuite()}
+rfioTest={'PREREQ':RfioTest.RfioPreRequisitesSuite(),'BASIC_RFCP':RfioTest.RfioRfcpSimpleSuite(),'BASIC_OTHERCMD':RfioTest.RfioOtherCmdSimpleSuite(),'CASTOR_RFCP':RfioTest.RfioRfcpEnvSuite() ,'CASTOR_RFCP_NEW_TURL': RfioTest.RfioRfcpNewTurlSuite(),'CASTOR_OTHERCMD':RfioTest.RfioOtherCmdEnvSuite() ,'CASTOR_OTHERCMD_NEW_TURL': RfioTest.RfioOtherCmdNewTurlSuite()}
 
 rootTest={'PREREQ':RootTest.RootPreRequisitesSuite(),'RFIO':RootTest.RootRfioNewTurlSuite(),'CASTOR':RootTest.RootCastorNewTurlSuite()}
 
 tapeTest={'PREREQ':TapeTest.TapePreSuite(),'MIGRATION':TapeTest.TapeMigrationSuite(),'RECALL':TapeTest.TapeRecallSuite(),'MIGRATION_AND_RECALL':TapeTest.TapeMigrationAndRecallSuite(), 'STRESS_CASTOR':TapeTest.TapeStressCastorSuite(),'TAPE_ONLY':TapeTest.TapeTapeOnlySuite()}
 
-dlfTest={'PREREQ':0,'TEST':0}
-
-
-commonTest={'PREREQ':0,'TEST':0}
-
-coreTest={'PREREQ':0,'TEST':0}
-
-listOfTest={'CLIENT':clientTest,'RFIO':rfioTest,'ROOT':rootTest,'TAPE':tapeTest,'DLF':dlfTest,'COMMON':commonTest,'CORE':coreTest}
+listOfTest={'CLIENT':clientTest,'RFIO':rfioTest,'ROOT':rootTest,'TAPE':tapeTest}
 
 
 #################### opening the file with the list of tests wanted  ################################
@@ -92,20 +69,20 @@ for mySuite in newSuites:
          testToAdd=(listOfTest[testSuiteName])["PREREQ"]
          if testToAdd != 0:
              (allCastorSuites[testSuiteName]).addTest(testToAdd)
-             
-    newCases=mySuite.splitlines()         
+
+    newCases=mySuite.splitlines()
     for myCase in newCases:
         if myCase.find("YES") != -1:
             elem=myCase.split()
             testToAdd=(listOfTest[elem[0]])[elem[1]]
             if testToAdd != 0:
                 (allCastorSuites[elem[0]]).addTest(testToAdd)
-            
+
 
 ############### this is the global test suite with all the tests required in the CASTORTESTCONFIG ####################
 
 class CastorGlobalSuite(unittest.TestSuite):
-    def __init__(self):    
+    def __init__(self):
         unittest.TestSuite.__init__(self)
 
 

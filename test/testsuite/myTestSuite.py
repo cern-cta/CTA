@@ -6,12 +6,12 @@ import sys
 
 
 class StagerTestCase(unittest.TestCase):
-        
+
     def checkCopy(self):
         assert os.stat("./tmpTest/diff1")[6] == 0, "Rfcp doesn't work"
         assert os.stat("./tmpTest/diff2")[6] == 0, "Rfcp doesn't work"
         assert os.stat("./tmpTest/diff3")[6] == 0, "Rfcp doesn't work"
-        
+
     def checkQuery(self):
 
         fi=open("./tmpTest/rem1","r")
@@ -25,26 +25,26 @@ class StagerTestCase(unittest.TestCase):
         if (fi.read().find("SUBREQUEST_READY")== -1):
             flagR2=0
         fi.close()
-        
+
         fi=open("./tmpTest/putDone1","r")
         flagP=1
         if (fi.read().find("error=0")== -1):
             flagP=0
         fi.close()
-        
+
         fi=open("./tmpTest/query0","r")
         assert fi.read().find("not in stager")!= -1, "stager_qry doesn't work if there isn't the file"
         fi.close()
-        
+
         fi=open("./tmpTest/query1","r")
         assert fi.read().find("CANBEMIGR") != -1, "stager_qry doesn't work"
         fi.close()
-             
+
         fi=open("./tmpTest/query2","r")
         assert fi.read().find("No such file or directory") != -1, "stager_qry doesn't work"
         fi.close()
 
-        
+
         fi=open("./tmpTest/query7","r")
         assert fi.read().find("STAGEOUT") != -1, "stager_qry doesn't work"
         fi.close()
@@ -59,7 +59,7 @@ class StagerTestCase(unittest.TestCase):
         if (resp.find("CANBEMIGR") != -1 or resp.find("CANBEMIGR") != -1):
            flag=1
         if (resp.find("STAGEOUT")!= -1 and not flagP):
-           flag=1                                                          
+           flag=1
         assert flag==1, "stager_qry doesn't work"
         fi.close()
 
@@ -70,10 +70,10 @@ class StagerTestCase(unittest.TestCase):
         if ((resp.find("CANBEMIGR") != -1) and flagP):
             flag=1
         if (resp.find("STAGEOUT")!= -1 and not flagP):
-            flag=1                                                          
+            flag=1
         assert flag==1, "stager_qry doesn't work"
         fi.close()
-            
+
         fi=open("./tmpTest/query11","r")
         flag=0
         if flagR1 and (fi.read().find("No such file")):
@@ -88,7 +88,7 @@ class StagerTestCase(unittest.TestCase):
         if flagR2 and (fi.read().find("No such file")):
             flag=1
         if (not flagR2):
-            flag=1    
+            flag=1
         assert flag==1, "stager_qry query doesn't work"
         fi.close()
 
@@ -96,43 +96,43 @@ class StagerTestCase(unittest.TestCase):
         fi=open("./tmpTest/put1","r")
         assert fi.read().find("SUBREQUEST_READY") != -1, "put doesn't work"
         fi.close()
-        
+
     def checkPutDone(self):
         fi=open("./tmpTest/putDone1","r")
         assert fi.read().find("error=0") != -1, "putDone doesn't work"
         fi.close()
-    
+
     def checkGet(self):
         for n in (1,2,3):
             fi=open("./tmpTest/get"+str(n),"r")
             assert fi.read().find("SUBREQUEST_READY") != -1, "stager_get doesn't work"
             fi.close()
     def checkRm(self):
-        
+
 	fir=open("./tmpTest/query1","r")
         flagR1=0
         if (fir.read().find("STAGED")!= -1):
             flagR1=1
         fir.close()
-	
+
 	fir=open("./tmpTest/query10","r")
         flagR2=0
 	resp=fir.read()
         if (resp.find("STAGED")!= -1 or resp.find("STAGEOUT") !=-1):
             flagR2=1
         fir.close()
-	
+
 	fi=open("./tmpTest/rem1","r")
 	resp=fi.read()
         assert (resp.find("SUBREQUEST_READY") != -1 and flagR1==1)or(resp.find("SUBREQUEST_FAILED") != -1 and flagR1==0), "stager_rm doesn't work"
-	
+
         fi.close()
-	
+
         fi=open("./tmpTest/rem2","r")
         resp=fi.read()
 	assert (resp.find("SUBREQUEST_READY") != -1 and flagR2==1)or(resp.find("SUBREQUEST_FAILED") != -1 and flagR2==0), "stager_rm doesn't work"
         fi.close()
-        
+
 cases=("checkCopy","checkQuery","checkPut","checkRm","checkPutDone","checkGet")
 
 class StagerTestSuite(unittest.TestSuite):
@@ -161,7 +161,7 @@ mySuite=StagerTestSuite()
 runner=unittest.TextTestRunner()
 runner.run(mySuite)
 
-print "For more details, look in ./tmpTest, it will be deleted if you run test again." 
+print "For more details, look in ./tmpTest, it will be deleted if you run test again."
 
 #os.system("rm -r tmpTest")
 
