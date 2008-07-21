@@ -46,7 +46,7 @@
 #include "AbstractTCPSocket.hpp"
 
 // Definitions
-#define MAX_NETDATA_SIZE 0xA00000 // 20MB
+#define MAX_NETDATA_SIZE 0x1400000 // 20MB
 
 
 //------------------------------------------------------------------------------
