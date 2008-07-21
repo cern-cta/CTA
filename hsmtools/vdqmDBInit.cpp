@@ -43,16 +43,15 @@
 // Hardcoded schema version of the VDQM database
 const std::string VDQMSCHEMAVERSION = "2_1_7_11";
 
-int help_flag =0;
-
 static struct Coptions longopts[] = {
-  {"help",NO_ARGUMENT,&help_flag,'h'},
-  {NULL, 0, NULL, 0}
+  {"config", REQUIRED_ARGUMENT, NULL, 'c'},
+  {"help"  , NO_ARGUMENT      , NULL, 'h'},
+  {NULL    , 0                , NULL, 0  }
 };
 
 void usage(char *cmd) {
   std::cout << "Usage : " << cmd
-            << " [-h|--help] FileClassName"
+            << " [-c|--config config-file] [-h|--help]"
             << std::endl;
 }
 
@@ -239,26 +238,59 @@ int main(int argc, char *argv[]) {
     castor::ICnvSvc* cnvSvc = NULL;
     castor::IService* iService = NULL;
     castor::vdqm::IVdqmSvc* iVdqmService = NULL;
-    
+
+    Coptind = 1;
+    Copterr = 0;
+
     // Deal with options
-    while ((ch = Cgetopt_long(argc,argv,"h",longopts,NULL)) != EOF) {
+    while ((ch = Cgetopt_long(argc, argv, "c:h", longopts, NULL)) != -1) {
       switch (ch) {
-      case 'h':
-        help_flag = 1;
+      case 'c':
+        {
+          FILE *fp = fopen(Coptarg,"r");
+          if(fp) {
+            // The configuration file exists
+            fclose(fp);
+          } else {
+            // The configuration files does not exist
+            std::cerr
+              << std::endl
+              << "Error: Configuration file \"" << Coptarg
+              << "\" does not exist"
+              << std::endl << std::endl;
+            usage(progName);
+            exit(1);
+          }
+        }
+        setenv("PATH_CONFIG", Coptarg, 1);
         break;
+      case 'h':
+        usage(progName);
+        exit(0);
       case '?':
+        std::cerr
+          << std::endl
+          << "Error: Unknown command-line option: " << (char)Coptopt
+          << std::endl << std::endl;
+        usage(progName);
+        exit(1);
+      case ':':
+        std::cerr
+          << std::endl
+          << "Error: An option is missing a parameter"
+          << std::endl << std::endl;
         usage(progName);
         exit(1);
       default:
-        break;
+        std::cerr
+          << std::endl
+          << "Internal error: "
+          << "Cgetopt_long returned the following unknown value: "
+          << "0x" << std::hex << (int)ch << std::dec
+          << std::endl << std::endl;
+        exit(1);
       }
     }
-    
-    // Display help if required
-    if (help_flag != 0) {
-      usage(progName);
-      return 0;
-    }    
 
     // Tell the DB service the VDQM schema version and DB connection details
     // file
