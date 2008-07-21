@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2008/06/16 07:42:10 $ $Author: waldron $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2008/07/21 09:32:00 $ $Author: waldron $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -70,16 +70,16 @@ throw (castor::exception::Exception) :
 void castor::rh::RHThread::run(void* param) {
   MessageAck ack;
   ack.setStatus(true);
-  
+
   // Record the start time for statistical purposes
   timeval tv;
   gettimeofday(&tv, NULL);
   signed64 startTime = ((tv.tv_sec * 1000000) + tv.tv_usec);
-  
+
   // We know it's a ServerSocket
   castor::io::ServerSocket* sock = (castor::io::ServerSocket*) param;
   castor::stager::Request* fr = 0;
-  
+
   // Retrieve info on the client
   unsigned short port;
   unsigned long ip;
@@ -92,20 +92,20 @@ void castor::rh::RHThread::run(void* param) {
        castor::dlf::Param("Precise Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 5, 2, params);
   }
-  
+
   // Give a uuid to the request
   Cuuid_t cuuid = nullCuuid;
   Cuuid_create(&cuuid);
   char uuid[CUUID_STRING_LEN+1];
   uuid[CUUID_STRING_LEN] = 0;
   Cuuid2string(uuid, CUUID_STRING_LEN+1, &cuuid);
-  
+
   // "New Request Arrival"
   castor::dlf::Param peerParams[] =
     {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
      castor::dlf::Param("Port", port)};
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 1, 2, peerParams);
-  
+
   // Get the incoming request
   try {
     castor::IObject* obj = sock->readObject();
@@ -125,36 +125,42 @@ void castor::rh::RHThread::run(void* param) {
        castor::dlf::Param("Port", port),
        castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 7, 3, params);
-    delete sock;
-    return;
+    ack.setStatus(false);
+    ack.setErrorCode(EINVAL);
+    std::ostringstream stst;
+    stst << "Unable to read Request object from socket."
+	 << std::endl << e.getMessage().str();
+    ack.setErrorMessage(stst.str());
   }
-  
-  // If the request comes from a secure connection then set Client values in 
+
+  // If the request comes from a secure connection then set Client values in
   // the Request object.
   bool secure = false;
-  castor::io::AuthServerSocket* authSock = 
+  castor::io::AuthServerSocket* authSock =
     dynamic_cast<castor::io::AuthServerSocket*>(sock);
   if (authSock != 0) {
     fr->setEuid(authSock->getClientEuid());
     fr->setEgid(authSock->getClientEgid());
     secure = true;
   }
-  
+
   castor::BaseAddress ad;
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
-  
+
   // Process request body
   unsigned int nbThreads = 0;
-  castor::rh::Client *client =
-    dynamic_cast<castor::rh::Client *>(fr->client());
+  castor::rh::Client *client = 0;
+  if (fr != 0) {
+    client = dynamic_cast<castor::rh::Client *>(fr->client());
+  }
   if (ack.status()) {
     try {
       fr->setReqId(uuid);
-      
+
       // "Processing Request"
       castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 8);
-      
+
       // Complete its client field
       if (0 == client) {
         delete fr;
@@ -166,7 +172,7 @@ void castor::rh::RHThread::run(void* param) {
       if (secure){
         client->setSecure(1);
       }
-     
+
       // Handle the request
       nbThreads = handleRequest(fr, ad, cuuid);
       ack.setRequestId(uuid);
@@ -181,7 +187,7 @@ void castor::rh::RHThread::run(void* param) {
       castor::dlf::dlf_writep(cuuid, DLF_LVL_AUTH, 14, 3, params);
       ack.setStatus(false);
       ack.setErrorCode(e.code());
-      ack.setErrorMessage(e.getMessage().str());      
+      ack.setErrorMessage(e.getMessage().str());
     } catch (castor::exception::Exception e) {
       // "Exception caught"
       castor::dlf::Param params[] =
@@ -193,7 +199,7 @@ void castor::rh::RHThread::run(void* param) {
       ack.setErrorMessage(e.getMessage().str());
     }
   }
-  
+
   // Send acknowledgement. If we fail, rollback the database transaction
   // otherwise commit the request to be processed by the stager
   try {
@@ -202,7 +208,7 @@ void castor::rh::RHThread::run(void* param) {
 
     if (ack.status()) {
       sendNotification(fr, cuuid, nbThreads);
-      
+
       // "Request stored in DB"
       castor::dlf::Param params[] =
 	{castor::dlf::Param("ID", fr->id())};
@@ -214,7 +220,7 @@ void castor::rh::RHThread::run(void* param) {
     gettimeofday(&tv, NULL);
     signed64 elapsedTime =
       (((tv.tv_sec * 1000000) + tv.tv_usec) - startTime);
-    
+
     // "Reply sent to client"
     if (fr == 0) {
       castor::dlf::Param params2[] =
@@ -238,7 +244,7 @@ void castor::rh::RHThread::run(void* param) {
       // 2.1.7-8
       int version = client->version();
       std::ostringstream clientVersion;
-      if (version < 2000000) { 
+      if (version < 2000000) {
 	clientVersion << "Unknown";
       } else {
 	int majorversion = version / 1000000;
@@ -268,7 +274,7 @@ void castor::rh::RHThread::run(void* param) {
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
        castor::dlf::Param("Precise Message", e.getMessage().str())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 11, 2, params);
-    
+
     // Rollback transaction
     try {
       if (ack.status()) {
@@ -282,7 +288,7 @@ void castor::rh::RHThread::run(void* param) {
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 15, 2, params);
     }
   }
-  
+
   delete fr;
   delete sock;
 }
@@ -292,7 +298,7 @@ void castor::rh::RHThread::run(void* param) {
 // handleRequest
 //------------------------------------------------------------------------------
 unsigned int castor::rh::RHThread::handleRequest
-(castor::stager::Request* fr, 
+(castor::stager::Request* fr,
  castor::BaseAddress ad,
  Cuuid_t cuuid)
   throw (castor::exception::Exception) {
@@ -300,7 +306,7 @@ unsigned int castor::rh::RHThread::handleRequest
   // Check access rights
   if (m_useAccessLists) {
     castor::rh::IRHSvc* m_rhSvc = 0;
-    castor::IService* svc = 
+    castor::IService* svc =
       castor::BaseObject::services()->service("DbRhSvc", castor::SVC_DBRHSVC);
     m_rhSvc = dynamic_cast<castor::rh::IRHSvc*>(svc);
     if (0 == m_rhSvc) {
