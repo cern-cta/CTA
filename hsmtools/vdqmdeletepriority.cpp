@@ -41,10 +41,11 @@ const std::string VDQMSCHEMAVERSION = "2_1_7_11";
 
 void usage(const std::string programName) {
   std::cerr << "Usage: " << programName <<
-    " -v VID -a mode [ -l type ] [ -h ]\n"
+    " [-c config-file] -v VID -a mode [ -l type ] [ -h ]\n"
     "\n"
     "where options can be:\n"
     "\n"
+    "\t-c, --config config-file  Configuration file\n"
     "\t-v, --vid VID             Volume visual Identifier\n"
     "\t-a, --tapeAccessMode mode Tape access mode. Valid values are \"read\"\n"
     "\t                          and \"write\"\n"
@@ -58,6 +59,7 @@ void usage(const std::string programName) {
 
 
 static struct Coptions longopts[] = {
+  {"config"        , REQUIRED_ARGUMENT, NULL, 'c'},
   {"vid"           , REQUIRED_ARGUMENT, NULL, 'v'},
   {"tapeAccessMode", REQUIRED_ARGUMENT, NULL, 'a'},
   {"lifespanType"  , REQUIRED_ARGUMENT, NULL, 'l'},
@@ -77,8 +79,27 @@ void parseCommandLine(int argc, char **argv, std::string &vid, int &tpMode,
   Coptind = 1;
   Copterr = 0;
 
-  while ((c = Cgetopt_long (argc, argv, "v:a:l:h", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "c:v:a:l:h", longopts, NULL)) != -1) {
     switch (c) {
+    case 'c':
+      {
+        FILE *fp = fopen(Coptarg,"r");
+        if(fp) {
+          // The configuration file exists
+          fclose(fp);
+        } else {
+          // The configuration files does not exist
+          std::cerr
+            << std::endl
+            << "Error: Configuration file \"" << Coptarg
+            << "\" does not exist"
+            << std::endl << std::endl;
+          usage(argv[0]);
+          exit(1);
+        }
+      }
+      setenv("PATH_CONFIG", Coptarg, 1);
+      break;
     case 'v':
       vid    = Coptarg;
       vidSet = true;
