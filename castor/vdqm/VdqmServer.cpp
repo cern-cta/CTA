@@ -24,6 +24,7 @@
  
  
 // Include Files
+#include <stdio.h>
 #include <string>
 
 #include "Cgetopt.h"
@@ -304,6 +305,21 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
       m_foreground = true;
       break;
     case 'c':
+      {
+        FILE *fp = fopen(Coptarg,"r");
+        if(fp) {
+          // The configuration file exists
+          fclose(fp);
+        } else {
+          // The configuration files does not exist
+          std::cerr
+            << std::endl
+            << "Error: Configuration file \"" << Coptarg << "\" does not exist"
+            << std::endl << std::endl;
+          help(argv[0]);
+          exit(1);
+        }
+      }
       setenv("PATH_CONFIG", Coptarg, 1);
       break;
     case 'h':
