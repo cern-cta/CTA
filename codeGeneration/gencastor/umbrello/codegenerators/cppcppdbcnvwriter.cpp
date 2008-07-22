@@ -332,10 +332,62 @@ void CppCppDbCnvWriter::writeConstants() {
             << "Db" << m_classInfo->className
             << "Cnv::s_bulkSelectStatementString =" << endl
             << getIndent()
-            << "\"DECLARE \\" << endl << getIndent()
-	    << "   TYPE CurType IS REF CURSOR RETURN "
-	    << m_classInfo->className << "%ROWTYPE; \\"
-	    << endl << getIndent()
+            << "\"DECLARE \\" << endl;
+  // We need to decide whether we can use the "%ROWTYPE" shortcut
+  bool useRowtype = true;
+  for (Member* mem = members.first();
+       0 != mem;
+       mem = members.next()) {
+    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) {
+      useRowtype = false;
+      break;
+    }
+  }
+  if (useRowtype) {
+    for (Assoc* as = assocs.first();
+	 0 != as;
+	 as = assocs.next()) {
+      if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) {
+	useRowtype = false;
+	break;
+      }
+    }
+  }
+  if (useRowtype) {
+    *m_stream << getIndent()
+	      << "   TYPE CurType IS REF CURSOR RETURN "
+	      << m_classInfo->className << "%ROWTYPE; \\"
+	      << endl;
+  } else {
+    // no ROWTYPE for us since we ignore some fields...
+    *m_stream << getIndent()
+	      << "   TYPE RecordType IS RECORD (";
+    n = 0;
+    for (Member* mem = members.first();
+	 0 != mem;
+	 mem = members.next()) {
+      if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+      if (n > 0) *m_stream << ", ";
+      *m_stream << mem->name << " " << getOraSQLType(mem->typeName);
+      n++;
+    }
+    // Go through the associations
+    for (Assoc* as = assocs.first();
+	 0 != as;
+	 as = assocs.next()) {
+      if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
+      if (as->type.multiRemote == MULT_ONE &&
+	  as->remotePart.name != "") {
+	if (n > 0) *m_stream << ", ";
+	*m_stream << as->remotePart.name << " INTEGER";
+	n++;
+      }
+    }
+    *m_stream << "); \\" << endl << getIndent()
+	      << "   TYPE CurType IS REF CURSOR RETURN RecordType; \\"
+	      << endl;
+  }
+  *m_stream << getIndent()
 	    << "   PROCEDURE bulkSelect(ids IN castor.\\\"cnumList\\\", \\"
 	    << endl << getIndent()
 	    << "                        objs OUT CurType) AS \\"
