@@ -1,5 +1,5 @@
 ------------
-- 2.1.7-11 -
+- 2.1.7-12 -
 ------------
 
   Bug Fixes
@@ -30,22 +30,22 @@
   Upgrading from 2.1.7-10
   -----------------------
 
-  Before upgrading to a 2.1.7-11 instance of CASTOR2 please make sure to read the upgrade
+  Before upgrading to a 2.1.7-12 instance of CASTOR2 please make sure to read the upgrade
   instructions fully before proceeding. Note: this upgrade does not require stopping of the
   instance and should be transparent to the end users.
 
   Warning
   -------
-  Do not upgrade CUPV to run 2.1.7-11 unless your CUPV entries are fully qualified!
+  Do not upgrade CUPV to run 2.1.7-12 unless your CUPV entries are fully qualified!
 
   Instructions
   ------------
   1. Upgrade the stager, dlf and repack databases using the correct upgrade scripts from
-     - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-11/upgrades
+     - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-12/upgrades
 
   2. Stop rtcpclientd.
 
-  3. Upgrade the software on the headnodes and diskservers to 2.1.7-11. All daemons apart
+  3. Upgrade the software on the headnodes and diskservers to 2.1.7-12. All daemons apart
      from rtcpclientd will be restarted automatically.
 
   4. Log onto the stager database and execute:
@@ -60,7 +60,7 @@
 
   5. Start rtcpclientd.
 
-  6. Upgrade the CUPV and CNS to 2.1.7-11.
+  6. Upgrade the CUPV and CNS to 2.1.7-12.
 
   7. Now that CUPV supports multiple network domains (Bug: #38825) it is necessary to update 
      the contents of the CUPV database so that all source and target entries are fully 
