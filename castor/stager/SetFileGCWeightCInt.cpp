@@ -391,7 +391,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cstager_SetFileGCWeight_weight
   //----------------------------------------------------------------------------
-  int Cstager_SetFileGCWeight_weight(castor::stager::SetFileGCWeight* instance, double* var) {
+  int Cstager_SetFileGCWeight_weight(castor::stager::SetFileGCWeight* instance, float* var) {
     *var = instance->weight();
     return 0;
   }
@@ -399,7 +399,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cstager_SetFileGCWeight_setWeight
   //----------------------------------------------------------------------------
-  int Cstager_SetFileGCWeight_setWeight(castor::stager::SetFileGCWeight* instance, double new_var) {
+  int Cstager_SetFileGCWeight_setWeight(castor::stager::SetFileGCWeight* instance, float new_var) {
     instance->setWeight(new_var);
     return 0;
   }
