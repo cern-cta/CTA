@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.147 $ $Release$ $Date: 2008/07/22 13:42:28 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.148 $ $Release$ $Date: 2008/07/22 21:11:14 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1367,6 +1367,28 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
     dgNameVar IN VARCHAR2, dedicateVar IN VARCHAR2);
 
   /**
+   * This procedure inserts the specified tape dedication into the database.
+   * If a tape drive is not specified, i.e. driveNAmeVar, serverNAmeVar and
+   * dgNameVar are set to NULL, then all dedications for the specified tape
+   * will be removed from the database.
+   *
+   * @param driveNameVar the name of the tape drive
+   * @param serverNameVar the name of the tape server of the tape drive
+   * @param dgNameVar the name of the device group of the tape drive
+   * @param vidVar the VID of the tape to be dedicated
+   * @exception castorVdqmException.invalid_drive_dedicate if an error is
+   * detected in the drive dedicate string.
+   * @exception castorVdqmException.drive_not_found_application if the
+   * specified tape drive cannot be found in the database.
+   * @exception castorVdqmException.drive_server_not_found if the specified
+   * tape drive and tape server combination cannot be found in the database.
+   * @exception castorVdqmException.drive_dgn_not_found if the specified tape
+   * drive and DGN combination cannot be found in the database.
+   */
+  PROCEDURE dedicateTape(vidVar IN VARCHAR2, driveNameVar IN VARCHAR2,
+    serverNameVar IN VARCHAR2, dgNameVar IN VARCHAR2);
+
+  /**
    * This procedure deletes the specified drive from the database.
    *
    * @param driveNameVar the name of the tape drive to be delete
@@ -2462,6 +2484,94 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     END IF;
 
   END dedicateDrive;
+
+
+  /**
+   * See the castorVdqm package specification for documentation.
+   */
+  PROCEDURE dedicateTape(vidVar IN VARCHAR2, driveNameVar IN VARCHAR2,
+    serverNameVar IN  VARCHAR2, dgNameVar IN  VARCHAR2) AS
+    driveIdVar           NUMBER;
+    TYPE dedicationList_t IS TABLE OF NUMBER INDEX BY BINARY_INTEGER;
+    dedicationsToDelete  dedicationList_t;
+    dedicationIdVar      NUMBER;
+  BEGIN
+    -- If no tape drive is specified then remove all dedications for the
+    -- specified tape and return
+    IF driveNameVar IS NULL AND serverNameVar IS NULL AND dgNameVar IS NULL
+      THEN
+      -- Delete all existing dedications for the tape
+      SELECT id BULK COLLECT INTO dedicationsToDelete
+        FROM Tape2DriveDedication
+        WHERE Tape2DriveDedication.vid = vidVar;
+      IF dedicationsToDelete.COUNT > 0 THEN
+        FOR i IN dedicationsToDelete.FIRST .. dedicationsToDelete.LAST LOOP
+          DELETE FROM Tape2DriveDedication
+            WHERE Tape2DriveDedication.id = dedicationsToDelete(i);
+          DELETE FROM Id2Type
+            WHERE Id2Type.id = dedicationsToDelete(i);
+        END LOOP;
+      END IF;
+
+      RETURN;
+    END IF;
+
+    -- Get the id of the tape drive
+    BEGIN
+      SELECT
+        TapeDrive.id
+        INTO driveIdVar
+        FROM TapeDrive
+        INNER JOIN TapeServer ON
+          TapeDrive.tapeServer = TapeServer.id
+        INNER JOIN DeviceGroupName ON
+          TapeDrive.deviceGroupName = DeviceGroupName.id
+        WHERE
+              TapeDrive.driveName    = driveNameVar
+          AND TapeServer.serverName  = serverNameVar
+          AND DeviceGroupName.dgName = dgNameVar;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      castorVdqmException.throw(castorVdqmException.drive_not_found_cd,
+        'Tape drive ''' || dgNameVar || ' ' || driveNameVar || '@' ||
+        serverNameVar || ''' not found in database.');
+    END;
+
+    -- Lock the tape drive row
+    BEGIN
+      SELECT
+        TapeDrive.id
+        INTO driveIdVar
+        FROM TapeDrive
+        WHERE
+          TapeDrive.id = driveIdVar
+        FOR UPDATE;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      castorVdqmException.throw(castorVdqmException.drive_not_found_cd,
+        'Tape drive ''' || dgNameVar || ' ' || driveNameVar || '@' ||
+        serverNameVar || ''' not found in database.');
+    END;
+
+    -- Delete all existing dedications for the tape
+    SELECT id BULK COLLECT INTO dedicationsToDelete
+      FROM Tape2DriveDedication
+      WHERE Tape2DriveDedication.vid = vidVar;
+    IF dedicationsToDelete.COUNT > 0 THEN
+      FOR i IN dedicationsToDelete.FIRST .. dedicationsToDelete.LAST LOOP
+        DELETE FROM Tape2DriveDedication
+          WHERE Tape2DriveDedication.id = dedicationsToDelete(i);
+        DELETE FROM Id2Type
+          WHERE Id2Type.id = dedicationsToDelete(i);
+      END LOOP;
+    END IF;
+
+    -- Insert new dedication
+    INSERT INTO Tape2DriveDedication(id, vid, tapeDrive)
+      VALUES(ids_seq.nextval, vidVar, driveIdVar)
+      RETURNING id INTO dedicationIdVar;
+    INSERT INTO Id2Type (id, type)
+        VALUES (dedicationIdVar, 160);
+
+  END dedicateTape;
 
 
   /**
