@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.146 $ $Release$ $Date: 2008/07/21 09:30:39 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.147 $ $Release$ $Date: 2008/07/22 13:42:28 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -9,7 +9,7 @@
  *******************************************************************/
 
 /* Update the schema version number */
-UPDATE CastorVersion SET schemaVersion = '2_1_7_11';
+UPDATE CastorVersion SET schemaVersion = '2_1_7_12';
 
 /* Sequence used to generate unique indentifies */
 CREATE SEQUENCE ids_seq CACHE 200;

@@ -51,7 +51,7 @@
 #include "castor/vdqm/VdqmServer.hpp"
 
 // Hardcoded schema version of the VDQM database
-const std::string VDQMSCHEMAVERSION = "2_1_7_11";
+const std::string VDQMSCHEMAVERSION = "2_1_7_12";
 
 
 //------------------------------------------------------------------------------

@@ -38,7 +38,7 @@
 #include <time.h>
 
 
-const std::string VDQMSCHEMAVERSION = "2_1_7_11";
+const std::string VDQMSCHEMAVERSION = "2_1_7_12";
 
 
 void usage(const std::string programName) {
