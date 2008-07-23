@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.148 $ $Release$ $Date: 2008/07/22 21:11:14 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.149 $ $Release$ $Date: 2008/07/23 21:08:52 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1210,6 +1210,41 @@ WHERE
   AND castorVdqmView.passesDedications(tapeDrive.id, ClientIdentification.egid,
     ClientIdentification.machine, TapeAccessSpecification.accessMode,
     ClientIdentification.euid, VdqmTape.vid)=1
+ORDER BY
+  TapeAccessSpecification.accessMode DESC,
+  TapeRequest.modificationTime ASC;
+
+
+/**
+ * This view shows candidate drive allocations that will reuse a current drive
+ * allocation before any dedicatioins have been taken into account.
+ */
+CREATE OR REPLACE VIEW PotentialReusableMounts_VIEW AS SELECT UNIQUE
+  TapeDrive.id as tapeDriveId,
+  TapeDrive.tape as tapeId,
+  TapeRequest.id as tapeRequestId,
+  TapeAccessSpecification.accessMode,
+  TapeRequest.modificationTime
+FROM
+  TapeRequest
+INNER JOIN TapeAccessSpecification ON
+  TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
+INNER JOIN VdqmTape ON
+  TapeRequest.tape = VdqmTape.id
+INNER JOIN ClientIdentification ON
+  TapeRequest.client = ClientIdentification.id
+INNER JOIN TapeDrive ON
+  TapeRequest.tape = TapeDrive.tape -- Request is for the tape in the drive
+  AND (
+    TapeRequest.requestedSrv IS NULL
+    OR TapeRequest.requestedSrv = TapeDrive.tapeServer
+  )
+INNER JOIN TapeServer ON
+  TapeDrive.tapeServer = TapeServer.id
+WHERE
+      TapeServer.actingMode=0 -- ACTIVE
+  AND TapeRequest.tapeDrive IS NULL -- Request has not already been allocated
+                                    -- a drive
 ORDER BY
   TapeAccessSpecification.accessMode DESC,
   TapeRequest.modificationTime ASC;
