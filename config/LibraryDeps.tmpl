@@ -4,39 +4,12 @@
  */
 
 /*
- * @(#)$RCSfile: LibraryDeps.tmpl,v $ $Revision: 1.13 $ $Date: 2007/06/28 15:40:08 $ CERN IT-ADC/CA Jean-Damien Durand
+ * @(#)$RCSfile: LibraryDeps.tmpl,v $ $Revision: 1.14 $ $Date: 2008/07/24 16:26:53 $ CERN IT-ADC/CA Jean-Damien Durand
  */
 
 /* ================================ */
 /* Hidden dependencies of libraries */
 /* ================================ */
-#if UseOracle
-#if BuildStageLibrary
-#if !BuildOraCpp
-#undef BuildOraCpp
-#define BuildOraCpp YES
-#endif
-#endif
-#endif
-
-#if UsePgsql
-#if BuildStageLibrary
-#if !BuildPgCpp
-#undef BuildPgCpp
-#define BuildPgCpp YES
-#endif
-#endif
-#endif
-
-#if UseMysql
-#if BuildStageLibrary
-#if !BuildMyCpp
-#undef BuildMyCpp
-#define BuildMyCpp YES
-#endif
-#endif
-#endif
-
 #if BuildNameServerLibrary
 #if UseCupv
 #undef BuildCupvLibrary
