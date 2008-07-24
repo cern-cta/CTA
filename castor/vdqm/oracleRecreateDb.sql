@@ -4,9 +4,9 @@
 whenever oserror exit failure
 whenever sqlerror exit failure rollback
 
-prompt Login as the VDQM schema owner
--- Replace connection string if the schema owner account is different
-connect vdqm@castordev64
+PROMPT Login as the VDQM schema owner
+ACCEPT vdqm_conn char PROMPT 'Enter connection string (user@tns): '
+CONNECT &vdqm_conn
 
 -- Drop all the exisiting database objects
 @oracleDropAllObjects.sqlplus
@@ -20,9 +20,9 @@ connect vdqm@castordev64
 -- Replace this account name if the writer account is different
 @oracleWriterGrants.sqlplus
 
-prompt Login as the VDQM writer
--- Replace connection string if the writer account is different
-connect vdqm_writer@castordev64
+PROMPT Login as the VDQM writer
+ACCEPT vdqm_writer_conn char PROMPT 'Enter VDQM writer connection string (user@tns): '
+CONNECT &vdqm_writer_conn
 
 -- Drop all the exisiting database objects
 @oracleDropAllObjects.sqlplus
