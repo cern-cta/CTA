@@ -136,6 +136,8 @@ void CppCppStreamCnvWriter::writeCreateRepContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
+    // don't take into account associations that only appear in the DB world
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
     if (as->type.multiRemote == MULT_ONE &&
         isEnum(as->remotePart.typeName) &&
         as->remotePart.stereotype != "enumerationNoStream") {
@@ -178,7 +180,7 @@ void CppCppStreamCnvWriter::writeCreateObjContent() {
     if (mem->stereotype == "DoNotStream") continue;
     // don't take into account members that only appear in the DB world
     if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
-    // Otherwise, unstream the member;    
+    // Otherwise, unstream the member;
     *m_stream << getIndent()
               << fixTypeName(mem->typeName,
                              getNamespace(mem->typeName),
@@ -217,6 +219,8 @@ void CppCppStreamCnvWriter::writeCreateObjContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
+    // don't take into account associations that only appear in the DB world
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
     if (as->type.multiRemote == MULT_ONE &&
         isEnum(as->remotePart.typeName) &&
         as->remotePart.stereotype != "enumerationNoStream") {
@@ -300,6 +304,8 @@ void CppCppStreamCnvWriter::writeMarshal() {
         as->remotePart.name != "") {
       // don't consider enums
       if (isEnum(as->remotePart.typeName)) continue;
+      // don't take into account associations that only appear in the DB world
+      if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
       // One to one association
       fixTypeName(as->remotePart.typeName,
                   getNamespace(as->remotePart.typeName),
@@ -402,6 +408,8 @@ void CppCppStreamCnvWriter::writeUnmarshal() {
           !isEnum(as->remotePart.typeName)) ||
          as->type.multiRemote == MULT_N) &&
         as->remotePart.name != "") {
+      // don't take into account associations that only appear in the DB world
+      if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
       // Get the precise object
       *m_stream << getIndent() << "// Fill object with associations"
                 << endl << getIndent() << m_originalPackage

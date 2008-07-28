@@ -47,6 +47,7 @@ CppCastorWriter::CppCastorWriter(UMLDoc* parent, const char *name) :
   m_ignoreButForDB.insert(QString("lastFileSystemChange"));
   m_ignoreButForDB.insert(QString("diskCopySize"));
   m_ignoreButForDB.insert(QString("nbCopyAccesses"));
+  m_ignoreButForDB.insert(QString("gcType"));
   m_ignoreButForDB.insert(QString("migrSelectPolicy"));
 }
 
@@ -77,7 +78,7 @@ QString CppCastorWriter::computeFileName(UMLClassifier* concept, QString ext) {
   //if we already know to which file this class was written/should be written, just return it.
   if(m_fileMap->contains(concept))
     return ((*m_fileMap)[concept]);
-  
+
   //else, determine the "natural" file name
   QString name;
   // Get the package name
@@ -85,10 +86,10 @@ QString CppCastorWriter::computeFileName(UMLClassifier* concept, QString ext) {
 
   // Replace all white spaces with blanks
   package.simplifyWhiteSpace();
-  
+
   // Replace all blanks with underscore
   package.replace(QRegExp(" "), "_");
-  
+
   // if package is given add this as a directory to the file name
   if (!package.isEmpty()) {
     name = package + "::" + concept->getName();
@@ -98,11 +99,11 @@ QString CppCastorWriter::computeFileName(UMLClassifier* concept, QString ext) {
   } else {
     name = concept->getName();
   }
-  
+
   // Convert all "." and "::" to "/" : Platform-specific path separator
   name.replace(QRegExp("\\."),"/"); // Simple hack!
   name.replace(QString("::"),"/");
-  
+
   // if a package name exists check the existence of the package directory
   if (!package.isEmpty()) {
     QDir packageDir(UMLApp::app()->getCommonPolicy()->getOutputDirectory().absPath() + package);
