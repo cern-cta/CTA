@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: dlfserver.init,v $ $Revision: 1.21 $ $Release$ $Date: 2008/05/20 07:53:13 $ $Author: waldron $
+# @(#)$RCSfile: dlfserver.init,v $ $Revision: 1.22 $ $Release$ $Date: 2008/07/28 16:42:48 $ $Author: waldron $
 #
 # chkconfig: 345 67 38
 # description: Distributed Logging Facility Initialisation Script
@@ -71,7 +71,7 @@ start() {
 stop() {
         echo -n $"Stopping $prog: "
         killproc $prog
-        
+
         RETVAL=$?
         echo
         [ -f /var/lock/subsys/$prog ] && rm -f /var/lock/subsys/$prog
@@ -87,12 +87,12 @@ reload() {
 
 restart() {
         stop
-        start 
+        start
 }
 
 # See how we were called
 case "$1" in
-        
+
         start)
                 start
                 ;;

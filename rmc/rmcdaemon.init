@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rmcdaemon.init,v $ $Revision: 1.6 $ $Release$ $Date: 2008/05/20 07:53:14 $ $Author: waldron $
+# @(#)$RCSfile: rmcdaemon.init,v $ $Revision: 1.7 $ $Release$ $Date: 2008/07/28 16:42:49 $ $Author: waldron $
 #
 # chkconfig: 345 71 34
 # description: RMC server daemon
@@ -61,7 +61,7 @@ start() {
                         RETVAL=1
                 fi
         fi
-        
+
         [ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
         echo
         [ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog
@@ -71,7 +71,7 @@ start() {
 stop() {
         echo -n $"Stopping $prog: "
         killproc $prog
-        
+
         RETVAL=$?
         echo
         [ -f /var/lock/subsys/$prog ] && rm -f /var/lock/subsys/$prog
@@ -80,12 +80,12 @@ stop() {
 
 restart() {
         stop
-        start 
+        start
 }
 
 # See how we were called
 case "$1" in
-        
+
         start)
                 start
                 ;;

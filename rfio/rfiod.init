@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rfiod.init,v $ $Revision: 1.11 $ $Release$ $Date: 2008/05/20 07:53:14 $ $Author: waldron $
+# @(#)$RCSfile: rfiod.init,v $ $Revision: 1.12 $ $Release$ $Date: 2008/07/28 16:42:49 $ $Author: waldron $
 #
 # chkconfig: 345 65 40
 # description: RFIO Server Daemon Initialisation Script
@@ -49,7 +49,7 @@ start() {
 
         cd /var/spool/rfio
         daemon /usr/bin/$prog $OPTIONS $RFIOD_OPTIONS
-        
+
         # Write the pid to a file. This way when we stop() the rfiod daemon
         # we only stop the main daemon allowing the children to continue
         # transferring data
@@ -58,7 +58,7 @@ start() {
                 pid=`ps -eo pid,ppid,comm | egrep " 1 $prog\$" | awk '{print $1}'`
                 rm -f /var/run/$prog.pid
                 if [ -n "$pid" ]; then
-                            echo $pid > /var/run/$prog.pid
+                        echo $pid > /var/run/$prog.pid
                         RETVAL=0
                 else
                         RETVAL=1
@@ -74,7 +74,7 @@ start() {
 stop() {
         echo -n $"Stopping $prog: "
         killproc $prog
-        
+
         RETVAL=$?
         echo
         [ -f /var/lock/subsys/$prog ] && rm -f /var/lock/subsys/$prog
@@ -83,12 +83,12 @@ stop() {
 
 restart() {
         stop
-        start 
+        start
 }
 
 # See how we were called
 case "$1" in
-        
+
         start)
                 start
                 ;;

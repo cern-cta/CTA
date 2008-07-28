@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rtcpclientd.init,v $ $Revision: 1.14 $ $Release$ $Date: 2008/05/20 07:53:14 $ $Author: waldron $
+# @(#)$RCSfile: rtcpclientd.init,v $ $Revision: 1.15 $ $Release$ $Date: 2008/07/28 16:42:49 $ $Author: waldron $
 #
 # chkconfig: 345 74 32
 # description: RTCPCLIENT Daemon Initialisation Script
@@ -49,16 +49,16 @@ start() {
         # Check if daemon is already running
         if [ -e /var/lock/subsys/$prog ]; then
                 if [ -n "`/sbin/pidof $prog`" ]; then
-                            echo -n $"already running"
+                        echo -n $"already running"
                         failure
-                            echo
+                        echo
                         return 1
                 fi
         fi
 
         cd /var/spool/rtcpclientd
         daemon /usr/bin/$prog $RTCPCLIENTD_OPTIONS
-        
+
         RETVAL=$?
         [ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
         echo
@@ -69,7 +69,7 @@ start() {
 stop() {
         echo -n $"Stopping $prog: "
         killproc $prog
-        
+
         RETVAL=$?
         echo
         [ -f /var/lock/subsys/$prog ] && rm -f /var/lock/subsys/$prog
@@ -78,12 +78,12 @@ stop() {
 
 restart() {
         stop
-        start 
+        start
 }
 
 # See how we were called
 case "$1" in
-        
+
         start)
                 start
                 ;;

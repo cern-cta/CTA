@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rtcpd.init,v $ $Revision: 1.6 $ $Release$ $Date: 2008/05/20 07:53:14 $ $Author: waldron $
+# @(#)$RCSfile: rtcpd.init,v $ $Revision: 1.7 $ $Release$ $Date: 2008/07/28 16:42:49 $ $Author: waldron $
 #
 # chkconfig: 345 73 32
 # description: RTCPD server daemon
@@ -48,7 +48,7 @@ start() {
 
         cd /var/spool/rtcopy
         daemon /usr/bin/$prog $RTCPD_OPTIONS
-        
+
         [ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
         echo
         [ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog
@@ -67,12 +67,12 @@ stop() {
 
 restart() {
         stop
-        start 
+        start
 }
 
 # See how we were called
 case "$1" in
-        
+
         start)
                 start
                 ;;

@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rechandler.init,v $ $Revision: 1.8 $ $Release$ $Date: 2008/06/25 12:40:07 $ $Author: waldron $
+# @(#)$RCSfile: rechandler.init,v $ $Revision: 1.9 $ $Release$ $Date: 2008/07/28 16:42:48 $ $Author: waldron $
 #
 # chkconfig: 345 70 35
 # description: RecHandlerDaemon Initialisation Script
@@ -71,21 +71,21 @@ start() {
 stop() {
 	echo -n $"Stopping $prog: "
 	killproc $prog
-	
+
 	RETVAL=$?
 	echo
 	[ -f /var/lock/subsys/$prog ] && rm -f /var/lock/subsys/$prog
-	return $RETVAL	
+	return $RETVAL
 }
 
 restart() {
 	stop
-        start 
+        start
 }
 
 # See how we were called
 case "$1" in
-	
+
 	start)
 		start
 		;;

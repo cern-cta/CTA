@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rmMasterDaemon.init,v $ $Revision: 1.11 $ $Release$ $Date: 2008/05/20 07:53:11 $ $Author: waldron $
+# @(#)$RCSfile: rmMasterDaemon.init,v $ $Revision: 1.12 $ $Release$ $Date: 2008/07/28 16:42:48 $ $Author: waldron $
 #
 # chkconfig: 345 74 31
 # description: Resource Monitoring Server Daemon Initialisation Script
@@ -48,14 +48,14 @@ start() {
 
         cd /var/spool/rmmaster
         daemon /usr/bin/$prog $RMMASTERDAEMON_OPTIONS
-        
+
         # Write the pid to a file.
         RETVAL=$?
         if [ $RETVAL -eq 0 ]; then
                 pid=`ps -eo pid,ppid,comm | egrep " 1 $prog\$" | awk '{print $1}'`
                 rm -f /var/run/$prog.pid
                 if [ -n "$pid" ]; then
-                            echo $pid > /var/run/$prog.pid
+                        echo $pid > /var/run/$prog.pid
                         RETVAL=0
                 else
                         RETVAL=1
@@ -71,7 +71,7 @@ start() {
 stop() {
         echo -n $"Stopping $prog: "
         killproc $prog
-        
+
         RETVAL=$?
         echo
         [ -f /var/lock/subsys/$prog ] && rm -f /var/lock/subsys/$prog
@@ -80,12 +80,12 @@ stop() {
 
 restart() {
         stop
-        start 
+        start
 }
 
 # See how we were called
 case "$1" in
-        
+
         start)
                 start
                 ;;
