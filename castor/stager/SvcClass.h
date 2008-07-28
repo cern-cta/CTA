@@ -238,6 +238,20 @@ int Cstager_SvcClass_hasDiskOnlyBehavior(struct Cstager_SvcClass_t* instance, in
 int Cstager_SvcClass_setHasDiskOnlyBehavior(struct Cstager_SvcClass_t* instance, int new_var);
 
 /**
+ * Get the value of replicateOnClose
+ * Flag to indicate whether files in this service class are replicated on closure.
+ * The number of copies created is defined by the maxReplicaNb attribute
+ */
+int Cstager_SvcClass_replicateOnClose(struct Cstager_SvcClass_t* instance, int* var);
+
+/**
+ * Set the value of replicateOnClose
+ * Flag to indicate whether files in this service class are replicated on closure.
+ * The number of copies created is defined by the maxReplicaNb attribute
+ */
+int Cstager_SvcClass_setReplicateOnClose(struct Cstager_SvcClass_t* instance, int new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

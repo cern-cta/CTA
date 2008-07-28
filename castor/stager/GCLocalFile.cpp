@@ -43,6 +43,10 @@ castor::stager::GCLocalFile::GCLocalFile() throw() :
   m_diskCopyId(0),
   m_fileId(0),
   m_nsHost(""),
+  m_lastAccessTime(0),
+  m_nbAccesses(0),
+  m_gcWeight(0.0),
+  m_gcTriggeredBy(""),
   m_id(0) {
 }
 
@@ -69,6 +73,10 @@ void castor::stager::GCLocalFile::print(std::ostream& stream,
   stream << indent << "diskCopyId : " << m_diskCopyId << std::endl;
   stream << indent << "fileId : " << m_fileId << std::endl;
   stream << indent << "nsHost : " << m_nsHost << std::endl;
+  stream << indent << "lastAccessTime : " << m_lastAccessTime << std::endl;
+  stream << indent << "nbAccesses : " << m_nbAccesses << std::endl;
+  stream << indent << "gcWeight : " << m_gcWeight << std::endl;
+  stream << indent << "gcTriggeredBy : " << m_gcTriggeredBy << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

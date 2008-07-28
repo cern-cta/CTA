@@ -170,6 +170,82 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_lastAccessTime
+       * Time when this DiskCopy was last accessed: this information is used to recompute
+       * the gcWeight at each access
+       * @return the value of m_lastAccessTime
+       */
+      u_signed64 lastAccessTime() const {
+        return m_lastAccessTime;
+      }
+
+      /**
+       * Set the value of m_lastAccessTime
+       * Time when this DiskCopy was last accessed: this information is used to recompute
+       * the gcWeight at each access
+       * @param new_var the new value of m_lastAccessTime
+       */
+      void setLastAccessTime(u_signed64 new_var) {
+        m_lastAccessTime = new_var;
+      }
+
+      /**
+       * Get the value of m_nbAccesses
+       * Number of accesses to this diskcopy
+       * @return the value of m_nbAccesses
+       */
+      unsigned int nbAccesses() const {
+        return m_nbAccesses;
+      }
+
+      /**
+       * Set the value of m_nbAccesses
+       * Number of accesses to this diskcopy
+       * @param new_var the new value of m_nbAccesses
+       */
+      void setNbAccesses(unsigned int new_var) {
+        m_nbAccesses = new_var;
+      }
+
+      /**
+       * Get the value of m_gcWeight
+       * Weight used by the garbage collector to decide who is the next candidate for
+       * removal
+       * @return the value of m_gcWeight
+       */
+      double gcWeight() const {
+        return m_gcWeight;
+      }
+
+      /**
+       * Set the value of m_gcWeight
+       * Weight used by the garbage collector to decide who is the next candidate for
+       * removal
+       * @param new_var the new value of m_gcWeight
+       */
+      void setGcWeight(double new_var) {
+        m_gcWeight = new_var;
+      }
+
+      /**
+       * Get the value of m_gcTriggeredBy
+       * The action that triggered the garbage collection
+       * @return the value of m_gcTriggeredBy
+       */
+      std::string gcTriggeredBy() const {
+        return m_gcTriggeredBy;
+      }
+
+      /**
+       * Set the value of m_gcTriggeredBy
+       * The action that triggered the garbage collection
+       * @param new_var the new value of m_gcTriggeredBy
+       */
+      void setGcTriggeredBy(std::string new_var) {
+        m_gcTriggeredBy = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -200,6 +276,18 @@ namespace castor {
 
       /// The name server hosting this castor file
       std::string m_nsHost;
+
+      /// Time when this DiskCopy was last accessed: this information is used to recompute the gcWeight at each access
+      u_signed64 m_lastAccessTime;
+
+      /// Number of accesses to this diskcopy
+      unsigned int m_nbAccesses;
+
+      /// Weight used by the garbage collector to decide who is the next candidate for removal
+      double m_gcWeight;
+
+      /// The action that triggered the garbage collection
+      std::string m_gcTriggeredBy;
 
       /// The id of this object
       u_signed64 m_id;

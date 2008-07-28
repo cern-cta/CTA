@@ -318,6 +318,26 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_replicateOnClose
+       * Flag to indicate whether files in this service class are replicated on closure.
+       * The number of copies created is defined by the maxReplicaNb attribute
+       * @return the value of m_replicateOnClose
+       */
+      bool replicateOnClose() const {
+        return m_replicateOnClose;
+      }
+
+      /**
+       * Set the value of m_replicateOnClose
+       * Flag to indicate whether files in this service class are replicated on closure.
+       * The number of copies created is defined by the maxReplicaNb attribute
+       * @param new_var the new value of m_replicateOnClose
+       */
+      void setReplicateOnClose(bool new_var) {
+        m_replicateOnClose = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -446,6 +466,9 @@ namespace castor {
 
       /// Whether the diskpools under this serviceClass should behave like disk only pools. This include failing jobs that want to allocate space when no space is available and forcing the fileClass of files if forcedFileClass is not empty.
       bool m_hasDiskOnlyBehavior;
+
+      /// Flag to indicate whether files in this service class are replicated on closure. The number of copies created is defined by the maxReplicaNb attribute
+      bool m_replicateOnClose;
 
       /// The id of this object
       u_signed64 m_id;

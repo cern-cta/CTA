@@ -283,6 +283,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_SvcClass_replicateOnClose
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_replicateOnClose(castor::stager::SvcClass* instance, bool* var) {
+    *var = instance->replicateOnClose();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_setReplicateOnClose
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_setReplicateOnClose(castor::stager::SvcClass* instance, bool new_var) {
+    instance->setReplicateOnClose(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_SvcClass_id
   //----------------------------------------------------------------------------
   int Cstager_SvcClass_id(castor::stager::SvcClass* instance, u_signed64* var) {
