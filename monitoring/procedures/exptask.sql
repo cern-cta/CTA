@@ -10,7 +10,7 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'Information about experiments system usage');
 END;
-/
+
 
 BEGIN
 dbms_scheduler.create_job(
@@ -24,7 +24,7 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'Information about experiments tape usage');
 END;
-/
+
 
 create table monitoring_TapeSummary (
 	runtime DATE,

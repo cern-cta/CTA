@@ -1,55 +1,42 @@
 CREATE OR REPLACE PROCEDURE Proc_MetaRecallRunning AS
 
-    TYPE first IS TABLE OF CASTOR_STAGER.svcclass.name%TYPE;
-    TYPE secnd IS TABLE OF NUMBER;
+  TYPE first IS TABLE OF CASTOR_STAGER.svcclass.name%TYPE;
+  TYPE secnd IS TABLE OF NUMBER;
 
-    a first;
-    b secnd;
-    c secnd;
-    d secnd;
-    e secnd;
+  a first;
+  b secnd;
+  c secnd;
+  d secnd;
+  e secnd;
 
-    mytime DATE := SYSDATE;
- 
-    BEGIN 
+  mytime DATE := SYSDATE;
 
-    execute immediate 'truncate table castor_stager.monitoring_MetaRecallRunning';
-    
-    SELECT * BULK COLLECT INTO a, b, c, d, e
+  BEGIN
+
+  execute immediate 'truncate table castor_stager.monitoring_MetaRecallRunning';
+
+  SELECT * BULK COLLECT INTO a, b, c, d, e
+    FROM (
+      SELECT name, min(creationtime), max(creationtime) maxage, avg(creationtime) avgage, sum(marker) total
         FROM (
-	    select b.name, 
-                round(nvl(a.minage,0),0), 
-                round(nvl(a.maxage,0),0), 
-                round(nvl(a.aveage,0),0), 
-                nvl(a.total,0) 
-            from ( 
-                select svc.name, 
-                    min(CASTOR_STAGER.gettime()-dc.creationtime) minage, 
-                    max(CASTOR_STAGER.gettime()-dc.creationtime) maxage,
-                    avg(CASTOR_STAGER.gettime()-dc.creationtime) aveage, 
-                    count(*) TOTAL 
-	    from CASTOR_STAGER.tapecopy tc, 
-                 CASTOR_STAGER.diskcopy dc, 
-                 CASTOR_STAGER.svcclass svc, 
-                 CASTOR_STAGER.filesystem fs, 
-                 CASTOR_STAGER.TAPE tape,
-                 CASTOR_STAGER.SEGMENT seg,
-                 CASTOR_STAGER.diskpool2svcclass dp2svc
-	    where dc.castorfile = tc.castorfile 
-                  and seg.tape = tape.ID
-                  and tc.id = seg.copy       
-		  and dc.status = 2 
-                  and tc.status = 4
-                  and tc.castorfile > 0                         
-                  and dc.filesystem=fs.id 
-                  and dp2svc.parent=fs.diskpool 
-                  and dp2svc.child=svc.id 
-   	    group by svc.name order by svc.name) a, 
-       CASTOR_STAGER.svcclass b where a.name(+)=b.name
-      );   
+          SELECT svcClass.name, decode(creationTime, NULL, 0, gettime() - creationtime) creationtime, decode(creationTime, NULL, 0, 1) marker
+            FROM (
+              SELECT Request.svcClassName svcClass, DiskCopy.creationtime
+                FROM DiskCopy, SubRequest, castorfile,
+                     (SELECT id, svcClassName FROM StageGetRequest UNION ALL
+                      SELECT id, svcClassName FROM StagePrepareToGetRequest UNION ALL
+                      SELECT id, svcClassName FROM StageUpdateRequest UNION ALL
+                      SELECT id, svcClassName FROM StageRepackRequest) Request
+               WHERE SubRequest.diskcopy = diskcopy.id
+                 AND DiskCopy.castorfile = castorfile.id
+                 AND DiskCopy.status = 2
+                 AND SubRequest.status = 4
+                 AND SubRequest.parent = 0
+                 AND SubRequest.request = Request.id
+            ) requests
+       RIGHT JOIN SvcClass ON SvcClass.name = Requests.svcClass
+      ) GROUP BY name);
 
-      forall f in a.first..a.last
-        insert into CASTOR_STAGER.monitoring_MetaRecallRunning values(mytime, a(f), b(f), c(f), d(f), e(f));
-
+  FORALL f IN a.first..a.last
+    INSERT INTO CASTOR_STAGER.monitoring_MetaRecallRunning VALUES (mytime, a(f), b(f), c(f), d(f), e(f));
 END Proc_MetaRecallRunning;
-/

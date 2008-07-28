@@ -18,7 +18,7 @@ CREATE OR REPLACE PROCEDURE Proc_TABLESIZE AS
        SELECT count(*)
         FROM CASTOR_STAGER.subrequest
       );
- 
+
     SELECT * BULK COLLECT INTO b
       FROM (
        SELECT count(*)
@@ -42,10 +42,10 @@ CREATE OR REPLACE PROCEDURE Proc_TABLESIZE AS
        SELECT count(*)
         FROM CASTOR_STAGER.id2type
       );
-    
+
 
       forall marker in a.first..a.last
         insert into CASTOR_STAGER.monitoring_TABLESIZE values(mytime, a(marker), b(marker), c(marker), d(marker), e(marker));
-      
+
 END Proc_TABLESIZE;
-/ 
+

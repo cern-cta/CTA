@@ -10,7 +10,7 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'migstall info');
 END;
-/
+
 BEGIN
 dbms_scheduler.create_job(
   job_name => 'task_recallstall',
@@ -23,8 +23,6 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'recall stall info');
 END;
-/
-
 
 BEGIN
 dbms_scheduler.create_job(
@@ -38,7 +36,7 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'count of rows in various tables');
 END;
-/
+
 BEGIN
 dbms_scheduler.create_job(
   job_name => 'task_DiskServerStat',
@@ -51,7 +49,7 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'Information about files on diskservers');
 END;
-/
+
 BEGIN
 dbms_scheduler.create_job(
   job_name => 'task_Segment',
@@ -64,7 +62,7 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'Information about Segments');
 END;
-/
+
 BEGIN
 dbms_scheduler.create_job(
   job_name => 'task_Stream',
@@ -77,7 +75,7 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'Information about Stream');
 END;
-/
+
 BEGIN
 dbms_scheduler.create_job(
   job_name => 'task_Subrequest',
@@ -90,7 +88,7 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'Information about SubRequests');
 END;
-/
+
 BEGIN
 dbms_scheduler.create_job(
   job_name => 'task_Tape',
@@ -103,7 +101,7 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'Information about Tape');
 END;
-/
+
 BEGIN
 dbms_scheduler.create_job(
   job_name => 'task_TapeCopy',
@@ -116,7 +114,7 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'Information about tape copies');
 END;
-/
+
 BEGIN
 dbms_scheduler.create_job(
   job_name => 'task_DiskCopy',
@@ -129,7 +127,7 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'Information about disk copies');
 END;
-/
+
 BEGIN
 dbms_scheduler.create_job(
   job_name => 'task_FilesData',
@@ -142,7 +140,7 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'Information about files inc access count, age and size');
 END;
-/
+
 BEGIN
 dbms_scheduler.create_job(
   job_name => 'task_MetaRecall',
@@ -155,7 +153,6 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'Information about active recalls and their lifetimes');
 END;
-/
 
 BEGIN
 dbms_scheduler.create_job(
@@ -169,7 +166,6 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'Create min, max, avg age of pending files and count for each svcclass');
 END;
-/
 
 BEGIN
 dbms_scheduler.create_job(
@@ -183,8 +179,7 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'Create min, max, avg age of selected files and count for each svcclass');
 END;
-/
-                                                                                                                             
+
 BEGIN
 dbms_scheduler.create_job(
   job_name => 'task_VeryOldFiles',
@@ -197,7 +192,6 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'Produce list of files in stager in diskcopy state 10, tapecopy state 0 or 1 older than specified time');
 END;
-/
 
 BEGIN
 dbms_scheduler.create_job(
@@ -211,7 +205,6 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'Produce list of files in stager in diskcopy state 2 older than specified time');
 END;
-/
 
 BEGIN
 dbms_scheduler.create_job(
@@ -225,7 +218,6 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'Produce list of files in stager in diskcopy state 1 older than specified time');
 END;
-/
 
 BEGIN
 dbms_scheduler.create_job(
@@ -239,7 +231,6 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'Produce list of files in stager in diskcopy state 6 -STAGEOUT- older than 10 days');
 END;
-/
 
 BEGIN
 dbms_scheduler.create_job(
@@ -253,4 +244,4 @@ dbms_scheduler.create_job(
   enabled => TRUE,
   comments => 'Produces a list of files in the stager which are in WAITTAPERECALL and are older then 48 hours');
 END;
-/
+

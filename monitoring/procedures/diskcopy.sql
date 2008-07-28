@@ -7,7 +7,7 @@ CREATE OR REPLACE PROCEDURE Proc_DISKCOPY AS
     b secnd;
     c secnd;
     d secnd;
-    e secnd; 
+    e secnd;
     f secnd;
     g secnd;
     h secnd;
@@ -39,16 +39,16 @@ CREATE OR REPLACE PROCEDURE Proc_DISKCOPY AS
 		nvl(sum(decode(dc.status,9,1,0)),0),
 		nvl(sum(decode(dc.status,10,1,0)),0),
 		nvl(sum(decode(dc.status,11,1,0)),0)
-	from castor_stager.diskcopy dc, 
-	     castor_stager.filesystem fs, 
-	     castor_stager.diskpool2svcclass dp2svc, 
-	     castor_stager.svcclass svc 
-        where dc.filesystem = fs.id and dp2svc.parent=fs.diskpool and dp2svc.child=svc.id 
+	from castor_stager.diskcopy dc,
+	     castor_stager.filesystem fs,
+	     castor_stager.diskpool2svcclass dp2svc,
+	     castor_stager.svcclass svc
+        where dc.filesystem = fs.id and dp2svc.parent=fs.diskpool and dp2svc.child=svc.id
         group by svc.name
       );
- 
+
       forall marker in a.first..a.last
         insert into CASTOR_STAGER.monitoring_DISKCOPY values(mytime, a(marker), b(marker), c(marker), d(marker), e(marker), f(marker), g(marker), h(marker), i(marker), j(marker), k(marker), l(marker), m(marker));
-     
+
 END Proc_DISKCOPY;
-/ 
+

@@ -34,18 +34,18 @@ CREATE OR REPLACE PROCEDURE Proc_waittaperecall AS
              CASTOR_STAGER.svcclass svc,
              CASTOR_STAGER.filesystem fs,
              CASTOR_STAGER.diskpool2svcclass dp2svc
-        where dc.status = '2' 
+        where dc.status = '2'
               AND dc.creationtime < ((to_number(SYSDATE - TO_DATE(19700101,'YYYYMMDD')) * 86400)-48*3600)
               AND dc.filesystem = fs.id
-	      AND fs.diskserver = ds.id 
+	      AND fs.diskserver = ds.id
               AND dp2svc.parent = fs.diskpool
               AND dp2svc.child = svc.id
               AND cf.id = dc.castorfile
         order by svc.name
       );
- 
+
       forall marker in a.first..a.last
         insert into CASTOR_STAGER.monitoring_waittaperecall values(mytime, a(marker), b(marker), c(marker), d(marker), e(marker), f(marker));
-      
+
 END Proc_waittaperecall;
-/ 
+

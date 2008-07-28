@@ -34,18 +34,18 @@ CREATE OR REPLACE PROCEDURE Proc_TAPEPOOL AS
              CASTOR_STAGER.svcclass svc,
              CASTOR_STAGER.filesystem fs,
              CASTOR_STAGER.diskpool2svcclass dp2svc
-        where dc.status = '6' 
+        where dc.status = '6'
               AND dc.creationtime < ((to_number(SYSDATE - TO_DATE(19700101,'YYYYMMDD')) * 86400)-240*3600)
               AND dc.filesystem = fs.id
-	      AND fs.diskserver = ds.id 
+	      AND fs.diskserver = ds.id
               AND dp2svc.parent = fs.diskpool
               AND dp2svc.child = svc.id
               AND cf.id = dc.castorfile
         order by svc.name
       );
- 
+
       forall marker in a.first..a.last
         insert into CASTOR_STAGER.monitoring_TAPEPOOL values(mytime, a(marker), b(marker), c(marker), d(marker), e(marker), f(marker));
-      
+
 END Proc_TAPEPOOL;
-/ 
+

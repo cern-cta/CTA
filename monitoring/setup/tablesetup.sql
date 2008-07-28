@@ -35,7 +35,7 @@ CREATE TABLE monitoring_MigStall (
   twelvehour	NUMBER,
   day		NUMBER,
   twoday	NUMBER,
-  older		NUMBER 
+  older		NUMBER
 );
 
 GRANT SELECT ON castor_stager.monitoring_MigStall TO castor_read;
@@ -66,7 +66,7 @@ CREATE TABLE monitoring_DiskServerStat (
   runtime 	DATE NOT NULL,
   diskserver    VARCHAR2(2048),
   filesystem	VARCHAR2(2048),
-  status	NUMBER,	
+  status	NUMBER,
   total 	NUMBER
 );
 
@@ -81,7 +81,7 @@ CREATE TABLE monitoring_Segment (
   runtime 	DATE NOT NULL,
   svcclass      VARCHAR2(2048),
   unprocessed	NUMBER,
-  filecopied	NUMBER,	
+  filecopied	NUMBER,
   failed	NUMBER,
   selected	NUMBER,
   retried	NUMBER
@@ -124,7 +124,7 @@ CREATE TABLE monitoring_SubRequest (
   ready			NUMBER,
   failed		NUMBER,
   finished		NUMBER,
-  failedfinished	NUMBER, 
+  failedfinished	NUMBER,
   failedanswering	NUMBER
 );
 
@@ -159,9 +159,9 @@ CREATE TABLE monitoring_TAPECOPY (
   runtime 	DATE NOT NULL,
   svcclass     	VARCHAR2(2048),
   created	NUMBER,
-  tobemigrated 	NUMBER, 
+  tobemigrated 	NUMBER,
   waitinstreams	NUMBER,
-  selected 	NUMBER, 
+  selected 	NUMBER,
   toberecalled	NUMBER,
   staged	NUMBER,
   failed	NUMBER
@@ -177,7 +177,7 @@ CREATE TABLE monitoring_DISKCOPY (
   runtime 		DATE NOT NULL,
   svcclass     		VARCHAR2(2048),
   staged 	 	NUMBER,
-  waitdisk2diskcopy 	NUMBER,	 
+  waitdisk2diskcopy 	NUMBER,
   waittaperecall 	NUMBER,
   deleted		NUMBER,
   failed 		NUMBER,
@@ -324,8 +324,8 @@ GRANT execute ON castor_stager.Proc_OLDFILES TO castor_read;
 CREATE TABLE monitoring_MetaMigPending (
   runtime 	DATE NOT NULL,
   svcclass 	VARCHAR2(2048),
-  min_age 	NUMBER,  
-  max_age  	NUMBER,   
+  min_age 	NUMBER,
+  max_age  	NUMBER,
   avg_age 	NUMBER,
   count 	NUMBER
 );
@@ -340,8 +340,8 @@ GRANT execute ON castor_stager.Proc_MetaMigPending TO castor_read;
 CREATE TABLE monitoring_MetaMigSelected (
   runtime 	DATE NOT NULL,
   svcclass 	VARCHAR2(2048),
-  min_age 	NUMBER,  
-  max_age  	NUMBER,   
+  min_age 	NUMBER,
+  max_age  	NUMBER,
   avg_age 	NUMBER,
   count 	NUMBER
 );

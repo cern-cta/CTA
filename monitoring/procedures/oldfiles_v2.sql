@@ -40,14 +40,14 @@ CREATE OR REPLACE PROCEDURE Proc_OLDFILES AS
               AND tc.status IN(0,1)
               AND dc.castorfile = tc.castorfile
               AND dc.filesystem = fs.id
-	      AND fs.diskserver = ds.id 
+	      AND fs.diskserver = ds.id
               AND dp2svc.parent = fs.diskpool
               AND dp2svc.child = svc.id
               AND cf.id = dc.castorfile
       );
- 
+
       forall marker in a.first..a.last
         insert into CASTOR_STAGER.monitoring_VERYOLDFILES values(mytime, a(marker), b(marker), c(marker), d(marker), e(marker), f(marker));
-      
+
 END Proc_OLDFILES;
-/ 
+

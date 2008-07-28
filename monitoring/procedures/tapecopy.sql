@@ -7,7 +7,7 @@ CREATE OR REPLACE PROCEDURE Proc_TAPECOPY AS
     b secnd;
     c secnd;
     d secnd;
-    e secnd; 
+    e secnd;
     f secnd;
     g secnd;
     h secnd;
@@ -30,15 +30,15 @@ CREATE OR REPLACE PROCEDURE Proc_TAPECOPY AS
 		nvl(sum(decode(tpcp.status,5,1,0)),0),
 		nvl(sum(decode(tpcp.status,6,1,0)),0)
 	from castor_stager.svcclass svc,
-             castor_stager.tapecopy tpcp, 
+             castor_stager.tapecopy tpcp,
              castor_stager.castorfile fid
         where tpcp.castorfile(+)=fid.id and fid.svcclass(+)=svc.id
                  group by svc.name
 
       );
- 
+
       forall marker in a.first..a.last
         insert into CASTOR_STAGER.monitoring_TAPECOPY values(mytime, a(marker), b(marker), c(marker), d(marker), e(marker), f(marker), g(marker), h(marker));
-      
+
 END Proc_TAPECOPY;
-/ 
+

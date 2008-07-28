@@ -7,14 +7,14 @@ CREATE OR REPLACE PROCEDURE Proc_SubRequest AS
     b secnd;
     c secnd;
     d secnd;
-    e secnd; 
+    e secnd;
     f secnd;
     g secnd;
-    h secnd; 	
-    i secnd; 
-    j secnd; 
+    h secnd;
+    i secnd;
+    j secnd;
     k secnd;
-    l secnd; 
+    l secnd;
 
     mytime DATE := SYSDATE;
 
@@ -22,11 +22,11 @@ CREATE OR REPLACE PROCEDURE Proc_SubRequest AS
 
     execute immediate 'truncate table castor_stager.monitoring_SubRequest';
 
-    SELECT * BULK COLLECT INTO a, b, c, d, e, f, g, h, i, j, k, l 
+    SELECT * BULK COLLECT INTO a, b, c, d, e, f, g, h, i, j, k, l
       FROM (
-	select  svc.name, 
+	select  svc.name,
 	        nvl(sum(decode(sr.status,0,1,0)),0),
-		nvl(sum(decode(sr.status,1,1,0)),0),	
+		nvl(sum(decode(sr.status,1,1,0)),0),
 		nvl(sum(decode(sr.status,2,1,0)),0),
 		nvl(sum(decode(sr.status,3,1,0)),0),
 		nvl(sum(decode(sr.status,4,1,0)),0),
@@ -44,9 +44,9 @@ CREATE OR REPLACE PROCEDURE Proc_SubRequest AS
                        and sr.diskcopy=dc.id
                  group by svc.name
   );
- 
+
       forall marker in a.first..a.last
         insert into CASTOR_STAGER.monitoring_SubRequest values(mytime, a(marker), b(marker), c(marker), d(marker), e(marker), f(marker), g(marker), h(marker), i(marker), j(marker), k(marker), l(marker));
-      
+
 END Proc_SubRequest;
-/ 
+

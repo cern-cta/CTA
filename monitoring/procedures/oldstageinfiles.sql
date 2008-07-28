@@ -46,4 +46,3 @@ CREATE OR REPLACE PROCEDURE Proc_OLDSTAGEINFILES AS
         insert into CASTOR_STAGER.monitoring_OLDSTAGEINFILES values(a(marker), b(marker), c(marker), d(marker), e(marker), f(marker));
 
 END Proc_OLDSTAGEINFILES;
-/

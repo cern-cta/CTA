@@ -1,108 +1,71 @@
 BEGIN
-dbms_scheduler.drop_job(
-  job_name => 'task_migstall'
-  );
+  dbms_scheduler.drop_job(job_name => 'task_migstall');
 END;
-/
+
 BEGIN
-dbms_scheduler.drop_job(
-  job_name => 'task_recallstall'
-  );
+  dbms_scheduler.drop_job(job_name => 'task_recallstall');
 END;
-/
+
 BEGIN
-dbms_scheduler.drop_job(
-  job_name => 'task_tablesize'
-  );
+  dbms_scheduler.drop_job(job_name => 'task_tablesize');
 END;
-/
+
 BEGIN
-dbms_scheduler.drop_job(
-  job_name => 'task_Segment'
-  );
+  dbms_scheduler.drop_job(job_name => 'task_Segment');
 END;
-/
+
 BEGIN
-dbms_scheduler.drop_job(
-  job_name => 'task_Stream'
-  );
+  dbms_scheduler.drop_job(job_name => 'task_Stream');
 END;
-/
+
 BEGIN
-dbms_scheduler.drop_job(
-  job_name => 'task_Subrequest'
-  );
+  dbms_scheduler.drop_job(job_name => 'task_Subrequest');
 END;
-/
+
 BEGIN
-dbms_scheduler.drop_job(
-  job_name => 'task_Tape'
-  );
+  dbms_scheduler.drop_job(job_name => 'task_Tape');
 END;
-/
+
 BEGIN
-dbms_scheduler.drop_job(
-  job_name => 'task_TapeCopy'
-  );
+  dbms_scheduler.drop_job(job_name => 'task_TapeCopy');
 END;
-/
+
 BEGIN
-dbms_scheduler.drop_job(
-  job_name => 'task_DiskCopy'
-  );
+  dbms_scheduler.drop_job(job_name => 'task_DiskCopy');
 END;
-/
+
 BEGIN
-dbms_scheduler.drop_job(
-  job_name => 'task_MetaRecall'
-  );
+  dbms_scheduler.drop_job(job_name => 'task_MetaRecall);
 END;
-/
+
 BEGIN
-dbms_scheduler.drop_job(
-  job_name => 'task_waittaperecall'
-  );
+  dbms_scheduler.drop_job(job_name => 'task_waittaperecall');
 END;
-/
+
 BEGIN
-dbms_scheduler.drop_job(
-  job_name => 'task_waitdisk2diskcopy'
-  );
+  dbms_scheduler.drop_job(job_name => 'task_waitdisk2diskcopy');
 END;
-/
+
 BEGIN
-dbms_scheduler.drop_job(
-  job_name => 'task_STAGEOUT'
-  );
+  dbms_scheduler.drop_job(job_name => 'task_STAGEOUT');
 END;
-/
+
 BEGIN
-dbms_scheduler.drop_job(
-  job_name => 'task_VeryOldFiles'
-  );
+  dbms_scheduler.drop_job(job_name => 'task_VeryOldFiles');
 END;
-/    
+
 BEGIN
-dbms_scheduler.drop_job(
-  job_name => 'task_FilesData'
-  );
+  dbms_scheduler.drop_job(job_name => 'task_FilesData');
 END;
-/    
+
 BEGIN
-dbms_scheduler.drop_job(
-  job_name => 'task_MigPending'
-  );
+  dbms_scheduler.drop_job(job_name => 'task_MigPending');
 END;
-/    
+
 BEGIN
-dbms_scheduler.drop_job(
-  job_name => 'task_MigSelected'
-  );
+  dbms_scheduler.drop_job(job_name => 'task_MigSelected');
 END;
-/    
+
 BEGIN
-dbms_scheduler.drop_job(
-  job_name => 'task_OldStageInFiles'
-  );
+  dbms_scheduler.drop_job(job_name => 'task_OldStageInFiles');
 END;
-/
