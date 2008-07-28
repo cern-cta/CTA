@@ -68,18 +68,19 @@ int main(int argc, char *argv[]) {
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("Deletion",
-	new castor::gc::DeletionThread(startDelay)));
-    daemon.getThreadPool('D')->setNbThreads(1);
+          new castor::gc::DeletionThread(startDelay)));
+            daemon.getThreadPool('D')->setNbThreads(1);
 
     // Create the Synchronization thread
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("Synchronization",
-	new castor::gc::SynchronizationThread(startDelay)));
-    daemon.getThreadPool('S')->setNbThreads(1);
+          new castor::gc::SynchronizationThread(startDelay)));
+            daemon.getThreadPool('S')->setNbThreads(1);
 
-    // Start daemon
+    // Start daemon as the stager superuser
     daemon.parseCommandLine(argc, argv);
+    daemon.runAsStagerSuperuser();
     daemon.start();
     return 0;
 
