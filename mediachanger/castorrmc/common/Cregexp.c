@@ -1,5 +1,5 @@
 /*
- * $Id: Cregexp.c,v 1.6 2007/12/06 14:24:47 sponcec3 Exp $
+ * $Id: Cregexp.c,v 1.7 2008/07/28 16:55:04 waldron Exp $
  */
 
 /*
@@ -2053,7 +2053,7 @@ int DLL_DECL Cregexp_dump(r)
 	s = r->program + 1;
 	while (op != END) {	/* While that wasn't END last time... */
 		op = OP(s);
-		printf("%2d%s", s-r->program, _Cregexp_prop(s));	/* Where, what. */
+		printf("%2ld%s", s-r->program, _Cregexp_prop(s));	/* Where, what. */
 		next = _Cregexp_next(s,
 							 _Cregexp_parse,
 							 _Cregexp_npar,
@@ -2063,7 +2063,7 @@ int DLL_DECL Cregexp_dump(r)
 		if (next == NULL)		/* Next ptr. */
 			printf("(0)");
 		else 
-			printf("(%d)", (s-r->program)+(next-s));
+			printf("(%ld)", (s-r->program)+(next-s));
 		s += 3;
 		if (op == ANYOF || op == ANYBUT || op == EXACTLY) {
 			/* Literal string, where present. */

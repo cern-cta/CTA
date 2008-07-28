@@ -1,5 +1,5 @@
 /*
- * $Id: osdep.h,v 1.19 2005/10/21 09:31:12 jdurand Exp $
+ * $Id: osdep.h,v 1.20 2008/07/28 16:55:05 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: osdep.h,v $ $Revision: 1.19 $ $Date: 2005/10/21 09:31:12 $ CERN IT-PDP/IP Frederic Hemmer
+ * @(#)$RCSfile: osdep.h,v $ $Revision: 1.20 $ $Date: 2008/07/28 16:55:05 $ CERN IT-PDP/IP Frederic Hemmer
  */
 
 /* osdep.h      Operating system dependencies                           */
@@ -163,6 +163,10 @@ typedef U_HYPER TIME_T;
 #endif
 #if defined(_WIN32)
 #define off64_t __int64
+#endif
+
+#if defined(_WIN32)
+typedef int socklen_t;
 #endif
 
 #endif /* _OSDEP_H_INCLUDED_ */
