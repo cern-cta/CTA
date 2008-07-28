@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/03/06 12:36:42 $ $Author: murrayc3 $
+ * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/07/28 16:41:31 $ $Author: itglp $
  *
  * Abstract CASTOR thread pool
  *
@@ -113,7 +113,6 @@ void* castor::server::_thread_run(void* param)
   args = (struct threadArgs*)param;
   pool = dynamic_cast<castor::server::BaseThreadPool*>(args->handler);
   if (pool == 0 || pool->m_thread == 0) {
-    delete args;
     return 0;
   }
 
@@ -128,7 +127,6 @@ void* castor::server::_thread_run(void* param)
                  << pool->m_poolName << std::endl;
   }
   
-  delete args;
   return 0;
 }
 
