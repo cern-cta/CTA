@@ -1,6 +1,0 @@
-/var/log/vdqmserv /var/spool/vdqm/vdqm.log {
-    compress
-    daily
-    missingok
-    rotate 90
-}
