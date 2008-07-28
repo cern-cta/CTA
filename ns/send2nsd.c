@@ -18,6 +18,7 @@
 #include "Cnetdb.h"
 #include "Cns.h"
 #include "Cns_api.h"
+#include "Cns_constants.h"
 #ifdef CSEC
 #include "Csec_api.h"
 #endif
@@ -108,31 +109,31 @@ int *nbstruct;
 		}
 		sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
 		if (! sin.sin_port) {
-                /*If the security Option is set it will try ONLY in that port, if it fails to connect it won't retry in an unsecure port*/
-		// Check if the secure mode has been enable
+			/*If the security Option is set it will try ONLY in that port, if it fails to connect it won't retry in an unsecure port*/
+			// Check if the secure mode has been enable
      			if ((securemode = getenv ("SECURE_CASTOR")) || (securemode = getconfent(CNS_SCE,"SECURITY",0))){
-	    	       		 securityOpt = (strcasecmp(securemode, "YES") == 0);
+				securityOpt = (strcasecmp(securemode, "YES") == 0);
                         }
                		if (securityOpt){
-         			       if ((sec_p = getenv (CNS_SPORT_ENV)) || ((sec_p = getconfent (CNS_SCE, "SEC_PORT", 0)))) {
-        	                		sin.sin_port = htons ((unsigned short)atoi (sec_p));
-	                		} else if ((sec_sp = getservbyname (CNS_SEC_SVC, "tcp"))) {
-                       			 	sin.sin_port = sec_sp->s_port;
-                			} else {
-                        			sin.sin_port = htons ((unsigned short)CNS_SEC_PORT);
-                			}
-			        }else { 
-					if ((p = getenv (CNS_PORT_ENV)) || (p = getconfent (CNS_SCE, "PORT", 0))) {
-						sin.sin_port = htons ((unsigned short)atoi (p));
-					} else if ((sp = Cgetservbyname (CNS_SVC, "tcp"))) {
-						sin.sin_port = sp->s_port;
-						serrno = 0;
-					} else {
-						sin.sin_port = htons ((unsigned short)CNS_PORT);
-						serrno = 0;
-					}
+				if ((sec_p = getenv (CNS_SPORT_ENV)) || ((sec_p = getconfent (CNS_SCE, "SEC_PORT", 0)))) {
+					sin.sin_port = htons ((unsigned short)atoi (sec_p));
+				} else if ((sec_sp = getservbyname (CNS_SEC_SVC, "tcp"))) {
+					sin.sin_port = sec_sp->s_port;
+				} else {
+					sin.sin_port = htons ((unsigned short)CNS_SEC_PORT);
+				}
+			}else { 
+				if ((p = getenv (CNS_PORT_ENV)) || (p = getconfent (CNS_SCE, "PORT", 0))) {
+					sin.sin_port = htons ((unsigned short)atoi (p));
+				} else if ((sp = Cgetservbyname (CNS_SVC, "tcp"))) {
+					sin.sin_port = sp->s_port;
+					serrno = 0;
+				} else {
+					sin.sin_port = htons ((unsigned short)CNS_PORT);
+					serrno = 0;
 				}
 			}
+		}
 		/* get retry environment variables */
 		if ((p = getenv (CNS_CONNTIMEOUT_ENV)) == NULL) {
 			timeout = DEFAULT_CONNTIMEOUT;
@@ -195,16 +196,16 @@ int *nbstruct;
 				(void) netclose (s);
 			} else {
 #ifdef CSEC            
-                           if (securityOpt){
-				Csec_client_initContext (&ctx, CSEC_SERVICE_TYPE_HOST, NULL);
-//				if (Cns_apiinit (&thip) == 0 && thip->use_authorization_id &&
-//				    *thip->Csec_mech && *thip->Csec_auth_id)
-//					Csec_client_setAuthorizationId (&ctx, thip->Csec_mech,
-//									thip->Csec_auth_id);
-				if (Csec_client_establishContext (&ctx, s) == 0)
-					break;
+				if (securityOpt){
+					Csec_client_initContext (&ctx, CSEC_SERVICE_TYPE_HOST, NULL);
+					//	if (Cns_apiinit (&thip) == 0 && thip->use_authorization_id &&
+					//	*thip->Csec_mech && *thip->Csec_auth_id)
+					//	Csec_client_setAuthorizationId (&ctx, thip->Csec_mech,
+					//	thip->Csec_auth_id);
+					if (Csec_client_establishContext (&ctx, s) == 0)
+						break;
 				
-				switch (serrno) {
+					switch (serrno) {
 					case SECOMERR:
 						Cns_errmsg (func, NS002, "send", "Communication error");
 						(void) netclose (s);
@@ -223,13 +224,13 @@ int *nbstruct;
 						(void) netclose (s);
 						Csec_clearContext (&ctx);
 						return (-1);
-				}
+					}
 				
-				(void) netclose (s);
-				Csec_clearContext (&ctx);	
-                             } else {		
-				break;
-		             }
+					(void) netclose (s);
+					Csec_clearContext (&ctx);	
+				} else {		
+					break;
+				}
 #else
 				break;
 #endif
