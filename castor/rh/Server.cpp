@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.60 $ $Release$ $Date: 2008/02/21 15:46:29 $ $Author: waldron $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.61 $ $Release$ $Date: 2008/07/28 15:00:25 $ $Author: sponcec3 $
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -72,7 +72,8 @@ int main(int argc, char *argv[]) {
     if ((securemode = getenv (castor::rh::CASTOR_SEC_ENV)) != 0 
         || (securemode = getconfent((char *)castor::rh::CATEGORY_CONF,
 				    (char *)castor::rh::CASTOR_SEC_CONF,0)) != 0){
-      security= true;	 
+       security = (strcasecmp(securemode, "YES") == 0);
+     
       // Get the secure port from the envirment or configuration file
       if ((secsport = getenv (castor::rh::PORT_SEC_ENV)) != 0 
 	  || (secsport = getconfent((char *)castor::rh::CATEGORY_CONF,

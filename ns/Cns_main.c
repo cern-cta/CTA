@@ -15,6 +15,7 @@
 #include <sys/time.h>
 #include <netdb.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #endif
@@ -32,6 +33,7 @@
 #include "net.h"
 #include "patchlevel.h"
 #include "serrno.h"
+#include <dlfcn.h>
 
 int procsessreq(int magic, char *req_data, const char *clienthost, struct Cns_srv_thread_info *thip);
 int procsessreq(int magic, char *req_data, const char *clienthost, struct Cns_srv_thread_info *thip);
@@ -79,12 +81,20 @@ struct main_args *main_args;
 	int ipool;
 	int nbthreads = CNS_NBTHREADS;
 	int on = 1;	/* for REUSEADDR */
-	char *p;
+	char *p; /*Pointer to the port*/
 	fd_set readfd, readmask;
 	int rqfd;
-	int s;
+	int s; /*Socket*/
+
+        char *sec_p;
+	int listen_sockets[2]; /*Vector of sockets to store the secure and unsecure*/
+        int securityOpt = 0; /*Flag set to 1 when security is enable*/
+	int socket_to_start = 1; /*Counter of sockets to be started*/
+	uint16_t v_port[2];
+	int nfds;
+	
 	struct sockaddr_in sin;
-	struct servent *sp;
+	struct servent *sp,*sec_sp;
 	int thread_index;
 	struct timeval timeval;
 
@@ -103,7 +113,7 @@ struct main_args *main_args;
 
 	/* process command line options if any */
 
-	while ((c = getopt (main_args->argc, main_args->argv, "c:l:m:rt:")) != EOF) {
+	while ((c = getopt (main_args->argc, main_args->argv, "c:l:m:rt:s")) != EOF) {
 		switch (c) {
 		case 'c':
 			strncpy (nsconfigfile, optarg, sizeof(nsconfigfile));
@@ -128,9 +138,16 @@ struct main_args *main_args;
 				exit (USERR);
 			}
 			break;
+                case 's':
+			securityOpt = 1; 
+			socket_to_start=2;
+			break;
 		}
 	}
 
+	if (securityOpt){
+        	nslogit (func, "started in the secure mode (%s %d.%d.%d-%d)\n", CNS_SCE, MAJORVERSION, MINORVERSION, MAJORRELEASE, MINORRELEASE);
+        }
 	nslogit (func, "started (%s %d.%d.%d-%d)\n", CNS_SCE, MAJORVERSION, MINORVERSION, MAJORRELEASE, MINORRELEASE);
 	gethostname (localhost, CA_MAXHOSTNAMELEN+1);
 	if (Cdomainname (localdomain, sizeof(localdomain)) < 0) {
@@ -207,31 +224,66 @@ struct main_args *main_args;
 
 	/* open request socket */
 
-	serrno = 0;
-	if ((s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
-		nslogit (func, NS002, "socket", neterror());
-		return (CONFERR);
-	}
-	memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
-	sin.sin_family = AF_INET ;
-	if ((p = getenv (CNS_PORT_ENV)) || ((p = getconfent (CNS_SCE, "PORT", 0)))) {
-		sin.sin_port = htons ((unsigned short)atoi (p));
-	} else if ((sp = getservbyname (CNS_SVC, "tcp"))) {
-		sin.sin_port = sp->s_port;
-	} else {
-		sin.sin_port = htons ((unsigned short)CNS_PORT);
-	}
-	sin.sin_addr.s_addr = htonl(INADDR_ANY);
-	serrno = 0;
-	if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
-		nslogit (func, NS002, "setsockopt", neterror());
-	if (bind (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
-		nslogit (func, NS002, "bind", neterror());
-		return (CONFERR);
-	}
-	listen (s, 5) ;
+        /* Get the ports where the sockets should be opened
+	 * Store them in a vector of ports
+	 * The first element corresponds to the unsecure mode
+	 * The second one to the secure one.
+	 * 
+	 * Once the unsecure mode is not supported any more or supported with CSEC_MECH = ID 
+	 * this code should be restored.
+	 * */
 
-	FD_SET (s, &readmask);
+        if ((p = getenv (CNS_PORT_ENV)) || ((p = getconfent (CNS_SCE, "PORT", 0)))) {
+		v_port[0] = htons ((unsigned short)atoi (p));
+	} else if ((sp = getservbyname (CNS_SVC, "tcp"))) {
+		v_port[0] = sp->s_port;
+	} else {
+		v_port[0] = htons ((unsigned short)CNS_PORT);
+	}
+
+	if (securityOpt){
+		if ((sec_p = getenv (CNS_SPORT_ENV)) || ((sec_p = getconfent (CNS_SCE, "SEC_PORT", 0)))) {
+                	v_port[1] = htons ((unsigned short)atoi (sec_p));
+        	} else if ((sec_sp = getservbyname (CNS_SEC_SVC, "tcp"))) {
+                	v_port[1] = sec_sp->s_port;
+        	} else {
+                	v_port[1] = htons ((unsigned short)CNS_SEC_PORT);
+        	}
+	}
+
+
+        for (i=0; i < socket_to_start;i++){
+		serrno = 0;
+		if ((s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
+			nslogit (func, NS002, "socket", neterror());
+			return (CONFERR);
+		}
+		memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
+		sin.sin_family = AF_INET ;
+		sin.sin_port = v_port[i];
+		sin.sin_addr.s_addr = htonl(INADDR_ANY);
+		if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0){
+			nslogit (func, NS002, "setsockopt", neterror());
+		        close (s);
+			continue;
+		}	
+		if (bind (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
+			nslogit (func, NS002, "bind", neterror());
+			close(s);
+			return (CONFERR); // SEE HOW TO REACT WHEN A SOCKET CAN NOT BE CREATED.
+		}
+		listen (s, 5) ;
+		FD_SET (s, &readmask);
+		listen_sockets[i]=s;
+	}
+
+	nfds = -1;
+	for (i=0; i< socket_to_start; ++i) {
+		FD_SET (listen_sockets[i], &readmask);
+		if (listen_sockets[i]>nfds)
+			nfds = listen_sockets[i];
+		}
+	++nfds;
 
 	/* main loop */
 
@@ -252,39 +304,51 @@ struct main_args *main_args;
 			if (nb_active_threads == 0)
 				return (0);
 		}
-		if (FD_ISSET (s, &readfd)) {
-			FD_CLR (s, &readfd);
-			rqfd = accept (s, (struct sockaddr *) &from, &fromlen);
+		for (i=0; i< socket_to_start; ++i) {
+			s = listen_sockets[i];
+			if (FD_ISSET (s, &readfd)) {
+				FD_CLR (s, &readfd);
+				rqfd = accept (s, (struct sockaddr *) &from, &fromlen);
 #if (defined(SOL_SOCKET) && defined(SO_KEEPALIVE))
-			{
-				int on = 1;
-				/* Set socket option */
-				setsockopt(rqfd,SOL_SOCKET,SO_KEEPALIVE,(char *) &on,sizeof(on));
-			}
+				{
+					int on = 1;
+					/* Set socket option */
+					setsockopt(rqfd,SOL_SOCKET,SO_KEEPALIVE,(char *) &on,sizeof(on));
+				}
 #endif
-			if ((thread_index = Cpool_next_index (ipool)) < 0) {
-				nslogit (func, NS002, "Cpool_next_index",
-					sstrerror(serrno));
-				if (serrno == SEWOULDBLOCK) {
-					sendrep (rqfd, CNS_RC, serrno);
-					continue;
-				} else
+				if ((thread_index = Cpool_next_index (ipool)) < 0) {
+					nslogit (func, NS002, "Cpool_next_index",
+						sstrerror(serrno));
+					if (serrno == SEWOULDBLOCK) {
+						sendrep (rqfd, CNS_RC, serrno);
+						continue;
+					} else
+						return (SYERR);
+				}
+				(Cns_srv_thread_info+thread_index)->s = rqfd;
+#ifdef CSEC
+/*Dirty trick to know in the doit method if the socket you are using is the one listening in the secure or unsecure port*/
+/*TODO: To be removed when unsecure mode will be only CSEC_MECH=ID*/
+                                if (i==1){ 
+					(Cns_srv_thread_info+thread_index)->secOn = 1;
+				}else{
+					(Cns_srv_thread_info+thread_index)->secOn = 0;
+				}
+#endif
+				if (Cpool_assign (ipool, &doit,
+			    	Cns_srv_thread_info+thread_index, 1) < 0) {
+					(Cns_srv_thread_info+thread_index)->s = -1;
+					nslogit (func, NS002, "Cpool_assign", sstrerror(serrno));
 					return (SYERR);
-			}
-			(Cns_srv_thread_info+thread_index)->s = rqfd;
-			if (Cpool_assign (ipool, &doit,
-			    Cns_srv_thread_info+thread_index, 1) < 0) {
-				(Cns_srv_thread_info+thread_index)->s = -1;
-				nslogit (func, NS002, "Cpool_assign", sstrerror(serrno));
-				return (SYERR);
+				}
 			}
 		}
                 memcpy (&readfd, &readmask, sizeof(readmask));
                 timeval.tv_sec = CHECKI;
                 timeval.tv_usec = 0;
-                if (select (maxfds, &readfd, (fd_set *)0, (fd_set *)0, &timeval) < 0) {
-                        FD_ZERO (&readfd);
-                }
+                if (select (nfds, &readfd, (fd_set *)0, (fd_set *)0, &timeval) <= 0) {
+                   	FD_ZERO (&readfd);
+               	}
 	}
 }
 
@@ -782,34 +846,55 @@ void *arg;
 	struct Cns_srv_thread_info *thip = (struct Cns_srv_thread_info *) arg;
 
 #ifdef CSEC
-	Csec_server_reinitContext (&thip->sec_ctx, CSEC_SERVICE_TYPE_HOST, NULL);
-	if (Csec_server_establishContext (&thip->sec_ctx, thip->s) < 0) {
-		nslogit (func, "Could not establish security context: %s !\n",
-		    Csec_getErrorMessage());
-		sendrep (thip->s, CNS_RC, ESEC_NO_CONTEXT);
-		thip->s = -1;
-		return NULL;
-	}
-	Csec_server_getClientId (&thip->sec_ctx, &thip->Csec_mech, &thip->Csec_auth_id);
-	if (strcmp (thip->Csec_mech, "ID") == 0 ||
+        /*There is a field in the Cns_srv_thread to expecified if the socket is the secure or not     */
+        /*It should be removed once the unsecure mode is not supported anymore, and next "if" as well */
+        if (thip->secOn){
+
+		Csec_server_initContext (&thip->sec_ctx, CSEC_SERVICE_TYPE_HOST, NULL);
+		if (Csec_server_establishContext (&thip->sec_ctx, thip->s) < 0) {
+			nslogit (func, "Could not establish security context: %s !\n",
+			    Csec_getErrorMessage());
+			sendrep (thip->s, CNS_RC, ESEC_NO_CONTEXT);
+			thip->s = -1;
+			return NULL;
+		}
+		Csec_server_getClientId (&thip->sec_ctx, &thip->Csec_mech, &thip->Csec_auth_id);
+		if (Csec_mapToLocalUser (thip->Csec_mech, thip->Csec_auth_id,
+            	NULL, 0, &thip->Csec_uid, &thip->Csec_gid) < 0) {
+        		nslogit (func, "Could not map to local user: %s !\n",sstrerror (serrno));
+               		sendrep (thip->s, CNS_RC, serrno);
+               		thip->s = -1;
+                	return NULL;
+        	}
+        }
+
+     /***************************************************************************************************/
+     /* This code should be uncommented once the services run in trusted hosts				*/
+     /* Trusted host concept should be supported. At the moment that unsecure				*/
+     /* mode will be stopped the stager won't be able to contact the ns unless the CSEC_MECH= ID	*/
+     /*  is provided and that means no security.							*/
+     /***************************************************************************************************/
+
+
+/*	if (strcmp (thip->Csec_mech, "ID") == 0 ||
 	    Csec_isIdAService (thip->Csec_mech, thip->Csec_auth_id) >= 0) {
 		if (isTrustedHost (thip->s, localhost, localdomain, CNS_SCE, "TRUST")) {
 			if (Csec_server_getAuthorizationId (&thip->sec_ctx,
 			    &thip->Csec_mech, &thip->Csec_auth_id) < 0) {
-				thip->Csec_uid = 0;
-				thip->Csec_gid = 0;
+				thip->uid = 0;
+				thip->_gid = 0;
 #ifndef VIRTUAL_ID
 			} else if (Csec_mapToLocalUser (thip->Csec_mech, thip->Csec_auth_id,
-			    NULL, 0, &thip->Csec_uid, &thip->Csec_gid) < 0) {
+			    NULL, 0, &thip->uid, &thip->Csec) < 0) {
 				nslogit (func, "Could not map to local user: %s !\n",
 				    sstrerror (serrno));
 				sendrep (thip->s, CNS_RC, serrno);
 				thip->s = -1;
 				return NULL;
 #else
-			} else {	/* mapping will be done later */
-				thip->Csec_uid = (uid_t) -1;
-				thip->Csec_gid = (gid_t) -1;
+			} else {	
+				thip->uid = (uid_t) -1;
+				thip->gid = (gid_t) -1;
 #endif
 			}
 		} else {
@@ -820,18 +905,19 @@ void *arg;
 		}
 #ifndef VIRTUAL_ID
 	} else if (Csec_mapToLocalUser (thip->Csec_mech, thip->Csec_auth_id,
-	    NULL, 0, &thip->Csec_uid, &thip->Csec_gid) < 0) {
+	    NULL, 0, &thip->uid, &thip->gid) < 0) {
 		nslogit (func, "Could not map to local user: %s !\n",
 		    sstrerror (serrno));
 		sendrep (thip->s, CNS_RC, serrno);
 		thip->s = -1;
 		return NULL;
 #else
-	} else {	/* mapping will be done later */
+	} else {	
 		thip->Csec_uid = (uid_t) -1;
 		thip->Csec_gid = (gid_t) -1;
 #endif
 	}
+*/
 #endif
 	req_data = reqbuf;
 	if ((c = getreq (thip, &magic, &req_type, &req_data, &clienthost)) == 0) {

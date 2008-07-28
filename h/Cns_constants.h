@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_constants.h,v 1.4 2008/02/27 07:18:11 waldron Exp $
+ * $Id: Cns_constants.h,v 1.5 2008/07/28 15:00:26 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_constants.h,v $ $Revision: 1.4 $ $Date: 2008/02/27 07:18:11 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_constants.h,v $ $Revision: 1.5 $ $Date: 2008/07/28 15:00:26 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_CONSTANTS_H
@@ -18,7 +18,7 @@
 #define DIRXSIZE (HYPERSIZE+WORDSIZE+LONGSIZE+LONGSIZE+LONGSIZE+HYPERSIZE+TIME_TSIZE+TIME_TSIZE+TIME_TSIZE+WORDSIZE+BYTESIZE)
 
 #ifdef CSEC
-#define SCNS_PORT 5510
+#define CNS_SEC_PORT 5510
 #endif
 #define CNS_PORT 5010
 

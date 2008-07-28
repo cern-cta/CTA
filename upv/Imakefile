@@ -78,7 +78,7 @@ DBOBJS = Cupv_db.Osuf Cupv_Cdb_ifce.Osuf
 #if UseCupv
 USE_CUPV=-DUSE_CUPV
 #endif
-#if BuildSecurity
+#if BuildSecureCupv
 SECURITYFLAG=-DCSEC
 LIBS+= -ldl
 #endif  

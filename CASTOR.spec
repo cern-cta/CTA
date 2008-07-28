@@ -122,6 +122,7 @@ find . -type f -exec touch {} \;
 make -f Makefile.ini Makefiles
 which makedepend >& /dev/null
 [ $? -eq 0 ] && make depend
+(cd h; ln -s . shift)
 make -j $((`grep processor /proc/cpuinfo | wc -l`*2))
 make
 %install

@@ -53,7 +53,7 @@ VDQMLIBTARGET=LibraryTargetName(vdqmapi)
 #if BuildVdqmServer
 VDQMFLAGS=-DVDQMSERV
 #endif
-#if BuildSecurity
+#if BuildSecureVdqm
 SECURITYFLAG=-DCSEC
 LDLIBS+= -ldl
 #endif  

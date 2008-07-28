@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfiod.man,v 1.1 2005/06/29 10:09:06 jdurand Exp $
+.\" $Id: rfiod.man,v 1.2 2008/07/28 15:00:28 sponcec3 Exp $
 .\"
-.\" @(#)$RCSfile: rfiod.man,v $ $Revision: 1.1 $ $Date: 2005/06/29 10:09:06 $ CERN/IT/PDP/DM
+.\" @(#)$RCSfile: rfiod.man,v $ $Revision: 1.2 $ $Date: 2008/07/28 15:00:28 $ CERN/IT/PDP/DM
 .\" Copyright (C) 1990-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIOD 1 "$Date: 2005/06/29 10:09:06 $" CASTOR "Rfio Administrator Commands"
+.TH RFIOD 1 "$Date: 2008/07/28 15:00:28 $" CASTOR "Rfio Administrator Commands"
 .SH NAME
 rfiod\- Remote file access daemon
 .SH SYNOPSIS
@@ -72,6 +72,12 @@ Ignore uid/gid from the protocol. This option should not be used interactively.
 .TP
 .B \-Z " subrequest_id"
 Use hooks at open/close/first_byte_writen to commit in the CASTOR2 databases changes to the file. This option should not be used interactively.
+.TP
+.B \-u " uid"
+User id of the client.This option should be present when rfiod runs in secure mode.
+.TP
+.B \-g " gid"
+Group id of the client.This option should be present when rfiod runs in secure mode.
 .SH EXAMPLE
 .RS
 .HP

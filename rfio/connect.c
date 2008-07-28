@@ -1,5 +1,5 @@
 /*
- * $Id: connect.c,v 1.16 2007/12/07 13:26:07 sponcec3 Exp $
+ * $Id: connect.c,v 1.17 2008/07/28 15:00:28 sponcec3 Exp $
  */
 
 /*
@@ -434,7 +434,7 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
        int rc;
      
        TRACE(1, "srfio", "Going to establish security context !");
-       if (Csec_client_initContext(&ctx, CSEC_SERVICE_TYPE_DISK, NULL) <0) {
+       if (Csec_client_initContext(&ctx, CSEC_SERVICE_TYPE_HOST, NULL) <0) {
 	 TRACE(2, "srfio", "Could not initiate context: %s", Csec_getErrorMessage());
        }
      

@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.25 2008/06/02 12:20:54 dhsmith Exp $
+ * $Id: rfio_serv.c,v 1.26 2008/07/28 15:00:28 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.25 $ $Date: 2008/06/02 12:20:54 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.26 $ $Date: 2008/07/28 15:00:28 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 /* rfio_serv.c  SHIFT remote file access super server                   */
@@ -106,8 +106,8 @@ const char KeyTabFile[] = RFIO_KEYTAB;
 #ifdef CSEC
 #include <Csec_api.h>
 Csec_context_t ctx;
-int peer_uid;
-int peer_gid;
+uid_t peer_uid;
+gid_t peer_gid;
 int Csec_service_type;
 #endif
 
@@ -222,7 +222,7 @@ int ignore_uid_gid = 0;
 u_signed64 subrequest_id = 0;
 void *handler_context = NULL;
 
-/* Use when option -Z is set : then this is putted to zero */
+/* Use when option -Z is set : then this is put to zero */
 /* only if the close hook was executed successfully */
 int forced_mover_exit_error = 1;
 
@@ -250,6 +250,8 @@ struct thData  {
   int  byte_read_from_network;
   struct rfiostat myinfo;
   char from_host[MAXHOSTNAMELEN];
+  uid_t uid = 0;
+  gid_t gid = 0;
 } *td;
 
 DWORD  tls_i;               /* Thread local storage index       */
@@ -280,7 +282,9 @@ char    **argv;
    int      Socket_parent = -1;       /* Somebody's giving us a file desciptor ? */
    int      Socket_parent_port = -1;  /* Somebody's giving us a yet binded port !? */
    int      once_only = 0;            /* Process only one request */
-   char     *curdir = NULL;           /* Current directory    */   
+   char     *curdir = NULL;           /* Current directory    */
+   uid_t    uid = 0;				  /* User id of the user issuing the request*/
+   gid_t    gid = 0;					   /* Group id of the user issuing the request*/	   
 #if defined(_WIN32)
    register SOCKET      s, ns;
 #else
@@ -343,7 +347,7 @@ char    **argv;
    }
 #endif /* if WIN32 */
 #if !defined(_WIN32)
-   while ((option = getopt(argc,argv,"sdltf:p:P:D:M:nS:1R:T:UZ:")) != EOF) {
+   while ((option = getopt(argc,argv,"sdltf:p:P:D:M:nS:1R:T:UZ:u:g:")) != EOF) {
       switch (option) {
          case 'd':
 			debug++;
@@ -390,6 +394,12 @@ char    **argv;
             break;
          case 'Z':
 			subrequest_id = strtou64(optarg);
+            break;
+         case 'u': 
+            uid = strtou64(optarg);
+            break;
+         case 'g':
+            gid = strtou64(optarg);
             break;
 	  default:
 		  fprintf(stderr,"Unknown option '%c'\n", option);
@@ -533,7 +543,7 @@ char    **argv;
 #if defined(_WIN32)
       log(LOG_ERR, "%s generated on %s %s\n", argv0, __DATE__, __TIME__);
 #else
-      log(LOG_ERR, "%s generated on %s %s\n",argv[0],__DATE__,__TIME__);
+      log(LOG_ERR, "%s generated on %s %s %d %d\n",argv[0],__DATE__,__TIME__, uid, gid);
 #endif /* WIN32 */      
 #else
       log(LOG_ERR, "%s\n", argv[0]);
@@ -593,7 +603,9 @@ char    **argv;
 	  } else {
 		  if (!port)  {
 #ifdef CSEC
-			  sp = Cgetservbyname(SRFIO_NAME, SRFIO_PROTO);
+		    /*If CSEC define and security requested (set uid and gid) and user not root*/
+                      if (uid > 0 && gid > 0){			
+	                  sp = Cgetservbyname(SRFIO_NAME, SRFIO_PROTO);
 			  if (sp == NULL) {
 				  log(LOG_ERR, "srfio/tcp: no such service - Use default port number %d\n", (int) SRFIO_PORT);
 				  sin.sin_port = htons((u_short) SRFIO_PORT);
@@ -606,6 +618,9 @@ char    **argv;
 			  } else {
 				  sin.sin_port = sp->s_port;
 			  }
+#ifdef CSEC
+		        }
+#endif
 		  }
 		  else {
 			  sin.sin_port = htons(port);
@@ -765,6 +780,8 @@ char    **argv;
                WSACleanup();
                exit(1);
             }
+            td->uid = uid;
+            td->gid = gid;
             td->ns = ns;
             memcpy(&(td->from), (void*)&from, sizeof(from)); 
             td->mode = 1;
@@ -801,7 +818,7 @@ char    **argv;
                case 0:                          /* Child  */
                   close(s);
                   mode = 0;
-                  doit(ns, &from, mode);
+                  doit(ns, &from, mode, uid, gid);
                   break;
             }
             have_a_child = 1;
@@ -819,7 +836,7 @@ char    **argv;
 #endif /* WIN32 */  
          } else {	/* singlethread */
             mode = 1;
-            doit(ns, &from, mode);
+            doit(ns, &from, mode, uid, gid);
          }
 #ifndef _WIN32
          FD_CLR (ns, &readfd);
@@ -885,7 +902,7 @@ char    **argv;
       }
 #endif
       mode = 0;
-      doit(0, &from, mode);
+      doit(0, &from, mode, uid, gid);
    }
 #if defined(_WIN32)
    WSACleanup();
@@ -924,7 +941,7 @@ mt_doit( void **ptr )          /* Wrapper for doit() */
       exit(1);
    }
    
-   res = doit( td->ns, td->from, td->mode );
+   res = doit( td->ns, td->from, td->mode, td->uid, td->gid );
    return (res);
 }
 
@@ -948,7 +965,7 @@ int mt_cleanup(struct thData *td, int *fd, int rcode)
 }
 #endif
 
-doit(s, fromp, mode)
+doit(s, fromp, mode, uid, gid)
 #if defined(_WIN32) 
 SOCKET   s;
 #else
@@ -956,6 +973,8 @@ int      s;
 #endif
 struct sockaddr_in *fromp;
 int mode;
+uid_t uid;
+gid_t gid;
 {
    int      request, status;        /* Request Id  number               */
    int      fd = -1;                /* Local fd      -> -1              */
@@ -995,54 +1014,84 @@ char tmpbuf[21], tmpbuf2[21];
    
 #ifdef CSEC
 #define CLIENT_NAME_SIZE 1000
+char *Csec_mech;
+char *Csec_auth_id;
+
+ log(LOG_INFO, "Entering the secure block ");
+/* Check that the uid and gid is set and user is not root */
+/*Condition to be replaced when trusted host is supported*/
+if (uid > 0 && gid > 0)
 /* Perfom the authentication */
  {
    char username[CA_MAXUSRNAMELEN+1];
    int ret_flags = 0;
    char *mech, *clientid;
 
-   if (Csec_server_initContext(&ctx, CSEC_SERVICE_TYPE_DISK, NULL)<0) {
+   log(LOG_INFO, "The user is %d in the group %d", uid, gid);
+   
+   if (Csec_server_initContext(&ctx, CSEC_SERVICE_TYPE_HOST, NULL)<0) {
      log(LOG_ERR, "Could not initailize context: %s\n", Csec_getErrorMessage()); 
      closesocket(s);
      exit(1);
    }
 
+   log(LOG_INFO, "Establishing context set\n");
    if (Csec_server_establishContext(&ctx, s)<0) {
      log(LOG_ERR, "Could not establish context: %s\n", Csec_getErrorMessage());
      closesocket(s);
      exit(1);
    }
+
+   log(LOG_INFO, "Getting client id\n");
    /* Getting the client identity */ 
-   Csec_server_getClientId(&ctx, &mech, &clientid);
-   
-   log(LOG_INFO, "The client principal is: %s/%s\n", mech, clientid);
+   Csec_server_getClientId(&ctx, &Csec_mech, &Csec_auth_id);
+   log(LOG_INFO, "The client principal is %s %s \n", Csec_mech,Csec_auth_id);
 
    /* Connection could be done from another castor service */
-   if ((Csec_service_type = Csec_isIdAService(mech, clientid)) >= 0) {
-     log(LOG_INFO, "CSEC: Client is castor service type: %d\n", Csec_service_type);
-   }
-   else {  
-     if (Csec_mapToLocalUser(mech, clientid,
-			     username, CA_MAXUSRNAMELEN,
-			     &peer_uid, &peer_gid) != 0) {
-       log(LOG_ERR, "CSEC: Could not map user %s/%s\n", mech, clientid);
-       closesocket(s);
-       exit(1);
-     }
 
-     log(LOG_INFO, "CSEC: Client is %s (%d/%d)\n",
+//   if ((Csec_service_type = Csec_isIdAService(Csec_mech, Csec_auth_id)) >= 0) {
+     //If one we consider working with trusted hosts the code should be added here
+     //IsTrustedHost then Csec_server_getAuthorizationId & mapToLocalUser
+  //   log(LOG_INFO, "CSEC: Client is castor service type: %d\n", Csec_service_type);
+ //  }
+ //  else {  
+    log(LOG_INFO, "mapping user \n");
+    if (Csec_mapToLocalUser(Csec_mech, Csec_auth_id,
+			     username, CA_MAXUSRNAMELEN,
+			     &peer_uid, &peer_gid) < 0) {
+      log(LOG_ERR, "CSEC: Could not map user %s/%s\n", Csec_mech, Csec_auth_id);
+   }
+   //  closesocket(s);
+   //  exit(1);
+  // }
+     /*Checking if the user just mapped match with the same that started the request */
+   log(LOG_INFO, "Comparing uid %d and peer_uid %d \n",uid ,peer_uid);
+   if(peer_uid != uid){
+	  log(LOG_ERR, "CSEC: The user do not match with the initial oner %s/%d\n", Csec_mech, peer_uid);
+	  closesocket(s);
+	  exit(1);	        
+   }else{
+       log(LOG_INFO, "Comparing gid %d and peer_gid %d \n",gid ,peer_gid);
+      if(peer_gid != gid){
+	     log(LOG_ERR, "CSEC: The group id of this group is not valid %s/%d\n", Csec_mech, peer_gid);
+	     closesocket(s);
+	     exit(1);
+      }
+    }
+   
+   log(LOG_INFO, "CSEC: Client is %s (%d/%d)\n",
 	 username,
 	 peer_uid,
 	 peer_gid);
-     Csec_service_type = -1;
-   }
- }
+   Csec_service_type = -1;
+}
+ 
 #endif
 
    /*
     * Initializing the info data structure.
     */
-   info.readop= 0 ; 
+   info.readop= 0; 
    info.writop= 0 ; 
    info.flusop= 0 ; 
    info.statop= 0 ; 
@@ -1435,7 +1484,7 @@ char tmpbuf[21], tmpbuf2[21];
             break;
          case RQST_READLINK:
             log(LOG_DEBUG, "request type <readlink()>\n");
-            status = srreadlink(s,from_host,is_remote) ;
+	    status = srreadlink(s,from_host,is_remote) ;
 #if defined(HPSS)
             log(LOG_DEBUG, "srreadlink() returned %d\n", status) ;
             return(rhpss_cleanup(s,&fd,dirp,0));
@@ -1889,3 +1938,19 @@ void check_child_exit(int block)
   return;
 }
 #endif
+/*
+int get_client_actual_id (uid_t *uid,gid_t *gid,char **mech,char **auth_id, int *rt,int *mapping){
+#ifdef CSEC
+    *uid = peer_uid;
+    *gid = peer_gid;
+    if (mech)
+	*mech = Csec_mech;
+    if (auth_id)
+	*auth_id = Csec_auth_id;
+    if (rt)
+	*rt = 0;
+    if (mapping)
+	*mapping = 1;
+#endif
+    return (0);
+} */

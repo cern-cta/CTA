@@ -332,3 +332,11 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-policy
 Description: castor (Cern Advanced STORage system)
  Recall Handler Daemon
+
+Package: castor-csec
+Architecture: any
+Build-Depends: vdt_globus_sdk, vdt_compile_globus_core, glite-security-voms-api, 
+Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib, vdt_globus_essentials, glite-security-voms-api-c
+Description: castor (Cern Advanced STORage system)
+ Csec library
+

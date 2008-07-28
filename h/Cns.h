@@ -1,5 +1,5 @@
 /*
- * $Id: Cns.h,v 1.7 2008/03/25 12:46:37 waldron Exp $
+ * $Id: Cns.h,v 1.8 2008/07/28 15:00:26 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns.h,v $ $Revision: 1.7 $ $Date: 2008/03/25 12:46:37 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns.h,v $ $Revision: 1.8 $ $Date: 2008/07/28 15:00:26 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_H
@@ -25,9 +25,11 @@
 #else
 #define CNS_SCE "CNS"
 #define CNS_SVC "cns"
+#define CNS_SEC_SVC "cns_sec"
 #define CNS_HOME_ENV "CASTOR_HOME"
 #define CNS_HOST_ENV "CNS_HOST"
 #define CNS_PORT_ENV "CNS_PORT"
+#define CNS_SPORT_ENV "CNS_SEC_PORT"
 #define CNS_CONNTIMEOUT_ENV "CNS_CONNTIMEOUT"
 #define CNS_CONRETRY_ENV "CNS_CONRETRY"
 #define CNS_CONRETRYINT_ENV "CNS_CONRETRYINT"

@@ -58,10 +58,22 @@ WNT_SYS_INCLUDE = "INCLUDE=$(MSDEVDIR)\..\Vc\Include"
 ORAINC = -I$(ORACLE_HOME)/precomp/public
 #endif
 #endif
+
 #if BuildSecurity
-SECURITYFLAG=-DCSEC
-LIBS+= -ldl
-#endif 
+SECURITYFLAG = -DCSEC
+#if UseGSI
+GLOBUS_LOCATION=GlobusLocation
+#if defined(__STDC__)
+GLOBUS_FLAVOUR=GlobusFlavour##pthr
+#else
+GLOBUS_FLAVOUR=GlobusFlavour/**/pthr
+#endif
+GLOBUS_LIBS=-L$(GLOBUS_LOCATION)/lib -lglobus_gssapi_gsi_$(GLOBUS_FLAVOUR) -lglobus_gss_assist_$(GLOBUS_FLAVOUR)
+LIBCSEC += $(GLOBUS_LIBS)
+#endif
+LIBCSEC += -ldl
+#endif
+
 COMM######################### FLAGS ##############################
 
 DFLAGS = -DBIN=\"$(BIN)\" -DCNS_HOST=\"$(CNS_HOST)\" \
@@ -432,9 +444,9 @@ NormalProgramTarget(nschmod,nschmod.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB
 NormalProgramTarget(nschown,nschown.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
 #if UseOracle && !defined(_WIN32)
 nsdaemon: $(NSDAEMON_OBJS) $(DEPLIB)
-	$(MAKE) -f oralink.mk nsdaemon NSDAEMON_OBJS="$(NSDAEMON_OBJS)" CLDFLAGS=$(MTLDFLAGS) LIBS="$(LIBS) $(MTLDLIBS)"
+	$(MAKE) -f oralink.mk nsdaemon NSDAEMON_OBJS="$(NSDAEMON_OBJS)" CLDFLAGS=$(MTLDFLAGS) LIBS="$(LIBS) $(LIBCSEC) $(MTLDLIBS)"
 #else
-NormalProgramTarget(nsdaemon,$(NSDAEMON_OBJS), $(DEPLIB), $(MTLDFLAGS) $(LIBS) $(MTLDLIBS) $(LIBORA))
+NormalProgramTarget(nsdaemon,$(NSDAEMON_OBJS), $(DEPLIB), $(MTLDFLAGS) $(LIBS) $(MTLDLIBS) $(LIBCSEC) $(LIBORA))
 #endif
 NormalProgramTarget(nsdelcomment,nsdelcomment.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
 NormalProgramTarget(nsdeleteclass,nsdeleteclass.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))

@@ -145,7 +145,7 @@ RTCPFLAG=
 
 CPFILES = rtcpc_CheckReq.c rtcpc_log.c rtcpc_SendRecv.c rtcpc_CallVMGR.c
 
-#if BuildSecurity
+#if BuildSecureRtcopy
 SECURITYFLAG=-DCSEC
 LDLIBS+= -ldl
 #endif  

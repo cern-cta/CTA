@@ -55,16 +55,16 @@ char **user;
 {
 	struct passwd *pw;
 
-#ifdef CSEC
-	*uid = thip->Csec_uid;
-	*gid = thip->Csec_gid;
-	*user = thip->Csec_auth_id;
-#else
+//#ifdef CSEC
+//	*uid = thip->Csec_uid;
+//	*gid = thip->Csec_gid;
+//	*user = thip->Csec_auth_id;
+//#else
 	if ((pw = Cgetpwuid (*uid)) == NULL)
 		*user = "UNKNOWN";
 	else
 		*user = pw->pw_name;
-#endif
+//#endif
 	return (0);
 }
 

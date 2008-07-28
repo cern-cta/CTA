@@ -12,21 +12,21 @@
    static int (*CgetClientId)(Csec_context_t *, char **, char **);
    static int (*CmapUser)(const char *, const char *, char *, size_t, uid_t *, gid_t *);
    static int loaded=0;
-   //double (*cosine)(double);
    char *error;
 
   
 int loader(){
+   /*Code to be discommented once libsecurity.so exists*/
+   /* 
    if (loaded==1)
      return 1; // is already loaded
 
-   handle = Cdlopen ("libsecurity.so", RTLD_LAZY);
+   handle = Cdlopen ("libshift.so", RTLD_LAZY);
    if (!handle) {
       fprintf (stderr, "%s\n", dlerror());
       return -1;
    }
-   Cdlerror();    /* Clear any existing error */
-   //*(void **) (&cosine) = dlsym(handle, "cos");
+   Cdlerror();    //Clear any existing error 
    *(void **) (&Cclient_initContext) = Cdlsym(handle, "Csec_client_initContext");
    *(void **) (&Cserver_initContext) = Cdlsym(handle, "Csec_server_initContext");
    *(void **) (&Cclient_establishContext) = Cdlsym(handle, "Csec_client_establishContext");
@@ -34,14 +34,22 @@ int loader(){
    *(void **) (&CclearContext) = Cdlsym(handle, "Csec_clearContext");
    *(void **) (&CgetClientId) = Cdlsym(handle, "Csec_server_getClientId");
    *(void **) (&CmapUser) = Cdlsym(handle, "Csec_mapToLocalUser");
-    
-    
-   if ((error = Cdlerror()) != NULL)  {
+   */ 
+
+   Cclient_initContext = &Csec_client_initContext;
+   Cserver_initContext = &Csec_server_initContext;
+   Cclient_establishContext = &Csec_client_establishContext;
+   Cserver_establishContext = &Csec_server_establishContext;
+   CclearContext = &Csec_clearContext;
+   CgetClientId = &Csec_server_getClientId;
+   CmapUser = &Csec_mapToLocalUser;   
+ 
+/*   if ((error = Cdlerror()) != NULL)  {
      fprintf (stderr, "%s\n", error);
      return -1;
    }
   
-  loaded=1;
+  loaded=1;*/
   return 0;
 }
 

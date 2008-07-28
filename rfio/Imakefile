@@ -98,7 +98,7 @@ NFSROOT0 = NfsRoot
 NFSROOT  = -DNFSROOT=\"$(NFSROOT0)\"
 #endif
 
-#if BuildSecurity
+#if BuildSecureRfio
 CSEC = -DCSEC
 #endif
 

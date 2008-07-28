@@ -266,6 +266,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/BaseTapeSvc.cpp \
               server/AuthListenerThreadPool.cpp \
               server/BaseThreadPool.cpp \
+              server/BaseThreadPool.cpp \
               server/ListenerThreadPool.cpp \
               server/TCPListenerThreadPool.cpp \
               server/UDPListenerThreadPool.cpp \
@@ -450,16 +451,12 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
 STGLIB_SRCSNW32 =  server/BaseDaemon.cpp  server/BaseServer.cpp
 #endif
 
-#if BuildSecurity
-STGLIB_SRCS1 = io/AuthServerSocket.cpp io/AuthClientSocket.cpp server/AuthListenerThreadPool.cpp
-#endif
-
 #if BuildDlfLibrary
 STGLIB_SRCS2 = DlfMsgSvc.cpp \
                dlfbuf.cpp
 #endif
 
-STGLIB_SRCS = $(STGLIB_SRCS0) $(STGLIB_SRCSNW32) $(STGLIB_SRCS1) $(STGLIB_SRCS2)
+STGLIB_SRCS = $(STGLIB_SRCS0) $(STGLIB_SRCSNW32) $(STGLIB_SRCS2)
 
 STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
 
