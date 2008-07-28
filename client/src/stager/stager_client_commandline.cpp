@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_commandline.cpp,v 1.10 2008/06/02 15:54:00 sponcec3 Exp $
+ * $Id: stager_client_commandline.cpp,v 1.11 2008/07/28 16:59:06 waldron Exp $
  *
  * Copyright (C) 2004-2006 by CERN/IT/FIO/FD
  * All rights reserved
@@ -37,141 +37,171 @@
 
 /********************************************************************************************************************
  * This Function:                                                                                                   *
- * if *host or *svc are null or empty strings retrive the values, the same if *port and *version are <= 0.          * 
+ * if *host or *svc are null or empty strings retrive the values, the same if *port and *version are <= 0.          *
  * To retrive the values it looks if:                                                                               *
- * enviroment variables are set or stager_mapper as values defined or castor.conf or (if it doesn't have valid)     * 
+ * enviroment variables are set or stager_mapper as values defined or castor.conf or (if it doesn't have valid)     *
  * it uses default hard coded values.                                                                               *
  *                                                                                                                  *
  *******************************************************************************************************************/
 
 int DLL_DECL getDefaultForGlobal(
-			char** host,
-			int* port,
-			char** svc,
-			int* version)
-{ 
-	char *hostMap, *hostDefault, *svcMap, *svcDefault;
-	int versionMap,versionDefault, portDefault, ret;
-	char* aux=NULL; 
-  struct group* grp=NULL; 
-	char* security=NULL;
-	gid_t gid;
+				 char** host,
+				 int* port,
+				 char** svc,
+				 int* version)
+{
+  char *hostMap, *hostDefault, *svcMap, *svcDefault;
+  int versionMap,versionDefault, portDefault, ret;
+  char* aux=NULL;
+  struct group* grp=NULL;
+  char* security=NULL;
+  gid_t gid;
 
-  hostMap=hostDefault=svcMap=svcDefault=NULL;
-  versionMap=versionDefault=portDefault=ret=0;
+  hostMap = hostDefault = svcMap = svcDefault = NULL;
+  versionMap = versionDefault = portDefault = ret = 0;
 
-	if(host == NULL || port == NULL || svc == NULL || version == NULL )
-    { return (-1);}
-	if (*host) hostDefault=strdup(*host);
-	else hostDefault=NULL;
-	
-  if (*svc) svcDefault=strdup(*svc);
-	else svcDefault=NULL;
+  if (host == NULL || port == NULL || svc == NULL || version == NULL) {
+    return (-1);
+  }
+  if (*host) hostDefault = strdup(*host);
+  else hostDefault = NULL;
 
-	portDefault=*port;
-	versionDefault=*version;
+  if (*svc) svcDefault = strdup(*svc);
+  else svcDefault = NULL;
 
-	gid=getgid();
-	grp = getgrgid(gid);
+  portDefault = *port;
+  versionDefault = *version;
 
-	if (grp != NULL){
-	  ret=just_stage_mapper(getenv("USER"),grp->gr_name,&hostMap,&svcMap,&versionMap);
+  gid = getgid();
+  grp = getgrgid(gid);
+
+  if (grp != NULL) {
+    ret = just_stage_mapper(getenv("USER"), grp->gr_name, &hostMap, &svcMap, &versionMap);
+  } else {
+    ret = just_stage_mapper(getenv("USER"), NULL, &hostMap, &svcMap, &versionMap);
+  }
+
+  if (hostDefault == NULL || strcmp(hostDefault, "") == 0) {
+    if (hostDefault != NULL) {
+      free(hostDefault);
+      hostDefault=NULL;
+    }
+    aux=  getenv("STAGE_HOST");
+    hostDefault = aux == NULL ? NULL : strdup(aux);
+    if (hostDefault == NULL || strcmp(hostDefault, "") == 0) {
+      if (hostDefault != NULL) {
+	free(hostDefault);
+	hostDefault = NULL;
+      }
+      if (hostMap == NULL || strcmp(hostMap, "") == 0) {
+	aux = (char*)getconfent("STAGER", "HOST", 0);
+	hostDefault = aux == NULL ? NULL : strdup(aux);
+	if (hostDefault == NULL || strcmp(hostDefault,"") == 0) {
+	  if (hostDefault != NULL) {
+	    free(hostDefault);
+	    hostDefault = NULL;
+	  }
+	  hostDefault = strdup(DEFAULT_HOST);
 	}
-	else { 
-	  ret=just_stage_mapper(getenv("USER"),NULL,&hostMap,&svcMap,&versionMap);
-	}	
-
-	if(hostDefault==NULL || strcmp(hostDefault,"")==0){
-		if(hostDefault != NULL){free(hostDefault);hostDefault=NULL;}
-		aux=getenv("STAGE_HOST");
-		hostDefault=aux==NULL?NULL:strdup(aux);
-		if (hostDefault==NULL || strcmp(hostDefault,"")==0 ){
-			if(hostDefault !=NULL){free(hostDefault);}
-			if (hostMap==NULL || strcmp(hostMap,"")==0 ){
-				aux=(char*)getconfent("STAGER","HOST", 0);
-				hostDefault=aux==NULL?NULL:strdup(aux);
-				if (hostDefault==NULL || strcmp(hostDefault,"")==0 ){
-					if(hostDefault != NULL){free(hostDefault);hostDefault=NULL;}
-					hostDefault=strdup(DEFAULT_HOST);
-				}
-			}
-			else{
-				if(hostDefault!=NULL){free(hostDefault);hostDefault=NULL;}
-				hostDefault=strdup(hostMap);
-			}
-		}
+      } else {
+	if (hostDefault != NULL) {
+	  free(hostDefault);
+	  hostDefault = NULL;
 	}
-	
+	hostDefault = strdup(hostMap);
+      }
+    }
+  }
 
-	if (svcDefault==NULL || strcmp(svcDefault,"")==0){
-	  if(svcDefault != NULL){free(svcDefault);svcDefault=NULL;}
-		aux=getenv("STAGE_SVCCLASS");
-		svcDefault= aux==NULL? NULL: strdup(aux);
-		if (svcDefault==NULL || strcmp(svcDefault,"")==0 ){
-		  if(svcDefault!= NULL &&strcmp(svcDefault,"")){free(svcDefault);svcDefault=NULL;}
-			if (svcMap==NULL || strcmp(svcMap,"")==0 ){
-				aux=(char*)getconfent("STAGER","SVCCLASS", 0);
-				svcDefault=aux==NULL?NULL:strdup(aux);
-				if (svcDefault==NULL || strcmp(svcDefault,"")==0 ){
-				        if(svcDefault!=NULL){free(svcDefault);svcDefault=NULL;}
-					svcDefault=strdup(DEFAULT_SVCCLASS);
-				}
-			}
-			else{
-			  if(svcDefault!=NULL && strcmp(svcDefault,"") ){free(svcDefault);svcDefault=NULL;}
-				svcDefault=strdup(svcMap);
-			}
-		}
-
+  if (svcDefault == NULL || strcmp(svcDefault, "") == 0) {
+    if (svcDefault != NULL) {
+      free(svcDefault);
+      svcDefault = NULL;
+    }
+    aux = getenv("STAGE_SVCCLASS");
+    svcDefault = aux == NULL ? NULL : strdup(aux);
+    if (svcDefault == NULL || strcmp(svcDefault, "") == 0) {
+      if (svcDefault != NULL && strcmp(svcDefault, "")) {
+	free(svcDefault);
+	svcDefault = NULL;
+      }
+      if (svcMap == NULL || strcmp(svcMap, "") == 0) {
+	aux = (char*)getconfent("STAGER", "SVCCLASS", 0);
+	svcDefault = aux == NULL ? NULL : strdup(aux);
+	if (svcDefault == NULL || strcmp(svcDefault, "") == 0) {
+	  if (svcDefault != NULL) {
+	    free(svcDefault);
+	    svcDefault = NULL;
+	  }
+	  svcDefault = strdup(DEFAULT_SVCCLASS);
 	}
-	if (versionDefault<=0){
-		aux=getenv("RFIO_USE_CASTOR_V2");
-		if(aux){
-		        
-			versionDefault=strcasecmp(aux,"YES")==0?2:1;
-		}else{versionDefault=0;}
-    		if (versionDefault<=0){
-			versionDefault=versionMap+1;
-			if (versionDefault<=0){
-			aux=(char*)getconfent("STAGER","VERSION",0);
-			versionDefault=aux==NULL?0:atoi(aux);
-				if (versionDefault<=0){
-					   versionDefault= DEFAULT_VERSION;
-			 	}
-			}
-		}
+      } else {
+	if (svcDefault != NULL && strcmp(svcDefault, "")) {
+	  free(svcDefault);
+	  svcDefault = NULL;
 	}
+	svcDefault = strdup(svcMap);
+      }
+    }
+  }
 
-	if (portDefault<=0){
-		if ((security = getenv ("CASTOR_SEC")) != 0 && strcasecmp(security,"YES") == 0 ){
-		    aux=getenv("STAGE_SEC_PORT");
-		    portDefault=aux==NULL?0:atoi(aux);
-		    if (portDefault<=0){
-		        aux=(char*)getconfent("STAGER", "SEC_PORT", 0);
-		        portDefault=aux==NULL?0:atoi(aux);
-		        if (portDefault<=0){
-		            portDefault= DEFAULT_SEC_PORT;
-			}
-		    }
-		}else{
-		    aux=getenv("STAGE_PORT");
-		    portDefault=aux==NULL?0:atoi(aux);
-		    if (portDefault<=0){
-		        aux=(char*)getconfent("STAGER", "PORT", 0);
-		        portDefault=aux==NULL?0:atoi(aux);
-		        if (portDefault<=0){
-		            portDefault= versionDefault==2?DEFAULT_PORT2:DEFAULT_PORT1;
-			}
-		    }
-		}
+  if (versionDefault <= 0) {
+    aux = getenv("RFIO_USE_CASTOR_V2");
+    if (aux) {
+      versionDefault = strcasecmp(aux, "YES") == 0 ? 2 : 1;
+    } else {
+      versionDefault = 0;
+    }
+    if (versionDefault <= 0) {
+      versionDefault = versionMap + 1;
+      if (versionDefault <= 0) {
+	aux = (char*)getconfent("STAGER", "VERSION", 0);
+	versionDefault = aux == NULL ? 0 : atoi(aux);
+	if (versionDefault <= 0) {
+	  versionDefault = DEFAULT_VERSION;
 	}
+      }
+    }
+  }
 
-	if (*host==NULL || strcmp(*host,"")){*host=strdup(hostDefault);}	
-	if (port==NULL || *port<=0) {*port=portDefault;}
-	if (*svc==NULL || strcmp(*svc,"")){*svc=strdup(svcDefault);}
-	if (version==NULL || *version<=0){*version=versionDefault;}
+  if (portDefault <= 0) {
+    if ((security = getenv ("CASTOR_SEC")) != 0 && strcasecmp(security, "YES") == 0) {
+      aux = getenv("STAGE_SEC_PORT");
+      portDefault = aux == NULL ? 0 : atoi(aux);
+      if (portDefault <= 0) {
+	aux = (char*)getconfent("STAGER", "SEC_PORT", 0);
+	portDefault = aux == NULL ? 0 : atoi(aux);
+	if (portDefault <= 0) {
+	  portDefault = DEFAULT_SEC_PORT;
+	}
+      }
+    } else {
+      aux = getenv("STAGE_PORT");
+      portDefault = aux == NULL ? 0 : atoi(aux);
+      if (portDefault <= 0) {
+	aux = (char*)getconfent("STAGER", "PORT", 0);
+	portDefault = aux == NULL ? 0 : atoi(aux);
+	if (portDefault <= 0) {
+	  portDefault = versionDefault == 2 ? DEFAULT_PORT2 : DEFAULT_PORT1;
+	}
+      }
+    }
+  }
 
-	return (1);
+  if (*host == NULL || strcmp(*host, "")) {
+    *host = strdup(hostDefault);
+  }
+  if (port == NULL || *port <= 0) {
+    *port = portDefault;
+  }
+  if (*svc == NULL || strcmp(*svc, "")) {
+    *svc = strdup(svcDefault);
+  }
+  if (version == NULL || *version <= 0) {
+    *version = versionDefault;
+  }
+
+  return (1);
 }
 
 extern "C" {
