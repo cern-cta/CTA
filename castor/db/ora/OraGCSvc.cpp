@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2008/05/30 08:21:48 $ $Author: itglp $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2008/07/28 16:46:07 $ $Author: waldron $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -199,7 +199,7 @@ void castor::db::ora::OraGCSvc::reset() throw() {
   m_stgFilesDeletedStatement = 0;
   m_dumpCleanupLogsStatement = 0;
   m_truncateCleanupLogsStatement = 0;
-  m_removeTerminatedRequestsStatement = 0;  
+  m_removeTerminatedRequestsStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -236,6 +236,10 @@ std::vector<castor::stager::GCLocalFile*>*
       f->setDiskCopyId((u_signed64)rset->getDouble(2));
       f->setFileId((u_signed64)rset->getDouble(3));
       f->setNsHost(rset->getString(4));
+      f->setLastAccessTime((u_signed64)rset->getDouble(5));
+      f->setNbAccesses(rset->getInt(6));
+      f->setGcWeight(rset->getDouble(7));
+      f->setGcTriggeredBy(rset->getString(8));
       result->push_back(f);
     }
     m_selectFiles2DeleteStatement->closeResultSet(rset);
