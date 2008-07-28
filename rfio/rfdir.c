@@ -1,5 +1,5 @@
 /*
- * $Id: rfdir.c,v 1.18 2008/02/21 17:22:26 waldron Exp $
+ * $Id: rfdir.c,v 1.19 2008/07/28 16:51:41 waldron Exp $
  */
 
 /*
@@ -133,7 +133,7 @@ char *argv[];
          strftime(t_creat,13,"%b %d  %Y",t_tm);
       else
          strftime(t_creat,13,"%b %d %H:%M",t_tm);
-      fprintf(stdout,"%s %3d %-8.8s %-8.8s %s %s %s\n", modestr,st.st_nlink,
+      fprintf(stdout,"%s %3d %-8.8s %-8.8s %s %s %s\n", modestr,(int)st.st_nlink,
          uidstr,gidstr,u64tostr((u_signed64)st.st_size,tmpbuf,20),t_creat,dir);
     } else {
       list_dir(dir,recursively,multiple);
@@ -296,7 +296,7 @@ int recursively,multiple;
          strftime(t_creat,13,"%b %d  %Y",t_tm);
     else
          strftime(t_creat,13,"%b %d %H:%M",t_tm);
-    fprintf(stdout,"%s %3d %-8.8s %-8.8s %s %s %s\n", modestr,st.st_nlink,
+    fprintf(stdout,"%s %3d %-8.8s %-8.8s %s %s %s\n", modestr,(int)st.st_nlink,
          uidstr,gidstr,u64tostr((u_signed64)st.st_size,tmpbuf,20),t_creat,de->d_name);
     if ( strcmp(de->d_name,".") && strcmp(de->d_name,"..") && 
 	 S_ISDIR(st.st_mode) && recursively ) rfio_pushdir(&ds,path);

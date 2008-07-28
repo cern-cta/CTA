@@ -426,7 +426,9 @@ int rtcpcld_updateTape _PROTO((
 int rtcpcld_segmentOK _PROTO((
                               struct Cns_segattrs *
                               ));
-
+int rtcpcld_startup _PROTO((
+			    void
+			    ));
 void rtcpcld_sendStreamReport _PROTO((
 				      struct Cstager_ITapeSvc_t* tpSvc,
 				      char *file_path,

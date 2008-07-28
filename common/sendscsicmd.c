@@ -606,7 +606,7 @@ char **msgaddr;
 		    sg_big_buff_val - sizeof(struct sg_header) - cdblen);
 		*msgaddr = tp_err_msgbuf;
 #else
-		sprintf (err_msgbuf, "blocksize too large (max %d)",
+		sprintf (err_msgbuf, "blocksize too large (max %lu)",
 		    sg_big_buff_val - sizeof(struct sg_header) - cdblen);
 		*msgaddr = err_msgbuf;
 #endif

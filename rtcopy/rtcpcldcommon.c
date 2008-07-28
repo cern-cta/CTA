@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.38 $ $Release$ $Date: 2008/03/25 09:02:02 $ $Author: wiebalck $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.39 $ $Release$ $Date: 2008/07/28 16:51:41 $ $Author: waldron $
  *
  * 
  *
@@ -210,7 +210,8 @@ int rtcpcld_initNotifyByPort(
 #if defined(_WIN32)
   SOCKET tmp;
 #endif /* _WIN32 */
-  int rc, len, notificationPort = -1;
+  int rc, notificationPort = -1;
+  socklen_t len;
 
   if ( notificationSocket == NULL ) {
     serrno = EINVAL;
@@ -296,7 +297,8 @@ int rtcpcld_getNotifyWithAddr(
   struct sockaddr_in from;
   fd_set rd_set, rd_setcp;
   struct timeval timeout;
-  int maxfd, rc, fromlen;
+  int maxfd, rc;
+  socklen_t fromlen;
   char buf[CA_MAXLINELEN + 1];
   struct hostent *hp;
 

@@ -11,13 +11,13 @@
  * of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRepackSvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/06/05 16:25:00 $ $Author: gtaur $
+ * @(#)$RCSfile: OraRepackSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/07/28 16:55:04 $ $Author: waldron $
  *
  *
  * @author castordev
@@ -85,90 +85,69 @@ namespace castor {
          */
         void reset() throw ();
 
-
 	/**
-	 *  storeRequest 
+	 * storeRequest 
 	 */
-
 	virtual castor::repack::RepackAck* storeRequest(castor::repack::RepackRequest* rreq)throw ();
 
 	/**
 	 * updateSubRequest
 	 */
-
-	virtual void updateSubRequest( castor::repack::RepackSubRequest* obj) throw ();
-
+	virtual void updateSubRequest(castor::repack::RepackSubRequest* obj) throw ();
+	
 	/**
 	 * updateSubRequestSegments
 	 */
-
-	virtual void updateSubRequestSegments( castor::repack::RepackSubRequest* obj, std::vector<RepackSegment*> listToUpdate) throw ();
-
+	virtual void updateSubRequestSegments(castor::repack::RepackSubRequest* obj, std::vector<RepackSegment*> listToUpdate) throw ();
 	
 	/**
 	 * insert SubRequestSegments
 	 */
-
-	virtual void castor::repack::ora::OraRepackSvc::insertSubRequestSegments(castor::repack::RepackSubRequest* obj) throw ();
-
-       /**
-	* getSubRequestByVid 
-	*/
-
+	virtual void insertSubRequestSegments(castor::repack::RepackSubRequest* obj) throw ();
+	
+	/**
+	 * getSubRequestByVid 
+	 */
 	virtual castor::repack::RepackResponse* getSubRequestByVid(std::string vid, bool fill) throw ();
-
-
-       /*
-	* getSubRequestsByStatus
-	*/
-
-	virtual std::vector<castor::repack::RepackSubRequest*> getSubRequestsByStatus( castor::repack::RepackSubRequestStatusCode st, bool fill) throw ();
-
-	/*
+	
+	/**
+	 * getSubRequestsByStatus
+	 */
+	virtual std::vector<castor::repack::RepackSubRequest*> getSubRequestsByStatus(castor::repack::RepackSubRequestStatusCode st, bool fill) throw ();
+	
+	/**
 	 * getAllSubRequests
 	 */
-
 	virtual castor::repack::RepackAck *getAllSubRequests() throw ();
 
-	/*
+	/**
 	 * validateRepackSubrequest
 	 */ 
-
-
-	virtual bool  validateRepackSubRequest( RepackSubRequest* tape) throw ();
-
-
-	/*
+	virtual bool validateRepackSubRequest(RepackSubRequest* tape) throw ();
+	
+	/**
 	 * resurrectTapesOnHold
 	 */ 
-
-	virtual void  resurrectTapesOnHold() throw ();
-
-	/*
+	virtual void resurrectTapesOnHold() throw ();
+	
+	/**
 	 * restartSubRequestTapes
 	 */
-
-	virtual void  restartSubRequest(u_signed64 srId) throw ();
-
-	/*
+	virtual void restartSubRequest(u_signed64 srId) throw ();
+	
+	/**
 	 * changeSubRequestsStatus
 	 */
-
-	virtual castor::repack::RepackAck*  changeSubRequestsStatus(std::vector<castor::repack::RepackSubRequest*> srs,  castor::repack::RepackSubRequestStatusCode st) throw ();
-
-
-
-	/*
+	virtual castor::repack::RepackAck* changeSubRequestsStatus(std::vector<castor::repack::RepackSubRequest*> srs, castor::repack::RepackSubRequestStatusCode st) throw ();
+	
+	/**
 	 * changeAllSubRequestsStatus
 	 */ 
-
-	virtual castor::repack::RepackAck*   changeAllSubRequestsStatus(castor::repack::RepackSubRequestStatusCode st) throw ();
-
-
-	/*
+	virtual castor::repack::RepackAck* changeAllSubRequestsStatus(castor::repack::RepackSubRequestStatusCode st) throw ();
+	
+	/**
 	 * getLastTapeInformation 
 	 */
-
 	virtual castor::repack::RepackRequest* getLastTapeInformation(std::string vidName) throw ();
 
      private:
@@ -201,8 +180,7 @@ namespace castor {
 	static const std::string s_changeAllSubRequestsStatusStatementString;
 	oracle::occi::Statement *m_changeAllSubRequestsStatusStatement;
 	static const std::string s_selectLastSegmentsSituationStatementString;
-	oracle::occi::Statement *m_selectLastSegmentsSituationStatement;
-     
+	oracle::occi::Statement *m_selectLastSegmentsSituationStatement;   
 	
      }; // end of class OraRepackSvc
 

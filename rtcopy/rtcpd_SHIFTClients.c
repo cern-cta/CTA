@@ -30,6 +30,7 @@ extern char *geterr();
 
 #include <pwd.h>
 #include <Castor_limits.h>
+#include <common.h>
 #include <Cglobals.h>
 #include <Cnetdb.h>
 #include <Cpwd.h>
@@ -58,7 +59,8 @@ static int rtcp_CheckClientHost(SOCKET *s,
     char local_host[CA_MAXHOSTNAMELEN+1];
     struct sockaddr_in from;
     struct hostent *hp;
-    int fromlen,rc;
+    socklen_t fromlen;
+    int rc;
 
     if ( s == NULL || *s == INVALID_SOCKET || req == NULL ) {
         serrno = EINVAL;

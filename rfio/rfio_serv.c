@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.26 2008/07/28 15:00:28 sponcec3 Exp $
+ * $Id: rfio_serv.c,v 1.27 2008/07/28 16:51:41 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.26 $ $Date: 2008/07/28 15:00:28 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.27 $ $Date: 2008/07/28 16:51:41 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 /* rfio_serv.c  SHIFT remote file access super server                   */
@@ -18,7 +18,8 @@ static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.26 $ $Date: 2
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
-#include <Castor_limits.h>
+#include "Castor_limits.h"
+#include "common.h"
 #include "rfio.h"                       /* Remote file I/O              */
 #include "u64subr.h"
 #include <signal.h>			/* Signal handling		*/
@@ -260,9 +261,75 @@ int mt_cleanup(struct thData *, int *, int);
 #endif /* WIN32 */
 
 #if defined(_WIN32)
+int set_rcv_sockparam(s, value)
+SOCKET  s;
+int     value;
+{
+   if( setsockopt( s, SOL_SOCKET, SO_RCVBUF, (char*)&value, sizeof(value)) == SOCKET_ERROR)  {
+      if( WSAGetLastError() != WSAENOBUFS )  {
+         log(LOG_ERR, "setsockopt rcvbuf(): %s\n", geterr());
+         WSACleanup();
+         exit(1);
+      } else
+         return(-1);
+   } else
+      return(value);
+}
+
+int set_snd_sockparam(s, value)
+SOCKET  s;
+int     value;
+{
+   if(setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char*)&value, sizeof(value)) == SOCKET_ERROR)  {
+      if( WSAGetLastError() != WSAENOBUFS )  {
+         log(LOG_ERR, "setsockopt sndbuf(): %s\n", geterr());
+         WSACleanup();
+         exit(1);
+      }
+      else
+         return(-1);
+   }
+   else
+      return(value);
+}
+#else
+int set_rcv_sockparam(s,value)
+int s,value;
+{
+   if (setsockopt(s,SOL_SOCKET,SO_RCVBUF,(char *)&value, sizeof(value)) < 0) {
+      if (errno != ENOBUFS)
+      {
+         log(LOG_ERR, "setsockopt rcvbuf(): %s\n",strerror(errno));
+         exit(1);
+      }
+      else
+         return(-1);
+   }
+   /* else */
+   return(value);
+}
+
+int set_snd_sockparam(s,value)
+int s,value;
+{
+   if (setsockopt(s,SOL_SOCKET,SO_SNDBUF,(char *)&value, sizeof(value)) < 0) {
+      if (errno != ENOBUFS)
+      {
+         log(LOG_ERR, "setsockopt sndbuf(): %s\n",strerror(errno));
+         exit(1);
+      }
+      else
+         return(-1);
+   }
+   /* else */
+   return(value);
+}
+#endif
+
+#if defined(_WIN32)
 rfiod()
 #else
-main (argc, argv)
+int main (argc, argv)
 int     argc;
 char    **argv;
 #endif
@@ -293,11 +360,7 @@ char    **argv;
    int      i, pid;
    struct   servent  *sp;
    struct   sockaddr_in sin, from;
-#if defined(_AIX)
    socklen_t fromlen;
-#else
-   int fromlen;
-#endif
    char     localhost[MAXHOSTNAMELEN];     /* Local host name      */
    int             mode;
    register int    maxfds=0;               /* max. # of file descr.*/
@@ -965,7 +1028,7 @@ int mt_cleanup(struct thData *td, int *fd, int rcode)
 }
 #endif
 
-doit(s, fromp, mode, uid, gid)
+int doit(s, fromp, mode, uid, gid)
 #if defined(_WIN32) 
 SOCKET   s;
 #else
@@ -1839,73 +1902,6 @@ if (uid > 0 && gid > 0)
       }  /* End of switch (request) */
    }  /* End of for (;;) */
 }
-
-   
-#if defined(_WIN32)
-int set_rcv_sockparam(s, value)
-SOCKET  s;
-int     value;
-{
-   if( setsockopt( s, SOL_SOCKET, SO_RCVBUF, (char*)&value, sizeof(value)) == SOCKET_ERROR)  {
-      if( WSAGetLastError() != WSAENOBUFS )  {
-         log(LOG_ERR, "setsockopt rcvbuf(): %s\n", geterr());
-         WSACleanup();
-         exit(1);
-      } else
-         return(-1);
-   } else
-      return(value);
-}
-
-int set_snd_sockparam(s, value)
-SOCKET  s;
-int     value;
-{
-   if(setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char*)&value, sizeof(value)) == SOCKET_ERROR)  {
-      if( WSAGetLastError() != WSAENOBUFS )  {
-         log(LOG_ERR, "setsockopt sndbuf(): %s\n", geterr());
-         WSACleanup();
-         exit(1);
-      }
-      else
-         return(-1);
-   }
-   else
-      return(value);
-}
-#else
-int set_rcv_sockparam(s,value)
-int s,value;
-{
-   if (setsockopt(s,SOL_SOCKET,SO_RCVBUF,(char *)&value, sizeof(value)) < 0) {
-      if (errno != ENOBUFS)
-      {
-         log(LOG_ERR, "setsockopt rcvbuf(): %s\n",strerror(errno));
-         exit(1);
-      }
-      else
-         return(-1);
-   }
-   /* else */
-   return(value);
-}
-
-int set_snd_sockparam(s,value)
-int s,value;
-{
-   if (setsockopt(s,SOL_SOCKET,SO_SNDBUF,(char *)&value, sizeof(value)) < 0) {
-      if (errno != ENOBUFS)
-      {
-         log(LOG_ERR, "setsockopt sndbuf(): %s\n",strerror(errno));
-         exit(1);
-      }
-      else
-         return(-1);
-   }
-   /* else */
-   return(value);
-}
-#endif
 
 #ifndef _WIN32
 void check_child_exit(int block)

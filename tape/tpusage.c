@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.9 $ $Date: 2007/03/26 12:14:53 $ CERN CN-PDP/DM Claire Redmond/Andrew Askew/Olof Barring"; 
+static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.10 $ $Date: 2008/07/28 16:51:40 $ CERN CN-PDP/DM Claire Redmond/Andrew Askew/Olof Barring"; 
 #endif /* not lint */
 
 #include <errno.h>
@@ -178,14 +178,14 @@ int usage( char* );
 #if defined(VDQM)
 int get_drvlist();
 #endif
-int create_devicelist( char[][] );
-int create_serverlist( char[][], int );
+int create_devicelist( char[MAXDGP][CA_MAXDGNLEN+1] );
+int create_serverlist( char[MAXSERVS][9], int );
 
 int chk_devgrp( char*, int );
-int chk_serv( char*, char[][], int );
+int chk_serv( char*, char[MAXSERVS][9], int );
 int chk_vol( char*, Cregexp_t ** );
 
-int create_reqserverlist( int, char[], char[][], int );
+int create_reqserverlist( int, char[], char[MAXSERVS][9], int );
 int getacctrec( int, struct accthdr*, char*, int* );
 int swap_fields( struct accttape* );
 int graph_divs( time_t, time_t, int*, time_t[] );

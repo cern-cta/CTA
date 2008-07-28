@@ -1,5 +1,5 @@
 /*
- * $Id: lstat.c,v 1.18 2008/02/21 17:22:26 waldron Exp $
+ * $Id: lstat.c,v 1.19 2008/07/28 16:51:41 waldron Exp $
  */
 
 /*
@@ -15,8 +15,10 @@
 #include <Cglobals.h>
 #include <Cpwd.h>
 
-static int pw_key = -1;
-static int old_uid_key = -1;
+#if !defined(IRIX64) && !defined(__ia64__) && !defined(__x86_64) && !defined(__ppc64__)
+  static int pw_key = -1;
+  static int old_uid_key = -1;
+#endif
 
 
 int DLL_DECL rfio_lstat(filepath, statbuf)      /* Remote file lstat	*/

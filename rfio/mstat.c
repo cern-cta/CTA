@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.37 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: mstat.c,v 1.38 2008/07/28 16:51:41 waldron Exp $
  */
 
 
@@ -44,7 +44,7 @@ struct stat *statb;
 #if (defined(__alpha) && defined(__osf__))
    return (rfio_mstat64(file,statb));
 #else
-   int       rc, parserc ;
+   int       rc;
 #if defined(IRIX64) || defined(__ia64__) || defined(__x86_64) || defined(__ppc64__)
    struct stat64 statb64;
 
@@ -52,7 +52,7 @@ struct stat *statb;
 	(void) stat64tostat(&statb64, statb);
    return (rc);
 #else
-   int rt ,i ,fd, rfindex, Tid;
+   int rt ,i ,fd, rfindex, Tid, parserc;
    char *host , *filename ;
 
    INIT_TRACE("RFIO_TRACE");

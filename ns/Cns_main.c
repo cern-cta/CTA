@@ -75,13 +75,14 @@ struct main_args *main_args;
 	void *doit(void *);
 	char *dp;
 	struct sockaddr_in from;
-	int fromlen = sizeof(from);
+        socklen_t fromlen = sizeof(from);
 	char *getconfent();
 	int i;
 	int ipool;
 	int nbthreads = CNS_NBTHREADS;
 	int on = 1;	/* for REUSEADDR */
-	char *p; /*Pointer to the port*/
+	char *p;
+	const char *buf;
 	fd_set readfd, readmask;
 	int rqfd;
 	int s; /*Socket*/
@@ -162,8 +163,9 @@ struct main_args *main_args;
 	/* set the location of the name server login file */
 	if (!*nsconfigfile) {
 		if (strncmp (NSCONFIG, "%SystemRoot%\\", 13) == 0 &&
-		    (p = getenv ("SystemRoot")))
-			sprintf (nsconfigfile, "%s%s", p, strchr (NSCONFIG, '\\'));
+		    (p = getenv ("SystemRoot")) &&
+		    (buf = strchr (NSCONFIG, '\\')))
+			sprintf (nsconfigfile, "%s%s", p, buf);
 		else
 			strcpy (nsconfigfile, NSCONFIG);
 	}
@@ -378,7 +380,7 @@ char **req_data;
 char **clienthost;
 {
 	struct sockaddr_in from;
-	int fromlen = sizeof(from);
+	socklen_t fromlen = sizeof(from);
 	struct hostent *hp;
 	struct timeval tv;
 	int l;

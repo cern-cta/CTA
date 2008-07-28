@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.29 $ $Date: 2008/06/23 08:16:36 $ CERN IT-PDP/DM Olof Barring";
-#endif /* not lint */
-
 /*
  * showqueues.c - command to list queues and running jobs.
  */

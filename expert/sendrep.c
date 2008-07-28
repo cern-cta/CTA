@@ -17,6 +17,7 @@
 #include "marshall.h"
 #include "net.h"
 #include "expert.h"
+#include "expert_daemon.h"
 #include "serrno.h"
 
 int sendrep(int rpfd, int rep_type, ...)
@@ -25,7 +26,6 @@ int sendrep(int rpfd, int rep_type, ...)
 	char func[16];
 	int n;
 	char *rbp;
-	int req_type;
 	char repbuf[EXP_REPBUFSZ+12];
 	int repsize;
 

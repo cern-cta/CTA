@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.18 2008/07/03 13:55:58 wiebalck Exp $
+ * $Id: tpdaemon.c,v 1.19 2008/07/28 16:51:40 waldron Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.18 $ $Date: 2008/07/03 13:55:58 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.19 $ $Date: 2008/07/28 16:51:40 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -125,7 +125,7 @@ struct main_args *main_args;
 	int c, l;
 	char *clienthost;
 	struct sockaddr_in from;
-	int fromlen = sizeof(from);
+	socklen_t fromlen = sizeof(from);
 	struct hostent *hp;
 	int magic;
 	int msglen;

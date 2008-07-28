@@ -1,5 +1,5 @@
 /*
- * $Id: open.c,v 1.31 2008/02/21 17:27:41 waldron Exp $
+ * $Id: open.c,v 1.32 2008/07/28 16:51:41 waldron Exp $
  */
 
 /*
@@ -139,11 +139,6 @@ int DLL_DECL rfio_open(filepath, flags, mode)
 char    *filepath ;
 int     flags,mode ;
 {
-   int n;
-   int n_index;
-   int old;
-   int fd;
-   int fd_index;
 
 #ifdef O_LARGEFILE
    /* If O_LARGEFILE go to open64                                     */
@@ -155,6 +150,11 @@ int     flags,mode ;
    /* If 64 is not supported goes to rfio_open_ext                    */
    return( rfio_open64(filepath, flags, mode) );
 #else
+   int n;
+   int n_index;
+   int old;
+   int fd;
+   int fd_index;
 
    old = rfioreadopt(RFIO_READOPT);
 

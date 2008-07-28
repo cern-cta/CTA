@@ -31,7 +31,6 @@ int send2expert(socketp, reqp, reql)
 int *socketp;
 char *reqp;
 int reql;
-
 {
 	/*int c;*/
 	int port;
@@ -130,14 +129,13 @@ int* reply_type;
         int n;
 	char *p;
 
-
 	/* get reply */
         s = socket;
 	/* read status */
 	if ((n = netread (s, repheader, 4 * LONGSIZE)) <= 0) {
-	  (void) netclose (s);
-	  serrno = SECOMERR;
-	  return (-1);
+		(void) netclose (s);
+		serrno = SECOMERR;
+		return (-1);
 	}
 	p = repheader;
 	unmarshall_LONG (p, magic);

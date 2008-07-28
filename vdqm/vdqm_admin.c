@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_admin.c,v $ $Revision: 1.6 $ $Date: 2008/06/23 21:21:25 $ CERN IT-PDP/DM Olof Barring";
-#endif /* not lint */
-
 /*
  * vdqm_admin.c - VDQM administration utility
  */

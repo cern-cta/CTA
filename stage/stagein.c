@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.60 2006/12/14 15:14:41 itglp Exp $
+ * $Id: stagein.c,v 1.61 2008/07/28 16:51:40 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.60 $ $Date: 2006/12/14 15:14:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.61 $ $Date: 2008/07/28 16:51:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -135,8 +135,10 @@ int main(argc, argv)
 	char xvsn[7*MAXVSN];
 	char **hsmfiles = NULL;
 	int nhsmfiles = 0;
+#if TMS
 	int fseq1 = -1;
 	int fseq2 = -1;
+#endif
 	int coff = 0;
 	char *qopt = NULL;
 	char *coffopt = NULL;
@@ -512,7 +514,7 @@ int main(argc, argv)
 
 	if (errflg != 0) {
 		usage (argv[0]);
-        freehsmfiles(nhsmfiles, hsmfiles);
+		freehsmfiles(nhsmfiles, hsmfiles);
 		exit (1);
 	}
 
@@ -535,7 +537,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 		WSACleanup();
 #endif
-        freehsmfiles(nhsmfiles, hsmfiles);
+		freehsmfiles(nhsmfiles, hsmfiles);
 		exit (SYERR);
 	}
 	strcpy (user, pw->pw_name);	/* login name */
@@ -783,7 +785,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 			WSACleanup();
 #endif
-            freehsmfiles(nhsmfiles, hsmfiles);
+			freehsmfiles(nhsmfiles, hsmfiles);
 			exit (SYERR);
 		} else if (c) {
 			errflg++;
@@ -807,7 +809,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 			WSACleanup();
 #endif
-            freehsmfiles(nhsmfiles, hsmfiles);
+			freehsmfiles(nhsmfiles, hsmfiles);
 			exit (SYERR);
 		} else if (c)
 			errflg++;
@@ -826,7 +828,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 		WSACleanup();
 #endif
-        freehsmfiles(nhsmfiles, hsmfiles);
+		freehsmfiles(nhsmfiles, hsmfiles);
 		if (qoptok != NULL) free(qoptok);
 		exit (1);
 	}
@@ -869,7 +871,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 	WSACleanup();
 #endif
-    freehsmfiles(nhsmfiles, hsmfiles);
+	freehsmfiles(nhsmfiles, hsmfiles);
 	if (qoptok != NULL) free(qoptok);
 	exit (c == 0 ? 0 : rc_castor2shift(serrno));
 }
@@ -878,17 +880,16 @@ void freehsmfiles(nhsmfiles,hsmfiles)
      int nhsmfiles;
      char **hsmfiles;
 {
-  int i;
+	int i;
 
-  if (hsmfiles == NULL) return;
+	if (hsmfiles == NULL) return;
 
-  for (i = 0; i < nhsmfiles; i++) {
-    if (hsmfiles[i] != NULL) {
-      free(hsmfiles[i]);
-    }
-  }
-
-  free(hsmfiles);
+	for (i = 0; i < nhsmfiles; i++) {
+		if (hsmfiles[i] != NULL) {
+			free(hsmfiles[i]);
+		}
+	}
+	free(hsmfiles);
 }
 
 #if TMS

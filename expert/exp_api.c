@@ -64,11 +64,12 @@
 #include "marshall.h"
 #include "serrno.h"
 #include "expert.h"
+#include "expert_api.h"
 #include "expert_daemon.h"
 
 int DLL_DECL expert_send_request(exp_socket, request)
-int *exp_socket;
-int request;
+     int *exp_socket;
+     int request;
 {
 
 	gid_t gid;
@@ -105,33 +106,33 @@ int request;
 	*exp_socket = -1;
 
 	if (send2expert (exp_socket, sendbuf, msglen) < 0)
-	  return (-1);
+		return (-1);
 
 	/* Get reply status */
 
 	if (getexpertrep (*exp_socket, &status, &errcode, &rep_type) < 0)
-	  return (-1); /* Error getting reply */
+		return (-1); /* Error getting reply */
 
 	/************************************************************************************/
 	if (rep_type != EXP_RP_STATUS) {
-	  serrno = SEINTERNAL;
-	  return (-1);
+		serrno = SEINTERNAL;
+		return (-1);
 	}
 	
 	/* Check status */
 
 	if (status == EXP_ST_ACCEPTED)
-	  return (0);
+		return (0);
 	else {
-	  serrno = errcode;
-	  return (-1);
+		serrno = errcode;
+		return (-1);
 	}
 }
 
 int DLL_DECL expert_send_data(exp_socket, buffer, buf_length)
-int exp_socket;
-const char *buffer;
-int buf_length;
+     int exp_socket;
+     const char *buffer;
+     int buf_length;
 {
         int n;
         if ((n = netwrite (exp_socket, (char *)buffer, buf_length)) <= 0) {
@@ -144,38 +145,38 @@ int buf_length;
 
 
 int DLL_DECL expert_netread_timeout(exp_socket, buffer, buf_length, timeout)
-int exp_socket;
-char *buffer;
-int buf_length;
-int timeout;
+     int exp_socket;
+     char *buffer;
+     int buf_length;
+     int timeout;
 {
-    fd_set  fds;
-    struct  timeval tout;
+	fd_set  fds;
+	struct  timeval tout;
 
-    FD_ZERO (&fds);
-    FD_SET  (exp_socket, &fds);
-    tout.tv_sec = timeout;
-    tout.tv_usec = 0;
+	FD_ZERO (&fds);
+	FD_SET  (exp_socket, &fds);
+	tout.tv_sec = timeout;
+	tout.tv_usec = 0;
 
-    switch(select(FD_SETSIZE, &fds, (fd_set *)0, (fd_set *)0, &tout)) {
-    case -1:
-        return (-1);
-    case 0:
-        serrno = SETIMEDOUT;
-        return(-1);
-    default:
-        break;
-    }
-    return (recv(exp_socket, buffer, buf_length, 0));
+	switch(select(FD_SETSIZE, &fds, (fd_set *)0, (fd_set *)0, &tout)) {
+	case -1:
+		return (-1);
+	case 0:
+		serrno = SETIMEDOUT;
+		return(-1);
+	default:
+		break;
+	}
+	return (recv(exp_socket, buffer, buf_length, 0));
 }
 
 
 
 int DLL_DECL expert_receive_data(exp_socket, buffer, buf_length, timeout)
-int exp_socket;
-char *buffer;
-int buf_length;
-int timeout;
+     int exp_socket;
+     char *buffer;
+     int buf_length;
+     int timeout;
 {
         char *p;
 	int l;
@@ -186,28 +187,28 @@ int timeout;
 	serrno = 0; /* Clear error */
 	el = strlen(EXP_ERRSTRING);
 	if (buf_length < el || timeout <= 0) {
-	  serrno = EINVAL;
-	  return (-1);
+		serrno = EINVAL;
+		return (-1);
 	}
 
         for (p = buffer, l = buf_length, c = 0; l > 0;) {
-	  n = expert_netread_timeout(exp_socket, p, l, timeout);
-	  if (n <= 0) break;
-	  c += n;
-	  p += n;
-	  l -= n;
+		n = expert_netread_timeout(exp_socket, p, l, timeout);
+		if (n <= 0) break;
+		c += n;
+		p += n;
+		l -= n;
 	}
         if (n <= 0) netclose (exp_socket);
 	if (c > 0) { /* Data have been received */
-	  if (c >= el) {
-	    if (strncmp(buffer, EXP_ERRSTRING, el) == 0) {
-	      serrno = EEXPEXECV;
-	      return (-1);
-	    }
-	  }
-	  return (c);
+		if (c >= el) {
+			if (strncmp(buffer, EXP_ERRSTRING, el) == 0) {
+				serrno = EEXPEXECV;
+				return (-1);
+			}
+		}
+		return (c);
 	}
 	else
-	  return (n);
+		return (n);
 }
 

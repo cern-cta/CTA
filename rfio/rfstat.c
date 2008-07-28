@@ -1,5 +1,5 @@
 /*
- * $Id: rfstat.c,v 1.11 2008/02/21 17:22:26 waldron Exp $
+ * $Id: rfstat.c,v 1.12 2008/07/28 16:51:41 waldron Exp $
  */
 
 /*
@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <time.h>
 #include <pwd.h>
 #include <grp.h>

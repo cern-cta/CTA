@@ -192,9 +192,9 @@ static int write_error;
 static volatile int stop_read;
 #endif   /* !HPSS */
 
-extern char *getconfent() ;
+extern char *getconfent();
 extern int     checkkey(int sock, u_short key );
-extern int     check_user_perm(int *uid, int *gid, char *hostname, int *ptrcode, char *permstr) ;
+extern int     check_user_perm(int *uid, int *gid, char *hostname, int *ptrcode, char *permstr);
 
 #if !defined(HPSS)
 #if defined(_WIN32)
@@ -244,10 +244,10 @@ extern struct thData {
 /*
  * Buffer declarations
  */
-extern char     rqstbuf[BUFSIZ] ;       /* Request buffer               */
+extern char     rqstbuf[BUFSIZ];       /* Request buffer               */
 extern char     filename[MAXFILENAMSIZE];
 
-static char     *iobuffer ;             /* Data communication buffer    */
+static char     *iobuffer;             /* Data communication buffer    */
 static int      iobufsiz;               /* Current io buffer size       */
 #endif   /* else WIN32 */
 #endif   /* !HPSS  */
@@ -290,22 +290,20 @@ int      s;
 struct   rfiostat *infop;
 int      fd;
 {
-   char    *p ;
+   char    *p;
    LONG    status = 0;
-   LONG    len ;
-   LONG    mode ;
-   int     uid,gid ;
+   LONG    len;
    int     op;
    off64_t siz;
-   int     rcode = 0 ;
+   int     rcode = 0;
    LONG    how;
    off64_t offset;
    off64_t offsetout;
    char    tmpbuf[21];
 
-   p = rqstbuf + (2*WORDSIZE) ;
-   unmarshall_LONG(p, how) ;
-   unmarshall_LONG(p, len) ;
+   p = rqstbuf + (2*WORDSIZE);
+   unmarshall_LONG(p, how);
+   unmarshall_LONG(p, len);
 
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
@@ -319,8 +317,8 @@ int      fd;
      /*
       * Reading request.
       */
-     p = rqstbuf ;
-     unmarshall_LONG(p, op) ;
+     p = rqstbuf;
+     unmarshall_LONG(p, op);
      unmarshall_HYPER(p, siz);
      unmarshall_HYPER(p, offset);
      log(LOG_DEBUG, "srlockf64(%d,%d): operation %d, size %s\n", s, fd, op,
@@ -332,26 +330,26 @@ int      fd;
       */
      if ( how != -1 ) {
        log(LOG_DEBUG, "lseek64(%d,%d): lseek64(%d,%s,%d)\n", s, fd, fd,
-           u64tostr(offset,tmpbuf,0), how) ; 
+           u64tostr(offset,tmpbuf,0), how); 
        infop->seekop++;
        if ( (offsetout= lseek64(fd,offset,how)) == -1 ) { 
-         rcode= errno ;
+         rcode= errno;
          status = -1;
          log(LOG_ERR, "srlockf64(%d,%d): error %d in lseek64\n", s, fd, rcode);
        }
      }
      if (status == 0 ) {
        if ( (status = lockf64(fd, op, siz)) < 0 ) {
-         rcode = errno ;
+         rcode = errno;
          log(LOG_ERR, "srlockf64(%d,%d): error %d in lockf64(%d,%d,%s)\n",
              s, fd, rcode, fd, op, u64tostr(siz,tmpbuf,0));
        }
        else
-         status = 0 ;
+         status = 0;
      }
    }
    
-   p = rqstbuf ;
+   p = rqstbuf;
    marshall_LONG(p, status);
    marshall_LONG(p, rcode);
 #if defined(SACCT)
@@ -360,9 +358,9 @@ int      fd;
    log(LOG_DEBUG, "srlockf64:  sending back status %d rcode %d\n", status, rcode);
    if (netwrite_timeout(s, rqstbuf, 2*LONGSIZE, RFIO_CTRL_TIMEOUT) != (2*LONGSIZE))  {
       log(LOG_ERR, "srlockf64:  write(): %s\n", strerror(errno));
-      return -1 ; 
+      return -1; 
    }
-   return status ; 
+   return status; 
 }
 #endif  /* !WIN32 */
 
@@ -372,16 +370,16 @@ int     s;
 int     rt; /* Is it a remote site call ?   */
 char *host; /* Where the request comes from */
 {
-   char *   p ;
-   int    status = 0, rcode = 0 ;
-   int    len ;
+   char *   p;
+   int    status = 0, rcode = 0;
+   int    len;
    int    replen;
-   struct stat64 statbuf ;
+   struct stat64 statbuf;
    char   user[CA_MAXUSRNAMELEN+1];
    int    uid,gid;
 
-   p= rqstbuf + 2*WORDSIZE ;
-   unmarshall_LONG(p,len) ;
+   p= rqstbuf + 2*WORDSIZE;
+   unmarshall_LONG(p,len);
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
    } else {
@@ -393,7 +391,7 @@ char *host; /* Where the request comes from */
        log(LOG_ERR, "srlstat64: read(): %s\n", strerror(errno));
        return -1;
      }
-     p= rqstbuf ;
+     p= rqstbuf;
      uid = gid = 0;
      status = 0;
      *user = *filename = '\0';
@@ -409,13 +407,13 @@ char *host; /* Where the request comes from */
      if ( (status == 0) && rt ) {
        char to[100];
        int rcd;
-       int to_uid, to_gid ;
+       int to_uid, to_gid;
        
        if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-         log(LOG_ERR, "srlstat64: get_user(): Error opening mapping file\n") ;
+         log(LOG_ERR, "srlstat64: get_user(): Error opening mapping file\n");
          status= -1;
          errno = EINVAL;
-         rcode = errno ;
+         rcode = errno;
        }
 
        if ( !status && abs(rcd) == 1 ) {
@@ -427,9 +425,9 @@ char *host; /* Where the request comes from */
        }
        else {
          log(LOG_DEBUG, "srlstat64: (%s,%s,%d,%d) mapped to %s(%d,%d)\n",
-             host, user, uid, gid, to, to_uid, to_gid) ;
-         uid = to_uid ;
-         gid = to_gid ;
+             host, user, uid, gid, to, to_uid, to_gid);
+         uid = to_uid;
+         gid = to_gid;
        }       
      }
      if ( !status ) {
@@ -451,22 +449,22 @@ char *host; /* Where the request comes from */
          else
            log(LOG_ERR, "srlstat64: failed at check_user_perm(), rcode %d\n", rcode);
          memset(&statbuf,'\0',sizeof(statbuf));
-         status = rcode ;
+         status = rcode;
        }
        else {
          char ofilename[MAXFILENAMSIZE];
          strcpy(ofilename, filename);
          if (forced_filename != NULL || !check_path_whitelist(host, filename, rfio_all_perms, ofilename, sizeof(ofilename),0)) {
-           status= ( lstat64(CORRECT_FILENAME(ofilename), &statbuf) < 0 ) ? errno : 0 ;
+           status= ( lstat64(CORRECT_FILENAME(ofilename), &statbuf) < 0 ) ? errno : 0;
          } else {
            status = errno;
          }
-         log(LOG_INFO, "srlstat64: file: %s , status %d\n", CORRECT_FILENAME(filename), status) ;
+         log(LOG_INFO, "srlstat64: file: %s , status %d\n", CORRECT_FILENAME(filename), status);
        }
      }
    }
    
-   p = rqstbuf ;
+   p = rqstbuf;
    marshall_WORD(p, statbuf.st_dev);
    marshall_HYPER(p, statbuf.st_ino);
    marshall_WORD(p, statbuf.st_mode);
@@ -490,9 +488,9 @@ char *host; /* Where the request comes from */
    log(LOG_DEBUG, "srlstat64: sending back %d\n", status);
    if (netwrite_timeout(s,rqstbuf, replen, RFIO_CTRL_TIMEOUT) != replen)  {
       log(LOG_ERR, "srlstat64: write(): %s\n", strerror(errno));
-      return -1 ;
+      return -1;
    }
-   return 0 ;
+   return 0;
 }
 #endif        /* !WIN32 */
 
@@ -505,11 +503,11 @@ int     s;
 int       rt; /* Is it a remote site call ?   */
 char *host; /* Where the request comes from */
 {
-   char   *p ;
-   int    status = 0, rcode = 0 ; 
-   int    len ;
+   char   *p;
+   int    status = 0, rcode = 0; 
+   int    len;
    int    replen; 
-   struct stat64 statbuf ;
+   struct stat64 statbuf;
    char   user[CA_MAXUSRNAMELEN+1];
    int    uid,gid;
 
@@ -517,8 +515,8 @@ char *host; /* Where the request comes from */
    struct thData *td;
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
-   p= rqstbuf + 2*WORDSIZE ;
-   unmarshall_LONG(p,len) ;
+   p= rqstbuf + 2*WORDSIZE;
+   unmarshall_LONG(p,len);
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
    } else {
@@ -534,7 +532,7 @@ char *host; /* Where the request comes from */
 #endif      
        return -1;
      }
-     p = rqstbuf ;
+     p = rqstbuf;
      uid = gid = 0;
      status = 0;     
      *user = *filename = '\0';
@@ -550,13 +548,13 @@ char *host; /* Where the request comes from */
      if ( (status == 0) && rt ) {
        char to[100];
        int rcd;
-       int to_uid, to_gid ;
+       int to_uid, to_gid;
        
        if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-         log(LOG_ERR, "srstat64: get_user(): Error opening mapping file\n") ;
+         log(LOG_ERR, "srstat64: get_user(): Error opening mapping file\n");
          status= -1;
          errno = EINVAL;
-         rcode = errno ;
+         rcode = errno;
        }
        
        if ( !status && abs(rcd) == 1 ) {
@@ -568,9 +566,9 @@ char *host; /* Where the request comes from */
        }
        else {
          log(LOG_DEBUG, "srstat64: (%s,%s,%d,%d) mapped to %s(%d,%d)\n",
-             host, user, uid, gid, to, to_uid, to_gid) ;
-         uid = to_uid ;
-         gid = to_gid ;
+             host, user, uid, gid, to, to_uid, to_gid);
+         uid = to_uid;
+         gid = to_gid;
        }       
      }
      if ( !status ) {
@@ -597,23 +595,23 @@ char *host; /* Where the request comes from */
          else
            log(LOG_ERR, "srstat64: failed at check_user_perm(), rcode %d\n", rcode);
          memset(&statbuf,'\0',sizeof(statbuf));
-         status = rcode ;
+         status = rcode;
        }
        else  {
          char ofilename[MAXFILENAMSIZE];
          strcpy(ofilename, filename);
          if (forced_filename != NULL || !check_path_whitelist(host, filename, rfio_all_perms, ofilename, sizeof(ofilename),1)) {
-           status= ( stat64(CORRECT_FILENAME(ofilename), &statbuf) < 0 ) ? errno : 0 ;
+           status= ( stat64(CORRECT_FILENAME(ofilename), &statbuf) < 0 ) ? errno : 0;
           } else {
            status = errno;
          }
          log(LOG_INFO, "srstat64: file: %s for (%d,%d) status %d\n",
-             CORRECT_FILENAME(filename), uid, gid, status) ;
+             CORRECT_FILENAME(filename), uid, gid, status);
        }
      }
    }
    
-   p = rqstbuf ;
+   p = rqstbuf;
    marshall_WORD(p, statbuf.st_dev);
    marshall_HYPER(p, statbuf.st_ino);
    marshall_WORD(p, statbuf.st_mode);
@@ -641,9 +639,9 @@ char *host; /* Where the request comes from */
 #else      
       log(LOG_ERR, "srstat64: write(): %s\n", strerror(errno));
 #endif      
-      return -1 ; 
+      return -1; 
    }
-   return 0 ; 
+   return 0; 
 }
        
 int  sropen64(s, rt, host)
@@ -660,7 +658,7 @@ char *host; /* Where the request comes from */
    char    *p;
    int     len;
    int     replen;
-   int     fd ;
+   int     fd;
    LONG    flags, mode;
    int     uid,gid;
    WORD    mask, ftype, passwd, mapping;
@@ -689,24 +687,24 @@ char tmpbuf[21], tmpbuf2[21];
    first_write = 1;
    first_read  = 1;
 
-   p = rqstbuf + 2*WORDSIZE ;
-   unmarshall_LONG(p, len) ;
+   p = rqstbuf + 2*WORDSIZE;
+   unmarshall_LONG(p, len);
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
    } else {
      /*
       * Reading open request.
       */
-     log(LOG_DEBUG, "sropen64(%d): reading %d bytes\n", s, len) ;
+     log(LOG_DEBUG, "sropen64(%d): reading %d bytes\n", s, len);
      if ((status = netread_timeout(s,rqstbuf,len,RFIO_CTRL_TIMEOUT)) != len) {
 #if defined(_WIN32)
        log(LOG_ERR, "sropen64: read(): %s\n", geterr());
 #else      
-       log(LOG_ERR, "sropen64: read(): %s\n", strerror(errno)) ;
+       log(LOG_ERR, "sropen64: read(): %s\n", strerror(errno));
 #endif      
-       return -1 ;
+       return -1;
      }
-     p = rqstbuf ;
+     p = rqstbuf;
      status = 0;
      *account = *filename = *user = *reqhost = '\0';
      unmarshall_WORD(p, uid);
@@ -742,16 +740,16 @@ char tmpbuf[21], tmpbuf2[21];
       */
      if ( (status == 0) && !mapping && !rt) {
        log(LOG_INFO, "sropen64: attempt to make non-mapped I/O and modify uid or gid !\n");
-       errno=EACCES ;
-       rcode=errno ;
-       status= -1 ;
+       errno=EACCES;
+       rcode=errno;
+       status= -1;
      }
               
      if ( (status == 0) && rt ) { 
        openlog("rfio", LOG_PID, LOG_USER);
        syslog(LOG_ALERT, "sropen64: connection %s mapping by %s(%d,%d) from %s",
-              (mapping ? "with" : "without"), user, uid, gid, host) ;
-       closelog() ;
+              (mapping ? "with" : "without"), user, uid, gid, host);
+       closelog();
      }
 
      /*
@@ -763,10 +761,10 @@ char tmpbuf[21], tmpbuf2[21];
        
        log(LOG_DEBUG, "sropen64: Mapping (%s, %d, %d) \n", user, uid, gid );
        if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-         log(LOG_ERR, "sropen64: get_user() error opening mapping file\n") ;
+         log(LOG_ERR, "sropen64: get_user() error opening mapping file\n");
          status = -1;
          errno = EINVAL;
-         rcode = SEHOSTREFUSED ;
+         rcode = SEHOSTREFUSED;
        }
 
        else if ( abs(rcd) == 1 ) {
@@ -778,9 +776,9 @@ char tmpbuf[21], tmpbuf2[21];
        }
        else {
          log(LOG_DEBUG, "sropen64: (%s,%s,%d,%d) mapped to %s(%d,%d)\n",
-             host, user, uid, gid, to, to_uid, to_gid) ;
-         uid = to_uid ;
-         gid = to_gid ;
+             host, user, uid, gid, to, to_uid, to_gid);
+         uid = to_uid;
+         gid = to_gid;
          if ( uid < 100 || gid < 100 ) {
            errno = EACCES;
            status = -1;
@@ -807,9 +805,9 @@ char tmpbuf[21], tmpbuf2[21];
            if( (sock = connecttpread(reqhost, passwd)) >= 0 && !checkkey(sock, passwd) )  
 #endif
            {
-             status= -1 ;
+             status= -1;
              errno = EACCES;
-             rcode= errno ;
+             rcode= errno;
              log(LOG_ERR, "sropen64: DIRECT mapping : permission denied\n");
            }
 #if defined(_WIN32)
@@ -818,7 +816,7 @@ char tmpbuf[21], tmpbuf2[21];
            if( sock < 0 ) 
 #endif
            {
-             status= -1 ;
+             status= -1;
              log(LOG_ERR, "sropen64: DIRECT mapping failed: Couldn't connect %s\n", reqhost);
              rcode = EACCES;
            }
@@ -836,7 +834,7 @@ char tmpbuf[21], tmpbuf2[21];
        log(LOG_DEBUG, "sropen64: account: %s\n", account);
        log(LOG_INFO, "sropen64: (%s,0%o,0%o) for (%d,%d)\n",
            CORRECT_FILENAME(filename), flags, mode, uid, gid);
-       (void) umask((mode_t) CORRECT_UMASK(mask)) ;
+       (void) umask((mode_t) CORRECT_UMASK(mask));
 
        rc = rfio_handle_open(CORRECT_FILENAME(filename),
 			     ntohopnflg(flags),
@@ -848,10 +846,10 @@ char tmpbuf[21], tmpbuf2[21];
 			     &need_user_check);
        if (rc < 0) {
 	 char alarmbuf[1024];
-	 sprintf(alarmbuf,"sropen64(): %s",CORRECT_FILENAME(filename)) ;
-	 log(LOG_DEBUG, "sropen64: rfio_handler_open refused open: %s\n", sstrerror(serrno)) ;
+	 sprintf(alarmbuf,"sropen64(): %s",CORRECT_FILENAME(filename));
+	 log(LOG_DEBUG, "sropen64: rfio_handler_open refused open: %s\n", sstrerror(serrno));
 	 rcode = serrno;
-	 rfio_alrm(rcode,alarmbuf) ;
+	 rfio_alrm(rcode,alarmbuf);
        }
        
 
@@ -861,7 +859,7 @@ char tmpbuf[21], tmpbuf2[21];
            log(LOG_ERR, "sropen64: uid %d not allowed to open64()\n", uid);
          else
            log(LOG_ERR, "sropen64: failed at check_user_perm(), rcode %d\n", rcode);
-         status = -1 ;
+         status = -1;
        }
        else
        {
@@ -874,17 +872,17 @@ char tmpbuf[21], tmpbuf2[21];
          errno = 0;
          fd = -1;
          if (forced_filename!=NULL || !check_path_whitelist(host, pfn, perm_array, ofilename, sizeof(ofilename),1)) {
-           fd = open64((forced_filename!=NULL)?pfn:ofilename, ntohopnflg(flags), mode) ;
+           fd = open64((forced_filename!=NULL)?pfn:ofilename, ntohopnflg(flags), mode);
            log(LOG_DEBUG, "sropen64: open64(%s,0%o,0%o) returned %x (hex)\n",
                CORRECT_FILENAME(filename), flags, mode, fd);
          }
          if (fd < 0) {
            char alarmbuf[1024];
-           sprintf(alarmbuf,"sropen64: %s", CORRECT_FILENAME(filename)) ;
-           status= -1 ;
-           rcode= errno ;
-           log(LOG_DEBUG, "sropen64: open64: %s\n", strerror(errno)) ;
-           rfio_alrm(rcode,alarmbuf) ;
+           sprintf(alarmbuf,"sropen64: %s", CORRECT_FILENAME(filename));
+           status= -1;
+           rcode= errno;
+           log(LOG_DEBUG, "sropen64: open64: %s\n", strerror(errno));
+           rfio_alrm(rcode,alarmbuf);
          }
          else {
            /*
@@ -892,11 +890,11 @@ char tmpbuf[21], tmpbuf2[21];
             */
            offsetin = 0;
            errno    = 0;
-           offsetout= lseek64(fd, offsetin, SEEK_CUR) ;
+           offsetout= lseek64(fd, offsetin, SEEK_CUR);
            log(LOG_DEBUG, "sropen64: lseek64(%d,%s,SEEK_CUR) returned %s\n",
-              fd, u64tostr(offsetin,tmpbuf,0), u64tostr(offsetout,tmpbuf2,0)) ; 
+              fd, u64tostr(offsetin,tmpbuf,0), u64tostr(offsetout,tmpbuf2,0)); 
            if ( offsetout < 0 ) {
-              rcode = errno ;
+              rcode = errno;
               status = -1;
            }
            else status = 0;
@@ -909,12 +907,12 @@ char tmpbuf[21], tmpbuf2[21];
    /*
     * Sending back status.
     */
-   p= rqstbuf ;
-   marshall_WORD(p,RQST_OPEN64) ; 
+   p= rqstbuf;
+   marshall_WORD(p,RQST_OPEN64); 
    marshall_LONG(p,status);
-   marshall_LONG(p,rcode) ;
-   marshall_LONG(p,0) ;
-   marshall_HYPER(p,offsetout) ;
+   marshall_LONG(p,rcode);
+   marshall_LONG(p,0);
+   marshall_HYPER(p,offsetout);
 #if defined(SACCT)
    rfioacct(RQST_OPEN64,uid,gid,s,(int)ntohopnflg(flags),(int)mode,status,rcode,NULL,CORRECT_FILENAME(filename),NULL);
 #endif /* SACCT */
@@ -924,11 +922,11 @@ char tmpbuf[21], tmpbuf2[21];
 #if defined(_WIN32)
       log(LOG_ERR, "sropen64: write(): %s\n", geterr());
 #else      
-      log(LOG_ERR, "sropen64: write(): %s\n", strerror(errno)) ;
+      log(LOG_ERR, "sropen64: write(): %s\n", strerror(errno));
 #endif      
-      return -1 ;
+      return -1;
    }
-   return fd ;
+   return fd;
 }
 
 // useful function to answer the client
@@ -936,11 +934,11 @@ int rfio_call64_answer_client_internal
 (char* rqstbuf, int code, int status, int s) {
   char* p;
   p = rqstbuf;
-  marshall_WORD(p,RQST_WRITE64) ;
-  marshall_LONG(p,status) ; 
-  marshall_LONG(p,code) ;
-  marshall_LONG(p,0) ;
-  log(LOG_DEBUG, "srwrite64: status %d, rcode %d\n", status, code) ;
+  marshall_WORD(p,RQST_WRITE64);
+  marshall_LONG(p,status); 
+  marshall_LONG(p,code);
+  marshall_LONG(p,0);
+  log(LOG_DEBUG, "srwrite64: status %d, rcode %d\n", status, code);
   if ( netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != WORDSIZE+3*LONGSIZE ) {
 #if defined(_WIN32) 
     log(LOG_ERR, "srwrite64: netwrite(): %s\n", geterr());
@@ -959,7 +957,7 @@ SOCKET s;
 int     s;
 #endif
 int     fd;
-struct rfiostat * infop ;
+struct rfiostat * infop;
 {
    int       status;                      /* Return code               */
    int       rcode;                       /* To send back errno        */
@@ -980,31 +978,31 @@ struct rfiostat * infop ;
      first_write = 0;
      status = rfio_handle_firstwrite(handler_context);
      if (status != 0) {
-       log(LOG_ERR, "srwrite64: rfio_handle_firstwrite(): %s\n", strerror(serrno)) ;
+       log(LOG_ERR, "srwrite64: rfio_handle_firstwrite(): %s\n", strerror(serrno));
        rfio_call64_answer_client_internal(rqstbuf, serrno, status, s);
        return -1;
      }
    }
    
-   p= rqstbuf + 2*WORDSIZE ; 
+   p= rqstbuf + 2*WORDSIZE; 
    unmarshall_LONG(p, size);
-   unmarshall_LONG(p, how) ;
+   unmarshall_LONG(p, how);
 
    /*
     * Receiving request: we have 4 bytes more to be read
     */
-   p= rqstbuf + RQSTSIZE ;
+   p= rqstbuf + RQSTSIZE;
    reqlen = HYPERSIZE; 
-   log(LOG_DEBUG, "srwrite64(%d, %d)): reading %d bytes\n", s, fd, reqlen) ;
+   log(LOG_DEBUG, "srwrite64(%d, %d)): reading %d bytes\n", s, fd, reqlen);
    if ((status = netread_timeout(s, p, reqlen, RFIO_CTRL_TIMEOUT)) != reqlen) {
 #if defined(_WIN32)
       log(LOG_ERR, "srwrite64: read(): %s\n", geterr());
 #else      
-      log(LOG_ERR, "srwrite64: read(): %s\n", strerror(errno)) ;
+      log(LOG_ERR, "srwrite64: read(): %s\n", strerror(errno));
 #endif      
-      return -1 ;
+      return -1;
    }
-   unmarshall_HYPER(p,offset) ; 
+   unmarshall_HYPER(p,offset); 
    log(LOG_DEBUG, "srwrite64(%d, %d): size %d, how %d offset %s\n", s, fd, size,
       how, u64tostr(offset,tmpbuf,0));
    
@@ -1012,19 +1010,19 @@ struct rfiostat * infop ;
     * Checking if buffer is large enough. 
     */
    if (iobufsiz < size)     {
-      int     optval ;       /* setsockopt opt value */
+      int     optval;       /* setsockopt opt value */
 
       if (iobufsiz > 0)       {
          log(LOG_DEBUG, "srwrite64: freeing %x\n", iobuffer);
-         (void) free(iobuffer) ;
+         (void) free(iobuffer);
       }
       if ((iobuffer = malloc(size)) == NULL)    {
          rfio_call64_answer_client_internal(rqstbuf, errno, -1, s);
-         return -1 ;
+         return -1;
       }
-      iobufsiz = size ;
+      iobufsiz = size;
       optval = (iobufsiz > 64 * 1024) ? iobufsiz : (64 * 1024);
-      log(LOG_DEBUG, "srwrite64: allocated %d bytes at %x\n", size, iobuffer) ;
+      log(LOG_DEBUG, "srwrite64: allocated %d bytes at %x\n", size, iobuffer);
 #if defined(_WIN32)
       if( setsockopt(s, SOL_SOCKET, SO_RCVBUF, (char*)&optval, sizeof(optval)) == SOCKET_ERROR ) 
          log(LOG_ERR, "srwrite64: setsockopt(SO_RCVBUF): %s\n", geterr());
@@ -1033,7 +1031,7 @@ struct rfiostat * infop ;
          log(LOG_ERR, "srwrite64: setsockopt(SO_RCVBUF): %s\n", strerror(errno));
 #endif      
       else
-         log(LOG_DEBUG, "srwrite64: setsockopt(SO_RCVBUF): %d\n", optval) ;
+         log(LOG_DEBUG, "srwrite64: setsockopt(SO_RCVBUF): %d\n", optval);
    }
    /*
     * Reading data on the network.
@@ -1043,43 +1041,43 @@ struct rfiostat * infop ;
 #if defined(_WIN32)
       log(LOG_ERR, "srwrite64: read(): %s\n", geterr());
 #else      
-      log(LOG_ERR, "srwrite64: read(): %s\n", strerror(errno)) ;
+      log(LOG_ERR, "srwrite64: read(): %s\n", strerror(errno));
 #endif      
-      return -1 ;
+      return -1;
    }
    /*
     * lseek() if needed.
     */
    if ( how != -1 ) {
       log(LOG_DEBUG, "srwrite64(%d,%d): lseek64(%d,%s,%d)\n", s, fd, fd,
-         u64tostr(offset,tmpbuf,0), how) ; 
+         u64tostr(offset,tmpbuf,0), how); 
       infop->seekop++;
       if ( (offsetout = lseek64(fd,offset,how)) == -1 ) { 
          rfio_call64_answer_client_internal(rqstbuf, errno, -1, s);
-         return -1 ;
+         return -1;
       }
    }
    /*
     * Writing data on disk.
     */
-   infop->wnbr+= size ;
+   infop->wnbr+= size;
    log(LOG_DEBUG, "srwrite64: writing %d bytes on %d\n", size, fd);
 #if defined(HPSS)
    status = rhpss_write(fd,p,size,s,0,0);
 #else /* HPSS */
-   status = write(fd,p,size) ;
+   status = write(fd,p,size);
 #endif /* HPSS */
-   rcode= ( status < 0 ) ? errno : 0 ;
+   rcode= ( status < 0 ) ? errno : 0;
        
    if ( status < 0 ) {
       char alarmbuf[1024];
-      sprintf(alarmbuf,"srwrite64(): %s",filename) ;
-      rfio_alrm(rcode,alarmbuf) ;
+      sprintf(alarmbuf,"srwrite64(): %s",filename);
+      rfio_alrm(rcode,alarmbuf);
    }
    if (rfio_call64_answer_client_internal(rqstbuf, rcode, status, s) < 0) {
      return -1;
    }
-   return status ; 
+   return status; 
 }
 
 int srread64(s, infop, fd)
@@ -1089,16 +1087,16 @@ SOCKET        s;
 int     s;
 #endif
 int     fd;
-struct rfiostat * infop ;
+struct rfiostat * infop;
 {
-   int      status ;          /* Return code               */
-   int      rcode ;           /* To send back errno        */
-   int      how ;             /* lseek mode                */
-   off64_t  offset ;          /* lseek offset              */
-   off64_t  offsetout ;       /* lseek offset              */
-   int      size ;            /* Requested read size       */
-   char     *p ;              /* Pointer to buffer         */
-   int      msgsiz ;          /* Message size              */
+   int      status;          /* Return code               */
+   int      rcode;           /* To send back errno        */
+   int      how;             /* lseek mode                */
+   off64_t  offset;          /* lseek offset              */
+   off64_t  offsetout;       /* lseek offset              */
+   int      size;            /* Requested read size       */
+   char     *p;              /* Pointer to buffer         */
+   int      msgsiz;          /* Message size              */
    int      reqlen;           /* residual request length   */
    int      replen=WORDSIZE+3*LONGSIZE;   /* Reply header length       */
    char     tmpbuf[21];
@@ -1108,50 +1106,50 @@ struct rfiostat * infop ;
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
-   p= rqstbuf + 2*WORDSIZE ; 
-   unmarshall_LONG(p, size) ;
-   unmarshall_LONG(p,how) ;
+   p= rqstbuf + 2*WORDSIZE; 
+   unmarshall_LONG(p, size);
+   unmarshall_LONG(p,how);
 
    /*
     * Receiving request: we have 8 bytes more to read
     */
-   p= rqstbuf + RQSTSIZE ;
+   p= rqstbuf + RQSTSIZE;
    reqlen = HYPERSIZE;
-   log(LOG_DEBUG, "srread64(%d, %d): reading %d bytes\n", s, fd, reqlen) ;
+   log(LOG_DEBUG, "srread64(%d, %d): reading %d bytes\n", s, fd, reqlen);
    if ((status = netread_timeout(s, p , reqlen, RFIO_CTRL_TIMEOUT)) != reqlen) {
 #if defined(_WIN32)
       log(LOG_ERR, "srread64: read(): %s\n", geterr());
 #else      
-      log(LOG_ERR, "srread64: read(): %s\n", strerror(errno)) ;
+      log(LOG_ERR, "srread64: read(): %s\n", strerror(errno));
 #endif      
-      return -1 ;
+      return -1;
    }
-   unmarshall_HYPER(p,offset) ;
+   unmarshall_HYPER(p,offset);
     
    /*
     * lseek() if needed.
     */
    if ( how != -1 ) {
       log(LOG_DEBUG, "srread64(%d,%d): lseek64(%d,%s,%d)\n", s, fd, fd,
-         u64tostr(offset,tmpbuf,0), how) ; 
+         u64tostr(offset,tmpbuf,0), how); 
       infop->seekop++;
       if ( (offsetout= lseek64(fd,offset,how)) == -1 ) { 
-         rcode= errno ;
+         rcode= errno;
          status = -1;
-         p= rqstbuf ; 
-         marshall_WORD(p,RQST_READ64) ;                     
-         marshall_LONG(p,status) ; 
-         marshall_LONG(p,rcode) ; 
-         marshall_LONG(p,0) ;
+         p= rqstbuf; 
+         marshall_WORD(p,RQST_READ64);                     
+         marshall_LONG(p,status); 
+         marshall_LONG(p,rcode); 
+         marshall_LONG(p,0);
          if ( netwrite_timeout(s,rqstbuf,replen,RFIO_CTRL_TIMEOUT) != replen ) {
 #if defined(_WIN32)
             log(LOG_ERR, "srread64: write(): %s\n", geterr());
 #else
             log(LOG_ERR, "srread64: write(): %s\n", strerror(errno));
 #endif           
-            return -1 ;
+            return -1;
          }
-         return -1 ;
+         return -1;
       }
    }
    /*
@@ -1159,32 +1157,32 @@ struct rfiostat * infop ;
     */
    log(LOG_DEBUG, "srread64(%d, %d): checking buffer size %d\n", s, fd, size);
    if (iobufsiz < (size+replen))     {
-      int     optval ;       /* setsockopt opt value       */
+      int     optval;       /* setsockopt opt value       */
 
       if (iobufsiz > 0)       {
          log(LOG_DEBUG, "srread64: freeing %x\n", iobuffer);
          (void) free(iobuffer);
       }
       if ((iobuffer = malloc(size+replen)) == NULL)    {
-         status= -1 ; 
-         rcode= errno ;
-         log(LOG_ERR, "srread64: malloc(): %s\n", strerror(errno)) ;
-         p= rqstbuf ; 
-         marshall_WORD(p,RQST_READ64) ;
-         marshall_LONG(p,status) ; 
-         marshall_LONG(p,rcode) ; 
-         marshall_LONG(p,0) ;
+         status= -1; 
+         rcode= errno;
+         log(LOG_ERR, "srread64: malloc(): %s\n", strerror(errno));
+         p= rqstbuf; 
+         marshall_WORD(p,RQST_READ64);
+         marshall_LONG(p,status); 
+         marshall_LONG(p,rcode); 
+         marshall_LONG(p,0);
          if ( netwrite_timeout(s,rqstbuf,replen,RFIO_CTRL_TIMEOUT) != replen ) {
 #if defined(_WIN32)
             log(LOG_ERR, "srread64: netwrite(): %s\n", geterr());
 #else           
-            log(LOG_ERR, "srread64: write(): %s\n", strerror(errno)) ;
+            log(LOG_ERR, "srread64: write(): %s\n", strerror(errno));
 #endif           
-            return -1 ;
+            return -1;
          }
-         return -1 ; 
+         return -1; 
       }
-      iobufsiz = size + replen ;
+      iobufsiz = size + replen;
       log(LOG_DEBUG, "srread64: allocated %d bytes at %x\n", size, iobuffer);
       optval = (iobufsiz > 64 * 1024) ? iobufsiz : (64 * 1024);
 #if defined(_WIN32)
@@ -1201,34 +1199,34 @@ struct rfiostat * infop ;
 #if defined(HPSS)
    status = rhpss_read(fd,p,size,s,0,0);
 #else /* HPSS */
-   status = read(fd, p, size) ;
+   status = read(fd, p, size);
 #endif /* HPSS */
    if ( status < 0 ) {
       char alarmbuf[1024];
-      sprintf(alarmbuf,"srread64(): %s",filename) ;
-      rcode= errno ;
-      msgsiz= replen ;
-      rfio_alrm(rcode,alarmbuf) ;
+      sprintf(alarmbuf,"srread64(): %s",filename);
+      rcode= errno;
+      msgsiz= replen;
+      rfio_alrm(rcode,alarmbuf);
    }  else  {
-      rcode= 0 ; 
-      infop->rnbr+= status ;
-      msgsiz= status+replen ;
+      rcode= 0; 
+      infop->rnbr+= status;
+      msgsiz= status+replen;
    }
-   p= iobuffer ;
-   marshall_WORD(p,RQST_READ64) ; 
-   marshall_LONG(p,status) ;
-   marshall_LONG(p,rcode) ;
-   marshall_LONG(p,status) ;
-   log(LOG_DEBUG, "srread64: returning status %d, rcode %d\n", status, rcode) ;
+   p= iobuffer;
+   marshall_WORD(p,RQST_READ64); 
+   marshall_LONG(p,status);
+   marshall_LONG(p,rcode);
+   marshall_LONG(p,status);
+   log(LOG_DEBUG, "srread64: returning status %d, rcode %d\n", status, rcode);
    if (netwrite_timeout(s,iobuffer,msgsiz,RFIO_CTRL_TIMEOUT) != msgsiz)  {
 #if defined(_WIN32)
       log(LOG_ERR, "srread64: write(): %s\n", geterr());
 #else      
       log(LOG_ERR, "srread64: write(): %s\n", strerror(errno));
 #endif      
-      return -1 ;
+      return -1;
    }
-   return status ;
+   return status;
 }
 
 int srreadahd64(s, infop, fd)
@@ -1238,7 +1236,7 @@ SOCKET	s;
 int     s;
 #endif
 int     fd;
-struct rfiostat *infop ;
+struct rfiostat *infop;
 {
    int      status;	/* Return code		*/ 
    int	    rcode;	/* To send back errno	*/
@@ -1260,49 +1258,49 @@ struct rfiostat *infop ;
     * Receiving request.
     */
    log(LOG_DEBUG, "rreadahd64(%d, %d)\n",s, fd);
-   p= rqstbuf + 2*WORDSIZE ; 
+   p= rqstbuf + 2*WORDSIZE; 
    unmarshall_LONG(p,size);
-   unmarshall_LONG(p,how) ;
+   unmarshall_LONG(p,how);
 
    /*
     * Receiving request: we have 8 bytes more to read
     */
-   p= rqstbuf + RQSTSIZE ;
+   p= rqstbuf + RQSTSIZE;
    reqlen = HYPERSIZE;
-   log(LOG_DEBUG, "rreadahd64(%d, %d): reading %d bytes\n", s, fd, reqlen) ;
+   log(LOG_DEBUG, "rreadahd64(%d, %d): reading %d bytes\n", s, fd, reqlen);
    if ((status = netread_timeout(s, p , reqlen, RFIO_CTRL_TIMEOUT)) != reqlen) {
 #if defined(_WIN32)
       log(LOG_ERR, "rreadahd64: read(): %s\n", geterr());
 #else
-      log(LOG_ERR, "rreadahd64: read(): %s\n", strerror(errno)) ;
+      log(LOG_ERR, "rreadahd64: read(): %s\n", strerror(errno));
 #endif
-      return -1 ;
+      return -1;
    }
-   unmarshall_HYPER(p,offset) ;
+   unmarshall_HYPER(p,offset);
 
    /*
     * lseek() if needed.
     */
    if ( how != -1 ) {
       log(LOG_DEBUG,"rread64(%d,%d): lseek64(%d,%s,%d)\n", s, fd, fd,
-         u64tostr(offset,tmpbuf,0), how) ;
+         u64tostr(offset,tmpbuf,0), how);
       infop->seekop++;
       if ( (offsetout= lseek64(fd,offset,how)) == -1 ) { 
-	 rcode= errno ;
-	 status= -1 ;
-	 p= iobuffer ; 
-	 marshall_WORD(p,RQST_FIRSTREAD) ;			
-	 marshall_LONG(p,status) ; 
-	 marshall_LONG(p,rcode) ; 
+	 rcode= errno;
+	 status= -1;
+	 p= iobuffer; 
+	 marshall_WORD(p,RQST_FIRSTREAD);			
+	 marshall_LONG(p,status); 
+	 marshall_LONG(p,rcode); 
 	 if ( netwrite_timeout(s,iobuffer,iobufsiz,RFIO_CTRL_TIMEOUT) != iobufsiz ) {
 #if defined(_WIN32)
 	    log(LOG_ERR, "rreadahd64(): netwrite_timeout(): %s\n",geterr());
 #else	    
 	    log(LOG_ERR, "rreadahd64(): netwrite_timeout(): %s\n", strerror(errno));
 #endif	    
-	    return -1 ;
+	    return -1;
 	 }
-	 return status ;
+	 return status;
       }
    }
    /*
@@ -1310,24 +1308,24 @@ struct rfiostat *infop ;
     */
    log(LOG_DEBUG, "rreadahd64(%d, %d): checking buffer size %d\n", s, fd, size);
    if (iobufsiz < (size+WORDSIZE+3*LONGSIZE))     {
-      int     optval ;	/* setsockopt opt value */
+      int     optval;	/* setsockopt opt value */
 
       if (iobufsiz > 0)       {
 	 log(LOG_DEBUG, "rreadahd64(): freeing %x\n",iobuffer);
 	 (void) free(iobuffer); 				   
       }
       if ((iobuffer = malloc(size+WORDSIZE+3*LONGSIZE)) == NULL)    {
-	 log(LOG_ERR, "rreadahd64: malloc(): %s\n", strerror(errno)) ;
+	 log(LOG_ERR, "rreadahd64: malloc(): %s\n", strerror(errno));
 #if !defined(HPSS)
 #if !defined(_WIN32)
-	 (void) close(s) ;
+	 (void) close(s);
 #else
-	 closesocket(s) ;
+	 closesocket(s);
 #endif /* _WIN32 */
 #endif /* HPSS */
-	 return -1 ; 
+	 return -1; 
       }
-      iobufsiz = size+WORDSIZE+3*LONGSIZE ;
+      iobufsiz = size+WORDSIZE+3*LONGSIZE;
       optval = (iobufsiz > 64 * 1024) ? iobufsiz : (64 * 1024);
       log(LOG_DEBUG, "rreadahd64(): allocated %d bytes at %x\n",iobufsiz,iobuffer);
 #if defined(_WIN32)
@@ -1335,25 +1333,25 @@ struct rfiostat *infop ;
 	 log(LOG_ERR, "rreadahd64(): setsockopt(SO_SNDBUF): %s\n", geterr());
 #else      
       if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char *)&optval, sizeof(optval)) == -1)
-	 log(LOG_ERR, "rreadahd64(): setsockopt(SO_SNDBUF): %s\n",strerror(errno)) ;
+	 log(LOG_ERR, "rreadahd64(): setsockopt(SO_SNDBUF): %s\n",strerror(errno));
 #endif      
       else
-	 log(LOG_DEBUG, "rreadahd64(): setsockopt(SO_SNDBUF): %d\n",optval) ;
+	 log(LOG_DEBUG, "rreadahd64(): setsockopt(SO_SNDBUF): %d\n",optval);
    }
    /*
     * Reading data and sending it. 
     */
    for(first= 1;;first= 0) {
-      fd_set fds ;
-      struct timeval timeout ;
+      fd_set fds;
+      struct timeval timeout;
 
       /*
        * Has a new request arrived ?
        */
-      FD_ZERO(&fds) ; 
-      FD_SET(s,&fds) ;
-      timeout.tv_sec = 0 ; 
-      timeout.tv_usec= 0 ;
+      FD_ZERO(&fds); 
+      FD_SET(s,&fds);
+      timeout.tv_sec = 0; 
+      timeout.tv_usec= 0;
 #if defined(_WIN32)
       if( select(FD_SETSIZE, &fds, (fd_set*)0, (fd_set*)0, &timeout) == SOCKET_ERROR )  {
 	 log(LOG_ERR,"rreadahd64(): select(): %s\n", geterr());
@@ -1361,55 +1359,55 @@ struct rfiostat *infop ;
       }
 #else      
       if ( select(FD_SETSIZE,&fds,(fd_set *)0,(fd_set *)0,&timeout) == -1 ) {
-	 log(LOG_ERR,"rreadahd64(): select(): %s\n",strerror(errno)) ;
-	 return -1 ; 
+	 log(LOG_ERR,"rreadahd64(): select(): %s\n",strerror(errno));
+	 return -1; 
       }
 #endif      
       if ( FD_ISSET(s,&fds) ) {
-	 log(LOG_DEBUG,"rreadahd64(): returns because of new request\n") ;
-	 return 0 ; 
+	 log(LOG_DEBUG,"rreadahd64(): returns because of new request\n");
+	 return 0; 
       }
       /*
        * Reading disk ...
        */
-      p= iobuffer + WORDSIZE + 3*LONGSIZE ;
+      p= iobuffer + WORDSIZE + 3*LONGSIZE;
 #if defined(HPSS)
       status = rhpss_read(fd,p,size,s,0,0);
 #else /* HPSS */
       status = read(fd,p,size);
 #endif /* HPSS */
       if (status < 0)        {
-	 rcode= errno ;
-	 iobufsiz= WORDSIZE+3*LONGSIZE ;
+	 rcode= errno;
+	 iobufsiz= WORDSIZE+3*LONGSIZE;
       }
       else	{
-	 rcode= 0 ; 
-	 infop->rnbr+= status ;
-	 iobufsiz = status+WORDSIZE+3*LONGSIZE ;
+	 rcode= 0; 
+	 infop->rnbr+= status;
+	 iobufsiz = status+WORDSIZE+3*LONGSIZE;
       }
       log(LOG_DEBUG, "rreadahd64: status %d, rcode %d\n", status, rcode);
       /*
        * Sending data.
        */
-      p= iobuffer ;
-      marshall_WORD(p,(first)?RQST_FIRSTREAD:RQST_READAHD64) ; 
-      marshall_LONG(p,status) ;
-      marshall_LONG(p, rcode) ;
-      marshall_LONG(p, status) ;
+      p= iobuffer;
+      marshall_WORD(p,(first)?RQST_FIRSTREAD:RQST_READAHD64); 
+      marshall_LONG(p,status);
+      marshall_LONG(p, rcode);
+      marshall_LONG(p, status);
       if ( netwrite_timeout(s, iobuffer, iobufsiz, RFIO_CTRL_TIMEOUT) != iobufsiz ) {
 #if defined(_WIN32)
 	 log(LOG_ERR, "rreadahd64(): netwrite_timeout(): %s\n", geterr());
 #else	     
-	 log(LOG_ERR, "rreadahd64(): netwrite_timeout(): %s\n", strerror(errno)) ;
+	 log(LOG_ERR, "rreadahd64(): netwrite_timeout(): %s\n", strerror(errno));
 #endif	     
-	 return -1 ;
+	 return -1;
       }
       /*
        * The end of file has been reached
        * or an error was encountered.
        */
       if ( status != size ) {
-	 return 0 ; 
+	 return 0; 
       }
    }
 }
@@ -1435,29 +1433,29 @@ struct rfiostat *infop;
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
-   log(LOG_DEBUG, "rfstat64(%d, %d)\n", s, fd) ;
+   log(LOG_DEBUG, "rfstat64(%d, %d)\n", s, fd);
    infop->statop++;
    
    /*
     * Issuing the fstat()
     */
-   status= fstat64(fd, &statbuf) ;
+   status= fstat64(fd, &statbuf);
    if ( status < 0) {
-      rcode= errno ;
+      rcode= errno;
       log(LOG_ERR,"rfstat64(%d,%d): fstat64 gave rc %d, errno=%d\n", s, fd, status, errno);
    }
    else errno = 0;
    
 #if !defined(_WIN32)
-   msgsiz= 5*WORDSIZE + 4*LONGSIZE + 3*HYPERSIZE ;
+   msgsiz= 5*WORDSIZE + 4*LONGSIZE + 3*HYPERSIZE;
 #else
-   msgsiz= 5*WORDSIZE + 3*LONGSIZE + 2*HYPERSIZE ;
+   msgsiz= 5*WORDSIZE + 3*LONGSIZE + 2*HYPERSIZE;
 #endif
    p = rqstbuf;
-   marshall_WORD(p, RQST_FSTAT64) ; 
-   marshall_LONG(p, status) ;
-   marshall_LONG(p,  rcode) ;
-   marshall_LONG(p, msgsiz) ;
+   marshall_WORD(p, RQST_FSTAT64); 
+   marshall_LONG(p, status);
+   marshall_LONG(p,  rcode);
+   marshall_LONG(p, msgsiz);
    marshall_WORD(p, statbuf.st_dev);
    marshall_HYPER(p, statbuf.st_ino);
    marshall_WORD(p, statbuf.st_mode);
@@ -1473,16 +1471,16 @@ struct rfiostat *infop;
    marshall_HYPER(p, statbuf.st_blocks);
 #endif
 
-   log(LOG_DEBUG, "rfstat64(%d,%d): sending back %d bytes, status=%d\n", s, fd, msgsiz, status) ;
+   log(LOG_DEBUG, "rfstat64(%d,%d): sending back %d bytes, status=%d\n", s, fd, msgsiz, status);
    if (netwrite_timeout(s,rqstbuf,headlen+msgsiz,RFIO_CTRL_TIMEOUT) != (headlen+msgsiz) )  {
 #if defined(WIN32)
       log(LOG_ERR,"rfstat64(%d,%d): netwrite(): %s\n", s, fd, geterr());
 #else
       log(LOG_ERR,"rfstat64(%d,%d): netwrite(): %s\n", s, fd, strerror(errno));
 #endif
-      return -1 ;
+      return -1;
    }
-   return 0 ; 
+   return 0; 
 }
 
 int srlseek64(s, request, infop, fd)
@@ -1509,30 +1507,30 @@ struct rfiostat *infop;
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
-   p= rqstbuf + 2*WORDSIZE ; 
-   unmarshall_HYPER(p,offset) ;
-   unmarshall_LONG(p,how) ;
+   p= rqstbuf + 2*WORDSIZE; 
+   unmarshall_HYPER(p,offset);
+   unmarshall_LONG(p,how);
    log(LOG_DEBUG, "srlseek64(%d, %d): offset64 %s, how: %x\n", s, fd,
-      u64tostr(offset,tmpbuf,0), how) ;
-   offsetout = lseek64(fd, offset, how) ;
+      u64tostr(offset,tmpbuf,0), how);
+   offsetout = lseek64(fd, offset, how);
    if (offsetout == (off64_t)-1 ) status = -1;
    else status = 0;
-   rcode= ( status < 0 ) ? errno : 0 ; 
-   log(LOG_DEBUG, "srlseek64: status %s, rcode %d\n", u64tostr(offsetout,tmpbuf,0), rcode) ;
-   p= rqstbuf ;
-   marshall_WORD(p,request) ;
-   marshall_HYPER(p, offsetout) ;
-   marshall_LONG(p,rcode) ;
+   rcode= ( status < 0 ) ? errno : 0; 
+   log(LOG_DEBUG, "srlseek64: status %s, rcode %d\n", u64tostr(offsetout,tmpbuf,0), rcode);
+   p= rqstbuf;
+   marshall_WORD(p,request);
+   marshall_HYPER(p, offsetout);
+   marshall_LONG(p,rcode);
    rlen =  WORDSIZE+LONGSIZE+HYPERSIZE;
    if (netwrite_timeout(s,rqstbuf,rlen,RFIO_CTRL_TIMEOUT) != rlen)  {
 #if defined(_WIN32)
-      log(LOG_ERR, "srlseek64: netwrite(): %s\n", geterr()) ;
+      log(LOG_ERR, "srlseek64: netwrite(): %s\n", geterr());
 #else
-      log(LOG_ERR, "srlseek64: write(): %s\n",strerror(errno)) ;
+      log(LOG_ERR, "srlseek64: write(): %s\n",strerror(errno));
 #endif      
-      return -1 ;
+      return -1;
    }
-   return status ;
+   return status;
 }
 
 int srpreseek64(s, infop, fd)
@@ -1562,10 +1560,10 @@ struct rfiostat *infop;
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
-   p= rqstbuf + 2*WORDSIZE ; 
-   unmarshall_LONG(p,size) ;
-   unmarshall_LONG(p,nblock) ; 
-   log(LOG_DEBUG,"rpreseek64(%d, %d)\n",s,fd) ;
+   p= rqstbuf + 2*WORDSIZE; 
+   unmarshall_LONG(p,size);
+   unmarshall_LONG(p,nblock); 
+   log(LOG_DEBUG,"rpreseek64(%d, %d)\n",s,fd);
 
    /*
     * A temporary buffer may need to be created 
@@ -1573,99 +1571,99 @@ struct rfiostat *infop;
     */
    if ( nblock*(HYPERSIZE+LONGSIZE) > BUFSIZ ) {
       if ( (trp= (char *) malloc(nblock*(HYPERSIZE+LONGSIZE))) == NULL ) {
-	 return -1 ;
+	 return -1;
       }
    }
-   p= ( trp ) ? trp : rqstbuf ;
+   p= ( trp ) ? trp : rqstbuf;
    /*
     * Receiving the request.
     */
-   log(LOG_DEBUG,"rpreseek64: reading %d bytes\n",nblock*(HYPERSIZE+LONGSIZE)) ; 
+   log(LOG_DEBUG,"rpreseek64: reading %d bytes\n",nblock*(HYPERSIZE+LONGSIZE)); 
    if ( netread_timeout(s,p,nblock*(HYPERSIZE+LONGSIZE),RFIO_CTRL_TIMEOUT) != (nblock*(HYPERSIZE+LONGSIZE)) ) {
 #if defined(_WIN32)
       log(LOG_ERR,"rpreseek64: netread(): %s\n", geterr());
 #else      
-      log(LOG_ERR,"rpreseek64: read(): %s\n",strerror(errno)) ;
+      log(LOG_ERR,"rpreseek64: read(): %s\n",strerror(errno));
 #endif      
-      if ( trp ) (void) free(trp) ;
-      return -1 ;
+      if ( trp ) (void) free(trp);
+      return -1;
    }	
    /*
     * Allocating space for the list of requests.
     */
    if ( (v= ( struct iovec64 *) malloc(nblock*sizeof(struct iovec64))) == NULL ) {
-      log(LOG_ERR, "rpreseek64: malloc(): %s\n",strerror(errno)) ;
-      if ( trp ) (void) free(trp) ;
+      log(LOG_ERR, "rpreseek64: malloc(): %s\n",strerror(errno));
+      if ( trp ) (void) free(trp);
 #if !defined(HPSS)
-      (void) close(s) ;
+      (void) close(s);
 #endif /* HPSS */
-      return -1 ; 
+      return -1; 
    }
    /*
     * Filling list request.
     */
    for(reqno= 0;reqno<nblock;reqno++) {
-      unmarshall_HYPER(p,v[reqno].iov_base) ; 
-      unmarshall_LONG(p,v[reqno].iov_len) ; 
+      unmarshall_HYPER(p,v[reqno].iov_base); 
+      unmarshall_LONG(p,v[reqno].iov_len); 
    }
    /*
     * Freeing temporary buffer if needed.
     */ 
-   if ( trp ) (void) free(trp) ;
+   if ( trp ) (void) free(trp);
    /*
     * Allocating new data buffer if the 
     * current one is not large enough.
     */
-   log(LOG_DEBUG,"rpreseek64(%d, %d): checking buffer size %d\n",s,fd,size) ;
+   log(LOG_DEBUG,"rpreseek64(%d, %d): checking buffer size %d\n",s,fd,size);
    if (iobufsiz < (size+WORDSIZE+3*LONGSIZE))     {
-      int     optval ;	/* setsockopt opt value */
+      int     optval;	/* setsockopt opt value */
 
       if (iobufsiz > 0)       {
 	 log(LOG_DEBUG, "rpreseek64(): freeing %x\n",iobuffer);
 	 (void) free(iobuffer);
       }
       if ((iobuffer = malloc(size+WORDSIZE+3*LONGSIZE)) == NULL)    {
-	 log(LOG_ERR, "rpreseek64: malloc(): %s\n", strerror(errno)) ;
+	 log(LOG_ERR, "rpreseek64: malloc(): %s\n", strerror(errno));
 #if defined(HPSS)
 	 if ( v ) free(v);
 #endif /* HPSS */
 #if !defined(HPSS)
-	 (void) close(s) ;
+	 (void) close(s);
 #endif /* HPSS */
-	 return -1 ; 
+	 return -1; 
       }
-      iobufsiz = size+WORDSIZE+3*LONGSIZE ;
+      iobufsiz = size+WORDSIZE+3*LONGSIZE;
       optval = (iobufsiz > 64 * 1024) ? iobufsiz : (64 * 1024);
-      log(LOG_DEBUG, "rpreseek64(): allocated %d bytes at %x\n",iobufsiz,iobuffer) ;
+      log(LOG_DEBUG, "rpreseek64(): allocated %d bytes at %x\n",iobufsiz,iobuffer);
 #if defined(_WIN32)
       if( setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char*)&optval, sizeof(optval)) == SOCKET_ERROR )
 	 log(LOG_ERR, "rpreseek64(): setsockopt(SO_SNDBUF): %s\n", geterr());
 #else      
       if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char *)&optval, sizeof(optval)) == -1)
-	 log(LOG_ERR, "rpreseek64(): setsockopt(SO_SNDBUF): %s\n",strerror(errno)) ;
+	 log(LOG_ERR, "rpreseek64(): setsockopt(SO_SNDBUF): %s\n",strerror(errno));
 #endif
       else
-	 log(LOG_DEBUG, "rpreseek64(): setsockopt(SO_SNDBUF): %d\n",optval) ;
+	 log(LOG_DEBUG, "rpreseek64(): setsockopt(SO_SNDBUF): %d\n",optval);
    }
    /*
     * Reading data and sending it. 
     */
-   reqno= 0 ; 
+   reqno= 0; 
    for(first= 1;;first= 0) {
-      struct timeval timeout ;
-      fd_set fds ;
-      int nbfree ;
-      int     nb ;
-      off64_t offsetout ;
+      struct timeval timeout;
+      fd_set fds;
+      int nbfree;
+      int     nb;
+      off64_t offsetout;
 
       /*
        * Has a new request arrived ?
        * The preseek is then interrupted.
        */
-      FD_ZERO(&fds) ; 
-      FD_SET(s,&fds) ;
-      timeout.tv_sec = 0 ; 
-      timeout.tv_usec= 0 ;
+      FD_ZERO(&fds); 
+      FD_SET(s,&fds);
+      timeout.tv_sec = 0; 
+      timeout.tv_usec= 0;
 #if defined(_WIN32)
       if( select(FD_SETSIZE, &fds, (fd_set*)0, (fd_set*)0, &timeout) == SOCKET_ERROR ) {
 	 log(LOG_ERR,"rpreseek64(): select(): %s\n", geterr());
@@ -1673,49 +1671,49 @@ struct rfiostat *infop;
       }
 #else      
       if ( select(FD_SETSIZE,&fds,(fd_set *)0,(fd_set *)0,&timeout) == -1 ) {
-	 log(LOG_ERR,"rpreseek64(): select(): %s\n",strerror(errno)) ;
+	 log(LOG_ERR,"rpreseek64(): select(): %s\n",strerror(errno));
 #if defined(HPSS)
 	 if ( v ) free(v);
 #endif /* HPSS */
-	 return -1 ; 
+	 return -1; 
       }
 #endif 	/* WIN32 */
       if ( FD_ISSET(s,&fds) ) {
-	 log(LOG_DEBUG,"rpreseek64(): returns because of new request\n") ;
+	 log(LOG_DEBUG,"rpreseek64(): returns because of new request\n");
 #if defined(HPSS)
 	 if ( v ) free(v);
 #endif /* HPSS */
-	 return 0 ; 
+	 return 0; 
       }
       /*
        * Filling buffer.
        */
-      p= iobuffer + WORDSIZE + 3*LONGSIZE ;
+      p= iobuffer + WORDSIZE + 3*LONGSIZE;
       for(nb= 0, nbfree= size; HYPERSIZE+3*LONGSIZE<nbfree && reqno<nblock; reqno ++, nb ++ ) {
-	 nbfree -= HYPERSIZE+3*LONGSIZE ;
-	 offsetout= lseek64(fd,v[reqno].iov_base,SEEK_SET) ;
+	 nbfree -= HYPERSIZE+3*LONGSIZE;
+	 offsetout= lseek64(fd,v[reqno].iov_base,SEEK_SET);
 	 if ( offsetout == (off64_t)-1 ) {
-	    status= -1 ;
-	    marshall_HYPER(p,v[reqno].iov_base) ; 
-	    marshall_LONG(p,v[reqno].iov_len) ;
-	    marshall_LONG(p,status) ;
-	    marshall_LONG(p,errno) ; 
-	    continue ;
+	    status= -1;
+	    marshall_HYPER(p,v[reqno].iov_base); 
+	    marshall_LONG(p,v[reqno].iov_len);
+	    marshall_LONG(p,status);
+	    marshall_LONG(p,errno); 
+	    continue;
 	 }
 	 if ( v[reqno].iov_len <= nbfree ) {
 #if defined(HPSS)
 	    status = rhpss_read(fd,p+HYPERSIZE+3*LONGSIZE,v[reqno].iov_len,s,0,0);
 #else /* HPSS */
-	    status= read(fd,p+HYPERSIZE+3*LONGSIZE,v[reqno].iov_len) ; 	
+	    status= read(fd,p+HYPERSIZE+3*LONGSIZE,v[reqno].iov_len); 	
 #endif /* HPSS */
-	    marshall_HYPER(p,v[reqno].iov_base) ; 
-	    marshall_LONG(p,v[reqno].iov_len) ;
-	    marshall_LONG(p,status) ;
-	    marshall_LONG(p,errno) ; 
+	    marshall_HYPER(p,v[reqno].iov_base); 
+	    marshall_LONG(p,v[reqno].iov_len);
+	    marshall_LONG(p,status);
+	    marshall_LONG(p,errno); 
 	    if ( status != -1 ) {
-	       infop->rnbr += status ;
-	       nbfree -= status ;	
-	       p += status ;
+	       infop->rnbr += status;
+	       nbfree -= status;	
+	       p += status;
 	    }
 	 }
 	 else	{
@@ -1725,44 +1723,44 @@ struct rfiostat *infop;
 #if defined(HPSS)
 	   status = rhpss_read(fd,p+HYPERSIZE+3*LONGSIZE,nbfree,s,0,0);
 #else /* HPSS */
-	    status= read(fd,p+HYPERSIZE+3*LONGSIZE,nbfree) ;
+	    status= read(fd,p+HYPERSIZE+3*LONGSIZE,nbfree);
 #endif /* HPSS */
-	    marshall_HYPER(p,v[reqno].iov_base) ; 
-	    marshall_LONG(p,nbfree) ;
-	    marshall_LONG(p,status) ;
-	    marshall_LONG(p,errno) ; 
+	    marshall_HYPER(p,v[reqno].iov_base); 
+	    marshall_LONG(p,nbfree);
+	    marshall_LONG(p,status);
+	    marshall_LONG(p,errno); 
 	    if ( status != -1 ) {
-	       infop->rnbr += status ;
-	       nbfree -= status ;	
-	       p += status ;
-	       v[reqno].iov_base += status ;
-	       v[reqno].iov_len -= status ;
-	       reqno -- ;
+	       infop->rnbr += status;
+	       nbfree -= status;	
+	       p += status;
+	       v[reqno].iov_base += status;
+	       v[reqno].iov_len -= status;
+	       reqno --;
 	    }
 	 }
 		
       }
-      p= iobuffer ;
+      p= iobuffer;
       if ( first ) {
-	 marshall_WORD(p,RQST_FIRSTSEEK) ; 
+	 marshall_WORD(p,RQST_FIRSTSEEK); 
       }
       else	{
-	 marshall_WORD(p,(reqno == nblock) ? RQST_LASTSEEK:RQST_PRESEEK64) ; 
+	 marshall_WORD(p,(reqno == nblock) ? RQST_LASTSEEK:RQST_PRESEEK64); 
       }
-      marshall_LONG(p,nb) ;
-      marshall_LONG(p,0) ;
-      marshall_LONG(p,size) ;
-      log(LOG_DEBUG,"rpreseek64(): sending %d bytes\n",iobufsiz) ;
+      marshall_LONG(p,nb);
+      marshall_LONG(p,0);
+      marshall_LONG(p,size);
+      log(LOG_DEBUG,"rpreseek64(): sending %d bytes\n",iobufsiz);
       if ( netwrite_timeout(s,iobuffer,iobufsiz,RFIO_CTRL_TIMEOUT) != iobufsiz ) {
 #if defined(_WIN32)
 	 log(LOG_ERR, "rpreseek64(): netwrite_timeout(): %s\n", geterr());
 #else	 
-	 log(LOG_ERR, "rpreseek64(): netwrite_timeout(): %s\n", strerror(errno)) ;
+	 log(LOG_ERR, "rpreseek64(): netwrite_timeout(): %s\n", strerror(errno));
 #endif	 
 #if defined(HPSS)
 	 if ( v ) free(v);
 #endif /* HPSS */
-	 return -1 ;
+	 return -1;
       }
       /*
        * All the data needed has been
@@ -1771,11 +1769,11 @@ struct rfiostat *infop;
 #if defined(HPSS)
       if ( reqno == nblock ) {
 	 if ( v ) free(v);
-	 return 0 ; 
+	 return 0; 
       }
 #else /* HPSS */
       if ( reqno == nblock ) 
-	 return 0 ; 
+	 return 0; 
 #endif /* HPSS */
    }
 }
@@ -1813,21 +1811,14 @@ char        *host;         /* Where the request comes from        */
    int      data_s;                       /* Data    socket       */
 #endif   /* else WIN32 */
 #endif   /* else HPSS  */
-#if defined(_AIX)
    socklen_t fromlen;
    socklen_t size_sin;
-#else
-   int fromlen;
-   int size_sin;
-#endif
    int      port;
    struct   sockaddr_in sin;
    struct   sockaddr_in from;
    extern int max_rcvbuf;
    extern int max_sndbuf;
-   int      optlen;                       /* Socket option length */
    int      yes;                          /* Socket option value  */
-   int      maxseg;                       /* Socket option segment*/
    off64_t  offsetout;                    /* Offset               */
    char     tmpbuf[21];
 #if defined(_WIN32)
@@ -1854,24 +1845,24 @@ char        *host;         /* Where the request comes from        */
    myinfo.aheadop = 1;
    byte_read_from_network = (off64_t)0;
 
-   p= rqstbuf + 2*WORDSIZE ;
-   unmarshall_LONG(p, len) ;
+   p= rqstbuf + 2*WORDSIZE;
+   unmarshall_LONG(p, len);
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
    } else {
      /*
       * Reading open request.
       */
-     log(LOG_DEBUG,"ropen64_v3(%d): reading %d bytes\n", s, len) ;
+     log(LOG_DEBUG,"ropen64_v3(%d): reading %d bytes\n", s, len);
      if ((status = netread_timeout(s,rqstbuf,len,RFIO_CTRL_TIMEOUT)) != len) {
 #if defined(_WIN32)
        log(LOG_ERR,"ropen64_v3: read(): %s\n", geterr());
 #else      
-       log(LOG_ERR,"ropen64_v3: read(): %s\n",strerror(errno)) ;
+       log(LOG_ERR,"ropen64_v3: read(): %s\n",strerror(errno));
 #endif
-       return -1 ;
+       return -1;
      }
-     p= rqstbuf ;
+     p= rqstbuf;
      status = 0;
      *account = *filename = *user = *reqhost = '\0';
      unmarshall_WORD(p, uid);
@@ -1907,15 +1898,15 @@ char        *host;         /* Where the request comes from        */
       */
      if (!mapping && !rt) {
        log(LOG_INFO,"ropen64_v3: attempt to make non-mapped I/O and modify uid or gid !\n");
-       errno=EACCES ;
-       rcode=errno ;
-       status= -1 ;
+       errno=EACCES;
+       rcode=errno;
+       status= -1;
      }
      
      if ( rt ) { 
        openlog("rfio", LOG_PID, LOG_USER);
        syslog(LOG_ALERT, "rfio: connection %s mapping by %s(%d,%d) from %s\n",
-              (mapping ? "with" : "without"), user, uid, gid, host) ;
+              (mapping ? "with" : "without"), user, uid, gid, host);
 #if !defined(_WIN32)
        closelog();
 #endif      
@@ -1930,10 +1921,10 @@ char        *host;         /* Where the request comes from        */
        
        log(LOG_DEBUG,"ropen64_v3: Mapping (%s, %d, %d) \n", user, uid, gid );
        if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-         log(LOG_ERR,"ropen64_v3: get_user() error opening mapping file\n") ;
+         log(LOG_ERR,"ropen64_v3: get_user() error opening mapping file\n");
          status = -1;
          errno = EINVAL;
-         rcode = SEHOSTREFUSED ;
+         rcode = SEHOSTREFUSED;
        }
        
        else if ( abs(rcd) == 1 ) {
@@ -1945,9 +1936,9 @@ char        *host;         /* Where the request comes from        */
        }
        else {
          log(LOG_DEBUG,"ropen64_v3: (%s,%s,%d,%d) mapped to %s(%d,%d)\n",
-             host, user, uid, gid, to, to_uid, to_gid) ;
-         uid = to_uid ;
-         gid = to_gid ;
+             host, user, uid, gid, to, to_uid, to_gid);
+         uid = to_uid;
+         gid = to_gid;
          if ( uid < 100 || gid < 100 ) {
            errno = EACCES;
            status = -1;
@@ -1974,9 +1965,9 @@ char        *host;         /* Where the request comes from        */
          if( (sock >= 0) && !checkkey(sock, passwd) )  
 #endif
          {
-           status= -1 ;
+           status= -1;
            errno = EACCES;
-           rcode= errno ;
+           rcode= errno;
            log(LOG_ERR,"ropen64_v3: DIRECT mapping : permission denied\n");
          }
 #if defined(_WIN32)
@@ -1985,7 +1976,7 @@ char        *host;         /* Where the request comes from        */
            if (sock < 0) 
 #endif
            {
-             status= -1 ;
+             status= -1;
              log(LOG_ERR,"ropen64_v3: DIRECT mapping failed: Couldn't connect %s\n", reqhost);
              rcode = EACCES;
            }
@@ -1999,7 +1990,7 @@ char        *host;         /* Where the request comes from        */
            uid, gid, mask, ftype, flags, mode);
        log(LOG_DEBUG, "ropen64_v3: account: %s\n", account);
        log(LOG_INFO,  "ropen64_v3: (%s,0%o,0%o) for (%d,%d)\n", CORRECT_FILENAME(filename), flags, mode, uid, gid);
-       (void) umask((mode_t) CORRECT_UMASK(mask)) ;
+       (void) umask((mode_t) CORRECT_UMASK(mask));
 #if !defined(_WIN32)  
        if ( ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
             ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
@@ -2007,7 +1998,7 @@ char        *host;         /* Where the request comes from        */
           log(LOG_ERR,"ropen64_v3: uid %d not allowed to open()\n", uid);
          else
           log(LOG_ERR,"ropen64_v3: failed at check_user_perm(), rcode %d\n", rcode);
-         status = -1 ;
+         status = -1;
       }  else
 #endif
       {
@@ -2022,10 +2013,10 @@ char        *host;         /* Where the request comes from        */
 			       &handler_context);
 	 if (rc < 0) {
 	   char alarmbuf[1024];
-	   sprintf(alarmbuf,"sropen64_v3: %s",CORRECT_FILENAME(filename)) ;
-	   log(LOG_DEBUG, "ropen64_v3: rfio_handler_open refused open: %s\n", sstrerror(serrno)) ;
+	   sprintf(alarmbuf,"sropen64_v3: %s",CORRECT_FILENAME(filename));
+	   log(LOG_DEBUG, "ropen64_v3: rfio_handler_open refused open: %s\n", sstrerror(serrno));
 	   rcode = serrno;
-           rfio_alrm(rcode,alarmbuf) ;
+           rfio_alrm(rcode,alarmbuf);
 	 }
 
 
@@ -2036,7 +2027,7 @@ char        *host;         /* Where the request comes from        */
             myinfo.directio = 1;
          }
          myinfo.xfsprealloc = 0;
-         if ( p = getconfent("RFIOD", "XFSPREALLOC", 0) ) {
+         if ( (p = getconfent("RFIOD", "XFSPREALLOC", 0)) ) {
             myinfo.xfsprealloc = atoi(p);
          }
          if (myinfo.directio) {
@@ -2066,36 +2057,36 @@ char        *host;         /* Where the request comes from        */
             }
          }
          if (fd < 0)  {
-          status= -1 ;
-          rcode= errno ;
+          status= -1;
+          rcode= errno;
 #if defined(_WIN32)  
           log(LOG_DEBUG,"ropen64_v3: open64(%s,0%o,0%o): %s\n",
-              CORRECT_FILENAME(filename), flags, mode, geterr()) ;
+              CORRECT_FILENAME(filename), flags, mode, geterr());
 #else
           log(LOG_DEBUG,"ropen64_v3: open64(%s,0%o,0%o): %s\n",
-              CORRECT_FILENAME(filename), flags, mode, strerror(errno)) ;
+              CORRECT_FILENAME(filename), flags, mode, strerror(errno));
 #endif
          }
          else  {
            /* File is opened         */
            log(LOG_DEBUG,"ropen64_v3: open64(%s,0%o,0%o) returned %d \n",
-               CORRECT_FILENAME(filename), flags, mode, fd) ;
+               CORRECT_FILENAME(filename), flags, mode, fd);
            /*
             * Getting current offset
             */
-           offsetout = lseek64(fd, (off64_t)0, SEEK_CUR) ; 
+           offsetout = lseek64(fd, (off64_t)0, SEEK_CUR); 
            if (offsetout == ((off64_t)-1) ) {
 #if defined(_WIN32)  
-             log(LOG_ERR,"ropen64_v3: lseek64(%d,0,SEEK_CUR): %s\n", fd, geterr()) ;
+             log(LOG_ERR,"ropen64_v3: lseek64(%d,0,SEEK_CUR): %s\n", fd, geterr());
 #else
-             log(LOG_ERR,"ropen64_v3: lseek64(%d,0,SEEK_CUR): %s\n", fd,strerror(errno)) ;
+             log(LOG_ERR,"ropen64_v3: lseek64(%d,0,SEEK_CUR): %s\n", fd,strerror(errno));
 #endif
              status = -1;
              rcode  = errno;
            }
            else {
              log(LOG_DEBUG,"ropen64_v3: lseek64(%d,0,SEEK_CUR) returned %s\n",
-                 fd, u64tostr(offsetout,tmpbuf,0)) ;
+                 fd, u64tostr(offsetout,tmpbuf,0));
              status = 0;
            }
          }
@@ -2182,12 +2173,12 @@ char        *host;         /* Where the request comes from        */
    /*
     * Sending back status to the client
     */
-   p= rqstbuf ;
-   marshall_WORD(p,RQST_OPEN64_V3) ;
+   p= rqstbuf;
+   marshall_WORD(p,RQST_OPEN64_V3);
    replen = RQSTSIZE+HYPERSIZE;
    marshall_LONG(p,status);
-   marshall_LONG(p,rcode) ;
-   marshall_LONG(p,ntohs(sin.sin_port)) ;
+   marshall_LONG(p,rcode);
+   marshall_LONG(p,ntohs(sin.sin_port));
    marshall_HYPER(p, offsetout);
    log(LOG_DEBUG, "ropen64_v3: sending back status(%d) and errno(%d)\n", status, rcode);
    errno = ECONNRESET;
@@ -2195,9 +2186,9 @@ char        *host;         /* Where the request comes from        */
 #if defined(_WIN32)
       log(LOG_ERR,"ropen64_v3: write(): %s\n", geterr());
 #else      
-      log(LOG_ERR,"ropen64_v3: write(): %s\n", strerror(errno)) ;
+      log(LOG_ERR,"ropen64_v3: write(): %s\n", strerror(errno));
 #endif
-      return -1 ;
+      return -1;
    }
 
    if (! status && fd >= 0)
@@ -2381,7 +2372,7 @@ char        *host;         /* Where the request comes from        */
 #if defined(SACCT)
    rfioacct(RQST_OPEN64_V3,uid,gid,s,(int)flags,(int)mode,status,rcode,NULL,CORRECT_FILENAME(filename),NULL);
 #endif /* SACCT */
-   return fd ;
+   return fd;
 }
 
 
@@ -2412,7 +2403,7 @@ struct rfiostat *infop;
       s, fd, myinfo.readop, myinfo.aheadop, myinfo.writop, myinfo.flusop, myinfo.statop,
       myinfo.seekop, myinfo.lockop);
    log(LOG_INFO,"rclose64_v3(%d, %d): %s bytes read and %s bytes written\n",
-      s, fd, u64tostr(myinfo.rnbr,tmpbuf,0), u64tostr(myinfo.wnbr,tmpbuf2,0)) ;
+      s, fd, u64tostr(myinfo.rnbr,tmpbuf,0), u64tostr(myinfo.wnbr,tmpbuf2,0));
 
    /* sync the file to be sure that filesize in correct in following stats.
       this is needed by some ext3 bug/feature
@@ -2425,13 +2416,13 @@ struct rfiostat *infop;
    rc = fstat(fd, &filestat);
 
    /* Close the local file                                    */
-   status = close(fd) ;
-   rcode = ( status < 0 ) ? errno : 0 ;
+   status = close(fd);
+   rcode = ( status < 0 ) ? errno : 0;
 
    ret=rfio_handle_close(handler_context, &filestat, rcode);
    if (ret<0){
       log(LOG_ERR, "srclose: rfio_handle_close failed\n");
-      return -1 ;
+      return -1;
       }
 
    /* Close the data socket */
@@ -2468,7 +2459,7 @@ struct rfiostat *infop;
 #else    /* WIN32 */
       log(LOG_ERR, "rclose64_v3: netwrite(): %s\n", strerror(errno));
 #endif   /* else WIN32 */
-      return -1 ;
+      return -1;
    }
    
    /* If not HPSS close the ctrl_sock                         */
@@ -2486,7 +2477,7 @@ struct rfiostat *infop;
       log(LOG_DEBUG, "rclose64_v3 : closing ctrl socket fildesc=%d\n", s);
 #endif /* HPSS */
 
-   return status ;
+   return status;
 }
 
 #if !defined(HPSS)
@@ -2552,7 +2543,7 @@ static void *produce64_thread(int *ptr)
             /* array[produced64 % daemonv3_rdmt_nbuf].p = NULL; */
             array[produced64 % daemonv3_rdmt_nbuf].len = 0;
 	    if(useCksum) {
-	      sprintf(ckSumbuf,"%lx", ckSum);
+	      sprintf(ckSumbuf,"%x", ckSum);
 	      log(LOG_DEBUG,"produce64_thread: file checksum=0x%s\n",ckSumbuf);
 	      if(strncmp(ckSumbufdisk,ckSumbuf,32)==0) {
 		log(LOG_DEBUG,"produce64_thread: checksums OK!\n");
@@ -2663,7 +2654,7 @@ static void *consume64_thread(int *ptr)
             log(LOG_DEBUG,"consume64_thread: End of writing : total consumed = %s, buffers=%d\n",
                u64tostr(total_consumed,tmpbuf,0), consumed64);
 	    if(useCksum) { /* sets the file extended attribute */
-	      sprintf(ckSumbuf,"%lx", ckSum);
+	      sprintf(ckSumbuf,"%x", ckSum);
 	      log(LOG_DEBUG,"consume64_thread: file checksum=0x%s\n",ckSumbuf);   
 	      if(fsetxattr(fd,"user.castor.checksum.value",ckSumbuf, strlen(ckSumbuf),0)) 
 	        log(LOG_ERR,"consume64_thread: fsetxattr failed, error=%d\n",errno);
@@ -2769,7 +2760,7 @@ char tmpbuf[21], tmpbuf2[21];
       s, infop->readop, infop->aheadop, infop->writop, infop->flusop, infop->statop,
       infop->seekop, infop->lockop); 
    log(LOG_INFO,"readerror64_v3(%d): %s bytes read and %s bytes written\n",
-      s, u64tostr(infop->rnbr,tmpbuf,0), u64tostr(infop->wnbr,tmpbuf2,0)) ;
+      s, u64tostr(infop->rnbr,tmpbuf,0), u64tostr(infop->wnbr,tmpbuf2,0));
    
    /* Free allocated memory                                              */
 #if !defined(HPSS)
@@ -2832,10 +2823,7 @@ struct rfiostat* infop;
 {
    int         status;              /* Return code                */
    int         rcode;               /* To send back errno         */
-   int         how;                 /* lseek mode                 */
-   off64_t     offset;              /* lseek offset               */
    off64_t     offsetout;           /* lseek offset               */
-   int         size;                /* Requested write size       */
    char        *p;                  /* Pointer to buffer          */
 #if !defined(_WIN32) && !defined(HPSS)
    char        *iobuffer;
@@ -2843,7 +2831,6 @@ struct rfiostat* infop;
    off64_t     bytes2send;
    fd_set      fdvar, fdvar2;
    extern int  max_sndbuf;
-   int         optlen;
    struct stat64 st;
    char        rfio_buf[BUFSIZ];
    int         eof_met;
@@ -2883,11 +2870,12 @@ struct rfiostat* infop;
       }
 
       daemonv3_rdmt = DAEMONV3_RDMT;
-      if( (p = getconfent("RFIO", "DAEMONV3_RDMT", 0)) != NULL )
+      if( (p = getconfent("RFIO", "DAEMONV3_RDMT", 0)) != NULL ) {
          if (*p == '0')
             daemonv3_rdmt = 0;
          else
             daemonv3_rdmt = 1;
+      }
 
       daemonv3_rdmt_nbuf = DAEMONV3_RDMT_NBUF;
       if( (p = getconfent("RFIO", "DAEMONV3_RDMT_NBUF", 0)) != NULL )
@@ -2913,7 +2901,7 @@ struct rfiostat* infop;
          if (array == NULL)  {
             log(LOG_ERR, "rread64_v3: malloc array: ERROR occured (errno=%d)\n", errno);
             readerror64_v3(ctrl_sock, &myinfo, &cid1);
-            return -1 ;
+            return -1;
          }
          log(LOG_DEBUG, "rread64_v3: malloc array allocated : 0X%X\n", array);      
 
@@ -2930,7 +2918,7 @@ struct rfiostat* infop;
                log(LOG_ERR, "rread64_v3: malloc array element %d, size %d: ERROR %d occured\n",
                   el, daemonv3_rdmt_bufsize, errno);
                readerror64_v3(ctrl_sock, &myinfo, &cid1);
-               return -1 ;
+               return -1;
             }
             log(LOG_DEBUG, "rread64_v3: malloc array element %d allocated : 0X%X\n",
                el, array[el].p);      
@@ -2946,7 +2934,7 @@ struct rfiostat* infop;
          if ( iobuffer == NULL)  {
             log(LOG_ERR, "rread64_v3: malloc: ERROR occured (errno=%d)\n", errno);
             readerror64_v3(ctrl_sock, &myinfo, &cid1);
-            return -1 ;
+            return -1;
          }
          log(LOG_DEBUG, "rread64_v3: malloc buffer allocated : 0X%X\n", iobuffer);      
          iobufsiz = DISKBUFSIZE_READ;
@@ -2967,7 +2955,7 @@ struct rfiostat* infop;
          if ((iobuffer = (char *)malloc(DISKBUFSIZE_READ)) == NULL)  {
             log(LOG_ERR, "rread64_v3: malloc: ERROR occured (errno=%d)\n", errno);
             readerror64_v3(ctrl_sock, &myinfo, &cid1);
-            return -1 ;
+            return -1;
          }
          log(LOG_DEBUG, "rread64_v3: malloc buffer allocated : 0X%X\n", iobuffer);      
          iobufsiz = DISKBUFSIZE_READ;
@@ -2977,7 +2965,7 @@ struct rfiostat* infop;
       if (fstat64(fd,&st) < 0) {
          log(LOG_ERR, "rread64_v3: fstat(): ERROR occured (errno=%d)\n", errno);
          readerror64_v3(ctrl_sock, &myinfo, &cid1);
-         return -1 ;
+         return -1;
       }
       
       log(LOG_DEBUG, "rread64_v3: filesize : %s bytes\n", u64tostr(st.st_size,tmpbuf,0));
@@ -2986,10 +2974,10 @@ struct rfiostat* infop;
 #if defined(_WIN32)
          log(LOG_ERR, "rread64_v3: lseek64(%d,0,SEEK_CUR): %s\n", fd, geterr());
 #else        
-         log(LOG_ERR, "rread64_v3: lseek64(%d,0,SEEK_CUR): %s\n", fd, strerror(errno)) ;
+         log(LOG_ERR, "rread64_v3: lseek64(%d,0,SEEK_CUR): %s\n", fd, strerror(errno));
 #endif   /* WIN32 */
          readerror64_v3(ctrl_sock, &myinfo, &cid1);
-         return -1 ;
+         return -1;
       }
       bytes2send = st.st_size - offsetout;
       if (bytes2send < 0) bytes2send = 0;
@@ -3006,10 +2994,10 @@ struct rfiostat* infop;
 #if defined(_WIN32)
          log(LOG_ERR, "rread64_v3: netwrite() ERROR: %s\n", geterr());
 #else    /* WIN32 */
-         log(LOG_ERR, "rread64_v3: netwrite() ERROR: %s\n", strerror(errno)) ;
+         log(LOG_ERR, "rread64_v3: netwrite() ERROR: %s\n", strerror(errno));
 #endif   /* else WIN32 */
          readerror64_v3(ctrl_sock, &myinfo, &cid1);
-         return -1 ;
+         return -1;
       }
 
 #ifdef CS2
@@ -3059,7 +3047,7 @@ struct rfiostat* infop;
       else
          write_fdset = &fdvar2;
       
-      log(LOG_DEBUG,"srread64_v3: doing select\n") ;
+      log(LOG_DEBUG,"srread64_v3: doing select\n");
 #if defined(_WIN32)
       if( select(FD_SETSIZE, &fdvar, write_fdset, NULL, &t) == SOCKET_ERROR ) {
          log(LOG_ERR, "srread64_v3: select failed: %s\n", geterr());
@@ -3078,7 +3066,7 @@ struct rfiostat* infop;
          int n, magic, code;
          
          /* Something received on the control socket */
-         log(LOG_DEBUG, "srread64_v3: ctrl socket: reading %d bytes\n", RQSTSIZE) ;
+         log(LOG_DEBUG, "srread64_v3: ctrl socket: reading %d bytes\n", RQSTSIZE);
          errno = ECONNRESET;
          n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT);
          if (n != RQSTSIZE) {
@@ -3090,11 +3078,11 @@ struct rfiostat* infop;
                ctrl_sock, strerror(errno));
 #endif
             readerror64_v3(ctrl_sock, &myinfo, &cid1);
-            return -1 ;
+            return -1;
          }
-         p = rqstbuf ; 
-         unmarshall_WORD(p,magic) ;
-         unmarshall_WORD(p,code) ;
+         p = rqstbuf; 
+         unmarshall_WORD(p,magic);
+         unmarshall_WORD(p,code);
          
          /* what to do ? */
          if (code == RQST_CLOSE64_V3)  {
@@ -3189,7 +3177,7 @@ struct rfiostat* infop;
 #endif   /* else HPSS */
 
          rcode = (status < 0) ? errno:0;
-         log(LOG_DEBUG, "srread64_v3: %d bytes have been read on disk\n", status) ;
+         log(LOG_DEBUG, "srread64_v3: %d bytes have been read on disk\n", status);
 
          if (status == 0)  {
 #if !defined(HPSS)
@@ -3200,18 +3188,18 @@ struct rfiostat* infop;
 #endif
             eof_met = 1;
             p = rqstbuf;
-            marshall_WORD(p,REP_EOF) ;                     
-            log(LOG_DEBUG, "rread64_v3: eof\n") ;
+            marshall_WORD(p,REP_EOF);                     
+            log(LOG_DEBUG, "rread64_v3: eof\n");
             errno = ECONNRESET;
             n = netwrite_timeout(ctrl_sock, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT);
             if (n != RQSTSIZE)  {
 #if defined(_WIN32)
                log(LOG_ERR,"rread64_v3: netwrite(): %s\n", geterr());   
 #else    /* WIN32 */          
-               log(LOG_ERR,"rread64_v3: netwrite(): %s\n", strerror(errno)) ;
+               log(LOG_ERR,"rread64_v3: netwrite(): %s\n", strerror(errno));
 #endif   /* else WIN32 */              
                readerror64_v3(ctrl_sock, &myinfo, &cid1);
-               return -1 ; 
+               return -1; 
             }
          }  /*  status == 0 */
          else {
@@ -3224,17 +3212,17 @@ struct rfiostat* infop;
                marshall_WORD(p, REP_ERROR);                     
                marshall_LONG(p, status);
                marshall_LONG(p, rcode);
-               log(LOG_DEBUG, "rread64_v3: status %d, rcode %d\n", status, rcode) ;
+               log(LOG_DEBUG, "rread64_v3: status %d, rcode %d\n", status, rcode);
                errno = ECONNRESET;
                n = netwrite_timeout(ctrl_sock, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT);
                if (n != RQSTSIZE)  {
 #if defined(_WIN32)
                   log(LOG_ERR, "rread64_v3: netwrite(): %s\n", geterr()); 
 #else                
-                  log(LOG_ERR, "rread64_v3: netwrite(): %s\n", strerror(errno)) ;
+                  log(LOG_ERR, "rread64_v3: netwrite(): %s\n", strerror(errno));
 #endif  /* WIN32 */
                   readerror64_v3(ctrl_sock, &myinfo, &cid1);
-                  return -1 ; 
+                  return -1; 
                }
                log(LOG_DEBUG, "read64_v3: waiting ack for error\n");
                n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT);
@@ -3259,7 +3247,7 @@ struct rfiostat* infop;
             }  /* status < 0  */
             else  {
                /* status > 0, reading was succesfully */
-               log(LOG_DEBUG, "rread64_v3: writing %d bytes to data socket %d\n", status, data_sock) ;
+               log(LOG_DEBUG, "rread64_v3: writing %d bytes to data socket %d\n", status, data_sock);
 #if defined(_WIN32)
                WSASetLastError(WSAECONNRESET);
                if( (n = send(data_sock, iobuffer, status, 0)) != status )  {
@@ -3272,7 +3260,7 @@ struct rfiostat* infop;
                if( (n = netwrite(data_sock, iobuffer, status)) != status ) {
                   log(LOG_ERR, "rread64_v3: netwrite(): %s\n", strerror(errno));
                   readerror64_v3(ctrl_sock, &myinfo, &cid1);
-                  return -1 ; 
+                  return -1; 
                }
 #endif   /* else WIN32 */
 #if !defined(HPSS)
@@ -3333,7 +3321,7 @@ int           *cidp;
 #if defined(_WIN32)
       log(LOG_ERR, "writerror64_v3: write(): %s\n", ws_strerr(errno));
 #else                
-      log(LOG_ERR, "writerror64_v3: write(): %s\n", strerror(errno)) ;
+      log(LOG_ERR, "writerror64_v3: write(): %s\n", strerror(errno));
 #endif
       /* Consumer thread already exited after error */
    }
@@ -3346,7 +3334,7 @@ int           *cidp;
    dummy = (unsigned char *)malloc(sizeof(unsigned char) * sizeofdummy);
    if (dummy == NULL)
       log(LOG_ERR, "writerror64_v3: malloc(%d) for dummy: %s\n",
-         sizeofdummy, strerror(errno)) ;
+         sizeofdummy, strerror(errno));
 
    /* 
     There is a potential deadlock here since the client may be stuck
@@ -3364,7 +3352,7 @@ int           *cidp;
       t.tv_sec = 1;
       t.tv_usec = 0;
         
-      log(LOG_DEBUG,"writerror64_v3: doing select after error writing on disk\n") ;
+      log(LOG_DEBUG,"writerror64_v3: doing select after error writing on disk\n");
 #if defined(_WIN32)
       if( select(FD_SETSIZE, &fdvar2, NULL, NULL, &t) == SOCKET_ERROR ) 
 #else
@@ -3374,9 +3362,9 @@ int           *cidp;
 #if defined(_WIN32)
          errno = WSAGetLastError();
 #endif
-         log(LOG_ERR, "writerror64_v3: select fdvar2 failed (errno=%d)\n", errno) ;
+         log(LOG_ERR, "writerror64_v3: select fdvar2 failed (errno=%d)\n", errno);
          /* Consumer thread already exited after error */
-         break ;
+         break;
       }
          
       if ( FD_ISSET(s, &fdvar2) )  {
@@ -3450,7 +3438,7 @@ int           *cidp;
       s, infop->readop, infop->aheadop, infop->writop, infop->flusop, infop->statop,
       infop->seekop, infop->lockop); 
    log(LOG_INFO,"writerror64_v3(%d): %s bytes read and %s bytes written\n",
-      s, u64tostr(infop->rnbr,tmpbuf,0), u64tostr(infop->wnbr,tmpbuf2,0)) ;
+      s, u64tostr(infop->rnbr,tmpbuf,0), u64tostr(infop->wnbr,tmpbuf2,0));
    
    /* free the allocated ressources     */
    free(dummy);
@@ -3500,9 +3488,6 @@ struct rfiostat   *infop;
 {
    int         status;        /* Return code                */
    int         rcode;         /* To send back errno         */
-   int         how;           /* lseek mode                 */
-   int         offset;        /* lseek offset               */
-   int         size;          /* Requested write size       */
    char        *p;            /* Pointer to buffer          */
 #if !defined(_WIN32) && !defined(HPSS)
    char        *iobuffer;
@@ -3510,17 +3495,11 @@ struct rfiostat   *infop;
    fd_set      fdvar;
    off64_t     byte_written_by_client = 0;
    int         eof_received       = 0;
-   int         invalid_received   = 0;
    extern int  max_rcvbuf;
    int         maxseg;
-#if defined(_AIX)
    socklen_t optlen;
-#else
-   int    optlen;
-#endif
    int         byte_in_diskbuffer = 0;
    char        *iobuffer_p;
-   int         max_rcv_wat;
    struct      timeval t;
 #if defined(HPSS)
    extern int  DISKBUFSIZE_WRITE;
@@ -3554,15 +3533,16 @@ struct rfiostat   *infop;
       if (status != 0)  {
         log(LOG_ERR, "srwrite64_v3: rfio_handle_firstwrite: %s\n", strerror(serrno));
         writerror64_v3(ctrl_sock, EBUSY, &myinfo);
-        return -1 ;
+        return -1;
       }
 
       daemonv3_wrmt = DAEMONV3_WRMT;
-      if( (p = getconfent("RFIO", "DAEMONV3_WRMT", 0)) != NULL )
+      if( (p = getconfent("RFIO", "DAEMONV3_WRMT", 0)) != NULL ) {
          if (*p == '0')
             daemonv3_wrmt = 0;
          else
             daemonv3_wrmt = 1;
+      }
 
       daemonv3_wrmt_nbuf = DAEMONV3_WRMT_NBUF;
       if( (p = getconfent("RFIO", "DAEMONV3_WRMT_NBUF", 0)) != NULL )
@@ -3590,7 +3570,7 @@ struct rfiostat   *infop;
          array = (struct element *)malloc(sizeof(struct element) * daemonv3_wrmt_nbuf);
          if (array == NULL)  {
             log(LOG_ERR, "rwrite64_v3: malloc array: ERROR occured (errno=%d)\n", errno);
-            return -1 ;
+            return -1;
          }
          log(LOG_DEBUG, "rwrite64_v3: malloc array allocated at 0X%X\n", array);      
 
@@ -3606,7 +3586,7 @@ struct rfiostat   *infop;
             if ( array[el].p == NULL)  {
                log(LOG_ERR, "rwrite64_v3: malloc array element %d: ERROR occured (errno=%d)\n",
                   el, errno);
-               return -1 ;
+               return -1;
             }
             log(LOG_DEBUG, "rwrite64_v3: malloc array element %d allocated at 0X%X\n",
                el, array[el].p);      
@@ -3618,7 +3598,7 @@ struct rfiostat   *infop;
          log(LOG_DEBUG, "rwrite64_v3: allocating malloc buffer: %d bytes\n", DISKBUFSIZE_WRITE);
          if ((iobuffer = (char *)malloc(DISKBUFSIZE_WRITE)) == NULL) {
             log(LOG_ERR, "rwrite64_v3: malloc: ERROR occured (errno=%d)\n", errno);
-            return -1 ;
+            return -1;
          }
          log(LOG_DEBUG, "rwrite64_v3: malloc buffer allocated at 0X%X\n", iobuffer);
          iobufsiz = DISKBUFSIZE_WRITE;
@@ -3633,8 +3613,8 @@ struct rfiostat   *infop;
 #if !defined(_WIN32)
       optlen = sizeof(maxseg);
       if (getsockopt(data_sock,IPPROTO_TCP,TCP_MAXSEG,(char *)&maxseg,&optlen) < 0) {
-         log(LOG_ERR, "rwrite64_v3: getsockopt: ERROR occured (errno=%d)\n", errno) ;
-         return -1 ;
+         log(LOG_ERR, "rwrite64_v3: getsockopt: ERROR occured (errno=%d)\n", errno);
+         return -1;
       }
       log(LOG_DEBUG,"rwrite64_v3: max TCP segment: %d\n", maxseg);
 #endif       /* WIN32 */       
@@ -3674,7 +3654,7 @@ struct rfiostat   *infop;
       t.tv_sec = 10;
       t.tv_usec = 0;
       
-      log(LOG_DEBUG,"rwrite64_v3: doing select\n") ;
+      log(LOG_DEBUG,"rwrite64_v3: doing select\n");
 #if defined(_WIN32)
       if( select(FD_SETSIZE, &fdvar, NULL, NULL, &t) == SOCKET_ERROR ) {
          log(LOG_ERR, "rwrite64_v3: select: %s\n", geterr());
@@ -3689,7 +3669,7 @@ struct rfiostat   *infop;
          if (daemonv3_wrmt)
             wait_consumer64_thread(&cid2);
 #endif   /* !HPSS */
-         return -1 ;
+         return -1;
       }
 #endif   /* else WIN32 */
       
@@ -3698,7 +3678,7 @@ struct rfiostat   *infop;
          int  n, magic, code;
          
          /* Something received on the control socket */
-         log(LOG_DEBUG, "rwrite64_v3: ctrl socket: reading %d bytes\n", RQSTSIZE) ;
+         log(LOG_DEBUG, "rwrite64_v3: ctrl socket: reading %d bytes\n", RQSTSIZE);
          n = netread_timeout(ctrl_sock, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT);
          if ( n != RQSTSIZE )  {
             if (n == 0)  errno = ECONNRESET;
@@ -3713,17 +3693,17 @@ struct rfiostat   *infop;
 #endif   /* !HPSS */
             return -1;
          }
-         p = rqstbuf ; 
-         unmarshall_WORD(p, magic) ;
-         unmarshall_WORD(p, code) ;
+         p = rqstbuf; 
+         unmarshall_WORD(p, magic);
+         unmarshall_WORD(p, code);
          unmarshall_HYPER(p, byte_written_by_client);
          
          if (code == RQST_CLOSE64_V3) {
-            log(LOG_DEBUG,"rwrite64_v3: close request:  magic: %x code: %x\n", magic, code) ;
+            log(LOG_DEBUG,"rwrite64_v3: close request:  magic: %x code: %x\n", magic, code);
             eof_received = 1;
          }
          else {
-            log(LOG_ERR,"rwrite64_v3: unknown request:  magic: %x code: %x\n", magic, code) ;
+            log(LOG_ERR,"rwrite64_v3: unknown request:  magic: %x code: %x\n", magic, code);
             writerror64_v3(ctrl_sock, EINVAL, &myinfo, &cid2);
             return -1;
          }
@@ -3736,7 +3716,7 @@ struct rfiostat   *infop;
          
       /* Anything received on data  socket ?  */
       if (data_sock >= 0 && FD_ISSET(data_sock, &fdvar)) {
-         int n,can_be_read; 
+         int n; 
       
 #if !defined(HPSS)
          if ((daemonv3_wrmt) && (byte_in_diskbuffer == 0)) {

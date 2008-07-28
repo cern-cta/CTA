@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpsrv_in_prod.c,v $ $Revision: 1.3 $ $Date: 2003/04/17 08:19:12 $ CERN IT-PDP/DM Olof Barring";
-#endif /* not lint */
-
 /*
  * tpsrv_in_prod.c - prod/development status for tape server.
  */
@@ -14,6 +10,7 @@ static char sccsid[] = "@(#)$RCSfile: tpsrv_in_prod.c,v $ $Revision: 1.3 $ $Date
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif /* _WIN32 */
@@ -22,6 +19,7 @@ static char sccsid[] = "@(#)$RCSfile: tpsrv_in_prod.c,v $ $Revision: 1.3 $ $Date
 #include <serrno.h>
 #include <net.h>
 #include <osdep.h>
+#include <getopt.h>
 #if !defined(VDQMSERV)
 #define VDQMSERV
 #endif /* VDQMSERV */
@@ -39,7 +37,7 @@ int main(int argc, char *argv[]) {
         struct vdqm_reqlist *next;
         struct vdqm_reqlist *prev;
     } *reqlist = NULL;
-    struct vdqm_reqlist *tmp, *tmp1;
+    struct vdqm_reqlist *tmp;
     vdqmnw_t *nw = NULL;
     char *p = NULL;
     char server[CA_MAXHOSTNAMELEN+1];

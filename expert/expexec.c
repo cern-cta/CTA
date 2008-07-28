@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <unistd.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
@@ -19,7 +20,7 @@
 #include "expert_api.h"
 
 #define EXP_STRBUFLEN 1024
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {

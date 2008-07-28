@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tapetohsm.c,v $ $Revision: 1.5 $ $Date: 2002/10/25 08:58:47 $ CERN/IT/PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	tapetohsm - catalog in the CASTOR Name Server files from a non HSM tape */
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,84 +25,7 @@ struct Cns_segattrs segattrs;
 struct vmgr_tape_info tape;
 int verbose;
 
-main(argc, argv)
-int argc;
-char **argv;
-{
-	int c;
-	int errflg = 0;
-	char tmpbuf[21];
-#if defined(_WIN32)
-	WSADATA wsadata;
-#endif
-
-	segattrs.fsec = 1;
-	segattrs.s_status = '-';
-
-	if (c = chkopt (argc, argv, &segattrs, 1)) {
-		usage (argv[0]);
-		goto prt_final_status;
-	}
-	if (*tape.vid == '\0' || *tape.model == '\0' || *tape.library == '\0' ||
-	    *tape.density == '\0') {
-		c = USERR;
-		usage (argv[0]);
-		goto prt_final_status;
-	}
-
-#if defined(_WIN32)
-	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-		fprintf (stderr, "WSAStartup unsuccessful\n");
-		c = SYERR;
-		goto prt_final_status;
-	}
-#endif
-#if TMS
-	if (tmscheck (tape.vid, tape.vsn, tape.model, tape.library,
-	    tape.density, tape.lbltype)) {
-		c = USERR;
-		goto prt_final_status;
-	}
-#endif
-
-	/* enter the tape in the Volume Manager */
-
-	if (verbose)
-		printf ("vmgr_entertape (%s, %s, %s, %s, %s, %s, %s, %s, %s, %d, %s, %x)\n",
-		    tape.vid, tape.vsn, tape.library, tape.density,
-		    tape.lbltype, tape.model, tape.media_letter, "", "", 1,
-		    tape.poolname, TAPE_RDONLY);
-	if (vmgr_entertape (tape.vid, tape.vsn, tape.library, tape.density,
-	    tape.lbltype, tape.model, tape.media_letter, NULL, NULL, 1,
-	    tape.poolname, TAPE_RDONLY) < 0) {
-		fprintf (stderr, "vmgrentertape %s: %s\n", tape.vid, sstrerror(serrno));
-		c = USERR;
-		goto prt_final_status;
-	}
-
-	if (! iflag)		/* all parameters on command line */
-		c = procfile();
-	else
-		c = procinpdir (stdin);
-	if (c)
-		goto prt_final_status;
-
-	if (verbose)
-		printf ("vmgr_updatetape (%s, 0, %s, 0, %d, 0)\n",
-		    tape.vid, u64tostr (BytesWritten, tmpbuf, 0), maxfseq);
-	if (vmgr_updatetape (tape.vid, 0, BytesWritten, 0, maxfseq, 0) < 0) {
-		fprintf (stderr, "%s: %s\n", tape.vid, sstrerror(serrno));
-		errflg++;
-	}
-	c = errflg ? USERR : 0;
-prt_final_status:
-#if defined(_WIN32)
-	WSACleanup();
-#endif
-	exit (c);
-}
-
-chkopt(nargs, argv, cmdline)
+int chkopt(nargs, argv, cmdline)
 int nargs;
 char **argv;
 int cmdline;
@@ -235,7 +154,7 @@ int cmdline;
 	return (errflg ? USERR : 0);
 }
 
-dir2argv(inpdir, argvp)
+int dir2argv(inpdir, argvp)
 char *inpdir;
 char ***argvp;
 {
@@ -248,7 +167,7 @@ char ***argvp;
 	nargs = 1;
 	p = inpdir;
 	parm = 0;
-	while (c = *p++) {
+	while ((c = *p++)) {
 		if (c == ' ' || c == '\t') {
 			parm = 0;
 		} else if (!parm) {
@@ -261,7 +180,7 @@ char ***argvp;
 	nargs = 1;
 	p = inpdir;
 	parm = 0;
-	while (c = *p++) {
+	while ((c = *p++)) {
 		if (c == ' ' || c == '\t') {
 			if (parm) {
 				parm = 0;
@@ -277,7 +196,7 @@ char ***argvp;
 	return (nargs);
 }
 
-procfile()
+int procfile()
 {
 	int errflg = 0;
 	struct Cns_fileid file_uniqueid;
@@ -336,13 +255,11 @@ procfile()
 	return (0);
 }
 
-procinpdir(s)
+int procinpdir(s)
 FILE *s;
 {
 	char **argv_d;
 	char buf[256];
-	int c;
-	char *dp;
 	int errflg = 0;
 	int n;
 	int nargs;
@@ -370,8 +287,95 @@ FILE *s;
 	return (errflg ? USERR : 0);
 }
 
+void usage(cmd)
+char *cmd;
+{
+	fprintf (stderr, "usage: %s ", cmd);
+	fprintf (stderr, "%s%s%s",
+	    "-d density [-i] [-l lbltype] [-M hsm_path_name]\n",
+	    "\t[-P pool_name] [-q file_sequence_number] [-s size] -V vid [-v vsn]\n",
+	    "\t--li library_name [--ml media_letter] --mo model [--verbose]\n");
+}
+
+int main(argc, argv)
+int argc;
+char **argv;
+{
+	int c;
+	int errflg = 0;
+	char tmpbuf[21];
+#if defined(_WIN32)
+	WSADATA wsadata;
+#endif
+
+	segattrs.fsec = 1;
+	segattrs.s_status = '-';
+
+	if ((c = chkopt (argc, argv, &segattrs, 1))) {
+		usage (argv[0]);
+		goto prt_final_status;
+	}
+	if (*tape.vid == '\0' || *tape.model == '\0' || *tape.library == '\0' ||
+	    *tape.density == '\0') {
+		c = USERR;
+		usage (argv[0]);
+		goto prt_final_status;
+	}
+
+#if defined(_WIN32)
+	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
+		fprintf (stderr, "WSAStartup unsuccessful\n");
+		c = SYERR;
+		goto prt_final_status;
+	}
+#endif
 #if TMS
-tmscheck(vid, vsn, model, library, den, lbl)
+	if (tmscheck (tape.vid, tape.vsn, tape.model, tape.library,
+	    tape.density, tape.lbltype)) {
+		c = USERR;
+		goto prt_final_status;
+	}
+#endif
+
+	/* enter the tape in the Volume Manager */
+
+	if (verbose)
+		printf ("vmgr_entertape (%s, %s, %s, %s, %s, %s, %s, %s, %s, %d, %s, %x)\n",
+		    tape.vid, tape.vsn, tape.library, tape.density,
+		    tape.lbltype, tape.model, tape.media_letter, "", "", 1,
+		    tape.poolname, TAPE_RDONLY);
+	if (vmgr_entertape (tape.vid, tape.vsn, tape.library, tape.density,
+	    tape.lbltype, tape.model, tape.media_letter, NULL, NULL, 1,
+	    tape.poolname, TAPE_RDONLY) < 0) {
+		fprintf (stderr, "vmgrentertape %s: %s\n", tape.vid, sstrerror(serrno));
+		c = USERR;
+		goto prt_final_status;
+	}
+
+	if (! iflag)		/* all parameters on command line */
+		c = procfile();
+	else
+		c = procinpdir (stdin);
+	if (c)
+		goto prt_final_status;
+
+	if (verbose)
+		printf ("vmgr_updatetape (%s, 0, %s, 0, %d, 0)\n",
+		    tape.vid, u64tostr (BytesWritten, tmpbuf, 0), maxfseq);
+	if (vmgr_updatetape (tape.vid, 0, BytesWritten, 0, maxfseq, 0) < 0) {
+		fprintf (stderr, "%s: %s\n", tape.vid, sstrerror(serrno));
+		errflg++;
+	}
+	c = errflg ? USERR : 0;
+prt_final_status:
+#if defined(_WIN32)
+	WSACleanup();
+#endif
+	exit (c);
+}
+
+#if TMS
+int tmscheck(vid, vsn, model, library, den, lbl)
 char *vid;
 char *vsn;
 char *model;
@@ -478,13 +482,3 @@ char *lbl;
 	return (errflg);
 }
 #endif
-
-usage(cmd)
-char *cmd;
-{
-	fprintf (stderr, "usage: %s ", cmd);
-	fprintf (stderr, "%s%s%s",
-	    "-d density [-i] [-l lbltype] [-M hsm_path_name]\n",
-	    "\t[-P pool_name] [-q file_sequence_number] [-s size] -V vid [-v vsn]\n",
-	    "\t--li library_name [--ml media_letter] --mo model [--verbose]\n");
-}

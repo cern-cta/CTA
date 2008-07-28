@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.69 $ $Date: 2008/07/03 13:55:58 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.70 $ $Date: 2008/07/28 16:51:40 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -79,6 +79,7 @@ int  Ctape_updvsn( uid_t, gid_t, int, int, char*, char*, int, int, int );
 int  Ctape_rslt( uid_t, gid_t, int, char*, char*, int*, char*, char* );
 int  rbtmountchk( int*, char*, char*, char*, char* );
 int  rbtdmntchk( int*, char*, unsigned int* );
+int repairbadmir( int tapefd, char* path );
 
 int main(argc, argv)
 int	argc;
@@ -143,7 +144,6 @@ char	**argv;
         char *getconfent();
 	void cleanup();
 	void mountkilled();
-        static int repairbadmir();
 
 	ENTRY (mounttape);
 
@@ -1380,7 +1380,7 @@ char *loader;
 ** Repair a bad MIR (corrupted tape directory) by issuing
 ** a 'SPACE to EOD' and a 'RWND', blocking. 
 */
-static int repairbadmir( int tapefd, char* path ) {
+int repairbadmir( int tapefd, char* path ) {
 
 	char func[16];
 	struct mtop mtop;

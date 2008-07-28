@@ -29,6 +29,7 @@ extern char *geterr();
 #include <string.h>
 
 #include <Castor_limits.h>
+#include <getconfent.h>
 #include <log.h>
 #include <net.h>
 #include <Cuuid.h>

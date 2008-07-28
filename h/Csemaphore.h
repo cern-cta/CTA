@@ -4,6 +4,8 @@
  */
 
 #include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <Cthread_api.h>
 
 #ifndef CSEMAPHORES

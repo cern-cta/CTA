@@ -200,10 +200,10 @@ static int write_error = 0;
 static int stop_read;
 #endif
 
-extern char *getconfent() ;
+extern char *getconfent();
 extern int 	checkkey();
-int 	check_user_perm() ;			/* Forward declaration 		*/
-static int     chksuser() ;		/* Forward declaration 		*/
+int 	check_user_perm();			/* Forward declaration 		*/
+static int     chksuser();		/* Forward declaration 		*/
 
 #if !defined(HPSS)
 #if defined(_WIN32)
@@ -253,10 +253,10 @@ extern struct thData {
 /*
  * Buffer declarations
  */
-char 	rqstbuf[BUFSIZ] ;		/* Request buffer		*/
+char 	rqstbuf[BUFSIZ];		/* Request buffer		*/
 char    filename[MAXFILENAMSIZE];       /* file name             	*/
 
-static char     *iobuffer ;             /* Data communication buffer    */
+static char     *iobuffer;             /* Data communication buffer    */
 static int      iobufsiz= 0;            /* Current io buffer size       */
 #endif /* WIN32 */
 #endif /* HPSS */
@@ -678,13 +678,13 @@ int travel_sym;
          strcpy(p, cp);
          for (cp=strtok(p,"\t ");cp!=NULL;cp=strtok(NULL,"\t ")) {
            if ( !strcmp(hostname,cp) ) {
-             found ++ ;
-             break ;
+             found ++;
+             break;
            }
            sprintf(hostname1,"%s.%s",cp,DOMAINNAME);
            if ( !strcmp(hostname1,hostname) ) {
-             found ++ ;
-             break ;
+             found ++;
+             break;
            }
          }
          if (p != NULL) { free(p); p = NULL; }
@@ -815,19 +815,19 @@ int     s;
 #endif
 int     *bet;
 {
-   char    * p ;
-   WORD  magic ;
-   WORD   code ;
-   int       n ; 
-   fd_set fds ;
+   char    * p;
+   WORD  magic;
+   WORD   code;
+   int       n; 
+   fd_set fds;
 
 #if defined(_WIN32)
    struct thData *td;
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
-   FD_ZERO(&fds) ; 
-   FD_SET(s,&fds) ;
+   FD_ZERO(&fds); 
+   FD_SET(s,&fds);
 #if defined(_WIN32)
    if( select(s+1, &fds, (fd_set*)0, (fd_set*)0, NULL) == SOCKET_ERROR )  {
      log(LOG_ERR,"rrequest(): select(): %s\n", geterr());
@@ -835,18 +835,18 @@ int     *bet;
    }
 #else      
    if ( select(s+1,&fds,(fd_set *)0,(fd_set *)0,NULL) == -1 ) {
-     log(LOG_ERR,"rrequest(): select(): %s\n",strerror(errno)) ;
-     return -1 ; 
+     log(LOG_ERR,"rrequest(): select(): %s\n",strerror(errno));
+     return -1; 
    }
 #endif      
    if ( ! FD_ISSET(s,&fds) ) {
-     log(LOG_ERR,"rrequest(): select() returns OK but FD_ISSET not\n") ;
-     return -1 ;
+     log(LOG_ERR,"rrequest(): select() returns OK but FD_ISSET not\n");
+     return -1;
    }
-   log(LOG_DEBUG, "rrequest: reading %d bytes\n",RQSTSIZE) ;
+   log(LOG_DEBUG, "rrequest: reading %d bytes\n",RQSTSIZE);
    if ((n = netread_timeout(s,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE) {
       if (n == 0)      {
-     return 0 ; 
+     return 0; 
       }
       else {
 #if defined(_WIN32)
@@ -854,15 +854,15 @@ int     *bet;
 #else 
      log(LOG_ERR, "rrequest: read(): %s\n", strerror(errno));
 #endif 
-     return -1 ;
+     return -1;
       }
    }
-   p= rqstbuf ; 
-   unmarshall_WORD(p,magic) ;
-   unmarshall_WORD(p,code) ;
-   log(LOG_DEBUG,"rrequest:  magic: %x code: %x\n",magic,code) ;
-   *bet= ( magic == RFIO_MAGIC ? 0 : 1 ) ;
-   return code ;
+   p= rqstbuf; 
+   unmarshall_WORD(p,magic);
+   unmarshall_WORD(p,code);
+   log(LOG_DEBUG,"rrequest:  magic: %x code: %x\n",magic,code);
+   *bet= ( magic == RFIO_MAGIC ? 0 : 1 );
+   return code;
 }
 
 int srchkreqsize(s, p, len)
@@ -899,60 +899,60 @@ SOCKET  s;
 int     s;
 #endif
 {
-   char * p        ;
-   int status = 0  ;
+   char * p       ;
+   int status = 0 ;
 #if defined(_WIN32)
    struct thData *td;
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
-   p = rqstbuf ;
+   p = rqstbuf;
    marshall_LONG(p,status);
    if ( netwrite_timeout(s, rqstbuf ,LONGSIZE, RFIO_CTRL_TIMEOUT) != LONGSIZE )  {
 #if defined(_WIN32)
       log(LOG_ERR,"srchk(): netwrite_timeout(): %s\n", geterr());
 #else
-      log(LOG_ERR,"srchk() : netwrite_timeout(): %s\n",strerror(errno)) ;
+      log(LOG_ERR,"srchk() : netwrite_timeout(): %s\n",strerror(errno));
 #endif
-      return -1 ;
+      return -1;
    }
-   return 0 ;
+   return 0;
 }
 
 #if !defined(_WIN32)
 int srsymlink(s,request,rt, host)
-int s ;
-int request ;
+int s;
+int request;
 int     rt; /* Is it a remote site call ?   */
 char *host; /* Where the request comes from */
 
 {
-   char * p        ;
-   int status=0    ;
-   int len         ;
-   char user[CA_MAXUSRNAMELEN+1]   ;
-   char name1[MAXFILENAMSIZE] ;
-   char name2[MAXFILENAMSIZE] ;
-   int rcode       ;
-   int uid,gid ;
+   char * p       ;
+   int status=0   ;
+   int len        ;
+   char user[CA_MAXUSRNAMELEN+1]  ;
+   char name1[MAXFILENAMSIZE];
+   char name2[MAXFILENAMSIZE];
+   int rcode      ;
+   int uid,gid;
 
-   p= rqstbuf + 2*WORDSIZE ;
-   unmarshall_LONG(p, len) ;
+   p= rqstbuf + 2*WORDSIZE;
+   unmarshall_LONG(p, len);
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
    } else {
      /*
       * Reading open request.
       */
-     log(LOG_DEBUG,"rlink: reading %d bytes\n",len) ;
+     log(LOG_DEBUG,"rlink: reading %d bytes\n",len);
      log(LOG_DEBUG,"remote ? %s\n", (rt?"yes":"no"));
      if (netread_timeout(s,rqstbuf,len,RFIO_CTRL_TIMEOUT) != len) {
        log(LOG_ERR,"rlink:  read() error: %s\n",strerror(errno));
-       return -1 ;
+       return -1;
      }
-     p= rqstbuf ;
-     unmarshall_WORD(p, uid) ;
-     unmarshall_WORD(p, gid) ;
+     p= rqstbuf;
+     unmarshall_WORD(p, uid);
+     unmarshall_WORD(p, gid);
      *name1 = *name2 = *user = '\0';
      if ( (status == 0) &&
           (status = unmarshall_STRINGN( p, name1, MAXFILENAMSIZE )) == -1 )
@@ -971,13 +971,13 @@ char *host; /* Where the request comes from */
      if ( (status==0) && rt ) {
        char to[100];
        int rcd;
-       int to_uid, to_gid ;
+       int to_uid, to_gid;
        
        if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-         log(LOG_ERR,"r%slink: get_user(): Error opening mapping file\n",(name1[0]=='\0' ? "un":"sym")) ;
+         log(LOG_ERR,"r%slink: get_user(): Error opening mapping file\n",(name1[0]=='\0' ? "un":"sym"));
          status= -1;
          errno = EINVAL;
-         rcode = errno ;
+         rcode = errno;
        }
        
        if ( !status && abs(rcd) == 1 ) {
@@ -988,15 +988,15 @@ char *host; /* Where the request comes from */
        }
        else {
          log(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n",
-             host, user, uid, gid, to, to_uid, to_gid) ;
-         uid = to_uid ;
-         gid = to_gid ;
+             host, user, uid, gid, to, to_uid, to_gid);
+         uid = to_uid;
+         gid = to_gid;
        }
      }
      
      if ( (status == 0) && ((status = check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0) && ((status = check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0) ) {
        if ( status == -2 )
-         log(LOG_ERR,"srsymlink(): UID %d not allowed to r%slink().\n",uid,(name1[0]=='\0' ? "un":"sym")) ;
+         log(LOG_ERR,"srsymlink(): UID %d not allowed to r%slink().\n",uid,(name1[0]=='\0' ? "un":"sym"));
        else
          log(LOG_ERR,"srsymlink(): failed, rcode = %d\n",rcode);
      }
@@ -1015,14 +1015,14 @@ char *host; /* Where the request comes from */
        if (forced_filename != NULL || !check_path_whitelist(host, name2, perm_array, oname2, sizeof(oname2),1)) {
          if (name1[0]=='\0') {
            status = unlink(CORRECT_FILENAME(oname2));
-           rcode = (status < 0 ? errno: 0) ;
+           rcode = (status < 0 ? errno: 0);
            log(LOG_INFO ,"runlink(): unlink(%s) returned %d, rcode=%d\n",CORRECT_FILENAME(oname2),status,rcode);
          }
          else {
-           log(LOG_INFO, "symlink for (%d, %d)\n",getuid(), getgid()) ;
-           status = symlink( name1, oname2 ) ;
-           rcode = (status < 0 ? errno: 0) ;
-           log(LOG_INFO ,"rsymlink(): symlink(%s,%s) returned %d,rcode=%d\n",name1, oname2, status,rcode ) ;
+           log(LOG_INFO, "symlink for (%d, %d)\n",getuid(), getgid());
+           status = symlink( name1, oname2 );
+           rcode = (status < 0 ? errno: 0);
+           log(LOG_INFO ,"rsymlink(): symlink(%s,%s) returned %d,rcode=%d\n",name1, oname2, status,rcode );
          }
        } else {
          status = -1;
@@ -1033,37 +1033,37 @@ char *host; /* Where the request comes from */
    /*
     * Sending back status.
     */
-   p= rqstbuf ;
-   marshall_WORD(p,request) ;
+   p= rqstbuf;
+   marshall_WORD(p,request);
    marshall_LONG(p,status);
-   marshall_LONG(p,rcode) ;
+   marshall_LONG(p,rcode);
 #if defined(SACCT)
    rfioacct(RQST_SYMLINK,uid,gid,s,0,0,status,rcode,NULL,name1,name2);
 #endif /* SACCT */
    log(LOG_DEBUG, "rlink: sending back status(%d) and errno (%d) \n",status,rcode);
    if (netwrite_timeout(s,rqstbuf,WORDSIZE+2*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+2*LONGSIZE)) {
-      log(LOG_ERR,"rlink: netwrite_timeout(): %s\n",strerror(errno)) ;
-      return -1 ;
+      log(LOG_ERR,"rlink: netwrite_timeout(): %s\n",strerror(errno));
+      return -1;
    }
-   return status ;
+   return status;
 }
 
 
 int srreadlink(s,host,rt)
-int s ;
-char *host ;
-int rt ;
+int s;
+char *host;
+int rt;
 {
-   char * p        ;
-   int status=0    ;
-   int len=0       ;
-   char path[MAXFILENAMSIZE] ;        /* link file path to read         */
-   char lpath[MAXFILENAMSIZE] ;       /* link returned by readlink()    */
-   int rcode       ;
-   int uid,gid     ;                  /* Requestor's uid & gid          */
+   char * p       ;
+   int status=0   ;
+   int len=0      ;
+   char path[MAXFILENAMSIZE];        /* link file path to read         */
+   char lpath[MAXFILENAMSIZE];       /* link returned by readlink()    */
+   int rcode      ;
+   int uid,gid    ;                  /* Requestor's uid & gid          */
 
-   p= rqstbuf + 2*WORDSIZE ;
-   unmarshall_LONG(p, len) ;
+   p= rqstbuf + 2*WORDSIZE;
+   unmarshall_LONG(p, len);
    lpath[0] = '\0';
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      *lpath = '\0';
@@ -1072,14 +1072,14 @@ int rt ;
      /*
       * Reading open request.
       */
-     log(LOG_DEBUG,"srreadlink(): reading %d bytes\n",len) ;
+     log(LOG_DEBUG,"srreadlink(): reading %d bytes\n",len);
      if (netread_timeout(s,rqstbuf,len,RFIO_CTRL_TIMEOUT) != len) {
        log(LOG_ERR,"srreadlink() :  read() error: %s\n",strerror(errno));
-       return -1 ;
+       return -1;
      }
-     p= rqstbuf ;
-     unmarshall_WORD(p, uid) ;
-     unmarshall_WORD(p, gid) ;
+     p= rqstbuf;
+     unmarshall_WORD(p, uid);
+     unmarshall_WORD(p, gid);
      *path = '\0';
      if ( (status == 0) &&
           (status = unmarshall_STRINGN( p, path, MAXFILENAMSIZE)) == -1 )
@@ -1090,9 +1090,9 @@ int rt ;
       * related activity will FAIL!!!
       */
      if ( ((getuid() == 0) && (setgroups(0, NULL)<0)) || (setgid(gid)<0) || (setuid(uid)<0) )  {
-       status= -1 ;
-       rcode= errno ;
-       log(LOG_ERR,"srreadlink(): unable to setuid,gid(%d,%d): %s, we are (uid=%d,gid=%d,euid=%d,egid=%d)\n",uid,gid,strerror(errno),(int) getuid(),(int) getgid(),(int) geteuid(),(int) getegid()) ;
+       status= -1;
+       rcode= errno;
+       log(LOG_ERR,"srreadlink(): unable to setuid,gid(%d,%d): %s, we are (uid=%d,gid=%d,euid=%d,egid=%d)\n",uid,gid,strerror(errno),(int) getuid(),(int) getgid(),(int) geteuid(),(int) getegid());
      }
      
      log(LOG_INFO,"srreadlink() : Solving %s\n",path);
@@ -1101,21 +1101,21 @@ int rt ;
        char opath[MAXFILENAMSIZE];
        rcode = -1;
        if (!check_path_whitelist(host, path, perm_array, opath, sizeof(opath),0)) {
-         rcode = readlink( opath, lpath, MAXFILENAMSIZE) ;
+         rcode = readlink( opath, lpath, MAXFILENAMSIZE);
        }
        if (rcode < 0) {
-         lpath[0]='\0' ;
-         status = -1 ;
-         rcode = errno ;
+         lpath[0]='\0';
+         status = -1;
+         rcode = errno;
        } else {
-         lpath[rcode]='\0' ;
+         lpath[rcode]='\0';
        }
      }
    }
    
-   p= rqstbuf ;
-   len = strlen(lpath) + 1 ;
-   marshall_LONG(p,len) ;
+   p= rqstbuf;
+   len = strlen(lpath) + 1;
+   marshall_LONG(p,len);
    marshall_LONG(p,status);
    marshall_LONG(p,rcode);
    if (status == 0 )
@@ -1128,26 +1128,26 @@ int rt ;
       log(LOG_ERR, "srreadlink(): netwrite_timeout(): %s\n", strerror(errno));
       return(-1);
    }
-   return (status) ;
+   return (status);
 
 }
 
 int     srchown(s,host,rt)
 int     s;
-char *host ;
-int rt ;
+char *host;
+int rt;
 {
-   char  *p ;
+   char  *p;
    LONG  status = 0;
-   LONG  len ;
-   int   uid,gid ;
-   int   owner, group ;
-   int   rcode = 0 ;
+   LONG  len;
+   int   uid,gid;
+   int   owner, group;
+   int   rcode = 0;
 
-   p = rqstbuf + (2*WORDSIZE) ;
-   unmarshall_WORD(p, uid) ;
-   unmarshall_WORD(p, gid) ;
-   unmarshall_LONG(p, len) ;
+   p = rqstbuf + (2*WORDSIZE);
+   unmarshall_WORD(p, uid);
+   unmarshall_WORD(p, gid);
+   unmarshall_LONG(p, len);
 
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
@@ -1159,7 +1159,7 @@ int rt ;
      /* chown() is not for remote users */
      if ( rt ) { 
        status = -1;
-       rcode = EACCES ;
+       rcode = EACCES;
        log(LOG_ERR,"Attempt to srchown() from %s denied\n",host);
      }
      else {
@@ -1168,7 +1168,7 @@ int rt ;
            log(LOG_ERR,"srchown(): UID %d not allowed to chown\n",uid);
          else
            log(LOG_ERR,"srchown(): failed, rcode = %d\n",rcode);
-         status = -1 ;
+         status = -1;
        }
        if ( !status && forced_filename != NULL) {
          log(LOG_ERR,"Disallowing chown in forced filename mode\n");
@@ -1180,7 +1180,7 @@ int rt ;
          log(LOG_ERR, "srchown(): read(): %s\n", strerror(errno));
          return -1;
        }
-       p = rqstbuf ;
+       p = rqstbuf;
        *filename = '\0';
        if ( (status == 0) &&
             (status = unmarshall_STRINGN(p, filename, MAXFILENAMSIZE)) == -1 )
@@ -1193,9 +1193,9 @@ int rt ;
          char ofilename[MAXFILENAMSIZE];
          if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
            if ( (status =  chown(ofilename,owner,group)) < 0 ) 
-             rcode = errno ;
+             rcode = errno;
            else
-             status = 0 ;
+             status = 0;
          } else {
            status = -1;
            rcode = errno;
@@ -1204,7 +1204,7 @@ int rt ;
      }
    }
    
-   p = rqstbuf ;
+   p = rqstbuf;
    marshall_LONG(p, status);
    marshall_LONG(p, rcode);
 #if defined(SACCT)
@@ -1213,9 +1213,9 @@ int rt ;
    log(LOG_DEBUG, "srchown: sending back status %d rcode %d\n", status,rcode);
    if (netwrite_timeout(s, rqstbuf, 2*LONGSIZE, RFIO_CTRL_TIMEOUT) != (2*LONGSIZE))  {
       log(LOG_ERR, "srchown(): netwrite_timeout(): %s\n", strerror(errno));
-      return -1 ; 
+      return -1; 
    }
-   return status ; 
+   return status; 
 }
 #endif  /* !WIN32 */
 
@@ -1225,15 +1225,15 @@ SOCKET  s;
 #else
 int     s;
 #endif
-char *host ;
-int rt ;
+char *host;
+int rt;
 {
-   char *p ;
+   char *p;
    LONG status = 0;
-   LONG len ;
-   LONG mode ;
-   int  uid,gid ;
-   int  rcode = 0 ;
+   LONG len;
+   LONG mode;
+   int  uid,gid;
+   int  rcode = 0;
    
 #if defined(_WIN32)
    struct thData *td;
@@ -1241,10 +1241,10 @@ int rt ;
 #endif
 
    
-   p = rqstbuf + (2*WORDSIZE) ;
-   unmarshall_WORD(p, uid) ;
-   unmarshall_WORD(p, gid) ;
-   unmarshall_LONG(p, len) ;
+   p = rqstbuf + (2*WORDSIZE);
+   unmarshall_WORD(p, uid);
+   unmarshall_WORD(p, gid);
+   unmarshall_LONG(p, len);
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
    } else {
@@ -1253,10 +1253,10 @@ int rt ;
       */
      log(LOG_DEBUG, "rchmod for (%d,%d): reading %d bytes\n", uid,gid,len);
      /* chmod() is not for remote users */
-     (void)umask((mode_t) CORRECT_UMASK(0)) ;
+     (void)umask((mode_t) CORRECT_UMASK(0));
      if ( rt ) { 
        status = -1;
-       rcode = EACCES ;
+       rcode = EACCES;
        log(LOG_ERR,"Attempt to srchmod() from %s denied\n",host);
      }
      else {
@@ -1265,7 +1265,7 @@ int rt ;
            log(LOG_ERR,"srchmod(): UID %d not allowed to chmod()\n",uid);
          else
            log(LOG_ERR,"srchmod(): failed, rcode = %d\n",rcode);
-         status = -1 ;
+         status = -1;
        }
        if ( !status && forced_filename != NULL) {
          log(LOG_ERR,"Disallowing chmod in forced filename mode\n");
@@ -1281,21 +1281,21 @@ int rt ;
 #endif  /* WIN32 */ 
          return -1;
        }
-       p = rqstbuf ;
+       p = rqstbuf;
        *filename = '\0';
        if ( (status == 0) &&
             (status = unmarshall_STRINGN(p, filename, MAXFILENAMSIZE)) == -1 )
          serrno = SENAMETOOLONG;
-       unmarshall_LONG(p, mode) ;
-       log(LOG_INFO,"chmod: filename: %s, mode: %o\n", filename, mode) ;
+       unmarshall_LONG(p, mode);
+       log(LOG_INFO,"chmod: filename: %s, mode: %o\n", filename, mode);
        if (status == 0 ) {
          const char *perm_array[] = { "WTRUST", "CHMODTRUST", NULL };
          char ofilename[MAXFILENAMSIZE];
          if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
            if ( (status =  chmod(ofilename, mode)) < 0 ) 
-             rcode = errno ;
+             rcode = errno;
            else
-             status = 0 ;
+             status = 0;
          } else {
            status = -1;
            rcode = errno;
@@ -1304,7 +1304,7 @@ int rt ;
      }
    }
    
-   p = rqstbuf ;
+   p = rqstbuf;
    marshall_LONG(p, status);
    marshall_LONG(p, rcode);
 #if defined(SACCT)
@@ -1317,9 +1317,9 @@ int rt ;
 #else      
       log(LOG_ERR, "srchmod(): netwrite_timeout(): %s\n", strerror(errno));
 #endif      
-      return -1 ; 
+      return -1; 
    }
-   return status ; 
+   return status; 
 }
 
 int     srmkdir(s,host,rt)
@@ -1328,15 +1328,15 @@ SOCKET  s;
 #else
 int     s;
 #endif
-char *host ;
-int rt ;
+char *host;
+int rt;
 {
-   char *p ;
+   char *p;
    LONG status = 0;
-   LONG len ;
-   LONG mode ;
-   int  uid,gid ;
-   int  rcode = 0 ;
+   LONG len;
+   LONG mode;
+   int  uid,gid;
+   int  rcode = 0;
    
 #if defined(_WIN32)
    struct thData *td;
@@ -1344,10 +1344,10 @@ int rt ;
 #endif
 
    
-   p = rqstbuf + (2*WORDSIZE) ;
-   unmarshall_WORD(p, uid) ;
-   unmarshall_WORD(p, gid) ;
-   unmarshall_LONG(p, len) ;
+   p = rqstbuf + (2*WORDSIZE);
+   unmarshall_WORD(p, uid);
+   unmarshall_WORD(p, gid);
+   unmarshall_LONG(p, len);
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
    } else {
@@ -1356,10 +1356,10 @@ int rt ;
       */
      log(LOG_DEBUG, "rmkdir for (%d,%d): reading %d bytes\n", uid,gid,len);
      /* mkdir() is not for remote users */
-     (void)umask((mode_t) CORRECT_UMASK(0)) ;
+     (void)umask((mode_t) CORRECT_UMASK(0));
      if ( rt ) { 
        status = -1;
-       rcode = EACCES ;
+       rcode = EACCES;
        log(LOG_ERR,"Attempt to srmkdir() from %s denied\n",host);
      }
      else {
@@ -1368,7 +1368,7 @@ int rt ;
            log(LOG_ERR,"srmkdir(): UID %d not allowed to mkdir()\n",uid);
          else
            log(LOG_ERR,"srmkdir(): failed, rcode = %d\n",rcode);
-         status = -1 ;
+         status = -1;
        }
        if ( !status && forced_filename != NULL) {
          log(LOG_ERR,"Disallowing mkdir in forced filename mode\n");
@@ -1384,21 +1384,21 @@ int rt ;
 #endif 
          return -1;
        }
-       p = rqstbuf ;
+       p = rqstbuf;
        *filename = '\0';
        if ( (status == 0) &&
             (status = unmarshall_STRINGN(p, filename, MAXFILENAMSIZE)) == -1 )
          rcode = SENAMETOOLONG;
-       unmarshall_LONG(p, mode) ;
-       log(LOG_INFO,"rmkdir: filename: %s, mode: %o\n", filename, mode) ;
+       unmarshall_LONG(p, mode);
+       log(LOG_INFO,"rmkdir: filename: %s, mode: %o\n", filename, mode);
        if (status == 0 ) {
          const char *perm_array[] = { "WTRUST", "MKDIRTRUST", NULL };
          char ofilename[MAXFILENAMSIZE];
          if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
            if ( (status =  mkdir(ofilename, mode)) < 0 ) 
-             rcode = errno ;
+             rcode = errno;
            else
-             status = 0 ;
+             status = 0;
          } else {
            status = -1;
            rcode = errno;
@@ -1407,7 +1407,7 @@ int rt ;
      }
    }
    
-   p = rqstbuf ;
+   p = rqstbuf;
    marshall_LONG(p, status);
    marshall_LONG(p, rcode);
 #if defined(SACCT)
@@ -1420,9 +1420,9 @@ int rt ;
 #else      
       log(LOG_ERR, "srmkdir(): netwrite_timeout(): %s\n", strerror(errno));
 #endif      
-      return -1 ; 
+      return -1; 
    }
-   return status ; 
+   return status; 
 }
 
 int     srrmdir(s,host,rt)
@@ -1431,14 +1431,14 @@ SOCKET  s;
 #else
 int     s;
 #endif
-char *host ;
-int rt ;
+char *host;
+int rt;
 {
-   char *p ;
+   char *p;
    LONG status = 0;
-   LONG len ;
-   int  uid,gid ;
-   int  rcode = 0 ;
+   LONG len;
+   int  uid,gid;
+   int  rcode = 0;
    
 #if defined(_WIN32)
    struct thData *td;
@@ -1446,10 +1446,10 @@ int rt ;
 #endif
 
    
-   p = rqstbuf + (2*WORDSIZE) ;
-   unmarshall_WORD(p, uid) ;
-   unmarshall_WORD(p, gid) ;
-   unmarshall_LONG(p, len) ;
+   p = rqstbuf + (2*WORDSIZE);
+   unmarshall_WORD(p, uid);
+   unmarshall_WORD(p, gid);
+   unmarshall_LONG(p, len);
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
    } else {
@@ -1458,10 +1458,10 @@ int rt ;
       */
      log(LOG_DEBUG, "rrmdir for (%d,%d): reading %d bytes\n", uid,gid,len);
      /* rmdir() is not for remote users */
-     (void)umask((mode_t) CORRECT_UMASK(0)) ;
+     (void)umask((mode_t) CORRECT_UMASK(0));
      if ( rt ) { 
        status = -1;
-       rcode = EACCES ;
+       rcode = EACCES;
        log(LOG_ERR,"Attempt to srrmdir() from %s denied\n",host);
      }
      else {
@@ -1470,7 +1470,7 @@ int rt ;
            log(LOG_ERR,"srrmdir(): UID %d not allowed to rmdir()\n",uid);
          else
            log(LOG_ERR,"srrmdir(): failed, rcode = %d\n",rcode);
-         status = -1 ;
+         status = -1;
        }
        if ( !status && forced_filename != NULL) {
          log(LOG_ERR,"Disallowing rmdir in forced filename mode\n");
@@ -1486,20 +1486,20 @@ int rt ;
 #endif 
          return -1;
        }
-       p = rqstbuf ;
+       p = rqstbuf;
        *filename = '\0';
        if ( (status == 0) && 
             (status = unmarshall_STRINGN(p, filename, MAXFILENAMSIZE)) == -1 )
          rcode = SENAMETOOLONG;
-       log(LOG_INFO,"rrmdir: filename: %s\n", filename) ;
+       log(LOG_INFO,"rrmdir: filename: %s\n", filename);
        if (status == 0 ) {
          const char *perm_array[] = { "WTRUST", "RMDIRTRUST", NULL };
          char ofilename[MAXFILENAMSIZE];
          if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
            if ( (status =  rmdir(ofilename)) < 0 ) 
-             rcode = errno ;
+             rcode = errno;
            else
-             status = 0 ;
+             status = 0;
          } else {
            status = -1;
            rcode = errno;
@@ -1508,7 +1508,7 @@ int rt ;
      }
    }
 
-   p = rqstbuf ;
+   p = rqstbuf;
    marshall_LONG(p, status);
    marshall_LONG(p, rcode);
 #if defined(SACCT)
@@ -1521,9 +1521,9 @@ int rt ;
 #else      
       log(LOG_ERR, "srrmdir(): netwrite_timeout(): %s\n", strerror(errno));
 #endif      
-      return -1 ; 
+      return -1; 
    }
-   return status ; 
+   return status; 
 }
 
 int srrename(s,host,rt)
@@ -1532,27 +1532,26 @@ SOCKET  s;
 #else
 int     s;
 #endif
-char    *host ;
-int     rt ;
+char    *host;
+int     rt;
 {
-   char    *p ;
+   char    *p;
    LONG    status = 0;
-   LONG    len ;
-   LONG    mode ;
-   int     uid,gid ;
-   char    filenameo[MAXFILENAMSIZE] ;
-   char    filenamen[MAXFILENAMSIZE] ;
-   int     rcode = 0 ;
+   LONG    len;
+   int     uid,gid;
+   char    filenameo[MAXFILENAMSIZE];
+   char    filenamen[MAXFILENAMSIZE];
+   int     rcode = 0;
 
 #if defined(_WIN32)
    struct thData *td;
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
-   p = rqstbuf + (2*WORDSIZE) ;
-   unmarshall_WORD(p, uid) ;
-   unmarshall_WORD(p, gid) ;
-   unmarshall_LONG(p, len) ;
+   p = rqstbuf + (2*WORDSIZE);
+   unmarshall_WORD(p, uid);
+   unmarshall_WORD(p, gid);
+   unmarshall_LONG(p, len);
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
    } else {
@@ -1563,7 +1562,7 @@ int     rt ;
      /* rename() is not for remote users */
      if ( rt ) { 
        status = -1;
-       rcode = EACCES ;
+       rcode = EACCES;
        log(LOG_ERR,"Attempt to srrename() from %s denied\n",host);
      }
      else {
@@ -1572,7 +1571,7 @@ int     rt ;
            log(LOG_ERR,"srrename(): UID %d not allowed to rename()\n",uid);
          else
            log(LOG_ERR,"srrename(): failed, rcode = %d\n",rcode);
-         status = -1 ;
+         status = -1;
        }
        if ( !status && forced_filename != NULL) {
          log(LOG_ERR,"Disallowing rename in forced filename mode\n");
@@ -1588,7 +1587,7 @@ int     rt ;
 #endif 
          return -1;
        }
-       p = rqstbuf ;
+       p = rqstbuf;
        *filenameo = *filenamen = '\0';
        if ( (status == 0) && 
             (status = unmarshall_STRINGN(p, filenameo,MAXFILENAMSIZE)) == -1)
@@ -1603,9 +1602,9 @@ int     rt ;
          if (!check_path_whitelist(host, filenameo, perm_array, ofilenameo, sizeof(ofilenameo),0) &&
              !check_path_whitelist(host, filenamen, perm_array, ofilenamen, sizeof(ofilenamen),0)) {
            if ( (status =  rename(ofilenameo, ofilenamen)) < 0 ) 
-             rcode = errno ;
+             rcode = errno;
            else
-             status = 0 ;
+             status = 0;
          } else {
            status = -1;
            rcode = errno;
@@ -1614,7 +1613,7 @@ int     rt ;
      }
    }
    
-   p = rqstbuf ;
+   p = rqstbuf;
    marshall_LONG(p, status);
    marshall_LONG(p, rcode);
 #if defined(SACCT)
@@ -1627,9 +1626,9 @@ int     rt ;
 #else      
       log(LOG_ERR, "srrename(): netwrite_timeout(): %s\n", strerror(errno));
 #endif      
-      return -1 ; 
+      return -1; 
    }
-   return status ; 
+   return status; 
 }
 
 #if !defined(_WIN32)
@@ -1637,19 +1636,18 @@ int srlockf(s,fd)
 int     s;
 int     fd;
 {
-   char    *p ;
+   char    *p;
    LONG    status = 0;
-   LONG    len ;
-   LONG    mode ;
-   int     uid,gid ;
+   LONG    len;
+   int     uid,gid;
    int     op;
    long    siz;
-   int     rcode = 0 ;
+   int     rcode = 0;
 
-   p = rqstbuf + (2*WORDSIZE) ;
-   unmarshall_WORD(p, uid) ;
-   unmarshall_WORD(p, gid) ;
-   unmarshall_LONG(p, len) ;
+   p = rqstbuf + (2*WORDSIZE);
+   unmarshall_WORD(p, uid);
+   unmarshall_WORD(p, gid);
+   unmarshall_LONG(p, len);
 
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
@@ -1660,9 +1658,9 @@ int     fd;
       * related activity will FAIL!!!
       */
      if ( ((getuid() == 0) && (setgroups(0, NULL)<0)) || (setgid(gid)<0) || (setuid(uid)<0) )  {
-       status= -1 ;
-       rcode= errno ;
-       log(LOG_ERR,"srlockf(): unable to setuid,gid(%d,%d): %s, we are (uid=%d,gid=%d,euid=%d,egid=%d)\n",uid,gid,strerror(errno),(int) getuid(),(int) getgid(),(int) geteuid(),(int) getegid()) ;
+       status= -1;
+       rcode= errno;
+       log(LOG_ERR,"srlockf(): unable to setuid,gid(%d,%d): %s, we are (uid=%d,gid=%d,euid=%d,egid=%d)\n",uid,gid,strerror(errno),(int) getuid(),(int) getgid(),(int) geteuid(),(int) getegid());
      }
      
      log(LOG_DEBUG, "srlockf for (%d,%d): reading %d bytes\n", uid,gid,len);
@@ -1674,19 +1672,19 @@ int     fd;
      /*
       * Reading request.
       */
-     p = rqstbuf ;
-     unmarshall_LONG(p, op) ;
+     p = rqstbuf;
+     unmarshall_LONG(p, op);
      unmarshall_LONG(p, siz);
      log(LOG_INFO,"srlockf: op %d, siz %ld\n", op, siz);
      if (status == 0 ) {
        if ( (status = lockf(fd, op, siz)) < 0 ) 
-         rcode = errno ;
+         rcode = errno;
        else
-         status = 0 ;
+         status = 0;
      }
    }
    
-   p = rqstbuf ;
+   p = rqstbuf;
    marshall_LONG(p, status);
    marshall_LONG(p, rcode);
 #if defined(SACCT)
@@ -1695,9 +1693,9 @@ int     fd;
    log(LOG_DEBUG, "srlockf: sending back status %d rcode %d\n", status,rcode);
    if (netwrite_timeout(s, rqstbuf, 2*LONGSIZE, RFIO_CTRL_TIMEOUT) != (2*LONGSIZE))  {
       log(LOG_ERR, "srlockf(): netwrite_timeout(): %s\n", strerror(errno));
-      return -1 ; 
+      return -1; 
    }
-   return status ; 
+   return status; 
 }
 #endif   /* !WIN32 */
 
@@ -1708,26 +1706,26 @@ SOCKET  s;
 int     s;
 #endif
 {
-   int   code ; 
-   int    len ;
-   char * msg ;
-   char *   p ;
+   int   code; 
+   int    len;
+   char * msg;
+   char *   p;
 
 #if defined(_WIN32)
    struct thData *td;
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
-   p= rqstbuf + 2*WORDSIZE ; 
+   p= rqstbuf + 2*WORDSIZE; 
    unmarshall_LONG(p, code);
-   log(LOG_INFO, "rerrmsg: code: %d\n",code) ;
-   msg= (code > 0) ? strerror(code) : "Invalid error code" ;
+   log(LOG_INFO, "rerrmsg: code: %d\n",code);
+   msg= (code > 0) ? strerror(code) : "Invalid error code";
    msg = strdup(msg);
    log(LOG_DEBUG, "rerrmsg: errmsg: %s\n",msg);
-   len= strlen(msg)+1 ;
-   p = rqstbuf ;
-   marshall_LONG(p,len) ;
-   marshall_STRING(p,msg) ;
+   len= strlen(msg)+1;
+   p = rqstbuf;
+   marshall_LONG(p,len);
+   marshall_STRING(p,msg);
    log(LOG_DEBUG, "rerrmsg: sending back %d bytes\n",len+LONGSIZE);
    free(msg);
    if (netwrite_timeout(s,rqstbuf,len+LONGSIZE,RFIO_CTRL_TIMEOUT) != (len+LONGSIZE)) {
@@ -1746,17 +1744,17 @@ int     srlstat(s,rt,host,bet)
 int     s;
 int     rt; /* Is it a remote site call ?   */
 char *host; /* Where the request comes from */
-int   bet ; /* Version indicator: 0(old) or 1(new) */
+int   bet; /* Version indicator: 0(old) or 1(new) */
 {
-   char *   p ;
+   char *   p;
    int status = 0, rcode = 0;
-   int    len ;
-   struct stat statbuf ;
+   int    len;
+   struct stat statbuf;
    char user[CA_MAXUSRNAMELEN+1];
    int uid,gid;
 
-   p= rqstbuf + 2*WORDSIZE ;
-   unmarshall_LONG(p,len) ;
+   p= rqstbuf + 2*WORDSIZE;
+   unmarshall_LONG(p,len);
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
    } else {
@@ -1768,7 +1766,7 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
        log(LOG_ERR,"rlstat: read(): %s\n",strerror(errno));
        return -1;
      }
-     p= rqstbuf ;
+     p= rqstbuf;
      status = uid = gid = 0;
      if (bet) {
        unmarshall_WORD(p,uid);
@@ -1786,13 +1784,13 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
      if ( (status == 0) && bet && rt ) {
        char to[100];
        int rcd;
-       int to_uid, to_gid ;
+       int to_uid, to_gid;
        
        if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-         log(LOG_ERR,"rlstat: get_user(): Error opening mapping file\n") ;
+         log(LOG_ERR,"rlstat: get_user(): Error opening mapping file\n");
          status= -1;
          errno = EINVAL;
-         rcode = errno ;
+         rcode = errno;
        }
        
        if ( !status && abs(rcd) == 1 ) {
@@ -1803,9 +1801,9 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
        }
        else {
          log(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n",
-             host,user,uid,gid,to,to_uid,to_gid) ;
-         uid = to_uid ;
-         gid = to_gid ;
+             host,user,uid,gid,to,to_uid,to_gid);
+         uid = to_uid;
+         gid = to_gid;
        }
      }
      if ( !status ) {
@@ -1828,21 +1826,21 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
          else
            log(LOG_ERR,"rlstat(): failed at check_user_perm(), rcode %d\n",rcode);
          memset(&statbuf,'\0',sizeof(statbuf));
-         status = rcode ;
+         status = rcode;
        } else {
          char ofilename[MAXFILENAMSIZE];
          strcpy(ofilename, filename);
          if (forced_filename != NULL || !check_path_whitelist(host, filename, rfio_all_perms, ofilename, sizeof(ofilename),0)) {
-           status= ( lstat(CORRECT_FILENAME(ofilename), &statbuf) < 0 ) ? errno : 0 ;
+           status= ( lstat(CORRECT_FILENAME(ofilename), &statbuf) < 0 ) ? errno : 0;
           } else {
            status = errno;
          }
-         log(LOG_INFO,"rlstat: file: %s , status %d\n",CORRECT_FILENAME(filename),status) ;
+         log(LOG_INFO,"rlstat: file: %s , status %d\n",CORRECT_FILENAME(filename),status);
        }
      }
    }
    
-   p = rqstbuf ;
+   p = rqstbuf;
    marshall_WORD(p, statbuf.st_dev);
    marshall_LONG(p, statbuf.st_ino);
    marshall_WORD(p, statbuf.st_mode);
@@ -1862,9 +1860,9 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
    log(LOG_DEBUG, "rlstat: sending back %d\n", status);
    if (netwrite_timeout(s,rqstbuf,6*LONGSIZE+5*WORDSIZE,RFIO_CTRL_TIMEOUT) != (6*LONGSIZE+5*WORDSIZE))  {
       log(LOG_ERR, "rlstat: netwrite_timeout(): %s\n", strerror(errno));
-      return -1 ;
+      return -1;
    }
-   return 0 ;
+   return 0;
 }
 #endif   /* !WIN32 */
 
@@ -1876,12 +1874,12 @@ int     s;
 #endif
 int   rt; /* Is it a remote site call ?   */
 char *host; /* Where the request comes from */
-int   bet ; /* Version indicator: 0(old) or 1(new) */
+int   bet; /* Version indicator: 0(old) or 1(new) */
 {
-   char *   p ;
+   char *   p;
    int status = 0, rcode = 0; 
-   int    len ; 
-   struct stat statbuf ;
+   int    len; 
+   struct stat statbuf;
    char user[CA_MAXUSRNAMELEN+1];
    int uid,gid;
 
@@ -1889,8 +1887,8 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
    struct thData *td;
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
-   p= rqstbuf + 2*WORDSIZE ;
-   unmarshall_LONG(p,len) ;
+   p= rqstbuf + 2*WORDSIZE;
+   unmarshall_LONG(p,len);
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
    } else {
@@ -1906,7 +1904,7 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
 #endif      
        return -1;
      }
-     p= rqstbuf ;
+     p= rqstbuf;
      status = uid = gid = 0;
      if (bet) {
        unmarshall_WORD(p,uid);
@@ -1923,13 +1921,13 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
      if ( (status == 0) && bet && rt ) {
        char to[100];
        int rcd;
-       int to_uid, to_gid ;
+       int to_uid, to_gid;
        
        if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-         log(LOG_ERR,"rstat: get_user(): Error opening mapping file\n") ;
+         log(LOG_ERR,"rstat: get_user(): Error opening mapping file\n");
          status= -1;
          errno = EINVAL;
-         rcode = errno ;
+         rcode = errno;
        }
        
        if ( !status && abs(rcd) == 1 ) {
@@ -1940,9 +1938,9 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
        }
        else {
          log(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n",
-             host,user,uid,gid,to,to_uid,to_gid) ;
-         uid = to_uid ;
-         gid = to_gid ;
+             host,user,uid,gid,to,to_uid,to_gid);
+         uid = to_uid;
+         gid = to_gid;
        }
      }
      if ( !status ) {
@@ -1969,22 +1967,22 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
          else
            log(LOG_ERR,"rstat(): failed at check_user_perm(), rcode %d\n",rcode);
          memset(&statbuf,'\0',sizeof(statbuf));
-         status = rcode ;
+         status = rcode;
        } else  {
          char ofilename[MAXFILENAMSIZE];
          strcpy(ofilename, filename);
          if (forced_filename != NULL || !check_path_whitelist(host, filename, rfio_all_perms, ofilename, sizeof(ofilename),1)) {
-           status= ( stat(CORRECT_FILENAME(ofilename), &statbuf) < 0 ) ? errno : 0 ;
+           status= ( stat(CORRECT_FILENAME(ofilename), &statbuf) < 0 ) ? errno : 0;
          } else {
            status = errno;
          }
 
-         log(LOG_INFO,"rstat: stat(): file: %s for (%d,%d) status %d\n",CORRECT_FILENAME(filename),uid,gid,status) ;
+         log(LOG_INFO,"rstat: stat(): file: %s for (%d,%d) status %d\n",CORRECT_FILENAME(filename),uid,gid,status);
        }
      }
    }
    
-   p = rqstbuf ;
+   p = rqstbuf;
    marshall_WORD(p, statbuf.st_dev);
    marshall_LONG(p, statbuf.st_ino);
    marshall_WORD(p, statbuf.st_mode);
@@ -2011,9 +2009,9 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
 #else      
       log(LOG_ERR, "rstat: netwrite_timeout(): %s\n", strerror(errno));
 #endif      
-      return -1 ; 
+      return -1; 
    }
-   return 0 ; 
+   return 0; 
 }
 
 #if !defined(_WIN32)
@@ -2022,17 +2020,17 @@ int     s;
 char    *host;
 int     rt;
 {
-   char *p ;
+   char *p;
    int  status = 0; 
    int  len ,uid, gid; 
-   int  mode ;
+   int  mode;
    int rcode = 0;
    const char *perm_array[14] = { "OPENTRUST", "STATTRUST", "POPENTRUST", "LINKTRUST", "CHMODTRUST",
                                  "CHOWNTRUST", "MKDIRTRUST", "RMDIRTRUST", "RENAMETRUST",
                                  NULL, NULL, NULL, NULL, NULL };
 
-   p= rqstbuf + 2*WORDSIZE ;
-   unmarshall_LONG(p,len) ;
+   p= rqstbuf + 2*WORDSIZE;
+   unmarshall_LONG(p,len);
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
    } else {
@@ -2044,7 +2042,7 @@ int     rt;
        log(LOG_ERR,"raccess: read(): %s\n",strerror(errno));
        return -1;
      }
-     p= rqstbuf ;
+     p= rqstbuf;
      *filename = '\0';
      status = 0;
      if ( (status == 0) &&
@@ -2065,8 +2063,8 @@ int     rt;
       * related activity will FAIL!!!
       */
      if ( (! status) && (((getuid() == 0) && (setgroups(0, NULL)<0)) || (setgid(gid)<0) || (setuid(uid)<0)) )  {
-       status= errno ;
-       log(LOG_ERR,"raccess: unable to setuid,gid(%d,%d): %s, we are (uid=%d,gid=%d,euid=%d,egid=%d)\n",uid,gid,strerror(errno),(int) getuid(),(int) getgid(),(int) geteuid(),(int) getegid()) ;
+       status= errno;
+       log(LOG_ERR,"raccess: unable to setuid,gid(%d,%d): %s, we are (uid=%d,gid=%d,euid=%d,egid=%d)\n",uid,gid,strerror(errno),(int) getuid(),(int) getgid(),(int) geteuid(),(int) getegid());
      }
      
      if (!status) {
@@ -2168,16 +2166,16 @@ int     rt;
        } else {
          char ofilename[MAXFILENAMSIZE];
          if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
-           status= ( access(ofilename, mode) < 0 ) ? errno : 0 ;
+           status= ( access(ofilename, mode) < 0 ) ? errno : 0;
          } else {
            status = errno;
          }
-         log(LOG_INFO,"raccess: filen: %s, mode %d for (%d,%d) status %d\n",filename,mode,uid,gid,status) ;
+         log(LOG_INFO,"raccess: filen: %s, mode %d for (%d,%d) status %d\n",filename,mode,uid,gid,status);
        }
      }
    }
    
-   p = rqstbuf ;
+   p = rqstbuf;
    /*
     * Bug #2646. This is one of the rare cases when the errno
     * is returned in the status parameter.
@@ -2190,33 +2188,33 @@ int     rt;
    log(LOG_DEBUG, "raccess: sending back %d\n", status);
    if (netwrite_timeout(s,rqstbuf,LONGSIZE,RFIO_CTRL_TIMEOUT) != LONGSIZE)  {
       log(LOG_ERR, "raccess: netwrite_timeout(): %s\n", strerror(errno));
-      return -1 ; 
+      return -1; 
    }
-   return 0 ; 
+   return 0; 
 }
 #endif   /* !WIN32 */
 
 int  srstatfs(s)
 int     s;
 {
-   int status = 0 ;
+   int status = 0;
    int rcode = 0;
-   int len ;
-   char *p ;
-   char path[MAXFILENAMSIZE] ;
-   struct rfstatfs statfsbuf ;
+   int len;
+   char *p;
+   char path[MAXFILENAMSIZE];
+   struct rfstatfs statfsbuf;
 
 #if defined(_WIN32)
    struct thData *td;
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
-   p= rqstbuf + 2*WORDSIZE ;
-   unmarshall_LONG(p,len) ;
+   p= rqstbuf + 2*WORDSIZE;
+   unmarshall_LONG(p,len);
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
    } else {
-     log(LOG_DEBUG,"srstatfs(): reading %d bytes\n",len) ;
+     log(LOG_DEBUG,"srstatfs(): reading %d bytes\n",len);
      if ((status = netread_timeout(s,rqstbuf,len,RFIO_CTRL_TIMEOUT)) != len) {
 #if defined(_WIN32)
        log(LOG_ERR,"srstatfs(): read(): %s\n", geterr());
@@ -2226,7 +2224,7 @@ int     s;
        return -1;
      }
 
-     p= rqstbuf ;
+     p= rqstbuf;
      status = 0;
      *path = '\0';
      if ( (status == 0) &&
@@ -2234,9 +2232,9 @@ int     s;
        rcode = SENAMETOOLONG;
        log(LOG_ERR,"srstatfs: path too long\n");
      } else {
-       status = rfstatfs(path,&statfsbuf) ;
-       rcode = errno ;
-       log(LOG_INFO,"srrstatfs: path : %s , status %d\n",path,status ) ;
+       status = rfstatfs(path,&statfsbuf);
+       rcode = errno;
+       log(LOG_INFO,"srrstatfs: path : %s , status %d\n",path,status );
      }
      
      /*
@@ -2244,14 +2242,14 @@ int     s;
       */
    }
    
-   p = rqstbuf ;
-   marshall_LONG( p, statfsbuf.bsize ) ;
-   marshall_LONG( p, statfsbuf.totblks ) ;
-   marshall_LONG( p, statfsbuf.freeblks ) ;
-   marshall_LONG( p, statfsbuf.totnods ) ;
-   marshall_LONG( p, statfsbuf.freenods ) ;
-   marshall_LONG( p, status ) ;
-   marshall_LONG( p, rcode ) ;
+   p = rqstbuf;
+   marshall_LONG( p, statfsbuf.bsize );
+   marshall_LONG( p, statfsbuf.totblks );
+   marshall_LONG( p, statfsbuf.freeblks );
+   marshall_LONG( p, statfsbuf.totnods );
+   marshall_LONG( p, statfsbuf.freenods );
+   marshall_LONG( p, status );
+   marshall_LONG( p, rcode );
 
    log(LOG_DEBUG, "srstatfs: sending back %d\n", status);
    if (netwrite_timeout(s,rqstbuf,7*LONGSIZE,RFIO_CTRL_TIMEOUT) != (7*LONGSIZE))  {
@@ -2260,9 +2258,9 @@ int     s;
 #else      
       log(LOG_ERR, "srstatfs: netwrite_timeout(): %s\n", strerror(errno));
 #endif      
-      return -1 ;
+      return -1;
    }
-   return status ;
+   return status;
 
 
 }
@@ -2275,7 +2273,7 @@ int     s;
 #endif  
 int   rt;   /* Is it a remote site call ?   */
 char *host; /* Where the request comes from */
-int   bet ; /* Version indicator: 0(old) or 1(new) */
+int   bet; /* Version indicator: 0(old) or 1(new) */
 {
    int   status;
    int   rcode = 0;
@@ -2304,26 +2302,26 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
-   p = rqstbuf + 2*WORDSIZE ;
-   unmarshall_LONG(p, len) ;
+   p = rqstbuf + 2*WORDSIZE;
+   unmarshall_LONG(p, len);
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
    } else {
      /*
       * Reading open request.
       */
-     log(LOG_DEBUG,"ropen: reading %d bytes\n",len) ;
+     log(LOG_DEBUG,"ropen: reading %d bytes\n",len);
      memset(rqstbuf,'\0',BUFSIZ);
      if ((status = netread_timeout(s,rqstbuf,len,RFIO_CTRL_TIMEOUT)) != len) {
 #if defined(_WIN32)
        log(LOG_ERR,"ropen: read(): %s\n", geterr());
 #else      
-       log(LOG_ERR,"ropen: read(): %s\n",strerror(errno)) ;
+       log(LOG_ERR,"ropen: read(): %s\n",strerror(errno));
 #endif      
-       return -1 ;
+       return -1;
      }
      status = 0;
-     p= rqstbuf ;
+     p= rqstbuf;
      unmarshall_WORD(p, uid);
      unmarshall_WORD(p, gid);
      unmarshall_WORD(p, mask);
@@ -2351,7 +2349,7 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
          rcode = E2BIG;
      }
      
-     log(LOG_DEBUG,"vms string is %s\n", vmstr) ;
+     log(LOG_DEBUG,"vms string is %s\n", vmstr);
      if (bet) 
        log(LOG_DEBUG,"Opening file %s for remote user: %s\n",CORRECT_FILENAME(filename),user);
      if (rt)
@@ -2367,19 +2365,19 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
       */
      if ( (status == 0) && bet && !mapping && !rt) {
        log(LOG_INFO,"attempt to make non-mapped I/O and modify uid or gid !\n");
-       errno=EACCES ;
-       rcode=errno ;
-       status= -1 ;
+       errno=EACCES;
+       rcode=errno;
+       status= -1;
      }
      
      if ( rt ) { 
 #if !defined(ultrix)
-       openlog("rfio",LOG_PID, LOG_USER) ;
+       openlog("rfio",LOG_PID, LOG_USER);
 #else
-       openlog("rfio",LOG_PID ) ;
+       openlog("rfio",LOG_PID );
 #endif
-       syslog(LOG_ALERT, "rfio: connection %s mapping by %s(%d,%d) from %s",(mapping ? "with" : "without"),user,uid,gid,host) ;
-       closelog() ;
+       syslog(LOG_ALERT, "rfio: connection %s mapping by %s(%d,%d) from %s",(mapping ? "with" : "without"),user,uid,gid,host);
+       closelog();
      }
      
      /*
@@ -2391,10 +2389,10 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
        
        log(LOG_DEBUG,"Mapping (%s, %d, %d) \n",user, uid, gid );
        if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-         log(LOG_ERR,"sropen(): get_user() error opening mapping file\n") ;
+         log(LOG_ERR,"sropen(): get_user() error opening mapping file\n");
          status = -1;
          errno = EINVAL;
-         rcode = SEHOSTREFUSED ;
+         rcode = SEHOSTREFUSED;
        }
        
        else if ( abs(rcd) == 1 ) {
@@ -2405,9 +2403,9 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
        }
        else {
          log(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n",
-             host,user,uid,gid,to,to_uid,to_gid) ;
-         uid = to_uid ;
-         gid = to_gid ;
+             host,user,uid,gid,to,to_uid,to_gid);
+         uid = to_uid;
+         gid = to_gid;
          if ( uid < 100 || gid < 100 ) {
            errno = EACCES;
            status = -1;
@@ -2434,9 +2432,9 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
            if( (sock = connecttpread(reqhost, passwd)) >= 0 && !checkkey(sock, passwd) )  
 #endif
            {
-             status= -1 ;
+             status= -1;
              errno = EACCES;
-             rcode= errno ;
+             rcode= errno;
              log(LOG_ERR,"ropen: DIRECT mapping : permission denied\n");
            }
 #if defined(_WIN32)
@@ -2445,7 +2443,7 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
            if( sock < 0 ) 
 #endif
            {
-             status= -1 ;
+             status= -1;
              log(LOG_ERR,"ropen: DIRECT mapping failed: Couldn't connect %s\n", reqhost);
              rcode = EACCES;
            }
@@ -2460,7 +2458,7 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
        log(LOG_DEBUG, "ropen: account: %s\n", account);
        log(LOG_DEBUG, "ropen: filename: %s\n", CORRECT_FILENAME(filename));
        log(LOG_INFO, "ropen(%s,0X%X,0X%X) for (%d,%d)\n",CORRECT_FILENAME(filename),flags,mode,uid,gid);
-       (void) umask((mode_t) CORRECT_UMASK(mask)) ;
+       (void) umask((mode_t) CORRECT_UMASK(mask));
 
        rc = rfio_handle_open(CORRECT_FILENAME(filename),
 			     ntohopnflg(flags),
@@ -2472,10 +2470,10 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
 			     &need_user_check);
        if (rc < 0) {
 	 char alarmbuf[1024];
-	 sprintf(alarmbuf,"sropen(): %s",CORRECT_FILENAME(filename)) ;
-	 log(LOG_DEBUG, "sropen: rfio_handler_open refused open: %s\n", sstrerror(serrno)) ;
+	 sprintf(alarmbuf,"sropen(): %s",CORRECT_FILENAME(filename));
+	 log(LOG_DEBUG, "sropen: rfio_handler_open refused open: %s\n", sstrerror(serrno));
 	 rcode = serrno;
-	 rfio_alrm(rcode,alarmbuf) ;
+	 rfio_alrm(rcode,alarmbuf);
        }
 
        if (need_user_check && ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
@@ -2484,7 +2482,7 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
 	     log(LOG_ERR,"ropen(): uid %d not allowed to open()\n",uid);
 	   else
 	     log(LOG_ERR,"ropen(): failed at check_user_perm(), rcode %d\n",rcode);
-	   status = -1 ;
+	   status = -1;
 	 }
       else
       {
@@ -2497,24 +2495,24 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
          strcpy(ofilename, filename);
          fd = -1;
          if (forced_filename!=NULL || !check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
-           fd = open(CORRECT_FILENAME(ofilename), ntohopnflg(flags), mode) ;
+           fd = open(CORRECT_FILENAME(ofilename), ntohopnflg(flags), mode);
            log(LOG_DEBUG, "ropen: open(%s,%d,%d) returned %x (hex)\n", CORRECT_FILENAME(ofilename), flags, mode, fd);
          }
          if (fd < 0) {
            char alarmbuf[1024];
-           sprintf(alarmbuf,"sropen(): %s",CORRECT_FILENAME(filename)) ;
-           status= -1 ;
-           rcode= errno ;
-           log(LOG_DEBUG,"ropen: open: %s\n",strerror(errno)) ;
-           rfio_alrm(rcode,alarmbuf) ;
+           sprintf(alarmbuf,"sropen(): %s",CORRECT_FILENAME(filename));
+           status= -1;
+           rcode= errno;
+           log(LOG_DEBUG,"ropen: open: %s\n",strerror(errno));
+           rfio_alrm(rcode,alarmbuf);
          }
          else {
 	   /*
             * Getting current offset
             */
-           status= lseek(fd,0L,SEEK_CUR) ;
-           log(LOG_DEBUG,"ropen: lseek(%d,0,SEEK_CUR) returned %x (hex)\n",fd,status) ; 
-           if ( status < 0 ) rcode= errno ;
+           status= lseek(fd,0L,SEEK_CUR);
+           log(LOG_DEBUG,"ropen: lseek(%d,0,SEEK_CUR) returned %x (hex)\n",fd,status); 
+           if ( status < 0 ) rcode= errno;
          }
       }
      }
@@ -2525,11 +2523,11 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
    /*
     * Sending back status.
     */
-   p= rqstbuf ;
-   marshall_WORD(p,RQST_OPEN) ; 
+   p= rqstbuf;
+   marshall_WORD(p,RQST_OPEN); 
    marshall_LONG(p,status);
-   marshall_LONG(p,rcode) ;
-   marshall_LONG(p,0) ;
+   marshall_LONG(p,rcode);
+   marshall_LONG(p,0);
 #if defined(SACCT)
    rfioacct(RQST_OPEN,uid,gid,s,(int)ntohopnflg(flags),(int)mode,status,rcode,NULL,CORRECT_FILENAME(filename),NULL);
 #endif /* SACCT */
@@ -2538,11 +2536,11 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
 #if defined(_WIN32)
       log(LOG_ERR,"ropen: netwrite_timeout(): %s\n", geterr());
 #else      
-      log(LOG_ERR,"ropen: netwrite_timeout(): %s\n",strerror(errno)) ;
+      log(LOG_ERR,"ropen: netwrite_timeout(): %s\n",strerror(errno));
 #endif      
-      return -1 ;
+      return -1;
    }
-   return fd ;
+   return fd;
 }
 
 // useful function to answer the client
@@ -2550,11 +2548,11 @@ int rfio_calls_answer_client_internal
 (char* rqstbuf, int code, int status, int s) {
   char* p;
   p = rqstbuf;
-  marshall_WORD(p,RQST_WRITE) ;
-  marshall_LONG(p,status) ; 
-  marshall_LONG(p,code) ;
-  marshall_LONG(p,0) ;
-  log(LOG_DEBUG, "srwrite: status %d, rcode %d\n", status, code) ;
+  marshall_WORD(p,RQST_WRITE);
+  marshall_LONG(p,status); 
+  marshall_LONG(p,code);
+  marshall_LONG(p,0);
+  log(LOG_DEBUG, "srwrite: status %d, rcode %d\n", status, code);
   if ( netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != WORDSIZE+3*LONGSIZE ) {
 #if defined(_WIN32) 
     log(LOG_ERR, "srwrite: netwrite(): %s\n", geterr());
@@ -2573,7 +2571,7 @@ SOCKET s;
 int     s;
 #endif
 int     fd;
-struct rfiostat * infop ;
+struct rfiostat * infop;
 {
    int  status;         /* Return code               */
    int  rcode;          /* To send back errno        */
@@ -2593,7 +2591,7 @@ struct rfiostat * infop ;
      if (status != 0) {
        log(LOG_ERR, "srwrite: rfio_handle_firstwrite(): %s\n", strerror(serrno));
        rfio_calls_answer_client_internal(rqstbuf, serrno, status, s);
-       return -1 ;
+       return -1;
      }
    }
 
@@ -2601,28 +2599,28 @@ struct rfiostat * infop ;
     * Receiving request,
     */
    log(LOG_DEBUG, "rwrite(%d, %d)\n",s, fd);
-   p= rqstbuf + 2*WORDSIZE ; 
+   p= rqstbuf + 2*WORDSIZE; 
    unmarshall_LONG(p, size);
-   unmarshall_LONG(p,how) ;
-   unmarshall_LONG(p,offset) ; 
+   unmarshall_LONG(p,how);
+   unmarshall_LONG(p,offset); 
    log(LOG_DEBUG, "rwrite(%d, %d): size %d, how %d offset %d\n",s,fd,size,how,offset);
    /*
     * Checking if buffer is large enough. 
     */
    if (iobufsiz < size)     {
-      int     optval ;        /* setsockopt opt value */
+      int     optval;        /* setsockopt opt value */
 
       if (iobufsiz > 0)       {
          log(LOG_DEBUG, "rwrite(): freeing %x\n",iobuffer);
-         (void) free(iobuffer) ;
+         (void) free(iobuffer);
       }
       if ((iobuffer = malloc(size)) == NULL)    {
          rfio_calls_answer_client_internal(rqstbuf, errno, -1, s);
-         return -1 ;
+         return -1;
       }
-      iobufsiz = size ;
+      iobufsiz = size;
       optval = (iobufsiz > 64 * 1024) ? iobufsiz : (64 * 1024);
-      log(LOG_DEBUG, "rwrite(): allocated %d bytes at %x\n",size,iobuffer) ;
+      log(LOG_DEBUG, "rwrite(): allocated %d bytes at %x\n",size,iobuffer);
 #if defined(_WIN32)
       if( setsockopt(s, SOL_SOCKET, SO_RCVBUF, (char*)&optval, sizeof(optval)) == SOCKET_ERROR ) 
          log(LOG_ERR, "rwrite(): setsockopt(SO_RCVBUF): %s\n", geterr());
@@ -2631,7 +2629,7 @@ struct rfiostat * infop ;
          log(LOG_ERR, "rwrite(): setsockopt(SO_RCVBUF): %s\n",strerror(errno));
 #endif      
       else
-         log(LOG_DEBUG, "rwrite(): setsockopt(SO_RCVBUF): %d\n",optval) ;
+         log(LOG_DEBUG, "rwrite(): setsockopt(SO_RCVBUF): %d\n",optval);
    }
    /*
     * Reading data on the network.
@@ -2641,41 +2639,41 @@ struct rfiostat * infop ;
 #if defined(_WIN32)
        log(LOG_ERR, "rwrite: read(): %s\n", geterr());
 #else      
-      log(LOG_ERR, "rwrite: read(): %s\n", strerror(errno)) ;
+      log(LOG_ERR, "rwrite: read(): %s\n", strerror(errno));
 #endif      
-      return -1 ;
+      return -1;
    }
    /*
     * lseek() if needed.
     */
    if ( how != -1 ) {
-      log(LOG_DEBUG,"rwrite(%d,%d): lseek(%d,%d,%d)\n",s,fd,fd,offset,how) ; 
+      log(LOG_DEBUG,"rwrite(%d,%d): lseek(%d,%d,%d)\n",s,fd,fd,offset,how); 
       infop->seekop++;
       if ( (status= lseek(fd,offset,how)) == -1 ) { 
          rfio_calls_answer_client_internal(rqstbuf, errno, status, s);
-         return -1 ;
+         return -1;
       }
    }
    /*
     * Writing data on disk.
     */
-   infop->wnbr+= size ;
+   infop->wnbr+= size;
 #if defined(HPSS)
    status = rhpss_write(fd,p,size,s,0,0);
 #else /* HPSS */
-   status = write(fd,p,size) ;
+   status = write(fd,p,size);
 #endif /* HPSS */
-   rcode= ( status < 0 ) ? errno : 0 ;
+   rcode= ( status < 0 ) ? errno : 0;
 
    if ( status < 0 ) {
       char alarmbuf[1024];
-      sprintf(alarmbuf,"srwrite(): %s",filename) ;
-      rfio_alrm(rcode,alarmbuf) ;
+      sprintf(alarmbuf,"srwrite(): %s",filename);
+      rfio_alrm(rcode,alarmbuf);
    }
    if (rfio_calls_answer_client_internal(rqstbuf, rcode, status, s) < 0) {
      return -1;
    }
-   return status ; 
+   return status; 
 }
 
 int srread(s, infop, fd)
@@ -2685,15 +2683,15 @@ SOCKET  s;
 int     s;
 #endif
 int     fd;
-struct rfiostat * infop ;
+struct rfiostat * infop;
 {
-   int  status ;        /* Return code                */
-   int  rcode ;         /* To send back errno         */
-   int  how ;           /* lseek mode                 */
-   int  offset ;        /* lseek offset               */
-   int  size ;          /* Requested read size        */
-   char *p ;            /* Pointer to buffer          */
-   int  msgsiz ;        /* Message size               */
+   int  status;        /* Return code                */
+   int  rcode;         /* To send back errno         */
+   int  how;           /* lseek mode                 */
+   int  offset;        /* lseek offset               */
+   int  size;          /* Requested read size        */
+   char *p;            /* Pointer to buffer          */
+   int  msgsiz;        /* Message size               */
 
 #if defined(_WIN32)
    struct thData *td;
@@ -2704,32 +2702,32 @@ struct rfiostat * infop ;
     * Receiving request.
     */
    log(LOG_DEBUG, "rread(%d, %d)\n",s, fd);
-   p= rqstbuf + 2*WORDSIZE ; 
-   unmarshall_LONG(p, size) ;
-   unmarshall_LONG(p,how) ;
-   unmarshall_LONG(p,offset) ; 
+   p= rqstbuf + 2*WORDSIZE; 
+   unmarshall_LONG(p, size);
+   unmarshall_LONG(p,how);
+   unmarshall_LONG(p,offset); 
    /*
     * lseek() if needed.
     */
    if ( how != -1 ) {
-      log(LOG_DEBUG,"rread(%d,%d): lseek(%d,%d,%d)\n",s,fd,fd,offset,how) ; 
+      log(LOG_DEBUG,"rread(%d,%d): lseek(%d,%d,%d)\n",s,fd,fd,offset,how); 
       infop->seekop++;
       if ( (status= lseek(fd,offset,how)) == -1 ) { 
-         rcode= errno ;
-         p= rqstbuf ; 
-         marshall_WORD(p,RQST_READ) ;
-         marshall_LONG(p,status) ; 
-         marshall_LONG(p,rcode) ; 
-         marshall_LONG(p,0) ;
+         rcode= errno;
+         p= rqstbuf; 
+         marshall_WORD(p,RQST_READ);
+         marshall_LONG(p,status); 
+         marshall_LONG(p,rcode); 
+         marshall_LONG(p,0);
          if ( netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE) ) {
 #if defined(_WIN32)
             log(LOG_ERR, "rread: netwrite_timeout(): %s\n", geterr());
 #else
             log(LOG_ERR, "rread: netwrite_timeout(): %s\n", strerror(errno));
 #endif    
-            return -1 ;
+            return -1;
          }
-         return -1 ;
+         return -1;
       }
    }
    /*
@@ -2737,32 +2735,32 @@ struct rfiostat * infop ;
     */
    log(LOG_DEBUG, "rread(%d, %d): checking buffer size %d\n", s, fd, size);
    if (iobufsiz < (size+WORDSIZE+3*LONGSIZE))     {
-      int     optval ;        /* setsockopt opt value        */
+      int     optval;        /* setsockopt opt value        */
 
       if (iobufsiz > 0)       {
          log(LOG_DEBUG, "rread(): freeing %x\n",iobuffer);
          (void) free(iobuffer);
       }
       if ((iobuffer = malloc(size+WORDSIZE+3*LONGSIZE)) == NULL)    {
-         status= -1 ; 
-         rcode= errno ;
-         log(LOG_ERR, "rread: malloc(): %s\n", strerror(errno)) ;
-         p= rqstbuf ; 
-         marshall_WORD(p,RQST_READ) ;
-         marshall_LONG(p,status) ; 
-         marshall_LONG(p,rcode) ; 
-         marshall_LONG(p,0) ;
+         status= -1; 
+         rcode= errno;
+         log(LOG_ERR, "rread: malloc(): %s\n", strerror(errno));
+         p= rqstbuf; 
+         marshall_WORD(p,RQST_READ);
+         marshall_LONG(p,status); 
+         marshall_LONG(p,rcode); 
+         marshall_LONG(p,0);
          if ( netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE) ) {
 #if defined(_WIN32)
             log(LOG_ERR, "rread: netwrite_timeout(): %s\n", geterr());
 #else    
-            log(LOG_ERR, "rread: netwrite_timeout(): %s\n", strerror(errno)) ;
+            log(LOG_ERR, "rread: netwrite_timeout(): %s\n", strerror(errno));
 #endif    
-            return -1 ;
+            return -1;
          }
-         return -1 ; 
+         return -1; 
       }
-      iobufsiz = size + WORDSIZE + 3*LONGSIZE ;
+      iobufsiz = size + WORDSIZE + 3*LONGSIZE;
       log(LOG_DEBUG, "rread(): allocated %d bytes at %x\n",size,iobuffer);
       optval = (iobufsiz > 64 * 1024) ? iobufsiz : (64 * 1024);
 #if defined(_WIN32)
@@ -2779,34 +2777,34 @@ struct rfiostat * infop ;
 #if defined(HPSS)
    status = rhpss_read(fd,p,size,s,0,0);
 #else /* HPSS */
-   status = read(fd, p, size) ;
+   status = read(fd, p, size);
 #endif /* HPSS */
    if ( status < 0 ) {
       char alarmbuf[1024];
-      sprintf(alarmbuf,"srread(): %s",filename) ;
-      rcode= errno ;
-      msgsiz= WORDSIZE+3*LONGSIZE ;
-      rfio_alrm(rcode,alarmbuf) ;
+      sprintf(alarmbuf,"srread(): %s",filename);
+      rcode= errno;
+      msgsiz= WORDSIZE+3*LONGSIZE;
+      rfio_alrm(rcode,alarmbuf);
    }  else  {
-      rcode= 0 ; 
-      infop->rnbr+= status ;
-      msgsiz= status+WORDSIZE+3*LONGSIZE ;
+      rcode= 0; 
+      infop->rnbr+= status;
+      msgsiz= status+WORDSIZE+3*LONGSIZE;
    }
-   p= iobuffer ;
-   marshall_WORD(p,RQST_READ) ; 
-   marshall_LONG(p,status) ;
-   marshall_LONG(p,rcode) ;
-   marshall_LONG(p,status) ;
-   log(LOG_DEBUG, "rread: returning status %d, rcode %d\n", status, rcode) ;
+   p= iobuffer;
+   marshall_WORD(p,RQST_READ); 
+   marshall_LONG(p,status);
+   marshall_LONG(p,rcode);
+   marshall_LONG(p,status);
+   log(LOG_DEBUG, "rread: returning status %d, rcode %d\n", status, rcode);
    if (netwrite_timeout(s,iobuffer,msgsiz,RFIO_CTRL_TIMEOUT) != msgsiz)  {
 #if defined(_WIN32)
       log(LOG_ERR, "rread: netwrite_timeout(): %s\n", geterr());
 #else      
       log(LOG_ERR, "rread: netwrite_timeout(): %s\n", strerror(errno));
 #endif      
-      return -1 ;
+      return -1;
    }
-   return status ;
+   return status;
 }
 
 int srreadahead(s, infop, fd)
@@ -2816,7 +2814,7 @@ SOCKET  s;
 int     s;
 #endif
 int     fd;
-struct rfiostat *infop ;
+struct rfiostat *infop;
 {
    int  status;         /* Return code                 */ 
    int  rcode;          /* To send back errno          */
@@ -2835,31 +2833,31 @@ struct rfiostat *infop ;
     * Receiving request.
     */
    log(LOG_DEBUG, "rreadahead(%d, %d)\n",s, fd);
-   p= rqstbuf + 2*WORDSIZE ; 
+   p= rqstbuf + 2*WORDSIZE; 
    unmarshall_LONG(p,size);
-   unmarshall_LONG(p,how) ;
-   unmarshall_LONG(p,offset) ; 
+   unmarshall_LONG(p,how);
+   unmarshall_LONG(p,offset); 
    /*
     * lseek() if needed.
     */
    if ( how != -1 ) {
-      log(LOG_DEBUG,"rread(%d,%d): lseek(%d,%d,%d)\n",s,fd,fd,offset,how) ; 
+      log(LOG_DEBUG,"rread(%d,%d): lseek(%d,%d,%d)\n",s,fd,fd,offset,how); 
       infop->seekop++;
       if ( (status= lseek(fd,offset,how)) == -1 ) { 
-         rcode= errno ;
-         p= iobuffer ; 
-         marshall_WORD(p,RQST_FIRSTREAD) ;
-         marshall_LONG(p,status) ; 
-         marshall_LONG(p,rcode) ; 
+         rcode= errno;
+         p= iobuffer; 
+         marshall_WORD(p,RQST_FIRSTREAD);
+         marshall_LONG(p,status); 
+         marshall_LONG(p,rcode); 
          if ( netwrite_timeout(s,iobuffer,iobufsiz,RFIO_CTRL_TIMEOUT) != iobufsiz ) {
 #if defined(_WIN32)
             log(LOG_ERR, "rreadahead(): netwrite_timeout(): %s\n",geterr());
 #else    
             log(LOG_ERR, "rreadahead(): netwrite_timeout(): %s\n", strerror(errno));
 #endif    
-            return -1 ;
+            return -1;
          }
-         return status ;
+         return status;
       }
    }
    /*
@@ -2867,20 +2865,20 @@ struct rfiostat *infop ;
     */
    log(LOG_DEBUG, "rreadahead(%d, %d): checking buffer size %d\n", s, fd, size);
    if (iobufsiz < (size+WORDSIZE+3*LONGSIZE))     {
-      int     optval ;        /* setsockopt opt value */
+      int     optval;        /* setsockopt opt value */
 
       if (iobufsiz > 0)       {
          log(LOG_DEBUG, "rreadahead(): freeing %x\n",iobuffer);
          (void) free(iobuffer);    
       }
       if ((iobuffer = malloc(size+WORDSIZE+3*LONGSIZE)) == NULL)    {
-         log(LOG_ERR, "rreadahead: malloc(): %s\n", strerror(errno)) ;
+         log(LOG_ERR, "rreadahead: malloc(): %s\n", strerror(errno));
 #if !defined(HPSS)
-         (void) close(s) ;
+         (void) close(s);
 #endif /* HPSS */
-         return -1 ; 
+         return -1; 
       }
-      iobufsiz = size+WORDSIZE+3*LONGSIZE ;
+      iobufsiz = size+WORDSIZE+3*LONGSIZE;
       optval = (iobufsiz > 64 * 1024) ? iobufsiz : (64 * 1024);
       log(LOG_DEBUG, "rreadahead(): allocated %d bytes at %x\n",iobufsiz,iobuffer);
 #if defined(_WIN32)
@@ -2888,25 +2886,25 @@ struct rfiostat *infop ;
          log(LOG_ERR, "rreadahead(): setsockopt(SO_SNDBUF): %s\n", geterr());
 #else      
       if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char *)&optval, sizeof(optval)) == -1)
-         log(LOG_ERR, "rreadahead(): setsockopt(SO_SNDBUF): %s\n",strerror(errno)) ;
+         log(LOG_ERR, "rreadahead(): setsockopt(SO_SNDBUF): %s\n",strerror(errno));
 #endif      
       else
-         log(LOG_DEBUG, "rreadahead(): setsockopt(SO_SNDBUF): %d\n",optval) ;
+         log(LOG_DEBUG, "rreadahead(): setsockopt(SO_SNDBUF): %d\n",optval);
    }
    /*
     * Reading data and sending it. 
     */
    for(first= 1;;first= 0) {
-      fd_set fds ;
-      struct timeval timeout ;
+      fd_set fds;
+      struct timeval timeout;
 
       /*
        * Has a new request arrived ?
        */
-      FD_ZERO(&fds) ; 
-      FD_SET(s,&fds) ;
-      timeout.tv_sec = 0 ; 
-      timeout.tv_usec= 0 ;
+      FD_ZERO(&fds); 
+      FD_SET(s,&fds);
+      timeout.tv_sec = 0; 
+      timeout.tv_usec= 0;
 #if defined(_WIN32)
       if( select(FD_SETSIZE, &fds, (fd_set*)0, (fd_set*)0, &timeout) == SOCKET_ERROR )  {
          log(LOG_ERR,"rreadahead(): select(): %s\n", geterr());
@@ -2914,55 +2912,55 @@ struct rfiostat *infop ;
       }
 #else      
       if ( select(FD_SETSIZE,&fds,(fd_set *)0,(fd_set *)0,&timeout) == -1 ) {
-         log(LOG_ERR,"rreadahead(): select(): %s\n",strerror(errno)) ;
-         return -1 ; 
+         log(LOG_ERR,"rreadahead(): select(): %s\n",strerror(errno));
+         return -1; 
       }
 #endif      
       if ( FD_ISSET(s,&fds) ) {
-         log(LOG_DEBUG,"rreadahead(): returns because of new request\n") ;
-         return 0 ; 
+         log(LOG_DEBUG,"rreadahead(): returns because of new request\n");
+         return 0; 
       }
       /*
        * Reading disk ...
        */
-      p= iobuffer + WORDSIZE + 3*LONGSIZE ;
+      p= iobuffer + WORDSIZE + 3*LONGSIZE;
 #if defined(HPSS)
       status = rhpss_read(fd,p,size,s,0,0);
 #else /* HPSS */
       status = read(fd,p,size);
 #endif /* HPSS */
       if (status < 0)        {
-         rcode= errno ;
-         iobufsiz= WORDSIZE+3*LONGSIZE ;
+         rcode= errno;
+         iobufsiz= WORDSIZE+3*LONGSIZE;
       }
       else {
-         rcode= 0 ; 
-         infop->rnbr+= status ;
-         iobufsiz = status+WORDSIZE+3*LONGSIZE ;
+         rcode= 0; 
+         infop->rnbr+= status;
+         iobufsiz = status+WORDSIZE+3*LONGSIZE;
       }
       log(LOG_DEBUG, "rreadahead: status %d, rcode %d\n", status, rcode);
       /*
        * Sending data.
        */
-      p= iobuffer ;
-      marshall_WORD(p,(first)?RQST_FIRSTREAD:RQST_READAHEAD) ; 
-      marshall_LONG(p,status) ;
-      marshall_LONG(p, rcode) ;
-      marshall_LONG(p, status) ;
+      p= iobuffer;
+      marshall_WORD(p,(first)?RQST_FIRSTREAD:RQST_READAHEAD); 
+      marshall_LONG(p,status);
+      marshall_LONG(p, rcode);
+      marshall_LONG(p, status);
       if ( netwrite_timeout(s, iobuffer, iobufsiz, RFIO_CTRL_TIMEOUT) != iobufsiz ) {
 #if defined(_WIN32)
          log(LOG_ERR, "rreadahead(): netwrite_timeout(): %s\n", geterr());
 #else     
-         log(LOG_ERR, "rreadahead(): netwrite_timeout(): %s\n", strerror(errno)) ;
+         log(LOG_ERR, "rreadahead(): netwrite_timeout(): %s\n", strerror(errno));
 #endif     
-         return -1 ;
+         return -1;
       }
       /*
        * The end of file has been reached
        * or an error was encountered.
        */
       if ( status != size ) {
-         return 0 ; 
+         return 0; 
       }
    }
 }
@@ -2974,11 +2972,11 @@ SOCKET  s;
 int     s;
 #endif
 int     fd;
-struct rfiostat * infop ;
+struct rfiostat * infop;
 {
-   int status ;
-   int  rcode ;
-   char   * p ;
+   int status;
+   int  rcode;
+   char   * p;
    char tmpbuf[21], tmpbuf2[21];
    struct stat filestat;
    int rc;
@@ -2990,9 +2988,9 @@ struct rfiostat * infop ;
 
    log(LOG_INFO,"rclose(%d,%d): %d read, %d readahead, %d write, %d flush, %d stat, %d lseek and %d preseek\n",
       s, fd, infop->readop, infop->aheadop, infop->writop, infop->flusop, infop->statop,
-      infop->seekop, infop->presop) ;
+      infop->seekop, infop->presop);
    log(LOG_INFO,"rclose(%d,%d): %s bytes read and %s bytes written\n",
-      s, fd, u64tostr(infop->rnbr,tmpbuf,0), u64tostr(infop->wnbr,tmpbuf2,0)) ;
+      s, fd, u64tostr(infop->rnbr,tmpbuf,0), u64tostr(infop->wnbr,tmpbuf2,0));
 
    /* sync the file to be sure that filesize in correct in following stats.
       this is needed by some ext3 bug/feature
@@ -3005,22 +3003,22 @@ struct rfiostat * infop ;
    rc = fstat(fd, &filestat);
    
    status = close(fd);
-   rcode = ( status < 0 ) ? errno : 0 ;
+   rcode = ( status < 0 ) ? errno : 0;
    if (iobufsiz > 0)       {
       log(LOG_DEBUG,"rclose(): freeing %x\n",iobuffer);
       (void) free(iobuffer);
    }
-   iobufsiz= 0 ;
+   iobufsiz= 0;
     ret=rfio_handle_close(handler_context, &filestat, rcode);
     if (ret<0){
       log(LOG_ERR, "srclose: rfio_handle_close failed\n");
-      return -1 ;
+      return -1;
       }
-   p= rqstbuf ; 
-   marshall_WORD(p,RQST_CLOSE) ;
-   marshall_LONG(p,status) ;
-   marshall_LONG(p,rcode) ;
-   marshall_LONG(p,0) ;
+   p= rqstbuf; 
+   marshall_WORD(p,RQST_CLOSE);
+   marshall_LONG(p,status);
+   marshall_LONG(p,rcode);
+   marshall_LONG(p,0);
 #if defined(SACCT)
    rfioacct(RQST_CLOSE,0,0,s,0,0,status,rcode,infop,NULL,NULL);
 #endif /* SACCT */
@@ -3030,9 +3028,9 @@ struct rfiostat * infop ;
 #else      
       log(LOG_ERR, "rclose: netwrite_timeout(): %s\n", strerror(errno));
 #endif
-      return -1 ;
+      return -1;
    }
-   return status ;
+   return status;
 }
 
 int  srpclose(s, fs) 
@@ -3057,21 +3055,21 @@ FILE    *fs;
 #else   
    status = pclose(fs);
 #endif
-   log(LOG_DEBUG,"rpclose(%x) returns %d\n",fs,status) ;
+   log(LOG_DEBUG,"rpclose(%x) returns %d\n",fs,status);
    /*
     * status returns the command's error code
     */
-   p= rqstbuf ;
-   marshall_LONG(p,status) ;
-   marshall_LONG(p,errno) ;
+   p= rqstbuf;
+   marshall_LONG(p,status);
+   marshall_LONG(p,errno);
 #if defined(SACCT)
    rfioacct(RQST_PCLOSE,0,0,s,0,0,status,errno,NULL,NULL,NULL);
 #endif /* SACCT */
    if (netwrite_timeout(s,rqstbuf,2*LONGSIZE,RFIO_CTRL_TIMEOUT) != (2*LONGSIZE))  {
       log(LOG_ERR, "rpclose: netwrite_timeout(): %s\n", strerror(errno));
-      return -1 ;
+      return -1;
    }
-   return status ;
+   return status;
 }
 
 FILE  *srpopen(s, host, rt)
@@ -3101,24 +3099,24 @@ int     rt;
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
-   log(LOG_DEBUG, "srpopen(%d,%s,%d)\n",s,host,rt) ;
-   p= rqstbuf + 2*WORDSIZE ;
+   log(LOG_DEBUG, "srpopen(%d,%s,%d)\n",s,host,rt);
+   p= rqstbuf + 2*WORDSIZE;
    unmarshall_LONG(p ,len );
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      log(LOG_ERR,"Denying popen request (with bad request size) from %s\n", host);
      rcode = errno;
    } else {
      if (netread_timeout(s,rqstbuf,len,RFIO_CTRL_TIMEOUT) != len) {
-       log(LOG_ERR,"rpopen: read(): %s\n",strerror(errno)) ;
-       return NULL ;
+       log(LOG_ERR,"rpopen: read(): %s\n",strerror(errno));
+       return NULL;
      }
-     p= rqstbuf ;
+     p= rqstbuf;
      unmarshall_WORD(p, uid);
      unmarshall_WORD(p, gid);
-     status += unmarshall_STRINGN(p , type, sizeof(type) ) ;
+     status += unmarshall_STRINGN(p , type, sizeof(type) );
      status += unmarshall_STRINGN (p, command, MAXCOMSIZ);
      command[MAXCOMSIZ-1] = '\0';
-     status += unmarshall_STRINGN (p, username, CA_MAXUSRNAMELEN+1) ;
+     status += unmarshall_STRINGN (p, username, CA_MAXUSRNAMELEN+1);
      username[CA_MAXUSRNAMELEN] = '\0';
      log(LOG_DEBUG,"requestor is (%s, %d, %d) \n",username, uid, gid );
      log(LOG_ERR,"Denying popen request (%s, %d, %d) from %s for command %s\n", username, uid, gid, host, command);
@@ -3132,22 +3130,22 @@ int     rt;
      }
    }
    
-   p= rqstbuf ;
+   p= rqstbuf;
 #if defined(SACCT)
    rfioacct(RQST_POPEN,uid,gid,s,0,0,status,rcode,NULL,command,NULL);
 #endif /* SACCT */
-   log(LOG_DEBUG, "rpopen: sending back status(%d) and rcode(%d)\n",status, rcode) ;
-   marshall_LONG( p, status ) ;
-   marshall_WORD( p, rcode ) ;
+   log(LOG_DEBUG, "rpopen: sending back status(%d) and rcode(%d)\n",status, rcode);
+   marshall_LONG( p, status );
+   marshall_WORD( p, rcode );
    if (netwrite_timeout(s,rqstbuf,WORDSIZE+LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+LONGSIZE)) {
 #if defined(WIN32)
       log(LOG_ERR,"rpopen(): netwrite_timeout(): %s\n", geterr());
 #else      
-      log(LOG_ERR,"rpopen(): netwrite_timeout(): %s\n",strerror(errno)) ;
+      log(LOG_ERR,"rpopen(): netwrite_timeout(): %s\n",strerror(errno));
 #endif
-      return NULL ;
+      return NULL;
    }
-   return fs ;
+   return fs;
 }
 
 
@@ -3169,7 +3167,7 @@ FILE    *fp;
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
-   p = rqstbuf +2*WORDSIZE ;
+   p = rqstbuf +2*WORDSIZE;
    log(LOG_DEBUG, "rfread(%x)\n",fp);
    unmarshall_LONG(p, size);
    unmarshall_LONG(p, items);
@@ -3186,10 +3184,10 @@ FILE    *fp;
       iobufsiz = items*size;
       log(LOG_DEBUG, "rfread(): allocated %d bytes at %x\n",items*size,iobuffer);
    }
-   errno = 0 ;
-   status = fread(iobuffer, size, items, fp) ;
+   errno = 0;
+   status = fread(iobuffer, size, items, fp);
    if ( status == 0 ) {
-      rcode= errno ;
+      rcode= errno;
    }
    log(LOG_DEBUG, "rfread : status %d, rcode %d\n", status, rcode);
    p = rqstbuf;
@@ -3235,7 +3233,7 @@ FILE    *fp;
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
-   p =  rqstbuf +2*WORDSIZE ;
+   p =  rqstbuf +2*WORDSIZE;
    log(LOG_DEBUG, "rfwrite(%x)\n",fp);
    unmarshall_LONG(p, size);
    unmarshall_LONG(p, items);
@@ -3253,7 +3251,7 @@ FILE    *fp;
       log(LOG_DEBUG, "rfwrite(): allocated %d bytes at %x\n",items*size,iobuffer);
    }
    ptr = iobuffer;
-   log(LOG_DEBUG, "rfwrite: reading %d bytes\n",items*size) ;
+   log(LOG_DEBUG, "rfwrite: reading %d bytes\n",items*size);
    if (netread_timeout(s, iobuffer, items*size, RFIO_CTRL_TIMEOUT) != (items*size))       {
 #if defined(_WIN32)
       log(LOG_ERR, "rfwrite: netread(): %s\n", geterr());
@@ -3263,7 +3261,7 @@ FILE    *fp;
       return(-1);
    }
    if ( (status = fwrite( ptr, size, items, fp)) == 0 ) 
-      rcode= errno ;
+      rcode= errno;
    log(LOG_DEBUG, "rfwrite: status %d, rcode %d\n", status, rcode);
    p = rqstbuf;
    marshall_LONG(p, status);
@@ -3301,43 +3299,43 @@ struct rfiostat *infop;
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
-   log(LOG_DEBUG, "rfstat(%d, %d)\n",s,fd) ;
-   p= rqstbuf + 2*WORDSIZE ;
-   unmarshall_LONG(p,offset) ;
-   unmarshall_LONG(p,how) ;
+   log(LOG_DEBUG, "rfstat(%d, %d)\n",s,fd);
+   p= rqstbuf + 2*WORDSIZE;
+   unmarshall_LONG(p,offset);
+   unmarshall_LONG(p,how);
    /*
     * lseek() if needed.
     */
    if ( how != -1 ) {
-      log(LOG_DEBUG,"rread(%d,%d): lseek(%d,%d,%d)\n",s,fd,fd,offset,how) ; 
+      log(LOG_DEBUG,"rread(%d,%d): lseek(%d,%d,%d)\n",s,fd,fd,offset,how); 
       if ( (status= lseek(fd,offset,how)) == -1 ) { 
-         rcode= errno ;
-         p= rqstbuf ; 
-         marshall_WORD(p,RQST_FSTAT) ;
-         marshall_LONG(p,status) ; 
-         marshall_LONG(p,rcode) ; 
+         rcode= errno;
+         p= rqstbuf; 
+         marshall_WORD(p,RQST_FSTAT);
+         marshall_LONG(p,status); 
+         marshall_LONG(p,rcode); 
          if ( netwrite_timeout(s,rqstbuf,6*LONGSIZE+6*WORDSIZE,RFIO_CTRL_TIMEOUT) != (6*LONGSIZE+6*WORDSIZE) ) {
 #if defined(WIN32)
             log(LOG_ERR, "rreadahead(): netwrite_timeout(): %s\n", geterr());
 #else    
             log(LOG_ERR, "rreadahead(): netwrite_timeout(): %s\n", strerror(errno));
 #endif
-            return -1 ;
+            return -1;
          }
-         return status ;
+         return status;
       }
    }
    /*
     * Issuing the fstat()
     */
-   status= fstat(fd, &statbuf) ;
-   rcode= errno ;
-   msgsiz= 5*WORDSIZE + 5*LONGSIZE ;
+   status= fstat(fd, &statbuf);
+   rcode= errno;
+   msgsiz= 5*WORDSIZE + 5*LONGSIZE;
    p = rqstbuf;
-   marshall_WORD(p, RQST_FSTAT) ; 
-   marshall_LONG(p, status) ;
-   marshall_LONG(p,  rcode) ;
-   marshall_LONG(p, msgsiz) ;
+   marshall_WORD(p, RQST_FSTAT); 
+   marshall_LONG(p, status);
+   marshall_LONG(p,  rcode);
+   marshall_LONG(p, msgsiz);
    marshall_WORD(p, statbuf.st_dev);
    marshall_LONG(p, statbuf.st_ino);
    marshall_WORD(p, statbuf.st_mode);
@@ -3348,16 +3346,16 @@ struct rfiostat *infop;
    marshall_LONG(p, statbuf.st_atime);
    marshall_LONG(p, statbuf.st_mtime);
    marshall_LONG(p, statbuf.st_ctime);
-   log(LOG_DEBUG, "rfstat: sending back %d\n",status) ;
+   log(LOG_DEBUG, "rfstat: sending back %d\n",status);
    if (netwrite_timeout(s,rqstbuf,8*LONGSIZE+6*WORDSIZE,RFIO_CTRL_TIMEOUT) != (8*LONGSIZE+6*WORDSIZE))  {
 #if defined(WIN32)
       log(LOG_ERR,"rfstat: netwrite_timeout(): %s\n", geterr());
 #else
       log(LOG_ERR,"rfstat: netwrite_timeout(): %s\n",strerror(errno));
 #endif
-      return -1 ;
+      return -1;
    }
-   return 0 ; 
+   return 0; 
 }
 
 int srlseek(s, infop, fd)
@@ -3380,27 +3378,27 @@ struct rfiostat *infop;
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
-   p= rqstbuf + 2*WORDSIZE ; 
-   unmarshall_LONG(p,offset) ;
-   unmarshall_LONG(p,how) ;
-   log(LOG_DEBUG,"rlseek(%d, %d): offset %d, how: %x\n",s,fd,offset,how) ;
-   status = lseek(fd, offset, how) ;
-   rcode= ( status < 0 ) ? errno : 0 ; 
-   log(LOG_DEBUG,"rlseek: status %d, rcode %d\n",status,rcode) ;
-   p= rqstbuf ;
-   marshall_WORD(p,RQST_LSEEK) ;
-   marshall_LONG(p,status) ;
-   marshall_LONG(p,rcode) ;
-   marshall_LONG(p,0) ; 
+   p= rqstbuf + 2*WORDSIZE; 
+   unmarshall_LONG(p,offset);
+   unmarshall_LONG(p,how);
+   log(LOG_DEBUG,"rlseek(%d, %d): offset %d, how: %x\n",s,fd,offset,how);
+   status = lseek(fd, offset, how);
+   rcode= ( status < 0 ) ? errno : 0; 
+   log(LOG_DEBUG,"rlseek: status %d, rcode %d\n",status,rcode);
+   p= rqstbuf;
+   marshall_WORD(p,RQST_LSEEK);
+   marshall_LONG(p,status);
+   marshall_LONG(p,rcode);
+   marshall_LONG(p,0); 
    if (netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE))  {
 #if defined(_WIN32)
-      log(LOG_ERR,"rlseek: netwrite_timeout(): %s\n", geterr()) ;
+      log(LOG_ERR,"rlseek: netwrite_timeout(): %s\n", geterr());
 #else
-      log(LOG_ERR,"rlseek: netwrite_timeout(): %s\n",strerror(errno)) ;
+      log(LOG_ERR,"rlseek: netwrite_timeout(): %s\n",strerror(errno));
 #endif      
-      return -1 ;
+      return -1;
    }
-   return status ;
+   return status;
 }
 
 int srpreseek(s, infop, fd)
@@ -3430,10 +3428,10 @@ struct rfiostat *infop;
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
-   p= rqstbuf + 2*WORDSIZE ; 
-   unmarshall_LONG(p,size) ;
-   unmarshall_LONG(p,nblock) ; 
-   log(LOG_DEBUG,"rpreseek(%d, %d)\n",s,fd) ;
+   p= rqstbuf + 2*WORDSIZE; 
+   unmarshall_LONG(p,size);
+   unmarshall_LONG(p,nblock); 
+   log(LOG_DEBUG,"rpreseek(%d, %d)\n",s,fd);
 
    /*
     * A temporary buffer may need to be created 
@@ -3441,104 +3439,104 @@ struct rfiostat *infop;
     */
    if ( nblock*2*LONGSIZE > BUFSIZ ) {
       if ( (trp= (char *) malloc(nblock*2*LONGSIZE)) == NULL ) {
-         return -1 ;
+         return -1;
       }
    }
-   p= ( trp ) ? trp : rqstbuf ;
+   p= ( trp ) ? trp : rqstbuf;
    /*
     * Receiving the request.
     */
-   log(LOG_DEBUG,"rpreseek: reading %d bytes\n",nblock*2*LONGSIZE) ; 
+   log(LOG_DEBUG,"rpreseek: reading %d bytes\n",nblock*2*LONGSIZE); 
    if ( netread_timeout(s,p,nblock*2*LONGSIZE,RFIO_CTRL_TIMEOUT) != (nblock*2*LONGSIZE) ) {
 #if defined(_WIN32)
       log(LOG_ERR,"rpreseek: netread(): %s\n", geterr());
 #else      
-      log(LOG_ERR,"rpreseek: read(): %s\n",strerror(errno)) ;
+      log(LOG_ERR,"rpreseek: read(): %s\n",strerror(errno));
 #endif      
-      if ( trp ) (void) free(trp) ;
-      return -1 ;
+      if ( trp ) (void) free(trp);
+      return -1;
    }
    /*
     * Allocating space for the list of requests.
     */
    if ( (v= ( struct iovec *) malloc(nblock*sizeof(struct iovec))) == NULL ) {
-      log(LOG_ERR, "rpreseek: malloc(): %s\n",strerror(errno)) ;
-      if ( trp ) (void) free(trp) ;
+      log(LOG_ERR, "rpreseek: malloc(): %s\n",strerror(errno));
+      if ( trp ) (void) free(trp);
 #if !defined(HPSS)
-      (void) close(s) ;
+      (void) close(s);
 #endif /* HPSS */
-      return -1 ; 
+      return -1; 
    }
    /*
     * Filling list request.
     */
    for(reqno= 0;reqno<nblock;reqno++) {
 #if ( !defined(HPUX) )
-      long *c ;
-      c = (long *) &(v[reqno].iov_base) ;
+      long *c;
+      c = (long *) &(v[reqno].iov_base);
       unmarshall_LONG(p,*c);
 #else
-      unmarshall_LONG(p,v[reqno].iov_base) ;
+      unmarshall_LONG(p,v[reqno].iov_base);
 #endif
-      unmarshall_LONG(p,v[reqno].iov_len) ; 
+      unmarshall_LONG(p,v[reqno].iov_len); 
    }
    /*
     * Freeing temporary buffer if needed.
     */ 
-   if ( trp ) (void) free(trp) ;
+   if ( trp ) (void) free(trp);
    /*
     * Allocating new data buffer if the 
     * current one is not large enough.
     */
-   log(LOG_DEBUG,"rpreseek(%d, %d): checking buffer size %d\n",s,fd,size) ;
+   log(LOG_DEBUG,"rpreseek(%d, %d): checking buffer size %d\n",s,fd,size);
    if (iobufsiz < (size+WORDSIZE+3*LONGSIZE))     {
-      int     optval ;        /* setsockopt opt value */
+      int     optval;        /* setsockopt opt value */
 
       if (iobufsiz > 0)       {
          log(LOG_DEBUG, "rpreseek(): freeing %x\n",iobuffer);
          (void) free(iobuffer);
       }
       if ((iobuffer = malloc(size+WORDSIZE+3*LONGSIZE)) == NULL)    {
-         log(LOG_ERR, "rpreseek: malloc(): %s\n", strerror(errno)) ;
+         log(LOG_ERR, "rpreseek: malloc(): %s\n", strerror(errno));
 #if defined(HPSS)
          if ( v ) free(v);
 #endif /* HPSS */
 #if !defined(HPSS)
-         (void) close(s) ;
+         (void) close(s);
 #endif /* HPSS */
-         return -1 ; 
+         return -1; 
       }
-      iobufsiz = size+WORDSIZE+3*LONGSIZE ;
+      iobufsiz = size+WORDSIZE+3*LONGSIZE;
       optval = (iobufsiz > 64 * 1024) ? iobufsiz : (64 * 1024);
-      log(LOG_DEBUG, "rpreseek(): allocated %d bytes at %x\n",iobufsiz,iobuffer) ;
+      log(LOG_DEBUG, "rpreseek(): allocated %d bytes at %x\n",iobufsiz,iobuffer);
 #if defined(_WIN32)
       if( setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char*)&optval, sizeof(optval)) == SOCKET_ERROR )
          log(LOG_ERR, "rpreseek(): setsockopt(SO_SNDBUF): %s\n", geterr());
 #else      
       if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char *)&optval, sizeof(optval)) == -1)
-         log(LOG_ERR, "rpreseek(): setsockopt(SO_SNDBUF): %s\n",strerror(errno)) ;
+         log(LOG_ERR, "rpreseek(): setsockopt(SO_SNDBUF): %s\n",strerror(errno));
 #endif
       else
-         log(LOG_DEBUG, "rpreseek(): setsockopt(SO_SNDBUF): %d\n",optval) ;
+         log(LOG_DEBUG, "rpreseek(): setsockopt(SO_SNDBUF): %d\n",optval);
    }
    /*
     * Reading data and sending it. 
     */
-   reqno= 0 ; 
+   reqno= 0; 
    for(first= 1;;first= 0) {
-      struct timeval timeout ;
-      fd_set fds ;
-      int nbfree ;
-      int     nb ;
+      struct timeval timeout;
+      fd_set fds;
+      int nbfree;
+      int     nb;
 
       /*
        * Has a new request arrived ?
        * The preseek is then interrupted.
        */
-      FD_ZERO(&fds) ; 
-      FD_SET(s,&fds) ;
-      timeout.tv_sec = 0 ; 
-      timeout.tv_usec= 0 ;
+      FD_ZERO(&fds); 
+      FD_SET(s,&fds);
+      timeout.tv_sec = 0; 
+      timeout.tv_usec= 0;
 #if defined(_WIN32)
       if( select(FD_SETSIZE, &fds, (fd_set*)0, (fd_set*)0, &timeout) == SOCKET_ERROR ) {
          log(LOG_ERR,"rpreseek(): select(): %s\n", geterr());
@@ -3546,48 +3544,48 @@ struct rfiostat *infop;
       }
 #else      
       if ( select(FD_SETSIZE,&fds,(fd_set *)0,(fd_set *)0,&timeout) == -1 ) {
-         log(LOG_ERR,"rpreseek(): select(): %s\n",strerror(errno)) ;
+         log(LOG_ERR,"rpreseek(): select(): %s\n",strerror(errno));
 #if defined(HPSS)
          if ( v ) free(v);
 #endif /* HPSS */
-         return -1 ; 
+         return -1; 
       }
 #endif   /* WIN32 */
       if ( FD_ISSET(s,&fds) ) {
-         log(LOG_DEBUG,"rpreseek(): returns because of new request\n") ;
+         log(LOG_DEBUG,"rpreseek(): returns because of new request\n");
 #if defined(HPSS)
          if ( v ) free(v);
 #endif /* HPSS */
-         return 0 ; 
+         return 0; 
       }
       /*
        * Filling buffer.
        */
-      p= iobuffer + WORDSIZE + 3*LONGSIZE ;
+      p= iobuffer + WORDSIZE + 3*LONGSIZE;
       for(nb= 0, nbfree= size; 4*LONGSIZE<nbfree && reqno<nblock; reqno ++, nb ++ ) {
-         nbfree -= 4*LONGSIZE ;
-         status= lseek(fd,(off_t)v[reqno].iov_base,SEEK_SET) ;
+         nbfree -= 4*LONGSIZE;
+         status= lseek(fd,(off_t)v[reqno].iov_base,SEEK_SET);
          if ( status == -1 ) {
-            marshall_LONG(p,v[reqno].iov_base) ; 
-            marshall_LONG(p,v[reqno].iov_len) ;
-            marshall_LONG(p,status) ;
-            marshall_LONG(p,errno) ; 
-            continue ;
+            marshall_LONG(p,v[reqno].iov_base); 
+            marshall_LONG(p,v[reqno].iov_len);
+            marshall_LONG(p,status);
+            marshall_LONG(p,errno); 
+            continue;
          }
          if ( v[reqno].iov_len <= nbfree ) {
 #if defined(HPSS)
             status = rhpss_read(fd,p+4*LONGSIZE,v[reqno].iov_len,s,0,0);
 #else /* HPSS */
-            status= read(fd,p+4*LONGSIZE,v[reqno].iov_len) ; 
+            status= read(fd,p+4*LONGSIZE,v[reqno].iov_len); 
 #endif /* HPSS */
-            marshall_LONG(p,v[reqno].iov_base) ; 
-            marshall_LONG(p,v[reqno].iov_len) ;
-            marshall_LONG(p,status) ;
-            marshall_LONG(p,errno) ; 
+            marshall_LONG(p,v[reqno].iov_base); 
+            marshall_LONG(p,v[reqno].iov_len);
+            marshall_LONG(p,status);
+            marshall_LONG(p,errno); 
             if ( status != -1 ) {
-               infop->rnbr += status ;
-               nbfree -= status ;
-               p += status ;
+               infop->rnbr += status;
+               nbfree -= status;
+               p += status;
             }
          }
          else {
@@ -3597,48 +3595,48 @@ struct rfiostat *infop;
 #if defined(HPSS)
            status = rhpss_read(fd,p+4*LONGSIZE,nbfree,s,0,0);
 #else /* HPSS */
-            status= read(fd,p+4*LONGSIZE,nbfree) ;
+            status= read(fd,p+4*LONGSIZE,nbfree);
 #endif /* HPSS */
-            marshall_LONG(p,v[reqno].iov_base) ; 
-            marshall_LONG(p,nbfree) ;
-            marshall_LONG(p,status) ;
-            marshall_LONG(p,errno) ; 
+            marshall_LONG(p,v[reqno].iov_base); 
+            marshall_LONG(p,nbfree);
+            marshall_LONG(p,status);
+            marshall_LONG(p,errno); 
             if ( status != -1 ) {
-               infop->rnbr += status ;
-               nbfree -= status ;
-               p += status ;
+               infop->rnbr += status;
+               nbfree -= status;
+               p += status;
 #if HPUX1010 || IRIX6 || IRIX5
-               v[reqno].iov_base = (caddr_t)v[reqno].iov_base + status ;
+               v[reqno].iov_base = (caddr_t)v[reqno].iov_base + status;
 #else
-               v[reqno].iov_base += status ;
+               v[reqno].iov_base += status;
 #endif
-               v[reqno].iov_len -= status ;
-               reqno -- ;
+               v[reqno].iov_len -= status;
+               reqno --;
             }
          }
 
       }
-      p= iobuffer ;
+      p= iobuffer;
       if ( first ) {
-         marshall_WORD(p,RQST_FIRSTSEEK) ; 
+         marshall_WORD(p,RQST_FIRSTSEEK); 
       }
       else {
-         marshall_WORD(p,(reqno == nblock) ? RQST_LASTSEEK:RQST_PRESEEK) ; 
+         marshall_WORD(p,(reqno == nblock) ? RQST_LASTSEEK:RQST_PRESEEK); 
       }
-      marshall_LONG(p,nb) ;
-      marshall_LONG(p,0) ;
-      marshall_LONG(p,size) ;
-      log(LOG_DEBUG,"rpreseek(): sending %d bytes\n",iobufsiz) ;
+      marshall_LONG(p,nb);
+      marshall_LONG(p,0);
+      marshall_LONG(p,size);
+      log(LOG_DEBUG,"rpreseek(): sending %d bytes\n",iobufsiz);
       if ( netwrite_timeout(s,iobuffer,iobufsiz,RFIO_CTRL_TIMEOUT) != iobufsiz ) {
 #if defined(_WIN32)
          log(LOG_ERR, "rpreseek(): netwrite_timeout(): %s\n", geterr());
 #else 
-         log(LOG_ERR, "rpreseek(): netwrite_timeout(): %s\n", strerror(errno)) ;
+         log(LOG_ERR, "rpreseek(): netwrite_timeout(): %s\n", strerror(errno));
 #endif 
 #if defined(HPSS)
          if ( v ) free(v);
 #endif /* HPSS */
-         return -1 ;
+         return -1;
       }
       /*
        * All the data needed has been
@@ -3647,11 +3645,11 @@ struct rfiostat *infop;
 #if defined(HPSS)
       if ( reqno == nblock ) {
          if ( v ) free(v);
-         return 0 ; 
+         return 0; 
       }
 #else /* HPSS */
       if ( reqno == nblock ) 
-         return 0 ; 
+         return 0; 
 #endif /* HPSS */
    }
 }
@@ -3669,11 +3667,11 @@ int	fd;
    char	*p;
    int  uid;
 
-   log(LOG_DEBUG, "rfchmod(%d, %d)\n",s,fd) ;
+   log(LOG_DEBUG, "rfchmod(%d, %d)\n",s,fd);
    /* fchmod() is not for remote users */
    if ( rt ) { 
       status = -1;
-      rcode = EACCES ;
+      rcode = EACCES;
       log(LOG_ERR,"Attempt to srfchmod() from %s denied\n",host);
    } else {
       uid = getuid();
@@ -3681,28 +3679,28 @@ int	fd;
         ((status=chksuser(uid,0,host,&rcode,"CHMODTRUST")) < 0) ) {
          log(LOG_ERR,"srchmod(): UID %d not allowed to chmod()\n",uid);
       } else {
-         p= rqstbuf + 2*WORDSIZE ;
-         unmarshall_LONG(p,mode) ;
-         log(LOG_INFO,"chmod: filedesc: %d, mode: %o\n", fd, mode) ;
+         p= rqstbuf + 2*WORDSIZE;
+         unmarshall_LONG(p,mode);
+         log(LOG_INFO,"chmod: filedesc: %d, mode: %o\n", fd, mode);
 
          /*
           * Issuing the fchmod()
           */	
-         status= fchmod(fd, mode) ;
-         rcode= errno ;
+         status= fchmod(fd, mode);
+         rcode= errno;
       }
    }
    p = rqstbuf;
-   marshall_WORD(p, RQST_FCHMOD) ; 
-   marshall_LONG(p, status) ;
-   marshall_LONG(p, rcode) ;
-   marshall_LONG(p, 0) ;
-   log(LOG_DEBUG, "rfchmod: sending back %d\n",status) ;
+   marshall_WORD(p, RQST_FCHMOD); 
+   marshall_LONG(p, status);
+   marshall_LONG(p, rcode);
+   marshall_LONG(p, 0);
+   log(LOG_DEBUG, "rfchmod: sending back %d\n",status);
    if (netwrite_timeout(s,rqstbuf,3*LONGSIZE+1*WORDSIZE,RFIO_CTRL_TIMEOUT) != (3*LONGSIZE+1*WORDSIZE))  {
       log(LOG_ERR,"rfchmod: netwrite_timeout(): %s\n",strerror(errno));
-      return -1 ;
+      return -1;
    }
-   return 0 ; 
+   return 0; 
 }
 
 int     srfchown(s, host, rt, fd)
@@ -3718,11 +3716,11 @@ int	fd;
    char	*p;
    int  uid;
 
-   log(LOG_DEBUG, "rfchown(%d, %d)\n",s,fd) ;
+   log(LOG_DEBUG, "rfchown(%d, %d)\n",s,fd);
    /* fchown() is not for remote users */
    if ( rt ) { 
       status = -1;
-      rcode = EACCES ;
+      rcode = EACCES;
       log(LOG_ERR,"Attempt to srfchown() from %s denied\n",host);
    } else {
       uid = getuid();
@@ -3730,29 +3728,29 @@ int	fd;
         ((status=chksuser(uid,0,host,&rcode,"CHOWNTRUST")) < 0) ) {
          log(LOG_ERR,"srfchown(): UID %d not allowed to chown()\n",uid);
       } else {
-         p= rqstbuf + 2*WORDSIZE ;
-         unmarshall_WORD(p,owner) ;
-         unmarshall_WORD(p,group) ;
+         p= rqstbuf + 2*WORDSIZE;
+         unmarshall_WORD(p,owner);
+         unmarshall_WORD(p,group);
          log(LOG_INFO,"rfchown: filedesc: %d, uid: %d ,gid: %d\n",fd,owner,group);
 
          /*
           * Issuing the fchown()
           */	
-         status= fchown(fd, owner, group) ;
-         rcode= errno ;
+         status= fchown(fd, owner, group);
+         rcode= errno;
       }
    }
    p = rqstbuf;
-   marshall_WORD(p, RQST_FCHOWN) ; 
-   marshall_LONG(p, status) ;
-   marshall_LONG(p,  rcode) ;
-   marshall_LONG(p,  0) ;
-   log(LOG_DEBUG, "rfchown: sending back %d\n",status) ;
+   marshall_WORD(p, RQST_FCHOWN); 
+   marshall_LONG(p, status);
+   marshall_LONG(p,  rcode);
+   marshall_LONG(p,  0);
+   log(LOG_DEBUG, "rfchown: sending back %d\n",status);
    if (netwrite_timeout(s,rqstbuf,3*LONGSIZE+1*WORDSIZE,RFIO_CTRL_TIMEOUT) != (3*LONGSIZE+1*WORDSIZE))  {
       log(LOG_ERR,"rfchown: netwrite_timeout(): %s\n",strerror(errno));
-      return -1 ;
+      return -1;
    }
-   return 0 ; 
+   return 0; 
 }
 #endif  /* !WIN32 */
 
@@ -3767,9 +3765,8 @@ int bet;
    int rcode = 0;
    char *p;
    int len;
-   int fd;
    int uid,gid;
-   WORD mask,passwd,mapping;
+   WORD passwd,mapping;
    char account[MAXACCTSIZE];
    char user[CA_MAXUSRNAMELEN+1];
    char reqhost[MAXHOSTNAMELEN];
@@ -3781,7 +3778,7 @@ int bet;
 #endif /* HPSS */
 
    dirp = NULL;
-   p = rqstbuf + 2*WORDSIZE ;
+   p = rqstbuf + 2*WORDSIZE;
    unmarshall_LONG(p,len);
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
@@ -3817,7 +3814,7 @@ int bet;
      if ( (status == 0) &&
           (status = unmarshall_STRINGN(p, vmstr, sizeof(vmstr))) == -1 )
        rcode = E2BIG;
-     log(LOG_DEBUG,"vms string is %s\n", vmstr) ;
+     log(LOG_DEBUG,"vms string is %s\n", vmstr);
      if (bet) 
        log(LOG_DEBUG,"Opening directory %s for remote user: %s\n",filename,user);
      if (rt)
@@ -3833,19 +3830,19 @@ int bet;
       */
      if ( (status == 0) && bet && !mapping && !rt) {
        log(LOG_INFO,"attempt to make non-mapped I/O and modify uid or gid !\n");
-       errno=EACCES ;
-       rcode=errno ;
-       status= -1 ;
+       errno=EACCES;
+       rcode=errno;
+       status= -1;
      }
      
      if ( rt ) { 
 #if !defined(ultrix)
-       openlog("rfio",LOG_PID, LOG_USER) ;
+       openlog("rfio",LOG_PID, LOG_USER);
 #else
-       openlog("rfio",LOG_PID ) ;
+       openlog("rfio",LOG_PID );
 #endif
-       syslog(LOG_ALERT, "rfio: connection %s mapping by %s(%d,%d) from %s",(mapping ? "with" : "without"),user,uid,gid,host) ;
-       closelog() ;
+       syslog(LOG_ALERT, "rfio: connection %s mapping by %s(%d,%d) from %s",(mapping ? "with" : "without"),user,uid,gid,host);
+       closelog();
      }
      
      /*
@@ -3857,10 +3854,10 @@ int bet;
        
        log(LOG_DEBUG,"Mapping (%s, %d, %d) \n",user, uid, gid );
        if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-         log(LOG_ERR,"sropendir(): get_user() error opening mapping file\n") ;
+         log(LOG_ERR,"sropendir(): get_user() error opening mapping file\n");
          status = -1;
          errno = EINVAL;
-         rcode = SEHOSTREFUSED ;
+         rcode = SEHOSTREFUSED;
        }
        
        else if ( abs(rcd) == 1 ) {
@@ -3871,9 +3868,9 @@ int bet;
        }
        else {
          log(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n",
-             host,user,uid,gid,to,to_uid,to_gid) ;
-         uid = to_uid ;
-         gid = to_gid ;
+             host,user,uid,gid,to,to_uid,to_gid);
+         uid = to_uid;
+         gid = to_gid;
          if ( uid < 100 || gid < 100 ) {
            errno = EACCES;
            status = -1;
@@ -3894,13 +3891,13 @@ int bet;
        {
          /* Port is also passwd */
          if  ((sock=connecttpread(reqhost,passwd))>=0 && !checkkey(sock,passwd)) {
-           status= -1 ;
+           status= -1;
            errno = EACCES;
-           rcode= errno ;
+           rcode= errno;
            log(LOG_ERR,"ropendir: DIRECT mapping : permission denied\n");
          }
          if (sock < 0) {
-           status= -1 ;
+           status= -1;
            log(LOG_ERR,"ropendir: DIRECT mapping failed: Couldn't connect %s\n",reqhost);
            rcode = EACCES;
          }
@@ -3917,7 +3914,7 @@ int bet;
            log(LOG_ERR,"ropendir(): uid %d not allowed to open()\n",uid);
          else
            log(LOG_ERR,"ropendir(): failed at check_user_perm(), rcode %d\n",rcode);
-         status = -1 ;
+         status = -1;
        }
        if ( !status && forced_filename != NULL) {
          log(LOG_ERR,"Disallowing opendir in forced filename mode\n");
@@ -3930,18 +3927,18 @@ int bet;
          char ofilename[MAXFILENAMSIZE];
          dirp = NULL;
          if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
-           dirp= opendir(ofilename) ;
+           dirp= opendir(ofilename);
          }
 
          if ( dirp == NULL ) {
            char alarmbuf[1024];
-           status= -1 ;
-           rcode= errno ;
-           sprintf(alarmbuf,"sropendir(): %s",filename) ;
-           log(LOG_ERR,"ropendir: opendir: %s\n",strerror(rcode)) ;
-           rfio_alrm(rcode,alarmbuf) ;
+           status= -1;
+           rcode= errno;
+           sprintf(alarmbuf,"sropendir(): %s",filename);
+           log(LOG_ERR,"ropendir: opendir: %s\n",strerror(rcode));
+           rfio_alrm(rcode,alarmbuf);
          }
-         log(LOG_DEBUG,"ropendir: opendir(%s) returned %x (hex)\n",filename,dirp) ;
+         log(LOG_DEBUG,"ropendir: opendir(%s) returned %x (hex)\n",filename,dirp);
        }
      }
    }
@@ -3950,17 +3947,17 @@ int bet;
     * Sending back status.
     */
    p = rqstbuf;
-   marshall_WORD(p,RQST_OPENDIR) ; 
+   marshall_WORD(p,RQST_OPENDIR); 
    marshall_LONG(p,status);
-   marshall_LONG(p,rcode) ;
-   marshall_LONG(p,0) ;
+   marshall_LONG(p,rcode);
+   marshall_LONG(p,0);
 #if defined(SACCT)
    rfioacct(RQST_OPENDIR,uid,gid,s,0,0,status,rcode,NULL,filename,NULL);
 #endif /* SACCT */
    log(LOG_DEBUG, "ropendir: sending back status(%d) and errno(%d)\n",status,rcode);
    if (netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE))  {
-      log(LOG_ERR,"ropendir: netwrite_timeout(): %s\n",strerror(errno)) ;
-      return NULL ;
+      log(LOG_ERR,"ropendir: netwrite_timeout(): %s\n",strerror(errno));
+      return NULL;
    }
    return(dirp);
 }
@@ -3970,19 +3967,19 @@ int s;
 struct rfiostat * infop;
 DIR *dirp;
 {
-   int   status ;       /* Return code          */
-   int   rcode=0 ;      /* To send back errno   */
-   int   namlen ;       /* length of filename   */
-   char  * p ;          /* Pointer to buffer    */
+   int   status;       /* Return code          */
+   int   rcode=0;      /* To send back errno   */
+   int   namlen;       /* length of filename   */
+   char  * p;          /* Pointer to buffer    */
    char  direntmsg[MAXFILENAMSIZE+WORDSIZE+3*LONGSIZE];  /* Reply msg */
-   int   msgsiz ;       /* Message size         */
+   int   msgsiz;       /* Message size         */
    struct dirent *dp = NULL;
 
    /*
     * Receiving request.
     */
    log(LOG_DEBUG, "rreaddir(%d, 0x%x)\n",s, dirp);
-   p= rqstbuf + 2*WORDSIZE ; 
+   p= rqstbuf + 2*WORDSIZE; 
 
    msgsiz = 0;
    status = 0;
@@ -4004,19 +4001,19 @@ DIR *dirp;
    marshall_LONG(p,rcode);
    marshall_LONG(p,namlen);
    infop->rnbr+=namlen + WORDSIZE + 3*LONGSIZE;
-   log(LOG_DEBUG, "rreaddir: status %d, rcode %d\n", status, rcode) ;
+   log(LOG_DEBUG, "rreaddir: status %d, rcode %d\n", status, rcode);
    if (netwrite_timeout(s,direntmsg,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE))  {
-      log(LOG_ERR, "rreaddir: netwrite_timeout(): %s\n", strerror(errno)) ;
-      return -1 ; 
+      log(LOG_ERR, "rreaddir: netwrite_timeout(): %s\n", strerror(errno));
+      return -1; 
    }
    if ( namlen > 0 ) {
       marshall_STRING(p,dp->d_name);
       if (netwrite_timeout(s,&direntmsg[WORDSIZE+3*LONGSIZE],namlen,RFIO_CTRL_TIMEOUT) != namlen)  {
-         log(LOG_ERR, "rreaddir: netwrite_timeout(): %s\n", strerror(errno)) ;
-         return -1 ; 
+         log(LOG_ERR, "rreaddir: netwrite_timeout(): %s\n", strerror(errno));
+         return -1; 
       }
    }
-   return status ; 
+   return status; 
 }
 
 int srrewinddir(s, infop, dirp)
@@ -4054,9 +4051,9 @@ DIR *dirp;
 #endif /* SACCT */
    if (netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE))  {
       log(LOG_ERR, "rrewinddir: netwrite_timeout(): %s\n", strerror(errno));
-      return -1 ;
+      return -1;
    }
-   return status ;
+   return status;
 }
 
 int srclosedir(s,infop,dirp)
@@ -4083,9 +4080,9 @@ DIR *dirp;
 #endif /* SACCT */
    if (netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE))  {
       log(LOG_ERR, "rclosedir: netwrite_timeout(): %s\n", strerror(errno));
-      return -1 ;
+      return -1;
    }
-   return status ;
+   return status;
 }
 #endif /* WIN32 */
 
@@ -4095,40 +4092,40 @@ DIR *dirp;
 static int chksuser(uid,gid,hostname,ptrcode,permstr)
 int uid; 		/* uid of caller */
 int gid;		/* gid of caller */
-char *hostname ;	/* caller's host name */
-int *ptrcode ;		/* Return code */
+char *hostname;	/* caller's host name */
+int *ptrcode;		/* Return code */
 char *permstr;		/* permission string for the request */
 {
 	
-   char ptr[BUFSIZ] ;
-   int found = 0 ;
+   char ptr[BUFSIZ];
+   int found = 0;
    char *cp , *p;
    char hostname1[MAXHOSTNAMELEN];
 
    if ( uid < 100  ) {
       if ( permstr != NULL && hostname != NULL && (p=getconfent("RFIOD", permstr, 1)) != NULL ) {
-	 strcpy(ptr,p) ;
+	 strcpy(ptr,p);
 	 for (cp=strtok(ptr,"\t ");cp!=NULL;cp=strtok(NULL,"\t ")) {
 	    if ( !strcmp(hostname,cp) ) {
-	       found ++ ;
-	       break ;
+	       found ++;
+	       break;
 	    }
 	    sprintf(hostname1,"%s.%s",cp,DOMAINNAME);
 	    if ( !strcmp(hostname1,hostname) ) {
-	       found ++ ;
-	       break ;
+	       found ++;
+	       break;
 	    }
 	 }
       }
       if (!found) {
-	 *ptrcode = EACCES ;
-	 log(LOG_ERR,"chksuser():uid < 100: No %s.\n",permstr) ;
-	 return -1 ;
+	 *ptrcode = EACCES;
+	 log(LOG_ERR,"chksuser():uid < 100: No %s.\n",permstr);
+	 return -1;
       }
       else
 	 log(LOG_INFO, "chksuser():root authorized from %s\n",hostname);
    }
-   return 0 ;
+   return 0;
 }
 
 /*
@@ -4137,8 +4134,8 @@ char *permstr;		/* permission string for the request */
 int check_user_perm(uid,gid,hostname,ptrcode,permstr)
 int *uid;                /* uid of caller                     */
 int *gid;                /* gid of caller                     */
-char *hostname ;        /* caller's host name                */
-int *ptrcode ;          /* Return code                       */
+char *hostname;        /* caller's host name                */
+int *ptrcode;          /* Return code                       */
 char *permstr;          /* permission string for the request */
 {
 #ifdef CSEC
@@ -4158,8 +4155,8 @@ char *permstr;          /* permission string for the request */
 int chsuser(uid,gid,hostname,ptrcode,permstr)
 int uid;                /* uid of caller                     */
 int gid;                /* gid of caller                     */
-char *hostname ;        /* caller's host name                */
-int *ptrcode ;          /* Return code                       */
+char *hostname;        /* caller's host name                */
+int *ptrcode;          /* Return code                       */
 char *permstr;          /* permission string for the request */
 {
 
@@ -4167,7 +4164,7 @@ char *permstr;          /* permission string for the request */
    struct passwd pw_result;
    char pwbuf[1024];
 #endif /* HPSS */    
-   struct passwd *pw ;
+   struct passwd *pw;
 
 #ifdef CSEC
    if (Csec_service_type < 0) {
@@ -4177,7 +4174,7 @@ char *permstr;          /* permission string for the request */
 #endif
 
    if ( chksuser(uid,gid,hostname,ptrcode,permstr) < 0 )
-      return -2 ;
+      return -2;
 #if defined(HPSS)
    pw = &pw_result;
    if ( uid >=100 && ( 
@@ -4196,9 +4193,9 @@ char *permstr;          /* permission string for the request */
 #endif
 #endif /* HPSS */
    {
-      *ptrcode = EACCES ;
+      *ptrcode = EACCES;
       log(LOG_ERR,"chsuser(): user (%d,%d) does not exist at local host\n",uid,gid);
-      return -2 ;
+      return -2;
    }
    /* While performing tape operations multiple calls to change uid are issued. As
     * a result we ignore errors from setgroups if we are not running as the super-
@@ -4206,34 +4203,34 @@ char *permstr;          /* permission string for the request */
     * related activity will FAIL!!!
     */
    if ( ((getuid() == 0) && (setgroups(0, NULL)<0)) || (setgid((gid_t)gid)<0) || (setuid((uid_t)uid)<0) )  {
-      *ptrcode = errno ;
-      log(LOG_ERR,"chsuser(): unable to setuid,gid(%d,%d): %s, we are (uid=%d,gid=%d,euid=%d,egid=%d)\n",uid,gid,strerror(errno),(int) getuid(),(int) getgid(),(int) geteuid(),(int) getegid()) ;
-      return -2 ;
+      *ptrcode = errno;
+      log(LOG_ERR,"chsuser(): unable to setuid,gid(%d,%d): %s, we are (uid=%d,gid=%d,euid=%d,egid=%d)\n",uid,gid,strerror(errno),(int) getuid(),(int) getgid(),(int) geteuid(),(int) getegid());
+      return -2;
    }
-   return 0 ;
+   return 0;
 }
 
 #if !defined(_WIN32)
 static int chk_newacct(pwd,gid)
-struct passwd *pwd ;
-gid_t gid ;
+struct passwd *pwd;
+gid_t gid;
 {
-  char buf[BUFSIZ] ;
+  char buf[BUFSIZ];
   char acct[MAXACCTSIZE];
-  char * def_acct ;
+  char * def_acct;
 #if defined(HPSS)
   struct group gr_result;
   char grbuf[1024];
 #endif /* HPSS */
-  struct group * gr ;
-  char * getacctent() ;
+  struct group * gr;
+  char * getacctent();
   
 #if defined(HPSS)
   gr = &gr_result;
 #endif /* HPSS */
   /* get default account */
   if ( getacctent(pwd,NULL,buf,sizeof(buf)) == NULL )
-    return -1 ;
+    return -1;
   if ( strtok(buf,":") == NULL || (def_acct= strtok(NULL,":")) == NULL )
     return -1;
   if ( strlen(def_acct) == 6 && *(def_acct+3) == '$' &&   /* uuu$gg */
@@ -4247,13 +4244,13 @@ gid_t gid ;
        (gr= getgrgid(gid))
 #endif /* HPSS */
        ) {
-    strncpy(acct,def_acct,4) ;
-    strcpy(acct+4,gr->gr_name) ;    /* new uuu$gg */
+    strncpy(acct,def_acct,4);
+    strcpy(acct+4,gr->gr_name);    /* new uuu$gg */
     if ( getacctent(pwd,acct,buf,sizeof(buf)) )
-      return 0 ;      /* newacct was executed */
+      return 0;      /* newacct was executed */
   }
-  acct[0]= '\0' ;
-  return -1 ;
+  acct[0]= '\0';
+  return -1;
 }
 
 int chsgroup(pw,gid)
@@ -4266,8 +4263,9 @@ int gid;
    struct group gr_result;
    char grbuf[1024];
    FILE *Grf=NULL;
+   int rc;
 #endif /* HPSS */
-   int rc,found;
+   int found;
 
    if ( pw != NULL && pw->pw_gid != (gid_t)gid ) {
       found = 0;
@@ -4278,7 +4276,7 @@ int gid;
       while ( !( rc = getgrent_r(gr,grbuf,sizeof(grbuf),&Grf) ) )
 #else
       (void) setgrent();
-      while (gr = getgrent())
+      while ((gr = getgrent()))
 #endif /* HPSS */
       {
          if ( gr->gr_gid != (gid_t)gid ) continue;
@@ -4321,7 +4319,7 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
    int uid,gid;
    WORD mask, ftype, passwd, mapping;
    char account[MAXACCTSIZE];           /* account string       */
-   char user[CA_MAXUSRNAMELEN+1];                       /* User name            */
+   char user[CA_MAXUSRNAMELEN+1];       /* User name            */
    char reqhost[MAXHOSTNAMELEN];
    char vmstr[MAXVMSTRING];
 #if defined(HPSS)
@@ -4335,18 +4333,12 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
 #endif   
 #endif /* HPSS */
    int port;
-#if defined(_AIX)
    socklen_t fromlen;
    socklen_t size_sin;
-#else
-   int fromlen;
-   int size_sin;
-#endif
    struct sockaddr_in sin, from;
    extern int max_rcvbuf;
    extern int max_sndbuf;
    int yes;
-   int optlen, maxseg;
 #if defined(_WIN32)
    struct thData *td;
 #endif
@@ -4385,26 +4377,26 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
    myinfo.aheadop = 1;
    byte_read_from_network = 0;
 
-   p= rqstbuf + 2*WORDSIZE ;
-   unmarshall_LONG(p, len) ;
+   p= rqstbuf + 2*WORDSIZE;
+   unmarshall_LONG(p, len);
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
    } else {
      /*
       * Reading open request.
       */
-     log(LOG_DEBUG,"ropen_v3: reading %d bytes\n",len) ;
+     log(LOG_DEBUG,"ropen_v3: reading %d bytes\n",len);
      if ((status = netread_timeout(s,rqstbuf,len,RFIO_CTRL_TIMEOUT)) != len) {
 #if defined(_WIN32)
        log(LOG_ERR,"ropen_v3: read(): %s\n", geterr());
 #else      
-       log(LOG_ERR,"ropen_v3: read(): %s\n",strerror(errno)) ;
+       log(LOG_ERR,"ropen_v3: read(): %s\n",strerror(errno));
 #endif
-       return -1 ;
+       return -1;
      }
      status = 0;
      *account = *filename = *user = *reqhost = *vmstr = '\0';
-     p= rqstbuf ;
+     p= rqstbuf;
      unmarshall_WORD(p, uid);
      unmarshall_WORD(p, gid);
      unmarshall_WORD(p, mask);
@@ -4431,7 +4423,7 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
          rcode = E2BIG;
      }
 
-     log(LOG_DEBUG,"vms string is %s\n", vmstr) ;
+     log(LOG_DEBUG,"vms string is %s\n", vmstr);
      if (bet) 
        log(LOG_DEBUG,"Opening file %s for remote user: %s\n",CORRECT_FILENAME(filename),user);
      if (rt)
@@ -4447,18 +4439,18 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
       */
      if (bet && !mapping && !rt) {
       log(LOG_INFO,"attempt to make non-mapped I/O and modify uid or gid !\n");
-      errno=EACCES ;
-      rcode=errno ;
-      status= -1 ;
+      errno=EACCES;
+      rcode=errno;
+      status= -1;
      }
 
      if ( rt ) { 
 #if !defined(ultrix)
-       openlog("rfio",LOG_PID, LOG_USER) ;
+       openlog("rfio",LOG_PID, LOG_USER);
 #else
-       openlog("rfio",LOG_PID ) ;
+       openlog("rfio",LOG_PID );
 #endif
-       syslog(LOG_ALERT, "rfio: connection %s mapping by %s(%d,%d) from %s",(mapping ? "with" : "without"),user,uid,gid,host) ;
+       syslog(LOG_ALERT, "rfio: connection %s mapping by %s(%d,%d) from %s",(mapping ? "with" : "without"),user,uid,gid,host);
 #if !defined(_WIN32)
        closelog();
 #endif      
@@ -4473,10 +4465,10 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
        
        log(LOG_DEBUG,"Mapping (%s, %d, %d) \n",user, uid, gid );
        if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-         log(LOG_ERR,"sropen_v3(): get_user() error opening mapping file\n") ;
+         log(LOG_ERR,"sropen_v3(): get_user() error opening mapping file\n");
          status = -1;
          errno = EINVAL;
-         rcode = SEHOSTREFUSED ;
+         rcode = SEHOSTREFUSED;
        }
        
        else if ( abs(rcd) == 1 ) {
@@ -4487,9 +4479,9 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
        }
        else {
          log(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n",
-             host,user,uid,gid,to,to_uid,to_gid) ;
-         uid = to_uid ;
-         gid = to_gid ;
+             host,user,uid,gid,to,to_uid,to_gid);
+         uid = to_uid;
+         gid = to_gid;
          if ( uid < 100 || gid < 100 ) {
            errno = EACCES;
            status = -1;
@@ -4516,9 +4508,9 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
          if( (sock >= 0) && !checkkey(sock, passwd) )  
 #endif
          {
-           status= -1 ;
+           status= -1;
            errno = EACCES;
-           rcode= errno ;
+           rcode= errno;
            log(LOG_ERR,"ropen_v3: DIRECT mapping : permission denied\n");
          }
 #if defined(_WIN32)
@@ -4527,7 +4519,7 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
          if (sock < 0) 
 #endif
          {
-           status= -1 ;
+           status= -1;
            log(LOG_ERR,"ropen_v3: DIRECT mapping failed: Couldn't connect %s\n",reqhost);
            rcode = EACCES;
          }
@@ -4544,7 +4536,7 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
        log(LOG_DEBUG, "ropen_v3: account: %s\n", account);
        log(LOG_DEBUG, "ropen_v3: filename: %s\n", CORRECT_FILENAME(filename));
        log(LOG_INFO, "ropen_v3(%s,0X%X,0X%X) for (%d,%d)\n",CORRECT_FILENAME(filename),flags,mode,uid,gid);
-       (void) umask((mode_t) CORRECT_UMASK(mask)) ;
+       (void) umask((mode_t) CORRECT_UMASK(mask));
 
        rc = rfio_handle_open(CORRECT_FILENAME(filename),
 			     ntohopnflg(flags),
@@ -4557,10 +4549,10 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
        
 	 if (rc < 0) {
 	   char alarmbuf[1024];
-	   sprintf(alarmbuf,"sropen_v3(): %s",CORRECT_FILENAME(filename)) ;
-	   log(LOG_DEBUG, "ropen_v3: rfio_handler_open refused open: %s\n", sstrerror(serrno)) ;
+	   sprintf(alarmbuf,"sropen_v3(): %s",CORRECT_FILENAME(filename));
+	   log(LOG_DEBUG, "ropen_v3: rfio_handler_open refused open: %s\n", sstrerror(serrno));
 	   rcode = serrno;
-           rfio_alrm(rcode,alarmbuf) ;
+           rfio_alrm(rcode,alarmbuf);
 	 }
 
 	 /* NOTE(fuji): from now on, flags is in host byte-order... */
@@ -4581,7 +4573,7 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
            log(LOG_ERR,"ropen_v3: uid %d not allowed to open()\n",uid);
          else
            log(LOG_ERR,"ropen_v3: failed at check_user_perm(), rcode %d\n",rcode);
-         status = -1 ;
+         status = -1;
        }  else
 #endif
        {
@@ -4598,23 +4590,23 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
 #if defined(_WIN32)
              _setmode( fd, _O_BINARY );        /* default is text mode  */
 #endif
-             log(LOG_DEBUG,"ropen_v3: open(%s,%d,%d) returned %x (hex)\n",CORRECT_FILENAME(ofilename),flags,mode,fd) ;
+             log(LOG_DEBUG,"ropen_v3: open(%s,%d,%d) returned %x (hex)\n",CORRECT_FILENAME(ofilename),flags,mode,fd);
          }
          if (fd < 0)  {
             char alarmbuf[1024];
-            sprintf(alarmbuf,"sropen_v3: %s",CORRECT_FILENAME(filename)) ;
-            status= -1 ;
-            rcode= errno ;
-            log(LOG_DEBUG,"ropen_v3: open: %s\n",strerror(errno)) ;
-            /* rfio_alrm(rcode,alarmbuf) ; */
+            sprintf(alarmbuf,"sropen_v3: %s",CORRECT_FILENAME(filename));
+            status= -1;
+            rcode= errno;
+            log(LOG_DEBUG,"ropen_v3: open: %s\n",strerror(errno));
+            /* rfio_alrm(rcode,alarmbuf); */
          }
          else  {
             /*
              * Getting current offset
              */
-            status= lseek(fd,0L,SEEK_CUR) ;
-            log(LOG_DEBUG,"ropen_v3: lseek(%d,0,SEEK_CUR) returned %x (hex)\n",fd,status) ; 
-            if ( status < 0 ) rcode= errno ;
+            status= lseek(fd,0L,SEEK_CUR);
+            log(LOG_DEBUG,"ropen_v3: lseek(%d,0,SEEK_CUR) returned %x (hex)\n",fd,status); 
+            if ( status < 0 ) rcode= errno;
          }
        }
        if (pfn != NULL) free(pfn);
@@ -4696,20 +4688,20 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
    /*
     * Sending back status to the client
     */
-   p= rqstbuf ;
-   marshall_WORD(p,RQST_OPEN_V3) ; 
+   p= rqstbuf;
+   marshall_WORD(p,RQST_OPEN_V3); 
    marshall_LONG(p,status);
-   marshall_LONG(p,rcode) ;
-   marshall_LONG(p,ntohs(sin.sin_port)) ;
+   marshall_LONG(p,rcode);
+   marshall_LONG(p,ntohs(sin.sin_port));
    log(LOG_DEBUG, "ropen_v3: sending back status(%d) and errno(%d)\n",status,rcode);
    errno = ECONNRESET;
    if (netwrite_timeout(s,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE)  {
 #if defined(_WIN32)
       log(LOG_ERR,"ropen_v3: netwrite_timeout(): %s\n", geterr());
 #else      
-      log(LOG_ERR,"ropen_v3: netwrite_timeout(): %s\n",strerror(errno)) ;
+      log(LOG_ERR,"ropen_v3: netwrite_timeout(): %s\n",strerror(errno));
 #endif
-      return -1 ;
+      return -1;
    }
 
    if (! status && fd >= 0)
@@ -4857,7 +4849,7 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
 #if defined(SACCT)
    rfioacct(RQST_OPEN_V3,uid,gid,s,(int)flags,(int)mode,status,rcode,NULL,CORRECT_FILENAME(filename),NULL);
 #endif /* SACCT */
-   return fd ;
+   return fd;
 }
 
 
@@ -4887,8 +4879,8 @@ struct rfiostat *infop;
        myinfo.readop, myinfo.aheadop, myinfo.writop, myinfo.flusop, myinfo.statop,
        myinfo.seekop, myinfo.presop);
    log(LOG_INFO,"%s bytes read and %s bytes written\n",
-      u64tostr(myinfo.rnbr,tmpbuf,0), u64tostr(myinfo.wnbr,tmpbuf2,0)) ;
-   log(LOG_INFO, "rclose_v3(%d, %d)\n",s, fd) ;
+      u64tostr(myinfo.rnbr,tmpbuf,0), u64tostr(myinfo.wnbr,tmpbuf2,0));
+   log(LOG_INFO, "rclose_v3(%d, %d)\n",s, fd);
 
    /* sync the file to be sure that filesize in correct in following stats.
       this is needed by some ext3 bug/feature
@@ -4900,13 +4892,13 @@ struct rfiostat *infop;
    memset(&filestat,0,sizeof(struct stat));
    rc = fstat(fd, &filestat);
 
-   status = close(fd) ;
-   rcode = ( status < 0 ) ? errno : 0 ;
+   status = close(fd);
+   rcode = ( status < 0 ) ? errno : 0;
 
    ret=rfio_handle_close(handler_context, &filestat, rcode);
    if (ret<0){
       log(LOG_ERR, "srclose_v3: rfio_handle_close failed\n");
-      return -1 ;
+      return -1;
       }
 
    /* Close data socket */
@@ -4920,7 +4912,7 @@ struct rfiostat *infop;
          data_sock, errno);
 #endif   /* WIN32 */   
    else
-      log(LOG_DEBUG, "rclose_v3 : closing data socket fildesc=%d\n", data_sock) ;
+      log(LOG_DEBUG, "rclose_v3 : closing data socket fildesc=%d\n", data_sock);
 
 
    p= rqstbuf; 
@@ -4938,7 +4930,7 @@ struct rfiostat *infop;
 #else      
       log(LOG_ERR, "rclose_v3: netwrite_timeout(): %s\n", strerror(errno));
 #endif  /* WIN32 */
-      return -1 ;
+      return -1;
    }
 #if !defined(HPSS)
 #if defined(_WIN32)
@@ -4954,7 +4946,7 @@ struct rfiostat *infop;
       log(LOG_DEBUG, "rclose_v3 : closing ctrl socket fildesc=%d\n", s);
 #endif /* HPSS */
 
-   return status ;
+   return status;
 }
 
 #if !defined(HPSS)
@@ -4964,7 +4956,6 @@ void *produce_thread(int *ptr)
    int  byte_read = -1;
    int  error = 0;
    int  total_produced = 0;
-   char     tmpbuf[21];
    unsigned int ckSum;
    char     ckSumbuf[33]; /* max check sum 256bit 32x8+'\0'*/
    char     ckSumbufdisk[33];
@@ -5013,7 +5004,7 @@ void *produce_thread(int *ptr)
          array[produced % daemonv3_rdmt_nbuf].len = byte_read;
 	 if(useCksum) {
 	   ckSum = adler32(ckSum,array[produced % daemonv3_rdmt_nbuf].p,(unsigned int)byte_read);
-	   log(LOG_DEBUG,"produce_thread: current checksum=0x%lx\n",ckSum);
+	   log(LOG_DEBUG,"produce_thread: current checksum=0x%x\n",ckSum);
 	 }
       }
       else {
@@ -5022,7 +5013,7 @@ void *produce_thread(int *ptr)
             /* array[produced % daemonv3_rdmt_nbuf].p = NULL; */
             array[produced % daemonv3_rdmt_nbuf].len = 0;
 	    if(useCksum) {
-	      sprintf(ckSumbuf,"%lx", ckSum);
+	      sprintf(ckSumbuf,"%x", ckSum);
 	      log(LOG_DEBUG,"produce_thread: file checksum=0x%s\n",ckSumbuf);
 	      if(strncmp(ckSumbufdisk,ckSumbuf,32)==0) {
 		log(LOG_DEBUG,"produce_thread: checksums OK!\n");
@@ -5056,7 +5047,6 @@ void *consume_thread(int *ptr)
   char *buffer_to_write;
   int len_to_write;
   int saved_errno;
-  char     tmpbuf[21];
   unsigned int ckSum;
   char     ckSumbuf[33]; /* max check sum 256bit 32x8+'\0'*/
   char     useCksum;
@@ -5123,7 +5113,7 @@ void *consume_thread(int *ptr)
             log(LOG_DEBUG,"Has written buf %d to disk (len %d)\n",consumed % daemonv3_wrmt_nbuf,byte_written);
 	    if(useCksum) {
 	      ckSum = adler32(ckSum,buffer_to_write,(unsigned int)byte_written);
-	      log(LOG_DEBUG,"consume_thread: current checksum=0x%lx\n",ckSum);
+	      log(LOG_DEBUG,"consume_thread: current checksum=0x%x\n",ckSum);
 	    }
          }
       }
@@ -5131,7 +5121,7 @@ void *consume_thread(int *ptr)
          if (len_to_write == 0) {
             log(LOG_DEBUG,"End of writing : total consumed = %d,buffers=%d\n",total_consumed,consumed);
 	    if(useCksum) { /* sets the file extended attribute */
-	      sprintf(ckSumbuf,"%lx", ckSum);
+	      sprintf(ckSumbuf,"%x", ckSum);
 	      log(LOG_DEBUG,"consume_thread: file checksum=0x%s\n",ckSumbuf);   
 	      if(fsetxattr(fd,"user.castor.checksum.value",ckSumbuf, strlen(ckSumbuf),0)) 
 	        log(LOG_ERR,"consume_thread: fsetxattr failed, error=%d\n",errno);
@@ -5189,9 +5179,7 @@ struct  rfiostat* infop;
 {
    int  status;         /* Return code          */
    int  rcode;          /* To send back errno   */
-   int  how;            /* lseek mode           */
    int  offset;         /* lseek offset         */
-   int  size;           /* Requested write size */
    char *p;             /* Pointer to buffer    */
 #if !defined(_WIN32) && !defined(HPSS)
    char *iobuffer;
@@ -5240,11 +5228,12 @@ struct  rfiostat* infop;
       }
 
       daemonv3_rdmt = DAEMONV3_RDMT;
-      if( (p = getconfent("RFIO", "DAEMONV3_RDMT", 0)) != NULL )
+      if( (p = getconfent("RFIO", "DAEMONV3_RDMT", 0)) != NULL ) {
          if (*p == '0')
             daemonv3_rdmt = 0;
          else
             daemonv3_rdmt = 1;
+      }
 
       daemonv3_rdmt_nbuf = DAEMONV3_RDMT_NBUF;
       if( (p = getconfent("RFIO", "DAEMONV3_RDMT_NBUF", 0)) != NULL )
@@ -5266,7 +5255,7 @@ struct  rfiostat* infop;
          log(LOG_DEBUG, "rread_v3 allocating circular buffer : %d bytes\n",sizeof(struct element) * daemonv3_rdmt_nbuf);
          if ((array = (struct element *)malloc(sizeof(struct element) * daemonv3_rdmt_nbuf)) == NULL)  {
             log(LOG_ERR, "rread_v3: malloc array: ERROR occured (errno=%d)", errno);
-            return -1 ;
+            return -1;
          }
          log(LOG_DEBUG, "rread_v3 malloc array allocated : 0X%X\n",array);      
 
@@ -5280,7 +5269,7 @@ struct  rfiostat* infop;
             }
             if ( array[el].p == NULL)  {
                log(LOG_ERR, "rread_v3: malloc array element %d: ERROR occured (errno=%d)", el, errno);
-               return -1 ;
+               return -1;
             }
             log(LOG_DEBUG, "rread_v3 malloc array element %d allocated : 0X%X\n",el, array[el].p);      
          }
@@ -5294,7 +5283,7 @@ struct  rfiostat* infop;
          }
          if ( iobuffer == NULL)  {
            log(LOG_ERR, "rread_v3: malloc: ERROR occured (errno=%d)", errno);
-           return -1 ;
+           return -1;
          }
          log(LOG_DEBUG, "rread_v3 malloc buffer allocated : 0X%X\n",iobuffer);      
       }
@@ -5311,7 +5300,7 @@ struct  rfiostat* infop;
          log(LOG_DEBUG, "rread_v3 allocating malloc buffer : %d bytes\n",DISKBUFSIZE_READ);
          if ((iobuffer = (char *)malloc(DISKBUFSIZE_READ)) == NULL)  {
             log(LOG_ERR, "rread_v3: malloc: ERROR occured (errno=%d)", errno);
-            return -1 ;
+            return -1;
          }
          log(LOG_DEBUG, "rread_v3 malloc buffer allocated : 0X%X\n",iobuffer);      
          iobufsiz = DISKBUFSIZE_READ;
@@ -5320,13 +5309,13 @@ struct  rfiostat* infop;
 
       if (fstat(fd,&st) < 0) {
          log(LOG_ERR, "rread_v3: fstat(): ERROR occured (errno=%d)", errno);
-         return -1 ;
+         return -1;
       }
       
       log(LOG_DEBUG, "rread_v3 filesize : %d bytes\n",st.st_size);
       if ((offset = lseek(fd,0L,SEEK_CUR)) < 0) {
          log(LOG_ERR, "rread_v3: lseek offset(): ERROR occured (errno=%d)", errno);
-         return -1 ;
+         return -1;
       }
       bytes2send = st.st_size - offset;
       if (bytes2send < 0) bytes2send = 0;
@@ -5343,7 +5332,7 @@ struct  rfiostat* infop;
 #else    /* WIN32 */
          log(LOG_ERR, "rread_v3: netwrite_timeout(): %s\n", strerror(errno));
 #endif   /* else WIN32 */
-         return -1 ;
+         return -1;
       }
 
 #ifdef CS2
@@ -5390,7 +5379,7 @@ struct  rfiostat* infop;
       else
          write_fdset = &fdvar2;
       
-      log(LOG_DEBUG,"srread: doing select\n") ;
+      log(LOG_DEBUG,"srread: doing select\n");
 #if defined(_WIN32)
       if( select(FD_SETSIZE, &fdvar, write_fdset, NULL, &t) == SOCKET_ERROR )  {
          log(LOG_ERR, "srread_v3: select failed: %s\n", geterr());
@@ -5398,15 +5387,15 @@ struct  rfiostat* infop;
       }
 #else      
       if( select(FD_SETSIZE, &fdvar, write_fdset, NULL, &t) < 0 )  {
-         log(LOG_ERR, "rfio","srread_v3: select failed (errno=%d)", errno) ;
-         return -1 ;
+         log(LOG_ERR, "rfio","srread_v3: select failed (errno=%d)", errno);
+         return -1;
       }
 #endif      
       if( FD_ISSET(ctrl_sock, &fdvar) )  {
          int n, magic, code;
   
          /* Something received on the control socket */
-         log(LOG_DEBUG, "ctrl socket: reading %d bytes\n", RQSTSIZE) ;
+         log(LOG_DEBUG, "ctrl socket: reading %d bytes\n", RQSTSIZE);
          errno = ECONNRESET;
          if ((n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE) {
 #if defined(_WIN32)
@@ -5414,11 +5403,11 @@ struct  rfiostat* infop;
 #else    
             log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif
-            return -1 ;
+            return -1;
          }
-         p = rqstbuf ; 
-         unmarshall_WORD(p,magic) ;
-         unmarshall_WORD(p,code) ;
+         p = rqstbuf; 
+         unmarshall_WORD(p,magic);
+         unmarshall_WORD(p,code);
   
          /* what to do ? */
          if (code == RQST_CLOSE_V3)  {
@@ -5468,7 +5457,7 @@ struct  rfiostat* infop;
             return 0;
          }
          else  {
-            log(LOG_ERR,"unknown request:  magic: %x code: %x\n",magic,code) ;
+            log(LOG_ERR,"unknown request:  magic: %x code: %x\n",magic,code);
             return(-1);
          }
       }
@@ -5513,7 +5502,7 @@ struct  rfiostat* infop;
             errno = 5; */
 
          rcode = (status < 0) ? errno:0;
-         log(LOG_DEBUG, "%d bytes have been read on disk\n",status) ;
+         log(LOG_DEBUG, "%d bytes have been read on disk\n",status);
 
          if (status == 0)  {
 #if !defined(HPSS)
@@ -5522,16 +5511,16 @@ struct  rfiostat* infop;
 #endif
             eof_met = 1;
             p = rqstbuf;
-            marshall_WORD(p,REP_EOF) ;
-            log(LOG_DEBUG, "rread_v3: eof\n") ;
+            marshall_WORD(p,REP_EOF);
+            log(LOG_DEBUG, "rread_v3: eof\n");
             errno = ECONNRESET;
             if ((n = netwrite_timeout(ctrl_sock, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT)) != RQSTSIZE)  {
 #if defined(_WIN32)
                log(LOG_ERR,"rread_v3: netwrite_timeout(): %s\n", geterr());   
 #else       
-               log(LOG_ERR,"rread_v3: netwrite_timeout(): %s\n", strerror(errno)) ;
+               log(LOG_ERR,"rread_v3: netwrite_timeout(): %s\n", strerror(errno));
 #endif   /* WIN32 */       
-               return -1 ; 
+               return -1; 
             }
          } /*  status == 0 */
          else
@@ -5544,15 +5533,15 @@ struct  rfiostat* infop;
                marshall_WORD(p, REP_ERROR);
                marshall_LONG(p, status);
                marshall_LONG(p, rcode);
-               log(LOG_DEBUG, "rread_v3: status %d, rcode %d\n", status, rcode) ;
+               log(LOG_DEBUG, "rread_v3: status %d, rcode %d\n", status, rcode);
                errno = ECONNRESET;
                if ((n = netwrite_timeout(ctrl_sock, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT)) != RQSTSIZE)  {
 #if defined(_WIN32)
                   log(LOG_ERR, "rread_v3: netwrite_timeout(): %s\n", geterr()); 
 #else  
-                  log(LOG_ERR, "rread_v3: netwrite_timeout(): %s\n", strerror(errno)) ;
+                  log(LOG_ERR, "rread_v3: netwrite_timeout(): %s\n", strerror(errno));
 #endif  /* WIN32 */
-                  return -1 ; 
+                  return -1; 
                }
                log(LOG_DEBUG, "read_v3: waiting ack for error\n");
                if ((n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE) {
@@ -5571,12 +5560,12 @@ struct  rfiostat* infop;
 #else     
                      log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif
-                     return -1 ;
+                     return -1;
                   }
                }
                return(-1);
             }  else  {
-               log(LOG_DEBUG, "rread_v3: writing %d bytes to data socket %d\n",status, data_sock) ;
+               log(LOG_DEBUG, "rread_v3: writing %d bytes to data socket %d\n",status, data_sock);
 #if defined(_WIN32)
                WSASetLastError(WSAECONNRESET);
                if( (n = send(data_sock, iobuffer, status, 0)) != status )  {
@@ -5589,7 +5578,7 @@ struct  rfiostat* infop;
                errno = ECONNRESET;  
                if( (n = netwrite(data_sock, iobuffer, status)) != status ) {
                   log(LOG_ERR, "rread_v3: netwrite(): %s\n", strerror(errno));
-                  return -1 ; 
+                  return -1; 
                }
 #endif
 #if !defined(HPSS)
@@ -5614,9 +5603,6 @@ struct rfiostat *infop;
 {
    int  status;         /* Return code         */
    int  rcode;          /* To send back errno  */
-   int  how;            /* lseek mode          */
-   int  offset;         /* lseek offset        */
-   int  size;           /* Requested write size*/
    char *p;             /* Pointer to buffer   */
 #if !defined(_WIN32) && !defined(HPSS)
    char *iobuffer;
@@ -5625,14 +5611,9 @@ struct rfiostat *infop;
    int    byte_written_by_client;
    extern int max_rcvbuf;
    int    maxseg;
-#if defined(_AIX)
    socklen_t optlen;
-#else
-   int    optlen;
-#endif
    int    byte_in_diskbuffer = 0;
    char   *iobuffer_p;
-   int    max_rcv_wat;
    struct timeval t;
    int    sizeofdummy;
    /*
@@ -5660,7 +5641,7 @@ struct rfiostat *infop;
       char *p;
 
 #ifdef USE_XFSPREALLOC
-      if ( p = getconfent("RFIOD","XFSPREALLOC",0) ) {
+      if ( (p = getconfent("RFIOD","XFSPREALLOC",0)) ) {
          rfio_xfs_resvsp64(fd, atoi(p));
       }
 #endif
@@ -5670,9 +5651,9 @@ struct rfiostat *infop;
       if (status != 0)  {
         log(LOG_ERR, "srwrite64_v3: rfio_handle_firstwrite: %s\n", strerror(serrno));
         p = rqstbuf;
-        marshall_WORD(p,REP_ERROR) ;
-        marshall_LONG(p,status) ;
-        marshall_LONG(p,serrno) ;
+        marshall_WORD(p,REP_ERROR);
+        marshall_LONG(p,status);
+        marshall_LONG(p,serrno);
         if( netwrite_timeout(s, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT) != RQSTSIZE )  {
 #if defined(_WIN32)
            log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", ws_strerr(errno));
@@ -5680,7 +5661,7 @@ struct rfiostat *infop;
            log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", strerror(errno));
 #endif
         }
-        return -1 ;
+        return -1;
       }
 #if !defined(HPSS)
       if ((p = getconfent("RFIO","DAEMONV3_WRSIZE",0)) != NULL)  {
@@ -5689,11 +5670,12 @@ struct rfiostat *infop;
       }
 
       daemonv3_wrmt = DAEMONV3_WRMT;
-      if( (p = getconfent("RFIO", "DAEMONV3_WRMT", 0)) != NULL )
+      if( (p = getconfent("RFIO", "DAEMONV3_WRMT", 0)) != NULL ) {
          if (*p == '0')
             daemonv3_wrmt = 0;
          else
             daemonv3_wrmt = 1;
+      }
 
       daemonv3_wrmt_nbuf = DAEMONV3_WRMT_NBUF;
       if( (p = getconfent("RFIO", "DAEMONV3_WRMT_NBUF", 0)) != NULL )
@@ -5718,7 +5700,7 @@ struct rfiostat *infop;
          log(LOG_DEBUG, "rwrite_v3 allocating circular buffer : %d bytes\n",sizeof(struct element) * daemonv3_wrmt_nbuf);
          if ((array = (struct element *)malloc(sizeof(struct element) * daemonv3_wrmt_nbuf)) == NULL)  {
             log(LOG_ERR, "rwrite_v3: malloc array: ERROR occured (errno=%d)", errno);
-            return -1 ;
+            return -1;
          }
          log(LOG_DEBUG, "rwrite_v3 malloc array allocated : 0X%X\n",array);      
 
@@ -5732,7 +5714,7 @@ struct rfiostat *infop;
             }
             if ( array[el].p == NULL)  {
                log(LOG_ERR, "rwrite_v3: malloc array element %d: ERROR occured (errno=%d)", el, errno);
-               return -1 ;
+               return -1;
             }
             log(LOG_DEBUG, "rwrite_v3 malloc array element %d allocated : 0X%X\n",el, array[el].p);      
          }
@@ -5746,7 +5728,7 @@ struct rfiostat *infop;
          }
          if ( iobuffer == NULL)  {
             log(LOG_ERR, "rwrite_v3: malloc: ERROR occured (errno=%d)", errno);
-            return -1 ;
+            return -1;
          }
          log(LOG_DEBUG, "rwrite_v3 malloc buffer allocated : 0X%X\n",iobuffer);
       }
@@ -5770,7 +5752,7 @@ struct rfiostat *infop;
          log(LOG_DEBUG, "rwrite_v3 allocating malloc buffer : %d bytes\n",DISKBUFSIZE_WRITE);
          if ((iobuffer = (char *)malloc(DISKBUFSIZE_WRITE)) == NULL) {
             log(LOG_ERR, "rwrite_v3: malloc: ERROR occured (errno=%d)", errno);
-            return -1 ;
+            return -1;
          }
          iobufsiz = DISKBUFSIZE_WRITE;
          log(LOG_DEBUG, "rwrite_v3 malloc buffer allocated : 0X%X\n",iobuffer);
@@ -5782,8 +5764,8 @@ struct rfiostat *infop;
 #if !defined(_WIN32)
       optlen = sizeof(maxseg);
       if (getsockopt(data_sock,IPPROTO_TCP,TCP_MAXSEG,(char *)&maxseg,&optlen) < 0) {
-         log(LOG_ERR,"rfio","rwrite_v3: getsockopt: ERROR occured (errno=%d)",errno) ;
-         return -1 ;
+         log(LOG_ERR,"rfio","rwrite_v3: getsockopt: ERROR occured (errno=%d)",errno);
+         return -1;
       }
       log(LOG_DEBUG,"rwrite_v3: max TCP segment: %d\n",maxseg);
 #endif   /* WIN32 */       
@@ -5822,7 +5804,7 @@ struct rfiostat *infop;
       t.tv_sec = 10;
       t.tv_usec = 0;
       
-      log(LOG_DEBUG,"rwrite: doing select\n") ;
+      log(LOG_DEBUG,"rwrite: doing select\n");
 #if defined(_WIN32)
       if( select(FD_SETSIZE, &fdvar, NULL, NULL, &t) == SOCKET_ERROR ) {
          log(LOG_ERR, "rwrite_v3: select: %s", geterr());
@@ -5834,12 +5816,12 @@ struct rfiostat *infop;
       }
 #else      
       if( select(FD_SETSIZE, &fdvar, NULL, NULL, &t) < 0 )  {
-         log(LOG_ERR, "rfio", "rwrite_v3: select failed (errno=%d)", errno) ;
+         log(LOG_ERR, "rfio", "rwrite_v3: select failed (errno=%d)", errno);
 #if !defined(HPSS)
          if (daemonv3_wrmt)
             wait_consumer_thread(cid2);
 #endif /* !HPSS */
-         return -1 ;
+         return -1;
       }
 #endif   /* WIN32 */
 
@@ -5847,7 +5829,7 @@ struct rfiostat *infop;
          int n, magic, code;
   
          /* Something received on the control socket */
-         log(LOG_DEBUG, "ctrl socket: reading %d bytes\n",RQSTSIZE) ;
+         log(LOG_DEBUG, "ctrl socket: reading %d bytes\n",RQSTSIZE);
          if( (n = netread_timeout(ctrl_sock, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT)) != RQSTSIZE )  {
             if (n == 0)  {
                errno = ECONNRESET;
@@ -5872,18 +5854,18 @@ struct rfiostat *infop;
                if (daemonv3_wrmt)
                   wait_consumer_thread(cid2);
 #endif /* !HPSS */
-               return -1 ;
+               return -1;
             }
          }
-         p = rqstbuf ; 
-         unmarshall_WORD(p,magic) ;
-         unmarshall_WORD(p,code) ;
+         p = rqstbuf; 
+         unmarshall_WORD(p,magic);
+         unmarshall_WORD(p,code);
          unmarshall_LONG(p,byte_written_by_client);
           
          if (code == RQST_CLOSE_V3)
-            log(LOG_DEBUG,"close request:  magic: %x code: %x\n",magic,code) ;
+            log(LOG_DEBUG,"close request:  magic: %x code: %x\n",magic,code);
          else
-            log(LOG_DEBUG,"unknown request:  magic: %x code: %x\n",magic,code) ;
+            log(LOG_DEBUG,"unknown request:  magic: %x code: %x\n",magic,code);
           
          log(LOG_DEBUG, "data socket: read_from_net=%d, written_by_client=%d\n",
             byte_read_from_network, byte_written_by_client);
@@ -5894,7 +5876,7 @@ struct rfiostat *infop;
              */
       
             if( byte_in_diskbuffer )  {
-               log(LOG_DEBUG, "writing last %d bytes on disk\n",byte_in_diskbuffer) ;
+               log(LOG_DEBUG, "writing last %d bytes on disk\n",byte_in_diskbuffer);
 #if defined(HPSS)
                status = rhpss_write(fd,iobuffer,byte_in_diskbuffer,s,0,0);
                /* If the write is successfull but incomplete (fs is full) we
@@ -5973,9 +5955,9 @@ struct rfiostat *infop;
       
             if (status < 0)  {
                p = rqstbuf;
-               marshall_WORD(p,REP_ERROR) ;
-               marshall_LONG(p,status) ;
-               marshall_LONG(p,rcode) ;
+               marshall_WORD(p,REP_ERROR);
+               marshall_LONG(p,status);
+               marshall_LONG(p,rcode);
                log(LOG_ERR, "rwrite_v3: status %d (%s), rcode %d\n", status,
                   strerror(errno), rcode);
                errno = ECONNRESET;
@@ -6010,7 +5992,7 @@ struct rfiostat *infop;
                      log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif   /* WIN32 */
                      /* No need to wait consumer thread here since it already exited after error */
-                     return -1 ;
+                     return -1;
                   }
                }
             }
@@ -6052,7 +6034,7 @@ struct rfiostat *infop;
             }
 #endif   /* !HPSS */
 #ifdef USE_XFSPREALLOC
-            if ( p = getconfent("RFIOD","XFSPREALLOC",0) ) {
+            if ( (p = getconfent("RFIOD","XFSPREALLOC",0)) ) {
                rfio_xfs_unresvsp64(fd, atoi(p), myinfo.wnbr);
             }
 #endif
@@ -6084,7 +6066,7 @@ struct rfiostat *infop;
                if (daemonv3_wrmt)
                   wait_consumer_thread(cid2);
 #endif   /* !HPSS */
-               return -1 ;
+               return -1;
             }
                iobuffer_p = iobuffer + byte_in_diskbuffer;
 #if !defined(HPSS)
@@ -6108,7 +6090,7 @@ struct rfiostat *infop;
             iobuffer = iobuffer_p = array[produced % daemonv3_wrmt_nbuf].p;
          }
 #endif   /* !HPSS */     
-         log(LOG_DEBUG, "data socket: reading residu %d bytes\n", diff) ;
+         log(LOG_DEBUG, "data socket: reading residu %d bytes\n", diff);
          if( (n = netread_timeout(data_sock, iobuffer_p, diff, RFIO_DATA_TIMEOUT)) != diff )  {
             if (n == 0)   {
                errno = ECONNRESET;
@@ -6133,7 +6115,7 @@ struct rfiostat *infop;
                   if (daemonv3_wrmt)
                      wait_consumer_thread(cid2);
 #endif   /* !HPSS */     
-                  return -1 ;
+                  return -1;
                }
             }
             byte_read_from_network += diff;
@@ -6142,7 +6124,7 @@ struct rfiostat *infop;
              * Writing data on disk.
              */
       
-            log(LOG_DEBUG, "writing %d bytes on disk\n",byte_in_diskbuffer) ;
+            log(LOG_DEBUG, "writing %d bytes on disk\n",byte_in_diskbuffer);
 #if defined(HPSS)
             status = rhpss_write(fd, iobuffer, byte_in_diskbuffer, s, 0,0);
             /* If the write is successfull but incomplete (fs is full) we
@@ -6218,10 +6200,10 @@ struct rfiostat *infop;
 #if defined(_WIN32)
                   log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", ws_strerr(errno));
 #else  
-                  log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", strerror(errno)) ;
+                  log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", strerror(errno));
 #endif
                   /* Consumer thread already exited */
-                  return -1 ; 
+                  return -1; 
                }
                /* No deadlock possible here since all the data sent by the client
                   using the data socket has been read at this point */
@@ -6245,7 +6227,7 @@ struct rfiostat *infop;
                      log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif   /* WIN32 */
                      /* Consumer thread already exited */
-                     return -1 ;
+                     return -1;
                   }
                }
             }
@@ -6332,7 +6314,7 @@ struct rfiostat *infop;
                if (daemonv3_wrmt)
                   wait_consumer_thread(cid2);
 #endif   /* !HPSS */
-               return -1 ;
+               return -1;
             }
          }
          else  { 
@@ -6405,16 +6387,16 @@ struct rfiostat *infop;
                marshall_WORD(p, REP_ERROR);
                marshall_LONG(p, status);
                marshall_LONG(p, rcode);
-               log(LOG_ERR, "rwrite_v3: status %d (%s), rcode %d\n", status,strerror(errno), rcode) ;
+               log(LOG_ERR, "rwrite_v3: status %d (%s), rcode %d\n", status,strerror(errno), rcode);
                errno = ECONNRESET;
                if ((n = netwrite_timeout(s,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE)  {
 #if defined(_WIN32)
                   log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", ws_strerr(errno));
 #else  
-                  log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", strerror(errno)) ;
+                  log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", strerror(errno));
 #endif
                   /* Consumer thread already exited after error */
-                  return -1 ; 
+                  return -1; 
                }
 
                /*
@@ -6424,7 +6406,7 @@ struct rfiostat *infop;
                sizeofdummy = 256 * 1024;
                dummy = (unsigned char *)malloc(sizeof(unsigned char) * sizeofdummy);
                if (dummy == NULL)
-                  log(LOG_ERR, "rwrite_v3: malloc(): %s\n", strerror(errno)) ;
+                  log(LOG_ERR, "rwrite_v3: malloc(): %s\n", strerror(errno));
 
                /* 
                   There is a potential deadlock here since the client may be stuck
@@ -6442,7 +6424,7 @@ struct rfiostat *infop;
                   t.tv_sec = 1;
                   t.tv_usec = 0;
       
-                  log(LOG_DEBUG,"rwrite_v3: doing select after error writing on disk\n") ;
+                  log(LOG_DEBUG,"rwrite_v3: doing select after error writing on disk\n");
 #if defined(_WIN32)
                   if( select(FD_SETSIZE, &fdvar2, NULL, NULL, &t) == SOCKET_ERROR ) 
 #else
@@ -6452,9 +6434,9 @@ struct rfiostat *infop;
 #if defined(_WIN32)
                      errno = WSAGetLastError();
 #endif
-                     log(LOG_ERR,"rfio","rwrite_v3: select fdvar2 failed (errno=%d)",errno) ;
+                     log(LOG_ERR,"rfio","rwrite_v3: select fdvar2 failed (errno=%d)",errno);
                      /* Consumer thread already exited after error */
-                     return -1 ;
+                     return -1;
                   }
       
                   if( FD_ISSET(ctrl_sock, &fdvar2) )  {
@@ -6480,7 +6462,7 @@ struct rfiostat *infop;
                            log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif   
                            /* Consumer thread already exited after error */
-                           return -1 ;
+                           return -1;
                         }
                      }
                      else  {
@@ -6547,7 +6529,7 @@ struct rfiostat *infop;
                            log(LOG_ERR, "read emptying data socket: read(): %s\n", strerror(errno));
 #endif
                            /* Consumer thread already exited after error */
-                           return -1 ;
+                           return -1;
                         }
                      }
                      log(LOG_DEBUG, "rwrite_v3: emptying data socket, %d bytes read\n",n);
@@ -6600,11 +6582,11 @@ struct rfiostat *infop;
 
    if (netwrite_timeout(s,rqstbuf,WORDSIZE+2*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+2*LONGSIZE))  {
 #if defined(_WIN32)
-      log(LOG_ERR,"rlseek: netwrite_timeout(): %s\n", geterr()) ;
+      log(LOG_ERR,"rlseek: netwrite_timeout(): %s\n", geterr());
 #else
-      log(LOG_ERR,"rlseek: netwrite_timeout(): %s\n", strerror(errno)) ;
+      log(LOG_ERR,"rlseek: netwrite_timeout(): %s\n", strerror(errno));
 #endif      
-      return -1 ;
+      return -1;
    }
    return status;
 }

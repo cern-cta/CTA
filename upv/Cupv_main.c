@@ -1,5 +1,5 @@
 /*
- * $Id: Cupv_main.c,v 1.11 2008/07/20 16:30:26 waldron Exp $
+ * $Id: Cupv_main.c,v 1.12 2008/07/28 16:51:40 waldron Exp $
  *
  * Copyright (C) 1999-2002 by CERN IT-DS/HSM
  * All rights reserved
@@ -68,6 +68,7 @@ struct main_args *main_args;
 	int ipool;
 	int on = 1;	/* for REUSEADDR */
 	char *p;
+	const char *buf;
 	fd_set readfd, readmask;
 	int rqfd;
 	int s;
@@ -83,8 +84,9 @@ struct main_args *main_args;
 	/* set the location of the upv login file */
 	cupvconfigfile[0] = '\0';
 	if (strncmp (CUPVCONFIG, "%SystemRoot%\\", 13) == 0 &&
-	   ((p = getenv ("SystemRoot"))))
-		sprintf (cupvconfigfile, "%s%s", p, strchr (CUPVCONFIG, '\\'));
+	    (p = getenv ("SystemRoot")) &&
+	    (buf = strchr (CUPVCONFIG, '\\')))
+		sprintf (cupvconfigfile, "%s%s", p, buf);
 	else
 		strcpy (cupvconfigfile, CUPVCONFIG);
 

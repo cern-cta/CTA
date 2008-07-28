@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.49 2004/03/03 14:04:07 jdurand Exp $
+ * $Id: stagestat.c,v 1.50 2008/07/28 16:51:40 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.49 $ $Date: 2004/03/03 14:04:07 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.50 $ $Date: 2008/07/28 16:51:40 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1305,7 +1305,6 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 	struct acctstage2 rp2;
 	struct acctstage64 rp64;
 	size_t thislen;
-	char *tmpbuf;
 	size_t max_to_read = 0;
 
 	rfio_errno = serrno = 0;

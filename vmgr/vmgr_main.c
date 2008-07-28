@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_main.c,v 1.10 2008/02/28 14:23:00 waldron Exp $
+ * $Id: vmgr_main.c,v 1.11 2008/07/28 16:51:40 waldron Exp $
  *
  * Copyright (C) 1999-2003 by CERN/IT/PDP/DM
  * All rights reserved
@@ -65,12 +65,13 @@ struct main_args *main_args;
 	void *doit(void *);
 	char domainname[CA_MAXHOSTNAMELEN+1];
 	struct sockaddr_in from;
-	int fromlen = sizeof(from);
+	socklen_t fromlen = sizeof(from);
 	char *getconfent();
 	int i;
 	int ipool;
 	int on = 1;	/* for REUSEADDR */
 	char *p;
+	const char *buf;
 	fd_set readfd, readmask;
 	int rqfd;
 	int s;
@@ -95,8 +96,9 @@ struct main_args *main_args;
 	/* set the location of the volume manager login file */
 	vmgrconfigfile[0] = '\0';
 	if (strncmp (VMGRCONFIG, "%SystemRoot%\\", 13) == 0 &&
-	   (p = getenv ("SystemRoot")))
-		sprintf (vmgrconfigfile, "%s%s", p, strchr (VMGRCONFIG, '\\'));
+	    (p = getenv ("SystemRoot")) &&
+	    (buf = strchr (VMGRCONFIG, '\\')))
+		sprintf (vmgrconfigfile, "%s%s", p, buf);
 	else
 		strcpy (vmgrconfigfile, VMGRCONFIG);
 
@@ -227,7 +229,7 @@ char *req_data;
 char **clienthost;
 {
 	struct sockaddr_in from;
-	int fromlen = sizeof(from);
+	socklen_t fromlen = sizeof(from);
 	struct hostent *hp;
 	int l;
 	int msglen;
