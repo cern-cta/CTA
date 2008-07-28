@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: listPriority.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/06/02 13:35:03 $ $Author: waldron $
+ * @(#)$RCSfile: listPriority.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/07/28 16:56:48 $ $Author: waldron $
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
     } else {
       fprintf(stdout, "%-8s %-8s %-8s\n", "Uid", "Gid", "Priority");
       while (line != listPriority.end()){ 
-	fprintf(stdout, "%-8d %-8d %-8d\n", 
+	fprintf(stdout, "%-8llu %-8llu %-8llu\n", 
 		(*line)->euid(),
 		(*line)->egid(),
 		(*line)->priority());

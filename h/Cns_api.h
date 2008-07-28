@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_api.h,v 1.12 2008/07/28 15:00:26 sponcec3 Exp $
+ * $Id: Cns_api.h,v 1.13 2008/07/28 16:57:50 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.12 $ $Date: 2008/07/28 15:00:26 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.13 $ $Date: 2008/07/28 16:57:50 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_API_H
@@ -44,14 +44,13 @@ struct Cns_api_thread_info {
 	mode_t		mask;		/* current HSM umask */
 	char		server[CA_MAXHOSTNAMELEN+1];	/* current HSM Name Server */
 #ifdef CSEC
-	//int		use_authorization_id;
 	uid_t		Csec_uid;
 	gid_t		Csec_gid;
 	char		Csec_mech[CA_MAXCSECPROTOLEN+1];
 	char		Csec_auth_id[CA_MAXCSECNAMELEN+1];
 #endif
-        /*  Authorization ID used by the API, otherwise it uses geteuid/getegid
-	    In any case these uid/gid are only trusted if the clients has service credentials */
+        /* Authorization ID used by the API, otherwise it uses geteuid/getegid
+	   In any case these uid/gid are only trusted if the clients has service credentials */
         int             use_authorization_id;
         uid_t           uid;
         gid_t           gid;
