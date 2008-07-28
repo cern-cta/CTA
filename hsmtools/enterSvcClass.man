@@ -1,14 +1,14 @@
-.\" @(#)$RCSfile: enterSvcClass.man,v $ $Revision: 1.7 $ $Date: 2008/06/13 14:52:47 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: enterSvcClass.man,v $ $Revision: 1.8 $ $Date: 2008/07/28 16:56:28 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH ENTERSVCCLASS 1 "$Date: 2008/06/13 14:52:47 $" CASTOR "stager catalogue administrative commands"
+.TH ENTERSVCCLASS 1 "$Date: 2008/07/28 16:56:28 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 enterSvcClass \- define a new service class in the stager catalogue
 .SH SYNOPSIS
 .B enterSvcClass
 [
-.BI -h, 
+.BI -h,
 .BI --help
 ]
 .BI --Name " name"
@@ -32,6 +32,9 @@ enterSvcClass \- define a new service class in the stager catalogue
 ]
 [
 .BI --ForcedFileClass " forcedFileClass"
+]
+[
+.BI --ReplicateOnClose " [yes|no]"
 ]
 [
 .BI --MigratorPolicy " migratorPolicy"
@@ -65,7 +68,7 @@ Get usage information
 is the name of the new service class. An error is printed and the command
 fails if an existing service class with the same name is found
 .TP
-.BI \-\-Nbdrives " nbDrives"
+.BI \-\-NbDrives " nbDrives"
 The number of tape drives this service class is allowed to use concurrently
 for migration. There is no service class attribute to control the number tape drives used
 for tape recall.
@@ -99,6 +102,14 @@ Specifies the name of the file class to force on files written to this service c
 forced file class overrides the file class that the user specifies.
 . If an empty string ("") the file class that the file was written too will be used.
 .TP
+.BI \-\-ReplicateOnClose " [yes|no]"
+Defines whether or not replication on close is enabled for this service class. The
+supported values are yes or no, 1 or 0 and are case-insensitive. When enabled,
+once a file is created and finalized/closed it will be replicated so that
+MaxReplicaNb copies exist in the same pool where the file resides. Note: this
+functionality will not rebalance the number copies in the pool in response to
+diskservers which are no longer in production!
+.TP
 .BI \-\-MigratorPolicy " migratorPolicy"
 Specifies the name of the migrator policy to be used for this service
 class. The policy should either be an executable external script known to the CASTOR
@@ -109,7 +120,7 @@ man-page).
 .BI \-\-StreamPolicy " streamPolicy"
 Specifies the name of the stream policy to be used for this service class. The policy
 will be used to determine the number of streams that should be running based on the
-number of files and volume of data that should be written too tape. If an empty string ("") 
+number of files and volume of data that should be written too tape. If an empty string ("")
 is provided the existing policy setting (if any) will be revoked
 .TP
 .TP

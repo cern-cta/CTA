@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.20 $ $Release$ $Date: 2008/06/13 14:53:20 $ $Author: sponcec3 $
+ * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.21 $ $Release$ $Date: 2008/07/28 16:56:28 $ $Author: waldron $
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -65,7 +65,8 @@ enum SvcClassAttributes {
   RemoveDiskPools,
   DiskOnlyBehavior,
   ForcedFileClass,
-  StreamPolicy
+  StreamPolicy,
+  ReplicateOnClose
 } svcClassAttributes;
 
 static struct Coptions longopts[] = {
@@ -85,6 +86,7 @@ static struct Coptions longopts[] = {
   {"DiskOnlyBehavior",REQUIRED_ARGUMENT,0,DiskOnlyBehavior},
   {"ForcedFileClass",REQUIRED_ARGUMENT,0,ForcedFileClass},
   {"StreamPolicy",REQUIRED_ARGUMENT,0,StreamPolicy},
+  {"ReplicateOnClose",REQUIRED_ARGUMENT,0,ReplicateOnClose},
   {NULL, 0, NULL, 0}
 };
 
@@ -110,7 +112,7 @@ int countItems(
   char *p;
   int nbItems = 0;
   if ( itemStr == NULL ) return(0);
-  
+
   p = itemStr;
   while ( p != NULL ) {
     nbItems++;
@@ -135,7 +137,7 @@ int splitItemStr(
     serrno = EINVAL;
     return(-1);
   }
-  
+
   tmpNbItems = countItems(itemStr);
   if ( tmpNbItems == 0 ) {
     if ( nbItems != NULL ) *nbItems = tmpNbItems;
@@ -232,7 +234,7 @@ int addTapePools(
     fprintf(stderr,"addTapePools(): empty tape pool array\n");
     return(-1);
   }
-  
+
   for ( i=0; i<nbAddTapePools; i++ ) {
     fprintf(stdout,"Add tape pool %s\n",addTapePoolsArray[i]);
     tapePool = NULL;
@@ -383,7 +385,7 @@ int removeDiskPools(
   return(0);
 }
 
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv[])
 {
   int ch, rc;
   char *cmd, *name = NULL;
@@ -391,7 +393,7 @@ int main(int argc, char *argv[])
   char **addTapePoolsArray = NULL, **addDiskPoolsArray = NULL;
   char *removeTapePoolsStr = NULL, *removeDiskPoolsStr = NULL;
   char **removeTapePoolsArray = NULL, **removeDiskPoolsArray = NULL;
-  char *gcEnabled = NULL, *diskOnlyBehavior = NULL, *forcedFileClass = NULL;
+  char *gcEnabled = NULL, *diskOnlyBehavior = NULL, *forcedFileClass = NULL, *replicateOnClose = 0;
   char *streamPolicy = NULL;
   int nbDiskPools = 0, nbTapePools = 0;
   int nbAddTapePools = 0, nbRemoveTapePools = 0, nbAddDiskPools = 0, nbRemoveDiskPools = 0;
@@ -408,7 +410,7 @@ int main(int argc, char *argv[])
   u_signed64 defaultFileSize = 0;
   int maxReplicaNb = -1, nbDrives = -1;
   char *replicationPolicy = NULL, *migratorPolicy = NULL, *recallerPolicy = NULL;
-  
+
   Coptind = 1;
   Copterr = 1;
   cmd = argv[0];
@@ -431,7 +433,7 @@ int main(int argc, char *argv[])
     return(1);
   }
   stgSvc = Cstager_IStagerSvc_fromIService(iSvc);
-    
+
   while ((ch = Cgetopt_long(argc,argv,"h",longopts,NULL)) != EOF) {
     switch (ch) {
     case Name:
@@ -479,6 +481,9 @@ int main(int argc, char *argv[])
     case StreamPolicy:
       streamPolicy = strdup(Coptarg);
       break;
+    case ReplicateOnClose:
+      replicateOnClose = strdup(Coptarg);
+      break;
     default:
       usage(cmd);
       return(1);
@@ -493,7 +498,7 @@ int main(int argc, char *argv[])
 
   rc = Cstager_IStagerSvc_selectSvcClass(stgSvc,&svcClass,name);
   if ( (rc == -1) || (svcClass == NULL) ) {
-    fprintf(stdout,
+    fprintf(stderr,
             "SvcClass %s does not exists, %s, %s\n",name,
             sstrerror(serrno),
             Cstager_IStagerSvc_errorMsg(stgSvc));
@@ -507,10 +512,10 @@ int main(int argc, char *argv[])
         !strcasecmp(gcEnabled, "1")) {
       Cstager_SvcClass_setGcEnabled(svcClass, 1);
     } else if (!strcasecmp(gcEnabled, "no") ||
-	             !strcasecmp(gcEnabled, "0")) {
+	       !strcasecmp(gcEnabled, "0")) {
       Cstager_SvcClass_setGcEnabled(svcClass, 0);
     } else {
-      fprintf(stdout,
+      fprintf(stderr,
 	      "Invalid option for GcEnabled, value must be 'yes' or 'no'\n");
       return(1);
     }
@@ -528,7 +533,7 @@ int main(int argc, char *argv[])
     Cstager_SvcClass_setStreamPolicy(svcClass,streamPolicy);
   }
   if ( forcedFileClass != NULL) {
-    if(strcmp(forcedFileClass,"") != 0) {
+    if (strcmp(forcedFileClass,"") != 0) {
       rc = Cstager_IStagerSvc_selectFileClass(stgSvc,&fileClass,forcedFileClass);
       if ( (rc == -1) || (fileClass == NULL) ) {
         if ( rc == -1 ) {
@@ -546,29 +551,37 @@ int main(int argc, char *argv[])
     else {
       /* forcedFileClass == "" means we want to unforce it */
       Cstager_SvcClass_setForcedFileClass(svcClass, 0);
-    }      
+    }
   }
   if ( diskOnlyBehavior != NULL) {
     if (!strcasecmp(diskOnlyBehavior, "yes") ||
         !strcasecmp(diskOnlyBehavior, "1")) {
       Cstager_SvcClass_setHasDiskOnlyBehavior(svcClass, 1);
     } else if (!strcasecmp(diskOnlyBehavior, "no") ||
-	             !strcasecmp(diskOnlyBehavior, "0")) {
+	       !strcasecmp(diskOnlyBehavior, "0")) {
       Cstager_SvcClass_setHasDiskOnlyBehavior(svcClass, 0);
     } else {
-      fprintf(stdout,
+      fprintf(stderr,
 	      "Invalid option for DiskOnlyBehavior, value must be 'yes' or 'no'\n");
+      return(1);
+    }
+  }
+  if (replicateOnClose != NULL) {
+    if (!strcasecmp(replicateOnClose, "yes") ||
+	!strcasecmp(replicateOnClose, "1")) {
+      Cstager_SvcClass_setReplicateOnClose(svcClass, 1);
+    } else if (!strcasecmp(replicateOnClose, "no") ||
+	       !strcasecmp(replicateOnClose, "0")) {
+      Cstager_SvcClass_setReplicateOnClose(svcClass, 0);
+    } else {
+      fprintf(stderr,
+	      "Invalid option for ReplicateOnClose, value must be 'yes' or 'no'\n");
       return(1);
     }
   }
 
   rc = C_BaseAddress_create(&baseAddr);
   if ( rc == -1 ) return(-1);
-
-  C_BaseAddress_setCnvSvcName(baseAddr,"DbCnvSvc");
-  C_BaseAddress_setCnvSvcType(baseAddr,SVC_DBCNV);
-  iAddr = C_BaseAddress_getIAddress(baseAddr);
-  iObj = Cstager_SvcClass_getIObject(svcClass);
 
   C_BaseAddress_setCnvSvcName(baseAddr,"DbCnvSvc");
   C_BaseAddress_setCnvSvcType(baseAddr,SVC_DBCNV);
@@ -586,7 +599,7 @@ int main(int argc, char *argv[])
             C_Services_errorMsg(svcs));
     return(1);
   }
-  
+
   rc = C_Services_fillObj(
                           svcs,
                           iAddr,
@@ -747,7 +760,7 @@ int main(int argc, char *argv[])
       C_Services_errorMsg(svcs));
     return(1);
   }
-  
+
   return(0);
 }
 
