@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2008/06/13 14:43:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2008/07/28 16:44:19 $ $Author: waldron $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -79,7 +79,7 @@ const std::string castor::db::ora::OraCommonSvc::s_selectTapeStatementString =
 
 /// SQL statement for selectSvcClass
 const std::string castor::db::ora::OraCommonSvc::s_selectSvcClassStatementString =
-  "SELECT id, nbDrives, defaultFileSize, maxReplicaNb, replicationPolicy, gcEnabled, migratorPolicy, recallerPolicy, hasDiskOnlyBehavior, streamPolicy, gcPolicy FROM SvcClass WHERE name = :1";
+  "SELECT id, nbDrives, defaultFileSize, maxReplicaNb, replicationPolicy, gcEnabled, migratorPolicy, recallerPolicy, hasDiskOnlyBehavior, streamPolicy, gcPolicy, replicateOnClose FROM SvcClass WHERE name = :1";
 
 /// SQL statement for selectFileClass
 const std::string castor::db::ora::OraCommonSvc::s_selectFileClassStatementString =
@@ -213,7 +213,7 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
   if (0 == m_selectTapeStatement) {
     m_selectTapeStatement = createStatement(s_selectTapeStatementString);
   }
-  
+
   // Execute statement and get result
   unsigned long id;
   try {
@@ -238,12 +238,12 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
         return tape;
       } catch (castor::exception::Exception e) {
         delete tape;
-        // XXX Change createRep in CodeGenerator to forward the oracle errorcode 
+        // XXX Change createRep in CodeGenerator to forward the oracle errorcode
         if ( e.getMessage().str().find("ORA-00001", 0) != std::string::npos ) {
           // if violation of unique constraint, ie means that
           // some other thread was quicker than us on the insertion
           // So let's select what was inserted
-       
+
           // set again the parameters
 
           rset = m_selectTapeStatement->executeQuery();
@@ -341,6 +341,7 @@ castor::db::ora::OraCommonSvc::selectSvcClass
     result->setHasDiskOnlyBehavior(rset->getInt(9));
     result->setStreamPolicy(rset->getString(10));
     result->setGcPolicy(rset->getString(11));
+    result->setReplicateOnClose(rset->getInt(12));
     result->setName(name);
     m_selectSvcClassStatement->closeResultSet(rset);
     return result;
