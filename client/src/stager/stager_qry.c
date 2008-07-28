@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.31 2008/06/02 16:27:12 sponcec3 Exp $
+ * $Id: stager_qry.c,v 1.32 2008/07/28 15:20:28 itglp Exp $
  */
 
 /*
@@ -73,7 +73,7 @@ static struct Coptions longopts_diskPoolQuery[] =
     {"statistic",         NO_ARGUMENT,        NULL,      's'},
     {"diskPool",          REQUIRED_ARGUMENT,  NULL,      'd'},
     {"svcClass",          REQUIRED_ARGUMENT,  NULL,      'S'},
-    {"si",                NO_ARGUMENT,        NULL,      'i'}, 
+    {"si",                NO_ARGUMENT,        NULL,      'i'},
     {NULL,                0,                  NULL,       0 }
   };
 
@@ -167,7 +167,7 @@ int main(int argc, char *argv[]) {
       exit(EXIT_FAILURE);
     }
     handleDiskPoolQuery(argc, argv, nbArgs);
-    break;    
+    break;
   }
   return 0;
 }
@@ -176,12 +176,12 @@ int main(int argc, char *argv[]) {
 // handleFileQuery
 // -----------------------------------------------------------------------
 void handleFileQuery(int argc, char *argv[], int nbArgs) {
-  
+
   struct cmd_args args;
   struct  stage_filequery_resp *responses;
   int nbresps, rc, errflg, i;
   char errbuf[BUFSIZE];
-  
+
   args.nbreqs = nbArgs;
 #if defined(_WIN32)
   WSADATA wsadata;
@@ -235,6 +235,8 @@ void handleFileQuery(int argc, char *argv[], int nbArgs) {
             responses[i].filename,
             stage_fileStatusName(responses[i].status));
     } else {
+      /* a single failure in the list makes the command fail as a whole */
+      rc = 1;
       printf("Error %d/%s (%s)",
             responses[i].errorCode,
             sstrerror(responses[i].errorCode),
@@ -246,20 +248,20 @@ void handleFileQuery(int argc, char *argv[], int nbArgs) {
   free_query_req(args.requests, args.nbreqs);
   free_filequery_resp(responses, nbresps);
 
-  exit(EXIT_SUCCESS);
+  exit(rc);
 }
 
 // -----------------------------------------------------------------------
 // handleDiskPoolQuery
 // -----------------------------------------------------------------------
 void handleDiskPoolQuery(int argc, char *argv[], int nbArgs) {
-  
+
   int errflg;
   char errbuf[BUFSIZE];
   char *diskPool = NULL;
   int siflag = 0;
   struct stage_options opts;
-  
+
   // parsing the commane line
   opts.stage_host = NULL;
   opts.stage_port = 0;
@@ -303,7 +305,7 @@ void handleDiskPoolQuery(int argc, char *argv[], int nbArgs) {
     }
   } else {
     struct stage_diskpoolquery_resp response;
-    int rc = stage_diskpoolquery(diskPool, &response, &opts);    
+    int rc = stage_diskpoolquery(diskPool, &response, &opts);
     // check for errors
     if (rc < 0) {
       if(serrno != 0) {
@@ -391,10 +393,10 @@ int parseCmdLineFileQuery(int argc, char *argv[],
     }
     if (errflg != 0) break;
   }
-  
+
   if(getNextMode) {
     errflg++;
-    for(i = 0; i  < nbargs; i++) {
+    for(i = 0; i < nbargs; i++) {
       if(args->requests[i].type == BY_REQID) {
         args->requests[i].type = BY_REQID_GETNEXT;
         errflg = 0;
@@ -405,7 +407,7 @@ int parseCmdLineFileQuery(int argc, char *argv[],
       }
     }
   }
-  
+
   return errflg;
 }
 
@@ -441,7 +443,7 @@ int parseCmdLineDiskPoolQuery(int argc, char *argv[],
       break;
     }
     if (errflg != 0) break;
-  }  
+  }
   return errflg;
 }
 
