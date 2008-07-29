@@ -251,7 +251,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildTest	        NO
 #define BuildTpusage		NO
 #define BuildVdqmClient		NO
-#define BuildVdqmServer		NO
 #define BuildVdqmLibrary	NO
 #define BuildVolumeMgrClient	NO
 #define BuildVolumeMgrDaemon	NO

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.74 2008/07/28 15:00:25 sponcec3 Exp $
+# $Id: maketar.sh,v 1.75 2008/07/29 06:43:41 waldron Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -67,7 +67,7 @@ echo "### INFO ### Customizing build directory"
 #
 ## Force build rules to YES for a lot of things
 #
-for this in Accounting BuildCastorClientCPPLibrary BuildCleaning BuildCommands BuildCommon BuildCupvClient BuildCupvDaemon BuildCupvLibrary BuildDlfDaemon BuildDlfLibrary BuildDlfWeb BuildExpertClient BuildExpertDaemon BuildExpertLibrary BuildGCCpp BuildHsmTools BuildJob BuildJobManagerCpp BuildInfoPolicyLibrary BuildMigHunterDaemon BuildRecHandlerDaemon BuildNameServerClient BuildNameServerDaemon BuildNameServerLibrary BuildOraCpp BuildRHCpp BuildRfioClient BuildRfioLibrary BuildRfioServer BuildRmMasterCpp BuildRmNodeCpp BuildRmcLibrary BuildRmcServer BuildRtcopyClient BuildRtcopyLibrary BuildRtcopyServer BuildRtcpclientd BuildRtstat BuildSchedPlugin BuildStageClient BuildStageClientOld BuildStageDaemonCpp BuildStageLibrary BuildTapeClient BuildTapeDaemon BuildTapeLibrary BuildTpusage BuildVdqmClient BuildVdqmLibrary BuildVdqmServer BuildVolumeMgrClient BuildVolumeMgrDaemon BuildVolumeMgrLibrary BuildVDQMCpp BuildRepack BuildGridFTP HasCDK HasNroff UseCupv UseExpert UseGSI UseKRB5 UseLsf UseOracle UseScheduler UseVmgr UseXFSPrealloc BuildSecurity BuildSecureCns BuildSecureRfio; do
+for this in Accounting BuildCastorClientCPPLibrary BuildCleaning BuildCommands BuildCommon BuildCupvClient BuildCupvDaemon BuildCupvLibrary BuildDlfDaemon BuildDlfLibrary BuildDlfWeb BuildExpertClient BuildExpertDaemon BuildExpertLibrary BuildGCCpp BuildHsmTools BuildJob BuildJobManagerCpp BuildInfoPolicyLibrary BuildMigHunterDaemon BuildRecHandlerDaemon BuildNameServerClient BuildNameServerDaemon BuildNameServerLibrary BuildOraCpp BuildRHCpp BuildRfioClient BuildRfioLibrary BuildRfioServer BuildRmMasterCpp BuildRmNodeCpp BuildRmcLibrary BuildRmcServer BuildRtcopyClient BuildRtcopyLibrary BuildRtcopyServer BuildRtcpclientd BuildRtstat BuildSchedPlugin BuildStageClient BuildStageClientOld BuildStageDaemonCpp BuildStageLibrary BuildTapeClient BuildTapeDaemon BuildTapeLibrary BuildTpusage BuildVdqmClient BuildVdqmLibrary BuildVolumeMgrClient BuildVolumeMgrDaemon BuildVolumeMgrLibrary BuildVDQMCpp BuildRepack BuildGridFTP HasCDK HasNroff UseCupv UseExpert UseGSI UseKRB5 UseLsf UseOracle UseScheduler UseVmgr UseXFSPrealloc BuildSecurity BuildSecureCns BuildSecureRfio; do
     perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tYES/g" config/site.def
 done
 
@@ -315,7 +315,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
 	#
 	if [ "$package" = "castor-dlf-web" ]; then
 	    perl -pi -e 's/\/var\/www\/conf\/dlf\/login.conf/\%config\(noreplace\) \/var\/www\/conf\/dlf\/login.conf/g' debian/$package.install.perm.tmp
-	else 
+	else
 	    if [ "$package" != "castor-lsf-tools" ]; then
 		perl -pi -e 's/\/etc\/castor\/expert/\%config\(noreplace\) \/etc\/castor\/expert/g' debian/$package.install.perm.tmp
 	    fi
