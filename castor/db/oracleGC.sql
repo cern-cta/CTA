@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.660 $ $Date: 2008/07/21 12:13:20 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.661 $ $Date: 2008/07/29 06:46:20 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -13,13 +13,17 @@ CREATE OR REPLACE PACKAGE castorGC AS
         path VARCHAR2(2048),
         id NUMBER,
         fileId NUMBER,
-        nsHost VARCHAR2(2048));
+        nsHost VARCHAR2(2048),
+        lastAccessTime INTEGER,
+        nbAccesses NUMBER,
+        gcWeight NUMBER,
+        gcTriggeredBy VARCHAR2(2048);
   TYPE SelectFiles2DeleteLine_Cur IS REF CURSOR RETURN SelectFiles2DeleteLine;
   TYPE JobLogEntry IS RECORD (
     fileid NUMBER,
     nshost VARCHAR2(2048),
     operation INTEGER);
-  TYPE JobLogEntry_Cur IS REF CURSOR RETURN JobLogEntry; 
+  TYPE JobLogEntry_Cur IS REF CURSOR RETURN JobLogEntry;
   -- find out a gc function to be used from a given serviceClass
   FUNCTION getUserWeight(svcClassId NUMBER) RETURN VARCHAR2;
   FUNCTION getRecallWeight(svcClassId NUMBER) RETURN VARCHAR2;
@@ -217,7 +221,7 @@ CREATE OR REPLACE PROCEDURE selectFiles2Delete(diskServerName IN VARCHAR2,
 BEGIN
   -- First of all, check if we have GC enabled
   dontGC := 0;
-  FOR sc IN (SELECT gcEnabled 
+  FOR sc IN (SELECT gcEnabled
                FROM SvcClass, DiskPool2SvcClass D2S, DiskServer, FileSystem
               WHERE SvcClass.id = D2S.child
                 AND D2S.parent = FileSystem.diskPool
@@ -238,8 +242,9 @@ BEGIN
     -- First take the INVALID diskcopies, they have to go in any case
     UPDATE DiskCopy
        SET status = 9, -- BEING_DELETED
-           lastAccessTime = getTime() -- See comment below on the status = 9 condition
-     WHERE fileSystem = fs.id 
+           lastAccessTime = getTime(), -- See comment below on the status = 9 condition
+           gcType = decode(gcType, NULL, 1, gcType) -- USER
+     WHERE fileSystem = fs.id
        AND (
              (status = 7 AND NOT EXISTS -- INVALID
                (SELECT 'x' FROM SubRequest
@@ -247,7 +252,7 @@ BEGIN
                    AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14))) -- All but FINISHED, FAILED*, ARCHIVED
         OR (status = 9 AND lastAccessTime < getTime() - 1800))
         -- For failures recovery we also take all DiskCopies which were already
-        -- selected but got stuck somehow and didn't get removed after 30 mins. 
+        -- selected but got stuck somehow and didn't get removed after 30 mins.
     RETURNING id BULK COLLECT INTO dcIds;
     COMMIT;
 
@@ -258,8 +263,8 @@ BEGIN
       IF dcIds.COUNT > 0 THEN
         SELECT SUM(diskCopySize) INTO freed
           FROM DiskCopy
-         WHERE DiskCopy.id IN 
-             (SELECT /*+ CARDINALITY(fsidTable 5) */ * 
+         WHERE DiskCopy.id IN
+             (SELECT /*+ CARDINALITY(fsidTable 5) */ *
                 FROM TABLE(dcIds) dcidTable);
       ELSE
         freed := 0;
@@ -277,12 +282,14 @@ BEGIN
                     WHERE fileSystem = fs.id
                       AND status = 0 -- STAGED
                       AND NOT EXISTS (
-                          SELECT 'x' FROM SubRequest 
-                           WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id 
+                          SELECT 'x' FROM SubRequest
+                           WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id
                              AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14)) -- All but FINISHED, FAILED*, ARCHIVED
                       ORDER BY gcWeight ASC) LOOP
           -- Mark the DiskCopy
-          UPDATE DiskCopy SET status = 9 -- BEINGDELETED
+          UPDATE DiskCopy
+             SET status = 9, -- BEINGDELETED
+                 gcType = 0  -- AUTO
            WHERE id = dc.id RETURNING diskCopySize INTO deltaFree;
           -- Update toBeFreed
           freed := freed + deltaFree;
@@ -295,11 +302,16 @@ BEGIN
       COMMIT;
     END IF;
   END LOOP;
-      
+
   -- Now select all the BEINGDELETED diskcopies in this diskserver for the gcDaemon
   OPEN files FOR
-    SELECT /*+ INDEX(CastorFile I_CastorFile_ID) */ FileSystem.mountPoint || DiskCopy.path, DiskCopy.id,
-	   Castorfile.fileid, Castorfile.nshost
+    SELECT /*+ INDEX(CastorFile I_CastorFile_ID) */ FileSystem.mountPoint || DiskCopy.path,
+           DiskCopy.id,
+	   Castorfile.fileid, Castorfile.nshost,
+           DiskCopy.lastAccessTime, DiskCopy.nbCopyAccesses, DiskCopy.gcWeight,
+           CASE WHEN DiskCopy.gcType = 0 THEN 'Automatic'
+                WHEN DiskCopy.gcType = 1 THEN 'User Requested'
+                ELSE 'Unknown' END
       FROM CastorFile, DiskCopy, FileSystem, DiskServer
      WHERE decode(DiskCopy.status,9,DiskCopy.status,NULL) = 9 -- BEINGDELETED
        AND DiskCopy.castorfile = CastorFile.id
@@ -510,7 +522,7 @@ BEGIN
                 AND lastModificationTime < getTime() - '|| timeOut ||';',
              'SubRequest');
   COMMIT;
-  
+
   -- and then related Requests + Clients
     ---- Get ----
   bulkDeleteRequests('StageGetRequest');
@@ -547,7 +559,7 @@ BEGIN
   -- Note that we don't select INVALID diskcopies from recreation of files
   -- because they are taken by the standard GC as they physically exist on disk.
   SELECT id
-    BULK COLLECT INTO dcIds 
+    BULK COLLECT INTO dcIds
     FROM DiskCopy
    WHERE (status = 4 OR (status = 7 AND fileSystem = 0))
      AND creationTime < getTime() - timeOut;
@@ -635,10 +647,10 @@ BEGIN
    WHERE class = 'cleaning' AND key = 'failedDCsTimeout' AND ROWNUM < 2;
   deleteFailedDiskCopies(t*3600);
   restartStuckRecalls();
-  
-  -- Loop over all tables which support row movement and recover space from 
-  -- the object and all dependant objects. We deliberately ignore tables 
-  -- with function based indexes here as the 'shrink space' option is not 
+
+  -- Loop over all tables which support row movement and recover space from
+  -- the object and all dependant objects. We deliberately ignore tables
+  -- with function based indexes here as the 'shrink space' option is not
   -- supported.
   FOR t IN (SELECT table_name FROM user_tables
              WHERE row_movement = 'ENABLED'
@@ -678,7 +690,7 @@ BEGIN
   LOOP
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
   END LOOP;
-  
+
   -- Creates a db job to be run every 20 minutes executing the deleteTerminatedRequests procedure
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'houseKeepingJob',
