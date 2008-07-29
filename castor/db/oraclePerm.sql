@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.646 $ $Date: 2008/06/23 07:47:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.647 $ $Date: 2008/07/29 06:48:50 $ $Author: waldron $
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -32,7 +32,7 @@ BEGIN
       END IF;
       -- service class exists, we give permission denied
       res := -1;
-    EXCEPTION WHEN NO_DATA_FOUND THEN 
+    EXCEPTION WHEN NO_DATA_FOUND THEN
       -- service class does not exist
       res := -2;
     END;
@@ -56,10 +56,11 @@ END;
 
 
 /* Function to wrap the checkPermission procedure so that is can be
-   used within SQL queries. The function returns 0 if the user has
-   access on the service class for the given request type otherwise
-   1 if access is denied */
-CREATE OR REPLACE 
+ * used within SQL queries. The function returns 0 if the user has
+ * access on the service class for the given request type otherwise
+ * 1 if access is denied
+ */
+CREATE OR REPLACE
 FUNCTION checkPermissionOnSvcClass(reqSvcClass IN VARCHAR2,
                                    reqEuid IN NUMBER,
                                    reqEgid IN NUMBER,
@@ -67,7 +68,7 @@ FUNCTION checkPermissionOnSvcClass(reqSvcClass IN VARCHAR2,
 RETURN NUMBER AS
   res NUMBER;
 BEGIN
-  -- Check the users access rights */
+  -- Check the users access rights
   checkPermission(reqSvcClass, reqEuid, reqEgid, reqType, res);
   IF res = 0 THEN
     RETURN 0;
@@ -176,7 +177,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     END IF;
     RETURN res;
   END;
-  
+
   -- Does one priviledge P1 contain another one P2 ?
   FUNCTION contains(p1 Privilege, p2 Privilege) RETURN Boolean AS
   BEGIN
@@ -198,7 +199,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     END IF;
     RETURN TRUE;
   END;
-  
+
   -- Intersection of a priviledge P with the WhiteList
   -- The result is stored in the temporary table removePrivilegeTmpTable
   PROCEDURE intersectionWithWhiteList(p Privilege) AS
@@ -252,7 +253,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
       END;
     END IF;
   END;
-  
+
   -- remove priviledge P from list L
   PROCEDURE removePrivilegeFromBlackList(p Privilege) AS
     blr Privilege;
@@ -278,7 +279,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
       END;
     END LOOP;
   END;
-  
+
   -- Add priviledge P to list L :
   PROCEDURE addPrivilegeToWL(p Privilege) AS
     wlr Privilege;
@@ -319,7 +320,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
       INSERT INTO WhiteList VALUES p;
     END IF;
   END;
-  
+
   -- Add priviledge P to list L :
   PROCEDURE addPrivilegeToBL(p Privilege) AS
     blr Privilege;
@@ -360,7 +361,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
       INSERT INTO BlackList VALUES p;
     END IF;
   END;
-  
+
   -- cleanup BlackList when a privilege was removed from the whitelist
   PROCEDURE cleanupBL AS
     blr Privilege;
@@ -390,7 +391,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     removePrivilegeFromBlackList(P);
     addPrivilegeToWL(P);
   END;
-  
+
   -- Remove priviledge P
   PROCEDURE removePrivilege(P Privilege) AS
     c NUMBER;
