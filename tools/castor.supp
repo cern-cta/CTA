@@ -1,32 +1,32 @@
 {
-  Oracle's library, use of uninitialized value
-  Memcheck:Value4
-  obj:*/libclntsh.so*
+   Oracle's library, use of uninitialized value
+   Memcheck:Value4
+   obj:*/libclntsh.so*
 }
 {
-  Oracle's library, use of uninitialized value size 8 in clntsh
-  Memcheck:Value8
-  obj:*/libclntsh.so*
+   Oracle's library, use of uninitialized value size 8 in clntsh
+   Memcheck:Value8
+   obj:*/libclntsh.so*
 }
 {
-  Oracle's library, use of uninitialized value size 8 in nnz10
-  Memcheck:Value8
-  obj:*/libnnz10.so*
+   Oracle's library, use of uninitialized value size 8 in nnz10
+   Memcheck:Value8
+   obj:*/libnnz10.so*
 }
 {
-  Oracle's library, jump depending on uninitialized value in clntsh
-  Memcheck:Cond
-  obj:*/libclntsh.so*
+   Oracle's library, jump depending on uninitialized value in clntsh
+   Memcheck:Cond
+   obj:*/libclntsh.so*
 }
 {
-  Oracle's library, jump depending on uninitialized value in nnz10
-  Memcheck:Cond
-  obj:*/libnnz10.so*
+   Oracle's library, jump depending on uninitialized value in nnz10
+   Memcheck:Cond
+   obj:*/libnnz10.so*
 }
 {
-  Oracle's library, Invalid read of size 8 in nnz10
-  Memcheck:Addr8
-  obj:*libnnz10.so
+   Oracle's library, Invalid read of size 8 in nnz10
+   Memcheck:Addr8
+   obj:*libnnz10.so
 }
 {
    Oracle's call to times
@@ -76,4 +76,20 @@
    obj:/lib/tls/libc-2.3.2.so
    fun:__nss_database_lookup
 }
-
+{
+   Syscall param write(buf) points to uninitialised byte(s)
+   Memcheck:Param
+   write(buf)
+   obj:/lib64/tls/libpthread-2.3.4.so
+   fun:snttwrite
+   fun:nttwr
+   fun:nsntwrn
+   fun:nspsend
+   fun:nsdofls
+   fun:nsdo
+   fun:nsdosend
+   fun:nioqrc
+   fun:ttcdrv
+   fun:nioqwa
+   fun:upirtrc
+}
