@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2008/07/28 16:44:19 $ $Author: waldron $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2008/07/29 13:43:54 $ $Author: itglp $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -215,7 +215,7 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
   }
 
   // Execute statement and get result
-  unsigned long id;
+  u_signed64 id;
   try {
     m_selectTapeStatement->setString(1, vid);
     m_selectTapeStatement->setInt(2, side);
@@ -270,7 +270,7 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
     }
     // If we reach this point, then we selected successfully
     // a tape and it's id is in rset
-    id = rset->getInt(1);
+    id = (u_signed64)rset->getDouble(1);
     m_selectTapeStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
