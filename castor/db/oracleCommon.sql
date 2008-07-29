@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.666 $ $Date: 2008/07/22 13:41:53 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.667 $ $Date: 2008/07/29 06:36:36 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -9,7 +9,7 @@
  *******************************************************************/
 
 /* A small table used to cross check code and DB versions */
-UPDATE CastorVersion SET schemaVersion = '2_1_7_12';
+UPDATE CastorVersion SET schemaVersion = '2_1_8_0';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -54,7 +54,7 @@ partition by list (type)
   partition type_80 values (80)  tablespace stager_data,
   partition type_84 values (84)  tablespace stager_data,
   partition type_90 values (90)  tablespace stager_data,
-  partition type_142 values (142)  tablespace stager_data,	
+  partition type_142 values (142)  tablespace stager_data,
   partition type_144 values (144)  tablespace stager_data,
   partition type_147 values (147)  tablespace stager_data,
   partition type_149 values (149)  tablespace stager_data,
@@ -149,13 +149,13 @@ CREATE INDEX I_QueryParameter_Query on QueryParameter (query);
 CREATE INDEX I_Segment_Copy on Segment (copy);
 
 /* Constraint on FileClass name */
-ALTER TABLE FileClass ADD CONSTRAINT I_FileClass_Name UNIQUE (name); 
+ALTER TABLE FileClass ADD CONSTRAINT I_FileClass_Name UNIQUE (name);
 
 /* Add unique constraint on tapes */
 ALTER TABLE Tape ADD CONSTRAINT I_Tape_VIDSideTpMode UNIQUE (VID, side, tpMode);
 
 /* Add unique constraint on svcClass name */
-ALTER TABLE SvcClass ADD CONSTRAINT I_SvcClass_Name UNIQUE (NAME); 
+ALTER TABLE SvcClass ADD CONSTRAINT I_SvcClass_Name UNIQUE (NAME);
 
 /* The primary key in this table allows for materialized views */
 ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT I_DiskPool2SvcCla_ParentChild PRIMARY KEY (parent, child);
@@ -172,6 +172,7 @@ ALTER TABLE SvcClass MODIFY (name NOT NULL)
 
 /* DiskCopy constraints */
 ALTER TABLE DiskCopy MODIFY (nbCopyAccesses DEFAULT 0);
+ALTER TABLE DiskCopy MODIFY (gcType DEFAULT NULL);
 
 /* Global temporary table to handle output of the filesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
@@ -200,9 +201,9 @@ CREATE GLOBAL TEMPORARY TABLE StgFilesDeletedOrphans
 
 /* Tables to log the activity performed by the cleanup job */
 CREATE TABLE CleanupJobLog
-  (fileId NUMBER NOT NULL, nsHost VARCHAR2(2048) NOT NULL, 
+  (fileId NUMBER NOT NULL, nsHost VARCHAR2(2048) NOT NULL,
    operation INTEGER NOT NULL);
-   
+
 /* Temporary table to handle removing of priviledges */
 CREATE GLOBAL TEMPORARY TABLE removePrivilegeTmpTable
   (svcClass VARCHAR2(2048),
@@ -214,8 +215,8 @@ CREATE GLOBAL TEMPORARY TABLE removePrivilegeTmpTable
 /* Global temporary table to store ids temporarily in the bulkCreateObj procedures */
 CREATE GLOBAL TEMPORARY TABLE bulkSelectHelper(objId NUMBER) ON COMMIT DELETE ROWS;
 
-/* SQL statements for table PriorityMap */ 
-CREATE TABLE PriorityMap (euid INTEGER, egid INTEGER, priority INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT; 
+/* SQL statements for table PriorityMap */
+CREATE TABLE PriorityMap (euid INTEGER, egid INTEGER, priority INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 ALTER TABLE PriorityMap ADD CONSTRAINT U_Priority_euid_egid UNIQUE (euid, egid);
 
 /**
@@ -451,7 +452,7 @@ CREATE OR REPLACE PROCEDURE cancelRecall
   unused NUMBER;
 BEGIN
   -- Lock the CastorFile
-  SELECT id INTO unused FROM CastorFile 
+  SELECT id INTO unused FROM CastorFile
    WHERE id = cfId FOR UPDATE;
   -- Cancel the recall
   deleteTapeCopies(cfId);
@@ -466,6 +467,24 @@ BEGIN
    WHERE status = 5 -- WAITSUBREQ
      AND parent IN (SELECT /*+ CARDINALITY(sridTable 5) */ * FROM TABLE(srIds) sridTable)
      AND castorfile = cfId;
+END;
+
+
+/* PL/SQL method FOR canceling a recall by tape VID, The subrequests associated with
+   the recall with be FAILED */
+CREATE OR REPLACE PROCEDURE cancelRecallForTape (vid IN VARCHAR2) AS
+BEGIN
+  FOR a IN (SELECT DISTINCT(DiskCopy.id), DiskCopy.castorfile
+              FROM Segment, Tape, TapeCopy, DiskCopy
+             WHERE Segment.tape = Tape.id
+               AND Segment.copy = TapeCopy.id
+               AND DiskCopy.castorfile = TapeCopy.castorfile
+               AND DiskCopy.status = 2  -- WAITTAPERECALL
+               AND Tape.vid = vid
+             ORDER BY DiskCopy.id ASC)
+  LOOP
+    cancelRecall(a.castorfile, a.id, 7);
+  END LOOP;
 END;
 
 
