@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DispatchThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/03/18 07:34:43 $ $Author: waldron $
+ * @(#)$RCSfile: DispatchThread.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/07/29 06:17:39 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -83,11 +83,11 @@ namespace castor {
       /// The forked process pool
       castor::server::ForkedProcessPool *m_processPool;
 
-      /// The request id of the job being processed
-      Cuuid_t m_requestId;
+      /// The request uuid of the job being processed
+      Cuuid_t m_requestUuid;
 
-      /// The sub request id of the job being processed
-      Cuuid_t m_subRequestId;
+      /// The sub request uuid of the job being processed
+      Cuuid_t m_subRequestUuid;
 
       /// The Cns invariant of the job
       Cns_fileid m_fileId;

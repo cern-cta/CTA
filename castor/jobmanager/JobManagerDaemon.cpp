@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/06/16 07:46:08 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2008/07/29 06:17:39 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -230,7 +230,7 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
      { 24, "Failed to terminate LSF job" },
      { 25, "Job terminated, timeout occurred" },
      { 26, "Job terminated by service administrator" },
-     { 27, "Management thread interval is greater then CLEAN_PERIOD in lsb.params, detection of abnormally EXITING jobs disabled" },
+     { 27, "Management thread interval is greater than CLEAN_PERIOD in lsb.params, detection of abnormally EXITING jobs disabled" },
      { 28, "Exception caught trying to run post job checks" },
      { 29, "Failed to execute postJobChecks procedure" },
      { 30, "Exception caught trying to get scheduler resources, continuing anyway" },
@@ -243,6 +243,7 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
      { 37, "Exception caught trying get space availability of all diskonly service classes, continuing anyway" },
      { 38, "Failed to execute getSvcClassesWithNoSpace, continuing anyway" },
      { 39, "Job terminated, svcclass no longer has any space available" },
+     { 70, "Job terminated, not enough hosts to meet jobs requirements" },
 
      // Submission
      { 40, "Invalid JobManager/SubmitRetryAttempts option, using default" },

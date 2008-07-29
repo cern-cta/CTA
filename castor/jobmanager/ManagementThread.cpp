@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/06/16 07:45:10 $ $Author: waldron $
+ * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/07/29 06:17:39 $ $Author: waldron $
  *
  * Cancellation thread used to cancel jobs in the LSF with have been in a
  * PENDING status for too long
@@ -107,12 +107,12 @@ void castor::jobmanager::ManagementThread::run(void *param) {
       m_defaultQueue = paramInfo->defaultQueues;
     }
 
-    // If the frequency of the thread, its 'interval' is greater then the
+    // If the frequency of the thread, its 'interval' is greater than the
     // CLEAN_PERIOD we will never catch jobs which have exited abnormally as
     // those jobs will never appear in the LSF queues output.
     if (m_timeout > m_cleanPeriod) {
 
-      // "Cancellation thread interval is greater then CLEAN_PERIOD in
+      // "Cancellation thread interval is greater than CLEAN_PERIOD in
       // lsb.params, detection of abnormally EXITING jobs disabled"
       castor::dlf::Param params[] =
 	{castor::dlf::Param("Thread Interval", m_timeout),
@@ -124,9 +124,21 @@ void castor::jobmanager::ManagementThread::run(void *param) {
 
   // Reset configuration variables
   m_pendingTimeouts.clear();
+  for (std::map<std::string,
+	 castor::jobmanager::DiskServerResource *>::const_iterator it =
+	 m_schedulerResources.begin();
+       it != m_schedulerResources.end();
+       it++) {
+    DiskServerResource *ds = (*it).second;
+    for (unsigned int i = 0; i < ds->fileSystems().size(); i++) {
+      FileSystemResource *fs = ds->fileSystems()[i];
+      delete fs;
+    }
+    delete ds;
+  }
   m_schedulerResources.clear();
   m_svcClassesWithNoSpace.clear();
-
+  
   // Remove all entries in the processed cache whose timestamp has exceeded
   // the CLEAN_PERIOD in lsb.params.
   for (std::map<std::string, u_signed64>::iterator it =
@@ -167,6 +179,7 @@ void castor::jobmanager::ManagementThread::run(void *param) {
       }
       free(results[i]);
     }
+    free(results);
   }
 
   // Extract the DiskCopyPendingTimeout value which defines how long a disk
@@ -215,7 +228,7 @@ void castor::jobmanager::ManagementThread::run(void *param) {
       m_svcClassesWithNoSpace = m_jobManagerService->getSvcClassesWithNoSpace();
     }
   } catch (castor::exception::Exception e) {
-    
+
     // "Exception caught trying get space availability of all diskonly service
     // classes, continuing anyway"
     castor::dlf::Param params[] =
@@ -304,7 +317,7 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
   // Logging variables
   std::istringstream extsched(job->submit.extsched);
   std::string buf, key, value;
-  std::vector<std::string> rfs;
+  std::vector<std::string> rfs, excludedHosts;
   u_signed64 requestType;
 
   Cuuid_t requestId = nullCuuid, subRequestId = nullCuuid;
@@ -333,6 +346,19 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
 	while (std::getline(requestedFileSystems, buf, '|')) {
 	  rfs.push_back(buf);
 	}
+      } else if (key == "EXCLUDEDHOSTS") {
+	// Tokenize the excluded hosts using '|' as a delimiter
+	std::istringstream excludedHostsInput(value);
+	while (std::getline(excludedHostsInput, buf, '|')) {
+	  excludedHosts.push_back(buf);
+	}
+
+	// Add the source diskserver to the exclusion list
+	if (rfs.size()) {
+	  std::istringstream iss(rfs[0]);
+	  std::getline(iss, buf, ':');
+	  excludedHosts.push_back(buf);
+	}
       }
     }
   }
@@ -351,7 +377,7 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
   if (!strcasecmp(job->submit.queue, m_defaultQueue.c_str())) {
     svcClass = "default";
   }
-  
+
   // Processing for jobs which have finished
   if (IS_FINISH(job->status)) {
 
@@ -439,12 +465,12 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
   // Terminate the job if the target service classes is a diskonly service class
   // which no longer has any space available.
   if ((m_resReqKill) &&
-      (requestType == OBJ_StageDiskCopyReplicaRequest) || 
+      (requestType == OBJ_StageDiskCopyReplicaRequest) ||
       (requestType == OBJ_StagePutRequest) ||
       (requestType == OBJ_StageUpdateRequest)) {
     std::vector<std::string>::const_iterator it =
-      std::find(m_svcClassesWithNoSpace.begin(), 
-		m_svcClassesWithNoSpace.end(), svcClass); 
+      std::find(m_svcClassesWithNoSpace.begin(),
+		m_svcClassesWithNoSpace.end(), svcClass);
     if (it != m_svcClassesWithNoSpace.end()) {
       if (terminateRequest(job->jobId, requestId, subRequestId, fileId, ENOSPC)) {
 	// "Job terminated, svcclass no longer has any space available"
@@ -577,6 +603,55 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
 	   castor::dlf::Param("SvcClass", svcClass),
 	   castor::dlf::Param(subRequestId)};
 	castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 34, 5, params, &fileId);
+      }
+      m_processedCache[job->submit.jobName] = time(NULL);
+      return;
+    }
+  }
+
+  // Handle cases where all diskservers in a service class for a
+  // StageDiskCopyReplicaRequest are excluded as candidate hosts to run the job
+  // as they already contain a copy of the file. The most common reason for
+  // this is a misconfigured service class where the number of diskservers
+  // is less than the maxReplicaNb
+  if (requestType == OBJ_StageDiskCopyReplicaRequest) {
+
+    unsigned long excluded = 0, total = 0;
+    for (std::map<std::string,
+	   castor::jobmanager::DiskServerResource *>::const_iterator it =
+	   m_schedulerResources.begin();
+	 it != m_schedulerResources.end();
+	 it++) {
+      DiskServerResource *ds = (*it).second;
+      for (unsigned int i = 0; i < ds->fileSystems().size(); i++) {
+	FileSystemResource *fs = ds->fileSystems()[i];
+	if (fs->svcClassName() != svcClass) {
+	  continue;
+	}
+
+	// Check to see if the diskserver is in the exclusion host list
+	std::vector<std::string>::const_iterator it2 =
+	  std::find(excludedHosts.begin(),
+		    excludedHosts.end(), ds->diskServerName());
+       	if (it2 != excludedHosts.end()) {
+	  excluded++;
+	}
+	total++;
+	break;
+      }
+    }
+    
+    // Terminate the job if all diskservers in the service class are excluded
+    if (total == excluded) {
+      if (terminateRequest(job->jobId, requestId, subRequestId, fileId, ESTSCHEDERR)) {
+	// "Job terminated, not enough hosts to meet jobs requirements"
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("JobId", (int)job->jobId),
+	   castor::dlf::Param("Username", job->user),
+	   castor::dlf::Param("Type", castor::ObjectsIdStrings[requestType]),
+	   castor::dlf::Param("SvcClass", svcClass),
+	   castor::dlf::Param(subRequestId)};
+	castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 70, 5, params, &fileId);
       }
       m_processedCache[job->submit.jobName] = time(NULL);
       return;

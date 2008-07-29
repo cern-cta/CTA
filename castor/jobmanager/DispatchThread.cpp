@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DispatchThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/03/18 07:34:43 $ $Author: waldron $
+ * @(#)$RCSfile: DispatchThread.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/07/29 06:17:39 $ $Author: waldron $
  *
  * A thread used to dispatch subrequest's in a SUBREQUEST_READYFORSCHED into
  * the scheduler using the forked process pool
@@ -100,8 +100,8 @@ void castor::jobmanager::DispatchThread::process(castor::IObject *param) throw()
     dynamic_cast<castor::jobmanager::JobSubmissionRequest *>(param);
 
   // Needed for logging purposes
-  string2Cuuid(&m_requestId, (char *)request->reqId().c_str());
-  string2Cuuid(&m_subRequestId, (char *)request->subReqId().c_str());
+  string2Cuuid(&m_requestUuid, (char *)request->reqId().c_str());
+  string2Cuuid(&m_subRequestUuid, (char *)request->subReqId().c_str());
   m_fileId.fileid = request->fileId();
   strncpy(m_fileId.server, request->nsHost().c_str(), CA_MAXHOSTNAMELEN);
   m_fileId.server[CA_MAXHOSTNAMELEN] = '\0';
@@ -109,8 +109,8 @@ void castor::jobmanager::DispatchThread::process(castor::IObject *param) throw()
   // "Job received"
   castor::dlf::Param params[] =
     {castor::dlf::Param("ID", request->id()),
-     castor::dlf::Param(m_subRequestId)};
-  castor::dlf::dlf_writep(m_requestId, DLF_LVL_SYSTEM, 60, 2, params, &m_fileId);
+     castor::dlf::Param(m_subRequestUuid)};
+  castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_SYSTEM, 60, 2, params, &m_fileId);
 
   try {
     m_processPool->dispatch(*param);
@@ -128,8 +128,8 @@ void castor::jobmanager::DispatchThread::process(castor::IObject *param) throw()
 	{castor::dlf::Param("Type", sstrerror(e.code())),
 	 castor::dlf::Param("Message", e.getMessage().str()),
 	 castor::dlf::Param("ID", request->id()),
-	 castor::dlf::Param(m_subRequestId)};
-      castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 63, 4, params, &m_fileId);
+	 castor::dlf::Param(m_subRequestUuid)};
+      castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 63, 4, params, &m_fileId);
     } catch (...) {
 
       // "Failed to execute updateSchedulerJob in DispatchThread::process,
@@ -137,8 +137,8 @@ void castor::jobmanager::DispatchThread::process(castor::IObject *param) throw()
       castor::dlf::Param params[] =
 	{castor::dlf::Param("Message", "General exception caught"),
 	 castor::dlf::Param("ID", request->id()),
-	 castor::dlf::Param(m_subRequestId)};
-      castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 64, 3, params, &m_fileId);
+	 castor::dlf::Param(m_subRequestUuid)};
+      castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 64, 3, params, &m_fileId);
     }
   }
   delete param;
