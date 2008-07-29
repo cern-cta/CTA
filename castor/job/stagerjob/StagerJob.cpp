@@ -27,7 +27,6 @@
 // Include Files
 #include <signal.h>
 #include <sys/time.h>
-#include <sys/resource.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sstream>
@@ -83,51 +82,6 @@ void castor::job::stagerjob::registerPlugin
     s_plugins = new std::map<std::string, castor::job::stagerjob::IPlugin*>();
   }
   s_plugins->operator[](protocol) = plugin;
-}
-
-// -----------------------------------------------------------------------
-// setCPULimit
-// -----------------------------------------------------------------------
-void setCPULimit() {
-  // get limit from config file
-  char* value = getconfent("Job", "LimitCPU", 0);
-  if (value == NULL) return;
-  // check value
-  unsigned int limit = atol(value);
-  if (limit <= 0) {
-    // "Invalid LimitCPU value found in configuration file, will be ignored"
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Value found", value)};
-    castor::dlf::dlf_writep
-      (nullCuuid, DLF_LVL_ERROR,
-       castor::job::stagerjob::INVLIMCPU, 1, params);
-    return;
-  }
-  // get the old limit
-  struct rlimit rlim;
-  if (getrlimit(RLIMIT_CPU, &rlim) != 0) {
-    castor::exception::Exception e(errno);
-    e.getMessage() << "Error caught in call to getrlimit";
-    throw e;
-  }
-  // check range
-  rlim.rlim_cur = limit;
-  if (rlim.rlim_max < limit) {
-    rlim.rlim_cur = rlim.rlim_max;
-    // "rlimit found in config file exceeds hard limit"
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Found in config file", limit),
-      castor::dlf::Param("Hard limit", rlim.rlim_max)};
-    castor::dlf::dlf_writep
-      (nullCuuid, DLF_LVL_WARNING,
-       castor::job::stagerjob::INVRLIMIT, 2, params);
-  }
-  // Set new limit
-  if (setrlimit(RLIMIT_CPU, &rlim) != 0) {
-    castor::exception::Exception e(errno);
-    e.getMessage() << "Error caught in call to setrlimit";
-    throw e;
-  }
 }
 
 // -----------------------------------------------------------------------
@@ -451,13 +405,19 @@ void castor::job::stagerjob::sendResponse
 // main
 // -----------------------------------------------------------------------
 int main(int argc, char** argv) {
+
+  // Record start time
+  timeval tv;
+  gettimeofday(&tv, NULL);
+  u_signed64 startTime = (tv.tv_sec * 1000000) + tv.tv_usec;
+
   // Ignore SIGPIPE to avoid being brutally interrupted
   // because of network [write] error
   signal(SIGPIPE,SIG_IGN);
   castor::job::stagerjob::InputArguments* arguments = 0;
+
   try {
     // Initializing logging
-    castor::BaseObject::initLog("job", castor::SVC_DLFMSG);
     using namespace castor::job::stagerjob;
     castor::dlf::Message messages[] = {
       // system call errors
@@ -468,15 +428,19 @@ int main(int argc, char** argv) {
       { DUP2FAILED,    "Failed to duplicate socket"},
       { MOVERNOTEXEC,  "Mover program can not be executed. Check permissions"},
       { EXECFAILED,    "Failed to exec mover"},
+
       // Invalid configurations or parameters
-      { INVRLIMIT,     "rlimit found in config file exceeds hard limit"},
-      { INVLIMCPU,     "Invalid LimitCPU value found in configuration file, will be ignored"},
-      { CPULIMTOOHIGH, "CPU limit value found in config file exceeds hard limit, using hard limit"},
-      { INVRETRYINT,   "Invalid DiskCopy/RetryInterval option, using default" },
-      { INVRETRYNBAT,  "Invalid DiskCopy/RetryAttempts option, using default" },
+      { INVRETRYINT,   "Invalid Job/RetryInterval option, using default" },
+      { INVRETRYNBAT,  "Invalid Job/RetryAttempts option, using default" },
+      { DOWNRESFILE,   "Downloading resource file" },
+      { INVALIDURI,    "Invalid Uniform Resource Indicator, cannot download resource file" },
+      { MAXATTEMPTS,   "Exceeded maximum number of attempts trying to download resource file" },
+      { DOWNEXCEPT,    "Exception caught trying to download resource file" },
+      { INVALRESCONT,  "The content of the resource file is invalid" },
+
       // Informative logs
       { JOBSTARTED,    "Job Started" },
-      { JOBENDED,      "Job exiting" },
+      { JOBENDED,      "Job finished successfully" },
       { JOBFAILED,     "Job failed" },
       { JOBORIGCRED,   "Credentials at start time" },
       { JOBACTCRED,    "Actual credentials used" },
@@ -487,12 +451,14 @@ int main(int argc, char** argv) {
       { MOVERFORK,     "Mover fork uses the following command line" },
       { ACCEPTCONN,    "Client connected" },
       { JOBFAILEDNOANS,"Job failed before it could send an answer to client" },
+
       // Errors
       { STAT64FAIL,    "rfio_stat64 error" },
       { CHILDEXITED,   "Child exited" },
       { CHILDSIGNALED, "Child exited due to uncaught signal" },
       { CHILDSTOPPED,  "Child was stopped" },
       { NOANSWERSENT,  "Could not send answer to client" },
+
       // Protocol specific. Should not be here if the plugins
       // were properly packaged in separate libs
       { GSIBADPORT,    "Invalid port range for GridFTP in config file. using default" },
@@ -502,11 +468,12 @@ int main(int argc, char** argv) {
       { GSIBADMAXVAL,  "Upper bound for GridFTP port range not in valid range. Using default" },
       { GSIPORTRANGE,  "GridFTP Port range" },
       { GSIPORTUSED,   "GridFTP Socket bound" },
-      { -1, ""}};
-    castor::dlf::dlf_init("job", messages);
+      { -1, "" }};
+    castor::dlf::dlf_init("Job", messages);
 
-    // Set CPU limits
-    setCPULimit();
+    // stagerJob does not inherit from the BaseDaemon so we must manually
+    // trigger the creation of the logging threads.
+    dlf_create_threads(0);
 
     // Parse the command line
     arguments = new castor::job::stagerjob::InputArguments(argc, argv);
@@ -514,51 +481,63 @@ int main(int argc, char** argv) {
   } catch (castor::exception::Exception e) {
     // Something went wrong but we are not yet in a situation
     // where we can inform the client. So log it and return straight
-    // "Job failed"
+    // "Job failed before it could send an answer to client"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Error", sstrerror(e.code())),
-       castor::dlf::Param("Detailed Error", e.getMessage().str()),
+       castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("JobId", getenv("LSB_JOBID"))};
     castor::dlf::dlf_writep
       (nullCuuid, DLF_LVL_ERROR,
        castor::job::stagerjob::JOBFAILEDNOANS, 3, params);
+    dlf_shutdown(10);
     return -1;
   }
 
   try {
 
-    // "Job Started"
+    // Construct command line
     std::string stagerConcatenatedArgv;
     for (int i = 0; i < argc; i++) {
       stagerConcatenatedArgv += argv[i];
       stagerConcatenatedArgv += " ";
     }
-    // compute waiting time of the request
+
+    // Compute waiting time of the request
     struct timeval tv;
     gettimeofday(&tv, NULL);
     double totalWaitTime = tv.tv_usec;
     totalWaitTime = totalWaitTime/1000000 +
       tv.tv_sec - arguments->requestCreationTime;
+
+    // "Job started"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Arguments", stagerConcatenatedArgv),
        castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+       castor::dlf::Param("Type", castor::ObjectsIdStrings[arguments->type]),
+       castor::dlf::Param("Protocol", arguments->protocol),
        castor::dlf::Param("TotalWaitTime", totalWaitTime),
        castor::dlf::Param(arguments->subRequestUuid)};
     castor::dlf::dlf_writep
       (arguments->requestUuid, DLF_LVL_SYSTEM,
-       castor::job::stagerjob::JOBSTARTED, 3, params, &arguments->fileId);
+       castor::job::stagerjob::JOBSTARTED, 5, params, &arguments->fileId);
 
     // Call stagerJobProcess
     process(arguments);
 
-    // "Job exiting successfully"
+    // Calculate statistics
+    gettimeofday(&tv, NULL);
+    signed64 elapsedTime =
+      (((tv.tv_sec * 1000000) + tv.tv_usec) - startTime);
+
+    // "Job finished successfully"
     castor::dlf::Param params2[] =
       {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+       castor::dlf::Param("ElapsedTime", elapsedTime  * 0.000001),
        castor::dlf::Param(arguments->subRequestUuid)};
     castor::dlf::dlf_writep
       (arguments->requestUuid, DLF_LVL_SYSTEM,
-       castor::job::stagerjob::JOBENDED, 2, params2, &arguments->fileId);
-    
+       castor::job::stagerjob::JOBENDED, 3, params2, &arguments->fileId);
+
     // memory cleanup
     delete arguments;
 
@@ -566,12 +545,13 @@ int main(int argc, char** argv) {
     // "Job failed"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Error", sstrerror(e.code())),
-       castor::dlf::Param("Detailed Error", e.getMessage().str()),
+       castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("JobId", getenv("LSB_JOBID")),
        castor::dlf::Param(arguments->subRequestUuid)};
     castor::dlf::dlf_writep
       (arguments->requestUuid, DLF_LVL_ERROR,
        castor::job::stagerjob::JOBFAILED, 4, params, &arguments->fileId);
+
     // Try to answer the client
     try {
       castor::rh::IOResponse ioResponse;
@@ -582,7 +562,7 @@ int main(int argc, char** argv) {
       // "Could not send answer to client"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Error", sstrerror(e2.code())),
-         castor::dlf::Param("Detailed Error", e2.getMessage().str()),
+         castor::dlf::Param("Message", e2.getMessage().str()),
          castor::dlf::Param("JobId", getenv("LSB_JOBID")),
          castor::dlf::Param(arguments->subRequestUuid)};
       castor::dlf::dlf_writep
@@ -591,6 +571,8 @@ int main(int argc, char** argv) {
     }
     // memory cleanup
     if (0 != arguments) delete arguments;
+    dlf_shutdown(10);
     return -1;
   }
+  dlf_shutdown(10);
 }

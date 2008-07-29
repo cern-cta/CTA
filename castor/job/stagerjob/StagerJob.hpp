@@ -76,15 +76,17 @@ namespace castor {
         EXECFAILED =   7, /* Failed to exec mover */
 
         // Invalid configurations or parameters
-        INVRLIMIT =     10, /* rlimit found in config file exceeds hard limit */
-        INVLIMCPU =     11, /* Invalid LimitCPU value found in configuration file, will be ignored */
-        CPULIMTOOHIGH = 12, /* CPU limit value found in config file exceeds hard limit, using hard limit */
-        INVRETRYINT =   13, /* Invalid DiskCopy/RetryInterval option, using default */
-        INVRETRYNBAT =  14, /* Invalid DiskCopy/RetryAttempts option, using default */
+        INVRETRYINT =   13, /* Invalid Job/RetryInterval option, using default */
+        INVRETRYNBAT =  14, /* Invalid Job/RetryAttempts option, using default */
+        DOWNRESFILE =   15, /* Downloading resource file */
+        INVALIDURI =    16, /* Invalid Uniform Resource Indicator, cannot download resource file */
+        MAXATTEMPTS =   17, /* Exceeded maximum number of attempts trying to download resource file */
+        DOWNEXCEPT =    18, /* Exception caught trying to download resource file */
+        INVALRESCONT =  19, /* The content of the resource file is invalid */
 
         // Informative logs
         JOBSTARTED =     20, /* Job Started */
-        JOBENDED =       21, /* Job exiting successfully */
+        JOBENDED =       21, /* Job finished successfully */
         JOBFAILED =      22, /* Job failed */
         JOBORIGCRED =    23, /* Credentials at start time */
         JOBACTCRED =     24, /* Actual credentials used */
