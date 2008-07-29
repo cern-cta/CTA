@@ -248,17 +248,12 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  User Privilege server
 
-Package: castor-vdqm-client
+Package: castor-vdqm2-client
 Architecture: any
+Replaces: castor-vdqm-client
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
- Volume Drive and Queue Manager clients
-
-Package: castor-vdqm-server
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
-Description: castor (Cern Advanced STORage system)
- Volume Drive and Queue Manager server
+ Volume Drive and Queue Manager clients version 2
 
 Package: castor-vdqm2-server
 Architecture: any
@@ -313,7 +308,7 @@ Package: castor-gridftp-dsi-ext
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib, xinetd, edg-mkgridmap, vdt_globus_data_server, vdt_globus_essentials, castor-gridftp-dsi-common
 Description: castor (Cern Advanced STORage system)
- External CASTOR2 gridftp2 DSI module 
+ External CASTOR2 gridftp2 DSI module
 
 Package: castor-lib-policy
 Architecture: any
