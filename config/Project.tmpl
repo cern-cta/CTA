@@ -350,7 +350,7 @@
 /* ---- */
 /* VDQM */
 /* ---- */
-#if BuildVdqmClient || BuildVdqmServer
+#if BuildVdqmClient
 #if !BuildVdqmLibrary
 #undef BuildVdqmLibrary
 #define BuildVdqmLibrary YES
@@ -504,7 +504,7 @@
 #undef BuildDlfLibrary
 #define BuildDlfLibrary YES
 #endif
-#if !BuildInfoPolicyLibrary 
+#if !BuildInfoPolicyLibrary
 #undef BuildInfoPolicyLibrary
 #define BuildInfoPolicyLibrary YES
 #endif
@@ -630,6 +630,7 @@ RMCDIR = rmc
 #endif
 #if BuildJob
 JOBDIR = job
+STAGERJOBDIR = stagerjob
 #endif
 #if BuildRtcopyClient || BuildRtcopyServer || BuildRtcopyLibrary || BuildRtstat
 RTCOPYDIR = rtcopy
@@ -647,7 +648,7 @@ STAGEDIROLD = stage
 #if BuildTapeClient || BuildTapeDaemon || BuildTapeLibrary || BuildTpusage
 TAPEDIR = tape
 #endif
-#if BuildVdqmClient || BuildVdqmServer || BuildVdqmLibrary
+#if BuildVdqmClient || BuildVdqmLibrary
 VDQMDIR = vdqm
 #endif
 #if BuildVolumeMgrClient || BuildVolumeMgrDaemon || BuildVolumeMgrLibrary
