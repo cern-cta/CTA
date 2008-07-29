@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2003-2005 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.17 $ $Date: 2008/01/16 15:37:28 $ CERN IT/ADC/CA  Ben Couturier
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.18 $ $Date: 2008/07/29 08:36:35 $ CERN IT/ADC/CA  Ben Couturier
  
 COMM    Make CASTOR Security package
 
@@ -244,7 +244,7 @@ exportshr:
 COMM###################### CLEANING RULES ########################
  
 clean:
-	-@RemoveFiles(FilesToClean) lib*.dylib lib*.so.[0-9] lib*.so.[0-9].[0-9].[0-9]
+	-@RemoveFiles(FilesToClean) lib*.dylib lib*.so.[0-9].[0-9].[0-9].[0-9] lib*.so.[0-9].[0-9]
  
 clobber:        clean
 	-@RemoveFiles($(CLIENT))
