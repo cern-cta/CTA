@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.661 $ $Date: 2008/07/29 06:46:20 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.662 $ $Date: 2008/07/29 13:35:05 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -17,7 +17,7 @@ CREATE OR REPLACE PACKAGE castorGC AS
         lastAccessTime INTEGER,
         nbAccesses NUMBER,
         gcWeight NUMBER,
-        gcTriggeredBy VARCHAR2(2048);
+        gcTriggeredBy VARCHAR2(2048));
   TYPE SelectFiles2DeleteLine_Cur IS REF CURSOR RETURN SelectFiles2DeleteLine;
   TYPE JobLogEntry IS RECORD (
     fileid NUMBER,
