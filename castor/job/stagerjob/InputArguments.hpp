@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: InputArguments.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/04/24 13:13:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: InputArguments.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/07/29 06:19:25 $ $Author: waldron $
  *
  * small struct holding the list of arguments passed to stagerJob
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef STAGERJOB_INPUTARGUMENTS_HPP 
+#ifndef STAGERJOB_INPUTARGUMENTS_HPP
 #define STAGERJOB_INPUTARGUMENTS_HPP 1
 
 // Include Files
@@ -67,22 +67,58 @@ namespace castor {
           throw (castor::exception::Exception);
 
       public:
+
+	/// The Cns invariant of the job
         struct Cns_fileid fileId;
+
+	/// The request uuid of the job being processed
         Cuuid_t requestUuid;
+
+	/// The sub request uuid of the job being processed
         Cuuid_t subRequestUuid;
+
+	/// The request uuid of the job represented as a string
         std::string rawRequestUuid;
+
+	/// The sub request uuid of the job represented as a string
         std::string rawSubRequestUuid;
+
+	/// The protocol used by the mover
         std::string protocol;
+
+	/// The id of the subrequest
         u_signed64 subRequestId;
+
+	/// The type of request e.g 40 (StagePutRequest)
         int type;
+
+	/// The selected diskserver as determined by scheduling
         std::string diskServer;
+
+	/// The select filesystem as determined by scheduling
         std::string fileSystem;
+
+	/// The access mode to open the file e.g. read, write, read/write, etc.
         enum AccessMode accessMode;
+
+	/// The client where to send the response
         castor::IClient* client;
+
+	/// Flag to indicate whether the transfer should be secure
         bool isSecure;
+
+	/// The userid of the user initiating the transfer
 	uid_t euid;
+
+	/// The groupid of the user initiating the transfer
 	gid_t egid;
+
+	/// The creation time of the original request in seconds since EPOCH
         u_signed64 requestCreationTime;
+
+	/// The location of the file to retrieve containing the diskserver and
+	/// filesystem to write too
+	std::string resourceFile;
 
       }; // end of class InputArguments
 

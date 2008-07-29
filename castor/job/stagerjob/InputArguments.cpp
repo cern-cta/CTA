@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: InputArguments.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/06/25 12:36:07 $ $Author: waldron $
+ * @(#)$RCSfile: InputArguments.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/07/29 06:19:25 $ $Author: waldron $
  *
  * small struct holding the list of arguments passed to stagerJob
  *
@@ -30,6 +30,7 @@
 #include "common.h"
 #include "getconfent.h"
 #include "castor/dlf/Dlf.hpp"
+#include "castor/Constants.hpp"
 #include "castor/IClientFactory.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
@@ -46,95 +47,182 @@
 // constructor
 // -----------------------------------------------------------------------
 castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
-  throw (castor::exception::Exception) {
-  // We expect nine arguments :
-  // fileid@nshost requestuuid subrequestuuid rfeatures
-  // subrequest_id@type host:fs mode clientString securityOption Euid EGid  Creation Time
+  throw (castor::exception::Exception) :
+  requestUuid(nullCuuid),
+  subRequestUuid(nullCuuid),
+  rawRequestUuid(""),
+  rawSubRequestUuid(""),
+  protocol("rfio"),
+  subRequestId(0),
+  type(0),
+  diskServer(""),
+  fileSystem(""),
+  accessMode(castor::job::stagerjob::ReadOnly),
+  client(0),
+  isSecure(false),
+  euid(0),
+  egid(0),
+  requestCreationTime(0),
+  resourceFile("") {
 
-  if (argc != 13) {
+  // Initialize the Cns_fileid structure
+  memset(&fileId, 0, sizeof(fileId));
+
+  // Supported command line options
+  Coptions_t longopts[] = {
+    // These options are for logging purposes only!
+    { "request",       REQUIRED_ARGUMENT, NULL, 'r' },
+    { "subrequest",    REQUIRED_ARGUMENT, NULL, 's' },
+
+    // The nameserver invariants
+    { "fileid",        REQUIRED_ARGUMENT, NULL, 'F' },
+    { "nshost",        REQUIRED_ARGUMENT, NULL, 'H' },
+
+    // Resources
+    { "resfile",       REQUIRED_ARGUMENT, NULL, 'R' },
+
+    // Mover specific
+    { "protocol",      REQUIRED_ARGUMENT, NULL, 'p' },
+    { "subreqid",      REQUIRED_ARGUMENT, NULL, 'i' },
+    { "reqtype",       REQUIRED_ARGUMENT, NULL, 'T' },
+    { "mode",          REQUIRED_ARGUMENT, NULL, 'm' },
+    { "clientstring",  REQUIRED_ARGUMENT, NULL, 'C' },
+    { "euid",          REQUIRED_ARGUMENT, NULL, 'u' },
+    { "egid",          REQUIRED_ARGUMENT, NULL, 'g' },
+    { "secure",        REQUIRED_ARGUMENT, NULL, 'X' },
+
+    // Logging/statistics
+    { "rcreationtime", REQUIRED_ARGUMENT, NULL, 't' },
+    { NULL,            0,                 NULL, 0   }
+  };
+
+  Coptind   = 1;
+  Copterr   = 1;
+  Coptreset = 1;
+
+  // Parse command line arguments
+  char c;
+  while ((c = Cgetopt_long(argc, argv, "r:s:F:H:R:p:i:T:m:C:u:g:X:t:", longopts, NULL)) != -1) {
+    switch (c) {
+    case 'r':
+      rawRequestUuid = Coptarg;
+      string2Cuuid(&requestUuid, Coptarg);
+      break;
+    case 's':
+      rawSubRequestUuid = Coptarg;
+      string2Cuuid(&subRequestUuid, Coptarg);
+      break;
+    case 'F':
+      fileId.fileid = strutou64(Coptarg);
+      break;
+    case 'H':
+      strncpy(fileId.server, Coptarg, CA_MAXHOSTNAMELEN);
+      fileId.server[CA_MAXHOSTNAMELEN] = '\0';
+      break;
+    case 'R':
+      resourceFile = Coptarg;
+      break;
+    case 'p':
+      protocol = Coptarg;
+      if (protocol == "rfio3") protocol = "rfio";
+      if (protocol!= "rfio" &&
+	  protocol!= "root" &&
+	  protocol!= "xroot" &&
+	  protocol!= "gsiftp") {
+	castor::exception::InvalidArgument e;
+	e.getMessage() << "Unsupported protocol " << protocol;
+	throw e;
+      }
+      break;
+    case 'i':
+      subRequestId = strtou64(Coptarg);
+      break;
+    case 'T':
+      type = atoi(Coptarg);
+      if ((type < 0) || ((unsigned int)type > castor::ObjectsIdsNb)) {
+	castor::exception::InvalidArgument e;
+	e.getMessage() << "Invalid request type: " << type;
+	throw e;
+      }
+      break;
+    case 'm': {
+        char *mode = Coptarg;
+	if (mode[0] == 'r') {
+	  accessMode = castor::job::stagerjob::ReadOnly;
+	} else if (mode[0] == 'w') {
+	  accessMode = castor::job::stagerjob::WriteOnly;
+	} else if (mode[0] == 'o') {
+	  accessMode = castor::job::stagerjob::ReadWrite;
+	} else {
+	  castor::exception::InvalidArgument e;
+	  e.getMessage() << "Invalid mode option: " << mode << ". "
+			 << "Valid values are 'r', 'w' and 'o'";
+	  throw e;
+	}
+      }
+      break;
+    case 'C':
+      client = castor::IClientFactory::string2Client(Coptarg);
+      break;
+    case 'u':
+      euid = strtou64(Coptarg);
+      break;
+    case 'g':
+      egid = strtou64(Coptarg);
+      break;
+    case 'X': {
+        std::string secureFlag = Coptarg;
+	if ((secureFlag == "1") || (secureFlag == "yes")) {
+	  isSecure = true;
+	} else if ((secureFlag != "0") && (secureFlag != "no")) {
+	  castor::exception::InvalidArgument e;
+	  e.getMessage() << "Invalid secure option: " << secureFlag << ". "
+			 << "Valid values are 'yes' (1) or 'no' (0)";
+	  throw e;
+	}
+      }
+      break;
+    case 't':
+      requestCreationTime = strutou64(Coptarg);
+      break;
+    default:
+      castor::exception::InvalidArgument e;
+      e.getMessage() << "Unknown argument given";
+      throw e;
+    }
+  }
+
+  // Check that all mandatory command line options have been specified
+  if (resourceFile.empty() || !fileId.fileid || !fileId.server[0] ||
+      !client || !type || !subRequestId) {
     castor::exception::InvalidArgument e;
-    e.getMessage() << "Wrong number of arguments given";
+    e.getMessage() << "Mandatory command line arguments missing";
     throw e;
   }
 
-  // fileid and nshost
-  std::string input = argv[1];
-  std::string::size_type atPos = input.find('@');
-  if (atPos == std::string::npos) {
+  // Check to make sure the request and subrequest uuid's are set
+  if (!Cuuid_compare(&requestUuid, &nullCuuid) ||
+      !Cuuid_compare(&subRequestUuid, &nullCuuid)) {
     castor::exception::InvalidArgument e;
-    e.getMessage() << "First argument should be <fileid>@<nshost>. "
-                   << "No '@' found.";
-    throw e;
-  }
-  if (input.find_first_not_of("0123456789") != atPos) {
-    castor::exception::InvalidArgument e;
-    e.getMessage() << "First argument should be <fileid>@<nshost> "
-                   << "and <fileid> should be a numerical value";
-    throw e;
-  }
-  strcpy(fileId.server, input.substr(atPos+1).c_str());
-  fileId.fileid = strtou64(input.substr(0, atPos).c_str());
-
-  // request uuid
-  rawRequestUuid = argv[2];
-  if (string2Cuuid(&requestUuid,argv[2]) != 0) {
-    castor::exception::InvalidArgument e;
-    e.getMessage() << "Invalid request uuid : " << argv[2];
+    e.getMessage() << "Invalid request and/or subrequest uuid";
     throw e;
   }
 
-  // subRequest uuid
-  rawSubRequestUuid = argv[3];
-  if (string2Cuuid(&subRequestUuid,argv[3]) != 0) {
+  // Don't allow to be run as root
+  if ((euid == 0) || (egid == 0)) {
     castor::exception::InvalidArgument e;
-    e.getMessage() << "Invalid request uuid : " << argv[3];
+    e.getMessage() << "Invalid euid and egid: (" << euid << ":" << egid << ")";
     throw e;
   }
-
-  // rfeatures
-  protocol = argv[4];
-  if (protocol == "rfio3") protocol = "rfio";
-  if (protocol!= "rfio" &&
-      protocol!= "root" &&
-      protocol!= "xroot" &&
-      protocol!= "gsiftp") {
-    castor::exception::InvalidArgument e;
-    e.getMessage() << "Unsupported protocol " << protocol;
-    throw e;
-  }
-
-  // subrequest_id and type
-  input = argv[5];
-  atPos = input.find('@');
-  if (atPos == std::string::npos) {
-    castor::exception::InvalidArgument e;
-    e.getMessage() << "Fifth argument should be <subreqId>@<type>. "
-                   << "No '@' found.";
-    throw e;
-  }
-  if (input.find_first_not_of("0123456789") != atPos) {
-    castor::exception::InvalidArgument e;
-    e.getMessage() << "Fifth argument should be <subreqId>@<type> "
-                   << "and <subreqId> should be a numerical value";
-    throw e;
-  }
-  if (input.find_last_not_of("0123456789") != atPos) {
-    castor::exception::InvalidArgument e;
-    e.getMessage() << "Fifth argument should be <subreqId>@<type> "
-                   << "and <type> should be a numerical value";
-    throw e;
-  }
-  subRequestId = strtou64(input.substr(0, atPos).c_str());
-  type = atoi(input.substr(atPos+1).c_str());
 
   // Determine the number of times that the shared resource helper should try
   // to download the resource file from the shared resource URL
-  char *value = getconfent("DiskCopy", "RetryAttempts", 0);
+  char *value = getconfent("Job", "RetryAttempts", 0);
   int attempts = DEFAULT_RETRY_ATTEMPTS;
   if (value) {
     attempts = std::strtol(value, 0, 10);
     if (attempts < 1) {
-      // "Invalid DiskCopy/RetryInterval option, using default"
+      // "Invalid Job/RetryInterval option, using default"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Default", attempts),
          castor::dlf::Param(subRequestUuid)};
@@ -146,12 +234,12 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
 
   // Extract the value of the retry interval. This value determines how long
   // we sleep between retry attempts
-  value = getconfent("DiskCopy", "RetryInterval", 0);
+  value = getconfent("Job", "RetryInterval", 0);
   int interval = DEFAULT_RETRY_INTERVAL;
   if (value) {
     interval = std::strtol(value, 0, 10);
     if (interval < 1) {
-      // "Invalid DiskCopy/RetryAttempts option, using default"
+      // "Invalid Job/RetryAttempts option, using default"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Default", interval),
          castor::dlf::Param(subRequestUuid)};
@@ -161,60 +249,67 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
     }
   }
 
-  // Get the diskserver and filesystem from the resource file
-  std::string path = argv[6];
-  if (path[path.size()-1] != '/') path += '/';
-  char* lsbJobId = getenv("LSB_JOBID");
-  if (0 == lsbJobId) {
-    castor::exception::Internal e;
-    e.getMessage() << "environment variable LSB_JOBID should be set but is not";
+  // Download the resource file
+  std::string content("");
+  castor::job::SharedResourceHelper resHelper(attempts, interval);
+  try {
+    // "Downloading resource file"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("ResourceFile", resourceFile),
+       castor::dlf::Param("MaxAttempts", resHelper.retryAttempts()),
+       castor::dlf::Param("RetryInterval", resHelper.retryInterval()),
+       castor::dlf::Param(subRequestUuid)};
+    castor::dlf::dlf_writep
+      (requestUuid, DLF_LVL_DEBUG, DOWNRESFILE, 4, params, &fileId);
+
+    resHelper.setUrl(resourceFile);
+    content = resHelper.download(false);
+  } catch (castor::exception::Exception e) {
+    if (e.code() == EINVAL) {
+
+      // "Invalid Uniform Resource Indicator, cannot download resource file"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("URI", resourceFile.substr(0, 7))};
+      castor::dlf::dlf_writep
+	(requestUuid, DLF_LVL_ERROR, INVALIDURI, 1, params, &fileId);
+    } else if (e.code() == SERTYEXHAUST) {
+
+      // "Exceeded maximum number of attempts trying to download resource file"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Error", resHelper.errorBuffer() != "" ?
+			    resHelper.errorBuffer() : "no message"),
+	 castor::dlf::Param("MaxAttempts", resHelper.retryAttempts()),
+	 castor::dlf::Param("URL", resourceFile),
+	 castor::dlf::Param(subRequestUuid)};
+      castor::dlf::dlf_writep
+	(requestUuid, DLF_LVL_ERROR, MAXATTEMPTS, 4, params, &fileId);
+    } else {
+
+      // "Exception caught trying to download resource file"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Message", e.getMessage().str()),
+	 castor::dlf::Param("Filename", resourceFile.substr(7)),
+	 castor::dlf::Param(subRequestUuid)};
+      castor::dlf::dlf_writep
+	(requestUuid, DLF_LVL_ERROR, DOWNEXCEPT, 3, params, &fileId);
+    }
     throw e;
   }
-  path += lsbJobId;
-  castor::job::SharedResourceHelper resHelper(attempts, interval);
-  resHelper.setUrl(path);
-  std::string content = resHelper.download(false);
+
   std::istringstream iss(content);
   std::getline(iss, diskServer, ':');
   std::getline(iss, fileSystem, '\n');
+
+  // "The content of the resource file is invalid"
   if (iss.fail() || diskServer.empty() || fileSystem.empty()) {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("RequiredFormat", "diskserver:filesystem"),
+       castor::dlf::Param(subRequestUuid)};
+    castor::dlf::dlf_writep
+      (requestUuid, DLF_LVL_ERROR, INVALRESCONT, 2, params, &fileId);
+
     castor::exception::Internal e;
-    e.getMessage() << "Sixth argument should be a resource file containing "
-                   << "diskserver:filesystem";
+    e.getMessage() << "Invalid resource file";
     throw e;
   }
-
-  // Retrieve mode
-  char* mode = argv[7];
-  if (mode[0] == 'r') {
-    accessMode = castor::job::stagerjob::ReadOnly;
-  } else if (mode[0] == 'w') {
-    accessMode = castor::job::stagerjob::WriteOnly;
-  } else if (mode[0] == 'o') {
-    accessMode = castor::job::stagerjob::ReadWrite;
-  } else {
-    castor::exception::InvalidArgument e;
-    e.getMessage() << "Seventh argument should be a mode. "
-                   << "Legal values are 'r', 'w' and 'o'";
-    throw e;
-  }
-
-  // clientString
-  client = castor::IClientFactory::string2Client(argv[8]);
-
-  // security Option
-  std::string secureFlag = argv[9];
-  isSecure = false;
-  if (secureFlag == "1") {
-    isSecure = true;
-  }
- 
-  // request creation time
-  requestCreationTime = atoi(argv[10]);
-  
-  // euid
-  euid = strtou64(argv[11]);
-
-  // egid
-  egid = strtou64(argv[12]);
 }
