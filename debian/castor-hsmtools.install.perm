@@ -2,4 +2,3 @@
 %attr(0755,root,bin) usr/bin/tapetohsm
 %attr(0755,root,bin) usr/bin/c2probe
 %attr(0755,root,bin) usr/bin/rfcpupd
-%attr(0750,root,bin) usr/bin/vdqm_admin
