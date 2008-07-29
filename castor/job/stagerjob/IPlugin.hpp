@@ -47,6 +47,11 @@ namespace castor {
 
       public:
 
+	/**
+	 * Default destructor
+	 */
+	virtual ~IPlugin() throw() {};
+
         /**
          * gets the port range that can be used by the protocol
          * to listen for client connections
