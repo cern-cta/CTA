@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SharedResourceHelper.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/26 14:54:54 $ $Author: waldron $
+ * @(#)$RCSfile: SharedResourceHelper.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/07/29 06:22:21 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -168,4 +168,48 @@ std::string castor::job::SharedResourceHelper::download(bool debug)
   }
 
   return m_content;
+}
+
+
+//-----------------------------------------------------------------------------
+// SetUrl
+//-----------------------------------------------------------------------------
+void castor::job::SharedResourceHelper::setUrl(std::string url)
+  throw (castor::exception::Exception) {
+
+  // For file:// requests we do not perform any string subsitution of the
+  // LSB_MASTERNAME variable
+  if (url.substr(0, 7) == "file://") {
+    m_url = url;
+    return;
+  }
+
+  // Perform variable subsitution
+  std::string::size_type index = url.find("LSB_MASTERNAME");
+  if (index != std::string::npos) {
+   
+    // Initialize the LSF library
+    if (lsb_init("SharedResourceHelper") < 0) {
+      
+      // "Failed to initialize the LSF batch library (LSBLIB)"
+      castor::exception::Exception e(SEINTERNAL);
+      e.getMessage() << "Failed to initialize the LSF batch library (LSBLIB): "
+		     << lsberrno ? lsb_sysmsg() : "no message";
+      throw e;
+    }
+
+    // Fetch the LSF master name
+    char *masterName = ls_getmastername();
+    if (masterName == NULL) {
+
+      // "Failed to determine the name of the current LSF master"
+      castor::exception::Exception e(SEINTERNAL);
+      e.getMessage() << "Failed to determine the name of the current LSF master: "
+		     << lsberrno ? lsb_sysmsg() : "no message";
+      throw e;
+    }
+    m_url = url.substr(0, index) + masterName + url.substr(index + 14, url.length());
+  } else {
+    m_url = url;
+  }
 }

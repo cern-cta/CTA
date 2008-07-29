@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SharedResourceHelper.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/01/21 07:34:54 $ $Author: waldron $
+ * @(#)$RCSfile: SharedResourceHelper.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/07/29 06:22:21 $ $Author: waldron $
  *
  * Helper used to download the resource file associated with a job
  *
@@ -35,6 +35,12 @@
 #include <curl/easy.h>
 #include <curl/types.h>
 
+extern "C" {
+  #ifndef LSBATCH_H
+    #include "lsf/lsbatch.h"
+    #include "lsf/lssched.h"
+  #endif
+}
 
 namespace castor {
 
@@ -44,14 +50,14 @@ namespace castor {
      * SharedResourceHelper class
      */
     class SharedResourceHelper {
-	
+
     public:
-      
+
       /**
        * Default constructor
        */
       SharedResourceHelper();
-      
+
       /**
        * Initialize the cURL interface and create a new cURL easy handle
        * @param retryAttempts defines how many times the helper should retry
@@ -64,23 +70,23 @@ namespace castor {
       SharedResourceHelper
       (unsigned int retryAttempts, unsigned int retryInterval)
 	throw(castor::exception::Exception);
-      
+
       /**
        * Default destructor
        */
       virtual ~SharedResourceHelper() throw();
-      
+
       /**
        * Download the data at the m_url location and return the result back
-       * to the callee. In case of failure the method will retry up to 
+       * to the callee. In case of failure the method will retry up to
        * retryAttempt times.
        * @param debug flag to indicate whether cURL debugging should be
        * enabled
        * @exception Exception in case of error
        */
-      virtual std::string download(bool debug) 
+      virtual std::string download(bool debug)
 	throw(castor::exception::Exception);
-      
+
       /**
        * Returns the error text/description of the last cURL error.
        * @return the value of m_errorBuffer
@@ -88,7 +94,7 @@ namespace castor {
       std::string errorBuffer() const {
 	return m_errorBuffer;
       }
-      
+
       /**
        * Returns the max number of retries the helper should perform upon
        * encountering an error.
@@ -97,7 +103,7 @@ namespace castor {
       unsigned int retryAttempts() const {
 	return m_retryAttempts;
       }
-      
+
       /**
        * Returns the retry interval in seconds between retry attempts.
        * @return the value of m_retryInterval
@@ -105,41 +111,41 @@ namespace castor {
       unsigned int retryInterval() const {
 	return m_retryInterval;
       }
-      
+
       /**
-       * Set the value of m_url
-       * @param new_var the new value of m_url
+       * Set the value of m_url. For http:// downloads the LSB_MASTERNAME
+       * variable will be replaced by the name of the current LSF master
+       * @param url the new value of m_url
        */
-      void setUrl(std::string new_var) {
-	m_url = new_var;
-      }
-      
+      virtual void setUrl(std::string url)
+	throw (castor::exception::Exception);
+
     private:
-      
+
       /// The cURL easy handle
       CURL *m_curl;
-      
+
       /// The error code of the last call to libcurl
       CURLcode m_errorCode;
-      
+
       /// The error message associated with the error code
       char m_errorBuffer[CURL_ERROR_SIZE];
-      
+
       /// How many times should we attempt to download the m_url
       unsigned int m_retryAttempts;
-      
+
       /// The interval to wait between download attempts
       unsigned int m_retryInterval;
-      
-      /// The location of the file to download into memory. file:// and 
-      /// http:// are support protocols
+
+      /// The location of the file to download into memory. file:// and
+      /// http:// are supported protocols
       std::string m_url;
-      
+
       /// The content of data downloaded from m_url
       std::string m_content;
-      
+
     };
-    
+
   } // End of namespace job
 
 } // End of namespace castor
