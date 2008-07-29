@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.27 2008/07/28 16:51:41 waldron Exp $
+ * $Id: rfio_serv.c,v 1.28 2008/07/29 08:34:51 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.27 $ $Date: 2008/07/28 16:51:41 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.28 $ $Date: 2008/07/29 08:34:51 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 /* rfio_serv.c  SHIFT remote file access super server                   */
@@ -413,10 +413,10 @@ char    **argv;
    while ((option = getopt(argc,argv,"sdltf:p:P:D:M:nS:1R:T:UZ:u:g:")) != EOF) {
       switch (option) {
          case 'd':
-			debug++;
+            debug++;
             break;
          case 's':
-			standalone++;
+            standalone++;
             break;
          case 'f':
             lfname++;
@@ -438,25 +438,25 @@ char    **argv;
             port=atoi(optarg);
             break;
          case 'D':
-			curdir = optarg;
+            curdir = optarg;
             break;
          case 'n':
-			nodetach++;
+            nodetach++;
             break;
          case 'S':
-			Socket_parent=atoi(optarg);
+            Socket_parent=atoi(optarg);
             break;
          case 'P':
-			Socket_parent_port=atoi(optarg);
+            Socket_parent_port=atoi(optarg);
             break;
          case '1':
-			once_only++;
+            once_only++;
             break;
          case 'U':
-			ignore_uid_gid++;
+            ignore_uid_gid++;
             break;
          case 'Z':
-			subrequest_id = strtou64(optarg);
+            subrequest_id = strtou64(optarg);
             break;
          case 'u': 
             uid = strtou64(optarg);
@@ -465,12 +465,12 @@ char    **argv;
             gid = strtou64(optarg);
             break;
 	  default:
-		  fprintf(stderr,"Unknown option '%c'\n", option);
-		  exit(1);
+            fprintf(stderr,"Unknown option '%c'\n", option);
+            exit(1);
       }
    }
    if (optind < argc) {
-	   forced_filename = argv[optind];
+      forced_filename = argv[optind];
    }
 #endif /* WIN32 */   
 
@@ -1015,13 +1015,13 @@ int mt_cleanup(struct thData *td, int *fd, int rcode)
    *fd = -1;
 
    if( rcode > 0 ) {
-      log(LOG_INFO, "mt_cleanup: closing control socket %d", td->ns);
+      log(LOG_INFO, "mt_cleanup: closing control socket %d\n", td->ns);
       shutdown(td->ns, SD_BOTH);
       closesocket(td->ns);
    }
    free(td->rqstbuf);
    free(td->filename);
-   log(LOG_INFO, "mt_cleanup: freeing thread data pointer at 0X%X", td);
+   log(LOG_INFO, "mt_cleanup: freeing thread data pointer at 0X%X\n", td);
    free(td);
 
    return rcode;
@@ -1077,77 +1077,75 @@ char tmpbuf[21], tmpbuf2[21];
    
 #ifdef CSEC
 #define CLIENT_NAME_SIZE 1000
-char *Csec_mech;
-char *Csec_auth_id;
-
- log(LOG_INFO, "Entering the secure block ");
-/* Check that the uid and gid is set and user is not root */
-/*Condition to be replaced when trusted host is supported*/
-if (uid > 0 && gid > 0)
-/* Perfom the authentication */
- {
-   char username[CA_MAXUSRNAMELEN+1];
-   int ret_flags = 0;
-   char *mech, *clientid;
-
-   log(LOG_INFO, "The user is %d in the group %d", uid, gid);
+   char *Csec_mech;
+   char *Csec_auth_id;
    
-   if (Csec_server_initContext(&ctx, CSEC_SERVICE_TYPE_HOST, NULL)<0) {
-     log(LOG_ERR, "Could not initailize context: %s\n", Csec_getErrorMessage()); 
-     closesocket(s);
-     exit(1);
-   }
+   log(LOG_INFO, "Entering the secure block\n");
+   
+   /* Check that the uid and gid is set and user is not root */
+   /*Condition to be replaced when trusted host is supported*/
+   if (uid > 0 && gid > 0) {
+     /* Perfom the authentication */
+     char username[CA_MAXUSRNAMELEN+1];
 
-   log(LOG_INFO, "Establishing context set\n");
-   if (Csec_server_establishContext(&ctx, s)<0) {
-     log(LOG_ERR, "Could not establish context: %s\n", Csec_getErrorMessage());
-     closesocket(s);
-     exit(1);
-   }
+     log(LOG_INFO, "The user is %d in the group %d\n", uid, gid);
+   
+     if (Csec_server_initContext(&ctx, CSEC_SERVICE_TYPE_HOST, NULL)<0) {
+       log(LOG_ERR, "Could not initailize context: %s\n", Csec_getErrorMessage()); 
+       closesocket(s);
+       exit(1);
+     }
 
-   log(LOG_INFO, "Getting client id\n");
-   /* Getting the client identity */ 
-   Csec_server_getClientId(&ctx, &Csec_mech, &Csec_auth_id);
-   log(LOG_INFO, "The client principal is %s %s \n", Csec_mech,Csec_auth_id);
+     log(LOG_INFO, "Establishing context set\n");
+     if (Csec_server_establishContext(&ctx, s)<0) {
+       log(LOG_ERR, "Could not establish context: %s\n", Csec_getErrorMessage());
+       closesocket(s);
+       exit(1);
+     }
 
-   /* Connection could be done from another castor service */
+     log(LOG_INFO, "Getting client id\n");
+     /* Getting the client identity */ 
+     Csec_server_getClientId(&ctx, &Csec_mech, &Csec_auth_id);
+     log(LOG_INFO, "The client principal is %s %s\n", Csec_mech,Csec_auth_id);
 
-//   if ((Csec_service_type = Csec_isIdAService(Csec_mech, Csec_auth_id)) >= 0) {
+     /* Connection could be done from another castor service */
+
+     //   if ((Csec_service_type = Csec_isIdAService(Csec_mech, Csec_auth_id)) >= 0) {
      //If one we consider working with trusted hosts the code should be added here
      //IsTrustedHost then Csec_server_getAuthorizationId & mapToLocalUser
-  //   log(LOG_INFO, "CSEC: Client is castor service type: %d\n", Csec_service_type);
- //  }
- //  else {  
-    log(LOG_INFO, "mapping user \n");
-    if (Csec_mapToLocalUser(Csec_mech, Csec_auth_id,
+     //   log(LOG_INFO, "CSEC: Client is castor service type: %d\n", Csec_service_type);
+     //  }
+     //  else {  
+     log(LOG_INFO, "mapping user\n");
+     if (Csec_mapToLocalUser(Csec_mech, Csec_auth_id,
 			     username, CA_MAXUSRNAMELEN,
 			     &peer_uid, &peer_gid) < 0) {
-      log(LOG_ERR, "CSEC: Could not map user %s/%s\n", Csec_mech, Csec_auth_id);
-   }
-   //  closesocket(s);
-   //  exit(1);
-  // }
+       log(LOG_ERR, "CSEC: Could not map user %s/%s\n", Csec_mech, Csec_auth_id);
+     }
+     //  closesocket(s);
+     //  exit(1);
+     // }
      /*Checking if the user just mapped match with the same that started the request */
-   log(LOG_INFO, "Comparing uid %d and peer_uid %d \n",uid ,peer_uid);
-   if(peer_uid != uid){
-	  log(LOG_ERR, "CSEC: The user do not match with the initial oner %s/%d\n", Csec_mech, peer_uid);
-	  closesocket(s);
-	  exit(1);	        
-   }else{
+     log(LOG_INFO, "Comparing uid %d and peer_uid %d \n",uid ,peer_uid);
+     if(peer_uid != uid){
+       log(LOG_ERR, "CSEC: The user do not match with the initial oner %s/%d\n", Csec_mech, peer_uid);
+       closesocket(s);
+       exit(1);	        
+     } else {
        log(LOG_INFO, "Comparing gid %d and peer_gid %d \n",gid ,peer_gid);
-      if(peer_gid != gid){
-	     log(LOG_ERR, "CSEC: The group id of this group is not valid %s/%d\n", Csec_mech, peer_gid);
-	     closesocket(s);
-	     exit(1);
-      }
-    }
+       if(peer_gid != gid){
+	 log(LOG_ERR, "CSEC: The group id of this group is not valid %s/%d\n", Csec_mech, peer_gid);
+	 closesocket(s);
+	 exit(1);
+       }
+     }
    
-   log(LOG_INFO, "CSEC: Client is %s (%d/%d)\n",
+     log(LOG_INFO, "CSEC: Client is %s (%d/%d)\n",
 	 username,
 	 peer_uid,
 	 peer_gid);
-   Csec_service_type = -1;
-}
+     Csec_service_type = -1;
+   }
  
 #endif
 
@@ -1184,7 +1182,7 @@ if (uid > 0 && gid > 0)
 #endif /* HPSS */
       yes = 1;
       if (setsockopt(s, SOL_SOCKET, SO_KEEPALIVE,(char *)&yes, sizeof (yes) ) == -1) {
-         log(LOG_ERR,"setsockopt(SO_KEEPALIVE) failed");
+         log(LOG_ERR,"setsockopt(SO_KEEPALIVE) failed\n");
       }
       /*
        * Trap SIGPIPE
