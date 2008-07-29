@@ -72,8 +72,8 @@ bool castor::job::stagerjob::BasePlugin::waitForChild
         int status = WEXITSTATUS(term_status);
         castor::dlf::Param params[] =
           {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-           castor::dlf::Param("pid", childPid),
-           castor::dlf::Param("status", status),
+           castor::dlf::Param("PID", childPid),
+           castor::dlf::Param("Status", status),
            castor::dlf::Param(args.subRequestUuid)};
         childFailed = (status != 0);
         if (childFailed) {
@@ -86,8 +86,8 @@ bool castor::job::stagerjob::BasePlugin::waitForChild
       } else if (WIFSIGNALED(term_status)) {
         castor::dlf::Param params[] =
           {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-           castor::dlf::Param("pid", childPid),
-           castor::dlf::Param("signal", WTERMSIG(term_status)),
+           castor::dlf::Param("PID", childPid),
+           castor::dlf::Param("Signal", WTERMSIG(term_status)),
            castor::dlf::Param(args.subRequestUuid)};
         castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
                                 CHILDSIGNALED, 4, params, &args.fileId);
@@ -95,7 +95,7 @@ bool castor::job::stagerjob::BasePlugin::waitForChild
       } else {
         castor::dlf::Param params[] =
           {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-           castor::dlf::Param("pid", childPid),
+           castor::dlf::Param("PID", childPid),
            castor::dlf::Param(args.subRequestUuid)};
         castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
                                 CHILDSTOPPED, 3, params, &args.fileId);

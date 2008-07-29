@@ -17,11 +17,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Release$ $Date: 2008/02/22 08:57:52 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Release$ $Date: 2008/07/29 06:29:16 $ $Author: waldron $
 #
 # Makefile for the CASTOR2 LSF External Plugin
 #
-# @author Dennis Waldron
+# @author Castor Dev team, castor-dev@cern.ch
 
 #include <Project.tmpl>
 

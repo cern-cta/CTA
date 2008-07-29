@@ -17,11 +17,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.14 $ $Release$ $Date: 2008/06/27 14:01:35 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.15 $ $Release$ $Date: 2008/07/29 06:29:15 $ $Author: waldron $
 #
 # Make Castor RH library
 #
-# @author Sebastien Ponce, sebastien.ponce@cern.ch
+# @author Castor Dev team, castor-dev@cern.ch
 #
 
 #include <Project.tmpl>

@@ -15,7 +15,7 @@ COMM
 
 NOMORERFIO = FileName(OperatorDir,nomorerfio)
 
-INCLUDES = FileName(..,h) -I FileName(..,job)
+INCLUDES = FileName(..,h)
 SPOOL = RfioSpool
 LOGFILE = FileName($(SPOOL),rfiod.log)
 STAGEHOST = StageHost
@@ -37,7 +37,7 @@ DUMPINSTALL=FileName($(BIN),ProgramTargetName(dump_log))
 CLIENTLOG=-DCLIENTLOG
 #endif
 
-#if defined(__osf__) && defined(__alpha) && (OSMajorVersion == 4) 
+#if defined(__osf__) && defined(__alpha) && (OSMajorVersion == 4)
 #if RFIODaemonRealTime
 RTFLAGS=-non_shared
 RTLIBS=-L/usr/ccs/lib -lrt
@@ -51,7 +51,7 @@ RFIO_ALRM= FileName(RfioSpool,RfioAlarmFile)
 #if BuildHpssServer
 HPSSINCLUDES = -I../hpss
 HPSSOPTS = -DHPSS -D_THREAD_SAFE -DMAX_THREADS=10 \
-	   -DRFIO_PRINCIPAL=\"rfiod\" -DRFIO_KEYTAB=\"/krb5/rfiod.keytabs\" 
+	   -DRFIO_PRINCIPAL=\"rfiod\" -DRFIO_KEYTAB=\"/krb5/rfiod.keytabs\"
 #if defined(_AIX)
 HPSSLIBS=-L../hpss -lrfio_hpss -L/usr/lpp/hpss/lib -lhpss -L/usr/lpp/encina/lib -lEncina -ldce
 CC = xlc_r4 -qlanglvl=extended -Dunix -DAIX42 -DAIX43
@@ -310,9 +310,9 @@ EPROGS = FileName($(EXPORTBIN),rfiod)
 SRVOBJS = $(NTSERVICEO) Csemaphore.Osuf rfio_serv.Osuf rfio_calls.Osuf \
 		rfio_call64.Osuf rfio_fcalls.Osuf rfio_callhandlers.Osuf switch_req.Osuf \
 		checkkey.Osuf $(FIOO) $(CRAYFORTRANO) rfstatfs.Osuf alrm.Osuf \
-		rfioacct.Osuf ../job/RemoteJobSvc.Osuf ../job/stager_catalogInterface.Osuf \
-		../job/stager_util.Osuf ../job/stager_messages.Osuf ../job/stager_extern_globals.Osuf \
-		../job/stager_uuid.Osuf 
+		rfioacct.Osuf RemoteJobSvc.Osuf stager_catalogInterface.Osuf \
+		stager_util.Osuf stager_messages.Osuf stager_extern_globals.Osuf \
+		stager_uuid.Osuf
 
 #if defined(linux)
 #if UseXFSPrealloc

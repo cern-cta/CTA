@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DiskCopyTransfer.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/03/03 13:22:01 $ $Author: waldron $
+ * @(#)$RCSfile: DiskCopyTransfer.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/07/29 06:28:17 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 
   try {
     castor::job::diskcopy::DiskCopyTransfer daemon;
-    
+
     // We create a thread here to handle the main logic/operations of the disk
     // copy transfer mover. We use a thread as we'd like to benefit from the
     // signal handling of the BaseDaemon's start method
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
     daemon.parseCommandLine(argc, argv);
     daemon.start();
     return 0;
-    
+
   } catch (castor::exception::Exception e) {
     std::cerr << "Caught exception: "
 	      << sstrerror(e.code()) << std::endl
@@ -117,7 +117,7 @@ castor::job::diskcopy::DiskCopyTransfer::DiskCopyTransfer():
     { 34, "Source end of mover terminated" },
     { 35, "Downloading resource file" },
     { 39, "DiskCopy Transfer successful" },
-    
+
     // Exit
     { 41, "DiskCopy Transfer failed" },
     { 42, "Exception caught trying to fail disk2DiskCopy transfer" },

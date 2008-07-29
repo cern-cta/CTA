@@ -17,17 +17,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Release$ $Date: 2007/12/04 12:57:27 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Release$ $Date: 2008/07/29 06:29:15 $ $Author: waldron $
 #
 # Make Castor libraries and executables
 #
-# @author Sebastien Ponce, sebastien.ponce@cern.ch
+# @author Castor Dev team, castor-dev@cern.ch
 #
 
 #include <Project.tmpl>
 
 SUBDIRS = $(MIGDIR) $(RECDIR)
-DEPENDDIRS = $(MIGDIR) $(RECDIR) 
+DEPENDDIRS = $(MIGDIR) $(RECDIR)
 
 MakeSubdirs(all,$(SUBDIRS))
 MakeSubdirs(install,$(SUBDIRS))

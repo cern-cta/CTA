@@ -21,7 +21,7 @@
 #
 # Make Castor GC daemon and hunter
 #
-# @author Sebastien Ponce, sebastien.ponce@cern.ch
+# @author Castor Dev team, castor-dev@cern.ch
 #
 
 #include <Project.tmpl>
@@ -51,10 +51,10 @@ DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift)
 LDFLAGS += -L FileName(..,FileName(..,shlib)) -L FileName(..,FileName(..,$(COMMONCPPDIR))) $(MTLDFLAGS)
 LD = g++
 
-#if BuildSecurity 
+#if BuildSecurity
 SECURITYFLAG=-DCSEC
 # LIBS+= -ldl
-#endif 
+#endif
 
 all: ProgramTargetName(gcDaemon)
 

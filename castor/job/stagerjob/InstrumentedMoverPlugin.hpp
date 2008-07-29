@@ -79,7 +79,7 @@ namespace castor {
          */
         void waitChildAndInformStager(InputArguments &args,
                                       PluginContext &context)
-          throw (castor::exception::Exception);      
+          throw (castor::exception::Exception);
 
       }; // end of class InstrumentedMoverPlugin
 

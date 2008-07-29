@@ -17,11 +17,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.26 $ $Release$ $Date: 2008/06/27 14:01:35 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.27 $ $Release$ $Date: 2008/07/29 06:29:15 $ $Author: waldron $
 #
 # Make Castor Repack System
 #
-# @author Felix Ehm, felixehm@cern.ch
+# @author Castor Dev team, castor-dev@cern.ch
 #
 
 #include <Project.tmpl>
@@ -54,11 +54,11 @@ REPACKCOMMON_SRC = ../io/StreamRepackRequestCnv.cpp \
                 RepackAck.cpp \
 		RepackResponse.cpp \
                 FileListHelper.cpp \
-                RepackUtility.cpp 
+                RepackUtility.cpp
 
 REPACKDBCNVSRC =../db/cnv/DbRepackRequestCnv.cpp \
 		../db/cnv/DbRepackSegmentCnv.cpp \
-		../db/cnv/DbRepackSubRequestCnv.cpp 
+		../db/cnv/DbRepackSubRequestCnv.cpp
 
 REPACKSERVERBIN_SRCS =  RepackServer.cpp \
 		RepackWorker.cpp \
@@ -68,14 +68,14 @@ REPACKSERVERBIN_SRCS =  RepackServer.cpp \
 		RepackFileChecker.cpp \
 		ora/OraRepackSvc.cpp \
 		$(REPACKDBCNVSRC) \
-		$(REPACKCOMMON_SRC) 
+		$(REPACKCOMMON_SRC)
 
 REPACKBIN_SRCS =  RepackClient.cpp \
 		../io/ClientSocket.cpp \
 		$(REPACKCOMMON_SRC)
 
 MANPAGES_REPACK = FileName($(MANDIR),repack.$(MANSUFFIX)) FileName($(MANDIR),repackserver.$(MANSUFFIX))
-EMANPAGES_REPACK = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),repack.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),repackserver.$(MANSUFFIX))) 
+EMANPAGES_REPACK = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),repack.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),repackserver.$(MANSUFFIX)))
 
 #Repack library
 REPACKLIB_SRCS = $(REPACKCOMMON_SRC)
@@ -84,7 +84,7 @@ REPACKLIB_OBJS = $(REPACKLIB_SRCS:.cpp=.Osuf)
 REPACKSERVERBIN_OBJS = $(REPACKSERVERBIN_SRCS:.cpp=.Osuf)
 REPACKBIN_OBJS = $(REPACKBIN_SRCS:.cpp=.Osuf)
 
-DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift) 
+DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift)
 
 LDFLAGS += -L FileName(..,FileName(..,shlib)) $(MTLDFLAGS)
 LD = g++

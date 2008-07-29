@@ -95,7 +95,7 @@ void castor::job::stagerjob::RfioPlugin::postForkHook
           << " (pid=" << context.childPid << ")";
   castor::dlf::Param params[] =
     {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-     castor::dlf::Param("command line", cmdLine.str()),
+     castor::dlf::Param("Command Line", cmdLine.str()),
      castor::dlf::Param(args.subRequestUuid)};
   castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_DEBUG,
                           MOVERFORK, 3, params, &args.fileId);
@@ -104,7 +104,7 @@ void castor::job::stagerjob::RfioPlugin::postForkHook
     // "Mover program can not be executed. Check permissions"
     castor::dlf::Param params[] =
       {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-       castor::dlf::Param("mover path", progfullpath),
+       castor::dlf::Param("Mover Path", progfullpath),
        castor::dlf::Param(args.subRequestUuid)};
     castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
                             MOVERNOTEXEC, 3, params, &args.fileId);

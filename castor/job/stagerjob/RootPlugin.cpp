@@ -70,7 +70,7 @@ void castor::job::stagerjob::RootPlugin::postForkHook
   // "Mover fork uses the following command line"
   castor::dlf::Param params[] =
     {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-     castor::dlf::Param("command line", cmdLine.str()),
+     castor::dlf::Param("Command Line", cmdLine.str()),
      castor::dlf::Param(args.subRequestUuid)};
   castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_DEBUG,
                           MOVERFORK, 3, params, &args.fileId);
@@ -79,7 +79,7 @@ void castor::job::stagerjob::RootPlugin::postForkHook
     // "Mover program can not be executed. Check permissions"
     castor::dlf::Param params[] =
       {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-       castor::dlf::Param("mover path", progfullpath),
+       castor::dlf::Param("Mover Path", progfullpath),
        castor::dlf::Param(args.subRequestUuid)};
     castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
                             MOVERNOTEXEC, 3, params, &args.fileId);
@@ -114,8 +114,8 @@ void castor::job::stagerjob::RootPlugin::execMover
   // Duplicate socket on stdin/stdout/stderr and close the others
   if (dup2(context.socket, 0) < 0 || dup2(context.socket, 1) < 0 || dup2(context.socket, 2) < 0) {
     castor::dlf::Param params[] =
-      {castor::dlf::Param("errorCode", errno),
-       castor::dlf::Param("errorMessage", strerror(errno)),
+      {castor::dlf::Param("ErrorCode", errno),
+       castor::dlf::Param("ErrorMessage", strerror(errno)),
        castor::dlf::Param(args.subRequestUuid)};
     castor::dlf::dlf_writep
       (args.requestUuid, DLF_LVL_ERROR,
@@ -129,8 +129,8 @@ void castor::job::stagerjob::RootPlugin::execMover
          "-H", args.rawRequestUuid.c_str(), NULL);
   // Should never be reached
   castor::dlf::Param params[] =
-    {castor::dlf::Param("errorCode", errno),
-     castor::dlf::Param("errorMessage", strerror(errno)),
+    {castor::dlf::Param("ErrorCode", errno),
+     castor::dlf::Param("ErrorMessage", strerror(errno)),
      castor::dlf::Param(args.subRequestUuid)};
   castor::dlf::dlf_writep
     (args.requestUuid, DLF_LVL_ERROR,

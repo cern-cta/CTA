@@ -110,7 +110,7 @@ std::pair<int, int> castor::job::stagerjob::GridFTPPlugin::getPortRange
     if (max < 1024 || max > 65535 || max < min) {
       castor::dlf::Param params[] =
         {castor::dlf::Param("Value", max),
-         castor::dlf::Param("min value", min),
+         castor::dlf::Param("Min value", min),
          castor::dlf::Param(args.subRequestUuid)};
       castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
                               GSIBADMAXVAL, 3, params, &args.fileId);
@@ -209,7 +209,7 @@ void castor::job::stagerjob::GridFTPPlugin::postForkHook
               << env.tcp_source_range.second;
   castor::dlf::Param params[] =
     {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-     castor::dlf::Param("command line", cmdLine.str()),
+     castor::dlf::Param("Command Line", cmdLine.str()),
      castor::dlf::Param("tcp_port_range", tcprange.str()),
      castor::dlf::Param("tcp_source_range", sourcerange.str()),
      castor::dlf::Param("certificate", env.globus_x509_user_cert),
@@ -222,7 +222,7 @@ void castor::job::stagerjob::GridFTPPlugin::postForkHook
     // "Mover program can not be executed. Check permissions"
     castor::dlf::Param params[] =
       {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-       castor::dlf::Param("mover path", progfullpath),
+       castor::dlf::Param("Mover Path", progfullpath),
        castor::dlf::Param(args.subRequestUuid)};
     castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
                             MOVERNOTEXEC, 3, params, &args.fileId);
@@ -283,8 +283,8 @@ void castor::job::stagerjob::GridFTPPlugin::execMover
   int s;
   if (dup2(s, 0) < 0 || dup2(s, 1) < 0 || dup2(s, 2) < 0) {
     castor::dlf::Param params[] =
-      {castor::dlf::Param("errorCode", errno),
-       castor::dlf::Param("errorMessage", strerror(errno)),
+      {castor::dlf::Param("ErrorCode", errno),
+       castor::dlf::Param("ErrorMessage", strerror(errno)),
        castor::dlf::Param(args.subRequestUuid)};
     castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
                             DUP2FAILED, 3, params, &args.fileId);

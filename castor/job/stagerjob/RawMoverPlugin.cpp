@@ -118,8 +118,8 @@ void castor::job::stagerjob::RawMoverPlugin::preForkHook
   if (close(context.socket) < 0) {
     // This is not fatal
     castor::dlf::Param params[] =
-      {castor::dlf::Param("errorCode", errno),
-       castor::dlf::Param("errorMessage", strerror(errno)),
+      {castor::dlf::Param("ErrorCode", errno),
+       castor::dlf::Param("ErrorMessage", strerror(errno)),
        castor::dlf::Param(args.subRequestUuid)};
     castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
                             SCLOSEFAILED, 3, params, &args.fileId);
@@ -127,8 +127,8 @@ void castor::job::stagerjob::RawMoverPlugin::preForkHook
   // Applications below: please use s
   context.socket = saccept;
   castor::dlf::Param params[] =
-    {castor::dlf::Param("client machine", clienthostptr),
-     castor::dlf::Param("file descriptor", context.socket),
+    {castor::dlf::Param("Client machine", clienthostptr),
+     castor::dlf::Param("File descriptor", context.socket),
      castor::dlf::Param(args.subRequestUuid)};
   castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_DEBUG,
                           ACCEPTCONN, 3, params, &args.fileId);

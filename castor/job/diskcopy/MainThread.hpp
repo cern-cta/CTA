@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/03/03 13:22:01 $ $Author: waldron $
+ * @(#)$RCSfile: MainThread.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/07/29 06:28:17 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -41,23 +41,23 @@ namespace castor {
   namespace job {
 
     namespace diskcopy {
-      
+
       /**
        * Main Thread
        */
       class MainThread: public castor::server::IThread {
-	
+
       public:
-	
+
 	/**
 	 * Default constructor
 	 */
 	MainThread();
-      
+
 	/**
 	 * Constructor which supports processing command line arguments
 	 * @param argc the number of arguments supplied to the program
-	 * @param argv an array of pointers to the strings which represents 
+	 * @param argv an array of pointers to the strings which represents
 	 * the values associated with the arguments
 	 * @exception Exception in case of error
 	 */
@@ -68,16 +68,16 @@ namespace castor {
 	 * Default destructor
 	 */
 	virtual ~MainThread() throw() {};
-	
+
 	/// Not implemented
 	virtual void init() {};
-	
+
 	/**
 	 * Executes the transfer between two diskservers. This runs once and
 	 * only once!
 	 */
 	virtual void run(void *param);
-	
+
 	/**
 	 * Called by the BaseServer when a termination request has been
 	 * received by the signal handler. Here we simply forward the stop
@@ -88,13 +88,13 @@ namespace castor {
 	/**
 	 * Parses the command line to set the movers options.
 	 * @param argc the number of arguments supplied to the program
-	 * @param argv an array of pointers to the strings which represents 
+	 * @param argv an array of pointers to the strings which represents
 	 * the values associated with the arguments
 	 * @exception Exception in case of error
 	 */
 	virtual void parseCommandLine(int argc, char *argv[])
 	  throw(castor::exception::Exception);
-      
+
 	/**
 	 * Changes the uid and gid of the running process
 	 * @param user the name of the user to set privileges to
@@ -103,7 +103,7 @@ namespace castor {
 	 */
 	void changeUidGid(std::string user, std::string group)
 	  throw(castor::exception::Exception);
-	
+
 	/**
 	 * Terminate the current process. If status does not indicate success
 	 * then disk2DiskCopyFailed will be called
@@ -119,15 +119,15 @@ namespace castor {
 	 * @param programName the name of the program usually argv[0]
 	 */
 	virtual void help(std::string programName);
-	
+
       private:
 
 	/// The remote job service
 	castor::stager::IJobSvc *m_jobSvc;
-	
+
 	/// The mover responsible for the actual data transfer
 	castor::job::IMover *m_mover;
-	
+
 	/// The helper to download the resource file
 	castor::job::SharedResourceHelper *m_resHelper;
 
@@ -137,24 +137,24 @@ namespace castor {
 	/// The protocol used by the mover
 	std::string m_protocol;
 
-	/// The request id of the job being processed
-	Cuuid_t m_requestId;
-	
-	/// The sub request id of the job being processed
-	Cuuid_t m_subRequestId;
-	
+	/// The request uuid of the job being processed
+	Cuuid_t m_requestUuid;
+
+	/// The sub request uuid of the job being processed
+	Cuuid_t m_subRequestUuid;
+
 	/// The Cns invariant of the job
 	Cns_fileid m_fileId;
-	
+
 	/// The name of the service class for the castor file
 	std::string m_svcClass;
-	
+
 	/// The id of the destination diskcopy
 	u_signed64 m_diskCopyId;
 
 	/// The id of the source diskcopy
 	u_signed64 m_sourceDiskCopyId;
-	
+
 	/// The location of the file to retrieve containing the diskserver and
 	/// filesystem to write too
 	std::string m_resourceFile;
@@ -163,7 +163,7 @@ namespace castor {
 	u_signed64 m_requestCreationTime;
 
       };
-      
+
     } // End of namespace diskcopy
 
   } // End of namespace job
