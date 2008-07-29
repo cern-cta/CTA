@@ -278,8 +278,8 @@ namespace castor {
          * Checks, if the fileid is in a actual repack process.
 	 * This method is run by the migrator. It looks into the
 	 * Stager Catalog, if a StageRepackRequest object is assigned to
-	 * a subrequest for this  file. In this case it returns the 
-	 * volume name (repackvid field) of the request. The SubRequest is 
+	 * a subrequest for this  file. In this case it returns the
+	 * volume name (repackvid field) of the request. The SubRequest is
 	 * set to ARCHIVED.
 	 * @return the name of the tape
 	 * @exception in case of an error
@@ -287,15 +287,25 @@ namespace castor {
         virtual std::string checkFileForRepack(const u_signed64 file)
           throw (castor::exception::Exception);
 
+	/**
+	 * Method to reset/cleanup the database after a rtcpclientd restart.
+	 * This essentially compensates for the fact that rtcpclientd isn't
+	 * 100% stateless and when it stops leaves the database in an
+	 * inconsistent state.
+	 * @exception in case of an error
+	 */
+	virtual void rtcpclientdCleanUp()
+	  throw (castor::exception::Exception);
+
         /**
-         * Give the number of files by stream 
+         * Give the number of files by stream
          * @param streamId id of the stream
 	 * @return the number of bytes
 	 * @exception in case of an error
          */
 	virtual u_signed64 getNumFilesByStream(const u_signed64 streamId)
           throw (castor::exception::Exception);
-	
+
       private:
 
         /// SQL statement for function tapesToDo
@@ -382,10 +392,16 @@ namespace castor {
         /// SQL statement object for function checkFileForRepack
         oracle::occi::Statement *m_checkFileForRepackStatement;
 
+        /// SQL statement for rtcpclientdCleanUp
+        static const std::string s_rtcpclientdCleanUpStatementString;
+
+        /// SQL statement object for function rtcpclientdCleanUp
+        oracle::occi::Statement *m_rtcpclientdCleanUpStatement;
+
 	/// SQL statement for getNumFilesByStream
         static const std::string s_getNumFilesByStreamStatementString;
 
-        /// SQL statement object for function getNumFilesByStream 
+        /// SQL statement object for function getNumFilesByStream
         oracle::occi::Statement *m_getNumFilesByStreamStatement;
 
       }; // end of class OraTapeSvc

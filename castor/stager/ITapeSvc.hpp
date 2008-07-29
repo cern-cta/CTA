@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/05/09 15:17:02 $ $Author: murrayc3 $
+ * @(#)$RCSfile: ITapeSvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/07/29 06:13:14 $ $Author: waldron $
  *
  * This class provides methods related to tape handling
  *
@@ -270,14 +270,24 @@ namespace castor {
        * Checks, if the fileid is in a actual repack process.
        * This method is run by the migrator. It looks into the
        * Stager Catalog, if a StageRepackRequest object is assigned to
-       * a subrequest for this  file. In this case it returns the 
-       * volume name (repackvid field) of the request. The SubRequest is 
+       * a subrequest for this  file. In this case it returns the
+       * volume name (repackvid field) of the request. The SubRequest is
        * set to ARCHIVED.
        * @return the name of the tape
        * @exception in case of an error
       */
       virtual std::string checkFileForRepack
       (const u_signed64 fileId) throw (castor::exception::Exception) = 0;
+
+      /**
+       * Method to reset/cleanup the database after a rtcpclientd restart.
+       * This essentially compensates for the fact that rtcpclientd isn't
+       * 100% stateless and when it stops leaves the database in an
+       * inconsistent state.
+       * @exception in case of an error
+       */
+      virtual void rtcpclientdCleanUp()
+	throw (castor::exception::Exception) = 0;
 
       /**
        * Sends a UDP message to the rmMasterDaemon to inform it
@@ -294,12 +304,12 @@ namespace castor {
 				    const std::string fileSystem,
 				    const castor::monitoring::StreamDirection direction,
 				    const bool created) throw() = 0;
-      
+
       /**
        * get the number of files of a stream
        * @param tpSvc the ITapeSvc used
-       * @param streamId  stream id 
-       */     
+       * @param streamId  stream id
+       */
       virtual u_signed64 getNumFilesByStream
       (const u_signed64 streamId) throw (castor::exception::Exception) = 0;
 

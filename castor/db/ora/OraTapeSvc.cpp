@@ -83,9 +83,9 @@
 
 #define NS_SEGMENT_NOTOK (' ')
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Instantiation of a static factory class
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 static castor::SvcFactory<castor::db::ora::OraTapeSvc>* s_factoryOraTapeSvc =
   new castor::SvcFactory<castor::db::ora::OraTapeSvc>();
 
@@ -148,14 +148,18 @@ const std::string castor::db::ora::OraTapeSvc::s_failedSegmentsStatementString =
 const std::string castor::db::ora::OraTapeSvc::s_checkFileForRepackStatementString =
   "BEGIN checkFileForRepack(:1, :2); END;";
 
+/// SQL statement for rtcpclientdCleanUp
+const std::string castor::db::ora::OraTapeSvc::s_rtcpclientdCleanUpStatementString =
+  "BEGIN rtcpclientdCleanup(); END;";
+
 /// SQL statement for getNumFilesByStream
 const std::string castor::db::ora::OraTapeSvc::s_getNumFilesByStreamStatementString =
   "BEGIN getNumFilesByStream(:1,:2); END;";
 
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // OraTapeSvc
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::db::ora::OraTapeSvc::OraTapeSvc(const std::string name) :
   BaseTapeSvc(),
   OraCommonSvc(name),
@@ -173,26 +177,27 @@ castor::db::ora::OraTapeSvc::OraTapeSvc(const std::string name) :
   m_resetStreamStatement(0),
   m_failedSegmentsStatement(0),
   m_checkFileForRepackStatement(0),
+  m_rtcpclientdCleanUpStatement(0),
   m_getNumFilesByStreamStatement(0){
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // ~OraTapeSvc
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::db::ora::OraTapeSvc::~OraTapeSvc() throw() {
   reset();
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // id
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 const unsigned int castor::db::ora::OraTapeSvc::id() const {
   return ID();
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // ID
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 const unsigned int castor::db::ora::OraTapeSvc::ID() {
   return castor::SVC_ORATAPESVC;
 }
@@ -219,6 +224,7 @@ void castor::db::ora::OraTapeSvc::reset() throw() {
     if (m_anySegmentsForTapeStatement) deleteStatement(m_anySegmentsForTapeStatement);
     if (m_failedSegmentsStatement) deleteStatement(m_failedSegmentsStatement);
     if (m_checkFileForRepackStatement) deleteStatement(m_checkFileForRepackStatement);
+    if (m_rtcpclientdCleanUpStatement) deleteStatement(m_rtcpclientdCleanUpStatement);
     if (m_getNumFilesByStreamStatement) deleteStatement(m_getNumFilesByStreamStatement);
   } catch (oracle::occi::SQLException e) {};
 
@@ -237,12 +243,13 @@ void castor::db::ora::OraTapeSvc::reset() throw() {
   m_anySegmentsForTapeStatement = 0;
   m_failedSegmentsStatement = 0;
   m_checkFileForRepackStatement = 0;
+  m_rtcpclientdCleanUpStatement = 0;
   m_getNumFilesByStreamStatement = 0;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // anySegmentsForTape
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int castor::db::ora::OraTapeSvc::anySegmentsForTape
 (castor::stager::Tape* tape)
   throw (castor::exception::Exception) {
@@ -269,9 +276,9 @@ int castor::db::ora::OraTapeSvc::anySegmentsForTape
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // segmentsForTape
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 std::vector<castor::stager::Segment*>
 castor::db::ora::OraTapeSvc::segmentsForTape
 (castor::stager::Tape* tape)
@@ -336,9 +343,9 @@ castor::db::ora::OraTapeSvc::segmentsForTape
   return result;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // bestFileSystemForSegment
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::DiskCopyForRecall*
 castor::db::ora::OraTapeSvc::bestFileSystemForSegment
 (castor::stager::Segment *segment)
@@ -401,9 +408,9 @@ castor::db::ora::OraTapeSvc::bestFileSystemForSegment
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // anyTapeCopyForStream
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 bool castor::db::ora::OraTapeSvc::anyTapeCopyForStream
 (castor::stager::Stream* searchItem)
   throw (castor::exception::Exception) {
@@ -437,9 +444,9 @@ bool castor::db::ora::OraTapeSvc::anyTapeCopyForStream
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // bestTapeCopyForStream
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::TapeCopyForMigration*
 castor::db::ora::OraTapeSvc::bestTapeCopyForStream
 (castor::stager::Stream* searchItem)
@@ -532,9 +539,9 @@ castor::db::ora::OraTapeSvc::bestTapeCopyForStream
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // streamsForTapePool
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraTapeSvc::streamsForTapePool
 (castor::stager::TapePool* tapePool)
   throw (castor::exception::Exception) {
@@ -595,9 +602,9 @@ void castor::db::ora::OraTapeSvc::streamsForTapePool
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // fileRecalled
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraTapeSvc::fileRecalled
 (castor::stager::TapeCopy* tapeCopy)
   throw (castor::exception::Exception) {
@@ -628,9 +635,9 @@ void castor::db::ora::OraTapeSvc::fileRecalled
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // fileRecallFailed
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraTapeSvc::fileRecallFailed
 (castor::stager::TapeCopy* tapeCopy)
   throw (castor::exception::Exception) {
@@ -661,9 +668,9 @@ void castor::db::ora::OraTapeSvc::fileRecallFailed
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // tapesToDo
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 std::vector<castor::stager::Tape*>
 castor::db::ora::OraTapeSvc::tapesToDo()
   throw (castor::exception::Exception) {
@@ -706,9 +713,9 @@ castor::db::ora::OraTapeSvc::tapesToDo()
   return result;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // streamsToDo
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 std::vector<castor::stager::Stream*>
 castor::db::ora::OraTapeSvc::streamsToDo()
   throw (castor::exception::Exception) {
@@ -764,9 +771,9 @@ castor::db::ora::OraTapeSvc::streamsToDo()
   return result;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // selectTapeCopiesForMigration
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 std::vector<castor::stager::TapeCopy*>
 castor::db::ora::OraTapeSvc::selectTapeCopiesForMigration
 (castor::stager::SvcClass *svcClass)
@@ -809,9 +816,9 @@ castor::db::ora::OraTapeSvc::selectTapeCopiesForMigration
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // resetStream
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraTapeSvc::resetStream
 (castor::stager::Stream* stream)
   throw (castor::exception::Exception) {
@@ -835,9 +842,9 @@ void castor::db::ora::OraTapeSvc::resetStream
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // failedSegments
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 std::vector<castor::stager::Segment*>
 castor::db::ora::OraTapeSvc::failedSegments ()
   throw (castor::exception::Exception) {
@@ -896,14 +903,15 @@ castor::db::ora::OraTapeSvc::failedSegments ()
   return result;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // checkFileForRepack
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 std::string castor::db::ora::OraTapeSvc::checkFileForRepack
 (const u_signed64 fileId)
   throw (castor::exception::Exception) {
   std::string repackvid = "";
   try {
+    // Check whether the statements are ok
     if (0 == m_checkFileForRepackStatement) {
       m_checkFileForRepackStatement =
         createStatement(s_checkFileForRepackStatementString);
@@ -929,14 +937,38 @@ std::string castor::db::ora::OraTapeSvc::checkFileForRepack
   return repackvid;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// rtcpclientCleanUp
+//------------------------------------------------------------------------------
+void castor::db::ora::OraTapeSvc::rtcpclientdCleanUp()
+  throw(castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_rtcpclientdCleanUpStatement) {
+      m_rtcpclientdCleanUpStatement =
+	createStatement(s_rtcpclientdCleanUpStatementString);
+    }
+    // Execute the statement
+    (void)m_rtcpclientdCleanUpStatement->executeUpdate();
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in rtcpclientdCleanUp."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
 // getNumFilesByStream
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 u_signed64 castor::db::ora::OraTapeSvc::getNumFilesByStream
 (const u_signed64 streamId)
   throw (castor::exception::Exception) {
   u_signed64 numFile =0;
   try {
+    // Check whether the statements are ok
     if (0 == m_getNumFilesByStreamStatement) {
       m_getNumFilesByStreamStatement =
         createStatement(s_getNumFilesByStreamStatementString);

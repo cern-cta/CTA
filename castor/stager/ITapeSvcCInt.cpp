@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvcCInt.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/08/13 15:20:17 $ $Author: waldron $
+ * @(#)$RCSfile: ITapeSvcCInt.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/07/29 06:13:14 $ $Author: waldron $
  *
  *
  *
@@ -390,7 +390,7 @@ extern "C" {
    char** repackvid,
    const u_signed64 fileid) {
     std::string tmp;
-    if (!checkITapeSvc(tpSvc) ) return -1;
+    if (!checkITapeSvc(tpSvc)) return -1;
     try {
       tmp = tpSvc->tpSvc->checkFileForRepack(fileid);
     } catch (castor::exception::Exception e) {
@@ -398,16 +398,31 @@ extern "C" {
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
     }
-    if ( tmp.length() >0 ){
-       *repackvid = strdup(tmp.c_str());
-       if ((*repackvid) == NULL ){
-         serrno = EINVAL;
-         tpSvc->errorMsg = 
-           "ITapeSvc: Could not allocate memory for returning repackVid information";
-         return EINVAL;
-       }
+    if (tmp.length() > 0) {
+      *repackvid = strdup(tmp.c_str());
+      if ((*repackvid) == NULL ){
+	serrno = EINVAL;
+	tpSvc->errorMsg =
+	  "ITapeSvc: Could not allocate memory for returning repackVid information";
+	return EINVAL;
+      }
     }
-    
+    return 0;
+  }
+
+  //-------------------------------------------------------------------------
+  // C_stager_ITapeSvc_rtcpclientdCleanUp
+  //-------------------------------------------------------------------------
+  int Cstager_ITapeSvc_rtcpclientdCleanUp
+  (struct Cstager_ITapeSvc_t* tpSvc) {
+    if (!checkITapeSvc(tpSvc)) return -1;
+    try {
+      tpSvc->tpSvc->rtcpclientdCleanUp();
+    } catch (castor::exception::Exception e){
+      serrno = e.code();
+      tpSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
     return 0;
   }
 
@@ -438,8 +453,8 @@ extern "C" {
   // Cstager_ITapeSvc_getNumFilesByStream
   //-------------------------------------------------------------------------
   int Cstager_ITapeSvc_getNumFilesByStream
-  (struct Cstager_ITapeSvc_t* tpSvc, 
-   const u_signed64 streamId, 
+  (struct Cstager_ITapeSvc_t* tpSvc,
+   const u_signed64 streamId,
    u_signed64 *numFile){
     u_signed64 numByStream=0;
     if (!checkITapeSvc(tpSvc)) return -1;
@@ -450,7 +465,7 @@ extern "C" {
       tpSvc->errorMsg = e.getMessage().str();
       return -1;
     }
-    *numFile=numByStream; 
+    *numFile=numByStream;
     return 0;
   }
 }

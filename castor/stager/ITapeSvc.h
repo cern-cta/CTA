@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvc.h,v $ $Revision: 1.11 $ $Release$ $Date: 2008/05/09 15:17:02 $ $Author: murrayc3 $
+ * @(#)$RCSfile: ITapeSvc.h,v $ $Revision: 1.12 $ $Release$ $Date: 2008/07/29 06:13:14 $ $Author: waldron $
  *
  *
  *
@@ -338,8 +338,8 @@ int Cstager_ITapeSvc_failedSegments
  * Checks, if the fileid is in a actual repack process.
  * This method is run by the migrator. It looks into the
  * Stager Catalog, if a StageRepackRequest object is assigned to
- * a subrequest for this  file. In this case it returns the 
- * volume name (repackvid field) of the request. 
+ * a subrequest for this  file. In this case it returns the
+ * volume name (repackvid field) of the request.
  * @param tpSvc the ITapeSvc used
  * @param repackvid the found tape name or NULL
  * @param key the castorfile to check
@@ -348,9 +348,22 @@ int Cstager_ITapeSvc_failedSegments
  * Cstager_ITapeSvc_errorMsg
  */
 int Cstager_ITapeSvc_checkFileForRepack
-(struct Cstager_ITapeSvc_t* tpSvc, 
+(struct Cstager_ITapeSvc_t* tpSvc,
  char** repackvid,
  const u_signed64 key);
+
+/**
+ * Method to reset/cleanup the database after a rtcpclientd restart.
+ * This essentially compensates for the fact that rtcpclientd isn't
+ * 100% stateless and when it stops leaves the database in an
+ * inconsistent state.
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_ITapeSvc_errorMsg
+ */
+int Cstager_ITapeSvc_rtcpclientdCleanUp
+(struct Cstager_ITapeSvc_t* tpSvc);
 
 /**
  * Sends a UDP message to the rmMasterDaemon to inform it
@@ -377,13 +390,13 @@ void Cstager_ITapeSvc_sendStreamReport
 /**
  * get the number of files of a stream
  * @param tpSvc the ITapeSvc used
- * @param streamId  stream id 
+ * @param streamId  stream id
  * @param numFile (returned value)
- * return value -1 in case of error 
+ * return value -1 in case of error
  */
 int Cstager_ITapeSvc_getNumFilesByStream
 (struct Cstager_ITapeSvc_t* tpSvc,
- const u_signed64 streamId, 
+ const u_signed64 streamId,
  u_signed64* numFile);
 
 #endif // CASTOR_ITAPESVC_H
