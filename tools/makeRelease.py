@@ -20,7 +20,7 @@ def runCommand(cmd, errorMessage):
         shutil.rmtree(workDir)
         if intReleaseDir != '':
             shutil.rmtree(intReleaseDir)
-        sys.exit(1)    
+        sys.exit(1)
 
 def findUpdates(d):
     res = []
@@ -85,7 +85,7 @@ updDir = workDir + os.sep + 'CASTOR2' + os.sep + 'upgrades'
 for f in findUpdates(updDir):
     shutil.copyfile(updDir + os.sep + f, intReleaseDir + os.sep + 'dbupgrades' + os.sep + f)
 os.chdir(workDir + os.sep + 'CASTOR2')
-runCommand('makesql.sh ' + intReleaseDir + os.sep + 'dbcreation', 'Could not publish SQL scripts')
+runCommand('./makesql.sh ' + intReleaseDir + os.sep + 'dbcreation', 'Could not publish SQL scripts')
 
 # compile on the different architectures
 outputs = []
