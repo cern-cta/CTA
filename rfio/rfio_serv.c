@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.28 2008/07/29 08:34:51 waldron Exp $
+ * $Id: rfio_serv.c,v 1.29 2008/07/30 09:32:59 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.28 $ $Date: 2008/07/29 08:34:51 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.29 $ $Date: 2008/07/30 09:32:59 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 /* rfio_serv.c  SHIFT remote file access super server                   */
@@ -665,29 +665,30 @@ char    **argv;
 		  port = Socket_parent_port;
 	  } else {
 		  if (!port)  {
-#ifdef CSEC
-		    /*If CSEC define and security requested (set uid and gid) and user not root*/
-                      if (uid > 0 && gid > 0){			
-	                  sp = Cgetservbyname(SRFIO_NAME, SRFIO_PROTO);
-			  if (sp == NULL) {
-				  log(LOG_ERR, "srfio/tcp: no such service - Use default port number %d\n", (int) SRFIO_PORT);
-				  sin.sin_port = htons((u_short) SRFIO_PORT);
-#else
-			  sp = Cgetservbyname(RFIO_NAME, RFIO_PROTO);
-			  if (sp == NULL) {
-				  log(LOG_ERR, "rfio/tcp: no such service - Use default port number %d\n", (int) RFIO_PORT);
-				  sin.sin_port = htons((u_short) RFIO_PORT);
-#endif
+
+			  /* If CSEC define and security requested (set uid and gid) and user not root */
+			  if (uid > 0 && gid > 0){			
+				  sp = Cgetservbyname(SRFIO_NAME, SRFIO_PROTO);
+				  if (sp == NULL) {
+					  log(LOG_ERR, "srfio/tcp: no such service - Use default port number %d\n", (int) SRFIO_PORT);
+					  sin.sin_port = htons((u_short) SRFIO_PORT);
+				  } else { 
+					  sin.sin_port = sp->s_port;
+				  }
 			  } else {
-				  sin.sin_port = sp->s_port;
+				  sp = Cgetservbyname(RFIO_NAME, RFIO_PROTO);
+				  if (sp == NULL) {
+					  log(LOG_ERR, "rfio/tcp: no such service - Use default port number %d\n", (int) RFIO_PORT);
+					  sin.sin_port = htons((u_short) RFIO_PORT);
+				  } else {
+					  sin.sin_port = sp->s_port;
+				  }
+			  
 			  }
-#ifdef CSEC
-		        }
-#endif
-		  }
-		  else {
+		  } else {
 			  sin.sin_port = htons(port);
 		  }
+
 		  sin.sin_addr.s_addr = htonl(INADDR_ANY);
 		  sin.sin_family = AF_INET;
 		  {  /* Re-usable port */
@@ -1083,7 +1084,7 @@ char tmpbuf[21], tmpbuf2[21];
    log(LOG_INFO, "Entering the secure block\n");
    
    /* Check that the uid and gid is set and user is not root */
-   /*Condition to be replaced when trusted host is supported*/
+   /* Condition to be replaced when trusted host is supported */
    if (uid > 0 && gid > 0) {
      /* Perfom the authentication */
      char username[CA_MAXUSRNAMELEN+1];
