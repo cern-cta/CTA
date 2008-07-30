@@ -827,7 +827,7 @@ char tmpbuf[21], tmpbuf2[21];
      if ( !status ) {
        int rc;
        char *pfn = NULL;
-       int need_user_check;
+       int need_user_check = 1;
 
        log(LOG_DEBUG, "sropen64: uid %d gid %d mask %o ftype %d flags 0%o mode 0%o\n",
            uid, gid, mask, ftype, flags, mode);
@@ -2002,15 +2002,17 @@ char        *host;         /* Where the request comes from        */
       }  else
 #endif
       {
-	 int rc;
 	 char *pfn = NULL;
+	 int rc;
+	 int unused_dummy;
 	 rc = rfio_handle_open(CORRECT_FILENAME(filename),
 			       ntohopnflg(flags),
 			       mode,
 			       uid,
 			       gid,
 			       &pfn,
-			       &handler_context);
+			       &handler_context,
+			       &unused_dummy);
 	 if (rc < 0) {
 	   char alarmbuf[1024];
 	   sprintf(alarmbuf,"sropen64_v3: %s",CORRECT_FILENAME(filename));
