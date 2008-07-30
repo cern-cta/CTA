@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.662 $ $Date: 2008/07/29 13:35:05 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.663 $ $Date: 2008/07/30 09:51:45 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -594,7 +594,7 @@ CREATE OR REPLACE PROCEDURE deleteOutOfDateStageOutDCs(timeOut IN NUMBER) AS
 BEGIN
   -- Deal with old DiskCopies in STAGEOUT/WAITFS. The rule is to drop
   -- the ones with 0 fileSize and issue a putDone for the others
-  FOR cf IN (SELECT c.filesize, c.id, c.fileId, c.nsHost, d.fileSystem, d.id AS dcid
+  FOR f IN (SELECT c.filesize, c.id, c.fileId, c.nsHost, d.fileSystem, d.id AS dcId, d.status AS dcStatus
                FROM DiskCopy d, Castorfile c
               WHERE c.id = d.castorFile
                 AND d.creationTime < getTime() - timeOut
@@ -606,21 +606,22 @@ BEGIN
                      AND SubRequest.request = Id2Type.id
                      AND status IN (0, 1, 2, 3, 5, 6, 13, 14) -- all active
                      AND type NOT IN (37, 38))) LOOP -- ignore PrepareToPut, PrepareToUpdate
-    IF 0 = cf.fileSize THEN
+    IF (0 = f.fileSize) OR (f.dcStatus <> 6) THEN
       -- here we invalidate the diskcopy and let the GC run
-      UPDATE DiskCopy SET status = 7 WHERE id = cf.dcid;
-      INSERT INTO CleanupJobLog VALUES (cf.fileId, cf.nsHost, 0);
+      UPDATE DiskCopy SET status = 7 WHERE id = f.dcid;
+      INSERT INTO CleanupJobLog VALUES (f.fileId, f.nsHost, 0);
     ELSE
       -- here we issue a putDone
       -- context 2 : real putDone. Missing PPut requests are ignored.
       -- svcClass 0 since we don't know it. This will trigger a
       -- default behavior in the putDoneFunc
-      putDoneFunc(cf.id, cf.fileSize, 2, 0);
-      INSERT INTO CleanupJobLog VALUES (cf.fileId, cf.nsHost, 1);
+      putDoneFunc(f.id, f.fileSize, 2, 0);
+      INSERT INTO CleanupJobLog VALUES (f.fileId, f.nsHost, 1);
     END IF;
   END LOOP;
   COMMIT;
 END;
+
 
 /* Deal with stuck recalls */
 CREATE OR REPLACE PROCEDURE restartStuckRecalls AS
