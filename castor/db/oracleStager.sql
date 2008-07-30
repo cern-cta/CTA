@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.675 $ $Date: 2008/07/29 06:47:54 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.676 $ $Date: 2008/07/30 09:50:26 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -990,6 +990,7 @@ BEGIN
     EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:fs, 10); END;'
       USING OUT gcw, IN fs;
     -- update the DiskCopy status to CANBEMIGR
+    dcId := 0;
     UPDATE DiskCopy
        SET status = 10, -- CANBEMIGR
            lastAccessTime = getTime(),  -- for the GC, effective lifetime of this diskcopy starts now
@@ -997,13 +998,16 @@ BEGIN
 	   diskCopySize = fs
      WHERE castorFile = cfId AND status = 6 -- STAGEOUT
      RETURNING id INTO dcId;
-    -- Create TapeCopies
-    FOR i IN 1..nbTC LOOP
-      INSERT INTO TapeCopy (id, copyNb, castorFile, status)
-           VALUES (ids_seq.nextval, i, cfId, 0) -- TAPECOPY_CREATED
-      RETURNING id INTO tcId;
-      INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
-    END LOOP;
+    IF dcId > 0 THEN
+      -- Only if we really found the relevant diskcopy, create TapeCopies
+      -- This is an extra sanity check, see also the deleteOutOfDateStageOutDCs procedure
+      FOR i IN 1..nbTC LOOP
+        INSERT INTO TapeCopy (id, copyNb, castorFile, status)
+             VALUES (ids_seq.nextval, i, cfId, 0) -- TAPECOPY_CREATED
+        RETURNING id INTO tcId;
+        INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
+      END LOOP;
+    END IF;
   END IF;
   -- If we are a real PutDone (and not a put outside of a prepareToPut/Update)
   -- then we have to archive the original prepareToPut/Update subRequest
