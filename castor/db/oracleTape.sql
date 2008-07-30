@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.676 $ $Date: 2008/07/29 06:48:36 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.677 $ $Date: 2008/07/30 09:38:35 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1330,7 +1330,7 @@ BEGIN
   -- get streamFromSvcClass
   BEGIN
     SELECT id INTO svcId FROM SvcClass
-     WHERE name = svcClassName AND ROWNUM <2;
+     WHERE name = svcClassName AND ROWNUM < 2;
     SELECT count(Stream.id) INTO nbOldStream
       FROM Stream, SvcClass2TapePool
      WHERE SvcClass2TapePool.child = Stream.tapepool
@@ -1345,15 +1345,15 @@ BEGIN
 
   IF nbOldStream <= 0 AND initialSizeToTransfer < volumeThreashold THEN
     -- restore WAITINSTREAM to TOBEMIGRATED, not enough data
-    retCode :=-2 ; -- RTCPCLD_MSG_DATALIMIT
+    retCode := -2 ; -- RTCPCLD_MSG_DATALIMIT
     RETURN;
   END IF;
 
-  IF nbOldStream >=0 AND (doClone = 1 OR nbMigrationCandidate > 0) THEN
+  IF nbOldStream >= 0 AND (doClone = 1 OR nbMigrationCandidate > 0) THEN
     -- stream creator
     SELECT SvcClass.nbDrives INTO nbDrives FROM SvcClass WHERE id = svcId;
     IF nbDrives = 0 THEN
-    	retCode :=-3 ; -- RESTORE NEEDED
+    	retCode := -3; -- RESTORE NEEDED
     	RETURN;
     END IF;
     -- get the initialSizeToTransfer to associate to the stream
@@ -1409,7 +1409,7 @@ BEGIN
               -- a take the first one, they are supposed to be all the same
               INSERT INTO stream2tapecopy (parent, child) VALUES (strId, tcId.child);
             END LOOP;
-            UPDATE Stream set initialSizeToTransfer=oldSize WHERE id = strId;
+            UPDATE Stream SET initialSizeToTransfer = oldSize WHERE id = strId;
            EXCEPTION WHEN NO_DATA_FOUND THEN
   	    -- no stream to clone for this tapepool
   	    NULL;
@@ -1489,8 +1489,8 @@ BEGIN
 END;
 
 /* stop chosen stream */
-CREATE OR REPLACE PROCEDURE startChosenStreams
-        (streamIds IN castor."cnumList", initSize IN NUMBER) AS
+CREATE OR REPLACE PROCEDURE stopChosenStreams
+        (streamIds IN castor."cnumList") AS
   nbTc NUMBER;
 BEGIN
   FOR i IN streamIds.FIRST .. streamIds.LAST LOOP
@@ -1500,14 +1500,12 @@ BEGIN
         DELETE FROM Stream where id = streamIds(i);
       ELSE
         UPDATE Stream
-           SET status = 0, -- PENDING
-               -- initialSize overwritten to initSize only if it is 0
-               initialSizeToTransfer = decode(initialSizeToTransfer, 0, initSize, initialSizeToTransfer)
+           SET status = 0 -- PENDING
          WHERE Stream.status = 7 -- WAITPOLICY
            AND id = streamIds(i);
       END IF;
       COMMIT;
-   END;
+    END;
   END LOOP;
 END;
 
@@ -1518,7 +1516,7 @@ AS
   unused "numList";
 BEGIN
   FORALL i IN migrationCandidates.FIRST .. migrationCandidates.LAST
-    UPDATE TapeCopy SET Status=1 WHERE Status=7 AND id=migrationCandidates(i);
+    UPDATE TapeCopy SET Status = 1 WHERE Status = 7 AND id = migrationCandidates(i);
   COMMIT;
 END;
 
@@ -1528,7 +1526,7 @@ CREATE OR REPLACE PROCEDURE invalidateTapeCopies
 AS
 BEGIN
   FORALL i IN tapecopyIds.FIRST .. tapecopyIds.LAST
-    UPDATE TapeCopy SET status = 6 WHERE id = tapecopyIds(i) AND status=7;
+    UPDATE TapeCopy SET status = 6 WHERE id = tapecopyIds(i) AND status = 7;
   COMMIT;
 END;
 
