@@ -17,10 +17,6 @@
 #define free_page_aligned(x) free(x)
 #endif
 
-#ifndef lint
-static char sccsid[] = "@(#)rfio_calls.c,v 1.3 2004/03/22 12:11:24 CERN/IT/PDP/DM Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
-#endif /* not lint */
-
 /*
  * Remote file I/O flags and declarations.
  */
@@ -33,6 +29,7 @@ static char sccsid[] = "@(#)rfio_calls.c,v 1.3 2004/03/22 12:11:24 CERN/IT/PDP/D
 #include <grp.h>
 #include <errno.h>
 #include <string.h>
+#include <common.h>
 #include <stdlib.h>
 #include <zlib.h>
 #include <attr/xattr.h>
@@ -90,6 +87,12 @@ static char sccsid[] = "@(#)rfio_calls.c,v 1.3 2004/03/22 12:11:24 CERN/IT/PDP/D
 #ifdef CS2
 #include <nfs/nfsio.h>
 #endif
+
+#include "rfio_callhandlers.h"
+#include "rfioacct.h"
+#include "checkkey.h"
+#include "alrm.h"
+#include "rfio_calls.h"
 
 extern int forced_umask;
 #define CORRECT_UMASK(this) (forced_umask > 0 ? forced_umask : this)
@@ -157,7 +160,6 @@ static int write_error = 0;
 static int stop_read;
 
 extern char *getconfent();
-extern int 	checkkey();
 int 	check_user_perm();			/* Forward declaration 		*/
 static int     chksuser();		/* Forward declaration 		*/
 
@@ -2421,7 +2423,7 @@ int   bet; /* Version indicator: 0(old) or 1(new) */
 	 rfio_alrm(rcode,alarmbuf);
        }
 
-       if (need_user_check && ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
+       if (need_user_check && ((status=check_user_perm(&uid,&gid,host,&rcode,(((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
 	      ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
 	   if (status == -2)
 	     log(LOG_ERR,"ropen(): uid %d not allowed to open()\n",uid);
@@ -2433,7 +2435,7 @@ int   bet; /* Version indicator: 0(old) or 1(new) */
       {
          const char *perm_array[3];
          char ofilename[MAXFILENAMSIZE];
-         perm_array[0] = ((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST";
+         perm_array[0] = (((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST";
          perm_array[1] = "OPENTRUST";
          perm_array[2] = NULL;
 
@@ -4010,71 +4012,6 @@ char *permstr;		/* permission string for the request */
    return 0;
 }
 
-/*
- * makes the setgid() and setuid(). Returns -1 if error , -2 if unauthorized.
- */
-int check_user_perm(uid,gid,hostname,ptrcode,permstr)
-int *uid;                /* uid of caller                     */
-int *gid;                /* gid of caller                     */
-char *hostname;        /* caller's host name                */
-int *ptrcode;          /* Return code                       */
-char *permstr;          /* permission string for the request */
-{
-#ifdef CSEC
-  if (Csec_service_type < 0) {
-    *uid = peer_uid;
-    *gid = peer_gid;
-  }
-#endif
-
-  return(ignore_uid_gid != 0 ? 0 : chsuser(*uid,*gid,hostname,ptrcode,permstr));
-}
-
-
-/*
- * makes the setgid() and setuid(). Returns -1 if error , -2 if unauthorized.
- */
-int chsuser(uid,gid,hostname,ptrcode,permstr)
-int uid;                /* uid of caller                     */
-int gid;                /* gid of caller                     */
-char *hostname;        /* caller's host name                */
-int *ptrcode;          /* Return code                       */
-char *permstr;          /* permission string for the request */
-{
-
-   struct passwd *pw;
-
-#ifdef CSEC
-   if (Csec_service_type < 0) {
-     uid = peer_uid;
-     gid = peer_gid;
-   }
-#endif
-
-   if ( chksuser(uid,gid,hostname,ptrcode,permstr) < 0 )
-      return -2;
-   if ( uid >=100 && ( (pw = getpwuid((uid_t)uid)) == NULL
-#if !defined(_WIN32)
-      || chsgroup(pw,gid)
-#endif
-      ))
-   {
-      *ptrcode = EACCES;
-      log(LOG_ERR,"chsuser(): user (%d,%d) does not exist at local host\n",uid,gid);
-      return -2;
-   }
-   /* While performing tape operations multiple calls to change uid are issued. As
-    * a result we ignore errors from setgroups if we are not running as the super-
-    * user because it is a super-user only command. If we do not do this all tape
-    * related activity will FAIL!!!
-    */
-   if ( ((getuid() == 0) && (setgroups(0, NULL)<0)) || (setgid((gid_t)gid)<0) || (setuid((uid_t)uid)<0) )  {
-      *ptrcode = errno;
-      log(LOG_ERR,"chsuser(): unable to setuid,gid(%d,%d): %s, we are (uid=%d,gid=%d,euid=%d,egid=%d)\n",uid,gid,strerror(errno),(int) getuid(),(int) getgid(),(int) geteuid(),(int) getegid());
-      return -2;
-   }
-   return 0;
-}
 
 #if !defined(_WIN32)
 static int chk_newacct(pwd,gid)
@@ -4133,6 +4070,70 @@ int gid;
 }
 #endif /* WIN32 */
 
+/*
+ * makes the setgid() and setuid(). Returns -1 if error , -2 if unauthorized.
+ */
+int chsuser(uid,gid,hostname,ptrcode,permstr)
+int uid;                /* uid of caller                     */
+int gid;                /* gid of caller                     */
+char *hostname;        /* caller's host name                */
+int *ptrcode;          /* Return code                       */
+char *permstr;          /* permission string for the request */
+{
+
+   struct passwd *pw;
+
+#ifdef CSEC
+   if (Csec_service_type < 0) {
+     uid = peer_uid;
+     gid = peer_gid;
+   }
+#endif
+
+   if ( chksuser(uid,gid,hostname,ptrcode,permstr) < 0 )
+      return -2;
+   if ( uid >=100 && ( (pw = getpwuid((uid_t)uid)) == NULL
+#if !defined(_WIN32)
+      || chsgroup(pw,gid)
+#endif
+      ))
+   {
+      *ptrcode = EACCES;
+      log(LOG_ERR,"chsuser(): user (%d,%d) does not exist at local host\n",uid,gid);
+      return -2;
+   }
+   /* While performing tape operations multiple calls to change uid are issued. As
+    * a result we ignore errors from setgroups if we are not running as the super-
+    * user because it is a super-user only command. If we do not do this all tape
+    * related activity will FAIL!!!
+    */
+   if ( ((getuid() == 0) && (setgroups(0, NULL)<0)) || (setgid((gid_t)gid)<0) || (setuid((uid_t)uid)<0) )  {
+      *ptrcode = errno;
+      log(LOG_ERR,"chsuser(): unable to setuid,gid(%d,%d): %s, we are (uid=%d,gid=%d,euid=%d,egid=%d)\n",uid,gid,strerror(errno),(int) getuid(),(int) getgid(),(int) geteuid(),(int) getegid());
+      return -2;
+   }
+   return 0;
+}
+
+/*
+ * makes the setgid() and setuid(). Returns -1 if error , -2 if unauthorized.
+ */
+int check_user_perm(uid,gid,hostname,ptrcode,permstr)
+int *uid;                /* uid of caller                     */
+int *gid;                /* gid of caller                     */
+char *hostname;        /* caller's host name                */
+int *ptrcode;          /* Return code                       */
+char *permstr;          /* permission string for the request */
+{
+#ifdef CSEC
+  if (Csec_service_type < 0) {
+    *uid = peer_uid;
+    *gid = peer_gid;
+  }
+#endif
+
+  return(ignore_uid_gid != 0 ? 0 : chsuser(*uid,*gid,hostname,ptrcode,permstr));
+}
 
 int  sropen_v3(s, rt, host, bet)
 #if defined(_WIN32)
@@ -4808,7 +4809,7 @@ void *produce_thread(int *ptr)
          /* printf("Has read in buf %d (len %d)\n",produced % daemonv3_rdmt_nbuf,byte_read);  */
          array[produced % daemonv3_rdmt_nbuf].len = byte_read;
 	 if(useCksum) {
-	   ckSum = adler32(ckSum,array[produced % daemonv3_rdmt_nbuf].p,(unsigned int)byte_read);
+	   ckSum = adler32(ckSum,(unsigned char*)array[produced % daemonv3_rdmt_nbuf].p,(unsigned int)byte_read);
 	   log(LOG_DEBUG,"produce_thread: current checksum=0x%x\n",ckSum);
 	 }
       }
@@ -4917,7 +4918,7 @@ void *consume_thread(int *ptr)
             total_consumed += byte_written; 
             log(LOG_DEBUG,"Has written buf %d to disk (len %d)\n",consumed % daemonv3_wrmt_nbuf,byte_written);
 	    if(useCksum) {
-	      ckSum = adler32(ckSum,buffer_to_write,(unsigned int)byte_written);
+	      ckSum = adler32(ckSum,(unsigned char*)buffer_to_write,(unsigned int)byte_written);
 	      log(LOG_DEBUG,"consume_thread: current checksum=0x%x\n",ckSum);
 	    }
          }

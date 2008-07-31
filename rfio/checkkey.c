@@ -1,5 +1,5 @@
 /*
- * $Id: checkkey.c,v 1.9 2008/07/31 07:09:13 sponcec3 Exp $
+ * $Id: checkkey.c,v 1.10 2008/07/31 13:16:54 sponcec3 Exp $
  */
 
 /*
@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <common.h>
+#include <checkkey.h>
 
 #define RFIO2TPREAD_MAGIC 0X0110
 #define OK 1

@@ -1,15 +1,11 @@
 /*
- * $Id: rfio_serv.c,v 1.31 2008/07/31 07:09:13 sponcec3 Exp $
+ * $Id: rfio_serv.c,v 1.32 2008/07/31 13:16:55 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.31 $ $Date: 2008/07/31 07:09:13 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
-#endif /* not lint */
 
 /* rfio_serv.c  SHIFT remote file access super server                   */
 
@@ -21,6 +17,9 @@ static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.31 $ $Date: 2
 #include "Castor_limits.h"
 #include "common.h"
 #include "rfio.h"                       /* Remote file I/O              */
+#include "rfio_constants.h"
+#include "rfioacct.h"
+#include "rfio_calls.h"
 #include "u64subr.h"
 #include <signal.h>   /* Signal handling  */
 #include <Cnetdb.h>

@@ -22,6 +22,7 @@
 #include "castor/stager/SubRequest.h"
 #include "RemoteJobSvc.h"
 #include "serrno.h"
+#include "rfio_callhandlers.h"
 
 struct internal_context {
   int one_byte_at_least;

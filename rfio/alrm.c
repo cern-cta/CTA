@@ -1,5 +1,5 @@
 /*
- * $Id: alrm.c,v 1.5 2008/07/31 07:09:13 sponcec3 Exp $
+ * $Id: alrm.c,v 1.6 2008/07/31 13:16:54 sponcec3 Exp $
  */
 
 /*
@@ -15,6 +15,7 @@
 #include "log.h"
 #include <stdlib.h>
 #include <unistd.h>
+#include <alrm.h>
 
 #ifndef RFIO_ALRM
 #define RFIO_ALRM "/usr/spool/rfio/rfio_alrm"

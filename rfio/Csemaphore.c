@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "$RCSfile: Csemaphore.c,v $ $Revision: 1.3 $ $Date: 2008/07/31 07:09:13 $ CERN/IT/PDP/DM";
-#endif /* not lint */
-
 /*//////////////////////////////////////////////////////////////////////
 // File: Csemaphore.c
 // --------------------------------------------------------------------

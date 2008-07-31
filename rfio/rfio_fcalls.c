@@ -1,15 +1,11 @@
 /*
- * $Id: rfio_fcalls.c,v 1.8 2008/07/31 07:09:13 sponcec3 Exp $
+ * $Id: rfio_fcalls.c,v 1.9 2008/07/31 13:16:55 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1994-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_fcalls.c,v $ $Revision: 1.8 $ $Date: 2008/07/31 07:09:13 $ CERN/IT/PDP/DM Felix Hassine" ;
-#endif /* not lint */
 
 /* rfio_fcalls.c        - Remote file I/O - server FORTRAN calls        */
 
@@ -21,6 +17,9 @@ static char sccsid[] = "@(#)$RCSfile: rfio_fcalls.c,v $ $Revision: 1.8 $ $Date: 
 #include <string.h>
 #include <Castor_limits.h>
 #include "rfio.h"                       /* Remote file I/O              */
+#include "common.h"
+#include "checkkey.h"
+#include <grp.h>
 #include <log.h>                        /* Genralized error logger      */
 #if defined(_WIN32)
 #include "syslog.h"
@@ -40,7 +39,6 @@ extern int forced_umask;
  * and space allocation.
  */
 extern char     *getconfent();
-extern int      checkkey();         /* To check passwd provided     */
 
 /*
  *External functions for RFIOs

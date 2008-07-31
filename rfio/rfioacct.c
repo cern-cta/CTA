@@ -1,15 +1,11 @@
 /*
- * $Id: rfioacct.c,v 1.8 2008/07/31 07:09:13 sponcec3 Exp $
+ * $Id: rfioacct.c,v 1.9 2008/07/31 13:16:55 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1998-2002 by CERN/IT/PDP/DM Olof Barring
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfioacct.c,v $ $Revision: 1.8 $ $Date: 2008/07/31 07:09:13 $ CERN/IT/PDP/DM Olof Barring";
-#endif /* not lint */
 
 #define RFIO_KERNEL 1
 
@@ -25,7 +21,8 @@ static char sccsid[] = "@(#)$RCSfile: rfioacct.c,v $ $Revision: 1.8 $ $Date: 200
 #endif
 
 #include "rfio.h"
-#include "sacct.h"
+#include "wsacct.h"
+#include "rfioacct.h"
 
 void rfioacct(reqtype,uid,gid,ns,flag1,flag2,status,rc,infop,filename1,filename2)
      int reqtype;
@@ -51,7 +48,7 @@ void rfioacct(reqtype,uid,gid,ns,flag1,flag2,status,rc,infop,filename1,filename2
   static int jid = -1;
 
   if ( ACCTRFIO_ON == -1 ) {
-    if (p == NULL && (p = getconfent("ACCT", "RFIO", 0)) == NULL ||
+    if (((p == NULL) && ((p = getconfent("ACCT", "RFIO", 0)) == NULL)) ||
         (strcmp (p, "YES") && strcmp (p, "yes"))) ACCTRFIO_ON = 0;
     else ACCTRFIO_ON = 1;
   }
@@ -96,7 +93,7 @@ void rfioacct(reqtype,uid,gid,ns,flag1,flag2,status,rc,infop,filename1,filename2
   acct_rfio.status = status;
   acct_rfio.rc = rc;
   acctreclen = ((char *)acct_rfio.filename - (char *) &acct_rfio) + strlen(acct_rfio.filename) + 1;
-  wsacct(ACCTRFIO64, &acct_rfio, acctreclen);
+  wsacct(ACCTRFIO64, (void*)&acct_rfio, acctreclen);
 #endif /* SACCT */
   return;
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: preseek.c,v 1.12 2008/07/31 07:09:13 sponcec3 Exp $
+ * $Id: preseek.c,v 1.13 2008/07/31 13:16:54 sponcec3 Exp $
  */
 
 /*
@@ -76,7 +76,7 @@ int DLL_DECL rfio_preseek(s,iov,iovnb)
     if ((iov64 = malloc (iovnb * sizeof(struct iovec64))) == NULL)
       return (-1) ;
     for(i= 0; i<iovnb; i ++) {
-      iov64[i].iov_base = (off64_t)iov[i].iov_base ;
+      iov64[i].iov_base = (off64_t)(long)iov[i].iov_base;
       iov64[i].iov_len = iov[i].iov_len ;
     }
     status = rfio_preseek64(s,iov64,iovnb) ;

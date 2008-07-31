@@ -12,10 +12,6 @@
 #define _GNU_SOURCE  /* O_DIRECT */
 #endif
 
-#ifndef lint
-static char sccsid[] = "@(#)rfio_call64.c,v 1.3 2004/03/22 12:34:03 CERN/IT/PDP/DM Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
-#endif /* not lint */
-
 /*
  * Remote file I/O flags and declarations.
  */
@@ -88,6 +84,10 @@ static char sccsid[] = "@(#)rfio_call64.c,v 1.3 2004/03/22 12:34:03 CERN/IT/PDP/
 #include <nfs/nfsio.h>
 #endif
 
+#include "rfio_callhandlers.h"
+#include "rfioacct.h"
+#include "checkkey.h"
+#include "alrm.h"
 #include <fcntl.h>
 
 extern int forced_umask;
@@ -790,7 +790,7 @@ int  sropen64(s, rt, host)
       }
 
 
-      if (need_user_check &&  ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
+      if (need_user_check &&  ((status=check_user_perm(&uid,&gid,host,&rcode,(((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
           ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
         if (status == -2)
           log(LOG_ERR, "sropen64: uid %d not allowed to open64()\n", uid);
@@ -802,7 +802,7 @@ int  sropen64(s, rt, host)
       {
         const char *perm_array[3];
         char ofilename[MAXFILENAMSIZE];
-        perm_array[0] = ((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST";
+        perm_array[0] = (((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST";
         perm_array[1] = "OPENTRUST";
         perm_array[2] = NULL;
 
@@ -1871,7 +1871,7 @@ int  sropen64_v3(s, rt, host)
       log(LOG_INFO,  "ropen64_v3: (%s,0%o,0%o) for (%d,%d)\n", CORRECT_FILENAME(filename), flags, mode, uid, gid);
       (void) umask((mode_t) CORRECT_UMASK(mask));
 #if !defined(_WIN32)
-      if ( ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
+      if ( ((status=check_user_perm(&uid,&gid,host,&rcode,(((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
            ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
         if (status == -2)
           log(LOG_ERR,"ropen64_v3: uid %d not allowed to open()\n", uid);
@@ -2389,7 +2389,7 @@ static void *produce64_thread(int *ptr)
       log(LOG_DEBUG, "Has read in buf %d (len %d)\n",produced64 % daemonv3_rdmt_nbuf,byte_read);
       array[produced64 % daemonv3_rdmt_nbuf].len = byte_read;
       if(useCksum) {
-        ckSum = adler32(ckSum,array[produced64 % daemonv3_rdmt_nbuf].p,(unsigned int)byte_read);
+        ckSum = adler32(ckSum,(unsigned char*)array[produced64 % daemonv3_rdmt_nbuf].p,(unsigned int)byte_read);
         log(LOG_DEBUG,"produce64_thread: current checksum=0x%lx\n",ckSum);
       }
     }
@@ -2501,7 +2501,7 @@ static void *consume64_thread(int *ptr)
         log(LOG_DEBUG,"consume64_thread: Has written buf %d to disk (len %d)\n",
             consumed64 % daemonv3_wrmt_nbuf, byte_written);
         if(useCksum) {
-          ckSum = adler32(ckSum,buffer_to_write,(unsigned int)byte_written);
+          ckSum = adler32(ckSum,(unsigned char*)buffer_to_write,(unsigned int)byte_written);
           log(LOG_DEBUG,"consume64_thread: current checksum=0x%lx\n",ckSum);
         }
       }
