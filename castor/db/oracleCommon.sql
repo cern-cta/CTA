@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.667 $ $Date: 2008/07/29 06:36:36 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.668 $ $Date: 2008/07/31 09:31:31 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -266,7 +266,7 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('cleaning', 'outOfDateStageOutDCsTimeout', '72', 'Timeout for STAGEOUT diskCopies in hours');
 INSERT INTO CastorConfig
-  VALUES ('cleaning', 'failedDCsTimeout', '72', 'Timeout for failed diskCopies in hour');
+  VALUES ('cleaning', 'failedDCsTimeout', '72', 'Timeout for failed diskCopies in hours');
 
 COMMIT;
 
