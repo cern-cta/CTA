@@ -309,7 +309,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
  * Section specifying the build of the Security packages
  */
 
-#define BuildSecurity		NO
+#define BuildSecurity		YES
 #define UseGSI                  YES
 #define UseKRB5                 YES
 #define UseHeimdalKrb5		NO
@@ -319,14 +319,14 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 
 #define SecMakeStaticLibrary	NO
 
-#define BuildSecureTape		YES
-#define BuildSecureVmgr		YES
-#define BuildSecureCupv		YES
-#define	BuildSecureVdqm		YES
+#define BuildSecureTape		NO
+#define BuildSecureVmgr		NO
+#define BuildSecureCupv		NO
+#define	BuildSecureVdqm		NO
 #define	BuildSecureRfio		YES
-#define BuildSecureRtcopy	YES
+#define BuildSecureRtcopy	NO
 #define BuildSecureCns		YES
-#define BuildSecureStage	YES
+#define BuildSecureStage	NO
 
 #if UseHeimdalKrb5
 #define Krb5Config /usr/heimdal/bin/krb5-config
