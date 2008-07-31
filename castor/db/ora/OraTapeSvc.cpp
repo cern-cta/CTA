@@ -422,7 +422,7 @@ bool castor::db::ora::OraTapeSvc::anyTapeCopyForStream
       m_anyTapeCopyForStreamStatement->registerOutParam
         (2, oracle::occi::OCCIINT);
     }
-    m_anyTapeCopyForStreamStatement->setInt(1, searchItem->id());
+    m_anyTapeCopyForStreamStatement->setDouble(1, searchItem->id());
     m_anyTapeCopyForStreamStatement->executeUpdate();
     bool result =
       1 == m_anyTapeCopyForStreamStatement->getInt(2);
