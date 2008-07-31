@@ -35,6 +35,19 @@ namespace castor {
   namespace job {
 
     namespace stagerjob {
+     /**
+       * small struct holding a Rfio enviroment
+       */
+      struct EnvironmentRfio {
+        std::string globus_location;
+        std::string globus_x509_user_cert;
+        std::string globus_x509_user_key;
+        std::string gridmapfile;
+        std::string csec_trace;
+        std::string csec_mech;
+        std::string csec_tracefile; 
+      };
+
 
       /**
        * StagerJob plugin for the Rfio protocol
@@ -75,6 +88,21 @@ namespace castor {
          * get the log level and the log file name
          */
         static void getLogLevel(std::string &logFile, bool &debug) throw();
+
+        /**
+         * gather all environment values
+         * @param env the environment, to be filled
+         */
+        static void getEnvironment(InputArguments &args,
+                                   EnvironmentRfio &env) throw();
+ 
+        /**
+         * Set the environment variables into the real environment
+         *  not the structure called environment
+         * @param env the environment
+         */
+
+        static void setEnvironment (EnvironmentRfio env) throw();
 
       }; // end of class RfioPlugin
 
