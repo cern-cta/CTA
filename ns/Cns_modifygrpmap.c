@@ -12,7 +12,7 @@
 #include <winsock2.h>
 #else
 #include <unistd.h>
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #endif
 #include "marshall.h"
 #include "Cns_api.h"
@@ -22,40 +22,40 @@
 int DLL_DECL
 Cns_modifygrpmap(gid_t gid, char *newname)
 {
-	int c;
-	char func[17];
-	int msglen;
-	char *q;
-	char *sbp;
-	char sendbuf[REQBUFSZ];
-	struct Cns_api_thread_info *thip;
+  int c;
+  char func[17];
+  int msglen;
+  char *q;
+  char *sbp;
+  char sendbuf[REQBUFSZ];
+  struct Cns_api_thread_info *thip;
 
-	strcpy (func, "Cns_modifygrpmap");
-	if (Cns_apiinit (&thip))
-		return (-1);
+  strcpy (func, "Cns_modifygrpmap");
+  if (Cns_apiinit (&thip))
+    return (-1);
 
-	if (! newname) {
-		serrno = EFAULT;
-		return (-1);
-	}
+  if (! newname) {
+    serrno = EFAULT;
+    return (-1);
+  }
 
-	/* Build request header */
+  /* Build request header */
 
-	sbp = sendbuf;
-	marshall_LONG (sbp, CNS_MAGIC);
-	marshall_LONG (sbp, CNS_MODGRPMAP);
-	q = sbp;	/* save pointer. The next field will be updated */
-	msglen = 3 * LONGSIZE;
-	marshall_LONG (sbp, msglen);
+  sbp = sendbuf;
+  marshall_LONG (sbp, CNS_MAGIC);
+  marshall_LONG (sbp, CNS_MODGRPMAP);
+  q = sbp; /* save pointer. The next field will be updated */
+  msglen = 3 * LONGSIZE;
+  marshall_LONG (sbp, msglen);
 
-	/* Build request body */
+  /* Build request body */
 
-	marshall_LONG (sbp, gid);
-	marshall_STRING (sbp, newname);
+  marshall_LONG (sbp, gid);
+  marshall_STRING (sbp, newname);
 
-	msglen = sbp - sendbuf;
-	marshall_LONG (q, msglen);	/* update length field */
+  msglen = sbp - sendbuf;
+  marshall_LONG (q, msglen); /* update length field */
 
-	c = send2nsd (NULL, NULL, sendbuf, msglen, NULL, 0);
-	return (c);
+  c = send2nsd (NULL, NULL, sendbuf, msglen, NULL, 0);
+  return (c);
 }

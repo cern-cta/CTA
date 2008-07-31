@@ -3,7 +3,7 @@
  * All rights reserved
  */
 
-/*	Cns_closedir - free the Cns_DIR structure */
+/* Cns_closedir - free the Cns_DIR structure */
 
 #include <errno.h>
 #include <unistd.h>
@@ -22,36 +22,36 @@
 int DLL_DECL
 Cns_closedir(Cns_DIR *dirp)
 {
-	int i;
-	struct Cns_rep_info *ir;
-	int msglen;
-	char *sbp;
-	char sendbuf[REQBUFSZ];
+  int i;
+  struct Cns_rep_info *ir;
+  int msglen;
+  char *sbp;
+  char sendbuf[REQBUFSZ];
 
-	if (! dirp) {
-		serrno = EFAULT;
-		return (-1);
-	}
+  if (! dirp) {
+    serrno = EFAULT;
+    return (-1);
+  }
 
-	/* tell nsdaemon to free the thread */
+  /* tell nsdaemon to free the thread */
 
-	sbp = sendbuf;
-	marshall_LONG (sbp, CNS_MAGIC);
-	marshall_LONG (sbp, CNS_CLOSEDIR);
-	msglen = 3 * LONGSIZE;
-	marshall_LONG (sbp, msglen);
-	(void) send2nsd (&dirp->dd_fd, NULL, sendbuf, msglen, NULL, 0);
-	if (dirp->replicas) {	/* free previous replica information */
-		ir = (struct Cns_rep_info *) dirp->replicas;
-		for (i = 0; i < dirp->nbreplicas; i++) {
-			free (ir->host);
-			free (ir->sfn);
-			ir++;
-		}
-		free (dirp->replicas);
-		dirp->nbreplicas = 0;
-		dirp->replicas = NULL;
-	}
-	free (dirp);
-	return (0);
+  sbp = sendbuf;
+  marshall_LONG (sbp, CNS_MAGIC);
+  marshall_LONG (sbp, CNS_CLOSEDIR);
+  msglen = 3 * LONGSIZE;
+  marshall_LONG (sbp, msglen);
+  (void) send2nsd (&dirp->dd_fd, NULL, sendbuf, msglen, NULL, 0);
+  if (dirp->replicas) { /* free previous replica information */
+    ir = (struct Cns_rep_info *) dirp->replicas;
+    for (i = 0; i < dirp->nbreplicas; i++) {
+      free (ir->host);
+      free (ir->sfn);
+      ir++;
+    }
+    free (dirp->replicas);
+    dirp->nbreplicas = 0;
+    dirp->replicas = NULL;
+  }
+  free (dirp);
+  return (0);
 }

@@ -2,7 +2,7 @@
  * Copyright (C) 2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
+
 /*      Cns_updateseg_checksum - Updates the segment checksum */
 
 #include <errno.h>
@@ -21,71 +21,71 @@
 int DLL_DECL
 Cns_updateseg_checksum(char *server, u_signed64 fileid, struct Cns_segattrs *oldsegattrs, struct Cns_segattrs *newsegattrs)
 {
-	int c;
-	char func[16];
-	gid_t gid;
-	int msglen;
-	char *q;
-	char *sbp;
-	char sendbuf[REQBUFSZ];
-	struct Cns_api_thread_info *thip;
-	uid_t uid;
+  int c;
+  char func[16];
+  gid_t gid;
+  int msglen;
+  char *q;
+  char *sbp;
+  char sendbuf[REQBUFSZ];
+  struct Cns_api_thread_info *thip;
+  uid_t uid;
 
-        strcpy (func, "Cns_replaceseg");
-        if (Cns_apiinit (&thip))
-                return (-1);
-        Cns_getid(&uid, &gid);
-        
-#        
+  strcpy (func, "Cns_replaceseg");
+  if (Cns_apiinit (&thip))
+    return (-1);
+  Cns_getid(&uid, &gid);
+
+  #
 #if defined(_WIN32)
-        if (uid < 0 || gid < 0) {
-                Cns_errmsg (func, NS053);
-                serrno = SENOMAPFND;
-                return (-1);
-        }
+    if (uid < 0 || gid < 0) {
+      Cns_errmsg (func, NS053);
+      serrno = SENOMAPFND;
+      return (-1);
+    }
 #endif
 
-	if (! oldsegattrs || ! newsegattrs) {
-		serrno = EFAULT;
-		return (-1);
-	}
+  if (! oldsegattrs || ! newsegattrs) {
+    serrno = EFAULT;
+    return (-1);
+  }
 
-	/* Check that the members (copyno, fsec)
-	   of oldsegattrs and newsegattrs are identical */
+  /* Check that the members (copyno, fsec)
+     of oldsegattrs and newsegattrs are identical */
 
-	if (oldsegattrs->copyno != newsegattrs->copyno ||
-	    oldsegattrs->fsec != newsegattrs->fsec) {
-		serrno = EINVAL;
-		return (-1);
-	}
- 
-	/* Build request header */
+  if (oldsegattrs->copyno != newsegattrs->copyno ||
+      oldsegattrs->fsec != newsegattrs->fsec) {
+    serrno = EINVAL;
+    return (-1);
+  }
 
-	sbp = sendbuf;
-	marshall_LONG (sbp, CNS_MAGIC4);
-	marshall_LONG (sbp, CNS_UPDATESEG_CHECKSUM);
-	q = sbp;        /* save pointer. The next field will be updated */
-	msglen = 3 * LONGSIZE;
-	marshall_LONG (sbp, msglen);
+  /* Build request header */
 
-	/* Build request body */
- 
-	marshall_LONG (sbp, uid);
-	marshall_LONG (sbp, gid);
-	marshall_HYPER (sbp, fileid);
-	marshall_WORD (sbp, oldsegattrs->copyno);
-	marshall_WORD (sbp, oldsegattrs->fsec);
+  sbp = sendbuf;
+  marshall_LONG (sbp, CNS_MAGIC4);
+  marshall_LONG (sbp, CNS_UPDATESEG_CHECKSUM);
+  q = sbp;        /* save pointer. The next field will be updated */
+  msglen = 3 * LONGSIZE;
+  marshall_LONG (sbp, msglen);
 
-	marshall_STRING (sbp, oldsegattrs->vid);
-	marshall_WORD (sbp, oldsegattrs->side);
-	marshall_LONG (sbp, oldsegattrs->fseq);
+  /* Build request body */
 
-	marshall_STRING (sbp, newsegattrs->checksum_name);
-	marshall_LONG (sbp, newsegattrs->checksum);
-    
-	msglen = sbp - sendbuf;
-	marshall_LONG (q, msglen);	/* update length field */
+  marshall_LONG (sbp, uid);
+  marshall_LONG (sbp, gid);
+  marshall_HYPER (sbp, fileid);
+  marshall_WORD (sbp, oldsegattrs->copyno);
+  marshall_WORD (sbp, oldsegattrs->fsec);
 
-	c = send2nsd (NULL, server, sendbuf, msglen, NULL, 0);
-	return (c);
+  marshall_STRING (sbp, oldsegattrs->vid);
+  marshall_WORD (sbp, oldsegattrs->side);
+  marshall_LONG (sbp, oldsegattrs->fseq);
+
+  marshall_STRING (sbp, newsegattrs->checksum_name);
+  marshall_LONG (sbp, newsegattrs->checksum);
+
+  msglen = sbp - sendbuf;
+  marshall_LONG (q, msglen); /* update length field */
+
+  c = send2nsd (NULL, server, sendbuf, msglen, NULL, 0);
+  return (c);
 }

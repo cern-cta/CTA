@@ -12,7 +12,7 @@
 #include <winsock2.h>
 #else
 #include <unistd.h>
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #endif
 #include "marshall.h"
 #include "Cns_api.h"
@@ -22,66 +22,66 @@
 int DLL_DECL
 Cns_getidmap (const char *username, int nbgroups, const char **groupnames, uid_t *userid, gid_t *gids)
 {
-	int c;
-	char func[16];
-	int i;
-	int msglen;
-	int n;
-	char *q;
-	char *rbp;
-	char repbuf[REPBUFSZ];
-	char *sbp;
-	char sendbuf[REQBUFSZ];
-	struct Cns_api_thread_info *thip;
+  int c;
+  char func[16];
+  int i;
+  int msglen;
+  int n;
+  char *q;
+  char *rbp;
+  char repbuf[REPBUFSZ];
+  char *sbp;
+  char sendbuf[REQBUFSZ];
+  struct Cns_api_thread_info *thip;
 
-	strcpy (func, "Cns_getidmap");
-	if (Cns_apiinit (&thip))
-		return (-1);
+  strcpy (func, "Cns_getidmap");
+  if (Cns_apiinit (&thip))
+    return (-1);
 
-	if (! username || ! userid || ! gids) {
-		serrno = EFAULT;
-		return (-1);
-	}
-	if (nbgroups < 0) {
-		serrno = EINVAL;
-		return (-1);
-	}
+  if (! username || ! userid || ! gids) {
+    serrno = EFAULT;
+    return (-1);
+  }
+  if (nbgroups < 0) {
+    serrno = EINVAL;
+    return (-1);
+  }
 
-	/* Build request header */
+  /* Build request header */
 
-	sbp = sendbuf;
-	marshall_LONG (sbp, CNS_MAGIC);
-	marshall_LONG (sbp, CNS_GETIDMAP);
-	q = sbp;	/* save pointer. The next field will be updated */
-	msglen = 3 * LONGSIZE;
-	marshall_LONG (sbp, msglen);
+  sbp = sendbuf;
+  marshall_LONG (sbp, CNS_MAGIC);
+  marshall_LONG (sbp, CNS_GETIDMAP);
+  q = sbp; /* save pointer. The next field will be updated */
+  msglen = 3 * LONGSIZE;
+  marshall_LONG (sbp, msglen);
 
-	/* Build request body */
+  /* Build request body */
 
-	marshall_STRING (sbp, username);
-	marshall_LONG (sbp, nbgroups);
-	if (groupnames) {
-		for (i = 0; i < nbgroups; i++) {
-			marshall_STRING (sbp, groupnames[i]);
-		}
-	} else {
-		marshall_STRING (sbp, "");
-	}
+  marshall_STRING (sbp, username);
+  marshall_LONG (sbp, nbgroups);
+  if (groupnames) {
+    for (i = 0; i < nbgroups; i++) {
+      marshall_STRING (sbp, groupnames[i]);
+    }
+  } else {
+    marshall_STRING (sbp, "");
+  }
 
-	msglen = sbp - sendbuf;
-	marshall_LONG (q, msglen);	/* update length field */
+  msglen = sbp - sendbuf;
+  marshall_LONG (q, msglen); /* update length field */
 
-	c = send2nsd (NULL, NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
-	if (c == 0) {
-		rbp = repbuf;
-		unmarshall_LONG (rbp, n);
-		*userid = n;
-		if (nbgroups == 0)
-			nbgroups = 1;
-		for (i = 0; i < nbgroups; i++) {
-			unmarshall_LONG (rbp, n);
-			*(gids+i) = n;
-		}
-	}
-	return (c);
+  c = send2nsd (NULL, NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
+  if (c == 0) {
+    rbp = repbuf;
+    unmarshall_LONG (rbp, n);
+    *userid = n;
+    if (nbgroups == 0)
+      nbgroups = 1;
+    for (i = 0; i < nbgroups; i++) {
+      unmarshall_LONG (rbp, n);
+      *(gids+i) = n;
+    }
+  }
+  return (c);
 }
