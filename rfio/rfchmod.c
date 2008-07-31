@@ -1,5 +1,5 @@
 /*
- * $Id: rfchmod.c,v 1.4 2008/02/21 17:22:26 waldron Exp $
+ * $Id: rfchmod.c,v 1.5 2008/07/31 06:26:51 sponcec3 Exp $
  */
 
 /*
@@ -109,11 +109,6 @@ char *path;
     strcpy (newpath, cp);
     strcat (newpath, path+9);
   } else 
- /* Special treatment for filenames starting with /hpss/... */
-    if ( !strncmp("/hpss/",path,6) &&
-	 (cp = getconfent("SHIFT","HPSS",0)) != NULL) {
-      strcpy(newpath,cp);
-      strcat(newpath,path+6);
-    } else strcpy(newpath,path);
+    strcpy(newpath,path);
   return(newpath);
 }

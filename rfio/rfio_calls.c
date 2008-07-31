@@ -107,48 +107,6 @@ extern int peer_gid;
 extern struct group *getgrent(void);
 #endif
 
-#if defined(HPSS)
-#include <dirent.h>
-#include <dce/pthread.h>
-#include <rfio_hpss.h>
-#include "../h/marshall.h"  /* A must on AIX because of clash with dce/marshall.h */
-extern struct global_defs global[];
-/*
- * Override some system calls which cannot be used in a threaded version
- */
-#define setuid(X) 0
-#define setgid(X) 0
-#define setgroups(X,Y) 0
-/*
- * Override the simplest I/O and filesystem calls with HPSS interface
- * Note that the following cannot be overridden: read(), write() and close() because
- * they may be used on sockets as well as normal filedescriptors.
- * The macros below all assumes that the socket "s" and the client "uid" are defined 
- * in calling routine (same rule for global[] declared above). If this is not the 
- * case, the precompiler will hopefully complain otherwise (e.g. s is defined but not 
- * the accept socket) the result will be unpredictable at run-time....
- */
-#define unlink(X) rhpss_unlink(X,s,uid,gid)
-#define symlink(X,Y) rhpss_symlink(X,Y,s,uid,gid)
-#define readlink(X,Y,Z) rhpss_readlink(X,Y,Z,s,uid,gid)
-#define chown(X,Y,Z) rhpss_chown(X,Y,Z,s,uid,gid)
-#define chmod(X,Y) rhpss_chmod(X,Y,s,uid,gid)
-#define umask(X) rhpss_umask(X,s,0,0)
-#define mkdir(X,Y) rhpss_mkdir(X,Y,s,uid,gid)
-#define rmdir(X) rhpss_rmdir(X,s,uid,gid)
-#define rename(X,Y) rhpss_rename(X,Y,s,uid,gid)
-#define lockf(X,Y,Z) rhpss_lockf(X,Y,Z,s,uid,gid)
-#define lstat(X,Y) rhpss_lstat(X,Y,s,uid,gid)
-#define stat(X,Y) rhpss_stat(X,Y,s,uid,gid)
-#define fstat(X,Y) rhpss_fstat(X,Y,s,0,0)
-#define access(X,Y) rhpss_access(X,Y,s,uid,gid)
-#define open(X,Y,Z) rhpss_open(X,Y,Z,s,uid,gid)
-#define opendir(X) rhpss_opendir(X,s,uid,gid)
-#define readdir(X) rhpss_readdir(X,s,0,0)
-#define closedir(X) rhpss_closedir(X,s,0,0)
-#define lseek(X,Y,Z) rhpss_lseek(X,Y,Z,s,0,0)
-#define popen(X,Y) rhpss_popen(X,Y,s,uid,gid)
-#endif /* HPSS */
 
 /* For real time stuff under Digital Unix V4 */
 #ifdef RFIODaemonRealTime
@@ -159,7 +117,6 @@ extern struct global_defs global[];
 
 /* For multithreading stuff, only tested under Linux at present */
 static int daemonv3_rdmt, daemonv3_wrmt;
-#if !defined(HPSS)
 #include <Cthread_api.h>
 #include "Csemaphore.h"
 
@@ -198,14 +155,12 @@ static int write_error = 0;
 /* Variable set by the main thread reading from the network
    to tell the disk reader thread to stop */
 static int stop_read;
-#endif
 
 extern char *getconfent();
 extern int 	checkkey();
 int 	check_user_perm();			/* Forward declaration 		*/
 static int     chksuser();		/* Forward declaration 		*/
 
-#if !defined(HPSS)
 #if defined(_WIN32)
 #if !defined (MAX_THREADS)
 #define MAX_THREADS 64
@@ -259,7 +214,6 @@ char    filename[MAXFILENAMSIZE];       /* file name             	*/
 static char     *iobuffer;             /* Data communication buffer    */
 static int      iobufsiz= 0;            /* Current io buffer size       */
 #endif /* WIN32 */
-#endif /* HPSS */
 
 /*
  * Communication limits.
@@ -275,7 +229,6 @@ extern char *forced_filename;
 #define CORRECT_FILENAME(filename) (forced_filename != NULL ? forced_filename : filename)
 
 
-#if !defined(HPSS)
 /* Warning : the new sequential transfer mode cannot be used with 
 several files open at a time (because of those global variables)*/
 #if !defined(_WIN32)    /* moved to global structure */
@@ -288,7 +241,6 @@ static struct rfiostat myinfo;
 /* Context for the open/firstwrite/close handlers */
 extern void *handler_context;
 #endif   /* WIN32 */
-#endif /* HPSS */
 
 const char *rfio_all_perms[] = { "FTRUST", "WTRUST", "RTRUST", "XTRUST", "OPENTRUST", "STATTRUST", 
                                  "POPENTRUST", "LINKTRUST", "CHMODTRUST", "CHOWNTRUST", "MKDIRTRUST",
@@ -2292,9 +2244,6 @@ int   bet; /* Version indicator: 0(old) or 1(new) */
 #else
    int  sock;
 #endif
-#if defined(HPSS)
-   extern char *rtuser;
-#endif /* HPSS */
    int rc;
    char *pfn = NULL;
 #if defined(_WIN32)
@@ -2417,12 +2366,8 @@ int   bet; /* Version indicator: 0(old) or 1(new) */
       * DIRECT access: the user specifies uid & gid by himself 
       */
      if ( !status && rt && !mapping ){
-#if defined(HPSS)
-       if ( rtuser == NULL || !strcmp(rtuser,"YES") )
-#else /* HPSS */
        char * rtuser;
        if ( (rtuser=getconfent ("RTUSER","CHECK",0) ) == NULL || ! strcmp (rtuser,"YES") )
-#endif /* HPSS */
        {
          /* Port is also passwd */
 #if defined(_WIN32)
@@ -2658,11 +2603,7 @@ struct rfiostat * infop;
     * Writing data on disk.
     */
    infop->wnbr+= size;
-#if defined(HPSS)
-   status = rhpss_write(fd,p,size,s,0,0);
-#else /* HPSS */
    status = write(fd,p,size);
-#endif /* HPSS */
    rcode= ( status < 0 ) ? errno : 0;
 
    if ( status < 0 ) {
@@ -2774,11 +2715,7 @@ struct rfiostat * infop;
       log(LOG_DEBUG, "rread(): setsockopt(SO_SNDBUF): %d\n",optval);
    }
    p = iobuffer + WORDSIZE + 3*LONGSIZE;
-#if defined(HPSS)
-   status = rhpss_read(fd,p,size,s,0,0);
-#else /* HPSS */
    status = read(fd, p, size);
-#endif /* HPSS */
    if ( status < 0 ) {
       char alarmbuf[1024];
       sprintf(alarmbuf,"srread(): %s",filename);
@@ -2873,9 +2810,7 @@ struct rfiostat *infop;
       }
       if ((iobuffer = malloc(size+WORDSIZE+3*LONGSIZE)) == NULL)    {
          log(LOG_ERR, "rreadahead: malloc(): %s\n", strerror(errno));
-#if !defined(HPSS)
          (void) close(s);
-#endif /* HPSS */
          return -1; 
       }
       iobufsiz = size+WORDSIZE+3*LONGSIZE;
@@ -2924,11 +2859,7 @@ struct rfiostat *infop;
        * Reading disk ...
        */
       p= iobuffer + WORDSIZE + 3*LONGSIZE;
-#if defined(HPSS)
-      status = rhpss_read(fd,p,size,s,0,0);
-#else /* HPSS */
       status = read(fd,p,size);
-#endif /* HPSS */
       if (status < 0)        {
          rcode= errno;
          iobufsiz= WORDSIZE+3*LONGSIZE;
@@ -3416,11 +3347,7 @@ struct rfiostat *infop;
    int  first;         /* First block sent           */
    char *p;            /* Pointer to buffer          */
    int  reqno;         /* Request number             */
-#if defined(HPSS)
-   struct iovec *v = NULL; /* List of requests       */
-#else /* HPSS */
    struct iovec *v;        /* List of requests       */
-#endif /* HPSS */
    char *trp = NULL;       /* Temporary buffer       */
 
 #if defined(_WIN32)
@@ -3462,9 +3389,7 @@ struct rfiostat *infop;
    if ( (v= ( struct iovec *) malloc(nblock*sizeof(struct iovec))) == NULL ) {
       log(LOG_ERR, "rpreseek: malloc(): %s\n",strerror(errno));
       if ( trp ) (void) free(trp);
-#if !defined(HPSS)
       (void) close(s);
-#endif /* HPSS */
       return -1; 
    }
    /*
@@ -3498,12 +3423,7 @@ struct rfiostat *infop;
       }
       if ((iobuffer = malloc(size+WORDSIZE+3*LONGSIZE)) == NULL)    {
          log(LOG_ERR, "rpreseek: malloc(): %s\n", strerror(errno));
-#if defined(HPSS)
-         if ( v ) free(v);
-#endif /* HPSS */
-#if !defined(HPSS)
          (void) close(s);
-#endif /* HPSS */
          return -1; 
       }
       iobufsiz = size+WORDSIZE+3*LONGSIZE;
@@ -3545,17 +3465,11 @@ struct rfiostat *infop;
 #else      
       if ( select(FD_SETSIZE,&fds,(fd_set *)0,(fd_set *)0,&timeout) == -1 ) {
          log(LOG_ERR,"rpreseek(): select(): %s\n",strerror(errno));
-#if defined(HPSS)
-         if ( v ) free(v);
-#endif /* HPSS */
          return -1; 
       }
 #endif   /* WIN32 */
       if ( FD_ISSET(s,&fds) ) {
          log(LOG_DEBUG,"rpreseek(): returns because of new request\n");
-#if defined(HPSS)
-         if ( v ) free(v);
-#endif /* HPSS */
          return 0; 
       }
       /*
@@ -3573,11 +3487,7 @@ struct rfiostat *infop;
             continue;
          }
          if ( v[reqno].iov_len <= nbfree ) {
-#if defined(HPSS)
-            status = rhpss_read(fd,p+4*LONGSIZE,v[reqno].iov_len,s,0,0);
-#else /* HPSS */
             status= read(fd,p+4*LONGSIZE,v[reqno].iov_len); 
-#endif /* HPSS */
             marshall_LONG(p,v[reqno].iov_base); 
             marshall_LONG(p,v[reqno].iov_len);
             marshall_LONG(p,status);
@@ -3592,11 +3502,7 @@ struct rfiostat *infop;
             /* 
              * The record is broken into two pieces.
              */
-#if defined(HPSS)
-           status = rhpss_read(fd,p+4*LONGSIZE,nbfree,s,0,0);
-#else /* HPSS */
             status= read(fd,p+4*LONGSIZE,nbfree);
-#endif /* HPSS */
             marshall_LONG(p,v[reqno].iov_base); 
             marshall_LONG(p,nbfree);
             marshall_LONG(p,status);
@@ -3633,24 +3539,14 @@ struct rfiostat *infop;
 #else 
          log(LOG_ERR, "rpreseek(): netwrite_timeout(): %s\n", strerror(errno));
 #endif 
-#if defined(HPSS)
-         if ( v ) free(v);
-#endif /* HPSS */
          return -1;
       }
       /*
        * All the data needed has been
        * sent over the network.
        */
-#if defined(HPSS)
-      if ( reqno == nblock ) {
-         if ( v ) free(v);
-         return 0; 
-      }
-#else /* HPSS */
       if ( reqno == nblock ) 
          return 0; 
-#endif /* HPSS */
    }
 }
 
@@ -3773,9 +3669,6 @@ int bet;
    char vmstr[MAXVMSTRING];
    int sock;
    DIR *dirp;
-#if defined(HPSS)
-   extern char *rtuser;
-#endif /* HPSS */
 
    dirp = NULL;
    p = rqstbuf + 2*WORDSIZE;
@@ -3882,12 +3775,8 @@ int bet;
       * DIRECT access: the user specifies uid & gid by himself 
       */
      if ( !status && rt && !mapping ) {
-#if defined(HPSS)
-       if ( rtuser == NULL || !strcmp(rtuser,"YES") )
-#else /* HPSS */
         char * rtuser;
        if ( (rtuser=getconfent ("RTUSER","CHECK",0) ) == NULL || ! strcmp (rtuser,"YES") )
-#endif /* HPSS */
        {
          /* Port is also passwd */
          if  ((sock=connecttpread(reqhost,passwd))>=0 && !checkkey(sock,passwd)) {
@@ -4027,15 +3916,8 @@ DIR *dirp;
 
    log(LOG_DEBUG,"rrewinddir(%d,0x%x)\n",s,dirp);
    if ( dirp != NULL ) {
-#if defined(HPSS)
-     /*
-      * rewinddir is alread a macro on some systems so we cannot override it...
-      */
-     status = rhpss_rewinddir(dirp,s,0,0);
-#else /* HPSS */
       (void)rewinddir(dirp);
       status = 0;
-#endif /* HPSS */
    } else {
      status = -1;
      rcode = EBADF;
@@ -4160,10 +4042,6 @@ int *ptrcode;          /* Return code                       */
 char *permstr;          /* permission string for the request */
 {
 
-#if defined(HPSS)
-   struct passwd pw_result;
-   char pwbuf[1024];
-#endif /* HPSS */    
    struct passwd *pw;
 
 #ifdef CSEC
@@ -4175,23 +4053,12 @@ char *permstr;          /* permission string for the request */
 
    if ( chksuser(uid,gid,hostname,ptrcode,permstr) < 0 )
       return -2;
-#if defined(HPSS)
-   pw = &pw_result;
-   if ( uid >=100 && ( 
-#if ( defined(__osf__) && defined(__alpha) ) || defined(AIX42)
-      getpwuid_r((uid_t)uid,&pw_result,pwbuf,sizeof(pwbuf),&pw) || pw == NULL
-#else /* __osf__ && __alpha */
-      getpwuid_r((uid_t)uid,&pw_result,pwbuf,sizeof(pwbuf))
-#endif /* __osf__ && __alpha */ 
-      || chsgroup(pw,gid) ) ) 
-#else /* HPSS */
    if ( uid >=100 && ( (pw = getpwuid((uid_t)uid)) == NULL
 #if defined(_WIN32)
       ))
 #else      
       || chsgroup(pw,gid)) )
 #endif
-#endif /* HPSS */
    {
       *ptrcode = EACCES;
       log(LOG_ERR,"chsuser(): user (%d,%d) does not exist at local host\n",uid,gid);
@@ -4218,31 +4085,16 @@ gid_t gid;
   char buf[BUFSIZ];
   char acct[MAXACCTSIZE];
   char * def_acct;
-#if defined(HPSS)
-  struct group gr_result;
-  char grbuf[1024];
-#endif /* HPSS */
   struct group * gr;
   char * getacctent();
   
-#if defined(HPSS)
-  gr = &gr_result;
-#endif /* HPSS */
   /* get default account */
   if ( getacctent(pwd,NULL,buf,sizeof(buf)) == NULL )
     return -1;
   if ( strtok(buf,":") == NULL || (def_acct= strtok(NULL,":")) == NULL )
     return -1;
   if ( strlen(def_acct) == 6 && *(def_acct+3) == '$' &&   /* uuu$gg */
-#if defined(HPSS)
-#if ( defined(__osf__) && defined(__alpha) ) || defined(AIX42)
-       (getgrgid_r(gid,&gr_result,grbuf,sizeof(grbuf),&gr) == 0)
-#else /* __osf__ && __alpha */
-       (getgrgid_r(gid,gr,grbuf,sizeof(grbuf)) == 0)
-#endif /* __osf__ && __alpha */ 
-#else /* HPSS */
        (gr= getgrgid(gid))
-#endif /* HPSS */
        ) {
     strncpy(acct,def_acct,4);
     strcpy(acct+4,gr->gr_name);    /* new uuu$gg */
@@ -4259,25 +4111,12 @@ int gid;
 {
    struct group *gr;
    char **membername;
-#if defined(HPSS)
-   struct group gr_result;
-   char grbuf[1024];
-   FILE *Grf=NULL;
-   int rc;
-#endif /* HPSS */
    int found;
 
    if ( pw != NULL && pw->pw_gid != (gid_t)gid ) {
       found = 0;
-#if defined(HPSS)
-      rc = setgrent_r(&Grf);
-      if ( rc ) return(rc);
-      gr = &gr_result;
-      while ( !( rc = getgrent_r(gr,grbuf,sizeof(grbuf),&Grf) ) )
-#else
       (void) setgrent();
       while ((gr = getgrent()))
-#endif /* HPSS */
       {
          if ( gr->gr_gid != (gid_t)gid ) continue;
          for ( membername = gr->gr_mem; membername && *membername; membername++ )
@@ -4287,11 +4126,7 @@ int gid;
             }
          if ( found ) break;
       }
-#if defined(HPSS)
-      endgrent_r(&Grf);
-#else /* HPSS */
       endgrent();
-#endif /* hpss */
       if ( !found && chk_newacct(pw,(gid_t)gid) ) return(-1);
    }
    else if ( pw == NULL ) return(-1);
@@ -4322,16 +4157,11 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
    char user[CA_MAXUSRNAMELEN+1];       /* User name            */
    char reqhost[MAXHOSTNAMELEN];
    char vmstr[MAXVMSTRING];
-#if defined(HPSS)
-   extern char *rtuser;
-   int sock;
-#else /* HPSS */
 #if defined(_WIN32)
     SOCKET sock;
 #else
    int sock, data_s;
 #endif   
-#endif /* HPSS */
    int port;
    socklen_t fromlen;
    socklen_t size_sin;
@@ -4343,7 +4173,6 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
    struct thData *td;
 #endif
    
-#if !defined(HPSS)
 #ifdef RFIODaemonRealTime
 #ifdef DUXV4
    struct sched_param param;
@@ -4359,7 +4188,6 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
    }
 #endif
 #endif
-#endif /* HPSS */
 
 #if defined(_WIN32)
    td = (struct thData*)TlsGetValue(tls_i);
@@ -4493,12 +4321,8 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
       * DIRECT access: the user specifies uid & gid by himself 
       */
      if( !status && rt && !mapping ) {
-#if defined(HPSS)
-       if ( rtuser == NULL || strcmp(rtuser,"YES") )
-#else /* HPSS */ 
        char *rtuser;
        if( (rtuser = getconfent("RTUSER","CHECK",0) ) == NULL || ! strcmp (rtuser,"YES") )
-#endif /* HPSS */
        {
          /* Port is also passwd */
          sock = connecttpread(reqhost, passwd);
@@ -4622,9 +4446,6 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
 #else      
        if( data_s < 0 )  {
          log(LOG_ERR, "datasocket(): %s\n", strerror(errno));
-#if defined(HPSS)
-         return(-1);
-#endif /* HPSS */
          exit(1);
        }
 #endif    
@@ -4645,9 +4466,6 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
        if( bind(data_s, (struct sockaddr*)&sin, sizeof(sin)) < 0 )
        {
          log(LOG_ERR, "bind: %s\n",strerror(errno));
-#if defined(HPSS)
-         return(-1);
-#endif /* HPSS */
          exit(1);
        }
 #endif
@@ -4661,9 +4479,6 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
 #else
        if( getsockname(data_s, (struct sockaddr*)&sin, &size_sin) < 0 )  {
          log(LOG_ERR, "getsockname: %s\n",strerror(errno));
-#if defined(HPSS)
-         return(-1);
-#endif /* HPSS */
          exit(1);
        }
 #endif    
@@ -4676,9 +4491,6 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
 #else
        if( listen(data_s, 5) < 0 )   {
          log(LOG_ERR, "listen: %s\n",strerror(errno));
-#if defined(HPSS)
-         return(-1);
-#endif /* HPSS */
          exit(1);
        }
 #endif
@@ -4742,9 +4554,6 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
 #else    
          if( data_sock < 0 )  {
             log(LOG_ERR, "data accept(): %s\n",strerror(errno));
-#if defined(HPSS)
-            return(-1);
-#endif /* HPSS */
             exit(1);
          }
 #endif   /* WIN32 */ 
@@ -4932,7 +4741,6 @@ struct rfiostat *infop;
 #endif  /* WIN32 */
       return -1;
    }
-#if !defined(HPSS)
 #if defined(_WIN32)
    if( closesocket(s) == SOCKET_ERROR )
       log(LOG_DEBUG, "rclose_v3: Error closing control socket fildesc=%d, errno=%d\n",
@@ -4944,12 +4752,10 @@ struct rfiostat *infop;
 #endif  /* WIN32 */
    else
       log(LOG_DEBUG, "rclose_v3 : closing ctrl socket fildesc=%d\n", s);
-#endif /* HPSS */
 
    return status;
 }
 
-#if !defined(HPSS)
 void *produce_thread(int *ptr)
 {        
    int  fd = *ptr;
@@ -5160,19 +4966,13 @@ int cid;
       return;
     }
 }
-#endif  /* !defined(HPSS) */
 
 #if defined(_WIN32)
 int srread_v3(s, infop, fd)
 SOCKET  s;
 #else
-#if defined(HPSS)
-int srread_v3(s, infop, fd)
-int s;
-#else /* HPSS */
 int srread_v3(ctrl_sock, infop, fd)
 int     ctrl_sock;
-#endif /* HPSS */
 #endif
 int     fd;
 struct  rfiostat* infop;
@@ -5181,7 +4981,7 @@ struct  rfiostat* infop;
    int  rcode;          /* To send back errno   */
    int  offset;         /* lseek offset         */
    char *p;             /* Pointer to buffer    */
-#if !defined(_WIN32) && !defined(HPSS)
+#if !defined(_WIN32)
    char *iobuffer;
 #endif
    off_t bytes2send;
@@ -5191,11 +4991,7 @@ struct  rfiostat* infop;
    char rfio_buf[BUFSIZ];
    int eof_met;
    int join_done;
-#if defined(HPSS)
-   extern int DISKBUFSIZE_READ;
-#else /* HPSS */
    int DISKBUFSIZE_READ = (1 * 1024 * 1024); 
-#endif /* HPSS */
    int n;
    int cid1;
    int el;
@@ -5206,9 +5002,6 @@ struct  rfiostat* infop;
 
    ctrl_sock = s;
 #endif 
-#if defined(HPSS)
-   ctrl_sock = s;
-#endif /* HPSS */
    /*
     * Receiving request,
     */
@@ -5221,7 +5014,6 @@ struct  rfiostat* infop;
       eof_met = 0;
       join_done = 0;
 
-#if !defined(HPSS)
       if( (p = getconfent("RFIO", "DAEMONV3_RDSIZE", 0)) != NULL ) {
          if (atoi(p) > 0)
             DISKBUFSIZE_READ = atoi(p);
@@ -5287,25 +5079,6 @@ struct  rfiostat* infop;
          }
          log(LOG_DEBUG, "rread_v3 malloc buffer allocated : 0X%X\n",iobuffer);      
       }
-#else    /* !HPSS */
-      /*
-       * For HPSS we reuse the buffer defined in the global structure
-       * for this thread rather than reserving a new local buffer.
-       */
-      if ( iobufsiz>0 && iobufsiz < DISKBUFSIZE_READ) {
-         free(iobuffer);
-         iobufsiz = 0;
-      }
-      if ( iobufsiz <= 0 ) {
-         log(LOG_DEBUG, "rread_v3 allocating malloc buffer : %d bytes\n",DISKBUFSIZE_READ);
-         if ((iobuffer = (char *)malloc(DISKBUFSIZE_READ)) == NULL)  {
-            log(LOG_ERR, "rread_v3: malloc: ERROR occured (errno=%d)", errno);
-            return -1;
-         }
-         log(LOG_DEBUG, "rread_v3 malloc buffer allocated : 0X%X\n",iobuffer);      
-         iobufsiz = DISKBUFSIZE_READ;
-      }
-#endif /* else !HPSS */
 
       if (fstat(fd,&st) < 0) {
          log(LOG_ERR, "rread_v3: fstat(): ERROR occured (errno=%d)", errno);
@@ -5344,7 +5117,6 @@ struct  rfiostat* infop;
       log(LOG_DEBUG,"rread_v3: CS2: clientnocache, servernocache\n");
 #endif
 
-#if !defined(HPSS)
       if (daemonv3_rdmt) {
          Csemaphore_init(&empty,daemonv3_rdmt_nbuf);
          Csemaphore_init(&full,0);
@@ -5354,7 +5126,6 @@ struct  rfiostat* infop;
             return(-1);
          }
       }
-#endif /* !HPSS */
    }
   
    /*
@@ -5412,7 +5183,6 @@ struct  rfiostat* infop;
          /* what to do ? */
          if (code == RQST_CLOSE_V3)  {
             log(LOG_DEBUG,"close request: magic: %x code: %x\n", magic, code);
-#if !defined(HPSS)
             if (!daemonv3_rdmt) {
                log(LOG_DEBUG,"freeing iobuffer at 0X%X\n",iobuffer);
                if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
@@ -5449,10 +5219,6 @@ struct  rfiostat* infop;
                log(LOG_DEBUG,"freeing array at 0X%X\n",array);
                free(array);
             }
-#else
-            log(LOG_DEBUG,"freeing iobuffer at 0X%X\n",iobuffer);
-            free(iobuffer);
-#endif /* HPSS */
             srclose_v3(ctrl_sock,&myinfo,fd);
             return 0;
          }
@@ -5467,9 +5233,6 @@ struct  rfiostat* infop;
        */
       
       if( !eof_met && (FD_ISSET(data_sock, &fdvar2)) )  {
-#if defined(HPSS)
-         status = rhpss_read(fd,iobuffer,DISKBUFSIZE_READ,s,0,0);
-#else    /* HPSS */
          if (daemonv3_rdmt) {
             Csemaphore_down(&full);
 
@@ -5495,7 +5258,6 @@ struct  rfiostat* infop;
            }
               else
           status = read(fd,iobuffer,DISKBUFSIZE_READ);
-#endif    /* else HPSS */
 
          /* To simulate a read I/O error 
             status = -1;
@@ -5505,10 +5267,8 @@ struct  rfiostat* infop;
          log(LOG_DEBUG, "%d bytes have been read on disk\n",status);
 
          if (status == 0)  {
-#if !defined(HPSS)
             if (daemonv3_rdmt)
               Csemaphore_up(&empty);
-#endif
             eof_met = 1;
             p = rqstbuf;
             marshall_WORD(p,REP_EOF);
@@ -5525,10 +5285,8 @@ struct  rfiostat* infop;
          } /*  status == 0 */
          else
             if (status < 0)  {
-#if !defined(HPSS)
                if (daemonv3_rdmt)
                  Csemaphore_up(&empty);
-#endif
                p = rqstbuf;
                marshall_WORD(p, REP_ERROR);
                marshall_LONG(p, status);
@@ -5581,10 +5339,8 @@ struct  rfiostat* infop;
                   return -1; 
                }
 #endif
-#if !defined(HPSS)
                if (daemonv3_rdmt)
                      Csemaphore_up(&empty);
-#endif
                myinfo.rnbr += status;
                myinfo.readop++;
             }
@@ -5604,7 +5360,7 @@ struct rfiostat *infop;
    int  status;         /* Return code         */
    int  rcode;          /* To send back errno  */
    char *p;             /* Pointer to buffer   */
-#if !defined(_WIN32) && !defined(HPSS)
+#if !defined(_WIN32)
    char *iobuffer;
 #endif   
    fd_set fdvar, fdvar2;
@@ -5620,11 +5376,7 @@ struct rfiostat *infop;
     * Put dummy on heap to avoid large arrays in thread stack
     */
    unsigned char *dummy;
-#if defined(HPSS)
-   extern int DISKBUFSIZE_WRITE;
-#else /* HPSS */
    int DISKBUFSIZE_WRITE = (1*1024*1024); 
-#endif /* HPSS */
    int el;
    int cid2;
    int saved_errno;
@@ -5663,7 +5415,6 @@ struct rfiostat *infop;
         }
         return -1;
       }
-#if !defined(HPSS)
       if ((p = getconfent("RFIO","DAEMONV3_WRSIZE",0)) != NULL)  {
          if (atoi(p) > 0)
             DISKBUFSIZE_WRITE = atoi(p);
@@ -5739,28 +5490,6 @@ struct rfiostat *infop;
       else
          iobuffer_p = iobuffer;
          
-#else /* !HPSS */
-      /*
-       * For HPSS we reuse the buffer defined in the global structure
-       * for this thread rather than reserving a new local buffer.
-       */
-      if ( iobufsiz>0 && iobufsiz<DISKBUFSIZE_WRITE) {
-         free(iobuffer);
-         iobufsiz = 0;
-      }
-      if ( iobufsiz <= 0 ) {
-         log(LOG_DEBUG, "rwrite_v3 allocating malloc buffer : %d bytes\n",DISKBUFSIZE_WRITE);
-         if ((iobuffer = (char *)malloc(DISKBUFSIZE_WRITE)) == NULL) {
-            log(LOG_ERR, "rwrite_v3: malloc: ERROR occured (errno=%d)", errno);
-            return -1;
-         }
-         iobufsiz = DISKBUFSIZE_WRITE;
-         log(LOG_DEBUG, "rwrite_v3 malloc buffer allocated : 0X%X\n",iobuffer);
-      }
-      byte_in_diskbuffer = 0;
-      iobuffer_p = iobuffer;
-#endif /* else !HPSS */
-
 #if !defined(_WIN32)
       optlen = sizeof(maxseg);
       if (getsockopt(data_sock,IPPROTO_TCP,TCP_MAXSEG,(char *)&maxseg,&optlen) < 0) {
@@ -5778,7 +5507,6 @@ struct rfiostat *infop;
          log(LOG_ERR,"rfio","rwrite_v3: ioctl server cache error occured (errno=%d)",errno);
 #endif
 
-#if !defined(HPSS)
       if (daemonv3_wrmt) {
          Csemaphore_init(&empty,daemonv3_wrmt_nbuf);
          Csemaphore_init(&full,0);
@@ -5788,7 +5516,6 @@ struct rfiostat *infop;
             return(-1);
          }
       }
-#endif /* !HPSS */
 
    }  /* End of if( first_write ) */
   
@@ -5808,19 +5535,15 @@ struct rfiostat *infop;
 #if defined(_WIN32)
       if( select(FD_SETSIZE, &fdvar, NULL, NULL, &t) == SOCKET_ERROR ) {
          log(LOG_ERR, "rwrite_v3: select: %s", geterr());
-#if !defined(HPSS)
          if (daemonv3_wrmt)
             wait_consumer_thread(cid2);
-#endif /* !HPSS */
          return -1;
       }
 #else      
       if( select(FD_SETSIZE, &fdvar, NULL, NULL, &t) < 0 )  {
          log(LOG_ERR, "rfio", "rwrite_v3: select failed (errno=%d)", errno);
-#if !defined(HPSS)
          if (daemonv3_wrmt)
             wait_consumer_thread(cid2);
-#endif /* !HPSS */
          return -1;
       }
 #endif   /* WIN32 */
@@ -5838,10 +5561,8 @@ struct rfiostat *infop;
 #else
                log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif   /* WIN32 */
-#if !defined(HPSS)
                if (daemonv3_wrmt)
                   wait_consumer_thread(cid2);
-#endif /* !HPSS */
                return -1;
             }
             else {
@@ -5850,10 +5571,8 @@ struct rfiostat *infop;
 #else              
                log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif   /* WIN32 */
-#if !defined(HPSS)
                if (daemonv3_wrmt)
                   wait_consumer_thread(cid2);
-#endif /* !HPSS */
                return -1;
             }
          }
@@ -5877,16 +5596,6 @@ struct rfiostat *infop;
       
             if( byte_in_diskbuffer )  {
                log(LOG_DEBUG, "writing last %d bytes on disk\n",byte_in_diskbuffer);
-#if defined(HPSS)
-               status = rhpss_write(fd,iobuffer,byte_in_diskbuffer,s,0,0);
-               /* If the write is successfull but incomplete (fs is full) we
-                report the ENOSPC error immediately in order to simplify the
-                code */
-               if ((status > 0) && (status != byte_in_diskbuffer)) {
-                  status = -1;
-                  errno = ENOSPC;
-               }
-#else    /* HPSS */
                if (daemonv3_wrmt) {
                   array[produced % daemonv3_wrmt_nbuf].len = byte_in_diskbuffer;
                   produced++;
@@ -5908,9 +5617,7 @@ struct rfiostat *infop;
                      errno = ENOSPC;
                   }
                }
-#endif   /* else HPSS */
             }  /* if( byte_in_diskbuffer ) */
-#if !defined(HPSS)
             else {
               if (daemonv3_wrmt) {
                   /* Indicate to the consumer thread that writing is finished */
@@ -5949,7 +5656,6 @@ struct rfiostat *infop;
             }
             if ((daemonv3_wrmt) && (status == -1))
                errno = saved_errno;
-#endif /* !HPSS */
 
             rcode = (status < 0) ? errno:0;
       
@@ -6001,17 +5707,12 @@ struct rfiostat *infop;
                if (byte_in_diskbuffer)
                   myinfo.writop++;
                byte_in_diskbuffer = 0;
-#if !defined(HPSS)
                if (daemonv3_wrmt)
                   iobuffer_p = NULL; /* For safety */
                else
                   iobuffer_p = iobuffer;
-#else    /* if !HPSS */
-               iobuffer_p = iobuffer;
-#endif   /* else !HPSS */
             }
 
-#if !defined(HPSS)
             if (!daemonv3_wrmt) {
                log(LOG_DEBUG,"freeing iobuffer at 0X%X\n",iobuffer);
                if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
@@ -6032,7 +5733,6 @@ struct rfiostat *infop;
                log(LOG_DEBUG,"freeing array at 0X%X\n",array);
                free(array);
             }
-#endif   /* !HPSS */
 #ifdef USE_XFSPREALLOC
             if ( (p = getconfent("RFIOD","XFSPREALLOC",0)) ) {
                rfio_xfs_unresvsp64(fd, atoi(p), myinfo.wnbr);
@@ -6045,51 +5745,36 @@ struct rfiostat *infop;
             int diff;
               
             diff = byte_written_by_client - byte_read_from_network;
-#if defined(HPSS)
-            if (byte_in_diskbuffer + diff > iobufsiz)  {
-#else /* HPSS */
             if (byte_in_diskbuffer + diff > DISKBUFSIZE_WRITE)  {
-#endif /* HPSS */
-#if !defined(HPSS)
             /* If previous buffer is empty then we must take a new one */
             if ((daemonv3_wrmt) && (byte_in_diskbuffer == 0)) {
                Csemaphore_down(&empty);
                iobuffer = array[produced % daemonv3_wrmt_nbuf].p;
             }
-#endif
             iobuffer = (char*)realloc(iobuffer, byte_in_diskbuffer + diff);
           
             log(LOG_DEBUG, "data socket: realloc done to get %d additional bytes, buffer 0X%X\n", diff, iobuffer);
             if (iobuffer == NULL)  {
                log(LOG_ERR, "realloc failed: %s\n", strerror(errno));
-#if !defined(HPSS)
                if (daemonv3_wrmt)
                   wait_consumer_thread(cid2);
-#endif   /* !HPSS */
                return -1;
             }
                iobuffer_p = iobuffer + byte_in_diskbuffer;
-#if !defined(HPSS)
             if (daemonv3_wrmt) {
                log(LOG_DEBUG,"Updating circular elem %d to address %X\n",produced % daemonv3_wrmt_nbuf,iobuffer);
                /* Update circular array element to take reallocation into account */
                array[produced % daemonv3_wrmt_nbuf].p = iobuffer;
                array[produced % daemonv3_wrmt_nbuf].len = byte_in_diskbuffer + diff;
             }
-#endif
 
-#if defined(HPSS)
-            iobufsiz = byte_in_diskbuffer + diff;
-#endif /* HPSS */
          } /* buffer reallocation was necessary */
         
-#if !defined(HPSS)
          /* If previous buffer is empty then we must take a new one */
          if ((daemonv3_wrmt) && (byte_in_diskbuffer == 0)) {
             Csemaphore_down(&empty);
             iobuffer = iobuffer_p = array[produced % daemonv3_wrmt_nbuf].p;
          }
-#endif   /* !HPSS */     
          log(LOG_DEBUG, "data socket: reading residu %d bytes\n", diff);
          if( (n = netread_timeout(data_sock, iobuffer_p, diff, RFIO_DATA_TIMEOUT)) != diff )  {
             if (n == 0)   {
@@ -6099,10 +5784,8 @@ struct rfiostat *infop;
 #else 
                log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif   /* WIN32 */
-#if !defined(HPSS)
                if (daemonv3_wrmt)
                   wait_consumer_thread(cid2);
-#endif   /* !HPSS */     
                return -1;
                }
                else  {
@@ -6111,10 +5794,8 @@ struct rfiostat *infop;
 #else
                   log(LOG_ERR, "read data residu socket: read(): %s\n", strerror(errno));
 #endif   /* WIN32 */
-#if !defined(HPSS)
                   if (daemonv3_wrmt)
                      wait_consumer_thread(cid2);
-#endif   /* !HPSS */     
                   return -1;
                }
             }
@@ -6125,16 +5806,6 @@ struct rfiostat *infop;
              */
       
             log(LOG_DEBUG, "writing %d bytes on disk\n",byte_in_diskbuffer);
-#if defined(HPSS)
-            status = rhpss_write(fd, iobuffer, byte_in_diskbuffer, s, 0,0);
-            /* If the write is successfull but incomplete (fs is full) we
-            report the ENOSPC error immediately in order to simplify the
-            code */
-            if ((status > 0) && (status != byte_in_diskbuffer)) {
-               status = -1;
-               errno = ENOSPC;
-            }
-#else /* HPSS */
             if (daemonv3_wrmt) {
                array[produced % daemonv3_wrmt_nbuf].len = byte_in_diskbuffer;
                produced++;
@@ -6186,7 +5857,6 @@ struct rfiostat *infop;
             }
             if ((daemonv3_wrmt) && (status == -1))
                errno = saved_errno;
-#endif /* HPSS */
             rcode = (status<0) ? errno:0;
               
             if (status < 0)  {
@@ -6235,16 +5905,11 @@ struct rfiostat *infop;
                myinfo.wnbr += byte_in_diskbuffer;
                myinfo.writop++;
                byte_in_diskbuffer = 0;
-#if !defined(HPSS)
                if (daemonv3_wrmt)
                   iobuffer_p = NULL; /* For safety */
                else
                   iobuffer_p = iobuffer;
-#else    /* !HPSS */
-               iobuffer_p = iobuffer;
-#endif   /* else !HPSS */
             }
-#if !defined(HPSS)
             if (!daemonv3_wrmt) {
                log(LOG_DEBUG,"freeing iobuffer at 0X%X\n",iobuffer);
                if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
@@ -6265,7 +5930,6 @@ struct rfiostat *infop;
                log(LOG_DEBUG,"freeing array at 0X%X\n",array);
                free(array);
             }
-#endif   /* !HPSS */
             srclose_v3(ctrl_sock, &myinfo, fd);
             return 0;
          }
@@ -6275,13 +5939,11 @@ struct rfiostat *infop;
       if (FD_ISSET(data_sock,&fdvar)) {
          int n,can_be_read; 
  
-#if !defined(HPSS)
          if ((daemonv3_wrmt) && (byte_in_diskbuffer == 0)) {
             log(LOG_DEBUG, "Data received on data socket, new buffer %d requested\n",produced % daemonv3_wrmt_nbuf);
             Csemaphore_down(&empty);
             iobuffer = iobuffer_p = array[produced % daemonv3_wrmt_nbuf].p;
          }
-#endif   /* !HPSS */
              
          log(LOG_DEBUG,"iobuffer_p = %X,DISKBUFSIZE_WRITE = %d\n",iobuffer_p,DISKBUFSIZE_WRITE);
 #if defined(_WIN32)
@@ -6298,11 +5960,9 @@ struct rfiostat *infop;
 #else
                log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif   /* WIN32 */       
-#if !defined(HPSS)
                if (daemonv3_wrmt)
                   wait_consumer_thread(cid2);
                return -1;
-#endif   /* !HPSS */
             }
             else  {
 #if defined(_WIN32)
@@ -6310,10 +5970,8 @@ struct rfiostat *infop;
 #else       
                log(LOG_DEBUG, "read data socket: read(): %s\n", strerror(errno));
 #endif
-#if !defined(HPSS)
                if (daemonv3_wrmt)
                   wait_consumer_thread(cid2);
-#endif   /* !HPSS */
                return -1;
             }
          }
@@ -6332,16 +5990,6 @@ struct rfiostat *infop;
           
          if (byte_in_diskbuffer == DISKBUFSIZE_WRITE)  {
             log(LOG_DEBUG, "writing %d bytes on disk\n", byte_in_diskbuffer);
-#if defined(HPSS)
-            status = rhpss_write(fd, iobuffer, byte_in_diskbuffer, s, 0,0);
-            /* If the write is successfull but incomplete (fs is full) we
-            report the ENOSPC error immediately in order to simplify the
-            code */
-            if ((status > 0) && (status != byte_in_diskbuffer)) {
-               status = -1;
-               errno = ENOSPC;
-            }
-#else /* HPSS */
             if (daemonv3_wrmt) {
                array[produced % daemonv3_wrmt_nbuf].len = byte_in_diskbuffer;
                produced++;
@@ -6378,7 +6026,6 @@ struct rfiostat *infop;
             }
             if ((daemonv3_wrmt) && (status == -1))
                errno = saved_errno;
-#endif /* HPSS */
 
             rcode = (status < 0) ? errno:0;
               
@@ -6466,7 +6113,6 @@ struct rfiostat *infop;
                         }
                      }
                      else  {
-#if !defined(HPSS)
                         if (!daemonv3_wrmt) {
                            log(LOG_DEBUG,"freeing iobuffer at 0X%X\n",iobuffer);
                            if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
@@ -6487,7 +6133,6 @@ struct rfiostat *infop;
                            log(LOG_DEBUG,"freeing array at 0X%X\n",array);
                            free(array);
                         }
-#endif /* HPSS */
                         /* srclose_v3(ctrl_sock,&myinfo,fd); */
                         return 0;
                      }
@@ -6501,13 +6146,8 @@ struct rfiostat *infop;
                      n = recv(data_sock, dummy, sizeofdummy, 0);
                      if( (n == 0) || (n == SOCKET_ERROR) ) 
 #else
-#if defined(HPSS)
-                     n = read(data_sock, dummy, sizeofdummy);
-                     if ( n <= 0 )
-#else /* HPSS */
                      n = read(data_sock, dummy, sizeofdummy);
                      if( n <= 0 )
-#endif /* HPSS */
 #endif  /* WIN32 */
                      {
                         (void) free(dummy);

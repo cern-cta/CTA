@@ -35,12 +35,6 @@
 #define TRANSFER_UNIT   131072 
 #endif
 
-#if defined(HPSSCLIENT)
-#if !defined(TRANSFER_UNIT_HPSS)
-#define TRANSFER_UNIT_HPSS   4*1024*1024 
-#endif /* TRANSFER_UNIT_HPSS */
-#endif /* HPSSCLIENT */
-
 #if !defined(vms)
 #define SYERR 2
 #define USERR 1
@@ -78,22 +72,6 @@ EXTERN_C int DLL_DECL use_castor2_api _PROTO(());
 #define	unlink	delete
 #endif /* vms */
 
-#if defined(HPSSCLIENT)
-/*
- * Prototype the workers
- */
-int (*worker) _PROTO((int, char *, int, off64_t));
-int local_read _PROTO((int, char *, int, off64_t));
-int local_write _PROTO((int, char *, int, off64_t));
-int cleanpath _PROTO((char *, char *));
-
-/*
- * Data needed by the workers
- */
-static char local_file[BUFSIZ];
-static int local_binmode;
-static int local_mode;
-#endif /* HPSSCLIENT */
 void usage();
 off64_t copyfile _PROTO((int, int, char *, u_signed64));
 off64_t copyfile_hpss _PROTO((int, int, char *, struct stat64 *, u_signed64));
@@ -250,36 +228,14 @@ int main(argc, argv)
 				strcpy (inpfile, cp);
 				strcat (inpfile, curargv+9);
 			} else
-#if defined(HPSSCLIENT)
-				/* Special treatment for filenames starting with /hpss/... */
-				if ( !strncmp("/hpss/",curargv,6) &&
-					 (cp = getconfent("SHIFT","HPSS",0)) != NULL) {
-					strcpy(inpfile,cp);
-					strcat(inpfile,curargv+6);
-				} else {
-#endif /* HPSSCLIENT */
 					strcpy (inpfile, curargv);
-#if defined(HPSSCLIENT)
-				}
-#endif
 		} else {
 			if (!strncmp ("/scratch/", curargv, 9) &&
 				(cp = getconfent ("SHIFT", "SCRATCH", 0)) != NULL) {
 				strcpy (outfile, cp);
 				strcat (outfile, curargv+9);
 			} else
-#if defined(HPSSCLIENT)
-				/* Special treatment for filenames starting with /hpss/... */
-				if ( !strncmp("/hpss/",curargv,6) &&
-					 (cp = getconfent("SHIFT","HPSS",0)) != NULL) {
-					strcpy(outfile,cp);
-					strcat(outfile,curargv+6);
-				} else {
-#endif /* HPSSCLIENT */
 					strcpy (outfile, curargv);
-#if defined(HPSSCLIENT)
-				}
-#endif
 		}
 	}
 
@@ -421,49 +377,11 @@ int main(argc, argv)
 	}
 #endif
 
-#if defined(HPSSCLIENT)
-	worker = NULL;
-	/*
-	 * Special signature of an HPSS file. First check input file
-	 */
-	if ( sbuf.st_dev  == 0 && sbuf.st_ino  == 1 ) {
-		worker = &local_write;
-		strcpy(local_file,filename);
-		local_mode = sbuf.st_mode;
-		local_binmode = binmode;
-	}
-	/*
-	 * Then check the output file. If both input and output are HPSS
-	 * we will be steered by the mover for the output file. This allows
-	 * the use of rfcp to copy a file from one COS to another.
-	 */
-	cp = strrchr(filename,'/');
-	if ( cp != NULL ) {
-		*cp = '\0';
-		if ( *filename ) {
-			rc = rfio_stat64(filename,&sbuf2);
-		}
-		*cp = '/';
-		if ( sbuf2.st_dev == 0 && sbuf2.st_ino == 1 ) {
-			worker = &local_read;
-			strcpy(local_file,inpfile);
-			local_mode  = sbuf2.st_mode;
-			local_binmode = binmode;
-		}
-	}
-	/*
-	 * Only allow V3 if both files are non-HPSS
-	 */
-	if ( worker == NULL ) {
-#endif /* HPSSCLIENT */
 		/* Activate new transfer mode for source file */
 		if (! v2) {
 			v = RFIO_STREAM;
 			rfiosetopt(RFIO_READOPT,&v,4); 
 		}
-#if defined(HPSSCLIENT)
-	} /* worker == NULL */
-#endif /* HPSSCLIENT */
 	
 	serrno = rfio_errno = 0;
 #ifdef CNS_ROOT
@@ -557,19 +475,11 @@ int main(argc, argv)
 		strcpy(ifce1,ifce);
 	}
 
-#if defined(HPSSCLIENT)
-	/* Only allow V3 if both files are non-HPSS */
-	if ( worker == NULL ) {
-#endif /* HPSSCLIENT */
 		/* Activate new transfer mode for target file */
 		if (! v2) {
 			v = RFIO_STREAM;
 			rfiosetopt(RFIO_READOPT,&v,4); 
 		}
-#if defined(HPSSCLIENT)
-	} /* worker == NULL */
-#endif /* HPSSCLIENT */
-
 	serrno = rfio_errno = 0;
 	
         fd2 = rfio_open64(filename, O_WRONLY|O_CREAT|O_TRUNC|binmode ,sbuf.st_mode & 0777);
@@ -642,15 +552,7 @@ int main(argc, argv)
 	}
 
 	time(&starttime);
-#if defined(HPSSCLIENT)
-	if ( worker == NULL ) {
-		size = copyfile(fd1, fd2, outfile, maxsize);
-	} else {
-		size = copyfile_hpss(fd1,fd2,filename,&sbuf,maxsize);
-	}
-#else /* HPSSCLIENT */
 	size = copyfile(fd1, fd2, outfile, maxsize);
-#endif /* HPSSCLIENT */
 
 	if ( rfio_HsmIf_GetHsmType(fd1,NULL) == RFIO_HSM_CNS ) {
 		if (rfio_close(fd1) < 0) {
@@ -869,259 +771,6 @@ void usage()
 	fprintf(stderr,"Usage:  rfcp [-s maxsize] [-v2] f1 f2; or rfcp f1 <dir2>\n");
 	exit(USERR);
 }
-
-#if defined(HPSSCLIENT)
-off64_t copyfile_hpss(fd1,fd2,name,sbuf,maxsiz)
-	int fd1, fd2;
-	u_signed64 maxsiz;
-	char *name;
-	struct stat64 *sbuf;
-{
-	int bufsize = TRANSFER_UNIT_HPSS;
-	off64_t effsize=0;
-	int cosid = 0;
-	mode_t mode;
-	int nb_ports = 1;
-	char *p;
-	char *cpbuf;
-
-	extern char *getenv();		/* External declaration */
-
-	if ((p=getenv("RFCP_HPSSBUFSIZ")) == NULL) {
-		if ((p=getconfent("RFCP","HPSSBUFSIZ",0)) == NULL) {
-			bufsize=TRANSFER_UNIT_HPSS;
-		} else  {
-			bufsize=atoi(p);
-		}
-	} else {
-		bufsize=atoi(p);
-	}
-	if ((p=getenv("RFCP_HPSSCOS")) == NULL) {
-		if ((p=getconfent("RFCP","HPSSCOS",0)) == NULL) {
-			cosid = 0;
-		} else  {
-			cosid=atoi(p);
-		}
-	} else {
-		cosid=atoi(p);
-	}
-	if (bufsize<=0) bufsize=TRANSFER_UNIT_HPSS;
-
-	if ( ( cpbuf = malloc(bufsize) ) == NULL ) {
-		perror("malloc");
-#if defined(_WIN32)
-		WSACleanup();
-#endif
-		exit (SYERR);
-	}
-
-	if ((p=getenv("RFCP_NBPORTS")) == NULL) {
-		if ((p=getconfent("RFCP","NBPORTS",0)) == NULL) {
-			nb_ports=1;
-		} else  {
-			nb_ports=atoi(p);
-		}
-	} else {
-		nb_ports=atoi(p);
-	}
-	if (nb_ports<=0) nb_ports=1;
-
-	if ( maxsiz <= 0 ) maxsiz = sbuf->st_size;
-	maxsiz = min(maxsiz,sbuf->st_size);
-	if ( worker == &local_read ) {
-		if ( cosid ) rfio_setcos(fd2,0,cosid);
-		/* We don't need the local file descr. any longer. each worker will create its own descr. */
-		if ( rfio_HsmIf_GetHsmType(fd1,NULL) != RFIO_HSM_CNS ) {
-			if (rfio_close(fd1) < 0) {
-				rfio_perror("close source");
-			}
-			fd1 = -1;
-		}
-		serrno = rfio_errno = 0;
-		if ( sbuf->st_size > 0 ) effsize = rfio_writelist64(fd2,0,maxsiz,nb_ports,worker,cpbuf,bufsize);
-		if ( effsize < 0 ) rfio_perror("rfio_writelist64()");
-	} else if ( worker == &local_write ) {
-		/* We don't need the local file descr. any longer. each worker will create its own descr. */
-		if ( rfio_HsmIf_GetHsmType(fd2,NULL) != RFIO_HSM_CNS ) {
-			if (rfio_close(fd2) < 0) {
-				rfio_perror("close target");
-			}
-		}
-		/* Make sure to have write access to the local file.... */
-		serrno = rfio_errno = 0;
-		if ( ! (local_mode & S_IWUSR) && chmod(local_file,local_mode | S_IWUSR) < 0 ) {
-			rfio_perror("chmod()");
-			free(cpbuf);
-			exit(USERR);
-		}
-		fd2 = -1;
-		serrno = rfio_errno = 0;
-		if ( sbuf->st_size > 0 ) effsize = rfio_readlist64(fd1,(off64_t) 0,(off64_t) maxsiz,nb_ports,worker,cpbuf,bufsize);
-		if ( effsize < 0 ) rfio_perror("rfio_readlist64()");
-	} else {
-		fprintf(stderr,"copyfile_hpss(): worker function (0x%x) not defined\n",worker);
-	}
-	if ( sbuf->st_size > 0 && effsize != maxsiz ) {
-		char tmpbuf1[21];
-		char tmpbuf2[21];
-		fprintf(stderr,"copyfile_hpss(): %s bytes out of %s transfered\n",i64tostr(effsize,tmpbuf1,0),u64tostr(maxsiz,tmpbuf2,0));
-		/* Write failed.  Don't keep truncated regular file. */
-		rfio_perror("rfcp");
-		if (rfio_HsmIf_GetHsmType(fd2,NULL) != RFIO_HSM_CNS) {
-			if (rfio_close(fd2) < 0) {
-				rfio_perror("close target");
-			}
-		}
-		mode = sbuf->st_mode & S_IFMT;
-		if (mode == S_IFREG) rfio_unlink(name);
-#if defined(_WIN32)
-		WSACleanup();
-#endif
-		free(cpbuf);
-		exit(SYERR);
-	}
-	serrno = rfio_errno = 0;
-	if (fd1 >= 0 && rfio_HsmIf_GetHsmType(fd1,NULL) != RFIO_HSM_CNS && rfio_close(fd1) < 0) {
-		rfio_perror("close source");
-#if defined(_WIN32)
-		WSACleanup();
-#endif
-		free(cpbuf);
-		exit(SYERR);
-	}
-
-	serrno = rfio_errno = 0;
-	if (fd2 >= 0 && rfio_HsmIf_GetHsmType(fd2,NULL) != RFIO_HSM_CNS && rfio_close(fd2) < 0) {
-		rfio_perror("close target");
-		mode = sbuf->st_mode & S_IFMT;
-		if (mode == S_IFREG) {
-			rfio_unlink(name);
-		}
-#if defined(_WIN32)
-		WSACleanup();
-#endif
-		free(cpbuf);
-		exit(SYERR);
-	}
-	return(effsize > 0 ? effsize : 0);
-}
-int local_read(fd,buf,bufsize,offset)
-	int fd,bufsize;
-	off64_t offset;
-	char *buf;
-{
-	static int local_fd = -1;
-	int rc,tot;
-	char *physical_path;
-
-	if ( local_fd == -1 ) {
-		physical_path = local_file;
-		if ( rfio_HsmIf_IsHsmFile(local_file) == 1 ) 
-			(void)rfio_HsmIf_FindPhysicalPath(local_file,&physical_path); 
-		serrno = rfio_errno = 0;
-		if (strcmp(physical_path,"-") == 0) {
-			local_fd = fileno(stdin); /* Untested */
-		} else {
-			local_fd = rfio_open64(physical_path,O_RDONLY | local_binmode, 0644);
-		}
-		if ( local_fd < 0 ) {
-			rfio_perror(local_file);
-			return(local_fd);
-		}
-	}
-
-	if ( bufsize<0 || offset<0) {
-		if ( rfio_HsmIf_GetHsmType(local_fd,NULL) != RFIO_HSM_CNS ) {
-			if (rfio_close(local_fd) < 0) {
-				rfio_perror("local_read's close");
-			}
-		}
-		local_fd = -1;
-		return(bufsize);
-	}
-
-	if ( buf == NULL ) {
-		return(bufsize);
-	}
-	if ( bufsize == 0 ) return(bufsize);
-	serrno = rfio_errno = 0;
-	if ( rfio_lseek64(local_fd,offset,SEEK_SET) != offset ) {
-		rfio_perror(local_file);
-		return(-1);
-	}
-	tot = 0;
-	while ( tot < bufsize ) {
-		serrno = rfio_errno = 0;
-		rc = rfio_read(local_fd,(char *)(buf+tot),bufsize-tot);
-		if ( rc < 0 ) {
-			rfio_perror(local_file);
-			return(rc);
-		}
-		tot += rc;
-	}
-	return(tot);
-}
-int local_write(fd,buf,bufsize,offset)
-	int fd,bufsize;
-	off64_t offset;
-	char *buf;
-{
-	static int local_fd = -1;
-	int rc,tot;
-	char *locbuf, *physical_path;
-
-	if ( local_fd == -1 ) {
-		physical_path = local_file;
-		if ( rfio_HsmIf_IsHsmFile(local_file) == 1 )
-			(void)rfio_HsmIf_FindPhysicalPath(local_file,&physical_path); 
-		serrno = rfio_errno = 0;
-		local_fd = rfio_open64(physical_path , O_WRONLY|O_CREAT ,local_mode & 0777);
-		if ( local_fd < 0 ) {
-			rfio_perror(local_file);
-			return(local_fd);
-		}
-	}
-	if ( bufsize<0 || offset<0) {
-		if ( rfio_HsmIf_GetHsmType(local_fd,NULL) != RFIO_HSM_CNS ) {
-			if (rfio_close(local_fd) < 0) {
-				rfio_perror("local_write's close");
-			}
-		}
-		local_fd = -1;
-		return(bufsize);
-	}
-
-	locbuf = buf;
-	if ( bufsize == 0 ) return(bufsize);
-	serrno = rfio_errno = 0;
-	if ( rfio_lseek64(local_fd,offset,SEEK_SET) != offset ) {
-		rfio_perror(local_file);
-		return(-1);
-	}
-	if ( buf == NULL && bufsize > 0 ) {
-		/* 
-		 * A true gap
-		 */
-		serrno = rfio_errno = 0;
-		if ( rfio_lseek64(local_fd,(off64_t)bufsize,SEEK_CUR) != (off64_t)(offset+bufsize)) {
-			rfio_perror(local_file);
-			return(-1);
-		}
-		return(bufsize);
-	}
-	tot = 0;
-	while ( tot < bufsize ) {
-		serrno = rfio_errno = 0;
-		rc = rfio_write(local_fd,(char *)(locbuf+tot),bufsize-tot);
-		if ( rc < 0 ) {
-			rfio_perror(local_file);
-			return(rc);
-		}
-		tot += rc;
-	}
-	return(tot);
-}
-#endif /* HPSSCLIENT */
 
 #ifdef CNS_ROOT
 int copyfile_stage(input,output,mode,input_size,input_is_hpss)
@@ -1552,9 +1201,6 @@ int copyfile_stage_from_local(input,output,mode,input_size,input_is_hpss)
   copy_retry:
 	/* Stage_out is successful, we do the normal RFIO copyfile disk->disk stuff */
 	/* given that the output file is now in stcp_output->ipath */
-
-	/* By definition, this routine is execute when input is local and output is CASTOR */
-	/* so there is NO notion of HPSS worker there */
 
 	/* The following is merely a copy of the original source code, simplified for disk->disk */
 

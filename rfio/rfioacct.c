@@ -1,5 +1,5 @@
 /*
- * $Id: rfioacct.c,v 1.6 2008/07/28 16:51:41 waldron Exp $
+ * $Id: rfioacct.c,v 1.7 2008/07/31 06:26:51 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfioacct.c,v $ $Revision: 1.6 $ $Date: 2008/07/28 16:51:41 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfioacct.c,v $ $Revision: 1.7 $ $Date: 2008/07/31 06:26:51 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 #define RFIO_KERNEL 1
@@ -46,29 +46,16 @@ char *filename1,*filename2;
   struct sockaddr_in remote_addr;
   socklen_t addr_len;
   static int ACCTRFIO_ON = -1;
-#if defined(HPSS)
-  int jid = -1;
-#else /* HPSS */
   char *getconfent();
   char *p = NULL;
   static int jid = -1;
-#endif /* HPSS */
 
-#if defined(HPSS)
-  if ( ACCTRFIO_ON == 0 ) return;
-  jid = rhpss_get_jid(ns);
-  if ( jid < 0 ) {
-    ACCTRFIO_ON = 0;
-    return;
-  }
-#else
   if ( ACCTRFIO_ON == -1 ) {
     if (p == NULL && (p = getconfent("ACCT", "RFIO", 0)) == NULL ||
 	(strcmp (p, "YES") && strcmp (p, "yes"))) ACCTRFIO_ON = 0;
     else ACCTRFIO_ON = 1;
   }
   if (jid == -1) jid = getpid();
-#endif
   if ( ACCTRFIO_ON == 0 ) return;
   if ( ns < 0 ) return;
   memset(&acct_rfio,'\0',sizeof(struct acctrfio64));
@@ -110,12 +97,6 @@ char *filename1,*filename2;
   acct_rfio.rc = rc;
   acctreclen = ((char *)acct_rfio.filename - (char *) &acct_rfio) + strlen(acct_rfio.filename) + 1;
   wsacct(ACCTRFIO64, &acct_rfio, acctreclen);
-#if defined(HPSS)
-  /*
-   * release accounting mutex
-   */
-  /*  rhpss_end_accounting(ns); */
-#endif /* HPSS */
 #endif /* SACCT */
   return;
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.29 2008/07/30 09:32:59 waldron Exp $
+ * $Id: rfio_serv.c,v 1.30 2008/07/31 06:26:51 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.29 $ $Date: 2008/07/30 09:32:59 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.30 $ $Date: 2008/07/31 06:26:51 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 /* rfio_serv.c  SHIFT remote file access super server                   */
@@ -85,25 +85,6 @@ static int have_stagersuperuser = 0; /* Default is no alternate super-user */
 int exit_code_from_last_child = -1;
 int have_a_child = 0;
 
-#if defined(HPSS)
-#include <dirent.h>
-#include <dce/pthread.h>
-#include <rfio_hpss.h>
-/*
- * some globals set by getconfent and therefore must go to main thread
- */
-char *rtuser = NULL;
-char *keepalive = NULL;
-int DISKBUFSIZE_READ =  262144;
-int DISKBUFSIZE_WRITE = 262144;
-struct global_defs global[FD_SETSIZE];
-/*
- * important constants
- */
-const char PrincipalName[] = RFIO_PRINCIPAL;
-const char KeyTabFile[] = RFIO_KEYTAB;
-#endif /* HPSS */
-
 #ifdef CSEC
 #include <Csec_api.h>
 Csec_context_t ctx;
@@ -173,15 +154,6 @@ extern int      srxywrit();             /* server remote xywrit()       */
 extern int      srxyread();             /* server remote xyread()       */
 #endif /* FORTRAN */
 extern int      setnetio();             /* set network characteristics  */
-
-#if defined(HPSS)
-extern int      srreadlist();
-extern int      srwritelist();
-extern int      srsetcos();
-extern int      srreadlist64();
-extern int      srwritlist64();
-extern int      srsetcos64();
-#endif /* HPSS */
 
 #if defined(_WIN32)
 extern int      standalone;
@@ -376,15 +348,6 @@ char    **argv;
    struct thData  *td;
    struct hostent *hp;
    /*   char *p; */
-#endif
-#if defined(HPSS)
-   char privhosts[MAX_PRIVHOST_LEN];
-   int nb_threads = 0;
-   struct rfio_threadData *threadData;
-   extern char *rtuser;
-   extern char *keepalive;
-   extern int DISKBUFSIZE_READ;
-   extern int DISKBUFSIZE_WRITE;
 #endif
 #ifdef STAGERSUPERUSER
   struct group *this_group;             /* Group structure */
@@ -628,15 +591,6 @@ char    **argv;
             log(LOG_ERR, "Current directory set to '%s'\n", curdir);
       }
 
-#if defined(HPSS)
-      /*
-       * Initialize HPSS.
-       */
-      rhpss_init(PrincipalName,KeyTabFile,privhosts,&threadData,&nb_threads);
-      log(LOG_ERR, "HPSS initialized: principal=%s, keytabfile=%s, threadpool=%d\n",
-         PrincipalName,KeyTabFile,nb_threads);
-#endif /* HPSS */
-      
 #ifndef _WIN32
       FD_ZERO (&readmask);
       FD_ZERO (&readfd);
@@ -827,13 +781,6 @@ char    **argv;
            
          }
          if (!singlethread)      {
-#if defined(HPSS)
-            if ( rhpss_startreq(ns,&from,fromlen,privhosts,threadData,nb_threads) ) {
-               shutdown(ns,2);
-               close(ns);
-            }
-            goto select_continue;
-#endif /* HPSS */
 #if defined(_WIN32)
             td = (struct thData*)malloc(sizeof(struct thData));
             if( td == NULL )  {
@@ -1049,20 +996,13 @@ gid_t gid;
    int      lun;
    int      access, yes;
    struct   rfiostat info;
-#if !defined(HPSS)
    int      is_remote = 0;              /* Is requestor in another site ? */
    char     from_host[MAXHOSTNAMELEN];  /* Where the request comes from   */
-#endif /* HPSS */
    char     * p1 ;
 #if defined(sgi)
    register int    ndpri;
 #endif /* sgi */
 
-#if defined(HPSS)
-   extern char *keepalive;
-   extern struct global_defs global[FD_SETSIZE];
-#endif /* HPSS */
-   
 #if (defined(sun) && !defined(SOLARIS)) || defined(ultrix) || defined(_AIX)
    struct sigvec   sv;
 #endif
@@ -1168,19 +1108,15 @@ char tmpbuf[21], tmpbuf2[21];
    /*
     * Use to solve an UltraNet bug
     */
-#if !defined(_WIN32) && !defined(HPSS)
+#if !defined(_WIN32)
    if (setnetio(s) <0)     {
       shutdown(s, 2);
       close(s);
       exit(1);
    }
-#endif /* _WIN32 && HPSS */
+#endif /* _WIN32 */
    
-#if defined(HPSS)
-   if ( keepalive != NULL && !strcmp(keepalive,"YES") ) {
-#else /* HPSS */
    if ( (p1 = getconfent("RFIOD","KEEPALIVE",0)) != NULL && !strcmp(p1,"YES") )   {
-#endif /* HPSS */
       yes = 1;
       if (setsockopt(s, SOL_SOCKET, SO_KEEPALIVE,(char *)&yes, sizeof (yes) ) == -1) {
          log(LOG_ERR,"setsockopt(SO_KEEPALIVE) failed\n");
@@ -1215,7 +1151,6 @@ char tmpbuf[21], tmpbuf2[21];
    /*
     * Getting the client host name.
     */
-#if !defined(HPSS)
 #if !defined(_WIN32)
    hp =  Cgethostbyaddr((char *)(&fromp->sin_addr), sizeof(struct in_addr), fromp->sin_family);
    if ( hp == NULL)  {
@@ -1239,7 +1174,6 @@ char tmpbuf[21], tmpbuf2[21];
    strcpy(from_host, td->from_host);
    is_remote = td->_is_remote;
 #endif /* WIN32 */   
-#endif /* HPSS */
    /*
     * Locking program in memory and setting a non degrading
     * priority if specified in the configuration file.
@@ -1287,9 +1221,6 @@ char tmpbuf[21], tmpbuf2[21];
       if ( (request==RQST_OPEN || request==RQST_OPENDIR || 
             request==RQST_XYOPEN) && !bet && is_remote ) {
          log(LOG_ERR,"Attempt to call daemon with expired magic from outside site\n");
-#if defined(HPSS)
-         return(rhpss_cleanup(s,&fd,dirp,1));
-#endif /* HPSS */
 #if defined(_WIN32)
          return(mt_cleanup(td, &fd, 1));
 #else	/* WIN32 */
@@ -1305,9 +1236,6 @@ char tmpbuf[21], tmpbuf2[21];
          log(LOG_INFO,"drop_socket(%d): %s bytes read and %s bytes written\n",
             s, u64tostr(info.rnbr,tmpbuf,0),u64tostr(info.wnbr,tmpbuf2,0)) ; 
          log(LOG_ERR, "fatal error on socket %d: %s\n", s, strerror(errno));
-#if defined(HPSS)
-         return(rhpss_cleanup(s,&fd,dirp,1));
-#endif /* HPSS */
 
 #if defined(_WIN32)
          return(mt_cleanup(td, &fd, 1));
@@ -1330,9 +1258,6 @@ char tmpbuf[21], tmpbuf2[21];
             rfioacct(0,0,0,s,0,0,status,errno,&info,NULL,NULL);
 #endif /* SACCT */
             
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,1));
-#endif /* HPSS */
 #if defined(_WIN32)
             return(mt_cleanup(td, &fd, 1));
 #endif
@@ -1345,9 +1270,6 @@ char tmpbuf[21], tmpbuf2[21];
          case RQST_CHKCON :
             log(LOG_DEBUG, "request type : check connect\n");
             srchk(s) ;
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
 #if defined(_WIN32)
             return(mt_cleanup(td, &fd, 0));
 #endif
@@ -1376,9 +1298,6 @@ char tmpbuf[21], tmpbuf2[21];
             status = srclose(s, &info, fd);
             log(LOG_DEBUG,"close() returned %d\n",status);
             fd = -1;
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
 #if defined(_WIN32)
             return(mt_cleanup(td, &fd, 0));     
 #endif
@@ -1390,9 +1309,6 @@ char tmpbuf[21], tmpbuf2[21];
             status = srclosedir(s,&info,dirp);
             log(LOG_DEBUG,"closedir() returned %d\n",status);
             dirp = NULL;
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
             shutdown(s,2); close(s);
             if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
             break;
@@ -1472,9 +1388,6 @@ char tmpbuf[21], tmpbuf2[21];
             status = srstat(s,(bet?is_remote:0),(bet?from_host:(char *)NULL),bet);
             log(LOG_DEBUG, "stat() returned %d\n",status);
             if (request==RQST_STAT || request==RQST_STAT_SEC) {
-#if defined(HPSS)
-               return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
 #if defined(_WIN32)
                return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
@@ -1488,9 +1401,6 @@ char tmpbuf[21], tmpbuf2[21];
             log(LOG_DEBUG, "request type <lstat()>\n");
             status = srlstat(s,(bet?is_remote:0),(bet?from_host:(char *)NULL),bet);
             log(LOG_DEBUG, "lstat() returned %d\n",status);
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
             shutdown(s,2); close(s);
             if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
 #endif /* WIN32 */
@@ -1522,9 +1432,6 @@ char tmpbuf[21], tmpbuf2[21];
          case RQST_ERRMSG :
             log(LOG_DEBUG, "request type <errmsg()>\n");
             srerrmsg(s);
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
 #if defined(_WIN32)
             return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
@@ -1537,9 +1444,6 @@ char tmpbuf[21], tmpbuf2[21];
             status = srsymlink(s,request,(bet?is_remote:0),(bet?from_host:(char *)NULL)) ; 
             log(LOG_DEBUG, "srsymlink() returned %d\n", status) ;
             if (request==RQST_SYMLINK) {
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
             shutdown(s,2); close(s);
             if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
             }
@@ -1547,10 +1451,6 @@ char tmpbuf[21], tmpbuf2[21];
          case RQST_READLINK:
             log(LOG_DEBUG, "request type <readlink()>\n");
 	    status = srreadlink(s,from_host,is_remote) ;
-#if defined(HPSS)
-            log(LOG_DEBUG, "srreadlink() returned %d\n", status) ;
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
             shutdown(s,2); close(s);
             log(LOG_DEBUG, "srreadlink() returned %d\n", status) ;
             if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
@@ -1565,9 +1465,6 @@ char tmpbuf[21], tmpbuf2[21];
             log(LOG_DEBUG, "request type <statfs()>\n");
             status = srstatfs(s) ;
             log(LOG_DEBUG, "statfs() returned %d\n",status);
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
 #if defined(_WIN32)
             return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
@@ -1592,9 +1489,6 @@ char tmpbuf[21], tmpbuf2[21];
             log(LOG_DEBUG,"request type <pclose()>\n");
             status = srpclose(s,streamf) ;
             log(LOG_DEBUG,"pclose() returned %d\n",status);
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
 #if defined(_WIN32)
             return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
@@ -1605,9 +1499,6 @@ char tmpbuf[21], tmpbuf2[21];
             log(LOG_DEBUG,"request type <access()>\n");
             status = sraccess(s, from_host, (bet?is_remote:0)) ;
             log(LOG_DEBUG,"raccess returned %d\n",status);
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
             shutdown(s,2); close(s);
             if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
 #endif /* WIN32 */  
@@ -1615,9 +1506,6 @@ char tmpbuf[21], tmpbuf2[21];
             log(LOG_DEBUG,"request type <mkdir()>\n");
             status = srmkdir(s,from_host,is_remote) ;
             log(LOG_DEBUG,"rmkdir returned %d\n", status);
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
 #if defined(_WIN32)
              return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
@@ -1627,9 +1515,6 @@ char tmpbuf[21], tmpbuf2[21];
             log(LOG_DEBUG,"request type <rmdir()>\n");
             status = srrmdir(s,from_host,is_remote) ;
             log(LOG_DEBUG,"rrmdir returned %d\n", status);
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
 #if defined(_WIN32)
              return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */  
@@ -1639,9 +1524,6 @@ char tmpbuf[21], tmpbuf2[21];
             log(LOG_DEBUG,"request type <chmod()>\n");
             status = srchmod(s,from_host,is_remote) ;
             log(LOG_DEBUG,"rchmod returned %d\n", status);
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
 #if defined(_WIN32)
              return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */  
@@ -1652,9 +1534,6 @@ char tmpbuf[21], tmpbuf2[21];
             log(LOG_DEBUG,"request type <chown()>\n");
             status = srchown(s,from_host,is_remote) ;
             log(LOG_DEBUG,"rchown returned %d\n", status);
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
             shutdown(s,2); close(s);
             if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
 #endif /* WIN32 */  
@@ -1662,9 +1541,6 @@ char tmpbuf[21], tmpbuf2[21];
             log(LOG_DEBUG,"request type <rename()>\n");
             status = srrename(s,from_host,is_remote) ;
             log(LOG_DEBUG,"rrename returned %d\n", status);
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
 #if defined(_WIN32)
              return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */  
@@ -1687,9 +1563,6 @@ char tmpbuf[21], tmpbuf2[21];
 #if defined(SACCT)
             rfioacct(RQST_END,0,0,s,0,0,status,errno,&info,NULL,NULL);
 #endif /* SACCT */
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
 #if defined(_WIN32)
              return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */  
@@ -1706,9 +1579,6 @@ char tmpbuf[21], tmpbuf2[21];
             status = srclose_v3(s,&info,fd);
             log(LOG_DEBUG,"rclose_v3 returned %d\n", status);
             fd = -1;
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
 #if defined(_WIN32)
             return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
@@ -1719,9 +1589,6 @@ char tmpbuf[21], tmpbuf2[21];
             log(LOG_DEBUG,"request type : read_v3\n");
             status = srread_v3(s,&info,fd);
             log(LOG_DEBUG,"rread_v3 returned %d\n",status);
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
 #if defined(_WIN32)
             return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
@@ -1733,9 +1600,6 @@ char tmpbuf[21], tmpbuf2[21];
             log(LOG_DEBUG,"request type : write_v3\n");
             status = srwrite_v3(s,&info,fd);
             log(LOG_DEBUG,"rwrite_v3 returned %d\n",status);
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
 #if defined(_WIN32)
              return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
@@ -1759,9 +1623,6 @@ char tmpbuf[21], tmpbuf2[21];
             status = srclose64_v3(s,&info,fd);
             log(LOG_DEBUG,"rclose64_v3 returned %d\n", status);
             fd = -1;
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
 #if defined(_WIN32)
             return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
@@ -1772,9 +1633,6 @@ char tmpbuf[21], tmpbuf2[21];
             log(LOG_DEBUG,"request type : read64_v3\n");
             status = srread64_v3(s,&info,fd);
             log(LOG_DEBUG,"rread64_v3 returned %d\n",status);
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
 #if defined(_WIN32)
             return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
@@ -1786,9 +1644,6 @@ char tmpbuf[21], tmpbuf2[21];
             log(LOG_DEBUG,"request type : write64_v3\n");
             status = srwrite64_v3(s,&info,fd);
             log(LOG_DEBUG,"rwrite64_v3 returned %d\n",status);
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
 #if defined(_WIN32)
              return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
@@ -1806,9 +1661,6 @@ char tmpbuf[21], tmpbuf2[21];
             log(LOG_DEBUG, "request type <xyclos(%d)>\n",lun);
             status = srxyclos(s, &info, lun);
             log(LOG_DEBUG,"xyclos() returned %d\n",status);
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
             shutdown(s,2); close(s);
             if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
          case RQST_XYREAD  :
@@ -1824,51 +1676,12 @@ char tmpbuf[21], tmpbuf2[21];
             log(LOG_DEBUG, "xywrit() returned: %d\n",status);
             break;
 #endif /* FORTRAN */
-#if defined(HPSS)
-         case RQST_READLIST  :
-            info.readop ++ ;
-            log(LOG_DEBUG, "request type <hpss_readlist()>\n");
-            status = srreadlist(s, &info, fd, fromp);
-            log(LOG_DEBUG, "rreadlist() returned: %x\n",status);
-            break;
-         case RQST_WRITELIST  :
-            info.writop ++ ;
-            log(LOG_DEBUG, "request type <hpss_writelist()>\n");
-            status = srwritelist(s, &info, fd, fromp);
-            log(LOG_DEBUG, "rwritelist() returned: %x\n",status);
-            break;
-         case RQST_SETCOS  :
-            log(LOG_DEBUG, "request type <hpss_setcos()>\n");
-            status = srsetcos(s, fd);
-            log(LOG_DEBUG, "rsetcos() returned: %x\n",status);
-            break;
-         case RQST_READLIST64  :
-            info.readop ++ ;
-            log(LOG_DEBUG, "request type <hpss_readlist64()>\n");
-            status = srreadlist64(s, &info, fd, fromp);
-            log(LOG_DEBUG, "rreadlist64() returned: %x\n",status);
-            break;
-         case RQST_WRITLIST64  :
-            info.writop ++ ;
-            log(LOG_DEBUG, "request type <hpss_writlist64()>\n");
-            status = srwritlist64(s, &info, fd, fromp);
-            log(LOG_DEBUG, "rwritlist64() returned: %x\n",status);
-            break;
-         case RQST_SETCOS64:
-            log(LOG_DEBUG, "request type <hpss_setcos64()>\n");
-            status = srsetcos64(s, fd);
-            log(LOG_DEBUG, "rsetcos64() returned: %x\n",status);
-            break;
-#endif /* HPSS */
          case RQST_MSTAT64:
          case RQST_STAT64 :
             log(LOG_DEBUG, "request type <stat64()>\n");
             status = srstat64(s, is_remote, from_host);
             log(LOG_DEBUG, "stat64() returned %d\n",status);
             if (request == RQST_STAT64) {
-#if defined(HPSS)
-               return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
 #if defined(_WIN32)
                return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
@@ -1881,18 +1694,12 @@ char tmpbuf[21], tmpbuf2[21];
             log(LOG_DEBUG, "request type <lstat64()>\n");
             status = srlstat64(s, is_remote, from_host);
             log(LOG_DEBUG, "lstat64() returned %d\n",status);
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
             shutdown(s,2); close(s);
             if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
             break;
 #endif /* ! _WIN32  */
          default :
             log(LOG_ERR, "unknown request type %x(hex)\n", request);
-#if defined(HPSS)
-            return(rhpss_cleanup(s,&fd,dirp,0));
-#endif /* HPSS */
 #if defined(_WIN32)
              return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */

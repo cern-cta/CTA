@@ -1,5 +1,5 @@
 /*
- * $Id: checkkey.c,v 1.7 2007/12/07 13:26:07 sponcec3 Exp $
+ * $Id: checkkey.c,v 1.8 2008/07/31 06:26:51 sponcec3 Exp $
  */
 
 /*
@@ -21,11 +21,7 @@
 #include <string.h>
 #include <errno.h>
 #include <serrno.h>
-#if defined(HPSS) /* Clash with marshall.h in /usr/include/dce */
-#include "../h/marshall.h"
-#else /* HPSS */
 #include <marshall.h>
-#endif /* HPSS */
 #include <socket_timeout.h>
 #include <Cnetdb.h>
 #include <stdlib.h>

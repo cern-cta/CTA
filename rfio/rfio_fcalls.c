@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_fcalls.c,v 1.6 2008/06/02 12:20:54 dhsmith Exp $
+ * $Id: rfio_fcalls.c,v 1.7 2008/07/31 06:26:51 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_fcalls.c,v $ $Revision: 1.6 $ $Date: 2008/06/02 12:20:54 $ CERN/IT/PDP/DM Felix Hassine" ;
+static char sccsid[] = "@(#)$RCSfile: rfio_fcalls.c,v $ $Revision: 1.7 $ $Date: 2008/07/31 06:26:51 $ CERN/IT/PDP/DM Felix Hassine" ;
 #endif /* not lint */
 
 /* rfio_fcalls.c        - Remote file I/O - server FORTRAN calls        */
@@ -32,14 +32,6 @@ static char sccsid[] = "@(#)$RCSfile: rfio_fcalls.c,v $ $Revision: 1.6 $ $Date: 
 extern int forced_umask;
 #define CORRECT_UMASK(this) (forced_umask > 0 ? forced_umask : this)
 
-#if defined(HPSS)
-#include "../h/marshall.h"
-#include <dirent.h>
-#include <dce/pthread.h>
-#include <rfio_hpss.h>
-extern struct global_defs global[];
-#endif /* HPSS */
-
 #define SO_BUFSIZE      20*1024         /* Default socket buffer size   */
 #define MAXXFERSIZE     200*1024        /* Maximum transfer size        */
 
@@ -62,7 +54,6 @@ extern int 	udf_read();
 extern int	uf_close();	
 extern void	uf_cread();
 
-#if !defined(HPSS)
 #if defined(_WIN32)
 
 #if !defined (MAX_THREADS)
@@ -119,7 +110,6 @@ static int      iobufsiz= 0;
  */
 extern char rqstbuf[] ;   
 #endif /* _WIN32 */
-#endif /* HPSS */
 
 extern int switch_open();
 extern int switch_close();
@@ -150,7 +140,7 @@ int 	bet ;
 	int     append ;			/* Open flag		*/
 	int 	trunc;				/* Open flag		*/
 	char	account[MAXACCTSIZE] ;		/* client account 	*/
-#if !defined(_WIN32) && !defined(HPSS)
+#if !defined(_WIN32)
 	char	filename[MAXFILENAMSIZE] ; 	/* file name            */
 #endif
 	int	filen ;				/* file name length	*/

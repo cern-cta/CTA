@@ -1,5 +1,5 @@
 /*
- * $Id: rfrename.c,v 1.8 2006/04/28 16:24:46 gtaur Exp $
+ * $Id: rfrename.c,v 1.9 2008/07/31 06:26:51 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrename.c,v $ $Revision: 1.8 $ $Date: 2006/04/28 16:24:46 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfrename.c,v $ $Revision: 1.9 $ $Date: 2008/07/31 06:26:51 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*
@@ -69,12 +69,7 @@ char *path;
     strcpy (newpath, cp);
     strcat (newpath, path+9);
   } else 
- /* Special treatment for filenames starting with /hpss/... */
-    if ( !strncmp("/hpss/",path,6) &&
-	 (cp = getconfent("SHIFT","HPSS",0)) != NULL) {
-      strcpy(newpath,cp);
-      strcat(newpath,path+6);
-    } else strcpy(newpath,path);
+    strcpy(newpath,path);
   return(newpath);
 }
 
