@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: Csemaphore.c,v $ $Revision: 1.2 $ $Date: 2004/02/16 13:32:41 $ CERN/IT/PDP/DM";
+static char sccsid[] = "$RCSfile: Csemaphore.c,v $ $Revision: 1.3 $ $Date: 2008/07/31 07:09:13 $ CERN/IT/PDP/DM";
 #endif /* not lint */
 
 /*//////////////////////////////////////////////////////////////////////
@@ -21,8 +21,8 @@ static char sccsid[] = "$RCSfile: Csemaphore.c,v $ $Revision: 1.2 $ $Date: 2004/
 //             University of Massachusetts
 //             Amherst, Massachusetts 01003.
 //
-// This code was written at the Multi-Agent Systems Lab. at the 
-// Department of Computer Science, University of Massachusetts, 
+// This code was written at the Multi-Agent Systems Lab. at the
+// Department of Computer Science, University of Massachusetts,
 // Amherst, MA 01003.
 //
 // Copyright (c) 1996 UMASS CS Dept. All rights are reserved.
@@ -30,7 +30,7 @@ static char sccsid[] = "$RCSfile: Csemaphore.c,v $ $Revision: 1.2 $ $Date: 2004/
 // Development of this code was partially supported by:
 //    ONR grant N00014-92-J-1450
 //    NSF grant IRI-9523419
-//    DARPA grant, RaDEO program, 70NANB6H0074 as subcontractor for 
+//    DARPA grant, RaDEO program, 70NANB6H0074 as subcontractor for
 //          Boeing Helicoptor
 ////////////////////////////////////
 //
@@ -46,7 +46,7 @@ static char sccsid[] = "$RCSfile: Csemaphore.c,v $ $Revision: 1.2 $ $Date: 2004/
 void
 Csemaphore_init (CSemaphore * s,int value)
 {
-    s->v = value;
+  s->v = value;
 }
 
 /*
@@ -57,8 +57,8 @@ Csemaphore_init (CSemaphore * s,int value)
 void
 Csemaphore_destroy (CSemaphore * s)
 {
-    if (Cthread_mutex_destroy ((s)) == -1)
-     do_error ("Error destroying Csemaphore mutex");
+  if (Cthread_mutex_destroy ((s)) == -1)
+    do_error ("Error destroying Csemaphore mutex");
 }
 
 /*
@@ -69,17 +69,17 @@ Csemaphore_destroy (CSemaphore * s)
 int
 Csemaphore_up (CSemaphore * s)
 {
-    int         value_after_op;
+  int         value_after_op;
 
-    tw_pthread_mutex_lock ((void *)(s));
+  tw_pthread_mutex_lock ((void *)(s));
 
-    (s->v)++;
-    value_after_op = s->v;
+  (s->v)++;
+  value_after_op = s->v;
 
-    tw_pthread_mutex_unlock ((void *)(s));
-    tw_pthread_cond_signal ((void *)(s));
+  tw_pthread_mutex_unlock ((void *)(s));
+  tw_pthread_cond_signal ((void *)(s));
 
-    return( value_after_op );
+  return( value_after_op );
 }
 
 /*
@@ -90,20 +90,20 @@ Csemaphore_up (CSemaphore * s)
 int
 Csemaphore_down (CSemaphore * s)
 {
-    int         value_after_op;
+  int         value_after_op;
 
-    tw_pthread_mutex_lock ((void *)(s));
-    while (s->v <= 0)
-    {
-     tw_pthread_cond_wait ((void *)(s));
-    }
+  tw_pthread_mutex_lock ((void *)(s));
+  while (s->v <= 0)
+  {
+    tw_pthread_cond_wait ((void *)(s));
+  }
 
-    (s->v)--;
-    value_after_op = s->v;
+  (s->v)--;
+  value_after_op = s->v;
 
-    tw_pthread_mutex_unlock ((void *)(s));
+  tw_pthread_mutex_unlock ((void *)(s));
 
-    return (value_after_op);
+  return (value_after_op);
 }
 
 /*
@@ -117,14 +117,14 @@ Csemaphore_down (CSemaphore * s)
 int
 Csemaphore_decrement (CSemaphore * s)
 {
-    int         value_after_op;
+  int         value_after_op;
 
-    tw_pthread_mutex_lock ((void *)(s));
-    s->v--;
-    value_after_op = s->v;
-    tw_pthread_mutex_unlock ((void *)(s));
+  tw_pthread_mutex_lock ((void *)(s));
+  s->v--;
+  value_after_op = s->v;
+  tw_pthread_mutex_unlock ((void *)(s));
 
-    return (value_after_op);
+  return (value_after_op);
 }
 
 /*
@@ -140,14 +140,14 @@ Csemaphore_decrement (CSemaphore * s)
 int
 Csemaphore_value (CSemaphore * s)
 {
-    /* not for sync */
-    int         value_after_op;
+  /* not for sync */
+  int         value_after_op;
 
-    tw_pthread_mutex_lock ((void *)(s));
-    value_after_op = s->v;
-    tw_pthread_mutex_unlock ((void *)(s));
+  tw_pthread_mutex_lock ((void *)(s));
+  value_after_op = s->v;
+  tw_pthread_mutex_unlock ((void *)(s));
 
-    return (value_after_op);
+  return (value_after_op);
 }
 
 
@@ -162,55 +162,55 @@ Csemaphore_value (CSemaphore * s)
 int
 tw_pthread_mutex_unlock(void *m)
 {
-    int         return_value;
+  int         return_value;
 
-    if ((return_value = Cthread_mutex_unlock (m)) == -1)
-     do_error ("Cthread_mutex_unlock");
+  if ((return_value = Cthread_mutex_unlock (m)) == -1)
+    do_error ("Cthread_mutex_unlock");
 
-    return (return_value);
+  return (return_value);
 }
 
 int
 tw_pthread_mutex_lock (void * m)
 {
-    int         return_value;
+  int         return_value;
 
-    if ((return_value = Cthread_mutex_lock (m)) == -1)
-     do_error ("Cthread_mutex_lock");
+  if ((return_value = Cthread_mutex_lock (m)) == -1)
+    do_error ("Cthread_mutex_lock");
 
-    return (return_value);
+  return (return_value);
 }
 
 int
 tw_pthread_cond_wait (void * c)
 {
-    int         return_value;
+  int         return_value;
 
-    if ((return_value = Cthread_cond_wait (c)) == -1)
-     do_error ("Cthread_cond_wait");
+  if ((return_value = Cthread_cond_wait (c)) == -1)
+    do_error ("Cthread_cond_wait");
 
-    return (return_value);
+  return (return_value);
 }
 
 int
 tw_pthread_cond_signal (void * c)
 {
-    int         return_value;
+  int         return_value;
 
-    if ((return_value = Cthread_cond_signal (c)) == -1)
-     do_error ("pthread_cond_signal");
+  if ((return_value = Cthread_cond_signal (c)) == -1)
+    do_error ("pthread_cond_signal");
 
-    return (return_value);
+  return (return_value);
 }
 
 
 /*
- * function just prints an error message and exits 
+ * function just prints an error message and exits
  *
  */
 void
 do_error (char *msg)
 {
-    perror (msg);
-    exit (1);
+  perror (msg);
+  exit (1);
 }

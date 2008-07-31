@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_rdirfdt.c,v 1.8 2003/09/14 06:38:58 jdurand Exp $
+ * $Id: rfio_rdirfdt.c,v 1.9 2008/07/31 07:09:13 sponcec3 Exp $
  */
 
 /*
@@ -191,5 +191,3 @@ int DLL_DECL rfio_rdirfdt_freeentry(s)
 #endif /* _WIN32 */
   return(0);
 }
-
-

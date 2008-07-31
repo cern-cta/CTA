@@ -1,5 +1,5 @@
 /*
- * $Id: stager_messages.c,v 1.1 2008/07/28 16:23:57 waldron Exp $
+ * $Id: stager_messages.c,v 1.2 2008/07/31 07:09:14 sponcec3 Exp $
  */
 
 /*
@@ -60,4 +60,3 @@ struct stagerMessages stagerMessages[] = {
 int DLL_DECL stager_messagesNbElements() {
   return(STAGER_NB_ELEMENTS(stagerMessages));
 }
-

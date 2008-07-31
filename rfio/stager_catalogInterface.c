@@ -1,5 +1,5 @@
 /*
- * $Id: stager_catalogInterface.c,v 1.1 2008/07/28 16:23:57 waldron Exp $
+ * $Id: stager_catalogInterface.c,v 1.2 2008/07/31 07:09:14 sponcec3 Exp $
  */
 
 /*
@@ -202,10 +202,3 @@ int DLL_DECL stager_getJobSvc(jobSvc)
  stager_getJobSvcReturn:
   STAGER_LOG_RETURN(rc);
 }
-
-
-
-
-
-
-

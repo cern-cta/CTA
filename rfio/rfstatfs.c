@@ -1,5 +1,5 @@
 /*
- * $Id: rfstatfs.c,v 1.6 2007/09/28 15:04:33 sponcec3 Exp $
+ * $Id: rfstatfs.c,v 1.7 2008/07/31 07:09:14 sponcec3 Exp $
  */
 
 /*
@@ -35,129 +35,128 @@
 #include <rfio.h>
 
 int DLL_DECL rfstatfs(path, statfsbuf )
-char *path ;
-struct rfstatfs *statfsbuf ;
+     char *path ;
+     struct rfstatfs *statfsbuf ;
 {
-	int status = 0   ;
+  int status = 0   ;
 
 #if defined(_WIN32)
-	DWORD bps, nfc, spc, tnc;
-	char *p, *rootpath;
-	char pathbuf[256];
+  DWORD bps, nfc, spc, tnc;
+  char *p, *rootpath;
+  char pathbuf[256];
 #else
 #if defined( ultrix )
-        struct fs_data fsbuffer;
+  struct fs_data fsbuffer;
 #else
 #if defined( SOLARIS )
-	static struct statvfs fsbuffer ;
+  static struct statvfs fsbuffer ;
 #else
-        static struct statfs fsbuffer;
+  static struct statfs fsbuffer;
 #endif
 #endif
 #endif
 #if defined(__osf__) && defined(__alpha)
-            if ( statfs(path,&fsbuffer,(int)sizeof(struct statfs)) < 0) {
-                status = -1;
-            }
+  if ( statfs(path,&fsbuffer,(int)sizeof(struct statfs)) < 0) {
+    status = -1;
+  }
 #endif
 #if defined( cray ) || defined( apollo ) || defined( sgi )
-            if ( statfs(path,&fsbuffer,(int)sizeof(struct statfs),(int)0) < 0) {
-                status = -1;
-            }
+  if ( statfs(path,&fsbuffer,(int)sizeof(struct statfs),(int)0) < 0) {
+    status = -1;
+  }
 #endif
 #if ( defined( sun ) && !defined(SOLARIS) ) || defined( _AIX ) || defined( hpux ) || defined(linux)
-            if ( statfs(path,&fsbuffer) < 0 ) {
-                status = -1;
-            }
+  if ( statfs(path,&fsbuffer) < 0 ) {
+    status = -1;
+  }
 #endif
 #if defined( ultrix )
-            if ( statfs(path,&fsbuffer) < 1 ) {
-                status = -1;
-            }
+  if ( statfs(path,&fsbuffer) < 1 ) {
+    status = -1;
+  }
 #endif
 #if defined ( SOLARIS )
-	    if (statvfs (  path, &fsbuffer ) < 0) {
-		status = -1;
-	    }
+  if (statvfs (  path, &fsbuffer ) < 0) {
+    status = -1;
+  }
 #endif
 #if defined(__Lynx__)
-            if ( statfs(path,&fsbuffer,sizeof(struct statfs),0) < 0 ) {
-                status = -1;
-            }
+  if ( statfs(path,&fsbuffer,sizeof(struct statfs),0) < 0 ) {
+    status = -1;
+  }
 #endif
 #if defined(_WIN32)
-	    if (*(path+1) == ':') {		/* drive name */
-		pathbuf[0] = *path;
-		pathbuf[1] = *(path+1);
-		pathbuf[2] = '\\';
-		pathbuf[3] = '\0';
-		rootpath = pathbuf;
-	    } else if (*path == '\\' && *(path+1) == '\\') {	/* UNC name */
-		if ((p = strchr (path+2, '\\')) == 0)
-		    return (-1);
-		if (p = strchr (p+1, '\\'))
-		    strncpy (pathbuf, path, p-path+1);
-		else {
-		    strcpy (pathbuf, path);
-		    strcat (pathbuf, "\\");
-		}
-		rootpath = pathbuf;
-	    } else
-		rootpath = NULL;
-	    if (GetDiskFreeSpace (rootpath, &spc, &bps, &nfc, &tnc) == 0) {
-		status = -1;
-	    }
+  if (*(path+1) == ':') {  /* drive name */
+    pathbuf[0] = *path;
+    pathbuf[1] = *(path+1);
+    pathbuf[2] = '\\';
+    pathbuf[3] = '\0';
+    rootpath = pathbuf;
+  } else if (*path == '\\' && *(path+1) == '\\') { /* UNC name */
+    if ((p = strchr (path+2, '\\')) == 0)
+      return (-1);
+    if (p = strchr (p+1, '\\'))
+      strncpy (pathbuf, path, p-path+1);
+    else {
+      strcpy (pathbuf, path);
+      strcat (pathbuf, "\\");
+    }
+    rootpath = pathbuf;
+  } else
+    rootpath = NULL;
+  if (GetDiskFreeSpace (rootpath, &spc, &bps, &nfc, &tnc) == 0) {
+    status = -1;
+  }
 #endif
 
-        /*
-         * Affecting variables
-         */
+  /*
+   * Affecting variables
+   */
 
-	if  ( status == 0 ) {
+  if  ( status == 0 ) {
 #if defined( ultrix )
-           statfsbuf->bsize = (long)1024;
-           statfsbuf->totblks = (long)fsbuffer.fd_req.btot;
-           statfsbuf->freeblks = (long)fsbuffer.fd_req.bfreen;
-           statfsbuf->freenods = (long)fsbuffer.fd_req.gfree ;
-           statfsbuf->totnods = (long)fsbuffer.fd_req.gtot ;
+    statfsbuf->bsize = (long)1024;
+    statfsbuf->totblks = (long)fsbuffer.fd_req.btot;
+    statfsbuf->freeblks = (long)fsbuffer.fd_req.bfreen;
+    statfsbuf->freenods = (long)fsbuffer.fd_req.gfree ;
+    statfsbuf->totnods = (long)fsbuffer.fd_req.gtot ;
 #endif
 #if defined( sgi ) || defined( __Lynx__ )
-           statfsbuf->freeblks = (long)fsbuffer.f_bfree;
-           statfsbuf->bsize = (long)fsbuffer.f_bsize ;
-           statfsbuf->totblks = (long)fsbuffer.f_blocks;
-           statfsbuf->totnods = (long)fsbuffer.f_files ;
-           statfsbuf->freenods = (long)fsbuffer.f_ffree ;
+    statfsbuf->freeblks = (long)fsbuffer.f_bfree;
+    statfsbuf->bsize = (long)fsbuffer.f_bsize ;
+    statfsbuf->totblks = (long)fsbuffer.f_blocks;
+    statfsbuf->totnods = (long)fsbuffer.f_files ;
+    statfsbuf->freenods = (long)fsbuffer.f_ffree ;
 #endif
 #if defined(SOLARIS)
-           statfsbuf->freeblks = (long)fsbuffer.f_bavail;
-           statfsbuf->bsize = (long)fsbuffer.f_frsize ;
-           statfsbuf->totblks = (long)fsbuffer.f_blocks;
-           statfsbuf->totnods = (long)fsbuffer.f_files ;
-           statfsbuf->freenods = (long)fsbuffer.f_ffree ;
+    statfsbuf->freeblks = (long)fsbuffer.f_bavail;
+    statfsbuf->bsize = (long)fsbuffer.f_frsize ;
+    statfsbuf->totblks = (long)fsbuffer.f_blocks;
+    statfsbuf->totnods = (long)fsbuffer.f_files ;
+    statfsbuf->freenods = (long)fsbuffer.f_ffree ;
 #endif
 #if (defined( sun ) && !defined(SOLARIS) ) || defined( hpux ) || defined( _AIX ) || defined(linux)
-           statfsbuf->totblks = (long)fsbuffer.f_blocks;
-           statfsbuf->freeblks = (long)fsbuffer.f_bavail;
-           statfsbuf->totnods = (long)fsbuffer.f_files ;
-           statfsbuf->freenods = (long)fsbuffer.f_ffree ;
-           statfsbuf->bsize = (long)fsbuffer.f_bsize;
+    statfsbuf->totblks = (long)fsbuffer.f_blocks;
+    statfsbuf->freeblks = (long)fsbuffer.f_bavail;
+    statfsbuf->totnods = (long)fsbuffer.f_files ;
+    statfsbuf->freenods = (long)fsbuffer.f_ffree ;
+    statfsbuf->bsize = (long)fsbuffer.f_bsize;
 #endif
 #if defined(__osf__) && defined(__alpha)
-           statfsbuf->totblks = (long)fsbuffer.f_blocks;
-           statfsbuf->freeblks = (long)fsbuffer.f_bavail;
-           statfsbuf->totnods = (long)fsbuffer.f_files ;
-           statfsbuf->freenods = (long)fsbuffer.f_ffree ;
-           statfsbuf->bsize = (long)fsbuffer.f_fsize ;
+    statfsbuf->totblks = (long)fsbuffer.f_blocks;
+    statfsbuf->freeblks = (long)fsbuffer.f_bavail;
+    statfsbuf->totnods = (long)fsbuffer.f_files ;
+    statfsbuf->freenods = (long)fsbuffer.f_ffree ;
+    statfsbuf->bsize = (long)fsbuffer.f_fsize ;
 #endif
 #if defined(_WIN32)
-           statfsbuf->totblks = (long)tnc;
-           statfsbuf->freeblks = (long)nfc;
-           statfsbuf->totnods = (long)-1;
-           statfsbuf->freenods = (long)-1;
-           statfsbuf->bsize = (long)(spc * bps);
+    statfsbuf->totblks = (long)tnc;
+    statfsbuf->freeblks = (long)nfc;
+    statfsbuf->totnods = (long)-1;
+    statfsbuf->freenods = (long)-1;
+    statfsbuf->bsize = (long)(spc * bps);
 #endif
- 	}
-	return status ;
+  }
+  return status ;
 
 }
-

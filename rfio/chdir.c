@@ -1,5 +1,5 @@
 /*
- * $Id: chdir.c,v 1.4 2007/10/05 09:05:29 sponcec3 Exp $
+ * $Id: chdir.c,v 1.5 2008/07/31 07:09:13 sponcec3 Exp $
  */
 
 /*
@@ -14,46 +14,46 @@
 #include "rfio.h"               /* Remote File I/O general definitions  */
 
 int DLL_DECL rfio_chdir(dirpath)
-char		*dirpath;       /* directory path               */
+     char  *dirpath;       /* directory path               */
 {
-   char    	*filename;
-   char    	*host;
-   int    	rc;
-   int      parserc;
-   
-   INIT_TRACE("RFIO_TRACE");
-   TRACE(1, "rfio", "rfio_chdir(%s)", dirpath);
+  char     *filename;
+  char     *host;
+  int     rc;
+  int      parserc;
 
-   if (!(parserc = rfio_parseln(dirpath, &host, &filename, NORDLINKS))) {
-      /* if not a remote file, must be local or HSM  */
-      if ( host != NULL ) {
-          /*
-           * HSM file
-           */
-          TRACE(1, "rfio", "rfio_chdir: %s is an HSM path", filename);
-          END_TRACE();
-          rfio_errno = 0;
-          if ( (rc = rfio_HsmIf_chdir(filename)) == 0 )
-              rfio_HsmIf_SetCwdServer(host);
-          return(rc);
-      }
-      TRACE(1, "rfio", "rfio_chdir: using local chdir(%s)", filename);
+  INIT_TRACE("RFIO_TRACE");
+  TRACE(1, "rfio", "rfio_chdir(%s)", dirpath);
 
+  if (!(parserc = rfio_parseln(dirpath, &host, &filename, NORDLINKS))) {
+    /* if not a remote file, must be local or HSM  */
+    if ( host != NULL ) {
+      /*
+       * HSM file
+       */
+      TRACE(1, "rfio", "rfio_chdir: %s is an HSM path", filename);
       END_TRACE();
       rfio_errno = 0;
-      if ( (rc = chdir(filename)) == 0 )
-          rfio_HsmIf_SetCwdType(0);
-      else
-          serrno = 0;
+      if ( (rc = rfio_HsmIf_chdir(filename)) == 0 )
+        rfio_HsmIf_SetCwdServer(host);
       return(rc);
-   }
-   if (parserc < 0) {
-	   END_TRACE();
-	   return(-1);
-   }
+    }
+    TRACE(1, "rfio", "rfio_chdir: using local chdir(%s)", filename);
 
-   END_TRACE();
-   rfio_errno = 0;
-   serrno = SEOPNOTSUP;
-   return (-1);
+    END_TRACE();
+    rfio_errno = 0;
+    if ( (rc = chdir(filename)) == 0 )
+      rfio_HsmIf_SetCwdType(0);
+    else
+      serrno = 0;
+    return(rc);
+  }
+  if (parserc < 0) {
+    END_TRACE();
+    return(-1);
+  }
+
+  END_TRACE();
+  rfio_errno = 0;
+  serrno = SEOPNOTSUP;
+  return (-1);
 }

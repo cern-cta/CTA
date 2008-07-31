@@ -1,5 +1,5 @@
 /*
- * $Id: rfrm.c,v 1.21 2008/07/31 06:26:51 sponcec3 Exp $
+ * $Id: rfrm.c,v 1.22 2008/07/31 07:09:14 sponcec3 Exp $
  */
 
 /*
@@ -30,15 +30,15 @@ struct dirstack {
 };
 
 static char *ckpath();
-static int rm_recursive(); 
+static int rm_recursive();
 
 char *cmd;
-int main(argc, argv) 
-int argc;
-char *argv[];
+int main(argc, argv)
+     int argc;
+     char *argv[];
 {
   int c, status;
-  extern char * optarg ; 
+  extern char * optarg ;
   extern int    optind ;
   char *path,*root_path;
   int recursive = 0;
@@ -82,8 +82,8 @@ char *argv[];
       serrno = 0;
       status = rm_recursive(root_path,&ask_yesno);
       if ( status == -1 ) {
-         rfio_perror(root_path);
-         exit(2);
+        rfio_perror(root_path);
+        exit(2);
       }
       /*
        * remove all directories. ENOENT can happen if the directory
@@ -99,8 +99,8 @@ char *argv[];
             ((rfio_errno == 0) && (serrno     ==      0) &&
              (errno !=      0) && (errno != ENOENT)))
            ) {
-         rfio_perror(root_path);
-         exit(2);
+        rfio_perror(root_path);
+        exit(2);
       }
       free(root_path);
     } else {
@@ -111,11 +111,11 @@ char *argv[];
       if (st.st_mode & S_IFDIR) {
         fprintf(stderr,"%s: %s directory\n",cmd,path);
         exit(2);
-      } 
+      }
       status = rfio_unlink(path);
       if ( status ) {
-	rfio_perror(path);
-	exit(1);
+        rfio_perror(path);
+        exit(1);
       }
     }
   }
@@ -123,23 +123,23 @@ char *argv[];
 }
 
 static char *ckpath(path)
-char *path;
+     char *path;
 {
   char *cp;
   static char newpath[BUFSIZ];
- /* Special treatment for filenames starting with /scratch/... */
+  /* Special treatment for filenames starting with /scratch/... */
   if (!strncmp ("/scratch/", path, 9) &&
       (cp = getconfent ("SHIFT", "SCRATCH", 0)) != NULL) {
     strcpy (newpath, cp);
     strcat (newpath, path+9);
-  } else 
+  } else
     strcpy(newpath,path);
   return(newpath);
 }
 
 static int rfio_pushdir(ds,dir)
-struct dirstack **ds;
-char *dir;
+     struct dirstack **ds;
+     char *dir;
 {
   struct dirstack *tmp;
   if ( ds == NULL || dir == NULL ) return(0);
@@ -151,35 +151,35 @@ char *dir;
   return(0);
 }
 static struct dirstack *rfio_popdir(ds)
-struct dirstack **ds;
+     struct dirstack **ds;
 {
-   struct dirstack *tmp;
-   if ( ds == NULL ) return(NULL);
-   tmp = *ds;
-   *ds = (*ds)->prev;
-   free(tmp->dir);
-   free(tmp);
-   return(*ds);
+  struct dirstack *tmp;
+  if ( ds == NULL ) return(NULL);
+  tmp = *ds;
+  *ds = (*ds)->prev;
+  free(tmp->dir);
+  free(tmp);
+  return(*ds);
 }
 
 static int read_yesno() {
-    int i, rc, retval;
-    i =0;
-    retval = 'n';
-    do {
-        rc = fgetc(stdin);
-        if ( rc == ' ' ) continue;
-        if ( i == 0 ) {
-            retval = rc;
-            i++;
-        }
-    } while ( rc != EOF && rc != '\n');
-    return(retval);
+  int i, rc, retval;
+  i =0;
+  retval = 'n';
+  do {
+    rc = fgetc(stdin);
+    if ( rc == ' ' ) continue;
+    if ( i == 0 ) {
+      retval = rc;
+      i++;
+    }
+  } while ( rc != EOF && rc != '\n');
+  return(retval);
 }
 
-static int rm_recursive(path, yesno) 
-char *path;
-int *yesno;
+static int rm_recursive(path, yesno)
+     char *path;
+     int *yesno;
 {
   DIR *dirp;
   struct dirent *de;
@@ -190,7 +190,7 @@ int *yesno;
   int empty = 1;
   char* hostname,*pathname;
   int ret;
-  
+
   if ( !rfio_lstat64(path,&st) ) {
     if ( S_ISDIR(st.st_mode) ) {
       if ( yesno == NULL || *yesno ) {
@@ -198,7 +198,7 @@ int *yesno;
         if ( read_yesno() != 'y' ) return(-1);
         if ( yesno != NULL ) *yesno = 0;
       }
-     
+
       dirp = (DIR *)rfio_opendir(path);
       while ( ( de = (struct dirent *)rfio_readdir((RDIR *)dirp) ) != NULL ) {
         if ( strcmp(de->d_name,".") && strcmp(de->d_name,"..") ) {
@@ -206,7 +206,7 @@ int *yesno;
           p = (char *)malloc(strlen(path)+strlen(de->d_name)+2);
           ret=rfio_parse(path,&hostname,&pathname);
           if (ret>=0 && pathname && hostname == NULL) strcpy(p,pathname);
-	  else strcpy(p,path);
+          else strcpy(p,path);
           strcat(p,"/");
           strcat(p,de->d_name);
           if ( rfio_lstat64(p,&st) == -1 ) {
@@ -221,18 +221,18 @@ int *yesno;
                 exit(1);
               }
               free(p);
-            } 
+            }
           }
         }
       }
-      
+
       rfio_closedir((RDIR *)dirp);
       if ( empty ) {
         printf("%s: remove directory `%s'? ",cmd,path);
         if ( read_yesno() != 'y' ) return(-1);
         if ( rfio_rmdir(path) == -1 ) {
-            fprintf(stderr,"rmdir(%s): %s\n",path,rfio_serror());
-            exit(2);
+          fprintf(stderr,"rmdir(%s): %s\n",path,rfio_serror());
+          exit(2);
         }
       }
     } else { /* if ( S_ISDIR(st.st_mode) ) ... */
@@ -250,15 +250,3 @@ int *yesno;
   }
   return(0);
 }
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,5 +1,5 @@
 /*
- * $Id: rfcat.c,v 1.7 2007/12/07 13:26:08 sponcec3 Exp $
+ * $Id: rfcat.c,v 1.8 2008/07/31 07:09:13 sponcec3 Exp $
  */
 
 /*
@@ -17,61 +17,60 @@
 #include "rfio_api.h"
 
 int catfile(inpfile)
-char *inpfile;
+     char *inpfile;
 {
-	char buf [32768];
-	int c;
-	int rc;
-	FILE *s;
-	int v;
+  char buf [32768];
+  int c;
+  int rc;
+  FILE *s;
+  int v;
 
-	/* Streaming opening is always better */
-	v = RFIO_STREAM;
-	rfiosetopt (RFIO_READOPT, &v, 4); 
-	
-	if (strcmp (inpfile, "-") == 0)
-		s  = stdin;
-	else if ((s = rfio_fopen64 (inpfile, "r")) == NULL) {
-		rfio_perror (inpfile);
-		return (1);
-	}
-	while ((c = rfio_fread (buf, 1, sizeof(buf), s)) > 0) {
-		if ((rc = fwrite (buf, 1, c, stdout)) < c) {
-			fprintf (stderr, "rfcat %s: %s\n", inpfile,
-			    strerror ((rc < 0) ? errno : ENOSPC));
-			if (strcmp (inpfile, "-"))
-				rfio_fclose (s);
-			return (1);
-		}
-	}
-	if (strcmp (inpfile, "-"))
-		rfio_fclose (s);
-	return (0);
+  /* Streaming opening is always better */
+  v = RFIO_STREAM;
+  rfiosetopt (RFIO_READOPT, &v, 4);
+
+  if (strcmp (inpfile, "-") == 0)
+    s  = stdin;
+  else if ((s = rfio_fopen64 (inpfile, "r")) == NULL) {
+    rfio_perror (inpfile);
+    return (1);
+  }
+  while ((c = rfio_fread (buf, 1, sizeof(buf), s)) > 0) {
+    if ((rc = fwrite (buf, 1, c, stdout)) < c) {
+      fprintf (stderr, "rfcat %s: %s\n", inpfile,
+               strerror ((rc < 0) ? errno : ENOSPC));
+      if (strcmp (inpfile, "-"))
+        rfio_fclose (s);
+      return (1);
+    }
+  }
+  if (strcmp (inpfile, "-"))
+    rfio_fclose (s);
+  return (0);
 }
 
 int main(argc, argv)
-int argc;
-char **argv;
+     int argc;
+     char **argv;
 {
-	int errflg = 0;
-	int i;
+  int errflg = 0;
+  int i;
 #if defined(_WIN32)
-	WSADATA wsadata;
+  WSADATA wsadata;
 
-	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-		fprintf (stderr, "WSAStartup unsuccessful\n");
-		exit (2);
-	}
+  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
+    fprintf (stderr, "WSAStartup unsuccessful\n");
+    exit (2);
+  }
 #endif
 
-	if (argc == 1)
-		errflg = catfile ("-");
-	else
-		for (i = 1; i < argc; i++)
-			errflg += catfile (argv[i]);
+  if (argc == 1)
+    errflg = catfile ("-");
+  else
+    for (i = 1; i < argc; i++)
+      errflg += catfile (argv[i]);
 #if defined(_WIN32)
-	WSACleanup();
+  WSACleanup();
 #endif
-	exit (errflg ? 1 : 0);
+  exit (errflg ? 1 : 0);
 }
-

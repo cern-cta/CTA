@@ -2,11 +2,11 @@
  * Copyright (C) 1998-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
+
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfmkdir.c,v $ $Revision: 1.11 $ $Date: 2008/07/31 06:26:51 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfmkdir.c,v $ $Revision: 1.12 $ $Date: 2008/07/31 07:09:13 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
- 
+
 /*
  * Make remote directory
  */
@@ -27,11 +27,11 @@ static char sccsid[] = "@(#)$RCSfile: rfmkdir.c,v $ $Revision: 1.11 $ $Date: 200
 static char *ckpath();
 char *getconfent();
 
-int main(argc, argv) 
-int argc;
-char *argv[];
+int main(argc, argv)
+     int argc;
+     char *argv[];
 {
-  extern char * optarg ; 
+  extern char * optarg ;
   extern int    optind ;
   int recursive = 0;
   char *path,*root_path,*p;
@@ -43,7 +43,7 @@ char *argv[];
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif /* _WIN32 */
-  
+
   if ( argc < 2 ) {
     fprintf(stderr,"Usage: %s [-m mode] [-p] dirname ...\n",argv[0]);
     exit(2);
@@ -57,8 +57,8 @@ char *argv[];
       lmode = strtol(optarg, &endprt, 8);
       if ( lmode > 0 && lmode <= 0777 && *endprt == '\0' ) mode = lmode;
       else {
-	fprintf(stderr, "Invalid mode '%s'.\n", optarg);
-	exit(2);
+        fprintf(stderr, "Invalid mode '%s'.\n", optarg);
+        exit(2);
       }
       break;
     case 'p':
@@ -82,27 +82,27 @@ char *argv[];
     if (recursive) {
       i = strlen(path);
       while (i && (path[i - 1] == '/')) {
-	i--;
+        i--;
       }
       path[i] = '\0';
       root_path = (char *)malloc(strlen(path)+1);
       strcpy(root_path,path);
       while ( (p = strrchr(root_path,'/')) != NULL ) {
-	*p = '\0';
-	if ( !rfio_stat64(root_path,&st) ) break;
+        *p = '\0';
+        if ( !rfio_stat64(root_path,&st) ) break;
       }
       while ( strlen(root_path) != strlen(path) ) {
-	root_path[strlen(root_path)] = '/';
-	if ( rfio_mkdir(root_path,mode) ) {
-	  rfio_perror("mkdir()");
-	  exit(1);
-	}
+        root_path[strlen(root_path)] = '/';
+        if ( rfio_mkdir(root_path,mode) ) {
+          rfio_perror("mkdir()");
+          exit(1);
+        }
       }
       free(root_path);
     } else {
       if (rfio_mkdir(path,mode) ) {
-	rfio_perror("mkdir()");
-	exit(1);
+        rfio_perror("mkdir()");
+        exit(1);
       }
     }
   }
@@ -111,7 +111,7 @@ char *argv[];
 
 
 static char *ckpath(path)
-char *path;
+     char *path;
 {
   char *cp;
   static char newpath[BUFSIZ];
@@ -120,7 +120,7 @@ char *path;
       (cp = (char *)getconfent ("SHIFT", "SCRATCH", 0)) != NULL) {
     strcpy (newpath, cp);
     strcat (newpath, path+9);
-  } else 
+  } else
     strcpy(newpath,path);
   return(newpath);
 }

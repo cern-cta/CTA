@@ -1,5 +1,5 @@
 /*
- * $Id: ferror.c,v 1.5 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: ferror.c,v 1.6 2008/07/31 07:09:13 sponcec3 Exp $
  */
 
 /*
@@ -16,58 +16,57 @@
 #include <stdlib.h>
 
 int rfio_ferror(fp)
-	RFILE * fp ; 
+     RFILE * fp ;
 {
-	int     rc 	;
+  int     rc  ;
 
-	INIT_TRACE("RFIO_TRACE");
-	TRACE(1, "rfio", "rfio_ferror(%x)", fp);
+  INIT_TRACE("RFIO_TRACE");
+  TRACE(1, "rfio", "rfio_ferror(%x)", fp);
 
-	if ( fp == NULL ) {
-		errno = EBADF;
-		END_TRACE();
-		return -1 ;
-	}
+  if ( fp == NULL ) {
+    errno = EBADF;
+    END_TRACE();
+    return -1 ;
+  }
 
-	/*
-	 * The file is local
-	 */
-	if (rfio_rfilefdt_findptr(fp,FINDRFILE_WITH_SCAN) == -1 ) {
-		rc= ferror((FILE *)fp) ; 
-		END_TRACE() ; 
-		rfio_errno = 0;
-		return rc ;
-	}
+  /*
+   * The file is local
+   */
+  if (rfio_rfilefdt_findptr(fp,FINDRFILE_WITH_SCAN) == -1 ) {
+    rc= ferror((FILE *)fp) ;
+    END_TRACE() ;
+    rfio_errno = 0;
+    return rc ;
+  }
 
-	/*
-	 * Checking magic number
-	 */
-	if ( fp->magic != RFIO_MAGIC) {
-		int fps = fp->s;
-		serrno = SEBADVERSION ; 
-		free((char *)fp);
-		(void) close(fps) ;
-		END_TRACE() ;
-		return -1 ;
-	}
-	
-	/*
-	 * The file is remote, using then the eof flag updated
- 	 * by rfio_fread.
-	 */
+  /*
+   * Checking magic number
+   */
+  if ( fp->magic != RFIO_MAGIC) {
+    int fps = fp->s;
+    serrno = SEBADVERSION ;
+    free((char *)fp);
+    (void) close(fps) ;
+    END_TRACE() ;
+    return -1 ;
+  }
+
+  /*
+   * The file is remote, using then the eof flag updated
+   * by rfio_fread.
+   */
 #ifdef linux
-	if ( ((RFILE *)fp)->eof & _IO_ERR_SEEN ) 
+  if ( ((RFILE *)fp)->eof & _IO_ERR_SEEN )
 #else
 #ifdef __Lynx__
-	if ( ((RFILE *)fp)->eof & _ERR ) 
+    if ( ((RFILE *)fp)->eof & _ERR )
 #else
-	if ( ((RFILE *)fp)->eof & _IOERR ) 
+      if ( ((RFILE *)fp)->eof & _IOERR )
 #endif
 #endif
-		rc = 1 ;
-	else 
-		rc = 0 ;
-	END_TRACE() ;
-	return rc ; 
+        rc = 1 ;
+      else
+        rc = 0 ;
+  END_TRACE() ;
+  return rc ;
 }
-

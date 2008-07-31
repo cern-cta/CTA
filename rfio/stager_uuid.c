@@ -1,5 +1,5 @@
 /*
- * $Id: stager_uuid.c,v 1.1 2008/07/28 16:23:57 waldron Exp $
+ * $Id: stager_uuid.c,v 1.2 2008/07/31 07:09:14 sponcec3 Exp $
  */
 
 /*
@@ -37,4 +37,3 @@ Cuuid_t DLL_DECL *C__stager_subrequest_uuid() {
   }
   return(var);
 }
-

@@ -1,11 +1,11 @@
 /*
-* rfio_callhandlers.c,v 1.6 2005/07/21 09:13:07 itglp Exp
-*/
+ * rfio_callhandlers.c,v 1.6 2005/07/21 09:13:07 itglp Exp
+ */
 
 /*
-* Copyright (C) 2004 by CERN/IT/ADC/CA
-* All rights reserved
-*/
+ * Copyright (C) 2004 by CERN/IT/ADC/CA
+ * All rights reserved
+ */
 
 #include <stdlib.h>
 #include <sys/types.h>
@@ -36,19 +36,19 @@ struct internal_context {
 extern u_signed64 subrequest_id;
 extern int forced_mover_exit_error;
 
-int rfio_handle_open(const char *lfn, 
-int flags,
-int mode,
-uid_t uid,
-gid_t gid,
-char **pfn, 
-void **ctx,
-int *need_user_check) {
+int rfio_handle_open(const char *lfn,
+                     int flags,
+                     int mode,
+                     uid_t uid,
+                     gid_t gid,
+                     char **pfn,
+                     void **ctx,
+                     int *need_user_check) {
 
   if (subrequest_id > 0) {
     /* rfiod started with -Z option and option value > 0 */
     struct internal_context *internal_context = calloc(1, sizeof(struct internal_context));
-    
+
     if (internal_context != NULL) {
       internal_context->mode = (mode_t) mode;
       internal_context->flags = flags;
@@ -56,59 +56,59 @@ int *need_user_check) {
       internal_context->subrequest_id = subrequest_id;
       internal_context->nsHost = NULL;
       internal_context->fileId = 0;
-      
+
       /* Extract the file id and name server host from the pfn */
       char *cpfn = strdup(internal_context->pfn);
       if (cpfn != NULL) {
-	
-	/* Get the filename from the path */
-	char *buf = strrchr(cpfn, '/');
-	if (buf != NULL) {
-	  *buf++ = '\0';
-	  
-	  /* Extract the file id */
-	  char *pnh = strchr(buf, '@');
-	  if (pnh != NULL) {
-	    *pnh++ = '\0';
-	    internal_context->fileId = strtou64(buf);
-	    
-	    /* Extract the name server host */
-	    char *p = strrchr(pnh, '.');
-	    if (p != NULL) {
-	      *p++ = '\0';
-	      internal_context->nsHost = strdup(pnh);
-	      if (internal_context->nsHost == NULL) {
-		log(LOG_ERR, "rfio_handle_open : memory allocation error duplicating "
-		    "nameserver host (%s)\n", strerror(errno));	
-		serrno = errno;
-		return -1;
-	      }
-	    }
-	  }
-	} 
-	free(cpfn);
 
-	/* If we got this far and the name server host is not defined then the
-	 * pfn was not as we expected
-	 */
-	if (internal_context->nsHost == NULL) {
-	  log(LOG_ERR, "rfio_handle_open : error parsing the physical filename %s: (format unknown)\n", 
-	      internal_context->pfn);
-	  serrno = EINVAL;
-	  return -1;
-	}
+        /* Get the filename from the path */
+        char *buf = strrchr(cpfn, '/');
+        if (buf != NULL) {
+          *buf++ = '\0';
+
+          /* Extract the file id */
+          char *pnh = strchr(buf, '@');
+          if (pnh != NULL) {
+            *pnh++ = '\0';
+            internal_context->fileId = strtou64(buf);
+
+            /* Extract the name server host */
+            char *p = strrchr(pnh, '.');
+            if (p != NULL) {
+              *p++ = '\0';
+              internal_context->nsHost = strdup(pnh);
+              if (internal_context->nsHost == NULL) {
+                log(LOG_ERR, "rfio_handle_open : memory allocation error duplicating "
+                    "nameserver host (%s)\n", strerror(errno));
+                serrno = errno;
+                return -1;
+              }
+            }
+          }
+        }
+        free(cpfn);
+
+        /* If we got this far and the name server host is not defined then the
+         * pfn was not as we expected
+         */
+        if (internal_context->nsHost == NULL) {
+          log(LOG_ERR, "rfio_handle_open : error parsing the physical filename %s: (format unknown)\n",
+              internal_context->pfn);
+          serrno = EINVAL;
+          return -1;
+        }
       } else {
-	log(LOG_ERR, "rfio_handle_open : error parsing the physical filename %s: (%s)\n", 
-	    internal_context->pfn, strerror(errno));
-	serrno = errno;
-	return -1;
+        log(LOG_ERR, "rfio_handle_open : error parsing the physical filename %s: (%s)\n",
+            internal_context->pfn, strerror(errno));
+        serrno = errno;
+        return -1;
       }
     } else {
       log(LOG_ERR, "rfio_handle_open : calloc error (%s)\n", strerror(errno));
       serrno = errno;
       return -1;
     }
-    
+
     struct stat64 statbuf;
     if (stat64(internal_context->pfn,&statbuf) < 0) {
       /* local file does not exist: here we assume that it's going to be created,
@@ -121,7 +121,7 @@ int *need_user_check) {
 
     *ctx = (void *)internal_context;
   }
-  
+
   *pfn = (char *)strdup(lfn);
   return 0;
 }
@@ -132,7 +132,7 @@ int rfio_handle_firstwrite(void *ctx) {
 
     /* In case of an update, we should call firstByteWritten, so we ignore pure Get and Put cases */
     if (!((internal_context->flags & O_ACCMODE) == O_RDONLY)  /* Get case (should actually never happen!) */
-      && !((internal_context->flags & O_TRUNC) == O_TRUNC)) {   /* Put case */
+        && !((internal_context->flags & O_TRUNC) == O_TRUNC)) {   /* Put case */
       struct Cstager_IJobSvc_t **jobSvc;
       struct C_Services_t **dbService;
       C_BaseObject_initLog("rfio", SVC_STDMSG);
@@ -158,24 +158,24 @@ int rfio_handle_firstwrite(void *ctx) {
 }
 
 int rfio_handle_close(void *ctx,
-struct stat *filestat,
-int close_status) {
-  
+                      struct stat *filestat,
+                      int close_status) {
+
   struct internal_context *internal_context = (struct internal_context *) ctx;
-  
+
   if (internal_context != NULL) {
     struct Cstager_IJobSvc_t **jobSvc;
     struct C_Services_t **dbService;
-    
+
     C_BaseObject_initLog("rfio", SVC_STDMSG);
     if (stager_getRemJobAndDbSvc(&jobSvc,&dbService) == 0) {
       char tmpbuf[21];
-      
+
       if (((internal_context->flags & O_TRUNC) == O_TRUNC) ||
           (internal_context->one_byte_at_least)) {   /* see also comment in rfio_handle_open */
         /* This is a write */
         struct stat64 statbuf;
-        
+
         if (stat64(internal_context->pfn,&statbuf) == 0) {
           struct Cstager_SubRequest_t *subrequest;
           /* File still exists - this is a candidate for migration regardless of its size (zero-length are ignored in the stager) */
@@ -226,5 +226,5 @@ int close_status) {
     return -1;
   }
   return 0;
- 
+
 }

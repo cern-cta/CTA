@@ -1,5 +1,5 @@
 /*
- * $Id: chown.c,v 1.11 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: chown.c,v 1.12 2008/07/31 07:09:13 sponcec3 Exp $
  */
 
 /*
@@ -13,56 +13,56 @@
 
 #include "rfio.h"               /* Remote File I/O general definitions  */
 
-int DLL_DECL rfio_chown(file, owner, group)     /* Remote chown	                */
-char		*file;          /* remote file path             */
-int		owner ;		   /* Owner's uid */
-int 		group ;		   /* Owner's gid */
+int DLL_DECL rfio_chown(file, owner, group)     /* Remote chown                 */
+     char  *file;          /* remote file path             */
+     int  owner ;     /* Owner's uid */
+     int   group ;     /* Owner's gid */
 {
-	char     buf[BUFSIZ];       /* General input/output buffer          */
-	register int    s;              /* socket descriptor            */
-	int             status;         /* remote chown() status        */
-	int     	len;
-	char    	*host,
-			*filename;
-	char    	*p=buf;
-	int 		rt ;
-	int 		rcode, parserc ;
+  char     buf[BUFSIZ];       /* General input/output buffer          */
+  register int    s;              /* socket descriptor            */
+  int             status;         /* remote chown() status        */
+  int      len;
+  char     *host,
+    *filename;
+  char     *p=buf;
+  int   rt ;
+  int   rcode, parserc ;
 
-	INIT_TRACE("RFIO_TRACE");
-	TRACE(1, "rfio", "rfio_chown(%s, %d, %d)", file,owner,group);
+  INIT_TRACE("RFIO_TRACE");
+  TRACE(1, "rfio", "rfio_chown(%s, %d, %d)", file,owner,group);
 
-	if (!(parserc = rfio_parseln(file,&host,&filename,NORDLINKS))) {
-		if ( host != NULL ) {
-			/*
-			 * HSM file
-			 */
-			TRACE(1,"rfio","rfio_chown: %s is an HSM path",
-				  filename);
-			END_TRACE();
-			rfio_errno = 0;
-			return(rfio_HsmIf_chown(filename,owner,group));
-		}
-		TRACE(1, "rfio", "rfio_chown: using local chown(%s, %d, %d)",
-			filename, owner, group);
+  if (!(parserc = rfio_parseln(file,&host,&filename,NORDLINKS))) {
+    if ( host != NULL ) {
+      /*
+       * HSM file
+       */
+      TRACE(1,"rfio","rfio_chown: %s is an HSM path",
+            filename);
+      END_TRACE();
+      rfio_errno = 0;
+      return(rfio_HsmIf_chown(filename,owner,group));
+    }
+    TRACE(1, "rfio", "rfio_chown: using local chown(%s, %d, %d)",
+          filename, owner, group);
 
-		END_TRACE();
-		rfio_errno = 0;
-		status = chown(filename,owner, group);
-		if ( status < 0 ) serrno = 0;
-		return(status);
-	}
-	if (parserc < 0) {
-		END_TRACE();
-		return(-1);
-	}
+    END_TRACE();
+    rfio_errno = 0;
+    status = chown(filename,owner, group);
+    if ( status < 0 ) serrno = 0;
+    return(status);
+  }
+  if (parserc < 0) {
+    END_TRACE();
+    return(-1);
+  }
 
-	s = rfio_connect(host,&rt);
-	if (s < 0)      {
-		END_TRACE();
-		return(-1);
-	}
+  s = rfio_connect(host,&rt);
+  if (s < 0)      {
+    END_TRACE();
+    return(-1);
+  }
 
-	len = strlen(filename)+ 2* WORDSIZE + 1;
+  len = strlen(filename)+ 2* WORDSIZE + 1;
   if ( RQSTSIZE+len > BUFSIZ ) {
     TRACE(2,"rfio","rfio_chown: request too long %d (max %d)",
           RQSTSIZE+len,BUFSIZ);
@@ -71,39 +71,39 @@ int 		group ;		   /* Owner's gid */
     serrno = E2BIG;
     return(-1);
   }
-	marshall_WORD(p, RFIO_MAGIC);
-	marshall_WORD(p, RQST_CHOWN);
-	marshall_WORD(p, geteuid());
-	marshall_WORD(p, getegid());
-	marshall_LONG(p, len);
-	p= buf + RQSTSIZE;
-	marshall_STRING(p, filename);
-	marshall_WORD(p, owner) ;
-	marshall_WORD(p, group);
-	TRACE(2,"rfio","rfio_chown: sending %d bytes",RQSTSIZE+len) ;
-	if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
-		TRACE(2, "rfio", "rfio_chown: write(): ERROR occured (errno=%d)", errno);
-		(void) netclose(s);
-		END_TRACE();
-		return(-1);
-	}
-	p = buf;
-	TRACE(2, "rfio", "rfio_chown: reading %d bytes", LONGSIZE);
-	if (netread_timeout(s, buf, 2* LONGSIZE, RFIO_CTRL_TIMEOUT) != (2 * LONGSIZE))  {
-		TRACE(2, "rfio", "rfio_chown: read(): ERROR occured (errno=%d)", errno);
-		(void) netclose(s);
-		END_TRACE();
-		return(-1);
-	}
-	unmarshall_LONG(p, status);
-	unmarshall_LONG(p, rcode);
-	TRACE(1, "rfio", "rfio_chown: return %d",status);
-	rfio_errno = rcode;
-	(void) netclose(s);
-	if (status)     {
-		END_TRACE();
-		return(-1);
-	}
-	END_TRACE();
-	return (0);
+  marshall_WORD(p, RFIO_MAGIC);
+  marshall_WORD(p, RQST_CHOWN);
+  marshall_WORD(p, geteuid());
+  marshall_WORD(p, getegid());
+  marshall_LONG(p, len);
+  p= buf + RQSTSIZE;
+  marshall_STRING(p, filename);
+  marshall_WORD(p, owner) ;
+  marshall_WORD(p, group);
+  TRACE(2,"rfio","rfio_chown: sending %d bytes",RQSTSIZE+len) ;
+  if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
+    TRACE(2, "rfio", "rfio_chown: write(): ERROR occured (errno=%d)", errno);
+    (void) netclose(s);
+    END_TRACE();
+    return(-1);
+  }
+  p = buf;
+  TRACE(2, "rfio", "rfio_chown: reading %d bytes", LONGSIZE);
+  if (netread_timeout(s, buf, 2* LONGSIZE, RFIO_CTRL_TIMEOUT) != (2 * LONGSIZE))  {
+    TRACE(2, "rfio", "rfio_chown: read(): ERROR occured (errno=%d)", errno);
+    (void) netclose(s);
+    END_TRACE();
+    return(-1);
+  }
+  unmarshall_LONG(p, status);
+  unmarshall_LONG(p, rcode);
+  TRACE(1, "rfio", "rfio_chown: return %d",status);
+  rfio_errno = rcode;
+  (void) netclose(s);
+  if (status)     {
+    END_TRACE();
+    return(-1);
+  }
+  END_TRACE();
+  return (0);
 }

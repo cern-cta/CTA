@@ -1,5 +1,5 @@
 /*
- * $Id: fseeko64.c,v 1.2 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: fseeko64.c,v 1.3 2008/07/31 07:09:13 sponcec3 Exp $
  */
 
 /*
@@ -12,8 +12,8 @@
 /*
  * System remote file I/O definitions
  */
-#define RFIO_KERNEL     1 
-#include "rfio.h"    
+#define RFIO_KERNEL     1
+#include "rfio.h"
 #include "rfio_rfilefdt.h"
 #include "u64subr.h"
 #include <stdlib.h>
@@ -21,7 +21,7 @@
 /*
  * Remote file fseek
  */
-int DLL_DECL rfio_fseeko64(fp, offset, whence)  
+int DLL_DECL rfio_fseeko64(fp, offset, whence)
      RFILE *fp;
      off64_t offset;
      int whence;
@@ -29,10 +29,10 @@ int DLL_DECL rfio_fseeko64(fp, offset, whence)
   int     rc;
   off64_t offsetout;
   char tmpbuf[21];
-  
+
   INIT_TRACE("RFIO_TRACE");
   TRACE(1, "rfio", "rfio_fseeko64(%x, %s, %d)", fp, u64tostr(offset,tmpbuf,0), whence);
-  
+
   /*
    * Checking fp validity
    */
@@ -48,7 +48,7 @@ int DLL_DECL rfio_fseeko64(fp, offset, whence)
     rc = fseeko64((FILE *)fp, offset, whence);
     if ( rc < 0 ) serrno = 0;
     rfio_errno = 0;
-    END_TRACE(); 
+    END_TRACE();
     return rc;
   }
 
@@ -59,7 +59,7 @@ int DLL_DECL rfio_fseeko64(fp, offset, whence)
    */
   if (fp->magic != RFIO_MAGIC) {
     int fps = fp->s;
-    serrno = SEBADVERSION; 
+    serrno = SEBADVERSION;
     TRACE(2, "rfio", "rfio_fseeko64() : Bad magic number");
     free((char *)fp);
     (void) close(fps);
@@ -68,7 +68,7 @@ int DLL_DECL rfio_fseeko64(fp, offset, whence)
   }
 
   /*
-   * The file is remote 
+   * The file is remote
    */
   offsetout = rfio_lseek64(fp->s, offset, whence);
   if ( offsetout == (off64_t)-1 ) {
@@ -87,5 +87,5 @@ int DLL_DECL rfio_fseeko64(fp, offset, whence)
     rc = 0;
   }
   END_TRACE();
-  return rc; 
+  return rc;
 }

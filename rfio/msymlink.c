@@ -1,5 +1,5 @@
 /*
- * $Id: msymlink.c,v 1.15 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: msymlink.c,v 1.16 2008/07/31 07:09:13 sponcec3 Exp $
  */
 
 
@@ -40,9 +40,9 @@ int DLL_DECL rfio_msymlink(n1,file2)
   char *host , *filename ;
 
   INIT_TRACE("RFIO_TRACE");
-  
+
   Cglobals_getTid(&Tid);
-  
+
   TRACE(1, "rfio", "rfio_msymlink(\"%s\",\"%s\"), Tid=%d", n1, file2, Tid);
   if (!(parserc = rfio_parseln(file2,&host,&filename,NORDLINKS))) {
     /* if not a remote file, must be local or HSM  */
@@ -58,8 +58,8 @@ int DLL_DECL rfio_msymlink(n1,file2)
     }
     /* The file is local */
 #if ! defined(_WIN32)
-      rc = symlink(n1,filename) ;
-      if ( rc < 0 ) serrno = 0;
+    rc = symlink(n1,filename) ;
+    if ( rc < 0 ) serrno = 0;
 #else
     { serrno = SEOPNOTSUP; rc = -1;}
 #endif
@@ -67,10 +67,10 @@ int DLL_DECL rfio_msymlink(n1,file2)
     END_TRACE();
     return (rc) ;
   } else {
-	  if (parserc < 0) {
-		  END_TRACE();
-		  return(-1);
-	  }
+    if (parserc < 0) {
+      END_TRACE();
+      return(-1);
+    }
     /* Look if already in */
     serrno = 0;
     rfindex = rfio_msymlink_findentry(host,Tid);
@@ -104,7 +104,7 @@ int DLL_DECL rfio_msymlink(n1,file2)
 static int pw_key = -1;
 static int old_uid_key = -1;
 
-static int rfio_smsymlink(s,n1,filename) 
+static int rfio_smsymlink(s,n1,filename)
      int s ;
      char * n1 ;
      char * filename ;
@@ -126,7 +126,7 @@ static int rfio_smsymlink(s,n1,filename)
   if ( Cglobals_get(&old_uid_key, (void**)&old_uid, sizeof(int)) > 0 )
     *old_uid = -1;
   Cglobals_get(&pw_key, (void**)&pw, sizeof(struct passwd));
-  
+
   len = strlen(filename)+1;
   uid = geteuid() ;
   gid = getegid () ;
@@ -136,7 +136,7 @@ static int rfio_smsymlink(s,n1,filename)
       TRACE(3, "rfio" ,"rfio_smsymlink: Cgetpwuid(): ERROR occured (errno=%d)",errno);
       rfio_symend_this(s,1);
       return(-1);
-    }	
+    }
     memcpy(pw, pw_tmp, sizeof(struct passwd));
     *old_uid = uid;
   }
@@ -164,7 +164,7 @@ static int rfio_smsymlink(s,n1,filename)
     rfio_symend_this(s,1);
     return(-1);
   }
-  
+
   p = nbuf ;
 
   marshall_WORD(p,uid) ;
@@ -172,7 +172,7 @@ static int rfio_smsymlink(s,n1,filename)
   marshall_STRING( p, n1 ) ;
   marshall_STRING( p, filename ) ;
   marshall_STRING( p, pw->pw_name) ;
-	
+
   if (netwrite_timeout(s,nbuf,status,RFIO_CTRL_TIMEOUT) != status ) {
     TRACE(3, "rfio", "smsymlink: write(): ERROR occured (errno=%d)",errno);
     rfio_symend_this(s,0);
@@ -183,7 +183,7 @@ static int rfio_smsymlink(s,n1,filename)
 
   /*
    * Getting back status
-   */ 
+   */
   if ((rc = netread_timeout(s, buf, WORDSIZE + 2*LONGSIZE, RFIO_CTRL_TIMEOUT)) != (WORDSIZE+ 2*LONGSIZE))  {
     TRACE(3, "rfio", "rfio_smsymlink: read(): ERROR occured (errno=%d)", errno);
     rfio_symend_this(s, (rc <= 0 ? 0 : 1));
@@ -199,7 +199,7 @@ static int rfio_smsymlink(s,n1,filename)
     rfio_symend_this(s,1);
     return(-1);
   }
-  
+
   TRACE(3,"rfio","rfio_smsymlink: return %d",rcode);
   rfio_errno = rcode ;
   if ( status < 0 ) {
@@ -246,7 +246,7 @@ int DLL_DECL rfio_symend()
       msymlink_tab[i].Tid = -1;
     }
   }
-   
+
   TRACE(3,"rfio","rfio_symend: Unlock msymlink_tab");
   if (Cmutex_unlock((void *) msymlink_tab) != 0) {
     TRACE(3,"rfio","rfio_symend: Cmutex_unlock(msymlink_tab) error No %d (%s)", errno, strerror(errno));
@@ -296,7 +296,7 @@ static int rfio_symend_this(s,flag)
       }
     }
   }
-   
+
   TRACE(3,"rfio","rfio_symend_this: Unlock msymlink_tab");
   if (Cmutex_unlock((void *) msymlink_tab) != 0) {
     TRACE(3,"rfio","rfio_symend_this: Cmutex_unlock(msymlink_tab) error No %d (%s)", errno, strerror(errno));
@@ -334,10 +334,10 @@ static int rfio_msymlink_allocentry(hostname,Tid,s)
       goto _rfio_msymlink_allocentry_return;
     }
   }
-  
+
   serrno = ENOENT;
   rc = -1;
-  
+
  _rfio_msymlink_allocentry_return:
   TRACE(3,"rfio","rfio_msymlink_allocentry: Unlock msymlink_tab");
   if (Cmutex_unlock((void *) msymlink_tab) != 0) {
@@ -404,14 +404,14 @@ int DLL_DECL rfio_msymlink_reset()
   }
   for (i = 0; i < MAXMCON; i++) {
     if ((msymlink_tab[i].s >= 0) && (msymlink_tab[i].host[0] != '\0')) {
-        TRACE(3,"rfio","rfio_msymlink_reset: Resetting socket fd=%d, host=%s\n", msymlink_tab[i].s, msymlink_tab[i].host);
-        netclose(msymlink_tab[i].s);
+      TRACE(3,"rfio","rfio_msymlink_reset: Resetting socket fd=%d, host=%s\n", msymlink_tab[i].s, msymlink_tab[i].host);
+      netclose(msymlink_tab[i].s);
     }
     msymlink_tab[i].s = -1;
     msymlink_tab[i].host[0] = '\0';
     msymlink_tab[i].Tid = -1;
   }
-   
+
   TRACE(3,"rfio","rfio_msymlink_reset: Unlock msymlink_tab");
   if (Cmutex_unlock((void *) msymlink_tab) != 0) {
     TRACE(3,"rfio","rfio_msymlink_reset: Cmutex_unlock(msymlink_tab) error No %d (%s)", errno, strerror(errno));

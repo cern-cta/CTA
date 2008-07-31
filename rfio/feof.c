@@ -1,5 +1,5 @@
 /*
- * $Id: feof.c,v 1.7 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: feof.c,v 1.8 2008/07/31 07:09:13 sponcec3 Exp $
  */
 
 /*
@@ -13,65 +13,64 @@
  * System remote file I/O definitions
  */
 
-#define RFIO_KERNEL     1  
-#include "rfio.h"         
+#define RFIO_KERNEL     1
+#include "rfio.h"
 #include "rfio_rfilefdt.h"
 #include <stdlib.h>
 
 int rfio_feof(fp)
-	RFILE * fp ; 
+     RFILE * fp ;
 {
-	int     rc 	;
+  int     rc  ;
 
-	INIT_TRACE("RFIO_TRACE");
-	TRACE(1, "rfio", "rfio_feof(%x)", fp);
+  INIT_TRACE("RFIO_TRACE");
+  TRACE(1, "rfio", "rfio_feof(%x)", fp);
 
-	if ( fp == NULL ) {
-		errno = EBADF;
-		END_TRACE();
-		return -1 ;
-	}
+  if ( fp == NULL ) {
+    errno = EBADF;
+    END_TRACE();
+    return -1 ;
+  }
 
-	/*
-	 * The file is local
-	 */
-	if (rfio_rfilefdt_findptr(fp,FINDRFILE_WITH_SCAN) == -1 ) {
-		rc= feof((FILE *)fp) ; 
-		END_TRACE() ; 
-		rfio_errno = 0;
-		return rc ;
-	}
+  /*
+   * The file is local
+   */
+  if (rfio_rfilefdt_findptr(fp,FINDRFILE_WITH_SCAN) == -1 ) {
+    rc= feof((FILE *)fp) ;
+    END_TRACE() ;
+    rfio_errno = 0;
+    return rc ;
+  }
 
-	/*
-	 * Checking magic number
-	 */
-	if ( fp->magic != RFIO_MAGIC) {
-		int fps = fp->s;
-		serrno = SEBADVERSION ; 
-		free((char *)fp);
-		(void) close(fps) ;
-		END_TRACE() ;
-		return -1 ;
-	}
-	
-	/*
-	 * The file is remote, using then the eof flag updated
- 	 * by rfio_fread.
-	 */
+  /*
+   * Checking magic number
+   */
+  if ( fp->magic != RFIO_MAGIC) {
+    int fps = fp->s;
+    serrno = SEBADVERSION ;
+    free((char *)fp);
+    (void) close(fps) ;
+    END_TRACE() ;
+    return -1 ;
+  }
+
+  /*
+   * The file is remote, using then the eof flag updated
+   * by rfio_fread.
+   */
 #ifdef linux
-	if ( ((RFILE *)fp)->eof & _IO_EOF_SEEN ) 
+  if ( ((RFILE *)fp)->eof & _IO_EOF_SEEN )
 #else
 #ifdef __Lynx__
-	if ( ((RFILE *)fp)->eof & _EOF ) 
+    if ( ((RFILE *)fp)->eof & _EOF )
 #else
-	if ( ((RFILE *)fp)->eof & _IOEOF ) 
+      if ( ((RFILE *)fp)->eof & _IOEOF )
 #endif
 #endif
-		rc = 1 ;
-	else 
-		rc = 0 ;
-	END_TRACE() ;
-	return rc ; 
-	
-}
+        rc = 1 ;
+      else
+        rc = 0 ;
+  END_TRACE() ;
+  return rc ;
 
+}

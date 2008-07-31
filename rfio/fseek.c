@@ -1,5 +1,5 @@
 /*
- * $Id: fseek.c,v 1.10 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: fseek.c,v 1.11 2008/07/31 07:09:13 sponcec3 Exp $
  */
 
 /*
@@ -12,24 +12,24 @@
 /*
  * System remote file I/O definitions
  */
-#define RFIO_KERNEL     1 
-#include "rfio.h"    
+#define RFIO_KERNEL     1
+#include "rfio.h"
 #include "rfio_rfilefdt.h"
 #include <stdlib.h>
 
 /*
  * Remote file fseek
  */
-int DLL_DECL rfio_fseek(fp, offset, whence)  
+int DLL_DECL rfio_fseek(fp, offset, whence)
      RFILE *fp;
      long int offset;
      int whence;
 {
   int rc;
-  
+
   INIT_TRACE("RFIO_TRACE");
   TRACE(1, "rfio", "rfio_fseek(%x, %d, %d)", fp, offset, whence);
-  
+
   /*
    * Checking fp validity
    */
@@ -45,7 +45,7 @@ int DLL_DECL rfio_fseek(fp, offset, whence)
     rc = fseek((FILE *)fp, offset, whence);
     if ( rc < 0 ) serrno = 0;
     rfio_errno = 0;
-    END_TRACE(); 
+    END_TRACE();
     return rc;
   }
 
@@ -56,7 +56,7 @@ int DLL_DECL rfio_fseek(fp, offset, whence)
    */
   if (fp->magic != RFIO_MAGIC) {
     int fps = fp->s;
-    serrno = SEBADVERSION; 
+    serrno = SEBADVERSION;
     TRACE(2,"rfio","rfio_fseek() : Bad magic number");
     free((char *)fp);
     (void) close(fps);
@@ -65,26 +65,26 @@ int DLL_DECL rfio_fseek(fp, offset, whence)
   }
 
   /*
-   * The file is remote 
+   * The file is remote
    */
   rc = rfio_lseek(fp->s,offset,whence);
-  switch(rc) 
-    {
-    case -1:
+  switch(rc)
+  {
+  case -1:
 #ifdef linux
-      ((RFILE *)fp)->eof |= _IO_ERR_SEEN;
+    ((RFILE *)fp)->eof |= _IO_ERR_SEEN;
 #else
 #ifdef __Lynx__
-      ((RFILE *)fp)->eof |= _ERR;
+    ((RFILE *)fp)->eof |= _ERR;
 #else
-      ((RFILE *)fp)->eof |= _IOERR;
+    ((RFILE *)fp)->eof |= _IOERR;
 #endif
 #endif
-      break;
+    break;
   default:
     rc = 0;
-    break; 
+    break;
   }
   END_TRACE();
-  return rc; 
+  return rc;
 }

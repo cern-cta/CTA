@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c,v 1.5 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: misc.c,v 1.6 2008/07/31 07:09:13 sponcec3 Exp $
  */
 
 /*
@@ -14,10 +14,10 @@
 #include <osdep.h>
 
 void DLL_DECL striptb(s)                 /* Strip trailing blanks       */
-char    *s;
+     char    *s;
 {
-	register int    i;
+  register int    i;
 
-	for (i=strlen(s)-1;s[i]==' ';i--);
-	s[i+1]='\0';
+  for (i=strlen(s)-1;s[i]==' ';i--);
+  s[i+1]='\0';
 }

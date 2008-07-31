@@ -1,16 +1,16 @@
 /*
- * $Id: rfrename.c,v 1.9 2008/07/31 06:26:51 sponcec3 Exp $
+ * $Id: rfrename.c,v 1.10 2008/07/31 07:09:13 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1998-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
+
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrename.c,v $ $Revision: 1.9 $ $Date: 2008/07/31 06:26:51 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfrename.c,v $ $Revision: 1.10 $ $Date: 2008/07/31 07:09:13 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
- 
+
 /*
  * Make remote directory
  */
@@ -26,15 +26,15 @@ static char sccsid[] = "@(#)$RCSfile: rfrename.c,v $ $Revision: 1.9 $ $Date: 200
 static char *ckpath();
 char *getconfent();
 
-int main(argc, argv) 
-int argc;
-char *argv[];
+int main(argc, argv)
+     int argc;
+     char *argv[];
 {
   char *old_path,*new_path;
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
- 
+
 
   if ( argc < 3 ) {
     fprintf(stderr,"Usage: %s old-path new-path\n",argv[0]);
@@ -42,8 +42,8 @@ char *argv[];
   }
   old_path = ckpath(argv[1]);
   new_path = ckpath(argv[2]);
-  
-  
+
+
 #if defined(_WIN32)
   if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
     fprintf (stderr, "WSAStartup unsuccessful\n");
@@ -58,19 +58,17 @@ char *argv[];
 }
 
 static char *ckpath(path)
-char *path;
+     char *path;
 {
   char *cp;
   char *newpath;
   newpath = (char *)malloc(BUFSIZ*sizeof(char));
- /* Special treatment for filenames starting with /scratch/... */
+  /* Special treatment for filenames starting with /scratch/... */
   if (!strncmp ("/scratch/", path, 9) &&
       (cp = getconfent ("SHIFT", "SCRATCH", 0)) != NULL) {
     strcpy (newpath, cp);
     strcat (newpath, path+9);
-  } else 
+  } else
     strcpy(newpath,path);
   return(newpath);
 }
-
-

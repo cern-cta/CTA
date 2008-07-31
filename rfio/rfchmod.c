@@ -1,5 +1,5 @@
 /*
- * $Id: rfchmod.c,v 1.5 2008/07/31 06:26:51 sponcec3 Exp $
+ * $Id: rfchmod.c,v 1.6 2008/07/31 07:09:13 sponcec3 Exp $
  */
 
 /*
@@ -33,9 +33,9 @@ void help(int rcode) {
   exit(rcode);
 }
 
-int main(argc, argv) 
-int argc;
-char *argv[];
+int main(argc, argv)
+     int argc;
+     char *argv[];
 {
   extern int optind;
   char     *path;
@@ -44,13 +44,13 @@ char *argv[];
   mode_t mode = 0777;
   long int lmode = 0;       /* For conversion, then casting to mode  IN2P3*/
   char     *endprt;             /* For conversion                        IN2P3*/
-  
+
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
-  
+
   cmdid = argv[0];
-  
+
   /* Options decoding                              */
   while ( (c = getopt(argc,argv,"")) != EOF ) {
     switch(c) {
@@ -64,7 +64,7 @@ char *argv[];
     fprintf(stderr,"Missing access mode\n");
     help(2);
   }
-  
+
   lmode = strtol(argv[optind], &endprt, 8);
   if ( lmode > 0 && lmode <= 0777 && *endprt == '\0' ) mode = lmode;
   else {
@@ -88,7 +88,7 @@ char *argv[];
 
   for (;optind<argc;optind++) {
     path = ckpath(argv[optind]);
-    
+
 
     if ( rfio_chmod(path,mode) ) {
       fprintf(stderr, "chmod(): %s: %s\n", path, rfio_serror() );
@@ -99,16 +99,16 @@ char *argv[];
 }
 
 static char *ckpath(path)
-char *path;
+     char *path;
 {
   char *cp;
   static char newpath[BUFSIZ];
- /* Special treatment for filenames starting with /scratch/... */
+  /* Special treatment for filenames starting with /scratch/... */
   if (!strncmp ("/scratch/", path, 9) &&
       (cp = getconfent ("SHIFT", "SCRATCH", 0)) != NULL) {
     strcpy (newpath, cp);
     strcat (newpath, path+9);
-  } else 
+  } else
     strcpy(newpath,path);
   return(newpath);
 }

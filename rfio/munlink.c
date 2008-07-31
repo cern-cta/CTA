@@ -1,5 +1,5 @@
 /*
- * $Id: munlink.c,v 1.14 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: munlink.c,v 1.15 2008/07/31 07:09:13 sponcec3 Exp $
  */
 
 
@@ -38,9 +38,9 @@ int DLL_DECL rfio_munlink(file)
   char *host , *filename ;
 
   INIT_TRACE("RFIO_TRACE");
-  
+
   Cglobals_getTid(&Tid);
-  
+
   TRACE(1, "rfio", "rfio_munlink(\"%s\"), Tid=%d", file, Tid);
   if (!(parserc = rfio_parseln(file,&host,&filename,NORDLINKS))) {
     /* if not a remote file, must be local or HSM  */
@@ -60,10 +60,10 @@ int DLL_DECL rfio_munlink(file)
     END_TRACE();
     return (rc) ;
   } else {
-	  if (parserc < 0) {
-		  END_TRACE();
-		  return(-1);
-	  }
+    if (parserc < 0) {
+      END_TRACE();
+      return(-1);
+    }
     /* Look if already in */
     serrno = 0;
     rfindex = rfio_munlink_findentry(host,Tid);
@@ -97,7 +97,7 @@ int DLL_DECL rfio_munlink(file)
 static int pw_key = -1;
 static int old_uid_key = -1;
 
-static int rfio_smunlink(s,filename) 
+static int rfio_smunlink(s,filename)
      int s ;
      char * filename ;
 {
@@ -119,7 +119,7 @@ static int rfio_smunlink(s,filename)
   if ( Cglobals_get(&old_uid_key, (void**)&old_uid, sizeof(int)) > 0 )
     *old_uid = -1;
   Cglobals_get(&pw_key, (void**)&pw, sizeof(struct passwd));
-  
+
   len = strlen(filename)+1;
   uid = geteuid() ;
   gid = getegid () ;
@@ -129,7 +129,7 @@ static int rfio_smunlink(s,filename)
       TRACE(3, "rfio" ,"rfio_smunlink: Cgetpwuid(): ERROR occured (errno=%d)",errno);
       rfio_unend_this(s,1);
       return(-1) ;
-    }	
+    }
     memcpy(pw, pw_tmp, sizeof(struct passwd));
     *old_uid = uid;
   }
@@ -157,7 +157,7 @@ static int rfio_smunlink(s,filename)
     rfio_unend_this(s,1);
     return(-1);
   }
-  
+
   p = nbuf ;
 
   marshall_WORD(p,uid) ;
@@ -165,7 +165,7 @@ static int rfio_smunlink(s,filename)
   marshall_STRING( p, n1 ) ;
   marshall_STRING( p, filename ) ;
   marshall_STRING( p, pw->pw_name) ;
-	
+
   if (netwrite_timeout(s,nbuf,status,RFIO_CTRL_TIMEOUT) != status ) {
     TRACE(3, "rfio", "smunlink: write(): ERROR occured (errno=%d)",errno);
     rfio_unend_this(s,0);
@@ -176,7 +176,7 @@ static int rfio_smunlink(s,filename)
 
   /*
    * Getting back status
-   */ 
+   */
   if ((rc = netread_timeout(s, buf, WORDSIZE + 2*LONGSIZE, RFIO_CTRL_TIMEOUT)) != (WORDSIZE+ 2*LONGSIZE))  {
     TRACE(3, "rfio", "rfio_smunlink: read(): ERROR occured (errno=%d)", errno);
     rfio_unend_this(s, (rc <= 0 ? 0 : 1));
@@ -192,7 +192,7 @@ static int rfio_smunlink(s,filename)
     rfio_unend_this(s,1);
     return(-1);
   }
-  
+
   TRACE(3,"rfio","rfio_smunlink: return %d",rcode);
   rfio_errno = rcode ;
   if ( status < 0 ) {
@@ -238,7 +238,7 @@ int DLL_DECL rfio_unend()
       munlink_tab[i].Tid = -1;
     }
   }
-   
+
   TRACE(3,"rfio","rfio_unend: Unlock munlink_tab");
   if (Cmutex_unlock((void *) munlink_tab) != 0) {
     TRACE(3,"rfio","rfio_unend: Cmutex_unlock(munlink_tab) error No %d (%s)", errno, strerror(errno));
@@ -288,7 +288,7 @@ static int rfio_unend_this(s,flag)
       }
     }
   }
-   
+
   TRACE(3,"rfio","rfio_unend_this: Unlock munlink_tab");
   if (Cmutex_unlock((void *) munlink_tab) != 0) {
     TRACE(3,"rfio","rfio_unend_this: Cmutex_unlock(munlink_tab) error No %d (%s)", errno, strerror(errno));
@@ -326,10 +326,10 @@ static int rfio_munlink_allocentry(hostname,Tid,s)
       goto _rfio_munlink_allocentry_return;
     }
   }
-  
+
   serrno = ENOENT;
   rc = -1;
-  
+
  _rfio_munlink_allocentry_return:
   TRACE(3,"rfio","rfio_munlink_allocentry: Unlock munlink_tab");
   if (Cmutex_unlock((void *) munlink_tab) != 0) {
@@ -396,14 +396,14 @@ int DLL_DECL rfio_munlink_reset()
   }
   for (i = 0; i < MAXMCON; i++) {
     if ((munlink_tab[i].s >= 0) && (munlink_tab[i].host[0] != '\0')) {
-        TRACE(3,"rfio","rfio_munlink_reset: Resetting socket fd=%d, host=%s\n", munlink_tab[i].s, munlink_tab[i].host);
-        netclose(munlink_tab[i].s);
+      TRACE(3,"rfio","rfio_munlink_reset: Resetting socket fd=%d, host=%s\n", munlink_tab[i].s, munlink_tab[i].host);
+      netclose(munlink_tab[i].s);
     }
     munlink_tab[i].s = -1;
     munlink_tab[i].host[0] = '\0';
     munlink_tab[i].Tid = -1;
   }
-   
+
   TRACE(3,"rfio","rfio_munlink_reset: Unlock munlink_tab");
   if (Cmutex_unlock((void *) munlink_tab) != 0) {
     TRACE(3,"rfio","rfio_munlink_reset: Cmutex_unlock(munlink_tab) error No %d (%s)", errno, strerror(errno));

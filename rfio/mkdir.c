@@ -1,5 +1,5 @@
 /*
- * $Id: mkdir.c,v 1.12 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: mkdir.c,v 1.13 2008/07/31 07:09:13 sponcec3 Exp $
  */
 
 /*
@@ -14,102 +14,102 @@
 #include "rfio.h"               /* Remote File I/O general definitions  */
 
 int DLL_DECL rfio_mkdir(dirpath, mode)     /* Remote mkdir              */
-char		*dirpath;          /* remote directory path             */
-int		mode;              /* remote directory mode             */
+     char  *dirpath;          /* remote directory path             */
+     int  mode;              /* remote directory mode             */
 {
-   char     buf[BUFSIZ];       /* General input/output buffer          */
-   register int    s;              /* socket descriptor            */
-   int             status;         /* remote mkdir() status        */
-   int     	len;
-   char    	*host;
-   char    	*filename;
-   char    	*p=buf;
-   int 		rt ;
-   int 		rcode, parserc ;
-   mode_t	curmask;
+  char     buf[BUFSIZ];       /* General input/output buffer          */
+  register int    s;              /* socket descriptor            */
+  int             status;         /* remote mkdir() status        */
+  int      len;
+  char     *host;
+  char     *filename;
+  char     *p=buf;
+  int   rt ;
+  int   rcode, parserc ;
+  mode_t curmask;
 
-   INIT_TRACE("RFIO_TRACE");
-   TRACE(1, "rfio", "rfio_mkdir(%s, %o)", dirpath, mode);
+  INIT_TRACE("RFIO_TRACE");
+  TRACE(1, "rfio", "rfio_mkdir(%s, %o)", dirpath, mode);
 
-   if (!(parserc = rfio_parseln(dirpath,&host,&filename,NORDLINKS))) {
-      /* if not a remote file, must be local or HSM  */
-      if ( host != NULL ) {
-          /*
-           * HSM file
-           */
-          TRACE(1,"rfio","rfio_mkdir: %s is an HSM path",
-                filename);
-          END_TRACE();
-          rfio_errno = 0;
-          return(rfio_HsmIf_mkdir(filename,mode));
-      }
-      TRACE(1, "rfio", "rfio_mkdir: using local mkdir(%s, %o)",
-	    filename, mode);
-
+  if (!(parserc = rfio_parseln(dirpath,&host,&filename,NORDLINKS))) {
+    /* if not a remote file, must be local or HSM  */
+    if ( host != NULL ) {
+      /*
+       * HSM file
+       */
+      TRACE(1,"rfio","rfio_mkdir: %s is an HSM path",
+            filename);
       END_TRACE();
       rfio_errno = 0;
-      status = mkdir(filename,mode);
-      if ( status < 0 ) serrno = 0;
-      return(status);
-   }
-   if (parserc < 0) {
-	   END_TRACE();
-	   return(-1);
-   }
+      return(rfio_HsmIf_mkdir(filename,mode));
+    }
+    TRACE(1, "rfio", "rfio_mkdir: using local mkdir(%s, %o)",
+          filename, mode);
 
-   /* Applies the umask to the mode                     */
-   curmask = umask(0);          /* get the mode         */
-   umask(curmask);              /* restore it           */
-   mode &= ~curmask;            /* and apply it to mode */
+    END_TRACE();
+    rfio_errno = 0;
+    status = mkdir(filename,mode);
+    if ( status < 0 ) serrno = 0;
+    return(status);
+  }
+  if (parserc < 0) {
+    END_TRACE();
+    return(-1);
+  }
 
-   len = strlen(filename)+ LONGSIZE + 1;
-   if ( len > BUFSIZ ) {
-     TRACE(2, "rfio", "rfio_mkdir: request too long %d (max %d)", len, BUFSIZ);
-     rfio_errno = 0;
-     serrno = E2BIG;
-     return(-1);
-   }
-   
-  
-   s = rfio_connect(host,&rt);
-   if (s < 0)      {
-      END_TRACE();
-      return(-1);
-   }
+  /* Applies the umask to the mode                     */
+  curmask = umask(0);          /* get the mode         */
+  umask(curmask);              /* restore it           */
+  mode &= ~curmask;            /* and apply it to mode */
 
-   marshall_WORD(p, RFIO_MAGIC);
-   marshall_WORD(p, RQST_MKDIR);
-   marshall_WORD(p, geteuid());
-   marshall_WORD(p, getegid());
-   marshall_LONG(p, len);
-   p= buf + RQSTSIZE;
-   marshall_STRING(p, filename);
-   marshall_LONG(p, mode);
-   TRACE(1,"rfio","rfio_mkdir: mode %o",mode);
-   TRACE(2,"rfio","rfio_mkdir: sending %d bytes",RQSTSIZE+len) ;
-   if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
-      TRACE(2, "rfio", "rfio_mkdir: write(): ERROR occured (errno=%d)", errno);
-      (void) close(s);
-      END_TRACE();
-      return(-1);
-   }
-   p = buf;
-   TRACE(2, "rfio", "rfio_mkdir: reading %d bytes", LONGSIZE);
-   if (netread_timeout(s, buf, 2* LONGSIZE, RFIO_CTRL_TIMEOUT) != (2 * LONGSIZE))  {
-      TRACE(2, "rfio", "rfio_mkdir: read(): ERROR occured (errno=%d)", errno);
-      (void) close(s);
-      END_TRACE();
-      return(-1);
-   }
-   unmarshall_LONG(p, status);
-   unmarshall_LONG(p, rcode);
-   TRACE(1, "rfio", "rfio_mkdir: return %d",status);
-   rfio_errno = rcode;
-   (void) close(s);
-   if (status)     {
-      END_TRACE();
-      return(-1);
-   }
-   END_TRACE();
-   return (0);
+  len = strlen(filename)+ LONGSIZE + 1;
+  if ( len > BUFSIZ ) {
+    TRACE(2, "rfio", "rfio_mkdir: request too long %d (max %d)", len, BUFSIZ);
+    rfio_errno = 0;
+    serrno = E2BIG;
+    return(-1);
+  }
+
+
+  s = rfio_connect(host,&rt);
+  if (s < 0)      {
+    END_TRACE();
+    return(-1);
+  }
+
+  marshall_WORD(p, RFIO_MAGIC);
+  marshall_WORD(p, RQST_MKDIR);
+  marshall_WORD(p, geteuid());
+  marshall_WORD(p, getegid());
+  marshall_LONG(p, len);
+  p= buf + RQSTSIZE;
+  marshall_STRING(p, filename);
+  marshall_LONG(p, mode);
+  TRACE(1,"rfio","rfio_mkdir: mode %o",mode);
+  TRACE(2,"rfio","rfio_mkdir: sending %d bytes",RQSTSIZE+len) ;
+  if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
+    TRACE(2, "rfio", "rfio_mkdir: write(): ERROR occured (errno=%d)", errno);
+    (void) close(s);
+    END_TRACE();
+    return(-1);
+  }
+  p = buf;
+  TRACE(2, "rfio", "rfio_mkdir: reading %d bytes", LONGSIZE);
+  if (netread_timeout(s, buf, 2* LONGSIZE, RFIO_CTRL_TIMEOUT) != (2 * LONGSIZE))  {
+    TRACE(2, "rfio", "rfio_mkdir: read(): ERROR occured (errno=%d)", errno);
+    (void) close(s);
+    END_TRACE();
+    return(-1);
+  }
+  unmarshall_LONG(p, status);
+  unmarshall_LONG(p, rcode);
+  TRACE(1, "rfio", "rfio_mkdir: return %d",status);
+  rfio_errno = rcode;
+  (void) close(s);
+  if (status)     {
+    END_TRACE();
+    return(-1);
+  }
+  END_TRACE();
+  return (0);
 }

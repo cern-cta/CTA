@@ -1,5 +1,5 @@
 /*
- * $Id: lun2fn.c,v 1.7 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: lun2fn.c,v 1.8 2008/07/31 07:09:13 sponcec3 Exp $
  */
 
 /*
@@ -29,85 +29,85 @@
 
 extern char     *getenv();
 
-char * DLL_DECL 
+char * DLL_DECL
 lun2fn(lun)                     /* find file name corresponding to lun  */
-int     lun;
+     int     lun;
 {
-   char    *afile;         /* assign file name                     */
-   FILE    *fp;            /* a file pointer                       */
-   char    *p, *p1;        /* character pointers                   */
-   int     clun;           /* current lun entry                    */
-   static  char    buf[1024];  	   /* general purpose buffer     	        */
-/*
- * Open the assign file, get the corresponding entry
- */
-   INIT_TRACE("RFIO_TRACE");
-   TRACE(1, "rfio", "lun2fn: looking environment for %s", "RFASSIGN");
-   if ((p = getenv("RFASSIGN")) != NULL)   {
-      afile = p;
-   }
-   else {  /* No RFASSIGN env var, so get the passwd entry         */
-      TRACE(1, "rfio", "lun2fn: getting home directory name");
-      if ((p = Cgetpwuid(getuid())->pw_dir) == NULL)   {
-	 END_TRACE();
-	 return(NULL);
-      }
-      sprintf(buf,"%s/%s",p,DEFASNFNAM);
-      afile = buf;
-   }
+  char    *afile;         /* assign file name                     */
+  FILE    *fp;            /* a file pointer                       */
+  char    *p, *p1;        /* character pointers                   */
+  int     clun;           /* current lun entry                    */
+  static  char    buf[1024];      /* general purpose buffer              */
+  /*
+   * Open the assign file, get the corresponding entry
+   */
+  INIT_TRACE("RFIO_TRACE");
+  TRACE(1, "rfio", "lun2fn: looking environment for %s", "RFASSIGN");
+  if ((p = getenv("RFASSIGN")) != NULL)   {
+    afile = p;
+  }
+  else {  /* No RFASSIGN env var, so get the passwd entry         */
+    TRACE(1, "rfio", "lun2fn: getting home directory name");
+    if ((p = Cgetpwuid(getuid())->pw_dir) == NULL)   {
+      END_TRACE();
+      return(NULL);
+    }
+    sprintf(buf,"%s/%s",p,DEFASNFNAM);
+    afile = buf;
+  }
 
-   TRACE(1, "rfio", "lun2fn: opening %s", afile);
-   if ((fp = fopen(afile, "r")) == NULL)   {
-      if (errno == ENOENT)    {
+  TRACE(1, "rfio", "lun2fn: opening %s", afile);
+  if ((fp = fopen(afile, "r")) == NULL)   {
+    if (errno == ENOENT)    {
 #if hpux
-	 sprintf (buf, "ftn%02d", lun);
-#else
-	 sprintf (buf, "fort.%d", lun);
-#endif
-	 TRACE(1, "rfio", "lun2fn: assigning unit %d to %s", lun, buf);
-	 END_TRACE();
-	 return(buf);
-      }
-      else    {
-	 END_TRACE();
-	 return(NULL);
-      }
-   }
-
-   for (;(p=fgets(buf, BUFSIZ, fp)) != NULL;)   {
-      p = strchr(p,'.');
-      p1 = strchr(p+1, ':');
-      *(p1++)='\0';
-      clun = atoi(p+1);
-      TRACE(1, "rfio", "lun2fn: processing entry %d", clun);
-      if (clun == lun) {      /* matching entry       */
-	 p = p1;
-	 /* The string is terminated by \n, \0 or \, */
-	 if ((p1 = strpbrk(p,"\n\0,")) != NULL) {
-	    *p1 = '\0';
-	 }
-	 break;
-      }
-      else    {
-	 p = NULL;
-      }
-   }
-   (void) fclose(fp);
-
-   if (p == NULL)  {               /* no matching entry    */
-#if hpux
-      sprintf (buf, "ftn%d", lun);
+      sprintf (buf, "ftn%02d", lun);
 #else
       sprintf (buf, "fort.%d", lun);
 #endif
-
       TRACE(1, "rfio", "lun2fn: assigning unit %d to %s", lun, buf);
       END_TRACE();
       return(buf);
-   }
-   else    {
-      TRACE(1, "rfio", "lun2fn: assigning unit %d to %s", lun, p);
+    }
+    else    {
       END_TRACE();
-      return(p);
-   }
+      return(NULL);
+    }
+  }
+
+  for (;(p=fgets(buf, BUFSIZ, fp)) != NULL;)   {
+    p = strchr(p,'.');
+    p1 = strchr(p+1, ':');
+    *(p1++)='\0';
+    clun = atoi(p+1);
+    TRACE(1, "rfio", "lun2fn: processing entry %d", clun);
+    if (clun == lun) {      /* matching entry       */
+      p = p1;
+      /* The string is terminated by \n, \0 or \, */
+      if ((p1 = strpbrk(p,"\n\0,")) != NULL) {
+        *p1 = '\0';
+      }
+      break;
+    }
+    else    {
+      p = NULL;
+    }
+  }
+  (void) fclose(fp);
+
+  if (p == NULL)  {               /* no matching entry    */
+#if hpux
+    sprintf (buf, "ftn%d", lun);
+#else
+    sprintf (buf, "fort.%d", lun);
+#endif
+
+    TRACE(1, "rfio", "lun2fn: assigning unit %d to %s", lun, buf);
+    END_TRACE();
+    return(buf);
+  }
+  else    {
+    TRACE(1, "rfio", "lun2fn: assigning unit %d to %s", lun, p);
+    END_TRACE();
+    return(p);
+  }
 }

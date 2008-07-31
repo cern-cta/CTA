@@ -4054,11 +4054,10 @@ char *permstr;          /* permission string for the request */
    if ( chksuser(uid,gid,hostname,ptrcode,permstr) < 0 )
       return -2;
    if ( uid >=100 && ( (pw = getpwuid((uid_t)uid)) == NULL
-#if defined(_WIN32)
-      ))
-#else      
-      || chsgroup(pw,gid)) )
+#if !defined(_WIN32)
+      || chsgroup(pw,gid)
 #endif
+      ))
    {
       *ptrcode = EACCES;
       log(LOG_ERR,"chsuser(): user (%d,%d) does not exist at local host\n",uid,gid);
@@ -6230,5 +6229,3 @@ struct rfiostat *infop;
    }
    return status;
 }
-
-

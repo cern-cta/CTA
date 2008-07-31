@@ -1,5 +1,5 @@
 /*
- * $Id: fflush.c,v 1.8 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: fflush.c,v 1.9 2008/07/31 07:09:13 sponcec3 Exp $
  */
 
 /*
@@ -12,8 +12,8 @@
 /*
  * System remote file I/O definitions
  */
-#define RFIO_KERNEL     1   
-#include "rfio.h"          
+#define RFIO_KERNEL     1
+#include "rfio.h"
 #include "rfio_rfilefdt.h"
 #include <stdlib.h>
 
@@ -21,38 +21,38 @@
  * Remote file flush
  * If the file is remote, this is a dummy operation.
  */
-int DLL_DECL rfio_fflush(fp)      
-	RFILE *fp;             
+int DLL_DECL rfio_fflush(fp)
+     RFILE *fp;
 {
-	int     status;
+  int     status;
 
-	INIT_TRACE("RFIO_TRACE");
-	TRACE(1, "rfio", "rfio_fflush(%x)", fp);
+  INIT_TRACE("RFIO_TRACE");
+  TRACE(1, "rfio", "rfio_fflush(%x)", fp);
 
-	if ( fp == NULL ) {
-		errno = EBADF;
-		END_TRACE();
-		return -1 ;
-	}
+  if ( fp == NULL ) {
+    errno = EBADF;
+    END_TRACE();
+    return -1 ;
+  }
 
-	if (rfio_rfilefdt_findptr(fp,FINDRFILE_WITH_SCAN) == -1 ) {
-		status= fflush((FILE *)fp) ;
-		END_TRACE() ; 
-		rfio_errno = 0;
-		return status ;
-	}
+  if (rfio_rfilefdt_findptr(fp,FINDRFILE_WITH_SCAN) == -1 ) {
+    status= fflush((FILE *)fp) ;
+    END_TRACE() ;
+    rfio_errno = 0;
+    return status ;
+  }
 
-	/*
-	 * Checking magic number
-	 */
-	if ( fp->magic != RFIO_MAGIC) {
-		int fps = fp->s;
-		serrno = SEBADVERSION ; 
-		free((char *)fp);
-		(void) close(fps) ;
-		END_TRACE() ;
-		return -1 ;
-	}
-	END_TRACE();
-	return 0 ;
+  /*
+   * Checking magic number
+   */
+  if ( fp->magic != RFIO_MAGIC) {
+    int fps = fp->s;
+    serrno = SEBADVERSION ;
+    free((char *)fp);
+    (void) close(fps) ;
+    END_TRACE() ;
+    return -1 ;
+  }
+  END_TRACE();
+  return 0 ;
 }

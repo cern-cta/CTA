@@ -568,9 +568,9 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
       if ( (flags & O_TRUNC) == O_TRUNC ) flags |= O_CREAT;
 
       if (mode64) {
-	rc = rfio_open64(url, flags, mode);
+        rc = rfio_open64(url, flags, mode);
       } else {
-	rc = rfio_open(url, flags, mode);
+        rc = rfio_open(url, flags, mode);
       }
 
       free(response);
@@ -772,11 +772,11 @@ int DLL_DECL rfio_HsmIf_open_limbysz(const char *path, int flags, mode_t mode, u
       }
 
       if (mode64) {
-	rc = rfio_open64(url, flags, mode);
+        rc = rfio_open64(url, flags, mode);
       } else {
-	rc = rfio_open(url, flags, mode);
+        rc = rfio_open(url, flags, mode);
       }
-      
+
       free(response);
       free(url);
 
@@ -1347,10 +1347,10 @@ int DLL_DECL use_castor2_api() {
   }
   if (ret<0) return 0;
 
-/* Let's now find the global variable thread specific */
+  /* Let's now find the global variable thread specific */
 
   ret=Cglobals_get(&tStageHostKey,(void **)&globalHost,sizeof(void*));
-  if (ret<0) return 0; 
+  if (ret<0) return 0;
 
   ret=Cglobals_get(&tSvcClassKey,(void **)&globalSvc,sizeof(void*));
   if (ret<0) return 0;

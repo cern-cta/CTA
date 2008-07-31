@@ -1,5 +1,5 @@
 /*
- * $Id: getcwd.c,v 1.4 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: getcwd.c,v 1.5 2008/07/31 07:09:13 sponcec3 Exp $
  */
 
 /*
@@ -18,24 +18,24 @@
 
 char DLL_DECL *rfio_getcwd(char *buf, int size)
 {
-   char *p;
-   INIT_TRACE("RFIO_TRACE");
-   TRACE(1, "rfio", "rfio_getcwd()");
+  char *p;
+  INIT_TRACE("RFIO_TRACE");
+  TRACE(1, "rfio", "rfio_getcwd()");
 
-   if ( rfio_HsmIf_GetCwdType() > 0 ) {
-          /*
-           * HSM file
-           */
-          TRACE(1, "rfio", "rfio_getcwd: current working directory is an HSM path");
-          END_TRACE();
-          rfio_errno = 0;
-          return(rfio_HsmIf_getcwd(buf, size));
-   }
-   TRACE(1, "rfio", "rfio_getcwd: using local getcwd()");
+  if ( rfio_HsmIf_GetCwdType() > 0 ) {
+    /*
+     * HSM file
+     */
+    TRACE(1, "rfio", "rfio_getcwd: current working directory is an HSM path");
+    END_TRACE();
+    rfio_errno = 0;
+    return(rfio_HsmIf_getcwd(buf, size));
+  }
+  TRACE(1, "rfio", "rfio_getcwd: using local getcwd()");
 
-   END_TRACE();
-   rfio_errno = 0;
-   p = getcwd(buf, size);
-   if ( ! p ) serrno = 0;
-   return(p);
+  END_TRACE();
+  rfio_errno = 0;
+  p = getcwd(buf, size);
+  if ( ! p ) serrno = 0;
+  return(p);
 }

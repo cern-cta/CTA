@@ -1,5 +1,5 @@
 /*
- * $Id: ftell.c,v 1.3 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: ftell.c,v 1.4 2008/07/31 07:09:13 sponcec3 Exp $
  */
 
 /*
@@ -7,25 +7,25 @@
  * All rights reserved
  */
 
-/* ftell.c      Remote File I/O - get current file position.	*/
+/* ftell.c      Remote File I/O - get current file position. */
 
 /*
  * System remote file I/O definitions
  */
-#define RFIO_KERNEL     1  
-#include "rfio.h"     
+#define RFIO_KERNEL     1
+#include "rfio.h"
 #include "rfio_rfilefdt.h"
 #include <stdlib.h>
 
-long rfio_ftell(fp)   
-	RFILE    *fp;
+long rfio_ftell(fp)
+     RFILE    *fp;
 {
   long      rc;
-  
+
   INIT_TRACE("RFIO_TRACE");
   TRACE(1, "rfio", "rfio_ftell(%x)", fp);
-  
-  
+
+
   /*
    * Checking fp validity
    */
@@ -44,7 +44,7 @@ long rfio_ftell(fp)
     rc = ftell((FILE *)fp);
     if ( rc < 0 ) serrno = 0;
     rfio_errno = 0;
-    END_TRACE(); 
+    END_TRACE();
     return rc;
   }
 
@@ -55,16 +55,16 @@ long rfio_ftell(fp)
    */
   if (fp->magic != RFIO_MAGIC) {
     int fps = fp->s;
-    serrno = SEBADVERSION; 
+    serrno = SEBADVERSION;
     TRACE(2,"rfio","rfio_ftell() : Bad magic number");
     free((char *)fp);
     (void) close(fps);
     END_TRACE();
     return -1;
   }
-  
-  /* Just use rfio_lseek                                 */ 
+
+  /* Just use rfio_lseek                                 */
   rc = rfio_lseek(fp->s, 0, SEEK_CUR);
-  END_TRACE(); 
+  END_TRACE();
   return rc;
 }
