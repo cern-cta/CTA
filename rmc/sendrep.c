@@ -16,6 +16,7 @@
 #include "marshall.h"
 #include "net.h"
 #include "rmc.h"
+#include "tplogger_api.h"
 int sendrep(int rpfd, int rep_type, ...)
 {
 	va_list args;
@@ -40,6 +41,9 @@ int sendrep(int rpfd, int rep_type, ...)
 		marshall_LONG (rbp, strlen (prtbuf) + 1);
 		marshall_STRING (rbp, prtbuf);
 		rmclogit (func, "%s", prtbuf);
+                tl_rmcdaemon.tl_log( &tl_rmcdaemon, 103, 2,
+                                     "func"   , TL_MSG_PARAM_STR, func,
+                                     "Message", TL_MSG_PARAM_STR, prtbuf );
 		break;
 	case MSG_DATA:
 		n = va_arg (args, int);
@@ -57,6 +61,10 @@ int sendrep(int rpfd, int rep_type, ...)
 	repsize = rbp - repbuf;
 	if (netwrite (rpfd, repbuf, repsize) != repsize) {
 		rmclogit (func, RMC02, "send", neterror());
+                tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 3,
+                                     "func" , TL_MSG_PARAM_STR, func,
+                                     "On"   , TL_MSG_PARAM_STR, "send",
+                                     "Error", TL_MSG_PARAM_STR, neterror() );
 		if (rep_type == RMC_RC)
 			netclose (rpfd);
 		return (-1);

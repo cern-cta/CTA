@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger_messages.c,v 1.10 2008/03/18 14:03:31 wiebalck Exp $
+** $Id: tplogger_messages.c,v 1.11 2008/08/04 12:33:36 wiebalck Exp $
 */
 
 #include <string.h>
@@ -43,7 +43,7 @@ tplogger_message_t tplogger_messages[] = {
 
 
 /*
-** The predefined messages for rtcpd/tpdaemon 
+** The predefined messages for rtcpd/tpdaemon/rmc 
 */
 tplogger_message_t tplogger_messages_tpdaemon[] = {
 
@@ -333,6 +333,36 @@ tplogger_message_t tplogger_messages_rtcpd[] = {
 };
 
 
+tplogger_message_t tplogger_messages_rmcdaemon[] = {
+
+        /* general messages */
+        {   0, TL_LVL_ERROR     , "RMC000 - SCSI media changer server not available"}, /* on server ... */ 
+        {   1, TL_LVL_ERROR     , "RMC001 - Robot parameter is mandatory"        },  
+        {   2, TL_LVL_ERROR     , "RMC002 - Error"                               },  /* ?, ?     */
+        {   3, TL_LVL_ERROR     , "RMC003 - Illegal function"                    },  /* function */  
+        {   4, TL_LVL_ERROR     , "RMC004 - Error getting request"               },  /* netread  */
+        {   5, TL_LVL_ERROR     , "RMC005 - Cannot allocate enough memory"       },  
+        {   6, TL_LVL_ERROR     , "RMC006 - Invalid value"                       },  /* for ...  */
+        {   9, TL_LVL_ERROR     , "RMC009 - Fatal configuration error"           },  /* ?, ?     */ 
+        {  46, TL_LVL_ERROR     , "RMC046 - Request too large"                   },  /* max      */
+        {  92, TL_LVL_IMPORTANT , "RMC092 - Got request"                         },  /* by, from */  
+        {  98, TL_LVL_IMPORTANT , "RMC098 - Log request"                         },  
+
+        { 101, TL_LVL_EMERGENCY , "RMC101 - General Emergency Message"           },  
+        { 102, TL_LVL_ALERT     , "RMC102 - General Alert Message"               },
+        { 103, TL_LVL_ERROR     , "RMC103 - General Error Message"               },
+        { 104, TL_LVL_WARNING   , "RMC104 - General Warning Message"             },
+        { 105, TL_LVL_AUTH      , "RMC105 - General Auth Message"                },
+        { 106, TL_LVL_SECURITY  , "RMC106 - General Security Message"            },
+        { 107, TL_LVL_USAGE     , "RMC107 - General Usage Message"               },
+        { 108, TL_LVL_SYSTEM    , "RMC108 - General System Message"              },
+        { 109, TL_LVL_IMPORTANT , "RMC109 - General Important Message"           },
+        { 110, TL_LVL_MONITORING, "RMC110 - General Monitoring Message"          },
+        { 111, TL_LVL_DEBUG     , "RMC111 - General Debug Message"               },
+
+};
+
+
 /**
  * Return the number of messages for the different facilities.
  *
@@ -345,13 +375,16 @@ int DLL_DECL tplogger_nb_messages( tplogger_t *self ) {
         if( 0 == strcmp( self->tl_name, "tpdaemon" ) ) {
                 
                 return( ARRAY_ENTRIES( tplogger_messages_tpdaemon ) ); 
-                /* return( ARRAY_ENTRIES( tplogger_messages ) ); */
         }
 
         if( 0 == strcmp( self->tl_name, "rtcpd" ) ) {
                 
                 return( ARRAY_ENTRIES( tplogger_messages_rtcpd ) );
-                /* return( ARRAY_ENTRIES( tplogger_messages ) ); */
+        }
+
+        if( 0 == strcmp( self->tl_name, "rmcdaemon" ) ) {
+                
+                return( ARRAY_ENTRIES( tplogger_messages_rmcdaemon ) );
         }
 
         if( 0 == strcmp( self->tl_name, "stdio" ) ) {

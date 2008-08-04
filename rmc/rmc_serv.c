@@ -29,6 +29,9 @@
 #include "serrno.h"
 #include "rmc_server_api.h"
 #include "Cdomainname.h"
+#include "tplogger_api.h"
+#include <sys/types.h>
+#include <sys/stat.h>
 
 /* Forward declaration */
 int getreq(int, int*, char*, char**);
@@ -68,14 +71,46 @@ struct main_args *main_args;
 	struct servent *sp;
 	struct timeval timeval;
 
+        /* init the tplogger interface */
+        {
+                mode_t save_mask;
+                /* char *p; */
+                
+                save_mask = umask(0);
+
+                /*
+                p = getconfent ("TAPE", "TPLOGGER", 0);
+                if (p && (0 == strcasecmp(p, "SYSLOG"))) {
+                        tl_init_handle( &tl_rtcpd, "syslog" ); 
+                } else {
+                        tl_init_handle( &tl_rmc, "dlf" );  
+                }
+                */
+
+                /* only syslog support */
+                tl_init_handle( &tl_rmcdaemon, "syslog" );
+                tl_rmcdaemon.tl_init( &tl_rmcdaemon, 2 );                
+                tl_rmcdaemon.tl_log( &tl_rmcdaemon, 109, 2,
+                                     "func"   , TL_MSG_PARAM_STR, "rmc_main",
+                                     "Message", TL_MSG_PARAM_STR, "Logging initialized" );
+                
+                umask(save_mask);
+        }
+
 	jid = getpid();
 	strcpy (func, "rmc_serv");
 	rmclogit (func, "started\n");
+        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 109, 2,
+                             "func"   , TL_MSG_PARAM_STR, "rmc_main",
+                             "Message", TL_MSG_PARAM_STR, "Daemon started" );        
+        
 	gethostname (localhost, CA_MAXHOSTNAMELEN+1);
 	if (strchr (localhost, '.') == NULL) {
 		if (Cdomainname (domainname, sizeof(domainname)) < 0) {
 			rmclogit (func, "Unable to get domainname\n");
-			exit (SYERR);
+                        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 103, 2,
+                                             "func"   , TL_MSG_PARAM_STR, "rmc_main",
+                                             "Message", TL_MSG_PARAM_STR, "Unable to get domainname" );
 		}
 		strcat (localhost, ".");
 		strcat (localhost, domainname);
@@ -83,12 +118,17 @@ struct main_args *main_args;
 
 	if (main_args->argc != 2) {
 		rmclogit (func, RMC01);
+                tl_rmcdaemon.tl_log( &tl_rmcdaemon, 1, 1,
+                                     "func", TL_MSG_PARAM_STR, "rmc_main" );
 		exit (USERR);
 	}
 	robot = main_args->argv[1];
 	if (*robot == '\0' ||
 	    (strlen (robot) + (*robot == '/') ? 0 : 5) > CA_MAXRBTNAMELEN) {
 		rmclogit (func, RMC06, "robot");
+                tl_rmcdaemon.tl_log( &tl_rmcdaemon, 6, 2,
+                                     "func", TL_MSG_PARAM_STR, "rmc_main",
+                                     "For" , TL_MSG_PARAM_STR, "robot" );
 		exit (USERR);
 	}
 	if (*robot == '/')
@@ -102,6 +142,10 @@ struct main_args *main_args;
 
 	if ((extended_robot_info.smc_fd = open (extended_robot_info.smc_ldr, O_RDWR)) < 0) {
 		rmclogit (func, RMC02, "open", strerror(errno));
+                tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 3,
+                                     "func" , TL_MSG_PARAM_STR, "rmc_main",
+                                     "On"   , TL_MSG_PARAM_STR, "open",
+                                     "error", TL_MSG_PARAM_STR, strerror(errno));                
 		exit (SYERR);
 	}
 #else
@@ -116,10 +160,24 @@ struct main_args *main_args;
                                  &extended_robot_info.robot_info))) {
             c = smc_lasterror (&smc_status, &msgaddr);
             rmclogit (func, RMC02, "get_geometry", msgaddr);
+            tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 4,
+                                 "func"    , TL_MSG_PARAM_STR, "rmc_main",
+                                 "On"      , TL_MSG_PARAM_STR, "get_geometry",
+                                 "Message" , TL_MSG_PARAM_STR, msgaddr,
+                                 "NextStep", TL_MSG_PARAM_STR, "Retry" );
+
             rmclogit (func,"trying again get_geometry\n");
+            tl_rmcdaemon.tl_log( &tl_rmcdaemon, 110, 2,
+                                 "func"   , TL_MSG_PARAM_STR, "rmc_main",
+                                 "Message", TL_MSG_PARAM_STR, "trying again get_geometry" );
             n++;
             if (n==2) {
               rmclogit (func, RMC02, "get_geometry", msgaddr);
+              tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 4,
+                                   "func"    , TL_MSG_PARAM_STR, "rmc_main",
+                                   "On"      , TL_MSG_PARAM_STR, "get_geometry",
+                                   "Message" , TL_MSG_PARAM_STR, msgaddr,
+                                   "NextStep", TL_MSG_PARAM_STR, "Exiting" );
               exit(c);
             }
 	     } else {
@@ -145,6 +203,11 @@ struct main_args *main_args;
 			extended_robot_info.smc_support_voltag = 0;
 		} else {
 			rmclogit (func, RMC02, "find_cartridge", msgaddr);
+                        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 4,
+                                             "func"    , TL_MSG_PARAM_STR, "rmc_main",
+                                             "On"      , TL_MSG_PARAM_STR, "find_cartridge",
+                                             "Message" , TL_MSG_PARAM_STR, msgaddr,
+                                             "NextStep", TL_MSG_PARAM_STR, "Exiting/SYERR" );
 			exit (SYERR);
 		}
 	}
@@ -159,6 +222,11 @@ struct main_args *main_args;
 
 	if ((s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
 		rmclogit (func, RMC02, "socket", neterror());
+                tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 4,
+                                     "func"    , TL_MSG_PARAM_STR, "rmc_main",
+                                     "On"      , TL_MSG_PARAM_STR, "socket",
+                                     "Message" , TL_MSG_PARAM_STR, msgaddr,
+                                     "NextStep", TL_MSG_PARAM_STR, "Exiting/CONFERR" );
 		exit (CONFERR);
 	}
 	memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
@@ -171,10 +239,20 @@ struct main_args *main_args;
 		sin.sin_port = htons ((unsigned short)RMC_PORT);
 	}
 	sin.sin_addr.s_addr = htonl(INADDR_ANY);
-	if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
+	if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0) {
 		rmclogit (func, RMC02, "setsockopt", neterror());
+                tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 3,
+                                     "func"    , TL_MSG_PARAM_STR, "rmc_main",
+                                     "On"      , TL_MSG_PARAM_STR, "setsockopt",
+                                     "Message" , TL_MSG_PARAM_STR, msgaddr );
+        }
 	if (bind (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
 		rmclogit (func, RMC02, "bind", neterror());
+                tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 4,
+                                     "func"    , TL_MSG_PARAM_STR, "rmc_main",
+                                     "On"      , TL_MSG_PARAM_STR, "bind",
+                                     "Message" , TL_MSG_PARAM_STR, msgaddr,
+                                     "NextStep", TL_MSG_PARAM_STR, "Exiting/CONFERR" );
 		exit (CONFERR);
 	}
 	listen (s, 5) ;
@@ -197,6 +275,8 @@ struct main_args *main_args;
 			FD_ZERO (&readfd);
 		}
 	}
+        /* never reached */
+        tl_rtcpd.tl_exit( &tl_rmcdaemon, 0 );
 }
 
 #if ! defined(_WIN32)
@@ -262,6 +342,9 @@ char **clienthost;
 		unmarshall_LONG (rbp, msglen);
 		if (msglen > REQBUFSZ) {
 			rmclogit (func, RMC46, REQBUFSZ);
+                        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 46, 2,
+                                             "func"   , TL_MSG_PARAM_STR, "getreq",
+                                             "MaxSize", TL_MSG_PARAM_STR,  REQBUFSZ);                        
 			return (-1);
 		}
 		l = msglen - sizeof(req_hdr);
@@ -271,6 +354,11 @@ char **clienthost;
 		}
 		if (getpeername (s, (struct sockaddr *) &from, &fromlen) < 0) {
 			rmclogit (func, RMC02, "getpeername", neterror());
+                        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 4,
+                                             "func"   , TL_MSG_PARAM_STR, "getreq",
+                                             "On"     , TL_MSG_PARAM_STR, "getpeername",
+                                             "Message", TL_MSG_PARAM_STR,  neterror(),
+                                             "Return" , TL_MSG_PARAM_STR, "ERMCUNREC" );
 			return (ERMCUNREC);
 		}
 		hp = gethostbyaddr ((char *)(&from.sin_addr),
@@ -281,10 +369,20 @@ char **clienthost;
 			*clienthost = hp->h_name ;
 		return (0);
 	} else {
-		if (l > 0)
+		if (l > 0) {
 			rmclogit (func, RMC04, l);
-		else if (l < 0)
+                        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 4, 3,
+                                             "func"   , TL_MSG_PARAM_STR, "getreq",
+                                             "netread", TL_MSG_PARAM_INT, l,
+                                             "Return" , TL_MSG_PARAM_STR, "ERMCUNREC" );
+		} else if (l < 0) {
 			rmclogit (func, RMC02, "netread", strerror(errno));
+                        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 4,
+                                             "func"   , TL_MSG_PARAM_STR, "getreq",
+                                             "On"     , TL_MSG_PARAM_STR, "netread",
+                                             "Message", TL_MSG_PARAM_STR, strerror(errno) ,
+                                             "Return" , TL_MSG_PARAM_STR, "ERMCUNREC" );
+                }
 		return (ERMCUNREC);
 	}
 }

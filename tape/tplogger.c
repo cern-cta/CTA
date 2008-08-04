@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger.c,v 1.12 2008/05/16 09:46:20 wiebalck Exp $
+** $Id: tplogger.c,v 1.13 2008/08/04 12:33:36 wiebalck Exp $
 */
 
 #include <string.h>
@@ -57,6 +57,19 @@ tplogger_t tl_tpdaemon = {
 };
 
 tplogger_t tl_rtcpd = {
+
+        .tl_init         = tl_init_dlf,
+        .tl_log          = tl_log_dlf,
+        .tl_llog         = tl_llog_dlf,
+        .tl_get_lvl      = tl_get_lvl_dlf,
+        .tl_set_lvl      = tl_set_lvl_dlf,
+        .tl_fork_prepare = tl_fork_prepare_dlf, 
+        .tl_fork_child   = tl_fork_child_dlf,
+        .tl_fork_parent  = tl_fork_parent_dlf, 
+        .tl_exit         = tl_exit_dlf                
+};
+
+tplogger_t tl_rmcdaemon = {
 
         .tl_init         = tl_init_dlf,
         .tl_log          = tl_log_dlf,
@@ -216,19 +229,22 @@ int DLL_DECL tl_init_dlf( tplogger_t *self, int init ) {
                 
         case 0: /* Facility: tpdaemon */        
 
-                self->tl_name = strdup( "tpdaemon" );  
-                
+                self->tl_name = strdup( "tpdaemon" );                  
                 tl_set_msg_tbl_dlf( self, tplogger_messages_tpdaemon ); 
-                /* tl_set_msg_tbl_dlf( self, tplogger_messages ); */
 
                 break;
 
         case 1: /* Facility: rtcpd */        
 
                 self->tl_name = strdup( "rtcpd" );    
-
                 tl_set_msg_tbl_dlf( self, tplogger_messages_rtcpd );
-                /* tl_set_msg_tbl_dlf( self, tplogger_messages ); */
+
+                break;
+
+        case 2: /* Facility: rmc daemon */        
+
+                self->tl_name = strdup( "rmcdaemon" );    
+                tl_set_msg_tbl_dlf( self, tplogger_messages_rmcdaemon );
 
                 break;
 
@@ -740,6 +756,12 @@ int DLL_DECL tl_init_syslog( tplogger_t *self, int init ) {
                 openlog("rtcpd", LOG_PID, LOG_LOCAL1);
                 break;
 
+        case 2:
+                self->tl_name = strdup( "rmcdaemon" );
+                tl_set_msg_tbl_dlf( self, tplogger_messages_rmcdaemon );
+                openlog("rmcdaemon", LOG_PID, LOG_LOCAL1);
+                break;
+
         default:
                 break;
         }
@@ -1070,14 +1092,16 @@ int DLL_DECL tl_init_stdio( tplogger_t *self, int init ) {
         case 0:
                 self->tl_name = strdup( "tpdaemon" );
                 tl_set_msg_tbl_dlf( self, tplogger_messages_tpdaemon );
-                /* tl_set_msg_tbl_dlf( self, tplogger_messages ); */
 
                 break;
 
         case 1:
                 self->tl_name = strdup( "rtcpd" );
                 tl_set_msg_tbl_dlf( self, tplogger_messages_rtcpd );
-                /* tl_set_msg_tbl_dlf( self, tplogger_messages ); */
+
+        case 2:
+                self->tl_name = strdup( "rmcdaemon" );
+                tl_set_msg_tbl_dlf( self, tplogger_messages_rmcdaemon );
 
                 break;
 

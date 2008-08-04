@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger_api.h,v 1.5 2008/04/18 09:28:56 wiebalck Exp $
+** $Id: tplogger_api.h,v 1.6 2008/08/04 12:33:35 wiebalck Exp $
 */
 
 
@@ -136,9 +136,13 @@ extern tplogger_message_t tplogger_messages_tpdaemon[];
 
 extern tplogger_message_t tplogger_messages_rtcpd[];
 
+extern tplogger_message_t tplogger_messages_rmcdaemon[];
+
 extern tplogger_t tl_tpdaemon;
 
 extern tplogger_t tl_rtcpd;
+
+extern tplogger_t tl_rmcdaemon;
 
 extern tplogger_t tl_gen;
 
