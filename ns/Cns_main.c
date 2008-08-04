@@ -850,6 +850,8 @@ doit(arg)
 #ifdef CSEC
   /*There is a field in the Cns_srv_thread to expecified if the socket is the secure or not     */
   /*It should be removed once the unsecure mode is not supported anymore, and next "if" as well */
+  char username[CA_MAXUSRNAMELEN+1];
+
   if (thip->secOn){
 
     Csec_server_initContext (&thip->sec_ctx, CSEC_SERVICE_TYPE_HOST, NULL);
@@ -868,6 +870,8 @@ doit(arg)
       thip->s = -1;
       return NULL;
     }
+    nslogit (func, "Users Principal  %s !\n",thip->Csec_auth_id);
+    nslogit (func, "User Mapped to  %s !\n",username);
   }
 
   /***************************************************************************************************/
@@ -934,6 +938,7 @@ doit(arg)
     free (req_data);
   thip->s = -1;
   return (NULL);
+
 }
 
 int procsessreq(magic, req_data, clienthost, thip)
