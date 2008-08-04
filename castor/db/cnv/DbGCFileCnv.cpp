@@ -357,7 +357,7 @@ void castor::db::cnv::DbGCFileCnv::bulkCreateRep(castor::IAddress* address,
       diskCopyIdBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (1, diskCopyIdBuffer, DBTYPE_UINT64, sizeof(diskCopyIdBuffer[0]), diskCopyIdBufLens);
+      (1, diskCopyIdBuffer, castor::db::DBTYPE_UINT64, sizeof(diskCopyIdBuffer[0]), diskCopyIdBufLens);
     // build the buffers for request
     double* requestBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* requestBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -366,12 +366,12 @@ void castor::db::cnv::DbGCFileCnv::bulkCreateRep(castor::IAddress* address,
       requestBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (2, requestBuffer, DBTYPE_UINT64, sizeof(requestBuffer[0]), requestBufLens);
+      (2, requestBuffer, castor::db::DBTYPE_UINT64, sizeof(requestBuffer[0]), requestBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
     m_insertStatement->setDataBuffer
-      (3, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
+      (3, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
@@ -384,7 +384,7 @@ void castor::db::cnv::DbGCFileCnv::bulkCreateRep(castor::IAddress* address,
     free(requestBufLens);
     // reuse idBuffer for bulk insertion into Id2Type
     m_storeTypeStatement->setDataBuffer
-      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
+      (1, idBuffer, castor::db::DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
     // build the buffers for type
     int* typeBuffer = (int*) malloc(nb * sizeof(int));
     unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -393,7 +393,7 @@ void castor::db::cnv::DbGCFileCnv::bulkCreateRep(castor::IAddress* address,
       typeBufLens[i] = sizeof(int);
     }
     m_storeTypeStatement->setDataBuffer
-      (2, typeBuffer, DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
+      (2, typeBuffer, castor::db::DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
     m_storeTypeStatement->execute(nb);
     // release the buffers for type
     free(typeBuffer);

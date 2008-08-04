@@ -509,7 +509,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
       fseqBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (1, fseqBuffer, DBTYPE_INT, sizeof(fseqBuffer[0]), fseqBufLens);
+      (1, fseqBuffer, castor::db::DBTYPE_INT, sizeof(fseqBuffer[0]), fseqBufLens);
     // build the buffers for offset
     double* offsetBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* offsetBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -518,7 +518,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
       offsetBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (2, offsetBuffer, DBTYPE_UINT64, sizeof(offsetBuffer[0]), offsetBufLens);
+      (2, offsetBuffer, castor::db::DBTYPE_UINT64, sizeof(offsetBuffer[0]), offsetBufLens);
     // build the buffers for bytes_in
     double* bytes_inBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* bytes_inBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -527,7 +527,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
       bytes_inBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (3, bytes_inBuffer, DBTYPE_UINT64, sizeof(bytes_inBuffer[0]), bytes_inBufLens);
+      (3, bytes_inBuffer, castor::db::DBTYPE_UINT64, sizeof(bytes_inBuffer[0]), bytes_inBufLens);
     // build the buffers for bytes_out
     double* bytes_outBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* bytes_outBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -536,7 +536,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
       bytes_outBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (4, bytes_outBuffer, DBTYPE_UINT64, sizeof(bytes_outBuffer[0]), bytes_outBufLens);
+      (4, bytes_outBuffer, castor::db::DBTYPE_UINT64, sizeof(bytes_outBuffer[0]), bytes_outBufLens);
     // build the buffers for host_bytes
     double* host_bytesBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* host_bytesBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -545,7 +545,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
       host_bytesBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (5, host_bytesBuffer, DBTYPE_UINT64, sizeof(host_bytesBuffer[0]), host_bytesBufLens);
+      (5, host_bytesBuffer, castor::db::DBTYPE_UINT64, sizeof(host_bytesBuffer[0]), host_bytesBufLens);
     // build the buffers for segmCksumAlgorithm
     unsigned int segmCksumAlgorithmMaxLen = 0;
     for (int i = 0; i < nb; i++) {
@@ -559,7 +559,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
       segmCksumAlgorithmBufLens[i] = objs[i]->segmCksumAlgorithm().length()+1; // + 1 for the trailing \0
     }
     m_insertStatement->setDataBuffer
-      (6, segmCksumAlgorithmBuffer, DBTYPE_STRING, segmCksumAlgorithmMaxLen, segmCksumAlgorithmBufLens);
+      (6, segmCksumAlgorithmBuffer, castor::db::DBTYPE_STRING, segmCksumAlgorithmMaxLen, segmCksumAlgorithmBufLens);
     // build the buffers for segmCksum
     long* segmCksumBuffer = (long*) malloc(nb * sizeof(long));
     unsigned short* segmCksumBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -568,7 +568,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
       segmCksumBufLens[i] = sizeof(long);
     }
     m_insertStatement->setDataBuffer
-      (7, segmCksumBuffer, DBTYPE_INT, sizeof(segmCksumBuffer[0]), segmCksumBufLens);
+      (7, segmCksumBuffer, castor::db::DBTYPE_INT, sizeof(segmCksumBuffer[0]), segmCksumBufLens);
     // build the buffers for errMsgTxt
     unsigned int errMsgTxtMaxLen = 0;
     for (int i = 0; i < nb; i++) {
@@ -582,7 +582,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
       errMsgTxtBufLens[i] = objs[i]->errMsgTxt().length()+1; // + 1 for the trailing \0
     }
     m_insertStatement->setDataBuffer
-      (8, errMsgTxtBuffer, DBTYPE_STRING, errMsgTxtMaxLen, errMsgTxtBufLens);
+      (8, errMsgTxtBuffer, castor::db::DBTYPE_STRING, errMsgTxtMaxLen, errMsgTxtBufLens);
     // build the buffers for errorCode
     int* errorCodeBuffer = (int*) malloc(nb * sizeof(int));
     unsigned short* errorCodeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -591,7 +591,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
       errorCodeBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (9, errorCodeBuffer, DBTYPE_INT, sizeof(errorCodeBuffer[0]), errorCodeBufLens);
+      (9, errorCodeBuffer, castor::db::DBTYPE_INT, sizeof(errorCodeBuffer[0]), errorCodeBufLens);
     // build the buffers for severity
     int* severityBuffer = (int*) malloc(nb * sizeof(int));
     unsigned short* severityBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -600,7 +600,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
       severityBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (10, severityBuffer, DBTYPE_INT, sizeof(severityBuffer[0]), severityBufLens);
+      (10, severityBuffer, castor::db::DBTYPE_INT, sizeof(severityBuffer[0]), severityBufLens);
     // build the buffers for blockId0
     unsigned char* blockId0Buffer = (unsigned char*) malloc(nb * sizeof(unsigned char));
     unsigned short* blockId0BufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -609,7 +609,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
       blockId0BufLens[i] = sizeof(unsigned char);
     }
     m_insertStatement->setDataBuffer
-      (11, blockId0Buffer, DBTYPE_INT, sizeof(blockId0Buffer[0]), blockId0BufLens);
+      (11, blockId0Buffer, castor::db::DBTYPE_INT, sizeof(blockId0Buffer[0]), blockId0BufLens);
     // build the buffers for blockId1
     unsigned char* blockId1Buffer = (unsigned char*) malloc(nb * sizeof(unsigned char));
     unsigned short* blockId1BufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -618,7 +618,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
       blockId1BufLens[i] = sizeof(unsigned char);
     }
     m_insertStatement->setDataBuffer
-      (12, blockId1Buffer, DBTYPE_INT, sizeof(blockId1Buffer[0]), blockId1BufLens);
+      (12, blockId1Buffer, castor::db::DBTYPE_INT, sizeof(blockId1Buffer[0]), blockId1BufLens);
     // build the buffers for blockId2
     unsigned char* blockId2Buffer = (unsigned char*) malloc(nb * sizeof(unsigned char));
     unsigned short* blockId2BufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -627,7 +627,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
       blockId2BufLens[i] = sizeof(unsigned char);
     }
     m_insertStatement->setDataBuffer
-      (13, blockId2Buffer, DBTYPE_INT, sizeof(blockId2Buffer[0]), blockId2BufLens);
+      (13, blockId2Buffer, castor::db::DBTYPE_INT, sizeof(blockId2Buffer[0]), blockId2BufLens);
     // build the buffers for blockId3
     unsigned char* blockId3Buffer = (unsigned char*) malloc(nb * sizeof(unsigned char));
     unsigned short* blockId3BufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -636,7 +636,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
       blockId3BufLens[i] = sizeof(unsigned char);
     }
     m_insertStatement->setDataBuffer
-      (14, blockId3Buffer, DBTYPE_INT, sizeof(blockId3Buffer[0]), blockId3BufLens);
+      (14, blockId3Buffer, castor::db::DBTYPE_INT, sizeof(blockId3Buffer[0]), blockId3BufLens);
     // build the buffers for creationTime
     double* creationTimeBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* creationTimeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -645,7 +645,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
       creationTimeBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (15, creationTimeBuffer, DBTYPE_UINT64, sizeof(creationTimeBuffer[0]), creationTimeBufLens);
+      (15, creationTimeBuffer, castor::db::DBTYPE_UINT64, sizeof(creationTimeBuffer[0]), creationTimeBufLens);
     // build the buffers for priority
     double* priorityBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* priorityBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -654,7 +654,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
       priorityBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (16, priorityBuffer, DBTYPE_UINT64, sizeof(priorityBuffer[0]), priorityBufLens);
+      (16, priorityBuffer, castor::db::DBTYPE_UINT64, sizeof(priorityBuffer[0]), priorityBufLens);
     // build the buffers for tape
     double* tapeBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* tapeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -663,7 +663,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
       tapeBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (17, tapeBuffer, DBTYPE_UINT64, sizeof(tapeBuffer[0]), tapeBufLens);
+      (17, tapeBuffer, castor::db::DBTYPE_UINT64, sizeof(tapeBuffer[0]), tapeBufLens);
     // build the buffers for copy
     double* copyBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* copyBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -672,7 +672,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
       copyBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (18, copyBuffer, DBTYPE_UINT64, sizeof(copyBuffer[0]), copyBufLens);
+      (18, copyBuffer, castor::db::DBTYPE_UINT64, sizeof(copyBuffer[0]), copyBufLens);
     // build the buffers for status
     int* statusBuffer = (int*) malloc(nb * sizeof(int));
     unsigned short* statusBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -681,12 +681,12 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
       statusBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (19, statusBuffer, DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
+      (19, statusBuffer, castor::db::DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
     m_insertStatement->setDataBuffer
-      (20, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
+      (20, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
@@ -750,7 +750,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
     free(statusBufLens);
     // reuse idBuffer for bulk insertion into Id2Type
     m_storeTypeStatement->setDataBuffer
-      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
+      (1, idBuffer, castor::db::DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
     // build the buffers for type
     int* typeBuffer = (int*) malloc(nb * sizeof(int));
     unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -759,7 +759,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
       typeBufLens[i] = sizeof(int);
     }
     m_storeTypeStatement->setDataBuffer
-      (2, typeBuffer, DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
+      (2, typeBuffer, castor::db::DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
     m_storeTypeStatement->execute(nb);
     // release the buffers for type
     free(typeBuffer);
