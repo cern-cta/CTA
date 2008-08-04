@@ -20,6 +20,7 @@
 #include "marshall.h"
 #include "rmc.h"
 #include "serrno.h"
+#include "tplogger_api.h"
 extern int being_shutdown;
 extern struct extended_robot_info extended_robot_info;
 extern char localhost[CA_MAXHOSTNAMELEN+1];
@@ -50,6 +51,9 @@ char *logbuf;
 		*(p + n1) = '\\';
 		*(p + n1 + 1) = '\0';
 		rmclogit (func, RMC98, p);
+                tl_rmcdaemon.tl_log( &tl_rmcdaemon, 98, 2,
+                                     "func"   , TL_MSG_PARAM_STR, "rmc_logreq",
+                                     "Request", TL_MSG_PARAM_STR, p );
 		if (p != logbuf) {
 			*p = savechrs2[0];
 			*(p + 1) = savechrs2[1];
@@ -64,6 +68,9 @@ char *logbuf;
 		n2 -= n1;
 	}
 	rmclogit (func, RMC98, p);
+        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 98, 2,
+                             "func"   , TL_MSG_PARAM_STR, "rmc_logreq",
+                             "Request", TL_MSG_PARAM_STR, p );
 	if (p != logbuf) {
 		*p = savechrs2[0];
 		*(p + 1) = savechrs2[1];
@@ -108,6 +115,12 @@ char *clienthost;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmclogit (func, RMC92, "export", uid, gid, clienthost);
+        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
+                             "func"      , TL_MSG_PARAM_STR, "rmc_srv_export",
+                             "Type"      , TL_MSG_PARAM_STR, "export",
+                             "UID"       , TL_MSG_PARAM_UID, uid,
+                             "GID"       , TL_MSG_PARAM_GID, gid,
+                             "ClientHost", TL_MSG_PARAM_STR, clienthost );
 	if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1) ||
 	    strcmp (smc_ldr, extended_robot_info.smc_ldr)) {
 		sendrep (rpfd, MSG_ERR, RMC06, "loader");
@@ -160,6 +173,12 @@ char *clienthost;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmclogit (func, RMC92, "findcart", uid, gid, clienthost);
+        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
+                             "func"      , TL_MSG_PARAM_STR, "rmc_srv_findcart",
+                             "Type"      , TL_MSG_PARAM_STR, "findcart",
+                             "UID"       , TL_MSG_PARAM_UID, uid,
+                             "GID"       , TL_MSG_PARAM_GID, gid,
+                             "ClientHost", TL_MSG_PARAM_STR, clienthost );
 	if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1) ||
 	    strcmp (smc_ldr, extended_robot_info.smc_ldr)) {
 		sendrep (rpfd, MSG_ERR, RMC06, "loader");
@@ -232,6 +251,12 @@ char *clienthost;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmclogit (func, RMC92, "getgeom", uid, gid, clienthost);
+        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
+                             "func"      , TL_MSG_PARAM_STR, "rmc_srv_getgeom",
+                             "Type"      , TL_MSG_PARAM_STR, "getgeom",
+                             "UID"       , TL_MSG_PARAM_UID, uid,
+                             "GID"       , TL_MSG_PARAM_GID, gid,
+                             "ClientHost", TL_MSG_PARAM_STR, clienthost );
 	if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1) ||
 	    strcmp (smc_ldr, extended_robot_info.smc_ldr)) {
 		sendrep (rpfd, MSG_ERR, RMC06, "loader");
@@ -274,6 +299,12 @@ char *clienthost;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmclogit (func, RMC92, "import", uid, gid, clienthost);
+        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
+                             "func"      , TL_MSG_PARAM_STR, "rmc_srv_import",
+                             "Type"      , TL_MSG_PARAM_STR, "import",
+                             "UID"       , TL_MSG_PARAM_UID, uid,
+                             "GID"       , TL_MSG_PARAM_GID, gid,
+                             "ClientHost", TL_MSG_PARAM_STR, clienthost );
 	if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1) ||
 	    strcmp (smc_ldr, extended_robot_info.smc_ldr)) {
 		sendrep (rpfd, MSG_ERR, RMC06, "loader");
@@ -318,6 +349,12 @@ char *clienthost;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmclogit (func, RMC92, "mount", uid, gid, clienthost);
+        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
+                             "func"      , TL_MSG_PARAM_STR, "rmc_srv_mount",
+                             "Type"      , TL_MSG_PARAM_STR, "mount",
+                             "UID"       , TL_MSG_PARAM_UID, uid,
+                             "GID"       , TL_MSG_PARAM_GID, gid,
+                             "ClientHost", TL_MSG_PARAM_STR, clienthost );
 	if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1) ||
 	    strcmp (smc_ldr, extended_robot_info.smc_ldr)) {
 		sendrep (rpfd, MSG_ERR, RMC06, "loader");
@@ -371,6 +408,12 @@ char *clienthost;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmclogit (func, RMC92, "readelem", uid, gid, clienthost);
+        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
+                             "func"      , TL_MSG_PARAM_STR, "rmc_srv_readelem",
+                             "Type"      , TL_MSG_PARAM_STR, "readelem",
+                             "UID"       , TL_MSG_PARAM_UID, uid,
+                             "GID"       , TL_MSG_PARAM_GID, gid,
+                             "ClientHost", TL_MSG_PARAM_STR, clienthost );
 	if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1) ||
 	    strcmp (smc_ldr, extended_robot_info.smc_ldr)) {
 		sendrep (rpfd, MSG_ERR, RMC06, "loader");
@@ -439,6 +482,12 @@ char *clienthost;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmclogit (func, RMC92, "unmount", uid, gid, clienthost);
+        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
+                             "func"      , TL_MSG_PARAM_STR, "rmc_srv_unmount",
+                             "Type"      , TL_MSG_PARAM_STR, "unmount",
+                             "UID"       , TL_MSG_PARAM_UID, uid,
+                             "GID"       , TL_MSG_PARAM_GID, gid,
+                             "ClientHost", TL_MSG_PARAM_STR, clienthost );
 	if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1) ||
 	    strcmp (smc_ldr, extended_robot_info.smc_ldr)) {
 		sendrep (rpfd, MSG_ERR, RMC06, "loader");
