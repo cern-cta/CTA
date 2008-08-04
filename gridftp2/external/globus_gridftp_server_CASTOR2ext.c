@@ -33,6 +33,9 @@
 #include <rfio_api.h> 
 #include <Castor_limits.h>
 
+#include <stager_mapper.h>
+#include <grp.h>
+#include <pwd.h>
 
 static
 globus_version_t local_version =
@@ -114,14 +117,32 @@ globus_l_gfs_CASTOR2ext_start(
     globus_l_gfs_CASTOR2ext_handle_t *       CASTOR2ext_handle;
     globus_gfs_finished_info_t          finished_info;
     char *                              func="globus_l_gfs_CASTOR2ext_start";
+    char *				mstager;
+    char *				msvcclass;
+    struct passwd *			pwd;
+    struct group *			grp;
     
     GlobusGFSName(globus_l_gfs_CASTOR2ext_start);
 
-    CASTOR2ext_handle = (globus_l_gfs_CASTOR2ext_handle_t *)
-        globus_malloc(sizeof(globus_l_gfs_CASTOR2ext_handle_t));
-
+    CASTOR2ext_handle = (globus_l_gfs_CASTOR2ext_handle_t *)globus_malloc(sizeof(globus_l_gfs_CASTOR2ext_handle_t));
         
     globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: started, uid: %u, gid: %u\n",func, getuid(),getgid());
+    
+    if((pwd=getpwuid(getuid()))!=NULL  && (grp=getgrgid(getgid()))!=NULL){
+	mstager=NULL;msvcclass=NULL;
+	if(0 == stage_mapper_setenv(pwd->pw_name,  /* const char *username */
+                        grp->gr_name,		   /* const char *groupname */
+                        &mstager,                  /* char **mstager */
+                        &msvcclass,		   /* char **msvcclass */
+                        NULL			   /* int* isV2 */
+			)){
+	    	if(mstager!=NULL) globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: user has been mapped to STAGE_HOST: %s\n",func, mstager);
+		if(msvcclass!=NULL) globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: user has been mapped to STAGE_CVSCLASS: %s\n",func, msvcclass);
+	}
+	else globus_gfs_log_message(GLOBUS_GFS_LOG_WARN,"%s: stage_mapper_setenv error\n",func);
+    }
+    else globus_gfs_log_message(GLOBUS_GFS_LOG_WARN,"%s: getpwuid or getgrgid error\n",func);
+    
     globus_mutex_init(&CASTOR2ext_handle->mutex,NULL);
     
     memset(&finished_info, '\0', sizeof(globus_gfs_finished_info_t));
