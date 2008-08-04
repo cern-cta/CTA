@@ -529,7 +529,7 @@ void CppCppDbCnvWriter::writeConstants() {
         secondRole = "Child";
       } else {
         firstRole = "Child";
-        secondRole = "Parent";        
+        secondRole = "Parent";
       }
       QString compoundName =
           capitalizeFirstLetter(firstMember->typeName).mid(0, 12) + QString("2")
@@ -1864,14 +1864,15 @@ void CppCppDbCnvWriter::writeBasicMultNFillRep(Assoc* as) {
             << endl << getIndent()
             << "// update " << as->remotePart.name
             << " and create new ones"
-            << endl << getIndent();
-  if (as->type.multiLocal == MULT_ONE) {
-    *m_stream << fixTypeName("vector", "", "")
+            << endl;
+  if (as->type.multiLocal == MULT_ONE
+      && as->remotePart.typeName != "longstring") {
+    *m_stream << getIndent() << fixTypeName("vector", "", "")
               << "<castor::IObject*> toBeCreated;"
-              << endl << getIndent();
+              << endl;
   }
-  *m_stream << "for (" << fixTypeName("vector", "", "")
-            << "<"
+  *m_stream << getIndent()
+            << "for (" << fixTypeName("vector", "", "") << "<"
             << fixTypeName(as->remotePart.typeName,
                            getNamespace(as->remotePart.typeName),
                            m_classInfo->packageName)
@@ -1886,7 +1887,8 @@ void CppCppDbCnvWriter::writeBasicMultNFillRep(Assoc* as) {
   *m_stream << getIndent() << "if (0 == (*it)->id()) {"
             << endl;
   m_indent++;
-  if (as->type.multiLocal == MULT_ONE) {
+  if (as->type.multiLocal == MULT_ONE
+      && as->remotePart.typeName != "longstring") {
     *m_stream << getIndent()
               << "toBeCreated.push_back(*it);";
   } else {
@@ -1986,7 +1988,8 @@ void CppCppDbCnvWriter::writeBasicMultNFillRep(Assoc* as) {
   }
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
-  if (as->type.multiLocal == MULT_ONE) {
+  if (as->type.multiLocal == MULT_ONE
+      && as->remotePart.typeName != "longstring") {
     *m_stream << getIndent() << "// create new objects" << endl
               << getIndent() << "cnvSvc()->bulkCreateRep(0, toBeCreated, false"
               << ", OBJ_" << as->localPart.typeName << ");" << endl;
@@ -2153,7 +2156,7 @@ void CppCppDbCnvWriter::writeBasicMultNFillObj(Assoc* as) {
   *m_stream << getIndent()
             << fixTypeName("vector", "", "")
             << "<u_signed64>::iterator item =" << endl
-	    << getIndent() << "  std::find("
+            << getIndent() << "  std::find("
             << as->remotePart.name
             << "List.begin(), "
             << as->remotePart.name
@@ -2443,6 +2446,21 @@ void CppCppDbCnvWriter::writeCreateBufferForSelect(QString name,
                                                    bool isAssoc,
                                                    QString remoteTypeName) {
   QString cTypeName = typeName;
+  if (typeName == "longstring") {
+    *m_stream << getIndent() << "// here we should build the buffers for "
+              << name << endl << getIndent()
+              << "// but this is a longstring (CLOB) field, and there's"
+              << endl << getIndent() 
+              << "// no support for bulk CLOBs insertion for the time being."
+              << endl << getIndent()
+              << "// Note that this method just compiles fine and is never called!"
+              << endl << getIndent()
+              << "char* " << name << "Buffer = 0;"
+              << endl << getIndent()
+              << "unsigned short* " << name << "BufLens = 0;"
+              << endl;
+    return;
+  }
   if (typeName == "string") cTypeName = "const char*";
   if (typeName == "u_signed64" || typeName == "signed64") {
     cTypeName = "double";
@@ -2638,7 +2656,7 @@ void CppCppDbCnvWriter::writeBulkCreateRepContent() {
             << "m_insertStatement->setDataBuffer" << endl
             << getIndent()
             << "  (" << n << ", "
-            << "idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);" << endl;
+            << "idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);" << endl;
   // Execute bulk insertion
   *m_stream << getIndent()
             << "m_insertStatement->execute(nb);"
@@ -3443,7 +3461,7 @@ QString CppCppDbCnvWriter::getDbType(QString& type) {
 QString CppCppDbCnvWriter::getDbCType(QString& type) {
   QString dbType = getSimpleType(type);
   if (dbType == "longstring") {
-    dbType = "char*";
+    return dbType;
   }
   if (dbType.startsWith("char")) {
     if (type.startsWith("unsigned")) {
@@ -3546,7 +3564,7 @@ QString CppCppDbCnvWriter::getDbTypeConstant(QString type) {
   } else if (m_castorTypes.find(dbType) != m_castorTypes.end()) {
     dbType = "DBTYPE_UINT64";
   }
-  return dbType;
+  return "castor::db::" + dbType;
 }
 
 //=============================================================================
