@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.676 $ $Date: 2008/07/30 09:50:26 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.677 $ $Date: 2008/08/05 09:53:01 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -263,7 +263,9 @@ CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
                                            srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
                                            srSubReqId OUT VARCHAR2, srAnswered OUT INTEGER) AS
 LockError EXCEPTION;
+InvalidRowid EXCEPTION;
 PRAGMA EXCEPTION_INIT (LockError, -54);
+PRAGMA EXCEPTION_INIT (InvalidRowid, -10632);
 CURSOR c IS
    SELECT /*+ USE_NL */ id
      FROM SubRequest
@@ -292,6 +294,9 @@ WHEN LockError THEN
   -- the SKIP LOCKED clause. This is a workaround to ignore the error until we understand
   -- what to do, another thread will pick up the request so we don't do anything.
   NULL;
+WHEN InvalidRowid THEN
+  -- Ignore random ORA-10632 errors (invalid rowid) due to interferences with the online shrinking
+  NULL;
 END;
 
 
@@ -302,6 +307,8 @@ CREATE OR REPLACE PROCEDURE subRequestFailedToDo(srId OUT INTEGER, srRetryCounte
                                                  srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
                                                  srSubReqId OUT VARCHAR2, srErrorCode OUT NUMBER,
                                                  srErrorMessage OUT VARCHAR2) AS
+InvalidRowid EXCEPTION;
+PRAGMA EXCEPTION_INIT (InvalidRowid, -10632);
 CURSOR c IS
    SELECT /*+ USE_NL */ id, answered
      FROM SubRequest
@@ -326,6 +333,9 @@ BEGIN
   CLOSE c;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- just return srId = 0, nothing to do
+  NULL;
+WHEN InvalidRowid THEN
+  -- Ignore random ORA-10632 errors (invalid rowid) due to interferences with the online shrinking
   NULL;
 END;
 
