@@ -79,6 +79,7 @@ namespace castor {
     extern const char* HIGHPORT_CONF;
     extern const char* SEC_MECH_ENV;
     extern const char* SECURITY_ENV;
+    extern const char* SECURITY_CONF;
     extern const int LOW_CLIENT_PORT_RANGE;
     extern const int HIGH_CLIENT_PORT_RANGE;
 

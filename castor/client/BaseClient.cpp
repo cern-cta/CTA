@@ -95,7 +95,8 @@ const char *castor::client::CLIENT_CONF = "CLIENT";
 const char *castor::client::LOWPORT_CONF = "LOWPORT";
 const char *castor::client::HIGHPORT_CONF = "HIGHPORT";
 const char *castor::client::SEC_MECH_ENV = "CSEC_MECH"; // Security protocol GSI, ID, KRB5,KRB4
-const char *castor::client::SECURITY_ENV = "CASTOR_SEC"; // Security enable
+const char *castor::client::SECURITY_ENV = "SECURE_CASTOR"; // Security enable
+const char *castor::client::SECURITY_CONF = "SECURE_CASTOR";
 
 
 //------------------------------------------------------------------------------
@@ -544,8 +545,10 @@ void castor::client::BaseClient::setAuthorization() throw(castor::exception::Exc
   char *security;
   char *mech;
   // Check if security env option is set. 
-  if ((security = getenv (castor::client::SECURITY_ENV)) != 0 && 
-      strcasecmp(security, "YES") == 0) {
+  if (((security = getenv (castor::client::SECURITY_ENV)) != 0 ||
+       (security = getconfent((char *)castor::client::CLIENT_CONF,
+                                     (char *)castor::client::SECURITY_CONF,0)) != 0 ) && 
+       strcasecmp(security, "YES") == 0) {
     if (( mech = getenv (castor::client::SEC_MECH_ENV)) != 0) {
       if (strlen(mech) > CA_MAXCSECPROTOLEN) {
         serrno = EINVAL;

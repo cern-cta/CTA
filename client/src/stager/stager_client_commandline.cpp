@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_commandline.cpp,v 1.11 2008/07/28 16:59:06 waldron Exp $
+ * $Id: stager_client_commandline.cpp,v 1.12 2008/08/05 15:31:38 riojac3 Exp $
  *
  * Copyright (C) 2004-2006 by CERN/IT/FIO/FD
  * All rights reserved
@@ -165,7 +165,7 @@ int DLL_DECL getDefaultForGlobal(
   }
 
   if (portDefault <= 0) {
-    if ((security = getenv ("CASTOR_SEC")) != 0 && strcasecmp(security, "YES") == 0) {
+    if ((security = getenv ("SECURE_CASTOR")) != 0 && strcasecmp(security, "YES") == 0) {
       aux = getenv("STAGE_SEC_PORT");
       portDefault = aux == NULL ? 0 : atoi(aux);
       if (portDefault <= 0) {
