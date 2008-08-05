@@ -479,21 +479,31 @@ int rtcpc_GiveInfo(tape_list_t *tl,
              */
             if ( tapereq->mode == WRITE_DISABLE ||
                  (fltmp->filereq.concat & CONCAT) == 0 ) {
+/*
               TransferTime += max(
                                   (time_t)fltmp->filereq.TEndTransferDisk,
                                   (time_t)fltmp->filereq.TEndTransferTape) -
                 (time_t)max(
                             (time_t)fltmp->filereq.TStartTransferDisk,
                             (time_t)fltmp->filereq.TStartTransferTape);
+*/
+              /* S. Murray 05/08/08 Only interested in tape transfer time */
+              TransferTime += (time_t)fltmp->filereq.TEndTransferTape -
+                (time_t)fltmp->filereq.TStartTransferTape;
             }
           } 
         } CLIST_ITERATE_END(tltmp->file,fltmp);
       } CLIST_ITERATE_END(tl,tltmp);
     } else {
+      /*
       TransferTime = (time_t)max((time_t)filereq->TEndTransferDisk,
                                  (time_t)filereq->TEndTransferTape) - 
         (time_t)max((time_t)filereq->TStartTransferDisk,
                     (time_t)filereq->TStartTransferTape);
+      */
+      /* S. Murray 05/08/08 Only interested in tape transfer time */
+      TransferTime += (time_t)fltmp->filereq.TEndTransferTape -
+        (time_t)fltmp->filereq.TStartTransferTape;
     }
 
     rtcp_log(LOG_INFO,RT201,cmd,(u_signed64)nbbytes);
