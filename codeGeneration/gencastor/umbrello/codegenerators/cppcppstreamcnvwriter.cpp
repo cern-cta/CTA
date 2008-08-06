@@ -1,6 +1,7 @@
 // Include files
 #include <qmap.h>
 #include <qregexp.h>
+#include <stdlib.h>
 
 // local
 #include "cppcppstreamcnvwriter.h"
