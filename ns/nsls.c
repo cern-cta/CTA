@@ -356,7 +356,7 @@ int listentry(path, statbuf, slink, comment)
   if (iflag)
     printf ("%s ", u64tostr (statbuf->fileid, tmpbuf, 20));
   if (clflag)
-    printf ("%2d ", statbuf->fileclass);
+    printf ("%3d ", statbuf->fileclass);
   if (lflag) {
     if (statbuf->filemode & S_IFDIR)
       modestr[0] = 'd';
