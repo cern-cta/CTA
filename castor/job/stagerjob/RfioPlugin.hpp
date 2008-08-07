@@ -43,6 +43,7 @@ namespace castor {
         std::string globus_x509_user_cert;
         std::string globus_x509_user_key;
         std::string gridmapfile;
+        std::string keytab_location;
         std::string csec_trace;
         std::string csec_mech;
         std::string csec_tracefile; 

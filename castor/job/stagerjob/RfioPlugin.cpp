@@ -80,6 +80,7 @@ void castor::job::stagerjob::RfioPlugin::setEnvironment
   setenv("GRIDMAP",env.gridmapfile.c_str(),1);
   setenv("X509_USER_KEY",env.globus_x509_user_key.c_str(),1);
   setenv("X509_USER_CERT",env.globus_x509_user_cert.c_str(),1);
+  setenv("KRB5_KTNAME",env.keytab_location.c_str(),1);
 }
 
 //------------------------------------------------------------------------------
@@ -88,6 +89,7 @@ void castor::job::stagerjob::RfioPlugin::setEnvironment
 void castor::job::stagerjob::RfioPlugin::getEnvironment
 (InputArguments &args, EnvironmentRfio &env) throw () {
 
+  // X509 Environment variables
   // Get certificate, key and location of the gridmapfile
   const char *globus_x509_user_cert = getconfent("CSEC","X509_USER_CERT",0);
   if (globus_x509_user_cert == NULL) {
@@ -107,6 +109,14 @@ void castor::job::stagerjob::RfioPlugin::getEnvironment
     env.gridmapfile = "/etc/grid-security/grid-mapfile";
   } else {
     env.gridmapfile = gridmapfile;
+  }
+
+  // KRB5 Environment variables
+  const char *keytab_location = getconfent("CSEC","KRB5_KTNAME",0);
+  if (keytab_location == NULL) {
+    env.keytab_location = "FILE:/etc/castor-csec-krb5.keytab";
+  } else {
+    env.keytab_location = keytab_location;
   }
 
   // get the CSEC mechanism, trace and tracefile
