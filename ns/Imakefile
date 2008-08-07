@@ -68,7 +68,7 @@ GLOBUS_FLAVOUR=GlobusFlavour##pthr
 #else
 GLOBUS_FLAVOUR=GlobusFlavour/**/pthr
 #endif
-GLOBUS_LIBS=-L$(GLOBUS_LOCATION)/lib -lglobus_gssapi_gsi_$(GLOBUS_FLAVOUR) -lglobus_gss_assist_$(GLOBUS_FLAVOUR)
+GLOBUS_LIBS=-L$(GLOBUS_LOCATION)/lib -lcrypto_$(GLOBUS_FLAVOUR)
 LIBCSEC += $(GLOBUS_LIBS)
 #endif
 LIBCSEC += -ldl
