@@ -2,7 +2,7 @@
  * Copyright (C) 1999-2005 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
+
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
@@ -40,16 +40,16 @@ struct sqlca *sqlca;
 	if (err_msg[err_len - 1]  == '\n') {
 		err_msg[err_len - 1] = '\0';
 	}
-	
+
 	nslogit (func, "%s error: %.*s\n", sql_method, err_len, err_msg);
-	
+
 	/* Connection to the database was lost ? */
 	if (sqlca->sqlcode == -2396  || sqlca->sqlcode == -3113  ||
-	    sqlca->sqlcode == -28    || sqlca->sqlcode == -3114  || 
-	    sqlca->sqlcode == -32102 || sqlca->sqlcode == -3135  || 
-	    sqlca->sqlcode == -12170 || sqlca->sqlcode == -12541 || 
-	    sqlca->sqlcode == -1012  || sqlca->sqlcode == -1003  || 
-	    sqlca->sqlcode == -12571 || sqlca->sqlcode == -25408 || 
+	    sqlca->sqlcode == -28    || sqlca->sqlcode == -3114  ||
+	    sqlca->sqlcode == -32102 || sqlca->sqlcode == -3135  ||
+	    sqlca->sqlcode == -12170 || sqlca->sqlcode == -12541 ||
+	    sqlca->sqlcode == -1012  || sqlca->sqlcode == -1003  ||
+	    sqlca->sqlcode == -12571 || sqlca->sqlcode == -25408 ||
 	    sqlca->sqlcode == -1033  || sqlca->sqlcode == -1089) {
 		nslogit (func, "Trying to reconnect\n");
 		Cns_closedb (dbfd);
@@ -798,8 +798,8 @@ Cns_dbrec_addr *rec_addr;
 		if (lock)
 			memcpy (rec_addr, rowid_value, sizeof(rowid_value));
 		lnk_entry->fileid = fileid;
-		if (ln_ind == -1) 
-		   	*lnk_entry->linkname = '\0'; 
+		if (ln_ind == -1)
+		   	*lnk_entry->linkname = '\0';
 		return (0);
 	case 1403:
 		serrno = ENOENT;
@@ -808,6 +808,45 @@ Cns_dbrec_addr *rec_addr;
 		Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
 	}
 	return (-1);
+}
+
+
+int Cns_getpath_by_fileid (dbfd, fileid, path)
+struct Cns_dbfd *dbfd;
+u_signed64 fileid;
+char **path;
+{
+  char fileid_str[21];
+  char result[CA_MAXPATHLEN+1];
+  char func[19];
+  struct sqlca sqlca;
+  EXEC SQL DECLARE getpath_cursor CURSOR FOR
+    SELECT getPathForFileid(:fileid_str)
+    FROM Dual;
+
+  strcpy (func, "Cns_getpath");
+  (void) u64tostr (fileid, fileid_str, -1);
+  EXEC SQL OPEN getpath_cursor;
+  if (sqlca.sqlcode) {
+    Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+    return (-1);
+  }
+  EXEC SQL FETCH getpath_cursor INTO :result;
+  switch (sqlca.sqlcode) {
+  case 0:
+    memcpy(*path, result, strlen(result)+1);
+    return (0);
+  case -1405:
+    /* returned value is NULL, we didn't find anything */
+    serrno = ENOENT;
+    break;
+  case -20001:
+    serrno = SENAMETOOLONG;
+    break;
+  default:
+    Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+  }
+  return (-1);
 }
 
 int Cns_get_max_copyno (dbfd, fileid, copyno)
@@ -929,7 +968,7 @@ Cns_dbrec_addr *rec_addr;
 }
 
 /* Get segments for a specified tapecopy */
- 
+
 int Cns_get_smd_by_copyno(dbfd, bof, fileid, copyno, smd_entry, lock, rec_addr, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bof;
@@ -947,7 +986,7 @@ DBLISTPTR *dblistptr;
 	char segsize_str[21];
 	struct sqlca sqlca;
 	short checksum_name_ind;
-	
+
 	EXEC SQL VAR smd_entry->blockid IS RAW(4);
 	EXEC SQL DECLARE smd_copyno_cursor CURSOR FOR
 		SELECT ROWID,
@@ -968,14 +1007,14 @@ DBLISTPTR *dblistptr;
 		WHERE s_fileid = TO_NUMBER(:fileid_str)
 		AND copyno = :copyno
 		FOR UPDATE;
-	
+
 	strcpy (func, "Cns_get_smd_by_copyno");
 
 	if (endlist)
 		return (1);
-	
+
 	(void) u64tostr (fileid, fileid_str, -1);
-	
+
 	if (bof) {
 		if (lock)
 			EXEC SQL OPEN smd_copyno_cursor4upd;
@@ -1015,7 +1054,7 @@ DBLISTPTR *dblistptr;
 		Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
 		return (-1);
 	}
-	
+
 }
 
 int Cns_get_smd_by_fullid(dbfd, fileid, copyno, fsec, smd_entry, lock, rec_addr)
@@ -1206,7 +1245,7 @@ struct Cns_seg_metadata *smd_entry;
 	if (sqlca.sqlcode) {
 		Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
 		return(-1);
-	}	
+	}
 	EXEC SQL FETCH last_smd_vid_cursor INTO
 		 :fileid_str, :smd_entry->copyno, :smd_entry->fsec,
 		 :segsize_str, :smd_entry->compression, :smd_entry->s_status,
@@ -1259,7 +1298,7 @@ int backup;
 		return(0);
 	default:
 		Cns_oracle_error (func, "SELECT", dbfd, &sqlca);
-		return(-1);	
+		return(-1);
 	}
 	return(0);
 }
@@ -1323,9 +1362,9 @@ u_signed64 *size;
 	char size_str[21];
 	int exists = 0;
 	struct sqlca sqlca;
-	
+
 	strcpy (func, "Cns_get_tapesum_by_vid");
-	EXEC SQL SELECT COUNT(*) INTO :exists 
+	EXEC SQL SELECT COUNT(*) INTO :exists
 	         FROM Cns_seg_metadata
 		 WHERE vid = :vid;
 	switch (sqlca.sqlcode) {
@@ -1338,24 +1377,24 @@ u_signed64 *size;
 		return(-1);
 	default:
 		Cns_oracle_error (func, "SELECT", dbfd, &sqlca);
-		return(-1);	
+		return(-1);
 	}
 
 	if (filter == 1) {
 		EXEC SQL SELECT TO_CHAR(COUNT(*)), TO_CHAR(NVL(SUM(segsize),0))
-			 INTO :count_str, :size_str 
-			 FROM Cns_seg_metadata 
+			 INTO :count_str, :size_str
+			 FROM Cns_seg_metadata
 			 WHERE vid = :vid;
 	} else if (filter == 2) {
-		EXEC SQL SELECT TO_CHAR(COUNT(*)), TO_CHAR(NVL(SUM(segsize),0)) 
-			 INTO :count_str, :size_str 
-			 FROM Cns_seg_metadata 
+		EXEC SQL SELECT TO_CHAR(COUNT(*)), TO_CHAR(NVL(SUM(segsize),0))
+			 INTO :count_str, :size_str
+			 FROM Cns_seg_metadata
 			 WHERE vid = :vid
 			 AND s_status = '-';
 	} else if (filter == 3) {
-		EXEC SQL SELECT TO_CHAR(COUNT(*)), TO_CHAR(NVL(SUM(segsize),0)) 
-			 INTO :count_str, :size_str 
-			 FROM Cns_seg_metadata 
+		EXEC SQL SELECT TO_CHAR(COUNT(*)), TO_CHAR(NVL(SUM(segsize),0))
+			 INTO :count_str, :size_str
+			 FROM Cns_seg_metadata
 			 WHERE vid = :vid
 			 AND s_status = 'D';
 	} else {
@@ -2333,7 +2372,7 @@ struct Cns_file_metadata *fmd_entry;
 	case 0:
 		return (0);
 	case -1438:
-		serrno = EMLINK; 
+		serrno = EMLINK;
 		break;
 	default:
 		Cns_oracle_error (func, "UPDATE", dbfd, &sqlca);
@@ -2505,7 +2544,7 @@ Cns_dbrec_addr *rec_addr;
 			memcpy (rec_addr, rowid_value, sizeof(rowid_value));
 		return (0);
 	case 1403:
-		serrno = ENOENT; 
+		serrno = ENOENT;
 		break;
 	default:
 		Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
@@ -2555,7 +2594,7 @@ Cns_dbrec_addr *rec_addr;
 			memcpy (rec_addr, rowid_value, sizeof(rowid_value));
 		return (0);
 	case 1403:
-		serrno = ENOENT; 
+		serrno = ENOENT;
 		break;
 	default:
 		Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
@@ -2605,7 +2644,7 @@ Cns_dbrec_addr *rec_addr;
 			memcpy (rec_addr, rowid_value, sizeof(rowid_value));
 		return (0);
 	case 1403:
-		serrno = ENOENT; 
+		serrno = ENOENT;
 		break;
 	default:
 		Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
@@ -2655,7 +2694,7 @@ int Cns_get_usrinfo_by_uid(dbfd, uid, user_entry, lock, rec_addr)
 			memcpy (rec_addr, rowid_value, sizeof(rowid_value));
 		return (0);
 	case 1403:
-		serrno = ENOENT; 
+		serrno = ENOENT;
 		break;
 	default:
 		Cns_oracle_error (func, "FETCH", dbfd, &sqlca);

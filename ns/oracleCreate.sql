@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Revision: 1.5 $ $Date: 2008/06/25 12:44:29 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Revision: 1.6 $ $Date: 2008/08/07 15:32:40 $ $Author: itglp $
  *
  * This file creates the Name Server database schema.
  *
@@ -138,3 +138,24 @@ CREATE GLOBAL TEMPORARY TABLE Cns_files_Exist_tmp
 CREATE TABLE schema_version (major NUMBER(1), minor NUMBER(1), patch NUMBER(1));
 INSERT INTO schema_version VALUES (1, 1, 1);
 
+-- A function to extract the full path of a file in one go
+CREATE OR REPLACE FUNCTION getPathForFileid(fid IN NUMBER) RETURN VARCHAR2 IS
+  CURSOR c IS
+    SELECT name
+      FROM cns_file_metadata
+    START WITH fileid = fid
+    CONNECT BY fileid = PRIOR parent_fileid
+    ORDER BY level DESC;
+  p VARCHAR2(2048) := '';
+BEGIN
+   FOR i in c LOOP
+     p := p ||  '/' || i.name;
+   END LOOP;
+   -- remove first '/'
+   p := replace(p, '///', '/');
+   IF length(p) > 1024 THEN
+     -- the caller will return SENAMETOOLONG
+     raise_application_error(-20001, '');
+   END IF;
+   RETURN p;
+END;
