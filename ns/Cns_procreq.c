@@ -1764,7 +1764,7 @@ int Cns_srv_getlinks(magic, req_data, clienthost, thip)
   } else {
     if (*path != '/') { /* need to get path */
       p = tmp_path;
-      if ((c = Cns_getpath_by_fileid (&thip->dbfd, fmd_entry.fileid, &p)))
+      if (Cns_getpath_by_fileid (&thip->dbfd, fmd_entry.fileid, &p))
         RETURNQ (serrno);
       strcpy (lnk_entry.linkname, p);
     } else
@@ -1775,7 +1775,7 @@ int Cns_srv_getlinks(magic, req_data, clienthost, thip)
                                   &lnk_entry, 0, &dblistptr)) == 0) {
     bol = 0;
     p = tmp_path;
-    if ((c = Cns_getpath_by_fileid (&thip->dbfd, lnk_entry.fileid, &p)))
+    if (Cns_getpath_by_fileid (&thip->dbfd, lnk_entry.fileid, &p))
       RETURNQ (serrno);
     n = strlen (p) + 1;
     if (sbp - repbuf + n > REPBUFSZ) {
@@ -2336,7 +2336,7 @@ int Cns_srv_listlinks(magic, req_data, clienthost, thip, lnk_entry, endlist, dbl
     } else {
       if (*path != '/') { /* need to get path */
         p = tmp_path;
-        if ((c = Cns_getpath_by_fileid (&thip->dbfd, fmd_entry.fileid, &p)))
+        if (Cns_getpath_by_fileid (&thip->dbfd, fmd_entry.fileid, &p))
           RETURN (serrno);
         strcpy (lnk_entry->linkname, p);
       } else
@@ -2363,7 +2363,7 @@ int Cns_srv_listlinks(magic, req_data, clienthost, thip, lnk_entry, endlist, dbl
   while (c == 0) {
     if (listentsz > maxsize) break;
     p = tmp_path;
-    if ((c = Cns_getpath_by_fileid (&thip->dbfd, lnk_entry->fileid, &p)))
+    if (Cns_getpath_by_fileid (&thip->dbfd, lnk_entry->fileid, &p))
       RETURN (serrno);
     marshall_STRING (sbp, p);
     maxsize -= listentsz;
