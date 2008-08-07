@@ -177,6 +177,16 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
         VDQM_DRIVE_ALLOCATION_ERROR, 5, params);
     }
   } catch(castor::exception::Exception &e) {
+    // Log failure of RTPCD job submission
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("tapeDriveID", drive->id()),
+      castor::dlf::Param("driveName", drive->driveName()),
+      castor::dlf::Param("tapeRequestID", request->id()),
+      castor::dlf::Param("Message", e.getMessage().str()),
+      castor::dlf::Param("Code", e.code())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      VDQM_RTCPD_JOB_SUBMIT_FAILED, 5, params);
+
     try {
       // Write failed submission of RTCPD job to the database
       if(!vdqmSvc->writeFailedRTPCDJobSubmission(drive->id(), request->id())) {

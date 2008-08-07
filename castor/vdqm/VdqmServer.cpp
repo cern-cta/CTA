@@ -273,6 +273,7 @@ void castor::vdqm::VdqmServer::initDlf()
     {VDQM_NO_VOL_PRIORITY_DELETED, "No volume priority was found and deleted"},
     {VDQM_DEL_OLD_VOL_PRIORITIES, "Deleted old volume priorities"},
     {VDQM_DEL_OLD_VOL_PRIORITIES_ERROR, "Error occurred whilst deleting old volume priorities"},
+    {VDQM_RTCPD_JOB_SUBMIT_FAILED, "Failed to submit RTCPD job"},
     {-1, ""}
   }; // castor::dlf::Message messages[]
 
