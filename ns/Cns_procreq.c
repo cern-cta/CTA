@@ -71,34 +71,8 @@ char **user;
         *user = "UNKNOWN";
     else
         *user = pw->pw_name;
-#endif 
+#endif
     return (0);
-}
-
-int getpath (thip, cur_fileid, path)
-     struct Cns_srv_thread_info *thip;
-     u_signed64 cur_fileid;
-     char **path;
-{
-  struct Cns_file_metadata fmd_entry;
-  int n;
-  char *p;
-
-  p = *path + CA_MAXPATHLEN;
-  *p = '\0';
-  while (cur_fileid != 2) {
-    if (Cns_get_fmd_by_fileid (&thip->dbfd, cur_fileid, &fmd_entry,
-                               0, NULL))
-      return (serrno);
-    n = strlen (fmd_entry.name);
-    if ((p -= n) < *path + 1)
-      return (SENAMETOOLONG);
-    memcpy (p, fmd_entry.name, n);
-    *(--p) = '/';
-    cur_fileid = fmd_entry.parent_fileid;
-  }
-  *path = p;
-  return (0);
 }
 
 /* Cns_logreq - log a request */
@@ -1790,8 +1764,8 @@ int Cns_srv_getlinks(magic, req_data, clienthost, thip)
   } else {
     if (*path != '/') { /* need to get path */
       p = tmp_path;
-      if ((c = getpath (thip, fmd_entry.fileid, &p)))
-        RETURNQ (c);
+      if ((c = Cns_getpath_by_fileid (&thip->dbfd, fmd_entry.fileid, &p)))
+        RETURNQ (serrno);
       strcpy (lnk_entry.linkname, p);
     } else
       strcpy (lnk_entry.linkname, path);
@@ -1801,8 +1775,8 @@ int Cns_srv_getlinks(magic, req_data, clienthost, thip)
                                   &lnk_entry, 0, &dblistptr)) == 0) {
     bol = 0;
     p = tmp_path;
-    if ((c = getpath (thip, lnk_entry.fileid, &p)))
-      RETURNQ (c);
+    if ((c = Cns_getpath_by_fileid (&thip->dbfd, lnk_entry.fileid, &p)))
+      RETURNQ (serrno);
     n = strlen (p) + 1;
     if (sbp - repbuf + n > REPBUFSZ) {
       sendrep (thip->s, MSG_LINKS, sbp - repbuf, repbuf);
@@ -1825,7 +1799,6 @@ int Cns_srv_getpath(magic, req_data, clienthost, thip)
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
 {
-  int c;
   u_signed64 cur_fileid;
   char func[16];
   gid_t gid;
@@ -1849,8 +1822,8 @@ int Cns_srv_getpath(magic, req_data, clienthost, thip)
     p = "/";
   else {
     p = path;
-    if ((c = getpath (thip, cur_fileid, &p)))
-      RETURNQ (c);
+    if (Cns_getpath_by_fileid (&thip->dbfd, cur_fileid, &p))
+      RETURNQ (serrno);
   }
   sbp = repbuf;
   marshall_STRING (sbp, p);
@@ -2363,8 +2336,8 @@ int Cns_srv_listlinks(magic, req_data, clienthost, thip, lnk_entry, endlist, dbl
     } else {
       if (*path != '/') { /* need to get path */
         p = tmp_path;
-        if ((c = getpath (thip, fmd_entry.fileid, &p)))
-          RETURN (c);
+        if ((c = Cns_getpath_by_fileid (&thip->dbfd, fmd_entry.fileid, &p)))
+          RETURN (serrno);
         strcpy (lnk_entry->linkname, p);
       } else
         strcpy (lnk_entry->linkname, path);
@@ -2390,8 +2363,8 @@ int Cns_srv_listlinks(magic, req_data, clienthost, thip, lnk_entry, endlist, dbl
   while (c == 0) {
     if (listentsz > maxsize) break;
     p = tmp_path;
-    if ((c = getpath (thip, lnk_entry->fileid, &p)))
-      RETURN (c);
+    if ((c = Cns_getpath_by_fileid (&thip->dbfd, lnk_entry->fileid, &p)))
+      RETURN (serrno);
     marshall_STRING (sbp, p);
     maxsize -= listentsz;
     nbentries++;
