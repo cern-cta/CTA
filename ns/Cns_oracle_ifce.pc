@@ -2230,6 +2230,8 @@ struct Cns_dbfd *dbfd;
 	char db_pwd[CA_MAXLINELEN+1];
 	char db_srv[CA_MAXLINELEN+1];
 	char db_name[CA_MAXLINELEN+1];
+	char dbversion[21] = "";
+	char codeversion[21] = "2_1_8_0";
 	char *p;
 	FILE *fp;
 
@@ -2259,6 +2261,7 @@ struct Cns_dbfd *dbfd;
 	}
 	fclose(fp);
 
+  /* connect */
 	while (1) {
 		if (strlen(db_srv) > 0) {
 			sprintf(db_connect, "%s/%s@%s", db_user, db_pwd, db_srv);
@@ -2266,14 +2269,24 @@ struct Cns_dbfd *dbfd;
 			sprintf(db_connect, "%s/%s", db_user, db_pwd);
 		}
 		EXEC SQL CONNECT :db_connect;
-		if (sqlca.sqlcode == 0) return (0);
-		if (sqlca.sqlcode != -1014 && sqlca.sqlcode != -1033 &&
-		    sqlca.sqlcode != -1034) break;
-		if (ntries++ >= MAXRETRY) break;
+    if (sqlca.sqlcode == 0) break;
+    if ((sqlca.sqlcode != -1014 && sqlca.sqlcode != -1033 &&
+         sqlca.sqlcode != -1034) || ntries++ >= MAXRETRY) { 
+      Cns_oracle_error (func, "CONNECT", dbfd, &sqlca);
+      return -1;
+    }
 		sleep (RETRYI);
 	}
-	Cns_oracle_error (func, "CONNECT", dbfd, &sqlca);
-	return (-1);
+
+	/* check database version: for the time being we only issue a warning if
+     a mismatch is found; this is to make mixed deployments and rolling upgrades easier */    
+	EXEC SQL SELECT schemaVersion INTO :dbversion FROM Cns_version;
+	if ((sqlca.sqlcode != 0) || strcmp(dbversion, codeversion)) {
+		nslogit (func, "warning: version mismatch between the NS daemon and database schema - "
+			       "db version: %s versus software version: %s\n", dbversion, codeversion);
+	}
+  
+	return 0;
 }
 
 int Cns_start_tr(s, dbfd)
