@@ -134,9 +134,22 @@ LDLIBS = -L../shlib -lshift $(MTLDLIBS)
 #endif
 #endif
 #endif
+
 #if BuildSecurity
+SECURITYFLAG = -DCSEC
+#if UseGSI
+GLOBUS_LOCATION=GlobusLocation
+#if defined(__STDC__)
+GLOBUS_FLAVOUR=GlobusFlavour##pthr
+#else
+GLOBUS_FLAVOUR=GlobusFlavour/**/pthr
+#endif
+GLOBUS_LIBS=-L$(GLOBUS_LOCATION)/lib -lcrypto_$(GLOBUS_FLAVOUR)
+LIBCSEC += $(GLOBUS_LIBS)
+#endif
 LDLIBS += -ldl
 #endif
+
 #if defined(linux)
 #if UseXFSPrealloc
 CFLAGS += -DUSE_XFSPREALLOC
@@ -375,7 +388,7 @@ NormalProgramTarget(rfiod,$(SRVOBJS),DepSharedLibraryTargetName(shlib,shift) \
  $(LDLIBS) $(HPSSLIBS) $(XFSLIBS) $(CKSUMLIB))
 #else
 NormalProgramTarget(rfiod,$(SRVOBJS),DepSharedLibraryTargetName(shlib,shift), \
- $(MTLDFLAGS) $(RTFLAGS) $(RTLIBS) $(LDLIBS) $(XFSLIBS) $(CKSUMLIB))
+ $(MTLDFLAGS) $(RTFLAGS) $(RTLIBS) $(LIBCSEC) $(LDLIBS) $(XFSLIBS) $(CKSUMLIB))
 #endif
 
 #if ((defined(__osf__) && defined(__alpha) && (OSMajorVersion == 4)) || defined(linux))

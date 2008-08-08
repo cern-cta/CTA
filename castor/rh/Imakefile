@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.15 $ $Release$ $Date: 2008/07/29 06:29:15 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.16 $ $Release$ $Date: 2008/08/08 12:35:35 $ $Author: riojac3 $
 #
 # Make Castor RH library
 #
@@ -34,10 +34,22 @@ DEBUG  = -g
 #endif
 #endif
 
+#if UseGSI
+GLOBUS_LOCATION=GlobusLocation
+#if defined(__STDC__)
+GLOBUS_FLAVOUR=GlobusFlavour##pthr
+#else
+GLOBUS_FLAVOUR=GlobusFlavour/**/pthr
+#endif
+GLOBUS_LIBS=-L$(GLOBUS_LOCATION)/lib -lcrypto_$(GLOBUS_FLAVOUR)
+LIBS += $(GLOBUS_LIBS)
+#endif
+
+
 INCLUDES = -I FileName(FileName(..,..),h) -I FileName(..,..)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
-LIBS = -lshift -Wl,-rpath-link,../../shlib
+LIBS += -lshift -Wl,-rpath-link,../../shlib
 
 RHBIN_SRCS = Server.cpp RHThread.cpp
 
