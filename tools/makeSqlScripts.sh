@@ -2,13 +2,13 @@
 
 # check arguments
 if [ $# != 3 -a $# != 4 ]; then
-  echo usage: $0 component targetDir releaseTag [installDir]
-  echo supported components are: castor, repack, vdqm, srm
+  echo usage: $0 component releaseTag targetDir [installDir]
+  echo valid components are: castor, repack, vdqm, srm
   echo
   exit
 fi
 
-cd $2
+cd $3
 if ! [ -f oracleSchema.sql ]; then
   echo oracleSchema.sql not found, exiting
   echo
@@ -22,7 +22,7 @@ if [ $# == 3 ]; then
   # insert release number
   echo >> $1_oracle_create.sql
   echo "CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));" >> $1_oracle_create.sql
-  echo "INSERT INTO CastorVersion VALUES ('-', '"$3"');" >> $1_oracle_create.sql
+  echo "INSERT INTO CastorVersion VALUES ('-', '"$2"');" >> $1_oracle_create.sql
   echo >> $1_oracle_create.sql
 
   # append trailers
@@ -41,7 +41,7 @@ if [ $# == 3 ]; then
   # generate sqlplus version
   sed 's/^END;/END;\n\//' $1_oracle_create.sql | sed 's/^\(END castor[a-zA-Z]*;\)/\1\n\//' | sed 's/^\(END repack[a-zA-Z]*;\)/\1\n\//' | sed 's/\(CREATE OR REPLACE TYPE .*;\)$/\1\n\//'  | sed 's/^);$/);\n\//' | sed 's/.sql$/.sqlplus/' > $1_oracle_create.sqlplus
 
-  echo Creation scripts for $1 generated with tag $3
+  echo Creation scripts for $1 generated with tag $2
 
 else
   # install
