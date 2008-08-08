@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/06/23 07:47:50 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/08/08 09:15:05 $ $Author: waldron $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -161,9 +161,9 @@ void castor::db::ora::OraRHSvc::checkPermission
 	ex.getMessage() << "'\n";
 	throw ex;
       } else {
-	// ret == -2 : no existent service class
+	// ret == -2 : non existent service class
 	castor::exception::InvalidArgument ex;
-	ex.getMessage() << "Unknown service class '"
+	ex.getMessage() << "Invalid service class '"
 			<< svcClassName
 			<< "'\n";
 	throw ex;
@@ -273,6 +273,12 @@ void castor::db::ora::OraRHSvc::changePrivilege
 		      << "that you are trying to grant only part of a privilege "
 		      << "that is currently denied.\nConsider granting all of it "
 		      << "and denying the complement afterward";
+      throw ex;
+    } else if (e.getErrorCode() == 20113) {
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() << "Invalid service class '"
+		      << svcClassName
+		      << "'\n";
       throw ex;
     } else {
       castor::exception::Internal ex;
