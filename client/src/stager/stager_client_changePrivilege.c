@@ -83,7 +83,11 @@ int cmd_parse(int argc,
     }
     if (errflg != 0) break;
   }
-  // check number of arguments
+  // check that arguments exist
+  if (argc == 1) {
+    return 1;
+  }
+  // check that all arguments were parsed
   argc -= Coptind;
   if (argc != 0) {
     errflg++;
