@@ -48,31 +48,31 @@ extern char localhost[CA_MAXHOSTNAMELEN+1];
 extern int rdonly;
 
 int get_client_actual_id (thip, uid, gid, user)
-struct Cns_srv_thread_info *thip;
-uid_t *uid;
-gid_t *gid;
-char **user;
+     struct Cns_srv_thread_info *thip;
+     uid_t *uid;
+     gid_t *gid;
+     char **user;
 {
-    struct passwd *pw;
-
+  struct passwd *pw;
+  
 #ifdef CSEC
-    if (thip->secOn){
-        *uid = thip->Csec_uid;
-        *gid = thip->Csec_gid;
-        *user = thip->Csec_auth_id;
-    }else {
-        if ((pw = Cgetpwuid (*uid)) == NULL)
-            *user = "UNKNOWN";
-        else
-            *user = pw->pw_name;
-    }
-#else
+  if (thip->secOn) {
+    *uid = thip->Csec_uid;
+    *gid = thip->Csec_gid;
+    *user = thip->Csec_auth_id;
+  } else {
     if ((pw = Cgetpwuid (*uid)) == NULL)
-        *user = "UNKNOWN";
+      *user = "UNKNOWN";
     else
-        *user = pw->pw_name;
+      *user = pw->pw_name;
+  }
+#else
+  if ((pw = Cgetpwuid (*uid)) == NULL)
+    *user = "UNKNOWN";
+  else
+    *user = pw->pw_name;
 #endif
-    return (0);
+  return (0);
 }
 
 /* Cns_logreq - log a request */

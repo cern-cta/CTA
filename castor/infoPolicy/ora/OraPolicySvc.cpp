@@ -100,11 +100,11 @@ const std::string castor::infoPolicy::ora::OraPolicySvc::s_resurrectCandidatesSt
 
 /// SQL invalidate tapecopies
 const std::string castor::infoPolicy::ora::OraPolicySvc::s_invalidateTapeCopiesStatementString = 
-"BEGIN  invalidateTapeCopies(:1);END;";
+  "BEGIN  invalidateTapeCopies(:1);END;";
 
 /// SQL select tapepoolnames
- const std::string castor::infoPolicy::ora::OraPolicySvc::s_selectTapePoolNamesStatementString =
- "SELECT TapePool.name, TapePool.id FROM TapePool,SvcClass2TapePool WHERE TapePool.id= SvcClass2TapePool.child AND SvcClass2TapePool.parent=:1";
+const std::string castor::infoPolicy::ora::OraPolicySvc::s_selectTapePoolNamesStatementString =
+  "SELECT TapePool.name, TapePool.id FROM TapePool,SvcClass2TapePool WHERE TapePool.id= SvcClass2TapePool.child AND SvcClass2TapePool.parent=:1";
 
 /// MigHunter Db Clean up
 
@@ -223,8 +223,8 @@ std::vector<castor::infoPolicy::PolicyObj*> castor::infoPolicy::ora::OraPolicySv
         (2, oracle::occi::OCCISTRING, 2048);
       m_inputForMigrationPolicyStatement->registerOutParam
         (3, oracle::occi::OCCIDOUBLE);
-        m_inputForMigrationPolicyStatement->registerOutParam
-       (4, oracle::occi::OCCICURSOR);
+      m_inputForMigrationPolicyStatement->registerOutParam
+	(4, oracle::occi::OCCICURSOR);
       m_inputForMigrationPolicyStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
@@ -236,11 +236,11 @@ std::vector<castor::infoPolicy::PolicyObj*> castor::infoPolicy::ora::OraPolicySv
     
     // let's get first the tapepools name and Id 
 
-     if (0 == m_selectTapePoolNamesStatement) {
+    if (0 == m_selectTapePoolNamesStatement) {
       m_selectTapePoolNamesStatement  =
         createStatement(s_selectTapePoolNamesStatementString);
     }
-     m_selectTapePoolNamesStatement->setDouble(1,(double)svcClassId);
+    m_selectTapePoolNamesStatement->setDouble(1,(double)svcClassId);
     oracle::occi::ResultSet *tapePoolResults = m_selectTapePoolNamesStatement->executeQuery();
     std::vector<std::string> listTapePoolName;
     std::vector<u_signed64>  listTapePoolId;
@@ -253,7 +253,7 @@ std::vector<castor::infoPolicy::PolicyObj*> castor::infoPolicy::ora::OraPolicySv
     
     // Now let's analyse the first query result with the tapepool information
 
-     oracle::occi::ResultSet *rs = m_inputForMigrationPolicyStatement->getCursor(4);
+    oracle::occi::ResultSet *rs = m_inputForMigrationPolicyStatement->getCursor(4);
 
     // Run through the cursor
 
@@ -307,15 +307,15 @@ std::vector<castor::infoPolicy::PolicyObj*> castor::infoPolicy::ora::OraPolicySv
 //--------------------------------------------------------------------------
 int castor::infoPolicy::ora::OraPolicySvc::createOrUpdateStream(std::string svcClassName, u_signed64 initialSizeToTransfer, u_signed64 volumeThreashold, u_signed64 initialSizeCeiling,bool doClone, std::vector<PolicyObj*> tapeCopiesInfo) throw (castor::exception::Exception){
 
-   unsigned char (*buffer)[21] = 0;
-   ub2 *lens =0;
+  unsigned char (*buffer)[21] = 0;
+  ub2 *lens =0;
   
   try {
     // Check whether the statements are ok
     if (0 == m_createOrUpdateStreamStatement) {
       m_createOrUpdateStreamStatement  =
         createStatement(s_createOrUpdateStreamStatementString);
-        m_createOrUpdateStreamStatement->registerOutParam
+      m_createOrUpdateStreamStatement->registerOutParam
         (7, oracle::occi::OCCIINT);
       m_createOrUpdateStreamStatement->setAutoCommit(true);
     }
@@ -354,16 +354,16 @@ int castor::infoPolicy::ora::OraPolicySvc::createOrUpdateStream(std::string svcC
 // attach tapecopies to streams
 //------------------------------------------------------------------------
 void  castor::infoPolicy::ora::OraPolicySvc::attachTapeCopiesToStreams(std::vector<PolicyObj*> outputFromMigrationPolicy) throw (castor::exception::Exception){
- unsigned char (*bufferTapeCopyId)[21] = 0;
- unsigned char (*bufferTapePoolId)[21] = 0;
- ub2 *lens1=NULL;
- ub2 *lens2=NULL;
+  unsigned char (*bufferTapeCopyId)[21] = 0;
+  unsigned char (*bufferTapePoolId)[21] = 0;
+  ub2 *lens1=NULL;
+  ub2 *lens2=NULL;
 
- if (outputFromMigrationPolicy.size() == 0){
-   // no tapecopy to attach
-   return;
- }
- try {
+  if (outputFromMigrationPolicy.size() == 0){
+    // no tapecopy to attach
+    return;
+  }
+  try {
     // Check whether the statements are ok
     if (0 == m_attachTapeCopiesToStreamsStatement) {
       m_attachTapeCopiesToStreamsStatement  =
@@ -374,7 +374,7 @@ void  castor::infoPolicy::ora::OraPolicySvc::attachTapeCopiesToStreams(std::vect
      
     castor::infoPolicy::DbInfoMigrationPolicy* realInfo;
 
-// two data buffer input
+    // two data buffer input
    
     unsigned int nb = outputFromMigrationPolicy.size();
 
@@ -397,9 +397,9 @@ void  castor::infoPolicy::ora::OraPolicySvc::attachTapeCopiesToStreams(std::vect
     }
     ub4 unused = nb;
     m_attachTapeCopiesToStreamsStatement->setDataBufferArray
-         (1, bufferTapeCopyId, oracle::occi::OCCI_SQLT_NUM,nb, &unused, 21, lens1);
+      (1, bufferTapeCopyId, oracle::occi::OCCI_SQLT_NUM,nb, &unused, 21, lens1);
     m_attachTapeCopiesToStreamsStatement->setDataBufferArray
-         (2, bufferTapePoolId, oracle::occi::OCCI_SQLT_NUM,nb, &unused, 21, lens2);
+      (2, bufferTapePoolId, oracle::occi::OCCI_SQLT_NUM,nb, &unused, 21, lens2);
     
     m_attachTapeCopiesToStreamsStatement->executeUpdate();
 
@@ -410,7 +410,7 @@ void  castor::infoPolicy::ora::OraPolicySvc::attachTapeCopiesToStreams(std::vect
     if (bufferTapePoolId){free(bufferTapePoolId);bufferTapePoolId=0;}
     
 
- } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException e) {
 
     //free allocated memory needed because of oracle unfriendly interface
     if (lens1) {free(lens1);lens1=0;}
@@ -432,9 +432,9 @@ void  castor::infoPolicy::ora::OraPolicySvc::attachTapeCopiesToStreams(std::vect
 //--------------------------------------------------------------------------
 
 std::vector<castor::infoPolicy::PolicyObj*> castor::infoPolicy::ora::OraPolicySvc::inputForStreamPolicy(std::string svcClassName) throw (castor::exception::Exception){
- std::vector<castor::infoPolicy::PolicyObj*> result;
+  std::vector<castor::infoPolicy::PolicyObj*> result;
 
- try {
+  try {
     // Check whether the statements are ok
     if (0 == m_inputForStreamPolicyStatement) {
       m_inputForStreamPolicyStatement  =
@@ -469,7 +469,7 @@ std::vector<castor::infoPolicy::PolicyObj*> castor::infoPolicy::ora::OraPolicySv
     oracle::occi::ResultSet::Status status = rs->next();
     while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::infoPolicy::DbInfoStreamPolicy* item = new castor::infoPolicy::DbInfoStreamPolicy();
-       castor::infoPolicy::PolicyObj* resultItem = new castor::infoPolicy::PolicyObj();
+      castor::infoPolicy::PolicyObj* resultItem = new castor::infoPolicy::PolicyObj();
       resultItem->setSvcClassName(svcClassName);
       resultItem->setPolicyName(policyName);
       item->setMaxNumStreams(nbDrives);
@@ -480,7 +480,7 @@ std::vector<castor::infoPolicy::PolicyObj*> castor::infoPolicy::ora::OraPolicySv
       resultItem->addDbInfoPolicy(item); 
       result.push_back(resultItem);
       status = rs->next();
-      } 
+    } 
 
   } catch (oracle::occi::SQLException e) {
 
@@ -526,7 +526,7 @@ void  castor::infoPolicy::ora::OraPolicySvc::startChosenStreams(std::vector<Poli
     }
     ub4 unused = nb;
     m_startChosenStreamsStatement->setDataBufferArray
-         (1, buffer, oracle::occi::OCCI_SQLT_NUM,nb, &unused, 21, lens);
+      (1, buffer, oracle::occi::OCCI_SQLT_NUM,nb, &unused, 21, lens);
     m_startChosenStreamsStatement->setDouble(2,(double)initialSize);
    
     nb= m_startChosenStreamsStatement->executeUpdate();
@@ -578,7 +578,7 @@ void  castor::infoPolicy::ora::OraPolicySvc::stopChosenStreams(std::vector<Polic
     }
     ub4 unused = nb;
     m_stopChosenStreamsStatement->setDataBufferArray
-         (1, buffer, oracle::occi::OCCI_SQLT_NUM,nb, &unused, 21, lens);
+      (1, buffer, oracle::occi::OCCI_SQLT_NUM,nb, &unused, 21, lens);
    
     nb= m_stopChosenStreamsStatement->executeUpdate();
 
@@ -605,8 +605,8 @@ void  castor::infoPolicy::ora::OraPolicySvc::stopChosenStreams(std::vector<Polic
 
 std::vector<castor::infoPolicy::PolicyObj*>  castor::infoPolicy::ora::OraPolicySvc::inputForRecallPolicy() throw (castor::exception::Exception){
 
-    std::vector<castor::infoPolicy::PolicyObj*> result;
-     try {
+  std::vector<castor::infoPolicy::PolicyObj*> result;
+  try {
     // Check whether the statements are ok
     if (0 ==  m_inputForRecallPolicyStatement) {
       m_inputForRecallPolicyStatement  =
@@ -679,7 +679,7 @@ void castor::infoPolicy::ora::OraPolicySvc::resurrectTapes(std::vector<u_signed6
     }
     ub4 unused = nb;
     m_resurrectTapesStatement->setDataBufferArray
-         (1, buffer, oracle::occi::OCCI_SQLT_NUM,nb, &unused, 21, lens);
+      (1, buffer, oracle::occi::OCCI_SQLT_NUM,nb, &unused, 21, lens);
    
     nb= m_resurrectTapesStatement->executeUpdate();
 
@@ -710,38 +710,38 @@ void   castor::infoPolicy::ora::OraPolicySvc::resurrectTapeCopies(std::vector<Po
   unsigned char (*buffer)[21] = 0;
   ub2 *lens =0;
   try{
-   if (0 == m_resurrectCandidatesStatement) {
-	m_resurrectCandidatesStatement  =
-	  createStatement(s_resurrectCandidatesStatementString);
-	m_resurrectCandidatesStatement->setAutoCommit(true);
+    if (0 == m_resurrectCandidatesStatement) {
+      m_resurrectCandidatesStatement  =
+	createStatement(s_resurrectCandidatesStatementString);
+      m_resurrectCandidatesStatement->setAutoCommit(true);
 
-      }
+    }
      
-      //  DataBuffer needed operations
+    //  DataBuffer needed operations
 
     unsigned int nb = tapeCopiesInfo.size();
 
     if (nb!=0){
-	buffer=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
-	lens=(ub2 *)malloc (sizeof(ub2)*nb);
-	for (unsigned int i = 0; i < nb; i++) {
-	  oracle::occi::Number n = (double)(dynamic_cast<castor::infoPolicy::DbInfoMigrationPolicy*>(tapeCopiesInfo.at(i)->dbInfoPolicy()[0])->tapeCopyId());
-	  oracle::occi::Bytes b = n.toBytes();
-	  b.getBytes(buffer[i],b.length());
-	  lens[i] = b.length();
-	}
-	ub4 unused = nb;
-	m_resurrectCandidatesStatement->setDataBufferArray(1, buffer, oracle::occi::OCCI_SQLT_NUM,nb, &unused, 21, lens);
-        m_resurrectCandidatesStatement->executeUpdate();
-    }
-   } catch(oracle::occi::SQLException e) {
-	handleException(e);
-	castor::exception::Internal ex;
-	ex.getMessage()
-	  << "Error caught in resurrectTapeCopies."
-	  << std::endl << e.what();
-	throw ex;
+      buffer=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
+      lens=(ub2 *)malloc (sizeof(ub2)*nb);
+      for (unsigned int i = 0; i < nb; i++) {
+	oracle::occi::Number n = (double)(dynamic_cast<castor::infoPolicy::DbInfoMigrationPolicy*>(tapeCopiesInfo.at(i)->dbInfoPolicy()[0])->tapeCopyId());
+	oracle::occi::Bytes b = n.toBytes();
+	b.getBytes(buffer[i],b.length());
+	lens[i] = b.length();
       }
+      ub4 unused = nb;
+      m_resurrectCandidatesStatement->setDataBufferArray(1, buffer, oracle::occi::OCCI_SQLT_NUM,nb, &unused, 21, lens);
+      m_resurrectCandidatesStatement->executeUpdate();
+    }
+  } catch(oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in resurrectTapeCopies."
+      << std::endl << e.what();
+    throw ex;
+  }
 
 }
 
@@ -754,38 +754,38 @@ void   castor::infoPolicy::ora::OraPolicySvc::invalidateTapeCopies(std::vector<P
   unsigned char (*buffer)[21] = 0;
   ub2 *lens =0;
   try{
-   if (0 == m_invalidateTapeCopiesStatement) {
-	m_invalidateTapeCopiesStatement  =
-	  createStatement(s_invalidateTapeCopiesStatementString);
-	m_invalidateTapeCopiesStatement->setAutoCommit(true);
+    if (0 == m_invalidateTapeCopiesStatement) {
+      m_invalidateTapeCopiesStatement  =
+	createStatement(s_invalidateTapeCopiesStatementString);
+      m_invalidateTapeCopiesStatement->setAutoCommit(true);
 
-      }
+    }
      
-      //  DataBuffer needed operations
+    //  DataBuffer needed operations
 
     unsigned int nb = tapeCopiesInfo.size();
 
     if (nb!=0){
-	buffer=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
-	lens=(ub2 *)malloc (sizeof(ub2)*nb);
-	for (unsigned int i = 0; i < nb; i++) {
-	  oracle::occi::Number n = (double)(dynamic_cast<castor::infoPolicy::DbInfoMigrationPolicy*>(tapeCopiesInfo.at(i)->dbInfoPolicy()[0])->tapeCopyId());
-	  oracle::occi::Bytes b = n.toBytes();
-	  b.getBytes(buffer[i],b.length());
-	  lens[i] = b.length();
-	}
-	ub4 unused = nb;
-	m_invalidateTapeCopiesStatement->setDataBufferArray(1, buffer, oracle::occi::OCCI_SQLT_NUM,nb, &unused, 21, lens);
-        m_invalidateTapeCopiesStatement->executeUpdate();
-    }
-   } catch(oracle::occi::SQLException e) {
-	handleException(e);
-	castor::exception::Internal ex;
-	ex.getMessage()
-	  << "Error caught in invalidate tape copies."
-	  << std::endl << e.what();
-	throw ex;
+      buffer=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
+      lens=(ub2 *)malloc (sizeof(ub2)*nb);
+      for (unsigned int i = 0; i < nb; i++) {
+	oracle::occi::Number n = (double)(dynamic_cast<castor::infoPolicy::DbInfoMigrationPolicy*>(tapeCopiesInfo.at(i)->dbInfoPolicy()[0])->tapeCopyId());
+	oracle::occi::Bytes b = n.toBytes();
+	b.getBytes(buffer[i],b.length());
+	lens[i] = b.length();
       }
+      ub4 unused = nb;
+      m_invalidateTapeCopiesStatement->setDataBufferArray(1, buffer, oracle::occi::OCCI_SQLT_NUM,nb, &unused, 21, lens);
+      m_invalidateTapeCopiesStatement->executeUpdate();
+    }
+  } catch(oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in invalidate tape copies."
+      << std::endl << e.what();
+    throw ex;
+  }
 
 }
 
