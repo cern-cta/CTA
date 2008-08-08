@@ -88,7 +88,17 @@ void castor::job::stagerjob::RfioPlugin::setEnvironment
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::RfioPlugin::getEnvironment
 (InputArguments &args, EnvironmentRfio &env) throw () {
-
+  // Globus location, required to resolved some dependencies
+  char* globus_location = getenv("GLOBUS_LOCATION");
+  if (globus_location == NULL) {
+    globus_location = getconfent("CSEC","GLOBUS_LOCATION",0);
+    if (globus_location == NULL) {
+      env.globus_location = "/opt/globus";
+    } else {
+      env.globus_location = globus_location;
+    }
+  }
+   
   // X509 Environment variables
   // Get certificate, key and location of the gridmapfile
   const char *globus_x509_user_cert = getconfent("CSEC","X509_USER_CERT",0);
