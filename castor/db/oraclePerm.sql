@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.647 $ $Date: 2008/07/29 06:48:50 $ $Author: waldron $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.648 $ $Date: 2008/08/08 09:13:40 $ $Author: waldron $
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -23,19 +23,15 @@ BEGIN
      AND (egid = iegid OR egid IS NULL)
      AND (euid = ieuid OR euid IS NULL)
      AND (reqType = ireqType OR reqType IS NULL);
-  IF unused = 0 THEN
+  IF unused = 0 THEN    
     -- Not found in White list -> no access
-    -- still check whether service class exists
-    BEGIN
-      IF isvcClass IS NOT NULL AND length(isvcClass) IS NOT NULL THEN
-        SELECT id INTO unused FROM SvcClass WHERE name = isvcClass;
-      END IF;
-      -- service class exists, we give permission denied
-      res := -1;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- service class does not exist
+    IF checkForValidSvcClass(isvcClass, 1, 0) = 1 THEN
+      -- Service class exists, we give permission denied
+      res := -1;      
+    ELSE
+      -- Service class does not exist
       res := -2;
-    END;
+    END IF;
   ELSE
     SELECT count(*) INTO unused
       FROM BlackList
@@ -272,7 +268,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
         -- diff raised an exception saying that the diff is empty
         -- thus we drop the line
         DELETE FROM BlackList
-         WHERE  nvl(svcClass, -1) = nvl(r.svcClass, -1) AND
+         WHERE nvl(svcClass, -1) = nvl(r.svcClass, -1) AND
                nvl(euid, -1) = nvl(r.euid, -1) AND
                nvl(egid, -1) = nvl(r.egid, -1) AND
                nvl(reqType, -1) = nvl(r.reqType, -1);
@@ -284,7 +280,11 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
   PROCEDURE addPrivilegeToWL(p Privilege) AS
     wlr Privilege;
     extended boolean := FALSE;
+    ret NUMBER;
   BEGIN
+    -- check if the service class exists
+    ret := checkForValidSvcClass(p.svcClass, 1, 1);
+
     FOR r IN (SELECT * FROM WhiteList) LOOP
       wlr.svcClass := r.svcClass;
       wlr.euid := r.euid;
@@ -325,7 +325,11 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
   PROCEDURE addPrivilegeToBL(p Privilege) AS
     blr Privilege;
     extended boolean := FALSE;
+    ret NUMBER;
   BEGIN
+    -- check if the service class exists
+    ret := checkForValidSvcClass(p.svcClass, 1, 1);
+
     FOR r IN (SELECT * FROM BlackList) LOOP
       blr.svcClass := r.svcClass;
       blr.euid := r.euid;
@@ -377,7 +381,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
       IF c = 0 THEN
         -- we can safely drop this line
         DELETE FROM BlackList
-         WHERE  nvl(svcClass, -1) = nvl(r.svcClass, -1) AND
+         WHERE nvl(svcClass, -1) = nvl(r.svcClass, -1) AND
                nvl(euid, -1) = nvl(r.euid, -1) AND
                nvl(egid, -1) = nvl(r.egid, -1) AND
                nvl(reqType, -1) = nvl(r.reqType, -1);
