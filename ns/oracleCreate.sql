@@ -1,11 +1,29 @@
-/*******************************************************************
+*****************************************************************************
+ *              oracleCreate.sql
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Revision: 1.6 $ $Date: 2008/08/07 15:32:40 $ $Author: itglp $
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
  *
- * This file creates the Name Server database schema.
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/08/08 09:25:16 $ $Author: itglp $
+ *
+ * This script creates a new Castor Name Server schema
  *
  * @author Castor Dev team, castor-dev@cern.ch
- *******************************************************************/
+ *****************************************************************************/
+
 
 CREATE TABLE Cns_class_metadata (
        classid NUMBER(5),
@@ -127,16 +145,16 @@ ALTER TABLE Cns_symlinks
 ALTER TABLE Cns_file_replica
        ADD CONSTRAINT fk_r_fileid FOREIGN KEY (fileid) REFERENCES Cns_file_metadata(fileid);
 
+-- Create the Cns_version table
+CREATE TABLE Cns_version (schemaVersion VARCHAR2(20), release VARCHAR2(20));
+INSERT INTO Cns_version VALUES ('2_1_8_0', 'releaseTag');
+
 -- Create an index on Cns_file_metadata(PARENT_FILEID)
 CREATE INDEX PARENT_FILEID_IDX on Cns_file_metadata(PARENT_FILEID);
 
 -- Temporary table to support Cns_bulkexist calls
-CREATE GLOBAL TEMPORARY TABLE Cns_files_Exist_tmp
-(tmpFileId NUMBER) ON COMMIT DELETE ROWS;
-
--- Create the "schema_version" table
-CREATE TABLE schema_version (major NUMBER(1), minor NUMBER(1), patch NUMBER(1));
-INSERT INTO schema_version VALUES (1, 1, 1);
+CREATE GLOBAL TEMPORARY TABLE Cns_files_exist_tmp
+  (tmpFileId NUMBER) ON COMMIT DELETE ROWS;
 
 -- A function to extract the full path of a file in one go
 CREATE OR REPLACE FUNCTION getPathForFileid(fid IN NUMBER) RETURN VARCHAR2 IS
