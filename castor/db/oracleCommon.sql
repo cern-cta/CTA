@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.668 $ $Date: 2008/07/31 09:31:31 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.669 $ $Date: 2008/08/08 09:13:59 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -413,6 +413,7 @@ BEGIN
   RETURN (SYSDATE - to_date('01-jan-1970 01:00:00','dd-mon-yyyy HH:MI:SS')) * (24*60*60);
 END;
 
+
 /* Generate a universally unique id (UUID) */
 CREATE OR REPLACE FUNCTION uuidGen RETURN VARCHAR2 IS
   ret VARCHAR2(36);
@@ -426,10 +427,43 @@ BEGIN
 END;
 
 
+/* Function to check if a service class exists by name. This function can return
+ * a boolean value or raise an application error if the named service class does
+ * not exist.
+ * @param svcClasName The name of the service class (Note: can be NULL)
+ * @param allowNull Flag to indicate whether NULL or '' service class names are
+ *                  permitted.
+ * @param throwException Flag to indicate whether the function should raise an
+ *                  application error when the service class doesn't exist or
+ *                  return a boolean value of 0.
+ */
+CREATE OR REPLACE FUNCTION checkForValidSvcClass
+(svcClassName VARCHAR2, allowNull NUMBER, raiseError NUMBER) RETURN NUMBER IS
+  ret NUMBER;
+BEGIN
+  -- Check if the service class name is allowed to be NULL. This is quite often
+  -- the case if the calling function supports '*' (null) to indicate that all 
+  -- service classes are being targeted.
+  IF svcClassName IS NULL OR length(svcClassName) IS NULL THEN 
+    IF allowNull = 1 THEN
+      RETURN 1;
+    END IF;
+  END IF;
+  -- Check to see if service class exists by name
+  SELECT count(*) INTO ret FROM SvcClass WHERE name = svcClassName;
+  -- If permitted to do so raise an application error if the service class does
+  -- not exist
+  IF raiseError = 1 AND ret = 0 THEN
+    raise_application_error(-20113, 'Invalid service class');
+  END IF;
+  RETURN ret;
+END;
+
+
 /* PL/SQL method deleting tapecopies (and segments) of a castorfile */
 CREATE OR REPLACE PROCEDURE deleteTapeCopies(cfId NUMBER) AS
 BEGIN
-  -- loop over the tapecopies
+  -- Loop over the tapecopies
   FOR t IN (SELECT id FROM TapeCopy WHERE castorfile = cfId) LOOP
     FOR s IN (SELECT id FROM Segment WHERE copy = t.id) LOOP
     -- Delete the segment(s)
