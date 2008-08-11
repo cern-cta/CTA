@@ -5,10 +5,10 @@
 #
 # @author Castor dev team, castor-dev@cern.ch
 #
-# @(#)$RCSfile: gencastor,v $ $Revision: 1.18 $ $Release$ $Date: 2008/06/02 13:16:53 $ $Author: waldron $
+# @(#)$RCSfile: gencastor,v $ $Revision: 1.19 $ $Release$ $Date: 2008/08/11 17:00:22 $ $Author: itglp $
 # 
 
-if ("$1" == "-h") then
+if ("$1" == "-h" || "$1" == "") then
   echo "Usage :"
   echo "  gencastor [-w castor_workdir] [-c topNamespace] [-h] [-v|--version] XMIFile"
   exit
@@ -50,7 +50,6 @@ endif
 set pushdsilent
 pushd ${TMPDIR}
 rm -f ${TOPNS}/db/*Generated*
-rm -f ${TOPNS}/db/*Trailer*
 
 foreach f (`find . -type f`)
   #echo $f
