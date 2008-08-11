@@ -81,6 +81,9 @@ void castor::job::stagerjob::RfioPlugin::setEnvironment
   setenv("X509_USER_KEY",env.globus_x509_user_key.c_str(),1);
   setenv("X509_USER_CERT",env.globus_x509_user_cert.c_str(),1);
   setenv("KRB5_KTNAME",env.keytab_location.c_str(),1);
+  std::ostringstream libloc;
+  libloc << env.globus_location << "/lib";
+  setenv("LD_LIBRARY_PATH",libloc.str().c_str(),1);
 }
 
 //------------------------------------------------------------------------------
@@ -98,7 +101,7 @@ void castor::job::stagerjob::RfioPlugin::getEnvironment
       env.globus_location = globus_location;
     }
   }
-   
+ 
   // X509 Environment variables
   // Get certificate, key and location of the gridmapfile
   const char *globus_x509_user_cert = getconfent("CSEC","X509_USER_CERT",0);
