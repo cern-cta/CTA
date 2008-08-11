@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.658 $ $Date: 2008/08/11 09:52:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.659 $ $Date: 2008/08/11 10:24:36 $ $Author: itglp $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -42,13 +42,14 @@ CREATE OR REPLACE PROCEDURE firstByteWrittenProc(srId IN INTEGER) AS
   dcId NUMBER;
   cfId NUMBER;
   nbres NUMBER;
-  unused NUMBER;
   stat NUMBER;
+  fclassId NUMBER;
+  sclassId NUMBER;
 BEGIN
-  -- lock the Castorfile
+  -- Get data and lock the Castorfile
   SELECT castorfile, diskCopy INTO cfId, dcId
     FROM SubRequest WHERE id = srId;
-  SELECT id INTO unused FROM CastorFile WHERE id = cfId FOR UPDATE;
+  SELECT fileclass INTO fclassId FROM CastorFile WHERE id = cfId FOR UPDATE;
   -- Check that the file is not busy, i.e. that we are not
   -- in the middle of migrating it. If we are, just stop and raise
   -- a user exception
@@ -59,8 +60,9 @@ BEGIN
     raise_application_error(-20106, 'Trying to update a busy file (ongoing migration)');
   END IF;
   -- Check that we can indeed open the file in write mode
-  -- 2 criteria have to be met :
+  -- 3 criteria have to be met :
   --   - we are not using a INVALID copy (we should not update an old version)
+  --   - we are not in a disk only svcClass and the file class asks for tape copy 
   --   - there is no other update/put going on or there is a prepareTo and we are
   --     dealing with the same copy.
   SELECT status INTO stat FROM DiskCopy WHERE id = dcId;
@@ -68,22 +70,30 @@ BEGIN
   IF stat = 7 THEN -- INVALID
     raise_application_error(-20106, 'Trying to update an invalid copy of a file (file has been modified by somebody else concurrently)');
   END IF;
-  -- if not invalid, either we are alone or we are on the right copy and we
+  -- Then the disk only check
+  SELECT svcClass INTO sclassId
+    FROM Subrequest, StageUpdateRequest Request
+   WHERE SubRequest.id = srId
+     AND Request.id = SubRequest.request; 
+  IF checkFailPutWhenDiskOnly(sclassId, fclassId) = 1 THEN
+     raise_application_error(-20106, 'File update canceled since this service class doesn''t provide tape backend');
+  END IF;
+  -- Otherwise, either we are alone or we are on the right copy and we
   -- only have to check that there is a prepareTo statement. We do the check
   -- only when needed, that is STAGEOUT case
   IF stat = 6 THEN -- STAGEOUT
     BEGIN
       -- do we have other ongoing requests ?
-      SELECT count(*) INTO unused FROM SubRequest WHERE diskCopy = dcId AND id != srId;
-      IF (unused > 0) THEN
+      SELECT count(*) INTO nbRes FROM SubRequest WHERE diskCopy = dcId AND id != srId;
+      IF (nbRes > 0) THEN
         -- do we have a prepareTo Request ? There can be only a single one
         -- or none. If there was a PrepareTo, any subsequent PPut would be rejected and any
         -- subsequent PUpdate would be directly archived (cf. processPrepareRequest).
-        SELECT SubRequest.id INTO unused
+        SELECT SubRequest.id INTO nbRes
           FROM (SELECT id FROM StagePrepareToPutRequest UNION ALL
                 SELECT id FROM StagePrepareToUpdateRequest) PrepareRequest,
-              SubRequest
-          WHERE SubRequest.CastorFile = cfId
+               SubRequest
+         WHERE SubRequest.CastorFile = cfId
            AND PrepareRequest.id = SubRequest.request
            AND SubRequest.status = 6;  -- READY
       END IF;
@@ -97,7 +107,7 @@ BEGIN
     -- so we have to setup everything
     -- invalidate all diskcopies
     UPDATE DiskCopy SET status = 7 -- INVALID
-     WHERE castorFile  = cfId
+     WHERE castorFile = cfId
        AND status IN (0, 10);
     -- except the one we are dealing with that goes to STAGEOUT
     UPDATE DiskCopy

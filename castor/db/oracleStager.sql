@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.678 $ $Date: 2008/08/11 09:52:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.679 $ $Date: 2008/08/11 10:24:37 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -488,6 +488,27 @@ BEGIN
     END IF;
   END IF;
   RETURN 0;
+END;
+
+
+/* PL/SQL method checking whether the given service class
+ * is declared disk only and the given file class asks for tape copies.
+ * Returns 1 in such a case, 0 else
+ */
+CREATE OR REPLACE FUNCTION checkFailPutWhenDiskOnly(svcClassId NUMBER, fileClassId NUMBER)
+RETURN NUMBER AS
+  diskOnlyFlag INTEGER;
+  nbTCs INTEGER;
+BEGIN
+  SELECT hasDiskOnlyBehavior INTO diskOnlyFlag
+    FROM SvcClass WHERE id = svcClassId;
+  SELECT nbCopies INTO nbTCs
+    FROM FileClass WHERE id = fileClassId;
+  IF (diskOnlyFlag = 1) AND (nbTCs > 0) THEN
+    RETURN 1;
+  ELSE
+    RETURN 0;
+  END IF;
 END;
 
 
@@ -1366,17 +1387,18 @@ CREATE OR REPLACE PROCEDURE recreateCastorFile(cfId IN INTEGER,
   nbRes INTEGER;
   fid INTEGER;
   nh VARCHAR2(2048);
-  unused INTEGER;
+  fclassId INTEGER;
+  sclassId INTEGER;
   putSC INTEGER;
   pputSC INTEGER;
   contextPIPP INTEGER;
   ouid INTEGER;
   ogid INTEGER;
 BEGIN
-  -- Lock the access to the CastorFile
+  -- Get data and lock access to the CastorFile
   -- This, together with triggers will avoid new TapeCopies
   -- or DiskCopies to be added
-  SELECT id INTO unused FROM CastorFile WHERE id = cfId FOR UPDATE;
+  SELECT fileclass INTO fclassId FROM CastorFile WHERE id = cfId FOR UPDATE;
   -- Determine the context (Put inside PrepareToPut ?)
   BEGIN
     -- check that we are a Put/Update
@@ -1448,31 +1470,40 @@ BEGIN
   IF contextPIPP = 0 THEN
     -- check if there is space in the diskpool in case of
     -- disk only pool
-    DECLARE
-      svcClassId NUMBER;
-    BEGIN
-      -- get the svcclass
-      SELECT svcClass, euid, egid INTO svcClassId, ouid, ogid
-        FROM Subrequest,
-             (SELECT id, svcClass, euid, egid FROM StagePutRequest UNION ALL
-              SELECT id, svcClass, euid, egid FROM StageUpdateRequest UNION ALL
-              SELECT id, svcClass, euid, egid FROM StagePrepareToPutRequest UNION ALL
-              SELECT id, svcClass, euid, egid FROM StagePrepareToUpdateRequest) Request
-       WHERE SubRequest.id = srId
-         AND Request.id = SubRequest.request;
-      IF (checkFailJobsWhenNoSpace(svcClassId) = 1) THEN
-        -- The svcClass is declared disk only and has no space
-        -- thus we cannot recreate the file
-        dcId := 0;
-        UPDATE SubRequest
-           SET status = 7, -- FAILED
-               errorCode = 28, -- ENOSPC
-               errorMessage = 'File creation canceled since diskPool is full'
-         WHERE id = srId;
-        COMMIT;
-        RETURN;
-      END IF;
-    END;
+    -- get the svcclass and the user
+    SELECT svcClass, euid, egid INTO sclassId, ouid, ogid
+      FROM Subrequest,
+           (SELECT id, svcClass, euid, egid FROM StagePutRequest UNION ALL
+            SELECT id, svcClass, euid, egid FROM StageUpdateRequest UNION ALL
+            SELECT id, svcClass, euid, egid FROM StagePrepareToPutRequest UNION ALL
+            SELECT id, svcClass, euid, egid FROM StagePrepareToUpdateRequest) Request
+     WHERE SubRequest.id = srId
+       AND Request.id = SubRequest.request;
+    IF checkFailJobsWhenNoSpace(sclassId) = 1 THEN
+      -- The svcClass is declared disk only and has no space
+      -- thus we cannot recreate the file
+      dcId := 0;
+      UPDATE SubRequest
+         SET status = 7, -- FAILED
+             errorCode = 28, -- ENOSPC
+             errorMessage = 'File creation canceled since diskPool is full'
+       WHERE id = srId;
+      COMMIT;
+      RETURN;
+    END IF;
+    -- check if the file existed in advance with a fileclass incompatible with this svcClass
+    IF checkFailPutWhenDiskOnly(sclassId, fclassId) = 1 THEN
+      -- The svcClass is disk only and the file being overwritten asks for tape copy.
+      -- This is impossible, so we deny the operation
+      dcId := 0;
+      UPDATE SubRequest
+         SET status = 7, -- FAILED
+             errorCode = 22, -- EINVAL
+             errorMessage = 'File recreation canceled since this service class doesn''t provide tape backend'
+       WHERE id = srId;
+      COMMIT;
+      RETURN;
+    END IF;        
     -- check if recreation is possible for TapeCopies
     SELECT count(*) INTO nbRes FROM TapeCopy
      WHERE status = 3 -- TAPECOPY_SELECTED
