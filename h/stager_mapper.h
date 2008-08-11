@@ -17,19 +17,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_mapper.h,v $ $Revision: 1.4 $ $Release$ $Date: 2007/04/19 15:18:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_mapper.h,v $ $Revision: 1.5 $ $Release$ $Date: 2008/08/11 16:52:18 $ $Author: itglp $
  *
- * 
+ *
  *
  * @author Ben Couturier
  *****************************************************************************/
 
 /** @file $RCSfile: stager_mapper.h,v $
- * @version $Revision: 1.4 $
- * @date $Date: 2007/04/19 15:18:19 $
+ * @version $Revision: 1.5 $
+ * @date $Date: 2008/08/11 16:52:18 $
  */
 /** @mainpage CASTOR Mapper
- * $RCSfile: stager_mapper.h,v $ $Revision: 1.4 $
+ * $RCSfile: stager_mapper.h,v $ $Revision: 1.5 $
  *
  * @section intro Introduction
  * The stage mapper consists of utility functions to help applications
@@ -38,16 +38,16 @@
  *
  * @section overview Overview
  * Stage_mapper_setenv checks whether the user is mapped to a specific
- * stager/serviceclass in /etc/castor/stgmap.conf by the line
+ * stager/serviceclass in /etc/castor/stagemap.conf by the line
  * USTGMAP <username> <stager> [<pool>]
  * If no mapping is found, the methood will look for a group mapping
  * in the same file with the line:
- * USTGMAP <username> <stager> [<pool>] 
+ * USTGMAP <username> <stager> [<pool>]
  * The environment variables STAGE_HOST, STAGE_POOL and STAGE_SVCCLASS
  * are set accordingly.
  *
  * If the user is mapped to a stager, then the method looks for the stager
- * in the list of V2 castor stagers in /etc/castor/stgtype.conf
+ * in the list of V2 castor stagers in /etc/castor/stagetype.conf
  * If the is and entry:
  * STGTYPE <hostname> v2
  * or
