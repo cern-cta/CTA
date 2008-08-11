@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.677 $ $Date: 2008/08/05 09:53:01 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.678 $ $Date: 2008/08/11 09:52:07 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -652,7 +652,7 @@ END;
 /* PL/SQL method implementing createDiskCopyReplicaRequest */
 CREATE OR REPLACE PROCEDURE createDiskCopyReplicaRequest
 (sourceSrId IN INTEGER, sourceDcId IN INTEGER, sourceSvcId IN INTEGER,
- destSvcId IN INTEGER) AS
+ destSvcId IN INTEGER, ouid IN INTEGER, ogid IN INTEGER) AS
   srId NUMBER;
   cfId NUMBER;
   destDcId NUMBER;
@@ -713,15 +713,15 @@ BEGIN
 
   -- Create the DiskCopy without filesystem
   buildPathFromFileId(fileId, nsHost, destDcId, rpath);
-  INSERT INTO DiskCopy (path, id, filesystem, castorfile, status, creationTime, lastAccessTime, gcWeight, diskCopySize, nbCopyAccesses)
-    VALUES (rpath, destDcId, 0, cfId, 1, getTime(), getTime(), 0, fileSize, 0);  -- WAITDISK2DISKCOPY
+  INSERT INTO DiskCopy (path, id, filesystem, castorfile, status, creationTime, lastAccessTime, gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid)
+    VALUES (rpath, destDcId, 0, cfId, 1, getTime(), getTime(), 0, fileSize, 0, ouid, ogid);  -- WAITDISK2DISKCOPY
   INSERT INTO Id2Type (id, type) VALUES (destDcId, 5);  -- OBJ_DiskCopy
   COMMIT;
 END;
 
 
 /* PL/SQL method implementing replicateOnClose */
-CREATE OR REPLACE PROCEDURE replicateOnClose(cfId IN NUMBER) AS
+CREATE OR REPLACE PROCEDURE replicateOnClose(cfId IN NUMBER, ouid IN INTEGER, ogid IN INTEGER) AS
   unused NUMBER;
   srcDcId NUMBER;
   srcSvcClassId NUMBER;
@@ -795,7 +795,7 @@ BEGIN
          -- the replication is internal to the destination service class. Why? if
          -- there is a better copy from which to replicate in another pool we might
          -- as well use it!
-         createDiskCopyReplicaRequest(0, srcDcId, srcSvcClassId, a.id);
+         createDiskCopyReplicaRequest(0, srcDcId, srcSvcClassId, a.id, ouid, ogid);
       EXCEPTION WHEN NO_DATA_FOUND THEN
         NULL;  -- No copies to replicate from
       END;
@@ -956,7 +956,7 @@ BEGIN
       checkForD2DCopyOrRecall(cfId, srId, reuid, regid, svcClassId, srcDcId, srcSvcClassId);
       IF srcDcId > 0 THEN
         -- create DiskCopyReplica request and make this subRequest wait on it
-        createDiskCopyReplicaRequest(srId, srcDcId, srcSvcClassId, svcClassId);
+        createDiskCopyReplicaRequest(srId, srcDcId, srcSvcClassId, svcClassId, reuid, regid);
         result := -3; -- return code is different here for logging purposes
       ELSIF srcDcId = 0 THEN
         -- no diskcopy found at all, go for recall
@@ -982,6 +982,8 @@ CREATE OR REPLACE PROCEDURE internalPutDoneFunc (cfId IN INTEGER,
   dcId INTEGER;
   gcwProc VARCHAR2(2048);
   gcw NUMBER;
+  ouid INTEGER;
+  ogid INTEGER;
 BEGIN
   -- get function to use for computing the gc weight of the brand new diskCopy
   gcwProc := castorGC.getUserWeight(svcClassId);
@@ -995,7 +997,8 @@ BEGIN
            lastAccessTime = getTime(),  -- for the GC, effective lifetime of this diskcopy starts now
            gcWeight = gcw,
 	   diskCopySize = fs
-     WHERE castorFile = cfId AND status = 6; -- STAGEOUT
+     WHERE castorFile = cfId AND status = 6 -- STAGEOUT
+     RETURNING owneruid, ownergid INTO ouid, ogid;
   ELSE
     EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:fs, 10); END;'
       USING OUT gcw, IN fs;
@@ -1007,7 +1010,7 @@ BEGIN
            gcWeight = gcw,
 	   diskCopySize = fs
      WHERE castorFile = cfId AND status = 6 -- STAGEOUT
-     RETURNING id INTO dcId;
+     RETURNING id, owneruid, ownergid INTO dcId, ouid, ogid;
     IF dcId > 0 THEN
       -- Only if we really found the relevant diskcopy, create TapeCopies
       -- This is an extra sanity check, see also the deleteOutOfDateStageOutDCs procedure
@@ -1040,7 +1043,7 @@ BEGIN
     END;
   END IF;
   -- Trigger the creation of additional copies of the file, if necessary.
-  replicateOnClose(cfId);
+  replicateOnClose(cfId, ouid, ogid);
 END;
 
 
@@ -1060,7 +1063,9 @@ END;
 
 
 /* PL/SQL procedure implementing startRepackMigration */
-CREATE OR REPLACE PROCEDURE startRepackMigration(srId IN INTEGER, cfId IN INTEGER, dcId IN INTEGER) AS
+CREATE OR REPLACE PROCEDURE startRepackMigration
+(srId IN INTEGER, cfId IN INTEGER, dcId IN INTEGER,
+ reuid OUT INTEGER, regid OUT INTEGER) AS
   nbTC NUMBER(2);
   nbTCInFC NUMBER(2);
   fsId NUMBER;
@@ -1093,8 +1098,8 @@ BEGIN
      AND SubRequest.request IN
        (SELECT id FROM StageRepackRequest);
 
-  -- get the service class
-  SELECT R.svcClass INTO svcClassId
+  -- get the service class, uid and gid
+  SELECT R.svcClass, euid, egid INTO svcClassId, reuid, regid
     FROM StageRepackRequest R, SubRequest
    WHERE SubRequest.request = R.id
      AND SubRequest.id = srId;
@@ -1183,7 +1188,7 @@ BEGIN
            AND DiskServer.status = 0 -- PRODUCTION
            AND DiskCopy.status = 0  -- STAGED
            AND ROWNUM < 2;
-        startRepackMigration(srId, cfId, srcDcId);
+        startRepackMigration(srId, cfId, srcDcId, reuid, regid);
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- no data found here means that either the file
         -- is being written/migrated or there's a disk-to-disk
@@ -1235,10 +1240,10 @@ BEGIN
   checkForD2DCopyOrRecall(cfId, srId, reuid, regid, svcClassId, srcDcId, srvSvcClassId);
   IF srcDcId > 0 THEN  -- disk to disk copy
     IF repack = 1 THEN
-      createDiskCopyReplicaRequest(srId, srcDcId, srvSvcClassId, svcClassId);
+      createDiskCopyReplicaRequest(srId, srcDcId, srvSvcClassId, svcClassId, reuid, regid);
       result := -2;  -- Repack waits on the disk to disk copy
     ELSE
-      createDiskCopyReplicaRequest(0, srcDcId, srvSvcClassId, svcClassId);
+      createDiskCopyReplicaRequest(0, srcDcId, srvSvcClassId, svcClassId, reuid, regid);
       result := 1;  -- DISKCOPY_WAITDISK2DISKCOPY, for logging purposes
     END IF;
   ELSIF srcDcId = 0 THEN  -- recall
@@ -1365,6 +1370,8 @@ CREATE OR REPLACE PROCEDURE recreateCastorFile(cfId IN INTEGER,
   putSC INTEGER;
   pputSC INTEGER;
   contextPIPP INTEGER;
+  ouid INTEGER;
+  ogid INTEGER;
 BEGIN
   -- Lock the access to the CastorFile
   -- This, together with triggers will avoid new TapeCopies
@@ -1445,12 +1452,12 @@ BEGIN
       svcClassId NUMBER;
     BEGIN
       -- get the svcclass
-      SELECT svcClass INTO svcClassId
+      SELECT svcClass, euid, egid INTO svcClassId, ouid, ogid
         FROM Subrequest,
-             (SELECT id, svcClass FROM StagePutRequest UNION ALL
-              SELECT id, svcClass FROM StageUpdateRequest UNION ALL
-              SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
-              SELECT id, svcClass FROM StagePrepareToUpdateRequest) Request
+             (SELECT id, svcClass, euid, egid FROM StagePutRequest UNION ALL
+              SELECT id, svcClass, euid, egid FROM StageUpdateRequest UNION ALL
+              SELECT id, svcClass, euid, egid FROM StagePrepareToPutRequest UNION ALL
+              SELECT id, svcClass, euid, egid FROM StagePrepareToUpdateRequest) Request
        WHERE SubRequest.id = srId
          AND Request.id = SubRequest.request;
       IF (checkFailJobsWhenNoSpace(svcClassId) = 1) THEN
@@ -1505,8 +1512,8 @@ BEGIN
     SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
     SELECT ids_seq.nextval INTO dcId FROM DUAL;
     buildPathFromFileId(fid, nh, dcId, rpath);
-    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime, lastAccessTime, gcWeight, diskCopySize, nbCopyAccesses)
-         VALUES (rpath, dcId, 0, cfId, 5, getTime(), getTime(), 0, 0, 0); -- status WAITFS
+    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime, lastAccessTime, gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid)
+         VALUES (rpath, dcId, 0, cfId, 5, getTime(), getTime(), 0, 0, 0, ouid, ogid); -- status WAITFS
     INSERT INTO Id2Type (id, type) VALUES (dcId, 5); -- OBJ_DiskCopy
     rstatus := 5; -- WAITFS
     rmountPoint := '';

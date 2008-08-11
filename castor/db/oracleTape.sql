@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.677 $ $Date: 2008/07/30 09:38:35 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.678 $ $Date: 2008/08/11 09:52:07 $ $Author: sponcec3 $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1029,6 +1029,8 @@ CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
   fs NUMBER;
   gcw NUMBER;
   gcwProc VARCHAR(2048);
+  ouid INTEGER;
+  ogid INTEGER;
 BEGIN
   SELECT SubRequest.id, SubRequest.request, DiskCopy.id, CastorFile.id, DiskCopy.fileSystem, Castorfile.FileSize
     INTO subRequestId, requestId, dci, cfId, fsId, fs
@@ -1053,17 +1055,17 @@ BEGIN
   -- Repack handling:
   -- create the tapecopies for waiting subrequests and update diskcopies
   IF reqType = 119 THEN  -- OBJ_StageRepackRequest
-    startRepackMigration(subRequestId, cfId, dci);
+    startRepackMigration(subRequestId, cfId, dci, ouid, ogid);
   ELSE
     DECLARE
       svcClassId NUMBER;
       gcw VARCHAR2(2048);
     BEGIN
-      SELECT Request.svcClass INTO svcClassId
-        FROM (SELECT id, svcClass FROM StageGetRequest UNION ALL
-              SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
-              SELECT id, svcClass FROM StageUpdateRequest UNION ALL
-              SELECT id, svcClass FROM StagePrepareToUpdateRequest) Request
+      SELECT Request.svcClass, euid, egid INTO svcClassId, ouid, ogid
+        FROM (SELECT id, svcClass, euid, egid FROM StageGetRequest UNION ALL
+              SELECT id, svcClass, euid, egid FROM StagePrepareToGetRequest UNION ALL
+              SELECT id, svcClass, euid, egid FROM StageUpdateRequest UNION ALL
+              SELECT id, svcClass, euid, egid FROM StagePrepareToUpdateRequest) Request
        WHERE Request.id = requestId;
       gcwProc := castorGC.getRecallWeight(svcClassId);
       EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:size); END;'
@@ -1087,7 +1089,7 @@ BEGIN
   -- update filesystem status
   updateFsFileClosed(fsId);
   -- Trigger the creation of additional copies of the file, if necessary.
-  replicateOnClose(cfId);
+  replicateOnClose(cfId, ouid, ogid);
 END;
 
 

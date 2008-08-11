@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.657 $ $Date: 2008/07/29 06:47:06 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.658 $ $Date: 2008/08/11 09:52:07 $ $Author: sponcec3 $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -375,6 +375,8 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   gcwProc VARCHAR2(2048);
   gcw NUMBER;
   fileSize NUMBER;
+  ouid INTEGER;
+  ogid INTEGER;
 BEGIN
   -- try to get the source status
   SELECT status, gcWeight, diskCopySize INTO srcStatus, gcw, fileSize
@@ -419,7 +421,8 @@ BEGIN
      SET status = srcStatus,
          gcWeight = gcw
    WHERE id = dcId
-  RETURNING castorFile, fileSystem INTO cfId, fsId;
+  RETURNING castorFile, fileSystem, owneruid, ownergid
+    INTO cfId, fsId, ouid, ogid;
   -- If the maxReplicaNb is exceeded, update one of the diskcopies in a
   -- DRAINING filesystem to INVALID.
   SELECT count(*) INTO repl
@@ -449,7 +452,7 @@ BEGIN
   -- update filesystem status
   updateFsFileClosed(fsId);
   -- Trigger the creation of additional copies of the file, if necessary.
-  replicateOnClose(cfId);
+  replicateOnClose(cfId, ouid, ogid);
   -- Wake up waiting subrequests
   UPDATE SubRequest SET status = 1,  -- SUBREQUEST_RESTART
          lastModificationTime = getTime(), parent = 0
@@ -462,6 +465,8 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyFailed
 (dcId IN INTEGER, res OUT INTEGER) AS
   fsId NUMBER;
   cfId NUMBER;
+  ouid INTEGER;
+  ogid INTEGER;
 BEGIN
   -- Set the diskcopy status to INVALID so that it will be garbage collected
   -- at a later date.
@@ -470,7 +475,8 @@ BEGIN
   UPDATE DiskCopy SET status = 7 -- INVALID
    WHERE status = 1 -- WAITDISK2DISKCOPY
      AND id = dcId
-   RETURNING fileSystem, castorFile INTO fsId, cfId;
+   RETURNING fileSystem, castorFile, owneruid, ownergid
+    INTO fsId, cfId, ouid, ogid;
   -- Fail the corresponding subrequest
   UPDATE SubRequest SET status = 9, -- FAILED_FINISHED
          lastModificationTime = getTime()
@@ -497,7 +503,7 @@ BEGIN
     updateFsFileClosed(fsId);
   END IF;
   -- Trigger the creation of additional copies of the file, if necessary.
-  replicateOnClose(cfId);
+  replicateOnClose(cfId, ouid, ogid);
 END;
 
 
