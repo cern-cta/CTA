@@ -146,10 +146,8 @@ int Cns_main(main_args)
     }
   }
 
-  if (securityOpt) {
-    nslogit (func, "started in the secure mode (%s %d.%d.%d-%d)\n", CNS_SCE, MAJORVERSION, MINORVERSION, MAJORRELEASE, MINORRELEASE);
-  }
-  nslogit (func, "started (%s %d.%d.%d-%d)\n", CNS_SCE, MAJORVERSION, MINORVERSION, MAJORRELEASE, MINORRELEASE);
+  nslogit (func, "started in %s mode (%s %d.%d.%d-%d)\n", (securityOpt ? "secure" : "non secure"),
+           CNS_SCE, MAJORVERSION, MINORVERSION, MAJORRELEASE, MINORRELEASE);
   gethostname (localhost, CA_MAXHOSTNAMELEN+1);
   if (Cdomainname (localdomain, sizeof(localdomain)) < 0) {
     nslogit (func, "Unable to get domainname\n");
