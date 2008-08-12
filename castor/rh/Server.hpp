@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/12/05 14:52:59 $ $Author: riojac3 $
+ * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/08/12 15:52:33 $ $Author: riojac3 $
  *
  *
  *
@@ -70,6 +70,22 @@ namespace castor {
        */
       virtual void parseCommandLine(int argc, char *argv[]);
 
+      /**
+       * Set the Secure attribute specifying the mode in which the server runs
+       * @param  Sec flag
+       */
+      void setSecOption(bool sec){
+        m_secure=sec;
+      }
+
+      /**
+       * Retrieve the security flag
+       */
+      bool getSecOption(){
+        return m_secure;
+      }
+
+
     protected:
  
       /**
@@ -77,6 +93,8 @@ namespace castor {
        */
       virtual void help(std::string programName);
 
+      // Security flag to define if the security option is enable or disable
+      bool m_secure; 
     }; // class Server
 
   } // end of namespace rh

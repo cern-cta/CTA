@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.61 $ $Release$ $Date: 2008/07/28 15:00:25 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.62 $ $Release$ $Date: 2008/08/12 15:52:33 $ $Author: riojac3 $
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -49,7 +49,7 @@ const char *castor::rh::PORT_SEC_ENV = "RH_SEC_PORT";
 const char *castor::rh::PORT_SEC_CONF = "SEC_PORT";
 const char *castor::rh::ACCESSLISTS_ENV = "RH_USEACCESSLISTS";
 const char *castor::rh::ACCESSLISTS_CONF = "USEACCESSLISTS";
-const char *castor::rh::CASTOR_SEC_ENV = "CASTOR_SEC";
+const char *castor::rh::CASTOR_SEC_ENV = "SECURE_CASTOR";
 const char *castor::rh::CASTOR_SEC_CONF = "SEC";
 
 
@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
         || (securemode = getconfent((char *)castor::rh::CATEGORY_CONF,
 				    (char *)castor::rh::CASTOR_SEC_CONF,0)) != 0){
        security = (strcasecmp(securemode, "YES") == 0);
-     
+       server.setSecOption(security);
       // Get the secure port from the envirment or configuration file
       if ((secsport = getenv (castor::rh::PORT_SEC_ENV)) != 0 
 	  || (secsport = getconfent((char *)castor::rh::CATEGORY_CONF,
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
     server.parseCommandLine(argc, argv);
     // start the server
     server.start();
-    
+   
   } catch (castor::exception::Exception e) {
     std::cerr << "Caught castor exception : "
               << sstrerror(e.code()) << std::endl
@@ -151,7 +151,7 @@ castor::rh::Server::Server() :
      { 15, "Exception caught : failed to rollback transaction" },
      { -1, "" }};
   dlfInit(messages);
-  
+     setSecOption(false); 
   try {
     // create oracle and streaming conversion service
     // so that it is not deleted and recreated all the time
@@ -206,13 +206,14 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[])
       {"help",       NO_ARGUMENT,       NULL, 'h'},
       {"config",     REQUIRED_ARGUMENT, NULL, 'c'},
       {"Rthreads",   REQUIRED_ARGUMENT, NULL, 'R'},
+      {"Rthreads Secure",   REQUIRED_ARGUMENT, NULL, 'S'},
       {"port",       REQUIRED_ARGUMENT, NULL, 'p'},
       {"secureport", REQUIRED_ARGUMENT, NULL, 's'}
     };
   Coptind = 1;
   Copterr = 0;
   char c;
-  while ((c = Cgetopt_long(argc, argv, "fhR:p:c:s:", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long(argc, argv, "fhR:S:p:c:s:", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;
@@ -238,6 +239,11 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[])
         p->setNbThreads(atoi(Coptarg));
       }
       break;
+
+    case 'S':
+        castor::server::BaseThreadPool* p = m_threadPools['S'];
+        p->setNbThreads(atoi(Coptarg));
+      break;
     case 'p':
       {
         castor::server::TCPListenerThreadPool* p =
@@ -247,15 +253,16 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[])
       }
       break;
     case 's':
-      {
-        castor::server::AuthListenerThreadPool* sp =
-          dynamic_cast<castor::server::AuthListenerThreadPool*>
-          (m_threadPools['S']);
-        if(sp) {
-          sp->setPort(castor::System::porttoi(Coptarg));
-        }
-        // else no secure service started, ignore
-      }
+         if(getSecOption()){
+           castor::server::AuthListenerThreadPool* sp =
+             dynamic_cast<castor::server::AuthListenerThreadPool*>
+             (m_threadPools['S']);
+           if(sp) {
+             sp->setPort(castor::System::porttoi(Coptarg));
+           }
+         }else{
+           printf("Please check your configuration for security \n");
+         }
       break;
     default:
       help(argv[0]);
