@@ -104,7 +104,7 @@ namespace castor {
        * Prints out the command-line usage message for the VDQM server
        * application.
        */
-      void help(std::string programName) throw();
+      void usage(std::string programName) throw();
     
     }; // class VdqmServer
 

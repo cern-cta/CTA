@@ -72,6 +72,44 @@ int main(int argc, char *argv[]) {
   server.parseCommandLine(argc, argv);
 
 
+  //--------------------------------------------------
+  // Check the database connection details file exists
+  //--------------------------------------------------
+
+  {
+    FILE *fp = fopen(ORAVDQMCONFIGFILE, "r");
+    if(fp) {
+      // The file exists
+      fclose(fp);
+    } else {
+      // The file does not exist
+      std::cerr
+        << std::endl
+        << "Error: Database connection details file \"" << ORAVDQMCONFIGFILE
+        << "\" does not exist"
+        << std::endl << std::endl;
+      exit(1);
+    }
+  }
+
+
+  //-------------------------------------------------------------------------
+  // Pass to the DB service the schema version and DB connection details file
+  //-------------------------------------------------------------------------
+
+  castor::IService* s =
+    castor::BaseObject::sharedServices()->service("DbParamsSvc",
+    castor::SVC_DBPARAMSSVC);
+  castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
+  if(params == 0) {
+    castor::exception::Internal e;
+    e.getMessage() << "Could not instantiate the parameters service";
+    throw e;
+  }
+  params->setSchemaVersion(VDQMSCHEMAVERSION);
+  params->setDbAccessConfFile(ORAVDQMCONFIGFILE);
+
+
   //------------------------
   // Create the thread pools
   //------------------------
@@ -121,23 +159,6 @@ int main(int argc, char *argv[]) {
 
   rtcpJobSubmitterThreadPool->setNbThreads(
     server.getRTCPJobSubmitterThreadNumber());
-
-
-  //---------------------------------------------------------------------------
-  // Tell the DB service the VDQM schema version and DB connection details file
-  //---------------------------------------------------------------------------
-
-  castor::IService* s =
-    castor::BaseObject::sharedServices()->service("DbParamsSvc",
-    castor::SVC_DBPARAMSSVC);
-  castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
-  if(params == 0) {
-    castor::exception::Internal e;
-    e.getMessage() << "Could not instantiate the parameters service";
-    throw e;
-  }
-  params->setSchemaVersion(VDQMSCHEMAVERSION);
-  params->setDbAccessConfFile(ORAVDQMCONFIGFILE);
 
 
   try {
@@ -307,24 +328,24 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
       break;
     case 'c':
       {
-        FILE *fp = fopen(Coptarg,"r");
+        FILE *fp = fopen(Coptarg, "r");
         if(fp) {
-          // The configuration file exists
+          // The file exists
           fclose(fp);
         } else {
-          // The configuration files does not exist
+          // The file does not exist
           std::cerr
             << std::endl
             << "Error: Configuration file \"" << Coptarg << "\" does not exist"
             << std::endl << std::endl;
-          help(argv[0]);
+          usage(argv[0]);
           exit(1);
         }
       }
       setenv("PATH_CONFIG", Coptarg, 1);
       break;
     case 'h':
-      help(argv[0]);
+      usage(argv[0]);
       exit(0);
     case 'r':
       m_requestHandlerThreadNumber = atoi(Coptarg);
@@ -337,14 +358,14 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
         << std::endl
         << "Error: Unknown command-line option: " << (char)Coptopt
         << std::endl << std::endl;
-      help(argv[0]);
+      usage(argv[0]);
       exit(1);
     case ':':
       std::cerr
         << std::endl
         << "Error: An option is missing a parameter"
         << std::endl << std::endl;
-      help(argv[0]);
+      usage(argv[0]);
       exit(1);
     default:
       std::cerr 
@@ -373,16 +394,16 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
       << "Error:  Unexpected command-line argument: "
       << argv[Coptind]
       << std::endl << std::endl;
-    help(argv[0]);
+    usage(argv[0]);
     exit(1);
   }
 }
 
 
 //------------------------------------------------------------------------------
-// help
+// usage
 //------------------------------------------------------------------------------
-void castor::vdqm::VdqmServer::help(std::string programName)
+void castor::vdqm::VdqmServer::usage(std::string programName)
   throw() {
   std::cerr << "Usage: " << programName << " [options]\n"
     "\n"
