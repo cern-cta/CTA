@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.12 $ $Release$ $Date: 2008/03/10 09:25:16 $ $Author: waldron $
+ * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.13 $ $Release$ $Date: 2008/08/12 14:56:28 $ $Author: kotlyar $
  *
  *
  *
@@ -301,6 +301,17 @@ int Cstager_IJobSvc_prepareForMigration
  u_signed64 timeStamp,
  u_signed64 fileId,
  const char* nsHost);
+
+int Cstager_IJobSvc_prepareForMigrationcs
+(struct Cstager_IJobSvc_t* jobSvc,
+ struct Cstager_SubRequest_t* subreq,
+ u_signed64 fileSize,
+ u_signed64 timeStamp,
+ u_signed64 fileId,
+ const char* nsHost,
+ const char* csumtype,
+ const char* csumvalue);
+
 
 /**
  * Informs the stager the a Get or Update SubRequest

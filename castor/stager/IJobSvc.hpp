@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/03/10 09:25:16 $ $Author: waldron $
+ * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/08/12 14:56:28 $ $Author: kotlyar $
  *
  * This class provides stager methods related to job handling
  *
@@ -236,6 +236,16 @@ namespace castor {
        u_signed64 fileId,
        const std::string nsHost)
         throw (castor::exception::Exception) = 0;
+        
+      virtual void prepareForMigrationcs
+      (castor::stager::SubRequest* subreq,
+       u_signed64 fileSize,
+       u_signed64 timeStamp,
+       u_signed64 fileId,
+       const std::string nsHost,
+       const std::string csumtype,
+       const std::string csumvalue)
+        throw (castor::exception::Exception) = 0;  
 
       /**
        * Informs the stager the a Get or Update SubRequest

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/03/05 16:14:32 $ $Author: riojac3 $
+ * @(#)$RCSfile: RemoteJobSvc.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/08/12 14:56:28 $ $Author: kotlyar $
  *
  *
  *
@@ -249,6 +249,16 @@ namespace castor {
        u_signed64 timeStamp,
        u_signed64 fileId,
        const std::string nsHost)
+        throw (castor::exception::Exception);
+        
+      virtual void prepareForMigrationcs
+      (castor::stager::SubRequest* subreq,
+       u_signed64 fileSize,
+       u_signed64 timeStamp,
+       u_signed64 fileId,
+       const std::string nsHost,
+       const std::string csumtype,
+       const std::string csumvalue)
         throw (castor::exception::Exception);
 
       /**

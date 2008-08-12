@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2008/03/25 14:35:41 $ $Author: itglp $
+ * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2008/08/12 14:56:28 $ $Author: kotlyar $
  *
  *
  *
@@ -477,6 +477,35 @@ void castor::stager::RemoteJobSvc::prepareForMigration
   client.sendRequest(&req, &rh);
 }
 
+//
+//------------------------------------------------------------------------------
+// prepareForMigration
+//------------------------------------------------------------------------------
+void castor::stager::RemoteJobSvc::prepareForMigrationcs
+(castor::stager::SubRequest *subreq,
+ u_signed64 fileSize,
+ u_signed64 timeStamp,
+ u_signed64 fileId,
+ const std::string nsHost,
+ const std::string csumtype,
+ const std::string csumvalue)
+  throw (castor::exception::Exception) {
+  // Build the MoverCloseRequest
+  castor::stager::MoverCloseRequest req;
+  req.setSubReqId(subreq->id());
+  req.setFileSize(fileSize);
+  req.setTimeStamp(timeStamp);
+  req.setFileId(fileId);
+  req.setNsHost(nsHost);
+  req.setCsumType(csumtype); 
+  req.setCsumValue(csumvalue);
+  // Build a response Handler
+  castor::client::BasicResponseHandler rh;
+  // Uses a BaseClient to handle the request
+  castor::client::BaseClient client(getRemoteJobClientTimeout());
+  client.setOptions(0);
+  client.sendRequest(&req, &rh);
+}
 //------------------------------------------------------------------------------
 // getRemoteJobClientTimeout
 //------------------------------------------------------------------------------

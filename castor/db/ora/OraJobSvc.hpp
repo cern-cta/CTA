@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/03/10 09:11:07 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/08/12 14:56:28 $ $Author: kotlyar $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -239,6 +239,15 @@ namespace castor {
          u_signed64 fileId,
          const std::string nsHost)
           throw (castor::exception::Exception);
+          
+        virtual void prepareForMigrationcs
+        (castor::stager::SubRequest* subreq,
+         u_signed64 fileSize, u_signed64 timeStamp,
+         u_signed64 fileId,
+         const std::string nsHost,
+         const std::string csumtype,
+         const std::string csumvalue)
+          throw (castor::exception::Exception);  
 
         /**
          * Informs the stager the a Get or Update SubRequest
