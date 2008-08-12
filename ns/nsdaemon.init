@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: nsdaemon.init,v $ $Revision: 1.10 $ $Release$ $Date: 2008/07/28 16:42:49 $ $Author: waldron $
+# @(#)$RCSfile: nsdaemon.init,v $ $Revision: 1.11 $ $Release$ $Date: 2008/08/12 11:44:44 $ $Author: waldron $
 #
 # chkconfig: 345 66 39
 # description: NS server daemo
@@ -45,6 +45,10 @@ fi
 start() {
         # Run daemon
         echo -n $"Starting $prog: "
+
+        # Set location of globus libraries
+        LD_LIBRARY_PATH=/opt/globus/lib
+        export LD_LIBRARY_PATH
 
         cd /var/spool/ns
         daemon /usr/bin/$prog $NSDAEMON_OPTIONS

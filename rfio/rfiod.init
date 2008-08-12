@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rfiod.init,v $ $Revision: 1.12 $ $Release$ $Date: 2008/07/28 16:42:49 $ $Author: waldron $
+# @(#)$RCSfile: rfiod.init,v $ $Revision: 1.13 $ $Release$ $Date: 2008/08/12 11:44:44 $ $Author: waldron $
 #
 # chkconfig: 345 65 40
 # description: RFIO Server Daemon Initialisation Script
@@ -46,6 +46,10 @@ fi
 start() {
         # Run daemon
         echo -n $"Starting $prog: "
+
+        # Set location of globus libraries
+        LD_LIBRARY_PATH=/opt/globus/lib
+        export LD_LIBRARY_PATH
 
         cd /var/spool/rfio
         daemon /usr/bin/$prog $OPTIONS $RFIOD_OPTIONS
