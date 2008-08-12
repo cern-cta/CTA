@@ -23,6 +23,8 @@
 #include "RemoteJobSvc.h"
 #include "serrno.h"
 #include "rfio_callhandlers.h"
+#include <attr/xattr.h>
+#include "getconfent.h"
 
 struct internal_context {
   int one_byte_at_least;
@@ -164,6 +166,14 @@ int rfio_handle_close(void *ctx,
 
   struct internal_context *internal_context = (struct internal_context *) ctx;
 
+  char*    csumtypeDiskNs[]={"ADLER32","AD","CRC32","CS","MD5","MD"}; /* in future move it in the one of the headers file */
+  char     csumalgnum=3;
+  char     useCksum;
+  int      xattr_len;
+  char     csumvalue[33];
+  char     csumtype[17];
+  char     *conf_ent;
+  
   if (internal_context != NULL) {
     struct Cstager_IJobSvc_t **jobSvc;
     struct C_Services_t **dbService;
@@ -182,12 +192,58 @@ int rfio_handle_close(void *ctx,
           /* File still exists - this is a candidate for migration regardless of its size (zero-length are ignored in the stager) */
           if (Cstager_SubRequest_create(&subrequest) == 0) {
             if (Cstager_SubRequest_setId(subrequest,internal_context->subrequest_id) == 0) {
-              log(LOG_INFO, "rfio_handle_close : Calling Cstager_IJobSvc_prepareForMigration on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
-              if (Cstager_IJobSvc_prepareForMigration(*jobSvc,subrequest,(u_signed64) statbuf.st_size, (u_signed64) time(NULL),internal_context->fileId, internal_context->nsHost) != 0) {
-                log(LOG_ERR, "rfio_handle_close : Cstager_IJobSvc_prepareForMigration error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), Cstager_IJobSvc_errorMsg(*jobSvc));
-              } else {
-                forced_mover_exit_error = 0;
+              useCksum=0;      
+              if((conf_ent=getconfent("CNS","USE_CKSUM",0)) != NULL)  /* checking should we use checksums for castor name server or not*/
+                 if((strncmp(conf_ent,"YES",3)==0) || (strncmp(conf_ent,"yes",3)==0)) useCksum=1;
+
+              if(useCksum) {
+                 /* first we try to read a file xattr for checksum */
+                 if((xattr_len=getxattr(internal_context->pfn,"user.castor.checksum.value",csumvalue, 32))==-1) {
+                   log(LOG_ERR,"rfio_handle_close : fgetxattr for checksum value failed, error=%d\n",errno);
+                   log(LOG_ERR,"rfio_handle_close : skipping checksums for castor NS\n");
+                   useCksum=0; /* we don't have the file checksum, and will not fill it in castor NS database */
+                 }
+                 else {
+                   csumvalue[xattr_len]='\0';
+                   log(LOG_DEBUG,"rfio_handle_close : csumvalue for the file on the disk=0x%s\n",csumvalue);
+                   if((xattr_len=getxattr(internal_context->pfn,"user.castor.checksum.type",csumtype, 16))==-1) {
+                     log(LOG_ERR,"rfio_handle_close : fgetxattr for checksum type failed, error=%d\n",errno);
+                     log(LOG_ERR,"rfio_handle_close : skipping checksums for castor NS\n");
+                     useCksum=0; /* we don't have the file checksum, and will not fill it in castor NS database */
+                   } else {
+                       csumtype[xattr_len]='\0';
+                       log(LOG_DEBUG,"rfio_handle_close : csumtype is %s\n",csumtype);
+                       /* now we have csumtype from disk and have to convert it for castor name server database */
+                       for(xattr_len=0;xattr_len<csumalgnum;xattr_len++) 
+                         if(strncmp(csumtype,csumtypeDiskNs[xattr_len*2],16)==0) {
+                                 /* we have found something */
+                                 strcpy(csumtype,csumtypeDiskNs[xattr_len*2+1]);
+                                 useCksum=2;
+                                 break;
+                         }
+                       if(useCksum!=2) {
+                         log(LOG_ERR,"rfio_handle_close : unknown checksum type  %s\n",csumtype);
+                         log(LOG_ERR,"rfio_handle_close : skipping checksums for castor NS\n");
+                         useCksum=0; /* we don't have the file checksum, and will not fill it in castor NS database */
+                       }
+                     }
+                 }
               }
+              if(useCksum) {    
+                log(LOG_INFO, "rfio_handle_close : Calling Cstager_IJobSvc_prepareForMigrationcs on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
+                if (Cstager_IJobSvc_prepareForMigrationcs(*jobSvc,subrequest,(u_signed64) statbuf.st_size, (u_signed64) time(NULL),internal_context->fileId, internal_context->nsHost,csumtype,csumvalue) != 0) {
+                  log(LOG_ERR, "rfio_handle_close : Cstager_IJobSvc_prepareForMigrationcs error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), Cstager_IJobSvc_errorMsg(*jobSvc));
+                } else {
+                  forced_mover_exit_error = 0;
+                  }
+              } else {
+                  log(LOG_INFO, "rfio_handle_close : Calling Cstager_IJobSvc_prepareForMigration on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
+                  if (Cstager_IJobSvc_prepareForMigration(*jobSvc,subrequest,(u_signed64) statbuf.st_size, (u_signed64) time(NULL),internal_context->fileId, internal_context->nsHost) != 0) {
+                    log(LOG_ERR, "rfio_handle_close : Cstager_IJobSvc_prepareForMigration error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), Cstager_IJobSvc_errorMsg(*jobSvc));
+                  } else {
+                    forced_mover_exit_error = 0;
+                    }      
+                }
             }
           }
         } else {
