@@ -67,7 +67,6 @@ castor::io::ServerSocket::ServerSocket(int socket) throw () :
   m_lowPort = m_highPort = -1;
 }
 
-
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -75,11 +74,11 @@ castor::io::ServerSocket::ServerSocket(const bool reusable)
   throw (castor::exception::Exception) :
   AbstractTCPSocket(reusable),
   m_listening(false) {
-    srand(time(NULL));
-    m_lowPort = m_highPort = -1;
-    createSocket();
-    setReusable();
-  }
+  srand(time(NULL));
+  m_lowPort = m_highPort = -1;
+  createSocket();
+  setReusable();
+}
 
 //------------------------------------------------------------------------------
 // constructor
@@ -89,12 +88,12 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
   throw (castor::exception::Exception) :
   AbstractTCPSocket(port, reusable),
   m_listening(false) {
-    srand(time(NULL));
-    m_lowPort = m_highPort = -1;
-    createSocket();
-    setReusable();
-    bind(port, port);
-  }
+  srand(time(NULL));
+  m_lowPort = m_highPort = -1;
+  createSocket();
+  setReusable();
+  bind(port, port);
+}
 
 //------------------------------------------------------------------------------
 // constructor
@@ -105,12 +104,12 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
   throw (castor::exception::Exception) :
   AbstractTCPSocket(port, host, reusable),
   m_listening(false) {
-    srand(time(NULL));
-    m_lowPort = m_highPort = -1;
-    createSocket();
-    setReusable();
-    bind(port, port);
-  }
+  srand(time(NULL));
+  m_lowPort = m_highPort = -1;
+  createSocket();
+  setReusable();
+  bind(port, port);
+}
 
 //------------------------------------------------------------------------------
 // constructor
@@ -121,12 +120,12 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
   throw (castor::exception::Exception) :
   AbstractTCPSocket(port, ip, reusable),
   m_listening(false) {
-    m_lowPort = m_highPort = -1;
-    srand(time(NULL));
-    createSocket();
-    setReusable();
-    bind(port, port);
-  }
+  m_lowPort = m_highPort = -1;
+  srand(time(NULL));
+  createSocket();
+  setReusable();
+  bind(port, port);
+}
 
 //------------------------------------------------------------------------------
 // listen
@@ -156,7 +155,6 @@ void castor::io::ServerSocket::listen()
     }
   }
   m_listening = true;
-
 }
 
 //------------------------------------------------------------------------------

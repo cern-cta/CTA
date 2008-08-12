@@ -153,11 +153,8 @@ void castor::job::stagerjob::RfioPlugin::getEnvironment
   } else {
     env.csec_mech = csec_tracefile;
   }
-
 }
    
-
-
 //------------------------------------------------------------------------------
 // postForkHook
 //------------------------------------------------------------------------------
@@ -251,22 +248,22 @@ void castor::job::stagerjob::RfioPlugin::execMover
   } else{
     if (args.isSecure){
       execl (progfullpath.c_str(), progname.c_str(),
-           "-1", "-d", "-s", "-l", "-n", "-f", logFile.c_str(),
-           "-T", arg_T.str().c_str(), "-S", arg_S.str().c_str(),
-           "-P", arg_P.str().c_str(), "-M", arg_M.str().c_str(),
-           "-U", "-Z", arg_Z.str().c_str(),"-u",arg_U.str().c_str(),"-g",arg_G.str().c_str(),
-           context.fullDestPath.c_str(),NULL);
+	     "-1", "-d", "-s", "-l", "-n", "-f", logFile.c_str(),
+	     "-T", arg_T.str().c_str(), "-S", arg_S.str().c_str(),
+	     "-P", arg_P.str().c_str(), "-M", arg_M.str().c_str(),
+	     "-U", "-Z", arg_Z.str().c_str(),"-u",arg_U.str().c_str(),"-g",arg_G.str().c_str(),
+	     context.fullDestPath.c_str(),NULL);
     }else{   
-    // the flags are the same as in unsecure mode so the stagerJob
-    // can work with rfiod unsecure (provisional)
-    // if (args.isSecure != 0) {
-    execl (progfullpath.c_str(), progname.c_str(),
-           "-1", "-s", "-l", "-n", "-f", logFile.c_str(),
-           "-T", arg_T.str().c_str(), "-S", arg_S.str().c_str(),
-           "-P", arg_P.str().c_str(), "-M", arg_M.str().c_str(),
-           "-U", "-Z", arg_Z.str().c_str(),
-           context.fullDestPath.c_str(), NULL);
-   }
+      // the flags are the same as in unsecure mode so the stagerJob
+      // can work with rfiod unsecure (provisional)
+      // if (args.isSecure != 0) {
+      execl (progfullpath.c_str(), progname.c_str(),
+	     "-1", "-s", "-l", "-n", "-f", logFile.c_str(),
+	     "-T", arg_T.str().c_str(), "-S", arg_S.str().c_str(),
+	     "-P", arg_P.str().c_str(), "-M", arg_M.str().c_str(),
+	     "-U", "-Z", arg_Z.str().c_str(),
+	     context.fullDestPath.c_str(), NULL);
+    }
   }
   // Should never be reached
   dlf_shutdown(5);

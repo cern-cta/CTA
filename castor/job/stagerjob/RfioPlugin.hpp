@@ -35,7 +35,7 @@ namespace castor {
   namespace job {
 
     namespace stagerjob {
-     /**
+      /**
        * small struct holding a Rfio enviroment
        */
       struct EnvironmentRfio {
@@ -48,7 +48,6 @@ namespace castor {
         std::string csec_mech;
         std::string csec_tracefile; 
       };
-
 
       /**
        * StagerJob plugin for the Rfio protocol
