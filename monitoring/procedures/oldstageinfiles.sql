@@ -14,6 +14,8 @@ CREATE OR REPLACE PROCEDURE Proc_OLDSTAGEINFILES AS
     e fifth;
     f sixth;
 
+    mytime DATE := SYSDATE;
+
     BEGIN
 
     execute immediate 'truncate table castor_stager.monitoring_OLDSTAGEINFILES';
@@ -43,6 +45,6 @@ CREATE OR REPLACE PROCEDURE Proc_OLDSTAGEINFILES AS
       );
 
       forall marker in a.first..a.last
-        insert into CASTOR_STAGER.monitoring_OLDSTAGEINFILES values(a(marker), b(marker), c(marker), d(marker), e(marker), f(marker));
+        insert into CASTOR_STAGER.monitoring_OLDSTAGEINFILES values(mytime, a(marker), b(marker), c(marker), d(marker), e(marker), f(marker));
 
 END Proc_OLDSTAGEINFILES;
