@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_server.h,v 1.16 2008/07/28 15:00:26 sponcec3 Exp $
+ * $Id: Cns_server.h,v 1.17 2008/08/12 11:49:14 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 /*
- * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.16 $ $Date: 2008/07/28 15:00:26 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.17 $ $Date: 2008/08/12 11:49:14 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
  
 #ifndef _CNS_SERVER_H
@@ -80,20 +80,20 @@ typedef MYSQL_RES *DBLISTPTR;
 #endif
 
 struct Cns_class_metadata {
-	int 	classid;
-	char	name[CA_MAXCLASNAMELEN+1];
-	uid_t	uid;
-	gid_t	gid;
-	int	min_filesize;	/* in Mbytes */
-	int	max_filesize;	/* in Mbytes */
-	int	flags;
-	int	maxdrives;
-	int	max_segsize;	/* in Mbytes */
-	int	migr_time_interval;
-	int	mintime_beforemigr;
-	int	nbcopies;
-	int	nbdirs_using_class;
-	int	retenp_on_disk;
+	int		classid;
+	char		name[CA_MAXCLASNAMELEN+1];
+	uid_t		uid;
+	gid_t		gid;
+	int		min_filesize;	/* in Mbytes */
+	int		max_filesize;	/* in Mbytes */
+	int		flags;
+	int		maxdrives;
+	int		max_segsize;	/* in Mbytes */
+	int		migr_time_interval;
+	int		mintime_beforemigr;
+	int		nbcopies;
+	int		nbdirs_using_class;
+	int		retenp_on_disk;
 };
 
 struct Cns_file_metadata {
@@ -141,7 +141,7 @@ struct Cns_srv_thread_info {
 	char		*Csec_mech;
 	char		*Csec_auth_id;
         /* This variable is to distingues when you are running in dual security mode if the socket is the one in the secure port (1) or not*/
-        int             secOn;  /*This variable won't be necessary once the unsecure mode is not supported*/
+        int             secOn;  /* This variable won't be necessary once the unsecure mode is not supported */
 #endif
         u_signed64      starttime;
 };
@@ -167,8 +167,8 @@ struct Cns_symlinks {
 };
 
 struct Cns_tp_pool {
-	int	classid;
-	char	tape_pool[CA_MAXPOOLNAMELEN+1];
+	int		classid;
+	char		tape_pool[CA_MAXPOOLNAMELEN+1];
 };
 
 struct Cns_user_metadata {
