@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.669 $ $Date: 2008/08/08 09:13:59 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.670 $ $Date: 2008/08/12 11:43:30 $ $Author: sponcec3 $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -569,3 +569,11 @@ BEGIN
     END IF;
   END IF;
 END;
+
+
+/**************/
+/* Accounting */
+/**************/
+
+CREATE TABLE Accounting (euid INTEGER, svcClass INTEGER, nbBytes INTEGER);
+

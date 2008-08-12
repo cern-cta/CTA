@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.679 $ $Date: 2008/08/11 10:24:37 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.680 $ $Date: 2008/08/12 11:43:30 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -221,6 +221,45 @@ BEGIN
   END LOOP;
 END;
 
+/**************/
+/* Accounting */
+/**************/
+
+/* Increase acccounting for new files */
+CREATE OR REPLACE TRIGGER tr_DiskCopy_accounting_plus
+AFTER UPDATE of status ON DiskCopy
+FOR EACH ROW
+WHEN ((new.status = 0 OR new.status = 10) AND -- STAGED, CANBEMIGR
+      old.status != 10) -- CANBEMIGR (don't double count migrations)
+BEGIN
+  MERGE INTO Accounting
+  USING (SELECT :new.owneruid euid, :new.diskCopySize fileSize, child svcClass
+           FROM DiskPool2SvcClass, FileSystem
+          WHERE FileSystem.id = :new.FileSystem
+            AND DiskPool2SvcClass.parent = FileSystem.DiskPool) DC
+     ON (Accounting.euid = DC.euid AND
+         Accounting.svcClass = DC.svcClass)
+   WHEN MATCHED THEN UPDATE SET nbBytes = nbBytes + DC.fileSize
+   WHEN NOT MATCHED THEN INSERT (euid, nbBytes, svcClass)
+                         VALUES (DC.euid, DC.fileSize, DC.SvcClass);
+END;
+
+/* Decrease acccounting for files dropped */
+CREATE OR REPLACE TRIGGER tr_DiskCopy_accounting_minus
+AFTER UPDATE of status ON DiskCopy
+FOR EACH ROW
+WHEN ((old.status = 0 OR old.status = 10) AND -- STAGED, CANBEMIGR
+      new.status != 0) -- STAGED (don't double count migrations)
+BEGIN
+  UPDATE Accounting
+     SET nbBytes = nbBytes - :new.diskCopySize
+   WHERE Accounting.euid = :new.owneruid
+     AND Accounting.svcClass IN
+         (SELECT child
+            FROM DiskPool2SvcClass, FileSystem
+           WHERE FileSystem.id = :new.FileSystem
+             AND DiskPool2SvcClass.parent = FileSystem.DiskPool);
+END;
 
 /***************************************/
 /* Some triggers to prevent dead locks */
