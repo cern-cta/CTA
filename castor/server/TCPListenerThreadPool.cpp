@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TCPListenerThreadPool.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/12/06 14:54:43 $ $Author: itglp $
+ * @(#)$RCSfile: TCPListenerThreadPool.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/08/12 11:46:52 $ $Author: waldron $
  *
  * Listener thread pool based on TCP
  *
@@ -51,7 +51,7 @@ void castor::server::TCPListenerThreadPool::bind() throw (castor::exception::Exc
     m_sock = new castor::io::ServerSocket(m_port, true);
   } catch (castor::exception::Exception e) {
     clog() << ERROR << "Fatal error: cannot bind socket on port " << m_port << ": "
-           << e.getMessage().str() << std::endl;
+           << sstrerror(e.code()) << std::endl;
     throw e;
   }
 }
@@ -75,7 +75,8 @@ void castor::server::TCPListenerThreadPool::listenLoop() {
         break;
       }
       clog() << ERROR << "Error while accepting connections to port " << m_port << ": "
-             << any.getMessage().str() << std::endl;
+             << sstrerror(any.code()) << " - " 
+	     << any.getMessage().str() << std::endl;
     }
   }
 }
