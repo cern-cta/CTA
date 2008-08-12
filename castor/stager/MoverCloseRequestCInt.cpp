@@ -424,6 +424,40 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_MoverCloseRequest_csumType
+  //----------------------------------------------------------------------------
+  int Cstager_MoverCloseRequest_csumType(castor::stager::MoverCloseRequest* instance, const char** var) {
+    *var = instance->csumType().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_MoverCloseRequest_setCsumType
+  //----------------------------------------------------------------------------
+  int Cstager_MoverCloseRequest_setCsumType(castor::stager::MoverCloseRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setCsumType(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_MoverCloseRequest_csumValue
+  //----------------------------------------------------------------------------
+  int Cstager_MoverCloseRequest_csumValue(castor::stager::MoverCloseRequest* instance, const char** var) {
+    *var = instance->csumValue().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_MoverCloseRequest_setCsumValue
+  //----------------------------------------------------------------------------
+  int Cstager_MoverCloseRequest_setCsumValue(castor::stager::MoverCloseRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setCsumValue(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_MoverCloseRequest_id
   //----------------------------------------------------------------------------
   int Cstager_MoverCloseRequest_id(castor::stager::MoverCloseRequest* instance, u_signed64* var) {

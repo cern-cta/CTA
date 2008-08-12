@@ -107,6 +107,8 @@ void castor::io::StreamMoverCloseRequestCnv::createRep(castor::IAddress* address
   ad->stream() << obj->timeStamp();
   ad->stream() << obj->fileId();
   ad->stream() << obj->nsHost();
+  ad->stream() << obj->csumType();
+  ad->stream() << obj->csumValue();
   ad->stream() << obj->id();
 }
 
@@ -171,6 +173,12 @@ castor::IObject* castor::io::StreamMoverCloseRequestCnv::createObj(castor::IAddr
   std::string nsHost;
   ad->stream() >> nsHost;
   object->setNsHost(nsHost);
+  std::string csumType;
+  ad->stream() >> csumType;
+  object->setCsumType(csumType);
+  std::string csumValue;
+  ad->stream() >> csumValue;
+  object->setCsumValue(csumValue);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

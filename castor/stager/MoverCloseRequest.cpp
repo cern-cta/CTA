@@ -46,6 +46,8 @@ castor::stager::MoverCloseRequest::MoverCloseRequest() throw() :
   m_timeStamp(0),
   m_fileId(0),
   m_nsHost(""),
+  m_csumType(""),
+  m_csumValue(""),
   m_id(0) {
 }
 
@@ -75,6 +77,8 @@ void castor::stager::MoverCloseRequest::print(std::ostream& stream,
   stream << indent << "timeStamp : " << m_timeStamp << std::endl;
   stream << indent << "fileId : " << m_fileId << std::endl;
   stream << indent << "nsHost : " << m_nsHost << std::endl;
+  stream << indent << "csumType : " << m_csumType << std::endl;
+  stream << indent << "csumValue : " << m_csumValue << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

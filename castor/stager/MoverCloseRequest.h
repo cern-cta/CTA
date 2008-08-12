@@ -326,6 +326,30 @@ int Cstager_MoverCloseRequest_nsHost(struct Cstager_MoverCloseRequest_t* instanc
 int Cstager_MoverCloseRequest_setNsHost(struct Cstager_MoverCloseRequest_t* instance, const char* new_var);
 
 /**
+ * Get the value of csumType
+ * The checksum type for castor name server database
+ */
+int Cstager_MoverCloseRequest_csumType(struct Cstager_MoverCloseRequest_t* instance, const char** var);
+
+/**
+ * Set the value of csumType
+ * The checksum type for castor name server database
+ */
+int Cstager_MoverCloseRequest_setCsumType(struct Cstager_MoverCloseRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of csumValue
+ * The checksum value for castor name server database
+ */
+int Cstager_MoverCloseRequest_csumValue(struct Cstager_MoverCloseRequest_t* instance, const char** var);
+
+/**
+ * Set the value of csumValue
+ * The checksum value for castor name server database
+ */
+int Cstager_MoverCloseRequest_setCsumValue(struct Cstager_MoverCloseRequest_t* instance, const char* new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

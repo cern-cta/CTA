@@ -189,6 +189,42 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_csumType
+       * The checksum type for castor name server database
+       * @return the value of m_csumType
+       */
+      std::string csumType() const {
+        return m_csumType;
+      }
+
+      /**
+       * Set the value of m_csumType
+       * The checksum type for castor name server database
+       * @param new_var the new value of m_csumType
+       */
+      void setCsumType(std::string new_var) {
+        m_csumType = new_var;
+      }
+
+      /**
+       * Get the value of m_csumValue
+       * The checksum value for castor name server database
+       * @return the value of m_csumValue
+       */
+      std::string csumValue() const {
+        return m_csumValue;
+      }
+
+      /**
+       * Set the value of m_csumValue
+       * The checksum value for castor name server database
+       * @param new_var the new value of m_csumValue
+       */
+      void setCsumValue(std::string new_var) {
+        m_csumValue = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -221,6 +257,12 @@ namespace castor {
 
       /// The name server hosting this castor file
       std::string m_nsHost;
+
+      /// The checksum type for castor name server database
+      std::string m_csumType;
+
+      /// The checksum value for castor name server database
+      std::string m_csumValue;
 
       /// The id of this object
       u_signed64 m_id;

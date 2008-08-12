@@ -56,7 +56,7 @@ static castor::CnvFactory<castor::db::cnv::DbMoverCloseRequestCnv>* s_factoryDbM
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbMoverCloseRequestCnv::s_insertStatementString =
-"INSERT INTO MoverCloseRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileSize, timeStamp, fileId, nsHost, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,:16,:17,ids_seq.nextval,:18,:19) RETURNING id INTO :20";
+"INSERT INTO MoverCloseRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileSize, timeStamp, fileId, nsHost, csumType, csumValue, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,:16,:17,:18,:19,ids_seq.nextval,:20,:21) RETURNING id INTO :22";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbMoverCloseRequestCnv::s_deleteStatementString =
@@ -64,7 +64,7 @@ const std::string castor::db::cnv::DbMoverCloseRequestCnv::s_deleteStatementStri
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbMoverCloseRequestCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileSize, timeStamp, fileId, nsHost, id, svcClass, client FROM MoverCloseRequest WHERE id = :1";
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileSize, timeStamp, fileId, nsHost, csumType, csumValue, id, svcClass, client FROM MoverCloseRequest WHERE id = :1";
 
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbMoverCloseRequestCnv::s_bulkSelectStatementString =
@@ -75,7 +75,7 @@ const std::string castor::db::cnv::DbMoverCloseRequestCnv::s_bulkSelectStatement
    BEGIN \
      FORALL i IN ids.FIRST..ids.LAST \
        INSERT INTO bulkSelectHelper VALUES(ids(i)); \
-     OPEN objs FOR SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileSize, timeStamp, fileId, nsHost, id, svcClass, client \
+     OPEN objs FOR SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileSize, timeStamp, fileId, nsHost, csumType, csumValue, id, svcClass, client \
                      FROM MoverCloseRequest t, bulkSelectHelper h \
                     WHERE t.id = h.objId; \
      DELETE FROM bulkSelectHelper; \
@@ -86,7 +86,7 @@ const std::string castor::db::cnv::DbMoverCloseRequestCnv::s_bulkSelectStatement
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbMoverCloseRequestCnv::s_updateStatementString =
-"UPDATE MoverCloseRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, lastModificationTime = :11, subReqId = :12, fileSize = :13, timeStamp = :14, fileId = :15, nsHost = :16 WHERE id = :17";
+"UPDATE MoverCloseRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, lastModificationTime = :11, subReqId = :12, fileSize = :13, timeStamp = :14, fileId = :15, nsHost = :16, csumType = :17, csumValue = :18 WHERE id = :19";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbMoverCloseRequestCnv::s_storeTypeStatementString =
@@ -311,7 +311,7 @@ void castor::db::cnv::DbMoverCloseRequestCnv::fillObjSvcClass(castor::stager::Mo
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = rset->getInt64(19);
+  u_signed64 svcClassId = rset->getInt64(21);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -349,7 +349,7 @@ void castor::db::cnv::DbMoverCloseRequestCnv::fillObjIClient(castor::stager::Mov
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = rset->getInt64(20);
+  u_signed64 clientId = rset->getInt64(22);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -387,7 +387,7 @@ void castor::db::cnv::DbMoverCloseRequestCnv::createRep(castor::IAddress* addres
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(20, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(22, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_insertNewReqStatement) {
       m_insertNewReqStatement = createStatement(s_insertNewReqStatementString);
@@ -413,10 +413,12 @@ void castor::db::cnv::DbMoverCloseRequestCnv::createRep(castor::IAddress* addres
     m_insertStatement->setUInt64(15, obj->timeStamp());
     m_insertStatement->setUInt64(16, obj->fileId());
     m_insertStatement->setString(17, obj->nsHost());
-    m_insertStatement->setUInt64(18, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setUInt64(19, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setString(18, obj->csumType());
+    m_insertStatement->setString(19, obj->csumValue());
+    m_insertStatement->setUInt64(20, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setUInt64(21, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(20));
+    obj->setId(m_insertStatement->getUInt64(22));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -453,6 +455,8 @@ void castor::db::cnv::DbMoverCloseRequestCnv::createRep(castor::IAddress* addres
                     << "  timeStamp : " << obj->timeStamp() << std::endl
                     << "  fileId : " << obj->fileId() << std::endl
                     << "  nsHost : " << obj->nsHost() << std::endl
+                    << "  csumType : " << obj->csumType() << std::endl
+                    << "  csumValue : " << obj->csumValue() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  svcClass : " << obj->svcClass() << std::endl
                     << "  client : " << obj->client() << std::endl;
@@ -480,7 +484,7 @@ void castor::db::cnv::DbMoverCloseRequestCnv::bulkCreateRep(castor::IAddress* ad
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(20, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(22, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_insertNewReqStatement) {
       m_insertNewReqStatement = createStatement(s_insertNewReqStatementString);
@@ -671,6 +675,34 @@ void castor::db::cnv::DbMoverCloseRequestCnv::bulkCreateRep(castor::IAddress* ad
     }
     m_insertStatement->setDataBuffer
       (17, nsHostBuffer, castor::db::DBTYPE_STRING, nsHostMaxLen, nsHostBufLens);
+    // build the buffers for csumType
+    unsigned int csumTypeMaxLen = 0;
+    for (int i = 0; i < nb; i++) {
+      if (objs[i]->csumType().length()+1 > csumTypeMaxLen)
+        csumTypeMaxLen = objs[i]->csumType().length()+1;
+    }
+    char* csumTypeBuffer = (char*) calloc(nb, csumTypeMaxLen);
+    unsigned short* csumTypeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      strncpy(csumTypeBuffer+(i*csumTypeMaxLen), objs[i]->csumType().c_str(), csumTypeMaxLen);
+      csumTypeBufLens[i] = objs[i]->csumType().length()+1; // + 1 for the trailing \0
+    }
+    m_insertStatement->setDataBuffer
+      (18, csumTypeBuffer, castor::db::DBTYPE_STRING, csumTypeMaxLen, csumTypeBufLens);
+    // build the buffers for csumValue
+    unsigned int csumValueMaxLen = 0;
+    for (int i = 0; i < nb; i++) {
+      if (objs[i]->csumValue().length()+1 > csumValueMaxLen)
+        csumValueMaxLen = objs[i]->csumValue().length()+1;
+    }
+    char* csumValueBuffer = (char*) calloc(nb, csumValueMaxLen);
+    unsigned short* csumValueBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    for (int i = 0; i < nb; i++) {
+      strncpy(csumValueBuffer+(i*csumValueMaxLen), objs[i]->csumValue().c_str(), csumValueMaxLen);
+      csumValueBufLens[i] = objs[i]->csumValue().length()+1; // + 1 for the trailing \0
+    }
+    m_insertStatement->setDataBuffer
+      (19, csumValueBuffer, castor::db::DBTYPE_STRING, csumValueMaxLen, csumValueBufLens);
     // build the buffers for svcClass
     double* svcClassBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* svcClassBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -679,7 +711,7 @@ void castor::db::cnv::DbMoverCloseRequestCnv::bulkCreateRep(castor::IAddress* ad
       svcClassBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (18, svcClassBuffer, castor::db::DBTYPE_UINT64, sizeof(svcClassBuffer[0]), svcClassBufLens);
+      (20, svcClassBuffer, castor::db::DBTYPE_UINT64, sizeof(svcClassBuffer[0]), svcClassBufLens);
     // build the buffers for client
     double* clientBuffer = (double*) malloc(nb * sizeof(double));
     unsigned short* clientBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
@@ -688,12 +720,12 @@ void castor::db::cnv::DbMoverCloseRequestCnv::bulkCreateRep(castor::IAddress* ad
       clientBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (19, clientBuffer, castor::db::DBTYPE_UINT64, sizeof(clientBuffer[0]), clientBufLens);
+      (21, clientBuffer, castor::db::DBTYPE_UINT64, sizeof(clientBuffer[0]), clientBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
     m_insertStatement->setDataBuffer
-      (20, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
+      (22, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
@@ -749,6 +781,12 @@ void castor::db::cnv::DbMoverCloseRequestCnv::bulkCreateRep(castor::IAddress* ad
     // release the buffers for nsHost
     free(nsHostBuffer);
     free(nsHostBufLens);
+    // release the buffers for csumType
+    free(csumTypeBuffer);
+    free(csumTypeBufLens);
+    // release the buffers for csumValue
+    free(csumValueBuffer);
+    free(csumValueBufLens);
     // release the buffers for svcClass
     free(svcClassBuffer);
     free(svcClassBufLens);
@@ -830,7 +868,9 @@ void castor::db::cnv::DbMoverCloseRequestCnv::updateRep(castor::IAddress* addres
     m_updateStatement->setUInt64(14, obj->timeStamp());
     m_updateStatement->setUInt64(15, obj->fileId());
     m_updateStatement->setString(16, obj->nsHost());
-    m_updateStatement->setUInt64(17, obj->id());
+    m_updateStatement->setString(17, obj->csumType());
+    m_updateStatement->setString(18, obj->csumValue());
+    m_updateStatement->setUInt64(19, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
@@ -933,7 +973,9 @@ castor::IObject* castor::db::cnv::DbMoverCloseRequestCnv::createObj(castor::IAdd
     object->setTimeStamp(rset->getUInt64(15));
     object->setFileId(rset->getUInt64(16));
     object->setNsHost(rset->getString(17));
-    object->setId(rset->getUInt64(18));
+    object->setCsumType(rset->getString(18));
+    object->setCsumValue(rset->getString(19));
+    object->setId(rset->getUInt64(20));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -996,7 +1038,9 @@ castor::db::cnv::DbMoverCloseRequestCnv::bulkCreateObj(castor::IAddress* address
       object->setTimeStamp(rset->getUInt64(15));
       object->setFileId(rset->getUInt64(16));
       object->setNsHost(rset->getString(17));
-      object->setId(rset->getUInt64(18));
+      object->setCsumType(rset->getString(18));
+      object->setCsumValue(rset->getString(19));
+      object->setId(rset->getUInt64(20));
       // store object in results and loop;
       res.push_back(object);
       status = rset->next();
@@ -1051,7 +1095,9 @@ void castor::db::cnv::DbMoverCloseRequestCnv::updateObj(castor::IObject* obj)
     object->setTimeStamp(rset->getUInt64(15));
     object->setFileId(rset->getUInt64(16));
     object->setNsHost(rset->getString(17));
-    object->setId(rset->getUInt64(18));
+    object->setCsumType(rset->getString(18));
+    object->setCsumValue(rset->getString(19));
+    object->setId(rset->getUInt64(20));
     delete rset;
   } catch (castor::exception::SQLError e) {
     castor::exception::InvalidArgument ex;
