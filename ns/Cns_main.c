@@ -146,7 +146,7 @@ int Cns_main(main_args)
     }
   }
 
-  if (securityOpt){
+  if (securityOpt) {
     nslogit (func, "started in the secure mode (%s %d.%d.%d-%d)\n", CNS_SCE, MAJORVERSION, MINORVERSION, MAJORRELEASE, MINORRELEASE);
   }
   nslogit (func, "started (%s %d.%d.%d-%d)\n", CNS_SCE, MAJORVERSION, MINORVERSION, MAJORRELEASE, MINORRELEASE);
@@ -243,7 +243,7 @@ int Cns_main(main_args)
     v_port[0] = htons ((unsigned short)CNS_PORT);
   }
 
-  if (securityOpt){
+  if (securityOpt) {
     if ((sec_p = getenv (CNS_SPORT_ENV)) || ((sec_p = getconfent (CNS_SCE, "SEC_PORT", 0)))) {
       v_port[1] = htons ((unsigned short)atoi (sec_p));
     } else if ((sec_sp = getservbyname (CNS_SEC_SVC, "tcp"))) {
@@ -253,8 +253,7 @@ int Cns_main(main_args)
     }
   }
 
-
-  for (i=0; i < socket_to_start;i++){
+  for (i = 0; i < socket_to_start; i++) {
     serrno = 0;
     if ((s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
       nslogit (func, NS002, "socket", neterror());
@@ -264,7 +263,7 @@ int Cns_main(main_args)
     sin.sin_family = AF_INET ;
     sin.sin_port = v_port[i];
     sin.sin_addr.s_addr = htonl(INADDR_ANY);
-    if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0){
+    if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0) {
       nslogit (func, NS002, "setsockopt", neterror());
       close (s);
       continue;
@@ -331,9 +330,9 @@ int Cns_main(main_args)
 #ifdef CSEC
         /*Dirty trick to know in the doit method if the socket you are using is the one listening in the secure or unsecure port*/
         /*TODO: To be removed when unsecure mode will be only CSEC_MECH=ID*/
-        if (i==1){
+        if (i == 1) {
           (Cns_srv_thread_info+thread_index)->secOn = 1;
-        }else{
+        } else {
           (Cns_srv_thread_info+thread_index)->secOn = 0;
         }
 #endif
@@ -384,7 +383,7 @@ int getreq(thip, magic, req_type, req_data, clienthost)
   struct hostent *hp;
   struct timeval tv;
   int l;
-  int msglen;
+  unsigned int msglen;
   int n;
   char *rbp;
   char req_hdr[3*LONGSIZE];
@@ -429,8 +428,11 @@ int getreq(thip, magic, req_type, req_data, clienthost)
   } else {
     if (l > 0)
       nslogit (func, NS004, l);
-    else if (l < 0)
+    else if (l < 0) {
       nslogit (func, NS002, "netread", neterror());
+      if (serrno == SETIMEDOUT)
+	return (SETIMEDOUT);
+    }
     return (SEINTERNAL);
   }
 }
@@ -852,8 +854,7 @@ doit(arg)
   /*It should be removed once the unsecure mode is not supported anymore, and next "if" as well */
   char username[CA_MAXUSRNAMELEN+1];
 
-  if (thip->secOn){
-
+  if (thip->secOn) {
     Csec_server_initContext (&thip->sec_ctx, CSEC_SERVICE_TYPE_HOST, NULL);
     if (Csec_server_establishContext (&thip->sec_ctx, thip->s) < 0) {
       nslogit (func, "Could not establish security context: %s !\n",
@@ -870,16 +871,15 @@ doit(arg)
       thip->s = -1;
       return NULL;
     }
-    nslogit (func, "Users Principal  %s !\n",thip->Csec_auth_id);
-    nslogit (func, "User Mapped to  %s !\n",username);
+    nslogit (func, "Users principal %s - mapped to %s\n", thip->Csec_auth_id, username);
   }
 
-  /***************************************************************************************************/
-  /* This code should be uncommented once the services run in trusted hosts    */
-  /* Trusted host concept should be supported. At the moment that unsecure    */
-  /* mode will be stopped the stager won't be able to contact the ns unless the CSEC_MECH= ID */
-  /*  is provided and that means no security.       */
-  /***************************************************************************************************/
+  /*******************************************************************************************/
+  /* This code should be uncommented once the services run in trusted hosts                  */
+  /* Trusted host concept should be supported. At the moment that unsecure                   */
+  /* mode will be stopped the stager won't be able to contact the ns unless the CSEC_MECH=ID */
+  /* is provided and that means no security.                                                 */
+  /*******************************************************************************************/
 
 
   /* if (strcmp (thip->Csec_mech, "ID") == 0 ||
