@@ -1,5 +1,5 @@
 /*
- * $Id: Cns.h,v 1.8 2008/07/28 15:00:26 sponcec3 Exp $
+ * $Id: Cns.h,v 1.9 2008/08/12 14:28:41 kotlyar Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns.h,v $ $Revision: 1.8 $ $Date: 2008/07/28 15:00:26 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns.h,v $ $Revision: 1.9 $ $Date: 2008/08/12 14:28:41 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_H
@@ -133,6 +133,7 @@
 #define CNS_BULKEXIST	77
 #define CNS_TAPESUM     78
 #define CNS_PING        82
+#define CNS_SETFSIZECS  83
 
 			/* name server reply types */
 

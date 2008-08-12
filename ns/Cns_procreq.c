@@ -5154,6 +5154,101 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
+/* Cns_srv_setfsizecs - set file size, last modification time and file checksum*/
+
+int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
+     int magic;
+     char *req_data;
+     const char *clienthost;
+     struct Cns_srv_thread_info *thip;
+{
+  u_signed64 cwd;
+  u_signed64 fileid;
+  struct Cns_file_metadata filentry;
+  u_signed64 filesize;
+  char func[17];
+  gid_t gid;
+  char logbuf[CA_MAXPATHLEN+52];
+  char path[CA_MAXPATHLEN+1];
+  char *rbp;
+  Cns_dbrec_addr rec_addr;
+  char tmpbuf[21];
+  char tmpbuf2[21];
+  uid_t uid;
+  char *user;
+  char csumtype[3];
+  char csumvalue[33];
+
+  strcpy (func, "Cns_srv_setfsizecs");
+  rbp = req_data;
+  unmarshall_LONG (rbp, uid);
+  unmarshall_LONG (rbp, gid);
+  get_client_actual_id (thip, &uid, &gid, &user);
+  nslogit (func, NS092, "setfsizecs", user, uid, gid, clienthost);
+  if (rdonly)
+    RETURN (EROFS);
+  unmarshall_HYPER (rbp, cwd);
+  unmarshall_HYPER (rbp, fileid);
+  if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
+    RETURN (SENAMETOOLONG);
+  unmarshall_HYPER (rbp, filesize);
+  if (unmarshall_STRINGN (rbp, csumtype, 3))
+    RETURN (EINVAL);
+  if (unmarshall_STRINGN (rbp, csumvalue, 33))
+    RETURN (EINVAL);
+  if (*csumtype && strcmp (csumtype, "CS") && strcmp (csumtype, "AD") && strcmp (csumtype, "MD")) /* CS for CRC32 AD for ADLER32 MD for MD5 */
+    RETURN (EINVAL);
+  sprintf (logbuf, "setfsizecs %s %s %s %s %s", u64tostr (fileid, tmpbuf, 0),
+           path, u64tostr (filesize, tmpbuf2, 0),csumvalue,csumtype);
+  Cns_logreq (func, logbuf);
+
+  /* start transaction */
+
+  (void) Cns_start_tr (thip->s, &thip->dbfd);
+
+  if (fileid) {
+    /* get/lock basename entry */
+
+    if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid,
+                               &filentry, 1, &rec_addr))
+      RETURN (serrno);
+
+    /* check parent directory components for search permission */
+
+    if (Cns_chkbackperm (&thip->dbfd, filentry.parent_fileid,
+                         S_IEXEC, uid, gid, clienthost))
+      RETURN (serrno);
+  } else {
+    /* check parent directory components for search permission and
+       get/lock basename entry */
+
+    if (Cns_parsepath (&thip->dbfd, cwd, path, uid, gid, clienthost,
+                       NULL, NULL, &filentry, &rec_addr, CNS_MUST_EXIST))
+      RETURN (serrno);
+  }
+
+  /* check if the entry is a regular file and
+     if the user is authorized to set modification time for this entry */
+
+  if (filentry.filemode & S_IFDIR)
+    RETURN (EISDIR);
+  if (uid != filentry.uid &&
+      Cns_chkentryperm (&filentry, S_IWRITE, uid, gid, clienthost))
+    RETURN (EACCES);
+
+  /* update entry */
+
+  filentry.filesize = filesize;
+  filentry.mtime = time (0);
+  filentry.ctime = filentry.mtime;
+  strcpy (filentry.csumtype, csumtype);
+  strcpy (filentry.csumvalue, csumvalue);
+  
+  if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &filentry))
+    RETURN (serrno);
+  RETURN (0);
+}
+
 /* Cns_srv_setfsizeg - set file size and last modification time */
 
 int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)

@@ -689,6 +689,9 @@ int procreq(magic, req_type, req_data, clienthost, thip)
   case CNS_SETFSIZE:
     c = Cns_srv_setfsize (magic, req_data, clienthost, thip);
     break;
+  case CNS_SETFSIZECS:
+    c = Cns_srv_setfsizecs (magic, req_data, clienthost, thip);
+    break;
   case CNS_SETSEGAT:
     c = Cns_srv_setsegattrs (magic, req_data, clienthost, thip);
     break;
