@@ -328,6 +328,9 @@ int rtcpc_GiveInfo(tape_list_t *tl,
         rtcp_log(LOG_INFO,RT204,cmd,filereq->blocksize);
       if ( filereq->recordlength > 0 ) 
         rtcp_log(LOG_INFO,RT210,cmd,filereq->recordlength);
+      if ( filereq->castorSegAttr.segmCksum > 0 ) 
+        rtcp_log(LOG_INFO," %s - CHECK SUM: %ld, 0x%x\n", 
+                 cmd, filereq->castorSegAttr.segmCksum, filereq->castorSegAttr.segmCksum);
       if ( filereq->maxnbrec > 0 ) 
         rtcp_log(LOG_INFO,RT207,cmd,(u_signed64)filereq->maxnbrec);
       if ( filereq->maxsize > 0 ) 
