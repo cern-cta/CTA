@@ -55,7 +55,7 @@ void usage(const std::string programName) {
     "where options can be:\n"
     "\n"
     "\t-c, --config config-file Configuration file\n"
-    "\t-a, --all                List all priorities.\n"
+    "\t-a, --all                List all priorities. This is the default.\n"
     "\t-l, --lifespanType type  List priorities with specified lifespan type.\n"
     "\t                         Valid values are \"singleMount\" and "
     "\"unlimited\".\n"
@@ -395,6 +395,7 @@ int main(int argc, char **argv) {
 
   switch(listType) {
   case NONE_PRIO_LIST_TYPE:
+    // The default is to display all priorities
   case ALL_PRIO_LIST_TYPE:
     printAllPriorities(vdqmSvc, displayColumnHeadings);
     break;
