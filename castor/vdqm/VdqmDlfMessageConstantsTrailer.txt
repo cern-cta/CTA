@@ -1,0 +1,4 @@
+}; } } // enum VdqmDlfMessages - namespace vdqm - namespace castor
+
+
+#endif // CASTOR_VDQM_VDQMDLFMESSAGECONSTANTS_HPP

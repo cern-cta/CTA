@@ -2,6 +2,85 @@
 
 use strict;
 
+my $vdqm_constants_head_filename="VdqmDlfMessageConstantsHeader.txt";
+my $vdqm_dlf_messages_filename="VdqmDlfMessages.csv";
+my $vdqm_constants_tail_filename="VdqmDlfMessageConstantsTrailer.txt";
+
+sub writeConstantsFile {
+  # Write the header text
+  open(VDQMDLFCONSTANTSHEAD, "<$vdqm_constants_head_filename")
+    or die("Could not open $vdqm_constants_head_filename for reading: $!\n");
+  while(<VDQMDLFCONSTANTSHEAD>) {
+    print;
+  }
+  close(VDQMDLFCONSTANTSHEAD);
+
+  # Count the number of messages
+  open(VDQMDLFMESSAGES, "<$vdqm_dlf_messages_filename")
+    or die("Could not open $vdqm_dlf_messages_filename for reading: $!\n");
+  my $nbMessages = 0;
+  while(<VDQMDLFMESSAGES>) {
+    $nbMessages = $nbMessages + 1;
+  }
+  close(VDQMDLFMESSAGES);
+
+  # Write the body text
+  open(VDQMDLFMESSAGES, "<$vdqm_dlf_messages_filename")
+    or die("Could not open $vdqm_dlf_messages_filename for reading: $!\n");
+  my $const_name;
+  my $const_val;
+  my $msg;
+  my $currentMessageNb = 0;
+  while(<VDQMDLFMESSAGES>) {
+    $currentMessageNb = $currentMessageNb + 1;
+    m/^([A-Z0-9_]*),(\d*),(.*)/;
+    $const_name = $1;
+    $const_val  = $2;
+    $msg        = $3;
+
+    # If this is not the last message
+    if($currentMessageNb != $nbMessages) {
+      # Terminate the enumeration item with a comma
+      print("${const_name}=${const_val}, /* ${msg} */\n");
+    } else {
+      # Don't terminate the enumeration item with a comma
+      print("${const_name}=${const_val} /* ${msg} */\n");
+    }
+  }
+  close(VDQMDLFMESSAGES);
+
+  # Write the trailer text
+  open(VDQMDLFCONSTANTSTAIL, "<$vdqm_constants_tail_filename")
+    or die("Could not open $vdqm_constants_tail_filename for reading: $!\n");
+  while(<VDQMDLFCONSTANTSTAIL>) {
+    print;
+  }
+  close(VDQMDLFCONSTANTSTAIL);
+}
+
+
+sub writeArrayElements {
+  open(VDQMDLFMESSAGES, "<$vdqm_dlf_messages_filename")
+    or die("Could not open $vdqm_dlf_messages_filename for reading: $!\n");
+
+  my $const_indent = "      ";
+  my $element_indent = "    ";
+  my $const_name;
+  my $const_val;
+  my $msg;
+
+  while(<VDQMDLFMESSAGES>) {
+    m/^([A-Z0-9_]*),(\d*),(.*)/;
+    $const_name = $1;
+    $const_val  = $2;
+    $msg        = $3;
+
+    print("${element_indent}{${const_name}, ${msg}},\n");
+  }
+
+  close(VDQMDLFMESSAGES);
+}
+
 
 my $help =         "Description:\n";
 $help    = $help . "\tGenerates enum and array code for VDQM DLF messages\n\n";
@@ -15,31 +94,10 @@ die "Wrong number of arguments\n\n$help"
 
 my $mode = "\U$ARGV[0]";
 
-die "Unknown mode: $mode\n\n$help"
-  if ($mode ne "ENUM") && ($mode ne "ARRAY");
-
-open VDQMDLFMESSAGES, "<VdqmDlfMessages.csv"
-  or die "Could not open VdqmDlfMessages.csv for reading: $!\n";
-
-my $const_indent = "      ";
-my $element_indent = "    ";
-my $const_name;
-my $const_val;
-my $msg;
-
-while(<VDQMDLFMESSAGES>) {
-  m/^([A-Z0-9_]*),(\d*),(.*)/;
-  $const_name = $1;
-  $const_val  = $2;
-  $msg        = $3;
-
-  if($mode eq "ENUM") {
-    print("${const_indent}${const_name}=${const_val}, /* ${msg} */\n");
-  } elsif($mode eq "ARRAY") {
-    print("${element_indent}{${const_name}, ${msg}},\n");
-  } else {
-    die("Unknown mode");
-  }
+if($mode eq "ENUM") {
+  &writeConstantsFile
+} elsif($mode eq "ARRAY") {
+  &writeArrayElements
+} else {
+  die("Unknown mode: $mode\n\n$help");
 }
-
-close VDQMDLFMESSAGES;
