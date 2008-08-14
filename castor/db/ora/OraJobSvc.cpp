@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2008/08/14 15:10:10 $ $Author: kotlyar $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2008/08/14 15:25:42 $ $Author: kotlyar $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -601,6 +601,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
 	} else {
 	  ex.getMessage() << cns_error_buffer;
 	}
+        throw ex;
       }
     }
   } catch (oracle::occi::SQLException e) {
