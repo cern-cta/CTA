@@ -17,12 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: listPriority.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/07/28 16:56:48 $ $Author: waldron $
+ * @(#)$RCSfile: listPriority.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/08/14 14:30:36 $ $Author: gtaur $
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include <iostream>
+#include <pwd.h>
+#include <grp.h>
+
 #include <castor/stager/SvcClass.hpp>
 #include <castor/stager/IStagerSvc.hpp>
 #include <castor/Services.hpp>
@@ -35,20 +38,25 @@
 static struct Coptions longopts[] = {
   { "help",     NO_ARGUMENT,       NULL, 'h'},
   { "uid",      REQUIRED_ARGUMENT, NULL, 'u'},
-  { "gid",      REQUIRED_ARGUMENT, NULL, 'g'}, 
+  { "user",     REQUIRED_ARGUMENT, NULL, 'U' },
+  { "gid",      REQUIRED_ARGUMENT, NULL, 'g'},
+  { "group",    REQUIRED_ARGUMENT, NULL, 'G'},
   { "priority", REQUIRED_ARGUMENT, NULL, 'p'}, 
   { NULL,       0,                 NULL,  0 }
 };
 
 void usage(char *cmd) {
-  std::cout << "Usage : " << cmd
-            << " [-h] [-u uid] [-g gid] [-p priority]"
+  std::cout << "Usage : \n"
+            << cmd << " [-h] [-u/--uid uid] [-g/--gid gid] [-p/--priority priority]\n"
+            << cmd << " [-h] [-U/--user user] [-G/--group gid] [-p/--priority priority]\n" 
             << std::endl;
 }
 
 int main(int argc, char *argv[]) {
   int muid = -1;
   int mgid = -1;
+  int muser = -1;
+  int mgroup = -1;
   int mpriority = -1;
     
   char* progName = argv[0];
@@ -57,7 +65,7 @@ int main(int argc, char *argv[]) {
   Coptind = 1;
   Copterr = 1;
   int ch;
-  while ((ch = Cgetopt_long(argc, argv, "hu:g:p:", longopts, NULL)) != EOF) {
+  while ((ch = Cgetopt_long(argc, argv, "hu:U:g:G:p:", longopts, NULL)) != EOF) {
     switch (ch) {
     case 'h':
       usage(progName);
@@ -65,8 +73,26 @@ int main(int argc, char *argv[]) {
     case 'u':
       muid = atoi(Coptarg);
       break;
+    case 'U':
+      struct passwd *pass = getpwnam(Coptarg);
+      if (0 == pass) {
+	  std::cerr << " Not existing user." << std::endl;
+	  usage(progName);
+	  return 0;
+      }
+      muser = pass->pw_uid;
+      break;
     case 'g':
       mgid = atoi(Coptarg);
+      break;
+    case 'G':
+      struct group *grp = getgrnam(Coptarg);
+      if (grp == 0){
+        std::cerr << " Not existing group." << std::endl;
+	usage(progName);
+	return 0;
+      }
+      mgroup = grp->gr_gid;
       break;
     case 'p':
       mpriority = atoi(Coptarg);
@@ -77,6 +103,14 @@ int main(int argc, char *argv[]) {
     }
   }
   
+  if ((muid>=0 && muser>=0) || (mgid>=0 && mgroup>=0)){
+    std::cerr << " Invalid syntax"<<std::endl; 
+    usage(progName);
+    return 0;
+  }
+
+  muid=muid>0?muid:muser;
+  mgid=mgid>0?mgid:mgroup; 
   try {
     
     // Initializing the log
@@ -106,9 +140,21 @@ int main(int argc, char *argv[]) {
     } else {
       fprintf(stdout, "%-8s %-8s %-8s\n", "Uid", "Gid", "Priority");
       while (line != listPriority.end()){ 
-	fprintf(stdout, "%-8llu %-8llu %-8llu\n", 
-		(*line)->euid(),
-		(*line)->egid(),
+        struct passwd *pass= getpwuid((*line)->euid());
+        if (pass ==0){
+	  line++;
+	  continue;
+	}
+
+	struct group *grp= getgrgid((*line)->egid());
+        if (grp ==0){
+	  line++;
+	  continue;
+	}
+
+	fprintf(stdout, "%-8s %-8s %-8llu\n", 
+		pass->pw_name,
+		grp->gr_name,
 		(*line)->priority());
 	line++;
       } 

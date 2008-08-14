@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: deletePriority.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/06/27 14:05:39 $ $Author: waldron $
+ * @(#)$RCSfile: deletePriority.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/08/14 14:30:36 $ $Author: gtaur $
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -30,31 +30,37 @@
 #include <castor/Constants.h>
 #include <Cgetopt.h>
 #include <castor/BaseObject.hpp>
+#include <pwd.h>
+#include <grp.h>
 
 static struct Coptions longopts[] = {
   { "help", NO_ARGUMENT,       NULL, 'h'},
   { "uid",  REQUIRED_ARGUMENT, NULL, 'u'},
+  { "user",      REQUIRED_ARGUMENT, NULL, 'U'},
   { "gid",  REQUIRED_ARGUMENT, NULL, 'g'},
+  { "group",      REQUIRED_ARGUMENT, NULL, 'G'},
   { NULL,   0,                 NULL,  0 }
 };
 
 void usage(char *cmd) {
-  std::cout << "Usage : " << cmd
-            << " [-h] [-u uid] [-g gid] "
-            << std::endl;
+  std::cout << "Usage : \n" 
+	    << cmd << " [-h] -u/--uid uid -g/--gid gid"<<std::endl;
+  std::cout << cmd << " [-h] -U/--user username -G/--group groupname"<< std::endl;
 }
 
 int main(int argc, char *argv[]) {
   int muid = -1;
   int mgid = -1;
-    
+  int muser = -1;
+  int mgroup = -1;
+ 
   char* progName = argv[0];
   
   // Deal with options
   Coptind = 1;
   Copterr = 1;
   int ch;
-  while ((ch = Cgetopt_long(argc, argv, "hu:g:", longopts, NULL)) != EOF) {
+  while ((ch = Cgetopt_long(argc, argv, "hu:U:g:G:", longopts, NULL)) != EOF) {
     switch (ch) {
     case 'h':
       usage(progName);
@@ -62,9 +68,28 @@ int main(int argc, char *argv[]) {
     case 'u':
       muid = atoi(Coptarg);
       break;
+    case 'U':
+      struct passwd *pass = getpwnam(Coptarg);
+      if (0 == pass) {
+	  std::cerr << " Not existing user." << std::endl;
+	  usage(progName);
+	  return 0;
+      }
+      muser = pass->pw_uid;
+      break;
     case 'g':
       mgid = atoi(Coptarg);
       break;
+    case 'G':
+      struct group *grp = getgrnam(Coptarg);
+      if (grp == 0){
+        std::cerr <<  " Not existing group." << std::endl;
+	usage(progName);
+	return 0;
+      }
+      mgroup = grp->gr_gid;
+      break;
+
     default:
       usage(progName);
       return 0;
@@ -72,12 +97,20 @@ int main(int argc, char *argv[]) {
   }
   
   // Check parameters
-  if ((muid < 0) && (mgid < 0)) {
-    std::cerr << progName << ": uid and/or gid options missing" << std::endl;
+  if ((muid < 0 && muser<0) && (mgid < 0 && mgroup<0)) {
+    std::cerr << " uid and/or gid options missing" << std::endl;
     usage(progName);
     return 0;
   }
-  
+  if ((muid>=0 && muser>=0) ||(mgid>=0 && mgroup>=0)) {
+    std::cerr << " Invalid syntax"<<std::endl; 
+    usage(progName);
+    return 0;
+  }
+
+  muid=muid<0?muser:muid;
+  mgid=mgid<0?mgroup:mgid;
+
   try {
     
     // Initializing the log
@@ -88,8 +121,8 @@ int main(int argc, char *argv[]) {
     castor::IService* isvc = svcs->service("DB", castor::SVC_DBSTAGERSVC);
     
     if (0 == isvc) {
-      std::cerr << "Unable to retrieve Stager Service." << std::endl
-                << "Please check your configuration." << std::endl;
+      std::cerr << " Unable to retrieve Stager Service." << std::endl
+                << " Please check your configuration." << std::endl;
       exit(1);
     }
     

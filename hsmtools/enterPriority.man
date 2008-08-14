@@ -1,13 +1,24 @@
-.TH ENTERPRIORITY 1 "$Date: 2008/06/27 14:05:39 $" CASTOR "Set the priority for a specific uid and gid"
+.TH ENTERPRIORITY 1 "$Date: 2008/08/14 14:30:36 $" CASTOR "Set the priority for a specific uid and gid"
 .SH NAME
 enterPriority
 .SH SYNOPSIS
 .B enterPriority
-.BI -u 
+.BI -u/--uid 
 .BI uid 
-.BI -g 
+.BI -g/--gid 
 .BI gid 
-.BI -p 
+.BI -p/--priority 
+.BI priority
+[
+.BI -h 
+]
+
+.B enterPriority
+.BI -U/--user 
+.BI user 
+.BI -G/--group
+.BI group
+.BI -p/--priority 
 .BI priority
 [
 .BI -h 
@@ -21,6 +32,7 @@ uid, gid and priority must be positive intergers.
 .SH EXAMPLES
 .fi
 enterPriority -u 333 -g 333 -p 6
+enterPriority --user name --group group --priority 9
 .fi
 
 .SH NOTES
