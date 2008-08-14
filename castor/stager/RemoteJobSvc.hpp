@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/08/12 14:56:28 $ $Author: kotlyar $
+ * @(#)$RCSfile: RemoteJobSvc.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/08/14 15:10:11 $ $Author: kotlyar $
  *
  *
  *
@@ -241,24 +241,19 @@ namespace castor {
        * @param timeStamp The time when the size of the file is checked.
        * @param fileId
        * @param nsHost
+       * @param csumtype The checksum type of the castor file
+       * @param csumvalue The checksum value of the castor file
        * @exception Exception throws an Exception in case of error
        */
+        
       virtual void prepareForMigration
       (castor::stager::SubRequest* subreq,
        u_signed64 fileSize,
        u_signed64 timeStamp,
        u_signed64 fileId,
-       const std::string nsHost)
-        throw (castor::exception::Exception);
-        
-      virtual void prepareForMigrationcs
-      (castor::stager::SubRequest* subreq,
-       u_signed64 fileSize,
-       u_signed64 timeStamp,
-       u_signed64 fileId,
        const std::string nsHost,
-       const std::string csumtype,
-       const std::string csumvalue)
+       const std::string csumtype="",
+       const std::string csumvalue="")
         throw (castor::exception::Exception);
 
       /**

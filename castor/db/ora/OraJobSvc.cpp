@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2008/08/12 14:56:28 $ $Author: kotlyar $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2008/08/14 15:10:10 $ $Author: kotlyar $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -71,6 +71,7 @@
 #include "castor/BaseAddress.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "occi.h"
+#include "getconfent.h"
 #include <Cuuid.h>
 #include <string>
 #include <sstream>
@@ -498,118 +499,6 @@ void castor::db::ora::OraJobSvc::prepareForMigration
  u_signed64 fileSize,
  u_signed64 timeStamp,
  u_signed64 fileId,
- const std::string nsHost)
-  throw (castor::exception::Exception) {
-  try {
-    // Check whether the statements are ok
-    if (0 == m_prepareForMigrationStatement) {
-      m_prepareForMigrationStatement =
-        createStatement(s_prepareForMigrationStatementString);
-      m_prepareForMigrationStatement->setAutoCommit(true);
-      m_prepareForMigrationStatement->registerOutParam
-        (4, oracle::occi::OCCIDOUBLE);
-      m_prepareForMigrationStatement->registerOutParam
-        (5, oracle::occi::OCCISTRING, 2048);
-      m_prepareForMigrationStatement->registerOutParam
-        (6, oracle::occi::OCCIINT);
-      m_prepareForMigrationStatement->registerOutParam
-        (7, oracle::occi::OCCIINT);
-      m_prepareForMigrationStatement->registerOutParam
-        (8, oracle::occi::OCCIINT);
-    }
-    // execute the statement and see whether we found something
-    m_prepareForMigrationStatement->setDouble(1, subreq->id());
-    m_prepareForMigrationStatement->setDouble(2, fileSize);
-    m_prepareForMigrationStatement->setDouble(3, timeStamp);
-    unsigned int nb = m_prepareForMigrationStatement->executeUpdate();
-    if (0 == nb) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "prepareForMigration did not return any result.";
-      throw ex;
-    }
-    // collect NS related output
-    struct Cns_fileid fileid;
-    fileid.fileid =
-      (u_signed64)m_prepareForMigrationStatement->getDouble(4);
-    std::string nsHost =
-      m_prepareForMigrationStatement->getString(5);
-    strncpy(fileid.server,
-            nsHost.c_str(),
-            CA_MAXHOSTNAMELEN);
-    // Check for errors
-    int errorCode = m_prepareForMigrationStatement->getInt(8);
-    if (errorCode > 0) {
-      // For now, the only situation when errorCode in not 0
-      // is when the file got deleted while it was written to
-      // This by itself is not an error, but we should no take
-      // any action here. We thus log something and return
-      // "File was deleted while it was written to. Giving up with migration."
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-                              DLF_BASE_ORACLELIB, 0, 0, &fileid);
-
-      return;
-    }
-    // collect rest of output
-    unsigned long euid =
-      m_prepareForMigrationStatement->getInt(6);
-    unsigned long egid =
-      m_prepareForMigrationStatement->getInt(7);
-    // Update name server
-    char cns_error_buffer[512];  /* Cns error buffer */
-    *cns_error_buffer = 0;
-    if (Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0) {
-      castor::exception::Exception ex(serrno);
-      ex.getMessage()
-        << "prepareForMigration : Cns_seterrbuf failed.";
-      throw ex;
-    }
-    if (Cns_setid(euid,egid) != 0) {
-      castor::exception::Exception ex(serrno);
-      ex.getMessage()
-        << "prepareForMigration : Cns_setid failed : ";
-      if (!strcmp(cns_error_buffer, "")) {
-	ex.getMessage() << sstrerror(serrno);
-      } else {
-	ex.getMessage() << cns_error_buffer;
-      }
-      throw ex;
-    }
-
-    // timeStamp is zero only if this function is used by putDone 
-    // it that case with the putDone not scheduled the file size 
-    // should NOT be updated
-    if (timeStamp != 0) {
-      if (Cns_setfsize(0, &fileid, fileSize) != 0) {
-	castor::exception::Exception ex(serrno);
-	ex.getMessage()
-	  << "prepareForMigration : Cns_setfsize failed : ";
-	if (!strcmp(cns_error_buffer, "")) {
-	  ex.getMessage() << sstrerror(serrno);
-	} else {
-	  ex.getMessage() << cns_error_buffer;
-	}
-	throw ex;
-      }
-    }
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in prepareForMigration."
-      << std::endl << e.what();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// prepareForMigration with checksums
-//------------------------------------------------------------------------------
-void castor::db::ora::OraJobSvc::prepareForMigrationcs
-(castor::stager::SubRequest *subreq,
- u_signed64 fileSize,
- u_signed64 timeStamp,
- u_signed64 fileId,
  const std::string nsHost,
  const std::string csumtype,
  const std::string csumvalue)
@@ -694,16 +583,24 @@ void castor::db::ora::OraJobSvc::prepareForMigrationcs
     // it that case with the putDone not scheduled the file size 
     // should NOT be updated
     if (timeStamp != 0) {
-      if (Cns_setfsizecs(0, &fileid, fileSize,csumtype.c_str(),csumvalue.c_str()) != 0) {
+      int useCksum=0;
+      char *conf_ent;
+      if ((conf_ent=getconfent("CNS","USE_CKSUM",0)) != NULL)  /* checking should we use checksums for castor name server or not*/
+          if ((csumtype != "" && csumvalue != "") && ((strncmp(conf_ent,"YES",3)==0) || (strncmp(conf_ent,"yes",3)==0))) useCksum=1;
+      
+      int rc=0;
+      if(useCksum) rc=Cns_setfsizecs(0, &fileid, fileSize,csumtype.c_str(),csumvalue.c_str());
+      else rc=Cns_setfsize(0, &fileid, fileSize);
+            
+      if ( rc != 0) {
 	castor::exception::Exception ex(serrno);
 	ex.getMessage()
-	  << "prepareForMigration : Cns_setfsizecs failed : ";
+	  << "prepareForMigration : Cns_setfsize failed : ";
 	if (!strcmp(cns_error_buffer, "")) {
 	  ex.getMessage() << sstrerror(serrno);
 	} else {
 	  ex.getMessage() << cns_error_buffer;
 	}
-	throw ex;
       }
     }
   } catch (oracle::occi::SQLException e) {

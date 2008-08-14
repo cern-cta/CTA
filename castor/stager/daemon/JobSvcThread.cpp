@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.58 $ $Release$ $Date: 2008/08/12 14:56:28 $ $Author: kotlyar $
+ * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.59 $ $Release$ $Date: 2008/08/14 15:10:11 $ $Author: kotlyar $
  *
  * Service thread for job related requests
  *
@@ -426,10 +426,7 @@ void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
     castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_PFMIG,
 			    fileId, nsHost, 1, params);
     try {
-      if (mcReq->csumType() != "" && mcReq->csumValue() != "")  // if we have old ns daemon, then we can use new stager with it 
-         jobSvc->prepareForMigrationcs(subreq, mcReq->fileSize(), mcReq->timeStamp(), fileId, nsHost, mcReq->csumType(), mcReq->csumValue());
-      else
-         jobSvc->prepareForMigration(subreq, mcReq->fileSize(), mcReq->timeStamp(), fileId, nsHost);
+         jobSvc->prepareForMigration(subreq, mcReq->fileSize(), mcReq->timeStamp(), fileId, nsHost, mcReq->csumType(), mcReq->csumValue());
     } catch (castor::exception::Exception e) {
       if (e.code() == ENOENT) {
 	// "File was removed by another user while being modified"

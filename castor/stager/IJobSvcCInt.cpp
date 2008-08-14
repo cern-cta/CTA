@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvcCInt.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/08/12 14:56:28 $ $Author: kotlyar $
+ * @(#)$RCSfile: IJobSvcCInt.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/08/14 15:10:11 $ $Author: kotlyar $
  *
  *
  *
@@ -242,7 +242,7 @@ extern "C" {
    const char* csumvalue) {
     if (!checkIJobSvc(jobSvc)) return -1;
     try {
-      jobSvc->jobSvc->prepareForMigrationcs
+      jobSvc->jobSvc->prepareForMigration
 	(subreq, fileSize, timeStamp, fileId, nsHost, csumtype, csumvalue);
     } catch (castor::exception::Exception e) {
       serrno = e.code();

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/08/12 14:56:28 $ $Author: kotlyar $
+ * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/08/14 15:10:11 $ $Author: kotlyar $
  *
  * This class provides stager methods related to job handling
  *
@@ -227,24 +227,19 @@ namespace castor {
        * @param timeStamp To know if the fileSize is still valid
        * @param fileId the id of the castorFile
        * @param nsHost the name server hosting this castorFile
+       * @param csumtype the checksum type of the castorFile
+       * @param csumvalue the checksum value of the castorFile
        * @exception Exception in case of error
        */
+         
       virtual void prepareForMigration
       (castor::stager::SubRequest* subreq,
        u_signed64 fileSize,
        u_signed64 timeStamp,
        u_signed64 fileId,
-       const std::string nsHost)
-        throw (castor::exception::Exception) = 0;
-        
-      virtual void prepareForMigrationcs
-      (castor::stager::SubRequest* subreq,
-       u_signed64 fileSize,
-       u_signed64 timeStamp,
-       u_signed64 fileId,
        const std::string nsHost,
-       const std::string csumtype,
-       const std::string csumvalue)
+       const std::string csumtype="",
+       const std::string csumvalue="")
         throw (castor::exception::Exception) = 0;  
 
       /**

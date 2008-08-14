@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/08/12 14:56:28 $ $Author: kotlyar $
+ * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/08/14 15:10:11 $ $Author: kotlyar $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -231,22 +231,18 @@ namespace castor {
          * @param timeStamp To know if the fileSize is still valid 
 	 * @param fileId the id of the castorFile
 	 * @param nsHost the name server hosting this castorFile
+         * @param csumtype the checksum type of the castor file
+         * @param csumvalue the checksum value of the castor file
 	 * @exception Exception in case of error
          */
+                  
         virtual void prepareForMigration
         (castor::stager::SubRequest* subreq,
          u_signed64 fileSize, u_signed64 timeStamp,
          u_signed64 fileId,
-         const std::string nsHost)
-          throw (castor::exception::Exception);
-          
-        virtual void prepareForMigrationcs
-        (castor::stager::SubRequest* subreq,
-         u_signed64 fileSize, u_signed64 timeStamp,
-         u_signed64 fileId,
          const std::string nsHost,
-         const std::string csumtype,
-         const std::string csumvalue)
+         const std::string csumtype="",
+         const std::string csumvalue="")
           throw (castor::exception::Exception);  
 
         /**
