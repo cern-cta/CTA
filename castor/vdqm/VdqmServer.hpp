@@ -86,6 +86,11 @@ namespace castor {
     private:
 
       /**
+       * DLF message strings.
+       */
+      static castor::dlf::Message s_dlfMessages[];
+
+      /**
        * Default number of request handler threads.
        */
       static const int s_requestHandlerDefaultThreadNumber = 20;
@@ -105,12 +110,6 @@ namespace castor {
        */
       int m_RTCPJobSubmitterThreadNumber;
     
-      /**
-       * Initializes the DLF logging including the definition of the predefined
-       * messages.
-       */
-      void initDlf() throw();
-
       /**
        * Prints out the command-line usage message for the VDQM server
        * application.

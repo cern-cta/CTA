@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.39 $ $Release$ $Date: 2008/07/29 06:29:16 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.40 $ $Release$ $Date: 2008/08/14 16:22:38 $ $Author: murrayc3 $
 #
 # Make Castor vdqm library
 #
@@ -53,6 +53,7 @@ VDQMBIN_SRCS = CDevTools.cpp \
                RTCopyDConnection.cpp \
                RTCPJobSubmitterThread.cpp \
                SocketHelper.cpp \
+               VdqmDlfMessageStrings.cpp \
                VdqmMagic2ProtocolInterpreter.cpp \
                VdqmServer.cpp \
                handler/BaseRequestHandler.cpp \
