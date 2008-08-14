@@ -25,6 +25,7 @@
  
 // Include Files
 #include <stdio.h>
+#include <sstream>
 #include <string>
 
 #include "Cgetopt.h"
@@ -72,42 +73,11 @@ int main(int argc, char *argv[]) {
   server.parseCommandLine(argc, argv);
 
 
-  //--------------------------------------------------
-  // Check the database connection details file exists
-  //--------------------------------------------------
+  //--------------------------------
+  // Initialise the database service
+  //--------------------------------
 
-  {
-    FILE *fp = fopen(ORAVDQMCONFIGFILE, "r");
-    if(fp) {
-      // The file exists
-      fclose(fp);
-    } else {
-      // The file does not exist
-      std::cerr
-        << std::endl
-        << "Error: Database connection details file \"" << ORAVDQMCONFIGFILE
-        << "\" does not exist"
-        << std::endl << std::endl;
-      exit(1);
-    }
-  }
-
-
-  //-------------------------------------------------------------------------
-  // Pass to the DB service the schema version and DB connection details file
-  //-------------------------------------------------------------------------
-
-  castor::IService* s =
-    castor::BaseObject::sharedServices()->service("DbParamsSvc",
-    castor::SVC_DBPARAMSSVC);
-  castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
-  if(params == 0) {
-    castor::exception::Internal e;
-    e.getMessage() << "Could not instantiate the parameters service";
-    throw e;
-  }
-  params->setSchemaVersion(VDQMSCHEMAVERSION);
-  params->setDbAccessConfFile(ORAVDQMCONFIGFILE);
+  server.initDatabaseService();
 
 
   //------------------------
@@ -295,6 +265,8 @@ void castor::vdqm::VdqmServer::initDlf()
     {VDQM_DEL_OLD_VOL_PRIORITIES, "Deleted old volume priorities"},
     {VDQM_DEL_OLD_VOL_PRIORITIES_ERROR, "Error occurred whilst deleting old volume priorities"},
     {VDQM_RTCPD_JOB_SUBMIT_FAILED, "Failed to submit RTCPD job"},
+    {VDQM_FAILED_TO_PARSE_COMMAND_LINE, "Failed to parse the command line"},
+    {VDQM_FAILED_TO_INIT_DB_SERVICE, "Failed to initialise database service"},
     {-1, ""}
   }; // castor::dlf::Message messages[]
 
@@ -334,9 +306,17 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
           fclose(fp);
         } else {
           // The file does not exist
-          std::cerr
-            << std::endl
-            << "Error: Configuration file \"" << Coptarg << "\" does not exist"
+          std::stringstream oss;
+          oss << "Configuration file '" << Coptarg << "' does not exist";
+
+          // Log
+          castor::dlf::Param params[] = {
+            castor::dlf::Param("reason", oss.str())};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+            VDQM_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
+
+          // Print error and usage to stderr and then abort
+          std::cerr << std::endl << "Error: " << oss.str()
             << std::endl << std::endl;
           usage(argv[0]);
           exit(1);
@@ -354,34 +334,74 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
       m_RTCPJobSubmitterThreadNumber = atoi(Coptarg);
       break;
     case '?':
-      std::cerr
-        << std::endl
-        << "Error: Unknown command-line option: " << (char)Coptopt
-        << std::endl << std::endl;
-      usage(argv[0]);
-      exit(1);
+      {
+        std::stringstream oss;
+        oss << "Unknown command-line option: " << (char)Coptopt;
+
+        // Log
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("reason", oss.str())};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+          VDQM_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
+
+        // Print error and usage to stderr and then abort
+        std::cerr << std::endl << "Error: " << oss.str()
+          << std::endl << std::endl;
+        usage(argv[0]);
+        exit(1);
+      }
     case ':':
-      std::cerr
-        << std::endl
-        << "Error: An option is missing a parameter"
-        << std::endl << std::endl;
-      usage(argv[0]);
-      exit(1);
+      {
+        std::stringstream oss;
+        oss << "An option is missing a parameter";
+
+        // Log
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("reason", oss.str())};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+          VDQM_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
+
+        // Print error and usage to stderr and then abort
+        std::cerr << std::endl << "Error: " << oss.str()
+          << std::endl << std::endl;
+        usage(argv[0]);
+        exit(1);
+      }
     default:
-      std::cerr 
-        << std::endl
-        << "Internal error: Cgetopt_long returned the following unknown value: "
-        << "0x" << std::hex << (int)c << std::dec
-        << std::endl << std::endl;
-      exit(1);
+      {
+        std::stringstream oss;
+        oss << "Cgetopt_long returned the following unknown value: 0x"
+          << std::hex << (int)c;
+
+        // Log
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("reason", oss.str())};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+          VDQM_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
+
+        // Print error and usage to stderr and then abort
+        std::cerr << std::endl << "Error: " << oss.str()
+          << std::endl << std::endl;
+        usage(argv[0]);
+        exit(1);
+      }
     }
   }
 
   if(Coptind > argc) {
-    std::cerr
-      << std::endl
-      << "Internal error.  Invalid value for Coptind: " << Coptind
-      << std::endl;
+    std::stringstream oss;
+    oss << "Internal error.  Invalid value for Coptind: " << Coptind;
+
+    // Log
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("reason", oss.str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+      VDQM_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
+
+    // Print error and usage to stderr and then abort
+    std::cerr << std::endl << "Error: " << oss.str()
+      << std::endl << std::endl;
+    usage(argv[0]);
     exit(1);
   }
 
@@ -389,10 +409,17 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
   // not been parsed as it could indicate that a valid option never got parsed
   if(Coptind < argc)
   {
-    std::cerr
-      << std::endl
-      << "Error:  Unexpected command-line argument: "
-      << argv[Coptind]
+    std::stringstream oss;
+    oss << "Unexpected command-line argument: " << argv[Coptind];
+
+    // Log
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("reason", oss.str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+      VDQM_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
+
+    // Print error and usage to stderr and then abort
+    std::cerr << std::endl << "Error: " << oss.str()
       << std::endl << std::endl;
     usage(argv[0]);
     exit(1);
@@ -418,6 +445,60 @@ void castor::vdqm::VdqmServer::usage(std::string programName)
     << s_RTCPJobSubmitterDefaultThreadNumber << "\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
+}
+
+
+//------------------------------------------------------------------------------
+// initDatabaseService
+//------------------------------------------------------------------------------
+void castor::vdqm::VdqmServer::initDatabaseService() {
+
+  // Check the database connection details file exists
+  FILE *fp = fopen(ORAVDQMCONFIGFILE, "r");
+  if(fp) {
+    // The file exists
+    fclose(fp);
+  } else {
+    // The file does not exist
+    std::stringstream oss;
+    oss << "Database connection details file '" << ORAVDQMCONFIGFILE
+      << "' does not exist";
+
+    // Log
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("reason", oss.str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+      VDQM_FAILED_TO_INIT_DB_SERVICE, 1, params);
+
+    // Print error to stderr and then abort
+    std::cerr << std::endl << "Error: " << oss.str()
+      << std::endl << std::endl;
+    exit(1);
+  }
+
+  // Pass to the DB service the schema version and DB connection details file
+  castor::IService* s =
+    castor::BaseObject::sharedServices()->service("DbParamsSvc",
+    castor::SVC_DBPARAMSSVC);
+  castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
+  if(params == 0) {
+    std::stringstream oss;
+    oss << "Could not instantiate the parameters service";
+
+    // Log
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("reason", oss.str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+      VDQM_FAILED_TO_INIT_DB_SERVICE, 1, params);
+
+    // Print error to stderr and then abort
+    std::cerr << std::endl << "Error: " << oss.str()
+      << std::endl << std::endl;
+    exit(1);
+  }
+
+  params->setSchemaVersion(VDQMSCHEMAVERSION);
+  params->setDbAccessConfFile(ORAVDQMCONFIGFILE);
 }
 
 

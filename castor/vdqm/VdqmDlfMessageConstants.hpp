@@ -119,7 +119,9 @@ namespace castor {
       VDQM_NO_VOL_PRIORITY_DELETED=85, /* "No volume priority was found and deleted" */
       VDQM_DEL_OLD_VOL_PRIORITIES=86, /* "Deleted old volume priorities" */
       VDQM_DEL_OLD_VOL_PRIORITIES_ERROR=87, /* "Error occurred whilst deleting old volume priorities" */
-      VDQM_RTCPD_JOB_SUBMIT_FAILED=88 /* "Failed to submit RTCPD job" */
+      VDQM_RTCPD_JOB_SUBMIT_FAILED=88, /* "Failed to submit RTCPD job" */
+      VDQM_FAILED_TO_PARSE_COMMAND_LINE=89, /* "Failed to parse the command line" */
+      VDQM_FAILED_TO_INIT_DB_SERVICE=99 /* "Failed to initialise database service" */
     }; // enum VdqmDlfMessages
 
   } // namespace vdqm

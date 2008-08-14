@@ -51,9 +51,20 @@ namespace castor {
       VdqmServer() throw();
 
       /**
-       * Parses the command line and sets the server options accordingly
-       */    
+       * Parses the command line and sets the server options accordingly.
+       *
+       * In case of an error this method writes the appriopriate error messages
+       * to both standard error and DLF and then calls exit with a value of 1.
+       */
       void parseCommandLine(int argc, char *argv[]) throw();
+
+      /**
+       * Initialises the database service.
+       *
+       * In case of an error this method writes the appriopriate error messages
+       * to both standard error and DLF and then calls exit with a value of 1.
+       */
+      void initDatabaseService();
 
       /**
        * Returns the port on which the server will listen.
