@@ -5,6 +5,7 @@ use strict;
 my $vdqm_constants_head_filename="VdqmDlfMessageConstantsHeader.txt";
 my $vdqm_dlf_messages_filename="VdqmDlfMessages.csv";
 my $vdqm_constants_tail_filename="VdqmDlfMessageConstantsTrailer.txt";
+my $vdqm_strings_head_filename="VdqmDlfMessageStringsHeader.txt";
 
 sub writeConstantsFile {
   # Write the header text
@@ -59,45 +60,52 @@ sub writeConstantsFile {
 }
 
 
-sub writeArrayElements {
+sub writeStringsFile {
+  # Write the header text
+  open(VDQMDLFSTRINGSHEAD, "<$vdqm_strings_head_filename")
+    or die("Could not open $vdqm_strings_head_filename for reading: $!\n");
+  while(<VDQMDLFSTRINGSHEAD>) {
+    print;
+  }
+  close(VDQMDLFSTRINGSHEAD);
+
+  # Write the body text
   open(VDQMDLFMESSAGES, "<$vdqm_dlf_messages_filename")
     or die("Could not open $vdqm_dlf_messages_filename for reading: $!\n");
-
-  my $const_indent = "      ";
-  my $element_indent = "    ";
   my $const_name;
   my $const_val;
   my $msg;
-
   while(<VDQMDLFMESSAGES>) {
     m/^([A-Z0-9_]*),(\d*),(.*)/;
     $const_name = $1;
     $const_val  = $2;
     $msg        = $3;
 
-    print("${element_indent}{${const_name}, ${msg}},\n");
+    print("{${const_name}, ${msg}},\n");
   }
-
   close(VDQMDLFMESSAGES);
+
+  # Write the trailer text
+  print("{-1, \"\"}};\n");
 }
 
 
 my $help =         "Description:\n";
-$help    = $help . "\tGenerates enum and array code for VDQM DLF messages\n\n";
+$help    = $help . "\tGenerates the constants or strings files for the VDQM DLF messages\n\n";
 $help    = $help . "Usage:\n";
 $help    = $help . "\t$0 mode\n\n";
 $help    = $help . "Where\n";
-$help    = $help . "\tmode is either enum or array\n";
+$help    = $help . "\tmode is either constants or strings\n";
 
 die "Wrong number of arguments\n\n$help"
   if @ARGV != 1;
 
 my $mode = "\U$ARGV[0]";
 
-if($mode eq "ENUM") {
+if($mode eq "CONSTANTS") {
   &writeConstantsFile
-} elsif($mode eq "ARRAY") {
-  &writeArrayElements
+} elsif($mode eq "STRINGS") {
+  &writeStringsFile
 } else {
   die("Unknown mode: $mode\n\n$help");
 }
