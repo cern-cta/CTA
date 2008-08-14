@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.13 $ $Release$ $Date: 2008/08/12 14:56:28 $ $Author: kotlyar $
+ * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.14 $ $Release$ $Date: 2008/08/14 15:59:00 $ $Author: kotlyar $
  *
  *
  *
@@ -289,20 +289,15 @@ int Cstager_IJobSvc_disk2DiskCopyFailed
  * @param timeStamp To know if the fileSize is still valid
  * @param fileId the id of the castorFile
  * @param nsHost the name server hosting this castorFile
+ * @param csumtype the checksum type of the castor file
+ * @parem csumvalue the checksum value of the castor file
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
  * Cstager_IJobSvc_errorMsg
  */
-int Cstager_IJobSvc_prepareForMigration
-(struct Cstager_IJobSvc_t* jobSvc,
- struct Cstager_SubRequest_t* subreq,
- u_signed64 fileSize,
- u_signed64 timeStamp,
- u_signed64 fileId,
- const char* nsHost);
 
-int Cstager_IJobSvc_prepareForMigrationcs
+int Cstager_IJobSvc_prepareForMigration
 (struct Cstager_IJobSvc_t* jobSvc,
  struct Cstager_SubRequest_t* subreq,
  u_signed64 fileSize,

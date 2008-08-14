@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvcCInt.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/08/14 15:10:11 $ $Author: kotlyar $
+ * @(#)$RCSfile: IJobSvcCInt.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/08/14 15:59:00 $ $Author: kotlyar $
  *
  *
  *
@@ -210,28 +210,6 @@ extern "C" {
   // Cstager_IJobSvc_prepareForMigration
   //-------------------------------------------------------------------------
   int Cstager_IJobSvc_prepareForMigration
-  (struct Cstager_IJobSvc_t* jobSvc,
-   castor::stager::SubRequest* subreq,
-   u_signed64 fileSize,
-   u_signed64 timeStamp,
-   u_signed64 fileId,
-   const char* nsHost) {
-    if (!checkIJobSvc(jobSvc)) return -1;
-    try {
-      jobSvc->jobSvc->prepareForMigration
-	(subreq, fileSize, timeStamp, fileId, nsHost);
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      jobSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-  }
-  
-  //-------------------------------------------------------------------------
-  // Cstager_IJobSvc_prepareForMigrationcs
-  //-------------------------------------------------------------------------
-  int Cstager_IJobSvc_prepareForMigrationcs
   (struct Cstager_IJobSvc_t* jobSvc,
    castor::stager::SubRequest* subreq,
    u_signed64 fileSize,
