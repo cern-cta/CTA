@@ -136,7 +136,12 @@ namespace castor{
           if(switchDiskCopiesForJob()) {
             if(stgRequestHelper->subrequest->answered() == 0) {
               stgReplyHelper = new ReplyHelper();
-              stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "");
+              if ( stgRequestHelper->subrequest->protocol() == "xroot"){
+                std::string filepath = stgRequestHelper->stagerService->selectPhysicalFileName(&(stgCnsHelper->cnsFileid), stgRequestHelper->svcClass);
+                stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "",filepath);
+              }else{              
+                stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "");
+              }
               stgReplyHelper->endReplyToClient(stgRequestHelper);
             
               delete stgReplyHelper;
