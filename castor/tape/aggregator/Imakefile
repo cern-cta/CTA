@@ -1,0 +1,91 @@
+#
+#                      castor/tape/aggregator/Imakefile
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+#
+# @author Steven Murray, Steven.Murray@cern.ch
+#
+
+#include <Project.tmpl>
+
+#if !defined(_WIN32)
+#if linux
+DEBUG  = -g -O0
+#else
+DEBUG  = -g
+#endif
+#endif
+
+INCLUDES = -I FileName(FileName(FileName(..,..),..),h) -I FileName(FileName(..,..),..)
+CPPFLAGS = -DORATAPECONFIGFILE=\"/etc/castor/ORATAPECONFIG\" $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
+CFLAGS = -O -I$(INCLUDES) $(THREADFLAGS)
+
+LIBS = -lshift -lcastorCnvs -Wl,-rpath-link,FileName(FileName(FileName(..,..),..),shlib)
+
+AGGREGATORBIN_SRCS = \
+  AggregatorDlfMessageStrings.cpp \
+  AggregatorServer.cpp
+
+MANPAGES_AGGREGATOR = FileName($(MANDIR),aggregatord.$(MANSUFFIX))
+EMANPAGES_AGGREGATOR = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),aggregatord.$(MANSUFFIX)))
+
+AGGREGATORBIN_OBJS = $(AGGREGATORBIN_SRCS:.cpp=.Osuf)
+
+DEPLIB = DepSharedLibraryTargetName(FileName(FileName(..,..),shlib),shift)
+
+LDFLAGS += -L FileName(FileName(FileName(..,..),..),shlib) $(MTLDFLAGS)
+LD = g++
+
+all: ProgramTargetName(aggregatord)
+
+NormalProgramTarget(aggregatord,$(AGGREGATORBIN_OBJS),$(DEPLIB),$(LIBS))
+
+MakeDepSharedLibrary(FileName(..,shlib),shift)
+
+Makefiles:
+
+#if defined(_WIN32)
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend $(INCLUDES) $(AGGREGATORBIN_SRCS) 2> /dev/null
+#endif
+
+install: FileName($(BIN),aggregatord)
+
+InstallProgram(aggregatord,$(BIN),root,bin,750)
+
+install.man: $(MANDIR) $(MANPAGES_AGGREGATOR)
+MakeDir($(MANDIR),root,bin,0755)
+IMANPAGE(aggregatord,$(MANDIR),$(MANSUFFIX))
+
+exportman: $(EMANPAGES_AGGREGATOR)
+
+EMANPAGE(aggregatord,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+
+clean:
+	@echo cleaning in CurDir
+	-@RemoveFiles(FilesToClean $(AGGREGATORBIN_OBJS))
+
+clobber:	clean
+	@echo clobbering in CurDir
+	-@RemoveFiles(ProgramTargetName(aggregatord))
+
+FORCE:
+
