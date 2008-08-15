@@ -666,6 +666,10 @@ RHCPPDIR = rh
 #if BuildVDQMCpp
 VDQMCPPDIR = vdqm
 #endif
+#if BuildAggregatorCpp
+AGGREGATORCPP = aggregator
+TAPECPPDIR = tape
+#endif
 #if BuildRepack
 REPACKDIR = repack
 #endif
@@ -683,7 +687,7 @@ INFOPOLICYDIR = infoPolicy
 #if BuildGCCpp
 GCCPPDIR = gc
 #endif
-#if BuildCastorClientCPPLibrary || BuildRHCpp || BuildVDQMCpp || BuildGCCpp || BuildOraCpp || BuildPgCpp || BuildMyCpp || BuildStageDaemonCpp || BuildRmMasterCpp || BuildRmNodeCpp
+#if BuildCastorClientCPPLibrary || BuildRHCpp || BuildVDQMCpp || BuildGCCpp || BuildOraCpp || BuildPgCpp || BuildMyCpp || BuildStageDaemonCpp || BuildRmMasterCpp || BuildRmNodeCpp || BuildAggregatorCpp
 COMMONCPPDIR = castor
 #endif
 #if BuildOraCpp
