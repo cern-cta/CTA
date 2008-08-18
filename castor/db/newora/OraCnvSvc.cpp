@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.41 $ $Release$ $Date: 2008/05/21 16:20:36 $ $Author: itglp $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2008/08/18 16:13:55 $ $Author: waldron $
  *
  * The conversion service to Oracle
  *
@@ -46,22 +46,22 @@
 // Local Files
 #include "castor/db/newora/OraCnvSvc.hpp"
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // External C function used for getting configuration from shift.conf file
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 extern "C" {
   char* getconfent_fromfile (const char *, const char *, const char *, int);
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Instantiation of a static factory class
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 static castor::SvcFactory<castor::db::ora::OraCnvSvc>* s_factoryOraCnvSvc =
   new castor::SvcFactory<castor::db::ora::OraCnvSvc>();
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // OraCnvSvc
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::db::ora::OraCnvSvc::OraCnvSvc(const std::string name) :
   castor::db::DbCnvSvc(name),
   m_user(""),
@@ -70,37 +70,37 @@ castor::db::ora::OraCnvSvc::OraCnvSvc(const std::string name) :
   m_environment(0),
   m_connection(0) {}
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // ~OraCnvSvc
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::db::ora::OraCnvSvc::~OraCnvSvc() throw() {
   dropConnection();
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // id
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 const unsigned int castor::db::ora::OraCnvSvc::id() const {
   return ID();
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // ID
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 const unsigned int castor::db::ora::OraCnvSvc::ID() {
   return castor::SVC_ORACNV;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getPhysRepType
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 const unsigned int castor::db::ora::OraCnvSvc::getPhysRepType() const {
   return castor::REP_ORACLE;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getConnection
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
   throw (oracle::occi::SQLException, castor::exception::Exception) {
   // Quick answer if connection available
@@ -108,54 +108,67 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
   
   // No connection available, try to build one
   // get the parameters service to resolve the schema version and the config file
-  castor::IService* s = castor::BaseObject::sharedServices()->service("DbParamsSvc", SVC_DBPARAMSSVC);
+  castor::IService* s = 
+    castor::BaseObject::sharedServices()->service("DbParamsSvc", SVC_DBPARAMSSVC);
   castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
-  if(params == 0) {
+  if (params == 0) {
     castor::exception::Internal e;
     e.getMessage() << "Fail to instantiate a DbParamsSvc, cannot connect to database.";
     throw e;
   }
   
+  // If the CASTOR_INSTANCE environment variable exists, append it the name
+  // of the configuration option to lookup in the config file.
+  std::string nameVal = name();
+  const char *instance = getenv("CASTOR_INSTANCE");
+  if (instance != NULL) {
+    nameVal += "_";
+    nameVal += instance;
+  }
+
   if ("" == m_user || "" == m_dbName) {
     // get the config file name. Defaults to ORASTAGERCONFIG
     std::string confFile = params->getDbAccessConfFile();
-    if(confFile == "") {
+    if (confFile == "") {
       confFile = std::string(ORASTAGERCONFIGFILE);
     }
     // get the new values
-    char* cuser = getconfent_fromfile(confFile.c_str(), name().c_str(), "user", 0);
-    if(cuser == 0) {
+    char* cuser = getconfent_fromfile(confFile.c_str(), nameVal.c_str(), "user", 0);
+    if (cuser == 0) {
       castor::exception::InvalidArgument e;
-      e.getMessage() << "Failed to get DB username from " << confFile.c_str()
-        << ".";
-      if(serrno == SENOCONFIG) {
-         e.getMessage() << " The file could not be opened.";
+      e.getMessage() << "Failed to connect to database. Missing " << nameVal 
+		     << "/user configuration option from " << confFile.c_str() 
+		     << ".";
+      if (serrno == SENOCONFIG) {
+	e.getMessage() << " The file could not be opened.";
       }
       throw e;
     } else {
       m_user = std::string(cuser);
     }
 
-    char* cpasswd = getconfent_fromfile(confFile.c_str(), name().c_str(), "passwd", 0);
-    if(cpasswd == 0) {
+    char* cpasswd = getconfent_fromfile(confFile.c_str(), nameVal.c_str(), "passwd", 0);
+    if (cpasswd == 0) {
       castor::exception::InvalidArgument e;
-      e.getMessage() << "Failed to get DB password from " << confFile.c_str()
-        << ".";
-      if(serrno == SENOCONFIG) {
-         e.getMessage() << " The file could not be opened.";
+      e.getMessage() << "Failed to connect to database. Missing " << nameVal 
+		     << "/passwd configuration option from " << confFile.c_str() 
+		     << ".";
+      if (serrno == SENOCONFIG) {
+	e.getMessage() << " The file could not be opened.";
       }
       throw e;
     } else {
       m_passwd = std::string(cpasswd);
     }
 
-    char* cdbName = getconfent_fromfile(confFile.c_str(), name().c_str(), "dbName", 0);
-    if(cdbName == 0) {
+    char* cdbName = getconfent_fromfile(confFile.c_str(), nameVal.c_str(), "dbName", 0);
+    if (cdbName == 0) {
       castor::exception::InvalidArgument e;
-      e.getMessage() << "Failed to get DB name from " << confFile.c_str()
-        << ".";
-      if(serrno == SENOCONFIG) {
-         e.getMessage() << " The file could not be opened.";
+      e.getMessage() << "Failed to connect to database. Missing " << nameVal 
+		     << "/dbName configuration option from " << confFile.c_str() 
+		     << ".";
+      if (serrno == SENOCONFIG) {
+	e.getMessage() << " The file could not be opened.";
       }
       throw e;
     } else {
@@ -230,9 +243,9 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
   return m_connection;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // dropConnection
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraCnvSvc::dropConnection() throw() {
   // inherited cleanup
   castor::db::DbCnvSvc::dropConnection();
@@ -296,9 +309,9 @@ void castor::db::ora::OraCnvSvc::rollback()
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // createStatement - the real one!
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::db::IDbStatement* castor::db::ora::OraCnvSvc::createStatement(const std::string& stmt)
   throw (castor::exception::Exception) {
   try {
@@ -314,9 +327,9 @@ castor::db::IDbStatement* castor::db::ora::OraCnvSvc::createStatement(const std:
 }
 
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // createOraStatement - for Oracle specific statements
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 oracle::occi::Statement* castor::db::ora::OraCnvSvc::createOraStatement(const std::string& stmt)
   throw (castor::exception::Exception) {
   try {
@@ -332,14 +345,14 @@ oracle::occi::Statement* castor::db::ora::OraCnvSvc::createOraStatement(const st
   return 0;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // closeStatement
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraCnvSvc::closeStatement(castor::db::IDbStatement* stmt)
   throw (castor::exception::SQLError) {
   try {
     castor::db::ora::OraStatement* oraStmt = dynamic_cast<castor::db::ora::OraStatement*>(stmt);
-    if(oraStmt == 0) return;
+    if (oraStmt == 0) return;
     m_connection->terminateStatement(oraStmt->getStatementImpl());
     // the stmt object is still alive; this method is called only inside ~OraStatement
     // so there's no need to delete it.
@@ -351,15 +364,15 @@ void castor::db::ora::OraCnvSvc::closeStatement(castor::db::IDbStatement* stmt)
   }
 }
 
-// -------------------------------------------------------------------------
+//-------------------------------------------------------------------------------
 //  handleException
-// -------------------------------------------------------------------------
+//-------------------------------------------------------------------------------
 void castor::db::ora::OraCnvSvc::handleException(std::exception& e) {
   int errcode = ((oracle::occi::SQLException&)e).getErrorCode();
   if (errcode == 28 || errcode == 3113 || errcode == 3114 || errcode == 32102
-    || errcode == 3135 || errcode == 12170 || errcode == 12541 || errcode == 1012
-    || errcode == 1003 || errcode == 12571 || errcode == 25408 || errcode == 1033
-    || errcode == 1089 || errcode == 12537) {  
+      || errcode == 3135 || errcode == 12170 || errcode == 12541 || errcode == 1012
+      || errcode == 1003 || errcode == 12571 || errcode == 25408 || errcode == 1033
+      || errcode == 1089 || errcode == 12537) {  
     // here we lost the connection due to an Oracle restart or network glitch
     // and this is the current list of errors acknowledged as a lost connection.
     // Notes:
@@ -374,4 +387,3 @@ void castor::db::ora::OraCnvSvc::handleException(std::exception& e) {
     dropConnection();  // reset values and drop the connection
   }
 }
-
