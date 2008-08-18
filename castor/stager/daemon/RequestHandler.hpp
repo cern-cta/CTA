@@ -36,14 +36,14 @@ namespace castor{
       
       class RequestHandler : public virtual castor::BaseObject{
         
+      public:
         
-        public:
+        RequestHandler() throw() : BaseObject() {
+	  stgCnsHelper = 0;
+	};
+	virtual ~RequestHandler() throw();
         
-        RequestHandler() throw() : BaseObject() {};
-	      virtual ~RequestHandler() throw();
-        
-        
-        /* to perfom the common flow for all the subrequest types but StageRm, StageUpdate, StagePrepareToUpdate */
+	/* to perfom the common flow for all the subrequest types but StageRm, StageUpdate, StagePrepareToUpdate */
         /* to be called before the stg____Handler->handle() */
         virtual void preHandle() throw(castor::exception::Exception);
         

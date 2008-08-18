@@ -66,7 +66,7 @@ namespace castor{
          Cns_fileid* cnsFileid,
          int errorCode,
          std::string errorMessage,
-         const std::string physicalFileName = " ")
+         const castor::stager::DiskCopyInfo* diskCopy = 0)
           throw(castor::exception::Exception);       
         
         

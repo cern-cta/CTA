@@ -61,7 +61,12 @@ namespace castor{
       /****************************************************************************/
       /* set fileId, reqAssociated (reqId()), castorFileName,newSubReqStatus,    */
       /**************************************************************************/
-      void ReplyHelper::setAndSendIoResponse(RequestHelper* stgRequestHelper, Cns_fileid* cnsFileid, int errorCode, std::string errorMessage, const std::string physicalFileName) throw(castor::exception::Exception)
+      void ReplyHelper::setAndSendIoResponse(RequestHelper* stgRequestHelper, 
+					     Cns_fileid* cnsFileid, 
+					     int errorCode, 
+					     std::string errorMessage, 
+					     const castor::stager::DiskCopyInfo* diskCopy)
+	throw(castor::exception::Exception)
       {
         if(stgRequestHelper->fileRequest) {
           if(stgRequestHelper->fileRequest->client() == 0) {
@@ -80,9 +85,9 @@ namespace castor{
           ioResponse->setFileId(0);
         }
 
-        if(!stgRequestHelper->fileRequest->reqId().empty()){
+        if (!stgRequestHelper->fileRequest->reqId().empty()) {
           this->ioResponse->setReqAssociated(stgRequestHelper->fileRequest->reqId());
-        }else{
+        } else {
           // no UUID?? at this stage just log it and try to go on
           castor::dlf::Param params[]={ castor::dlf::Param(stgRequestHelper->subrequestUuid),
             castor::dlf::Param("Filename",stgRequestHelper->subrequest->fileName()),
@@ -93,12 +98,12 @@ namespace castor{
           castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_WARNING, STAGER_REQUESTUUID_EXCEPTION, 5, params);
         }
 
-        if (physicalFileName != " "){
-          ioResponse->setFileName(physicalFileName); 
-        }else{
-          ioResponse->setCastorFileName(stgRequestHelper->subrequest->fileName());
+        if (diskCopy) {
+          ioResponse->setFileName(diskCopy->diskCopyPath());
+	  ioResponse->setServer(diskCopy->diskServer());
         }
-        ioResponse->setStatus(stgRequestHelper->subrequest->status() == SUBREQUEST_FAILED_FINISHED ? SUBREQUEST_FAILED : SUBREQUEST_READY);
+	ioResponse->setCastorFileName(stgRequestHelper->subrequest->fileName());
+	ioResponse->setStatus(stgRequestHelper->subrequest->status() == SUBREQUEST_FAILED_FINISHED ? SUBREQUEST_FAILED : SUBREQUEST_READY);
         ioResponse->setId(stgRequestHelper->subrequest->id());
 
         /* errorCode = exception.code() */

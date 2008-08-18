@@ -72,9 +72,11 @@ namespace castor{
         stgRequestHelper->checkFilePermission(fileCreated, stgCnsHelper);
       }
       
-      RequestHandler::~RequestHandler() throw(){
-        delete stgCnsHelper;
-        stgCnsHelper = 0;
+      RequestHandler::~RequestHandler() throw() {
+	if (stgCnsHelper) {
+	  delete stgCnsHelper;
+	}
+	stgCnsHelper = 0;
       }
       
     }//end namespace daemon
