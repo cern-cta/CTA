@@ -170,48 +170,50 @@ namespace castor {
          * @exception Exception in case of system error
          */
         virtual void createDiskCopyReplicaRequest
-        (castor::stager::SubRequest* subreq,
-         castor::stager::DiskCopyForRecall* srcDiskCopy,
-	 castor::stager::SvcClass* srcSc,
-         castor::stager::SvcClass* destSc)
+        (const castor::stager::SubRequest* subreq,
+         const castor::stager::DiskCopyForRecall* srcDiskCopy,
+	 const castor::stager::SvcClass* srcSc,
+         const castor::stager::SvcClass* destSc)
           throw (castor::exception::Exception);
 
-        /**
-         * Retrieves a CastorFile from the database based on its fileId.
-         * Caller is in charge of the deletion of the allocated object
-         * @param fileId the fileId of the CastorFile
-         * @param svcClass the service class of the castor file.
-         * Used only in case of creation of a new castor file.
-         * @param fileClass the file class of the castor file.
-         * Used only in case of creation of a new castor file.
-         * @param fileSize the size fo the castor file.
-         * Used only in case of creation of a new castor file.
-         * @param fileName the name of the castor file at the time
-         * if this call. This will go to the DB as lastKnownFileName.
-         * @return the CastorFile, or 0 if none found
-         * @exception Exception in case of error
-         */
+	/**
+	 * Retrieves a CastorFile from the database based on its fileId
+	 * and name server. Creates a new one if none if found.
+	 * Caller is in charge of the deletion of the allocated object
+	 * @param fileId the fileId of the CastorFile
+	 * @param nsHost the name server to use
+	 * @param svcClass the service class of the castor file.
+	 * Used only in case of creation of a new castor file.
+	 * @param fileClass the file class of the castor file.
+	 * Used only in case of creation of a new castor file.
+	 * @param fileSize the size fo the castor file.
+	 * Used only in case of creation of a new castor file.
+	 * @param fileName the name of the castor file at the time
+	 * of this call. This will go to the DB as lastKnownFileName.
+	 * @return the CastorFile, or 0 if none found
+	 * @exception Exception in case of error
+	 */
         virtual castor::stager::CastorFile* selectCastorFile
         (const u_signed64 fileId, const std::string nsHost,
          u_signed64 svcClass, u_signed64 fileClass,
          u_signed64 fileSize, std::string fileName)
           throw (castor::exception::Exception);
 
-        /**
-         * Retrieves a Physical file name of a castorFile in the diskserver
-	 * from the database based on its fileId.
-         * Caller is in charge of the deletion of the allocated object
-         * @param fileId the fileId of the CastorFile
-         * @param svcClass the service class of the castor file.
-         * @return the physicalFileName composed by the filesystem mounting point
-         * and the path of the diskcopy, if none found
-         * @exception Exception in case of error
-         */
-
-        virtual std::string selectPhysicalFileName 
-	 (struct Cns_fileid* CnsfileId, castor::stager::SvcClass* svcClass)
- 	   throw (castor::exception::Exception); 
-
+	/**
+	 * Retrieves the location of the best diskcopy to read from
+	 * given by the castorfile and service class where the file
+	 * is requested.
+	 * @param castorFile the file to lookup
+	 * @param svcClass the service class where the file is requested
+	 * @return The information about the diskcopy or 0 if none is
+	 * found. Note: not all attributes of the DiskCopyInfo class are
+	 * provided.
+	 * @exception Exception in case of error
+	 */
+	virtual castor::stager::DiskCopyInfo* getBestDiskCopyToRead
+	(const castor::stager::CastorFile *castorFile, 
+	 const castor::stager::SvcClass *svcClass)
+	  throw (castor::exception::Exception);
 
         /**
          * Updates a SubRequest status in the DB, including
@@ -495,11 +497,11 @@ namespace castor {
         /// SQL statement object for function selectCastorFile
         oracle::occi::Statement *m_selectCastorFileStatement;
 
-        /// SQL statement for function selectPhysicalFileName
-        static const std::string s_selectPhysicalFileNameStatementString;
+        /// SQL statement for function getBestDiskCopyToRead
+        static const std::string s_getBestDiskCopyToReadStatementString;
 
-        /// SQL statement object for function selectPhysicalFileName
-        oracle::occi::Statement *m_selectPhysicalFileNameStatement;
+        /// SQL statement object for function getBestDiskCopyToRead
+        oracle::occi::Statement *m_getBestDiskCopyToReadStatement;
 
         /// SQL statement for function updateAndCheckSubRequest
         static const std::string s_updateAndCheckSubRequestStatementString;

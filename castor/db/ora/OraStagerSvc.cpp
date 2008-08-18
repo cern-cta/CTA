@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.257 $ $Release$ $Date: 2008/06/25 16:00:24 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.258 $ $Release$ $Date: 2008/08/18 16:16:03 $ $Author: waldron $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -125,9 +125,9 @@ const std::string castor::db::ora::OraStagerSvc::s_createDiskCopyReplicaRequestS
 const std::string castor::db::ora::OraStagerSvc::s_selectCastorFileStatementString =
   "BEGIN selectCastorFile(:1, :2, :3, :4, :5, :6, :7, :8); END;";
 
-/// SQL statement for selectPhysicalFileName
-const std::string castor::db::ora::OraStagerSvc::s_selectPhysicalFileNameStatementString =
-  "BEGIN selectPhysicalFileName(:1, :2, :3, :4); END;";
+/// SQL statement for getBestDiskCopyToRead
+const std::string castor::db::ora::OraStagerSvc::s_getBestDiskCopyToReadStatementString =
+  "BEGIN getBestDiskCopyToRead(:1, :2, :3, :4); END;";
 
 /// SQL statement for updateAndCheckSubRequest
 const std::string castor::db::ora::OraStagerSvc::s_updateAndCheckSubRequestStatementString =
@@ -193,7 +193,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_processPutDoneRequestStatement(0),
   m_createDiskCopyReplicaRequestStatement(0),
   m_selectCastorFileStatement(0),
-  m_selectPhysicalFileNameStatement(0),
+  m_getBestDiskCopyToReadStatement(0),
   m_updateAndCheckSubRequestStatement(0),
   m_recreateCastorFileStatement(0),
   m_archiveSubReqStatement(0),
@@ -245,7 +245,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     if (m_processPutDoneRequestStatement) deleteStatement(m_processPutDoneRequestStatement);
     if (m_createDiskCopyReplicaRequestStatement) deleteStatement(m_createDiskCopyReplicaRequestStatement);
     if (m_selectCastorFileStatement) deleteStatement(m_selectCastorFileStatement);
-    if (m_selectPhysicalFileNameStatement) deleteStatement(m_selectPhysicalFileNameStatement);
+    if (m_getBestDiskCopyToReadStatement) deleteStatement(m_getBestDiskCopyToReadStatement);
     if (m_updateAndCheckSubRequestStatement) deleteStatement(m_updateAndCheckSubRequestStatement);
     if (m_recreateCastorFileStatement) deleteStatement(m_recreateCastorFileStatement);
     if (m_archiveSubReqStatement) deleteStatement(m_archiveSubReqStatement);
@@ -269,7 +269,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_processPutDoneRequestStatement = 0;
   m_createDiskCopyReplicaRequestStatement = 0;
   m_selectCastorFileStatement = 0;
-  m_selectPhysicalFileNameStatement = 0;
+  m_getBestDiskCopyToReadStatement = 0;
   m_updateAndCheckSubRequestStatement = 0;
   m_recreateCastorFileStatement = 0;
   m_archiveSubReqStatement = 0;
@@ -605,8 +605,10 @@ int castor::db::ora::OraStagerSvc::processPutDoneRequest
 // createDiskCopyReplicaRequest
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStagerSvc::createDiskCopyReplicaRequest
-(castor::stager::SubRequest* subreq, castor::stager::DiskCopyForRecall* srcDiskCopy,
- castor::stager::SvcClass* srcSc, castor::stager::SvcClass* destSc)
+(const castor::stager::SubRequest* subreq,
+ const castor::stager::DiskCopyForRecall* srcDiskCopy,
+ const castor::stager::SvcClass* srcSc,
+ const castor::stager::SvcClass* destSc)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statement is ok
@@ -615,11 +617,12 @@ void castor::db::ora::OraStagerSvc::createDiskCopyReplicaRequest
         createStatement(s_createDiskCopyReplicaRequestStatementString);
       m_createDiskCopyReplicaRequestStatement->setAutoCommit(true);
     }
-    // execute the statement
+    // Execute the statement
     m_createDiskCopyReplicaRequestStatement->setDouble(1, (subreq ? subreq->id() : 0));
     m_createDiskCopyReplicaRequestStatement->setDouble(2, srcDiskCopy->id());
     m_createDiskCopyReplicaRequestStatement->setDouble(3, srcSc->id());
     m_createDiskCopyReplicaRequestStatement->setDouble(4, destSc->id());
+
     unsigned int rc =
       m_createDiskCopyReplicaRequestStatement->executeUpdate();
     if (0 == rc) {
@@ -793,43 +796,58 @@ castor::db::ora::OraStagerSvc::selectCastorFile
 }
 
 //------------------------------------------------------------------------------
-// selectPhysicalfileName
+// getBestDiskCopyToRead
 //------------------------------------------------------------------------------
-std::string castor::db::ora::OraStagerSvc::selectPhysicalFileName (struct Cns_fileid *fileId, castor::stager::SvcClass *svcClass)
+castor::stager::DiskCopyInfo*
+castor::db::ora::OraStagerSvc::getBestDiskCopyToRead
+(const castor::stager::CastorFile *castorFile, 
+ const castor::stager::SvcClass *svcClass)
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
-  if (0 == m_selectPhysicalFileNameStatement) {
-    m_selectPhysicalFileNameStatement =
-      createStatement(s_selectPhysicalFileNameStatementString);
-    m_selectPhysicalFileNameStatement->registerOutParam
-      (3, oracle::occi::OCCISTRING,2048);
-    m_selectPhysicalFileNameStatement->registerOutParam
-      (4, oracle::occi::OCCISTRING, 2048);
-    m_selectPhysicalFileNameStatement->setAutoCommit(true);
-  }
-  // Execute statement and get result
+  castor::stager::DiskCopyInfo *result = 0;
   try {
-    m_selectPhysicalFileNameStatement->setDouble(1, fileId->fileid);
-    m_selectPhysicalFileNameStatement->setDouble(2, svcClass->id());
+    if (0 == m_getBestDiskCopyToReadStatement) {
+      m_getBestDiskCopyToReadStatement =
+	createStatement(s_getBestDiskCopyToReadStatementString);
+      m_getBestDiskCopyToReadStatement->registerOutParam
+	(3, oracle::occi::OCCISTRING, 2048);
+      m_getBestDiskCopyToReadStatement->registerOutParam
+	(4, oracle::occi::OCCISTRING, 2048);
+      m_getBestDiskCopyToReadStatement->setAutoCommit(true);
+    }
+    // Execute statement and get result    
+    m_getBestDiskCopyToReadStatement->setDouble(1, castorFile->id());
+    m_getBestDiskCopyToReadStatement->setDouble(2, svcClass->id());
    
-    int nb  = m_selectPhysicalFileNameStatement->executeUpdate();
+    int nb = m_getBestDiskCopyToReadStatement->executeUpdate();
     if (0 == nb) {
       // Nothing found, throw exception
       castor::exception::Internal e;
       e.getMessage()
-        << "selectPhysicalFileName returned no CastorFile";
+        << "getBestDiskCopyToRead returned no DiskCopyInfo";
       throw e;
     }
-    std::string dcPath = m_selectPhysicalFileNameStatement->getString(3);
-    std::string fsMountingP = m_selectPhysicalFileNameStatement->getString(4);
-    std::string result= fsMountingP + dcPath;
+
+    // Found the CastorFile, so create it in memory
+    result = new castor::stager::DiskCopyInfo();
+    result->setDiskServer(m_getBestDiskCopyToReadStatement->getString(3));
+    result->setDiskCopyPath(m_getBestDiskCopyToReadStatement->getString(4));
+    result->setFileId(castorFile->fileId());
+    result->setNsHost(castorFile->nsHost());
+    result->setSize(castorFile->fileSize());
     return result;
+
   } catch (oracle::occi::SQLException e) {
+    // Free resources
+    if (result) {
+      delete result;
+      result = 0;
+    };
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Unable to select Physical FileName by fileId :"
-      << std::endl << e.getMessage();
+      << "Error caught in getDiskCopyToRead."
+      << std::endl << e.what();
     throw ex;
   }
 }

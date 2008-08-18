@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.96 $ $Release$ $Date: 2008/05/30 14:03:05 $ $Author: waldron $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.97 $ $Release$ $Date: 2008/08/18 16:14:07 $ $Author: waldron $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -33,6 +33,7 @@
 #include "castor/stager/ICommonSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
+#include "castor/stager/DiskCopyInfo.hpp"
 #include "castor/stager/PriorityMap.hpp"
 #include <vector>
 #include <string>
@@ -165,11 +166,11 @@ namespace castor {
        * @exception Exception in case of system error
        */
       virtual void createDiskCopyReplicaRequest
-      (castor::stager::SubRequest* subreq,
-       castor::stager::DiskCopyForRecall* srcDiskCopy,
-       castor::stager::SvcClass* srcSc,
-       castor::stager::SvcClass* destSc)
-        throw (castor::exception::Exception) = 0;
+      (const castor::stager::SubRequest* subreq,
+       const castor::stager::DiskCopyForRecall* srcDiskCopy,
+       const castor::stager::SvcClass* srcSc,
+       const castor::stager::SvcClass* destSc)
+	throw (castor::exception::Exception) = 0;
 
       /**
        * Retrieves a CastorFile from the database based on its fileId
@@ -184,7 +185,7 @@ namespace castor {
        * @param fileSize the size fo the castor file.
        * Used only in case of creation of a new castor file.
        * @param fileName the name of the castor file at the time
-       * if this call. This will go to the DB as lastKnownFileName.
+       * of this call. This will go to the DB as lastKnownFileName.
        * @return the CastorFile, or 0 if none found
        * @exception Exception in case of error
        */
@@ -195,19 +196,21 @@ namespace castor {
         throw (castor::exception::Exception) = 0;
 
       /**
-       * Retrieves a Physical file name of a castorFile in the diskserver
-       * from the database based on its fileId REQUIRED ONLY FOR XROOTD.
-       * Caller is in charge of the deletion of the allocated object
-       * @param fileId the fileId of the CastorFile
-       * @param svcClass the service class of the castor file.
-       * @return the physicalFileName composed by the filesystem mounting point
-       * and the path of the diskcopy, if none found
+       * Retrieves the location of the best diskcopy to read from
+       * given by the castorfile and service class where the file
+       * is requested.
+       * @param castorFile the file to lookup
+       * @param svcClass the service class where the file is requested
+       * @return The information about the diskcopy or 0 if none is
+       * found. Note: not all attributes of the DiskCopyInfo class are
+       * provided.
        * @exception Exception in case of error
        */
-      virtual std::string selectPhysicalFileName
-      (struct Cns_fileid* CnsfileId, castor::stager::SvcClass* svcClass)
-        throw (castor::exception::Exception) = 0;
-
+      virtual castor::stager::DiskCopyInfo* getBestDiskCopyToRead
+      (const castor::stager::CastorFile *castorFile, 
+       const castor::stager::SvcClass *svcClass)
+	throw (castor::exception::Exception) = 0;
+      
       /**
        * Updates a SubRequest status in the DB, including
        * the answered flag that is set to 1 and tells
