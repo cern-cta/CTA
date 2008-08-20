@@ -5148,7 +5148,9 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
   filentry.filesize = filesize;
   filentry.mtime = time (0);
   filentry.ctime = filentry.mtime;
-
+  *filentry.csumtype = '\0';
+  *filentry.csumvalue = '\0';
+  
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &filentry))
     RETURN (serrno);
   RETURN (0);
@@ -5556,7 +5558,7 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
   char tmpbuf2[21];
   uid_t uid;
   char *user;
-
+  
   strcpy (func, "Cns_srv_setsegattrs");
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
@@ -5647,7 +5649,6 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
     Cns_logreq (func, logbuf);
 
     if (magic >= CNS_MAGIC4) {
-
       /* Checking that we can't have a NULL checksum name when a
          checksum is specified */
       if ((smd_entry.checksum_name == NULL
@@ -5655,6 +5656,23 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
           && smd_entry.checksum != 0) {
         sprintf (logbuf, "setsegattrs: invalid checksum name with non zero value");
         RETURN(EINVAL);
+      }
+    }
+    
+    if (magic >= CNS_MAGIC4 && nbseg==1) {
+      /* Checking for a checksum in the file metadata table if we have one segment for a file
+      We have different names for checksum type in Cns_seg_metadata table and Cns_file_metadata.
+      adler32==AD  crc32==CS */
+      if ((strcmp(smd_entry.checksum_name,"adler32")==0 && strcmp(filentry.csumtype,"AD")==0) ||
+          (strcmp(smd_entry.checksum_name,"crc32")==0 && strcmp(filentry.csumtype,"CS")==0)) {
+             /* we have adler32 or crc32 checksum type   */
+             sprintf(logbuf, "%lx",smd_entry.checksum);  /* convert number to a string */
+             if (strncmp(logbuf,filentry.csumvalue,32)) {
+                /* checksum mismatch! error! */
+                sprintf (logbuf, "setsegattrs: checksum mismatch for the castor file and the segment 0x%s != 0x%lx",filentry.csumvalue,smd_entry.checksum);
+                Cns_logreq (func, logbuf);
+                RETURN(EINVAL);
+             }
       }
     }
 
