@@ -8,9 +8,9 @@
 /*              DE-AC02-76-SFO0515 with the Department of Energy              */
 /******************************************************************************/
 
-//         $Id: XrdCS2Xmi.cc,v 1.4 2008/04/03 15:11:23 apeters Exp $
+//         $Id: XrdCS2Xmi.cc,v 1.5 2008/08/20 12:14:01 apeters Exp $
 
-const char *XrdCS2Xmi2csCVSID = "$Id: XrdCS2Xmi.cc,v 1.4 2008/04/03 15:11:23 apeters Exp $";
+const char *XrdCS2Xmi2csCVSID = "$Id: XrdCS2Xmi.cc,v 1.5 2008/08/20 12:14:01 apeters Exp $";
 
 #include <stdlib.h>
 #include <string.h>
@@ -968,13 +968,20 @@ void XrdCS2Xmi::doGet(XrdOlbReq *Request, const char *path, bool noresponse )
 	       if (!noresponse)Request->Reply_Wait(retryTime);
 	       return;
 	     } else {
+	       
 	       DEBUG("Procedd to get path=" <<resp[i].filename );
 	     }
 	   } else { 
-	     DEBUG("Error for " << path );
-	     if (!noresponse)sendError(Request, resp[i].castorfilename,
-		       resp[i].errorCode, resp[i].errorMessage);
-	     return;
+	     if (!strcmp(stage_fileStatusName(resp[i].status),"NA")) {
+               int ec;
+               if ((ec = Prep("*",path, 0))!=1) {
+                 if (!noresponse)sendError(Request,path, ec, "failed to prepare");
+                 return;
+               } else {
+                 if (!noresponse)Request->Reply_Wait(retryTime);
+               }
+               return;
+             }
 	   }
 	 } else {
 	   DEBUG("Issue Prep for " <<path );
