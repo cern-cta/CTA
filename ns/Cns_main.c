@@ -866,7 +866,7 @@ doit(arg)
     }
     Csec_server_getClientId (&thip->sec_ctx, &thip->Csec_mech, &thip->Csec_auth_id);
     if (Csec_mapToLocalUser (thip->Csec_mech, thip->Csec_auth_id,
-                             NULL, 0, &thip->Csec_uid, &thip->Csec_gid) < 0) {
+                             username,CA_MAXUSRNAMELEN, &thip->Csec_uid, &thip->Csec_gid) < 0) {
       nslogit (func, "Could not map to local user: %s !\n",sstrerror (serrno));
       sendrep (thip->s, CNS_RC, serrno);
       thip->s = -1;
