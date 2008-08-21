@@ -129,26 +129,34 @@ void castor::job::stagerjob::RfioPlugin::getEnvironment
     env.keytab_location = keytab_location;
   }
 
-  // get the CSEC mechanism, trace and tracefile
-  const char *csec_trace = getconfent("CSEC","TRACE",0);
-  if (csec_trace == NULL) {
-    env.csec_trace = "3";
-  } else {
-    env.csec_trace = csec_trace;
-  }
+  char* debug = getconfent("CSEC", "DEBUG", 0);
+  if (debug != NULL) {
+    if (!strcasecmp(debug, "yes") ||
+        !strcasecmp(debug, "1")   ||
+        !strcasecmp(debug, "y")) {
+        
+      // get the CSEC mechanism, trace and tracefile
+      const char *csec_trace = getconfent("CSEC","TRACE",0);
+      if (csec_trace == NULL) {
+        env.csec_trace = "3";
+      } else {
+        env.csec_trace = csec_trace;
+      }
 
-  const char *csec_tracefile = getconfent("CSEC","TRACEFILE",0);
-  if (csec_tracefile == NULL) {
-    env.csec_tracefile = "/var/spool/rfio/rfiod.sec.log";
-  } else {
-    env.csec_tracefile = csec_tracefile;
+      const char *csec_tracefile = getconfent("CSEC","TRACEFILE",0);
+      if (csec_tracefile == NULL) {
+        env.csec_tracefile = "/var/spool/rfio/rfiod.sec.log";
+      } else {
+        env.csec_tracefile = csec_tracefile;
+      }
+    }
   }
 
   const char *csec_mech = getconfent("CSEC","MECH",0);
   if (csec_mech == NULL) {
     env.csec_mech = "GSI KRB5";
   } else {
-    env.csec_mech = csec_tracefile;
+    env.csec_mech = csec_mech;
   }
 }
    
