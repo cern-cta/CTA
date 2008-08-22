@@ -48,7 +48,8 @@ void castor::dlf::dlf_init
   char dlfErrBuf[CA_MAXLINELEN+1];  
   if (::dlf_init(facilityName, dlfErrBuf, 0) != 0) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Unable to initialize DLF";
+    dlfErrBuf[sizeof(dlfErrBuf)-1]='\0'; // Ensure dlfErrBuf is null terminated
+    ex.getMessage() << "Unable to initialize DLF: " << dlfErrBuf;
     throw ex;
   }
   // Register the facility's messages with the interface. We do this even
