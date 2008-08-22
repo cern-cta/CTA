@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.21 $ $Date: 2008/03/28 09:56:52 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.22 $ $Date: 2008/08/22 10:20:00 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -17,9 +17,34 @@
 #include "Ctape_api.h"
 #include "serrno.h"
 #include "tplogger_api.h"
+#include <stdlib.h>
 
 static char badLabelReason[128];
 static char badLabelContent[LBLBUFSZ];
+
+char *getconfent();
+
+int getMaxPosTime() {
+
+        int position_timeout = 900;
+        char *p = NULL;
+        p = getconfent ("TAPE", "POSITION_TIMEOUT", 0);
+        if (NULL != p) {
+                position_timeout = (int)atoi(p);
+                if (position_timeout < 900) {
+                        /*
+                          atoi()'s behaviour is undefined if
+                          the value is not convertible. Reset
+                          the value to the default in case it
+                          is too small.                  
+                        */
+                        position_timeout = 900;
+                }
+        }
+
+        return position_timeout;
+}
+
 
 int gethdr2uhl1(tapefd, path, lblcode, hdr1, hdr2, uhl1, tmr)
 int tapefd;
@@ -125,8 +150,12 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 	int tmr;		/* tape mark read */
 	char tpfid[CA_MAXFIDLEN+1];
 
+        time_t posStart, posEnd;
+
 	ENTRY (posittape);
 	c = 0;
+
+        posStart = time(NULL);
 
 	sprintf (sfseq, "%d", fseq);
 	pfseq = *cfseq;		/* save current file sequence number */
@@ -703,6 +732,30 @@ reply:
 	default:
 		break;
 	}
+
+        /* 
+           If the positioning seems OK, but took too long: abort. This
+           is to protect from damage by wrong positionings which 
+           only _seem_ to be OK.
+        */
+        {
+                time_t d;
+                int maxPosTime = getMaxPosTime();
+                posEnd = time(NULL);
+                if ((posStart > 0) && (posEnd > 0) && (posEnd >= posStart)) {
+                        d = posEnd - posStart;
+                        tplogit (func, "positioning took %d secs (limit is %d secs)\n", d, maxPosTime);  
+                        if (0 == c) {         
+                                if (d > maxPosTime) {
+                                        tplogit (func, "positioning took too long. ABORTING!\n");  
+                                        c = ETHWERR;
+                                }
+                        }
+                } else {
+                        tplogit (func, "strange time values for positioning: start=%d, end=%d\n", 
+                                 posStart, posEnd);  
+                }
+        }
+        
 	RETURN (c);
 }
-
