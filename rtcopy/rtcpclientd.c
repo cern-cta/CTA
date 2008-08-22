@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.44 $ $Release$ $Date: 2008/07/28 16:51:41 $ $Author: waldron $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.45 $ $Release$ $Date: 2008/08/22 15:34:44 $ $Author: murrayc3 $
  *
  *
  *
@@ -1609,7 +1609,7 @@ static void usage(
                   )
      char *cmd;
 {
-  printf("Usage: %s [-d] [-f facilityName] [-p port] [-u uid] [-g gid]\n",cmd);
+  printf("Usage: %s [-c configurationFile] [-d] [-f facilityName] [-p port] [-u uid] [-g gid] [-h]\n",cmd);
   return;
 }
 
@@ -1639,8 +1639,22 @@ int main(
   Coptind = 1;
   Copterr = 1;
 
-  while ( (c = Cgetopt(argc, argv, "df:p:u:g:")) != -1 ) {
+  while ( (c = Cgetopt(argc, argv, "c:df:p:u:g:h")) != -1 ) {
     switch (c) {
+    case 'c':
+      {
+        FILE *fp = fopen(Coptarg, "r");
+        if(fp) {
+          // The file exists
+          fclose(fp);
+        } else {
+          // The file does not exist
+          fprintf(stderr, "Configuration file '%s' does not exist\n", Coptarg);
+          return(1);
+        }
+      }
+      setenv("PATH_CONFIG", Coptarg, 1);
+      break;
     case 'd':
       Debug = TRUE;
       break;
@@ -1661,6 +1675,9 @@ int main(
     case 'u':
       myUser = Coptarg;
       break;
+    case 'h':
+      usage(argv[0]);
+      return(0);
     default:
       usage(argv[0]);
       break;

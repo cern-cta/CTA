@@ -1,13 +1,16 @@
-.\" @(#)$RCSfile: rtcpclientd.man,v $ $Revision: 1.2 $ $Date: 2006/06/13 14:32:14 $ CERN CERN IT-PDP/DM Olof Barring
+.\" @(#)$RCSfile: rtcpclientd.man,v $ $Revision: 1.3 $ $Date: 2008/08/22 15:34:44 $ CERN CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 2000-2005 by CERN IT-ADC
 .\" All rights reserved
 .\"
 .nh
-.TH RTCPD 1 "$Date: 2006/06/13 14:32:14 $" CASTOR "RTCOPY client daemon"
+.TH RTCPD 1 "$Date: 2008/08/22 15:34:44 $" CASTOR "RTCOPY client daemon"
 .SH NAME
 rtcpclientd \- CASTOR remote tape copy client daemon
 .SH SYNOPSIS
 .B rtcpclientd
+[
+.BI \-c " configuration-file"
+] [
 [
 .BI \-d
 ] [
@@ -18,6 +21,8 @@ rtcpclientd \- CASTOR remote tape copy client daemon
 .BI \-p " port-number"
 ] [
 .BI \-u " user-name"
+] [
+.BI \-h
 ]
 .SH DESCRIPTION
 \fBrtcpclientd\fP is part of the CASTOR stager framework where it is the common
@@ -29,6 +34,10 @@ and \fBrecaller\fP for all running tape recall requests. This means that there a
 most can be as many such child processes as there are available tape drives.
 .SH OPTIONS
 The \fBrtcpclientd\fP takes the following options (all optional)
+.TP
+.BI \-c " configuration-file"
+Set the location of the configuration  file.   The  default  is
+\fB/etc/castor/castor.conf\fP
 .TP
 .BI \-d
 switch to run the daemon in foreground debug mode
@@ -59,6 +68,9 @@ always run under a user/group different from root. The reason for this is
 that the tape mover by default does not accept tape requests from root. The
 default user login name is
 .B stage
+.TP
+.BI \-h
+Get usage information.
 
 .SH ENVIRONMENT
 The following configuration variables in "/etc/castor/castor.conf" are relevant for
