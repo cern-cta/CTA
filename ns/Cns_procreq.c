@@ -5170,7 +5170,7 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
   u_signed64 filesize;
   char func[17];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+52];
+  char logbuf[CA_MAXPATHLEN+90];
   char path[CA_MAXPATHLEN+1];
   char *rbp;
   Cns_dbrec_addr rec_addr;
@@ -5837,6 +5837,79 @@ int Cns_srv_stat(magic, req_data, clienthost, thip)
   marshall_TIME_T (sbp, fmd_entry.ctime);
   marshall_WORD (sbp, fmd_entry.fileclass);
   marshall_BYTE (sbp, fmd_entry.status);
+  sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
+  RETURNQ (0);
+}
+
+/* Cns_srv_statcs - get information about a file or a directory */
+
+int Cns_srv_statcs(magic, req_data, clienthost, thip)
+     int magic;
+     char *req_data;
+     const char *clienthost;
+     struct Cns_srv_thread_info *thip;
+{
+  u_signed64 cwd;
+  u_signed64 fileid;
+  struct Cns_file_metadata fmd_entry;
+  char func[16];
+  gid_t gid;
+  char logbuf[CA_MAXPATHLEN+29];
+  char path[CA_MAXPATHLEN+1];
+  char *rbp;
+  char repbuf[93];
+  char *sbp;
+  char tmpbuf[21];
+  uid_t uid;
+  char *user;
+
+  strcpy (func, "Cns_srv_statcs");
+  rbp = req_data;
+  unmarshall_LONG (rbp, uid);
+  unmarshall_LONG (rbp, gid);
+  get_client_actual_id (thip, &uid, &gid, &user);
+  nslogit (func, NS092, "statcs", user, uid, gid, clienthost);
+  unmarshall_HYPER (rbp, cwd);
+  unmarshall_HYPER (rbp, fileid);
+  if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
+    RETURNQ (SENAMETOOLONG);
+  sprintf (logbuf, "statcs %s %s", u64tostr(fileid, tmpbuf, 0), path);
+  Cns_logreq (func, logbuf);
+
+  if (fileid) {
+    /* get basename entry */
+
+    if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid,
+                               &fmd_entry, 0, NULL))
+      RETURNQ (serrno);
+
+    /* check parent directory components for search permission */
+
+    if (Cns_chkbackperm (&thip->dbfd, fmd_entry.parent_fileid,
+                         S_IEXEC, uid, gid, clienthost))
+      RETURNQ (serrno);
+  } else {
+    /* check parent directory components for search permission and
+       get basename entry */
+
+    if (Cns_parsepath (&thip->dbfd, cwd, path, uid, gid, clienthost,
+                       NULL, NULL, &fmd_entry, NULL, CNS_MUST_EXIST))
+      RETURNQ (serrno);
+  }
+  sbp = repbuf;
+  marshall_HYPER (sbp, fmd_entry.fileid);
+  marshall_WORD (sbp, fmd_entry.filemode);
+  marshall_LONG (sbp, fmd_entry.nlink);
+  marshall_LONG (sbp, fmd_entry.uid);
+  marshall_LONG (sbp, fmd_entry.gid);
+  marshall_HYPER (sbp, fmd_entry.filesize);
+  marshall_TIME_T (sbp, fmd_entry.atime);
+  marshall_TIME_T (sbp, fmd_entry.mtime);
+  marshall_TIME_T (sbp, fmd_entry.ctime);
+  marshall_WORD (sbp, fmd_entry.fileclass);
+  marshall_BYTE (sbp, fmd_entry.status);
+  marshall_STRING (sbp, fmd_entry.csumtype);
+  marshall_STRING (sbp, fmd_entry.csumvalue);  
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
   RETURNQ (0);
 }

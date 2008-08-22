@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_api.h,v 1.14 2008/08/12 14:28:41 kotlyar Exp $
+ * $Id: Cns_api.h,v 1.15 2008/08/22 12:53:43 kotlyar Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.14 $ $Date: 2008/08/12 14:28:41 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.15 $ $Date: 2008/08/22 12:53:43 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_API_H
@@ -229,6 +229,7 @@ struct Cns_filestatg {
 	char		csumtype[3];
 	char		csumvalue[33];
 };
+#define Cns_filestatcs Cns_filestatg
 
 struct Cns_linkinfo {
 	char		path[CA_MAXPATHLEN+1];
@@ -340,6 +341,7 @@ EXTERN_C int DLL_DECL Cns_stat _PROTO((const char *, struct Cns_filestat *));
 EXTERN_C int DLL_DECL Cns_statg _PROTO((const char *, const char *, struct Cns_filestatg *));
 EXTERN_C int DLL_DECL Cns_statr _PROTO((const char *, struct Cns_filestatg *));
 EXTERN_C int DLL_DECL Cns_statx _PROTO((const char *, struct Cns_fileid *, struct Cns_filestat *));
+EXTERN_C int DLL_DECL Cns_statcs _PROTO((const char *, struct Cns_fileid *, struct Cns_filestatcs *));
 EXTERN_C int DLL_DECL Cns_symlink _PROTO((const char *, const char *));
 EXTERN_C int DLL_DECL Cns_tapesum _PROTO((const char *, u_signed64 *, u_signed64 *, int));
 EXTERN_C mode_t DLL_DECL Cns_umask _PROTO((mode_t));

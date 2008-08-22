@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_server.h,v 1.18 2008/08/12 14:28:41 kotlyar Exp $
+ * $Id: Cns_server.h,v 1.19 2008/08/22 12:56:34 kotlyar Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 /*
- * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.18 $ $Date: 2008/08/12 14:28:41 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.19 $ $Date: 2008/08/22 12:56:34 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
  
 #ifndef _CNS_SERVER_H
@@ -295,6 +295,7 @@ EXTERN_C int Cns_srv_setfsizecs _PROTO((int, char *, const char *, struct Cns_sr
 EXTERN_C int Cns_srv_setsegattrs _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_shutdown _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_stat _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
+EXTERN_C int Cns_srv_statcs _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_symlink _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_tapesum _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_undelete _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));

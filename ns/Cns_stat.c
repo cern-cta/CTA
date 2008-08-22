@@ -210,6 +210,106 @@ Cns_stat(const char *path, struct Cns_filestat *statbuf)
   return (Cns_statx (path, &file_uniqueid, statbuf));
 }
 
+/*
+* This is the same function as Cns_statx, but has Cns_filestatg structure as parameter.
+* Cns_filestatg has additional fields: guid, csumtype, csumvalue 
+*/
+int DLL_DECL
+Cns_statcs(const char *path, struct Cns_fileid *file_uniqueid, struct Cns_filestatg *statbuf)
+{
+  char *actual_path;
+  int c;
+  char func[16];
+  gid_t gid;
+  int msglen;
+  char *q;
+  char *rbp;
+  char repbuf[93];
+  char *sbp;
+  char sendbuf[REQBUFSZ];
+  char server[CA_MAXHOSTNAMELEN+1];
+  struct Cns_api_thread_info *thip;
+  uid_t uid;
+  u_signed64 zero = 0;
+
+  strcpy (func, "Cns_statcs");
+  if (Cns_apiinit (&thip))
+    return (-1);
+  Cns_getid(&uid, &gid);
+
+#if defined(_WIN32)
+  if (uid < 0 || gid < 0) {
+    Cns_errmsg (func, NS053);
+    serrno = SENOMAPFND;
+    return (-1);
+  }
+#endif
+
+  if (! path || ! statbuf || ! file_uniqueid) {
+    serrno = EFAULT;
+    return (-1);
+  }
+
+  if (strlen (path) > CA_MAXPATHLEN) {
+    serrno = ENAMETOOLONG;
+    return (-1);
+  }
+
+  if (file_uniqueid && *file_uniqueid->server)
+    strcpy (server, file_uniqueid->server);
+  else
+    if (Cns_selectsrvr (path, thip->server, server, &actual_path))
+      return (-1);
+
+  /* Build request header */
+
+  sbp = sendbuf;
+  marshall_LONG (sbp, CNS_MAGIC);
+  marshall_LONG (sbp, CNS_STATCS);
+  q = sbp;        /* save pointer. The next field will be updated */
+  msglen = 3 * LONGSIZE;
+  marshall_LONG (sbp, msglen);
+
+  /* Build request body */
+
+  marshall_LONG (sbp, uid);
+  marshall_LONG (sbp, gid);
+  marshall_HYPER (sbp, thip->cwd);
+  if (*file_uniqueid->server) {
+    marshall_HYPER (sbp, file_uniqueid->fileid);
+    marshall_STRING (sbp, "");
+  } else {
+    marshall_HYPER (sbp, zero);
+    marshall_STRING (sbp, actual_path);
+  }
+
+  msglen = sbp - sendbuf;
+  marshall_LONG (q, msglen); /* update length field */
+
+  c = send2nsd (NULL, server, sendbuf, msglen, repbuf, sizeof(repbuf));
+  if (c == 0) {
+    rbp = repbuf;
+    unmarshall_HYPER (rbp, statbuf->fileid);
+    unmarshall_WORD (rbp, statbuf->filemode);
+    unmarshall_LONG (rbp, statbuf->nlink);
+    unmarshall_LONG (rbp, statbuf->uid);
+    unmarshall_LONG (rbp, statbuf->gid);
+    unmarshall_HYPER (rbp, statbuf->filesize);
+    unmarshall_TIME_T (rbp, statbuf->atime);
+    unmarshall_TIME_T (rbp, statbuf->mtime);
+    unmarshall_TIME_T (rbp, statbuf->ctime);
+    unmarshall_WORD (rbp, statbuf->fileclass);
+    unmarshall_BYTE (rbp, statbuf->status);
+    unmarshall_STRING (rbp, statbuf->csumtype);
+    unmarshall_STRING (rbp, statbuf->csumvalue);
+    
+    strcpy (file_uniqueid->server, server);
+    file_uniqueid->fileid = statbuf->fileid;
+  }
+  if (c && serrno == SENAMETOOLONG) serrno = ENAMETOOLONG;
+  return (c);
+}
+
 int DLL_DECL
 Cns_statg(const char *path, const char *guid, struct Cns_filestatg *statbuf)
 {

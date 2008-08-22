@@ -696,6 +696,9 @@ int procreq(magic, req_type, req_data, clienthost, thip)
   case CNS_STAT:
     c = Cns_srv_stat (magic, req_data, clienthost, thip);
     break;
+  case CNS_STATCS:
+    c = Cns_srv_statcs (magic, req_data, clienthost, thip);
+    break;
   case CNS_SYMLINK:
     c = Cns_srv_symlink (magic, req_data, clienthost, thip);
     break;
@@ -1025,7 +1028,7 @@ int proctransreq(magic, req_data, clienthost, thip)
         req_type != CNS_GETCOMMENT && req_type != CNS_GETLINKS &&
         req_type != CNS_GETPATH && req_type != CNS_GETREPLICA &&
         req_type != CNS_LSTAT && req_type != CNS_READLINK &&
-        req_type != CNS_STAT && req_type != CNS_STATG &&
+        req_type != CNS_STAT && req_type != CNS_STATCS && req_type != CNS_STATG &&
         req_type != CNS_STATR && req_type != CNS_GETGRPID &&
         req_type != CNS_GETGRPNAM && req_type != CNS_GETUSRID &&
         req_type != CNS_GETUSRNAM && req_type != CNS_LASTFSEQ &&
