@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RfioMover.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/02/01 12:47:58 $ $Author: waldron $
+ * @(#)$RCSfile: RfioMover.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/08/22 13:04:37 $ $Author: kotlyar $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -26,11 +26,13 @@
 #include "castor/job/RfioMover.hpp"
 #include "getconfent.h"
 #include "rfio_api.h"
+#include "Cns_api.h"
 
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <attr/xattr.h>
 
 // Defaults
 #define RFIO_DEFAULT_BUFFER_SIZE (128 * 1024)
@@ -44,7 +46,9 @@ castor::job::RfioMover::RfioMover() :
   m_inputFile(""),
   m_outputFD(0),
   m_inputFD(0),
-  m_totalBytes(0) {
+  m_totalBytes(0),
+  m_csumType(""),
+  m_csumValue("") {
   
 }
 
@@ -89,7 +93,7 @@ void castor::job::RfioMover::destination
   m_outputFile = diskCopy->mountPoint() + diskCopy->diskCopyPath();
   m_inputFile  = sourceDiskCopy->diskServer() + ":" 
     + sourceDiskCopy->mountPoint() + sourceDiskCopy->diskCopyPath();
-
+    
   // Activate V3 RFIO protocol (Streaming mode)
   int v = RFIO_STREAM;
   rfiosetopt(RFIO_READOPT, &v, 4);
@@ -134,6 +138,30 @@ void castor::job::RfioMover::destination
     throw e;
   }
 
+  // ok we were able to open source and destination files, then do a call to CNS for checksums
+  char *conf_ent;  
+  if((conf_ent=getconfent("CNS","USE_CKSUM",0)) != NULL)  // checking should we use checksums or not
+     if((strncmp(conf_ent,"YES",3)==0) || (strncmp(conf_ent,"yes",3)==0))
+          if((conf_ent=getconfent("RFIOD","USE_CKSUM",0)) != NULL) 
+            if((strncmp(conf_ent,"YES",3)==0) || (strncmp(conf_ent,"yes",3)==0)) {
+               // we have CNS and RFIOD USE_CKSUM YES, then we can ask nameserver for checksums and fill it on a filesystem
+               // Fill checksum variables
+               struct Cns_filestatcs statbuf;         // we have checksums in this structure
+               struct Cns_fileid castorFileId;
+               char *castorFileName = "\0";  
+               memset(&castorFileId,'\0',sizeof(castorFileId));
+               strncpy(castorFileId.server,sourceDiskCopy->nsHost().c_str(),sizeof(castorFileId.server)-1);
+               castorFileId.fileid=sourceDiskCopy->fileId();
+               if(Cns_statcs(castorFileName,&castorFileId,&statbuf)==0) {
+                       m_csumType = statbuf.csumtype;
+                       m_csumValue = statbuf.csumvalue;
+                       if (m_csumType == "AD" ) m_csumType = "ADLER32";  // convert types for extended attrubutes
+                       else if (m_csumType == "CS" ) m_csumType = "CRC32";
+                            else if (m_csumType == "MD" ) m_csumType = "MD5";
+                               else m_csumType = ""; // unknown type
+               } // in error case we will do nothing
+            }
+  
   // Copy the file
   try {
     copyFile();
@@ -160,6 +188,12 @@ void castor::job::RfioMover::cleanupFile(bool silent, bool unlink)
   }
   m_inputFD = -1;
 
+  // Before closing the destination file descriptor we will try to set extended file attrubutes
+  if(m_csumValue != ""  && m_csumType != "") { /* sets the file extended attribute */
+    if(fsetxattr(m_outputFD,"user.castor.checksum.value",m_csumValue.c_str(), strlen(m_csumValue.c_str()),0)) ;
+    else fsetxattr(m_outputFD,"user.castor.checksum.type",m_csumType.c_str(), strlen(m_csumType.c_str()),0); // do nothing in case of error
+  }
+  
   // Close the destination file descriptor. If the close fails unlink the file
   // but only after checking its S_IFREG.
   struct stat64 statbuf;

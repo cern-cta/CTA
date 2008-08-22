@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RfioMover.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/26 14:54:54 $ $Author: waldron $
+ * @(#)$RCSfile: RfioMover.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/08/22 13:04:37 $ $Author: kotlyar $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -129,6 +129,12 @@ namespace castor {
       /// The total number of bytes to be transferred. I.e the size of the
       /// source/destination file
       u_signed64 m_totalBytes;
+      
+      /// The checksum type of the input file
+      std::string m_csumType;
+      
+      /// The checksum value of the input file
+      std::string m_csumValue;
 
     };
 
