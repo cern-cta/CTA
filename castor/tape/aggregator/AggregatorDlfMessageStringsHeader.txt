@@ -23,6 +23,6 @@
  *****************************************************************************/
 
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
-#include "castor/tape/aggregator/AggregatorServer.hpp"
+#include "castor/tape/aggregator/AggregatorDaemon.hpp"
 
-castor::dlf::Message castor::tape::aggregator::AggregatorServer::s_dlfMessages[] = {
+castor::dlf::Message castor::tape::aggregator::AggregatorDaemon::s_dlfMessages[] = {

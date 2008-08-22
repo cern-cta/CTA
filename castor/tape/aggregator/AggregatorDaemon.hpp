@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/aggregator/AggregatorServer.hpp
+ *                 castor/tape/aggregator/AggregatorDaemon.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,10 +22,13 @@
  * @author Steven Murray Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_AGGREGATORSERVER_HPP
-#define CASTOR_TAPE_AGGREAGTOR_AGGREGATORSERVER_HPP 1
+#ifndef CASTOR_TAPE_AGGREGATOR_AGGREGATORDAEMON_HPP
+#define CASTOR_TAPE_AGGREAGTOR_AGGREGATORDAEMON_HPP 1
 
 #include "castor/server/BaseDaemon.hpp"
+#include "castor/exception/Exception.hpp"
+
+#include <iostream>
 
 
 namespace castor {
@@ -33,36 +36,40 @@ namespace tape {
 namespace aggregator {
   	
 /**
- * The aggregator server.
+ * The aggregator daemon.
  */
-class AggregatorServer : public castor::server::BaseDaemon {
+class AggregatorDaemon : public castor::server::BaseDaemon {
 
 public:
 
   /**
    * Constructor.
    *
-   * Calls the constructor of BaseDaemon with the name of this server and
-   * initialises DLF.
+   * @param daemonName The name of the daemon.
    */
-  AggregatorServer(const char *const serverName) throw();
+  AggregatorDaemon(const char *const daemonName)
+    throw(castor::exception::Exception);
 
   /**
-   * Parses the command line and sets the server options accordingly.
+   * Parses the command-line arguments and sets the daemon options accordingly.
    *
-   * In case of an error this method writes the appriopriate error messages
-   * to both standard error and DLF and then calls exit with a value of 1.
+   * @param argc Number of command-line arguments.
+   * @param argv Command-line argument values.
+   * @param helpOption This method sets this parameter to true if the help
+   * option was found on the command-line, else this method sets it to false.
+   *
    */
-  void parseCommandLine(int argc, char *argv[]) throw();
+  void parseCommandLine(int argc, char *argv[], bool &helpRequested)
+    throw(castor::exception::Exception);
 
   /**
-   * Initialises the database service.
+   * Writes the command-line usage message of the daemon onto the specified
+   * output stream.
    *
-   * In case of an error this method writes the appriopriate error messages
-   * to both standard error and DLF and then calls exit with a value of 1.
+   * @param os Output stream to be written to.
+   * @param programName The program name of the aggregator daemon.
    */
-  void initDatabaseService();
-
+  static void usage(std::ostream &os, const char *const programName) throw();
 
 private:
 
@@ -71,16 +78,11 @@ private:
    */
   static castor::dlf::Message s_dlfMessages[];
 
-  /**
-   * Prints out the command-line usage message for the server.
-   */
-  void usage(const char *const programName) throw();
-
-}; // class AggregatorServer
+}; // class AggregatorDaemon
 
 } // namespace aggregator
 } // namespace tape
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_AGGREGATOR_AGGREGATORSERVER_HPP
+#endif // CASTOR_TAPE_AGGREGATOR_AGGREGATORDAEMON_HPP

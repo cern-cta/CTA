@@ -39,7 +39,7 @@ LIBS = -lshift -lcastorCnvs -Wl,-rpath-link,FileName(FileName(FileName(..,..),..
 
 AGGREGATORBIN_SRCS = \
   AggregatorDlfMessageStrings.cpp \
-  AggregatorServer.cpp
+  AggregatorDaemon.cpp
 
 MANPAGES_AGGREGATOR = FileName($(MANDIR),aggregatord.$(MANSUFFIX))
 EMANPAGES_AGGREGATOR = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),aggregatord.$(MANSUFFIX)))

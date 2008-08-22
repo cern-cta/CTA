@@ -1,3 +1,4 @@
 AGGREGATOR_NULL,0," - "
-AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE,1,"Failed to parse the command line"
-AGGREGATOR_FAILED_TO_INIT_DB_SERVICE,2,"Failed to initialise database service"
+AGGREGATOR_STARTED,1,"aggregatord started"
+AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE,2,"Failed to parse the command line"
+AGGREGATOR_FAILED_TO_INIT_DB_SERVICE,3,"Failed to initialise database service"
