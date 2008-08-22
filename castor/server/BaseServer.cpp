@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2008/06/02 17:08:53 $ $Author: waldron $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2008/08/22 19:35:49 $ $Author: murrayc3 $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -134,6 +134,7 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
 // dlfInit
 //------------------------------------------------------------------------------
 void castor::server::BaseServer::dlfInit(castor::dlf::Message messages[])
+  throw (castor::exception::Exception)
 {
   castor::BaseObject::initLog(m_serverName, castor::SVC_DLFMSG);
   castor::dlf::dlf_init((char*)m_serverName.c_str(), messages);

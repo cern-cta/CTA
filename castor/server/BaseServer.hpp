@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/06/02 12:10:47 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/08/22 19:35:49 $ $Author: murrayc3 $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -83,7 +83,8 @@ namespace castor {
      * Does not create the DLF thread, this is created after daemonization
      * @param messages the messages to be passed to dlf_init
      */
-    void dlfInit(castor::dlf::Message messages[]);
+    void dlfInit(castor::dlf::Message messages[])
+      throw (castor::exception::Exception);
 
     /**
      * Adds a thread pool to this server
