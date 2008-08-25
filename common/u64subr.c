@@ -294,7 +294,7 @@ char DLL_DECL *u64tostru(u64, buf, fldsize)
 		unit = 'M';
 	} else if (u64 > ONE_KB) {
 		fnum = (double) t64 / (double) ONE_KB;
-		unit = 'k';
+		unit = 'K';
 	} else {
 		inum = (int) u64;
 		unit = ' ';
