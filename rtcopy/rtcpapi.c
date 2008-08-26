@@ -505,8 +505,8 @@ int rtcpc_GiveInfo(tape_list_t *tl,
                     (time_t)filereq->TStartTransferTape);
       */
       /* S. Murray 05/08/08 Only interested in tape transfer time */
-      TransferTime += (time_t)fltmp->filereq.TEndTransferTape -
-        (time_t)fltmp->filereq.TStartTransferTape;
+      TransferTime += (time_t)filereq->TEndTransferTape -
+        (time_t)filereq->TStartTransferTape;
     }
 
     rtcp_log(LOG_INFO,RT201,cmd,(u_signed64)nbbytes);

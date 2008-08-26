@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.45 $ $Release$ $Date: 2008/08/22 15:34:44 $ $Author: murrayc3 $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.46 $ $Release$ $Date: 2008/08/26 16:53:11 $ $Author: murrayc3 $
  *
  *
  *
@@ -916,7 +916,8 @@ static int startWorker(
     }
     sprintf(cmd,"%s/%s",BIN,RTCPCLD_MIGRATOR_CMD);
   } else {
-    sprintf(cmd,"%s/%s",BIN,RTCPCLD_RECALLER_CMD);
+//    sprintf(cmd,"%s/%s",BIN,RTCPCLD_RECALLER_CMD);
+    sprintf(cmd,"/usr/local/src/CASTOR2/rtcopy/recaller");
   }
 
   key = tape->dbRef->key;
