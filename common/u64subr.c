@@ -218,7 +218,7 @@ u_signed64 DLL_DECL strutou64(str)
 		u64 = u64 * 10 + (*p++ - '0');
 	}
 	if (*p && ! *(p + 1)) {
-		if (*p == 'k') u64 *= ONE_KB;
+		if (*p == 'K') u64 *= ONE_KB;
 		else if (*p == 'M') u64 *= ONE_MB;
 		else if (*p == 'G') u64 *= ONE_GB;
 		else if (*p == 'T') u64 *= ONE_TB;
@@ -251,7 +251,7 @@ u_signed64 DLL_DECL hexstrutou64(str)
 		}
 	}
 	if (*p && ! *(p + 1)) {
-		if (*p == 'k') u64 *= ONE_KB;
+		if (*p == 'K') u64 *= ONE_KB;
 		else if (*p == 'M') u64 *= ONE_MB;
 		else if (*p == 'G') u64 *= ONE_GB;
 		else if (*p == 'T') u64 *= ONE_TB;
@@ -300,7 +300,7 @@ char DLL_DECL *u64tostru(u64, buf, fldsize)
 		unit = ' ';
 	}
 	if (unit != ' ')
-		sprintf (tmpbuf, "%.2f%c", fnum, unit); /* fnum <= 1024 */
+		sprintf (tmpbuf, "%.2f%ci", fnum, unit); /* fnum <= 1024 */
 	else
 		sprintf (tmpbuf, "%d", inum); /* By constuction inum is < 1024 */
 
