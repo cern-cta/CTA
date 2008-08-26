@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.40 $ $Release$ $Date: 2008/08/26 16:53:11 $ $Author: murrayc3 $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.41 $ $Release$ $Date: 2008/08/26 17:04:58 $ $Author: murrayc3 $
  *
  * 
  *
@@ -1025,7 +1025,7 @@ int rtcpcld_runWorker(
                           );
   if ( rc == -1 ) return(-1);
   hdr.magic = RTCOPY_MAGIC;
-  rtcp_log(LOG_INFO, "rtcpcld_runWorker > rtcpc_sendReqList\n"); rc = rtcpc_sendReqList(
+  rc = rtcpc_sendReqList(
                          &hdr,
                          &socks,
                          internalTapeList
