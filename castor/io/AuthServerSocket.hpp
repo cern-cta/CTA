@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthServerSocket.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/01/09 17:50:06 $ $Author: waldron $
+ * @(#)$RCSfile: AuthServerSocket.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/08/27 08:05:04 $ $Author: riojac3 $
  *
  * Defines a dedicated socket that handles most of the network calls
  *
@@ -139,11 +139,17 @@ namespace castor {
        */
       gid_t getClientEgid ();
 
+      /**
+       * Returns the value user mmaped
+       * THAT METHOD SHOULDN'T BELONG TO THE CLASS SOCKET --TO BE MOVED
+       */
+      std::string getClientMappedName();
+
     private:
       Csec_context_t m_security_context;
       uid_t m_Euid;
       gid_t m_Egid;
-
+      std::string m_userName;
     };
 
   } // end of namespace io

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2008/07/21 09:32:00 $ $Author: waldron $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2008/08/27 08:03:42 $ $Author: riojac3 $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -141,6 +141,7 @@ void castor::rh::RHThread::run(void* param) {
   if (authSock != 0) {
     fr->setEuid(authSock->getClientEuid());
     fr->setEgid(authSock->getClientEgid());
+    fr->setUserName(authSock->getClientMappedName());
     secure = true;
   }
 

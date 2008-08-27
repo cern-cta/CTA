@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/01/09 17:50:06 $ $Author: waldron $
+ * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/08/27 08:05:04 $ $Author: riojac3 $
  *
  * @author Benjamin Couturier
  *****************************************************************************/
@@ -204,16 +204,16 @@ castor::io::ServerSocket* castor::io::AuthServerSocket::accept()
 void castor::io::AuthServerSocket::setClientId () 
 throw(castor::exception::Exception) {
   char *mech, *name;
-  
+  char username[CA_MAXUSRNAMELEN+1]; 
   getClientId(&m_security_context, &mech, &name);
-  //log that action	
-  //Csec_server_getAuthorizationId(m_security_context, &amech, &aname);
-  //the name you get it from gridmapfile here you get uid and gid and if you want
+  //In the name you got the principal it in the previous call from the gridmapfile
+  // here you get uid and gid and if you want
   // the name matching the uid then set buf and BUF_SIZE
-  if (getMapUser (mech,name, NULL,0, &m_Euid,&m_Egid) != 0) {
+  if (getMapUser (mech, name, username, CA_MAXUSRNAMELEN, &m_Euid,&m_Egid) != 0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "User cannot be mapped into local user";
   }
+  m_userName=username; 
 }
 
 
@@ -230,6 +230,13 @@ uid_t castor::io::AuthServerSocket::getClientEuid () {
 //------------------------------------------------------------------------------
 gid_t castor::io::AuthServerSocket::getClientEgid () {
   return m_Egid;
+}
+
+//------------------------------------------------------------------------------
+//  get ClientEgid
+//------------------------------------------------------------------------------
+std::string castor::io::AuthServerSocket::getClientMappedName () {
+  return m_userName;
 }
 
 
