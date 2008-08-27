@@ -74,6 +74,7 @@ int Cns_main(main_args)
   struct Cns_file_metadata direntry;
   void *doit(void *);
   char *dp;
+  int s;
   struct sockaddr_in from;
   socklen_t fromlen = sizeof(from);
   char *getconfent();
@@ -85,17 +86,12 @@ int Cns_main(main_args)
   const char *buf;
   fd_set readfd, readmask;
   int rqfd;
-  int s; /*Socket*/
 
   char *sec_p;
-  int listen_sockets[2]; /*Vector of sockets to store the secure and unsecure*/
   int securityOpt = 0; /*Flag set to 1 when security is enable*/
-  int socket_to_start = 1; /*Counter of sockets to be started*/
-  uint16_t v_port[2];
-  int nfds;
 
   struct sockaddr_in sin;
-  struct servent *sp,*sec_sp;
+  struct servent *sp;
   int thread_index;
   struct timeval timeval;
 
@@ -141,7 +137,6 @@ int Cns_main(main_args)
       break;
     case 's':
       securityOpt = 1;
-      socket_to_start=2;
       break;
     }
   }
@@ -224,34 +219,6 @@ int Cns_main(main_args)
 
   /* open request socket */
 
-  /* Get the ports where the sockets should be opened
-   * Store them in a vector of ports
-   * The first element corresponds to the unsecure mode
-   * The second one to the secure one.
-   *
-   * Once the unsecure mode is not supported any more or supported with CSEC_MECH = ID
-   * this code should be restored.
-   * */
-
-  if ((p = getenv (CNS_PORT_ENV)) || ((p = getconfent (CNS_SCE, "PORT", 0)))) {
-    v_port[0] = htons ((unsigned short)atoi (p));
-  } else if ((sp = getservbyname (CNS_SVC, "tcp"))) {
-    v_port[0] = sp->s_port;
-  } else {
-    v_port[0] = htons ((unsigned short)CNS_PORT);
-  }
-
-  if (securityOpt) {
-    if ((sec_p = getenv (CNS_SPORT_ENV)) || ((sec_p = getconfent (CNS_SCE, "SEC_PORT", 0)))) {
-      v_port[1] = htons ((unsigned short)atoi (sec_p));
-    } else if ((sec_sp = getservbyname (CNS_SEC_SVC, "tcp"))) {
-      v_port[1] = sec_sp->s_port;
-    } else {
-      v_port[1] = htons ((unsigned short)CNS_SEC_PORT);
-    }
-  }
-
-  for (i = 0; i < socket_to_start; i++) {
     serrno = 0;
     if ((s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
       nslogit (func, NS002, "socket", neterror());
@@ -259,30 +226,34 @@ int Cns_main(main_args)
     }
     memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
     sin.sin_family = AF_INET ;
-    sin.sin_port = v_port[i];
-    sin.sin_addr.s_addr = htonl(INADDR_ANY);
-    if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0) {
-      nslogit (func, NS002, "setsockopt", neterror());
-      close (s);
-      continue;
+    if (securityOpt){
+      if ((p = getenv (CNS_SPORT_ENV)) || ((p = getconfent (CNS_SCE, "SEC_PORT", 0)))) {
+        sin.sin_port = htons ((unsigned short)atoi (p));
+      } else if ((sp = getservbyname (CNS_SEC_SVC, "tcp"))) {
+        sin.sin_port = sp->s_port;
+      } else {
+        sin.sin_port = htons ((unsigned short)CNS_SEC_PORT);
+      }
+    }else{
+      if ((p = getenv (CNS_PORT_ENV)) || ((p = getconfent (CNS_SCE, "PORT", 0)))) {
+        sin.sin_port = htons ((unsigned short)atoi (p));
+      } else if ((sp = getservbyname (CNS_SVC, "tcp"))) {
+        sin.sin_port = sp->s_port;
+      } else {
+        sin.sin_port = htons ((unsigned short)CNS_PORT);
+      }
     }
+    sin.sin_addr.s_addr = htonl(INADDR_ANY);
+    serrno=0; 
+    if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0) 
+      nslogit (func, NS002, "setsockopt", neterror());
     if (bind (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
       nslogit (func, NS002, "bind", neterror());
-      close(s);
       return (CONFERR); // SEE HOW TO REACT WHEN A SOCKET CAN NOT BE CREATED.
     }
     listen (s, 5) ;
-    FD_SET (s, &readmask);
-    listen_sockets[i]=s;
-  }
 
-  nfds = -1;
-  for (i=0; i< socket_to_start; ++i) {
-    FD_SET (listen_sockets[i], &readmask);
-    if (listen_sockets[i]>nfds)
-      nfds = listen_sockets[i];
-  }
-  ++nfds;
+    FD_SET (s, &readmask);
 
   /* main loop */
 
@@ -303,8 +274,6 @@ int Cns_main(main_args)
       if (nb_active_threads == 0)
         return (0);
     }
-    for (i=0; i< socket_to_start; ++i) {
-      s = listen_sockets[i];
       if (FD_ISSET (s, &readfd)) {
         FD_CLR (s, &readfd);
         rqfd = accept (s, (struct sockaddr *) &from, &fromlen);
@@ -325,30 +294,21 @@ int Cns_main(main_args)
             return (SYERR);
         }
         (Cns_srv_thread_info+thread_index)->s = rqfd;
-#ifdef CSEC
-        /*Dirty trick to know in the doit method if the socket you are using is the one listening in the secure or unsecure port*/
-        /*TODO: To be removed when unsecure mode will be only CSEC_MECH=ID*/
-        if (i == 1) {
-          (Cns_srv_thread_info+thread_index)->secOn = 1;
-        } else {
-          (Cns_srv_thread_info+thread_index)->secOn = 0;
-        }
-#endif
+        (Cns_srv_thread_info+thread_index)->secOn = securityOpt;
         if (Cpool_assign (ipool, &doit,
                           Cns_srv_thread_info+thread_index, 1) < 0) {
           (Cns_srv_thread_info+thread_index)->s = -1;
           nslogit (func, NS002, "Cpool_assign", sstrerror(serrno));
           return (SYERR);
         }
-      }
     }
     memcpy (&readfd, &readmask, sizeof(readmask));
     timeval.tv_sec = CHECKI;
     timeval.tv_usec = 0;
-    if (select (nfds, &readfd, (fd_set *)0, (fd_set *)0, &timeval) <= 0) {
+    if (select (maxfds, &readfd, (fd_set *)0, (fd_set *)0, &timeval) <= 0) {
       FD_ZERO (&readfd);
     }
-  }
+  } 
 }
 
 int main(argc, argv)
