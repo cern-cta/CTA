@@ -9,7 +9,10 @@ COMM    Make name server programs.
 #include <Project.tmpl>
 
 CNS_HOST = NsHost
+SCNS_HOST = SNsHost
 CNSHOSTPFX = NsHostPfx
+SCNSHOSTPFX = SNsHostPfx
+
 INCLUDES = FileName(..,h)
 #if _AIX
 LIBS = -L../shlib -lshift
@@ -77,7 +80,9 @@ LIBCSEC += -ldl
 COMM######################### FLAGS ##############################
 
 DFLAGS = -DBIN=\"$(BIN)\" -DCNS_HOST=\"$(CNS_HOST)\" \
+         -DSCNS_HOST=\"$(SCNS_HOST)\" \
          -DCNSHOSTPFX=\"$(CNSHOSTPFX)\" \
+         -DSCNSHOSTPFX=\"$(SCNSHOSTPFX)\" \
          -DLCGDM_MAPFILE=\"$(LCGDM_MAPFILE)\" \
          -DLOGFILE=\"$(LOGFILE)\" \
          -DNSCONFIG=\"$(NSCONFIG)\" \

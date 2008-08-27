@@ -88,12 +88,21 @@ int send2nsdx(socketp, host, reqp, reql, user_repbuf, user_repbuf_len, repbuf2, 
     else if ((p = getenv (CNS_HOST_ENV)) || (p = getconfent (CNS_SCE, "HOST", 0)))
       strcpy (Cnshost, p);
     else {
-#if defined(CNS_HOST)
-      strcpy (Cnshost, CNS_HOST);
+      if ((securemode = getenv ("SECURE_CASTOR")) || (securemode = getconfent(CNS_SCE,"SECURITY",0))){
+#if defined(SCNS_HOST)
+        strcpy (Cnshost, SCNS_HOST);
 #else
-      gethostname (Cnshost, sizeof(Cnshost));
+        serrno=SENOSHOST;
+        return -1;
 #endif
-      serrno = 0;
+      } else{
+#if defined(CNS_HOST)
+        strcpy (Cnshost, CNS_HOST);
+#else
+        gethostname (Cnshost, sizeof(Cnshost));
+#endif
+        serrno = 0;
+      }
     }
     /*If the user has decided to enable the security mode then the port can not be set via host:port
      * but with the specific SECURITY_PORT  options*/
