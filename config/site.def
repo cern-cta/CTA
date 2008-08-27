@@ -111,8 +111,10 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #else
 #define NsConfigFile	/etc/castor/NSCONFIG
 #endif
-#define NsHost	"castorns"
-#define NsHostPfx	cns
+#define NsHost  "castorns"
+#define SNsHost "scnsdev"
+#define NsHostPfx       cns
+#define SNsHostPfx      scns
 #define NsSpool	/var/spool/ns
 #define NsRoot  "/castor"
 #if defined(_WIN32)
