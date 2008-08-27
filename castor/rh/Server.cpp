@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.62 $ $Release$ $Date: 2008/08/12 15:52:33 $ $Author: riojac3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.63 $ $Release$ $Date: 2008/08/27 13:53:23 $ $Author: riojac3 $
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -50,7 +50,7 @@ const char *castor::rh::PORT_SEC_CONF = "SEC_PORT";
 const char *castor::rh::ACCESSLISTS_ENV = "RH_USEACCESSLISTS";
 const char *castor::rh::ACCESSLISTS_CONF = "USEACCESSLISTS";
 const char *castor::rh::CASTOR_SEC_ENV = "SECURE_CASTOR";
-const char *castor::rh::CASTOR_SEC_CONF = "SEC";
+const char *castor::rh::CASTOR_SEC_CONF = "CSEC";
 
 
 //------------------------------------------------------------------------------
@@ -70,8 +70,8 @@ int main(int argc, char *argv[]) {
     
     // Check if the secure mode has been enable
     if ((securemode = getenv (castor::rh::CASTOR_SEC_ENV)) != 0 
-        || (securemode = getconfent((char *)castor::rh::CATEGORY_CONF,
-				    (char *)castor::rh::CASTOR_SEC_CONF,0)) != 0){
+        || (securemode = getconfent((char *)castor::rh::CASTOR_SEC_CONF,
+				    (char *)castor::rh::CASTOR_SEC_ENV,0)) != 0){
        security = (strcasecmp(securemode, "YES") == 0);
        server.setSecOption(security);
       // Get the secure port from the envirment or configuration file
