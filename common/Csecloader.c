@@ -76,7 +76,7 @@ int getClientId(Csec_context_t *security_context , char **mech, char **name){
 }
 
 int getMapUser(const char *mech, const char *principal, char *username, size_t usernamesize, uid_t *euid, gid_t *egid){ 
-  return (*CmapUser)(mech,principal, NULL,0, euid,egid);
+  return (*CmapUser)(mech,principal, username,usernamesize, euid,egid);
 }
 
 int getClearContext(Csec_context_t *security_context){
