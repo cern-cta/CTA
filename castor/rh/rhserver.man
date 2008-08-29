@@ -11,6 +11,9 @@ rhserver \- start the CASTOR Request Handler daemon
 .BI -h
 ]
 [
+.BI -s
+]
+[
 .BI -c
 .BI <config-file>
 ]
@@ -37,7 +40,10 @@ which is the user entry point into the CASTOR system.
 runs in foreground mode (no daemonization).
 .TP
 .BI \-h,\ \-\-help
-display command usage help
+displays command usage help.
+.TP
+.BI \-s,\ \-\-secure
+runs the daemon in secure mode
 .TP
 .BI \-c,\ \-\-config\ <config-file>
 specified the location of the configuration file to use. The default value
@@ -47,7 +53,8 @@ is /etc/castor/castor.conf.
 specifies the number of threads to use to handle client requests. Default is 20.
 .TP
 .BI \-p,\ \-\-port\ <port>
-specifies the port on which to listen for client request. Default is 9002.
+specifies the port on which to listen for client request. The default port for the 
+unsecure daemon is 9002 and for the secure is 9007.
 The port can also be overwritten using the RH_PORT enviroment variable or
 by having a RH/PORT entry in the /etc/castor/castor.conf file.
 
