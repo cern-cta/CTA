@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.63 $ $Release$ $Date: 2008/08/27 13:53:23 $ $Author: riojac3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.64 $ $Release$ $Date: 2008/08/29 12:37:51 $ $Author: riojac3 $
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -53,6 +53,7 @@ const char *castor::rh::CASTOR_SEC_ENV = "SECURE_CASTOR";
 const char *castor::rh::CASTOR_SEC_CONF = "CSEC";
 
 
+
 //------------------------------------------------------------------------------
 // main method
 //------------------------------------------------------------------------------
@@ -60,56 +61,7 @@ int main(int argc, char *argv[]) {
   try {
     castor::rh::Server server;
 
-    // retrieve the port to be used
-    int port = CSP_RHSERVER_PORT;
-    int secport= CSP_RHSERVER_SEC_PORT;
-    char* sport;
-    char* secsport;
-    char* securemode; 
-    bool security =false;
-    
-    // Check if the secure mode has been enable
-    if ((securemode = getenv (castor::rh::CASTOR_SEC_ENV)) != 0 
-        || (securemode = getconfent((char *)castor::rh::CASTOR_SEC_CONF,
-				    (char *)castor::rh::CASTOR_SEC_ENV,0)) != 0){
-       security = (strcasecmp(securemode, "YES") == 0);
-       server.setSecOption(security);
-      // Get the secure port from the envirment or configuration file
-      if ((secsport = getenv (castor::rh::PORT_SEC_ENV)) != 0 
-	  || (secsport = getconfent((char *)castor::rh::CATEGORY_CONF,
-				    (char *)castor::rh::PORT_SEC_CONF,0)) != 0) {
-	secport = castor::System::porttoi(secsport);
-      }  
-    }
-    
-    // Get unsecure port
-    if ((sport = getenv (castor::rh::PORT_ENV)) != 0 
-        || (sport = getconfent((char *)castor::rh::CATEGORY_CONF,
-                               (char *)castor::rh::PORT_CONF,0)) != 0) {
-      port = castor::System::porttoi(sport);
-    }
-    
-    // See whether access lists should be used
-    bool accessLists = false;
-    char* saccessLists;
-    if ((saccessLists = getenv(castor::rh::ACCESSLISTS_ENV)) != 0 
-        || (saccessLists = getconfent((char *)castor::rh::CATEGORY_CONF,
-                                      (char *)castor::rh::ACCESSLISTS_CONF,0)) != 0) {
-      accessLists = (strcasecmp(saccessLists, "YES") == 0);
-    }
-    
-    // Start daemon
-    server.addThreadPool
-      (new castor::server::TCPListenerThreadPool
-       ("RH", new castor::rh::RHThread(accessLists), port));
-    
-    if (security){
-      server.addThreadPool
-	(new castor::server::AuthListenerThreadPool
-	 ("SecRH", new castor::rh::RHThread(accessLists), secport));    
-    }
-    
-    // parse the command line (note that this may overwrite the port we are listening to)
+    // parse the command line 
     server.parseCommandLine(argc, argv);
     // start the server
     server.start();
@@ -187,9 +139,9 @@ void castor::rh::Server::help(std::string programName)
 	  "\n"
 	  "\t--foreground            or -f           \tForeground\n"
 	  "\t--help                  or -h           \tThis help\n"
+          "\t--secure                or -s           \tRun the daemon in secure mode  \n"
 	  "\t--config <config-file>  or -c           \tConfiguration file\n"
 	  "\t--port                  or -p {integer} \tPort to be used\n"
-	  "\t--secureport            or -s {integer} \tSecure Port to be used  \n"
 	  "\t--Rthreads              or -R {integer} \tNumber of Request Handler threads\n"
 	  "\n"
 	  "Comments to: Castor.Support@cern.ch\n";
@@ -198,22 +150,26 @@ void castor::rh::Server::help(std::string programName)
 //------------------------------------------------------------------------------
 // parseCommandLine
 //------------------------------------------------------------------------------
-void castor::rh::Server::parseCommandLine(int argc, char *argv[])
+void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor::exception::Exception)
 {
   Coptions_t longopts[] =
     {
       {"foreground", NO_ARGUMENT,       NULL, 'f'},
       {"help",       NO_ARGUMENT,       NULL, 'h'},
+      {"Secure",     NO_ARGUMENT,       NULL, 's'},
       {"config",     REQUIRED_ARGUMENT, NULL, 'c'},
       {"Rthreads",   REQUIRED_ARGUMENT, NULL, 'R'},
-      {"Rthreads Secure",   REQUIRED_ARGUMENT, NULL, 'S'},
       {"port",       REQUIRED_ARGUMENT, NULL, 'p'},
-      {"secureport", REQUIRED_ARGUMENT, NULL, 's'}
     };
   Coptind = 1;
   Copterr = 0;
   char c;
-  while ((c = Cgetopt_long(argc, argv, "fhR:S:p:c:s:", longopts, NULL)) != -1) {
+  char *sport;
+  int port, iport=-1;
+  bool secOn=false;
+  int nThreads=-1;
+ 
+  while ((c = Cgetopt_long(argc, argv, "fhsR:p:c:", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;
@@ -233,40 +189,66 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[])
       help(argv[0]);
       exit(0);
       break;
-    case 'R':
-      {
-        castor::server::BaseThreadPool* p = m_threadPools['R'];
-        p->setNbThreads(atoi(Coptarg));
-      }
+    case 's':
+      secOn=true;
       break;
-
-    case 'S':
-        castor::server::BaseThreadPool* p = m_threadPools['S'];
-        p->setNbThreads(atoi(Coptarg));
+    case 'R':
+      nThreads = atoi(Coptarg); 
       break;
     case 'p':
-      {
-        castor::server::TCPListenerThreadPool* p =
-          dynamic_cast<castor::server::TCPListenerThreadPool*>
-          (m_threadPools['R']);
-        p->setPort(castor::System::porttoi(Coptarg));
-      }
-      break;
-    case 's':
-         if(getSecOption()){
-           castor::server::AuthListenerThreadPool* sp =
-             dynamic_cast<castor::server::AuthListenerThreadPool*>
-             (m_threadPools['S']);
-           if(sp) {
-             sp->setPort(castor::System::porttoi(Coptarg));
-           }
-         }else{
-           printf("Please check your configuration for security \n");
-         }
+      iport = castor::System::porttoi(Coptarg);
       break;
     default:
       help(argv[0]);
       exit(0);
     } 
+  }
+
+    // See whether access lists should be used
+  bool accessLists = false;
+  char* saccessLists;
+  if ((saccessLists = getenv(castor::rh::ACCESSLISTS_ENV)) != 0
+      || (saccessLists = getconfent((char *)castor::rh::CATEGORY_CONF,
+                                    (char *)castor::rh::ACCESSLISTS_CONF,0)) != 0) {
+    accessLists = (strcasecmp(saccessLists, "YES") == 0);
+  }
+
+  if (secOn){
+    if (iport == -1){
+      if ((sport = getenv (castor::rh::PORT_SEC_ENV)) != 0
+          || (sport = getconfent((char *)castor::rh::CATEGORY_CONF,
+                                    (char *)castor::rh::PORT_SEC_CONF,0)) != 0) {
+        port = castor::System::porttoi(sport);
+       } else{ //default port
+         port = CSP_RHSERVER_SEC_PORT;
+       }
+    } else{
+       port = iport;
+    }  
+
+    addThreadPool
+	(new castor::server::AuthListenerThreadPool
+	 ("RH", new castor::rh::RHThread(accessLists), port)); 
+    
+  } else{ 
+    if (iport == -1){
+      if ((sport = getenv (castor::rh::PORT_ENV)) != 0
+          || (sport = getconfent((char *)castor::rh::CATEGORY_CONF,
+                                    (char *)castor::rh::PORT_CONF,0)) != 0) {
+        port = castor::System::porttoi(sport);
+       } else{ //default port
+         port = CSP_RHSERVER_PORT;
+       }
+    } else{
+       port = iport;
+    }
+    addThreadPool
+      (new castor::server::TCPListenerThreadPool
+       ("RH", new castor::rh::RHThread(accessLists), port));
+ }
+
+ if (nThreads != -1){
+   castor::server::BaseThreadPool* p = m_threadPools['R'];
+        p->setNbThreads(atoi(Coptarg));
   }
 }

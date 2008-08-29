@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/08/12 15:52:33 $ $Author: riojac3 $
+ * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/08/29 12:37:52 $ $Author: riojac3 $
  *
  *
  *
@@ -68,7 +68,7 @@ namespace castor {
       /**
        * Overloaded method from BaseDaemon for individual command line parser
        */
-      virtual void parseCommandLine(int argc, char *argv[]);
+      virtual void parseCommandLine(int argc, char *argv[]) throw(castor::exception::Exception);
 
       /**
        * Set the Secure attribute specifying the mode in which the server runs
