@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.678 $ $Date: 2008/08/11 09:52:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.679 $ $Date: 2008/09/01 17:49:54 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1144,7 +1144,7 @@ BEGIN
      UPDATE Tape SET status = 4 -- MOUNTED
        WHERE id = tapeId;
      FORALL j IN segs.FIRST..segs.LAST -- bulk update with the forall..
-       UPDATE Segment set status = 7 -- SELECTED
+       UPDATE Segment SET status = 7 -- SELECTED
        WHERE id = segs(j);
   END IF;
 
@@ -1437,7 +1437,7 @@ BEGIN
   -- add choosen tapecopies to all Streams associated to the tapepool used by the policy
   FOR i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST LOOP
     BEGIN
-      SELECT count(id) into nbStream FROM Stream
+      SELECT count(id) INTO nbStream FROM Stream
        WHERE Stream.tapepool = tapePoolIds(i);
       IF nbStream <> 0 THEN
         -- we have at least a stream for that tapepool
@@ -1453,7 +1453,7 @@ BEGIN
             INSERT INTO stream2tapecopy (parent ,child) VALUES (streamId.id, tapeCopyIds(i));
           EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
             -- if the stream does not exist anymore
-            UPDATE tapecopy SET status = 7 where id = tapeCopyIds(i);
+            UPDATE tapecopy SET status = 7 WHERE id = tapeCopyIds(i);
             -- it might also be that the tapecopy does not exist anymore
           END;
         END LOOP; -- stream loop
@@ -1499,7 +1499,7 @@ BEGIN
     BEGIN
       SELECT count(*) INTO nbTc FROM stream2tapecopy WHERE parent = streamIds(i);
       IF nbTc = 0 THEN
-        DELETE FROM Stream where id = streamIds(i);
+        DELETE FROM Stream WHERE id = streamIds(i);
       ELSE
         UPDATE Stream
            SET status = 0 -- PENDING
