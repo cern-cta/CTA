@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.663 $ $Date: 2008/07/30 09:51:45 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.664 $ $Date: 2008/09/01 17:49:10 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -211,13 +211,15 @@ END castorGC;
    This is the standard garbage collector: it sorts STAGED
    diskcopies by gcWeight and selects them for deletion up to
    the desired free space watermark */
-CREATE OR REPLACE PROCEDURE selectFiles2Delete(diskServerName IN VARCHAR2,
-                                               files OUT castorGC.SelectFiles2DeleteLine_Cur) AS
+CREATE OR REPLACE
+PROCEDURE selectFiles2Delete(diskServerName IN VARCHAR2,
+                             files OUT castorGC.SelectFiles2DeleteLine_Cur) AS
   dcIds "numList";
   freed INTEGER;
   deltaFree INTEGER;
   toBeFreed INTEGER;
   dontGC INTEGER;
+  totalCount INTEGER;
 BEGIN
   -- First of all, check if we have GC enabled
   dontGC := 0;
@@ -234,40 +236,60 @@ BEGIN
       EXIT;
     END IF;
   END LOOP;
-  -- Loop on all concerned fileSystems
+
+  -- Loop on all concerned fileSystems in a random order.
+  totalCount := 0;
   FOR fs IN (SELECT FileSystem.id
                FROM FileSystem, DiskServer
               WHERE FileSystem.diskServer = DiskServer.id
-                AND DiskServer.name = diskServerName) LOOP
-    -- First take the INVALID diskcopies, they have to go in any case
+                AND DiskServer.name = diskServerName
+             ORDER BY dbms_random.value) LOOP
+                
+    -- Count the number of diskcopies on this filesystem that are in a
+    -- BEINGDELETED state. These need to be reselected in any case.
+    freed := 0;
+    SELECT totalCount + count(*), sum(DiskCopy.diskCopySize)
+      INTO totalCount, freed
+      FROM DiskCopy, FileSystem, DiskServer
+     WHERE DiskCopy.fileSystem = filesystem.id
+       AND decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9 -- BEINGDELETED
+       AND FileSystem.diskServer = DiskServer.id
+       AND DiskServer.name = diskservername;
+
+    -- Process diskcopies that are in an INVALID state.
     UPDATE DiskCopy
-       SET status = 9, -- BEING_DELETED
-           lastAccessTime = getTime(), -- See comment below on the status = 9 condition
+       SET status = 9, -- BEINGDELETED
            gcType = decode(gcType, NULL, 1, gcType) -- USER
      WHERE fileSystem = fs.id
-       AND (
-             (status = 7 AND NOT EXISTS -- INVALID
-               (SELECT 'x' FROM SubRequest
-                 WHERE SubRequest.diskcopy = DiskCopy.id
-                   AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14))) -- All but FINISHED, FAILED*, ARCHIVED
-        OR (status = 9 AND lastAccessTime < getTime() - 1800))
-        -- For failures recovery we also take all DiskCopies which were already
-        -- selected but got stuck somehow and didn't get removed after 30 mins.
+       AND status = 7  -- INVALID
+       AND NOT EXISTS
+        (SELECT 'x' FROM SubRequest
+          WHERE SubRequest.diskcopy = DiskCopy.id
+            AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14)) -- All but FINISHED, FAILED*, ARCHIVED
+       AND rownum <= 10000 - totalCount
     RETURNING id BULK COLLECT INTO dcIds;
     COMMIT;
+       
+    -- If me have more then 10,000 files to GC, exit the loop. There is no point
+    -- processing more as the maximum sent back to the client in one call is 
+    -- 10,000. This protects the garbage collector from being overwhelmed with 
+    -- requests and reduces the stager DB load. Furthermore, if too much data is
+    -- sent back to the client, the transfer time between the stager and client
+    -- becomes very long and the message may timeout or may not even fit in the
+    -- clients recieve buffer!!!!
+    totalCount := totalCount + dcIds.COUNT();
+    EXIT WHEN totalCount >= 10000;
 
-    -- Continue processing but with STAGED files.
+    -- Continue processing but with STAGED files
     IF dontGC = 0 THEN
-      -- Determine the space that would be freed if the INVALID files selected above
-      -- were to be removed
+      -- Calculate the amount of space that would be freed on the filesystem
+      -- if the files selected above were to be deleted.
       IF dcIds.COUNT > 0 THEN
-        SELECT SUM(diskCopySize) INTO freed
+        SELECT freed + sum(diskCopySize) INTO freed
           FROM DiskCopy
          WHERE DiskCopy.id IN
              (SELECT /*+ CARDINALITY(fsidTable 5) */ *
                 FROM TABLE(dcIds) dcidTable);
-      ELSE
-        freed := 0;
       END IF;
       -- Get the amount of space to be liberated
       SELECT decode(sign(maxFreeSpace * totalSize - free), -1, 0, maxFreeSpace * totalSize - free)
@@ -277,48 +299,57 @@ BEGIN
       -- If space is still required even after removal of INVALID files, consider
       -- removing STAGED files until we are below the free space watermark
       IF freed < toBeFreed THEN
-        -- Loop on file deletions
-        FOR dc IN (SELECT id, castorFile FROM DiskCopy
-                    WHERE fileSystem = fs.id
-                      AND status = 0 -- STAGED
-                      AND NOT EXISTS (
-                          SELECT 'x' FROM SubRequest
-                           WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id
-                             AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14)) -- All but FINISHED, FAILED*, ARCHIVED
-                      ORDER BY gcWeight ASC) LOOP
+        -- Loop on file deletions. Select only enough files until we reach the 
+        -- 10000 return limit.
+        FOR dc IN (SELECT id, castorFile FROM (
+                     SELECT id, castorFile FROM DiskCopy
+                      WHERE fileSystem = fs.id
+                        AND status = 0 -- STAGED
+                        AND NOT EXISTS (
+                            SELECT 'x' FROM SubRequest
+                             WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id
+                               AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14)) -- All but FINISHED, FAILED*, ARCHIVED
+                        ORDER BY gcWeight ASC)
+                   WHERE rownum <= 10000 - totalCount) LOOP
           -- Mark the DiskCopy
           UPDATE DiskCopy
              SET status = 9, -- BEINGDELETED
                  gcType = 0  -- AUTO
            WHERE id = dc.id RETURNING diskCopySize INTO deltaFree;
+          totalCount := totalCount + 1;
           -- Update toBeFreed
           freed := freed + deltaFree;
           -- Shall we continue ?
           IF toBeFreed <= freed THEN
             EXIT;
-          END IF;
+          END IF;                
         END LOOP;
       END IF;
       COMMIT;
     END IF;
+    -- We have enough files to exit the loop ?
+    EXIT WHEN totalCount >= 10000;
   END LOOP;
 
   -- Now select all the BEINGDELETED diskcopies in this diskserver for the gcDaemon
   OPEN files FOR
-    SELECT /*+ INDEX(CastorFile I_CastorFile_ID) */ FileSystem.mountPoint || DiskCopy.path,
-           DiskCopy.id,
-	   Castorfile.fileid, Castorfile.nshost,
-           DiskCopy.lastAccessTime, DiskCopy.nbCopyAccesses, DiskCopy.gcWeight,
-           CASE WHEN DiskCopy.gcType = 0 THEN 'Automatic'
-                WHEN DiskCopy.gcType = 1 THEN 'User Requested'
-                ELSE 'Unknown' END
-      FROM CastorFile, DiskCopy, FileSystem, DiskServer
-     WHERE decode(DiskCopy.status,9,DiskCopy.status,NULL) = 9 -- BEINGDELETED
-       AND DiskCopy.castorfile = CastorFile.id
-       AND DiskCopy.fileSystem = FileSystem.id
-       AND FileSystem.diskServer = DiskServer.id
-       AND DiskServer.name = diskServerName;
+    SELECT * FROM (
+      SELECT /*+ INDEX(CastorFile I_CastorFile_ID) */ FileSystem.mountPoint || DiskCopy.path,
+             DiskCopy.id,
+             Castorfile.fileid, Castorfile.nshost,
+             DiskCopy.lastAccessTime, DiskCopy.nbCopyAccesses, DiskCopy.gcWeight,
+             CASE WHEN DiskCopy.gcType = 0 THEN 'Automatic'
+                  WHEN DiskCopy.gcType = 1 THEN 'User Requested'
+                  ELSE 'Unknown' END
+        FROM CastorFile, DiskCopy, FileSystem, DiskServer
+       WHERE decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9 -- BEINGDELETED
+         AND DiskCopy.castorfile = CastorFile.id
+         AND DiskCopy.fileSystem = FileSystem.id
+         AND FileSystem.diskServer = DiskServer.id
+         AND DiskServer.name = diskServerName)
+     WHERE rownum <= 10000;
 END;
+
 
 /*
  * PL/SQL method implementing filesDeleted
@@ -506,7 +537,7 @@ CREATE OR REPLACE PROCEDURE deleteTerminatedRequests AS
 BEGIN
   -- select requested timeout from configuration table
   SELECT TO_NUMBER(value) INTO timeOut FROM CastorConfig
-   WHERE class = 'cleaning' AND key = 'terminatedRequestsTimeout' AND ROWNUM < 2;
+   WHERE class = 'cleaning' AND key = 'terminatedRequestsTimeout';
   timeOut := timeOut*3600;
   -- get a rough estimate of the current request processing rate
   SELECT count(*) INTO rate
@@ -642,10 +673,10 @@ BEGIN
   -- First perform some cleanup of old stuff:
   -- for each, read relevant timeout from configuration table
   SELECT TO_NUMBER(value) INTO t FROM CastorConfig
-   WHERE class = 'cleaning' AND key = 'outOfDateStageOutDCsTimeout' AND ROWNUM < 2;
+   WHERE class = 'cleaning' AND key = 'outOfDateStageOutDCsTimeout';
   deleteOutOfDateStageOutDCs(t*3600);
   SELECT TO_NUMBER(value) INTO t FROM CastorConfig
-   WHERE class = 'cleaning' AND key = 'failedDCsTimeout' AND ROWNUM < 2;
+   WHERE class = 'cleaning' AND key = 'failedDCsTimeout';
   deleteFailedDiskCopies(t*3600);
   restartStuckRecalls();
 
@@ -697,7 +728,7 @@ BEGIN
       JOB_NAME        => 'houseKeepingJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN deleteTerminatedRequests(); END;',
-      START_DATE      => SYSDATE,
+      START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=20',
       ENABLED         => TRUE,
       COMMENTS        => 'Cleaning of terminated requests');
@@ -707,7 +738,7 @@ BEGIN
       JOB_NAME        => 'cleanupJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN cleanup(); END;',
-      START_DATE      => SYSDATE,
+      START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=HOURLY; INTERVAL=12',
       ENABLED         => TRUE,
       COMMENTS        => 'Database maintenance');
@@ -717,7 +748,7 @@ BEGIN
       JOB_NAME        => 'bulkCheckFSBackInProdJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN bulkCheckFSBackInProd(); END;',
-      START_DATE      => SYSDATE,
+      START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
       ENABLED         => TRUE,
       COMMENTS        => 'Bulk operation to processing filesystem state changes');
