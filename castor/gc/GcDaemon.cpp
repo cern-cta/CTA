@@ -117,7 +117,7 @@ castor::gc::GcDaemon::GcDaemon(): castor::server::BaseDaemon("GC") {
     {  7, "Sleep interval changed" },
     {  8, "Error caught while looking for garbage files" },
     {  9, "Sleeping" },
-    { 10, "Found files to garbage. Starting removal" },
+    { 10, "Found files to garbage collect. Starting removal" },
     { 11, "Removed file successfully" },
     { 12, "Failed to remove file" },
     { 13, "Summary of files removed" },

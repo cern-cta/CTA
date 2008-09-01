@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DeletionThread.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/07/28 16:47:10 $ $Author: waldron $
+ * @(#)$RCSfile: DeletionThread.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/09/01 17:31:20 $ $Author: waldron $
  *
  * Deletion thread used to check periodically whether files need to be deleted
  *
@@ -151,7 +151,7 @@ void castor::gc::DeletionThread::run(void *param) {
     // Delete files
     if (0 < files2Delete->size()) {
 
-      // "Found files to garbage. Starting removal"
+      // "Found files to garbage collect. Starting removal"
       castor::dlf::Param params[] =
         {castor::dlf::Param("NbFiles", files2Delete->size())};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 10, 1, params);
