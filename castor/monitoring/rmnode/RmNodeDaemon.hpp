@@ -34,9 +34,9 @@
 
 namespace castor {
 
-  namespace monitoring{
+  namespace monitoring {
 
-    namespace rmnode{
+    namespace rmnode {
 
       /**
        * Castor RmNode daemon.
@@ -55,6 +55,13 @@ namespace castor {
          */
         virtual ~RmNodeDaemon() throw() {};
 
+	/**
+	 * Returns a vector of configured mountpoints
+	 */
+	static std::vector<std::string>
+	castor::monitoring::rmnode::RmNodeDaemon::getMountPoints() 
+	  throw(castor::exception::Exception);
+      
       };
 
     } // end of namespace rmnode

@@ -101,7 +101,10 @@ void castor::monitoring::rmnode::StateThread::run(void *param)
     return;
   }
 
+
   // Send information to resource masters
+  std::vector<std::string> fsList = 
+    castor::monitoring::rmnode::RmNodeDaemon::getMountPoints();
   for(std::map<std::string, u_signed64>::iterator it =
 	m_hostList.begin();
       it != m_hostList.end(); it++) {
@@ -143,6 +146,14 @@ void castor::monitoring::rmnode::StateThread::run(void *param)
 	      {castor::dlf::Param("Filename", filename),
 	       castor::dlf::Param("Error", strerror(errno))};
 	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 22, 2, params);
+	  } else if (ack->ack().size() != fsList.size()) {
+	    
+	    // "Failed to update the RmNode/StatusFile, filesystem acknowledgement mismatch"
+	    castor::dlf::Param params[] =
+	      {castor::dlf::Param("Filename", filename),
+	       castor::dlf::Param("Acknowledged", ack->ack().size()),
+	       castor::dlf::Param("Configured", fsList.size())};
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 5, 3, params);
 	  } else {
 
 	    // Update the status of the diskserver
@@ -151,11 +162,11 @@ void castor::monitoring::rmnode::StateThread::run(void *param)
 
 	    // Update the status of the filesystems
 	    std::vector<FileSystemStateAck *>::const_iterator it;
-	    int i = 1;
+	    int i = 0;
 	    for (it = ack->ack().begin();
 		 it != ack->ack().end();
 		 it++, i++) {
-	      fprintf(fp, "FS%d=%s\n", i,
+	      fprintf(fp, "%s=%s\n", fsList[i].c_str(),
 		      castor::stager::FileSystemStatusCodesStrings[(*it)->fileSystemStatus()]);
 	    }
 	    fclose(fp);
@@ -273,20 +284,9 @@ castor::monitoring::rmnode::StateThread::collectDiskServerState()
     }
   }
 
-  // Convert the value of the RmNode/MountPoints configuration option into a
-  // vector of strings
-  std::vector<std::string> fsList;
-  char **values;
-  int  count;
-  if (getconfent_multi("RmNode", "MountPoints", 1, &values, &count) == 0) {
-    for (int i = 0; i < count; i++) {
-      fsList.push_back(values[i]);
-      free(values[i]);
-    }
-    free(values);
-  }
-
   // Fill the state for each filesystem
+  std::vector<std::string> fsList = 
+    castor::monitoring::rmnode::RmNodeDaemon::getMountPoints();
   try {
     for (u_signed64 i = 0; i < fsList.size(); i++) {
       state->addFileSystemStatesReports

@@ -29,6 +29,7 @@
 #include "castor/monitoring/DiskServerMetricsReport.hpp"
 #include "castor/monitoring/FileSystemMetricsReport.hpp"
 #include "castor/monitoring/rmnode/MetricsThread.hpp"
+#include "castor/monitoring/rmnode/RmNodeDaemon.hpp"
 #include "castor/monitoring/MonitorMessageAck.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Exception.hpp"
@@ -181,20 +182,9 @@ void castor::monitoring::rmnode::MetricsThread::collectDiskServerMetrics()
     throw e;
   }
 
-  // Convert the value of the RmNode/MountPoints configuration option into a
-  // vector of strings
-  std::vector<std::string> fsList;
-  char **values;
-  int  count;
-  if (getconfent_multi("RmNode", "MountPoints", 1, &values, &count) == 0) {
-    for (int i = 0; i < count; i++) {
-      fsList.push_back(values[i]);
-      free(values[i]);
-    }
-    free(values);
-  }
-
   // Fill metrics for each filesystem
+  std::vector<std::string> fsList = 
+    castor::monitoring::rmnode::RmNodeDaemon::getMountPoints();
   try {
     for (u_signed64 i = 0; i < fsList.size(); i++) {
 

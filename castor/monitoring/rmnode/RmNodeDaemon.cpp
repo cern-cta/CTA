@@ -186,6 +186,7 @@ castor::monitoring::rmnode::RmNodeDaemon::RmNodeDaemon() :
     { 2,  "Invalid RmNode/MetricsUpdateInterval option, using default" },
     { 3,  "Exception caught when starting RmNode" },
     { 4,  "RmNode Daemon started" },
+    { 5,  "Failed to update the RmNode/StatusFile, filesystem acknowledgement mismatch" },
 
     // State Thread
     { 6,  "State thread created" },
@@ -214,4 +215,27 @@ castor::monitoring::rmnode::RmNodeDaemon::RmNodeDaemon() :
 
     { -1, "" }};
   dlfInit(messages);
+}
+
+
+//-----------------------------------------------------------------------------
+// getMountPoints
+//-----------------------------------------------------------------------------
+std::vector<std::string> 
+castor::monitoring::rmnode::RmNodeDaemon::getMountPoints() 
+  throw(castor::exception::Exception) {
+  
+  // Convert the value of the RmNode/MountPoints configuration option into a
+  // vector of strings
+  std::vector<std::string> fileSystems;
+  char **values;
+  int  count;
+  if (getconfent_multi("RmNode", "MountPoints", 1, &values, &count) == 0) {
+    for (int i = 0; i < count; i++) {
+      fileSystems.push_back(values[i]);
+      free(values[i]);
+    }
+    free(values);
+  }
+  return fileSystems;
 }
