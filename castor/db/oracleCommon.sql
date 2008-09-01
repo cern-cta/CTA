@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.670 $ $Date: 2008/08/12 11:43:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.671 $ $Date: 2008/09/01 17:33:20 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -20,45 +20,45 @@ CREATE TABLE Id2Type (id INTEGER CONSTRAINT I_Id2Type_Id PRIMARY KEY, type NUMBE
 /* SQL statements for requests status */
 /* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */
 CREATE TABLE newRequests (type NUMBER(38) NOT NULL, id NUMBER(38) NOT NULL, creation DATE NOT NULL, CONSTRAINT I_NewRequests_Type_Id PRIMARY KEY (type, id))
-organization index
-compress
-partition by list (type)
+ORGANIZATION INDEX
+COMPRESS
+PARTITION BY LIST (type)
  (
-  partition type_16 values (16)  tablespace stager_data,
-  partition type_21 values (21)  tablespace stager_data,
-  partition type_33 values (33)  tablespace stager_data,
-  partition type_34 values (34)  tablespace stager_data,
-  partition type_35 values (35)  tablespace stager_data,
-  partition type_36 values (36)  tablespace stager_data,
-  partition type_37 values (37)  tablespace stager_data,
-  partition type_38 values (38)  tablespace stager_data,
-  partition type_39 values (39)  tablespace stager_data,
-  partition type_40 values (40)  tablespace stager_data,
-  partition type_41 values (41)  tablespace stager_data,
-  partition type_42 values (42)  tablespace stager_data,
-  partition type_43 values (43)  tablespace stager_data,
-  partition type_44 values (44)  tablespace stager_data,
-  partition type_45 values (45)  tablespace stager_data,
-  partition type_46 values (46)  tablespace stager_data,
-  partition type_48 values (48)  tablespace stager_data,
-  partition type_49 values (49)  tablespace stager_data,
-  partition type_50 values (50)  tablespace stager_data,
-  partition type_51 values (51)  tablespace stager_data,
-  partition type_60 values (60)  tablespace stager_data,
-  partition type_64 values (64)  tablespace stager_data,
-  partition type_65 values (65)  tablespace stager_data,
-  partition type_66 values (66)  tablespace stager_data,
-  partition type_67 values (67)  tablespace stager_data,
-  partition type_78 values (78)  tablespace stager_data,
-  partition type_79 values (79)  tablespace stager_data,
-  partition type_80 values (80)  tablespace stager_data,
-  partition type_84 values (84)  tablespace stager_data,
-  partition type_90 values (90)  tablespace stager_data,
-  partition type_142 values (142)  tablespace stager_data,
-  partition type_144 values (144)  tablespace stager_data,
-  partition type_147 values (147)  tablespace stager_data,
-  partition type_149 values (149)  tablespace stager_data,
-  partition notlisted values (default) tablespace stager_data
+  PARTITION type_16 VALUES (16)  TABLESPACE stager_data,
+  PARTITION type_21 VALUES (21)  TABLESPACE stager_data,
+  PARTITION type_33 VALUES (33)  TABLESPACE stager_data,
+  PARTITION type_34 VALUES (34)  TABLESPACE stager_data,
+  PARTITION type_35 VALUES (35)  TABLESPACE stager_data,
+  PARTITION type_36 VALUES (36)  TABLESPACE stager_data,
+  PARTITION type_37 VALUES (37)  TABLESPACE stager_data,
+  PARTITION type_38 VALUES (38)  TABLESPACE stager_data,
+  PARTITION type_39 VALUES (39)  TABLESPACE stager_data,
+  PARTITION type_40 VALUES (40)  TABLESPACE stager_data,
+  PARTITION type_41 VALUES (41)  TABLESPACE stager_data,
+  PARTITION type_42 VALUES (42)  TABLESPACE stager_data,
+  PARTITION type_43 VALUES (43)  TABLESPACE stager_data,
+  PARTITION type_44 VALUES (44)  TABLESPACE stager_data,
+  PARTITION type_45 VALUES (45)  TABLESPACE stager_data,
+  PARTITION type_46 VALUES (46)  TABLESPACE stager_data,
+  PARTITION type_48 VALUES (48)  TABLESPACE stager_data,
+  PARTITION type_49 VALUES (49)  TABLESPACE stager_data,
+  PARTITION type_50 VALUES (50)  TABLESPACE stager_data,
+  PARTITION type_51 VALUES (51)  TABLESPACE stager_data,
+  PARTITION type_60 VALUES (60)  TABLESPACE stager_data,
+  PARTITION type_64 VALUES (64)  TABLESPACE stager_data,
+  PARTITION type_65 VALUES (65)  TABLESPACE stager_data,
+  PARTITION type_66 VALUES (66)  TABLESPACE stager_data,
+  PARTITION type_67 VALUES (67)  TABLESPACE stager_data,
+  PARTITION type_78 VALUES (78)  TABLESPACE stager_data,
+  PARTITION type_79 VALUES (79)  TABLESPACE stager_data,
+  PARTITION type_80 VALUES (80)  TABLESPACE stager_data,
+  PARTITION type_84 VALUES (84)  TABLESPACE stager_data,
+  PARTITION type_90 VALUES (90)  TABLESPACE stager_data,
+  PARTITION type_142 VALUES (142)  TABLESPACE stager_data,
+  PARTITION type_144 VALUES (144)  TABLESPACE stager_data,
+  PARTITION type_147 VALUES (147)  TABLESPACE stager_data,
+  PARTITION type_149 VALUES (149)  TABLESPACE stager_data,
+  PARTITION notlisted VALUES (default) TABLESPACE stager_data
  );
 
 /* Redefinition of table SubRequest to make it partitioned by status */
@@ -90,7 +90,9 @@ CREATE TABLE SubRequest
     PARTITION P_STATUS_OTHER   VALUES (DEFAULT)
    );
 
-ALTER TABLE SUBREQUEST ADD CONSTRAINT I_SUBREQUEST_PK PRIMARY KEY (ID);
+/* SQL statements for constraints on SubRequest */
+ALTER TABLE SubRequest
+  ADD CONSTRAINT I_SubRequest_PK PRIMARY KEY (ID);
 
 /* Indexes related to most used entities */
 CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
@@ -143,10 +145,10 @@ ALTER TABLE FileSystem MODIFY (diskServer NOT NULL);
 ALTER TABLE DiskServer MODIFY (status NOT NULL);
 
 /* An index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */
-CREATE INDEX I_QueryParameter_Query on QueryParameter (query);
+CREATE INDEX I_QueryParameter_Query ON QueryParameter (query);
 
 /* An index to speed the queries on Segments by copy */
-CREATE INDEX I_Segment_Copy on Segment (copy);
+CREATE INDEX I_Segment_Copy ON Segment (copy);
 
 /* Constraint on FileClass name */
 ALTER TABLE FileClass ADD CONSTRAINT I_FileClass_Name UNIQUE (name);
@@ -163,7 +165,7 @@ ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT I_DiskPool2SvcCla_ParentChild PRIMA
 /* Custom type to handle int arrays */
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 
-/* default policy for migration */
+/* Default policy for migration */
 ALTER TABLE TapePool MODIFY (migrSelectPolicy DEFAULT 'defaultMigrSelPolicy');
 
 /* SvcClass constraints */
@@ -219,18 +221,18 @@ CREATE GLOBAL TEMPORARY TABLE bulkSelectHelper(objId NUMBER) ON COMMIT DELETE RO
 CREATE TABLE PriorityMap (euid INTEGER, egid INTEGER, priority INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 ALTER TABLE PriorityMap ADD CONSTRAINT U_Priority_euid_egid UNIQUE (euid, egid);
 
-/**
-  * Black and while list mechanism
-  * In order to be able to enter a request for a given service class, you need :
-  *   - to be in the white list for this service class
-  *   - to not be in the black list for this services class
-  * Being in a list means :
-  *   - either that your uid,gid is explicitely in the list
-  *   - or that your gid is in the list with null uid (that is group wildcard)
-  *   - or there is an entry with null uid and null gid (full wild card)
-  * The permissions can also have a request type. Default is null, that is everything.
-  * By default anybody can do anything
-  */
+/*
+ * Black and while list mechanism
+ * In order to be able to enter a request for a given service class, you need :
+ *     - to be in the white list for this service class
+ *   - to not be in the black list for this services class
+ * Being in a list means :
+ *   - either that your uid,gid is explicitely in the list
+ *   - or that your gid is in the list with null uid (that is group wildcard)
+ *   - or there is an entry with null uid and null gid (full wild card)
+ * The permissions can also have a request type. Default is null, that is everything.
+ * By default anybody can do anything
+ */
 CREATE TABLE WhiteList (svcClass VARCHAR2(2048), euid NUMBER, egid NUMBER, reqType NUMBER);
 CREATE TABLE BlackList (svcClass VARCHAR2(2048), euid NUMBER, egid NUMBER, reqType NUMBER);
 
@@ -238,12 +240,12 @@ INSERT INTO WhiteList VALUES (NULL, NULL, NULL, NULL);
 
 
 /* Define the service handlers for the appropriate sets of stage request objects */
-UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type in (35, 40, 44);
-UPDATE Type2Obj SET svcHandler = 'PrepReqSvc' WHERE type in (36, 37, 38, 119);
-UPDATE Type2Obj SET svcHandler = 'StageReqSvc' WHERE type in (39, 42, 95);
-UPDATE Type2Obj SET svcHandler = 'QueryReqSvc' WHERE type in (33, 34, 41, 103, 131, 152, 155);
-UPDATE Type2Obj SET svcHandler = 'JobSvc' WHERE type in (60, 64, 65, 67, 78, 79, 80, 93, 144, 147);
-UPDATE Type2Obj SET svcHandler = 'GCSvc' WHERE type in (73, 74, 83, 142, 149);
+UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type IN (35, 40, 44);
+UPDATE Type2Obj SET svcHandler = 'PrepReqSvc' WHERE type IN (36, 37, 38, 119);
+UPDATE Type2Obj SET svcHandler = 'StageReqSvc' WHERE type IN (39, 42, 95);
+UPDATE Type2Obj SET svcHandler = 'QueryReqSvc' WHERE type IN (33, 34, 41, 103, 131, 152, 155);
+UPDATE Type2Obj SET svcHandler = 'JobSvc' WHERE type IN (60, 64, 65, 67, 78, 79, 80, 93, 144, 147);
+UPDATE Type2Obj SET svcHandler = 'GCSvc' WHERE type IN (73, 74, 83, 142, 149);
 
 /* Set default values for the StageDiskCopyReplicaRequest table */
 ALTER TABLE StageDiskCopyReplicaRequest MODIFY flags DEFAULT 0;
@@ -285,8 +287,8 @@ COMMIT;
  * filesystem. The cost is an increase of complexity and especially
  * of the number of triggers ensuring consistency of the whole database */
 CREATE TABLE NbTapeCopiesInFS (FS NUMBER, Stream NUMBER, NbTapeCopies NUMBER);
-CREATE UNIQUE INDEX I_NbTapeCopiesInFS_FSStream on NbTapeCopiesInFS(FS, Stream);
-CREATE INDEX I_NbTapeCopiesInFS_Stream on NbTapeCopiesInFS(Stream);
+CREATE UNIQUE INDEX I_NbTapeCopiesInFS_FSStream ON NbTapeCopiesInFS(FS, Stream);
+CREATE INDEX I_NbTapeCopiesInFS_Stream ON NbTapeCopiesInFS(Stream);
 
 
 /*******************************************************************/
@@ -320,34 +322,40 @@ CREATE TABLE FileSystemsToCheck (FileSystem NUMBER PRIMARY KEY, ToBeChecked NUMB
 INSERT INTO FileSystemsToCheck SELECT id, 0 FROM FileSystem;
 
 
+/**************/
+/* Accounting */
+/**************/
+CREATE TABLE Accounting (euid INTEGER, svcClass INTEGER, nbBytes INTEGER);
+
+
 /************************************/
 /* Garbage collection related table */
 /************************************/
 
-/* a table storing the Gc policies and detailing there configuration
-   For each policy, identified by a name, parameters are :
-     - userWeight : the name of the PL/SQL function to be called to
-       precompute the GC weight when a file is written by the user.
-     - recallWeight : the name of the PL/SQL function to be called to
-       precompute the GC weight when a file is recalled
-     - copyWeight : the name of the PL/SQL function to be called to
-       precompute the GC weight when a file is disk to disk copied
-     - firstAccessHook : the name of the PL/SQL function to be called
-       when the file is accessed for the first time. Can be NULL.
-     - accessHook : the name of the PL/SQL function to be called
-       when the file is accessed (except for the first time). Can be NULL.
-     - userSetGCWeight : the name of the PL/SQL function to be called
-       when a setFileGcWeight user request is processed can be NULL.
-   All functions return a number that is the new gcWeight.
-   In general, here are the signatures :
-     userWeight(fileSize NUMBER, DiskCopyStatus NUMBER)
-     recallWeight(fileSize NUMBER)
-     copyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER))
-     firstAccessHook(oldGcWeight NUMBER, creationTime NUMBER)
-     accessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER)
-     userSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER)
-   Few notes :
-     diskCopyStatus can be STAGED(0) or CANBEMIGR(10)
+/* A table storing the Gc policies and detailing there configuration
+ * For each policy, identified by a name, parameters are :
+ *   - userWeight : the name of the PL/SQL function to be called to
+ *     precompute the GC weight when a file is written by the user.
+ *   - recallWeight : the name of the PL/SQL function to be called to
+ *     precompute the GC weight when a file is recalled
+ *   - copyWeight : the name of the PL/SQL function to be called to
+ *     precompute the GC weight when a file is disk to disk copied
+ *   - firstAccessHook : the name of the PL/SQL function to be called
+ *     when the file is accessed for the first time. Can be NULL.
+ *   - accessHook : the name of the PL/SQL function to be called
+ *     when the file is accessed (except for the first time). Can be NULL.
+ *   - userSetGCWeight : the name of the PL/SQL function to be called
+ *     when a setFileGcWeight user request is processed can be NULL.
+ * All functions return a number that is the new gcWeight.
+ * In general, here are the signatures :
+ *   userWeight(fileSize NUMBER, DiskCopyStatus NUMBER)
+ *   recallWeight(fileSize NUMBER)
+ *   copyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER))
+ *   firstAccessHook(oldGcWeight NUMBER, creationTime NUMBER)
+ *   accessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER)
+ *   userSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER)
+ * Few notes :
+ *   diskCopyStatus can be STAGED(0) or CANBEMIGR(10)
  */
 CREATE TABLE GcPolicy (name VARCHAR2(2048) NOT NULL PRIMARY KEY,
                        userWeight VARCHAR2(2048) NOT NULL,
@@ -367,18 +375,19 @@ INSERT INTO GcPolicy VALUES ('default',
                              'castorGC.cappedUserSetGCWeight');
 INSERT INTO GcPolicy VALUES ('FIFO',
                              'castorGC.creationTimeUserWeight',
-                             'castorGC.creationTimeRecallsWeight',
+                             'castorGC.creationTimeRecallWeight',
                              'castorGC.creationTimeCopyWeight',
                              NULL,
                              NULL,
                              NULL);
 INSERT INTO GcPolicy VALUES ('LRU',
                              'castorGC.creationTimeUserWeight',
-                             'castorGC.creationTimeRecallsWeight',
+                             'castorGC.creationTimeRecallWeight',
                              'castorGC.creationTimeCopyWeight',
                              'castorGC.LRUFirstAccessHook',
                              'castorGC.LRUAccessHook',
                              NULL);
+
 
 /*********************/
 /* FileSystem rating */
@@ -442,9 +451,9 @@ CREATE OR REPLACE FUNCTION checkForValidSvcClass
   ret NUMBER;
 BEGIN
   -- Check if the service class name is allowed to be NULL. This is quite often
-  -- the case if the calling function supports '*' (null) to indicate that all 
+  -- the case if the calling function supports '*' (null) to indicate that all
   -- service classes are being targeted.
-  IF svcClassName IS NULL OR length(svcClassName) IS NULL THEN 
+  IF svcClassName IS NULL OR length(svcClassName) IS NULL THEN
     IF allowNull = 1 THEN
       RETURN 1;
     END IF;
@@ -569,11 +578,3 @@ BEGIN
     END IF;
   END IF;
 END;
-
-
-/**************/
-/* Accounting */
-/**************/
-
-CREATE TABLE Accounting (euid INTEGER, svcClass INTEGER, nbBytes INTEGER);
-
