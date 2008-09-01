@@ -44,9 +44,9 @@
 namespace castor{
   namespace stager{
     namespace daemon{
-      
-      
-      
+
+
+
       /* constructor */
       RmHandler::RmHandler(RequestHelper* stgRequestHelper) throw() :
       RequestHandler()
@@ -54,27 +54,27 @@ namespace castor{
         this->stgRequestHelper = stgRequestHelper;
         this->typeRequest = OBJ_StageRmRequest;
       }
-      
-      
+
+
       void RmHandler::preHandle() throw(castor::exception::Exception)
       {
-        
+
         /* get the uuid request string version and check if it is valid */
         stgRequestHelper->setUuids();
-        
+
         /* we create the CnsHelper inside and we pass the requestUuid needed for logging */
         this->stgCnsHelper = new CnsHelper(stgRequestHelper->requestUuid);
-                
+
         /* set the username and groupname needed to print them on the log */
         stgRequestHelper->setUsernameAndGroupname();
-        
-        /* set the euid, egid attributes on stgCnsHelper (from fileRequest) */ 
+
+        /* set the euid, egid attributes on stgCnsHelper (from fileRequest) */
         stgCnsHelper->cnsSetEuidAndEgid(stgRequestHelper->fileRequest);
-        
+
         // the rest (getting svcClass, checking nameServer) is done in the handle
       }
-        
-      
+
+
       void RmHandler::handle() throw(castor::exception::Exception)
       {
         // Check the existence of the file. Don't stop if ENOENT
@@ -85,8 +85,8 @@ namespace castor{
           // This check overrides the default one provided in RequestHelper::checkFilePermission because
           // we need to check write access to the parent directory.
           std::string dirName = stgRequestHelper->subrequest->fileName();
-          dirName = dirName.substr(0, dirName.rfind('/')-1);
-          if(0 != Cns_accessUser(dirName.c_str(), W_OK, 
+          dirName = dirName.substr(0, dirName.rfind('/'));
+          if(0 != Cns_accessUser(dirName.c_str(), W_OK,
              stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid())) {
             castor::exception::Exception ex(serrno);
             throw ex;
@@ -119,19 +119,19 @@ namespace castor{
           }
           svcClassId = stgRequestHelper->svcClass->id();
         }
-          
+
         ReplyHelper* stgReplyHelper=NULL;
         try{
           // try to perform the stageRm; internally, the method checks for non existing files
           if(stgRequestHelper->stagerService->stageRm(stgRequestHelper->subrequest,
             stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server, svcClassId)) {
-            
+
             stgRequestHelper->subrequest->setStatus(SUBREQUEST_ARCHIVED);
-            
-            stgReplyHelper = new ReplyHelper();	  
+
+            stgReplyHelper = new ReplyHelper();
             stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "No error");
             stgReplyHelper->endReplyToClient(stgRequestHelper);
-            delete stgReplyHelper; 
+            delete stgReplyHelper;
             stgReplyHelper = NULL;
             stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
           }
@@ -144,7 +144,7 @@ namespace castor{
           }
         }
         catch(castor::exception::Exception e){
-          if(stgReplyHelper != NULL) { 
+          if(stgReplyHelper != NULL) {
 	    delete stgReplyHelper;
 	    stgReplyHelper = NULL;
 	  }
@@ -155,7 +155,7 @@ namespace castor{
           throw(e);
         }
       }
-      
+
     }//end daemon
   }//end stager
 }//end castor
