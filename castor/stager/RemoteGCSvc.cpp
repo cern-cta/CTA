@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/05/30 08:21:45 $ $Author: itglp $
+ * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/09/01 17:57:58 $ $Author: waldron $
  *
  *
  *
@@ -278,7 +278,6 @@ void castor::stager::RemoteGCSvc::filesDeleted
   throw (castor::exception::Exception) {
   // Build the FilesDeletedRequest
   castor::stager::FilesDeleted req;
-  int i = 0;
   for (std::vector<u_signed64*>::iterator it = diskCopyIds.begin();
        it != diskCopyIds.end();
        it++) {
@@ -288,7 +287,6 @@ void castor::stager::RemoteGCSvc::filesDeleted
     file->setRequest(&req);
     // Here the owner ship of files[i] is transmitted to req !
     req.files().push_back(file);
-    i++;
   }
   // Build a response Handler
   castor::client::BasicResponseHandler rh;
@@ -308,7 +306,6 @@ void castor::stager::RemoteGCSvc::filesDeletionFailed
   throw (castor::exception::Exception) {
   // Build the FilesDeletionFailedRequest
   castor::stager::FilesDeletionFailed req;
-  int i = 0;
   for (std::vector<u_signed64*>::iterator it = diskCopyIds.begin();
        it != diskCopyIds.end();
        it++) {
@@ -318,7 +315,6 @@ void castor::stager::RemoteGCSvc::filesDeletionFailed
     file->setRequest(&req);
     // Here the owner ship of files[i] is transmitted to req !
     req.files().push_back(file);
-    i++;
   }
   // Build a response Handler
   castor::client::BasicResponseHandler rh;
@@ -384,7 +380,6 @@ std::vector<u_signed64> castor::stager::RemoteGCSvc::nsFilesDeleted
   // Build the nsFilesDeleted Request
   castor::stager::NsFilesDeleted req;
   req.setNsHost(nsHost);
-  int i = 0;
   for (std::vector<u_signed64>::iterator it = fileIds.begin();
        it != fileIds.end();
        it++) {
@@ -393,7 +388,6 @@ std::vector<u_signed64> castor::stager::RemoteGCSvc::nsFilesDeleted
     file->setRequest(&req);
     // Here the owner ship of files[i] is transmitted to req !
     req.files().push_back(file);
-    i++;
   }
   // Prepare a result vector
   std::vector<u_signed64> result;
@@ -470,7 +464,6 @@ std::vector<u_signed64> castor::stager::RemoteGCSvc::stgFilesDeleted
   // Build the stgFilesDeleted Request
   castor::stager::StgFilesDeleted req;
   req.setNsHost(nsHost);
-  int i = 0;
   for (std::vector<u_signed64>::iterator it = diskCopyIds.begin();
        it != diskCopyIds.end();
        it++) {
@@ -479,7 +472,6 @@ std::vector<u_signed64> castor::stager::RemoteGCSvc::stgFilesDeleted
     file->setRequest(&req);
     // Here the owner ship of files[i] is transmitted to req !
     req.files().push_back(file);
-    i++;
   }
   // Prepare a result vector
   std::vector<u_signed64> result;
