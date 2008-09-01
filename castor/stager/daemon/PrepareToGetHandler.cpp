@@ -141,8 +141,10 @@ namespace castor{
 		diskCopy = stgRequestHelper->stagerService->
 		  getBestDiskCopyToRead(stgRequestHelper->subrequest->castorFile(),
 					stgRequestHelper->svcClass);
-                stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "", diskCopy);
-              } else {              
+              }
+	      if (diskCopy) {
+		stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "", diskCopy);
+	      } else {              
                 stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "");
               }
               stgReplyHelper->endReplyToClient(stgRequestHelper);

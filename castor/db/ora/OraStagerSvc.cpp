@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.258 $ $Release$ $Date: 2008/08/18 16:16:03 $ $Author: waldron $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.259 $ $Release$ $Date: 2008/09/01 17:23:30 $ $Author: waldron $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -843,6 +843,10 @@ castor::db::ora::OraStagerSvc::getBestDiskCopyToRead
       delete result;
       result = 0;
     };
+    // Ignore ORA-01403: no data found
+    if (1403 == e.getErrorCode()) {
+      return result;
+    }
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
