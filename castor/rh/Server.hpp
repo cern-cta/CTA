@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/08/29 12:37:52 $ $Author: riojac3 $
+ * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/09/01 17:26:48 $ $Author: waldron $
  *
  *
  *
@@ -68,23 +68,14 @@ namespace castor {
       /**
        * Overloaded method from BaseDaemon for individual command line parser
        */
-      virtual void parseCommandLine(int argc, char *argv[]) throw(castor::exception::Exception);
+      virtual void parseCommandLine(int argc, char *argv[])
+	throw(castor::exception::Exception);
 
-      /**
-       * Set the Secure attribute specifying the mode in which the server runs
-       * @param  Sec flag
-       */
-      void setSecOption(bool sec){
-        m_secure=sec;
-      }
+      /// The listening port
+      int m_port;
 
-      /**
-       * Retrieve the security flag
-       */
-      bool getSecOption(){
-        return m_secure;
-      }
-
+      /// Flag to indicate whether strong authentication is enabled or not
+      bool m_secure;
 
     protected:
  
@@ -93,8 +84,6 @@ namespace castor {
        */
       virtual void help(std::string programName);
 
-      // Security flag to define if the security option is enable or disable
-      bool m_secure; 
     }; // class Server
 
   } // end of namespace rh
