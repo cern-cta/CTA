@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.8 $ $Date: 2008/07/02 15:20:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.9 $ $Date: 2008/09/01 17:34:21 $ $Author: waldron $
  *
  * Some SQL code to ease support and debugging
  *
@@ -13,7 +13,8 @@ CREATE OR REPLACE PACKAGE castor_debug AS
     diskPool VARCHAR2(2048),
     location VARCHAR2(2048),
     status NUMBER,
-    creationtime DATE);
+    creationtime DATE,
+    gcWeight NUMBER);
   TYPE DiskCopyDebug IS TABLE OF DiskCopyDebug_typ;
   TYPE SubRequestDebug IS TABLE OF SubRequest%ROWTYPE;
   TYPE RequestDebug_typ IS RECORD (
@@ -73,7 +74,8 @@ BEGIN
                    diskPool.name AS diskpool,
                    diskServer.name || ':' || fileSystem.mountPoint || diskCopy.path AS location,
                    diskCopy.status AS status,
-                   to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationtime AS creationtime
+                   to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationtime AS creationtime,
+                   diskCopy.gcWeight AS gcweight
               FROM DiskCopy, FileSystem, DiskServer, DiskPool
              WHERE DiskCopy.fileSystem = FileSystem.id(+)
                AND FileSystem.diskServer = diskServer.id(+)
