@@ -898,6 +898,11 @@ doit(arg)
   } else {
     netclose (thip->s);
   }
+#ifdef CSEC
+  if (thip->secOn){
+     Csec_clearContext(&thip->sec_ctx);
+  }
+#endif
   if (req_data != reqbuf)
     free (req_data);
   thip->s = -1;
