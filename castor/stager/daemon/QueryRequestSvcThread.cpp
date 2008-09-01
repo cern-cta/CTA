@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.88 $ $Release$ $Date: 2008/06/17 13:15:57 $ $Author: sponcec3 $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.89 $ $Release$ $Date: 2008/09/01 17:17:46 $ $Author: waldron $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -169,21 +169,11 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileName
   castor::dlf::Param params[] =
     {castor::dlf::Param("Filename", fileName)};
   castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_FQUERY, 1, params);
-  // Check to see if regular expression support is enabled
+  // Regular expression supported is no longer supported
   if (fileName.compare(0, 7, "regexp:") == 0) {
-    bool enabled = false;
-    char *p = getconfent("FILEQUERY", "ENABLEREGEXP", 0);
-    if (p) {
-      if (!strcasecmp(p, "yes")) {
-	enabled = true;
-      }
-    }
-    // Regexp support is disabled!
-    if (!enabled) {
-      castor::exception::Exception ex(EPERM);
-      ex.getMessage() << "Support for regular expressions has been disabled";
-      throw ex;
-    }
+    castor::exception::Exception ex(SEOPNOTSUP);
+    ex.getMessage() << "Operation not supported for regular expressions";
+    throw ex;
   }
   // List diskCopies
   std::list<castor::stager::DiskCopyInfo*>* result =
@@ -563,23 +553,23 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
     std::string svcClassName;
     if (0 != svcClass) {
       svcClassName = svcClass->name();
-    }      
+    }
 
     // Get the name of the client hostname to pass into the Cupv interface.
     const castor::rh::Client *c =
       dynamic_cast<const castor::rh::Client*>(client);
-    std::string srcHostName = 
+    std::string srcHostName =
       castor::System::ipAddressToHostname(c->ipAddress());
 
     // Check if the user has ADMIN privileges so that they can see detailed
     // information about the diskservers and filesystems within a given pool
     // and/or svcclass
     bool detailed = false;
-    int rc = Cupv_check(req->euid(), req->egid(), 
+    int rc = Cupv_check(req->euid(), req->egid(),
 			srcHostName.c_str(), "", P_ADMIN);
     if ((rc < 0) && (serrno != EACCES)) {
       castor::exception::Exception e(serrno);
-      e.getMessage() << "Failed Cupv_check call for " 
+      e.getMessage() << "Failed Cupv_check call for "
 		     << req->euid() << ":" << req->egid() << " (ADMIN)";
       throw e;
     } else if (rc == 0) {
@@ -593,7 +583,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
       castor::dlf::Param params[] =
 	{castor::dlf::Param("SvcClass", svcClassName)};
       castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_DSQUERY, 1, params);
-  
+
       // Invoking the method
       std::vector<castor::query::DiskPoolQueryResponse*>* result =
         qrySvc->describeDiskPools(svcClassName, req->euid(), req->egid(), detailed);
@@ -612,7 +602,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
         delete (*it);
       }
       delete result;
-    } 
+    }
 
     // List all DiskPools for a given svcclass
     else {
@@ -681,26 +671,26 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
     // Get the name of the client hostname to pass into the Cupv interface.
     const castor::rh::Client *c =
       dynamic_cast<const castor::rh::Client*>(client);
-    std::string srcHostName = 
+    std::string srcHostName =
       castor::System::ipAddressToHostname(c->ipAddress());
     // check privileges of the caller. He must be ADMIN in general
     // or GROUP_ADMIN for user operations
     int rc = Cupv_check(req->euid(), req->egid(),
-                        srcHostName.c_str(), 
+                        srcHostName.c_str(),
 			"", P_GRP_ADMIN);
     if ((rc < 0) && (serrno != EACCES)) {
       castor::exception::Exception e(serrno);
-      e.getMessage() << "Failed Cupv_check call for " 
+      e.getMessage() << "Failed Cupv_check call for "
 		     << req->euid() << ":" << req->egid() << " (GRP_ADMIN)";
       throw e;
     } else if (rc < 0) {
       // Check for GRP_ADMIN failed so check if the user is an ADMIN
       rc = Cupv_check(req->euid(), req->egid(),
-		      srcHostName.c_str(), 
+		      srcHostName.c_str(),
 		      "", P_ADMIN);
       if ((rc < 0) && (serrno != EACCES)){
 	castor::exception::Exception e(serrno);
-	e.getMessage() << "Failed Cupv_check call for " 
+	e.getMessage() << "Failed Cupv_check call for "
 		       << req->euid() << ":" << req->egid() << " (ADMIN)";
 	throw e;
       } else if (rc < 0) {
@@ -734,10 +724,10 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
 	sendResponse(client, &res, true);
     } catch (castor::exception::Exception e) {
       // nothing that can really be done here
-    } 
+    }
   }
 }
-    
+
 //-----------------------------------------------------------------------------
 // handleListPrivileges
 //-----------------------------------------------------------------------------
@@ -785,10 +775,10 @@ void castor::stager::daemon::QueryRequestSvcThread::handleListPrivileges
 	sendResponse(client, &res, true);
     } catch (castor::exception::Exception e) {
       // nothing that can really be done here
-    } 
+    }
   }
 }
-    
+
 //-----------------------------------------------------------------------------
 // handleVersionQuery
 //-----------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.642 $ $Date: 2008/06/25 12:26:10 $ $Author: waldron $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.643 $ $Date: 2008/09/01 17:18:14 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -44,7 +44,7 @@ BEGIN
         FROM CastorFile,
              (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name as machine, FileSystem.mountPoint,
                      DiskPool2SvcClass.child as dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile, DiskCopy.nbCopyAccesses
-                FROM FileSystem, DiskServer, DiskPool2SvcClass, 
+                FROM FileSystem, DiskServer, DiskPool2SvcClass,
                      (SELECT id, status, filesystem, castorFile, path, nbCopyAccesses FROM DiskCopy
                        WHERE CastorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
                          AND status IN (0, 1, 2, 4, 5, 6, 7, 10, 11)
@@ -97,7 +97,7 @@ BEGIN
        FROM CastorFile,
             (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name as machine, FileSystem.mountPoint,
                     DiskPool2SvcClass.child as dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile, DiskCopy.nbCopyAccesses
-               FROM FileSystem, DiskServer, DiskPool2SvcClass, 
+               FROM FileSystem, DiskServer, DiskPool2SvcClass,
                     (SELECT id, status, filesystem, castorFile, path, nbCopyAccesses FROM DiskCopy
                       WHERE CastorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
                         AND status IN (0, 1, 2, 4, 5, 6, 7, 10, 11)
@@ -126,19 +126,14 @@ CREATE OR REPLACE PROCEDURE fileNameStageQuery
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
 BEGIN
-  IF substr(fn, 1, 7) = 'regexp:' THEN  -- posix-syle regular expressions
-    SELECT id BULK COLLECT INTO cfs
-      FROM CastorFile
-     WHERE REGEXP_LIKE(lastKnownFileName,substr(fn, 8)) 
-       AND ROWNUM <= maxNbResponses + 1;
-  ELSIF substr(fn, -1, 1) = '/' THEN    -- files in a 'subdirectory'
+  IF substr(fn, -1, 1) = '/' THEN    -- files in a 'subdirectory'
     SELECT /*+ INDEX(CastorFile I_CastorFile_LastKnownFileName) */ id BULK COLLECT INTO cfs
-      FROM CastorFile 
+      FROM CastorFile
      WHERE lastKnownFileName LIKE fn||'%'
        AND ROWNUM <= maxNbResponses + 1;
   ELSE                                  -- exact match
     SELECT /*+ INDEX(CastorFile I_CastorFile_LastKnownFileName) */ id BULK COLLECT INTO cfs
-      FROM CastorFile 
+      FROM CastorFile
      WHERE lastKnownFileName = REGEXP_REPLACE(fn,'(/){2,}','/');
   END IF;
   IF cfs.COUNT > maxNbResponses THEN
@@ -325,9 +320,9 @@ CREATE OR REPLACE PROCEDURE describeDiskPools
 (svcClassName IN VARCHAR2, reqEuid IN INTEGER, reqEgid IN INTEGER,
  res OUT NUMBER, result OUT castor.DiskPoolsQueryLine_Cur) AS
 BEGIN
-  -- We use here analytic functions and the grouping sets functionnality to 
-  -- get both the list of filesystems and a summary per diskserver and per 
-  -- diskpool. The grouping analytic function also allows to mark the summary 
+  -- We use here analytic functions and the grouping sets functionnality to
+  -- get both the list of filesystems and a summary per diskserver and per
+  -- diskpool. The grouping analytic function also allows to mark the summary
   -- lines for easy detection in the C++ code
   OPEN result FOR
     SELECT grouping(ds.name) AS IsDSGrouped,
@@ -357,12 +352,12 @@ BEGIN
           )
        ORDER BY dp.name, IsDSGrouped DESC, ds.name, IsFSGrouped DESC, fs.mountpoint;
 
-  -- If no results are available, check to see if any diskpool exists and if 
+  -- If no results are available, check to see if any diskpool exists and if
   -- access to view all the diskpools has been revoked. The information extracted
   -- here will be used to send an appropriate error message to the client.
   IF result%ROWCOUNT = 0 THEN
     SELECT CASE count(*)
-           WHEN sum(checkPermissionOnSvcClass(sc.name, reqEuid, reqEgid, 103)) THEN -1 
+           WHEN sum(checkPermissionOnSvcClass(sc.name, reqEuid, reqEgid, 103)) THEN -1
            ELSE count(*) END
       INTO res
       FROM DiskPool2SvcClass d2s, SvcClass sc
@@ -380,11 +375,11 @@ CREATE OR REPLACE PROCEDURE describeDiskPool
 (diskPoolName IN VARCHAR2, svcClassName IN VARCHAR2,
  res OUT NUMBER, result OUT castor.DiskPoolQueryLine_Cur) AS
 BEGIN
-  -- We use here analytic functions and the grouping sets functionnality to 
-  -- get both the list of filesystems and a summary per diskserver and per 
-  -- diskpool. The grouping analytic function also allows to mark the summary 
+  -- We use here analytic functions and the grouping sets functionnality to
+  -- get both the list of filesystems and a summary per diskserver and per
+  -- diskpool. The grouping analytic function also allows to mark the summary
   -- lines for easy detection in the C++ code
-  OPEN result FOR 
+  OPEN result FOR
     SELECT grouping(ds.name) AS IsDSGrouped,
            grouping(fs.mountPoint) AS IsGrouped,
            ds.name, ds.status, fs.mountPoint,
@@ -409,7 +404,7 @@ BEGIN
           )
        order by IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint;
 
-  -- If no results are available, check to see if any diskpool exists and if 
+  -- If no results are available, check to see if any diskpool exists and if
   -- access to view all the diskpools has been revoked. The information extracted
   -- here will be used to send an appropriate error message to the client.
   IF result%ROWCOUNT = 0 THEN
