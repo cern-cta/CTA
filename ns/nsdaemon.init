@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: nsdaemon.init,v $ $Revision: 1.11 $ $Release$ $Date: 2008/08/12 11:44:44 $ $Author: waldron $
+# @(#)$RCSfile: nsdaemon.init,v $ $Revision: 1.12 $ $Release$ $Date: 2008/09/01 17:05:11 $ $Author: waldron $
 #
 # chkconfig: 345 66 39
 # description: NS server daemo
@@ -32,6 +32,7 @@
 
 # Variables
 prog="nsdaemon"
+FRETVAL=0
 RETVAL=0
 
 # Source sysconfig files
@@ -46,68 +47,144 @@ start() {
         # Run daemon
         echo -n $"Starting $prog: "
 
+        # Check for roles
+        if [ -n "$1" ]; then
+                ROLES=$1
+        elif [ -z "${ROLES}" ]; then
+                ROLES="public"
+        fi
+        echo
+
         # Set location of globus libraries
         LD_LIBRARY_PATH=/opt/globus/lib
         export LD_LIBRARY_PATH
 
-        cd /var/spool/ns
-        daemon /usr/bin/$prog $NSDAEMON_OPTIONS
+        # Start nsdaemons
+        for i in ${ROLES}; do
 
-        # Write the pid to a file.
-        RETVAL=$?
-        if [ $RETVAL -eq 0 ]; then
-                pid=`ps -eo pid,ppid,comm | egrep " 1 $prog\$" | awk '{print $1}'`
-                rm -f /var/run/$prog.pid
-                if [ -n "$pid" ]; then
-                        echo $pid > /var/run/$prog.pid
-                        RETVAL=0
+                # Load the appropriate sysconfig file for role
+                if [ -f /etc/sysconfig/$prog.$i ]; then
+                        . /etc/sysconfig/$prog.$i
                 else
-                        RETVAL=1
+                        # Load default
+                        if [ -f /etc/sysconfig/$prog ]; then
+                                . /etc/sysconfig/$prog
+                        fi
                 fi
-        fi
+                echo -n $"Starting $prog for role: $i "
 
-        [ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
-        echo
-        [ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog
+                # Check to see if the nsdaemon for this role is already running
+                pid=`pidofproc $prog.$i`
+                if [ -n "$pid" ]; then
+                        echo -n $"- already started"
+                        failure
+                        echo
+                else
+                        cd /var/spool/ns
+                        daemon /usr/bin/$prog $NSDAEMON_OPTIONS
+
+                        # Write the pid to a file.
+                        RETVAL=$?
+                        if [ $RETVAL -eq 0 ]; then
+                                pid=`ps -eo pid,ppid,comm,cmd | egrep " 1 $prog.*$NSDAEMON_OPTIONS\$" | awk '{print $1}'`
+                                rm -f /var/run/$prog.$i.pid
+                                if [ -n "$pid" ]; then
+                                        echo $pid > /var/run/$prog.$i.pid
+                                        RETVAL=0
+                                else
+                                        RETVAL=1
+                                fi
+                        fi
+
+                        [ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
+                        echo
+                        if [ $RETVAL -eq 0 ]; then
+                                touch /var/lock/subsys/$prog.$i
+                        else
+                                FRETVAL=$RETVAL
+                        fi
+                fi
+        done
+
+        RETVAL=$FRETVAL
         return $RETVAL
 }
 
 stop() {
-        echo -n $"Stopping $prog: "
-        killproc $prog
-
+        echo -n $"Stopping $prog: $1 "
+        if [ -n "$1" ]; then
+                killproc $prog.$1
+        else
+                killproc $prog
+        fi
         RETVAL=$?
         echo
-        [ -f /var/lock/subsys/$prog ] && rm -f /var/lock/subsys/$prog
+        if [ -n "$1" ]; then
+                [ -f /var/lock/subsys/$prog.$1 ] && rm -f /var/lock/subsys/$prog.$1
+        else 
+                rm -f /var/lock/subsys/$prog.*
+        fi
+        return $RETVAL
+}
+
+status() {
+        # Check for roles
+        if [ -z "${ROLES}" ]; then
+                ROLES="public"
+        fi
+        # Loop over nsdaemons
+        for i in ${ROLES}; do
+                # Check if the nsdaemon associated to this role running
+                pid=`pidofproc $prog.$i`
+                if [ -n "$pid" ]; then
+                        echo $"$prog for role: $i (pid $pid) is running..."
+                        continue
+                else
+                        # See if /var/lock/subsys/$prog.$i exists
+                        if [ -f /var/lock/subsys/$prog.$i ]; then
+                                echo $"$prog for role: $i dead but subsys locked"
+                        else
+                                echo $"$prog for role: $i is stopped"
+                        fi
+                        RETVAL=1
+                fi                        
+        done
         return $RETVAL
 }
 
 restart() {
-        stop
-        start
+        stop $1
+        start $1
 }
+
+# Check for roles
+if [ -n "$2" ]; then
+        ROLES=$2
+elif [ -z "${ROLES}" ]; then
+        ROLES="public"
+fi
 
 # See how we were called
 case "$1" in
 
         start)
-                start
+                start $2
                 ;;
         stop)
-                stop
+                stop $2
                 ;;
         status)
-                status $prog
-                RETVAL=$?
+                status
                 ;;
         restart)
-                restart
+                restart $2
                 ;;
         condrestart)
-                [ -f /var/lock/subsys/$prog ] && restart || :
+                [ -n "$2" -a -f /var/lock/subsys/$prog.$2 ] && restart $2 || :
+                [ -z "$2" ] && restart || :
                 ;;
         *)
-                echo $"Usage: $0 {start|stop|status|restart|condrestart}"
+                echo $"Usage: $0 {start|stop|status|restart|condrestart} [role]"
                 exit 1
 esac
 
