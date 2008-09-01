@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.59 $ $Release$ $Date: 2008/08/14 15:10:11 $ $Author: kotlyar $
+ * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.60 $ $Release$ $Date: 2008/09/01 18:01:21 $ $Author: waldron $
  *
  * Service thread for job related requests
  *
@@ -422,9 +422,11 @@ void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
     string2Cuuid(&suuid, (char*)subreq->subreqId().c_str());
     // "Invoking prepareForMigration"
     castor::dlf::Param params[] =
-      {castor::dlf::Param(suuid)};
+      {castor::dlf::Param("ChkSumType", mcReq->csumType()),
+       castor::dlf::Param("ChkSumValue", mcReq->csumValue()),
+       castor::dlf::Param(suuid)};
     castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_PFMIG,
-			    fileId, nsHost, 1, params);
+			    fileId, nsHost, 3, params);
     try {
          jobSvc->prepareForMigration(subreq, mcReq->fileSize(), mcReq->timeStamp(), fileId, nsHost, mcReq->csumType(), mcReq->csumValue());
     } catch (castor::exception::Exception e) {
