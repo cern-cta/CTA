@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.648 $ $Date: 2008/08/08 09:13:40 $ $Author: waldron $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.649 $ $Date: 2008/09/01 17:53:14 $ $Author: waldron $
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -23,11 +23,11 @@ BEGIN
      AND (egid = iegid OR egid IS NULL)
      AND (euid = ieuid OR euid IS NULL)
      AND (reqType = ireqType OR reqType IS NULL);
-  IF unused = 0 THEN    
+  IF unused = 0 THEN
     -- Not found in White list -> no access
     IF checkForValidSvcClass(isvcClass, 1, 0) = 1 THEN
       -- Service class exists, we give permission denied
-      res := -1;      
+      res := -1;
     ELSE
       -- Service class does not exist
       res := -2;
@@ -64,6 +64,10 @@ FUNCTION checkPermissionOnSvcClass(reqSvcClass IN VARCHAR2,
 RETURN NUMBER AS
   res NUMBER;
 BEGIN
+  -- Skip access control checks for special internal users
+  IF reqEuid = -1 AND reqEgid = -1 THEN
+    RETURN 0;
+  END IF;
   -- Check the users access rights
   checkPermission(reqSvcClass, reqEuid, reqEgid, reqType, res);
   IF res = 0 THEN
