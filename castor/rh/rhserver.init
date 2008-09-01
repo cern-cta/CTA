@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.16 $ $Release$ $Date: 2008/08/12 11:48:35 $ $Author: waldron $
+# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.17 $ $Release$ $Date: 2008/09/01 17:27:40 $ $Author: waldron $
 #
 # chkconfig: 345 63 52
 # description: Request Handler Initialisation Script
@@ -45,7 +45,7 @@ fi
 
 start() {
         # Run daemon
-        echo -n $"Starting rhserver: "
+        echo -n $"Starting $prog: "
 
         # Check for roles
         if [ -n "$1" ]; then
@@ -63,15 +63,15 @@ start() {
         for i in ${ROLES}; do
 
                 # Load the appropriate sysconfig file for role
-                if [ -f /etc/sysconfig/rhserver.$i ]; then
-                        . /etc/sysconfig/rhserver.$i
+                if [ -f /etc/sysconfig/$prog.$i ]; then
+                        . /etc/sysconfig/$prog.$i
                 else
                         # Load default
-                        if [ -f /etc/sysconfig/rhserver ]; then
-                                . /etc/sysconfig/rhserver
+                        if [ -f /etc/sysconfig/$prog ]; then
+                                . /etc/sysconfig/$prog
                         fi
                 fi
-                echo -n $"Starting rhserver for role: $i "
+                echo -n $"Starting $prog for role: $i "
 
                 # Check to see if the rhserver for this role is already running
                 pid=`pidofproc $prog.$i`
@@ -80,7 +80,7 @@ start() {
                         failure
                         echo
                 else
-                        cd /var/spool/rhserver
+                        cd /var/spool/$prog
                         daemon /usr/bin/$prog $RHSERVER_OPTIONS
 
                         # Write the pid to a file.
@@ -111,7 +111,7 @@ start() {
 }
 
 stop() {
-        echo -n $"Stopping rhserver: $1 "
+        echo -n $"Stopping $prog: $1 "
         if [ -n "$1" ]; then
                 killproc $prog.$1
         else
@@ -137,14 +137,14 @@ status() {
                 # Check if the rhserver associated to this role running
                 pid=`pidofproc $prog.$i`
                 if [ -n "$pid" ]; then
-                        echo $"rhserver for role: $i (pid $pid) is running..."
+                        echo $"$prog for role: $i (pid $pid) is running..."
                         continue
                 else
                         # See if /var/lock/subsys/$prog.$i exists
                         if [ -f /var/lock/subsys/$prog.$i ]; then
-                                echo $"rhserver for role: $i dead but subsys locked"
+                                echo $"$prog for role: $i dead but subsys locked"
                         else
-                                echo $"rhserver for role: $i is stopped"
+                                echo $"$prog for role: $i is stopped"
                         fi
                         RETVAL=1
                 fi                        
@@ -157,13 +157,12 @@ restart() {
         start $1
 }
 
-        # Check for roles
-        if [ -n "$2" ]; then
-                ROLES=$2
-        elif [ -z "${ROLES}" ]; then
-                ROLES="public"
-        fi
-
+# Check for roles
+if [ -n "$2" ]; then
+        ROLES=$2
+elif [ -z "${ROLES}" ]; then
+        ROLES="public"
+fi
 
 # See how we were called
 case "$1" in
