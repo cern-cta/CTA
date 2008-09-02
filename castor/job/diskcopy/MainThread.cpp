@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/08/22 13:04:37 $ $Author: kotlyar $
+ * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/09/02 09:14:49 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -474,10 +474,6 @@ void castor::job::diskcopy::MainThread::run(void *param) {
 			  diskCopy->diskCopyPath()),
        castor::dlf::Param(m_subRequestUuid)};
     castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_DEBUG, 28, 3, params, &m_fileId);
-
-    sourceDiskCopy->setFileId(m_fileId.fileid);
-    sourceDiskCopy->setNsHost(m_fileId.server);
-
     m_mover->destination(diskCopy, sourceDiskCopy);
   } catch (castor::exception::Exception e) {
 
