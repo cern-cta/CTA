@@ -34,6 +34,8 @@ CREATE TABLE VolumePriority (priority NUMBER, clientUID NUMBER, clientGID NUMBER
 /* SQL statements for type Tape2DriveDedication */
 CREATE TABLE Tape2DriveDedication (vid VARCHAR2(2048), creationTime INTEGER, modificationTime INTEGER, id INTEGER CONSTRAINT I_Tape2DriveDedication_Id PRIMARY KEY, tapeDrive INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
+/* SQL statements for constraints on TapeDrive */
 ALTER TABLE TapeDrive2TapeDriveComp
-  ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_P FOREIGN KEY (Parent) REFERENCES TapeDrive (id)
-  ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
+  ADD CONSTRAINT FK_TapeDrive2TapeDriveComp_P FOREIGN KEY (Parent) REFERENCES TapeDrive (id)
+  ADD CONSTRAINT FK_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
+
