@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/08/27 08:05:04 $ $Author: riojac3 $
+ * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/09/02 13:10:23 $ $Author: riojac3 $
  *
  * @author Benjamin Couturier
  *****************************************************************************/
@@ -213,6 +213,7 @@ throw(castor::exception::Exception) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "User cannot be mapped into local user";
   }
+  m_secMech=mech;
   m_userName=username; 
 }
 
@@ -239,4 +240,10 @@ std::string castor::io::AuthServerSocket::getClientMappedName () {
   return m_userName;
 }
 
+//------------------------------------------------------------------------------
+//  set security Mechanism
+//------------------------------------------------------------------------------
+std::string castor::io::AuthServerSocket::getSecMech () {
+  return m_secMech;
+}
 

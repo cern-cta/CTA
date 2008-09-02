@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthServerSocket.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/08/27 08:05:04 $ $Author: riojac3 $
+ * @(#)$RCSfile: AuthServerSocket.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/09/02 13:10:23 $ $Author: riojac3 $
  *
  * Defines a dedicated socket that handles most of the network calls
  *
@@ -145,11 +145,18 @@ namespace castor {
        */
       std::string getClientMappedName();
 
+     /**
+       * Returns the value of the security mechanims used by the client
+       * THAT METHOD SHOULDN'T BELONG TO THE CLASS SOCKET --TO BE MOVED
+       */
+      std::string getSecMech();
+
     private:
       Csec_context_t m_security_context;
       uid_t m_Euid;
       gid_t m_Egid;
       std::string m_userName;
+      std::string m_secMech;
     };
 
   } // end of namespace io
