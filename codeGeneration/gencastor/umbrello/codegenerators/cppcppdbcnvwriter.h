@@ -41,7 +41,7 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
   /// writes SQL statements for creation/deletion of the databases
   void writeOraSqlStatements();
   void writePgSqlStatements();
-    
+
   /// writes constructor and destructor
   void writeConstructors();
 
@@ -93,9 +93,6 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
                                   bool isEnum = false,
                                   bool isAssoc = false,
                                   QString remoteTypeName = "");
-
-  /// writes the buffer release code for one member in bulkCreateRep
-  void writeReleaseBufferForSelect(QString name);
 
   /// writes createRep method's content
   void writeCreateRepContent();

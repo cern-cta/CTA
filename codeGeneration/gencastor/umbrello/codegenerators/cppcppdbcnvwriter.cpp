@@ -44,9 +44,9 @@ void CppCppDbCnvWriter::startSQLFile() {
            IO_WriteOnly | IO_Truncate);
   file.close();
   openFile(file, s_topNS + "/db/oracleGeneratedTrailer_create.sql",
-           IO_WriteOnly | IO_Truncate);
-  file.close();  
-
+	   IO_WriteOnly | IO_Truncate);
+  file.close();
+  
   /*  openFile(file, s_topNS + "/db/postgresSchema.sql",
            IO_WriteOnly | IO_Truncate);
   file.close();
@@ -670,7 +670,7 @@ void CppCppDbCnvWriter::writeConstants() {
 // writeOraSqlStatements
 //=============================================================================
 void CppCppDbCnvWriter::writeOraSqlStatements() {
-  QFile file, tFile;
+  QFile file, tFile, cFile;
   openFile(file,
            s_topNS + "/db/oracleGeneratedCore_create.sql",
            IO_WriteOnly | IO_Append);
@@ -759,19 +759,23 @@ void CppCppDbCnvWriter::writeOraSqlStatements() {
                << " (parent);"
                << endl;
         tStream << getIndent()
+		<< "/* SQL statements for constraints on "
+		<< m_classInfo->className
+		<< " */"
+		<< endl
                 << "ALTER TABLE "
                 << compoundName
                 << endl << getIndent()
-                << "  ADD CONSTRAINT fk_"
+                << "  ADD CONSTRAINT FK_"
                 << compoundName
                 << "_P FOREIGN KEY (Parent) REFERENCES "
                 << capitalizeFirstLetter(firstMember->typeName)
                 << " (id)" << endl << getIndent()
-                << "  ADD CONSTRAINT fk_"
+                << "  ADD CONSTRAINT FK_"
                 << compoundName
                 << "_C FOREIGN KEY (Child) REFERENCES "
                 << capitalizeFirstLetter(secondMember->typeName)
-                << " (id);" << endl;
+                << " (id);" << endl << endl;
       }
     }
   }
@@ -1403,7 +1407,7 @@ void CppCppDbCnvWriter::writeFillObj() {
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
   m_indent--;
-  *m_stream << getIndent() << "}" << endl;
+  *m_stream << getIndent() << "}" << endl << endl;
 
   // Now write the dedicated fillObj Methods
   unsigned int n = 0;
@@ -2262,7 +2266,6 @@ void CppCppDbCnvWriter::writeBasicMultNFillObj(Assoc* as) {
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
 
-
   m_indent--;
   *m_stream << getIndent() << "}" << endl << endl;
 }
@@ -2483,19 +2486,47 @@ void CppCppDbCnvWriter::writeCreateBufferForSelect(QString name,
     *m_stream << getIndent() << "}" << endl
 	      << getIndent()
 	      << "char* " << name << "Buffer = (char*) calloc(nb, "
-	      << name << "MaxLen);"
-	      << endl;
+	      << name << "MaxLen);" << endl
+	      << getIndent()
+	      << "if (" << name << "Buffer == 0) {" << endl
+	      << getIndent()
+	      << "  castor::exception::OutOfMemory e;" << endl 
+	      << getIndent()
+	      << "  throw e;" << endl
+	      << getIndent()
+	      << "}" << endl
+	      << getIndent()
+	      << "allocMem.push_back(" << name << "Buffer);" << endl;
   } else {
     *m_stream << getIndent()
 	      << cTypeName << "* " << name << "Buffer = ("
 	      << cTypeName << "*) malloc(nb * sizeof("
-	      << cTypeName << "));"
-	      << endl;
+	      << cTypeName << "));" << endl 
+	      << getIndent()
+	      << "if (" << name << "Buffer == 0) {" << endl
+	      << getIndent()
+	      << "  castor::exception::OutOfMemory e;" << endl 
+	      << getIndent()
+	      << "  throw e;" << endl
+	      << getIndent()
+	      << "}" << endl
+	      << getIndent()
+	      << "allocMem.push_back(" << name << "Buffer);" << endl;
   }
   *m_stream << getIndent()
             << "unsigned short* " << name
             << "BufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));"
             << endl << getIndent()
+	    << "if (" << name << "BufLens == 0) {" << endl
+	    << getIndent()
+	    << "  castor::exception::OutOfMemory e;" << endl 
+	    << getIndent()
+	    << "  throw e;" << endl
+	    << getIndent()
+	    << "}" << endl
+	    << getIndent()
+	    << "allocMem.push_back(" << name << "BufLens);" << endl
+	    << getIndent()
             << "for (int i = 0; i < nb; i++) {" << endl;
   m_indent++;
   if (name == "creationTime" ||
@@ -2559,18 +2590,6 @@ void CppCppDbCnvWriter::writeCreateBufferForSelect(QString name,
 }
 
 //=============================================================================
-// writeReleaseBufferForSelect
-//=============================================================================
-void CppCppDbCnvWriter::writeReleaseBufferForSelect(QString name) {
-  *m_stream << getIndent() << "// release the buffers for " << name
-            << endl << getIndent()
-            << "free(" << name << "Buffer);"
-            << endl << getIndent()
-            << "free(" << name << "BufLens);"
-            << endl;
-}
-
-//=============================================================================
 // writeBulkCreateRepContent
 //=============================================================================
 void CppCppDbCnvWriter::writeBulkCreateRepContent() {
@@ -2598,6 +2617,7 @@ void CppCppDbCnvWriter::writeBulkCreateRepContent() {
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
   // Start of try block for database statements
+  *m_stream << getIndent() << fixTypeName("vector", "", "") << "<void *> allocMem;" << endl;
   *m_stream << getIndent() << "try {" << endl;
   m_indent++;
   // Check the statements
@@ -2622,6 +2642,7 @@ void CppCppDbCnvWriter::writeBulkCreateRepContent() {
       n++;
     }
   }
+  addInclude("\"castor/exception/OutOfMemory.hpp\"");
   // Go through the associations
   for (Assoc* as = assocs.first();
        0 != as;
@@ -2650,9 +2671,29 @@ void CppCppDbCnvWriter::writeBulkCreateRepContent() {
   *m_stream << getIndent() << "// build the buffers for returned ids"
             << endl << getIndent()
             << "double* idBuffer = (double*) calloc(nb, sizeof(double));"
+	    << endl << getIndent()
+	    << "if (idBuffer == 0) {"
+	    << endl << getIndent()
+	    << "  castor::exception::OutOfMemory e;"
+	    << endl << getIndent()
+	    << "  throw e;"
+	    << endl << getIndent()
+	    << "}"
             << endl << getIndent()
-            << "unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));"
+	    << "allocMem.push_back(idBuffer);"
+	    << endl << getIndent()
+	    << "unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));"
+	    << endl << getIndent()
+	    << "if (idBufLens == 0) {"
+	    << endl << getIndent()
+	    << "  castor::exception::OutOfMemory e;"
+	    << endl << getIndent()
+	    << "  throw e;"
+	    << endl << getIndent()
+	    << "}"
             << endl << getIndent()
+	    << "allocMem.push_back(idBufLens);"
+	    << endl << getIndent()
             << "m_insertStatement->setDataBuffer" << endl
             << getIndent()
             << "  (" << n << ", "
@@ -2670,28 +2711,6 @@ void CppCppDbCnvWriter::writeBulkCreateRepContent() {
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
-  // Release buffers
-  for (Member* mem = members.first();
-       0 != mem;
-       mem = members.next()) {
-    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
-    // declare buffers, one for the data, one for the lengths
-    if (mem->name != "id" &&
-        mem->name != "nbAccesses" &&
-        mem->name != "lastAccessTime") {
-      writeReleaseBufferForSelect(mem->name);
-    }
-  }
-  for (Assoc* as = assocs.first();
-       0 != as;
-       as = assocs.next()) {
-    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
-    if (isEnum(as->remotePart.typeName) ||
-        (as->type.multiRemote == MULT_ONE &&
-         as->remotePart.name != "")) {
-      writeReleaseBufferForSelect(as->remotePart.name);
-    }
-  }
   // Prepare the buffers for bulk insertion into Id2Type
   *m_stream  << getIndent()
              << "// reuse idBuffer for bulk insertion into Id2Type"
@@ -2733,13 +2752,14 @@ void CppCppDbCnvWriter::writeBulkCreateRepContent() {
 	      << endl;
   }
   // Release all buffers
-  writeReleaseBufferForSelect("type");
-  *m_stream << getIndent() << "// release the buffers for returned ids"
-            << endl << getIndent()
-            << "free(idBuffer);"
-            << endl << getIndent()
-            << "free(idBufLens);"
-            << endl;
+  *m_stream << getIndent() << "// release the buffers"
+	    << endl << getIndent()
+	    << "for (unsigned int i = 0; i < allocMem.size(); i++) {"
+	    << endl << getIndent()
+	    << "  free(allocMem[i]);"
+	    << endl << getIndent()
+	    << "}"
+	    << endl;
   // Commit if needed
   *m_stream << getIndent()
             << "if (endTransaction) {" << endl;
@@ -2753,7 +2773,16 @@ void CppCppDbCnvWriter::writeBulkCreateRepContent() {
   *m_stream << getIndent()
             << "} catch (castor::exception::SQLError e) {"
             << endl;
+  // Release all buffers
   m_indent++;
+  *m_stream << getIndent() << "// release the buffers"
+	    << endl << getIndent()
+	    << "for (unsigned int i = 0; i < allocMem.size(); i++) {"
+	    << endl << getIndent()
+	    << "  free(allocMem[i]);"
+	    << endl << getIndent()
+	    << "}"
+	    << endl;
   printSQLError("bulkInsert", members, assocs, true);
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
@@ -3579,9 +3608,11 @@ void CppCppDbCnvWriter::printSQLError(QString name,
     *m_stream << getIndent()
               << "// Always try to rollback" << endl
               << getIndent()
-              << "try { if (endTransaction) cnvSvc()->rollback(); }"
-              << endl << getIndent()
-              << "catch(castor::exception::Exception ignored) {}"
+              << "try {" << endl
+	      << getIndent()
+	      << "  if (endTransaction) cnvSvc()->rollback();" << endl
+	      << getIndent() 
+	      << "} catch (castor::exception::Exception ignored) {}"
               << endl;
   }
   *m_stream << getIndent()
