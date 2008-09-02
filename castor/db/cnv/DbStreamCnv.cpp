@@ -40,6 +40,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
+#include "castor/exception/OutOfMemory.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/StreamStatusCodes.hpp"
 #include "castor/stager/Tape.hpp"
@@ -444,6 +445,7 @@ void castor::db::cnv::DbStreamCnv::fillObj(castor::IAddress* address,
     cnvSvc()->commit();
   }
 }
+
 //------------------------------------------------------------------------------
 // fillObjTapeCopy
 //------------------------------------------------------------------------------
@@ -613,8 +615,9 @@ void castor::db::cnv::DbStreamCnv::createRep(castor::IAddress* address,
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (endTransaction) cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
+    try {
+      if (endTransaction) cnvSvc()->rollback();
+    } catch (castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -646,6 +649,7 @@ void castor::db::cnv::DbStreamCnv::bulkCreateRep(castor::IAddress* address,
   for (int i = 0; i < nb; i++) {
     objs.push_back(dynamic_cast<castor::stager::Stream*>(objects[i]));
   }
+  std::vector<void *> allocMem;
   try {
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
@@ -657,7 +661,17 @@ void castor::db::cnv::DbStreamCnv::bulkCreateRep(castor::IAddress* address,
     }
     // build the buffers for initialSizeToTransfer
     double* initialSizeToTransferBuffer = (double*) malloc(nb * sizeof(double));
+    if (initialSizeToTransferBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(initialSizeToTransferBuffer);
     unsigned short* initialSizeToTransferBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (initialSizeToTransferBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(initialSizeToTransferBufLens);
     for (int i = 0; i < nb; i++) {
       initialSizeToTransferBuffer[i] = objs[i]->initialSizeToTransfer();
       initialSizeToTransferBufLens[i] = sizeof(double);
@@ -666,7 +680,17 @@ void castor::db::cnv::DbStreamCnv::bulkCreateRep(castor::IAddress* address,
       (1, initialSizeToTransferBuffer, castor::db::DBTYPE_UINT64, sizeof(initialSizeToTransferBuffer[0]), initialSizeToTransferBufLens);
     // build the buffers for tape
     double* tapeBuffer = (double*) malloc(nb * sizeof(double));
+    if (tapeBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(tapeBuffer);
     unsigned short* tapeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (tapeBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(tapeBufLens);
     for (int i = 0; i < nb; i++) {
       tapeBuffer[i] = (type == OBJ_Tape && objs[i]->tape() != 0) ? objs[i]->tape()->id() : 0;
       tapeBufLens[i] = sizeof(double);
@@ -675,7 +699,17 @@ void castor::db::cnv::DbStreamCnv::bulkCreateRep(castor::IAddress* address,
       (2, tapeBuffer, castor::db::DBTYPE_UINT64, sizeof(tapeBuffer[0]), tapeBufLens);
     // build the buffers for tapePool
     double* tapePoolBuffer = (double*) malloc(nb * sizeof(double));
+    if (tapePoolBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(tapePoolBuffer);
     unsigned short* tapePoolBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (tapePoolBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(tapePoolBufLens);
     for (int i = 0; i < nb; i++) {
       tapePoolBuffer[i] = (type == OBJ_TapePool && objs[i]->tapePool() != 0) ? objs[i]->tapePool()->id() : 0;
       tapePoolBufLens[i] = sizeof(double);
@@ -684,7 +718,17 @@ void castor::db::cnv::DbStreamCnv::bulkCreateRep(castor::IAddress* address,
       (3, tapePoolBuffer, castor::db::DBTYPE_UINT64, sizeof(tapePoolBuffer[0]), tapePoolBufLens);
     // build the buffers for status
     int* statusBuffer = (int*) malloc(nb * sizeof(int));
+    if (statusBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(statusBuffer);
     unsigned short* statusBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (statusBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(statusBufLens);
     for (int i = 0; i < nb; i++) {
       statusBuffer[i] = objs[i]->status();
       statusBufLens[i] = sizeof(int);
@@ -693,31 +737,39 @@ void castor::db::cnv::DbStreamCnv::bulkCreateRep(castor::IAddress* address,
       (4, statusBuffer, castor::db::DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
+    if (idBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(idBuffer);
     unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
+    if (idBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(idBufLens);
     m_insertStatement->setDataBuffer
       (5, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
     }
-    // release the buffers for initialSizeToTransfer
-    free(initialSizeToTransferBuffer);
-    free(initialSizeToTransferBufLens);
-    // release the buffers for tape
-    free(tapeBuffer);
-    free(tapeBufLens);
-    // release the buffers for tapePool
-    free(tapePoolBuffer);
-    free(tapePoolBufLens);
-    // release the buffers for status
-    free(statusBuffer);
-    free(statusBufLens);
     // reuse idBuffer for bulk insertion into Id2Type
     m_storeTypeStatement->setDataBuffer
       (1, idBuffer, castor::db::DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
     // build the buffers for type
     int* typeBuffer = (int*) malloc(nb * sizeof(int));
+    if (typeBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(typeBuffer);
     unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (typeBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(typeBufLens);
     for (int i = 0; i < nb; i++) {
       typeBuffer[i] = objs[i]->type();
       typeBufLens[i] = sizeof(int);
@@ -725,19 +777,22 @@ void castor::db::cnv::DbStreamCnv::bulkCreateRep(castor::IAddress* address,
     m_storeTypeStatement->setDataBuffer
       (2, typeBuffer, castor::db::DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
     m_storeTypeStatement->execute(nb);
-    // release the buffers for type
-    free(typeBuffer);
-    free(typeBufLens);
-    // release the buffers for returned ids
-    free(idBuffer);
-    free(idBufLens);
+    // release the buffers
+    for (unsigned int i = 0; i < allocMem.size(); i++) {
+      free(allocMem[i]);
+    }
     if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
+    // release the buffers
+    for (unsigned int i = 0; i < allocMem.size(); i++) {
+      free(allocMem[i]);
+    }
     // Always try to rollback
-    try { if (endTransaction) cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
+    try {
+      if (endTransaction) cnvSvc()->rollback();
+    } catch (castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in bulkInsert request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -773,8 +828,9 @@ void castor::db::cnv::DbStreamCnv::updateRep(castor::IAddress* address,
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (endTransaction) cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
+    try {
+      if (endTransaction) cnvSvc()->rollback();
+    } catch (castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -814,8 +870,9 @@ void castor::db::cnv::DbStreamCnv::deleteRep(castor::IAddress* address,
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (endTransaction) cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
+    try {
+      if (endTransaction) cnvSvc()->rollback();
+    } catch (castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.getMessage().str() << std::endl

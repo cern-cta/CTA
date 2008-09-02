@@ -42,6 +42,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
+#include "castor/exception/OutOfMemory.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include <vector>
 
@@ -294,6 +295,7 @@ void castor::db::cnv::DbListPrivilegesCnv::fillObj(castor::IAddress* address,
     cnvSvc()->commit();
   }
 }
+
 //------------------------------------------------------------------------------
 // fillObjSvcClass
 //------------------------------------------------------------------------------
@@ -426,8 +428,9 @@ void castor::db::cnv::DbListPrivilegesCnv::createRep(castor::IAddress* address,
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (endTransaction) cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
+    try {
+      if (endTransaction) cnvSvc()->rollback();
+    } catch (castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -472,6 +475,7 @@ void castor::db::cnv::DbListPrivilegesCnv::bulkCreateRep(castor::IAddress* addre
   for (int i = 0; i < nb; i++) {
     objs.push_back(dynamic_cast<castor::bwlist::ListPrivileges*>(objects[i]));
   }
+  std::vector<void *> allocMem;
   try {
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
@@ -486,7 +490,17 @@ void castor::db::cnv::DbListPrivilegesCnv::bulkCreateRep(castor::IAddress* addre
     }
     // build the buffers for flags
     double* flagsBuffer = (double*) malloc(nb * sizeof(double));
+    if (flagsBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(flagsBuffer);
     unsigned short* flagsBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (flagsBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(flagsBufLens);
     for (int i = 0; i < nb; i++) {
       flagsBuffer[i] = objs[i]->flags();
       flagsBufLens[i] = sizeof(double);
@@ -500,7 +514,17 @@ void castor::db::cnv::DbListPrivilegesCnv::bulkCreateRep(castor::IAddress* addre
         userNameMaxLen = objs[i]->userName().length()+1;
     }
     char* userNameBuffer = (char*) calloc(nb, userNameMaxLen);
+    if (userNameBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(userNameBuffer);
     unsigned short* userNameBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (userNameBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(userNameBufLens);
     for (int i = 0; i < nb; i++) {
       strncpy(userNameBuffer+(i*userNameMaxLen), objs[i]->userName().c_str(), userNameMaxLen);
       userNameBufLens[i] = objs[i]->userName().length()+1; // + 1 for the trailing \0
@@ -509,7 +533,17 @@ void castor::db::cnv::DbListPrivilegesCnv::bulkCreateRep(castor::IAddress* addre
       (2, userNameBuffer, castor::db::DBTYPE_STRING, userNameMaxLen, userNameBufLens);
     // build the buffers for euid
     long* euidBuffer = (long*) malloc(nb * sizeof(long));
+    if (euidBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(euidBuffer);
     unsigned short* euidBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (euidBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(euidBufLens);
     for (int i = 0; i < nb; i++) {
       euidBuffer[i] = objs[i]->euid();
       euidBufLens[i] = sizeof(long);
@@ -518,7 +552,17 @@ void castor::db::cnv::DbListPrivilegesCnv::bulkCreateRep(castor::IAddress* addre
       (3, euidBuffer, castor::db::DBTYPE_INT, sizeof(euidBuffer[0]), euidBufLens);
     // build the buffers for egid
     long* egidBuffer = (long*) malloc(nb * sizeof(long));
+    if (egidBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(egidBuffer);
     unsigned short* egidBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (egidBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(egidBufLens);
     for (int i = 0; i < nb; i++) {
       egidBuffer[i] = objs[i]->egid();
       egidBufLens[i] = sizeof(long);
@@ -527,7 +571,17 @@ void castor::db::cnv::DbListPrivilegesCnv::bulkCreateRep(castor::IAddress* addre
       (4, egidBuffer, castor::db::DBTYPE_INT, sizeof(egidBuffer[0]), egidBufLens);
     // build the buffers for mask
     long* maskBuffer = (long*) malloc(nb * sizeof(long));
+    if (maskBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(maskBuffer);
     unsigned short* maskBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (maskBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(maskBufLens);
     for (int i = 0; i < nb; i++) {
       maskBuffer[i] = objs[i]->mask();
       maskBufLens[i] = sizeof(long);
@@ -536,7 +590,17 @@ void castor::db::cnv::DbListPrivilegesCnv::bulkCreateRep(castor::IAddress* addre
       (5, maskBuffer, castor::db::DBTYPE_INT, sizeof(maskBuffer[0]), maskBufLens);
     // build the buffers for pid
     long* pidBuffer = (long*) malloc(nb * sizeof(long));
+    if (pidBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(pidBuffer);
     unsigned short* pidBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (pidBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(pidBufLens);
     for (int i = 0; i < nb; i++) {
       pidBuffer[i] = objs[i]->pid();
       pidBufLens[i] = sizeof(long);
@@ -550,7 +614,17 @@ void castor::db::cnv::DbListPrivilegesCnv::bulkCreateRep(castor::IAddress* addre
         machineMaxLen = objs[i]->machine().length()+1;
     }
     char* machineBuffer = (char*) calloc(nb, machineMaxLen);
+    if (machineBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(machineBuffer);
     unsigned short* machineBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (machineBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(machineBufLens);
     for (int i = 0; i < nb; i++) {
       strncpy(machineBuffer+(i*machineMaxLen), objs[i]->machine().c_str(), machineMaxLen);
       machineBufLens[i] = objs[i]->machine().length()+1; // + 1 for the trailing \0
@@ -564,7 +638,17 @@ void castor::db::cnv::DbListPrivilegesCnv::bulkCreateRep(castor::IAddress* addre
         svcClassNameMaxLen = objs[i]->svcClassName().length()+1;
     }
     char* svcClassNameBuffer = (char*) calloc(nb, svcClassNameMaxLen);
+    if (svcClassNameBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(svcClassNameBuffer);
     unsigned short* svcClassNameBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (svcClassNameBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(svcClassNameBufLens);
     for (int i = 0; i < nb; i++) {
       strncpy(svcClassNameBuffer+(i*svcClassNameMaxLen), objs[i]->svcClassName().c_str(), svcClassNameMaxLen);
       svcClassNameBufLens[i] = objs[i]->svcClassName().length()+1; // + 1 for the trailing \0
@@ -578,7 +662,17 @@ void castor::db::cnv::DbListPrivilegesCnv::bulkCreateRep(castor::IAddress* addre
         userTagMaxLen = objs[i]->userTag().length()+1;
     }
     char* userTagBuffer = (char*) calloc(nb, userTagMaxLen);
+    if (userTagBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(userTagBuffer);
     unsigned short* userTagBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (userTagBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(userTagBufLens);
     for (int i = 0; i < nb; i++) {
       strncpy(userTagBuffer+(i*userTagMaxLen), objs[i]->userTag().c_str(), userTagMaxLen);
       userTagBufLens[i] = objs[i]->userTag().length()+1; // + 1 for the trailing \0
@@ -592,7 +686,17 @@ void castor::db::cnv::DbListPrivilegesCnv::bulkCreateRep(castor::IAddress* addre
         reqIdMaxLen = objs[i]->reqId().length()+1;
     }
     char* reqIdBuffer = (char*) calloc(nb, reqIdMaxLen);
+    if (reqIdBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(reqIdBuffer);
     unsigned short* reqIdBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (reqIdBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(reqIdBufLens);
     for (int i = 0; i < nb; i++) {
       strncpy(reqIdBuffer+(i*reqIdMaxLen), objs[i]->reqId().c_str(), reqIdMaxLen);
       reqIdBufLens[i] = objs[i]->reqId().length()+1; // + 1 for the trailing \0
@@ -601,7 +705,17 @@ void castor::db::cnv::DbListPrivilegesCnv::bulkCreateRep(castor::IAddress* addre
       (10, reqIdBuffer, castor::db::DBTYPE_STRING, reqIdMaxLen, reqIdBufLens);
     // build the buffers for creationTime
     double* creationTimeBuffer = (double*) malloc(nb * sizeof(double));
+    if (creationTimeBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(creationTimeBuffer);
     unsigned short* creationTimeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (creationTimeBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(creationTimeBufLens);
     for (int i = 0; i < nb; i++) {
       creationTimeBuffer[i] = time(0);
       creationTimeBufLens[i] = sizeof(double);
@@ -610,7 +724,17 @@ void castor::db::cnv::DbListPrivilegesCnv::bulkCreateRep(castor::IAddress* addre
       (11, creationTimeBuffer, castor::db::DBTYPE_UINT64, sizeof(creationTimeBuffer[0]), creationTimeBufLens);
     // build the buffers for lastModificationTime
     double* lastModificationTimeBuffer = (double*) malloc(nb * sizeof(double));
+    if (lastModificationTimeBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(lastModificationTimeBuffer);
     unsigned short* lastModificationTimeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (lastModificationTimeBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(lastModificationTimeBufLens);
     for (int i = 0; i < nb; i++) {
       lastModificationTimeBuffer[i] = time(0);
       lastModificationTimeBufLens[i] = sizeof(double);
@@ -619,7 +743,17 @@ void castor::db::cnv::DbListPrivilegesCnv::bulkCreateRep(castor::IAddress* addre
       (12, lastModificationTimeBuffer, castor::db::DBTYPE_UINT64, sizeof(lastModificationTimeBuffer[0]), lastModificationTimeBufLens);
     // build the buffers for userId
     int* userIdBuffer = (int*) malloc(nb * sizeof(int));
+    if (userIdBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(userIdBuffer);
     unsigned short* userIdBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (userIdBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(userIdBufLens);
     for (int i = 0; i < nb; i++) {
       userIdBuffer[i] = objs[i]->userId();
       userIdBufLens[i] = sizeof(int);
@@ -628,7 +762,17 @@ void castor::db::cnv::DbListPrivilegesCnv::bulkCreateRep(castor::IAddress* addre
       (13, userIdBuffer, castor::db::DBTYPE_INT, sizeof(userIdBuffer[0]), userIdBufLens);
     // build the buffers for groupId
     int* groupIdBuffer = (int*) malloc(nb * sizeof(int));
+    if (groupIdBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(groupIdBuffer);
     unsigned short* groupIdBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (groupIdBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(groupIdBufLens);
     for (int i = 0; i < nb; i++) {
       groupIdBuffer[i] = objs[i]->groupId();
       groupIdBufLens[i] = sizeof(int);
@@ -637,7 +781,17 @@ void castor::db::cnv::DbListPrivilegesCnv::bulkCreateRep(castor::IAddress* addre
       (14, groupIdBuffer, castor::db::DBTYPE_INT, sizeof(groupIdBuffer[0]), groupIdBufLens);
     // build the buffers for requestType
     int* requestTypeBuffer = (int*) malloc(nb * sizeof(int));
+    if (requestTypeBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(requestTypeBuffer);
     unsigned short* requestTypeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (requestTypeBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(requestTypeBufLens);
     for (int i = 0; i < nb; i++) {
       requestTypeBuffer[i] = objs[i]->requestType();
       requestTypeBufLens[i] = sizeof(int);
@@ -646,7 +800,17 @@ void castor::db::cnv::DbListPrivilegesCnv::bulkCreateRep(castor::IAddress* addre
       (15, requestTypeBuffer, castor::db::DBTYPE_INT, sizeof(requestTypeBuffer[0]), requestTypeBufLens);
     // build the buffers for svcClass
     double* svcClassBuffer = (double*) malloc(nb * sizeof(double));
+    if (svcClassBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(svcClassBuffer);
     unsigned short* svcClassBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (svcClassBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(svcClassBufLens);
     for (int i = 0; i < nb; i++) {
       svcClassBuffer[i] = (type == OBJ_SvcClass && objs[i]->svcClass() != 0) ? objs[i]->svcClass()->id() : 0;
       svcClassBufLens[i] = sizeof(double);
@@ -655,7 +819,17 @@ void castor::db::cnv::DbListPrivilegesCnv::bulkCreateRep(castor::IAddress* addre
       (16, svcClassBuffer, castor::db::DBTYPE_UINT64, sizeof(svcClassBuffer[0]), svcClassBufLens);
     // build the buffers for client
     double* clientBuffer = (double*) malloc(nb * sizeof(double));
+    if (clientBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(clientBuffer);
     unsigned short* clientBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (clientBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(clientBufLens);
     for (int i = 0; i < nb; i++) {
       clientBuffer[i] = (type == OBJ_IClient && objs[i]->client() != 0) ? objs[i]->client()->id() : 0;
       clientBufLens[i] = sizeof(double);
@@ -664,70 +838,39 @@ void castor::db::cnv::DbListPrivilegesCnv::bulkCreateRep(castor::IAddress* addre
       (17, clientBuffer, castor::db::DBTYPE_UINT64, sizeof(clientBuffer[0]), clientBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
+    if (idBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(idBuffer);
     unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
+    if (idBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(idBufLens);
     m_insertStatement->setDataBuffer
       (18, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
     }
-    // release the buffers for flags
-    free(flagsBuffer);
-    free(flagsBufLens);
-    // release the buffers for userName
-    free(userNameBuffer);
-    free(userNameBufLens);
-    // release the buffers for euid
-    free(euidBuffer);
-    free(euidBufLens);
-    // release the buffers for egid
-    free(egidBuffer);
-    free(egidBufLens);
-    // release the buffers for mask
-    free(maskBuffer);
-    free(maskBufLens);
-    // release the buffers for pid
-    free(pidBuffer);
-    free(pidBufLens);
-    // release the buffers for machine
-    free(machineBuffer);
-    free(machineBufLens);
-    // release the buffers for svcClassName
-    free(svcClassNameBuffer);
-    free(svcClassNameBufLens);
-    // release the buffers for userTag
-    free(userTagBuffer);
-    free(userTagBufLens);
-    // release the buffers for reqId
-    free(reqIdBuffer);
-    free(reqIdBufLens);
-    // release the buffers for creationTime
-    free(creationTimeBuffer);
-    free(creationTimeBufLens);
-    // release the buffers for lastModificationTime
-    free(lastModificationTimeBuffer);
-    free(lastModificationTimeBufLens);
-    // release the buffers for userId
-    free(userIdBuffer);
-    free(userIdBufLens);
-    // release the buffers for groupId
-    free(groupIdBuffer);
-    free(groupIdBufLens);
-    // release the buffers for requestType
-    free(requestTypeBuffer);
-    free(requestTypeBufLens);
-    // release the buffers for svcClass
-    free(svcClassBuffer);
-    free(svcClassBufLens);
-    // release the buffers for client
-    free(clientBuffer);
-    free(clientBufLens);
     // reuse idBuffer for bulk insertion into Id2Type
     m_storeTypeStatement->setDataBuffer
       (1, idBuffer, castor::db::DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
     // build the buffers for type
     int* typeBuffer = (int*) malloc(nb * sizeof(int));
+    if (typeBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(typeBuffer);
     unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (typeBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(typeBufLens);
     for (int i = 0; i < nb; i++) {
       typeBuffer[i] = objs[i]->type();
       typeBufLens[i] = sizeof(int);
@@ -742,19 +885,22 @@ void castor::db::cnv::DbListPrivilegesCnv::bulkCreateRep(castor::IAddress* addre
     m_insertNewReqStatement->setDataBuffer
       (2, typeBuffer, castor::db::DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
     m_insertNewReqStatement->execute(nb);
-    // release the buffers for type
-    free(typeBuffer);
-    free(typeBufLens);
-    // release the buffers for returned ids
-    free(idBuffer);
-    free(idBufLens);
+    // release the buffers
+    for (unsigned int i = 0; i < allocMem.size(); i++) {
+      free(allocMem[i]);
+    }
     if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
+    // release the buffers
+    for (unsigned int i = 0; i < allocMem.size(); i++) {
+      free(allocMem[i]);
+    }
     // Always try to rollback
-    try { if (endTransaction) cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
+    try {
+      if (endTransaction) cnvSvc()->rollback();
+    } catch (castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in bulkInsert request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -802,8 +948,9 @@ void castor::db::cnv::DbListPrivilegesCnv::updateRep(castor::IAddress* address,
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (endTransaction) cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
+    try {
+      if (endTransaction) cnvSvc()->rollback();
+    } catch (castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -846,8 +993,9 @@ void castor::db::cnv::DbListPrivilegesCnv::deleteRep(castor::IAddress* address,
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (endTransaction) cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
+    try {
+      if (endTransaction) cnvSvc()->rollback();
+    } catch (castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.getMessage().str() << std::endl

@@ -40,6 +40,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
+#include "castor/exception/OutOfMemory.hpp"
 #include "castor/stager/QryRequest.hpp"
 #include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/RequestQueryType.hpp"
@@ -235,6 +236,7 @@ void castor::db::cnv::DbQueryParameterCnv::fillObj(castor::IAddress* address,
     cnvSvc()->commit();
   }
 }
+
 //------------------------------------------------------------------------------
 // fillObjQryRequest
 //------------------------------------------------------------------------------
@@ -311,8 +313,9 @@ void castor::db::cnv::DbQueryParameterCnv::createRep(castor::IAddress* address,
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (endTransaction) cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
+    try {
+      if (endTransaction) cnvSvc()->rollback();
+    } catch (castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -343,6 +346,7 @@ void castor::db::cnv::DbQueryParameterCnv::bulkCreateRep(castor::IAddress* addre
   for (int i = 0; i < nb; i++) {
     objs.push_back(dynamic_cast<castor::stager::QueryParameter*>(objects[i]));
   }
+  std::vector<void *> allocMem;
   try {
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
@@ -359,7 +363,17 @@ void castor::db::cnv::DbQueryParameterCnv::bulkCreateRep(castor::IAddress* addre
         valueMaxLen = objs[i]->value().length()+1;
     }
     char* valueBuffer = (char*) calloc(nb, valueMaxLen);
+    if (valueBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(valueBuffer);
     unsigned short* valueBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (valueBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(valueBufLens);
     for (int i = 0; i < nb; i++) {
       strncpy(valueBuffer+(i*valueMaxLen), objs[i]->value().c_str(), valueMaxLen);
       valueBufLens[i] = objs[i]->value().length()+1; // + 1 for the trailing \0
@@ -368,7 +382,17 @@ void castor::db::cnv::DbQueryParameterCnv::bulkCreateRep(castor::IAddress* addre
       (1, valueBuffer, castor::db::DBTYPE_STRING, valueMaxLen, valueBufLens);
     // build the buffers for query
     double* queryBuffer = (double*) malloc(nb * sizeof(double));
+    if (queryBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(queryBuffer);
     unsigned short* queryBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (queryBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(queryBufLens);
     for (int i = 0; i < nb; i++) {
       queryBuffer[i] = (type == OBJ_QryRequest && objs[i]->query() != 0) ? objs[i]->query()->id() : 0;
       queryBufLens[i] = sizeof(double);
@@ -377,7 +401,17 @@ void castor::db::cnv::DbQueryParameterCnv::bulkCreateRep(castor::IAddress* addre
       (2, queryBuffer, castor::db::DBTYPE_UINT64, sizeof(queryBuffer[0]), queryBufLens);
     // build the buffers for queryType
     int* queryTypeBuffer = (int*) malloc(nb * sizeof(int));
+    if (queryTypeBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(queryTypeBuffer);
     unsigned short* queryTypeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (queryTypeBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(queryTypeBufLens);
     for (int i = 0; i < nb; i++) {
       queryTypeBuffer[i] = objs[i]->queryType();
       queryTypeBufLens[i] = sizeof(int);
@@ -386,28 +420,39 @@ void castor::db::cnv::DbQueryParameterCnv::bulkCreateRep(castor::IAddress* addre
       (3, queryTypeBuffer, castor::db::DBTYPE_INT, sizeof(queryTypeBuffer[0]), queryTypeBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
+    if (idBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(idBuffer);
     unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
+    if (idBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(idBufLens);
     m_insertStatement->setDataBuffer
       (4, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
     }
-    // release the buffers for value
-    free(valueBuffer);
-    free(valueBufLens);
-    // release the buffers for query
-    free(queryBuffer);
-    free(queryBufLens);
-    // release the buffers for queryType
-    free(queryTypeBuffer);
-    free(queryTypeBufLens);
     // reuse idBuffer for bulk insertion into Id2Type
     m_storeTypeStatement->setDataBuffer
       (1, idBuffer, castor::db::DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
     // build the buffers for type
     int* typeBuffer = (int*) malloc(nb * sizeof(int));
+    if (typeBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(typeBuffer);
     unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (typeBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(typeBufLens);
     for (int i = 0; i < nb; i++) {
       typeBuffer[i] = objs[i]->type();
       typeBufLens[i] = sizeof(int);
@@ -415,19 +460,22 @@ void castor::db::cnv::DbQueryParameterCnv::bulkCreateRep(castor::IAddress* addre
     m_storeTypeStatement->setDataBuffer
       (2, typeBuffer, castor::db::DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
     m_storeTypeStatement->execute(nb);
-    // release the buffers for type
-    free(typeBuffer);
-    free(typeBufLens);
-    // release the buffers for returned ids
-    free(idBuffer);
-    free(idBufLens);
+    // release the buffers
+    for (unsigned int i = 0; i < allocMem.size(); i++) {
+      free(allocMem[i]);
+    }
     if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
+    // release the buffers
+    for (unsigned int i = 0; i < allocMem.size(); i++) {
+      free(allocMem[i]);
+    }
     // Always try to rollback
-    try { if (endTransaction) cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
+    try {
+      if (endTransaction) cnvSvc()->rollback();
+    } catch (castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in bulkInsert request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -463,8 +511,9 @@ void castor::db::cnv::DbQueryParameterCnv::updateRep(castor::IAddress* address,
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (endTransaction) cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
+    try {
+      if (endTransaction) cnvSvc()->rollback();
+    } catch (castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -504,8 +553,9 @@ void castor::db::cnv::DbQueryParameterCnv::deleteRep(castor::IAddress* address,
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (endTransaction) cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
+    try {
+      if (endTransaction) cnvSvc()->rollback();
+    } catch (castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.getMessage().str() << std::endl

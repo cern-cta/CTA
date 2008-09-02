@@ -40,6 +40,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
+#include "castor/exception/OutOfMemory.hpp"
 #include "castor/vdqm/ClientIdentification.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
@@ -575,6 +576,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObj(castor::IAddress* address,
     cnvSvc()->commit();
   }
 }
+
 //------------------------------------------------------------------------------
 // fillObjVdqmTape
 //------------------------------------------------------------------------------
@@ -850,8 +852,9 @@ void castor::db::cnv::DbTapeRequestCnv::createRep(castor::IAddress* address,
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (endTransaction) cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
+    try {
+      if (endTransaction) cnvSvc()->rollback();
+    } catch (castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in insert request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -891,6 +894,7 @@ void castor::db::cnv::DbTapeRequestCnv::bulkCreateRep(castor::IAddress* address,
   for (int i = 0; i < nb; i++) {
     objs.push_back(dynamic_cast<castor::vdqm::TapeRequest*>(objects[i]));
   }
+  std::vector<void *> allocMem;
   try {
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
@@ -902,40 +906,80 @@ void castor::db::cnv::DbTapeRequestCnv::bulkCreateRep(castor::IAddress* address,
     }
     // build the buffers for priority
     int* priorityBuffer = (int*) malloc(nb * sizeof(int));
+    if (priorityBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(priorityBuffer);
     unsigned short* priorityBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (priorityBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(priorityBufLens);
     for (int i = 0; i < nb; i++) {
       priorityBuffer[i] = objs[i]->priority();
       priorityBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (1, priorityBuffer, DBTYPE_INT, sizeof(priorityBuffer[0]), priorityBufLens);
+      (1, priorityBuffer, castor::db::DBTYPE_INT, sizeof(priorityBuffer[0]), priorityBufLens);
     // build the buffers for modificationTime
     double* modificationTimeBuffer = (double*) malloc(nb * sizeof(double));
+    if (modificationTimeBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(modificationTimeBuffer);
     unsigned short* modificationTimeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (modificationTimeBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(modificationTimeBufLens);
     for (int i = 0; i < nb; i++) {
       modificationTimeBuffer[i] = objs[i]->modificationTime();
       modificationTimeBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (2, modificationTimeBuffer, DBTYPE_UINT64, sizeof(modificationTimeBuffer[0]), modificationTimeBufLens);
+      (2, modificationTimeBuffer, castor::db::DBTYPE_UINT64, sizeof(modificationTimeBuffer[0]), modificationTimeBufLens);
     // build the buffers for creationTime
     double* creationTimeBuffer = (double*) malloc(nb * sizeof(double));
+    if (creationTimeBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(creationTimeBuffer);
     unsigned short* creationTimeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (creationTimeBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(creationTimeBufLens);
     for (int i = 0; i < nb; i++) {
       creationTimeBuffer[i] = time(0);
       creationTimeBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (3, creationTimeBuffer, DBTYPE_UINT64, sizeof(creationTimeBuffer[0]), creationTimeBufLens);
+      (3, creationTimeBuffer, castor::db::DBTYPE_UINT64, sizeof(creationTimeBuffer[0]), creationTimeBufLens);
     // build the buffers for errorCode
     int* errorCodeBuffer = (int*) malloc(nb * sizeof(int));
+    if (errorCodeBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(errorCodeBuffer);
     unsigned short* errorCodeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (errorCodeBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(errorCodeBufLens);
     for (int i = 0; i < nb; i++) {
       errorCodeBuffer[i] = objs[i]->errorCode();
       errorCodeBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (4, errorCodeBuffer, DBTYPE_INT, sizeof(errorCodeBuffer[0]), errorCodeBufLens);
+      (4, errorCodeBuffer, castor::db::DBTYPE_INT, sizeof(errorCodeBuffer[0]), errorCodeBufLens);
     // build the buffers for errorMessage
     unsigned int errorMessageMaxLen = 0;
     for (int i = 0; i < nb; i++) {
@@ -943,147 +987,214 @@ void castor::db::cnv::DbTapeRequestCnv::bulkCreateRep(castor::IAddress* address,
         errorMessageMaxLen = objs[i]->errorMessage().length()+1;
     }
     char* errorMessageBuffer = (char*) calloc(nb, errorMessageMaxLen);
+    if (errorMessageBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(errorMessageBuffer);
     unsigned short* errorMessageBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (errorMessageBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(errorMessageBufLens);
     for (int i = 0; i < nb; i++) {
       strncpy(errorMessageBuffer+(i*errorMessageMaxLen), objs[i]->errorMessage().c_str(), errorMessageMaxLen);
       errorMessageBufLens[i] = objs[i]->errorMessage().length()+1; // + 1 for the trailing \0
     }
     m_insertStatement->setDataBuffer
-      (5, errorMessageBuffer, DBTYPE_STRING, errorMessageMaxLen, errorMessageBufLens);
+      (5, errorMessageBuffer, castor::db::DBTYPE_STRING, errorMessageMaxLen, errorMessageBufLens);
     // build the buffers for tape
     double* tapeBuffer = (double*) malloc(nb * sizeof(double));
+    if (tapeBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(tapeBuffer);
     unsigned short* tapeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (tapeBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(tapeBufLens);
     for (int i = 0; i < nb; i++) {
       tapeBuffer[i] = (type == OBJ_VdqmTape && objs[i]->tape() != 0) ? objs[i]->tape()->id() : 0;
       tapeBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (6, tapeBuffer, DBTYPE_UINT64, sizeof(tapeBuffer[0]), tapeBufLens);
+      (6, tapeBuffer, castor::db::DBTYPE_UINT64, sizeof(tapeBuffer[0]), tapeBufLens);
     // build the buffers for tapeAccessSpecification
     double* tapeAccessSpecificationBuffer = (double*) malloc(nb * sizeof(double));
+    if (tapeAccessSpecificationBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(tapeAccessSpecificationBuffer);
     unsigned short* tapeAccessSpecificationBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (tapeAccessSpecificationBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(tapeAccessSpecificationBufLens);
     for (int i = 0; i < nb; i++) {
       tapeAccessSpecificationBuffer[i] = (type == OBJ_TapeAccessSpecification && objs[i]->tapeAccessSpecification() != 0) ? objs[i]->tapeAccessSpecification()->id() : 0;
       tapeAccessSpecificationBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (7, tapeAccessSpecificationBuffer, DBTYPE_UINT64, sizeof(tapeAccessSpecificationBuffer[0]), tapeAccessSpecificationBufLens);
+      (7, tapeAccessSpecificationBuffer, castor::db::DBTYPE_UINT64, sizeof(tapeAccessSpecificationBuffer[0]), tapeAccessSpecificationBufLens);
     // build the buffers for requestedSrv
     double* requestedSrvBuffer = (double*) malloc(nb * sizeof(double));
+    if (requestedSrvBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(requestedSrvBuffer);
     unsigned short* requestedSrvBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (requestedSrvBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(requestedSrvBufLens);
     for (int i = 0; i < nb; i++) {
       requestedSrvBuffer[i] = (type == OBJ_TapeServer && objs[i]->requestedSrv() != 0) ? objs[i]->requestedSrv()->id() : 0;
       requestedSrvBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (8, requestedSrvBuffer, DBTYPE_UINT64, sizeof(requestedSrvBuffer[0]), requestedSrvBufLens);
+      (8, requestedSrvBuffer, castor::db::DBTYPE_UINT64, sizeof(requestedSrvBuffer[0]), requestedSrvBufLens);
     // build the buffers for tapeDrive
     double* tapeDriveBuffer = (double*) malloc(nb * sizeof(double));
+    if (tapeDriveBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(tapeDriveBuffer);
     unsigned short* tapeDriveBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (tapeDriveBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(tapeDriveBufLens);
     for (int i = 0; i < nb; i++) {
       tapeDriveBuffer[i] = (type == OBJ_TapeDrive && objs[i]->tapeDrive() != 0) ? objs[i]->tapeDrive()->id() : 0;
       tapeDriveBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (9, tapeDriveBuffer, DBTYPE_UINT64, sizeof(tapeDriveBuffer[0]), tapeDriveBufLens);
+      (9, tapeDriveBuffer, castor::db::DBTYPE_UINT64, sizeof(tapeDriveBuffer[0]), tapeDriveBufLens);
     // build the buffers for deviceGroupName
     double* deviceGroupNameBuffer = (double*) malloc(nb * sizeof(double));
+    if (deviceGroupNameBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(deviceGroupNameBuffer);
     unsigned short* deviceGroupNameBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (deviceGroupNameBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(deviceGroupNameBufLens);
     for (int i = 0; i < nb; i++) {
       deviceGroupNameBuffer[i] = (type == OBJ_DeviceGroupName && objs[i]->deviceGroupName() != 0) ? objs[i]->deviceGroupName()->id() : 0;
       deviceGroupNameBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (10, deviceGroupNameBuffer, DBTYPE_UINT64, sizeof(deviceGroupNameBuffer[0]), deviceGroupNameBufLens);
+      (10, deviceGroupNameBuffer, castor::db::DBTYPE_UINT64, sizeof(deviceGroupNameBuffer[0]), deviceGroupNameBufLens);
     // build the buffers for status
     int* statusBuffer = (int*) malloc(nb * sizeof(int));
+    if (statusBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(statusBuffer);
     unsigned short* statusBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (statusBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(statusBufLens);
     for (int i = 0; i < nb; i++) {
       statusBuffer[i] = objs[i]->status();
       statusBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (11, statusBuffer, DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
+      (11, statusBuffer, castor::db::DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
     // build the buffers for client
     double* clientBuffer = (double*) malloc(nb * sizeof(double));
+    if (clientBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(clientBuffer);
     unsigned short* clientBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (clientBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(clientBufLens);
     for (int i = 0; i < nb; i++) {
       clientBuffer[i] = (type == OBJ_ClientIdentification && objs[i]->client() != 0) ? objs[i]->client()->id() : 0;
       clientBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (12, clientBuffer, DBTYPE_UINT64, sizeof(clientBuffer[0]), clientBufLens);
+      (12, clientBuffer, castor::db::DBTYPE_UINT64, sizeof(clientBuffer[0]), clientBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
+    if (idBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(idBuffer);
     unsigned short* idBufLens = (unsigned short*) calloc(nb, sizeof(unsigned short));
+    if (idBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(idBufLens);
     m_insertStatement->setDataBuffer
-      (13, idBuffer, DBTYPE_UINT64, sizeof(double), idBufLens);
+      (13, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
     }
-    // release the buffers for priority
-    free(priorityBuffer);
-    free(priorityBufLens);
-    // release the buffers for modificationTime
-    free(modificationTimeBuffer);
-    free(modificationTimeBufLens);
-    // release the buffers for creationTime
-    free(creationTimeBuffer);
-    free(creationTimeBufLens);
-    // release the buffers for errorCode
-    free(errorCodeBuffer);
-    free(errorCodeBufLens);
-    // release the buffers for errorMessage
-    free(errorMessageBuffer);
-    free(errorMessageBufLens);
-    // release the buffers for tape
-    free(tapeBuffer);
-    free(tapeBufLens);
-    // release the buffers for tapeAccessSpecification
-    free(tapeAccessSpecificationBuffer);
-    free(tapeAccessSpecificationBufLens);
-    // release the buffers for requestedSrv
-    free(requestedSrvBuffer);
-    free(requestedSrvBufLens);
-    // release the buffers for tapeDrive
-    free(tapeDriveBuffer);
-    free(tapeDriveBufLens);
-    // release the buffers for deviceGroupName
-    free(deviceGroupNameBuffer);
-    free(deviceGroupNameBufLens);
-    // release the buffers for status
-    free(statusBuffer);
-    free(statusBufLens);
-    // release the buffers for client
-    free(clientBuffer);
-    free(clientBufLens);
     // reuse idBuffer for bulk insertion into Id2Type
     m_storeTypeStatement->setDataBuffer
-      (1, idBuffer, DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
+      (1, idBuffer, castor::db::DBTYPE_UINT64, sizeof(idBuffer[0]), idBufLens);
     // build the buffers for type
     int* typeBuffer = (int*) malloc(nb * sizeof(int));
+    if (typeBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(typeBuffer);
     unsigned short* typeBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (typeBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(typeBufLens);
     for (int i = 0; i < nb; i++) {
       typeBuffer[i] = objs[i]->type();
       typeBufLens[i] = sizeof(int);
     }
     m_storeTypeStatement->setDataBuffer
-      (2, typeBuffer, DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
+      (2, typeBuffer, castor::db::DBTYPE_INT, sizeof(typeBuffer[0]), typeBufLens);
     m_storeTypeStatement->execute(nb);
-    // release the buffers for type
-    free(typeBuffer);
-    free(typeBufLens);
-    // release the buffers for returned ids
-    free(idBuffer);
-    free(idBufLens);
+    // release the buffers
+    for (unsigned int i = 0; i < allocMem.size(); i++) {
+      free(allocMem[i]);
+    }
     if (endTransaction) {
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError e) {
+    // release the buffers
+    for (unsigned int i = 0; i < allocMem.size(); i++) {
+      free(allocMem[i]);
+    }
     // Always try to rollback
-    try { if (endTransaction) cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
+    try {
+      if (endTransaction) cnvSvc()->rollback();
+    } catch (castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in bulkInsert request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -1122,8 +1233,9 @@ void castor::db::cnv::DbTapeRequestCnv::updateRep(castor::IAddress* address,
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (endTransaction) cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
+    try {
+      if (endTransaction) cnvSvc()->rollback();
+    } catch (castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in update request :"
                     << std::endl << e.getMessage().str() << std::endl
@@ -1166,8 +1278,9 @@ void castor::db::cnv::DbTapeRequestCnv::deleteRep(castor::IAddress* address,
     }
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
-    try { if (endTransaction) cnvSvc()->rollback(); }
-    catch(castor::exception::Exception ignored) {}
+    try {
+      if (endTransaction) cnvSvc()->rollback();
+    } catch (castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in delete request :"
                     << std::endl << e.getMessage().str() << std::endl
