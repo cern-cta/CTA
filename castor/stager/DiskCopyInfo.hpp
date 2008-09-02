@@ -333,6 +333,42 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_csumType
+       * The checksum type of the castor file
+       * @return the value of m_csumType
+       */
+      std::string csumType() const {
+        return m_csumType;
+      }
+
+      /**
+       * Set the value of m_csumType
+       * The checksum type of the castor file
+       * @param new_var the new value of m_csumType
+       */
+      void setCsumType(std::string new_var) {
+        m_csumType = new_var;
+      }
+
+      /**
+       * Get the value of m_csumValue
+       * The checksum value of the castor file
+       * @return the value of m_csumValue
+       */
+      std::string csumValue() const {
+        return m_csumValue;
+      }
+
+      /**
+       * Set the value of m_csumValue
+       * The checksum value of the castor file
+       * @param new_var the new value of m_csumValue
+       */
+      void setCsumValue(std::string new_var) {
+        m_csumValue = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -390,6 +426,12 @@ namespace castor {
 
       /// The service class that the diskcopy is in
       std::string m_svcClass;
+
+      /// The checksum type of the castor file
+      std::string m_csumType;
+
+      /// The checksum value of the castor file
+      std::string m_csumValue;
 
       /// The id of this object
       u_signed64 m_id;
