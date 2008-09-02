@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.679 $ $Date: 2008/09/01 17:49:54 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.680 $ $Date: 2008/09/02 12:44:05 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1443,7 +1443,7 @@ BEGIN
         -- we have at least a stream for that tapepool
         SELECT id INTO unused
           FROM TapeCopy
-         WHERE Status = 7 AND id = tapeCopyIds(i) FOR UPDATE;
+         WHERE Status in (2,7) AND id = tapeCopyIds(i) FOR UPDATE;
         -- let's attach it to the different streams
         FOR streamId IN (SELECT id FROM Stream WHERE Stream.tapepool = tapePoolIds(i)) LOOP
           UPDATE TapeCopy SET Status = 2 WHERE Status = 7 AND id = tapeCopyIds(i);
