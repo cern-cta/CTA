@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2008/08/27 08:03:42 $ $Author: riojac3 $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2008/09/02 13:11:15 $ $Author: riojac3 $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -136,16 +136,19 @@ void castor::rh::RHThread::run(void* param) {
   // If the request comes from a secure connection then set Client values in
   // the Request object.
   bool secure = false;
+  std::string client_mech="Unsecure";
   castor::io::AuthServerSocket* authSock =
     dynamic_cast<castor::io::AuthServerSocket*>(sock);
   if (authSock != 0) {
     fr->setEuid(authSock->getClientEuid());
     fr->setEgid(authSock->getClientEgid());
     fr->setUserName(authSock->getClientMappedName());
+    client_mech = authSock->getSecMech();
     secure = true;
   }
-
+  
   castor::BaseAddress ad;
+
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
 
@@ -266,8 +269,9 @@ void castor::rh::RHThread::run(void* param) {
 	 castor::dlf::Param("SvcClass", fr->svcClassName()),
 	 castor::dlf::Param("SubRequests", nbThreads),
 	 castor::dlf::Param("ClientVersion", clientVersion.str()),
+         castor::dlf::Param("Security Mechanism",client_mech),
 	 castor::dlf::Param("ElapsedTime", elapsedTime * 0.000001)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_MONITORING, 10, 8, params2);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_MONITORING, 10, 9, params2);
     }
   } catch (castor::exception::Exception e) {
     // "Unable to send Ack to client"
