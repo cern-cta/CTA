@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/07/09 16:31:06 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/09/02 06:34:29 $ $Author: waldron $
  *
  *
  *
@@ -30,28 +30,29 @@
 #include <string>
 #include "castor/db/IDbStatement.hpp"
 #include "castor/db/newora/OraCnvSvc.hpp"
+#include "castor/exception/OutOfMemory.hpp"
 #include "occi.h"
 
 namespace castor {
-  
+
   namespace db {
-    
+
     namespace ora {
 
       static const oracle::occi::Type oraTypeMap[] = {
-        (oracle::occi::Type)0, 
-        oracle::occi::OCCIINT, 
+        (oracle::occi::Type)0,
+        oracle::occi::OCCIINT,
         oracle::occi::OCCIDOUBLE,
         oracle::occi::OCCIDOUBLE,
         oracle::occi::OCCIFLOAT,
         oracle::occi::OCCIDOUBLE,
-        oracle::occi::OCCISTRING, 
+        oracle::occi::OCCISTRING,
         oracle::occi::OCCICLOB,
 	oracle::occi::OCCICURSOR
       };
-         
+
       static const oracle::occi::Type oraBulkTypeMap[] = {
-        (oracle::occi::Type)0, 
+        (oracle::occi::Type)0,
         oracle::occi::OCCIINT,
         oracle::occi::OCCIBDOUBLE,
         oracle::occi::OCCIBDOUBLE,
@@ -61,7 +62,7 @@ namespace castor {
         oracle::occi::OCCI_SQLT_CLOB,  // but this one is not yet supported
 	oracle::occi::OCCICURSOR       // and this is never used for bulk operations
       };
-          
+
       /**
        * Oracle implementation for IDbStatement
        */
@@ -77,7 +78,7 @@ namespace castor {
         virtual ~OraStatement();
 
         virtual void endTransaction();
-        
+
         /**
          * Setter methods
          * @param pos
@@ -94,10 +95,10 @@ namespace castor {
         virtual void setDataBuffer(int pos, void* buffer, unsigned dbType, unsigned size, void* bufLens)
           throw (castor::exception::SQLError);
 
-        virtual void setDataBufferArray(int pos, void* buffer, unsigned dbType, 
+        virtual void setDataBufferArray(int pos, void* buffer, unsigned dbType,
           unsigned size, unsigned elementSize, void* bufLens)
           throw (castor::exception::SQLError);
-        
+
         virtual void setDataBufferUInt64Array(int pos, std::vector<u_signed64> data)
           throw (castor::exception::SQLError);
 
@@ -132,18 +133,18 @@ namespace castor {
         }
 
       private:
-      
+
         oracle::occi::Statement *m_statement;
-        
+
         castor::db::ora::OraCnvSvc* m_cnvSvc;
-        
+
         std::string m_clobBuf;
-        
+
         unsigned m_clobPos;
-        
+
         void* m_arrayBuf;
         void* m_arrayBufLens;
-        
+
         unsigned m_arrayPos;
       };
 

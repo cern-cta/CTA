@@ -17,9 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/07/09 16:31:06 $ $Author: sponcec3 $
- *
- *
+ * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/09/02 06:34:29 $ $Author: waldron $
  *
  * @author Giuseppe Lo Presti, giuseppe.lopresti@cern.ch
  *****************************************************************************/
@@ -29,85 +27,99 @@
 #include "occi.h"
 
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // OraStatement
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::db::ora::OraStatement::OraStatement(oracle::occi::Statement* stmt, castor::db::ora::OraCnvSvc* cnvSvc) :
-  m_statement(stmt), m_cnvSvc(cnvSvc), m_clobBuf(""), m_clobPos(0), m_arrayBuf(0), m_arrayBufLens(0), m_arrayPos(0)
+  m_statement(stmt),
+  m_cnvSvc(cnvSvc),
+  m_clobBuf(""),
+  m_clobPos(0),
+  m_arrayBuf(0),
+  m_arrayBufLens(0),
+  m_arrayPos(0)
 {
   m_statement->setAutoCommit(false);
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // ~OraStatement
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::db::ora::OraStatement::~OraStatement() {
   try {
+    // Free memory buffers
+    if (m_arrayBuf)
+      free(m_arrayBuf);
+    m_arrayBuf = 0;
+    if (m_arrayBufLens)
+      free(m_arrayBufLens);
+    m_arrayBufLens = 0;
+    m_arrayPos = 0;
+    // Close statement
     m_cnvSvc->closeStatement(this);
   }
   catch(oracle::occi::SQLException ignored) {}
 }
 
-
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // endTransaction
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraStatement::endTransaction()
 {
   m_statement->setAutoCommit(true);
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // setInt
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraStatement::setInt(int pos, int value)
 {
   m_statement->setInt(pos, value);
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // setInt64
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraStatement::setInt64(int pos, signed64 value)
 {
   m_statement->setDouble(pos, (double)value);
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // setUInt64
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraStatement::setUInt64(int pos, u_signed64 value)
 {
   m_statement->setDouble(pos, (double)value);
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // setString
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraStatement::setString(int pos, std::string value)
 {
   m_statement->setString(pos, value);
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // setFloat
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraStatement::setFloat(int pos, float value)
 {
   m_statement->setFloat(pos, value);
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // setDouble
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraStatement::setDouble(int pos, double value)
 {
   m_statement->setDouble(pos, value);
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // setClob
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraStatement::setClob(int pos, std::string value)
 {
   // A Clob is actually stored in two steps: first as an empty one
@@ -125,18 +137,17 @@ void castor::db::ora::OraStatement::setClob(int pos, std::string value)
   m_clobPos = pos;
 }
 
-
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // setDataBuffer
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraStatement::setDataBuffer
-  (int pos, void* buffer, unsigned dbType, unsigned size, void* bufLens)
+(int pos, void* buffer, unsigned dbType, unsigned size, void* bufLens)
   throw(castor::exception::SQLError) {
   if(dbType > DBTYPE_MAXVALUE) {
     castor::exception::SQLError ex;
     ex.getMessage() << "Invalid dbType: " << dbType;
     throw ex;
-  }    
+  }
   try {
     m_statement->setDataBuffer(pos, buffer, oraBulkTypeMap[dbType], size, (ub2*)bufLens);
   }
@@ -148,18 +159,18 @@ void castor::db::ora::OraStatement::setDataBuffer
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // setDataBufferArray
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraStatement::setDataBufferArray
-  (int pos, void* buffer, unsigned dbType, unsigned size, unsigned elementSize, void* bufLens)
+(int pos, void* buffer, unsigned dbType, unsigned size, unsigned elementSize, void* bufLens)
   throw(castor::exception::SQLError) {
   try {
     ub4 unused = size;
     m_statement->setDataBufferArray(pos, buffer,
-      // yes, Oracle is not that symmetric in data type handling...
-      (dbType == DBTYPE_UINT64 || dbType == DBTYPE_INT64 ? oracle::occi::OCCI_SQLT_NUM : oraBulkTypeMap[dbType]),
-      size, &unused, elementSize, (ub2*)bufLens);
+				    // yes, Oracle is not that symmetric in data type handling...
+				    (dbType == DBTYPE_UINT64 || dbType == DBTYPE_INT64 ? oracle::occi::OCCI_SQLT_NUM : oraBulkTypeMap[dbType]),
+				    size, &unused, elementSize, (ub2*)bufLens);
   }
   catch(oracle::occi::SQLException e) {
     castor::exception::SQLError ex;
@@ -169,39 +180,47 @@ void castor::db::ora::OraStatement::setDataBufferArray
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // setDataBufferUInt64Array
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraStatement::setDataBufferUInt64Array
-  (int pos, std::vector<u_signed64> data)
+(int pos, std::vector<u_signed64> data)
   throw(castor::exception::SQLError) {
+  m_arrayPos = pos;
   // a dedicated method to handle u_signed64 arrays, i.e. arrays of ids
   unsigned int nb1 = data.size() == 0 ? 1 : data.size();
   ub2* lens = (ub2*) malloc(nb1 * sizeof(ub2));
+  if (lens == 0) {
+    castor::exception::OutOfMemory e;
+    throw e;
+  }
+  m_arrayBufLens = lens;
   unsigned char (*buf)[21] = (unsigned char(*)[21]) calloc(nb1*21, sizeof(unsigned char));
+  if (buf == 0) {
+    castor::exception::OutOfMemory e;
+    throw e;
+  }
+  m_arrayBuf = buf;
+
   for(unsigned int i = 0; i < data.size(); i++) {
     oracle::occi::Number n = (double)data[i];
     oracle::occi::Bytes b = n.toBytes();
     lens[i] = b.length();
     b.getBytes(buf[i], lens[i]);
   }
-  m_arrayBuf = buf;
-  m_arrayBufLens = lens;
-  m_arrayPos = pos;
   setDataBufferArray(pos, buf, DBTYPE_UINT64, nb1, 21, lens);
 }
 
-
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // registerOutParam
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraStatement::registerOutParam(int pos, unsigned dbType)
   throw (castor::exception::SQLError) {
   if(dbType > DBTYPE_MAXVALUE) {
     castor::exception::SQLError ex;
     ex.getMessage() << "Invalid dbType: " << dbType;
     throw ex;
-  }    
+  }
   try {
     m_statement->registerOutParam(pos, oraTypeMap[dbType]);
   } catch (oracle::occi::SQLException e) {
@@ -212,9 +231,9 @@ void castor::db::ora::OraStatement::registerOutParam(int pos, unsigned dbType)
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getInt
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int castor::db::ora::OraStatement::getInt(int pos)
   throw (castor::exception::SQLError) {
   try {
@@ -228,9 +247,9 @@ int castor::db::ora::OraStatement::getInt(int pos)
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getInt64
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 signed64 castor::db::ora::OraStatement::getInt64(int pos)
   throw (castor::exception::SQLError) {
   try {
@@ -244,9 +263,9 @@ signed64 castor::db::ora::OraStatement::getInt64(int pos)
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getUInt64
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 u_signed64 castor::db::ora::OraStatement::getUInt64(int pos)
   throw (castor::exception::SQLError) {
   try {
@@ -260,9 +279,9 @@ u_signed64 castor::db::ora::OraStatement::getUInt64(int pos)
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getString
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 std::string castor::db::ora::OraStatement::getString(int pos)
   throw (castor::exception::SQLError) {
   try {
@@ -276,9 +295,9 @@ std::string castor::db::ora::OraStatement::getString(int pos)
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getFloat
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 float castor::db::ora::OraStatement::getFloat(int pos)
   throw (castor::exception::SQLError) {
   try {
@@ -292,9 +311,9 @@ float castor::db::ora::OraStatement::getFloat(int pos)
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getDouble
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 double castor::db::ora::OraStatement::getDouble(int pos)
   throw (castor::exception::SQLError) {
   try {
@@ -308,9 +327,9 @@ double castor::db::ora::OraStatement::getDouble(int pos)
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getClob
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 std::string castor::db::ora::OraStatement::getClob(int pos)
   throw (castor::exception::SQLError) {
   try {
@@ -333,9 +352,9 @@ std::string castor::db::ora::OraStatement::getClob(int pos)
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getCursor
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::db::IDbResultSet* castor::db::ora::OraStatement::getCursor(int pos)
   throw (castor::exception::SQLError) {
   try {
@@ -349,9 +368,9 @@ castor::db::IDbResultSet* castor::db::ora::OraStatement::getCursor(int pos)
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // executeQuery
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::db::IDbResultSet* castor::db::ora::OraStatement::executeQuery()
   throw (castor::exception::SQLError) {
   try {
@@ -368,9 +387,9 @@ castor::db::IDbResultSet* castor::db::ora::OraStatement::executeQuery()
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // execute
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int castor::db::ora::OraStatement::execute(int count)
   throw (castor::exception::SQLError) {
   try {
@@ -379,7 +398,7 @@ int castor::db::ora::OraStatement::execute(int count)
       ret = m_statement->executeUpdate();
     }
     else {
-      if(m_clobPos > 0) { 
+      if(m_clobPos > 0) {
         // bulk operations are not supported when CLOB data is involved
         castor::exception::SQLError ex;
         ex.getMessage() << "Cannot execute a bulk query with CLOB values, operation not supported";
@@ -387,17 +406,16 @@ int castor::db::ora::OraStatement::execute(int count)
       }
       ret = m_statement->executeArrayUpdate(count);
     }
-    
-    // special handling for array parameters
-    if(m_arrayPos > 0) {
-      // buffers need to be freed after the statement execution
-      if(m_arrayBuf) free(m_arrayBuf);
+    // Free memory buffers
+    if (m_arrayPos > 0) {
+      if (m_arrayBuf)
+	free(m_arrayBuf);
       m_arrayBuf = 0;
-      if(m_arrayBufLens) free(m_arrayBufLens);
+      if (m_arrayBufLens)
+	free(m_arrayBufLens);
       m_arrayBufLens = 0;
       m_arrayPos = 0;   // reset for next usage
     }
-    
     // special handling for clobs: they need to be populated in this weird way...
     if(m_clobPos > 0) {
       // extract needed metadata: we know we are in a 'standard' INSERT or UPDATE
@@ -433,7 +451,7 @@ int castor::db::ora::OraStatement::execute(int count)
       std::stringstream clobQuery;
       clobQuery << "SELECT " << fieldName << " FROM " << tabName
                 << " WHERE id = " << (u_signed64)m_statement->getDouble(idPos) << " FOR UPDATE";
-      
+
       // now run the SELECT FOR UPDATE query and populate the clob
       oracle::occi::Statement* stmt = m_cnvSvc->getConnection()->createStatement(clobQuery.str());
       oracle::occi::ResultSet* rset = stmt->executeQuery();
@@ -447,12 +465,22 @@ int castor::db::ora::OraStatement::execute(int count)
       stmt->executeUpdate();
       stmt->closeResultSet(rset);
       m_cnvSvc->getConnection()->terminateStatement(stmt);
-      
-      m_clobPos = 0;   // reset for next usage      
+
+      m_clobPos = 0;   // reset for next usage
     }
     return ret;
   }
   catch(oracle::occi::SQLException e) {
+    // Free memory buffers
+    if (m_arrayPos > 0) {
+      if (m_arrayBuf)
+	free(m_arrayBuf);
+      m_arrayBuf = 0;
+      if (m_arrayBufLens)
+	free(m_arrayBufLens);
+      m_arrayBufLens = 0;
+      m_arrayPos = 0;   // reset for next usage
+    }
     m_cnvSvc->handleException(e);
 
     castor::exception::SQLError ex;
