@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2008/08/14 15:25:42 $ $Author: kotlyar $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2008/09/02 09:44:31 $ $Author: waldron $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -103,7 +103,7 @@ const std::string castor::db::ora::OraJobSvc::s_putStartStatementString =
 
 /// SQL statement for disk2DiskCopyStart
 const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyStartStatementString =
-  "BEGIN disk2DiskCopyStart(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10); END;";
+  "BEGIN disk2DiskCopyStart(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12); END;";
 
 /// SQL statement for disk2DiskCopyDone
 const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyDoneStatementString =
@@ -253,7 +253,7 @@ castor::db::ora::OraJobSvc::getUpdateStart
     if (0 == id) {
       return 0;
     }
-    
+
     castor::stager::DiskCopy* result =
       new castor::stager::DiskCopy();
     result->setId(id);
@@ -284,7 +284,7 @@ castor::db::ora::OraJobSvc::putStart
  castor::stager::FileSystem* fileSystem,
  u_signed64 fileId,
  const std::string nsHost)
-   throw (castor::exception::Exception) {
+  throw (castor::exception::Exception) {
   castor::stager::DiskCopy* result = 0;
   try {
     // Check whether the statements are ok
@@ -344,14 +344,14 @@ castor::db::ora::OraJobSvc::putStart
 void castor::db::ora::OraJobSvc::disk2DiskCopyStart
 (const u_signed64 diskCopyId,
  const u_signed64 sourceDiskCopyId,
- const std::string destSvcClass, 
- const std::string diskServer, 
+ const std::string destSvcClass,
+ const std::string diskServer,
  const std::string fileSystem,
- castor::stager::DiskCopyInfo* &diskCopy, 
+ castor::stager::DiskCopyInfo* &diskCopy,
  castor::stager::DiskCopyInfo* &sourceDiskCopy,
  u_signed64 fileId,
  const std::string nsHost)
-   throw (castor::exception::Exception) {
+  throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
     if (0 == m_disk2DiskCopyStartStatement) {
@@ -366,7 +366,11 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
       m_disk2DiskCopyStartStatement->registerOutParam
 	(9, oracle::occi::OCCISTRING, 2048);
       m_disk2DiskCopyStartStatement->registerOutParam
-	(10, oracle::occi::OCCISTRING, 2048);      
+	(10, oracle::occi::OCCISTRING, 2048);
+      m_disk2DiskCopyStartStatement->registerOutParam
+	(11, oracle::occi::OCCIINT, 2048);
+      m_disk2DiskCopyStartStatement->registerOutParam
+	(12, oracle::occi::OCCIINT, 2048);
     }
 
     // Execute the statement and see if we found something
@@ -391,6 +395,8 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
     diskCopy->setMountPoint(fileSystem);
     diskCopy->setDiskCopyPath(m_disk2DiskCopyStartStatement->getString(6));
     diskCopy->setSvcClass(destSvcClass);
+    diskCopy->setFileId(fileId);
+    diskCopy->setNsHost(nsHost);
 
     // Get the information about the source disk copy
     sourceDiskCopy = new castor::stager::DiskCopyInfo();
@@ -399,13 +405,75 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
     sourceDiskCopy->setMountPoint(m_disk2DiskCopyStartStatement->getString(8));
     sourceDiskCopy->setDiskCopyPath(m_disk2DiskCopyStartStatement->getString(9));
     sourceDiskCopy->setSvcClass(m_disk2DiskCopyStartStatement->getString(10));
+    sourceDiskCopy->setFileId(fileId);
+    sourceDiskCopy->setNsHost(nsHost);
+
+    // Extract the checksum information of the file from the name server. We
+    // need to pass the checksum information to the job as the generation of
+    // checksums using the RFIO protocol is only computed over the network when
+    // running an rfiod process i.e. a server. It is not computed at the client!
+    bool useChkSum = false;
+    const char *confvalue = getconfent("CNS", "USE_CKSUM", 0);
+    if (confvalue != NULL) {
+      if (!strncasecmp(confvalue, "yes", 3)) {
+	useChkSum = true;
+      }
+    }
+
+    if (useChkSum) {
+      struct Cns_filestatcs statbuf;
+      struct Cns_fileid fileid;
+      char fileName[CA_MAXPATHLEN+1];
+      fileName[0] = '\0';
+
+      // Initialize structures
+      fileid.fileid = fileId;
+      strncpy(fileid.server, nsHost.c_str(), CA_MAXHOSTNAMELEN);
+
+      // Set the uid and gid to pass through to the name server
+      unsigned long euid = m_disk2DiskCopyStartStatement->getInt(11);
+      unsigned long egid = m_disk2DiskCopyStartStatement->getInt(12);
+      if (Cns_setid(euid, egid) != 0) {
+	castor::exception::Exception ex(serrno);
+	ex.getMessage()
+	  << "disk2DiskCopyStart : Cns_setid failed - "
+	  << sstrerror(serrno);
+	throw ex;
+      }
+
+      // Extract checksum information for file
+      if (Cns_statcs(fileName, &fileid, &statbuf) != 0) {
+	castor::exception::Exception ex(serrno);
+	ex.getMessage()
+	  << "disk2DiskCopyStart : Cns_statcs failed - "
+	  << sstrerror(serrno);
+	throw ex;
+      }
+
+      // Check that the checksum type is supported. If its not we ignore it.
+      std::string csumtype = "";
+      std::string csumvalue = statbuf.csumvalue;
+      if ((statbuf.csumtype == "AD") ||
+	  (statbuf.csumtype == "CS") ||
+	  (statbuf.csumtype == "MD")) {
+	csumtype = statbuf.csumtype;
+      }
+
+      // Set the source and destination diskcopy checksum attributes.
+      if ((csumtype != "") && (csumvalue != "")) {
+	diskCopy->setCsumType(csumtype);
+	diskCopy->setCsumValue(csumvalue);
+	sourceDiskCopy->setCsumType(csumtype);
+	sourceDiskCopy->setCsumValue(csumvalue);
+      }
+    }
 
     // Make sure the filesystems have a trailing '/'
     u_signed64 len = diskCopy->mountPoint().size();
     if ((len > 2) && (diskCopy->mountPoint()[len - 1] != '/')) {
       diskCopy->setMountPoint(diskCopy->mountPoint() + "/");
     }
-    
+
     len = sourceDiskCopy->mountPoint().size();
     if ((len > 2) && (sourceDiskCopy->mountPoint()[len - 1] != '/')) {
       sourceDiskCopy->setMountPoint(sourceDiskCopy->mountPoint() + "/");
@@ -438,7 +506,7 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyDone
  u_signed64 sourceDiskCopyId,
  u_signed64 fileId,
  const std::string nsHost)
-   throw (castor::exception::Exception) {
+  throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
     if (0 == m_disk2DiskCopyDoneStatement) {
@@ -567,7 +635,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
         << "prepareForMigration : Cns_seterrbuf failed.";
       throw ex;
     }
-    if (Cns_setid(euid,egid) != 0) {
+    if (Cns_setid(euid, egid) != 0) {
       castor::exception::Exception ex(serrno);
       ex.getMessage()
         << "prepareForMigration : Cns_setid failed : ";
@@ -579,23 +647,34 @@ void castor::db::ora::OraJobSvc::prepareForMigration
       throw ex;
     }
 
-    // timeStamp is zero only if this function is used by putDone 
-    // it that case with the putDone not scheduled the file size 
+    // timeStamp is zero only if this function is used by putDone
+    // it that case with the putDone not scheduled the file size
     // should NOT be updated
     if (timeStamp != 0) {
-      int useCksum=0;
-      char *conf_ent;
-      if ((conf_ent=getconfent("CNS","USE_CKSUM",0)) != NULL)  /* checking should we use checksums for castor name server or not*/
-          if ((csumtype != "" && csumvalue != "") && ((strncmp(conf_ent,"YES",3)==0) || (strncmp(conf_ent,"yes",3)==0))) useCksum=1;
-      
-      int rc=0;
-      if(useCksum) rc=Cns_setfsizecs(0, &fileid, fileSize,csumtype.c_str(),csumvalue.c_str());
-      else rc=Cns_setfsize(0, &fileid, fileSize);
-            
-      if ( rc != 0) {
+
+      // Update size in the nameserver and checksum in name server
+      bool useChkSum = false;
+      const char *confvalue = getconfent("CNS", "USE_CKSUM", 0);
+      if ((confvalue != NULL) && (csumtype != "") && (csumvalue != "")) {
+	if (!strncasecmp(confvalue, "yes", 3)) {
+	  useChkSum = true;
+	}
+      }
+
+      // Update the size of file and its checksum if possible
+      int rc = 0;
+      if (useChkSum) {
+	rc = Cns_setfsizecs(0, &fileid, fileSize, csumtype.c_str(), csumvalue.c_str());
+      } else {
+	rc = Cns_setfsize(0, &fileid, fileSize);
+      }
+
+      if (rc != 0) {
 	castor::exception::Exception ex(serrno);
 	ex.getMessage()
-	  << "prepareForMigration : Cns_setfsize failed : ";
+	  << "prepareForMigration : "
+	  << (useChkSum == true ? "Cns_setfsizecs" : "Cns_setfsize")
+	  << " failed : ";
 	if (!strcmp(cns_error_buffer, "")) {
 	  ex.getMessage() << sstrerror(serrno);
 	} else {
