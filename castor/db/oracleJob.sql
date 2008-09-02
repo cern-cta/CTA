@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.659 $ $Date: 2008/08/11 10:24:36 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.660 $ $Date: 2008/09/02 09:46:23 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -62,7 +62,7 @@ BEGIN
   -- Check that we can indeed open the file in write mode
   -- 3 criteria have to be met :
   --   - we are not using a INVALID copy (we should not update an old version)
-  --   - we are not in a disk only svcClass and the file class asks for tape copy 
+  --   - we are not in a disk only svcClass and the file class asks for tape copy
   --   - there is no other update/put going on or there is a prepareTo and we are
   --     dealing with the same copy.
   SELECT status INTO stat FROM DiskCopy WHERE id = dcId;
@@ -74,7 +74,7 @@ BEGIN
   SELECT svcClass INTO sclassId
     FROM Subrequest, StageUpdateRequest Request
    WHERE SubRequest.id = srId
-     AND Request.id = SubRequest.request; 
+     AND Request.id = SubRequest.request;
   IF checkFailPutWhenDiskOnly(sclassId, fclassId) = 1 THEN
      raise_application_error(-20106, 'File update canceled since this service class doesn''t provide tape backend');
   END IF;
@@ -285,7 +285,7 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyStart
 (dcId IN INTEGER, srcDcId IN INTEGER, destSvcClass IN VARCHAR2,
  destdiskServer IN VARCHAR2, destMountPoint IN VARCHAR2, destPath OUT VARCHAR2,
  srcDiskServer OUT VARCHAR2, srcMountPoint OUT VARCHAR2, srcPath OUT VARCHAR2,
- srcSvcClass OUT VARCHAR2) AS
+ srcSvcClass OUT VARCHAR2, reqEuid OUT NUMBER, reqEgid OUT NUMBER) AS
   fsId NUMBER;
   cfId NUMBER;
   dsId NUMBER;
@@ -296,9 +296,13 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyStart
 BEGIN
   -- Check that we did not cancel the replication request in the mean time
   BEGIN
-    SELECT status INTO unused FROM SubRequest
-     WHERE diskcopy = dcId
-       AND status = 6; -- READY
+    SELECT SubRequest.status, 
+           StageDiskCopyReplicaRequest.euid, StageDiskCopyReplicaRequest.egid
+      INTO unused, reqEuid, reqEgid
+      FROM SubRequest, StageDiskCopyReplicaRequest
+     WHERE SubRequest.diskcopy = dcId
+       AND SubRequest.request = StageDiskCopyReplicaRequest.id
+       AND SubRequest.status = 6; -- READY
   EXCEPTION WHEN NO_DATA_FOUND THEN
     raise_application_error(-20111, 'Replication request canceled while queuing in scheduler. Giving up.');
   END;
@@ -398,7 +402,7 @@ BEGIN
     UPDATE DiskCopy SET status = 7 WHERE id = dcId -- INVALID
     RETURNING CastorFile, FileSystem INTO cfId, fsId;
     -- restart the SubRequests waiting for the copy
-    UPDATE SubRequest set status = 1, -- SUBREQUEST_RESTART
+    UPDATE SubRequest SET status = 1, -- SUBREQUEST_RESTART
                           lastModificationTime = getTime()
      WHERE diskCopy = dcId RETURNING id INTO srId;
     UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
@@ -411,7 +415,7 @@ BEGIN
   END IF;
   -- otherwise, we can validate the new diskcopy
   -- update SubRequest and get data
-  UPDATE SubRequest set status = 6, -- SUBREQUEST_READY
+  UPDATE SubRequest SET status = 6, -- SUBREQUEST_READY
                         getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
                         lastModificationTime = getTime()
    WHERE diskCopy = dcId RETURNING id, protocol, request
@@ -433,6 +437,8 @@ BEGIN
    WHERE id = dcId
   RETURNING castorFile, fileSystem, owneruid, ownergid
     INTO cfId, fsId, ouid, ogid;
+  -- Lock the castorfile
+  SELECT id INTO cfId FROM CastorFile WHERE id = cfId FOR UPDATE;
   -- If the maxReplicaNb is exceeded, update one of the diskcopies in a
   -- DRAINING filesystem to INVALID.
   SELECT count(*) INTO repl
