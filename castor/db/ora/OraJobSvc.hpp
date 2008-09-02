@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/08/14 15:10:11 $ $Author: kotlyar $
+ * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.20 $ $Release$ $Date: 2008/09/02 09:30:20 $ $Author: waldron $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -153,7 +153,7 @@ namespace castor {
 
         /**
          * Handles the start of a StageDiskCopyReplicaRequest. It checks
-         * that the source DiskCopy stills exists i.e. hasn't been 
+         * that the source DiskCopy stills exists i.e. hasn't been
          * garbage collected. Updates the filesystem of the destination
          * DiskCoy and verifies that the selected destination diskserver
          * and filesystem are valid for the given service class.
@@ -168,6 +168,8 @@ namespace castor {
          * @return sourceDiskCopy information about the source DiskCopy
 	 * @param fileId the id of the castorFile
 	 * @param nsHost the name server hosting this castorFile
+	 * @param euid the uid of the user issuing the command
+	 * @param egid the gid of the user issuing the command
          * @exception Exception in case of error
          */
         virtual void disk2DiskCopyStart
@@ -228,14 +230,14 @@ namespace castor {
          * castorFile.
          * @param subreq The SubRequest handling the file to prepare
          * @param fileSize The actual size of the castor file
-         * @param timeStamp To know if the fileSize is still valid 
+         * @param timeStamp To know if the fileSize is still valid
 	 * @param fileId the id of the castorFile
 	 * @param nsHost the name server hosting this castorFile
          * @param csumtype the checksum type of the castor file
          * @param csumvalue the checksum value of the castor file
 	 * @exception Exception in case of error
          */
-                  
+
         virtual void prepareForMigration
         (castor::stager::SubRequest* subreq,
          u_signed64 fileSize, u_signed64 timeStamp,
@@ -243,7 +245,7 @@ namespace castor {
          const std::string nsHost,
          const std::string csumtype="",
          const std::string csumvalue="")
-          throw (castor::exception::Exception);  
+          throw (castor::exception::Exception);
 
         /**
          * Informs the stager the a Get or Update SubRequest
