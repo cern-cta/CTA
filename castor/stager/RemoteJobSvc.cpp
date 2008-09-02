@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2008/08/14 15:10:11 $ $Author: kotlyar $
+ * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2008/09/02 09:49:23 $ $Author: waldron $
  *
  *
  *
@@ -150,7 +150,7 @@ public:
    bool *emptyFile) :
     m_diskCopy(diskCopy),
     m_emptyFile(emptyFile){}
-  
+
   virtual void handleResponse(castor::rh::Response& r)
     throw (castor::exception::Exception) {
     castor::rh::GetUpdateStartResponse *resp =
@@ -171,7 +171,6 @@ private:
   // Where to store the emptyFile flag
   bool* m_emptyFile;
 };
-
 
 //------------------------------------------------------------------------------
 // getUpdateStart
@@ -205,19 +204,6 @@ castor::stager::RemoteJobSvc::getUpdateStart
 }
 
 //------------------------------------------------------------------------------
-// getUpdateStart old signature (to be dropped)
-//------------------------------------------------------------------------------
-/*castor::stager::DiskCopy*
-castor::stager::RemoteJobSvc::getUpdateStart
-(castor::stager::SubRequest* subreq,
- castor::stager::FileSystem* fileSystem,
- std::list<castor::stager::DiskCopyForRecall*>& sources,
- bool* emptyFile)
-  throw (castor::exception::Exception) {
-  return getUpdateStart(subreq, fileSystem, emptyFile);
-}
-*/
-//------------------------------------------------------------------------------
 // putStartResponseHandler
 //------------------------------------------------------------------------------
 
@@ -244,7 +230,7 @@ public:
       e.getMessage() << "PutStartResponseHandler ; invalid repsonse type\n"
 		     << "Was expecting StartResponse, got "
 		     << castor::ObjectsIdStrings[r.type()];
-      throw e;      
+      throw e;
     }
     *m_diskCopy = resp->diskCopy();
   };
@@ -387,7 +373,7 @@ void castor::stager::RemoteJobSvc::disk2DiskCopyStart
  castor::stager::DiskCopyInfo* &diskCopy,
  castor::stager::DiskCopyInfo* &sourceDiskCopy,
  u_signed64 fileId,
- const std::string nsHost) 
+ const std::string nsHost)
   throw(castor::exception::Exception) {
   // Build the Disk2DiskCopyStartRequest
   castor::stager::Disk2DiskCopyStartRequest req;
@@ -471,7 +457,7 @@ void castor::stager::RemoteJobSvc::prepareForMigration
   req.setTimeStamp(timeStamp);
   req.setFileId(fileId);
   req.setNsHost(nsHost);
-  req.setCsumType(csumtype); 
+  req.setCsumType(csumtype);
   req.setCsumValue(csumvalue);
   // Build a response Handler
   castor::client::BasicResponseHandler rh;
@@ -488,7 +474,7 @@ int castor::stager::RemoteJobSvc::getRemoteJobClientTimeout() {
   int ret_timeout = castor::stager::DEFAULT_REMOTEJOBSVC_TIMEOUT;
 
   char *strtimeout = getconfent((char *)castor::stager::RMTJOBSVC_CATEGORY_CONF,
-				(char *)castor::stager::TIMEOUT_CONF, 
+				(char *)castor::stager::TIMEOUT_CONF,
 				0);
   if (strtimeout != 0) {
     char* dp = strtimeout;
