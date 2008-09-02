@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.7 $ $Release$ $Date: 2008/06/27 06:38:12 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.8 $ $Release$ $Date: 2008/09/02 09:47:08 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -18,7 +18,7 @@ CREATE SEQUENCE ids_seq CACHE 300;
 CREATE TABLE Id2Type (id INTEGER PRIMARY KEY, type NUMBER);
 CREATE INDEX I_Id2Type_typeId on Id2Type (type, id);
 
-/* get current time as a time_t. Not that easy in ORACLE */
+/* Get current time as a time_t. Not that easy in ORACLE */
 CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
   ret NUMBER;
 BEGIN
@@ -27,16 +27,16 @@ BEGIN
 END;
 
 /* Global tables */
-CREATE GLOBAL TEMPORARY TABLE listOfStrs(id VARCHAR(2048))ON COMMIT DELETE ROWS;
-CREATE GLOBAL TEMPORARY TABLE listOfIds(id NUMBER)ON COMMIT DELETE ROWS;
+CREATE GLOBAL TEMPORARY TABLE listOfStrs(id VARCHAR(2048)) ON COMMIT DELETE ROWS;
+CREATE GLOBAL TEMPORARY TABLE listOfIds(id NUMBER) ON COMMIT DELETE ROWS;
 
 /* Packages and types */
 CREATE OR REPLACE PACKAGE repack AS
   TYPE RepackRequest_Cur IS REF CURSOR RETURN RepackRequest%ROWTYPE;
   TYPE RepackSubRequest_Cur IS REF CURSOR RETURN RepackSubRequest%ROWTYPE;
   TYPE RepackSegment_Cur IS REF CURSOR RETURN RepackSegment%ROWTYPE;
-  TYPE "cnumList" IS TABLE OF NUMBER index by binary_integer;
-  TYPE "strList" IS TABLE OF VARCHAR2(2048) index by binary_integer;
+  TYPE "cnumList" IS TABLE OF NUMBER INDEX BY binary_integer;
+  TYPE "strList" IS TABLE OF VARCHAR2(2048) INDEX BY binary_integer;
 END repack;
 
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
