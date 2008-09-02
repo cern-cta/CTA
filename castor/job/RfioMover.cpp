@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RfioMover.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/08/22 13:04:37 $ $Author: kotlyar $
+ * @(#)$RCSfile: RfioMover.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/09/02 09:29:06 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -49,7 +49,7 @@ castor::job::RfioMover::RfioMover() :
   m_totalBytes(0),
   m_csumType(""),
   m_csumValue("") {
-  
+
 }
 
 
@@ -63,7 +63,7 @@ castor::job::RfioMover::~RfioMover() throw() {
     rfio_close(m_inputFD);
     m_inputFD = -1;
   }
-  
+
   // Close the destination file descriptor
   if (m_outputFD > 0) {
     rfio_close(m_outputFD);
@@ -91,32 +91,32 @@ void castor::job::RfioMover::destination
 
   // Construct the input and output filepaths
   m_outputFile = diskCopy->mountPoint() + diskCopy->diskCopyPath();
-  m_inputFile  = sourceDiskCopy->diskServer() + ":" 
+  m_inputFile  = sourceDiskCopy->diskServer() + ":"
     + sourceDiskCopy->mountPoint() + sourceDiskCopy->diskCopyPath();
-    
+
   // Activate V3 RFIO protocol (Streaming mode)
   int v = RFIO_STREAM;
   rfiosetopt(RFIO_READOPT, &v, 4);
-  
+
   // Before any RFIO calls it appears necessary to reset the rfio_errno and
   // serrno error indicators!! This is also true within the rfcp source code
   rfio_errno = serrno = 0;
 
-  // Open the source file 
+  // Open the source file
   m_inputFD = rfio_open64((char *)m_inputFile.c_str(), O_RDONLY, 0644);
   if (m_inputFD < 0) {
     castor::exception::Exception e(SEINTERNAL);
-    e.getMessage() << "Failed to rfio_open64 the source: " 
+    e.getMessage() << "Failed to rfio_open64 the source: "
 		   << m_inputFile << " : " << rfio_serror() << std::endl;
     throw e;
-  }  
-  
+  }
+
   // Stat the source file
   struct stat64 statbuf;
   rfio_errno = serrno = 0;
   if (rfio_fstat64(m_inputFD, &statbuf) != 0) {
     castor::exception::Exception e(SEINTERNAL);
-    e.getMessage() << "Failed to rfio_fstat64 the source: " 
+    e.getMessage() << "Failed to rfio_fstat64 the source: "
 		   << m_inputFile << " : " << rfio_serror() << std::endl;
     throw e;
   }
@@ -126,10 +126,10 @@ void castor::job::RfioMover::destination
 
   // Activate V3 RFIO protocol again (???)
   rfiosetopt(RFIO_READOPT, &v, 4);
-  
+
   // Open the destination file
   rfio_errno = serrno = 0;
-  m_outputFD = rfio_open64((char *)m_outputFile.c_str(), 
+  m_outputFD = rfio_open64((char *)m_outputFile.c_str(),
 			   O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR);
   if (m_outputFD < 0) {
     castor::exception::Exception e(SEINTERNAL);
@@ -138,30 +138,15 @@ void castor::job::RfioMover::destination
     throw e;
   }
 
-  // ok we were able to open source and destination files, then do a call to CNS for checksums
-  char *conf_ent;  
-  if((conf_ent=getconfent("CNS","USE_CKSUM",0)) != NULL)  // checking should we use checksums or not
-     if((strncmp(conf_ent,"YES",3)==0) || (strncmp(conf_ent,"yes",3)==0))
-          if((conf_ent=getconfent("RFIOD","USE_CKSUM",0)) != NULL) 
-            if((strncmp(conf_ent,"YES",3)==0) || (strncmp(conf_ent,"yes",3)==0)) {
-               // we have CNS and RFIOD USE_CKSUM YES, then we can ask nameserver for checksums and fill it on a filesystem
-               // Fill checksum variables
-               struct Cns_filestatcs statbuf;         // we have checksums in this structure
-               struct Cns_fileid castorFileId;
-               char *castorFileName = "\0";  
-               memset(&castorFileId,'\0',sizeof(castorFileId));
-               strncpy(castorFileId.server,sourceDiskCopy->nsHost().c_str(),sizeof(castorFileId.server)-1);
-               castorFileId.fileid=sourceDiskCopy->fileId();
-               if(Cns_statcs(castorFileName,&castorFileId,&statbuf)==0) {
-                       m_csumType = statbuf.csumtype;
-                       m_csumValue = statbuf.csumvalue;
-                       if (m_csumType == "AD" ) m_csumType = "ADLER32";  // convert types for extended attrubutes
-                       else if (m_csumType == "CS" ) m_csumType = "CRC32";
-                            else if (m_csumType == "MD" ) m_csumType = "MD5";
-                               else m_csumType = ""; // unknown type
-               } // in error case we will do nothing
-            }
-  
+  // Keep a record of the checksum information of the file
+  const char *confvalue = getconfent("RFIO", "USE_CKSUM", 0);
+  if (confvalue != NULL) {
+    if (!strncasecmp(confvalue, "yes", 3)) {
+      m_csumType  = sourceDiskCopy->csumType();
+      m_csumValue = sourceDiskCopy->csumValue();
+    }
+  }
+
   // Copy the file
   try {
     copyFile();
@@ -188,12 +173,27 @@ void castor::job::RfioMover::cleanupFile(bool silent, bool unlink)
   }
   m_inputFD = -1;
 
-  // Before closing the destination file descriptor we will try to set extended file attrubutes
-  if(m_csumValue != ""  && m_csumType != "") { /* sets the file extended attribute */
-    if(fsetxattr(m_outputFD,"user.castor.checksum.value",m_csumValue.c_str(), strlen(m_csumValue.c_str()),0)) ;
-    else fsetxattr(m_outputFD,"user.castor.checksum.type",m_csumType.c_str(), strlen(m_csumType.c_str()),0); // do nothing in case of error
+  // Before closing the destination file descriptor set the extended attributes
+  // of file to include the checksum information recorded earlier
+  if ((m_csumType != "") && (m_csumValue != "")) {
+    if (fsetxattr(m_outputFD, "user.castor.checksum.value",
+		  m_csumValue.c_str(), strlen(m_csumValue.c_str()), 0) != 0) {
+      castor::exception::Exception e(errno);
+      e.getMessage() << "Failed to set extended attribute : "
+		     << "'user.castor.checksum.value' to "
+		     << m_csumValue;
+      throw e;
+    }
+    if (fsetxattr(m_outputFD, "user.castor.checksum.type",
+		  m_csumType.c_str(), strlen(m_csumType.c_str()), 0) != 0) {
+      castor::exception::Exception e(errno);
+      e.getMessage() << "Failed to set extended attribute : "
+		     << "'user.castor.checksum.type' to "
+		     << m_csumType;
+      throw e;
+    }
   }
-  
+
   // Close the destination file descriptor. If the close fails unlink the file
   // but only after checking its S_IFREG.
   struct stat64 statbuf;
@@ -243,7 +243,7 @@ void castor::job::RfioMover::copyFile()
       castor::exception::Exception e(EINVAL);
       e.getMessage() << "Invalid RFCP/BUFFERSIZE option, transfer aborted"
 		     << std::endl;
-      throw e;      
+      throw e;
     }
   }
 
@@ -279,11 +279,11 @@ void castor::job::RfioMover::copyFile()
     rfio_errno = serrno = 0;
     n = rfio_read(m_inputFD, copyBuffer, bufsize);
     if (n > 0) {
-      
+
       // Write data to disk
       int count = 0, m = 0;
       rfio_errno = serrno = 0;
-      while ((count != n && 
+      while ((count != n &&
 	      (m = rfio_write(m_outputFD, copyBuffer + count, n - count)) > 0)) {
 	count += m;
       }
@@ -298,7 +298,7 @@ void castor::job::RfioMover::copyFile()
 	e.getMessage() << "Failed to rfio_write on destination: "
 		       << m_outputFile << " : " << rfio_serror() << std::endl;
 	throw e;
-      } 
+      }
     } else if (n < 0) {
       // Here we encountered a read error, so we remove the file and throw
       // an exception
@@ -308,7 +308,7 @@ void castor::job::RfioMover::copyFile()
       e.getMessage() << "Failed to rfio_read from source: "
 		     << m_inputFile << " : " << rfio_serror() << std::endl;
       throw e;
-    }		  
+    }
   } while ((m_fileSize != m_totalBytes) && (n > 0));
   free(copyBuffer);
 
