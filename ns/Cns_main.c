@@ -204,8 +204,8 @@ int Cns_main(main_args)
     return (SYERR);
   }
   for (i = 0; i < nbthreads; i++) {
-    (Cns_srv_thread_info+i)->s = -1;
-    (Cns_srv_thread_info+i)->dbfd.idx = i;
+    (Cns_srv_thread_info + i)->s = -1;
+    (Cns_srv_thread_info + i)->dbfd.idx = i;
   }
 
   FD_ZERO (&readmask);
@@ -219,41 +219,41 @@ int Cns_main(main_args)
 
   /* open request socket */
 
-    serrno = 0;
-    if ((s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
-      nslogit (func, NS002, "socket", neterror());
-      return (CONFERR);
+  serrno = 0;
+  if ((s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
+    nslogit (func, NS002, "socket", neterror());
+    return (CONFERR);
+  }
+  memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
+  sin.sin_family = AF_INET ;
+  if (securityOpt){
+    if ((p = getenv (CNS_SPORT_ENV)) || ((p = getconfent (CNS_SCE, "SEC_PORT", 0)))) {
+      sin.sin_port = htons ((unsigned short)atoi (p));
+    } else if ((sp = getservbyname (CNS_SEC_SVC, "tcp"))) {
+      sin.sin_port = sp->s_port;
+    } else {
+      sin.sin_port = htons ((unsigned short)CNS_SEC_PORT);
     }
-    memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
-    sin.sin_family = AF_INET ;
-    if (securityOpt){
-      if ((p = getenv (CNS_SPORT_ENV)) || ((p = getconfent (CNS_SCE, "SEC_PORT", 0)))) {
-        sin.sin_port = htons ((unsigned short)atoi (p));
-      } else if ((sp = getservbyname (CNS_SEC_SVC, "tcp"))) {
-        sin.sin_port = sp->s_port;
-      } else {
-        sin.sin_port = htons ((unsigned short)CNS_SEC_PORT);
-      }
-    }else{
-      if ((p = getenv (CNS_PORT_ENV)) || ((p = getconfent (CNS_SCE, "PORT", 0)))) {
-        sin.sin_port = htons ((unsigned short)atoi (p));
-      } else if ((sp = getservbyname (CNS_SVC, "tcp"))) {
-        sin.sin_port = sp->s_port;
-      } else {
-        sin.sin_port = htons ((unsigned short)CNS_PORT);
-      }
+  }else{
+    if ((p = getenv (CNS_PORT_ENV)) || ((p = getconfent (CNS_SCE, "PORT", 0)))) {
+      sin.sin_port = htons ((unsigned short)atoi (p));
+    } else if ((sp = getservbyname (CNS_SVC, "tcp"))) {
+      sin.sin_port = sp->s_port;
+    } else {
+      sin.sin_port = htons ((unsigned short)CNS_PORT);
     }
-    sin.sin_addr.s_addr = htonl(INADDR_ANY);
-    serrno=0; 
-    if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0) 
-      nslogit (func, NS002, "setsockopt", neterror());
-    if (bind (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
-      nslogit (func, NS002, "bind", neterror());
-      return (CONFERR); // SEE HOW TO REACT WHEN A SOCKET CAN NOT BE CREATED.
-    }
-    listen (s, 5) ;
+  }
+  sin.sin_addr.s_addr = htonl(INADDR_ANY);
+  serrno=0; 
+  if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0) 
+    nslogit (func, NS002, "setsockopt", neterror());
+  if (bind (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
+    nslogit (func, NS002, "bind", neterror());
+    return (CONFERR); // SEE HOW TO REACT WHEN A SOCKET CAN NOT BE CREATED.
+  }
+  listen (s, 5) ;
 
-    FD_SET (s, &readmask);
+  FD_SET (s, &readmask);
 
   /* main loop */
 
@@ -261,46 +261,46 @@ int Cns_main(main_args)
     if (being_shutdown) {
       int nb_active_threads = 0;
       for (i = 0; i < nbthreads; i++) {
-        if ((Cns_srv_thread_info+i)->s >= 0) {
+        if ((Cns_srv_thread_info + i)->s >= 0) {
           nb_active_threads++;
           continue;
         }
-        if ((Cns_srv_thread_info+i)->db_open_done)
-          (void) Cns_closedb (&(Cns_srv_thread_info+i)->dbfd);
+        if ((Cns_srv_thread_info + i)->db_open_done)
+          (void) Cns_closedb (&(Cns_srv_thread_info + i)->dbfd);
 #ifdef CSEC
-        (void) Csec_clearContext (&(Cns_srv_thread_info+i)->sec_ctx);
+        (void) Csec_clearContext (&(Cns_srv_thread_info + i)->sec_ctx);
 #endif
       }
       if (nb_active_threads == 0)
         return (0);
     }
-      if (FD_ISSET (s, &readfd)) {
-        FD_CLR (s, &readfd);
-        rqfd = accept (s, (struct sockaddr *) &from, &fromlen);
+    if (FD_ISSET (s, &readfd)) {
+      FD_CLR (s, &readfd);
+      rqfd = accept (s, (struct sockaddr *) &from, &fromlen);
 #if (defined(SOL_SOCKET) && defined(SO_KEEPALIVE))
-        {
-          int on = 1;
-          /* Set socket option */
-          setsockopt(rqfd,SOL_SOCKET,SO_KEEPALIVE,(char *) &on,sizeof(on));
-        }
+      {
+	int on = 1;
+	/* Set socket option */
+	setsockopt(rqfd, SOL_SOCKET, SO_KEEPALIVE,(char *) &on, sizeof(on));
+      }
 #endif
-        if ((thread_index = Cpool_next_index (ipool)) < 0) {
-          nslogit (func, NS002, "Cpool_next_index",
-                   sstrerror(serrno));
-          if (serrno == SEWOULDBLOCK) {
-            sendrep (rqfd, CNS_RC, serrno);
-            continue;
-          } else
-            return (SYERR);
-        }
-        (Cns_srv_thread_info+thread_index)->s = rqfd;
-        (Cns_srv_thread_info+thread_index)->secOn = securityOpt;
-        if (Cpool_assign (ipool, &doit,
-                          Cns_srv_thread_info+thread_index, 1) < 0) {
-          (Cns_srv_thread_info+thread_index)->s = -1;
-          nslogit (func, NS002, "Cpool_assign", sstrerror(serrno));
-          return (SYERR);
-        }
+      if ((thread_index = Cpool_next_index (ipool)) < 0) {
+	nslogit (func, NS002, "Cpool_next_index",
+		 sstrerror(serrno));
+	if (serrno == SEWOULDBLOCK) {
+	  sendrep (rqfd, CNS_RC, serrno);
+	  continue;
+	} else
+	  return (SYERR);
+      }
+      (Cns_srv_thread_info + thread_index)->s = rqfd;
+      (Cns_srv_thread_info + thread_index)->secOn = securityOpt;
+      if (Cpool_assign (ipool, &doit,
+			Cns_srv_thread_info + thread_index, 1) < 0) {
+	(Cns_srv_thread_info + thread_index)->s = -1;
+	nslogit (func, NS002, "Cpool_assign", sstrerror(serrno));
+	return (SYERR);
+      }
     }
     memcpy (&readfd, &readmask, sizeof(readmask));
     timeval.tv_sec = CHECKI;
@@ -835,7 +835,7 @@ doit(arg)
       thip->s = -1;
       return NULL;
     }
-    nslogit (func, "Users principal %s - mapped to %s\n", thip->Csec_auth_id, username);
+    nslogit (func, "users principal %s - mapped to %s\n", thip->Csec_auth_id, username);
   }
 
   /*******************************************************************************************/
@@ -900,7 +900,7 @@ doit(arg)
   }
 #ifdef CSEC
   if (thip->secOn){
-     Csec_clearContext(&thip->sec_ctx);
+    Csec_clearContext(&thip->sec_ctx);
   }
 #endif
   if (req_data != reqbuf)

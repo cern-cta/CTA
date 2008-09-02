@@ -5198,7 +5198,8 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
     RETURN (EINVAL);
   if (unmarshall_STRINGN (rbp, csumvalue, 33))
     RETURN (EINVAL);
-  if (*csumtype && strcmp (csumtype, "CS") && strcmp (csumtype, "AD") && strcmp (csumtype, "MD")) /* CS for CRC32 AD for ADLER32 MD for MD5 */
+  if (*csumtype && strcmp (csumtype, "CS") && strcmp (csumtype, "AD") 
+      && strcmp (csumtype, "MD"))
     RETURN (EINVAL);
   sprintf (logbuf, "setfsizecs %s %s %s %s %s", u64tostr (fileid, tmpbuf, 0),
            path, u64tostr (filesize, tmpbuf2, 0),csumvalue,csumtype);
@@ -5659,20 +5660,20 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
       }
     }
     
-    if (magic >= CNS_MAGIC4 && nbseg==1) {
+    if ((magic >= CNS_MAGIC4) && (nbseg == 1)) {
       /* Checking for a checksum in the file metadata table if we have one segment for a file
-      We have different names for checksum type in Cns_seg_metadata table and Cns_file_metadata.
-      adler32==AD  crc32==CS */
-      if ((strcmp(smd_entry.checksum_name,"adler32")==0 && strcmp(filentry.csumtype,"AD")==0) ||
-          (strcmp(smd_entry.checksum_name,"crc32")==0 && strcmp(filentry.csumtype,"CS")==0)) {
-             /* we have adler32 or crc32 checksum type   */
-             sprintf(logbuf, "%lx",smd_entry.checksum);  /* convert number to a string */
-             if (strncmp(logbuf,filentry.csumvalue,32)) {
-                /* checksum mismatch! error! */
-                sprintf (logbuf, "setsegattrs: checksum mismatch for the castor file and the segment 0x%s != 0x%lx",filentry.csumvalue,smd_entry.checksum);
-                Cns_logreq (func, logbuf);
-                RETURN(EINVAL);
-             }
+	 We have different names for checksum type in Cns_seg_metadata table and Cns_file_metadata.
+	 adler32==AD crc32==CS */
+      if (((strcmp(smd_entry.checksum_name, "adler32") == 0) && (strcmp(filentry.csumtype, "AD") == 0)) ||
+	  ((strcmp(smd_entry.checksum_name, "crc32") == 0) && (strcmp(filentry.csumtype, "CS") == 0))) {
+	/* we have adler32 or crc32 checksum type */
+	sprintf(logbuf, "%lx", smd_entry.checksum);  /* convert number to a string */
+	if (strncmp(logbuf, filentry.csumvalue, 32)) {
+	  /* checksum mismatch! error! */
+	  sprintf (logbuf, "setsegattrs: checksum mismatch for the castor file and the segment 0x%s != 0x%lx", filentry.csumvalue, smd_entry.checksum);
+	  Cns_logreq (func, logbuf);
+	  RETURN(EINVAL);
+	}
       }
     }
 
