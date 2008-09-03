@@ -5168,7 +5168,7 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
   u_signed64 fileid;
   struct Cns_file_metadata filentry;
   u_signed64 filesize;
-  char func[17];
+  char func[19];
   gid_t gid;
   char logbuf[CA_MAXPATHLEN+90];
   char path[CA_MAXPATHLEN+1];
