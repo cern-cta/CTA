@@ -4858,22 +4858,32 @@ void *consume_thread(int *ptr)
   char     useCksum;
   char     *conf_ent;
   char     *ckSumalg="ADLER32";
+  int      mode;
    
    useCksum=0;
    if((conf_ent=getconfent("RFIOD","USE_CKSUM",0)) != NULL) 
      if((strncmp(conf_ent,"YES",3)==0) || (strncmp(conf_ent,"yes",3)==0)) useCksum=1;
 	
-   if(useCksum) {
-     if(fsetxattr(fd,"user.castor.checksum.value","0", 1,0)) { 
-       log(LOG_ERR,"consume_thread: fsetxattr failed, error=%d\n",errno);
-       log(LOG_ERR,"consume_thread: skipping ckecksums check\n");
-       useCksum=0;
-     } else {
-         ckSum = adler32(0L,Z_NULL,0);
-         log(LOG_DEBUG,"consume_thread: checksum init for %s\n",ckSumalg);
-       }
-   }
-
+  if(useCksum) {
+    /* first of all we will check the mode for the file and will do nothing for O_RDWR - Update */
+    mode=fcntl(fd,F_GETFL);
+    if (mode == -1) {
+      log(LOG_ERR,"consume_thread: fcntl (F_GETFL) failed, error=%d\n",errno);
+      useCksum=0; 
+    }
+    else if (mode & O_RDWR ){
+      log(LOG_ERR,"consume_thread: file opened in O_RDWR, skipping checksums\n");
+      useCksum=0;
+    }
+    else if(fsetxattr(fd,"user.castor.checksum.value","0", 1,0)) {
+      log(LOG_ERR,"consume_thread: fsetxattr failed, error=%d\n",errno);
+      log(LOG_ERR,"consume_thread: skipping ckecksums check\n");
+      useCksum=0;
+    } else {
+      ckSum = adler32(0L,Z_NULL,0);
+      log(LOG_DEBUG,"consume_thread: checksum init for %s\n",ckSumalg);
+      }
+  }
 
    while ((! error) && (! end)) {
       Csemaphore_down(&full);
