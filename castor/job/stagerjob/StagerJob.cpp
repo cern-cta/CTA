@@ -29,6 +29,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <attr/xattr.h>
 #include <sstream>
 #include <fcntl.h>
 #include "common.h"
@@ -179,6 +180,14 @@ std::string startAndGetPath
            castor::job::stagerjob::FCLOSEFAILED, 4, params, &args->fileId);
       }
     }
+
+    // for Update we should clear extended file attributes
+    // no need to do something for errors maybe we have not attributes
+    // and we do not have to check RFIOD USE_CHECKSUM
+    if (args->accessMode == castor::job::stagerjob::ReadWrite && !emptyFile) 
+      if (removexattr(fullDestPath.c_str(),"user.castor.checksum.value") == 0)    // ok
+	removexattr(fullDestPath.c_str(),"user.castor.checksum.type");
+         
     delete diskCopy;
     return fullDestPath;
 
