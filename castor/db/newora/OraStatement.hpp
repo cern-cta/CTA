@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/09/02 06:34:29 $ $Author: waldron $
+ * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/09/04 10:00:49 $ $Author: sponcec3 $
  *
  *
  *
@@ -146,6 +146,13 @@ namespace castor {
         void* m_arrayBufLens;
 
         unsigned m_arrayPos;
+
+        /**
+         * a placeholder for the array size needed by setDataBufferArray
+         * setDataBufferArray allocates it if needed and it is then
+         * reused and only dropped when the Statement is dropped
+         */
+        ub4* m_arraySize;
       };
 
     }

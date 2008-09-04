@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/09/02 06:34:29 $ $Author: waldron $
+ * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/09/04 10:00:49 $ $Author: sponcec3 $
  *
  * @author Giuseppe Lo Presti, giuseppe.lopresti@cern.ch
  *****************************************************************************/
@@ -37,7 +37,8 @@ castor::db::ora::OraStatement::OraStatement(oracle::occi::Statement* stmt, casto
   m_clobPos(0),
   m_arrayBuf(0),
   m_arrayBufLens(0),
-  m_arrayPos(0)
+  m_arrayPos(0),
+  m_arraySize(NULL)
 {
   m_statement->setAutoCommit(false);
 }
@@ -59,6 +60,7 @@ castor::db::ora::OraStatement::~OraStatement() {
     m_cnvSvc->closeStatement(this);
   }
   catch(oracle::occi::SQLException ignored) {}
+  if (NULL != m_arraySize) delete m_arraySize;
 }
 
 //------------------------------------------------------------------------------
@@ -166,11 +168,14 @@ void castor::db::ora::OraStatement::setDataBufferArray
 (int pos, void* buffer, unsigned dbType, unsigned size, unsigned elementSize, void* bufLens)
   throw(castor::exception::SQLError) {
   try {
-    ub4 unused = size;
+    if (NULL == m_arraySize) {
+      m_arraySize = (ub4*) malloc(sizeof(ub4));
+    }
+    *m_arraySize = size;
     m_statement->setDataBufferArray(pos, buffer,
-				    // yes, Oracle is not that symmetric in data type handling...
-				    (dbType == DBTYPE_UINT64 || dbType == DBTYPE_INT64 ? oracle::occi::OCCI_SQLT_NUM : oraBulkTypeMap[dbType]),
-				    size, &unused, elementSize, (ub2*)bufLens);
+      // yes, Oracle is not that symmetric in data type handling...
+      (dbType == DBTYPE_UINT64 || dbType == DBTYPE_INT64 ? oracle::occi::OCCI_SQLT_NUM : oraBulkTypeMap[dbType]),
+      size, m_arraySize, elementSize, (ub2*)bufLens);
   }
   catch(oracle::occi::SQLException e) {
     castor::exception::SQLError ex;
