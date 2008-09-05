@@ -35,10 +35,11 @@ extern char *getenv();
 int procpath(char*);
 int listdir(char*);
 int listsegs(char*);
-int listentry(char*,struct Cns_filestat*,char*,char*);
+int listentry(char*,struct Cns_filestatcs*,char*,char*);
 int listtpentry(char*,int,int,u_signed64,int,char*,int,int,
                 unsigned char[4],char,char*,unsigned long);
-
+void direntstatg2filestatcs(struct Cns_filestatcs*, struct Cns_direnstatg*);
+void direntstatc2filestatcs(struct Cns_filestatcs*, struct Cns_direnstatc*);
 
 #if sgi
 extern char *strdup _PROTO((CONST char *));
@@ -138,7 +139,7 @@ int main(argc, argv)
   }
   if (errflg) {
     fprintf (stderr,
-             "usage: %s [-cdilRTu] [--class] [--comment] [--deleted] [--checksum] path...\n",
+             "usage: %s [-cdiLlRTu] [--class] [--comment] [--deleted] [--display_side] [--ds] [--checksum] path...\n",
              argv[0]);
 #if defined(_WIN32)
     WSACleanup();
@@ -183,14 +184,17 @@ int procpath(fullpath)
   int c;
   char comment[CA_MAXCOMMENTLEN+1];
   char slink[CA_MAXPATHLEN+1];
-  struct Cns_filestat statbuf;
-
+  struct Cns_filestatcs statbuf;
+  
   if (Lflag) {
-    if (Cns_stat (fullpath, &statbuf) < 0)
+    if (Cns_statcs (fullpath, &statbuf) < 0)
       return (-1);
   } else {
-    if (Cns_lstat (fullpath, &statbuf) < 0)
-      return (-1);
+    if (checksumflag && !Tflag) {
+      if (Cns_statcs (fullpath, &statbuf) < 0)
+        return (-1); 
+    } else if (Cns_lstat (fullpath, (struct Cns_filestat*) &statbuf) < 0)
+        return (-1);
   }
   if (statbuf.filemode & S_IFDIR && ! dflag)
     return (listdir (fullpath));
@@ -226,11 +230,11 @@ int listdir(dir)
   struct dirlist *dll;  /* pointer to last directory in the list */
   struct dirent *dp;
   struct Cns_direnstatc *dxcp;
-  struct Cns_direnstat *dxp;
+  struct Cns_direnstatg *dxp;
   struct Cns_direntape *dxtp;
   char slink[CA_MAXPATHLEN+1];
-  struct Cns_filestat statbuf;
-
+  struct Cns_filestatcs statbuf;
+  
   if ((dirp = Cns_opendir (dir)) == NULL)
     return (-1);
 
@@ -263,11 +267,11 @@ int listdir(dir)
     }
   } else {
     if (! cmflag)
-      while ((dxp = Cns_readdirx (dirp)) != NULL) {
+      while ((dxp = Cns_readdirg (dirp)) != NULL) {
         if ((dxp->filemode & S_IFLNK) == S_IFLNK) {
           sprintf (curdir, "%s/%s", dir, dxp->d_name);
-          if (Lflag) {
-            if (Cns_stat (curdir, &statbuf))
+          if (Lflag) { 
+            if (Cns_statcs (curdir,&statbuf))
               fprintf (stderr, "%s: %s\n", curdir,
                        sstrerror(serrno));
             else
@@ -282,7 +286,8 @@ int listdir(dir)
             slink[c] = '\0';
           }
         }
-        listentry (dxp->d_name, dxp, slink, NULL);
+        direntstatg2filestatcs(&statbuf,dxp);
+        listentry (dxp->d_name, &statbuf, slink, NULL);
         if (Rflag && (dxp->filemode & S_IFDIR)) {
           if ((dlc = (struct dirlist *)
                malloc (sizeof(struct dirlist))) == NULL ||
@@ -306,7 +311,8 @@ int listdir(dir)
             c = 0;
           slink[c] = '\0';
         }
-        listentry (dxcp->d_name, dxcp, slink, dxcp->comment);
+        direntstatc2filestatcs(&statbuf,dxcp);
+        listentry (dxcp->d_name, &statbuf, slink, dxcp->comment);
         if (Rflag && (dxcp->filemode & S_IFDIR)) {
           if ((dlc = (struct dirlist *)
                malloc (sizeof(struct dirlist))) == NULL ||
@@ -341,7 +347,7 @@ int listdir(dir)
 
 int listentry(path, statbuf, slink, comment)
      char *path;
-     struct Cns_filestat *statbuf;
+     struct Cns_filestatcs *statbuf;
      char *slink;
      char *comment;
 {
@@ -350,7 +356,7 @@ int listentry(path, statbuf, slink, comment)
   char timestr[13];
   struct tm *tm;
   char tmpbuf[21];
-
+  
   if (statbuf->status == 'D' && delflag == 0)
     return (0);
   if (iflag)
@@ -408,6 +414,9 @@ int listentry(path, statbuf, slink, comment)
             modestr, statbuf->nlink, decode_user (statbuf->uid),
             decode_group (statbuf->gid),
             u64tostr (statbuf->filesize, tmpbuf, 18), timestr);
+  }
+  if (checksumflag) {
+    printf ("%2s %8s ", statbuf->csumtype, statbuf->csumvalue);
   }
   printf ("%s", path);
   if (lflag && modestr[0] == 'l')
@@ -515,4 +524,41 @@ int listtpentry(char *path, int copyno, int fsec, u_signed64 segsize, int compre
   }
   printf ("%s\n", path);
   return (0);
+}
+/* converting procedures */
+void direntstatg2filestatcs(struct Cns_filestatcs* statbuf, struct Cns_direnstatg* dxp) 
+{
+  statbuf->fileid=dxp->fileid;
+  statbuf->filemode=dxp->filemode;
+  statbuf->nlink=dxp->nlink;
+  statbuf->uid=dxp->uid;
+  statbuf->gid=dxp->gid;
+  statbuf->filesize=dxp->filesize;
+  statbuf->atime=dxp->atime;
+  statbuf->mtime=dxp->mtime;
+  statbuf->ctime=dxp->ctime;
+  statbuf->fileclass=dxp->fileclass;
+  statbuf->filemode=dxp->filemode;
+  statbuf->status=dxp->status;
+  strncpy(statbuf->csumtype,dxp->csumtype,2);statbuf->csumtype[2]='\0';
+  strncpy(statbuf->csumvalue,dxp->csumvalue,32);statbuf->csumvalue[32]='\0';
+  return;
+}
+void direntstatc2filestatcs(struct Cns_filestatcs* statbuf, struct Cns_direnstatc* dxp)
+{
+  statbuf->fileid=dxp->fileid;
+  statbuf->filemode=dxp->filemode;
+  statbuf->nlink=dxp->nlink;
+  statbuf->uid=dxp->uid;
+  statbuf->gid=dxp->gid;
+  statbuf->filesize=dxp->filesize;
+  statbuf->atime=dxp->atime;
+  statbuf->mtime=dxp->mtime;
+  statbuf->ctime=dxp->ctime;
+  statbuf->fileclass=dxp->fileclass;
+  statbuf->filemode=dxp->filemode;
+  statbuf->status=dxp->status;
+  statbuf->csumtype[0]='\0';
+  statbuf->csumvalue[0]='\0';
+  return;
 }
