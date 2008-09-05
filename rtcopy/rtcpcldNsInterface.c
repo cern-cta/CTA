@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.43 $ $Release$ $Date: 2007/11/06 14:43:51 $ $Author: gtaur $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.44 $ $Release$ $Date: 2008/09/05 14:07:35 $ $Author: sponcec3 $
  *
  * 
  *
@@ -889,7 +889,6 @@ int rtcpcld_checkDualCopies(
    * tape.This is avoided here.
    */
    file_list_t* fl = NULL;
-   file_list_t* prev_fid = NULL;
    /* go through the list of files and compare the fileids 
 
           iteration ->      file
@@ -898,19 +897,16 @@ int rtcpcld_checkDualCopies(
      fileid:   1 2 3 4 5 6 7 3
    */
    
-   CLIST_ITERATE_BEGIN(tape->file, fl)
+   CLIST_ITERATE_BEGIN(file->next, fl)
      {
         
-        if ( prev_fid != NULL &&  //first time
-             prev_fid != fl  &&  // pointer is not the same
-             prev_fid->filereq.castorSegAttr.castorFileId == fl->filereq.castorSegAttr.castorFileId )
-	{ // fileid is the same
+        if ( file->filereq.castorSegAttr.castorFileId == fl->filereq.castorSegAttr.castorFileId )
+        { // fileid is the same
            dualCopyFound = 1;
            break;
         }
-        prev_fid = fl;
      }
-   CLIST_ITERATE_END(tape->file, fl);
+   CLIST_ITERATE_END(file, fl);
   
 
   for ( i=0; i<nbSegs; i++ ) {
