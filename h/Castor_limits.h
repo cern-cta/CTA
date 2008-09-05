@@ -62,6 +62,7 @@
 #define	CA_MAXVIDLEN       6	/* maximum length for a VID */
 #define	CA_MAXVSNLEN       6	/* maximum length for a VSN */
 #define CA_MAXCKSUMNAMELEN 15   /* maximum length for a checksum algorithm name */
+#define CA_MAXCKSUMLEN     32   /* maximum length for a checksum value in an asci form */
 #define CA_MAXDMPROTNAMELEN 15  /* maximum length for Disk Mover protocol name */
 #define CA_MAXJOBIDLEN     36   /* Maximum length for the representation of the Cuuid */
 #define CA_MAXUSERTAGLEN    63  /* Maximum length for a user tag (stage request) */
