@@ -210,12 +210,23 @@ Cns_stat(const char *path, struct Cns_filestat *statbuf)
   return (Cns_statx (path, &file_uniqueid, statbuf));
 }
 
+/* Cns_statcs - get information about a file or a directory as Cns_stat*/
+
+int DLL_DECL
+Cns_statcs(const char *path, struct Cns_filestatcs *statbuf)
+{
+  struct Cns_fileid file_uniqueid;
+
+  memset ((void *) &file_uniqueid, 0, sizeof(struct Cns_fileid));
+  return (Cns_statcsx (path, &file_uniqueid, statbuf));
+}
+
 /*
-* This is the same function as Cns_statx, but has Cns_filestatg structure as parameter.
-* Cns_filestatg has additional fields: guid, csumtype, csumvalue 
+* This is the same function as Cns_statx, but has Cns_filestatcs structure as parameter.
+* Cns_filestatcs has additional fields:  csumtype, csumvalue 
 */
 int DLL_DECL
-Cns_statcs(const char *path, struct Cns_fileid *file_uniqueid, struct Cns_filestatg *statbuf)
+Cns_statcsx(const char *path, struct Cns_fileid *file_uniqueid, struct Cns_filestatcs *statbuf)
 {
   char *actual_path;
   int c;
