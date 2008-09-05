@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2008/09/02 09:44:31 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.48 $ $Release$ $Date: 2008/09/05 15:08:23 $ $Author: kotlyar $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -442,7 +442,7 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
       }
 
       // Extract checksum information for file
-      if (Cns_statcs(fileName, &fileid, &statbuf) != 0) {
+      if (Cns_statcsx(fileName, &fileid, &statbuf) != 0) {
 	castor::exception::Exception ex(serrno);
 	ex.getMessage()
 	  << "disk2DiskCopyStart : Cns_statcs failed - "
