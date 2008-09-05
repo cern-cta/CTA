@@ -680,6 +680,9 @@ int procreq(magic, req_type, req_data, clienthost, thip)
   case CNS_UPDATESEG_CHECKSUM:
     c = Cns_srv_updateseg_checksum (magic, req_data, clienthost, thip);
     break;
+  case CNS_UPDATEFILE_CHECKSUM:
+    c = Cns_srv_updatefile_checksum (magic, req_data, clienthost, thip);
+    break;
     /*
       case CNS_ADDREPLICA:
       c = Cns_srv_addreplica (magic, req_data, clienthost, thip);

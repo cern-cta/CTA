@@ -5238,7 +5238,18 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
   if (uid != filentry.uid &&
       Cns_chkentryperm (&filentry, S_IWRITE, uid, gid, clienthost))
     RETURN (EACCES);
-
+    
+  if ((strcmp(filentry.csumtype,"PA") == 0 && strcmp(csumtype,"AD") == 0) ||
+      (strcmp(filentry.csumtype,"PC") == 0 && strcmp(csumtype,"CS") == 0) ||
+    (strcmp(filentry.csumtype,"PM") == 0 && strcmp(csumtype,"MD") == 0)) {
+    /* we have predefined checksums then should check them with new ones */
+    if(strcmp(filentry.csumvalue,csumvalue)!=0) {
+      sprintf (logbuf, "setfsizecs: predefined checksum error 0x%s != 0x%s", filentry.csumvalue, csumvalue);
+      Cns_logreq (func, logbuf);
+      RETURN (SECHECKSUM); 
+    }
+  }
+    
   /* update entry */
 
   filentry.filesize = filesize;
@@ -5672,7 +5683,7 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
 	  /* checksum mismatch! error! */
 	  sprintf (logbuf, "setsegattrs: checksum mismatch for the castor file and the segment 0x%s != 0x%lx", filentry.csumvalue, smd_entry.checksum);
 	  Cns_logreq (func, logbuf);
-	  RETURN(EINVAL);
+	  RETURN(SECHECKSUM);
 	}
       }
     }
@@ -6463,6 +6474,89 @@ int Cns_srv_utime(magic, req_data, clienthost, thip)
     filentry.atime = filentry.ctime;
     filentry.mtime = filentry.ctime;
   }
+
+  if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &filentry))
+    RETURN (serrno);
+  RETURN (0);
+}
+
+/* Cns_srv_updatefile_checksum - set checksums for the file */
+
+int Cns_srv_updatefile_checksum(magic, req_data, clienthost, thip)
+     int magic;
+     char *req_data;
+     const char *clienthost;
+     struct Cns_srv_thread_info *thip;
+{
+  u_signed64 cwd;
+  struct Cns_file_metadata filentry;
+  char func[28];
+  gid_t gid;
+  char logbuf[CA_MAXPATHLEN+58];
+  char path[CA_MAXPATHLEN+1];
+  char *rbp;
+  Cns_dbrec_addr rec_addr;
+  uid_t uid;
+  char *user;
+  char csumtype[3];
+  char csumvalue[33];
+  
+  strcpy (func, "Cns_srv_updatefile_checksum");
+  rbp = req_data;
+  unmarshall_LONG (rbp, uid);
+  unmarshall_LONG (rbp, gid);
+  get_client_actual_id (thip, &uid, &gid, &user);
+  nslogit (func, NS092, "updatefile_checksum", user, uid, gid, clienthost);
+  if (rdonly)
+    RETURN (EROFS);
+  unmarshall_HYPER (rbp, cwd);
+  if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
+    RETURN (SENAMETOOLONG);
+  if (unmarshall_STRINGN (rbp, csumtype, 3))
+    RETURN (EINVAL);
+  if (unmarshall_STRINGN (rbp, csumvalue, 33))
+    RETURN (EINVAL);
+  if (*csumtype && strcmp (csumtype, "PC") && strcmp (csumtype, "PA") && strcmp (csumtype, "PM") &&
+     strcmp (csumtype, "CS") && strcmp (csumtype, "AD") && strcmp (csumtype, "MD"))
+    RETURN (EINVAL);
+  
+  sprintf (logbuf, "updatefile_checksum %s %s %s", path, csumvalue, csumtype);
+  Cns_logreq (func, logbuf);
+
+  /* start transaction */
+
+  (void) Cns_start_tr (thip->s, &thip->dbfd);
+
+  /* check parent directory components for search permission and
+     get/lock basename entry */
+
+  if (Cns_parsepath (&thip->dbfd, cwd, path, uid, gid, clienthost, NULL,
+                     NULL, &filentry, &rec_addr, CNS_MUST_EXIST))
+    RETURN (serrno);
+
+  /* check if the entry is a regular file */
+  if (filentry.filemode & S_IFDIR)
+    RETURN (EISDIR);
+
+  /* check if the user is authorized to set access/modification checksum for this entry 
+     for users we will allow only predefined checksums and for admins any types */
+     
+  if (strcmp (csumtype, "CS") == 0 || strcmp (csumtype, "AD") == 0 || strcmp (csumtype, "MD") == 0) {
+    if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+      RETURN (EPERM);
+  } else {
+    if (uid != filentry.uid &&
+        Cns_chkentryperm (&filentry, S_IWRITE, uid, gid, clienthost))
+      RETURN (EACCES);
+  }
+
+  /* update entry */
+  filentry.mtime = time (0);
+  filentry.ctime = filentry.mtime;
+  
+  strcpy (filentry.csumtype, csumtype);
+  if( *csumtype == '\0') strcpy (filentry.csumvalue, ""); /* reset value for empty types */
+  else strcpy (filentry.csumvalue, csumvalue);
 
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &filentry))
     RETURN (serrno);

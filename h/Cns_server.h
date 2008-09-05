@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_server.h,v 1.19 2008/08/22 12:56:34 kotlyar Exp $
+ * $Id: Cns_server.h,v 1.20 2008/09/05 15:20:20 kotlyar Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 /*
- * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.19 $ $Date: 2008/08/22 12:56:34 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.20 $ $Date: 2008/09/05 15:20:20 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
  
 #ifndef _CNS_SERVER_H
@@ -304,6 +304,7 @@ EXTERN_C int Cns_srv_utime _PROTO((int, char *, const char *, struct Cns_srv_thr
 EXTERN_C int Cns_srv_replaceseg _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_replacetapecopy _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_updateseg_checksum _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
+EXTERN_C int Cns_srv_updatefile_checksum _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_addreplica _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_delreplica _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_endtrans _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
