@@ -731,7 +731,7 @@ int travel_sym;
    free(test_path_prefix);
 
    if (!found) {
-     log(LOG_ERR, "check_path_whitelist: Could not match path %s to white list\n", path);
+     log(LOG_ERR, "check_path_whitelist: Could not match path %s (canonicalized to %s) to white list\n", path, test_path);
      free(test_path);
      errno = EACCES;
      return -1;
