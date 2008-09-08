@@ -471,7 +471,7 @@ int travel_sym;
 
      if (ptr2 == NULL) goto error;
 
-     rc = readlink(ptr2, buffer, sizeof(buffer));
+     rc = readlink(ptr2, buffer, sizeof(buffer)-1);
      if (n==0 || rc<0 || (cp == NULL && !travel_sym)) {
        if (ptr != NULL) free(ptr);
        ptr = ptr2;
@@ -479,6 +479,7 @@ int travel_sym;
        continue;
      }
      free(ptr2);
+     buffer[rc] = '\0';
 
      result = l_canonicalize_path(buffer, sym_depth+1, ptr, path_typep, prefixp,travel_sym);
      if (result == NULL) goto error;
