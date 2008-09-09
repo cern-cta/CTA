@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.44 $ $Release$ $Date: 2008/09/05 14:07:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.45 $ $Release$ $Date: 2008/09/09 16:30:14 $ $Author: sponcec3 $
  *
  * 
  *
@@ -896,7 +896,7 @@ int rtcpcld_checkDualCopies(
                    V         V
      fileid:   1 2 3 4 5 6 7 3
    */
-   
+   if (file != NULL && file != file->next ){
    CLIST_ITERATE_BEGIN(file->next, fl)
      {
         
@@ -907,7 +907,7 @@ int rtcpcld_checkDualCopies(
         }
      }
    CLIST_ITERATE_END(file, fl);
-  
+   }
 
   for ( i=0; i<nbSegs; i++ ) {
     if ( strncmp(tape->tapereq.vid,segArray[i].vid,CA_MAXVIDLEN) == 0 ) {
