@@ -101,6 +101,8 @@ void castor::io::StreamRepackRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->userId();
   ad->stream() << obj->groupId();
   ad->stream() << obj->retryMax();
+  ad->stream() << obj->reclaim();
+  ad->stream() << obj->finalPool();
   ad->stream() << obj->id();
   ad->stream() << obj->command();
 }
@@ -145,6 +147,12 @@ castor::IObject* castor::io::StreamRepackRequestCnv::createObj(castor::IAddress*
   u_signed64 retryMax;
   ad->stream() >> retryMax;
   object->setRetryMax(retryMax);
+  int reclaim;
+  ad->stream() >> reclaim;
+  object->setReclaim(reclaim);
+  std::string finalPool;
+  ad->stream() >> finalPool;
+  object->setFinalPool(finalPool);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

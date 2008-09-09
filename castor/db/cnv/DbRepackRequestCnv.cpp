@@ -58,7 +58,7 @@ static castor::CnvFactory<castor::db::cnv::DbRepackRequestCnv>* s_factoryDbRepac
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbRepackRequestCnv::s_insertStatementString =
-"INSERT INTO RepackRequest (machine, userName, creationTime, pool, pid, svcclass, stager, userId, groupId, retryMax, id, command) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,ids_seq.nextval,:11) RETURNING id INTO :12";
+"INSERT INTO RepackRequest (machine, userName, creationTime, pool, pid, svcclass, stager, userId, groupId, retryMax, reclaim, finalPool, id, command) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,ids_seq.nextval,:13) RETURNING id INTO :14";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbRepackRequestCnv::s_deleteStatementString =
@@ -66,7 +66,7 @@ const std::string castor::db::cnv::DbRepackRequestCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbRepackRequestCnv::s_selectStatementString =
-"SELECT machine, userName, creationTime, pool, pid, svcclass, stager, userId, groupId, retryMax, id, command FROM RepackRequest WHERE id = :1";
+"SELECT machine, userName, creationTime, pool, pid, svcclass, stager, userId, groupId, retryMax, reclaim, finalPool, id, command FROM RepackRequest WHERE id = :1";
 
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbRepackRequestCnv::s_bulkSelectStatementString =
@@ -77,7 +77,7 @@ const std::string castor::db::cnv::DbRepackRequestCnv::s_bulkSelectStatementStri
    BEGIN \
      FORALL i IN ids.FIRST..ids.LAST \
        INSERT INTO bulkSelectHelper VALUES(ids(i)); \
-     OPEN objs FOR SELECT machine, userName, creationTime, pool, pid, svcclass, stager, userId, groupId, retryMax, id, command \
+     OPEN objs FOR SELECT machine, userName, creationTime, pool, pid, svcclass, stager, userId, groupId, retryMax, reclaim, finalPool, id, command \
                      FROM RepackRequest t, bulkSelectHelper h \
                     WHERE t.id = h.objId; \
      DELETE FROM bulkSelectHelper; \
@@ -88,7 +88,7 @@ const std::string castor::db::cnv::DbRepackRequestCnv::s_bulkSelectStatementStri
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbRepackRequestCnv::s_updateStatementString =
-"UPDATE RepackRequest SET machine = :1, userName = :2, pool = :3, pid = :4, svcclass = :5, stager = :6, userId = :7, groupId = :8, retryMax = :9, command = :10 WHERE id = :11";
+"UPDATE RepackRequest SET machine = :1, userName = :2, pool = :3, pid = :4, svcclass = :5, stager = :6, userId = :7, groupId = :8, retryMax = :9, reclaim = :10, finalPool = :11, command = :12 WHERE id = :13";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbRepackRequestCnv::s_storeTypeStatementString =
@@ -359,7 +359,7 @@ void castor::db::cnv::DbRepackRequestCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(12, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(14, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -375,9 +375,11 @@ void castor::db::cnv::DbRepackRequestCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(8, obj->userId());
     m_insertStatement->setInt(9, obj->groupId());
     m_insertStatement->setUInt64(10, obj->retryMax());
-    m_insertStatement->setInt(11, (int)obj->command());
+    m_insertStatement->setInt(11, obj->reclaim());
+    m_insertStatement->setString(12, obj->finalPool());
+    m_insertStatement->setInt(13, (int)obj->command());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(12));
+    obj->setId(m_insertStatement->getUInt64(14));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -405,6 +407,8 @@ void castor::db::cnv::DbRepackRequestCnv::createRep(castor::IAddress* address,
                     << "  userId : " << obj->userId() << std::endl
                     << "  groupId : " << obj->groupId() << std::endl
                     << "  retryMax : " << obj->retryMax() << std::endl
+                    << "  reclaim : " << obj->reclaim() << std::endl
+                    << "  finalPool : " << obj->finalPool() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  command : " << obj->command() << std::endl;
     throw ex;
@@ -432,7 +436,7 @@ void castor::db::cnv::DbRepackRequestCnv::bulkCreateRep(castor::IAddress* addres
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(12, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(14, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -652,6 +656,49 @@ void castor::db::cnv::DbRepackRequestCnv::bulkCreateRep(castor::IAddress* addres
     }
     m_insertStatement->setDataBuffer
       (10, retryMaxBuffer, castor::db::DBTYPE_UINT64, sizeof(retryMaxBuffer[0]), retryMaxBufLens);
+    // build the buffers for reclaim
+    int* reclaimBuffer = (int*) malloc(nb * sizeof(int));
+    if (reclaimBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(reclaimBuffer);
+    unsigned short* reclaimBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (reclaimBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(reclaimBufLens);
+    for (int i = 0; i < nb; i++) {
+      reclaimBuffer[i] = objs[i]->reclaim();
+      reclaimBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (11, reclaimBuffer, castor::db::DBTYPE_INT, sizeof(reclaimBuffer[0]), reclaimBufLens);
+    // build the buffers for finalPool
+    unsigned int finalPoolMaxLen = 0;
+    for (int i = 0; i < nb; i++) {
+      if (objs[i]->finalPool().length()+1 > finalPoolMaxLen)
+        finalPoolMaxLen = objs[i]->finalPool().length()+1;
+    }
+    char* finalPoolBuffer = (char*) calloc(nb, finalPoolMaxLen);
+    if (finalPoolBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(finalPoolBuffer);
+    unsigned short* finalPoolBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (finalPoolBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(finalPoolBufLens);
+    for (int i = 0; i < nb; i++) {
+      strncpy(finalPoolBuffer+(i*finalPoolMaxLen), objs[i]->finalPool().c_str(), finalPoolMaxLen);
+      finalPoolBufLens[i] = objs[i]->finalPool().length()+1; // + 1 for the trailing \0
+    }
+    m_insertStatement->setDataBuffer
+      (12, finalPoolBuffer, castor::db::DBTYPE_STRING, finalPoolMaxLen, finalPoolBufLens);
     // build the buffers for command
     int* commandBuffer = (int*) malloc(nb * sizeof(int));
     if (commandBuffer == 0) {
@@ -670,7 +717,7 @@ void castor::db::cnv::DbRepackRequestCnv::bulkCreateRep(castor::IAddress* addres
       commandBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (11, commandBuffer, castor::db::DBTYPE_INT, sizeof(commandBuffer[0]), commandBufLens);
+      (13, commandBuffer, castor::db::DBTYPE_INT, sizeof(commandBuffer[0]), commandBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     if (idBuffer == 0) {
@@ -685,7 +732,7 @@ void castor::db::cnv::DbRepackRequestCnv::bulkCreateRep(castor::IAddress* addres
     }
     allocMem.push_back(idBufLens);
     m_insertStatement->setDataBuffer
-      (12, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
+      (14, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
@@ -764,8 +811,10 @@ void castor::db::cnv::DbRepackRequestCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt(7, obj->userId());
     m_updateStatement->setInt(8, obj->groupId());
     m_updateStatement->setUInt64(9, obj->retryMax());
-    m_updateStatement->setInt(10, (int)obj->command());
-    m_updateStatement->setUInt64(11, obj->id());
+    m_updateStatement->setInt(10, obj->reclaim());
+    m_updateStatement->setString(11, obj->finalPool());
+    m_updateStatement->setInt(12, (int)obj->command());
+    m_updateStatement->setUInt64(13, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
@@ -860,8 +909,10 @@ castor::IObject* castor::db::cnv::DbRepackRequestCnv::createObj(castor::IAddress
     object->setUserId(rset->getInt(8));
     object->setGroupId(rset->getInt(9));
     object->setRetryMax(rset->getUInt64(10));
-    object->setId(rset->getUInt64(11));
-    object->setCommand((enum castor::repack::RepackCommandCode)rset->getInt(12));
+    object->setReclaim(rset->getInt(11));
+    object->setFinalPool(rset->getString(12));
+    object->setId(rset->getUInt64(13));
+    object->setCommand((enum castor::repack::RepackCommandCode)rset->getInt(14));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -917,8 +968,10 @@ castor::db::cnv::DbRepackRequestCnv::bulkCreateObj(castor::IAddress* address)
       object->setUserId(rset->getInt(8));
       object->setGroupId(rset->getInt(9));
       object->setRetryMax(rset->getUInt64(10));
-      object->setId(rset->getUInt64(11));
-      object->setCommand((enum castor::repack::RepackCommandCode)rset->getInt(12));
+      object->setReclaim(rset->getInt(11));
+      object->setFinalPool(rset->getString(12));
+      object->setId(rset->getUInt64(13));
+      object->setCommand((enum castor::repack::RepackCommandCode)rset->getInt(14));
       // store object in results and loop;
       res.push_back(object);
       status = rset->next();
@@ -966,8 +1019,10 @@ void castor::db::cnv::DbRepackRequestCnv::updateObj(castor::IObject* obj)
     object->setUserId(rset->getInt(8));
     object->setGroupId(rset->getInt(9));
     object->setRetryMax(rset->getUInt64(10));
-    object->setId(rset->getUInt64(11));
-    object->setCommand((enum castor::repack::RepackCommandCode)rset->getInt(12));
+    object->setReclaim(rset->getInt(11));
+    object->setFinalPool(rset->getString(12));
+    object->setId(rset->getUInt64(13));
+    object->setCommand((enum castor::repack::RepackCommandCode)rset->getInt(14));
     delete rset;
   } catch (castor::exception::SQLError e) {
     castor::exception::InvalidArgument ex;
