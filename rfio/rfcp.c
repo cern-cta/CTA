@@ -676,6 +676,7 @@ off64_t copyfile(fd1, fd2, name, maxsize)
   char * cpbuf;
   extern char *getenv();  /* External declaration */
   u_signed64 total_bytes = 0;
+  int save_error_for_read=0;
 
   if ((p=getenv("RFCPBUFSIZ")) == NULL) {
     if ((p=getconfent("RFCP","BUFFERSIZE",0)) == NULL) {
@@ -733,12 +734,21 @@ off64_t copyfile(fd1, fd2, name, maxsize)
     } else {
       if (n < 0) {
         rfio_perror("cp: read error");
+        save_error_for_read = rfio_serrno();
         break;
       }
     }
   } while ((total_bytes != maxsize) && (n > 0));
   serrno = rfio_errno = 0;
   if (rfio_HsmIf_GetHsmType(fd1,NULL) != RFIO_HSM_CNS && rfio_close(fd1) < 0) {
+    if (save_error_for_read == SECHECKSUM) {
+      /* if there was a checksum error we will return Bad checksum rc==200 */
+#if defined(_WIN32)
+      WSACleanup();
+#endif
+      free(cpbuf);
+      exit(CHECKSUMERR);
+    }
     rfio_perror("close source");
 #if defined(_WIN32)
     WSACleanup();
@@ -749,6 +759,7 @@ off64_t copyfile(fd1, fd2, name, maxsize)
 
   serrno = rfio_errno = 0;
   if (rfio_HsmIf_GetHsmType(fd2,NULL) != RFIO_HSM_CNS && rfio_close(fd2) < 0) {
+    int save_errno=rfio_serrno();
     rfio_perror("close target");
     rfio_stat64(name, &sbuf); /* check for special files */
     mode = sbuf.st_mode & S_IFMT;
@@ -759,7 +770,9 @@ off64_t copyfile(fd1, fd2, name, maxsize)
     WSACleanup();
 #endif
     free(cpbuf);
-    exit(SYERR);
+    /* for checksum error we have to return Bad checksum rc==200 */
+    save_errno= (save_errno == SECHECKSUM) ? CHECKSUMERR:SYERR;
+    exit(save_errno);
   }
 
   free(cpbuf);
