@@ -608,10 +608,12 @@ int main(argc, argv)
 #ifdef _WIN32
         if (binmode != O_BINARY) {
           fprintf(stderr,"%s : got %s bytes instead of %s bytes\n", "Warning", u64tostr(size, tmpbuf, 0), u64tostr(inpfile_size, tmpbuf2, 0));
+          fprintf(stderr,"The local file size may have changed during the transfer process\n");
           rc = OK;
         } else {
 #endif
           fprintf(stderr,"%s : got %s bytes instead of %s bytes\n", sstrerror(SESYSERR), u64tostr(size, tmpbuf, 0), u64tostr(inpfile_size, tmpbuf2, 0));
+          fprintf(stderr,"The local file size may have changed during the transfer process\n");
 #ifdef _WIN32
         }
 #endif
