@@ -1674,7 +1674,13 @@ int     s;
    p= rqstbuf + 2*WORDSIZE; 
    unmarshall_LONG(p, code);
    log(LOG_INFO, "rerrmsg: code: %d\n",code);
+   if (code >= SEBASEOFF) {
+     /* this mean that we have castor error code */
+     msg= (code > 0) ? sstrerror(code) : "Invalid error code";
+   } else {
    msg= (code > 0) ? strerror(code) : "Invalid error code";
+   }
+
    msg = strdup(msg);
    log(LOG_DEBUG, "rerrmsg: errmsg: %s\n",msg);
    len= strlen(msg)+1;
@@ -2943,11 +2949,16 @@ struct rfiostat * infop;
       (void) free(iobuffer);
    }
    iobufsiz= 0;
-    ret=rfio_handle_close(handler_context, &filestat, rcode);
-    if (ret<0){
-      log(LOG_ERR, "srclose: rfio_handle_close failed\n");
-      return -1;
-      }
+   ret=rfio_handle_close(handler_context, &filestat, rcode);
+   if (ret<0){
+     log(LOG_ERR, "srclose: rfio_handle_close failed\n");
+     if (status>=0) {
+       /* we have to set status = -1 and fill rcode with serrno, that should be filled by rfio_handle_close */
+       status=-1;
+       rcode=serrno;
+     } 
+     /* we already have status<0 in error case here and will send a reply for client with rcode */     
+   }
    p= rqstbuf; 
    marshall_WORD(p,RQST_CLOSE);
    marshall_LONG(p,status);

@@ -2283,7 +2283,12 @@ int   srclose64_v3(s, infop, fd)
   ret=rfio_handle_close(handler_context, &filestat, rcode);
   if (ret<0){
     log(LOG_ERR, "srclose: rfio_handle_close failed\n");
-    return -1;
+    if (status>=0) {
+      /* we have to set status = -1 and fill rcode with serrno, that should be filled by rfio_handle_close */
+      status=-1;
+      rcode=serrno;
+    } 
+    /* we already have status<0 in error case here and will send a reply for client with rcode */
   }
 
   /* Close the data socket */
@@ -2407,7 +2412,7 @@ static void *produce64_thread(int *ptr)
           }
           else {
             log(LOG_ERR,"produce64_thread: checksums doesn't match %s != %s\n",ckSumbufdisk,ckSumbuf);
-            array[produced64 % daemonv3_rdmt_nbuf].len = -(EREMOTEIO); /* setting errno=Remote I/O error */
+            array[produced64 % daemonv3_rdmt_nbuf].len = -(SECHECKSUM); /* setting errno= Bad checksum */
             error = -1;
           }
         }
