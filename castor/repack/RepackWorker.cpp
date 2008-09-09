@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2008/06/05 16:25:00 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2008/09/09 09:18:40 $ $Author: gtaur $
  *
  *
  *
@@ -350,8 +350,9 @@ RepackAck* RepackWorker::removeRequest(RepackRequest* rreq) throw ()
 //------------------------------------------------------------------------------
 RepackAck* RepackWorker::handleRepack(RepackRequest* rreq) throw ()
 {
-  RepackAck* ack= new RepackAck();
-  
+  RepackAck* ack= NULL;
+  std::vector<RepackResponse*> badVmgrTapes;
+
   if (rreq==NULL) {
     RepackResponse* result=new RepackResponse();
     result->setErrorCode(-1);
@@ -381,7 +382,7 @@ RepackAck* RepackWorker::handleRepack(RepackRequest* rreq) throw ()
 
   std::vector<RepackSubRequest*>::iterator tape=rreq->repacksubrequest().begin(); 
   
-  std::vector<RepackResponse*> result; 
+
   std::vector<RepackResponse*>::iterator errorVmgr;
   RepackRequest* requestToSubmit=new RepackRequest();
  
@@ -398,6 +399,8 @@ RepackAck* RepackWorker::handleRepack(RepackRequest* rreq) throw ()
   requestToSubmit->setUserId(rreq->userId());
   requestToSubmit->setGroupId(rreq->groupId());
   requestToSubmit->setRetryMax(rreq->retryMax());
+  requestToSubmit->setReclaim(rreq->reclaim());
+  requestToSubmit->setFinalPool(rreq->finalPool());
  
   while ( tape != rreq->repacksubrequest().end() ){
 
@@ -417,7 +420,7 @@ RepackAck* RepackWorker::handleRepack(RepackRequest* rreq) throw ()
        resp->setErrorCode(-1); 
        resp->setErrorMessage("invalid vmgr status");
        resp->setRepacksubrequest(sub);
-       result.push_back(resp);  
+       badVmgrTapes.push_back(resp);  
     }
     tape++;
   }
@@ -431,16 +434,17 @@ RepackAck* RepackWorker::handleRepack(RepackRequest* rreq) throw ()
   if ( requestToSubmit->stager().length() == 0 ){
     requestToSubmit->setStager(ptr_server->getStagerName());
   }
-  
-  ack = m_dbSvc->storeRequest(requestToSubmit);
+  if (!requestToSubmit->repacksubrequest().empty())
+    ack = m_dbSvc->storeRequest(requestToSubmit);
   if (ack==NULL){
     ack=new RepackAck();
     ack->setCommand(requestToSubmit->command());
   }
-  if (!result.empty()){
+
+  if (!badVmgrTapes.empty()){
     // report failure due to vmgr problems
-    errorVmgr=result.begin();
-    while (errorVmgr != result.end()){
+    errorVmgr=badVmgrTapes.begin();
+    while (errorVmgr != badVmgrTapes.end()){
       ack->addRepackresponse(*errorVmgr);
       errorVmgr++;
     }

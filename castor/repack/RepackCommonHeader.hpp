@@ -49,10 +49,10 @@ namespace castor{
     enum RepackConstants {
 
     CSP_REPACKSERVER_PORT = 62800,  // the standard server port
-    CSP_REPACKPOLLTIME = 240,       // the standard polling time for cleaner and monitor
-
+    CSP_REPACKPOLLTIME = 240, // the standard polling time
     DEFAULT_STAGER_PORT = 9002,
-
+    DEFAULT_MAX_FILES = 6000000,
+    DEFAULT_MAX_TAPES = 300
     };
 
    

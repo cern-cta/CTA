@@ -109,7 +109,7 @@ void RepackFileChecker::run(void* param) throw(){
         
 	// validate that none of the files on the tape is involved in another repack process.
 
-	bool ret= m_dbSvc->validateRepackSubRequest(*sreq);
+	bool ret= m_dbSvc->validateRepackSubRequest(*sreq,ptr_server->maxFiles(),ptr_server->maxTapes());
 
 	if (ret){
 	  stage_trace(3,"Found %d files, RepackSubRequest for Tape %s ready for Staging ",(*sreq)->files(),(char*)(*sreq)->vid().c_str());

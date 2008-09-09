@@ -100,7 +100,7 @@ void RepackCleaner::run(void* param) {
 
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 43, 0, 0);
 
-    m_dbSvc->resurrectTapesOnHold();
+    m_dbSvc->resurrectTapesOnHold(ptr_server->maxFiles(),ptr_server->maxTapes());
 
   } catch (...) {
      if (!tapes.empty()){
@@ -142,6 +142,32 @@ void  RepackCleaner::checkTape(RepackSubRequest* tape){
        castor::dlf::Param("STATUS", "RSUBREQUEST_DONE" )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 45, 2, params);
     tape->setStatus(RSUBREQUEST_DONE);
+
+
+    castor::dlf::Param params1[] =
+      {castor::dlf::Param("VID", tape->vid())};
+    
+    // reclaim the tape
+
+    if (tape->repackrequest()->reclaim() == 1){
+      if (vmgr_reclaim((char*) tape->vid().c_str())<0){
+	castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 61, 1, params1);
+      } else {
+	castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 62, 1, params1);
+      }
+      
+    }
+   
+    //change tapepool
+
+    if  (!tape->repackrequest()->finalPool().empty()){
+      if (vmgr_modifytape((char*) tape->vid().c_str(),NULL,NULL,NULL,NULL,NULL,NULL,(char *)tape->repackrequest()->finalPool().c_str(),-1)<0){
+	castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 63, 1, params1);
+      } else {
+	castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 64, 1, params1);
+      }
+    }
+
   } else {
     // tape failed
     castor::dlf::Param params[] =

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IRepackSvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/06/16 11:30:32 $ $Author: waldron $
+ * @(#)$RCSfile: IRepackSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/09/09 09:18:39 $ $Author: gtaur $
  *
  * This class provides methods related to tape handling
  *
@@ -138,7 +138,7 @@ namespace castor {
 	 */ 
 
 
-	virtual bool  validateRepackSubRequest( RepackSubRequest* tape) throw ()=0;
+	virtual bool  validateRepackSubRequest( RepackSubRequest* tape, int numFiles, int numTapes) throw ()=0;
 
 
 	/*
@@ -147,7 +147,7 @@ namespace castor {
 	 *
 	 */ 
 
-	virtual void  resurrectTapesOnHold() throw ()=0;
+	virtual void  resurrectTapesOnHold(int numFiles,int numTapes) throw ()=0;
 
 	/*
 	 * restartSubRequestTapes

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRepackSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/07/28 16:55:04 $ $Author: waldron $
+ * @(#)$RCSfile: OraRepackSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/09/09 09:18:41 $ $Author: gtaur $
  *
  *
  * @author castordev
@@ -123,16 +123,19 @@ namespace castor {
 	/**
 	 * validateRepackSubrequest
 	 */ 
-	virtual bool validateRepackSubRequest(RepackSubRequest* tape) throw ();
+
+	virtual bool  validateRepackSubRequest( RepackSubRequest* tape, int numFiles, int numTapes) throw ();
 	
 	/**
 	 * resurrectTapesOnHold
 	 */ 
-	virtual void resurrectTapesOnHold() throw ();
-	
-	/**
+
+	virtual void  resurrectTapesOnHold(int numFiles, int numTapes) throw ();
+
+	/* 
 	 * restartSubRequestTapes
 	 */
+
 	virtual void restartSubRequest(u_signed64 srId) throw ();
 	
 	/**

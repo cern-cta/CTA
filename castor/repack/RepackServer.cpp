@@ -137,7 +137,7 @@ castor::repack::RepackServer::RepackServer() :
      { 9, "RepackWorker: Unable to send the response to client "},
      {10, "RepackWorker : Getting tapes for the input tapepool"},
      {11, "RepackWorker : No Such tape"},
-     {12, "RepackWorker : Tape not marked ad FULL" },
+     {12, "RepackWorker : Tape not marked as FULL" },
      {13, "RepackFileChecker : Getting tapes to check "},
      {14, "RepackFileChecker : Getting segments for tape"},
      {15, "RepackFileChecker : No segments for tape"},
@@ -186,7 +186,10 @@ castor::repack::RepackServer::RepackServer() :
      {58, "OraRepackSvc : commit" },
      {59, "FileListHelper : error in getting the file path from the nameserver" },
      {60, "FileListHelper : list of files  retrieved from  the nameserver" },
-
+     {61, "RepackCleaner : impossible to reclaim the tape" },
+     {62, "RepackCleaner : reclaimed tape" },
+     {63, "RepackCleaner : impossible to change tapepool" },
+     {64, "RepackCleaner : changed tapepool" },
      {-1, ""}};
 
   dlfInit(messages);
@@ -195,10 +198,13 @@ castor::repack::RepackServer::RepackServer() :
   m_cmdLineParams << "fsh";
 
   
+
+  char* tmp=NULL;
+  char* dp=NULL;
+
   /* --------------------------------------------------------------------- */
   /** This gets the repack port configuration in the enviroment, this 
       is the only on, which is taken from the enviroment */
-  char* tmp;
 
   if ( (tmp = getenv ("REPACK_PORT")) != 0 ) {
       char* dp = tmp;
@@ -220,7 +226,7 @@ castor::repack::RepackServer::RepackServer() :
   else
     m_listenPort = castor::repack::CSP_REPACKSERVER_PORT;
 
-  free(tmp);
+
 
   /* --------------------------------------------------------------------- */
 
@@ -228,24 +234,23 @@ castor::repack::RepackServer::RepackServer() :
       at the beginning and keeps the information for the threads
     */
 
-  char* tmp2;
-  if ( !(tmp2 = getconfent("CNS", "HOST",0)) &&
-       !(tmp2 = getenv("CNS_HOST")) ){
+  if ( !(tmp = getconfent("CNS", "HOST",0)) &&
+       !(tmp = getenv("CNS_HOST")) ){
     castor::exception::Internal ex;
     ex.getMessage() << "Unable to initialise RepackServer with nameserver "
                     << "entry in castor config file or enviroment variable"
 		    << std::endl;
     throw ex; 
   }
-  m_ns = new std::string(tmp2);
+  m_ns = new std::string(tmp);
 
 
   /* --------------------------------------------------------------------- */
 
   /** the stager name 
   */
-  if ( !(tmp2 = getenv("RH_HOST")) &&
-       !(tmp2 = getconfent("RH", "HOST",0))
+  if ( !(tmp = getenv("RH_HOST")) &&
+       !(tmp = getconfent("RH", "HOST",0))
      ){
     castor::exception::Internal ex;
     ex.getMessage() << "Unable to initialise RepackServer with stager "
@@ -253,7 +258,7 @@ castor::repack::RepackServer::RepackServer() :
 		    << std::endl;
     throw ex; 
   }
-  m_stager = new std::string(tmp2);
+  m_stager = new std::string(tmp);
 
 
   /* --------------------------------------------------------------------- */
@@ -261,43 +266,73 @@ castor::repack::RepackServer::RepackServer() :
   /** Get the repack service class, which is used for staging in files 
     * The diskpool in this service class is used for recall process.
     */
-  if ( !(tmp2 = getconfent("REPACK", "SVCCLASS",0)) && 
-       !(tmp2 = getenv ("REPACK_SVCCLASS")) ){
+  if ( !(tmp = getconfent("REPACK", "SVCCLASS",0)) && 
+       !(tmp = getenv ("REPACK_SVCCLASS")) ){
     castor::exception::Internal ex;
     ex.getMessage() << "Unable to initialise RepackServer with service class "
                     << "entry in castor config file or enviroment variable"
 		    << std::endl;
     throw ex; 
   }
-  m_serviceClass = new std::string(tmp2);
+  m_serviceClass = new std::string(tmp);
+
+ 
+  // Parameters to limitate concurrent repack processes 
+
+  // Number of files
+
+   if ( tmp = getconfent("REPACK", "MAXFILES",0)){
+     dp=tmp;
+     m_maxFiles = strtoul(tmp, &dp, 0);
+     if  (*dp != 0 || m_maxFiles<=0) {
+       m_maxFiles = castor::repack::DEFAULT_MAX_FILES;
+     }
+   } else {
+     m_maxFiles = castor::repack::DEFAULT_MAX_FILES;   
+   }
+  
+   // Number of tapes
+
+   if ( tmp = getconfent("REPACK", "MAXTAPES",0)){
+     dp=tmp;
+     m_maxTapes = strtoul(tmp, &dp, 0);
+     if  (*dp != 0 || m_maxTapes<=0) {
+       m_maxTapes = castor::repack::DEFAULT_MAX_TAPES;
+     }
+   } else {
+     m_maxTapes = castor::repack::DEFAULT_MAX_TAPES; 
+   }
+  
+
+
 
   /* --------------------------------------------------------------------- */
 
   /** Get the repack service class, which is used for staging in files 
     * The diskpool in this service class is used for recall process.
     */
-  if ( !(tmp2 = getconfent("REPACK", "PROTOCOL",0)) &&
-       !(tmp2 = getenv("REPACK_PROTOCOL")) ){
+  if ( !(tmp = getconfent("REPACK", "PROTOCOL",0)) &&
+       !(tmp = getenv("REPACK_PROTOCOL")) ){
     castor::exception::Internal ex;
     ex.getMessage() << "Unable to initialise RepackServer with protocol "
                     << "entry in castor config file" << std::endl;
     throw ex; 
   }
-  m_protocol = new std::string(tmp2);
+  m_protocol = new std::string(tmp);
 
   /* --------------------------------------------------------------------- */
 
   /** Get the polling time for the Monitor and service. This value should be not less
       than 120 ( to stage a file takes about that time).
     */
-  if ( (tmp2 = getenv ("REPACK_POLLTIME")) != 0 ){
-    char* dp = tmp2;
-    m_pollingTime = strtoul(tmp2, &dp, 0);
+  if ( (tmp = getenv ("REPACK_POLLTIME")) != 0 ){
+    dp = tmp;
+    m_pollingTime = strtoul(tmp, &dp, 0);
       
     if (*dp != 0) {
       castor::exception::Internal ex;
       ex.getMessage() << "Bad polling time value in enviroment variable " 
-                      << tmp2 << std::endl;
+                      << tmp << std::endl;
       throw ex;
     }
     if ( m_pollingTime > 65535 ){
@@ -311,6 +346,8 @@ castor::repack::RepackServer::RepackServer() :
     m_pollingTime = castor::repack::CSP_REPACKPOLLTIME;
   /* --------------------------------------------------------------------- */
 
+  if (tmp) free(tmp);
+  tmp=NULL;
 
 }
 
@@ -323,7 +360,10 @@ castor::repack::RepackServer::~RepackServer() throw()
     if ( m_stager != NULL ) delete m_stager;
     if ( m_serviceClass != NULL ) delete m_serviceClass;
     if ( m_protocol != NULL ) delete m_protocol;
+    m_maxFiles=0;
+    m_maxTapes=0;
     m_pollingTime = 0;
+    m_listenPort =0 ;
 }
 
 //------------------------------------------------------------------------------

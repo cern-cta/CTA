@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/03/08 16:03:43 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/09/09 09:18:40 $ $Author: gtaur $
  *
  *
  *
@@ -80,7 +80,8 @@ namespace castor {
     std::string getProtocol() const {
       return (*m_protocol);
     }
-    /** Retrieves Port from env (if given) */
+
+   /** Retrieves Port from env (if given) */
     int getListenPort() const {
       return m_listenPort;
     }
@@ -90,9 +91,14 @@ namespace castor {
       return m_pollingTime;
     }
 
-    /** Returns true, if Server runs in synchronise mode.*/
-    bool synchronise() {
-      return m_synchronise;
+    /** Retrieves max number of files **/
+    int maxFiles() const {
+      return m_maxFiles;
+    }
+    
+    /** Retrieves max number of tapes ONGOING **/
+    int maxTapes() const {
+      return m_maxTapes;
     }
 
     
@@ -104,35 +110,37 @@ namespace castor {
 
 
   private:
-    /**
-      * The Nameserver (this name is queries by RepackFileStager and RepackCleaner (config file)
-      */
+    
+    // The Nameserver (this name is queries by RepackFileStager and RepackCleaner (config file)
+      
     std::string* m_ns;
-    /**
-      * The Stager (Request Handler,RH) to contact (config file)
-      */
+    
+    // The Request Handler,RH to contact (config file)
+      
     std::string* m_stager;
-     /**
-      * The default service class to use (config file)
-      */
+     
+    //The default service class to use (config file)
+      
     std::string* m_serviceClass;
-     /**
-      * The default transfer protocol to use (config file)
-      */
+    
+    // The default transfer protocol to use (config file)
+     
     std::string* m_protocol;
-     /**
-      * The port to accept connections (environment)
-      */
+
+    // The port to accept connections (environment)
+     
     int m_listenPort;
-     /**
-      * The repack monitor DB polling interval (environment) 
-      */
+
+    //The repack monitor DB polling interval (environment) 
+ 
     int m_pollingTime;
-     /**
-      * Flag, if the user wishes to synchronise with the stager (in case
-      * a crash happend when a StageRepackRequest is submitted to the Stager
-      */
-    bool m_synchronise;
+    
+    // parameters to limitate the concurrent repack processes
+
+    int m_maxFiles;
+    
+    int m_maxTapes;
+
   };
 
  } // end of namespace repack

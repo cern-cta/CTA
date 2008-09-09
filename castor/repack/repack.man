@@ -7,30 +7,33 @@ repack \- Move files from tape(s) to other tape destination
 .SH "SYNOPSIS"
 
 
-.B repack option] 
+.B repack [option] 
 
 options: 
 .B
 .br 
-.BI \-V " VID1[:VID2[:VID3...]] ["\-o " OutputServiceClass ][" \-S " StagerHostname"]
+.BI \-V " VID1[:VID2[:VID3... ]] ["\-o " OutputServiceClass ][ "\-m " numberRetry ][" \-c "]["\-n " newPoolName ]
 .br 
-.BI \-P " SourcePoolname"
-[
-.BI \-o " OutputServiceClass"
-]
+.BI \-P " SourcePoolname"  [\-o " OutputServiceClass ] [" \-m " retryNumber ][ " \-c " ]["\-n " newPoolName ][ " \-o " OutputServiceClass ]
 .br 
-.BI  \-r " VID"
-.br 
-.br 
-.BI  \-R " VID"
-.br
-.B \-s 
-.br 
-.BI \-x " VID"
+.BI  \-r " VID1[:VID2[:VID3...]]"
 .br
 .BI \-A " VID1[:VID2[:VID3...]]" 
 .br 
-.BI \-a " VID1[:VID2[:VID3...]]" 
+.br 
+.BI  \-R " VID1[:VID2[:VID3...]]"
+.br
+.B \-s 
+.br 
+.BI \-S " VID1[:VID2[:VID3...]]"
+.br
+.BI \-x " VID1[:VID2[:VID3...]]"
+.br
+.BI \-e " VID1[:VID2[:VID3...]]" 
+.br 
+.BI \-A " VID1[:VID2[:VID3...]]" 
+.br 
+.BI \-a  
 .br
 .BI  \-h
  
@@ -82,11 +85,13 @@ service class has to have a tape pool containing this tape.
 .I SourcePoolname
 The name of the tape pool which is to be repacked . It must be at most CA_MAXPOOLNAMELEN characters long.
 The list of pools can be obtained with vmgrlistpool .
+.TP 
+.I retryNumber
+Maximum number of automatic retry allowed. If this option is not used the default is zero.
 .TP
-.I StagerHostname
-The hostname of the Stager this Repack process has to be send to.
-
-
+.I newTapePool
+New tapepool in with should be moved the tape after a successful repack.
+.TP
 .SH "OPTIONS"
 \fB\-V\fR
 specifies the volumes to repack seperated by :.
@@ -101,23 +106,38 @@ The service class used for migration (see obove). If none specified, the default
 The stager to be used to do the repack of the tape.
 
 \fB\-r\fR
-To restart the repack of the tape which finished but with failures.
+To restart the repack of the tape which is finished but with failures.
 
 \fB\-R\fR
-To kill a repack process.
+To abort a repack of a tape.
 
 \fB\-s\fR
 Prints information about all tapes in an active repack process.
 
-\fB\-x\fR
-Prints detailed information of the given volume.
+\fB\-s\fR
+Prints information about a given tape in an active repack process.
 
-\fB\-A\fR
-Archives all the repacked tapes. They are not listed anymore when the \fB\-s\fR option is 
-given
+\fB\-x\fR
+Prints detailed information of the given volume. It lists the nameserver information of the files which were on that tape when repack has been started.
 
 \fB\-a\fR
-Archives the tapes specified, the volumes to repack seperated by :
+Archives all the FINISHED tapes. They are not listed anymore when the \fB\-s\fR option is 
+given
+
+\fB\-A\fR
+Archives the FINISHED-FAILED tapes given by command line 
+
+\fB\-e\fR
+For each given tape, it list the error reported by the stager when repack have been issued.
+
+\fB\-m\fR
+To set the maximum number of automatic retry which should be issued in case of failure.  
+
+\fB\-c\fR
+To issue vmgr_reclaim of the tape if repack does not report any failure.
+
+\fB\-n\fR
+To change the pool of the tape with the given one ,if repack does not report any failure.
 
 \fB\-h\fR
 Help
@@ -143,10 +163,15 @@ This program returns 0 if the operation was successful or >0 if the operation fa
 0	Ok.
 .br 
 1	An error occured.
+
+.SH KNOWN BUGS
+repack -x and repack -e can display maximum 1300 entries.
+
 .SH "SEE ALSO"
 .BR Castor_limits(4) ,
 .BR Cns_listtape(3) ,
 .BR reclaim(1) ,
 .BR vmgr_listtape(3) ,
 .BR vmgr_querypool(3) ,
+.BR vmgr_modifytape(3) ,
 .B vmgr_querytape(3)

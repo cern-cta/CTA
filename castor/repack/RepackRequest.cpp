@@ -52,6 +52,8 @@ castor::repack::RepackRequest::RepackRequest() throw() :
   m_userId(0),
   m_groupId(0),
   m_retryMax(0),
+  m_reclaim(0),
+  m_finalPool(""),
   m_id(0),
   m_command(RepackCommandCode(0)) {
 }
@@ -89,6 +91,8 @@ void castor::repack::RepackRequest::print(std::ostream& stream,
   stream << indent << "userId : " << m_userId << std::endl;
   stream << indent << "groupId : " << m_groupId << std::endl;
   stream << indent << "retryMax : " << m_retryMax << std::endl;
+  stream << indent << "reclaim : " << m_reclaim << std::endl;
+  stream << indent << "finalPool : " << m_finalPool << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

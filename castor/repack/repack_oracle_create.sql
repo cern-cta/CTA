@@ -39,6 +39,51 @@ BEGIN
   RETURN ret;
 END;
 
+/* Table for cleaning daemon with defautl values */
+
+/* Define a table for some configuration key-value pairs and populate it */
+CREATE TABLE RepackConfig
+  (class VARCHAR2(2048) NOT NULL, key VARCHAR2(2048) NOT NULL, value VARCHAR2(2048) NOT NULL, description VARCHAR2(2048));
+
+INSERT INTO RepackConfig (class,key,value,description) VALUES ('Repack','CleaningTimeout','72','time out to clean archived repacksubrequest');
+
+/* Function to execute the cleaning operation */
+
+CREATE OR REPLACE PROCEDURE repackCleanup AS
+  t INTEGER;
+  srIds "numList";
+  rIds "numList";
+BEGIN
+  -- First perform some cleanup of old stuff:
+  -- for each, read relevant timeout from configuration table
+  SELECT TO_NUMBER(value) INTO t FROM RepackConfig
+   WHERE class = 'Repack' AND key = 'CleaningTimeout' AND ROWNUM < 2;
+  SELECT id BULK COLLECT INTO srIds FROM RepackSubrequest WHERE status=8 AND submittime < gettime() + t*3600 FOR UPDATE;
+  DELETE FROM id2type where id IN (Select id FROM RepackSegment WHERE RepackSubrequest MEMBER OF srIds);
+  DELETE FROM RepackSegment WHERE RepackSubrequest MEMBER OF srIds;
+  DELETE FROM id2type WHERE id MEMBER OF srIds;
+  DELETE FROM RepackSubrequest WHERE id MEMBER OF srIds;
+  DELETE FROM RepackRequest A WHERE NOT EXISTS (SELECT id FROM RepackSubRequest WHERE A.id=RepackSubRequest.repackrequest) RETURNING A.id BULK COLLECT INTO rIds;
+  DELETE FROM id2type WHERE id MEMBER OF rIds;
+  COMMIT;  
+ 
+  -- Loop over all tables which support row movement and recover space from 
+  -- the object and all dependant objects. We deliberately ignore tables 
+  -- with function based indexes here as the 'shrink space' option is not 
+  -- supported.
+  
+  FOR t IN (SELECT table_name FROM user_tables
+             WHERE row_movement = 'ENABLED'
+               AND table_name NOT IN (
+                 SELECT table_name FROM user_indexes
+                  WHERE index_type LIKE 'FUNCTION-BASED%')
+               AND temporary = 'N')
+  LOOP
+    EXECUTE IMMEDIATE 'ALTER TABLE '|| t.table_name ||' SHRINK SPACE CASCADE';
+  END LOOP;
+  COMMIT;
+END;
+
 /* Global tables */
 CREATE GLOBAL TEMPORARY TABLE listOfStrs(id VARCHAR(2048))ON COMMIT DELETE ROWS;
 CREATE GLOBAL TEMPORARY TABLE listOfIds(id NUMBER)ON COMMIT DELETE ROWS;

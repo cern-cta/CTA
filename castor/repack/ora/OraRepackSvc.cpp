@@ -51,7 +51,7 @@ static castor::SvcFactory<castor::repack::ora::OraRepackSvc>* s_factoryOraRepack
 
 /// SQL to store a new request
 const std::string castor::repack::ora::OraRepackSvc::s_storeRequestStatementString =
-  "BEGIN storeRequest(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13);END;";
+  "BEGIN storeRequest(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15);END;";
 
 /// SQL to store all the segment for a request
 const std::string castor::repack::ora::OraRepackSvc::s_updateSubRequestSegmentsStatementString=
@@ -75,11 +75,11 @@ const std::string castor::repack::ora::OraRepackSvc::s_getAllSubRequestsStatemen
 
 /// SQL to validate a RepackSubrequest to submit to the stager
 const std::string castor::repack::ora::OraRepackSvc::s_validateRepackSubRequestStatementString =
-  "BEGIN validateRepackSubRequest(:1,:2); END;"; 
+  "BEGIN validateRepackSubRequest(:1,:2, :3, :4); END;"; 
 
 /// SQL to resurrect a RepackSubrequest to submit to the stager
 const std::string castor::repack::ora::OraRepackSvc::s_resurrectTapesOnHoldStatementString =
-  "BEGIN resurrectTapesOnHold(); END;"; 
+  "BEGIN resurrectTapesOnHold(:1, :2); END;"; 
 
 /// SQL to restart a failed RepackSubRequest
 const std::string castor::repack::ora::OraRepackSvc::s_restartSubRequestStatementString="BEGIN restartSubRequest(:1); END;";
@@ -209,7 +209,7 @@ castor::repack::RepackAck* castor::repack::ora::OraRepackSvc::storeRequest(casto
 	m_storeRequestStatement = 
 	  createStatement(s_storeRequestStatementString);
         m_storeRequestStatement->registerOutParam
-	  (13, oracle::occi::OCCICURSOR);
+	  (15, oracle::occi::OCCICURSOR);
      
       }
      
@@ -226,6 +226,8 @@ castor::repack::RepackAck* castor::repack::ora::OraRepackSvc::storeRequest(casto
       m_storeRequestStatement->setDouble(9,rreq->userId());
       m_storeRequestStatement->setDouble(10,(double)rreq->groupId());
       m_storeRequestStatement->setDouble(11,(double)rreq->retryMax());
+      m_storeRequestStatement->setInt(12,(int)rreq->reclaim());
+      m_storeRequestStatement->setString(13,rreq->finalPool());
 
       // DataBuffer with all the vid (one for each subrequest)
 
@@ -278,12 +280,12 @@ castor::repack::RepackAck* castor::repack::ora::OraRepackSvc::storeRequest(casto
 
       ub4 len=numTapes;
       m_storeRequestStatement->setDataBufferArray
-	(12, buffer, oracle::occi::OCCI_SQLT_CHR,
+	(14, buffer, oracle::occi::OCCI_SQLT_CHR,
 	 len, &len, maxLen, lens);
 
       m_storeRequestStatement->executeUpdate();
 
-      rset=m_storeRequestStatement->getCursor(13);
+      rset=m_storeRequestStatement->getCursor(15);
 
       // Run through the cursor
       
@@ -350,8 +352,7 @@ castor::repack::RepackAck* castor::repack::ora::OraRepackSvc::storeRequest(casto
     
   }  
   
-  if (rset) delete rset;
-  rset=NULL;
+  m_storeRequestStatement->closeResultSet(rset);
   if (buffer) free(buffer);
   buffer=NULL;
   if (lens) free(lens);
@@ -595,8 +596,7 @@ void castor::repack::ora::OraRepackSvc::getSegmentsForSubRequest(RepackSubReques
     }
     
   } catch(oracle::occi::SQLException e){
-    if (rset) delete rset;
-    rset=NULL;
+    m_getSegmentsForSubRequestStatement->closeResultSet(rset);
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -604,6 +604,8 @@ void castor::repack::ora::OraRepackSvc::getSegmentsForSubRequest(RepackSubReques
       << std::endl << e.what();
     throw ex;
   }
+  m_getSegmentsForSubRequestStatement->closeResultSet(rset);
+
 }
 
 
@@ -653,15 +655,12 @@ castor::repack::ora::OraRepackSvc::getSubRequestByVid(std::string vid, bool fill
       sub->setFilesFailedSubmit((u_signed64)rset->getDouble(11));
       sub->setRetryNb((u_signed64)rset->getDouble(12));
       sub->setId((u_signed64)rset->getDouble(13));
-      sub->setRepackrequest(NULL); // don't used
+      sub->setRepackrequest(NULL); // don't used        
     
-      if (rset) delete rset;
-      rset=NULL;
-
       // Get the segment and attach it 
 
       if (fill)  getSegmentsForSubRequest(sub);
-
+ 
      
     } else {
       
@@ -701,8 +700,7 @@ castor::repack::ora::OraRepackSvc::getSubRequestByVid(std::string vid, bool fill
   
   }
 
-  if ( rset ) delete rset;
-  rset=NULL;
+  m_getSubRequestByVidStatement->closeResultSet(rset);
   return result;
 
 }
@@ -728,25 +726,24 @@ castor::repack::ora::OraRepackSvc::getSubRequestsByStatus( castor::repack::Repac
     }	
     m_getSubRequestsByStatusStatement->setInt(1,st);
     m_getSubRequestsByStatusStatement->executeUpdate();
-    oracle::occi::ResultSet *rs =
-      m_getSubRequestsByStatusStatement->getCursor(2);
+    rset = m_getSubRequestsByStatusStatement->getCursor(2);
     // Run through the cursor
-    oracle::occi::ResultSet::Status status = rs->next();
+    oracle::occi::ResultSet::Status status = rset->next();
     while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
       resp = new castor::repack::RepackSubRequest();
-      resp->setVid(rs->getString(1));
-      resp->setXsize((u_signed64)rs->getDouble(2));
-      resp->setStatus((castor::repack::RepackSubRequestStatusCode) rs->getInt(3));
-      resp->setFilesMigrating((u_signed64)rs->getDouble(4));
-      resp->setFilesStaging((u_signed64)rs->getDouble(5));
-      resp->setFiles((u_signed64)rs->getDouble(6));
-      resp->setFilesFailed((u_signed64)rs->getDouble(7));
-      resp->setCuuid(rs->getString(8));
-      resp->setSubmitTime((u_signed64)rs->getDouble(9));
-      resp->setFilesStaged((u_signed64)rs->getDouble(10));
-      resp->setFilesFailedSubmit((u_signed64)rs->getDouble(11));
-      resp->setRetryNb((u_signed64)rs->getDouble(12));
-      resp->setId((u_signed64)rs->getDouble(13));
+      resp->setVid(rset->getString(1));
+      resp->setXsize((u_signed64)rset->getDouble(2));
+      resp->setStatus((castor::repack::RepackSubRequestStatusCode) rset->getInt(3));
+      resp->setFilesMigrating((u_signed64)rset->getDouble(4));
+      resp->setFilesStaging((u_signed64)rset->getDouble(5));
+      resp->setFiles((u_signed64)rset->getDouble(6));
+      resp->setFilesFailed((u_signed64)rset->getDouble(7));
+      resp->setCuuid(rset->getString(8));
+      resp->setSubmitTime((u_signed64)rset->getDouble(9));
+      resp->setFilesStaged((u_signed64)rset->getDouble(10));
+      resp->setFilesFailedSubmit((u_signed64)rset->getDouble(11));
+      resp->setRetryNb((u_signed64)rset->getDouble(12));
+      resp->setId((u_signed64)rset->getDouble(13));
       
       // GET REQUEST
 
@@ -760,7 +757,7 @@ castor::repack::ora::OraRepackSvc::getSubRequestsByStatus( castor::repack::Repac
       if (fill) getSegmentsForSubRequest(resp);
       
       subs.push_back(resp);
-      status = rs->next();
+      status = rset->next();
 
     }
 
@@ -787,9 +784,7 @@ castor::repack::ora::OraRepackSvc::getSubRequestsByStatus( castor::repack::Repac
     subs.clear();
   } 
 
-  if ( rset ) delete rset;
-  rset=NULL;
-
+  m_getSubRequestsByStatusStatement->closeResultSet(rset); 
   return subs;	
 }
 
@@ -814,33 +809,32 @@ castor::repack::ora::OraRepackSvc::getAllSubRequests()
         (1, oracle::occi::OCCICURSOR); // to get a valid repack subrequest request 
     }	
     m_getAllSubRequestsStatement->executeUpdate();
-    oracle::occi::ResultSet *rs =
-      m_getAllSubRequestsStatement->getCursor(1);
+    rset = m_getAllSubRequestsStatement->getCursor(1);
     // Run through the cursor
-    oracle::occi::ResultSet::Status status = rs->next();
+    oracle::occi::ResultSet::Status status = rset->next();
     while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
       resp = new RepackResponse();
       resp->setErrorCode(0);
 
       sub = new RepackSubRequest();
-      sub->setVid(rs->getString(1));
-      sub->setXsize((u_signed64)rs->getDouble(2));
-      sub->setStatus((castor::repack::RepackSubRequestStatusCode) rs->getInt(3));
-      sub->setFilesMigrating((u_signed64)rs->getDouble(4));
-      sub->setFilesStaging((u_signed64)rs->getDouble(5));
-      sub->setFiles((u_signed64)rs->getDouble(6));
-      sub->setFilesFailed((u_signed64)rs->getDouble(7));
-      sub->setCuuid(rs->getString(8));
-      sub->setSubmitTime((u_signed64)rs->getDouble(9));
-      sub->setFilesStaged((u_signed64)rs->getDouble(10));
-      sub->setFilesFailedSubmit((u_signed64)rs->getDouble(11));
-      sub->setRetryNb((u_signed64)rs->getDouble(12));
-      sub->setId((u_signed64)rs->getDouble(13));
+      sub->setVid(rset->getString(1));
+      sub->setXsize((u_signed64)rset->getDouble(2));
+      sub->setStatus((castor::repack::RepackSubRequestStatusCode) rset->getInt(3));
+      sub->setFilesMigrating((u_signed64)rset->getDouble(4));
+      sub->setFilesStaging((u_signed64)rset->getDouble(5));
+      sub->setFiles((u_signed64)rset->getDouble(6));
+      sub->setFilesFailed((u_signed64)rset->getDouble(7));
+      sub->setCuuid(rset->getString(8));
+      sub->setSubmitTime((u_signed64)rset->getDouble(9));
+      sub->setFilesStaged((u_signed64)rset->getDouble(10));
+      sub->setFilesFailedSubmit((u_signed64)rset->getDouble(11));
+      sub->setRetryNb((u_signed64)rset->getDouble(12));
+      sub->setId((u_signed64)rset->getDouble(13));
       sub->setRepackrequest(NULL); // not used
       
       resp->setRepacksubrequest(sub);
       ack->addRepackresponse(resp);
-      status = rs->next();
+      status = rset->next();
 
     }
 
@@ -863,7 +857,7 @@ castor::repack::ora::OraRepackSvc::getAllSubRequests()
     ack->addRepackresponse(resp);
   }
 
-  if (rset) delete rset;  
+  m_getAllSubRequestsStatement->closeResultSet(rset);  
   return ack;	
 }
 
@@ -871,21 +865,23 @@ castor::repack::ora::OraRepackSvc::getAllSubRequests()
 //------------------------------------------------------------------------------
 // validateRepackSubRequest
 //------------------------------------------------------------------------------
-bool  castor::repack::ora::OraRepackSvc::validateRepackSubRequest( RepackSubRequest* tape)
-  throw (){
+bool  castor::repack::ora::OraRepackSvc::validateRepackSubRequest( RepackSubRequest* tape, int numFiles, int numTapes)  throw (){
   stage_trace(3,"Validate tape  %s",tape->vid().c_str());
   try{
     /// Check whether the statements are ok
     if ( m_validateRepackSubRequestStatement == NULL ) {
       m_validateRepackSubRequestStatement = createStatement(s_validateRepackSubRequestStatementString);
-      m_validateRepackSubRequestStatement->registerOutParam(2, oracle::occi::OCCIINT); // to get a valid repack subrequest request 
+      m_validateRepackSubRequestStatement->registerOutParam(4, oracle::occi::OCCIINT); // to get a valid repack subrequest request 
    
     }	
     m_validateRepackSubRequestStatement->setDouble(1, tape->id());
+    m_validateRepackSubRequestStatement->setInt(2, numFiles);
+    m_validateRepackSubRequestStatement->setInt(3, numTapes);
+
     m_validateRepackSubRequestStatement->executeUpdate();
     
     /// get the request we found
-    bool ret =  (u_signed64)  m_validateRepackSubRequestStatement->getInt(2) == 1?true:false;
+    bool ret =  (u_signed64)  m_validateRepackSubRequestStatement->getInt(4) == 1?true:false;
     return ret;
   }catch (oracle::occi::SQLException ex) {
 
@@ -907,8 +903,8 @@ bool  castor::repack::ora::OraRepackSvc::validateRepackSubRequest( RepackSubRequ
 //------------------------------------------------------------------------------
 // resurrectTapesOnHold
 //------------------------------------------------------------------------------
-void  castor::repack::ora::OraRepackSvc::resurrectTapesOnHold()
-  throw (){
+
+void  castor::repack::ora::OraRepackSvc::resurrectTapesOnHold(int numFiles, int numTapes)  throw (){
   stage_trace(3,"Resurrecting  tapes");
   try{
     /// Check whether the statements are ok
@@ -916,6 +912,8 @@ void  castor::repack::ora::OraRepackSvc::resurrectTapesOnHold()
       m_resurrectTapesOnHoldStatement = createStatement(s_resurrectTapesOnHoldStatementString);
    
     }	
+    m_resurrectTapesOnHoldStatement->setInt(1, numFiles);
+    m_resurrectTapesOnHoldStatement->setInt(2, numTapes);
     m_resurrectTapesOnHoldStatement->executeUpdate();
     
 
@@ -1106,8 +1104,7 @@ castor::repack::RepackAck*  castor::repack::ora::OraRepackSvc::changeSubRequests
     ack->addRepackresponse(resp);
   }
 
-  if (rset) delete rset;
-  rset=NULL;
+  m_changeSubRequestsStatusStatement->closeResultSet(rset);
     
   if (buffer) free(buffer);
   buffer=NULL;
@@ -1194,8 +1191,7 @@ castor::repack::RepackAck*  castor::repack::ora::OraRepackSvc::changeAllSubReque
     ack->addRepackresponse(resp);
   }
 
-  if (rset) delete rset;
-  rset=NULL ;
+  m_changeAllSubRequestsStatusStatement->closeResultSet(rset);
   return ack;
 }
 

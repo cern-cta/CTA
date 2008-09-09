@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2008/06/26 06:49:12 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2008/09/09 09:18:39 $ $Author: gtaur $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -137,7 +137,8 @@ RepackClient::RepackClient()
   cp.serviceclass = NULL;
   cp.stager = NULL ;
   cp.retryMax = 0;
-
+  cp.reclaim =0;
+  cp.finalPool= NULL;
   svc = svcs()->cnvService("StreamCnvSvc", castor::SVC_STREAMCNV);
   if (0 == svc) {
       // "Could not get Conversion Service for Streaming" message
@@ -163,14 +164,14 @@ RepackClient::~RepackClient() throw()
 //------------------------------------------------------------------------------
 bool RepackClient::parseInput(int argc, char** argv)
 {
-  const char* cmdParams = "o:aA:S:sR:V:P:r:hx:m:e:";
+  const char* cmdParams = "o:aA:S:sR:V:P:r:hx:m:cn:e:";
   if (argc == 1){
     return false;
   }
 
   if (getuid() == 0){
     std::cout <<"You cannot use repack commands if you are root."<< std::endl; 
-    return false;
+    exit(1);
   }
 
   struct Coptions longopts[] = {
@@ -186,6 +187,8 @@ bool RepackClient::parseInput(int argc, char** argv)
     {"details", REQUIRED_ARGUMENT, 0, 'x'},
     {"help", NO_ARGUMENT,NULL, 'h' },
     {"retryMax", REQUIRED_ARGUMENT, 0, 'm'},
+    {"reclaim", NO_ARGUMENT, NULL, 'c'},
+    {"newPool",REQUIRED_ARGUMENT, NULL,'n'},
     {"errors", NO_ARGUMENT, NULL, 'e'},  
     {NULL, 0, NULL, 0}
   };
@@ -246,6 +249,12 @@ bool RepackClient::parseInput(int argc, char** argv)
       cp.retryMax=atoi(Coptarg);
       if (cp.retryMax < 0) cp.retryMax=0;
       break;
+    case 'c':
+      cp.reclaim=1;
+      break;
+    case 'n':
+      cp.finalPool=Coptarg;
+      break;
    case 'e':
       cp.command = GET_ERROR;
       cp.vid = Coptarg;
@@ -265,7 +274,7 @@ bool RepackClient::parseInput(int argc, char** argv)
 //------------------------------------------------------------------------------
 void RepackClient::usage() 
 {
-	std::cout << " Usage:  \n ------  \n repack -V VID1[:VID2:..] | -P PoolID  [-o serviceclass] [-m num]" << " to start a repack request (-m to set the number of retry in case of failure of the request. Default is one)"<< std::endl
+	std::cout << " Usage:  \n ------  \n repack -V VID1[:VID2:..] | -P PoolID [-o serviceclass] [-m num] [-c]" << " to start a repack request (-m to set the number of retry in case of failure of the request. Default is one). If the option -c is given the tapes in the request will be reclaimed."<< std::endl
                   << " repack -s " 
                   << "   (to have the global status of the all repack sequests not archived)" << std::endl
                   << " repack -S VID[:VID2:..] " 
@@ -392,7 +401,8 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
   rreq->setCreationTime(time(NULL));
   rreq->setMachine(cName);
   rreq->setRetryMax(cp.retryMax);
-  
+  rreq->setReclaim(cp.reclaim);
+  if (cp.finalPool !=NULL) rreq->setFinalPool(cp.finalPool);
   if ( cp.serviceclass != NULL ) rreq->setSvcclass(cp.serviceclass);
   return rreq;
   
@@ -419,6 +429,7 @@ void RepackClient::run(int argc, char** argv)
    
     // creates a socket
     castor::io::ClientSocket s(m_defaultport, m_defaulthost);
+    s.setTimeout(100000);
     s.connect();
     // sends the request
     s.sendObject(*req);
@@ -666,7 +677,7 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape){
   std::cout <<
     std::setw(8) <<std::right <<tape->vid() <<
     std::setw(10) <<std::right <<  tape->files() << 
-    std::setw(10) << std::right << buf <<
+    std::setw(10) << std::right << buf <<"B"<<
     std::setw(10) << std::right << tape->filesStaging() <<
     std::setw(10) << std::right << tape->filesMigrating() <<
     std::setw(10) << std::right << tape->filesFailed() + tape->filesFailedSubmit()   <<

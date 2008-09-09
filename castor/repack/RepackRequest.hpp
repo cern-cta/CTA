@@ -262,6 +262,38 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_reclaim
+       * @return the value of m_reclaim
+       */
+      int reclaim() const {
+        return m_reclaim;
+      }
+
+      /**
+       * Set the value of m_reclaim
+       * @param new_var the new value of m_reclaim
+       */
+      void setReclaim(int new_var) {
+        m_reclaim = new_var;
+      }
+
+      /**
+       * Get the value of m_finalPool
+       * @return the value of m_finalPool
+       */
+      std::string finalPool() const {
+        return m_finalPool;
+      }
+
+      /**
+       * Set the value of m_finalPool
+       * @param new_var the new value of m_finalPool
+       */
+      void setFinalPool(std::string new_var) {
+        m_finalPool = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -345,6 +377,10 @@ namespace castor {
       int m_groupId;
 
       u_signed64 m_retryMax;
+
+      int m_reclaim;
+
+      std::string m_finalPool;
 
       /// The id of this object
       u_signed64 m_id;
