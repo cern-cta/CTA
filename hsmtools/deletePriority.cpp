@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: deletePriority.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/08/14 14:30:36 $ $Author: gtaur $
+ * @(#)$RCSfile: deletePriority.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/09/09 09:13:31 $ $Author: gtaur $
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
   
   // Check parameters
   if ((muid < 0 && muser<0) && (mgid < 0 && mgroup<0)) {
-    std::cerr << " uid and/or gid options missing" << std::endl;
+    std::cerr << "options missing" << std::endl;
     usage(progName);
     return 0;
   }
