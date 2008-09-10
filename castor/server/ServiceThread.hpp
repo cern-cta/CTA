@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServiceThread.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/05/30 14:08:25 $ $Author: itglp $
+ * @(#)$RCSfile: ServiceThread.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/09/10 17:14:58 $ $Author: itglp $
  *
  * Internal thread to allow user service threads running forever
  *
@@ -81,6 +81,10 @@ namespace castor {
     bool stopped() {
       return m_stopped;
     };
+    
+    SignalThreadPool* owner() {
+      return m_owner;
+    }
 
   private:
 
