@@ -114,9 +114,8 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
   }
 
   try {
-    bool withTapeDrives = (ptr_driveRequest->status == VDQM_TPD_STARTED);
     tapeServer = ptr_IVdqmService->selectOrCreateTapeServer(
-      ptr_driveRequest->reqhost, withTapeDrives);
+      ptr_driveRequest->reqhost, false);
   } catch ( castor::exception::Exception ex ) {
     if ( tapeServer ) {
       for(std::vector<castor::vdqm::TapeDrive*>::iterator it =
