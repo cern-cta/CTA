@@ -112,16 +112,6 @@ namespace castor {
         const Cuuid_t          m_cuuid;
         
         /**
-         * Deletes all TapeDrives and their old TapeRequests (if any)
-         * in the db from the given TapeServer 
-         * 
-         * @param tapeServer The tape server, which drive should be deleted
-         * @exception In case of error
-         */
-        void deleteAllTapeDrvsFromSrv(TapeServer* tapeServer) 
-          throw (castor::exception::Exception);
-  
-        /**
          * Handles the communication with the data base to get the TapeDrive.
          * If there is no entry in the db, a new TapeDrive Object will be
          * created.  Please notice, that this object is not stored in the db.

@@ -89,3 +89,4 @@ VDQM_DEL_OLD_VOL_PRIORITIES_ERROR,87,"Error occurred whilst deleting old volume 
 VDQM_RTCPD_JOB_SUBMIT_FAILED,88,"Failed to submit RTCPD job"
 VDQM_FAILED_TO_PARSE_COMMAND_LINE,89,"Failed to parse the command line"
 VDQM_FAILED_TO_INIT_DB_SERVICE,90,"Failed to initialise database service"
+VDQM_TPD_STARTED_NOT_SUPPORTED,91,"VDQM_TPD_STARTED messages are nor supported"

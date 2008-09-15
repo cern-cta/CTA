@@ -107,17 +107,16 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
     16, params);
 
 
+  // The VDQM2 does not support "tape daemon startup status" messages
+  if ( ptr_driveRequest->status == VDQM_TPD_STARTED ) {
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR, VDQM_TPD_STARTED_NOT_SUPPORTED);
+    return;
+  }
+
   try {
     bool withTapeDrives = (ptr_driveRequest->status == VDQM_TPD_STARTED);
     tapeServer = ptr_IVdqmService->selectOrCreateTapeServer(
       ptr_driveRequest->reqhost, withTapeDrives);
-
-    // If it is a tape daemon startup status we delete all TapeDrives 
-    // on that tape server.
-    if ( ptr_driveRequest->status == VDQM_TPD_STARTED ) {
-      deleteAllTapeDrvsFromSrv(tapeServer);
-      return;
-    }
   } catch ( castor::exception::Exception ex ) {
     if ( tapeServer ) {
       for(std::vector<castor::vdqm::TapeDrive*>::iterator it =
@@ -215,79 +214,6 @@ void castor::vdqm::handler::TapeDriveHandler::deleteTapeDrive()
 
   ptr_IVdqmService->deleteDrive(ptr_driveRequest->drive,
     ptr_driveRequest->server, ptr_driveRequest->dgn);    
-}
-
-
-//------------------------------------------------------------------------------
-// deleteAllTapeDrvsFromSrv
-//------------------------------------------------------------------------------
-void castor::vdqm::handler::TapeDriveHandler::deleteAllTapeDrvsFromSrv(
-  TapeServer* tapeServer) 
-  throw (castor::exception::Exception) {
-
-  TapeDrive* tapeDrive = NULL;
-
-  
-  if ( strcmp(ptr_driveRequest->reqhost, ptr_driveRequest->server) != 0 ) {
-    castor::exception::Exception ex(EPERM);
-    ex.getMessage()
-      << "TapeDriveHandler::deleteAllTapeDrvsFromSrv(): "
-      << "unauthorized VDQM_TPD_STARTED for " 
-      << ptr_driveRequest->server << " sent by "
-      << ptr_driveRequest->reqhost
-      << std::endl;
-    
-    throw ex;
-  }
-  
-  // Select the server and deletes all db entries of tapeDrives 
-  // (+ old TapeRequests), which are dedicated to this server.
-  try {
-    for(std::vector<castor::vdqm::TapeDrive*>::iterator it =
-      tapeServer->tapeDrives().begin(); it != tapeServer->tapeDrives().end();
-      it++) {
-      tapeDrive = *it;
-
-      // The old TapeRequest. Normally it should not exist.
-      TapeRequest* runningTapeReq = tapeDrive->runningTapeReq();     
-      
-      if (runningTapeReq != 0) {
-        castor::vdqm::DatabaseHelper::deleteRepresentation(runningTapeReq,
-          m_cuuid);
-        delete runningTapeReq;
-        runningTapeReq = 0;
-        tapeDrive->setRunningTapeReq(0);
-      }
-      
-      castor::vdqm::DatabaseHelper::deleteRepresentation(tapeDrive, m_cuuid);
-      delete tapeDrive;
-    }
-    
-    tapeServer->tapeDrives().clear();
-  } catch ( castor::exception::Exception ex ) {
-    if ( tapeServer ) { 
-      for (std::vector<castor::vdqm::TapeDrive*>::iterator it =
-        tapeServer->tapeDrives().begin(); it != tapeServer->tapeDrives().end();
-        it++) {
-        TapeRequest* runningTapeReq = (*it)->runningTapeReq();     
-    
-        if (runningTapeReq != 0) {
-          delete runningTapeReq;
-          runningTapeReq = 0;
-          (*it)->setRunningTapeReq(0);
-        }
-    
-        delete (*it);
-      }
-      
-      delete tapeServer;
-      tapeServer = 0;
-    }
-    throw ex;
-  }
-  
-  delete tapeServer;
-  tapeServer = 0;
 }
 
 
