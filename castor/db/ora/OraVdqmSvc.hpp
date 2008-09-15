@@ -42,6 +42,7 @@ namespace castor {
   namespace db {
     
     namespace ora {
+
       
       /**
        * Implementation of the IVdqmSvc for Oracle
@@ -288,16 +289,11 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Selects from the TapeDriveCompatibility table all entries for the
-         * specified drive model.
-         * 
-         * @param tapeDriveModel The model of the tape drive
-         * @exception Exception in case of error (DB problem, no mounted Tape, 
-         * etc...)  
-         * @return All entries in the table for the selected drive model
+         * See the documentation for castor::vdqm::IVdqmSvc.
          */
-        virtual std::vector<castor::vdqm::TapeDriveCompatibility*>* 
-        selectCompatibilitiesForDriveModel(const std::string tapeDriveModel)
+        void selectCompatibilitiesForDriveModel(
+          castor::vdqm::TapeDrive *const tapeDrive,
+          const std::string tapeDriveModel)
           throw (castor::exception::Exception);
   
         /**

@@ -49,6 +49,7 @@
 #include "h/vdqm_constants.h"
 #include "h/vmgr_api.h" // For VMGR
 
+#include <memory>
 #include <vector>
 
 
@@ -81,9 +82,6 @@ castor::vdqm::handler::TapeDriveHandler::~TapeDriveHandler() throw() {
 void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest() 
   throw (castor::exception::Exception) {
 
-  castor::vdqm::TapeServer* tapeServer = NULL;
-  
-
   // XXX: This log doesn't appear in the log!
   //"The parameters of the old vdqm DrvReq Request" message
   castor::dlf::Param params[] =
@@ -106,53 +104,25 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, VDQM_OLD_VDQM_DRV_REQ_PARAMS,
     16, params);
 
-
   // The VDQM2 does not support "tape daemon startup status" messages
   if ( ptr_driveRequest->status == VDQM_TPD_STARTED ) {
-    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR, VDQM_TPD_STARTED_NOT_SUPPORTED);
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
+      VDQM_TPD_STARTED_NOT_SUPPORTED);
     return;
   }
 
-  try {
-    tapeServer = ptr_IVdqmService->selectOrCreateTapeServer(
-      ptr_driveRequest->reqhost, false);
-  } catch ( castor::exception::Exception ex ) {
-    if ( tapeServer ) {
-      for(std::vector<castor::vdqm::TapeDrive*>::iterator it =
-        tapeServer->tapeDrives().begin(); it != tapeServer->tapeDrives().end();
-        it++) {
-        // The old TapeRequest. Normally it should not exist.
-        TapeRequest* runningTapeReq = (*it)->runningTapeReq();     
-        
-        if (runningTapeReq != 0) {
-          delete runningTapeReq;
-          runningTapeReq = 0;
-          (*it)->setRunningTapeReq(0);
-        }
-        
-        delete (*it);
-      } 
-      tapeServer->tapeDrives().clear();
-      delete tapeServer;
-      tapeServer = 0;      
-    }
-      
-    
-    throw ex;
-  }
+  std::auto_ptr<castor::vdqm::TapeServer> tapeServer(
+    ptr_IVdqmService->selectOrCreateTapeServer(ptr_driveRequest->reqhost,
+      false)); // withTapeDrives = false
 
   // Gets the TapeDrive from the db or creates a new one.
-  castor::vdqm::TapeDrive *const tapeDrive = getTapeDrive(tapeServer);
+  TapeDriveAutoPtr tapeDrive(getTapeDrive(tapeServer.get()));
 
   // Log the actual "new" status and the old one.
-  printStatus(ptr_driveRequest->status, tapeDrive->status());
+  printStatus(ptr_driveRequest->status, tapeDrive.get()->status());
 
   if(ptr_driveRequest->status == VDQM_UNIT_QUERY ) {
-    copyTapeDriveInformations(tapeDrive);
-      
-    freeMemory(tapeDrive, tapeServer);
-    delete tapeDrive;
-
+    copyTapeDriveInformations(tapeDrive.get());
     return;
   }                                            
 
@@ -160,8 +130,8 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
   // current status of the drive.
   // In some cases a jobID can be overgiven to tapeDrive and the status
   // can already change to UNIT_STARTING or UNIT_ASSIGNED.
-  TapeDriveConsistencyChecker consistencyChecker(tapeDrive, ptr_driveRequest,
-    m_cuuid);
+  TapeDriveConsistencyChecker consistencyChecker(tapeDrive.get(),
+    ptr_driveRequest, m_cuuid);
   consistencyChecker.checkConsistency();
 
   //TODO implementing everything, which is commented out. ;-)
@@ -182,26 +152,21 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
   // newRequestId will get a valid request ID (value > 0) if there is
   // another request for the same tape
   u_signed64 newRequestId;
-  TapeDriveStatusHandler statusHandler(tapeDrive, ptr_driveRequest, m_cuuid,
-    &newRequestId);
+  TapeDriveStatusHandler statusHandler(tapeDrive.get(), ptr_driveRequest,
+    m_cuuid, &newRequestId);
   statusHandler.handleOldStatus();
-
 
   // Now the last thing is to update the data base if neccessary.
   // Note that if an allocation was reused then the database has already been
   // updated via a PL/SQL procedure which did not keep tapeDrive in sync,
   // therefore in this case an update using tapeDrive should not be performed.
   if(newRequestId == 0) {
-    castor::vdqm::DatabaseHelper::updateRepresentation(tapeDrive, m_cuuid);
+    castor::vdqm::DatabaseHelper::updateRepresentation(tapeDrive.get(),
+      m_cuuid);
   }
    
   // Log the actual "new" status.
-  printStatus(0, tapeDrive->status());
-   
-  // Free memory for all Objects, which are not needed any more
-  freeMemory(tapeDrive, tapeServer);
-    
-  delete tapeDrive;
+  printStatus(0, tapeDrive.get()->status());
 }
 
 
@@ -228,7 +193,6 @@ castor::vdqm::TapeDrive*
     
     // Check, if the tape drive already exists
     tapeDrive = ptr_IVdqmService->selectTapeDrive(ptr_driveRequest, tapeServer);
-    
     
     if ( ptr_driveRequest->status == VDQM_UNIT_QUERY ) {
       if ( tapeDrive == NULL ) {
@@ -313,25 +277,16 @@ castor::vdqm::TapeDrive*
       }
       (void) vmgr_listdgnmap (VMGR_LIST_END, &list);
       
-      // Looks, wheter there is already existing entries in the 
+      // Looks whether there are already existing entries in the 
       // TapeDriveCompatibility table for that model
-      std::vector<castor::vdqm::TapeDriveCompatibility*>
-        *tapeDriveCompatibilities = 
-        ptr_IVdqmService->selectCompatibilitiesForDriveModel(driveModel);
-          
-      if ( tapeDriveCompatibilities == NULL ||
-           tapeDriveCompatibilities->size() == 0 ) {
-        // Handle the conection to the priority list of the tape Drives
+      ptr_IVdqmService->selectCompatibilitiesForDriveModel(tapeDrive,
+        driveModel);
+
+      if(tapeDrive->tapeDriveCompatibilities().size() == 0) {
+        // Handle the connection to the priority list of the tape Drives
         handleTapeDriveCompatibilities(tapeDrive, driveModel);
-      } else {
-        for (unsigned int i = 0; i < tapeDriveCompatibilities->size(); i++) {
-          tapeDrive->addTapeDriveCompatibilities(
-            (*tapeDriveCompatibilities)[i]);
-        }
-        delete tapeDriveCompatibilities;
-        tapeDriveCompatibilities = 0;
       }
-      
+
       // "Create new TapeDrive in DB" message
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, VDQM_CREATE_DRIVE_IN_DB);
 
@@ -550,70 +505,6 @@ void castor::vdqm::handler::TapeDriveHandler::printStatus(
           ex.getMessage() << "The tapeDrive is in a wrong status" << std::endl;
           throw ex;
   }
-}
-
-
-//------------------------------------------------------------------------------
-// freeMemory
-//------------------------------------------------------------------------------
-void castor::vdqm::handler::TapeDriveHandler::freeMemory(
-  TapeDrive* tapeDrive, 
-  TapeServer* tapeServer) {
-
-  // Free memory for all Objects, which are not needed any more
-  
-  delete tapeDrive->deviceGroupName();
-  tapeDrive->setDeviceGroupName(0);
-  
-  if ( tapeDrive->tape() ) {
-    delete tapeDrive->tape();
-    tapeDrive->setTape(0);
-  }
-  
-  
-  
-  TapeRequest* runningTapeReq = tapeDrive->runningTapeReq();
-  if ( runningTapeReq ) {
-    delete runningTapeReq->tape();
-    runningTapeReq->setTape(0);
-
-    if ( runningTapeReq->requestedSrv() ) {
-      delete runningTapeReq->requestedSrv();
-      runningTapeReq->setRequestedSrv(0);
-    }
-
-    delete runningTapeReq->deviceGroupName();
-    runningTapeReq->setDeviceGroupName(0);
-    
-    delete runningTapeReq->tapeAccessSpecification();
-    runningTapeReq->setTapeAccessSpecification(0);
-    
-      
-    delete runningTapeReq;   
-    runningTapeReq = 0;
-    tapeDrive->setRunningTapeReq(0);
-  }
-  
-  delete tapeServer;
-  tapeServer = 0;
-  tapeDrive->setTapeServer(0);
-  
-  std::vector<castor::vdqm::TapeDriveDedication*> tapeDriveDedicationVector = tapeDrive->tapeDriveDedication();
-  for (unsigned int i = 0; i < tapeDriveDedicationVector.size(); i++) {
-    delete tapeDriveDedicationVector[i];
-  }  
-  tapeDriveDedicationVector.clear();
-  
-  std::vector<castor::vdqm::TapeDriveCompatibility*> tapeDriveCompatibilityVector = tapeDrive->tapeDriveCompatibilities();
-  for (unsigned int i = 0; i < tapeDriveCompatibilityVector.size(); i++) {
-    if ( tapeDriveCompatibilityVector[i]->tapeAccessSpecification() != NULL ) {
-      delete tapeDriveCompatibilityVector[i]->tapeAccessSpecification();
-      tapeDriveCompatibilityVector[i]->setTapeAccessSpecification(0);
-    }
-    
-    delete tapeDriveCompatibilityVector[i];
-  }  
-  tapeDriveCompatibilityVector.clear();
 }
 
 

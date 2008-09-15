@@ -27,7 +27,12 @@
 #ifndef _TAPEDRIVEHANDLER_HPP_
 #define _TAPEDRIVEHANDLER_HPP_
 
+#include "castor/vdqm/DeviceGroupName.hpp"
+#include "castor/vdqm/TapeAccessSpecification.hpp"
+#include "castor/vdqm/TapeDrive.hpp"
+#include "castor/vdqm/TapeDriveDedication.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
+#include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/handler/BaseRequestHandler.hpp"
 #include "h/vdqm_messages.h"
 
@@ -63,7 +68,7 @@ namespace castor {
           throw(castor::exception::Exception);
         
         /**
-         * Destructor
+         * Destructor.
          */
         virtual ~TapeDriveHandler() throw();
         
@@ -106,10 +111,95 @@ namespace castor {
           
       private:
 
+        /**
+         * Inner auto pointer class used to delete the owned tape drive object
+         * and all its child objects from the heap except for the associated
+         * tape server.
+         */
+        class TapeDriveAutoPtr {
+
+        private:
+
+          castor::vdqm::TapeDrive *const m_tapeDrive;
+
+
+        public:
+
+           /**
+            * Constructor.
+            */
+           TapeDriveAutoPtr(castor::vdqm::TapeDrive *const tapeDrive) :
+             m_tapeDrive(tapeDrive) {
+           }
+
+           /**
+            * Returns a pointer to the owned tape drive object.
+            */
+           castor::vdqm::TapeDrive *get() {
+             return m_tapeDrive;
+           }
+
+           /**
+            * Destructor.
+            *
+            * Deletes the owned tape drive object and all of its child objects
+            * from the heap except for the associated tape server object.  The
+            * tape server object is not deleted because it has a bi-directional
+            * link with the tape drive object.
+            */
+           ~TapeDriveAutoPtr() {
+              delete m_tapeDrive->tape();
+              m_tapeDrive->setTape(0);
+
+              TapeRequest* runningTapeReq = m_tapeDrive->runningTapeReq();
+              if(runningTapeReq ) {
+                delete runningTapeReq->tape();
+                runningTapeReq->setTape(0);
+
+                delete runningTapeReq->requestedSrv();
+                runningTapeReq->setRequestedSrv(0);
+
+                delete runningTapeReq->deviceGroupName();
+                runningTapeReq->setDeviceGroupName(0);
+
+                delete runningTapeReq->tapeAccessSpecification();
+                runningTapeReq->setTapeAccessSpecification(0);
+
+                delete runningTapeReq;
+                m_tapeDrive->setRunningTapeReq(0);
+              }
+
+              std::vector<castor::vdqm::TapeDriveDedication*>
+                tapeDriveDedicationVector = m_tapeDrive->tapeDriveDedication();
+
+              for(unsigned int i=0; i<tapeDriveDedicationVector.size(); i++) {
+                delete tapeDriveDedicationVector[i];
+              }
+              tapeDriveDedicationVector.clear();
+
+              std::vector<castor::vdqm::TapeDriveCompatibility*>
+                tapeDriveCompatibilityVector =
+                m_tapeDrive->tapeDriveCompatibilities();
+              for(unsigned int i=0; i<tapeDriveCompatibilityVector.size(); i++){
+                delete
+                  tapeDriveCompatibilityVector[i]->tapeAccessSpecification();
+                tapeDriveCompatibilityVector[i]->setTapeAccessSpecification(0);
+
+                delete tapeDriveCompatibilityVector[i];
+              }
+              tapeDriveCompatibilityVector.clear();
+
+              delete m_tapeDrive->deviceGroupName();
+              m_tapeDrive->setDeviceGroupName(0);
+
+              delete m_tapeDrive;
+           }
+        };
+
         // Private variables
         vdqmHdr_t    *const ptr_header;
         vdqmDrvReq_t *const ptr_driveRequest;
-        const Cuuid_t          m_cuuid;
+        const Cuuid_t       m_cuuid;
         
         /**
          * Handles the communication with the data base to get the TapeDrive.
@@ -156,12 +246,6 @@ namespace castor {
         void printStatus(const int oldProtocolStatus, const int newActStatus)
           throw (castor::exception::Exception);
           
-        /**
-         * Deletes the the tape Server and all inner objects of the 
-         * tapeDrive. Please notice, that the tapeDrive itself is not
-         * deleted.
-         */
-        void freeMemory(TapeDrive* tapeDrive, TapeServer* tapeServer);                    
         /**
          * Connects the new tape drive with the TapeDriveCompatibility objects.
          * If there are now rows for this model inside the table, it starts

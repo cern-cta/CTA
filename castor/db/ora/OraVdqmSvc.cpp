@@ -1267,14 +1267,12 @@ void castor::db::ora::OraVdqmSvc::getVolRequestsPriorityOrder(
   }
 
   // Execute statement and get result
-  try
-  {
+  try {
     oracle::occi::ResultSet *const rs = stmt->executeQuery();
 
     castor::vdqm::IVdqmSvc::VolRequest *request = NULL;
 
-    while(rs->next())
-    {
+    while(rs->next()) {
       requests.push_back(request = new castor::vdqm::IVdqmSvc::VolRequest());
 
       request->id             = (u_signed64)rs->getDouble(1);
@@ -2827,15 +2825,9 @@ castor::vdqm::TapeRequest *castor::db::ora::OraVdqmSvc::requestToSubmit()
 // -----------------------------------------------------------------------
 // selectCompatibilitiesForDriveModel
 // -----------------------------------------------------------------------
-std::vector<castor::vdqm::TapeDriveCompatibility*>* 
-  castor::db::ora::OraVdqmSvc::selectCompatibilitiesForDriveModel(
-  const std::string tapeDriveModel)
+void castor::db::ora::OraVdqmSvc::selectCompatibilitiesForDriveModel(
+  castor::vdqm::TapeDrive *const tapeDrive, const std::string tapeDriveModel)
   throw (castor::exception::Exception) {
-  
-  //The result from the select statement
-  oracle::occi::ResultSet *rset;
-  // Execute statement and get result
-  u_signed64 id;
   
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -2859,42 +2851,21 @@ std::vector<castor::vdqm::TapeDriveCompatibility*>*
     throw ie;
   }
  
-  try {
-    stmt->setString(1, tapeDriveModel);
-    rset = stmt->executeQuery();
-    
-    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      stmt->closeResultSet(rset);
-      // we found nothing, so let's return NULL
-      
-      return NULL;
-    }
-    
-    // If we reach this point, then we selected successfully
-    // a TapeDriveCompatibility object and it's id is in rset
-  } catch (oracle::occi::SQLException &oe) {
-    handleException(oe);
-    castor::exception::Internal ie;
-    ie.getMessage()
-      << "Unable to select TapeDriveCompatibility by tapeDriveModel :"
-      << std::endl << oe.getMessage();
-    throw ie;
-  }
-  
-  // Now get the TapeDriveCompatibility from its id
-  std::vector<castor::vdqm::TapeDriveCompatibility*>* result;
+  // Get the list of tape drive compatibilities
   try {
     castor::BaseAddress ad;
     ad.setCnvSvcName("DbCnvSvc");
     ad.setCnvSvcType(castor::SVC_DBCNV);
     
-    // create result
-    result = new std::vector<castor::vdqm::TapeDriveCompatibility*>; 
+    stmt->setString(1, tapeDriveModel);
+    oracle::occi::ResultSet *rs = stmt->executeQuery();
+
+    u_signed64 driveCompatibilityId = 0;
     castor::vdqm::TapeDriveCompatibility* driveCompatibility = NULL;
-    
-    do {
-      id = (u_signed64)rset->getDouble(1);
-      ad.setTarget(id);
+
+    while(rs->next()) {
+      driveCompatibilityId = (u_signed64)rs->getDouble(1);
+      ad.setTarget(driveCompatibilityId);
       castor::IObject* obj = cnvSvc()->createObj(&ad);
       driveCompatibility =
         dynamic_cast<castor::vdqm::TapeDriveCompatibility*> (obj);
@@ -2902,34 +2873,24 @@ std::vector<castor::vdqm::TapeDriveCompatibility*>*
       if (0 == driveCompatibility) {
         castor::exception::Internal e;
         e.getMessage() << "createObj return unexpected type "
-                       << obj->type() << " for id " << id;
+                       << obj->type() << " for id " << driveCompatibilityId;
         delete obj;
-        obj = 0;
         throw e;
       }
-      
-      result->push_back(driveCompatibility);
-    } while (oracle::occi::ResultSet::END_OF_FETCH != rset->next());
+
+      tapeDrive->addTapeDriveCompatibilities(driveCompatibility);
+    }
     
-    stmt->closeResultSet(rset);
-    return result;
+    stmt->closeResultSet(rs);
   } catch (oracle::occi::SQLException &oe) {
     handleException(oe);
     castor::exception::Internal ie;
     ie.getMessage()
-      << "Unable to select TapeDriveCompatibility for id " << id  << " :"
+      << "Unable to get the list of tape drive compatibilities: "
       << std::endl << oe.getMessage();
-      
-    for (unsigned int i = 0; i < result->size(); i++) {
-      delete (*result)[i];
-    }
-    result->clear();
-    delete result;
-    result = 0;
       
     throw ie;
   }
-  // We should never reach this point 
 }
 
 

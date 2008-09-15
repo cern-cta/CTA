@@ -28,6 +28,7 @@
 #define VDQM_IVDQMSVC_HPP 1
 
 #include "castor/IService.hpp"
+#include "castor/vdqm/TapeDriveCompatibility.hpp"
 #include "h/vdqm_messages.h"
 
 #include <list>
@@ -45,7 +46,6 @@ namespace castor {
     class TapeRequest;
     class TapeDrive;
     class TapeServer;
-    class TapeDriveCompatibility;
     class VdqmTape;
 
     /**
@@ -555,15 +555,13 @@ namespace castor {
           
         /**
          * Selects from the TapeDriveCompatibility table all entries for the
-         * specified drive model.
-         * 
-         * @param tapeDriveModel The model of the tape drive
-         * @exception Exception in case of error (DB problem, no mounted Tape, 
-         * etc...)  
-         * @return All entries in the table for the selected drive model
+         * specified drive model and adds them to the specified Tapedrive.
+         *
+         * @param tapeDrive The tape drive.
+         * @param tapeDriveModel The model of the tape drive.
          */
-        virtual std::vector<TapeDriveCompatibility*>* 
-          selectCompatibilitiesForDriveModel(const std::string tapeDriveModel)
+        virtual void selectCompatibilitiesForDriveModel(
+          TapeDrive *const tapeDrive, const std::string tapeDriveModel)
           throw (castor::exception::Exception) = 0;
         
         /**
