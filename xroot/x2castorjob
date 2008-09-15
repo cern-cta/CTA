@@ -1,0 +1,61 @@
+#!/usr/bin/perl
+use strict;
+
+my $tag = shift @ARGV;
+my $state = 0;
+my $startstate=$state;
+my $timeout = 30;           # 30 seconds
+my $readtimeout = 60*60*48; # 48 hours
+my $date=`date`; chomp $date;
+my $passed;
+my $now;
+
+sub catchopen{ 
+    printf FD "$date x2castorjob [ $tag ] INFO  : received open signal\n";
+    $state++;
+};
+
+sub catchclose{
+    printf FD "$date x2castorjob [ $tag ] INFO  : received close signal\n";
+    $state=2;
+};
+    
+$SIG{USR1} = 'catchopen';
+$SIG{USR2} = 'catchclose';
+
+
+my $starttime = time;
+system("mkdir -p /var/log/xroot/server");
+if (open FD , ">> /var/log/xroot/server/x2castorjob.log" ) {
+    select ((select (FD), $| = 1)[0]);
+
+    print FD "$date x2castorjob [ $tag ] INFO  : starttime=$starttime showupttimeout=$timeout maxreadtimeout=$readtimeout\n";
+
+    while (1) {
+	sleep(1);
+	$now = time;
+	$passed = $now - $starttime;
+	$date=`date`; chomp $date;
+
+	if ( ($state == 0 ) && ($passed > $timeout) ) {
+            printf FD "$date x2castorjob [ $tag ] ERROR : no SIGUSR1 received within $timeout seconds\n";
+            close FD;
+            exit(-1);
+        }
+
+	if ( ($state == 1 ) && ($passed > $readtimeout) ) {
+	    printf FD "$date x2castorjob [ $tag ] ERROR : no SIGUSR2 received within $readtimeout seconds\n";
+	    close FD;
+	    exit(-2);
+	}
+	
+	if ( $state >= 2) {
+	    printf FD "$date x2castorjob [ $tag ] INFO  : stoptime=$now passed=$passed\n";
+	    close FD;
+	    exit(0);
+	}
+    }
+} else {
+    printf STDERR "$date x2castorjob [ $tag ] ERROR : cannot open log file /var/log/xroot/server/x2castorjob.log\n";
+    exit(-99);
+}

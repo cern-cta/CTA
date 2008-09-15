@@ -1,0 +1,5 @@
+#!/bin/bash
+test -n "$STAGE_HOST"     && opaque1="stagerHost=$STAGE_HOST";
+test -n "$STAGE_SVCCLASS" && opaque2="svcClass=$STAGE_SVCCLASS"
+xrdcp $* -OS$opaque1\&$opaque2 -OD$opaque1\&$opaque2
+
