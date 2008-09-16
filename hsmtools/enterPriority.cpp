@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterPriority.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/08/14 14:30:36 $ $Author: gtaur $ 
+ * @(#)$RCSfile: enterPriority.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/09/16 13:38:10 $ $Author: itglp $ 
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -71,6 +71,7 @@ int main(int argc, char *argv[]) {
       muid = atoi(Coptarg);
       break;
     case 'U':
+    {
       struct passwd *pass = getpwnam(Coptarg);
       if (0 == pass) {
 	  std::cerr <<" Not existing user" << std::endl;
@@ -79,10 +80,12 @@ int main(int argc, char *argv[]) {
       }
       muser = pass->pw_uid;
       break;
+    }
     case 'g':
       mgid = atoi(Coptarg);
       break;
     case 'G':
+    {
       struct group *grp = getgrnam(Coptarg);
       if (grp == 0){
         std::cerr << " Not existing group." << std::endl;
@@ -91,6 +94,7 @@ int main(int argc, char *argv[]) {
       }
       mgroup = grp->gr_gid;
       break;
+    }
     case 'p':
       mpriority = atoi(Coptarg);
       break;
