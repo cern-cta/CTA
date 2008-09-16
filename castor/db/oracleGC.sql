@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.664 $ $Date: 2008/09/01 17:49:10 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.665 $ $Date: 2008/09/16 13:21:09 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -333,21 +333,20 @@ BEGIN
 
   -- Now select all the BEINGDELETED diskcopies in this diskserver for the gcDaemon
   OPEN files FOR
-    SELECT * FROM (
-      SELECT /*+ INDEX(CastorFile I_CastorFile_ID) */ FileSystem.mountPoint || DiskCopy.path,
-             DiskCopy.id,
-             Castorfile.fileid, Castorfile.nshost,
-             DiskCopy.lastAccessTime, DiskCopy.nbCopyAccesses, DiskCopy.gcWeight,
-             CASE WHEN DiskCopy.gcType = 0 THEN 'Automatic'
-                  WHEN DiskCopy.gcType = 1 THEN 'User Requested'
-                  ELSE 'Unknown' END
-        FROM CastorFile, DiskCopy, FileSystem, DiskServer
-       WHERE decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9 -- BEINGDELETED
-         AND DiskCopy.castorfile = CastorFile.id
-         AND DiskCopy.fileSystem = FileSystem.id
-         AND FileSystem.diskServer = DiskServer.id
-         AND DiskServer.name = diskServerName)
-     WHERE rownum <= 10000;
+    SELECT /*+ INDEX(CastorFile I_CastorFile_ID) */ FileSystem.mountPoint || DiskCopy.path,
+           DiskCopy.id,
+           Castorfile.fileid, Castorfile.nshost,
+           DiskCopy.lastAccessTime, DiskCopy.nbCopyAccesses, DiskCopy.gcWeight,
+           CASE WHEN DiskCopy.gcType = 0 THEN 'Automatic'
+                WHEN DiskCopy.gcType = 1 THEN 'User Requested'
+                ELSE 'Unknown' END
+      FROM CastorFile, DiskCopy, FileSystem, DiskServer
+     WHERE decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9 -- BEINGDELETED
+       AND DiskCopy.castorfile = CastorFile.id
+       AND DiskCopy.fileSystem = FileSystem.id
+       AND FileSystem.diskServer = DiskServer.id
+       AND DiskServer.name = diskServerName
+       AND rownum <= 10000;
 END;
 
 
