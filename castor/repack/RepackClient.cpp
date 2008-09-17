@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2008/09/09 09:18:39 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2008/09/17 15:26:32 $ $Author: gtaur $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -274,7 +274,7 @@ bool RepackClient::parseInput(int argc, char** argv)
 //------------------------------------------------------------------------------
 void RepackClient::usage() 
 {
-	std::cout << " Usage:  \n ------  \n repack -V VID1[:VID2:..] | -P PoolID [-o serviceclass] [-m num] [-c]" << " to start a repack request (-m to set the number of retry in case of failure of the request. Default is one). If the option -c is given the tapes in the request will be reclaimed."<< std::endl
+	std::cout << " Usage:  \n ------  \n repack -V VID1[:VID2:..] | -P PoolID [-o serviceclass] [-m num] [-c] [-n finalPool" << " to start a repack request (-m to set the number of retry in case of failure of the request. Default is one). If the option -c is given the tapes in the request will be reclaimed. Option -n is used to specified a new tape pool in which the tape should be moved after being repacked."<< std::endl
                   << " repack -s " 
                   << "   (to have the global status of the all repack sequests not archived)" << std::endl
                   << " repack -S VID[:VID2:..] " 
@@ -558,7 +558,7 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
 	  std::setw(8)<<"Vid"<<
 	  std::setw(10)<<"Total"<<
 	  std::setw(10)<<"Size"<<
-	  std::setw(10)<<"toRecall"<<
+	  std::setw(11)<<"toRecall"<<
 	  std::setw(10)<<"toMigr"<<
 	  std::setw(10)<<"Failed"<<
 	  std::setw(10)<<"Migrated"<<
@@ -578,7 +578,7 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
 	  std::setw(8)<<"Vid"<<
 	  std::setw(10)<<"Total"<<
 	  std::setw(10)<<"Size"<<
-	  std::setw(10)<<"toRecall"<<
+	  std::setw(11)<<"toRecall"<<
 	  std::setw(10)<<"toMigr"<<
 	  std::setw(10)<<"Failed"<<
 	  std::setw(10)<<"Migrated"<<
@@ -663,7 +663,7 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape){
     std::cout<< 
       std::setw(8)  <<std::right <<tape->vid() <<   
       std::setw(10)  <<std::right <<   tape->files() << 
-      std::setw(10) << std::right << buf <<
+      std::setw(10) << std::right << buf <<'B'<<
       std::setw(10) << std::right << "N/A" <<
       std::setw(10) << std::right << "N/A" <<
       std::setw(10) << std::right << "N/A"  <<
