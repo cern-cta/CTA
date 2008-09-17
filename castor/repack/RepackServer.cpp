@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
 
     /// Read the command line parameters
     server.parseCommandLine(argc, argv);
-
+    server.runAsStagerSuperuser();
     /// Start the Repack Server
     server.start();
 
