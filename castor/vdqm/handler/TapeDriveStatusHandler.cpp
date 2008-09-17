@@ -459,34 +459,36 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
         VDQM_DRIVE_STATUS_UNKNOWN_FORCE_UNMOUNT);
     } else {
       // Try to reuse the drive allocation
-      int reuseResult = ptr_IVdqmService->reuseDriveAllocation(tape,
-        ptr_tapeDrive, ptr_newRequestId);
+      if(rememberedFinishedTapeRequest) {
+        int reuseResult = ptr_IVdqmService->reuseDriveAllocation(tape,
+          ptr_tapeDrive, finishedTapeRequestTpMode, ptr_newRequestId);
 
-      // If the drive allocation was reused or a possible reuse was found, but
-      // was invalidated by other threads
-      if((reuseResult == 1) || (reuseResult == -1)) {
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
-          castor::dlf::Param("serverName",
-            ptr_tapeDrive->tapeServer()->serverName()),
-          castor::dlf::Param("tapeVID", tape->vid()),
-          castor::dlf::Param("tapeRequestID", *ptr_newRequestId)}; 
+        // If the drive allocation was reused or a possible reuse was found,
+        // but was invalidated by other threads
+        if((reuseResult == 1) || (reuseResult == -1)) {
+          castor::dlf::Param params[] = {
+            castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+            castor::dlf::Param("serverName",
+              ptr_tapeDrive->tapeServer()->serverName()),
+            castor::dlf::Param("tapeVID", tape->vid()),
+            castor::dlf::Param("tapeRequestID", *ptr_newRequestId)}; 
 
-        if(reuseResult == 1) { // Allocation reused
+          if(reuseResult == 1) { // Allocation reused
+            castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+              VDQM_FOUND_QUEUED_TAPE_REQUEST_FOR_MOUNTED_TAPE, 4, params);
+          } else { // Invalidated allocation reuse
+            castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+              VDQM_INVALIDATED_REUSE_OF_DRIVE_ALLOCATION, 4, params);
+          }
+        } else { // Else the drive allocation could not be reused
+          castor::dlf::Param params[] = {
+            castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
+            castor::dlf::Param("serverName",
+              ptr_tapeDrive->tapeServer()->serverName()),
+            castor::dlf::Param("tapeVID", tape->vid())};
           castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-            VDQM_FOUND_QUEUED_TAPE_REQUEST_FOR_MOUNTED_TAPE, 4, params);
-        } else { // Invalidated allocation reuse
-          castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-            VDQM_INVALIDATED_REUSE_OF_DRIVE_ALLOCATION, 4, params);
+            VDQM_NO_TAPE_REQUEST_FOR_MOUNTED_TAPE, 3, params);
         }
-      } else { // Else the drive allocation could not be reused
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
-          castor::dlf::Param("serverName",
-            ptr_tapeDrive->tapeServer()->serverName()),
-          castor::dlf::Param("tapeVID", tape->vid())};
-        castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-          VDQM_NO_TAPE_REQUEST_FOR_MOUNTED_TAPE, 3, params);
       }
     }
               

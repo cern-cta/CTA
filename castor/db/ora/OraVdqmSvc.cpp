@@ -310,7 +310,7 @@ castor::db::ora::OraVdqmSvc::StatementStringMap::StatementStringMap() {
   addStmtStr(ALLOCATE_DRIVE_SQL_STMT,
     "BEGIN castorVdqm.allocateDrive(:1, :2, :3, :4, :5); END;");
   addStmtStr(REUSE_DRIVE_ALLOCATION_SQL_STMT,
-    "BEGIN castorVdqm.reuseDriveAllocation(:1, :2, :3, :4); END;");
+    "BEGIN castorVdqm.reuseDriveAllocation(:1, :2, :3, :4, :5); END;");
   addStmtStr(REQUEST_TO_SUBMIT_SQL_STMT,
     "BEGIN castorVdqm.getRequestToSubmit(:1); END;");
 }
@@ -2651,7 +2651,7 @@ int castor::db::ora::OraVdqmSvc::allocateDrive(u_signed64 *tapeDriveId,
 // -----------------------------------------------------------------------
 int castor::db::ora::OraVdqmSvc::reuseDriveAllocation(
   castor::vdqm::VdqmTape *const tape, castor::vdqm::TapeDrive *const drive,
-  u_signed64 *const tapeRequestId)
+  const int accessMode, u_signed64 *const tapeRequestId)
   throw (castor::exception::Exception) {
 
   // 1 = driev allocation reused, 0 = no possible reuse found, -1 possible
@@ -2664,8 +2664,8 @@ int castor::db::ora::OraVdqmSvc::reuseDriveAllocation(
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
-      stmt->registerOutParam(3, oracle::occi::OCCIINT);
-      stmt->registerOutParam(4, oracle::occi::OCCIDOUBLE);
+      stmt->registerOutParam(4, oracle::occi::OCCIINT);
+      stmt->registerOutParam(5, oracle::occi::OCCIDOUBLE);
       stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
@@ -2686,10 +2686,11 @@ int castor::db::ora::OraVdqmSvc::reuseDriveAllocation(
   try {
     stmt->setDouble(1, tape->id());
     stmt->setDouble(2, drive->id());
+    stmt->setInt(3, accessMode);
     stmt->executeUpdate();
     
-    reuseResult    = stmt->getInt(3);
-    *tapeRequestId = (u_signed64)stmt->getDouble(4);
+    reuseResult    = stmt->getInt(4);
+    *tapeRequestId = (u_signed64)stmt->getDouble(5);
   } catch (oracle::occi::SQLException &oe) {
     handleException(oe);
     castor::exception::Internal ie;

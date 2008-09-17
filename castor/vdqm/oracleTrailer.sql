@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.149 $ $Release$ $Date: 2008/07/23 21:08:52 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.150 $ $Release$ $Date: 2008/09/17 16:32:00 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1180,6 +1180,10 @@ ORDER BY
 /**
  * This view shows candidate drive allocations that will reuse a current drive
  * allocation.
+ *
+ * Please note that a drive allocation can only be reused if the access modes
+ * (R/W) of the current and next allocations match.  Therefore any use of this
+ * view must take the accessMode column into account.
  */
 CREATE OR REPLACE VIEW DriveAllocationsForReuse_VIEW AS SELECT UNIQUE
   TapeDrive.id as tapeDriveId,
@@ -1380,7 +1384,7 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
    * request, else the value of this parameter will be undefined.
    */
   PROCEDURE reuseDriveAllocation(tapeIdVar IN NUMBER, tapeDriveIdVar IN NUMBER,
-    returnVar OUT NUMBER, tapeRequestIdVar  OUT NUMBER);
+    accessModeVar IN NUMBER, returnVar OUT NUMBER, tapeRequestIdVar OUT NUMBER);
 
   /**
    * This procedure inserts the specified drive dedications into the database.
@@ -2078,24 +2082,36 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
   PROCEDURE reuseDriveAllocation(
     tapeIdVar          IN NUMBER,
     tapeDriveIdVar     IN NUMBER,
+    accessModeVar      IN NUMBER,
     returnVar         OUT NUMBER,
     tapeRequestIdVar  OUT NUMBER)
   AS
-    tapeDriveStatusVar   NUMBER;
-    mountedTapeIdVar     NUMBER;
-    tapeRequestStatusVar NUMBER;
+    tapeDriveStatusCheckVar   NUMBER;
+    mountedTapeIdCheckVar     NUMBER;
+    tapeRequestStatusCheckVar NUMBER;
+    tapeAccessSpecIdCheckVar  NUMBER;
+    accessModeCheckVar        NUMBER;
   BEGIN
-    returnVar         := 0; -- No possible reuse was found
-    tapeRequestIdVar  := 0;
+    returnVar        := 0; -- No possible reuse was found
+    tapeRequestIdVar := 0;
 
     -- Try to find a candidate volume request that can reuse the current drive
     -- allocation
-    SELECT tapeRequestId INTO tapeRequestIdVar
-      FROM DriveAllocationsForReuse_VIEW
-      WHERE
-            DriveAllocationsForReuse_VIEW.TapeDriveId = tapeDriveIdVar
-        AND DriveAllocationsForReuse_VIEW.TapeId      = tapeIdVar
-        AND rownum < 2;
+    BEGIN
+      SELECT tapeRequestId INTO tapeRequestIdVar
+        FROM DriveAllocationsForReuse_VIEW
+        WHERE
+              DriveAllocationsForReuse_VIEW.tapeDriveId = tapeDriveIdVar
+          AND DriveAllocationsForReuse_VIEW.tapeId      = tapeIdVar
+          AND DriveAllocationsForReuse_VIEW.accessMode  = accessModeVar
+          AND rownum < 2;
+    EXCEPTION
+      -- No possible reuse was found
+      WHEN NO_DATA_FOUND THEN
+        tapeRequestIdVar := 0;
+        returnVar        := 0;
+        RETURN;
+    END;
 
     -- A candidate was found, because a NO_DATA_FOUND exception was not raised
 
@@ -2105,22 +2121,40 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     -- messages.  Therefore get a lock on the corresponding drive and request
     -- rows and retrieve their statuses and mounted tape in the case of the
     -- drive, to see if the reuse of the drive allocation is still valid.
-    SELECT TapeDrive.status, TapeDrive.tape
-    INTO TapeDriveStatusVar, mountedTapeIdVar
-    FROM TapeDrive
-    WHERE TapeDrive.id = tapeDriveIdVar
-    FOR UPDATE;
-    SELECT TapeRequest.status
-    INTO TapeRequestStatusVar
-    FROM TapeRequest
-    WHERE TapeRequest.id = tapeRequestIdVar
-    FOR UPDATE; 
+    BEGIN
+      SELECT TapeDrive.status, TapeDrive.tape
+      INTO tapeDriveStatusCheckVar, mountedTapeIdCheckVar
+      FROM TapeDrive
+      WHERE TapeDrive.id = tapeDriveIdVar
+      FOR UPDATE;
+      SELECT TapeRequest.status, TapeRequest.tapeAccessSpecification
+      INTO tapeRequestStatusCheckVar, tapeAccessSpecIdCheckVar
+      FROM TapeRequest
+      WHERE TapeRequest.id = tapeRequestIdVar
+      FOR UPDATE; 
+      SELECT TapeAccessSpecification.accessMode
+      INTO accessModeCheckVar
+      FROM TapeAccessSpecification
+      WHERE TapeAccessSpecification.id = tapeAccessSpecIdCheckVar
+      FOR UPDATE;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        -- A possible reuse of the drive allocation was found but was
+        -- invalidated by other threads before the appropriate locks could be
+        -- taken
+        tapeRequestIdVar :=  0;
+        returnVar        := -1;
+        RETURN;
+    END;
 
     -- If the reuse of the drive allocation is still valid, i.e. the drive's
     -- status is VOL_MOUNTED and the correct tape is mounted and the tape
-    -- request's status is REQUEST_PENDING
-    IF(tapeDriveStatusVar = 3) AND(mountedTapeIdVar = tapeIdVar) AND
-      (tapeRequestStatusVar = 0) THEN
+    -- request's status is REQUEST_PENDING and the access mode still matches
+    IF
+      (tapeDriveStatusCheckVar   =             3) AND
+      (mountedTapeIdCheckVar     =     tapeIdVar) AND
+      (tapeRequestStatusCheckVar =             0) AND
+      (accessModeCheckVar        = accessModeVar) THEN
 
       -- Reuse the drive allocation with the pending request
       UPDATE TapeRequest SET
@@ -2143,14 +2177,11 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
 
        -- A possible reuse of the drive allocation was found but was invalidated
        -- by other threads before the appropriate locks could be taken
-       returnVar := -1;
+       tapeRequestIdVar :=  0;
+       returnVar        := -1;
 
     END IF; -- If the reuse of the drive allocation is still valid
 
-  EXCEPTION
-    -- Return a tape request ID of 0 if there was no candidate volume request
-    -- which would have reused the current drive allocation
-    WHEN NO_DATA_FOUND THEN NULL;
   END reuseDriveAllocation;
 
 

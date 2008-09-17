@@ -335,7 +335,7 @@ namespace castor {
          */
         virtual int reuseDriveAllocation(
           castor::vdqm::VdqmTape *const tape,
-          castor::vdqm::TapeDrive *const drive,
+          castor::vdqm::TapeDrive *const drive, const int accessMode,
           u_signed64 *const tapeRequestId)
           throw (castor::exception::Exception);
 
