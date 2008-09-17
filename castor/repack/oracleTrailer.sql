@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.9 $ $Release$ $Date: 2008/09/09 09:18:40 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.10 $ $Release$ $Date: 2008/09/17 15:27:39 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -43,8 +43,9 @@ CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 
 /* SQL procedures */
 
+/* repack cleanup cronjob */
 
-CREATE OR REPLACE PROCEDURE repackCleanup AS
+create or replace PROCEDURE repackCleanup AS
   t INTEGER;
   srIds "numList";
   rIds "numList";
@@ -80,8 +81,10 @@ BEGIN
 END;
 
 
+
 /* PL/SQL method implementing changeAllSubRequestsStatus */
-CREATE OR REPLACE PROCEDURE changeAllSubRequestsStatus
+
+create or replace PROCEDURE changeAllSubRequestsStatus
 (st IN INTEGER, rsr OUT repack.RepackSubRequest_Cur) AS
   srIds "numList";
 BEGIN
@@ -97,119 +100,128 @@ BEGIN
 END;
 
 /* PL/SQL method implementing changeSubRequestsStatus */
-CREATE OR REPLACE PROCEDURE changeSubRequestsStatus
+
+create or replace PROCEDURE changeSubRequestsStatus
 (tapeVids IN repack."strList", st IN INTEGER, rsr OUT repack.RepackSubRequest_Cur) AS
-  srId NUMBER;
+srId NUMBER;
 BEGIN
-  COMMIT; -- to flush the temporary table
-  -- RepackWorker remove subrequests -> TOBEREMOVED 
-  IF st = 6 THEN 
-    FOR i IN tapeVids.FIRST .. tapeVids.LAST LOOP
-      -- IF TOBECHECKED or TOBESTAGED -> TOBECLEANED
-      UPDATE RepackSubrequest SET Status = 3 WHERE Status IN (0, 1) AND vid = tapeVids(i) RETURNING id INTO srId; 
-      INSERT INTO listOfIds (id) VALUES (srId);  
+ COMMIT; -- to flush the temporary table
+ -- RepackWorker remove subrequests -> TOBEREMOVED 
+ IF st = 6 THEN 
+  	FOR i IN tapeVids.FIRST .. tapeVids.LAST LOOP
+    --	 IF TOBECHECKED or TOBESTAGED -> TOBECLEANED
+    		UPDATE RepackSubrequest SET Status=3 WHERE Status in (0, 1) AND vid=tapeVids(i) RETURNING id INTO srId; 
+    		INSERT INTO listOfIds (id) VALUES (srId);  
     		
-      -- ONGOING -> TOBEREMOVED
-      UPDATE RepackSubrequest SET Status = 6 WHERE Status = 2 AND vid = tapeVids(i) RETURNING id INTO srId;
-      INSERT INTO listOfIds (id) VALUES (srId);  
-    END LOOP;
+    --	 ONGOING -> TOBEREMOVED
+    		UPDATE RepackSubrequest SET Status=6 WHERE Status=2 AND vid=tapeVids(i) RETURNING id INTO srId;
+    		INSERT INTO listOfIds (id) VALUES (srId);  
+    	END LOOP;
   END IF;
   
-  -- RepackWorker subrequests -> TOBERESTARTED 
+ -- RepackWorker subrequests -> TOBERESTARTED 
   IF st = 7 THEN
-    FOR i IN tapeVids.FIRST .. tapeVids.LAST LOOP
-      -- IF IT IS NOT ARCHIVED, NOT ONGOING
-      UPDATE RepackSubrequest SET Status = 7 WHERE Status NOT IN (2, 8) AND vid = tapeVids(i) RETURNING id INTO srId;
-      INSERT INTO listOfIds (id) VALUES (srId);
-    END LOOP;
+  	FOR i IN tapeVids.FIRST .. tapeVids.LAST LOOP
+    	-- IF IT IS NOT ARCHIVED, NOT ONGOING
+    	    	 UPDATE RepackSubrequest SET Status=7 WHERE Status NOT IN ( 2, 8 ) AND vid=tapeVids(i) RETURNING id INTO srId;
+    	         INSERT INTO listOfIds (id) VALUES (srId);
+    	END LOOP;
   END IF; 
 
-  -- RepackWorker subrequests -> ARCHIVED  
+ -- RepackWorker subrequests -> ARCHIVED  
   IF st = 8 THEN
-    FOR i IN tapeVids.FIRST .. tapeVids.LAST LOOP
-      -- JUST IF IT IS FINISHED OR FAILED
-      UPDATE RepackSubrequest SET Status = 8 WHERE Status IN (4, 5) AND vid = tapeVids(i) RETURNING id INTO srId;
-      INSERT INTO listOfIds(id) VALUES (srId);	
-    END LOOP;
+  	FOR i IN tapeVids.FIRST .. tapeVids.LAST LOOP
+    	-- JUST IF IT IS FINISHED OR FAILED
+    	    	UPDATE RepackSubrequest SET Status=8 WHERE Status IN (4, 5, 9) AND vid=tapeVids(i) RETURNING id INTO srId;
+    	    	INSERT INTO listOfIds(id) VALUES (srId);	
+    	END LOOP;
   END IF;  
   OPEN rsr FOR
-    SELECT vid, xsize, status, filesmigrating, filesstaging, files, filesfailed, cuuid, submittime, filesstaged, filesfailedsubmit, retrynb, id, repackrequest
-      fROM RepackSubRequest WHERE id IN (SELECT id FROM listOfIds); 
+     SELECT vid, xsize, status, filesmigrating, filesstaging,files,filesfailed,cuuid,submittime,filesstaged,filesfailedsubmit,retrynb,id,repackrequest
+      	FROM RepackSubRequest WHERE id in (select id from listOfIds); 
 END;
 
+
 /* PL/SQL method implementing getAllSubRequests */
-CREATE OR REPLACE PROCEDURE getAllSubRequests (rsr OUT repack.RepackSubRequest_Cur ) AS
+
+create or replace PROCEDURE getAllSubRequests (rsr OUT repack.RepackSubRequest_Cur ) AS
 BEGIN 
  OPEN rsr FOR
    SELECT vid, xsize, status, filesmigrating, filesstaging, files, filesfailed, cuuid, submittime, filesstaged, filesfailedsubmit, retrynb, id, repackrequest
      FROM RepackSubRequest WHERE status != 8 ORDER BY submittime DESC; -- not ARCHIVED
 END;
 
+
 /* PL/SQL method implementing getSegmentsForSubRequest */
-CREATE OR REPLACE PROCEDURE getSegmentsForSubRequest
-(srId NUMBER, rs OUT repack.RepackSegment_Cur) AS
+
+create or replace PROCEDURE getSegmentsForSubRequest
+( srId NUMBER,  rs OUT repack.RepackSegment_Cur) AS
 BEGIN
  OPEN rs FOR
-   SELECT fileid, segsize, compression, filesec, copyno, blockid, fileseq, errorcode, errormessage, id, repacksubrequest
-     FROM RepackSegment WHERE repacksubrequest = srId and rownum<1300; -- not archived  	      	
+     SELECT fileid, segsize, compression, filesec, copyno, blockid, fileseq, errorcode, errormessage, id, repacksubrequest
+       	FROM RepackSegment WHERE repacksubrequest=srId; -- not archived 
+       	      	
 END;
 
 /* PL/SQL method implementing getSubRequestByVid */
-CREATE OR REPLACE PROCEDURE getSubRequestByVid
-(rvid IN VARCHAR2, rsr OUT repack.RepackSubRequest_Cur) AS
+
+create or replace PROCEDURE getSubRequestByVid
+( rvid IN VARCHAR2, rsr OUT repack.RepackSubRequest_Cur) AS
 BEGIN
  OPEN rsr FOR
-   SELECT vid, xsize, status, filesmigrating, filesstaging, files, filesfailed, cuuid, submittime, filesstaged, filesfailedsubmit, retrynb, id, repackrequest
-     FROM RepackSubRequest WHERE vid = rvid AND status != 8; -- not archived       	      	
+     SELECT vid, xsize, status, filesmigrating, filesstaging,files,filesfailed,cuuid,submittime,filesstaged,filesfailedsubmit,retrynb,id,repackrequest
+       	FROM RepackSubRequest WHERE vid=rvid AND status!=8; -- not archived       	      	
 END;
 
+
 /* PL/SQL method implementing getSubRequestsByStatus */
-CREATE OR REPLACE PROCEDURE getSubRequestsByStatus(st IN INTEGER, srs OUT repack.RepackSubRequest_Cur) AS
-  srIds "numList";
+
+create or replace PROCEDURE getSubRequestsByStatus(st IN INTEGER, srs OUT repack.RepackSubRequest_Cur) AS
+srIds "numList";
 BEGIN 
-  -- File Checker st = TOBECHECKED
-  -- File Cleaner st = TOBECLEANED 
-  -- File Stager st = TOBESTAGED 
-  -- File Stager st = TOBEREMOVED
-  -- File Stager st = TOBERESTARTED
-  -- Repack Monitor st = ONGOING 
+-- File Checker st = TOBECHECKED
+-- File Cleaner st = TOBECLEANED 
+-- File Stager st = TOBESTAGED 
+-- File Stager st = TOBEREMOVED
+-- File Stager st = TOBERESTARTED
+-- Repack Monitor st = ONGOING 
   OPEN srs FOR
-    SELECT vid, xsize, status, filesmigrating, filesstaging, files, filesfailed, cuuid, submittime, filesstaged, filesfailedsubmit, retrynb, id, repackrequest
-      FROM RepackSubRequest WHERE status = st; 
+     SELECT RepackSubRequest.vid, RepackSubRequest.xsize, RepackSubRequest.status,  RepackSubRequest.filesmigrating, RepackSubRequest.filesstaging, RepackSubRequest.files,RepackSubRequest.filesfailed,RepackSubRequest.cuuid,RepackSubRequest.submittime,RepackSubRequest.filesstaged,RepackSubRequest.filesfailedsubmit,RepackSubRequest.retrynb,RepackSubRequest.id,RepackSubRequest.repackrequest
+       	FROM RepackSubRequest, RepackRequest WHERE RepackSubRequest.status=st and RepackRequest.id=RepackSubRequest.repackrequest ORDER BY RepackRequest.creationtime; 
 END;
 
 /* PL/SQL method implementing restartSubRequest */
-CREATE OR REPLACE PROCEDURE restartSubRequest(srId IN NUMBER) AS
-  oldVid VARCHAR2(2048);
-  oldCuuid VARCHAR2(2048);
-  oldRetrynb NUMBER;
-  oldRepackrequest NUMBER;
-  newSrId NUMBER;
+
+create or replace PROCEDURE restartSubRequest (srId IN NUMBER) AS
+ oldVid VARCHAR2(2048);
+ oldCuuid VARCHAR2(2048);
+ oldRetrynb NUMBER;
+ oldRepackrequest NUMBER;
+ newSrId NUMBER;
 BEGIN
   -- archive the old repacksubrequest
-  UPDATE RepackSubRequest SET status = 8 WHERE id = srId;
+  UPDATE RepackSubRequest SET status=8 WHERE id=srId;
   -- attach a new repacksubrequest in TOBECHECKED
-  SELECT vid, cuuid, retrynb, repackrequest INTO oldVid, oldCuuid, oldRetrynb, oldRepackrequest
-    FROM RepackSubRequest WHERE id = srId;
-  INSERT INTO RepackSubrequest (vid, xsize, status, filesmigrating, filesstaging, files, filesfailed, cuuid, submittime, filesstaged, filesfailedsubmit, retrynb, id, repackrequest) 
-     VALUES (oldVid, 0, 0, 0, 0, 0, 0, oldCuuid, 0, 0, 0, oldRetrynb, ids_seq.nextval, oldRepackrequest) RETURN id INTO newSrId;
-  INSERT INTO id2type (id, type) VALUES (newSrId, 97); -- new repacksubrequest
+  SELECT  vid,cuuid, retrynb,repackrequest INTO oldVid, oldCuuid, oldRetrynb,oldRepackrequest
+   FROM RepackSubRequest WHERE id=srId;
+  INSERT INTO RepackSubrequest (vid, xsize, status, filesmigrating, filesstaging,files,filesfailed,cuuid,submittime,filesstaged,filesfailedsubmit,retrynb,id,repackrequest) 
+    VALUES (oldVid, 0, 0, 0, 0, 0, 0,oldCuuid,0,0,0,oldRetrynb,ids_seq.nextval,oldRepackrequest) RETURN id INTO newSrId;
+  INSERT INTO id2type (id,type) VALUES (newSrId,97); -- new repacksubrequest
   COMMIT;
 END;
 
 /* PL/SQL method implementing resurrectTapesOnHold */
-
-CREATE OR REPLACE PROCEDURE resurrectTapesOnHold (maxFiles IN INTEGER, maxTapes IN INTEGER)AS
+create or replace PROCEDURE              resurrectTapesOnHold (maxFiles IN INTEGER, maxTapes IN INTEGER)AS
 filesOnGoing INTEGER;
 tapesOnGoing INTEGER;
 newFiles NUMBER;
 BEGIN
 	SELECT count(vid), sum(filesStaging) + sum(filesMigrating) INTO  tapesOnGoing, filesOnGoing FROM RepackSubrequest WHERE  status IN (1,2); -- TOBESTAGED ONGOING 
 -- Set the subrequest to TOBESTAGED FROM ON-HOLD if there is no ongoing repack for any of the files on the tape
-	FOR sr IN (SELECT id FROM RepackSubRequest WHERE  status=9 ) LOOP 
+	FOR sr IN (SELECT RepackSubRequest.id FROM RepackSubRequest,RepackRequest WHERE  RepackRequest.id=RepackSubrequest.repackrequest AND RepackSubRequest.status=9 ORDER BY RepackRequest.creationTime ) LOOP 
 		BEGIN 
 			UPDATE RepackSubRequest SET status=1 WHERE id=sr.id AND status=9
-			AND filesOnGoing + files < maxFiles AND tapesOnGoing+1 < maxTapes
+			AND filesOnGoing + files <= maxFiles AND tapesOnGoing+1 <= maxTapes
 			AND NOT EXISTS (SELECT 'x' FROM RepackSegment WHERE 
 				RepackSegment.RepackSubRequest=sr.id AND 
 				RepackSegment.fileid IN (SELECT DISTINCT RepackSegment.fileid FROM RepackSegment
@@ -227,7 +239,10 @@ BEGIN
 	END LOOP;
 END;
 
-/* PL/SQL method implementing storeRequest */create or replace PROCEDURE storeRequest
+
+/* PL/SQL method implementing storeRequest */
+
+create or replace PROCEDURE storeRequest
 ( rmachine IN VARCHAR2, ruserName IN VARCHAR2, rcreationTime IN NUMBER, rpool IN VARCHAR2, rpid IN NUMBER,
   rsvcclass IN VARCHAR2, rcommand IN INTEGER, rstager IN VARCHAR2, 
   ruserid IN NUMBER, rgroupid IN NUMBER, rretrymax IN NUMBER, rreclaim IN INTEGER, rfinalPool IN VARCHAR2, listVids IN repack."strList",rsr  OUT repack.RepackSubRequest_Cur) AS
@@ -238,7 +253,7 @@ END;
 BEGIN
   COMMIT; -- to flush the temporary table
   INSERT INTO RepackRequest (machine, username, creationtime, pool, pid, svcclass, command, stager, userid, groupid, retryMax, reclaim, finalPool ,id) VALUES
-  (rmachine,rusername,rcreationTime,rpool,rpid,rsvcclass,rcommand,rstager,ruserid,rgroupid,rretryMax,rreclaim,rpool, ids_seq.nextval) RETURNING id INTO rId; 
+  (rmachine,rusername,rcreationTime,rpool,rpid,rsvcclass,rcommand,rstager,ruserid,rgroupid,rretryMax,rreclaim,rfinalPool, ids_seq.nextval) RETURNING id INTO rId; 
   counter:=0; 
   FOR i IN listVids.FIRST .. listVids.LAST LOOP
   	BEGIN
@@ -267,27 +282,31 @@ END;
 
 
 /* PL/SQL method implementing updateSubRequestSegments */
-CREATE OR REPLACE PROCEDURE updateSubRequestSegments 
+
+create or replace PROCEDURE updateSubRequestSegments 
  (srId IN NUMBER, fileIds IN repack."cnumList",
   errorCodes IN repack."cnumList",
   errorMessages IN repack."strList") AS 
-BEGIN
-  FOR i in fileIds.FIRST .. fileIds.LAST LOOP	
-    UPDATE RepackSegment SET errorCode = errorCodes(i), errorMessage = errorMessages(i)
-     WHERE (fileid = fileIds(i) OR fileIds(i) = 0) AND repacksubrequest = srId;
-  END LOOP;
-  COMMIT;
-END;
+ BEGIN
+ 	FOR i in fileIds.FIRST .. fileIds.LAST LOOP	
+ 		UPDATE RepackSegment SET errorCode=errorCodes(i), errorMessage=errorMessages(i)
+ 			WHERE (fileid=fileIds(i) OR fileIds(i)=0) AND repacksubrequest=srId;
+ 	END LOOP;
+ 	COMMIT;
+ END;
+
 
 /* PL/SQL method implementing validateRepackSubRequest */
 
-CREATE OR REPLACE PROCEDURE validateRepackSubRequest(srId IN NUMBER, maxFiles IN INTEGER, maxTapes IN INTEGER, ret OUT INT) AS
+create or replace PROCEDURE  validateRepackSubRequest(srId IN NUMBER, maxFiles IN INTEGER, maxTapes IN INTEGER, ret OUT INT) AS
 unused NUMBER;
 filesOnGoing INTEGER;
 tapesOnGoing INTEGER;
 BEGIN
 SELECT count(vid), sum(filesStaging) + sum(filesMigrating) INTO  tapesOnGoing, filesOnGoing FROM RepackSubrequest WHERE  status IN (1,2); -- TOBESTAGED ONGOING 
-
+IF filesongoing is NULL THEN
+  filesongoing:=0;
+END IF;
 -- Set the subrequest to TOBESTAGED FROM ON-HOLD if there is no ongoing repack for any of the files on the tape
 	UPDATE RepackSubRequest SET status=1 WHERE id=srId  
 		AND NOT EXISTS (SELECT 'x' FROM RepackSegment WHERE 
@@ -297,10 +316,11 @@ SELECT count(vid), sum(filesStaging) + sum(filesMigrating) INTO  tapesOnGoing, f
 			             	IN (SELECT RepackSubRequest.id FROM RepackSubRequest WHERE RepackSubRequest.id<>srId AND RepackSubRequest.status NOT IN(4,5,8,9) 
 			             	 )
 			) 
-		) AND filesOnGoing + files < maxFiles AND tapesOnGoing+1 < maxTapes  RETURNING id INTO unused; -- FINISHED ARCHIVED FAILED ONHOLD
+		) AND filesOnGoing + files <= maxFiles AND tapesOnGoing+1 <= maxTapes RETURNING id INTO unused; -- FINISHED ARCHIVED FAILED ONHOLD
 		ret:=1;
 		COMMIT;
 EXCEPTION  WHEN NO_DATA_FOUND THEN
   ret := 0;
 END;
+
 
