@@ -45,7 +45,7 @@ INSERT INTO CastorVersion VALUES ('-', '2_1_7_12');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.149  Release Date: 2008/07/23 21:08:52  Author: murrayc3 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.150  Release Date: 2008/09/17 16:32:00  Author: murrayc3 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1914,15 +1914,22 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     tapeRequestIdVar  := 0;
     tapeRequestVidVar := '';
 
-    SELECT
-      tapeDriveId,
-      tapeRequestId
-    INTO
-      tapeDriveIdVar, tapeRequestIdVar
-    FROM
-      CandidateDriveAllocations_VIEW
-    WHERE
-      rownum < 2;
+    -- Select a candidate drive allocation
+    BEGIN
+      SELECT
+        tapeDriveId,
+        tapeRequestId
+      INTO
+        tapeDriveIdVar, tapeRequestIdVar
+      FROM
+        CandidateDriveAllocations_VIEW
+      WHERE
+        rownum < 2;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        returnVar := 0; -- No possible allocation could be found
+        RETURN;
+    END;
 
     -- If there is a possible drive allocation
     IF tapeDriveIdVar IS NOT NULL AND tapeRequestIdVar IS NOT NULL THEN
@@ -1933,14 +1940,22 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
       -- threads handling tape request messages.  Therefore get a lock on the
       -- corresponding drive and request rows and retrieve their statuses to see
       -- if the drive allocation is still valid
-      SELECT TapeDrive.status INTO TapeDriveStatusVar
-      FROM TapeDrive
-      WHERE TapeDrive.id = tapeDriveIdVar
-      FOR UPDATE;
-      SELECT TapeRequest.status INTO TapeRequestStatusVar
-      FROM TapeRequest
-      WHERE TapeRequest.id = tapeRequestIdVar
-      FOR UPDATE;
+      BEGIN
+        SELECT TapeDrive.status INTO TapeDriveStatusVar
+        FROM TapeDrive
+        WHERE TapeDrive.id = tapeDriveIdVar
+        FOR UPDATE;
+        SELECT TapeRequest.status INTO TapeRequestStatusVar
+        FROM TapeRequest
+        WHERE TapeRequest.id = tapeRequestIdVar
+        FOR UPDATE;
+      EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+          -- A possible drive allocation was found but was invalidated by other
+          -- threads before the appropriate locks could be taken
+          returnVar := -1;
+        RETURN;
+      END;
 
       -- Get the drive name (used for logging)
       SELECT TapeDrive.driveName INTO TapeDriveNameVar
@@ -1985,12 +2000,6 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
      END IF; -- If the drive allocation is still valid
 
     END IF; -- If there is a possible drive allocation
-
-  EXCEPTION
-
-    -- Do nothing if there was no free tape drive which could be allocated to a
-    -- pending request
-    WHEN NO_DATA_FOUND THEN NULL;
 
   END allocateDrive;
 
