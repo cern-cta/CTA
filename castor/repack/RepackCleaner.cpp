@@ -153,7 +153,7 @@ void  RepackCleaner::checkTape(RepackSubRequest* tape){
       if (vmgr_reclaim((char*) tape->vid().c_str())<0){
 	castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 61, 1, params1);
       } else {
-	castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 62, 1, params1);
+	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 62, 1, params1);
       }
       
     }
@@ -164,7 +164,7 @@ void  RepackCleaner::checkTape(RepackSubRequest* tape){
       if (vmgr_modifytape((char*) tape->vid().c_str(),NULL,NULL,NULL,NULL,NULL,NULL,(char *)tape->repackrequest()->finalPool().c_str(),-1)<0){
 	castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 63, 1, params1);
       } else {
-	castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 64, 1, params1);
+	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 64, 1, params1);
       }
     }
 
