@@ -45,7 +45,7 @@ INSERT INTO CastorVersion VALUES ('-', '2_1_7_12');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.151  Release Date: 2008/09/18 08:22:01  Author: murrayc3 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.153  Release Date: 2008/09/18 13:19:27  Author: murrayc3 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -641,22 +641,6 @@ END castorVdqmCommon;
 CREATE OR REPLACE PACKAGE castorVdqmView AS
 
   /**
-   * This function determines if the specified drive and usage pass all of the
-   * dedications of the drive.
-   *
-   * @param driveIdVar the ID of the drive.
-   * @param gidVar     the gid of the client.
-   * @param hostVar    the host of the client.
-   * @param modeVar    the tape access mode.
-   * @param uidVar     the uid of the client.
-   * @param vidVar     the vid of the volume request.
-   * @return 1 if the specified drive passes all of its dedications, else 0.
-   */
-  FUNCTION passesDedications(driveIdVar IN NUMBER, gidVar IN NUMBER,
-    hostVar IN VARCHAR2, modeVar IN NUMBER, uidVar IN NUMBER,
-    vidVar IN VARCHAR2) RETURN NUMBER;
-
-  /**
    * This function returns the dedications of the specified drive in the format
    * required by the showqueues command-line tool.
    *
@@ -673,285 +657,6 @@ END castorVdqmView;
  * See the castorVdqmView package specification for documentation.
  */
 CREATE OR REPLACE PACKAGE BODY castorVdqmView AS
-
-  /**
-   * This private function determines whether or not the specified drive and
-   * GID pass the dedications of the drive.
-   *
-   * @param driveIdVar the ID of the drive.
-   * @param gidVar     the GID of the client.
-   * @return 1 if the dedications are passed, else 0.
-   */
-  FUNCTION passesGidDedications(
-    driveIdVar IN NUMBER,
-    gidVar     IN NUMBER)
-    RETURN NUMBER AS
-    nbGidDedicationsVar NUMBER;
-  BEGIN
-    -- Count the number of GID dedications for the drive
-    -- (there should only be one)
-    SELECT COUNT(*) INTO nbGidDedicationsVar
-      FROM TapeDriveDedication
-      WHERE tapeDrive = driveIdVar AND egid IS NOT NULL;
-
-    -- Drive passes if there are no GID dedications for it
-    IF nbGidDedicationsVar = 0 THEN
-      RETURN 1;
-    END IF;
-
-    -- Drive has one or more GID dedications
-
-    -- Count the number of matching GID dedications
-    SELECT COUNT(*) INTO nbGidDedicationsVar
-      FROM TapeDriveDedication
-      WHERE
-            TapeDriveDedication.tapeDrive = driveIdVar
-        AND gidVar = TapeDriveDedication.egid;
-
-    -- As there are GID dedications for the drive, it only passes if at least
-    -- one matches
-    IF nbGidDedicationsVar > 0 THEN
-      RETURN 1;
-    ELSE
-      RETURN 0;
-    END IF;
-  END passesGidDedications;
-
-
-  /**
-   * This private function determines whether or not the specified drive and
-   * access mode pass the dedications of the drive.
-   *
-   * @param driveIdVar    the ID of the drive.
-   * @param accessModeVar the access mode of the volume request.
-   * @return 1 if the dedications are passed, else 0.
-   */
-  FUNCTION passesModeDedication(
-    driveIdVar    IN NUMBER,
-    accessModeVar IN NUMBER)
-    RETURN NUMBER AS
-    nbModeDedicationsVar NUMBER;
-  BEGIN
-    -- Count the number of mode dedications for the drive
-    -- (there should only be one)
-    SELECT COUNT(*) INTO nbModeDedicationsVar
-      FROM TapeDriveDedication
-      WHERE tapeDrive = driveIdVar AND accessMode IS NOT NULL;
-
-    -- Drive passes if there are no access mode dedications for it
-    IF nbModeDedicationsVar = 0 THEN
-      RETURN 1;
-    END IF;
-
-    -- Drive has a mode dedication
-
-    -- Count the number of matching vid dedications
-    -- (there should be a maximum of one)
-    SELECT COUNT(*) INTO nbModeDedicationsVar
-      FROM TapeDriveDedication
-      WHERE
-            TapeDriveDedication.tapeDrive = driveIdVar
-        AND TapeDriveDedication.accessMode = accessModeVar;
-
-    -- As there is a mode dedication for the drive, the drive only passes if it
-    -- matches
-    IF nbModeDedicationsVar > 0 THEN
-      RETURN 1;
-    ELSE
-      RETURN 0;
-    END IF;
-  END passesModeDedication;
-
-
-  /**
-   * This private function determines whether or not the specified drive and
-   * host pass the dedications of the drive.
-   *
-   * @param driveIdVar    the ID of the drive.
-   * @param clientHostVar the client host of the volume request.
-   * @return 1 if the dedications are passed, else 0.
-   */
-  FUNCTION passesHostDedications(
-    driveIdVar    IN NUMBER,
-    clientHostVar IN VARCHAR2)
-    RETURN NUMBER AS
-    nbHostDedicationsVar NUMBER;
-  BEGIN
-  /*
-    -- Determine if the host is dedicated to another drive
-    SELECT COUNT(*) INTO nbHostDedicationsVar
-      FROM TapeDriveDedication
-      WHERE tapeDrive != driveIdVar AND clientHost = clientHostVar;
-
-    -- Drive does not pass if the host is dedicated to another drive
-    IF nbHostDedicationsVar > 0 THEN
-      RETURN 0;
-    END IF;
-  */
-    -- Count the number of host dedications for the drive
-    SELECT COUNT(*) INTO nbHostDedicationsVar
-      FROM TapeDriveDedication
-      WHERE tapeDrive = driveIdVar AND clientHost IS NOT NULL;
-
-    -- Drive passes if there are no host dedications for it
-    IF nbHostDedicationsVar = 0 THEN
-      RETURN 1;
-    END IF;
-
-    -- Drive has one or more host dedications
-
-    -- Count the number of matching host dedications
-    SELECT COUNT(*) INTO nbHostDedicationsVar
-      FROM TapeDriveDedication
-      WHERE
-            TapeDriveDedication.tapeDrive = driveIdVar
-        AND REGEXP_LIKE(clientHostVar, TapeDriveDedication.clientHost);
-
-    -- As there are host dedications for the drive, it only passes if at least
-    -- one matches
-    IF nbHostDedicationsVar > 0 THEN
-      RETURN 1;
-    ELSE
-      RETURN 0;
-    END IF;
-  END passesHostDedications;
-
-
-  /**
-   * This private function determines whether or not the specified drive and
-   * UID pass the dedications of the drive.
-   *
-   * @param driveIdVar the ID of the drive.
-   * @param uidVar     the UID of the volume request.
-   * @return 1 if the dedications are passed, else 0.
-   */
-  FUNCTION passesUidDedications(
-    driveIdVar IN NUMBER,
-    uidVar     IN NUMBER)
-    RETURN NUMBER AS
-    nbUidDedicationsVar NUMBER;
-  BEGIN
-    -- Count the number of UID dedications for the drive
-    -- (there should only be one)
-    SELECT COUNT(*) INTO nbUidDedicationsVar
-      FROM TapeDriveDedication
-      WHERE tapeDrive = driveIdVar AND euid IS NOT NULL;
-
-    -- Drive passes if there are no UID dedications for it
-    IF nbUidDedicationsVar = 0 THEN
-      RETURN 1;
-    END IF;
-
-    -- Drive has one or more UID dedications
-
-    -- Count the number of matching UID dedications
-    SELECT COUNT(*) INTO nbUidDedicationsVar
-      FROM TapeDriveDedication
-      WHERE
-            TapeDriveDedication.tapeDrive = driveIdVar
-        AND uidVar = TapeDriveDedication.euid;
-
-    -- As there are UID dedications for the drive, it only passes if at least
-    -- one matches
-    IF nbUidDedicationsVar > 0 THEN
-      RETURN 1;
-    ELSE
-      RETURN 0;
-    END IF;
-  END passesUidDedications;
-
-
-  /**
-   * This private function determines whether or not the specified drive and
-   * VID pass the dedications of the drive.
-   *
-   * @param driveIdVar the ID of the drive.
-   * @param vidVar     the vid of the volume request.
-   * @return 1 if the dedications are passed, else 0.
-   */
-  FUNCTION passesVidDedications(
-    driveIdVar IN NUMBER,
-    vidVar     IN VARCHAR2)
-    RETURN NUMBER AS
-    nbVidDedicationsVar NUMBER;
-  BEGIN
-  /*
-    -- Determine if the vid is dedicated to another drive
-    SELECT COUNT(*) INTO nbVidDedicationsVar
-      FROM TapeDriveDedication
-      WHERE tapeDrive != driveIdVar AND vid = vidVar;
-
-    -- Drive does not pass if the vid is dedicated to another drive
-    IF nbVidDedicationsVar > 0 THEN
-      RETURN 0;
-    END IF;
-  */
-    -- Count the number of vid dedications for the drive
-    SELECT COUNT(*) INTO nbVidDedicationsVar
-      FROM TapeDriveDedication
-      WHERE tapeDrive = driveIdVar AND vid IS NOT NULL;
-
-    -- Drive passes if there are no vid dedications for it
-    IF nbVidDedicationsVar = 0 THEN
-      RETURN 1;
-    END IF;
-
-    -- Drive has one or more vid dedications
-
-    -- Count the number of matching vid dedications
-    SELECT COUNT(*) INTO nbVidDedicationsVar
-      FROM TapeDriveDedication
-      WHERE
-            TapeDriveDedication.tapeDrive = driveIdVar
-        AND REGEXP_LIKE(vidVar, TapeDriveDedication.vid);
-
-    -- As there are vid dedications for the drive, it only passes if at least
-    -- one matches
-    IF nbVidDedicationsVar > 0 THEN
-      RETURN 1;
-    ELSE
-      RETURN 0;
-    END IF;
-  END passesVidDedications;
-
-
-  /**
-   * See the castorVdqmView package specification for documentation.
-   */
-  FUNCTION passesDedications(
-    driveIdVar IN NUMBER,
-    gidVar     IN NUMBER,
-    hostVar    IN VARCHAR2,
-    modeVar    IN NUMBER,
-    uidVar     IN NUMBER,
-    vidVar     IN VARCHAR2)
-    RETURN NUMBER AS
-    nbVidDedicationsVar NUMBER;
-  BEGIN
-    IF passesGidDedications(driveIdVar, gidVar) = 0 THEN
-      RETURN 0;
-    END IF;
-
-    IF passesHostDedications(driveIdVar, hostVar) = 0 THEN
-      RETURN 0;
-    END IF;
-
-    IF passesModeDedication(driveIdVar, modeVar) = 0 THEN
-      RETURN 0;
-    END IF;
-
-    IF passesUidDedications(driveIdVar, uidVar) = 0 THEN
-      RETURN 0;
-    END IF;
-
-    IF passesVidDedications(driveIdVar, vidVar) = 0 THEN
-      RETURN 0;
-    END IF;
-
-    -- Drive has passed all of its dedications
-    RETURN 1;
-  END passesDedications;
-
 
   /**
    * See the castorVdqmView package specification for documentation.
@@ -1160,64 +865,27 @@ ORDER BY
 
 /**
  * This view shows candidate drive allocations that will reuse a current drive
- * allocation.
- *
- * Please note that a drive allocation can only be reused if the access modes
- * (R/W) of the current and next allocations match.  Therefore any use of this
- * view must take the accessMode column into account.
- */
-CREATE OR REPLACE VIEW DriveAllocationsForReuse_VIEW AS SELECT UNIQUE
-  TapeDrive.id as tapeDriveId,
-  TapeDrive.tape as tapeId,
-  TapeRequest.id as tapeRequestId,
-  TapeAccessSpecification.accessMode,
-  TapeRequest.modificationTime
-FROM
-  TapeRequest
-INNER JOIN TapeAccessSpecification ON
-  TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
-INNER JOIN VdqmTape ON
-  TapeRequest.tape = VdqmTape.id
-INNER JOIN ClientIdentification ON
-  TapeRequest.client = ClientIdentification.id
-INNER JOIN TapeDrive ON
-  TapeRequest.tape = TapeDrive.tape -- Request is for the tape in the drive
-  AND (
-    TapeRequest.requestedSrv IS NULL
-    OR TapeRequest.requestedSrv = TapeDrive.tapeServer
-  )
-INNER JOIN TapeServer ON
-  TapeDrive.tapeServer = TapeServer.id
-WHERE
-      TapeServer.actingMode=0 -- ACTIVE
-  AND TapeRequest.tapeDrive IS NULL -- Request has not already been allocated
-                                    -- a drive
-  AND castorVdqmView.passesDedications(tapeDrive.id, ClientIdentification.egid,
-    ClientIdentification.machine, TapeAccessSpecification.accessMode,
-    ClientIdentification.euid, VdqmTape.vid)=1
-ORDER BY
-  TapeAccessSpecification.accessMode DESC,
-  TapeRequest.modificationTime ASC;
-
-
-/**
- * This view shows candidate drive allocations that will reuse a current drive
  * allocation before any dedicatioins have been taken into account.
  */
 CREATE OR REPLACE VIEW PotentialReusableMounts_VIEW AS SELECT UNIQUE
-  TapeDrive.id as tapeDriveId,
-  TapeDrive.tape as tapeId,
   TapeRequest.id as tapeRequestId,
+  TapeRequest.modificationTime,
+  ClientIdentification.euid as clientEuid,
+  ClientIdentification.egid as clientEgid,
+  ClientIdentification.machine as clientMachine,
   TapeAccessSpecification.accessMode,
-  TapeRequest.modificationTime
+  VdqmTape.id as tapeId,
+  VdqmTape.vid,
+  TapeDrive.id as driveId,
+  TapeServer.actingMode
 FROM
   TapeRequest
+INNER JOIN ClientIdentification ON
+  TapeRequest.client = ClientIdentification.id
 INNER JOIN TapeAccessSpecification ON
   TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
 INNER JOIN VdqmTape ON
   TapeRequest.tape = VdqmTape.id
-INNER JOIN ClientIdentification ON
-  TapeRequest.client = ClientIdentification.id
 INNER JOIN TapeDrive ON
   TapeRequest.tape = TapeDrive.tape -- Request is for the tape in the drive
   AND (
@@ -1830,8 +1498,7 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
 
 
   /**
-   * Future scheduler algorithm.  This procedure will replace allocateDrive
-   * when it has been fully tested.
+   * See the castorVdqm package specification for documentation.
    */
   PROCEDURE allocateDrive(
     returnVar         OUT NUMBER,
@@ -1983,92 +1650,92 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     returnVar        := 0; -- No possible reuse was found
     tapeRequestIdVar := 0;
 
-    -- Try to find a candidate volume request that can reuse the current drive
-    -- allocation
-    BEGIN
-      SELECT tapeRequestId INTO tapeRequestIdVar
-        FROM DriveAllocationsForReuse_VIEW
+    -- For each potential reuse of the current mount
+    FOR potentialReuse IN (
+      SELECT tapeRequestId, clientEuid, clientEgid, clientMachine, accessMode,
+        tapeId, vid, driveId
+        FROM PotentialReusableMounts_VIEW
         WHERE
-              DriveAllocationsForReuse_VIEW.tapeDriveId = tapeDriveIdVar
-          AND DriveAllocationsForReuse_VIEW.tapeId      = tapeIdVar
-          AND DriveAllocationsForReuse_VIEW.accessMode  = accessModeVar
-          AND rownum < 2;
-    EXCEPTION
-      -- No possible reuse was found
-      WHEN NO_DATA_FOUND THEN
-        tapeRequestIdVar := 0;
-        returnVar        := 0;
+              PotentialReusableMounts_VIEW.driveId    = tapeDriveIdVar
+          AND PotentialReusableMounts_VIEW.tapeId     = tapeIdVar
+          AND PotentialReusableMounts_VIEW.accessMode = accessModeVar
+    ) LOOP
+
+      -- The status of the drives including which tapes may be mounted in them,
+      -- may be modified by other threads handling drive request messages.  The
+      -- status of the requests may be modified by threads handling tape request
+      -- messages.  Therefore get a lock on the corresponding drive and request
+      -- rows and retrieve their statuses and mounted tape in the case of the
+      -- drive, to see if the reuse of the mount is still valid.
+      BEGIN
+        SELECT TapeDrive.status, TapeDrive.tape
+        INTO tapeDriveStatusCheckVar, mountedTapeIdCheckVar
+        FROM TapeDrive
+        WHERE TapeDrive.id = potentialReuse.driveId
+        FOR UPDATE;
+        SELECT TapeRequest.status, TapeRequest.tapeAccessSpecification
+        INTO tapeRequestStatusCheckVar, tapeAccessSpecIdCheckVar
+        FROM TapeRequest
+        WHERE TapeRequest.id = potentialReuse.tapeRequestId
+        FOR UPDATE;
+        SELECT TapeAccessSpecification.accessMode
+        INTO accessModeCheckVar
+        FROM TapeAccessSpecification
+        WHERE TapeAccessSpecification.id = tapeAccessSpecIdCheckVar
+        FOR UPDATE;
+      EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+          -- A possible reuse of the mount was found but was invalidated by
+          -- other threads before the appropriate locks could be taken
+          tapeRequestIdVar :=  0;
+          returnVar        := -1;
+          RETURN;
+      END;
+
+      -- If the reuse of the mount is no longer valid, i.e. the drive's status
+      -- is not VOL_MOUNTED or the correct tape is not mounted or the tape
+      -- request's status is not REQUEST_PENDING or the access mode no longer
+      -- matches
+      IF
+        (tapeDriveStatusCheckVar   !=             3) OR
+        (mountedTapeIdCheckVar     !=     tapeIdVar) OR
+        (tapeRequestStatusCheckVar !=             0) OR
+        (accessModeCheckVar        != accessModeVar) THEN
+          -- A possible reuse of the mount was found but was invalidated by
+          -- other threads before the appropriate locks could be taken
+          tapeRequestIdVar :=  0;
+          returnVar        := -1;
+          RETURN;
+      END IF;
+
+      IF passesDedications(
+        potentialReuse.driveId,
+        potentialReuse.clientEgid,
+        potentialReuse.clientMachine,
+        potentialReuse.accessMode,
+        potentialReuse.clientEuid,
+        potentialReuse.vid) = 1 THEN
+
+        -- Reuse the mount with the pending request
+        UPDATE TapeRequest SET
+          status           = 1, -- MATCHED
+          tapeDrive        = tapeDriveIdVar,
+          modificationTime = castorVdqmCommon.getTime()
+        WHERE id = potentialReuse.tapeRequestId;
+        UPDATE TapeDrive SET
+          status           = 1, -- UNIT_STARTING
+          jobId            = 0,
+          runningTapeReq   = potentialReuse.tapeRequestId,
+          modificationTime = castorVdqmCommon.getTime()
+        WHERE id = tapeDriveIdVar;
+
+        -- The drive allocation was reused
+        tapeRequestIdVar := potentialReuse.tapeRequestId;
+        returnVar        := 1;
         RETURN;
-    END;
+      END IF;
 
-    -- A candidate was found, because a NO_DATA_FOUND exception was not raised
-
-    -- The status of the drives including which tapes may be mounted in them,
-    -- may be modified by other threads handling drive request messages.  The
-    -- status of the requests may be modified by threads handling tape request
-    -- messages.  Therefore get a lock on the corresponding drive and request
-    -- rows and retrieve their statuses and mounted tape in the case of the
-    -- drive, to see if the reuse of the drive allocation is still valid.
-    BEGIN
-      SELECT TapeDrive.status, TapeDrive.tape
-      INTO tapeDriveStatusCheckVar, mountedTapeIdCheckVar
-      FROM TapeDrive
-      WHERE TapeDrive.id = tapeDriveIdVar
-      FOR UPDATE;
-      SELECT TapeRequest.status, TapeRequest.tapeAccessSpecification
-      INTO tapeRequestStatusCheckVar, tapeAccessSpecIdCheckVar
-      FROM TapeRequest
-      WHERE TapeRequest.id = tapeRequestIdVar
-      FOR UPDATE; 
-      SELECT TapeAccessSpecification.accessMode
-      INTO accessModeCheckVar
-      FROM TapeAccessSpecification
-      WHERE TapeAccessSpecification.id = tapeAccessSpecIdCheckVar
-      FOR UPDATE;
-    EXCEPTION
-      WHEN NO_DATA_FOUND THEN
-        -- A possible reuse of the drive allocation was found but was
-        -- invalidated by other threads before the appropriate locks could be
-        -- taken
-        tapeRequestIdVar :=  0;
-        returnVar        := -1;
-        RETURN;
-    END;
-
-    -- If the reuse of the drive allocation is still valid, i.e. the drive's
-    -- status is VOL_MOUNTED and the correct tape is mounted and the tape
-    -- request's status is REQUEST_PENDING and the access mode still matches
-    IF
-      (tapeDriveStatusCheckVar   =             3) AND
-      (mountedTapeIdCheckVar     =     tapeIdVar) AND
-      (tapeRequestStatusCheckVar =             0) AND
-      (accessModeCheckVar        = accessModeVar) THEN
-
-      -- Reuse the drive allocation with the pending request
-      UPDATE TapeRequest SET
-        status           = 1,  -- MATCHED
-        tapeDrive        = tapeDriveIdVar,
-        modificationTime = castorVdqmCommon.getTime()
-      WHERE id = tapeRequestIdVar;
-      UPDATE TapeDrive SET
-        status           = 1, -- UNIT_STARTING
-        jobId            = 0,
-        runningTapeReq   = tapeRequestIdVar,
-        modificationTime = castorVdqmCommon.getTime()
-      WHERE id = tapeDriveIdVar;
-
-      -- The drive allocation was reused
-      returnVar := 1;
-
-     -- Else the reuse of the drive allocation is no longer valid
-     ELSE
-
-       -- A possible reuse of the drive allocation was found but was invalidated
-       -- by other threads before the appropriate locks could be taken
-       tapeRequestIdVar :=  0;
-       returnVar        := -1;
-
-    END IF; -- If the reuse of the drive allocation is still valid
+    END LOOP; -- For each potential reuse of the current mount
 
   END reuseDriveAllocation;
 
