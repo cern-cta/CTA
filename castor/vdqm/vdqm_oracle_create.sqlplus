@@ -45,7 +45,7 @@ INSERT INTO CastorVersion VALUES ('-', '2_1_7_12');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.150  Release Date: 2008/09/17 16:32:00  Author: murrayc3 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.151  Release Date: 2008/09/18 08:22:01  Author: murrayc3 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1099,74 +1099,10 @@ INNER JOIN EffectiveLifespanType ON
 
 
 /**
- * This view shows candidate "free tape drive to pending tape request"
- * allocations.
- */
-CREATE OR REPLACE VIEW CandidateDriveAllocations_VIEW AS SELECT UNIQUE
-  TapeDrive.id as tapeDriveId,
-  TapeRequest.id as tapeRequestId,
-  TapeAccessSpecification.accessMode,
-  TapeRequest.modificationTime,
-  TapeRequest.creationTime,
-  NVL(EffectiveVolumePriority_VIEW.priority,0) AS volumePriority
-FROM
-  TapeRequest
-INNER JOIN TapeAccessSpecification ON
-  TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
-INNER JOIN VdqmTape ON
-  TapeRequest.tape = VdqmTape.id
-INNER JOIN ClientIdentification ON
-  TapeRequest.client = ClientIdentification.id
-INNER JOIN TapeDrive ON
-  TapeRequest.deviceGroupName = TapeDrive.deviceGroupName
-  AND (
-    TapeRequest.requestedSrv IS NULL
-    OR TapeRequest.requestedSrv = TapeDrive.tapeServer
-  )
-INNER JOIN TapeServer ON
-  TapeDrive.tapeServer = TapeServer.id
-LEFT OUTER JOIN EffectiveVolumePriority_VIEW ON
-  VdqmTape.vid = EffectiveVolumePriority_VIEW.vid
-  AND TapeAccessSpecification.accessMode = EffectiveVolumePriority_VIEW.tpMode
-WHERE
-  TapeDrive.status=0 -- UNIT_UP
-  -- Exclude a request if its tape is associated with an on-going request
-  AND NOT EXISTS (
-    SELECT
-      'x'
-    FROM
-      TapeRequest TapeRequest2
-    WHERE
-      TapeRequest2.tape = TapeRequest.tape
-      AND TapeRequest2.tapeDrive IS NOT NULL
-  )
-  -- Exclude a request if its tape is already in a drive, such a request
-  -- will be considered upon the release of the drive in question
-  -- (cf. TapeDriveStatusHandler)
-  AND NOT EXISTS (
-    SELECT
-      'x'
-    FROM
-      TapeDrive TapeDrive2
-    WHERE
-      TapeDrive2.tape = TapeRequest.tape
-  )
-  AND TapeServer.actingMode=0 -- TAPE_SERVER_ACTIVE
-  AND TapeRequest.status=0 -- REQUEST_PENDING
-  AND castorVdqmView.passesDedications(tapeDrive.id, ClientIdentification.egid,
-    ClientIdentification.machine, TapeAccessSpecification.accessMode,
-    ClientIdentification.euid, VdqmTape.vid)=1
-ORDER BY
-  TapeAccessSpecification.accessMode DESC,
-  VolumePriority DESC,
-  TapeRequest.creationTime ASC;
-
-
-/**
  * This view shows candidate tape drive allocations before any dedicatioins
  * have been taken into account.
  */
-CREATE OR REPLACE VIEW PotentialDriveAllocations_VIEW AS SELECT UNIQUE
+CREATE OR REPLACE VIEW PotentialMounts_VIEW AS SELECT UNIQUE
   TapeDrive.id as driveId,
   TapeDrive.driveName,
   TapeRequest.id as tapeRequestId,
@@ -1901,7 +1837,8 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
 
 
   /**
-   * See the castorVdqm package specification for documentation.
+   * Future scheduler algorithm.  This procedure will replace allocateDrive
+   * when it has been fully tested.
    */
   PROCEDURE allocateDrive(
     returnVar         OUT NUMBER,
@@ -1921,26 +1858,13 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     tapeRequestIdVar  := 0;
     tapeRequestVidVar := '';
 
-    -- Select a candidate drive allocation
-    BEGIN
-      SELECT
-        tapeDriveId,
-        tapeRequestId
-      INTO
-        tapeDriveIdVar, tapeRequestIdVar
-      FROM
-        CandidateDriveAllocations_VIEW
-      WHERE
-        rownum < 2;
-    EXCEPTION
-      WHEN NO_DATA_FOUND THEN
-        returnVar := 0; -- No possible allocation could be found
-        RETURN;
-    END;
-
-    -- If there is a possible drive allocation
-    IF tapeDriveIdVar IS NOT NULL AND tapeRequestIdVar IS NOT NULL THEN
-
+    -- For each potential drive allocation, i.e. a drive allocation for which
+    -- no dedications have been taken into account
+    FOR potentialMount IN (
+      SELECT driveId, driveName, tapeRequestId, clientEuid, clientEgid,
+        clientMachine, accessMode, vid
+      FROM PotentialMounts_VIEW
+    ) LOOP
       -- The status of the drives and requests maybe modified by other scheduler
       -- threads.  The status of the drives may be modified by threads handling
       -- drive request messages.  The status of the requests may be modified by
@@ -1950,162 +1874,72 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
       BEGIN
         SELECT TapeDrive.status INTO TapeDriveStatusVar
         FROM TapeDrive
-        WHERE TapeDrive.id = tapeDriveIdVar
+        WHERE TapeDrive.id = potentialMount.driveId
         FOR UPDATE;
         SELECT TapeRequest.status INTO TapeRequestStatusVar
         FROM TapeRequest
-        WHERE TapeRequest.id = tapeRequestIdVar
+        WHERE TapeRequest.id = potentialMount.tapeRequestId
         FOR UPDATE;
       EXCEPTION
         WHEN NO_DATA_FOUND THEN
           -- A possible drive allocation was found but was invalidated by other
           -- threads before the appropriate locks could be taken
           returnVar := -1;
-        RETURN;
+          RETURN;
       END;
 
-      -- Get the drive name (used for logging)
-      SELECT TapeDrive.driveName INTO TapeDriveNameVar
-      FROM TapeDrive
-      WHERE TapeDrive.id = tapeDriveIdVar;
-  
-      -- Get the VID of the pending request (used for logging)
-      SELECT VdqmTape.vid INTO tapeRequestVidVar
-      FROM TapeRequest
-      INNER JOIN VdqmTape ON TapeRequest.tape = VdqmTape.id
-      WHERE TapeRequest.id = tapeRequestIdVar;
+      -- If the drive allocation is no longer valid, i.e. drive status is not
+      -- UNIT_UP or request status is not REQUEST_PENDING
+      IF(TapeDriveStatusVar != 0) OR (TapeRequestStatusVar != 0) THEN
+        -- A possible drive allocation was found but was invalidated by other
+        -- threads before the appropriate locks could be taken
+        returnVar := -1;
+        RETURN;
+      END IF;
 
-      -- If the drive allocation is still valid, i.e. drive status is UNIT_UP 
-      -- and request status is REQUEST_PENDING
-      IF(TapeDriveStatusVar = 0) AND (TapeRequestStatusVar = 0) THEN
+      IF passesDedications(
+        potentialMount.driveId,
+        potentialMount.clientEgid,
+        potentialMount.clientMachine,
+        potentialMount.accessMode,
+        potentialMount.clientEuid,
+        potentialMount.vid) = 1 THEN
+
+        -- Set the drive id for logging
+        tapeDriveIdVar := potentialMount.driveId;
+
+        -- Set the drive name for logging
+        TapeDriveNameVar := potentialMount.driveName;
+
+        -- Set the request id for logging
+        tapeRequestIdVar := potentialMount.tapeRequestId;
+
+        -- Set the VID of the pending request for logging
+        tapeRequestVidVar := potentialMount.vid;
 
         -- Allocate the free drive to the pending request
         UPDATE TapeDrive SET
           status           = 1, -- UNIT_STARTING
           jobId            = 0,
           modificationTime = castorVdqmCommon.getTime(),
-          runningTapeReq   = tapeRequestIdVar
+          runningTapeReq   = potentialMount.tapeRequestId
         WHERE
-          id = tapeDriveIdVar;
+          id = potentialMount.driveId;
         UPDATE TapeRequest SET
           status           = 1, -- MATCHED
-          tapeDrive        = tapeDriveIdVar,
+          tapeDrive        = potentialMount.driveId,
           modificationTime = castorVdqmCommon.getTime()
         WHERE
-          id = tapeRequestIdVar;
+          id = potentialMount.tapeRequestId;
 
-        -- A free drive has been allocated to a pending request
-        returnVar := 1;
+        returnVar := 1; -- A free drive has been allocated to a pending request
+        RETURN;
 
-     -- Else the drive allocation is no longer valid
-     ELSE
-
-       -- A possible drive allocation was found but was invalidated by other
-       -- threads before the appropriate locks could be taken
-       returnVar := -1;
-
-     END IF; -- If the drive allocation is still valid
-
-    END IF; -- If there is a possible drive allocation
-
-  END allocateDrive;
-
-
-  /**
-   * Future scheduler algorithm.  This procedure will replace allocateDrive
-   * when it has been fully tested.
-   */
-  PROCEDURE allocateDrive2(
-    returnVar         OUT NUMBER,
-    tapeDriveIdVar    OUT NUMBER,
-    tapeDriveNameVar  OUT NOCOPY VARCHAR2,
-    tapeRequestIdVar  OUT NUMBER,
-    tapeRequestVidVar OUT NOCOPY VARCHAR2
-    ) AS
-
-    tapeDriveStatusVar   NUMBER;
-    tapeRequestStatusVar NUMBER;
-
-  BEGIN
-    returnVar         := 0; -- No possible allocation could be found
-    tapeDriveIdVar    := 0;
-    tapeDriveNameVar  := '';
-    tapeRequestIdVar  := 0;
-    tapeRequestVidVar := '';
-
-    -- For each potential drive allocation, i.e. a drive allocation for which
-    -- no dedications have been taken into account
-    FOR potentialAllocation IN (
-      SELECT driveId, driveName, tapeRequestId, clientEuid, clientEgid,
-        clientMachine, accessMode, vid
-      FROM PotentialDriveAllocations_VIEW
-    ) LOOP
-      -- The status of the drives and requests maybe modified by other scheduler
-      -- threads.  The status of the drives may be modified by threads handling
-      -- drive request messages.  The status of the requests may be modified by
-      -- threads handling tape request messages.  Therefore get a lock on the
-      -- corresponding drive and request rows and retrieve their statuses to see
-      -- if the drive allocation is still valid
-      SELECT TapeDrive.status INTO TapeDriveStatusVar
-      FROM TapeDrive
-      WHERE TapeDrive.id = potentialAllocation.driveId
-      FOR UPDATE;
-      SELECT TapeRequest.status INTO TapeRequestStatusVar
-      FROM TapeRequest
-      WHERE TapeRequest.id = potentialAllocation.tapeRequestId
-      FOR UPDATE;
-
-      -- If the drive allocation is still valid, i.e. drive status is UNIT_UP
-      -- and request status is REQUEST_PENDING
-      IF(TapeDriveStatusVar = 0) AND (TapeRequestStatusVar = 0) THEN
-
-        IF passesDedications(
-          potentialAllocation.driveId,
-          potentialAllocation.clientEgid,
-          potentialAllocation.clientMachine,
-          potentialAllocation.accessMode,
-          potentialAllocation.clientEuid,
-          potentialAllocation.vid) = 1 THEN
-
-          -- Set the drive id for logging
-          tapeDriveIdVar := potentialAllocation.driveId;
-
-          -- Set the drive name for logging
-          TapeDriveNameVar := potentialAllocation.driveName;
-
-          -- Set the request id for logging
-          tapeRequestIdVar := potentialAllocation.tapeRequestId;
-
-          -- Set the VID of the pending request for logging
-          tapeRequestVidVar := potentialAllocation.vid;
-
-          -- Allocate the free drive to the pending request
-          UPDATE TapeDrive SET
-            status           = 1, -- UNIT_STARTING
-            jobId            = 0,
-            modificationTime = castorVdqmCommon.getTime(),
-            runningTapeReq   = potentialAllocation.tapeRequestId
-          WHERE
-            id = potentialAllocation.driveId;
-          UPDATE TapeRequest SET
-            status           = 1, -- MATCHED
-            tapeDrive        = potentialAllocation.driveId,
-            modificationTime = castorVdqmCommon.getTime()
-          WHERE
-            id = potentialAllocation.tapeRequestId;
-
-          -- A free drive has been allocated to a pending request
-          -- Set the return value of the procedure and exit this for loop
-          returnVar := 1;
-          EXIT;
-
-        END IF; -- passesDedications
-
-      END IF; -- The drive allocation is still valid
+      END IF; -- passesDedications
 
     END LOOP; -- For each potential drive allocation
 
-  END allocateDrive2;
+  END allocateDrive;
 
 
   /**
