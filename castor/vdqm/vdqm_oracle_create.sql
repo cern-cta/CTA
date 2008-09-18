@@ -45,7 +45,7 @@ INSERT INTO CastorVersion VALUES ('-', '2_1_7_12');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.153  Release Date: 2008/09/18 13:19:27  Author: murrayc3 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.155  Release Date: 2008/09/18 20:00:18  Author: murrayc3 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1687,7 +1687,6 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
         WHEN NO_DATA_FOUND THEN
           -- A possible reuse of the mount was found but was invalidated by
           -- other threads before the appropriate locks could be taken
-          tapeRequestIdVar :=  0;
           returnVar        := -1;
           RETURN;
       END;
@@ -1703,7 +1702,6 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
         (accessModeCheckVar        != accessModeVar) THEN
           -- A possible reuse of the mount was found but was invalidated by
           -- other threads before the appropriate locks could be taken
-          tapeRequestIdVar :=  0;
           returnVar        := -1;
           RETURN;
       END IF;
