@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.152 $ $Release$ $Date: 2008/09/18 13:08:46 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.153 $ $Release$ $Date: 2008/09/18 13:19:27 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1785,8 +1785,7 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
 
 
   /**
-   * Future scheduler algorithm.  This procedure will replace allocateDrive
-   * when it has been fully tested.
+   * See the castorVdqm package specification for documentation.
    */
   PROCEDURE allocateDrive(
     returnVar         OUT NUMBER,
