@@ -822,7 +822,7 @@ doit(arg)
   char username[CA_MAXUSRNAMELEN+1];
 
   if (thip->secOn) {
-    Csec_server_initContext (&thip->sec_ctx, CSEC_SERVICE_TYPE_HOST, NULL);
+    Csec_server_reinitContext (&thip->sec_ctx, CSEC_SERVICE_TYPE_HOST, NULL);
     if (Csec_server_establishContext (&thip->sec_ctx, thip->s) < 0) {
       nslogit (func, "Could not establish security context: %s !\n",
                Csec_getErrorMessage());
@@ -901,11 +901,7 @@ doit(arg)
   } else {
     netclose (thip->s);
   }
-#ifdef CSEC
-  if (thip->secOn){
-    Csec_clearContext(&thip->sec_ctx);
-  }
-#endif
+
   if (req_data != reqbuf)
     free (req_data);
   thip->s = -1;
