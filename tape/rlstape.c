@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.51 $ $Date: 2008/07/08 17:19:37 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.52 $ $Date: 2008/09/19 09:25:22 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -350,9 +350,26 @@ unload_loop:
 		if ((c = chkdriveready (tapefd)) < 0) {
 			configdown (drive);
 		} else if (c > 0) {
-			if (*loader != 'n')
-				if (unldtape (tapefd, dvn) < 0)
-					configdown (drive);
+			if (*loader != 'n') {
+				if (unldtape (tapefd, dvn) < 0) {                                        
+                                        char *p = NULL;                                        
+                                        p = getconfent( "TAPE", "DOWN_ON_UNLOAD_FAILURE", 0 );
+                                        if ((NULL != p) && (0 == strcasecmp(p, "NO"))) {
+                                                char msg[] = "Leave drive up after unload failure";
+                                                tplogit(func, "%s\n", msg);
+                                                tl_tpdaemon.tl_log(&tl_tpdaemon, 104, 2,
+                                                                   "func"   , TL_MSG_PARAM_STR, func,
+                                                                   "Message", TL_MSG_PARAM_STR, msg);
+                                        } else {
+                                                char msg[] = "Put drive down after unload failure";
+                                                tplogit(func, "%s\n", msg);
+                                                tl_tpdaemon.tl_log(&tl_tpdaemon, 103, 2,
+                                                                   "func"   , TL_MSG_PARAM_STR, func,
+                                                                   "Message", TL_MSG_PARAM_STR, msg);
+                                                configdown (drive);
+                                        }
+                                }
+                        }
 #if SACCT
 			tapeacct (TPUNLOAD, uid, gid, jid, dgn, drive, vid, 0, 0);
 #endif
