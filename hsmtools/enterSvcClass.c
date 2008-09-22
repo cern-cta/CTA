@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.15 $ $Release$ $Date: 2008/07/28 16:56:28 $ $Author: waldron $
+ * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.16 $ $Release$ $Date: 2008/09/22 11:53:26 $ $Author: waldron $
  *
  *
  *
@@ -229,17 +229,7 @@ int main(int argc, char *argv[])
       Cstager_SvcClass_setReplicationPolicy(svcClass,Coptarg);
       break;
     case GcEnabled:
-      if (!strcasecmp(Coptarg, "yes") ||
-          !strcasecmp(Coptarg, "1")) {
-        Cstager_SvcClass_setGcEnabled(svcClass, 1);
-      } else if (!strcasecmp(Coptarg, "no") ||
-                 !strcasecmp(Coptarg, "0")) {
-        Cstager_SvcClass_setGcEnabled(svcClass, 0);
-      } else {
-        fprintf(stderr,
-		"Invalid option for GcEnabled, value must be 'yes' or 'no'\n");
-        return(1);
-      }
+      gcEnabled = strdup(Coptarg);
       break;
     case GcPolicy:
       Cstager_SvcClass_setGcPolicy(svcClass,Coptarg);
@@ -257,11 +247,9 @@ int main(int argc, char *argv[])
       diskPoolsStr = strdup(Coptarg);
       break;
     case DiskOnlyBehavior:
-      if (!strcasecmp(Coptarg, "yes") ||
-          !strcasecmp(Coptarg, "1")) {
+      if (!strcasecmp(Coptarg, "yes")) {
         Cstager_SvcClass_setHasDiskOnlyBehavior(svcClass, 1);
-      } else if (!strcasecmp(Coptarg, "no") ||
-                 !strcasecmp(Coptarg, "0")) {
+      } else if (!strcasecmp(Coptarg, "no")) {
         Cstager_SvcClass_setHasDiskOnlyBehavior(svcClass, 0);
       } else {
         fprintf(stderr,
@@ -279,7 +267,7 @@ int main(int argc, char *argv[])
           return(1);
         }
         fprintf(stderr,
-                "FileClass %s does not exists\n",Coptarg);
+                "FileClass %s does not exist\n",Coptarg);
         return(1);
       }
       Cstager_SvcClass_setForcedFileClass(svcClass,fileClass);
@@ -288,11 +276,9 @@ int main(int argc, char *argv[])
       Cstager_SvcClass_setStreamPolicy(svcClass,Coptarg);
       break;
     case ReplicateOnClose:
-      if (!strcasecmp(Coptarg, "yes") ||
-	  !strcasecmp(Coptarg, "1")) {
+      if (!strcasecmp(Coptarg, "yes")) {
 	Cstager_SvcClass_setReplicateOnClose(svcClass, 1);
-      } else if (!strcasecmp(Coptarg, "no") ||
-		 !strcasecmp(Coptarg, "0")) {
+      } else if (!strcasecmp(Coptarg, "no")) {
 	Cstager_SvcClass_setReplicateOnClose(svcClass, 0);
       } else {
 	fprintf(stderr,
@@ -327,9 +313,17 @@ int main(int argc, char *argv[])
                                      defaultReplicaNb
                                      );
   }
-  if ( NULL == gcEnabled ) {
+  if ( gcEnabled == NULL) {
     Cstager_SvcClass_setGcEnabled(svcClass, 1);
     fprintf(stdout,"No gcEnabled parameter given, setting to true by default\n");
+  } else if (!strcasecmp(gcEnabled, "yes")) {
+    Cstager_SvcClass_setGcEnabled(svcClass, 1);
+  } else if (!strcasecmp(gcEnabled, "no")) {
+    Cstager_SvcClass_setGcEnabled(svcClass, 0);
+  } else {
+    fprintf(stderr,
+	    "Invalid option for GcEnabled, value must be 'yes' or 'no'\n");
+    return(1);
   }
 
   fprintf(stdout,"Adding SvcClass: %s\n",name);
@@ -356,7 +350,7 @@ int main(int argc, char *argv[])
       return(1);
     }
     for ( i=0; i<nbTapePools; i++ ) {
-      fprintf(stdout,"Add tape pool %s to SvcClass %s\n",tapePoolsArray[i],name);
+      fprintf(stdout,"Adding tape pool %s to SvcClass %s\n",tapePoolsArray[i],name);
       tapePool = NULL;
       rc = Cstager_IStagerSvc_selectTapePool(
                                              fsSvc,
@@ -403,7 +397,7 @@ int main(int argc, char *argv[])
       return(1);
     }
     for ( i=0; i<nbDiskPools; i++ ) {
-      fprintf(stdout,"Add disk pool %s to SvcClass %s\n",diskPoolsArray[i],name);
+      fprintf(stdout,"Adding disk pool %s to SvcClass %s\n",diskPoolsArray[i],name);
       diskPool = NULL;
       rc = Cstager_IStagerSvc_selectDiskPool(
                                              fsSvc,
@@ -453,8 +447,8 @@ int main(int argc, char *argv[])
                             );
     if ( rc == -1 ) {
       fprintf(stderr,"C_Services_fillRep(svcClass,OBJ_FileClass): %s, %s\n",
-        sstrerror(serrno),
-        C_Services_errorMsg(svcs));
+	      sstrerror(serrno),
+	      C_Services_errorMsg(svcs));
       return(1);
     }
   }
