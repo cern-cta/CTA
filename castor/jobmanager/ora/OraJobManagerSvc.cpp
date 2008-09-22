@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/06/27 08:24:52 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/09/22 12:31:58 $ $Author: waldron $
  *
  * Implementation of the IJobManagerSvc for Oracle
  *
@@ -336,18 +336,18 @@ castor::jobmanager::JobSubmissionRequest
     result->setDefaultFileSize((u_signed64)m_jobToScheduleStatement->getDouble(24));
 
     // Construct the list of excluded hosts
-    if (result->requestType() == OBJ_StageDiskCopyReplicaRequest) { 
-      oracle::occi::ResultSet *rs = m_jobToScheduleStatement->getCursor(25); 
-      while (oracle::occi::ResultSet::END_OF_FETCH != rs->next()) { 
-	result->setExcludedHosts(result->excludedHosts().append(rs->getString(1) + "|")); 
+    if (result->requestType() == OBJ_StageDiskCopyReplicaRequest) {
+      oracle::occi::ResultSet *rs = m_jobToScheduleStatement->getCursor(25);
+      while (oracle::occi::ResultSet::END_OF_FETCH != rs->next()) {
+	result->setExcludedHosts(result->excludedHosts().append(rs->getString(1) + "|"));
       }
       // Remove trailing '|'
       if (result->excludedHosts() != "") {
-	result->setExcludedHosts(result->excludedHosts().substr(0, 
+	result->setExcludedHosts(result->excludedHosts().substr(0,
                                  result->excludedHosts().length() - 1));
       }
       m_jobToScheduleStatement->closeResultSet(rs);
-    } 
+    }
 
     // For statistical purposes
     timeval tv;
@@ -461,8 +461,7 @@ castor::jobmanager::ora::OraJobManagerSvc::getSchedulerResources()
       fs->setMountPoint(rs->getString(4));
       fs->setStatus((castor::stager::FileSystemStatusCodes)rs->getInt(5));
       fs->setAdminStatus((castor::monitoring::AdminStatusCodes)rs->getInt(6));
-      fs->setDiskPoolName(rs->getString(7));
-      fs->setSvcClassName(rs->getString(8));
+      fs->setSvcClassName(rs->getString(7));
       it->second->addFileSystems(fs);
     }
     m_getSchedulerResourcesStatement->closeResultSet(rs);
@@ -534,13 +533,13 @@ castor::jobmanager::ora::OraJobManagerSvc::getSvcClassesWithNoSpace()
   std::vector<std::string> result;
   try {
     if (m_getSvcClassesWithNoSpaceStatement == NULL) {
-      m_getSvcClassesWithNoSpaceStatement = 
+      m_getSvcClassesWithNoSpaceStatement =
 	createStatement(s_getSvcClassesWithNoSpaceString);
       m_getSvcClassesWithNoSpaceStatement->setAutoCommit(true);
     }
 
     // Loop over results
-    oracle::occi::ResultSet *rs = 
+    oracle::occi::ResultSet *rs =
       m_getSvcClassesWithNoSpaceStatement->executeQuery();
     while (oracle::occi::ResultSet::END_OF_FETCH != rs->next()) {
       result.push_back(rs->getString(1));
