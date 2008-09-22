@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ICommonSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/12/14 16:56:19 $ $Author: itglp $
+ * @(#)$RCSfile: ICommonSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/09/22 13:28:27 $ $Author: waldron $
  *
  * This class provides common methods useful to the stager to
  * deal with database queries
@@ -90,20 +90,6 @@ namespace castor {
        * @exception Exception in case of error
        */
       virtual castor::stager::FileClass* selectFileClass(const std::string name)
-        throw (castor::exception::Exception) = 0;
-
-      /**
-       * Retrieves a FileSystem from the database based on its
-       * mount point and diskServer name. Keeps a lock on it.
-       * Caller is in charge of the deletion of the allocated
-       * objects, including the DiskServer Object
-       * @param mountPoint the mountPoint of the FileSystem
-       * @param diskServer the name of the disk server hosting this file system
-       * @return the FileSystem linked to its DiskServer, or 0 if none found
-       * @exception Exception in case of error
-       */
-      virtual castor::stager::FileSystem* selectFileSystem
-      (const std::string mountPoint, const std::string diskServer)
         throw (castor::exception::Exception) = 0;
 
       /**

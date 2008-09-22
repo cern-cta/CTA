@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/02/19 09:40:04 $ $Author: itglp $
+ * @(#)$RCSfile: OraCommonSvc.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/09/22 13:32:08 $ $Author: waldron $
  *
  * Implementation of the ICommonSvc for Oracle/CDBC
  *
@@ -128,52 +128,36 @@ namespace castor {
         (const std::string name)
           throw (castor::exception::Exception);
 
-        /**
-         * Retrieves a FileSystem from the database based on its
-         * mount point and diskServer name. Keeps a lock on it.
-         * Caller is in charge of the deletion of the allocated
-         * objects, including the DiskServer Object
-         * @param mountPoint the mountPoint of the FileSystem
-         * @param diskServer the name of the disk server hosting
-         * this file system
-         * @return the FileSystem linked to its DiskServer, or 0 if none found
-         * @exception Exception in case of error
-         */
-        virtual castor::stager::FileSystem* selectFileSystem
-        (const std::string mountPoint,
-         const std::string diskServer)
-          throw (castor::exception::Exception);
-          
       protected:
-          
+
         /**
          * helper method to commit
          */
-        virtual void commit();          
+        virtual void commit();
 
         /**
          * helper method to rollback
          */
         virtual void rollback();
-        
+
         /**
          * Helper method to handle exceptions - see OraCnvSvc
          * @param e an Oracle exception
          */
         void handleException(oracle::occi::SQLException& e);
-        
+
         /**
          * helper method to create Oracle statement
          */
         virtual oracle::occi::Statement* createStatement(const std::string& stmtString)
           throw (castor::exception::Exception);
-          
+
         /**
          * helper method to delete Oracle statement
          */
         virtual void deleteStatement(oracle::occi::Statement* stmt)
           throw (castor::exception::Exception);
-        
+
       private:
 
         /// SQL statement for function requestToDo
@@ -199,12 +183,6 @@ namespace castor {
 
         /// SQL statement object for function selectFileClass
         oracle::occi::Statement *m_selectFileClassStatement;
-
-        /// SQL statement for function selectFileSystem
-        static const std::string s_selectFileSystemStatementString;
-
-        /// SQL statement object for function selectFileSystem
-        oracle::occi::Statement *m_selectFileSystemStatement;
 
       }; // end of class OraCommonSvc
 

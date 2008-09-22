@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2008/09/02 09:49:23 $ $Author: waldron $
+ * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2008/09/22 13:28:27 $ $Author: waldron $
  *
  *
  *
@@ -299,21 +299,6 @@ castor::stager::RemoteJobSvc::selectFileClass
 }
 
 //------------------------------------------------------------------------------
-// selectFileSystem
-//------------------------------------------------------------------------------
-castor::stager::FileSystem*
-castor::stager::RemoteJobSvc::selectFileSystem
-(const std::string mountPoint,
- const std::string diskServer)
-  throw (castor::exception::Exception) {
-  castor::exception::NotSupported ex;
-  ex.getMessage()
-    << "RemoteJobSvc implementation is not complete"
-    << std::endl << "This method is not supported.";
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
 // DiskCopyStartResponseHandler
 //------------------------------------------------------------------------------
 
@@ -367,7 +352,6 @@ private:
 void castor::stager::RemoteJobSvc::disk2DiskCopyStart
 (const u_signed64 diskCopyId,
  const u_signed64 sourceDiskCopyId,
- const std::string destSvcClass,
  const std::string diskServer,
  const std::string fileSystem,
  castor::stager::DiskCopyInfo* &diskCopy,
@@ -379,7 +363,6 @@ void castor::stager::RemoteJobSvc::disk2DiskCopyStart
   castor::stager::Disk2DiskCopyStartRequest req;
   req.setDiskCopyId(diskCopyId);
   req.setSourceDiskCopyId(sourceDiskCopyId);
-  req.setDestSvcClass(destSvcClass);
   req.setDiskServer(diskServer);
   req.setMountPoint(fileSystem);
   req.setFileId(fileId);

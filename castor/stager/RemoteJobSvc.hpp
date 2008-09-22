@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.hpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/09/02 09:48:56 $ $Author: waldron $
+ * @(#)$RCSfile: RemoteJobSvc.hpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/09/22 13:28:27 $ $Author: waldron $
  *
  *
  *
@@ -157,8 +157,6 @@ namespace castor {
        * and filesystem are valid for the given service class.
        * @param diskcopyId the id of the new DiskCopy
        * @param sourceDiskCopyId the id of the source diskCopy
-       * @param destSvcClass the service class of the diskserver writing
-       * the new castor file.
        * @param diskServer the name of the destination diskserver
        * @param fileSystem the file system mount point
        * @param fileId the fileId of the CastorFile
@@ -171,7 +169,6 @@ namespace castor {
       virtual void disk2DiskCopyStart
       (const u_signed64 diskCopyId,
        const u_signed64 sourceDiskCopyId,
-       const std::string destSvcClass,
        const std::string diskServer,
        const std::string fileSystem,
        castor::stager::DiskCopyInfo* &diskCopy,
@@ -310,21 +307,6 @@ namespace castor {
        * @exception Exception in case of error
        */
       virtual castor::stager::FileClass* selectFileClass(const std::string name)
-        throw (castor::exception::Exception);
-
-      /**
-       * Retrieves a FileSystem from the database based on its
-       * mount point and diskServer name. Keeps a lock on it.
-       * Caller is in charge of the deletion of the allocated
-       * objects, including the DiskServer Object
-       * @param mountPoint the mountPoint of the FileSystem
-       * @param diskServer the name of the disk server hosting this file system
-       * @return the FileSystem linked to its DiskServer, or 0 if none found
-       * @exception Exception in case of error
-       */
-      virtual castor::stager::FileSystem* selectFileSystem
-      (const std::string mountPoint,
-       const std::string diskServer)
         throw (castor::exception::Exception);
 
       /**

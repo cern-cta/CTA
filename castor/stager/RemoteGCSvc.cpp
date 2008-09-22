@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/09/01 17:57:58 $ $Author: waldron $
+ * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/09/22 13:28:27 $ $Author: waldron $
  *
  *
  *
@@ -165,21 +165,6 @@ castor::stager::RemoteGCSvc::selectFileClass
 }
 
 //------------------------------------------------------------------------------
-// selectFileSystem
-//------------------------------------------------------------------------------
-castor::stager::FileSystem*
-castor::stager::RemoteGCSvc::selectFileSystem
-(const std::string mountPoint,
- const std::string diskServer)
-  throw (castor::exception::Exception) {
-  castor::exception::NotSupported ex;
-  ex.getMessage()
-    << "RemoteGCSvc implementation is not complete"
-    << std::endl << "This method is not supported.";
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
 // getRemoteGCClientTimeout
 //------------------------------------------------------------------------------
 int castor::stager::RemoteGCSvc::getRemoteGCClientTimeout() {
@@ -187,7 +172,7 @@ int castor::stager::RemoteGCSvc::getRemoteGCClientTimeout() {
   int ret_timeout = castor::stager::DEFAULT_REMOTEGCSVC_TIMEOUT;
 
   char *strtimeout = getconfent((char *)castor::stager::RMTGCSVC_CATEGORY_CONF,
-				(char *)castor::stager::TIMEOUT_CONF, 
+				(char *)castor::stager::TIMEOUT_CONF,
 				0);
   if (strtimeout != 0) {
     char* dp = strtimeout;
@@ -293,7 +278,7 @@ void castor::stager::RemoteGCSvc::filesDeleted
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteGCClientTimeout());
   client.setOptions(0);
-  client.sendRequest(&req, &rh); 
+  client.sendRequest(&req, &rh);
   // no need to cleanup files since the ownership of its content
   // was transmitted to req and the deletion of req will delete it !
 }
@@ -505,7 +490,7 @@ void castor::stager::RemoteGCSvc::dumpCleanupLogs()
     << std::endl << "This method is not supported.";
   throw ex;
 }
-    
+
 // -----------------------------------------------------------------------
 // removeTerminatedRequests
 // -----------------------------------------------------------------------

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/07/29 06:13:14 $ $Author: waldron $
+ * @(#)$RCSfile: ITapeSvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/09/22 13:28:27 $ $Author: waldron $
  *
  * This class provides methods related to tape handling
  *
@@ -270,12 +270,12 @@ namespace castor {
        * Checks, if the fileid is in a actual repack process.
        * This method is run by the migrator. It looks into the
        * Stager Catalog, if a StageRepackRequest object is assigned to
-       * a subrequest for this  file. In this case it returns the
+       * a subrequest for this file. In this case it returns the
        * volume name (repackvid field) of the request. The SubRequest is
        * set to ARCHIVED.
        * @return the name of the tape
        * @exception in case of an error
-      */
+       */
       virtual std::string checkFileForRepack
       (const u_signed64 fileId) throw (castor::exception::Exception) = 0;
 
@@ -287,7 +287,7 @@ namespace castor {
        * @exception in case of an error
        */
       virtual void rtcpclientdCleanUp()
-	throw (castor::exception::Exception) = 0;
+        throw (castor::exception::Exception) = 0;
 
       /**
        * Sends a UDP message to the rmMasterDaemon to inform it
@@ -308,7 +308,7 @@ namespace castor {
       /**
        * get the number of files of a stream
        * @param tpSvc the ITapeSvc used
-       * @param streamId  stream id
+       * @param streamId stream id
        */
       virtual u_signed64 getNumFilesByStream
       (const u_signed64 streamId) throw (castor::exception::Exception) = 0;

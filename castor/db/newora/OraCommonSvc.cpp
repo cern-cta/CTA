@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2008/07/29 13:43:54 $ $Author: itglp $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2008/09/22 13:32:08 $ $Author: waldron $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -85,10 +85,6 @@ const std::string castor::db::ora::OraCommonSvc::s_selectSvcClassStatementString
 const std::string castor::db::ora::OraCommonSvc::s_selectFileClassStatementString =
   "SELECT id, nbCopies FROM FileClass WHERE name = :1";
 
-/// SQL statement for selectFileSystem
-const std::string castor::db::ora::OraCommonSvc::s_selectFileSystemStatementString =
-  "SELECT d.id, d.status, d.adminStatus, d.readRate, d.writeRate, d.nbReadStreams, d.nbWriteStreams, d.nbReadWriteStreams, d.nbMigratorStreams, d.nbRecallerStreams, f.id, f.free, f.minFreeSpace, f.minAllowedFreeSpace, f.maxFreeSpace, f.totalSize, f.readRate, f.writeRate, f.nbReadStreams, f.nbWriteStreams, f.nbReadWriteStreams, f.nbMigratorStreams, f.nbRecallerStreams, f.status, f.adminStatus FROM FileSystem f, DiskServer d WHERE d.name = :1 AND f.mountPoint = :2 AND f.diskserver = d.id";
-
 
 //------------------------------------------------------------------------------
 // OraCommonSvc
@@ -98,8 +94,7 @@ castor::db::ora::OraCommonSvc::OraCommonSvc(const std::string name) :
   m_requestToDoStatement(0),
   m_selectTapeStatement(0),
   m_selectSvcClassStatement(0),
-  m_selectFileClassStatement(0),
-  m_selectFileSystemStatement(0) {
+  m_selectFileClassStatement(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -134,14 +129,12 @@ void castor::db::ora::OraCommonSvc::reset() throw() {
     if (m_selectTapeStatement) deleteStatement(m_selectTapeStatement);
     if (m_selectSvcClassStatement) deleteStatement(m_selectSvcClassStatement);
     if (m_selectFileClassStatement) deleteStatement(m_selectFileClassStatement);
-    if (m_selectFileSystemStatement) deleteStatement(m_selectFileSystemStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_requestToDoStatement = 0;
   m_selectTapeStatement = 0;
   m_selectSvcClassStatement = 0;
   m_selectFileClassStatement = 0;
-  m_selectFileSystemStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -387,79 +380,6 @@ castor::db::ora::OraCommonSvc::selectFileClass
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select FileClass by name :"
-      << std::endl << e.getMessage();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// selectFileSystem
-//------------------------------------------------------------------------------
-castor::stager::FileSystem*
-castor::db::ora::OraCommonSvc::selectFileSystem
-(const std::string mountPoint,
- const std::string diskServer)
-  throw (castor::exception::Exception) {
-  // Check whether the statements are ok
-  if (0 == m_selectFileSystemStatement) {
-    m_selectFileSystemStatement =
-      createStatement(s_selectFileSystemStatementString);
-  }
-  // Execute statement and get result
-  try {
-    m_selectFileSystemStatement->setString(1, diskServer);
-    m_selectFileSystemStatement->setString(2, mountPoint);
-    oracle::occi::ResultSet *rset = m_selectFileSystemStatement->executeQuery();
-    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      // Nothing found, return 0
-      m_selectFileSystemStatement->closeResultSet(rset);
-      return 0;
-    }
-    // Found the FileSystem and the DiskServer,
-    // create them in memory
-    castor::stager::DiskServer* ds =
-      new castor::stager::DiskServer();
-    ds->setId((u_signed64)rset->getDouble(1));
-    ds->setStatus
-      ((enum castor::stager::DiskServerStatusCode)rset->getInt(2));
-    ds->setAdminStatus
-      ((enum castor::monitoring::AdminStatusCodes)rset->getInt(3));
-    ds->setName(diskServer);
-    ds->setReadRate((u_signed64)rset->getDouble(4));
-    ds->setWriteRate((u_signed64)rset->getDouble(5));
-    ds->setNbReadStreams(rset->getInt(6));
-    ds->setNbWriteStreams(rset->getInt(7));
-    ds->setNbReadWriteStreams(rset->getInt(8));
-    ds->setNbMigratorStreams(rset->getInt(9));
-    ds->setNbRecallerStreams(rset->getInt(10));
-    castor::stager::FileSystem* result =
-      new castor::stager::FileSystem();
-    result->setId((u_signed64)rset->getDouble(11));
-    result->setFree((u_signed64)rset->getDouble(12));
-    result->setMinFreeSpace(rset->getFloat(13));
-    result->setMinAllowedFreeSpace(rset->getFloat(14));
-    result->setMaxFreeSpace(rset->getFloat(15));
-    result->setTotalSize((u_signed64)rset->getDouble(16));
-    result->setReadRate((u_signed64)rset->getDouble(17));
-    result->setWriteRate((u_signed64)rset->getDouble(18));
-    result->setNbReadStreams(rset->getInt(19));
-    result->setNbWriteStreams(rset->getInt(20));
-    result->setNbReadWriteStreams(rset->getInt(21));
-    result->setNbMigratorStreams(rset->getInt(22));
-    result->setNbRecallerStreams(rset->getInt(23));
-    result->setStatus
-      ((enum castor::stager::FileSystemStatusCodes)rset->getInt(24));
-    result->setAdminStatus
-      ((enum castor::monitoring::AdminStatusCodes)rset->getInt(25));
-    result->setMountPoint(mountPoint);
-    result->setDiskserver(ds);
-    ds->addFileSystems(result);
-    m_selectFileSystemStatement->closeResultSet(rset);
-    return result;
-  } catch (oracle::occi::SQLException e) {
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Unable to select FileSystem by name :"
       << std::endl << e.getMessage();
     throw ex;
   }

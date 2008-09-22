@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvcCInt.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/07/29 06:13:14 $ $Author: waldron $
+ * @(#)$RCSfile: ITapeSvcCInt.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/09/22 13:28:27 $ $Author: waldron $
  *
  *
  *
@@ -80,7 +80,7 @@ extern "C" {
   // Cstager_ITapeSvc_anySegmentsForTape
   //-------------------------------------------------------------------------
   int Cstager_ITapeSvc_anySegmentsForTape(Cstager_ITapeSvc_t* tpSvc,
-                                            castor::stager::Tape* searchItem) {
+					  castor::stager::Tape* searchItem) {
     if (!checkITapeSvc(tpSvc)) return -1;
     try {
       return tpSvc->tpSvc->anySegmentsForTape(searchItem);
@@ -195,7 +195,7 @@ extern "C" {
   // Cstager_ITapeSvc_fileRecalled
   //-------------------------------------------------------------------------
   int Cstager_ITapeSvc_fileRecalled(Cstager_ITapeSvc_t* tpSvc,
-                                      castor::stager::TapeCopy* tapeCopy) {
+				    castor::stager::TapeCopy* tapeCopy) {
     if (!checkITapeSvc(tpSvc)) return -1;
     try {
       tpSvc->tpSvc->fileRecalled(tapeCopy);
@@ -211,7 +211,7 @@ extern "C" {
   // Cstager_ITapeSvc_fileRecallFailed
   //-------------------------------------------------------------------------
   int Cstager_ITapeSvc_fileRecallFailed(Cstager_ITapeSvc_t* tpSvc,
-                                          castor::stager::TapeCopy* tapeCopy) {
+					castor::stager::TapeCopy* tapeCopy) {
     if (!checkITapeSvc(tpSvc)) return -1;
     try {
       tpSvc->tpSvc->fileRecallFailed(tapeCopy);
@@ -227,8 +227,8 @@ extern "C" {
   // Cstager_ITapeSvc_tapesToDo
   //-------------------------------------------------------------------------
   int Cstager_ITapeSvc_tapesToDo(Cstager_ITapeSvc_t* tpSvc,
-                                   castor::stager::Tape*** tapeArray,
-                                   int *nbItems) {
+				 castor::stager::Tape*** tapeArray,
+				 int *nbItems) {
     if (!checkITapeSvc(tpSvc)) return -1;
     try {
       std::vector<castor::stager::Tape*> result =
@@ -251,8 +251,8 @@ extern "C" {
   // Cstager_ITapeSvc_streamsToDo
   //-------------------------------------------------------------------------
   int Cstager_ITapeSvc_streamsToDo(Cstager_ITapeSvc_t* tpSvc,
-                                     castor::stager::Stream*** streamArray,
-                                     int *nbItems) {
+				   castor::stager::Stream*** streamArray,
+				   int *nbItems) {
     if (!checkITapeSvc(tpSvc)) return -1;
     try {
       std::vector<castor::stager::Stream*> result =
@@ -275,10 +275,10 @@ extern "C" {
   // Cstager_ITapeSvc_selectTape
   //-------------------------------------------------------------------------
   int Cstager_ITapeSvc_selectTape(struct Cstager_ITapeSvc_t* tpSvc,
-                                    castor::stager::Tape** tape,
-                                    const char* vid,
-                                    const int side,
-                                    const int tpmode) {
+				  castor::stager::Tape** tape,
+				  const char* vid,
+				  const int side,
+				  const int tpmode) {
     if (!checkITapeSvc(tpSvc)) return -1;
     try {
       *tape = tpSvc->tpSvc->selectTape(vid, side, tpmode);
@@ -301,8 +301,8 @@ extern "C" {
   // Cstager_ITapeSvc_selectSvcClass
   //-------------------------------------------------------------------------
   int Cstager_ITapeSvc_selectSvcClass(struct Cstager_ITapeSvc_t* tpSvc,
-                                        castor::stager::SvcClass** svcClass,
-                                        const char* name) {
+				      castor::stager::SvcClass** svcClass,
+				      const char* name) {
     if (!checkITapeSvc(tpSvc)) return -1;
     try {
       *svcClass = tpSvc->tpSvc->selectSvcClass(name);
