@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.681 $ $Date: 2008/09/01 17:55:34 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.682 $ $Date: 2008/09/22 13:22:40 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -77,7 +77,6 @@ CREATE OR REPLACE PACKAGE castor AS
     fileSystemMountPoint VARCHAR(2048),
     fileSystemStatus INTEGER,
     fileSystemAdminStatus INTEGER,
-    fileSystemDiskPoolName VARCHAR(2048),
     fileSystemSvcClassName VARCHAR(2048));
   TYPE SchedulerResources_Cur IS REF CURSOR RETURN SchedulerResourceLine;
   TYPE FileEntry IS RECORD (
@@ -670,8 +669,8 @@ BEGIN
   -- Resolve the destination service class id to a name
   SELECT name INTO destSvcClass FROM SvcClass WHERE id = svcClassId;
   -- If we are in this procedure then we did not find a copy of the
-  -- file in the target service class that could be used. So, we check 
-  -- to see if the user has the rights to create a file in the destination 
+  -- file in the target service class that could be used. So, we check
+  -- to see if the user has the rights to create a file in the destination
   -- service class. I.e. check for StagePutRequest access rights
   checkPermission(destSvcClass, reuid, regid, 40, authDest);
   IF authDest != 0 THEN
@@ -680,7 +679,7 @@ BEGIN
       UPDATE SubRequest
          SET status = 7, -- FAILED
              errorCode = 13, -- EACCES
-             errorMessage = 'Insufficient user privileges to trigger a recall or file replication request to the '''||destSvcClass||''' service class '
+             errorMessage = 'Insufficient user privileges to trigger a tape recall or file replication to the '''||destSvcClass||''' service class'
        WHERE id = srId;
       COMMIT;
     RETURN;
@@ -723,7 +722,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     UPDATE SubRequest
        SET status = 7, -- FAILED
            errorCode = CASE
-             WHEN dcStatus IN (5,11) THEN 16 -- WAITFS, WAITFSSCHEDULING, EBUSY
+             WHEN dcStatus IN (5, 11) THEN 16 -- WAITFS, WAITFSSCHEDULING, EBUSY
              WHEN dcStatus = 6 AND fsStatus = 0 and dsStatus = 0 THEN 16 -- STAGEOUT, PRODUCTION, PRODUCTION, EBUSY
              ELSE 1718 -- ESTNOTAVAIL
            END,
@@ -738,8 +737,22 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
      WHERE id = srId;
     COMMIT;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- We did not find the very special case so trigger a tape recall.
-    dcId := 0;
+    -- Check whether the user has the rights to issue a tape recall to
+    -- the destination service class.
+    checkPermission(destSvcClass, reuid, regid, 161, authDest);
+    IF authDest != 0 THEN
+      -- Fail the subrequest and notify the client
+      dcId := -1;
+      UPDATE SubRequest
+         SET status = 7, -- FAILED
+             errorCode = 13, -- EACCES
+             errorMessage = 'Insufficient user privileges to trigger a tape recall to the '''||destSvcClass||''' service class'
+       WHERE id = srId;
+      COMMIT;
+    ELSE
+      -- We did not find the very special case so trigger a tape recall.
+      dcId := 0;
+    END IF;
   END;
 END;
 
