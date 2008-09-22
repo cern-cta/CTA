@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.14 $ $Release$ $Date: 2008/08/14 15:59:00 $ $Author: kotlyar $
+ * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.15 $ $Release$ $Date: 2008/09/22 13:31:14 $ $Author: waldron $
  *
  *
  *
@@ -60,21 +60,6 @@ Cstager_IJobSvc_fromIService(struct C_IService_t* obj);
  * Destructor
  */
 int Cstager_IJobSvc_delete(struct Cstager_IJobSvc_t* svcs);
-
-/**
- * Selects the next request the job service should deal with.
- * Selects a Request in START status and move its status
- * PROCESSED to avoid double processing.
- * @param jobSvc the IJobSvc used
- * @param request the request to process
- * @return 0 : OK.
- * -1 : an error occurred and serrno is set to the corresponding error code
- * A detailed error message can be retrieved by calling
- * Cstager_IJobSvc_errorMsg
- */
-int Cstager_IJobSvc_requestToDo
-(struct Cstager_IJobSvc_t* jobSvc,
- struct Cstager_Request_t** request);
 
 /**
  * Handles the start of a Get or Update job.
@@ -197,82 +182,6 @@ int Cstager_IJobSvc_putDoneStart
 const char* Cstager_IJobSvc_errorMsg(struct Cstager_IJobSvc_t* jobSvc);
 
 /**
- * Retrieves a SvcClass from the database based on its name.
- * Caller is in charge of the deletion of the allocated object
- * @param jobSvc the IJobSvc used
- * @param svcClass the SvcClass object returned, or 0 if none found
- * @param name the name of the SvcClass
- * @return 0 : OK.
- * -1 : an error occurred and serrno is set to the corresponding error code
- * A detailed error message can be retrieved by calling
- * Cstager_IJobSvc_errorMsg
- */
-int Cstager_IJobSvc_selectSvcClass(struct Cstager_IJobSvc_t* jobSvc,
-				   struct Cstager_SvcClass_t** svcClass,
-				   const char* name);
-
-/**
- * Retrieves a FileSystem from the database based on its
- * mount point and diskServer name.
- * Caller is in charge of the deletion of the allocated
- * objects, including the DiskServer Object
- * @param jobSvc the IJobSvc used
- * @param mountPoint the mountPoint of the FileSystem
- * @param diskServer the name of the disk server hosting this file system
- * @param fileSystem the FileSystem linked to its DiskServer, or 0 if none found
- * @return 0 : OK.
- * -1 : an error occurred and serrno is set to the corresponding error code
- * A detailed error message can be retrieved by calling
- * Cstager_IJobSvc_errorMsg
- */
-int Cstager_IJobSvc_selectFileSystem
-(struct Cstager_IJobSvc_t* jobSvc,
- struct Cstager_FileSystem_t** fileSystem,
- const char* mountPoint,
- const char* diskServer);
-
-/**
- * Updates database after successful completion of a
- * disk to disk copy. This includes setting the DiskCopy
- * status to DISKCOPY_STAGED and setting the SubRequest
- * status to SUBREQUEST_READY.
- * Changes are commited
- * @param jobSvc the IJobSvc used
- * @param diskcopyId the id of the new DiskCopy
- * @param sourceDiskCopyId the id of the source diskCopy
- * @param fileId the id of the castorFile
- * @param nsHost the name server hosting this castorFile
- * @return 0 : OK.
- * -1 : an error occurred and serrno is set to the corresponding error code
- * A detailed error message can be retrieved by calling
- * Cstager_IJobSvc_errorMsg
- */
-int Cstager_IJobSvc_disk2DiskCopyDone
-(struct Cstager_IJobSvc_t* jobSvc,
- u_signed64 diskCopyId,
- u_signed64 sourceDiskCopyId,
- u_signed64 fileId,
- const char* nsHost);
-
-/**
- * Updates database after a failure of a disk to disk copy.
- * Changes are commited
- * @param jobSvc the IJobSvc used
- * @param diskcopyId the id of the new DiskCopy
- * @param fileId the id of the castorFile
- * @param nsHost the name server hosting this castorFile
- * @return 0 : OK.
- * -1 : an error occurred and serrno is set to the corresponding error code
- * A detailed error message can be retrieved by calling
- * Cstager_IJobSvc_errorMsg
- */
-int Cstager_IJobSvc_disk2DiskCopyFailed
-(struct Cstager_IJobSvc_t* jobSvc,
- u_signed64 diskCopyId,
- u_signed64 fileId,
- const char* nsHost);
-
-/**
  * Prepares a file for migration, when needed.
  * This is called both when a stagePut is over and when a
  * putDone request is processed.
@@ -285,7 +194,7 @@ int Cstager_IJobSvc_disk2DiskCopyFailed
  * castorFile.
  * @param jobSvc the IJobSvc used
  * @param subreq The SubRequest handling the file to prepare
- * @param fileSize The actual size of the castor file 
+ * @param fileSize The actual size of the castor file
  * @param timeStamp To know if the fileSize is still valid
  * @param fileId the id of the castorFile
  * @param nsHost the name server hosting this castorFile
@@ -306,7 +215,6 @@ int Cstager_IJobSvc_prepareForMigration
  const char* nsHost,
  const char* csumtype,
  const char* csumvalue);
-
 
 /**
  * Informs the stager the a Get or Update SubRequest

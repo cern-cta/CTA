@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvcCInt.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/08/14 15:59:00 $ $Author: kotlyar $
+ * @(#)$RCSfile: IJobSvcCInt.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/09/22 13:31:14 $ $Author: waldron $
  *
  *
  *
@@ -130,83 +130,6 @@ extern "C" {
   }
 
   //-------------------------------------------------------------------------
-  // Cstager_IJobSvc_selectSvcClass
-  //-------------------------------------------------------------------------
-  int Cstager_IJobSvc_selectSvcClass(struct Cstager_IJobSvc_t* jobSvc,
-				     castor::stager::SvcClass** svcClass,
-				     const char* name) {
-    if (!checkIJobSvc(jobSvc)) return -1;
-    try {
-      *svcClass = jobSvc->jobSvc->selectSvcClass(name);
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      jobSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-  }
-
-  //-------------------------------------------------------------------------
-  // Cstager_IJobSvc_selectFileSystem
-  //-------------------------------------------------------------------------
-  int Cstager_IJobSvc_selectFileSystem
-  (struct Cstager_IJobSvc_t* jobSvc,
-   castor::stager::FileSystem** fileSystem,
-   const char* mountPoint,
-   const char* diskServer) {
-    if (!checkIJobSvc(jobSvc)) return -1;
-    try {
-      *fileSystem = jobSvc->jobSvc->selectFileSystem
-	(mountPoint, diskServer);
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      jobSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-  }
-
-  //-------------------------------------------------------------------------
-  // Cstager_IJobSvc_disk2DiskCopyDone
-  //-------------------------------------------------------------------------
-  int Cstager_IJobSvc_disk2DiskCopyDone
-  (struct Cstager_IJobSvc_t* jobSvc,
-   u_signed64 diskCopyId,
-   u_signed64 sourceDiskCopyId,
-   u_signed64 fileId,
-   const char* nsHost) {
-    if (!checkIJobSvc(jobSvc)) return -1;
-    try {
-      jobSvc->jobSvc->disk2DiskCopyDone
-	(diskCopyId, sourceDiskCopyId, fileId, nsHost);
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      jobSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-  }
-
-  //-------------------------------------------------------------------------
-  // Cstager_IJobSvc_disk2DiskCopyFailed
-  //-------------------------------------------------------------------------
-  int Cstager_IJobSvc_disk2DiskCopyFailed
-  (struct Cstager_IJobSvc_t* jobSvc,
-   u_signed64 diskCopyId,
-   u_signed64 fileId,
-   const char* nsHost) {
-    if (!checkIJobSvc(jobSvc)) return -1;
-    try {
-      jobSvc->jobSvc->disk2DiskCopyFailed(diskCopyId, fileId, nsHost);
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      jobSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-  }
-
-  //-------------------------------------------------------------------------
   // Cstager_IJobSvc_prepareForMigration
   //-------------------------------------------------------------------------
   int Cstager_IJobSvc_prepareForMigration
@@ -273,7 +196,7 @@ extern "C" {
   //-------------------------------------------------------------------------
   int Cstager_IJobSvc_putFailed
   (struct Cstager_IJobSvc_t* jobSvc,
-   u_signed64 subReqId, 
+   u_signed64 subReqId,
    u_signed64 fileId,
    const char* nsHost) {
     if (!checkIJobSvc(jobSvc)) return -1;

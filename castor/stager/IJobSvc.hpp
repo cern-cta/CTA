@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/08/14 15:10:11 $ $Author: kotlyar $
+ * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/09/22 13:31:14 $ $Author: waldron $
  *
  * This class provides stager methods related to job handling
  *
@@ -148,14 +148,12 @@ namespace castor {
 
       /**
        * Handles the start of a StageDiskCopyReplicaRequest. It checks
-       * that the source DiskCopy stills exists i.e. hasn't been 
+       * that the source DiskCopy stills exists i.e. hasn't been
        * garbage collected. Updates the filesystem of the destination
        * DiskCoy and verifies that the selected destination diskserver
        * and filesystem are valid for the given service class.
        * @param diskcopyId the id of the new DiskCopy
        * @param sourceDiskCopyId the id of the source diskCopy
-       * @param destSvcClass the service class of the diskserver writing
-       * the new castor file.
        * @param diskServer the name of the destination diskserver
        * @param fileSystem the file system mount point
        * @param fileId the id of the castorFile
@@ -168,16 +166,15 @@ namespace castor {
       virtual void disk2DiskCopyStart
       (const u_signed64 diskCopyId,
        const u_signed64 sourceDiskCopyId,
-       const std::string destSvcClass,
        const std::string diskServer,
        const std::string fileSystem,
        castor::stager::DiskCopyInfo* &diskCopy,
        castor::stager::DiskCopyInfo* &sourceDiskCopy,
        u_signed64 fileId,
        const std::string nsHost)
-       
+
         throw(castor::exception::Exception) = 0;
-      
+
       /**
        * Updates database after successful completion of a
        * disk to disk copy. This includes setting the DiskCopy
@@ -231,7 +228,7 @@ namespace castor {
        * @param csumvalue the checksum value of the castorFile
        * @exception Exception in case of error
        */
-         
+
       virtual void prepareForMigration
       (castor::stager::SubRequest* subreq,
        u_signed64 fileSize,
@@ -240,7 +237,7 @@ namespace castor {
        const std::string nsHost,
        const std::string csumtype="",
        const std::string csumvalue="")
-        throw (castor::exception::Exception) = 0;  
+        throw (castor::exception::Exception) = 0;
 
       /**
        * Informs the stager the a Get or Update SubRequest
@@ -302,7 +299,7 @@ namespace castor {
        u_signed64 fileId,
        const std::string nsHost)
         throw (castor::exception::Exception) = 0;
-    
+
     }; // end of class IJobSvc
 
   } // end of namespace stager
