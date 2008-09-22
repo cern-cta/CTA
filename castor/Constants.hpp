@@ -202,7 +202,12 @@ namespace castor {
     OBJ_VectorAddress = 159,
 
     /* VDQM objects to be moved to a different range */
-    OBJ_Tape2DriveDedication = 160
+    OBJ_Tape2DriveDedication = 160,
+
+    /* Special constant used by the B/W list to determine if a user has rights
+     * to issue tape recalls.
+     */
+    OBJ_TapeRecall = 161
   };
 
   /**
@@ -280,7 +285,7 @@ namespace castor {
    * declared outside of any function.
    */
 
-#define OBJECT_IDS_NB 161
+#define OBJECT_IDS_NB 162
   static const unsigned int ObjectsIdsNb = OBJECT_IDS_NB;
 
   /**

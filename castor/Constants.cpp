@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.65 $ $Release$ $Date: 2008/07/20 10:44:34 $ $Author: murrayc3 $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.66 $ $Release$ $Date: 2008/09/22 11:48:02 $ $Author: waldron $
  *
  *
  *
@@ -122,10 +122,10 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "TapeDrive",
   "DeviceGroupName",
   "ErrorHistory",
-  "TapeDriveDedication",	
+  "TapeDriveDedication",
   "TapeAccessSpecification",
   "TapeDriveCompatibility",
-  
+
   "PutDoneStart",
   "DELETED TYPE",
   "SetFileGCWeight",
@@ -151,7 +151,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "BasicResponse",
   "StartResponse",
   "GCFilesResponse",
-  "FileQryResponse", 
+  "FileQryResponse",
   "DiskPoolQueryResponse",
 
   "StageRepackRequest",
@@ -174,7 +174,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "StageDiskCopyReplicaRequest",
   "RepackResponse",
   "RepackFileQry",
-  "CnsInfoMigrationPolicy", 
+  "CnsInfoMigrationPolicy",
   "DbInfoMigrationPolicy",
   "CnsInfoRecallPolicy",
   "DbInfoRecallPolicy",
@@ -201,7 +201,9 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "ListPrivilegesResponse",
   "PriorityMap",
   "VectorAddress",
-  "Tape2DriveDedication"
+  "Tape2DriveDedication",
+
+  "TapeRecall"
 };
 
 
@@ -247,10 +249,10 @@ const char* castor::ServicesIdStrings[ServicesIdsNb] = {
   "DELETED SERVICE",
   "DELETED SERVICE",
   "MYCNV",
-  
+
   "DBSRMSVC",
   "DBSRMDAEMONSVC",
-  
+
   "ORACLEANSVC",
   "ORARMMASTERSVC",
   "DBPARAMSSVC",
