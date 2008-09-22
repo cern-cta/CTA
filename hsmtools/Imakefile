@@ -251,6 +251,23 @@ NormalProgramTarget(listPriority,listPriority.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(enterPriority,enterPriority.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(deletePriority,deletePriority.Osuf,$(DEPLIB2),$(LIBS2))
 
+NOMORERFIO = FileName(OperatorDir,nomorerfio)
+DOMAINNAME = DomainName
+LOGFILE = FileName($(SPOOL),rfiod.log)
+
+#if BuildNameServerLibrary
+CNS_ROOT_DIR = NsRoot
+CNS_ROOT = -DCNS_ROOT=\"$(CNS_ROOT_DIR)\"
+#endif
+
+#if FollowRtLinks
+FOLLOWLINKS=-DFollowRtLinks
+#endif
+
+#ifdef RfioAlarmFile
+RFIO_ALRM= FileName(RfioSpool,RfioAlarmFile)
+#endif
+
 RFIOFLAGS=-DNOMORERFIO=\"$(NOMORERFIO)\" $(FOLLOWLINKS) \
 	  -DDOMAINNAME=\"$(DOMAINNAME)\" -DLOGFILE=\"$(LOGFILE)\" \
 	  -DRFIO_ALRM=\"$(RFIO_ALRM)\" $(CNS_ROOT) $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
