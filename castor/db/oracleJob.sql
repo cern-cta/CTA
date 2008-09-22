@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.660 $ $Date: 2008/09/02 09:46:23 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.661 $ $Date: 2008/09/22 13:25:12 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -19,6 +19,7 @@ BEGIN
                         free = free - fileSize   -- just an evaluation, monitoring will update it
    WHERE id = fs;
 END;
+
 
 /* PL/SQL method to update FileSystem nb of streams when files are closed */
 CREATE OR REPLACE PROCEDURE updateFsFileClosed(fs IN INTEGER) AS
@@ -118,12 +119,15 @@ BEGIN
   END IF;
 END;
 
+
 /* Checks whether the protocol used is supporting updates and when not
  * calls firstByteWrittenProc as if the file was already modified */
 CREATE OR REPLACE PROCEDURE handleProtoNoUpd
 (srId IN INTEGER, protocol VARCHAR2) AS
 BEGIN
-  IF protocol != 'rfio' AND protocol != 'rfio3' THEN
+  IF protocol != 'rfio'  AND
+     protocol != 'rfio3' AND
+     protocol != 'xroot' THEN
     firstByteWrittenProc(srId);
   END IF;
 END;
@@ -131,27 +135,47 @@ END;
 
 /* PL/SQL method implementing putStart */
 CREATE OR REPLACE PROCEDURE putStart
-        (srId IN INTEGER, fileSystemId IN INTEGER,
-         rdcId OUT INTEGER, rdcStatus OUT INTEGER,
-         rdcPath OUT VARCHAR2) AS
+        (srId IN INTEGER, selectedDiskServer IN VARCHAR2, selectedMountPoint IN VARCHAR2,
+         rdcId OUT INTEGER, rdcStatus OUT INTEGER, rdcPath OUT VARCHAR2) AS
   srStatus INTEGER;
+  srSvcClass INTEGER;
+  fsId INTEGER;
   prevFsId INTEGER;
+  blah NUMBER;
 BEGIN
-  -- Get diskCopy id
-  SELECT diskCopy, SubRequest.status, fileSystem INTO rdcId, srStatus, prevFsId
-    FROM SubRequest, DiskCopy
+  -- Get diskCopy and subrequest related information
+  SELECT SubRequest.diskCopy, SubRequest.status, DiskCopy.fileSystem,
+         Request.svcClass
+    INTO rdcId, srStatus, prevFsId, srSvcClass
+    FROM SubRequest, DiskCopy,
+         (SELECT id, svcClass FROM StagePutRequest UNION ALL
+          SELECT id, svcClass FROM StageGetRequest UNION ALL
+          SELECT id, svcClass FROM StageUpdateRequest) Request
    WHERE SubRequest.diskcopy = Diskcopy.id
-     AND SubRequest.id = srId;
+     AND SubRequest.id = srId
+     AND SubRequest.request = Request.id;
   -- Check that we did not cancel the SubRequest in the mean time
   IF srStatus IN (7, 9, 10) THEN -- FAILED, FAILED_FINISHED, FAILED_ANSWERING
     raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
   END IF;
-  IF prevFsId > 0 AND prevFsId <> fileSystemId THEN
-    -- this could happen if LSF schedules the same job twice!
-    -- (see bug report #14358 for the whole story)
+  -- Check to see if the proposed diskserver and filesystem selected by the
+  -- scheduler to run the job is in the correct service class.
+  BEGIN
+    SELECT FileSystem.id INTO fsId
+      FROM DiskServer, FileSystem, DiskPool2SvcClass
+     WHERE FileSystem.diskserver = DiskServer.id
+       AND FileSystem.diskPool = DiskPool2SvcClass.parent
+       AND DiskPool2SvcClass.child = srSvcClass
+       AND DiskServer.name = selectedDiskServer
+       AND FileSystem.mountPoint = selectedMountPoint;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    raise_application_error(-20114, 'Job scheduled to the wrong service class. Giving up.');
+  END;
+  -- Check that a job has not already started for this diskcopy. Refer to
+  -- bug #14358
+  IF prevFsId > 0 AND prevFsId <> fsId THEN
     raise_application_error(-20107, 'This job has already started for this DiskCopy. Giving up.');
   END IF;
-
   -- Get older castorFiles with the same name and drop their lastKnownFileName
   UPDATE /*+ INDEX (castorFile) */ CastorFile SET lastKnownFileName = TO_CHAR(id)
    WHERE id IN (
@@ -166,22 +190,23 @@ BEGIN
    WHERE parent = srId;
   -- link DiskCopy and FileSystem and update DiskCopyStatus
   UPDATE DiskCopy SET status = 6, -- DISKCOPY_STAGEOUT
-                      fileSystem = fileSystemId,
+                      fileSystem = fsId,
                       nbCopyAccesses = nbCopyAccesses + 1
    WHERE id = rdcId
    RETURNING status, path
    INTO rdcStatus, rdcPath;
 END;
 
+
 /* PL/SQL method implementing getUpdateStart */
 CREATE OR REPLACE PROCEDURE getUpdateStart
-        (srId IN INTEGER, fileSystemId IN INTEGER,
-         dci OUT INTEGER, rpath OUT VARCHAR2,
-         rstatus OUT NUMBER,
-         reuid OUT INTEGER, regid OUT INTEGER) AS
+        (srId IN INTEGER, selectedDiskServer IN VARCHAR2, selectedMountPoint IN VARCHAR2,
+         dci OUT INTEGER, rpath OUT VARCHAR2, rstatus OUT NUMBER, reuid OUT INTEGER,
+         regid OUT INTEGER) AS
   cfid INTEGER;
   fid INTEGER;
   dcId INTEGER;
+  fsId INTEGER;
   dcIdInReq INTEGER;
   nh VARCHAR2(2048);
   fileSize INTEGER;
@@ -207,12 +232,25 @@ BEGIN
     FROM CastorFile, SubRequest
    WHERE CastorFile.id = SubRequest.castorFile
      AND SubRequest.id = srId FOR UPDATE;
+  -- Check to see if the proposed diskserver and filesystem selected by the
+  -- scheduler to run the job is in the correct service class.
+  BEGIN
+    SELECT FileSystem.id INTO fsId
+      FROM DiskServer, FileSystem, DiskPool2SvcClass
+     WHERE FileSystem.diskserver = DiskServer.id
+       AND FileSystem.diskPool = DiskPool2SvcClass.parent
+       AND DiskPool2SvcClass.child = srSvcClass
+       AND DiskServer.name = selectedDiskServer
+       AND FileSystem.mountPoint = selectedMountPoint;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    raise_application_error(-20114, 'Job scheduled to the wrong service class. Giving up.');
+  END;
   -- Try to find local DiskCopy
   SELECT /*+ INDEX(DISKCOPY I_DISKCOPY_CASTORFILE) */ id, nbCopyAccesses, gcWeight, creationTime
     INTO dcId, nbac, gcw, cTime
     FROM DiskCopy
    WHERE DiskCopy.castorfile = cfId
-     AND DiskCopy.filesystem = fileSystemId
+     AND DiskCopy.filesystem = fsId
      AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
      AND ROWNUM < 2;
   -- We found it, so we are settled and we'll use the local copy.
@@ -266,7 +304,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       SELECT status INTO stat FROM DiskCopy WHERE id = dcIdInReq;
       IF stat IN (5, 11) THEN -- WAITFS, WAITFS_SCHEDULING
         -- it is an update creating a file, let's call putStart
-        putStart(srId, fileSystemId, dci, rstatus, rpath);
+        putStart(srId, selectedDiskServer, selectedMountPoint, dci, rstatus, rpath);
         RETURN;
       END IF;
     END;
@@ -282,10 +320,10 @@ END;
 
 /* PL/SQL method implementing disk2DiskCopyStart */
 CREATE OR REPLACE PROCEDURE disk2DiskCopyStart
-(dcId IN INTEGER, srcDcId IN INTEGER, destSvcClass IN VARCHAR2,
- destdiskServer IN VARCHAR2, destMountPoint IN VARCHAR2, destPath OUT VARCHAR2,
+(dcId IN INTEGER, srcDcId IN INTEGER, destdiskServer IN VARCHAR2,
+ destMountPoint IN VARCHAR2, destPath OUT VARCHAR2, destSvcClass OUT VARCHAR2,
  srcDiskServer OUT VARCHAR2, srcMountPoint OUT VARCHAR2, srcPath OUT VARCHAR2,
- srcSvcClass OUT VARCHAR2, reqEuid OUT NUMBER, reqEgid OUT NUMBER) AS
+ srcSvcClass OUT VARCHAR2) AS
   fsId NUMBER;
   cfId NUMBER;
   dsId NUMBER;
@@ -296,9 +334,9 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyStart
 BEGIN
   -- Check that we did not cancel the replication request in the mean time
   BEGIN
-    SELECT SubRequest.status, 
-           StageDiskCopyReplicaRequest.euid, StageDiskCopyReplicaRequest.egid
-      INTO unused, reqEuid, reqEgid
+    SELECT SubRequest.status,
+           StageDiskCopyReplicaRequest.svcClassName
+      INTO unused, destSvcClass
       FROM SubRequest, StageDiskCopyReplicaRequest
      WHERE SubRequest.diskcopy = dcId
        AND SubRequest.request = StageDiskCopyReplicaRequest.id
@@ -313,11 +351,10 @@ BEGIN
   -- diskservers/filesystems are moved.
   BEGIN
     SELECT FileSystem.id, DiskServer.id INTO fsId, dsId
-      FROM DiskServer, FileSystem, DiskPool2SvcClass, DiskPool, SvcClass
+      FROM DiskServer, FileSystem, DiskPool2SvcClass, SvcClass
      WHERE FileSystem.diskserver = DiskServer.id
        AND FileSystem.diskPool = DiskPool2SvcClass.parent
        AND DiskPool2SvcClass.child = SvcClass.id
-       AND DiskPool2SvcClass.parent = DiskPool.id
        AND SvcClass.name = destSvcClass
        AND DiskServer.name = destDiskServer
        AND FileSystem.mountPoint = destMountPoint;
@@ -709,14 +746,13 @@ BEGIN
   -- the status of all diskservers, their associated filesystems and the
   -- service class they are in.
   OPEN resources
-  FOR SELECT DiskServer.name, DiskServer.status, DiskServer.adminstatus,
-	     Filesystem.mountpoint, FileSystem.status, FileSystem.adminstatus,
-	     DiskPool.name, SvcClass.name
-        FROM DiskServer, FileSystem, DiskPool2SvcClass, DiskPool, SvcClass
-       WHERE FileSystem.diskServer = DiskServer.id
-         AND FileSystem.diskPool = DiskPool2SvcClass.parent
-         AND DiskPool2SvcClass.child = SvcClass.id
-         AND DiskPool2SvcClass.parent = DiskPool.id;
+    FOR SELECT DiskServer.name, DiskServer.status, DiskServer.adminstatus,
+               Filesystem.mountpoint, FileSystem.status, FileSystem.adminstatus,
+	       SvcClass.name
+          FROM DiskServer, FileSystem, DiskPool2SvcClass, SvcClass
+         WHERE FileSystem.diskServer = DiskServer.id
+           AND FileSystem.diskPool = DiskPool2SvcClass.parent
+           AND DiskPool2SvcClass.child = SvcClass.id;
 END;
 
 
