@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/09/02 13:10:23 $ $Author: riojac3 $
+ * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/09/22 13:36:29 $ $Author: waldron $
  *
  * @author Benjamin Couturier
  *****************************************************************************/
@@ -48,18 +48,18 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::io::AuthServerSocket::AuthServerSocket(int socket) throw () : 
+castor::io::AuthServerSocket::AuthServerSocket(int socket) throw () :
   ServerSocket(socket) {
   if (loader() == -1) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "dynamic library was not proprely loaded";
-    throw ex; 
+    throw ex;
   }
-  
+
   if (getServer_initContext(&m_security_context,CSEC_SERVICE_TYPE_HOST ,NULL) < 0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "The initialization of the security context failed";
-    throw ex;  
+    throw ex;
   }
 }
 
@@ -68,20 +68,20 @@ castor::io::AuthServerSocket::AuthServerSocket(int socket) throw () :
 // constructor
 //------------------------------------------------------------------------------
 castor::io::AuthServerSocket::AuthServerSocket(const bool reusable)
-  throw (castor::exception::Exception): 
+  throw (castor::exception::Exception):
   ServerSocket(reusable) {
-  
+
   if (loader() == -1) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "dynamic library was not proprely loaded";
     throw ex;
   }
-  
+
   if (getServer_initContext(&m_security_context,CSEC_SERVICE_TYPE_HOST ,NULL) < 0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "The initialization of the security context failed";
     throw ex;
-  }  
+  }
 }
 
 
@@ -89,20 +89,20 @@ castor::io::AuthServerSocket::AuthServerSocket(const bool reusable)
 // constructor
 //------------------------------------------------------------------------------
 castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
-					       const bool reusable) 
-  throw (castor::exception::Exception) : 
+					       const bool reusable)
+  throw (castor::exception::Exception) :
   ServerSocket(port, reusable) {
   if (loader() == -1) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "dynamic library was not proprely loaded";
     throw ex;
   }
-  
+
   if (getServer_initContext(&m_security_context,CSEC_SERVICE_TYPE_HOST ,NULL) < 0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "The initialization of the security context failed";
     throw ex;
-  }  
+  }
 }
 
 
@@ -110,17 +110,17 @@ castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
 // constructor
 //------------------------------------------------------------------------------
 castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
-					       const std::string host, 
+					       const std::string host,
 					       const bool reusable,
 					       int service_type)
-  throw (castor::exception::Exception) : 
+  throw (castor::exception::Exception) :
   ServerSocket(port, host, reusable) {
   if (loader() == -1) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "dynamic library was not proprely loaded";
     throw ex;
   }
-  
+
   if (getServer_initContext(&m_security_context,CSEC_SERVICE_TYPE_HOST ,NULL) < 0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "The initialization of the security context failed";
@@ -136,45 +136,45 @@ castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
 					       const unsigned long ip,
 					       const bool reusable,
 					       int service_type)
-  throw (castor::exception::Exception) : 
+  throw (castor::exception::Exception) :
   ServerSocket(port, ip, reusable) {
   if (loader() == -1) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "dynamic library was not proprely loaded";
     throw ex;
   }
-  
+
   if (getServer_initContext(&m_security_context,CSEC_SERVICE_TYPE_HOST ,NULL) < 0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "The initialization of the security context failed";
     throw ex;
-  }    
+  }
 }
 
 
 //------------------------------------------------------------------------------
-// constructor 
-// Initialize a AuthServerSocket from a ServerSocket. It copies the attributes of 
-// the ServerSocket, reuses the security context and establishes the context with 
-// the client and maps the user to a local user 
+// constructor
+// Initialize a AuthServerSocket from a ServerSocket. It copies the attributes of
+// the ServerSocket, reuses the security context and establishes the context with
+// the client and maps the user to a local user
 //------------------------------------------------------------------------------
-castor::io::AuthServerSocket::AuthServerSocket(castor::io::ServerSocket* cs, 
+castor::io::AuthServerSocket::AuthServerSocket(castor::io::ServerSocket* cs,
                                                const Csec_context_t context)
-  throw (castor::exception::Exception) : 
+  throw (castor::exception::Exception) :
   ServerSocket(cs->socket()) {
   cs->resetSocket();
   delete cs;
   m_security_context = context;
-  
+
   if (getServer_establishContext(&m_security_context ,m_socket) < 0) {
     close();
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "The initialization of the security context failed";
     throw ex;
   }
-  
-  // map user. 
-  setClientId();  
+
+  // map user.
+  setClientId();
 }
 
 
@@ -192,7 +192,7 @@ castor::io::AuthServerSocket::~AuthServerSocket() throw () {
 //------------------------------------------------------------------------------
 castor::io::ServerSocket* castor::io::AuthServerSocket::accept()
   throw(castor::exception::Exception) {
-  
+
   castor::io::ServerSocket* as = castor::io::ServerSocket::accept();
   return new AuthServerSocket(as, m_security_context);
 }
@@ -201,25 +201,25 @@ castor::io::ServerSocket* castor::io::AuthServerSocket::accept()
 //------------------------------------------------------------------------------
 // setClientId (That method should go out of this class
 //------------------------------------------------------------------------------
-void castor::io::AuthServerSocket::setClientId () 
-throw(castor::exception::Exception) {
+void castor::io::AuthServerSocket::setClientId ()
+  throw(castor::exception::Exception) {
   char *mech, *name;
-  char username[CA_MAXUSRNAMELEN+1]; 
+  char username[CA_MAXUSRNAMELEN+1];
   getClientId(&m_security_context, &mech, &name);
-  //In the name you got the principal it in the previous call from the gridmapfile
+  // In the name you got the principal it in the previous call from the gridmapfile
   // here you get uid and gid and if you want
   // the name matching the uid then set buf and BUF_SIZE
-  if (getMapUser (mech, name, username, CA_MAXUSRNAMELEN, &m_Euid,&m_Egid) != 0) {
+  if (getMapUser (mech, name, username, CA_MAXUSRNAMELEN, &m_Euid, &m_Egid) != 0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "User cannot be mapped into local user";
   }
-  m_secMech=mech;
-  m_userName=username; 
+  m_secMech = mech;
+  m_userName = username;
 }
 
 
 //------------------------------------------------------------------------------
-//  get ClientEuid
+// getClientEuid
 //------------------------------------------------------------------------------
 uid_t castor::io::AuthServerSocket::getClientEuid () {
   return m_Euid;
@@ -227,21 +227,23 @@ uid_t castor::io::AuthServerSocket::getClientEuid () {
 
 
 //------------------------------------------------------------------------------
-//  get ClientEgid
+// getClientEgid
 //------------------------------------------------------------------------------
 gid_t castor::io::AuthServerSocket::getClientEgid () {
   return m_Egid;
 }
 
+
 //------------------------------------------------------------------------------
-//  get ClientEgid
+// getClientEgid
 //------------------------------------------------------------------------------
 std::string castor::io::AuthServerSocket::getClientMappedName () {
   return m_userName;
 }
 
+
 //------------------------------------------------------------------------------
-//  set security Mechanism
+// getSecMech
 //------------------------------------------------------------------------------
 std::string castor::io::AuthServerSocket::getSecMech () {
   return m_secMech;
