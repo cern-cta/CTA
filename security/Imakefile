@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2003-2005 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.19 $ $Date: 2008/08/29 10:02:03 $ CERN IT/ADC/CA  Ben Couturier
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.20 $ $Date: 2008/09/22 14:56:28 $ CERN IT/ADC/CA  Ben Couturier
  
 COMM    Make CASTOR Security package
 
@@ -66,7 +66,7 @@ VOMS_LIB_PTHR=-L$(VOMS_LOCATION)/lib -lvomsc_$(VOMS_FLAVOUR)
 
 #define IDMech ID
 
-#define CSEC_Mechlist KRB5Mech GSIMech 
+#define CSEC_Mechlist KRB5Mech GSIMech IDMech
 
 SECLIB = LibraryTargetName(security)
 SECLIB_UTIL_OBJS = Csec_errmsg.Osuf Csec_apiinit.Osuf Csec_common.Osuf
