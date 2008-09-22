@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.665 $ $Date: 2008/09/16 13:21:09 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.666 $ $Date: 2008/09/22 13:22:11 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -248,12 +248,13 @@ BEGIN
     -- Count the number of diskcopies on this filesystem that are in a
     -- BEINGDELETED state. These need to be reselected in any case.
     freed := 0;
-    SELECT totalCount + count(*), sum(DiskCopy.diskCopySize)
+    SELECT totalCount + count(*), nvl(sum(DiskCopy.diskCopySize), 0)
       INTO totalCount, freed
       FROM DiskCopy, FileSystem, DiskServer
      WHERE DiskCopy.fileSystem = filesystem.id
        AND decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9 -- BEINGDELETED
        AND FileSystem.diskServer = DiskServer.id
+       AND FileSystem.id = fs.id
        AND DiskServer.name = diskservername;
 
     -- Process diskcopies that are in an INVALID state.
@@ -317,7 +318,7 @@ BEGIN
                  gcType = 0  -- AUTO
            WHERE id = dc.id RETURNING diskCopySize INTO deltaFree;
           totalCount := totalCount + 1;
-          -- Update toBeFreed
+          -- Update freed space
           freed := freed + deltaFree;
           -- Shall we continue ?
           IF toBeFreed <= freed THEN
