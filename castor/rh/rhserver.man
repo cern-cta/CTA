@@ -27,8 +27,8 @@ rhserver \- start the CASTOR Request Handler daemon
 ]
 .SH DESCRIPTION
 .LP
-The 
-.B rhserver 
+The
+.B rhserver
 command starts the CASTOR request handler daemon,
 which is the user entry point into the CASTOR system.
 .LP
@@ -53,10 +53,13 @@ is /etc/castor/castor.conf.
 specifies the number of threads to use to handle client requests. Default is 20.
 .TP
 .BI \-p,\ \-\-port\ <port>
-specifies the port on which to listen for client request. The default port for the 
+specifies the port on which to listen for client request. The default port for the
 unsecure daemon is 9002 and for the secure is 9007.
 The port can also be overwritten using the RH_PORT enviroment variable or
 by having a RH/PORT entry in the /etc/castor/castor.conf file.
+.TP
+.BI \-b,\ \-\-bw
+specifies whether black and white list support is enabled.
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

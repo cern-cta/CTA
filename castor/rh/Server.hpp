@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/09/01 17:26:48 $ $Author: waldron $
+ * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/09/22 13:27:06 $ $Author: waldron $
  *
  *
  *
@@ -47,10 +47,7 @@ namespace castor {
     extern const char* CATEGORY_CONF;
     extern const char* PORT_CONF;
     extern const char* PORT_SEC_CONF;
-    extern const char* ACCESSLISTS_ENV;
-    extern const char* ACCESSLISTS_CONF;
-    extern const char* CASTOR_SEC_ENV;
-    extern const char* CASTOR_SEC_CONF;
+
     /**
      * The Request Handler server. This is where client requests
      * arrive. The main task of this component is to store them
@@ -77,8 +74,11 @@ namespace castor {
       /// Flag to indicate whether strong authentication is enabled or not
       bool m_secure;
 
+      /// Flag to indicate whether black and white list support is enabled or not
+      bool m_bw;
+
     protected:
- 
+
       /**
        * Prints out the online help
        */
