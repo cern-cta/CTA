@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/07/29 06:17:39 $ $Author: waldron $
+ * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/09/22 12:35:10 $ $Author: waldron $
  *
  * Cancellation thread used to cancel jobs in the LSF with have been in a
  * PENDING status for too long
@@ -130,15 +130,11 @@ void castor::jobmanager::ManagementThread::run(void *param) {
        it != m_schedulerResources.end();
        it++) {
     DiskServerResource *ds = (*it).second;
-    for (unsigned int i = 0; i < ds->fileSystems().size(); i++) {
-      FileSystemResource *fs = ds->fileSystems()[i];
-      delete fs;
-    }
     delete ds;
   }
   m_schedulerResources.clear();
   m_svcClassesWithNoSpace.clear();
-  
+
   // Remove all entries in the processed cache whose timestamp has exceeded
   // the CLEAN_PERIOD in lsb.params.
   for (std::map<std::string, u_signed64>::iterator it =
@@ -640,7 +636,7 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
 	break;
       }
     }
-    
+
     // Terminate the job if all diskservers in the service class are excluded
     if (total == excluded) {
       if (terminateRequest(job->jobId, requestId, subRequestId, fileId, ESTSCHEDERR)) {
