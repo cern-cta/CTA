@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2008/07/29 06:17:39 $ $Author: waldron $
+ * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2008/09/22 12:33:51 $ $Author: waldron $
  *
  * The Submission Process is used to submit new jobs into the scheduler. It is
  * run inside a separate process allowing for setuid and setgid calls to take
@@ -42,6 +42,7 @@
 // Definitions
 #define DEFAULT_RETRY_ATTEMPTS 3
 #define DEFAULT_RETRY_INTERVAL 5
+#define DEFAULT_MAX_DISKCOPY_RUNTIME 18000
 
 
 //-----------------------------------------------------------------------------
@@ -52,7 +53,8 @@ castor::jobmanager::SubmissionProcess::SubmissionProcess
   m_reverseUidLookup(reverseUidLookup),
   m_sharedLSFResource(sharedLSFResource),
   m_submitRetryAttempts(DEFAULT_RETRY_ATTEMPTS),
-  m_submitRetryInterval(DEFAULT_RETRY_INTERVAL) {}
+  m_submitRetryInterval(DEFAULT_RETRY_INTERVAL),
+  m_maxDiskCopyRunTime(DEFAULT_MAX_DISKCOPY_RUNTIME) {}
 
 
 //-----------------------------------------------------------------------------
@@ -92,7 +94,7 @@ void castor::jobmanager::SubmissionProcess::init()
   // Determine the number of times the job manager should try to submit a job
   // into LSF when it encounters an error
   char *value = getconfent("JobManager", "SubmitRetryAttempts", 0);
-  unsigned int attempts, interval;
+  int attempts, interval;
   if (value) {
     attempts = std::strtol(value, 0, 10);
     if (attempts == 0) {
@@ -108,8 +110,8 @@ void castor::jobmanager::SubmissionProcess::init()
     m_submitRetryAttempts = attempts;
   }
 
-  // Extract the value of the SubmitRetryInterval from the castor.conf config
-  // file. This value determines how long we sleep in between submission
+  // Extract the value of the SubmitRetryInterval options from the castor.conf
+  // config file. This value determines how long we sleep in between submission
   // attempts. A really small value will stress the LSF master more then
   // necessary, you have been warned!!
   value = getconfent("JobManager", "SubmitRetryInterval", 0);
@@ -125,6 +127,21 @@ void castor::jobmanager::SubmissionProcess::init()
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 41, 1, params);
     }
     m_submitRetryInterval = interval;
+  }
+
+  // Determine the max run time of a StageDiskCopyReplicaRequest
+  value = getconfent("JobManager", "MaxDiskCopyRunTime", 0);
+  if (value) {
+    m_maxDiskCopyRunTime = std::strtol(value, 0, 10);
+    if (m_maxDiskCopyRunTime < -1) {
+      m_maxDiskCopyRunTime = DEFAULT_MAX_DISKCOPY_RUNTIME;
+
+      // "Invalid JobManager/MaxDiskCopyRunTime option, value too small.
+      // Using default"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Default", m_maxDiskCopyRunTime)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 57, 1, params);
+    }
   }
 }
 
@@ -368,6 +385,15 @@ void castor::jobmanager::SubmissionProcess::submitJob
     m_job.options |= SUB_HOST;
   }
 
+  // For StageDiskCopyReplicaRequests set the max runtime of the job. This
+  // helps us to recover from situations where jobs are stuck due to the crash
+  // of a diskserver during a transfer between machines.
+  if ((request->requestType() == OBJ_StageDiskCopyReplicaRequest) &&
+      (m_maxDiskCopyRunTime != -1)) {
+    m_job.rLimits[LSF_RLIMIT_RUN] = m_maxDiskCopyRunTime;
+    m_job.options2 |= SUB2_MODIFY_RUN_JOB;
+  }
+
   // Set the external scheduler options. This information is made available to
   // the CASTOR2 LSF plugin and is required for logging and filesystem level
   // scheduling.
@@ -449,13 +475,14 @@ void castor::jobmanager::SubmissionProcess::submitJob
 	 castor::dlf::Param("Type", castor::ObjectsIdStrings[request->requestType()]),
 	 castor::dlf::Param("Username", request->username()),
 	 castor::dlf::Param("SvcClass", request->svcClass()),
+	 castor::dlf::Param("MaxRunTime", m_job.rLimits[LSF_RLIMIT_RUN]),
 	 castor::dlf::Param("AskedHosts",
 			    request->requestType() == 40 ? 0 : m_job.numAskedHosts),
 	 castor::dlf::Param("SourceDiskCopyId", request->sourceDiskCopyId()),
 	 castor::dlf::Param("SubmissionTime",
 			    submissionTime != 0 ? submissionTime * 0.000001 : 0),
 	 castor::dlf::Param(m_subRequestUuid)};
-      castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_SYSTEM, 45, 8, params, &m_fileId);
+      castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_SYSTEM, 45, 9, params, &m_fileId);
 
       // Update the subrequest to SUBREQUEST_READY
       m_jobManagerService->updateSchedulerJob(request,

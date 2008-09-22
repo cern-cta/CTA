@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/07/29 06:17:39 $ $Author: waldron $
+ * @(#)$RCSfile: SubmissionProcess.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/09/22 12:33:51 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -121,6 +121,10 @@ namespace castor {
 
       /// The interval to wait between submission attempts
       unsigned int m_submitRetryInterval;
+
+      /// The maximum amount of time that a StageDiskReplicaRequest job can
+      /// run for in minutes
+      int m_maxDiskCopyRunTime;
 
       /// The request uuid of the job being processed
       Cuuid_t m_requestUuid;

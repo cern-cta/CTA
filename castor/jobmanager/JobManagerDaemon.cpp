@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2008/07/29 06:17:39 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2008/09/22 12:33:51 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -262,6 +262,7 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
      { 54, "Invalid diskCopySource syntax, job submission cancelled" },
      { 55, "Exception caught when trying to fail scheduler job" },
      { 56, "Failed to execute failSchedulerJob procedure" },
+     { 57, "Invalid JobManager/MaxDiskCopyRunTime option, value too small. Using default" },
 
      // Dispatch
      { 60, "Job received" },
