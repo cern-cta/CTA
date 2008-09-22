@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: deleteFileClass.c,v $ $Revision: 1.5 $ $Release$ $Date: 2007/04/03 09:45:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: deleteFileClass.c,v $ $Revision: 1.6 $ $Release$ $Date: 2008/09/22 11:57:56 $ $Author: waldron $
  *
- * 
+ *
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -74,7 +74,7 @@ void usage(
   return;
 }
 
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv[])
 {
   int ch, rc;
   char *cmd, *name = NULL;
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
   struct C_Services_t *svcs = NULL;
   struct C_IService_t *iSvc = NULL;
   struct Cstager_FileClass_t *fileClassOld = NULL;
-  
+
   Coptind = 1;
   Copterr = 1;
   cmd = argv[0];
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
     return(1);
   }
   stgSvc = Cstager_IStagerSvc_fromIService(iSvc);
-    
+
   while ((ch = Cgetopt_long(argc,argv,"h",longopts,NULL)) != EOF) {
     switch (ch) {
     case Name:
@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
       return(1);
     }
     fprintf(stderr,
-            "FileClass %s does not exists\n",name);
+            "FileClass %s does not exist\n",name);
     return(1);
   }
 
@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
     return(1);
   }
   C_Services_delete(svcs);
-  
+
   return(0);
 }
 
