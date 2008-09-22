@@ -1,16 +1,16 @@
 /*
- * $Id: Cns_server.h,v 1.20 2008/09/05 15:20:20 kotlyar Exp $
+ * $Id: Cns_server.h,v 1.21 2008/09/22 13:40:18 waldron Exp $
  */
 
 /*
  * Copyright (C) 1999-2005 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
+
 /*
- * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.20 $ $Date: 2008/09/05 15:20:20 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.21 $ $Date: 2008/09/22 13:40:18 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
- 
+
 #ifndef _CNS_SERVER_H
 #define _CNS_SERVER_H
 #ifdef USE_MYSQL
@@ -20,7 +20,7 @@
 #ifdef CSEC
 #include "Csec_api.h"
 #endif
- 
+
                         /* name server constants and macros */
 
 #define CHECKI	5	/* max interval to check for work to be done */
@@ -112,7 +112,7 @@ struct Cns_file_metadata {
 	short		fileclass;	/* 1 --> experiment, 2 --> user */
 	char		status;		/* '-' --> online, 'm' --> migrated */
 	char		csumtype[3];
-	char		csumvalue[33];
+	char		csumvalue[CA_MAXCKSUMLEN+1];
 	char		acl[CA_MAXACLENTRIES*13];
 };
 

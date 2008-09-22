@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_api.h,v 1.16 2008/09/05 15:16:25 kotlyar Exp $
+ * $Id: Cns_api.h,v 1.17 2008/09/22 13:40:18 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.16 $ $Date: 2008/09/05 15:16:25 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.17 $ $Date: 2008/09/22 13:40:18 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_API_H
@@ -158,7 +158,7 @@ struct Cns_direnstatg {
 	short		fileclass;	/* 1 --> experiment, 2 --> user */
 	char		status;		/* ' ' --> online, 'm' --> migrated */
 	char		csumtype[3];
-	char		csumvalue[33];
+	char		csumvalue[CA_MAXCKSUMLEN+1];
 	unsigned short	d_reclen;	/* length of this entry */
 	char		d_name[1];
 };
@@ -227,7 +227,7 @@ struct Cns_filestatg {
 	short		fileclass;	/* 1 --> experiment, 2 --> user */
 	char		status;		/* ' ' --> online, 'm' --> migrated */
 	char		csumtype[3];
-	char		csumvalue[33];
+	char		csumvalue[CA_MAXCKSUMLEN+1];
 };
 
 struct Cns_filestatcs {
@@ -243,7 +243,7 @@ struct Cns_filestatcs {
         short           fileclass;      /* 1 --> experiment, 2 --> user */
         char            status;         /* ' ' --> online, 'm' --> migrated */
         char            csumtype[3];
-        char            csumvalue[33];
+        char            csumvalue[CA_MAXCKSUMLEN+1];
 };
 
 struct Cns_linkinfo {
