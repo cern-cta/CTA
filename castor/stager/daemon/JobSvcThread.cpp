@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.60 $ $Release$ $Date: 2008/09/01 18:01:21 $ $Author: waldron $
+ * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.61 $ $Release$ $Date: 2008/09/22 13:30:31 $ $Author: waldron $
  *
  * Service thread for job related requests
  *
@@ -84,7 +84,8 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
  castor::BaseAddress &ad,
  Cuuid_t uuid) throw() {
   // Useful Variables
-  castor::stager::FileSystem *fs = 0;
+  castor::stager::FileSystem fs;
+  castor::stager::DiskServer ds;
   castor::stager::SubRequest *subreq = 0;
   castor::stager::DiskCopy *dc = 0;
   castor::stager::StartRequest *sReq;
@@ -124,36 +125,31 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
       return;
     }
     string2Cuuid(&suuid, (char*)subreq->subreqId().c_str());
-    // Getting the FileSystem Object
-    fs = jobSvc->selectFileSystem(sReq->fileSystem(),
-                                  sReq->diskServer());
-    if (0 == fs) {
-      // "Could not find suitable filesystem",
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("DiskServer", sReq->diskServer()),
-         castor::dlf::Param("FileSystem", sReq->fileSystem()),
-         castor::dlf::Param(suuid)};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_NOFSOK,
-			      fileId, nsHost, 3, params);
-      delete obj;
-      return;
-    }
+    // Create diskserver and filesystem in memory
+    ds.setName(sReq->diskServer());
+    fs.setMountPoint(sReq->fileSystem());
+    fs.setDiskserver(&ds);
+    ds.addFileSystems(&fs);
     // Invoking the method
     if (castor::OBJ_GetUpdateStartRequest == sReq->type()) {
       // "Invoking getUpdateStart"
       castor::dlf::Param params[] =
-        {castor::dlf::Param(suuid)};
+        {castor::dlf::Param("DiskServer", ds.name()),
+	 castor::dlf::Param("FileSystem", fs.mountPoint()),
+	 castor::dlf::Param(suuid)};
          castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_GETUPDS,
-			      fileId, nsHost, 1, params);
-      dc = jobSvc->getUpdateStart(subreq, fs, &emptyFile, fileId, nsHost);
+			      fileId, nsHost, 3, params);
+      dc = jobSvc->getUpdateStart(subreq, &fs, &emptyFile, fileId, nsHost);
     } else {
       // "Invoking PutStart"
       castor::dlf::Param params[] =
-        {castor::dlf::Param(suuid)};
+        {castor::dlf::Param("DiskServer", ds.name()),
+	 castor::dlf::Param("FileSystem", fs.mountPoint()),
+	 castor::dlf::Param(suuid)};
          castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_PUTS,
-			      fileId, nsHost, 1, params);
+			      fileId, nsHost, 3, params);
       try {
-        dc = jobSvc->putStart(subreq, fs, fileId, nsHost);
+        dc = jobSvc->putStart(subreq, &fs, fileId, nsHost);
       } catch (castor::exception::RequestCanceled e) {
         // special case of canceled requests, don't log
         res.setErrorCode(e.code());
@@ -196,11 +192,6 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
 			    fileId, nsHost, 4, params);
   }
   // Cleanup
-  if (0 != fs) {
-    castor::stager::DiskServer *ds = fs->diskserver();
-    if (0 != ds) { delete ds; }
-    delete fs;
-  }
   if (subreq) delete subreq;
   if (dc) delete dc;
 }
@@ -234,16 +225,15 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyStartRequest
     castor::dlf::Param params[] = {
       castor::dlf::Param("DiskCopyId", uReq->diskCopyId()),
       castor::dlf::Param("SourceDcId", uReq->sourceDiskCopyId()),
-      castor::dlf::Param("SvcClassName", uReq->destSvcClass()),
       castor::dlf::Param("DiskServer", uReq->diskServer()),
       castor::dlf::Param("FileSystem", uReq->mountPoint())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_D2DCS,
-			    fileId, nsHost, 5, params);
+			    fileId, nsHost, 4, params);
     jobSvc->disk2DiskCopyStart(uReq->diskCopyId(),
 			       uReq->sourceDiskCopyId(),
-			       uReq->destSvcClass(),
 			       uReq->diskServer(),
-			       uReq->mountPoint(), dc, srcDc, fileId, nsHost);
+			       uReq->mountPoint(),
+			       dc, srcDc, fileId, nsHost);
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =

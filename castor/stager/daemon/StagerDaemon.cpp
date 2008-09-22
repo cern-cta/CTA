@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.56 $ $Release$ $Date: 2008/06/24 12:46:31 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.57 $ $Release$ $Date: 2008/09/22 13:30:32 $ $Author: waldron $
  *
  * Main stager daemon
  *
@@ -96,7 +96,7 @@ int main(int argc, char* argv[]){
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("GcSvcThread",
         new castor::stager::daemon::GcSvcThread()));
-        
+
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("CleaningThread",
         new castor::stager::daemon::CleaningThread(), 4000));   // this thread only dumps logs from cleanup
@@ -227,7 +227,7 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_QRYSVC_IQUERY, "Processing File Query by fileid"},
     { STAGER_QRYSVC_RQUERY, "Processing File Query by Request"},
     { STAGER_QRYSVC_DSQUERY, "Processing DiskPoolQuery by SvcClass"},
-    { STAGER_QRYSVC_DDQUERY, "Processing DiskPoolQuery by DiskPool"}, 
+    { STAGER_QRYSVC_DDQUERY, "Processing DiskPoolQuery by DiskPool"},
 
     /*********/
     /* GcSvc */
@@ -257,7 +257,6 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_JOBSVC_EXCEPT,  "Unexpected exception caught"},
     { STAGER_JOBSVC_NOSREQ,  "Could not find subrequest associated to Request"},
     { STAGER_JOBSVC_BADSRT,  "Expected SubRequest in Request but found another type"},
-    { STAGER_JOBSVC_NOFSOK,  "Could not find suitable filesystem"},
     { STAGER_JOBSVC_GETUPDS, "Invoking getUpdateStart"},
     { STAGER_JOBSVC_PUTS,    "Invoking putStart"},
     { STAGER_JOBSVC_D2DCBAD, "Invoking disk2DiskCopyFailed"},

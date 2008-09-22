@@ -8,47 +8,47 @@
 
 namespace castor{
   namespace stager{
-    namespace daemon{   
+    namespace daemon{
 
       enum StgDlfMessages{
-	
+
 	/***************************************/
 	/* Daemon: To DLF_LVL_DEBUG */
 	/*************************************/
-     
+
 	STAGER_DAEMON_START = 1, /*  Daemon started" */
 	STAGER_DAEMON_EXECUTION = 2, /* " Daemon execution" */
 	STAGER_DAEMON_ERROR_CONFIG = 3, /* " Daemon configuration error" */
 	STAGER_DAEMON_EXCEPTION = 4, /* " Daemon Exception" */
 	STAGER_DAEMON_POOLCREATION = 7, /* " Daemon Pool creation" */
-	
-	
+
+
 	STAGER_CONFIGURATION = 8, /* "Got wrong configuration, using default" */ /* DLF_LVL_USAGE */
 	STAGER_CONFIGURATION_ERROR = 9, /* "Impossible to get (right) configuration" */ /* DLF_LVL_ERROR */
-	
+
 	/*******************************************************************************************************/
 	/* Constants related with the DBService SvcThreads: JobRequestSvc, PreRequestSvc, StgRequestSvc */
 	/*****************************************************************************************************/
 	/* mainly for DLF_LVL_DEBUG */
-	/***************************/     
+	/***************************/
 	STAGER_JOBREQSVC_CREATION = 21, /* "Created new JobRequestSvc Thread" */
-	STAGER_PREREQSVC_CREATION = 22, /* "Created new PreRequestSvc Thread" */   
+	STAGER_PREREQSVC_CREATION = 22, /* "Created new PreRequestSvc Thread" */
 	STAGER_STGREQSVC_CREATION = 23, /* "Created new StgRequestSvc Thread" */
 	STAGER_SUBREQ_SELECTED = 24,
 	STAGER_REQ_PROCESSED = 25,
-  
-	/* JobRequestSvcThread */     
+
+	/* JobRequestSvcThread */
 	STAGER_GET = 31, /*Get Request" */
 	STAGER_UPDATE = 32, /* Update Request" */
-	STAGER_PUT = 33, /* "Put Request" */     
-     
+	STAGER_PUT = 33, /* "Put Request" */
+
 	/************************/
-	/* PreRequestSvcThread */  
+	/* PreRequestSvcThread */
 	STAGER_REPACK = 34, /* "Repack Request" */
 	STAGER_PREPARETOGET = 35, /* "PrepareToGet Request" */
 	STAGER_PREPARETOUPDATE = 36, /* "PrepareToUpdate Request" */
 	STAGER_PREPARETOPUT = 37, /* "PrepareToPut Request" */
-		
+
 	/*************************/
 	/* StgRequestSvcThread  */
 	STAGER_SETGC = 38, /* "SetGC Request" */
@@ -57,7 +57,7 @@ namespace castor{
 	STAGER_RM_DETAILS = 41, /* Rm details" *//* SYSTEM LEVEL ALSO */
 	STAGER_PUTDONE = 42, /* "PutDone Request" */
 	STAGER_CHGPRIV = 43, /* "ChangePrivilege Request" */
-	
+
 	/******************/
 	/*  SYSTEM LEVEL */
 	/****************/
@@ -72,7 +72,7 @@ namespace castor{
 	STAGER_CASTORFILE_RECREATION = 58, /*Recreating CastorFile" */
 	STAGER_RECREATION_IMPOSSIBLE = 59, /* "Impossible to recreate CastorFile" "*/
 	STAGER_SCHEDULINGJOB = 60, /* Diskcopy available, scheduling job */
-	
+
 	/* DLF_LVL_ERROR */
 	STAGER_SERVICES_EXCEPTION = 71, /*Impossible to get the Service" */
 	STAGER_SVCCLASS_EXCEPTION = 72, /*Impossible to get the SvcClass" */
@@ -87,7 +87,7 @@ namespace castor{
 	STAGER_REQUESTUUID_EXCEPTION = 81, /* Impossible to get the request Uuid */
 	STAGER_CASTORFILE_EXCEPTION = 82, /* Impossible to get the CastorFile */
 	STAGER_INVALID_TYPE = 83,  /* Request type not valid for this thread pool */
-	
+
 	/*******************/
 	/* QueryRequestSvc */
 	STAGER_QRYSVC_GETSVC = 91, /* Could not get QuerySvc" */
@@ -103,7 +103,7 @@ namespace castor{
 	STAGER_QRYSVC_DSQUERY = 101, /* "Processing DiskPoolQuery by SvcClass" */
 	STAGER_QRYSVC_DDQUERY = 102, /* "Processing DiskPoolQuery by DiskPool" */
 	STAGER_QRYSVC_DFAILED = 103, /* "Failed to process DiskPoolQuery" */
-	
+
 	/*********/
 	/* GcSvc */
 	STAGER_GCSVC_GETSVC = 111, /* "Could not get GCSvc" */
@@ -125,14 +125,13 @@ namespace castor{
 	STAGER_ERRSVC_EXCEPT = 122, /* "Unexpected exception caught" */
 	STAGER_ERRSVC_NOREQ = 123, /* "No request associated with subrequest ! Cannot answer !" */
 	STAGER_ERRSVC_NOCLI = 124, /* "No client associated with request ! Cannot answer !" */
-	
+
 	/**********/
 	/* JobSvc */
 	STAGER_JOBSVC_GETSVC = 131, /* "Could not get JobSvc" */
 	STAGER_JOBSVC_EXCEPT = 132, /* "Unexpected exception caught" */
 	STAGER_JOBSVC_NOSREQ = 133, /* "Could not find subrequest associated to Request" */
 	STAGER_JOBSVC_BADSRT = 134, /* "Expected SubRequest in Request but found another type" */
-	STAGER_JOBSVC_NOFSOK = 135, /* "Could not find suitable filesystem" */
 	STAGER_JOBSVC_GETUPDS = 136, /* "Invoking getUpdateStart" */
 	STAGER_JOBSVC_PUTS = 137, /* "Invoking putStart" */
 	STAGER_JOBSVC_D2DCBAD = 138 , /* "Invoking disk2DiskCopyFailed" */
