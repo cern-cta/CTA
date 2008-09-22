@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.649 $ $Date: 2008/09/01 17:53:14 $ $Author: waldron $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.650 $ $Date: 2008/09/22 13:15:12 $ $Author: waldron $
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -27,6 +27,11 @@ BEGIN
     -- Not found in White list -> no access
     IF checkForValidSvcClass(isvcClass, 1, 0) = 1 THEN
       -- Service class exists, we give permission denied
+      res := -1;
+    -- Special case where we accept '*' as a service class for Qry,
+    -- DiskPoolQuery and RM requests.
+    ELSIF isvcClass = '*' AND 
+          (ireqType = 33 OR ireqType = 42 OR ireqType = 103) THEN
       res := -1;
     ELSE
       -- Service class does not exist
@@ -485,3 +490,4 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
   END;
 
 END castorBW;
+
