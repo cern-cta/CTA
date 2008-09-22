@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/09/04 10:00:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/09/22 12:02:15 $ $Author: waldron $
  *
  * @author Giuseppe Lo Presti, giuseppe.lopresti@cern.ch
  *****************************************************************************/
@@ -170,6 +170,10 @@ void castor::db::ora::OraStatement::setDataBufferArray
   try {
     if (NULL == m_arraySize) {
       m_arraySize = (ub4*) malloc(sizeof(ub4));
+      if (NULL == m_arraySize) {
+	castor::exception::OutOfMemory e;
+	throw e;
+      }
     }
     *m_arraySize = size;
     m_statement->setDataBufferArray(pos, buffer,
