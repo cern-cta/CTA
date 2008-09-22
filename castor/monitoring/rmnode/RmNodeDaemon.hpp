@@ -58,8 +58,7 @@ namespace castor {
 	/**
 	 * Returns a vector of configured mountpoints
 	 */
-	static std::vector<std::string>
-	castor::monitoring::rmnode::RmNodeDaemon::getMountPoints() 
+	static std::vector<std::string> getMountPoints() 
 	  throw(castor::exception::Exception);
       
       };
