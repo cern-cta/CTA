@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/08/08 09:15:05 $ $Author: waldron $
+ * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/09/22 12:17:05 $ $Author: waldron $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -235,7 +235,7 @@ void castor::db::ora::OraRHSvc::changePrivilege
     if (svcClassName != "*") {
       stmt->setString(1, svcClassName);
     } else {
-      stmt->setNull(1, oracle::occi::OCCINUMBER);
+      stmt->setNull(1, oracle::occi::OCCISTRING);
     }
     // loop over users if any
     if (users.size() > 0) {
@@ -310,7 +310,7 @@ castor::db::ora::OraRHSvc::listPrivileges
     if (svcClassName != "*") {
       m_listPrivilegesStatement->setString(1, svcClassName);
     } else {
-      m_listPrivilegesStatement->setNull(1, oracle::occi::OCCINUMBER);
+      m_listPrivilegesStatement->setNull(1, oracle::occi::OCCISTRING);
     }
     m_listPrivilegesStatement->setInt(2, user);
     m_listPrivilegesStatement->setInt(3, group);
@@ -318,7 +318,7 @@ castor::db::ora::OraRHSvc::listPrivileges
     // Call DB
     m_listPrivilegesStatement->executeUpdate();
     // Extract list of privileges
-    std::vector<castor::bwlist::Privilege*> result;    
+    std::vector<castor::bwlist::Privilege*> result;
     oracle::occi::ResultSet *prs =
       m_listPrivilegesStatement->getCursor(5);
     oracle::occi::ResultSet::Status status = prs->next();
