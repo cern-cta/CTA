@@ -140,9 +140,9 @@ int cmd_parse(int argc,
  * @param cmd command name
  */
 void usage(char* cmd) {
-  fprintf (stderr, "usage: %s ", cmd);
-  fprintf (stderr, "%s",
-           "[-h] [-S service class] [-U user] [-G group] [-R requestType]\n");
+  fprintf(stderr, "usage: %s ", cmd);
+  fprintf(stderr, "%s",
+          "[-h] [-S service class] [-U user] [-G group] [-R requestType]\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -191,7 +191,7 @@ int main(int argc, char *argv[]) {
   if (0 == nbPrivs) {
     fprintf(stdout, "No privileges found\n");
   } else {
-    fprintf(stdout, "%-15s %-8s %-8s %-20s %s\n",
+    fprintf(stdout, "%-15s %-8s %-8s %-30s %s\n",
 	    "ServiceClass", "User", "Group", "RequestType", "Status");
     for (i = 0; i < nbPrivs; i++) {
       char* user;
@@ -222,7 +222,7 @@ int main(int argc, char *argv[]) {
 	  group = strdup(grp->gr_name);
 	}
       }
-      fprintf(stdout, "%-15s %-8s %-8s %-20s %s\n",
+      fprintf(stdout, "%-15s %-8s %-8s %-30s %s\n",
 	      privileges[i].svcClass,
 	      user,
 	      group,
