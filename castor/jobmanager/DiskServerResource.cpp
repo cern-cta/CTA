@@ -48,6 +48,7 @@ castor::jobmanager::DiskServerResource::DiskServerResource() throw() :
 castor::jobmanager::DiskServerResource::~DiskServerResource() throw() {
   for (unsigned int i = 0; i < m_fileSystemsVector.size(); i++) {
     m_fileSystemsVector[i]->setDiskServer(0);
+    delete m_fileSystemsVector[i];
   }
   m_fileSystemsVector.clear();
 }

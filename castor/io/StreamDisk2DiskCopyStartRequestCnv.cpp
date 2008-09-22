@@ -104,7 +104,6 @@ void castor::io::StreamDisk2DiskCopyStartRequestCnv::createRep(castor::IAddress*
   ad->stream() << obj->lastModificationTime();
   ad->stream() << obj->diskCopyId();
   ad->stream() << obj->sourceDiskCopyId();
-  ad->stream() << obj->destSvcClass();
   ad->stream() << obj->diskServer();
   ad->stream() << obj->mountPoint();
   ad->stream() << obj->fileId();
@@ -164,9 +163,6 @@ castor::IObject* castor::io::StreamDisk2DiskCopyStartRequestCnv::createObj(casto
   u_signed64 sourceDiskCopyId;
   ad->stream() >> sourceDiskCopyId;
   object->setSourceDiskCopyId(sourceDiskCopyId);
-  std::string destSvcClass;
-  ad->stream() >> destSvcClass;
-  object->setDestSvcClass(destSvcClass);
   std::string diskServer;
   ad->stream() >> diskServer;
   object->setDiskServer(diskServer);

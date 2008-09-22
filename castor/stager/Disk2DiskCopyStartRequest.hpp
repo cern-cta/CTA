@@ -135,24 +135,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_destSvcClass
-       * The destination service class of the new castor file.
-       * @return the value of m_destSvcClass
-       */
-      std::string destSvcClass() const {
-        return m_destSvcClass;
-      }
-
-      /**
-       * Set the value of m_destSvcClass
-       * The destination service class of the new castor file.
-       * @param new_var the new value of m_destSvcClass
-       */
-      void setDestSvcClass(std::string new_var) {
-        m_destSvcClass = new_var;
-      }
-
-      /**
        * Get the value of m_diskServer
        * The name of the destination diskserver.
        * @return the value of m_diskServer
@@ -249,9 +231,6 @@ namespace castor {
 
       /// The id of the source diskcopy
       u_signed64 m_sourceDiskCopyId;
-
-      /// The destination service class of the new castor file.
-      std::string m_destSvcClass;
 
       /// The name of the destination diskserver.
       std::string m_diskServer;

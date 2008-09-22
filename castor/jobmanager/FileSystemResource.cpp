@@ -38,7 +38,6 @@
 //------------------------------------------------------------------------------
 castor::jobmanager::FileSystemResource::FileSystemResource() throw() :
   m_mountPoint(""),
-  m_diskPoolName(""),
   m_svcClassName(""),
   m_status(castor::stager::FileSystemStatusCodes(0)),
   m_adminStatus(castor::monitoring::AdminStatusCodes(0)),

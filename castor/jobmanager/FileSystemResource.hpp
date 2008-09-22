@@ -77,24 +77,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_diskPoolName
-       * The name of the diskpool assoicated with the filesystem
-       * @return the value of m_diskPoolName
-       */
-      std::string diskPoolName() const {
-        return m_diskPoolName;
-      }
-
-      /**
-       * Set the value of m_diskPoolName
-       * The name of the diskpool assoicated with the filesystem
-       * @param new_var the new value of m_diskPoolName
-       */
-      void setDiskPoolName(std::string new_var) {
-        m_diskPoolName = new_var;
-      }
-
-      /**
        * Get the value of m_svcClassName
        * The service class that the filesystem belongs too.
        * @return the value of m_svcClassName
@@ -150,7 +132,7 @@ namespace castor {
 
       /**
        * Get the value of m_diskServer
-       * The diskserver associated with the filesystem.
+       * The diskserver associated with the filesystems.
        * @return the value of m_diskServer
        */
       DiskServerResource* diskServer() const {
@@ -159,7 +141,7 @@ namespace castor {
 
       /**
        * Set the value of m_diskServer
-       * The diskserver associated with the filesystem.
+       * The diskserver associated with the filesystems.
        * @param new_var the new value of m_diskServer
        */
       void setDiskServer(DiskServerResource* new_var) {
@@ -171,9 +153,6 @@ namespace castor {
       /// The mountpoint for the filesystem.
       std::string m_mountPoint;
 
-      /// The name of the diskpool assoicated with the filesystem
-      std::string m_diskPoolName;
-
       /// The service class that the filesystem belongs too.
       std::string m_svcClassName;
 
@@ -183,7 +162,7 @@ namespace castor {
       /// The admin status of the filesystem.
       castor::monitoring::AdminStatusCodes m_adminStatus;
 
-      /// The diskserver associated with the filesystem.
+      /// The diskserver associated with the filesystems.
       DiskServerResource* m_diskServer;
 
     }; /* end of class FileSystemResource */
