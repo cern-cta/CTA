@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.680 $ $Date: 2008/09/02 12:44:05 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.681 $ $Date: 2008/09/22 12:53:38 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1188,6 +1188,7 @@ END;
 CREATE OR REPLACE PROCEDURE rtcpclientdCleanUp AS
 BEGIN
   EXECUTE IMMEDIATE 'TRUNCATE TABLE Stream2TapeCopy';
+  UPDATE NbTapeCopiesInFS SET NbTapeCopies = 0;
   UPDATE TapeCopy SET status = 1 WHERE status IN (2, 3, 7);
   UPDATE Stream SET status = 0;
   UPDATE tape SET status = 1 WHERE status IN (2, 3, 4);
