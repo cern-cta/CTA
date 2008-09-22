@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: enterSvcClass.man,v $ $Revision: 1.8 $ $Date: 2008/07/28 16:56:28 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: enterSvcClass.man,v $ $Revision: 1.9 $ $Date: 2008/09/22 11:54:16 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH ENTERSVCCLASS 1 "$Date: 2008/07/28 16:56:28 $" CASTOR "stager catalogue administrative commands"
+.TH ENTERSVCCLASS 1 "$Date: 2008/09/22 11:54:16 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 enterSvcClass \- define a new service class in the stager catalogue
 .SH SYNOPSIS
@@ -88,14 +88,14 @@ applied.
 .TP
 .BI \-\-GcEnabled " [yes|no]"
 Defines whether or not garbage collection is enabled for this service class. The
-supported values are yes or no, 1 or 0 and are case-insensitive.
+supported values are yes or no.
 .TP
 .BI \-\-GcPolicy " gcPolicyName"
 Specifies the name of the garbage collection policy to be used for this service class
 .TP
 .BI \-\-DiskOnlyBehavior " [yes|no]"
 Defines whether or not this service class has disk only behavior. The supported values
-are yes or no, 1 or 0 and are case-insensitive.
+are yes or no.
 .TP
 .BI \-\-ForcedFileClass " forcedFileClass"
 Specifies the name of the file class to force on files written to this service class. The
@@ -104,10 +104,9 @@ forced file class overrides the file class that the user specifies.
 .TP
 .BI \-\-ReplicateOnClose " [yes|no]"
 Defines whether or not replication on close is enabled for this service class. The
-supported values are yes or no, 1 or 0 and are case-insensitive. When enabled,
-once a file is created and finalized/closed it will be replicated so that
-MaxReplicaNb copies exist in the same pool where the file resides. Note: this
-functionality will not rebalance the number copies in the pool in response to
+supported values are yes or no. When enabled, once a file is created and finalized/closed it
+will be replicated so that MaxReplicaNb copies exist in the same pool where the file resides.
+Note: this functionality will not rebalance the number copies in the pool in response to
 diskservers which are no longer in production!
 .TP
 .BI \-\-MigratorPolicy " migratorPolicy"

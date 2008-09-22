@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.21 $ $Release$ $Date: 2008/07/28 16:56:28 $ $Author: waldron $
+ * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.22 $ $Release$ $Date: 2008/09/22 11:54:16 $ $Author: waldron $
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -236,7 +236,7 @@ int addTapePools(
   }
 
   for ( i=0; i<nbAddTapePools; i++ ) {
-    fprintf(stdout,"Add tape pool %s\n",addTapePoolsArray[i]);
+    fprintf(stdout,"Adding tape pool %s\n",addTapePoolsArray[i]);
     tapePool = NULL;
     if ( findTapePool(tapePoolsArray,nbTapePools,&tapePool,addTapePoolsArray[i]) == 0 ) {
       rc = Cstager_IStagerSvc_selectTapePool(
@@ -262,7 +262,7 @@ int addTapePools(
       Cstager_TapePool_addSvcClasses(tapePool,svcClass);
       Cstager_SvcClass_addTapePools(svcClass,tapePool);
     } else {
-      fprintf(stdout,"Add tape pool ignored: %s already linked\n",addTapePoolsArray[i]);
+      fprintf(stdout,"Adding tape pool ignored: %s already linked\n",addTapePoolsArray[i]);
     }
   }
   return(0);
@@ -321,7 +321,7 @@ int addDiskPools(
     return(-1);
   }
   for ( i=0; i<nbAddDiskPools; i++ ) {
-    fprintf(stdout,"Add disk pool %s\n",addDiskPoolsArray[i]);
+    fprintf(stdout,"Adding disk pool %s\n",addDiskPoolsArray[i]);
     diskPool = NULL;
     if ( findDiskPool(diskPoolsArray,nbDiskPools,&diskPool,addDiskPoolsArray[i]) == 0 ) {
       rc = Cstager_IStagerSvc_selectDiskPool(
@@ -347,7 +347,7 @@ int addDiskPools(
       Cstager_DiskPool_addSvcClasses(diskPool,svcClass);
       Cstager_SvcClass_addDiskPools(svcClass,diskPool);
     } else {
-      fprintf(stdout,"Add disk pool ignored: %s already linked\n",addDiskPoolsArray[i]);
+      fprintf(stdout,"Adding disk pool ignored: %s already linked\n",addDiskPoolsArray[i]);
     }
   }
   return(0);
@@ -498,21 +498,24 @@ int main(int argc, char *argv[])
 
   rc = Cstager_IStagerSvc_selectSvcClass(stgSvc,&svcClass,name);
   if ( (rc == -1) || (svcClass == NULL) ) {
+    if ( rc == -1) {
+      fprintf(stderr,
+	      "SvcClass %s does not exist, %s, %s\n",name,
+	      sstrerror(serrno),
+	      Cstager_IStagerSvc_errorMsg(stgSvc));
+      return(1);
+    }
     fprintf(stderr,
-            "SvcClass %s does not exists, %s, %s\n",name,
-            sstrerror(serrno),
-            Cstager_IStagerSvc_errorMsg(stgSvc));
+            "SvcClass %s does not exist\n",name);
     return(1);
   }
   if ( nbDrives >= 0 ) Cstager_SvcClass_setNbDrives(svcClass,nbDrives);
   if ( maxReplicaNb >= 0 ) Cstager_SvcClass_setMaxReplicaNb(svcClass,maxReplicaNb);
   if ( defaultFileSize > 0 ) Cstager_SvcClass_setDefaultFileSize(svcClass,defaultFileSize);
   if ( gcEnabled != NULL) {
-    if (!strcasecmp(gcEnabled, "yes") ||
-        !strcasecmp(gcEnabled, "1")) {
+    if (!strcasecmp(gcEnabled, "yes")) {
       Cstager_SvcClass_setGcEnabled(svcClass, 1);
-    } else if (!strcasecmp(gcEnabled, "no") ||
-	       !strcasecmp(gcEnabled, "0")) {
+    } else if (!strcasecmp(gcEnabled, "no")) {
       Cstager_SvcClass_setGcEnabled(svcClass, 0);
     } else {
       fprintf(stderr,
@@ -543,7 +546,7 @@ int main(int argc, char *argv[])
           return(1);
         }
         fprintf(stderr,
-                "FileClass %s does not exists\n",forcedFileClass);
+                "FileClass %s does not exist\n",forcedFileClass);
         return(1);
       }
       Cstager_SvcClass_setForcedFileClass(svcClass,fileClass);
@@ -554,11 +557,9 @@ int main(int argc, char *argv[])
     }
   }
   if ( diskOnlyBehavior != NULL) {
-    if (!strcasecmp(diskOnlyBehavior, "yes") ||
-        !strcasecmp(diskOnlyBehavior, "1")) {
+    if (!strcasecmp(diskOnlyBehavior, "yes")) {
       Cstager_SvcClass_setHasDiskOnlyBehavior(svcClass, 1);
-    } else if (!strcasecmp(diskOnlyBehavior, "no") ||
-	       !strcasecmp(diskOnlyBehavior, "0")) {
+    } else if (!strcasecmp(diskOnlyBehavior, "no")) {
       Cstager_SvcClass_setHasDiskOnlyBehavior(svcClass, 0);
     } else {
       fprintf(stderr,
@@ -567,11 +568,9 @@ int main(int argc, char *argv[])
     }
   }
   if (replicateOnClose != NULL) {
-    if (!strcasecmp(replicateOnClose, "yes") ||
-	!strcasecmp(replicateOnClose, "1")) {
+    if (!strcasecmp(replicateOnClose, "yes")) {
       Cstager_SvcClass_setReplicateOnClose(svcClass, 1);
-    } else if (!strcasecmp(replicateOnClose, "no") ||
-	       !strcasecmp(replicateOnClose, "0")) {
+    } else if (!strcasecmp(replicateOnClose, "no")) {
       Cstager_SvcClass_setReplicateOnClose(svcClass, 0);
     } else {
       fprintf(stderr,
