@@ -178,6 +178,15 @@ The following error values might be returned by any package:
 .TP
 .B SECHECKSUM
 (1037) Bad checksum
+.TP
+.B SESVCCLASSNFND
+(1038) This service class is not available for this host
+.TP
+.B SESQLERR
+(1039) Got SQL exception from database
+.TP
+.B SELOOP
+(1040) Too many symbolic links
 
 .SH COPYTAPE ERRORS
 None yet
@@ -296,7 +305,7 @@ The following error values are returned only by the database package:
 .B EDB_D_NOSPC
 (1240) Cdb daemon        : no more space
 .TP
-.B EDB_D_DUMPEND 
+.B EDB_D_DUMPEND
 (1241) Cdb daemon        : end of dump
 .TP
 .B EDB_D_UNIQUE
@@ -402,9 +411,9 @@ The following error values are returned only by the database package:
 (1275) Cdb daemon system : [set/get]sockopt() error
 .TP
 .B EDB_D_RESHOST
-(1276) Cdb daemon     : host res error 
+(1276) Cdb daemon     : host res error
 .TP EDB_D_REQSIZE
-.B 
+.B
 (1277) Cdb daemon     : request too big
 .TP
 .B EDB_C_EINVAL
