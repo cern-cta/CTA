@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.20 $ $Release$ $Date: 2008/09/02 09:30:20 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.21 $ $Release$ $Date: 2008/09/22 13:35:24 $ $Author: waldron $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -159,8 +159,6 @@ namespace castor {
          * and filesystem are valid for the given service class.
          * @param diskcopyId the id of the new DiskCopy
          * @param sourceDiskCopyId the id of the source diskCopy
-         * @param destSvcClass the service class of the diskserver writing
-         * the new castor file.
          * @param diskServer the name of the destination diskserver
          * @param fileSystem the file system mount point
          * Changes are commited
@@ -175,7 +173,6 @@ namespace castor {
         virtual void disk2DiskCopyStart
         (const u_signed64 diskCopyId,
          const u_signed64 sourceDiskCopyId,
-         const std::string destSvcClass,
          const std::string diskServer,
          const std::string fileSystem,
          castor::stager::DiskCopyInfo* &diskCopy,

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.48 $ $Release$ $Date: 2008/09/05 15:08:23 $ $Author: kotlyar $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.49 $ $Release$ $Date: 2008/09/22 13:35:24 $ $Author: waldron $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -95,15 +95,15 @@ static castor::SvcFactory<castor::db::ora::OraJobSvc>* s_factoryOraJobSvc =
 
 /// SQL statement for getUpdateStart
 const std::string castor::db::ora::OraJobSvc::s_getUpdateStartStatementString =
-  "BEGIN getUpdateStart(:1, :2, :3, :4, :5, :6, :7); END;";
+  "BEGIN getUpdateStart(:1, :2, :3, :4, :5, :6, :7, :8); END;";
 
 /// SQL statement for putStart
 const std::string castor::db::ora::OraJobSvc::s_putStartStatementString =
-  "BEGIN putStart(:1, :2, :3, :4, :5); END;";
+  "BEGIN putStart(:1, :2, :3, :4, :5, :6); END;";
 
 /// SQL statement for disk2DiskCopyStart
 const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyStartStatementString =
-  "BEGIN disk2DiskCopyStart(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12); END;";
+  "BEGIN disk2DiskCopyStart(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10); END;";
 
 /// SQL statement for disk2DiskCopyDone
 const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyDoneStatementString =
@@ -221,23 +221,22 @@ castor::db::ora::OraJobSvc::getUpdateStart
       m_getUpdateStartStatement =
         createStatement(s_getUpdateStartStatementString);
       m_getUpdateStartStatement->registerOutParam
-        (3, oracle::occi::OCCIDOUBLE);
+        (4, oracle::occi::OCCIDOUBLE);
       m_getUpdateStartStatement->registerOutParam
-        (4, oracle::occi::OCCISTRING, 2048);
-      m_getUpdateStartStatement->registerOutParam
-        (5, oracle::occi::OCCIINT);
+        (5, oracle::occi::OCCISTRING, 2048);
       m_getUpdateStartStatement->registerOutParam
         (6, oracle::occi::OCCIINT);
       m_getUpdateStartStatement->registerOutParam
         (7, oracle::occi::OCCIINT);
+      m_getUpdateStartStatement->registerOutParam
+        (8, oracle::occi::OCCIINT);
       m_getUpdateStartStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
     m_getUpdateStartStatement->setDouble(1, subreq->id());
-    m_getUpdateStartStatement->setDouble(2, fileSystem->id());
-
-    unsigned int nb =
-      m_getUpdateStartStatement->executeUpdate();
+    m_getUpdateStartStatement->setString(2, fileSystem->diskserver()->name());
+    m_getUpdateStartStatement->setString(3, fileSystem->mountPoint());
+    unsigned int nb = m_getUpdateStartStatement->executeUpdate();
     if (0 == nb) {
       rollback();
       castor::exception::Internal ex;
@@ -247,8 +246,7 @@ castor::db::ora::OraJobSvc::getUpdateStart
     }
 
     // Check result
-    u_signed64 id
-      = (u_signed64)m_getUpdateStartStatement->getDouble(3);
+    u_signed64 id = (u_signed64)m_getUpdateStartStatement->getDouble(4);
     // If no DiskCopy returned, we have to wait, hence return
     if (0 == id) {
       return 0;
@@ -257,8 +255,10 @@ castor::db::ora::OraJobSvc::getUpdateStart
     castor::stager::DiskCopy* result =
       new castor::stager::DiskCopy();
     result->setId(id);
-    result->setPath(m_getUpdateStartStatement->getString(4));
-    result->setStatus((enum castor::stager::DiskCopyStatusCodes)m_getUpdateStartStatement->getInt(5));
+    result->setPath(m_getUpdateStartStatement->getString(5));
+    result->setStatus
+      ((enum castor::stager::DiskCopyStatusCodes)
+       m_getUpdateStartStatement->getInt(6));
     if(result->status() == castor::stager::DISKCOPY_WAITDISK2DISKCOPY) {
       *emptyFile = true;
     }
@@ -292,16 +292,17 @@ castor::db::ora::OraJobSvc::putStart
       m_putStartStatement =
         createStatement(s_putStartStatementString);
       m_putStartStatement->registerOutParam
-        (3, oracle::occi::OCCIDOUBLE);
+        (4, oracle::occi::OCCIDOUBLE);
       m_putStartStatement->registerOutParam
-        (4, oracle::occi::OCCIINT);
+        (5, oracle::occi::OCCIINT);
       m_putStartStatement->registerOutParam
-        (5, oracle::occi::OCCISTRING, 2048);
+        (6, oracle::occi::OCCISTRING, 2048);
       m_putStartStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
     m_putStartStatement->setDouble(1, subreq->id());
-    m_putStartStatement->setDouble(2, fileSystem->id());
+    m_putStartStatement->setString(2, fileSystem->diskserver()->name());
+    m_putStartStatement->setString(3, fileSystem->mountPoint());
     unsigned int nb = m_putStartStatement->executeUpdate();
     if (0 == nb) {
       rollback();
@@ -312,11 +313,11 @@ castor::db::ora::OraJobSvc::putStart
     }
     // Get the result
     result = new castor::stager::DiskCopy();
-    result->setId((u_signed64)m_putStartStatement->getDouble(3));
+    result->setId((u_signed64)m_putStartStatement->getDouble(4));
     result->setStatus
       ((enum castor::stager::DiskCopyStatusCodes)
-       m_putStartStatement->getInt(4));
-    result->setPath(m_putStartStatement->getString(5));
+       m_putStartStatement->getInt(5));
+    result->setPath(m_putStartStatement->getString(6));
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
@@ -344,7 +345,6 @@ castor::db::ora::OraJobSvc::putStart
 void castor::db::ora::OraJobSvc::disk2DiskCopyStart
 (const u_signed64 diskCopyId,
  const u_signed64 sourceDiskCopyId,
- const std::string destSvcClass,
  const std::string diskServer,
  const std::string fileSystem,
  castor::stager::DiskCopyInfo* &diskCopy,
@@ -358,6 +358,8 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
       m_disk2DiskCopyStartStatement =
 	createStatement(s_disk2DiskCopyStartStatementString);
       m_disk2DiskCopyStartStatement->registerOutParam
+	(5, oracle::occi::OCCISTRING, 2048);
+      m_disk2DiskCopyStartStatement->registerOutParam
 	(6, oracle::occi::OCCISTRING, 2048);
       m_disk2DiskCopyStartStatement->registerOutParam
 	(7, oracle::occi::OCCISTRING, 2048);
@@ -367,18 +369,13 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
 	(9, oracle::occi::OCCISTRING, 2048);
       m_disk2DiskCopyStartStatement->registerOutParam
 	(10, oracle::occi::OCCISTRING, 2048);
-      m_disk2DiskCopyStartStatement->registerOutParam
-	(11, oracle::occi::OCCIINT, 2048);
-      m_disk2DiskCopyStartStatement->registerOutParam
-	(12, oracle::occi::OCCIINT, 2048);
     }
 
     // Execute the statement and see if we found something
     m_disk2DiskCopyStartStatement->setDouble(1, diskCopyId);
     m_disk2DiskCopyStartStatement->setDouble(2, sourceDiskCopyId);
-    m_disk2DiskCopyStartStatement->setString(3, destSvcClass);
-    m_disk2DiskCopyStartStatement->setString(4, diskServer);
-    m_disk2DiskCopyStartStatement->setString(5, fileSystem);
+    m_disk2DiskCopyStartStatement->setString(3, diskServer);
+    m_disk2DiskCopyStartStatement->setString(4, fileSystem);
 
     unsigned int nb = m_disk2DiskCopyStartStatement->executeUpdate();
     if (nb == 0) {
@@ -393,8 +390,8 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
     diskCopy->setDiskCopyId(diskCopyId);
     diskCopy->setDiskServer(diskServer);
     diskCopy->setMountPoint(fileSystem);
-    diskCopy->setDiskCopyPath(m_disk2DiskCopyStartStatement->getString(6));
-    diskCopy->setSvcClass(destSvcClass);
+    diskCopy->setDiskCopyPath(m_disk2DiskCopyStartStatement->getString(5));
+    diskCopy->setSvcClass(m_disk2DiskCopyStartStatement->getString(6));
     diskCopy->setFileId(fileId);
     diskCopy->setNsHost(nsHost);
 
@@ -430,22 +427,14 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
       fileid.fileid = fileId;
       strncpy(fileid.server, nsHost.c_str(), CA_MAXHOSTNAMELEN);
 
-      // Set the uid and gid to pass through to the name server
-      unsigned long euid = m_disk2DiskCopyStartStatement->getInt(11);
-      unsigned long egid = m_disk2DiskCopyStartStatement->getInt(12);
-      if (Cns_setid(euid, egid) != 0) {
-	castor::exception::Exception ex(serrno);
-	ex.getMessage()
-	  << "disk2DiskCopyStart : Cns_setid failed - "
-	  << sstrerror(serrno);
-	throw ex;
-      }
+      // Note: we do not call Cns_setid here as there is no need to perform the
+      // Cns_statcsx call under the users uid and gid
 
       // Extract checksum information for file
       if (Cns_statcsx(fileName, &fileid, &statbuf) != 0) {
 	castor::exception::Exception ex(serrno);
 	ex.getMessage()
-	  << "disk2DiskCopyStart : Cns_statcs failed - "
+	  << "disk2DiskCopyStart : Cns_statcsx failed - "
 	  << sstrerror(serrno);
 	throw ex;
       }
@@ -466,17 +455,6 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
 	sourceDiskCopy->setCsumType(csumtype);
 	sourceDiskCopy->setCsumValue(csumvalue);
       }
-    }
-
-    // Make sure the filesystems have a trailing '/'
-    u_signed64 len = diskCopy->mountPoint().size();
-    if ((len > 2) && (diskCopy->mountPoint()[len - 1] != '/')) {
-      diskCopy->setMountPoint(diskCopy->mountPoint() + "/");
-    }
-
-    len = sourceDiskCopy->mountPoint().size();
-    if ((len > 2) && (sourceDiskCopy->mountPoint()[len - 1] != '/')) {
-      sourceDiskCopy->setMountPoint(sourceDiskCopy->mountPoint() + "/");
     }
 
     // Return
@@ -622,14 +600,12 @@ void castor::db::ora::OraJobSvc::prepareForMigration
       return;
     }
     // collect rest of output
-    unsigned long euid =
-      m_prepareForMigrationStatement->getInt(6);
-    unsigned long egid =
-      m_prepareForMigrationStatement->getInt(7);
+    unsigned long euid = m_prepareForMigrationStatement->getInt(6);
+    unsigned long egid = m_prepareForMigrationStatement->getInt(7);
     // Update name server
     char cns_error_buffer[512];  /* Cns error buffer */
     *cns_error_buffer = 0;
-    if (Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0) {
+    if (Cns_seterrbuf(cns_error_buffer, sizeof(cns_error_buffer)) != 0) {
       castor::exception::Exception ex(serrno);
       ex.getMessage()
         << "prepareForMigration : Cns_seterrbuf failed.";
