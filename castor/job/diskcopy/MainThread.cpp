@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/09/02 09:14:49 $ $Author: waldron $
+ * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/09/22 13:37:06 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -47,7 +47,7 @@
 castor::job::diskcopy::MainThread::MainThread(int argc, char *argv[])
   throw(castor::exception::Exception) :
   m_mover(0),
-  m_protocol("Rfio"),
+  m_protocol("rfio"),
   m_requestUuid(nullCuuid),
   m_subRequestUuid(nullCuuid),
   m_svcClass(""),
@@ -434,7 +434,6 @@ void castor::job::diskcopy::MainThread::run(void *param) {
   try {
     m_jobSvc->disk2DiskCopyStart(m_diskCopyId,
 				 m_sourceDiskCopyId,
-				 m_svcClass,
 				 diskserver,
 				 filesystem,
 				 diskCopy,
