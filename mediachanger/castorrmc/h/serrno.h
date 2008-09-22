@@ -29,7 +29,7 @@
 #define ESQBASEOFF      1800            /* SYSREQ error base offset     */
 #define ETBASEOFF       1900            /* TAPE error base offset       */
 #define EVMBASEOFF      2000            /* VMGR error base offset       */
-#define EVQBASEOFF      2100            /* VDQM error base offset       */ 
+#define EVQBASEOFF      2100            /* VDQM error base offset       */
 #define ERMBASEOFF      2200            /* RMC error base offset        */
 #define EMONBASEOFF     2300            /* Monitoring Error base offset */
 #define EUPBASEOFF      2400            /* UPV error base offset        */
@@ -74,10 +74,10 @@
 #define SEDUPKEY        SEBASEOFF+34    /* Duplicate key value          */
 #define SEENTRYEXISTS   SEBASEOFF+35    /* Entry already exists         */
 #define SEGROUPUNKN     SEBASEOFF+36    /* Group Unknown                */
-#define SECHECKSUM      SEBASEOFF+37    /* Wrong checksum               */
-#define SESVCCLASSNFND  SEBASEOFF+38    /* Service class not available  */
-#define SESQLERR        SEBASEOFF+39    /* SQL exception from database  */
-#define SELOOP          SEBASEOFF+40    /* Too many symbolic links encountered */
+#define SECHECKSUM      SEBASEOFF+37    /* Bad checksum                 */
+#define SESVCCLASSNFND  SEBASEOFF+38    /* This service class is not available for this host */
+#define SESQLERR        SEBASEOFF+39    /* Got SQL exception from database */
+#define SELOOP          SEBASEOFF+40    /* Too many symbolic links      */
 
 #define SEMAXERR        SEBASEOFF+40    /* Maximum error number         */
 
@@ -87,7 +87,7 @@
  */
 #define SEFNAM2LONG     SENAMETOOLONG
 
-/* 
+/*
  * Package specific error messages (don't forget to update commmon/serror.c)
  */
 
@@ -223,7 +223,7 @@
 #define ERFXHOST        ERFBASEOFF+3    /* Cross-host link (rename())   */
 #define ERFPROTONOTSUP  ERFBASEOFF+4    /* RFIO protocol not supported  */
 #define ERFMAXERR       ERFBASEOFF+4    /* Maximum error number of RFIO */
-/* 
+/*
  * Backward compatibility
  */
 #define SENORCODE       ERFNORCODE
