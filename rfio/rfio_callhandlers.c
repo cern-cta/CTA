@@ -1,3 +1,4 @@
+
 /*
  * rfio_callhandlers.c,v 1.6 2005/07/21 09:13:07 itglp Exp
  */
@@ -23,8 +24,9 @@
 #include "RemoteJobSvc.h"
 #include "serrno.h"
 #include "rfio_callhandlers.h"
-#include <attr/xattr.h>
 #include "getconfent.h"
+#include "Castor_limits.h"
+#include <attr/xattr.h>
 
 struct internal_context {
   int one_byte_at_least;
@@ -170,10 +172,10 @@ int rfio_handle_close(void *ctx,
   char     csumalgnum=3;
   int      useCksum;
   int      xattr_len;
-  char     csumvalue[33];
+  char     csumvalue[CA_MAXCKSUMLEN+1];
   char     csumtype[17];
   char     *conf_ent;
-  
+
   if (internal_context != NULL) {
     struct Cstager_IJobSvc_t **jobSvc;
     struct C_Services_t **dbService;
@@ -217,7 +219,7 @@ int rfio_handle_close(void *ctx,
 		    csumtype[xattr_len] = '\0';
 		    log(LOG_DEBUG, "rfio_handle_close : csumtype is %s\n", csumtype);
 		    /* now we have csumtype from disk and have to convert it for castor name server database */
-		    for (xattr_len = 0; xattr_len < csumalgnum; xattr_len++) 
+		    for (xattr_len = 0; xattr_len < csumalgnum; xattr_len++)
 		      if (strncmp(csumtype, csumtypeDiskNs[xattr_len * 2], 16) == 0) {
 			/* we have found something */
 			strcpy(csumtype, csumtypeDiskNs[xattr_len * 2 + 1]);
@@ -230,18 +232,18 @@ int rfio_handle_close(void *ctx,
 		      useCksum = 0; /* we don't have the file checksum, and will not fill it in castor NS database */
 		    }
 		  }
-		}		
+		}
 	      }
 	      if (useCksum == 0) {
 		csumtype[0] = '\0';
 		csumvalue[0] = '\0';
-	      }	      
+	      }
               log(LOG_INFO, "rfio_handle_close : Calling Cstager_IJobSvc_prepareForMigration on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
               if (Cstager_IJobSvc_prepareForMigration(*jobSvc,subrequest,(u_signed64) statbuf.st_size, (u_signed64) time(NULL),internal_context->fileId, internal_context->nsHost, csumtype, csumvalue) != 0) {
 		log(LOG_ERR, "rfio_handle_close : Cstager_IJobSvc_prepareForMigration error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), Cstager_IJobSvc_errorMsg(*jobSvc));
               } else {
 		forced_mover_exit_error = 0;
-              }            
+              }
             }
           }
         } else {

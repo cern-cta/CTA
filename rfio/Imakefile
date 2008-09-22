@@ -69,7 +69,7 @@ HPSSCOPTS = -DHPSSCLIENT
 HPSSCLIBS = -L../hpss -lhpss_common
 #endif
 
-DOMAINNAME= DomainName
+DOMAINNAME = DomainName
 
 #ifdef StagerSuperUser
 STAGERSUPERUSER0 = StagerSuperUser

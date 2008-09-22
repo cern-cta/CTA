@@ -1664,8 +1664,8 @@ int cleanpath(output,input)
 
 #ifndef _WIN32
 Sigfunc *_rfio_signal(signo, func)
-     int signo;
-     Sigfunc *func;
+int signo;
+Sigfunc *func;
 {
   struct sigaction act, oact;
   int n = 0;

@@ -96,9 +96,9 @@ int main(int argc, char *argv[]) {
       break;
     }
   }
-  if ((hastgchecksum && hastgchecksum_name) && !(hastgcopyno && hastgfsec)) fileflag=1; 
+  if ((hastgchecksum && hastgchecksum_name) && !(hastgcopyno && hastgfsec)) fileflag=1;
   if (Coptind >= argc
-      || !((hastgcopyno && hastgfsec) || fileflag) 
+      || !((hastgcopyno && hastgfsec) || fileflag)
       || (!clrflag && !(hastgchecksum && hastgchecksum_name))) {
     errflg++;
   }
@@ -127,18 +127,18 @@ int main(int argc, char *argv[]) {
   }
 
   if(fileflag && hastgchecksum && hastgchecksum_name) { /* we will update the file checksum in Cns_file_metadata */
-    /* in CNS we know only AD, CS, MD, PA, PC, PM so for a user we will convert checksum name to the predefined checksum name 
+    /* in CNS we know only AD, CS, MD, PA, PC, PM so for a user we will convert checksum name to the predefined checksum name
        admims may use AD, CS, MD if they want to change checksums for a file.
        User can use empty checksum name to clear checksum */
-    if (*targetchecksum_name =='\0' || strcmp(targetchecksum_name,"CS") == 0 || strcmp(targetchecksum_name,"MD") == 0 || strcmp(targetchecksum_name,"AD") == 0 
+    if (*targetchecksum_name =='\0' || strcmp(targetchecksum_name,"CS") == 0 || strcmp(targetchecksum_name,"MD") == 0 || strcmp(targetchecksum_name,"AD") == 0
         || strcmp(targetchecksum_name,"adler32") == 0 || strcmp(targetchecksum_name,"crc32") == 0 || strcmp(targetchecksum_name,"md5") == 0) {
-        if (strcmp(targetchecksum_name,"adler32") == 0) strcpy(targetchecksum_name,"PA");
-        else if (strcmp(targetchecksum_name,"crc32") == 0) strcpy(targetchecksum_name,"PC");
-        else if (strcmp(targetchecksum_name,"md5") == 0) strcpy(targetchecksum_name,"PM");
-      } else {
-        fprintf(stderr, "Unknown checksum name %s\n",targetchecksum_name);
-        return EXIT_FAILURE;
-      }
+      if (strcmp(targetchecksum_name,"adler32") == 0) strcpy(targetchecksum_name,"PA");
+      else if (strcmp(targetchecksum_name,"crc32") == 0) strcpy(targetchecksum_name,"PC");
+      else if (strcmp(targetchecksum_name,"md5") == 0) strcpy(targetchecksum_name,"PM");
+    } else {
+      fprintf(stderr, "Unknown checksum name %s\n",targetchecksum_name);
+      return EXIT_FAILURE;
+    }
     rc = Cns_updatefile_checksum(filename,targetchecksum_name,targetchecksum_value);
     if (rc != 0) {
       fprintf(stderr, "Cns_updatefile_checksum error %d : %s\n",
@@ -147,24 +147,24 @@ int main(int argc, char *argv[]) {
       return EXIT_FAILURE;
     }
   }
-  else { /* we are working with tape segments */        
+  else { /* we are working with tape segments */
     rc = Cns_getsegattrs(filename,
                          NULL,
                          &outnb,
                          &outsat);
-  
+
     if (rc != 0) {
       fprintf(stderr, "Cns_getsegattrs error %d : %s\n",
               serrno,
               sstrerror(serrno));
       return EXIT_FAILURE;
     }
-  
+
     for (i=0; i<outnb; i++) {
       if (outsat[i].copyno == targetcopyno
           && outsat[i].fsec == targetfsec) {
         targetfound = 1;
-  
+
         rsat = outsat[i];
         if (clrflag) {
           rsat.checksum_name[0] = '\0';
@@ -173,7 +173,7 @@ int main(int argc, char *argv[]) {
           strcpy(rsat.checksum_name, targetchecksum_name);
           rsat.checksum = targetchecksum;
         }
-  
+
         if (updateflag) {
           rc = Cns_updateseg_checksum(NULL, stat.fileid,
                                       &(outsat[i]), &rsat);
@@ -194,11 +194,11 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
       }
     }
-  
+
     if (outnb > 0) {
       free(outsat);
     }
-  
+
     if (!targetfound) {
       fprintf(stderr, "Could not find segment !\n");
       return EXIT_FAILURE;

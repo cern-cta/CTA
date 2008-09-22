@@ -129,14 +129,14 @@ Cns_updatefile_checksum(const char *path, const char *csumtype, const char *csum
     serrno = ENAMETOOLONG;
     return (-1);
   }
-  
+
   if ((csumtype && strlen (csumtype) > 2) || (csumvalue && strlen (csumvalue) > 32)) {
     serrno = EINVAL;
     return (-1);
   }
-  
+
   if (Cns_selectsrvr (path, thip->server, server, &actual_path))
-      return (-1);
+    return (-1);
 
   /* Build request header */
 
@@ -153,7 +153,7 @@ Cns_updatefile_checksum(const char *path, const char *csumtype, const char *csum
   marshall_LONG (sbp, gid);
   marshall_HYPER (sbp, thip->cwd);
   marshall_STRING (sbp, actual_path);
-    
+
   if (csumtype) {
     marshall_STRING (sbp, csumtype);
   } else {

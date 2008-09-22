@@ -54,7 +54,7 @@ int get_client_actual_id (thip, uid, gid, user)
      char **user;
 {
   struct passwd *pw;
-  
+
 #ifdef CSEC
   if (thip->secOn) {
     *uid = thip->Csec_uid;
@@ -5150,7 +5150,7 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
   filentry.ctime = filentry.mtime;
   *filentry.csumtype = '\0';
   *filentry.csumvalue = '\0';
-  
+
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &filentry))
     RETURN (serrno);
   RETURN (0);
@@ -5179,7 +5179,7 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
   uid_t uid;
   char *user;
   char csumtype[3];
-  char csumvalue[33];
+  char csumvalue[CA_MAXCKSUMLEN+1];
 
   strcpy (func, "Cns_srv_setfsizecs");
   rbp = req_data;
@@ -5196,9 +5196,9 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
   unmarshall_HYPER (rbp, filesize);
   if (unmarshall_STRINGN (rbp, csumtype, 3))
     RETURN (EINVAL);
-  if (unmarshall_STRINGN (rbp, csumvalue, 33))
+  if (unmarshall_STRINGN (rbp, csumvalue, CA_MAXCKSUMLEN+1))
     RETURN (EINVAL);
-  if (*csumtype && strcmp (csumtype, "CS") && strcmp (csumtype, "AD") 
+  if (*csumtype && strcmp (csumtype, "CS") && strcmp (csumtype, "AD")
       && strcmp (csumtype, "MD"))
     RETURN (EINVAL);
   sprintf (logbuf, "setfsizecs %s %s %s %s %s", u64tostr (fileid, tmpbuf, 0),
@@ -5238,18 +5238,18 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
   if (uid != filentry.uid &&
       Cns_chkentryperm (&filentry, S_IWRITE, uid, gid, clienthost))
     RETURN (EACCES);
-    
+
   if ((strcmp(filentry.csumtype,"PA") == 0 && strcmp(csumtype,"AD") == 0) ||
       (strcmp(filentry.csumtype,"PC") == 0 && strcmp(csumtype,"CS") == 0) ||
-    (strcmp(filentry.csumtype,"PM") == 0 && strcmp(csumtype,"MD") == 0)) {
+      (strcmp(filentry.csumtype,"PM") == 0 && strcmp(csumtype,"MD") == 0)) {
     /* we have predefined checksums then should check them with new ones */
     if(strcmp(filentry.csumvalue,csumvalue)!=0) {
       sprintf (logbuf, "setfsizecs: predefined checksum error 0x%s != 0x%s", filentry.csumvalue, csumvalue);
       Cns_logreq (func, logbuf);
-      RETURN (SECHECKSUM); 
+      RETURN (SECHECKSUM);
     }
   }
-    
+
   /* update entry */
 
   filentry.filesize = filesize;
@@ -5257,7 +5257,7 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
   filentry.ctime = filentry.mtime;
   strcpy (filentry.csumtype, csumtype);
   strcpy (filentry.csumvalue, csumvalue);
-  
+
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &filentry))
     RETURN (serrno);
   RETURN (0);
@@ -5272,7 +5272,7 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
      struct Cns_srv_thread_info *thip;
 {
   char csumtype[3];
-  char csumvalue[33];
+  char csumvalue[CA_MAXCKSUMLEN+1];
   struct Cns_file_metadata filentry;
   u_signed64 filesize;
   char func[18];
@@ -5298,7 +5298,7 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
   unmarshall_HYPER (rbp, filesize);
   if (unmarshall_STRINGN (rbp, csumtype, 3))
     RETURN (EINVAL);
-  if (unmarshall_STRINGN (rbp, csumvalue, 33))
+  if (unmarshall_STRINGN (rbp, csumvalue, CA_MAXCKSUMLEN+1))
     RETURN (EINVAL);
   if (*csumtype && strcmp (csumtype, "CS") && strcmp (csumtype, "AD") &&
       strcmp (csumtype, "MD"))
@@ -5570,7 +5570,7 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
   char tmpbuf2[21];
   uid_t uid;
   char *user;
-  
+
   strcpy (func, "Cns_srv_setsegattrs");
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
@@ -5670,7 +5670,7 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
         RETURN(EINVAL);
       }
     }
-    
+
     if ((magic >= CNS_MAGIC4) && (nbseg == 1)) {
       /* Checking for a checksum in the file metadata table if we have one segment for a file
 	 We have different names for checksum type in Cns_seg_metadata table and Cns_file_metadata.
@@ -5921,7 +5921,7 @@ int Cns_srv_statcs(magic, req_data, clienthost, thip)
   marshall_WORD (sbp, fmd_entry.fileclass);
   marshall_BYTE (sbp, fmd_entry.status);
   marshall_STRING (sbp, fmd_entry.csumtype);
-  marshall_STRING (sbp, fmd_entry.csumvalue);  
+  marshall_STRING (sbp, fmd_entry.csumvalue);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
   RETURNQ (0);
 }
@@ -6499,8 +6499,8 @@ int Cns_srv_updatefile_checksum(magic, req_data, clienthost, thip)
   uid_t uid;
   char *user;
   char csumtype[3];
-  char csumvalue[33];
-  
+  char csumvalue[CA_MAXCKSUMLEN+1];
+
   strcpy (func, "Cns_srv_updatefile_checksum");
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
@@ -6514,12 +6514,12 @@ int Cns_srv_updatefile_checksum(magic, req_data, clienthost, thip)
     RETURN (SENAMETOOLONG);
   if (unmarshall_STRINGN (rbp, csumtype, 3))
     RETURN (EINVAL);
-  if (unmarshall_STRINGN (rbp, csumvalue, 33))
+  if (unmarshall_STRINGN (rbp, csumvalue, CA_MAXCKSUMLEN+1))
     RETURN (EINVAL);
   if (*csumtype && strcmp (csumtype, "PC") && strcmp (csumtype, "PA") && strcmp (csumtype, "PM") &&
-     strcmp (csumtype, "CS") && strcmp (csumtype, "AD") && strcmp (csumtype, "MD"))
+      strcmp (csumtype, "CS") && strcmp (csumtype, "AD") && strcmp (csumtype, "MD"))
     RETURN (EINVAL);
-  
+
   sprintf (logbuf, "updatefile_checksum %s %s %s", path, csumvalue, csumtype);
   Cns_logreq (func, logbuf);
 
@@ -6538,9 +6538,9 @@ int Cns_srv_updatefile_checksum(magic, req_data, clienthost, thip)
   if (filentry.filemode & S_IFDIR)
     RETURN (EISDIR);
 
-  /* check if the user is authorized to set access/modification checksum for this entry 
+  /* check if the user is authorized to set access/modification checksum for this entry
      for users we will allow only predefined checksums and for admins any types */
-     
+
   if (strcmp (csumtype, "CS") == 0 || strcmp (csumtype, "AD") == 0 || strcmp (csumtype, "MD") == 0) {
     if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
       RETURN (EPERM);
@@ -6553,7 +6553,7 @@ int Cns_srv_updatefile_checksum(magic, req_data, clienthost, thip)
   /* update entry */
   filentry.mtime = time (0);
   filentry.ctime = filentry.mtime;
-  
+
   strcpy (filentry.csumtype, csumtype);
   if( *csumtype == '\0') strcpy (filentry.csumvalue, ""); /* reset value for empty types */
   else strcpy (filentry.csumvalue, csumvalue);

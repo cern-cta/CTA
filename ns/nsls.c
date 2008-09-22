@@ -185,16 +185,16 @@ int procpath(fullpath)
   char comment[CA_MAXCOMMENTLEN+1];
   char slink[CA_MAXPATHLEN+1];
   struct Cns_filestatcs statbuf;
-  
+
   if (Lflag) {
     if (Cns_statcs (fullpath, &statbuf) < 0)
       return (-1);
   } else {
     if (checksumflag && !Tflag) {
       if (Cns_statcs (fullpath, &statbuf) < 0)
-        return (-1); 
-    } else if (Cns_lstat (fullpath, (struct Cns_filestat*) &statbuf) < 0)
         return (-1);
+    } else if (Cns_lstat (fullpath, (struct Cns_filestat*) &statbuf) < 0)
+      return (-1);
   }
   if (statbuf.filemode & S_IFDIR && ! dflag)
     return (listdir (fullpath));
@@ -234,7 +234,7 @@ int listdir(dir)
   struct Cns_direntape *dxtp;
   char slink[CA_MAXPATHLEN+1];
   struct Cns_filestatcs statbuf;
-  
+
   if ((dirp = Cns_opendir (dir)) == NULL)
     return (-1);
 
@@ -270,7 +270,7 @@ int listdir(dir)
       while ((dxp = Cns_readdirg (dirp)) != NULL) {
         if ((dxp->filemode & S_IFLNK) == S_IFLNK) {
           sprintf (curdir, "%s/%s", dir, dxp->d_name);
-          if (Lflag) { 
+          if (Lflag) {
             if (Cns_statcs (curdir,&statbuf))
               fprintf (stderr, "%s: %s\n", curdir,
                        sstrerror(serrno));
@@ -356,7 +356,7 @@ int listentry(path, statbuf, slink, comment)
   char timestr[13];
   struct tm *tm;
   char tmpbuf[21];
-  
+
   if (statbuf->status == 'D' && delflag == 0)
     return (0);
   if (iflag)
@@ -526,7 +526,7 @@ int listtpentry(char *path, int copyno, int fsec, u_signed64 segsize, int compre
   return (0);
 }
 /* converting procedures */
-void direntstatg2filestatcs(struct Cns_filestatcs* statbuf, struct Cns_direnstatg* dxp) 
+void direntstatg2filestatcs(struct Cns_filestatcs* statbuf, struct Cns_direnstatg* dxp)
 {
   statbuf->fileid=dxp->fileid;
   statbuf->filemode=dxp->filemode;

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_statg.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:21 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_statg.man,v $ $Revision: 1.3 $ $Date: 2008/09/22 13:41:37 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2005 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_STATG 3 "$Date: 2006/01/26 15:36:21 $" CASTOR "Cns Library Functions"
+.TH CNS_STATG 3 "$Date: 2008/09/22 13:41:37 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_statg \- get information about a CASTOR file or directory in the name server
 .SH SYNOPSIS
@@ -21,7 +21,7 @@ Cns_statg \- get information about a CASTOR file or directory in the name server
 gets information about a CASTOR file or directory, having the given GUID, in the name server.
 .LP
 .B Cns_statr
-retrieves information about the given replica. 
+retrieves information about the given replica.
 .LP
 The file can be specified by
 .I path
@@ -69,7 +69,7 @@ char		status;			/* '-' --> online, 'm' --> migrated */
 .br
 char		csumtype[3];
 .br
-char		csumvalue[33];
+char		csumvalue[CA_MAXCKSUMLEN+1];
 .RE
 .LP
 filemode is constructed by OR'ing the bits defined in
@@ -77,49 +77,49 @@ filemode is constructed by OR'ing the bits defined in
 under Unix or \fB "statbits.h"\fR under Windows/NT:
 .sp
 .RS
-.B S_IFLNK	0xA000		
+.B S_IFLNK	0xA000
 symbolic link
 .br
-.B S_IFREG	0x8000		
+.B S_IFREG	0x8000
 regular file
 .br
-.B S_IFDIR	0x4000		
+.B S_IFDIR	0x4000
 directory
 .br
-.B S_ISUID	0004000		
+.B S_ISUID	0004000
 set user ID on execution
 .br
-.B S_ISGID	0002000		
+.B S_ISGID	0002000
 set group ID on execution
 .br
-.B S_ISVTX	0001000		
+.B S_ISVTX	0001000
 sticky bit
 .br
-.B S_IRUSR	0000400		
+.B S_IRUSR	0000400
 read by owner
 .br
-.B S_IWUSR	0000200		
+.B S_IWUSR	0000200
 write by owner
 .br
-.B S_IXUSR	0000100		
+.B S_IXUSR	0000100
 execute/search by owner
 .br
-.B S_IRGRP	0000040		
+.B S_IRGRP	0000040
 read by group
 .br
-.B S_IWGRP	0000020		
+.B S_IWGRP	0000020
 write by group
 .br
-.B S_IXGRP	0000010		
+.B S_IXGRP	0000010
 execute/search by group
 .br
-.B S_IROTH	0000004		
+.B S_IROTH	0000004
 read by others
 .br
-.B S_IWOTH	0000002		
+.B S_IWOTH	0000002
 write by others
 .br
-.B S_IXOTH	0000001		
+.B S_IXOTH	0000001
 execute/search by others
 .RE
 .SH RETURN VALUE
