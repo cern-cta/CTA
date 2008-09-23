@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.155 $ $Release$ $Date: 2008/09/18 20:00:18 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.156 $ $Release$ $Date: 2008/09/23 15:44:35 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2157,15 +2157,17 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
   , dgNameVar     IN  VARCHAR2
   , resultVar     OUT INTEGER
   ) AS
-    dgnIdVar        NUMBER;
-    tapeServerIdVar NUMBER;
-    driveIdVar      NUMBER;
-    driveStatusVar  NUMBER;
+    dgnIdVar          NUMBER;
+    tapeServerIdVar   NUMBER;
+    driveIdVar        NUMBER;
+    runningTapeReqVar NUMBER;
   BEGIN
     resultVar := 0;
 
     BEGIN
-      SELECT id INTO tapeServerIdVar FROM TapeServer
+      SELECT id
+        INTO tapeServerIdVar
+        FROM TapeServer
         WHERE
           serverName = serverNameVar;
     EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -2181,7 +2183,9 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     END;
   
     BEGIN
-      SELECT id, status INTO driveIdVar, driveStatusVar FROM TapeDrive
+      SELECT id, runningTapeReq
+        INTO driveIdVar, runningTapeReqVar
+        FROM TapeDrive
         WHERE
               deviceGroupName = dgnIdVar
           AND tapeServer = tapeServerIdVar
@@ -2192,8 +2196,7 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
       RETURN;
     END;
   
-    -- Not UNIT_UP and not UNIT_DOWN
-    IF driveStatusVar != 0 AND driveStatusVar != 5 THEN
+    IF runningTapeReqVar IS NOT NULL THEN
       resultVar := -4; -- Drive has a job assigned
       RETURN;
     END IF;
