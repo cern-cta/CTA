@@ -33,6 +33,8 @@
 #include "castor/vdqm/TapeDriveDedication.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
+#include "castor/vdqm/TapeServer.hpp"
+#include "castor/vdqm/VdqmTape.hpp"
 #include "castor/vdqm/handler/BaseRequestHandler.hpp"
 #include "h/vdqm_messages.h"
 
