@@ -27,6 +27,8 @@
 #include "castor/BaseAddress.hpp"
 #include "castor/Constants.hpp"
 #include "castor/Services.hpp"
+#include "castor/System.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/server/NotifierThread.hpp"
 #include "castor/vdqm/DevTools.hpp"
@@ -183,10 +185,51 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
   castor::vdqm::DevTools::printMessage(std::cout, false, false,
     ptr_serverSocket->socket(), &header);
 #endif
-  
+
+  // Get local hostname
+  std::string localHostname;
+  try {
+    localHostname = castor::System::getHostName();
+  } catch (castor::exception::Exception e) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << "Failed to determine local hostname";
+    throw ie;
+  }
+
+  // Get client hostname
+  std::string clientHostname;
+  {
+    unsigned short port;
+    unsigned long ip;
+
+    try {
+      ptr_serverSocket->getPeerIp(port, ip);
+    } catch(castor::exception::Exception &e) {
+      castor::exception::Internal ie;
+
+      ie.getMessage() << "Failed to get client ip: "
+        << e.getMessage().str();
+
+      throw ie;
+    }
+
+    try {
+      clientHostname = castor::System::ipAddressToHostname(ip);
+    } catch(castor::exception::Exception &e) {
+      castor::exception::Internal ie;
+
+      ie.getMessage() << "Failed to get client hostname from client ip: "
+        << e.getMessage().str();
+
+      throw ie;
+    }
+  }
+
   // Initialization of the OldRequestFacade, which provides the essential
   // functions
-  OldRequestFacade oldRequestFacade(&volumeRequest, &driveRequest, &header);
+  OldRequestFacade oldRequestFacade(&volumeRequest, &driveRequest, &header,
+    clientHostname, localHostname);
   
   // The request handling phase
   try {

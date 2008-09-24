@@ -27,12 +27,14 @@
 #include "castor/Constants.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NotSupported.hpp"
+#include "castor/exception/PermissionDenied.hpp"
 #include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
 #include "castor/vdqm/OldRequestFacade.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/handler/TapeDriveHandler.hpp"
 #include "castor/vdqm/handler/TapeRequestHandler.hpp"
+#include "h/Cupv_api.h"
 #include "h/net.h"
 #include "h/vdqm_constants.h"
 
@@ -48,9 +50,19 @@ using namespace castor::vdqm::handler;
 //------------------------------------------------------------------------------
 castor::vdqm::OldRequestFacade::OldRequestFacade(
   vdqmVolReq_t *const volumeRequest, vdqmDrvReq_t *const driveRequest,
-  vdqmHdr_t *const header) : ptr_volumeRequest(volumeRequest),
-  ptr_driveRequest(driveRequest), ptr_header(header),
+  vdqmHdr_t *const header, const std::string &clientHostname,
+  const std::string &localHostname) :
+  ptr_volumeRequest(volumeRequest), ptr_driveRequest(driveRequest),
+  ptr_header(header), m_clientHostname(clientHostname),
+  m_localHostname(localHostname),
   m_reqtype(header->reqtype) {
+}
+
+
+//------------------------------------------------------------------------------
+// Destructor
+//------------------------------------------------------------------------------
+castor::vdqm::OldRequestFacade::~OldRequestFacade() throw() {
 }
 
 
@@ -99,7 +111,6 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
   
   bool handleRequest = true;
 
-
   switch (m_reqtype) {
   case VDQM_VOL_REQ:
     if(ptr_header == NULL || ptr_volumeRequest == NULL) {
@@ -124,6 +135,20 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
       handleRequest = false;
     } else {        
       logVolumeRequest(ptr_header, ptr_volumeRequest, cuuid, DLF_LVL_SYSTEM);
+      if(Cupv_check(ptr_volumeRequest->clientUID, ptr_volumeRequest->clientGID,
+        m_clientHostname.c_str(), m_localHostname.c_str(), P_TAPE_OPERATOR)) {
+        char buf[80];
+        sstrerror_r(serrno, buf, 80);
+        castor::exception::PermissionDenied ex;
+
+        ex.getMessage() << "Failed Cupv_check call for VDQM_DEL_VOLREQ uid="
+          << ptr_volumeRequest->clientUID << " gid="
+          << ptr_volumeRequest->clientGID << " source_host="
+          << m_clientHostname << " target_host="
+          << m_localHostname  << " privilege=P_TAPE_OPERATOR : " << buf;
+
+        throw ex;
+      }
       TapeRequestHandler requestHandler;
       requestHandler.deleteTapeRequest(ptr_volumeRequest, cuuid); 
     }
@@ -133,6 +158,19 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
       handleRequest = false;
     } else {
       logDriveRequest(ptr_header, ptr_driveRequest, cuuid, DLF_LVL_SYSTEM);
+      if(Cupv_check(ptr_driveRequest->uid, ptr_driveRequest->gid,
+        m_clientHostname.c_str(), m_localHostname.c_str(), P_TAPE_OPERATOR)) {
+        char buf[80];
+        sstrerror_r(serrno, buf, 80);
+        castor::exception::PermissionDenied ex;
+
+        ex.getMessage() << "Failed Cupv_check call for VDQM_DEL_DRVREQ uid="
+          << ptr_driveRequest->uid  << " gid=" << ptr_driveRequest->gid
+          << " source_host=" << m_clientHostname << " target_host="
+          << m_localHostname << " privilege=P_TAPE_OPERATOR : " << buf;
+
+        throw ex;
+      }
       TapeDriveHandler tapeDriveHandler(ptr_header, ptr_driveRequest, cuuid);
       tapeDriveHandler.deleteTapeDrive();
     }
@@ -163,6 +201,19 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
       handleRequest = false;
     } else {
       logDriveRequest(ptr_header, ptr_driveRequest, cuuid, DLF_LVL_SYSTEM);
+      if(Cupv_check(ptr_driveRequest->uid, ptr_driveRequest->gid,
+        m_clientHostname.c_str(), m_localHostname.c_str(), P_TAPE_OPERATOR)) {
+        char buf[80];
+        sstrerror_r(serrno, buf, 80);
+        castor::exception::PermissionDenied ex;
+
+        ex.getMessage() << "Failed Cupv_check call for VDQM_DEDICATE_DRV uid="
+          << ptr_driveRequest->uid  << " gid=" << ptr_driveRequest->gid
+          << " source_host=" << m_clientHostname << " target_host="
+          << m_localHostname << " privilege=P_TAPE_OPERATOR : " << buf;
+
+        throw ex;
+      }
       TapeDriveHandler tapeDriveHandler(ptr_header, ptr_driveRequest, cuuid);
       tapeDriveHandler.dedicateTapeDrive();
     }

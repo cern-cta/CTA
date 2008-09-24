@@ -31,6 +31,8 @@
 #include "castor/BaseObject.hpp"
 #include "h/vdqm_messages.h"
 
+#include <string>
+
 namespace castor {
 
   namespace vdqm {
@@ -50,7 +52,8 @@ namespace castor {
          * Constructor
          */
         OldRequestFacade(vdqmVolReq_t *const volumeRequest,
-          vdqmDrvReq_t *const driveRequest, vdqmHdr_t *const header);
+          vdqmDrvReq_t *const driveRequest, vdqmHdr_t *const header,
+          const std::string &clientHostname, const std::string &localHostname);
       
         /**
          * Calls the right function for the request.
@@ -68,6 +71,11 @@ namespace castor {
          */
         void checkRequestType(const Cuuid_t cuuid) 
           throw (castor::exception::Exception);
+
+        /**
+         * Destructor.
+         */
+        ~OldRequestFacade() throw ();
       
       
       private:
@@ -75,6 +83,8 @@ namespace castor {
         vdqmVolReq_t *const ptr_volumeRequest;
         vdqmDrvReq_t *const ptr_driveRequest;
         vdqmHdr_t    *const ptr_header;
+        const std::string   m_clientHostname;
+        const std::string   m_localHostname;
         const int           m_reqtype;
 
         /**

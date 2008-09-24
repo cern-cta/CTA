@@ -57,7 +57,7 @@ namespace castor {
 
       }; // class VdqmMagic2RequestHandler
 
-    };  // namespace handler
+    } // namespace handler
 
   } // namespace vdqm
 
