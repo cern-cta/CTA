@@ -464,7 +464,7 @@ void castor::vdqm::ProtocolFacade::handleVdqmMagic3Request(
 
     protInterpreter.readDelDrv(header.len, &msg);
     handler::VdqmMagic3RequestHandler requestHandler;
-    requestHandler.handleDelDrv(m_cuuid, &msg);
+    requestHandler.handleDelDrv(ptr_serverSocket, m_cuuid, &msg);
 
     break;
   }
@@ -474,7 +474,7 @@ void castor::vdqm::ProtocolFacade::handleVdqmMagic3Request(
 
     protInterpreter.readDedicate(header.len, &msg);
     handler::VdqmMagic3RequestHandler requestHandler;
-    requestHandler.handleDedicate(m_cuuid, &msg);
+    requestHandler.handleDedicate(ptr_serverSocket, m_cuuid, &msg);
 
     break;
   }

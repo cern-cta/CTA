@@ -32,17 +32,17 @@
 #include <netinet/tcp.h>
 #include <string>
 
+#include "castor/System.hpp"
 #include "castor/exception/Internal.hpp"
-
-#include <vdqm_constants.h>
-#include "osdep.h" //for LONGSIZE
-#include "Cnetdb.h"
-#include <common.h>
-
-// Local Includes
+#include "castor/io/ServerSocket.hpp"
 #include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/SocketHelper.hpp"
 #include "castor/vdqm/vdqmMacros.h"  // Needed for marshalling
+#include "h/Cnetdb.h"
+#include "h/common.h"
+#include "h/Cupv_api.h"
+#include "h/osdep.h" //for LONGSIZE
+#include "h/vdqm_constants.h"
 
 // definition of some constants
 #define STG_CALLBACK_BACKLOG 2
@@ -177,4 +177,71 @@ void castor::vdqm::SocketHelper::netReadVdqmHeader(
   castor::vdqm::DevTools::printMessage(std::cout, false, true, socket->socket(),
     hdrbuf);
 #endif
+}
+
+
+//------------------------------------------------------------------------------
+// checkCupvPermissions
+//------------------------------------------------------------------------------
+void castor::vdqm::SocketHelper::checkCupvPermissions(
+  castor::io::ServerSocket *const socket, const uid_t uid, const gid_t gid,
+  const int privilege, const char *privilegeName, const char *messageType)
+  throw (castor::exception::PermissionDenied) {
+  // Get local hostname
+  std::string localHostname;
+  try {
+    localHostname = castor::System::getHostName();
+  } catch (castor::exception::Exception e) {
+    castor::exception::PermissionDenied pe;
+
+    pe.getMessage() << "Failed to determine local hostname. messageType="
+      << messageType << " privilege=" << privilegeName << " error="
+      << e.getMessage().str();
+
+    throw pe;
+  }
+
+  // Get client hostname
+  std::string clientHostname;
+  {
+    unsigned short port;
+    unsigned long  ip;
+
+    try {
+      socket->getPeerIp(port, ip);
+    } catch(castor::exception::Exception &e) {
+      castor::exception::PermissionDenied pe;
+
+      pe.getMessage() << "Failed to get client ip. messageType=" << messageType
+        << " privilege=" << privilegeName << " error=" << e.getMessage().str();
+
+      throw pe;
+    }
+
+    try {
+      clientHostname = castor::System::ipAddressToHostname(ip);
+    } catch(castor::exception::Exception &e) {
+      castor::exception::PermissionDenied pe;
+
+      pe.getMessage() << "Failed to get client hostname from client ip. "
+        "messageType=" << messageType << " privilege=" << privilegeName
+        << " error=" << e.getMessage().str();
+
+      throw pe;
+    }
+  }
+
+  if(Cupv_check(uid, gid, clientHostname.c_str(), localHostname.c_str(),
+    privilege)) {
+    char buf[80];
+    sstrerror_r(serrno, buf, 80);
+    castor::exception::PermissionDenied pe;
+
+    pe.getMessage() << "Failed Cupv_check call. messageType=" << messageType
+      << " privilege=" << privilegeName << " uid=" << uid << " gid=" << gid
+      << " source_host=" << clientHostname << " target_host=" << localHostname
+      << " privilege=P_TAPE_OPERATOR error=" << buf;
+
+    throw pe;
+  }
 }

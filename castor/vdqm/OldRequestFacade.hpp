@@ -62,9 +62,6 @@ namespace castor {
          * @param driveRequest The un-marshalled messsage body if the request
          * to be processed is a drive request.
          * @param header The un-marshalled message header.
-         * @param socket The socket used to receive the message.  This socket
-         * should only be used for CUPV purposes as all message data has
-         * already been read out.
          */
         OldRequestFacade(vdqmVolReq_t *const volumeRequest,
           vdqmDrvReq_t *const driveRequest, vdqmHdr_t *const header,
@@ -112,14 +109,6 @@ namespace castor {
          */
         void logVolumeRequest(const vdqmHdr_t *const header,
           const vdqmVolReq_t *const request, const Cuuid_t cuuid, int severity);
-
-        /**
-         * Throws a permission denied exception if the specified action is
-         * not authorised.
-         */
-        void checkCupvPermissions(const uid_t uid, const gid_t gid,
-          const int privilege, const char *privilegeName,
-          const char *messageType) throw (castor::exception::PermissionDenied);
 
     }; // class VdqmServer
 

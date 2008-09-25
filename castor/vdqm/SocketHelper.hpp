@@ -25,12 +25,17 @@
 #ifndef CASTOR_VDQM_SOCKETHELPER_HPP
 #define CASTOR_VDQM_SOCKETHELPER_HPP 1
 
-#include "castor/io/ServerSocket.hpp"
+#include "castor/exception/PermissionDenied.hpp"
 
 #include <iostream>
 
 
 namespace castor {
+
+  namespace io {
+    // Forward declaration
+    class ServerSocket;
+  }
 
   namespace vdqm {
 
@@ -73,6 +78,24 @@ namespace castor {
        */
       static void netReadVdqmHeader(castor::io::ServerSocket *const socket,
         void *hdrbuf) throw (castor::exception::Exception);       
+
+      /**
+       * Throws a permission denied exception if the specified action is
+       * not authorised.
+       *
+       * @param sock The socket used to receive the message.  This socket
+       * should only be used for CUPV purposes as all message data has
+       * already been read out.
+       * @param uid The uid of the client.
+       * @param gid The gid of the client.
+       * @param privilege The required privilege.
+       * @param privilegeName The name string of the required privilege
+       * @param messageType Then type string of the message.
+       */
+      static void checkCupvPermissions(castor::io::ServerSocket *const socket,
+        const uid_t uid, const gid_t gid, const int privilege,
+        const char *privilegeName, const char *messageType)
+        throw (castor::exception::PermissionDenied);
 
     }; // class SocketHelper
 
