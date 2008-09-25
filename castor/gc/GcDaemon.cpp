@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
   try {
     castor::gc::GcDaemon daemon;
 
-    // Randomize the start0up of the daemon between 1 and 15 minutes.
+    // Randomize the start-up of the daemon between 1 and 15 minutes.
     char *value;
     int startDelay = 1;
     if ((value = getenv("GC_IMMEDIATESTART")) ||
@@ -55,6 +55,7 @@ int main(int argc, char *argv[]) {
     }
     if (startDelay){
       timeval tv;
+      gettimeofday(&tv, NULL);
       srand(tv.tv_usec * tv.tv_sec);
       startDelay = 60 + (int) (900.0 * rand() / (RAND_MAX + 60.0));
     }
@@ -68,15 +69,15 @@ int main(int argc, char *argv[]) {
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("Deletion",
-          new castor::gc::DeletionThread(startDelay)));
-            daemon.getThreadPool('D')->setNbThreads(1);
+	new castor::gc::DeletionThread(startDelay)));
+    daemon.getThreadPool('D')->setNbThreads(1);
 
     // Create the Synchronization thread
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("Synchronization",
-          new castor::gc::SynchronizationThread(startDelay)));
-            daemon.getThreadPool('S')->setNbThreads(1);
+	new castor::gc::SynchronizationThread(startDelay)));
+    daemon.getThreadPool('S')->setNbThreads(1);
 
     // Start daemon as the stager superuser
     daemon.parseCommandLine(argc, argv);
