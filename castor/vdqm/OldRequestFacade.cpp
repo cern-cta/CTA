@@ -25,9 +25,10 @@
  *****************************************************************************/
 
 #include "castor/Constants.hpp"
+#include "castor/System.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NotSupported.hpp"
-#include "castor/exception/PermissionDenied.hpp"
+#include "castor/io/ServerSocket.hpp"
 #include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
 #include "castor/vdqm/OldRequestFacade.hpp"
@@ -50,11 +51,9 @@ using namespace castor::vdqm::handler;
 //------------------------------------------------------------------------------
 castor::vdqm::OldRequestFacade::OldRequestFacade(
   vdqmVolReq_t *const volumeRequest, vdqmDrvReq_t *const driveRequest,
-  vdqmHdr_t *const header, const std::string &clientHostname,
-  const std::string &localHostname) :
+  vdqmHdr_t *const header, castor::io::ServerSocket *const socket) :
   ptr_volumeRequest(volumeRequest), ptr_driveRequest(driveRequest),
-  ptr_header(header), m_clientHostname(clientHostname),
-  m_localHostname(localHostname),
+  ptr_header(header), m_socket(socket),
   m_reqtype(header->reqtype) {
 }
 
@@ -135,20 +134,11 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
       handleRequest = false;
     } else {        
       logVolumeRequest(ptr_header, ptr_volumeRequest, cuuid, DLF_LVL_SYSTEM);
-      if(Cupv_check(ptr_volumeRequest->clientUID, ptr_volumeRequest->clientGID,
-        m_clientHostname.c_str(), m_localHostname.c_str(), P_TAPE_OPERATOR)) {
-        char buf[80];
-        sstrerror_r(serrno, buf, 80);
-        castor::exception::PermissionDenied ex;
 
-        ex.getMessage() << "Failed Cupv_check call for VDQM_DEL_VOLREQ uid="
-          << ptr_volumeRequest->clientUID << " gid="
-          << ptr_volumeRequest->clientGID << " source_host="
-          << m_clientHostname << " target_host="
-          << m_localHostname  << " privilege=P_TAPE_OPERATOR : " << buf;
+      checkCupvPermissions(ptr_volumeRequest->clientUID,
+        ptr_volumeRequest->clientGID, P_TAPE_OPERATOR, "P_TAPE_OPERATOR",
+        "VDQM_DEL_VOLREQ");
 
-        throw ex;
-      }
       TapeRequestHandler requestHandler;
       requestHandler.deleteTapeRequest(ptr_volumeRequest, cuuid); 
     }
@@ -158,19 +148,10 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
       handleRequest = false;
     } else {
       logDriveRequest(ptr_header, ptr_driveRequest, cuuid, DLF_LVL_SYSTEM);
-      if(Cupv_check(ptr_driveRequest->uid, ptr_driveRequest->gid,
-        m_clientHostname.c_str(), m_localHostname.c_str(), P_TAPE_OPERATOR)) {
-        char buf[80];
-        sstrerror_r(serrno, buf, 80);
-        castor::exception::PermissionDenied ex;
 
-        ex.getMessage() << "Failed Cupv_check call for VDQM_DEL_DRVREQ uid="
-          << ptr_driveRequest->uid  << " gid=" << ptr_driveRequest->gid
-          << " source_host=" << m_clientHostname << " target_host="
-          << m_localHostname << " privilege=P_TAPE_OPERATOR : " << buf;
+      checkCupvPermissions(ptr_driveRequest->uid, ptr_driveRequest->gid,
+        P_TAPE_OPERATOR, "P_TAPE_OPERATOR", "VDQM_DEL_DRVREQ");
 
-        throw ex;
-      }
       TapeDriveHandler tapeDriveHandler(ptr_header, ptr_driveRequest, cuuid);
       tapeDriveHandler.deleteTapeDrive();
     }
@@ -201,19 +182,10 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
       handleRequest = false;
     } else {
       logDriveRequest(ptr_header, ptr_driveRequest, cuuid, DLF_LVL_SYSTEM);
-      if(Cupv_check(ptr_driveRequest->uid, ptr_driveRequest->gid,
-        m_clientHostname.c_str(), m_localHostname.c_str(), P_TAPE_OPERATOR)) {
-        char buf[80];
-        sstrerror_r(serrno, buf, 80);
-        castor::exception::PermissionDenied ex;
 
-        ex.getMessage() << "Failed Cupv_check call for VDQM_DEDICATE_DRV uid="
-          << ptr_driveRequest->uid  << " gid=" << ptr_driveRequest->gid
-          << " source_host=" << m_clientHostname << " target_host="
-          << m_localHostname << " privilege=P_TAPE_OPERATOR : " << buf;
+      checkCupvPermissions(ptr_driveRequest->uid, ptr_driveRequest->gid,
+        P_TAPE_OPERATOR, "P_TAPE_OPERATOR", "VDQM_DEDICATE_DRV");
 
-        throw ex;
-      }
       TapeDriveHandler tapeDriveHandler(ptr_header, ptr_driveRequest, cuuid);
       tapeDriveHandler.dedicateTapeDrive();
     }
@@ -288,6 +260,9 @@ void castor::vdqm::OldRequestFacade::logDriveRequest(
 }
 
 
+//------------------------------------------------------------------------------
+// logVolumeRequest
+//------------------------------------------------------------------------------
 void castor::vdqm::OldRequestFacade::logVolumeRequest(
   const vdqmHdr_t *const header, const vdqmVolReq_t *const request,
   const Cuuid_t cuuid, int severity) {
@@ -313,4 +288,72 @@ void castor::vdqm::OldRequestFacade::logVolumeRequest(
     castor::dlf::Param("dgn"        , request->dgn),
     castor::dlf::Param("client_name", request->client_name)};
   castor::dlf::dlf_writep(cuuid, severity, VDQM_HANDLE_VOL_REQ, 17, params);
+}
+
+
+//------------------------------------------------------------------------------
+// checkCupvPermissions
+//------------------------------------------------------------------------------
+void castor::vdqm::OldRequestFacade::checkCupvPermissions(const uid_t uid,
+  const gid_t gid, const int privilege, const char *privilegeName,
+  const char *messageType) throw (castor::exception::PermissionDenied) {
+  // Get local hostname
+  std::string localHostname;
+  try {
+    localHostname = castor::System::getHostName();
+  } catch (castor::exception::Exception e) {
+    castor::exception::PermissionDenied pe;
+
+    pe.getMessage() << "Failed to determine local hostname. messageType="
+      << messageType << " privilege=" << privilegeName << " error="
+      << e.getMessage().str();
+    
+    throw pe;
+  }
+
+  // Get client hostname
+  std::string clientHostname;
+  {
+    unsigned short port;
+    unsigned long  ip;
+
+    try {
+      m_socket->getPeerIp(port, ip);
+    } catch(castor::exception::Exception &e) {
+      castor::exception::PermissionDenied pe;
+
+      pe.getMessage() << "Failed to get client ip. messageType=" << messageType
+        << " privilege=" << privilegeName << " error=" << e.getMessage().str();
+
+      throw pe;
+    }
+
+    try {
+      clientHostname = castor::System::ipAddressToHostname(ip);
+    } catch(castor::exception::Exception &e) {
+      castor::exception::PermissionDenied pe;
+
+      pe.getMessage() << "Failed to get client hostname from client ip. "
+        "messageType=" << messageType << " privilege=" << privilegeName
+        << " error=" << e.getMessage().str();
+
+      throw pe;
+    }
+  }
+
+  if(Cupv_check(ptr_volumeRequest->clientUID, ptr_volumeRequest->clientGID,
+    clientHostname.c_str(), localHostname.c_str(), P_TAPE_OPERATOR)) {
+    char buf[80];
+    sstrerror_r(serrno, buf, 80);
+    castor::exception::PermissionDenied pe;
+
+    pe.getMessage() << "Failed Cupv_check call. messageType=" << messageType
+      << " privilege=" << privilegeName << " uid="
+      << ptr_volumeRequest->clientUID << " gid="
+      << ptr_volumeRequest->clientGID << " source_host=" << clientHostname
+      << " target_host=" << localHostname
+      << " privilege=P_TAPE_OPERATOR error=" << buf;
+
+    throw pe;
+  }
 }

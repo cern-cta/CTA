@@ -29,15 +29,21 @@
 
 //Include files
 #include "castor/BaseObject.hpp"
+#include "castor/exception/PermissionDenied.hpp"
 #include "h/vdqm_messages.h"
 
 #include <string>
 
 namespace castor {
 
+  namespace io {
+    // Forward declaration
+    class ServerSocket;
+  }
+
   namespace vdqm {
     
-    //Forward declaration
+    // Forward declaration
     class OldProtocolInterpreter;
 
     /**
@@ -50,10 +56,19 @@ namespace castor {
        
         /**
          * Constructor
+         *
+         * @param volumeRequest The un-marshalled messsage body if the request
+         * to be processed is a volume request.
+         * @param driveRequest The un-marshalled messsage body if the request
+         * to be processed is a drive request.
+         * @param header The un-marshalled message header.
+         * @param socket The socket used to receive the message.  This socket
+         * should only be used for CUPV purposes as all message data has
+         * already been read out.
          */
         OldRequestFacade(vdqmVolReq_t *const volumeRequest,
           vdqmDrvReq_t *const driveRequest, vdqmHdr_t *const header,
-          const std::string &clientHostname, const std::string &localHostname);
+          castor::io::ServerSocket *const socket);
       
         /**
          * Calls the right function for the request.
@@ -80,12 +95,11 @@ namespace castor {
       
       private:
       
-        vdqmVolReq_t *const ptr_volumeRequest;
-        vdqmDrvReq_t *const ptr_driveRequest;
-        vdqmHdr_t    *const ptr_header;
-        const std::string   m_clientHostname;
-        const std::string   m_localHostname;
-        const int           m_reqtype;
+        vdqmVolReq_t             *const ptr_volumeRequest;
+        vdqmDrvReq_t             *const ptr_driveRequest;
+        vdqmHdr_t                *const ptr_header;
+        castor::io::ServerSocket *const m_socket;
+        const int                       m_reqtype;
 
         /**
          * Logs the reception of a drive request message.
@@ -98,6 +112,14 @@ namespace castor {
          */
         void logVolumeRequest(const vdqmHdr_t *const header,
           const vdqmVolReq_t *const request, const Cuuid_t cuuid, int severity);
+
+        /**
+         * Throws a permission denied exception if the specified action is
+         * not authorised.
+         */
+        void checkCupvPermissions(const uid_t uid, const gid_t gid,
+          const int privilege, const char *privilegeName,
+          const char *messageType) throw (castor::exception::PermissionDenied);
 
     }; // class VdqmServer
 
