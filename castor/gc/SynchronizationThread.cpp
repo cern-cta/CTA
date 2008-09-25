@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/06/30 15:34:50 $ $Author: waldron $
+ * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/09/25 13:27:20 $ $Author: waldron $
  *
  * Synchronization thread used to check periodically whether files need to be
  * deleted
@@ -79,6 +79,10 @@ void castor::gc::SynchronizationThread::run(void *param) {
     // Get the synchronization interval and chunk size these may have changed
     // since the last iteration
     readConfigFile(&syncInterval, &chunkInterval, &chunkSize);
+    if (syncInterval <= 0) {
+      sleep(300);
+      return;
+    }
 
     // Get the list of filesystem to be checked
     char** fs;
