@@ -1,5 +1,5 @@
 /*
- * $Id: vdqm_constants.h,v 1.6 2008/09/25 17:26:10 murrayc3 Exp $
+ * $Id: vdqm_constants.h,v 1.7 2008/09/25 17:37:06 murrayc3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vdqm_constants.h,v $ $Revision: 1.6 $ $Date: 2008/09/25 17:26:10 $ CERN IT-PDP/DM Olof Barring
+ * @(#)$RCSfile: vdqm_constants.h,v $ $Revision: 1.7 $ $Date: 2008/09/25 17:37:06 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -67,8 +67,8 @@
  */
 #define VDQM3_BASE_REQTYPE (0x4110)
 #define VDQM3_REQ_MIN      (VDQM3_BASE_REQTYPE)
-#define VDQM3_DEL_DRVREQ   (VDQM3_BASE_REQTYPE+0x01)
-#define VDQM3_DEDICATE_DRV (VDQM3_BASE_REQTYPE+0x02)
+#define VDQM3_DEL_DRV      (VDQM3_BASE_REQTYPE+0x01)
+#define VDQM3_DEDICATE     (VDQM3_BASE_REQTYPE+0x02)
 #define VDQM3_REQ_MAX      (VDQM3_BASE_REQTYPE+0x03)
 #define VDQM3_VALID_REQTYPE(X) ((X)>VDQM3_REQ_MIN && (X)<VDQM3_REQ_MAX)
 

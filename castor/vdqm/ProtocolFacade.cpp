@@ -458,7 +458,7 @@ void castor::vdqm::ProtocolFacade::handleVdqmMagic3Request(
   }
 
   switch(header.reqtype) {
-  case VDQM3_DEL_DRVREQ:
+  case VDQM3_DEL_DRV:
   {
     vdqmDelDrv_t msg;
 
@@ -468,7 +468,7 @@ void castor::vdqm::ProtocolFacade::handleVdqmMagic3Request(
 
     break;
   }
-  case VDQM3_DEDICATE_DRV :
+  case VDQM3_DEDICATE:
   {
     vdqmDedicate_t msg;
 
