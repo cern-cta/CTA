@@ -144,6 +144,16 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
     }
     break;
   case VDQM_DEL_DRVREQ:
+    {
+      castor::exception::PermissionDenied pe;
+
+      pe.getMessage() << "VDQM_DEL_DRVREQ message is not supported";
+
+      throw pe;
+    }
+    break;
+/*
+  case VDQM_DEL_DRVREQ_CUPV:
     if(ptr_header == NULL || ptr_driveRequest == NULL) {
       handleRequest = false;
     } else {
@@ -156,6 +166,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
       tapeDriveHandler.deleteTapeDrive();
     }
     break;
+*/
   case VDQM_GET_VOLQUEUE:
     if(ptr_header == NULL || ptr_volumeRequest == NULL) {
       handleRequest = false;
@@ -178,6 +189,16 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
     }
     break;
   case VDQM_DEDICATE_DRV:
+    {
+      castor::exception::PermissionDenied pe;
+
+      pe.getMessage() << "VDQM_DEDICATE_DRV message is not supported";
+
+      throw pe;
+    }
+    break;
+/*
+  case VDQM_DEDICATE_DRV_CUPV:
     if(ptr_header == NULL || ptr_driveRequest == NULL) {
       handleRequest = false;
     } else {
@@ -190,6 +211,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
       tapeDriveHandler.dedicateTapeDrive();
     }
     break;
+*/
   case VDQM_PING:
     if(ptr_header == NULL || ptr_volumeRequest == NULL) {
       handleRequest = false;

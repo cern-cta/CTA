@@ -113,9 +113,48 @@ typedef struct vdqmVolPriority {
 } vdqmVolPriority_t;
 /*
  * Length of marshalled structure. Don't forget to update if entries are added.
- * Note that a string requires strlen + 1 bytes of storage.
+ * Note that a string requires strlen + 1 bytes of storage, hence the "+ 2" at
+ * the end of the VDQM_VOLPRIORITYLEN macro.
  */
 #define VDQM_VOLPRIORITYLEN(X) ( 5*LONGSIZE + \
-    strlen(X->clientHost) + strlen(X->vid) + 2 )
+  strlen(X->clientHost) + strlen(X->vid) + 2 )
+
+/*
+ * Message used to send a delete drive message to the VDQM.
+ *
+ * Note that this message will be sent with VDQM magic number: VDQM3
+ */
+typedef struct vdqmDelDrv {
+    int  clientUID;
+    int  clientGID;
+    char server[CA_MAXHOSTNAMELEN+1];
+    char drive[CA_MAXUNMLEN+1];
+    char dgn[CA_MAXDGNLEN+1];
+} vdqmDelDrv_t;
+/*
+ * Length of marshalled structure. Don't forget to update if entries are added.
+ * Note that a string requires strlen + 1 bytes of storage, hence the "+ 3" at
+ * the end of the VDQM_DELDRVLEN macro.
+ */
+#define VDQM_DELDRVLEN(X) ( 2*LONGSIZE + strlen(X->server) + \
+  strlen(X->drive) +  strlen(X->dgn) + 3 )
+
+/*
+ * Message used to send a dedicate to the VDQM.
+ *
+ * Note that this message will be sent with VDQM magic number: VDQM3
+ */
+typedef struct vdqmDedicate {
+    int  clientUID;
+    int  clientGID;
+    char dedicate[CA_MAXLINELEN+1];
+} vdqmDedicate_t;
+/*
+ * Length of marshalled structure. Don't forget to update if entries are added.
+ * Note that a string requires strlen + 1 bytes of storage, hence the "+ 3" at
+ * the end of the VDQM_DEDICATELEN macro.
+ */
+#define VDQM_DEDICATELEN(X) ( 2*LONGSIZE + strlen(X->dedicate) + 1 )
+
 
 #endif /* VDQM_MESSAGES_H */

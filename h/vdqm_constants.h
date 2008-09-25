@@ -1,5 +1,5 @@
 /*
- * $Id: vdqm_constants.h,v 1.5 2008/07/19 11:13:37 murrayc3 Exp $
+ * $Id: vdqm_constants.h,v 1.6 2008/09/25 17:26:10 murrayc3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vdqm_constants.h,v $ $Revision: 1.5 $ $Date: 2008/07/19 11:13:37 $ CERN IT-PDP/DM Olof Barring
+ * @(#)$RCSfile: vdqm_constants.h,v $ $Revision: 1.6 $ $Date: 2008/09/25 17:26:10 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -22,6 +22,7 @@
  */
 #define VDQM_MAGIC  (0x8537)
 #define VDQM_MAGIC2 (0x8538)
+#define VDQM_MAGIC3 (0x8539)
 
 /*
  * Request types for magic number: VDQM_MAGIC
@@ -60,6 +61,16 @@
 #define VDQM2_SET_VOL_PRIORITY (VDQM2_BASE_REQTYPE+0x01)
 #define VDQM2_REQ_MAX          (VDQM2_BASE_REQTYPE+0x02)
 #define VDQM2_VALID_REQTYPE(X) ((X)>VDQM2_REQ_MIN && (X)<VDQM2_REQ_MAX)
+
+/*
+ * Request types for magic number: VDQM_MAGIC3
+ */
+#define VDQM3_BASE_REQTYPE (0x4110)
+#define VDQM3_REQ_MIN      (VDQM3_BASE_REQTYPE)
+#define VDQM3_DEL_DRVREQ   (VDQM3_BASE_REQTYPE+0x01)
+#define VDQM3_DEDICATE_DRV (VDQM3_BASE_REQTYPE+0x02)
+#define VDQM3_REQ_MAX      (VDQM3_BASE_REQTYPE+0x03)
+#define VDQM3_VALID_REQTYPE(X) ((X)>VDQM3_REQ_MIN && (X)<VDQM3_REQ_MAX)
 
 /*
  * Privileged requests. Note that VDQM_DEL_VOLREQ and VDQM_DEL_DRVREQ

@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.41 $ $Release$ $Date: 2008/09/24 15:59:18 $ $Author: murrayc3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.42 $ $Release$ $Date: 2008/09/25 17:26:11 $ $Author: murrayc3 $
 #
 # Make Castor vdqm library
 #
@@ -55,13 +55,15 @@ VDQMBIN_SRCS = CDevTools.cpp \
                SocketHelper.cpp \
                VdqmDlfMessageStrings.cpp \
                VdqmMagic2ProtocolInterpreter.cpp \
+               VdqmMagic3ProtocolInterpreter.cpp \
                VdqmServer.cpp \
                handler/BaseRequestHandler.cpp \
                handler/TapeDriveConsistencyChecker.cpp \
                handler/TapeDriveHandler.cpp \
                handler/TapeDriveStatusHandler.cpp \
                handler/TapeRequestHandler.cpp \
-               handler/VdqmMagic2RequestHandler.cpp
+               handler/VdqmMagic2RequestHandler.cpp \
+               handler/VdqmMagic3RequestHandler.cpp
 
 MANPAGES_VDQM = FileName($(MANDIR),vdqmserver.$(MANSUFFIX))
 EMANPAGES_VDQM = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),vdqmserver.$(MANSUFFIX)))

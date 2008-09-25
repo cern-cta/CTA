@@ -267,6 +267,14 @@ throw (castor::exception::Exception) {
     DO_MARSHALL_STRING(p,driveRequest->dgn,ReceiveFrom, sizeof(driveRequest->dgn));
 
     DO_MARSHALL_STRING(p,driveRequest->dedicate,ReceiveFrom, sizeof(driveRequest->dedicate));
+    // The uid and gid fields will be marshalled by vdqm_admin clients that
+    // support Cupv authentication.  The VDQM will ignore the values of the uid
+    // and gid fileds in the case of older vdqm_admin clients which do not
+    // marshall the uid and gid fields.  The VDQM will use the message types
+    // VDQM_DEL_DRVREQ_CUPV and VDQM_DEDICATE_DRV_CUPV to identify drive
+    // admin messages supporting Cupv authentication.
+    DO_MARSHALL(LONG,p,driveRequest->uid,ReceiveFrom);
+    DO_MARSHALL(LONG,p,driveRequest->gid,ReceiveFrom);
     if ( (local_access == 1) &&
          (domain = strstr(driveRequest->server,".")) != NULL ) *domain = '\0';
   }

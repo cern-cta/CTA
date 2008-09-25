@@ -96,6 +96,15 @@ namespace castor {
       throw (castor::exception::Exception);
 
       /**
+       * Handles a VDQM message with a magic number of VDQM_MAGIC3.
+       *
+       * @param magicNumber The magic Number of the used protocol.  This is used
+       * to complete the message header.
+       */
+      void handleVdqmMagic3Request(const unsigned int magicNumber)
+      throw (castor::exception::Exception);
+
+      /**
        * The object which includes the socket connection to the client
        */
       castor::io::ServerSocket* ptr_serverSocket;  
