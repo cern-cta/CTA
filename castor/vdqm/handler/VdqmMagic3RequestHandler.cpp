@@ -62,7 +62,7 @@ void castor::vdqm::handler::VdqmMagic3RequestHandler::handleDedicate(
     castor::dlf::Param("clientGID", msg->clientGID),
     castor::dlf::Param("server"   , msg->server),
     castor::dlf::Param("drive"    , msg->drive),
-    castor::dlf::Param("dgn"      , msg->dgn)};
+    castor::dlf::Param("dgn"      , msg->dgn),
     castor::dlf::Param("dedicate" , msg->dedicate)};
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_VDQM3_DEDICATE, 6,
     param);
