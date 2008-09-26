@@ -42,7 +42,7 @@ namespace castor {
     namespace stagerjob {
 
       /**
-       * base, abstract class for a stagerJob plugin.
+       * Base, abstract class for a stagerJob plugin.
        * To be extended by each of the actual implementations
        */
       class BasePlugin : public IPlugin {
@@ -50,19 +50,19 @@ namespace castor {
       public:
 
         /**
-         * default constructor, registering the plugin
+         * Default constructor, registering the plugin
          * @param protocol the supported protocol
          */
         BasePlugin(std::string protocol) throw();
 
         /**
-         * default implementation of getPortRange returning [1024:65535]
+         * Default implementation of getPortRange returning [1024:65535]
          */
         virtual std::pair<int, int> getPortRange
         (castor::job::stagerjob::InputArguments &args) throw();
 
         /**
-         * default, empty implementation of preForkHook
+         * Default, empty implementation of preForkHook
          * @param args the arguments given to the stager job
          * @param context the current context (localhost, port, etc...)
          */
@@ -74,7 +74,7 @@ namespace castor {
       protected:
 
         /**
-         * wait on a child (the mover) and know it failed or not
+         * Wait on a child (the mover) and know it failed or not
          * @param args the arguments given to the stager job
          * @return whether the child failed
          */
@@ -82,7 +82,7 @@ namespace castor {
         (castor::job::stagerjob::InputArguments &args) throw();
 
         /**
-         * set the select timeout for inetd mode
+         * Set the select timeout for inetd mode
          * @param timeOut the new value in seconds
          */
         void setSelectTimeOut(time_t timeOut) {
@@ -90,7 +90,7 @@ namespace castor {
         }
 
         /**
-         * get the select timeout for inetd mode
+         * Set the select timeout for inetd mode
          * @return the timout in seconds
          */
         time_t getSelectTimeOut() {
@@ -99,7 +99,7 @@ namespace castor {
 
       private:
 
-        /// the select timeout for inetd mode
+        /// The select timeout for inetd mode
         time_t m_selectTimeOut;
 
       }; // end of class BasePlugin

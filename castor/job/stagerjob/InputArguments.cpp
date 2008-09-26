@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: InputArguments.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/07/29 06:19:25 $ $Author: waldron $
+ * @(#)$RCSfile: InputArguments.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/09/26 12:00:56 $ $Author: waldron $
  *
  * small struct holding the list of arguments passed to stagerJob
  *
@@ -38,14 +38,14 @@
 #include "castor/job/stagerjob/StagerJob.hpp"
 #include "castor/job/stagerjob/InputArguments.hpp"
 
-// default number of retries and interval between retries
+// Default number of retries and interval between retries
 // for the sharedResourceHelper
 #define DEFAULT_RETRY_ATTEMPTS 60
 #define DEFAULT_RETRY_INTERVAL 10
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // constructor
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
   throw (castor::exception::Exception) :
   requestUuid(nullCuuid),

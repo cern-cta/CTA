@@ -49,7 +49,7 @@ castor::job::stagerjob::GridFTPPlugin gridFTPPlugin;
 //------------------------------------------------------------------------------
 castor::job::stagerjob::GridFTPPlugin::GridFTPPlugin() throw() :
   RawMoverPlugin("gsiftp") {
-  // change the default time out for select
+  // Change the default time out for select
   setSelectTimeOut(SELECT_TIMEOUT_GSIFTP);
 }
 
@@ -59,12 +59,12 @@ castor::job::stagerjob::GridFTPPlugin::GridFTPPlugin() throw() :
 std::pair<int, int> castor::job::stagerjob::GridFTPPlugin::getPortRange
 (InputArguments &args, std::string name)
   throw() {
-  // look at the config file
+  // Look at the config file
   char* entry = getconfent("GSIFTP", name.c_str(), 0);
   if (NULL == entry) {
     return std::pair<int, int>(GRIDFTPMINPORT, GRIDFTPMAXPORT);
   }
-  // parse min port
+  // Parse min port
   std::istringstream iss(entry);
   std::string value;
   std::getline(iss, value, ',');
@@ -96,7 +96,7 @@ std::pair<int, int> castor::job::stagerjob::GridFTPPlugin::getPortRange
       min = GRIDFTPMINPORT;
     }
   }
-  // parse max port
+  // Parse max port
   int max = GRIDFTPMAXPORT;
   std::getline(iss, value);
   if (value.find_first_not_of("0123456789") != value.npos) {
@@ -134,46 +134,51 @@ castor::job::stagerjob::GridFTPPlugin::getPortRange
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::GridFTPPlugin::getEnvironment
 (InputArguments &args, Environment &env) throw () {
-  // get the location of globus
+  // Get the location of globus
   char* globus_location = getenv("GLOBUS_LOCATION");
   if (globus_location == NULL) {
-    globus_location = getconfent("GSIFTP","GLOBUS_LOCATION",0);
+    globus_location = getconfent("GSIFTP", "GLOBUS_LOCATION", 0);
     if (globus_location == NULL) {
       env.globus_location = "/opt/globus";
     } else {
       env.globus_location = globus_location;
     }
   }
-  // get data port range
+  // Get data port range
   env.tcp_port_range = getPortRange(args, "DATA_TCP_PORT_RANGE");
   env.tcp_source_range = getPortRange(args, "DATA_TCP_SOURCE_RANGE");
+
   // Get log file names and log level
-  char *globus_logfile = getconfent("GSIFTP","LOGFILE",0);
+  char *globus_logfile = getconfent("GSIFTP", "LOGFILE", 0);
   if (globus_logfile == NULL) {
     env.globus_logfile = "/var/log/gridftp.log";
   } else {
     env.globus_logfile = globus_logfile;
   }
-  const char *globus_logfile_netlogger = getconfent("GSIFTP","NETLOGFILE",0);
+
+  const char *globus_logfile_netlogger = getconfent("GSIFTP", "NETLOGFILE", 0);
   if (globus_logfile_netlogger == NULL) {
     globus_logfile_netlogger = "/var/log/globus-gridftp.log";
   } else {
     env.globus_logfile_netlogger = globus_logfile_netlogger;
   }
-  const char *globus_loglevel = getconfent("GSIFTP","LOGLEVEL",0);
+
+  const char *globus_loglevel = getconfent("GSIFTP", "LOGLEVEL", 0);
   if (globus_loglevel == NULL) {
     globus_loglevel = "ALL";
   } else {
     env.globus_loglevel = globus_loglevel;
   }
+
   // Get certificate and key file names
-  const char *globus_x509_user_cert = getconfent("GSIFTP","X509_USER_CERT",0);
+  const char *globus_x509_user_cert = getconfent("GSIFTP", "X509_USER_CERT", 0);
   if (globus_x509_user_cert == NULL) {
     globus_x509_user_cert = "/etc/grid-security/castor-gridftp-dsi-int/castor-gridftp-dsi-int-cert.pem";
   } else {
     env.globus_x509_user_cert = globus_x509_user_cert;
   }
-  const char *globus_x509_user_key = getconfent("GSIFTP","X509_USER_KEY",0);
+
+  const char *globus_x509_user_key = getconfent("GSIFTP", "X509_USER_KEY", 0);
   if (globus_x509_user_key == NULL) {
     globus_x509_user_key = "/etc/grid-security/castor-gridftp-dsi-int/castor-gridftp-dsi-int-key.pem";
   } else {
@@ -187,7 +192,7 @@ void castor::job::stagerjob::GridFTPPlugin::getEnvironment
 void castor::job::stagerjob::GridFTPPlugin::postForkHook
 (InputArguments &args, PluginContext &context)
   throw(castor::exception::Exception) {
-  // get environment
+  // Get environment
   Environment env;
   getEnvironment(args, env);
   // Build the command line
@@ -217,9 +222,9 @@ void castor::job::stagerjob::GridFTPPlugin::postForkHook
      castor::dlf::Param(args.subRequestUuid)};
   castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_DEBUG,
                           MOVERFORK, 7, params, &args.fileId);
-  // check that the mover can be executed
+  // Check that the mover can be executed
   if (access(progfullpath.c_str(), X_OK) != 0) {
-    // "Mover program can not be executed. Check permissions"
+    // "Mover program cannot be executed. Check permissions"
     castor::dlf::Param params[] =
       {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
        castor::dlf::Param("Mover Path", progfullpath),
@@ -237,27 +242,27 @@ void castor::job::stagerjob::GridFTPPlugin::postForkHook
 void castor::job::stagerjob::GridFTPPlugin::execMover
 (InputArguments &args, PluginContext &context)
   throw(castor::exception::Exception) {
-  // get environment
+  // Get environment
   Environment env;
   getEnvironment(args, env);
-  // set some enviroment variables
+  // Set some enviroment variables
   setenv("GLOBUS_LOCATION", env.globus_location.c_str(), 1);
   std::ostringstream libloc;
   libloc << env.globus_location << "/lib";
-  setenv("LD_LIBRARY_PATH",libloc.str().c_str(),1);
+  setenv("LD_LIBRARY_PATH", libloc.str().c_str(), 1);
   std::ostringstream tcprange;
   tcprange << env.tcp_port_range.first << ","
            << env.tcp_port_range.second;
-  setenv("GLOBUS_TCP_PORT_RANGE",tcprange.str().c_str(),1);
+  setenv("GLOBUS_TCP_PORT_RANGE", tcprange.str().c_str(), 1);
   std::ostringstream sourcerange;
   sourcerange << env.tcp_source_range.first << ","
               << env.tcp_source_range.second;
-  setenv("GLOBUS_TCP_SOURCE_RANGE",sourcerange.str().c_str(),1);
-  setenv("X509_USER_CERT",env.globus_x509_user_cert.c_str(),1);
-  setenv("X509_USER_KEY",env.globus_x509_user_key.c_str(),1);
-  // this variables we will use inside CASTOR2 DSI
-  setenv("UUID",args.rawRequestUuid.c_str(),1);
-  setenv("FULLDESTPATH",context.fullDestPath.c_str(),1);
+  setenv("GLOBUS_TCP_SOURCE_RANGE", sourcerange.str().c_str(), 1);
+  setenv("X509_USER_CERT", env.globus_x509_user_cert.c_str(), 1);
+  setenv("X509_USER_KEY", env.globus_x509_user_key.c_str(), 1);
+  // This variables we will use inside CASTOR2 DSI
+  setenv("UUID", args.rawRequestUuid.c_str(), 1);
+  setenv("FULLDESTPATH", context.fullDestPath.c_str(), 1);
   switch(args.accessMode) {
   case ReadOnly:
     setenv("ACCESS_MODE","r",1);

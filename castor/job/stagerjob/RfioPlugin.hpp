@@ -35,8 +35,9 @@ namespace castor {
   namespace job {
 
     namespace stagerjob {
+
       /**
-       * small struct holding a Rfio enviroment
+       * Small struct holding a Rfio enviroment
        */
       struct EnvironmentRfio {
         std::string globus_location;
@@ -46,7 +47,7 @@ namespace castor {
         std::string keytab_location;
         std::string csec_trace;
         std::string csec_mech;
-        std::string csec_tracefile; 
+        std::string csec_tracefile;
       };
 
       /**
@@ -58,12 +59,12 @@ namespace castor {
       public:
 
         /**
-         * default constructor
+         * Default constructor
          */
         RfioPlugin() throw();
 
         /**
-         * hook for the code to be executed just after the mover fork,
+         * Hook for the code to be executed just after the mover fork,
          * in the parent process. Only logging and calling the method
          * of InstrumentedPlugin.
          * @param args the arguments given to the stager job
@@ -74,7 +75,7 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * hook for the launching of the mover
+         * Hook for the launching of the mover
          * @param args the arguments given to the stager job
          * @param context the current context (localhost, port, etc...)
          */
@@ -85,24 +86,23 @@ namespace castor {
       private:
 
         /**
-         * get the log level and the log file name
+         * Get the log level and the log file name
          */
         static void getLogLevel(std::string &logFile, bool &debug) throw();
 
         /**
-         * gather all environment values
+         * Gather all environment values
          * @param env the environment, to be filled
          */
         static void getEnvironment(InputArguments &args,
                                    EnvironmentRfio &env) throw();
- 
+
         /**
          * Set the environment variables into the real environment
-         *  not the structure called environment
+         * not the structure called environment
          * @param env the environment
          */
-
-        static void setEnvironment (EnvironmentRfio env) throw();
+        static void setEnvironment(EnvironmentRfio env) throw();
 
       }; // end of class RfioPlugin
 

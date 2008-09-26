@@ -38,7 +38,7 @@ namespace castor {
     namespace stagerjob {
 
       /**
-       * small struct holding a GridFTP enviroment
+       * Small struct holding a GridFTP enviroment
        */
       struct Environment {
         std::string globus_location;
@@ -60,18 +60,18 @@ namespace castor {
       public:
 
         /**
-         * default constructor
+         * Default constructor
          */
         GridFTPPlugin() throw();
 
         /**
-         * returns the port range for GridFTP
+         * Returns the port range for GridFTP
          */
         virtual std::pair<int, int> getPortRange
         (castor::job::stagerjob::InputArguments &args) throw();
 
         /**
-         * hook for the code to be executed just after the mover fork,
+         * Hook for the code to be executed just after the mover fork,
          * in the parent process. Only logging and calling the method
          * of InstrumentedPlugin.
          * @param args the arguments given to the stager job
@@ -83,7 +83,7 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * hook for the launching of the mover
+         * Hook for the launching of the mover
          * @param args the arguments given to the stager job
          * @param context the current context (localhost, port, etc...)
          */
@@ -94,16 +94,15 @@ namespace castor {
       private:
 
         /**
-         * get a given port range from the config file and checks it
+         * Get a given port range from the config file and checks it
          * @param name the config file entry
          */
         static std::pair<int, int> getPortRange
         (InputArguments &args, std::string name)
           throw();
 
-
         /**
-         * gather all environment values
+         * Gather all environment values
          * @param env the environment, to be filled
          */
         static void getEnvironment(InputArguments &args,

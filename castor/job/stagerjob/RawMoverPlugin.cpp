@@ -72,7 +72,7 @@ void castor::job::stagerjob::RawMoverPlugin::preForkHook
   ioResponse.setProtocol(args.protocol);
   ioResponse.setFileName(args.rawRequestUuid);
   sendResponse(args.client, ioResponse);
-  // Do ourselves a timeouted accept() so that the mover can work in inetd mode
+  // Do ourselves a timed out accept() so that the mover can work in inetd mode
   struct timeval timeval;
   fd_set readmask;
   FD_ZERO(&readmask);
@@ -156,12 +156,12 @@ void castor::job::stagerjob::RawMoverPlugin::postForkHook
     // Do a stat of the output file
     rfio_errno = serrno = 0;
     struct stat64 statbuf;
-    if (rfio_stat64((char*)context.fullDestPath.c_str(),&statbuf) == 0) {
+    if (rfio_stat64((char*)context.fullDestPath.c_str(), &statbuf) == 0) {
       castor::stager::SubRequest subrequest;
       subrequest.setId(args.subRequestId);
       context.jobSvc->prepareForMigration
-        (&subrequest, (u_signed64) statbuf.st_size, time(NULL),
-         args.fileId.fileid, args.fileId.server);
+        (&subrequest, (u_signed64) statbuf.st_size,
+	 time(NULL), args.fileId.fileid, args.fileId.server);
     } else {
       castor::dlf::Param params[] =
         {castor::dlf::Param("JobId", getenv("LSB_JOBID")),

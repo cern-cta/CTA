@@ -51,13 +51,13 @@ namespace castor {
       public:
 
         /**
-         * default constructor
+         * Default constructor
          * @param protocol the supported protocol
          */
         RawMoverPlugin(std::string protocol) throw();
 
         /**
-         * hook for the code to be executed just before the mover fork
+         * Hook for the code to be executed just before the mover fork
          * Essentially mimicing xinetd
          * @param args the arguments given to the stager job
          * @param context the current context (localhost, port, etc...)
@@ -67,7 +67,7 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * hook for the code to be executed just after the mover fork,
+         * Hook for the code to be executed just after the mover fork,
          * in the parent process. Here we inform the CASTOR framework
          * after the mover exited.
          * This should be called at the end of any overwritting method

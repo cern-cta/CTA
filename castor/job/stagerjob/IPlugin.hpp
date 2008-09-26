@@ -41,7 +41,7 @@ namespace castor {
       struct PluginContext;
 
       /**
-       * abstract interface of a stagerJob plugin
+       * Abstract interface of a stagerJob plugin
        */
       class IPlugin {
 
@@ -53,14 +53,14 @@ namespace castor {
 	virtual ~IPlugin() throw() {};
 
         /**
-         * gets the port range that can be used by the protocol
+         * Gets the port range that can be used by the protocol
          * to listen for client connections
          */
         virtual std::pair<int, int> getPortRange
         (InputArguments &args) throw() = 0;
 
         /**
-         * hook for the code to be executed just before the mover fork
+         * Hook for the code to be executed just before the mover fork
          * empty by default.
          * @param args the arguments given to the stager job
          * @param context the current context (localhost, port, etc...)
@@ -80,7 +80,7 @@ namespace castor {
           throw (castor::exception::Exception) = 0;
 
         /**
-         * hook for the code to be executed just after the mover fork,
+         * Hook for the code to be executed just after the mover fork,
          * in the parent process. Empty by default.
          * @param args the arguments given to the stager job
          * @param context the current context (localhost, port, etc...)

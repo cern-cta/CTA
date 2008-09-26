@@ -53,7 +53,7 @@ castor::job::stagerjob::InstrumentedMoverPlugin::InstrumentedMoverPlugin
 void castor::job::stagerjob::InstrumentedMoverPlugin::postForkHook
 (InputArguments &args, PluginContext &context)
   throw(castor::exception::Exception) {
-  // answer the client so that it can connect to the mover
+  // Answer the client so that it can connect to the mover
   castor::rh::IOResponse ioResponse;
   ioResponse.setStatus(castor::stager::SUBREQUEST_READY);
   ioResponse.setSubreqId(args.rawSubRequestUuid);
@@ -65,7 +65,7 @@ void castor::job::stagerjob::InstrumentedMoverPlugin::postForkHook
   ioResponse.setProtocol(args.protocol);
   ioResponse.setFileName(args.rawSubRequestUuid);
   sendResponse(args.client, ioResponse);
-  // then wait for the child to complete and inform stager
+  // Then wait for the child to complete and inform stager
   waitChildAndInformStager(args, context);
 }
 
@@ -88,7 +88,7 @@ void castor::job::stagerjob::InstrumentedMoverPlugin::waitChildAndInformStager
     // Do a stat of the output file
     rfio_errno = serrno = 0;
     struct stat64 statbuf;
-    if (rfio_stat64((char*)context.fullDestPath.c_str(),&statbuf) == 0) {
+    if (rfio_stat64((char*)context.fullDestPath.c_str(), &statbuf) == 0) {
       castor::stager::SubRequest subrequest;
       subrequest.setId(args.subRequestId);
       context.jobSvc->prepareForMigration

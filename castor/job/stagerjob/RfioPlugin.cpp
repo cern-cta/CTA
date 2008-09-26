@@ -33,7 +33,7 @@
 #include "castor/job/stagerjob/InputArguments.hpp"
 #include "castor/job/stagerjob/RfioPlugin.hpp"
 
-// static instance of the RfioPlugin
+// Static instance of the RfioPlugin
 castor::job::stagerjob::RfioPlugin rfioPlugin;
 
 //------------------------------------------------------------------------------
@@ -41,7 +41,7 @@ castor::job::stagerjob::RfioPlugin rfioPlugin;
 //------------------------------------------------------------------------------
 castor::job::stagerjob::RfioPlugin::RfioPlugin() throw():
   InstrumentedMoverPlugin("rfio") {
-  // also register for rfio3 (rfio registration is done by the parent)
+  // Also register for rfio3 (rfio registration is done by the parent)
   castor::job::stagerjob::registerPlugin("rfio3", this);
 }
 
@@ -51,19 +51,17 @@ castor::job::stagerjob::RfioPlugin::RfioPlugin() throw():
 void castor::job::stagerjob::RfioPlugin::getLogLevel
 (std::string &logFile, bool &debug)
   throw() {
-  // Get loggin file
+  // Get log file
   logFile = "/dev/null";
   char* value = getconfent("RFIOD", "LOGFILE", 0);
   if (value != NULL) {
     logFile = strdup(value);
   }
-  // get logging level
+  // Get logging level
   debug = false;
   value = getconfent("RFIOD", "DEBUG", 0);
   if (value != NULL) {
-    if (!strcasecmp(value, "yes") ||
-        !strcasecmp(value, "1")   ||
-        !strcasecmp(value, "y")) {
+    if (!strcasecmp(value, "yes")) {
       debug = true;
     }
   }
@@ -74,16 +72,16 @@ void castor::job::stagerjob::RfioPlugin::getLogLevel
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::RfioPlugin::setEnvironment
 (EnvironmentRfio env) throw () {
-  setenv("CSEC_TRACE", env.csec_trace.c_str(),1);
-  setenv("CSEC_TRACEFILE", env.csec_tracefile.c_str(),1);
-  setenv("CSEC_MECH", env.csec_mech.c_str(),1); 
-  setenv("GRIDMAP",env.gridmapfile.c_str(),1);
-  setenv("X509_USER_KEY",env.globus_x509_user_key.c_str(),1);
-  setenv("X509_USER_CERT",env.globus_x509_user_cert.c_str(),1);
-  setenv("KRB5_KTNAME",env.keytab_location.c_str(),1);
+  setenv("CSEC_TRACE", env.csec_trace.c_str(), 1);
+  setenv("CSEC_TRACEFILE", env.csec_tracefile.c_str(), 1);
+  setenv("CSEC_MECH", env.csec_mech.c_str(), 1);
+  setenv("GRIDMAP", env.gridmapfile.c_str(), 1);
+  setenv("X509_USER_KEY", env.globus_x509_user_key.c_str(), 1);
+  setenv("X509_USER_CERT", env.globus_x509_user_cert.c_str(), 1);
+  setenv("KRB5_KTNAME", env.keytab_location.c_str(), 1);
   std::ostringstream libloc;
   libloc << env.globus_location << "/lib";
-  setenv("LD_LIBRARY_PATH",libloc.str().c_str(),1);
+  setenv("LD_LIBRARY_PATH", libloc.str().c_str(), 1);
 }
 
 //------------------------------------------------------------------------------
@@ -92,29 +90,30 @@ void castor::job::stagerjob::RfioPlugin::setEnvironment
 void castor::job::stagerjob::RfioPlugin::getEnvironment
 (InputArguments &args, EnvironmentRfio &env) throw () {
   // Globus location, required to resolved some dependencies
-  char* globus_location = getconfent("CSEC","GLOBUS_LOCATION",0);
+  const char* globus_location = getconfent("CSEC", "GLOBUS_LOCATION", 0);
   if (globus_location == NULL) {
     env.globus_location = "/opt/globus";
   } else {
     env.globus_location = globus_location;
   }
- 
+
   // X509 Environment variables
   // Get certificate, key and location of the gridmapfile
-  const char *globus_x509_user_cert = getconfent("CSEC","X509_USER_CERT",0);
+  const char *globus_x509_user_cert = getconfent("CSEC", "X509_USER_CERT", 0);
   if (globus_x509_user_cert == NULL) {
     env.globus_x509_user_cert = "/etc/grid-security/castor-csec/castor-csec-cert.pem";
   } else {
     env.globus_x509_user_cert = globus_x509_user_cert;
   }
-  const char *globus_x509_user_key = getconfent("CSEC","X509_USER_KEY",0);
+
+  const char *globus_x509_user_key = getconfent("CSEC", "X509_USER_KEY", 0);
   if (globus_x509_user_key == NULL) {
     env.globus_x509_user_key = "/etc/grid-security/castor-csec/castor-csec-key.pem";
   } else {
     env.globus_x509_user_key = globus_x509_user_key;
   }
 
-  const char *gridmapfile = getconfent("CSEC","GRIDMAP",0);
+  const char *gridmapfile = getconfent("CSEC", "GRIDMAP", 0);
   if (gridmapfile == NULL) {
     env.gridmapfile = "/etc/grid-security/grid-mapfile";
   } else {
@@ -122,28 +121,26 @@ void castor::job::stagerjob::RfioPlugin::getEnvironment
   }
 
   // KRB5 Environment variables
-  const char *keytab_location = getconfent("CSEC","KRB5_KTNAME",0);
+  const char *keytab_location = getconfent("CSEC", "KRB5_KTNAME", 0);
   if (keytab_location == NULL) {
     env.keytab_location = "FILE:/etc/castor-csec-krb5.keytab";
   } else {
     env.keytab_location = keytab_location;
   }
 
-  char* debug = getconfent("CSEC", "DEBUG", 0);
+  const char* debug = getconfent("CSEC", "DEBUG", 0);
   if (debug != NULL) {
-    if (!strcasecmp(debug, "yes") ||
-        !strcasecmp(debug, "1")   ||
-        !strcasecmp(debug, "y")) {
-        
-      // get the CSEC mechanism, trace and tracefile
-      const char *csec_trace = getconfent("CSEC","TRACE",0);
+    if (!strcasecmp(debug, "yes")) {
+
+      // Get the CSEC mechanism, trace and tracefile
+      const char *csec_trace = getconfent("CSEC", "TRACE", 0);
       if (csec_trace == NULL) {
         env.csec_trace = "3";
       } else {
         env.csec_trace = csec_trace;
       }
 
-      const char *csec_tracefile = getconfent("CSEC","TRACEFILE",0);
+      const char *csec_tracefile = getconfent("CSEC", "TRACEFILE", 0);
       if (csec_tracefile == NULL) {
         env.csec_tracefile = "/var/spool/rfio/rfiod.sec.log";
       } else {
@@ -152,14 +149,14 @@ void castor::job::stagerjob::RfioPlugin::getEnvironment
     }
   }
 
-  const char *csec_mech = getconfent("CSEC","MECH",0);
+  const char *csec_mech = getconfent("CSEC", "MECH", 0);
   if (csec_mech == NULL) {
     env.csec_mech = "GSI KRB5";
   } else {
     env.csec_mech = csec_mech;
   }
 }
-   
+
 //------------------------------------------------------------------------------
 // postForkHook
 //------------------------------------------------------------------------------
@@ -167,8 +164,7 @@ void castor::job::stagerjob::RfioPlugin::postForkHook
 (InputArguments &args, PluginContext &context)
   throw(castor::exception::Exception) {
 
-  // log the mover command line on behalf of the mover process
-  // that cannot log
+  // Log the mover command line on behalf of the mover process that cannot log
   std::string logFile;
   bool isDebugMode;
   getLogLevel(logFile, isDebugMode);
@@ -184,31 +180,36 @@ void castor::job::stagerjob::RfioPlugin::postForkHook
           << " -M " << context.mask
           << " -U -Z " << args.subRequestId;
   if (args.isSecure){
-    cmdLine << "-u"<< args.euid 
-            << "-g"<< args.egid;
+    cmdLine << "-u" << args.euid
+            << "-g" << args.egid;
   }
   cmdLine << " " << context.fullDestPath
           << " (pid=" << context.childPid << ")";
+
+  // "Mover fork uses the following command line"
   castor::dlf::Param params[] =
     {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
      castor::dlf::Param("Command Line", cmdLine.str()),
      castor::dlf::Param(args.subRequestUuid)};
   castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_DEBUG,
                           MOVERFORK, 3, params, &args.fileId);
-  // check that the mover can be executed
+  // Check that the mover can be executed
   if (access(progfullpath.c_str(), X_OK) != 0) {
-    // "Mover program can not be executed. Check permissions"
+    // "Mover program cannot be executed. Check permissions"
     castor::dlf::Param params[] =
       {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
        castor::dlf::Param("Mover Path", progfullpath),
        castor::dlf::Param(args.subRequestUuid)};
     castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
                             MOVERNOTEXEC, 3, params, &args.fileId);
+    // Throw an exception
+    castor::exception::Exception e(SEINTERNAL);
+    e.getMessage() << "Mover program cannot be executed";
+    throw e;
   }
-  // and call upper level for the actual work
+  // And call upper level for the actual work
   InstrumentedMoverPlugin::postForkHook(args, context);
 }
-
 
 //------------------------------------------------------------------------------
 // execMover
@@ -216,12 +217,11 @@ void castor::job::stagerjob::RfioPlugin::postForkHook
 void castor::job::stagerjob::RfioPlugin::execMover
 (InputArguments &args, PluginContext &context)
   throw(castor::exception::Exception) {
-  
-  // get environment
+
+  // Get environment
   EnvironmentRfio env;
   getEnvironment(args, env);
   setEnvironment(env);
-
   // Build argument list
   std::string progfullpath = "/usr/bin/rfiod";
   std::string progname = "rfiod";
@@ -250,18 +250,18 @@ void castor::job::stagerjob::RfioPlugin::execMover
            "-P", arg_P.str().c_str(), "-M", arg_M.str().c_str(),
            "-U", "-Z", arg_Z.str().c_str(),
            context.fullDestPath.c_str(), NULL);
-  } else{
-    if (args.isSecure){
+  } else {
+    if (args.isSecure) {
       execl (progfullpath.c_str(), progname.c_str(),
 	     "-1", "-d", "-s", "-l", "-n", "-f", logFile.c_str(),
 	     "-T", arg_T.str().c_str(), "-S", arg_S.str().c_str(),
 	     "-P", arg_P.str().c_str(), "-M", arg_M.str().c_str(),
-	     "-U", "-Z", arg_Z.str().c_str(),"-u",arg_U.str().c_str(),"-g",arg_G.str().c_str(),
+	     "-U", "-Z", arg_Z.str().c_str(), "-u", arg_U.str().c_str(),
+	     "-g", arg_G.str().c_str(),
 	     context.fullDestPath.c_str(),NULL);
-    }else{   
-      // the flags are the same as in unsecure mode so the stagerJob
+    } else {
+      // The flags are the same as in unsecure mode so the stagerJob
       // can work with rfiod unsecure (provisional)
-      // if (args.isSecure != 0) {
       execl (progfullpath.c_str(), progname.c_str(),
 	     "-1", "-s", "-l", "-n", "-f", logFile.c_str(),
 	     "-T", arg_T.str().c_str(), "-S", arg_S.str().c_str(),

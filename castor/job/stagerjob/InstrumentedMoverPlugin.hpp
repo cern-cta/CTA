@@ -50,13 +50,13 @@ namespace castor {
       public :
 
         /**
-         * default constructor
+         * Default constructor
          * @param protocol the supported protocol
          */
         InstrumentedMoverPlugin(std::string protocol) throw();
 
         /**
-         * hook for the code to be executed just after the mover fork,
+         * Hook for the code to be executed just after the mover fork,
          * in the parent process.
          * Here we answer the client and check the exit status of the
          * mover in order to inform the stager.
@@ -70,7 +70,7 @@ namespace castor {
       protected :
 
         /**
-         * waits for the child to end and informs stager
+         * Waits for the child to end and informs stager
          * Used internally by postForkHook after the response was
          * sent to the client. Can be reused by children classes
          * reimplementing postForkHook with a different response

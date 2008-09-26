@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: InputArguments.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/07/29 06:19:25 $ $Author: waldron $
+ * @(#)$RCSfile: InputArguments.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/09/26 12:00:56 $ $Author: waldron $
  *
  * small struct holding the list of arguments passed to stagerJob
  *
@@ -43,7 +43,7 @@ namespace castor {
     namespace stagerjob {
 
       /**
-       * internal enum describing the access mode
+       * Internal enum describing the access mode
        */
       enum AccessMode {
         ReadOnly,
@@ -52,14 +52,14 @@ namespace castor {
       };
 
       /**
-       * internal struct holding the list of arguments passed to stagerJob
+       * Internal struct holding the list of arguments passed to stagerJob
        */
       class InputArguments {
 
       public:
 
         /**
-         * constructor initializing an InputArguments object
+         * Constructor initializing an InputArguments object
          * from the command line
          * @param argc the number of arguments on the command line
          */

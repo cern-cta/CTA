@@ -50,11 +50,11 @@ castor::job::stagerjob::RootPlugin::RootPlugin() throw():
 void castor::job::stagerjob::RootPlugin::postForkHook
 (InputArguments &args, PluginContext &context)
   throw(castor::exception::Exception) {
-  // get ROOTSYS
+  // Get ROOTSYS
   const char *rootsys_default = "/usr/local/bin";
   const char *rootsys = getenv("ROOTSYS");
   if (rootsys == NULL) {
-    rootsys = getconfent("ROOT","ROOTSYS",0);
+    rootsys = getconfent("ROOT", "ROOTSYS", 0);
     if (rootsys == NULL) {
       rootsys = rootsys_default;
     }
@@ -74,9 +74,9 @@ void castor::job::stagerjob::RootPlugin::postForkHook
      castor::dlf::Param(args.subRequestUuid)};
   castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_DEBUG,
                           MOVERFORK, 3, params, &args.fileId);
-  // check that the mover can be executed
+  // Check that the mover can be executed
   if (access(progfullpath.c_str(), X_OK) != 0) {
-    // "Mover program can not be executed. Check permissions"
+    // "Mover program cannot be executed. Check permissions"
     castor::dlf::Param params[] =
       {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
        castor::dlf::Param("Mover Path", progfullpath),
@@ -94,15 +94,16 @@ void castor::job::stagerjob::RootPlugin::postForkHook
 void castor::job::stagerjob::RootPlugin::execMover
 (InputArguments &args, PluginContext &context)
   throw(castor::exception::Exception) {
-  // get ROOTSYS and set the environment
+  // Get ROOTSYS
   const char *rootsys_default = "/usr/local/bin";
   const char *rootsys = getenv("ROOTSYS");
   if (rootsys == NULL) {
-    rootsys = getconfent("ROOT","ROOTSYS",0);
+    rootsys = getconfent("ROOT", "ROOTSYS", 0);
     if (rootsys == NULL) {
       rootsys = rootsys_default;
     }
   }
+  // Check mover executable
   setenv("ROOTSYS", rootsys, 1);
   std::string progfullpath = rootsys;
   progfullpath += "/rootd";
@@ -123,7 +124,7 @@ void castor::job::stagerjob::RootPlugin::execMover
     dlf_shutdown(5);
     exit(EXIT_FAILURE);
   }
-  // execute mover
+  // Execute mover
   execl (progfullpath.c_str(), progname.c_str(),
          "-i", "-d", "0", "-F", context.fullDestPath.c_str(),
          "-H", args.rawRequestUuid.c_str(), NULL);

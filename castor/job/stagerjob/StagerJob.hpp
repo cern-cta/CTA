@@ -50,7 +50,7 @@ namespace castor {
       class IPlugin;
 
       /**
-       * internal struct holding the context passed to a plugin
+       * Internal struct holding the context passed to a plugin
        */
       struct PluginContext {
         int socket;
@@ -66,23 +66,23 @@ namespace castor {
        * DLF messages defined for the stager job
        */
       enum StagerJobDlfMessages {
-        // system call errors
-        CREATFAILED =  1, /* Failed to create empty file */
-        FCLOSEFAILED = 2, /* Failed to close file */
-        SCLOSEFAILED = 3, /* Failed to close socket */
-        CHDIRFAILED =  4, /* Failed to change directory to tmp */
-        DUP2FAILED =   5, /* Failed to duplicate socket */
-        MOVERNOTEXEC = 6, /* Mover program can not be executed. Check permissions */
-        EXECFAILED =   7, /* Failed to exec mover */
+        // System call errors
+        CREATFAILED =    1, /* Failed to create empty file */
+        FCLOSEFAILED =   2, /* Failed to close file */
+        SCLOSEFAILED =   3, /* Failed to close socket */
+        CHDIRFAILED =    4, /* Failed to change directory to tmp */
+        DUP2FAILED =     5, /* Failed to duplicate socket */
+        MOVERNOTEXEC =   6, /* Mover program cannot be executed. Check permissions */
+        EXECFAILED =     7, /* Failed to exec mover */
 
         // Invalid configurations or parameters
-        INVRETRYINT =   13, /* Invalid Job/RetryInterval option, using default */
-        INVRETRYNBAT =  14, /* Invalid Job/RetryAttempts option, using default */
-        DOWNRESFILE =   15, /* Downloading resource file */
-        INVALIDURI =    16, /* Invalid Uniform Resource Indicator, cannot download resource file */
-        MAXATTEMPTS =   17, /* Exceeded maximum number of attempts trying to download resource file */
-        DOWNEXCEPT =    18, /* Exception caught trying to download resource file */
-        INVALRESCONT =  19, /* The content of the resource file is invalid */
+        INVRETRYINT =    13, /* Invalid Job/RetryInterval option, using default */
+        INVRETRYNBAT =   14, /* Invalid Job/RetryAttempts option, using default */
+        DOWNRESFILE =    15, /* Downloading resource file */
+        INVALIDURI =     16, /* Invalid Uniform Resource Indicator, cannot download resource file */
+        MAXATTEMPTS =    17, /* Exceeded maximum number of attempts trying to download resource file */
+        DOWNEXCEPT =     18, /* Exception caught trying to download resource file */
+        INVALRESCONT =   19, /* The content of the resource file is invalid */
 
         // Informative logs
         JOBSTARTED =     20, /* Job Started */
@@ -99,32 +99,34 @@ namespace castor {
         JOBFAILEDNOANS = 31, /* Job failed before it could send an answer to client */
 
         // Errors
-        STAT64FAIL =    40, /* rfio_stat64 error */
-        CHILDEXITED =   41, /* Child exited */
-        CHILDSIGNALED = 42, /* Child exited due to uncaught signal */
-        CHILDSTOPPED =  43, /* Child was stopped */
-        NOANSWERSENT =  44, /* Could not send answer to client */
+        STAT64FAIL =     40, /* rfio_stat64 error */
+        CHILDEXITED =    41, /* Child exited */
+        CHILDSIGNALED =  42, /* Child exited due to uncaught signal */
+        CHILDSTOPPED =   43, /* Child was stopped */
+        NOANSWERSENT =   44, /* Could not send answer to client */
 
         // Protocol specific. Should not be here if the plugins
         // were properly packaged in separate libs
-        GSIBADPORT =    44, /* Invalid port range for GridFTP in config file. using default */
-        GSIBADMINPORT = 45, /* Invalid lower bound for GridFTP port range in config file. Using default */
-        GSIBADMAXPORT = 46, /* Invalid upper bound for GridFTP port range in config file. Using default */
-        GSIBADMINVAL =  47, /* Lower bound for GridFTP port range not in valid range. Using default */
-        GSIBADMAXVAL =  48, /* Upper bound for GridFTP port range not in valid range. Using default */
-        GSIPORTRANGE =  49, /* GridFTP Port range */
-        GSIPORTUSED =   50  /* GridFTP Socket bound */
+        GSIBADPORT =     44, /* Invalid port range for GridFTP in config file. using default */
+        GSIBADMINPORT =  45, /* Invalid lower bound for GridFTP port range in config file. Using default */
+        GSIBADMAXPORT =  46, /* Invalid upper bound for GridFTP port range in config file. Using default */
+        GSIBADMINVAL =   47, /* Lower bound for GridFTP port range not in valid range. Using default */
+        GSIBADMAXVAL =   48, /* Upper bound for GridFTP port range not in valid range. Using default */
+        GSIPORTRANGE =   49, /* GridFTP Port range */
+        GSIPORTUSED =    50, /* GridFTP Socket bound */
+
+	XROOTENOENT =    51  /* Xrootd is not installed */
       };
 
       /**
-       * gets the plugin for a given protocol
+       * Gets the plugin for a given protocol
        * @param protocol the requested protocol
        */
       IPlugin* getPlugin(std::string protocol)
         throw (castor::exception::Exception);
 
       /**
-       * registers a new plugin
+       * Registers a new plugin
        * @param protocol the associatedprotocol
        * @param protocol the plugin to register
        */
