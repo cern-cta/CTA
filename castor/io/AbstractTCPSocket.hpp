@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AbstractTCPSocket.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/01/09 17:50:05 $ $Author: waldron $
+ * @(#)$RCSfile: AbstractTCPSocket.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/09/26 07:38:34 $ $Author: waldron $
  *
  * defines a dedicated socket that handles most of the network
  * calls
@@ -56,7 +56,7 @@ namespace castor {
        * @param reusable whether the socket should be reusable
        * @exception Exception in case of error
        */
-      AbstractTCPSocket(const bool reusable) 
+      AbstractTCPSocket(const bool reusable)
 	throw (castor::exception::Exception);
 
       /**
@@ -131,6 +131,12 @@ namespace castor {
                               char** buf,
                               int& n)
         throw (castor::exception::Exception);
+
+    protected:
+
+      /// The maximum amount of data in bytes that can be read from the
+      /// socket in the readBuffer method
+      int m_maxNetDataSize;
 
     };
 

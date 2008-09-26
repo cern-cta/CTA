@@ -41,6 +41,7 @@
 #include "castor/Constants.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
+#include "getconfent.h"
 
 // Local Includes
 #include "AbstractTCPSocket.hpp"
@@ -53,14 +54,16 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::io::AbstractTCPSocket::AbstractTCPSocket(int socket) throw () :
-  AbstractSocket(socket) {}
+  AbstractSocket(socket),
+  m_maxNetDataSize(-1) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::io::AbstractTCPSocket::AbstractTCPSocket(const bool reusable)
   throw (castor::exception::Exception) :
-  AbstractSocket(reusable) {}
+  AbstractSocket(reusable),
+  m_maxNetDataSize(-1) {}
 
 //------------------------------------------------------------------------------
 // constructor
@@ -68,7 +71,8 @@ castor::io::AbstractTCPSocket::AbstractTCPSocket(const bool reusable)
 castor::io::AbstractTCPSocket::AbstractTCPSocket(const unsigned short port,
                                                  const bool reusable)
   throw (castor::exception::Exception) :
-  AbstractSocket(port, reusable) {}
+  AbstractSocket(port, reusable),
+  m_maxNetDataSize(-1) {}
 
 //------------------------------------------------------------------------------
 // constructor
@@ -77,7 +81,8 @@ castor::io::AbstractTCPSocket::AbstractTCPSocket(const unsigned short port,
                                                  const std::string host,
                                                  const bool reusable)
   throw (castor::exception::Exception) :
-  AbstractSocket(port, host, reusable) {}
+  AbstractSocket(port, host, reusable),
+  m_maxNetDataSize(-1) {}
 
 //------------------------------------------------------------------------------
 // constructor
@@ -86,7 +91,8 @@ castor::io::AbstractTCPSocket::AbstractTCPSocket(const unsigned short port,
                                                  const unsigned long ip,
                                                  const bool reusable)
   throw (castor::exception::Exception) :
-  AbstractSocket(port, ip, reusable) {}
+  AbstractSocket(port, ip, reusable),
+  m_maxNetDataSize(-1) {}
 
 //------------------------------------------------------------------------------
 // createSocket
@@ -137,6 +143,29 @@ void castor::io::AbstractTCPSocket::readBuffer(const unsigned int magic,
                                                char** buf,
                                                int& n)
   throw (castor::exception::Exception) {
+  // Determine the maximum amount of bytes per message that can be read from
+  // the socket when readBuffer is called. By default this is 20MB
+  if (m_maxNetDataSize == -1) {
+    const char *value = getconfent("CLIENT", "MAX_NETDATA_SIZE", 0);
+    if (0 != value) {
+      errno = 0;
+      long bytes = std::strtol(value, 0, 10);
+      // Check that the string converted to an integer is valid
+      if (((bytes == 0) && (errno == ERANGE)) || (bytes > INT_MAX)) {
+	castor::exception::Exception ex(EINVAL);
+	ex.getMessage() << "Invalid CLIENT/MAX_NETDATA_SIZE option, " << strerror(ERANGE);
+	throw ex;
+      } else if (bytes < MAX_NETDATA_SIZE) {
+	castor::exception::Exception ex(EINVAL);
+	ex.getMessage() << "Invalid CLIENT/MAX_NETDATA_SIZE option, value too small";
+	throw ex;
+      }
+      m_maxNetDataSize = (int)bytes;
+    } else {
+      // No value defined so use the default
+      m_maxNetDataSize = MAX_NETDATA_SIZE;
+    }
+  }
   // First read the header
   unsigned int header[2];
   int ret = netread_timeout(m_socket,
@@ -170,7 +199,7 @@ void castor::io::AbstractTCPSocket::readBuffer(const unsigned int magic,
   // For security purposes we restrict the maximum possible length of the data
   // returned
   n = header[1];
-  if ((n > MAX_NETDATA_SIZE) || (n < 0)){
+  if ((n > m_maxNetDataSize) || (n < 0)){
     castor::exception::Exception ex(ESTMEM);
     ex.getMessage() << "Message body is too long";
     throw ex;
