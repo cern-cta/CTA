@@ -26,6 +26,7 @@
 
 // Include Files
 #include <string>
+#include <errno.h>
 #include <sstream>
 #include "getconfent.h"
 #include "castor/dlf/Dlf.hpp"
@@ -42,7 +43,7 @@ castor::job::stagerjob::XRootPlugin xrootPlugin;
 // constructor
 //------------------------------------------------------------------------------
 castor::job::stagerjob::XRootPlugin::XRootPlugin() throw():
-  InstrumentedMoverPlugin("xroot") {
+  RawMoverPlugin("xroot") {
 }
 
 //------------------------------------------------------------------------------
@@ -51,43 +52,68 @@ castor::job::stagerjob::XRootPlugin::XRootPlugin() throw():
 void castor::job::stagerjob::XRootPlugin::postForkHook
 (InputArguments &args, PluginContext &context)
   throw(castor::exception::Exception) {
-  // log the mover command line on behalf of the mover process
-  // that cannot log
-  const char *xrootsys_default="/usr/local/xroot/bin";
-  const char *xrootsys = getenv("XROOTSYS");
-  if (xrootsys == NULL) {
-    xrootsys = getconfent("XROOT","XROOTSYS",0);
-    if (xrootsys == NULL) {
-      xrootsys = xrootsys_default;
-    }
-  }
-  std::string progfullpath = xrootsys;
-  progfullpath += "/XrdCS2e";
-  std::ostringstream cmdLine;
-  cmdLine << "Executed " << progfullpath
-          << " " << args.rawSubRequestUuid << " "
-          << args.fileId.fileid << "@" << args.fileId.server
-          << " " << context.fullDestPath.c_str()
-          << " (pid=" << context.childPid << ")";
-  // "Mover fork uses the following command line"
-  castor::dlf::Param params[] =
-    {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-     castor::dlf::Param("command line" , cmdLine.str()),
-     castor::dlf::Param(args.subRequestUuid)};
-  castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_DEBUG,
-                          MOVERFORK, 3, params, &args.fileId);
 
-  // check that the mover can be executed
-  if (access(progfullpath.c_str(), X_OK) != 0) {
-    // "Mover program can not be executed. Check permissions"
+  // Log the mover command line on behalf of the mover process that cannot log
+  std::vector<std::string> paths;
+  paths.push_back("/usr/local/xroot/bin/XrdCS2e");
+  paths.push_back("/opt/xrootd/bin/x2castorjob");
+
+  // Determine which command line exists
+  std::string progfullpath = "";
+  for (unsigned int i = 0; i < paths.size(); i++) {
+     if (access(paths[i].c_str(), F_OK) == 0) {
+       progfullpath = paths[i];
+       break;
+     }
+  }
+
+  // Path found?
+  if (progfullpath == "") {
+    castor::exception::Exception e(SEINTERNAL);
+    e.getMessage() << "Xrootd is not installed";
+    throw e;
+  } else {
+
+    // Build command line
+    std::ostringstream cmdLine;
+    cmdLine << "Executed " << progfullpath;
+    std::string::size_type loc = progfullpath.find("x2castorjob", 0);
+    if (loc != std::string::npos) {
+      cmdLine << " " << args.subRequestId;
+    } else {
+      cmdLine << " " << args.rawSubRequestUuid << " "
+	      << args.fileId.fileid << "@" << args.fileId.server
+	      << " " << context.fullDestPath.c_str();
+    }
+    cmdLine << " (pid=" << context.childPid << ")";
+
+    // "Mover fork uses the following command line"
     castor::dlf::Param params[] =
       {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-       castor::dlf::Param("mover path", progfullpath),
+       castor::dlf::Param("Command Line" , cmdLine.str()),
        castor::dlf::Param(args.subRequestUuid)};
-    castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
-                            MOVERNOTEXEC, 3, params, &args.fileId);
+    castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_DEBUG,
+			    MOVERFORK, 3, params, &args.fileId);
+
+    // Check that the mover can be executed
+    if (access(progfullpath.c_str(), X_OK) != 0) {
+      // "Mover program cannot be executed. Check permissions"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+	 castor::dlf::Param("Mover Path", progfullpath),
+	 castor::dlf::Param("ErrorMessage", sstrerror(errno)),
+	 castor::dlf::Param(args.subRequestUuid)};
+      castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
+			      MOVERNOTEXEC, 4, params, &args.fileId);
+
+      // Throw an exception
+      castor::exception::Exception e(SEINTERNAL);
+      e.getMessage() << "Mover program cannot be executed";
+      throw e;
+    }
   }
-  // answer the client so that it can connect to the mover
+
+  // Answer the client so that it can connect to the mover
   castor::rh::IOResponse ioResponse;
   ioResponse.setStatus(castor::stager::SUBREQUEST_READY);
   ioResponse.setSubreqId(args.rawSubRequestUuid);
@@ -99,8 +125,9 @@ void castor::job::stagerjob::XRootPlugin::postForkHook
   ioResponse.setProtocol(args.protocol);
   ioResponse.setFileName(context.fullDestPath);
   sendResponse(args.client, ioResponse);
-  // then wait for the child to complete and inform stager
-  waitChildAndInformStager(args, context);
+
+  // And call upper level for the actual work
+  RawMoverPlugin::postForkHook(args, context);
 }
 
 //------------------------------------------------------------------------------
@@ -109,27 +136,43 @@ void castor::job::stagerjob::XRootPlugin::postForkHook
 void castor::job::stagerjob::XRootPlugin::execMover
 (InputArguments &args, PluginContext &context)
   throw(castor::exception::Exception) {
-  // get XrdCS2e executable full path
-  const char *xrootsys_default="/usr/local/xroot/bin";
-  const char *xrootsys = getenv("XROOTSYS");
-  if (xrootsys == NULL) {
-    xrootsys = getconfent("XROOT","XROOTSYS",0);
-    if (xrootsys == NULL) {
-      xrootsys = xrootsys_default;
-    }
+
+  // List of paths to the movers
+  std::vector<std::string> paths;
+  paths.push_back("/usr/local/xroot/bin/XrdCS2e");
+  paths.push_back("/opt/xrootd/bin/x2castorjob");
+
+  // Determine which command line exists
+  std::string progfullpath = "";
+  for (unsigned int i = 0; i < paths.size(); i++) {
+     if (access(paths[i].c_str(), F_OK) == 0) {
+       progfullpath = paths[i];
+       break;
+     }
   }
+
   // Check mover executable
-  std::string progfullpath = xrootsys;
-  progfullpath += "/XrdCS2e";
-  std::string progname = "XrdCS2e";
-  if (access(progfullpath.c_str(), X_OK) != 0) {
+  if ((progfullpath == "") || (access(progfullpath.c_str(), X_OK) != 0)) {
     dlf_shutdown(5);
     exit(EXIT_FAILURE);
   }
+
+  // Determine the name of the program
+  std::string::size_type loc = progfullpath.find_last_of("/");
+  std::string progname = progfullpath.substr(loc + 1);
+
   // Launch mover
-  std::ostringstream fid;
-  fid << args.fileId.fileid << "@" << args.fileId.server;
-  execl (progfullpath.c_str(), progname.c_str(),
-         args.rawSubRequestUuid.c_str(), fid.str().c_str(),
-         context.fullDestPath.c_str(), NULL);
+  loc = progfullpath.find("x2castorjob", 0);
+  if (loc != std::string::npos) {
+    std::ostringstream subRequestId;
+    subRequestId << args.subRequestId;
+    execl (progfullpath.c_str(), progname.c_str(),
+	   subRequestId.str().c_str(), NULL);
+  } else {
+    std::ostringstream fid;
+    fid << args.fileId.fileid << "@" << args.fileId.server;
+    execl (progfullpath.c_str(), progname.c_str(),
+	   args.rawSubRequestUuid.c_str(), fid.str().c_str(),
+	   context.fullDestPath.c_str(), NULL);
+  }
 }
