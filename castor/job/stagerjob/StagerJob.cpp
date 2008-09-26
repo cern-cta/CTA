@@ -55,12 +55,15 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/RequestCanceled.hpp"
 
-// static map s_plugins
+// Static map s_plugins
 static std::map<std::string, castor::job::stagerjob::IPlugin*> *s_plugins = 0;
 
-// -----------------------------------------------------------------------
+// Flag to indicate whether the client has already been sent a callback
+static bool clientAnswered = false;
+
+//------------------------------------------------------------------------------
 // getPlugin
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::job::stagerjob::IPlugin*
 castor::job::stagerjob::getPlugin(std::string protocol)
   throw (castor::exception::Exception) {
@@ -73,9 +76,9 @@ castor::job::stagerjob::getPlugin(std::string protocol)
   throw e;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // registerPlugin
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::job::stagerjob::registerPlugin
 (std::string protocol, castor::job::stagerjob::IPlugin* plugin)
   throw () {
@@ -85,9 +88,9 @@ void castor::job::stagerjob::registerPlugin
   s_plugins->operator[](protocol) = plugin;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getJobSvc
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::IJobSvc* getJobSvc()
   throw (castor::exception::Exception) {
   // Initialize the remote job service
@@ -109,15 +112,15 @@ castor::stager::IJobSvc* getJobSvc()
   return jobSvc;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // startAndGetPath
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 std::string startAndGetPath
 (castor::job::stagerjob::InputArguments* args,
  castor::job::stagerjob::PluginContext& context)
   throw (castor::exception::Exception) {
 
-  // create diskserver and filesystem in memory
+  // Create diskserver and filesystem in memory
   castor::stager::DiskServer diskServer;
   diskServer.setName(args->diskServer);
   castor::stager::FileSystem fileSystem;
@@ -125,7 +128,7 @@ std::string startAndGetPath
   fileSystem.setDiskserver(&diskServer);
   diskServer.addFileSystems(&fileSystem);
 
-  // create a subreq in memory and we will just fill its id
+  // Create a subreq in memory and we will just fill its id
   castor::stager::SubRequest subrequest;
   subrequest.setId(args->subRequestId);
 
@@ -181,13 +184,14 @@ std::string startAndGetPath
       }
     }
 
-    // for Update we should clear extended file attributes
-    // no need to do something for errors maybe we have not attributes
+    // For Updates we should clear extended file attributes
+    // no need to do something for errors as maybe we have no attributes
     // and we do not have to check RFIOD USE_CHECKSUM
-    if (args->accessMode == castor::job::stagerjob::ReadWrite && !emptyFile) 
-      if (removexattr(fullDestPath.c_str(),"user.castor.checksum.value") == 0)    // ok
-	removexattr(fullDestPath.c_str(),"user.castor.checksum.type");
-         
+    if (args->accessMode == castor::job::stagerjob::ReadWrite && !emptyFile) {
+      removexattr(fullDestPath.c_str(), "user.castor.checksum.value");
+      removexattr(fullDestPath.c_str(), "user.castor.checksum.type");
+    }
+
     delete diskCopy;
     return fullDestPath;
 
@@ -202,74 +206,100 @@ std::string startAndGetPath
     delete diskCopy;
     return fullDestPath;
   }
-  // never reached
+  // Never reached
   castor::exception::Internal e;
   e.getMessage() << "reached unreachable code !";
   throw e;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // switchToCastorSuperuser
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void switchToCastorSuperuser(castor::job::stagerjob::InputArguments *args)
   throw (castor::exception::Exception) {
 
   // "Credentials at start time"
   castor::dlf::Param params[] =
-    {castor::dlf::Param("uid", getuid()),
-     castor::dlf::Param("gid", getgid()),
-     castor::dlf::Param("euid", geteuid()),
-     castor::dlf::Param("egid", getegid()),
+    {castor::dlf::Param("Uid", getuid()),
+     castor::dlf::Param("Gid", getgid()),
+     castor::dlf::Param("Euid", geteuid()),
+     castor::dlf::Param("Egid", getegid()),
      castor::dlf::Param(args->subRequestUuid)};
   castor::dlf::dlf_writep
     (args->requestUuid, DLF_LVL_DEBUG,
      castor::job::stagerjob::JOBORIGCRED, 5, params, &args->fileId);
 
-   // Perform the switch
-   castor::System::switchToCastorSuperuser();
+  // Perform the switch
+  castor::System::switchToCastorSuperuser();
 
   // "Actual credentials used"
   castor::dlf::Param params2[] =
-    {castor::dlf::Param("uid", getuid()),
-     castor::dlf::Param("gid", getgid()),
-     castor::dlf::Param("euid", geteuid()),
-     castor::dlf::Param("egid", getegid()),
+    {castor::dlf::Param("Uid", getuid()),
+     castor::dlf::Param("Gid", getgid()),
+     castor::dlf::Param("Euid", geteuid()),
+     castor::dlf::Param("Egid", getegid()),
      castor::dlf::Param(args->subRequestUuid)};
   castor::dlf::dlf_writep
     (args->requestUuid, DLF_LVL_DEBUG,
      castor::job::stagerjob::JOBACTCRED, 5, params2, &args->fileId);
 }
 
-
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // bindSocketAndListen
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void bindSocketAndListen
 (castor::job::stagerjob::PluginContext &context,
- std::pair<int,int> &range)
+ std::pair<int,int> &range, int attempts = 0)
   throw (castor::exception::Exception) {
-  // build address
+  // Build address
   struct sockaddr_in sin;
   memset(&sin,'\0',sizeof(sin));
   sin.sin_addr.s_addr = htonl(INADDR_ANY);
   sin.sin_family = AF_INET;
-  // try to bind the socket to a random port in the range
-  int counter = 0;
-  int rc;
-  while (0 != rc && counter < 1000){
-    int port = (rand() % (range.second - range.first+1)) + range.first;
+ 
+  // Set the seed for the new sequence of pseudo-random numbers to be returned
+  // by subsequent calls to rand()
+  timeval tv;
+  gettimeofday(&tv, NULL);
+  srand(tv.tv_usec * tv.tv_sec);  
+
+  // Loop over all the ports in the specified range starting at a random offset
+  int offset = 0;
+  int port   = -1;
+  int rc     = -1;
+  for (offset = (rand() % (range.second - range.first+1)) + range.first;
+       port != offset;
+       port++) {
+    if (port < 0) {
+      port = offset;
+    }
+    // Attempt to bind to the port
     sin.sin_port = htons(port);
     rc = ::bind(context.socket, (struct sockaddr *)&sin, sizeof(sin));
-    counter++;
+    if (rc == 0) {
+      break; // Port successfully bound, doesn't mean listen will succeed!
+    }
+
+    // If we reach the maximum allowed port value reset it
+    if (port >= range.second) {
+      port = 0;
+    }
   }
-  if (0 != rc) {
+  if (rc != 0) {
     castor::exception::Internal e;
-    e.getMessage() << "Unable to bind socket after 1000 attempts with range ["
+    e.getMessage() << "Unable to bind socket with range ["
                    << range.first << "," << range.second << "]";
     throw e;
-  }
-  // listen for the client connection
-  if (listen(context.socket,1) < 0 ) {
+  } 
+
+  // Listen for the client connection
+  if (listen(context.socket,1) < 0) {
+    // If the error is "Address already in use" we try and bind again after 5
+    // seconds
+    if ((errno == EADDRINUSE) && (attempts < 10)) {
+      sleep(5);
+      bindSocketAndListen(context, range, attempts + 1);
+    }
     castor::exception::Exception e(errno);
     e.getMessage() << "Error caught in call to listen";
     throw e;
@@ -283,18 +313,17 @@ void bindSocketAndListen
   context.port = ntohs(sin.sin_port);
 }
 
-
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // process
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void process(castor::job::stagerjob::InputArguments* args)
   throw (castor::exception::Exception) {
   try {
-    // First switch to stage/st privileges
+    // First switch to stage:st privileges
     switchToCastorSuperuser(args);
     // Get an instance of the job service
     castor::stager::IJobSvc* jobSvc = getJobSvc();
-    // get full path of the file we handle
+    // Get full path of the file we handle
     castor::job::stagerjob::PluginContext context;
     context.host = castor::System::getHostName();
     context.mask = S_IRWXG|S_IRWXO;
@@ -308,41 +337,46 @@ void process(castor::job::stagerjob::InputArguments* args)
       // we've already logged, so just quit
       return;
     }
-    // get proper plugin
+    // Get proper plugin
     castor::job::stagerjob::IPlugin* plugin =
       castor::job::stagerjob::getPlugin(args->protocol);
-    // create a socket
-    context.socket = socket(AF_INET, SOCK_STREAM, 0);
-    if (context.socket < 0) {
-      castor::exception::Exception e(errno);
-      e.getMessage() << "Error caught in call to socket";
-      throw e;
+    // Create the socket that the user will connect too. Note:
+    // xrootd requires no socket as users will connect to the
+    // xrd daemon on the machine itself!
+    if (args->protocol != "xroot") {
+      // Create a socket
+      context.socket = socket(AF_INET, SOCK_STREAM, 0);
+      if (context.socket < 0) {
+	castor::exception::Exception e(errno);
+	e.getMessage() << "Error caught in call to socket";
+	throw e;
+      }
+      int rcode = 1;
+      int rc = setsockopt(context.socket, SOL_SOCKET, SO_REUSEADDR,
+			  (char *)&rcode, sizeof(rcode));
+      if (rc < 0) {
+	castor::exception::Exception e(errno);
+	e.getMessage() << "Error caught in call to setsockopt";
+	throw e;
+      }
+      // Get available port range for the socket
+      std::pair<int,int> portRange = plugin->getPortRange(*args);
+      // Bind socket and listen for client connection
+      bindSocketAndListen(context, portRange);
+      // "Mover will use the following port"
+      std::ostringstream sPortRange;
+      sPortRange << portRange.first << ":" << portRange.second;
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Protocol", args->protocol),
+	 castor::dlf::Param("Available port range", sPortRange.str()),
+	 castor::dlf::Param("Port used", context.port),
+	 castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+	 castor::dlf::Param(args->subRequestUuid)};
+      castor::dlf::dlf_writep
+	(args->requestUuid, DLF_LVL_DEBUG,
+	 castor::job::stagerjob::MOVERPORT, 5, params, &args->fileId);
     }
-    int rcode = 1;
-    int rc = setsockopt(context.socket, SOL_SOCKET, SO_REUSEADDR,
-                        (char *)&rcode, sizeof(rcode));
-    if (rc < 0) {
-      castor::exception::Exception e(errno);
-      e.getMessage() << "Error caught in call to setsockopt";
-      throw e;
-    }
-    // get available port range for the socket
-    std::pair<int,int> portRange = plugin->getPortRange(*args);
-    // bind socket and listen for client connection
-    bindSocketAndListen(context, portRange);
-    // "Mover will use the following port"
-    std::ostringstream sPortRange;
-    sPortRange << portRange.first << ":" << portRange.second;
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Protocol", args->protocol),
-       castor::dlf::Param("Available port range", sPortRange.str()),
-       castor::dlf::Param("Port used", context.port),
-       castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-       castor::dlf::Param(args->subRequestUuid)};
-    castor::dlf::dlf_writep
-      (args->requestUuid, DLF_LVL_DEBUG,
-       castor::job::stagerjob::MOVERPORT, 5, params, &args->fileId);
-    // prefork hook for the different movers
+    // Prefork hook for the different movers
     plugin->preForkHook(*args, context);
     // Set our mask to the most restrictive mode
     umask(context.mask);
@@ -354,7 +388,7 @@ void process(castor::job::stagerjob::InputArguments* args)
       castor::dlf::dlf_writep
         (args->requestUuid, DLF_LVL_ERROR,
          castor::job::stagerjob::CHDIRFAILED, 2, params, &args->fileId);
-      // not fatal, we just ignore the error
+      // Not fatal, we just ignore the error
     }
     // Fork and execute the mover
     dlf_prepare();
@@ -368,9 +402,9 @@ void process(castor::job::stagerjob::InputArguments* args)
     if (context.childPid == 0) {
       // Child side of the fork
       dlf_child();
-      // this call will never come back, since it call execl
+      // This call will never come back, since it call execl
       plugin->execMover(*args, context);
-      // but in case, let's fail
+      // But in case, let's fail
       dlf_shutdown(5);
       exit(EXIT_FAILURE);
     }
@@ -387,7 +421,6 @@ void process(castor::job::stagerjob::InputArguments* args)
   }
 }
 
-
 //------------------------------------------------------------------------------
 // sendResponse
 //------------------------------------------------------------------------------
@@ -402,17 +435,22 @@ void castor::job::stagerjob::sendResponse
                    << client->type();
     throw e;
   }
-  castor::io::ClientSocket s(rhc->port(), rhc->ipAddress());
-  s.connect();
-  s.sendObject(response);
-  castor::rh::EndResponse endRes;
-  s.sendObject(endRes);
+  if (clientAnswered == false) {
+    clientAnswered = true;
+    castor::io::ClientSocket s(rhc->port(), rhc->ipAddress());
+    s.connect();
+    s.sendObject(response);
+    castor::rh::EndResponse endRes;
+    s.sendObject(endRes);
+  } else {
+    // The client has already been sent a response, trying to send a second
+    // one will just result in a failure to connect.
+  }
 }
 
-
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // main
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int main(int argc, char** argv) {
 
   // Record start time
@@ -435,7 +473,7 @@ int main(int argc, char** argv) {
       { SCLOSEFAILED,  "Failed to close socket"},
       { CHDIRFAILED,   "Failed to change directory to tmp"},
       { DUP2FAILED,    "Failed to duplicate socket"},
-      { MOVERNOTEXEC,  "Mover program can not be executed. Check permissions"},
+      { MOVERNOTEXEC,  "Mover program cannot be executed. Check permissions"},
       { EXECFAILED,    "Failed to exec mover"},
 
       // Invalid configurations or parameters
@@ -477,6 +515,8 @@ int main(int argc, char** argv) {
       { GSIBADMAXVAL,  "Upper bound for GridFTP port range not in valid range. Using default" },
       { GSIPORTRANGE,  "GridFTP Port range" },
       { GSIPORTUSED,   "GridFTP Socket bound" },
+
+      { XROOTENOENT,   "Xrootd is not installed" },
       { -1, "" }};
     castor::dlf::dlf_init("Job", messages);
 
@@ -547,7 +587,7 @@ int main(int argc, char** argv) {
       (arguments->requestUuid, DLF_LVL_SYSTEM,
        castor::job::stagerjob::JOBENDED, 3, params2, &arguments->fileId);
 
-    // memory cleanup
+    // Memory cleanup
     delete arguments;
 
   } catch (castor::exception::Exception e) {
@@ -578,7 +618,7 @@ int main(int argc, char** argv) {
         (arguments->requestUuid, DLF_LVL_ERROR,
          castor::job::stagerjob::NOANSWERSENT, 4, params, &arguments->fileId);
     }
-    // memory cleanup
+    // Memory cleanup
     if (0 != arguments) delete arguments;
     dlf_shutdown(10);
     return -1;
