@@ -22,7 +22,7 @@ COMM ---------------------------------------------------------------------------
 IFILES = $(DLFWEB)/config.php          \
 	 $(DLFWEB)/dbview.php          \
 	 $(DLFWEB)/index.php           \
-	 $(DLFCONF)/login.conf         \
+	 $(DLFCONF)/login.conf.example \
 	 $(DLFWEB)/query.php           \
 	 $(DLFWEB)/results.php         \
 	 $(DLFWEB)/site.css            \
@@ -45,7 +45,7 @@ directories:
 	mkdir -p $(DESTDIR)$(DLFWEB)/images
 	mkdir -p $(DESTDIR)$(DLFCONF)
 
-InstallNonExecFile(login.conf,$(DLFCONF),root,apache,640)
+InstallNonExecFile(login.conf.example,$(DLFCONF),root,apache,640)
 
 InstallNonExecFile(config.php,$(DLFWEB),root,root,644)
 InstallNonExecFile(dbview.php,$(DLFWEB),root,root,644)
