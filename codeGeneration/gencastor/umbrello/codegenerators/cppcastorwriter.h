@@ -38,7 +38,7 @@ class CppCastorWriter : public SimpleCodeGenerator {
    * computes a fileName for a given class and a given extension
    * Written from the simpleCodeGenerator::findFileName method
    */
-	QString computeFileName(UMLClassifier* concept, QString ext);
+  QString computeFileName(UMLClassifier* concept, QString ext);
 
   /**
    * accessor to topNS
@@ -49,6 +49,11 @@ class CppCastorWriter : public SimpleCodeGenerator {
    * Gets the base type for a given type
    */
   static QString getSimpleType(QString type);
+
+  /**
+   * Create directories recursively
+   */
+  static bool mkpath(const QString &name);
 
   /**
    * Gets the classifier for a given type

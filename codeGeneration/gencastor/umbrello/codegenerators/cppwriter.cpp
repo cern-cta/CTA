@@ -227,14 +227,14 @@ void CppWriter::writeClass(UMLClassifier *c) {
             // check existence of the directory
             QDir outputDirectory = UMLApp::app()->getCommonPolicy()->getOutputDirectory();
             QDir packageDir(UMLApp::app()->getCommonPolicy()->getOutputDirectory().absPath() + "/" + s_topNS + "/db");
-            if (! (packageDir.exists() || packageDir.mkdir(packageDir.absPath()) ) ) {
+            if (! (packageDir.exists() || mkpath(packageDir.absPath()) ) ) {
               std::cerr << "Cannot create the package folder "
                         << packageDir.absPath().ascii()
                         << "\nPlease check the access rights" << std::endl;
               return;
             }
             QDir packageDirDb(UMLApp::app()->getCommonPolicy()->getOutputDirectory().absPath() + "/" + s_topNS + "/db/cnv");
-            if (! (packageDirDb.exists() || packageDirDb.mkdir(packageDirDb.absPath()) ) ) {
+            if (! (packageDirDb.exists() || mkpath(packageDirDb.absPath()) ) ) {
               std::cerr << "Cannot create the package folder "
                         << packageDirDb.absPath().ascii()
                         << "\nPlease check the access rights" << std::endl;
@@ -254,7 +254,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
         if (classInfo->allImplementedAbstracts.contains(concept)) {
           // check existence of the directory
           QDir packageDir(UMLApp::app()->getCommonPolicy()->getOutputDirectory().absPath() + "/" + s_topNS + "/io");
-          if (! (packageDir.exists() || packageDir.mkdir(packageDir.absPath()) ) ) {
+          if (! (packageDir.exists() || mkpath(packageDir.absPath()) ) ) {
             std::cerr << "Cannot create the package folder "
                       << packageDir.absPath().ascii()
                       << "\nPlease check the access rights" << std::endl;

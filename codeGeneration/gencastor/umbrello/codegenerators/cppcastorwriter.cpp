@@ -8,6 +8,8 @@
 #include <klocale.h>
 #include <kmessagebox.h>
 #include <uml.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 // local includes
 #include "folder.h"
@@ -57,19 +59,19 @@ CppCastorWriter::CppCastorWriter(UMLDoc* parent, const char *name) :
 // openFile
 //=============================================================================
 bool CppCastorWriter::openFile (QFile & file, QString fileName, int mode) {
-	//open files for writing.
-	if(fileName.isEmpty()) {
-		kdWarning() << "cannot find a file name" << endl;
-		return false;
-	} else {
-		QDir outputDirectory = UMLApp::app()->getCommonPolicy()->getOutputDirectory();
-		file.setName(outputDirectory.absFilePath(fileName));
-		if(!file.open(mode)) {
-			KMessageBox::sorry(0,i18n("Cannot open file %1. Please make sure the folder exists and you have permissions to write to it.").arg(file.name()),i18n("Cannot Open File"));
-			return false;
-		}
-		return true;
-	}
+  //open files for writing.
+  if(fileName.isEmpty()) {
+    kdWarning() << "cannot find a file name" << endl;
+    return false;
+  } else {
+    QDir outputDirectory = UMLApp::app()->getCommonPolicy()->getOutputDirectory();
+    file.setName(outputDirectory.absFilePath(fileName));
+    if(!file.open(mode)) {
+      KMessageBox::sorry(0,i18n("Cannot open file %1. Please make sure the folder exists and you have permissions to write to it.").arg(file.name()),i18n("Cannot Open File"));
+      return false;
+    }
+    return true;
+  }
 }
 
 //=============================================================================
@@ -109,7 +111,7 @@ QString CppCastorWriter::computeFileName(UMLClassifier* concept, QString ext) {
   // if a package name exists check the existence of the package directory
   if (!package.isEmpty()) {
     QDir packageDir(UMLApp::app()->getCommonPolicy()->getOutputDirectory().absPath() + package);
-    if (! (packageDir.exists() || packageDir.mkdir(packageDir.absPath()) ) ) {
+    if (! (packageDir.exists() || mkpath(packageDir.absPath()) ) ) {
       KMessageBox::error(0, i18n("Cannot create the package folder:\n") +
                          packageDir.absPath() + i18n("\nPlease check the access rights"),
                          i18n("Cannot Create Folder"));
@@ -161,4 +163,30 @@ UMLClassifier* CppCastorWriter::getClassifier(QString type) {
 UMLClassifier* CppCastorWriter::getDatatype(QString type) {
   QString name = getSimpleType(type);
   return new UMLClassifier(name);
+}
+
+//=============================================================================
+// mkpath
+//=============================================================================
+bool CppCastorWriter::mkpath(const QString &name) {
+  QString dirName = name;
+  for(int oldslash = -1, slash = 0; slash != -1; oldslash = slash) {
+    slash = dirName.find(QDir::separator(), oldslash + 1);
+    if (slash == -1) {
+      if (oldslash == (int)dirName.length())
+	break;
+      slash = dirName.length();
+    }
+    if (slash) {
+      QByteArray chunk = QFile::encodeName(dirName.left(slash));
+      struct stat st;
+      if (stat(chunk, &st) != -1) {
+	if ((st.st_mode & S_IFMT) != S_IFDIR)
+	  return false;
+      } else if (::mkdir(chunk, 0777) != 0) {
+	return false;
+      }
+    }
+  }
+  return true;
 }
