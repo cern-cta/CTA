@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.10 $ $Release$ $Date: 2008/09/17 15:27:39 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.11 $ $Release$ $Date: 2008/09/26 08:16:00 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -41,7 +41,17 @@ END repack;
 
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 
+/* Table for cleaning  with default values */
+
+/* Define a table for some configuration key-value pairs and populate it */
+CREATE TABLE RepackConfig
+  (class VARCHAR2(2048) NOT NULL, key VARCHAR2(2048) NOT NULL, value VARCHAR2(2048) NOT NULL, description VARCHAR2(2048));
+
+INSERT INTO RepackConfig (class,key,value,description) VALUES ('Repack','CleaningTimeout','72','time out to clean archived repacksubrequest');
+
+
 /* SQL procedures */
+
 
 /* repack cleanup cronjob */
 
