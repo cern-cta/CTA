@@ -1,0 +1,87 @@
+.\"
+.\"
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\"
+.TH VDQM_SENDDEDICATE l "$Date: 2008/09/26 09:34:26 $" "CASTOR" "VDQM Library Functions"
+.SH NAME
+.PP
+vdqm_SendDedicate \- send a dedication to the VDQM
+.SH SYNOPSIS
+.br
+\fB#include "Castor_limits.h"\fR
+.br
+\fB#include "osdep.h"\fR
+.br
+\fB#include "net.h"\fR
+.br
+\fB#include "vdqm_api.h"\fR
+.sp
+.BI "int vdqm_SendDedicate ("
+.br
+.BI "                char *" server ,
+.br
+.BI "                char *" drive ,
+.br
+.BI "                char *" dgn ,
+.br
+.BI "                char *" dedicate );
+.SH DESCRIPTION
+.B vdqm_SendDedicate
+sends to the VDQM the specified dedication.
+.SH PARAMETERS
+.I server
+\- character string specifying the tape server name.
+.PP
+.I drive
+\- character string specifying the drive name.
+.PP
+.I dgn
+\- character string specifying the DGN of the drive.
+.PP
+.I dedicate
+\- character string specifying the dedication.
+.PP
+
+.SH RETURN VALUES
+.PP
+On successful completion, the
+.B vdqm_SendDedicate
+function returns 0. Otherwise, a value of \-1 is returned and
+.B serrno
+is set to indicate the error.
+
+.SH ERRORS
+.PP
+If the
+.B vdqm_SendDedicate
+function fails,
+.B serrno
+may be set to one of the following values:
+.TP
+.B SEINTERNAL
+Unexpected internal error 
+.TP
+.B SENOSSERV
+VDQM service unknown.
+.TP
+.B SENOSHOST
+VDQM host unknown.
+.TP
+.B SECOMERR
+A network library call failed when trying to establish the connection
+with the VDQM server.
+.TP
+.B EINVAL
+A parameter or combination of parameters is invalid. For instance if
+.I VID
+is a NULL pointer.
+.TP
+.B EVQSYERR
+A fatal system call (e.g. calloc()) failure in VDQM server.
+.TP
+.B EVQHOLD
+The server is in HOLD status. This is normally a temporary error due
+to VDQM server maintenance. Client should retry after a short delay.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
