@@ -178,6 +178,7 @@ mkdir -p ${RPM_BUILD_ROOT}/var/lib/castor
 mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/db
 mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/js
 mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/images
+mkdir -p ${RPM_BUILD_ROOT}/var/www/conf/dlf/
 %if %has_globus
   mkdir -p ${RPM_BUILD_ROOT}/etc/xinetd.d
   install -m 644 gridftp2/external/gsiftp ${RPM_BUILD_ROOT}/etc/xinetd.d/gsiftp
@@ -193,15 +194,13 @@ make exportman DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/m
 # Install policies
 (cd clips; ../imake/imake -I../config DESTDIR=${RPM_BUILD_ROOT}; make install DESTDIR=${RPM_BUILD_ROOT})
 
-# Install example configuration files
+# Install example files
 for i in debian/*CONFIG; do
     install -m 640 ${i} ${RPM_BUILD_ROOT}/etc/castor/`basename ${i}`.example
 done
-# Install the debian+redhat init script
 for i in `find . -name "*.init"`; do
     install -m 755 ${i} ${RPM_BUILD_ROOT}/etc/init.d/`basename ${i} | sed 's/\.init//g'`
 done
-# Install the sample castor.conf
 install -m 644 debian/castor.conf ${RPM_BUILD_ROOT}/etc/castor/castor.conf.example
 install -m 644 debian/scheduler.py ${RPM_BUILD_ROOT}/etc/castor/policies/scheduler.py.example
 install -m 644 debian/migration.py ${RPM_BUILD_ROOT}/etc/castor/policies/migration.py.example
