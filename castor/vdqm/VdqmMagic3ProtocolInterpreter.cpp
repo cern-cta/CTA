@@ -93,6 +93,64 @@ void castor::vdqm::VdqmMagic3ProtocolInterpreter::readHeader(
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmMagic3ProtocolInterpreter::readDelDrv(const int len,
   vdqmDelDrv_t *const msg) throw(castor::exception::Exception) {
+
+  if(msg == NULL) {
+    castor::exception::Internal ex;
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": NULL msg argument" << std::endl;
+    throw ex;
+  }
+
+  if(!VALID_VDQM_MSGLEN(len)) {
+    castor::exception::Exception ex(SECONNDROP);
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": netread(REQ): connection dropped" << std::endl;
+    throw ex;
+  }
+
+  char buf[VDQM_MSGBUFSIZ];
+  int rc = 0;
+
+  // Read the message body
+  rc = netread_timeout(m_sock->socket(), buf, len, VDQM_TIMEOUT);
+
+  if(rc == -1) {
+    castor::exception::Exception ex(SECOMERR);
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ":netread_timeout: " << neterror() << std::endl;
+    throw ex;
+  } else if(rc == 0) {
+    castor::exception::Exception ex(SECONNDROP);
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": netread_timeout: " << "connection dropped" << std::endl;
+    throw ex;
+  }
+
+  // Un-marshall the message body
+  char *p = buf;
+
+  DO_MARSHALL(LONG,p,msg->clientUID,ReceiveFrom);
+  DO_MARSHALL(LONG,p,msg->clientGID,ReceiveFrom);
+  if(unmarshall_STRINGN(p,msg->clientHost, sizeof(msg->clientHost))) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to unmarshall_STRINGN clientHost" << std::endl;
+  }
+  if(unmarshall_STRINGN(p,msg->server, sizeof(msg->server))) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to unmarshall_STRINGN server" << std::endl;
+  }
+  if(unmarshall_STRINGN(p,msg->drive, sizeof(msg->drive))) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to unmarshall_STRINGN drive" << std::endl;
+  }
+  if(unmarshall_STRINGN(p,msg->dgn, sizeof(msg->dgn))) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to unmarshall_STRINGN dgn" << std::endl;
+  }
 }
 
 
@@ -101,4 +159,52 @@ void castor::vdqm::VdqmMagic3ProtocolInterpreter::readDelDrv(const int len,
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmMagic3ProtocolInterpreter::readDedicate(const int len,
   vdqmDedicate_t *const msg) throw(castor::exception::Exception) {
+
+  if(msg == NULL) {
+    castor::exception::Internal ex;
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": NULL msg argument" << std::endl;
+    throw ex;
+  }
+
+  if(!VALID_VDQM_MSGLEN(len)) {
+    castor::exception::Exception ex(SECONNDROP);
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": netread(REQ): connection dropped" << std::endl;
+    throw ex;
+  }
+
+  char buf[VDQM_MSGBUFSIZ];
+  int rc = 0;
+
+  // Read the message body
+  rc = netread_timeout(m_sock->socket(), buf, len, VDQM_TIMEOUT);
+
+  if(rc == -1) {
+    castor::exception::Exception ex(SECOMERR);
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ":netread_timeout: " << neterror() << std::endl;
+    throw ex;
+  } else if(rc == 0) {
+    castor::exception::Exception ex(SECONNDROP);
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": netread_timeout: " << "connection dropped" << std::endl;
+    throw ex;
+  }
+
+  // Un-marshall the message body
+  char *p = buf;
+
+  DO_MARSHALL(LONG,p,msg->clientUID,ReceiveFrom);
+  DO_MARSHALL(LONG,p,msg->clientGID,ReceiveFrom);
+  if(unmarshall_STRINGN(p,msg->clientHost, sizeof(msg->clientHost))) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to unmarshall_STRINGN clientHost" << std::endl;
+  }
+  if(unmarshall_STRINGN(p,msg->dedicate, sizeof(msg->dedicate))) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to unmarshall_STRINGN dedicate" << std::endl;
+  }
 }

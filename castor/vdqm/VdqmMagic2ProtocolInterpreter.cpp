@@ -92,20 +92,19 @@ void castor::vdqm::VdqmMagic2ProtocolInterpreter::readHeader(
 // readVolPriority
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmMagic2ProtocolInterpreter::readVolPriority(const int len,
-  vdqmVolPriority_t *const vdqmVolPriority)
-  throw(castor::exception::Exception) {
+  vdqmVolPriority_t *const msg) throw(castor::exception::Exception) {
 
-  if(vdqmVolPriority == NULL) {
+  if(msg == NULL) {
     castor::exception::Internal ex;
-    ex.getMessage() << "VdqmMagic2ProtocolInterpreter::readVolPriority(): "
-      "vdqmVolPriority argument is NULL" << std::endl;
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": NULL msg argument" << std::endl;
     throw ex;
   }
 
   if(!VALID_VDQM_MSGLEN(len)) {
     castor::exception::Exception ex(SECONNDROP);
-    ex.getMessage() << "OldProtocolInterpreter::readProtocol() "
-      "netread(REQ): connection dropped" << std::endl;
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": netread(REQ): connection dropped" << std::endl;
     throw ex;
   }
 
@@ -117,34 +116,32 @@ void castor::vdqm::VdqmMagic2ProtocolInterpreter::readVolPriority(const int len,
 
   if(rc == -1) {
     castor::exception::Exception ex(SECOMERR);
-    ex.getMessage() << "VdqmMagic2ProtocolInterpreter::readVolPriority() "
-      "netread_timeout: " << neterror() << std::endl;
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": netread_timeout: " << neterror() << std::endl;
     throw ex;
   } else if(rc == 0) {
     castor::exception::Exception ex(SECONNDROP);
-    ex.getMessage() << "VdqmMagic2ProtocolInterpreter::readVolPriority() "
-      "netread_timeout: " << "connection dropped" << std::endl;
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": netread_timeout: " << "connection dropped" << std::endl;
     throw ex;
   }
 
   // Un-marshall the message body
   char *p = buf;
 
-  DO_MARSHALL(LONG,p,vdqmVolPriority->priority,ReceiveFrom);
-  DO_MARSHALL(LONG,p,vdqmVolPriority->clientUID,ReceiveFrom);
-  DO_MARSHALL(LONG,p,vdqmVolPriority->clientGID,ReceiveFrom);
-  if(unmarshall_STRINGN(p,vdqmVolPriority->clientHost,
-    sizeof(vdqmVolPriority->clientHost))) {
+  DO_MARSHALL(LONG,p,msg->priority,ReceiveFrom);
+  DO_MARSHALL(LONG,p,msg->clientUID,ReceiveFrom);
+  DO_MARSHALL(LONG,p,msg->clientGID,ReceiveFrom);
+  if(unmarshall_STRINGN(p,msg->clientHost, sizeof(msg->clientHost))) {
     castor::exception::Exception ex(EINVAL);
-    ex.getMessage() << "VdqmMagic2ProtocolInterpreter::readVolPriority() "
-      "unmarshall_STRINGN( client_host )" << std::endl;
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to unmarshall_STRINGN clientHost" << std::endl;
   }
-  if(unmarshall_STRINGN(p,vdqmVolPriority->vid,
-    sizeof(vdqmVolPriority->vid))) {
+  if(unmarshall_STRINGN(p,msg->vid, sizeof(msg->vid))) {
     castor::exception::Exception ex(EINVAL);
-    ex.getMessage() << "VdqmMagic2ProtocolInterpreter::readVolPriority() "
-      "unmarshall_STRINGN( volid )" << std::endl;
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to unmarshall_STRINGN vid" << std::endl;
   }
-  DO_MARSHALL(LONG,p,vdqmVolPriority->tpMode,ReceiveFrom);
-  DO_MARSHALL(LONG,p,vdqmVolPriority->lifespanType,ReceiveFrom);
+  DO_MARSHALL(LONG,p,msg->tpMode,ReceiveFrom);
+  DO_MARSHALL(LONG,p,msg->lifespanType,ReceiveFrom);
 }

@@ -73,11 +73,10 @@ namespace castor {
        * message header has already been read from the socket.
        *
        * @param len The length of the message body
-       * @param vdqmVolPriority Pointer to the memory which the message body
-       * should be read out into
+       * @param msg Pointer to the memory which the message body should be read
+       * out into
        */
-      void readVolPriority(const int len,
-        vdqmVolPriority_t *const vdqmVolPriority)
+      void readVolPriority(const int len, vdqmVolPriority_t *const msg)
         throw(castor::exception::Exception);
 
 
