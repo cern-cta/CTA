@@ -29,6 +29,7 @@
 #include "castor/Services.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
+#include "castor/exception/NotSupported.hpp"
 #include "castor/server/NotifierThread.hpp"
 #include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/OldRequestFacade.hpp"
@@ -140,7 +141,7 @@ void castor::vdqm::ProtocolFacade::handleProtocolVersion()
       break;
 
     default:
-      //Wrong Magic number
+      // Wrong Magic number
       castor::dlf::Param params[] = {
         castor::dlf::Param("Magic Number", magicNumber),
         castor::dlf::Param("VDQM_MAGIC", VDQM_MAGIC)};
@@ -349,36 +350,42 @@ void castor::vdqm::ProtocolFacade::handleVdqmMagic2Request(
     return;
   }
 
-  switch(header.reqtype) {
-  case VDQM2_SET_VOL_PRIORITY:
-  {
-    vdqmVolPriority_t vdqmVolPriority;
+  try {
+    switch(header.reqtype) {
+    case VDQM2_SET_VOL_PRIORITY:
+    {
+      vdqmVolPriority_t vdqmVolPriority;
 
-    vdqmMagic2ProtInterpreter.readVolPriority(header.len, &vdqmVolPriority);
-    handler::VdqmMagic2RequestHandler requestHandler;
-    requestHandler.handleVolPriority(m_cuuid, &vdqmVolPriority);
+      vdqmMagic2ProtInterpreter.readVolPriority(header.len, &vdqmVolPriority);
+      handler::VdqmMagic2RequestHandler requestHandler;
+      requestHandler.handleVolPriority(m_cuuid, &vdqmVolPriority);
 
-    break;
-  }
-  default: // Invalid request type
-    std::stringstream oss;
-    oss << "Invalid Request 0x" << std::hex << header.reqtype << std::endl;
+      break;
+    }
+    default: // Invalid request type
+      castor::exception::NotSupported ne;
 
+      ne.getMessage() << "Invalid Request 0x" << std::hex << header.reqtype;
+
+      throw ne;
+    }
+  } catch(castor::exception::Exception &e) {
+
+    // Log the exception
     castor::dlf::Param params2[] = {
-    castor::dlf::Param("Message", oss.str()),
+    castor::dlf::Param("Message", e.getMessage().str()),
     castor::dlf::Param("errorCode", SEOPNOTSUP)};
 
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR, VDQM_EXCEPTION, 2,
       params2);
 
-    // Rollback of the whole request message
-    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-      VDQM_MAGIC2_ROLLBACK);
+    // Rollback the whole request message
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, VDQM_MAGIC2_ROLLBACK);
     svcs()->rollback(&ad);
 
     // Tell the client about the error
     try {
-      oldProtInterpreter.sendAcknRollback(SEOPNOTSUP);
+      oldProtInterpreter.sendAcknRollback(e.code());
     } catch (castor::exception::Exception &e) {
       // "Exception caught" message
       castor::dlf::Param params[] = {
@@ -457,45 +464,52 @@ void castor::vdqm::ProtocolFacade::handleVdqmMagic3Request(
     return;
   }
 
-  switch(header.reqtype) {
-  case VDQM3_DEL_DRV:
-  {
-    vdqmDelDrv_t msg;
+  try {
+    switch(header.reqtype) {
+    case VDQM3_DEL_DRV:
+    {
+      vdqmDelDrv_t msg;
 
-    protInterpreter.readDelDrv(header.len, &msg);
-    handler::VdqmMagic3RequestHandler requestHandler;
-    requestHandler.handleDelDrv(ptr_serverSocket, m_cuuid, &msg);
+      protInterpreter.readDelDrv(header.len, &msg);
+      handler::VdqmMagic3RequestHandler requestHandler;
+      requestHandler.handleDelDrv(ptr_serverSocket, m_cuuid, &msg);
 
-    break;
-  }
-  case VDQM3_DEDICATE:
-  {
-    vdqmDedicate_t msg;
+      break;
+    }
+    case VDQM3_DEDICATE:
+    {
+      vdqmDedicate_t msg;
 
-    protInterpreter.readDedicate(header.len, &msg);
-    handler::VdqmMagic3RequestHandler requestHandler;
-    requestHandler.handleDedicate(ptr_serverSocket, m_cuuid, &msg);
+      protInterpreter.readDedicate(header.len, &msg);
+      handler::VdqmMagic3RequestHandler requestHandler;
+      requestHandler.handleDedicate(ptr_serverSocket, m_cuuid, &msg);
 
-    break;
-  }
-  default: // Invalid request type
-    std::stringstream oss;
-    oss << "Invalid Request 0x" << std::hex << header.reqtype << std::endl;
+      break;
+    }
+    default: // Invalid request type
+      castor::exception::NotSupported ne;
 
+      ne.getMessage() << "Invalid Request 0x" << std::hex << header.reqtype;
+
+      throw ne;
+    }
+  } catch(castor::exception::Exception &e) {
+
+    // Log the exception
     castor::dlf::Param params2[] = {
-    castor::dlf::Param("Message", oss.str()),
+    castor::dlf::Param("Message", e.getMessage().str()),
     castor::dlf::Param("errorCode", SEOPNOTSUP)};
 
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR, VDQM_EXCEPTION, 2,
       params2);
 
-    // Rollback of the whole request message
+    // Rollback the whole request message
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, VDQM_MAGIC3_ROLLBACK);
     svcs()->rollback(&ad);
 
     // Tell the client about the error
     try {
-      oldProtInterpreter.sendAcknRollback(SEOPNOTSUP);
+      oldProtInterpreter.sendAcknRollback(e.code());
     } catch (castor::exception::Exception &e) {
       // "Exception caught" message
       castor::dlf::Param params[] = {

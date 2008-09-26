@@ -1,5 +1,5 @@
 /*
- * $Id: vdqmapi.c,v 1.14 2008/05/15 20:07:19 murrayc3 Exp $
+ * $Id: vdqmapi.c,v 1.15 2008/09/26 15:41:09 murrayc3 Exp $
  *
  * Copyright (C) 1999 by CERN IT-PDP/DM
  * All rights reserved
@@ -888,34 +888,176 @@ int DLL_DECL vdqm_PingServer(vdqmnw_t *nw, char *dgn, int reqID) {
 int DLL_DECL vdqm_SendVolPriority(char *vid, int tpMode, int priority,
   int lifespanType) {
     vdqmnw_t *nw = NULL;
-    vdqmVolPriority_t volpriority;
+    vdqmVolPriority_t msg;
     vdqmnw_t *tmpnw = NULL;
     int save_serrno = 0;
     int rc = 0;
-    VDQM_API_ENTER(vdqm_setVolPriority);
+    VDQM_API_ENTER(vdqm_SendVolPriority);
 
-    memset(&volpriority,'\0',sizeof(volpriority));
-    if ( (nw != NULL && nw->connect_socket == INVALID_SOCKET) ||
-        vid == NULL) {
-        TRACE(1,"vdqm","vdqm_SetVolPriority() called with invalid argument");
+    memset(&msg,'\0',sizeof(msg));
+    if ( vid == NULL ) {
+        TRACE(1,"vdqm","vdqm_SendVolPriority() called with invalid argument");
         serrno = EINVAL;
         VDQM_API_RETURN(-1);
     }
-    if ( nw == NULL ) {
-        rc = vdqm_Connect(&tmpnw);
-        if ( rc < 0 ) VDQM_API_RETURN(rc);
-    } else tmpnw = nw;
-    volpriority.priority = priority;
-    volpriority.clientUID = geteuid();
-    volpriority.clientGID = getegid();
-    strncpy(volpriority.vid, vid, sizeof(volpriority.vid));
-    volpriority.vid[sizeof(volpriority.vid)-1] = '\0';
-    volpriority.tpMode = tpMode;
-    volpriority.lifespanType = lifespanType;
-    rc = vdqm_SendVolPriority_Transfer(tmpnw,&volpriority);
+
+    rc = vdqm_Connect(&tmpnw);
+    if ( rc < 0 ) VDQM_API_RETURN(rc);
+
+    msg.priority = priority;
+    msg.clientUID = geteuid();
+    msg.clientGID = getegid();
+    // msg.clientHost is set by vdqm_SendVolPriority_Transfer
+    strncpy(msg.vid, vid, sizeof(msg.vid));
+    msg.vid[sizeof(msg.vid)-1] = '\0';
+    msg.tpMode = tpMode;
+    msg.lifespanType = lifespanType;
+    rc = vdqm_SendVolPriority_Transfer(tmpnw,&msg);
     if ( rc != -1 ) {
         rc = vdqm_RecvAckn(tmpnw);
-        TRACE(1,"vdqm","vdqm_setVolPriority() vdqm_RecvAckn() rc = 0x%x",rc);
+        TRACE(1,"vdqm","vdqm_SendVolPriority() vdqm_RecvAckn() rc = 0x%x",rc);
+        if ( rc == VDQM_COMMIT ) {
+            rc = vdqm_AcknCommit(tmpnw);
+            rc = 0;
+        } else {
+            if ( rc > 0 ) save_serrno = rc;
+            rc = -1;
+        }
+    }
+    if ( nw == NULL ) vdqm_Disconnect(&tmpnw);
+    if ( rc == -1 && save_serrno > 0 ) serrno = save_serrno;
+    VDQM_API_RETURN(rc);
+}
+
+int DLL_DECL vdqm_SendDelDrv(char *server, char *drive, char *dgn) {
+    vdqmnw_t *nw = NULL;
+    vdqmDelDrv_t msg;
+    vdqmnw_t *tmpnw = NULL;
+    int save_serrno = 0;
+    int rc = 0;
+    VDQM_API_ENTER(vdqm_SendDelDrv);
+
+    memset(&msg,'\0',sizeof(msg));
+    if ( server == NULL || drive == NULL || dgn == NULL ) {
+        TRACE(1,"vdqm","vdqm_SendDelDrv() called with invalid argument");
+        serrno = EINVAL;
+        VDQM_API_RETURN(-1);
+    }
+
+    rc = vdqm_Connect(&tmpnw);
+    if ( rc < 0 ) VDQM_API_RETURN(rc);
+
+    msg.clientUID = geteuid();
+    msg.clientGID = getegid();
+    // msg.clientHost is set by vdqm_SendDelDrv_Transfer
+    strncpy(msg.server, server, sizeof(msg.server));
+    msg.server[sizeof(msg.server)-1] = '\0';
+    strncpy(msg.drive, drive, sizeof(msg.drive));
+    msg.drive[sizeof(msg.drive)-1] = '\0';
+    strncpy(msg.dgn, dgn, sizeof(msg.dgn));
+    msg.dgn[sizeof(msg.dgn)-1] = '\0';
+
+    rc = vdqm_SendDelDrv_Transfer(tmpnw,&msg);
+    if ( rc != -1 ) {
+        rc = vdqm_RecvAckn(tmpnw);
+        TRACE(1,"vdqm","vdqm_SendDelDrv() vdqm_RecvAckn() rc = 0x%x",rc);
+        if ( rc == VDQM_COMMIT ) {
+            rc = vdqm_AcknCommit(tmpnw);
+            rc = 0;
+        } else {
+            if ( rc > 0 ) save_serrno = rc;
+            rc = -1;
+        }
+    }
+    if ( nw == NULL ) vdqm_Disconnect(&tmpnw);
+    if ( rc == -1 && save_serrno > 0 ) serrno = save_serrno;
+    VDQM_API_RETURN(rc);
+}
+
+int DLL_DECL vdqm_SendDedicate(char *server, char *drive, char *dgn,
+    char *dedicate) {
+    vdqmnw_t *nw = NULL;
+    vdqmDedicate_t msg;
+    vdqmnw_t *tmpnw = NULL;
+    int save_serrno = 0;
+    int rc = 0;
+    VDQM_API_ENTER(vdqm_SendDedicate);
+
+    memset(&msg,'\0',sizeof(msg));
+    if ( server == NULL || drive == NULL || dgn == NULL || dedicate == NULL ) {
+        TRACE(1,"vdqm","vdqm_SendDedicate() called with invalid argument");
+        serrno = EINVAL;
+        VDQM_API_RETURN(-1);
+    }
+
+    // Expand dedication string
+    {
+        char tmpstr[CA_MAXLINELEN+1], *p, *q;
+        char keywords[][20] = VDQM_DEDICATE_PREFIX;
+        char defaults[][20] = VDQM_DEDICATE_DEFAULTS;
+
+        if ( *dedicate == '\0' ) {
+           msg.dedicate[0] = '\0';
+        } else {
+            if ( strlen(dedicate) > sizeof(tmpstr)-1 ) {
+                TRACE(1,"vdqm",
+                      "vdqm_SendDedicate() dedication string too long (%d>%d)",
+                      strlen(dedicate),sizeof(msg.dedicate)-1);
+                serrno = E2BIG;
+                VDQM_API_RETURN(-1);
+            }
+            strcpy(tmpstr,dedicate);
+
+            int i = 0;
+            for (i=0; *keywords[i] != '\0'; i++) {
+                if ( (p = strstr(tmpstr,keywords[i])) == NULL ) {
+                    if ( strlen(msg.dedicate) + strlen(defaults[i]) >
+                         sizeof(msg.dedicate) - 1 ) {
+                        TRACE(1,"vdqm",
+                           "vdqm_SendDedicate() expanded dedication too long");
+                        serrno = E2BIG;
+                        VDQM_API_RETURN(-1);
+                    }
+                    strcat(msg.dedicate,defaults[i]);
+                } else {
+                    q = strchr(p,',');
+                    if ( q != NULL ) *q = '\0';
+                    if ( strlen(msg.dedicate) + strlen(p) >
+                         sizeof(msg.dedicate) - 1 ) {
+                        TRACE(1,"vdqm",
+                            "vdqm_SendDedicate() expanded dedication too long");
+                        serrno = E2BIG;
+                        VDQM_API_RETURN(-1);
+                    }
+                    strcat(msg.dedicate,p);
+                    if ( q != NULL ) *q = ',';
+                }
+                if ( *keywords[i+1] != '\0' ) strcat(msg.dedicate,",");
+            }
+            TRACE(1,"vdqm","vdqm_SendDedicate() expanded dedicate = %s",
+                msg.dedicate);
+        }
+    }
+
+    rc = vdqm_Connect(&tmpnw);
+    if ( rc < 0 ) VDQM_API_RETURN(rc);
+
+    msg.clientUID = geteuid();
+    msg.clientGID = getegid();
+    // msg.clientHost is set by vdqm_SendDedicate_Transfer
+    strncpy(msg.server, server, sizeof(msg.server));
+    msg.server[sizeof(msg.server)-1] = '\0';
+    strncpy(msg.drive, drive, sizeof(msg.drive));
+    msg.drive[sizeof(msg.drive)-1] = '\0';
+    strncpy(msg.dgn, dgn, sizeof(msg.dgn));
+    msg.dgn[sizeof(msg.dgn)-1] = '\0';
+    strncpy(msg.dedicate, dedicate, sizeof(msg.dedicate));
+    msg.dedicate[sizeof(msg.dedicate)-1] = '\0';
+
+    rc = vdqm_SendDedicate_Transfer(tmpnw,&msg);
+    if ( rc != -1 ) {
+        rc = vdqm_RecvAckn(tmpnw);
+        TRACE(1,"vdqm","vdqm_SendDedicate() vdqm_RecvAckn() rc = 0x%x",rc);
         if ( rc == VDQM_COMMIT ) {
             rc = vdqm_AcknCommit(tmpnw);
             rc = 0;

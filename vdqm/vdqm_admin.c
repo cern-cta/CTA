@@ -162,11 +162,11 @@ int main(int argc, char *argv[]) {
                 fprintf(stdout,"Dedicate %s@%s to %s\n",
                         drive,server,match);
             }
-            rc = vdqm_DedicateDrive(NULL,dgn,server,drive,match);
+          rc = vdqm_SendDedicate(server, drive, dgn, match);
         } else if ( icmds[i] == VDQM_DEL_VOLREQ ) {
             rc = vdqm_DelVolumeReq(NULL,reqid,vid,dgn,server,drive,port);
         } else if ( icmds[i] == VDQM_DEL_DRVREQ ) {
-            rc = vdqm_DelDrive(NULL,dgn,server,drive);
+            rc = vdqm_SendDelDrv(server, drive, dgn);
         }
         break;
     default:
@@ -175,7 +175,8 @@ int main(int argc, char *argv[]) {
         exit(2);
     }
     if ( rc == -1 ) {
-        fprintf(stderr,"error: %s\n",sstrerror(serrno));
+        fprintf(stderr,"%s encountered an error: %s\n",argv[0],
+          sstrerror(serrno));
         exit(1);
     }
 

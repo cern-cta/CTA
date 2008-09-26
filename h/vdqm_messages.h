@@ -160,6 +160,7 @@ typedef struct vdqmDedicate {
  * the end of the VDQM_DEDICATELEN macro.
  */
 #define VDQM_DEDICATELEN(X) ( 2*LONGSIZE + strlen(X->clientHost) + \
-  strlen(X->dedicate) + 5 )
+  strlen(X->server) + strlen(X->drive) + strlen(X->dgn) + strlen(X->dedicate) \
+  + 5 )
 
 #endif /* VDQM_MESSAGES_H */

@@ -1,5 +1,5 @@
 /*
- * $Id: vdqm.h,v 1.5 2008/05/07 08:20:25 murrayc3 Exp $
+ * $Id: vdqm.h,v 1.6 2008/09/26 15:41:09 murrayc3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vdqm.h,v $ $Revision: 1.5 $ $Date: 2008/05/07 08:20:25 $ CERN IT-PDP/DM Olof Barring
+ * @(#)$RCSfile: vdqm.h,v $ $Revision: 1.6 $ $Date: 2008/09/26 15:41:09 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -65,6 +65,8 @@ int vdqm_SendRTCPAckn _PROTO((SOCKET, int *, int *, char *));
 int vdqm_GetRTCPPort _PROTO((void));
 int vdqm_SendVolPriority_Transfer _PROTO((vdqmnw_t *, vdqmVolPriority_t *));
 int vdqm_RecvVolPriority_Transfer _PROTO((vdqmnw_t *, vdqmVolPriority_t *));
+int vdqm_SendDelDrv_Transfer _PROTO((vdqmnw_t *, vdqmDelDrv_t *));
+int vdqm_SendDedicate_Transfer _PROTO((vdqmnw_t *, vdqmDedicate_t *));
 
 #if defined(VDQMSERV)
 /*

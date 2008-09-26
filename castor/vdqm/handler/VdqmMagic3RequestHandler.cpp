@@ -38,12 +38,13 @@ void castor::vdqm::handler::VdqmMagic3RequestHandler::handleDelDrv(
   vdqmDelDrv_t *const msg) throw (castor::exception::Exception) {
 
   castor::dlf::Param param[] = {
-    castor::dlf::Param("clientUID", msg->clientUID),
-    castor::dlf::Param("clientGID", msg->clientGID),
-    castor::dlf::Param("server"   , msg->server),
-    castor::dlf::Param("drive"    , msg->drive),
-    castor::dlf::Param("dgn"      , msg->dgn)};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_VDQM3_DEL_DRV, 5,
+    castor::dlf::Param("clientUID" , msg->clientUID),
+    castor::dlf::Param("clientGID" , msg->clientGID),
+    castor::dlf::Param("clientHost", msg->clientHost),
+    castor::dlf::Param("server"    , msg->server),
+    castor::dlf::Param("drive"     , msg->drive),
+    castor::dlf::Param("dgn"       , msg->dgn)};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_VDQM3_DEL_DRV, 6,
     param);
 
   SocketHelper::checkCupvPermissions(socket, msg->clientUID, msg->clientGID,
@@ -58,13 +59,14 @@ void castor::vdqm::handler::VdqmMagic3RequestHandler::handleDedicate(
   vdqmDedicate_t *const msg)
   throw (castor::exception::Exception) {
   castor::dlf::Param param[] = {
-    castor::dlf::Param("clientUID", msg->clientUID),
-    castor::dlf::Param("clientGID", msg->clientGID),
-    castor::dlf::Param("server"   , msg->server),
-    castor::dlf::Param("drive"    , msg->drive),
-    castor::dlf::Param("dgn"      , msg->dgn),
-    castor::dlf::Param("dedicate" , msg->dedicate)};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_VDQM3_DEDICATE, 6,
+    castor::dlf::Param("clientUID" , msg->clientUID),
+    castor::dlf::Param("clientGID" , msg->clientGID),
+    castor::dlf::Param("clientHost", msg->clientHost),
+    castor::dlf::Param("server"    , msg->server),
+    castor::dlf::Param("drive"     , msg->drive),
+    castor::dlf::Param("dgn"       , msg->dgn),
+    castor::dlf::Param("dedicate"  , msg->dedicate)};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_VDQM3_DEDICATE, 7,
     param);
 
   SocketHelper::checkCupvPermissions(socket, msg->clientUID, msg->clientGID,
