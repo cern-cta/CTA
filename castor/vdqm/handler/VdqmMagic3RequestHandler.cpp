@@ -48,10 +48,8 @@ void castor::vdqm::handler::VdqmMagic3RequestHandler::handleDelDrv(
 
   SocketHelper::checkCupvPermissions(socket, msg->clientUID, msg->clientGID,
     P_TAPE_OPERATOR, "P_TAPE_OPERATOR", "VDQM_DEL_DRVREQ");
-/*
-  TapeDriveHandler tapeDriveHandler(ptr_header, ptr_driveRequest, cuuid);
-  tapeDriveHandler.deleteTapeDrive();
-*/
+
+  ptr_IVdqmService->deleteDrive(msg->drive, msg->server, msg->dgn);
 }
 
 
@@ -68,8 +66,7 @@ void castor::vdqm::handler::VdqmMagic3RequestHandler::handleDedicate(
 
   SocketHelper::checkCupvPermissions(socket, msg->clientUID, msg->clientGID,
     P_TAPE_OPERATOR, "P_TAPE_OPERATOR", "VDQM_DEDICATE_DRV");
-/*
-  TapeDriveHandler tapeDriveHandler(ptr_header, ptr_driveRequest, cuuid);
-  tapeDriveHandler.dedicateTapeDrive();
-*/
+
+  ptr_IVdqmService->dedicateDrive(msg->drive, msg->server, msg->dgn,
+    msg->dedicate);
 }

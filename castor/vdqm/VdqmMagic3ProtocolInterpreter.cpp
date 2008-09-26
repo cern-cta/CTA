@@ -202,6 +202,21 @@ void castor::vdqm::VdqmMagic3ProtocolInterpreter::readDedicate(const int len,
     ex.getMessage() << __PRETTY_FUNCTION__
       << ": Failed to unmarshall_STRINGN clientHost" << std::endl;
   }
+  if(unmarshall_STRINGN(p,msg->server, sizeof(msg->server))) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to unmarshall_STRINGN server" << std::endl;
+  }
+  if(unmarshall_STRINGN(p,msg->drive, sizeof(msg->drive))) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to unmarshall_STRINGN drive" << std::endl;
+  }
+  if(unmarshall_STRINGN(p,msg->dgn, sizeof(msg->dgn))) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to unmarshall_STRINGN dgn" << std::endl;
+  }
   if(unmarshall_STRINGN(p,msg->dedicate, sizeof(msg->dedicate))) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage() << __PRETTY_FUNCTION__
