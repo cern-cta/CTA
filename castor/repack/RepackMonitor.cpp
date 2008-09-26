@@ -88,7 +88,7 @@ namespace castor {
 	    {castor::dlf::Param("VID", (*tape)->vid()),
 	     castor::dlf::Param("ID", (*tape)->id()),
 	     castor::dlf::Param("STATUS", (*tape)->status())};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 14, 3, params);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 35, 3, params);
 
 	// get information for this tape querying the stager
 	  updateTape(*tape);
