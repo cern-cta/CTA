@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2008/05/05 08:33:54 $ $Author: waldron $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.48 $ $Release$ $Date: 2008/09/29 17:50:38 $ $Author: itglp $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -196,15 +196,15 @@ castor::db::ora::OraQuerySvc::diskCopies4FileName
       char* pend = p;
       unsigned long ip = strtoul(p, &pend, 0);
       if (*pend != 0) {
-	clog() << ERROR
-	       << "Invalid limit for number of responses to a file query : '"
-	       << pend << "'. Should be a number." << std::endl;
+        clog() << ERROR
+               << "Invalid limit for number of responses to a file query : '"
+               << pend << "'. Should be a number." << std::endl;
       } else if (ip > 30000) {
-	clog() << ERROR
-	       << "Limit for number of responses to a file query is too high : "
-	       << ip << " > 30000. Will use default : 1000." << std::endl;
+        clog() << ERROR
+               << "Limit for number of responses to a file query is too high : "
+               << ip << " > 30000. Will use default : 1000." << std::endl;
       } else {
-	maxNbResponses = ip;
+        maxNbResponses = ip;
       }
     }
     // execute the statement and see whether we found something

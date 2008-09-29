@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_open.cpp,v 1.10 2008/02/18 11:47:49 itglp Exp $
+ * $Id: stager_client_api_open.cpp,v 1.11 2008/09/29 17:50:37 itglp Exp $
  */
 
 /*
@@ -65,7 +65,7 @@ EXTERN_C int DLL_DECL stage_open(const char *userTag,
                      protocol, 
                      filename,
                      mode,
-		     size,
+                     size,
                      response, 
                      requestId, 
                      opts);
@@ -77,7 +77,7 @@ EXTERN_C int DLL_DECL stage_open(const char *userTag,
                         filename, 
                         flags,
                         mode, 
-			size,
+                        size,
                         response,
                         requestId, 
                         opts);

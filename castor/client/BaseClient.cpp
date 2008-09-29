@@ -139,7 +139,7 @@ void DLL_DECL BaseClient_util_time(time_t then, char *timestr) {
     // Too much in past
     strftime(timestr,64,strftime_format_sixmonthsold,tp);
   } else if ((this_time < then) && ((then - this_time) > SIXMONTHS)) {
-    // Too much in feature...!
+    // Too much in future...!
     strftime(timestr,64,strftime_format_sixmonthsold,tp);
   } else {
     strftime(timestr,64,strftime_format,tp);
@@ -338,7 +338,7 @@ castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
       throw e;
     } else if (rc < 0) {
       if (errno == EINTR) {
-	continue; // A signal was caught during poll()
+        continue; // A signal was caught during poll()
       }
       castor::exception::Communication e(requestId(), errno);
       e.getMessage() << "Poll error:" << strerror(errno);
