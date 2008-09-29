@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.16 $ $Release$ $Date: 2008/09/22 11:53:26 $ $Author: waldron $
+ * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.17 $ $Release$ $Date: 2008/09/29 17:47:54 $ $Author: itglp $
  *
  *
  *
@@ -58,13 +58,12 @@ enum SvcClassAttributes {
   DefaultFileSize,
   MaxReplicaNb,
   ReplicationPolicy,
-  GcEnabled,
   GcPolicy,
   MigratorPolicy,
   RecallerPolicy,
   TapePools,
   DiskPools,
-  DiskOnlyBehavior,
+  Disk1Behavior,
   ForcedFileClass,
   StreamPolicy,
   ReplicateOnClose
@@ -77,13 +76,12 @@ static struct Coptions longopts[] = {
   {"MaxReplicaNb",REQUIRED_ARGUMENT,0,MaxReplicaNb},
   {"NbDrives",REQUIRED_ARGUMENT,0,NbDrives},
   {"ReplicationPolicy",REQUIRED_ARGUMENT,0,ReplicationPolicy},
-  {"GcEnabled",REQUIRED_ARGUMENT,0,GcEnabled},
   {"GcPolicy",REQUIRED_ARGUMENT,0,GcPolicy},
   {"MigratorPolicy",REQUIRED_ARGUMENT,0,MigratorPolicy},
   {"RecallerPolicy",REQUIRED_ARGUMENT,0,RecallerPolicy},
   {"TapePools",REQUIRED_ARGUMENT,0,TapePools},
   {"DiskPools",REQUIRED_ARGUMENT,0,DiskPools},
-  {"DiskOnlyBehavior",REQUIRED_ARGUMENT,0,DiskOnlyBehavior},
+  {"Disk1Behavior",REQUIRED_ARGUMENT,0,Disk1Behavior},
   {"ForcedFileClass",REQUIRED_ARGUMENT,0,ForcedFileClass},
   {"StreamPolicy",REQUIRED_ARGUMENT,0,StreamPolicy},
   {"ReplicateOnClose",REQUIRED_ARGUMENT,0,ReplicateOnClose},
@@ -171,7 +169,6 @@ int main(int argc, char *argv[])
   char *cmd, *name = NULL;
   char *tapePoolsStr = NULL, *diskPoolsStr = NULL;
   char **tapePoolsArray = NULL, **diskPoolsArray = NULL;
-  char *gcEnabled = NULL;
   int nbDiskPools = 0, nbTapePools = 0;
   int defaultReplicaNb = 1, maxReplicaNb = -1;
   struct C_BaseAddress_t *baseAddr = NULL;
@@ -228,9 +225,6 @@ int main(int argc, char *argv[])
     case ReplicationPolicy:
       Cstager_SvcClass_setReplicationPolicy(svcClass,Coptarg);
       break;
-    case GcEnabled:
-      gcEnabled = strdup(Coptarg);
-      break;
     case GcPolicy:
       Cstager_SvcClass_setGcPolicy(svcClass,Coptarg);
       break;
@@ -246,14 +240,14 @@ int main(int argc, char *argv[])
     case DiskPools:
       diskPoolsStr = strdup(Coptarg);
       break;
-    case DiskOnlyBehavior:
+    case Disk1Behavior:
       if (!strcasecmp(Coptarg, "yes")) {
-        Cstager_SvcClass_setHasDiskOnlyBehavior(svcClass, 1);
+        Cstager_SvcClass_setDisk1Behavior(svcClass, 1);
       } else if (!strcasecmp(Coptarg, "no")) {
-        Cstager_SvcClass_setHasDiskOnlyBehavior(svcClass, 0);
+        Cstager_SvcClass_setDisk1Behavior(svcClass, 0);
       } else {
         fprintf(stderr,
-		"Invalid option for DiskOnlyBehavior, value must be 'yes' or 'no'\n");
+		"Invalid option for Disk1Behavior, value must be 'yes' or 'no'\n");
         return(1);
       }
       break;
@@ -312,18 +306,6 @@ int main(int argc, char *argv[])
                                      svcClass,
                                      defaultReplicaNb
                                      );
-  }
-  if ( gcEnabled == NULL) {
-    Cstager_SvcClass_setGcEnabled(svcClass, 1);
-    fprintf(stdout,"No gcEnabled parameter given, setting to true by default\n");
-  } else if (!strcasecmp(gcEnabled, "yes")) {
-    Cstager_SvcClass_setGcEnabled(svcClass, 1);
-  } else if (!strcasecmp(gcEnabled, "no")) {
-    Cstager_SvcClass_setGcEnabled(svcClass, 0);
-  } else {
-    fprintf(stderr,
-	    "Invalid option for GcEnabled, value must be 'yes' or 'no'\n");
-    return(1);
   }
 
   fprintf(stdout,"Adding SvcClass: %s\n",name);

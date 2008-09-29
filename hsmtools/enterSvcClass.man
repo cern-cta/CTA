@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: enterSvcClass.man,v $ $Revision: 1.9 $ $Date: 2008/09/22 11:54:16 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: enterSvcClass.man,v $ $Revision: 1.10 $ $Date: 2008/09/29 17:47:54 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH ENTERSVCCLASS 1 "$Date: 2008/09/22 11:54:16 $" CASTOR "stager catalogue administrative commands"
+.TH ENTERSVCCLASS 1 "$Date: 2008/09/29 17:47:54 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 enterSvcClass \- define a new service class in the stager catalogue
 .SH SYNOPSIS
@@ -22,19 +22,16 @@ enterSvcClass \- define a new service class in the stager catalogue
 .BI --MaxReplicaNb " maxReplicaNb"
 ]
 [
-.BI --GcEnabled " [yes|no]"
-]
-[
-.BI --GcPolicy " gcPolicyName"
-]
-[
-.BI --DiskOnlyBehavior " [yes|no]"
+.BI --Disk1Behavior " [yes|no]"
 ]
 [
 .BI --ForcedFileClass " forcedFileClass"
 ]
 [
 .BI --ReplicateOnClose " [yes|no]"
+]
+[
+.BI --GcPolicy " gcPolicyName"
 ]
 [
 .BI --MigratorPolicy " migratorPolicy"
@@ -86,21 +83,17 @@ unless a replication policy is specified, see below). If this option is not
 specified or if a negative number is given, the default of one (1) replica is
 applied.
 .TP
-.BI \-\-GcEnabled " [yes|no]"
-Defines whether or not garbage collection is enabled for this service class. The
-supported values are yes or no.
-.TP
-.BI \-\-GcPolicy " gcPolicyName"
-Specifies the name of the garbage collection policy to be used for this service class
-.TP
-.BI \-\-DiskOnlyBehavior " [yes|no]"
-Defines whether or not this service class has disk only behavior. The supported values
-are yes or no.
+.BI \-\-Disk1Behavior " [yes|no]"
+Defines whether or not this service class has Disk1 behavior, which means that garbage
+collection is disabled and jobs requesting new space are failed when the pool(s) connected
+with this service class is(are) full. The supported values are yes or no.
 .TP
 .BI \-\-ForcedFileClass " forcedFileClass"
 Specifies the name of the file class to force on files written to this service class. The
-forced file class overrides the file class that the user specifies.
-. If an empty string ("") the file class that the file was written too will be used.
+forced file class overrides the file class that the user specifies. This parameter allows
+specifying for this service class any TapeN retention policy, where N is the number of
+tape copies of the forced file class.
+. If an empty string ("") is provided, the file class that the file was written to will be used.
 .TP
 .BI \-\-ReplicateOnClose " [yes|no]"
 Defines whether or not replication on close is enabled for this service class. The
@@ -108,6 +101,10 @@ supported values are yes or no. When enabled, once a file is created and finaliz
 will be replicated so that MaxReplicaNb copies exist in the same pool where the file resides.
 Note: this functionality will not rebalance the number copies in the pool in response to
 diskservers which are no longer in production!
+.TP
+.BI \-\-GcPolicy " gcPolicyName"
+Specifies the name of the garbage collection policy to be used for this service class.
+This value is irrelevant if Disk1Behavior is set to yes.
 .TP
 .BI \-\-MigratorPolicy " migratorPolicy"
 Specifies the name of the migrator policy to be used for this service

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.22 $ $Release$ $Date: 2008/09/22 11:54:16 $ $Author: waldron $
+ * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.23 $ $Release$ $Date: 2008/09/29 17:47:54 $ $Author: itglp $
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -56,14 +56,13 @@ enum SvcClassAttributes {
   DefaultFileSize,
   MaxReplicaNb,
   ReplicationPolicy,
-  GcEnabled,
   MigratorPolicy,
   RecallerPolicy,
   AddTapePools,
   AddDiskPools,
   RemoveTapePools,
   RemoveDiskPools,
-  DiskOnlyBehavior,
+  Disk1Behavior,
   ForcedFileClass,
   StreamPolicy,
   ReplicateOnClose
@@ -76,14 +75,13 @@ static struct Coptions longopts[] = {
   {"MaxReplicaNb",REQUIRED_ARGUMENT,0,MaxReplicaNb},
   {"NbDrives",REQUIRED_ARGUMENT,0,NbDrives},
   {"ReplicationPolicy",REQUIRED_ARGUMENT,0,ReplicationPolicy},
-  {"GcEnabled",REQUIRED_ARGUMENT,0,GcEnabled},
   {"MigratorPolicy",REQUIRED_ARGUMENT,0,MigratorPolicy},
   {"RecallerPolicy",REQUIRED_ARGUMENT,0,RecallerPolicy},
   {"AddTapePools",REQUIRED_ARGUMENT,0,AddTapePools},
   {"AddDiskPools",REQUIRED_ARGUMENT,0,AddDiskPools},
   {"RemoveTapePools",REQUIRED_ARGUMENT,0,RemoveTapePools},
   {"RemoveDiskPools",REQUIRED_ARGUMENT,0,RemoveDiskPools},
-  {"DiskOnlyBehavior",REQUIRED_ARGUMENT,0,DiskOnlyBehavior},
+  {"Disk1Behavior",REQUIRED_ARGUMENT,0,Disk1Behavior},
   {"ForcedFileClass",REQUIRED_ARGUMENT,0,ForcedFileClass},
   {"StreamPolicy",REQUIRED_ARGUMENT,0,StreamPolicy},
   {"ReplicateOnClose",REQUIRED_ARGUMENT,0,ReplicateOnClose},
@@ -393,7 +391,7 @@ int main(int argc, char *argv[])
   char **addTapePoolsArray = NULL, **addDiskPoolsArray = NULL;
   char *removeTapePoolsStr = NULL, *removeDiskPoolsStr = NULL;
   char **removeTapePoolsArray = NULL, **removeDiskPoolsArray = NULL;
-  char *gcEnabled = NULL, *diskOnlyBehavior = NULL, *forcedFileClass = NULL, *replicateOnClose = 0;
+  char *diskOnlyBehavior = NULL, *forcedFileClass = NULL, *replicateOnClose = 0;
   char *streamPolicy = NULL;
   int nbDiskPools = 0, nbTapePools = 0;
   int nbAddTapePools = 0, nbRemoveTapePools = 0, nbAddDiskPools = 0, nbRemoveDiskPools = 0;
@@ -451,9 +449,6 @@ int main(int argc, char *argv[])
     case ReplicationPolicy:
       replicationPolicy = strdup(Coptarg);
       break;
-    case GcEnabled:
-      gcEnabled = strdup(Coptarg);
-      break;
     case MigratorPolicy:
       migratorPolicy = strdup(Coptarg);
       break;
@@ -472,7 +467,7 @@ int main(int argc, char *argv[])
     case RemoveDiskPools:
       removeDiskPoolsStr = strdup(Coptarg);
       break;
-    case DiskOnlyBehavior:
+    case Disk1Behavior:
       diskOnlyBehavior = strdup(Coptarg);
       break;
     case ForcedFileClass:
@@ -512,17 +507,6 @@ int main(int argc, char *argv[])
   if ( nbDrives >= 0 ) Cstager_SvcClass_setNbDrives(svcClass,nbDrives);
   if ( maxReplicaNb >= 0 ) Cstager_SvcClass_setMaxReplicaNb(svcClass,maxReplicaNb);
   if ( defaultFileSize > 0 ) Cstager_SvcClass_setDefaultFileSize(svcClass,defaultFileSize);
-  if ( gcEnabled != NULL) {
-    if (!strcasecmp(gcEnabled, "yes")) {
-      Cstager_SvcClass_setGcEnabled(svcClass, 1);
-    } else if (!strcasecmp(gcEnabled, "no")) {
-      Cstager_SvcClass_setGcEnabled(svcClass, 0);
-    } else {
-      fprintf(stderr,
-	      "Invalid option for GcEnabled, value must be 'yes' or 'no'\n");
-      return(1);
-    }
-  }
   if ( replicationPolicy != NULL ) {
     Cstager_SvcClass_setReplicationPolicy(svcClass,replicationPolicy);
   }
@@ -558,12 +542,12 @@ int main(int argc, char *argv[])
   }
   if ( diskOnlyBehavior != NULL) {
     if (!strcasecmp(diskOnlyBehavior, "yes")) {
-      Cstager_SvcClass_setHasDiskOnlyBehavior(svcClass, 1);
+      Cstager_SvcClass_setDisk1Behavior(svcClass, 1);
     } else if (!strcasecmp(diskOnlyBehavior, "no")) {
-      Cstager_SvcClass_setHasDiskOnlyBehavior(svcClass, 0);
+      Cstager_SvcClass_setDisk1Behavior(svcClass, 0);
     } else {
       fprintf(stderr,
-	      "Invalid option for DiskOnlyBehavior, value must be 'yes' or 'no'\n");
+	      "Invalid option for Disk1Behavior, value must be 'yes' or 'no'\n");
       return(1);
     }
   }

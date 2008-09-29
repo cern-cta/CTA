@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: modifySvcClass.man,v $ $Revision: 1.12 $ $Date: 2008/09/22 11:54:16 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: modifySvcClass.man,v $ $Revision: 1.13 $ $Date: 2008/09/29 17:47:54 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH MODIFYSCVCLASS 1 "$Date: 2008/09/22 11:54:16 $" CASTOR "stager catalogue administrative commands"
+.TH MODIFYSCVCLASS 1 "$Date: 2008/09/29 17:47:54 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 modifySvcClass \- modify an existing service class in the stager catalogue
 .SH SYNOPSIS
@@ -22,10 +22,7 @@ modifySvcClass \- modify an existing service class in the stager catalogue
 .BI --MaxReplicaNb " maxReplicaNb"
 ]
 [
-.BI --GcEnabled " [yes|no]"
-]
-[
-.BI --DiskOnlyBehavior " [yes|no]"
+.BI --Disk1Behavior " [yes|no]"
 ]
 [
 .BI --ForcedFileClass " forcedFileClass"
@@ -93,18 +90,17 @@ Furthermore, if you increase this number on a service class which has replicatio
 on close enabled it will not create additional copies for files which have already
 reached the maximum number of copies.
 .TP
-.BI \-\-GcEnabled " [yes|no]"
-Defines whether or not garbage collection is enabled for this service class. The
-supported values are yes or no.
-.TP
-.BI \-\-DiskOnlyBehavior " [yes|no]"
-Defines whether or not this service class has disk only behavior. The supported values
-are yes or no.
+.BI \-\-Disk1Behavior " [yes|no]"
+Defines whether or not this service class has Disk1 behavior, which means that garbage
+collection is disabled and jobs requesting new space are failed when the pool(s) connected
+with this service class is(are) full. The supported values are yes or no.
 .TP
 .BI \-\-ForcedFileClass " forcedFileClass"
 Specifies the name of the file class to force on files written to this service class. The
-forced file class overrides the file class that the user specifies.
-. If an empty string ("") the file class that the file was written to will be used, that is the forcing is disabled.
+forced file class overrides the file class that the user specifies. This parameter allows
+specifying for this service class any TapeN retention policy, where N is the number of
+tape copies of the forced file class.
+. If an empty string ("") is provided, the file class that the file was written to will be used.
 .TP
 .BI \-\-ReplicateOnClose " [yes|no]"
 Defines whether or not replication on close is enabled for this service class. The
