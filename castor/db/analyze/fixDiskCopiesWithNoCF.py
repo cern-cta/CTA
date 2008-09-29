@@ -8,7 +8,6 @@ except:
   Make sure it is installed and $PYTHONPATH includes the directory where cx_Oracle.so resides.\n'''
   sys.exit(2)
 
-stagerDb = "castor_stager/password@stgdb"     # write your stager db login here
 nsHost = "castorns"          # write your nameserver host alias here
 
 nsFileCl = {'0' : 'null'}
@@ -32,8 +31,9 @@ def parseNsListClass():
 ## main()
 
 # connect to DB
-print "Connecting to CASTOR 2 stager db..."
-conn = cx_Oracle.connect(stagerDb)
+stgDb = raw_input("Please insert the full connection string to a CASTOR2 stager db (user/passwd@stgdb): ")
+print "Connecting to the stager db..."
+conn = cx_Oracle.connect(stgDb)
 dbcursor = conn.cursor()
 
 parseNsListClass()
@@ -70,10 +70,12 @@ dbcursor.execute(sql)
 
 # Get list of files to fix and do it
 sqlList = '''
-select diskcopy.id, substr(path, instr(path, '/',1,1)+1, instr(path,'@',1,1)-instr(path, '/',1,1)-1) from diskcopy where castorfile is null
+SELECT diskcopy.id, substr(path, instr(path, '/',1,1)+1, instr(path,'@',1,1)-instr(path, '/',1,1)-1)
+  FROM DiskCopy WHERE castorFile = 0 or castorFile is null
 '''
 dbcursor.execute(sqlList)
 files = dbcursor.fetchall()
+print 'Found %d diskcopies to be updated, starting...' % len(files)
 for f in files:
     namefd = os.popen('nsgetpath castorns ' + str(f[1]))
     name = namefd.read().strip('\n')
@@ -84,4 +86,8 @@ for f in files:
       dbcursor.callproc('reinsertCastorFile', ([f[0], f[1], nsHost, nsFileCl[ls[0]], ls[5], ls[9]]));
 #   else the file does not exist: we can probably drop everything then
 
-print 'Update of %d diskcopies completed' % len(files)
+# cleanup
+sql = 'DROP PROCEDURE reinsertCastorFile'
+dbcursor.execute(sql)
+
+print 'Update completed'
