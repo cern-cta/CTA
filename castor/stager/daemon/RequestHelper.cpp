@@ -222,9 +222,7 @@ namespace castor{
           throw ex;
         }
         
-        if(svcClass->hasDiskOnlyBehavior()) {   // for later use
-          dbSvc->fillObj(baseAddr, svcClass, castor::OBJ_FileClass, false);
-        }
+        dbSvc->fillObj(baseAddr, svcClass, castor::OBJ_FileClass, false);
       }
       
       

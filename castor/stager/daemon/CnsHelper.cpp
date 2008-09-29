@@ -145,7 +145,7 @@ namespace castor{
               if(nbNsSegments == 0) {
                 // This file has no copy on tape
                 getCnsFileclass();
-                if (cnsFileclass.nbcopies = 0) {
+                if (cnsFileclass.nbcopies == 0) {
                   // This file will never have a copy on tape, so we force recreation
                   newFile = true;
                 }
@@ -186,7 +186,7 @@ namespace castor{
           }
 
           // in case of Disk1 pool, force the fileClass of the file
-          if(newFile && svcClass->hasDiskOnlyBehavior() && svcClass->forcedFileClass()) {
+          if(newFile && svcClass->forcedFileClass()) {
             std::string forcedFileClassName = svcClass->forcedFileClass()->name();
             Cns_unsetid();           // local call, ignore result
             if(Cns_chclass(subReq->fileName().c_str(), 0, (char*)forcedFileClassName.c_str())) {

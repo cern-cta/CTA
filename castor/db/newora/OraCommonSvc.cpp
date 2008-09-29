@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2008/09/22 13:32:08 $ $Author: waldron $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2008/09/29 17:24:41 $ $Author: itglp $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -79,7 +79,7 @@ const std::string castor::db::ora::OraCommonSvc::s_selectTapeStatementString =
 
 /// SQL statement for selectSvcClass
 const std::string castor::db::ora::OraCommonSvc::s_selectSvcClassStatementString =
-  "SELECT id, nbDrives, defaultFileSize, maxReplicaNb, replicationPolicy, gcEnabled, migratorPolicy, recallerPolicy, hasDiskOnlyBehavior, streamPolicy, gcPolicy, replicateOnClose FROM SvcClass WHERE name = :1";
+  "SELECT id, nbDrives, defaultFileSize, maxReplicaNb, replicationPolicy, migratorPolicy, recallerPolicy, disk1Behavior, streamPolicy, gcPolicy, replicateOnClose FROM SvcClass WHERE name = :1";
 
 /// SQL statement for selectFileClass
 const std::string castor::db::ora::OraCommonSvc::s_selectFileClassStatementString =
@@ -328,13 +328,12 @@ castor::db::ora::OraCommonSvc::selectSvcClass
     result->setDefaultFileSize((u_signed64)rset->getDouble(3));
     result->setMaxReplicaNb(rset->getInt(4));
     result->setReplicationPolicy(rset->getString(5));
-    result->setGcEnabled(rset->getInt(6));
-    result->setMigratorPolicy(rset->getString(7));
-    result->setRecallerPolicy(rset->getString(8));
-    result->setHasDiskOnlyBehavior(rset->getInt(9));
-    result->setStreamPolicy(rset->getString(10));
-    result->setGcPolicy(rset->getString(11));
-    result->setReplicateOnClose(rset->getInt(12));
+    result->setMigratorPolicy(rset->getString(6));
+    result->setRecallerPolicy(rset->getString(7));
+    result->setDisk1Behavior(rset->getInt(8));
+    result->setStreamPolicy(rset->getString(9));
+    result->setGcPolicy(rset->getString(10));
+    result->setReplicateOnClose(rset->getInt(11));
     result->setName(name);
     m_selectSvcClassStatement->closeResultSet(rset);
     return result;

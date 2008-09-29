@@ -278,43 +278,25 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_gcEnabled
-       * Whether the diskpools under this serviceClass should be garbage collected.
-       * @return the value of m_gcEnabled
+       * Get the value of m_Disk1Behavior
+       * Flag to indicate whether the diskpools under this service class should behave as
+       * Disk1 pools. This means no automatic GC, and failing jobs that want to allocate
+       * space when no space is available.
+       * @return the value of m_Disk1Behavior
        */
-      bool gcEnabled() const {
-        return m_gcEnabled;
+      bool Disk1Behavior() const {
+        return m_Disk1Behavior;
       }
 
       /**
-       * Set the value of m_gcEnabled
-       * Whether the diskpools under this serviceClass should be garbage collected.
-       * @param new_var the new value of m_gcEnabled
+       * Set the value of m_Disk1Behavior
+       * Flag to indicate whether the diskpools under this service class should behave as
+       * Disk1 pools. This means no automatic GC, and failing jobs that want to allocate
+       * space when no space is available.
+       * @param new_var the new value of m_Disk1Behavior
        */
-      void setGcEnabled(bool new_var) {
-        m_gcEnabled = new_var;
-      }
-
-      /**
-       * Get the value of m_hasDiskOnlyBehavior
-       * Whether the diskpools under this serviceClass should behave like disk only
-       * pools. This include failing jobs that want to allocate space when no space is
-       * available and forcing the fileClass of files if forcedFileClass is not empty.
-       * @return the value of m_hasDiskOnlyBehavior
-       */
-      bool hasDiskOnlyBehavior() const {
-        return m_hasDiskOnlyBehavior;
-      }
-
-      /**
-       * Set the value of m_hasDiskOnlyBehavior
-       * Whether the diskpools under this serviceClass should behave like disk only
-       * pools. This include failing jobs that want to allocate space when no space is
-       * available and forcing the fileClass of files if forcedFileClass is not empty.
-       * @param new_var the new value of m_hasDiskOnlyBehavior
-       */
-      void setHasDiskOnlyBehavior(bool new_var) {
-        m_hasDiskOnlyBehavior = new_var;
+      void setDisk1Behavior(bool new_var) {
+        m_Disk1Behavior = new_var;
       }
 
       /**
@@ -461,11 +443,8 @@ namespace castor {
       /// Policy ruling the behavior of the garbage collector, when enabled
       std::string m_gcPolicy;
 
-      /// Whether the diskpools under this serviceClass should be garbage collected.
-      bool m_gcEnabled;
-
-      /// Whether the diskpools under this serviceClass should behave like disk only pools. This include failing jobs that want to allocate space when no space is available and forcing the fileClass of files if forcedFileClass is not empty.
-      bool m_hasDiskOnlyBehavior;
+      /// Flag to indicate whether the diskpools under this service class should behave as Disk1 pools. This means no automatic GC, and failing jobs that want to allocate space when no space is available.
+      bool m_Disk1Behavior;
 
       /// Flag to indicate whether files in this service class are replicated on closure. The number of copies created is defined by the maxReplicaNb attribute
       bool m_replicateOnClose;

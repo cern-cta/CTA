@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.682 $ $Date: 2008/09/22 13:22:40 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.683 $ $Date: 2008/09/29 17:24:40 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -306,7 +306,7 @@ InvalidRowid EXCEPTION;
 PRAGMA EXCEPTION_INIT (LockError, -54);
 PRAGMA EXCEPTION_INIT (InvalidRowid, -10632);
 CURSOR c IS
-   SELECT /*+ USE_NL */ id
+   SELECT id
      FROM SubRequest
     WHERE status in (0,1,2)  -- START, RESTART, RETRY
       AND EXISTS
@@ -349,7 +349,7 @@ CREATE OR REPLACE PROCEDURE subRequestFailedToDo(srId OUT INTEGER, srRetryCounte
 InvalidRowid EXCEPTION;
 PRAGMA EXCEPTION_INIT (InvalidRowid, -10632);
 CURSOR c IS
-   SELECT /*+ USE_NL */ id, answered
+   SELECT id, answered
      FROM SubRequest
     WHERE status = 7  -- FAILED
     FOR UPDATE SKIP LOCKED;
@@ -501,20 +501,20 @@ END;
  */
 CREATE OR REPLACE FUNCTION checkFailJobsWhenNoSpace(svcClassId NUMBER)
 RETURN NUMBER AS
-  diskOnlyFlag NUMBER;
+  d1Flag NUMBER;
   defFileSize NUMBER;
-  unused NUMBER;
+  c NUMBER;
 BEGIN
-  -- Determine if the service class is disk only and the default
+  -- Determine if the service class is D1 and the default
   -- file size. If the default file size is 0 we assume 2G
-  SELECT hasDiskOnlyBehavior,
+  SELECT disk1Behavior, 
          decode(defaultFileSize, 0, 2000000000, defaultFileSize)
-    INTO diskOnlyFlag, defFileSize
-    FROM SvcClass
+    INTO d1Flag, defFileSize
+    FROM SvcClass 
    WHERE id = svcClassId;
-  -- If diskonly check that the pool has space
-  IF (diskOnlyFlag = 1) THEN
-    SELECT count(*) INTO unused
+  -- If D1 check that the pool has space
+  IF (d1Flag = 1) THEN
+    SELECT count(*) INTO c
       FROM diskpool2svcclass, FileSystem, DiskServer
      WHERE diskpool2svcclass.child = svcClassId
        AND diskpool2svcclass.parent = FileSystem.diskPool
@@ -522,13 +522,12 @@ BEGIN
        AND FileSystem.status = 0 -- PRODUCTION
        AND DiskServer.status = 0 -- PRODUCTION
        AND totalSize * minAllowedFreeSpace < free - defFileSize;
-    IF (unused = 0) THEN
+    IF (c = 0) THEN
       RETURN 1;
     END IF;
   END IF;
   RETURN 0;
 END;
-
 
 /* PL/SQL method checking whether the given service class
  * is declared disk only and the given file class asks for tape copies.

@@ -210,32 +210,20 @@ int Cstager_SvcClass_gcPolicy(struct Cstager_SvcClass_t* instance, const char** 
 int Cstager_SvcClass_setGcPolicy(struct Cstager_SvcClass_t* instance, const char* new_var);
 
 /**
- * Get the value of gcEnabled
- * Whether the diskpools under this serviceClass should be garbage collected.
+ * Get the value of Disk1Behavior
+ * Flag to indicate whether the diskpools under this service class should behave as
+ * Disk1 pools. This means no automatic GC, and failing jobs that want to allocate
+ * space when no space is available.
  */
-int Cstager_SvcClass_gcEnabled(struct Cstager_SvcClass_t* instance, int* var);
+int Cstager_SvcClass_Disk1Behavior(struct Cstager_SvcClass_t* instance, int* var);
 
 /**
- * Set the value of gcEnabled
- * Whether the diskpools under this serviceClass should be garbage collected.
+ * Set the value of Disk1Behavior
+ * Flag to indicate whether the diskpools under this service class should behave as
+ * Disk1 pools. This means no automatic GC, and failing jobs that want to allocate
+ * space when no space is available.
  */
-int Cstager_SvcClass_setGcEnabled(struct Cstager_SvcClass_t* instance, int new_var);
-
-/**
- * Get the value of hasDiskOnlyBehavior
- * Whether the diskpools under this serviceClass should behave like disk only
- * pools. This include failing jobs that want to allocate space when no space is
- * available and forcing the fileClass of files if forcedFileClass is not empty.
- */
-int Cstager_SvcClass_hasDiskOnlyBehavior(struct Cstager_SvcClass_t* instance, int* var);
-
-/**
- * Set the value of hasDiskOnlyBehavior
- * Whether the diskpools under this serviceClass should behave like disk only
- * pools. This include failing jobs that want to allocate space when no space is
- * available and forcing the fileClass of files if forcedFileClass is not empty.
- */
-int Cstager_SvcClass_setHasDiskOnlyBehavior(struct Cstager_SvcClass_t* instance, int new_var);
+int Cstager_SvcClass_setDisk1Behavior(struct Cstager_SvcClass_t* instance, int new_var);
 
 /**
  * Get the value of replicateOnClose

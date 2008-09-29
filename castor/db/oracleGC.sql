@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.666 $ $Date: 2008/09/22 13:22:11 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.667 $ $Date: 2008/09/29 17:24:40 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -221,17 +221,17 @@ PROCEDURE selectFiles2Delete(diskServerName IN VARCHAR2,
   dontGC INTEGER;
   totalCount INTEGER;
 BEGIN
-  -- First of all, check if we have GC enabled
+  -- First of all, check if we are in a Disk1 pool
   dontGC := 0;
-  FOR sc IN (SELECT gcEnabled
+  FOR sc IN (SELECT disk1Behavior
                FROM SvcClass, DiskPool2SvcClass D2S, DiskServer, FileSystem
               WHERE SvcClass.id = D2S.child
                 AND D2S.parent = FileSystem.diskPool
                 AND FileSystem.diskServer = DiskServer.id
                 AND DiskServer.name = diskServerName) LOOP
     -- If any of the service classes to which we belong (normally a single one)
-    -- says don't GC, we don't GC STAGED files.
-    IF sc.gcEnabled = 0 THEN
+    -- say this is Disk1, we don't GC STAGED files.
+    IF sc.disk1Behavior = 1 THEN
       dontGC := 1;
       EXIT;
     END IF;
@@ -271,13 +271,13 @@ BEGIN
     RETURNING id BULK COLLECT INTO dcIds;
     COMMIT;
        
-    -- If me have more then 10,000 files to GC, exit the loop. There is no point
+    -- If we have more than 10,000 files to GC, exit the loop. There is no point
     -- processing more as the maximum sent back to the client in one call is 
     -- 10,000. This protects the garbage collector from being overwhelmed with 
     -- requests and reduces the stager DB load. Furthermore, if too much data is
     -- sent back to the client, the transfer time between the stager and client
     -- becomes very long and the message may timeout or may not even fit in the
-    -- clients recieve buffer!!!!
+    -- clients receive buffer!!!!
     totalCount := totalCount + dcIds.COUNT();
     EXIT WHEN totalCount >= 10000;
 

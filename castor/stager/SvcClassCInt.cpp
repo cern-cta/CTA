@@ -251,34 +251,18 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_SvcClass_gcEnabled
+  // Cstager_SvcClass_Disk1Behavior
   //----------------------------------------------------------------------------
-  int Cstager_SvcClass_gcEnabled(castor::stager::SvcClass* instance, bool* var) {
-    *var = instance->gcEnabled();
+  int Cstager_SvcClass_Disk1Behavior(castor::stager::SvcClass* instance, bool* var) {
+    *var = instance->Disk1Behavior();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_SvcClass_setGcEnabled
+  // Cstager_SvcClass_setDisk1Behavior
   //----------------------------------------------------------------------------
-  int Cstager_SvcClass_setGcEnabled(castor::stager::SvcClass* instance, bool new_var) {
-    instance->setGcEnabled(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_SvcClass_hasDiskOnlyBehavior
-  //----------------------------------------------------------------------------
-  int Cstager_SvcClass_hasDiskOnlyBehavior(castor::stager::SvcClass* instance, bool* var) {
-    *var = instance->hasDiskOnlyBehavior();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_SvcClass_setHasDiskOnlyBehavior
-  //----------------------------------------------------------------------------
-  int Cstager_SvcClass_setHasDiskOnlyBehavior(castor::stager::SvcClass* instance, bool new_var) {
-    instance->setHasDiskOnlyBehavior(new_var);
+  int Cstager_SvcClass_setDisk1Behavior(castor::stager::SvcClass* instance, bool new_var) {
+    instance->setDisk1Behavior(new_var);
     return 0;
   }
 
