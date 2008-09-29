@@ -49,6 +49,7 @@ namespace castor{
       
       
       CnsHelper::CnsHelper(Cuuid_t requestUuid) throw(castor::exception::Exception){
+        memset(&(cnsFileclass), 0, sizeof(cnsFileclass));
         this->requestUuid = requestUuid;
       }
       
@@ -57,8 +58,9 @@ namespace castor{
       /****************************************************************************************/
       /* get the Cns_fileclass needed to create the fileClass object using cnsFileClass.name */
       void CnsHelper::getCnsFileclass() throw(castor::exception::Exception){
-        memset(&(cnsFileclass), 0, sizeof(cnsFileclass));
-        if(Cns_queryclass(cnsFileid.server, cnsFilestat.fileclass, NULL, &cnsFileclass) != 0) {
+        // only enter if the info is not yet available
+        if (cnsFileclass.classid != 0) return;
+        if (Cns_queryclass(cnsFileid.server, cnsFilestat.fileclass, NULL, &cnsFileclass) != 0) {
           castor::dlf::Param params[]={
             castor::dlf::Param("Function","Cns_queryclass"),
             castor::dlf::Param("Error", sstrerror(serrno))};
@@ -141,8 +143,12 @@ namespace castor{
             if(Cns_getsegattrs(0, &cnsFileid, &nbNsSegments, &nsSegmentAttrs) == 0) {
 	      // we ignore here the case of a nameserver failure: we are still able to carry on if the failure is transient
               if(nbNsSegments == 0) {
-                // This file has no copy on tape, so we force recreation
-                newFile = true;
+                // This file has no copy on tape
+                getCnsFileclass();
+                if (cnsFileclass.nbcopies = 0) {
+                  // This file will never have a copy on tape, so we force recreation
+                  newFile = true;
+                }
               }
               free(nsSegmentAttrs);
             }
