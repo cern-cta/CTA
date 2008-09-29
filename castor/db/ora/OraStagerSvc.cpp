@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.259 $ $Release$ $Date: 2008/09/01 17:23:30 $ $Author: waldron $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.260 $ $Release$ $Date: 2008/09/29 17:15:03 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -669,15 +669,18 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
       createTapeCopySegmentsForRecall(cf, subreq->request()->euid(),
 				      subreq->request()->egid(), svcClass, tape);
 
-      // If we are here, we do have segments to recall
-      // create DiskCopy, and store in the DB so we have the id for
-      // the following operation
+      // If we are here, we do have segments to recall;
+      // create DiskCopy and store in the DB so we have the id for
+      // the following operation; we don't fillRep() from castorFile
+      // to the diskCopy as there may be other diskcopies, which are
+      // not in memory now and would loose their FK to the castorFile
       dc = new castor::stager::DiskCopy();
       dc->setStatus(castor::stager::DISKCOPY_WAITTAPERECALL);
       dc->setCreationTime(time(NULL));
       dc->setCastorFile(cf);
       cf->addDiskCopies(dc);
-      cnvSvc()->fillRep(&ad, cf, OBJ_DiskCopy, false);
+      cnvSvc()->createRep(&ad, dc, false);
+      cnvSvc()->fillRep(&ad, dc, OBJ_CastorFile, false);
 
       // Build the path, since we now have the DB id from the DiskCopy;
       // note that this line duplicates the buildPathFromFileId PL/SQL
