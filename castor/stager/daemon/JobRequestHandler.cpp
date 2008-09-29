@@ -63,21 +63,10 @@ namespace castor{
       /**************************************************************************************/
       void JobRequestHandler::jobOriented() throw(castor::exception::Exception)
       {
-        memset(&(stgCnsHelper->cnsFileclass), 0, sizeof(stgCnsHelper->cnsFileclass));
-        if(Cns_queryclass(stgCnsHelper->cnsFileid.server, stgCnsHelper->cnsFilestat.fileclass, NULL, &(stgCnsHelper->cnsFileclass)) != 0) {
-          castor::dlf::Param params[]={	
-            castor::dlf::Param("Function","Cns_queryclass"),
-            castor::dlf::Param("Error", sstrerror(serrno))};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 2, params);	  
-          
-          castor::exception::Exception ex(SEINTERNAL);
-          ex.getMessage() << "Failed to query the fileclass on the Name Server";
-          throw ex;
-        }
+        /* get the fileclass */
+        stgCnsHelper->getCnsFileclass();
         /* free the tppols*/
         free(stgCnsHelper->cnsFileclass.tppools);
-        
-        // forward any db exception to the upper level
         /* link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name ) */
         stgRequestHelper->getCastorFileFromSvcClass(stgCnsHelper);
       }
