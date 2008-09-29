@@ -11,31 +11,22 @@
 #include "Cns_struct.h"
 #include "Cglobals.h"
 #include "serrno.h"
-
-#include "castor/BaseObject.hpp"
-#include "castor/exception/Exception.hpp"
-#include "castor/stager/SvcClass.hpp"
-#include "castor/stager/FileRequest.hpp"
-
-
-
-#include "castor/Constants.hpp"
-
-#include "castor/ObjectSet.hpp"
-
-
-#include "dlf_api.h"
-#include "castor/dlf/Dlf.hpp"
-#include "castor/dlf/Param.hpp"
-#include "castor/stager/daemon/DlfMessages.hpp"
-
-#include "serrno.h"
 #include <errno.h>
 #include <iostream>
 #include <string>
 
 #include <fcntl.h>
 
+#include "castor/BaseObject.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/stager/SvcClass.hpp"
+#include "castor/stager/FileRequest.hpp"
+#include "castor/Constants.hpp"
+
+#include "dlf_api.h"
+#include "castor/dlf/Dlf.hpp"
+#include "castor/dlf/Param.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
 
 
 namespace castor{
