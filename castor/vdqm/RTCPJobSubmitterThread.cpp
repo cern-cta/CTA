@@ -36,10 +36,12 @@
 #include "castor/vdqm/IVdqmSvc.hpp"
 #include "castor/vdqm/RTCopyDConnection.hpp"
 #include "castor/vdqm/RTCPJobSubmitterThread.hpp"
+#include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
+#include "castor/vdqm/VdqmTape.hpp"
 #include "h/rtcp_constants.h"
 
 
@@ -128,11 +130,18 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
     throw e;
   }
 
-  // The destructor of a castor::vdqm::TapeRequest object does not delete the
-  // tape drive it points to.  Therefore create an auto pointer to delete the
-  // tape drive when it goes out of scope.
-  std::auto_ptr<castor::vdqm::TapeDrive> drive(request->tapeDrive());
-
+  // Create auto pointers for the child objects that the tape request  object
+  // does not delete in its destructor
+  std::auto_ptr<castor::vdqm::VdqmTape> tape(request->tape());
+  std::auto_ptr<castor::vdqm::TapeServer>
+    requestedSrv(request->requestedSrv());
+  std::auto_ptr<castor::vdqm::DeviceGroupName>
+    deviceGroupName(request->deviceGroupName());
+  std::auto_ptr<castor::vdqm::TapeAccessSpecification>
+    tapeAccessSpecification(request->tapeAccessSpecification());
+  std::auto_ptr<castor::vdqm::TapeDrive>
+    tapeDrive(request->tapeDrive());
+  
   try {
     vdqmSvc = getDbVdqmSvc();
   } catch(castor::exception::Exception &e) {
@@ -157,18 +166,18 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
     try
     {
       // Write successful submission of RTCPD job to the database
-      if(!vdqmSvc->writeRTPCDJobSubmission(drive->id(), request->id())) {
+      if(!vdqmSvc->writeRTPCDJobSubmission(tapeDrive->id(), request->id())) {
         castor::dlf::Param params[] = {
-          castor::dlf::Param("tapeDriveID", drive->id()),
-          castor::dlf::Param("driveName", drive->driveName()),
+          castor::dlf::Param("tapeDriveID", tapeDrive->id()),
+          castor::dlf::Param("driveName", tapeDrive->driveName()),
           castor::dlf::Param("tapeRequestID", request->id())};
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
           VDQM_IGNORED_RTCPD_JOB_SUBMISSION, 3, params);
       }
     } catch(castor::exception::Exception &e) {
       castor::dlf::Param params[] = {
-        castor::dlf::Param("tapeDriveID", drive->id()),
-        castor::dlf::Param("driveName", drive->driveName()),
+        castor::dlf::Param("tapeDriveID", tapeDrive->id()),
+        castor::dlf::Param("driveName", tapeDrive->driveName()),
         castor::dlf::Param("tapeRequestID", request->id()),
         castor::dlf::Param("Message", "Failed to write successful submission "
           "of RTCPD job to the database: " + e.getMessage().str()),
@@ -179,8 +188,8 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
   } catch(castor::exception::Exception &e) {
     // Log failure of RTPCD job submission
     castor::dlf::Param params[] = {
-      castor::dlf::Param("tapeDriveID", drive->id()),
-      castor::dlf::Param("driveName", drive->driveName()),
+      castor::dlf::Param("tapeDriveID", tapeDrive->id()),
+      castor::dlf::Param("driveName", tapeDrive->driveName()),
       castor::dlf::Param("tapeRequestID", request->id()),
       castor::dlf::Param("Message", e.getMessage().str()),
       castor::dlf::Param("Code", e.code())};
@@ -189,18 +198,19 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
 
     try {
       // Write failed submission of RTCPD job to the database
-      if(!vdqmSvc->writeFailedRTPCDJobSubmission(drive->id(), request->id())) {
+      if(!vdqmSvc->writeFailedRTPCDJobSubmission(tapeDrive->id(),
+        request->id())) {
         castor::dlf::Param params[] = {
-          castor::dlf::Param("tapeDriveID", drive->id()),
-          castor::dlf::Param("driveName", drive->driveName()),
+          castor::dlf::Param("tapeDriveID", tapeDrive->id()),
+          castor::dlf::Param("driveName", tapeDrive->driveName()),
           castor::dlf::Param("tapeRequestID", request->id())};
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
           VDQM_IGNORED_FAILED_RTCPD_JOB_SUBMISSION, 3, params);
       }
     } catch(castor::exception::Exception &e) {
       castor::dlf::Param params[] = {
-        castor::dlf::Param("tapeDriveID", drive->id()),
-        castor::dlf::Param("driveName", drive->driveName()),
+        castor::dlf::Param("tapeDriveID", tapeDrive->id()),
+        castor::dlf::Param("driveName", tapeDrive->driveName()),
         castor::dlf::Param("tapeRequestID", request->id()),
         castor::dlf::Param("Message", "Failed to write failed submission "
           "of RTCPD job to the database: " + e.getMessage().str()),
