@@ -145,10 +145,6 @@ namespace castor {
         private:
 
           castor::vdqm::TapeDrive *const m_tapeDrive;
-
-bool m_hadRunningTapeReq;
-bool m_hadRunningTapeReqTape;
-bool m_hadRunningTapeReqDeviceGroupName;
         };
 
         // Private variables

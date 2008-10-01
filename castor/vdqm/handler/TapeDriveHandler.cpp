@@ -59,16 +59,6 @@
 //------------------------------------------------------------------------------
 castor::vdqm::handler::TapeDriveHandler::TapeDriveAutoPtr::TapeDriveAutoPtr(
   castor::vdqm::TapeDrive *const tapeDrive) throw() : m_tapeDrive(tapeDrive) {
-
-m_hadRunningTapeReq                = false;
-m_hadRunningTapeReqTape            = false;
-m_hadRunningTapeReqDeviceGroupName = false;
-if(m_tapeDrive->runningTapeReq() != NULL) {
-  m_hadRunningTapeReq = true;
-  m_hadRunningTapeReqTape = m_tapeDrive->runningTapeReq()->tape() != NULL;
-  m_hadRunningTapeReqDeviceGroupName = m_tapeDrive->runningTapeReq()->deviceGroupName() != NULL;
-}
-
 }
 
 
@@ -86,17 +76,6 @@ castor::vdqm::TapeDrive
 //------------------------------------------------------------------------------
 castor::vdqm::handler::TapeDriveHandler::TapeDriveAutoPtr::~TapeDriveAutoPtr()
 throw() {
-
-if(m_hadRunningTapeReq && m_tapeDrive->runningTapeReq() == NULL) {
-  std::cout << "runningTapeReq LEAK!!!!" << std::endl;
-} else {
-  if(m_hadRunningTapeReqTape && m_tapeDrive->runningTapeReq()->tape() == NULL) {
-    std::cout << "runningTapeReq tape LEAK!!!!" << std::endl;
-  }
-  if(m_hadRunningTapeReqTape && m_tapeDrive->runningTapeReq()->deviceGroupName() == NULL) {
-    std::cout << "runningTapeReq deviceGroupName LEAK!!!!" << std::endl;
-  }
-}
 
   delete m_tapeDrive->tape();
   m_tapeDrive->setTape(0);
