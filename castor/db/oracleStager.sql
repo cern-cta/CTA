@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.683 $ $Date: 2008/09/29 17:24:40 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.684 $ $Date: 2008/10/01 08:24:33 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -530,19 +530,20 @@ BEGIN
 END;
 
 /* PL/SQL method checking whether the given service class
- * is declared disk only and the given file class asks for tape copies.
+ * doesn't provide tape backend and the given file class asks for tape copies.
  * Returns 1 in such a case, 0 else
  */
 CREATE OR REPLACE FUNCTION checkFailPutWhenDiskOnly(svcClassId NUMBER, fileClassId NUMBER)
 RETURN NUMBER AS
-  diskOnlyFlag INTEGER;
+  nbTPools INTEGER;
   nbTCs INTEGER;
 BEGIN
-  SELECT hasDiskOnlyBehavior INTO diskOnlyFlag
-    FROM SvcClass WHERE id = svcClassId;
+  SELECT count(*) INTO nbTPools
+    FROM SvcClass2TapePool S2T
+   WHERE S2T.parent = svcClassId;
   SELECT nbCopies INTO nbTCs
     FROM FileClass WHERE id = fileClassId;
-  IF (diskOnlyFlag = 1) AND (nbTCs > 0) THEN
+  IF (nbTPools = 0) AND (nbTCs > 0) THEN
     RETURN 1;
   ELSE
     RETURN 0;
