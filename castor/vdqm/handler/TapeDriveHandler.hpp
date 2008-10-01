@@ -120,26 +120,17 @@ namespace castor {
          */
         class TapeDriveAutoPtr {
 
-        private:
-
-          castor::vdqm::TapeDrive *const m_tapeDrive;
-
-
         public:
 
            /**
             * Constructor.
             */
-           TapeDriveAutoPtr(castor::vdqm::TapeDrive *const tapeDrive) :
-             m_tapeDrive(tapeDrive) {
-           }
+           TapeDriveAutoPtr(castor::vdqm::TapeDrive *const tapeDrive) throw();
 
            /**
             * Returns a pointer to the owned tape drive object.
             */
-           castor::vdqm::TapeDrive *get() {
-             return m_tapeDrive;
-           }
+           castor::vdqm::TapeDrive *get() throw();
 
            /**
             * Destructor.
@@ -149,53 +140,15 @@ namespace castor {
             * tape server object is not deleted because it has a bi-directional
             * link with the tape drive object.
             */
-           ~TapeDriveAutoPtr() {
-              delete m_tapeDrive->tape();
-              m_tapeDrive->setTape(0);
+           ~TapeDriveAutoPtr() throw();
 
-              TapeRequest* runningTapeReq = m_tapeDrive->runningTapeReq();
-              if(runningTapeReq ) {
-                delete runningTapeReq->tape();
-                runningTapeReq->setTape(0);
+        private:
 
-                delete runningTapeReq->requestedSrv();
-                runningTapeReq->setRequestedSrv(0);
+          castor::vdqm::TapeDrive *const m_tapeDrive;
 
-                delete runningTapeReq->deviceGroupName();
-                runningTapeReq->setDeviceGroupName(0);
-
-                delete runningTapeReq->tapeAccessSpecification();
-                runningTapeReq->setTapeAccessSpecification(0);
-
-                delete runningTapeReq;
-                m_tapeDrive->setRunningTapeReq(0);
-              }
-
-              std::vector<castor::vdqm::TapeDriveDedication*>
-                tapeDriveDedicationVector = m_tapeDrive->tapeDriveDedication();
-
-              for(unsigned int i=0; i<tapeDriveDedicationVector.size(); i++) {
-                delete tapeDriveDedicationVector[i];
-              }
-              tapeDriveDedicationVector.clear();
-
-              std::vector<castor::vdqm::TapeDriveCompatibility*>
-                tapeDriveCompatibilityVector =
-                m_tapeDrive->tapeDriveCompatibilities();
-              for(unsigned int i=0; i<tapeDriveCompatibilityVector.size(); i++){
-                delete
-                  tapeDriveCompatibilityVector[i]->tapeAccessSpecification();
-                tapeDriveCompatibilityVector[i]->setTapeAccessSpecification(0);
-
-                delete tapeDriveCompatibilityVector[i];
-              }
-              tapeDriveCompatibilityVector.clear();
-
-              delete m_tapeDrive->deviceGroupName();
-              m_tapeDrive->setDeviceGroupName(0);
-
-              delete m_tapeDrive;
-           }
+bool m_hadRunningTapeReq;
+bool m_hadRunningTapeReqTape;
+bool m_hadRunningTapeReqDeviceGroupName;
         };
 
         // Private variables

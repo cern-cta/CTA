@@ -26,7 +26,9 @@
 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/vdqm/DatabaseHelper.hpp"
+#include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/DevTools.hpp"
+#include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
@@ -193,19 +195,33 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency()
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveConsistencyChecker::deleteOldRequest() 
   throw (castor::exception::Exception) {
-  
-  if ( ptr_tapeDrive->runningTapeReq() ) {
+
+  TapeRequest* runningTapeReq = ptr_tapeDrive->runningTapeReq();
+
+  if (runningTapeReq) {
     // "Remove old TapeRequest from db" message
     castor::dlf::Param param[] = {
-      castor::dlf::Param("tapeRequestID",
-        ptr_tapeDrive->runningTapeReq()->id())};
+      castor::dlf::Param("tapeRequestID", runningTapeReq->id())};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       VDQM_REMOVE_OLD_TAPE_REQUEST_FROM_DB, 1, param);
 
-    //Delete the tape request from the db and from the tapeDrive Object
-    castor::vdqm::DatabaseHelper::deleteRepresentation(
-      ptr_tapeDrive->runningTapeReq(), m_cuuid);
-    delete (ptr_tapeDrive->runningTapeReq());
+    // Delete the tape request from the db
+    castor::vdqm::DatabaseHelper::deleteRepresentation(runningTapeReq, m_cuuid);
+
+    // Free the memory used by the tape request and its child objects
+    delete runningTapeReq->tape();
+    runningTapeReq->setTape(NULL);
+
+    delete runningTapeReq->requestedSrv();
+    runningTapeReq->setRequestedSrv(NULL);
+
+    delete runningTapeReq->deviceGroupName();
+    runningTapeReq->setDeviceGroupName(NULL);
+
+    delete runningTapeReq->tapeAccessSpecification();
+    runningTapeReq->setTapeAccessSpecification(NULL);
+
+    delete runningTapeReq;
     ptr_tapeDrive->setRunningTapeReq(NULL);
   }  
   

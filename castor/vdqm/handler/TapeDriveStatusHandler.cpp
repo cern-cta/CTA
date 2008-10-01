@@ -402,9 +402,23 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, VDQM_REMOVING_TAPE_REQUEST,
       1, params);
     castor::vdqm::DatabaseHelper::deleteRepresentation(tapeRequest, m_cuuid);
+
+    // Free the memory used by the tape request and its child objects
+    delete tapeRequest->tape();
+    tapeRequest->setTape(NULL);
+
+    delete tapeRequest->requestedSrv();
+    tapeRequest->setRequestedSrv(NULL);
+
+    delete tapeRequest->deviceGroupName();
+    tapeRequest->setDeviceGroupName(NULL);
+
+    delete tapeRequest->tapeAccessSpecification();
+    tapeRequest->setTapeAccessSpecification(NULL);
+
     delete tapeRequest;
-    tapeRequest = 0;
-    ptr_tapeDrive->setRunningTapeReq(0);
+    ptr_tapeDrive->setRunningTapeReq(NULL);
+    tapeRequest = NULL;
   }
   
   // Reset job ID
@@ -629,12 +643,25 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitFreeStatus()
   // volume request for this drive
   if ( tapeRequest != NULL ) {
     
-      castor::vdqm::DatabaseHelper::deleteRepresentation(tapeRequest,
-        m_cuuid);
-      delete tapeRequest;
-      
-      tapeRequest = 0;
-      ptr_tapeDrive->setRunningTapeReq(NULL);
+    castor::vdqm::DatabaseHelper::deleteRepresentation(tapeRequest,
+      m_cuuid);
+
+    // Free the memory used by the tape request and its child objects
+    delete tapeRequest->tape();
+    tapeRequest->setTape(NULL);
+
+    delete tapeRequest->requestedSrv();
+    tapeRequest->setRequestedSrv(NULL);
+
+    delete tapeRequest->deviceGroupName();
+    tapeRequest->setDeviceGroupName(NULL);
+
+    delete tapeRequest->tapeAccessSpecification();
+    tapeRequest->setTapeAccessSpecification(NULL);
+
+    delete tapeRequest;
+    ptr_tapeDrive->setRunningTapeReq(NULL);
+    tapeRequest = NULL;
   }
   
   // Reset job IDs

@@ -53,6 +53,99 @@
 #include <vector>
 
 
+
+//------------------------------------------------------------------------------
+// Inner class TapeDriveAutoPtr constructor
+//------------------------------------------------------------------------------
+castor::vdqm::handler::TapeDriveHandler::TapeDriveAutoPtr::TapeDriveAutoPtr(
+  castor::vdqm::TapeDrive *const tapeDrive) throw() : m_tapeDrive(tapeDrive) {
+
+m_hadRunningTapeReq                = false;
+m_hadRunningTapeReqTape            = false;
+m_hadRunningTapeReqDeviceGroupName = false;
+if(m_tapeDrive->runningTapeReq() != NULL) {
+  m_hadRunningTapeReq = true;
+  m_hadRunningTapeReqTape = m_tapeDrive->runningTapeReq()->tape() != NULL;
+  m_hadRunningTapeReqDeviceGroupName = m_tapeDrive->runningTapeReq()->deviceGroupName() != NULL;
+}
+
+}
+
+
+//------------------------------------------------------------------------------
+// Inner class TapeDriveAutoPtr get method
+//------------------------------------------------------------------------------
+castor::vdqm::TapeDrive
+  *castor::vdqm::handler::TapeDriveHandler::TapeDriveAutoPtr::get() throw() {
+  return m_tapeDrive;
+}
+
+
+//------------------------------------------------------------------------------
+// Inner class TapeDriveAutoPtr destructor
+//------------------------------------------------------------------------------
+castor::vdqm::handler::TapeDriveHandler::TapeDriveAutoPtr::~TapeDriveAutoPtr()
+throw() {
+
+if(m_hadRunningTapeReq && m_tapeDrive->runningTapeReq() == NULL) {
+  std::cout << "runningTapeReq LEAK!!!!" << std::endl;
+} else {
+  if(m_hadRunningTapeReqTape && m_tapeDrive->runningTapeReq()->tape() == NULL) {
+    std::cout << "runningTapeReq tape LEAK!!!!" << std::endl;
+  }
+  if(m_hadRunningTapeReqTape && m_tapeDrive->runningTapeReq()->deviceGroupName() == NULL) {
+    std::cout << "runningTapeReq deviceGroupName LEAK!!!!" << std::endl;
+  }
+}
+
+  delete m_tapeDrive->tape();
+  m_tapeDrive->setTape(0);
+
+  TapeRequest* runningTapeReq = m_tapeDrive->runningTapeReq();
+  if(runningTapeReq ) {
+    delete runningTapeReq->tape();
+    runningTapeReq->setTape(0);
+
+    delete runningTapeReq->requestedSrv();
+    runningTapeReq->setRequestedSrv(0);
+
+    delete runningTapeReq->deviceGroupName();
+    runningTapeReq->setDeviceGroupName(0);
+
+    delete runningTapeReq->tapeAccessSpecification();
+    runningTapeReq->setTapeAccessSpecification(0);
+
+    delete runningTapeReq;
+    m_tapeDrive->setRunningTapeReq(0);
+  }
+
+  std::vector<castor::vdqm::TapeDriveDedication*>
+    tapeDriveDedicationVector = m_tapeDrive->tapeDriveDedication();
+
+  for(unsigned int i=0; i<tapeDriveDedicationVector.size(); i++) {
+    delete tapeDriveDedicationVector[i];
+  }
+  tapeDriveDedicationVector.clear();
+
+  std::vector<castor::vdqm::TapeDriveCompatibility*>
+    tapeDriveCompatibilityVector =
+    m_tapeDrive->tapeDriveCompatibilities();
+  for(unsigned int i=0; i<tapeDriveCompatibilityVector.size(); i++){
+    delete
+      tapeDriveCompatibilityVector[i]->tapeAccessSpecification();
+    tapeDriveCompatibilityVector[i]->setTapeAccessSpecification(0);
+
+    delete tapeDriveCompatibilityVector[i];
+  }
+  tapeDriveCompatibilityVector.clear();
+
+  delete m_tapeDrive->deviceGroupName();
+  m_tapeDrive->setDeviceGroupName(0);
+
+  delete m_tapeDrive;
+}
+
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
