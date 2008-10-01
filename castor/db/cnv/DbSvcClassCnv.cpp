@@ -59,7 +59,7 @@ static castor::CnvFactory<castor::db::cnv::DbSvcClassCnv>* s_factoryDbSvcClassCn
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbSvcClassCnv::s_insertStatementString =
-"INSERT INTO SvcClass (nbDrives, name, defaultFileSize, maxReplicaNb, replicationPolicy, migratorPolicy, recallerPolicy, streamPolicy, gcPolicy, Disk1Behavior, replicateOnClose, id, forcedFileClass) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,ids_seq.nextval,:12) RETURNING id INTO :13";
+"INSERT INTO SvcClass (nbDrives, name, defaultFileSize, maxReplicaNb, replicationPolicy, migratorPolicy, recallerPolicy, streamPolicy, gcPolicy, disk1Behavior, replicateOnClose, id, forcedFileClass) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,ids_seq.nextval,:12) RETURNING id INTO :13";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbSvcClassCnv::s_deleteStatementString =
@@ -67,7 +67,7 @@ const std::string castor::db::cnv::DbSvcClassCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbSvcClassCnv::s_selectStatementString =
-"SELECT nbDrives, name, defaultFileSize, maxReplicaNb, replicationPolicy, migratorPolicy, recallerPolicy, streamPolicy, gcPolicy, Disk1Behavior, replicateOnClose, id, forcedFileClass FROM SvcClass WHERE id = :1";
+"SELECT nbDrives, name, defaultFileSize, maxReplicaNb, replicationPolicy, migratorPolicy, recallerPolicy, streamPolicy, gcPolicy, disk1Behavior, replicateOnClose, id, forcedFileClass FROM SvcClass WHERE id = :1";
 
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbSvcClassCnv::s_bulkSelectStatementString =
@@ -78,7 +78,7 @@ const std::string castor::db::cnv::DbSvcClassCnv::s_bulkSelectStatementString =
    BEGIN \
      FORALL i IN ids.FIRST..ids.LAST \
        INSERT INTO bulkSelectHelper VALUES(ids(i)); \
-     OPEN objs FOR SELECT nbDrives, name, defaultFileSize, maxReplicaNb, replicationPolicy, migratorPolicy, recallerPolicy, streamPolicy, gcPolicy, Disk1Behavior, replicateOnClose, id, forcedFileClass \
+     OPEN objs FOR SELECT nbDrives, name, defaultFileSize, maxReplicaNb, replicationPolicy, migratorPolicy, recallerPolicy, streamPolicy, gcPolicy, disk1Behavior, replicateOnClose, id, forcedFileClass \
                      FROM SvcClass t, bulkSelectHelper h \
                     WHERE t.id = h.objId; \
      DELETE FROM bulkSelectHelper; \
@@ -89,7 +89,7 @@ const std::string castor::db::cnv::DbSvcClassCnv::s_bulkSelectStatementString =
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbSvcClassCnv::s_updateStatementString =
-"UPDATE SvcClass SET nbDrives = :1, name = :2, defaultFileSize = :3, maxReplicaNb = :4, replicationPolicy = :5, migratorPolicy = :6, recallerPolicy = :7, streamPolicy = :8, gcPolicy = :9, Disk1Behavior = :10, replicateOnClose = :11 WHERE id = :12";
+"UPDATE SvcClass SET nbDrives = :1, name = :2, defaultFileSize = :3, maxReplicaNb = :4, replicationPolicy = :5, migratorPolicy = :6, recallerPolicy = :7, streamPolicy = :8, gcPolicy = :9, disk1Behavior = :10, replicateOnClose = :11 WHERE id = :12";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbSvcClassCnv::s_storeTypeStatementString =
@@ -593,7 +593,7 @@ void castor::db::cnv::DbSvcClassCnv::createRep(castor::IAddress* address,
     m_insertStatement->setString(7, obj->recallerPolicy());
     m_insertStatement->setString(8, obj->streamPolicy());
     m_insertStatement->setString(9, obj->gcPolicy());
-    m_insertStatement->setInt(10, obj->Disk1Behavior());
+    m_insertStatement->setInt(10, obj->disk1Behavior());
     m_insertStatement->setInt(11, obj->replicateOnClose());
     m_insertStatement->setUInt64(12, (type == OBJ_FileClass && obj->forcedFileClass() != 0) ? obj->forcedFileClass()->id() : 0);
     m_insertStatement->execute();
@@ -624,7 +624,7 @@ void castor::db::cnv::DbSvcClassCnv::createRep(castor::IAddress* address,
                     << "  recallerPolicy : " << obj->recallerPolicy() << std::endl
                     << "  streamPolicy : " << obj->streamPolicy() << std::endl
                     << "  gcPolicy : " << obj->gcPolicy() << std::endl
-                    << "  Disk1Behavior : " << obj->Disk1Behavior() << std::endl
+                    << "  disk1Behavior : " << obj->disk1Behavior() << std::endl
                     << "  replicateOnClose : " << obj->replicateOnClose() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  forcedFileClass : " << obj->forcedFileClass() << std::endl;
@@ -859,25 +859,25 @@ void castor::db::cnv::DbSvcClassCnv::bulkCreateRep(castor::IAddress* address,
     }
     m_insertStatement->setDataBuffer
       (9, gcPolicyBuffer, castor::db::DBTYPE_STRING, gcPolicyMaxLen, gcPolicyBufLens);
-    // build the buffers for Disk1Behavior
-    bool* Disk1BehaviorBuffer = (bool*) malloc(nb * sizeof(bool));
-    if (Disk1BehaviorBuffer == 0) {
+    // build the buffers for disk1Behavior
+    bool* disk1BehaviorBuffer = (bool*) malloc(nb * sizeof(bool));
+    if (disk1BehaviorBuffer == 0) {
       castor::exception::OutOfMemory e;
       throw e;
     }
-    allocMem.push_back(Disk1BehaviorBuffer);
-    unsigned short* Disk1BehaviorBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
-    if (Disk1BehaviorBufLens == 0) {
+    allocMem.push_back(disk1BehaviorBuffer);
+    unsigned short* disk1BehaviorBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (disk1BehaviorBufLens == 0) {
       castor::exception::OutOfMemory e;
       throw e;
     }
-    allocMem.push_back(Disk1BehaviorBufLens);
+    allocMem.push_back(disk1BehaviorBufLens);
     for (int i = 0; i < nb; i++) {
-      Disk1BehaviorBuffer[i] = objs[i]->Disk1Behavior();
-      Disk1BehaviorBufLens[i] = sizeof(bool);
+      disk1BehaviorBuffer[i] = objs[i]->disk1Behavior();
+      disk1BehaviorBufLens[i] = sizeof(bool);
     }
     m_insertStatement->setDataBuffer
-      (10, Disk1BehaviorBuffer, castor::db::DBTYPE_INT, sizeof(Disk1BehaviorBuffer[0]), Disk1BehaviorBufLens);
+      (10, disk1BehaviorBuffer, castor::db::DBTYPE_INT, sizeof(disk1BehaviorBuffer[0]), disk1BehaviorBufLens);
     // build the buffers for replicateOnClose
     bool* replicateOnCloseBuffer = (bool*) malloc(nb * sizeof(bool));
     if (replicateOnCloseBuffer == 0) {
@@ -1009,7 +1009,7 @@ void castor::db::cnv::DbSvcClassCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setString(7, obj->recallerPolicy());
     m_updateStatement->setString(8, obj->streamPolicy());
     m_updateStatement->setString(9, obj->gcPolicy());
-    m_updateStatement->setInt(10, obj->Disk1Behavior());
+    m_updateStatement->setInt(10, obj->disk1Behavior());
     m_updateStatement->setInt(11, obj->replicateOnClose());
     m_updateStatement->setUInt64(12, obj->id());
     m_updateStatement->execute();

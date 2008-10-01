@@ -278,25 +278,25 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_Disk1Behavior
+       * Get the value of m_disk1Behavior
        * Flag to indicate whether the diskpools under this service class should behave as
        * Disk1 pools. This means no automatic GC, and failing jobs that want to allocate
        * space when no space is available.
-       * @return the value of m_Disk1Behavior
+       * @return the value of m_disk1Behavior
        */
-      bool Disk1Behavior() const {
-        return m_Disk1Behavior;
+      bool disk1Behavior() const {
+        return m_disk1Behavior;
       }
 
       /**
-       * Set the value of m_Disk1Behavior
+       * Set the value of m_disk1Behavior
        * Flag to indicate whether the diskpools under this service class should behave as
        * Disk1 pools. This means no automatic GC, and failing jobs that want to allocate
        * space when no space is available.
-       * @param new_var the new value of m_Disk1Behavior
+       * @param new_var the new value of m_disk1Behavior
        */
       void setDisk1Behavior(bool new_var) {
-        m_Disk1Behavior = new_var;
+        m_disk1Behavior = new_var;
       }
 
       /**
@@ -444,7 +444,7 @@ namespace castor {
       std::string m_gcPolicy;
 
       /// Flag to indicate whether the diskpools under this service class should behave as Disk1 pools. This means no automatic GC, and failing jobs that want to allocate space when no space is available.
-      bool m_Disk1Behavior;
+      bool m_disk1Behavior;
 
       /// Flag to indicate whether files in this service class are replicated on closure. The number of copies created is defined by the maxReplicaNb attribute
       bool m_replicateOnClose;

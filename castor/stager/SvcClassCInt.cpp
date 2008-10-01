@@ -251,10 +251,10 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_SvcClass_Disk1Behavior
+  // Cstager_SvcClass_disk1Behavior
   //----------------------------------------------------------------------------
-  int Cstager_SvcClass_Disk1Behavior(castor::stager::SvcClass* instance, bool* var) {
-    *var = instance->Disk1Behavior();
+  int Cstager_SvcClass_disk1Behavior(castor::stager::SvcClass* instance, bool* var) {
+    *var = instance->disk1Behavior();
     return 0;
   }
 

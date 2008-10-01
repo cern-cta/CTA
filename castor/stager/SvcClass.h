@@ -210,15 +210,15 @@ int Cstager_SvcClass_gcPolicy(struct Cstager_SvcClass_t* instance, const char** 
 int Cstager_SvcClass_setGcPolicy(struct Cstager_SvcClass_t* instance, const char* new_var);
 
 /**
- * Get the value of Disk1Behavior
+ * Get the value of disk1Behavior
  * Flag to indicate whether the diskpools under this service class should behave as
  * Disk1 pools. This means no automatic GC, and failing jobs that want to allocate
  * space when no space is available.
  */
-int Cstager_SvcClass_Disk1Behavior(struct Cstager_SvcClass_t* instance, int* var);
+int Cstager_SvcClass_disk1Behavior(struct Cstager_SvcClass_t* instance, int* var);
 
 /**
- * Set the value of Disk1Behavior
+ * Set the value of disk1Behavior
  * Flag to indicate whether the diskpools under this service class should behave as
  * Disk1 pools. This means no automatic GC, and failing jobs that want to allocate
  * space when no space is available.
