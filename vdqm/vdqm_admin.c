@@ -175,8 +175,7 @@ int main(int argc, char *argv[]) {
         exit(2);
     }
     if ( rc == -1 ) {
-        fprintf(stderr,"vdqm_admin: %s\n",argv[0],
-          sstrerror(serrno));
+        fprintf(stderr,"vdqm_admin: %s\n", sstrerror(serrno));
         exit(1);
     }
 
