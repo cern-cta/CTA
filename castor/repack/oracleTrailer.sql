@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.11 $ $Release$ $Date: 2008/09/26 08:16:00 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.12 $ $Release$ $Date: 2008/10/02 11:35:15 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -111,7 +111,8 @@ END;
 
 /* PL/SQL method implementing changeSubRequestsStatus */
 
-create or replace PROCEDURE changeSubRequestsStatus
+create or replace
+PROCEDURE changeSubRequestsStatus
 (tapeVids IN repack."strList", st IN INTEGER, rsr OUT repack.RepackSubRequest_Cur) AS
 srId NUMBER;
 BEGIN
@@ -119,21 +120,22 @@ BEGIN
  -- RepackWorker remove subrequests -> TOBEREMOVED 
  IF st = 6 THEN 
   	FOR i IN tapeVids.FIRST .. tapeVids.LAST LOOP
-    --	 IF TOBECHECKED or TOBESTAGED -> TOBECLEANED
-    		UPDATE RepackSubrequest SET Status=3 WHERE Status in (0, 1) AND vid=tapeVids(i) RETURNING id INTO srId; 
+    --	 IF TOBECHECKED or TOBESTAGED or ONHOLD -> TOBECLEANED
+    		UPDATE RepackSubrequest SET Status=3 WHERE Status in (0, 1, 9) AND vid=tapeVids(i) RETURNING id INTO srId; 
     		INSERT INTO listOfIds (id) VALUES (srId);  
     		
     --	 ONGOING -> TOBEREMOVED
     		UPDATE RepackSubrequest SET Status=6 WHERE Status=2 AND vid=tapeVids(i) RETURNING id INTO srId;
     		INSERT INTO listOfIds (id) VALUES (srId);  
+        
     	END LOOP;
   END IF;
   
  -- RepackWorker subrequests -> TOBERESTARTED 
   IF st = 7 THEN
   	FOR i IN tapeVids.FIRST .. tapeVids.LAST LOOP
-    	-- IF IT IS NOT ARCHIVED, NOT ONGOING
-    	    	 UPDATE RepackSubrequest SET Status=7 WHERE Status NOT IN ( 2, 8 ) AND vid=tapeVids(i) RETURNING id INTO srId;
+    	-- JUST IF IT IS FINISHED OR FAILED
+    	    	 UPDATE RepackSubrequest SET Status=7 WHERE Status IN (4, 5) AND vid=tapeVids(i) RETURNING id INTO srId;
     	         INSERT INTO listOfIds (id) VALUES (srId);
     	END LOOP;
   END IF; 
@@ -141,8 +143,8 @@ BEGIN
  -- RepackWorker subrequests -> ARCHIVED  
   IF st = 8 THEN
   	FOR i IN tapeVids.FIRST .. tapeVids.LAST LOOP
-    	-- JUST IF IT IS FINISHED OR FAILED
-    	    	UPDATE RepackSubrequest SET Status=8 WHERE Status IN (4, 5, 9) AND vid=tapeVids(i) RETURNING id INTO srId;
+    	-- JUST IF IT IS FINISHED OR FAILED 
+    	    	UPDATE RepackSubrequest SET Status=8 WHERE Status IN (4, 5) AND vid=tapeVids(i) RETURNING id INTO srId;
     	    	INSERT INTO listOfIds(id) VALUES (srId);	
     	END LOOP;
   END IF;  
@@ -150,7 +152,6 @@ BEGIN
      SELECT vid, xsize, status, filesmigrating, filesstaging,files,filesfailed,cuuid,submittime,filesstaged,filesfailedsubmit,retrynb,id,repackrequest
       	FROM RepackSubRequest WHERE id in (select id from listOfIds); 
 END;
-
 
 /* PL/SQL method implementing getAllSubRequests */
 
