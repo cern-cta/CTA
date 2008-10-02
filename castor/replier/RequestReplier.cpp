@@ -898,6 +898,10 @@ castor::replier::RequestReplier::sendEndResponse
          << " to m_ClientQueue" << std::endl;
   m_clientQueue->push(cr);
 
+  clog() << VERBOSE << SETW func
+         << "Unlocking m_clientQueue" << std::endl;
+  Cthread_mutex_unlock(&m_clientQueue);
+
   int val = 1;
   int rc = write(*m_pipeWrite, (void *)&val, sizeof(val));
   if (rc != sizeof(val)) {
@@ -905,10 +909,5 @@ castor::replier::RequestReplier::sendEndResponse
            << "Error writing to communication pipe with RRThread"
            << std::endl;
   }
-
-  // Exiting...
-  clog() << VERBOSE << SETW func
-         << "Unlocking m_clientQueue" << std::endl;
-  Cthread_mutex_unlock(&m_clientQueue);
 }
 
