@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.12 $ $Release$ $Date: 2008/10/02 11:35:15 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.13 $ $Release$ $Date: 2008/10/02 12:21:09 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -298,13 +298,13 @@ create or replace PROCEDURE updateSubRequestSegments
  (srId IN NUMBER, fileIds IN repack."cnumList",
   errorCodes IN repack."cnumList",
   errorMessages IN repack."strList") AS 
- BEGIN
+BEGIN
  	FOR i in fileIds.FIRST .. fileIds.LAST LOOP	
  		UPDATE RepackSegment SET errorCode=errorCodes(i), errorMessage=errorMessages(i)
  			WHERE (fileid=fileIds(i) OR fileIds(i)=0) AND repacksubrequest=srId;
  	END LOOP;
  	COMMIT;
- END;
+END;
 
 
 /* PL/SQL method implementing validateRepackSubRequest */
