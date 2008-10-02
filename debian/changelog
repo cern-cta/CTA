@@ -1,3 +1,9 @@
+castor (2.1.8-1) unstable; urgency=low
+
+  * First 2.1.8 production release
+
+-- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 06 Oct 2008 08:00:00 +0100
+
 castor (2.1.7-12) unstable; urgency=low
 
   * Seventh 2.1.7 production release
@@ -63,15 +69,15 @@ castor (2.1.7-1) unstable; urgency=low
   * Second internal release of CASTOR 2.1.7
 
 -- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 03 March 2008 09:00:00 +0100
-	
+
 castor (2.1.7-0) unstable; urgency=low
 
   * First internal release of CASTOR 2.1.7
 
 -- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 03 March 2008 15:00:00 +0100
-	
+
 castor (2.1.6-10) unstable; urgency=low
-	
+
   * CASTOR2/castor/db/ora/OraStagerSvc.cpp:
     [r1.236,2008-01-31,itglp] Another fix for stageRm
   * CASTOR2/castor/db/oracleTrailer.sql:
@@ -135,7 +141,7 @@ castor (2.1.6-9) unstable; urgency=low
     [r 1.3,2008-01-30,waldron] Regenerated
   * CASTOR2/castor/job/RfioMover.cpp:
     [r 1.3,2008-01-30,waldron] Throw an exception in case an rfio_read error happens. Prior to this modification we would accept the number of bytes transferred up to the point of the read error and consider the transfer as successful. I.e. only a partial file was transferred but considered ok. Now we make sure that the size of the replica is equal in size to the original file
-	
+
 -- Sebastien Ponce <sebastien.ponce@cern.ch>  Wed, 30 January 2008 15:30:00 +0100
 
 castor (2.1.6-8) unstable; urgency=low
@@ -277,9 +283,9 @@ castor (2.1.4-5) unstable; urgency=low
     [r1.24,2007-09-11,obarring] host information is lost since it's part of the volume request.
   * CASTOR2/vdqm/showqueues.man:
     [r 1.6,2007-09-11,obarring] bug #29499] add support for showing only the drives
-	
+
 -- Dennis Waldron <waldron@cern.ch>  Mon, 17 September 2007 15:00:00 +0100
-	
+
 castor (2.1.4-4) unstable; urgency=low
 
   * CASTOR2/CASTOR.spec:
@@ -423,7 +429,7 @@ castor (2.1.4-4) unstable; urgency=low
     [r1.47,2007-09-07,kotlyar] to build gridftp rpms there should be GLOBUS_LOCATION variable defined, in other case it will provide a standart set of rpms
   * CASTOR2/disksrv/src/gridftp2/external/globus_gridftp_server_CASTOR2ext.c:
     [r 1.4,2007-08-30,kotlyar] uberftp ls command doesn't understand castor's nlink=0 for empty directories, in common  unix file system  it should be  2  (one for '.' and one for '..') so now we return nlink=2 for the empty dirs and for the dirs with two files inside.
-    [r 1.4,2007-08-30,kotlyar] 
+    [r 1.4,2007-08-30,kotlyar]
     [r 1.4,2007-08-30,kotlyar] For a security reason we do not allow access for  a path without "/castor".
   * CASTOR2/dlf/scripts/mysql/dlf_mysql_create.sql:
     [r2.11,2007-09-10,waldron] Regenerated for version 2.1.4-4
@@ -548,14 +554,14 @@ castor (2.1.4-4) unstable; urgency=low
     [r 1.2,2007-09-10,waldron] Updated to follow the standard upgrade template
   * CASTOR2/upgrades/repack_2.1.2-*_to_2.1.3-17.sqlplus:
     [r 1.2,2007-09-10,waldron] Updated to follow the standard upgrade template
-	
--- Dennis Waldron <waldron@cern.ch>  Tue, 11 September 2007 12:00:00 +0100	
+
+-- Dennis Waldron <waldron@cern.ch>  Tue, 11 September 2007 12:00:00 +0100
 
 castor (2.1.4-3) unstable; urgency=low
 
   * fixed the PL/SQL versionning (I forgot the C++ oen in previous release)
 
--- Sebastien Ponce <sponce@cern.ch>  Wed, 28 August 2007 10:30:00 +0100	
+-- Sebastien Ponce <sponce@cern.ch>  Wed, 28 August 2007 10:30:00 +0100
 
 castor (2.1.4-2) unstable; urgency=low
 
@@ -628,7 +634,7 @@ castor (2.1.4-2) unstable; urgency=low
   * CASTOR2/upgrades/dlf_2.1.3-24_to_2.1.4-1.sqlplus:
     [2007-08-28,waldron] Included modifications to partition procedure to increase max size of a tablespace
 
--- Sebastien Ponce <sponce@cern.ch>  Wed, 28 August 2007 10:30:00 +0100	
+-- Sebastien Ponce <sponce@cern.ch>  Wed, 28 August 2007 10:30:00 +0100
 
 castor (2.1.4-1) unstable; urgency=low
 
@@ -992,7 +998,7 @@ castor (2.1.4-1) unstable; urgency=low
   * CASTOR2/vdqm/vdqmapi.c:
     [r 1.5,2007-08-17,sponcec3] Fixed compilation warnings
 
--- Dennis Waldron <waldron@cern.ch>  Wed, 22 August 2007 18:30:00 +0100	
+-- Dennis Waldron <waldron@cern.ch>  Wed, 22 August 2007 18:30:00 +0100
 
 castor (2.1.4-0) unstable; urgency=low
 
@@ -1009,7 +1015,7 @@ castor (2.1.4-0) unstable; urgency=low
     + Added ability to declare a svcClass as disk only. In this case, requests that need to write to the diskpool (that is puts but also recalls and disk to disk copy) will fail if no space is available instead of filling the LSF queue
     + Added ability to force the fileClass of new files in the disk only pool
   * Stager
-    + 2 new status codes exist for SubRequest SUBREQUEST_BEINGSCHED and READYFORSCHED. These are used by the jobManager when dispatching jobs 
+    + 2 new status codes exist for SubRequest SUBREQUEST_BEINGSCHED and READYFORSCHED. These are used by the jobManager when dispatching jobs
     + Log the svcClass for all requests
     + Handle properly requests sent of behalf of somebody else
     + Handle properly cases where STAGEOUT diskcopies are unavailable (disable hardware) or in another fileclass.
@@ -1201,7 +1207,7 @@ castor (2.1.3-15) unstable; urgency=low
     [r 1.9,2007-05-31,wiebalck] Added some debugging for the 'volume in use' issue.
 
 -- Sebastien Ponce <sponcec3@cern.ch>  Wed, 6 June 2007 15:00:00 +0100
-	
+
 castor (2.1.3-14) unstable; urgency=low
 
   * CASTOR2/CASTOR.spec:
@@ -1376,7 +1382,7 @@ castor (2.1.3-12) unstable; urgency=low
 
   * CASTOR2/castor/monitoring/rmmaster/Imakefile:
     [r1.9,2007-05-15,sponcec3] Fixed compile time library dependencies for rmMaster
-	
+
 castor (2.1.3-11) unstable; urgency=low
 
   * Bug fix release on top of 3.10
@@ -1524,7 +1530,7 @@ castor (2.1.3-11) unstable; urgency=low
   * CASTOR2/upgrades/dlf_2.1.2-x_to_2.1.3-x.sql:
   * CASTOR2/upgrades/dlf_2.1.2-x_to_2.1.3-x.sqlplus:
     [2007-05-10,waldron] updated to reflect latest changes
-	
+
 castor (2.1.3-10) unstable; urgency=low
 
   * Bug fix release on top of 3.9
@@ -1653,7 +1659,7 @@ castor (2.1.3-9) unstable; urgency=low
     [r1.13,2007-04-23,sponcec3] Added a WriteOnly flag. If set, files are written to CASTOR and never read back
 
 castor (2.1.3-8) unstable; urgency=low
-  
+
   * Bug fix release on top of 3.7
   * General :
     + drop reservedSpace and freeSpace in the DB
@@ -1710,7 +1716,7 @@ castor (2.1.3-8) unstable; urgency=low
   * CASTOR2/upv/Imakefile:
   * CASTOR2/vmgr/Imakefile:
     [2007-04-18,waldron] remove all generated files when clobbering
-	
+
 castor (2.1.3-7) unstable; urgency=low
 
   * Bug fix release on top of 3.6.
@@ -1752,7 +1758,7 @@ castor (2.1.3-7) unstable; urgency=low
   * CASTOR2/dlf/mysql.c:
   * CASTOR2/dlf/oracle.pc:
     [2007-04-18,waldron] reduce the database overhead of dlf initialisation calls by caching messages texts in memory
-	
+
 castor (2.1.3-6) unstable; urgency=low
 
   * Sixth test release with new LSF plugin and new monitoring
@@ -1768,15 +1774,15 @@ castor (2.1.3-6) unstable; urgency=low
   * CASTOR2/CASTOR.spec:
     - Fixed LSF paths for LSF 7
     - added package castor-lib-monitor
-    - Fixed rule to decide if we have oracle 
-    - Added UDP sockets and ListenerThreadPool, also renamed ListenerThreadPool into TCPListenerThreadPool 
+    - Fixed rule to decide if we have oracle
+    - Added UDP sockets and ListenerThreadPool, also renamed ListenerThreadPool into TCPListenerThreadPool
     - Putdone now is not scheduled anymore
     - Added infrasstructure for shared memory in the framework
     - Now compiling with -Wall -pedantic by default. A lot of compilation warnings have already been fixed, but a lot remain
   * cleaning Daemon
     - Fixed default values for time intervals
   * DB releated
-    - Removed the Oracle specific database converters 
+    - Removed the Oracle specific database converters
     - Fixed all calls to deleteStatement to avoid passing null pointers (this led to segfaults)
   * CASTOR2/castor/db/ora/OraStagerSvc.cpp:
     - Fixed handling of exception in createRecallCandidate that was leading to a segfault in stager_db_service. The point is that the link subrequest->diskCopy was not suppressed while the diskCopy was deleted.
@@ -1806,7 +1812,7 @@ castor (2.1.3-6) unstable; urgency=low
     - Added some debug tool for analyzing the shared memory content. Not compiled by default
   * repack
     - Fixed man for repack and repackserver as well as -h output
-    - Removed the Z option which was not implemented 
+    - Removed the Z option which was not implemented
     - Changed the logic of the parsing of arguments given to repackserver because it was creating coredump in case of not existing options.
     - extension of archiving command, check uid != root at the begining, added staged counter
     - thrown castor::castor::Exception instead of  castor::exception::Internal from DatabaseHelper, fix for monitoring to be able to deal with time out, bug fix in repack worker.
@@ -1815,7 +1821,7 @@ castor (2.1.3-6) unstable; urgency=low
     - Added the DOWN_ON_TPALERT option. Default value YES (same as if the config entry is missing).
     - increasing the scsi timeout for the volume tag command
     - Fix for the "stuck in START" case. The patch changes the code to not ignore consistency problems with the status of a tape in VMGR (thanks to Olof for the help tracking this down).
-    - changing the compression handling for the NVC IBM mode in tapedrives 
+    - changing the compression handling for the NVC IBM mode in tapedrives
     - Initial commit of the tplogger implementation.
     - Extension of tpdaemon and related programs to use the dlf-based tape logging interface (tplogger).
     - Extended error handling in case of a device or resource busy in smcmount(). This should now trigger a retry, instead of the attempt to unmount the non-mounted tape (which led to subsequent errors and ended in the drive being configured down).
@@ -1912,7 +1918,7 @@ castor (2.1.2-6) unstable; urgency=low
    * Bug Fix for Repack:
      - castor::castor::Exception instead of castor::exception::Internal thrown by functions in the DatabaseHelper,
      - fix for monitoring to be able to deal with stager time out,
-     - bug fix in repack worker. 
+     - bug fix in repack worker.
    * Fixed the socket leak in DLF client when the DLF server is not reachable
    * Fixed the stagerJob for xroot. We were calling prepareForMigration while xroot does it for us.
    * Modifications on the PL/SQL
@@ -3838,22 +3844,22 @@ castor (2.1.1-0) unstable; urgency=low
     [r 1.8,2006-08-18,gtaur] try for response modifications
     [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
     [r 1.5,2006-05-29,felixehm] Changed field pool->serviceclass name.
-    [r 1.5,2006-05-29,felixehm] 
+    [r 1.5,2006-05-29,felixehm]
     [r 1.5,2006-05-29,felixehm] This is the service class to where the file have to be written to. It is not
     [r 1.5,2006-05-29,felixehm] possible to specify directly the target tapes or tapepools, but we can use
     [r 1.5,2006-05-29,felixehm] the information stored in the service classes.
-    [r 1.5,2006-05-29,felixehm] 
+    [r 1.5,2006-05-29,felixehm]
     [r 1.5,2006-05-29,felixehm] By default, the files are written to the tapepool belonging to the repack
     [r 1.5,2006-05-29,felixehm] service class specified in the castor config file.
   * CASTOR2/castor/db/cnv/DbRepackRequestCnv.hpp:
     [r 1.8,2006-08-18,gtaur] try for response modifications
     [r 1.6,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
     [r 1.5,2006-05-29,felixehm] Changed field pool->serviceclass name.
-    [r 1.5,2006-05-29,felixehm] 
+    [r 1.5,2006-05-29,felixehm]
     [r 1.5,2006-05-29,felixehm] This is the service class to where the file have to be written to. It is not
     [r 1.5,2006-05-29,felixehm] possible to specify directly the target tapes or tapepools, but we can use
     [r 1.5,2006-05-29,felixehm] the information stored in the service classes.
-    [r 1.5,2006-05-29,felixehm] 
+    [r 1.5,2006-05-29,felixehm]
     [r 1.5,2006-05-29,felixehm] By default, the files are written to the tapepool belonging to the repack
     [r 1.5,2006-05-29,felixehm] service class specified in the castor config file.
   * CASTOR2/castor/db/cnv/DbRepackSegmentCnv.cpp:
@@ -4325,21 +4331,21 @@ castor (2.1.1-0) unstable; urgency=low
     [r 1.7,2006-08-02,itglp] One more fix for handleException
     [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
     [r 1.4,2006-05-29,felixehm] Changed field pool->serviceclass name.
-    [r 1.4,2006-05-29,felixehm] 
+    [r 1.4,2006-05-29,felixehm]
     [r 1.4,2006-05-29,felixehm] This is the service class to where the file have to be written to. It is not
     [r 1.4,2006-05-29,felixehm] possible to specify directly the target tapes or tapepools, but we can use
     [r 1.4,2006-05-29,felixehm] the information stored in the service classes.
-    [r 1.4,2006-05-29,felixehm] 
+    [r 1.4,2006-05-29,felixehm]
     [r 1.4,2006-05-29,felixehm] By default, the files are written to the tapepool belonging to the repack
     [r 1.4,2006-05-29,felixehm] service class specified in the castor config file.
   * CASTOR2/castor/db/ora/OraRepackRequestCnv.hpp:
     [r 1.5,2006-08-01,gtaur] new way to handle exceptions to recove the db connection
     [r 1.4,2006-05-29,felixehm] Changed field pool->serviceclass name.
-    [r 1.4,2006-05-29,felixehm] 
+    [r 1.4,2006-05-29,felixehm]
     [r 1.4,2006-05-29,felixehm] This is the service class to where the file have to be written to. It is not
     [r 1.4,2006-05-29,felixehm] possible to specify directly the target tapes or tapepools, but we can use
     [r 1.4,2006-05-29,felixehm] the information stored in the service classes.
-    [r 1.4,2006-05-29,felixehm] 
+    [r 1.4,2006-05-29,felixehm]
     [r 1.4,2006-05-29,felixehm] By default, the files are written to the tapepool belonging to the repack
     [r 1.4,2006-05-29,felixehm] service class specified in the castor config file.
   * CASTOR2/castor/db/ora/OraRepackSegmentCnv.cpp:
@@ -4606,7 +4612,7 @@ castor (2.1.1-0) unstable; urgency=low
     [r1.12,2006-08-11,felixehm] removed method checkExistingTapeCopy
     [r1.11,2006-08-07,felixehm] modified checkFileForRepack SQL Statement: the subrequest is archived when
     [r1.11,2006-08-07,felixehm] statement was successfull.
-    [r1.11,2006-08-07,felixehm] 
+    [r1.11,2006-08-07,felixehm]
     [r1.11,2006-08-07,felixehm] added method checkExistingTapeCopy:
     [r1.11,2006-08-07,felixehm] used in migration part (MigHunter), when TapeCopies are added to Streams
     [r1.11,2006-08-07,felixehm] to ensure to have 2 TapeCopies on one tape.
@@ -4614,7 +4620,7 @@ castor (2.1.1-0) unstable; urgency=low
     [r 1.6,2006-08-11,felixehm] removed method checkExistingTapeCopy
     [r 1.5,2006-08-07,felixehm] modified checkFileForRepack SQL Statement: the subrequest is archived when
     [r 1.5,2006-08-07,felixehm] statement was successfull.
-    [r 1.5,2006-08-07,felixehm] 
+    [r 1.5,2006-08-07,felixehm]
     [r 1.5,2006-08-07,felixehm] added method checkExistingTapeCopy:
     [r 1.5,2006-08-07,felixehm] used in migration part (MigHunter), when TapeCopies are added to Streams
     [r 1.5,2006-08-07,felixehm] to ensure to have 2 TapeCopies on one tape.
@@ -4673,21 +4679,21 @@ castor (2.1.1-0) unstable; urgency=low
     [r 1.7,2006-09-06,felixehm] added pool name for repacking tape pools
     [r 1.6,2006-08-18,gtaur] modifications done to deal with the new response.
     [r 1.4,2006-05-29,felixehm] Changed field pool->serviceclass name.
-    [r 1.4,2006-05-29,felixehm] 
+    [r 1.4,2006-05-29,felixehm]
     [r 1.4,2006-05-29,felixehm] This is the service class to where the file have to be written to. It is not
     [r 1.4,2006-05-29,felixehm] possible to specify directly the target tapes or tapepools, but we can use
     [r 1.4,2006-05-29,felixehm] the information stored in the service classes.
-    [r 1.4,2006-05-29,felixehm] 
+    [r 1.4,2006-05-29,felixehm]
     [r 1.4,2006-05-29,felixehm] By default, the files are written to the tapepool belonging to the repack
     [r 1.4,2006-05-29,felixehm] service class specified in the castor config file.
   * CASTOR2/castor/io/StreamRepackRequestCnv.hpp:
     [r 1.6,2006-08-18,gtaur] modifications done to deal with the new response.
     [r 1.4,2006-05-29,felixehm] Changed field pool->serviceclass name.
-    [r 1.4,2006-05-29,felixehm] 
+    [r 1.4,2006-05-29,felixehm]
     [r 1.4,2006-05-29,felixehm] This is the service class to where the file have to be written to. It is not
     [r 1.4,2006-05-29,felixehm] possible to specify directly the target tapes or tapepools, but we can use
     [r 1.4,2006-05-29,felixehm] the information stored in the service classes.
-    [r 1.4,2006-05-29,felixehm] 
+    [r 1.4,2006-05-29,felixehm]
     [r 1.4,2006-05-29,felixehm] By default, the files are written to the tapepool belonging to the repack
     [r 1.4,2006-05-29,felixehm] service class specified in the castor config file.
   * CASTOR2/castor/io/StreamRepackSubRequestCnv.cpp:
@@ -4732,16 +4738,16 @@ castor (2.1.1-0) unstable; urgency=low
     [r1.15,2006-06-02,felixehm] method to put subrequests in archived state
     [r1.15,2006-06-02,felixehm] method which is used internally by getSubRequests and getSubRequestsStatus
     [r1.15,2006-06-02,felixehm] avoid of redundant code)
-    [r1.15,2006-06-02,felixehm] 
+    [r1.15,2006-06-02,felixehm]
     [r1.15,2006-06-02,felixehm] changed sql statements:
     [r1.15,2006-06-02,felixehm] Added locking whenever a request or subrequest is to be
     [r1.15,2006-06-02,felixehm] fetched due to complete crashes of the server.
-    [r1.15,2006-06-02,felixehm] 
+    [r1.15,2006-06-02,felixehm]
     [r1.15,2006-06-02,felixehm] getSubRequest returns now a full Object
     [r1.15,2006-06-02,felixehm] filled with RepackRequest and Segments)
-    [r1.15,2006-06-02,felixehm] 
+    [r1.15,2006-06-02,felixehm]
     [r1.15,2006-06-02,felixehm] fixed some mem leaks
-    [r1.15,2006-06-02,felixehm] 
+    [r1.15,2006-06-02,felixehm]
     [r1.15,2006-06-02,felixehm] future use: added method for checking a specific TapeCopy
     [r1.15,2006-06-02,felixehm] used, to avoid double entry for same tapecopy. (repacking one
     [r1.15,2006-06-02,felixehm] file is allowed as long as it is another tapecopy)
@@ -4763,16 +4769,16 @@ castor (2.1.1-0) unstable; urgency=low
     [r1.11,2006-06-02,felixehm] method to put subrequests in archived state
     [r1.11,2006-06-02,felixehm] method which is used internally by getSubRequests and getSubRequestsStatus
     [r1.11,2006-06-02,felixehm] avoid of redundant code)
-    [r1.11,2006-06-02,felixehm] 
+    [r1.11,2006-06-02,felixehm]
     [r1.11,2006-06-02,felixehm] changed sql statements:
     [r1.11,2006-06-02,felixehm] Added locking whenever a request or subrequest is to be
     [r1.11,2006-06-02,felixehm] fetched due to complete crashes of the server.
-    [r1.11,2006-06-02,felixehm] 
+    [r1.11,2006-06-02,felixehm]
     [r1.11,2006-06-02,felixehm] getSubRequest returns now a full Object
     [r1.11,2006-06-02,felixehm] filled with RepackRequest and Segments)
-    [r1.11,2006-06-02,felixehm] 
+    [r1.11,2006-06-02,felixehm]
     [r1.11,2006-06-02,felixehm] fixed some mem leaks
-    [r1.11,2006-06-02,felixehm] 
+    [r1.11,2006-06-02,felixehm]
     [r1.11,2006-06-02,felixehm] future use: added method for checking a specific TapeCopy
     [r1.11,2006-06-02,felixehm] used, to avoid double entry for same tapecopy. (repacking one
     [r1.11,2006-06-02,felixehm] file is allowed as long as it is another tapecopy)
@@ -4826,22 +4832,22 @@ castor (2.1.1-0) unstable; urgency=low
   * CASTOR2/castor/repack/RepackClient.cpp:
     [r1.16,2006-08-07,felixehm] changed status output with proper shown time
     [r1.15,2006-07-04,felixehm] added new restart command. This causes the repack process to start again (the stager request is send again);
-    [r1.15,2006-07-04,felixehm] 
+    [r1.15,2006-07-04,felixehm]
     [r1.15,2006-07-04,felixehm] added check: the user is questioned in case no service class is given.
     [r1.15,2006-07-04,felixehm] believe me: thats important! )
     [r1.14,2006-06-02,felixehm] added new functionality:
     [r1.14,2006-06-02,felixehm] user can now specify a target service class (thereby also a certain target tapepool).
-    [r1.14,2006-06-02,felixehm] 
+    [r1.14,2006-06-02,felixehm]
     [r1.14,2006-06-02,felixehm] improved the handling of the output.
     [r1.13,2006-05-22,felixehm] Changed the output to show the stats for a repack process
   * CASTOR2/castor/repack/RepackClient.hpp:
     [r1.10,2006-06-02,felixehm] added new functionality:
     [r1.10,2006-06-02,felixehm] user can now specify a target service class (thereby also a certain target tapepool).
-    [r1.10,2006-06-02,felixehm] 
+    [r1.10,2006-06-02,felixehm]
     [r1.10,2006-06-02,felixehm] improved the handling of the output.
   * CASTOR2/castor/repack/RepackCommonHeader.hpp:
     [r1.12,2006-07-04,felixehm] New header file to separate the command defines.
-    [r1.12,2006-07-04,felixehm] 
+    [r1.12,2006-07-04,felixehm]
     [r1.12,2006-07-04,felixehm] The RepackCommonHeader is also used to create the Magic Numbers List.
     [r1.12,2006-07-04,felixehm] We don't want to have the commands in this list.
     [r1.11,2006-06-02,felixehm] Added new Commands, still some of them are not implemented.
@@ -4862,10 +4868,10 @@ castor (2.1.1-0) unstable; urgency=low
     [r 1.8,2006-06-20,felixehm] The exception from the method fom DatabaseHelper wasn't catched.
     [r 1.7,2006-06-02,felixehm] changed the throwing of exceptions. The stage_files(..) method should not catch exception. Instead of that the caller (run method) catches them. In case of this messages are written to DLF.
     [r 1.6,2006-06-02,felixehm] for staging the service class from the repackrequest is taken, otherwise the standard one from the castor config file is taken from the RepackServer.
-    [r 1.6,2006-06-02,felixehm] 
+    [r 1.6,2006-06-02,felixehm]
     [r 1.6,2006-06-02,felixehm] fixed some memory issues
     [r 1.5,2006-05-22,felixehm] Added pointer to instanciating class (RepackServer)
-    [r 1.5,2006-05-22,felixehm] 
+    [r 1.5,2006-05-22,felixehm]
     [r 1.5,2006-05-22,felixehm] Removed the part for reading the stager information from castor config file
     [r 1.5,2006-05-22,felixehm] now done by server)
     [r 1.4,2006-05-04,felixehm] Added vmgr_modifytape for changing the status of a tape after sending
@@ -4889,27 +4895,27 @@ castor (2.1.1-0) unstable; urgency=low
     [r 1.5,2006-06-20,felixehm] The exception from the method fom DatabaseHelper wasn't catched.
     [r 1.4,2006-06-02,felixehm] added more comments for better understanding
     [r 1.3,2006-05-22,felixehm] Added pointer to instanciating class (RepackServer)
-    [r 1.3,2006-05-22,felixehm] 
+    [r 1.3,2006-05-22,felixehm]
     [r 1.3,2006-05-22,felixehm] Removed the part for reading the stager information from castor config file
     [r 1.3,2006-05-22,felixehm] now done by server)
   * CASTOR2/castor/repack/RepackRequest.cpp:
     [r 1.9,2006-05-29,felixehm] Changed field pool->serviceclass name.
-    [r 1.9,2006-05-29,felixehm] 
+    [r 1.9,2006-05-29,felixehm]
     [r 1.9,2006-05-29,felixehm] This is the service class to where the file have to be written to. It is not
     [r 1.9,2006-05-29,felixehm] possible to specify directly the target tapes or tapepools, but we can use
     [r 1.9,2006-05-29,felixehm] the information stored in the service classes.
-    [r 1.9,2006-05-29,felixehm] 
+    [r 1.9,2006-05-29,felixehm]
     [r 1.9,2006-05-29,felixehm] By default, the files are written to the tapepool belonging to the repack
     [r 1.9,2006-05-29,felixehm] service class specified in the castor config file.
     [r1.12,2006-09-06,felixehm] added field pool name for tape pool repacking
     [r1.11,2006-08-18,gtaur] try for response modifications
   * CASTOR2/castor/repack/RepackRequest.hpp:
     [r 1.9,2006-05-29,felixehm] Changed field pool->serviceclass name.
-    [r 1.9,2006-05-29,felixehm] 
+    [r 1.9,2006-05-29,felixehm]
     [r 1.9,2006-05-29,felixehm] This is the service class to where the file have to be written to. It is not
     [r 1.9,2006-05-29,felixehm] possible to specify directly the target tapes or tapepools, but we can use
     [r 1.9,2006-05-29,felixehm] the information stored in the service classes.
-    [r 1.9,2006-05-29,felixehm] 
+    [r 1.9,2006-05-29,felixehm]
     [r 1.9,2006-05-29,felixehm] By default, the files are written to the tapepool belonging to the repack
     [r 1.9,2006-05-29,felixehm] service class specified in the castor config file.
     [r1.12,2006-09-06,felixehm] added field pool name for tape pool repacking
@@ -4967,14 +4973,14 @@ castor (2.1.1-0) unstable; urgency=low
     [r1.19,2006-07-04,felixehm] Added function : restart of a repack process. Still this is not the optimum solution , because this just triggers the repack system to send the same StagePrepareToGet request again.
     [r1.19,2006-07-04,felixehm] So there will be 2 Subrequests for one file. One is waiting for the other one to be finished.
     [r1.19,2006-07-04,felixehm] Until now this is only available for debugging and test purpose.
-    [r1.19,2006-07-04,felixehm] 
+    [r1.19,2006-07-04,felixehm]
     [r1.19,2006-07-04,felixehm] future : the stage_abort request should be used to restart the preparetoget request)
     [r1.18,2006-06-20,felixehm] Changed method call for get SubRequestByVid(). Now it is possible to specify, whether the fetched object has to be filled with its segments or not. We need this for remove  as well as to find a tape. But in the case of removal, we need the segments.
     [r1.17,2006-06-02,felixehm] new functionality:
     [r1.17,2006-06-02,felixehm] archive finished repack processes
-    [r1.17,2006-06-02,felixehm] 
+    [r1.17,2006-06-02,felixehm]
     [r1.17,2006-06-02,felixehm] the removeRequest (command sent by user) method, now doesn't delete the subrequest direktly, but changes the status into READYFORCLEANUP, so that the RepackCleaner can remove the process.
-    [r1.17,2006-06-02,felixehm] 
+    [r1.17,2006-06-02,felixehm]
     [r1.17,2006-06-02,felixehm] getStatus(..) now sends also the RepackRequest corresponding
     [r1.17,2006-06-02,felixehm] to the queried RepackSubRequest.This means more details for the status.
     [r1.16,2006-05-22,felixehm] The Repack Monitor Service. It queries the stager for the files, with are on
@@ -4988,13 +4994,13 @@ castor (2.1.1-0) unstable; urgency=low
     [r1.15,2006-07-04,felixehm] Added function : restart of a repack process. Still this is not the optimum solution , because this just triggers the repack system to send the same StagePrepareToGet request again.
     [r1.15,2006-07-04,felixehm] So there will be 2 Subrequests for one file. One is waiting for the other one to be finished.
     [r1.15,2006-07-04,felixehm] Until now this is only available for debugging and test purpose.
-    [r1.15,2006-07-04,felixehm] 
+    [r1.15,2006-07-04,felixehm]
     [r1.15,2006-07-04,felixehm] future : the stage_abort request should be used to restart the preparetoget request)
     [r1.14,2006-06-02,felixehm] new functionality:
     [r1.14,2006-06-02,felixehm] archive finished repack processes
-    [r1.14,2006-06-02,felixehm] 
+    [r1.14,2006-06-02,felixehm]
     [r1.14,2006-06-02,felixehm] the removeRequest (command sent by user) method, now doesn't delete the subrequest direktly, but changes the status into READYFORCLEANUP, so that the RepackCleaner can remove the process.
-    [r1.14,2006-06-02,felixehm] 
+    [r1.14,2006-06-02,felixehm]
     [r1.14,2006-06-02,felixehm] getStatus(..) now sends also the RepackRequest corresponding
     [r1.14,2006-06-02,felixehm] to the queried RepackSubRequest.This means more details for the status.
     [r1.13,2006-05-22,felixehm] The Repack Monitor Service. It queries the stager for the files, with are on
@@ -5133,7 +5139,7 @@ castor (2.1.1-0) unstable; urgency=low
     [r 1.4,2006-08-07,felixehm] fixed wrong definition of struct Cstager_Stream
     [r 1.3,2006-08-07,felixehm] modified checkFileForRepack SQL Statement: the subrequest is archived when
     [r 1.3,2006-08-07,felixehm] statement was successfull.
-    [r 1.3,2006-08-07,felixehm] 
+    [r 1.3,2006-08-07,felixehm]
     [r 1.3,2006-08-07,felixehm] added method checkExistingTapeCopy:
     [r 1.3,2006-08-07,felixehm] used in migration part (MigHunter), when TapeCopies are added to Streams
     [r 1.3,2006-08-07,felixehm] to ensure to have 2 TapeCopies on one tape.
@@ -5144,7 +5150,7 @@ castor (2.1.1-0) unstable; urgency=low
     [r 1.4,2006-08-11,felixehm] removed method checkExistingTapeCopy
     [r 1.3,2006-08-07,felixehm] modified checkFileForRepack SQL Statement: the subrequest is archived when
     [r 1.3,2006-08-07,felixehm] statement was successfull.
-    [r 1.3,2006-08-07,felixehm] 
+    [r 1.3,2006-08-07,felixehm]
     [r 1.3,2006-08-07,felixehm] added method checkExistingTapeCopy:
     [r 1.3,2006-08-07,felixehm] used in migration part (MigHunter), when TapeCopies are added to Streams
     [r 1.3,2006-08-07,felixehm] to ensure to have 2 TapeCopies on one tape.
@@ -5441,14 +5447,14 @@ castor (2.1.1-0) unstable; urgency=low
     [r 1.3,2006-05-11,felixehm] This is used for the repack process. A file is removed from a tape and written
     [r 1.3,2006-05-11,felixehm] to a another one. In this case, we would like to keep the old tapecopy number
     [r 1.3,2006-05-11,felixehm] and set it to the new segment tapecopy.
-    [r 1.3,2006-05-11,felixehm] 
+    [r 1.3,2006-05-11,felixehm]
     [r 1.3,2006-05-11,felixehm] Note, that the old segments of that tapecopy are removed from the NS database.
   * CASTOR2/h/Cns_api.h:
     [r 1.5,2006-05-11,felixehm] Added new function for replacing a tapecopy for a file.
     [r 1.5,2006-05-11,felixehm] This is used for the repack process. A file is removed from a tape and written
     [r 1.5,2006-05-11,felixehm] to a another one. In this case, we would like to keep the old tapecopy number
     [r 1.5,2006-05-11,felixehm] and set it to the new segment tapecopy.
-    [r 1.5,2006-05-11,felixehm] 
+    [r 1.5,2006-05-11,felixehm]
     [r 1.5,2006-05-11,felixehm] Note, that the old segments of that tapecopy are removed from the NS database.
   * CASTOR2/h/Cns_server.h:
     [r 1.7,2006-05-15,felixehm] Added new function to retrieve all segments for one tapecopy.
@@ -5499,14 +5505,14 @@ castor (2.1.1-0) unstable; urgency=low
     [r 1.4,2006-05-11,felixehm] This is used for the repack process. A file is removed from a tape and written
     [r 1.4,2006-05-11,felixehm] to a another one. In this case, we would like to keep the old tapecopy number
     [r 1.4,2006-05-11,felixehm] and set it to the new segment tapecopy.
-    [r 1.4,2006-05-11,felixehm] 
+    [r 1.4,2006-05-11,felixehm]
     [r 1.4,2006-05-11,felixehm] Note, that the old segments of that tapecopy are removed from the NS database.
   * CASTOR2/ns/Cns_main.c:
     [r1.14,2006-05-11,felixehm] Added new function for replacing a tapecopy for a file.
     [r1.14,2006-05-11,felixehm] This is used for the repack process. A file is removed from a tape and written
     [r1.14,2006-05-11,felixehm] to a another one. In this case, we would like to keep the old tapecopy number
     [r1.14,2006-05-11,felixehm] and set it to the new segment tapecopy.
-    [r1.14,2006-05-11,felixehm] 
+    [r1.14,2006-05-11,felixehm]
     [r1.14,2006-05-11,felixehm] Note, that the old segments of that tapecopy are removed from the NS database.
   * CASTOR2/ns/Cns_oracle_ifce.pc:
     [r 1.3,2006-05-15,felixehm] Added new function to retrieve all segments for one tapecopy.
@@ -5526,18 +5532,18 @@ castor (2.1.1-0) unstable; urgency=low
     [r 1.5,2006-05-11,felixehm] This is used for the repack process. A file is removed from a tape and written
     [r 1.5,2006-05-11,felixehm] to a another one. In this case, we would like to keep the old tapecopy number
     [r 1.5,2006-05-11,felixehm] and set it to the new segment tapecopy.
-    [r 1.5,2006-05-11,felixehm] 
+    [r 1.5,2006-05-11,felixehm]
     [r 1.5,2006-05-11,felixehm] Note, that the old segments of that tapecopy are removed from the NS database.
   * CASTOR2/ns/Imakefile:
     [r 1.7,2006-05-11,felixehm] Added new function for replacing a tapecopy for a file.
     [r 1.7,2006-05-11,felixehm] This is used for the repack process. A file is removed from a tape and written
     [r 1.7,2006-05-11,felixehm] to a another one. In this case, we would like to keep the old tapecopy number
     [r 1.7,2006-05-11,felixehm] and set it to the new segment tapecopy.
-    [r 1.7,2006-05-11,felixehm] 
+    [r 1.7,2006-05-11,felixehm]
     [r 1.7,2006-05-11,felixehm] Note, that the old segments of that tapecopy are removed from the NS database.
   * CASTOR2/resourcemonitoring/Crmd_recv_from_maui.c:
     [r1.53,2006-09-04,kotlyar] added implementation for Maui scheduler:
-    [r1.53,2006-09-04,kotlyar] 
+    [r1.53,2006-09-04,kotlyar]
     [r1.53,2006-09-04,kotlyar] defined WIKI_1_1 means to use wiki 1.1 protocol between rmmaster and scheduler;
     [r1.53,2006-09-04,kotlyar] for wiki 1.1 all filesystems are converted into node/filesystem presentation and a node information
     [r1.53,2006-09-04,kotlyar] is duplicated if it has several file systems except the information about a local disk;
@@ -5636,15 +5642,15 @@ castor (2.1.1-0) unstable; urgency=low
     [r1.286,2006-08-02,felixehm] in fact an extraction from putDoneFunc. It creates a specified number
     [r1.286,2006-08-02,felixehm] of tapecopies for a diskcopy in STAGEOUT. This number is passed as a
     [r1.286,2006-08-02,felixehm] parameter.
-    [r1.286,2006-08-02,felixehm] 
+    [r1.286,2006-08-02,felixehm]
     [r1.286,2006-08-02,felixehm] Changed fileRecalled:
     [r1.286,2006-08-02,felixehm] Whenever a file is recalled its repackvid in the subrequest is checked and
     [r1.286,2006-08-02,felixehm] for each found 'repack-subrequest' for this file the number of tapecopies
     [r1.286,2006-08-02,felixehm] are created. Only subrequest in WAITTAPERECALL,WAITSUBREQ and READY are
     [r1.286,2006-08-02,felixehm] considered. This is neccessary for >1 tapecopy repacking (otherwise only
     [r1.286,2006-08-02,felixehm] one tapecopy is created for the migration).
-    [r1.286,2006-08-02,felixehm] 
-    [r1.286,2006-08-02,felixehm] 
+    [r1.286,2006-08-02,felixehm]
+    [r1.286,2006-08-02,felixehm]
     [r1.286,2006-08-02,felixehm] Changed putDoneFunc:
     [r1.286,2006-08-02,felixehm] Reduced by the extracted part now in internalputDoneFunc
     [r1.285,2006-08-02,sponcec3] Fixed the cleaning of the DiskCopy in case of put failure. This was leading to orphaned DiskCopies
@@ -5693,13 +5699,13 @@ castor (2.1.1-0) unstable; urgency=low
     [r1.265,2006-05-11,felixehm] whenever a file is staged in as a repack request (the new subrequest field
     [r1.265,2006-05-11,felixehm] repackvid is set with the origin tape), the diskcopy status is
     [r1.265,2006-05-11,felixehm] directly put into CANBEMIGRATED.
-    
+
  -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Mon, 12 Sep 2006 13:00:00 +0200
 
 castor (2.1.0-8) unstable; urgency=low
 
   * identical to the 2.1.0-7 but with some more bugs fixed
-  
+
   * rfio/rfcp.c free cleanInp and cleanOut are commented, they should be
     properly set.
 
@@ -5707,11 +5713,11 @@ castor (2.1.0-8) unstable; urgency=low
 
 castor (2.1.0-7) unstable; urgency=low
 
-  * identical to the 2.1.0-6 but with some more bugs fixed 
-  
+  * identical to the 2.1.0-6 but with some more bugs fixed
+
   * castor/io/ServerSocket.cpp
   Random port in bind() to wait the answer from the stager. Port with limited values...
-  
+
   * rfio/RfioTURL.c
   Removed memory leak in Rfio
 
@@ -5719,45 +5725,45 @@ castor (2.1.0-7) unstable; urgency=low
 
 castor (2.1.0-6) unstable; urgency=low
 
-  * identical to the 2.1.0-5 but with some more bugs fixed 
-  
+  * identical to the 2.1.0-5 but with some more bugs fixed
+
   * stager/stager_client_api_query.cpp
   Handle the case of a simple 'Response' instead of a FileQryResponse. This could happen in case of error
-  
+
   * hsmtools/diskServer_qry
   Added CF.lastKnownFileName as a result of diskServer_qry
-  
+
   * hsmtools/diskServer_qry.man
-  
+
   * tape/mircheck.c
-  
+
   * tape/mounttape.c
-  
-  * tape/rlstape.c 
-  
-  * tape/rbtsubr.c 
-  
-  * tape/smcsubr2.c  
+
+  * tape/rlstape.c
+
+  * tape/rbtsubr.c
+
+  * tape/smcsubr2.c
   Mir valid/invalid checking on IBM3592E05 tape drives, new IBM3592E05 firmware release (172E) fixed problem seen before.Connection reset messages from rmc are just sent to msgdaemon after 2 retries. Rmcdaemon now checks if tape is in the storage slot before returning dismount OK.
-  
+
   * castor/db/oracleTrailer.sql
   Fix mistake in updateFiles2Delete
-  
+
   * castor/client/BaseClient.cpp
   Handle properly exceptions in sendRequest and especially release memory and close the socket
-  
+
   * stager/stager_db_service.c
   Fixed missing filling of the svcclass of a castorfile in memory. The consequence was that the svcclass could be overwritten in case of reuse of a castorfile in 2 different service classes
-  
+
  -- rosa maria garcia rioja <riojac3@localhost.localdomain>  Mon,   7 Aug 2006 0:00:00 +0200
 
 castor (2.1.0-5) unstable; urgency=low
 
-  * identical to the 2.1.0-4 but with some more bugs fixed 
+  * identical to the 2.1.0-4 but with some more bugs fixed
 
   * castor/db/ora/OraGCSvc.cpp
-    Fixed some deadlock between the GC and the updateFsFileClosed PL/SQL function  
-  * castor/db/ora/oracleTrailer.sql 
+    Fixed some deadlock between the GC and the updateFsFileClosed PL/SQL function
+  * castor/db/ora/oracleTrailer.sql
     Fixed some deadlock between the GC and the updateFsFileClosed PL/SQL function
   * debian/cleaning.init
     Fixed missing chkconfig line
@@ -5778,7 +5784,7 @@ castor (2.1.0-5) unstable; urgency=low
 
 castor (2.1.0-4) unstable; urgency=low
 
-  * identical to the 2.1.0-3 but with some more bugs fixed 
+  * identical to the 2.1.0-3 but with some more bugs fixed
 
   * rfio/rfcp.c
   * rfio/rfcat.man
@@ -5804,7 +5810,7 @@ castor (2.1.0-4) unstable; urgency=low
   * tape/mounttape.c
   * tape/rlstape.c
   * tape/Imakefile
-  
+
  -- rosa maria garcia rioja <riojac3@localhost.localdomain>  Wed,  5 Jul 2006 17:07:14 +0200
 
 castor (2.1.0-3) unstable; urgency=low
@@ -5813,7 +5819,7 @@ castor (2.1.0-3) unstable; urgency=low
 
   * debian/rtcpclientd.init
   * CASTOR.spec
-  * rfio/RfioTURL.c 
+  * rfio/RfioTURL.c
   * rfio/rfcp.c
   * upgrades/2.1.0-0_to_2.1.0-3.sqlplus
   * upgrades/2.1.0-0_to_2.1.0-3.sql
@@ -5824,7 +5830,7 @@ castor (2.1.0-3) unstable; urgency=low
   * castor/db/oracleTrailer.sql
   * tape/mircheck.c
   * tape/mounttape.c
-  
+
  -- rosa maria garcia rioja <riojac3@localhost.localdomain>  Tue, 13 Jun 2006 11:30:52 +0200
 
 castor (2.1.0-2) unstable; urgency=low
@@ -5833,7 +5839,7 @@ castor (2.1.0-2) unstable; urgency=low
     * CASTOR2/tape/getcompstat.c:
         [r1.20,2006-05-24,hcacote] Add T10000 device when
 	decoding the sequential device page
-	
+
  -- rosa maria garcia rioja <rioja@cern.ch>  Wed, 31 May 2006 18:44:59 +0200
 
 castor (2.1.0-1) unstable; urgency=low
@@ -6161,7 +6167,7 @@ castor (2.0.3-4) unstable; urgency=low
     [r 1.2,2006-03-10,felixehm] Since I added a new Attribute in the Stager SubRequest (isRepack), the stage api should not be
     [r 1.2,2006-03-10,felixehm] changed. This option would then also be accessable for normal users, which we don't like.
     [r 1.2,2006-03-10,felixehm] So, the Requets is created with the option isrepack set to true.
-    [r 1.2,2006-03-10,felixehm] 
+    [r 1.2,2006-03-10,felixehm]
     [r 1.2,2006-03-10,felixehm] This option would put the file in STAGEOUT and not (like the normal preparetoget request into STAGED).
     [r 1.2,2006-03-10,felixehm] Then we can use putdone from thge api to migrate the files.
   * CASTOR2/castor/repack/RepackServer.cpp:
@@ -6296,7 +6302,7 @@ castor (2.0.3-2) unstable; urgency=low
   * PROTO2/shlib/makeshlib.sh:
     [r 1.4,2006-03-02,itglp] Fixed rule to make install shared libraries with correct versioning.
   * CASTOR/tape/wrttpmrk.c:
-    [r 1.6,2006-03-09,hcacote] 
+    [r 1.6,2006-03-09,hcacote]
     [r 1.6,2006-03-09,hcacote] write filemark controlled by entry in castor.conf default immediate bit off
   * PROTO2/test/security/Csec_client.c:
     [r 1.5,2006-03-07,lopic3] 0 instead of delegation flag
@@ -6343,11 +6349,11 @@ castor (2.0.3-1) unstable; urgency=low
   * PROTO2/castor/repack/RepackClient.cpp:
     [r 1.9,2006-02-17,felixehm] the Repack port is now hard-coded, but still changeable in enviroment
     [r1.10,2006-02-23,felixehm] added new functionality: remove a running repack Request
-    [r1.10,2006-02-23,felixehm] 
+    [r1.10,2006-02-23,felixehm]
     [r1.10,2006-02-23,felixehm] added little helper method to add the given tapes to the subrequest
   * PROTO2/castor/repack/RepackClient.hpp:
     [r 1.7,2006-02-23,felixehm] added new functionality: remove a running repack Request
-    [r 1.7,2006-02-23,felixehm] 
+    [r 1.7,2006-02-23,felixehm]
     [r 1.7,2006-02-23,felixehm] added little helper method to add the given tapes to the subrequest
   * PROTO2/castor/repack/RepackCommonHeader.hpp:
     [r 1.7,2006-02-23,felixehm] added RepackCommands.
@@ -6528,10 +6534,10 @@ castor (2.0.3-0) unstable; urgency=low
     [2006-02-14,felixehm] removed mem leak for m_ns
     [2006-02-14,felixehm] Added the initialisation of the m_ns (nameserver var) by castor config file
     [2006-02-14,felixehm] Added cuuid for message follow
-    [2006-02-14,felixehm] 
+    [2006-02-14,felixehm]
     [2006-02-14,felixehm] very important : not parent_fileid, but fileid is the correct one!!
     [2006-02-14,felixehm] more information is stored with the segment
-    [2006-02-14,felixehm] 
+    [2006-02-14,felixehm]
     [2006-02-14,felixehm] and last but not least, DLF
     [2006-02-03,felixehm] Experimental version for finding error during update in db.
     [2006-02-03,felixehm] two connections are opened, this cause a lock.
@@ -6541,9 +6547,9 @@ castor (2.0.3-0) unstable; urgency=low
   * PROTO2/castor/repack/FileOrganizer.hpp:
     [2006-02-14,felixehm] added cuuid information
     [2006-02-14,felixehm] storing request in to DB AFTER stage_command
-    [2006-02-14,felixehm] 
+    [2006-02-14,felixehm]
     [2006-02-14,felixehm] stages file
-    [2006-02-14,felixehm] 
+    [2006-02-14,felixehm]
     [2006-02-14,felixehm] removed mistake for putting filenames into stager_request
     [2006-02-14,felixehm] filehelper is now dynamically
     [2006-02-07,felixehm] Added new Messages for DLF
@@ -6575,7 +6581,7 @@ castor (2.0.3-0) unstable; urgency=low
   * PROTO2/castor/repack/RepackServer.hpp:
     [2006-02-14,felixehm] now the port is in repack namespace
     [2006-02-07,felixehm] Added new Messages
-    [2006-02-07,felixehm] 
+    [2006-02-07,felixehm]
     [2006-02-07,felixehm] Test with new ListenerThread runs successfully. Former version of ListenerThreadPool
     [2006-02-07,felixehm] was not created properly (blocked the main process)
     [2006-02-03,felixehm] Experimental version for finding error during update in db.
@@ -7019,7 +7025,7 @@ castor (2.0.2-7) unstable; urgency=low
 castor (2.0.2-6) unstable; urgency=low
 
   * Somehow I've lost this part. Everything is merged in 2.0.2-7
-    
+
  -- Sebastien Ponce <sponcec3@pcitds13>  Wed,  7 Dec 2005 10:??:?? +0100
 
 castor (2.0.2-5) unstable; urgency=low
@@ -7806,7 +7812,7 @@ castor (2.0.1-0) unstable; urgency=low
 	[r1.29,2005-09-15,jdurand] Ugly hack but the problem is architectural: to be able to install somewhere else but in the root filesystem, rules are based on dir/name: constraint, and install in $(DESTDIR)dir/name. Those who construct the value of dir/name is every Imakefile. And they FileName() macro to do that. but we cannot impose FileName() macro to prepend $(DESTDIR) in any case, because FileName() macro is often called several times (i.e. recursively). So, even if the correct solution would be to:
 	[r1.29,2005-09-15,jdurand] change config/Imake.rules to depend on $(DESTDIR)dir/name instead of dir/name:
 	[r1.29,2005-09-15,jdurand] change ALL (repeat: ALL) Imakefiles/Makefiles to use $(DESTDIR), once, as soon as they build a relative path
-	[r1.29,2005-09-15,jdurand] 
+	[r1.29,2005-09-15,jdurand]
 	[r1.29,2005-09-15,jdurand] the quick alternative is to touch every file before the build. This horrible thing will guarantee that packaging CASTOR using a tarball made before CASTOR has been locally installed, will anyway correctly install the newly CASTOR in the packaging install path (typically, i.e. in $(DESTDIR))
   * PROTO2/castor/BaseCnvSvc.cpp:
 	[r1.17,2005-08-23,itglp] Core' files upgraded to manage CDBC API.
@@ -7845,7 +7851,7 @@ castor (2.0.1-0) unstable; urgency=low
 	[r1.13,2005-09-19,sponcec3] Added totalSize field in FileSystem
 	[r1.12,2005-09-15,itglp] Updated scripts due to latest changes in RH.xmi and oracleTrailer.sql.
 	[r1.11,2005-09-01,mbraeger] Added three procedures to oracleTrailer: selectTapeRequestQueue, testMatchTape2TapeDrive, matchTape2TapeDrive
-	[r1.11,2005-09-01,mbraeger] 
+	[r1.11,2005-09-01,mbraeger]
 	[r1.11,2005-09-01,mbraeger] testMatchTape2TapeDrive and  matchTape2TapeDrive are used by OraVdqmSvc::matchTape2TapeDrive
 	[r1.11,2005-09-01,mbraeger] selectTapeRequestQueue is used by OraVdqmSvc::selectTapeRequestQueue
 	[r1.10,2005-08-22,itglp] Updated to the latest changes in RH.xmi
@@ -7995,7 +8001,7 @@ castor (2.0.1-0) unstable; urgency=low
 	[r1.188,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM
 	[r1.188,2005-09-05,mbraeger] server.
 	[r1.187,2005-09-01,mbraeger] Added three procedures to oracleTrailer: selectTapeRequestQueue, testMatchTape2TapeDrive, matchTape2TapeDrive
-	[r1.187,2005-09-01,mbraeger] 
+	[r1.187,2005-09-01,mbraeger]
 	[r1.187,2005-09-01,mbraeger] testMatchTape2TapeDrive and  matchTape2TapeDrive are used by OraVdqmSvc::matchTape2TapeDrive
 	[r1.187,2005-09-01,mbraeger] selectTapeRequestQueue is used by OraVdqmSvc::selectTapeRequestQueue
 	[r1.186,2005-08-12,itglp] Fixed some small bugs
@@ -8569,7 +8575,7 @@ castor (2.0.1-0) unstable; urgency=low
 	[r1.31,2005-09-15,jdurand] Ugly hack but the problem is architectural: to be able to install somewhere else but in the root filesystem, rules are based on dir/name: constraint, and install in $(DESTDIR)dir/name. Those who construct the value of dir/name is every Imakefile. And they FileName() macro to do that. but we cannot impose FileName() macro to prepend $(DESTDIR) in any case, because FileName() macro is often called several times (i.e. recursively). So, even if the correct solution would be to:
 	[r1.31,2005-09-15,jdurand] change config/Imake.rules to depend on $(DESTDIR)dir/name instead of dir/name:
 	[r1.31,2005-09-15,jdurand] change ALL (repeat: ALL) Imakefiles/Makefiles to use $(DESTDIR), once, as soon as they build a relative path
-	[r1.31,2005-09-15,jdurand] 
+	[r1.31,2005-09-15,jdurand]
 	[r1.31,2005-09-15,jdurand] the quick alternative is to touch every file before the build. This horrible thing will guarantee that packaging CASTOR using a tarball made before CASTOR has been locally installed, will anyway correctly install the newly CASTOR in the packaging install path (typically, i.e. in $(DESTDIR))
   * PROTO2/debian/stager.init:
 	[r 1.3,2005-09-13,jdurand] Always redirect kill output to /dev/null (we handle the error afterwards)
@@ -8690,7 +8696,7 @@ castor (2.0.1-0) unstable; urgency=low
 	[r1.29,2005-09-15,jdurand] Ugly hack but the problem is architectural: to be able to install somewhere else but in the root filesystem, rules are based on dir/name: constraint, and install in $(DESTDIR)dir/name. Those who construct the value of dir/name is every Imakefile. And they FileName() macro to do that. but we cannot impose FileName() macro to prepend $(DESTDIR) in any case, because FileName() macro is often called several times (i.e. recursively). So, even if the correct solution would be to:
 	[r1.29,2005-09-15,jdurand] change config/Imake.rules to depend on $(DESTDIR)dir/name instead of dir/name:
 	[r1.29,2005-09-15,jdurand] change ALL (repeat: ALL) Imakefiles/Makefiles to use $(DESTDIR), once, as soon as they build a relative path
-	[r1.29,2005-09-15,jdurand] 
+	[r1.29,2005-09-15,jdurand]
 	[r1.29,2005-09-15,jdurand] the quick alternative is to touch every file before the build. This horrible thing will guarantee that packaging CASTOR using a tarball made before CASTOR has been locally installed, will anyway correctly install the newly CASTOR in the packaging install path (typically, i.e. in $(DESTDIR))
   * PROTO2/castor/BaseCnvSvc.cpp:
 	[r1.17,2005-08-23,itglp] Core' files upgraded to manage CDBC API.
@@ -8729,7 +8735,7 @@ castor (2.0.1-0) unstable; urgency=low
 	[r1.13,2005-09-19,sponcec3] Added totalSize field in FileSystem
 	[r1.12,2005-09-15,itglp] Updated scripts due to latest changes in RH.xmi and oracleTrailer.sql.
 	[r1.11,2005-09-01,mbraeger] Added three procedures to oracleTrailer: selectTapeRequestQueue, testMatchTape2TapeDrive, matchTape2TapeDrive
-	[r1.11,2005-09-01,mbraeger] 
+	[r1.11,2005-09-01,mbraeger]
 	[r1.11,2005-09-01,mbraeger] testMatchTape2TapeDrive and  matchTape2TapeDrive are used by OraVdqmSvc::matchTape2TapeDrive
 	[r1.11,2005-09-01,mbraeger] selectTapeRequestQueue is used by OraVdqmSvc::selectTapeRequestQueue
 	[r1.10,2005-08-22,itglp] Updated to the latest changes in RH.xmi
@@ -8879,7 +8885,7 @@ castor (2.0.1-0) unstable; urgency=low
 	[r1.188,2005-09-05,mbraeger] Implemented the VDQM_GET_VOLQUEUE and VDQM_GET_DRVQUEUE messages, which are needed for the > showqueues-command of the VDQM
 	[r1.188,2005-09-05,mbraeger] server.
 	[r1.187,2005-09-01,mbraeger] Added three procedures to oracleTrailer: selectTapeRequestQueue, testMatchTape2TapeDrive, matchTape2TapeDrive
-	[r1.187,2005-09-01,mbraeger] 
+	[r1.187,2005-09-01,mbraeger]
 	[r1.187,2005-09-01,mbraeger] testMatchTape2TapeDrive and  matchTape2TapeDrive are used by OraVdqmSvc::matchTape2TapeDrive
 	[r1.187,2005-09-01,mbraeger] selectTapeRequestQueue is used by OraVdqmSvc::selectTapeRequestQueue
 	[r1.186,2005-08-12,itglp] Fixed some small bugs
@@ -9453,7 +9459,7 @@ castor (2.0.1-0) unstable; urgency=low
 	[r1.31,2005-09-15,jdurand] Ugly hack but the problem is architectural: to be able to install somewhere else but in the root filesystem, rules are based on dir/name: constraint, and install in $(DESTDIR)dir/name. Those who construct the value of dir/name is every Imakefile. And they FileName() macro to do that. but we cannot impose FileName() macro to prepend $(DESTDIR) in any case, because FileName() macro is often called several times (i.e. recursively). So, even if the correct solution would be to:
 	[r1.31,2005-09-15,jdurand] change config/Imake.rules to depend on $(DESTDIR)dir/name instead of dir/name:
 	[r1.31,2005-09-15,jdurand] change ALL (repeat: ALL) Imakefiles/Makefiles to use $(DESTDIR), once, as soon as they build a relative path
-	[r1.31,2005-09-15,jdurand] 
+	[r1.31,2005-09-15,jdurand]
 	[r1.31,2005-09-15,jdurand] the quick alternative is to touch every file before the build. This horrible thing will guarantee that packaging CASTOR using a tarball made before CASTOR has been locally installed, will anyway correctly install the newly CASTOR in the packaging install path (typically, i.e. in $(DESTDIR))
   * PROTO2/debian/stager.init:
 	[r 1.3,2005-09-13,jdurand] Always redirect kill output to /dev/null (we handle the error afterwards)
@@ -9794,7 +9800,7 @@ castor (2.0.0-45) unstable; urgency=low
   * Bug fix in recreateCastorFile PL/SQL
   * New VDQM improvements
   * Fixed stager_job_service for sending NOTOK IOResponse to client
-  * Fixed stager_fs_service 
+  * Fixed stager_fs_service
 
  -- Sebastien Ponce <sponcec3@pcitds13>  Fri,  1 Jul 2005 16:46:49 +0200
 
@@ -9882,7 +9888,7 @@ castor (2.0.0-36) unstable; urgency=low
 
 castor (2.0.0-35) unstable; urgency=low
 
-  * Added stager mapping 
+  * Added stager mapping
 
  -- Ben Couturier <ben.couturier@cern.ch>  Wed, 26 May 2005 11:00:35 +0200
 
