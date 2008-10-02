@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: template.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/05/05 09:02:08 $ $Author: waldron $
+ * @(#)$RCSfile: template.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/10/02 12:21:31 $ $Author: waldron $
  *
- * This script upgrades a CASTOR vprevRelease database into vnewRelease
+ * This script upgrades a CASTOR vprevRelease DBNAME database into vnewRelease
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -56,9 +56,19 @@ BEGIN
 END;
 
 /* Schema changes go here */
+/**************************/
 
+/* Update and revalidation of PL-SQL code */
+/******************************************/
 
-/* Update and revalidation of all PL-SQL code */
-/**********************************************/
-
-
+/* Recompile all procedures */
+/****************************/
+BEGIN
+  FOR a IN (SELECT object_name, object_type
+              FROM all_objects
+             WHERE object_type = 'PROCEDURE'
+               AND status = 'INVALID')
+  LOOP
+    EXECUTE IMMEDIATE 'ALTER PROCEDURE '||a.object_name||' COMPILE';
+  END LOOP;
+END;
