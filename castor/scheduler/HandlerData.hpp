@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: HandlerData.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/06/27 08:24:06 $ $Author: waldron $
+ * @(#)$RCSfile: HandlerData.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/10/02 12:17:40 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -41,7 +41,7 @@ namespace castor {
      * An object holding the hander data for a single job
      */
     class HandlerData {
-      
+
     public:
 
       /**
@@ -58,7 +58,7 @@ namespace castor {
        */
       HandlerData(void *resreq)
 	throw(castor::exception::Exception);
-      
+
       /**
        * Default destructor
        */
@@ -80,7 +80,7 @@ namespace castor {
       std::string protocol;
 
       /// The expected size of the castor file. For reads this is 0. For disk
-      /// copy replication requests this is the exact size of the file. For 
+      /// copy replication requests this is the exact size of the file. For
       /// writes this is the estimated file size or the default file size as
       /// defined on the service class
       u_signed64 xsize;
@@ -92,11 +92,11 @@ namespace castor {
       /// The name of the service class
       std::string svcClass;
 
-      /// The filesystems requested to fulfil the jobs resource requirements 
+      /// The filesystems requested to fulfil the jobs resource requirements
       /// in the scheduler
       std::string requestedFileSystems;
 
-      /// A tokenized list of requested filesystems 
+      /// A tokenized list of requested filesystems
       std::vector<std::string> rfs;
 
       /// A list of diskservers to exclude
@@ -107,7 +107,7 @@ namespace castor {
 
       /// The type of the request
       int requestType;
-      
+
       /// The name of the source diskserver to be used in a d2d transfer
       std::string sourceDiskServer;
 
@@ -131,6 +131,9 @@ namespace castor {
 
       /// The number of match phases performed by the job
       u_signed64 matches;
+
+      /// The creation time of the handler data
+      u_signed64 creationTime;
 
     };
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: HandlerData.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/06/27 08:24:06 $ $Author: waldron $
+ * @(#)$RCSfile: HandlerData.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/10/02 12:17:40 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -50,7 +50,8 @@ castor::scheduler::HandlerData::HandlerData(void *resreq)
   selectedDiskServer(""),
   selectedFileSystem(""),
   jobId(0),
-  matches(0) {
+  matches(0),
+  creationTime(time(NULL)) {
 
   // Initialize Cns_fileid structure
   memset(&fileId, 0, sizeof(fileId));
@@ -69,8 +70,8 @@ castor::scheduler::HandlerData::HandlerData(void *resreq)
   std::istringstream extsched(msgArray[1]);
   extsched.exceptions((std::ios_base::iostate)(std::ios_base::eofbit ||
 					       std::ios_base::failbit));
-  
-  // Parse the string
+
+  // Parse the stream
   try {
     std::string token, excludedHostsStr;
     std::getline(extsched, token, '=');                // SIZE
@@ -88,21 +89,21 @@ castor::scheduler::HandlerData::HandlerData(void *resreq)
     string2Cuuid(&reqId, (char *)token.c_str());
     std::getline(extsched, token, '=');                // SUBREQUESTID
     std::getline(extsched, jobName, ';');
-    string2Cuuid(&subReqId, (char *)jobName.c_str());   
+    string2Cuuid(&subReqId, (char *)jobName.c_str());
     std::getline(extsched, token, '=');                // OPENFLAGS
     std::getline(extsched, openFlags, ';');
     std::getline(extsched, token, '=');                // FILEID
     extsched >> fileId.fileid;
     std::getline(extsched, token, '=');                // NSHOST
     std::getline(extsched, token, ';');
-    strncpy(fileId.server, (char *)token.c_str(), 
+    strncpy(fileId.server, (char *)token.c_str(),
 	    sizeof(fileId.server));
     std::getline(extsched, token, '=');                // TYPE
     extsched >> requestType;
     std::getline(extsched, token, '=');                // SRCSVCCLASS
     std::getline(extsched, sourceSvcClass, ';');
     std::getline(extsched, token, '=');                // EXCLUDEDHOSTS
-    extsched >> excludedHostsStr;  
+    extsched >> excludedHostsStr;
 
     // Convert the list of requested filesystems into a vector for easier
     // processing later
@@ -110,7 +111,7 @@ castor::scheduler::HandlerData::HandlerData(void *resreq)
       std::istringstream buf(requestedFileSystems);
       buf.exceptions(std::ios_base::failbit);
       try {
-	
+
 	// For StageDiskCopyReplicaRequest's the RFS is actually the source
 	// diskserver and filesystem which holds the copy of the castor file
 	// to be replicated
@@ -122,7 +123,7 @@ castor::scheduler::HandlerData::HandlerData(void *resreq)
 	    std::string diskServer, fileSystem;
 	    std::getline(buf, diskServer, ':');
 	    std::getline(buf, fileSystem, '|');
-	    
+
 	    // We store information in the requested filesystems vector both
 	    // in terms of diskservers and diskserver:filesystem combination
 	    // for search convenience later.
@@ -154,7 +155,7 @@ castor::scheduler::HandlerData::HandlerData(void *resreq)
   } catch (std::ios_base::failure e) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage() << "Unable to parse external scheduler option: "
-		    << "'" << msgArray[1] << "'" << "Error was : " << e.what();
+		    << "'" << msgArray[1] << "' Error was : " << e.what();
     throw ex;
   }
 }

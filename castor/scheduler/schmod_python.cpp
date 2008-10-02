@@ -17,11 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/05/07 14:57:53 $ $Author: waldron $
+ * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/10/02 12:17:40 $ $Author: waldron $
  *
  * Castor LSF External Plugin - Phase 2 (Python)
  *
- * This is the second of two LSF plugins for Castor and should be the very 
+ * This is the second of two LSF plugins for Castor and should be the very
  * last plugin in the lsb.modules list in LSF. Its primary goal is to a select
  * a suitable filesystem where a job could run using python based policies.
  *
@@ -55,13 +55,14 @@ castor::monitoring::ClusterStatus *clusterStatus = 0;
 castor::scheduler::Python *python = 0;
 
 // Configuration options
-std::string notifyDir  = DEFAULT_NOTIFY_DIR;
-std::string policyFile = DEFAULT_POLICY_FILE;
+std::string notifyDir        = DEFAULT_NOTIFY_DIR;
+std::string policyFile       = DEFAULT_POLICY_FILE;
+std::string dynamicPythonLib = DEFAULT_DYNAMIC_PYTHON_LIB;
 
 // Coefficients for the python_update_deltas function
-int jobReadRateCost          = 1000; 
+int jobReadRateCost          = 1000;
 int jobWriteRateCost         = 1000;
-int jobNbReadStreamCost      = 1; 
+int jobNbReadStreamCost      = 1;
 int jobNbReadWriteStreamCost = 1;
 int jobNbWriteStreamCost     = 1;
 
@@ -78,7 +79,7 @@ extern "C" {
 #ifdef SIGXDSZ
     signal(SIGXFSZ, SIG_IGN);
 #endif
-    signal(SIGPIPE, SIG_IGN);    
+    signal(SIGPIPE, SIG_IGN);
 
     // Initialize DLF logging
     try {
@@ -106,17 +107,19 @@ extern "C" {
 	{ -1, "" }};
       castor::dlf::dlf_init("Scheduler", messages);
     } catch (castor::exception::Exception e) {
-      // Ignored. DLF failure is not a reason to halt the module loading
+      // Ignored. DLF failure is not a reason to stop the module loading
     }
-    
+
     // Create the dlf thread for remote server logging. Normally this is done
     // automatically by the BaseDaemon after daemonization. However, as the
-    // plugin does not daemonize we must call the dlf api ourselves
+    // plugin does not daemonize we must call the dlf api ourselves.
     dlf_create_threads(0);
 
     // "LSF plugin initialization started"
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 0, 0, 0);
-    
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Plugin", "schmod_python")};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 0, 1, params);
+
     // Get the value of the SharedLSFResource. The plugin will write job
     // notification files in this directory which will be read/downloaded by
     // the remote execution job in order to instruct the job on which
@@ -126,9 +129,9 @@ extern "C" {
       // "Sched/SharedLSFResource configuration option not defined"
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6, 0, 0);
       return -1;
-    } 
+    }
     notifyDir = value;
-    
+
     // Strip trailing '/' from the notification directory path. This is purely
     // for cosmetic reasons.
     if (notifyDir[notifyDir.length() - 1] == '/') {
@@ -148,7 +151,7 @@ extern "C" {
       castor::dlf::Param params[] =
 	{castor::dlf::Param("Directory", notifyDir),
 	 castor::dlf::Param("Error", strerror(errno))};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 8, 2, params);      
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 8, 2, params);
       return -1;
     }
 
@@ -178,40 +181,42 @@ extern "C" {
       policyFile = value;
     }
 
-    // Load the python library. For python versions < 2.3.4 this step isn't
-    // required. For versions newer then this the library must be dlopen'd
-    // because it doesn't link nicely with shared object libraries.
+    // Load the python library. 
     value = getconfent("Sched", "DynamicPythonLib", 0);
     if (value != NULL) {
-      void *handle = Cdlopen(value, RTLD_NOW | RTLD_GLOBAL);
-      if (handle == NULL) {
-	// "Failed to load python library"
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("DynamicPythonLib", value),
-	   castor::dlf::Param("Error", Cdlerror())};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 14, 2, params);
-	return -1;
-      }
+      dynamicPythonLib = value;
+    }
+    void *handle = Cdlopen(value, RTLD_NOW | RTLD_GLOBAL);
+    if (handle == NULL) {
+      // "Failed to load python library"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("DynamicPythonLib", value),
+	 castor::dlf::Param("Error", Cdlerror())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 14, 2, params);
+      return -1;
     }
 
     // Get pointer to the shared memory
     try {
       bool create = false;
-      clusterStatus = 
+      clusterStatus =
 	castor::monitoring::ClusterStatus::getClusterStatus(create);
     } catch (castor::exception::Exception e) {
       // "Unable to access shared memory"
       castor::dlf::Param params[] =
 	{castor::dlf::Param("Type", sstrerror(e.code())),
-	 castor::dlf::Param("Error", e.getMessage().str())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 1, 2, params);
+	 castor::dlf::Param("Error", e.getMessage().str()),
+	 castor::dlf::Param("Plugin", "shmod_python")};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 1, 3, params);
       return -1;
     }
 
     // Shared memory defined ?
     if (clusterStatus == NULL) {
       // "Shared memory doesn't exist, check the rmMasterDaemon is running"
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 0, 0);
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Plugin", "schmod_python")};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params);
       return -1;
     }
 
@@ -225,7 +230,7 @@ extern "C" {
     //
     // In order for the filesystem ratings to be calculated in the rating
     // thread all service classes associated with a filesystem must be known
-    // in the shared memory in order to apply the correct python policy. 
+    // in the shared memory in order to apply the correct python policy.
     //
     // A filesystem which belongs to service class A only will have 3 rating
     // values (read, write and read-write). A filesystem belonging to service
@@ -237,7 +242,7 @@ extern "C" {
     // which services classes each diskserver and its associated filesystems
     // belong too and create the appropriate data structures in the shared
     // memory to reflect this.
-    
+
     if (lsb_init("schmod_python") < 0) {
       // "Failed to initialise LSF batch library interface"
       castor::dlf::Param params[] =
@@ -246,7 +251,7 @@ extern "C" {
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 2, params);
       return -1;
     }
-    
+
     // Set all rating groups to inactive. If we don't do this then diskservers
     // cannot change from one service class to another without a complete
     // reset/wipe of the shared memory
@@ -262,7 +267,7 @@ extern "C" {
     }
 
     // Query LSF for a list of all host groups and their associated members.
-    // The success of this call is mandatory unlike the previous 
+    // The success of this call is mandatory unlike the previous
     // lsb_openjobinfo call which could be overlooked upon failure
     int enumGrp = 0;
     groupInfoEnt *grpInfo = NULL;
@@ -281,12 +286,12 @@ extern "C" {
 
       // Extract the real group name. The format is groupName<Group>
       std::string hostGroup(grpInfo[i].group);
-      std::string::size_type index = 
+      std::string::size_type index =
 	hostGroup.find_last_of("Group", hostGroup.length());
       if (index == std::string::npos) {
 	continue;   // Group name does not conform to known standards
       }
-      std::string groupName = hostGroup.substr(0, index - 4);      
+      std::string groupName = hostGroup.substr(0, index - 4);
 
       // Loop over all diskservers which are members of this group
       std::istringstream membersList(grpInfo[i].memberList);
@@ -304,13 +309,13 @@ extern "C" {
 	}
 
 	// Loop over all filesystems. Check if the rating group already exists.
-	// If so activate it or create and associate a new rating group with 
+	// If so activate it or create and associate a new rating group with
 	// the filesystem
 	for (castor::monitoring::DiskServerStatus::iterator it2 =
 	       it->second.begin();
 	     it2 != it->second.end();
 	     it2++) {
-	  
+
 	  // Cast normal string into sharedMemory one in order to be able to
 	  // search for it in the fileSystemStatus map.
 	  castor::monitoring::SharedMemoryString *smGroupName =
@@ -320,7 +325,7 @@ extern "C" {
 
 	  if (it3 == it2->second.end()) {
 	    try {
-	      // Here we really have to create a shared memory string, the 
+	      // Here we really have to create a shared memory string, the
 	      // previous cast won't work since we need to allocate memory
 	      castor::monitoring::SharedMemoryString smGName(groupName.c_str());
 	      it2->second.insert
@@ -344,8 +349,9 @@ extern "C" {
     if (handler == NULL) {
       // "Failed to initialize handler plugin"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Error", strerror(errno))};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3, 1, params);      
+	{castor::dlf::Param("Error", strerror(errno)),
+	 castor::dlf::Param("Plugin", "schmod_python")};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3, 2, params);
       return -1;
     }
 
@@ -379,18 +385,19 @@ extern "C" {
     if (Cthread_create((void *(*)(void *))python_rate, NULL) < 0) {
       // "Failed to create the ratings thread to analyse diskserver and
       // filesystem information"
-      castor::dlf::Param params[] = 
+      castor::dlf::Param params[] =
 	{castor::dlf::Param("Error", sstrerror(serrno))};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 11, 1, params);
       return -1;
     }
 
     // "LSF plugin initialization successful"
-    castor::dlf::Param params[] =
+    castor::dlf::Param params2[] =
       {castor::dlf::Param("PolicyFile", policyFile),
        castor::dlf::Param("SharedLSFResource", notifyDir),
-       castor::dlf::Param("PythonVersion", python->version())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 10, 3, params);
+       castor::dlf::Param("PythonVersion", python->version()),
+       castor::dlf::Param("Plugin", "schmod_python")};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 10, 4, params2);
 
     return 0;
   }
@@ -434,10 +441,10 @@ extern "C" {
     }
 
     // Attempt to create a new HandlerData structure for the job
+    castor::scheduler::HandlerData *handler = 0;
     try {
-      castor::scheduler::HandlerData *handler = 
-	new castor::scheduler::HandlerData(resreq);
-      
+      handler = new castor::scheduler::HandlerData(resreq);
+
       // Add the handler data to the internal hash table. But first check that
       // a job with the same name isn't already registered!
       castor::scheduler::HandlerData *it =
@@ -453,14 +460,18 @@ extern "C" {
 				&handler->fileId);
 	delete handler;
 	return -1;
-      } 
+      }
       castor::scheduler::hashTable[handler->jobName.c_str()] = handler;
-      
+
       // Set the key and handler specific data for this resource requirement
       lsb_resreq_setobject(resreq, HANDLER_PYTHON_ID,
 			   (char *)handler->jobName.c_str(),
 			   handler);
     } catch (castor::exception::Exception e) {
+      // Free resources
+      if (handler)
+	delete handler;
+
       // "Failed to parse resource requirements, exiting python_new"
       castor::dlf::Param params[] =
 	{castor::dlf::Param("Type", sstrerror(e.code())),
@@ -468,7 +479,7 @@ extern "C" {
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 13, 2, params);
       return -1;
     }
-    
+
     return 0;
   }
 
@@ -495,8 +506,10 @@ extern "C" {
     // Reset the decision made by the previous run
     handler->selectedDiskServer = "";
     handler->selectedFileSystem = "";
+
+    // Increment the number of matches performed on this job
     handler->matches++;
-    
+
     // Loop over the list of candidate hosts LSF has provided and eliminate
     // those that do not fulfil the necessary requirements. The logic here
     // is almost duplicated from the schmod_shmem plugin but with all the
@@ -549,11 +562,11 @@ extern "C" {
 	    // PRODUCTION
 	    else if ((handler->requestType !=
 		 castor::OBJ_StageDiskCopyReplicaRequest) &&
-		(it3->second.status() != 
+		(it3->second.status() !=
 		 castor::stager::FILESYSTEM_PRODUCTION)) {
 	      continue;
 	    }
-	    
+
 	    // For diskcopy replication requests where the diskserver being
 	    // processed is the source diskserver the diskserver must be in
 	    // PRODUCTION or DRAINING
@@ -561,29 +574,29 @@ extern "C" {
 		      castor::OBJ_StageDiskCopyReplicaRequest) &&
 		     (handler->sourceDiskServer == diskServer)) {
 	      if ((handler->sourceFileSystem == it3->first.c_str()) &&
-		  (it3->second.status() == 
+		  (it3->second.status() ==
 		   castor::stager::FILESYSTEM_DISABLED)) {
 		continue;
 	      }
 	    }
-	    
+
 	    // For all other requests the filesystem must be in PRODUCTION
-	    else if (it3->second.status() != 
+	    else if (it3->second.status() !=
 		     castor::stager::FILESYSTEM_PRODUCTION) {
 	      continue;
 	    }
-	    
+
 	    // Does the filesystem have enough space to accept the job? This
 	    // check does not apply to diskcopy replication requests where
 	    // the source diskserver and filesystem are the ones being
-	    // tested. Why? because the job only reads from the source! 
+	    // tested. Why? because the job only reads from the source!
 	    if ((handler->xsize > 0) &&
 		(!((handler->requestType ==
 		    castor::OBJ_StageDiskCopyReplicaRequest) &&
 		   (handler->sourceDiskServer == diskServer) &&
 		   (handler->sourceFileSystem == it3->first.c_str())))) {
-	      
-	      // Calculate the actual amount of free space left on the 
+
+	      // Calculate the actual amount of free space left on the
 	      // filesystem. To try and minimise the likelihood of writing
 	      // to a full filesystem we also try to take into consideration
 	      // how much the current number of streams will take up on the
@@ -594,9 +607,9 @@ extern "C" {
 					    it3->second.deltaNbWriteStreams() +
 					    it3->second.nbReadWriteStreams() +
 					    it3->second.deltaNbReadWriteStreams());
-	      
+
 	      if (!((actualFreeSpace > (signed64)handler->xsize) &&
-		    (actualFreeSpace > it3->second.minAllowedFreeSpace() * 
+		    (actualFreeSpace > it3->second.minAllowedFreeSpace() *
 		     it3->second.space()))) {
 		continue;
 	      }
@@ -641,12 +654,20 @@ extern "C" {
 
 	      float newWeight = 0.0;
 	      if (handler->openFlags == "r") {
-		newWeight = it4->second.readRating();
+		newWeight = it4->second.readRating() -
+		  it3->second.deltaReadRate() -
+		  it3->second.deltaNbReadStreams();
 	      } else if (handler->openFlags == "w") {
-		newWeight = it4->second.writeRating();
+		newWeight = it4->second.writeRating() -
+		  it3->second.deltaWriteRate() -
+		  it3->second.deltaNbWriteStreams();
 	      } else {
-		newWeight = it4->second.readWriteRating();
+		newWeight = it4->second.readWriteRating() -
+		  it3->second.deltaReadRate() -
+		  it3->second.deltaWriteRate() -
+		  it3->second.deltaNbReadWriteStreams();
 	      }
+
 	      if ((newWeight < 0) && (newWeight > bestWeight)) {
 		handler->selectedDiskServer = diskServer;
 		handler->selectedFileSystem = it3->first.c_str();
@@ -664,10 +685,10 @@ extern "C" {
 	  index++;
 	}
 	free(hInfo);
-      } 
+      }
       candGroupEntry = lsb_cand_getnextgroup(NULL);
     }
-    
+
     // At this point we have made our final decision on which diskserver and
     // filesystem to use so we notify LSF of the result and increase the
     // deltas for our choice in the shared memory
@@ -682,7 +703,7 @@ extern "C" {
 	std::string diskServer = handler->selectedDiskServer;
 	std::string fileSystem = handler->selectedFileSystem;
 	std::string openFlags  = handler->openFlags;
-	
+
 	// Determine if the diskserver should be removed
 	bool remove = false;
 	if ((handler->requestType ==
@@ -695,11 +716,11 @@ extern "C" {
 	    fileSystem = handler->sourceFileSystem;
 	    openFlags  = "r";
 	  }
-	} else if ((handler->selectedDiskServer != hInfo->name) || 
+	} else if ((handler->selectedDiskServer != hInfo->name) ||
 		   (validSource == false)) {
 	  remove = true;
 	}
-	
+
 	if (remove) {
 	  lsb_reason_set(reasonTb, candHost, PEND_HOST_CNOINTEREST);
 	  lsb_cand_removehost(candGroupEntry, index);
@@ -707,7 +728,7 @@ extern "C" {
 	  // This diskserver and filesystem combination is to be kept so we
 	  // update the delta values in the shared memory
 	  python_update_deltas
-	    (diskServer, fileSystem, openFlags, handler->xsize);  
+	    (diskServer, fileSystem, openFlags, handler->xsize);
 	  index++;
 	}
 	free(hInfo);
@@ -722,11 +743,11 @@ extern "C" {
   //---------------------------------------------------------------------------
   // python_update_deltas
   //---------------------------------------------------------------------------
-  void python_update_deltas(std::string diskServer, 
-			    std::string fileSystem, 
+  void python_update_deltas(std::string diskServer,
+			    std::string fileSystem,
 			    std::string openFlags,
 			    u_signed64 fileSize) {
-    
+
     // Find the diskserver
     castor::monitoring::SharedMemoryString *smDiskServer =
       (castor::monitoring::SharedMemoryString *)(&(diskServer));
@@ -761,18 +782,26 @@ extern "C" {
       it->second.setDeltaNbWriteStreams
 	(it->second.deltaNbWriteStreams() + jobNbWriteStreamCost);
       it2->second.setDeltaWriteRate
-	(it2->second.deltaWriteRate()  + jobWriteRateCost);
+	(it2->second.deltaWriteRate() + jobWriteRateCost);
       it2->second.setDeltaNbWriteStreams
-	(it2->second.deltaNbWriteStreams()  + jobNbWriteStreamCost);
+	(it2->second.deltaNbWriteStreams() + jobNbWriteStreamCost);
       it2->second.setDeltaFreeSpace(it2->second.deltaFreeSpace() - fileSize);
-    } else { 
+    } else {
+      it->second.setDeltaWriteRate
+	(it->second.deltaWriteRate() + jobWriteRateCost);
+      it2->second.setDeltaWriteRate
+	(it2->second.deltaWriteRate() + jobWriteRateCost);
+      it->second.setDeltaReadRate
+	(it->second.deltaReadRate() + jobReadRateCost);
+      it2->second.setDeltaReadRate
+	(it2->second.deltaReadRate() + jobReadRateCost);
       it->second.setDeltaNbReadWriteStreams
 	(it->second.deltaNbReadWriteStreams() + jobNbReadWriteStreamCost);
       it2->second.setDeltaNbReadWriteStreams
 	(it2->second.deltaNbReadWriteStreams() + jobNbReadWriteStreamCost);
       it2->second.setDeltaFreeSpace(it2->second.deltaFreeSpace() - fileSize);
     }
-    
+
     // Reset the last time the filesystem was rated. This will force the
     // rating thread to re-evaluate it
     it2->second.setLastRatingUpdate(0);
@@ -789,7 +818,7 @@ extern "C" {
 		    int  notifyFlag) {
 
     // Check parameters
-    if ((info == NULL)  || (job == NULL) || 
+    if ((info == NULL)  || (job == NULL) ||
 	(alloc == NULL) || (allocLimitList == NULL)) {
       return -1;
     }
@@ -816,10 +845,10 @@ extern "C" {
 	{castor::dlf::Param("HashKey", key),
 	 castor::dlf::Param("JobID", j->jobId),
 	 castor::dlf::Param("JobStatus", j->status)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 80, 3, params);      
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 80, 3, params);
       return -1;
     }
-    
+
     // Update the handler with LSF job information
     handler->jobId = j->jobId;
 
@@ -832,14 +861,14 @@ extern "C" {
     // A lack of a diskserver or filesystem is an indication that the job has
     // either already been notified and currently running or the plugin has
     // just been reloaded
-    if ((handler->selectedDiskServer == "") || 
+    if ((handler->selectedDiskServer == "") ||
 	(handler->selectedFileSystem == "")) {
       // "LSF Job already notified, skipping notification phase"
       castor::dlf::Param params[] =
 	{castor::dlf::Param("JobID", handler->jobId),
 	 castor::dlf::Param("JobStatus", j->status),
 	 castor::dlf::Param(handler->subReqId)};
-      castor::dlf::dlf_writep(handler->reqId, DLF_LVL_DEBUG, 35, 3, params, 
+      castor::dlf::dlf_writep(handler->reqId, DLF_LVL_DEBUG, 35, 3, params,
 			      &handler->fileId);
       return 0;
     }
@@ -857,7 +886,7 @@ extern "C" {
 	{castor::dlf::Param("JobID", handler->jobId),
 	 castor::dlf::Param("Filename", handler->notifyFile),
 	 castor::dlf::Param(handler->subReqId)};
-      castor::dlf::dlf_writep(handler->reqId, DLF_LVL_ERROR, 33, 3, params, 
+      castor::dlf::dlf_writep(handler->reqId, DLF_LVL_ERROR, 33, 3, params,
 			      &handler->fileId);
       return -1;
     }
@@ -867,15 +896,15 @@ extern "C" {
     ipath << handler->selectedDiskServer << ":" << handler->selectedFileSystem;
     fin << ipath.str() << std::endl;
     fin.close();
-    
+
     // Calculate statistics. Note the submission time of the job is only
-    // measured to the accuracy of 1 second 
+    // measured to the accuracy of 1 second
     timeval tv;
     gettimeofday(&tv, NULL);
     signed64 queueTime = ((tv.tv_sec - j->submitTime) * 1000000) + tv.tv_usec;
 
     // "Wrote notification file"
-    castor::dlf::Param param[] = 
+    castor::dlf::Param param[] =
       {castor::dlf::Param("JobID", handler->jobId),
        castor::dlf::Param("Filename", handler->notifyFile),
        castor::dlf::Param("OpenFlags", handler->openFlags),
@@ -883,16 +912,16 @@ extern "C" {
        castor::dlf::Param("Matches", handler->matches),
        castor::dlf::Param("Type", castor::ObjectsIdStrings[handler->requestType]),
        castor::dlf::Param("SvcClass", handler->svcClass),
-       castor::dlf::Param("QueueTime", 
+       castor::dlf::Param("QueueTime",
 			  queueTime > 0 ? queueTime * 0.000001 : 0),
        castor::dlf::Param(handler->subReqId)};
-    castor::dlf::dlf_writep(handler->reqId, DLF_LVL_SYSTEM, 34, 9, param, 
+    castor::dlf::dlf_writep(handler->reqId, DLF_LVL_SYSTEM, 34, 9, param,
 			    &handler->fileId);
 
     return 0;
   }
 
-  
+
   //---------------------------------------------------------------------------
   // python_delete
   //---------------------------------------------------------------------------
@@ -907,7 +936,7 @@ extern "C" {
     if (handler->notifyFile != "") {
       unlink(handler->notifyFile.c_str());
     }
-    
+
     // Clean up the internal hash table and release memory
     castor::scheduler::hashTable.erase(handler->jobName.c_str());
     delete handler;
@@ -925,7 +954,7 @@ extern "C" {
     while (1) {
 
       // If we failed to initialise the python embedded interpreter try again.
-      // If we fail sleep for PYINI_THROTTLING seconds so that we don't flood 
+      // If we fail sleep for PYINI_THROTTLING seconds so that we don't flood
       // the log file with error messages
       if (python == NULL) {
 	try {
@@ -948,7 +977,7 @@ extern "C" {
 	     clusterStatus->begin(); it != clusterStatus->end(); it++) {
 
 	// Loop over all filesystems
-	for (castor::monitoring::DiskServerStatus::iterator it2 = 
+	for (castor::monitoring::DiskServerStatus::iterator it2 =
 	       it->second.begin(); it2 != it->second.end(); it2++) {
 
 	  // Do not recalculate the rating of this filesystem unless the
@@ -964,32 +993,32 @@ extern "C" {
 	  python->pySet("FreeSpace", it2->second.freeSpace());
 	  python->pySet("TotalSpace", it2->second.space());
 	  python->pySet("TotalNbFilesystems", (unsigned int)it->second.size());
-	  
+
 	  // The data rate and stream counts for this filesystem only
-	  python->pySet("ReadRate", it2->second.readRate() + 
+	  python->pySet("ReadRate", it2->second.readRate() +
 			it2->second.deltaReadRate());
-	  python->pySet("WriteRate", it2->second.writeRate() + 
+	  python->pySet("WriteRate", it2->second.writeRate() +
 			it2->second.deltaWriteRate());
-	  python->pySet("NbReadStreams", it2->second.nbReadStreams() + 
+	  python->pySet("NbReadStreams", it2->second.nbReadStreams() +
 			it2->second.deltaNbReadStreams());
-	  python->pySet("NbWriteStreams", it2->second.nbWriteStreams() + 
+	  python->pySet("NbWriteStreams", it2->second.nbWriteStreams() +
 			it2->second.deltaNbWriteStreams());
-	  python->pySet("NbReadWriteStreams", it2->second.nbReadWriteStreams() + 
+	  python->pySet("NbReadWriteStreams", it2->second.nbReadWriteStreams() +
 			it2->second.deltaNbReadWriteStreams());
-	  
+
 	  // The total values for data rates and stream counts across
 	  // the whole diskserver i.e. all filesystems
-	  python->pySet("TotalReadRate", it->second.readRate() + 
+	  python->pySet("TotalReadRate", it->second.readRate() +
 			it->second.deltaReadRate());
-	  python->pySet("TotalWriteRate", it->second.writeRate() + 
+	  python->pySet("TotalWriteRate", it->second.writeRate() +
 			it->second.deltaWriteRate());
-	  python->pySet("TotalNbReadStreams", it->second.nbReadStreams() + 
+	  python->pySet("TotalNbReadStreams", it->second.nbReadStreams() +
 			it->second.deltaNbReadStreams());
-	  python->pySet("TotalNbWriteStreams", it->second.nbWriteStreams() + 
+	  python->pySet("TotalNbWriteStreams", it->second.nbWriteStreams() +
 			it->second.deltaNbWriteStreams());
-	  python->pySet("TotalNbReadWriteStreams", it->second.nbReadWriteStreams() + 
+	  python->pySet("TotalNbReadWriteStreams", it->second.nbReadWriteStreams() +
 			it->second.deltaNbReadWriteStreams());
-	  
+
 	  // Recaller and migrator streams. Note: there are no deltas to be
 	  // added here as migrations and recalls are scheduled through LSF
 	  python->pySet("NbRecallerStreams", it2->second.nbRecallerStreams());
@@ -998,7 +1027,7 @@ extern "C" {
 	  python->pySet("TotalNbMigratorStreams", it->second.nbMigratorStreams());
 
 	  // Update the ratings of the filesystem for all rating groups
-	  for (castor::monitoring::FileSystemStatus::iterator it3 = 
+	  for (castor::monitoring::FileSystemStatus::iterator it3 =
 		 it2->second.begin();
 	       it3 != it2->second.end(); it3++) {
 
@@ -1007,7 +1036,7 @@ extern "C" {
 	    }
 
 	    try {
-	      processed++;      
+	      processed++;
 	      python->pySet("OpenFlags", "r");
 	      it3->second.setReadRating(python->pyExecute(it3->first.c_str()));
 	      python->pySet("OpenFlags", "w");
@@ -1032,8 +1061,8 @@ extern "C" {
 	      // filesystem to be excluded in the match phase
 	      it3->second.setReadRating(1.0);
 	      it3->second.setWriteRating(1.0);
-	      it3->second.setReadWriteRating(1.0);	      
-	    }	    
+	      it3->second.setReadWriteRating(1.0);
+	    }
 	  }
 	}
       }
