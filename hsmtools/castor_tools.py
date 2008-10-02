@@ -17,7 +17,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.1 $ $Release$ $Date: 2008/10/01 12:56:54 $ $Author: sponcec3 $
+# * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.2 $ $Release$ $Date: 2008/10/02 15:52:02 $ $Author: sponcec3 $
 # *
 # * utility functions for castor tools written in python
 # *
@@ -26,30 +26,81 @@
 
 import os
 
-def getOraStagerSvc():
-  # find out the instance to use
-  full_name = "DbCnvSvc";
-  if os.environ.has_key('CASTOR_INSTANCE'):
-      full_name = full_name + '_' + os.environ['CASTOR_INSTANCE']
+def getStagerDBConnectParams():
+    # find out the instance to use
+    full_name = "DbCnvSvc"
+    if os.environ.has_key('CASTOR_INSTANCE'):
+        full_name = full_name + '_' + os.environ['CASTOR_INSTANCE']
 
-  # go through the lines of ORASTAGERCONFIG
-  user = "";
-  passwd = "";
-  dbname = "";
-  for l in open ('/etc/castor/ORASTAGERCONFIG').readlines():
-      try:
-          instance, entry, value = l.split()
-          if instance == full_name:
-              if entry == 'user':
-                  user = value
-              elif entry == 'passwd':
-                  passwd = value
-              elif entry == 'dbName':
-                  dbname = value
-      except ValueError:
-          # ignore line
-          pass
-  return user, passwd, dbname
+    # go through the lines of ORASTAGERCONFIG
+    user = ""
+    passwd = ""
+    dbname = ""
+    for l in open ('/etc/castor/ORASTAGERCONFIG').readlines():
+        try:
+            instance, entry, value = l.split()
+            if instance == full_name:
+                if entry == 'user':
+                    user = value
+                elif entry == 'passwd':
+                    passwd = value
+                elif entry == 'dbName':
+                    dbname = value
+        except ValueError:
+            # ignore line
+            pass
+    if len(user) == 0:
+        raise ValueError, "empty user name"
+    if len(passwd) == 0:
+        raise ValueError, "empty password"
+    if len(dbname) == 0:
+        raise ValueError, "empty DB name"
+    return user, passwd, dbname
+
+def getNSDBConnectParam():
+    # read the NSCONFIG
+    line = open('/etc/castor/NSCONFIG').readline()
+    line = line[0:len(line)-1] #drop trailing \n
+    sl = line.find('/')
+    if sl == -1:
+        raise ValueError, 'Invalid connection string in /etc/castor/NSCONFIG'
+    ar = line.find('@',sl)
+    if ar == -1:
+        raise ValueError, 'Invalid connection string in /etc/castor/NSCONFIG'
+    user = line[0:sl]
+    passwd = line[sl+1:ar]
+    dbname = line[ar+1:]
+    if len(user) == 0:
+        raise ValueError, "empty user name"
+    if len(passwd) == 0:
+        raise ValueError, "empty password"
+    if len(dbname) == 0:
+        raise ValueError, "empty DB name"
+    return user, passwd, dbname
+
+def importOracle():
+    global cx_Oracle
+    try:
+        import cx_Oracle
+    except Exception:
+        raise Exception, '''Fatal: could not load module cx_Oracle.
+Make sure it is installed and $PYTHONPATH includes the directory where cx_Oracle.so resides and that
+your ORACLE environment is setup properly.'''
+
+def connectToDB(user, passwd, dbname):
+    importOracle()
+    return cx_Oracle.Connection(user + '/' + passwd + '@' + dbname)
+
+def connectToStager():
+    user, passwd, dbname = getStagerDBConnectParams()
+    return connectToDB(user, passwd, dbname)
+
+def connectToNS():
+    user, passwd, dbname = getNSDBConnectParam()
+    return connectToDB(user, passwd, dbname)
+
+def disconnectDB(connection):
+  connection.close()
 
 # DiskCopy status
 DiskCopyStatus = ["DISKCOPY_STAGED",
@@ -63,5 +114,5 @@ DiskCopyStatus = ["DISKCOPY_STAGED",
                   "DISKCOPY_GCCANDIDATE",
                   "DISKCOPY_BEINGDELETED",
                   "DISKCOPY_CANBEMIGR",
-                  "DISKCOPY_WAITFS_SCHEDULING"];
+                  "DISKCOPY_WAITFS_SCHEDULING"]
 
