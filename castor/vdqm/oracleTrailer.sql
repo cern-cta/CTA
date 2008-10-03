@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.156 $ $Release$ $Date: 2008/09/23 15:44:35 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.157 $ $Release$ $Date: 2008/10/03 17:00:13 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2689,7 +2689,7 @@ END;
  * Converts an updated tape drive id of 0 to NULL.
  */
 CREATE OR REPLACE TRIGGER TR_I_Tape2DriveDedication
-  BEFORE INSERT ON TapeRequest
+  BEFORE INSERT ON Tape2DriveDedication
 FOR EACH ROW
 DECLARE
   timeVar NUMBER := castorVdqmCommon.getTime();
