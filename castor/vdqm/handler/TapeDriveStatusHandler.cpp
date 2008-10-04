@@ -289,12 +289,8 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
 void castor::vdqm::handler::TapeDriveStatusHandler::handleVolUnmountStatus() 
   throw (castor::exception::Exception) {
   
-  castor::vdqm::VdqmTape* tape = ptr_tapeDrive->tape();
-  delete tape;
-  tape = 0;
-  
+  delete ptr_tapeDrive->tape();
   ptr_tapeDrive->setTape(NULL);
-
   
   if ( ptr_tapeDrive->status() == WAIT_FOR_UNMOUNT ) {
     // Set status to FREE if there is no job assigned to the unit
