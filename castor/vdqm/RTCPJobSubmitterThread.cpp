@@ -141,6 +141,10 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
     tapeAccessSpecification(request->tapeAccessSpecification());
   std::auto_ptr<castor::vdqm::TapeDrive>
     tapeDrive(request->tapeDrive());
+  std::auto_ptr<castor::vdqm::DeviceGroupName>
+    tapeDriveDeviceGroupName(request->tapeDrive()->deviceGroupName());
+  std::auto_ptr<castor::vdqm::TapeServer>
+    tapeDriveTapeServer(request->tapeDrive()->tapeServer());
   
   try {
     vdqmSvc = getDbVdqmSvc();
