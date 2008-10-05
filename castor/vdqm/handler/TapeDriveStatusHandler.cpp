@@ -232,9 +232,14 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
 
   if(tapeRequest != NULL) {
     if(strcmp(tapeRequest->tape()->vid().c_str(),ptr_driveRequest->volid)==0) {
+      // Free the memory of any existing tape object
+      delete ptr_tapeDrive->tape();
+      ptr_tapeDrive->setTape(NULL);
+
       // The tape, which is now in the tape drive
       castor::vdqm::VdqmTape* mountedTape =
         ptr_IVdqmService->selectOrCreateTape(ptr_driveRequest->volid);
+
       ptr_tapeDrive->setTape(mountedTape);
     } else {
       // Normally, this is not needed any more!
