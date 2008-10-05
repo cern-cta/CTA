@@ -75,6 +75,39 @@ namespace castor {
     private:
 
       /**
+       * Inner auto pointer class used by the process method to delete the
+       * owned tape request object and all its child objects from the heap.
+       */
+      class TapeRequestAutoPtr {
+
+      public:
+
+        /**
+         * Constructor.
+         */
+        TapeRequestAutoPtr(
+          castor::vdqm::TapeRequest *const tapeRequest) throw();
+
+        /**
+         * Returns a pointer to the owned tape drive object.
+         */
+        castor::vdqm::TapeRequest *get() throw();
+
+        /**
+         * Destructor.
+         *
+         * Deletes the owned tape request object and all of its child
+         * objects from the heap.
+         */
+        ~TapeRequestAutoPtr() throw();
+
+      private:
+
+        castor::vdqm::TapeRequest *const m_tapeRequest;
+      };
+
+
+      /**
        * Submits the corresponding remote tape job of the specified tape
        * request to the RTCPD.
        *
