@@ -1,3 +1,744 @@
+-----------
+- 2.1.8-1 -
+-----------
+
+  Highlights and BugFixes
+  -----------------------
+  - #29840: replication after put/recall
+  - #38590: Two tape drive deletion bugs in the VDQM2
+  - #35388: error messages in DLF (updated)
+  - #40578: Formatting of data volumes in repack and others should use uppercase K
+  - #42055: Should be able to delete a drive in the UNKNOWN state with no pending request
+
+  - Added support for replication on close. Now it is possible to have CASTOR automatically
+    trigger the replication of a file after it has been closed by the user. The number of
+    replicas created is dependent on the value of the maxReplicaNb defined on the service
+    class. You can enable replication on close using the following command against a 
+    targeted service class:
+     `modifySvcClass --Name <svcclass> --ReplicateOnClose yes --MaxReplicaNb X`
+
+    Notes:
+     - Make sure that the maxReplicaNb is not equal to 1. This defies the purpose of 
+       replication on close if you only permit one copy of the file to be present on disk!
+     - The rebalancing of the number of copies of a file when a diskserver goes offline is
+       not supported.
+     - When allocating resources for ReplicateOnClose based service classes do not assume
+       that the only requirement is disk capacity. It is a key factor but network throughput
+       and the number of job slots needed are also critical. Remember disk2disk copy 
+       transfers require two slots. So if you want to allow 100 concurrent transfers on a
+       D2TX service class you need a minimum of 300 slots.
+
+       Please make sure to monitor services classes that have replication on close enabled
+       to avoid an accumulation due to lack of resources.
+       
+  - The gcDaemon and repackserver now run under the stage:st account not root:root.
+
+  - Improved logging of the garbage collection process. Now when files are deleted the
+    LastAccessTime, NbAccesses, GcWeight and GcType will be logged for every file removed
+    by the garbage collector. The GcType can have two values:
+      Automatic:      The file was deleted in order to liberate space on the filesystem.
+      User Requested: The file deletion was triggered by the user with an explicit stager_rm
+                      call or the transfer failed due to some user error and the file is
+                      invalid.
+
+  - Removed regular expression support from the stager's query service. It is now no longer
+    possible to perform stager_qry commands with the -E option. Note: since 2.1.7-7 this
+    functionality was disabled by default with an option provided in castor.conf to enable
+    it. In this release the support for this functionality has been removed completely.
+
+  - Fixed a deadlock caused by a race condition in the request replier of the stager that
+    could cause the stager to become unresponsive.
+
+  - Modified the contents of the /etc/castor/status file and changed the labeling of
+    filesystems. Prior to this modification filesystems were labeled as FS1=, FS2=, FS3=,
+    etc... Now there are labeled using the name of the mountpoint as defined by the
+    RmNode/MountPoints option in castor.conf. E.g. /src/castor/01, /srv/castor02/, etc...
+
+  - Added checks to stagerJob to prevent a file being transferred to an incorrect service
+    class due to a misconfiguration between LSF and the stager database.
+
+  - Added support for defining the maximum amount of data that can be read by a client or
+    server. The default value is 20MB and can be altered by changing the
+    CLIENT/MAX_NETDATA_SIZE option in castor.conf. For more information please refer to
+    savannah bug #38984
+
+  - Added support for defining multiple JobManager/SharedLSFResource locations when using
+    http:// access. This allows for diskservers (stagerJob and diskCopyTransfer) to fail
+    over to another webserver to download the notification file recorded by the scheduler if
+    the first webserver is unavailable.
+
+  - Added basic user space accounting. It is now possible to see in the Accounting table of 
+    the stager database the amount of data that every user has on disk on a per service class
+    basis. Note: In this release no tools are provided for end-users to see this information.
+
+  - New implementation of stagerJob with improved logging and error reporting (#35388).
+
+  - Modified stagerJob to support a new xroot interface. Please note: this is a backwards
+    incompatible change. When upgrading to 2.1.8 old installations of xrootd must also be
+    upgraded. For installation instructions of xrootd please refer to:
+      https://twiki.cern.ch/twiki/bin/view/DataManagement/X2CASTOR#Deployment_Configuration_Model
+
+    The interface was modified to support T3 analysis use-cases.
+
+  - Consolidated the service class parameters used to define the retention policy and access
+    latency of the underlying disk pools. The flag disk1Behavior supersedes both 
+    hasDiskOnlyBehavior and gcEnabled, while the forcedFileClass defines whether files go to
+    tape, enabling full support of any DiskN TapeM storage class combination. See also the
+    enterSvcClass man page for further details.
+
+  - Enabled checksuming support in RFIOD by default. Now all files written to disk using 
+    RFIO as a protocol will have the checksum of the file recorded in the files extended
+    attributes.
+
+  - Added role based initd scripts for the rhserver and nsdaemon. This now provides support
+    for controlling multiple rhservers and nsdaemons from their respective initd scripts. 
+    (Refer to point 8 of the upgrade instructions)
+
+  - Improved the initd script for the mighunter daemon. Now you can stop the mighunters on a
+    per service class basis as well as querying their status. Prior to this it was not 
+    possible to stop a service class based mighunter without stopping all of them.
+
+  - Official release of VDQM2 providing a stateless backend and support for tape priorities.
+
+
+  Repack Related:
+  ---------------
+  - #38419: Post FINISHED repack actions such as reclaim or move pool
+  - #23711: Maxdrives - input and output
+  - #38418: Limit parallel ONGOING repacks for bulk repack
+  - #40680: repack of a non-full tape gives 'No Tape Given'
+  - #40489: repack command exits with 0 if running as root and errors to stdout
+
+
+  Package changes
+  ---------------
+  - With the discontinuation of VDQM1 the castor-vdqm-client and castor-vdqm-server packages
+    are no longer provided.
+  - The commands that use to be found in the castor-vdqm-client package have been moved to a
+    new package called castor-vdqm2-client.
+  - The vdqm_admin command has been moved from castor-hsmtools to the castor-vdqm2-client
+    package.
+
+
+  Upgrading from 2.1.7-19
+  -----------------------
+
+    Central services (CNS, CUPV and VMGR)
+    -------------------------------------
+
+    Although there are modifications to the Castor Central Services in this release. It is
+    not mandatory to upgrade the software for the correct operation and running of a 2.1.8
+    stager instance of CASTOR2. As a result the upgrade of the following packages:
+
+      - castor-upv-server
+      - castor-vmgr-server
+      - castor-ns-server
+
+    are not prerequisites for deploying a 2.1.8 stager.
+
+    Note: If you do wish to upgrade the central services described please follow the
+    instructions below. Note: this upgrade does not require stopping of the central services
+    and should be transparent to the end users
+
+      Instructions
+      ------------
+
+      1. Upgrade the CNS database using the correct upgrade script from
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.8-*/2.1.8-1/dbupgrades
+
+      2. Install the vdt_globus_essentials RPM on the Castor Name Server headnodes. This is
+         necessary as the name server now has a dependency on globus in order to provide 
+         support for strong authentication through GSI and KRB5. The recommended version for 
+         vdt_globus_essentials is VDT1.6.1{x86|x86_64}_rhas_4-5 for SLC4.
+ 
+      3. Update the software to use the 2.1.8-1 RPMS. Note: the affected services will be
+         restarted automatically.
+
+      4. Upgrade complete.
+
+
+    Stager
+    ------
+
+    Before upgrading to a 2.1.8 stager instance of CASTOR2 please make sure to read the 
+    upgrade instructions fully before proceeding. It is highly recommended to have an 
+    Oracle DBA on standby while upgrading the stager database just in case a database
+    restoration is required.
+    
+    Notes: 
+      - To upgrade to this version of CASTOR2 all jobs PEND'ing in the LSF queue will need
+        to be terminated. In order to reduce the visible impact of the upgrade to the users
+        in terms of failed transfers it is recommended to suspend any new user activity 
+        from entering the instance several hours before the upgrade.
+
+      - This upgrade is intrusive and will require the stager to be stopped!  
+
+      Instructions
+      ------------
+
+       1. Stop all daemons on stager headnodes which have direct connections to the stager
+          databases. This includes: rhserver, stager, jobManager, rtcpclientd, mighunter
+          rechandler and the rmMasterDaemon. Note: it is not necessary to stop any 
+          services/daemons on the diskservers themselves.
+
+       2. Verify that all sessions from CASTOR2 related daemons to the stager database are
+          terminated. This step is advised to make sure that modifications are no longer
+          being made to  the database which may interfere or prolong the upgrade process.
+
+       3. Ask your DBA to create a backup of the database.
+
+       4. Upgrade the stager and DLF databases using the correct upgrade scripts from
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.8-*/2.1.8-1/dbupgrades
+
+          Note: At the end of the upgrade process the upgrade script will recompile all the
+                invalid objects in the database schema. This may fail if you have objects
+                which do not belong to the castor schema or left over objects from past
+                workarounds. It does not mean that the upgrade failed but you should cleanup
+                the database schema. If in doubt please ask the CASTOR development team.
+
+                If a recompilation error occurs an ORA-24344: success with compilation error
+                will be observed.
+
+       5. Install the vdt_globus_essentials RPM on all machines which run the rhserver and
+          rfiod daemons. This is necessary as these two daemons now have a dependency on 
+          globus in order to provide support for strong authentication through GSI and KRB5.
+          The recommended version for vdt_globus_essentials is VDT1.6.1{x86|x86_64}_rhas_4-5
+          for SLC4.
+
+       6. Upgrade the software on the headnodes and diskservers to 2.1.8-1. Note: the
+          castor-vdqm-client package has been replaced by castor-vdqm2-client.
+
+       7. Update the castor.conf configuration file on all machines based on the
+          castor.conf.example file in /etc/castor/. Please note that the options which are
+          commented out are the default values for those options unless explicitly stated
+          otherwise.
+
+          Of particular note: the job/LOGSTANDARD option has been replaced by 
+          Job/LOGSTANDARD. A change in the capitalization was necessary to distinguish the
+          difference between the old and new implementations of stagerJob.
+
+       8. The rhserver now uses a role based initd script (like the mighunter) which allows
+          for multiple rhservers to be controlled via a single initd script. If you are
+          running multiple rhservers on the same machine or using the Black and White list
+          support you will need to modify the rhserver sysconfig file(s) accordingly.
+
+          Example 1: Running a private and public rhserver on the same machine
+          ---------
+            - Create a rhserver sysconfig file:
+                `cp /etc/sysconfig/rhserver.example /etc/sysconfig/rhserver`
+            - Edit the new file and set the ROLES option to:
+                 ROLES="public private"
+            - Create an additional sysconfig file for the private rhserver:
+                 `cp /etc/sysconfig/rhserver.example /etc/sysconfig/rhserver.private`
+            - Edit the rhserver.public file and set the RHSERVER_OPTIONS value to reflect the
+              port you want the private rhserver to run on. E.g:
+                 RHSERVER_OPTIONS="-p 5002"
+
+          Once completed you now have the ability to start, stop and query the status of the
+          individual rhserver roles. The syntax for the initd script is:
+
+          Usage: /etc/init.d/rhserver {start|stop|status|restart|condrestart} [role]
+
+          If no role is specified then all listed roles will be targeted  E.g.
+
+          [root@c2itdcsrv102 ~]# service rhserver status
+          rhserver for role: public is stopped
+          rhserver for role: private is stopped
+
+          [root@c2itdcsrv102 ~]# service rhserver start public
+          Starting rhserver:
+          Starting rhserver for role: public                         [  OK  ]
+
+          [root@c2itdcsrv102 ~]# service rhserver status
+          rhserver for role: public (pid 12115) is running...
+          rhserver for role: private is stopped
+
+
+          Example 2: Enabling Black and White list support.
+          ---------
+            - Create a rhserver sysconfig file:
+                `cp /etc/sysconfig/rhserver.example /etc/sysconfig/rhserver`
+            - Edit the new file and set the RHSERVER_OPTIONS value to enable Black and White
+              list support:
+                RHSERVER_OPTIONS="-b"
+
+          Note: The ONLY way to turn on Black and White list support is on the command line
+          to the rhserver. The RH/USEACCESSLISTS option in castor.conf is no longer
+          respected.
+
+       8. If you have an independent monitoring system to monitor the CASTOR2 related daemons
+          such as LEMON. Please make sure to update the monitoring configuration to reflect
+          the fact the the gcDaemon no longer runs as root:root but as stage:st.
+
+       9. Restart the service
+
+          Notes:
+            - If you have a concept of private and public rhserver's you should start the
+              private one only so that you can test/validate the installation without user 
+              interference.
+            - Unlike previous upgrades it is no longer necessary to cleanup the stager
+              database when restarting rtcpclientd. This is now done automatically when the
+              daemon starts.
+
+      10. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.8-*/2.1.8-1/fastTestSuite
+
+      11. Start the public rhserver (if applicable)
+
+      12. Congratulations you have successfully upgraded to the 2.1.8 release of CASTOR2!!
+
+
+    Repack
+    ------
+
+    1. Stop the repackserver
+
+    2. Upgrade the repack database using the correct upgrade scripts from
+       - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.8-*/2.1.8-1/dbupgrades
+
+    3. If you have an independent monitoring system to monitor the CASTOR2 related daemons
+       such as LEMON. Please make sure to update the monitoring configuration to reflect
+       the fact the the repackserver no longer runs as root:root but as stage:st.
+ 
+    4. Grant the stage:st user TP_OPER and ADMIN rights in CUPV from the repackserver 
+       machine to the central name servers. These privileges are need so that repack can
+       issue the vmgrmodifytape and reclaim commands.
+
+    5. Start the repackserver
+
+
+  Installation of VDQM
+  --------------------
+
+  For installation instructions on VDQM2 please refer to:
+    http://twiki.cern.ch/twiki/bin/view/FIOgroup/InstallVDQM2
+
+  Note: The installation instructions provided will not be updated for the 2.1.8 version of
+        VDQM2 until that version is installed at CERN. External sites are advised not to 
+        install the 2.1.8 version of the VDQM2 until CERN has successfully used it in 
+        production for at least several days.
+
+
+------------
+- 2.1.7-19 -
+------------
+
+  Bug Fixes
+  ---------
+  - #36804: Inconsistency in permission handling between stager_rm and nsrm (Updated)
+  - #38611: modifySvcClass vs printSvcClass: setting and displaying parameters
+  - #39604: updates on diskonly pools may create CANBIMIG files
+  - #39795: stager_addprivilege: Invalid argument
+  - #41500: stager_removeprivilege returns ORA-01722: invalid number
+  - #41943: STAGED diskcopy with castorfile=0
+  - #42034: A recent zero-size file case created by 2.1.7-17 stager (Updated)
+
+  - Fixed a bug in enterSvcClass which did not respect the GcEnabled option supplied on the
+    command line. (#38611)
+
+  - Fixed a bug in the logic for adding and removing entries from the Black and White list
+    which did not check to see if the service class being targeted existed. Now if the user
+    specifies an non-existent service class using the stager_[add|remove]privilege commands
+    they will get the following error: `stage_addPrivilege: Invalid service class 'xxxx'`
+
+  - Fix to the castorBW PL/SQL package to allow users to issue the stager_removeprilege 
+    command to manage the Black and White list. Prior to this fix it was not possible to 
+    remove privileges. This was due to an error in the upgrade script when upgrading from 
+    2.1.6 to 2.1.7. (#41500)
+
+  - Fixed a bug in the stager client API which caused a segmentation fault because of an
+    attempt to free memory twice (*** glibc detected *** double free or corruption). This
+    occurred when STAGE_HOST was defined but set to an empty value.
+
+  - Added missing checks for memory allocation failures in the automatically generated 
+    database access code.
+
+  - Added a cancelRecallForTape procedure to the stager database which accepts a tape vid
+    as input and cancels all files waiting to be recalled from that tape. Note: there is no
+    external interface to this procedure, it must be called directly from a SQL database
+    session.
+
+  - Fixed a bug which allowed files to be left in a CANBEMIGR state indefinitely after being
+    updated in a disk only pool. Now if a user attempts to update a file which has a copy on
+    tape in a disk only pool they will get EBUSY with rfcp and the following error with a 
+    PrepareToPut: `EINVAL/"File recreation canceled since this service class doesn't provide
+    tape backend"`. (#39604)
+
+  - Added a new implementation of the selectFiles2Delete procedure pack ported from 2.1.8 to
+    optimise the selection of files to be deleted when there are many files to be garbage 
+    collected. Prior to this optimisation the stager DB would consume far more resources then
+    necessary and cause the general castor instance to become degraded. Furthermore, the 
+    garbage collection process stops working completely as the stager cannot answer clients
+    (GC daemons) fast enough before they timeout waiting for a response.
+
+  - Fixed handling of symbolic links in the white list of RFIOD.
+
+  - Added support for disabling tape recalls in the Black and White list. During the upgrade
+    process for this release all users will be granted the ability to recall from tape. So,
+    from the perspective of the user nothing will have changed after the upgrade. In order to
+    manipulate who can recall from tape. one must:
+
+     A) Remove the line granting all users access:
+
+        stager_removeprivilege -R TapeRecall -U ':' -S '*'
+
+     B) Add the grants for who can recall from tape:
+
+        stager_addprivilege -R TapeRecall -U ':c3' -S 'default'
+        stager_addprivilege -R TapeRecall -U ':st' -S 'diskonly'
+        ...
+        ...
+
+    Note: Clients must be running 2.1.7-19 if they wish to manipulate the TapeRecall request
+          type through the stager_[add|remove]privilege commands.
+
+    Clients who are prevented from recalling from tape will get the following error message:
+      SUBREQUEST_FAILED 13 Insufficient user privileges to trigger a tape recall to the
+      'xxxxx' service class
+
+  - Fixed segmentation fault in the jobManager.
+
+  - Added support for defining the maximum runtime (wallclock) of a disk2disk copy transfer.
+    This helps to protect against cases where slots used by a disk2disk copy transfer are
+    not released after a diskserver crashes mid transfer. The default value is 5 hours, after
+    which time the transfer will be killed by LSF.
+
+  - Added a startup hook into rtcpclientd which resets all the streams, tapecopies and tape
+    statuses. As a result of this fix it is no longer necessary to cleanup the stager database
+    when restarting rtcpclientd. Furthermore, rtcpclientd is now automatically restarted
+    upon RPM updates.
+
+  - Fixed bad check allowing migration of the two copies of a file to the same tape.
+
+  - Backports to allow compilation of the CASTOR2 software on SLC5. Note: although SLC5 RPMS
+    can be built they are only provided on demand, are not certified nor do they come with 
+    any support.
+
+  - Added support for disabling the GcDaemon's synchronization functionality by setting the
+    GC/SyncInterval configuration option in castor.conf to 0.
+
+  - Fixed incorrect logging of the NSFILEID in the "File to be unlinked since it dissapeared 
+    from the stager" messaged logged by the stager when a file is on disk but is not know to
+    to the stager database. Prior to this fix the NSFILEID was actually the diskcopy id. Now
+    the NSFILEID will be 0 and a separate parameter will be logged giving the diskcopy id.
+
+  - Added support to repack database to cleanup ARCHIVED Repack SubRequests after a 
+    configurable amount of time.
+
+  Tape
+  ----
+  - Added support to abort when positioning took suspiciously long. The timeout value is 
+    controlled by the new parameter POSITION_TIMEOUT. Default value is 900 seconds.
+ 
+  - Added a new parameter DOWN_ON_UNLOAD_FAILURE to control the behaviour if an unload failure
+    occurs. Default (and old behaviour): the drive is put down. Since SUN drives do not need
+    the unload as the unmount will be retried with the force option, this option may help to
+    avoid unnecessary down time of drives.
+  
+  Upgrading from 2.1.7-17
+  -----------------------
+
+  Before upgrading to a 2.1.7-17 instance of CASTOR2 please make sure to read the upgrade
+  instructions fully before proceeding. Note: this upgrade does not require stopping of the
+  instance and should be transparent to the end users.
+
+  Instructions
+  ------------
+  1. Upgrade the stager and dlf databases using the correct upgrade scripts from
+     - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-19/dbupgrades
+
+  2. Upgrade the software on the headnodes and diskservers to 2.1.7-19. All daemons will be
+     automatically restarted.
+
+  3. Announce completion of the upgrade.
+
+
+------------
+- 2.1.7-17 -
+------------
+
+  Bug Fixes
+  ---------
+  - Fixed possible memory corruption when using setDataBufferArray.
+
+  - Fixed migrations to several tapepools when not using migration policies. Only one pool
+    was used leading to using only a fraction of the streams.
+
+  - Added support to be able to use username and groupname as input on the listPriority,
+    deletePriority and enterPriority commands
+
+  Upgrading from 2.1.7-16
+  -----------------------
+
+  Before upgrading to a 2.1.7-16 instance of CASTOR2 please make sure to read the upgrade
+  instructions fully before proceeding. Note: this upgrade does not require stopping of the
+  instance and should be transparent to the end users.
+
+  Instructions
+  ------------
+  1. Upgrade the stager, dlf and repack databases using the correct upgrade scripts from
+     - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-17/dbupgrades
+
+  2. Stop rtcpclientd.
+
+  3. Upgrade the software on the headnodes and diskservers to 2.1.7-16. All daemons apart
+     from rtcpclientd will be restarted automatically.
+
+  4. Log onto the stager database and execute:
+
+     TRUNCATE TABLE Stream2TapeCopy;
+     UPDATE NbTapeCopiesInFS SET NbTapeCopies = 0;
+     UPDATE TapeCopy SET status = 1 WHERE status IN (2, 3, 7);
+     UPDATE Stream SET status = 0;
+     UPDATE tape SET status = 1 WHERE status IN (2, 3, 4);
+     UPDATE tape SET stream = 0 WHERE stream != 0;
+     UPDATE Stream SET tape = 0 WHERE tape != 0;
+     COMMIT;
+
+  5. Start rtcpclientd.
+
+  6. Announce completion of the upgrade.
+
+
+------------
+- 2.1.7-16 -
+------------
+
+  Bug Fixes
+  ---------
+  - #40147: Stager segfaults on non-existent service classes
+
+  - Added support for the CASTOR_INSTANCE environment variable in the database connection 
+    handling code of the C and C++ related applications/utilities. Now, just like listSvcClass,
+    listFileClass, etc... it is possible to use commands from a single machine but connect to
+    different CASTOR2 instances.
+
+    For this to work correctly the /etc/castor/ORASTAGERCONFIG file must contain all the
+    passwords for the instances you wish to connect too. E.g
+
+      DbCnvSvc_castoratlas  user     castoruser
+      DbCnvSvc_castoratlas  passwd   castorpass
+      DbCnvSvc_castoratlas  dbName   castoratlas
+
+      DbCnvSvc_castorcms  user	     castoruser
+      DbCnvSvc_castorcms  passwd     castorpass
+      DbCnvSvc_castorcms  dnName     castorcms
+
+    By setting CASTOR_INSTANCE to castoratlas or castorcms you can switch between the stager
+    instances.
+
+  - Fixed the StagePrepareToGetRequest IOResponse for the xrootd protocol so that it now 
+    correctly returns the physical location of a file. Previously the response was empty.
+
+  - Fixed a bug in the scheduling logic of the schmod_python LSF plugin which did not take
+    into consideration the scheduling coefficients as defined in castor.conf. As a
+    consequence the selection of filesystems was biased and jobs were not spread evenly
+    across diskservers.
+
+  - Fixed a misconfiguration of the FIFO and LRU garbage collection policies which would
+    call a nonexistent function to update the gc weight of a file after a recall. As a
+    consequence this would cause the following error in the recaller log:
+
+      DB_ERROR="Error caught in fileRecalled. ORA-06550: line 1, column 27: PLS-00302: 
+      component 'CREATIONTIMERECALLSWEIGHT' must be declared ORA-06550: line 1, column 7: 
+      PL/SQL: Statement ignored ORA-06512: at "CASTOR_STAGER.FILERECALLED", line 49  
+
+    Which in turn would cause the recall to fail.
+
+
+  Upgrading from 2.1.7-15
+  -----------------------
+
+  Before upgrading to a 2.1.7-16 instance of CASTOR2 please make sure to read the upgrade
+  instructions fully before proceeding. Note: this upgrade does not require stopping of the
+  instance and should be transparent to the end users.
+
+  Instructions
+  ------------
+  1. Upgrade the stager, dlf and repack databases using the correct upgrade scripts from
+     - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-16/dbupgrades
+
+  2. Stop rtcpclientd.
+
+  3. Upgrade the software on the headnodes and diskservers to 2.1.7-16. All daemons apart
+     from rtcpclientd will be restarted automatically.
+
+  4. Log onto the stager database and execute:
+
+     TRUNCATE TABLE Stream2TapeCopy;
+     UPDATE TapeCopy SET status = 1 WHERE status IN (2, 3, 7);
+     UPDATE Stream SET status = 0;
+     UPDATE tape SET status = 1 WHERE status IN (2, 3, 4);
+     UPDATE tape SET stream = 0 WHERE stream != 0;
+     UPDATE Stream SET tape = 0 WHERE tape != 0;
+     COMMIT;
+
+  5. Start rtcpclientd.
+
+  6. Reload the LSF plugin. `badmin reconfig`
+
+  7. Announce completion of the upgrade.
+
+
+------------
+- 2.1.7-15 -
+------------
+
+  Bug Fixes
+  ---------
+
+  - Added support to GridFTPv2 external for handling diskpools shared across multiple service
+    classes. Prior to this release transfers would fail for diskpools which were shared
+    across service classes under certain circumstances. For example, user A could issue a
+    file transfer request from service class Z and when the transfer actually took place, be
+    using service class Y. The reason for this is that the user is not mapped using their
+    uid and gid to an appropriate service classes once on the diskserver. So, GridFTPv2 
+    selects the default service class as defined in the castor.conf (STAGER/SVCCLASS) or if 
+    not defined uses 'default'.
+
+    Now like GridFTPv1, GridFTPv2 supports the stagemap.conf file concept.
+
+  - Fixed an 'ORA-10632: Invalid rowid' error, in the subRequestToDo and subRequestFailedToDo
+    procedures of the Stager database. This error, under certain conditions was typically
+    seen when the table shrink job was running in the database.
+
+
+  Upgrading from 2.1.7-14
+  -----------------------
+
+  Before upgrading to a 2.1.7-15 instance of CASTOR2 please make sure to read the upgrade
+  instructions fully before proceeding. Note: this upgrade does not require stopping of the
+  instance and should be transparent to the end users.
+
+  Installing GridFTPv2 External
+  -----------------------------
+
+  1. On all diskservers that you wish to be GridFTP enabled you will need to install the 
+     following packages. Note: Some of these may already be installed by the previous
+     GridFTPv1 installation:
+
+     For i386:
+       vdt_globus_essentials-VDT1.6.1x86_rhas_4-5
+       vdt_globus_data_server-VDT1.6.1x86_rhas_4-5
+     For x86_64:
+       vdt_globus_essentials-VDT1.6.1x86_64_rhas_4-5
+       vdt_globus_data_server-VDT1.6.1x86_64_rhas_4-5
+
+     In all cases:
+       castor-gridftp-dsi-ext-2.1.7-15
+       castor-gridftp-dsi-common-2.1.7-15
+  
+  2. Copy the host certificate of the machine to the correct place. As user root on all
+     diskservers:
+
+     mkdir /etc/grid-security/castor-gridftp-dsi-ext
+     cd /etc/grid-security/
+     cp hostcert.pem castor-gridftp-dsi-ext/castor-gridftp-dsi-ext-cert.pem
+     cp hostkey.pem castor-gridftp-dsi-ext/castor-gridftp-dsi-ext-key.pem
+     chmod 644 castor-gridftp-dsi-ext/castor-gridftp-dsi-ext-cert.pem
+     chmod 400 castor-gridftp-dsi-ext/castor-gridftp-dsi-ext-key.pem
+
+  3. For diskpools which are mapped directly to a service class 1-to-1 and are NOT shared
+     across service classes there is no need to have a stagemap.conf file on all the
+     diskservers and it is advised to simply set the STAGER/SVCCLASS option in castor.conf
+     to the appropriate value.
+
+     For diskpools which are shared across service classes a stagemap.conf will be
+     necessary to resolve the uid and gid of the user to a service class. This is the same
+     as used for GridFTPv1.
+
+  4. Restart xinetd.
+
+
+  Instructions
+  ------------
+  1. Upgrade the stager, dlf and repack databases using the correct upgrade scripts from
+     - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-15/dbupgrades
+
+  2. Stop rtcpclientd.
+
+  3. Upgrade the software on the headnodes and diskservers to 2.1.7-15. All daemons apart
+     from rtcpclientd will be restarted automatically.
+
+  4. Log onto the stager database and execute:
+
+     TRUNCATE TABLE Stream2TapeCopy;
+     UPDATE TapeCopy SET status = 1 WHERE status IN (2, 3, 7);
+     UPDATE Stream SET status = 0;
+     UPDATE tape SET status = 1 WHERE status IN (2, 3, 4);
+     UPDATE tape SET stream = 0 WHERE stream != 0;
+     UPDATE Stream SET tape = 0 WHERE tape != 0;
+     COMMIT;
+
+  5. Start rtcpclientd.
+
+  6. Announce completion of the upgrade.
+
+
+------------
+- 2.1.7-14 -
+------------
+
+  Bug Fixes
+  ---------
+
+  - Fixed a 32 bit overflow problem when using id2type values which exceeded the value of 
+    INT_MAX (2147483647). When this number is exceeded migrations and recalls to tapes,
+    where the id of the tape is greater than INT_MAX will fail and the following error 
+    messages are observed:
+
+    In /var/spool/rtcpclientd/rtcpcld:
+      DB_ERROR="Unable to select tape by vid, side and tpmode : ORA-01455: converting column 
+                overflows integer datatype"   
+
+    In /var/spool/stager/log:
+      Error_Message="Unable to select tape by vid, side and tpmode : ORA-01455: converting 
+                     column overflows integer datatype"
+
+  - Fixed a security problem in rfiod which allowed root users (uid=0) to write files to 
+    a remote host as root using the update v2 (non-streaming) protocol.
+
+  - Fixed a bug in the startChosenStreams procedure which incorrectly contained the wrong
+    content.
+
+  - Fixed a bug in the cleaning logic which automatically calls PutDone for files which
+    remain in a STAGEOUT/WAITFS state after X number of hours (default: 72). Under
+    curtain circumstances the previous code was triggering the file to be migrated to tape
+    and creating new tapecopies when actually it should have been invalidating the 
+    diskcopy for garbage collection.
+
+  Upgrading from 2.1.7-12
+  -----------------------
+
+  Before upgrading to a 2.1.7-14 instance of CASTOR2 please make sure to read the upgrade
+  instructions fully before proceeding. Note: this upgrade does not require stopping of the
+  instance and should be transparent to the end users.
+
+  Instructions
+  ------------
+  1. Upgrade the stager, dlf and repack databases using the correct upgrade scripts from
+     - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-14/dbupgrades
+
+  2. Stop rtcpclientd.
+
+  3. Upgrade the software on the headnodes and diskservers to 2.1.7-14. All daemons apart
+     from rtcpclientd will be restarted automatically.
+
+  4. Log onto the stager database and execute:
+
+     TRUNCATE TABLE Stream2TapeCopy;
+     UPDATE TapeCopy SET status = 1 WHERE status IN (2, 3, 7);
+     UPDATE Stream SET status = 0;
+     UPDATE tape SET status = 1 WHERE status IN (2, 3, 4);
+     UPDATE tape SET stream = 0 WHERE stream != 0;
+     UPDATE Stream SET tape = 0 WHERE tape != 0;
+     COMMIT;
+
+  5. Start rtcpclientd.
+
+  6. Announce completion of the upgrade.
+
+
 ------------
 - 2.1.7-12 -
 ------------
@@ -27,6 +768,8 @@
   - Added support for bulk selection to reduce the stress on the rhserver and stager for
     large requests. #35428
 
+  - Fixed a memory leak in the jobManager
+
   Upgrading from 2.1.7-10
   -----------------------
 
@@ -41,7 +784,7 @@
   Instructions
   ------------
   1. Upgrade the stager, dlf and repack databases using the correct upgrade scripts from
-     - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-12/upgrades
+     - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.7-*/2.1.7-12/dbupgrades
 
   2. Stop rtcpclientd.
 
@@ -60,9 +803,11 @@
 
   5. Start rtcpclientd.
 
-  6. Upgrade the CUPV and CNS to 2.1.7-12.
+  6. Reload the LSF plugin. `badmin reconfig`
 
-  7. Now that CUPV supports multiple network domains (Bug: #38825) it is necessary to update 
+  7. Upgrade the CUPV and CNS to 2.1.7-12.
+
+  8. Now that CUPV supports multiple network domains (Bug: #38825) it is necessary to update 
      the contents of the CUPV database so that all source and target entries are fully 
      qualified. If you know that your database already contains fully qualified domain names
      then you can skip this step. Otherwise,
@@ -83,8 +828,32 @@
         Where DOMAIN.COM represents the name of the network domain. Note: the domain name
         is case sensitive.
 
-     For network's with multiple domains you will need to modify the entries by hand.
- 
+     For network's with multiple domains you will need to modify the entries by hand. The
+     recommended procedure for minimising downtime for this case is detailed below:
+
+     - Connect to the CUPV database and create a copy of the user_privilege table:
+       
+         CREATE TABLE user_privilege_copy AS SELECT * FROM user_privilege WHERE '1' = '1';
+
+     - Instruct users which have UPV_ADMIN rights that making changes to CUPV while the
+       migration is taking place will be lost.
+
+     - Modify the entries in the user_privilege_copy table so that both the source and target
+       entries are fully qualified.
+
+     - Stop CUPV. Due to the nature of the CUPV API clients will just wait until the service
+       returns.
+
+     - Backup the production table
+    
+         ALTER TABLE user_privilege RENAME TO user_privilege_bak;
+
+     - Rename the copy as the production table
+
+         ALTER TABLE user_privilege_copy RENAME TO user_privilege;
+
+     - Start the 2.1.7-12 CUPV
+
 
 ------------
 - 2.1.7-10 -
@@ -189,6 +958,18 @@
       setFileGcWeight is capped to 5 hours.
     - FIFO: first in first out.
     - LRU: least recently used.
+
+  - Added support for using different types of migration policies when migrating files to
+    tape. In this release 3 policies are defined:
+    - defaultMigrSelPolicy: Equivalent to bestTapeCopyForStream in previous releases where
+      the stager will pick the best filesystem to use based on monitoring information and
+      try to keep a migrator on a given filesystem for at least 15 minutes if there are
+      files to migrate.
+    - drainDiskMigrSelPolicy (RAL): Same as defaultMigrSelPolicy with the exception that
+      the migrator will remain on the box for at least 30 minutes if there is data to 
+      migrate and new migration streams will favour diskservers where migration streams
+      are already running.
+    - repackMigrSelPolicy: A repack orientated policy, no filesystem pinning.
 
   Package changes
   ---------------
@@ -861,1318 +1642,4 @@
 
   - 2.1.7-3-2: Modification in attachTapeCopiesToStream procedure to have always a 
     stateless behaviour. 
-
-
-------------
-- 2.1.6-10 -
-------------
-
-  Fixes
-  -----
-  - Fixed the 'communication errors' between nameserver and gcDaemon when trying to synchronise the diskserver contents with the nameserver.
-  - Fixed segmentation fault in gcDaemon when trying to extract the fileid from a file on disk which does not conform to the castor naming conventions.
-  - Fixed random writing of zero sized files during replication
-  - Fixed UDP notification problems between headnode daemons leading to poor response times.
-
-  Hotfixes for 2.1.6-10
-  ---------------------
-
-  - 2.1.6-10-1: Optimization of the gc
-  - 2.1.6-10-2: #33419: ATLAS migrator errors => missing diskcopies
-
-  Upgrade from 2.1.6-9
-  ---------------------
-  - Apply the SQL upgrade script to the stager, dlf and repack databases
-  - Upgrade all head nodes and diskservers
-  - No restart is necessary
-
------------
-- 2.1.6-9 -
------------
-
-  Fixes
-  -----
-  - made the client timeout tunable so that repack can have longer timeouts
-  - Fixed bug in stageForcedRm leading to not answering the client in all cases
-  - tuning for inputForMigrationgPolicy
-  - Ignore temporary tables in tableShrink procedure
-  - Changed sleeping time for the error svc thread pool
-  - In case of failures explicitly call the disk2DiskCopyFailed procedure in order to avoid accumulation of WAITDISK2DISKCOPY in case of timeouts.
-  - After a disk to disk copy, make sure that the size of the replica is equal in size to the original file. This allows to detect transfer failures.
-  - Fixed resurrectCandidates to avoid to resurrect candidates that are actually already attached to a stream.
-
-  Upgrade from 2.1.6-8
-  ---------------------
-  - Stop all daemons on the head nodes
-  - Apply the SQL upgrade script to the stager DB
-  - Upgrade all head nodes
-  - Restart all daemons
-
------------
-- 2.1.6-8 -
------------
-
-  New Features and Changes
-  ------------------------
-  This part lists the changes since the first release of the 2.1.4 series, that is 2.1.4-5
-  Some fixes were backported to later releases of the 2.1.4 series, as mentioned.
-
-    Broad view and stager
-    ---------------------
-
-    - The central stager code was completely rewritten in order to be more modular and
-      more maintainable. The logging should also be much better.
-    - A synchronization of the disksevers with the nameserver has been introduced. It is
-      insured by the gcDaemon of each diskserver that is checking that all the files
-      present on the disk still exist in the nameserver. When not, the stager is informed
-      and the file is cleaned up.
-    - In order to nor accumulates files in STAGEOUT status, a timeout has been introduced
-      on the time spent in this status (defaults to 3 days). After this delay, either the
-      file will be dropped (if its disk size is still 0) or an automatic putDone will be issued
-    - The handling of disk to disk copies has been completely reviewed. Diskcopies are now
-      scheduled properly in LSF, both on the source and on the destination host. Additionally,
-      internal replication within a diskpool will now be executed in background and access
-      will be granted to the user to the old copy.
-    - Disk checksums were introduced. This checksum is computed on the writing of the file
-      on the disk (only when RFIO v3 is used) and is checked for each subsequent read
-      (again only with RFIO v3). This also includes the migration, allowing for detection
-      of bad files before the migration takes place.
-    - The update and preapareForUpdate requests are now fully supported with RFIO (including
-      read only operations). For other protocols, the situation stays unchanged and updates
-      will be considered as always modifying the file.
-    - Redundancy was added to the rmMasterDaemon so that it can "follow" the LSF master
-      if that ones goes from one failing machine to another one.
-    - The parsing of file names was improved to support properly multiple '/'s as path separator
-
-    Migrations and recalls
-    ----------------------
-
-    - A python policy framework has been implemented that allow easy definition of policies
-      in python and efficient execution of them using precompilation.
-    - A stream policy policy has been introduced, using the python framework, that allows
-      to influence the number of streams that will be used for migrating data to tape depending
-      on the number of files and the amount of data to be migrated.
-    - The existing migration policy were adapted to the new python framework, unchanged.
-    - A recall policy was introduced that allows to decide whether a tape should be mounted
-      for recalls depending on the number of files to recall, the amount of data to be read
-      and the age of the oldest waiting recall on that tape
-
-    Security
-    --------
-
-    - Strong authentication has been added to CASTOR on the client side, although the
-      insecure protocol is still available. Kerberos 5 and grid certificates are
-      supported.
-
-    Repack
-    ------
-
-    - Repack has been enhanced to take advantage of the files already staged on disk.
-      These files will be reused and won't be recalled.
-    - The repack visualization was improved. See Bug #29775 for more details.
-    - Checksums comparisons were added when the old segment is replaced by the new one
-      in the nameserver. This allows to trap any corruption introduced during the repacking.
-
-    Miscellaneous
-    -------------
-
-    - SQL tools are now provided to facilitate the management tools for black and white lists.
-      This includes addPrivilege and removePrivilege methods and tries to keep both the black
-      and the whote list as clean as possible.
-    - The gridFTP plugins packaging has been improved with the creation of a third rpm called
-      castor-gridftp-dsi-common holding the common code and tools. This fixes the problem of
-      log rotation for concurrent installs of both the internal and external plugins.
-
-  Bug Fixes
-  ---------
-  - #20052 RFE to have thresholds for the number of migrators started
-  - #21431 RFE for recall policy
-  - #29786 Add support for CLOB in the CASTOR code generation
-  - #28994 Handling files "stuck" in STAGEOUT
-  - #20652 RFE for nsrm
-  - #28346 Wrong filesize with overlapping stagerUpdateRequest requests
-  - #29847 files in STAGEOUT and STAGED concurrently
-  - #30343 2 concurrent prepareToPut for a given file
-  - #6019  Disk Resident check sums
-  - #29779 inconsistent behavior between stager_rm and nsrm
-  - #30391 daemons on castor should be stateless and redundant: rmMasterDaemon
-  - #30404 RFE: gc daemon should delete files which exist on disk and not in nameserver
-  - #31510 stop() function in /etc/init/d/rfiod kills too many process
-  - #32523 Accumulation of orphaned diskfiles after failed tape recalls
-  - #19413 diskpool with no filesystem should cause jobs for this diskpool to fail
-  - #27319 RFE Loadbalancing of VMGR pools with tapes in multiple libraries
-  - #28962 reporting of bad label structure from tapes
-  - #29217 We forget disk to disk copies after recalls
-  - #29775 RFE: Repack2 message and error visualization
-  - #29776 RFE: checksum verification in Repack2
-  - #30346 RFE: stager_rm could be allowed to remove non-existing castor files
-  - #30383 No factory found for object type 3 after upgrade to CASTOR 2.1.4
-  - #30384 Prevent writing too many files when labeltype='al'
-  - #30559 RFE improvements in Repack when diskcopies are available
-  - #30825 diskcopies with status=null
-  - #30826 CHECKFSEQ check in migrator incorrectly rejects new tapes
-  - #30917 Timed out locate leaves zombie posovl processes behind
-  - #31055 ForcedFileClass: constraint and check
-  - #31684 RFE: Stager modification for repack
-  - #31683 Repack long delay to submit requests
-  - #28010 regular shrink of tables in ORACLE
-  - #30852 add a -f (force option) to tplabel and do not overwrite labels by default
-  - #31246 NS, VMGR and CUPV should reconnect to their databases after disconnection
-  - #24106 Please replace multiple '/' on the file path with single '/'
-  - #26029 disk to disk copy scheduling
-  - #23218 File update/append does not update the size in nameserver
-  - #21821 stuck file in case of nbStreams = 0
-  - #31481 Problems with white/blacklists on c2atlas
-  Already in 2.1.4-10:
-  - #30228 MigHunter gets free(): invalid pointer ...
-  - Fix bad processing after ENOENT in Cns_lastfseq() in the migrator
-  - Fix for unique constraint violation caused by -insert tape- in OraCommonSvc
-  - Fix in Repack to be able to start a new RepackSubrequest, even if there is a RepackSubrequest in Failed, Archived or Failed status, with the same files.
-  - Fix in Repack to start the different RepackSubrequests associated to a RepackRequest even if one of them is stopped.
-  Already in 2.1.4-9:
-  - #30392 Cleanup for STAGED files coming back after FS was disabled incomplete
-  - #30324 PutDones stuck waiting on failed puts
-  - #30275 Subrequests stuck in WAITSUBREQ after bkill
-  - #30223 rfiod does not write all data to disk upon rclose64_v3
-  - #30125 socket leak when BaseClient objects are reused
-  - Better SubRequest partitioning
-  - gridFTP v2 now uses a port range
-  - Improvements in gridFTP v2 packaging, especially around the handling of certificates.
-  - Fix for more tapepool associated to a single svcclass
-  Already in 2.1.4-8:
-  - #30125 socket leak when BaseClient objects are reused
-  - #30127 Failed transfers using root protocol
-  - gridFTP v2 packages are now build as part of the releases
-  Already in 2.1.4-7:
-  - #29133 Stagein file size problem
-  - #28705 Inconsistent increment of file counter in VMGR
-  - #29775 Repack2 message and error visualization (updated)
-  - #29711 Repack sometimes loses stage requests
-  - Added recaller retry policies.
-  - Fixed the wrong mode being displayed for queued requests when using showqueues 
-    with the -x option.
-  - Numerous modifications to the PLSQL code of the stager database to improve the error
-    handling of recall failures observed during repack testing.
-  - Added support for retrying files which have failed to be repacked at the end of a 
-    repack run. The maximum number of attempts to make can be specified on the command 
-    line with the -m option of the repack command.
-  - Fixed the nameserver daemon on 64 bit operating systems. Prior to this fix any attempt
-    from a daemon to update the segments on a tape would fail.
-  Already in 2.1.4-6:
-  - #27311 please ensure MAXREPLICANB is respected
-  - #29482 Missing cleanup of tapecopy+segment when GC'ing an INVALID diskcopy
-  - #29815 jobs submitted in wrong svcClass by JobManager
-  - #20052 RFE to have thresholds for the number of migrators started (Experimental)
-  - #28685 Possible file loss due to inconsistent vmgr_updatetape and Cns_setsegattr calls in failing migrator
-  - Fixes to the recaller. In the 2.1.4-5 release a situation could occur whereby 
-    reading a set of files from the same tape could result in the mounting and 
-    dismounting of the tape after every read of a single file.
-  - Fixes to the stager so that StagePrepareToGet and StagePrepareToUpdate requests
-    are correctly scheduled.
-  - Added a second MIR check after a repair. The result will be logged and is to check 
-    whether it's possible to "see" the MIR repair (avoid waiting for the next mount). 
-    This info can then be used to deal with tapes where the SCSI repair commands 
-    succeeded, but the MIR is invalid on the next mount.
-
-  Upgrade from 2.1.4-*
-  --------------------
-    - You basically have to update to 2.1.4-10 and then follow the instructions for updating from 2.1.4-10.
-    - You can however avoid to update the RPMs
-
-  Upgrade from 2.1.4-10
-  ---------------------
-    - Before upgrading the CASTOR 2 head nodes, one should first upgrade the nameserver
-       - This is actually mandatory if you want to have synchronization of diskservers with the nameserver
-       - The database needs to be updated using script Cns_oracle_addsynchro.sql (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.6-8/upgrades). This script can be run beforehand with no service interruption.
-       - The 2.1.6 nameserver can be run concurrently to an older one in case you have
-         DNS load balanced clusters of nameservers, allowing an upgrade with no service interruption
-    - Make sure that no LSF jobs stay in the queue. bkill all the remaining ones
-    - Update the configuration of LSF
-       - Modify the ego.cluster file and add a diskcopy resource to all diskservers.
-       - Modify the ego.shared file and add the entry:
-           diskcopy   Boolean ()       ()          (Disk Copy Resource, implies RFIO)
-       - Add 'PARALLEL_SCHED_BY_SLOT = y' to the parameters section of the lsb.params file
-       - Verify that the schmod_parallel module is enabled in lsb.modules
-    - Stop all daemons and services (rhserver, stager, jobManager, rtcpclientd, cleaningDaemon, rmMasterDaemon, dlfserver, expertd, rmNodeDaemon, gcdaemon, LSF)
-    - Optionally backup your stager DB (one never knows...)
-    - Upgrade the stager database
-       - Use script 2.1.4-10_to_2.1.6-8 (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.6-8/upgrades)
-    - Update DLF DB using script dlf_2.1.4_to_2.1.6-8
-       - (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.6-8/upgrades)
-    - Update the rpms on the different nodes. Some changes were made in the list of packages to install :
-       - The castor-gridftp-dsi-ext and castor-gridftp-dsi-int packages are now depending on castor-gridftp-dsi-common
-       - There are 2 new packages to be installed on the rtcpcld head node : castor-lib-policy and castor-rechandler-server.
-       - The mighunter package was renamed from castor-rtcopy-mighunter to castor-mighunter-server
-       - The cleaningDaemon is now in its own package called castor-cleaning-server
-    - Update your monitoring tools according to the daemon changes :
-       - The stager became stagerDaemon
-       - The MigHunter became migHunterDaemon
-       - A recHandlerDaemon was added
-    - Update the CASTOR configuration files on all machines
-       - Update castor.conf using the template giving in castor.conf.example
-       - Move the scheduling policy file on the scheduler machine :
-           mv /etc/castor/policies.py /etc/castor/policies/scheduler.py
-       - Move or create the policies that you need on the rtcpcld machine : /etc/castor/policies/stream.py, /etc/castor/policies/migration.py and /etc/castor/policies/rechandler.py
-    - Restart all daemons
-       - Don't forget the new ones : stagerDaemon, recHandlerDaemon (which is not mandatory if the recall policy is not used), migHunterDaemon 
-
-
------------
-- 2.1.5-2 -
------------
-
-  New Features and Changes
-  ------------------------
-  This CASTOR version is an internal one dedicated to the testing of the new stager.
-  Full release notes will be provided with the 2.1.6 version.
-  Note that this version is compatible with 2.1.4 in order to run the
-  new stager on top of a standard 2.1.4 install. Hence, the release field in the db
-  remains at 2.1.4-x.
-
-  Upgrade from 2.1.4:
-  -------------------
-  - There's no need to stop the service
-  - Run the 2.1.4_to_2.1.5-2.sqlplus script on the stager database
-  - Install only the stager RPM and its dependencies on a dedicated node
-
-
------------
-- 2.1.4-5 -
------------
-
-  New Features and Changes
-  ------------------------
-  This part lists the changes since the first release of the 2.1.3 series, that is 2.1.3-14.
-  Many of the fixes were backported to later releases of the 2.1.3 series, as mentioned.
-
-    Broad view and stager
-    ---------------------
-
-    - Official support for head nodes on SLC4 32 and 64 bit.
-    - rmmaster has been dropped and replaced by a jobManager dealing with LSF and the job scheduling
-    - initd scripts and sysconfig files have been cleaned up and improved
-    - Introduced hooks for recall policies. Policies themselves are not implemented yet
-    - Implemented stageRm per service class
-    - Added ability to declare a svcClass as disk only. In this case, requests that need to write 
-      to the diskpool (that is puts but also recalls and disk to disk copy) will fail if no space 
-      is available instead of filling the LSF queue
-    - Added ability to force the fileClass of new files in the disk only pool
-    - 2 new status codes were added for SubRequest SUBREQUEST_BEINGSCHED and READYFORSCHED. These 
-      are used by the jobManager
-    - Handle properly cases where STAGEOUT diskcopies are unavailable (disable hardware) or in 
-      another fileclass.
-    - Added 'ENABLE ROW MOVEMENT' to all tables in order to be able to shrink them online
-    - Better naming of version and releases within the stager DB
-    - Introduced partitioning of the subrequest table. This allows to avoid function based indexes
-      and thus to shrink tables dynamically. This was actually backported to 2.1.3-17.
-    - Added support for white and blacklist in the request handler.
-    - Added stage_version entry point in the stager API to get the stager version
-    - Added support in the init scripts for running 2 request handlers on a single node, on for 
-      users and one for admins
-
-    DiskServer
-    ----------
-
-    - Added proper cleaning after disk to disk copy failure
-    - Fail the job if the localhost does not match the hostname requested by the plugin (#28398)
-    - Fixed interrupted RFIO transfers not being correctly committed to the stager (#28372)
-    - When a diskserver is brought back into production all recalls for files available on the 
-      diskserver are now cancelled and the subrequest is restarted (#20832) 
-
-    Central Services
-    ----------------
-    - rfiod :
-      + dropping secondary groups as well when doing setuid/setgid
-    - nameserver :
-      + allow nschclass to change the class for regular files, but only if the user has Cupv admin 
-        privilege
-      + Added missing man pages
-    - rtcopy, MigHunter
-      + Added /var/lib/castor as new character device directory for rtcopyd
-      + getNumFilesByStream function was added to the TapeSvc and gives the number of files to be 
-        migrated in a given stream. This will allow to have thresholds for the number of migrators 
-        started (#20052). They will be implemented via streamPolicies attached to service class. 
-        Not there yet.
-    - DLF
-      + added separate stager link to ns file id results column in the DLF GUI
-      + added automatic creation of partition tablespaces
-      + support for large password lengths in connect string
-      + Added new loggin severity LOG_STANDARD. This is masking a standard set of rules, logging
-        everything but the DEBUG level locally and everything but DEBUG and USAGE level remotely
-      + Added dlf_isinitialized api call to determine whether the DLF api has been initialized or not
-
-    Tape related
-    ------------
-    - Added load balancing of VMGR pools with tapes in multiple libraries (#27319)
-    - Extension of rtcpd to log into DLF (using the tplogger interface of the tape part).
-    - Removal of message daemon from the tape code. The "ask operator" actions in case of failures 
-      have been replaced by RTB_NORETRY and RBT_FAST_RETRY for mount and unmounts, respectively.
-    - Refinement of 'Volume in use' fix: re-check the mount status of the drive if a 'Volume in use' 
-      is encountered. Despite the first (negative) check after EBUSY, the tape may still be mounted
-      (due to a flawed SMC response or a too early check).
-    - Refinement of EBUSY handling: an EBUSY error reported by the SCSI layer on a mount does not 
-      necessarily mean that the mount failed. A simple retry will hence cause in some cases 'volume
-      in use' errors, which lead to disabled tapes. If receiving an EBUSY, the code will now check 
-      if the requested tape is mounted in our drive and retry only if appropriate.
-    - Streamlined logging output in case of the new 'Bad MIR' handling in order to ease parsing.
-
-    Bug Fixes
-    ---------
-
-    Only in 2.1.4 :
-    - #15841 jobs that have 'no candidate' in LSF loop
-    - #18777 rhserver has no man page
-    - #19413 diskpool with no filesystem should cause jobs for this diskpool to fail
-    - #20832 Optimization of tape recalls after DiskServer problem
-    - #22178 closing a castorinstance to the users
-    - #22403 In the DLF gui, config.php has to be "world" readable
-    - #22969 rhserver doesn't reply if castorversion is the wrong one
-    - #23268 nsfind gives you paths with double slashes this makes stager_qry screw
-    - #23293 Impossible to only target one service class with stager_rm
-    - #23303 Required improvements in CASTOR2 for proper handling of Disk1TapeX
-    - #23710 Error information feedback from the repackserver
-    - #24746 ORA-01480 error in nameserver
-    - #25159 need for constraints of filesystem table to avoid orphaned filesystems
-    - #25468 nsls with big directories fails in 64 bit architectures
-    - #25997 Proper handling of castorVersion in DbCnvSvc
-    - #26134 no interface to fail a transfer request in a proper manner
-    - #26534 GC policies are not taking gcWeight attribute into account
-    - #26711 stager_qry provides responses while it shouldn't
-    - #26842 cleaning daemon connection to db is not closed
-    - #27311 please ensure MAXREPLICANB is respected
-    - #27319 RFE Loadbalancing of VMGR pools with tapes in multiple libraries
-    - #27320 RFE Get rid of msgdaemon
-    - #27331 Command line option to specify location of config files
-    - #27660 File with two concurrent tape recalls that get stuck.
-    - #27720 showqueues shows wrong queuing times on x86_64
-    - #28009 relocation of rtcopy work directory
-    - #28097 migration not optimized if nb of diskservers < N * nb of migrators
-    - #28168 putDone may wait on puts when the puts are already over
-    - #28182 CASTOR files can still end up with wrong size
-    - #28308 missing man-pages in castor-ns-client package
-    - #28336 A D2D copy running while a file is being migrated can cause inconsistent status
-    - #28398 New variant of files being scheduled to wrong filesystem
-    - #28411 rmAdminNode does not respect the deleted status of a diskserver when using the -f option
-    - #28438 rfiod may get stuck waiting for data connection in ropen(64)_v3() 
-    - #28564 rfiod not resetting secondary group ID's
-    - #28619 Two concurrent stagerGetRequests may result in two DiskCopies in status WAITTAPERECALL
-    - #28679 Core dump when user or group are not in passwd or group file
-    - #28685 Possible file loss due to inconsistent vmgr_updatetape and Cns_setsegattr calls in 
-             failing migrator
-    - #28678 # of castor threads can go -ve
-    - #28962 reporting of bad label structure from tapes
-    - #28986 stager_qry -s output not always in synch with reality.
-    - #29482 Missing cleanup of tapecopy+segment when GC'ing an INVALID diskcopy
-    - #29499 showqueues drive status display filter
-    - Fixed creation of the rtcopy work directory
-    - Fixed incorrectly logged checksum with DLF_MSG_PARAM_INT64 leading to segfault for old 
-      castorfiles without checksum
-    Already in 2.1.3-24:
-    - #28372 A file created in an interrupted RFIO transfer for a stagerPutRequest is not properly 
-             committed to the stager
-    - #27871 rfcp timeout creates "Device or resource busy"
-    - #27196 request waiting on D2D copy
-    - #26789 streamsToDo returns streams with nothing to do
-    - #27206 bad decision to STAGEIN if diskcopy in CANBEMIGR in disabled filesystem
-    - #27302 spacetobefreed has negative values
-    - #27564 MigHunter startup does not check for duplicates
-    - #27130 rmNodeDaemon problems on start-up
-    - #27507 recaller crash for old castor files without checksum
-    - 'volume in use' after EBUSY leading to disabled tapes
-    - Streamlined logging output in case of the new 'Bad MIR'
-    - getHostByName not thread safe, as well as the CASTOR clients using it
-    - #27794 cleaning daemon too slow to cope with heavy loads
-    - internalPutDoneFunc suffered from bad execution plans from ORACLE
-    - corrupted ns hostname logging in repack
-    - broken http downloads in stagerJob due to unintialised variable
-    - fixed incorrect return code of stager_put in case of success.
-    Already in 2.1.3-17:
-    - Fixed updating of the stager database for monitoring information when a diskserver was deleted 
-      via rmAdminNode
-    - Fix garbage collector in case of FileSystems with no GC policy
-    - fixed handling of command line options in modifyFileClass
-    - flag tape as unused in resetStream when stream is in WAITDRIVER
-    - fixed signal handling in rtcpclientd and reset streams with no active process on shutdown.
-    - Added an automatic repair of corrupted tape directories (MIR). The repair is done by SPACE to 
-      EOD and REWIND SCSI commands. The handling of bad MIRs is controlled via the new option 
-      BADMIR_HANDLING.
-    Already in 2.1.3-15:
-    - Fixed in stager_qry for the case of a file with no diskcopy and no subrequest but which still 
-      has a CASTOR file. We were answering STAGED instead of File Not Found in previous releases.
-    - Added more retries on system and tape errors
-    - Fixed iptable rules for the range of open ports on a Castor client (port 30101 was open by 
-      mistake)
-    - Use new error code ERTWRONGSIZE to flag tape recalls with wrong filesize
-    - Added support for separate stager trace and rfiod log files
-    - Avoided that segments stay in SEGMENT_SELECTED if filesize is wrong on a tape recall
-    - Avoided deadlock with castor2 clients after errors in Ctape_reserve() or Ctape_mount()
-    - Expanded the list of customised pending errors to help in operational debugging
-    - Fixed missing Python 2.3 symbols at runtime
-    - Changed signal handling to prevent mount/dismount race in case of a killed mount request.
-      This should fix at least some of the 'volume in use' cases and the 'Destination Element Full' 
-      problems.
-
-  Upgrade from 2.1.3-*
-  --------------------
-    - you basically have to update to 2.1.3-24 and then follow the instructions for updating from 2.1.3-24.
-    - you can however avoid to update the RPMs
-
-  Upgrade from 2.1.3-24
-  ---------------------
-    - before upgrading the CASTOR 2 head nodes, one should first upgrade the nameserver
-       - this is actually mandatory if you want to use disk only service classes
-       - it is a pure RPM upgrade, no DB update
-       - the 2.1.4 nameserver can be ran concurrently to an older one in case you have
-         DNS load balanced clusters of nameservers, allowing an upgrade with no service interruption
-    - make sure that no LSF jobs stay in the queue. bkill all the remaining ones
-    - stop all daemons and services (rhserver, stager, rtcpclientd, cleaningDaemon, rmmaster, dlfserver, expertd, rmnode, gcdaemon, LSF)
-    - optionally backup your stager DB (one never knows...)
-    - upgrade the stager database
-       - use script 2.1.3-24_to_2.1.4-5 (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.4-5/upgrades)
-    - update DLF DB using script dlf_2.1.3-24_to_2.1.4-x
-       (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.4-5/upgrades)
-    - update the rpms on the different nodes. Some changes were made in the list of packages to install :
-       - the castor-rmmaster-server should not be installed anymore on the rmmaster node (now called jobManager node)
-       - the castor-jobmanager-server package should be installed on the jobManager node (former rmmaster node)
-    - update your monitoring tools according to the daemon changes :
-       - on the jobManager (ex rmmaster) machine, jobManager replace rmmaster
-    - update the CASTOR configuration files on all machines
-       - update castor.conf using the template giving in castor.conf.example
-       - take care that the RmMaster/SharedLSFResource target changed to JobManager/SharedLSFResource
-    - restart all daemons
-       - don't forget that rmmaster is replaced by jobManager
-    - for the dlf web interface move the login configuration to its new location
-       - mv /var/www/html/dlf/login.php.rpmsave /var/www/conf/dlf/login.conf
-       - chown root:apache /var/www/conf/dlf/login.conf
-       - chmod 640 /var/www/conf/dlf/login.conf
-
-------------
-- 2.1.3-24 -
-------------
-
-  Bug Fixes
-  ---------
-  - #27196 request waiting on D2D copy
-  - #26789 streamsToDo returns streams with nothing to do
-  - #27206 bad decision to STAGEIN if diskcopy in CANBEMIGR in disabled filesystem
-  - #27302 spacetobefreed has negative values
-  - #27564 MigHunter startup does not check for duplicates
-  - #27130 rmNodeDaemon problems on start-up
-  - #27507 recaller crash for old castor files without checksum
-  - 'volume in use' after EBUSY leading to disabled tapes
-  - Streamlined logging output in case of the new 'Bad MIR'
-  - getHostByName not thread safe, as well as the CASTOR clients using it
-  - #27794 cleaning daemon too slow to cope with heavy loads
-  - internalPutDoneFunc suffered from bad execution plans from ORACLE
-  - corrupted ns hostname logging in repack
-  - broken http downloads in stagerJob due to unintialised variable
-
-  Upgrade from 2.1.3-17
-  ---------------------
-  - GRANT new privileges on the DLF DB. Here is an example of what to run,
-    has to be modified for each site :
-      alter system set db_create_file_dest='/ORA/dbs03/oradata/CASTORDLF/' scope=both ;
-      grant create tablespace to castor_dlf;
-      grant unlimited tablespace to castor_dlf;
-      grant alter tablespace to castor_dlf;
-  - Apply the SQL upgrade script to the dlf DB
-  - Stop all daemons
-  - Apply the SQL upgrade script to the stager DB
-  - Upgrade all nodes
-  - Restart all daemons
-
-------------
-- 2.1.3-17 -
-------------
-
-  New Features and Changes
-  ------------------------
-  - Better naming of version and releases within the stager DB
-  - introduced partitionning the subrequest table. This allows to avoid
-    function based indexes and thus to shrink tables dynamically
-  - Fixed updating of the stager database for monitoring information when
-    a diskserver was deleted via rmAdminNode
-  - Fix garbage collector in case of FileSystems with no GC policy
-  - Added check of the version of the dlf schema at startup of the dlf server
-  - fixed handling of command line options in modifyFileClass
-  - flag tape as unused in resetStream when stream is in WAITDRIVER
-  - fixed signal handling in rtcpclientd and reset streams with no active
-    process on shutdown.
-  - Added an automatic repair of corrupted tape directories (MIR).
-    The repair is done by SPACE to EOD and REWIND SCSI commands.
-    The handling of bad MIRs is controlled via the new option BADMIR_HANDLING.
-  - Adapted repack to castor 2.1.3
-
-  Upgrade from 2.1.3-15
-  ---------------------
-  - Stop all daemons
-  - Apply the SQL upgrade script to the stager DB
-  - Upgrade all nodes
-  - Restart all daemons
-
-------------
-- 2.1.3-15 -
-------------
-
-  New Features and Changes
-  ------------------------
-  * Fixed in stager_qry for the case of a file with no diskcopy and no subrequest but which still has a CASTOR file.
-    We were answering STAGED instead of File Not Found in previous releases.
-  * Added more retries on system and tape errors
-  * Fixed iptable rules for the range of open ports on a Castor client (port 30101 was open by mistake)
-  * Use new error code ERTWRONGSIZE to flag tape recalls with wrong filesize
-  * Added support for separate stager trace and rfiod log files
-  * Avoided that segments stay in SEGMENT_SELECTED if filesize is wrong on a tape recall
-  * Avoided deadlock with castor2 clients after errors in Ctape_reserve() or Ctape_mount()
-  * Expanded the list of customised pending errors to help in operational debugging
-  * Fixed missing Python 2.3 symbols at runtime
-  * Changed signal handling to prevent mount/dismount race in case of a killed mount request.
-    This should fix at least some of the 'volume in use' cases and the 'Destination Element Full' problems.
-
-  Upgrade from 2.1.3-14
-  ---------------------
-  - There is no need to stop the service for this upgrade
-    and the order in which the update steps are taken does
-    not matter
-  - Upgrade all head nodes and tapeServers
-  - Apply the SQL upgrade script
-
-------------
-- 2.1.3-14 -
-------------
-
-  New Features and Changes
-  ------------------------
-  They are so numerous here that they were divided into categories
-
-    Broad view and transverse items
-    -------------------------------
-    - the monitoring has been fully rewritten, see details below
-    - the LSF plugin has been fully rewritten, see details below
-    - clips was dropped, python replaces it
-    - fully qualified domain names are used everywhere
-    - all executables and libraries have a new symbol storing the CASTOR version number.
-      just do an "nm <exe or lib file> | grep CastorVersion" to get it
-    - putDones are not scheduled anymore
-    - the maximum file name length in the nameserver was changed from 231 to 255 characters
-    - garbage collection on diskservers was "desynchronized". The point is to avoid that all GCs
-      start concurrently both for load and smoothing reasons
-
-    Monitoring
-    ----------
-    - rmmaster daemon is now only doing job scheduling and is not used anymore for monitoring
-      although it is still active. As a consequence, rmgetnodes won't give anything
-    - as a corrolate, rmnode is no more distributed and does not run anymore on the diskservers.
-      rmadminnode should not be used anymore and the fileSystem service of the stager was dropped.
-    - the new monitoring daemon is called rmMasterDaemon and should run on the scheduler node.
-      It is distributed in the same package castor-rmmaster as rmmaster so this package should be
-      installed on both the scheduler node and the rmmaster node even if both daemons are not
-      needed in both places.
-    - rmMasterDaemon uses shared memory to store the data. This set of memory will survive it
-      in case of crash and be reused when restarting. In case of reboot, it can be reinitialized from
-      the data contained in the stager DB, which are constantly updated.
-    - the new command lines are rmAdminNode and rmGetNodes (the second one being only available on
-      the scheduler node).
-    - the new monitoring daemon is called rmNodeDaemon and is distributed in castor-rmnode. On top
-      of monitoring the node and sending data to the rmMasterDaemon, it also keeps the current status
-      of the node in the daemon in /etc/castor/status (default). It initializes the shared memory when
-      starting by reseting the metrics, setting statuses to Down and Admin statuses to what they are
-      in the stager DB.
-    - the new monitoring monitors :
-      - for each diskserver : ram(total+free), memory(total+free), swap(total+free),
-        nbRead/ReadWrite/Write/Recaller/MigratorStreams, read/writeRate, status and adminStatus
-      - for each filesystem : space(total+free), nbRead/ReadWrite/Write/Recaller/MigratorStreams,
-        read/writeRate, status and adminstatus
-    - the status can be Production, Down, Draining.
-    - the admin status can be None, Force or Deleted. If None, the status in the master is updated according
-      to monitoring. It Force, it is not updated. If Deleted, the diskServer/FileSystem is dropped from the
-      stager database and will disappear at the next reset of the shared memory (e.g. reboot).
-    - the new monitoring system is able to disable diskservers that did not send data for too long
-
-    Around LSF
-    ----------
-    - there is a new LSF plugin with same name and same interface as the old one.
-    - it uses shared memory to get data from the rmMasterDaemon and thus has to run on the same machine
-    - this shared memory is also accessed by rmGetNodes that basically dumps it
-    - In case of corruption, the way to reset the shared memory is to stop rmMasterDaemon and LSF and
-      use ipcrm. the key used is 0x946
-    - scheduling policies are now defined in python and can be defined per svcclass.
-      The python code is precompiled at plugin start in order to speed up the execution.
-      Policies can be updated with no service interuption by reloading the plugin (badmin reconfig).
-      Default policy takes only the number of streams per filesystem into account.
-    - CASTOR now uses multiple queues in LSF, namely one queue per svcclass
-    - we don't use message boxes anymore inside LSF. The first one was dropped while the second one is
-      replaced by file sharing, either via distributed filesystem or via a web server running on the
-      scheduler machine. This also implies that jobs are no longer suspended and resumed.
-
-    Around the stage DB
-    -------------------
-    - all indexes and constraints in the stager DB schema are now properly named
-    - reservedSpace has been dropped from the filesystem table. It is replaced by loose heuristics
-      leading to imprecisions on the actual and expected free space but avoiding any accumulation
-      problems.
-    - the nullGCPolicy does not exist anymore since "INVALID" diskcopies are cleaned up independently.
-      In order to not use any garbage collection policy, an empty name should be used.
-    - the way to choose the best filesystem to be used for migration (migration policy) has changed
-      to favor the reuse of filesystems. Namely, filesystems will be reused during 15 minutes by
-      migrators (as long as there are candidates and the filesystems are in Production). This allows
-      the scheduler plugin to adapt its behavior by reducing the number of concurrent reads and has
-      very good effects on the migration speed.
-    - many schema changes took place. Here is an overview of the biggest ones :
-       - min/max/minAllowedFreeSpace were dropped. They now reside in the monitoring shared memory
-         of the new rmMasterDaemon and are defined in the castor.conf of the diskServers
-       - the load of diskServers and the weight of fileSystems have been dropped. They are replaced by
-         nbRead/ReadWrite/Write/Recaller/MigratorStreams and read/writeRate. The values stored in the
-         database are actually only copies from the mnitoring shared memory that is the primary source.
-       - procedure bestFilesystemForJob is gone, replaced by the python policies of the scheduler plugin.
-       - reservedSpace disappeared from the filesystem table as already mentionned.
-       - the stream table has new columns : lastFileSystemChange, lastFileSystemUsed and lastButOneFileSystemUsed.
-         This allows the migration policies to be more clever (see above).
-
-    Tape related
-    ------------
-    - Extended tpdaemon to use proper DFL logging
-    - Concerning bad MIRs, take the operator out of the loop and rely on the healing capabilities of the
-      drive during the next access. This can be controlled by new option TAPE CANCEL_ON_BADMIR.
-    - a restriction was added on the repack server to dismiss users with 0 id
-    - the repack -a has been modified. "repack -a Vid" is used to archive a specific finished tape
-      while "repack -A" archive all the finished one.
-    - repack -x has been extended to give information about the different segments that were on a
-      repacked tape querying the name server.
-    - A new couter has been added to repack with the STAGED files (properly migrated) and it will be
-      updated by the monitoring. At the end the last snapshot is taken before deleting the subrequest.
-
-    Bug Fixes
-    ---------
-    - #26534  GC policies are not taking gcWeight attribute into account
-    - #26489  Allow results to be displayed in reverse chronological order
-    - #26177  putDone does not to update the filesize in the nameserver?
-    - #26176  Accumulation of orphaned subrequests in SUBREQUEST_WAITSUBREQ (5)
-    - #26135  Customized pending reason number 20003
-    - #26060  enterSvcClass should fail if it detects illegal options
-    - #25344  misleading error message from rfcp
-    - #25029  reservedSpace leak for SRM 'put' request cycles
-    - #24864  Tape recalls do not work properly on 2.1.2.6 (itdc)
-    - #24407  errcode == 32102 doesn't resurrect
-    - #23961  Tape removed from vmgr makes rtcpclientd loop
-    - #23795  UID zero checking 
-    - #23794  FAILING file count
-    - #23793  repack -a
-    - #23709  Kill and terminate a repack session 
-    - #23705  repack -s status information
-    - #21953  problem with subdirectory creation on diskservers 
-    - #21823  putDone failure not well handled if file does not exist on diskserver
-    - #21745  RFE: CASTOR to support FQDN internally for disk servers
-    - #20353  The 'no valid copy found on tape' instead of 'Internal error' is still not fixed!
-    - #20079  filesystems not being updated are not taken out of production!
-    - #17153  LSF job can remain in PSUSP after a timeout between stager - rmmaster
-    - #15832  RMMASTER does not keep node states
-    - #11550  Leak in stager
-    - #1288   rfmkdir -p
-    - the default values for the cleaning daemon time intervals were fixed
-    - a PutDone is now accepted on a disabled diskserver
-    - read only jobs go through whatever the space situation is. However "false" read jobs
-      (read jobs that would trigger disk2diskCopy or recalls) don't
-    - fixed automatic renewal of the database connection for all hand-written services
-    - regular retries on disabled or archived tapes
-    - jump over files with bad size in tape recalls. This avoids looping blocking other correct files.
-      There will still be an alert log for the wrong file.
-    - fixed tape stuck in START problem. The code ignores consistency problems with the status of a tape in VMGR.
-    - fix for the device or resource busy problem leading to put all drives down. A simple retry worked here.
-    - fix tape stuck in UNKNOWN status in case of tape alert. The new parameter DOWN_ON_TPALERT allows
-      to configure whether to put the drive down or to ignore the alert.
-    - in case of time out in contacting the stager the  repack subrequest is not ending up into "FAILED" status.
-
-  Upgrade from 2.1.1-*
-  --------------------
-    - you basically have to update to 2.1.2-x (with x >= 4) and then follow the instructions for updating from 2.1.2-*.
-    - you can avoid to update the RPMs
-    - concerning the stager database updates :
-       - if you start from a 2.1.1-4, first run 2.1.1-4_to_2.1.1-9
-         http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.1-9/upgrades/
-       - from a 2.1.1-9, update to 2.1.2-4 using 2.1.1-9_to_2.1.2-4
-         http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.2-*/2.1.2-4/upgrades/
-    - concerning the DLF database :
-       - if starting from a 2.1.1, drop and recreate the DLF DB.
-         The easiest is to use the 2.1.3 drop script (a generic one that can be applied to any version)
-         and recreate the DLF schema using the 2.1.2-4 script
-         (both can be found on http://castor.web.cern.ch/castor/software.htm)
-
-  Upgrade from 2.1.2-*
-  --------------------
-    - first make sure that no LSF jobs stay in the queue. bkill all the remaining ones
-    - stop all daemons and services (rhserver, stager, rtcpclientd, cleaningDaemon, rmmaster, dlfserver, expertd, rmnode, gcdaemon, LSF)
-    - optionnaly backup your stager DB (one never knows...)
-    - upgrade the stager database
-       - first save somewhere the values of min/max/minAllowedFreeSpace for all filesystems. They will needed
-         when upgrading the diskservers.
-       - use script 2.1.2-*_to_2.1.3-14 (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.3-14/upgrades)
-    - upgrade the diskServer names in the stager database to include the fully qualified domain :
-         UPDATE DiskServer SET name = name || '.cern.ch';
-         COMMIT;
-    - update DLF DB using script dlf_2.1.2-x_to_2.1.3-x
-       (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.3-14/upgrades)
-    - update the rpms on the different nodes. Some changes were made in the list of packages to install :
-       - on the scheduler machine, castor-rmmaster and castor-lib-monitor should be added
-       - on the diskservers, castor-lib-monitor should be added
-       - clips can be dropped from the expert machine
-    - update your monitoring tools according to the daemon changes :
-       - on the diskServer, rmnode was replaced by rmNodeDaemon
-       - on the scheduler machine, rmMasterDaemon was added
-    - upgrade to LSF7 and modify the LSF configuration files :
-       - use fully qualified machine names :
-          - update machine names accordingly in all config files
-          - remove LSF_STRIP_DOMAIN from lsf.conf on all machines
-       - define one queue per svcclass in lsb.queues
-       - remove or increase the 1000 jobs limitation in lsb.params
-          - e.g. CERN has a 30000 limit on the number of jobs
-       - allow for extsched option in job submission :
-          - add LSF_ENABLE_EXTSCHEDULER in lsf.conf of the scheduler and rmmaster machines
-    - define python scheduling policies :
-       - create the policy python file from the .example one (/etc/castor/policies.py.example)
-       - optionnaly modify it to adapt policies
-       - optionnaly define different policies for different service classes
-    - update the CASTOR configuration files on all machines
-       - update castor.conf using the template giving in castor.conf.example
-       - define the way to share files between the scheduler machine and the diskservers
-         - on the scheduler machine, define the Sched/SharedLSFResource option giving the place where to put files
-           Note that this ca be either a shared filesystem or a local directory accessible through a web server
-           In both cases, lsfadmin needs write access to the directory
-         - on the rmmaster machine, define the Job/SharedLSFResource option giving the place where diskservers
-           can find the files. Again, this can be either a shared filesystem or an http location (e.g.
-           dir:/var/lsf/sharedfiles or http://castorscheduler.cern.ch/lsf)
-       - on diskservers :
-         - edit castor.conf to define the proper name for the RM/HOST option (scheduler machine)
-         - edit castor.conf to define proper mountPoints in the RmNode/MountPoints option. e.g.
-           RmNode MountPoints /srv/castor/01/ /srv/castor/02/ /srv/castor/03/
-         - optionnaly define option RmNode/StatusFile in castor.conf. The given file will contain the filesystem
-           and node status as seen by the central servers, constantly updated
-         - if needed, edit castor.conf to define the min/max/minAllowedFreeSpace according to the values
-           saved from the stager DB. Default values are .10, .15 and .05
-    - restart all daemons
-       - on diskservers : rmNodeDaemon, gcDaemon
-       - on scheduler : rmMasterDaemon, LSF
-       - on other nodes, nothing changed (including on rmmaster, the old rmmaster must still run)
-    - enable diskservers one by one using rmAdminNode :
-         rmAdminNode -n <fully qualified node name> -r -R
-
------------
-- 2.1.2-10-
------------
-
-  New Features and Changes
-  ------------------------
-  This release brings selected fixes and no new functionality with respect to the previous 2.1.2:
-  - Fix the back signal handler modifications from 2.1.3
-
-  Upgrade from 2.1.2-9
-  --------------------
-  - Upgrade all head nodes (the order is not important)
-
------------
-- 2.1.2-9 -
------------
-
-  New Features and Changes
-  ------------------------
-  This release brings selected fixes and no new functionality with respect to the previous 2.1.2:
-  - Fixes for reservedSpace accumulation in case of failed Puts and Puts from SRM
-  - Fixes in the stager to prevent segmentation faults in case of exception handling for tape recalls
-  - Fix in the scheduling of disk-to-disk copies
-  - Fix for the stagemap handling when only the user gid is mapped in stagemap.conf
-
-  Upgrade from 2.1.2-6/7
-  ----------------------
-  - Upgrade the database 
-  - Upgrade all head nodes (the order is not important)
-
-
------------
-- 2.1.2-7 -
------------
-
-  This release is broken in disk-to-disk copy handling.
-
-
------------
-- 2.1.2-6 -
------------
-
-  New Features and Changes
-  ------------------------
-  This release brings a number of bug fixes:
-   - Fixed potential double/invalid frees in the database access layer
-   - Fixed error checking in the PrepareToGet in case of tape recalls
-   - Bug Fixed in repack worker and monitoring now is able to deal with the stager timeout.
-   - Fixed the socket leak in DLF client when the DLF server is not reachable
-   - Fixed the stagerJob for xroot. We were calling prepareForMigration while xroot does it for us.
-   - Optimized version of stage_qry
-   - Fixes for the processing of update requests
-   - Fixed the reservedSpace accumulation problem
-   - Fixed garbage collector job
-  
-  Upgrade from 2.1.2-4
-  --------------------
-  - Upgrade the database 
-  - Upgrade all head nodes (the order is not important)
-
-
------------
-- 2.1.2-4 -
------------
-
-  New Features and Changes
-  ------------------------
-  This release brings a number of bug fixes and improvements:
-  - A PrepareToGet request is not scheduled anymore if the requested file is to be recalled from tape
-  - Bugfixes and finalization of the Repack system
-  - Implemented Repack check and Repack undo
-  - Fixes around the DLF and the web interface
-  - Fixed all known database deadlocks to date
-  - Reconnection to the db more robust in case of transient failures, many more are recognized now
-  - Cleaned NS clients and CUPV code for 64bit
-  - Many optimizations in the PL/SQL code
-  - Minor fixes to be able to compile the C++ part with gcc-3.4 and gcc-4.1 without warnings
-  - Fixed a problem in TapeErrorHandler to allow tape retries upon error
-  - Fixed query used by the cleaningDaemon to delete old failed subRequests
-  - Bugfix for #22620: Uncaught C++ exception causes TapeErrorHandler to Abort
-  - Bugfix for #22382: rtcpclientd does not stop gracefully upon signal
-  - Bugfix for #21824: internalPutDoneFunc tries to delete the prepareTo request too hard
-  - Bugfix for #21541: change location of RTCOPY
-  - Bugfix for #21482: bad values on defaultFileSize when using modifySvcClass
-  
-  Upgrade from 2.1.1-9
-  --------------------
-  - Stop all the CASTOR daemons
-  - Upgrade the database; new database code does not work with old stagers
-  - Upgrade all nodes (the order is not important) and restart the service
-
-
------------
-- 2.1.1-9 -
------------
-
-  New Features and Changes
-  ------------------------
-  This release brings a number of bug fixes and improvements:
-  - Improvements around the Repack system, added Repack multi-stager ability
-  - Bugfix for #21093: strange files created on local disk, when DLF is not able to log
-  - Bugfix for #20069: if user has the wrong (non existent) svcclass there is no intelligible error reported
-  - Bugfix for very large files
-  - Improved selection of migration candidates via PL/SQL procedure
-  - Improved port handling in clients in case of many concurrent callbacks on a small port range
-  - Improved stager_qry in case of castorFiles with many diskCopies
-  - Bugfix for stager_qry (#19044, #19836)
-  - Improved logging in the Request Handler
-  - Support for 700Gb tapes
-
-  Upgrade from 2.1.1-4
-  --------------------
-  - Upgrade the database
-  - Upgrade all nodes (the order is not important).
-
-
------------
-- 2.1.1-4 -
------------
-
-  New Features and Changes
-  ------------------------
-  This release brings a number of bug fixes:
-  - Fixes around the Repack system
-  - Improved cleaning procedures and config for the cleaningDaemon, now it shares castor.conf
-  - Fixed Oracle deadlock which was leading to many diskcopies left in status 9
-  - Fixed Oracle deadlock in streams leading to inconsistencies in NbTapeCopiesInFS
-  - Fixes in the migrator
-  - Improved GC trigger to resurrect the GC job if it previously died
-  - Improved stagerJob to prevent it to loop forever for a missing msgbox 4 from LSF
-
-  Upgrade from 2.1.1-0
-  --------------------
-  - Upgrade the database
-  - Upgrade the head nodes and the diskservers (the order is not important).
-
-
------------
-- 2.1.1-3 -
------------
-
-  New Features and Changes
-  ------------------------
-  This release brings the new Repack for CASTOR2 system, and a number of bug fixes:
-  - Fixed leak of stager_rm subrequests in status ready
-  - Fixed deadlock in the updateFsFileOpen/Close SQL methods
-  - Fixed stager_qry for prepareToPut requests
-  - Fix concerning retrieval of castorversion from stagemap if the env variable is not set
-  - Take '*' as a wildcard for the svcClass in a stager_qry
-  - Changed compression factor for IBM3592 in order to activate NVC bit
-  - Included modifications for xrootd
-
-  Upgrade from 2.1.1-0
-  --------------------
-  - Upgrade the head nodes
-  - Then for the other nodes no special order is required.
-
-
------------
-- 2.1.1-2 -
------------
-
-  - This release is broken in the rtcpclientd.
-
-
------------
-- 2.1.1-1 -
------------
-
-  New Features and Changes
-  ------------------------
-  This release is exactly the same as the 2.1.1-0 except for a minor fix on the DLF server.
-  It has been rebuilt to widely deploy it at CERN, as the first attempt for the 2.1.1-0 had
-  a major problem leading to backward incompatibilities on the client.
-  Note that the RPMs in the castor download area are correct for both 2.1.1-0 and 2.1.1-1.
-
-  Upgrade from 2.1.1-0
-  --------------------
-  Not needed. If you're running an older version, please follow upgrade instructions below.
-
-
------------
-- 2.1.1-0 -
------------
-
-  New Features and Changes
-  ------------------------
-  This is a major release with many fixes and features. See the changelog for all the details.
-  The most important new features are:
-  - New rewritten version of DLF
-  - Resurrection of the db connection when it's lost
-  - Many fixes to the SQL code
-  - Fixed some deadlock between the GC and the updateFsFileClosed PL/SQL function
-  - Fixed the random port issue on the client
-  - Changed default nb of threads to 20 for DB and JOB (optimal value according to Olof's tests)
-  - Modifications to be ready with RFIO merge
-  - Increased the number of test suites
-  
-  Upgrade from 2.1.0-x
-  --------------------
-  The upgrade to be done concerns the whole system (database, stager, clients, tape servers),
-  and backward compatibility is ensured only if clients are uprgraded BEFORE servers.
-  - Upgrade all clients (they can still connect to an OLD stager).
-  - Upgrade the stager database (you don't need to stop the services nor daemons for that).
-  - Drop and recreate the DLF database.
-  - Then upgrade the head nodes.
-
------------
-- 2.1.0-8 -
------------
-
-  New Features and Changes (from 2.1.0-7)
-  ---------------------------------------
-  - Fixed temporaly the problems with rfcp command for CASTOR1
-
-  Upgrade from 2.1.0-7
-  --------------------
-  Only CLIENTS using CASTOR1 should upgrade. For CASTOR2 there are no changes
-    
------------
-- 2.1.0-7 -
------------
-  
-  New Features and Changes (from 2.1.0-6)
-  ---------------------------------------
-  - Fixed a problem with the memory leak in RFIO
-  - Temporary fix, the port used in the bind is now a pseudo-random value that change for each request.To reduce the probability that the answer of an aborted request is returned to a new one.
-
-  Upgrade from 2.1.0-6
-  --------------------
-  Non special order is required.
-  
------------
-- 2.1.0-6 -
------------
-  New Features and Changes (from 2.1.0-5)
-  ---------------------------------------
-  - Made the output of stager_qry -s less wide
-  - Added CF.lastKnownFileName as a result of diskServer_qry -i 
-  - Mir valid/invalid checking on IBM3592E05 tape drives, new IBM3592E05 firmware release (172E) fixed problem seen before.
-  - Connection reset messages from rmc are just sent to msgdaemon after 2 retries.
-  - Rmcdaemon now checks if tape is in the storage slot before returning dismount OK
-  - Fixed the cleaning of the DiskCopy in case of put failure. This was leading to orphaned DiskCopies
-  - Fixed a bug in updateFiles2Delete
-  - Handle properly exceptions in sendRequest and especially release memory and close the socket
-  - Fixed missing filling of the svcclass of a castorfile in memory.The consequence was that the svcclass could be overwritten in case  of reuse of a castorfile in 2 different service classes
-
-
-  Upgrade from 2.1.0-5
-  --------------------
-
-  - Upgrade the Database
-  - Upgrade the head nodes
-  - Then for the other components there are no restrictions in that release.
-
------------
-- 2.1.0-5 -
------------
-  New Features and Changes (from 2.1.0-5)
-  ---------------------------------------
-  - Fixed some deadlock between the GC and the updateFsFileClosed PL/SQL function
-  - Fixed a missing chkconfig line in debian/cleaning.init
-  - RFIO_USE_CASTOR_V2 NOT case sensitive.
-  - Fixed the bug of permissions when creating a file (stager_put)
-  - Remove check for already migrated files preventing recreated files from being migrated
-  - Fixed stage_open, broken since the integration of O_LARGEFILE
-  - Fixed tpdump for toot usage
-
-  Upgrade from 2.1.0-4
-  --------------------
-
-  - Upgrade the Database
-  - Upgrade the head nodes
-  - Then for the other components there are no restrictions in that release.
-
------------
-- 2.1.0-4 -
------------
-  New Features and Changes (from 2.1.0-3)
-  ---------------------------------------
-  This is a bug fix release, strictly identical to 2.1.0-3 with some exceptions:
-  - The name server client commands(nsln, nsgetacl and nssetacl) for manipulating the ACLs are included in castor-ns-client package
-  - Fixed TURL parsing in rfcp
-  - Updated the man pages with the new turl
-  - Added some changes in the stager and disk server to support xrootd protocol
-  - Fixed bug #17720, backport fix in rtcpcld_putFailed from 1.143.0.2
-  - Added message when skipping not-staged files
-  - Stager client command line is CASTOR2 by default (RFIO_USE_CASTOR_V2 doesn't need to be set with this client version)
-  - Check of tapealerts hard error, media error, write failure, read failure at release time. 
-  - Removal of MIR validity check, on IBM3592EO5 in some situation gives false positive results.
-  
-
-  Upgrade from 2.1.0-3
-  --------------------
-
-   - The upgrade to be done concerns to the whole system but the database( stager, client, disk servers and tape servers)
-   - There are no specific modifications of the database
-   - If your are upgrading 2.1.0-3 no order is required, but if you are upgrading from 2.1.0-2 or previous versions please follow the order specified in "2.1.0-3 upgrade from 2.1.0-2"  
-   
-
-
-
------------
-- 2.1.0-3 -
------------
-  New Features and Changes (from 2.1.0-2)
-  ---------------------------------------
-  This is a bug fix release, strictly identical to 2.1.0-2 with some exceptions:
-  - Fixes concerning the TURL parsing in RFIO
-  - The garbage collection was optimized 
-  - Added the check of MIR validity at mount time for SUN/STK T10000, LTO and IBM3592
-  - Fixes concerning the deadlocks in PL/SQL and avoiding replication of STAGEOUT files
-  - Added dependency on castor_lib_compact 2.0.2_1 to avoid relinking.
-  - Fixed the inicialitation of the file systemd for minAllowedFreeSpace
-  
-
-  Upgrade from 2.1.0-2
-  --------------------
-
-    - The upgrade to be done concerns the whole system (database, stager, client, tape servers)
-    - Upgrade the database (you don't need to stop the services nor daemons for that).
-    - Then upgrade the rest of the system. 
-
-
-  
-
------------
-- 2.1.0-2 -
------------
-
-  New Features and Changes (from 2.1.0-0)
-  ---------------------------------------
-  
-  This is a bug fix release, strictly identical to 2.1.0-0 except
-  for the tape part.
-  On previous releases of Castor, the report of compression statistics
-  from SUN T10000 tape drives was wrong. This behaviour was due to the
-  wrong handling of the T10000 device when decoding the sequential log page.
-  Castor will report wrong compression statistics on IBM3592 tape drives
-  if the tape drive is set with NVC mode on. The tape drive will only post
-  correct statistics after the flush of the NVC buffer, this behaviour is
-  particularly seen when files are smaller than the NVC buffer size
-  (~300MBytes).
-
-  Upgrade from 2.1.0-0
-  --------------------
-
-    - The only upgrade to be done concerns the tape servers.
-
-
------------
-- 2.1.0-1 -
------------
-
-  New Features and Changes (from 2.1.0-0)
-  ---------------------------------------
-  This is not really a release but modifications at the rpm level
-  
------------
-- 2.1.0.0 -
------------
-
-  New Features and Changes (from 2.0.4-1)
-  ---------------------------------------
-
-  This version is strictly identical to 2.0.4-1.
-  It is however prefered to 2.0.4-* since the soname of the libraries changed
-  which was needed after we introduced some non backward compatible change in
-  the interface.
-
-  Upgrade from 2.0.4-1
-  --------------------
-
-    - The only upgrade to be done concerns the castor.conf: it has to be
-      upgraded everywhere (head nodes and diskservers) with the new library
-      name (ends with 2.1 instead of 2.0).
-    - Note that for the client part, we advice to let castor-lib 2.0.* live
-      aside the new one, so that applications linked with libshift.2.0 don't
-      break suddenly. Once all users have relinked there applications with
-      the new version, it can be removed.
-
------------
-- 2.0.4-1 -
------------
-
-  New Features and Changes (from 2.0.4-0)
-  ---------------------------------------
-    
-    - Fixes concerning the TURL parsing in RFIO
-    - Implementation of a port range for the ports used by the stager clients.
-      Default range in [30000,30100], it can be overwritten in castor.conf
-    - The file permission checks were fixed in the stager
-    - The getNext functionnalities were made available to update requests
-    - The cleaning daemon now has an init script
-    - The flags given to RFIO when opening a file are now correctly handled
-    - Queries on directories are now properly handled
-    - SQL scripts are now also provided for sqlplus
-    - The garbage collection was fixed (it was broken in 2.0.4-0 due to the new archiving of subrequests)
-    - stager_qry -s was fixed (ordering was wrong)
-
-  Upgrade from 2.0.4-0
-  --------------------
-
-    - The database schema has not evolved. However, some fixes in the PL/SQL code
-      were added. Use upgrades/2.0.4-0_to_2.0.4-1.sql to upgrade.
-    - Clients can be updated completely independently (before or after the server
-      update).
-
------------
-- 2.0.4-0 -
------------
-
-  New Features and Changes (from 2.0.3-0)
-  ---------------------------------------
-
-    - Fixes concerning the IBM 3592 tapes
-    - Support for preallocation and direct i/o were added to RFIO
-    - A Cleaning service was added that cleans up old requests
-      and errors after some (configurable) time
-    - stager_qry support for regexp was improved. Regexp is
-      no more the default but can be activated using options.
-      Directory listing is also supported and several fixes were applied.
-    - stager_qry -s was implemented for getting statistics on diskpools
-    - (prepareTo)Get/Put requests now detect directory names
-    - RFIO was modified for supporting extended TURLs needed for
-      SRM : rfio://stager:port//castor/.../file?svcclass=...&castorversion=...
-    - /etc/castor/ORASTAGERCONFIG can now contain several lines in order
-      to be able to switch between several CASTOR2 instances. The environment
-      variable CASTOR_INSTANCE defines which line to use
-    - VMGR now updates correctly the estimated free space, even for full tapes
-    - rmnode has no more default for the RMMASTER_HOST. It raises an error
-      if nothing is set.
-    - Better logging of rmmaster to DLF
-
-  Upgrade from 2.0.3-*
-  --------------------
-
-    - The database schema has evolved. Use upgrades/2.0.3_to_2.0.4.sql to upgrade.
-      This can be done anytime before the software upgrade and does not imply any
-      service interruption.
-    - The server code can be updated after the DB, still without service interruption
-      if you play with several processes.
-    - Clients can be updated completely independently (before or after the server
-      update). However, new functionnalities will lead to strange errors in case
-      servers were not updated, typically :
-          > stager_qry -s
-          Error: Invalid argument
-          stage_diskpoolsquery: Server Error 22 :
-          Unable to read Request object from socket.
-          No factory found for object type 103 and representation type 1
-
------------
-- 2.0.3-5 -
------------
-
-  Prerelease of future 2.0.4-0. To be tested.
-
------------
-- 2.0.3-4 -
------------
-
-  Bug fix release. Should again only be used for IBM 3592 taperservers
-
------------
-- 2.0.3-3 -
------------
-
-  Bug fix release. This release should be used in place of v2_0_3_0. It fixes
-  a packaging bug that was introducing a symbol main in the library libshift.
-  It is otherwise fully identical to v2_0_3_0.
-
------------
-- 2.0.3-2 -
------------
-
-  Bug fix release. Should again only be used for IBM 3592 taperservers
-
------------
-- 2.0.3-1 -
------------
-
-  Bug fix release. Should only be used for IBM 3592 taperservers
-
------------
-- 2.0.3-0 -
------------
-
-  New Features and Changes
-  ------------------------
-
-    - Support for ACLs in the nameserver
-    - Regular expression support in stager_qry. The feature is
-      limited on the server side via the FILEQUERY/MAXNBRESPONSES
-      entry in the castor.conf.
-    - LSF plugin is using new fixes coming with LSF 6.1-24. This
-      allows to remove an internal fork. This change is incompatible
-      with any old version of LSF
-    - Interface for passing an authorization id to the stager on top
-      of a user id.
-    - Framework for multithreaded applications was ported to C++
-    - Fixed compilation for x86_64 architecture
-    - New package castor-dlf-gui
-    - tpdaemon uses sg0 device instead of sga
-    - Write filemarks with sg driver and immediate bit set
-
-  Upgrade from 2.0.2-*
-  --------------------
-
-    - LSF 6.1-24 or higher must be used
-    - The database schema has evolved. Use upgrades/2.0.2_to_2.0.3.sql to upgrade
-    - Once the database is upgraded, the content of the lastKnownFileName column
-      of the CastorFile table is still empty. It will be updated when the files
-      are accessed but you can update it by hand using upgrades/2.0.2_to_2.0.3.pl
-      Note that the only disadvantage of not updating is that stager_qry -M will
-      not return files that were not updated.
-    - For the nameserver, the database must be updated first, using the script
-      ns/Cns_oracle_add_ACL.sql. Then the daemons can be updated and finally the
-      clients. Note that each step is backward compatible, so that an old daemon
-      can run on a new database and an old client can contact a new daemon.
 
