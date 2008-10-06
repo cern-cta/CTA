@@ -41,11 +41,11 @@ ALTER TABLE TapeDrive2TapeDriveComp
 
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_7_12');
+INSERT INTO CastorVersion VALUES ('-', '2_1_8_1');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.155  Release Date: 2008/09/18 20:00:18  Author: murrayc3 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.157  Release Date: 2008/10/03 17:00:13  Author: murrayc3 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2734,7 +2734,7 @@ END;
  * Converts an updated tape drive id of 0 to NULL.
  */
 CREATE OR REPLACE TRIGGER TR_I_Tape2DriveDedication
-  BEFORE INSERT ON TapeRequest
+  BEFORE INSERT ON Tape2DriveDedication
 FOR EACH ROW
 DECLARE
   timeVar NUMBER := castorVdqmCommon.getTime();
