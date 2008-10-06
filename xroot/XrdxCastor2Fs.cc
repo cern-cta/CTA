@@ -1,6 +1,6 @@
-//          $Id: XrdxCastor2Fs.cc,v 1.1 2008/09/15 10:04:02 apeters Exp $
+//          $Id: XrdxCastor2Fs.cc,v 1.2 2008/10/06 13:43:07 apeters Exp $
 
-const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.1 2008/09/15 10:04:02 apeters Exp $";
+const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.2 2008/10/06 13:43:07 apeters Exp $";
 
 
 #include "XrdVersion.hh"
@@ -1118,6 +1118,7 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
 	     while ( (fpos = newpath.find("/",fpos)) != STR_NPOS ) {
 	       XrdOucString createpath;
 	       createpath.assign(newpath,0,fpos);
+	       ZTRACE(open,"Creating Path as uid:" << client_uid << " gid: " << client_gid);
 	       if (XrdxCastor2FsUFS::Mkdir(createpath.c_str(),S_IRWXU | S_IRGRP | S_IRWXO)) {
        		 return XrdxCastor2Fs::Emsg(epname, error, serrno , "create path need dir = ", createpath.c_str());
 	       }	   
@@ -1203,14 +1204,14 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
 	   XrdClientAdmin* newadmin = new XrdClientAdmin(slinklookup.c_str());
 	   if (!newadmin) {
 	     return XrdxCastor2Fs::Emsg(epname, error, errno, "open file: cannot create client admin to check cached location ", fname);	   
-	     XrdxCastor2FS->ClientMutex.UnLock();
 	   }
+
 	   newadmin->Connect();
 	   XrdxCastor2FS->ClientMutex.UnLock();
 
 	   long id; long long size; long flags; long modtime;
 	   if (newadmin->Stat(slinkpath.c_str(),id,size,flags,modtime)) {
- 	     redirectionhost = slinkhost;
+	     redirectionhost = slinkhost;
 	     redirectionpfn1 = slinkpath;
 	     nocachelookup = false;
 	   } else {
@@ -1218,7 +1219,7 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
 	     ::unlink(locationfile.c_str());
 	   } 
 	   delete newadmin;
- 	 } else {
+	 } else {
 	   // illegal location
 	   ::unlink(locationfile.c_str());
 	 }
@@ -1230,41 +1231,43 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
      if (nocachelookup) {
        // for all reads
        if ( policy && ((strstr(policy->c_str(),"nohsm")))) {
-	 // check the staging status, if not stage return error
-	 TIMING(xCastor2FsTrace,"STAGERQRY",&opentiming);
-	 if (!XrdxCastor2Stager::StagerQuery(error, (uid_t) client_uid, (gid_t) client_gid, path, stagehost.c_str(),serviceclass.c_str(),stagestatus)) {
-	   TIMING(xCastor2FsTrace,"RETURN",&opentiming);
-	   opentiming.Print(xCastor2FsTrace);
-	   return SFS_ERROR;
-	 } 
-	 
-	 if ( (stagestatus == "STAGEIN") ) {
-	   TIMING(xCastor2FsTrace,"RETURN",&opentiming);
-	   opentiming.Print(xCastor2FsTrace);
-	   return XrdxCastor2Fs::Emsg(epname, error, EBUSY, "open file: file is in status=STAGEIN ", fname);
-	 }
-	 
-	 if ( (stagestatus == "NA") ) {
-	   TIMING(xCastor2FsTrace,"RETURN",&opentiming);
-	   opentiming.Print(xCastor2FsTrace);
-	   return XrdxCastor2Fs::Emsg(epname, error, EBUSY, "open file: file is in status=OFFLINE ", fname);
-	 }
-	 
-	 if ( (stagestatus == "STAGEOUT") ) {
-	   XrdOucString delaytag = tident;
-	   delaytag += "::"; delaytag += path;
+	 if (0) {
+	   // check the staging status, if not stage return error
+	   TIMING(xCastor2FsTrace,"STAGERQRY",&opentiming);
+	   if (!XrdxCastor2Stager::StagerQuery(error, (uid_t) client_uid, (gid_t) client_gid, path, stagehost.c_str(),serviceclass.c_str(),stagestatus)) {
+	     TIMING(xCastor2FsTrace,"RETURN",&opentiming);
+	     opentiming.Print(xCastor2FsTrace);
+	     return SFS_ERROR;
+	   } 
 	   
 	   if ( (stagestatus == "STAGEIN") ) {
 	     TIMING(xCastor2FsTrace,"RETURN",&opentiming);
 	     opentiming.Print(xCastor2FsTrace);
-	     return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , "file is being staged out");
+	     return XrdxCastor2Fs::Emsg(epname, error, EBUSY, "open file: file is in status=STAGEIN ", fname);
 	   }
-	 }
-	 
-	 if ( (stagestatus == "INVALID") ) {
-	   TIMING(xCastor2FsTrace,"RETURN",&opentiming);
-	   opentiming.Print(xCastor2FsTrace);
-	   return XrdxCastor2Fs::Emsg(epname, error, ECOMM, "open file: file is in status=INVALID ", fname);
+	   
+	   if ( (stagestatus == "NA") ) {
+	     TIMING(xCastor2FsTrace,"RETURN",&opentiming);
+	     opentiming.Print(xCastor2FsTrace);
+	     return XrdxCastor2Fs::Emsg(epname, error, EBUSY, "open file: file is in status=OFFLINE ", fname);
+	   }
+	   
+	   if ( (stagestatus == "STAGEOUT") ) {
+	     XrdOucString delaytag = tident;
+	     delaytag += "::"; delaytag += path;
+	     
+	     if ( (stagestatus == "STAGEIN") ) {
+	       TIMING(xCastor2FsTrace,"RETURN",&opentiming);
+	       opentiming.Print(xCastor2FsTrace);
+	       return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , "file is being staged out");
+	     }
+	   }
+	   
+	   if ( (stagestatus == "INVALID") ) {
+	     TIMING(xCastor2FsTrace,"RETURN",&opentiming);
+	     opentiming.Print(xCastor2FsTrace);
+	     return XrdxCastor2Fs::Emsg(epname, error, ECOMM, "open file: file is in status=INVALID ", fname);
+	   }
 	 }
        }
        
@@ -1291,7 +1294,7 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
 	 return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()), "file is being staged out");
        }
        
-       if ( (stagestatus == "INVALID") ) {
+       if ( (stagestatus == "INVALID") || (stagestatus == "SUBREQUEST_FAILED") ) {
 	 TIMING(xCastor2FsTrace,"RETURN",&opentiming);
 	 opentiming.Print(xCastor2FsTrace);
 	 return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "access file in stager (status=INVALID)  fn = ", path);	   
@@ -1411,12 +1414,17 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
    ZTRACE(open,"redirection to " << redirectionhost.c_str());
 
    if (XrdxCastor2FS->Proc) {
+     XrdOucString stagersvcclient="";
+     XrdOucString stagersvcserver="";
+     stagersvcclient=stagehost; stagersvcclient+="::"; stagersvcclient+=serviceclass; stagersvcclient+="::"; stagersvcclient+=mappedclient.name;
+     stagersvcserver=stagehost; stagersvcserver+="::"; stagersvcserver+=serviceclass; stagersvcserver+="::"; stagersvcserver+=redirectionhost.c_str();
+     
      if (isRW) {
-       XrdxCastor2FS->Stats.IncServerWrite(redirectionhost.c_str());
-       XrdxCastor2FS->Stats.IncUserWrite(mappedclient.name);
+       XrdxCastor2FS->Stats.IncServerWrite(stagersvcserver.c_str());
+       XrdxCastor2FS->Stats.IncUserWrite(stagersvcclient.c_str());
      } else {
-       XrdxCastor2FS->Stats.IncServerRead(redirectionhost.c_str());
-       XrdxCastor2FS->Stats.IncUserRead(mappedclient.name);
+       XrdxCastor2FS->Stats.IncServerRead(stagersvcserver.c_str());
+       XrdxCastor2FS->Stats.IncUserRead(stagersvcclient.c_str());
      }
    }
 

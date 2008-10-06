@@ -1,14 +1,14 @@
 Summary: The next generation xrootd@Castor2 interface
 Name: xrootd-xcastor2fs
 Version: 1.0.2
-Release: 7
+Release: 10
 License: none
 Group: CERN-IT-DM-SMD
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
 AutoReqProv: no
-Requires: castor-lib >= 2.1.7
+Requires: castor-lib >= 2.1.8
 Requires: xrootd
 
 %description
@@ -44,7 +44,7 @@ mkdir -p /var/log/xroot/server/
 cat /etc/passwd | cut -d ':' -f 1 | grep -w stage >& /dev/null && chown stage /var/log/xroot/server/ || echo >& /dev/null
 
 if [ "$1" = "2" ] ; then  # upgrade
-        /sbin/service xrd condstart > /dev/null 2>&1 || :
+        /sbin/service xrd condrestart > /dev/null 2>&1 || :
 fi
 
 
