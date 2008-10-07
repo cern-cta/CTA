@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.17 $ $Release$ $Date: 2008/09/29 17:47:54 $ $Author: itglp $
+ * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.18 $ $Release$ $Date: 2008/10/07 14:55:40 $ $Author: itglp $
  *
  *
  *
@@ -61,12 +61,13 @@ enum SvcClassAttributes {
   GcPolicy,
   MigratorPolicy,
   RecallerPolicy,
-  TapePools,
-  DiskPools,
-  Disk1Behavior,
-  ForcedFileClass,
   StreamPolicy,
-  ReplicateOnClose
+  Disk1Behavior,
+  FailJobsWhenNoSpace,
+  ForcedFileClass,
+  ReplicateOnClose,
+  TapePools,
+  DiskPools
 } svcClassAttributes;
 
 static struct Coptions longopts[] = {
@@ -79,12 +80,13 @@ static struct Coptions longopts[] = {
   {"GcPolicy",REQUIRED_ARGUMENT,0,GcPolicy},
   {"MigratorPolicy",REQUIRED_ARGUMENT,0,MigratorPolicy},
   {"RecallerPolicy",REQUIRED_ARGUMENT,0,RecallerPolicy},
+  {"StreamPolicy",REQUIRED_ARGUMENT,0,StreamPolicy},
+  {"Disk1Behavior",REQUIRED_ARGUMENT,0,Disk1Behavior},
+  {"FailJobsWhenNoSpace",REQUIRED_ARGUMENT,0,FailJobsWhenNoSpace},
+  {"ForcedFileClass",REQUIRED_ARGUMENT,0,ForcedFileClass},
+  {"ReplicateOnClose",REQUIRED_ARGUMENT,0,ReplicateOnClose},
   {"TapePools",REQUIRED_ARGUMENT,0,TapePools},
   {"DiskPools",REQUIRED_ARGUMENT,0,DiskPools},
-  {"Disk1Behavior",REQUIRED_ARGUMENT,0,Disk1Behavior},
-  {"ForcedFileClass",REQUIRED_ARGUMENT,0,ForcedFileClass},
-  {"StreamPolicy",REQUIRED_ARGUMENT,0,StreamPolicy},
-  {"ReplicateOnClose",REQUIRED_ARGUMENT,0,ReplicateOnClose},
   {NULL, 0, NULL, 0}
 };
 
@@ -206,6 +208,7 @@ int main(int argc, char *argv[])
   fsSvc = Cstager_IStagerSvc_fromIService(iSvc);
 
   Cstager_SvcClass_create(&svcClass);
+  Cstager_SvcClass_setFailJobsWhenNoSpace(svcClass, 1);  /* by default */
   while ((ch = Cgetopt_long(argc,argv,"h",longopts,NULL)) != EOF) {
     switch (ch) {
     case Name:
@@ -243,11 +246,23 @@ int main(int argc, char *argv[])
     case Disk1Behavior:
       if (!strcasecmp(Coptarg, "yes")) {
         Cstager_SvcClass_setDisk1Behavior(svcClass, 1);
+        Cstager_SvcClass_setFailJobsWhenNoSpace(svcClass, 1);
       } else if (!strcasecmp(Coptarg, "no")) {
         Cstager_SvcClass_setDisk1Behavior(svcClass, 0);
       } else {
         fprintf(stderr,
-		"Invalid option for Disk1Behavior, value must be 'yes' or 'no'\n");
+          "Invalid option for Disk1Behavior, value must be 'yes' or 'no'\n");
+        return(1);
+      }
+      break;
+    case FailJobsWhenNoSpace:
+      if (!strcasecmp(Coptarg, "yes")) {
+        Cstager_SvcClass_setFailJobsWhenNoSpace(svcClass, 1);
+      } else if (!strcasecmp(Coptarg, "no")) {
+        Cstager_SvcClass_setFailJobsWhenNoSpace(svcClass, 0);
+      } else {
+        fprintf(stderr,
+          "Invalid option for FailJobsWhenNoSpace, value must be 'yes' or 'no'\n");
         return(1);
       }
       break;
@@ -271,13 +286,13 @@ int main(int argc, char *argv[])
       break;
     case ReplicateOnClose:
       if (!strcasecmp(Coptarg, "yes")) {
-	Cstager_SvcClass_setReplicateOnClose(svcClass, 1);
+        Cstager_SvcClass_setReplicateOnClose(svcClass, 1);
       } else if (!strcasecmp(Coptarg, "no")) {
-	Cstager_SvcClass_setReplicateOnClose(svcClass, 0);
+        Cstager_SvcClass_setReplicateOnClose(svcClass, 0);
       } else {
-	fprintf(stderr,
-		"Invalid option for ReplicateOnClose, value must be 'yes' or 'no'\n");
-	return(1);
+        fprintf(stderr,
+          "Invalid option for ReplicateOnClose, value must be 'yes' or 'no'\n");
+        return(1);
       }
       break;
     default:

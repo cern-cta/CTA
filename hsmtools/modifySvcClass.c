@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.23 $ $Release$ $Date: 2008/09/29 17:47:54 $ $Author: itglp $
+ * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.24 $ $Release$ $Date: 2008/10/07 14:55:41 $ $Author: itglp $
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -58,13 +58,14 @@ enum SvcClassAttributes {
   ReplicationPolicy,
   MigratorPolicy,
   RecallerPolicy,
+  StreamPolicy,
   AddTapePools,
   AddDiskPools,
   RemoveTapePools,
   RemoveDiskPools,
   Disk1Behavior,
+  FailJobsWhenNoSpace,
   ForcedFileClass,
-  StreamPolicy,
   ReplicateOnClose
 } svcClassAttributes;
 
@@ -77,14 +78,15 @@ static struct Coptions longopts[] = {
   {"ReplicationPolicy",REQUIRED_ARGUMENT,0,ReplicationPolicy},
   {"MigratorPolicy",REQUIRED_ARGUMENT,0,MigratorPolicy},
   {"RecallerPolicy",REQUIRED_ARGUMENT,0,RecallerPolicy},
+  {"StreamPolicy",REQUIRED_ARGUMENT,0,StreamPolicy},
+  {"Disk1Behavior",REQUIRED_ARGUMENT,0,Disk1Behavior},
+  {"FailJobsWhenNoSpace",REQUIRED_ARGUMENT,0,FailJobsWhenNoSpace},
+  {"ForcedFileClass",REQUIRED_ARGUMENT,0,ForcedFileClass},
+  {"ReplicateOnClose",REQUIRED_ARGUMENT,0,ReplicateOnClose},
   {"AddTapePools",REQUIRED_ARGUMENT,0,AddTapePools},
   {"AddDiskPools",REQUIRED_ARGUMENT,0,AddDiskPools},
   {"RemoveTapePools",REQUIRED_ARGUMENT,0,RemoveTapePools},
   {"RemoveDiskPools",REQUIRED_ARGUMENT,0,RemoveDiskPools},
-  {"Disk1Behavior",REQUIRED_ARGUMENT,0,Disk1Behavior},
-  {"ForcedFileClass",REQUIRED_ARGUMENT,0,ForcedFileClass},
-  {"StreamPolicy",REQUIRED_ARGUMENT,0,StreamPolicy},
-  {"ReplicateOnClose",REQUIRED_ARGUMENT,0,ReplicateOnClose},
   {NULL, 0, NULL, 0}
 };
 
@@ -391,8 +393,10 @@ int main(int argc, char *argv[])
   char **addTapePoolsArray = NULL, **addDiskPoolsArray = NULL;
   char *removeTapePoolsStr = NULL, *removeDiskPoolsStr = NULL;
   char **removeTapePoolsArray = NULL, **removeDiskPoolsArray = NULL;
-  char *diskOnlyBehavior = NULL, *forcedFileClass = NULL, *replicateOnClose = 0;
-  char *streamPolicy = NULL;
+  char *diskOnlyBehavior = NULL, *failJobsWhenNoSpace = NULL, 
+       *forcedFileClass = NULL, *replicateOnClose = NULL,
+       *streamPolicy = NULL, *replicationPolicy = NULL,
+       *migratorPolicy = NULL, *recallerPolicy = NULL;
   int nbDiskPools = 0, nbTapePools = 0;
   int nbAddTapePools = 0, nbRemoveTapePools = 0, nbAddDiskPools = 0, nbRemoveDiskPools = 0;
   struct C_BaseAddress_t *baseAddr = NULL;
@@ -407,7 +411,6 @@ int main(int argc, char *argv[])
   struct Cstager_DiskPool_t **diskPoolsArray = NULL;
   u_signed64 defaultFileSize = 0;
   int maxReplicaNb = -1, nbDrives = -1;
-  char *replicationPolicy = NULL, *migratorPolicy = NULL, *recallerPolicy = NULL;
 
   Coptind = 1;
   Copterr = 1;
@@ -455,6 +458,9 @@ int main(int argc, char *argv[])
     case RecallerPolicy:
       recallerPolicy = strdup(Coptarg);
       break;
+    case StreamPolicy:
+      streamPolicy = strdup(Coptarg);
+      break;
     case AddTapePools:
       addTapePoolsStr = strdup(Coptarg);
       break;
@@ -470,11 +476,11 @@ int main(int argc, char *argv[])
     case Disk1Behavior:
       diskOnlyBehavior = strdup(Coptarg);
       break;
+    case FailJobsWhenNoSpace:
+      failJobsWhenNoSpace = strdup(Coptarg);
+      break;
     case ForcedFileClass:
       forcedFileClass = strdup(Coptarg);
-      break;
-    case StreamPolicy:
-      streamPolicy = strdup(Coptarg);
       break;
     case ReplicateOnClose:
       replicateOnClose = strdup(Coptarg);
@@ -543,11 +549,23 @@ int main(int argc, char *argv[])
   if ( diskOnlyBehavior != NULL) {
     if (!strcasecmp(diskOnlyBehavior, "yes")) {
       Cstager_SvcClass_setDisk1Behavior(svcClass, 1);
+      Cstager_SvcClass_setFailJobsWhenNoSpace(svcClass, 1);
     } else if (!strcasecmp(diskOnlyBehavior, "no")) {
       Cstager_SvcClass_setDisk1Behavior(svcClass, 0);
     } else {
       fprintf(stderr,
 	      "Invalid option for Disk1Behavior, value must be 'yes' or 'no'\n");
+      return(1);
+    }
+  }
+  if (failJobsWhenNoSpace != NULL) {
+    if (!strcasecmp(failJobsWhenNoSpace, "yes")) {
+      Cstager_SvcClass_setFailJobsWhenNoSpace(svcClass, 1);
+    } else if (!strcasecmp(failJobsWhenNoSpace, "no")) {
+      Cstager_SvcClass_setFailJobsWhenNoSpace(svcClass, 0);
+    } else {
+      fprintf(stderr,
+	      "Invalid option for FailJobsWhenNoSpace, value must be 'yes' or 'no'\n");
       return(1);
     }
   }

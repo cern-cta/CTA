@@ -93,43 +93,43 @@ int Cstager_SvcClass_clone(struct Cstager_SvcClass_t* instance,
 
 /**
  * Get the value of nbDrives
- * Number of drives to use for this service class.
+ * Number of tape drives to use for this service class.
  * This is the default number, but it could be that occasionnally more drives are
- * used, if a resource is shared with another service class using more drives
+ * used, if a resource is shared with another service class using more drives.
  */
 int Cstager_SvcClass_nbDrives(struct Cstager_SvcClass_t* instance, unsigned int* var);
 
 /**
  * Set the value of nbDrives
- * Number of drives to use for this service class.
+ * Number of tape drives to use for this service class.
  * This is the default number, but it could be that occasionnally more drives are
- * used, if a resource is shared with another service class using more drives
+ * used, if a resource is shared with another service class using more drives.
  */
 int Cstager_SvcClass_setNbDrives(struct Cstager_SvcClass_t* instance, unsigned int new_var);
 
 /**
  * Get the value of name
- * the name of this SvcClass
+ * The name of this SvcClass.
  */
 int Cstager_SvcClass_name(struct Cstager_SvcClass_t* instance, const char** var);
 
 /**
  * Set the value of name
- * the name of this SvcClass
+ * The name of this SvcClass.
  */
 int Cstager_SvcClass_setName(struct Cstager_SvcClass_t* instance, const char* new_var);
 
 /**
  * Get the value of defaultFileSize
  * Default size used for space allocation in the case of a stage put with no size
- * explicitely given (ie size given was 0)
+ * explicitely given (ie size given was 0).
  */
 int Cstager_SvcClass_defaultFileSize(struct Cstager_SvcClass_t* instance, u_signed64* var);
 
 /**
  * Set the value of defaultFileSize
  * Default size used for space allocation in the case of a stage put with no size
- * explicitely given (ie size given was 0)
+ * explicitely given (ie size given was 0).
  */
 int Cstager_SvcClass_setDefaultFileSize(struct Cstager_SvcClass_t* instance, u_signed64 new_var);
 
@@ -199,45 +199,59 @@ int Cstager_SvcClass_setStreamPolicy(struct Cstager_SvcClass_t* instance, const 
 
 /**
  * Get the value of gcPolicy
- * Policy ruling the behavior of the garbage collector, when enabled
+ * Policy ruling the behavior of the garbage collector, when enabled.
  */
 int Cstager_SvcClass_gcPolicy(struct Cstager_SvcClass_t* instance, const char** var);
 
 /**
  * Set the value of gcPolicy
- * Policy ruling the behavior of the garbage collector, when enabled
+ * Policy ruling the behavior of the garbage collector, when enabled.
  */
 int Cstager_SvcClass_setGcPolicy(struct Cstager_SvcClass_t* instance, const char* new_var);
 
 /**
  * Get the value of disk1Behavior
  * Flag to indicate whether the diskpools under this service class should behave as
- * Disk1 pools. This means no automatic GC, and failing jobs that want to allocate
- * space when no space is available.
+ * Disk1 pools. This means no automatic GC, and failJobsWhenNoSpace set to true.
  */
 int Cstager_SvcClass_disk1Behavior(struct Cstager_SvcClass_t* instance, int* var);
 
 /**
  * Set the value of disk1Behavior
  * Flag to indicate whether the diskpools under this service class should behave as
- * Disk1 pools. This means no automatic GC, and failing jobs that want to allocate
- * space when no space is available.
+ * Disk1 pools. This means no automatic GC, and failJobsWhenNoSpace set to true.
  */
 int Cstager_SvcClass_setDisk1Behavior(struct Cstager_SvcClass_t* instance, int new_var);
 
 /**
  * Get the value of replicateOnClose
  * Flag to indicate whether files in this service class are replicated on closure.
- * The number of copies created is defined by the maxReplicaNb attribute
+ * The number of copies created is defined by the maxReplicaNb attribute.
  */
 int Cstager_SvcClass_replicateOnClose(struct Cstager_SvcClass_t* instance, int* var);
 
 /**
  * Set the value of replicateOnClose
  * Flag to indicate whether files in this service class are replicated on closure.
- * The number of copies created is defined by the maxReplicaNb attribute
+ * The number of copies created is defined by the maxReplicaNb attribute.
  */
 int Cstager_SvcClass_setReplicateOnClose(struct Cstager_SvcClass_t* instance, int new_var);
+
+/**
+ * Get the value of failJobsWhenNoSpace
+ * Flag to indicate whether jobs that require new space on disk shall be failed
+ * when the diskpools under this service class have run out of space. This flag is
+ * enabled by default, if disabled jobs are left pending in the scheduler.
+ */
+int Cstager_SvcClass_failJobsWhenNoSpace(struct Cstager_SvcClass_t* instance, int* var);
+
+/**
+ * Set the value of failJobsWhenNoSpace
+ * Flag to indicate whether jobs that require new space on disk shall be failed
+ * when the diskpools under this service class have run out of space. This flag is
+ * enabled by default, if disabled jobs are left pending in the scheduler.
+ */
+int Cstager_SvcClass_setFailJobsWhenNoSpace(struct Cstager_SvcClass_t* instance, int new_var);
 
 /**
  * Get the value of id

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: enterSvcClass.man,v $ $Revision: 1.10 $ $Date: 2008/09/29 17:47:54 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: enterSvcClass.man,v $ $Revision: 1.11 $ $Date: 2008/10/07 14:55:40 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH ENTERSVCCLASS 1 "$Date: 2008/09/29 17:47:54 $" CASTOR "stager catalogue administrative commands"
+.TH ENTERSVCCLASS 1 "$Date: 2008/10/07 14:55:40 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 enterSvcClass \- define a new service class in the stager catalogue
 .SH SYNOPSIS
@@ -20,6 +20,9 @@ enterSvcClass \- define a new service class in the stager catalogue
 ]
 [
 .BI --MaxReplicaNb " maxReplicaNb"
+]
+[
+.BI --FailJobsWhenNoSpace " [yes|no]"
 ]
 [
 .BI --Disk1Behavior " [yes|no]"
@@ -83,10 +86,15 @@ unless a replication policy is specified, see below). If this option is not
 specified or if a negative number is given, the default of one (1) replica is
 applied.
 .TP
+.BI \-\-FailJobsWhenNoSpace " [yes|no]"
+Defines whether or not jobs requesting new space are failed when the pool(s) connected
+with this service class is(are) full. The supported values are yes or no, and the default
+value is yes.
+.TP
 .BI \-\-Disk1Behavior " [yes|no]"
 Defines whether or not this service class has Disk1 behavior, which means that garbage
-collection is disabled and jobs requesting new space are failed when the pool(s) connected
-with this service class is(are) full. The supported values are yes or no.
+collection is disabled and the flag FailJobsWhenNoSpace is set to yes.
+The supported values are yes or no.
 .TP
 .BI \-\-ForcedFileClass " forcedFileClass"
 Specifies the name of the file class to force on files written to this service class. The

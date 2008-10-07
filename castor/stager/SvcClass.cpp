@@ -54,6 +54,7 @@ castor::stager::SvcClass::SvcClass() throw() :
   m_gcPolicy(""),
   m_disk1Behavior(false),
   m_replicateOnClose(false),
+  m_failJobsWhenNoSpace(false),
   m_id(0),
   m_forcedFileClass(0) {
 }
@@ -96,6 +97,7 @@ void castor::stager::SvcClass::print(std::ostream& stream,
   stream << indent << "gcPolicy : " << m_gcPolicy << std::endl;
   stream << indent << "disk1Behavior : " << (m_disk1Behavior ? "Yes" : "No") << std::endl;
   stream << indent << "replicateOnClose : " << (m_replicateOnClose ? "Yes" : "No") << std::endl;
+  stream << indent << "failJobsWhenNoSpace : " << (m_failJobsWhenNoSpace ? "Yes" : "No") << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

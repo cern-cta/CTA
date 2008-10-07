@@ -283,6 +283,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_SvcClass_failJobsWhenNoSpace
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_failJobsWhenNoSpace(castor::stager::SvcClass* instance, bool* var) {
+    *var = instance->failJobsWhenNoSpace();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_setFailJobsWhenNoSpace
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_setFailJobsWhenNoSpace(castor::stager::SvcClass* instance, bool new_var) {
+    instance->setFailJobsWhenNoSpace(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_SvcClass_id
   //----------------------------------------------------------------------------
   int Cstager_SvcClass_id(castor::stager::SvcClass* instance, u_signed64* var) {

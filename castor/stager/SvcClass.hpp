@@ -107,9 +107,9 @@ namespace castor {
       /*********************************/
       /**
        * Get the value of m_nbDrives
-       * Number of drives to use for this service class.
+       * Number of tape drives to use for this service class.
        * This is the default number, but it could be that occasionnally more drives are
-       * used, if a resource is shared with another service class using more drives
+       * used, if a resource is shared with another service class using more drives.
        * @return the value of m_nbDrives
        */
       unsigned int nbDrives() const {
@@ -118,9 +118,9 @@ namespace castor {
 
       /**
        * Set the value of m_nbDrives
-       * Number of drives to use for this service class.
+       * Number of tape drives to use for this service class.
        * This is the default number, but it could be that occasionnally more drives are
-       * used, if a resource is shared with another service class using more drives
+       * used, if a resource is shared with another service class using more drives.
        * @param new_var the new value of m_nbDrives
        */
       void setNbDrives(unsigned int new_var) {
@@ -129,7 +129,7 @@ namespace castor {
 
       /**
        * Get the value of m_name
-       * the name of this SvcClass
+       * The name of this SvcClass.
        * @return the value of m_name
        */
       std::string name() const {
@@ -138,7 +138,7 @@ namespace castor {
 
       /**
        * Set the value of m_name
-       * the name of this SvcClass
+       * The name of this SvcClass.
        * @param new_var the new value of m_name
        */
       void setName(std::string new_var) {
@@ -148,7 +148,7 @@ namespace castor {
       /**
        * Get the value of m_defaultFileSize
        * Default size used for space allocation in the case of a stage put with no size
-       * explicitely given (ie size given was 0)
+       * explicitely given (ie size given was 0).
        * @return the value of m_defaultFileSize
        */
       u_signed64 defaultFileSize() const {
@@ -158,7 +158,7 @@ namespace castor {
       /**
        * Set the value of m_defaultFileSize
        * Default size used for space allocation in the case of a stage put with no size
-       * explicitely given (ie size given was 0)
+       * explicitely given (ie size given was 0).
        * @param new_var the new value of m_defaultFileSize
        */
       void setDefaultFileSize(u_signed64 new_var) {
@@ -261,7 +261,7 @@ namespace castor {
 
       /**
        * Get the value of m_gcPolicy
-       * Policy ruling the behavior of the garbage collector, when enabled
+       * Policy ruling the behavior of the garbage collector, when enabled.
        * @return the value of m_gcPolicy
        */
       std::string gcPolicy() const {
@@ -270,7 +270,7 @@ namespace castor {
 
       /**
        * Set the value of m_gcPolicy
-       * Policy ruling the behavior of the garbage collector, when enabled
+       * Policy ruling the behavior of the garbage collector, when enabled.
        * @param new_var the new value of m_gcPolicy
        */
       void setGcPolicy(std::string new_var) {
@@ -280,8 +280,7 @@ namespace castor {
       /**
        * Get the value of m_disk1Behavior
        * Flag to indicate whether the diskpools under this service class should behave as
-       * Disk1 pools. This means no automatic GC, and failing jobs that want to allocate
-       * space when no space is available.
+       * Disk1 pools. This means no automatic GC, and failJobsWhenNoSpace set to true.
        * @return the value of m_disk1Behavior
        */
       bool disk1Behavior() const {
@@ -291,8 +290,7 @@ namespace castor {
       /**
        * Set the value of m_disk1Behavior
        * Flag to indicate whether the diskpools under this service class should behave as
-       * Disk1 pools. This means no automatic GC, and failing jobs that want to allocate
-       * space when no space is available.
+       * Disk1 pools. This means no automatic GC, and failJobsWhenNoSpace set to true.
        * @param new_var the new value of m_disk1Behavior
        */
       void setDisk1Behavior(bool new_var) {
@@ -302,7 +300,7 @@ namespace castor {
       /**
        * Get the value of m_replicateOnClose
        * Flag to indicate whether files in this service class are replicated on closure.
-       * The number of copies created is defined by the maxReplicaNb attribute
+       * The number of copies created is defined by the maxReplicaNb attribute.
        * @return the value of m_replicateOnClose
        */
       bool replicateOnClose() const {
@@ -312,11 +310,33 @@ namespace castor {
       /**
        * Set the value of m_replicateOnClose
        * Flag to indicate whether files in this service class are replicated on closure.
-       * The number of copies created is defined by the maxReplicaNb attribute
+       * The number of copies created is defined by the maxReplicaNb attribute.
        * @param new_var the new value of m_replicateOnClose
        */
       void setReplicateOnClose(bool new_var) {
         m_replicateOnClose = new_var;
+      }
+
+      /**
+       * Get the value of m_failJobsWhenNoSpace
+       * Flag to indicate whether jobs that require new space on disk shall be failed
+       * when the diskpools under this service class have run out of space. This flag is
+       * enabled by default, if disabled jobs are left pending in the scheduler.
+       * @return the value of m_failJobsWhenNoSpace
+       */
+      bool failJobsWhenNoSpace() const {
+        return m_failJobsWhenNoSpace;
+      }
+
+      /**
+       * Set the value of m_failJobsWhenNoSpace
+       * Flag to indicate whether jobs that require new space on disk shall be failed
+       * when the diskpools under this service class have run out of space. This flag is
+       * enabled by default, if disabled jobs are left pending in the scheduler.
+       * @param new_var the new value of m_failJobsWhenNoSpace
+       */
+      void setFailJobsWhenNoSpace(bool new_var) {
+        m_failJobsWhenNoSpace = new_var;
       }
 
       /**
@@ -414,15 +434,15 @@ namespace castor {
     private:
 
       /*
-       * Number of drives to use for this service class.
-       * This is the default number, but it could be that occasionnally more drives are used, if a resource is shared with another service class using more drives
+       * Number of tape drives to use for this service class.
+       * This is the default number, but it could be that occasionnally more drives are used, if a resource is shared with another service class using more drives.
       */
       unsigned int m_nbDrives;
 
-      /// the name of this SvcClass
+      /// The name of this SvcClass.
       std::string m_name;
 
-      /// Default size used for space allocation in the case of a stage put with no size explicitely given (ie size given was 0)
+      /// Default size used for space allocation in the case of a stage put with no size explicitely given (ie size given was 0).
       u_signed64 m_defaultFileSize;
 
       /// Maximum number of replicas for a file created with this service class. If 0, the replication is ruled by the replication policy. If there is none, then 0 means infinity.
@@ -440,14 +460,17 @@ namespace castor {
       /// Policy ruling the behavior of the streams to migrate files.
       std::string m_streamPolicy;
 
-      /// Policy ruling the behavior of the garbage collector, when enabled
+      /// Policy ruling the behavior of the garbage collector, when enabled.
       std::string m_gcPolicy;
 
-      /// Flag to indicate whether the diskpools under this service class should behave as Disk1 pools. This means no automatic GC, and failing jobs that want to allocate space when no space is available.
+      /// Flag to indicate whether the diskpools under this service class should behave as Disk1 pools. This means no automatic GC, and failJobsWhenNoSpace set to true.
       bool m_disk1Behavior;
 
-      /// Flag to indicate whether files in this service class are replicated on closure. The number of copies created is defined by the maxReplicaNb attribute
+      /// Flag to indicate whether files in this service class are replicated on closure. The number of copies created is defined by the maxReplicaNb attribute.
       bool m_replicateOnClose;
+
+      /// Flag to indicate whether jobs that require new space on disk shall be failed when the diskpools under this service class have run out of space. This flag is enabled by default, if disabled jobs are left pending in the scheduler.
+      bool m_failJobsWhenNoSpace;
 
       /// The id of this object
       u_signed64 m_id;
