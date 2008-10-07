@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.685 $ $Date: 2008/10/07 15:02:01 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.686 $ $Date: 2008/10/07 15:46:39 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1574,7 +1574,7 @@ BEGIN
       RETURN;
     END IF;
     -- check if the file existed in advance with a fileclass incompatible with this svcClass
-    IF checkFailPutWhenDiskOnly(sclassId, fclassId) = 1 THEN
+    IF checkFailPutWhenTape0(sclassId, fclassId) = 1 THEN
       -- The svcClass is disk only and the file being overwritten asks for tape copy.
       -- This is impossible, so we deny the operation
       dcId := 0;
