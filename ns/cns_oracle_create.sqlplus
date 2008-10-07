@@ -147,7 +147,7 @@ ALTER TABLE Cns_file_replica
 
 -- Create the Cns_version table
 CREATE TABLE Cns_version (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO Cns_version VALUES ('2_1_8_0', '2_1_8_1');
+INSERT INTO Cns_version VALUES ('2_1_8_0', '2_1_8_2');
 
 -- Create an index on Cns_file_metadata(PARENT_FILEID)
 CREATE INDEX PARENT_FILEID_IDX on Cns_file_metadata(PARENT_FILEID);
