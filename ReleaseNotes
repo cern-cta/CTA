@@ -1,5 +1,5 @@
 -----------
-- 2.1.8-1 -
+- 2.1.8-2 -
 -----------
 
   Highlights and BugFixes
@@ -7,8 +7,10 @@
   - #29840: replication after put/recall
   - #38590: Two tape drive deletion bugs in the VDQM2
   - #35388: error messages in DLF (updated)
+  - #39552: Documentation errors
   - #40578: Formatting of data volumes in repack and others should use uppercase K
   - #42055: Should be able to delete a drive in the UNKNOWN state with no pending request
+  - #42575: disk pool 'has no tape backend' decision
 
   - Added support for replication on close. Now it is possible to have CASTOR automatically
     trigger the replication of a file after it has been closed by the user. The number of
@@ -81,10 +83,10 @@
     The interface was modified to support T3 analysis use-cases.
 
   - Consolidated the service class parameters used to define the retention policy and access
-    latency of the underlying disk pools. The flag hasDiskOnlyBehavior has been renamed
-    failJobsWhenNoSpace, as this is reflecting its meaning; a flag disk1Behavior supersedes
-    gcEnabled; and forcedFileClass defines whether files go to tape. All those parameters
-    enable full support of any DiskN TapeM storage class combinations. See also the
+    latency of the underlying disk pools. The flag hasDiskOnlyBehavior has been renamed to
+    failJobsWhenNoSpace, as this is reflects its true meaning; a flag disk1Behavior 
+    supersedes gcEnabled; and forcedFileClass defines whether files go to tape. All those 
+    parameters enable full support of any DiskN TapeM storage class combinations. See also the
     enterSvcClass man page for further details.
 
   - Enabled checksuming support in RFIOD by default. Now all files written to disk using 
@@ -145,14 +147,14 @@
       ------------
 
       1. Upgrade the CNS database using the correct upgrade script from
-         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.8-*/2.1.8-1/dbupgrades
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.8-*/2.1.8-2/dbupgrades
 
       2. Install the vdt_globus_essentials RPM on the Castor Name Server headnodes. This is
          necessary as the name server now has a dependency on globus in order to provide 
          support for strong authentication through GSI and KRB5. The recommended version for 
-         vdt_globus_essentials is VDT1.6.1{x86|x86_64}_rhas_4-5 for SLC4.
+         vdt_globus_essentials is VDT1.6.1{x86|x86_64}_rhas_4-7 for SLC4.
  
-      3. Update the software to use the 2.1.8-1 RPMS. Note: the affected services will be
+      3. Update the software to use the 2.1.8-2 RPMS. Note: the affected services will be
          restarted automatically.
 
       4. Upgrade complete.
@@ -189,7 +191,7 @@
        3. Ask your DBA to create a backup of the database.
 
        4. Upgrade the stager and DLF databases using the correct upgrade scripts from
-          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.8-*/2.1.8-1/dbupgrades
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.8-*/2.1.8-2/dbupgrades
 
           Note: At the end of the upgrade process the upgrade script will recompile all the
                 invalid objects in the database schema. This may fail if you have objects
@@ -203,10 +205,10 @@
        5. Install the vdt_globus_essentials RPM on all machines which run the rhserver and
           rfiod daemons. This is necessary as these two daemons now have a dependency on 
           globus in order to provide support for strong authentication through GSI and KRB5.
-          The recommended version for vdt_globus_essentials is VDT1.6.1{x86|x86_64}_rhas_4-5
+          The recommended version for vdt_globus_essentials is VDT1.6.1{x86|x86_64}_rhas_4-7
           for SLC4.
 
-       6. Upgrade the software on the headnodes and diskservers to 2.1.8-1. Note: the
+       6. Upgrade the software on the headnodes and diskservers to 2.1.8-2. Note: the
           castor-vdqm-client package has been replaced by castor-vdqm2-client.
 
        7. Update the castor.conf configuration file on all machines based on the
@@ -271,7 +273,10 @@
           such as LEMON. Please make sure to update the monitoring configuration to reflect
           the fact the the gcDaemon no longer runs as root:root but as stage:st.
 
-       9. Restart the service
+       9. Verify that all services classes have the correct attributes enabled. In particular,
+          please pay close attention to the failJobsWhenNoSpace and disk1Behavior flags.
+
+      10. Restart the service
 
           Notes:
             - If you have a concept of private and public rhserver's you should start the
@@ -281,12 +286,12 @@
               database when restarting rtcpclientd. This is now done automatically when the
               daemon starts.
 
-      10. Test the instance by running the test suite available from:
-          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.8-*/2.1.8-1/fastTestSuite
+      11. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.8-*/2.1.8-2/fastTestSuite
 
-      11. Start the public rhserver (if applicable)
+      12. Start the public rhserver (if applicable)
 
-      12. Congratulations you have successfully upgraded to the 2.1.8 release of CASTOR2!!
+      13. Congratulations you have successfully upgraded to the 2.1.8 release of CASTOR2!!
 
 
     Repack
@@ -295,7 +300,7 @@
     1. Stop the repackserver
 
     2. Upgrade the repack database using the correct upgrade scripts from
-       - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.8-*/2.1.8-1/dbupgrades
+       - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.8-*/2.1.8-2/dbupgrades
 
     3. If you have an independent monitoring system to monitor the CASTOR2 related daemons
        such as LEMON. Please make sure to update the monitoring configuration to reflect

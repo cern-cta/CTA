@@ -1,5 +1,5 @@
 /******************************************************************************
- *              2.1.7-19_to_2.1.8-1.sql
+ *              2.1.7-19_to_2.1.8-2.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.7-19_to_2.1.8-2.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/10/06 11:56:34 $ $Author: waldron $
+ * @(#)$RCSfile: 2.1.7-19_to_2.1.8-2.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/10/07 17:57:02 $ $Author: waldron $
  *
- * This script upgrades a CASTOR v2.1.7-19 database into v2.1.8-1
+ * This script upgrades a CASTOR v2.1.7-19 database into v2.1.8-2
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -37,7 +37,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts before this one.');
 END;
 
-UPDATE CastorVersion SET schemaVersion = '2_1_8_0', release = '2_1_8_1';
+UPDATE CastorVersion SET schemaVersion = '2_1_8_0', release = '2_1_8_2';
 COMMIT;
 
 /* Job management */
@@ -59,24 +59,35 @@ END;
 /**************************/
 
 /* Updates to the service class table */
-DECLARE
-  cnt NUMBER;
-BEGIN
-  SELECT count(*) INTO cnt FROM SvcClass WHERE gcEnabled = hasDiskOnlyBehavior;
-  IF cnt >= 1 THEN
-  -- Error, we can't apply this script
-  raise_application_error(-20000, 'Cannot proceed with upgrade: this instance has an incorrect garbage collection setup. Refer to ReleaseNotes');
-  END IF;
-END;
-
-ALTER TABLE SvcClass ADD (replicateOnClose NUMBER, disk1Behavior NUMBER);
-UPDATE SvcClass SET disk1Behavior = 1
+ALTER TABLE SvcClass ADD (replicateOnClose NUMBER, disk1Behavior NUMBER, failJobsWhenNoSpace NUMBER);
+UPDATE SvcClass SET failJobsWhenNoSpace = 0;
+UPDATE SvcClass SET failJobsWhenNoSpace = 1
  WHERE hasDiskOnlyBehavior = 1;
+UPDATE SvcClass SET disk1Behavior = 1
+ WHERE id IN (
+  SELECT SvcClass.id 
+    FROM SvcClass, FileClass 
+   WHERE forcedFileClass = FileClass.id
+     AND hasDiskOnlyBehavior = 1 
+     AND nbcopies = 0);
 ALTER TABLE SvcClass DROP COLUMN gcEnabled;
 ALTER TABLE SvcClass DROP COLUMN hasDiskOnlyBehavior;
 
+/* Obsolete functions */
+DECLARE
+  unused VARCHAR(100);
+BEGIN
+  SELECT procedure_name INTO unused
+    FROM user_procedures
+   WHERE object_name = 'CHECKFAILPUTWHENDISKONLY'
+     AND object_type = 'FUNCTION';
+  EXECUTE IMMEDIATE 'DROP FUNCTION checkFailPutWhenDiskOnly';
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  NULL; -- Nothing
+END;
+
 /* Updates to the DiskCopy table for Accounting and GC Logging */
-ALTER TABLE DiskCopy ADD (owneruid INTEGER, ownergid INTEGER, gcType INTEGER DEFAULT NULL);
+ALTER TABLE DiskCopy ADD (owneruid INTEGER, ownergid INTEGER, gcType INTEGER);
 
 /* Improved garbage collection logging */
 ALTER TABLE GCLocalFile ADD (lastAccessTime INTEGER, nbAccesses NUMBER, gcWeight NUMBER, gcTriggeredBy VARCHAR2(2048));
@@ -766,7 +777,7 @@ END castorBW;
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleStager.sql,v  Revision: 1.684  Date: 2008/10/01 08:24:33  Author: itglp 
+ * @(#)RCSfile: oracleStager.sql,v  Revision: 1.685  Date: 2008/10/07 15:02:01  Author: itglp 
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1267,19 +1278,19 @@ END;
  */
 CREATE OR REPLACE FUNCTION checkFailJobsWhenNoSpace(svcClassId NUMBER)
 RETURN NUMBER AS
-  d1Flag NUMBER;
+  failJobsFlag NUMBER;
   defFileSize NUMBER;
   c NUMBER;
 BEGIN
   -- Determine if the service class is D1 and the default
   -- file size. If the default file size is 0 we assume 2G
-  SELECT disk1Behavior, 
+  SELECT failJobsWhenNoSpace, 
          decode(defaultFileSize, 0, 2000000000, defaultFileSize)
-    INTO d1Flag, defFileSize
+    INTO failJobsFlag, defFileSize
     FROM SvcClass 
    WHERE id = svcClassId;
   -- If D1 check that the pool has space
-  IF (d1Flag = 1) THEN
+  IF (failJobsFlag = 1) THEN
     SELECT count(*) INTO c
       FROM diskpool2svcclass, FileSystem, DiskServer
      WHERE diskpool2svcclass.child = svcClassId
@@ -1299,17 +1310,22 @@ END;
  * doesn't provide tape backend and the given file class asks for tape copies.
  * Returns 1 in such a case, 0 else
  */
-CREATE OR REPLACE FUNCTION checkFailPutWhenDiskOnly(svcClassId NUMBER, fileClassId NUMBER)
+CREATE OR REPLACE FUNCTION checkFailPutWhenTape0(svcClassId NUMBER, fileClassId NUMBER)
 RETURN NUMBER AS
-  nbTPools INTEGER;
   nbTCs INTEGER;
+  nbForcedTCs INTEGER;
 BEGIN
-  SELECT count(*) INTO nbTPools
-    FROM SvcClass2TapePool S2T
-   WHERE S2T.parent = svcClassId;
+  -- get #tapeCopies requested by this file
   SELECT nbCopies INTO nbTCs
     FROM FileClass WHERE id = fileClassId;
-  IF (nbTPools = 0) AND (nbTCs > 0) THEN
+  -- get #tapeCpies from the forcedFileClass: if no forcing
+  -- we assume we have tape backend and we let the job
+  SELECT nvl(nbCopies, nbTCs) INTO nbForcedTCs
+    FROM FileClass, SvcClass
+   WHERE SvcClass.forcedFileClass = FileClass.id(+) 
+     AND SvcClass.id = svcClassId;
+  IF nbTCs > nbForcedTCs THEN
+    -- typically, when nbTCs = 1 and nbForcedTCs = 0: fail the job
     RETURN 1;
   ELSE
     RETURN 0;
@@ -2335,7 +2351,7 @@ BEGIN
       RETURN;
     END IF;
     -- check if the file existed in advance with a fileclass incompatible with this svcClass
-    IF checkFailPutWhenDiskOnly(sclassId, fclassId) = 1 THEN
+    IF checkFailPutWhenTape0(sclassId, fclassId) = 1 THEN
       -- The svcClass is disk only and the file being overwritten asks for tape copy.
       -- This is impossible, so we deny the operation
       dcId := 0;
@@ -2994,7 +3010,7 @@ BEGIN
 END;
 /*******************************************************************
  *
- * @(#)RCSfile: oracleJob.sql,v  Revision: 1.661  Date: 2008/09/22 13:25:12  Author: waldron 
+ * @(#)RCSfile: oracleJob.sql,v  Revision: 1.662  Date: 2008/10/07 15:04:02  Author: itglp 
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -3070,7 +3086,7 @@ BEGIN
     FROM Subrequest, StageUpdateRequest Request
    WHERE SubRequest.id = srId
      AND Request.id = SubRequest.request;
-  IF checkFailPutWhenDiskOnly(sclassId, fclassId) = 1 THEN
+  IF checkFailPutWhenTape0(sclassId, fclassId) = 1 THEN
      raise_application_error(-20106, 'File update canceled since this service class doesn''t provide tape backend');
   END IF;
   -- Otherwise, either we are alone or we are on the right copy and we
