@@ -81,9 +81,10 @@
     The interface was modified to support T3 analysis use-cases.
 
   - Consolidated the service class parameters used to define the retention policy and access
-    latency of the underlying disk pools. The flag disk1Behavior supersedes both 
-    hasDiskOnlyBehavior and gcEnabled, while the forcedFileClass defines whether files go to
-    tape, enabling full support of any DiskN TapeM storage class combination. See also the
+    latency of the underlying disk pools. The flag hasDiskOnlyBehavior has been renamed
+    failJobsWhenNoSpace, as this is reflecting its meaning; a flag disk1Behavior supersedes
+    gcEnabled; and forcedFileClass defines whether files go to tape. All those parameters
+    enable full support of any DiskN TapeM storage class combinations. See also the
     enterSvcClass man page for further details.
 
   - Enabled checksuming support in RFIOD by default. Now all files written to disk using 
