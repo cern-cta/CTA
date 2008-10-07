@@ -4507,7 +4507,7 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
   if (unmarshall_STRINGN (rbp, oldvid, CA_MAXVIDLEN+1))
     RETURN (EINVAL);
 
-  sprintf (logbuf, "for FileId %lld: %s->%s",fileid, oldvid, newvid);
+  sprintf (logbuf, "for fileid %lld: %s->%s",fileid, oldvid, newvid);
   Cns_logreq (func, logbuf);
 
   /* check if the user is authorized to replace segment attributes */
@@ -4646,7 +4646,7 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
       }
     }
 
-    sprintf (logbuf, "replacetapecpy %lld %d %d %lld %d %c %s %d %02x%02x%02x%02x %s:%lx",
+    sprintf (logbuf, "replacetapecopy %lld %d %d %lld %d %c %s %d %02x%02x%02x%02x %s:%lx",
              new_smd_entry[i].s_fileid, new_smd_entry[i].copyno,
              new_smd_entry[i].fsec, new_smd_entry[i].segsize,
              new_smd_entry[i].compression, new_smd_entry[i].s_status, new_smd_entry[i].vid,
