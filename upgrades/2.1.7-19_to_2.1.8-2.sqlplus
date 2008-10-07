@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.7-19_to_2.1.8-2.sqlplus,v $ $Release: 1.2 $ $Release$ $Date: 2008/10/07 17:57:02 $ $Author: waldron $
+ * @(#)$RCSfile: 2.1.7-19_to_2.1.8-2.sqlplus,v $ $Release: 1.2 $ $Release$ $Date: 2008/10/07 18:42:01 $ $Author: waldron $
  *
  * This script upgrades a CASTOR v2.1.7-19 database into v2.1.8-2
  *
@@ -65,6 +65,7 @@ ALTER TABLE SvcClass ADD (replicateOnClose NUMBER, disk1Behavior NUMBER, failJob
 UPDATE SvcClass SET failJobsWhenNoSpace = 0;
 UPDATE SvcClass SET failJobsWhenNoSpace = 1
  WHERE hasDiskOnlyBehavior = 1;
+UPDATE SvcClass SET disk1Behavior = 0;
 UPDATE SvcClass SET disk1Behavior = 1
  WHERE id IN (
   SELECT SvcClass.id 
