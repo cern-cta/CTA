@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.684 $ $Date: 2008/10/01 08:24:33 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.685 $ $Date: 2008/10/07 15:02:01 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -501,19 +501,19 @@ END;
  */
 CREATE OR REPLACE FUNCTION checkFailJobsWhenNoSpace(svcClassId NUMBER)
 RETURN NUMBER AS
-  d1Flag NUMBER;
+  failJobsFlag NUMBER;
   defFileSize NUMBER;
   c NUMBER;
 BEGIN
   -- Determine if the service class is D1 and the default
   -- file size. If the default file size is 0 we assume 2G
-  SELECT disk1Behavior, 
+  SELECT failJobsWhenNoSpace, 
          decode(defaultFileSize, 0, 2000000000, defaultFileSize)
-    INTO d1Flag, defFileSize
+    INTO failJobsFlag, defFileSize
     FROM SvcClass 
    WHERE id = svcClassId;
   -- If D1 check that the pool has space
-  IF (d1Flag = 1) THEN
+  IF (failJobsFlag = 1) THEN
     SELECT count(*) INTO c
       FROM diskpool2svcclass, FileSystem, DiskServer
      WHERE diskpool2svcclass.child = svcClassId
@@ -533,17 +533,22 @@ END;
  * doesn't provide tape backend and the given file class asks for tape copies.
  * Returns 1 in such a case, 0 else
  */
-CREATE OR REPLACE FUNCTION checkFailPutWhenDiskOnly(svcClassId NUMBER, fileClassId NUMBER)
+CREATE OR REPLACE FUNCTION checkFailPutWhenTape0(svcClassId NUMBER, fileClassId NUMBER)
 RETURN NUMBER AS
-  nbTPools INTEGER;
   nbTCs INTEGER;
+  nbForcedTCs INTEGER;
 BEGIN
-  SELECT count(*) INTO nbTPools
-    FROM SvcClass2TapePool S2T
-   WHERE S2T.parent = svcClassId;
+  -- get #tapeCopies requested by this file
   SELECT nbCopies INTO nbTCs
     FROM FileClass WHERE id = fileClassId;
-  IF (nbTPools = 0) AND (nbTCs > 0) THEN
+  -- get #tapeCpies from the forcedFileClass: if no forcing
+  -- we assume we have tape backend and we let the job
+  SELECT nvl(nbCopies, nbTCs) INTO nbForcedTCs
+    FROM FileClass, SvcClass
+   WHERE SvcClass.forcedFileClass = FileClass.id(+) 
+     AND SvcClass.id = svcClassId;
+  IF nbTCs > nbForcedTCs THEN
+    -- typically, when nbTCs = 1 and nbForcedTCs = 0: fail the job
     RETURN 1;
   ELSE
     RETURN 0;
