@@ -18,7 +18,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: fixFileSize.py,v $ $Revision: 1.1 $ $Release$ $Date: 2008/10/02 15:52:43 $ $Author: sponcec3 $
+# * @(#)$RCSfile: fixFileSize.py,v $ $Revision: 1.2 $ $Release$ $Date: 2008/10/07 14:38:28 $ $Author: sponcec3 $
 # *
 # * fixes the size of a file both in the nameserver and in the stager
 # * This tool overwrites any existing size, including the one of all existing
@@ -27,13 +27,13 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
-import sys, os
+import sys
 import getopt
 import castor_tools
 
 # usage function
 def usage(exitCode):
-  print 'Usage : ' + sys.argv[0] + ' [-h] fileId:size [...]'
+  print 'Usage : ' + sys.argv[0] + ' [-h|--help] fileId:size [...]'
   sys.exit(exitCode)
 
 # first parse the options
