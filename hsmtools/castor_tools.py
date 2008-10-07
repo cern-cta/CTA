@@ -17,7 +17,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.2 $ $Release$ $Date: 2008/10/02 15:52:02 $ $Author: sponcec3 $
+# * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.3 $ $Release$ $Date: 2008/10/07 14:38:57 $ $Author: sponcec3 $
 # *
 # * utility functions for castor tools written in python
 # *
@@ -26,12 +26,18 @@
 
 import os
 
+def checkValueFound(name, value, instance, configFile):
+    if len(value) == 0:
+        raise ValueError, "No " + name + " found for " + instance + " in " + configFile
+
 def getStagerDBConnectParams():
     # find out the instance to use
     full_name = "DbCnvSvc"
+    inst = "default"
     if os.environ.has_key('CASTOR_INSTANCE'):
-        full_name = full_name + '_' + os.environ['CASTOR_INSTANCE']
-
+        inst = os.environ['CASTOR_INSTANCE']
+        full_name = full_name + '_' + inst
+        inst = "'" + inst + "' stager"
     # go through the lines of ORASTAGERCONFIG
     user = ""
     passwd = ""
@@ -49,12 +55,9 @@ def getStagerDBConnectParams():
         except ValueError:
             # ignore line
             pass
-    if len(user) == 0:
-        raise ValueError, "empty user name"
-    if len(passwd) == 0:
-        raise ValueError, "empty password"
-    if len(dbname) == 0:
-        raise ValueError, "empty DB name"
+    checkValueFound("user name", user, inst, 'ORASTAGERCONFIG')
+    checkValueFound("password", passwd, inst, 'ORASTAGERCONFIG')
+    checkValueFound("DB name", dbname, inst, 'ORASTAGERCONFIG')
     return user, passwd, dbname
 
 def getNSDBConnectParam():
@@ -70,12 +73,9 @@ def getNSDBConnectParam():
     user = line[0:sl]
     passwd = line[sl+1:ar]
     dbname = line[ar+1:]
-    if len(user) == 0:
-        raise ValueError, "empty user name"
-    if len(passwd) == 0:
-        raise ValueError, "empty password"
-    if len(dbname) == 0:
-        raise ValueError, "empty DB name"
+    checkValueFound("user name", user, 'nameserver', 'NSCONFIG')
+    checkValueFound("password", passwd, 'nameserver', 'NSCONFIG')
+    checkValueFound("DB name", dbname, 'nameserver', 'NSCONFIG')
     return user, passwd, dbname
 
 def importOracle():
