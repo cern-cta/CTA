@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.661 $ $Date: 2008/09/22 13:25:12 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.662 $ $Date: 2008/10/07 15:04:02 $ $Author: itglp $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -76,7 +76,7 @@ BEGIN
     FROM Subrequest, StageUpdateRequest Request
    WHERE SubRequest.id = srId
      AND Request.id = SubRequest.request;
-  IF checkFailPutWhenDiskOnly(sclassId, fclassId) = 1 THEN
+  IF checkFailPutWhenTape0(sclassId, fclassId) = 1 THEN
      raise_application_error(-20106, 'File update canceled since this service class doesn''t provide tape backend');
   END IF;
   -- Otherwise, either we are alone or we are on the right copy and we
