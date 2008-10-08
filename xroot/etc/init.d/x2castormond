@@ -21,7 +21,7 @@ XRDPORT=$2
 
 
 
-if test -z ${XRDPORT}; then
+if test -n ${XRDPORT}; then
     cp -f ${XRDLOCATION}/bin/x2castormond ${XRDLOCATION}/bin/x2castormond${XRDPORT} 2> /dev/null
 fi
 
