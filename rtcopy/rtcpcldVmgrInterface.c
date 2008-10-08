@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.29 $ $Release$ $Date: 2007/10/10 12:07:28 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.30 $ $Release$ $Date: 2008/10/08 13:45:02 $ $Author: murrayc3 $
  *
  * 
  *
@@ -654,16 +654,42 @@ int rtcpcld_updateTape(
     flags = flags & ~TAPE_BUSY;
   }
   if ( rtcpc_serrno > 0 ) {
+    const char* rtcpc_serrno_str = NULL; // Used to generate log message
+
     /*
      * Request finished. rtcpc_serrno should only be set if there was an error
      */
     switch (rtcpc_serrno) {
     case ETWLBL:                          /* Wrong label type */
+      rtcpc_serrno_str = "ETWLBL";
     case ETWVSN:                          /* Wrong vsn */
+      rtcpc_serrno_str = "ETWVSN";
     case ETHELD:                          /* Volume held (TMS) */
+      rtcpc_serrno_str = "ETHELD";
     case ETVUNKN:                         /* Volume unknown or absent (TMS) */
+      rtcpc_serrno_str = "ETVUNKN";
     case ETOPAB:                          /* Operator cancel */
+      rtcpc_serrno_str = "ETOPAB";
     case ETNOSNS:                         /* No sense */
+      rtcpc_serrno_str = "ETNOSNS";
+
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+3,
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      "Disabling tape",
+                      "",
+                      DLF_MSG_PARAM_TPVID,
+                      (tpreq == NULL ? "" : tapereq->vid),
+                      "RTCPC_SERRNO",
+                      DLF_MSG_PARAM_STR,
+                      rtcpc_serrno_str,
+                      RTCPCLD_LOG_WHERE
+                      );
+
       flags = DISABLED;
       break;
     case ETABSENT:                        /* Volume absent (TMS) */
