@@ -3,6 +3,7 @@
 ##### uses two environment variables
 ##### env X2CASTORMONINTERVAL = default(2)
 ##### env X2CASTORMONDEBUG    = default(undef)
+##### env X2CASTORMONDBSTRING = default(undef)
 
 my $logdir = shift or exit -1;
 
@@ -30,7 +31,10 @@ if ($ENV{X2CASTORMONINTERVAL} ne "") {
 	$ENV{X2CASTORMONINTERVAL} = 2;
     }
 }
-	
+
+if ($ENV{X2CASTORMONDBSTRING} eq "") {
+    $ENV{X2CASTORMONDBSTRING} = "castormon/changemenow64537\@test1_castor_mon";
+}
 
 while(1) {
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
@@ -95,13 +99,13 @@ while(1) {
 			if ($ENV{X2CASTORMONDEBUG} ne "")  {
 			    printf "$mday-$mon-$year $hour:$min:$sec $msgid $tag $val\n";
 			}
-			monval("$mday-$mon-$year","$hour:$min:$sec", $msgid, "$tag","$val","$host");
+			monval($ENV{X2CASTORMONDBSTRING},"$mday-$mon-$year","$hour:$min:$sec", $msgid, "$tag","$val","$host");
 		    }
 		} else {
 		    if ($ENV{X2CASTORMONDEBUG} ne "")  {
 			printf "$mday-$mon-$year $hour:$min:$sec $msgid $tag $val\n";
 		    }
-		    monval("$mday-$mon-$year","$hour:$min:$sec", $msgid, "$tag","$val","$host");
+		    monval($ENV{X2CASTORMONDBSTRING},"$mday-$mon-$year","$hour:$min:$sec", $msgid, "$tag","$val","$host");
 		}
 	    }
 	    $procstore->{$_} = $newcontent;
@@ -120,8 +124,8 @@ use Inline Python => <<'END_OF_PYTHON_CODE';
 import sys 
 import cx_Oracle
 
-def monval(a,b,c,d,e,f) :
-    connection = cx_Oracle.connect("castormon/changemenow64537@test1_castor_mon")
+def monval(indb,a,b,c,d,e,f) :
+    connection = cx_Oracle.connect(indb)
     time = a + ' ' + b       # '22-SEP-08 11:59:59'
     msg_type = c                       # '1'
     msg_string = d                     # 'aaa'

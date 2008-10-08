@@ -2,7 +2,7 @@
 ## Makefile.am for xCastor2 FS plugin
 ##
 ##
-## Version info: $Id: Makefile.am,v 1.6 2008/10/08 09:20:05 apeters Exp $
+## Version info: $Id: Makefile.am,v 1.7 2008/10/08 09:49:00 apeters Exp $
 ## Checked in by $Author: apeters $
 #######################################################################
 
@@ -45,7 +45,7 @@ libXrdxCastor2Fs_la_SOURCES = \
 
 
 libXrdxCastor2Fs_la_LIBADD = -L$(XROOTD_LOCATION)/lib$(MARK64)/  -lXrdSys -lXrdOuc -lXrdClient -lXrdCms -lXrdOfs -lcrypto -luuid -L$(CASTOR_LOCATION)/lib$(MARK64)/ -lshift
-EXTRA_DIST = configure.ac bootstrap.sh xrootd-xcastor2fs.spec xrootd-publickey.spec keys/pkey.pem keys/key.pem etc/xrd.cf x2castorjob x2cp etc/init.d/x2castormond x2castormonitoring.pl etc/logrotate.d/x2castormond
+EXTRA_DIST = configure.ac bootstrap.sh xrootd-xcastor2fs.spec xrootd-publickey.spec keys/pkey.pem keys/key.pem etc/xrd.cf x2castorjob x2cp etc/init.d/x2castormond x2castormonitoring.pl etc/logrotate.d/x2castormond etc/sysconfig/x2castormond.example
 
 
 libXrdxCastor2ServerAcc_la_SOURCES = \
@@ -78,10 +78,12 @@ mon-install:
 	mkdir -p $(DESTDIR)/$(prefix)/bin/	
 	mkdir -p $(DESTDIR)/etc/init.d/
 	mkdir -p $(DESTDIR)/etc/logrotate.d/
+	mkdir -p $(DESTDIR)/etc/sysconfig/
 	$(INSTALL) -m 755 $(srcdir)/x2castormonitoring.pl $(DESTDIR)/$(prefix)/bin/x2castormonitoring.pl
 	$(INSTALL) -m 755 $(srcdir)/x2castormond $(DESTDIR)/$(prefix)/bin/x2castormond
 	$(INSTALL) -m 755 $(srcdir)/etc/init.d/x2castormond $(DESTDIR)/etc/init.d/x2castormond
-	$(INSTALL) -m 755 $(srcdir)/etc/logrotate.d/x2castormond $(DESTDIR)/etc/logrotate.d/x2castormond
+	$(INSTALL) -m 644 $(srcdir)/etc/logrotate.d/x2castormond $(DESTDIR)/etc/logrotate.d/x2castormond
+	$(INSTALL) -m 644 $(srcdir)/etc/sysconfig/x2castormond.example $(DESTDIR)/etc/logrotate.d/x2castormond.example
 
 install-exec-local: client-install
 	mkdir -p $(DESTDIR)/$(prefix)/keys/
@@ -102,6 +104,7 @@ mon-uninstall:
 	rm -f $(DESTDIR)/$(prefix)/bin/x2castormonitoring.pl
 	rm -f $(DESTDIR)/etc/logrotate.d/x2castormond
 	rm -f $(DESTDIR)/$(prefix)/bin/x2castormond
+	rm -f $(DESTDIR)/etc/sysconfig/x2castormond.example
 
 uninstall: client-uninstall mon-uninstall
 	rm -f $(DESTDIR)/etc/xrd.cf
