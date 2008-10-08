@@ -2,7 +2,7 @@
 ## Makefile.am for xCastor2 FS plugin
 ##
 ##
-## Version info: $Id: Makefile.am,v 1.5 2008/09/15 10:04:02 apeters Exp $
+## Version info: $Id: Makefile.am,v 1.6 2008/10/08 09:20:05 apeters Exp $
 ## Checked in by $Author: apeters $
 #######################################################################
 
@@ -10,7 +10,9 @@ lib_LTLIBRARIES = libXrdxCastor2Fs.la libXrdxCastor2ServerAcc.la libXrdxCastor2O
 
 INCLUDES = -I$(XROOTD_LOCATION)/include/xrootd -I$(CASTOR_SOURCE_LOCATION)/h -I$(CASTOR_SOURCE_LOCATION) -I$(CASTOR_LOCATION) -D_THREAD_SAFE -D_REENTRANT -O -pg -g
 
-bin_PROGRAMS = xrdstager_qry xrdstager_get
+bin_PROGRAMS = xrdstager_qry xrdstager_get x2castormond
+
+x2castormond_SOURCES = x2castormond.c
 
 ###############################################
 xrdstager_qry_SOURCES = XrdStagerQry.cc
@@ -43,7 +45,7 @@ libXrdxCastor2Fs_la_SOURCES = \
 
 
 libXrdxCastor2Fs_la_LIBADD = -L$(XROOTD_LOCATION)/lib$(MARK64)/  -lXrdSys -lXrdOuc -lXrdClient -lXrdCms -lXrdOfs -lcrypto -luuid -L$(CASTOR_LOCATION)/lib$(MARK64)/ -lshift
-EXTRA_DIST = configure.ac bootstrap.sh xrootd-xcastor2fs.spec xrootd-publickey.spec keys/pkey.pem keys/key.pem etc/xrd.cf x2castorjob x2cp
+EXTRA_DIST = configure.ac bootstrap.sh xrootd-xcastor2fs.spec xrootd-publickey.spec keys/pkey.pem keys/key.pem etc/xrd.cf x2castorjob x2cp etc/init.d/x2castormond x2castormonitoring.pl etc/logrotate.d/x2castormond
 
 
 libXrdxCastor2ServerAcc_la_SOURCES = \
@@ -72,6 +74,14 @@ client-install:
 	mkdir -p $(DESTDIR)/$(prefix)/bin/
 	$(INSTALL) -m 755 $(srcdir)/x2cp $(DESTDIR)/$(prefix)/bin/x2cp
 
+mon-install:
+	mkdir -p $(DESTDIR)/$(prefix)/bin/	
+	mkdir -p $(DESTDIR)/etc/init.d/
+	mkdir -p $(DESTDIR)/etc/logrotate.d/
+	$(INSTALL) -m 755 $(srcdir)/x2castormonitoring.pl $(DESTDIR)/$(prefix)/bin/x2castormonitoring.pl
+	$(INSTALL) -m 755 $(srcdir)/x2castormond $(DESTDIR)/$(prefix)/bin/x2castormond
+	$(INSTALL) -m 755 $(srcdir)/etc/init.d/x2castormond $(DESTDIR)/etc/init.d/x2castormond
+	$(INSTALL) -m 755 $(srcdir)/etc/logrotate.d/x2castormond $(DESTDIR)/etc/logrotate.d/x2castormond
 
 install-exec-local: client-install
 	mkdir -p $(DESTDIR)/$(prefix)/keys/
@@ -79,13 +89,21 @@ install-exec-local: client-install
 	mkdir -p $(DESTDIR)/etc/
 	$(INSTALL) -m 644 $(srcdir)/etc/xrd.cf $(DESTDIR)/etc/xrd.cf
 	$(INSTALL) -m 755 $(srcdir)/x2castorjob $(DESTDIR)/$(prefix)/bin/x2castorjob
+	$(INSTALL) -m 755 $(srcdir)/x2castormonitoring.pl $(DESTDIR)/$(prefix)/bin/x2castormonitoring.pl
+	$(INSTALL) -m 755 $(srcdir)/etc/init.d/x2castormond $(DESTDIR)/etc/init.d/x2castormond
 #	$(INSTALL) -m 644 $(srcdir)/keys/pkey.pem $(DESTDIR)/$(prefix)/keys/ 
 #	$(INSTALL) -m 400 $(srcdir)/keys/key.pem $(DESTDIR)/$(prefix)/keys/ 
 
 client-uninstall:
 	rm -f $(DESTDIR)/$(prefix)/bin/x2cp
 
-uninstall: client-uninstall
+mon-uninstall:
+	rm -f $(DESTDIR)/etc/init.d/x2castormond
+	rm -f $(DESTDIR)/$(prefix)/bin/x2castormonitoring.pl
+	rm -f $(DESTDIR)/etc/logrotate.d/x2castormond
+	rm -f $(DESTDIR)/$(prefix)/bin/x2castormond
+
+uninstall: client-uninstall mon-uninstall
 	rm -f $(DESTDIR)/etc/xrd.cf
 	rm -f $(DESTDIR)/$(prefix)/bin/x2castorjob
 
@@ -109,6 +127,10 @@ rpm:	dist
 pkeyrpm:dist
 	cp $(DIST_ARCHIVES) /usr/src/redhat/SOURCES/
 	rpmbuild -bb xrootd-publickey.spec
+
+monrpm:dist
+	cp $(DIST_ARCHIVES) /usr/src/redhat/SOURCES/
+	rpmbuild -bb xrootd-castormon.spec
 
 rpmnodist:	
 	cp $(DIST_ARCHIVES) /usr/src/redhat/SOURCES/
