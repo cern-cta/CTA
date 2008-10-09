@@ -2,7 +2,7 @@
 ## Makefile.am for xCastor2 FS plugin
 ##
 ##
-## Version info: $Id: Makefile.am,v 1.7 2008/10/08 09:49:00 apeters Exp $
+## Version info: $Id: Makefile.am,v 1.8 2008/10/09 13:09:56 apeters Exp $
 ## Checked in by $Author: apeters $
 #######################################################################
 
@@ -45,7 +45,7 @@ libXrdxCastor2Fs_la_SOURCES = \
 
 
 libXrdxCastor2Fs_la_LIBADD = -L$(XROOTD_LOCATION)/lib$(MARK64)/  -lXrdSys -lXrdOuc -lXrdClient -lXrdCms -lXrdOfs -lcrypto -luuid -L$(CASTOR_LOCATION)/lib$(MARK64)/ -lshift
-EXTRA_DIST = configure.ac bootstrap.sh xrootd-xcastor2fs.spec xrootd-publickey.spec keys/pkey.pem keys/key.pem etc/xrd.cf x2castorjob x2cp etc/init.d/x2castormond x2castormonitoring.pl etc/logrotate.d/x2castormond etc/sysconfig/x2castormond.example
+EXTRA_DIST = configure.ac bootstrap.sh xrootd-xcastor2fs.spec xrootd-publickey.spec keys/pkey.pem keys/key.pem etc/xrd.cf x2castorjob x2cp etc/init.d/x2castormond x2castormonitoring.pl etc/logrotate.d/x2castormond etc/sysconfig/x2castormond.example 
 
 
 libXrdxCastor2ServerAcc_la_SOURCES = \
@@ -71,7 +71,7 @@ libXrdxCastor2Xmi_la_SOURCES = \
 libXrdxCastor2Xmi_la_LIBADD = -L$(XROOTD_LOCATION)/lib$(MARK64)/  -lXrdCms -lXrdOuc -L$(CASTOR_LOCATION)/lib$(MARK64)/ -lshift
 
 client-install:
-	mkdir -p $(DESTDIR)/$(prefix)/bin/
+	mkdir -p $(DESTDIR)/$(prefix)/bin/ 
 	$(INSTALL) -m 755 $(srcdir)/x2cp $(DESTDIR)/$(prefix)/bin/x2cp
 
 mon-install:
@@ -83,12 +83,13 @@ mon-install:
 	$(INSTALL) -m 755 $(srcdir)/x2castormond $(DESTDIR)/$(prefix)/bin/x2castormond
 	$(INSTALL) -m 755 $(srcdir)/etc/init.d/x2castormond $(DESTDIR)/etc/init.d/x2castormond
 	$(INSTALL) -m 644 $(srcdir)/etc/logrotate.d/x2castormond $(DESTDIR)/etc/logrotate.d/x2castormond
-	$(INSTALL) -m 644 $(srcdir)/etc/sysconfig/x2castormond.example $(DESTDIR)/etc/logrotate.d/x2castormond.example
+	$(INSTALL) -m 644 $(srcdir)/etc/sysconfig/x2castormond.example $(DESTDIR)/etc/sysconfig/x2castormond.example
 
 install-exec-local: client-install
 	mkdir -p $(DESTDIR)/$(prefix)/keys/
 	mkdir -p $(DESTDIR)/$(prefix)/bin/
-	mkdir -p $(DESTDIR)/etc/
+	mkdir -p $(DESTDIR)/etc/sysconfig
+	mkdir -p $(DESTDIR)/etc/init.d
 	$(INSTALL) -m 644 $(srcdir)/etc/xrd.cf $(DESTDIR)/etc/xrd.cf
 	$(INSTALL) -m 755 $(srcdir)/x2castorjob $(DESTDIR)/$(prefix)/bin/x2castorjob
 	$(INSTALL) -m 755 $(srcdir)/x2castormonitoring.pl $(DESTDIR)/$(prefix)/bin/x2castormonitoring.pl

@@ -1,6 +1,6 @@
-//          $Id: XrdxCastor2Fs.cc,v 1.2 2008/10/06 13:43:07 apeters Exp $
+//          $Id: XrdxCastor2Fs.cc,v 1.3 2008/10/09 13:09:56 apeters Exp $
 
-const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.2 2008/10/06 13:43:07 apeters Exp $";
+const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.3 2008/10/09 13:09:56 apeters Exp $";
 
 
 #include "XrdVersion.hh"
@@ -1089,9 +1089,17 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
 
    // look for the scheduling policy
    XrdOucString *policy=NULL;
+   XrdOucString *wildcardpolicy=NULL;
    XrdOucString policytag = stagehost; policytag +="::"; policytag += serviceclass;
+   XrdOucString wildcardpolicytag = stagehost; policytag +="::"; policytag += "*";
+
+   wildcardpolicy = XrdxCastor2FS->stagerpolicy->Find(wildcardpolicytag.c_str());
    policy = XrdxCastor2FS->stagerpolicy->Find(policytag.c_str());
-   
+
+   if ((!policy) && (wildcardpolicy)) {
+     wildcardpolicy = policy;
+   }
+
    bool nocachelookup=true;
 
    if (isRW) {

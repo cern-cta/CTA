@@ -1,7 +1,7 @@
 Summary: The next generation xrootd@Castor2 interface
 Name: xrootd-xcastor2fs
 Version: 1.0.2
-Release: 10
+Release: 12
 License: none
 Group: CERN-IT-DM-SMD
 Source0: %{name}-%{version}.tar.gz
@@ -33,7 +33,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %doc
 
-
+%config(noreplace) /etc/xrd.cf
 
 %changelog
 * Wed Aug 20 2008 root <root@pcitsmd01.cern.ch> - xcastor2-1
