@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/10/02 12:17:40 $ $Author: waldron $
+ * @(#)$RCSfile: Constants.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/10/09 15:59:56 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -43,7 +43,7 @@ static const int HANDLER_PYTHON_ID = 104;
 // Configuration
 #define DEFAULT_NOTIFY_DIR         "/var/www/html/lsf/"
 #define DEFAULT_POLICY_FILE        "/etc/castor/policies/scheduler.py"
-#define DEFAULT_DYNAMIC_PYTHON_LIB "/usr/lib/libpython2.3.so"
+#define DEFAULT_DYNAMIC_PYTHON_LIB "/usr/lib64/libpython2.3.so"
 
 // Throttling of error messages
 #define PYERR_THROTTLING 60
