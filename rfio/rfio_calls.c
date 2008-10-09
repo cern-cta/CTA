@@ -4776,9 +4776,9 @@ void *produce_thread(int *ptr)
   char     *ckSumalg="ADLER32";
   int      xattr_len;
 
-  useCksum=0;
-  if((conf_ent=getconfent("RFIOD","USE_CKSUM",0)) != NULL)
-    if((strncmp(conf_ent,"YES",3)==0) || (strncmp(conf_ent,"yes",3)==0)) useCksum=1;
+  useCksum = 1;
+  if ((conf_ent=getconfent("RFIOD","USE_CKSUM",0)) != NULL)
+    if (!strncasecmp(conf_ent,"no",2)) useCksum = 0;
 
   if(useCksum) {
     /* first we try to read a file xattr for checksum */
@@ -4866,9 +4866,9 @@ void *consume_thread(int *ptr)
   char     *ckSumalg="ADLER32";
   int      mode;
 
-  useCksum=0;
-  if((conf_ent=getconfent("RFIOD","USE_CKSUM",0)) != NULL)
-    if((strncmp(conf_ent,"YES",3)==0) || (strncmp(conf_ent,"yes",3)==0)) useCksum=1;
+  useCksum = 1;
+  if ((conf_ent=getconfent("RFIOD","USE_CKSUM",0)) != NULL)
+    if (!strncasecmp(conf_ent,"no",2)) useCksum = 0;
 
   if(useCksum) {
     /* first of all we will check the mode for the file and will do nothing for O_RDWR - Update */

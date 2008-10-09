@@ -194,12 +194,12 @@ int rfio_handle_close(void *ctx,
           /* File still exists - this is a candidate for migration regardless of its size (zero-length are ignored in the stager) */
           if (Cstager_SubRequest_create(&subrequest) == 0) {
             if (Cstager_SubRequest_setId(subrequest, internal_context->subrequest_id) == 0) {
-	      useCksum = 0;
+	      useCksum = 1;
 	      csumtype[0] = '\0';
 	      csumvalue[0] = '\0';
               if ((conf_ent = getconfent("RFIOD", "USE_CKSUM", 0)) != NULL) {
-		if (!strncasecmp(conf_ent, "yes", 3)) {
-		  useCksum = 1;
+		if (!strncasecmp(conf_ent, "no", 2)) {
+		  useCksum = 0;
 		}
 	      }
 	      if (useCksum) {
