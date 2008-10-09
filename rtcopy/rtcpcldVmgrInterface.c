@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.30 $ $Release$ $Date: 2008/10/08 13:45:02 $ $Author: murrayc3 $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.31 $ $Release$ $Date: 2008/10/09 16:20:40 $ $Author: waldron $
  *
  * 
  *
@@ -683,7 +683,7 @@ int rtcpcld_updateTape(
                       "Disabling tape",
                       "",
                       DLF_MSG_PARAM_TPVID,
-                      (tpreq == NULL ? "" : tapereq->vid),
+                      (tapereq == NULL ? "" : tapereq->vid),
                       "RTCPC_SERRNO",
                       DLF_MSG_PARAM_STR,
                       rtcpc_serrno_str,
