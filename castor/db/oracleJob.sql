@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.662 $ $Date: 2008/10/07 15:04:02 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.663 $ $Date: 2008/10/09 16:08:06 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -429,28 +429,40 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   ouid INTEGER;
   ogid INTEGER;
 BEGIN
-  -- try to get the source status
-  SELECT status, gcWeight, diskCopySize INTO srcStatus, gcw, fileSize
-    FROM DiskCopy WHERE id = srcDcId;
-  -- In case the status is null, it means that the source has been GCed
-  -- while the disk to disk copy was processed. We will invalidate the
-  -- brand new copy as we don't know in which status is should be
-  IF srcStatus IS NULL THEN
+  -- Lock the castorfile
+  SELECT castorFile INTO cfId
+    FROM DiskCopy
+   WHERE id = dcId;
+  SELECT id INTO cfId FROM CastorFile WHERE id = cfId FOR UPDATE;
+  -- Try to get the source diskcopy status
+  BEGIN
+    SELECT status, gcWeight, diskCopySize 
+      INTO srcStatus, gcw, fileSize
+      FROM DiskCopy 
+     WHERE id = srcDcId
+       AND status IN (0, 10);  -- STAGED, CANBEMIGR
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- If no diskcopy was returned it means that the source has either:
+    --   A) Been GCed while the copying was taking place or 
+    --   B) The diskcopy is no longer in a STAGED or CANBEMIGR state.
+    -- As we do not know which status to put the new copy in and/or
+    -- cannot trust that the file was not modified mid transfer, we
+    -- invalidate the new copy.
     UPDATE DiskCopy SET status = 7 WHERE id = dcId -- INVALID
     RETURNING CastorFile, FileSystem INTO cfId, fsId;
-    -- restart the SubRequests waiting for the copy
+    -- Restart the SubRequests waiting for the copy
     UPDATE SubRequest SET status = 1, -- SUBREQUEST_RESTART
                           lastModificationTime = getTime()
      WHERE diskCopy = dcId RETURNING id INTO srId;
     UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
      WHERE parent = srId; -- SUBREQUEST_RESTART
-    -- update filesystem status
+    -- Update filesystem status
     updateFsFileClosed(fsId);
-    -- archive the diskCopy replica request
+    -- Archive the diskCopy replica request
     archiveSubReq(srId);
-    RETURN;
-  END IF;
-  -- otherwise, we can validate the new diskcopy
+    RETURN;   
+  END;
+  -- Otherwise, we can validate the new diskcopy
   -- update SubRequest and get data
   UPDATE SubRequest SET status = 6, -- SUBREQUEST_READY
                         getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
@@ -463,19 +475,17 @@ BEGIN
    WHERE SubRequest.id = srId
      AND SubRequest.request = Req.id
      AND Req.svcClass = SvcClass.id;
-  -- compute gcWeight
+  -- Compute gcWeight
   gcwProc := castorGC.getCopyWeight(svcClassId);
   EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:size, :status, :gcw); END;'
     USING OUT gcw, IN fileSize, srcStatus, gcw;
-  -- update status
+  -- Update status
   UPDATE DiskCopy
      SET status = srcStatus,
          gcWeight = gcw
    WHERE id = dcId
   RETURNING castorFile, fileSystem, owneruid, ownergid
     INTO cfId, fsId, ouid, ogid;
-  -- Lock the castorfile
-  SELECT id INTO cfId FROM CastorFile WHERE id = cfId FOR UPDATE;
   -- If the maxReplicaNb is exceeded, update one of the diskcopies in a
   -- DRAINING filesystem to INVALID.
   SELECT count(*) INTO repl
@@ -500,15 +510,16 @@ BEGIN
             AND status = 1)  -- DRAINING
        AND ROWNUM < 2;
   END IF;
-  -- archive the diskCopy replica request
+  -- Archive the diskCopy replica request
   archiveSubReq(srId);
-  -- update filesystem status
+  -- Update filesystem status
   updateFsFileClosed(fsId);
   -- Trigger the creation of additional copies of the file, if necessary.
   replicateOnClose(cfId, ouid, ogid);
   -- Wake up waiting subrequests
   UPDATE SubRequest SET status = 1,  -- SUBREQUEST_RESTART
-         lastModificationTime = getTime(), parent = 0
+                        lastModificationTime = getTime(), 
+                        parent = 0
    WHERE parent = srId;
 END;
 
