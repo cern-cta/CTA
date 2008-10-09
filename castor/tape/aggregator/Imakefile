@@ -32,14 +32,16 @@ DEBUG  = -g
 #endif
 
 INCLUDES = -I FileName(FileName(FileName(..,..),..),h) -I FileName(FileName(..,..),..)
-CPPFLAGS = -DORATAPECONFIGFILE=\"/etc/castor/ORATAPECONFIG\" $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
+CPPFLAGS = -pedantic -Werror $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 CFLAGS = -O -I$(INCLUDES) $(THREADFLAGS)
 
 LIBS = -lshift -lcastorCnvs -Wl,-rpath-link,FileName(FileName(FileName(..,..),..),shlib)
 
 AGGREGATORBIN_SRCS = \
   AggregatorDlfMessageStrings.cpp \
-  AggregatorDaemon.cpp
+  AggregatorDaemon.cpp \
+  AggregatorMain.cpp \
+  RequestHandlerThread.cpp
 
 MANPAGES_AGGREGATOR = FileName($(MANDIR),aggregatord.$(MANSUFFIX))
 EMANPAGES_AGGREGATOR = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),aggregatord.$(MANSUFFIX)))

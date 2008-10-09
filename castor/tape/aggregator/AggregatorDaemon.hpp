@@ -34,6 +34,12 @@
 namespace castor {
 namespace tape {
 namespace aggregator {
+
+/**
+ * Default port on which the aggregator listens.
+ */
+const int AGGREGATOR_PORT = 12345;
+
   	
 /**
  * The aggregator daemon.
@@ -71,12 +77,22 @@ public:
    */
   static void usage(std::ostream &os, const char *const programName) throw();
 
+  /**
+   * Returns the port on which the server will listen.
+   */
+  int getListenPort();
+
 private:
 
   /**
    * DLF message strings.
    */
   static castor::dlf::Message s_dlfMessages[];
+
+  /**
+   * The port on which the server will listen.
+   */
+  int m_listenPort;
 
 }; // class AggregatorDaemon
 
