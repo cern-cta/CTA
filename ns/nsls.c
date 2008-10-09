@@ -186,6 +186,7 @@ int procpath(fullpath)
   char slink[CA_MAXPATHLEN+1];
   struct Cns_filestatcs statbuf;
 
+  comment[0] = '\0';
   if (Lflag) {
     if (Cns_statcs (fullpath, &statbuf) < 0)
       return (-1);
@@ -208,7 +209,7 @@ int procpath(fullpath)
         c = 0;
       slink[c] = '\0';
     }
-    if (cmflag)
+    if (cmflag) {
       (void) Cns_getcomment (fullpath, comment);
     return (listentry (fullpath, &statbuf, slink, comment));
   }
