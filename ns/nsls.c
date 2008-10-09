@@ -209,7 +209,7 @@ int procpath(fullpath)
         c = 0;
       slink[c] = '\0';
     }
-    if (cmflag) {
+    if (cmflag)
       (void) Cns_getcomment (fullpath, comment);
     return (listentry (fullpath, &statbuf, slink, comment));
   }
