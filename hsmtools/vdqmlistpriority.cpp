@@ -37,7 +37,7 @@
 #include <string.h>
 
 
-const std::string VDQMSCHEMAVERSION = "2_1_7_12";
+const std::string VDQMSCHEMAVERSION = "2_1_7_20";
 
 // Possible types of volume priority list that can be displayed
 enum PriorityListType {

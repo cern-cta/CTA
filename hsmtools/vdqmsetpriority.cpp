@@ -37,7 +37,7 @@
 #include <unistd.h>
 
 
-const std::string VDQMSCHEMAVERSION = "2_1_7_12";
+const std::string VDQMSCHEMAVERSION = "2_1_7_20";
 
 
 void usage(const std::string programName) {
