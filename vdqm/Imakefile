@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Release$ $Date: 2008/07/29 06:29:17 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Release$ $Date: 2008/10/10 16:56:09 $ $Author: murrayc3 $
 #
 # Makefile for the VDQM API library and client
 #
@@ -60,7 +60,7 @@ SECURITYFLAG=-DCSEC
 LDLIBS+= -ldl
 #endif  
 
-CFLAGS = -O -I$(INCLUDES) $(THREADFLAGS) -DVDQM_HOST=\"$(VDQM_HOST)\" $(SECURITYFLAG)
+CFLAGS = -g -O -I$(INCLUDES) $(THREADFLAGS) -DVDQM_HOST=\"$(VDQM_HOST)\" $(SECURITYFLAG)
 
 #if BuildVdqmClient
 PROG_C = ProgramTargetName(showqueues) ProgramTargetName(tpsrv_in_prod) ProgramTargetName(vdqm_admin)
