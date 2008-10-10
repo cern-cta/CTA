@@ -28,6 +28,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NotSupported.hpp"
 #include "castor/io/ServerSocket.hpp"
+#include "castor/System.hpp"
 #include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
 #include "castor/vdqm/OldRequestFacade.hpp"
@@ -115,6 +116,33 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
       handleRequest = false;
     } else {
       logVolumeRequest(ptr_header, ptr_volumeRequest, cuuid, DLF_LVL_SYSTEM);
+
+      // User root is not allowed to make a volume request
+      if(ptr_volumeRequest->clientUID == 0 &&
+        ptr_volumeRequest->clientGID == 0) {
+
+        // Try to get client hostname
+        std::string clientHostname;
+        {
+          unsigned short port;
+          unsigned long  ip;
+
+          try {
+            m_socket->getPeerIp(port, ip);
+            clientHostname = castor::System::ipAddressToHostname(ip);
+          } catch(castor::exception::Exception &e) {
+            clientHostname = "UNKNOWN";
+          }
+        }
+
+        castor::exception::PermissionDenied pe;
+
+        pe.getMessage() << "User root is not allowed to make a volume request. "
+          "source_host=" << clientHostname;
+
+        throw pe;
+      }
+
       TapeRequestHandler requestHandler;
       requestHandler.newTapeRequest(ptr_header, ptr_volumeRequest, cuuid); 
     }
