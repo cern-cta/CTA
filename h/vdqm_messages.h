@@ -36,8 +36,9 @@ typedef struct vdqmVolReq {
     char client_name[CA_MAXUSRNAMELEN+1];
 } vdqmVolReq_t;
 /*
- * Length of marshalled structure. Don't forget to update
- * if entries are added
+ * Length of marshalled structure. Don't forget to update if entries are added.
+ * Note that a string requires strlen + 1 bytes of storage, hence the "+ 6" at
+ * the end of the VDQM_DEDICATELEN macro.
  */
 #define VDQM_VOLREQLEN(X) ( 8*LONGSIZE + \
     strlen(X->volid) + strlen(X->client_host) + strlen(X->server) + \
@@ -84,7 +85,6 @@ typedef struct vdqmdDrvReq {
     gid_t gid;
     char  name[CA_MAXUSRNAMELEN+1];
 } vdqmDrvReq_t;
-
 /*
  * Length of marshalled structure. Don't forget to update if entries are added.
  * Note that a string requires strlen + 1 bytes of storage.

@@ -1,5 +1,5 @@
 /*
- * $Id: vdqm_api.h,v 1.16 2008/09/26 15:41:09 murrayc3 Exp $
+ * $Id: vdqm_api.h,v 1.17 2008/10/11 11:33:34 murrayc3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vdqm_api.h,v $ $Revision: 1.16 $ $Date: 2008/09/26 15:41:09 $ CERN IT-PDP/DM Olof Barring
+ * @(#)$RCSfile: vdqm_api.h,v $ $Revision: 1.17 $ $Date: 2008/10/11 11:33:34 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -46,5 +46,10 @@ EXTERN_C int DLL_DECL vdqm_SendVolPriority _PROTO((char*, int, int, int));
  */
 EXTERN_C int DLL_DECL vdqm_SendDelDrv _PROTO((char*, char*, char*));
 EXTERN_C int DLL_DECL vdqm_SendDedicate _PROTO((char*, char*, char*, char*));
+
+/*
+ * Functions that use VDQM magic number: VDQM4
+ */
+EXTERN_C int DLL_DECL vdqm_SendAggregatorVolReq _PROTO((vdqmnw_t *, int *, char *, char *, char *, char *, int, int));
 
 #endif /* _VDQM_API_H */
