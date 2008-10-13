@@ -69,18 +69,10 @@ namespace castor{
         
       private:
         
-        /**********************************************/
-        /* return if it is to replicate considering: */
-        /* - sources.size() */
-        /* - maxReplicaNb */
-        /* - replicationPolicy (call to the expert system) */
+        /** decides whether to replicate or not
+         */
         void processReplica() throw(castor::exception::Exception);
         
-        /***************************************************************************************************************************/
-        /* if the replicationPolicy exists, ask the expert system to get maxReplicaNb for this file                                */
-        /**************************************************************************************************************************/
-        int checkReplicationPolicy() throw(castor::exception::Exception);
-
         /// list of available diskcopies for the request to be scheduled        
         std::list<castor::stager::DiskCopyForRecall *> sources;
                 

@@ -13,9 +13,7 @@
 
 #include "stager_uuid.h"
 #include "stager_constants.h"
-
 #include "Cns_api.h"
-#include "expert_api.h"
 
 #include "Cpwd.h"
 #include "Cgrp.h"
@@ -153,31 +151,31 @@ namespace castor{
             break;
             
           case DISKCOPY_WAITTAPERECALL:   // create a tape copy and corresponding segment objects on stager catalogue
-	    {
-	      // answer client only if success
-	      castor::stager::Tape *tape = 0;
-	      result = stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest, stgRequestHelper->svcClass, tape);
-	      if (result) {
-		// "Triggering Tape Recall"
-		castor::dlf::Param params[] = {
-		  castor::dlf::Param("Type", castor::ObjectsIdStrings[stgRequestHelper->fileRequest->type()]),
-		  castor::dlf::Param("Filename", stgRequestHelper->subrequest->fileName()),
-		  castor::dlf::Param("Username", stgRequestHelper->username),
-		  castor::dlf::Param("Groupname", stgRequestHelper->groupname),
-		  castor::dlf::Param("SvcClass", stgRequestHelper->svcClassName),
-		  castor::dlf::Param("TPVID", tape->vid()),
-		  castor::dlf::Param("TapeStatus", castor::stager::TapeStatusCodesStrings[tape->status()]),
-		  castor::dlf::Param("FileSize", stgRequestHelper->subrequest->castorFile()->fileSize()),
-		  castor::dlf::Param(stgRequestHelper->subrequestUuid)};
-		castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, 9, params, &(stgCnsHelper->cnsFileid));
-	      } else {
-		// no tape copy found because of Tape0 file, log it
-		// any other tape error will throw an exception and will be classified as LVL_ERROR 
-		stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
-	      }
-	      if (tape != 0)
-		delete tape;
-	    }
+            {
+              // answer client only if success
+              castor::stager::Tape *tape = 0;
+              result = stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest, stgRequestHelper->svcClass, tape);
+              if (result) {
+                // "Triggering Tape Recall"
+                castor::dlf::Param params[] = {
+                  castor::dlf::Param("Type", castor::ObjectsIdStrings[stgRequestHelper->fileRequest->type()]),
+                  castor::dlf::Param("Filename", stgRequestHelper->subrequest->fileName()),
+                  castor::dlf::Param("Username", stgRequestHelper->username),
+                  castor::dlf::Param("Groupname", stgRequestHelper->groupname),
+                  castor::dlf::Param("SvcClass", stgRequestHelper->svcClassName),
+                  castor::dlf::Param("TPVID", tape->vid()),
+                  castor::dlf::Param("TapeStatus", castor::stager::TapeStatusCodesStrings[tape->status()]),
+                  castor::dlf::Param("FileSize", stgRequestHelper->subrequest->castorFile()->fileSize()),
+                castor::dlf::Param(stgRequestHelper->subrequestUuid)};
+                castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, 9, params, &(stgCnsHelper->cnsFileid));
+              } else {
+                // no tape copy found because of Tape0 file, log it
+                // any other tape error will throw an exception and will be classified as LVL_ERROR 
+                stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
+              }
+              if (tape != 0)
+                delete tape;
+            }
             break;
           
         }        
@@ -212,32 +210,21 @@ namespace castor{
       }
       
 
-      /************************************************************************************/
-      /* decides if it is to replicate considering: */
-      /* - sources.size() */
-      /* - maxReplicaNb */
-      /* - replicationPolicy (call to the expert system) */
-      /**********************************************************************************/
+      /***********************************************************************/
+      /* decides whether we need to replicate                                */
+      /***********************************************************************/
       void GetHandler::processReplica() throw(castor::exception::Exception)
       {
         bool replicate = true;
         
-        if(sources.size() == 1 && sources.front()->status() == DISKCOPY_STAGEOUT) {
-          // a Get on a STAGEOUT DiskCopy is not allowed to replicate
-          maxReplicaNb = 1;
+        if( (sources.size() == 1 && sources.front()->status() == DISKCOPY_STAGEOUT)
+            || stgRequestHelper->fileRequest->type() == OBJ_StageUpdateRequest
+            || (maxReplicaNb > 0 && maxReplicaNb <= sources.size()) ) {
+          // A Get on a STAGEOUT DiskCopy is not allowed to replicate,
+          // nor is allowed an Update request. Otherwise, maxReplicaNb > 0 decides 
+          replicate = false;
         }
-        if(maxReplicaNb > 0) {
-          if(maxReplicaNb <= sources.size()) {
-            replicate = false;
-          }
-        }
-        else if((replicationPolicy.empty()) == false) { 
-          maxReplicaNb = checkReplicationPolicy();
-          if(maxReplicaNb > 0 && maxReplicaNb <= sources.size()) {
-            replicate = false;
-          }
-          // else maxReplicaNb == 0 means infinite replication
-        }
+        // XXX Note that maxReplicaNb == 0 allows infinite replication (to be reviewed maybe)
 
         if(replicate) {
           // We need to replicate, create a diskCopyReplica request
@@ -246,43 +233,7 @@ namespace castor{
         }
       }
 
-     
-      /***************************************************************************************************************************/
-      /* if the replicationPolicy exists, ask the expert system to get maxReplicaNb for this file                                */
-      /**************************************************************************************************************************/
-      int GetHandler::checkReplicationPolicy() throw(castor::exception::Exception)/* changes coming from the latest stager_db_service.cpp */
-      {
-        const std::string filename = stgRequestHelper->subrequest->fileName();
-        std::string expQuestion=replicationPolicy + " " + filename;
-        char expAnswer[21];//SINCE unsigned64 maxReplicaNb=expAnswer.stringTOnumber() THEN  expAnswer.size()=21 (=us64.size)
-        int fd;
-        
-	  
-        if(expert_send_request(&fd, EXP_RQ_REPLICATION)){//connecting to the expert system
-            
-          castor::exception::Exception ex(SEINTERNAL);
-          ex.getMessage()<<"Error on expert_send_request";
-          throw ex;
-        }
-        if((unsigned)(expert_send_data(fd, expQuestion.c_str(), expQuestion.size())) != (expQuestion.size())) {  //sending question
-          
-          castor::exception::Exception ex(SEINTERNAL);
-          ex.getMessage()<<"Error on expert_send_data";
-          throw ex;
-        }
-        
-        memset(expAnswer, '\0',sizeof(expAnswer));
-        if((expert_receive_data(fd,expAnswer,sizeof(expAnswer),STAGER_DEFAULT_REPLICATION_EXP_TIMEOUT)) <= 0){
-          
-          castor::exception::Exception ex(SEINTERNAL);
-          ex.getMessage()<<"Error on expert_receive_data";
-          throw ex;
-        }
-        
-        return(atoi(expAnswer));
-      }
-      
-       
+    
       GetHandler::~GetHandler()throw(){        
       }
       
