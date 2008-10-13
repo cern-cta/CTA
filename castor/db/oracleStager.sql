@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.686 $ $Date: 2008/10/07 15:46:39 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.687 $ $Date: 2008/10/13 17:25:19 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1396,6 +1396,10 @@ CREATE OR REPLACE PROCEDURE processPutDoneRequest
   fs NUMBER;
   nbDCs INTEGER;
   putSubReq NUMBER;
+  ouid INTEGER;
+  ogid INTEGER;
+  ruid INTEGER;
+  rgid INTEGER;  
 BEGIN
   -- Get the svcClass and the castorFile for this subrequest
   SELECT Req.svcclass, SubRequest.castorfile
@@ -1439,21 +1443,41 @@ BEGIN
        AND DiskPool2SvcClass.child = svcClassId
        AND FileSystem.diskserver = DiskServer.id
        AND DiskCopy.status = 6;  -- STAGEOUT
-    IF nbDCs > 0 THEN
-      -- we have it
-      result := 1;
-      putDoneFunc(cfId, fs, 2, svcClassId);   -- context = PutDone
-    ELSE
+    IF nbDCs = 0 THEN
       -- This is a PutDone without a put (otherwise we would have found
       -- a DiskCopy on a FileSystem), so we fail the subrequest.
       UPDATE SubRequest SET
-        status = 7,
+        status = 7,  -- FAILED
         errorCode = 1,  -- EPERM
         errorMessage = 'putDone without a put, or wrong service class'
       WHERE id = rsubReqId;
       result := 0;  -- no go
       COMMIT;
+      RETURN;
     END IF;
+    -- Check that the request has been issued by the same user as
+    -- the original PPut/PUpdate one; note that this check is stricter
+    -- than the stager check against the nameserver.
+    SELECT euid, egid INTO ouid, ogid
+      FROM SubRequest, 
+       (SELECT id, euid, egid FROM StagePrepareToPutRequest UNION ALL
+        SELECT id, euid, egid FROM StagePrepareToUpdateRequest) Request
+     WHERE SubRequest.castorFile = cfId
+       AND SubRequest.request = Request.id
+       AND SubRequest.status = 6;  -- READY
+    IF ouid != ruid OR ogid != rgid THEN
+      UPDATE SubRequest SET
+        status = 7,  -- FAILED
+        errorCode = 13,  -- EACCESS
+        errorMessage = 'Permission denied, only the user who originated the PrepareToPut request is allowed to issue a PutDone'
+      WHERE id = rsubReqId;
+      result := 0;  -- no go
+      COMMIT;
+      RETURN;
+    END IF;      
+    -- All checks have been completed, let's do it
+    putDoneFunc(cfId, fs, 2, svcClassId);   -- context = PutDone
+    result := 1;
   END;
 END;
 
