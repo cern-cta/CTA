@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.45 $ $Release$ $Date: 2008/09/09 16:30:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.46 $ $Release$ $Date: 2008/10/14 16:09:21 $ $Author: itglp $
  *
  * 
  *
@@ -197,7 +197,7 @@ int rtcpcld_updateNsSegmentAttributes(
 {
   rtcpTapeRequest_t *tapereq;
   rtcpFileRequest_t *filereq;
-  int rc, stat_rc, save_serrno = 0, nbSegms = 0, compressionFactor;
+  int i, rc, stat_rc, save_serrno = 0, nbSegms = 0, compressionFactor;
   int retryNsUpdate = 0, maxRetryNsUpdate = 5;
   struct Cns_fileid castorFileId;
   struct Cns_segattrs *nsSegAttrs = NULL;
@@ -432,17 +432,17 @@ int rtcpcld_updateNsSegmentAttributes(
                        );
 
        if ( (rc == -1) ||
-	    (oldNbSegms <= 0) ||
-	    (oldSegattrs == NULL) ) {
-	 LOG_SYSCALL_ERR("Cns_getsegattrs()");  
-	 return(-1);
+            (oldNbSegms <= 0) ||
+            (oldSegattrs == NULL) ) {
+          LOG_SYSCALL_ERR("Cns_getsegattrs()");  
+          return(-1);
        }
-             
+       
        if ( use_checksum && oldNbSegms == 1 && oldSegattrs->checksum != nsSegAttrs->checksum){
-	 /* log error checksum problems for repack */
-	 /* checksum error I don't replace the segment */
+         /* log error checksum problems for repack */
+         /* checksum error I don't replace the segment */
 
-           (void)dlf_write(
+         (void)dlf_write(
                           (inChild == 0 ? mainUuid : childUuid),
                           RTCPCLD_LOG_MSG(RTCPCLD_MSG_WRONGCKSUM),
                           (struct Cns_fileid *)&castorFileId,
@@ -456,9 +456,9 @@ int rtcpcld_updateNsSegmentAttributes(
                           "FSEQ",
                           DLF_MSG_PARAM_INT,
                           nsSegAttrs->fseq,
-			  "BLOCKID",
-			  DLF_MSG_PARAM_STR,
-			  blkid,
+                          "BLOCKID",
+                          DLF_MSG_PARAM_STR,
+                          blkid,
                           "OLDCKSUM",
                           DLF_MSG_PARAM_INT,
                           (int)oldSegattrs->checksum,
@@ -468,24 +468,33 @@ int rtcpcld_updateNsSegmentAttributes(
                           RTCPCLD_LOG_WHERE
                           );
 
-          save_serrno = SECHECKSUM;
-          if (oldSegattrs) free(oldSegattrs);
-          rc=-1;
-	  break;
+         save_serrno = SECHECKSUM;
+         free(oldSegattrs);
+         oldSegattrs = NULL;
+         rc=-1;
+         break;
        }
        else {
-	 /*used only to check the old value */
-         if (oldSegattrs) free(oldSegattrs); 
-
-	 rc = Cns_replacetapecopy(
+         /* look for the previous copyno in the repacked tape */
+         for(i = 0; i < oldNbSegms; i++) {
+           if(!strcmp(oldSegattrs[i].vid, repackvid)) {
+             nsSegAttrs->copyno = oldSegattrs[i].copyno;
+             break;
+           }
+         }
+         /* perform the replacement */
+         rc = Cns_replacetapecopy(
                                &castorFileId,
                                repackvid,
                                nsSegAttrs->vid,
                                nbSegms,
                                nsSegAttrs
                                );
-	 free(repackvid);
-	 repackvid = NULL;
+
+         free(oldSegattrs);
+         oldSegattrs = NULL;
+         free(repackvid);
+         repackvid = NULL;
        }
 
     } else { 
