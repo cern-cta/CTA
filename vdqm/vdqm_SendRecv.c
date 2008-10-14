@@ -1146,17 +1146,6 @@ int vdqm_SendDedicate_Transfer(vdqmnw_t *nw, vdqmDedicate_t *msg)
     return(reqtype);
 }
 
-int vdqm_AggregatorVolReq_Send(vdqmnw_t *nw, vdqmHdr_t *hdr, 
-    vdqmVolReq_t *volreq) {
-    direction_t whereto = SendTo;
-    return(vdqm_AggregatorVolReq_Transfer(nw,hdr,volreq,whereto));
-}
-
-int vdqm_AggregatorVolReq_Recv(vdqmnw_t *nw, vdqmHdr_t *hdr, vdqmVolReq_t *volreq) {
-    direction_t whereto = ReceiveFrom;
-    return(vdqm_AggregatorVolReq_Transfer(nw,hdr,volreq,whereto));
-}
-
 static int vdqm_AggregatorVolReq_Transfer(vdqmnw_t *nw, vdqmHdr_t *hdr,
     vdqmVolReq_t *volreq, direction_t whereto) {
     
@@ -1331,4 +1320,15 @@ static int vdqm_AggregatorVolReq_Transfer(vdqmnw_t *nw, vdqmHdr_t *hdr,
         }
     }
     return(reqtype);
+}
+
+int vdqm_AggregatorVolReq_Send(vdqmnw_t *nw, vdqmHdr_t *hdr, 
+    vdqmVolReq_t *volreq) {
+    direction_t whereto = SendTo;
+    return(vdqm_AggregatorVolReq_Transfer(nw,hdr,volreq,whereto));
+}
+
+int vdqm_AggregatorVolReq_Recv(vdqmnw_t *nw, vdqmHdr_t *hdr, vdqmVolReq_t *volreq) {
+    direction_t whereto = ReceiveFrom;
+    return(vdqm_AggregatorVolReq_Transfer(nw,hdr,volreq,whereto));
 }
