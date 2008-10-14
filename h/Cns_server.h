@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_server.h,v 1.21 2008/09/22 13:40:18 waldron Exp $
+ * $Id: Cns_server.h,v 1.22 2008/10/14 16:18:56 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.21 $ $Date: 2008/09/22 13:40:18 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.22 $ $Date: 2008/10/14 16:18:56 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_SERVER_H
@@ -261,6 +261,7 @@ EXTERN_C int Cns_unique_gid _PROTO((struct Cns_dbfd *, unsigned int *));
 EXTERN_C int Cns_unique_uid _PROTO((struct Cns_dbfd *, unsigned int *));
 EXTERN_C int Cns_update_group_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_groupinfo *));
 EXTERN_C int Cns_update_user_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_userinfo *));
+EXTERN_C int Cns_getpath_by_fileid _PROTO((struct Cns_dbfd *, u_signed, char **));
 
 EXTERN_C int Cns_srv_access _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_chclass _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
