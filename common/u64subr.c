@@ -373,7 +373,9 @@ char DLL_DECL *u64tostrsi(u64, buf, fldsize)
                 // Else the contents of tmpbuf is too much
                 } else {
                     strncpy (buf, tmpbuf, fldsize);
-                    *(buf + n - 1) = '\0'; // Ensure the string is termintaed
+
+                    // Ensure the string is termintaed
+                    *(buf + fldsize - 1) = '\0';
                 }
 	}
 		
