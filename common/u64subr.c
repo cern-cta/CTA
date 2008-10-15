@@ -365,8 +365,16 @@ char DLL_DECL *u64tostrsi(u64, buf, fldsize)
 		strcpy (buf, tmpbuf);
 	} else {
 		n = fldsize - strlen (tmpbuf);
-		memset (buf, ' ', n);
-		strcpy (buf + n, tmpbuf);
+
+                // If the content of tmpbuf fits exactly or requires padding
+                if(n>=0) {
+		    memset (buf, ' ', n);
+		    strcpy (buf + n, tmpbuf);
+                // Else the contents of tmpbuf is too much
+                } else {
+                    strncpy (buf, tmpbuf, fldsize);
+                    *(buf + n - 1) = '\0'; // Ensure the string is termintaed
+                }
 	}
 		
 	return (buf);
