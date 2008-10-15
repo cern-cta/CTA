@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.681 $ $Date: 2008/09/22 12:53:38 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.682 $ $Date: 2008/10/15 12:03:47 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1220,7 +1220,8 @@ BEGIN
 END;
 
 /* Get input for python migration policy */
-CREATE OR REPLACE PROCEDURE inputForMigrationPolicy
+
+create or replace PROCEDURE inputForMigrationPolicy
 (svcclassName IN VARCHAR2,
  policyName OUT VARCHAR2,
  svcId OUT NUMBER,
@@ -1236,27 +1237,18 @@ BEGIN
 
   UPDATE TapeCopy A SET status = 7
    WHERE status IN (0, 1) AND
-    EXISTS (SELECT 'x' FROM  SubRequest, StageRepackRequest
+    ( EXISTS (SELECT 'x' FROM  SubRequest, StageRepackRequest
              WHERE StageRepackRequest.svcclass = svcId
                AND SubRequest.request = StageRepackRequest.id
                AND SubRequest.status = 12  -- SUBREQUEST_REPACK
                AND A.castorfile = SubRequest.castorfile
-    ) RETURNING A.id -- CREATED / TOBEMIGRATED
-    BULK COLLECT INTO tcIds;
-  COMMIT;
-  -- if we didn't find anything, we look
-  -- the usual svcclass from castorfile table.
-  -- we update atomically WAITPOLICY
-  IF tcIds.count = 0 THEN
-    UPDATE TapeCopy A SET status = 7
-     WHERE status IN (0, 1) AND
-      EXISTS ( SELECT 'x' FROM  CastorFile
+    ) OR  EXISTS ( SELECT 'x' FROM  CastorFile
      	WHERE A.castorFile = CastorFile.id
           AND CastorFile.svcClass = svcId
-      ) RETURNING A.id -- CREATED / TOBEMIGRATED
-      BULK COLLECT INTO tcIds;
-      COMMIT;
-  END IF;
+      ) )
+    RETURNING A.id -- CREATED / TOBEMIGRATED
+    BULK COLLECT INTO tcIds;
+  COMMIT;
   -- return the full resultset
   OPEN dbInfo FOR
     SELECT TapeCopy.id, TapeCopy.copyNb, CastorFile.lastknownfilename,
