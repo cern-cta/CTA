@@ -27,7 +27,7 @@ char **argv;
 	int flags;
 	vmgr_list list;
 	struct vmgr_tape_denmap *lp;
-	char tmpbuf[9];
+	char tmpbuf[80];
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
@@ -50,7 +50,7 @@ char **argv;
 	while ((lp = vmgr_listdenmap (flags, &list)) != NULL) {
 		printf ("%-6s %-2s %-8s %-8s\n", lp->md_model, lp->md_media_letter,
 		    lp->md_density,
-		    u64tostru ((u_signed64)lp->native_capacity * ONE_MB, tmpbuf, 8));
+		    u64tostru ((u_signed64)lp->native_capacity * ONE_MB, tmpbuf, 9));
 		flags = VMGR_LIST_CONTINUE;
 	}
 	(void) vmgr_listdenmap (VMGR_LIST_END, &list);

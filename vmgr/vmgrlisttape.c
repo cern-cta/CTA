@@ -30,7 +30,7 @@ int sflag;
 	time_t ltime;
 	char p_stat = '\0';
 	struct tm *tm;
-	char tmpbuf[9];
+	char tmpbuf[80];
 	u_signed64 u64;
 
 	u64 = ((u_signed64) lp->estimated_free_space) * 1024;
@@ -51,7 +51,7 @@ int sflag;
 			printf ("%s %s ", lp->poolname, u64tostr (u64, tmpbuf, 0));
 		else
 			printf ("%-15s %-8sB ", lp->poolname, 
-				u64tostru (u64, tmpbuf, 8));
+				u64tostru (u64, tmpbuf, 9));
 		ltime = (lp->wtime < lp->rtime) ? lp->rtime : lp->wtime;
 		if (ltime) {
 			tm = localtime (&ltime);
@@ -80,7 +80,7 @@ int sflag;
 				lp->rjid, lp->wjid);
 		else
 			printf ("%-8sB %6d %5d %5d %-10s %-10s %10d %10d ", 
-				u64tostru (u64, tmpbuf, 8), lp->nbfiles, 
+				u64tostru (u64, tmpbuf, 9), lp->nbfiles, 
 				lp->rcount, lp->wcount, lp->rhost, lp->whost, 
 				lp->rjid, lp->wjid);
 		if (lp->rtime) {

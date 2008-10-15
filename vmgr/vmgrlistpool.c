@@ -39,8 +39,8 @@ int sflag;
 	static char sav_gidstr[7];
 	static uid_t sav_uid = -1;
 	static char sav_uidstr[CA_MAXUSRNAMELEN+1];
-	char tmpbuf[9];
-	char tmpbuf2[9];
+	char tmpbuf[80];
+	char tmpbuf2[80];
 
 	if (pool_uid != sav_uid) {
 		sav_uid = pool_uid;
@@ -71,8 +71,8 @@ int sflag;
 	else
 		printf ("%-15s %-8.8s %-6.6s CAPACITY %sB FREE %sB (%5.1f%%)\n",
 			pool_name, sav_uidstr, sav_gidstr,
-			u64tostru (capacity, tmpbuf, 8),
-			u64tostru (tot_free_space, tmpbuf2, 8), capacity ?
+			u64tostru (capacity, tmpbuf, 9),
+			u64tostru (tot_free_space, tmpbuf2, 9), capacity ?
 			(double)f64 * 100. / (double)c64 : 0);
 }
 
