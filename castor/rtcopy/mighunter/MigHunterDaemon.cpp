@@ -71,7 +71,11 @@ int main(int argc, char* argv[]){
     std::cerr << "Couldn't load the policy  service, check the castor.conf for DynamicLib entries" << std::endl;
     return -1;
   }
- 
+
+  // new BaseDaemon as Server 
+    
+  castor::rtcopy::mighunter::MigHunterDaemon newMigHunter; //dlf available now
+    
   // create the policy
   try{
     char* pm=NULL;
@@ -113,11 +117,6 @@ int main(int argc, char* argv[]){
     if (ps != NULL )
 	strSvc = new  castor::infoPolicy::StreamPySvc(streamPolicyName);
   
-
-    // new BaseDaemon as Server 
-    
-    castor::rtcopy::mighunter::MigHunterDaemon newMigHunter;
-
     
     newMigHunter.parseCommandLine(argc, argv);
     
@@ -144,10 +143,18 @@ int main(int argc, char* argv[]){
     std::cerr << "Caught castor exception : "
      << sstrerror(e.code()) << std::endl
      << e.getMessage().str() << std::endl;
+         
+    castor::dlf::Param params0[] =
+      {castor::dlf::Param("errorCode",e.code()),
+       castor::dlf::Param("errorMessage",e.getMessage().str())
+      };
+       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 14, 2, params0);
+    return -1;
   }
   catch (...) {
     
-    std::cerr << "Caught general exception!" << std::endl;    
+    std::cerr << "Caught general exception!" << std::endl;  
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 14, 0, NULL);
     return -1;
     
   } 
@@ -184,6 +191,7 @@ castor::rtcopy::mighunter::MigHunterDaemon::MigHunterDaemon() : castor::server::
    {11, "Summary of stream policy results"},
    {12, "No Policy file available"},
    {13,"Error in executing the policy script"},
+   {14,"Fatal Error"},
    {-1, ""}
   };
   dlfInit(messages);
