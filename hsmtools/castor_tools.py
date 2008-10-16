@@ -17,7 +17,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.4 $ $Release$ $Date: 2008/10/16 14:10:29 $ $Author: sponcec3 $
+# * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.5 $ $Release$ $Date: 2008/10/16 18:29:14 $ $Author: itglp $
 # *
 # * utility functions for castor tools written in python
 # *
@@ -172,8 +172,13 @@ def fillObject12n(stcur, obj, entry, table, key):
   stmt = 'SELECT * FROM ' + table + ' WHERE ' + key + '=' + str(obj.id)
   fillObjectgeneric(stcur, obj, entry, table, stmt)
 
+def fillObjectn21(stcur, obj, entry, table):
+  '''Fill an object following a n->1 relation'''
+  stmt = 'SELECT * FROM ' + table + ' WHERE id =' + str(obj[entry.upper()])
+  fillObjectgeneric(stcur, obj, entry.upper(), table, stmt)
+
 def fillObjectn2n(stcur, obj, entry, table):
-  '''Fill an object following a 1->n relation'''
+  '''Fill an object following a n->n relation'''
   if obj.name < table:
     jointable = obj.name + '2' + table
     key1 = 'child'
@@ -194,6 +199,7 @@ def getSvcClass(svcClassName):
         svcClass = getObject(stcur, 'SvcClass', 'name', svcClassName)
         fillObjectn2n(stcur, svcClass, 'DiskPools', 'DiskPool')
         fillObjectn2n(stcur, svcClass, 'TapePools', 'TapePool')
+        fillObjectn21(stcur, svcClass, 'forcedFileClass', 'FileClass');
         disconnectDB(stconn)
         return svcClass
     except Exception, e:
