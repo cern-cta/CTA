@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/python
 #/******************************************************************************
 # *                      listFileClass
 # *
@@ -18,47 +18,48 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: listFileClass,v $ $Revision: 1.1 $ $Release$ $Date: 2005/07/29 15:36:11 $ $Author: sponcec3 $
+# * @(#)$RCSfile: listFileClass,v $ $Revision: 1.2 $ $Release$ $Date: 2008/10/16 14:50:27 $ $Author: sponcec3 $
 # *
 # * Lists existing service classes
 # *
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
-use strict;
-use diagnostics;
-use lib "/usr/lib/perl/CASTOR";
-use castor_tools;
+
+import sys
+import getopt
+import castor_tools
 
 # usage function
-sub usage {
-  printf("Usage : %s [-h|--help]\n", $0);
-}
+def usage(exitCode):
+  print 'Usage : ' + sys.argv[0] + ' [-h|--help]'
+  sys.exit(exitCode)
 
 # first parse the options
-my $help;
-if (0 == Getopt::Long::GetOptions ('h|help' => \$help)) {
-  usage();
-  exit(1);
-}
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'h', ['help'])
+except Exception, e:
+    print e
+    usage(1)
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    else:
+        print "unknown option : " + f
+        usage(1)
 
-if ($help) {
-  usage();
-  exit(0);
-}
+# If any arg, warn they are ignored
+if len(args) != 0:
+    print "Ignoring arguments\n"
 
-#connect to the database and execute the query
-my @castor_conf = castor_conf_getOraStagerSvc();
-my $dbh = DBI->connect('dbi:Oracle:',$castor_conf[0] ,$castor_conf[1]);
-my $dbquery = "SELECT name FROM FileClass";
-my $sth = $dbh->prepare("$dbquery");
-$sth->execute;
-
-# display results
-my @row;
-while (@row = $sth->fetchrow_array) {
-  printf("%s\n", $row[0]);
-}
-
-# Close DB connection
-$sth->finish;
-$dbh->disconnect;
+# connect to the nameserver and fix files
+try:
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    stcur.arraysize = 50
+    stcur.execute('SELECT name FROM FileClass')
+    for res in stcur.fetchall():
+        print res[0]
+    castor_tools.disconnectDB(stconn)
+except Exception, e:
+    print e
+    sys.exit(-1)
