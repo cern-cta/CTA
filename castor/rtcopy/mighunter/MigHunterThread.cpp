@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: waldron $
+ * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: gtaur $
  *
  *
  *
@@ -95,7 +95,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
       
 	// tapecopy id and extra information retrieved from the db for the python policy       
    
-	infoCandidateTapeCopies=m_policySvc->inputForMigrationPolicy((*svcClassName),&initialSizeToTransfer);
+	infoCandidateTapeCopies=m_policySvc->inputForMigrationPolicy(*svcClassName,&initialSizeToTransfer);
 
 	if (infoCandidateTapeCopies.empty()){	
 	   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 3, 1, params0);
@@ -276,15 +276,25 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 
 	  if (streamInfo == NULL){
 	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 14, 1, params0);
+            infoCandidateStream++;
 	    continue;
 	  }
 
 	  streamInfo->setRunningStream(runningStreams); // new potential value
+	  
+	  // if there are no candidates there is no point to call the policy 
+
+	  if (streamInfo->numBytes()==0) {
+	     streamsToRestore.push_back(*infoCandidateStream);
+	     infoCandidateStream++;
+	     continue;
+	  }
           // start to apply the policy
   
 	  try {
 	    if (m_strSvc == NULL ||((*infoCandidateStream)->policyName()).empty()){
 	      //no policy
+   
 	      eligibleStreams.push_back(*infoCandidateStream);
 	      runningStreams++;
 	      withoutPolicy++;
