@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_rm.man,v $ $Revision: 1.7 $ $Date: 2008/06/02 16:27:29 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_rm.man,v $ $Revision: 1.8 $ $Date: 2008/10/16 14:41:54 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_RM 1castor "$Date: 2008/06/02 16:27:29 $" CASTOR "STAGER Commands"
+.TH STAGER_RM 1castor "$Date: 2008/10/16 14:41:54 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_rm \- request for removing a file from the CASTOR stager
 .SH SYNOPSIS
@@ -39,11 +39,6 @@ running recall of the file will be untouched leading to a new
 copy of the file on disk just after the stager_rm has been
 performed.
 
-.B stager_rm
-can return EBUSY if the file is not yet migrated or being
-replicated at the moment the command is issued. Otherwise, it is 
-always successful.
-
 .SH OPTIONS
 
 .TP
@@ -77,7 +72,8 @@ $ stager_rm -M /castor/cern.ch/user/t/test/file1
 
 .SH EXIT STATUS
 This program returns 0 if the operation was successful or >0 if the operation
-failed.
+failed. Note that busy or non-existing files are not considered as
+failures.
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
