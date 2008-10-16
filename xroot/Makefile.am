@@ -2,7 +2,7 @@
 ## Makefile.am for xCastor2 FS plugin
 ##
 ##
-## Version info: $Id: Makefile.am,v 1.8 2008/10/09 13:09:56 apeters Exp $
+## Version info: $Id: Makefile.am,v 1.9 2008/10/16 14:28:08 apeters Exp $
 ## Checked in by $Author: apeters $
 #######################################################################
 

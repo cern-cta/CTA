@@ -1,9 +1,9 @@
 Summary: The next generation xrootd@Castor2 interface
 Name: xrootd-xcastor2fs
 Version: 1.0.2
-Release: 12
+Release: 13
 License: none
-Group: CERN-IT-DM-SMD
+Group: Applications/Castor
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
@@ -22,6 +22,13 @@ make
 
 %install
 make install DESTDIR=$RPM_BUILD_ROOT
+rm -f $RPM_BUILD_ROOT/etc/init.d/x2castormond
+rm -f $RPM_BUILD_ROOT/opt/xrootd/bin/x2castormond
+rm -f $RPM_BUILD_ROOT/opt/xrootd/bin/x2castormonitoring.pl
+rm -f $RPM_BUILD_ROOT/opt/xrootd/bin/x2cp
+rm -f $RPM_BUILD_ROOT/opt/xrootd/bin/xrdstager_get
+rm -f $RPM_BUILD_ROOT/opt/xrootd/bin/xrdstager_qry
+
 find $RPM_BUILD_ROOT \( -type f -o -type l \) -print \
     | sed "s#^$RPM_BUILD_ROOT/*#/#" > RPM-FILE-LIST
 
@@ -36,6 +43,9 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) /etc/xrd.cf
 
 %changelog
+* Wed Oct 15 2008 root <root@pcitsmd01.cern.ch> - xcastor2-13
+- Cleanup of spec file
+
 * Wed Aug 20 2008 root <root@pcitsmd01.cern.ch> - xcastor2-1
 - Initial build.
 

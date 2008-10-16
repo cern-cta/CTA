@@ -2,9 +2,9 @@
 Summary: Monitoring Service for x2castorfs head nodes
 Name: xrootd-castormon
 Version: 1.0.2
-Release: 3
+Release: 4
 License: none
-Group: CERN-IT-DM
+Group: Applications/Castor
 Source0: xrootd-xcastor2fs-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 AutoReqProv: no
