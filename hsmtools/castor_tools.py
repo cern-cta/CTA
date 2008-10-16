@@ -17,14 +17,14 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.3 $ $Release$ $Date: 2008/10/07 14:38:57 $ $Author: sponcec3 $
+# * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.4 $ $Release$ $Date: 2008/10/16 14:10:29 $ $Author: sponcec3 $
 # *
 # * utility functions for castor tools written in python
 # *
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
-import os
+import os, sys
 
 def checkValueFound(name, value, instance, configFile):
     if len(value) == 0:
@@ -61,7 +61,6 @@ def getStagerDBConnectParams():
     return user, passwd, dbname
 
 def getNSDBConnectParam():
-    # read the NSCONFIG
     line = open('/etc/castor/NSCONFIG').readline()
     line = line[0:len(line)-1] #drop trailing \n
     sl = line.find('/')
@@ -102,7 +101,6 @@ def connectToNS():
 def disconnectDB(connection):
   connection.close()
 
-# DiskCopy status
 DiskCopyStatus = ["DISKCOPY_STAGED",
                   "DISKCOPY_WAITDISK2DISKCOPY",
                   "DISKCOPY_WAITTAPERECALL",
@@ -115,4 +113,102 @@ DiskCopyStatus = ["DISKCOPY_STAGED",
                   "DISKCOPY_BEINGDELETED",
                   "DISKCOPY_CANBEMIGR",
                   "DISKCOPY_WAITFS_SCHEDULING"]
+
+class castorObject(dict):
+  '''a base object for CASTOR items.
+  This includes clever printing and case insensitive member access'''
+  def __init__(self, name):
+    self.name = name
+  def __str__(self):
+    res = '[# ' + self.name + ' #]\n'
+    for s in self.keys():
+      if isinstance(self[s], type([])):
+        res = res + s.lower() + " :\n"
+        i = 0
+        for t in self[s]:
+          res = res + "  " + str(i) + " :\n"
+          for l in str(t).split('\n'):
+            if len(l) > 0:
+              res = res + '    ' + l + '\n'
+          i = i + 1
+      else:
+        res = res + s.lower() + " : " + str(self[s]) + "\n"
+    return res
+  def __getattr__(self, name):
+    return self[name.upper()]
+
+def getObject(stcur, table, key, value):
+  '''Gets an object from the DB'''
+  stmt = 'SELECT * FROM ' + table + ' WHERE ' + key + '='
+  if type(value) == type(''): stmt = stmt + "'"
+  stmt = stmt + value
+  if type(value) == type(''): stmt = stmt + "'"  
+  stcur.execute(stmt)
+  rawobj = stcur.fetchone()
+  if None == rawobj:
+    raise ValueError, "Found no " + table + " with " + key + " : '" + value + "'"
+  obj = castorObject(table)
+  i = 0
+  for d in stcur.description:
+    obj[d[0]] = rawobj[i]
+    i = i + 1
+  return obj
+
+def fillObjectgeneric(stcur, obj, entry, table, stmt):
+  '''Fill an object with the children given by a DB stmt'''
+  stcur.execute(stmt)
+  rawobjs = stcur.fetchall()
+  obj[entry] = []
+  for r in rawobjs:
+    child = castorObject(table)
+    i = 0
+    for d in stcur.description:
+      child[d[0]] = r[i]
+      i = i + 1
+    obj[entry].append(child)
+
+def fillObject12n(stcur, obj, entry, table, key):
+  '''Fill an object following a 1->n relation'''
+  stmt = 'SELECT * FROM ' + table + ' WHERE ' + key + '=' + str(obj.id)
+  fillObjectgeneric(stcur, obj, entry, table, stmt)
+
+def fillObjectn2n(stcur, obj, entry, table):
+  '''Fill an object following a 1->n relation'''
+  if obj.name < table:
+    jointable = obj.name + '2' + table
+    key1 = 'child'
+    key2 = 'parent'
+  else:
+    jointable = table + '2' + obj.name
+    key1 = 'parent'
+    key2 = 'child'
+  stmt = 'SELECT ' + table + '.* FROM ' + table + ',' + jointable + ' WHERE ' + jointable + '.' + key1 + '=' + table + '.id AND ' + jointable + '.' + key2 + '=' + str(obj.id)
+  fillObjectgeneric(stcur, obj, entry, table, stmt)
+
+def getSvcClass(svcClassName):
+    '''Gets the content of a given service class'''
+    try:
+        stconn = connectToStager()
+        stcur = stconn.cursor()
+        stcur.arraysize = 50
+        svcClass = getObject(stcur, 'SvcClass', 'name', svcClassName)
+        fillObjectn2n(stcur, svcClass, 'DiskPools', 'DiskPool')
+        fillObjectn2n(stcur, svcClass, 'TapePools', 'TapePool')
+        disconnectDB(stconn)
+        return svcClass
+    except Exception, e:
+        print e
+        sys.exit(-1)
+
+def getFileClass(fileClassName):
+    '''Gets the content of a given file class'''
+    try:
+        stconn = connectToStager()
+        stcur = stconn.cursor()
+        fileClass = getObject(stcur, 'FileClass', 'name', fileClassName)
+        disconnectDB(stconn)
+        return fileClass
+    except Exception, e:
+        print e
+        sys.exit(-1)
 
