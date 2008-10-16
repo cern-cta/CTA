@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: printFileClass.man,v $ $Revision: 1.3 $ $Date: 2008/06/02 13:31:55 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: printFileClass.man,v $ $Revision: 1.4 $ $Date: 2008/10/16 14:51:56 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH PRINTFILECLASS 1 "$Date: 2008/06/02 13:31:55 $" CASTOR "Prints out a given file class"
+.TH PRINTFILECLASS 1 "$Date: 2008/10/16 14:51:56 $" CASTOR "Prints out a given file class"
 .SH NAME
 printFileClass
 .SH SYNOPSIS
@@ -29,7 +29,7 @@ the name of the file class to print out
 .fi
 name : test
 .fi
-nbCopies : 1
+nbcopies : 1
 .fi
 id : 1
 .fi

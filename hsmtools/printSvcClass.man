@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: printSvcClass.man,v $ $Revision: 1.3 $ $Date: 2006/04/24 16:13:40 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: printSvcClass.man,v $ $Revision: 1.4 $ $Date: 2008/10/16 14:51:56 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH PRINTSVCCLASS 1 "$Date: 2006/04/24 16:13:40 $" CASTOR "Prints out a given service class"
+.TH PRINTSVCCLASS 1 "$Date: 2008/10/16 14:51:56 $" CASTOR "Prints out a given service class"
 .SH NAME
 printSvcClass
 .SH SYNOPSIS
@@ -27,81 +27,43 @@ the name of the service class to print out
 .fi
 [# SvcClass #]
 .fi
-nbDrives : 1
+defaultfilesize : 0
 .fi
-name : default
-.fi
-defaultFileSize : 0
-.fi
-maxReplicaNb : 0
-.fi
-replicationPolicy : 
-.fi
-gcPolicy : 
-.fi
-migratorPolicy : 
-.fi
-recallerPolicy : 
-.fi
-id : 144
-.fi
-TapePools : 
+tapepools :
 .fi
   0 :
 .fi
     [# TapePool #]
 .fi
-    name : test1
+    migrselectpolicy : defaultMigrSelPolicy
 .fi
-    id : 239
+    name : user_small
 .fi
-    SvcClasses : 
-.fi
-      0 :
-.fi
-        [# SvcClass #]
-.fi
-        Back pointer, see above
-.fi
-    Streams : 
+    id : 25594105
 .fi
   1 :
 .fi
     [# TapePool #]
 .fi
-    name : test1
+    migrselectpolicy : defaultMigrSelPolicy
 .fi
-    id : 240
+    name : itdc_T10KR3_new
 .fi
-    SvcClasses : 
-.fi
-      0 :
-.fi
-        [# SvcClass #]
-.fi
-        Back pointer, see above
-.fi
-    Streams : 
+    id : 25594096
 .fi
   2 :
 .fi
     [# TapePool #]
 .fi
-    name : test2
+    migrselectpolicy : defaultMigrSelPolicy
 .fi
-    id : 241
+    name : castor_swtests
 .fi
-    SvcClasses : 
+    id : 16244462
 .fi
-      0 :
+name : default
 .fi
-        [# SvcClass #]
-.fi
-        Back pointer, see above
-.fi
-    Streams : 
-.fi
-DiskPools : 
+diskpools :
 .fi
   0 :
 .fi
@@ -109,17 +71,29 @@ DiskPools :
 .fi
     name : default
 .fi
-    id : 145
+    id : 1741
 .fi
-    FileSystems : 
+nbdrives : 3
 .fi
-    SvcClasses : 
+gcenabled : 1
 .fi
-      0 :
+id : 1601
 .fi
-        [# SvcClass #]
+replicationpolicy : None
 .fi
-        Back pointer, see above
+streampolicy : defaultStreamPolicy
+.fi
+gcpolicy : FIFO
+.fi
+maxreplicanb : 1
+.fi
+hasdiskonlybehavior : 1
+.fi
+forcedfileclass : None
+.fi
+migratorpolicy : testMigrPolicy
+.fi
+recallerpolicy : None
 .ft
 .fi
 
