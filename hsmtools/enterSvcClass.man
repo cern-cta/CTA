@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: enterSvcClass.man,v $ $Revision: 1.11 $ $Date: 2008/10/07 14:55:40 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: enterSvcClass.man,v $ $Revision: 1.12 $ $Date: 2008/10/17 13:13:59 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH ENTERSVCCLASS 1 "$Date: 2008/10/07 14:55:40 $" CASTOR "stager catalogue administrative commands"
+.TH ENTERSVCCLASS 1 "$Date: 2008/10/17 13:13:59 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 enterSvcClass \- define a new service class in the stager catalogue
 .SH SYNOPSIS
@@ -44,9 +44,6 @@ enterSvcClass \- define a new service class in the stager catalogue
 ]
 [
 .BI --RecallerPolicy " recallerPolicy"
-]
-[
-.BI --ReplicationPolicy " replicationPolicy"
 ]
 [
 .BI --TapePools " tapePool1:tapePool2:..."
@@ -134,15 +131,6 @@ class. The policy should either be an executable external script known to the CA
 expert system (see the
 .BI expertd(1castor)
 man-page).
-.TP
-.BI \-\-ReplicationPolicy " replicationPolicy"
-Specifies the name of the replication policy to be used for this service
-class. The policy should either be an executable external script known to the CASTOR
-expert system (see the
-.BI expertd(1castor)
-man-page). If a replication policy is specified, the
-.BI \-\-MaxReplicaNb
-option (see above) is ignored.
 .TP
 .BI \-\-TapePools " tapePool1:tapePool2:..."
 Lists the names of the tape pools that this service class is allowed to use. If

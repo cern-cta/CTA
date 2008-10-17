@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.24 $ $Release$ $Date: 2008/10/07 14:55:41 $ $Author: itglp $
+ * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.25 $ $Release$ $Date: 2008/10/17 13:13:59 $ $Author: waldron $
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -55,7 +55,6 @@ enum SvcClassAttributes {
   NbDrives,
   DefaultFileSize,
   MaxReplicaNb,
-  ReplicationPolicy,
   MigratorPolicy,
   RecallerPolicy,
   StreamPolicy,
@@ -75,7 +74,6 @@ static struct Coptions longopts[] = {
   {"DefaultFileSize",REQUIRED_ARGUMENT,0,DefaultFileSize},
   {"MaxReplicaNb",REQUIRED_ARGUMENT,0,MaxReplicaNb},
   {"NbDrives",REQUIRED_ARGUMENT,0,NbDrives},
-  {"ReplicationPolicy",REQUIRED_ARGUMENT,0,ReplicationPolicy},
   {"MigratorPolicy",REQUIRED_ARGUMENT,0,MigratorPolicy},
   {"RecallerPolicy",REQUIRED_ARGUMENT,0,RecallerPolicy},
   {"StreamPolicy",REQUIRED_ARGUMENT,0,StreamPolicy},
@@ -395,8 +393,8 @@ int main(int argc, char *argv[])
   char **removeTapePoolsArray = NULL, **removeDiskPoolsArray = NULL;
   char *diskOnlyBehavior = NULL, *failJobsWhenNoSpace = NULL, 
        *forcedFileClass = NULL, *replicateOnClose = NULL,
-       *streamPolicy = NULL, *replicationPolicy = NULL,
-       *migratorPolicy = NULL, *recallerPolicy = NULL;
+       *streamPolicy = NULL, *migratorPolicy = NULL, 
+       *recallerPolicy = NULL;
   int nbDiskPools = 0, nbTapePools = 0;
   int nbAddTapePools = 0, nbRemoveTapePools = 0, nbAddDiskPools = 0, nbRemoveDiskPools = 0;
   struct C_BaseAddress_t *baseAddr = NULL;
@@ -448,9 +446,6 @@ int main(int argc, char *argv[])
       break;
     case NbDrives:
       nbDrives = atoi(Coptarg);
-      break;
-    case ReplicationPolicy:
-      replicationPolicy = strdup(Coptarg);
       break;
     case MigratorPolicy:
       migratorPolicy = strdup(Coptarg);
@@ -513,9 +508,6 @@ int main(int argc, char *argv[])
   if ( nbDrives >= 0 ) Cstager_SvcClass_setNbDrives(svcClass,nbDrives);
   if ( maxReplicaNb >= 0 ) Cstager_SvcClass_setMaxReplicaNb(svcClass,maxReplicaNb);
   if ( defaultFileSize > 0 ) Cstager_SvcClass_setDefaultFileSize(svcClass,defaultFileSize);
-  if ( replicationPolicy != NULL ) {
-    Cstager_SvcClass_setReplicationPolicy(svcClass,replicationPolicy);
-  }
   if ( migratorPolicy != NULL ) {
     Cstager_SvcClass_setMigratorPolicy(svcClass,migratorPolicy);
   }

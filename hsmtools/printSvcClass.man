@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: printSvcClass.man,v $ $Revision: 1.4 $ $Date: 2008/10/16 14:51:56 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: printSvcClass.man,v $ $Revision: 1.5 $ $Date: 2008/10/17 13:13:59 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH PRINTSVCCLASS 1 "$Date: 2008/10/16 14:51:56 $" CASTOR "Prints out a given service class"
+.TH PRINTSVCCLASS 1 "$Date: 2008/10/17 13:13:59 $" CASTOR "Prints out a given service class"
 .SH NAME
 printSvcClass
 .SH SYNOPSIS
@@ -78,8 +78,6 @@ nbdrives : 3
 gcenabled : 1
 .fi
 id : 1601
-.fi
-replicationpolicy : None
 .fi
 streampolicy : defaultStreamPolicy
 .fi

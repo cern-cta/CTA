@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.18 $ $Release$ $Date: 2008/10/07 14:55:40 $ $Author: itglp $
+ * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.19 $ $Release$ $Date: 2008/10/17 13:13:59 $ $Author: waldron $
  *
  *
  *
@@ -57,7 +57,6 @@ enum SvcClassAttributes {
   NbDrives,
   DefaultFileSize,
   MaxReplicaNb,
-  ReplicationPolicy,
   GcPolicy,
   MigratorPolicy,
   RecallerPolicy,
@@ -76,7 +75,6 @@ static struct Coptions longopts[] = {
   {"DefaultFileSize",REQUIRED_ARGUMENT,0,DefaultFileSize},
   {"MaxReplicaNb",REQUIRED_ARGUMENT,0,MaxReplicaNb},
   {"NbDrives",REQUIRED_ARGUMENT,0,NbDrives},
-  {"ReplicationPolicy",REQUIRED_ARGUMENT,0,ReplicationPolicy},
   {"GcPolicy",REQUIRED_ARGUMENT,0,GcPolicy},
   {"MigratorPolicy",REQUIRED_ARGUMENT,0,MigratorPolicy},
   {"RecallerPolicy",REQUIRED_ARGUMENT,0,RecallerPolicy},
@@ -224,9 +222,6 @@ int main(int argc, char *argv[])
       break;
     case NbDrives:
       Cstager_SvcClass_setNbDrives(svcClass,atoi(Coptarg));
-      break;
-    case ReplicationPolicy:
-      Cstager_SvcClass_setReplicationPolicy(svcClass,Coptarg);
       break;
     case GcPolicy:
       Cstager_SvcClass_setGcPolicy(svcClass,Coptarg);

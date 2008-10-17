@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: modifySvcClass.man,v $ $Revision: 1.14 $ $Date: 2008/10/07 14:55:41 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: modifySvcClass.man,v $ $Revision: 1.15 $ $Date: 2008/10/17 13:13:59 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH MODIFYSCVCLASS 1 "$Date: 2008/10/07 14:55:41 $" CASTOR "stager catalogue administrative commands"
+.TH MODIFYSCVCLASS 1 "$Date: 2008/10/17 13:13:59 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 modifySvcClass \- modify an existing service class in the stager catalogue
 .SH SYNOPSIS
@@ -41,9 +41,6 @@ modifySvcClass \- modify an existing service class in the stager catalogue
 ]
 [
 .BI --RecallerPolicy " recallerPolicy"
-]
-[
-.BI --ReplicationPolicy " replicationPolicy"
 ]
 [
 .BI --AddTapePools " tapePool1:tapePool2:..."
@@ -138,16 +135,6 @@ expert system (see the
 .BI expertd(1castor)
 man-page). If an empty string ("") is provided the existing policy setting (if any) will
 be revoked.
-.TP
-.BI \-\-ReplicationPolicy " replicationPolicy"
-Specifies the name of the replication policy to be used for this service
-class. The policy should either be an executable external script known to the CASTOR
-expert system (see the
-.BI expertd(1castor)
-man-page). If an empty string ("") is provided the existing policy setting (if any) will
-be revoked. If a replication policy is specified, the
-.BI \-\-MaxReplicaNb
-option (see above) is ignored.
 .TP
 .BI \-\-AddTapePools " tapePool1:tapePool2:..."
 Lists the names of the tape pools that are to be added to the service class. If
