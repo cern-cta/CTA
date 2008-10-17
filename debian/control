@@ -109,7 +109,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-ns-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, vdt_globus_essentials
 Description: castor (Cern Advanced STORage system)
  Name server daemon
 
@@ -128,13 +128,13 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-rfio-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, vdt_globus_essentials
 Description: castor (Cern Advanced STORage system)
  RFIO server
 
 Package: castor-rh-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-oracle
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-oracle, vdt_globus_essentials
 Description: castor (Cern Advanced STORage system)
  Request Handler server
 
