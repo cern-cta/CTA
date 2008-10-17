@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.49 $ $Release$ $Date: 2008/09/22 13:35:24 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.50 $ $Release$ $Date: 2008/10/17 09:30:43 $ $Author: waldron $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -408,7 +408,8 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
     // Extract the checksum information of the file from the name server. We
     // need to pass the checksum information to the job as the generation of
     // checksums using the RFIO protocol is only computed over the network when
-    // running an rfiod process i.e. a server. It is not computed at the client!
+    // running an rfiod process i.e. a server. It is not stored at the clients
+    // local disk!
     bool useChkSum = false;
     const char *confvalue = getconfent("CNS", "USE_CKSUM", 0);
     if (confvalue != NULL) {
