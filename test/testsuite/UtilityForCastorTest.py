@@ -235,14 +235,17 @@ def checkUser():
     return 0
 
 # check if an rfcp output is correct, i.e. it states the transfer went through
-# and the number of bytes written/read is equal to the remote file size
-def checkRfcpOutput(buf, put):
+# and the number of bytes written/read is equal to the remote file size if not
+# an update
+def checkRfcpOutput(buf, put, update=0):
     if put:
         s = re.compile('(\d+) bytes in [0-9]+ seconds through local \(in\) and eth[0-1] \(out\).*\n(\d+) bytes in remote file').search(buf)
     else:
         s = re.compile('(\d+) bytes in [0-9]+ seconds through eth[0-1] \(in\) and local \(out\).*\n(\d+) bytes in remote file').search(buf)
     if not s:
         return 0
+    elif update:
+        return 1
     else:
         return (s.group(1) == s.group(2))
 
