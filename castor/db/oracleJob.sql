@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.663 $ $Date: 2008/10/09 16:08:06 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.664 $ $Date: 2008/10/17 12:17:52 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -47,7 +47,7 @@ CREATE OR REPLACE PROCEDURE firstByteWrittenProc(srId IN INTEGER) AS
   fclassId NUMBER;
   sclassId NUMBER;
 BEGIN
-  -- Get data and lock the Castorfile
+  -- Get data and lock the CastorFile
   SELECT castorfile, diskCopy INTO cfId, dcId
     FROM SubRequest WHERE id = srId;
   SELECT fileclass INTO fclassId FROM CastorFile WHERE id = cfId FOR UPDATE;
@@ -117,6 +117,10 @@ BEGIN
     -- Suppress all Tapecopies (avoid migration of previous version of the file)
     deleteTapeCopies(cfId);
   END IF;
+  -- Invalidate any ongoing replications
+  UPDATE DiskCopy SET status = 7 -- INVALID
+   WHERE castorFile = cfId
+     AND status = 1; -- WAITDISK2DISKCOPY
 END;
 
 
@@ -429,7 +433,7 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   ouid INTEGER;
   ogid INTEGER;
 BEGIN
-  -- Lock the castorfile
+  -- Lock the CastorFile
   SELECT castorFile INTO cfId
     FROM DiskCopy
    WHERE id = dcId;
@@ -510,10 +514,10 @@ BEGIN
             AND status = 1)  -- DRAINING
        AND ROWNUM < 2;
   END IF;
-  -- Archive the diskCopy replica request
-  archiveSubReq(srId);
   -- Update filesystem status
   updateFsFileClosed(fsId);
+  -- Archive the diskCopy replica request
+  archiveSubReq(srId);
   -- Trigger the creation of additional copies of the file, if necessary.
   replicateOnClose(cfId, ouid, ogid);
   -- Wake up waiting subrequests
@@ -589,8 +593,10 @@ CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
   contextPIPP INTEGER;
 BEGIN
   errorCode := 0;
-  -- get CastorFile
+  -- Get CastorFile
   SELECT castorFile, diskCopy INTO cfId, dcId FROM SubRequest WHERE id = srId;
+  -- Lock the CastorFile
+  SELECT id INTO cfId FROM CastorFile WHERE id = cfId FOR UPDATE;
   -- Determine the context (Put inside PrepareToPut or not)
   -- check that we are a Put or an Update
   SELECT Request.id INTO unused
@@ -600,7 +606,7 @@ BEGIN
    WHERE SubRequest.id = srId
      AND Request.id = SubRequest.request;
   BEGIN
-    -- check that there is a PrepareToPut/Update going on. There can be only a single one
+    -- Check that there is a PrepareToPut/Update going on. There can be only a single one
     -- or none. If there was a PrepareTo, any subsequent PPut would be rejected and any
     -- subsequent PUpdate would be directly archived (cf. processPrepareRequest).
     SELECT SubRequest.diskCopy INTO unused
@@ -616,22 +622,21 @@ BEGIN
     -- here we are a standalone Put
     contextPIPP := 1;
   END;
-
   -- Check whether the diskCopy is still in STAGEOUT. If not, the file
   -- was deleted via stageRm while being written to. Thus, we should just give up
   BEGIN
     SELECT status INTO unused
       FROM DiskCopy WHERE id = dcId AND status = 6; -- STAGEOUT
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- so we are in the case, we give up
+    -- So we are in the case, we give up
     errorCode := 1;
-    -- but we still would like to have the fileId and nameserver
+    -- But we still would like to have the fileId and nameserver
     -- host for logging reasons
     SELECT fileId, nsHost INTO fId, nh
       FROM CastorFile WHERE id = cfId;
     RETURN;
   END;
-  -- now we can safely update CastorFile's file size
+  -- Now we can safely update CastorFile's file size
   UPDATE CastorFile SET fileSize = fs, lastUpdateTime = ts
    WHERE id = cfId AND (lastUpdateTime IS NULL OR ts > lastUpdateTime);
   -- If ts < lastUpdateTime, we were late and another job already updated the
@@ -642,18 +647,16 @@ BEGIN
     FROM CastorFile
     WHERE id = cfId
     FOR UPDATE;
-  -- get uid, gid and svcclass from Request
+  -- Get uid, gid and svcclass from Request
   SELECT euid, egid, svcClass INTO userId, groupId, scId
     FROM SubRequest,
       (SELECT euid, egid, id, svcClass from StagePutRequest UNION ALL
        SELECT euid, egid, id, svcClass from StageUpdateRequest UNION ALL
        SELECT euid, egid, id, svcClass from StagePutDoneRequest) Request
    WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
-
+  -- Get the filesystem of the DiskCopy
   SELECT fileSystem INTO fsId from DiskCopy
    WHERE castorFile = cfId AND status = 6;
-  updateFsFileClosed(fsId);
-
   IF contextPIPP != 0 THEN
     -- If not a put inside a PrepareToPut/Update, create TapeCopies
     -- and update DiskCopy status
@@ -669,7 +672,9 @@ BEGIN
           AND SubRequest.castorFile = cfId
           AND SubRequest.status = 5); -- WAITSUBREQ
   END IF;
-  -- archive Subrequest
+  -- Update filesystem status
+  updateFsFileClosed(fsId);
+  -- Archive Subrequest
   archiveSubReq(srId);
   COMMIT;
 END;
@@ -712,10 +717,10 @@ BEGIN
     IF fsId > 0 THEN
       updateFsFileClosed(fsId);
     END IF;
-  -- ELSE the subRequest is not linked to a diskCopy: should never happen,
-  -- but we observed NO DATA FOUND errors and the above SELECT is the only
-  -- query that could trigger them! Anyway it's fine to ignore the FS update,
-  -- it will be properly updated by the monitoring.
+    -- ELSE the subRequest is not linked to a diskCopy: should never happen,
+    -- but we observed NO DATA FOUND errors and the above SELECT is the only
+    -- query that could trigger them! Anyway it's fine to ignore the FS update,
+    -- it will be properly updated by the monitoring.
   END IF;
   -- Determine the context (Put inside PrepareToPut/Update ?)
   BEGIN
