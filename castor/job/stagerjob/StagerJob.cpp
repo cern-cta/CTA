@@ -184,7 +184,7 @@ std::string startAndGetPath
       }
     }
 
-    // For Updates we should clear extended file attributes
+    // For Updates we should clear the files extended attributes. There is
     // no need to do something for errors as maybe we have no attributes
     // and we do not have to check RFIOD USE_CHECKSUM
     if (args->accessMode == castor::job::stagerjob::ReadWrite && !emptyFile) {
