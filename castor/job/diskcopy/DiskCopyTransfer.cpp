@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DiskCopyTransfer.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/07/29 06:28:17 $ $Author: waldron $
+ * @(#)$RCSfile: DiskCopyTransfer.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/10/17 09:13:49 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -108,7 +108,7 @@ castor::job::diskcopy::DiskCopyTransfer::DiskCopyTransfer():
     { 25, "DiskCopyTransfer started" },
     { 26, "Exception caught trying to get information on destination and source disk copies" },
     { 27, "Failed to remotely execute disk2DiskCopyStart" },
-    { 28, "Starting destination end of mover" },
+    { 28, "Transfer information" },
     { 29, "Exception caught transfering file" },
     { 30, "Exception caught trying to finalize disk2disk copy transfer, transfer failed" },
     { 31, "Failed to remotely execute disk2DiskCopyDone" },
