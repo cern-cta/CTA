@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2008/07/28 16:46:07 $ $Author: waldron $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.41 $ $Release$ $Date: 2008/10/17 09:11:07 $ $Author: waldron $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -240,6 +240,7 @@ std::vector<castor::stager::GCLocalFile*>*
       f->setNbAccesses(rset->getInt(6));
       f->setGcWeight(rset->getDouble(7));
       f->setGcTriggeredBy(rset->getString(8));
+      f->setSvcClassName(rset->getString(9));
       result->push_back(f);
     }
     m_selectFiles2DeleteStatement->closeResultSet(rset);
