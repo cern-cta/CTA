@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.682 $ $Date: 2008/10/15 12:03:47 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.683 $ $Date: 2008/10/17 09:30:27 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -108,8 +108,8 @@ FOR EACH ROW
 WHEN (old.status = 1 AND -- WAITDISK2DISKCOPY
       new.status = 10) -- CANBEMIGR
 BEGIN
--- added this lock because of severaval copies of different file systems
---  from different streams which can cause deadlock
+  -- added this lock because of severval copies on different file systems
+  -- from different streams which can cause deadlock
   LOCK TABLE  NbTapeCopiesInFS IN ROW SHARE MODE;
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
    WHERE FS = :new.fileSystem
