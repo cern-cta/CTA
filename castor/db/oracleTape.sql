@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.683 $ $Date: 2008/10/17 09:30:27 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.684 $ $Date: 2008/10/17 14:37:15 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1220,8 +1220,7 @@ BEGIN
 END;
 
 /* Get input for python migration policy */
-
-create or replace PROCEDURE inputForMigrationPolicy
+CREATE OR REPLACE PROCEDURE inputForMigrationPolicy
 (svcclassName IN VARCHAR2,
  policyName OUT VARCHAR2,
  svcId OUT NUMBER,
@@ -1237,12 +1236,13 @@ BEGIN
 
   UPDATE TapeCopy A SET status = 7
    WHERE status IN (0, 1) AND
-    ( EXISTS (SELECT 'x' FROM  SubRequest, StageRepackRequest
-             WHERE StageRepackRequest.svcclass = svcId
-               AND SubRequest.request = StageRepackRequest.id
-               AND SubRequest.status = 12  -- SUBREQUEST_REPACK
-               AND A.castorfile = SubRequest.castorfile
-    ) OR  EXISTS ( SELECT 'x' FROM  CastorFile
+    ( EXISTS (SELECT 'x' FROM SubRequest, StageRepackRequest
+               WHERE StageRepackRequest.svcclass = svcId
+                 AND SubRequest.request = StageRepackRequest.id
+                 AND SubRequest.status = 12  -- SUBREQUEST_REPACK
+                 AND A.castorfile = SubRequest.castorfile
+    ) OR EXISTS (
+       SELECT 'x' FROM CastorFile
      	WHERE A.castorFile = CastorFile.id
           AND CastorFile.svcClass = svcId
       ) )
