@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.260 $ $Release$ $Date: 2008/09/29 17:15:03 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.261 $ $Release$ $Date: 2008/10/17 09:25:49 $ $Author: waldron $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -615,7 +615,6 @@ void castor::db::ora::OraStagerSvc::createDiskCopyReplicaRequest
     if (0 == m_createDiskCopyReplicaRequestStatement) {
       m_createDiskCopyReplicaRequestStatement =
         createStatement(s_createDiskCopyReplicaRequestStatementString);
-      m_createDiskCopyReplicaRequestStatement->setAutoCommit(true);
     }
     // Execute the statement
     m_createDiskCopyReplicaRequestStatement->setDouble(1, (subreq ? subreq->id() : 0));
@@ -678,6 +677,8 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
       dc->setStatus(castor::stager::DISKCOPY_WAITTAPERECALL);
       dc->setCreationTime(time(NULL));
       dc->setCastorFile(cf);
+      dc->setOwneruid(subreq->request()->euid());
+      dc->setOwnergid(subreq->request()->egid());
       cf->addDiskCopies(dc);
       cnvSvc()->createRep(&ad, dc, false);
       cnvSvc()->fillRep(&ad, dc, OBJ_CastorFile, false);
