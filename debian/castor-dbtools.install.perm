@@ -12,6 +12,7 @@
 %attr(0755,root,bin) usr/bin/printFileClass
 %attr(0755,root,bin) usr/bin/printSvcClass
 %attr(0755,root,bin) usr/lib/perl/CASTOR/castor_tools.pm
+%attr(0644,root,bin) %{_python_lib}/castor_tools.py
 %attr(0755,root,bin) usr/bin/vdqmDBInit
 %attr(0755,root,bin) usr/bin/vdqmdeletepriority
 %attr(0755,root,bin) usr/bin/vdqmlistpriority

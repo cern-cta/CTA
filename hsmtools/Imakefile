@@ -49,7 +49,6 @@ LIBS2 = $(LIBS)
 LIBS2 = $(LIBS) -L../shlib
 #endif
 SPOOL = HsmToolsSpool
-PERLLIBDIR = /usr/lib/perl/CASTOR
 
 CKSUMLIB = -lz
 
@@ -179,6 +178,8 @@ IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(diskServer_qry)) \
 	 FileName($(BIN),ProgramTargetName(listFileClass)) \
 	 FileName($(BIN),ProgramTargetName(listSvcClass)) \
+	 FileName($(BIN),ProgramTargetName(printFileClass)) \
+	 FileName($(BIN),ProgramTargetName(printSvcClass)) \
 	 FileName($(BIN),ProgramTargetName(moveDiskServer)) \
 	 FileName($(BIN),ProgramTargetName(dedicateTapeDrive)) \
 	 FileName($(BIN),ProgramTargetName(listDedications)) \
@@ -220,18 +221,17 @@ EPROGS = $(EXPORTBIN)/reclaim \
 
 
 #if BuildVDQMCpp
-EPROGS +=	$(EXPORTBIN)/vdqmDBInit
-EPROGS +=	$(EXPORTBIN)/vdqmsetpriority
-EPROGS +=	$(EXPORTBIN)/vdqmdeletepriority
-EPROGS +=	$(EXPORTBIN)/vdqmlistpriority
-EPROGS +=	$(EXPORTBIN)/vdqmlistrequest
+EPROGS += $(EXPORTBIN)/vdqmDBInit
+EPROGS += $(EXPORTBIN)/vdqmsetpriority
+EPROGS += $(EXPORTBIN)/vdqmdeletepriority
+EPROGS += $(EXPORTBIN)/vdqmlistpriority
+EPROGS += $(EXPORTBIN)/vdqmlistrequest
 #endif
 
 IPERL = FileName($(PERLLIBDIR),castor_tools.pm)
-EPERL = $(EXPORTPERL)/castor_tools.pm
+IPYTHON = FileName($(PYTHONLIBDIR),castor_tools.py)
 
 all: $(PROGS_TO_KEEP) $(PROGS_TO_CLEAN)
-
 
 NormalProgramTarget(reclaim,reclaim.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(tapetohsm,tapetohsm.Osuf,$(DEPLIB),$(LIBS))
@@ -269,7 +269,7 @@ RFIOFLAGS=-DNOMORERFIO=\"$(NOMORERFIO)\" $(FOLLOWLINKS) \
 	  -DRFIO_ALRM=\"$(RFIO_ALRM)\" $(CNS_ROOT) $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
 
 rfcpupd.c: ../rfio/rfcp.c
-	sed 's/| *O_TRUNC//' $< | sed 's/O_RDONLY/O_RDWR/' | sed 's/O_WRONLY/O_RDWR/' > $@
+	sed 's/| *O_TRUNC//' $< | sed 's/O_RDONLY/O_RDWR/' | sed 's/O_WRONLY/O_RDWR|O_APPEND/' > $@
 
 rfcpupd.Osuf: rfcpupd.c
 	$(CC) $(DEBUG) -I$(INCLUDES) $(MTCCFLAGS) $(RFIOFLAGS) $(ACCTFLAG) -c -o $@ $<
@@ -286,7 +286,7 @@ NormalProgramTarget(vdqmlistrequest,vdqmlistrequest.Osuf,$(DEPLIB2),$(LIBS2))
 
 MakeDepSharedLibrary(shlib,shift)
 
-install: $(BIN) $(IPROGS) $(SPOOL) $(PERLLIBDIR) $(IPERL)
+install: $(BIN) $(IPROGS) $(SPOOL) $(PERLLIBDIR) $(IPERL) $(PYTHONLIBDIR) $(IPYTHON)
 
 InstallProgram(reclaim,$(BIN),root,bin,755)
 IEXPORT(reclaim,$(EXPORTBIN),755);
@@ -360,7 +360,7 @@ InstallProgram(printSvcClass,$(BIN),root,bin,755)
 IEXPORT(printSvcClass,$(EXPORTBIN),755);
 
 InstallNonExecFile(castor_tools.pm,$(PERLLIBDIR),root,bin,755)
-IEXPORT(castor_tools.pm,$(EXPORTPERL),755);
+InstallNonExecFile(castor_tools.py,$(PYTHONLIBDIR),root,bin,755)
 
 InstallProgram(dedicateTapeDrive,$(BIN),root,bin,755)
 IEXPORT(dedicateTapeDrive,$(EXPORTBIN),755);
@@ -383,6 +383,7 @@ IEXPORT(deletePriority,$(EXPORTBIN),755);
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(SPOOL),root,bin,0755)
 MakeDir($(PERLLIBDIR),root,bin,0755)
+MakeDir($(PYTHONLIBDIR),root,bin,0755)
 
 install.man: $(MANDIR) $(MANPAGES)
 
@@ -445,7 +446,7 @@ IMANPAGE(vdqmlistrequest,$(MANDIR),$(MANSUFFIX))
 EMANPAGE(vdqmlistrequest,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 #endif
 
-export: $(EPROGS) $(EXPORTPERL) $(EPERL)
+export: $(EPROGS)
 
 exportman: $(EXPORTMANPAGES)
 

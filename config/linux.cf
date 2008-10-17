@@ -17,9 +17,12 @@ MTLDFLAGS = -pthread
 SHLIBLDFLAGS = -shared
 SHLIBREQLIBS = -lc -lpthread `g++ -print-file-name=libstdc++.so` -ldl
 
+PERLLIBDIR = /usr/lib/perl/CASTOR
+
 PYTHONLIBS = `python ${CASTOR_HOME}/config/pycompile.py --libs`
 PYTHONINC = `python ${CASTOR_HOME}/config/pycompile.py --inc`
 PYTHONCFLAGS = `python ${CASTOR_HOME}/config/pycompile.py --cflags`
+PYTHONLIBDIR = $(shell python -c "from distutils import sysconfig; print sysconfig.get_python_lib()")
 
 #if UseAdns
 ADNSLIB = -ladns

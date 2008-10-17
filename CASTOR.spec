@@ -1,13 +1,11 @@
-# $Id$
-#
-## Generic macros
-#  --------------
+# Generic macros
+#---------------
 %define name castor
 %define version __A__.__B__.__C__
 %define release __D__
-#
-## Conditional packaging a-la-RPM
-#  ------------------------------
+
+# Conditional packaging a-la-RPM
+#-------------------------------
 %ifarch x86_64
 %define LIB lib64
 %define FLAVOR gcc64dbg
@@ -15,6 +13,9 @@
 %define LIB lib
 %define FLAVOR gcc32dbg
 %endif
+
+# ORACLE definitions
+#-------------------
 %{expand:%define has_oracle_home %(if [ -z $ORACLE_HOME ]; then echo 0; else echo 1; fi)}
 %if ! %has_oracle_home
 %{expand:%define has_oracle_home %([ -r /etc/sysconfig/castor ] && . /etc/sysconfig/castor; if [ -z $ORACLE_HOME ]; then echo 0; else echo 1; fi)}
@@ -24,12 +25,21 @@
 %else
 %{expand:%define has_oracle %(if [ ! -r $ORACLE_HOME/lib/libclntsh.so ]; then echo 0; else echo 1; fi)}
 %endif
+
+# STK definitions
+#----------------
 %{expand:%define compiling_nostk %(if [ -z $CASTOR_NOSTK ]; then echo 0; else echo 1; fi)}
 %{expand:%define has_stk_ssi %(rpm -q stk-ssi-devel >&/dev/null && rpm -q stk-ssi >&/dev/null; if [ $? -ne 0 ]; then echo 0; else echo 1; fi)}
+
+# LSF definitions
+#----------------
 %{expand:%define has_lsf %(if [ -e /usr/%{LIB}/liblsf.so -a -d /usr/include/lsf ]; then echo 1; else echo 0; fi)}
+
+# Globus defintions
+#------------------
 %{expand:%define has_globus_location %(if [ -z $GLOBUS_LOCATION ]; then echo 0; else echo 1; fi)}
 %if ! %has_globus_location
-# try some default
+# Try some defaults
 %{expand:%define has_globus %(if [ ! -r /opt/globus/lib/libglobus_ftp_control_%{FLAVOR}.so ]; then echo 0; else echo 1; fi)}
 %else
 %{expand:%define has_globus %(if [ ! -r $GLOBUS_LOCATION/lib/libglobus_ftp_control_%{FLAVOR}.so ]; then echo 0; else echo 1; fi)}
@@ -38,9 +48,12 @@
 %{expand:%define has_globus %(if [ ! -d $GLOBUS_LOCATION/include -a ! -d /opt/globus/include ]; then echo 0; else echo 1; fi)}
 %endif
 
-#
-## General settings
-#  ----------------
+# Python definitions
+#-------------------
+%define _python_lib %(python -c "from distutils import sysconfig; print sysconfig.get_python_lib()")
+
+# General settings
+#-----------------
 Summary: Cern Advanced mass STORage
 Name: %{name}
 Version: %{version}
@@ -50,9 +63,9 @@ URL: http://cern.ch/castor
 License: http://cern.ch/castor/DIST/CONDITIONS
 Group: Application/Castor
 BuildRoot: %{_builddir}/%{name}-%{version}-root
-#
-## RPM specific definitions
-#  ------------------------
+
+# RPM specific definitions
+#-------------------------
 # Should unpackaged files in a build root terminate a build?
 %define __check_files %{nil}
 # Don't build debuginfo packages
@@ -135,6 +148,7 @@ rm -rf ${RPM_BUILD_ROOT}
 mkdir -p ${RPM_BUILD_ROOT}/usr/bin
 mkdir -p ${RPM_BUILD_ROOT}/usr/sbin
 mkdir -p ${RPM_BUILD_ROOT}/usr/%{LIB}/rtcopy
+mkdir -p ${RPM_BUILD_ROOT}/%{_python_lib}
 mkdir -p ${RPM_BUILD_ROOT}/usr/lib/perl/CASTOR
 mkdir -p ${RPM_BUILD_ROOT}/usr/include/shift
 mkdir -p ${RPM_BUILD_ROOT}/usr/share/man/man1
@@ -214,8 +228,8 @@ for i in `find . -name "*.sysconfig"`; do
 done
 
 %if ! %compiling_nostk
-#
-## Hardcoded package name CASTOR-client for RPM transition from castor1 to castor2
+
+# Hardcoded package name CASTOR-client for RPM transition from castor1 to castor2
 %package -n CASTOR-client
 Summary: Cern Advanced mass STORage
 Group: Application/Castor
@@ -225,6 +239,4 @@ castor (Cern Advanced STORage system)  Meta package for CASTOR-client from casto
 %files -n CASTOR-client
 
 
-#
-## The following will be filled dynamically with the rule: make rpm, or make tar
-#
+# The following will be filled dynamically with the rule: make rpm, or make tar
