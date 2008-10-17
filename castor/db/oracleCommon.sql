@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.671 $ $Date: 2008/09/01 17:33:20 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.672 $ $Date: 2008/10/17 14:09:07 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -466,6 +466,25 @@ BEGIN
     raise_application_error(-20113, 'Invalid service class');
   END IF;
   RETURN ret;
+END;
+
+
+/* Function to return a comma separate list of service classes that a
+ * filesystem belongs too.
+ */
+CREATE OR REPLACE FUNCTION getSvcClassList(fsId NUMBER) RETURN VARCHAR2 IS
+  svcClassList VARCHAR2(4000) := NULL;
+BEGIN
+  FOR a IN (SELECT Distinct(SvcClass.name)
+              FROM FileSystem, DiskPool2SvcClass, SvcClass
+             WHERE FileSystem.id = fsId
+               AND FileSystem.diskpool = DiskPool2SvcClass.parent
+               AND DiskPool2SvcClass.child = SvcClass.id
+             ORDER BY SvcClass.name)
+  LOOP
+    svcClassList := svcClassList || ',' || a.name;               
+  END LOOP;
+  RETURN ltrim(svcClassList, ',');
 END;
 
 
