@@ -51,8 +51,6 @@ CppCastorWriter::CppCastorWriter(UMLDoc* parent, const char *name) :
   m_ignoreButForDB.insert(QString("nbCopyAccesses"));
   m_ignoreButForDB.insert(QString("gcType"));
   m_ignoreButForDB.insert(QString("migrSelectPolicy"));
-  m_ignoreButForDB.insert(QString("owneruid"));
-  m_ignoreButForDB.insert(QString("ownergid"));
 }
 
 //=============================================================================
