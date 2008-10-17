@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.195 $ $Release$ $Date: 2008/08/15 12:57:59 $ $Author: murrayc3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.196 $ $Release$ $Date: 2008/10/17 09:10:02 $ $Author: waldron $
 #
 # Make Castor libraries and executables
 #
@@ -366,7 +366,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/StagePrepareToUpdateRequest.cpp \
               stager/StagePrepareToUpdateRequestCInt.cpp \
               stager/StageRepackRequest.cpp \
-              stager/StageRepackRequestCInt.cpp \
               stager/StagePutDoneRequest.cpp \
               stager/StagePutDoneRequestCInt.cpp \
               stager/StagePutNextRequest.cpp \
