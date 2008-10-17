@@ -87,7 +87,6 @@ int Cns_main(main_args)
   fd_set readfd, readmask;
   int rqfd;
 
-  char *sec_p;
   int securityOpt = 0; /*Flag set to 1 when security is enable*/
 
   struct sockaddr_in sin;
