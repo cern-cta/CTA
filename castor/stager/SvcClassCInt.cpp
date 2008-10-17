@@ -166,23 +166,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_SvcClass_replicationPolicy
-  //----------------------------------------------------------------------------
-  int Cstager_SvcClass_replicationPolicy(castor::stager::SvcClass* instance, const char** var) {
-    *var = instance->replicationPolicy().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_SvcClass_setReplicationPolicy
-  //----------------------------------------------------------------------------
-  int Cstager_SvcClass_setReplicationPolicy(castor::stager::SvcClass* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setReplicationPolicy(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_SvcClass_migratorPolicy
   //----------------------------------------------------------------------------
   int Cstager_SvcClass_migratorPolicy(castor::stager::SvcClass* instance, const char** var) {

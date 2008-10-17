@@ -188,24 +188,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_replicationPolicy
-       * Policy ruling the internal replication of files in the diskpools.
-       * @return the value of m_replicationPolicy
-       */
-      std::string replicationPolicy() const {
-        return m_replicationPolicy;
-      }
-
-      /**
-       * Set the value of m_replicationPolicy
-       * Policy ruling the internal replication of files in the diskpools.
-       * @param new_var the new value of m_replicationPolicy
-       */
-      void setReplicationPolicy(std::string new_var) {
-        m_replicationPolicy = new_var;
-      }
-
-      /**
        * Get the value of m_migratorPolicy
        * Policy ruling the migration of files.
        * @return the value of m_migratorPolicy
@@ -447,9 +429,6 @@ namespace castor {
 
       /// Maximum number of replicas for a file created with this service class. If 0, the replication is ruled by the replication policy. If there is none, then 0 means infinity.
       int m_maxReplicaNb;
-
-      /// Policy ruling the internal replication of files in the diskpools.
-      std::string m_replicationPolicy;
 
       /// Policy ruling the migration of files.
       std::string m_migratorPolicy;

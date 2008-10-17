@@ -47,7 +47,6 @@ castor::stager::SvcClass::SvcClass() throw() :
   m_name(""),
   m_defaultFileSize(0),
   m_maxReplicaNb(0),
-  m_replicationPolicy(""),
   m_migratorPolicy(""),
   m_recallerPolicy(""),
   m_streamPolicy(""),
@@ -90,7 +89,6 @@ void castor::stager::SvcClass::print(std::ostream& stream,
   stream << indent << "name : " << m_name << std::endl;
   stream << indent << "defaultFileSize : " << m_defaultFileSize << std::endl;
   stream << indent << "maxReplicaNb : " << m_maxReplicaNb << std::endl;
-  stream << indent << "replicationPolicy : " << m_replicationPolicy << std::endl;
   stream << indent << "migratorPolicy : " << m_migratorPolicy << std::endl;
   stream << indent << "recallerPolicy : " << m_recallerPolicy << std::endl;
   stream << indent << "streamPolicy : " << m_streamPolicy << std::endl;

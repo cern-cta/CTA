@@ -150,18 +150,6 @@ int Cstager_SvcClass_maxReplicaNb(struct Cstager_SvcClass_t* instance, int* var)
 int Cstager_SvcClass_setMaxReplicaNb(struct Cstager_SvcClass_t* instance, int new_var);
 
 /**
- * Get the value of replicationPolicy
- * Policy ruling the internal replication of files in the diskpools.
- */
-int Cstager_SvcClass_replicationPolicy(struct Cstager_SvcClass_t* instance, const char** var);
-
-/**
- * Set the value of replicationPolicy
- * Policy ruling the internal replication of files in the diskpools.
- */
-int Cstager_SvcClass_setReplicationPolicy(struct Cstager_SvcClass_t* instance, const char* new_var);
-
-/**
  * Get the value of migratorPolicy
  * Policy ruling the migration of files.
  */
