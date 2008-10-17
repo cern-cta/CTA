@@ -54,8 +54,6 @@ namespace castor{
       /*****************************************************************/
       void PutHandler::handlerSettings() throw(castor::exception::Exception)
       {	
-        /* we don't care about: maxReplicaNb, replicationPolicy, hostlist */
-        
         /* get the request's size required on disk */
         this->xsize = this->stgRequestHelper->subrequest->xsize();
         

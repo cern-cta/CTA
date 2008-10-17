@@ -55,7 +55,6 @@ namespace castor{
       void PrepareToGetHandler::handlerSettings() throw(castor::exception::Exception)
       {	
         this->maxReplicaNb= this->stgRequestHelper->svcClass->maxReplicaNb();
-        this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
       }
       
       

@@ -67,7 +67,6 @@ namespace castor{
       protected:
         
         unsigned int maxReplicaNb;
-        std::string replicationPolicy;
         std::string default_protocol;
         
         unsigned int xsize;	

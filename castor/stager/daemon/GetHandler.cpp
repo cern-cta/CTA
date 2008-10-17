@@ -55,7 +55,6 @@ namespace castor{
       void GetHandler::handlerSettings() throw(castor::exception::Exception)
       {	
         this->maxReplicaNb = stgRequestHelper->svcClass->maxReplicaNb();	
-        this->replicationPolicy = stgRequestHelper->svcClass->replicationPolicy();
         
         this->default_protocol = "rfio";
       }
