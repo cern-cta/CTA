@@ -54,6 +54,7 @@
 #define DEFAULT_MINFREESPACE .10
 #define DEFAULT_MAXFREESPACE .15
 #define DEFAULT_MINALLOWEDFREESPACE .05
+#define DEFAULT_STATUSFILE "/etc/castor/status"
 
 
 //-----------------------------------------------------------------------------
@@ -136,7 +137,10 @@ void castor::monitoring::rmnode::StateThread::run(void *param)
 
       // Update the status file
       if (ack != 0) {
-	char *filename = getconfent("RmNode", "StatusFile", 0);
+     	char *filename = getconfent("RmNode", "StatusFile", 0);
+	if (filename) {
+	  filename = DEFAULT_STATUSFILE;
+	}
 	if ((filename) && (ack->ack().size())) {
 	  FILE *fp = fopen(filename, "w");
 	  if (fp == NULL) {
