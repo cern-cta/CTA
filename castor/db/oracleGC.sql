@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.667 $ $Date: 2008/09/29 17:24:40 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.668 $ $Date: 2008/10/17 14:09:30 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -17,7 +17,8 @@ CREATE OR REPLACE PACKAGE castorGC AS
         lastAccessTime INTEGER,
         nbAccesses NUMBER,
         gcWeight NUMBER,
-        gcTriggeredBy VARCHAR2(2048));
+        gcTriggeredBy VARCHAR2(2048),
+        svcClassName VARCHAR2(2048));
   TYPE SelectFiles2DeleteLine_Cur IS REF CURSOR RETURN SelectFiles2DeleteLine;
   TYPE JobLogEntry IS RECORD (
     fileid NUMBER,
@@ -340,7 +341,8 @@ BEGIN
            DiskCopy.lastAccessTime, DiskCopy.nbCopyAccesses, DiskCopy.gcWeight,
            CASE WHEN DiskCopy.gcType = 0 THEN 'Automatic'
                 WHEN DiskCopy.gcType = 1 THEN 'User Requested'
-                ELSE 'Unknown' END
+                ELSE 'Unknown' END, 
+           getSvcClassList(FileSystem.id)
       FROM CastorFile, DiskCopy, FileSystem, DiskServer
      WHERE decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9 -- BEINGDELETED
        AND DiskCopy.castorfile = CastorFile.id
