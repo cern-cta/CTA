@@ -164,6 +164,38 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_owneruid
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_owneruid(castor::stager::DiskCopyForRecall* instance, int* var) {
+    *var = instance->owneruid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_setOwneruid
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_setOwneruid(castor::stager::DiskCopyForRecall* instance, int new_var) {
+    instance->setOwneruid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_ownergid
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_ownergid(castor::stager::DiskCopyForRecall* instance, int* var) {
+    *var = instance->ownergid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_setOwnergid
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_setOwnergid(castor::stager::DiskCopyForRecall* instance, int new_var) {
+    instance->setOwnergid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_DiskCopyForRecall_id
   //----------------------------------------------------------------------------
   int Cstager_DiskCopyForRecall_id(castor::stager::DiskCopyForRecall* instance, u_signed64* var) {

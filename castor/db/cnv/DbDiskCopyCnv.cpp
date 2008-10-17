@@ -60,7 +60,7 @@ static castor::CnvFactory<castor::db::cnv::DbDiskCopyCnv>* s_factoryDbDiskCopyCn
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbDiskCopyCnv::s_insertStatementString =
-"INSERT INTO DiskCopy (path, gcWeight, creationTime, lastAccessTime, id, fileSystem, castorFile, status) VALUES (:1,:2,:3,NULL,ids_seq.nextval,:4,:5,:6) RETURNING id INTO :7";
+"INSERT INTO DiskCopy (path, gcWeight, creationTime, lastAccessTime, owneruid, ownergid, id, fileSystem, castorFile, status) VALUES (:1,:2,:3,NULL,:4,:5,ids_seq.nextval,:6,:7,:8) RETURNING id INTO :9";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbDiskCopyCnv::s_deleteStatementString =
@@ -68,19 +68,19 @@ const std::string castor::db::cnv::DbDiskCopyCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbDiskCopyCnv::s_selectStatementString =
-"SELECT path, gcWeight, creationTime, lastAccessTime, id, fileSystem, castorFile, status FROM DiskCopy WHERE id = :1";
+"SELECT path, gcWeight, creationTime, lastAccessTime, owneruid, ownergid, id, fileSystem, castorFile, status FROM DiskCopy WHERE id = :1";
 
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbDiskCopyCnv::s_bulkSelectStatementString =
 "DECLARE \
-   TYPE RecordType IS RECORD (path VARCHAR2(2048), gcWeight NUMBER, creationTime INTEGER, lastAccessTime INTEGER, id INTEGER, fileSystem INTEGER, castorFile INTEGER, status INTEGER); \
+   TYPE RecordType IS RECORD (path VARCHAR2(2048), gcWeight NUMBER, creationTime INTEGER, lastAccessTime INTEGER, owneruid NUMBER, ownergid NUMBER, id INTEGER, fileSystem INTEGER, castorFile INTEGER, status INTEGER); \
    TYPE CurType IS REF CURSOR RETURN RecordType; \
    PROCEDURE bulkSelect(ids IN castor.\"cnumList\", \
                         objs OUT CurType) AS \
    BEGIN \
      FORALL i IN ids.FIRST..ids.LAST \
        INSERT INTO bulkSelectHelper VALUES(ids(i)); \
-     OPEN objs FOR SELECT path, gcWeight, creationTime, lastAccessTime, id, fileSystem, castorFile, status \
+     OPEN objs FOR SELECT path, gcWeight, creationTime, lastAccessTime, owneruid, ownergid, id, fileSystem, castorFile, status \
                      FROM DiskCopy t, bulkSelectHelper h \
                     WHERE t.id = h.objId; \
      DELETE FROM bulkSelectHelper; \
@@ -91,7 +91,7 @@ const std::string castor::db::cnv::DbDiskCopyCnv::s_bulkSelectStatementString =
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbDiskCopyCnv::s_updateStatementString =
-"UPDATE DiskCopy SET path = :1, gcWeight = :2, status = :3 WHERE id = :4";
+"UPDATE DiskCopy SET path = :1, gcWeight = :2, owneruid = :3, ownergid = :4, status = :5 WHERE id = :6";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbDiskCopyCnv::s_storeTypeStatementString =
@@ -466,7 +466,7 @@ void castor::db::cnv::DbDiskCopyCnv::fillObjFileSystem(castor::stager::DiskCopy*
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 fileSystemId = rset->getInt64(6);
+  u_signed64 fileSystemId = rset->getInt64(8);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -506,7 +506,7 @@ void castor::db::cnv::DbDiskCopyCnv::fillObjCastorFile(castor::stager::DiskCopy*
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 castorFileId = rset->getInt64(7);
+  u_signed64 castorFileId = rset->getInt64(9);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -546,7 +546,7 @@ void castor::db::cnv::DbDiskCopyCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(7, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(9, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -555,11 +555,13 @@ void castor::db::cnv::DbDiskCopyCnv::createRep(castor::IAddress* address,
     m_insertStatement->setString(1, obj->path());
     m_insertStatement->setDouble(2, obj->gcWeight());
     m_insertStatement->setInt(3, time(0));
-    m_insertStatement->setUInt64(4, (type == OBJ_FileSystem && obj->fileSystem() != 0) ? obj->fileSystem()->id() : 0);
-    m_insertStatement->setUInt64(5, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
-    m_insertStatement->setInt(6, (int)obj->status());
+    m_insertStatement->setInt(4, obj->owneruid());
+    m_insertStatement->setInt(5, obj->ownergid());
+    m_insertStatement->setUInt64(6, (type == OBJ_FileSystem && obj->fileSystem() != 0) ? obj->fileSystem()->id() : 0);
+    m_insertStatement->setUInt64(7, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
+    m_insertStatement->setInt(8, (int)obj->status());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(7));
+    obj->setId(m_insertStatement->getUInt64(9));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -581,6 +583,8 @@ void castor::db::cnv::DbDiskCopyCnv::createRep(castor::IAddress* address,
                     << "  gcWeight : " << obj->gcWeight() << std::endl
                     << "  creationTime : " << obj->creationTime() << std::endl
                     << "  lastAccessTime : " << obj->lastAccessTime() << std::endl
+                    << "  owneruid : " << obj->owneruid() << std::endl
+                    << "  ownergid : " << obj->ownergid() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  fileSystem : " << obj->fileSystem() << std::endl
                     << "  castorFile : " << obj->castorFile() << std::endl
@@ -610,7 +614,7 @@ void castor::db::cnv::DbDiskCopyCnv::bulkCreateRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(7, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(9, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -677,6 +681,44 @@ void castor::db::cnv::DbDiskCopyCnv::bulkCreateRep(castor::IAddress* address,
     }
     m_insertStatement->setDataBuffer
       (3, creationTimeBuffer, castor::db::DBTYPE_UINT64, sizeof(creationTimeBuffer[0]), creationTimeBufLens);
+    // build the buffers for owneruid
+    int* owneruidBuffer = (int*) malloc(nb * sizeof(int));
+    if (owneruidBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(owneruidBuffer);
+    unsigned short* owneruidBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (owneruidBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(owneruidBufLens);
+    for (int i = 0; i < nb; i++) {
+      owneruidBuffer[i] = objs[i]->owneruid();
+      owneruidBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (4, owneruidBuffer, castor::db::DBTYPE_INT, sizeof(owneruidBuffer[0]), owneruidBufLens);
+    // build the buffers for ownergid
+    int* ownergidBuffer = (int*) malloc(nb * sizeof(int));
+    if (ownergidBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(ownergidBuffer);
+    unsigned short* ownergidBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (ownergidBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(ownergidBufLens);
+    for (int i = 0; i < nb; i++) {
+      ownergidBuffer[i] = objs[i]->ownergid();
+      ownergidBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (5, ownergidBuffer, castor::db::DBTYPE_INT, sizeof(ownergidBuffer[0]), ownergidBufLens);
     // build the buffers for fileSystem
     double* fileSystemBuffer = (double*) malloc(nb * sizeof(double));
     if (fileSystemBuffer == 0) {
@@ -695,7 +737,7 @@ void castor::db::cnv::DbDiskCopyCnv::bulkCreateRep(castor::IAddress* address,
       fileSystemBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (4, fileSystemBuffer, castor::db::DBTYPE_UINT64, sizeof(fileSystemBuffer[0]), fileSystemBufLens);
+      (6, fileSystemBuffer, castor::db::DBTYPE_UINT64, sizeof(fileSystemBuffer[0]), fileSystemBufLens);
     // build the buffers for castorFile
     double* castorFileBuffer = (double*) malloc(nb * sizeof(double));
     if (castorFileBuffer == 0) {
@@ -714,7 +756,7 @@ void castor::db::cnv::DbDiskCopyCnv::bulkCreateRep(castor::IAddress* address,
       castorFileBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (5, castorFileBuffer, castor::db::DBTYPE_UINT64, sizeof(castorFileBuffer[0]), castorFileBufLens);
+      (7, castorFileBuffer, castor::db::DBTYPE_UINT64, sizeof(castorFileBuffer[0]), castorFileBufLens);
     // build the buffers for status
     int* statusBuffer = (int*) malloc(nb * sizeof(int));
     if (statusBuffer == 0) {
@@ -733,7 +775,7 @@ void castor::db::cnv::DbDiskCopyCnv::bulkCreateRep(castor::IAddress* address,
       statusBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (6, statusBuffer, castor::db::DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
+      (8, statusBuffer, castor::db::DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     if (idBuffer == 0) {
@@ -748,7 +790,7 @@ void castor::db::cnv::DbDiskCopyCnv::bulkCreateRep(castor::IAddress* address,
     }
     allocMem.push_back(idBufLens);
     m_insertStatement->setDataBuffer
-      (7, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
+      (9, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
@@ -820,8 +862,10 @@ void castor::db::cnv::DbDiskCopyCnv::updateRep(castor::IAddress* address,
     // Update the current object
     m_updateStatement->setString(1, obj->path());
     m_updateStatement->setDouble(2, obj->gcWeight());
-    m_updateStatement->setInt(3, (int)obj->status());
-    m_updateStatement->setUInt64(4, obj->id());
+    m_updateStatement->setInt(3, obj->owneruid());
+    m_updateStatement->setInt(4, obj->ownergid());
+    m_updateStatement->setInt(5, (int)obj->status());
+    m_updateStatement->setUInt64(6, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
@@ -910,8 +954,10 @@ castor::IObject* castor::db::cnv::DbDiskCopyCnv::createObj(castor::IAddress* add
     object->setGcWeight(rset->getDouble(2));
     object->setCreationTime(rset->getUInt64(3));
     object->setLastAccessTime(rset->getUInt64(4));
-    object->setId(rset->getUInt64(5));
-    object->setStatus((enum castor::stager::DiskCopyStatusCodes)rset->getInt(8));
+    object->setOwneruid(rset->getInt(5));
+    object->setOwnergid(rset->getInt(6));
+    object->setId(rset->getUInt64(7));
+    object->setStatus((enum castor::stager::DiskCopyStatusCodes)rset->getInt(10));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -961,8 +1007,10 @@ castor::db::cnv::DbDiskCopyCnv::bulkCreateObj(castor::IAddress* address)
       object->setGcWeight(rset->getDouble(2));
       object->setCreationTime(rset->getUInt64(3));
       object->setLastAccessTime(rset->getUInt64(4));
-      object->setId(rset->getUInt64(5));
-      object->setStatus((enum castor::stager::DiskCopyStatusCodes)rset->getInt(8));
+      object->setOwneruid(rset->getInt(5));
+      object->setOwnergid(rset->getInt(6));
+      object->setId(rset->getUInt64(7));
+      object->setStatus((enum castor::stager::DiskCopyStatusCodes)rset->getInt(10));
       // store object in results and loop;
       res.push_back(object);
       status = rset->next();
@@ -1004,8 +1052,10 @@ void castor::db::cnv::DbDiskCopyCnv::updateObj(castor::IObject* obj)
     object->setGcWeight(rset->getDouble(2));
     object->setCreationTime(rset->getUInt64(3));
     object->setLastAccessTime(rset->getUInt64(4));
-    object->setId(rset->getUInt64(5));
-    object->setStatus((enum castor::stager::DiskCopyStatusCodes)rset->getInt(8));
+    object->setOwneruid(rset->getInt(5));
+    object->setOwnergid(rset->getInt(6));
+    object->setId(rset->getUInt64(7));
+    object->setStatus((enum castor::stager::DiskCopyStatusCodes)rset->getInt(10));
     delete rset;
   } catch (castor::exception::SQLError e) {
     castor::exception::InvalidArgument ex;

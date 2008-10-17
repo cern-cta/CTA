@@ -246,6 +246,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_svcClassName
+       * The name of the service class
+       * @return the value of m_svcClassName
+       */
+      std::string svcClassName() const {
+        return m_svcClassName;
+      }
+
+      /**
+       * Set the value of m_svcClassName
+       * The name of the service class
+       * @param new_var the new value of m_svcClassName
+       */
+      void setSvcClassName(std::string new_var) {
+        m_svcClassName = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -288,6 +306,9 @@ namespace castor {
 
       /// The action that triggered the garbage collection
       std::string m_gcTriggeredBy;
+
+      /// The name of the service class
+      std::string m_svcClassName;
 
       /// The id of this object
       u_signed64 m_id;

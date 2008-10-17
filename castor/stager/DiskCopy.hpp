@@ -181,6 +181,42 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_owneruid
+       * uid of the owner of this diskCopy
+       * @return the value of m_owneruid
+       */
+      int owneruid() const {
+        return m_owneruid;
+      }
+
+      /**
+       * Set the value of m_owneruid
+       * uid of the owner of this diskCopy
+       * @param new_var the new value of m_owneruid
+       */
+      void setOwneruid(int new_var) {
+        m_owneruid = new_var;
+      }
+
+      /**
+       * Get the value of m_ownergid
+       * gid of the owner of this diskCopy
+       * @return the value of m_ownergid
+       */
+      int ownergid() const {
+        return m_ownergid;
+      }
+
+      /**
+       * Set the value of m_ownergid
+       * gid of the owner of this diskCopy
+       * @param new_var the new value of m_ownergid
+       */
+      void setOwnergid(int new_var) {
+        m_ownergid = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -288,6 +324,12 @@ namespace castor {
 
       /// Time when this DiskCopy was last accessed: this information is used to recompute the gcWeight at each access
       u_signed64 m_lastAccessTime;
+
+      /// uid of the owner of this diskCopy
+      int m_owneruid;
+
+      /// gid of the owner of this diskCopy
+      int m_ownergid;
 
       /// The id of this object
       u_signed64 m_id;

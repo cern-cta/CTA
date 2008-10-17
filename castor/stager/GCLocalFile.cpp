@@ -47,6 +47,7 @@ castor::stager::GCLocalFile::GCLocalFile() throw() :
   m_nbAccesses(0),
   m_gcWeight(0.0),
   m_gcTriggeredBy(""),
+  m_svcClassName(""),
   m_id(0) {
 }
 
@@ -77,6 +78,7 @@ void castor::stager::GCLocalFile::print(std::ostream& stream,
   stream << indent << "nbAccesses : " << m_nbAccesses << std::endl;
   stream << indent << "gcWeight : " << m_gcWeight << std::endl;
   stream << indent << "gcTriggeredBy : " << m_gcTriggeredBy << std::endl;
+  stream << indent << "svcClassName : " << m_svcClassName << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

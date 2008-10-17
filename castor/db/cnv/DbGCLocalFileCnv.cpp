@@ -54,7 +54,7 @@ static castor::CnvFactory<castor::db::cnv::DbGCLocalFileCnv>* s_factoryDbGCLocal
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbGCLocalFileCnv::s_insertStatementString =
-"INSERT INTO GCLocalFile (fileName, diskCopyId, fileId, nsHost, lastAccessTime, nbAccesses, gcWeight, gcTriggeredBy, id) VALUES (:1,:2,:3,:4,NULL,0,:5,:6,ids_seq.nextval) RETURNING id INTO :7";
+"INSERT INTO GCLocalFile (fileName, diskCopyId, fileId, nsHost, lastAccessTime, nbAccesses, gcWeight, gcTriggeredBy, svcClassName, id) VALUES (:1,:2,:3,:4,NULL,0,:5,:6,:7,ids_seq.nextval) RETURNING id INTO :8";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbGCLocalFileCnv::s_deleteStatementString =
@@ -62,7 +62,7 @@ const std::string castor::db::cnv::DbGCLocalFileCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbGCLocalFileCnv::s_selectStatementString =
-"SELECT fileName, diskCopyId, fileId, nsHost, lastAccessTime, nbAccesses, gcWeight, gcTriggeredBy, id FROM GCLocalFile WHERE id = :1";
+"SELECT fileName, diskCopyId, fileId, nsHost, lastAccessTime, nbAccesses, gcWeight, gcTriggeredBy, svcClassName, id FROM GCLocalFile WHERE id = :1";
 
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbGCLocalFileCnv::s_bulkSelectStatementString =
@@ -73,7 +73,7 @@ const std::string castor::db::cnv::DbGCLocalFileCnv::s_bulkSelectStatementString
    BEGIN \
      FORALL i IN ids.FIRST..ids.LAST \
        INSERT INTO bulkSelectHelper VALUES(ids(i)); \
-     OPEN objs FOR SELECT fileName, diskCopyId, fileId, nsHost, lastAccessTime, nbAccesses, gcWeight, gcTriggeredBy, id \
+     OPEN objs FOR SELECT fileName, diskCopyId, fileId, nsHost, lastAccessTime, nbAccesses, gcWeight, gcTriggeredBy, svcClassName, id \
                      FROM GCLocalFile t, bulkSelectHelper h \
                     WHERE t.id = h.objId; \
      DELETE FROM bulkSelectHelper; \
@@ -84,7 +84,7 @@ const std::string castor::db::cnv::DbGCLocalFileCnv::s_bulkSelectStatementString
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbGCLocalFileCnv::s_updateStatementString =
-"UPDATE GCLocalFile SET fileName = :1, diskCopyId = :2, fileId = :3, nsHost = :4, gcWeight = :5, gcTriggeredBy = :6 WHERE id = :7";
+"UPDATE GCLocalFile SET fileName = :1, diskCopyId = :2, fileId = :3, nsHost = :4, gcWeight = :5, gcTriggeredBy = :6, svcClassName = :7 WHERE id = :8";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbGCLocalFileCnv::s_storeTypeStatementString =
@@ -223,7 +223,7 @@ void castor::db::cnv::DbGCLocalFileCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(7, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(8, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -236,8 +236,9 @@ void castor::db::cnv::DbGCLocalFileCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(5, obj->nbAccesses());
     m_insertStatement->setDouble(6, obj->gcWeight());
     m_insertStatement->setString(7, obj->gcTriggeredBy());
+    m_insertStatement->setString(8, obj->svcClassName());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(8));
+    obj->setId(m_insertStatement->getUInt64(9));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -263,6 +264,7 @@ void castor::db::cnv::DbGCLocalFileCnv::createRep(castor::IAddress* address,
                     << "  nbAccesses : " << obj->nbAccesses() << std::endl
                     << "  gcWeight : " << obj->gcWeight() << std::endl
                     << "  gcTriggeredBy : " << obj->gcTriggeredBy() << std::endl
+                    << "  svcClassName : " << obj->svcClassName() << std::endl
                     << "  id : " << obj->id() << std::endl;
     throw ex;
   }
@@ -289,7 +291,7 @@ void castor::db::cnv::DbGCLocalFileCnv::bulkCreateRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(7, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(8, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -423,6 +425,30 @@ void castor::db::cnv::DbGCLocalFileCnv::bulkCreateRep(castor::IAddress* address,
     }
     m_insertStatement->setDataBuffer
       (6, gcTriggeredByBuffer, castor::db::DBTYPE_STRING, gcTriggeredByMaxLen, gcTriggeredByBufLens);
+    // build the buffers for svcClassName
+    unsigned int svcClassNameMaxLen = 0;
+    for (int i = 0; i < nb; i++) {
+      if (objs[i]->svcClassName().length()+1 > svcClassNameMaxLen)
+        svcClassNameMaxLen = objs[i]->svcClassName().length()+1;
+    }
+    char* svcClassNameBuffer = (char*) calloc(nb, svcClassNameMaxLen);
+    if (svcClassNameBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(svcClassNameBuffer);
+    unsigned short* svcClassNameBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (svcClassNameBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(svcClassNameBufLens);
+    for (int i = 0; i < nb; i++) {
+      strncpy(svcClassNameBuffer+(i*svcClassNameMaxLen), objs[i]->svcClassName().c_str(), svcClassNameMaxLen);
+      svcClassNameBufLens[i] = objs[i]->svcClassName().length()+1; // + 1 for the trailing \0
+    }
+    m_insertStatement->setDataBuffer
+      (7, svcClassNameBuffer, castor::db::DBTYPE_STRING, svcClassNameMaxLen, svcClassNameBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     if (idBuffer == 0) {
@@ -437,7 +463,7 @@ void castor::db::cnv::DbGCLocalFileCnv::bulkCreateRep(castor::IAddress* address,
     }
     allocMem.push_back(idBufLens);
     m_insertStatement->setDataBuffer
-      (7, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
+      (8, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
@@ -513,7 +539,8 @@ void castor::db::cnv::DbGCLocalFileCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setString(4, obj->nsHost());
     m_updateStatement->setDouble(5, obj->gcWeight());
     m_updateStatement->setString(6, obj->gcTriggeredBy());
-    m_updateStatement->setUInt64(7, obj->id());
+    m_updateStatement->setString(7, obj->svcClassName());
+    m_updateStatement->setUInt64(8, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
@@ -606,7 +633,8 @@ castor::IObject* castor::db::cnv::DbGCLocalFileCnv::createObj(castor::IAddress* 
     object->setNbAccesses(rset->getInt(6));
     object->setGcWeight(rset->getDouble(7));
     object->setGcTriggeredBy(rset->getString(8));
-    object->setId(rset->getUInt64(9));
+    object->setSvcClassName(rset->getString(9));
+    object->setId(rset->getUInt64(10));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -660,7 +688,8 @@ castor::db::cnv::DbGCLocalFileCnv::bulkCreateObj(castor::IAddress* address)
       object->setNbAccesses(rset->getInt(6));
       object->setGcWeight(rset->getDouble(7));
       object->setGcTriggeredBy(rset->getString(8));
-      object->setId(rset->getUInt64(9));
+      object->setSvcClassName(rset->getString(9));
+      object->setId(rset->getUInt64(10));
       // store object in results and loop;
       res.push_back(object);
       status = rset->next();
@@ -706,7 +735,8 @@ void castor::db::cnv::DbGCLocalFileCnv::updateObj(castor::IObject* obj)
     object->setNbAccesses(rset->getInt(6));
     object->setGcWeight(rset->getDouble(7));
     object->setGcTriggeredBy(rset->getString(8));
-    object->setId(rset->getUInt64(9));
+    object->setSvcClassName(rset->getString(9));
+    object->setId(rset->getUInt64(10));
     delete rset;
   } catch (castor::exception::SQLError e) {
     castor::exception::InvalidArgument ex;

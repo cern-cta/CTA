@@ -143,6 +143,30 @@ int Cstager_DiskCopy_lastAccessTime(struct Cstager_DiskCopy_t* instance, u_signe
 int Cstager_DiskCopy_setLastAccessTime(struct Cstager_DiskCopy_t* instance, u_signed64 new_var);
 
 /**
+ * Get the value of owneruid
+ * uid of the owner of this diskCopy
+ */
+int Cstager_DiskCopy_owneruid(struct Cstager_DiskCopy_t* instance, int* var);
+
+/**
+ * Set the value of owneruid
+ * uid of the owner of this diskCopy
+ */
+int Cstager_DiskCopy_setOwneruid(struct Cstager_DiskCopy_t* instance, int new_var);
+
+/**
+ * Get the value of ownergid
+ * gid of the owner of this diskCopy
+ */
+int Cstager_DiskCopy_ownergid(struct Cstager_DiskCopy_t* instance, int* var);
+
+/**
+ * Set the value of ownergid
+ * gid of the owner of this diskCopy
+ */
+int Cstager_DiskCopy_setOwnergid(struct Cstager_DiskCopy_t* instance, int new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

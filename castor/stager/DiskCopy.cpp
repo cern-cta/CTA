@@ -48,6 +48,8 @@ castor::stager::DiskCopy::DiskCopy() throw() :
   m_gcWeight(0.0),
   m_creationTime(0),
   m_lastAccessTime(0),
+  m_owneruid(0),
+  m_ownergid(0),
   m_id(0),
   m_fileSystem(0),
   m_castorFile(0),
@@ -87,6 +89,8 @@ void castor::stager::DiskCopy::print(std::ostream& stream,
   stream << indent << "gcWeight : " << m_gcWeight << std::endl;
   stream << indent << "creationTime : " << m_creationTime << std::endl;
   stream << indent << "lastAccessTime : " << m_lastAccessTime << std::endl;
+  stream << indent << "owneruid : " << m_owneruid << std::endl;
+  stream << indent << "ownergid : " << m_ownergid << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

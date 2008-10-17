@@ -96,6 +96,7 @@ void castor::io::StreamGCLocalFileCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->nbAccesses();
   ad->stream() << obj->gcWeight();
   ad->stream() << obj->gcTriggeredBy();
+  ad->stream() << obj->svcClassName();
   ad->stream() << obj->id();
 }
 
@@ -133,6 +134,9 @@ castor::IObject* castor::io::StreamGCLocalFileCnv::createObj(castor::IAddress* a
   std::string gcTriggeredBy;
   ad->stream() >> gcTriggeredBy;
   object->setGcTriggeredBy(gcTriggeredBy);
+  std::string svcClassName;
+  ad->stream() >> svcClassName;
+  object->setSvcClassName(svcClassName);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
