@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.688 $ $Date: 2008/10/14 13:20:08 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.689 $ $Date: 2008/10/17 09:26:56 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -843,7 +843,6 @@ BEGIN
      gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid)
   VALUES (rpath, destDcId, 0, cfId, 1, getTime(), getTime(), 0, fileSize, 0, ouid, ogid);  -- WAITDISK2DISKCOPY
   INSERT INTO Id2Type (id, type) VALUES (destDcId, 5);  -- OBJ_DiskCopy
-  COMMIT;
 END;
 
 
