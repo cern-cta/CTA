@@ -17,7 +17,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.5 $ $Release$ $Date: 2008/10/16 18:29:14 $ $Author: itglp $
+# * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.6 $ $Release$ $Date: 2008/10/19 09:19:56 $ $Author: sponcec3 $
 # *
 # * utility functions for castor tools written in python
 # *
@@ -114,6 +114,27 @@ DiskCopyStatus = ["DISKCOPY_STAGED",
                   "DISKCOPY_CANBEMIGR",
                   "DISKCOPY_WAITFS_SCHEDULING"]
 
+areBooleans = ["aborted",
+               "emptyfile",
+               "disk1behavior",
+               "replicateonclose",
+               "failJobsWhenNoSpace",
+               "recursive",
+               "created",
+               "isgranted",
+               "granted",
+               "concat",
+               "deferedallocation"]
+
+def intToBoolean(entry, value):
+    if entry.lower() in areBooleans:
+        if value == 0:
+            return 'No'
+        else:
+            return 'Yes'
+    else:
+        return value
+
 class castorObject(dict):
   '''a base object for CASTOR items.
   This includes clever printing and case insensitive member access'''
@@ -127,12 +148,13 @@ class castorObject(dict):
         i = 0
         for t in self[s]:
           res = res + "  " + str(i) + " :\n"
+          # this is only reindenting
           for l in str(t).split('\n'):
             if len(l) > 0:
               res = res + '    ' + l + '\n'
           i = i + 1
       else:
-        res = res + s.lower() + " : " + str(self[s]) + "\n"
+        res = res + s.lower() + " : " + str(intToBoolean(s, self[s])) + "\n"
     return res
   def __getattr__(self, name):
     return self[name.upper()]
@@ -174,8 +196,12 @@ def fillObject12n(stcur, obj, entry, table, key):
 
 def fillObjectn21(stcur, obj, entry, table):
   '''Fill an object following a n->1 relation'''
-  stmt = 'SELECT * FROM ' + table + ' WHERE id =' + str(obj[entry.upper()])
-  fillObjectgeneric(stcur, obj, entry.upper(), table, stmt)
+  value = obj[entry.upper()]
+  if value == 0:
+      obj[entry.upper()] = None
+  else:
+      stmt = 'SELECT * FROM ' + table + ' WHERE id =' + str(value)
+      fillObjectgeneric(stcur, obj, entry.upper(), table, stmt)
 
 def fillObjectn2n(stcur, obj, entry, table):
   '''Fill an object following a n->n relation'''
@@ -199,7 +225,7 @@ def getSvcClass(svcClassName):
         svcClass = getObject(stcur, 'SvcClass', 'name', svcClassName)
         fillObjectn2n(stcur, svcClass, 'DiskPools', 'DiskPool')
         fillObjectn2n(stcur, svcClass, 'TapePools', 'TapePool')
-        fillObjectn21(stcur, svcClass, 'forcedFileClass', 'FileClass');
+        fillObjectn21(stcur, svcClass, 'forcedFileClass', 'FileClass')
         disconnectDB(stconn)
         return svcClass
     except Exception, e:
