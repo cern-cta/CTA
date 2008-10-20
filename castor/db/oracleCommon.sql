@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.672 $ $Date: 2008/10/17 14:09:07 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.673 $ $Date: 2008/10/20 13:19:02 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -430,9 +430,7 @@ BEGIN
   -- Note: the guid generator provided by ORACLE produces sequential uuid's, not
   -- random ones. The reason for this is because random uuid's are not good for
   -- indexing!
-  SELECT lower(regexp_replace(sys_guid(), '(.{8})(.{4})(.{4})(.{4})(.{12})', '\1-\2-\3-\4-\5'))
-    INTO ret FROM Dual;
-  RETURN ret;
+  RETURN lower(regexp_replace(sys_guid(), '(.{8})(.{4})(.{4})(.{4})(.{12})', '\1-\2-\3-\4-\5'));
 END;
 
 
