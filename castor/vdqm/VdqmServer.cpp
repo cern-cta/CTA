@@ -36,23 +36,20 @@
 
 #define VDQMSERV
 
-#include <net.h>
-#include <vdqm_constants.h>  //e.g. Magic Number of old vdqm protocol
-
 #include "castor/Services.hpp"
 #include "castor/db/DbParamsSvc.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
+#include "castor/vdqm/Constants.hpp"
 #include "castor/vdqm/DriveSchedulerThread.hpp"
 #include "castor/vdqm/ProtocolFacade.hpp"
 #include "castor/vdqm/RequestHandlerThread.hpp"
 #include "castor/vdqm/RTCPJobSubmitterThread.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/VdqmServer.hpp"
-
-// Hardcoded schema version of the VDQM database
-const std::string VDQMSCHEMAVERSION = "2_1_7_20";
+#include "h/net.h"
+#include "h/vdqm_constants.h"  // e.g. Magic Number of old vdqm protocol
 
 
 //------------------------------------------------------------------------------
@@ -393,7 +390,7 @@ void castor::vdqm::VdqmServer::initDatabaseService() {
     exit(1);
   }
 
-  params->setSchemaVersion(VDQMSCHEMAVERSION);
+  params->setSchemaVersion(castor::vdqm::VDQMSCHEMAVERSION);
   params->setDbAccessConfFile(ORAVDQMCONFIGFILE);
 }
 

@@ -27,6 +27,7 @@
 #include "castor/Services.hpp"
 #include "castor/Services.hpp"
 #include "castor/db/DbParamsSvc.hpp"
+#include "castor/vdqm/Constants.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
 #include "h/Castor_limits.h"
 
@@ -36,8 +37,6 @@
 #include <string>
 #include <string.h>
 
-
-const std::string VDQMSCHEMAVERSION = "2_1_7_20";
 
 // Possible types of volume priority list that can be displayed
 enum PriorityListType {
@@ -256,7 +255,7 @@ castor::vdqm::IVdqmSvc *retrieveVdqmSvc() {
 
   // Tell the DB parameter service of the VDQM schema version and the DB
   // connection details file
-  paramsSvc->setSchemaVersion(VDQMSCHEMAVERSION);
+  paramsSvc->setSchemaVersion(castor::vdqm::VDQMSCHEMAVERSION);
   paramsSvc->setDbAccessConfFile(ORAVDQMCONFIGFILE);
 
   // Retrieve the VDQM DB service

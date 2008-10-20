@@ -34,14 +34,13 @@
 #include <castor/IService.hpp>
 #include <castor/Services.hpp>
 #include <castor/db/DbParamsSvc.hpp>
+#include <castor/vdqm/Constants.hpp>
 #include <castor/vdqm/DeviceGroupName.hpp>
 #include <castor/vdqm/IVdqmSvc.hpp>
 #include <castor/vdqm/TapeAccessSpecification.hpp>
 #include <h/vmgr_api.h> // For VMGR
 #include <sys/types.h> // For VMGR
 
-// Hardcoded schema version of the VDQM database
-const std::string VDQMSCHEMAVERSION = "2_1_7_20";
 
 static struct Coptions longopts[] = {
   {"config", REQUIRED_ARGUMENT, NULL, 'c'},
@@ -302,7 +301,7 @@ int main(int argc, char *argv[]) {
       std::cerr << "Could not instantiate the parameters service" << std::endl;
       exit(1);
     }
-    params->setSchemaVersion(VDQMSCHEMAVERSION);
+    params->setSchemaVersion(castor::vdqm::VDQMSCHEMAVERSION);
     params->setDbAccessConfFile(ORAVDQMCONFIGFILE);
 
     // Initializing the log

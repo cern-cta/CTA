@@ -27,6 +27,7 @@
 #include "castor/Services.hpp"
 #include "castor/Services.hpp"
 #include "castor/db/DbParamsSvc.hpp"
+#include "castor/vdqm/Constants.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
 #include "h/Castor_limits.h"
 
@@ -34,9 +35,6 @@
 #include <iostream>
 #include <string>
 #include <string.h>
-
-
-const std::string VDQMSCHEMAVERSION = "2_1_7_20";
 
 
 void usage(const std::string programName) {
@@ -248,7 +246,7 @@ castor::vdqm::IVdqmSvc *retrieveVdqmSvc() {
 
   // Tell the DB parameter service of the VDQM schema version and the DB
   // connection details file
-  paramsSvc->setSchemaVersion(VDQMSCHEMAVERSION);
+  paramsSvc->setSchemaVersion(castor::vdqm::VDQMSCHEMAVERSION);
   paramsSvc->setDbAccessConfFile(ORAVDQMCONFIGFILE);
 
   // Retrieve the VDQM DB service
