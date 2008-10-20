@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: gtaur $
+ * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: sponcec3 $
  *
  *
  *
@@ -154,13 +154,12 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	    continue;
 	  }
 
-	  cnsInfo = getInfoFromNs(realInfo->nsHost(),realInfo->fileId());
+	  cnsInfo = getInfoFromNs(realInfo->nsHost(),realInfo->fileId(),*svcClassName);
          
 	  if (cnsInfo==NULL) {
-	    //not in the nameServer
+	    // note that we've already logged something inside getInfoFromNS
             invalidTapeCopies.push_back(*infoCandidate);
             infoCandidate++;
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6, 1, params0);
 	    continue;
 	  }  
 
@@ -411,7 +410,9 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 }
 
 
-castor::infoPolicy::CnsInfoMigrationPolicy* castor::rtcopy::mighunter::MigHunterThread::getInfoFromNs(std::string nsHost,u_signed64 fileId){
+castor::infoPolicy::CnsInfoMigrationPolicy*
+castor::rtcopy::mighunter::MigHunterThread::getInfoFromNs
+(std::string nsHost,u_signed64 fileId, std::string &svcClassName){
   struct Cns_filestat statbuf;
   struct Cns_fileid cnsFile;
   memset(&cnsFile,'\0',sizeof(cnsFile));
@@ -422,10 +423,11 @@ castor::infoPolicy::CnsInfoMigrationPolicy* castor::rtcopy::mighunter::MigHunter
   
   int rc = Cns_statx(castorFileName,&cnsFile,&statbuf);
   if (rc == -1){
-    castor::dlf::Param params2[]={
+    castor::dlf::Param params3[]={
+      castor::dlf::Param("SvcClass", svcClassName),
       castor::dlf::Param("Function", "Cns_statx"),
       castor::dlf::Param("Error", sstrerror(serrno))};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6, 2, params2, &cnsFile);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR, 6, 3, params3, &cnsFile);
     return NULL;
   }  
 

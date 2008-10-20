@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunterThread.hpp,v $ $Author: waldron $
+ * @(#)$RCSfile: MigHunterThread.hpp,v $ $Author: sponcec3 $
  *
  *
  *
@@ -61,7 +61,8 @@ namespace castor {
        */
       MigHunterThread(castor::infoPolicy::IPolicySvc* svc, std::vector<std::string> svcClassArray, u_signed64 minByte, bool doClone,	castor::infoPolicy::MigrationPySvc* migrPy, castor::infoPolicy::StreamPySvc* StrPy);
       
-      castor::infoPolicy::CnsInfoMigrationPolicy* getInfoFromNs(std::string nsHost,u_signed64 fileId);
+      castor::infoPolicy::CnsInfoMigrationPolicy* getInfoFromNs
+      (std::string nsHost,u_signed64 fileId,std::string &svcClassName);
       /**
        * destructor
        */
