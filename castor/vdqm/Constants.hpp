@@ -27,7 +27,7 @@
 
 
 namespace castor { namespace vdqm {
-  const std::string VDQMSCHEMAVERSION = "2_1_8_3";
+  const std::string VDQMSCHEMAVERSION = "2_1_7_20";
 } } // namespace vdqm - namespace castor
 
 
