@@ -41,12 +41,9 @@ ALTER TABLE TapeDrive2TapeDriveComp
 
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_8_2');
+INSERT INTO CastorVersion VALUES ('-', '2_1_8_3');
 
 /*******************************************************************
- *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.157  Release Date: 2008/10/03 17:00:13  Author: murrayc3 
- *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
  *
@@ -54,7 +51,7 @@ INSERT INTO CastorVersion VALUES ('-', '2_1_8_2');
  *******************************************************************/
 
 /* Update the schema version number */
-UPDATE CastorVersion SET schemaVersion = '2_1_7_12';
+UPDATE CastorVersion SET schemaVersion = '2_1_7_20';
 
 /* Sequence used to generate unique indentifies */
 CREATE SEQUENCE ids_seq CACHE 200;

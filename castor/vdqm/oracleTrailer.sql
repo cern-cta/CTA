@@ -1,6 +1,4 @@
 /*******************************************************************
- *
- *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
  *
@@ -8,7 +6,7 @@
  *******************************************************************/
 
 /* Update the schema version number */
-UPDATE CastorVersion SET schemaVersion = '2_1_7_12';
+UPDATE CastorVersion SET schemaVersion = '2_1_7_20';
 
 /* Sequence used to generate unique indentifies */
 CREATE SEQUENCE ids_seq CACHE 200;
