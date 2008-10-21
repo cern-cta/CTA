@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/05/26 15:40:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: QueryRequestSvcThread.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/10/21 03:27:57 $ $Author: sponcec3 $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -96,8 +96,9 @@ namespace castor {
          */
         void handleFileQueryRequestByFileId(castor::query::IQuerySvc* qrySvc,
                                             castor::IClient *client,
-                                            std::string &fid,
+                                            u_signed64 fid,
                                             std::string &nshost,
+                                            std::string& fileName,
                                             u_signed64 svcClassId,
                                             std::string reqId,
                                             Cuuid_t uuid)

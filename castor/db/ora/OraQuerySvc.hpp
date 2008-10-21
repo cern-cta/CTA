@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/05/05 08:33:54 $ $Author: waldron $
+ * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/10/21 03:27:57 $ $Author: sponcec3 $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -120,9 +120,10 @@ namespace castor {
          * @exception in case of error
          */
         virtual std::list<castor::stager::DiskCopyInfo*>*
-        diskCopies4File (std::string fileId,
+        diskCopies4File (u_signed64 fileId,
                          std::string nsHost,
-                         u_signed64 svcClassId)
+                         u_signed64 svcClassId,
+                         std::string& fileName)
           throw (castor::exception::Exception);
 
         /**

@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.643 $ $Date: 2008/09/01 17:18:14 $ $Author: waldron $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.644 $ $Date: 2008/10/21 03:27:57 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -151,10 +151,23 @@ CREATE OR REPLACE PROCEDURE fileIdStageQuery
  (fid IN NUMBER,
   nh IN VARCHAR2,
   svcClassId IN INTEGER,
+  fileName IN VARCHAR2,
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
+  currentFileName VARCHAR2(2048);  
 BEGIN
+  -- extract CastorFile ids FROM the fileid
   SELECT id BULK COLLECT INTO cfs FROM CastorFile WHERE fileId = fid AND nshost = nh;
+  -- Check and fix when needed the LastKnowFileNames
+  SELECT lastKnownFileName INTO currentFileName
+    FROM CastorFile
+   WHERE id = cfs(cfs.FIRST);
+  IF currentFileName != fileName THEN
+    UPDATE CastorFile SET lastKnownFileName = fileName
+     WHERE id = cfs(cfs.FIRST);
+    COMMIT;
+  END IF;
+  -- Finally issue the actual query
   internalStageQuery(cfs, svcClassId, result);
 END;
 

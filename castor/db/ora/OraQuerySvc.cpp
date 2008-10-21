@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.48 $ $Release$ $Date: 2008/09/29 17:50:38 $ $Author: itglp $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.49 $ $Release$ $Date: 2008/10/21 03:27:57 $ $Author: sponcec3 $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -57,7 +57,7 @@ static castor::SvcFactory<castor::db::ora::OraQuerySvc>* s_factoryOraQuerySvc =
 //------------------------------------------------------------------------------
 
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4FileStatementString =
-  "BEGIN fileIdStageQuery(:1, :2, :3, :4); END;";
+  "BEGIN fileIdStageQuery(:1, :2, :3, :4, :5); END;";
 
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4FileNameStatementString =
   "BEGIN fileNameStageQuery(:1, :2, :3, :4); END;";
@@ -245,7 +245,8 @@ castor::db::ora::OraQuerySvc::diskCopies4FileName
 //------------------------------------------------------------------------------
 std::list<castor::stager::DiskCopyInfo*>*
 castor::db::ora::OraQuerySvc::diskCopies4File
-(std::string fileId, std::string nsHost, u_signed64 svcClassId)
+(u_signed64 fileId, std::string nsHost,
+ u_signed64 svcClassId, std::string& fileName)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -253,12 +254,13 @@ castor::db::ora::OraQuerySvc::diskCopies4File
       m_diskCopies4FileStatement =
         createStatement(s_diskCopies4FileStatementString);
       m_diskCopies4FileStatement->registerOutParam
-        (4, oracle::occi::OCCICURSOR);
+        (5, oracle::occi::OCCICURSOR);
     }
     // execute the statement and see whether we found something
-    m_diskCopies4FileStatement->setString(1, fileId);
+    m_diskCopies4FileStatement->setDouble(1, fileId);
     m_diskCopies4FileStatement->setString(2, nsHost);
     m_diskCopies4FileStatement->setDouble(3, svcClassId);
+    m_diskCopies4FileStatement->setString(4, fileName);
     unsigned int nb = m_diskCopies4FileStatement->executeUpdate();
     if (0 == nb) {
       castor::exception::Internal ex;
@@ -267,7 +269,7 @@ castor::db::ora::OraQuerySvc::diskCopies4File
       throw ex;
     }
     oracle::occi::ResultSet *rset =
-      m_diskCopies4FileStatement->getCursor(4);
+      m_diskCopies4FileStatement->getCursor(5);
     std::list<castor::stager::DiskCopyInfo*>* result = gatherResults(rset);
     m_diskCopies4FileStatement->closeResultSet(rset);
     return result;

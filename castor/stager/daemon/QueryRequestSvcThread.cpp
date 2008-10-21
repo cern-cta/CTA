@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.89 $ $Release$ $Date: 2008/09/01 17:17:46 $ $Author: waldron $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.90 $ $Release$ $Date: 2008/10/21 03:27:57 $ $Author: sponcec3 $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -244,25 +244,28 @@ void
 castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileId
 (castor::query::IQuerySvc* qrySvc,
  castor::IClient *client,
- std::string &fid,
+ u_signed64 fid,
  std::string &nshost,
+ std::string &fileName,
  u_signed64 svcClassId,
  std::string reqId,
  Cuuid_t uuid)
   throw (castor::exception::Exception) {
   // Processing File Query by fileid
+  std::ostringstream sst;
+  sst << fid;
   castor::dlf::Param params[] =
-    {castor::dlf::Param("FileId", fid.c_str()),
+    {castor::dlf::Param("FileId", sst.str().c_str()),
      castor::dlf::Param("NsHost", nshost.c_str())};
   castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_IQUERY, 1, params);
   std::list<castor::stager::DiskCopyInfo*>* result =
-    qrySvc->diskCopies4File(fid, nshost, svcClassId);
-  if(result == 0 || result->size() != 1) {   // sanity check, result.size() must be == 1
+    qrySvc->diskCopies4File(fid, nshost, svcClassId, fileName);
+  if(result == 0 || result->size() == 0) {   // sanity check, result.size() must be == 1
     castor::exception::Exception e(ENOENT);
     if(svcClassId > 0)
-      e.getMessage() << "File " << fid << "@" << nshost << " not on this service class";
+      e.getMessage() << "File " << fileName << " (" << fid << "@" << nshost << ") not on this service class";
     else
-      e.getMessage() << "File " << fid << "@" << nshost << " not on disk cache";
+      e.getMessage() << "File " << fileName << " (" << fid << "@" << nshost << ") not on disk cache";
     if(result != 0)
       delete result;
     throw e;
@@ -272,8 +275,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileId
   // Preparing the response
   castor::rh::FileQryResponse res;
   res.setReqAssociated(reqId);
-  std::ostringstream sst;
-  sst << fid << "@" << nshost;
+  sst << "@" << nshost;
   res.setFileName(sst.str());
   res.setFileId(diskcopy->fileId());
   // compute the status; INVALID is taken into account too
@@ -400,17 +402,18 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
     castor::stager::RequestQueryType ptype = (*it)->queryType();
     std::string pval = (*it)->value();
     try {
-      std::string fid, nshost, reqidtag;
+      std::string nshost, reqidtag;
+      u_signed64 fid = 0;
       bool queryOk = false;
       switch(ptype) {
       case REQUESTQUERYTYPE_FILEID:
         {
           std::string::size_type idx = pval.find('@');
           if (idx == std::string::npos) {
-            fid = pval;
+            fid = strtou64(pval.c_str());
             nshost = '%';
           } else {
-            fid = pval.substr(0, idx);
+            fid = strtou64(pval.substr(0, idx).c_str());
             nshost = pval.substr(idx + 1);
           }
           queryOk = true;
@@ -435,37 +438,45 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
       // Verify whether we are querying a directory (if not regexp)
       if (ptype == REQUESTQUERYTYPE_FILEID ||
          (ptype == REQUESTQUERYTYPE_FILENAME && (0 != pval.compare(0, 7, "regexp:")))) {
-
         // Get PATH for queries by fileId
         if (ptype == REQUESTQUERYTYPE_FILEID) {
           char cfn[CA_MAXPATHLEN+1];     // XXX unchecked string length in Cns_getpath() call
-          if (Cns_getpath((char*)nshost.c_str(),
-                          strtou64(fid.c_str()), cfn) < 0) {
+          if (Cns_getpath((char*)nshost.c_str(), fid, cfn) < 0) {
             castor::exception::Exception e(serrno);
             e.getMessage() << "Fileid " << fid;
             throw e;
           }
           pval = cfn;
         }
-
         // check if the filename is valid (it has to start with /)
 	if (pval.empty() || (pval.at(0) != '/')) {
 	  castor::exception::Exception ex(EINVAL);
 	  ex.getMessage() << "Invalid file path";
 	  throw ex;
 	}
-
+        // stat the file in the nameserver
         struct Cns_filestat Cnsfilestat;
-        if (Cns_stat(pval.c_str(), &Cnsfilestat) < 0) {
+        struct Cns_fileid Cnsfileid;
+        Cnsfileid.server[0] = 0;
+        if (Cns_statx(pval.c_str(), &Cnsfileid, &Cnsfilestat) < 0) {
           castor::exception::Exception e(serrno);
           e.getMessage() << "Filename " << pval;
           throw e;
         }
+        // deal with directories and with pure file request
         if ((Cnsfilestat.filemode & S_IFDIR) == S_IFDIR) {
           // it is a directory, query for the content (don't perform a query by ID)
           ptype = REQUESTQUERYTYPE_FILENAME;
           if (pval[pval.length()-1] != '/')
             pval = pval + "/";
+        } else {
+          // prefer the querying by file id for real files
+          // in order to be immune to file renames
+          ptype = REQUESTQUERYTYPE_FILEID;
+          if (0 == fid) {
+            fid = Cnsfileid.fileid;
+            nshost = Cnsfileid.server;
+          }
         }
       }
       // Get the SvcClass associated to the request
@@ -487,6 +498,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
                                        client,
                                        fid,
                                        nshost,
+                                       pval,
                                        svcClassId,
                                        req->reqId(),
                                        uuid);
