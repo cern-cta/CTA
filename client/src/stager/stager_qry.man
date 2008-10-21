@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.22 $ $Date: 2008/06/02 16:27:12 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.23 $ $Date: 2008/10/21 03:51:07 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_QRY 1castor "$Date: 2008/06/02 16:27:12 $" CASTOR "STAGER Commands"
+.TH STAGER_QRY 1castor "$Date: 2008/10/21 03:51:07 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_qry \- query the CASTOR stager for files and requests
 .SH SYNOPSIS
@@ -115,6 +115,8 @@ Also note that you may have more files listed here than in the nameserver in cas
 .BI \-f,\ \-\-hsm_filelist " hsmFileList"
 specifies a file containing a list of CASTOR HSM file(s) to be queried, one per line.
 This can be used to avoid the command line restrictions when many files should be removed at once.
+Note that lines starting with a '/' will be considered as containing file names while others will
+be considered as containing a fileid[@nshost] expression
 .TP
 .BI \-F,\ \-\-fileid " fileid@nshost"
 query by CASTOR fileid and nshost. The fileid is a unique 64bit number assigned by the CASTOR name server to each file in its namespace. The fileid can be retrieved using the

@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.32 2008/07/28 15:20:28 itglp Exp $
+ * $Id: stager_qry.c,v 1.33 2008/10/21 03:51:07 sponcec3 Exp $
  */
 
 /*
@@ -139,8 +139,8 @@ int parseCmdLineFileQuery(int argc, char *argv[], struct cmd_args *args);
  * @return 0 if parsing succeeded
  */
 int parseCmdLineDiskPoolQuery(int argc, char *argv[],
-			      char** diskpool, char** svcClass,
-			      int* siflag);
+                              char** diskpool, char** svcClass,
+                              int* siflag);
 
 // -----------------------------------------------------------------------
 // main
@@ -201,8 +201,8 @@ void handleFileQuery(int argc, char *argv[], int nbArgs) {
   }
 #ifdef _WIN32
   if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-	  fprintf (stderr, "Can not initialize Windows Socket layer.\n");
-	  exit (1);
+    fprintf (stderr, "Can not initialize Windows Socket layer.\n");
+    exit (1);
   }
 #endif
   /* Setting the error buffer */
@@ -231,16 +231,16 @@ void handleFileQuery(int argc, char *argv[], int nbArgs) {
   for (i=0; i<nbresps; i++) {
     if (responses[i].errorCode == 0) {
       printf("%s %s %s",
-            responses[i].castorfilename,
-            responses[i].filename,
-            stage_fileStatusName(responses[i].status));
+             responses[i].castorfilename,
+             responses[i].filename,
+             stage_fileStatusName(responses[i].status));
     } else {
       /* a single failure in the list makes the command fail as a whole */
       rc = 1;
       printf("Error %d/%s (%s)",
-            responses[i].errorCode,
-            sstrerror(responses[i].errorCode),
-            responses[i].errorMessage);
+             responses[i].errorCode,
+             sstrerror(responses[i].errorCode),
+             responses[i].errorMessage);
     }
     printf ("\n");
   }
@@ -289,7 +289,7 @@ void handleDiskPoolQuery(int argc, char *argv[], int nbArgs) {
     int i, nbresps;
     int rc = stage_diskpoolsquery(&responses,
                                   &nbresps,
-				  &opts);
+                                  &opts);
     // check for errors
     if (rc < 0) {
       if(serrno != 0) {
@@ -346,24 +346,29 @@ int parseCmdLineFileQuery(int argc, char *argv[],
       break;
     case 'f':
       {
-	FILE *infile;
-	char line[CA_MAXPATHLEN+1];
-	infile = fopen(Coptarg, "r");
-	if(NULL == infile) {
-	  fprintf (stderr, "unable to read file %s\n", Coptarg);
+        FILE *infile;
+        char line[CA_MAXPATHLEN+1];
+        infile = fopen(Coptarg, "r");
+        if(NULL == infile) {
+          fprintf (stderr, "unable to read file %s\n", Coptarg);
           errflg++;
           break;
         }
-	while (fgets(line, sizeof(line), infile) != NULL) {
-	  // drop trailing \n
-	  while (strlen(line) &&
-		 ((line[strlen(line)-1] == '\n') || (line[strlen(line)-1] == '\r'))) {
-	    line[strlen(line) - 1] = 0;
-	  }
-	  args->requests[nbargs].type = BY_FILENAME;
-	  args->requests[nbargs].param = (char *)strdup(line);
-	  nbargs++;
-	}
+        while (fgets(line, sizeof(line), infile) != NULL) {
+          // drop trailing \n
+          while (strlen(line) &&
+                 ((line[strlen(line)-1] == '\n') || (line[strlen(line)-1] == '\r'))) {
+            line[strlen(line) - 1] = 0;
+          }
+          // check whether we got a castor file name or a fileid
+          if (line[0] == '/') {
+            args->requests[nbargs].type = BY_FILENAME;
+          } else {
+            args->requests[nbargs].type = BY_FILEID;
+          }
+          args->requests[nbargs].param = (char *)strdup(line);
+          nbargs++;
+        }
       }
       break;
     case 'F':
@@ -415,8 +420,8 @@ int parseCmdLineFileQuery(int argc, char *argv[],
 // parseCmdLineDiskPoolQuery
 // -----------------------------------------------------------------------
 int parseCmdLineDiskPoolQuery(int argc, char *argv[],
-			      char** diskPool, char** svcClass,
-			      int *siflag) {
+                              char** diskPool, char** svcClass,
+                              int *siflag) {
   int Coptind, Copterr, errflg;
   char c;
 
@@ -471,17 +476,17 @@ int checkAndCountArguments(int argc, char *argv[],
       break;
     case 'f':
       {
-	FILE *infile;
-	char line[CA_MAXPATHLEN+1];
-	infile = fopen(Coptarg, "r");
-	if(NULL == infile) {
-	  fprintf (stderr, "unable to read file %s\n", Coptarg);
+        FILE *infile;
+        char line[CA_MAXPATHLEN+1];
+        infile = fopen(Coptarg, "r");
+        if(NULL == infile) {
+          fprintf (stderr, "unable to read file %s\n", Coptarg);
           errflg++;
           break;
         }
-	while (fgets(line, sizeof(line), infile) != NULL) {
-	  (*count)++;
-	}
+        while (fgets(line, sizeof(line), infile) != NULL) {
+          (*count)++;
+        }
       }
       break;
     case 's':
