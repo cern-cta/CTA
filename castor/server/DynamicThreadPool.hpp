@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DynamicThreadPool.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/10/21 08:36:38 $ $Author: waldron $
+ * @(#)$RCSfile: DynamicThreadPool.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/10/21 09:42:11 $ $Author: waldron $
  *
  * This header file describes the implementation of a generic thread pool with
  * dynamic thread creation and destruction. A thread pool is a set of threads
@@ -25,13 +25,13 @@
  * task is added/pushed to the pool, the thread pool will find an idle thread
  * to handle the task. In case all existing threads are busy and the number of
  * tasks in the queue is higher than the adjustable threshold, the pool will
- * try to create a new thread to serve the task if the maximum has not already
- * been reached. If the number of pending tasks is below the threshold then a
- * thread will be destroyed every 10 seconds until either the threshold or
- * initial number of threads value is reached.
+ * try to create a new threads to serve the tasks if the maximum has not 
+ * already been reached. If the number of pending tasks is below the threshold
+ * then a thread will be destroyed every 10 seconds until either the threshold
+ * or initial number of threads is reached.
  *
  * Note: This class cannot be used directly and must be used from a derived
- * class which implements the run method.
+ * class which implements the execute method.
  *
  * The base implementation is adapted from the following two projects:
  * @see apr_thread_pool.h (Apache Portable Runtime Utils)
