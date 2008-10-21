@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      Constants.hpp
+ *              vdqm_2.1.7_20_to_2.1.8-3.sqlplus
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,17 +18,34 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- *
- * @author castor dev team
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_VDQM_CONSTANTS_HPP
-#define CASTOR_VDQM_CONSTANTS_HPP 1
+/******************************************************************************
+ * Summary of upgrade
+ *
+ * Only the release number needs to be updated.
+ *****************************************************************************/
 
+/* Stop on errors - this only works from sqlplus */
+WHENEVER SQLERROR EXIT FAILURE;
 
-namespace castor { namespace vdqm {
-  const std::string VDQMSCHEMAVERSION = "2_1_8_3";
-} } // namespace vdqm - namespace castor
+/* Enabled the output of DBMS_OUTPUT.PUT_LINE */
+SET SERVEROUTPUT ON
 
+PROMPT =====================================
+PROMPT SCHEMA VERSION CROSS CHECK AND UPDATE
+PROMPT =====================================
 
-#endif // CASTOR_VDQM_CONSTANTS_HPP
+DECLARE
+  unused VARCHAR(100);
+BEGIN
+  SELECT release INTO unused FROM CastorVersion WHERE release = '2_1_7_20';
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- Error, we can't apply this script
+  raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts before this one.');
+END;
+/
+
+UPDATE CastorVersion SET release = '2_1_8_3';
+COMMIT;
