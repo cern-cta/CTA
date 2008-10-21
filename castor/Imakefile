@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.196 $ $Release$ $Date: 2008/10/17 09:10:02 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.197 $ $Release$ $Date: 2008/10/21 03:25:24 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -429,13 +429,9 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               exception/TooBig.cpp \
               exception/SegmentNotAccessible.cpp \
               exception/TapeOffline.cpp \
-              query/DiskPoolQueryResponseCInt.cpp \
               query/DiskPoolQueryResponse.cpp \
-              query/FileSystemDescriptionCInt.cpp \
               query/FileSystemDescription.cpp \
-              query/DiskServerDescriptionCInt.cpp \
               query/DiskServerDescription.cpp \
-              query/DiskPoolQueryCInt.cpp \
               query/DiskPoolQuery.cpp \
               query/VersionQuery.cpp \
               query/VersionResponse.cpp \
