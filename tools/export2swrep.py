@@ -6,7 +6,7 @@ def usage():
 
 # list of platforms as a tuple (OS, arch)
 platforms = (('SLC4', 'x86_64', 'x86_64_slc4'),
-             ('SLC4', 'i386', 'i386_slc4'))
+             ('SLC4', 'i386',   'i386_slc4'))
 
 # First check the arguments
 if len(sys.argv) != 2:
@@ -41,21 +41,10 @@ def export2swrep(arch, rpm):
     if (f.close() != None):
         print cmd
         print out
-    
-# send all packages to swrep, with one thread per platform to be faster
-class SWREP (threading.Thread):
-    def __init__ (self, archDesc):
-        self.OS = archDesc[0]
-        self.arch = archDesc[1]
-        self.swrepArch = archDesc[2]
-        threading.Thread.__init__(self)
-    def run ( self ):
-        dir = intReleaseDir + os.sep + self.OS + os.sep + self.arch
-        for rpm in os.listdir(dir):
-            export2swrep(self.swrepArch, dir + os.sep + rpm)
-            # export the 32bit castor-lib and castor-devel packages in 64 bits
-            if self.OS == 'SLC4' and self.arch == 'i386' and (rpm.startswith('castor-lib-2') or rpm.startswith('castor-devel-2')):
-                export2swrep('x86_64_slc4', dir + os.sep + rpm)
 
+# export packages
 for p in platforms:
-    SWREP(p).start()
+    dir = intReleaseDir + "/" + p[0]
+    if p[1] == "x86_64" and p[0] == "SLC4":
+	export2swrep(p[2], dir + "/i386/castor-lib-2* " + dir + "/i386/castor-devel-2*")
+    export2swrep(p[2], dir + "/" + p[1] + "/")
