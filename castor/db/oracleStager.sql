@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.689 $ $Date: 2008/10/17 09:26:56 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.690 $ $Date: 2008/10/22 06:26:15 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1806,6 +1806,7 @@ BEGIN
      WHERE id = dcsToRm(i);
 END;
 
+
 /* PL/SQL method implementing stageRm */
 CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
                                      fid IN INTEGER,
@@ -1817,6 +1818,7 @@ CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
   nbRes INTEGER;
   dcsToRm "numList";
   sr "numList";
+	dcStatus INTEGER;
 BEGIN
   ret := 0;
   BEGIN
@@ -1837,7 +1839,8 @@ BEGIN
   END;
   -- First select involved diskCopies
   scId := svcClassId;
-  IF scId > 0 THEN
+  dcStatus := 0;
+	IF scId > 0 THEN
     SELECT id BULK COLLECT INTO dcsToRm FROM (
       -- first physical diskcopies
       SELECT DC.id
@@ -1869,12 +1872,36 @@ BEGIN
       RETURN;
     END IF;
     -- Check whether something else is left: if not, do as
-    -- we are performing a stageRm everywhere
-    SELECT count(*) INTO nbRes FROM DiskCopy
-     WHERE castorFile = cfId
-       AND status IN (0, 1, 2, 5, 6, 10, 11)  -- WAITDISK2DISKCOPY, WAITTAPERECALL, STAGED, STAGEOUT, CANBEMIGR, WAITFS, WAITFS_SCHEDULING
-       AND id NOT IN (SELECT /*+ CARDINALITY(dcidTable 5) */ *
-                        FROM TABLE(dcsToRm) dcidTable);
+    -- we are performing a stageRm everywhere.
+    -- First select current status of the diskCopies: if CANBEMIGR,
+    -- make sure we don't drop the last remaining valid migrable copy,
+    -- i.e. drop the disk only copies from the count.
+    SELECT status INTO dcStatus
+      FROM DiskCopy
+     WHERE id = dcsToRm(1);
+    IF dcStatus = 10 THEN  -- CANBEMIGR
+      SELECT count(*) INTO nbRes FROM DiskCopy
+       WHERE castorFile = cfId
+         AND status IN (1, 10)  -- WAITDISK2DISKCOPY, CANBEMIGR
+         AND id NOT IN (
+           (SELECT /*+ CARDINALITY(dcidTable 5) */ *
+              FROM TABLE(dcsToRm) dcidTable)
+           UNION
+           (SELECT DC.id     -- all diskcopies in Tape0 pools
+              FROM DiskCopy DC, FileSystem, DiskPool2SvcClass D2S, SvcClass, FileClass
+             WHERE DC.castorFile = cfId
+               AND DC.fileSystem = FileSystem.id
+               AND FileSystem.diskPool = D2S.parent
+               AND D2S.child = SvcClass.id
+               AND SvcClass.forcedFileClass = FileClass.id
+               AND FileClass.nbCopies = 0));
+    ELSE
+      SELECT count(*) INTO nbRes FROM DiskCopy
+         WHERE castorFile = cfId
+           AND status IN (0, 1, 2, 5, 6, 10, 11)  -- WAITDISK2DISKCOPY, WAITTAPERECALL, STAGED, STAGEOUT, CANBEMIGR, WAITFS, WAITFS_SCHEDULING
+           AND id NOT IN (SELECT /*+ CARDINALITY(dcidTable 5) */ *
+                            FROM TABLE(dcsToRm) dcidTable);
+    END IF;
     IF nbRes = 0 THEN
       scId := 0;
     END IF;
