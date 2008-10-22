@@ -2,8 +2,8 @@
 import sys, re, os, shutil, tempfile
 
 # list of platforms as a tuple (OS, arch, machine where to build)
-platforms = (('SLC4', 'x86_64', 'lxbuild085.cern.ch'),
-             ('SLC4', 'i386',   'lxs5012.cern.ch'))
+platforms = (('SLC4', 'i386',   'lxc2slc4-i386.cern.ch'),
+             ('SLC4', 'x86_64', 'lxc2slc4-x64.cern.ch'))
 
 def usage():
     print sys.argv[0] + " <CVS tag of the release>"
@@ -29,6 +29,16 @@ def findUpdates(d):
     for f in os.listdir(d):
         if updRegExp.match(f):
             res.append(f)
+    return res
+
+def findGrantAndDropScripts(workDir, dirs):
+    res = []
+    dgRegExp = re.compile('\w+_oracle_(drop|grant).sql(plus)?')
+    for d in (dirs):
+        d = workDir + os.sep + d
+        for f in os.listdir(d):
+            if dgRegExp.match(f):
+                res.append(d + os.sep + f) 
     return res
 
 intReleaseDir = ''
@@ -84,6 +94,9 @@ shutil.copyfile(workDir + os.sep + 'CASTOR2' + os.sep + 'ReleaseNotes', intRelea
 updDir = workDir + os.sep + 'CASTOR2' + os.sep + 'upgrades'
 for f in findUpdates(updDir):
     shutil.copyfile(updDir + os.sep + f, intReleaseDir + os.sep + 'dbupgrades' + os.sep + f)
+for f in findGrantAndDropScripts(workDir + os.sep + 'CASTOR2', 
+                                 ['castor/db', 'castor/repack', 'dlf/scripts/oracle']):
+    shutil.copy(f, intReleaseDir + os.sep + 'dbcreation' + os.sep)
 os.chdir(workDir + os.sep + 'CASTOR2')
 runCommand('./makesql.sh ' + intReleaseDir + os.sep + 'dbcreation', 'Could not publish SQL scripts')
 
@@ -91,13 +104,13 @@ runCommand('./makesql.sh ' + intReleaseDir + os.sep + 'dbcreation', 'Could not p
 outputs = []
 print "Spawning remote builds..."
 for p in platforms:
-    # first copy over the tar ball
+    # first copy over the tar ball and build script
     print "Sending tarBall to " + p[2]
-    cmd = 'scp ' + workDir + os.sep + tarBall + ' ' + p[2] + ':/tmp/' + tarBall
+    cmd = 'scp ' + workDir + os.sep + tarBall + ' ' + p[2] + ':/tmp/' + tarBall + ' ' + workDir + os.sep + 'CASTOR2/tools/buildRPMs.py ' + p[2] + ':/tmp/'
     runCommand(cmd, 'Error while exporting tar ball to ' + p[2])
     # then launch the compilation in parallel
     print "Launching RPM build on " + p[2]
-    cmd = 'ssh ' + p[2] + ' "python /afs/cern.ch/project/castor/CASTOR2/tools/buildRPMs.py ' + p[0] + ' ' + p[1] + ' ' + fullVersion + ' /tmp/' + tarBall + '"'
+    cmd = 'ssh ' + p[2] + ' "python /tmp/buildRPMs.py ' + p[0] + ' ' + p[1] + ' ' + fullVersion + ' /tmp/' + tarBall + '"'
     outputs.append((p[2], os.popen4(cmd)[1]))
 
 for o in outputs:

@@ -1,7 +1,7 @@
-#!/usr/bin/tcsh
+#!/usr/local/bin/tcsh
 
 if $?CASTOR_ROOT then
-  setenv CASTOR_ROOT /usr/local/src/CASTOR2
+  setenv CASTOR_ROOT /afs/cern.ch/user/w/waldron/cvs/CASTOR2
 endif
 
 rm -f MagicNumbers
