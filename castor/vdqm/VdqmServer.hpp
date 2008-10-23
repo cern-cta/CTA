@@ -98,7 +98,7 @@ namespace castor {
       /**
        * Default number of remote tape copy job submitter threads.
        */
-      static const int s_RTCPJobSubmitterDefaultThreadNumber = 20;
+      static const int s_RTCPJobSubmitterDefaultThreadNumber = 5;
 
       /**
        * Number of request handler threads.
