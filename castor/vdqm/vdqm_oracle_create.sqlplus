@@ -97,6 +97,20 @@ INSERT INTO TapeRequestStatusCodes VALUES (3, 'REQUEST_SUBMITTED');
 INSERT INTO TapeRequestStatusCodes VALUES (4, 'REQUEST_FAILED');
 COMMIT;
 
+/**
+ * Lock table used to serialise the drive scheduler algorithm.
+ */
+CREATE TABLE VdqmLock(
+  id INTEGER,
+  name VARCHAR2(128) CONSTRAINT NN_VdqmLock_name NOT NULL,
+  CONSTRAINT PK_VdqmLock_id PRIMARY KEY(id),
+  CONSTRAINT U_VdqmLock_name UNIQUE(name));
+
+/**
+ * Insert the lock used to serialise the databse scheduler.
+ */
+INSERT INTO VdqmLock(id, name) VALUES(1, 'SCHEDULER');
+COMMIT;
 
 /* Not null column constraints */
 ALTER TABLE ClientIdentification MODIFY
@@ -1512,6 +1526,7 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     tapeRequestVidVar OUT NOCOPY VARCHAR2
     ) AS
 
+    schedulerLockIdVar   INTEGER;
     tapeDriveStatusVar   NUMBER;
     tapeRequestStatusVar NUMBER;
 
@@ -1521,6 +1536,12 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     tapeDriveNameVar  := '';
     tapeRequestIdVar  := 0;
     tapeRequestVidVar := '';
+
+    -- Take the scheduler lock which is responsible for serializing the
+    -- scheduler algorithm
+    SELECT id INTO schedulerLockIdVar
+      FROM VdqmLock
+      WHERE id = 1;
 
     -- For each potential drive allocation, i.e. a drive allocation for which
     -- no dedications have been taken into account
