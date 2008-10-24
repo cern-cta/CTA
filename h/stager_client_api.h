@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.41 $ $Release$ $Date: 2008/05/29 11:42:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.42 $ $Release$ $Date: 2008/10/24 03:01:38 $ $Author: sponcec3 $
  *
  * the client API to the castor stager
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.41 $
- * @date $Date: 2008/05/29 11:42:39 $
+ * @version $Revision: 1.42 $
+ * @date $Date: 2008/10/24 03:01:38 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.41 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.42 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -1376,49 +1376,6 @@ EXTERN_C int DLL_DECL stage_requestquery _PROTO((struct stage_query_req *request
                                                  struct stage_options* opts));
 
 
-
-/**********************************************************
- *    stage_findrequest                                   *
- **********************************************************/
-
-
-/**
- * Request structure to put a file to CASTOR.
- */
-struct stage_findrequest_resp {
-
-  /**
-   * The id of the matching request
-   */
-  char *requestId;
-
-};
-
-
-
-/**
- * stage_findrequest
- * Find requests dealing with given file gives or usertags.
- * \ingroup Functions
- * 
- * 
- * @param requests   Pointer to the list of file requests
- * @param nbreqs     Number of file requests in the list
- * @param responses  List of file responses, created by the call itself
- * @param nbresps    Number of file responses in the list
- * @param opts       CASTOR stager specific options 
- *
- * @returns 0 in case of success, -1 otherwise
- * @note requestId and responses are allocated by the call, and therefore
- *       should be freed by the client.
- */
-EXTERN_C int DLL_DECL stage_findrequest _PROTO((struct stage_query_req *requests,
-                                                int nbreqs,
-                                                struct stage_findrequest_resp **responses,
-                                                int *nbresps,
-                                                struct stage_options* opts));
-
-
 /**********************************************************
  *    stage_seterrbuf                                     *
  **********************************************************/
@@ -1635,7 +1592,6 @@ ALLOC_STRUCT_LIST_DECL(query_req)
 ALLOC_STRUCT_LIST_DECL(filequery_resp)
 ALLOC_STRUCT_LIST_DECL(requestquery_resp)
 ALLOC_STRUCT_LIST_DECL(subrequestquery_resp)
-ALLOC_STRUCT_LIST_DECL(findrequest_resp)
 
 
 FREE_STRUCT_LIST_DECL(prepareToGet_filereq)
@@ -1651,7 +1607,6 @@ FREE_STRUCT_LIST_DECL(query_req)
 FREE_STRUCT_LIST_DECL(filequery_resp)
 FREE_STRUCT_LIST_DECL(requestquery_resp)
 FREE_STRUCT_LIST_DECL(subrequestquery_resp)
-FREE_STRUCT_LIST_DECL(findrequest_resp)
 
 
 
@@ -1665,9 +1620,5 @@ FREE_STRUCT_LIST_DECL(findrequest_resp)
 #define MOVER_PROTOCOL_XROOT "xroot"
 #define MOVER_PROTOCOL_GSIFTP "gsiftp"
 
-
-
-/* XXX Add FindRequest */
-/*\@}*/
 
 #endif /* stager_client_api_h */
