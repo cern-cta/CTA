@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.35 2008/05/29 07:46:35 sponcec3 Exp $
+ * $Id: stager_client_api_common.cpp,v 1.36 2008/10/24 02:51:02 sponcec3 Exp $
  */
 
 /*
@@ -128,11 +128,6 @@ int _free_subrequestquery_resp (struct stage_subrequestquery_resp  *ptr){
   return 0; 
 }
 
-int _free_findrequest_resp (struct stage_findrequest_resp  *ptr){ 
-  if (ptr->requestId != NULL) free (ptr->requestId);
-  return 0; 
-}
-
 /* ================= */
 /* External routines */
 /* ================= */
@@ -153,7 +148,6 @@ ALLOC_STRUCT_LIST(query_req)
 ALLOC_STRUCT_LIST(filequery_resp)
 ALLOC_STRUCT_LIST(requestquery_resp)
 ALLOC_STRUCT_LIST(subrequestquery_resp)
-ALLOC_STRUCT_LIST(findrequest_resp)
 
 
 FREE_STRUCT_LIST(prepareToGet_filereq)
@@ -169,7 +163,6 @@ FREE_STRUCT_LIST(query_req)
 FREE_STRUCT_LIST(filequery_resp)
 FREE_STRUCT_LIST(requestquery_resp)
 FREE_STRUCT_LIST(subrequestquery_resp)
-FREE_STRUCT_LIST(findrequest_resp)
 
 
 #define STATUS_NA "NA"

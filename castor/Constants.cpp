@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.66 $ $Release$ $Date: 2008/09/22 11:48:02 $ $Author: waldron $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.67 $ $Release$ $Date: 2008/10/24 02:42:44 $ $Author: sponcec3 $
  *
  *
  *
@@ -65,7 +65,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "TapePool",
   "DELETED TYPE",
   "StageFileQueryRequest",
-  "StageFindRequestRequest",
+  "DELETED TYPE",
   "StageGetRequest",
   "StagePrepareToGetRequest",
   "StagePrepareToPutRequest",
@@ -146,7 +146,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "AbortResponse",
   "RequestQueryResponse",
   "FileQueryResponse",
-  "FindReqResponse",
+  "DELETED TYPE",
   "GetUpdateStartResponse",
   "BasicResponse",
   "StartResponse",

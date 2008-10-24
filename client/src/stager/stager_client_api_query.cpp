@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.38 2008/05/05 08:49:56 waldron Exp $
+ * $Id: stager_client_api_query.cpp,v 1.39 2008/10/24 02:51:02 sponcec3 Exp $
  */
 
 /*
@@ -267,20 +267,6 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
     return -1;
   }
   return 0;
-}
-
-
-////////////////////////////////////////////////////////////
-//    stage_findrequest                                   //
-////////////////////////////////////////////////////////////
-
-EXTERN_C int DLL_DECL stage_findrequest(struct stage_query_req *requests,
-					int nbreqs,
-					struct stage_findrequest_resp **responses,
-					int *nbresps,
-					struct stage_options* opts){
-  serrno = SEOPNOTSUP;
-  return -1;
 }
 
 

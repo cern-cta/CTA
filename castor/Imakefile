@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.197 $ $Release$ $Date: 2008/10/21 03:25:24 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.198 $ $Release$ $Date: 2008/10/24 02:42:44 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -191,7 +191,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamTapePoolCnv.cpp \
               io/StreamStageAbortRequestCnv.cpp \
               io/StreamStageFileQueryRequestCnv.cpp \
-              io/StreamStageFindRequestRequestCnv.cpp \
               io/StreamStageGetNextRequestCnv.cpp \
               io/StreamStageGetRequestCnv.cpp \
               io/StreamStagePrepareToGetRequestCnv.cpp \
@@ -211,7 +210,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamStgFilesDeletedResponseCnv.cpp \
               io/StreamAbortResponseCnv.cpp \
               io/StreamFileQryResponseCnv.cpp \
-              io/StreamFindReqResponseCnv.cpp \
               io/StreamFirstByteWrittenCnv.cpp \
               io/StreamIOResponseCnv.cpp \
               io/StreamRequestQueryResponseCnv.cpp \
@@ -251,8 +249,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               rh/AbortResponseCInt.cpp \
               rh/FileQryResponse.cpp \
               rh/FileQryResponseCInt.cpp \
-              rh/FindReqResponse.cpp \
-              rh/FindReqResponseCInt.cpp \
               rh/IOResponse.cpp \
               rh/IOResponseCInt.cpp \
               rh/RequestQueryResponse.cpp \
@@ -353,8 +349,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/StageAbortRequestCInt.cpp \
               stager/StageFileQueryRequest.cpp \
               stager/StageFileQueryRequestCInt.cpp \
-              stager/StageFindRequestRequest.cpp \
-              stager/StageFindRequestRequestCInt.cpp \
               stager/StageGetNextRequest.cpp \
               stager/StageGetNextRequestCInt.cpp \
               stager/StageGetRequest.cpp \
