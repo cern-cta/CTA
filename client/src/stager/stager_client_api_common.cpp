@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.36 2008/10/24 02:51:02 sponcec3 Exp $
+ * $Id: stager_client_api_common.cpp,v 1.37 2008/10/24 06:54:38 sponcec3 Exp $
  */
 
 /*
@@ -100,31 +100,12 @@ int _free_fileresp (struct stage_fileresp  *ptr){
   return 0; 
 }
 
-int _free_query_req (struct stage_query_req  *ptr){ 
-  if (ptr->param != NULL) free (ptr->param);
-  return 0; 
-}
-
 int _free_filequery_resp (struct stage_filequery_resp  *ptr){ 
   if (ptr->castorfilename != NULL) free (ptr->castorfilename);
   if (ptr->filename != NULL) free (ptr->filename);
   if (ptr->poolname != NULL) free (ptr->poolname);
   if (ptr->diskserver != NULL) free(ptr->diskserver);
   if (ptr->errorMessage) free (ptr->errorMessage);
-  return 0; 
-}
-
-int _free_requestquery_resp (struct stage_requestquery_resp  *ptr){ 
-  if (ptr->requestId != NULL) free (ptr->requestId);
-  if (ptr->errorMessage != NULL) free (ptr->errorMessage);
-  if (ptr->subrequests != NULL){
-    for (int i=0; i<ptr->nbsubrequests; i++)
-      ;//free_subrequestquery_resp(&ptr->subrequests[i]);
-  }
-  return 0; 
-}
-
-int _free_subrequestquery_resp (struct stage_subrequestquery_resp  *ptr){ 
   return 0; 
 }
 
@@ -144,10 +125,7 @@ ALLOC_STRUCT_LIST(prepareToUpdate_filereq)
 ALLOC_STRUCT_LIST(prepareToUpdate_fileresp)
 ALLOC_STRUCT_LIST(filereq)
 ALLOC_STRUCT_LIST(fileresp)
-ALLOC_STRUCT_LIST(query_req)
 ALLOC_STRUCT_LIST(filequery_resp)
-ALLOC_STRUCT_LIST(requestquery_resp)
-ALLOC_STRUCT_LIST(subrequestquery_resp)
 
 
 FREE_STRUCT_LIST(prepareToGet_filereq)
@@ -159,10 +137,7 @@ FREE_STRUCT_LIST(prepareToUpdate_filereq)
 FREE_STRUCT_LIST(prepareToUpdate_fileresp)
 FREE_STRUCT_LIST(filereq)
 FREE_STRUCT_LIST(fileresp)
-FREE_STRUCT_LIST(query_req)
 FREE_STRUCT_LIST(filequery_resp)
-FREE_STRUCT_LIST(requestquery_resp)
-FREE_STRUCT_LIST(subrequestquery_resp)
 
 
 #define STATUS_NA "NA"

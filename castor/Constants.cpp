@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.67 $ $Release$ $Date: 2008/10/24 02:42:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.68 $ $Release$ $Date: 2008/10/24 06:54:35 $ $Author: sponcec3 $
  *
  *
  *
@@ -72,7 +72,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "StagePrepareToUpdateRequest",
   "StagePutDoneRequest",
   "StagePutRequest",
-  "StageRequestQueryRequest",
+  "DELETED TYPE",
   "StageRmRequest",
   "StageUpdateFileStatusRequest",
   "StageUpdateRequest",
@@ -144,7 +144,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "Response",
   "IOResponse",
   "AbortResponse",
-  "RequestQueryResponse",
+  "DELETED TYPE",
   "FileQueryResponse",
   "DELETED TYPE",
   "GetUpdateStartResponse",

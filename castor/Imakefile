@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.198 $ $Release$ $Date: 2008/10/24 02:42:44 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.199 $ $Release$ $Date: 2008/10/24 06:54:36 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -200,7 +200,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamStagePutNextRequestCnv.cpp \
               io/StreamStagePutRequestCnv.cpp \
               io/StreamStageReleaseFilesRequestCnv.cpp \
-              io/StreamStageRequestQueryRequestCnv.cpp \
               io/StreamStageRmRequestCnv.cpp \
               io/StreamStageUpdateNextRequestCnv.cpp \
               io/StreamStageUpdateRequestCnv.cpp \
@@ -212,7 +211,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamFileQryResponseCnv.cpp \
               io/StreamFirstByteWrittenCnv.cpp \
               io/StreamIOResponseCnv.cpp \
-              io/StreamRequestQueryResponseCnv.cpp \
               io/StreamDiskPoolQueryResponseCnv.cpp \
               io/StreamFileSystemDescriptionCnv.cpp \
               io/StreamDiskServerDescriptionCnv.cpp \
@@ -251,8 +249,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               rh/FileQryResponseCInt.cpp \
               rh/IOResponse.cpp \
               rh/IOResponseCInt.cpp \
-              rh/RequestQueryResponse.cpp \
-              rh/RequestQueryResponseCInt.cpp \
               rh/BasicResponse.cpp \
               rh/BasicResponseCInt.cpp \
               monitoring/AdminStatusCodes.cpp \
@@ -368,8 +364,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/StagePutRequestCInt.cpp \
               stager/StageReleaseFilesRequest.cpp \
               stager/StageReleaseFilesRequestCInt.cpp \
-              stager/StageRequestQueryRequest.cpp \
-              stager/StageRequestQueryRequestCInt.cpp \
               stager/StageRmRequest.cpp \
               stager/StageRmRequestCInt.cpp \
               stager/StageUpdateNextRequest.cpp \

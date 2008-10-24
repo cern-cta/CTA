@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.91 $ $Release$ $Date: 2008/10/24 02:49:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.92 $ $Release$ $Date: 2008/10/24 06:54:37 $ $Author: sponcec3 $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -48,7 +48,6 @@
 #include "castor/query/VersionQuery.hpp"
 #include "castor/query/VersionResponse.hpp"
 #include "castor/stager/StageFileQueryRequest.hpp"
-#include "castor/stager/StageRequestQueryRequest.hpp"
 #include "castor/query/DiskPoolQuery.hpp"
 #include "castor/query/DiskPoolQueryResponse.hpp"
 #include "castor/query/DiskServerDescription.hpp"
@@ -879,7 +878,6 @@ void castor::stager::daemon::QueryRequestSvcThread::process
   try {
     // Getting the parameters
     if (req->type() == OBJ_StageFileQueryRequest ||
-        req->type() == OBJ_StageRequestQueryRequest ||
         req->type() == OBJ_VersionQuery) {
       svcs->fillObj(&ad, req, castor::OBJ_QueryParameter);
     }
@@ -891,7 +889,6 @@ void castor::stager::daemon::QueryRequestSvcThread::process
     // Getting the svcClass
     // We take an empty svcClass or '*' as a wildcard
     if (req->type() == OBJ_StageFileQueryRequest ||
-        req->type() == OBJ_StageRequestQueryRequest ||
         req->type() == OBJ_DiskPoolQuery) {
       std::string className = req->svcClassName();
       if ("" != className && "*" != className) {
@@ -942,10 +939,6 @@ void castor::stager::daemon::QueryRequestSvcThread::process
     case castor::OBJ_StageFileQueryRequest:
       castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
         (req, client, qrySvc, uuid);
-      break;
-    case castor::OBJ_StageRequestQueryRequest:
-      //castor::stager::daemon::QueryRequestSvcThread::handle_requestQueryRequest
-      //  (req, client, qrySvc, uuid);
       break;
     case castor::OBJ_DiskPoolQuery:
       castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
