@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
 
   server.addThreadPool(
     new castor::server::SignalThreadPool("JobSubmitterThreadPool",
-      new castor::vdqm::RTCPJobSubmitterThread(), 10));
+      new castor::vdqm::RTCPJobSubmitterThread(), 5));
 
   server.addNotifierThreadPool(server.getListenPort());
 
