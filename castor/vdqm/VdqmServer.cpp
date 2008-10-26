@@ -106,8 +106,16 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  requestHandlerThreadPool->setNbThreads(
-    server.getRequestHandlerThreadNumber());
+  {
+    int nbThreads = server.getRequestHandlerThreadNumber();
+
+    requestHandlerThreadPool->setNbThreads(nbThreads);
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("nbThreads", nbThreads)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      castor::vdqm::VDQM_SET_REQUEST_HANDLER_THREAD_NB, 1, params);
+  }
 
   driveSchedulerThreadPool = server.getThreadPool('D');
   if(driveSchedulerThreadPool == NULL) {
@@ -115,7 +123,16 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  driveSchedulerThreadPool->setNbThreads(server.getSchedulerThreadNumber());
+  {
+    int nbThreads = server.getSchedulerThreadNumber();
+
+    driveSchedulerThreadPool->setNbThreads(nbThreads);
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("nbThreads", nbThreads)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      castor::vdqm::VDQM_SET_SCHEDULER_THREAD_NB, 1, params);
+  }
 
   rtcpJobSubmitterThreadPool = server.getThreadPool('J');
   if(rtcpJobSubmitterThreadPool == NULL) {
@@ -123,8 +140,16 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  rtcpJobSubmitterThreadPool->setNbThreads(
-    server.getRTCPJobSubmitterThreadNumber());
+  {
+    int nbThreads = server.getRTCPJobSubmitterThreadNumber();
+
+    rtcpJobSubmitterThreadPool->setNbThreads(nbThreads);
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("nbThreads", nbThreads)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      castor::vdqm::VDQM_SET_RTCP_JOB_SUBMITTER_THREAD_NB, 1, params);
+  }
 
 
   try {
@@ -159,7 +184,8 @@ castor::vdqm::VdqmServer::VdqmServer()
   throw():
   castor::server::BaseDaemon("Vdqm"),
   m_requestHandlerThreadNumber(s_requestHandlerDefaultThreadNumber),
-  m_RTCPJobSubmitterThreadNumber(s_RTCPJobSubmitterDefaultThreadNumber) {
+  m_RTCPJobSubmitterThreadNumber(s_RTCPJobSubmitterDefaultThreadNumber),
+  m_schedulerThreadNumber(s_schedulerDefaultThreadNumber) {
   // Initializes the DLF logging including the definition of the predefined
   // messages.
   dlfInit(s_dlfMessages);
