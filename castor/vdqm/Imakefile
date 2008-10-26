@@ -33,7 +33,7 @@ DEBUG  = -g
 #endif
 #endif
 
-INCLUDES = -I FileName(FileName(..,..),h) -I FileName(..,..)
+INCLUDES = -I FileName(..,..) -I FileName(FileName(..,..),h)
 #CPPFLAGS = -DPRINT_NETWORK_MESSAGES -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\" $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 CPPFLAGS = -pedantic -Werror -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\" $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 CFLAGS = -O -I$(INCLUDES) $(THREADFLAGS)
@@ -55,6 +55,7 @@ VDQMBIN_SRCS = CDevTools.cpp \
                VdqmDlfMessageStrings.cpp \
                VdqmMagic2ProtocolInterpreter.cpp \
                VdqmMagic3ProtocolInterpreter.cpp \
+               VdqmMain.cpp \
                VdqmServer.cpp \
                handler/BaseRequestHandler.cpp \
                handler/TapeDriveConsistencyChecker.cpp \

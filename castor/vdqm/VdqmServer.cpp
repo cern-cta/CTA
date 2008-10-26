@@ -22,18 +22,6 @@
  * @author castor dev team
  *****************************************************************************/
  
- 
-// Include Files
-#include <stdio.h>
-#include <sstream>
-#include <string>
-
-#include "Cgetopt.h"
-#include "Cinit.h"
-#include "Cuuid.h"
-#include "Cpool_api.h"
-#include "errno.h"
-
 #define VDQMSERV
 
 #include "castor/Services.hpp"
@@ -48,133 +36,17 @@
 #include "castor/vdqm/RTCPJobSubmitterThread.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/VdqmServer.hpp"
+#include "h/Cgetopt.h"
+#include "h/Cinit.h"
+#include "h/Cuuid.h"
+#include "h/Cpool_api.h"
 #include "h/net.h"
-#include "h/vdqm_constants.h"  // e.g. Magic Number of old vdqm protocol
+#include "h/vdqm_constants.h"
 
-
-//------------------------------------------------------------------------------
-// main method
-//------------------------------------------------------------------------------
-int main(int argc, char *argv[]) {
-
-  castor::vdqm::VdqmServer       server;
-  castor::server::BaseThreadPool *requestHandlerThreadPool   = NULL;
-  castor::server::BaseThreadPool *driveSchedulerThreadPool   = NULL;
-  castor::server::BaseThreadPool *rtcpJobSubmitterThreadPool = NULL;
-
-
-  //-----------------------
-  // Parse the command line
-  //-----------------------
-
-  server.parseCommandLine(argc, argv);
-
-
-  //--------------------------------
-  // Initialise the database service
-  //--------------------------------
-
-  server.initDatabaseService();
-
-
-  //------------------------
-  // Create the thread pools
-  //------------------------
-
-  server.addThreadPool(
-    new castor::server::TCPListenerThreadPool("RequestHandlerThreadPool",
-      new castor::vdqm::RequestHandlerThread(), server.getListenPort()));
-
-  server.addThreadPool(
-    new castor::server::SignalThreadPool("DriveSchedulerThreadPool",
-      new castor::vdqm::DriveSchedulerThread(), 10));
-
-  server.addThreadPool(
-    new castor::server::SignalThreadPool("JobSubmitterThreadPool",
-      new castor::vdqm::RTCPJobSubmitterThread(), 5));
-
-  server.addNotifierThreadPool(server.getListenPort());
-
-
-  //----------------------------------------------
-  // Set the number of threads in each thread pool
-  //----------------------------------------------
-
-  requestHandlerThreadPool = server.getThreadPool('R');
-  if(requestHandlerThreadPool == NULL) {
-    std::cerr << "Failed to get RequestHandlerThreadPool" << std::endl;
-    return 1;
-  }
-
-  {
-    int nbThreads = server.getRequestHandlerThreadNumber();
-
-    requestHandlerThreadPool->setNbThreads(nbThreads);
-
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("nbThreads", nbThreads)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-      castor::vdqm::VDQM_SET_REQUEST_HANDLER_THREAD_NB, 1, params);
-  }
-
-  driveSchedulerThreadPool = server.getThreadPool('D');
-  if(driveSchedulerThreadPool == NULL) {
-    std::cerr << "Failed to get DriveSchedulerThreadPool" << std::endl;
-    return 1;
-  }
-
-  {
-    int nbThreads = server.getSchedulerThreadNumber();
-
-    driveSchedulerThreadPool->setNbThreads(nbThreads);
-
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("nbThreads", nbThreads)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-      castor::vdqm::VDQM_SET_SCHEDULER_THREAD_NB, 1, params);
-  }
-
-  rtcpJobSubmitterThreadPool = server.getThreadPool('J');
-  if(rtcpJobSubmitterThreadPool == NULL) {
-    std::cerr << "Failed to get JobSubmitterThreadPool" << std::endl;
-    return 1;
-  }
-
-  {
-    int nbThreads = server.getRTCPJobSubmitterThreadNumber();
-
-    rtcpJobSubmitterThreadPool->setNbThreads(nbThreads);
-
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("nbThreads", nbThreads)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-      castor::vdqm::VDQM_SET_RTCP_JOB_SUBMITTER_THREAD_NB, 1, params);
-  }
-
-
-  try {
-
-    //-----------------
-    // Start the server
-    //-----------------
-
-    server.start();
-
-  } catch (castor::exception::Exception &e) {
-    std::cerr << "Failed to start VDQM server : "
-              << sstrerror(e.code()) << std::endl
-              << e.getMessage().str() << std::endl;
-
-    return 1;
-  } catch (...) {
-    std::cerr << "Failed to start VDQM server : Caught general exception!"
-      << std::endl;
-    
-    return 1;
-  }
-  
-  return 0;
-}
+#include <errno.h>
+#include <stdio.h>
+#include <sstream>
+#include <string>
 
 
 //------------------------------------------------------------------------------
