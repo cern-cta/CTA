@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      Constants.hpp
+ *                      Utils.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,49 +19,37 @@
  *
  *
  *
- * @author castor dev team
+ *
+ * @author Castor dev team
  *****************************************************************************/
 
-#ifndef CASTOR_VDQM_CONSTANTS_HPP
-#define CASTOR_VDQM_CONSTANTS_HPP 1
+#ifndef CASTOR_VDQM_UTILS_HPP
+#define CASTOR_VDQM_UTILS_HPP 1
 
 
-namespace castor { namespace vdqm {
-  /**
-   * The schema version with which this release of the VDQM is compatible with.
-   */
-  const std::string VDQMSCHEMAVERSION = "2_1_8_3";
+namespace castor {
 
-  /**
-   * Default number of request handler threads.
-   */
-  const int REQUESTHANDLERDEFAULTTHREADNUMBER = 20;
+  namespace vdqm {
+  	
+    /**
+     * Collection of general-purpose static methods.
+     */
+    class Utils {
+    public:
 
-  /**
-   * Default number of remote tape copy job submitter threads.
-   */
-  const int RTCPJOBSUBMITTERDEFAULTTHREADNUMBER = 5;
+      /**
+       * checks if the specified string is a valid unsigned integer.
+       *
+       * @param str The string to be checked.
+       * @returns true if the string is a valid unsigned integer, else false.
+       */
+      static bool isAValidUInt(char *str);
 
-  /**
-   * Default number of scheduler threads.
-   */
-  const int SCHEDULERDEFAULTTHREADNUMBER = 1;
+    }; // class Utils
 
-  /**
-   * Default VDQM port number.
-   */
-  const int VDQMPORT = 5012;
+  } // namespace vdqm
 
-  /**
-   * Default VDQM secure port number.
-   */
-  const int SVDQMPORT = 5512;
-
-  /**
-   * Default VDQM UDP notification port number.
-   */
-  const int VDQMNOTIFYPORT = 5012;
-} } // namespace vdqm - namespace castor
+} // namespace castor
 
 
-#endif // CASTOR_VDQM_CONSTANTS_HPP
+#endif // CASTOR_VDQM_UTILS_HPP

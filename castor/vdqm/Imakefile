@@ -52,6 +52,7 @@ VDQMBIN_SRCS = CDevTools.cpp \
                RTCopyDConnection.cpp \
                RTCPJobSubmitterThread.cpp \
                SocketHelper.cpp \
+               Utils.cpp \
                VdqmDlfMessageStrings.cpp \
                VdqmMagic2ProtocolInterpreter.cpp \
                VdqmMagic3ProtocolInterpreter.cpp \

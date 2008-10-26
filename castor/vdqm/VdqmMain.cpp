@@ -33,7 +33,6 @@
 #include "castor/vdqm/VdqmServer.hpp"
 
 #include <stdio.h>
-#include <sstream>
 #include <string>
 
 
@@ -66,9 +65,18 @@ int main(int argc, char *argv[]) {
   // Create the thread pools
   //------------------------
 
-  server.addThreadPool(
-    new castor::server::TCPListenerThreadPool("RequestHandlerThreadPool",
-      new castor::vdqm::RequestHandlerThread(), server.getListenPort()));
+  {
+    const int vdqmPort = server.getListenPort();
+
+    server.addThreadPool(
+      new castor::server::TCPListenerThreadPool("RequestHandlerThreadPool",
+        new castor::vdqm::RequestHandlerThread(), vdqmPort));
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("vdqmPort", vdqmPort)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      castor::vdqm::VDQM_SET_VDQM_PORT, 1, params);
+  }
 
   server.addThreadPool(
     new castor::server::SignalThreadPool("DriveSchedulerThreadPool",
@@ -76,9 +84,19 @@ int main(int argc, char *argv[]) {
 
   server.addThreadPool(
     new castor::server::SignalThreadPool("JobSubmitterThreadPool",
-      new castor::vdqm::RTCPJobSubmitterThread(), 5));
+      new castor::vdqm::RTCPJobSubmitterThread(), 10));
 
-  server.addNotifierThreadPool(server.getListenPort());
+  // Add a dedicated UDP thread pool for getting wakeup notifications
+  {
+    int notifyPort = server.getNotifyPort();
+
+    server.addNotifierThreadPool(notifyPort);
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("notifyPort", notifyPort)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      castor::vdqm::VDQM_SET_UDP_NOTIFY_PORT, 1, params);
+  }
 
 
   //----------------------------------------------

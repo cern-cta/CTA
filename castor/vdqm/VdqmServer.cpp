@@ -34,14 +34,15 @@
 #include "castor/vdqm/ProtocolFacade.hpp"
 #include "castor/vdqm/RequestHandlerThread.hpp"
 #include "castor/vdqm/RTCPJobSubmitterThread.hpp"
+#include "castor/vdqm/Utils.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/VdqmServer.hpp"
 #include "h/Cgetopt.h"
 #include "h/Cinit.h"
 #include "h/Cuuid.h"
 #include "h/Cpool_api.h"
+#include "h/common.h"
 #include "h/net.h"
-#include "h/vdqm_constants.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -301,9 +302,44 @@ void castor::vdqm::VdqmServer::initDatabaseService() {
 //------------------------------------------------------------------------------
 // getListenPort
 //------------------------------------------------------------------------------
-int castor::vdqm::VdqmServer::getListenPort()
-{
-  return VDQM_PORT;
+int castor::vdqm::VdqmServer::getListenPort() {
+  int port = VDQMPORT; // Initialise to default value
+  char *const configEntry = getconfent("VDQM", "PORT", 0);
+
+  if(configEntry != NULL) {
+    if(Utils::isAValidUInt(configEntry)) {
+      port = atoi(configEntry);
+    } else {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("invalidValue", configEntry)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+        VDQM_INVALID_PORT_ENTRY, 1, params);
+    }
+  }
+
+  return port;
+}
+
+
+//------------------------------------------------------------------------------
+// getNotifyPort
+//------------------------------------------------------------------------------
+int castor::vdqm::VdqmServer::getNotifyPort() {
+  int port = VDQMNOTIFYPORT;  // Initialise to default value
+  char *const configEntry = getconfent("VDQM", "NOTIFYPORT", 0);
+
+  if(configEntry != NULL) {
+    if(Utils::isAValidUInt(configEntry)) {
+      port = atoi(configEntry);
+    } else {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("invalidValue", configEntry)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+        VDQM_INVALID_NOTIFY_PORT_ENTRY, 1, params);
+    }
+  }
+
+  return port;
 }
 
 

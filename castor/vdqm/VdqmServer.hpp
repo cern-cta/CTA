@@ -72,6 +72,12 @@ namespace castor {
       int getListenPort();
 
       /**
+       * Returns the UPD port on which the server will listen fori
+       * notifications.
+       */
+      int getNotifyPort();
+
+      /**
        * Returns the number of threads in the request handler thread pool.
        */
       int getRequestHandlerThreadNumber();
