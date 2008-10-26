@@ -67,6 +67,18 @@ namespace castor {
       void initDatabaseService();
 
       /**
+       * Returns the scheduler timeout, in other words the time a scheduler
+       * thread will sleep when there is no work to be done.
+       */
+      int getSchedulerTimeout();
+
+      /**
+       * Returns the RTCP job submitter timeout, in other words the time an
+       * RTCP job submitter thread will sleep when there is no work to be done.
+       */
+      int getRTCPJobSubmitterTimeout();
+
+      /**
        * Returns the port on which the server will listen.
        */
       int getListenPort();

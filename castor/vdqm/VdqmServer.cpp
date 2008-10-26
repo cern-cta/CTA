@@ -300,6 +300,50 @@ void castor::vdqm::VdqmServer::initDatabaseService() {
 
 
 //------------------------------------------------------------------------------
+// getSchedulerTimeout
+//------------------------------------------------------------------------------
+int castor::vdqm::VdqmServer::getSchedulerTimeout() {
+  int timeout = SCHEDULERTIMEOUT; // Initialise to default value
+  char *const configEntry = getconfent("VDQM", "SCHEDULERTIMEOUT", 0);
+
+  if(configEntry != NULL) {
+    if(Utils::isAValidUInt(configEntry)) {
+      timeout = atoi(configEntry);
+    } else {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("invalidValue", configEntry)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+        VDQM_INVALID_SCHEDULERTIMEOUT_ENTRY, 1, params);
+    }
+  }
+
+  return timeout;
+}
+
+
+//------------------------------------------------------------------------------
+// getRTCPJobSubmitterTimeout
+//------------------------------------------------------------------------------
+int castor::vdqm::VdqmServer::getRTCPJobSubmitterTimeout() {
+  int timeout = RTCPJOBSUBMITTERTIMEOUT; // Initialise to default value
+  char *const configEntry = getconfent("VDQM", "RTCPJOBSUBMITTERTIMEOUT", 0);
+
+  if(configEntry != NULL) {
+    if(Utils::isAValidUInt(configEntry)) {
+      timeout = atoi(configEntry);
+    } else {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("invalidValue", configEntry)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+        VDQM_INVALID_RTCPJOBSUBMITTERTIMEOUT_ENTRY, 1, params);
+    }
+  }
+
+  return timeout;
+}
+
+
+//------------------------------------------------------------------------------
 // getListenPort
 //------------------------------------------------------------------------------
 int castor::vdqm::VdqmServer::getListenPort() {
@@ -335,7 +379,7 @@ int castor::vdqm::VdqmServer::getNotifyPort() {
       castor::dlf::Param params[] = {
         castor::dlf::Param("invalidValue", configEntry)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-        VDQM_INVALID_NOTIFY_PORT_ENTRY, 1, params);
+        VDQM_INVALID_NOTIFYPORT_ENTRY, 1, params);
     }
   }
 

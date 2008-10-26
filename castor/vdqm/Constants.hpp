@@ -61,6 +61,18 @@ namespace castor { namespace vdqm {
    * Default VDQM UDP notification port number.
    */
   const int VDQMNOTIFYPORT = 5012;
+
+  /**
+   * Default scheduler timeout, in other words the time a scheduler thread will
+   * sleep when there is no work to be done.
+   */
+  const int SCHEDULERTIMEOUT = 10;
+
+  /**
+   * Default RTCP job submitter timeout, in other words the time an RTCP job
+   * submitter thread will sleep when there is no work to be done.
+   */
+  const int RTCPJOBSUBMITTERTIMEOUT = 10;
 } } // namespace vdqm - namespace castor
 
 
