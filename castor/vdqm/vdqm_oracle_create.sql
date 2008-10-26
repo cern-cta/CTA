@@ -51,7 +51,7 @@ INSERT INTO CastorVersion VALUES ('-', '2_1_8_3');
  *******************************************************************/
 
 /* Update the schema version number */
-UPDATE CastorVersion SET schemaVersion = '2_1_7_20';
+UPDATE CastorVersion SET schemaVersion = '2_1_8_3';
 
 /* Sequence used to generate unique indentifies */
 CREATE SEQUENCE ids_seq CACHE 200;

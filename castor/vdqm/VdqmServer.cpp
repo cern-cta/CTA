@@ -55,9 +55,9 @@
 castor::vdqm::VdqmServer::VdqmServer()
   throw():
   castor::server::BaseDaemon("Vdqm"),
-  m_requestHandlerThreadNumber(s_requestHandlerDefaultThreadNumber),
-  m_RTCPJobSubmitterThreadNumber(s_RTCPJobSubmitterDefaultThreadNumber),
-  m_schedulerThreadNumber(s_schedulerDefaultThreadNumber) {
+  m_requestHandlerThreadNumber(REQUESTHANDLERDEFAULTTHREADNUMBER),
+  m_RTCPJobSubmitterThreadNumber(RTCPJOBSUBMITTERDEFAULTTHREADNUMBER),
+  m_schedulerThreadNumber(SCHEDULERDEFAULTTHREADNUMBER) {
   // Initializes the DLF logging including the definition of the predefined
   // messages.
   dlfInit(s_dlfMessages);
@@ -234,11 +234,11 @@ void castor::vdqm::VdqmServer::usage(std::string programName)
     "\t-c, --config config-file          Configuration file\n"
     "\t-h, --help                        Print this help and exit\n"
     "\t-r, --requestHandlerThreads num   Default "
-    << s_requestHandlerDefaultThreadNumber << "\n"
+    << REQUESTHANDLERDEFAULTTHREADNUMBER << "\n"
     "\t-j, --RTCPJobSubmitterThreads num Default "
-    << s_RTCPJobSubmitterDefaultThreadNumber << "\n"
+    << RTCPJOBSUBMITTERDEFAULTTHREADNUMBER << "\n"
     "\t-s, --schedulerThreads num Default "
-    << s_schedulerDefaultThreadNumber << "\n"
+    << SCHEDULERDEFAULTTHREADNUMBER << "\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
 }

@@ -27,7 +27,25 @@
 
 
 namespace castor { namespace vdqm {
-  const std::string VDQMSCHEMAVERSION = "2_1_7_20";
+  /**
+   * The schema version with which this release of the VDQM is compatible with.
+   */
+  const std::string VDQMSCHEMAVERSION = "2_1_8_3";
+
+  /**
+   * Default number of request handler threads.
+   */
+  const int REQUESTHANDLERDEFAULTTHREADNUMBER = 20;
+
+  /**
+   * Default number of remote tape copy job submitter threads.
+   */
+  const int RTCPJOBSUBMITTERDEFAULTTHREADNUMBER = 5;
+
+  /**
+   * Default number of scheduler threads.
+   */
+  const int SCHEDULERDEFAULTTHREADNUMBER = 1;
 } } // namespace vdqm - namespace castor
 
 

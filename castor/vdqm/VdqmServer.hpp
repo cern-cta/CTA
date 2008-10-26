@@ -96,21 +96,6 @@ namespace castor {
       static castor::dlf::Message s_dlfMessages[];
 
       /**
-       * Default number of request handler threads.
-       */
-      static const int s_requestHandlerDefaultThreadNumber = 20;
-
-      /**
-       * Default number of remote tape copy job submitter threads.
-       */
-      static const int s_RTCPJobSubmitterDefaultThreadNumber = 5;
-
-      /**
-       * Default number of scheduler threads.
-       */
-      static const int s_schedulerDefaultThreadNumber = 1;
-
-      /**
        * Number of request handler threads.
        */
       int m_requestHandlerThreadNumber;
