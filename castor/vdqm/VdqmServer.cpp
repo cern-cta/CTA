@@ -115,8 +115,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  // Only one thread should run the drive scheduler algorithm
-  driveSchedulerThreadPool->setNbThreads(1);
+  driveSchedulerThreadPool->setNbThreads(server.getSchedulerThreadNumber());
 
   rtcpJobSubmitterThreadPool = server.getThreadPool('J');
   if(rtcpJobSubmitterThreadPool == NULL) {
@@ -179,6 +178,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
     {"help"                   , NO_ARGUMENT      , NULL, 'h'},
     {"requestHandlerThreads"  , REQUIRED_ARGUMENT, NULL, 'r'},
     {"rtcpJobSubmitterThreads", REQUIRED_ARGUMENT, NULL, 'j'},
+    {"schedulerThreads"       , REQUIRED_ARGUMENT, NULL, 's'},
     {NULL                     , 0                , NULL,  0 }
   };
 
@@ -186,7 +186,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
   Copterr = 0;
 
   char c;
-  while ((c = Cgetopt_long (argc, argv, "fc:hr:j:", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "fc:hr:j:s:", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;
@@ -225,6 +225,9 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
       break;
     case 'j':
       m_RTCPJobSubmitterThreadNumber = atoi(Coptarg);
+      break;
+    case 's':
+      m_schedulerThreadNumber = atoi(Coptarg);
       break;
     case '?':
       {
@@ -336,6 +339,8 @@ void castor::vdqm::VdqmServer::usage(std::string programName)
     << s_requestHandlerDefaultThreadNumber << "\n"
     "\t-j, --RTCPJobSubmitterThreads num Default "
     << s_RTCPJobSubmitterDefaultThreadNumber << "\n"
+    "\t-s, --schedulerThreads num Default "
+    << s_schedulerDefaultThreadNumber << "\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
 }
@@ -419,4 +424,13 @@ int castor::vdqm::VdqmServer::getRequestHandlerThreadNumber()
 int castor::vdqm::VdqmServer::getRTCPJobSubmitterThreadNumber()
 {
   return m_RTCPJobSubmitterThreadNumber;
+}
+
+
+//------------------------------------------------------------------------------
+// getSchedulerThreadNumber
+//------------------------------------------------------------------------------
+int castor::vdqm::VdqmServer::getSchedulerThreadNumber()
+{
+  return m_schedulerThreadNumber;
 }

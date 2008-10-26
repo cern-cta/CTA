@@ -10,11 +10,11 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH VDQMSERVER 1 "$Date: 2008/10/24 01:17:33 $" CASTOR "VDQM server daemon"
+.TH VDQMSERVER 1 "$Date: 2008/10/26 08:30:47 $" CASTOR "VDQM server daemon"
 .SH NAME
 vdqmserver \- Volume and Drive Queue Manager (VDQM) server
 .SH SYNOPSIS
-.BI "vdqmserver [ -f ] [ -c ] [ -h ] [ -r num ] [ -j num ]"
+.BI "vdqmserver [ -f ] [ -c ] [ -h ] [ -r num ] [ -j num ] [ -s num ]"
 
 .SH DESCRIPTION
 .B vdqmserver
@@ -93,6 +93,9 @@ Set the number of request handler threads.  The default is 20.
 .TP
 \fB\-j, \-\-RTCPJobSubmitterThreads num
 Set the number of RTCP job submitter threads.  The default is 5.
+.TP
+\fB\-s, \-\-schedulerThreads num
+Set the number of scheduler threads.  The default is 1.
 
 
 .SH FILES

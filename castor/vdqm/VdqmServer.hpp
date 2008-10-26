@@ -81,6 +81,11 @@ namespace castor {
        * thread pool.
        */
       int getRTCPJobSubmitterThreadNumber();
+
+      /**
+       * Returns the number of threads in the scheduler thread pool.
+       */
+      int getSchedulerThreadNumber();
       
 
     private:
@@ -101,6 +106,11 @@ namespace castor {
       static const int s_RTCPJobSubmitterDefaultThreadNumber = 5;
 
       /**
+       * Default number of scheduler threads.
+       */
+      static const int s_schedulerDefaultThreadNumber = 1;
+
+      /**
        * Number of request handler threads.
        */
       int m_requestHandlerThreadNumber;
@@ -109,6 +119,11 @@ namespace castor {
        * Number of remote tape copy job submitter threads.
        */
       int m_RTCPJobSubmitterThreadNumber;
+
+      /**
+       * Number of scheduler threads.
+       */
+      int m_schedulerThreadNumber;
     
       /**
        * Prints out the command-line usage message for the VDQM server
