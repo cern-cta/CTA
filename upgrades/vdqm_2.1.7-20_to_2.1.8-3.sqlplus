@@ -49,7 +49,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
-UPDATE CastorVersion SET release = '2_1_8_3';
+UPDATE CastorVersion
+  SET schemaVersion = '2_1_8_3', release = '2_1_8_3';
 COMMIT;
 
 
