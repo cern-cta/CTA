@@ -302,7 +302,8 @@ void castor::vdqm::VdqmServer::initDatabaseService() {
 //------------------------------------------------------------------------------
 // getSchedulerTimeout
 //------------------------------------------------------------------------------
-int castor::vdqm::VdqmServer::getSchedulerTimeout() {
+int castor::vdqm::VdqmServer::getSchedulerTimeout()
+  throw(castor::vdqm::exception::InvalidConfigEntry) {
   int timeout = SCHEDULERTIMEOUT; // Initialise to default value
   char *const configEntry = getconfent("VDQM", "SCHEDULERTIMEOUT", 0);
 
@@ -310,10 +311,14 @@ int castor::vdqm::VdqmServer::getSchedulerTimeout() {
     if(Utils::isAValidUInt(configEntry)) {
       timeout = atoi(configEntry);
     } else {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("invalidValue", configEntry)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-        VDQM_INVALID_SCHEDULERTIMEOUT_ENTRY, 1, params);
+      castor::vdqm::exception::InvalidConfigEntry ex("VDQM",
+        "SCHEDULERTIMEOUT", configEntry);
+
+      ex.getMessage() << "Invalid configuration entry: "
+        << ex.getEntryCategory() << " " << ex.getEntryName() << " "
+        << ex.getEntryValue();
+
+      throw ex;
     }
   }
 
@@ -324,7 +329,8 @@ int castor::vdqm::VdqmServer::getSchedulerTimeout() {
 //------------------------------------------------------------------------------
 // getRTCPJobSubmitterTimeout
 //------------------------------------------------------------------------------
-int castor::vdqm::VdqmServer::getRTCPJobSubmitterTimeout() {
+int castor::vdqm::VdqmServer::getRTCPJobSubmitterTimeout()
+  throw(castor::vdqm::exception::InvalidConfigEntry) {
   int timeout = RTCPJOBSUBMITTERTIMEOUT; // Initialise to default value
   char *const configEntry = getconfent("VDQM", "RTCPJOBSUBMITTERTIMEOUT", 0);
 
@@ -332,10 +338,14 @@ int castor::vdqm::VdqmServer::getRTCPJobSubmitterTimeout() {
     if(Utils::isAValidUInt(configEntry)) {
       timeout = atoi(configEntry);
     } else {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("invalidValue", configEntry)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-        VDQM_INVALID_RTCPJOBSUBMITTERTIMEOUT_ENTRY, 1, params);
+      castor::vdqm::exception::InvalidConfigEntry ex("VDQM",
+        "RTCPJOBSUBMITTERTIMEOUT", configEntry);
+
+      ex.getMessage() << "Invalid configuration entry: "
+        << ex.getEntryCategory() << " " << ex.getEntryName() << " "
+        << ex.getEntryValue();
+
+      throw ex;
     }
   }
 
@@ -346,7 +356,8 @@ int castor::vdqm::VdqmServer::getRTCPJobSubmitterTimeout() {
 //------------------------------------------------------------------------------
 // getListenPort
 //------------------------------------------------------------------------------
-int castor::vdqm::VdqmServer::getListenPort() {
+int castor::vdqm::VdqmServer::getVdqmPort()
+  throw(castor::vdqm::exception::InvalidConfigEntry) {
   int port = VDQMPORT; // Initialise to default value
   char *const configEntry = getconfent("VDQM", "PORT", 0);
 
@@ -354,10 +365,14 @@ int castor::vdqm::VdqmServer::getListenPort() {
     if(Utils::isAValidUInt(configEntry)) {
       port = atoi(configEntry);
     } else {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("invalidValue", configEntry)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-        VDQM_INVALID_PORT_ENTRY, 1, params);
+      castor::vdqm::exception::InvalidConfigEntry ex("VDQM", "PORT",
+        configEntry);
+
+      ex.getMessage() << "Invalid configuration entry: "
+        << ex.getEntryCategory() << " " << ex.getEntryName() << " "
+        << ex.getEntryValue();
+
+      throw ex;
     }
   }
 
@@ -368,7 +383,8 @@ int castor::vdqm::VdqmServer::getListenPort() {
 //------------------------------------------------------------------------------
 // getNotifyPort
 //------------------------------------------------------------------------------
-int castor::vdqm::VdqmServer::getNotifyPort() {
+int castor::vdqm::VdqmServer::getNotifyPort()
+  throw(castor::vdqm::exception::InvalidConfigEntry) {
   int port = VDQMNOTIFYPORT;  // Initialise to default value
   char *const configEntry = getconfent("VDQM", "NOTIFYPORT", 0);
 
@@ -376,10 +392,14 @@ int castor::vdqm::VdqmServer::getNotifyPort() {
     if(Utils::isAValidUInt(configEntry)) {
       port = atoi(configEntry);
     } else {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("invalidValue", configEntry)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-        VDQM_INVALID_NOTIFYPORT_ENTRY, 1, params);
+      castor::vdqm::exception::InvalidConfigEntry ex("VDQM", "NOTIFYPORT",
+        configEntry);
+
+      ex.getMessage() << "Invalid configuration entry: "
+        << ex.getEntryCategory() << " " << ex.getEntryName() << " "
+        << ex.getEntryValue();
+
+      throw ex;
     }
   }
 
@@ -390,8 +410,7 @@ int castor::vdqm::VdqmServer::getNotifyPort() {
 //------------------------------------------------------------------------------
 // getRequestHandlerThreadNumber
 //------------------------------------------------------------------------------
-int castor::vdqm::VdqmServer::getRequestHandlerThreadNumber()
-{
+int castor::vdqm::VdqmServer::getRequestHandlerThreadNumber() {
   return m_requestHandlerThreadNumber;
 }
 
@@ -399,8 +418,7 @@ int castor::vdqm::VdqmServer::getRequestHandlerThreadNumber()
 //------------------------------------------------------------------------------
 // getRTCPJobSubmitterThreadNumber
 //------------------------------------------------------------------------------
-int castor::vdqm::VdqmServer::getRTCPJobSubmitterThreadNumber()
-{
+int castor::vdqm::VdqmServer::getRTCPJobSubmitterThreadNumber() {
   return m_RTCPJobSubmitterThreadNumber;
 }
 
@@ -408,7 +426,6 @@ int castor::vdqm::VdqmServer::getRTCPJobSubmitterThreadNumber()
 //------------------------------------------------------------------------------
 // getSchedulerThreadNumber
 //------------------------------------------------------------------------------
-int castor::vdqm::VdqmServer::getSchedulerThreadNumber()
-{
+int castor::vdqm::VdqmServer::getSchedulerThreadNumber() {
   return m_schedulerThreadNumber;
 }

@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)RCSfile: VdqmServer.hpp  Revision: 1.0  Release Date: Apr 8, 2005  Author: mbraeger 
- *
  *
  *
  * @author Matthias Braeger
@@ -28,6 +26,7 @@
 #define CASTOR_VDQM_VDQMSERVER_HPP 1
 
 #include "castor/server/BaseDaemon.hpp"
+#include "castor/vdqm/exception/InvalidConfigEntry.hpp"
 #include <string>
 
 namespace castor {
@@ -70,24 +69,28 @@ namespace castor {
        * Returns the scheduler timeout, in other words the time a scheduler
        * thread will sleep when there is no work to be done.
        */
-      int getSchedulerTimeout();
+      int getSchedulerTimeout()
+        throw(castor::vdqm::exception::InvalidConfigEntry);
 
       /**
        * Returns the RTCP job submitter timeout, in other words the time an
        * RTCP job submitter thread will sleep when there is no work to be done.
        */
-      int getRTCPJobSubmitterTimeout();
+      int getRTCPJobSubmitterTimeout()
+        throw(castor::vdqm::exception::InvalidConfigEntry);
 
       /**
        * Returns the port on which the server will listen.
        */
-      int getListenPort();
+      int getVdqmPort()
+        throw(castor::vdqm::exception::InvalidConfigEntry);
 
       /**
        * Returns the UPD port on which the server will listen fori
        * notifications.
        */
-      int getNotifyPort();
+      int getNotifyPort()
+        throw(castor::vdqm::exception::InvalidConfigEntry);
 
       /**
        * Returns the number of threads in the request handler thread pool.

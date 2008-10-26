@@ -58,6 +58,7 @@ VDQMBIN_SRCS = CDevTools.cpp \
                VdqmMagic3ProtocolInterpreter.cpp \
                VdqmMain.cpp \
                VdqmServer.cpp \
+               exception/InvalidConfigEntry.cpp \
                handler/BaseRequestHandler.cpp \
                handler/TapeDriveConsistencyChecker.cpp \
                handler/TapeDriveHandler.cpp \
