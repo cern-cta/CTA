@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.92 $ $Release$ $Date: 2008/10/24 06:54:37 $ $Author: sponcec3 $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.93 $ $Release$ $Date: 2008/10/27 16:14:12 $ $Author: sponcec3 $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -268,21 +268,31 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileId
       delete result;
     throw e;
   }
-  castor::stager::DiskCopyInfo* diskcopy = *result->begin();
   bool foundDiskCopy = false;
   // Preparing the response
   castor::rh::FileQryResponse res;
   res.setReqAssociated(reqId);
   sst << "@" << nshost;
   res.setFileName(sst.str());
-  res.setFileId(diskcopy->fileId());
-  // compute the status; INVALID is taken into account too
-  setFileResponseStatus(&res, diskcopy, foundDiskCopy);
+  res.setFileId(fid);
+  // Iterates over the list of disk copies, and computes status
+  for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+        = result->begin();
+      dcit != result->end();
+      ++dcit) {
+    setFileResponseStatus(&res, *dcit, foundDiskCopy);
+  }
   // Sending the response
   castor::replier::RequestReplier::getInstance()->
     sendResponse(client, &res);
   // Cleanup
-  delete diskcopy;
+  // Cleanup
+  for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+        = result->begin();
+      dcit != result->end();
+      ++dcit) {
+    delete *dcit;
+  }
   delete result;
 }
 
