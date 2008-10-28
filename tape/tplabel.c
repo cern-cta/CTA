@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.13 $ $Date: 2007/11/20 15:14:10 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.14 $ $Date: 2008/10/28 08:04:11 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	tplabel - prelabel al and sl tapes, write 2 tape marks for nl tapes */
@@ -271,10 +271,13 @@ char	**argv;
 	Ctape_kill_needed = 1;
 	for (side = 0; side < nbsides; side++) {
 		if (Ctape_label (path, vid, side, dgn, density, drive, vsn,
-		    lbltype, nbhdr, flags, 0))
+                                 lbltype, nbhdr, flags, 0)) {
+                        fprintf (stderr, "tplabel: tape not labeled.\n");
 			exit_prog ((serrno == ETOPAB || serrno == ETWPROT || serrno == EINVAL) ?
-			    USERR : SYERR);
+                                   USERR : SYERR);
+                }
 	}
+        fprintf (stderr, "tplabel: tape labeled.\n");
 	exit_prog (0);
 
         /* will never be reached, but makes the compiler happy */

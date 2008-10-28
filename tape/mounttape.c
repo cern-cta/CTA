@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.70 $ $Date: 2008/07/28 16:51:40 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.71 $ $Date: 2008/10/28 08:04:11 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -183,10 +183,12 @@ char	**argv;
 	clienthost = argv[24];
 
 	if ((prelabel > 2) && (prelabel & DOUBLETM)) {
+                tplogit (func, "DOUBLETM option set\n");
 		prelabel -= DOUBLETM;
 		Tflag = 1;
 	}
 	if ((prelabel > 2) && (prelabel & FORCEPRELBL)) {
+                tplogit (func, "FORCEPRELBL option set\n");
 		prelabel -= FORCEPRELBL;
                 Fflag = 1;
 	}

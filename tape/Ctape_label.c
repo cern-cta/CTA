@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: Ctape_label.c,v $ $Revision: 1.25 $ $Date: 2007/11/20 15:14:10 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: Ctape_label.c,v $ $Revision: 1.26 $ $Date: 2008/10/28 08:04:11 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	Ctape_label - send a request to the tape daemon to have a tape mounted
@@ -211,6 +211,9 @@ int vdqm_reqid;
 
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
+
+        Ctape_errmsg ("tplabel", "uid=%d gid=%d vid=%s side=%d dgn=%s den=%s vsn=%s lbltype=%s\n", 
+                      uid, gid, actual_vid, side, actual_dgn, actual_den, actual_vsn, actual_lbltype);
 
 	c = send2tpd (NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
 	return (c);
