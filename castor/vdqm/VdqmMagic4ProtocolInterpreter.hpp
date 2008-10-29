@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      VdqmMagic2ProtocolInterpreter.hpp
+ *                      VdqmMagic4ProtocolInterpreter.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_VDQM_VDQMMAGIC2PROTOCOLINTERPRETER_HPP
-#define CASTOR_VDQM_VDQMMAGIC2PROTOCOLINTERPRETER_HPP 1
+#ifndef CASTOR_VDQM_VDQMMAGIC4PROTOCOLINTERPRETER_HPP
+#define CASTOR_VDQM_VDQMMAGIC4PROTOCOLINTERPRETER_HPP 1
 
 #include "castor/exception/Exception.hpp"
 #include "castor/io/ServerSocket.hpp"
@@ -36,26 +36,26 @@ namespace castor {
     
     /**
      * This class provides the functions to send and receive messages through a 
-     * socket using VDQM messages with the magic number VDQM_MAGIC2.
+     * socket using VDQM messages with the magic number VDQM_MAGIC4.
      */
-    class VdqmMagic2ProtocolInterpreter {
+    class VdqmMagic4ProtocolInterpreter {
 
     public:
 
       /**
        * Constructor.
        *
-       * @param socket The Object, which includes the actual socket connection
-       * to the client
+       * @param sock The Object, which includes the actual socket connection to
+       * the client
        * @param cuuid the cuuid of the incoming request
        * @exception In case that one of the parameters is NULL
        */
-      VdqmMagic2ProtocolInterpreter(castor::io::ServerSocket &socket,
+      VdqmMagic4ProtocolInterpreter(castor::io::ServerSocket &socket,
         const Cuuid_t &cuuid)throw (castor::exception::Exception);
 
       /**
        * Reads the message header of VDQM message with a magic number of
-       * VDQM_MAGIC2 from the socket of this protocol interpreter.  Please note
+       * VDQM_MAGIC4 from the socket of this protocol interpreter.  Please note
        * that this method assumes the magic number has already been read from
        * the socket.
        *
@@ -67,15 +67,24 @@ namespace castor {
         throw(castor::exception::Exception);
 
       /**
-       * Reads the message body of vdqmVolPriority message from the socket of
-       * this protocol interpreter.  Please note that this method assumes the
-       * message header has already been read from the socket.
+       * Reads the message body of an aggregator volume request message from
+       * the socket of this protocol interpreter.  Please note that this method
+       * assumes the message header has already been read from the socket.
        *
        * @param len The length of the message body
-       * @param msg Pointer to the memory which the message body should be read
-       * out into
+       * @param msg The message body
+       * should be read out into
        */
-      void readVolPriority(const int len, vdqmVolPriority_t &msg)
+      void readAggregatorVolReq(const int len, vdqmVolReq_t &msg)
+        throw(castor::exception::Exception);
+
+      /**
+       * Sends the specified aggegartor volume request back to the client.
+       *
+       * @param header the message header
+       * @param msg the message body
+       */
+      void sendAggregatorVolReqToClient(vdqmHdr_t &header, vdqmVolReq_t &msg)
         throw(castor::exception::Exception);
 
 
@@ -91,10 +100,10 @@ namespace castor {
        */
       const Cuuid_t &m_cuuid;
 
-    }; // class VdqmMagic2ProtocolInterpreter
+    }; // class VdqmMagic4ProtocolInterpreter
 
   } // namespace vdqm
 
 } // namespace castor      
 
-#endif // CASTOR_VDQM_VDQMMAGIC2PROTOCOLINTERPRETER_HPP
+#endif // CASTOR_VDQM_VDQMMAGIC4PROTOCOLINTERPRETER_HPP

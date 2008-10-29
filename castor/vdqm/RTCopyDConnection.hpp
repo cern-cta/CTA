@@ -97,6 +97,7 @@ namespace castor {
        * @exception In case of errors 
        */
       bool sendJobToRTCPD(
+        const Cuuid_t     &cuuid,
         const u_signed64  tapeRequestID,
         const std::string &clientUserName,
         const std::string &clientMachine,
@@ -114,10 +115,10 @@ namespace castor {
        * This is a helper function for sendJobToRTCP(), to read
        * the answer of RTCP
        * 
+       * @param cuuid the cuuid to be used for logging
        * @return false, in case of problems on RTCP side
-       * @exception In case of errors 
        */
-      bool readRTCPAnswer()
+      bool readRTCPAnswer(const Cuuid_t &cuuid)
         throw (castor::exception::Exception);    
     };
 

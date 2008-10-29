@@ -59,15 +59,22 @@ void castor::vdqm::RequestHandlerThread::init()
 void castor::vdqm::RequestHandlerThread::run(void *param)
   throw() {
 
-  Cuuid_t cuuid = nullCuuid; // Placeholder for the request uuid if any
-  castor::io::ServerSocket *sock = (castor::io::ServerSocket*)param;
+  Cuuid_t cuuid = nullCuuid;
 
   // Gives a Cuuid to the request
   Cuuid_create(&cuuid);
 
+  if(param == NULL) {
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+      VDQM_REQUEST_HANDLER_SOCKET_IS_NULL);
+    return;
+  }
+
+  castor::io::ServerSocket *socket = (castor::io::ServerSocket*)param;
+
   try {
 
-    handleRequest(&cuuid, sock);
+    handleRequest(cuuid, *socket);
 
     // Maybe the scheduler has some work to do
     castor::server::NotifierThread::getInstance()->doNotify('D');
@@ -83,26 +90,24 @@ void castor::vdqm::RequestHandlerThread::run(void *param)
   }
 
   // De-allocate the socket
-  if(sock != NULL) {
-    delete sock;
-  }
+  delete socket;
 } 
 
 
 //-----------------------------------------------------------------------------
 // handleRequest
 //-----------------------------------------------------------------------------
-void castor::vdqm::RequestHandlerThread::handleRequest(Cuuid_t *cuuid,
-  castor::io::ServerSocket *sock)
+void castor::vdqm::RequestHandlerThread::handleRequest(Cuuid_t &cuuid,
+  castor::io::ServerSocket &sock)
   throw(castor::exception::Exception) {
 
-  unsigned short port;              // Client port
-  unsigned long  ip;                // Client IP
+  unsigned short port; // Client port
+  unsigned long  ip;   // Client IP
 
   try {
 
     // Get client IP info
-    sock->getPeerIp(port, ip);
+    sock.getPeerIp(port, ip);
 
   } catch(castor::exception::Exception &e) {
 
@@ -119,13 +124,13 @@ void castor::vdqm::RequestHandlerThread::handleRequest(Cuuid_t *cuuid,
     castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
     castor::dlf::Param("Port", port)
   };
-  castor::dlf::dlf_writep(*cuuid, DLF_LVL_DEBUG, VDQM_NEW_REQUEST_ARRIVAL,
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_NEW_REQUEST_ARRIVAL,
     2, params);
 
   try {
 
     // The ProtocolFacade manages the analysis of the remaining socket message
-    ProtocolFacade protocolFacade(sock, *cuuid);
+    ProtocolFacade protocolFacade(sock, cuuid);
 
     protocolFacade.handleProtocolVersion();
 

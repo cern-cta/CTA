@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)RCSfile: ProtocolFacade.hpp  Revision: 1.0  Release Date: Nov 7, 2005  Author: mbraeger 
  *
  *
  *
@@ -53,8 +52,7 @@ namespace castor {
        * @param cuuid the cuuid of the incoming request 
        * @exception In case that one of the parameter is NULL
        */
-      ProtocolFacade(castor::io::ServerSocket* serverSocket,
-        const Cuuid_t &cuuid)
+      ProtocolFacade(castor::io::ServerSocket &socket, const Cuuid_t &cuuid)
       throw (castor::exception::Exception);
       
       /**
@@ -79,6 +77,30 @@ namespace castor {
        * Internal function to handle the old Vdqm request. Puts the values into
        * the old structs and reads out the request typr number, to delegates
        * them to the right function.
+       *
+       * Good-day Protocol
+       * =================
+       *
+       * 1. CLIENT >>>> request      >>>> SERVER
+       * 2. CLIENT <<<< VDQM_COMMIT  <<<< SERVER
+       * 3. CLIENT <<<< request      <<<< SERVER
+       * 4. CLIENT >>>> VDQM_COMMIT  >>>> SERVER
+       *
+       * Bad-day Protocol: Server unable to execute request
+       * ==================================================
+       *
+       * 1. CLIENT >>>> request      >>>> SERVER
+       * 2. CLIENT <<<< error code   <<<< SERVER
+       *
+       * Bad-day Protocol: Client rolls back request
+       * ===========================================
+       *
+       * 1. CLIENT >>>> request      >>>> SERVER
+       * 2. CLIENT <<<< VDQM_COMMIT  <<<< SERVER
+       * 3. CLIENT <<<< request      <<<< SERVER
+       * 4. CLIENT >>>> ~VDQM_COMMIT >>>> SERVER
+       *
+       * NOTE: ~VDQM_COMMIT means not a VDQM_COMMIT
        * 
        * @param magicNumber The magic Number of the used protocol.  This is used
        * to complete the message header.
@@ -89,6 +111,28 @@ namespace castor {
       /**
        * Handles a VDQM message with a magic number of VDQM_MAGIC2.
        *
+       * Good-day Protocol
+       * =================
+       *
+       * 1. CLIENT >>>> request      >>>> SERVER
+       * 2. CLIENT <<<< VDQM_COMMIT  <<<< SERVER
+       * 3. CLIENT >>>> VDQM_COMMIT  >>>> SERVER
+       *
+       * Bad-day Protocol: Server unable to execute request
+       * ==================================================
+       *
+       * 1. CLIENT >>>> request      >>>> SERVER
+       * 2. CLIENT <<<< error code   <<<< SERVER
+       *
+       * Bad-day Protocol: Client rolls back request
+       * ===========================================
+       *
+       * 1. CLIENT >>>> request      >>>> SERVER
+       * 2. CLIENT <<<< VDQM_COMMIT  <<<< SERVER
+       * 3. CLIENT >>>> ~VDQM_COMMIT >>>> SERVER
+       *
+       * NOTE: ~VDQM_COMMIT means not a VDQM_COMMIT
+       *
        * @param magicNumber The magic Number of the used protocol.  This is used
        * to complete the message header.
        */
@@ -98,6 +142,28 @@ namespace castor {
       /**
        * Handles a VDQM message with a magic number of VDQM_MAGIC3.
        *
+       * Good-day Protocol
+       * =================
+       *
+       * 1. CLIENT >>>> request      >>>> SERVER
+       * 2. CLIENT <<<< VDQM_COMMIT  <<<< SERVER
+       * 3. CLIENT >>>> VDQM_COMMIT  >>>> SERVER
+       *
+       * Bad-day Protocol: Server unable to execute request
+       * ==================================================
+       *
+       * 1. CLIENT >>>> request      >>>> SERVER
+       * 2. CLIENT <<<< error code   <<<< SERVER
+       *
+       * Bad-day Protocol: Client rolls back request
+       * ===========================================
+       *
+       * 1. CLIENT >>>> request      >>>> SERVER
+       * 2. CLIENT <<<< VDQM_COMMIT  <<<< SERVER
+       * 3. CLIENT >>>> ~VDQM_COMMIT >>>> SERVER
+       *
+       * NOTE: ~VDQM_COMMIT means not a VDQM_COMMIT
+       *
        * @param magicNumber The magic Number of the used protocol.  This is used
        * to complete the message header.
        */
@@ -105,9 +171,42 @@ namespace castor {
       throw (castor::exception::Exception);
 
       /**
+       * Handles a VDQM message with a magic number of VDQM_MAGIC4.
+       *
+       * Good-day Protocol
+       * =================
+       *
+       * 1. CLIENT >>>> request      >>>> SERVER
+       * 2. CLIENT <<<< VDQM_COMMIT  <<<< SERVER
+       * 3. CLIENT <<<< request      <<<< SERVER
+       * 4. CLIENT >>>> VDQM_COMMIT  >>>> SERVER
+       *
+       * Bad-day Protocol: Server unable to execute request
+       * ==================================================
+       *
+       * 1. CLIENT >>>> request      >>>> SERVER
+       * 2. CLIENT <<<< error code   <<<< SERVER
+       *
+       * Bad-day Protocol: Client rolls back request
+       * ===========================================
+       *
+       * 1. CLIENT >>>> request      >>>> SERVER
+       * 2. CLIENT <<<< VDQM_COMMIT  <<<< SERVER
+       * 3. CLIENT <<<< request      <<<< SERVER
+       * 4. CLIENT >>>> ~VDQM_COMMIT >>>> SERVER
+       *
+       * NOTE: ~VDQM_COMMIT means not a VDQM_COMMIT
+       *
+       * @param magicNumber The magic Number of the used protocol.  This is used
+       * to complete the message header.
+       */
+      void handleVdqmMagic4Request(const unsigned int magicNumber)
+      throw (castor::exception::Exception);
+
+      /**
        * The object which includes the socket connection to the client
        */
-      castor::io::ServerSocket* ptr_serverSocket;  
+      castor::io::ServerSocket &m_socket;  
         
       /**
        * The cuuid of the request

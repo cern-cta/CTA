@@ -52,14 +52,13 @@ namespace castor {
       /**
        * Constructor
        * 
-       * @param serverSocket The Object, which includes the actual socket 
-       * connection to the client
+       * @param socket The Object, which includes the actual socket connection
+       * to the client
        * @param cuuid the cuuid of the incoming request 
        * @exception In case that one of the parameters is NULL
        */
-      OldProtocolInterpreter(castor::io::ServerSocket* serverSocket,
-        const Cuuid_t* cuuid) 
-      throw (castor::exception::Exception);
+      OldProtocolInterpreter(castor::io::ServerSocket &socket,
+        const Cuuid_t &cuuid) throw (castor::exception::Exception);
           
       /**
        * Destructor
@@ -138,12 +137,12 @@ namespace castor {
         /**
          * The object which includes the socket connection to the client
          */
-        castor::io::ServerSocket *ptr_serverSocket;  
+        castor::io::ServerSocket &m_socket;  
         
         /**
          * The cuuid of the request
          */
-        const Cuuid_t *m_cuuid;
+        const Cuuid_t &m_cuuid;
 
     }; // class OldProtocolInterpreter
 

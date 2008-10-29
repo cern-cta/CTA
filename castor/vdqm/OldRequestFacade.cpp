@@ -52,7 +52,7 @@ using namespace castor::vdqm::handler;
 //------------------------------------------------------------------------------
 castor::vdqm::OldRequestFacade::OldRequestFacade(
   vdqmVolReq_t *const volumeRequest, vdqmDrvReq_t *const driveRequest,
-  vdqmHdr_t *const header, castor::io::ServerSocket *const socket) :
+  vdqmHdr_t *const header, castor::io::ServerSocket &socket) :
   ptr_volumeRequest(volumeRequest), ptr_driveRequest(driveRequest),
   ptr_header(header), m_socket(socket), m_reqtype(header->reqtype) {
 }
@@ -128,7 +128,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
           unsigned long  ip;
 
           try {
-            m_socket->getPeerIp(port, ip);
+            m_socket.getPeerIp(port, ip);
             clientHostname = castor::System::ipAddressToHostname(ip);
           } catch(castor::exception::Exception &e) {
             clientHostname = "UNKNOWN";
@@ -144,7 +144,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
       }
 
       TapeRequestHandler requestHandler;
-      requestHandler.newTapeRequest(ptr_header, ptr_volumeRequest, cuuid); 
+      requestHandler.newTapeRequest(*ptr_header, *ptr_volumeRequest, cuuid); 
     }
     break;
   case VDQM_DRV_REQ:

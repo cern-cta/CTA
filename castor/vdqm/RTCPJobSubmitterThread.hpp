@@ -119,7 +119,8 @@ namespace castor {
        * <li>Tape drive of tape request -> tape server</li>
        * </ul>
        */
-      void submitJobToRTCPD(castor::vdqm::TapeRequest* request)
+      void submitJobToRTCPD(const Cuuid_t &cuuid,
+        castor::vdqm::TapeRequest* request)
         throw(castor::exception::Exception);
 
       /**

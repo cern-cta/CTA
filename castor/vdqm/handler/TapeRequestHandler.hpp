@@ -63,11 +63,11 @@ namespace castor {
            * stores the request into the database.
            * 
            * @param header The header of the old Protocol
-           * @param volumeRequest The TapeRequest in the old protocol
+           * @param msg The TapeRequest in the old protocol
            * @param cuuid The unique id of the request. Needed for dlf
            */
-          void newTapeRequest(const vdqmHdr_t *const header, 
-            vdqmVolReq_t *const volumeRequest, const Cuuid_t cuuid) 
+          void newTapeRequest(const vdqmHdr_t &header, vdqmVolReq_t &msg,
+            const Cuuid_t &cuuid) 
             throw (castor::exception::Exception);
             
           /**

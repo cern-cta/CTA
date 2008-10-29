@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)RCSfile: OldProtocolInterpreter.cpp  Revision: 1.0  Release Date: Aug 3, 2005  Author: mbraeger 
  *
  *
  *
@@ -52,18 +51,8 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::vdqm::OldProtocolInterpreter::OldProtocolInterpreter(
-  castor::io::ServerSocket* serverSocket, const Cuuid_t* cuuid)
-  throw(castor::exception::Exception) {
-  
-  if ( 0 == serverSocket || 0 == cuuid) {
-    castor::exception::InvalidArgument ex;
-    ex.getMessage() << "One of the arguments is NULL";
-    throw ex;
-  }
-  else {
-    ptr_serverSocket = serverSocket;
-    m_cuuid = cuuid;
-  }
+  castor::io::ServerSocket &socket, const Cuuid_t &cuuid)
+  throw(castor::exception::Exception) : m_socket(socket), m_cuuid(cuuid){
 }
 
 
@@ -102,7 +91,7 @@ throw (castor::exception::Exception) {
 
   
   // Read rest of header. The magic number is already read out
-  rc = netread_timeout(ptr_serverSocket->socket(), hdrbuf, headerBufSize,
+  rc = netread_timeout(m_socket.socket(), hdrbuf, headerBufSize,
     VDQM_TIMEOUT);
   
   if (rc == -1) {
@@ -139,7 +128,7 @@ throw (castor::exception::Exception) {
   }
 
   if ( VALID_VDQM_MSGLEN(len) ) {
-    rc = netread_timeout(ptr_serverSocket->socket(),buf,len,VDQM_TIMEOUT);
+    rc = netread_timeout(m_socket.socket(),buf,len,VDQM_TIMEOUT);
     
     if (rc == -1) {
 
@@ -167,7 +156,7 @@ throw (castor::exception::Exception) {
   }
         
   fromlen = sizeof(from);
-  rc = getpeername(ptr_serverSocket->socket(), (struct sockaddr *)&from,
+  rc = getpeername(m_socket.socket(), (struct sockaddr *)&from,
     (socklen_t *)&fromlen);
   if ( rc == SOCKET_ERROR ) {
     castor::exception::Internal ex;
@@ -217,10 +206,10 @@ throw (castor::exception::Exception) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("reqtype", reqtype),
         castor::dlf::Param("h_name", hp->h_name)};
-    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, VDQM_ADMIN_REQUEST, 2,
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, VDQM_ADMIN_REQUEST, 2,
       params);
 
-    if ( (isadminhost(ptr_serverSocket->socket(),hp->h_name) != 0) ) {
+    if ( (isadminhost(m_socket.socket(),hp->h_name) != 0) ) {
       serrno = EPERM;
       castor::exception::Exception ex(serrno);
       ex.getMessage() << "OldProtocolInterpreter::readProtocol(): "
@@ -282,7 +271,7 @@ throw (castor::exception::Exception) {
   
   if ( REQTYPE(DRV,reqtype) && (reqtype != VDQM_GET_DRVQUEUE) ) {
     if (  (strcmp(driveRequest->reqhost,driveRequest->server) != 0) &&
-          (isadminhost(ptr_serverSocket->socket(),driveRequest->reqhost) != 0) ) {
+          (isadminhost(m_socket.socket(),driveRequest->reqhost) != 0) ) {
       serrno = EPERM;
       castor::exception::Exception ex(serrno);
       ex.getMessage() << "OldProtocolInterpreter::readProtocol(): "
@@ -413,7 +402,7 @@ throw (castor::exception::Exception) {
   DO_MARSHALL(LONG,p,len,SendTo);
 
   try {
-    SocketHelper::netWriteVdqmHeader(ptr_serverSocket, hdrbuf);
+    SocketHelper::netWriteVdqmHeader(m_socket, hdrbuf);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 
@@ -424,7 +413,7 @@ throw (castor::exception::Exception) {
   }
    
   if ( len > 0 ) {
-    rc = netwrite_timeout(ptr_serverSocket->socket(), buf, len, VDQM_TIMEOUT);
+    rc = netwrite_timeout(m_socket.socket(), buf, len, VDQM_TIMEOUT);
     if (rc == -1) {
       serrno = SECOMERR;
       castor::exception::Exception ex(serrno);
@@ -473,7 +462,7 @@ throw (castor::exception::Exception) {
   p = hdrbuf;
   
   try {
-    SocketHelper::netWriteVdqmHeader(ptr_serverSocket, hdrbuf);
+    SocketHelper::netWriteVdqmHeader(m_socket, hdrbuf);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 
@@ -500,7 +489,7 @@ throw (castor::exception::Exception) {
   recvreqtype = 0;
   
   try {
-    SocketHelper::netReadVdqmHeader(ptr_serverSocket, hdrbuf);
+    SocketHelper::netReadVdqmHeader(m_socket, hdrbuf);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 
@@ -539,7 +528,7 @@ throw (castor::exception::Exception) {
   DO_MARSHALL(LONG,p,queuePosition,SendTo);
     
   try {
-    SocketHelper::netWriteVdqmHeader(ptr_serverSocket, hdrbuf);
+    SocketHelper::netWriteVdqmHeader(m_socket, hdrbuf);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 
@@ -578,7 +567,7 @@ throw (castor::exception::Exception) {
   p = hdrbuf;
   
   try {
-    SocketHelper::netWriteVdqmHeader(ptr_serverSocket, hdrbuf);
+    SocketHelper::netWriteVdqmHeader(m_socket, hdrbuf);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 

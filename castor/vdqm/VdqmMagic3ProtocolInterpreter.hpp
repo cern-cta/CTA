@@ -45,12 +45,12 @@ namespace castor {
       /**
        * Constructor.
        *
-       * @param sock The Object, which includes the actual socket connection to
-       * the client
+       * @param socket The Object, which includes the actual socket connection
+       * to the client
        * @param cuuid the cuuid of the incoming request
        * @exception In case that one of the parameters is NULL
        */
-      VdqmMagic3ProtocolInterpreter(castor::io::ServerSocket *const sock,
+      VdqmMagic3ProtocolInterpreter(castor::io::ServerSocket &socket,
         const Cuuid_t &cuuid)throw (castor::exception::Exception);
 
       /**
@@ -61,10 +61,9 @@ namespace castor {
        *
        * @param magic The already read out magic number which is to be copied
        * into the header ro make it complete
-       * @param header Pointer to the memory which the message header should be
-       * read out into
+       * @param header The message header
        */
-      void readHeader(const unsigned int magic, vdqmHdr_t *const header)
+      void readHeader(const unsigned int magic, vdqmHdr_t &header)
         throw(castor::exception::Exception);
 
       /**
@@ -73,10 +72,10 @@ namespace castor {
        * message header has already been read from the socket.
        *
        * @param len The length of the message body
-       * @param msg Pointer to the memory which the message body
+       * @param msg The message body
        * should be read out into
        */
-      void readDelDrv(const int len, vdqmDelDrv_t *const msg)
+      void readDelDrv(const int len, vdqmDelDrv_t &msg)
         throw(castor::exception::Exception);
 
       /**
@@ -85,10 +84,9 @@ namespace castor {
        * message header has already been read from the socket.
        *
        * @param len The length of the message body
-       * @param msg Pointer to the memory which the message body
-       * should be read out into
+       * @param msg The message body
        */
-      void readDedicate(const int len, vdqmDedicate_t *const msg)
+      void readDedicate(const int len, vdqmDedicate_t &msg)
         throw(castor::exception::Exception);
 
     private:
@@ -96,7 +94,7 @@ namespace castor {
       /**
        * The object which includes the socket connection to the client
        */
-      castor::io::ServerSocket *const m_sock;
+      castor::io::ServerSocket &m_socket;
 
       /**
        * The cuuid of the request

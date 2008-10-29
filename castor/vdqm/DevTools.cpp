@@ -58,15 +58,15 @@ void castor::vdqm::DevTools::printIp(std::ostream &os, const unsigned long ip)
 // printSocketDescription
 //------------------------------------------------------------------------------
 void castor::vdqm::DevTools::printSocketDescription(std::ostream &os,
-  castor::io::ServerSocket *const socket) {
+  castor::io::ServerSocket &socket) {
 
   unsigned short localPort = 0;
   unsigned long  localIp   = 0;
   unsigned short peerPort  = 0;
   unsigned long  peerIp    = 0;
 
-  socket->getPortIp(localPort, localIp);
-  socket->getPeerIp(peerPort , peerIp );
+  socket.getPortIp(localPort, localIp);
+  socket.getPeerIp(peerPort , peerIp );
 
   os << "local=";
   castor::vdqm::DevTools::printIp(os, localIp);

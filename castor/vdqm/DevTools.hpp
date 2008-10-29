@@ -62,7 +62,7 @@ namespace castor {
        * stream.
        */
       static void printSocketDescription(std::ostream &os,
-        castor::io::ServerSocket *const socket);
+        castor::io::ServerSocket &socket);
 
       /**
        * Prints the magic number, request type, and IP information of the

@@ -60,7 +60,10 @@ castor::vdqm::DriveSchedulerThread::~DriveSchedulerThread()
 //-----------------------------------------------------------------------------
 void castor::vdqm::DriveSchedulerThread::run(void *param) {
 
+  Cuuid_t                cuuid    = nullCuuid;
   castor::vdqm::IVdqmSvc *vdqmSvc = NULL;
+
+  Cuuid_create(&cuuid);
 
   try {
     vdqmSvc = getDbVdqmSvc();
@@ -71,7 +74,7 @@ void castor::vdqm::DriveSchedulerThread::run(void *param) {
       castor::dlf::Param("Message", e.getMessage().str()),
       castor::dlf::Param("Code", e.code())
     };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_DBVDQMSVC_GETSVC,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, VDQM_DBVDQMSVC_GETSVC,
       3, params);
 
     return;
@@ -102,10 +105,10 @@ void castor::vdqm::DriveSchedulerThread::run(void *param) {
         castor::dlf::Param("tapeVID"      , tapeRequestVid)};
 
       if(allocationResult == 1) { // Drive allocated
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
           VDQM_DRIVE_ALLOCATED, 4, param);
       } else { // Invalidated drive allocation
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
           VDQM_INVALIDATED_DRIVE_ALLOCATION, 4, param);
       }
     }
@@ -114,7 +117,7 @@ void castor::vdqm::DriveSchedulerThread::run(void *param) {
       castor::dlf::Param("Function", __PRETTY_FUNCTION__),
       castor::dlf::Param("Message", ex.getMessage().str()),
       castor::dlf::Param("Code", ex.code())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
       VDQM_MATCHTAPE2TAPEDRIVE_ERROR, 3, params);
   }
 
@@ -148,7 +151,7 @@ void castor::vdqm::DriveSchedulerThread::run(void *param) {
     if(prioritiesDeleted > 0) {
       castor::dlf::Param params[] = {
         castor::dlf::Param("prioritiesDeleted",prioritiesDeleted)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
         VDQM_DEL_OLD_VOL_PRIORITIES, 1, params);;
     }
   } catch(castor::exception::Exception &ex) {
@@ -157,7 +160,7 @@ void castor::vdqm::DriveSchedulerThread::run(void *param) {
       castor::dlf::Param("Message", ex.getMessage().str()),
       castor::dlf::Param("Code", ex.code())
     };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
       VDQM_DEL_OLD_VOL_PRIORITIES_ERROR, 3, params);
   }
 }

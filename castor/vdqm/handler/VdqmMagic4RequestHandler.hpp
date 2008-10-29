@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      VdqmMagic2RequestHandler.hpp
+ *                      VdqmMagic4RequestHandler.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef _VDQMMAGIC2REQUESTHANDLER_HPP_
-#define _VDQMMAGIC2REQUESTHANDLER_HPP_ 1
+#ifndef _VDQMMAGIC4REQUESTHANDLER_HPP_
+#define _VDQMMAGIC4REQUESTHANDLER_HPP_ 1
 
 
 #include "castor/exception/Exception.hpp"
@@ -39,23 +39,24 @@ namespace castor {
 
       /**
        * This class provides functions to handle VDQM messages with the magic
-       * number VDQM_MAGIC2.
+       * number VDQM_MAGIC4.
        */
-      class VdqmMagic2RequestHandler : public BaseRequestHandler {
+      class VdqmMagic4RequestHandler : public BaseRequestHandler {
 
       public:
 
         /**
-         * Handles the specified vdqmVolPriority message.
+         * Handles the specified aggregator volume request message..
          *
+         * @param socket the socket.
          * @param cuuid the unique id of the request. Needed for dlf.
          * @param msg the message.
          */
-        void handleVolPriority(const Cuuid_t &cuuid,
-          vdqmVolPriority_t &msg)
+        void handleAggregatorVolReq(castor::io::ServerSocket &socket,
+          const Cuuid_t &cuuid, vdqmVolReq_t &msg)
           throw (castor::exception::Exception);
 
-      }; // class VdqmMagic2RequestHandler
+      }; // class VdqmMagic4RequestHandler
 
     } // namespace handler
 
@@ -63,4 +64,4 @@ namespace castor {
 
 } // namespace castor
 
-#endif // _VDQMMAGIC2REQUESTHANDLER_HPP_
+#endif // _VDQMMAGIC4REQUESTHANDLER_HPP_

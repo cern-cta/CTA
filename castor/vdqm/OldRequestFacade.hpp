@@ -65,7 +65,7 @@ namespace castor {
          */
         OldRequestFacade(vdqmVolReq_t *const volumeRequest,
           vdqmDrvReq_t *const driveRequest, vdqmHdr_t *const header,
-          castor::io::ServerSocket *const socket);
+          castor::io::ServerSocket &socket);
       
         /**
          * Calls the right function for the request.
@@ -95,7 +95,7 @@ namespace castor {
         vdqmVolReq_t             *const ptr_volumeRequest;
         vdqmDrvReq_t             *const ptr_driveRequest;
         vdqmHdr_t                *const ptr_header;
-        castor::io::ServerSocket *const m_socket;
+        castor::io::ServerSocket        &m_socket;
         const int                       m_reqtype;
 
         /**

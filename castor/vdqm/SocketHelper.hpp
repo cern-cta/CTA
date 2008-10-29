@@ -55,8 +55,8 @@ namespace castor {
        * @param the socket to be read from.
        * @return the magic number.
        */
-      static unsigned int readMagicNumber(castor::io::ServerSocket *const
-        socket) throw (castor::exception::Exception);
+      static unsigned int readMagicNumber(castor::io::ServerSocket &socket)
+        throw (castor::exception::Exception);
 
       /**
        * Writes the contents of the specified header buffer to the specified
@@ -66,7 +66,7 @@ namespace castor {
        * @param hdrbuf The header buffer, which contains the data for the client
        * @exception In case of error
        */
-      static void netWriteVdqmHeader(castor::io::ServerSocket *const socket,
+      static void netWriteVdqmHeader(castor::io::ServerSocket &socket,
         void *hdrbuf) throw (castor::exception::Exception);
           
       /**
@@ -76,7 +76,7 @@ namespace castor {
        * @param socket the socket to be read from.
        * @param hdrbuf the header buffer where the data will be written to
        */
-      static void netReadVdqmHeader(castor::io::ServerSocket *const socket,
+      static void netReadVdqmHeader(castor::io::ServerSocket &socket,
         void *hdrbuf) throw (castor::exception::Exception);       
 
       /**
@@ -92,7 +92,7 @@ namespace castor {
        * @param privilegeName The name string of the required privilege
        * @param messageType Then type string of the message.
        */
-      static void checkCupvPermissions(castor::io::ServerSocket *const socket,
+      static void checkCupvPermissions(castor::io::ServerSocket &socket,
         const uid_t uid, const gid_t gid, const int privilege,
         const char *privilegeName, const char *messageType)
         throw (castor::exception::PermissionDenied);

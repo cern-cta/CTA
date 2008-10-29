@@ -33,14 +33,8 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::vdqm::VdqmMagic2ProtocolInterpreter::VdqmMagic2ProtocolInterpreter(
-  castor::io::ServerSocket *const sock, const Cuuid_t &cuuid)
-  throw(castor::exception::Exception) : m_sock(sock), m_cuuid(cuuid) {
-
-  if(0 == sock) {
-    castor::exception::InvalidArgument ex;
-    ex.getMessage() << "sock argument is NULL";
-    throw ex;
-  }
+  castor::io::ServerSocket &socket, const Cuuid_t &cuuid)
+  throw(castor::exception::Exception) : m_socket(socket), m_cuuid(cuuid) {
 }
 
 
@@ -48,25 +42,18 @@ castor::vdqm::VdqmMagic2ProtocolInterpreter::VdqmMagic2ProtocolInterpreter(
 // readHeader
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmMagic2ProtocolInterpreter::readHeader(
-  const unsigned int magic, vdqmHdr_t *const header)
+  const unsigned int magic, vdqmHdr_t &header)
   throw(castor::exception::Exception) {
 
-  if(header == NULL) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "VdqmMagic2ProtocolInterpreter::readHeader(): header "
-      "argument is NULL" << std::endl;
-    throw ex;
-  }
-
   // Fill in the magic number which has already been read out from the socket
-  header->magic = magic;
+  header.magic = magic;
 
   // Header buffer is shorter, because the magic number should already be read
   // out
   char buf[VDQM_HDRBUFSIZ - LONGSIZE];
 
   // Read rest of header. The magic number is already read out
-  const int rc = netread_timeout(m_sock->socket(), buf, sizeof(buf),
+  const int rc = netread_timeout(m_socket.socket(), buf, sizeof(buf),
     VDQM_TIMEOUT);
 
   if(rc == -1) {
@@ -83,8 +70,8 @@ void castor::vdqm::VdqmMagic2ProtocolInterpreter::readHeader(
 
   // Un-marshall the message request type and length
   char *p = buf;
-  DO_MARSHALL(LONG, p, header->reqtype, ReceiveFrom);
-  DO_MARSHALL(LONG, p, header->len    , ReceiveFrom);
+  DO_MARSHALL(LONG, p, header.reqtype, ReceiveFrom);
+  DO_MARSHALL(LONG, p, header.len    , ReceiveFrom);
 }
 
 
@@ -92,14 +79,7 @@ void castor::vdqm::VdqmMagic2ProtocolInterpreter::readHeader(
 // readVolPriority
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmMagic2ProtocolInterpreter::readVolPriority(const int len,
-  vdqmVolPriority_t *const msg) throw(castor::exception::Exception) {
-
-  if(msg == NULL) {
-    castor::exception::Internal ex;
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": NULL msg argument" << std::endl;
-    throw ex;
-  }
+  vdqmVolPriority_t &msg) throw(castor::exception::Exception) {
 
   if(!VALID_VDQM_MSGLEN(len)) {
     castor::exception::Exception ex(SECONNDROP);
@@ -112,7 +92,7 @@ void castor::vdqm::VdqmMagic2ProtocolInterpreter::readVolPriority(const int len,
   int rc = 0;
 
   // Read the message body
-  rc = netread_timeout(m_sock->socket(), buf, len, VDQM_TIMEOUT);
+  rc = netread_timeout(m_socket.socket(), buf, len, VDQM_TIMEOUT);
 
   if(rc == -1) {
     castor::exception::Exception ex(SECOMERR);
@@ -129,19 +109,19 @@ void castor::vdqm::VdqmMagic2ProtocolInterpreter::readVolPriority(const int len,
   // Un-marshall the message body
   char *p = buf;
 
-  DO_MARSHALL(LONG,p,msg->priority,ReceiveFrom);
-  DO_MARSHALL(LONG,p,msg->clientUID,ReceiveFrom);
-  DO_MARSHALL(LONG,p,msg->clientGID,ReceiveFrom);
-  if(unmarshall_STRINGN(p,msg->clientHost, sizeof(msg->clientHost))) {
+  DO_MARSHALL(LONG,p,msg.priority,ReceiveFrom);
+  DO_MARSHALL(LONG,p,msg.clientUID,ReceiveFrom);
+  DO_MARSHALL(LONG,p,msg.clientGID,ReceiveFrom);
+  if(unmarshall_STRINGN(p,msg.clientHost, sizeof(msg.clientHost))) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage() << __PRETTY_FUNCTION__
       << ": Failed to unmarshall_STRINGN clientHost" << std::endl;
   }
-  if(unmarshall_STRINGN(p,msg->vid, sizeof(msg->vid))) {
+  if(unmarshall_STRINGN(p,msg.vid, sizeof(msg.vid))) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage() << __PRETTY_FUNCTION__
       << ": Failed to unmarshall_STRINGN vid" << std::endl;
   }
-  DO_MARSHALL(LONG,p,msg->tpMode,ReceiveFrom);
-  DO_MARSHALL(LONG,p,msg->lifespanType,ReceiveFrom);
+  DO_MARSHALL(LONG,p,msg.tpMode,ReceiveFrom);
+  DO_MARSHALL(LONG,p,msg.lifespanType,ReceiveFrom);
 }

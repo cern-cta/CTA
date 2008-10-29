@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      VdqmMagic2RequestHandler.hpp
+ *                      VdqmMagic4RequestHandler.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,27 +23,35 @@
  *****************************************************************************/
 
 #include "castor/exception/NotSupported.hpp"
+#include "castor/io/ServerSocket.hpp"
+#include "castor/vdqm/SocketHelper.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
-#include "castor/vdqm/handler/VdqmMagic2RequestHandler.hpp"
+#include "castor/vdqm/handler/VdqmMagic4RequestHandler.hpp"
+#include "h/Cupv_api.h"
 #include "h/vdqm_constants.h"
 
 #include <iostream>
 
 
-void castor::vdqm::handler::VdqmMagic2RequestHandler::handleVolPriority(
-  const Cuuid_t &cuuid, vdqmVolPriority_t &msg)
-  throw (castor::exception::Exception) {
-  castor::dlf::Param param[] = {
-    castor::dlf::Param("priority"    , msg.priority),
-    castor::dlf::Param("clientUID"   , msg.clientUID),
-    castor::dlf::Param("clientGID"   , msg.clientGID),
-    castor::dlf::Param("clientHost"  , msg.clientHost),
-    castor::dlf::Param("vid"         , msg.vid),
-    castor::dlf::Param("tpMode"      , msg.tpMode),
-    castor::dlf::Param("lifespanType", msg.lifespanType)};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-    VDQM_HANDLE_VDQM2_VOL_PRIORITY, 7, param);
+void castor::vdqm::handler::VdqmMagic4RequestHandler::handleAggregatorVolReq(
+  castor::io::ServerSocket &socket, const Cuuid_t &cuuid,
+  vdqmVolReq_t &msg) throw (castor::exception::Exception) {
 
-  ptr_IVdqmService->setVolPriority(msg.priority, msg.clientUID, msg.clientGID,
-    msg.clientHost, msg.vid, msg.tpMode, msg.lifespanType);
+  castor::dlf::Param param[] = {
+    castor::dlf::Param("VolReqID" , msg.VolReqID),
+    castor::dlf::Param("DrvReqID" , msg.DrvReqID),
+    castor::dlf::Param("priority" , msg.priority),
+    castor::dlf::Param("client_port" , msg.client_port),
+    castor::dlf::Param("recvtime" , msg.recvtime),
+    castor::dlf::Param("clientUID", msg.clientUID),
+    castor::dlf::Param("clientGID", msg.clientGID),
+    castor::dlf::Param("mode", msg.mode),
+    castor::dlf::Param("client_host", msg.client_host),
+    castor::dlf::Param("volid", msg.volid),
+    castor::dlf::Param("server", msg.server),
+    castor::dlf::Param("drive", msg.drive),
+    castor::dlf::Param("dgn", msg.dgn),
+    castor::dlf::Param("client_name", msg.client_name)};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    VDQM_HANDLE_VDQM4_AGGREGATOR_VOL_REQ, 14, param);
 }

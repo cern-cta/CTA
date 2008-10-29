@@ -68,8 +68,8 @@ castor::vdqm::VdqmServer::VdqmServer()
 //------------------------------------------------------------------------------
 // parseCommandLine
 //------------------------------------------------------------------------------
-void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
-  throw() {
+void castor::vdqm::VdqmServer::parseCommandLine(Cuuid_t &cuuid, int argc,
+  char *argv[]) throw() {
 
   static struct Coptions longopts[] = {
     {"foreground"             , NO_ARGUMENT      , NULL, 'f'},
@@ -104,7 +104,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
           // Log
           castor::dlf::Param params[] = {
             castor::dlf::Param("reason", oss.str())};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+          castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
             VDQM_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
 
           // Print error and usage to stderr and then abort
@@ -136,7 +136,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
         // Log
         castor::dlf::Param params[] = {
           castor::dlf::Param("reason", oss.str())};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
           VDQM_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
 
         // Print error and usage to stderr and then abort
@@ -153,7 +153,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
         // Log
         castor::dlf::Param params[] = {
           castor::dlf::Param("reason", oss.str())};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
           VDQM_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
 
         // Print error and usage to stderr and then abort
@@ -171,7 +171,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
         // Log
         castor::dlf::Param params[] = {
           castor::dlf::Param("reason", oss.str())};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
           VDQM_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
 
         // Print error and usage to stderr and then abort
@@ -190,7 +190,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
     // Log
     castor::dlf::Param params[] = {
       castor::dlf::Param("reason", oss.str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
       VDQM_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
 
     // Print error and usage to stderr and then abort
@@ -210,7 +210,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
     // Log
     castor::dlf::Param params[] = {
       castor::dlf::Param("reason", oss.str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
       VDQM_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
 
     // Print error and usage to stderr and then abort
@@ -248,7 +248,7 @@ void castor::vdqm::VdqmServer::usage(std::string programName)
 //------------------------------------------------------------------------------
 // initDatabaseService
 //------------------------------------------------------------------------------
-void castor::vdqm::VdqmServer::initDatabaseService() {
+void castor::vdqm::VdqmServer::initDatabaseService(Cuuid_t &cuuid) {
 
   // Check the database connection details file exists
   FILE *fp = fopen(ORAVDQMCONFIGFILE, "r");
@@ -264,7 +264,7 @@ void castor::vdqm::VdqmServer::initDatabaseService() {
     // Log
     castor::dlf::Param params[] = {
       castor::dlf::Param("reason", oss.str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
       VDQM_FAILED_TO_INIT_DB_SERVICE, 1, params);
 
     // Print error to stderr and then abort
@@ -285,7 +285,7 @@ void castor::vdqm::VdqmServer::initDatabaseService() {
     // Log
     castor::dlf::Param params[] = {
       castor::dlf::Param("reason", oss.str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
       VDQM_FAILED_TO_INIT_DB_SERVICE, 1, params);
 
     // Print error to stderr and then abort

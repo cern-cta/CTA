@@ -48,21 +48,22 @@ namespace castor {
         /**
          * Handles the specified delete drive message.
          *
+         * @param socket the socket.
          * @param cuuid the unique id of the request. Needed for dlf.
-         * @param msg the vdqmdDrvReq message.
+         * @param msg the message.
          */
-        void handleDelDrv(castor::io::ServerSocket *const socket,
-          const Cuuid_t &cuuid, vdqmDelDrv_t *const msg)
+        void handleDelDrv(castor::io::ServerSocket &socket,
+          const Cuuid_t &cuuid, vdqmDelDrv_t &msg)
           throw (castor::exception::Exception);
 
         /**
          * Handlers the specified dedicate message.
          *
          * @param cuuid the unique id of the request. Needed for dlf.
-         * @param msg the vdqmdDrvReq message.
+         * @param msg the message.
          */
-        void handleDedicate(castor::io::ServerSocket *const socket,
-          const Cuuid_t &cuuid, vdqmDedicate_t *const msg)
+        void handleDedicate(castor::io::ServerSocket &socket,
+          const Cuuid_t &cuuid, vdqmDedicate_t &msg)
           throw (castor::exception::Exception);
 
       }; // class VdqmMagic3RequestHandler

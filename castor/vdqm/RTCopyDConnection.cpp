@@ -113,6 +113,7 @@ void castor::vdqm::RTCopyDConnection::connect()
 // sendJobToRTCP
 //------------------------------------------------------------------------------
 bool castor::vdqm::RTCopyDConnection::sendJobToRTCPD(
+  const Cuuid_t     &cuuid,
   const u_signed64  tapeRequestID,
   const std::string &clientUserName,
   const std::string &clientMachine,
@@ -210,7 +211,7 @@ bool castor::vdqm::RTCopyDConnection::sendJobToRTCPD(
   }
 
 
-  acknSucc = readRTCPAnswer();
+  acknSucc = readRTCPAnswer(cuuid);
 
   return acknSucc;
 }
@@ -219,7 +220,7 @@ bool castor::vdqm::RTCopyDConnection::sendJobToRTCPD(
 //------------------------------------------------------------------------------
 // readRTCPAnswer
 //------------------------------------------------------------------------------
-bool castor::vdqm::RTCopyDConnection::readRTCPAnswer()
+bool castor::vdqm::RTCopyDConnection::readRTCPAnswer(const Cuuid_t &cuuid)
   throw (castor::exception::Exception) {
 
   int rc, magic, reqtype, len, errmsglen, msglen, status;
@@ -267,7 +268,8 @@ bool castor::vdqm::RTCopyDConnection::readRTCPAnswer()
       castor::dlf::Param params[] =
         {castor::dlf::Param("valid length", (VDQM_MSGBUFSIZ-3*LONGSIZE)),
          castor::dlf::Param("requested length", len)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_RTCOPYDCONNECTION_ERRMSG_TOO_LARGE, 2, params);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+        VDQM_RTCOPYDCONNECTION_ERRMSG_TOO_LARGE, 2, params);
 
       len = VDQM_MSGBUFSIZ - 3*LONGSIZE;
     }
@@ -324,7 +326,8 @@ bool castor::vdqm::RTCopyDConnection::readRTCPAnswer()
       castor::dlf::Param params[] =
         {castor::dlf::Param("status", status),
          castor::dlf::Param("error msg", errmsg)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_RTCOPYDCONNECTION_RTCOPY_ERROR, 2, params);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+        VDQM_RTCOPYDCONNECTION_RTCOPY_ERROR, 2, params);
 
       return false;
     }

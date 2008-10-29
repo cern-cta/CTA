@@ -54,16 +54,22 @@ namespace castor {
        *
        * In case of an error this method writes the appriopriate error messages
        * to both standard error and DLF and then calls exit with a value of 1.
+       *
+       * @param cuuid the cuuid to be used for logging
+       * @param argc the number of command-line arguments
+       * @param argv the command-line arguments
        */
-      void parseCommandLine(int argc, char *argv[]) throw();
+      void parseCommandLine(Cuuid_t &cuuid, int argc, char *argv[]) throw();
 
       /**
        * Initialises the database service.
        *
        * In case of an error this method writes the appriopriate error messages
        * to both standard error and DLF and then calls exit with a value of 1.
+       *
+       * @param cuuid the cuuid to be used for logging
        */
-      void initDatabaseService();
+      void initDatabaseService(Cuuid_t &cuuid);
 
       /**
        * Returns the scheduler timeout, in other words the time a scheduler

@@ -84,8 +84,8 @@ castor::vdqm::handler::TapeRequestHandler::~TapeRequestHandler() throw() {
 // newTapeRequest
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
-  const vdqmHdr_t *const header, vdqmVolReq_t *const volumeRequest,
-  const Cuuid_t cuuid) throw (castor::exception::Exception) {
+  const vdqmHdr_t &header, vdqmVolReq_t &msg, const Cuuid_t &cuuid)
+  throw (castor::exception::Exception) {
   
   struct vmgr_tape_info tape_info; // used to get information about the tape
   
@@ -93,27 +93,20 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
   char *p;
 
 
-  if ( header == NULL || volumeRequest == NULL ) {
-    castor::exception::InvalidArgument ex;
-    ex.getMessage() << "One of the arguments is NULL"
-                    << std::endl;
-    throw ex;
-  }
-  
   //The parameters of the old vdqm VolReq Request
   castor::dlf::Param params[] =
-    {castor::dlf::Param("client_name", volumeRequest->client_name),
-     castor::dlf::Param("clientUID", volumeRequest->clientUID),
-     castor::dlf::Param("clientGID", volumeRequest->clientGID),
-     castor::dlf::Param("client_host", volumeRequest->client_host),
-     castor::dlf::Param("client_port", volumeRequest->client_port),
-     castor::dlf::Param("volid", volumeRequest->volid),
-     castor::dlf::Param("mode", volumeRequest->mode),
-     castor::dlf::Param("dgn", volumeRequest->dgn),
+    {castor::dlf::Param("client_name", msg.client_name),
+     castor::dlf::Param("clientUID", msg.clientUID),
+     castor::dlf::Param("clientGID", msg.clientGID),
+     castor::dlf::Param("client_host", msg.client_host),
+     castor::dlf::Param("client_port", msg.client_port),
+     castor::dlf::Param("volid", msg.volid),
+     castor::dlf::Param("mode", msg.mode),
+     castor::dlf::Param("dgn", msg.dgn),
      castor::dlf::Param("drive",
-       (*volumeRequest->drive == '\0' ? "***" : volumeRequest->drive)),
+       (*msg.drive == '\0' ? "***" : msg.drive)),
      castor::dlf::Param("server",
-       (*volumeRequest->server == '\0' ? "***" : volumeRequest->server))};
+       (*msg.server == '\0' ? "***" : msg.server))};
   castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_OLD_VDQM_VOLREQ_PARAMS,
     10, params);
   
@@ -132,20 +125,20 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
   //The client related informations
   std::auto_ptr<ClientIdentification>
     clientData(new castor::vdqm::ClientIdentification());
-  clientData->setMachine(volumeRequest->client_host);
-  clientData->setUserName(volumeRequest->client_name);
-  clientData->setPort(volumeRequest->client_port);
-  clientData->setEuid(volumeRequest->clientUID);
-  clientData->setEgid(volumeRequest->clientGID);
-  clientData->setMagic(header->magic);
+  clientData->setMachine(msg.client_host);
+  clientData->setUserName(msg.client_name);
+  clientData->setPort(msg.client_port);
+  clientData->setEuid(msg.clientUID);
+  clientData->setEgid(msg.clientGID);
+  clientData->setMagic(header.magic);
    
   // Select the tape or create one if it does not already exist
   std::auto_ptr<VdqmTape> tape(ptr_IVdqmService->selectOrCreateTape(
-    volumeRequest->volid));                                     
+    msg.volid));                                     
   // The requested tape server: Return value is NULL if the server name is
   // empty
   std::auto_ptr<TapeServer> reqTapeServer(
-    ptr_IVdqmService->selectOrCreateTapeServer(volumeRequest->server, false));
+    ptr_IVdqmService->selectOrCreateTapeServer(msg.server, false));
   
   memset(&tape_info,'\0',sizeof(vmgr_tape_info));
   
@@ -153,7 +146,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
   castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,VDQM_GET_TAPE_INFO_FROM_VMGR);     
   // Create a connection to vmgr daemon, to obtain more information about the
   // tape, like its density and its tapeModel.
-  rc = vmgr_querytape(tape->vid().c_str(), 0, &tape_info, volumeRequest->dgn);    
+  rc = vmgr_querytape(tape->vid().c_str(), 0, &tape_info, msg.dgn);    
   if ( rc == -1) {
     castor::exception::Exception ex(EVQDGNINVL);
     ex.getMessage() << "Errors, while using to vmgr_querytape: "
@@ -165,7 +158,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
   // Validate the requested tape Access for the specific tape model.
   // In case of errors, the return value is NULL
   std::auto_ptr<TapeAccessSpecification> tapeAccessSpec(
-    ptr_IVdqmService->selectTapeAccessSpecification(volumeRequest->mode,
+    ptr_IVdqmService->selectTapeAccessSpecification(msg.mode,
     tape_info.density, tape_info.model));
 
   if (0 == tapeAccessSpec.get()) {
@@ -179,11 +172,11 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
   // The requested device group name. If the entry doesn't yet exist, 
   // it will be created.
   std::auto_ptr<DeviceGroupName> dgName(
-    ptr_IVdqmService->selectDeviceGroupName(volumeRequest->dgn));
+    ptr_IVdqmService->selectDeviceGroupName(msg.dgn));
     
   if(0 == dgName.get()) {
     castor::exception::Exception ex(EVQDGNINVL);
-    ex.getMessage() << "DGN " <<  volumeRequest->dgn
+    ex.getMessage() << "DGN " <<  msg.dgn
                     << " does not exist in the db" << std::endl;
     throw ex;
   }
@@ -237,7 +230,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
   // protocol, we must convert the 64bit id into a 32bit number.
   // This is still sufficient to have a unique TapeRequest ID, because
   // the requests don't stay for long time in the db.
-  volumeRequest->VolReqID = (unsigned int)newTapeReq.id();  
+  msg.VolReqID = (unsigned int)newTapeReq.id();  
 }
 
 

@@ -38,12 +38,22 @@ namespace castor {
     public:
 
       /**
-       * checks if the specified string is a valid unsigned integer.
+       * Checks if the specified string is a valid unsigned integer.
        *
        * @param str The string to be checked.
        * @returns true if the string is a valid unsigned integer, else false.
        */
       static bool isAValidUInt(char *str);
+
+      /**
+       * Marshalls the specified string into the specified message header/body
+       * buffer.
+       *
+       * @param ptr pointer to where the string should be marshalled
+       * @param str the string to be marshalled
+       * @return pointer to the first byte after the marshalled string
+       */
+      static char* marshallString(char *ptr, char *str);
 
     }; // class Utils
 

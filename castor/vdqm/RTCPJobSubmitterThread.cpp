@@ -67,9 +67,12 @@ castor::vdqm::RTCPJobSubmitterThread::~RTCPJobSubmitterThread()
 castor::IObject* castor::vdqm::RTCPJobSubmitterThread::select()
   throw() {
 
+  Cuuid_t                cuuid    = nullCuuid;
   castor::vdqm::IVdqmSvc *vdqmSvc = NULL;
   castor::IObject        *obj     = NULL;
 
+
+  Cuuid_create(&cuuid);
 
   try {
     vdqmSvc = getDbVdqmSvc();
@@ -81,7 +84,7 @@ castor::IObject* castor::vdqm::RTCPJobSubmitterThread::select()
       castor::dlf::Param("Message", e.getMessage().str()),
       castor::dlf::Param("Code", e.code())
     };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_DBVDQMSVC_GETSVC,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, VDQM_DBVDQMSVC_GETSVC,
       3, params);
 
     return NULL;
@@ -98,7 +101,7 @@ castor::IObject* castor::vdqm::RTCPJobSubmitterThread::select()
       castor::dlf::Param("Message", e.getMessage().str()),
       castor::dlf::Param("Code", e.code())
     };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
       VDQM_MATCHTAPE2TAPEDRIVE_ERROR, 3, params);
 
     return NULL;
@@ -212,7 +215,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
   try {
 
     // Submit the remote tape copy job to RTCPD
-    submitJobToRTCPD(request.get());
+    submitJobToRTCPD(nullCuuid, request.get());
 
     try
     {
@@ -318,7 +321,8 @@ castor::vdqm::IVdqmSvc *castor::vdqm::RTCPJobSubmitterThread::getDbVdqmSvc()
 // submitJobToRTCPD
 //-----------------------------------------------------------------------------
 void castor::vdqm::RTCPJobSubmitterThread::submitJobToRTCPD(
-  castor::vdqm::TapeRequest* request) throw(castor::exception::Exception) {
+  const Cuuid_t &cuuid, castor::vdqm::TapeRequest* request)
+  throw(castor::exception::Exception) {
 
   castor::vdqm::ClientIdentification *client     = request->client();
   castor::vdqm::TapeDrive            *tapeDrive  = request->tapeDrive();
@@ -357,7 +361,7 @@ void castor::vdqm::RTCPJobSubmitterThread::submitJobToRTCPD(
   }
 
   try {
-    acknSucc = rtcpConnection.sendJobToRTCPD(request->id(),
+    acknSucc = rtcpConnection.sendJobToRTCPD(cuuid, request->id(),
       client->userName(), client->machine(), client->port(), client->euid(),
       client->egid(), dgn->dgName(), tapeDrive->driveName()
     );

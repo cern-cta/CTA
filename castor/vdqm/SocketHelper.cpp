@@ -53,13 +53,13 @@
 // readMagicNumber
 //------------------------------------------------------------------------------
 unsigned int castor::vdqm::SocketHelper::readMagicNumber(
-  castor::io::ServerSocket *const socket)
+  castor::io::ServerSocket &socket)
   throw (castor::exception::Exception) {
 
   char buffer[sizeof(unsigned int)];
 
   // Read the magic number from the socket
-  int rc = netread(socket->socket(), buffer, sizeof(unsigned int));
+  int rc = netread(socket.socket(), buffer, sizeof(unsigned int));
 
   switch(rc) {
   case -1:
@@ -104,10 +104,10 @@ unsigned int castor::vdqm::SocketHelper::readMagicNumber(
 // netWriteVdqmHeader
 //------------------------------------------------------------------------------
 void castor::vdqm::SocketHelper::netWriteVdqmHeader(
-  castor::io::ServerSocket *const socket, void *hdrbuf)
+  castor::io::ServerSocket &socket, void *hdrbuf)
   throw (castor::exception::Exception) {
 
-  int rc = netwrite_timeout(socket->socket(), hdrbuf, VDQM_HDRBUFSIZ,
+  int rc = netwrite_timeout(socket.socket(), hdrbuf, VDQM_HDRBUFSIZ,
     VDQM_TIMEOUT);
 
   switch (rc) {
@@ -144,10 +144,10 @@ void castor::vdqm::SocketHelper::netWriteVdqmHeader(
 // netReadVdqmHeader
 //------------------------------------------------------------------------------
 void castor::vdqm::SocketHelper::netReadVdqmHeader(
-  castor::io::ServerSocket *const socket, void* hdrbuf)
+  castor::io::ServerSocket &socket, void* hdrbuf)
   throw (castor::exception::Exception) {
 
-  int rc = netread_timeout(socket->socket(), hdrbuf, VDQM_HDRBUFSIZ,
+  int rc = netread_timeout(socket.socket(), hdrbuf, VDQM_HDRBUFSIZ,
     VDQM_TIMEOUT);
 
   switch (rc) {
@@ -184,7 +184,7 @@ void castor::vdqm::SocketHelper::netReadVdqmHeader(
 // checkCupvPermissions
 //------------------------------------------------------------------------------
 void castor::vdqm::SocketHelper::checkCupvPermissions(
-  castor::io::ServerSocket *const socket, const uid_t uid, const gid_t gid,
+  castor::io::ServerSocket &socket, const uid_t uid, const gid_t gid,
   const int privilege, const char *privilegeName, const char *messageType)
   throw (castor::exception::PermissionDenied) {
   // Get local hostname
@@ -208,7 +208,7 @@ void castor::vdqm::SocketHelper::checkCupvPermissions(
     unsigned long  ip;
 
     try {
-      socket->getPeerIp(port, ip);
+      socket.getPeerIp(port, ip);
     } catch(castor::exception::Exception &e) {
       castor::exception::PermissionDenied pe;
 
