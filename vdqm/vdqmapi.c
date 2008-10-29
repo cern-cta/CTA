@@ -1,5 +1,5 @@
 /*
- * $Id: vdqmapi.c,v 1.16 2008/10/11 11:33:34 murrayc3 Exp $
+ * $Id: vdqmapi.c,v 1.17 2008/10/29 19:17:13 murrayc3 Exp $
  *
  * Copyright (C) 1999 by CERN IT-PDP/DM
  * All rights reserved
@@ -1122,7 +1122,6 @@ int DLL_DECL vdqm_SendAggregatorVolReq(vdqmnw_t *nw,
         TRACE(1,"vdqm","vdqm_SendAggregatorVolReq() vdqm_RecvAckn() rc = 0x%x",rc);
         if ( rc == VDQM_COMMIT ) {
 			memset(&volreq,'\0',sizeof(volreq));
-            rc = vdqm_RecvReq(tmpnw,NULL,&volreq,NULL);
             rc = vdqm_AggregatorVolReq_Recv(tmpnw,NULL,&volreq);
             if ( rc != -1 ) {
                 rc = vdqm_AcknCommit(tmpnw);
