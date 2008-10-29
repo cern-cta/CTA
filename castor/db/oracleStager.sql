@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.690 $ $Date: 2008/10/22 06:26:15 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.691 $ $Date: 2008/10/29 17:12:56 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -315,6 +315,7 @@ CURSOR c IS
            WHERE a.id = SubRequest.request
              AND a.type = Type2Obj.type
              AND Type2Obj.svcHandler = service)
+      ORDER BY creationTime ASC
     FOR UPDATE SKIP LOCKED;
 BEGIN
   srId := 0;
