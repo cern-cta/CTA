@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.668 $ $Date: 2008/10/17 14:09:30 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.669 $ $Date: 2008/10/29 07:36:52 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -309,7 +309,7 @@ BEGIN
                         AND status = 0 -- STAGED
                         AND NOT EXISTS (
                             SELECT 'x' FROM SubRequest
-                             WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id
+                             WHERE SubRequest.diskcopy = DiskCopy.id
                                AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14)) -- All but FINISHED, FAILED*, ARCHIVED
                         ORDER BY gcWeight ASC)
                    WHERE rownum <= 10000 - totalCount) LOOP
