@@ -122,9 +122,12 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
   // We don't allow client to set priority
   newTapeReq.setPriority(VDQM_PRIORITY_NORMAL);
 
-  // Set the remote copy type to be RTCPD, in the near future TAPE_AGGREAGTOR
-  // will also be supported
-  newTapeReq.setRemoteCopyType("RTCPD");
+  // Set the remote copy type
+  if(header.reqtype == VDQM4_AGGREGATOR_VOL_REQ) {
+    newTapeReq.setRemoteCopyType("TAPE_AGGREGATOR");
+  } else {
+    newTapeReq.setRemoteCopyType("RTCPD");
+  }
    
   //The client related informations
   std::auto_ptr<ClientIdentification>

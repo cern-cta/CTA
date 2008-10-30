@@ -599,7 +599,7 @@ void castor::vdqm::ProtocolFacade::handleVdqmMagic4Request(
     {
       protInterpreter.readAggregatorVolReq(header.len, volReq);
       handler::VdqmMagic4RequestHandler requestHandler;
-      requestHandler.handleAggregatorVolReq(m_socket, m_cuuid, volReq);
+      requestHandler.handleAggregatorVolReq(m_socket, m_cuuid, header, volReq);
 
       break;
     }

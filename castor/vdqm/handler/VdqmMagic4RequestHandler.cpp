@@ -26,6 +26,7 @@
 #include "castor/io/ServerSocket.hpp"
 #include "castor/vdqm/SocketHelper.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
+#include "castor/vdqm/handler/TapeRequestHandler.hpp"
 #include "castor/vdqm/handler/VdqmMagic4RequestHandler.hpp"
 #include "h/Cupv_api.h"
 #include "h/vdqm_constants.h"
@@ -35,7 +36,8 @@
 
 void castor::vdqm::handler::VdqmMagic4RequestHandler::handleAggregatorVolReq(
   castor::io::ServerSocket &socket, const Cuuid_t &cuuid,
-  vdqmVolReq_t &msg) throw (castor::exception::Exception) {
+  const vdqmHdr_t &header, vdqmVolReq_t &msg)
+  throw (castor::exception::Exception) {
 
   castor::dlf::Param param[] = {
     castor::dlf::Param("VolReqID" , msg.VolReqID),
@@ -54,4 +56,7 @@ void castor::vdqm::handler::VdqmMagic4RequestHandler::handleAggregatorVolReq(
     castor::dlf::Param("client_name", msg.client_name)};
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
     VDQM_HANDLE_VDQM4_AGGREGATOR_VOL_REQ, 14, param);
+
+  TapeRequestHandler requestHandler;
+  requestHandler.newTapeRequest(header, msg, cuuid);
 }
