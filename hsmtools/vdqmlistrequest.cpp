@@ -35,6 +35,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <sstream>
 #include <string.h>
 #include <time.h>
 
@@ -202,6 +203,51 @@ castor::vdqm::IVdqmSvc *retrieveVdqmSvc() {
 }
 
 
+void addPadding(std::ostream &os, const int nbSpaces) {
+  for(int i=0; i<nbSpaces; i++) {
+    os << " ";
+  }
+}
+
+
+void addPaddedNumColumn(std::ostream &os, const u_signed64 number,
+  const int width) {
+  std::stringstream oss;
+
+  // Convert the number to a string
+  oss << number;
+
+  // Calculate the necessary padding
+  int len = oss.str().size();
+  int padding = 0;
+  if(width > len) {
+    padding = width - len;
+  }
+
+  // Write the padding to the stream
+  addPadding(os, padding);
+
+  // Write the number as a string to the stream
+  os << oss.str();
+}
+
+
+void addPaddedTxtColumn(std::ostream &os, std::string text, const int width) {
+  // Write the text to the stream
+  os << text;
+
+  // Calculate the necessary padding
+  int len = text.size();
+  int padding = 0;
+  if(width > len) {
+    padding = width - len;
+  }
+
+  // Write the padding to the stream
+  addPadding(os, padding);
+}
+
+
 void printRequestList(castor::vdqm::IVdqmSvc::VolRequestList &requests,
   const bool displayColumnHeadings) {
   time_t t = 0;
@@ -211,32 +257,38 @@ void printRequestList(castor::vdqm::IVdqmSvc::VolRequestList &requests,
 
 
   if(displayColumnHeadings) {
-    std::cout << "REQID\tDGN\tVID\tMODE\tCREATED\t\tPRIORITY" << std::endl;
+    std::cout << "REQID   "         //  8 characters wide
+                 "DGN     "         //  8 characters wide
+                 "VID     "         //  8 characters wide
+                 "MODE    "         //  8 characters wide
+                 "CREATED         " // 16 characters wide
+                 "REMOTECOPYTYPE  " // 16 characters wide
+                 "PRIORITY"         //  8 characters wide
+      << std::endl;
   }
 
   for(castor::vdqm::IVdqmSvc::VolRequestList::iterator itor =
     requests.begin(); itor != requests.end(); itor++) {
-    std::cout << (*itor)->id     << "\t";
-    std::cout << (*itor)->dgName << "\t";
-    std::cout << (*itor)->vid    << "\t";
+    addPaddedNumColumn(std::cout, (*itor)->id    , 8);
+    addPaddedTxtColumn(std::cout, (*itor)->dgName, 8);
+    addPaddedTxtColumn(std::cout, (*itor)->vid   , 8);
     switch((*itor)->accessMode) {
     case 0: // read
-      std::cout << "read";
+      std::cout << "read    "; // 8 characters wide
       break;
     case 1: // write
-      std::cout << "write";
+      std::cout << "write   "; // 8 characters wide
       break;
     default:
-      std::cout << "UNKNOWN";
+      std::cout << "UNKNOWN "; // 8 characters wide
     }
-    std::cout << "\t";
     t = (*itor)->creationTime;
     tp = localtime(&t);
     strftime(timestr,sizeof(timestr),strftime_format, tp);
     timestr[sizeof(timestr)-1] = '\0';
-    std::cout << timestr;
-    std::cout << "\t";
-    std::cout << (*itor)->volumePriority;
+    addPaddedTxtColumn(std::cout, timestr                , 16);
+    addPaddedTxtColumn(std::cout, (*itor)->remoteCopyType, 16);
+    addPaddedNumColumn(std::cout, (*itor)->volumePriority,  8);
     std::cout << std::endl;
   }
 }

@@ -936,7 +936,8 @@ CREATE OR REPLACE VIEW TapeRequestShowqueues_VIEW AS SELECT
   TapeServer.serverName AS tapeServer,
   DeviceGroupName.dgName,
   ClientIdentification.username AS clientUsername,
-  NVL(EffectiveVolumePriority_VIEW.priority,0) AS volumePriority
+  NVL(EffectiveVolumePriority_VIEW.priority,0) AS volumePriority,
+  TapeRequest.remoteCopyType
 FROM
   TapeRequest
 LEFT OUTER JOIN TapeDrive ON

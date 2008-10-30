@@ -235,6 +235,7 @@ namespace castor {
           std::string dgName;
           std::string clientUsername;
           int         volumePriority;  // Priority used for ordering requests
+          std::string remoteCopyType;
         };
 
         /**

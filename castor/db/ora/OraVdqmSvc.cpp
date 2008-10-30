@@ -259,7 +259,8 @@ castor::db::ora::OraVdqmSvc::StatementStringMap::StatementStringMap() {
     "  tapeServer,"
     "  dgName,"
     "  clientUsername,"
-    "  volumePriority "
+    "  volumePriority,"
+    "  remoteCopyType "
     "FROM"
     "  tapeRequestShowqueues_VIEW "
     "WHERE"
@@ -1290,6 +1291,7 @@ void castor::db::ora::OraVdqmSvc::getVolRequestsPriorityOrder(
       request->dgName         = rs->getString(13);
       request->clientUsername = rs->getString(14);
       request->volumePriority = rs->getInt(15);
+      request->remoteCopyType = rs->getString(16);
     }
 
     stmt->closeResultSet(rs);

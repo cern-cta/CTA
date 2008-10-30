@@ -26,6 +26,7 @@
  *
  * 1. Create the VdqmLocks table and inserts the scheduler lock
  * 2. Add the RemoteCopyType column to the TapeRequest table
+ * 3. Replace TapeRequestShowqueues_VIEW
  * 3. Drop the CASTORVDQM package
  * 4. Create the CASTORVDQM package
  *****************************************************************************/
@@ -101,6 +102,46 @@ ALTER TABLE TapeRequest ADD (
   CONSTRAINT CH_TapeRequest_remoteCopyType
     CHECK ((remoteCopyType='RTCPD') OR (remoteCopyType='TAPE_AGGREGATOR')));
 ALTER TABLE TapeRequest MODIFY remoteCopyType DEFAULT NULL;
+
+
+PROMPT ======================================
+PROMPT REPLACE THE TAPEREQUESTSHOWQUEUES_VIEW
+PROMPT ======================================
+
+CREATE OR REPLACE VIEW TapeRequestShowqueues_VIEW AS SELECT
+  TapeRequest.id,
+  TapeDrive.driveName,
+  TapeDrive.id AS tapeDriveId,
+  TapeRequest.priority,
+  ClientIdentification.port AS clientPort,
+  ClientIdentification.euid AS clientEuid,
+  ClientIdentification.egid AS clientEgid,
+  TapeAccessSpecification.accessMode,
+  TapeRequest.creationTime,
+  ClientIdentification.machine AS clientMachine,
+  VdqmTape.vid,
+  TapeServer.serverName AS tapeServer,
+  DeviceGroupName.dgName,
+  ClientIdentification.username AS clientUsername,
+  NVL(EffectiveVolumePriority_VIEW.priority,0) AS volumePriority,
+  TapeRequest.remoteCopyType
+FROM
+  TapeRequest
+LEFT OUTER JOIN TapeDrive ON
+  TapeRequest.tapeDrive = TapeDrive.id
+LEFT OUTER JOIN ClientIdentification ON
+  TapeRequest.client = ClientIdentification.id
+INNER JOIN TapeAccessSpecification ON
+  TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
+LEFT OUTER JOIN VdqmTape ON
+  TapeRequest.tape = VdqmTape.id
+LEFT OUTER JOIN TapeServer ON
+  TapeRequest.requestedSrv = TapeServer.id
+LEFT OUTER JOIN DeviceGroupName ON
+  TapeRequest.deviceGroupName = DeviceGroupName.id
+LEFT OUTER JOIN EffectiveVolumePriority_VIEW ON
+      VdqmTape.vid = EffectiveVolumePriority_VIEW.vid
+  AND TapeAccessSpecification.accessMode = EffectiveVolumePriority_VIEW.tpMode;
 
 
 PROMPT ===========================
