@@ -123,6 +123,8 @@ ALTER TABLE TapeRequest MODIFY
 ALTER TABLE TapeRequest MODIFY
  (priority CONSTRAINT NN_TapeRequest_priority NOT NULL);
 ALTER TABLE TapeRequest MODIFY
+ (remoteCopyType CONSTRAINT NN_TapeRequest_remoteCopyType NOT NULL);
+ALTER TABLE TapeRequest MODIFY
  (status CONSTRAINT NN_TapeRequest_status NOT NULL);
 ALTER TABLE TapeRequest MODIFY
  (tape CONSTRAINT NN_TapeRequest_tape NOT NULL);
@@ -193,6 +195,12 @@ ALTER TABLE Tape2DriveDedication
 ALTER TABLE TapeAccessSpecification
   ADD CONSTRAINT CH_TapeAccessSpec_accessMode
     CHECK ((accessMode=0) OR (accessMode=1));
+
+-- The remoteCopyType column of the TapeRequest table has 2 possible
+-- values: 'RTCPD' or 'TAPE_AGGREGATOR'
+ALTER TABLE TapeRequest
+  ADD CONSTRAINT CH_TapeRequest_remoteCopyType
+    CHECK ((remoteCopyType='RTCPD') OR (remoteCopyType='TAPE_AGGREGATOR'));
 
 -- The tpMode column of the VolumePriority table has 2 possible
 -- values: 0=write-disabled or 1=write-enabled
