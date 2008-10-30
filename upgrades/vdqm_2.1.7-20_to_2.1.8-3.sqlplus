@@ -25,8 +25,9 @@
  * Summary of upgrade
  *
  * 1. Create the VdqmLocks table and inserts the scheduler lock
- * 2. Drop the CASTORVDQM package
- * 3. Create the CASTORVDQM package
+ * 2. Add the RemoteCopyType column to the TapeRequest table
+ * 3. Drop the CASTORVDQM package
+ * 4. Create the CASTORVDQM package
  *****************************************************************************/
 
 /* Stop on errors - this only works from sqlplus */
@@ -88,6 +89,18 @@ BEGIN
   END IF;
 END;
 /
+
+
+PROMPT ======================================================
+PROMPT ADD THE REMOTECOPYTYPE COLUMN TO THE TAPEREQUEST TABLE
+PROMPT ======================================================
+
+ALTER TABLE TapeRequest ADD (
+  remoteCopyType VARCHAR2(2048) DEFAULT 'RTCPD'
+    CONSTRAINT NN_TapeRequest_remoteCopyType NOT NULL,
+  CONSTRAINT CH_TapeRequest_remoteCopyType
+    CHECK ((remoteCopyType='RTCPD') OR (remoteCopyType='TAPE_AGGREGATOR')));
+ALTER TABLE TapeRequest MODIFY remoteCopyType DEFAULT NULL;
 
 
 PROMPT ===========================
