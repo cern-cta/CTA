@@ -269,7 +269,8 @@ void printRequestList(castor::vdqm::IVdqmSvc::VolRequestList &requests,
 
   for(castor::vdqm::IVdqmSvc::VolRequestList::iterator itor =
     requests.begin(); itor != requests.end(); itor++) {
-    addPaddedNumColumn(std::cout, (*itor)->id    , 8);
+    addPaddedNumColumn(std::cout, (*itor)->id    , 7);
+    std::cout << " ";
     addPaddedTxtColumn(std::cout, (*itor)->dgName, 8);
     addPaddedTxtColumn(std::cout, (*itor)->vid   , 8);
     switch((*itor)->accessMode) {
