@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.261 $ $Release$ $Date: 2008/10/17 09:25:49 $ $Author: waldron $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.262 $ $Release$ $Date: 2008/10/30 10:21:44 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1177,45 +1177,52 @@ int castor::db::ora::OraStagerSvc::setFileGCWeight
 //------------------------------------------------------------------------------
 int validateNsSegments(struct Cns_segattrs *nsSegments, int nbNsSegments)
   throw (castor::exception::Exception) {
-  int useCopyNb = -1;
-  for(int i = 0; i < nbNsSegments; i++) {
-    if (useCopyNb != -1 && nsSegments[i].copyno != useCopyNb)
-      // we don't validate all copies of the file, only the segments of the first chosen copy
-      continue;
+  int currCopyNb = nsSegments[0].copyno;
+  int myErrno = 0;
+  
+  for(short i = 0; i < nbNsSegments; i++) {
+    if(nsSegments[i].copyno != currCopyNb) {
+      // moving out of the current copy: check whether it was a valid one and exit
+      if(!myErrno) break;
+      // if not, let's restart with the new copy
+      currCopyNb = nsSegments[i].copyno;
+      myErrno = 0;
+    }
+
+    // consistency checks for this segment
     if((nsSegments[i].vid == '\0') || (nsSegments[i].s_status != '-')) {
-      free(nsSegments);
       // The segment is not valid. We may have lost a file on tape!
-      castor::exception::SegmentNotAccessible e;
-      e.getMessage() << sstrerror(e.code());
-      throw e;
+      myErrno = ESTSEGNOACC;
+      continue;
     }
     struct vmgr_tape_info vmgrTapeInfo;
     int rc = vmgr_querytape(nsSegments[i].vid, nsSegments[i].side, &vmgrTapeInfo, 0);
     if(-1 == rc) {
-      free(nsSegments);
-      castor::exception::Internal e;
-      e.getMessage() << "validateNsSegments : vmgr_querytape failed";
-      throw e;
+      myErrno = SEINTERNAL;
+      continue;
     }
     // check tape status; when STANDBY tapes will be supported, they will
     // be let through, while we consider any of the following as permanent errors
     if(((vmgrTapeInfo.status & DISABLED) == DISABLED) ||
        ((vmgrTapeInfo.status & ARCHIVED) == ARCHIVED) ||
        ((vmgrTapeInfo.status & EXPORTED) == EXPORTED)) {
-      free(nsSegments);
-      // The tape is not accessible at all (e.g. out of the robot or in maintenance), inform user
-      castor::exception::TapeOffline e;
-      e.getMessage() << sstrerror(e.code());
-      throw e;
-    }
-    if(useCopyNb == -1) {
-      // if we got here we can use this copy for the recall
-      // but we have to eventually validate the other segments for this copy
-      // so we go through the loop
-      useCopyNb = nsSegments[i].copyno;
+      // The tape is not accessible at all (e.g. out of the robot or in maintenance)
+      myErrno = ESTTAPEOFFLINE;
     }
   }
-  return useCopyNb;
+  if(!myErrno)   // all segments for this copy were valid, let's use it
+    return currCopyNb;
+  else {
+    // Otherwise we didn't find a valid copy, raise appropriate exception.
+    // Note that we may have had more than a reason==exception to raise, so
+    // we arbitrarily raise the last one.
+    free(nsSegments);
+    castor::exception::Exception e(myErrno);
+    e.getMessage() << (myErrno == SEINTERNAL ?
+                      "Failed to query the tape on VMGR" 
+                      : sstrerror(e.code()) );
+    throw e;
+  }
 }
 
 //------------------------------------------------------------------------------
