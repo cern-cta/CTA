@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<XMI xmlns:UML="http://schema.omg.org/spec/UML/1.3" verified="false" timestamp="2008-07-21T09:34:10" xmi.version="1.2" >
+<XMI xmlns:UML="http://schema.omg.org/spec/UML/1.3" verified="false" timestamp="2008-10-30T11:40:45" xmi.version="1.2" >
  <XMI.header>
   <XMI.documentation>
    <XMI.exporter>umbrello uml modeller http://uml.sf.net</XMI.exporter>
@@ -157,6 +157,7 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
             <UML:Attribute comment="The time, when the tape request is beeing created" isSpecification="false" visibility="public" xmi.id="130258" type="131665" name="creationTime" />
             <UML:Attribute comment="[s]errno in case of failure" isSpecification="false" visibility="public" xmi.id="gV6r0QcujXOP" type="133771" name="errorCode" />
             <UML:Attribute comment="Error message in case of failure" isSpecification="false" visibility="public" xmi.id="Yd8r485Wm0Lh" type="137289" name="errorMessage" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="y0fktQWMXdqJ" type="137289" name="remoteCopyType" />
            </UML:Classifier.feature>
           </UML:Class>
           <UML:Class stereotype="53501" comment="Contains all  possible status of the TapeDrive" isSpecification="false" isLeaf="false" visibility="public" namespace="5219" xmi.id="3947" isRoot="false" isAbstract="false" name="TapeDriveStatusCodes" >
@@ -331,38 +332,38 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
       <UML:Generalization isSpecification="false" child="1eCFCxRYhdgN" visibility="public" namespace="1" xmi.id="105008" parent="1eCFCxRYhdgN" discriminator="" name="" />
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="107198" name="" >
        <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="EtWKFjWg6qCE" aggregation="composite" type="3274" name="" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="3y1Xl06fez3G" aggregation="none" type="3947" name="status" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="WDcNJI4byfpE" aggregation="composite" type="3274" name="" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="imBjy5Eedl3F" aggregation="none" type="3947" name="status" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="107211" name="" >
        <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="ShFrOdkcWGuj" aggregation="none" type="4710" name="" multiplicity="0..n" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="xQP1FaGIWFnH" aggregation="none" type="1016" name="tape" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="7lGexH9TSlok" aggregation="none" type="4710" name="" multiplicity="0..n" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="1sLyX8AEtJvr" aggregation="none" type="1016" name="tape" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="107216" name="" >
        <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="Erxsqy7HeM60" aggregation="none" type="3274" name="" multiplicity="0..1" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="xqcU4VB1tZ38" aggregation="none" type="1016" name="tape" multiplicity="0..1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="O9T0uWFzFVbC" aggregation="none" type="3274" name="" multiplicity="0..1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="kkdATRuTIDRn" aggregation="none" type="1016" name="tape" multiplicity="0..1" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="107228" name="" >
        <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="9HOfWAvi1qbs" aggregation="composite" type="5194" name="tapeServer" multiplicity="1" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="og7Q2DQy41Q6" aggregation="none" type="3274" name="tapeDrives" multiplicity="0..n" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="KZ1Dsw2H4WFw" aggregation="composite" type="5194" name="tapeServer" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="0UwGxXQhG2rj" aggregation="none" type="3274" name="tapeDrives" multiplicity="0..n" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="107230" name="" >
        <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="Ub6NA7UHOsxs" aggregation="none" type="4710" name="" multiplicity="0..n" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="2qb2gAuSqztq" aggregation="none" type="5156" name="tapeAccessSpecification" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="TmAlzZZH8YUz" aggregation="none" type="4710" name="" multiplicity="0..n" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="TXEX1TT1xNFu" aggregation="none" type="5156" name="tapeAccessSpecification" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="107231" name="" >
        <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="CHoEICLmoP8w" aggregation="none" type="4710" name="" multiplicity="0..n" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="WcEsS9kTxJVd" aggregation="none" type="5194" name="requestedSrv" multiplicity="0..1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="veb9gQq9A1t8" aggregation="none" type="4710" name="" multiplicity="0..n" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="aQPhwugNPusQ" aggregation="none" type="5194" name="requestedSrv" multiplicity="0..1" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="107823" client="5156" name="" supplier="960" />
@@ -383,26 +384,26 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="109142" client="5194" name="" supplier="1216" />
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="113533" name="" >
        <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="TN5HMw8WCulU" aggregation="none" type="3274" name="tapeDrive" multiplicity="0..1" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="74FtTLpxx1pN" aggregation="none" type="4710" name="runningTapeReq" multiplicity="0..1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="NKPKhdCaHljx" aggregation="none" type="3274" name="tapeDrive" multiplicity="0..1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="Ba4KZvS9JroG" aggregation="none" type="4710" name="runningTapeReq" multiplicity="0..1" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="114167" name="" >
        <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="8Xo5pJiIemY0" aggregation="composite" type="4710" name="" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="geXsYGLdIYWl" aggregation="none" type="5444" name="client" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="jUb8OUYjow1T" aggregation="composite" type="4710" name="" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="ZD4qyln8JpSs" aggregation="none" type="5444" name="client" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="120418" name="" >
        <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="tKgoLVBU0yXp" aggregation="composite" type="5194" name="" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="HE6w0eugIPXo" aggregation="none" type="120415" name="actingMode" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="lu04joITJubf" aggregation="composite" type="5194" name="" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="M8PA4QbdcfTa" aggregation="none" type="120415" name="actingMode" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="120431" name="" >
        <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="dsSvQweHGK5a" aggregation="none" type="3274" name="tapeDrive" multiplicity="0..1" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="nE4oCZdSnjMl" aggregation="none" type="120423" name="tapeDriveDedication" multiplicity="0..n" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="PEgi16bm0bpk" aggregation="none" type="3274" name="tapeDrive" multiplicity="0..1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="P5BgxmMJulRy" aggregation="none" type="120423" name="tapeDriveDedication" multiplicity="0..n" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="120442" client="120423" name="" supplier="960" />
@@ -413,26 +414,26 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="120503" client="120423" name="" supplier="1216" />
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="123183" name="" >
        <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="LEQbexQHpqBD" aggregation="none" type="3274" name="" multiplicity="0..n" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="mpU18Xbvldjw" aggregation="none" type="123177" name="tapeDriveCompatibilities" multiplicity="0..n" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="93Zlg2K5EyoG" aggregation="none" type="3274" name="" multiplicity="0..n" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="5N05ynnLty2o" aggregation="none" type="123177" name="tapeDriveCompatibilities" multiplicity="0..n" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="123192" name="" >
        <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="CLO02ilOw9za" aggregation="none" type="123177" name="" multiplicity="0..n" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="6NqtBz4yoYzw" aggregation="none" type="5156" name="tapeAccessSpecification" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="jO6b7VaGW90D" aggregation="none" type="123177" name="" multiplicity="0..n" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="AKGMG2cLPdRL" aggregation="none" type="5156" name="tapeAccessSpecification" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="123199" name="" >
        <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="3YqnBZjNs5Lv" aggregation="none" type="3274" name="" multiplicity="0..n" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="l5HhEEGJc6Cl" aggregation="none" type="123190" name="deviceGroupName" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="QChH9j6q5ARC" aggregation="none" type="3274" name="" multiplicity="0..n" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="fzQC7QNHibdz" aggregation="none" type="123190" name="deviceGroupName" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="123200" name="" >
        <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="3HhrngmpCccN" aggregation="none" type="4710" name="" multiplicity="0..n" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="9Jl2M6v79CoO" aggregation="none" type="123190" name="deviceGroupName" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="eEI1rjNFu2V1" aggregation="none" type="4710" name="" multiplicity="0..n" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="jZrojIyMIMYP" aggregation="none" type="123190" name="deviceGroupName" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="123890" client="123190" name="" supplier="960" />
@@ -455,16 +456,16 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="2274" client="1016" name="" supplier="960" />
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="2300" name="" >
        <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="O4hy8rkB8R1u" aggregation="composite" type="1eCFCxRYhdgN" name="" multiplicity="1" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="6njINJgWcPWy" aggregation="none" type="1eCFCxRYhdgN" name="client" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="lveTXFQ9TjAI" aggregation="composite" type="1eCFCxRYhdgN" name="" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="QVWIV1JEaA0H" aggregation="none" type="1eCFCxRYhdgN" name="client" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Generalization isSpecification="false" child="1eCFCxRYhdgN" visibility="public" namespace="1" xmi.id="2342" parent="1eCFCxRYhdgN" discriminator="" name="" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="2352" client="1016" name="" supplier="943" />
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="jaqwf1oHa9Xr" name="" >
        <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="TP5dZr1ywgw2" aggregation="none" type="4710" name="" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="XeEe6DYCyFSL" aggregation="none" type="n0qG9gvAGDvj" name="status" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="TydjLA863mXY" aggregation="none" type="4710" name="" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="1whTdql1LHIr" aggregation="none" type="n0qG9gvAGDvj" name="status" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="ugL4rTDV9K6d" client="eQDkBHa6rgbc" name="" supplier="943" />
@@ -472,21 +473,21 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="ieVYudRu9iyy" client="HooxXeg2z7dq" name="" supplier="960" />
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="Bsd5eVwlUfiC" name="" >
        <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="Y8pAXK61jBcJ" aggregation="none" type="HooxXeg2z7dq" name="" multiplicity="0..n" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="2dFwHBzoqBSu" aggregation="none" type="3274" name="tapeDrive" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="Gb3ok45D0huJ" aggregation="none" type="HooxXeg2z7dq" name="" multiplicity="0..n" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="r2NumtTlnAEO" aggregation="none" type="3274" name="tapeDrive" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="zKeRABm4PjGv" client="HooxXeg2z7dq" name="" supplier="943" />
      </UML:Namespace.ownedElement>
      <XMI.extension xmi.extender="umbrello" >
       <diagrams>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1004" snapy="10" showatts="1" xmi.id="981" documentation="" type="1" showops="1" showpackage="0" name="InheritanceClass" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="1059" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="994" snapy="10" showatts="1" xmi.id="981" documentation="" type="1" showops="1" showpackage="0" name="InheritanceClass" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="1059" >
         <widgets>
          <interfacewidget usesdiagramfillcolor="0" width="147" x="329" fillcolor="#ffffc0" y="217" drawascircle="0" showopsigs="601" linewidth="none" height="93" usefillcolor="1" showpubliconly="0" isinstance="0" xmi.id="960" showoperations="1" showpackage="1" showscope="1" usesdiagramusefillcolor="0" font="helvetica,9,-1,0,50,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="144" showattsigs="600" x="384" fillcolor="#ffffc0" y="467" showopsigs="600" linewidth="none" height="44" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="1016" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Bitstream Charter,9,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="255" showattsigs="600" x="263" fillcolor="#ffffc0" y="888" showopsigs="600" linewidth="none" height="62" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="5156" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="162" showattsigs="600" x="232" fillcolor="#ffffc0" y="725" showopsigs="600" linewidth="none" height="54" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="3274" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,75,0,0,0,0,0" linecolor="#ff0000" />
-         <classwidget usesdiagramfillcolor="0" width="172" showattsigs="600" x="451" fillcolor="#ffffc0" y="775" showopsigs="600" linewidth="none" height="50" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="4710" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
+         <classwidget usesdiagramfillcolor="0" width="204" showattsigs="600" x="451" fillcolor="#ffffc0" y="775" showopsigs="600" linewidth="none" height="56" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="4710" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,75,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="170" showattsigs="600" x="84" fillcolor="#ffffc0" y="802" showopsigs="600" linewidth="none" height="62" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="5194" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="217" showattsigs="600" x="14" fillcolor="#ffffc0" y="419" showopsigs="600" linewidth="none" height="54" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="5444" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="228" showattsigs="600" x="689" fillcolor="#ffffc0" y="378" showopsigs="600" linewidth="none" height="62" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="120423" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
@@ -514,9 +515,9 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
            <startpoint startx="313" starty="725" />
            <endpoint endx="432" endy="511" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="317" fillcolor="none" y="780" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="mx9W6ln7M23d" text="0..1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="30" x="474" fillcolor="none" y="486" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="D0Q19qvVpxn0" text="0..1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="41" x="402" fillcolor="none" y="489" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="My4KDWfjdSrA" text="tape" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="317" fillcolor="none" y="780" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="EOCF56Ww6uos" text="0..1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="474" fillcolor="none" y="486" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="nHbaQoyOmLiz" text="0..1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="41" x="402" fillcolor="none" y="489" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="0yPKFf9UHCI1" text="tape" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="4" indexa="1" visibilityB="200" totalcountb="9" indexb="4" linewidth="none" widgetbid="960" widgetaid="3274" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
@@ -526,25 +527,25 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
          </assocwidget>
          <assocwidget totalcounta="3" indexa="1" visibilityB="200" totalcountb="3" indexb="2" linewidth="none" widgetbid="1016" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="508" starty="775" />
+           <startpoint startx="519" starty="775" />
            <endpoint endx="480" endy="511" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="32" x="438" fillcolor="none" y="762" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="8wkTym4AkU9s" text="0..n" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="15" x="454" fillcolor="none" y="463" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="J3L8096UZobS" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="41" x="456" fillcolor="none" y="489" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="USk7tZFfXN9d" text="tape" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="449" fillcolor="none" y="762" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="Xy7bsvRdB2Bb" text="0..n" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="15" x="454" fillcolor="none" y="463" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="q9zaSiaRV3fV" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="41" x="456" fillcolor="none" y="489" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="1pTG0mHEARRD" text="tape" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="1" visibilityB="200" totalcountb="3" indexb="2" linewidth="none" widgetbid="5156" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="508" starty="825" />
+           <startpoint startx="519" starty="831" />
            <endpoint endx="433" endy="888" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="540" fillcolor="none" y="800" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="zoIhGSZZVvfT" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="15" x="564" fillcolor="none" y="747" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="4mybaX4wKApW" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="160" x="458" fillcolor="none" y="748" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="Op8vCHWICFjA" text="tapeAccessSpecification" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="549" fillcolor="none" y="805" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="7saItlthssIJ" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="15" x="566" fillcolor="none" y="748" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="Ysi4tOXhIFce" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="160" x="458" fillcolor="none" y="748" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="nuivL98q7DRx" text="tapeAccessSpecification" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="2" visibilityB="200" totalcountb="9" indexb="7" linewidth="none" widgetbid="960" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="565" starty="775" />
+           <startpoint startx="587" starty="775" />
            <endpoint endx="443" endy="310" />
           </linepath>
          </assocwidget>
@@ -553,19 +554,19 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
            <startpoint startx="272" starty="779" />
            <endpoint endx="197" endy="802" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="16" x="237" fillcolor="none" y="720" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="sP3DZsjzCWal" text="1" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="30" x="261" fillcolor="none" y="1003" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="3KHNNVwrI5py" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="90" x="190" fillcolor="none" y="755" linewidth="none" posttext="" role="709" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="RMpdZYmYK4Fb" text="tapeServer" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="78" x="188" fillcolor="none" y="1030" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="Un8xioRkYNL6" text="tapeDrives" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="16" x="237" fillcolor="none" y="720" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="yDzEQasnJLGD" text="1" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="261" fillcolor="none" y="1003" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="DgFxcYZKjsto" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="90" x="190" fillcolor="none" y="755" linewidth="none" posttext="" role="709" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="NjSSwuQ3kyJd" text="tapeServer" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="78" x="188" fillcolor="none" y="1030" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="iCJa5brdRafK" text="tapeDrives" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="5194" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="451" starty="800" />
+           <startpoint startx="451" starty="803" />
            <endpoint endx="254" endy="833" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="612" fillcolor="none" y="764" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="NOxXuWHxqWJD" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="30" x="129" fillcolor="none" y="801" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="1F5HIsF96xWf" text="0..1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="93" x="123" fillcolor="none" y="774" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="rEiPb3TTRUgy" text="requestedSrv" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="612" fillcolor="none" y="767" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="kJU1ckCpOPl0" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="129" fillcolor="none" y="801" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="wILf8CRZuqRD" text="0..1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="93" x="123" fillcolor="none" y="774" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="RkPsI5AEGATg" text="requestedSrv" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="1" visibilityB="200" totalcountb="9" indexb="2" linewidth="none" widgetbid="960" widgetaid="5194" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
@@ -584,10 +585,10 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
            <startpoint startx="353" starty="725" />
            <endpoint endx="803" endy="440" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="32" x="374" fillcolor="none" y="661" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="lbzrYUUVUcvw" text="0..1" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="30" x="806" fillcolor="none" y="456" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="PIkYc3cQdd4j" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="83" x="383" fillcolor="none" y="699" linewidth="none" posttext="" role="709" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="z08QUnOpBKL5" text="tapeDrive" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="132" x="671" fillcolor="none" y="432" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="qa1e6Ks6ZvNs" text="tapeDriveDedication" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="374" fillcolor="none" y="661" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="vyIopj1iIQq2" text="0..1" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="806" fillcolor="none" y="456" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="HgRR0sD2TnQR" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="83" x="383" fillcolor="none" y="699" linewidth="none" posttext="" role="709" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="tbP9jsqRCKQm" text="tapeDrive" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="132" x="671" fillcolor="none" y="432" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="2bcQ0LQudjXj" text="tapeDriveDedication" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" visibilityB="200" totalcountb="3" indexb="2" linewidth="none" widgetbid="960" widgetaid="120423" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
@@ -600,18 +601,18 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
            <startpoint startx="353" starty="779" />
            <endpoint endx="644" endy="970" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="313" fillcolor="none" y="729" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="mtmEUfArxsQX" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="15" x="680" fillcolor="none" y="968" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="v2vYd0GYs30i" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="123" x="562" fillcolor="none" y="946" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="vunUp9KakIPG" text="deviceGroupName" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="313" fillcolor="none" y="729" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="REJid9iup9Ln" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="15" x="680" fillcolor="none" y="968" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="zWnSKDsQ2EAY" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="123" x="562" fillcolor="none" y="946" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="8oMjYtSRqkFd" text="deviceGroupName" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="2" visibilityB="200" totalcountb="4" indexb="2" linewidth="none" widgetbid="123190" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="565" starty="825" />
+           <startpoint startx="587" starty="831" />
            <endpoint endx="698" endy="970" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="575" fillcolor="none" y="804" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="chpYaD3TDz2o" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="15" x="738" fillcolor="none" y="946" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="xGMpHKXSbmMA" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="123" x="613" fillcolor="none" y="946" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="CJGubeBLVxZx" text="deviceGroupName" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="595" fillcolor="none" y="809" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="x6unGDYDkKg4" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="15" x="738" fillcolor="none" y="946" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="VYSVka3nBzhS" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="123" x="613" fillcolor="none" y="946" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="5axtJBWiPqQ0" text="deviceGroupName" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="4" indexa="3" visibilityB="200" totalcountb="9" indexb="8" linewidth="none" widgetbid="960" widgetaid="123190" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
@@ -624,18 +625,18 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
            <startpoint startx="313" starty="779" />
            <endpoint endx="185" endy="904" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="287" fillcolor="none" y="729" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="pel2dloa1AQH" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="30" x="162" fillcolor="none" y="903" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="Svj4f5E3biv3" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="156" x="163" fillcolor="none" y="881" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="OXVrU4p5kedI" text="tapeDriveCompatibilities" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="287" fillcolor="none" y="729" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="eG5OajQ6Fqbz" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="162" fillcolor="none" y="903" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="RdkacP0kb8Ha" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="156" x="163" fillcolor="none" y="881" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="AB8X1XYxdQkr" text="tapeDriveCompatibilities" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="5156" widgetaid="123177" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
            <startpoint startx="267" starty="935" />
            <endpoint endx="263" endy="919" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="347" fillcolor="none" y="959" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="HxaH5yYXtFZX" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="15" x="265" fillcolor="none" y="860" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="ImYtUTxCB3hV" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="160" x="265" fillcolor="none" y="934" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="ki8UMjm9OW9z" text="tapeAccessSpecification" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="347" fillcolor="none" y="959" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="wa8BQi8rLrPv" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="15" x="265" fillcolor="none" y="860" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="GPfrYuQDgxUu" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="160" x="265" fillcolor="none" y="934" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="fnXJEFAqUDC4" text="tapeAccessSpecification" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="1" visibilityB="200" totalcountb="9" indexb="3" linewidth="none" widgetbid="960" widgetaid="123177" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
@@ -657,20 +658,20 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1000" snapy="10" showatts="1" xmi.id="1214" documentation="" type="1" showops="1" showpackage="0" name="PersistencyClass" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="977" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1095" snapy="10" showatts="1" xmi.id="1214" documentation="" type="1" showops="1" showpackage="0" name="PersistencyClass" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="977" >
         <widgets>
          <interfacewidget usesdiagramfillcolor="0" width="146" x="369" fillcolor="#ffffc0" y="225" drawascircle="0" showopsigs="600" linewidth="none" height="32" usefillcolor="1" showpubliconly="0" isinstance="0" xmi.id="943" showoperations="1" showpackage="1" showscope="1" usesdiagramusefillcolor="0" font="Andale Mono,9,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="147" showattsigs="600" x="99" fillcolor="#ffffc0" y="462" showopsigs="600" linewidth="none" height="48" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="1016" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="helvetica,9,-1,0,50,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="217" showattsigs="600" x="435" fillcolor="#ffffc0" y="695" showopsigs="600" linewidth="none" height="54" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="5444" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="255" showattsigs="600" x="202" fillcolor="#ffffc0" y="762" showopsigs="600" linewidth="none" height="62" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="5156" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="162" showattsigs="600" x="8" fillcolor="#ffffc0" y="773" showopsigs="600" linewidth="none" height="54" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="3274" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
-         <classwidget usesdiagramfillcolor="0" width="172" showattsigs="600" x="176" fillcolor="#ffffc0" y="657" showopsigs="600" linewidth="none" height="50" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="4710" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
+         <classwidget usesdiagramfillcolor="0" width="204" showattsigs="600" x="398" fillcolor="#ffffc0" y="404" showopsigs="600" linewidth="none" height="161" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="4710" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,75,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="170" showattsigs="600" x="745" fillcolor="#ffffc0" y="663" showopsigs="600" linewidth="none" height="62" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="5194" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="228" showattsigs="600" x="758" fillcolor="#ffffc0" y="279" showopsigs="600" linewidth="none" height="62" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="120423" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="215" showattsigs="600" x="632" fillcolor="#ffffc0" y="801" showopsigs="600" linewidth="none" height="62" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="123190" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="245" showattsigs="600" x="411" fillcolor="#ffffc0" y="911" showopsigs="600" linewidth="none" height="62" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="123177" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
-         <classwidget usesdiagramfillcolor="1" width="252" showattsigs="601" x="36" fillcolor="none" y="11" showopsigs="601" linewidth="none" height="207" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="eQDkBHa6rgbc" showoperations="1" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,75,0,0,0,0,0" linecolor="none" />
-         <classwidget usesdiagramfillcolor="1" width="308" showattsigs="601" x="2" fillcolor="none" y="227" showopsigs="601" linewidth="none" height="99" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="HooxXeg2z7dq" showoperations="1" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,75,0,0,0,0,0" linecolor="none" />
+         <classwidget usesdiagramfillcolor="1" width="252" showattsigs="601" x="36" fillcolor="none" y="11" showopsigs="601" linewidth="none" height="207" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="eQDkBHa6rgbc" showoperations="1" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+         <classwidget usesdiagramfillcolor="1" width="308" showattsigs="601" x="2" fillcolor="none" y="227" showopsigs="601" linewidth="none" height="99" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="HooxXeg2z7dq" showoperations="1" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
         </widgets>
         <messages/>
         <associations>
@@ -680,26 +681,26 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
            <endpoint endx="385" endy="257" />
           </linepath>
          </assocwidget>
-         <assocwidget totalcounta="2" indexa="1" visibilityB="200" totalcountb="9" indexb="5" linewidth="none" widgetbid="943" widgetaid="5444" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
+         <assocwidget totalcounta="2" indexa="1" visibilityB="200" totalcountb="9" indexb="4" linewidth="none" widgetbid="943" widgetaid="5444" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
            <startpoint startx="543" starty="695" />
-           <endpoint endx="450" endy="257" />
-          </linepath>
-         </assocwidget>
-         <assocwidget totalcounta="3" indexa="2" visibilityB="200" totalcountb="9" indexb="4" linewidth="none" widgetbid="943" widgetaid="5156" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
-          <linepath>
-           <startpoint startx="372" starty="762" />
            <endpoint endx="433" endy="257" />
           </linepath>
          </assocwidget>
-         <assocwidget totalcounta="5" indexa="2" visibilityB="200" totalcountb="3" indexb="1" linewidth="none" widgetbid="1016" widgetaid="3274" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
+         <assocwidget totalcounta="3" indexa="1" visibilityB="200" totalcountb="9" indexb="3" linewidth="none" widgetbid="943" widgetaid="5156" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
+          <linepath>
+           <startpoint startx="287" starty="762" />
+           <endpoint endx="417" endy="257" />
+          </linepath>
+         </assocwidget>
+         <assocwidget totalcounta="5" indexa="2" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="1016" widgetaid="3274" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
            <startpoint startx="72" starty="773" />
-           <endpoint endx="148" endy="510" />
+           <endpoint endx="172" endy="510" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="151" fillcolor="none" y="749" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="e0JWDq3VcZP4" text="0..1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="30" x="121" fillcolor="none" y="488" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="3KHCNyg6NIFJ" text="0..1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="41" x="121" fillcolor="none" y="488" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="lRc9xl6DigSn" text="tape" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="151" fillcolor="none" y="749" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="Y3ktu9mAZR05" text="0..1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="121" fillcolor="none" y="488" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="JQIzLlrWObBC" text="0..1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="41" x="121" fillcolor="none" y="488" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="BdkfqwjlUqwu" text="tape" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="5" indexa="3" visibilityB="200" totalcountb="9" indexb="2" linewidth="none" widgetbid="943" widgetaid="3274" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
@@ -707,52 +708,52 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
            <endpoint endx="401" endy="257" />
           </linepath>
          </assocwidget>
-         <assocwidget totalcounta="3" indexa="1" visibilityB="200" totalcountb="3" indexb="2" linewidth="none" widgetbid="1016" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
+         <assocwidget totalcounta="2" indexa="1" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="1016" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="233" starty="657" />
-           <endpoint endx="197" endy="510" />
+           <startpoint startx="398" starty="484" />
+           <endpoint endx="246" endy="486" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="32" x="253" fillcolor="none" y="626" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="d8cEhzIiHZtd" text="0..n" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="15" x="210" fillcolor="none" y="488" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="VZjtpxArHeYH" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="41" x="218" fillcolor="none" y="488" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="2KWi0yUdwn77" text="tape" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="399" fillcolor="none" y="474" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="luxIJvNcLeah" text="0..n" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="15" x="271" fillcolor="none" y="439" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="PRDl1PxUIvSz" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="41" x="267" fillcolor="none" y="435" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="VtxzjusHvc8p" text="tape" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
-         <assocwidget totalcounta="3" indexa="1" visibilityB="200" totalcountb="3" indexb="1" linewidth="none" widgetbid="5156" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
+         <assocwidget totalcounta="3" indexa="1" visibilityB="200" totalcountb="3" indexb="2" linewidth="none" widgetbid="5156" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="233" starty="707" />
-           <endpoint endx="287" endy="762" />
+           <startpoint startx="466" starty="565" />
+           <endpoint endx="372" endy="762" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="799" fillcolor="none" y="726" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="BvVSUO50vprj" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="15" x="274" fillcolor="none" y="760" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="m1Y3f6ID8Bhv" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="160" x="384" fillcolor="none" y="738" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="a2sUpzbQ5Den" text="tapeAccessSpecification" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="1061" fillcolor="none" y="585" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="MJ7hxhMK7a58" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="15" x="345" fillcolor="none" y="759" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="x1cDw4ChMQNI" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="160" x="633" fillcolor="none" y="738" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="nKGiwMVfGQyX" text="tapeAccessSpecification" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
-         <assocwidget totalcounta="3" indexa="2" visibilityB="200" totalcountb="9" indexb="3" linewidth="none" widgetbid="943" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
+         <assocwidget totalcounta="2" indexa="1" visibilityB="200" totalcountb="9" indexb="6" linewidth="none" widgetbid="943" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="290" starty="657" />
-           <endpoint endx="417" endy="257" />
+           <startpoint startx="500" starty="404" />
+           <endpoint endx="466" endy="257" />
           </linepath>
          </assocwidget>
-         <assocwidget totalcounta="4" indexa="1" visibilityB="200" totalcountb="3" indexb="2" linewidth="none" widgetbid="5194" widgetaid="3274" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
+         <assocwidget totalcounta="4" indexa="1" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="5194" widgetaid="3274" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
            <startpoint startx="170" starty="786" />
-           <endpoint endx="745" endy="704" />
+           <endpoint endx="745" endy="694" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="16" x="200" fillcolor="none" y="785" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="63yFCfAIxSWQ" text="1" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="30" x="171" fillcolor="none" y="783" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="PT3Gw8alGuVE" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="90" x="200" fillcolor="none" y="759" linewidth="none" posttext="" role="709" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="8IKETwzerS5M" text="tapeServer" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="78" x="171" fillcolor="none" y="761" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="pAKkx9TjA2kn" text="tapeDrives" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="16" x="200" fillcolor="none" y="785" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="AU9WsWneMjcc" text="1" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="171" fillcolor="none" y="783" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="d9DokVx27PRI" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="90" x="200" fillcolor="none" y="759" linewidth="none" posttext="" role="709" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="msy0GuXcDcI9" text="tapeServer" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="78" x="171" fillcolor="none" y="761" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="IeTPCXX7Y7IS" text="tapeDrives" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" visibilityB="200" totalcountb="3" indexb="1" linewidth="none" widgetbid="5194" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="348" starty="682" />
-           <endpoint endx="745" endy="683" />
+           <startpoint startx="602" starty="484" />
+           <endpoint endx="801" endy="663" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="383" fillcolor="none" y="642" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="XPBUritG9uV5" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="30" x="740" fillcolor="none" y="702" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="05qGyKUzHQ9C" text="0..1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="93" x="650" fillcolor="none" y="681" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="3xxBxgw3juGt" text="requestedSrv" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="623" fillcolor="none" y="450" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="TTfpAIPlPcZ9" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="813" fillcolor="none" y="676" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="5V9DsaTkUsAW" text="0..1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="93" x="706" fillcolor="none" y="661" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="uwPQ1isBAzg3" text="requestedSrv" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
-         <assocwidget totalcounta="2" indexa="1" visibilityB="200" totalcountb="9" indexb="8" linewidth="none" widgetbid="943" widgetaid="5194" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
+         <assocwidget totalcounta="3" indexa="2" visibilityB="200" totalcountb="9" indexb="8" linewidth="none" widgetbid="943" widgetaid="5194" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="830" starty="663" />
+           <startpoint startx="858" starty="663" />
            <endpoint endx="498" endy="257" />
           </linepath>
          </assocwidget>
@@ -761,10 +762,10 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
            <startpoint startx="137" starty="773" />
            <endpoint endx="872" endy="341" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="32" x="124" fillcolor="none" y="775" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="vQTAocKufXhd" text="0..1" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="30" x="865" fillcolor="none" y="291" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="zL7oC3ViqQPX" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="83" x="125" fillcolor="none" y="749" linewidth="none" posttext="" role="709" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="65DnySgVrryg" text="tapeDrive" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="132" x="739" fillcolor="none" y="317" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="XpxhhSmhVbxT" text="tapeDriveDedication" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="124" fillcolor="none" y="775" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="q0KLrSrNSW2P" text="0..1" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="865" fillcolor="none" y="291" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="skre44ZhiGgx" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="83" x="125" fillcolor="none" y="749" linewidth="none" posttext="" role="709" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="Y0hhzLiSmLFw" text="tapeDrive" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="132" x="739" fillcolor="none" y="317" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="deh1HF8MiIXa" text="tapeDriveDedication" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="943" widgetaid="120423" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
@@ -777,18 +778,18 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
            <startpoint startx="170" starty="800" />
            <endpoint endx="632" endy="832" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="171" fillcolor="none" y="769" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="s7DXdu9cFEPQ" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="15" x="626" fillcolor="none" y="829" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="Hu85KVcAemTN" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="123" x="509" fillcolor="none" y="807" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="s9CLk7pdXInL" text="deviceGroupName" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="171" fillcolor="none" y="769" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="T30tY3IQl72p" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="15" x="626" fillcolor="none" y="829" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="BbVuq9pJw7Tz" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="123" x="509" fillcolor="none" y="807" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="TnKB3pjto1Cf" text="deviceGroupName" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="2" visibilityB="200" totalcountb="3" indexb="1" linewidth="none" widgetbid="123190" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="290" starty="707" />
+           <startpoint startx="534" starty="565" />
            <endpoint endx="703" endy="801" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="232" fillcolor="none" y="678" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="q774LUSaMYfe" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="15" x="744" fillcolor="none" y="820" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="3Fof1F2uY1J6" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="123" x="629" fillcolor="none" y="798" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="tI0PYmkQtyyU" text="deviceGroupName" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="463" fillcolor="none" y="536" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="Pp19v3y6dRyT" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="15" x="752" fillcolor="none" y="821" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="bokVvDVqQKZc" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="123" x="629" fillcolor="none" y="798" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="xCrlC3Of5MXd" text="deviceGroupName" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="2" visibilityB="200" totalcountb="9" indexb="7" linewidth="none" widgetbid="943" widgetaid="123190" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
@@ -801,23 +802,23 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
            <startpoint startx="170" starty="813" />
            <endpoint endx="472" endy="911" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="105" fillcolor="none" y="779" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="iGR2o6gpJSVK" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="30" x="496" fillcolor="none" y="909" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="hVCFUUKHUruS" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="156" x="363" fillcolor="none" y="887" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="n2XeyT9maEot" text="tapeDriveCompatibilities" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="105" fillcolor="none" y="779" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="6nZjEYAnKuJF" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="496" fillcolor="none" y="909" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="8m4W6d6RbLst" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="156" x="363" fillcolor="none" y="887" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="NxFSKm3ha4qV" text="tapeDriveCompatibilities" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="4" indexa="2" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="5156" widgetaid="123177" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
            <startpoint startx="533" starty="911" />
            <endpoint endx="329" endy="824" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="478" fillcolor="none" y="913" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="EdrX5Krkq10K" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="15" x="330" fillcolor="none" y="774" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="VKaz9SPRTcHg" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="160" x="330" fillcolor="none" y="800" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="I1CqF1jvFAx2" text="tapeAccessSpecification" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="478" fillcolor="none" y="913" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="EtAYlTmtDqNJ" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="15" x="330" fillcolor="none" y="774" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="TTk2ncttWSXU" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="160" x="330" fillcolor="none" y="800" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="6vagyP94CilO" text="tapeAccessSpecification" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
-         <assocwidget totalcounta="4" indexa="3" visibilityB="200" totalcountb="9" indexb="6" linewidth="none" widgetbid="943" widgetaid="123177" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
+         <assocwidget totalcounta="4" indexa="3" visibilityB="200" totalcountb="9" indexb="5" linewidth="none" widgetbid="943" widgetaid="123177" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
            <startpoint startx="594" starty="911" />
-           <endpoint endx="466" endy="257" />
+           <endpoint endx="450" endy="257" />
           </linepath>
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" linewidth="none" widgetbid="943" widgetaid="eQDkBHa6rgbc" xmi.id="ugL4rTDV9K6d" type="511" linecolor="none" >
@@ -831,9 +832,9 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
            <startpoint startx="156" starty="326" />
            <endpoint endx="40" endy="773" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="32" x="158" fillcolor="none" y="328" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="2guqfsB9Aj8J" text="0..n" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="16" x="54" fillcolor="none" y="749" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="BWic6xIhtrVz" text="1" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="83" x="74" fillcolor="none" y="749" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="bybq6WsK7irA" text="tapeDrive" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="158" fillcolor="none" y="328" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="yvlBj8UBaDDN" text="0..n" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="16" x="54" fillcolor="none" y="749" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="n5EJXlnMPHLj" text="1" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="83" x="74" fillcolor="none" y="749" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="rgW1MFNb8X9t" text="tapeDrive" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" linewidth="none" widgetbid="943" widgetaid="HooxXeg2z7dq" xmi.id="zKeRABm4PjGv" type="511" linecolor="none" >
           <linepath>
@@ -843,14 +844,14 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1004" snapy="10" showatts="1" xmi.id="1215" documentation="" type="1" showops="1" showpackage="0" name="StreamingClass" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="1111" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="994" snapy="10" showatts="1" xmi.id="1215" documentation="" type="1" showops="1" showpackage="0" name="StreamingClass" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="1111" >
         <widgets>
          <classwidget usesdiagramfillcolor="0" width="147" showattsigs="600" x="62" fillcolor="#ffffc0" y="473" showopsigs="600" linewidth="none" height="48" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="1016" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="helvetica,9,-1,0,50,0,0,0,0,0" linecolor="#ff0000" />
          <interfacewidget usesdiagramfillcolor="0" width="116" x="362" fillcolor="#ffffc0" y="335" drawascircle="0" showopsigs="601" linewidth="none" height="42" usefillcolor="1" showpubliconly="0" isinstance="0" xmi.id="1216" showoperations="0" showpackage="1" showscope="1" usesdiagramusefillcolor="0" font="Arial,9,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="217" showattsigs="600" x="380" fillcolor="#ffffc0" y="572" showopsigs="600" linewidth="none" height="54" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="5444" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="255" showattsigs="600" x="305" fillcolor="#ffffc0" y="782" showopsigs="600" linewidth="none" height="62" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="5156" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="162" showattsigs="600" x="40" fillcolor="#ffffc0" y="802" showopsigs="600" linewidth="none" height="54" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="3274" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,75,0,0,0,0,0" linecolor="#ff0000" />
-         <classwidget usesdiagramfillcolor="0" width="172" showattsigs="600" x="617" fillcolor="#ffffc0" y="863" showopsigs="600" linewidth="none" height="50" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="4710" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,75,0,0,0,0,0" linecolor="#ff0000" />
+         <classwidget usesdiagramfillcolor="0" width="204" showattsigs="600" x="617" fillcolor="#ffffc0" y="863" showopsigs="600" linewidth="none" height="56" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="4710" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,75,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="170" showattsigs="600" x="121" fillcolor="#ffffc0" y="920" showopsigs="600" linewidth="none" height="62" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="5194" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="228" showattsigs="600" x="525" fillcolor="#ffffc0" y="1005" showopsigs="600" linewidth="none" height="62" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="120423" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="215" showattsigs="600" x="769" fillcolor="#ffffc0" y="941" showopsigs="600" linewidth="none" height="62" usefillcolor="1" showpubliconly="0" showattributes="0" isinstance="0" xmi.id="123190" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
@@ -881,9 +882,9 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
            <startpoint startx="94" starty="802" />
            <endpoint endx="111" endy="521" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="117" fillcolor="none" y="778" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="L6bVnhnyDTYH" text="0..1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="30" x="81" fillcolor="none" y="499" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="RqyKhUK2obSs" text="0..1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="41" x="36" fillcolor="none" y="499" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="LMJS48a6mSvS" text="tape" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="117" fillcolor="none" y="778" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="NoEv1RIpUU61" text="0..1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="81" fillcolor="none" y="499" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="DsNa9gKgNcIb" text="0..1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="41" x="36" fillcolor="none" y="499" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="WiKcESWCLFM5" text="tape" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="2" visibilityB="200" totalcountb="10" indexb="2" linewidth="none" widgetbid="1216" widgetaid="3274" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
@@ -893,25 +894,25 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
          </assocwidget>
          <assocwidget totalcounta="3" indexa="1" visibilityB="200" totalcountb="3" indexb="2" linewidth="none" widgetbid="1016" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="674" starty="863" />
+           <startpoint startx="685" starty="863" />
            <endpoint endx="160" endy="521" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="32" x="685" fillcolor="none" y="865" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="D4eOXCgy2cHh" text="0..n" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="15" x="145" fillcolor="none" y="473" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="4ZhsA9ks9fLc" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="41" x="145" fillcolor="none" y="499" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="i2wUSrwnvVHi" text="tape" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="696" fillcolor="none" y="865" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="6Zib3paFhwpq" text="0..n" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="15" x="146" fillcolor="none" y="473" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="c9UzmlYoVICV" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="41" x="145" fillcolor="none" y="499" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="4mlQ17TNwhIv" text="tape" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="1" visibilityB="200" totalcountb="3" indexb="2" linewidth="none" widgetbid="5156" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="617" starty="879" />
+           <startpoint startx="617" starty="881" />
            <endpoint endx="475" endy="844" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="651" fillcolor="none" y="861" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="xyAyZPddyLW7" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="15" x="433" fillcolor="none" y="793" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="SExatIAOYXoH" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="160" x="433" fillcolor="none" y="820" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="WFNQle8wglIE" text="tapeAccessSpecification" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="651" fillcolor="none" y="863" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="kYyPSlE3vg2f" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="15" x="433" fillcolor="none" y="794" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="RZTvrgQEJIWc" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="160" x="433" fillcolor="none" y="820" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="PfsJK8DPfvyj" text="tapeAccessSpecification" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="2" visibilityB="200" totalcountb="10" indexb="8" linewidth="none" widgetbid="1216" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="731" starty="863" />
+           <startpoint startx="753" starty="863" />
            <endpoint endx="454" endy="377" />
           </linepath>
          </assocwidget>
@@ -920,19 +921,19 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
            <startpoint startx="80" starty="856" />
            <endpoint endx="177" endy="920" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="16" x="81" fillcolor="none" y="832" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="ucaS7OhHHs6u" text="1" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="30" x="113" fillcolor="none" y="838" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="L8TlJ0kw9NVa" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="90" x="118" fillcolor="none" y="832" linewidth="none" posttext="" role="709" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="AuDqfT2bSDX1" text="tapeServer" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="78" x="122" fillcolor="none" y="840" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="c8cZT8guLdUE" text="tapeDrives" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="16" x="81" fillcolor="none" y="832" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="APcRf834r48V" text="1" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="113" fillcolor="none" y="838" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="1rqVYbR0ZQME" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="90" x="118" fillcolor="none" y="832" linewidth="none" posttext="" role="709" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="Oj14ezlNVhmw" text="tapeServer" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="78" x="122" fillcolor="none" y="840" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="SyzNf104YUzP" text="tapeDrives" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="2" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="5194" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="617" starty="896" />
+           <startpoint startx="617" starty="900" />
            <endpoint endx="291" endy="951" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="607" fillcolor="none" y="849" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="0ntFdz9z6dkP" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="30" x="292" fillcolor="none" y="936" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="bVLiqoHJxj8i" text="0..1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="93" x="292" fillcolor="none" y="914" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="T9Somu3gWd6e" text="requestedSrv" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="607" fillcolor="none" y="853" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="5RPuUVOTMEys" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="292" fillcolor="none" y="936" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="pNrPnDdDXw9K" text="0..1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="93" x="292" fillcolor="none" y="914" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="PKJyoILwixOL" text="requestedSrv" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="2" visibilityB="200" totalcountb="10" indexb="3" linewidth="none" widgetbid="1216" widgetaid="5194" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
@@ -945,10 +946,10 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
            <startpoint startx="161" starty="856" />
            <endpoint endx="601" endy="1005" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="32" x="193" fillcolor="none" y="796" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="FJAA0IscRFlD" text="0..1" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="30" x="633" fillcolor="none" y="1003" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="gXwsBvkn4XUm" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="83" x="194" fillcolor="none" y="832" linewidth="none" posttext="" role="709" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="eBMAmTmkEezs" text="tapeDrive" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="132" x="506" fillcolor="none" y="981" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="d9pjkX9L0S2q" text="tapeDriveDedication" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="193" fillcolor="none" y="796" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="MoGsjNAupOnF" text="0..1" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="633" fillcolor="none" y="1003" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="1zh3b5XhpS9n" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="83" x="194" fillcolor="none" y="832" linewidth="none" posttext="" role="709" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="DSGtQcET2cOU" text="tapeDrive" usesdiagramusefillcolor="1" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="132" x="506" fillcolor="none" y="981" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="7mxSyuKoHBB5" text="tapeDriveDedication" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="2" visibilityB="200" totalcountb="10" indexb="7" linewidth="none" widgetbid="1216" widgetaid="120423" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
@@ -961,18 +962,18 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
            <startpoint startx="202" starty="829" />
            <endpoint endx="769" endy="972" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="232" fillcolor="none" y="792" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="MI2nVnyBIu3S" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="15" x="845" fillcolor="none" y="939" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="qmFsJhfMJlSL" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="123" x="727" fillcolor="none" y="917" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="5b8528wHP6RP" text="deviceGroupName" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="232" fillcolor="none" y="792" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="IvA7KvLJu2KW" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="15" x="845" fillcolor="none" y="939" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="5pDuHKfejFGI" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="123" x="727" fillcolor="none" y="917" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="MRZebkhvZxlG" text="deviceGroupName" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" visibilityB="200" totalcountb="3" indexb="1" linewidth="none" widgetbid="123190" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="703" starty="913" />
+           <startpoint startx="719" starty="919" />
            <endpoint endx="840" endy="941" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="720" fillcolor="none" y="864" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="QVxhQz9ElM62" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="15" x="826" fillcolor="none" y="938" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="3jPKUpdLBDbb" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="123" x="708" fillcolor="none" y="917" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="tMaGQzdmHfZm" text="deviceGroupName" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="737" fillcolor="none" y="869" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="ncSiemCjZNbq" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="15" x="826" fillcolor="none" y="939" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="fHSMWifTdpyV" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="123" x="708" fillcolor="none" y="917" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="zxCWsxkArsH9" text="deviceGroupName" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="2" visibilityB="200" totalcountb="10" indexb="9" linewidth="none" widgetbid="1216" widgetaid="123190" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
@@ -985,18 +986,18 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
            <startpoint startx="121" starty="856" />
            <endpoint endx="422" endy="1045" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="138" fillcolor="none" y="806" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="75zqP4tQnGlG" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="30" x="522" fillcolor="none" y="983" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="5MZGYBpjOABE" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="156" x="339" fillcolor="none" y="1021" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="DFNSsuFHNAwn" text="tapeDriveCompatibilities" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="138" fillcolor="none" y="806" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="uGrTdRIGikdC" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="522" fillcolor="none" y="983" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="RId45bYpKBRt" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="156" x="339" fillcolor="none" y="1021" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="kifbbviOVA4A" text="tapeDriveCompatibilities" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="4" indexa="2" visibilityB="200" totalcountb="3" indexb="1" linewidth="none" widgetbid="5156" widgetaid="123177" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
            <startpoint startx="483" starty="1045" />
            <endpoint endx="390" endy="844" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="30" x="531" fillcolor="none" y="982" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="EOG0c1GhLpvt" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="15" x="383" fillcolor="none" y="820" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="ykcKsmXwA0Lh" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="160" x="391" fillcolor="none" y="820" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="4OTRZPDeSAVr" text="tapeAccessSpecification" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="30" x="531" fillcolor="none" y="982" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="0wSge3q3JU6O" text="0..n" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="15" x="383" fillcolor="none" y="820" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="3eELndEsmWS2" text="1" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="160" x="391" fillcolor="none" y="820" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="69HcIKkCaZeC" text="tapeAccessSpecification" usesdiagramusefillcolor="1" font="Nimbus Sans L,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="4" indexa="3" visibilityB="200" totalcountb="10" indexb="5" linewidth="none" widgetbid="1216" widgetaid="123177" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
@@ -1006,7 +1007,7 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1020" snapy="10" showatts="1" xmi.id="1242" documentation="" type="6" showops="1" showpackage="0" name="RequestBuilderActivity" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="636" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1010" snapy="10" showatts="1" xmi.id="1242" documentation="" type="6" showops="1" showpackage="0" name="RequestBuilderActivity" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="636" >
         <widgets>
          <activitywidget usesdiagramfillcolor="1" width="10" activityname="Activity" x="466" fillcolor="none" y="86" linewidth="none" height="10" usefillcolor="1" isinstance="0" xmi.id="1243" documentation="" activitytype="0" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <notewidget usesdiagramfillcolor="0" width="260" x="46" fillcolor="#c0ffc0" y="230" linewidth="none" height="90" usefillcolor="1" isinstance="0" xmi.id="1248" text="Stores Request
@@ -1702,7 +1703,7 @@ Here, we will reschedule" usesdiagramusefillcolor="1" font="Andale Mono,9,-1,5,5
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="1" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1004" snapy="10" showatts="1" xmi.id="1325" documentation="" type="5" showops="1" showpackage="0" name="DiskCopy" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="645" >
+       <diagram snapgrid="1" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="994" snapy="10" showatts="1" xmi.id="1325" documentation="" type="5" showops="1" showpackage="0" name="DiskCopy" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="645" >
         <widgets>
          <statewidget statetype="0" statename="State" usesdiagramfillcolor="1" width="10" x="60" fillcolor="none" y="230" linewidth="none" height="10" usefillcolor="1" isinstance="0" xmi.id="1326" documentation="" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" linecolor="none" >
           <Activities/>
@@ -2156,7 +2157,7 @@ Here, we will reschedule" usesdiagramusefillcolor="1" font="Andale Mono,9,-1,5,5
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1004" snapy="10" showatts="1" xmi.id="1381" documentation="" type="6" showops="1" showpackage="0" name="GarbageCollection" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="953" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="994" snapy="10" showatts="1" xmi.id="1381" documentation="" type="6" showops="1" showpackage="0" name="GarbageCollection" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="953" >
         <widgets>
          <activitywidget usesdiagramfillcolor="1" width="10" activityname="Activity" x="460" fillcolor="none" y="62" linewidth="none" height="10" usefillcolor="1" isinstance="0" xmi.id="1382" documentation="" activitytype="0" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <activitywidget usesdiagramfillcolor="1" width="10" activityname="Activity" x="460" fillcolor="none" y="939" linewidth="none" height="10" usefillcolor="1" isinstance="0" xmi.id="1383" documentation="" activitytype="2" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
@@ -2333,7 +2334,7 @@ The selected diskcopies are the ones with the biggest >0 GCWeight. If no weigth 
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1004" snapy="10" showatts="1" xmi.id="1461" documentation="" type="6" showops="1" showpackage="0" name="RecallerActivity" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="967" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="994" snapy="10" showatts="1" xmi.id="1461" documentation="" type="6" showops="1" showpackage="0" name="RecallerActivity" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="967" >
         <widgets>
          <activitywidget usesdiagramfillcolor="1" width="10" activityname="Activity" x="381" fillcolor="none" y="42" linewidth="none" height="10" usefillcolor="1" isinstance="0" xmi.id="1462" documentation="" activitytype="0" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <activitywidget usesdiagramfillcolor="1" width="10" activityname="Activity" x="380" fillcolor="none" y="279" linewidth="none" height="10" usefillcolor="1" isinstance="0" xmi.id="1463" documentation="" activitytype="2" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
@@ -2520,7 +2521,7 @@ A policy could be applied here, avoiding the creation of some TapeCopies (e.g. t
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1020" snapy="10" showatts="1" xmi.id="1464" documentation="" type="3" showops="1" showpackage="0" name="RecallerSequence" localid="29990" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="814" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1010" snapy="10" showatts="1" xmi.id="1464" documentation="" type="3" showops="1" showpackage="0" name="RecallerSequence" localid="29990" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="814" >
         <widgets>
          <objectwidget usesdiagramfillcolor="1" width="160" x="4" fillcolor="none" y="48" instancename="" linewidth="none" height="30" usefillcolor="1" isinstance="0" xmi.id="1467" decon="0" localid="29997" multipleinstance="0" drawasactor="0" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,1,0,0,0" linecolor="none" />
          <objectwidget usesdiagramfillcolor="0" width="120" x="169" fillcolor="#ffffc0" y="48" instancename="" linewidth="none" height="30" usefillcolor="1" isinstance="0" xmi.id="1468" decon="0" localid="29996" multipleinstance="0" drawasactor="0" usesdiagramusefillcolor="0" font="Andale Mono,12,-1,5,50,0,1,0,0,0" linecolor="#ff0000" />
@@ -2597,7 +2598,7 @@ A policy could be applied here, avoiding the creation of some TapeCopies (e.g. t
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1004" snapy="10" showatts="1" xmi.id="1591" documentation="" type="6" showops="1" showpackage="0" name="MigHunter" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="805" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="994" snapy="10" showatts="1" xmi.id="1591" documentation="" type="6" showops="1" showpackage="0" name="MigHunter" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="805" >
         <widgets>
          <activitywidget usesdiagramfillcolor="1" width="10" activityname="Activity" x="448" fillcolor="none" y="194" linewidth="none" height="10" usefillcolor="1" isinstance="0" xmi.id="1592" documentation="" activitytype="0" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <activitywidget usesdiagramfillcolor="0" width="180" activityname="Select Candidates" x="363" fillcolor="#ffffc0" y="249" linewidth="none" height="32" usefillcolor="1" isinstance="0" xmi.id="1594" documentation="" activitytype="1" usesdiagramusefillcolor="0" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
@@ -2714,7 +2715,7 @@ A policy could be applied here, avoiding the creation of some TapeCopies (e.g. t
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1004" snapy="10" showatts="1" xmi.id="1601" documentation="" type="6" showops="1" showpackage="0" name="Migrator" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="669" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="994" snapy="10" showatts="1" xmi.id="1601" documentation="" type="6" showops="1" showpackage="0" name="Migrator" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="669" >
         <widgets>
          <activitywidget usesdiagramfillcolor="1" width="10" activityname="Activity" x="484" fillcolor="none" y="196" linewidth="none" height="10" usefillcolor="1" isinstance="0" xmi.id="1602" documentation="" activitytype="0" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <activitywidget usesdiagramfillcolor="1" width="150" activityname="getStreamsToDo" x="414" fillcolor="none" y="261" linewidth="none" height="32" usefillcolor="1" isinstance="0" xmi.id="1603" documentation="" activitytype="1" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
@@ -2786,7 +2787,7 @@ A policy could be applied here, avoiding the creation of some TapeCopies (e.g. t
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1020" snapy="10" showatts="1" xmi.id="1679" documentation="" type="5" showops="1" showpackage="0" name="TapeStates" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="646" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1010" snapy="10" showatts="1" xmi.id="1679" documentation="" type="5" showops="1" showpackage="0" name="TapeStates" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="646" >
         <widgets>
          <statewidget statetype="0" statename="State" usesdiagramfillcolor="1" width="10" x="99" fillcolor="none" y="271" linewidth="none" height="10" usefillcolor="1" isinstance="0" xmi.id="1680" documentation="" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" linecolor="none" >
           <Activities/>
@@ -2896,7 +2897,7 @@ A policy could be applied here, avoiding the creation of some TapeCopies (e.g. t
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1020" snapy="10" showatts="1" xmi.id="1690" documentation="" type="5" showops="1" showpackage="0" name="Segment" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="636" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1010" snapy="10" showatts="1" xmi.id="1690" documentation="" type="5" showops="1" showpackage="0" name="Segment" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="636" >
         <widgets>
          <statewidget statetype="0" statename="State" usesdiagramfillcolor="1" width="10" x="29" fillcolor="none" y="370" linewidth="none" height="10" usefillcolor="1" isinstance="0" xmi.id="1691" documentation="" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" linecolor="none" >
           <Activities/>
@@ -3035,7 +3036,7 @@ In case of retry, a new Segment is created" usesdiagramusefillcolor="1" font="An
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1020" snapy="10" showatts="1" xmi.id="1701" documentation="" type="5" showops="1" showpackage="0" name="TapeCopyStates" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="636" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1010" snapy="10" showatts="1" xmi.id="1701" documentation="" type="5" showops="1" showpackage="0" name="TapeCopyStates" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="636" >
         <widgets>
          <statewidget statetype="0" statename="State" usesdiagramfillcolor="1" width="10" x="418" fillcolor="none" y="58" linewidth="none" height="10" usefillcolor="1" isinstance="0" xmi.id="1702" documentation="" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" linecolor="none" >
           <Activities/>
@@ -3192,7 +3193,7 @@ The TapeCopy is detached from the stream and the other streams should not select
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1020" snapy="10" showatts="1" xmi.id="1715" documentation="" type="3" showops="1" showpackage="0" name="MigratorSequence" localid="29990" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="854" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1010" snapy="10" showatts="1" xmi.id="1715" documentation="" type="3" showops="1" showpackage="0" name="MigratorSequence" localid="29990" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="854" >
         <widgets>
          <objectwidget usesdiagramfillcolor="1" width="160" x="0" fillcolor="none" y="48" instancename="" linewidth="none" height="30" usefillcolor="1" isinstance="0" xmi.id="1467" decon="0" localid="29997" multipleinstance="0" drawasactor="0" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,1,0,0,0" linecolor="none" />
          <objectwidget usesdiagramfillcolor="0" width="110" x="294" fillcolor="#ffffc0" y="48" instancename="" linewidth="none" height="30" usefillcolor="1" isinstance="0" xmi.id="1469" decon="0" localid="29996" multipleinstance="0" drawasactor="0" usesdiagramusefillcolor="0" font="Andale Mono,12,-1,5,50,0,1,0,0,0" linecolor="#ff0000" />
@@ -3257,7 +3258,7 @@ The TapeCopy is detached from the stream and the other streams should not select
         </messages>
         <associations/>
        </diagram>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1004" snapy="10" showatts="1" xmi.id="1828" documentation="" type="6" showops="1" showpackage="0" name="StreamerActivity" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="693" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="994" snapy="10" showatts="1" xmi.id="1828" documentation="" type="6" showops="1" showpackage="0" name="StreamerActivity" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="693" >
         <widgets>
          <activitywidget usesdiagramfillcolor="1" width="10" activityname="Activity" x="473" fillcolor="none" y="162" linewidth="none" height="10" usefillcolor="1" isinstance="0" xmi.id="1829" documentation="" activitytype="0" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <activitywidget usesdiagramfillcolor="1" width="10" activityname="Activity" x="473" fillcolor="none" y="679" linewidth="none" height="10" usefillcolor="1" isinstance="0" xmi.id="1830" documentation="" activitytype="2" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
@@ -3343,7 +3344,7 @@ The TapeCopy is detached from the stream and the other streams should not select
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1020" snapy="10" showatts="1" xmi.id="1839" documentation="" type="6" showops="1" showpackage="0" name="DeletorActivity" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="636" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1010" snapy="10" showatts="1" xmi.id="1839" documentation="" type="6" showops="1" showpackage="0" name="DeletorActivity" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="636" >
         <widgets>
          <activitywidget usesdiagramfillcolor="1" width="10" activityname="Activity" x="471" fillcolor="none" y="69" linewidth="none" height="10" usefillcolor="1" isinstance="0" xmi.id="1840" documentation="" activitytype="0" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <activitywidget usesdiagramfillcolor="1" width="10" activityname="Activity" x="471" fillcolor="none" y="410" linewidth="none" height="10" usefillcolor="1" isinstance="0" xmi.id="1841" documentation="" activitytype="2" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
@@ -3393,7 +3394,7 @@ The TapeCopy is detached from the stream and the other streams should not select
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1020" snapy="10" showatts="1" xmi.id="1852" documentation="" type="5" showops="1" showpackage="0" name="StreamStates" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="636" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1010" snapy="10" showatts="1" xmi.id="1852" documentation="" type="5" showops="1" showpackage="0" name="StreamStates" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="636" >
         <widgets>
          <statewidget statetype="0" statename="State" usesdiagramfillcolor="1" width="10" x="243" fillcolor="none" y="0" linewidth="none" height="10" usefillcolor="1" isinstance="0" xmi.id="1853" documentation="" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" linecolor="none" >
           <Activities/>
@@ -3462,7 +3463,7 @@ The TapeCopy is detached from the stream and the other streams should not select
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1020" snapy="10" showatts="1" xmi.id="1865" documentation="" type="5" showops="1" showpackage="0" name="RequestStates" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="636" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1010" snapy="10" showatts="1" xmi.id="1865" documentation="" type="5" showops="1" showpackage="0" name="RequestStates" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="636" >
         <widgets>
          <statewidget statetype="0" statename="State" usesdiagramfillcolor="1" width="10" x="146" fillcolor="none" y="255" linewidth="none" height="10" usefillcolor="1" isinstance="0" xmi.id="1866" documentation="" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,75,0,0,0,0,0" linecolor="none" >
           <Activities/>
@@ -3656,7 +3657,7 @@ The TapeCopy is detached from the stream and the other streams should not select
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1020" snapy="10" showatts="1" xmi.id="2051" documentation="" type="3" showops="1" showpackage="0" name="UpdateSequence" localid="29996" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="636" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1010" snapy="10" showatts="1" xmi.id="2051" documentation="" type="3" showops="1" showpackage="0" name="UpdateSequence" localid="29996" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="636" >
         <widgets>
          <objectwidget usesdiagramfillcolor="0" width="110" x="112" fillcolor="#ffffc0" y="48" instancename="" linewidth="none" height="30" usefillcolor="1" isinstance="0" xmi.id="1870" decon="1" localid="29999" multipleinstance="0" drawasactor="0" usesdiagramusefillcolor="0" font="Andale Mono,12,-1,5,50,0,1,0,0,0" linecolor="#ff0000" />
          <objectwidget usesdiagramfillcolor="0" width="110" x="258" fillcolor="#ffffc0" y="48" instancename="" linewidth="none" height="30" usefillcolor="1" isinstance="0" xmi.id="1469" decon="1" localid="29998" multipleinstance="0" drawasactor="0" usesdiagramusefillcolor="0" font="Andale Mono,12,-1,5,50,0,1,0,0,0" linecolor="#ff0000" />
@@ -3700,7 +3701,7 @@ The TapeCopy is detached from the stream and the other streams should not select
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1020" snapy="10" showatts="1" xmi.id="63295" documentation="" type="6" showops="1" showpackage="0" name="RecallWorker" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="636" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1010" snapy="10" showatts="1" xmi.id="63295" documentation="" type="6" showops="1" showpackage="0" name="RecallWorker" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="636" >
         <widgets>
          <activitywidget usesdiagramfillcolor="1" width="10" activityname="" x="478" fillcolor="none" y="98" linewidth="none" height="10" usefillcolor="1" isinstance="0" xmi.id="63296" documentation="" activitytype="0" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <activitywidget usesdiagramfillcolor="1" width="10" activityname="" x="482" fillcolor="none" y="584" linewidth="none" height="10" usefillcolor="1" isinstance="0" xmi.id="63297" documentation="" activitytype="2" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
@@ -3711,7 +3712,7 @@ The TapeCopy is detached from the stream and the other streams should not select
        <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="81" showgrid="1" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1265" snapy="10" showatts="1" xmi.id="107197" documentation="" type="1" showops="1" showpackage="0" name="Vdqm data base" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Vera Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="1310" >
         <widgets>
          <classwidget usesdiagramfillcolor="0" width="259" showattsigs="601" x="549" fillcolor="#ffffc0" y="511" showopsigs="600" linewidth="none" height="153" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="5444" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
-         <classwidget usesdiagramfillcolor="0" width="211" showattsigs="601" x="886" fillcolor="#ffffc0" y="664" showopsigs="600" linewidth="none" height="120" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="4710" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
+         <classwidget usesdiagramfillcolor="0" width="245" showattsigs="601" x="886" fillcolor="#ffffc0" y="664" showopsigs="600" linewidth="none" height="153" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="4710" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Sans Serif,10,-1,5,75,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="227" showattsigs="601" x="196" fillcolor="#ffffc0" y="639" showopsigs="600" linewidth="none" height="189" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="3274" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="287" showattsigs="601" x="115" fillcolor="#ffffc0" y="1117" showopsigs="600" linewidth="none" height="189" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="3947" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="203" showattsigs="601" x="413" fillcolor="#ffffc0" y="127" showopsigs="600" linewidth="none" height="63" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="5194" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
@@ -3732,17 +3733,17 @@ The TapeCopy is detached from the stream and the other streams should not select
            <startpoint startx="252" starty="828" />
            <endpoint endx="258" endy="1117" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="16" x="278" fillcolor="none" y="1093" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="v9UGxP8v7kEz" text="1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="59" x="132" fillcolor="none" y="1093" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="OWMqhrgtDwtp" text="status" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="16" x="278" fillcolor="none" y="1093" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="2DPMfVkg7w2s" text="1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="59" x="132" fillcolor="none" y="1093" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="qCDOjrYilzMN" text="status" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="1" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="1016" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="956" starty="784" />
+           <startpoint startx="967" starty="817" />
            <endpoint endx="929" endy="1067" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="32" x="1113" fillcolor="none" y="777" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="XaHkWBXPI1dF" text="0..n" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="16" x="831" fillcolor="none" y="1006" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="Ql9VUNSy8Ldr" text="1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="48" x="914" fillcolor="none" y="1005" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="WltfjCM7jiwO" text="tape" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="1124" fillcolor="none" y="810" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="OTm7Q8VTJsnw" text="0..n" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="16" x="831" fillcolor="none" y="1006" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="NVdSSdK1t5Lc" text="1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="48" x="914" fillcolor="none" y="1005" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="ZGkMkCMYMZv4" text="tape" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="4" indexa="2" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="1016" widgetaid="3274" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
@@ -3750,9 +3751,9 @@ The TapeCopy is detached from the stream and the other streams should not select
            <endpoint endx="836" endy="1095" />
            <point x="303" y="1096" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="32" x="263" fillcolor="none" y="822" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="1WKKVxXujgPB" text="0..1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="32" x="806" fillcolor="none" y="1091" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="1s99BlzhluuR" text="0..1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="48" x="786" fillcolor="none" y="1119" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="Y0xFgtbETsyx" text="tape" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="263" fillcolor="none" y="822" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="WEOq6BkRhLt9" text="0..1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="806" fillcolor="none" y="1091" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="yE8qHUSWCc6R" text="0..1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="48" x="786" fillcolor="none" y="1119" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="FiAcH5geXQlx" text="tape" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="1" visibilityB="200" totalcountb="4" indexb="1" linewidth="none" widgetbid="3274" widgetaid="5194" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
@@ -3761,59 +3762,59 @@ The TapeCopy is detached from the stream and the other streams should not select
            <point x="425" y="199" />
            <point x="256" y="209" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="16" x="481" fillcolor="none" y="183" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="9xcurWJc0xoM" text="1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="32" x="293" fillcolor="none" y="615" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="XvjdMPClagoP" text="0..n" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="90" x="387" fillcolor="none" y="183" linewidth="none" posttext="" role="709" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="nVfEMc9N6Tfb" text="tapeServer" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="90" x="221" fillcolor="none" y="615" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="ODV5rtGtlO0u" text="tapeDrives" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="16" x="481" fillcolor="none" y="183" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="5pQHQXg6HmHS" text="1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="293" fillcolor="none" y="615" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="bP9cwgkdtKyU" text="0..n" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="90" x="387" fillcolor="none" y="183" linewidth="none" posttext="" role="709" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="gm5DAr8h3XX8" text="tapeServer" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="90" x="221" fillcolor="none" y="615" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="iFZNbTUZfdPw" text="tapeDrives" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="5" indexa="4" visibilityB="200" totalcountb="3" indexb="2" linewidth="none" widgetbid="5156" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="1054" starty="664" />
+           <startpoint startx="1082" starty="664" />
            <endpoint endx="892" endy="220" />
            <point x="1054" y="268" />
            <point x="889" y="268" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="32" x="1074" fillcolor="none" y="640" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="HjeHeRdBMMmh" text="0..n" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="16" x="872" fillcolor="none" y="222" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="jxQHdEhCHxSi" text="1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="176" x="889" fillcolor="none" y="223" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="Z5GIRHCaCmS2" text="tapeAccessSpecification" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="1102" fillcolor="none" y="640" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="F4jXo0zNP80K" text="0..n" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="16" x="872" fillcolor="none" y="222" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="mixf2vAnMABO" text="1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="176" x="889" fillcolor="none" y="223" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="lT2Q4PK9FkOf" text="tapeAccessSpecification" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="5" indexa="3" visibilityB="200" totalcountb="3" indexb="2" linewidth="none" widgetbid="5194" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="1012" starty="664" />
+           <startpoint startx="1033" starty="664" />
            <endpoint endx="548" endy="190" />
            <point x="1011" y="292" />
            <point x="546" y="292" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="32" x="1007" fillcolor="none" y="640" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="SYGns0Ucxura" text="0..n" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="32" x="514" fillcolor="none" y="239" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="8YkOUC6gpN3C" text="0..1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="105" x="546" fillcolor="none" y="241" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="CcGPPiRgQ3v4" text="requestedSrv" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="1028" fillcolor="none" y="640" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="Ax6Y54srmnVn" text="0..n" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="514" fillcolor="none" y="239" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="gdY1niPMBv9N" text="0..1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="105" x="546" fillcolor="none" y="241" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="ZTXoCtRRwAyi" text="requestedSrv" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="4710" widgetaid="3274" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
            <startpoint startx="423" starty="733" />
-           <endpoint endx="886" endy="724" />
+           <endpoint endx="886" endy="740" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="32" x="428" fillcolor="none" y="674" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="DgI01LC5o0YI" text="0..1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="32" x="856" fillcolor="none" y="697" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="l4E2qyCb9vLF" text="0..1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="83" x="428" fillcolor="none" y="700" linewidth="none" posttext="" role="709" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="3SqTWlYwJmj9" text="tapeDrive" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="125" x="762" fillcolor="none" y="722" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="mDlk5bIE93cd" text="runningTapeReq" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="428" fillcolor="none" y="696" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="L7rW20spZhXG" text="0..1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="856" fillcolor="none" y="691" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="Sy7BRVy0kcIl" text="0..1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="83" x="428" fillcolor="none" y="726" linewidth="none" posttext="" role="709" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="oapijnRrjVPo" text="tapeDrive" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="125" x="762" fillcolor="none" y="712" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="ZFeJ074hkdiX" text="runningTapeReq" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="5" indexa="1" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="5444" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="928" starty="664" />
+           <startpoint startx="935" starty="664" />
            <endpoint endx="808" endy="587" />
            <point x="926" y="583" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="16" x="806" fillcolor="none" y="559" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="tzmfzIvjL7l9" text="1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="55" x="806" fillcolor="none" y="585" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="WbRee1HqhXoh" text="client" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="16" x="806" fillcolor="none" y="559" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="mf3LKaZmXgyw" text="1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="55" x="806" fillcolor="none" y="585" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="jMQRx8yIDnnE" text="client" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="120415" widgetaid="5194" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
            <startpoint startx="514" starty="127" />
            <endpoint endx="515" endy="81" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="16" x="515" fillcolor="none" y="74" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="qF7VmwCdvwGs" text="1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="94" x="418" fillcolor="none" y="74" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="3vkBr3QLfrzH" text="actingMode" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="16" x="515" fillcolor="none" y="74" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="BYnOLYc7DdQX" text="1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="94" x="418" fillcolor="none" y="74" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="BwvuWDfDX5cV" text="actingMode" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="4" indexa="3" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="120423" widgetaid="3274" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
@@ -3821,10 +3822,10 @@ The TapeCopy is detached from the stream and the other streams should not select
            <endpoint endx="472" endy="974" />
            <point x="351" y="980" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="32" x="310" fillcolor="none" y="834" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="RE1KBGDOPmwe" text="0..1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="32" x="442" fillcolor="none" y="967" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="7bvM3ORZGqhw" text="0..n" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="83" x="345" fillcolor="none" y="835" linewidth="none" posttext="" role="709" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="F9bYHLhIGST5" text="tapeDrive" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="153" x="321" fillcolor="none" y="998" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="VtRAiOSWdX2O" text="tapeDriveDedication" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="310" fillcolor="none" y="834" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="6XQHBqpLo52S" text="0..1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="442" fillcolor="none" y="967" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="JfHTEz5xLsCl" text="0..n" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="83" x="345" fillcolor="none" y="835" linewidth="none" posttext="" role="709" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="CzIhgGdpAYje" text="tapeDrive" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="153" x="321" fillcolor="none" y="998" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="lMpHPRmazXxI" text="tapeDriveDedication" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="4" indexa="2" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="123177" widgetaid="3274" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
@@ -3832,18 +3833,18 @@ The TapeCopy is detached from the stream and the other streams should not select
            <endpoint endx="645" endy="362" />
            <point x="303" y="358" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="32" x="340" fillcolor="none" y="615" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="UaCrK6WSiRoj" text="0..n" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="32" x="615" fillcolor="none" y="334" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="nDG34yyJ3R9g" text="0..n" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="181" x="468" fillcolor="none" y="360" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="F7TsfTE4hGPq" text="tapeDriveCompatibilities" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="340" fillcolor="none" y="615" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="leGZhI10vGT7" text="0..n" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="615" fillcolor="none" y="334" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="FW3bOFKfCdtg" text="0..n" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="181" x="468" fillcolor="none" y="360" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="HyJGUEYamwpv" text="tapeDriveCompatibilities" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" visibilityB="200" totalcountb="3" indexb="1" linewidth="none" widgetbid="5156" widgetaid="123177" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
            <startpoint startx="791" starty="322" />
            <endpoint endx="791" endy="220" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="32" x="792" fillcolor="none" y="298" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="dRSJqE2cSHfU" text="0..n" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="16" x="792" fillcolor="none" y="213" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="FbnG0uxuIiSu" text="1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="176" x="614" fillcolor="none" y="213" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="uOlZc8O6gYv0" text="tapeAccessSpecification" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="792" fillcolor="none" y="298" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="1dOwsp27M5gi" text="0..n" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="16" x="792" fillcolor="none" y="213" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="K0MWcDASbO2w" text="1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="176" x="614" fillcolor="none" y="213" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="sQGcK5V5ilcP" text="tapeAccessSpecification" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="4" indexa="3" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="123190" widgetaid="3274" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
@@ -3851,27 +3852,27 @@ The TapeCopy is detached from the stream and the other streams should not select
            <endpoint endx="553" endy="453" />
            <point x="351" y="449" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="32" x="424" fillcolor="none" y="615" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="7FkXWN1jzmzz" text="0..n" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="16" x="539" fillcolor="none" y="425" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="hwszcIsQ4ouO" text="1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="139" x="413" fillcolor="none" y="451" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="ooyUKuUxJvE8" text="deviceGroupName" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="424" fillcolor="none" y="615" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="jDD5Irlbs55S" text="0..n" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="16" x="539" fillcolor="none" y="425" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="JGuuewq6TqEj" text="1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="139" x="413" fillcolor="none" y="451" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="SX1AIcXHDtD5" text="deviceGroupName" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="5" indexa="2" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="123190" widgetaid="4710" roleBdoc="" documentation="" roleAdoc="" type="-1" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
-           <startpoint startx="970" starty="664" />
+           <startpoint startx="984" starty="664" />
            <endpoint endx="810" endy="453" />
            <point x="969" y="449" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="32" x="968" fillcolor="none" y="640" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="Bu08h08OwyLZ" text="0..n" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="16" x="808" fillcolor="none" y="425" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="GBzI0seeDwcT" text="1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="139" x="808" fillcolor="none" y="451" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="gNK0GW6NlqvH" text="deviceGroupName" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="982" fillcolor="none" y="640" linewidth="none" posttext="" role="701" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="nBGdGK5XaxSC" text="0..n" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="16" x="808" fillcolor="none" y="425" linewidth="none" posttext="" role="702" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="tGHK6T3WD3Cp" text="1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="139" x="808" fillcolor="none" y="451" linewidth="none" posttext="" role="710" height="22" usefillcolor="1" pretext="+" isinstance="0" xmi.id="Sk0fdBlMPwPf" text="deviceGroupName" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="2" totalcountb="2" indexb="1" linewidth="none" widgetbid="n0qG9gvAGDvj" widgetaid="4710" xmi.id="jaqwf1oHa9Xr" type="512" linecolor="none" >
           <linepath>
-           <startpoint startx="1026" starty="784" />
+           <startpoint startx="1049" starty="817" />
            <endpoint endx="1117" endy="856" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="16" x="1114" fillcolor="none" y="833" linewidth="none" posttext="" role="702" height="20" usefillcolor="1" pretext="" isinstance="0" xmi.id="UwdPuyw88tQ6" text="1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="55" x="1070" fillcolor="none" y="834" linewidth="none" posttext="" role="710" height="20" usefillcolor="1" pretext="+" isinstance="0" xmi.id="TioEWhUicUqH" text="status" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="16" x="1111" fillcolor="none" y="835" linewidth="none" posttext="" role="702" height="20" usefillcolor="1" pretext="" isinstance="0" xmi.id="qJSOHuYA8pTD" text="1" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="55" x="1070" fillcolor="none" y="834" linewidth="none" posttext="" role="710" height="20" usefillcolor="1" pretext="+" isinstance="0" xmi.id="Fv9crZHciWGw" text="status" usesdiagramusefillcolor="1" font="Sans Serif,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" linewidth="none" widgetbid="3274" widgetaid="HooxXeg2z7dq" xmi.id="Bsd5eVwlUfiC" type="503" linecolor="none" >
           <linepath>
@@ -3879,9 +3880,9 @@ The TapeCopy is detached from the stream and the other streams should not select
            <endpoint endx="196" endy="733" />
            <point x="143" y="733" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="27" x="169" fillcolor="none" y="513" linewidth="none" posttext="" role="701" height="21" usefillcolor="1" pretext="" isinstance="0" xmi.id="t9ITd6i63LTx" text="0..n" usesdiagramusefillcolor="1" font="AR PL ShanHeiSun Uni,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="13" x="181" fillcolor="none" y="709" linewidth="none" posttext="" role="702" height="21" usefillcolor="1" pretext="" isinstance="0" xmi.id="IP4QISW2VEwT" text="1" usesdiagramusefillcolor="1" font="AR PL ShanHeiSun Uni,10,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="73" x="99" fillcolor="none" y="706" linewidth="none" posttext="" role="710" height="21" usefillcolor="1" pretext="+" isinstance="0" xmi.id="j3kwzNNS5Cfc" text="tapeDrive" usesdiagramusefillcolor="1" font="AR PL ShanHeiSun Uni,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="27" x="169" fillcolor="none" y="513" linewidth="none" posttext="" role="701" height="21" usefillcolor="1" pretext="" isinstance="0" xmi.id="yeGeAUYyn0M4" text="0..n" usesdiagramusefillcolor="1" font="AR PL ShanHeiSun Uni,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="13" x="181" fillcolor="none" y="709" linewidth="none" posttext="" role="702" height="21" usefillcolor="1" pretext="" isinstance="0" xmi.id="svD1igC1CvUi" text="1" usesdiagramusefillcolor="1" font="AR PL ShanHeiSun Uni,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="73" x="99" fillcolor="none" y="706" linewidth="none" posttext="" role="710" height="21" usefillcolor="1" pretext="+" isinstance="0" xmi.id="JWjUYtHloRNd" text="tapeDrive" usesdiagramusefillcolor="1" font="AR PL ShanHeiSun Uni,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
         </associations>
        </diagram>
@@ -3904,7 +3905,7 @@ The TapeCopy is detached from the stream and the other streams should not select
   </UML:Model>
  </XMI.content>
  <XMI.extensions xmi.extender="umbrello" >
-  <docsettings viewid="1214" documentation="The name server hosting this castor file" uniqueid="T0jId6KDM36r" />
+  <docsettings viewid="1214" documentation="The name server hosting this castor file" uniqueid="QBMERfnKEo1x" />
   <listview>
    <listitem open="1" type="800" label="Views" >
     <listitem open="1" type="801" id="1" >
@@ -4023,12 +4024,13 @@ The TapeCopy is detached from the stream and the other streams should not select
         <listitem open="0" type="814" id="116659" />
         <listitem open="0" type="814" id="116661" />
        </listitem>
-       <listitem open="0" type="813" id="4710" >
+       <listitem open="1" type="813" id="4710" >
         <listitem open="0" type="814" id="4718" />
         <listitem open="0" type="814" id="4720" />
         <listitem open="0" type="814" id="130258" />
         <listitem open="0" type="814" id="gV6r0QcujXOP" />
         <listitem open="0" type="814" id="Yd8r485Wm0Lh" />
+        <listitem open="1" type="814" id="y0fktQWMXdqJ" />
        </listitem>
        <listitem open="0" type="813" id="n0qG9gvAGDvj" >
         <listitem open="0" type="814" id="VpYePlK3d4xG" />

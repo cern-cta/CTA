@@ -196,6 +196,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_remoteCopyType
+       * @return the value of m_remoteCopyType
+       */
+      std::string remoteCopyType() const {
+        return m_remoteCopyType;
+      }
+
+      /**
+       * Set the value of m_remoteCopyType
+       * @param new_var the new value of m_remoteCopyType
+       */
+      void setRemoteCopyType(std::string new_var) {
+        m_remoteCopyType = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -340,6 +356,8 @@ namespace castor {
 
       /// Error message in case of failure
       std::string m_errorMessage;
+
+      std::string m_remoteCopyType;
 
       /// The id of this object
       u_signed64 m_id;

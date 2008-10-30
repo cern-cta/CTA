@@ -51,6 +51,7 @@ castor::vdqm::TapeRequest::TapeRequest() throw() :
   m_creationTime(0),
   m_errorCode(0),
   m_errorMessage(""),
+  m_remoteCopyType(""),
   m_id(0),
   m_tape(0),
   m_tapeAccessSpecification(0),
@@ -92,6 +93,7 @@ void castor::vdqm::TapeRequest::print(std::ostream& stream,
   stream << indent << "creationTime : " << m_creationTime << std::endl;
   stream << indent << "errorCode : " << m_errorCode << std::endl;
   stream << indent << "errorMessage : " << m_errorMessage << std::endl;
+  stream << indent << "remoteCopyType : " << m_remoteCopyType << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Tape : " << std::endl;
