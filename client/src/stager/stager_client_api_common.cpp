@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.37 2008/10/24 06:54:38 sponcec3 Exp $
+ * $Id: stager_client_api_common.cpp,v 1.38 2008/10/31 08:53:54 waldron Exp $
  */
 
 /*
@@ -100,6 +100,11 @@ int _free_fileresp (struct stage_fileresp  *ptr){
   return 0; 
 }
 
+int _free_query_req (struct stage_query_req  *ptr){   
+  if (ptr->param != NULL) free (ptr->param);   
+  return 0;   
+} 
+
 int _free_filequery_resp (struct stage_filequery_resp  *ptr){ 
   if (ptr->castorfilename != NULL) free (ptr->castorfilename);
   if (ptr->filename != NULL) free (ptr->filename);
@@ -125,6 +130,7 @@ ALLOC_STRUCT_LIST(prepareToUpdate_filereq)
 ALLOC_STRUCT_LIST(prepareToUpdate_fileresp)
 ALLOC_STRUCT_LIST(filereq)
 ALLOC_STRUCT_LIST(fileresp)
+ALLOC_STRUCT_LIST(query_req)
 ALLOC_STRUCT_LIST(filequery_resp)
 
 
@@ -137,6 +143,7 @@ FREE_STRUCT_LIST(prepareToUpdate_filereq)
 FREE_STRUCT_LIST(prepareToUpdate_fileresp)
 FREE_STRUCT_LIST(filereq)
 FREE_STRUCT_LIST(fileresp)
+FREE_STRUCT_LIST(query_req)
 FREE_STRUCT_LIST(filequery_resp)
 
 
