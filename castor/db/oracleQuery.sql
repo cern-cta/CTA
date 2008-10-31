@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.644 $ $Date: 2008/10/21 03:27:57 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.645 $ $Date: 2008/10/31 16:04:04 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -337,34 +337,58 @@ BEGIN
   -- get both the list of filesystems and a summary per diskserver and per
   -- diskpool. The grouping analytic function also allows to mark the summary
   -- lines for easy detection in the C++ code
-  OPEN result FOR
-    SELECT grouping(ds.name) AS IsDSGrouped,
-           grouping(fs.mountPoint) AS IsFSGrouped,
-           dp.name,
-           ds.name, ds.status, fs.mountPoint,
-           sum(decode(sign(fs.free - fs.minAllowedFreeSpace * fs.totalSize), -1, 0,
-	       fs.free - fs.minAllowedFreeSpace * fs.totalSize)) AS freeSpace,
-           sum(fs.totalSize),
-           fs.minFreeSpace, fs.maxFreeSpace, fs.status
-      FROM FileSystem fs, DiskServer ds, DiskPool dp,
-           DiskPool2SvcClass d2s, SvcClass sc
-     WHERE (sc.name = svcClassName OR svcClassName IS NULL)
-       AND sc.id = d2s.child
-       AND checkPermissionOnSvcClass(sc.name, reqEuid, reqEgid, 103) = 0
-       AND d2s.parent = dp.id
-       AND dp.id = fs.diskPool
-       AND ds.id = fs.diskServer
-       GROUP BY grouping sets(
-           (dp.name, ds.name, ds.status, fs.mountPoint,
-             decode(sign(fs.free - fs.minAllowedFreeSpace * fs.totalSize), -1, 0,
-	       fs.free - fs.minAllowedFreeSpace * fs.totalSize),
-             fs.totalSize,
-             fs.minFreeSpace, fs.maxFreeSpace, fs.status),
-           (dp.name, ds.name, ds.status),
-           (dp.name)
-          )
-       ORDER BY dp.name, IsDSGrouped DESC, ds.name, IsFSGrouped DESC, fs.mountpoint;
-
+  IF svcClassName IS NULL THEN
+    OPEN result FOR
+      SELECT grouping(ds.name) AS IsDSGrouped,
+            grouping(fs.mountPoint) AS IsFSGrouped,
+              dp.name,
+             ds.name, ds.status, fs.mountPoint,
+             sum(decode(sign(fs.free - fs.minAllowedFreeSpace * fs.totalSize), -1, 0,
+	         fs.free - fs.minAllowedFreeSpace * fs.totalSize)) AS freeSpace,
+             sum(fs.totalSize),
+             fs.minFreeSpace, fs.maxFreeSpace, fs.status
+        FROM FileSystem fs, DiskServer ds, DiskPool dp
+       WHERE dp.id = fs.diskPool
+         AND ds.id = fs.diskServer
+         GROUP BY grouping sets(
+             (dp.name, ds.name, ds.status, fs.mountPoint,
+               decode(sign(fs.free - fs.minAllowedFreeSpace * fs.totalSize), -1, 0,
+	         fs.free - fs.minAllowedFreeSpace * fs.totalSize),
+               fs.totalSize,
+               fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+             (dp.name, ds.name, ds.status),
+             (dp.name)
+            )
+         ORDER BY dp.name, IsDSGrouped DESC, ds.name, IsFSGrouped DESC, fs.mountpoint;
+  ELSE 
+    OPEN result FOR
+      SELECT grouping(ds.name) AS IsDSGrouped,
+             grouping(fs.mountPoint) AS IsFSGrouped,
+              dp.name,
+             ds.name, ds.status, fs.mountPoint,
+             sum(decode(sign(fs.free - fs.minAllowedFreeSpace * fs.totalSize), -1, 0,
+  	       fs.free - fs.minAllowedFreeSpace * fs.totalSize)) AS freeSpace,
+             sum(fs.totalSize),
+             fs.minFreeSpace, fs.maxFreeSpace, fs.status
+        FROM FileSystem fs, DiskServer ds, DiskPool dp,
+             DiskPool2SvcClass d2s, SvcClass sc
+       WHERE sc.name = svcClassName
+         AND sc.id = d2s.child
+         AND checkPermissionOnSvcClass(sc.name, reqEuid, reqEgid, 103) = 0
+         AND d2s.parent = dp.id
+         AND dp.id = fs.diskPool
+         AND ds.id = fs.diskServer
+         GROUP BY grouping sets(
+             (dp.name, ds.name, ds.status, fs.mountPoint,
+               decode(sign(fs.free - fs.minAllowedFreeSpace * fs.totalSize), -1, 0,
+	         fs.free - fs.minAllowedFreeSpace * fs.totalSize),
+               fs.totalSize,
+               fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+             (dp.name, ds.name, ds.status),
+             (dp.name)
+            )
+         ORDER BY dp.name, IsDSGrouped DESC, ds.name, IsFSGrouped DESC, fs.mountpoint;
+  END IF;
   -- If no results are available, check to see if any diskpool exists and if
   -- access to view all the diskpools has been revoked. The information extracted
   -- here will be used to send an appropriate error message to the client.
@@ -392,31 +416,53 @@ BEGIN
   -- get both the list of filesystems and a summary per diskserver and per
   -- diskpool. The grouping analytic function also allows to mark the summary
   -- lines for easy detection in the C++ code
-  OPEN result FOR
-    SELECT grouping(ds.name) AS IsDSGrouped,
-           grouping(fs.mountPoint) AS IsGrouped,
-           ds.name, ds.status, fs.mountPoint,
-           sum(fs.free - fs.minAllowedFreeSpace * fs.totalSize) AS freeSpace,
-           sum(fs.totalSize),
-           fs.minFreeSpace, fs.maxFreeSpace, fs.status
-      FROM FileSystem fs, DiskServer ds, DiskPool dp,
-           DiskPool2SvcClass d2s, SvcClass sc
-     WHERE (sc.name = svcClassName OR svcClassName IS NULL)
-       AND sc.id = d2s.child
-       AND d2s.parent = dp.id
-       AND dp.id = fs.diskPool
-       AND ds.id = fs.diskServer
-       AND dp.name = diskPoolName
-       group by grouping sets(
-           (ds.name, ds.status, fs.mountPoint,
-             fs.free - fs.minAllowedFreeSpace * fs.totalSize,
-             fs.totalSize,
-             fs.minFreeSpace, fs.maxFreeSpace, fs.status),
-           (ds.name, ds.status),
-           (dp.name)
-          )
-       order by IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint;
-
+  IF svcClassName IS NULL THEN
+    OPEN result FOR
+      SELECT grouping(ds.name) AS IsDSGrouped,
+             grouping(fs.mountPoint) AS IsGrouped,
+             ds.name, ds.status, fs.mountPoint,
+             sum(fs.free - fs.minAllowedFreeSpace * fs.totalSize) AS freeSpace,
+             sum(fs.totalSize),
+             fs.minFreeSpace, fs.maxFreeSpace, fs.status
+        FROM FileSystem fs, DiskServer ds, DiskPool dp
+       WHERE dp.id = fs.diskPool
+         AND ds.id = fs.diskServer
+         AND dp.name = diskPoolName
+         group by grouping sets(
+             (ds.name, ds.status, fs.mountPoint,
+               fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+               fs.totalSize,
+               fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+             (ds.name, ds.status),
+             (dp.name)
+            )
+         order by IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint;
+  ELSE
+    OPEN result FOR
+      SELECT grouping(ds.name) AS IsDSGrouped,
+             grouping(fs.mountPoint) AS IsGrouped,
+             ds.name, ds.status, fs.mountPoint,
+             sum(fs.free - fs.minAllowedFreeSpace * fs.totalSize) AS freeSpace,
+             sum(fs.totalSize),
+             fs.minFreeSpace, fs.maxFreeSpace, fs.status
+        FROM FileSystem fs, DiskServer ds, DiskPool dp,
+             DiskPool2SvcClass d2s, SvcClass sc
+       WHERE sc.name = svcClassName
+         AND sc.id = d2s.child
+         AND d2s.parent = dp.id
+         AND dp.id = fs.diskPool
+         AND ds.id = fs.diskServer
+         AND dp.name = diskPoolName
+         group by grouping sets(
+             (ds.name, ds.status, fs.mountPoint,
+               fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+               fs.totalSize,
+               fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+             (ds.name, ds.status),
+             (dp.name)
+            )
+         order by IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint;
+  END IF;
   -- If no results are available, check to see if any diskpool exists and if
   -- access to view all the diskpools has been revoked. The information extracted
   -- here will be used to send an appropriate error message to the client.
