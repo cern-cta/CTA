@@ -3,6 +3,7 @@
 #include <qregexp.h>
 #include <qvaluelist.h>
 #include <vector>
+#include <stdlib.h>
 
 // local
 #include "cpphclasswriter.h"

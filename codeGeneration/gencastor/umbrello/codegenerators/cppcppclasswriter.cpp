@@ -2,6 +2,8 @@
 #include <qstring.h>
 #include <qvaluelist.h>
 #include <vector>
+#include <stdlib.h>
+
 // local
 #include "cppcppclasswriter.h"
 #include "umlrole.h"
