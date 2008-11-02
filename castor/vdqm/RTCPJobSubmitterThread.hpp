@@ -39,9 +39,9 @@ namespace castor {
 
 
     /**
-     * Instances of this class submit remote tape copy jobs to RTPCD based on
-     * the matched "tape request / free drive" pairs they find in the VDQM
-     * database.
+     * Instances of this class submit remote tape copy jobs to RTPCD and the
+     * tape aggregator based on the matched "tape request / free drive" pairs
+     * they find in the VDQM database.
      */
     class RTCPJobSubmitterThread :
     public virtual castor::server::SelectProcessThread {
@@ -106,7 +106,6 @@ namespace castor {
         castor::vdqm::TapeRequest *const m_tapeRequest;
       };
 
-
       /**
        * Submits the corresponding remote tape job of the specified tape
        * request to the RTCPD.
@@ -120,6 +119,22 @@ namespace castor {
        * </ul>
        */
       void submitJobToRTCPD(const Cuuid_t &cuuid,
+        castor::vdqm::TapeRequest* request)
+        throw(castor::exception::Exception);
+
+      /**
+       * Submits the corresponding remote tape job of the specified tape
+       * request to the tape aggregator.
+       *
+       * WARNING: The following links should be present:
+       * <ul>
+       * <li>Tape request -> set of client indentification data</li>
+       * <li>Tape request -> tape drive</li>
+       * <li>Tape drive of tape request -> device group name</li>
+       * <li>Tape drive of tape request -> tape server</li>
+       * </ul>
+       */
+      void submitJobToTapeAggregator(const Cuuid_t &cuuid,
         castor::vdqm::TapeRequest* request)
         throw(castor::exception::Exception);
 

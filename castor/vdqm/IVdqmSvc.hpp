@@ -583,38 +583,117 @@ namespace castor {
           throw (castor::exception::Exception) = 0;                  
 
         /**
-         * Tries to write to the database the fact that a successful RTCPD job
-         * submission has occured.  This update of the database may not be
-         * possible if the corresponding drive and tape request states have
-         * been modified by other threads.  For example a thread handling a
-         * tape drive request message may have put the drive into the down
-         * state.  The RTCPD job submission should be ignored in this case.
+         * Tries to move a the state of the specified request from
+         * REQUEST_BEINGSUBMITTED to REQUEST_SUBMITTED.
+         *
+         * This state transition may not be possible if the corresponding drive
+         * and tape request states have been modified by other threads.  For
+         * example a thread handling a tape drive request message may have put
+         * the drive into the down state.
+         *
+         * If the state of the request cannot be moved to REQUEST_SUBMITTED,
+         * then this method will take the appropriate actions.
+         *
+         * All the details of the actions taken by the procedure, both in
+         * success and failure, are reflected in the xxxxBefore and xxxxAfter
+         * parameters of this method.
+         *
+         * Note that except for database ids, a xxxxBefore or a xxxxAfter
+         * parameter will contain the value -1 if the actual value is unknown.
+         * In the case of database ids, a value of NULL may mean unknown or
+         * NULL.
          *
          * @param tapeDriveId the ID of the drive
          * @param tapeRequestId the ID of the tape request
-         * @return true if the occurance of the RTCPD job submission was
-         * successfully written to the database, else false.
+         * @param driveExists -1 = unknown, 0 = no drive, 1 = drive exists
+         * @param driveStatusBefore -1 = unknown, else drive status before this
+         * method
+         * @param driveStatusAfter -1 = unknown, else drive status after this
+         * method
+         * @param runningRequestIdBefore the id of the drive's running request
+         * before this method
+         * @param runningRequestIdAfter the id of the drive's running request
+         * after this method
+         * @param requestExists -1 = unknown, 0 = no request, 1 request exists
+         * @param requestStatusBefore -1 = unknown, else the request status
+         * before this method
+         * @param requestStatusAfter -1 = unknown, else the request status
+         * after this method
+         * @param requestDriveIdBefore -1 = the id of the request's drive
+         * before this method
+         * @param requestDriveIdAfter -1 = the id of the request's drive after
+         * this method
+         * @return 1 if the state of the request was successfully moved to
+         * REQUEST_SUBMITTED, else 0
          */
-        virtual bool writeRTPCDJobSubmission(const u_signed64 tapeDriveId,
-          const u_signed64 tapeRequestId)
+        virtual bool requestSubmitted(
+          const u_signed64  driveId,
+          const u_signed64  requestId,
+          bool             &driveExists,
+          int              &driveStatusBefore,
+          int              &driveStatusAfter,
+          u_signed64       &runningRequestIdBefore,
+          u_signed64       &runningRequestIdAfter,
+          bool             &requestExists,
+          int              &requestStatusBefore,
+          int              &requestStatusAfter,
+          u_signed64       &requestDriveIdBefore,
+          u_signed64       &requestDriveIdAfter)
           throw (castor::exception::Exception) = 0;
 
         /**
-         * Tries to write to the database the fact that a failed RTCPD job
-         * submission has occured.  This update of the database may not be
-         * possible if the corresponding drive and tape request states have
-         * been modified by other threads.  For example a thread handling a
-         * tape drive request message may have put the drive into the down
-         * state.  The failed RTCPD job submission should be ignored in this
-         * case.
+         * Resets the specified drive and request.
          *
-         * @param tapeDriveId the ID of the drive
-         * @param tapeRequestId the ID of the tape request
-         * @return true if the occurance of the failed RTCPD job submission was
-         * successfully written to the database, else false.
+         * The status of the drive is set to REQUEST_PENDING and its running
+         * request is set to NULL.
+         *
+         * The status of the request is set to REQUEST_PENDING and its drive is
+         * set to NULL.
+         *
+         * All the details of the actions taken by this method are reflected
+         * in the xxxxBeforeVar and xxxxAfterVar OUT parameters of this
+         * method.
+         *
+         * Note that except for database ids, a xxxxBefore or a xxxxAfter
+         * parameter will contain the value -1 if the actual value is unknown.
+         * In the case of database ids, a value of NULL may mean unknown or
+         * NULL.
+         *
+         * @param tapeDriveIdVar the ID of the drive
+         * @param tapeRequestIdVar the ID of the tape request
+         * @param driveExistsVar -1 = unknown, 0 = no drive, 1 = drive exists
+         * @param driveStatusBeforeVar -1 = unknown, else drive status before
+         * this method
+         * @param driveStatusAfterVar -1 = unknown, else drive status after this
+         * method
+         * @param runningRequestIdBeforeVar the id of the drive's running
+         * request before this method
+         * @param runningRequestIdAfterVar the id of the drive's running
+         * request after this method
+         * @param requestExistsVar -1 = unknown, 0 = no request, 1 request
+         * exists
+         * @param requestStatusBeforeVar -1 = unknown, else the request status
+         * before this method
+         * @param requestStatusAfterVar -1 = unknown, else the request status
+         * after this method
+         * @param requestDriveIdBeforeVar the id of the request's drive before
+         * this method
+         * @param requestDriveIdAfterVar the id of the* request's drive after
+         * this method
          */
-        virtual bool writeFailedRTPCDJobSubmission(const u_signed64 tapeDriveId,
-          const u_signed64 tapeRequestId)
+        virtual void resetDriveAndRequest(
+          const u_signed64  driveId,
+          const u_signed64  requestId,
+          bool             &driveExists,
+          int              &driveStatusBefore,
+          int              &driveStatusAfter,
+          u_signed64       &runningRequestIdBefore,
+          u_signed64       &runningRequestIdAfter,
+          bool             &requestExists,
+          int              &requestStatusBefore,
+          int              &requestStatusAfter,
+          u_signed64       &requestDriveIdBefore,
+          u_signed64       &requestDriveIdAfter)
           throw (castor::exception::Exception) = 0;
 
     }; // end of class IVdqmSvc

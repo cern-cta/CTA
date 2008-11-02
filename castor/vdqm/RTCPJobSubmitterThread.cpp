@@ -210,70 +210,149 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
     return;
   }
 
-  TapeDrive *tapeDrive = request.get()->tapeDrive();
+  TapeDrive *tapeDrive       = request.get()->tapeDrive();
+  bool      requestSubmitted = false;
 
   try {
 
-    // Submit the remote tape copy job to RTCPD
-    submitJobToRTCPD(nullCuuid, request.get());
+    // Submit remote copy job
+    if(request.get()->remoteCopyType() == "RTCPD") {
+      submitJobToRTCPD(nullCuuid, request.get());
+    } else if(request.get()->remoteCopyType() == "TAPE_AGGREGATOR") {
+      submitJobToTapeAggregator(nullCuuid, request.get());
+    } else {
+      castor::exception::Internal ie;
 
-    try
-    {
-      // Write successful submission of RTCPD job to the database
-      if(!vdqmSvc->writeRTPCDJobSubmission(tapeDrive->id(),
-        request.get()->id())) {
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("tapeDriveID", tapeDrive->id()),
-          castor::dlf::Param("driveName", tapeDrive->driveName()),
-          castor::dlf::Param("tapeRequestID", request.get()->id())};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-          VDQM_IGNORED_RTCPD_JOB_SUBMISSION, 3, params);
-      }
-    } catch(castor::exception::Exception &e) {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("tapeDriveID", tapeDrive->id()),
-        castor::dlf::Param("driveName", tapeDrive->driveName()),
-        castor::dlf::Param("tapeRequestID", request.get()->id()),
-        castor::dlf::Param("Message", "Failed to write successful submission "
-          "of RTCPD job to the database: " + e.getMessage().str()),
-        castor::dlf::Param("Code", e.code())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-        VDQM_DRIVE_ALLOCATION_ERROR, 5, params);
+      ie.getMessage() << "Invalid remoteCopyType: "
+        << request.get()->remoteCopyType();
+
+      throw ie;
     }
-  } catch(castor::exception::Exception &e) {
-    // Log failure of RTPCD job submission
+
+    requestSubmitted = true;
+
+  } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("tapeDriveID", tapeDrive->id()),
       castor::dlf::Param("driveName", tapeDrive->driveName()),
       castor::dlf::Param("tapeRequestID", request.get()->id()),
-      castor::dlf::Param("Message", e.getMessage().str()),
-      castor::dlf::Param("Code", e.code())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-      VDQM_RTCPD_JOB_SUBMIT_FAILED, 5, params);
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code", ex.code())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+      VDQM_FAILED_TO_SUBMIT_REMOTE_COPY_JOB, 5, params);
 
     try {
-      // Write failed submission of RTCPD job to the database
-      if(!vdqmSvc->writeFailedRTPCDJobSubmission(tapeDrive->id(),
-        request.get()->id())) {
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("tapeDriveID", tapeDrive->id()),
-          castor::dlf::Param("driveName", tapeDrive->driveName()),
-          castor::dlf::Param("tapeRequestID", request.get()->id())};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-          VDQM_IGNORED_FAILED_RTCPD_JOB_SUBMISSION, 3, params);
-      }
-    } catch(castor::exception::Exception &e) {
+      bool       driveExists            = false;
+      int        driveStatusBefore      = -1;
+      int        driveStatusAfter       = -1;
+      u_signed64 runningRequestIdBefore = 0;
+      u_signed64 runningRequestIdAfter  = 0;
+      bool       requestExists          = FALSE;
+      int        requestStatusBefore    = -1;
+      int        requestStatusAfter     = -1;
+      u_signed64 requestDriveIdBefore   = 0;
+      u_signed64 requestDriveIdAfter    = 0;
+
+      // Reset drive and request
+      vdqmSvc->resetDriveAndRequest(
+        tapeDrive->id(),
+        request.get()->id(),
+        driveExists,
+        driveStatusBefore,
+        driveStatusAfter,
+        runningRequestIdBefore,
+        runningRequestIdAfter,
+        requestExists,
+        requestStatusBefore,
+        requestStatusAfter,
+        requestDriveIdBefore,
+        requestDriveIdAfter);
+
       castor::dlf::Param params[] = {
         castor::dlf::Param("tapeDriveID", tapeDrive->id()),
         castor::dlf::Param("driveName", tapeDrive->driveName()),
         castor::dlf::Param("tapeRequestID", request.get()->id()),
-        castor::dlf::Param("Message", "Failed to write failed submission "
-          "of RTCPD job to the database: " + e.getMessage().str()),
-        castor::dlf::Param("Code", e.code())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-        VDQM_DRIVE_ALLOCATION_ERROR, 5, params);
+        castor::dlf::Param("driveExists", driveExists),
+        castor::dlf::Param("driveStatusBefore", driveStatusBefore),
+        castor::dlf::Param("driveStatusAfter", driveStatusAfter),
+        castor::dlf::Param("runningRequestIdBefore", runningRequestIdBefore),
+        castor::dlf::Param("runningRequestIdAfter",runningRequestIdAfter),
+        castor::dlf::Param("requestExists", requestExists),
+        castor::dlf::Param("requestStatusBefore", requestStatusBefore),
+        castor::dlf::Param("requestStatusAfter", requestStatusAfter),
+        castor::dlf::Param("requestDriveIdBefore", requestDriveIdBefore),
+        castor::dlf::Param("requestDriveIdAfter", requestDriveIdAfter)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+        VDQM_RESET_DRIVE_AND_REQUEST, 13, params);
+
+    } catch(castor::exception::Exception &ex) {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("tapeDriveID", tapeDrive->id()),
+        castor::dlf::Param("driveName", tapeDrive->driveName()),
+        castor::dlf::Param("tapeRequestID", request.get()->id()),
+        castor::dlf::Param("Message", ex.getMessage().str()),
+        castor::dlf::Param("Code", ex.code())};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+        VDQM_RESET_DRIVE_AND_REQUEST_DB_WRITE_FAILED, 5, params);
     }
   }
+
+  if(requestSubmitted) {
+    try {
+      bool       driveExists            = false;
+      int        driveStatusBefore      = -1;
+      int        driveStatusAfter       = -1;
+      u_signed64 runningRequestIdBefore = 0;
+      u_signed64 runningRequestIdAfter  = 0;
+      bool       requestExists          = FALSE;
+      int        requestStatusBefore    = -1;
+      int        requestStatusAfter     = -1;
+      u_signed64 requestDriveIdBefore   = 0;
+      u_signed64 requestDriveIdAfter    = 0;
+
+      // Write request submitted state change to the database
+      if(!vdqmSvc->requestSubmitted(
+        tapeDrive->id(),
+        request.get()->id(),
+        driveExists,
+        driveStatusBefore,
+        driveStatusAfter,
+        runningRequestIdBefore,
+        runningRequestIdAfter,
+        requestExists,
+        requestStatusBefore,
+        requestStatusAfter,
+        requestDriveIdBefore,
+        requestDriveIdAfter)) {
+
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("tapeDriveID", tapeDrive->id()),
+          castor::dlf::Param("driveName", tapeDrive->driveName()),
+          castor::dlf::Param("tapeRequestID", request.get()->id()),
+          castor::dlf::Param("driveExists", driveExists),
+          castor::dlf::Param("driveStatusBefore", driveStatusBefore),
+          castor::dlf::Param("driveStatusAfter", driveStatusAfter),
+          castor::dlf::Param("runningRequestIdBefore", runningRequestIdBefore),
+          castor::dlf::Param("runningRequestIdAfter",runningRequestIdAfter),
+          castor::dlf::Param("requestExists", requestExists),
+          castor::dlf::Param("requestStatusBefore", requestStatusBefore),
+          castor::dlf::Param("requestStatusAfter", requestStatusAfter),
+          castor::dlf::Param("requestDriveIdBefore", requestDriveIdBefore),
+          castor::dlf::Param("requestDriveIdAfter", requestDriveIdAfter)};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+          VDQM_REQUEST_SUBMITTED_TRANSITION_FAILED, 13, params);
+      }
+    } catch(castor::exception::Exception &ex) {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("tapeDriveID", tapeDrive->id()),
+        castor::dlf::Param("driveName", tapeDrive->driveName()),
+        castor::dlf::Param("tapeRequestID", request.get()->id()),
+        castor::dlf::Param("Message", ex.getMessage().str()),
+        castor::dlf::Param("Code", ex.code())};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+        VDQM_REQUEST_SUBMITTED_DB_WRITE_FAILED, 5, params);
+    }
+  } // if(requestSubmitted)
 
   try
   {
@@ -282,12 +361,12 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
     ad.setCnvSvcName("DbCnvSvc");
     ad.setCnvSvcType(castor::SVC_DBCNV);
     services()->commit(&ad);
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("Function", "RTCPJobSubmitterThread::process"),
       castor::dlf::Param("Message", "Failed to commit changes" +
-        e.getMessage().str()),
-      castor::dlf::Param("Code", e.code())
+        ex.getMessage().str()),
+      castor::dlf::Param("Code", ex.code())
     };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
       VDQM_DRIVE_ALLOCATION_ERROR, 3, params);
@@ -382,4 +461,13 @@ void castor::vdqm::RTCPJobSubmitterThread::submitJobToRTCPD(
 
     throw ie;
   }
+}
+
+
+//-----------------------------------------------------------------------------
+// submitJobToTapeAggregator
+//-----------------------------------------------------------------------------
+void castor::vdqm::RTCPJobSubmitterThread::submitJobToTapeAggregator(
+  const Cuuid_t &cuuid, castor::vdqm::TapeRequest* request)
+  throw(castor::exception::Exception) {
 }

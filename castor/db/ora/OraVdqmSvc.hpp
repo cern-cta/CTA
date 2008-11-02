@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)RCSfile: OraVdqmSvc.hpp  Revision: 1.0  Release Date: May 31, 2005  Author: mbraeger 
  *
  * @author Matthias Braeger
  *****************************************************************************/
@@ -89,6 +88,8 @@ namespace castor {
           ALLOCATE_DRIVE_SQL_STMT,
           REUSE_DRIVE_ALLOCATION_SQL_STMT,
           REQUEST_TO_SUBMIT_SQL_STMT,
+          REQUEST_SUBMITTED_SQL_STMT,
+          RESET_DRIVE_AND_REQUEST_SQL_STMT
         };
 
         /**
@@ -277,15 +278,37 @@ namespace castor {
         /**
          * See the documentation for castor::vdqm::IVdqmSvc.
          */
-        bool writeRTPCDJobSubmission(const u_signed64 tapeDriveId,
-          const u_signed64 tapeRequestId)
+        bool requestSubmitted(
+          const u_signed64  driveId,
+          const u_signed64  requestId,
+          bool             &driveExists,
+          int              &driveStatusBefore,
+          int              &driveStatusAfter,
+          u_signed64       &runningRequestIdBefore,
+          u_signed64       &runningRequestIdAfter,
+          bool             &requestExists,
+          int              &requestStatusBefore,
+          int              &requestStatusAfter,
+          u_signed64       &requestDriveIdBefore,
+          u_signed64       &requestDriveIdAfter)
           throw (castor::exception::Exception);
 
         /**
          * See the documentation for castor::vdqm::IVdqmSvc.
          */
-        bool writeFailedRTPCDJobSubmission(const u_signed64 tapeDriveId,
-          const u_signed64 tapeRequestId)
+        void resetDriveAndRequest(
+          const u_signed64  driveId,
+          const u_signed64  requestId,
+          bool             &driveExists,
+          int              &driveStatusBefore,
+          int              &driveStatusAfter,
+          u_signed64       &runningRequestIdBefore,
+          u_signed64       &runningRequestIdAfter,
+          bool             &requestExists,
+          int              &requestStatusBefore,
+          int              &requestStatusAfter,
+          u_signed64       &requestDriveIdBefore,
+          u_signed64       &requestDriveIdAfter)
           throw (castor::exception::Exception);
 
         /**

@@ -314,6 +314,12 @@ castor::db::ora::OraVdqmSvc::StatementStringMap::StatementStringMap() {
     "BEGIN castorVdqm.reuseDriveAllocation(:1, :2, :3, :4, :5); END;");
   addStmtStr(REQUEST_TO_SUBMIT_SQL_STMT,
     "BEGIN castorVdqm.getRequestToSubmit(:1); END;");
+  addStmtStr(REQUEST_SUBMITTED_SQL_STMT,
+    "BEGIN castorVdqm.requestSubmitted(:1, :2, :3, :4, :5, :6, :7, :8, :9, "
+    ":10, :11, :12, :13); END;");
+  addStmtStr(RESET_DRIVE_AND_REQUEST_SQL_STMT,
+    "BEGIN castorVdqm.resetDriveAndRequest(:1, :2, :3, :4, :5, :6, :7, :8, "
+    ":9, :10, :11, :12); END;");
 }
 
 
@@ -1604,10 +1610,21 @@ void castor::db::ora::OraVdqmSvc::deleteDrive(std::string driveName,
 
 
 // -----------------------------------------------------------------------
-// writeRTPCDJobSubmission
+// requestSubmitted
 // -----------------------------------------------------------------------
-bool castor::db::ora::OraVdqmSvc::writeRTPCDJobSubmission(
-  const u_signed64 tapeDriveId, const u_signed64 tapeRequestId)
+bool castor::db::ora::OraVdqmSvc::requestSubmitted(
+  const u_signed64  driveId,
+  const u_signed64  requestId,
+  bool             &driveExists,
+  int              &driveStatusBefore,
+  int              &driveStatusAfter,
+  u_signed64       &runningRequestIdBefore,
+  u_signed64       &runningRequestIdAfter,
+  bool             &requestExists,
+  int              &requestStatusBefore,
+  int              &requestStatusAfter,
+  u_signed64       &requestDriveIdBefore,
+  u_signed64       &requestDriveIdAfter)
   throw (castor::exception::Exception) {
 
   bool result = false;
@@ -1615,11 +1632,21 @@ bool castor::db::ora::OraVdqmSvc::writeRTPCDJobSubmission(
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  const StatementId stmtId = WRITE_RTCPD_JOB_SUBMISSION_SQL_STMT;
+  const StatementId stmtId = REQUEST_SUBMITTED_SQL_STMT;
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
-      stmt->registerOutParam(3, oracle::occi::OCCIINT);
+      stmt->registerOutParam( 3, oracle::occi::OCCIINT);    // return
+      stmt->registerOutParam( 4, oracle::occi::OCCIINT);    // driveExists
+      stmt->registerOutParam( 5, oracle::occi::OCCIINT);    // driveStatusBef
+      stmt->registerOutParam( 6, oracle::occi::OCCIINT);    // driveStatusAft
+      stmt->registerOutParam( 7, oracle::occi::OCCIDOUBLE); // runningRequestBef
+      stmt->registerOutParam( 8, oracle::occi::OCCIDOUBLE); // runningRequestAft
+      stmt->registerOutParam( 9, oracle::occi::OCCIINT);    // requestExists
+      stmt->registerOutParam(10, oracle::occi::OCCIINT);    // requestStatusBef
+      stmt->registerOutParam(11, oracle::occi::OCCIINT);    // requestStatusAft
+      stmt->registerOutParam(12, oracle::occi::OCCIDOUBLE); // requestDriveBef
+      stmt->registerOutParam(13, oracle::occi::OCCIDOUBLE); // requestDriveAft
       stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
@@ -1638,15 +1665,25 @@ bool castor::db::ora::OraVdqmSvc::writeRTPCDJobSubmission(
 
   // Execute statement and get result
   try {
-    stmt->setDouble(1, tapeDriveId);
-    stmt->setDouble(2, tapeRequestId);
+    stmt->setDouble(1, driveId);
+    stmt->setDouble(2, requestId);
     stmt->executeUpdate();
-    result = stmt->getInt(3);
+    result                 = stmt->getInt(3);
+    driveExists            = stmt->getInt(4);
+    driveStatusBefore      = stmt->getInt(5);
+    driveStatusAfter       = stmt->getInt(6);
+    runningRequestIdBefore = (u_signed64)stmt->getDouble(7);
+    runningRequestIdAfter  = (u_signed64)stmt->getDouble(8);
+    requestExists          = stmt->getInt(9);
+    requestStatusBefore    = stmt->getInt(10);
+    requestStatusAfter     = stmt->getInt(11);
+    requestDriveIdBefore   = (u_signed64)stmt->getDouble(12);
+    requestDriveIdAfter    = (u_signed64)stmt->getDouble(13);
   } catch(oracle::occi::SQLException &oe) {
     handleException(oe);
 
     castor::exception::Internal ie;
-    ie.getMessage() << "Failed to execute writeRTPCDJobSubmission statement: "
+    ie.getMessage() << "Failed to execute REQUEST_SUBMITTED_SQL_STMT: "
       << oe.getMessage();
 
     throw ie;
@@ -1657,10 +1694,21 @@ bool castor::db::ora::OraVdqmSvc::writeRTPCDJobSubmission(
 
 
 // -----------------------------------------------------------------------
-// writeFailedRTPCDJobSubmission
+// resetDriveAndRequest
 // -----------------------------------------------------------------------
-bool castor::db::ora::OraVdqmSvc::writeFailedRTPCDJobSubmission(
-  const u_signed64 tapeDriveId, const u_signed64 tapeRequestId)
+void castor::db::ora::OraVdqmSvc::resetDriveAndRequest(
+  const u_signed64  driveId,
+  const u_signed64  requestId,
+  bool             &driveExists,
+  int              &driveStatusBefore,
+  int              &driveStatusAfter,
+  u_signed64       &runningRequestIdBefore,
+  u_signed64       &runningRequestIdAfter,
+  bool             &requestExists,
+  int              &requestStatusBefore,
+  int              &requestStatusAfter,
+  u_signed64       &requestDriveIdBefore,
+  u_signed64       &requestDriveIdAfter)
   throw (castor::exception::Exception) {
 
   bool result = false;
@@ -1668,11 +1716,20 @@ bool castor::db::ora::OraVdqmSvc::writeFailedRTPCDJobSubmission(
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
-  const StatementId stmtId = WRITE_FAILED_RTCPD_JOB_SUBMISSION_SQL_STMT;
+  const StatementId stmtId = RESET_DRIVE_AND_REQUEST_SQL_STMT;
   try {
     if(!(stmt = getStatement(stmtId))) {
       stmt = createStatement(s_statementStrings[stmtId]);
-      stmt->registerOutParam(3, oracle::occi::OCCIINT);
+      stmt->registerOutParam( 3, oracle::occi::OCCIINT);    // driveExists
+      stmt->registerOutParam( 4, oracle::occi::OCCIINT);    // driveStatusBef
+      stmt->registerOutParam( 5, oracle::occi::OCCIINT);    // driveStatusAft
+      stmt->registerOutParam( 6, oracle::occi::OCCIDOUBLE); // runningRequestBef
+      stmt->registerOutParam( 7, oracle::occi::OCCIDOUBLE); // runningRequestAft
+      stmt->registerOutParam( 8, oracle::occi::OCCIINT);    // requestExists
+      stmt->registerOutParam( 9, oracle::occi::OCCIINT);    // requestStatusBef
+      stmt->registerOutParam(10, oracle::occi::OCCIINT);    // requestStatusAft
+      stmt->registerOutParam(11, oracle::occi::OCCIDOUBLE); // requestDriveBef
+      stmt->registerOutParam(12, oracle::occi::OCCIDOUBLE); // requestDriveAft
       stmt->setAutoCommit(false);
       storeStatement(stmtId, stmt);
     }
@@ -1691,22 +1748,29 @@ bool castor::db::ora::OraVdqmSvc::writeFailedRTPCDJobSubmission(
 
   // Execute statement and get result
   try {
-    stmt->setDouble(1, tapeDriveId);
-    stmt->setDouble(2, tapeRequestId);
+    stmt->setDouble(1, driveId);
+    stmt->setDouble(2, requestId);
     stmt->executeUpdate();
-    result = stmt->getInt(3);
+    result                 = stmt->getInt(3);
+    driveExists            = stmt->getInt(4);
+    driveStatusBefore      = stmt->getInt(5);
+    driveStatusAfter       = stmt->getInt(6);
+    runningRequestIdBefore = (u_signed64)stmt->getDouble(7);
+    runningRequestIdAfter  = (u_signed64)stmt->getDouble(8);
+    requestExists          = stmt->getInt(9);
+    requestStatusBefore    = stmt->getInt(10);
+    requestStatusAfter     = stmt->getInt(11);
+    requestDriveIdBefore   = (u_signed64)stmt->getDouble(12);
+    requestDriveIdAfter    = (u_signed64)stmt->getDouble(13);
   } catch(oracle::occi::SQLException &oe) {
     handleException(oe);
 
     castor::exception::Internal ie;
-    ie.getMessage()
-      << "Failed to execute writeFailedRTPCDJobSubmission statement: "
+    ie.getMessage() << "Failed to execute RESET_DRIVE_AND_REQUEST_SQL_STMT: "
       << oe.getMessage();
 
     throw ie;
   }
-
-  return result;
 }
 
 

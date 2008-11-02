@@ -1066,36 +1066,115 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
     dgNameVar IN VARCHAR2, resultVar OUT INTEGER);
 
   /**
-   * This procedure tries to write to the database the fact that a successful
-   * RTCPD job submission has occured.  This update of the database may not be
-   * possible if the corresponding drive and tape request states have been
-   * modified by other threads.  For example a thread handling a tape drive
-   * request message may have put the drive into the down state.  The RTCPD job
-   * submission should be ignored in this case.
+   * This procedure tries to move a the state of the specified request from
+   * REQUEST_BEINGSUBMITTED to REQUEST_SUBMITTED.
+   *
+   * This state transition may not be possible if the corresponding drive and
+   * tape request states have been modified by other threads.  For example a
+   * thread handling a tape drive request message may have put the drive into
+   * the down state.
+   *
+   * If the state of the request cannot be moved to REQUEST_SUBMITTED, then
+   * this procedure will take the appropriate actions.
+   *
+   * All the details of the actions taken by this procedure, both in success
+   * and failure, are reflected in the xxxxBeforeVar and xxxxAfterVar OUT
+   * parameters of this procedure.
+   *
+   * Note that except for database ids, a xxxxBefore or a xxxxAfter
+   * parameter will contain the value -1 if the actual value is unknown.
+   * In the case of database ids, a value of NULL may mean unknown or
+   * NULL.
    *
    * @param tapeDriveIdVar the ID of the drive
    * @param tapeRequestIdVar the ID of the tape request
-   * @param returnVar has a value of 1 if the occurance of the RTCPD job
-   * submission was successfully written to the database, else 0.
+   * @param returnVar has a value of 1 if the state of the request was
+   * successfully moved to REQUEST_SUBMITTED, else 0
+   * @param driveExistsVar -1 = unknown, 0 = no drive, 1 = drive exists
+   * @param driveStatusBeforeVar -1 = unknown, else drive status before this
+   * procedure
+   * @param driveStatusAfterVar -1 = unknown, else drive status after this
+   * procedure
+   * @param runningRequestIdBeforeVar the id of the drive's running request
+   * before this procedure
+   * @param runningRequestIdAfterVar the id of the drive's running request
+   * after this procedure
+   * @param requestExistsVar -1 = unknown, 0 = no request, 1 request exists
+   * @param requestStatusBeforeVar -1 = unknown, else the request status before
+   * this procedure
+   * @param requestStatusAfterVar -1 = unknown, else the request status after
+   * this procedure
+   * @param requestDriveIdBeforeVar the id of the request's drive before this
+   * procedure
+   * @param requestDriveIdAfterVar the id of the request's drive after this
+   * procedure
    */
-  PROCEDURE writeRTPCDJobSubmission(tapeDriveIdVar IN NUMBER,
-    tapeRequestIdVar IN NUMBER, returnVar OUT NUMBER);
+  PROCEDURE requestSubmitted(
+    driveIdVar                IN  NUMBER,
+    requestIdVar              IN  NUMBER,
+    returnVar                 OUT NUMBER,
+    driveExistsVar            OUT NUMBER,
+    driveStatusBeforeVar      OUT NUMBER,
+    driveStatusAfterVar       OUT NUMBER,
+    runningRequestIdBeforeVar OUT NUMBER,
+    runningRequestIdAfterVar  OUT NUMBER,
+    requestExistsVar          OUT NUMBER,
+    requestStatusBeforeVar    OUT NUMBER,
+    requestStatusAfterVar     OUT NUMBER,
+    requestDriveIdBeforeVar   OUT NUMBER,
+    requestDriveIdAfterVar    OUT NUMBER);
 
   /**
-   * This procedure tries to write to the database the fact that a failed RTCPD
-   * job submission has occured.  This update of the database may not be
-   * possible if the corresponding drive and tape request states have been
-   * modified by other threads.  For example a thread handling a tape drive
-   * request message may have put the drive into the down state.  The failed
-   * RTCPD job submission should be ignored in this case.
+   * Resets the specified drive and request.
+   *
+   * The status of the drive is set to REQUEST_PENDING and its running request
+   * is set to NULL.
+   *
+   * The status of the request is set to REQUEST_PENDING and its drive is set
+   * to NULL.
+   *
+   * All the details of the actions taken by this procedure are reflected in
+   * the xxxxBeforeVar and xxxxAfterVar OUT parameters of this procedure.
+   *
+   * Note that except for database ids, a xxxxBefore or a xxxxAfter
+   * parameter will contain the value -1 if the actual value is unknown.
+   * In the case of database ids, a value of NULL may mean unknown or
+   * NULL.
    *
    * @param tapeDriveIdVar the ID of the drive
    * @param tapeRequestIdVar the ID of the tape request
-   * @param returnVar has a value of 1 if the occurance of the failed RTCPD job
-   * submission was successfully written to the database, else 0.
+   * @param driveExistsVar -1 = unknown, 0 = no drive, 1 = drive exists
+   * @param driveStatusBeforeVar -1 = unknown, else drive status before this
+   * procedure
+   * @param driveStatusAfterVar -1 = unknown, else drive status after this
+   * procedure
+   * @param runningRequestIdBeforeVar the id of the drive's running request
+   * before this procedure
+   * @param runningRequestIdAfterVar the id of the drive's running request
+   * after this procedure
+   * @param requestExistsVar -1 = unknown, 0 = no request, 1 request exists
+   * @param requestStatusBeforeVar -1 = unknown, else the request status before
+   * this procedure
+   * @param requestStatusAfterVar -1 = unknown, else the request status after
+   * this procedure
+   * @param requestDriveIdBeforeVar the id of the request's drive before this
+   * procedure
+   * @param requestDriveIdAfterVar the id of the request's drive after this
+   * procedure
    */
-  PROCEDURE writeFailedRTPCDJobSubmission(tapeDriveIdVar IN NUMBER,
-    tapeRequestIdVar IN NUMBER, returnVar OUT NUMBER);
+  PROCEDURE resetDriveAndRequest(
+    driveIdVar                IN  NUMBER,
+    requestIdVar              IN  NUMBER,
+    driveExistsVar            OUT NUMBER,
+    driveStatusBeforeVar      OUT NUMBER,
+    driveStatusAfterVar       OUT NUMBER,
+    runningRequestIdBeforeVar OUT NUMBER,
+    runningRequestIdAfterVar  OUT NUMBER,
+    requestExistsVar          OUT NUMBER,
+    requestStatusBeforeVar    OUT NUMBER,
+    requestStatusAfterVar     OUT NUMBER,
+    requestDriveIdBeforeVar   OUT NUMBER,
+    requestDriveIdAfterVar    OUT NUMBER);
 
   /**
    * This procedure sets the priority of a volume.
@@ -2239,126 +2318,222 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
   /**
    * See the castorVdqm package specification for documentation.
    */
-  PROCEDURE writeRTPCDJobSubmission(
-    tapeDriveIdVar    IN NUMBER,
-    tapeRequestIdVar  IN NUMBER,
-    returnVar        OUT NUMBER)
+  PROCEDURE requestSubmitted(
+    driveIdVar                IN  NUMBER,
+    requestIdVar              IN  NUMBER,
+    returnVar                 OUT NUMBER,
+    driveExistsVar            OUT NUMBER,
+    driveStatusBeforeVar      OUT NUMBER,
+    driveStatusAfterVar       OUT NUMBER,
+    runningRequestIdBeforeVar OUT NUMBER,
+    runningRequestIdAfterVar  OUT NUMBER,
+    requestExistsVar          OUT NUMBER,
+    requestStatusBeforeVar    OUT NUMBER,
+    requestStatusAfterVar     OUT NUMBER,
+    requestDriveIdBeforeVar   OUT NUMBER,
+    requestDriveIdAfterVar    OUT NUMBER)
   AS
-    tapeDriveStatusVar      NUMBER;
-    runningTapeRequestIdVar NUMBER;
-    tapeRequestStatusVar    NUMBER;
   BEGIN
-    returnVar := 0; -- RTCPD job submission not written to database
+    returnVar                 :=    0; -- Nothing has been done
+    driveExistsVar            :=   -1; -- Unknown
+    driveStatusBeforeVar      :=   -1; -- Unknown
+    driveStatusAfterVar       :=   -1; -- Unknown
+    runningRequestIdBeforeVar := NULL; -- Unknown
+    runningRequestIdAfterVar  := NULL; -- Unknown
+    requestExistsVar          :=   -1; -- Unknown
+    requestStatusBeforeVar    :=   -1; -- Unknown
+    requestStatusAfterVar     :=   -1; -- Unknown
+    requestDriveIdBeforeVar   := NULL; -- Unknown
+    requestDriveIdAfterVar    := NULL; -- Unknown
 
-    -- The status of the tape requests may be modified by threads handling tape
-    -- request messages.  The status of the drives may be modified by threads
-    -- handling drive request messages.  One such modification may be the
-    -- bringing down of the drive in question, which would make it meaningless
-    -- to record a successful RTPCD job submission.  Therefore get a lock on the
-    -- corresponding request and drive rows and retrieve their statuses to see
-    -- whether or not the success of the RTPCD job submission should be recorded
-    -- in the database.
-    SELECT TapeDrive.status, TapeDrive.runningTapeReq
-    INTO tapeDriveStatusVar, runningTapeRequestIdVar
-    FROM TapeDrive
-    WHERE TapeDrive.id = tapeDriveIdVar
-    FOR UPDATE;
-    SELECT TapeRequest.status
-    INTO tapeRequestStatusVar
-    FROM TapeRequest
-    WHERE TapeRequest.id = tapeRequestIdVar
-    FOR UPDATE;
+    -- Try to get a lock on and the status of the corresponding drive row
+    BEGIN
+      SELECT TapeDrive.status    , TapeDrive.runningTapeReq
+        INTO driveStatusBeforeVar, runningRequestIdBeforeVar
+        FROM TapeDrive
+        WHERE TapeDrive.id = driveIdVar
+        FOR UPDATE;
 
-    -- If recording of successfull RTCPD job submission is permitted,
-    -- i.e. the status of the drive is UNIT_STARTING and the drive is still
-    -- paired with the tape request and the status of the tape request is
-    -- REQUEST_BEINGSUBMITTED
-    IF (tapeDriveStatusVar = 1) AND (runningTapeRequestIdVar = tapeRequestIdVar)
-      AND (tapeRequestStatusVar = 2) THEN
+      driveExistsVar           := 1;                         -- Drive exists
+      driveStatusAfterVar      := driveStatusBeforeVar;      -- No change yet
+      runningRequestIdAfterVar := runningRequestIdBeforeVar; -- No change yet
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        driveExistsVar := 0; -- Drive row does not exist
+    END;
 
-      -- Set the state of the tape request to REQUEST_SUBMITTED (3)
-      UPDATE TapeRequest
-      SET TapeRequest.status = 3
-      WHERE TapeRequest.id = tapeRequestIdVar;
+    -- Try to get a lock on and the status of the request row
+    BEGIN
+      SELECT TapeRequest.status    , TapeRequest.tapeDrive
+        INTO requestStatusBeforeVar, RequestDriveIdBeforeVar
+        FROM TapeRequest
+        WHERE TapeRequest.id = requestIdVar
+        FOR UPDATE;
 
-      returnVar := 1; -- RTCPD job submission written to database
+      requestExistsVar       := 1;                       -- Request exists
+      requestStatusAfterVar  := requestStatusBeforeVar;  -- No change yet
+      requestDriveIdAfterVar := requestDriveIdBeforeVar; -- No change yet
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        requestExistsVar := 0; -- Request does not exist
+    END;
+
+    -- If the drive exists and the request does not exist
+    IF driveExistsVar = 1 AND requestExistsVar = 0 THEN
+      UPDATE TapeDrive
+        SET
+          TapeDrive.status         = 7,   -- STATUS_UNKNOWN = 7
+          TapeDrive.runningTapeReq = NULL -- No running request
+        WHERE TapeDrive.id = driveIdVar;
+
+      -- Set out parameters and return
+      driveStatusAfterVar      := 7;    -- STATUS_UNKNOWN = 7
+      runningRequestIdAfterVar := NULL; -- No running request
+      returnVar                := 0;    -- Failed
+      RETURN;
     END IF;
 
-  EXCEPTION
+    -- If the drive does not exist and the request does exist
+    IF driveExistsVar = 0 AND requestExistsVar = 1 THEN
+      UPDATE TapeRequest
+        SET
+          TapeRequest.status    = 0,   -- REQUEST_PENDING = 0
+          TapeRequest.tapeDrive = NULL -- No drive
+        WHERE TapeRequest.id = requestIdVar;
 
-    -- Do nothing if either the drive or request no longer exist in the database
-    WHEN NO_DATA_FOUND THEN NULL;
+      -- Set out parameters and return
+      requestStatusAfterVar  := 0;    -- REQUEST_PENDING = 0
+      requestDriveIdAfterVar := NULL; -- No drive
+      returnVar              := 0;    -- Failed
+      RETURN;
+    END IF;
 
-  END writeRTPCDJobSubmission;
+    -- If the state of the request cannot be moved to REQUEST_SUBMITTED
+    IF driveStatusBeforeVar      != 1 OR         --Not UNIT_STARTING
+       requestStatusBeforeVar    != 2 OR         --Not REQUEST_BEINGSUBMITTED
+       runningRequestIdBeforeVar != requestIdVar --Drive not paired with request
+      THEN
+
+      UPDATE TapeDrive
+        SET
+          TapeDrive.status         = 7,   -- STATUS_UNKNOWN = 7
+          TapeDrive.runningTapeReq = NULL -- No running request
+        WHERE TapeDrive.id = driveIdVar;
+
+      UPDATE TapeRequest
+        SET
+          TapeRequest.status    = 0,   -- REQUEST_PENDING = 0
+          TapeRequest.tapeDrive = NULL -- No drive
+        WHERE TapeRequest.id = requestIdVar;
+
+      -- Set out parameters and return
+      driveStatusAfterVar      := 7;    -- STATUS_UNKNOWN = 7
+      runningRequestIdAfterVar := NULL; -- No running request
+      requestStatusAfterVar    := 0;    -- REQUEST_PENDING = 0
+      requestDriveIdAfterVar   := NULL; -- No drive
+      returnVar                := 0;    -- Failed
+      RETURN;
+    END IF;
+
+    -- Reaching this points means the transition to REQUEST_SUBMITTED is valid
+
+    -- Set the state of the request to REQUEST_SUBMITTED
+    UPDATE TapeRequest
+      SET TapeRequest.status = 3 -- REQUEST_SUBMITTED = 3
+      WHERE TapeRequest.id = requestIdVar;
+
+    -- Set out parameters
+    requestStatusAfterVar := 3; -- REQUEST_SUBMITTED = 3
+    returnVar             := 1; -- Succeeded
+
+  END requestSubmitted;
 
 
   /**
    * See the castorVdqm package specification for documentation.
    */
-  PROCEDURE writeFailedRTPCDJobSubmission(
-    tapeDriveIdVar    IN NUMBER,
-    tapeRequestIdVar  IN NUMBER,
-    returnVar        OUT NUMBER)
+  PROCEDURE resetDriveAndRequest(
+    driveIdVar                IN  NUMBER,
+    requestIdVar              IN  NUMBER,
+    driveExistsVar            OUT NUMBER,
+    driveStatusBeforeVar      OUT NUMBER,
+    driveStatusAfterVar       OUT NUMBER,
+    runningRequestIdBeforeVar OUT NUMBER,
+    runningRequestIdAfterVar  OUT NUMBER,
+    requestExistsVar          OUT NUMBER,
+    requestStatusBeforeVar    OUT NUMBER,
+    requestStatusAfterVar     OUT NUMBER,
+    requestDriveIdBeforeVar   OUT NUMBER,
+    requestDriveIdAfterVar    OUT NUMBER)
   AS
-    tapeDriveStatusVar      NUMBER;
-    runningTapeRequestIdVar NUMBER;
-    tapeRequestStatusVar    NUMBER;
   BEGIN
-    returnVar := 0; -- Failed RTCPD job submission not written to database
+    driveExistsVar            :=   -1; -- Unknown
+    driveStatusBeforeVar      :=   -1; -- Unknown
+    driveStatusAfterVar       :=   -1; -- Unknown
+    runningRequestIdBeforeVar := NULL; -- Unknown
+    runningRequestIdAfterVar  := NULL; -- Unknown
+    requestExistsVar          :=   -1; -- Unknown
+    requestStatusBeforeVar    :=   -1; -- Unknown
+    requestStatusAfterVar     :=   -1; -- Unknown
+    requestDriveIdBeforeVar   := NULL; -- Unknown
+    requestDriveIdAfterVar    := NULL; -- Unknown
 
-    -- The status of the tape requests may be modified by threads handling tape
-    -- request messages.  The status of the drives may be modified by threads
-    -- handling drive request messages.  One such modification may be the
-    -- bringing down of the drive in question, which would make it meaningless
-    -- to record a successful RTPCD job submission.  Therefore get a lock on the
-    -- corresponding request and drive rows and retrieve their statuses to see
-    -- whether or not the success of the RTPCD job submission should be recorded
-    -- in the database.
-    SELECT TapeDrive.status, TapeDrive.runningTapeReq
-    INTO tapeDriveStatusVar, runningTapeRequestIdVar
-    FROM TapeDrive
-    WHERE TapeDrive.id = tapeDriveIdVar
-    FOR UPDATE;
-    SELECT TapeRequest.status
-    INTO tapeRequestStatusVar
-    FROM TapeRequest
-    WHERE TapeRequest.id = tapeRequestIdVar
-    FOR UPDATE;
+    -- Try to get a lock on and the status of the corresponding drive row
+    BEGIN
+      SELECT TapeDrive.status    , TapeDrive.runningTapeReq
+        INTO driveStatusBeforeVar, runningRequestIdBeforeVar
+        FROM TapeDrive
+        WHERE TapeDrive.id = driveIdVar
+        FOR UPDATE;
 
-    -- If recording of failed RTCPD job submission is permitted,
-    -- i.e. the status of the drive is UNIT_STARTING and the drive is still
-    -- paired with the tape request and the status of the tape request is
-    -- REQUEST_BEINGSUBMITTED
-    IF (tapeDriveStatusVar = 1) AND (runningTapeRequestIdVar = tapeRequestIdVar)
-      AND (tapeRequestStatusVar = 2) THEN
+      driveExistsVar           := 1;                         -- Drive exists
+      driveStatusAfterVar      := driveStatusBeforeVar;      -- No change yet
+      runningRequestIdAfterVar := runningRequestIdBeforeVar; -- No change yet
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        driveExistsVar := 0; -- Drive row does not exist
+    END;
 
-      -- Unlink the tape drive from the tape request
+    -- Try to get a lock on and the status of the request row
+    BEGIN
+      SELECT TapeRequest.status    , TapeRequest.tapeDrive
+        INTO requestStatusBeforeVar, RequestDriveIdBeforeVar
+        FROM TapeRequest
+        WHERE TapeRequest.id = requestIdVar
+        FOR UPDATE;
+
+      requestExistsVar       := 1;                       -- Request exists
+      requestStatusAfterVar  := requestStatusBeforeVar;  -- No change yet
+      requestDriveIdAfterVar := requestDriveIdBeforeVar; -- No change yet
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        requestExistsVar := 0; -- Request does not exist
+    END;
+
+    -- If the drive exists
+    IF driveExistsVar = 1 THEN
       UPDATE TapeDrive
-      SET TapeDrive.runningTapeReq = NULL
-      WHERE TapeDrive.id = tapeDriveIdVar;
-      UPDATE TapeRequest
-      SET TapeRequest.tapeDrive = NULL
-      WHERE TapeRequest.id = tapeRequestIdVar;
+        SET
+          TapeDrive.status         = 7,   -- STATUS_UNKNOWN = 7
+          TapeDrive.runningTapeReq = NULL -- No running request
+        WHERE TapeDrive.id = driveIdVar;
 
-      -- set the state of the tape drive to STATUS_UNKNOWN (7)
-      UPDATE TapeDrive
-      SET TapeDrive.status = 7
-      WHERE TapeDrive.id = tapeDriveIdVar;
-
-      -- Set the state of the tape request to REQUEST_PENDING (0)
-      UPDATE TapeRequest
-      SET TapeRequest.status = 0
-      WHERE TapeRequest.id = tapeRequestIdVar;
-
-      returnVar := 1; -- Failed RTCPD job submission written to database
+      driveStatusAfterVar      := 7;    -- STATUS_UNKNOWN = 7
+      runningRequestIDAfterVar := NULL; -- No running request
     END IF;
 
-  EXCEPTION
+    -- If the request exists
+    IF requestExistsVar = 1 THEN
+      UPDATE TapeRequest
+        SET
+          TapeRequest.status    = 0,   -- REQUEST_PENDING = 0
+          TapeRequest.tapeDrive = NULL -- No drive
+        WHERE TapeRequest.id = requestIdVar;
 
-    -- Do nothing if either the drive or request no longer exist in the database
-    WHEN NO_DATA_FOUND THEN NULL;
-
-  END writeFailedRTPCDJobSubmission;
+      requestStatusAfterVar  := 0;    -- REQUEST_PENDING = 0
+      requestDriveIdAfterVar := NULL; -- No drive
+    END IF;
+  END resetDriveAndRequest;
 
 
   /**
