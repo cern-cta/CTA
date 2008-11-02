@@ -1711,9 +1711,6 @@ void castor::db::ora::OraVdqmSvc::resetDriveAndRequest(
   u_signed64       &requestDriveIdAfter)
   throw (castor::exception::Exception) {
 
-  bool result = false;
-
-
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
   const StatementId stmtId = RESET_DRIVE_AND_REQUEST_SQL_STMT;
@@ -1751,17 +1748,16 @@ void castor::db::ora::OraVdqmSvc::resetDriveAndRequest(
     stmt->setDouble(1, driveId);
     stmt->setDouble(2, requestId);
     stmt->executeUpdate();
-    result                 = stmt->getInt(3);
-    driveExists            = stmt->getInt(4);
-    driveStatusBefore      = stmt->getInt(5);
-    driveStatusAfter       = stmt->getInt(6);
-    runningRequestIdBefore = (u_signed64)stmt->getDouble(7);
-    runningRequestIdAfter  = (u_signed64)stmt->getDouble(8);
-    requestExists          = stmt->getInt(9);
-    requestStatusBefore    = stmt->getInt(10);
-    requestStatusAfter     = stmt->getInt(11);
-    requestDriveIdBefore   = (u_signed64)stmt->getDouble(12);
-    requestDriveIdAfter    = (u_signed64)stmt->getDouble(13);
+    driveExists            = stmt->getInt(3);
+    driveStatusBefore      = stmt->getInt(4);
+    driveStatusAfter       = stmt->getInt(5);
+    runningRequestIdBefore = (u_signed64)stmt->getDouble(6);
+    runningRequestIdAfter  = (u_signed64)stmt->getDouble(7);
+    requestExists          = stmt->getInt(8);
+    requestStatusBefore    = stmt->getInt(9);
+    requestStatusAfter     = stmt->getInt(10);
+    requestDriveIdBefore   = (u_signed64)stmt->getDouble(11);
+    requestDriveIdAfter    = (u_signed64)stmt->getDouble(12);
   } catch(oracle::occi::SQLException &oe) {
     handleException(oe);
 
