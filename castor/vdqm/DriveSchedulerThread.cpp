@@ -108,7 +108,7 @@ void castor::vdqm::DriveSchedulerThread::run(void *param) {
         castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
           VDQM_DRIVE_ALLOCATED, 4, param);
       } else { // Invalidated drive allocation
-        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
           VDQM_INVALIDATED_DRIVE_ALLOCATION, 4, param);
       }
     }
