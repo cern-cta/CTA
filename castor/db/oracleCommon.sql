@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.674 $ $Date: 2008/11/03 09:27:32 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.675 $ $Date: 2008/11/03 09:32:11 $ $Author: sponcec3 $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -68,10 +68,11 @@ DROP TABLE SubRequest;
 CREATE TABLE SubRequest
   (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048),
    xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER,
-   modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER,
+   modeBits NUMBER, creationTime INTEGER NOT NULL, lastModificationTime INTEGER,
    answered NUMBER, errorCode NUMBER, errorMessage VARCHAR2(2048), id NUMBER NOT NULL,
    diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER,
-   request INTEGER, getNextStatus INTEGER, requestedFileSystems VARCHAR2(2048)
+   request INTEGER, getNextStatus INTEGER, requestedFileSystems VARCHAR2(2048),
+   svcHandler VARCHAR2(2048) NOT NULL
   )
   PCTFREE 50 PCTUSED 40 INITRANS 50
   ENABLE ROW MOVEMENT
@@ -93,6 +94,18 @@ CREATE TABLE SubRequest
 /* SQL statements for constraints on SubRequest */
 ALTER TABLE SubRequest
   ADD CONSTRAINT I_SubRequest_PK PRIMARY KEY (ID);
+CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) LOCAL
+ (PARTITION P_STATUS_0_1_2,
+  PARTITION P_STATUS_3_13_14,
+  PARTITION P_STATUS_4,
+  PARTITION P_STATUS_5,
+  PARTITION P_STATUS_6,
+  PARTITION P_STATUS_7,
+  PARTITION P_STATUS_8,
+  PARTITION P_STATUS_9_10,
+  PARTITION P_STATUS_11,
+  PARTITION P_STATUS_12,
+  PARTITION P_STATUS_OTHER);  
 
 /* Indexes related to most used entities */
 CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
