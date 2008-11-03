@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.669 $ $Date: 2008/10/29 07:36:52 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.670 $ $Date: 2008/11/03 09:29:19 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -245,7 +245,7 @@ BEGIN
               WHERE FileSystem.diskServer = DiskServer.id
                 AND DiskServer.name = diskServerName
              ORDER BY dbms_random.value) LOOP
-                
+
     -- Count the number of diskcopies on this filesystem that are in a
     -- BEINGDELETED state. These need to be reselected in any case.
     freed := 0;
@@ -271,10 +271,10 @@ BEGIN
        AND rownum <= 10000 - totalCount
     RETURNING id BULK COLLECT INTO dcIds;
     COMMIT;
-       
+
     -- If we have more than 10,000 files to GC, exit the loop. There is no point
-    -- processing more as the maximum sent back to the client in one call is 
-    -- 10,000. This protects the garbage collector from being overwhelmed with 
+    -- processing more as the maximum sent back to the client in one call is
+    -- 10,000. This protects the garbage collector from being overwhelmed with
     -- requests and reduces the stager DB load. Furthermore, if too much data is
     -- sent back to the client, the transfer time between the stager and client
     -- becomes very long and the message may timeout or may not even fit in the
@@ -301,7 +301,7 @@ BEGIN
       -- If space is still required even after removal of INVALID files, consider
       -- removing STAGED files until we are below the free space watermark
       IF freed < toBeFreed THEN
-        -- Loop on file deletions. Select only enough files until we reach the 
+        -- Loop on file deletions. Select only enough files until we reach the
         -- 10000 return limit.
         FOR dc IN (SELECT id, castorFile FROM (
                      SELECT id, castorFile FROM DiskCopy
@@ -324,7 +324,7 @@ BEGIN
           -- Shall we continue ?
           IF toBeFreed <= freed THEN
             EXIT;
-          END IF;                
+          END IF;
         END LOOP;
       END IF;
       COMMIT;
@@ -341,7 +341,8 @@ BEGIN
            DiskCopy.lastAccessTime, DiskCopy.nbCopyAccesses, DiskCopy.gcWeight,
            CASE WHEN DiskCopy.gcType = 0 THEN 'Automatic'
                 WHEN DiskCopy.gcType = 1 THEN 'User Requested'
-                ELSE 'Unknown' END, 
+                WHEN DiskCopy.gcType = 2 THEN 'Too many replicas'
+                ELSE 'Unknown' END,
            getSvcClassList(FileSystem.id)
       FROM CastorFile, DiskCopy, FileSystem, DiskServer
      WHERE decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9 -- BEINGDELETED
