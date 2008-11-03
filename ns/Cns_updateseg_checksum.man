@@ -1,10 +1,10 @@
-.\" @(#)$RCSfile: Cns_updateseg_checksum.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:21 $ CERN IT-DS/HSM Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_updateseg_checksum.man,v $ $Revision: 1.3 $ $Date: 2008/11/03 10:26:08 $ CERN IT-DS/HSM Jean-Philippe Baud
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH CNS_UPDATESEG_CHECKSUM 3 "$Date: 2006/01/26 15:36:21 $" CASTOR "Cns Library Functions"
+.TH CNS_UPDATESEG_CHECKSUM 3 "$Date: 2008/11/03 10:26:08 $" CASTOR "Cns Library Functions"
 .SH NAME
-Cns_updateseg_checksum \- Updates the checksum of a file segment
+Cns_updateseg_checksum \- updates the checksum of a file segment
 .SH SYNOPSIS
 .B #include <sys/types.h>
 .br
@@ -16,9 +16,9 @@ Cns_updateseg_checksum \- Updates the checksum of a file segment
 .BI "struct Cns_segattrs *" newsegattrs )
 .SH DESCRIPTION
 .B Cns_updateseg_checksum
-Updates the checksum of a file segment.
+updates the checksum of a file segment.
 This function should be called by the stager to update the checksum
-of file segment for files which did not previously 
+of file segment for files which did not previously
 have a checksum computed
 The file is identified by
 .I server
@@ -38,7 +38,7 @@ struct Cns_segattrs {
         int             fsec;           /* file segment number */
         u_signed64      segsize;        /* file segment size */
         int             compression;    /* compression factor */
-        char            s_status;       /* 'd' --> deleted */
+        char            s_status;       /* 'D' --> deleted */
         char            vid[CA_MAXVIDLEN+1];
         int             side;
         int             fseq;           /* file sequence number */
@@ -48,6 +48,8 @@ struct Cns_segattrs {
 };
 .ft
 .fi
+.LP
+This function requires ADMIN privilege.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
@@ -74,7 +76,7 @@ is not identical to the copyno/fsec pair in
 .I oldsegattrs
 or the length of
 .I vid
-in either 
+in either
 .I oldsegattrs
 or
 .I newsegattrs

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_getsegattrs.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:18 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_getsegattrs.man,v $ $Revision: 1.3 $ $Date: 2008/11/03 10:26:08 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_GETSEGATTRS 3 "$Date: 2006/01/26 15:36:18 $" CASTOR "Cns Library Functions"
+.TH CNS_GETSEGATTRS 3 "$Date: 2008/11/03 10:26:08 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_getsegattrs \- get file segment attributes
 .SH SYNOPSIS
@@ -43,7 +43,7 @@ struct Cns_segattrs {
         int             fsec;           /* file section number */
         u_signed64      segsize;        /* file section size */
         int             compression;    /* compression factor */
-        char            s_status;       /* 'd' --> deleted */
+        char            s_status;       /* 'D' --> deleted */
         char            vid[CA_MAXVIDLEN+1];
         int             side;
         int             fseq;           /* file sequence number */
