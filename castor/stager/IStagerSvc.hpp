@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.97 $ $Release$ $Date: 2008/08/18 16:14:07 $ $Author: waldron $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.98 $ $Release$ $Date: 2008/11/03 07:42:38 $ $Author: waldron $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -117,7 +117,7 @@ namespace castor {
          a DiskCopy was found and the SubRequest can be scheduled.
        * DISKCOPY_WAITDISK2DISKCOPY (1): like above, plus the
        * stager is allowed to replicate according to policies.
-       * DISKCOPY_WAITTAPERECALL (2): no scheduling, no DiskCopy 
+       * DISKCOPY_WAITTAPERECALL (2): no scheduling, no DiskCopy
          found anywhere, a tape recall is needed.
        * DISKCOPY_WAITFS (5): the only available DiskCopy is in
        * WAITFS, i.e. this is an Update inside PrepareToPut:
@@ -163,13 +163,16 @@ namespace castor {
        * @param srcDiskCopy the source diskCopy
        * @param srcSc the source service class
        * @param destSc the destination service class
+       * @param internal flag to indicate whether this is an internal
+       * replication request.
        * @exception Exception in case of system error
        */
       virtual void createDiskCopyReplicaRequest
       (const castor::stager::SubRequest* subreq,
        const castor::stager::DiskCopyForRecall* srcDiskCopy,
        const castor::stager::SvcClass* srcSc,
-       const castor::stager::SvcClass* destSc)
+       const castor::stager::SvcClass* destSc,
+       const bool internal = false)
 	throw (castor::exception::Exception) = 0;
 
       /**
@@ -207,10 +210,10 @@ namespace castor {
        * @exception Exception in case of error
        */
       virtual castor::stager::DiskCopyInfo* getBestDiskCopyToRead
-      (const castor::stager::CastorFile *castorFile, 
+      (const castor::stager::CastorFile *castorFile,
        const castor::stager::SvcClass *svcClass)
 	throw (castor::exception::Exception) = 0;
-      
+
       /**
        * Updates a SubRequest status in the DB, including
        * the answered flag that is set to 1 and tells
@@ -332,18 +335,18 @@ namespace castor {
        * @exception in case of error
        */
       virtual int setFileGCWeight
-      (const u_signed64 fileId, const std::string nsHost, 
+      (const u_signed64 fileId, const std::string nsHost,
        const u_signed64 svcClassId, const float weight)
         throw (castor::exception::Exception) = 0;
 
       /**
        * Creates a candidate for a recall. This includes TapeCopy with
-       * its Segment(s), a DiskCopy and a SubRequest in WAITTAPERECALL. 
+       * its Segment(s), a DiskCopy and a SubRequest in WAITTAPERECALL.
        * @param subreq the subreq of the file to recall
        * @param svcClass svc class for recall policy
-       * @param tape a pointer to a location of where to store the tape 
-       * information associated with the recall. Note: if the file has 
-       * multiple segments spread across multiple tapes only the last 
+       * @param tape a pointer to a location of where to store the tape
+       * information associated with the recall. Note: if the file has
+       * multiple segments spread across multiple tapes only the last
        * Tape processed will be returned. We could of course return a
        * vector of Tape objects but this is overkill as multi segment,
        * multi tape recalls are extremely rare and can only happen when
@@ -357,7 +360,7 @@ namespace castor {
      virtual int createRecallCandidate
      (castor::stager::SubRequest* subreq,
       castor::stager::SvcClass* svcClass,
-      castor::stager::Tape* &tape) 
+      castor::stager::Tape* &tape)
         throw (castor::exception::Exception) = 0;
 
       /**
@@ -385,7 +388,7 @@ namespace castor {
         throw (castor::exception::Exception) = 0;
 
       /**
-       * Select priority for recall  
+       * Select priority for recall
        * @param euid the userid of the user
        * @param egid the groupid of the user
        * @return priority value
@@ -394,9 +397,9 @@ namespace castor {
       virtual std::vector<castor::stager::PriorityMap*>
       selectPriority(int euid, int egid, int priority)
 	throw (castor::exception::Exception) = 0;
-      
+
       /**
-       * Enter priority for recall  
+       * Enter priority for recall
        * @param euid the userid of the user
        * @param egid the groupid of the user
        * @param priority value
@@ -406,9 +409,9 @@ namespace castor {
 				 u_signed64 egid,
 				 u_signed64 priority)
 	throw (castor::exception::Exception) = 0;
-      
+
       /**
-       * Delete priority for recall  
+       * Delete priority for recall
        * @param euid the userid of the user
        * @param egid the groupid of the user
        * @exception in case of an error

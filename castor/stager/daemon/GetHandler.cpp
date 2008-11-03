@@ -40,62 +40,62 @@
 namespace castor{
   namespace stager{
     namespace daemon{
-      
+
       GetHandler::GetHandler(RequestHelper* stgRequestHelper, CnsHelper* stgCnsHelper) throw (castor::exception::Exception)
       {
         this->stgRequestHelper = stgRequestHelper;
         this->stgCnsHelper = stgCnsHelper;
         this->typeRequest = OBJ_StageGetRequest;
       }
-      
-      
+
+
       /*******************************************************************/
       /* function to set the handler's attributes according to its type */
       /*****************************************************************/
       void GetHandler::handlerSettings() throw(castor::exception::Exception)
-      {	
-        this->maxReplicaNb = stgRequestHelper->svcClass->maxReplicaNb();	
-        
+      {
+        this->maxReplicaNb = stgRequestHelper->svcClass->maxReplicaNb();
+
         this->default_protocol = "rfio";
       }
-      
-      
-      
-      
-      /********************************************/	
+
+
+
+
+      /********************************************/
       /* for Get, Update                         */
-      /*     switch(getDiskCopyForJob):         */                                     
+      /*     switch(getDiskCopyForJob):         */
       /*        case 0,1: (staged) jobManager  */
       /* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
       bool GetHandler::switchDiskCopiesForJob() throw(castor::exception::Exception)
       {
         int result = stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest, sources);
-        
+
         switch(result) {
           case -3:
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_PREPARETOGET_DISK2DISKCOPY, &(stgCnsHelper->cnsFileid));
             // we notify the jobManager as we have to wait on diskcopy replication
             m_notifyJobManager = true;
             break;
-          
+
           case -2:
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
             break;
-          
+
           case -1:
             stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
             break;
-          
+
           case DISKCOPY_STAGED:   // schedule job
           case DISKCOPY_WAITDISK2DISKCOPY:
             {
               stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_SCHEDULINGJOB, &(stgCnsHelper->cnsFileid));
-              
+
               if(result == DISKCOPY_WAITDISK2DISKCOPY) {
                 // there's room for internal replication, check if it's to be done
                 processReplica();
               }
-  
+
               // Fill the requested filesystems for the request being processed
               std::string rfs = "";
               std::list<castor::stager::DiskCopyForRecall*>::iterator it;
@@ -106,17 +106,17 @@ namespace castor{
               }
               sources.clear();
               stgRequestHelper->subrequest->setRequestedFileSystems(rfs);
-              stgRequestHelper->subrequest->setXsize(0);   // no size requirements for a Get  
-              
+              stgRequestHelper->subrequest->setXsize(0);   // no size requirements for a Get
+
               stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
-              stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
+              stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
               stgRequestHelper->dbSvc->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-              
+
               // and we notify the jobManager
               m_notifyJobManager = true;
             }
             break;
-          
+
           case DISKCOPY_WAITFS:   // case of update in a prepareToPut: we actually need to behave as a Put and schedule
             {
               castor::stager::DiskCopyForRecall* dc =
@@ -128,9 +128,9 @@ namespace castor{
                 }
                 stgRequestHelper->subrequest->setXsize(this->xsize);
                 stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_CASTORFILE_RECREATION, &(stgCnsHelper->cnsFileid));
-                
+
                 stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
-                stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
+                stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
                 try {
                   stgRequestHelper->dbSvc->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
                 }
@@ -148,7 +148,7 @@ namespace castor{
               }
             }
             break;
-            
+
           case DISKCOPY_WAITTAPERECALL:   // create a tape copy and corresponding segment objects on stager catalogue
             {
               // answer client only if success
@@ -169,19 +169,19 @@ namespace castor{
                 castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, 9, params, &(stgCnsHelper->cnsFileid));
               } else {
                 // no tape copy found because of Tape0 file, log it
-                // any other tape error will throw an exception and will be classified as LVL_ERROR 
+                // any other tape error will throw an exception and will be classified as LVL_ERROR
                 stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
               }
               if (tape != 0)
                 delete tape;
             }
             break;
-          
-        }        
-        return false;        
+
+        }
+        return false;
       }
-      
-      
+
+
       /****************************************************************************************/
       /* handler for the get subrequest method */
       /****************************************************************************************/
@@ -189,12 +189,12 @@ namespace castor{
       {
         try{
           handlerSettings();
-          
+
           stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_GET, &(stgCnsHelper->cnsFileid));
-          
+
           jobOriented();
-          switchDiskCopiesForJob(); 
-          
+          switchDiskCopiesForJob();
+
         }catch(castor::exception::Exception e){
           if(e.getMessage().str().empty()) {
             e.getMessage() << sstrerror(e.code());
@@ -205,9 +205,9 @@ namespace castor{
           };
           castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_GET, 2, params, &(stgCnsHelper->cnsFileid));
           throw(e);
-        }  
+        }
       }
-      
+
 
       /***********************************************************************/
       /* decides whether we need to replicate                                */
@@ -215,12 +215,12 @@ namespace castor{
       void GetHandler::processReplica() throw(castor::exception::Exception)
       {
         bool replicate = true;
-        
+
         if( (sources.size() == 1 && sources.front()->status() == DISKCOPY_STAGEOUT)
             || stgRequestHelper->fileRequest->type() == OBJ_StageUpdateRequest
             || (maxReplicaNb > 0 && maxReplicaNb <= sources.size()) ) {
           // A Get on a STAGEOUT DiskCopy is not allowed to replicate,
-          // nor is allowed an Update request. Otherwise, maxReplicaNb > 0 decides 
+          // nor is allowed an Update request. Otherwise, maxReplicaNb > 0 decides
           replicate = false;
         }
         // XXX Note that maxReplicaNb == 0 allows infinite replication (to be reviewed maybe)
@@ -228,14 +228,16 @@ namespace castor{
         if(replicate) {
           // We need to replicate, create a diskCopyReplica request
           stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_GET_REPLICATION, &(stgCnsHelper->cnsFileid));
-          stgRequestHelper->stagerService->createDiskCopyReplicaRequest(0, sources.front(), stgRequestHelper->svcClass, stgRequestHelper->svcClass);
+          stgRequestHelper->stagerService->createDiskCopyReplicaRequest
+	    (stgRequestHelper->subrequest, sources.front(),
+	     stgRequestHelper->svcClass, stgRequestHelper->svcClass, true);
         }
       }
 
-    
-      GetHandler::~GetHandler()throw(){        
+
+      GetHandler::~GetHandler()throw(){
       }
-      
+
     }//end namespace daemon
   }//end namespace stager
 }//end namespace castor
