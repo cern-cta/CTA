@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.645 $ $Date: 2008/10/31 16:04:04 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.646 $ $Date: 2008/11/03 07:53:29 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -25,10 +25,10 @@ BEGIN
       SELECT fileId, nsHost, dcId, path, fileSize, status, machine, mountPoint, nbCopyAccesses, lastKnownFileName
          FROM (SELECT
              -- we need to give these hints to the optimizer otherwise it goes for a full table scan (!)
-             UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id as dcId,
+             UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id AS dcId,
              DC.path, CastorFile.fileSize,
              CASE WHEN DC.id IS NULL THEN
-                 nvl((SELECT UNIQUE decode(SubRequest.status, 0,2, 3,2, -1)
+                 nvl((SELECT UNIQUE decode(SubRequest.status, 0, 2, 3, 2, -1)
                     FROM SubRequest,
                         (SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
                          SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
@@ -36,14 +36,14 @@ BEGIN
                          SELECT id, svcClass FROM StageRepackRequest UNION ALL
                          SELECT id, svcClass FROM StageGetRequest) Req
                           WHERE SubRequest.CastorFile = CastorFile.id
-                            AND Subrequest.status in (0,3)
+                            AND Subrequest.status IN (0, 3)
                             AND request = Req.id), -1)
-                  ELSE DC.status END as status,
+                  ELSE DC.status END AS status,
              DC.machine, DC.mountPoint,
              DC.nbCopyAccesses, CastorFile.lastKnownFileName
         FROM CastorFile,
-             (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name as machine, FileSystem.mountPoint,
-                     DiskPool2SvcClass.child as dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile, DiskCopy.nbCopyAccesses
+             (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name AS machine, FileSystem.mountPoint,
+                     DiskPool2SvcClass.child AS dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile, DiskCopy.nbCopyAccesses
                 FROM FileSystem, DiskServer, DiskPool2SvcClass,
                      (SELECT id, status, filesystem, castorFile, path, nbCopyAccesses FROM DiskCopy
                        WHERE CastorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
@@ -56,7 +56,7 @@ BEGIN
                  AND nvl(DiskServer.status, 0) = 0 -- PRODUCTION
                  AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool) DC
        WHERE CastorFile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
-         AND CastorFile.id = DC.castorFile(+))    -- search for valid diskcopy
+         AND CastorFile.id = DC.castorFile(+))  -- search for valid diskcopy
     WHERE status != -1 -- when no diskcopy and no subrequest available, ignore garbage
     ORDER BY fileid, nshost;
   ELSE
@@ -67,7 +67,7 @@ BEGIN
       SELECT fileId, nsHost, dcId, path, fileSize, srStatus, machine, mountPoint, nbCopyAccesses, lastKnownFileName
         FROM (SELECT
             -- we need to give these hints to the optimizer otherwise it goes for a full table scan (!)
-            UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id as dcId,
+            UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id AS dcId,
             DC.path, CastorFile.fileSize, DC.status,
             CASE WHEN DC.dcSvcClass = svcClassId THEN DC.status
                  WHEN DC.fileSystem = 0 THEN
@@ -82,7 +82,7 @@ BEGIN
                            AND request = Req.id
                            AND svcClass = svcClassId)
                  WHEN DC.id IS NULL THEN
-                (SELECT UNIQUE decode(SubRequest.status, 0,2, 3,2, -1)
+                (SELECT UNIQUE decode(SubRequest.status, 0, 2, 3, 2, -1)
                    FROM SubRequest,
                        (SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
                         SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
@@ -91,12 +91,12 @@ BEGIN
                         SELECT id, svcClass FROM StageGetRequest) Req
                          WHERE SubRequest.CastorFile = CastorFile.id
                            AND request = Req.id
-                           AND svcClass = svcClassId) END as srStatus,
+                           AND svcClass = svcClassId) END AS srStatus,
             DC.machine, DC.mountPoint,
             DC.nbCopyAccesses, CastorFile.lastKnownFileName
        FROM CastorFile,
-            (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name as machine, FileSystem.mountPoint,
-                    DiskPool2SvcClass.child as dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile, DiskCopy.nbCopyAccesses
+            (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name AS machine, FileSystem.mountPoint,
+                    DiskPool2SvcClass.child AS dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile, DiskCopy.nbCopyAccesses
                FROM FileSystem, DiskServer, DiskPool2SvcClass,
                     (SELECT id, status, filesystem, castorFile, path, nbCopyAccesses FROM DiskCopy
                       WHERE CastorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
@@ -109,7 +109,7 @@ BEGIN
                 AND nvl(DiskServer.status, 0) = 0 -- PRODUCTION
                 AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool) DC
       WHERE CastorFile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
-        AND CastorFile.id = DC.castorFile(+))    -- search for valid diskcopy
+        AND CastorFile.id = DC.castorFile(+))  -- search for valid diskcopy
       WHERE srStatus != -1
       ORDER BY fileid, nshost;
    END IF;
@@ -126,12 +126,12 @@ CREATE OR REPLACE PROCEDURE fileNameStageQuery
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
 BEGIN
-  IF substr(fn, -1, 1) = '/' THEN    -- files in a 'subdirectory'
+  IF substr(fn, -1, 1) = '/' THEN  -- files in a 'subdirectory'
     SELECT /*+ INDEX(CastorFile I_CastorFile_LastKnownFileName) */ id BULK COLLECT INTO cfs
       FROM CastorFile
      WHERE lastKnownFileName LIKE fn||'%'
        AND ROWNUM <= maxNbResponses + 1;
-  ELSE                                  -- exact match
+  ELSE  -- exact match
     SELECT /*+ INDEX(CastorFile I_CastorFile_LastKnownFileName) */ id BULK COLLECT INTO cfs
       FROM CastorFile
      WHERE lastKnownFileName = REGEXP_REPLACE(fn,'(/){2,}','/');
@@ -156,9 +156,9 @@ CREATE OR REPLACE PROCEDURE fileIdStageQuery
   cfs "numList";
   currentFileName VARCHAR2(2048);  
 BEGIN
-  -- extract CastorFile ids FROM the fileid
+  -- Extract CastorFile ids FROM the fileid
   SELECT id BULK COLLECT INTO cfs FROM CastorFile WHERE fileId = fid AND nshost = nh;
-  -- Check and fix when needed the LastKnowFileNames
+  -- Check and fix when needed the LastKnownFileNames
   SELECT lastKnownFileName INTO currentFileName
     FROM CastorFile
    WHERE id = cfs(cfs.FIRST);
@@ -281,7 +281,7 @@ BEGIN
            WHERE reqid LIKE rid
           );
   IF reqs.COUNT > 0 THEN
-    FORALL i in reqs.FIRST..reqs.LAST
+    FORALL i IN reqs.FIRST..reqs.LAST
       UPDATE SubRequest SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED
        WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
          AND request = reqs(i)
@@ -314,7 +314,7 @@ BEGIN
            WHERE userTag LIKE tag
           );
   IF reqs.COUNT > 0 THEN
-    FORALL i in reqs.FIRST..reqs.LAST
+    FORALL i IN reqs.FIRST..reqs.LAST
       UPDATE SubRequest SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED
        WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
          AND request = reqs(i)
@@ -428,7 +428,7 @@ BEGIN
        WHERE dp.id = fs.diskPool
          AND ds.id = fs.diskServer
          AND dp.name = diskPoolName
-         group by grouping sets(
+         GROUP BY grouping sets(
              (ds.name, ds.status, fs.mountPoint,
                fs.free - fs.minAllowedFreeSpace * fs.totalSize,
                fs.totalSize,
@@ -436,7 +436,7 @@ BEGIN
              (ds.name, ds.status),
              (dp.name)
             )
-         order by IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint;
+         ORDER BY IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint;
   ELSE
     OPEN result FOR
       SELECT grouping(ds.name) AS IsDSGrouped,
@@ -453,7 +453,7 @@ BEGIN
          AND dp.id = fs.diskPool
          AND ds.id = fs.diskServer
          AND dp.name = diskPoolName
-         group by grouping sets(
+         GROUP BY grouping sets(
              (ds.name, ds.status, fs.mountPoint,
                fs.free - fs.minAllowedFreeSpace * fs.totalSize,
                fs.totalSize,
@@ -461,7 +461,7 @@ BEGIN
              (ds.name, ds.status),
              (dp.name)
             )
-         order by IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint;
+         ORDER BY IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint;
   END IF;
   -- If no results are available, check to see if any diskpool exists and if
   -- access to view all the diskpools has been revoked. The information extracted

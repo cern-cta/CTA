@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.650 $ $Date: 2008/09/22 13:15:12 $ $Author: waldron $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.651 $ $Date: 2008/11/03 07:53:42 $ $Author: waldron $
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -213,7 +213,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     empty_privilege EXCEPTION;
     PRAGMA EXCEPTION_INIT(empty_privilege, -20109);
   BEGIN
-    DELETE FROM removePrivilegeTmpTable;
+    DELETE FROM RemovePrivilegeTmpTable;
     FOR r IN (SELECT * FROM WhiteList) LOOP
       BEGIN
         wlr.svcClass := r.svcClass;
@@ -221,7 +221,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
         wlr.egid := r.egid;
         wlr.reqType := r.reqType;
         tmp := intersection(wlr, p);
-        INSERT INTO removePrivilegeTmpTable
+        INSERT INTO RemovePrivilegeTmpTable
         VALUES (tmp.svcClass, tmp.euid, tmp.egid, tmp.reqType);
       EXCEPTION WHEN empty_privilege THEN
         NULL;
@@ -386,7 +386,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
       blr.egid := r.egid;
       blr.reqType := r.reqType;
       intersectionWithWhiteList(blr);
-      SELECT COUNT(*) INTO c FROM removePrivilegeTmpTable;
+      SELECT COUNT(*) INTO c FROM RemovePrivilegeTmpTable;
       IF c = 0 THEN
         -- we can safely drop this line
         DELETE FROM BlackList
@@ -412,7 +412,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
   BEGIN
     -- Check first whether there is something to remove
     intersectionWithWhiteList(P);
-    SELECT COUNT(*) INTO c FROM removePrivilegeTmpTable;
+    SELECT COUNT(*) INTO c FROM RemovePrivilegeTmpTable;
     IF c = 0 THEN RETURN; END IF;
     -- Remove effectively what can be removed
     FOR r IN (SELECT * FROM WHITELIST) LOOP
@@ -435,7 +435,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     SELECT COUNT(*) INTO c FROM removePrivilegeTmpTable;
     IF c = 0 THEN RETURN; END IF;
     -- If any, add them to blackList
-    FOR q IN (SELECT * FROM removePrivilegeTmpTable) LOOP
+    FOR q IN (SELECT * FROM RemovePrivilegeTmpTable) LOOP
       wlr.svcClass := q.svcClass;
       wlr.euid := q.euid;
       wlr.egid := q.egid;
