@@ -128,7 +128,7 @@ Cns_setfsizeg(const char *guid, u_signed64 filesize, const char *csumtype, char 
 
   if (strlen (guid) > CA_MAXGUIDLEN ||
       (csumtype && strlen (csumtype) > 2) ||
-      (csumvalue && strlen (csumvalue) > 32)) {
+      (csumvalue && strlen (csumvalue) > CA_MAXCKSUMLEN)) {
     serrno = EINVAL;
     return (-1);
   }
@@ -204,12 +204,13 @@ Cns_setfsizecs(const char *path, struct Cns_fileid *file_uniqueid, u_signed64 fi
     serrno = ENAMETOOLONG;
     return (-1);
   }
-  
-  if ((csumtype && strlen (csumtype) > 2) || (csumvalue && strlen (csumvalue) > 32)) {
+
+  if ((csumtype && strlen (csumtype) > 2) ||
+      (csumvalue && strlen (csumvalue) > CA_MAXCKSUMLEN)) {
     serrno = EINVAL;
     return (-1);
   }
-  
+
   if (file_uniqueid && *file_uniqueid->server)
     strcpy (server, file_uniqueid->server);
   else
@@ -238,7 +239,7 @@ Cns_setfsizecs(const char *path, struct Cns_fileid *file_uniqueid, u_signed64 fi
     marshall_STRING (sbp, actual_path);
   }
   marshall_HYPER (sbp, filesize);
-  
+
   if (csumtype) {
     marshall_STRING (sbp, csumtype);
   } else {
