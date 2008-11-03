@@ -1,59 +1,33 @@
-.\" @(#)$RCSfile: nsfind.man,v $ $Revision: 1.3 $ $Date: 2008/02/26 18:25:52 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: nsfind.man,v $ $Revision: 1.4 $ $Date: 2008/11/03 10:37:05 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSFIND 1 "$Date: 2008/02/26 18:25:52 $" CASTOR "Cns User Commands"
+.TH NSFIND 1 "$Date: 2008/11/03 10:37:05 $" CASTOR "Cns User Commands"
 .SH NAME
 nsfind \- search for files in CASTOR name server
 .SH SYNOPSIS
 .B nsfind
-.I path-list
-[
-.BI -atime " nbdays"
-] [
-.BI -ctime " nbdays"
-] [
-.BI -inum " fileid"
-] [
-.B -ls
-] [
-.BI -mtime " nbdays"
-] [
-.BI -name " pattern"
-] [
-.BI -type " c"
-]
+[\fIPATH...\fR]... \fIOPTIONS\fR...
 .SH DESCRIPTION
 .B nsfind
 searches for files in CASTOR name server.
 .TP
-.I path-list
-specifies the list of CASTOR pathnames.
-If
-.I path
-does not start with
+.I PATH
+specifies the list of CASTOR pathnames. If PATH does not start with
 .BR / ,
 it is prefixed by the content of the
 .B CASTOR_HOME
 environment variable.
 .SH OPTIONS
 .TP
-.BI -atime " nbdays"
-if
-.I nbdays
-is is just a number, the file is selected if it was accessed exactly
-.I nbdays
-ago. If the argument is in the form +n, this means more than n days ago and
-if the argument is in the form -n, this means less than n days ago.
+.BI -atime=NBDAYS
+if NBDAYS is is just a number, the file is selected if it was accessed exactly NBDAYS ago. If the argument is in the form +n, this means more than n days ago and if the argument is in the form -n, this means less than n days ago.
 .TP
-.BI -ctime " nbdays"
-the file is selected if its status changed
-.I nbdays
-ago. See -atime above.
+.BI -ctime=NBDAYS
+the file is selected if its status changed NBDAYS ago. See -atime above.
 .TP
-.BI -inum " fileid"
-the file is selected if its fileid matches
-.IR fileid .
+.BI -inum=FILEID
+the file is selected if its fileid matches FILEID.
 .TP
 .B -ls
 list current file in "nsls -dil" format, i.e.
@@ -101,18 +75,14 @@ sticky bit is on
 .RE
 .RE
 .TP
-.BI -mtime " nbdays"
-the file is selected if it has been modified
-.I nbdays
-ago. See -atime above.
+.BI -mtime=NBDAYS
+the file is selected if it has been modified NBDAYS ago. See -atime above.
 .TP
-.BI -name " pattern"
-select the file if the file name matches regular expression
-.IR pattern .
+.BI -name=PATTERN
+select the file if the file name matches regular expression PATTERN.
 .TP
-.BI -type " c"
-The file is of type
-.IR c:
+.BI -type=TYPE
+The file is of type TYPE:
 .RS
 .TP
 .B d

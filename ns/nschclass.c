@@ -18,9 +18,9 @@
 #endif
 #include "Cns.h"
 #include "Cns_api.h"
+#include "Cgetopt.h"
 #include "serrno.h"
-extern char *getenv();
-extern int optind;
+
 #if sgi
 extern char *strdup _PROTO((CONST char *));
 #endif
@@ -30,12 +30,31 @@ int rflag;
 
 int chdirclass (char *dir,int oldclass,int newclass,char *newclass_name);
 
+void usage(int status, char *name) {
+  if (status != 0) {
+    fprintf (stderr, "Try `%s --help` for more information.\n", name);
+  } else {
+    printf ("Usage: %s [OPTION]... [CLASSID|CLASSNAME] DIRECTORY...\n", name);
+    printf ("Change the class of a CASTOR directory in the name server.\n\n");
+    printf ("  -i, --interactive  request acknowledge before changing each individual entry\n");
+    printf ("  -r, --recursive    the class is changed on the directories, not on the existing\n");
+    printf ("                     regular files\n");
+    printf ("      --help         display this help and exit\n\n");
+    printf ("Report bugs to <castor.support@cern.ch>.\n");
+  }
+#if defined(_WIN32)
+  WSACleanup();
+#endif
+  exit (status);
+}
+
 int main(int argc,char **argv)
 {
   int c;
   char *dp;
   char fullpath[CA_MAXPATHLEN+1];
   int i;
+  int hflg = 0;
   char *class_arg;
   int newclass = 0;
   char *newclass_name = NULL;
@@ -47,7 +66,16 @@ int main(int argc,char **argv)
   WSADATA wsadata;
 #endif
 
-  while ((c = getopt (argc, argv, "ir")) != EOF) {
+  Coptions_t longopts[] = {
+    { "interactive", NO_ARGUMENT, NULL, 'i' },
+    { "recursive",   NO_ARGUMENT, NULL, 'r' },
+    { "help",        NO_ARGUMENT, &hflg, 1  },
+    { NULL,          0,           NULL,  0  }
+  };
+
+  Coptind = 1;
+  Copterr = 1;
+  while ((c = Cgetopt_long (argc, argv, "ir", longopts, NULL)) != EOF) {
     switch (c) {
     case 'i':
       iflag++;
@@ -62,12 +90,13 @@ int main(int argc,char **argv)
       break;
     }
   }
-  if (errflg || optind >= argc - 1) {
-    fprintf (stderr,
-             "usage: %s [-i] [-r] class dirname...\n", argv[0]);
-    exit (USERR);
+  if (hflg) {
+    usage (0, argv[0]);
   }
-  class_arg = argv[optind];
+  if (errflg || Coptind >= argc - 1) {
+    usage (USERR, argv[0]);
+  }
+  class_arg = argv[Coptind];
   if (isdigit (*class_arg)) { /* numeric class */
     newclass = strtol (class_arg, &dp, 10);
     if (*dp != '\0') { /* may be a name starting with a digit */
@@ -82,7 +111,7 @@ int main(int argc,char **argv)
     exit (SYERR);
   }
 #endif
-  for (i = optind+1; i < argc; i++) {
+  for (i = Coptind+1; i < argc; i++) {
     path = argv[i];
     if (*path != '/' && strstr (path, ":/") == NULL) {
       if ((p = getenv (CNS_HOME_ENV)) == NULL ||

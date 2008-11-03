@@ -10,18 +10,36 @@
 #include <pwd.h>
 #include <stdio.h>
 #include <string.h>
-#include <getopt.h>
 #include <stdlib.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif
-#include "Cgetopt.h"
 #include "Cns.h"
 #include "Cns_api.h"
+#include "Cgetopt.h"
 #include "serrno.h"
 int nohdr = 0;
 int listentry(struct Cns_fileclass *Cns_fileclass);
 
+void usage(int status, char *name) {
+  if (status != 0) {
+    fprintf (stderr, "Try `%s --help` for more information.\n", name);
+  } else {
+    printf ("Usage: %s <--id=CLASSID|--name=CLASSNAME> [OPTION]...\n", name);
+    printf ("List existing file class(es).\n\n");
+    printf ("      --id=CLASSID      the class number of the class to be displayed\n");
+    printf ("      --name=CLASSNAME  the name of the class to be displayed\n");
+    printf ("      --nohdr           display each class on one line, removing key value pair\n");
+    printf ("                        listing\n");
+    printf ("  -h, --host=HOSTNAME   specify the name server hostname\n");
+    printf ("      --help            display this help and exit\n\n");
+    printf ("Report bugs to <castor.support@cern.ch>.\n");
+  }
+#if defined(_WIN32)
+  WSACleanup();
+#endif
+  exit (status);
+}
 
 int main(int argc,char **argv)
 {
@@ -31,19 +49,23 @@ int main(int argc,char **argv)
   struct Cns_fileclass Cns_fileclass;
   char *dp;
   int errflg = 0;
+  int hflg = 0;
   int flags;
   Cns_list list;
-  static struct Coptions longopts[] = {
-    {"id", REQUIRED_ARGUMENT, 0, OPT_CLASS_ID},
-    {"name", REQUIRED_ARGUMENT, 0, OPT_CLASS_NAME},
-    {"nohdr", NO_ARGUMENT, &nohdr, 1},
-    {0, 0, 0, 0}
-  };
   struct Cns_fileclass *lp;
   char *server = NULL;
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
+
+  Coptions_t longopts[] = {
+    { "id",    REQUIRED_ARGUMENT, NULL,   OPT_CLASS_ID   },
+    { "name",  REQUIRED_ARGUMENT, NULL,   OPT_CLASS_NAME },
+    { "nohdr", NO_ARGUMENT,       &nohdr, 1              },
+    { "host",  REQUIRED_ARGUMENT, NULL,  'h'             },
+    { "help",  NO_ARGUMENT,       &hflg,  1              },
+    { NULL,    0,                 NULL,   0              }
+  };
 
   Copterr = 1;
   Coptind = 1;
@@ -69,18 +91,20 @@ int main(int argc,char **argv)
       server = Coptarg;
       break;
     case '?':
+    case ':':
       errflg++;
       break;
     default:
       break;
     }
   }
+  if (hflg) {
+    usage (0, argv[0]);
+  }
   if (Coptind < argc)
     errflg++;
   if (errflg) {
-    fprintf (stderr, "usage: %s %s", argv[0],
-             "--id classid --name class_name [-h name_server] [--nohdr]\n");
-    exit (USERR);
+    usage (USERR, argv[0]);
   }
 
 #if defined(_WIN32)

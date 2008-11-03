@@ -15,13 +15,30 @@
 #endif
 #include "Cns.h"
 #include "Cns_api.h"
+#include "Cgetopt.h"
 #include "serrno.h"
-extern char *getenv();
+
+void usage(int status, char *name) {
+  if (status != 0) {
+    fprintf (stderr, "Try `%s --help` for more information.\n", name);
+  } else {
+    printf ("Usage: %s PATH COMMENT\n", name);
+    printf ("Add/replace a comment associated with a file/directory\n\n");
+    printf ("Report bugs to <castor.support@cern.ch>.\n");
+  }
+#if defined(_WIN32)
+  WSACleanup();
+#endif
+  exit (status);
+}
+
 int main(argc, argv)
      int argc;
      char **argv;
 {
   int errflg = 0;
+  int hflg = 0;
+  int c;
   char fullpath[CA_MAXPATHLEN+1];
   char *p;
   char *path;
@@ -29,10 +46,27 @@ int main(argc, argv)
   WSADATA wsadata;
 #endif
 
+  Coptions_t longopts[] = {
+    { "help",      NO_ARGUMENT, &hflg, 1  },
+    { NULL,        0,           NULL,  0  }
+  };
+
+  Coptind = 1;
+  Copterr = 1;
+  while ((c = Cgetopt_long (argc, argv, "", longopts, NULL)) != EOF) {
+    switch (c) {
+    case '?':
+      errflg++;
+      break;
+    default:
+      break;
+    }
+  }
+  if (hflg) {
+    usage (0, argv[0]);
+  }
   if (argc < 3) {
-    fprintf (stderr,
-             "usage: %s file comment\n", argv[0]);
-    exit (USERR);
+    usage (USERR, argv[0]);
   }
 #if defined(_WIN32)
   if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {

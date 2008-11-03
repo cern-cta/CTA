@@ -1,33 +1,22 @@
-.\" @(#)$RCSfile: nsls.man,v $ $Revision: 1.4 $ $Date: 2008/02/26 18:28:37 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: nsls.man,v $ $Revision: 1.5 $ $Date: 2008/11/03 10:37:05 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSLS 1 "$Date: 2008/02/26 18:28:37 $" CASTOR "Cns User Commands"
+.TH NSLS 1 "$Date: 2008/11/03 10:37:05 $" CASTOR "Cns User Commands"
 .SH NAME
 nsls \- list CASTOR name server directory/file entries
 .SH SYNOPSIS
 .B nsls
-.RB [ -cdiLlRTu ]
-.RB [ --class ]
-.RB [ --comment ]
-.RB [ --deleted ]
-.RB [ --display_side ]
-.RB [ --ds ]
-.IR path ...
+[\fIOPTION\fR]... [\fIPATH\fR]...
 .SH DESCRIPTION
 .B nsls
 lists CASTOR name server directory/file entries.
-If
-.I path
-is a directory,
+If PATH is a directory,
 .B nsls
 list the entries in the directory; they are sorted alphabetically.
 .TP
-.I path
-specifies the CASTOR pathname.
-If
-.I path
-does not start with
+.I PATH
+specifies the CASTOR pathname. If PATH does not start with
 .BR / ,
 it is prefixed by the content of the
 .B CASTOR_HOME
@@ -38,9 +27,7 @@ environment variable.
 use time of last metadata modification instead of last file modification.
 .TP
 .B -d
-if
-.I path
-is a directory, list the directory entry itself, not the files in that
+if PATH is a directory, list the directory entry itself, not the files in that
 directory.
 .TP
 .B -i
@@ -77,6 +64,9 @@ print also the logically deleted files.
 print the vid followed by a slash followed by the media side number.
 This option is valid only if -T is specified and is useful for multi-sided
 media like DVD.
+.TP
+.B \-\-help
+display this help and exit
 .LP
 The long list gives the file mode, the number of entries in the directory,
 the owner in alphabetic form if the user ID is defined in the
@@ -85,7 +75,11 @@ file else as a decimal number,
 the group in alphabetic form if the group ID is defined in the
 .B group
 file else as a decimal number, the file size, the last modification date and
-the file name.
+the file name. If either the
+.B passwd
+or
+.B group
+fields exceed 15 characters in length the value will be truncated.
 .LP
 The mode is printed as 10 characters, the first one is
 .B d

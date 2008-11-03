@@ -1,19 +1,24 @@
-.\" @(#)$RCSfile: nsgetpath.man,v $ $Revision: 1.1 $ $Date: 2008/02/26 17:58:07 $ CERN Castor Dev team
+.\" @(#)$RCSfile: nsgetpath.man,v $ $Revision: 1.2 $ $Date: 2008/11/03 10:37:05 $ CERN Castor Dev team
 .\" Copyright (C) 2003  CERN
 .\" All rights reserved
 .\"
-.TH NSGETPATH 1 "$Date: 2008/02/26 17:58:07 $" CASTOR "Cns User Commands"
+.TH NSGETPATH 1 "$Date: 2008/11/03 10:37:05 $" CASTOR "Cns User Commands"
 .SH NAME
 nsgetpath \- get file path from fileid
 .SH SYNOPSIS
 .B nsgetpath
-.RB cnsserver
-.RB [ fileid | "-x hex" ]
+<\fCNSHOST\fR> [FILEID|-x HEXID\fR]
 .SH DESCRIPTION
 .B nsgetpath
 gets the name of the castorfile given by its fileid and the name
 server where it resides.
-
+.SH OPTIONS
+.TP
+.B -x,\ \-\-hex=HEXID
+Fileid expressed in hexadecimal form.
+.TP
+.B \-\-help
+display this help and exit
 .SH EXAMPLES
 .BI #\ nsgetpath\ cnsuser\ 183591842
 .fi

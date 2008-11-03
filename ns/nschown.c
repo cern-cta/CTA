@@ -19,9 +19,9 @@
 #endif
 #include "Cns.h"
 #include "Cns_api.h"
+#include "Cgetopt.h"
 #include "serrno.h"
-extern char *getenv();
-extern int optind;
+
 #if sgi
 extern char *strdup _PROTO((CONST char *));
 #endif
@@ -29,11 +29,29 @@ int hflag;
 int Rflag;
 int chowndir (char *dir,uid_t newuid,gid_t newgid);
 
+void usage(int status, char *name) {
+  if (status != 0) {
+    fprintf (stderr, "Try `%s --help` for more information.\n", name);
+  } else {
+    printf ("Usage: %s [OPTION]... OWNER[:[GROUP]] PATH...\n", name);
+    printf ("Change owner and group of a CASTOR directory/file in the name server.\n\n");
+    printf ("  -h          if PATH is a symbolic link, changes the ownership of the link itself\n");
+    printf ("  -R          recursively change ownership\n");
+    printf ("      --help  display this help and exit\n\n");
+    printf ("Report bugs to <castor.support@cern.ch>.\n");
+  }
+#if defined(_WIN32)
+  WSACleanup();
+#endif
+  exit (status);
+}
+
 int main(int argc,char **argv)
 {
   int c;
   char *dp;
   int errflg = 0;
+  int hflg = 0;
   char fullpath[CA_MAXPATHLEN+1];
   struct group *gr;
   int i;
@@ -47,7 +65,14 @@ int main(int argc,char **argv)
   WSADATA wsadata;
 #endif
 
-  while ((c = getopt (argc, argv, "hR")) != EOF) {
+  Coptions_t longopts[] = {
+    { "help", NO_ARGUMENT, &hflg, 1  },
+    { NULL,   0,           NULL,  0  }
+  };
+
+  Coptind = 1;
+  Copterr = 1;
+  while ((c = Cgetopt_long (argc, argv, "hR", longopts, NULL)) != EOF) {
     switch (c) {
     case 'h':
       hflag++;
@@ -62,12 +87,13 @@ int main(int argc,char **argv)
       break;
     }
   }
-  if (errflg || optind >= argc - 1) {
-    fprintf (stderr,
-             "usage: %s [-h] [-R] owner[{.|:}group] file...\n", argv[0]);
-    exit (USERR);
+  if (hflg) {
+    usage (0, argv[0]);
   }
-  p = strtok (argv[optind], ":.");
+  if (errflg || Coptind >= argc - 1) {
+    usage (USERR, argv[0]);
+  }
+  p = strtok (argv[Coptind], ":.");
   if (isdigit (*p)) {
     newuid = strtol (p, &dp, 10);
     if (*dp != '\0') {
@@ -116,6 +142,9 @@ int main(int argc,char **argv)
   } else
     newgid = -1;
   if (errflg)
+#if defined(_WIN32)
+    WSACleanup();
+#endif
     exit (USERR);
 #if defined(_WIN32)
   if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
@@ -123,7 +152,7 @@ int main(int argc,char **argv)
     exit (SYERR);
   }
 #endif
-  for (i = optind+1; i < argc; i++) {
+  for (i = Coptind+1; i < argc; i++) {
     path = argv[i];
     if (*path != '/' && strstr (path, ":/") == NULL) {
       if ((p = getenv (CNS_HOME_ENV)) == NULL ||

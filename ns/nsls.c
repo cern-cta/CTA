@@ -58,28 +58,68 @@ int Rflag;
 int Tflag;
 int uflag;
 int checksumflag;
+int group_width = -1;
+int user_width  = -1;
+
+void usage(int status, char *name) {
+  if (status != 0) {
+    fprintf (stderr, "Try `%s --help` for more information.\n", name);
+  } else {
+    printf ("Usage: %s [OPTION]... [PATH]...\n", name);
+    printf ("List CASTOR name server directory/file entries.\n\n");
+    printf ("  -c              use time of last metadata modification instead of last file\n");
+    printf ("                  modification\n");
+    printf ("  -d              if path is a directory, list the directory entry itself, not the\n");
+    printf ("                  files in that directory\n");
+    printf ("  -i              print the file uniqueid in front of each entry\n");
+    printf ("  -L              for symbolic links, print target attributes instead of link\n");
+    printf ("                  attributes\n");
+    printf ("  -l              long listing\n");
+    printf ("  -R              list the contents of directories recursively\n");
+    printf ("  -T              list file segments migrated to tape\n");
+    printf ("  -u              use last access time instead of last modification\n");
+    printf ("      --checksum  prints the checksum (and its type) for each file segment. This\n");
+    printf ("                  option is valid only if -T is specified\n");
+    printf ("      --class     print the file class in front of each entry\n");
+    printf ("      --comment   print the comment associated with the entry after the pathname\n");
+    printf ("      --deleted   print also the logically deleted files\n");
+    printf ("      --ds        print the vid followed by a slash followed by the media side\n");
+    printf ("                  number. This option is valid only if -T is specified and is useful\n");
+    printf ("                  for multi-sided media like DVD\n");
+    printf ("      --help      display this help and exit\n\n");
+    printf ("Report bugs to <castor.support@cern.ch>.\n");
+  }
+#if defined(_WIN32)
+  WSACleanup();
+#endif
+  exit (status);
+}
+
 int main(argc, argv)
      int argc;
      char **argv;
 {
   int c;
   int errflg = 0;
+  int hflg = 0;
   char fullpath[CA_MAXPATHLEN+1];
   int i;
-  static struct Coptions longopts[] = {
-    {"checksum", NO_ARGUMENT, &checksumflag, 1},
-    {"class", NO_ARGUMENT, &clflag, 1},
-    {"comment", NO_ARGUMENT, &cmflag, 1},
-    {"deleted", NO_ARGUMENT, &delflag, 1},
-    {"display_side", NO_ARGUMENT, &dsflag, 1},
-    {"ds", NO_ARGUMENT, &dsflag, 1},
-    {0, 0, 0, 0}
-  };
   char *p;
   char *path;
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
+
+  Coptions_t longopts[] = {
+    { "checksum",     NO_ARGUMENT, &checksumflag, 1 },
+    { "class",        NO_ARGUMENT, &clflag,       1 },
+    { "comment",      NO_ARGUMENT, &cmflag,       1 },
+    { "deleted",      NO_ARGUMENT, &delflag,      1 },
+    { "display_side", NO_ARGUMENT, &dsflag,       1 },
+    { "ds",           NO_ARGUMENT, &dsflag,       1 },
+    { "help",         NO_ARGUMENT, &hflg,         1 },
+    { NULL,           0,           NULL,          0 }
+  };
 
   Copterr = 1;
   Coptind = 1;
@@ -116,6 +156,9 @@ int main(argc, argv)
       break;
     }
   }
+  if (hflg) {
+    usage (0, argv[0]);
+  }
   (void) time (&current_time);
 #if defined(_WIN32)
   if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
@@ -138,13 +181,7 @@ int main(argc, argv)
       errflg++;
   }
   if (errflg) {
-    fprintf (stderr,
-             "usage: %s [-cdiLlRTu] [--class] [--comment] [--deleted] [--display_side] [--ds] [--checksum] path...\n",
-             argv[0]);
-#if defined(_WIN32)
-    WSACleanup();
-#endif
-    exit (USERR);
+    usage (USERR, argv[0]);
   }
   for (i = Coptind; i < argc; i++) {
     path = argv[i];
@@ -411,9 +448,9 @@ int listentry(path, statbuf, slink, comment)
       strftime (timestr, 13, "%b %d  %Y", tm);
     else
       strftime (timestr, 13, "%b %d %H:%M", tm);
-    printf ("%s %3d %-8.8s %-8.8s %s %s ",
-            modestr, statbuf->nlink, decode_user (statbuf->uid),
-            decode_group (statbuf->gid),
+    printf ("%s %3d %-*.15s %-*.15s %s %s ",
+            modestr, statbuf->nlink, user_width, decode_user (statbuf->uid),
+            group_width, decode_group (statbuf->gid),
             u64tostr (statbuf->filesize, tmpbuf, 18), timestr);
   }
   if (checksumflag) {
@@ -434,7 +471,17 @@ decode_group(gid_t gid)
   struct group *gr;
   static gid_t sav_gid = -1;
   static char sav_gidstr[256];
+  int len;
 
+  if (group_width == -1) {
+    group_width = 8;
+    while ((gr = getgrent ()) != NULL) {
+      len = strlen (gr->gr_name);
+      if ((len > group_width) && (len < 15))
+	group_width = len;
+    }
+    endgrent();
+  }
   if (gid != sav_gid) {
 #ifdef VIRTUAL_ID
     if (gid == 0)
@@ -458,7 +505,17 @@ decode_user(uid_t uid)
   struct passwd *pw;
   static uid_t sav_uid = -1;
   static char sav_uidstr[256];
+  int len;
 
+  if (user_width == -1) {
+    user_width = 8;
+    while ((pw = getpwent ()) != NULL) {
+      len = strlen (pw->pw_name);
+      if ((len > user_width) && (len < 15))
+      	user_width = len;
+    }
+    endpwent();
+  }
   if (uid != sav_uid) {
 #ifdef VIRTUAL_ID
     if (uid == 0)
@@ -485,7 +542,7 @@ int listsegs(path)
   struct Cns_segattrs *segattrs;
 
   memset (&file_uniqueid, 0, sizeof(struct Cns_fileid));
-  if ((c = Cns_getsegattrs (path, &file_uniqueid, &nbseg , &segattrs)))
+  if ((c = Cns_getsegattrs (path, &file_uniqueid, &nbseg, &segattrs)))
     return (c);
   for (i = 0; i < nbseg; i++) {
     listtpentry (path, (segattrs+i)->copyno, (segattrs+i)->fsec,
@@ -542,7 +599,7 @@ void direntstatg2filestatcs(struct Cns_filestatcs* statbuf, struct Cns_direnstat
   statbuf->filemode=dxp->filemode;
   statbuf->status=dxp->status;
   strncpy(statbuf->csumtype,dxp->csumtype,2);statbuf->csumtype[2]='\0';
-  strncpy(statbuf->csumvalue,dxp->csumvalue,32);statbuf->csumvalue[32]='\0';
+  strncpy(statbuf->csumvalue,dxp->csumvalue,CA_MAXCKSUMLEN);statbuf->csumvalue[CA_MAXCKSUMLEN]='\0';
   return;
 }
 void direntstatc2filestatcs(struct Cns_filestatcs* statbuf, struct Cns_direnstatc* dxp)

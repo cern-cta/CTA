@@ -1,22 +1,20 @@
-.\" @(#)$RCSfile: nssetacl.man,v $ $Revision: 1.3 $ $Date: 2008/05/05 13:08:53 $ CERN IT-ADC/CA Jean-Philippe Baud
+.\" @(#)$RCSfile: nssetacl.man,v $ $Revision: 1.4 $ $Date: 2008/11/03 10:37:05 $ CERN IT-ADC/CA Jean-Philippe Baud
 .\" Copyright (C) 2003 by CERN/IT/ADC/CA
 .\" All rights reserved
 .\"
-.TH NSSETACL 1 "$Date: 2008/05/05 13:08:53 $" CASTOR "Cns User Commands"
+.TH NSSETACL 1 "$Date: 2008/11/03 10:37:05 $" CASTOR "Cns User Commands"
 .SH NAME
 nssetacl \- set CASTOR directory/file access control lists
 .SH SYNOPSIS
 .B nssetacl
-.RB [ -d ]
-.RB [ -m ]
-.RB [ -s ]
-.I acl_entries
-.IR path ...
+.I OPTION
+.I ACL
+.IR PATH ...
 .SH DESCRIPTION
 .B nssetacl
 sets the Access Control List associated with a CASTOR directory/file.
 .LP
-.I acl_entries
+.I ACL
 is a comma separated list of entries. Each entry has colon separated fields:
 ACL type, id (uid or gid), permission. Only directories can have default ACL
 entries.
@@ -64,11 +62,9 @@ The entry processing conforms to the Posix 1003.1e draft standard 17.
 The effective user ID of the process must match the owner of the file or
 the caller must have GRP_ADMIN or ADMIN privileges in the Cupv database.
 .TP
-.I path
+.I PATH
 specifies the CASTOR pathname.
-If
-.I path
-does not start with
+If PATH does not start with
 .BR / ,
 it is prefixed by the content of the
 .B CASTOR_HOME
@@ -86,13 +82,13 @@ can be expressed as a combination of characters
 or as a value between 0 and 7.
 .SH OPTIONS
 .TP
-.B -d
+.B -d,\ \-\-delete
 remove ACL entries. The "perm" field is ignored.
 .TP
-.B -m
+.B -m,\ \-\-modify
 modify existing ACL entries or add new entries.
 .TP
-.B -s
+.B -s,\ \-\-set
 set the ACL entries. The complete set of ACL entries is replaced.
 .SH EXAMPLES
 Let's create a directory:

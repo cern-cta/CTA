@@ -1,33 +1,25 @@
-.\" @(#)$RCSfile: nstouch.man,v $ $Revision: 1.1 $ $Date: 2007/08/09 06:32:56 $ CERN Castor Dev team
+.\" @(#)$RCSfile: nstouch.man,v $ $Revision: 1.2 $ $Date: 2008/11/03 10:37:05 $ CERN Castor Dev team
 .\" Copyright (C) 2003  CERN
 .\" All rights reserved
 .\"
-.TH NSTOUCH 1 "$Date: 2007/08/09 06:32:56 $" CASTOR "Cns User Commands"
+.TH NSTOUCH 1 "$Date: 2008/11/03 10:37:05 $" CASTOR "Cns User Commands"
 .SH NAME
 nstouch \- change file timestamps
 .SH SYNOPSIS
 .B nstouch
-.RB [ -a ]
-.RB [ -c ]
-.RB [ -m ]
-.RB [ -t " STAMP"]
-.RB path ...
+[\fIOPTION\fR]... \fIPATH\fR...
 .SH DESCRIPTION
 .B nstouch
 updates the access and modification times of CASTOR directory/files(s) in the name server to the current time.
 .TP
-.I path
+.I PATH
 specifies the CASTOR pathname or directory.
-If
-.I path
-does not start with
-.BR / 
+If PATH does not start with
+.BR /
 it is prefixed by the content of the
 .B CASTOR_HOME
 environment variable.
-If
-.I path
-does not exist and the no create 
+If PATH does not exist and the no create
 .I -c
 argument is not specified it will be created.
 .SH OPTIONS
@@ -36,14 +28,17 @@ The following options are supported:
 .B -a
 change only the access time
 .TP
-.B -c
+.B -c,\ \-\-no-create
 do not create any files
 .TP
 .B -m
 change only the modification time
 .TP
-.B -t " STAMP"
+.B -t=STAMP
 use [[CC]YY]MMDDhhmm instead of current time
+.TP
+.B \-\-help
+display this help and exit
 .SH EXIT STATUS
 This program returns 0 if the operation was successful or >0 if the operation
 failed.

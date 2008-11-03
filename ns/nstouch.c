@@ -10,29 +10,46 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
-#include <getopt.h>
 #include <stdlib.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif
 #include "Cns.h"
 #include "Cns_api.h"
+#include "Cgetopt.h"
 #include "serrno.h"
 
 static time_t cvt_datime();
-extern char *getenv();
-extern char *optarg;
-extern int optind;
+
+void usage(int status, char *name) {
+  if (status != 0) {
+    fprintf (stderr, "Try `%s --help` for more information.\n", name);
+  } else {
+    printf ("Usage: %s [OPTION]... PATH...\n", name);
+    printf ("Change file timestamps.\n\n");
+    printf ("  -a               change only the access time\n");
+    printf ("  -c, --no-create  do not create any files\n");
+    printf ("  -m               change only the modification time\n");
+    printf ("  -t=STAMP         use [[CC]YY]MMDDhhmm instead of current time\n");
+    printf ("      --help       display this help and exit\n\n");
+    printf ("Report bugs to <castor.support@cern.ch>.\n");
+  }
+#if defined(_WIN32)
+  WSACleanup();
+#endif
+  exit (status);
+}
 
 int main(int argc,char **argv)
 {
-  int aflag = 0;
+  int aflg = 0;
   int c;
-  int cflag = 0;
+  int cflg = 0;
+  int hflg = 0;
   int errflg = 0;
   char fullpath[CA_MAXPATHLEN+1];
   int i;
-  int mflag = 0;
+  int mflg = 0;
   time_t newtime;
   char *p;
   char *path;
@@ -43,21 +60,30 @@ int main(int argc,char **argv)
   WSADATA wsadata;
 #endif
 
+  Coptions_t longopts[] = {
+    { "no-create", NO_ARGUMENT, NULL, 'c' },
+    { "help",      NO_ARGUMENT, &hflg, 1  },
+    { NULL,        0,           NULL,  0  }
+  };
+
+  Coptind = 1;
+  Copterr = 1;
+
   newtime = time (0);
-  while ((c = getopt (argc, argv, "acmt:")) != EOF) {
+  while ((c = Cgetopt_long (argc, argv, "acmt:", longopts, NULL)) != EOF) {
     switch (c) {
     case 'a':
-      aflag++;
+      aflg++;
       break;
     case 'c':
-      cflag++;
+      cflg++;
       break;
     case 'm':
-      mflag++;
+      mflg++;
       break;
     case 't':
       tflag++;
-      newtime = cvt_datime (optarg);
+      newtime = cvt_datime (Coptarg);
       break;
     case '?':
       errflg++;
@@ -66,14 +92,16 @@ int main(int argc,char **argv)
       break;
     }
   }
-  if (errflg || optind >= argc) {
-    fprintf (stderr,
-             "usage: %s [-a] [-c] [-m] [-t time] file...\n", argv[0]);
-    exit (USERR);
+  if (hflg) {
+    usage (0, argv[0]);
   }
-  if (! aflag && ! mflag) {
-    aflag = 1;
-    mflag = 1;
+  if (errflg || Coptind >= argc) {
+    usage (USERR, argv[0]);
+  }
+
+  if (! aflg && ! mflg) {
+    aflg = 1;
+    mflg = 1;
   }
 #if defined(_WIN32)
   if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
@@ -81,7 +109,7 @@ int main(int argc,char **argv)
     exit (SYERR);
   }
 #endif
-  for (i = optind; i < argc; i++) {
+  for (i = Coptind; i < argc; i++) {
     path = argv[i];
     if (*path != '/' && strstr (path, ":/") == NULL) {
       if ((p = getenv (CNS_HOME_ENV)) == NULL ||
@@ -101,17 +129,17 @@ int main(int argc,char **argv)
         strcpy (fullpath, path);
     }
     if ((c = Cns_stat (fullpath, &statbuf)) == 0) {
-      if (aflag)
+      if (aflg)
         times.actime = newtime;
       else
         times.actime = statbuf.atime;
-      if (mflag)
+      if (mflg)
         times.modtime = newtime;
       else
         times.modtime = statbuf.mtime;
       c = Cns_utime (fullpath, tflag ? &times : NULL);
     } else if (serrno == ENOENT) {
-      if (cflag) continue;
+      if (cflg) continue;
       c = Cns_creat (fullpath, 0666);
     }
     if (c) {

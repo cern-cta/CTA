@@ -19,10 +19,25 @@
 #endif
 #include "Cns.h"
 #include "Cns_api.h"
+#include "Cgetopt.h"
 #include "serrno.h"
-extern char *getenv();
-extern char *optarg;
-extern int optind;
+
+void usage(int status, char *name) {
+  if (status != 0) {
+    fprintf (stderr, "Try `%s --help` for more information.\n", name);
+  } else {
+    printf ("Usage: %s [OPTION] DIRECTORY...\n", name);
+    printf ("Create the DIRECTORY(ies), if they do not already exist..\n\n");
+    printf ("  -m, --mode=MODE  specifies the mode to be used\n");
+    printf ("  -p, --parents    create all the non-existing parent directories first\n");
+    printf ("      --help       display this help and exit\n\n");
+    printf ("Report bugs to <castor.support@cern.ch>.\n");
+  }
+#if defined(_WIN32)
+  WSACleanup();
+#endif
+  exit (status);
+}
 
 int main(argc, argv)
      int argc;
@@ -34,6 +49,7 @@ int main(argc, argv)
   char *dp;
   char *endp;
   int errflg = 0;
+  int hflg = 0;
   int i;
   mode_t mask;
   int mflag = 0;
@@ -45,12 +61,21 @@ int main(argc, argv)
   WSADATA wsadata;
 #endif
 
+  Coptions_t longopts[] = {
+    { "mode",    REQUIRED_ARGUMENT, NULL, 'm' },
+    { "parents", NO_ARGUMENT,       NULL, 'p' },
+    { "help",    NO_ARGUMENT,       &hflg, 1  },
+    { NULL,      0,                 NULL,  0  }
+  };
+
+  Coptind = 1;
+  Copterr = 1;
   mode = 0777;
-  while ((c = getopt (argc, argv, "m:p")) != EOF) {
+  while ((c = Cgetopt_long (argc, argv, "m:p", longopts, NULL)) != EOF) {
     switch (c) {
     case 'm':
       mflag++;
-      mode = strtol (optarg, &dp, 8);
+      mode = strtol (Coptarg, &dp, 8);
       if (*dp != '\0') {
         fprintf (stderr, "invalid value for option -m\n");
         errflg++;
@@ -62,19 +87,21 @@ int main(argc, argv)
       Cns_umask (mask);
       break;
     case '?':
+    case ':':
       errflg++;
       break;
     default:
       break;
     }
   }
-  if (optind >= argc) {
+  if (hflg) {
+    usage (0, argv[0]);
+  }
+  if (Coptind >= argc) {
     errflg++;
   }
   if (errflg) {
-    fprintf (stderr,
-             "usage: %s [-m absolute_mode] [-p] dirname...\n", argv[0]);
-    exit (USERR);
+    usage (USERR, argv[0]);
   }
 #if defined(_WIN32)
   if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
@@ -82,7 +109,7 @@ int main(argc, argv)
     exit (SYERR);
   }
 #endif
-  for (i = optind; i < argc; i++) {
+  for (i = Coptind; i < argc; i++) {
     dir = argv[i];
     if (*dir != '/' && strstr (dir, ":/") == NULL) {
       if ((p = getenv (CNS_HOME_ENV)) == NULL ||

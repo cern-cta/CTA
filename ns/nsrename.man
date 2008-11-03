@@ -1,25 +1,20 @@
-.\" @(#)$RCSfile: nsrename.man,v $ $Revision: 1.3 $ $Date: 2008/02/26 18:36:31 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: nsrename.man,v $ $Revision: 1.4 $ $Date: 2008/11/03 10:37:05 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSRENAME 1 "$Date: 2008/02/26 18:36:31 $" CASTOR "Cns User Commands"
+.TH NSRENAME 1 "$Date: 2008/11/03 10:37:05 $" CASTOR "Cns User Commands"
 .SH NAME
 nsrename \- rename a CASTOR file or directory in the name server
 .SH SYNOPSIS
 .B nsrename
-.RB [ -f ]
-.I oldpath
-.I newpath
+[\fIOPTION\fR]... \fISOURCE\f  \fIDEST\f
 .SH DESCRIPTION
 .B nsrename
 renames a CASTOR file or directory in the name server.
 .LP
 This requires write permission in the parent directories.
 .LP
-If
-.I oldpath
-or
-.I newpath
+If SOURCE or DEST
 does not start with
 .BR / ,
 it is prefixed by the content of the
@@ -28,8 +23,14 @@ environment variable.
 .SH OPTIONS
 The following options are supported:
 .TP
-.B -f
+.B -v,\ \-\-verbose
+Explain what is being done
+.TP
+.B -f,\ \-\-force
 Do not prompt before overwriting the destination path if it already exists.
+.TP
+.B \-\-help
+Display this help and exit
 .SH EXIT STATUS
 This program returns 0 if the operation was successful or >0 if the operation
 failed.

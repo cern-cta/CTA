@@ -24,14 +24,31 @@
 #endif
 #include "Cns.h"
 #include "Cns_api.h"
+#include "Cgetopt.h"
 #include "serrno.h"
+
 static char *decode_group(gid_t);
 static char *decode_perm(unsigned char);
 static char *decode_user(uid_t);
-extern char *getenv();
-extern int optind;
-int aflag;
-int dflag;
+
+void usage(int status, char *name) {
+  if (status != 0) {
+    fprintf (stderr, "Try `%s --help` for more information.\n", name);
+  } else {
+    printf ("Usage: %s [OPTION]... PATH..\n", name);
+    printf ("List directory/file access control lists.\n\n");
+    printf ("  -a          only display the access ACL\n");
+    printf ("  -d          only display the default ACL\n");
+    printf ("      --help  display this help and exit\n\n");
+    printf ("Report bugs to <castor.support@cern.ch>.\n");
+  }
+#if defined(_WIN32)
+  WSACleanup();
+#endif
+  exit (status);
+}
+
+
 int main(argc, argv)
      int argc;
      char **argv;
@@ -40,6 +57,9 @@ int main(argc, argv)
   struct Cns_acl *aclp;
   int c;
   int errflg = 0;
+  int aflag = 0;
+  int dflag = 0;
+  int hflg = 0;
   char fullpath[CA_MAXPATHLEN+1];
   int i;
   int j;
@@ -51,7 +71,14 @@ int main(argc, argv)
   WSADATA wsadata;
 #endif
 
-  while ((c = getopt (argc, argv, "ad")) != EOF) {
+  Coptions_t longopts[] = {
+    { "help", NO_ARGUMENT, &hflg, 1  },
+    { NULL,   0,           NULL,  0  }
+  };
+
+  Coptind = 1;
+  Copterr = 1;
+  while ((c = Cgetopt_long (argc, argv, "ad", longopts, NULL)) != EOF) {
     switch (c) {
     case 'a':
       aflag++;
@@ -66,10 +93,11 @@ int main(argc, argv)
       break;
     }
   }
-  if (errflg || optind >= argc) {
-    fprintf (stderr,
-             "usage: %s [-a] [-d] file...\n", argv[0]);
-    exit (USERR);
+  if (hflg) {
+    usage (0, argv[0]);
+  }
+  if (errflg || Coptind >= argc) {
+    usage (USERR, argv[0]);
   }
 #if defined(_WIN32)
   if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
@@ -77,7 +105,7 @@ int main(argc, argv)
     exit (SYERR);
   }
 #endif
-  for (i = optind; i < argc; i++) {
+  for (i = Coptind; i < argc; i++) {
     path = argv[i];
     if (*path != '/' && strstr (path, ":/") == NULL) {
       if ((p = getenv (CNS_HOME_ENV)) == NULL ||

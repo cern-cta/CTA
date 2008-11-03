@@ -1,36 +1,34 @@
-.\" @(#)$RCSfile: nsdeleteclass.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: nsdeleteclass.man,v $ $Revision: 1.3 $ $Date: 2008/11/03 10:37:05 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSDELETECLASS 1 "$Date: 2006/01/26 15:36:22 $" CASTOR "Cns Administrator Commands"
+.TH NSDELETECLASS 1 "$Date: 2008/11/03 10:37:05 $" CASTOR "Cns Administrator Commands"
 .SH NAME
 nsdeleteclass \- delete a fileclass definition
 .SH SYNOPSIS
 .B nsdeleteclass
-.BI --id " classid"
-.BI --name " class_name"
-[
-.BI -h " name_server"
-]
+<\f--id=CLASSID|--name=CLASSNAME\fR> [\fIOPTION\fR]...
 .SH DESCRIPTION
 .B nsdeleteclass
 deletes a fileclass definition.
-The fileclass can be identified by
-.I classid
-or by
-.IR class_name .
+The fileclass can be identified by CLASSID or by CLASSNAME.
 If both are specified, they must point at the same class.
 .LP
 This command requires ADMIN privilege in the Cupv database.
 .SH OPTIONS
 .TP
-.BI -h " name_server"
+.BI -h,\ \-\-host=HOSTNAME
+specify the name server hostname.  This can also be set through the
+CNS_HOST environment variable.
 .TP
-.BI --id " classid"
+.BI --id=CLASSID
 The class number of the class to be deleted.
 .TP
-.BI --name " class_name"
+.BI --name=CLASSNAME
 The name of the class to be deleted.
+.TP
+.B \-\-help
+Display this help and exit
 .SH EXAMPLES
 .nf
 .ft CW

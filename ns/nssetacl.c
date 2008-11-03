@@ -12,17 +12,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <getopt.h>
 #include <ctype.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif
 #include "Cns.h"
 #include "Cns_api.h"
+#include "Cgetopt.h"
 #include "serrno.h"
+
 static int parse_entries(char *, struct Cns_acl *);
-extern char *getenv();
-extern int optind;
 int dflag;
 int mflag;
 int sflag;
@@ -30,6 +29,24 @@ int sflag;
 int cvt_group(char *p);
 int cvt_perm(char *p);
 int cvt_user(char *p);
+
+void usage(int status, char *name) {
+  if (status != 0) {
+    fprintf (stderr, "Try `%s --help` for more information.\n", name);
+  } else {
+    printf ("Usage: %s OPTION ACL PATH...\n", name);
+    printf ("Set directory/file access control lists.\n\n");
+    printf ("  -d, --delete  remove ACL entries. The \"perm\" field is ignored\n");
+    printf ("  -m, --modify  modify existing ACL entries or add new entries\n");
+    printf ("  -s, --set     set the ACL entries. The complete set of ACL entries is replaced\n");
+    printf ("      --help    display this help and exit\n\n");
+    printf ("Report bugs to <castor.support@cern.ch>.\n");
+  }
+#if defined(_WIN32)
+  WSACleanup();
+#endif
+  exit (status);
+}
 
 int main(argc, argv)
      int argc;
@@ -39,6 +56,7 @@ int main(argc, argv)
   struct Cns_acl *aclp;
   int c;
   int errflg = 0;
+  int hflg = 0;
   int found;
   char fullpath[CA_MAXPATHLEN+1];
   int i;
@@ -57,7 +75,17 @@ int main(argc, argv)
   WSADATA wsadata;
 #endif
 
-  while ((c = getopt (argc, argv, "dms")) != EOF) {
+  Coptions_t longopts[] = {
+    { "delete", NO_ARGUMENT, NULL, 'd' },
+    { "modify", NO_ARGUMENT, NULL, 'm' },
+    { "set",    NO_ARGUMENT, NULL, 's' },
+    { "help",   NO_ARGUMENT, &hflg, 1  },
+    { NULL,     0,           NULL,  0  }
+  };
+
+  Coptind = 1;
+  Copterr = 1;
+  while ((c = Cgetopt_long (argc, argv, "dms", longopts, NULL)) != EOF) {
     switch (c) {
     case 'd':
       dflag++;
@@ -75,12 +103,13 @@ int main(argc, argv)
       break;
     }
   }
+  if (hflg) {
+    usage (0, argv[0]);
+  }
   if (dflag + mflag + sflag != 1)
     errflg++;
-  if (errflg || optind >= argc - 1) {
-    fprintf (stderr,
-             "usage: %s [-d] [-m] [-s] entries file...\n", argv[0]);
-    exit (USERR);
+  if (errflg || Coptind >= argc - 1) {
+    usage (USERR, argv[0]);
   }
 #if defined(_WIN32)
   if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
@@ -88,9 +117,13 @@ int main(argc, argv)
     exit (SYERR);
   }
 #endif
-  if ((nb_inp_entries = parse_entries (argv[optind], inpacl)) <= 0)
+  if ((nb_inp_entries = parse_entries (argv[Coptind], inpacl)) <= 0) {
+#if defined(_WIN32)
+    WSACleanup();
+#endif
     exit (USERR);
-  for (i = optind+1; i < argc; i++) {
+  }
+  for (i = Coptind+1; i < argc; i++) {
     path = argv[i];
     if (*path != '/' && strstr (path, ":/") == NULL) {
       if ((p = getenv (CNS_HOME_ENV)) == NULL ||

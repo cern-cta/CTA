@@ -15,18 +15,34 @@
 #endif
 #include "Cns.h"
 #include "Cns_api.h"
+#include "Cgetopt.h"
 #include "serrno.h"
-#include <getopt.h>
 
-extern char *getenv();
-extern int optind;
-int sflag;
+void usage(int status, char *name) {
+  if (status != 0) {
+    fprintf (stderr, "Try `%s --help` for more information.\n", name);
+  } else {
+    printf ("Usage: %s -s TARGET [LINK_NAME]\n", name);
+    printf ("   or: %s -s TARGET... DIRECTORY\n", name);
+    printf ("Create a symbolic link to a file or directory in the CASTOR name server.\n\n");
+    printf ("  -s, --symbolic  make symbolic link\n");
+    printf ("      --help      display this help and exit\n\n");
+    printf ("Report bugs to <castor.support@cern.ch>.\n");
+  }
+#if defined(_WIN32)
+  WSACleanup();
+#endif
+  exit (status);
+}
+
 int main(argc, argv)
      int argc;
      char **argv;
 {
   int c;
   int errflg = 0;
+  int sflag = 0;
+  int hflg = 0;
   char fullpath[CA_MAXPATHLEN+1];
   int i;
   char *lastarg;
@@ -37,7 +53,15 @@ int main(argc, argv)
   WSADATA wsadata;
 #endif
 
-  while ((c = getopt (argc, argv, "s")) != EOF) {
+  Coptions_t longopts[] = {
+    { "symbolic", NO_ARGUMENT, NULL, 's' },
+    { "help",     NO_ARGUMENT, &hflg, 1  },
+    { NULL,       0,           NULL,  0  }
+  };
+
+  Copterr = 1;
+  Coptind = 1;
+  while ((c = Cgetopt_long (argc, argv, "s", longopts, NULL)) != EOF) {
     switch (c) {
     case 's':
       sflag++;
@@ -49,19 +73,22 @@ int main(argc, argv)
       break;
     }
   }
+  if (hflg) {
+    usage (0, argv[0]);
+  }
   if (! sflag)
     errflg++;
-  if (errflg || optind >= argc) {
-    fprintf (stderr,
-             "usage: %s -s file [link]\n\t%s -s file...directory\n",
-             argv[0], argv[0]);
-    exit (USERR);
+  if (errflg || Coptind >= argc) {
+    usage (USERR, argv[0]);
   }
-  if (argc - optind > 2) {
+  if (argc - Coptind > 2) {
     if (Cns_stat (argv[argc-1], &statbuf) < 0 ||
         (statbuf.filemode & S_IFDIR) == 0) {
       fprintf (stderr, "target %s must be a directory\n",
                argv[argc-1]);
+#if defined(_WIN32)
+      WSACleanup();
+#endif
       exit (USERR);
     }
   }
@@ -71,8 +98,8 @@ int main(argc, argv)
     exit (SYERR);
   }
 #endif
-  argc -= optind;
-  argv += optind;
+  argc -= Coptind;
+  argv += Coptind;
   if (argc == 1)
     if ((p = strrchr (argv[0], '/')))
       lastarg = p + 1;

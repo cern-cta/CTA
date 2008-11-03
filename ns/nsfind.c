@@ -20,11 +20,11 @@
 #include "Cns.h"
 #include "Cns_api.h"
 #include "Cregexp.h"
+#include "Cgetopt.h"
 #include "serrno.h"
 #include "u64subr.h"
 #define ONEDAY (24*60*60)
 #define SIXMONTHS (6*30*24*60*60)
-extern char *getenv();
 #if sgi
 extern char *strdup _PROTO((CONST char *));
 #endif
@@ -42,6 +42,32 @@ int mtimeval;
 int typeval;
 time_t current_time;
 
+void usage(int status, char *name) {
+  if (status != 0) {
+    fprintf (stderr, "Try `%s --help` for more information.\n", name);
+  } else {
+    printf ("Usage: %s [PATH...] OPTIONS...\n", name);
+    printf ("Search for files in the CASTOR name server.\n\n");
+    printf ("  -atime=NBDAYS  if NBDAYS is is just a number, the file is selected if it was\n");
+    printf ("                 accessed exactly NBDAYS ago. If the argument is in the form +n,\n");
+    printf ("                 this means more than n days ago and if the argument is in the form\n");
+    printf ("                 -n, this means less than n days ago.\n");
+    printf ("  -ctime=NBDAYS  the file is selected if its status changed NBDAYS ago, see -atime\n");
+    printf ("                 above\n");
+    printf ("  -inum=FILEID   the file is selected if its fileid matches FILEID\n");
+    printf ("  -ls            list current file in `nsls -dil format`\n");
+    printf ("  -mtime=NBDAYS  the file is selected if it has been modified NBDAYS ago. See -atime\n");
+    printf ("                 above.\n");
+    printf ("  -name=PATTERN  select the file if the file name matches regular expression PATTERN\n");
+    printf ("  -type=TYPE     the file is of type (d = directory, f = regular file, l = symlink)\n");
+    printf ("       --help    display this help and exit\n\n");
+    printf ("Report bugs to <castor.support@cern.ch>.\n");
+  }
+#if defined(_WIN32)
+  WSACleanup();
+#endif
+  exit (status);
+}
 
 int main(argc, argv)
      int argc;
@@ -50,6 +76,7 @@ int main(argc, argv)
   char fullpath[CA_MAXPATHLEN+1];
   int i;
   int lastpath = 0;
+  int hflg = 0;
   char *p;
   char *path;
 #if defined(_WIN32)
@@ -119,14 +146,17 @@ int main(argc, argv)
         typeval = *argv[i] == 'd' ? S_IFDIR :
           *argv[i] == 'f' ? S_IFREG :
           *argv[i] == 'l' ? S_IFLNK : 0;
+      } else if (strcmp (argv[i], "--help") == 0) {
+	hflg++;
       } else
         errflg++;
     }
   }
+  if (hflg) {
+    usage (0, argv[0]);
+  }
   if (lastpath == 0 || errflg) {
-    fprintf (stderr,
-             "usage: %s path-list [predicate-list]\n", argv[0]);
-    exit (USERR);
+    usage (USERR, argv[0]);
   }
   (void) time (&current_time);
 #if defined(_WIN32)

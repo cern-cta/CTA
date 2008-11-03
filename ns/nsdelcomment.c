@@ -16,7 +16,21 @@
 #include "Cns.h"
 #include "Cns_api.h"
 #include "serrno.h"
-extern char *getenv();
+
+void usage(int status, char *name) {
+  if (status != 0) {
+    fprintf (stderr, "Try `%s --help` for more information.\n", name);
+  } else {
+    printf ("Usage: %s PATH\n", name);
+    printf ("Delete the comment associated with a file/directory.\n\n");
+    printf ("Report bugs to <castor.support@cern.ch>.\n");
+  }
+#if defined(_WIN32)
+  WSACleanup();
+#endif
+  exit (status);
+}
+
 int main(argc, argv)
      int argc;
      char **argv;
@@ -29,10 +43,12 @@ int main(argc, argv)
   WSADATA wsadata;
 #endif
 
+  if (argc == 2) {
+    if (strcmp(argv[1], "--help") == 0)
+      usage (0, argv[0]);
+  }
   if (argc != 2) {
-    fprintf (stderr,
-             "usage: %s file\n", argv[0]);
-    exit (USERR);
+    usage (USERR, argv[0]);
   }
 #if defined(_WIN32)
   if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {

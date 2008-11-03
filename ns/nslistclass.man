@@ -1,36 +1,35 @@
-.\" @(#)$RCSfile: nslistclass.man,v $ $Revision: 1.3 $ $Date: 2008/02/26 18:26:46 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: nslistclass.man,v $ $Revision: 1.4 $ $Date: 2008/11/03 10:37:05 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSLISTCLASS 1 "$Date: 2008/02/26 18:26:46 $" CASTOR "Cns User Commands"
+.TH NSLISTCLASS 1 "$Date: 2008/11/03 10:37:05 $" CASTOR "Cns User Commands"
 .SH NAME
 nslistclass \- query the CASTOR Name Server about a given class or list all existing classes
 .SH SYNOPSIS
 .B nslistclass
-.BI --id " classid"
-.BI --name " class_name"
-[
-.BI -h " name_server"
-] [
-.B --nohdr
-]
+<\f--id=CLASSID|--name=CLASSNAME\fR> [\fIOPTION\fR]...
 .SH DESCRIPTION
 .B nslistclass
 queries the CASTOR Name Server about a given class or lists all existing classes:
-The fileclass can be identified by
-.I classid
-or by
-.IR class_name .
+The fileclass can be identified by CLASSID or by CLASSNAME.
 If both are specified, they must point at the same class.
 .SH OPTIONS
 .TP
-.BI -h " name_server"
-.TP
-.BI --id " classid"
+.BI --id=CLASSID
 The class number of the class to be displayed.
 .TP
-.BI --name " class_name"
+.BI --name=CLASSNAME
 The name of the class to be displayed.
+.TP
+.BI --nohdr
+Display each class on one line, removing key value pair listing.
+.TP
+.BI -h,\ \-\-host=HOSTNAME
+specify the name server hostname. This can also be set through the
+CNS_HOST environment variable.
+.TP
+.B \-\-help
+display this help and exit
 .SH EXAMPLES
 .nf
 .ft CW

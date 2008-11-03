@@ -1,114 +1,84 @@
-.\" @(#)$RCSfile: nsmodifyclass.man,v $ $Revision: 1.3 $ $Date: 2008/02/26 18:26:45 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: nsmodifyclass.man,v $ $Revision: 1.4 $ $Date: 2008/11/03 10:37:05 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSMODIFYCLASS 1 "$Date: 2008/02/26 18:26:45 $" CASTOR "Cns Administrator Commands"
+.TH NSMODIFYCLASS 1 "$Date: 2008/11/03 10:37:05 $" CASTOR "Cns Administrator Commands"
 .SH NAME
 nsmodifyclass \- modify an existing file class
 .SH SYNOPSIS
 .B nsmodifyclass
-.BI --id " classid"
-.BI --name " class_name"
-[
-.BI -h " name_server"
-] [
-.BI --flags " flags"
-] [
-.BI --gid " class_gid"
-] [
-.BI --group " class_group"
-] [
-.BI --maxdrives " n"
-] [
-.BI --maxfilesize " n"
-] [
-.BI --maxsegsize " n"
-] [
-.BI --migr_interval " n"
-] [
-.BI --minfilesize " n"
-] [
-.BI --mintime " n"
-] [
-.BI --nbcopies " n"
-] [
-.BI --newname " class_name"
-] [
-.BI --retenp_on_disk " n"
-] [
-.BI --tppools " pool1:pool2..."
-] [
-.BI --uid " class_uid"
-] [
-.BI --user " class_user"
-]
+<\f--id=CLASSID|--name=CLASSNAME\fR> [\fIOPTION\fR]...
 .SH DESCRIPTION
 .B nsmodifyclass
 modifies an existing file class.
-The fileclass can be identified by
-.I classid
-or by
-.IR class_name .
+The fileclass can be identified by CLASSID or by CLASSNAME.
 If both are specified, they must point at the same class.
 .LP
 This command requires ADMIN privilege in the Cupv database.
 .SH OPTIONS
 .TP
-.BI -h " name_server"
+.BI -h,\ \-\-host=HOSTNAME
+specify the name server hostname.  This can also be set through the
+CNS_HOST environment variable.
 .TP
-.BI --flags " flags"
+.BI --flags=FLAGS
 .TP
-.BI --gid " class_gid"
+.BI --gid=CLASSGID
 The class is restricted to this group gid.
 .TP
-.BI --id " classid"
+.BI --group=CLASSGRP
+The class is restricted to this group name
+.TP
+.BI --id=CLASSID
 The class number of the class to be modified.
 .TP
-.BI --maxdrives " n"
+.BI --maxdrives=NUM
 Specifies the number of drives which can be used in parallel for a migration.
 .TP
-.BI --maxfilesize " n"
+.BI --maxfilesize=NUM
 Specifies the maximum file size. There is no limit by default.
 .TP
-.BI --maxsegsize " n"
+.BI --maxsegsize=NUM
 Specifies the maximum segment size. There is no limit by default.
 .TP
-.BI --migr_interval " n"
-A new migration will be started if at least
-.I n
-seconds have elapsed since the last migration.
+.BI --migr_interval=NUM
+A new migration will be started if at least NUM seconds have elapsed since the last migration.
 .TP
-.BI --minfilesize " n"
+.BI --minfilesize=NUM
 Specifies the minimum file size. The default value is 0.
 .TP
-.BI --mintime " n"
-A file will not be migrated unless at least
-.I n
-seconds have elapsed since the last update.
+.BI --mintime=NUM
+A file will not be migrated unless at least NUM seconds have elapsed since the last update.
 .TP
-.BI --name " class_name"
+.BI --name=CLASSNAME
 The name of the class to be modified.
 .TP
-.BI --nbcopies " n"
+.BI --nbcopies=NUM
 Specifies the number of copies for a file. Each copy is written to a different
 tape pool.
 .TP
-.BI --newname " class_name"
+.BI --newname=CLASSNAME
 The class name must be at most CA_MAXCLASNAMELEN characters long.
 .TP
-.BI --retenp_on_disk " n"
+.BI --retenp_on_disk=NUM
 Specifies the maximum retention period (in seconds) for a file on disk.
 The retention period can also be set to AS_LONG_AS_POSSIBLE or INFINITE_LIFETIME.
 If zero, the file is purged immediately after migration.
 Default is AS_LONG_AS_POSSIBLE, i.e. purged when disk space is needed.
 .TP
-.BI --tppools " pool1:pool2..."
+.BI --tppools=POOL1:POOL2...
 Specifies the tape pools to be used for migration. The number of tape pools
 must be at least as big as the number of copies.
 Pool names must be at most CA_MAXPOOLNAMELEN characters long.
 .TP
-.BI --uid " class_uid"
+.BI --uid=CLASSUID
 The class is restricted to this user uid.
+.TP
+.BI --user=CLASSUSER
+The class is restricted to this user name
+.TP
+.B \-\-help
+Display this help and exit
 .SH EXIT STATUS
 This program returns 0 if the operation was successful or >0 if the operation
 failed.

@@ -18,19 +18,37 @@
 #endif
 #include "Cns.h"
 #include "Cns_api.h"
+#include "Cgetopt.h"
 #include "serrno.h"
-extern char *getenv();
-extern int optind;
+
 #if sgi
 extern char *strdup _PROTO((CONST char *));
 #endif
-int errflg;
-int fflag;
-int iflag;
-int rflag;
+int errflg = 0;
+int fflag  = 0;
+int iflag  = 0;
+int rflag  = 0;
 
 int isyes();
 int removedir (char *dir);
+
+void usage(int status, char *name) {
+  if (status != 0) {
+    fprintf (stderr, "Try `%s --help` for more information.\n", name);
+  } else {
+    printf ("Usage: %s [OPTION]... FILE...\n", name);
+    printf ("Remove files or directories.\n\n");
+    printf ("  -f, --force          ignore nonexistent files or directories\n");
+    printf ("  -i, --interactive    prompt before any removal\n");
+    printf ("  -r, -R, --recursive  remove the contents of directories recursively\n");
+    printf ("          --help       display this help and exit\n\n");
+    printf ("Report bugs to <castor.support@cern.ch>.\n");
+  }
+#if defined(_WIN32)
+  WSACleanup();
+#endif
+  exit (status);
+}
 
 int main(argc, argv)
      int argc;
@@ -39,6 +57,7 @@ int main(argc, argv)
   int c;
   char fullpath[CA_MAXPATHLEN+1];
   int i;
+  int hflg = 0;
   char *p;
   char *path;
   struct Cns_filestat statbuf;
@@ -46,7 +65,17 @@ int main(argc, argv)
   WSADATA wsadata;
 #endif
 
-  while ((c = getopt (argc, argv, "fiRr")) != EOF) {
+  Coptions_t longopts[] = {
+    { "recursive",   NO_ARGUMENT, NULL, 'r' },
+    { "interactive", NO_ARGUMENT, NULL, 'i' },
+    { "force",       NO_ARGUMENT, NULL, 'f' },
+    { "help",        NO_ARGUMENT, &hflg, 1  },
+    { NULL,          0,           NULL,  0  }
+  };
+
+  Coptind = 1;
+  Copterr = 1;
+  while ((c = Cgetopt_long (argc, argv, "fiRr", longopts, NULL)) != EOF) {
     switch (c) {
     case 'f':
       fflag++;
@@ -65,11 +94,11 @@ int main(argc, argv)
       break;
     }
   }
-  if (errflg || optind >= argc) {
-    fprintf (stderr,
-             "usage: %s [-f] [-i] file...\n\t%s [-f] [-i] -r dirname...\n",
-             argv[0], argv[0]);
-    exit (USERR);
+  if (hflg) {
+    usage (0, argv[0]);
+  }
+  if (errflg || Coptind >= argc) {
+    usage (USERR, argv[0]);
   }
 #if defined(_WIN32)
   if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
@@ -77,7 +106,7 @@ int main(argc, argv)
     exit (SYERR);
   }
 #endif
-  for (i = optind; i < argc; i++) {
+  for (i = Coptind; i < argc; i++) {
     path = argv[i];
     if (*path != '/' && strstr (path, ":/") == NULL) {
       if ((p = getenv (CNS_HOME_ENV)) == NULL ||

@@ -11,9 +11,51 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Cgetopt.h"
 #include "Cns_api.h"
+#include "Cgetopt.h"
 #include "serrno.h"
+
+void usage(int status, char *name) {
+  if (status != 0) {
+    fprintf (stderr, "Try `%s --help` for more information.\n", name);
+  } else {
+    printf ("Usage: %s <--name=CLASSNAME> [OPTION]... \n", name);
+    printf ("Modify an existing file class.\n\n");
+    printf ("      --gid=CLASSGID            the class is restricted to this group gid\n");
+    printf ("      --group=CLASSGRP          the class is restricted to this group name\n");
+    printf ("      --id=CLASSID              the class number of the class to be modified\n");
+    printf ("      --maxdrives=NUM           specifies the number of drives which can be used\n");
+    printf ("                                in parallel for a migration\n");
+    printf ("      --maxfilesize=NUM         specifies the maximum file size\n");
+    printf ("      --maxsegsize=NUM          specifies the maximum segment size\n");
+    printf ("      --migr_interval=NUM       a new migration will be started if at least NUM\n");
+    printf ("                                seconds have\n");
+    printf ("                                elapsed since the last migration\n");
+    printf ("      --minfilesize=NUM         specifies the minimum file size\n");
+    printf ("      --mintime=NUM             a file will not be migrated unless at least NUM\n");
+    printf ("                                seconds have\n");
+    printf ("                                elapsed since the last update\n");
+    printf ("      --name=CLASSNAME          the name of the class to be modified\n");
+    printf ("      --nbcopies=NUM            specifies the number of copies for a file\n");
+    printf ("      --retenp_on_disk=NUM      specifies the maximum retention period (in seconds)\n");
+    printf ("                                for a file on disk. The retention period can also be\n");
+    printf ("                                set to AS_LONG_AS_POSSIBLE or INFINITE_LIFETIME. If\n");
+    printf ("                                zero, the file is purged immediately after migration.\n");
+    printf ("                                Default is AS_LONG_AS_POSSIBLE, i.e. purged when\n");
+    printf ("                                disk space is needed\n");
+    printf ("      --tppools=POOL1:POOL2...  Specifies the tape pools to be used for migration.\n");
+    printf ("                                The number of tape pools must be at least as big as\n");
+    printf ("                                the number of copies.\n");
+    printf ("      --uid=CLASSUID            the class is restricted to this user uid\n");
+    printf ("      --user=CLASSUSER          the class is restricted to this user name\n");
+    printf ("  -h, --host=HOSTNAME           specify the name server hostname\n");
+    printf ("      --help                    display this help and exit\n\n");
+    printf ("Report bugs to <castor.support@cern.ch>.\n");
+  }
+  exit (status);
+}
+
+
 int main(argc, argv)
      int argc;
      char **argv;
@@ -22,26 +64,8 @@ int main(argc, argv)
   struct Cns_fileclass Cns_fileclass;
   char *dp;
   int errflg = 0;
+  int hflg = 0;
   struct group *gr;
-  static struct Coptions longopts[] = {
-    {"gid", REQUIRED_ARGUMENT, 0, OPT_CLASS_GID},
-    {"group", REQUIRED_ARGUMENT, 0, OPT_CLASS_GROUP},
-    {"id", REQUIRED_ARGUMENT, 0, OPT_CLASS_ID},
-    {"name", REQUIRED_ARGUMENT, 0, OPT_CLASS_NAME},
-    {"uid", REQUIRED_ARGUMENT, 0, OPT_CLASS_UID},
-    {"user", REQUIRED_ARGUMENT, 0, OPT_CLASS_USER},
-    {"flags", REQUIRED_ARGUMENT, 0, OPT_FLAGS},
-    {"maxdrives", REQUIRED_ARGUMENT, 0, OPT_MAX_DRV},
-    {"maxfilesize", REQUIRED_ARGUMENT, 0, OPT_MAX_FSZ},
-    {"maxsegsize", REQUIRED_ARGUMENT, 0, OPT_MAX_SSZ},
-    {"migr_interval", REQUIRED_ARGUMENT, 0, OPT_MIGR_INTV},
-    {"minfilesize", REQUIRED_ARGUMENT, 0, OPT_MIN_FSZ},
-    {"mintime", REQUIRED_ARGUMENT, 0, OPT_MIN_TIME},
-    {"nbcopies", REQUIRED_ARGUMENT, 0, OPT_NBCOPIES},
-    {"retenp_on_disk", REQUIRED_ARGUMENT, 0, OPT_RETENP_DISK},
-    {"tppools", REQUIRED_ARGUMENT, 0, OPT_TPPOOLS},
-    {0, 0, 0, 0}
-  };
   int nbtppools;
   char *p;
   struct passwd *pwd;
@@ -50,6 +74,29 @@ int main(argc, argv)
 
   memset (&Cns_fileclass, 0, sizeof(struct Cns_fileclass));
   Cns_fileclass.retenp_on_disk = AS_LONG_AS_POSSIBLE;
+
+  Coptions_t longopts[] = {
+    { "gid",            REQUIRED_ARGUMENT, NULL,  OPT_CLASS_GID   },
+    { "group",          REQUIRED_ARGUMENT, NULL,  OPT_CLASS_GROUP },
+    { "id",             REQUIRED_ARGUMENT, NULL,  OPT_CLASS_ID    },
+    { "name",           REQUIRED_ARGUMENT, NULL,  OPT_CLASS_NAME  },
+    { "uid",            REQUIRED_ARGUMENT, NULL,  OPT_CLASS_UID   },
+    { "user",           REQUIRED_ARGUMENT, NULL,  OPT_CLASS_USER  },
+    { "flags",          REQUIRED_ARGUMENT, NULL,  OPT_FLAGS       },
+    { "maxdrives",      REQUIRED_ARGUMENT, NULL,  OPT_MAX_DRV     },
+    { "maxfilesize",    REQUIRED_ARGUMENT, NULL,  OPT_MAX_FSZ     },
+    { "maxsegsize",     REQUIRED_ARGUMENT, NULL,  OPT_MAX_SSZ     },
+    { "migr_interval",  REQUIRED_ARGUMENT, NULL,  OPT_MIGR_INTV   },
+    { "minfilesize",    REQUIRED_ARGUMENT, NULL,  OPT_MIN_FSZ     },
+    { "mintime",        REQUIRED_ARGUMENT, NULL,  OPT_MIN_TIME    },
+    { "nbcopies",       REQUIRED_ARGUMENT, NULL,  OPT_NBCOPIES    },
+    { "retenp_on_disk", REQUIRED_ARGUMENT, NULL,  OPT_RETENP_DISK },
+    { "tppools",        REQUIRED_ARGUMENT, NULL,  OPT_TPPOOLS     },
+    { "host",           REQUIRED_ARGUMENT, NULL,  'h'             },
+    { "help",           NO_ARGUMENT,       &hflg, 1               },
+    { NULL,             0,                 NULL,  0               }
+  };
+
   Copterr = 1;
   Coptind = 1;
   while ((c = Cgetopt_long (argc, argv, "h:", longopts, NULL)) != EOF) {
@@ -210,23 +257,21 @@ int main(argc, argv)
       server = Coptarg;
       break;
     case '?':
+    case ':':
       errflg++;
       break;
     default:
       break;
     }
   }
-  if (Coptind < argc || Cns_fileclass.name == NULL) {
+  if (hflg) {
+    usage (0, argv[0]);
+  }
+  if (Coptind < argc || Cns_fileclass.name[0] == '\0') {
     errflg++;
   }
   if (errflg) {
-    fprintf (stderr, "usage: %s %s %s %s %s %s", argv[0],
-             "--id classid --name class_name [-h name_server] [--flags flags]\n",
-             "[--gid class_gid] [--group class_group] [--maxdrives n] [--maxfilesize n]\n",
-             "[--maxsegsize n] [--migr_interval n] [--minfilesize n] [--mintime n]\n",
-             "[--nbcopies n] [--retenp_on_disk n] [--tppools pool1:pool2...]\n",
-             "[--uid class_uid] [--user class_user]\n");
-    exit (USERR);
+    usage (USERR, argv[0]);
   }
 
   if (Cns_enterclass (server, &Cns_fileclass) < 0) {

@@ -12,11 +12,38 @@
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif
-#include "Cgetopt.h"
 #include "Cns.h"
 #include "Cns_api.h"
+#include "Cgetopt.h"
 #include "serrno.h"
 #include "u64subr.h"
+
+void usage(int status, char *name) {
+  if (status != 0) {
+    fprintf (stderr, "Try `%s --help` for more information.\n", name);
+  } else {
+    printf ("Usage: %s -V VID [OPTION]...\n", name);
+    printf ("List the file segments residing on a volume/tape.\n\n");
+    printf ("  -V=VID               specifies the visual identifier for the volume\n");
+    printf ("  -i                   print the file uniqueid in front of each entry\n");
+    printf ("  -H                   print sizes in human readable format (e.g., 1K 234M 2G) using\n");
+    printf ("                       powers of 1024\n");
+    printf ("  -D                   only display/count logical deleted segments\n");
+    printf ("  -f=FSEQ              restrict the output to the given file sequence number\n");
+    printf ("  -s, --summarize      display only the total number of files and the total size of all\n");
+    printf ("                       files on the volume\n");
+    printf ("  -h, --host=HOSTNAME  the name server to query\n");
+    printf ("      --ds             print the vid followed by a slash followed by the media side\n");
+    printf ("                       number. This option is useful for multi-sided media like DVD.\n");
+    printf ("      --checksum       display the tape segments checksum\n");
+    printf ("      --help           display this help and exit\n\n");
+    printf ("Report bugs to <castor.support@cern.ch>.\n");
+  }
+#if defined(_WIN32)
+  WSACleanup();
+#endif
+  exit (status);
+}
 
 int main(int argc,char **argv)
 {
@@ -29,16 +56,10 @@ int main(int argc,char **argv)
   int errflg = 0;
   int iflag = 0;
   int dflag = 0;
+  int hflg = 0;
   int humanflag = 0;
   int flags;
   Cns_list list;
-  static struct Coptions longopts[] = {
-    {"display_side", NO_ARGUMENT, &dsflag, 1},
-    {"checksum", NO_ARGUMENT, &checksumflag, 1},
-    {"ds", NO_ARGUMENT, &dsflag, 1},
-    {"summarize", NO_ARGUMENT, &sumflag, 1},
-    {0, 0, 0, 0}
-  };
   signed64 parent_fileid = -1;
   char path[CA_MAXPATHLEN+1];
   char *server = NULL;
@@ -52,6 +73,16 @@ int main(int argc,char **argv)
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
+
+  Coptions_t longopts[] = {
+    { "display_side", NO_ARGUMENT,       &dsflag,       1  },
+    { "checksum",     NO_ARGUMENT,       &checksumflag, 1  },
+    { "ds",           NO_ARGUMENT,       &dsflag,       1  },
+    { "summarize",    NO_ARGUMENT,       &sumflag,      1  },
+    { "host",         REQUIRED_ARGUMENT, NULL,         'h' },
+    { "help",         NO_ARGUMENT,       &hflg,         1  },
+    { NULL,           0,                 NULL,          0  }
+  };
 
   Copterr = 1;
   Coptind = 1;
@@ -76,11 +107,17 @@ int main(int argc,char **argv)
       fseq = (int) strtol(Coptarg, (char **)NULL, 10);
       if ((errno != 0) || (fseq == 0)) {
         fprintf (stderr, "invalid file sequence number: %s\n", Coptarg);
+#if defined(_WIN32)
+	WSACleanup();
+#endif
         exit (USERR);
       }
       break;
     case 'D':
       dflag++;
+      break;
+    case ':':
+      errflg++;
       break;
     case '?':
       errflg++;
@@ -89,12 +126,14 @@ int main(int argc,char **argv)
       break;
     }
   }
+  if (hflg) {
+    usage (0, argv[0]);
+  }
   if (Coptind < argc || ! vid) {
     errflg++;
   }
   if (errflg) {
-    fprintf (stderr, "usage: %s [-h name_server] [--display_side] [--checksum] [--summarize] [-f fseq] [-HD] -V vid\n", argv[0]);
-    exit (USERR);
+    usage (USERR, argv[0]);
   }
 #if defined(_WIN32)
   if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
@@ -169,6 +208,9 @@ int main(int argc,char **argv)
   }
   if (serrno != 0) {
     fprintf (stderr, "%s: %s\n", vid, (serrno == ENOENT) ? "No such volume or no files found" : sstrerror(serrno));
+#if defined(_WIN32)
+    WSACleanup();
+#endif
     exit(USERR);
   }
   (void) Cns_listtape (server, vid, CNS_LIST_END, &list, fseq);

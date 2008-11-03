@@ -1,42 +1,27 @@
-.\" @(#)$RCSfile: nslisttape.man,v $ $Revision: 1.4 $ $Date: 2008/02/28 16:10:39 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: nslisttape.man,v $ $Revision: 1.5 $ $Date: 2008/11/03 10:37:05 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSLISTTAPE 1 "$Date: 2008/02/28 16:10:39 $" CASTOR "Cns User Commands"
+.TH NSLISTTAPE 1 "$Date: 2008/11/03 10:37:05 $" CASTOR "Cns User Commands"
 .SH NAME
 nslisttape \- list the file segments residing on a volume
 .SH SYNOPSIS
 .B nslisttape
-[
-.B -iHD
-] [
-.B -h
-.I name_server
-] [
-.B --display_side
-] [
-.B --checksum
-] [
-.B --summarize
-] [
-.B -f 
-.I fseq
-]
-.B -V
-.I vid
+-V VID
+[\fIOPTION\fR]...
 .SH DESCRIPTION
 .B nslisttape
 lists the file segments residing on a volume with the possibility of filtering the results by file sequence number and summarizing the overall data.
 .SH OPTIONS
 .TP
-.BI -h " name_server"
+.BI -h,\ \-\-host=HOSTNAME
 specify the name server hostname.
 This can also be set thru the CNS_HOST environment variable.
 .TP
-.BI -V " vid"
+.BI -V=VID
 specifies the visual identifier for the volume.
 .TP
-.BI --display_side " or " --ds
+.BI -ds,\ \-\-display_side
 print the vid followed by a slash followed by the media side number.
 This option is useful for multi-sided media like DVD.
 .TP
@@ -49,14 +34,17 @@ print the file uniqueid in front of each entry.
 .BI -H
 print sizes in human readable format (e.g., 1K 234M 2G) using powers of 1024
 .TP
-.BI -s " or " --summarize
+.BI -s,\ \-\-summarize
 display only the total number of files and the total size of all files on the volume.
 .TP
 .BI -D
-only diskplay/count logical deleted segments.
+only display/count logical deleted segments.
 .TP
-.BI -f " fseq"
-restrict the output to the given file sequence number. 
+.BI -f=FSEQ
+restrict the output to the given file sequence number.
+.TP
+.B \-\-help
+display this help and exit
 .LP
 The list gives the file segment status, the copy number, the file segment
 number, the tape visual identifier, the file sequence number on tape,

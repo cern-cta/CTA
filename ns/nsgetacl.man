@@ -1,21 +1,18 @@
-.\" @(#)$RCSfile: nsgetacl.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-ADC/CA Jean-Philippe Baud
+.\" @(#)$RCSfile: nsgetacl.man,v $ $Revision: 1.3 $ $Date: 2008/11/03 10:37:05 $ CERN IT-ADC/CA Jean-Philippe Baud
 .\" Copyright (C) 2003-2005 by CERN/IT/ADC/CA
 .\" All rights reserved
 .\"
-.TH NSGETACL 1 "$Date: 2006/01/26 15:36:22 $" CASTOR "Cns User Commands"
+.TH NSGETACL 1 "$Date: 2008/11/03 10:37:05 $" CASTOR "Cns User Commands"
 .SH NAME
 nsgetacl \- get CASTOR directory/file access control lists
 .SH SYNOPSIS
 .B nsgetacl
-.RB [ -a ]
-.RB [ -d ]
-.IR path ...
+[\fIOPTION\fR]... \fIPATH\fR...
 .SH DESCRIPTION
 .B nsgetacl
 gets the Access Control List associated with a CASTOR directory/file.
-For each
-.IR path ,
-it  displays the file name, owner, the group, and the Access Control List (ACL)
+For each PATH,
+it displays the file name, owner, the group, and the Access Control List (ACL)
 if present. If a directory has a default ACL,
 .B nsgetacl
 also displays the default ACL. Regular files cannot have default ACLs.
@@ -62,11 +59,8 @@ As soon as there is one default ACL entry, the 3 default ACL base entries
 .LP
 The entry processing conforms to the Posix 1003.1e draft standard 17.
 .TP
-.I path
-specifies the CASTOR pathname.
-If
-.I path
-does not start with
+.I PATH
+specifies the CASTOR pathname. If PATH does not start with
 .BR / ,
 it is prefixed by the content of the
 .B CASTOR_HOME
@@ -88,6 +82,9 @@ only display the access ACL.
 .TP
 .B -d
 only display the default ACL.
+.TP
+.B \-\-help
+display this help and exit.
 .SH EXAMPLES
 .nf
 .ft CW
