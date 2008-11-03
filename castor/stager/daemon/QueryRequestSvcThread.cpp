@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.93 $ $Release$ $Date: 2008/10/27 16:14:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.94 $ $Release$ $Date: 2008/11/03 07:47:37 $ $Author: waldron $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -253,9 +253,9 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileId
   std::ostringstream sst;
   sst << fid;
   castor::dlf::Param params[] =
-    {castor::dlf::Param("FileId", sst.str().c_str()),
-     castor::dlf::Param("NsHost", nshost.c_str())};
-  castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_IQUERY, 1, params);
+    {castor::dlf::Param("FileId", fid),
+     castor::dlf::Param("NsHost", nshost)};
+  castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_IQUERY, 2, params);
   std::list<castor::stager::DiskCopyInfo*>* result =
     qrySvc->diskCopies4File(fid, nshost, svcClassId, fileName);
   if(result == 0 || result->size() == 0) {   // sanity check, result.size() must be == 1
@@ -311,7 +311,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByRequest
   throw (castor::exception::Exception) {
   // Processing File Query by Request
   castor::dlf::Param params[] =
-    {castor::dlf::Param("ReqId", val.c_str())};
+    {castor::dlf::Param("ReqId", val)};
   castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_RQUERY, 1, params);
   std::list<castor::stager::DiskCopyInfo*>* result;
   result = qrySvc->diskCopies4Request(reqType, val, svcClassId);
@@ -634,7 +634,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
 
       // Invoking the method
       castor::query::DiskPoolQueryResponse* result =
-        qrySvc->describeDiskPool(uReq->diskPoolName(), svcClassName, true);
+        qrySvc->describeDiskPool(uReq->diskPoolName(), svcClassName, detailed);
       if (result == 0) {
         castor::exception::NoEntry e;
         e.getMessage() << " describeDiskPool returned NULL";
