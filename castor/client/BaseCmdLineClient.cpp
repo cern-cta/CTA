@@ -100,7 +100,7 @@ bool castor::client::BaseCmdLineClient::parseInput(int argc, char** argv)
   /**
    * List of options supported
    */
-  struct Coptions longopts[] = {
+  Coptions_t longopts[] = {
     {"allocation_mode", REQUIRED_ARGUMENT,  NULL,        'A'},
     {"host",            REQUIRED_ARGUMENT,  NULL,        'h'},
     {"keep",            NO_ARGUMENT,        NULL,        'K'},
@@ -118,21 +118,21 @@ bool castor::client::BaseCmdLineClient::parseInput(int argc, char** argv)
   Coptreset = 1;  /* In case we are parsing several times the same argv */
   int ch;
 
-	while ((ch = Cgetopt_long (argc, argv, "aA:fh:Kp:s:", longopts, NULL)) != -1) {
+  while ((ch = Cgetopt_long (argc, argv, "aA:fh:Kp:s:", longopts, NULL)) != -1) {
     switch (ch) {
-		case 'A':
-		case 'h':
-		case 's':
-		case 'p':
-			m_inputFlags[std::string(1, ch)] = Coptarg;
+    case 'A':
+    case 'h':
+    case 's':
+    case 'p':
+      m_inputFlags[std::string(1, ch)] = Coptarg;
       break;
     case 'K':
     case 'a':
     case 'f':
-			m_inputFlags[std::string(1, ch)] = "";
+      m_inputFlags[std::string(1, ch)] = "";
       break;
     case 0:
-			// Long option without short option correspondance
+      // Long option without short option correspondance
       // they will be handled at the end
       break;
     default:
