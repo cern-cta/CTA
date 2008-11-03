@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
     int vdqmPort = 0;
 
     try {
-      vdqmPort = server.getVdqmPort();
+      vdqmPort = server.getListenPort();
     } catch(castor::vdqm::exception::InvalidConfigEntry &ex) {
       castor::dlf::Param params[] = {
         castor::dlf::Param("invalidValue", ex.getEntryValue())};

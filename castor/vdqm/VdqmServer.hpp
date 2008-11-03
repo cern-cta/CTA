@@ -88,8 +88,7 @@ namespace castor {
       /**
        * Returns the port on which the server will listen.
        */
-      int getVdqmPort()
-        throw(castor::vdqm::exception::InvalidConfigEntry);
+      int getListenPort() throw(castor::vdqm::exception::InvalidConfigEntry);
 
       /**
        * Returns the UPD port on which the server will listen fori

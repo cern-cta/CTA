@@ -356,7 +356,7 @@ int castor::vdqm::VdqmServer::getRTCPJobSubmitterTimeout()
 //------------------------------------------------------------------------------
 // getListenPort
 //------------------------------------------------------------------------------
-int castor::vdqm::VdqmServer::getVdqmPort()
+int castor::vdqm::VdqmServer::getListenPort()
   throw(castor::vdqm::exception::InvalidConfigEntry) {
   int port = VDQMPORT; // Initialise to default value
   char *const configEntry = getconfent("VDQM", "PORT", 0);
