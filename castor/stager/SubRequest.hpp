@@ -376,6 +376,26 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_svcHandler
+       * Service that should handle this subrequest. To be used only by the server.
+       * Clients should leave this field empty.
+       * @return the value of m_svcHandler
+       */
+      std::string svcHandler() const {
+        return m_svcHandler;
+      }
+
+      /**
+       * Set the value of m_svcHandler
+       * Service that should handle this subrequest. To be used only by the server.
+       * Clients should leave this field empty.
+       * @param new_var the new value of m_svcHandler
+       */
+      void setSvcHandler(std::string new_var) {
+        m_svcHandler = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -565,6 +585,9 @@ namespace castor {
 
       /// The filesystems requested to fulfil the jobs resource requirements in the scheduler
       std::string m_requestedFileSystems;
+
+      /// Service that should handle this subrequest. To be used only by the server. Clients should leave this field empty.
+      std::string m_svcHandler;
 
       /// The id of this object
       u_signed64 m_id;

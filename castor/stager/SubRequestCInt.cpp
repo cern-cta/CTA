@@ -332,6 +332,23 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_SubRequest_svcHandler
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_svcHandler(castor::stager::SubRequest* instance, const char** var) {
+    *var = instance->svcHandler().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setSvcHandler
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setSvcHandler(castor::stager::SubRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setSvcHandler(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_SubRequest_id
   //----------------------------------------------------------------------------
   int Cstager_SubRequest_id(castor::stager::SubRequest* instance, u_signed64* var) {

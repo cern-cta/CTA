@@ -58,6 +58,7 @@ castor::stager::SubRequest::SubRequest() throw() :
   m_errorCode(0),
   m_errorMessage(""),
   m_requestedFileSystems(""),
+  m_svcHandler(""),
   m_id(0),
   m_diskcopy(0),
   m_castorFile(0),
@@ -109,6 +110,7 @@ void castor::stager::SubRequest::print(std::ostream& stream,
   stream << indent << "errorCode : " << m_errorCode << std::endl;
   stream << indent << "errorMessage : " << m_errorMessage << std::endl;
   stream << indent << "requestedFileSystems : " << m_requestedFileSystems << std::endl;
+  stream << indent << "svcHandler : " << m_svcHandler << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Diskcopy : " << std::endl;
