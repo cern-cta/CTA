@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.50 $ $Release$ $Date: 2008/10/17 09:30:43 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.51 $ $Release$ $Date: 2008/11/03 07:38:49 $ $Author: waldron $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -443,9 +443,9 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
       // Check that the checksum type is supported. If its not we ignore it.
       std::string csumtype = "";
       std::string csumvalue = statbuf.csumvalue;
-      if ((statbuf.csumtype == "AD") ||
-	  (statbuf.csumtype == "CS") ||
-	  (statbuf.csumtype == "MD")) {
+      if ((strcmp(statbuf.csumtype, "AD") == 0) ||
+	  (strcmp(statbuf.csumtype, "CS") == 0) ||
+	  (strcmp(statbuf.csumtype, "MD") == 0)) {
 	csumtype = statbuf.csumtype;
       }
 
