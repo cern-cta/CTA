@@ -243,8 +243,8 @@ int Cns_main(main_args)
     }
   }
   sin.sin_addr.s_addr = htonl(INADDR_ANY);
-  serrno=0; 
-  if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0) 
+  serrno=0;
+  if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
     nslogit (func, NS002, "setsockopt", neterror());
   if (bind (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
     nslogit (func, NS002, "bind", neterror());
@@ -307,7 +307,7 @@ int Cns_main(main_args)
     if (select (maxfds, &readfd, (fd_set *)0, (fd_set *)0, &timeval) <= 0) {
       FD_ZERO (&readfd);
     }
-  } 
+  }
 }
 
 int main(argc, argv)
@@ -678,6 +678,9 @@ int procreq(magic, req_type, req_data, clienthost, thip)
     break;
   case CNS_UPDATESEG_CHECKSUM:
     c = Cns_srv_updateseg_checksum (magic, req_data, clienthost, thip);
+    break;
+  case CNS_UPDATESEG_STATUS:
+    c = Cns_srv_updateseg_status (magic, req_data, clienthost, thip);
     break;
   case CNS_UPDATEFILE_CHECKSUM:
     c = Cns_srv_updatefile_checksum (magic, req_data, clienthost, thip);
