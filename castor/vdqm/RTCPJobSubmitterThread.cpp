@@ -34,7 +34,7 @@
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
-#include "castor/vdqm/RTCopyDConnection.hpp"
+#include "castor/vdqm/RemoteCopyConnection.hpp"
 #include "castor/vdqm/RTCPJobSubmitterThread.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
@@ -43,6 +43,7 @@
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
 #include "h/rtcp_constants.h"
+#include "h/tape_aggregator_constants.h"
 
 
 //-----------------------------------------------------------------------------
@@ -178,7 +179,11 @@ throw() {
 void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
   throw() {
 
+  Cuuid_t                cuuid    = nullCuuid;
   castor::vdqm::IVdqmSvc *vdqmSvc = NULL;
+
+
+  Cuuid_create(&cuuid);
 
   // Create an auto pointer to delete the tape request object when it goes out
   // of scope.
@@ -204,8 +209,8 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
       castor::dlf::Param("Message", e.getMessage().str()),
       castor::dlf::Param("Code", e.code())
     };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_DBVDQMSVC_GETSVC,
-      3, params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, VDQM_DBVDQMSVC_GETSVC, 3,
+      params);
 
     return;
   }
@@ -216,19 +221,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
   try {
 
     // Submit remote copy job
-    if(request.get()->remoteCopyType() == "RTCPD") {
-      submitJobToRTCPD(nullCuuid, request.get());
-    } else if(request.get()->remoteCopyType() == "TAPE_AGGREGATOR") {
-      submitJobToTapeAggregator(nullCuuid, request.get());
-    } else {
-      castor::exception::Internal ie;
-
-      ie.getMessage() << "Invalid remoteCopyType: "
-        << request.get()->remoteCopyType();
-
-      throw ie;
-    }
-
+    submitJob(cuuid, request.get());
     requestSubmitted = true;
 
   } catch(castor::exception::Exception &ex) {
@@ -238,7 +231,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
       castor::dlf::Param("tapeRequestID", request.get()->id()),
       castor::dlf::Param("Message", ex.getMessage().str()),
       castor::dlf::Param("Code", ex.code())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
       VDQM_FAILED_TO_SUBMIT_REMOTE_COPY_JOB, 5, params);
 
     try {
@@ -282,7 +275,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
         castor::dlf::Param("requestStatusAfter", requestStatusAfter),
         castor::dlf::Param("requestDriveIdBefore", requestDriveIdBefore),
         castor::dlf::Param("requestDriveIdAfter", requestDriveIdAfter)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
         VDQM_RESET_DRIVE_AND_REQUEST, 13, params);
 
     } catch(castor::exception::Exception &ex) {
@@ -292,7 +285,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
         castor::dlf::Param("tapeRequestID", request.get()->id()),
         castor::dlf::Param("Message", ex.getMessage().str()),
         castor::dlf::Param("Code", ex.code())};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
         VDQM_RESET_DRIVE_AND_REQUEST_DB_WRITE_FAILED, 5, params);
     }
   }
@@ -339,7 +332,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
           castor::dlf::Param("requestStatusAfter", requestStatusAfter),
           castor::dlf::Param("requestDriveIdBefore", requestDriveIdBefore),
           castor::dlf::Param("requestDriveIdAfter", requestDriveIdAfter)};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
           VDQM_REQUEST_SUBMITTED_TRANSITION_FAILED, 13, params);
       }
     } catch(castor::exception::Exception &ex) {
@@ -349,7 +342,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
         castor::dlf::Param("tapeRequestID", request.get()->id()),
         castor::dlf::Param("Message", ex.getMessage().str()),
         castor::dlf::Param("Code", ex.code())};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
         VDQM_REQUEST_SUBMITTED_DB_WRITE_FAILED, 5, params);
     }
   } // if(requestSubmitted)
@@ -368,7 +361,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
         ex.getMessage().str()),
       castor::dlf::Param("Code", ex.code())
     };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
       VDQM_DRIVE_ALLOCATION_ERROR, 3, params);
   }
 }
@@ -397,35 +390,49 @@ castor::vdqm::IVdqmSvc *castor::vdqm::RTCPJobSubmitterThread::getDbVdqmSvc()
 
 
 //-----------------------------------------------------------------------------
-// submitJobToRTCPD
+// submitJob
 //-----------------------------------------------------------------------------
-void castor::vdqm::RTCPJobSubmitterThread::submitJobToRTCPD(
-  const Cuuid_t &cuuid, castor::vdqm::TapeRequest* request)
+void castor::vdqm::RTCPJobSubmitterThread::submitJob(const Cuuid_t &cuuid,
+  castor::vdqm::TapeRequest *request)
   throw(castor::exception::Exception) {
+  castor::vdqm::ClientIdentification *client = request->client();
+  castor::vdqm::TapeDrive *tapeDrive  = request->tapeDrive();
+  castor::vdqm::DeviceGroupName *dgn = tapeDrive->deviceGroupName();
+  castor::vdqm::TapeServer *tapeServer = tapeDrive->tapeServer();
+  const std::string remoteCopyType = request->remoteCopyType();
+  unsigned short port = 0;
 
-  castor::vdqm::ClientIdentification *client     = request->client();
-  castor::vdqm::TapeDrive            *tapeDrive  = request->tapeDrive();
-  castor::vdqm::DeviceGroupName      *dgn        = tapeDrive->deviceGroupName();
-  castor::vdqm::TapeServer           *tapeServer = tapeDrive->tapeServer();
 
-  
-  RTCopyDConnection rtcpConnection(RTCOPY_PORT, tapeServer->serverName());
+  if(remoteCopyType == "RTCPD") {
+    port = RTCOPY_PORT;
+  } else if(remoteCopyType == "TAPE_AGGREGATOR") {
+    port = TAPE_AGGREGATOR_PORT;
+  } else {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << "Invalid remoteCopyType: " << remoteCopyType;
+
+    throw ie;
+  }
+
+  RemoteCopyConnection connection(port, tapeServer->serverName());
 
   try {
-    rtcpConnection.connect();
+    connection.connect();
   } catch (castor::exception::Exception e) {
     castor::exception::Internal ie;
 
     ie.getMessage()
-      << "Failed to connect to RTCopyD: " << e.getMessage().str();
+      << "Failed to connect to tape aggregator: " << e.getMessage().str();
 
     throw ie;
   }
-      
+
   bool acknSucc = true;
 
   {
     castor::dlf::Param params[] = {
+      castor::dlf::Param("remoteCopyType", remoteCopyType),
       castor::dlf::Param("tapeRequestID", request->id()),
       castor::dlf::Param("clientUserName", client->userName()),
       castor::dlf::Param("clientMachine", client->machine()),
@@ -435,20 +442,20 @@ void castor::vdqm::RTCPJobSubmitterThread::submitJobToRTCPD(
       castor::dlf::Param("deviceGroupName", dgn->dgName()),
       castor::dlf::Param("tapeDriveName", tapeDrive->driveName())};
 
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, VDQM_SEND_RTCPD_JOB, 8,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_SEND_RTCPD_JOB, 9,
       params);
   }
 
   try {
-    acknSucc = rtcpConnection.sendJobToRTCPD(cuuid, request->id(),
+    acknSucc = connection.sendJob(cuuid, remoteCopyType.c_str(), request->id(),
       client->userName(), client->machine(), client->port(), client->euid(),
-      client->egid(), dgn->dgName(), tapeDrive->driveName()
-    );
+      client->egid(), dgn->dgName(), tapeDrive->driveName());
   } catch (castor::exception::Exception e) {
     castor::exception::Internal ie;
 
     ie.getMessage()
-      << "Failed to send job to RTCPD: " << e.getMessage().str();
+      << "Failed to send job to " << remoteCopyType << ": "
+      << e.getMessage().str();
 
     throw ie;
   }
@@ -457,17 +464,8 @@ void castor::vdqm::RTCPJobSubmitterThread::submitJobToRTCPD(
     castor::exception::Internal ie;
 
     ie.getMessage() <<
-      "Did not receive an acknSucc from sending a job to RTCPD";
+      "Did not receive an acknSucc from sending a job to " << remoteCopyType;
 
     throw ie;
   }
-}
-
-
-//-----------------------------------------------------------------------------
-// submitJobToTapeAggregator
-//-----------------------------------------------------------------------------
-void castor::vdqm::RTCPJobSubmitterThread::submitJobToTapeAggregator(
-  const Cuuid_t &cuuid, castor::vdqm::TapeRequest* request)
-  throw(castor::exception::Exception) {
 }

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      RTCopyDConnection.hpp
+ *                      RemoteCopyConnection.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,19 +17,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)RCSfile: RTCopyDConnection.hpp  Revision: 1.0  Release Date: Jul 29, 2005  Author: mbraeger 
  *
  *
  *
- * @author Matthias Braeger
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
-#ifndef _RTCOPYDCONNECTION_HPP_
-#define _RTCOPYDCONNECTION_HPP_
-
-// Include Files
-#include <string>
+#ifndef _CASTOR_VDQM_REMOTECOPYCONNECTION_HPP_
+#define _CASTOR_VDQM_REMOTECOPYCONNECTION_HPP_
 
 #include "castor/io/AbstractTCPSocket.hpp"
+
+#include <string>
 
 
 namespace castor {
@@ -42,9 +40,9 @@ namespace castor {
 
     /**
      * A dedicated socket class, able to deal with socket manipulation
-     * and to handle sending of messages to the RTCopy daemon.
+     * and to handle sending of messages to RTCPD and tape aggregator daemons.
      */
-    class RTCopyDConnection : public castor::io::AbstractTCPSocket {
+    class RemoteCopyConnection : public castor::io::AbstractTCPSocket {
 
     public:
 
@@ -52,7 +50,7 @@ namespace castor {
        * Constructor building a Socket objet around a regular socket
        * @param socket the regular socket used
        */
-      RTCopyDConnection(int socket) throw ();
+      RemoteCopyConnection(int socket) throw ();
 
       /**
        * Constructor building a socket on a given port of a given host
@@ -60,7 +58,7 @@ namespace castor {
        * remote host
        * @param host the host to connect to, given by its name
        */
-      RTCopyDConnection(const unsigned short port,
+      RemoteCopyConnection(const unsigned short port,
         const std::string host)
         throw (castor::exception::Exception);
 
@@ -70,7 +68,7 @@ namespace castor {
        * remote host
        * @param host the host to connect to, given as an ip address
        */
-      RTCopyDConnection(const unsigned short port,
+      RemoteCopyConnection(const unsigned short port,
         const unsigned long ip)
         throw (castor::exception::Exception);
 
@@ -78,7 +76,7 @@ namespace castor {
       /**
        * destructor
        */
-      ~RTCopyDConnection() throw();
+      ~RemoteCopyConnection() throw();
       
       
       /**
@@ -89,21 +87,24 @@ namespace castor {
       
       
       /**
-       * This function asks the RT Copy daemon to start a job.
+       * Asks the RTCPD or tape aggregator daemon to start a job.
        * 
        * @param tapeRequestID
-       * @param clientID The client's identification information
-       * @param tapeDrive The tape drive to be used
+       * @param remoteCopyType remote copy type to be used for exception and
+       * log messages
+       * @param clientID the client's identification information
+       * @param tapeDrive the tape drive to be used
        * @exception In case of errors 
        */
-      bool sendJobToRTCPD(
+      bool sendJob(
         const Cuuid_t     &cuuid,
+        const char        *remoteCopyType,
         const u_signed64  tapeRequestID,
         const std::string &clientUserName,
         const std::string &clientMachine,
-        const int         clientPort,
-        const int         clientEuid,
-        const int         clientEgid,
+        const int          clientPort,
+        const int          clientEuid,
+        const int          clientEgid,
         const std::string &deviceGroupName,
         const std::string &tapeDriveName)
         throw (castor::exception::Exception);    
@@ -112,18 +113,20 @@ namespace castor {
     private:
       
       /**
-       * This is a helper function for sendJobToRTCP(), to read
-       * the answer of RTCP
+       * This is a helper function for sendJob() to read the answer of the
+       * RTCPD or tape aggregator daemon
        * 
        * @param cuuid the cuuid to be used for logging
+       * @param remoteCopyType remote copy type to be used for exception and
+       * log messages
        * @return false, in case of problems on RTCP side
        */
-      bool readRTCPAnswer(const Cuuid_t &cuuid)
+      bool readAnswer(const Cuuid_t &cuuid, const char *remoteCopyType)
         throw (castor::exception::Exception);    
     };
 
-  } // end of namespace vdqm
+  } // namespace vdqm
 
-} // end of namespace castor      
+} // namespace castor      
 
-#endif //_RTCOPYDCONNECTION_HPP_
+#endif //_CASTOR_VDQM_REMOTECOPYCONNECTION_HPP_

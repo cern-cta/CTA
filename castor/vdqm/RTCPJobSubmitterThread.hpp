@@ -108,7 +108,7 @@ namespace castor {
 
       /**
        * Submits the corresponding remote tape job of the specified tape
-       * request to the RTCPD.
+       * request to either an RTCPD or a tape aggregator daemon.
        *
        * WARNING: The following links should be present:
        * <ul>
@@ -117,25 +117,11 @@ namespace castor {
        * <li>Tape drive of tape request -> device group name</li>
        * <li>Tape drive of tape request -> tape server</li>
        * </ul>
-       */
-      void submitJobToRTCPD(const Cuuid_t &cuuid,
-        castor::vdqm::TapeRequest* request)
-        throw(castor::exception::Exception);
-
-      /**
-       * Submits the corresponding remote tape job of the specified tape
-       * request to the tape aggregator.
        *
-       * WARNING: The following links should be present:
-       * <ul>
-       * <li>Tape request -> set of client indentification data</li>
-       * <li>Tape request -> tape drive</li>
-       * <li>Tape drive of tape request -> device group name</li>
-       * <li>Tape drive of tape request -> tape server</li>
-       * </ul>
+       * @param cuuid the cuuid used for logging
+       * @param request the tape request
        */
-      void submitJobToTapeAggregator(const Cuuid_t &cuuid,
-        castor::vdqm::TapeRequest* request)
+      void submitJob(const Cuuid_t &cuuid, castor::vdqm::TapeRequest *request)
         throw(castor::exception::Exception);
 
       /**

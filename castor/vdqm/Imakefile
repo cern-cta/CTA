@@ -49,7 +49,7 @@ VDQMBIN_SRCS = CDevTools.cpp \
                OldRequestFacade.cpp \
                ProtocolFacade.cpp \
                RequestHandlerThread.cpp \
-               RTCopyDConnection.cpp \
+               RemoteCopyConnection.cpp \
                RTCPJobSubmitterThread.cpp \
                SocketHelper.cpp \
                Utils.cpp \

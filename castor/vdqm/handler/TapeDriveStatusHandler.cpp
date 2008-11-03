@@ -32,7 +32,6 @@
 #include "castor/vdqm/DatabaseHelper.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/DevTools.hpp"
-#include "castor/vdqm/RTCopyDConnection.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
