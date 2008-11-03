@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.684 $ $Date: 2008/10/17 14:37:15 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.685 $ $Date: 2008/11/03 12:25:28 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -266,15 +266,15 @@ BEGIN
            AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
         -- we are within the time range, so we try to reuse the filesystem
         SELECT /*+ FIRST_ROWS(1)  LEADING(D T ST) */
-               DiskCopy.path, DiskCopy.id, DiskCopy.castorfile, TapeCopy.id
+               D.path, D.id, D.castorfile, T.id
           INTO path, dci, castorFileId, tapeCopyId
-          FROM DiskCopy, TapeCopy, Stream2TapeCopy
-         WHERE DiskCopy.status = 10 -- CANBEMIGR
-           AND DiskCopy.filesystem = lastButOneFSUsed
-           AND Stream2TapeCopy.parent = streamId
-           AND TapeCopy.status = 2 -- WAITINSTREAMS
-           AND Stream2TapeCopy.child = TapeCopy.id
-           AND TapeCopy.castorfile = DiskCopy.castorfile
+          FROM DiskCopy D, TapeCopy T, Stream2TapeCopy ST
+         WHERE D.status = 10 -- CANBEMIGR
+           AND D.filesystem = lastButOneFSUsed
+           AND ST.parent = streamId
+           AND T.status = 2 -- WAITINSTREAMS
+           AND ST.child = T.id
+           AND T.castorfile = D.castorfile
            AND ROWNUM < 2;
         SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize
           INTO fileId, nsHost, fileSize
@@ -340,15 +340,15 @@ BEGIN
          ) FN
      WHERE ROWNUM < 2;
     SELECT /*+ FIRST_ROWS(1)  LEADING(D T ST) */
-           DiskCopy.path, DiskCopy.id, DiskCopy.castorfile, TapeCopy.id
+           D.path, D.id, D.castorfile, T.id
       INTO path, dci, castorFileId, tapeCopyId
-      FROM DiskCopy, TapeCopy, Stream2TapeCopy
-     WHERE DiskCopy.status = 10 -- CANBEMIGR
-       AND DiskCopy.filesystem = fileSystemId
-       AND Stream2TapeCopy.parent = streamId
-       AND TapeCopy.status = 2 -- WAITINSTREAMS
-       AND Stream2TapeCopy.child = TapeCopy.id
-       AND TapeCopy.castorfile = DiskCopy.castorfile
+      FROM DiskCopy D, TapeCopy T, Stream2TapeCopy ST
+     WHERE D.status = 10 -- CANBEMIGR
+       AND D.filesystem = fileSystemId
+       AND ST.parent = streamId
+       AND T.status = 2 -- WAITINSTREAMS
+       AND ST.child = T.id
+       AND T.castorfile = D.castorfile
        AND ROWNUM < 2;
     SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize
       INTO fileId, nsHost, fileSize
@@ -735,15 +735,15 @@ BEGIN
        ) FN
    WHERE ROWNUM < 2;
   SELECT /*+ FIRST_ROWS(1)  LEADING(D T ST) */
-         DiskCopy.path, DiskCopy.id, DiskCopy.castorfile, TapeCopy.id
+         D.path, D.id, D.castorfile, T.id
     INTO path, dci, castorFileId, tapeCopyId
-    FROM DiskCopy, TapeCopy, Stream2TapeCopy
-   WHERE DiskCopy.status = 10 -- CANBEMIGR
-     AND DiskCopy.filesystem = fileSystemId
-     AND Stream2TapeCopy.parent = streamId
-     AND TapeCopy.status = 2 -- WAITINSTREAMS
-     AND Stream2TapeCopy.child = TapeCopy.id
-     AND TapeCopy.castorfile = DiskCopy.castorfile
+    FROM DiskCopy D, TapeCopy T, Stream2TapeCopy ST
+   WHERE D.status = 10 -- CANBEMIGR
+     AND D.filesystem = fileSystemId
+     AND ST.parent = streamId
+     AND T.status = 2 -- WAITINSTREAMS
+     AND ST.child = T.id
+     AND T.castorfile = D.castorfile
      AND ROWNUM < 2;
   SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize
     INTO fileId, nsHost, fileSize
