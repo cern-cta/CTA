@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_server.h,v 1.23 2008/10/16 17:09:36 waldron Exp $
+ * $Id: Cns_server.h,v 1.24 2008/11/03 10:33:10 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.23 $ $Date: 2008/10/16 17:09:36 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.24 $ $Date: 2008/11/03 10:33:10 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_SERVER_H
@@ -25,7 +25,8 @@
 
 #define CHECKI	5	/* max interval to check for work to be done */
 #define CNS_MAXNBTHREADS 100	/* maximum number of threads */
-#define CNS_NBTHREADS	20
+#define CNS_NBTHREADS    20
+
 #define LOWER(s) \
 	{ \
 	char * q; \
@@ -305,6 +306,7 @@ EXTERN_C int Cns_srv_utime _PROTO((int, char *, const char *, struct Cns_srv_thr
 EXTERN_C int Cns_srv_replaceseg _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_replacetapecopy _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_updateseg_checksum _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
+EXTERN_C int Cns_srv_updateseg_status _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_updatefile_checksum _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_addreplica _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_delreplica _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));

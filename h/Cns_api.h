@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_api.h,v 1.17 2008/09/22 13:40:18 waldron Exp $
+ * $Id: Cns_api.h,v 1.18 2008/11/03 10:33:10 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.17 $ $Date: 2008/09/22 13:40:18 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.18 $ $Date: 2008/11/03 10:33:10 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_API_H
@@ -315,14 +315,14 @@ EXTERN_C struct Cns_filereplica DLL_DECL *Cns_listreplica _PROTO((const char *, 
 EXTERN_C struct Cns_filereplica DLL_DECL *Cns_listreplicax _PROTO((const char *, const char *, const char *, int, Cns_list *));
 EXTERN_C int DLL_DECL Cns_lstat _PROTO((const char *, struct Cns_filestat *));
 EXTERN_C int DLL_DECL Cns_lastfseq _PROTO((const char *, int, struct Cns_segattrs *));
-EXTERN_C int DLL_DECL Cns_bulkexist _PROTO((const char*, u_signed64 *, int *));
+EXTERN_C int DLL_DECL Cns_bulkexist _PROTO((const char *, u_signed64 *, int *));
 EXTERN_C int DLL_DECL Cns_mkdir _PROTO((const char *, mode_t));
 EXTERN_C int DLL_DECL Cns_mkdirg _PROTO((const char *, const char *, mode_t));
 EXTERN_C int DLL_DECL Cns_modifyclass _PROTO((char *, int, char *, struct Cns_fileclass *));
 EXTERN_C Cns_DIR DLL_DECL *Cns_opendir _PROTO((const char *));
 EXTERN_C Cns_DIR DLL_DECL *Cns_opendirg _PROTO((const char *, const char *));
 EXTERN_C Cns_DIR DLL_DECL *Cns_opendirxg _PROTO((char *, const char *, const char *));
-EXTERN_C int DLL_DECL Cns_ping _PROTO((char *host, char *info));
+EXTERN_C int DLL_DECL Cns_ping _PROTO((char *, char *));
 EXTERN_C int DLL_DECL Cns_queryclass _PROTO((char *, int, char *, struct Cns_fileclass *));
 EXTERN_C struct dirent DLL_DECL *Cns_readdir _PROTO((Cns_DIR *));
 EXTERN_C struct Cns_direncomm DLL_DECL *Cns_readdirc _PROTO((Cns_DIR *));
@@ -336,6 +336,7 @@ EXTERN_C int DLL_DECL Cns_rename _PROTO((const char *, const char *));
 EXTERN_C int DLL_DECL Cns_replacetapecopy _PROTO((struct Cns_fileid *, const char*, const char*, int, struct Cns_segattrs *));
 EXTERN_C int DLL_DECL Cns_replaceseg _PROTO((char *, u_signed64, struct Cns_segattrs *, struct Cns_segattrs *));
 EXTERN_C int DLL_DECL Cns_updateseg_checksum _PROTO((char *, u_signed64, struct Cns_segattrs *, struct Cns_segattrs *));
+EXTERN_C int DLL_DECL Cns_updateseg_status _PROTO((char *, u_signed64, struct Cns_segattrs *, const char));
 EXTERN_C int DLL_DECL Cns_updatefile_checksum _PROTO((const char *, const char *, const char *));
 EXTERN_C void DLL_DECL Cns_rewinddir _PROTO((Cns_DIR *));
 EXTERN_C int DLL_DECL Cns_rmdir _PROTO((const char *));
