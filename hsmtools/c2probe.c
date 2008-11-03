@@ -17,9 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: c2probe.c,v $ $Revision: 1.4 $ $Release$ $Date: 2007/05/07 06:58:05 $ $Author: waldron $
- *
- * 
+ * @(#)$RCSfile: c2probe.c,v $ $Revision: 1.5 $ $Release$ $Date: 2008/11/03 10:37:47 $ $Author: waldron $
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -53,20 +51,20 @@
 #define CLIST_ITERATE_BEGIN(X,Y) {if ( (X) != NULL ) {(Y)=(X); do {
 #define CLIST_ITERATE_END(X,Y) Y=(Y)->next; } while ((X) != (Y));}}
 #define CLIST_INSERT(X,Y) {if ((X) == NULL) {X=(Y); (X)->next = (X)->prev = (X);} \
-else {(Y)->next=(X); (Y)->prev=(X)->prev; (Y)->next->prev=(Y); (Y)->prev->next=(Y);}}
+    else {(Y)->next=(X); (Y)->prev=(X)->prev; (Y)->next->prev=(Y); (Y)->prev->next=(Y);}}
 #define CLIST_DELETE(X,Y) {if ((Y) != NULL) {if ( (Y) == (X) ) (X)=(X)->next; \
- if ((Y)->prev != (Y) && (Y)->next != (Y)) {\
- (Y)->prev->next = (Y)->next; (Y)->next->prev = (Y)->prev;} else {(X)=NULL;}}}
+    if ((Y)->prev != (Y) && (Y)->next != (Y)) {			\
+    (Y)->prev->next = (Y)->next; (Y)->next->prev = (Y)->prev;} else {(X)=NULL;}}}
 
-#define UPDATE_TIMING(SVCC,WHAT) { \
-    TimingItem_t *myItem; \
-    myItem = getTimingItem(SVCC); \
-    myItem->lastUpdate = myItem->WHAT = time(NULL); \
+#define UPDATE_TIMING(SVCC,WHAT) {			\
+    TimingItem_t *myItem;				\
+    myItem = getTimingItem(SVCC);			\
+    myItem->lastUpdate = myItem->WHAT = time(NULL);	\
     (void)unlockTimingList();}
-#define UPDATE_ERROR(SVCC,WHAT) { \
-    TimingItem_t *myItem; \
-    myItem = getTimingItem(SVCC); \
-    addErrorItem(&(myItem->WHAT)); \
+#define UPDATE_ERROR(SVCC,WHAT) {		\
+    TimingItem_t *myItem;			\
+    myItem = getTimingItem(SVCC);		\
+    addErrorItem(&(myItem->WHAT));		\
     (void)unlockTimingList();}
 #define _DELTA_TIME(WHAT,A,B) (WHAT ## A - WHAT ## B >= 0 ? WHAT ## A - WHAT ## B : time(NULL)-WHAT ## B)
 #define DELTA_TIME(WHAT) _DELTA_TIME(WHAT,_end,_start)
@@ -133,39 +131,39 @@ typedef struct TimingItem
 TimingItem_t *timingList = NULL;
 
 enum RunOptions
-{
-  Noop,
-  DirectoryName,
-  StatFile,
-  AppendStat,
-  LogFile,
-  StageHost,
-  SvcClasses,
-  BufferSize,
-  NbBytesToWrite,
-  NbLoops,
-  SleepTime,
-  KeepErrorTime,
-  RunAsUser
-} runOptions;
+  {
+    Noop,
+    DirectoryName,
+    StatFile,
+    AppendStat,
+    LogFile,
+    StageHost,
+    SvcClasses,
+    BufferSize,
+    NbBytesToWrite,
+    NbLoops,
+    SleepTime,
+    KeepErrorTime,
+    RunAsUser
+  } runOptions;
 
 static struct Coptions longopts[] = 
-{
-  {"help",NO_ARGUMENT,&help_flag,'h'},
-  {"DirectoryName",REQUIRED_ARGUMENT,NULL,DirectoryName},
-  {"StatFile",REQUIRED_ARGUMENT,NULL,StatFile},
-  {"AppendStat",NO_ARGUMENT,&appendStat_flag,1},
-  {"LogFile",REQUIRED_ARGUMENT,NULL,LogFile},
-  {"StageHost",REQUIRED_ARGUMENT,NULL,StageHost},
-  {"SvcClasses",REQUIRED_ARGUMENT,NULL,SvcClasses},
-  {"NbLoops",REQUIRED_ARGUMENT,NULL,NbLoops},
-  {"SleepTime",REQUIRED_ARGUMENT,NULL,SleepTime},
-  {"KeepErrorTime",REQUIRED_ARGUMENT,NULL,KeepErrorTime},
-  {"BufferSize",REQUIRED_ARGUMENT,NULL,BufferSize},
-  {"NbBytesToWrite",REQUIRED_ARGUMENT,NULL,NbBytesToWrite},
-  {"RunAsUser",REQUIRED_ARGUMENT,NULL,RunAsUser},
-  {NULL, 0, NULL, 0}
-};
+  {
+    {"help",NO_ARGUMENT,&help_flag,'h'},
+    {"DirectoryName",REQUIRED_ARGUMENT,NULL,DirectoryName},
+    {"StatFile",REQUIRED_ARGUMENT,NULL,StatFile},
+    {"AppendStat",NO_ARGUMENT,&appendStat_flag,1},
+    {"LogFile",REQUIRED_ARGUMENT,NULL,LogFile},
+    {"StageHost",REQUIRED_ARGUMENT,NULL,StageHost},
+    {"SvcClasses",REQUIRED_ARGUMENT,NULL,SvcClasses},
+    {"NbLoops",REQUIRED_ARGUMENT,NULL,NbLoops},
+    {"SleepTime",REQUIRED_ARGUMENT,NULL,SleepTime},
+    {"KeepErrorTime",REQUIRED_ARGUMENT,NULL,KeepErrorTime},
+    {"BufferSize",REQUIRED_ARGUMENT,NULL,BufferSize},
+    {"NbBytesToWrite",REQUIRED_ARGUMENT,NULL,NbBytesToWrite},
+    {"RunAsUser",REQUIRED_ARGUMENT,NULL,RunAsUser},
+    {NULL, 0, NULL, 0}
+  };
 
 void usage(
            cmd
@@ -311,9 +309,9 @@ int splitItemStr(
 
 int qryFile(char *svcClass, char *path) 
 {
-	struct stage_query_req *qrequests;
-	struct  stage_filequery_resp *qresponses;
-	int nbqresps = 0, rc;
+  struct stage_query_req *qrequests;
+  struct stage_filequery_resp *qresponses;
+  int nbqresps = 0, rc;
   char errbuf[ERRBUFSIZE+1];
   struct stage_options opts;
 
