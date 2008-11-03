@@ -27,7 +27,9 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/AggregatorDaemon.hpp"
-#include "Cgetopt.h"
+#include "h/tape_aggregator_constants.h"
+#include "h/Cgetopt.h"
+#include "h/common.h"
 
 
 //------------------------------------------------------------------------------
@@ -35,8 +37,7 @@
 //------------------------------------------------------------------------------
 castor::tape::aggregator::AggregatorDaemon::AggregatorDaemon(
   const char *const daemonName) throw(castor::exception::Exception):
-  castor::server::BaseDaemon(daemonName),
-   m_listenPort(castor::tape::aggregator::AGGREGATOR_PORT) {
+  castor::server::BaseDaemon(daemonName) {
   // Initializes the DLF logging including the definition of the predefined
   // messages.  Please not that castor::server::BaseServer::dlfInit can throw a
   // castor::exception::Exception.
@@ -58,8 +59,6 @@ void castor::tape::aggregator::AggregatorDaemon::usage(std::ostream &os,
     "\n"
     "\t-f, --foreground            Remain in the Foreground\n"
     "\t-c, --config config-file    Configuration file\n"
-    "\t-p, --port                  Overide the default listening port ("
-    << castor::tape::aggregator::AGGREGATOR_PORT << ")\n"
     "\t-h, --help                  Print this help and exit\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
@@ -75,7 +74,6 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(int argc,
   static struct Coptions longopts[] = {
     {"foreground", NO_ARGUMENT      , NULL, 'f'},
     {"config"    , REQUIRED_ARGUMENT, NULL, 'c'},
-    {"port"      , REQUIRED_ARGUMENT, NULL, 'p'},
     {"help"      , NO_ARGUMENT      , NULL, 'h'},
     {NULL        , 0                , NULL,  0 }
   };
@@ -111,22 +109,6 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(int argc,
         }
       }
       setenv("PATH_CONFIG", Coptarg, 1);
-      break;
-    case 'p':
-      m_listenPort = atoi(Coptarg);
-      if(m_listenPort == 0) {
-        std::stringstream oss;
-        oss << "Invalid listening port: " << Coptarg;
-
-        // Log and throw an exception
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("reason", oss.str())};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-          AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
-        castor::exception::InvalidArgument e;
-        e.getMessage() << oss.str();
-        throw e;
-      }
       break;
     case 'h':
       helpOption = true;
@@ -213,6 +195,46 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(int argc,
 //------------------------------------------------------------------------------
 // getListenPort()
 //------------------------------------------------------------------------------
-int castor::tape::aggregator::AggregatorDaemon::getListenPort() {
-  return m_listenPort;
+int castor::tape::aggregator::AggregatorDaemon::getListenPort()
+  throw(castor::exception::InvalidConfigEntry) {
+  int port = TAPE_AGGREGATOR_PORT; // Initialise to default value
+  char *const configEntry = getconfent("TAPEAGGREGATOR", "PORT", 0);
+
+  if(configEntry != NULL) {
+    if(isAValidUInt(configEntry)) {
+      port = atoi(configEntry);
+    } else {
+      castor::exception::InvalidConfigEntry ex("TAPEAGGREGATOR", "PORT",
+        configEntry);
+
+      ex.getMessage() << "Invalid configuration entry: "
+        << ex.getEntryCategory() << " " << ex.getEntryName() << " "
+        << ex.getEntryValue();
+
+      throw ex;
+    }
+  }
+
+  return port;
+}
+
+
+//------------------------------------------------------------------------------
+// isAValidUInt
+//------------------------------------------------------------------------------
+bool castor::tape::aggregator::AggregatorDaemon::isAValidUInt(char *str) {
+  // An empty string is not a valid unsigned integer
+  if(*str == '\0') {
+    return false;
+  }
+
+  // For each character in the string
+  for(;*str != '\0'; str++) {
+    // If the current character is not a valid numerical digit
+    if(*str < '0' || *str > '9') {
+      return false;
+    }
+  }
+
+  return true;
 }

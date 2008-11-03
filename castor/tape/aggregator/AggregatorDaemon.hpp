@@ -27,6 +27,7 @@
 
 #include "castor/server/BaseDaemon.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/InvalidConfigEntry.hpp"
 
 #include <iostream>
 
@@ -35,12 +36,6 @@ namespace castor {
 namespace tape {
 namespace aggregator {
 
-/**
- * Default port on which the aggregator listens.
- */
-const int AGGREGATOR_PORT = 12345;
-
-  	
 /**
  * The aggregator daemon.
  */
@@ -80,7 +75,7 @@ public:
   /**
    * Returns the port on which the server will listen.
    */
-  int getListenPort();
+   int getListenPort() throw(castor::exception::InvalidConfigEntry);
 
 private:
 
@@ -90,9 +85,12 @@ private:
   static castor::dlf::Message s_dlfMessages[];
 
   /**
-   * The port on which the server will listen.
+   * Checks if the specified string is a valid unsigned integer.
+   *
+   * @param str The string to be checked.
+   * @returns true if the string is a valid unsigned integer, else false.
    */
-  int m_listenPort;
+  static bool isAValidUInt(char *str);
 
 }; // class AggregatorDaemon
 

@@ -24,8 +24,10 @@
  
 
 
+#include "castor/exception/Internal.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/tape/aggregator/AggregatorDaemon.hpp"
+#include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/RequestHandlerThread.hpp"
 
 
@@ -60,10 +62,33 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
+
+    //------------------------
+    // Create the thread pools
+    //------------------------
+
     daemon.addThreadPool(
     new castor::server::TCPListenerThreadPool("RequestHandlerThreadPool",
       new castor::tape::aggregator::RequestHandlerThread(),
         daemon.getListenPort()));
+
+    castor::server::BaseThreadPool *requestHandlerThreadPool =
+      daemon.getThreadPool('R');
+    if(requestHandlerThreadPool == NULL) {
+      std::stringstream oss;
+      oss << "Failed to get RequestHandlerThreadPool" << std::endl;
+
+      // Log and throw an exception
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("reason", oss.str())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+        castor::tape::aggregator::AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 1,
+        params);
+      castor::exception::Internal e;
+      e.getMessage() << oss.str();
+      throw e;
+    }
+    requestHandlerThreadPool->setNbThreads(0);
 
     daemon.start();
 
