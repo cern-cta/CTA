@@ -16,7 +16,9 @@
 %attr(0755,root,bin) usr/bin/nsping
 %attr(0755,root,bin) usr/bin/nsrename
 %attr(0755,root,bin) usr/bin/nsrm
+%attr(0755,root,bin) usr/bin/nsrmdir
 %attr(0755,root,bin) usr/bin/nssetchecksum
 %attr(0755,root,bin) usr/bin/nssetacl
 %attr(0755,root,bin) usr/bin/nssetcomment
+%attr(0755,root,bin) usr/bin/nssetsegment
 %attr(0755,root,bin) usr/bin/nstouch
