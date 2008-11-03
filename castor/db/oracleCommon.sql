@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.675 $ $Date: 2008/11/03 09:32:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.676 $ $Date: 2008/11/03 14:04:34 $ $Author: sponcec3 $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -619,6 +619,11 @@ BEGIN
             -- from the name server
             INSERT INTO FilesDeletedProcOutput VALUES (fid, nsh);
           END IF;
+        EXCEPTION WHEN NO_DATA_FOUND THEN
+          -- ignore, this means that the castor file did not exist.
+          -- There is thus no way to find out whether to remove the
+          -- file from the nameserver. For safety, we thus keep it
+          NULL;
         END;
       END IF;
     END IF;
