@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.692 $ $Date: 2008/11/03 09:33:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.693 $ $Date: 2008/11/03 09:35:40 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -138,18 +138,20 @@ BEGIN
                 AND e.fileSystem != fsId
                 AND d.status = 6 -- STAGEOUT
                 AND e.status IN (0, 10, 2, 5, 6, 11)) LOOP -- STAGED/CANBEMIGR/WAITTAPERECALL/WAITFS/STAGEOUT/WAITFS_SCHEDULING
-    -- Delete the DiskCopy
+    -- Invalidate the DiskCopy
     UPDATE DiskCopy
        SET status = 7  -- INVALID
      WHERE id = cf.id;
-    -- Look for request associated to the diskCopy and restart
+    -- Look for requests associated to the diskCopy and restart
     -- it and all the waiting ones
     UPDATE SubRequest SET status = 7 -- FAILED
      WHERE diskCopy = cf.id RETURNING id BULK COLLECT INTO srIds;
     UPDATE SubRequest
        SET status = 7, parent = 0 -- FAILED
      WHERE status = 5 -- WAITSUBREQ
-       AND parent MEMBER OF srIds
+       AND parent IN
+         (SELECT /*+ CARDINALITY(sridTable 5) */ *
+            FROM TABLE(srIds) sridTable)
        AND castorfile = cf.castorfile;
   END LOOP;
 END;
@@ -198,7 +200,7 @@ DECLARE
   s NUMBER;
 BEGIN
   SELECT status INTO s FROM DiskServer WHERE id = :old.diskServer;
-  IF (s = 0) THEN
+  IF s = 0 THEN
     checkFSBackInProd(:old.id);
   END IF;
 END;
@@ -214,14 +216,76 @@ WHEN (old.status IN (1, 2) AND -- DRAINING, DISABLED
       new.status = 0) -- PRODUCTION
 BEGIN
   FOR fs IN (SELECT id, status FROM FileSystem WHERE diskServer = :old.id) LOOP
-    IF (fs.status = 0) THEN
+    IF fs.status = 0 THEN
       checkFSBackInProd(fs.id);
     END IF;
   END LOOP;
 END;
 
 
-/* Trigger used to update the accounting (Quota) information */
+/* Trigger used to check if the maxReplicaNb has been exceeded
+ * after a diskcopy has changed its status to STAGED or CANBEMIGR
+ */
+CREATE OR REPLACE TRIGGER tr_DiskCopy_Stmt_Online
+AFTER UPDATE OF STATUS ON DISKCOPY
+DECLARE
+  svcId NUMBER;
+  maxReplicaNb NUMBER;
+  srIds "numList";
+BEGIN
+  -- Loop over the diskcopies to be processed
+  FOR a IN (SELECT * FROM TooManyReplicasHelper)
+  LOOP
+    -- Get the service class id and max replica number of the
+    -- service class the diskcopy belongs too
+    SELECT SvcClass.id, SvcClass.maxReplicaNb
+      INTO svcId, maxReplicaNb
+      FROM FileSystem, DiskPool2SvcClass, SvcClass
+     WHERE FileSystem.diskpool = DiskPool2SvcClass.parent
+       AND DiskPool2SvcClass.child = SvcClass.id
+       AND FileSystem.id = a.filesystem;
+    -- Produce a list of diskcopies to invalidate should too
+    -- many replicas be online.
+    -- Note: This check deliberately ignores the status of the
+    -- filesystems and diskservers!
+    FOR b IN (SELECT DiskCopy.id FROM (
+                SELECT rownum ind, DiskCopy.id
+                  FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass
+                 WHERE DiskCopy.filesystem = FileSystem.id
+                   AND FileSystem.diskpool = DiskPool2SvcClass.parent
+                   AND DiskPool2SvcClass.child = SvcClass.id
+                   AND DiskCopy.castorfile = a.castorfile
+                   -- Ignore the diskcopy being processed!!!!!
+                   AND DiskCopy.id != a.id
+                   AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
+                   AND SvcClass.id = svcId
+                 ORDER BY DiskCopy.gcWeight DESC) DiskCopy
+              WHERE ind > (maxReplicaNb - 1))
+    LOOP
+      -- Invalidate the diskcopy
+      UPDATE DiskCopy
+         SET status = 7,  -- INVALID
+             gcType = 2   -- Too many replicas
+       WHERE id = b.id;
+      -- Look for requests associated to the diskCopy and restart
+      -- it and all the waiting ones
+      UPDATE SubRequest SET status = 7 -- FAILED
+       WHERE diskCopy = b.id RETURNING id BULK COLLECT INTO srIds;
+      UPDATE SubRequest
+         SET status = 7, parent = 0 -- FAILED
+       WHERE status = 5 -- WAITSUBREQ
+         AND parent IN
+           (SELECT /*+ CARDINALITY(sridTable 5) */ *
+              FROM TABLE(srIds) sridTable)
+         AND castorfile = a.castorfile;
+    END LOOP;
+  END LOOP;
+END;
+
+
+/* Trigger used to update the accounting (Quota) information and
+ * provide input to the statement level trigger defined above
+ */
 CREATE OR REPLACE TRIGGER tr_DiskCopy_Online
 AFTER UPDATE OF status ON DiskCopy
 FOR EACH ROW
@@ -239,6 +303,14 @@ BEGIN
    WHEN MATCHED THEN UPDATE SET nbBytes = nbBytes + DC.fileSize
    WHEN NOT MATCHED THEN INSERT (euid, nbBytes, svcClass)
                          VALUES (DC.euid, DC.fileSize, DC.SvcClass);
+
+  -- Insert the information about the diskcopy being processed into
+  -- the TooManyReplicasHelper. This information will be used later
+  -- on the DiskCopy AFTER UPDATE statement level trigger. We cannot
+  -- do the work of that trigger here as it would result in
+  -- `ORA-04091: table is mutating, trigger/function` errors
+  INSERT INTO TooManyReplicasHelper
+  VALUES (:new.id, :new.filesystem, :new.castorfile);
 END;
 
 
@@ -494,10 +566,10 @@ RETURN NUMBER AS
 BEGIN
   -- Determine if the service class is D1 and the default
   -- file size. If the default file size is 0 we assume 2G
-  SELECT failJobsWhenNoSpace, 
+  SELECT failJobsWhenNoSpace,
          decode(defaultFileSize, 0, 2000000000, defaultFileSize)
     INTO failJobsFlag, defFileSize
-    FROM SvcClass 
+    FROM SvcClass
    WHERE id = svcClassId;
   -- If D1 check that the pool has space
   IF (failJobsFlag = 1) THEN
@@ -532,7 +604,7 @@ BEGIN
   -- we assume we have tape backend and we let the job
   SELECT nvl(nbCopies, nbTCs) INTO nbForcedTCs
     FROM FileClass, SvcClass
-   WHERE SvcClass.forcedFileClass = FileClass.id(+) 
+   WHERE SvcClass.forcedFileClass = FileClass.id(+)
      AND SvcClass.id = svcClassId;
   IF nbTCs > nbForcedTCs THEN
     -- typically, when nbTCs = 1 and nbForcedTCs = 0: fail the job
@@ -848,7 +920,7 @@ BEGIN
               SELECT * FROM (
                 SELECT SvcClass.id, count(*) found
                   FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
-                 WHERE DiskCopy.filesystem = filesystem.id
+                 WHERE DiskCopy.filesystem = FileSystem.id
                    AND DiskCopy.castorfile = cfId
                    AND FileSystem.diskpool = DiskPool2SvcClass.parent
                    AND DiskPool2SvcClass.child = SvcClass.id
@@ -1960,7 +2032,7 @@ BEGIN
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- Nothing running
       deleteTapeCopies(cfId);
-      -- Delete the DiskCopies
+      -- Invalidate the DiskCopies
       UPDATE DiskCopy
          SET status = 7  -- INVALID
        WHERE status = 2  -- WAITTAPERECALL
@@ -1987,7 +2059,7 @@ BEGIN
   FORALL i IN sr.FIRST..sr.LAST
     UPDATE SubRequest
        SET status = 7, parent = 0,  -- FAILED
-           errorCode = 4,  -- EINT
+           errorCode = 4,  -- EINTR
            errorMessage = 'Canceled by another user request'
      WHERE id = sr(i) OR parent = sr(i);
   -- Set selected DiskCopies to INVALID. In any case keep
