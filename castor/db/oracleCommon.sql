@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.673 $ $Date: 2008/10/20 13:19:02 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.674 $ $Date: 2008/11/03 09:27:32 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -9,7 +9,7 @@
  *******************************************************************/
 
 /* A small table used to cross check code and DB versions */
-UPDATE CastorVersion SET schemaVersion = '2_1_8_0';
+UPDATE CastorVersion SET schemaVersion = '2_1_8_3';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -139,7 +139,7 @@ CREATE INDEX I_GCFile_Request ON GCFile (request);
 CREATE INDEX I_Segment_Tape ON Segment (tape);
 
 /* Some constraints */
-ALTER TABLE FileSystem ADD CONSTRAINT diskserver_fk FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
+ALTER TABLE FileSystem ADD CONSTRAINT diskserver_FK FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
 ALTER TABLE FileSystem MODIFY (status NOT NULL);
 ALTER TABLE FileSystem MODIFY (diskServer NOT NULL);
 ALTER TABLE DiskServer MODIFY (status NOT NULL);
@@ -175,6 +175,10 @@ ALTER TABLE SvcClass MODIFY (name NOT NULL)
 /* DiskCopy constraints */
 ALTER TABLE DiskCopy MODIFY (nbCopyAccesses DEFAULT 0);
 ALTER TABLE DiskCopy MODIFY (gcType DEFAULT NULL);
+ALTER TABLE DiskCopy ADD CONSTRAINT I_DiskCopyCastorFile_FK
+  FOREIGN KEY (castorFile)
+  REFERENCES CastorFile (id)
+  INITIALLY DEFERRED DEFERRABLE;
 
 /* Global temporary table to handle output of the filesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
@@ -207,7 +211,7 @@ CREATE TABLE CleanupJobLog
    operation INTEGER NOT NULL);
 
 /* Temporary table to handle removing of priviledges */
-CREATE GLOBAL TEMPORARY TABLE removePrivilegeTmpTable
+CREATE GLOBAL TEMPORARY TABLE RemovePrivilegeTmpTable
   (svcClass VARCHAR2(2048),
    euid NUMBER,
    egid NUMBER,
@@ -215,7 +219,17 @@ CREATE GLOBAL TEMPORARY TABLE removePrivilegeTmpTable
   ON COMMIT DELETE ROWS;
 
 /* Global temporary table to store ids temporarily in the bulkCreateObj procedures */
-CREATE GLOBAL TEMPORARY TABLE bulkSelectHelper(objId NUMBER) ON COMMIT DELETE ROWS;
+CREATE GLOBAL TEMPORARY TABLE BulkSelectHelper
+  (objId NUMBER)
+  ON COMMIT DELETE ROWS;
+
+/* Global temporary table to store the information on diskcopyies which need to
+ * processed to see if too many replicas are online. This temporary table is
+ * required to solve the error: `ORA-04091: table is mutating, trigger/function`
+ */
+CREATE GLOBAL TEMPORARY TABLE TooManyReplicasHelper
+  (id NUMBER, fileSystem NUMBER, castorFile NUMBER)
+  ON COMMIT DELETE ROWS;
 
 /* SQL statements for table PriorityMap */
 CREATE TABLE PriorityMap (euid INTEGER, egid INTEGER, priority INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -480,7 +494,7 @@ BEGIN
                AND DiskPool2SvcClass.child = SvcClass.id
              ORDER BY SvcClass.name)
   LOOP
-    svcClassList := svcClassList || ',' || a.name;               
+    svcClassList := svcClassList || ',' || a.name;
   END LOOP;
   RETURN ltrim(svcClassList, ',');
 END;
@@ -516,7 +530,7 @@ BEGIN
    WHERE id = cfId FOR UPDATE;
   -- Cancel the recall
   deleteTapeCopies(cfId);
-  -- Delete the DiskCopy
+  -- Invalidate the DiskCopy
   UPDATE DiskCopy SET status = 7 WHERE id = dcId; -- INVALID
   -- Look for request associated to the recall and fail
   -- it and all the waiting ones
@@ -525,7 +539,9 @@ BEGIN
   UPDATE SubRequest
      SET status = newSubReqStatus, parent = 0 -- FAILED
    WHERE status = 5 -- WAITSUBREQ
-     AND parent IN (SELECT /*+ CARDINALITY(sridTable 5) */ * FROM TABLE(srIds) sridTable)
+     AND parent IN
+       (SELECT /*+ CARDINALITY(sridTable 5) */ *
+          FROM TABLE(srIds) sridTable)
      AND castorfile = cfId;
 END;
 
