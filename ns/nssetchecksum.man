@@ -1,65 +1,44 @@
-.\" @(#)$RCSfile: nssetchecksum.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:23 $ CERN IT-ADC-CA Ben Couturier
-.\" Copyright (C) 2004 by CERN/IT/ADC/CA
+.\" @(#)$RCSfile: nssetchecksum.man,v $ $Revision: 1.3 $ $Date: 2008/11/03 10:22:31 $ CERN IT/DM
+.\" Copyright (C) 2004 by CERN/IT/D
 .\" All rights reserved
 .\"
-.TH NSSETCHECKSUM 1 "$Date: 2006/01/26 15:36:23 $" CASTOR "Cns User Commands"
+.TH NSSETCHECKSUM 1 "$Date: 2008/11/03 10:22:31 $" CASTOR "Cns User Commands"
 .SH NAME
-nssetchecksum \- Sets or resets the checksum for a tape segment.
+nssetchecksum \- set or reset the checksum for a file
 .SH SYNOPSIS
-.B nssetchecksum
-.B --copyno  
-.RB copy_number
-.B --segmentno 
-.RB segment_number
-.RB [ --update ]
-.B --checksum_name
-.RB checksum_name
-.B --checksum
-.RB checksum 
-.IR path ...
-.sp
-.B nssetchecksum
-.B --copyno  
-.RB copy_number
-.B --segmentno 
-.RB segment_number
-.B --clr
-.IR path ...
+.B nssetchecksum [OPTION]... PATH
 .SH DESCRIPTION
 .B nssetchecksum
-Sets or resets the checksum for a tape segment. Requires the ADMIN privilege in
-Cupv, unless the
-.B --update 
-option is used, in which case tape segments with empty checksum
-can be updated without special privileges.
+set or resets the checksum for a file in the name server. Requires the user to have access to
+the file.
 .TP
-.I path
+.I PATH
 specifies the CASTOR pathname.
+If PATH does not start with
+.BR / ,
+it is prefixed by the content of the
+.B CASTOR_HOME
+environment variable.
 .SH OPTIONS
 .TP
-.B --copyno
-specifies which copy of the file should be modified.
+.B -n,\ \-\-name=CKSUMNAME
+Name of the checksum to be stored in the name server.
 .TP
-.B --segmentno
-specifies which tape segment should be modified.
+.B -k,\ \-\-checksum=CKSUM
+Value of the checksum to be stored in the name server.
 .TP
-.B --update
-use the Cns_updateseg_checksum call rather than Cns_replaceseg.
+.B --clear
+Resets the checksum to a NULL name, and a 0 value.
 .TP
-.B --checksum_name
-Name of the checksum to be stored in the database.
-.TP
-.B --checksum
-Value of the checksum to be stored in the database.
-.TP
-.B --clr
-Resets the checksum to a NULL name, and a 0 value. Cannot be used in conjunction
-with --checksum_name and --checksum nor --update. Requires the ADMIN UPV privileges.
+.B \-\-help
+Display this help and exit
+.SH EXAMPLES
+
 .SH EXIT STATUS
 This program returns 0 if the operation was successful or >0 if the operation
 failed.
 .SH SEE ALSO
-.BR Cns_replaceseg(3) ,
-.BR Cns_updateseg_checksum(3)
+.BR Castor_limits(3) ,
+.BR Cns_updatefile_checksum(3)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
