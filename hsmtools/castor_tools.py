@@ -17,7 +17,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.6 $ $Release$ $Date: 2008/10/19 09:19:56 $ $Author: sponcec3 $
+# * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.7 $ $Release$ $Date: 2008/11/03 15:28:42 $ $Author: itglp $
 # *
 # * utility functions for castor tools written in python
 # *
@@ -100,6 +100,23 @@ def connectToNS():
 
 def disconnectDB(connection):
   connection.close()
+
+# create the nsFileCl dictionary from nslistclass
+def parseNsListClass():
+  global nsFileCl 
+  nsFileCl = {'0' : 'null'}
+  print "Parsing nslistclass output..."
+  #nsout = open('nslistclass_output.txt', 'r')
+  nsout = os.popen("nslistclass | grep -C1 CLASS_ID | awk '{ print $2 }'", 'r')
+  while(1):
+    currentLine = nsout.readline()
+    if currentLine == '':
+      nsout.close()
+      return
+    nsFileCl[currentLine.strip('\n')] = nsout.readline().strip('\n')
+    nsout.readline()
+    nsout.readline()
+
 
 DiskCopyStatus = ["DISKCOPY_STAGED",
                   "DISKCOPY_WAITDISK2DISKCOPY",
