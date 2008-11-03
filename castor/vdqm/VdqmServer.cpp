@@ -303,7 +303,7 @@ void castor::vdqm::VdqmServer::initDatabaseService(Cuuid_t &cuuid) {
 // getSchedulerTimeout
 //------------------------------------------------------------------------------
 int castor::vdqm::VdqmServer::getSchedulerTimeout()
-  throw(castor::vdqm::exception::InvalidConfigEntry) {
+  throw(castor::exception::InvalidConfigEntry) {
   int timeout = SCHEDULERTIMEOUT; // Initialise to default value
   char *const configEntry = getconfent("VDQM", "SCHEDULERTIMEOUT", 0);
 
@@ -311,8 +311,8 @@ int castor::vdqm::VdqmServer::getSchedulerTimeout()
     if(Utils::isAValidUInt(configEntry)) {
       timeout = atoi(configEntry);
     } else {
-      castor::vdqm::exception::InvalidConfigEntry ex("VDQM",
-        "SCHEDULERTIMEOUT", configEntry);
+      castor::exception::InvalidConfigEntry ex("VDQM", "SCHEDULERTIMEOUT",
+        configEntry);
 
       ex.getMessage() << "Invalid configuration entry: "
         << ex.getEntryCategory() << " " << ex.getEntryName() << " "
@@ -330,7 +330,7 @@ int castor::vdqm::VdqmServer::getSchedulerTimeout()
 // getRTCPJobSubmitterTimeout
 //------------------------------------------------------------------------------
 int castor::vdqm::VdqmServer::getRTCPJobSubmitterTimeout()
-  throw(castor::vdqm::exception::InvalidConfigEntry) {
+  throw(castor::exception::InvalidConfigEntry) {
   int timeout = RTCPJOBSUBMITTERTIMEOUT; // Initialise to default value
   char *const configEntry = getconfent("VDQM", "RTCPJOBSUBMITTERTIMEOUT", 0);
 
@@ -338,7 +338,7 @@ int castor::vdqm::VdqmServer::getRTCPJobSubmitterTimeout()
     if(Utils::isAValidUInt(configEntry)) {
       timeout = atoi(configEntry);
     } else {
-      castor::vdqm::exception::InvalidConfigEntry ex("VDQM",
+      castor::exception::InvalidConfigEntry ex("VDQM",
         "RTCPJOBSUBMITTERTIMEOUT", configEntry);
 
       ex.getMessage() << "Invalid configuration entry: "
@@ -357,7 +357,7 @@ int castor::vdqm::VdqmServer::getRTCPJobSubmitterTimeout()
 // getListenPort
 //------------------------------------------------------------------------------
 int castor::vdqm::VdqmServer::getListenPort()
-  throw(castor::vdqm::exception::InvalidConfigEntry) {
+  throw(castor::exception::InvalidConfigEntry) {
   int port = VDQMPORT; // Initialise to default value
   char *const configEntry = getconfent("VDQM", "PORT", 0);
 
@@ -365,8 +365,7 @@ int castor::vdqm::VdqmServer::getListenPort()
     if(Utils::isAValidUInt(configEntry)) {
       port = atoi(configEntry);
     } else {
-      castor::vdqm::exception::InvalidConfigEntry ex("VDQM", "PORT",
-        configEntry);
+      castor::exception::InvalidConfigEntry ex("VDQM", "PORT", configEntry);
 
       ex.getMessage() << "Invalid configuration entry: "
         << ex.getEntryCategory() << " " << ex.getEntryName() << " "
@@ -384,7 +383,7 @@ int castor::vdqm::VdqmServer::getListenPort()
 // getNotifyPort
 //------------------------------------------------------------------------------
 int castor::vdqm::VdqmServer::getNotifyPort()
-  throw(castor::vdqm::exception::InvalidConfigEntry) {
+  throw(castor::exception::InvalidConfigEntry) {
   int port = VDQMNOTIFYPORT;  // Initialise to default value
   char *const configEntry = getconfent("VDQM", "NOTIFYPORT", 0);
 
@@ -392,7 +391,7 @@ int castor::vdqm::VdqmServer::getNotifyPort()
     if(Utils::isAValidUInt(configEntry)) {
       port = atoi(configEntry);
     } else {
-      castor::vdqm::exception::InvalidConfigEntry ex("VDQM", "NOTIFYPORT",
+      castor::exception::InvalidConfigEntry ex("VDQM", "NOTIFYPORT",
         configEntry);
 
       ex.getMessage() << "Invalid configuration entry: "

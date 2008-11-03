@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
 
     try {
       vdqmPort = server.getListenPort();
-    } catch(castor::vdqm::exception::InvalidConfigEntry &ex) {
+    } catch(castor::exception::InvalidConfigEntry &ex) {
       castor::dlf::Param params[] = {
         castor::dlf::Param("invalidValue", ex.getEntryValue())};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
 
     try {
       timeout = server.getSchedulerTimeout();
-    } catch(castor::vdqm::exception::InvalidConfigEntry &ex) {
+    } catch(castor::exception::InvalidConfigEntry &ex) {
       castor::dlf::Param params[] = {
         castor::dlf::Param("invalidValue", ex.getEntryValue())};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
 
     try {
       timeout = server.getRTCPJobSubmitterTimeout();
-    } catch(castor::vdqm::exception::InvalidConfigEntry &ex) {
+    } catch(castor::exception::InvalidConfigEntry &ex) {
       castor::dlf::Param params[] = {
         castor::dlf::Param("invalidValue", ex.getEntryValue())};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
@@ -157,7 +157,7 @@ int main(int argc, char *argv[]) {
 
     try {
       notifyPort = server.getNotifyPort();
-    } catch(castor::vdqm::exception::InvalidConfigEntry &ex) {
+    } catch(castor::exception::InvalidConfigEntry &ex) {
       castor::dlf::Param params[] = {
         castor::dlf::Param("invalidValue", ex.getEntryValue())};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,

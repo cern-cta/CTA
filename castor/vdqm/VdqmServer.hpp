@@ -26,7 +26,8 @@
 #define CASTOR_VDQM_VDQMSERVER_HPP 1
 
 #include "castor/server/BaseDaemon.hpp"
-#include "castor/vdqm/exception/InvalidConfigEntry.hpp"
+#include "castor/exception/InvalidConfigEntry.hpp"
+
 #include <string>
 
 namespace castor {
@@ -75,27 +76,25 @@ namespace castor {
        * Returns the scheduler timeout, in other words the time a scheduler
        * thread will sleep when there is no work to be done.
        */
-      int getSchedulerTimeout()
-        throw(castor::vdqm::exception::InvalidConfigEntry);
+      int getSchedulerTimeout() throw(castor::exception::InvalidConfigEntry);
 
       /**
        * Returns the RTCP job submitter timeout, in other words the time an
        * RTCP job submitter thread will sleep when there is no work to be done.
        */
       int getRTCPJobSubmitterTimeout()
-        throw(castor::vdqm::exception::InvalidConfigEntry);
+        throw(castor::exception::InvalidConfigEntry);
 
       /**
        * Returns the port on which the server will listen.
        */
-      int getListenPort() throw(castor::vdqm::exception::InvalidConfigEntry);
+      int getListenPort() throw(castor::exception::InvalidConfigEntry);
 
       /**
        * Returns the UPD port on which the server will listen fori
        * notifications.
        */
-      int getNotifyPort()
-        throw(castor::vdqm::exception::InvalidConfigEntry);
+      int getNotifyPort() throw(castor::exception::InvalidConfigEntry);
 
       /**
        * Returns the number of threads in the request handler thread pool.
