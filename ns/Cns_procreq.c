@@ -47,6 +47,23 @@ extern char *cmd;
 extern char localhost[CA_MAXHOSTNAMELEN+1];
 extern int rdonly;
 
+void get_cwd_path (thip, cwd, cwdpath)
+     struct Cns_srv_thread_info *thip;
+     u_signed64 cwd;
+     char *cwdpath;
+{
+  char path[CA_MAXPATHLEN+1];
+  char *p = path;
+  cwdpath[0] = path[0] = '\0';
+  if (cwd == 2) {
+    p = "/";
+  } else if (cwd > 0) {
+    Cns_getpath_by_fileid (&thip->dbfd, cwd, &p);
+  }
+  if (path[0] != '\0')
+    sprintf (cwdpath, "(cwd: %s)", p);
+}
+
 int get_client_actual_id (thip, uid, gid, user)
      struct Cns_srv_thread_info *thip;
      uid_t *uid;
@@ -258,6 +275,7 @@ int Cns_srv_access(magic, req_data, clienthost, thip)
   char logbuf[CA_MAXPATHLEN+13];
   mode_t mode;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   uid_t uid;
   char *user;
@@ -272,7 +290,8 @@ int Cns_srv_access(magic, req_data, clienthost, thip)
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURNQ (SENAMETOOLONG);
   unmarshall_LONG (rbp, amode);
-  sprintf (logbuf, "access %o %s", amode, path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "access %o %s %s", amode, path, cwdpath);
   Cns_logreq (func, logbuf);
 
   if (amode & ~(R_OK | W_OK | X_OK | F_OK))
@@ -503,6 +522,7 @@ int Cns_srv_chclass(magic, req_data, clienthost, thip)
   struct Cns_class_metadata old_class_entry;
   Cns_dbrec_addr old_rec_addrc;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   Cns_dbrec_addr rec_addr;
   uid_t uid;
@@ -520,7 +540,8 @@ int Cns_srv_chclass(magic, req_data, clienthost, thip)
   unmarshall_LONG (rbp, classid);
   if (unmarshall_STRINGN (rbp, class_name, CA_MAXCLASNAMELEN+1))
     RETURN (EINVAL);
-  sprintf (logbuf, "chclass %s %d %s", path, classid, class_name);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "chclass %s %d %s %s", path, classid, class_name, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -608,6 +629,7 @@ int Cns_srv_chdir(magic, req_data, clienthost, thip)
   gid_t gid;
   char logbuf[CA_MAXPATHLEN+12];
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   char repbuf[8];
   char *sbp;
@@ -623,7 +645,8 @@ int Cns_srv_chdir(magic, req_data, clienthost, thip)
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
-  sprintf (logbuf, "chdir %s", path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "chdir %s %s", path, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* check parent directory components for search permission and
@@ -661,6 +684,7 @@ int Cns_srv_chmod(magic, req_data, clienthost, thip)
   char logbuf[CA_MAXPATHLEN+12];
   mode_t mode;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   Cns_dbrec_addr rec_addr;
   uid_t uid;
@@ -678,7 +702,8 @@ int Cns_srv_chmod(magic, req_data, clienthost, thip)
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
   unmarshall_LONG (rbp, mode);
-  sprintf (logbuf, "chmod %o %s", mode, path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "chmod %o %s %s", mode, path, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -734,6 +759,7 @@ int Cns_srv_chown(magic, req_data, clienthost, thip)
   gid_t new_gid;
   uid_t new_uid;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   struct passwd *pw;
   char *rbp;
   Cns_dbrec_addr rec_addr;
@@ -753,7 +779,8 @@ int Cns_srv_chown(magic, req_data, clienthost, thip)
     RETURN (SENAMETOOLONG);
   unmarshall_LONG (rbp, new_uid);
   unmarshall_LONG (rbp, new_gid);
-  sprintf (logbuf, "chown %d:%d %s", new_uid, new_gid, path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "chown %d:%d %s %s", new_uid, new_gid, path, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -847,6 +874,7 @@ int Cns_srv_creat(magic, req_data, clienthost, thip)
   mode_t mode;
   struct Cns_file_metadata parent_dir;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   Cns_dbrec_addr rec_addr; /* file record address */
   Cns_dbrec_addr rec_addrp; /* parent record address */
@@ -880,7 +908,8 @@ int Cns_srv_creat(magic, req_data, clienthost, thip)
       RETURN (EINVAL);
   } else
     *guid = '\0';
-  sprintf (logbuf, "creat %s %s %o %o", path, guid, mode, mask);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "creat %s %s %o %o %s", path, guid, mode, mask, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -1007,6 +1036,7 @@ int Cns_srv_delcomment(magic, req_data, clienthost, thip)
   gid_t gid;
   char logbuf[CA_MAXPATHLEN+12];
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   Cns_dbrec_addr rec_addru;
   uid_t uid;
@@ -1024,7 +1054,8 @@ int Cns_srv_delcomment(magic, req_data, clienthost, thip)
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
-  sprintf (logbuf, "delcomment %s", path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "delcomment %s %s", path, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -1072,6 +1103,7 @@ int Cns_srv_delete(magic, req_data, clienthost, thip)
   char logbuf[CA_MAXPATHLEN+8];
   struct Cns_file_metadata parent_dir;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   Cns_dbrec_addr rec_addr; /* file record address */
   Cns_dbrec_addr rec_addrp; /* parent record address */
@@ -1092,7 +1124,8 @@ int Cns_srv_delete(magic, req_data, clienthost, thip)
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
-  sprintf (logbuf, "delete %s", path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "delete %s %s", path, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -1397,6 +1430,7 @@ int Cns_srv_du(magic, req_data, clienthost, thip)
   u_signed64 nbbytes = 0;
   u_signed64 nbentries = 0;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   char repbuf[16];
   char *sbp;
@@ -1413,7 +1447,8 @@ int Cns_srv_du(magic, req_data, clienthost, thip)
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURNQ (SENAMETOOLONG);
   unmarshall_WORD (rbp, Lflag);
-  sprintf (logbuf, "du %s", path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "du %s %s", path, cwdpath);
   Cns_logreq (func, logbuf);
 
   if (! cwd && *path == 0)
@@ -1579,6 +1614,7 @@ int Cns_srv_getacl(magic, req_data, clienthost, thip)
   int nentries = 0;
   char *p;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   char repbuf[REPBUFSZ];
   char *sbp;
@@ -1594,7 +1630,8 @@ int Cns_srv_getacl(magic, req_data, clienthost, thip)
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURNQ (SENAMETOOLONG);
-  sprintf (logbuf, "getacl %s", path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "getacl %s %s", path, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* check parent directory components for search permission and
@@ -1649,6 +1686,7 @@ int Cns_srv_getcomment(magic, req_data, clienthost, thip)
   gid_t gid;
   char logbuf[CA_MAXPATHLEN+12];
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   char repbuf[CA_MAXCOMMENTLEN+1];
   char *sbp;
@@ -1665,7 +1703,8 @@ int Cns_srv_getcomment(magic, req_data, clienthost, thip)
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURNQ (SENAMETOOLONG);
-  sprintf (logbuf, "getcomment %s", path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "getcomment %s %s", path, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* check parent directory components for search permission and
@@ -1714,6 +1753,7 @@ int Cns_srv_getlinks(magic, req_data, clienthost, thip)
   int n;
   char *p;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   char repbuf[REPBUFSZ];
   char *sbp = repbuf;
@@ -1732,7 +1772,8 @@ int Cns_srv_getlinks(magic, req_data, clienthost, thip)
     RETURNQ (SENAMETOOLONG);
   if (unmarshall_STRINGN (rbp, guid, CA_MAXGUIDLEN + 1) < 0)
     RETURNQ (EINVAL);
-  sprintf (logbuf, "getlinks %s %s", path, guid);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "getlinks %s %s %s", path, guid, cwdpath);
   Cns_logreq (func, logbuf);
 
   if (*path) {
@@ -1793,6 +1834,8 @@ int Cns_srv_getlinks(magic, req_data, clienthost, thip)
   RETURNQ (0);
 }
 
+/* Cns_srv_getpath - resolve a file id to a path */
+
 int Cns_srv_getpath(magic, req_data, clienthost, thip)
      int magic;
      char *req_data;
@@ -1851,6 +1894,7 @@ int Cns_srv_getreplica(magic, req_data, clienthost, thip)
   int n;
   int nbrepl = 0;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   struct Cns_file_replica rep_entry;
   char repbuf[REPBUFSZ];
@@ -1872,7 +1916,8 @@ int Cns_srv_getreplica(magic, req_data, clienthost, thip)
     RETURNQ (EINVAL);
   if (unmarshall_STRINGN (rbp, se, CA_MAXHOSTNAMELEN + 1) < 0)
     RETURNQ (EINVAL);
-  sprintf (logbuf, "getreplica %s %s", path, guid);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "getreplica %s %s %s", path, guid, cwdpath);
   Cns_logreq (func, logbuf);
 
   if (*path) {
@@ -1954,6 +1999,7 @@ int Cns_srv_getsegattrs(magic, req_data, clienthost, thip)
   char logbuf[CA_MAXPATHLEN+34];
   int nbseg = 0;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *q;
   char *rbp;
   char repbuf[REPBUFSZ];
@@ -1973,8 +2019,9 @@ int Cns_srv_getsegattrs(magic, req_data, clienthost, thip)
   unmarshall_HYPER (rbp, fileid);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
-  sprintf (logbuf, "getsegattrs %s %s",
-           u64tostr (fileid, tmpbuf, 0), path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "getsegattrs %s %s %s",
+           u64tostr (fileid, tmpbuf, 0), path, cwdpath);
   Cns_logreq (func, logbuf);
 
   if (fileid) {
@@ -2058,6 +2105,7 @@ int Cns_srv_lchown(magic, req_data, clienthost, thip)
   gid_t new_gid;
   uid_t new_uid;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   struct passwd *pw;
   char *rbp;
   Cns_dbrec_addr rec_addr;
@@ -2077,7 +2125,8 @@ int Cns_srv_lchown(magic, req_data, clienthost, thip)
     RETURN (SENAMETOOLONG);
   unmarshall_LONG (rbp, new_uid);
   unmarshall_LONG (rbp, new_gid);
-  sprintf (logbuf, "lchown %d:%d %s", new_uid, new_gid, path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "lchown %d:%d %s %s", new_uid, new_gid, path, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -2150,6 +2199,8 @@ int Cns_srv_lchown(magic, req_data, clienthost, thip)
     RETURN (serrno);
   RETURN (0);
 }
+
+/* Cns_srv_listclass - list file classes */
 
 int Cns_srv_listclass(magic, req_data, clienthost, thip, class_entry, endlist, dblistptr)
      int magic;
@@ -2283,6 +2334,7 @@ int Cns_srv_listlinks(magic, req_data, clienthost, thip, lnk_entry, endlist, dbl
   char outbuf[LISTBUFSZ+4];
   char *p;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   char *sbp;
   char tmp_path[CA_MAXPATHLEN+1];
@@ -2302,7 +2354,8 @@ int Cns_srv_listlinks(magic, req_data, clienthost, thip, lnk_entry, endlist, dbl
   if (unmarshall_STRINGN (rbp, guid, CA_MAXGUIDLEN + 1) < 0)
     RETURN (EINVAL);
   unmarshall_WORD (rbp, bol);
-  sprintf (logbuf, "listlinks %s %s", path, guid);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "listlinks %s %s %s", path, guid, cwdpath);
   Cns_logreq (func, logbuf);
 
   if (bol) {
@@ -2490,6 +2543,7 @@ int Cns_srv_listreplica(magic, req_data, clienthost, thip, fmd_entry, rep_entry,
   char outbuf[LISTBUFSZ+4];
   char *p;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   char *sbp;
   uid_t uid;
@@ -2508,7 +2562,8 @@ int Cns_srv_listreplica(magic, req_data, clienthost, thip, fmd_entry, rep_entry,
   if (unmarshall_STRINGN (rbp, guid, CA_MAXGUIDLEN + 1) < 0)
     RETURN (EINVAL);
   unmarshall_WORD (rbp, bol);
-  sprintf (logbuf, "listreplica %s %s", path, guid);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "listreplica %s %s %s", path, guid, cwdpath);
   Cns_logreq (func, logbuf);
 
   if (bol) {
@@ -2959,6 +3014,7 @@ int Cns_srv_lstat(magic, req_data, clienthost, thip)
   gid_t gid;
   char logbuf[CA_MAXPATHLEN+8];
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   char repbuf[57];
   char *sbp;
@@ -2976,7 +3032,8 @@ int Cns_srv_lstat(magic, req_data, clienthost, thip)
   unmarshall_HYPER (rbp, fileid);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURNQ (SENAMETOOLONG);
-  sprintf (logbuf, "lstat %s %s", u64tostr(fileid, tmpbuf, 0), path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "lstat %s %s %s", u64tostr(fileid, tmpbuf, 0), path, cwdpath);
   Cns_logreq (func, logbuf);
 
   if (fileid) {
@@ -3034,6 +3091,7 @@ int Cns_srv_mkdir(magic, req_data, clienthost, thip)
   mode_t mode;
   struct Cns_file_metadata parent_dir;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   Cns_dbrec_addr rec_addrc;
   Cns_dbrec_addr rec_addrp;
@@ -3061,7 +3119,8 @@ int Cns_srv_mkdir(magic, req_data, clienthost, thip)
       RETURN (EINVAL);
   } else
     *guid = '\0';
-  sprintf (logbuf, "mkdir %s %s %o %o", path, guid, mode, mask);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "mkdir %s %s %o %o %s", path, guid, mode, mask, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -3322,6 +3381,7 @@ int Cns_srv_open(magic, req_data, clienthost, thip)
   int oflag;
   struct Cns_file_metadata parent_dir;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   Cns_dbrec_addr rec_addr; /* file record address */
   Cns_dbrec_addr rec_addrp; /* parent record address */
@@ -3345,7 +3405,8 @@ int Cns_srv_open(magic, req_data, clienthost, thip)
   unmarshall_LONG (rbp, oflag);
   oflag = ntohopnflg (oflag);
   unmarshall_LONG (rbp, mode);
-  sprintf (logbuf, "open %s %o %o %o", path, oflag, mode, mask);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "open %s %o %o %o %s", path, oflag, mode, mask, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -3465,6 +3526,7 @@ int Cns_srv_opendir(magic, req_data, clienthost, thip)
   char guid[CA_MAXGUIDLEN+1];
   char logbuf[CA_MAXPATHLEN+CA_MAXGUIDLEN+10];
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   char repbuf[8];
   char *sbp;
@@ -3485,7 +3547,8 @@ int Cns_srv_opendir(magic, req_data, clienthost, thip)
       RETURN (EINVAL);
   } else
     *guid = '\0';
-  sprintf (logbuf, "opendir %s %s", path, guid);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "opendir %s %s %s", path, guid, cwdpath);
   Cns_logreq (func, logbuf);
 
   if (*guid) {
@@ -3901,6 +3964,7 @@ int Cns_srv_readlink(magic, req_data, clienthost, thip)
   struct Cns_symlinks lnk_entry;
   char logbuf[CA_MAXPATHLEN+10];
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   char repbuf[CA_MAXPATHLEN+1];
   char *sbp;
@@ -3916,7 +3980,8 @@ int Cns_srv_readlink(magic, req_data, clienthost, thip)
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURNQ (SENAMETOOLONG);
-  sprintf (logbuf, "readlink %s", path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "readlink %s %s", path, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* check parent directory components for search permission and
@@ -3975,6 +4040,7 @@ int Cns_srv_rename(magic, req_data, clienthost, thip)
   Cns_dbrec_addr old_rec_addr;
   Cns_dbrec_addr old_rec_addrp;
   char oldpath[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   Cns_dbrec_addr rec_addrl;       /* symlink record address */
   Cns_dbrec_addr rec_addrs; /* segment record address */
@@ -3999,7 +4065,8 @@ int Cns_srv_rename(magic, req_data, clienthost, thip)
     RETURN (SENAMETOOLONG);
   if (unmarshall_STRINGN (rbp, newpath, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
-  sprintf (logbuf, "rename %s %s", oldpath, newpath);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "rename %s %s %s", oldpath, newpath, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -4177,8 +4244,102 @@ int Cns_srv_rename(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/* Cns_srv_updateseg_checksum - Updates file segment checksum
-   when previous value is NULL*/
+/* Cns_srv_updateseg_status - updates the segment status */
+
+int Cns_srv_updateseg_status(magic, req_data, clienthost, thip)
+     int magic;
+     char *req_data;
+     const char *clienthost;
+     struct Cns_srv_thread_info *thip;
+{
+  char *rbp;
+  char *user;
+  char func[25];
+  char logbuf[CA_MAXPATHLEN+34];
+  char newstatus;
+  char oldstatus;
+  char tmpbuf[21];
+  char vid[CA_MAXVIDLEN+1];
+  Cns_dbrec_addr rec_addr;
+  Cns_dbrec_addr rec_addrs;
+  gid_t gid;
+  int copyno;
+  int fsec;
+  int fseq;
+  int side;
+  struct Cns_file_metadata filentry;
+  struct Cns_seg_metadata old_smd_entry;
+  u_signed64 fileid;
+  uid_t uid;
+
+  strcpy (func, "Cns_srv_updateseg_status");
+  rbp = req_data;
+  unmarshall_LONG (rbp, uid);
+  unmarshall_LONG (rbp, gid);
+  get_client_actual_id (thip, &uid, &gid, &user);
+  nslogit (func, NS092, "updateseg_status", user, uid, gid, clienthost);
+  unmarshall_HYPER (rbp, fileid);
+  unmarshall_WORD (rbp, copyno);
+  unmarshall_WORD (rbp, fsec);
+  if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1))
+    RETURN (EINVAL);
+  unmarshall_WORD (rbp, side);
+  unmarshall_LONG (rbp, fseq);
+  unmarshall_BYTE (rbp, oldstatus);
+  unmarshall_BYTE (rbp, newstatus);
+  sprintf (logbuf, "updateseg_status %s %d %d %s '%c' -> '%c'",
+           u64tostr (fileid, tmpbuf, 0), copyno, fsec, vid, oldstatus, newstatus);
+  Cns_logreq (func, logbuf);
+
+  /* check if the user is authorized to set segment status */
+
+  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+     RETURN (serrno);
+
+  /* check for valid status */
+
+  if (((newstatus != '-') && (newstatus != 'D')) || (oldstatus == newstatus))
+    RETURN (EINVAL);
+
+  /* start transaction */
+
+  (void) Cns_start_tr (thip->s, &thip->dbfd);
+
+  /* get/lock basename entry */
+
+  if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &filentry, 1, &rec_addr))
+    RETURN (serrno);
+
+  /* check if the entry is a regular file */
+
+  if (filentry.filemode & S_IFDIR)
+    RETURN (EISDIR);
+
+  /* get/lock segment metadata entry to be updated */
+
+  if (Cns_get_smd_by_fullid (&thip->dbfd, fileid, copyno, fsec,
+                             &old_smd_entry, 1, &rec_addrs))
+    RETURN (serrno);
+
+  /* verify that the segment metadata return is what we expected */
+
+  if (strcmp (old_smd_entry.vid, vid) ||
+      (old_smd_entry.side != side) ||
+      (old_smd_entry.fseq != fseq) ||
+      (old_smd_entry.s_status != oldstatus))
+    RETURN (SEENTRYNFND);
+
+  /* update file segment entry */
+
+  old_smd_entry.s_status = newstatus;
+  if (Cns_update_smd_entry (&thip->dbfd, &rec_addrs, &old_smd_entry))
+    RETURN (serrno);
+
+  RETURN (0);
+}
+
+/* Cns_srv_updateseg_checksum - updates file segment checksum
+   when previous value is NULL */
 
 int Cns_srv_updateseg_checksum(magic, req_data, clienthost, thip)
      int magic;
@@ -4221,13 +4382,16 @@ int Cns_srv_updateseg_checksum(magic, req_data, clienthost, thip)
   Cns_logreq (func, logbuf);
 
   /* start transaction */
+
   (void) Cns_start_tr (thip->s, &thip->dbfd);
 
   /* get/lock basename entry */
+
   if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &filentry, 1, &rec_addr))
     RETURN (serrno);
 
   /* check if the entry is a regular file */
+
   if (filentry.filemode & S_IFDIR)
     RETURN (EISDIR);
 
@@ -4246,7 +4410,7 @@ int Cns_srv_updateseg_checksum(magic, req_data, clienthost, thip)
       old_smd_entry.fseq != fseq)
     RETURN (SEENTRYNFND);
 
-  sprintf (logbuf, "old segment: %s %d %d %s %d %c %s %d %d %02x%02x%02x%02x \"%s\" %lx",
+  sprintf (logbuf, "updateseg_checksum old segment: %s %d %d %s %d %c %s %d %d %02x%02x%02x%02x \"%s\" %lx",
            u64tostr (old_smd_entry.s_fileid, tmpbuf, 0), old_smd_entry.copyno,
            old_smd_entry.fsec, u64tostr (old_smd_entry.segsize, tmpbuf2, 0),
            old_smd_entry.compression, old_smd_entry.s_status, old_smd_entry.vid,
@@ -4255,10 +4419,11 @@ int Cns_srv_updateseg_checksum(magic, req_data, clienthost, thip)
            old_smd_entry.checksum_name, old_smd_entry.checksum);
   Cns_logreq (func, logbuf);
 
-  /* Checking that the segment has not checksum */
+  /* Checking that the segment has no checksum */
+
   if (!(old_smd_entry.checksum_name == NULL
         || old_smd_entry.checksum_name[0] == '\0')) {
-    sprintf (logbuf, "old checksum \"%s\" %lx non NULL, Cannot overwrite",
+    sprintf (logbuf, "updateseg_checksum old checksum \"%s\" %lx non NULL, Cannot overwrite",
              old_smd_entry.checksum_name,
              old_smd_entry.checksum);
     Cns_logreq (func, logbuf);
@@ -4292,13 +4457,13 @@ int Cns_srv_updateseg_checksum(magic, req_data, clienthost, thip)
        checksum is specified */
     if (!checksum_ok
         && smd_entry.checksum != 0) {
-      sprintf (logbuf, "setsegattrs: NULL checksum name with non zero value, overriding");
+      sprintf (logbuf, "updateseg_checksum NULL checksum name with non zero value, overriding");
       Cns_logreq (func, logbuf);
       smd_entry.checksum = 0;
     }
   }
 
-  sprintf (logbuf, "new segment: %s %d %d %s %d %c %s %d %d %02x%02x%02x%02x \"%s\" %lx",
+  sprintf (logbuf, "updateseg_checksum new segment: %s %d %d %s %d %c %s %d %d %02x%02x%02x%02x \"%s\" %lx",
            u64tostr (smd_entry.s_fileid, tmpbuf, 0), smd_entry.copyno,
            smd_entry.fsec, u64tostr (smd_entry.segsize, tmpbuf2, 0),
            smd_entry.compression, smd_entry.s_status, smd_entry.vid,
@@ -4391,7 +4556,7 @@ int Cns_srv_replaceseg(magic, req_data, clienthost, thip)
       old_smd_entry.fseq != fseq)
     RETURN (SEENTRYNFND);
 
-  sprintf (logbuf, "old segment: %s %d %d %s %d %c %s %d %d %02x%02x%02x%02x \"%s\" %lx",
+  sprintf (logbuf, "replaceseg old segment: %s %d %d %s %d %c %s %d %d %02x%02x%02x%02x \"%s\" %lx",
            u64tostr (old_smd_entry.s_fileid, tmpbuf, 0), old_smd_entry.copyno,
            old_smd_entry.fsec, u64tostr (old_smd_entry.segsize, tmpbuf2, 0),
            old_smd_entry.compression, old_smd_entry.s_status, old_smd_entry.vid,
@@ -4434,13 +4599,13 @@ int Cns_srv_replaceseg(magic, req_data, clienthost, thip)
        checksum is specified */
     if (!checksum_ok
         && smd_entry.checksum != 0) {
-      sprintf (logbuf, "setsegattrs: NULL checksum name with non zero value, overriding");
+      sprintf (logbuf, "replaceseg: NULL checksum name with non zero value, overriding");
       Cns_logreq (func, logbuf);
       smd_entry.checksum = 0;
     }
   }
 
-  sprintf (logbuf, "new segment: %s %d %d %s %d %c %s %d %d %02x%02x%02x%02x \"%s\" %lx",
+  sprintf (logbuf, "replaceseg new segment: %s %d %d %s %d %c %s %d %d %02x%02x%02x%02x \"%s\" %lx",
            u64tostr (smd_entry.s_fileid, tmpbuf, 0), smd_entry.copyno,
            smd_entry.fsec, u64tostr (smd_entry.segsize, tmpbuf2, 0),
            smd_entry.compression, smd_entry.s_status, smd_entry.vid,
@@ -4473,8 +4638,8 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
 {
   u_signed64 fileid = 0;
   int rc,checksum_ok, nboldsegs, nbseg ,copyno, bof, i;
-  DBLISTPTR dblistptr; // in fact an int
-  int CA_MAXSEGS = 20; // maximum number of segments of a file
+  DBLISTPTR dblistptr; /* in fact an int */
+  int CA_MAXSEGS = 20; /* maximum number of segments of a file */
   gid_t gid;
   uid_t uid;
   char *user;
@@ -4483,15 +4648,14 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
   struct Cns_seg_metadata old_smd_entry[CA_MAXSEGS];
   struct Cns_file_metadata filentry;
 
-  Cns_dbrec_addr backup_rec_addr[CA_MAXSEGS]; // db keys of old segs
-  Cns_dbrec_addr rec_addr;   // db key for file
+  Cns_dbrec_addr backup_rec_addr[CA_MAXSEGS]; /* db keys of old segs */
+  Cns_dbrec_addr rec_addr;   /* db key for file */
 
   char *rbp;
-  char func[23];
+  char func[24];
   char logbuf[CA_MAXPATHLEN+34];
   char newvid[CA_MAXVIDLEN+1];
   char oldvid[CA_MAXVIDLEN+1];
-
 
   /* the header stuff */
 
@@ -4507,14 +4671,13 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
   if (unmarshall_STRINGN (rbp, oldvid, CA_MAXVIDLEN+1))
     RETURN (EINVAL);
 
-  sprintf (logbuf, "for fileid %lld: %s->%s",fileid, oldvid, newvid);
+  sprintf (logbuf, "replacetapecopy %lld %s->%s",fileid, oldvid, newvid);
   Cns_logreq (func, logbuf);
 
-  /* check if the user is authorized to replace segment attributes */
+  /* check if the user is authorized to replacetapecopy */
 
-  /* if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
-     RETURN (serrno);*/
-
+  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+     RETURN (serrno);
 
   /* start transaction */
   (void) Cns_start_tr (thip->s, &thip->dbfd);
@@ -4539,8 +4702,8 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
                                     &backup_rec_addr[nboldsegs],
                                     0,
                                     &dblistptr)) == 0) {
-    // we want only segments, which are on the oldvid
-    if ( strcmp( old_smd_entry[nboldsegs].vid,oldvid )==0 ){
+    /* we want only segments, which are on the oldvid */
+    if ( strcmp( old_smd_entry[nboldsegs].vid, oldvid ) == 0 ){
       /* Store the copyno for first right segment.
          we have to know it for the new segments */
       if (!nboldsegs){
@@ -4553,14 +4716,12 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
   }
 
   if ( copyno == -1 ){
-    sprintf (logbuf, "Can't find old copyno.");
+    sprintf (logbuf, "replacetapecopy cannot find old copyno");
     Cns_logreq (func, logbuf);
     RETURN (-1);
   }
 
-  /**
-   * after we have the copyno, we get the old segs by this no
-   */
+  /* after we have the copyno, we get the old segs by this no */
   bof = 1;
   dblistptr = 0;
   while ((rc = Cns_get_smd_by_copyno (&thip->dbfd, bof,
@@ -4576,7 +4737,7 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
 
     /* SHOULD NEVER HAPPEN !*/
     if (nboldsegs > CA_MAXSEGS ){
-      sprintf (logbuf,"Too many segments for file %lld.",
+      sprintf (logbuf,"replacetapecopy too many segments for file %lld",
                fileid);
       Cns_logreq (func, logbuf);
       RETURN (EINVAL);
@@ -4588,13 +4749,13 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
   }
 
   if ( !nboldsegs ) {
-    sprintf (logbuf, "Can't find old segs for copyno %d.", copyno);
+    sprintf (logbuf, "replacetapecopy cannot find old segs for copyno %d", copyno);
     Cns_logreq (func, logbuf);
     RETURN (-1);
   }
 
   unmarshall_WORD(rbp, nbseg);
-  sprintf (logbuf, "Replacing %d old Segments by %d from Stream, the tapecopyno is %d",
+  sprintf (logbuf, "replacetapecopy replacing %d old segments by %d from stream, the tapecopyno is %d",
            nboldsegs, nbseg, copyno);
   Cns_logreq (func, logbuf);
 
@@ -4640,7 +4801,7 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
       /* Checking that we can't have a NULL checksum name when a
          checksum is specified */
       if (!checksum_ok && new_smd_entry[i].checksum != 0) {
-        sprintf (logbuf, "%s: NULL checksum name with non zero value, overriding", func);
+        sprintf (logbuf, "replacetapecopy NULL checksum name with non zero value, overriding");
         Cns_logreq (func, logbuf);
         new_smd_entry[i].checksum = 0;
       }
@@ -4659,7 +4820,7 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
   /* remove old segs */
   for (i=0; i< nboldsegs; i++){
     if (Cns_delete_smd_entry (&thip->dbfd, &backup_rec_addr[i])) {
-      sprintf (logbuf,"%s",sstrerror(serrno));
+      sprintf (logbuf,"replacetapecopy %s",sstrerror(serrno));
       Cns_logreq (func, logbuf);
       RETURN (serrno);
     }
@@ -4669,7 +4830,7 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
   for (i=0; i< nbseg; i++){
     /* insert new file segment entry */
     if (Cns_insert_smd_entry (&thip->dbfd,&new_smd_entry[i])){
-      sprintf (logbuf,"%s",sstrerror(serrno));
+      sprintf (logbuf,"replacetapecopy %s",sstrerror(serrno));
       Cns_logreq (func, logbuf);
       RETURN (serrno);
     }
@@ -4694,6 +4855,7 @@ int Cns_srv_rmdir(magic, req_data, clienthost, thip)
   char logbuf[CA_MAXPATHLEN+7];
   struct Cns_file_metadata parent_dir;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   Cns_dbrec_addr rec_addr;
   Cns_dbrec_addr rec_addrc;
@@ -4714,7 +4876,8 @@ int Cns_srv_rmdir(magic, req_data, clienthost, thip)
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
-  sprintf (logbuf, "rmdir %s", path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "rmdir %s %s", path, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -4801,6 +4964,7 @@ int Cns_srv_setacl(magic, req_data, clienthost, thip)
   char logbuf[CA_MAXPATHLEN+8];
   int nentries;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   Cns_dbrec_addr rec_addr;
   uid_t uid;
@@ -4817,7 +4981,8 @@ int Cns_srv_setacl(magic, req_data, clienthost, thip)
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
-  sprintf (logbuf, "setacl %s", path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "setacl %s %s", path, cwdpath);
   Cns_logreq (func, logbuf);
 
   unmarshall_WORD (rbp, nentries);
@@ -4928,6 +5093,7 @@ int Cns_srv_setatime(magic, req_data, clienthost, thip)
   gid_t gid;
   char logbuf[CA_MAXPATHLEN+31];
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   Cns_dbrec_addr rec_addr;
   char tmpbuf[21];
@@ -4946,7 +5112,8 @@ int Cns_srv_setatime(magic, req_data, clienthost, thip)
   unmarshall_HYPER (rbp, fileid);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
-  sprintf (logbuf, "setatime %s %s", u64tostr (fileid, tmpbuf, 0), path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "setatime %s %s %s", u64tostr (fileid, tmpbuf, 0), path, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -5008,6 +5175,7 @@ int Cns_srv_setcomment(magic, req_data, clienthost, thip)
   char logbuf[CA_MAXPATHLEN+12];
   struct Cns_user_metadata old_umd_entry;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   Cns_dbrec_addr rec_addru;
   uid_t uid;
@@ -5027,7 +5195,8 @@ int Cns_srv_setcomment(magic, req_data, clienthost, thip)
     RETURN (SENAMETOOLONG);
   if (unmarshall_STRINGN (rbp, comment, CA_MAXCOMMENTLEN+1))
     RETURN (EINVAL);
-  sprintf (logbuf, "setcomment %s", path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "setcomment %s %s", path, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -5085,6 +5254,7 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
   gid_t gid;
   char logbuf[CA_MAXPATHLEN+52];
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   Cns_dbrec_addr rec_addr;
   char tmpbuf[21];
@@ -5105,8 +5275,9 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
   unmarshall_HYPER (rbp, filesize);
-  sprintf (logbuf, "setfsize %s %s %s", u64tostr (fileid, tmpbuf, 0),
-           path, u64tostr (filesize, tmpbuf2, 0));
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "setfsize %s %s %s %s", u64tostr (fileid, tmpbuf, 0),
+           path, u64tostr (filesize, tmpbuf2, 0), cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -5172,6 +5343,7 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
   gid_t gid;
   char logbuf[CA_MAXPATHLEN+90];
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   Cns_dbrec_addr rec_addr;
   char tmpbuf[21];
@@ -5198,12 +5370,15 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
     RETURN (EINVAL);
   if (unmarshall_STRINGN (rbp, csumvalue, CA_MAXCKSUMLEN+1))
     RETURN (EINVAL);
-  if (*csumtype && strcmp (csumtype, "CS") && strcmp (csumtype, "AD")
-      && strcmp (csumtype, "MD"))
-    RETURN (EINVAL);
-  sprintf (logbuf, "setfsizecs %s %s %s %s %s", u64tostr (fileid, tmpbuf, 0),
-           path, u64tostr (filesize, tmpbuf2, 0),csumvalue,csumtype);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "setfsizecs %s %s %s %s %s %s", u64tostr (fileid, tmpbuf, 0),
+           path, u64tostr (filesize, tmpbuf2, 0), csumvalue, csumtype, cwdpath);
   Cns_logreq (func, logbuf);
+  if (*csumtype &&
+      strcmp (csumtype, "CS") &&
+      strcmp (csumtype, "AD") &&
+      strcmp (csumtype, "MD"))
+    RETURN (EINVAL);
 
   /* start transaction */
 
@@ -5300,11 +5475,13 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
     RETURN (EINVAL);
   if (unmarshall_STRINGN (rbp, csumvalue, CA_MAXCKSUMLEN+1))
     RETURN (EINVAL);
-  if (*csumtype && strcmp (csumtype, "CS") && strcmp (csumtype, "AD") &&
-      strcmp (csumtype, "MD"))
-    RETURN (EINVAL);
   sprintf (logbuf, "setfsizeg %s %s", guid, u64tostr (filesize, tmpbuf, 0));
   Cns_logreq (func, logbuf);
+  if (*csumtype &&
+      strcmp (csumtype, "CS") &&
+      strcmp (csumtype, "AD") &&
+      strcmp (csumtype, "MD"))
+    RETURN (EINVAL);
 
   /* start transaction */
 
@@ -5562,12 +5739,14 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
   int nbseg;
   struct Cns_seg_metadata old_smd_entry;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   Cns_dbrec_addr rec_addr;
   Cns_dbrec_addr rec_addrs;
   struct Cns_seg_metadata smd_entry;
   char tmpbuf[21];
   char tmpbuf2[21];
+  char tmpbuf3[50];
   uid_t uid;
   char *user;
 
@@ -5582,8 +5761,9 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
   unmarshall_WORD (rbp, nbseg);
-  sprintf (logbuf, "setsegattrs %s %s",
-           u64tostr (fileid, tmpbuf, 0), path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "setsegattrs %s %s %s",
+           u64tostr (fileid, tmpbuf, 0), path, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -5667,23 +5847,26 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
            || strlen(smd_entry.checksum_name) == 0)
           && smd_entry.checksum != 0) {
         sprintf (logbuf, "setsegattrs: invalid checksum name with non zero value");
-        RETURN(EINVAL);
+        RETURN (EINVAL);
       }
     }
 
     if ((magic >= CNS_MAGIC4) && (nbseg == 1)) {
-      /* Checking for a checksum in the file metadata table if we have one segment for a file
-	 We have different names for checksum type in Cns_seg_metadata table and Cns_file_metadata.
+      /* Checking for a checksum in the file metadata table if we have
+	 only one segment for a file. We have different names for
+	 checksum type in Cns_seg_metadata table and Cns_file_metadata.
 	 adler32==AD crc32==CS */
-      if (((strcmp(smd_entry.checksum_name, "adler32") == 0) && (strcmp(filentry.csumtype, "AD") == 0)) ||
-	  ((strcmp(smd_entry.checksum_name, "crc32") == 0) && (strcmp(filentry.csumtype, "CS") == 0))) {
+      if (((strcmp(smd_entry.checksum_name, "adler32") == 0) &&
+	   (strcmp(filentry.csumtype, "AD") == 0)) ||
+	  ((strcmp(smd_entry.checksum_name, "crc32") == 0) &&
+	   (strcmp(filentry.csumtype, "CS") == 0))) {
 	/* we have adler32 or crc32 checksum type */
-	sprintf(logbuf, "%lx", smd_entry.checksum);  /* convert number to a string */
-	if (strncmp(logbuf, filentry.csumvalue, 32)) {
+	sprintf(tmpbuf3, "%lx", smd_entry.checksum);  /* convert number to a string */
+	if (strncmp(tmpbuf3, filentry.csumvalue, CA_MAXCKSUMLEN)) {
 	  /* checksum mismatch! error! */
 	  sprintf (logbuf, "setsegattrs: checksum mismatch for the castor file and the segment 0x%s != 0x%lx", filentry.csumvalue, smd_entry.checksum);
 	  Cns_logreq (func, logbuf);
-	  RETURN(SECHECKSUM);
+	  RETURN (SECHECKSUM);
 	}
       }
     }
@@ -5797,6 +5980,7 @@ int Cns_srv_stat(magic, req_data, clienthost, thip)
   gid_t gid;
   char logbuf[CA_MAXPATHLEN+6];
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   char repbuf[57];
   char *sbp;
@@ -5814,7 +5998,8 @@ int Cns_srv_stat(magic, req_data, clienthost, thip)
   unmarshall_HYPER (rbp, fileid);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURNQ (SENAMETOOLONG);
-  sprintf (logbuf, "stat %s %s", u64tostr(fileid, tmpbuf, 0), path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "stat %s %s %s", u64tostr(fileid, tmpbuf, 0), path, cwdpath);
   Cns_logreq (func, logbuf);
 
   if (fileid) {
@@ -5868,6 +6053,7 @@ int Cns_srv_statcs(magic, req_data, clienthost, thip)
   gid_t gid;
   char logbuf[CA_MAXPATHLEN+29];
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   char repbuf[93];
   char *sbp;
@@ -5885,7 +6071,8 @@ int Cns_srv_statcs(magic, req_data, clienthost, thip)
   unmarshall_HYPER (rbp, fileid);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURNQ (SENAMETOOLONG);
-  sprintf (logbuf, "statcs %s %s", u64tostr(fileid, tmpbuf, 0), path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "statcs %s %s %s", u64tostr(fileid, tmpbuf, 0), path, cwdpath);
   Cns_logreq (func, logbuf);
 
   if (fileid) {
@@ -5941,6 +6128,7 @@ int Cns_srv_statg(magic, req_data, clienthost, thip)
   char guid[CA_MAXGUIDLEN+1];
   char logbuf[CA_MAXPATHLEN+CA_MAXGUIDLEN+8];
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   char repbuf[130];
   char *sbp;
@@ -5958,7 +6146,8 @@ int Cns_srv_statg(magic, req_data, clienthost, thip)
     RETURNQ (SENAMETOOLONG);
   if (unmarshall_STRINGN (rbp, guid, CA_MAXGUIDLEN+1))
     RETURNQ (EINVAL);
-  sprintf (logbuf, "statg %s %s", path, guid);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "statg %s %s %s", path, guid, cwdpath);
   Cns_logreq (func, logbuf);
 
   if (*path) {
@@ -6074,6 +6263,7 @@ int Cns_srv_symlink(magic, req_data, clienthost, thip)
   char logbuf[2*CA_MAXPATHLEN+10];
   struct Cns_file_metadata fmd_entry;
   char linkname[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   struct Cns_symlinks lnk_entry;
   struct Cns_file_metadata parent_dir;
   char *rbp;
@@ -6095,7 +6285,8 @@ int Cns_srv_symlink(magic, req_data, clienthost, thip)
     RETURN (SENAMETOOLONG);
   if (unmarshall_STRINGN (rbp, linkname, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
-  sprintf (logbuf, "symlink %s %s", target, linkname);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "symlink %s %s %s", target, linkname, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -6171,6 +6362,7 @@ int Cns_srv_undelete(magic, req_data, clienthost, thip)
   char logbuf[CA_MAXPATHLEN+10];
   struct Cns_file_metadata parent_dir;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   Cns_dbrec_addr rec_addr; /* file record address */
   Cns_dbrec_addr rec_addrp; /* parent record address */
@@ -6191,7 +6383,8 @@ int Cns_srv_undelete(magic, req_data, clienthost, thip)
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
-  sprintf (logbuf, "undelete %s", path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "undelete %s %s", path, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -6287,6 +6480,7 @@ int Cns_srv_unlink(magic, req_data, clienthost, thip)
   char logbuf[CA_MAXPATHLEN+8];
   struct Cns_file_metadata parent_dir;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   Cns_dbrec_addr rec_addr; /* file record address */
   Cns_dbrec_addr rec_addrl; /* link record address */
@@ -6310,7 +6504,8 @@ int Cns_srv_unlink(magic, req_data, clienthost, thip)
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
-  sprintf (logbuf, "unlink %s", path);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "unlink %s %s", path, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -6415,6 +6610,7 @@ int Cns_srv_utime(magic, req_data, clienthost, thip)
   char logbuf[CA_MAXPATHLEN+19];
   time_t modtime;
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   Cns_dbrec_addr rec_addr;
   uid_t uid;
@@ -6437,7 +6633,8 @@ int Cns_srv_utime(magic, req_data, clienthost, thip)
     unmarshall_TIME_T (rbp, actime);
     unmarshall_TIME_T (rbp, modtime);
   }
-  sprintf (logbuf, "utime %s %d", path, user_specified_time);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "utime %s %d %s", path, user_specified_time, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -6494,6 +6691,7 @@ int Cns_srv_updatefile_checksum(magic, req_data, clienthost, thip)
   gid_t gid;
   char logbuf[CA_MAXPATHLEN+58];
   char path[CA_MAXPATHLEN+1];
+  char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   Cns_dbrec_addr rec_addr;
   uid_t uid;
@@ -6516,12 +6714,17 @@ int Cns_srv_updatefile_checksum(magic, req_data, clienthost, thip)
     RETURN (EINVAL);
   if (unmarshall_STRINGN (rbp, csumvalue, CA_MAXCKSUMLEN+1))
     RETURN (EINVAL);
-  if (*csumtype && strcmp (csumtype, "PC") && strcmp (csumtype, "PA") && strcmp (csumtype, "PM") &&
-      strcmp (csumtype, "CS") && strcmp (csumtype, "AD") && strcmp (csumtype, "MD"))
-    RETURN (EINVAL);
-
-  sprintf (logbuf, "updatefile_checksum %s %s %s", path, csumvalue, csumtype);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "updatefile_checksum %s %s %s %s", path, csumvalue, csumtype, cwdpath);
   Cns_logreq (func, logbuf);
+  if (*csumtype &&
+      strcmp (csumtype, "PC") &&
+      strcmp (csumtype, "PA") &&
+      strcmp (csumtype, "PM") &&
+      strcmp (csumtype, "CS") &&
+      strcmp (csumtype, "AD") &&
+      strcmp (csumtype, "MD"))
+    RETURN (EINVAL);
 
   /* start transaction */
 
@@ -6541,7 +6744,9 @@ int Cns_srv_updatefile_checksum(magic, req_data, clienthost, thip)
   /* check if the user is authorized to set access/modification checksum for this entry
      for users we will allow only predefined checksums and for admins any types */
 
-  if (strcmp (csumtype, "CS") == 0 || strcmp (csumtype, "AD") == 0 || strcmp (csumtype, "MD") == 0) {
+  if (strcmp (csumtype, "CS") == 0 ||
+      strcmp (csumtype, "AD") == 0 ||
+      strcmp (csumtype, "MD") == 0) {
     if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
       RETURN (EPERM);
   } else {
@@ -6555,9 +6760,11 @@ int Cns_srv_updatefile_checksum(magic, req_data, clienthost, thip)
   filentry.ctime = filentry.mtime;
 
   strcpy (filentry.csumtype, csumtype);
-  if( *csumtype == '\0') strcpy (filentry.csumvalue, ""); /* reset value for empty types */
-  else strcpy (filentry.csumvalue, csumvalue);
-
+  if (*csumtype == '\0') {
+    strcpy (filentry.csumvalue, ""); /* reset value for empty types */
+  } else {
+    strcpy (filentry.csumvalue, csumvalue);
+  }
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &filentry))
     RETURN (serrno);
   RETURN (0);
