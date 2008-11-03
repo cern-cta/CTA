@@ -1,0 +1,103 @@
+.\" @(#)$RCSfile: Cns_updatefile_checksum.man,v $ $Revision: 1.1 $ $Date: 2008/11/03 10:10:24 $ CERN IT-DM
+.\" Copyright (C) 2002 by CERN/IT/DM
+.\" All rights reserved
+.\"
+.TH CNS_UPDATEFILE_CHECKSUM 3 "$Date: 2008/11/03 10:10:24 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_updatefile_checksum \- updates the checksum of a regular file
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_updatefile_checksum (const char *" guid ,
+.BI "const char *" csumtype ,
+.BI "const char *" csumvalue )
+.SH DESCRIPTION
+.B Cns_updatefile_checksum
+updates the checksum for a regular file given the file path.
+.TP
+.I csumtype
+specifies the type of checksum. Valid types are:
+.RS
+.TP
+.B CS
+standard 32 bits checksum
+.TP
+.B AD
+Adler 32 bits checksum
+.TP
+.B MD
+MD5 128 bits checksum
+.TP
+Extensions available for end-to-end file check summing support
+.TP
+.B PC
+pre CS
+.TP
+.B PA
+pre Adler
+.TP
+.B PM
+pre MD5
+.TP
+.I csumvalue
+the value of the checksum
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named file/directory does not exist or is a null pathname.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.I path
+prefix.
+.TP
+.B EFAULT
+.I path
+is a NULL pointer.
+.TP
+.B EINVAL
+The length of the
+.I csumtype
+exceeds 2 or
+.I csumtype
+is an unknown type or the length of the
+.I csumvalue
+exceeds 32.
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
