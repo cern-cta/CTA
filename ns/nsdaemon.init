@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: nsdaemon.init,v $ $Revision: 1.12 $ $Release$ $Date: 2008/09/01 17:05:11 $ $Author: waldron $
+# @(#)$RCSfile: nsdaemon.init,v $ $Revision: 1.13 $ $Release$ $Date: 2008/11/03 10:29:11 $ $Author: waldron $
 #
 # chkconfig: 345 66 39
 # description: NS server daemo
@@ -46,14 +46,6 @@ fi
 start() {
         # Run daemon
         echo -n $"Starting $prog: "
-
-        # Check for roles
-        if [ -n "$1" ]; then
-                ROLES=$1
-        elif [ -z "${ROLES}" ]; then
-                ROLES="public"
-        fi
-        echo
 
         # Set location of globus libraries
         LD_LIBRARY_PATH=/opt/globus/lib
@@ -121,17 +113,13 @@ stop() {
         echo
         if [ -n "$1" ]; then
                 [ -f /var/lock/subsys/$prog.$1 ] && rm -f /var/lock/subsys/$prog.$1
-        else 
+        else
                 rm -f /var/lock/subsys/$prog.*
         fi
         return $RETVAL
 }
 
 status() {
-        # Check for roles
-        if [ -z "${ROLES}" ]; then
-                ROLES="public"
-        fi
         # Loop over nsdaemons
         for i in ${ROLES}; do
                 # Check if the nsdaemon associated to this role running
@@ -147,7 +135,7 @@ status() {
                                 echo $"$prog for role: $i is stopped"
                         fi
                         RETVAL=1
-                fi                        
+                fi
         done
         return $RETVAL
 }
