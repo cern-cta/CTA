@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.664 $ $Date: 2008/10/17 12:17:52 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.665 $ $Date: 2008/11/03 09:28:35 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -421,8 +421,6 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   srId INTEGER;
   cfId INTEGER;
   fsId INTEGER;
-  maxRepl INTEGER;
-  repl INTEGER;
   srcStatus INTEGER;
   proto VARCHAR2(2048);
   reqId NUMBER;
@@ -440,14 +438,14 @@ BEGIN
   SELECT id INTO cfId FROM CastorFile WHERE id = cfId FOR UPDATE;
   -- Try to get the source diskcopy status
   BEGIN
-    SELECT status, gcWeight, diskCopySize 
+    SELECT status, gcWeight, diskCopySize
       INTO srcStatus, gcw, fileSize
-      FROM DiskCopy 
+      FROM DiskCopy
      WHERE id = srcDcId
        AND status IN (0, 10);  -- STAGED, CANBEMIGR
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- If no diskcopy was returned it means that the source has either:
-    --   A) Been GCed while the copying was taking place or 
+    --   A) Been GCed while the copying was taking place or
     --   B) The diskcopy is no longer in a STAGED or CANBEMIGR state.
     -- As we do not know which status to put the new copy in and/or
     -- cannot trust that the file was not modified mid transfer, we
@@ -464,7 +462,7 @@ BEGIN
     updateFsFileClosed(fsId);
     -- Archive the diskCopy replica request
     archiveSubReq(srId);
-    RETURN;   
+    RETURN;
   END;
   -- Otherwise, we can validate the new diskcopy
   -- update SubRequest and get data
@@ -473,8 +471,7 @@ BEGIN
                         lastModificationTime = getTime()
    WHERE diskCopy = dcId RETURNING id, protocol, request
     INTO srId, proto, reqId;
-  SELECT SvcClass.id, maxReplicaNb
-    INTO svcClassId, maxRepl
+  SELECT SvcClass.id INTO svcClassId
     FROM SvcClass, StageDiskCopyReplicaRequest Req, SubRequest
    WHERE SubRequest.id = srId
      AND SubRequest.request = Req.id
@@ -490,30 +487,6 @@ BEGIN
    WHERE id = dcId
   RETURNING castorFile, fileSystem, owneruid, ownergid
     INTO cfId, fsId, ouid, ogid;
-  -- If the maxReplicaNb is exceeded, update one of the diskcopies in a
-  -- DRAINING filesystem to INVALID.
-  SELECT count(*) INTO repl
-    FROM DiskCopy, FileSystem, DiskPool2SvcClass DP2SC
-   WHERE castorFile = cfId
-     AND DiskCopy.fileSystem = FileSystem.id
-     AND FileSystem.diskPool = DP2SC.parent
-     AND DP2SC.child = svcClassId
-     AND DiskCopy.status IN (0, 10);  -- STAGED, CANBEMIGR
-  IF repl > maxRepl THEN
-    -- We did replicate only because of a DRAINING filesystem.
-    -- Invalidate one of the original diskcopies, not all of them for
-    -- fault resiliency purposes
-    UPDATE DiskCopy SET status = 7
-     WHERE status IN (0, 10)  -- STAGED, CANBEMIGR
-       AND castorFile = cfId
-       AND fileSystem IN (
-         SELECT FileSystem.id
-           FROM FileSystem, DiskPool2SvcClass DP2SC
-          WHERE FileSystem.diskPool = DP2SC.parent
-            AND DP2SC.child = svcClassId
-            AND status = 1)  -- DRAINING
-       AND ROWNUM < 2;
-  END IF;
   -- Update filesystem status
   updateFsFileClosed(fsId);
   -- Archive the diskCopy replica request
@@ -522,7 +495,7 @@ BEGIN
   replicateOnClose(cfId, ouid, ogid);
   -- Wake up waiting subrequests
   UPDATE SubRequest SET status = 1,  -- SUBREQUEST_RESTART
-                        lastModificationTime = getTime(), 
+                        lastModificationTime = getTime(),
                         parent = 0
    WHERE parent = srId;
 END;
@@ -571,6 +544,8 @@ BEGIN
     updateFsFileClosed(fsId);
   END IF;
   -- Trigger the creation of additional copies of the file, if necessary.
+  -- Note: We do this also on failure to be able to recover from transient
+  -- errors. E.g timeouts while waiting to be scheduled.
   replicateOnClose(cfId, ouid, ogid);
 END;
 
