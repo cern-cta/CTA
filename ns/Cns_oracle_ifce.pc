@@ -810,43 +810,42 @@ Cns_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-
 int Cns_getpath_by_fileid (dbfd, fileid, path)
 struct Cns_dbfd *dbfd;
 u_signed64 fileid;
 char **path;
 {
-  char fileid_str[21];
-  char result[CA_MAXPATHLEN+1];
-  char func[19];
-  struct sqlca sqlca;
-  EXEC SQL DECLARE getpath_cursor CURSOR FOR
-    SELECT getPathForFileid(:fileid_str)
-    FROM Dual;
+	char fileid_str[21];
+	char result[CA_MAXPATHLEN+1];
+	char func[19];
+	struct sqlca sqlca;
+	EXEC SQL DECLARE getpath_cursor CURSOR FOR
+		SELECT getPathForFileid(:fileid_str)
+		FROM Dual;
 
-  strcpy (func, "Cns_getpath");
-  (void) u64tostr (fileid, fileid_str, -1);
-  EXEC SQL OPEN getpath_cursor;
-  if (sqlca.sqlcode) {
-    Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
-    return (-1);
-  }
-  EXEC SQL FETCH getpath_cursor INTO :result;
-  switch (sqlca.sqlcode) {
-  case 0:
-    memcpy(*path, result, strlen(result)+1);
-    return (0);
-  case -1405:
-    /* returned value is NULL, we didn't find anything */
-    serrno = ENOENT;
-    break;
-  case -20001:
-    serrno = SENAMETOOLONG;
-    break;
-  default:
-    Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
-  }
-  return (-1);
+	strcpy (func, "Cns_getpath");
+	(void) u64tostr (fileid, fileid_str, -1);
+	EXEC SQL OPEN getpath_cursor;
+	if (sqlca.sqlcode) {
+		Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+		return (-1);
+	}
+	EXEC SQL FETCH getpath_cursor INTO :result;
+	switch (sqlca.sqlcode) {
+	case 0:
+		memcpy(*path, result, strlen(result)+1);
+		return (0);
+	case -1405:
+		/* returned value is NULL, we didn't find anything */
+		serrno = ENOENT;
+		break;
+	case -20001:
+		serrno = SENAMETOOLONG;
+		break;
+	default:
+		Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+	}
+	return (-1);
 }
 
 int Cns_get_max_copyno (dbfd, fileid, copyno)
@@ -2271,7 +2270,7 @@ struct Cns_dbfd *dbfd;
 		EXEC SQL CONNECT :db_connect;
     if (sqlca.sqlcode == 0) break;
     if ((sqlca.sqlcode != -1014 && sqlca.sqlcode != -1033 &&
-         sqlca.sqlcode != -1034) || ntries++ >= MAXRETRY) { 
+         sqlca.sqlcode != -1034) || ntries++ >= MAXRETRY) {
       Cns_oracle_error (func, "CONNECT", dbfd, &sqlca);
       return -1;
     }
@@ -2279,13 +2278,13 @@ struct Cns_dbfd *dbfd;
 	}
 
 	/* check database version: for the time being we only issue a warning if
-     a mismatch is found; this is to make mixed deployments and rolling upgrades easier */    
+     a mismatch is found; this is to make mixed deployments and rolling upgrades easier */
 	EXEC SQL SELECT schemaVersion INTO :dbversion FROM Cns_version;
 	if ((sqlca.sqlcode != 0) || strcmp(dbversion, codeversion)) {
 		nslogit (func, "warning: version mismatch between the NS daemon and database schema - "
 			       "db version: %s versus software version: %s\n", dbversion, codeversion);
 	}
-  
+
 	return 0;
 }
 
