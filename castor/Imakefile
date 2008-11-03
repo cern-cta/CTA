@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.200 $ $Release$ $Date: 2008/11/03 07:49:55 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.201 $ $Release$ $Date: 2008/11/03 19:27:40 $ $Author: murrayc3 $
 #
 # Make Castor libraries and executables
 #
@@ -406,6 +406,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               exception/Busy.cpp \
               exception/Exception.cpp \
               exception/InvalidArgument.cpp \
+              exception/InvalidConfigEntry.cpp \
               exception/Internal.cpp \
               exception/NotSupported.cpp \
               exception/OutOfMemory.cpp \
