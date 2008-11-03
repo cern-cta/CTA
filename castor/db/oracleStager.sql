@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.691 $ $Date: 2008/10/29 17:12:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.692 $ $Date: 2008/11/03 09:33:30 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -300,39 +300,25 @@ CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
                                            srId OUT INTEGER, srRetryCounter OUT INTEGER, srFileName OUT VARCHAR2,
                                            srProtocol OUT VARCHAR2, srXsize OUT INTEGER, srPriority OUT INTEGER,
                                            srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
-                                           srSubReqId OUT VARCHAR2, srAnswered OUT INTEGER) AS
-LockError EXCEPTION;
+                                           srSubReqId OUT VARCHAR2, srAnswered OUT INTEGER, srSvcHandler OUT VARCHAR2) AS
 InvalidRowid EXCEPTION;
-PRAGMA EXCEPTION_INIT (LockError, -54);
 PRAGMA EXCEPTION_INIT (InvalidRowid, -10632);
-CURSOR c IS
-   SELECT id
-     FROM SubRequest
-    WHERE status in (0,1,2)  -- START, RESTART, RETRY
-      AND EXISTS
-         (SELECT /*+ index(a I_Id2Type_id) */ 'x'
-            FROM Id2Type a, Type2Obj
-           WHERE a.id = SubRequest.request
-             AND a.type = Type2Obj.type
-             AND Type2Obj.svcHandler = service)
-      ORDER BY creationTime ASC
-    FOR UPDATE SKIP LOCKED;
 BEGIN
   srId := 0;
-  OPEN c;
-  FETCH c INTO srId;
-  UPDATE SubRequest SET status = 3, subReqId = nvl(subReqId, uuidGen())
-   WHERE id = srId  -- WAITSCHED
-    RETURNING retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags, subReqId, answered
-    INTO srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus, srModeBits, srFlags, srSubReqId, srAnswered;
-  CLOSE c;
+  UPDATE SubRequest SET status = 3, subReqId = nvl(subReqId, uuidGen()) -- WAITSCHED
+   WHERE id = (
+     SELECT id FROM (
+       SELECT /*+ index(sr I_SubRequest_RT_CT_ID) */ sr.id
+         FROM SubRequest PARTITION (P_STATUS_0_1_2) sr
+        WHERE sr.svcHandler = service
+        ORDER BY sr.creationTime ASC
+     )
+      WHERE ROWNUM < 2
+  )
+  RETURNING id, retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags, subReqId, answered, svcHandler
+  INTO srId, srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus, srModeBits, srFlags, srSubReqId, srAnswered, srSvcHandler;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- just return srId = 0, nothing to do
-  NULL;
-WHEN LockError THEN
-  -- We have observed ORA-00054 errors (resource busy and acquire with NOWAIT) even with
-  -- the SKIP LOCKED clause. This is a workaround to ignore the error until we understand
-  -- what to do, another thread will pick up the request so we don't do anything.
   NULL;
 WHEN InvalidRowid THEN
   -- Ignore random ORA-10632 errors (invalid rowid) due to interferences with the online shrinking
@@ -832,9 +818,9 @@ BEGIN
   INSERT INTO SubRequest
     (retrycounter, filename, protocol, xsize, priority, subreqid, flags, modebits,
      creationtime, lastmodificationtime, answered, id, diskcopy, castorfile, parent,
-     status, request, getnextstatus, errorcode)
+     status, request, getnextstatus, errorcode, svcHandler)
   VALUES (0, fileName, 'rfio', fileSize, 0, uuidgen(), 0, 0, gettime(), gettime(),
-     0, srId, destDcId, cfId, 0, 13, reqId, 0, 0);
+     0, srId, destDcId, cfId, 0, 13, reqId, 0, 0, 'NotNullNeeded');
   INSERT INTO Id2Type (id, type) VALUES (srId, 27);  -- OBJ_SubRequest
 
   -- Create the DiskCopy without filesystem
