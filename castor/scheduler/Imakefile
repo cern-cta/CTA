@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Release$ $Date: 2008/07/29 06:29:16 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Release$ $Date: 2008/11/03 07:44:25 $ $Author: waldron $
 #
 # Makefile for the CASTOR2 LSF External Plugin
 #
@@ -40,6 +40,8 @@ EXTSHARED = so
 #endif
 
 CASTOR_HOME = ../..
+MANPAGES = FileName($(MANDIR),schmod_castor.$(MANSUFFIX))
+EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),schmod_castor.$(MANSUFFIX)))
 INCLUDES = -I FileName(FileName(..,..),h) -I FileName(..,..)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
@@ -74,9 +76,14 @@ depend:
 
 install: FileName($(LIBDIR),ProgramTargetName(schmod_shmem.$(EXTSHARED))) FileName($(LIBDIR),ProgramTargetName(schmod_python.$(EXTSHARED)))
 
+install.man: $(MANDIR) $(MANPAGES)
+MakeDir($(MANDIR),root,bin,0755)
+IMANPAGE(schmod_castor,$(MANDIR),$(MANSUFFIX))
+EMANPAGE(schmod_castor,$(EXPORTMAN)/man1,$(MANSUFFIX))
+
 export: install
 
-exportman:
+exportman: $(EXPORTMANPAGES)
 
 exportshr:
 InstallTarget(schmod_shmem.$(EXTSHARED),root,bin,0755,$(LIBDIR))
