@@ -266,15 +266,15 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
         castor::dlf::Param("driveName", tapeDrive->driveName()),
         castor::dlf::Param("tapeRequestID", request.get()->id()),
         castor::dlf::Param("driveExists", driveExists),
-        castor::dlf::Param("driveStatusBefore", driveStatusBefore),
-        castor::dlf::Param("driveStatusAfter", driveStatusAfter),
-        castor::dlf::Param("runningRequestIdBefore", runningRequestIdBefore),
-        castor::dlf::Param("runningRequestIdAfter",runningRequestIdAfter),
+        castor::dlf::Param("driveStatusBef", driveStatusBefore),
+        castor::dlf::Param("driveStatusAft", driveStatusAfter),
+        castor::dlf::Param("runningRequestIdBef", runningRequestIdBefore),
+        castor::dlf::Param("runningRequestIdAft",runningRequestIdAfter),
         castor::dlf::Param("requestExists", requestExists),
-        castor::dlf::Param("requestStatusBefore", requestStatusBefore),
-        castor::dlf::Param("requestStatusAfter", requestStatusAfter),
-        castor::dlf::Param("requestDriveIdBefore", requestDriveIdBefore),
-        castor::dlf::Param("requestDriveIdAfter", requestDriveIdAfter)};
+        castor::dlf::Param("requestStatusBef", requestStatusBefore),
+        castor::dlf::Param("requestStatusAft", requestStatusAfter),
+        castor::dlf::Param("requestDriveIdBef", requestDriveIdBefore),
+        castor::dlf::Param("requestDriveIdAft", requestDriveIdAfter)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
         VDQM_RESET_DRIVE_AND_REQUEST, 13, params);
 
@@ -323,15 +323,15 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
           castor::dlf::Param("driveName", tapeDrive->driveName()),
           castor::dlf::Param("tapeRequestID", request.get()->id()),
           castor::dlf::Param("driveExists", driveExists),
-          castor::dlf::Param("driveStatusBefore", driveStatusBefore),
-          castor::dlf::Param("driveStatusAfter", driveStatusAfter),
-          castor::dlf::Param("runningRequestIdBefore", runningRequestIdBefore),
-          castor::dlf::Param("runningRequestIdAfter",runningRequestIdAfter),
+          castor::dlf::Param("driveStatusBef", driveStatusBefore),
+          castor::dlf::Param("driveStatusAft", driveStatusAfter),
+          castor::dlf::Param("runningRequestIdBef", runningRequestIdBefore),
+          castor::dlf::Param("runningRequestIdAft",runningRequestIdAfter),
           castor::dlf::Param("requestExists", requestExists),
-          castor::dlf::Param("requestStatusBefore", requestStatusBefore),
-          castor::dlf::Param("requestStatusAfter", requestStatusAfter),
-          castor::dlf::Param("requestDriveIdBefore", requestDriveIdBefore),
-          castor::dlf::Param("requestDriveIdAfter", requestDriveIdAfter)};
+          castor::dlf::Param("requestStatusBef", requestStatusBefore),
+          castor::dlf::Param("requestStatusAf", requestStatusAfter),
+          castor::dlf::Param("requestDriveIdBef", requestDriveIdBefore),
+          castor::dlf::Param("requestDriveIdAft", requestDriveIdAfter)};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
           VDQM_REQUEST_SUBMITTED_TRANSITION_FAILED, 13, params);
       }
