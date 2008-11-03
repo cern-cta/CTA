@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.693 $ $Date: 2008/11/03 09:35:40 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.694 $ $Date: 2008/11/03 10:07:57 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -250,16 +250,20 @@ BEGIN
     -- filesystems and diskservers!
     FOR b IN (SELECT DiskCopy.id FROM (
                 SELECT rownum ind, DiskCopy.id
-                  FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass
+                  FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass, DiskServer
                  WHERE DiskCopy.filesystem = FileSystem.id
                    AND FileSystem.diskpool = DiskPool2SvcClass.parent
+                   AND FileSystem.diskserver = DiskServer.id
                    AND DiskPool2SvcClass.child = SvcClass.id
                    AND DiskCopy.castorfile = a.castorfile
                    -- Ignore the diskcopy being processed!!!!!
                    AND DiskCopy.id != a.id
                    AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
-                   AND SvcClass.id = svcId
-                 ORDER BY DiskCopy.gcWeight DESC) DiskCopy
+                   AND SvcClass.id = svcId  
+                 -- Select DISABLED or DRAINING hardware first
+                 ORDER BY decode(FileSystem.status, 0,
+                          decode(DiskServer.status, 0, 0, 1), 1) ASC,
+                          DiskCopy.gcWeight DESC) DiskCopy
               WHERE ind > (maxReplicaNb - 1))
     LOOP
       -- Invalidate the diskcopy
