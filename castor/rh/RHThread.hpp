@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/02/21 15:51:11 $ $Author: waldron $
+ * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/11/03 09:29:40 $ $Author: sponcec3 $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -105,7 +105,10 @@ namespace castor {
       
       /// Stager notify port
       unsigned m_stagerPort;
-
+      
+      /// hash table for mapping requests to svc handlers
+      std::map<int, std::string> m_svcHandler;
+      
     }; // class RHThread
     
   } // end of namespace rh

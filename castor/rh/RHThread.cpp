@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2008/10/24 06:54:37 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2008/11/03 09:29:40 $ $Author: sponcec3 $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -39,6 +39,7 @@
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/QryRequest.hpp"
 #include "castor/stager/GCFileList.hpp"
+#include "castor/stager/SubRequest.hpp"
 #include "castor/rh/Client.hpp"
 #include "castor/bwlist/ChangePrivilege.hpp"
 #include "castor/io/biniostream.h"
@@ -61,6 +62,19 @@ throw (castor::exception::Exception) :
     getHostName(castor::CASTOR_STAGER);
   m_stagerPort = castor::PortsConfig::getInstance()->
     getNotifPort(castor::CASTOR_STAGER);
+  
+  // statically initialize the list of stager service handlers for each
+  // request type, cf. the Type2Obj table
+  m_svcHandler[OBJ_StageGetRequest] = "JobReqSvc";
+  m_svcHandler[OBJ_StagePutRequest] = "JobReqSvc";
+  m_svcHandler[OBJ_StageUpdateRequest] = "JobReqSvc";
+  m_svcHandler[OBJ_StagePrepareToGetRequest] = "PrepReqSvc";
+  m_svcHandler[OBJ_StagePrepareToPutRequest] = "PrepReqSvc";
+  m_svcHandler[OBJ_StagePrepareToUpdateRequest] = "PrepReqSvc";
+  m_svcHandler[OBJ_StageRepackRequest] = "PrepReqSvc";
+  m_svcHandler[OBJ_StagePutDoneRequest] = "StageReqSvc";
+  m_svcHandler[OBJ_StageRmRequest] = "StageReqSvc";
+  m_svcHandler[OBJ_SetFileGCWeight] = "StageReqSvc";
 }
 
 
@@ -334,9 +348,12 @@ unsigned int castor::rh::RHThread::handleRequest
     castor::stager::FileRequest* filreq =
       dynamic_cast<castor::stager::FileRequest*>(fr);
     if (0 != filreq) {
-      svcs()->fillRep(&ad, fr, OBJ_SubRequest, false);
       // And get number of subrequests
       nbSubReqs = filreq->subRequests().size();
+      for(unsigned i = 0; i < nbSubReqs; i++) {
+        filreq->subRequests()[i]->setSvcHandler(m_svcHandler[filreq->type()]);
+      }
+      svcs()->fillRep(&ad, fr, OBJ_SubRequest, false);
     }
 
     // Store client for requests
@@ -389,21 +406,15 @@ void castor::rh::RHThread::sendNotification
   case OBJ_StageGetRequest:
   case OBJ_StagePutRequest:
   case OBJ_StageUpdateRequest:
-    // JobRequest Service
-    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'J', nbThreads);
-    break;
   case OBJ_StagePrepareToPutRequest:
   case OBJ_StagePrepareToGetRequest:
   case OBJ_StageRepackRequest:
   case OBJ_StagePrepareToUpdateRequest:
-    // PrepareRequest Service
-    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'P', nbThreads);
-    break;
   case OBJ_StageRmRequest:
   case OBJ_StagePutDoneRequest:
   case OBJ_SetFileGCWeight:
-    // StagerRequest Service
-    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'S', nbThreads);
+    // File requests: use the svc handler mapping
+    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, m_svcHandler[fr->type()][0], nbThreads);
     break;
   case OBJ_StageFileQueryRequest:
   case OBJ_DiskPoolQuery:
