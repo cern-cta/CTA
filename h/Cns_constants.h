@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_constants.h,v 1.5 2008/07/28 15:00:26 sponcec3 Exp $
+ * $Id: Cns_constants.h,v 1.6 2008/11/03 10:34:07 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_constants.h,v $ $Revision: 1.5 $ $Date: 2008/07/28 15:00:26 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_constants.h,v $ $Revision: 1.6 $ $Date: 2008/11/03 10:34:07 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_CONSTANTS_H
@@ -44,27 +44,27 @@
 
 			/* long options for Cns utilities */
 
-#define	OPT_CLASS_GID	0
-#define	OPT_CLASS_GROUP	1
-#define	OPT_CLASS_ID	2
-#define	OPT_CLASS_NAME	3
-#define	OPT_CLASS_UID	4
-#define	OPT_CLASS_USER	5
-#define	OPT_FLAGS	6
-#define	OPT_MAX_DRV	7
-#define	OPT_MAX_FSZ	8
-#define	OPT_MAX_SSZ	9
-#define	OPT_MIGR_INTV	10
-#define	OPT_MIN_FSZ	11
-#define	OPT_MIN_TIME	12
-#define	OPT_NBCOPIES	13
-#define	OPT_NEW_C_NAME	14
-#define	OPT_RETENP_DISK	15
-#define	OPT_TPPOOLS	16
-#define	OPT_IDMAP_GID	17
-#define	OPT_IDMAP_GROUP	18
-#define	OPT_IDMAP_UID	17
-#define	OPT_IDMAP_USER	18
+#define	OPT_CLASS_GID	1
+#define	OPT_CLASS_GROUP	2
+#define	OPT_CLASS_ID	3
+#define	OPT_CLASS_NAME	4
+#define	OPT_CLASS_UID	5
+#define	OPT_CLASS_USER	6
+#define	OPT_FLAGS	7
+#define	OPT_MAX_DRV	8
+#define	OPT_MAX_FSZ	9
+#define	OPT_MAX_SSZ	10
+#define	OPT_MIGR_INTV	11
+#define	OPT_MIN_FSZ	12
+#define	OPT_MIN_TIME	13
+#define	OPT_NBCOPIES	14
+#define	OPT_NEW_C_NAME	15
+#define	OPT_RETENP_DISK	16
+#define	OPT_TPPOOLS	17
+#define	OPT_IDMAP_GID	18
+#define	OPT_IDMAP_GROUP	19
+#define	OPT_IDMAP_UID	20
+#define	OPT_IDMAP_USER	21
 
 			/* name server utilities exit codes */
 
