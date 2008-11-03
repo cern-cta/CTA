@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.263 $ $Release$ $Date: 2008/11/03 07:42:37 $ $Author: waldron $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.264 $ $Release$ $Date: 2008/11/03 09:30:30 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -99,7 +99,7 @@ static castor::SvcFactory<castor::db::ora::OraStagerSvc>* s_factoryOraStagerSvc 
 
 /// SQL statement for subRequestToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestToDoStatementString =
-  "BEGIN subRequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12); END;";
+  "BEGIN subRequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13); END;";
 
 /// SQL statement for subRequestFailedToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestFailedToDoStatementString =
@@ -319,6 +319,8 @@ castor::db::ora::OraStagerSvc::subRequestToDo
         (11, oracle::occi::OCCISTRING, 2048);
       m_subRequestToDoStatement->registerOutParam
         (12, oracle::occi::OCCIINT);
+      m_subRequestToDoStatement->registerOutParam
+        (13, oracle::occi::OCCISTRING, 2048);
       m_subRequestToDoStatement->setAutoCommit(true);
     }
     m_subRequestToDoStatement->setString(1, service);
@@ -353,6 +355,7 @@ castor::db::ora::OraStagerSvc::subRequestToDo
     result->setFlags(m_subRequestToDoStatement->getInt(10));
     result->setSubreqId(m_subRequestToDoStatement->getString(11));
     result->setAnswered(m_subRequestToDoStatement->getInt(12));
+    result->setSvcHandler(m_subRequestToDoStatement->getString(13));
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
