@@ -23,7 +23,7 @@ Cns_replacetapecopy(struct Cns_fileid *file_uniqueid, const char* oldvid, const 
 {
   int c,i;
   int msglen;
-  char func[19];
+  char func[20];
 
   gid_t gid;
   uid_t uid;
