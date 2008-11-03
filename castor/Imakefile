@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.199 $ $Release$ $Date: 2008/10/24 06:54:36 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.200 $ $Release$ $Date: 2008/11/03 07:49:55 $ $Author: waldron $
 #
 # Make Castor libraries and executables
 #
@@ -266,6 +266,8 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               server/SignalThreadPool.cpp \
               server/NotifierThread.cpp \
               server/ThreadNotification.cpp \
+              server/DynamicThreadPool.cpp \
+              server/Queue.cpp \
               stager/CastorFile.cpp \
               stager/CastorFileCInt.cpp \
               stager/DiskCopy.cpp \
