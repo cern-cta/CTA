@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.66 $ $Release$ $Date: 2008/09/22 13:27:06 $ $Author: waldron $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.67 $ $Release$ $Date: 2008/11/03 07:34:58 $ $Author: waldron $
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -171,6 +171,7 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
       {"Rthreads",   REQUIRED_ARGUMENT, NULL, 'R'},
       {"port",       REQUIRED_ARGUMENT, NULL, 'p'},
       {"bw",         NO_ARGUMENT,       NULL, 'b'},
+      {NULL,         0,                 NULL,  0 }
     };
   Coptind = 1;
   Copterr = 0;
