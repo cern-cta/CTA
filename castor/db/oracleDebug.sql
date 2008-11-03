@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.9 $ $Date: 2008/09/01 17:34:21 $ $Author: waldron $
+ * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.10 $ $Date: 2008/11/03 07:38:19 $ $Author: waldron $
  *
  * Some SQL code to ease support and debugging
  *
@@ -12,6 +12,7 @@ CREATE OR REPLACE PACKAGE castor_debug AS
     id INTEGER,
     diskPool VARCHAR2(2048),
     location VARCHAR2(2048),
+    available CHAR(1),
     status NUMBER,
     creationtime DATE,
     gcWeight NUMBER);
@@ -70,12 +71,13 @@ END;
 /* Get the diskcopys associated with the reference number */
 CREATE OR REPLACE FUNCTION getDCs(ref number) RETURN castor_debug.DiskCopyDebug PIPELINED AS
 BEGIN
-  FOR d IN (SELECT diskCopy.id,
-                   diskPool.name AS diskpool,
-                   diskServer.name || ':' || fileSystem.mountPoint || diskCopy.path AS location,
-                   diskCopy.status AS status,
+  FOR d IN (SELECT DiskCopy.id,
+                   DiskPool.name AS diskpool,
+                   DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path AS location,
+                   decode(DiskServer.status, 2, 'N', decode(FileSystem.status, 2, 'N', 'Y')) AS available,
+                   DiskCopy.status AS status,
                    to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationtime AS creationtime,
-                   diskCopy.gcWeight AS gcweight
+                   DiskCopy.gcWeight AS gcweight
               FROM DiskCopy, FileSystem, DiskServer, DiskPool
              WHERE DiskCopy.fileSystem = FileSystem.id(+)
                AND FileSystem.diskServer = diskServer.id(+)
