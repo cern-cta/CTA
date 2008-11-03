@@ -30,6 +30,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NotSupported.hpp"
 #include "castor/server/NotifierThread.hpp"
+#include "castor/System.hpp"
 #include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/OldRequestFacade.hpp"
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
@@ -598,6 +599,32 @@ void castor::vdqm::ProtocolFacade::handleVdqmMagic4Request(
     case VDQM4_AGGREGATOR_VOL_REQ:
     {
       protInterpreter.readAggregatorVolReq(header.len, volReq);
+
+      // User root is not allowed to make a volume request
+      if(volReq.clientUID == 0 && volReq.clientGID == 0) {
+
+        // Try to get client hostname
+        std::string clientHostname;
+        {
+          unsigned short port;
+          unsigned long  ip;
+
+          try {
+            m_socket.getPeerIp(port, ip);
+            clientHostname = castor::System::ipAddressToHostname(ip);
+          } catch(castor::exception::Exception &e) {
+            clientHostname = "UNKNOWN";
+          }
+        }
+
+        castor::exception::PermissionDenied pe;
+
+        pe.getMessage() << "User root is not allowed to make a volume request. "
+          "source_host=" << clientHostname;
+
+        throw pe;
+      }
+
       handler::VdqmMagic4RequestHandler requestHandler;
       requestHandler.handleAggregatorVolReq(m_socket, m_cuuid, header, volReq);
 
