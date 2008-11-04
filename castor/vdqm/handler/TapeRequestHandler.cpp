@@ -124,7 +124,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
 
   // Set the remote copy type
   if(header.reqtype == VDQM4_AGGREGATOR_VOL_REQ) {
-    newTapeReq.setRemoteCopyType("TAPE_AGGREGATOR");
+    newTapeReq.setRemoteCopyType("AGGREGATOR");
   } else {
     newTapeReq.setRemoteCopyType("RTCPD");
   }

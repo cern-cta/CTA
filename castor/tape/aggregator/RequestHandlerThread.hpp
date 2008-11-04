@@ -26,6 +26,8 @@
 #define CASTOR_TAPE_AGGREGATOR_REQUESTHANDLERTHREAD_HPP 1
 
 #include "castor/server/IThread.hpp"
+#include "castor/server/Queue.hpp"
+
 
 namespace castor {
 namespace tape {
@@ -62,6 +64,17 @@ namespace aggregator {
      * Convenience method to stop the thread.
      */
     virtual void stop() throw();
+
+
+  private:
+
+    /**
+     * Queue of remote copy jobs to be worked on.
+     *
+     * This queue should only ever contain a maximum of 1 job.  The queue is
+     * here in order to detect erronous clients.
+     */
+    castor::server::Queue m_jobQueue;
 
   }; // class RequestHandlerThread
 

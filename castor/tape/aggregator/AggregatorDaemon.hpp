@@ -52,6 +52,11 @@ public:
     throw(castor::exception::Exception);
 
   /**
+   * Destructor.
+   */
+  ~AggregatorDaemon() throw();
+
+  /**
    * Parses the command-line arguments and sets the daemon options accordingly.
    *
    * @param argc Number of command-line arguments.
@@ -76,6 +81,7 @@ public:
    * Returns the port on which the server will listen.
    */
    int getListenPort() throw(castor::exception::InvalidConfigEntry);
+
 
 private:
 

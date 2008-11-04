@@ -29,7 +29,7 @@
 // constructor
 //-----------------------------------------------------------------------------
 castor::tape::aggregator::RequestHandlerThread::RequestHandlerThread()
-  throw () {
+  throw () : m_jobQueue(1) {
 }
 
 //-----------------------------------------------------------------------------
@@ -52,6 +52,40 @@ void castor::tape::aggregator::RequestHandlerThread::init()
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RequestHandlerThread::run(void *param)
   throw() {
+/*
+  Cuuid_t cuuid = nullCuuid;
+
+  // Gives a Cuuid to the request
+  Cuuid_create(&cuuid);
+
+  if(param == NULL) {
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_REQUEST_HANDLER_SOCKET_IS_NULL);
+    return;
+  }
+
+  castor::io::ServerSocket *socket = (castor::io::ServerSocket*)param;
+
+  try {
+
+    handleRequest(cuuid, *socket);
+
+    // Maybe the scheduler has some work to do
+    castor::server::NotifierThread::getInstance()->doNotify('D');
+
+  } catch(castor::exception::Exception &e) {
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Standard Message", sstrerror(e.code())),
+      castor::dlf::Param("Precise Message", e.getMessage().str())
+    };
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, VDQM_HANDLE_REQUEST_EXCEPT, 2,
+      params);
+  }
+
+  // De-allocate the socket
+  delete socket;
+*/
 }
 
 

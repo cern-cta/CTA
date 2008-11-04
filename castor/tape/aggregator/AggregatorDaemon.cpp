@@ -36,7 +36,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::aggregator::AggregatorDaemon::AggregatorDaemon(
-  const char *const daemonName) throw(castor::exception::Exception):
+  const char *const daemonName) throw(castor::exception::Exception) :
   castor::server::BaseDaemon(daemonName) {
   // Initializes the DLF logging including the definition of the predefined
   // messages.  Please not that castor::server::BaseServer::dlfInit can throw a
@@ -45,6 +45,13 @@ castor::tape::aggregator::AggregatorDaemon::AggregatorDaemon(
 
   // Log the aggregator daemon has been started
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, AGGREGATOR_STARTED);
+}
+
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+castor::tape::aggregator::AggregatorDaemon::~AggregatorDaemon() throw() {
 }
 
 
@@ -197,7 +204,7 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(int argc,
 //------------------------------------------------------------------------------
 int castor::tape::aggregator::AggregatorDaemon::getListenPort()
   throw(castor::exception::InvalidConfigEntry) {
-  int port = TAPE_AGGREGATOR_PORT; // Initialise to default value
+  int port = AGGREGATOR_PORT; // Initialise to default value
   char *const configEntry = getconfent("TAPEAGGREGATOR", "PORT", 0);
 
   if(configEntry != NULL) {
