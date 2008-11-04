@@ -279,7 +279,7 @@
 #define ESTJOBTIMEDOUT	ESTBASEOFF+20	/* Job timed out while waiting to be scheduled */
 #define ESTSCHEDERR     ESTBASEOFF+21   /* Scheduler error */
 #define ESTSVCCLASSNOFS ESTBASEOFF+22   /* No filesystems available in service class */
-#define ESTNOSEGFOUND   ESTBASEOFF+23   /* File has no copy on tape or no diskcopies are accessible */
+#define ESTNOSEGFOUND   ESTBASEOFF+23   /* File has no copy on tape and no diskcopies are accessible */
 #define ESTTAPEOFFLINE  ESTBASEOFF+24   /* File is on an offline tape */
 #define ESTREQCANCELED  ESTBASEOFF+25   /* Request canceled while queuing */
 #define ESTMAXERR       ESTBASEOFF+25
