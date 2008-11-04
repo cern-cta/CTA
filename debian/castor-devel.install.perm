@@ -116,3 +116,9 @@
 %attr(0644,root,bin) usr/include/shift/ypgetacctent.h
 %attr(-,root,root) usr/lib/libshift.so
 %attr(-,root,root) usr/lib/libcastorClient.so
+%attr(-,root,root) usr/lib/libcastorns.so
+%attr(-,root,root) usr/lib/libcastorrfio.so
+%attr(-,root,root) usr/lib/libcastorupv.so
+%attr(-,root,root) usr/lib/libcastorvmgr.so
+%attr(-,root,root) usr/lib/libcastorrtcopy.so
+%attr(-,root,root) usr/lib/libcastorvdqm.so

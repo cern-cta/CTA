@@ -64,11 +64,9 @@ CCOPTIM = -g
 SONYRFLG = -DSONYRAW
 #endif
 
-#if UseVmgr
 VMGRFLG = -DVMGR
 VMGRSERV = rtcp_CallVMGR.Osuf
 VMGRLIB = rtcpc_CallVMGR.Osuf
-#endif
 
 #if BuildVdqmLibrary
 VDQMFLG = -DVDQM
@@ -117,21 +115,11 @@ RTCPCLDFLAGS = -DRTCPCLD_NOTIFY_HOST=\"$(RTCPCLDHOST)\" -DRTCPCLD_USER=\"$(RTCPC
 
 THREADFLAGS = $(MTCCFLAGS)
 
-#if SOLARIS
-LDLIBS = -lsocket -lnsl
-#else
-#if _AIX
-#if defined(_IBMR2)
-LDLIBS = -lodm
-#endif
-#else
 #if linux
 LDLIBS = $(ADNSLIB) -lnsl -Wl,-rpath-link,../shlib
 #else
 #if _WIN32
 LDLIBS = ..\lib\shift.lib ws2_32.lib advapi32.lib
-#endif
-#endif
 #endif
 #endif
 
@@ -257,7 +245,7 @@ RTSTAT_OBJS = rtstat.Osuf
 #endif
 
 #if BuildRtcopyLibrary
-RTCPLIBTARGET=LibraryTargetName(rtcpapi)
+RTCPLIBTARGET=SharedLibraryTargetName(castorrtcopy)
 #endif
 
 all: $(RTCPLIBTARGET) $(PROGS_C) $(PROGS_D)
@@ -320,7 +308,7 @@ NormalProgramTarget(rtcpd,$(RTCPD_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(LDLI
 
 NormalProgramTarget(killjid,killjid.Osuf $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(MTLDLIBS))
 
-NormalLibraryTarget(rtcpapi,$(RTCPLIB_OBJS))
+SharedLibraryTarget(castorrtcopy,$(RTCPLIB_OBJS),,)
 
 MakeDepSharedLibrary(shlib,shift)
 
@@ -418,7 +406,7 @@ clean:
 
 clobber:	clean
 	@echo clobbering in CurDir
-	-@RemoveFiles($(PROGS_RTSTAT) $(PROGS_C) $(PROGS_D) $(CPFILES) LibraryTargetName(rtcopy))
+	-@RemoveFiles($(PROGS_RTSTAT) $(PROGS_C) $(PROGS_D) $(CPFILES) SharedLibraryTargetName(castorrtcopy))
 
 #if _WIN32
 depend:

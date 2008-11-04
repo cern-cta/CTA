@@ -15,12 +15,6 @@
    if you have an RS6000 Parallel Channel Tape Attachment or ESCON
    #define ADSTAR
    if you have SCSI connected 3490 or 3590 
-   
-   If your platform is Digital Unix 4 and you have
-   a 100BT Ethernet interface on a busy CPU/Disk
-   server we advice you to enable the RFIODaemonRealTime
-   option : the RFIO daemon will then run as a real time process
-   This option has no efect on all other platforms.
 */
 
 /* Uncomment this for linux ppc64 systems. Currently, the arch is not
@@ -283,18 +277,14 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define HasNis			NO
 #define HasNroff		YES
 #define HasCDK			NO
-#define RFIODaemonRealTime 	NO
 #define UseXFSPrealloc		YES
 #define UseAdns			NO
-#define UseCupv			YES
 #define UseDMSCapi		NO
-#define	UseHpss			NO
 #define UseMtx			NO
 #define UseOracle		YES
 #define UseOraCDBC		YES
 #define UsePgSQL		NO
 #define UseMySQL		NO
-#define UseVmgr			YES
 #define UseVdqm			YES
 #define UseLsf			YES
 #define UseScheduler    	YES

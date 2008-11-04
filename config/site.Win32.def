@@ -1,5 +1,5 @@
 /*
- * $Id: site.Win32.def,v 1.7 2008/02/21 19:07:31 waldron Exp $
+ * $Id: site.Win32.def,v 1.8 2008/11/04 15:24:00 sponcec3 Exp $
  */
 /*
  * Copyright (C) 1993-2003 by CERN/IT/ADC/CA
@@ -7,20 +7,14 @@
  */
 
 /*
- * @(#)$RCSfile: site.Win32.def,v $ $Revision: 1.7 $ $Date: 2008/02/21 19:07:31 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: site.Win32.def,v $ $Revision: 1.8 $ $Date: 2008/11/04 15:24:00 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Platform is normally guessed from the CPP predefined symbols
    But you may define special flags, for example
    #define RS6000PCTA
    if you have an RS6000 Parallel Channel Tape Attachment or ESCON
    #define ADSTAR
-   if you have SCSI connected 3490 or 3590 
-   
-   If your platform is Digital Unix 4 and you have
-   a 100BT Ethernet interface on a busy CPU/Disk
-   server we advice you to enable the RFIODaemonRealTime
-   option : the RFIO daemon will then run as a real time process
-   This option has no efect on all other platforms.
+   if you have SCSI connected 3490 or 3590    
 */
 
 /* Uncomment this for linux ppc64 systems. Currently, the arch is not
@@ -139,7 +133,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #else
 #define OperatorDir	/var/run
 #endif
-#define RaimaDir	/usr/local/raima
 #if defined(_WIN32)
 #define RemoteHostsList	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\castor.remhosts
 #else
@@ -292,15 +285,11 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define HasNis	NO
 #define HasNroff	NO
 #define HasCDK	NO
-#define RFIODaemonRealTime	NO	
 #define UseAdns	NO
-#define UseCupv	YES
 #define UseDMSCapi	NO
-#define	UseHpss	NO
 #define UseMtx	NO
 #define UseMySQL	NO
 #define UseOracle	NO
-#define UseVmgr	YES
 #define UseLsf	NO
 #define UseScheduler	NO
 #define UseExpert	NO

@@ -84,10 +84,8 @@ CTHREAD_FLAGS = $(MTCCFLAGS)
 #if UseAdns
 ADNS = -DADNS
 #endif
-#ifdef NfsRoot
 NFSROOT0 = NfsRoot
 NFSROOT  = -DNFSROOT=\"$(NFSROOT0)\"
-#endif
 #if !defined(_WIN32)
 COMM
 COMM Uncomment the following to compile in the common package in debug mode

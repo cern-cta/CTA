@@ -18,8 +18,8 @@ SYMTABNAM = __.SYMDEF
 #endif
 
 COMM Libraries to include in SharedLibraryTargetName(shift)
-LIBRARIES0 = $(COMMONLIB) $(RFIOLIB) $(MSGLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(SECURITYLIB) $(RTCOPYLIB) $(VDQMLIB) $(DLFLIB) $(TAPELIB) $(DBLIB) $(MONITORLIB) $(RMCLIB) $(EXPERTLIB)
-SHLIBREQLIBS0 = $(SHLIBREQLIBS) -L../../$(COMMONCPPDIR) -lcastorClient
+LIBRARIES0 = $(COMMONLIB) $(MSGLIB) $(STGLIB) $(SECURITYLIB) $(DLFLIB) $(TAPELIB) $(DBLIB) $(MONITORLIB) $(RMCLIB) $(EXPERTLIB)
+SHLIBREQLIBS0 = $(SHLIBREQLIBS) -L../../$(COMMONCPPDIR) -lcastorClient -L../../$(NSDIR) -lcastorns -L../../$(RFIODIR) -lcastorrfio -L../../$(UPVDIR) -lcastorupv -L../../$(VMGRDIR) -lcastorvmgr -L../../$(RTCOPYDIR) -lcastorrtcopy -L../../$(VDQMDIR) -lcastorvdqm
 
 LIBRARIES1 = $(RHORALIB)
 SHLIBREQLIBS1 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshift
@@ -46,7 +46,7 @@ LIBRARIES7 = $(INFOPOLICYLIB)
 CASTOR_HOME=../
 SHLIBREQLIBS7 = $(SHLIBREQLIBS) -L.. -lshift -lcastorCnvs $(PYTHONLIBS) $(PYTHONINC) -L$(ORACLE_HOME)/lib -locci
 
-ALL0=SharedLibraryTargetName(shift) SharedLibraryTargetName(castorClient)
+ALL0=SharedLibraryTargetName(shift) SharedLibraryTargetName(castorClient) SharedLibraryTargetName(castorns) SharedLibraryTargetName(castorrfio) SharedLibraryTargetName(castorupv) SharedLibraryTargetName(castorvmgr) SharedLibraryTargetName(castorrtcopy) SharedLibraryTargetName(castorvdqm)
 
 #if BuildOraCpp
 #if UseOraCDBC
@@ -105,6 +105,12 @@ all: $(ALL0) $(ALL1) $(ALL2) $(ALL4) $(ALL5) $(ALL6) $(ALL7) $(ALLSEC)
 
 INSTALL0=FileName($(LIBDIR),SharedLibraryTargetName(shift))
 INSTALL0+=FileName($(LIBDIR),SharedLibraryTargetName(castorClient))
+INSTALL0+=FileName($(LIBDIR),SharedLibraryTargetName(castorns))
+INSTALL0+=FileName($(LIBDIR),SharedLibraryTargetName(castorrfio))
+INSTALL0+=FileName($(LIBDIR),SharedLibraryTargetName(castorupv))
+INSTALL0+=FileName($(LIBDIR),SharedLibraryTargetName(castorvmgr))
+INSTALL0+=FileName($(LIBDIR),SharedLibraryTargetName(castorrtcopy))
+INSTALL0+=FileName($(LIBDIR),SharedLibraryTargetName(castorvdqm))
 #if BuildOraCpp
 INSTALL1=FileName($(LIBDIR),SharedLibraryTargetName(castorCommonOra))
 #if UseOraCDBC
@@ -131,6 +137,12 @@ install: $(LIBDIR) $(INSTALL0) $(INSTALL1) $(INSTALL2) $(INSTALL4) $(INSTALL5) $
 
 EXPORT0=$(EXPORTLIB)/SharedLibraryTargetName(shift)
 EXPORT0+=$(EXPORTLIB)/SharedLibraryTargetName(castorClient)
+EXPORT0+=$(EXPORTLIB)/SharedLibraryTargetName(castorns)
+EXPORT0+=$(EXPORTLIB)/SharedLibraryTargetName(castorrfio)
+EXPORT0+=$(EXPORTLIB)/SharedLibraryTargetName(castorupv)
+EXPORT0+=$(EXPORTLIB)/SharedLibraryTargetName(castorvmgr)
+EXPORT0+=$(EXPORTLIB)/SharedLibraryTargetName(castorrtcopy)
+EXPORT0+=$(EXPORTLIB)/SharedLibraryTargetName(castorvdqm)
 #if BuildOraCpp
 EXPORT1=$(EXPORTLIB)/SharedLibraryTargetName(castorCommonOra)
 #if UseOraCDBC
@@ -158,7 +170,7 @@ exportman:
 
 exportshr: 
 
-libshift.sl libshift.so: $(LIBRARIES0) libcastorClient.so
+libshift.sl libshift.so: $(LIBRARIES0) libcastorClient.so libcastorns.so libcastorrfio.so libcastorupv.so libcastorvmgr.so libcastorrtcopy.so libcastorvdqm.so
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmplibshift.so
 	@mkdir tmplibshift.so
@@ -168,6 +180,24 @@ libshift.sl libshift.so: $(LIBRARIES0) libcastorClient.so
 
 libcastorClient.sl libcastorClient.so: $(LIBRARIES0) $(SLIBRARIES0)
 	./makeshlib.sh preinstall ../$(COMMONCPPDIR)/SharedLibraryTargetName(castorClient) ./SharedLibraryTargetName(castorClient)
+
+libcastorns.sl libcastorns.so: $(LIBRARIES0) $(SLIBRARIES0)
+	./makeshlib.sh preinstall ../$(NSDIR)/SharedLibraryTargetName(castorns) ./SharedLibraryTargetName(castorns)
+
+libcastorrfio.sl libcastorrfio.so: $(LIBRARIES0) $(SLIBRARIES0)
+	./makeshlib.sh preinstall ../$(RFIODIR)/SharedLibraryTargetName(castorrfio) ./SharedLibraryTargetName(castorrfio)
+
+libcastorupv.sl libcastorupv.so: $(LIBRARIES0) $(SLIBRARIES0)
+	./makeshlib.sh preinstall ../$(UPVDIR)/SharedLibraryTargetName(castorupv) ./SharedLibraryTargetName(castorupv)
+
+libcastorvmgr.sl libcastorvmgr.so: $(LIBRARIES0) $(SLIBRARIES0)
+	./makeshlib.sh preinstall ../$(VMGRDIR)/SharedLibraryTargetName(castorvmgr) ./SharedLibraryTargetName(castorvmgr)
+
+libcastorrtcopy.sl libcastorrtcopy.so: $(LIBRARIES0) $(SLIBRARIES0)
+	./makeshlib.sh preinstall ../$(RTCOPYDIR)/SharedLibraryTargetName(castorrtcopy) ./SharedLibraryTargetName(castorrtcopy)
+
+libcastorvdqm.sl libcastorvdqm.so: $(LIBRARIES0) $(SLIBRARIES0)
+	./makeshlib.sh preinstall ../$(VDQMDIR)/SharedLibraryTargetName(castorvdqm) ./SharedLibraryTargetName(castorvdqm)
 
 libcastorCommonOra.so: $(LIBRARIES1) SharedLibraryTargetName(shift) SharedLibraryTargetName(castorCnvs)
 	@echo " making $@ in `pwd`"
@@ -261,6 +291,12 @@ MakeDir($(LIBDIR),root,bin,0755)
 
 InstallSharedLibrary(shift,,,$(LIBDIR))
 InstallSharedLibrary(castorClient,,,$(LIBDIR))
+InstallSharedLibrary(castorns,,,$(LIBDIR))
+InstallSharedLibrary(castorrfio,,,$(LIBDIR))
+InstallSharedLibrary(castorupv,,,$(LIBDIR))
+InstallSharedLibrary(castorvmgr,,,$(LIBDIR))
+InstallSharedLibrary(castorrtcopy,,,$(LIBDIR))
+InstallSharedLibrary(castorvdqm,,,$(LIBDIR))
 InstallSharedLibrary(castorCnvs,,,$(LIBDIR))
 InstallSharedLibrary(castorCommonOra,,,$(LIBDIR))
 InstallSharedLibrary(castorCommonMysql,,,$(LIBDIR))
@@ -271,6 +307,12 @@ InstallSharedLibrary(castorInfoPolicy,,,$(LIBDIR))
 
 InstallSharedLibrary(shift,,,$(EXPORTLIB))
 InstallSharedLibrary(castorClient,,,$(EXPORTDIR))
+InstallSharedLibrary(castorns,,,$(EXPORTDIR))
+InstallSharedLibrary(castorrfio,,,$(EXPORTDIR))
+InstallSharedLibrary(castorupv,,,$(EXPORTDIR))
+InstallSharedLibrary(castorvmgr,,,$(EXPORTDIR))
+InstallSharedLibrary(castorrtcopy,,,$(EXPORTDIR))
+InstallSharedLibrary(castorvdqm,,,$(EXPORTDIR))
 InstallSharedLibrary(castorCnvs,,,$(EXPORTLIB))
 InstallSharedLibrary(castorCommonOra,,,$(EXPORTLIB))
 InstallSharedLibrary(castorCommonMysql,,,$(EXPORTLIB))
@@ -297,25 +339,25 @@ Makefiles:
 
 MakeDepLibrary(common,common)
 
-MakeDepLibrary(rfio,rfio)
-
 MakeDepLibrary(msg,msg)
-
-MakeDepLibrary(ns,ns)
 
 MakeDepLibrary(client/src/stager,stager)
 
-MakeDepLibrary(vmgr,vmgr)
-
-MakeDepLibrary(upv,upv)
-
 MakeDepSharedLibrary(castor,castorClient)
 
+MakeDepSharedLibrary(ns,castorns)
+
+MakeDepSharedLibrary(rfio,castorrfio)
+
+MakeDepSharedLibrary(upv,castorupv)
+
+MakeDepSharedLibrary(vmgr,castorvmgr)
+
+MakeDepSharedLibrary(rtcopy,castorrtcopy)
+
+MakeDepSharedLibrary(vdqm,castorvdqm)
+
 MakeDepLibrary(castor/proto,castorProto)
-
-MakeDepLibrary(rtcopy,rtcpapi)
-
-MakeDepLibrary(vdqm,vdqmapi)
 
 MakeDepLibrary(dlf,dlf)
 

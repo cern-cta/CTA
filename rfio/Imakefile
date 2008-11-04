@@ -26,10 +26,6 @@ CNS_ROOT = -DCNS_ROOT=\"$(CNS_ROOT_DIR)\"
 #endif
 ERFIODSCRIPT = FileName(FileName(FileName($(EXPORTSHR),etc),init.d),rfiod.scripts)
 
-#if FollowRtLinks
-FOLLOWLINKS=-DFollowRtLinks
-#endif
-
 #if ClientLogging
 LOGGINGO=logging.Osuf
 DUMPLOG=ProgramTargetName(dump_log)
@@ -37,38 +33,7 @@ DUMPINSTALL=FileName($(BIN),ProgramTargetName(dump_log))
 CLIENTLOG=-DCLIENTLOG
 #endif
 
-#if defined(__osf__) && defined(__alpha) && (OSMajorVersion == 4)
-#if RFIODaemonRealTime
-RTFLAGS=-non_shared
-RTLIBS=-L/usr/ccs/lib -lrt
-#endif
-#endif
-
-#ifdef RfioAlarmFile
 RFIO_ALRM= FileName(RfioSpool,RfioAlarmFile)
-#endif
-
-#if BuildHpssServer
-HPSSINCLUDES = -I../hpss
-HPSSOPTS = -DHPSS -D_THREAD_SAFE -DMAX_THREADS=10 \
-	   -DRFIO_PRINCIPAL=\"rfiod\" -DRFIO_KEYTAB=\"/krb5/rfiod.keytabs\"
-#if defined(_AIX)
-HPSSLIBS=-L../hpss -lrfio_hpss -L/usr/lpp/hpss/lib -lhpss -L/usr/lpp/encina/lib -lEncina -ldce
-CC = xlc_r4 -qlanglvl=extended -Dunix -DAIX42 -DAIX43
-LD = xlc_r4 -bmaxdata:0x20000000
-#endif
-#if defined(__osf__) && defined(__alpha)
-HPSSLIBS=-L../hpss -lrfio_hpss -L/usr/lpp/hpss/lib -lhpss -L/usr/lpp/encina/lib -lEncina -ldce -laio
-CC = cc -threads -DDUXV4
-LD = cc -threads
-#endif
-#endif
-
-#if BuildHpssClient
-HPSSCOPTS = -DHPSSCLIENT
-HPSSCLIBS = -L../hpss -lhpss_common
-#endif
-
 DOMAINNAME = DomainName
 
 #ifdef StagerSuperUser
@@ -80,58 +45,37 @@ STAGERSUPERGROUP0 = StagerSuperGroup
 STAGERSUPERGROUP = -DSTAGERSUPERGROUP=\"$(STAGERSUPERGROUP0)\"
 #endif
 
-RFIOFLAGS=-DNOMORERFIO=\"$(NOMORERFIO)\" $(FOLLOWLINKS) \
+RFIOFLAGS=-DNOMORERFIO=\"$(NOMORERFIO)\" \
 	  -DDOMAINNAME=\"$(DOMAINNAME)\" -DLOGFILE=\"$(LOGFILE)\" \
 	  -DRFIO_ALRM=\"$(RFIO_ALRM)\" $(CNS_ROOT) $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
 CTHREAD_FLAGS = $(MTCCFLAGS)
 
 #if !defined(_WIN32)
-COMM
 COMM Uncomment the following to compile in debug mode RFIO package
-COMM
 DEBUG  = -g
-COMM
 #endif
 
-#ifdef NfsRoot
 NFSROOT0 = NfsRoot
 NFSROOT  = -DNFSROOT=\"$(NFSROOT0)\"
-#endif
 
 #if BuildSecureRfio
 CSEC = -DCSEC
 #endif
 
-CFLAGS = $(DEBUG) -I$(INCLUDES) -I.. $(HPSSINCLUDES) $(CTHREAD_FLAGS) $(CLIENTLOG) $(CCOPTFLAGS) $(DEFCFLAGS) $(RFIOFLAGS) $(ACCTFLAG) -DFORTRAN $(SUPPORT_CS2) $(CPPUFL) $(HPSSOPTS) $(HPSSCOPTS) $(NFSROOT) $(CSEC) -DSTAGEHOST=\"$(STAGEHOST)\"
+CFLAGS = $(DEBUG) -I$(INCLUDES) -I.. $(CTHREAD_FLAGS) $(CLIENTLOG) $(CCOPTFLAGS) $(DEFCFLAGS) $(RFIOFLAGS) $(ACCTFLAG) -DFORTRAN $(SUPPORT_CS2) $(CPPUFL) $(NFSROOT) $(CSEC) -DSTAGEHOST=\"$(STAGEHOST)\"
 
 FIOO=fio.Osuf
 #if _WIN32
 NTSERVICEO=service.obj
 #endif
 FFLAGS = $(FFOPTFLAGS) $(FPPUFL)
-#if defined(__alpha) && defined(__osf__)
-LDLIBS = -no_so -L../shlib -lshift -so_archive
-#else
 #if linux
 LDLIBS = -L../shlib -lshift $(ADNSLIB) -lnsl $(MTLDLIBS) -Wl,-rpath-link,../shlib
-#else
-#if SOLARIS
-LDLIBS = -L../shlib -lshift -lsocket -lnsl
-#else
-#if sgi
-LDLIBS =  -L../shlib -lshift $(MTLDLIBS)
-#else
-#if __Lynx__
-LDLIBS = -L../lib -lshift -lnsl -lbsd
 #else
 #if _WIN32
 LDLIBS = ..\lib\shift.lib ws2_32.lib advapi32.lib mpr.lib
 #else
 LDLIBS = -L../shlib -lshift $(MTLDLIBS)
-#endif
-#endif
-#endif
-#endif
 #endif
 #endif
 
@@ -161,7 +105,7 @@ CKSUMLIB = -lz
 LIBS = $(OPTLIBS)
 
 #if BuildRfioLibrary
-RFIOLIBTARGET=LibraryTargetName(rfio)
+RFIOLIBTARGET=SharedLibraryTargetName(castorrfio)
 #endif
 
 MANPAGES = FileName($(MANDIR),rfiod.$(MANSUFFIX)) \
@@ -380,23 +324,11 @@ $(ERFIODSCRIPT): rfiod.scripts
 	cp $? $@
 	chmod 750 $@
 
-NormalLibraryTarget(rfio,$(RFIOLIB_OBJS))
+SharedLibraryTarget(castorrfio,$(RFIOLIB_OBJS),,)
 
-#if BuildHpssServer
-NormalProgramTarget(rfiod,$(SRVOBJS),DepSharedLibraryTargetName(shlib,shift) \
- DepLibraryTargetName(hpss,rfio_hpss), \
- $(LDLIBS) $(HPSSLIBS) $(XFSLIBS) $(CKSUMLIB))
-#else
 NormalProgramTarget(rfiod,$(SRVOBJS),DepSharedLibraryTargetName(shlib,shift), \
  $(MTLDFLAGS) $(RTFLAGS) $(RTLIBS) $(LIBCSEC) $(LDLIBS) $(XFSLIBS) $(CKSUMLIB))
-#endif
 
-#if ((defined(__osf__) && defined(__alpha) && (OSMajorVersion == 4)) || defined(linux))
-#if RFIODaemonRealTime
-rfio_calls.Osuf: rfio_calls.c
-	$(CC) $(CFLAGS) -DRFIODaemonRealTime -c rfio_calls.c
-#endif
-#endif
 #if _WIN32
 service.c:	..\win32\service.c
 	RemoveFile(service.c)
@@ -407,34 +339,28 @@ NormalProgramTarget(dump_log,dump_log.Osuf,DepLibraryTargetName(common,common), 
  $(LDLIBS))
 
 NormalProgramTarget(rfcat,rfcat.Osuf, \
- LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
+ SharedLibraryTargetName(castorrfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
 
 NormalProgramTarget(rfchmod,rfchmod.Osuf, \
- LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
+ SharedLibraryTargetName(castorrfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
 
-#if BuildHpssClient
 NormalProgramTarget(rfcp,rfcp.Osuf, \
- LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift) DepLibraryTargetName(hpss,hpss_common), \
-  $(HPSSCLIBS) $(LDLIBS))
-#else
-NormalProgramTarget(rfcp,rfcp.Osuf, \
- LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
-#endif
+ SharedLibraryTargetName(castorrfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
 
 NormalProgramTarget(rfstat,rfstat.Osuf, \
- LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
+ SharedLibraryTargetName(castorrfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
 
 NormalProgramTarget(rfrm,rfrm.Osuf, \
- LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
+ SharedLibraryTargetName(castorrfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
 
 NormalProgramTarget(rfdir,rfdir.Osuf, \
- LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
+ SharedLibraryTargetName(castorrfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
 
 NormalProgramTarget(rfmkdir,rfmkdir.Osuf, \
- LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
+ SharedLibraryTargetName(castorrfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
 
 NormalProgramTarget(rfrename,rfrename.Osuf, \
- LibraryTargetName(rfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
+ SharedLibraryTargetName(castorrfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
 
 InstallProgram(rfiod,$(BIN),root,bin,755)
 IEXPORT(rfiod,$(EXPORTBIN),755)
@@ -624,12 +550,6 @@ Makefiles:
 
 MakeDepLibrary(common,common)
 MakeDepSharedLibrary(shlib,shift)
-#if BuildHpssServer
-MakeDepLibrary(hpss,rfio_hpss)
-#endif
-#if BuildHpssClient
-MakeDepLibrary(hpss,hpss_common)
-#endif
 
 FORCE:
 

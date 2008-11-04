@@ -14,31 +14,11 @@ CNSHOSTPFX = NsHostPfx
 SCNSHOSTPFX = SNsHostPfx
 
 INCLUDES = FileName(..,h)
-#if _AIX
-LIBS = -L../shlib -lshift
-#else
-#if defined(__alpha) && defined(__osf__)
-LIBS = -no_so -L../shlib -lshift -so_archive
-#else
-#if hpux
-LIBS = -L../shlib -lshift
-#else
 #if linux
 LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl -luuid -Wl,-rpath-link,../shlib
 #else
-#if sgi
-LIBS = -L../shlib -lshift
-#else
-#if SOLARIS
-LIBS = -L../shlib -lshift -lsocket -lnsl
-#else
 #if _WIN32
 LIBS = ..\lib\shift.lib wsock32.lib advapi32.lib
-#endif
-#endif
-#endif
-#endif
-#endif
 #endif
 #endif
 SPOOL = NsSpool
@@ -284,11 +264,11 @@ EXPORTMANPAGES = $(EXPORTMAN)/man3/Cns_aborttrans.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man1/nstouch.$(MANSUFFIX)
 
 #if BuildNameServerLibrary
-NSLIBTARGET=LibraryTargetName(ns)
+NSLIBTARGET=SharedLibraryTargetName(castorns)
 #endif
 
 #if BuildNameServerClient
-CLIENT = LibraryTargetName(ns) \
+CLIENT = SharedLibraryTargetName(castorns) \
 	 ProgramTargetName(nschclass) \
 	 ProgramTargetName(nschmod) \
 	 ProgramTargetName(nschown) \
@@ -460,46 +440,40 @@ Cns_oracle_ifce.c: Cns_oracle_ifce.pc
 	proc INAME=Cns_oracle_ifce INCLUDE=$(INCLUDES) THREADS=YES CHAR_MAP=STRING PARSE=FULL $(WNT_SYS_INCLUDE)
 #define YES 1
 
-NormalProgramTarget(nschclass,nschclass.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nschmod,nschmod.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nschown,nschown.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nschclass,nschclass.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nschmod,nschmod.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nschown,nschown.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
 #if UseOracle && !defined(_WIN32)
 nsdaemon: $(NSDAEMON_OBJS) $(DEPLIB)
 	$(MAKE) -f oralink.mk nsdaemon NSDAEMON_OBJS="$(NSDAEMON_OBJS)" CLDFLAGS=$(MTLDFLAGS) LIBS="$(LIBS) $(LIBCSEC) $(MTLDLIBS)"
 #else
 NormalProgramTarget(nsdaemon,$(NSDAEMON_OBJS), $(DEPLIB), $(MTLDFLAGS) $(LIBS) $(MTLDLIBS) $(LIBCSEC) $(LIBORA))
 #endif
-NormalProgramTarget(nsdelcomment,nsdelcomment.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsdeleteclass,nsdeleteclass.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsenterclass,nsenterclass.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsfind,nsfind.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsgetacl,nsgetacl.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsgetpath,nsgetpath.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nslistclass,nslistclass.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nslisttape,nslisttape.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
-NormalProgramTarget(nsln,nsln.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsls,nsls.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsmkdir,nsmkdir.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsmodifyclass,nsmodifyclass.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsping,nsping.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsrename,nsrename.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsrm,nsrm.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsrmdir,nsrmdir.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nssetchecksum,nssetchecksum.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
-NormalProgramTarget(nssetacl,nssetacl.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nssetcomment,nssetcomment.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nssetsegment,nssetsegment.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nstouch,nstouch.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-
-NormalLibraryTarget(ns,$(NSLIB_OBJS))
+NormalProgramTarget(nsdelcomment,nsdelcomment.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsdeleteclass,nsdeleteclass.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsenterclass,nsenterclass.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsfind,nsfind.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsgetacl,nsgetacl.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsgetpath,nsgetpath.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nslistclass,nslistclass.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nslisttape,nslisttape.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nsln,nsln.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsls,nsls.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsmkdir,nsmkdir.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsmodifyclass,nsmodifyclass.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsping,nsping.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsrename,nsrename.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsrm,nsrm.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsrmdir,nsrmdir.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nssetchecksum,nssetchecksum.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB), $(LIBS))
+NormalProgramTarget(nssetacl,nssetacl.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nssetcomment,nssetcomment.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nssetsegment,nssetsegment.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nstouch,nstouch.Osuf,SharedLibraryTargetName(castorns) $(DEPLIB),$(NSLIB) $(LIBS))
 
 MakeDepSharedLibrary(shlib,shift)
+SharedLibraryTarget(castorns,$(NSLIB_OBJS),,)
 
-#if BuildNameServerDaemon
-install: $(BIN) $(IPROGS_C) $(IPROGS_D) $(SPOOL) $(SACCTDIR)
-#else
-install: $(BIN) $(IPROGS_C)
-#endif
 
 #if BuildNameServerDaemon
 install: $(BIN) $(IPROGS_C) $(IPROGS_D) $(SPOOL) $(SACCTDIR)

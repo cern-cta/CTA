@@ -2,44 +2,24 @@ COMM
 COMM  Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.11 $ $Date: 2008/10/15 11:53:09 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.12 $ $Date: 2008/11/04 15:24:02 $ CERN IT-PDP/DM Jean-Philippe Baud
 
 COMM    Make volume manager programs.
 
 #include <Project.tmpl>
 
 INCLUDES = FileName(..,h)
-#if _AIX
-LIBS = -L../shlib -lshift
-#else
-#if defined(__alpha) && defined(__osf__)
-LIBS = -no_so -L../shlib -lshift -so_archive
-#else
-#if hpux
-LIBS = -L../shlib -lshift
-#else
 #if linux
 LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl -Wl,-rpath-link,../shlib
-#else
-#if sgi
-LIBS = -L../shlib -lshift
-#else
-#if SOLARIS
-LIBS = -L../shlib -lshift -lsocket -lnsl
 #else
 #if _WIN32
 LIBS = ..\lib\shift.lib wsock32.lib advapi32.lib
 #endif
 #endif
-#endif
-#endif
-#endif
-#endif
-#endif
 #if _WIN32
-VMGRLIB = vmgr.lib
+VMGRLIB = castorvmgr.lib
 #else
-VMGRLIB = -L. -lvmgr
+VMGRLIB = -L. -lcastorvmgr
 #endif
 OPSGRP = OperatorGid
 SPOOL = VmgrSpool
@@ -221,7 +201,7 @@ EXPORTMANPAGES = $(EXPORTMAN)/man3/vmgr_deletedenmap.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man1/vmgrsettag.$(MANSUFFIX)
 
 #if BuildVolumeMgrLibrary
-VMGRLIBTARGET=LibraryTargetName(vmgr)
+VMGRLIBTARGET=SharedLibraryTargetName(castorvmgr)
 #endif
 
 #if BuildVolumeMgrClient
@@ -363,32 +343,32 @@ vmgrdaemon: $(VMGRDAEMON_OBJS) $(DEPLIB)
 #else
 NormalProgramTarget(vmgrdaemon,$(VMGRDAEMON_OBJS), $(DEPLIB), $(MTLDFLAGS) $(LIBS) $(MTLDLIBS) $(LIBORA) $(LIBRDS))
 #endif
-NormalProgramTarget(vmgrdeletedenmap,vmgrdeletedenmap.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrdeletedgnmap,vmgrdeletedgnmap.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrdeletelibrary,vmgrdeletelibrary.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrdeletemodel,vmgrdeletemodel.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrdeletepool,vmgrdeletepool.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrdeletetape,vmgrdeletetape.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrdeltag,vmgrdeltag.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrenterdenmap,vmgrenterdenmap.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrenterdgnmap,vmgrenterdgnmap.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrenterlibrary,vmgrenterlibrary.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrentermodel,vmgrentermodel.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrenterpool,vmgrenterpool.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrentertape,vmgrentertape.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrgettag,vmgrgettag.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrlistdenmap,vmgrlistdenmap.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrlistdgnmap,vmgrlistdgnmap.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrlistlibrary,vmgrlistlibrary.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrlistmodel,vmgrlistmodel.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrlistpool,vmgrlistpool.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrlisttape,vmgrlisttape.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrmodifylibrary,vmgrmodifylibrary.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrmodifypool,vmgrmodifypool.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrmodifytape,vmgrmodifytape.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrsettag,vmgrsettag.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrdeletedenmap,vmgrdeletedenmap.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrdeletedgnmap,vmgrdeletedgnmap.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrdeletelibrary,vmgrdeletelibrary.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrdeletemodel,vmgrdeletemodel.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrdeletepool,vmgrdeletepool.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrdeletetape,vmgrdeletetape.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrdeltag,vmgrdeltag.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrenterdenmap,vmgrenterdenmap.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrenterdgnmap,vmgrenterdgnmap.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrenterlibrary,vmgrenterlibrary.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrentermodel,vmgrentermodel.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrenterpool,vmgrenterpool.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrentertape,vmgrentertape.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrgettag,vmgrgettag.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrlistdenmap,vmgrlistdenmap.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrlistdgnmap,vmgrlistdgnmap.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrlistlibrary,vmgrlistlibrary.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrlistmodel,vmgrlistmodel.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrlistpool,vmgrlistpool.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrlisttape,vmgrlisttape.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrmodifylibrary,vmgrmodifylibrary.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrmodifypool,vmgrmodifypool.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrmodifytape,vmgrmodifytape.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
+NormalProgramTarget(vmgrsettag,vmgrsettag.Osuf,SharedLibraryTargetName(castorvmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
 
-NormalLibraryTarget(vmgr,$(VMGRLIB_OBJS))
+SharedLibraryTarget(castorvmgr,$(VMGRLIB_OBJS),,)
 
 MakeDepSharedLibrary(shlib,shift)
 

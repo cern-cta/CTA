@@ -9,31 +9,11 @@ COMM    Make UPV programs.
 #include <Project.tmpl>
 
 INCLUDES = FileName(..,h)
-#if _AIX
-LIBS = -L../shlib -lshift
-#else
-#if defined(__alpha) && defined(__osf__)
-LIBS = -no_so -L../shlib -lshift -so_archive
-#else
-#if hpux
-LIBS = -L../shlib -lshift
-#else
 #if linux
 LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl -Wl,-rpath-link,../shlib
 #else
-#if sgi
-LIBS = -L../shlib -lshift
-#else
-#if SOLARIS
-LIBS = -L../shlib -lshift -lsocket -lnsl
-#else
 #if _WIN32
 LIBS = ..\lib\shift.lib wsock32.lib advapi32.lib
-#endif
-#endif
-#endif
-#endif
-#endif
 #endif
 #endif
 OPSGRP = OperatorGid
@@ -75,9 +55,7 @@ CDBANA = FileName(FileName(..,db),ProgramTargetName(Cdbana))
 DBOBJS = Cupv_db.Osuf Cupv_Cdb_ifce.Osuf
 #endif
 #endif 
-#if UseCupv
 USE_CUPV=-DUSE_CUPV
-#endif
 #if BuildSecureCupv
 SECURITYFLAG=-DCSEC
 LIBS+= -ldl
@@ -123,7 +101,7 @@ EXPORTMANPAGES = $(EXPORTMAN)/man3/Cupv_add.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man1/Cupvmodify.$(MANSUFFIX)
 
 #if BuildCupvLibrary
-UPVLIBTARGET = LibraryTargetName(upv)
+UPVLIBTARGET = SharedLibraryTargetName(castorupv)
 #endif
 #if BuildCupvClient
 CLIENT = ProgramTargetName(Cupvadd) \
@@ -188,13 +166,13 @@ Cupvdaemon: $(CUPVDAEMON_OBJS) $(DEPLIB)
 NormalProgramTarget(Cupvdaemon,$(CUPVDAEMON_OBJS), $(DEPLIB), $(MTLDFLAGS) $(LIBS) $(MTLDLIBS) $(LIBORA) $(LIBRDS))
 #endif
 
-NormalProgramTarget(Cupvadd, Cupvadd.Osuf, LibraryTargetName(upv) $(DEPLIB),$(CUPVLIB) $(LIBS))
-NormalProgramTarget(Cupvmodify, Cupvmodify.Osuf, LibraryTargetName(upv) $(DEPLIB),$(CUPVLIB) $(LIBS))
-NormalProgramTarget(Cupvcheck, Cupvcheck.Osuf, LibraryTargetName(upv) $(DEPLIB),$(CUPVLIB) $(LIBS))
-NormalProgramTarget(Cupvdelete, Cupvdelete.Osuf, LibraryTargetName(upv) $(DEPLIB),$(CUPVLIB) $(LIBS))
-NormalProgramTarget(Cupvlist, Cupvlist.Osuf, LibraryTargetName(upv) $(DEPLIB),$(CUPVLIB) $(LIBS))
+NormalProgramTarget(Cupvadd, Cupvadd.Osuf,SharedLibraryTargetName(castorupv) $(DEPLIB),$(CUPVLIB) $(LIBS))
+NormalProgramTarget(Cupvmodify, Cupvmodify.Osuf,SharedLibraryTargetName(castorupv) $(DEPLIB),$(CUPVLIB) $(LIBS))
+NormalProgramTarget(Cupvcheck, Cupvcheck.Osuf,SharedLibraryTargetName(castorupv) $(DEPLIB),$(CUPVLIB) $(LIBS))
+NormalProgramTarget(Cupvdelete, Cupvdelete.Osuf,SharedLibraryTargetName(castorupv) $(DEPLIB),$(CUPVLIB) $(LIBS))
+NormalProgramTarget(Cupvlist, Cupvlist.Osuf,SharedLibraryTargetName(castorupv) $(DEPLIB),$(CUPVLIB) $(LIBS))
 
-NormalLibraryTarget(upv,$(CUPVLIB_OBJS))
+SharedLibraryTarget(castorupv,$(CUPVLIB_OBJS),,)
 
 MakeDepSharedLibrary(shlib,shift)
 

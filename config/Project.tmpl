@@ -58,11 +58,9 @@
 #undef BuildStageLibrary
 #define BuildStageLibrary YES
 #endif
-#if UseVmgr
 #if !BuildVolumeMgrLibrary
 #undef BuildVolumeMgrLibrary
 #define BuildVolumeMgrLibrary YES
-#endif
 #endif
 #if !BuildRfioClient
 #undef BuildRfioClient
@@ -148,11 +146,9 @@
 #undef BuildRfioLibrary
 #define BuildRfioLibrary YES
 #endif
-#if UseVmgr
 #if !BuildVolumeMgrLibrary
 #undef BuildVolumeMgrLibrary
 #define BuildVolumeMgrLibrary YES
-#endif
 #endif
 #if BuildVdqmLibrary != YES
 #undef BuildVdqmLibrary
@@ -200,11 +196,9 @@
 #undef BuildStageLibrary
 #define BuildStageLibrary YES
 #endif
-#if UseVmgr
 #if !BuildVolumeMgrLibrary
 #undef BuildVolumeMgrLibrary
 #define BuildVolumeMgrLibrary YES
-#endif
 #endif
 #if !BuildTapeLibrary
 #undef BuildTapeLibrary
@@ -314,11 +308,9 @@
 #undef Accounting
 #define Accounting YES
 #endif
-#if UseVmgr
 #if !BuildVolumeMgrLibrary
 #undef BuildVolumeMgrLibrary
 #define BuildVolumeMgrLibrary YES
-#endif
 #endif
 #endif
 
@@ -327,11 +319,9 @@
 #undef BuildTapeLibrary
 #define BuildTapeLibrary YES
 #endif
-#if UseVmgr
 #if !BuildVolumeMgrLibrary
 #undef BuildVolumeMgrLibrary
 #define BuildVolumeMgrLibrary YES
-#endif
 #endif
 #endif
 
@@ -363,11 +353,9 @@
 #undef BuildRfioLibrary
 #define BuildRfioLibrary YES
 #endif
-#if UseVmgr
 #if !BuildVolumeMgrLibrary
 #undef BuildVolumeMgrLibrary
 #define BuildVolumeMgrLibrary YES
-#endif
 #endif
 #endif
 
