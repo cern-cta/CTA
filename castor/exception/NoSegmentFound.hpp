@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NoSegmentFound.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/02/11 10:38:51 $ $Author: murrayc3 $
+ * @(#)$RCSfile: NoSegmentFound.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/11/04 15:07:52 $ $Author: itglp $
  *
  * NoSegmentFound error exception
  *
@@ -35,7 +35,7 @@ namespace castor {
   namespace exception {
 
     /**
-     * Invalid argument exception
+     * NOSEGFOUND == 'File has no copy on tape and no diskcopies are accessible' exception
      */
     class NoSegmentFound : public castor::exception::Exception {
       
