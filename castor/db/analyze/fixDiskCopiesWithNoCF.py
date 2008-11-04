@@ -44,16 +44,20 @@ CREATE OR REPLACE PROCEDURE reinsertCastorFile(
  unused NUMBER;
  fcId NUMBER;
 BEGIN
+  SELECT id INTO fcId
+    FROM FileClass
+   WHERE name = fcname;
   SELECT d2s.child INTO scId
     FROM diskcopy, filesystem, diskpool2svcclass d2s 
    WHERE diskcopy.id = dcId 
      and diskcopy.filesystem = filesystem.id
      and filesystem.diskpool = d2s.parent;
-  SELECT id INTO fcId
-    FROM FileClass
-   WHERE name = fcname;
   selectCastorFile(fid, nh, scId, fcId, fileSize, fname, cfId, unused);
   UPDATE DiskCopy set castorFile = cfId, status = 7 WHERE id = dcId;
+  COMMIT;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  DELETE FROM DiskCopy WHERE id = dcId;
+  DELETE FROM Id2Type WHERE id = dcId;
   COMMIT;
 END;'''
     dbcursor.execute(sql)
@@ -69,17 +73,21 @@ SELECT diskcopy.id, substr(path, instr(path, '/',1,1)+1, instr(path,'@',1,1)-ins
     else:
         print 'Found %d diskcopies to be updated, starting...' % len(files)
     for f in files:
-        namefd = os.popen('nsgetpath castorns ' + str(f[1]))
+        namefd = os.popen('nsgetpath castorns ' + f[1])
         name = namefd.read().strip('\n')
         rc = namefd.close()
         if rc == None:
-            print 'fileid %d' % f[1]
+            print 'fileid %s' % f[1]
             lsfd = os.popen('nsls -l --class ' + name)
             ls = lsfd.read().strip('\n').split()
-            #print [f[0], f[1], nsHost, nsFileCl[ls[0]], ls[5], ls[9]]
-            dbcursor.callproc('reinsertCastorFile', ([f[0], f[1], nsHost, castor_tools.nsFileCl[ls[0]], ls[5], ls[9]]));
-    #   else the file does not exist: we can probably drop everything then
-    
+            #print [f[0], int(f[1]), nsHost, castor_tools.nsFileCl[ls[0]], int(ls[5]), ls[9]]
+            dbcursor.execute('BEGIN reinsertCastorFile(:dcId, :fid, :nh, :fcName, :fs, :fname); END;',
+                    dcId=long(f[0]), fid=int(f[1]), nh=nsHost, fcName=castor_tools.nsFileCl[ls[0]], fs=int(ls[5]), fname=ls[9])
+        else:
+            # the file does not exist anywhere (the ones on disk would have been taken by the synchronization)
+            dbcursor.execute('BEGIN DELETE FROM DiskCopy WHERE id = :dcId; DELETE FROM Id2Type WHERE id = :dcId; END;',
+                    dcId=long(f[0]))
+
     # cleanup
     sql = 'DROP PROCEDURE reinsertCastorFile'
     dbcursor.execute(sql)
