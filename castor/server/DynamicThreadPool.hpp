@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DynamicThreadPool.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/10/21 09:42:11 $ $Author: waldron $
+ * @(#)$RCSfile: DynamicThreadPool.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/11/04 11:02:02 $ $Author: murrayc3 $
  *
  * This header file describes the implementation of a generic thread pool with
  * dynamic thread creation and destruction. A thread pool is a set of threads
@@ -139,7 +139,7 @@ namespace castor {
       pthread_attr_t m_attr;
 
       /// A FIFO bounded queue storing tasks pending execution
-      castor::server::Queue *m_taskQueue;
+      castor::server::Queue m_taskQueue;
 
       /// Flag to indicate whether the thread pool is terminated
       bool m_terminated;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DynamicThreadPool.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/10/21 08:36:38 $ $Author: waldron $
+ * @(#)$RCSfile: DynamicThreadPool.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/11/04 11:02:02 $ $Author: murrayc3 $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -35,6 +35,7 @@ castor::server::DynamicThreadPool::DynamicThreadPool
  unsigned int threshold,
  unsigned int maxTasks)
   throw(castor::exception::Exception) :
+  m_taskQueue(maxTasks),
   m_terminated(false),
   m_threadCount(0),
   m_lastPoolShrink(0) {
@@ -56,9 +57,6 @@ castor::server::DynamicThreadPool::DynamicThreadPool
   m_threshold   = 
     ((m_initThreads == m_maxThreads) || (threshold > 100)) ? 0 :
     (maxTasks / 100) * threshold;
-
-  // Initialize the task queue
-  m_taskQueue = new castor::server::Queue(maxTasks);
 
   // Initialize globus mutexes
   rv = pthread_mutex_init(&m_lock, NULL);
@@ -87,7 +85,6 @@ castor::server::DynamicThreadPool::DynamicThreadPool
   // destructor so we flag the thread pool for termination so that any threads
   // that were created successfully destroy themselves.
   if (rv != 0) {
-    delete m_taskQueue;
     m_terminated = true;
 
     // Throw exception
@@ -107,13 +104,12 @@ castor::server::DynamicThreadPool::~DynamicThreadPool() throw() {
   // Update the termination flag to true and notify the task queue of the
   // termination.
   m_terminated = true;
-  m_taskQueue->terminate();
+  m_taskQueue.terminate();
 
   // Wait for all threads to shutdown before destroying the queue
   while (m_threadCount > 0) {
     usleep(20 * 1000); // 20 millisecond spin lock
   }
-  delete m_taskQueue;
 
   // Destroy global mutexes
   pthread_mutex_destroy(&m_lock);
@@ -137,7 +133,7 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
     // Wait for a task to be available from the queue.
     void *args = 0;
     try {
-      args = pool->m_taskQueue->pop
+      args = pool->m_taskQueue.pop
 	((pool->m_threadCount == pool->m_initThreads));
     } catch (castor::exception::Exception e) {
       if (e.code() == EPERM) {
@@ -163,7 +159,7 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
     // Destroy any threads over the initial thread limit if the number of tasks
     // in the task queue has dropped to acceptable limits.
     pthread_mutex_lock(&pool->m_lock);
-    if ((pool->m_taskQueue->size() < pool->m_threshold) &&
+    if ((pool->m_taskQueue.size() < pool->m_threshold) &&
 	(pool->m_threadCount > pool->m_initThreads) &&
 	(time(NULL) - pool->m_lastPoolShrink > 10)) {
       pool->m_threadCount--;
@@ -199,7 +195,7 @@ void castor::server::DynamicThreadPool::addTask(void *data, bool wait)
   // Push the task to the queue. We ignore interrupts here!
   while (1) {
     try {
-      m_taskQueue->push(data, wait);
+      m_taskQueue.push(data, wait);
       break;
     } catch (castor::exception::Exception e) {
       if (e.code() == EINTR) {
@@ -213,7 +209,7 @@ void castor::server::DynamicThreadPool::addTask(void *data, bool wait)
   pthread_mutex_lock(&m_lock);
   if ((m_threadCount == 0) ||
       ((m_threadCount < m_maxThreads) &&
-       (m_taskQueue->size() > m_threshold))) {
+       (m_taskQueue.size() > m_threshold))) {
     rv = pthread_create(&t, &m_attr, (void *(*)(void *))&castor::server::DynamicThreadPool::_consumer, this);
     if (rv == 0) {
       m_threadCount++;
