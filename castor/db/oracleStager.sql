@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.694 $ $Date: 2008/11/03 10:07:57 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.695 $ $Date: 2008/11/04 15:05:56 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -409,12 +409,15 @@ CREATE OR REPLACE PROCEDURE subRequestFailedToDo(srId OUT INTEGER, srRetryCounte
                                                  srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
                                                  srSubReqId OUT VARCHAR2, srErrorCode OUT NUMBER,
                                                  srErrorMessage OUT VARCHAR2) AS
+LockError EXCEPTION;
+PRAGMA EXCEPTION_INIT (LockError, -54);
 InvalidRowid EXCEPTION;
 PRAGMA EXCEPTION_INIT (InvalidRowid, -10632);
 CURSOR c IS
    SELECT id, answered
      FROM SubRequest
     WHERE status = 7  -- FAILED
+      AND ROWNUM < 2
     FOR UPDATE SKIP LOCKED;
 srAnswered INTEGER;
 BEGIN
@@ -438,6 +441,11 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   NULL;
 WHEN InvalidRowid THEN
   -- Ignore random ORA-10632 errors (invalid rowid) due to interferences with the online shrinking
+  NULL;
+WHEN LockError THEN
+  -- We have observed ORA-00054 errors (resource busy and acquire with NOWAIT) even with
+  -- the SKIP LOCKED clause. This is a workaround to ignore the error until we understand
+  -- what to do, another thread will pick up the request so we don't do anything.
   NULL;
 END;
 
@@ -2101,7 +2109,7 @@ BEGIN
   FOR dc in dcs LOOP
     gcw := dc.gcWeight;
     -- compute actual gc weight to be used
-    if gcwProc IS NOT NULL THEN
+    IF gcwProc IS NOT NULL THEN
       EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:oldGcw, :delta); END;'
         USING OUT gcw, IN gcw, weight;
     END IF;
