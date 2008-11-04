@@ -110,7 +110,7 @@ BEGIN
           CONSTRAINT NN_TapeRequest_remoteCopyType NOT NULL,
         CONSTRAINT CH_TapeRequest_remoteCopyType
           CHECK(
-            (remoteCopyType=''RTCPD'') OR (remoteCopyType=''TAPE_AGGREGATOR'')
+            (remoteCopyType=''RTCPD'') OR (remoteCopyType=''AGGREGATOR'')
           ))');
     EXECUTE IMMEDIATE('
       ALTER TABLE TapeRequest MODIFY remoteCopyType DEFAULT NULL');
