@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.676 $ $Date: 2008/11/03 14:04:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.677 $ $Date: 2008/11/05 16:58:11 $ $Author: itglp $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -152,7 +152,8 @@ CREATE INDEX I_GCFile_Request ON GCFile (request);
 CREATE INDEX I_Segment_Tape ON Segment (tape);
 
 /* Some constraints */
-ALTER TABLE FileSystem ADD CONSTRAINT diskserver_FK FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
+ALTER TABLE FileSystem ADD CONSTRAINT FK_FileSystem_DiskServer 
+  FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
 ALTER TABLE FileSystem MODIFY (status NOT NULL);
 ALTER TABLE FileSystem MODIFY (diskServer NOT NULL);
 ALTER TABLE DiskServer MODIFY (status NOT NULL);
@@ -188,10 +189,22 @@ ALTER TABLE SvcClass MODIFY (name NOT NULL)
 /* DiskCopy constraints */
 ALTER TABLE DiskCopy MODIFY (nbCopyAccesses DEFAULT 0);
 ALTER TABLE DiskCopy MODIFY (gcType DEFAULT NULL);
-ALTER TABLE DiskCopy ADD CONSTRAINT I_DiskCopyCastorFile_FK
-  FOREIGN KEY (castorFile)
-  REFERENCES CastorFile (id)
+ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_CastorFile
+  FOREIGN KEY (castorFile) REFERENCES CastorFile (id)
   INITIALLY DEFERRED DEFERRABLE;
+
+/* CastorFile constraints */
+ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_SvcClass
+  FOREIGN KEY (svcClass) REFERENCES SvcClass (id)
+  INITIALLY DEFERRED DEFERRABLE;
+
+ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
+  FOREIGN KEY (fileClass) REFERENCES FileClass (id)
+  INITIALLY DEFERRED DEFERRABLE;
+
+/* Stream constraints */
+ALTER TABLE Stream ADD CONSTRAINT FK_Stream_TapePool
+  FOREIGN KEY (tapePool) REFERENCES TapePool (id);
 
 /* Global temporary table to handle output of the filesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
