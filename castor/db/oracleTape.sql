@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.685 $ $Date: 2008/11/03 12:25:28 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.686 $ $Date: 2008/11/05 15:06:28 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1112,7 +1112,7 @@ BEGIN
        AND status = 2 -- TAPECOPY_WAITINSTREAMS
        AND ROWNUM < 2;
     -- We'we found one, update stream status
-    UPDATE Stream SET status = 6, tape = 0, lastFileSystemChange = 0
+    UPDATE Stream SET status = 6, tape = null, lastFileSystemChange = null
      WHERE id = sid; -- STREAM_STOPPED
     -- to avoid to by-pass the stream policy if it is used
   EXCEPTION  WHEN NO_DATA_FOUND THEN
@@ -1122,7 +1122,7 @@ BEGIN
     DELETE FROM Stream WHERE id = sid;
   END;
   -- in any case, unlink tape and stream
-  UPDATE Tape SET Stream = 0 WHERE Stream = sid;
+  UPDATE Tape SET Stream = null WHERE Stream = sid;
 END;
 
 
@@ -1391,7 +1391,7 @@ BEGIN
         INSERT INTO Stream
           (id, initialsizetotransfer, lastFileSystemChange, tape, lastFileSystemUsed,
            lastButOneFileSystemUsed, tapepool, status)
-        VALUES (ids_seq.nextval, initSize, 0, 0, 0, 0, tpId, 5) RETURN id INTO strId;
+        VALUES (ids_seq.nextval, initSize, null, null, null, null, tpId, 5) RETURN id INTO strId;
         INSERT INTO Id2Type (id, type) values (strId,26); -- Stream type
     	IF doClone = 1 THEN
 	  BEGIN
