@@ -2,14 +2,11 @@ COMM
 COMM  Copyright (C) 1993-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Date: 2008/11/04 15:24:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Date: 2008/11/06 13:30:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
 
 COMM 	Make stage daemon programs. 
 
 COMM WARNING - THIS IMAKEFILE IS PROVIDED TO BUILD ONLY OLD STAGE CLIENTS, THEREFORE...
-#if BuildStageDaemon
-#undef BuildStageDaemon
-#endif
 
 COMM --------------------------------------------------------------------------------
 COMM For debug mode uncomment the following
@@ -76,7 +73,6 @@ ACCTFLAG = -DSACCT
 #endif
 STGGRP = StagerGid
 STGCONFIG = StageConfigFile
-STGDBCONFIG = StageConfigDbLogin
 INCLUDES = FileName(..,h)
 
 #if UseStageCdb
@@ -129,7 +125,6 @@ DFLAGS = -DBIN=\"$(BIN)\" \
 	 -DSTGCAT=\"$(SPOOL)/stgcat\" \
 	 -DSTGPATH=\"$(SPOOL)/stgpath\" \
 	 -DSTGCONFIG=\"$(STGCONFIG)\" \
-	 -DSTGDBCONFIG=\"$(STGDBCONFIG)\" \
 	 -DSTGGRP=\"$(STGGRP)\" \
 	 -DNOMORESTAGE=\"$(NOMORESTAGE)\" \
 	 -DNOMOREMIGR=\"$(NOMOREMIGR)\" \
@@ -147,8 +142,6 @@ COMM######################### DEPENDENCY LIBRARIES ###############
 GLOBLIB = DepSharedLibraryTargetName(shlib,shift)
 
 COMM######################### RULES ##############################
-
-MANPAGESS = FileName($(MANDIR),stageinit.$(MANSUFFIX)) FileName($(MANDIR),stgdaemon.$(MANSUFFIX)) FileName($(MANDIR),stageshutdown.$(MANSUFFIX)) FileName($(MANDIR),stgdump.$(MANSUFFIX))
 
 MANPAGESC = FileName($(MANDIR),stagein.$(MANSUFFIX)) \
 	FileName($(MANDIR),stageout.$(MANSUFFIX)) \
@@ -181,7 +174,6 @@ MANPAGESA =	FileName($(LIBMANDIR),print_stcp.$(LIBMANSUFFIX)) \
 	FileName($(LIBMANDIR),stage_geterrbuf.$(LIBMANSUFFIX)) \
 	FileName($(LIBMANDIR),stage_getlog.$(LIBMANSUFFIX)) \
 	FileName($(LIBMANDIR),stage_getoutbuf.$(LIBMANSUFFIX)) \
-	FileName($(LIBMANDIR),stage_init.$(LIBMANSUFFIX)) \
 	FileName($(LIBMANDIR),stage_kill.$(LIBMANSUFFIX)) \
 	FileName($(LIBMANDIR),stage_limits.$(LIBMANSUFFIX)) \
 	FileName($(LIBMANDIR),stage_macros.$(LIBMANSUFFIX)) \
@@ -190,7 +182,6 @@ MANPAGESA =	FileName($(LIBMANDIR),print_stcp.$(LIBMANSUFFIX)) \
 	FileName($(LIBMANDIR),stage_seterrbuf.$(LIBMANSUFFIX)) \
 	FileName($(LIBMANDIR),stage_setlog.$(LIBMANSUFFIX)) \
 	FileName($(LIBMANDIR),stage_setoutbuf.$(LIBMANSUFFIX)) \
-	FileName($(LIBMANDIR),stage_shutdown.$(LIBMANSUFFIX)) \
 	FileName($(LIBMANDIR),stage_struct.$(LIBMANSUFFIX)) \
 	FileName($(LIBMANDIR),stage_updc.$(LIBMANSUFFIX)) \
 	FileName($(LIBMANDIR),stage_in_disk.$(LIBMANSUFFIX)) \
@@ -207,19 +198,13 @@ MANPAGESA =	FileName($(LIBMANDIR),print_stcp.$(LIBMANSUFFIX)) \
 	FileName($(LIBMANDIR),stage_wrt_hsm.$(LIBMANSUFFIX)) \
 	FileName($(LIBMANDIR),stage_wrt_tape.$(LIBMANSUFFIX))
 
-#if BuildStageDaemon
-#if UseStageCdb
-MANPAGESD =	FileName($(MANDIR),stgconvert.$(MANSUFFIX))
-#endif
-#endif
-
-#if BuildStageClientOld && BuildStageDaemon
-MANPAGES = $(MANPAGESC) $(MANPAGESS) $(MANPAGESD) $(MANPAGESA)
+#if BuildStageClientOld
+MANPAGES = $(MANPAGESC) $(MANPAGESD) $(MANPAGESA)
 #else
 #if BuildStageClientOld
 MANPAGES = $(MANPAGESC) $(MANPAGESA)
 #else
-MANPAGES = $(MANPAGESS) $(MANPAGESD)
+MANPAGES = $(MANPAGESD)
 #endif
 #endif
 
@@ -239,10 +224,6 @@ EXPORTMANPAGESC = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stagein.$(MANSU
 	FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stagecat.$(MANSUFFIX))) \
 	FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stagealloc.$(MANSUFFIX))) \
 	FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stageget.$(MANSUFFIX))) \
-	FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stageinit.$(MANSUFFIX))) \
-	FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stageshutdown.$(MANSUFFIX))) \
-	FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stgdaemon.$(MANSUFFIX))) \
-	FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stgdump.$(MANSUFFIX))) \
 	FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stage_other_options.$(MANSUFFIX)))
 
 EXPORTMANPAGESA = FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),print_stcp.$(LIBMANSUFFIX))) \
@@ -261,7 +242,6 @@ EXPORTMANPAGESA = FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),print_stcp.$
 	FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),stage_geterrbuf.$(LIBMANSUFFIX))) \
 	FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),stage_getlog.$(LIBMANSUFFIX))) \
 	FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),stage_getoutbuf.$(LIBMANSUFFIX))) \
-	FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),stage_init.$(LIBMANSUFFIX))) \
 	FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),stage_kill.$(LIBMANSUFFIX))) \
 	FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),stage_limits.$(LIBMANSUFFIX))) \
 	FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),stage_macros.$(LIBMANSUFFIX))) \
@@ -270,7 +250,6 @@ EXPORTMANPAGESA = FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),print_stcp.$
 	FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),stage_seterrbuf.$(LIBMANSUFFIX))) \
 	FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),stage_setlog.$(LIBMANSUFFIX))) \
 	FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),stage_setoutbuf.$(LIBMANSUFFIX))) \
-	FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),stage_shutdown.$(LIBMANSUFFIX))) \
 	FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),stage_struct.$(LIBMANSUFFIX))) \
 	FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),stage_updc.$(LIBMANSUFFIX))) \
 	FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),stage_in_disk.$(LIBMANSUFFIX))) \
@@ -286,12 +265,6 @@ EXPORTMANPAGESA = FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),print_stcp.$
 	FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),stage_wrt_disk.$(LIBMANSUFFIX))) \
 	FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),stage_wrt_hsm.$(LIBMANSUFFIX))) \
 	FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),stage_wrt_tape.$(LIBMANSUFFIX)))
-
-#if BuildStageDaemon
-#if UseStageCdb
-EXPORTMANPAGESD = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stgconvert.$(MANSUFFIX)))
-#endif
-#endif
 
 EXPORTMANPAGES = $(EXPORTMANPAGESC) $(EXPORTMANPAGESD) $(EXPORTMANPAGESA)
 
@@ -336,28 +309,6 @@ PROGS_CPDSKDSK = cpdskdsk
 #endif
 #endif
 
-#if BuildStageDaemon
-PROGS_DS = ProgramTargetName(stgdaemon) \
-	  ProgramTargetName(cleaner) \
-	  ProgramTargetName(stageinit) \
-	  ProgramTargetName(stageshutdown) \
-	  ProgramTargetName(stager_castor) \
-	  ProgramTargetName(stager_disk) \
-	  ProgramTargetName(stager_tape) \
-	  ProgramTargetName(stgdump)
-#endif
-
-#if BuildStageDaemon
-#if UseStageCdb
-PROGS_DD = ProgramTargetName(stgconvert) \
-			ProgramTargetName(stgshift_to_castor) \
-			ProgramTargetName(stgshift_cmp_shift) \
-			ProgramTargetName(stgcastor_to_shift) \
-			ProgramTargetName(check_struct_len) \
-			ProgramTargetName(check_Cdbentry)
-#endif
-#endif
-
 PROGS_D = $(PROGS_DS) $(PROGS_DD)
 
 #if Accounting
@@ -370,25 +321,6 @@ COMM
 COMM Special case of cpdskdsk
 COMM
 IPROGS_CPDSKDSK = FileName($(BIN),cpdskdsk)
-#endif
-#endif
-
-#if BuildStageDaemon
-IPROGS_DS = FileName($(BIN),ProgramTargetName(stgdaemon)) \
-	   FileName($(BIN),ProgramTargetName(cleaner)) \
-	   FileName($(BIN),ProgramTargetName(stageinit)) \
-	   FileName($(BIN),ProgramTargetName(stageshutdown)) \
-	   FileName($(BIN),ProgramTargetName(stager_castor)) \
-	   FileName($(BIN),ProgramTargetName(stager_disk)) \
-	   FileName($(BIN),ProgramTargetName(stager_tape)) \
-	   FileName($(BIN),ProgramTargetName(stgdump))
-
-#if UseStageCdb
-IPROGS_DD = FileName($(BIN),ProgramTargetName(stgconvert)) \
-			FileName($(BIN),ProgramTargetName(stgshift_to_castor)) \
-			FileName($(BIN),ProgramTargetName(stgshift_cmp_shift)) \
-			FileName($(BIN),ProgramTargetName(stgcastor_to_shift)) \
-			FileName($(BIN),ProgramTargetName(check_Cdbentry))
 #endif
 #endif
 
@@ -407,33 +339,10 @@ EPROGS_CPDSKDSK = $(EXPORTBIN)/cpdskdsk
 #endif
 #endif
 
-#if BuildStageDaemon
-EPROGS_DS = $(EXPORTBIN)/stgdaemon \
-	   $(EXPORTBIN)/cleaner \
-	   $(EXPORTBIN)/stageinit \
-	   $(EXPORTBIN)/stageshutdown \
-	   $(EXPORTBIN)/stager_castor \
-	   $(EXPORTBIN)/stager_disk \
-	   $(EXPORTBIN)/stager_tape \
-	   $(EXPORTBIN)/stgdump
-#if UseStageCdb
-EPROGS_DD = $(EXPORTBIN)/stgconvert
-#endif
-#endif
-
 EPROGS_D = $(EPROGS_DS) $(EPROGS_DD)
 
 #if Accounting
 EPROGS_Z = $(EXPORTBIN)/stagestat
-#endif
-
-#if BuildStageDaemon
-#if UseStageCdb
-CDBANA = FileName(FileName(..,db),ProgramTargetName(Cdbana))
-DBOBJS = Cstage_db.Osuf Cstage_ifce.Osuf
-DBOBJS_STGD = stgdb_Cdb_ifce.Osuf $(DBOBJS)
-DBOBJS_ALL = stgdb_Cdb_ifce.Osuf $(DBOBJS)
-#endif
 #endif
 
 STGLIB_OBJS =	send2stgd_api.Osuf \
@@ -452,20 +361,6 @@ EPROGS_S = $(EXPORTBIN)/stageupdc $(EXPORTBIN)/stagechng $(EXPORTBIN)/stageping
 #endif
 
 all: $(STGLIB) $(PROGS_C) $(PROGS_D) $(PROGS_S) $(PROGS_Z) $(DBOBJS_ALL) $(PROGS_CPDSKDSK)
-
-#if BuildStageDaemon
-#if UseStageCdb
-#if defined(_WIN32)
-$(CDBANA): FORCE
-	pushd ..\db & $(MAKE) Cdbana.exe & popd
-#else
-$(CDBANA): FORCE
-	cd ../db ; $(MAKE) Cdbana
-#endif
-Cstage_db.c Cstage_db.h: $(CDBANA) Cstage_db.des
-	$(CDBANA) -I$(INCLUDES) -c Cstage_db.c -h Cstage_db.h Cstage_db.des
-#endif
-#endif
 
 MakeDepSharedLibrary(shlib,shift)
 
@@ -504,79 +399,17 @@ NormalProgramTarget(stagechng, \
 NormalProgramTarget(stageping, \
  stageping.Osuf send2stgd_cmd.Osuf,$(GLOBLIB),$(LIBS))
 
-NormalProgramTarget(stageinit, \
- stageinit.Osuf send2stgd_cmd.Osuf,$(GLOBLIB),$(LIBS))
-
-NormalProgramTarget(stageshutdown, \
- stageshutdown.Osuf send2stgd_cmd.Osuf,$(GLOBLIB),$(LIBS))
-
 NormalProgramTarget(stagestat,stagestat.Osuf,$(GLOBLIB),$(LIBS) $(MATHLIB))
-
-NormalProgramTarget(stgdaemon, \
- stgdaemon.Osuf packfseq.Osuf poolmgr.Osuf procalloc.Osuf procclr.Osuf \
- $(DBOBJS_STGD) \
- procio.Osuf procping.Osuf procqry.Osuf procupd.Osuf procfilchg.Osuf sendrep.Osuf stglogit.Osuf \
-	$(STAGEACCT),\
- $(GLOBLIB),$(LIBS) $(MATHLIB))
-
-NormalProgramTarget(cleaner,cleaner.Osuf stglogit.Osuf,$(GLOBLIB),$(LIBS))
 
 cpdskdsk: cpdskdsk.sh
 	sed -e s!CPSHELL!$(CPSHELL)! cpdskdsk.sh | sed -e s!BINDIR!$(BIN)! > cpdskdsk
 	chmod 755 cpdskdsk
-
-NormalProgramTarget(stager_castor, \
- stager_castor.Osuf sendrep.Osuf stglogit.Osuf stager_usrmsg.Osuf,\
- $(GLOBLIB),$(LIBS) $(MATHLIB))
-
-NormalProgramTarget(stager_disk, \
- stager_disk.Osuf sendrep.Osuf stglogit.Osuf stager_usrmsg.Osuf,\
- $(GLOBLIB),$(LIBS) $(MATHLIB))
-
-NormalProgramTarget(stager_tape, \
- stager_tape.Osuf sendrep.Osuf stglogit.Osuf stager_usrmsg.Osuf,\
- $(GLOBLIB),$(LIBS) $(MATHLIB))
-
-#if BuildStageDaemon
-#if UseStageCdb
-STGCONVERT_DB_OBJS = FileName(FileName(..,db),Cdb_hash.Osuf) FileName(FileName(..,db),Cdb_error.Osuf) FileName(FileName(..,db),Cdb_login.Osuf) FileName(FileName(..,db),Cdb_lock.Osuf) FileName(FileName(..,db),Cdb_util.Osuf) FileName(FileName(..,db),Cdb_ana.Osuf) FileName(FileName(..,db),Cdb_db.Osuf) FileName(FileName(..,db),Cdb_wrapio.Osuf)
-stgconvert.Osuf: stgconvert.c
-	$(CC) -o stgconvert.Osuf $(CFLAGS) -DSTGCONVERT -c stgconvert.c
-STGCONVERT_OBJS = stgconvert.Osuf $(DBOBJS) $(STGCONVERT_DB_OBJS) $(GLOBLIB)
-#if defined(_WIN32)
-$(STGCONVERT_DB_OBJS): FORCE
-	pushd ..\db & $(MAKE) $@ & popd
-#else
-$(STGCONVERT_DB_OBJS): FORCE
-	cd ../db; $(MAKE) $@
-#endif
-stgconvert: $(STGCONVERT_OBJS)
-	$(LD) -o $@ $(MTLDFLAGS) $(STGCONVERT_OBJS) $(LIBS)
-#endif
-NormalProgramTarget(check_struct_len,check_struct_len.Osuf $(DBOBJS),$(GLOBLIB),$(LIBS))
-NormalProgramTarget(stgshift_to_castor,shift_to_castor.Osuf $(DBOBJS),$(GLOBLIB),$(LIBS))
-NormalProgramTarget(stgshift_cmp_shift,shift_cmp_shift.Osuf $(DBOBJS),$(GLOBLIB),$(LIBS))
-NormalProgramTarget(stgcastor_to_shift,castor_to_shift.Osuf $(DBOBJS),$(GLOBLIB),$(LIBS))
-NormalProgramTarget(check_Cdbentry,check_Cdbentry.Osuf $(DBOBJS_STGD) stglogit_term.Osuf,$(GLOBLIB),$(LIBS))
-NormalProgramTarget(stgdump,stgdump.Osuf $(DBOBJS_STGD) stglogit_term.Osuf,$(GLOBLIB),$(LIBS))
-#if hpux
-check_Cdbentry.Osuf:
-	$(CC) -o check_Cdbentry.Osuf -Ae $(CFLAGS) -c check_Cdbentry.c
-#endif
-#endif
-
-#if BuildStageDaemon
-install: $(BIN) $(IPROGS_C) $(IPROGS_D) $(IPROGS_S) $(IPROGS_Z) $(SPOOL) $(SACCTDIR) $(IPROGS_CPDSKDSK)
-#else
-install: $(BIN) $(IPROGS_C) $(IPROGS_D) $(IPROGS_S) $(IPROGS_Z) $(IPROGS_CPDSKDSK)
-#endif
 
 export: $(EPROGS_C) $(EPROGS_D) $(EPROGS_S) $(EPROGS_Z) $(EPROGS_CPDSKDSK)
 
 exportman: $(EXPORTMANPAGES) $(EMANSSTAT)
 
 exportshr: 
-
 
 InstallProgram(stagein,$(BIN),root,bin,755)
 IEXPORT(stagein,$(EXPORTBIN),755);
@@ -614,20 +447,8 @@ IEXPORT(stagechng,$(EXPORTBIN),755);
 InstallProgram(stageping,$(BIN),root,bin,755)
 IEXPORT(stageping,$(EXPORTBIN),755);
 
-InstallProgram(stageinit,$(BIN),root,bin,750)
-IEXPORT(stageinit,$(EXPORTBIN),750);
-
-InstallProgram(stageshutdown,$(BIN),root,bin,750)
-IEXPORT(stageshutdown,$(EXPORTBIN),750);
-
 InstallProgram(stagestat,$(BIN),root,bin,755)
 IEXPORT(stagestat,$(EXPORTBIN),755);
-
-InstallProgram(stgdaemon,$(BIN),root,$(OPSGRP),750)
-IEXPORT(stgdaemon,$(EXPORTBIN),750);
-
-InstallProgram(cleaner,$(BIN),root,bin,750)
-IEXPORT(cleaner,$(EXPORTBIN),750);
 
 $(BIN)/cpdskdsk:	cpdskdsk
 	-mv $(DESTDIR)$(BIN)/cpdskdsk $(DESTDIR)$(BIN)/OLDcpdskdsk
@@ -636,29 +457,6 @@ $(BIN)/cpdskdsk:	cpdskdsk
 	chgrp bin $(DESTDIR)$(BIN)/cpdskdsk
 	chmod 755 $(DESTDIR)$(BIN)/cpdskdsk
 IEXPORT(cpdskdsk,$(EXPORTBIN),755);
-
-InstallProgram(stager_castor,$(BIN),root,bin,750)
-IEXPORT(stager_castor,$(EXPORTBIN),750);
-
-InstallProgram(stager_disk,$(BIN),root,bin,750)
-IEXPORT(stager_disk,$(EXPORTBIN),750);
-
-InstallProgram(stager_tape,$(BIN),root,bin,750)
-IEXPORT(stager_tape,$(EXPORTBIN),750);
-
-InstallProgram(stgdump,$(BIN),root,bin,750)
-IEXPORT(stgdump,$(EXPORTBIN),750);
-
-#if BuildStageDaemon
-#if UseStageCdb
-InstallProgram(stgconvert,$(BIN),root,bin,750)
-IEXPORT(stgconvert,$(EXPORTBIN),750);
-#endif
-InstallProgram(stgshift_to_castor,$(BIN),root,bin,750)
-InstallProgram(stgshift_cmp_shift,$(BIN),root,bin,750)
-InstallProgram(stgcastor_to_shift,$(BIN),root,bin,750)
-InstallProgram(check_Cdbentry,$(BIN),root,bin,750)
-#endif
 
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(SPOOL),root,bin,0755)
@@ -684,16 +482,7 @@ IMANPAGE(stageping,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(stagecat,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(stagealloc,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(stageget,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(stageinit,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(stageshutdown,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(stagestat,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(stgdaemon,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(stgdump,$(MANDIR),$(MANSUFFIX))
-#if BuildStageDaemon
-#if UseStageCdb
-IMANPAGE(stgconvert,$(MANDIR),$(MANSUFFIX))
-#endif
-#endif
 IMANPAGE(stage_other_options,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(print_stcp,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(print_stpp,$(LIBMANDIR),$(LIBMANSUFFIX))
@@ -711,7 +500,6 @@ IMANPAGE(stage_getcallback,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(stage_geterrbuf,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(stage_getlog,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(stage_getoutbuf,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(stage_init,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(stage_kill,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(stage_limits,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(stage_macros,$(LIBMANDIR),$(LIBMANSUFFIX))
@@ -720,7 +508,6 @@ IMANPAGE(stage_setcallback,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(stage_seterrbuf,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(stage_setlog,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(stage_setoutbuf,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(stage_shutdown,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(stage_struct,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(stage_updc,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(stage_in_disk,$(LIBMANDIR),$(LIBMANSUFFIX))
@@ -750,16 +537,7 @@ EMANPAGE(stageping,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(stagecat,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(stagealloc,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(stageget,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(stageinit,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(stageshutdown,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(stagestat,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(stgdaemon,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(stgdump,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-#if BuildStageDaemon
-#if UseStageCdb
-EMANPAGE(stgconvert,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-#endif
-#endif
 EMANPAGE(stage_other_options,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(print_stcp,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
 EMANPAGE(print_stpp,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
@@ -777,7 +555,6 @@ EMANPAGE(stage_getcallback,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUF
 EMANPAGE(stage_geterrbuf,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
 EMANPAGE(stage_getlog,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
 EMANPAGE(stage_getoutbuf,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(stage_init,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
 EMANPAGE(stage_kill,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
 EMANPAGE(stage_limits,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
 EMANPAGE(stage_macros,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
@@ -786,7 +563,6 @@ EMANPAGE(stage_setcallback,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUF
 EMANPAGE(stage_seterrbuf,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
 EMANPAGE(stage_setlog,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
 EMANPAGE(stage_setoutbuf,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(stage_shutdown,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
 EMANPAGE(stage_struct,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
 EMANPAGE(stage_updc,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
 EMANPAGE(stage_in_disk,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
@@ -811,7 +587,7 @@ clean:
 
 clobber:	clean
 	@echo clobbering in CurDir
-	-@RemoveFiles($(PROGS_C) $(PROGS_D) $(PROGS_S) $(PROGS_Z) $(DBOBJS_ALL) $(STGLIB_OBJS) $(PROGS_CPDSKDSK) Cstage_db.c Cstage_db.h)
+	-@RemoveFiles($(PROGS_C) $(PROGS_D) $(PROGS_S) $(PROGS_Z) $(DBOBJS_ALL) $(STGLIB_OBJS) $(PROGS_CPDSKDSK))
 
 #if _WIN32
 depend:
@@ -824,21 +600,6 @@ depend:
 Makefiles:
 
 FORCE:
-
-COMM####################### DEPENDENCIES ##########################
-
-#if BuildStageDaemon
-#if UseStageCdb
-COMM We force the following dependencies (Cstage_db.h and Cstage_db.c are generated files)
-
-Cstage_db.Osuf: FileName(FileName(..,h),marshall.h) FileName(FileName(..,h),osdep.h) FileName(FileName(..,h),Cdb_wrapmarshall.h)
-Cstage_db.Osuf: FileName(FileName(..,h),serrno.h) Cstage_db.h
-check_Cdbentry.Osuf: Cstage_db.h
-Cstage_ifce.Osuf: Cstage_db.h
-stgconvert.Osuf: Cstage_db.h
-stgdb_Cdb_ifce.Osuf: Cstage_db.h
-#endif
-#endif
 
 COMM -------------------------
 COMM DEPENDENCIES of *.c files
