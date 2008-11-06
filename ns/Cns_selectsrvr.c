@@ -98,7 +98,7 @@ Cns_selectsrvr(path, current_directory_server, server, actual_path)
           return (-1);
         }        
         sprintf (server, "%s%s.%s", SCNSHOSTPFX, p, domain);     
-      }else{
+      } else {
         if (strlen (CNSHOSTPFX) + strlen (p) + strlen (domain) +
             1 > CA_MAXHOSTNAMELEN) {
           serrno = EINVAL;
