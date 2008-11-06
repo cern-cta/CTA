@@ -1,3 +1,4 @@
+<?php
 /******************************************************************************
  *              pool_transaction.php
  *
@@ -18,8 +19,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  * Author Theodoros Rekatsinas, 
- *****************************************************************************/
-<html>
+ *****************************************************************************/?>
 <head>
 	<style>
 		#fonts {
@@ -61,6 +61,7 @@ if(!$conn) {
 	print htmlentities($e['message']);
 	exit;
 }
+$pool[-1] = 'foo';
 $query1 = "select originalpool,targetpool,count(*)
 	   from diskcopy
 	   where timestamp > sysdate - $period
@@ -70,12 +71,21 @@ if (!($parsed1 = OCIParse($conn, $query1)))
 	{ echo "Error Parsing Query";exit();}
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
-	
+$i =0;
 while(OCIFetch($parsed1)) {
 	$opool = OCIResult($parsed1,1);
 	$tpool = OCIResult($parsed1,2);
+	if (!(in_array($opool,$pool))) {
+		$pool[$i] = $opool;
+		$i++;
+	};
+	if (!(in_array($tpool,$pool))) {
+		$pool[$i] = $tpool;
+		$i++;
+	};
 	$trans[$opool][$tpool] = OCIResult($parsed1,3);
 }
+$size = $i;/*
 $query2 = "select distinct svcclass
 	   from requests ";
 
@@ -88,7 +98,7 @@ while(OCIFetch($parsed2)) {
 	$pool[$i] = OCIResult($parsed2,1);
 	$i++;
 }
-$size = $i;
+$size = $i;*/
 for($i = 0; $i < $size;$i++) {
 	for($j = 0; $j < $size;$j++) {
 		if ($trans[$pool[$i]][$pool[$j]] == NULL) 
@@ -108,7 +118,8 @@ for($i = 0; $i < $size;$i++) {
 		<tr style="background-color: #C0C0C0">
 		<th id="fonts" align = center>FROM - TO</a></th>
 		<?php
-		  foreach ($pool as $p) {
+		  for($k=0;$k < $size; $k++) {
+		  $p = $pool[$k];
 		?>
 		<th id="fonts"  align = center><?php echo $p;?></th>
 		<?php }?>
