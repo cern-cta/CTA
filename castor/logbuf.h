@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logbuf.h,v $ $Revision: 1.9 $ $Release$ $Date: 2005/02/17 10:56:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logbuf.h,v $ $Revision: 1.10 $ $Release$ $Date: 2008/11/06 13:18:42 $ $Author: sponcec3 $
  *
  * An abstract string buffer for the log that is able
  * to handle levels of output
@@ -29,6 +29,8 @@
 #define CASTOR_LOGBUF_H 1
 
 // Include Files
+#include <string.h>
+#include <stdlib.h>
 #include <sstream>
 #include "Cuuid.h"
 #include "Cns_api.h"
