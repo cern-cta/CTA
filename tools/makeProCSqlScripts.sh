@@ -16,7 +16,7 @@ if ! [ -f oracleCreate.sql ]; then
 fi
 
 if [ $# == 3 ]; then
-  rm -rf $1_oracle_create.sql $1_oracle_create.sqlplus
+  rm -rf $1_oracle_create.sql
 
   # insert release number
   sed 's/releaseTag/'$2'/' oracleCreate.sql > $1_oracle_create.sql
@@ -25,14 +25,11 @@ if [ $# == 3 ]; then
   sed 's/\$//g' $1_oracle_create.sql > tmp.sql
   mv tmp.sql $1_oracle_create.sql
 
-  # generate sqlplus version
-  sed 's/^END;/END;\n\//' $1_oracle_create.sql | sed 's/^\(END castor[a-zA-Z]*;\)/\1\n\//' | sed 's/\(CREATE OR REPLACE TYPE .*\)$/\1\n\//' > $1_oracle_create.sqlplus
-
   echo Creation scripts for $1 generated with tag $2
 
 else
   # install
-  cp $1_oracle_create.sql $1_oracle_create.sqlplus $4
+  cp $1_oracle_create.sql $4
   echo Creation scripts for $1 installed in $4
 fi
 
