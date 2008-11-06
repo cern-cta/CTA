@@ -1,5 +1,5 @@
 -- This script should be ran using:
---     sqlplus /nolog @oracleRecreateDb.sqlplus
+--     sqlplus /nolog @oracleRecreateDb.sql
 
 whenever oserror exit failure
 whenever sqlerror exit failure rollback
@@ -9,10 +9,10 @@ ACCEPT vdqm_conn char PROMPT 'Enter connection string (user@tns): '
 CONNECT &vdqm_conn
 
 -- Drop all the exisiting database objects
-@oracleDropAllObjects.sqlplus
+@oracleDropAllObjects.sql
 
 -- Create the new schema
-@vdqm_oracle_create.sqlplus
+@vdqm_oracle_create.sql
 
 -- Note that vdqmDBInit uses the database connection details given in:
 --     /etc/castor/ORAVDQMCONFIG
