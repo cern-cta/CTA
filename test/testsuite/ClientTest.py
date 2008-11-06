@@ -1078,13 +1078,11 @@ class StagerExtraTestCase(unittest.TestCase):
     def putDoneAndLongFile(self):
         fileBig=makeBigFile(inputFile)
 
-        cmd1=["stager_put -M "+dirCastor+"fileClientPutDoneLongFile"+ticket,"rfcp "+fileBig+" "+dirCastor+"fileClientPutDoneLongFile"+ticket]
-        cmd2=["stager_rm -M "+dirCastor+"fileClientPutDoneLongFile"+ticket,"stager_putdone -M "+dirCastor+"fileClientPutDoneLongFile"+ticket]
+        cmd1=["stager_put -M "+dirCastor+"fileClientPutDoneLongFile"+ticket,"rfcp "+fileBig+" "+dirCastor+"fileClientPutDoneLongFile"+ticket,"stager_rm -M "+dirCastor+"fileClientPutDoneLongFile"+ticket,"stager_putdone -M "+dirCastor+"fileClientPutDoneLongFile"+ticket]
 
-        UtilityForCastorTest.runOnShell(cmd1,myScen)
-        UtilityForCastorTest.saveOnFile(localDir+"ClientPutDoneAndLongFile",cmd2,myScen)
+        UtilityForCastorTest.saveOnFile(localDir+"ClientPutDoneAndLongFile",cmd1,myScen)
         os.system("rm "+fileBig)
-        fi=open(localDir+"ClientPutDoneAndLongFile1","r")
+        fi=open(localDir+"ClientPutDoneAndLongFile3","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_FAILED") != -1, "putDone doesn't work with big files"
