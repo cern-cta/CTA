@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.680 $ $Date: 2008/11/06 15:56:16 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.681 $ $Date: 2008/11/06 18:17:27 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -143,7 +143,7 @@ CREATE INDEX I_StagePutRequest_ReqId ON StagePutRequest (reqId);
 CREATE INDEX I_StageRepackRequest_ReqId ON StageRepackRequest (reqId);
 
 /* A primary key index for better scan of Stream2TapeCopy */
-CREATE UNIQUE INDEX I_pk_Stream2TapeCopy ON Stream2TapeCopy (parent, child);
+CREATE UNIQUE INDEX I_PK_Stream2TapeCopy ON Stream2TapeCopy (parent, child);
 
 /* Some index on the GCFile table to speed up garbage collection */
 CREATE INDEX I_GCFile_Request ON GCFile (request);
@@ -151,11 +151,13 @@ CREATE INDEX I_GCFile_Request ON GCFile (request);
 /* Indexing segments by Tape */
 CREATE INDEX I_Segment_Tape ON Segment (tape);
 
-/* Some constraints */
+/* FileSystem constraints */
 ALTER TABLE FileSystem ADD CONSTRAINT FK_FileSystem_DiskServer 
   FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
 ALTER TABLE FileSystem MODIFY (status NOT NULL);
 ALTER TABLE FileSystem MODIFY (diskServer NOT NULL);
+
+/* DiskServer constraints */
 ALTER TABLE DiskServer MODIFY (status NOT NULL);
 
 /* An index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */

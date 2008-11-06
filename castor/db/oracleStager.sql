@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.697 $ $Date: 2008/11/06 13:20:06 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.698 $ $Date: 2008/11/06 18:17:27 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -26,8 +26,8 @@ CREATE OR REPLACE PACKAGE castor AS
     tapePoolId NUMBER,
     tapePoolName VARCHAR2(2048));
   TYPE Stream_Cur IS REF CURSOR RETURN StreamCore;
-  TYPE "strList" IS TABLE OF VARCHAR2(2048) index by binary_integer;
-  TYPE "cnumList" IS TABLE OF NUMBER index by binary_integer;
+  TYPE "strList" IS TABLE OF VARCHAR2(2048) index BY binary_integer;
+  TYPE "cnumList" IS TABLE OF NUMBER INDEX BY binary_integer;
   TYPE QueryLine IS RECORD (
     fileid INTEGER,
     nshost VARCHAR2(2048),
@@ -394,10 +394,10 @@ BEGIN
   UPDATE SubRequest SET status = 3, subReqId = nvl(subReqId, uuidGen()) -- WAITSCHED
    WHERE id = (
      SELECT id FROM (
-       SELECT /*+ index(sr I_SubRequest_RT_CT_ID) */ sr.id
-         FROM SubRequest PARTITION (P_STATUS_0_1_2) sr
-        WHERE sr.svcHandler = service
-        ORDER BY sr.creationTime ASC
+       SELECT /*+ INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
+         FROM SubRequest PARTITION (P_STATUS_0_1_2) SR
+        WHERE SR.svcHandler = service
+        ORDER BY SR.creationTime ASC
      )
       WHERE ROWNUM < 2
   )

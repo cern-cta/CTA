@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.666 $ $Date: 2008/11/06 13:20:05 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.667 $ $Date: 2008/11/06 18:17:27 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -255,7 +255,7 @@ BEGIN
     raise_application_error(-20114, 'Job scheduled to the wrong service class. Giving up.');
   END;
   -- Try to find local DiskCopy
-  SELECT /*+ INDEX(DISKCOPY I_DISKCOPY_CASTORFILE) */ id, nbCopyAccesses, gcWeight, creationTime
+  SELECT /*+ INDEX(DiskCopy I_DiskCopy_Castorfile) */ id, nbCopyAccesses, gcWeight, creationTime
     INTO dcId, nbac, gcw, cTime
     FROM DiskCopy
    WHERE DiskCopy.castorfile = cfId
