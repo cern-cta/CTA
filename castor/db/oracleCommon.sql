@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.679 $ $Date: 2008/11/06 15:18:31 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.680 $ $Date: 2008/11/06 15:56:16 $ $Author: itglp $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -15,11 +15,11 @@ UPDATE CastorVersion SET schemaVersion = '2_1_8_3';
 CREATE SEQUENCE ids_seq CACHE 300;
 
 /* SQL statements for object types */
-CREATE TABLE Id2Type (id INTEGER CONSTRAINT I_Id2Type_Id PRIMARY KEY, type NUMBER) ENABLE ROW MOVEMENT;
+CREATE TABLE Id2Type (id INTEGER CONSTRAINT PK_Id2Type_Id PRIMARY KEY, type NUMBER) ENABLE ROW MOVEMENT;
 
 /* SQL statements for requests status */
 /* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */
-CREATE TABLE newRequests (type NUMBER(38) NOT NULL, id NUMBER(38) NOT NULL, creation DATE NOT NULL, CONSTRAINT I_NewRequests_Type_Id PRIMARY KEY (type, id))
+CREATE TABLE newRequests (type NUMBER(38) NOT NULL, id NUMBER(38) NOT NULL, creation DATE NOT NULL, CONSTRAINT PK_NewRequests_Type_Id PRIMARY KEY (type, id))
 ORGANIZATION INDEX
 COMPRESS
 PARTITION BY LIST (type)
@@ -93,7 +93,7 @@ CREATE TABLE SubRequest
 
 /* SQL statements for constraints on SubRequest */
 ALTER TABLE SubRequest
-  ADD CONSTRAINT I_SubRequest_PK PRIMARY KEY (ID);
+  ADD CONSTRAINT PK_SubRequest_Id PRIMARY KEY (ID);
 CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) LOCAL
  (PARTITION P_STATUS_0_1_2,
   PARTITION P_STATUS_3_13_14,
@@ -172,9 +172,6 @@ ALTER TABLE Tape ADD CONSTRAINT I_Tape_VIDSideTpMode UNIQUE (VID, side, tpMode);
 
 /* Add unique constraint on svcClass name */
 ALTER TABLE SvcClass ADD CONSTRAINT I_SvcClass_Name UNIQUE (NAME);
-
-/* The primary key in this table allows for materialized views */
-ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT I_DiskPool2SvcCla_ParentChild PRIMARY KEY (parent, child);
 
 /* Custom type to handle int arrays */
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
@@ -351,7 +348,7 @@ CREATE INDEX I_NbTapeCopiesInFS_Stream ON NbTapeCopiesInFS(Stream);
  * weight of all filesystems). Locking the diskserver only was fine but
  * was introducing a possible deadlock with a place where the FileSystem
  * is locked before the DiskServer. Thus this table..... */
-CREATE TABLE LockTable (DiskServerId NUMBER CONSTRAINT I_LockTable_DSId PRIMARY KEY, TheLock NUMBER);
+CREATE TABLE LockTable (DiskServerId NUMBER CONSTRAINT PK_LockTable_DSId PRIMARY KEY, TheLock NUMBER);
 INSERT INTO LockTable SELECT id, id FROM DiskServer;
 
 
@@ -359,7 +356,7 @@ INSERT INTO LockTable SELECT id, id FROM DiskServer;
 /* FileSystemsToCheck used to optimise the processing of filesystems */
 /* when they change status                                           */
 /*********************************************************************/
-CREATE TABLE FileSystemsToCheck (FileSystem NUMBER CONSTRAINT I_FSToCheck_FS PRIMARY KEY, ToBeChecked NUMBER);
+CREATE TABLE FileSystemsToCheck (FileSystem NUMBER CONSTRAINT PK_FSToCheck_FS PRIMARY KEY, ToBeChecked NUMBER);
 INSERT INTO FileSystemsToCheck SELECT id, 0 FROM FileSystem;
 
 
@@ -398,7 +395,7 @@ CREATE TABLE Accounting (euid INTEGER, svcClass INTEGER, nbBytes INTEGER);
  * Few notes :
  *   diskCopyStatus can be STAGED(0) or CANBEMIGR(10)
  */
-CREATE TABLE GcPolicy (name VARCHAR2(2048) CONSTRAINT I_GcPolicy_name PRIMARY KEY,
+CREATE TABLE GcPolicy (name VARCHAR2(2048) CONSTRAINT PK_GcPolicy_name PRIMARY KEY,
                        userWeight VARCHAR2(2048) NOT NULL,
                        recallWeight VARCHAR2(2048) NOT NULL,
                        copyWeight VARCHAR2(2048) NOT NULL,
