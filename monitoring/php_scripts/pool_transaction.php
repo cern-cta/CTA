@@ -85,20 +85,7 @@ while(OCIFetch($parsed1)) {
 	};
 	$trans[$opool][$tpool] = OCIResult($parsed1,3);
 }
-$size = $i;/*
-$query2 = "select distinct svcclass
-	   from requests ";
-
-if (!($parsed2 = OCIParse($conn, $query2))) 
-	{ echo "Error Parsing Query";exit();}
-if (!OCIExecute($parsed2))
-	{ echo "Error Executing Query";exit();}
-$i = 0;
-while(OCIFetch($parsed2)) {
-	$pool[$i] = OCIResult($parsed2,1);
-	$i++;
-}
-$size = $i;*/
+$size = $i;
 for($i = 0; $i < $size;$i++) {
 	for($j = 0; $j < $size;$j++) {
 		if ($trans[$pool[$i]][$pool[$j]] == NULL) 
