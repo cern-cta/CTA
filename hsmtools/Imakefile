@@ -72,7 +72,6 @@ DEPLIB2 = $(DEPLIB)
 COMM######################### RULES ##############################
 
 MANPAGES = $(MANDIR)/reclaim.$(MANSUFFIX) \
-	   $(MANDIR)/tapetohsm.$(MANSUFFIX) \
 	   $(MANDIR)/cleanLostFiles.$(MANSUFFIX) \
 	   $(MANDIR)/enterFileClass.$(MANSUFFIX) \
 	   $(MANDIR)/enterSvcClass.$(MANSUFFIX) \
@@ -93,7 +92,6 @@ MANPAGES = $(MANDIR)/reclaim.$(MANSUFFIX) \
 	   $(MANDIR)/enterPriority.$(MANSUFFIX) \
            $(MANDIR)/deletePriority.$(MANSUFFIX)
 EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tapetohsm.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),cleanLostFiles.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),enterFileClass.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),enterSvcClass.$(MANSUFFIX))) \
@@ -117,7 +115,6 @@ EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUF
 COMM Warning Warning, our default clean rule deletes PROGS... Changed it to use PROGS_TO_CLEAN
 
 PROGS_TO_CLEAN =  ProgramTargetName(reclaim) \
-	 ProgramTargetName(tapetohsm) \
 	 ProgramTargetName(enterFileClass) \
 	 ProgramTargetName(enterSvcClass) \
 	 ProgramTargetName(modifyFileClass) \
@@ -167,7 +164,6 @@ PROGS_TO_KEEP =  ProgramTargetName(cleanLostFiles) \
 #endif
 
 IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
-	 FileName($(BIN),ProgramTargetName(tapetohsm)) \
 	 FileName($(BIN),ProgramTargetName(cleanLostFiles)) \
 	 FileName($(BIN),ProgramTargetName(enterFileClass)) \
 	 FileName($(BIN),ProgramTargetName(enterSvcClass)) \
@@ -199,7 +195,6 @@ IPROGS += FileName($(BIN),ProgramTargetName(vdqmlistrequest))
 #endif
 
 EPROGS = $(EXPORTBIN)/reclaim \
-	 $(EXPORTBIN)/tapetohsm \
 	 $(EXPORTBIN)/cleanLostFiles \
 	 $(EXPORTBIN)/enterFileClass \
 	 $(EXPORTBIN)/enterSvcClass \
@@ -234,7 +229,6 @@ IPYTHON = FileName($(PYTHONLIBDIR),castor_tools.py)
 all: $(PROGS_TO_KEEP) $(PROGS_TO_CLEAN)
 
 NormalProgramTarget(reclaim,reclaim.Osuf,$(DEPLIB),$(LIBS))
-NormalProgramTarget(tapetohsm,tapetohsm.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(enterFileClass,enterFileClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(enterSvcClass,enterSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(modifyFileClass,modifyFileClass.Osuf,$(DEPLIB2),$(LIBS2))
@@ -285,8 +279,6 @@ install: $(BIN) $(IPROGS) $(SPOOL) $(PERLLIBDIR) $(IPERL) $(PYTHONLIBDIR) $(IPYT
 InstallProgram(reclaim,$(BIN),root,bin,755)
 IEXPORT(reclaim,$(EXPORTBIN),755);
 
-InstallProgram(tapetohsm,$(BIN),root,bin,755)
-IEXPORT(tapetohsm,$(EXPORTBIN),755);
 
 InstallProgram(cleanLostFiles,$(BIN),root,bin,755)
 IEXPORT(cleanLostFiles,$(EXPORTBIN),755);
@@ -384,7 +376,6 @@ install.man: $(MANDIR) $(MANPAGES)
 MakeDir($(MANDIR),root,bin,0755)
 
 IMANPAGE(reclaim,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(tapetohsm,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(cleanLostFiles,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(enterFileClass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(enterSvcClass,$(MANDIR),$(MANSUFFIX))
@@ -402,7 +393,6 @@ IMANPAGE(c2probe,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(adler32,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(adminMultiInstance,$(MANDIR),$(MANSUFFIX))
 EMANPAGE(reclaim,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(tapetohsm,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(cleanLostFiles,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(enterFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(enterSvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))

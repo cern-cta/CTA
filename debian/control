@@ -62,7 +62,7 @@ Package: castor-hsmtools
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
- HSM Administration tools i.e. reclaim, repack and tapetohsm
+ HSM Administration tools e.g. reclaim
 
 Package: castor-dbtools
 Architecture: any
