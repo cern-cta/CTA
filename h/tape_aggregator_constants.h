@@ -22,9 +22,9 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#if !defined(TAPE_AGGREGTOR_CONSTANTS_H)
+#if !defined(TAPE_AGGREGATOR_CONSTANTS_H)
 #define RTCP_CONSTANTS_H
 
-#define TAPE_AGGREGATOR_PORT (5070)
+#define AGGREGATOR_PORT (5070)
 
-#endif /* TAPE_AGGREGTOR_CONSTANTS_H */
+#endif /* TAPE_AGGREGATOR_CONSTANTS_H */
