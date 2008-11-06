@@ -4,15 +4,28 @@
  */
 
 /*	vmgrenterlibrary - define a new tape library */
+#include <ctype.h>
 #include <grp.h>
 #include <pwd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include "Cgetopt.h"
 #include "serrno.h"
 #include "vmgr_api.h"
+
+
+/**
+ * Converts the specified string to uppercase.
+ */
+void toupperstr(char *str) {
+  for(;*str != '\0'; str++) {
+    *str = toupper(*str);
+  }
+}
+
 
 int main(argc, argv)
 int argc;
@@ -47,8 +60,13 @@ char **argv;
 			library_name = Coptarg;
 			break;
 		case OPT_STATUS:
-			if ((status = strtol (Coptarg, &dp, 10)) < 0 ||
-			    *dp != '\0') {
+			toupperstr(Coptarg);
+
+			if(strcmp(Coptarg, "ONLINE") == 0) {
+				status = LIBRARY_ONLINE;
+			} else if(strcmp(Coptarg, "OFFLINE") == 0) {
+				status = LIBRARY_OFFLINE;
+			} else {
 				fprintf (stderr,
 				    "invalid status %s\n", Coptarg);
 				errflg++;
@@ -57,7 +75,13 @@ char **argv;
                 case '?':
                         errflg++;
                         break;
+		case ':':
+			fprintf (stderr, "An option is missing a parameter\n");
+			errflg++;
+			break;
                 default:
+			fprintf (stderr, "Cgetopt_long returned the following unknown value: %x\n", c);
+			errflg++;
                         break;
                 }
         }
@@ -66,7 +90,7 @@ char **argv;
         }
         if (errflg) {
 		fprintf (stderr, "usage: %s %s", argv[0],
-		    "--name library_name --capacity n [--status n]\n");
+		    "--name library_name --capacity n [--status ONLINE|OFFLINE]\n");
                 exit (USERR);
         }
  

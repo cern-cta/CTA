@@ -19,6 +19,7 @@
 #include "serrno.h"
 #include "vmgr.h"
 #include "vmgr_api.h"
+#include "vmgr_constants.h"
 
 void listentry(library_name, capacity, nb_free_slots, status)
 char *library_name;
@@ -26,9 +27,23 @@ int capacity;
 int nb_free_slots;
 int status;
 {
-	printf ("%-8s CAPACITY %d FREE %d (%5.1f%%)\n",
+	const char *statusStr = NULL;
+
+
+	switch(status) {
+	case LIBRARY_ONLINE:
+		statusStr = "ONLINE";
+		break;
+	case LIBRARY_OFFLINE:
+		statusStr = "OFFLINE";
+		break;
+	default:
+		statusStr = "UNKNOWN";
+	}
+	printf ("%-8s CAPACITY %d FREE %d (%5.1f%%) %s\n",
 		library_name, capacity, nb_free_slots,
-		capacity ? (float)nb_free_slots * 100. / (float)capacity : 0);
+		capacity ? (float)nb_free_slots * 100. / (float)capacity : 0,
+		statusStr);
 }
 
 int main(argc, argv)

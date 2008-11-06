@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_constants.h,v 1.4 2008/11/06 12:21:01 murrayc3 Exp $
+ * $Id: vmgr_constants.h,v 1.5 2008/11/06 16:45:42 murrayc3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vmgr_constants.h,v $ $Revision: 1.4 $ $Date: 2008/11/06 12:21:01 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: vmgr_constants.h,v $ $Revision: 1.5 $ $Date: 2008/11/06 16:45:42 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _VMGR_CONSTANTS_H
@@ -30,8 +30,8 @@
 #define	TAPE_RDONLY 16
 #define	ARCHIVED 32
 
-#define LIBRARY_STATUS_ONLINE  (0)
-#define LIBRARY_STATUS_OFFLINE (1)
+#define LIBRARY_ONLINE  (0)
+#define LIBRARY_OFFLINE (1)
 
 			/* options for vmgr utilities */
 

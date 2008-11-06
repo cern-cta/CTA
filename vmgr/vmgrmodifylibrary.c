@@ -4,6 +4,7 @@
  */
 
 /*	vmgrmodifylibrary - modify an existing tape library definition */
+#include <ctype.h>
 #include <grp.h>
 #include <pwd.h>
 #include <stdlib.h>
@@ -13,6 +14,17 @@
 #include "Cgetopt.h"
 #include "serrno.h"
 #include "vmgr_api.h"
+
+
+/**
+ * Converts the specified string to uppercase.
+ */
+void toupperstr(char *str) {
+  for(;*str != '\0'; str++) {
+    *str = toupper(*str);
+  }
+}
+
 
 int main(argc, argv)
 int argc;
@@ -47,8 +59,13 @@ char **argv;
 			library_name = Coptarg;
 			break;
 		case OPT_STATUS:
-			if ((status = strtol (Coptarg, &dp, 10)) < 0 ||
-			    *dp != '\0') {
+			toupperstr(Coptarg);
+
+			if(strcmp(Coptarg, "ONLINE") == 0) {
+				status = LIBRARY_ONLINE;
+			} else if(strcmp(Coptarg, "OFFLINE") == 0) {
+				status = LIBRARY_OFFLINE;
+			} else {
 				fprintf (stderr,
 				    "invalid status %s\n", Coptarg);
 				errflg++;
@@ -64,9 +81,13 @@ char **argv;
         if (Coptind < argc) {
                 errflg++;
         }
+	if (library_name == NULL) {
+		fprintf (stderr, "no library_name\n");
+                errflg++;
+	}
         if (errflg) {
 		fprintf (stderr, "usage: %s %s", argv[0],
-			 "--name library_name [--capacity n] [--status]\n");
+			 "--name library_name [--capacity n] [--status ONLINE|OFFLINE]\n");
                 exit (USERR);
         }
  
