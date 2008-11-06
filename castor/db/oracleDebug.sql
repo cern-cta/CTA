@@ -1,13 +1,14 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.11 $ $Date: 2008/11/06 13:20:05 $ $Author: waldron $
+ * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.12 $ $Date: 2008/11/06 18:12:49 $ $Author: waldron $
  *
  * Some SQL code to ease support and debugging
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
-CREATE OR REPLACE PACKAGE castor_debug AS
+/* PL/SQL declaration for the castorDebug package */
+CREATE OR REPLACE PACKAGE castorDebug AS
   TYPE DiskCopyDebug_typ IS RECORD (
     id INTEGER,
     diskPool VARCHAR2(2048),
@@ -71,7 +72,7 @@ END;
 
 
 /* Get the diskcopys associated with the reference number */
-CREATE OR REPLACE FUNCTION getDCs(ref number) RETURN castor_debug.DiskCopyDebug PIPELINED AS
+CREATE OR REPLACE FUNCTION getDCs(ref number) RETURN castorDebug.DiskCopyDebug PIPELINED AS
 BEGIN
   FOR d IN (SELECT DiskCopy.id,
                    DiskPool.name AS diskpool,
@@ -92,7 +93,7 @@ END;
 
 
 /* Get the tapecopys, segments and streams associated with the reference number */
-CREATE OR REPLACE FUNCTION getTCs(ref number) RETURN castor_debug.TapeCopyDebug PIPELINED AS
+CREATE OR REPLACE FUNCTION getTCs(ref number) RETURN castorDebug.TapeCopyDebug PIPELINED AS
 BEGIN
   FOR t IN (SELECT TapeCopy.id AS TCId, TapeCopy.status AS TCStatus,
                    Segment.Id, Segment.status AS SegStatus, Segment.errorCode AS SegErrCode,
@@ -115,7 +116,7 @@ END;
 /* Get the subrequests associated with the reference number. (By castorfile/diskcopy/
  * subrequest/tapecopy or fileid
  */
-CREATE OR REPLACE FUNCTION getSRs(ref number) RETURN castor_debug.SubRequestDebug PIPELINED AS
+CREATE OR REPLACE FUNCTION getSRs(ref number) RETURN castorDebug.SubRequestDebug PIPELINED AS
 BEGIN
   FOR d IN (SELECT * FROM SubRequest WHERE castorfile = getCF(ref)) LOOP
      PIPE ROW(d);
@@ -127,7 +128,7 @@ END;
 /* Get the requests associated with the reference number. (By castorfile/diskcopy/
  * subrequest/tapecopy or fileid
  */
-CREATE OR REPLACE FUNCTION getRs(ref number) RETURN castor_debug.RequestDebug PIPELINED AS
+CREATE OR REPLACE FUNCTION getRs(ref number) RETURN castorDebug.RequestDebug PIPELINED AS
 BEGIN
   FOR d IN (SELECT to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationtime AS creationtime,
                    SubRequest.id AS SubReqId, SubRequest.parent AS SubReqParentId, SubRequest.Status,
