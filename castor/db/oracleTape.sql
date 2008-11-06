@@ -1,12 +1,11 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.687 $ $Date: 2008/11/06 13:20:06 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.688 $ $Date: 2008/11/06 18:16:00 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
-
 
 /* Used to create a row INTO NbTapeCopiesInFS whenever a new
    Stream is created */
@@ -493,13 +492,13 @@ BEGIN
         SELECT P.path, P.diskcopy_id, P.castorfile,
              C.fileId, C.nsHost, C.fileSize, P.id
         INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
-        FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
+        FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TapeCopy_CF_Status_2) INDEX(ST I_PK_Stream2TapeCopy) */
               D.path, D.diskcopy_id, D.castorfile, T.id
-                FROM (SELECT /*+ INDEX(DK I_DISKCOPY_FS_STATUS_10) */
-                             DiskCopy.path path, DiskCopy.id diskcopy_id, DiskCopy.castorfile
-                        FROM DiskCopy
-                       WHERE decode(DiskCopy.status,10,DiskCopy.status,null) = 10 -- CANBEMIGR
-                         AND DiskCopy.filesystem = lastFSUsed) D,
+                FROM (SELECT /*+ INDEX(DK I_DiskCopy_FS_Status_10) */
+                             DK.path path, DK.id diskcopy_id, DK.castorfile
+                        FROM DiskCopy DK
+                       WHERE decode(DK.status,10,DK.status,null) = 10 -- CANBEMIGR
+                         AND DK.filesystem = lastFSUsed) D,
                       TapeCopy T, Stream2TapeCopy ST
                WHERE T.castorfile = D.castorfile
                  AND ST.child = T.id
@@ -585,13 +584,13 @@ BEGIN
     SELECT P.path, P.diskcopy_id, P.castorfile,
            C.fileId, C.nsHost, C.fileSize, P.id
       INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
-      FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
+      FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TapeCopy_CF_Status_2) INDEX(ST I_PK_Stream2TapeCopy) */
             D.path, D.diskcopy_id, D.castorfile, T.id
-              FROM (SELECT /*+ INDEX(DK I_DISKCOPY_FS_STATUS_10) */
-                           DiskCopy.path path, DiskCopy.id diskcopy_id, DiskCopy.castorfile
-                      FROM DiskCopy
-                     WHERE decode(DiskCopy.status,10,DiskCopy.status,null) = 10 -- CANBEMIGR
-                       AND DiskCopy.filesystem = fileSystemId) D,
+              FROM (SELECT /*+ INDEX(DK I_DiskCopy_FS_Status_10) */
+                           DK.path path, DK.id diskcopy_id, DK.castorfile
+                      FROM DiskCopy DK
+                     WHERE decode(DK.status,10,DK.status,null) = 10 -- CANBEMIGR
+                       AND DK.filesystem = fileSystemId) D,
                     TapeCopy T, Stream2TapeCopy ST
              WHERE T.castorfile = D.castorfile
                AND ST.child = T.id
