@@ -123,6 +123,11 @@ char **argv;
         if (Coptind < argc) {
                 errflg++;
         }
+	if (vid == NULL) {
+		fprintf (stderr, "no vid\n");
+		errflg++;
+	}
+
 	if (errflg) {
                 fprintf (stderr, "usage: %s %s%s%s", argv[0],
 		    "[-d density] [-l lbltype] [-P pool_name] -V vid [-v vsn]\n",
