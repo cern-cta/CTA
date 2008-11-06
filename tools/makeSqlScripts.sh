@@ -38,11 +38,11 @@ if [ $# == 3 ]; then
   sed 's/\$//g' $1_oracle_create.sql > tmp.sql
   mv tmp.sql $1_oracle_create.sql
 
-  echo Creation scripts for $1 generated with tag $2
+  echo Creation script for $1 generated with tag $2
 
 else
   # install
   cp $1_oracle_create.sql $4
-  echo Creation scripts for $1 installed in $4
+  echo Creation script for $1 installed in $4
 fi
 
