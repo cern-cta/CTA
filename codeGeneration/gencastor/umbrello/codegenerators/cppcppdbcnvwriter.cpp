@@ -699,7 +699,7 @@ void CppCppDbCnvWriter::writeOraSqlStatements() {
            << getOraSQLType(mem->typeName);
     if (mem->name == "id") {
       stream << " CONSTRAINT PK_"
-	     << m_classInfo->className.left(25)
+	     << m_classInfo->className.left(24)
 	     << "_Id PRIMARY KEY";
     }
     n++;
