@@ -1599,7 +1599,7 @@ struct vmgr_srv_thread_info *thip;
 		library_entry.nb_free_slots += capacity - library_entry.capacity;
 		library_entry.capacity = capacity;
 	}
-	if (status > 0)
+	if (status >= 0)
 		library_entry.status = status;
 
 	if (vmgr_update_library_entry (&thip->dbfd, &rec_addr, &library_entry))
