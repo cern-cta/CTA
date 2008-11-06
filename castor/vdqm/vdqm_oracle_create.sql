@@ -504,6 +504,7 @@ CREATE OR REPLACE PACKAGE castorVdqmException AS
     messageVar IN VARCHAR2 DEFAULT NULL);
 
 END castorVdqmException;
+/
 
 
 /**
@@ -551,6 +552,7 @@ BEGIN
     'VID value is not a valid regular expression.';
 
 END castorVdqmException;
+/
 
 
 /**
@@ -581,6 +583,7 @@ CREATE OR REPLACE PACKAGE castorVdqmCommon AS
   FUNCTION getTime RETURN NUMBER;
 
 END castorVdqmCommon;
+/
 
 
 /**
@@ -652,6 +655,7 @@ CREATE OR REPLACE PACKAGE BODY castorVdqmCommon AS
   END getTime;
 
 END castorVdqmCommon;
+/
 
 
 /**
@@ -670,6 +674,7 @@ CREATE OR REPLACE PACKAGE castorVdqmView AS
   FUNCTION getVdqmDedicate(driveIdVar IN NUMBER) RETURN VARCHAR2;
 
 END castorVdqmView;
+/
 
 
 /**
@@ -779,6 +784,7 @@ CREATE OR REPLACE PACKAGE BODY castorVdqmView AS
   END getVdqmDedicate;
 
 END castorVdqmView;
+/
 
 
 /**
@@ -1276,6 +1282,7 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
     prioritiesDeletedVar OUT NUMBER);
 
 END castorVdqm;
+/
 
 
 /**
@@ -2744,6 +2751,7 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
   END deleteOldVolPriorities;
 
 END castorVdqm;
+/
 
 
 /**
@@ -2769,6 +2777,7 @@ BEGIN
     :NEW.tape := NULL;
   END IF;
 END;
+/
 
 
 /**
@@ -2793,6 +2802,7 @@ BEGIN
     :NEW.tape := NULL;
   END IF;
 END;
+/
 
 
 /**
@@ -2823,6 +2833,7 @@ BEGIN
     :NEW.tapeDrive := NULL;
   END IF;
 END;
+/
 
 
 /**
@@ -2850,6 +2861,7 @@ BEGIN
     :NEW.tapeDrive := NULL;
   END IF;
 END;
+/
 
 
 /**
@@ -2869,6 +2881,7 @@ BEGIN
   -- Set modification time
   :NEW.modificationTime := timeVar;
 END;
+/
 
 
 /**
@@ -2889,6 +2902,7 @@ BEGIN
   -- Update the modification time
   :NEW.modificationTime := castorVdqmCommon.getTime();
 END;
+/
 
 
 /**
@@ -2928,6 +2942,7 @@ BEGIN
         'VID value is not a valid regular expression ''' || :NEW.vid || '''');
   END;
 END;
+/
 
 
 /**
@@ -2952,6 +2967,7 @@ BEGIN
     :NEW.tapeDrive := NULL;
   END IF;
 END;
+/
 
 
 /**
@@ -2970,3 +2986,4 @@ BEGIN
     :NEW.tapeDrive := NULL;
   END IF;
 END;
+/
