@@ -1,5 +1,5 @@
 /*
- * $Id: vdqm.h,v 1.6 2008/09/26 15:41:09 murrayc3 Exp $
+ * $Id: vdqm.h,v 1.7 2008/11/06 09:55:05 murrayc3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vdqm.h,v $ $Revision: 1.6 $ $Date: 2008/09/26 15:41:09 $ CERN IT-PDP/DM Olof Barring
+ * @(#)$RCSfile: vdqm.h,v $ $Revision: 1.7 $ $Date: 2008/11/06 09:55:05 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -67,6 +67,8 @@ int vdqm_SendVolPriority_Transfer _PROTO((vdqmnw_t *, vdqmVolPriority_t *));
 int vdqm_RecvVolPriority_Transfer _PROTO((vdqmnw_t *, vdqmVolPriority_t *));
 int vdqm_SendDelDrv_Transfer _PROTO((vdqmnw_t *, vdqmDelDrv_t *));
 int vdqm_SendDedicate_Transfer _PROTO((vdqmnw_t *, vdqmDedicate_t *));
+int vdqm_AggregatorVolReq_Send _PROTO((vdqmnw_t *,vdqmHdr_t *, vdqmVolReq_t *));
+int vdqm_AggregatorVolReq_Recv _PROTO((vdqmnw_t *,vdqmHdr_t *, vdqmVolReq_t *));
 
 #if defined(VDQMSERV)
 /*
