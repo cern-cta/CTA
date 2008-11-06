@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.695 $ $Date: 2008/11/04 15:05:56 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.696 $ $Date: 2008/11/06 08:58:07 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -930,23 +930,23 @@ BEGIN
   FOR a IN (SELECT SvcClass.id FROM (
               -- Determine the number of copies of the file in all service classes
               SELECT * FROM (
-                SELECT SvcClass.id, count(*) found
+                SELECT SvcClass.id, count(*) available
                   FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
                  WHERE DiskCopy.filesystem = FileSystem.id
                    AND DiskCopy.castorfile = cfId
                    AND FileSystem.diskpool = DiskPool2SvcClass.parent
                    AND DiskPool2SvcClass.child = SvcClass.id
-                   AND DiskCopy.status IN (0, 1, 6, 10)  -- STAGED, WAITDISK2DISKCOPY, STAGEOUT, CANBEMIGR
-                   AND FileSystem.status = 0  -- PRODUCTION
+                   AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
+                   AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
                    AND DiskServer.id = FileSystem.diskserver
-                   AND DiskServer.status = 0  -- PRODUCTION
+                   AND DiskServer.status IN (0, 1)  -- PRODUCTION, DRAINING
                  GROUP BY SvcClass.id)
              ) results, SvcClass
              -- Join the results with the service class table and determine if
              -- additional copies need to be created
              WHERE results.id = SvcClass.id
                AND SvcClass.replicateOnClose = 1
-               AND results.found < maxReplicaNbForSvcClass(SvcClass.id))
+               AND results.available < maxReplicaNbForSvcClass(SvcClass.id))
   LOOP
     -- Ignore this replication if there is already a pending replication request
     -- for the given castorfile in the target/destination service class. Once
@@ -954,13 +954,15 @@ BEGIN
     -- This insures that only one replication request is active at any given time
     -- and that we don't create too many replication requests that may exceed
     -- the maxReplicaNb defined on the service class
-    SELECT count(*) INTO ignoreSvcClass
-      FROM DiskCopy, StageDiskCopyReplicaRequest
-     WHERE StageDiskCopyReplicaRequest.destdiskcopy = DiskCopy.id
-       AND StageDiskCopyReplicaRequest.svcclass = a.id
-       AND DiskCopy.castorfile = cfId
-       AND DiskCopy.status = 1;  -- WAITDISK2DISKCOPY
-    IF ignoreSvcClass = 0 THEN
+    BEGIN
+      SELECT DiskCopy.id INTO unused
+        FROM DiskCopy, StageDiskCopyReplicaRequest
+       WHERE StageDiskCopyReplicaRequest.destdiskcopy = DiskCopy.id
+         AND StageDiskCopyReplicaRequest.svcclass = a.id
+         AND DiskCopy.castorfile = cfId
+         AND DiskCopy.status = 1  -- WAITDISK2DISKCOPY
+         AND rownum < 2;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
       BEGIN
         -- Select the best diskcopy to be replicated. Note: we force that the
         -- replication must happen internally within the service class. This
