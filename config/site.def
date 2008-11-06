@@ -146,11 +146,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define StageConfigFile	/etc/castor/STGCONFIG
 #endif
 #if defined(_WIN32)
-#define StageConfigDbLogin	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\STGDBCONFIG
-#else
-#define StageConfigDbLogin	/etc/castor/STGDBCONFIG
-#endif
-#if defined(_WIN32)
 #define StageMapFile   %%SystemRoot%%\\system32\\drivers\\etc\\castor\\stagemap.conf
 #else
 #define StageMapFile   /etc/castor/stagemap.conf
@@ -236,7 +231,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildRtcpclientd	NO
 #define BuildStageClient	NO
 #define BuildStageClientOld	NO
-#define BuildStageDaemon	NO
 #define BuildStageDaemonCpp	NO
 #define BuildStageLibrary	NO
 #define BuildRmMasterCpp	NO
