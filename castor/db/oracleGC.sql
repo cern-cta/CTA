@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.671 $ $Date: 2008/11/06 13:20:05 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.672 $ $Date: 2008/11/06 18:17:03 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -337,7 +337,7 @@ BEGIN
 
   -- Now select all the BEINGDELETED diskcopies in this diskserver for the gcDaemon
   OPEN files FOR
-    SELECT /*+ INDEX(CastorFile I_CastorFile_ID) */ FileSystem.mountPoint || DiskCopy.path,
+    SELECT /*+ INDEX(CastorFile PK_CastorFile_ID) */ FileSystem.mountPoint || DiskCopy.path,
            DiskCopy.id,
            Castorfile.fileid, Castorfile.nshost,
            DiskCopy.lastAccessTime, DiskCopy.nbCopyAccesses, DiskCopy.gcWeight,
@@ -608,7 +608,7 @@ BEGIN
     FROM DiskCopy
    WHERE (status = 4 OR (status = 7 AND fileSystem = 0))
      AND creationTime < getTime() - timeOut;
-  SELECT /*+ INDEX(DC I_DiskCopy_ID) */ UNIQUE castorFile
+  SELECT /*+ INDEX(DC PK_DiskCopy_ID) */ UNIQUE castorFile
     BULK COLLECT INTO cfIds
     FROM DiskCopy DC
    WHERE id IN (SELECT /*+ CARDINALITY(ids 5) */ * FROM TABLE(dcIds) ids);
