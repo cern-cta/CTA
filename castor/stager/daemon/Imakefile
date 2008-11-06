@@ -34,7 +34,6 @@ INCLUDES = -I FileName(../../..,h) -I FileName(../..,..)
 
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DORACDBC=1
 
-LIBS = -lshift -lcastorCnvs -lcastorClient
 DBSERVICEDAEMONBIN_SRCS = \
 	CnsHelper.cpp \
 	GetHandler.cpp \
@@ -70,7 +69,7 @@ DEPLIB = DepSharedLibraryTargetName(../../shlib,castorCnvs) \
 
 LDFLAGS += -L FileName(../../..,shlib) -L FileName(../../..,$(COMMONCPPDIR)) $(MTLDFLAGS)
 LD = g++
-GLOBLIB = -lshift -lcastorCnvs -lcastorClient
+GLOBLIB = -lshift -lcastorCnvs -lcastorClient -lcastorns -lcastorvmgr -lcastorupv -lcastorrfio
 
 PROGS_STAGER = ProgramTargetName(stagerDaemon)
 IPROGS_STAGER = FileName($(BIN),ProgramTargetName(stagerDaemon))
