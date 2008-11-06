@@ -11,4 +11,6 @@ tools/makeSqlScripts.sh repack $tag castor/repack $1
 tools/makeSqlScripts.sh vdqm $tag castor/vdqm $1
 tools/makeProCSqlScripts.sh dlf $tag dlf/scripts/oracle $1
 tools/makeProCSqlScripts.sh cns $tag ns $1
+tools/makeProCSqlScripts.sh upv $tag upv $1
+tools/makeProCSqlScripts.sh vmgr $tag vmgr $1
 
