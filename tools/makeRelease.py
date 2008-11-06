@@ -25,7 +25,7 @@ def runCommand(cmd, errorMessage):
 def findUpdates(d):
     res = []
     # take all relevant update scripts
-    updRegExp = re.compile('(\w*_)?\d+.\d+.\d+(-\d+|)_to_' + fullVersion + '.sql(plus)?')
+    updRegExp = re.compile('(\w*_)?\d+.\d+.\d+(-\d+|)_to_' + fullVersion + '.sql?')
     for f in os.listdir(d):
         if updRegExp.match(f):
             res.append(f)
@@ -33,7 +33,7 @@ def findUpdates(d):
 
 def findGrantAndDropScripts(workDir, dirs):
     res = []
-    dgRegExp = re.compile('\w+_oracle_(drop|grant).sql(plus)?')
+    dgRegExp = re.compile('\w+_oracle_(drop|grant).sql?')
     for d in (dirs):
         d = workDir + os.sep + d
         for f in os.listdir(d):
