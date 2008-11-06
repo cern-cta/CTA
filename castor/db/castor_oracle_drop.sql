@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: castor_oracle_drop.sql,v $ $Revision: 1.43 $ $Date: 2008/06/25 12:47:58 $ $Author: waldron $
+ * @(#)$RCSfile: castor_oracle_drop.sql,v $ $Revision: 1.44 $ $Date: 2008/11/06 13:20:05 $ $Author: waldron $
  *
  * This file drops all defined entities from a (stager) database.
  * For the time being, it does NOT drop the monitoring-related ones. 
@@ -37,3 +37,4 @@ BEGIN
   -- Purge the recycle bin
   EXECUTE IMMEDIATE 'PURGE RECYCLEBIN';
 END;
+/

@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.646 $ $Date: 2008/11/03 07:53:29 $ $Author: waldron $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.647 $ $Date: 2008/11/06 13:20:06 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -114,6 +114,7 @@ BEGIN
       ORDER BY fileid, nshost;
    END IF;
 END;
+/
 
 
 /*
@@ -142,6 +143,7 @@ BEGIN
   END IF;
   internalStageQuery(cfs, svcClassId, result);
 END;
+/
 
 
 /*
@@ -170,6 +172,7 @@ BEGIN
   -- Finally issue the actual query
   internalStageQuery(cfs, svcClassId, result);
 END;
+/
 
 
 /*
@@ -214,6 +217,7 @@ BEGIN
     notfound := 1;
   END IF;
 END;
+/
 
 
 /*
@@ -254,6 +258,7 @@ BEGIN
     notfound := 1;
   END IF;
 END;
+/
 
 
 /*
@@ -291,6 +296,7 @@ BEGIN
     notfound := 1;
   END IF;
 END;
+/
 
 
 /*
@@ -324,6 +330,7 @@ BEGIN
     notfound := 1;
   END IF;
 END;
+/
 
 
 /*
@@ -402,6 +409,7 @@ BEGIN
        AND (sc.name = svcClassName OR svcClassName IS NULL);
   END IF;
 END;
+/
 
 
 
@@ -475,3 +483,4 @@ BEGIN
        AND (sc.name = svcClassName OR svcClassName IS NULL);
   END IF;
 END;
+/

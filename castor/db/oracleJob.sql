@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.665 $ $Date: 2008/11/03 09:28:35 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.666 $ $Date: 2008/11/06 13:20:05 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -19,6 +19,7 @@ BEGIN
                         free = free - fileSize   -- just an evaluation, monitoring will update it
    WHERE id = fs;
 END;
+/
 
 
 /* PL/SQL method to update FileSystem nb of streams when files are closed */
@@ -33,6 +34,7 @@ BEGIN
   UPDATE FileSystem SET nbReadWriteStreams = decode(sign(nbReadWriteStreams-1),-1,0,nbReadWriteStreams-1)
   WHERE id = fs;
 END;
+/
 
 
 /* This method should be called when the first byte is written to a file
@@ -122,6 +124,7 @@ BEGIN
    WHERE castorFile = cfId
      AND status = 1; -- WAITDISK2DISKCOPY
 END;
+/
 
 
 /* Checks whether the protocol used is supporting updates and when not
@@ -135,6 +138,7 @@ BEGIN
     firstByteWrittenProc(srId);
   END IF;
 END;
+/
 
 
 /* PL/SQL method implementing putStart */
@@ -200,6 +204,7 @@ BEGIN
    RETURNING status, path
    INTO rdcStatus, rdcPath;
 END;
+/
 
 
 /* PL/SQL method implementing getUpdateStart */
@@ -320,6 +325,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   dci := 0;
   rpath := '';
 END;
+/
 
 
 /* PL/SQL method implementing disk2DiskCopyStart */
@@ -413,6 +419,7 @@ BEGIN
     raise_application_error(-20110, 'A transfer has already started for this DiskCopy.');
   END IF;
 END;
+/
 
 
 /* PL/SQL method implementing disk2DiskCopyDone */
@@ -499,6 +506,7 @@ BEGIN
                         parent = 0
    WHERE parent = srId;
 END;
+/
 
 
 /* PL/SQL method implementing disk2DiskCopyFailed */
@@ -548,6 +556,7 @@ BEGIN
   -- errors. E.g timeouts while waiting to be scheduled.
   replicateOnClose(cfId, ouid, ogid);
 END;
+/
 
 
 /* PL/SQL method implementing prepareForMigration */
@@ -653,6 +662,7 @@ BEGIN
   archiveSubReq(srId);
   COMMIT;
 END;
+/
 
 
 /* PL/SQL method implementing getUpdateDone */
@@ -661,6 +671,7 @@ CREATE OR REPLACE PROCEDURE getUpdateDoneProc
 BEGIN
   archiveSubReq(subReqId);
 END;
+/
 
 
 /* PL/SQL method implementing getUpdateFailed */
@@ -672,6 +683,7 @@ BEGIN
   UPDATE SubRequest SET status = 1 -- RESTART
    WHERE parent = srId;
 END;
+/
 
 
 /* PL/SQL method implementing putFailedProc */
@@ -727,6 +739,7 @@ BEGIN
     deleteCastorFile(cfId);
   END;
 END;
+/
 
 
 /* PL/SQL method implementing getSchedulerResources */
@@ -745,6 +758,7 @@ BEGIN
            AND FileSystem.diskPool = DiskPool2SvcClass.parent
            AND DiskPool2SvcClass.child = SvcClass.id;
 END;
+/
 
 
 /* PL/SQL method implementing failSchedulerJob */
@@ -795,6 +809,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   res := 0;
   RETURN;
 END;
+/
 
 
 /* PL/SQL method implementing postJobChecks */
@@ -815,6 +830,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   res := 0;
   RETURN;
 END;
+/
 
 
 /* PL/SQL method implementing jobToSchedule */
@@ -924,3 +940,4 @@ BEGIN
          AND DiskCopy.status IN (0, 1, 2, 10); -- STAGED, DISK2DISKCOPY, WAITTAPERECALL, CANBEMIGR
   END IF;
 END;
+/

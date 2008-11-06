@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.686 $ $Date: 2008/11/05 15:06:28 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.687 $ $Date: 2008/11/06 13:20:06 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -18,6 +18,7 @@ BEGIN
     INSERT INTO NbTapeCopiesInFS (FS, Stream, NbTapeCopies) VALUES (item.id, :new.id, 0);
   END LOOP;
 END;
+/
 
 
 /* Used to delete rows IN NbTapeCopiesInFS whenever a
@@ -28,6 +29,7 @@ FOR EACH ROW
 BEGIN
   DELETE FROM NbTapeCopiesInFS WHERE Stream = :old.id;
 END;
+/
 
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
@@ -50,6 +52,7 @@ BEGIN
                    AND DiskCopy.status = 10) -- CANBEMIGR
      AND Stream = :new.parent;
 END;
+/
 
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
@@ -71,6 +74,7 @@ BEGIN
                    AND DiskCopy.status = 10) -- CANBEMIGR
      AND Stream = :old.parent;
 END;
+/
 
 /************************************************/
 /* Triggers to keep NbTapeCopiesInFS consistent */
@@ -87,6 +91,7 @@ BEGIN
   END LOOP;
   INSERT INTO FileSystemsToCheck (FileSystem, ToBeChecked) VALUES (:new.id, 0);
 END;
+/
 
 /* Used to delete rows in NbTapeCopiesInFS and FileSystemsToCheck
    whenever a FileSystem is deleted */
@@ -97,6 +102,7 @@ BEGIN
   DELETE FROM NbTapeCopiesInFS WHERE FS = :old.id;
   DELETE FROM FileSystemsToCheck WHERE FileSystem = :old.id;
 END;
+/
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
    whenever a DiskCopy has been replicated and the new one
@@ -119,6 +125,7 @@ BEGIN
                        AND Stream2TapeCopy.child = TapeCopy.id
                        AND TapeCopy.status = 2); -- WAITINSTREAMS
 END;
+/
 
 
 /* Used to create a row INTO LockTable whenever a new
@@ -129,6 +136,7 @@ FOR EACH ROW
 BEGIN
   INSERT INTO LockTable (DiskServerId, TheLock) VALUES (:new.id, 0);
 END;
+/
 
 
 /* Used to delete rows IN LockTable whenever a
@@ -139,6 +147,7 @@ FOR EACH ROW
 BEGIN
   DELETE FROM LockTable WHERE DiskServerId = :old.id;
 END;
+/
 
 
 
@@ -151,6 +160,7 @@ BEGIN
   UPDATE DiskServer SET nbMigratorStreams = nbMigratorStreams + 1 WHERE id = ds;
   UPDATE FileSystem SET nbMigratorStreams = nbMigratorStreams + 1 WHERE id = fs;
 END;
+/
 
 /* PL/SQL methods to update FileSystem weight for new recaller streams */
 CREATE OR REPLACE PROCEDURE updateFsRecallerOpened
@@ -163,6 +173,7 @@ BEGIN
                         free = free - fileSize   -- just an evaluation, monitoring will update it
    WHERE id = fs;
 END;
+/
 
 
 /* PL/SQL method implementing anyTapeCopyForStream.
@@ -201,6 +212,7 @@ EXCEPTION
  WHEN NO_DATA_FOUND THEN
   res := 0;
 END;
+/
 
 
 /* PL/SQL method implementing bestTapeCopyForStream */
@@ -228,6 +240,7 @@ BEGIN
   EXECUTE IMMEDIATE 'BEGIN ' || policy || '(:streamId, :diskServerName, :mountPoint, :path, :dci, :castorFileId, :fileId, :nsHost, :fileSize, :tapeCopyId, :optimized); END;'
     USING IN streamId, OUT diskServerName, OUT mountPoint, OUT path, OUT dci, OUT castorFileId, OUT fileId, OUT nsHost, OUT fileSize, OUT tapeCopyId, IN optimized;
 END;
+/
 
 /* default migration candidate selection policy */
 CREATE OR REPLACE PROCEDURE defaultMigrSelPolicy(streamId IN INTEGER,
@@ -440,6 +453,7 @@ BEGIN
 			    optimized);
     END IF;
 END;
+/
 
 /* drain disk migration candidate selection policy */
 CREATE OR REPLACE PROCEDURE drainDiskMigrSelPolicy(streamId IN INTEGER,
@@ -672,6 +686,7 @@ BEGIN
 			    optimized);
     END IF;
 END;
+/
 
 /* repack migration candidate selection policy */
 CREATE OR REPLACE PROCEDURE repackMigrSelPolicy(streamId IN INTEGER,
@@ -832,6 +847,7 @@ BEGIN
 			    optimized);
     END IF;
 END;
+/
 
 /* PL/SQL method implementing bestFileSystemForSegment */
 CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskServerName OUT VARCHAR2,
@@ -960,6 +976,7 @@ BEGIN
       RAISE;
     END IF;
 END;
+/
 
 
 /* PL/SQL method implementing fileRecallFailed */
@@ -990,6 +1007,7 @@ BEGIN
      WHERE parent = SubRequestId;
   END IF;
 END;
+/
 
 
 /* PL/SQL method implementing streamsToDo */
@@ -1016,6 +1034,7 @@ BEGIN
      WHERE Stream.id MEMBER OF streams
        AND Stream.TapePool = TapePool.id;
 END;
+/
 
 
 /* PL/SQL method implementing fileRecalled */
@@ -1091,6 +1110,7 @@ BEGIN
   -- Trigger the creation of additional copies of the file, if necessary.
   replicateOnClose(cfId, ouid, ogid);
 END;
+/
 
 
 /* PL/SQL method implementing resetStream */
@@ -1124,6 +1144,7 @@ BEGIN
   -- in any case, unlink tape and stream
   UPDATE Tape SET Stream = null WHERE Stream = sid;
 END;
+/
 
 
 /* PL/SQL method implementing segmentsForTape */
@@ -1155,6 +1176,7 @@ BEGIN
       FROM Segment
      WHERE id IN (SELECT /*+ CARDINALITY(segsTable 5) */ * FROM TABLE(segs) segsTable);
 END;
+/
 
 
 /* PL/SQL method implementing anySegmentsForTape */
@@ -1169,6 +1191,7 @@ BEGIN
     WHERE id = tapeId;
   END IF;
 END;
+/
 
 
 /* PL/SQL method implementing failedSegments */
@@ -1182,6 +1205,7 @@ BEGIN
       FROM Segment
      WHERE Segment.status = 6; -- SEGMENT_FAILED
 END;
+/
 
 
 /* PL/SQL method implementing rtcpclientdCleanUp */
@@ -1195,6 +1219,7 @@ BEGIN
   UPDATE tape SET stream = 0 WHERE stream != 0;
   UPDATE Stream SET tape = 0 WHERE tape != 0;
 END;
+/
 
 
 /** Functions for the MigHunterDaemon **/
@@ -1218,6 +1243,7 @@ BEGIN
      WHERE svcId = svcclass2tapepool.parent);
   COMMIT;
 END;
+/
 
 /* Get input for python migration policy */
 CREATE OR REPLACE PROCEDURE inputForMigrationPolicy
@@ -1257,6 +1283,7 @@ BEGIN
      WHERE CastorFile.id = TapeCopy.castorfile
        AND TapeCopy.id IN (SELECT /*+ CARDINALITY(tcidTable 5) */ * FROM table(tcIds) tcidTable);
 END;
+/
 
 /* Get input for python Stream Policy */
 CREATE OR REPLACE PROCEDURE inputForStreamPolicy
@@ -1300,6 +1327,7 @@ BEGIN
        AND Stream.status = 7
      GROUP BY Stream.id;
 END;
+/
 
 /* createOrUpdateStream */
 CREATE OR REPLACE PROCEDURE createOrUpdateStream
@@ -1416,6 +1444,7 @@ BEGIN
     END IF;
   END IF;
 END;
+/
 
 /* attach tapecopies to stream */
 CREATE OR REPLACE PROCEDURE attachTapeCopiesToStreams
@@ -1468,6 +1497,7 @@ BEGIN
   END LOOP;
   COMMIT;
 END;
+/
 
 /* start choosen stream */
 CREATE OR REPLACE PROCEDURE startChosenStreams
@@ -1482,6 +1512,7 @@ BEGIN
        AND id = streamIds(i);
   COMMIT;
 END;
+/
 
 /* stop chosen stream */
 CREATE OR REPLACE PROCEDURE stopChosenStreams
@@ -1503,6 +1534,7 @@ BEGIN
     END;
   END LOOP;
 END;
+/
 
 /* resurrect Candidates */
 CREATE OR REPLACE PROCEDURE resurrectCandidates
@@ -1514,6 +1546,7 @@ BEGIN
     UPDATE TapeCopy SET Status = 1 WHERE Status = 7 AND id = migrationCandidates(i);
   COMMIT;
 END;
+/
 
 /* invalidate tape copies */
 CREATE OR REPLACE PROCEDURE invalidateTapeCopies
@@ -1524,6 +1557,7 @@ BEGIN
     UPDATE TapeCopy SET status = 6 WHERE id = tapecopyIds(i) AND status = 7;
   COMMIT;
 END;
+/
 
 /** Functions for the RecHandlerDaemon **/
 
@@ -1543,6 +1577,7 @@ BEGIN
      GROUP BY Tape.id, Tape.vid
      HAVING count(distinct segment.id) > 0;
 END;
+/
 
 /* resurrect tapes */
 CREATE OR REPLACE PROCEDURE resurrectTapes
@@ -1554,3 +1589,4 @@ BEGIN
   END LOOP;
   COMMIT;
 END;
+/

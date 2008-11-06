@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.10 $ $Date: 2008/11/03 07:38:19 $ $Author: waldron $
+ * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.11 $ $Date: 2008/11/06 13:20:05 $ $Author: waldron $
  *
  * Some SQL code to ease support and debugging
  *
@@ -42,6 +42,7 @@ CREATE OR REPLACE PACKAGE castor_debug AS
     SegErr VARCHAR2(2048));
   TYPE TapeCopyDebug IS TABLE OF TapeCopyDebug_typ;
 END;
+/
 
 
 /* Return the castor file id associated with the reference number */
@@ -66,6 +67,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- fileid ?
   SELECT id INTO cfId FROM CastorFile WHERE fileId = ref;
   RETURN cfId;
 END;
+/
 
 
 /* Get the diskcopys associated with the reference number */
@@ -86,6 +88,7 @@ BEGIN
      PIPE ROW(d);
   END LOOP;
 END;
+/
 
 
 /* Get the tapecopys, segments and streams associated with the reference number */
@@ -106,6 +109,7 @@ BEGIN
      PIPE ROW(t);
   END LOOP;
 END;
+/
 
 
 /* Get the subrequests associated with the reference number. (By castorfile/diskcopy/
@@ -117,6 +121,7 @@ BEGIN
      PIPE ROW(d);
   END LOOP;
 END;
+/
 
 
 /* Get the requests associated with the reference number. (By castorfile/diskcopy/
@@ -145,3 +150,4 @@ BEGIN
      PIPE ROW(d);
   END LOOP;
 END;
+/

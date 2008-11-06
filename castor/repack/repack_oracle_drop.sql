@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: repack_oracle_drop.sql,v $ $Revision: 1.4 $ $Date: 2007/09/18 06:47:32 $ $Author: waldron $
+ * @(#)$RCSfile: repack_oracle_drop.sql,v $ $Revision: 1.5 $ $Date: 2008/11/06 13:20:07 $ $Author: waldron $
  *
  * This file drops all defined entities from a (repack) database.
  *
@@ -36,3 +36,4 @@ BEGIN
   -- Purge the recycle bin
   EXECUTE IMMEDIATE 'PURGE RECYCLEBIN';
 END;
+/

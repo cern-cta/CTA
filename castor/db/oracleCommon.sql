@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.677 $ $Date: 2008/11/05 16:58:11 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.678 $ $Date: 2008/11/06 13:20:05 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -178,6 +178,7 @@ ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT I_DiskPool2SvcCla_ParentChild PRIMA
 
 /* Custom type to handle int arrays */
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
+/
 
 /* Default policy for migration */
 ALTER TABLE TapePool MODIFY (migrSelectPolicy DEFAULT 'defaultMigrSelPolicy');
@@ -448,6 +449,7 @@ RETURN NUMBER DETERMINISTIC IS
 BEGIN
   RETURN - nbReadStreams - nbWriteStreams - nbReadWriteStreams - nbMigratorStreams - nbRecallerStreams;
 END;
+/
 
 
 /* FileSystem index based on the rate. */
@@ -461,6 +463,7 @@ CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
 BEGIN
   RETURN (SYSDATE - to_date('01-jan-1970 01:00:00','dd-mon-yyyy HH:MI:SS')) * (24*60*60);
 END;
+/
 
 
 /* Generate a universally unique id (UUID) */
@@ -472,6 +475,7 @@ BEGIN
   -- indexing!
   RETURN lower(regexp_replace(sys_guid(), '(.{8})(.{4})(.{4})(.{4})(.{12})', '\1-\2-\3-\4-\5'));
 END;
+/
 
 
 /* Function to check if a service class exists by name. This function can return
@@ -505,6 +509,7 @@ BEGIN
   END IF;
   RETURN ret;
 END;
+/
 
 
 /* Function to return a comma separate list of service classes that a
@@ -524,6 +529,7 @@ BEGIN
   END LOOP;
   RETURN ltrim(svcClassList, ',');
 END;
+/
 
 
 /* PL/SQL method deleting tapecopies (and segments) of a castorfile */
@@ -543,6 +549,7 @@ BEGIN
     DELETE FROM TapeCopy WHERE id = t.id;
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method canceling a given recall */
@@ -570,6 +577,7 @@ BEGIN
           FROM TABLE(srIds) sridTable)
      AND castorfile = cfId;
 END;
+/
 
 
 /* PL/SQL method FOR canceling a recall by tape VID, The subrequests associated with
@@ -588,6 +596,7 @@ BEGIN
     cancelRecall(a.castorfile, a.id, 7);
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method to delete a CastorFile only when no Disk|TapeCopies are left for it */
@@ -642,3 +651,4 @@ BEGIN
     END IF;
   END IF;
 END;
+/

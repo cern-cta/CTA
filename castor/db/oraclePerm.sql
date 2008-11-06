@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.651 $ $Date: 2008/11/03 07:53:42 $ $Author: waldron $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.652 $ $Date: 2008/11/06 13:20:06 $ $Author: waldron $
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -54,6 +54,7 @@ BEGIN
     END IF;
   END IF;
 END;
+/
 
 
 /* Function to wrap the checkPermission procedure so that is can be
@@ -80,6 +81,7 @@ BEGIN
   END IF;
   RETURN 1;
 END;
+/
 
 
 /**
@@ -144,6 +146,7 @@ CREATE OR REPLACE PACKAGE castorBW AS
                            iegid IN NUMBER, ireqType IN NUMBER,
                            plist OUT PrivilegeExt_Cur);
 END castorBW;
+/
 
 CREATE OR REPLACE PACKAGE BODY castorBW AS
 
@@ -490,4 +493,5 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
   END;
 
 END castorBW;
+/
 

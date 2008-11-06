@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.696 $ $Date: 2008/11/06 08:58:07 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.697 $ $Date: 2008/11/06 13:20:06 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -106,6 +106,7 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE DbRecallInfo_Cur IS REF CURSOR RETURN DbRecallInfo;
   TYPE PriorityMap_Cur IS REF CURSOR RETURN PriorityMap%ROWTYPE;
 END castor;
+/
 
 
 /* Checks consistency of DiskCopies when a FileSystem comes
@@ -155,6 +156,7 @@ BEGIN
        AND castorfile = cf.castorfile;
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method implementing bulkCheckFSBackInProd for processing
@@ -186,6 +188,7 @@ BEGIN
     cancelRecall(cf.castorfile, cf.id, 1); -- RESTART
   END LOOP;
 END;
+/
 
 
 /* Used to check consistency of diskcopies when a filesytem
@@ -204,6 +207,7 @@ BEGIN
     checkFSBackInProd(:old.id);
   END IF;
 END;
+/
 
 
 /* Used to check consistency of diskcopies when filesytems
@@ -221,6 +225,7 @@ BEGIN
     END IF;
   END LOOP;
 END;
+/
 
 
 /* Trigger used to check if the maxReplicaNb has been exceeded
@@ -285,6 +290,7 @@ BEGIN
     END LOOP;
   END LOOP;
 END;
+/
 
 
 /* Trigger used to update the accounting (Quota) information and
@@ -316,6 +322,7 @@ BEGIN
   INSERT INTO TooManyReplicasHelper
   VALUES (:new.id, :new.filesystem, :new.castorfile);
 END;
+/
 
 
 /* Trigger used to update the accounting (Quota) information */
@@ -335,6 +342,7 @@ BEGIN
            WHERE FileSystem.id = :new.FileSystem
              AND DiskPool2SvcClass.parent = FileSystem.DiskPool);
 END;
+/
 
 
 /***************************************/
@@ -354,6 +362,7 @@ BEGIN
   SELECT id INTO unused FROM CastorFile
    WHERE id = :new.castorFile FOR UPDATE;
 END;
+/
 
 
 /* Used to avoid LOCK TABLE TapeCopy whenever someone wants
@@ -369,6 +378,7 @@ BEGIN
   SELECT id INTO unused FROM CastorFile
    WHERE id = :new.castorFile FOR UPDATE;
 END;
+/
 
 
 /* PL/SQL method to get the next SubRequest to do according to the given service */
@@ -400,6 +410,7 @@ WHEN InvalidRowid THEN
   -- Ignore random ORA-10632 errors (invalid rowid) due to interferences with the online shrinking
   NULL;
 END;
+/
 
 
 /* PL/SQL method to get the next failed SubRequest to do according to the given service */
@@ -448,6 +459,7 @@ WHEN LockError THEN
   -- what to do, another thread will pick up the request so we don't do anything.
   NULL;
 END;
+/
 
 
 /* PL/SQL method to get the next request to do according to the given service */
@@ -462,6 +474,7 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN
   rId := 0;   -- nothing to do
 END;
+/
 
 
 /* PL/SQL method to make a SubRequest wait on another one, linked to the given DiskCopy */
@@ -485,6 +498,7 @@ BEGIN
         lastModificationTime = getTime()
   WHERE SubRequest.id = srId;
 END;
+/
 
 
 /* PL/SQL method to delete one single request */
@@ -531,6 +545,7 @@ BEGIN  -- delete Request, Client and SubRequests
     (SELECT id FROM SubRequest WHERE request = rId);
   DELETE FROM SubRequest WHERE request = rId;
 END;
+/
 
 
 /* PL/SQL method to archive a SubRequest */
@@ -564,6 +579,7 @@ BEGIN
   -- Check that we don't have too many requests for this file in the DB
   -- XXX dropped for the time being as it introduced deadlocks with itself and with selectFiles2Delete!
 END;
+/
 
 
 /* PL/SQL method checking whether a given service class
@@ -599,6 +615,7 @@ BEGIN
   END IF;
   RETURN 0;
 END;
+/
 
 /* PL/SQL method checking whether the given service class
  * doesn't provide tape backend and the given file class asks for tape copies.
@@ -625,6 +642,7 @@ BEGIN
     RETURN 0;
   END IF;
 END;
+/
 
 
 /* PL/SQL method implementing maxReplicaNbForSvcClass */
@@ -643,6 +661,7 @@ BEGIN
      AND SvcClass.id = SvcClassId;
   RETURN maxReplicaNb;
 END;
+/
 
 
 /* PL/SQL method implementing getBestDiskCopyToReplicate. */
@@ -688,6 +707,7 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN
   RAISE; -- No diskcopy found that could be replicated
 END;
+/
 
 
 /* PL/SQL method implementing getBestDiskCopyToRead used to return the
@@ -718,6 +738,7 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN
   RAISE; -- No file found to be read
 END;
+/
 
 
 /* PL/SQL method implementing checkForD2DCopyOrRecall
@@ -831,6 +852,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     END IF;
   END;
 END;
+/
 
 
 /* Build diskCopy path from fileId */
@@ -843,6 +865,7 @@ BEGIN
                  CONCAT(TO_CHAR(fid), '@')),
                  nsHost), CONCAT('.', TO_CHAR(dcid)));
 END;
+/
 
 
 /* PL/SQL method implementing createDiskCopyReplicaRequest */
@@ -915,6 +938,7 @@ BEGIN
   VALUES (rpath, destDcId, 0, cfId, 1, getTime(), getTime(), 0, fileSize, 0, ouid, ogid);  -- WAITDISK2DISKCOPY
   INSERT INTO Id2Type (id, type) VALUES (destDcId, 5);  -- OBJ_DiskCopy
 END;
+/
 
 
 /* PL/SQL method implementing replicateOnClose */
@@ -974,9 +998,10 @@ BEGIN
       EXCEPTION WHEN NO_DATA_FOUND THEN
         NULL;  -- No copies to replicate from
       END;
-    END IF;
+    END;
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method implementing getDiskCopiesForJob */
@@ -1143,6 +1168,7 @@ BEGIN
     END;
   END IF;
 END;
+/
 
 
 /* PL/SQL method internalPutDoneFunc, used by fileRecalled and putDoneFunc.
@@ -1220,6 +1246,7 @@ BEGIN
   -- Trigger the creation of additional copies of the file, if necessary.
   replicateOnClose(cfId, ouid, ogid);
 END;
+/
 
 
 /* PL/SQL method implementing putDoneFunc */
@@ -1235,6 +1262,7 @@ BEGIN
   -- and execute the internal putDoneFunc with the number of TapeCopies to be created
   internalPutDoneFunc(cfId, fs, context, nc, svcClassId);
 END;
+/
 
 
 /* PL/SQL procedure implementing startRepackMigration */
@@ -1289,6 +1317,7 @@ BEGIN
   UPDATE DiskCopy SET status = 10  -- DISKCOPY_CANBEMIGR
    WHERE castorFile = cfId AND status = 0;  -- DISKCOPY_STAGED
 END;
+/
 
 
 /* PL/SQL method implementing processPrepareRequest */
@@ -1458,6 +1487,7 @@ BEGIN
     result := -1;  -- user error
   END IF;
 END;
+/
 
 
 /* PL/SQL method implementing processPutDoneRequest */
@@ -1528,6 +1558,7 @@ BEGIN
     result := 1;
   END;
 END;
+/
 
 
 /* PL/SQL method implementing recreateCastorFile */
@@ -1760,6 +1791,7 @@ BEGIN
   -- we don't commit here, the stager will do that when
   -- the subRequest status will be updated to 6
 END;
+/
 
 
 /* PL/SQL method implementing selectCastorFile */
@@ -1795,6 +1827,7 @@ EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
   SELECT id, fileSize INTO rid, rfs FROM CastorFile
     WHERE fileId = fid AND nsHost = nh;
 END;
+/
 
 /* PL/SQL method implementing stageRelease */
 CREATE OR REPLACE PROCEDURE stageRelease (fid IN INTEGER,
@@ -1830,6 +1863,7 @@ BEGIN
    WHERE castorFile = cfId AND status = 0; -- STAGED
   ret := 0;
 END;
+/
 
 /* PL/SQL method implementing stageForcedRm */
 CREATE OR REPLACE PROCEDURE stageForcedRm (fid IN INTEGER,
@@ -1878,6 +1912,7 @@ BEGIN
     UPDATE DiskCopy SET status = 7 -- INVALID
      WHERE id = dcsToRm(i);
 END;
+/
 
 
 /* PL/SQL method implementing stageRm */
@@ -2085,6 +2120,7 @@ BEGIN
      WHERE id = dcsToRm(i);
   ret := 1;  -- ok
 END;
+/
 
 
 /* PL/SQL method implementing a setFileGCWeight request */
@@ -2120,6 +2156,7 @@ BEGIN
     ret := 1;   -- some diskcopies found, ok
   END LOOP;
 END;
+/
 
 
 /* PL/SQL procedure which is executed whenever a files has been written to tape by the migrator to
@@ -2146,6 +2183,7 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN
   NULL;
 END;
+/
 
 
 /* PL/SQL method implementing updateAndCheckSubRequest */
@@ -2176,6 +2214,7 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
   result := 0;
 END;
+/
 
 
 /* PL/SQL method implementing storeClusterStatus */
@@ -2293,6 +2332,7 @@ BEGIN
     COMMIT;
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method implementing selectPriority */
@@ -2308,6 +2348,7 @@ BEGIN
        AND (egid = inGid OR inGid = -1)
        AND (priority = inPriority OR inPriority = -1);
 END;
+/
 
 /* PL/SQL method implementing enterPriority
    it can raise constraint violation exception */
@@ -2319,6 +2360,7 @@ BEGIN
   INSERT INTO PriorityMap (euid, egid, priority)
   VALUES (inUid, inGid, inPriority);
 END;
+/
 
 
 /* PL/SQL method implementing deletePriority */
@@ -2330,3 +2372,4 @@ BEGIN
    WHERE (euid = inUid OR inUid = -1)
      AND (egid = inGid OR inGid = -1);
 END;
+/

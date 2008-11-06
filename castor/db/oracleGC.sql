@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.670 $ $Date: 2008/11/03 09:29:19 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.671 $ $Date: 2008/11/06 13:20:05 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -49,6 +49,7 @@ CREATE OR REPLACE PACKAGE castorGC AS
   FUNCTION LRUFirstAccessHook(oldGcWeight NUMBER, creationTime NUMBER) RETURN NUMBER;
   FUNCTION LRUAccessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER) RETURN NUMBER;
 END castorGC;
+/
 
 CREATE OR REPLACE PACKAGE BODY castorGC AS
 
@@ -207,6 +208,7 @@ CREATE OR REPLACE PACKAGE BODY castorGC AS
   END;
 
 END castorGC;
+/
 
 /* PL/SQL method implementing selectFiles2Delete
    This is the standard garbage collector: it sorts STAGED
@@ -352,6 +354,7 @@ BEGIN
        AND DiskServer.name = diskServerName
        AND rownum <= 10000;
 END;
+/
 
 
 /*
@@ -385,6 +388,7 @@ BEGIN
   END IF;
   OPEN fileIds FOR SELECT * FROM FilesDeletedProcOutput;
 END;
+/
 
 /*
  * PL/SQL method removing completely a file from the stager
@@ -429,6 +433,7 @@ BEGIN
   FORALL i IN cfIds.FIRST .. cfIds.LAST
     DELETE FROM CastorFile WHERE id = cfIds(i);
 END;
+/
 
 /* PL/SQL method implementing filesDeletionFailedProc */
 CREATE OR REPLACE PROCEDURE filesDeletionFailedProc
@@ -442,6 +447,7 @@ BEGIN
        WHERE id = dcIds(i);
   END IF;
 END;
+/
 
 
 
@@ -472,6 +478,7 @@ BEGIN
   -- return orphan ones
   OPEN orphans FOR SELECT * FROM NsFilesDeletedOrphans;
 END;
+/
 
 
 /* PL/SQL method implementing stgFilesDeletedProc */
@@ -494,6 +501,7 @@ BEGIN
         SELECT 'x' FROM DiskCopy
          WHERE id = diskCopyId);
 END;
+/
 
 
 /** Cleanup job **/
@@ -518,6 +526,7 @@ BEGIN
     END LOOP;
   END;';
 END;
+/
 
 /* A generic method to delete requests of a given type */
 CREATE OR REPLACE Procedure bulkDeleteRequests(reqType IN VARCHAR) AS
@@ -532,6 +541,7 @@ BEGIN
     reqType);
   COMMIT;
 END;
+/
 
 /* Search and delete old archived/failed subrequests and their requests */
 CREATE OR REPLACE PROCEDURE deleteTerminatedRequests AS
@@ -579,6 +589,7 @@ BEGIN
     ---- DiskCopyReplica ----
   bulkDeleteRequests('StageDiskCopyReplicaRequest');
 END;
+/
 
 
 /* Search and delete old diskCopies in bad states */
@@ -622,6 +633,7 @@ BEGIN
     COMMIT;
   END IF;
 END;
+/
 
 /* Deal with old diskCopies in STAGEOUT */
 CREATE OR REPLACE PROCEDURE deleteOutOfDateStageOutDCs(timeOut IN NUMBER) AS
@@ -655,6 +667,7 @@ BEGIN
   END LOOP;
   COMMIT;
 END;
+/
 
 
 /* Deal with stuck recalls */
@@ -667,6 +680,7 @@ BEGIN
     (SELECT tape FROM Segment WHERE status in (0, 7));
   COMMIT;
 END;
+/
 
 
 /* Runs cleanup operations and a table shrink for maintenance purposes */
@@ -697,6 +711,7 @@ BEGIN
     EXECUTE IMMEDIATE 'ALTER TABLE '|| t.table_name ||' SHRINK SPACE CASCADE';
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method used by the stager to log what it has been done by the cleanup job */
@@ -712,6 +727,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   -- nothing to do
   NULL;
 END;
+/
 
 
 
@@ -756,3 +772,4 @@ BEGIN
       ENABLED         => TRUE,
       COMMENTS        => 'Bulk operation to processing filesystem state changes');
 END;
+/

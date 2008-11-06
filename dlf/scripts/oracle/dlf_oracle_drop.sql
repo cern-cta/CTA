@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dlf_oracle_drop.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/25 12:50:05 $ $Author: waldron $
+ * @(#)$RCSfile: dlf_oracle_drop.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/11/06 13:20:07 $ $Author: waldron $
  *
  * This script drops a DLF schema
  *
@@ -72,6 +72,6 @@ BEGIN
   -- Purge the recycle bin
   EXECUTE IMMEDIATE 'PURGE RECYCLEBIN';
 END;
-
+/
 
 /* End-of-File */

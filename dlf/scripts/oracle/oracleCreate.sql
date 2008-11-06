@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/07/29 06:36:46 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/11/06 13:20:07 $ $Author: waldron $
  *
  * This script create a new DLF schema
  *
@@ -256,6 +256,7 @@ BEGIN
     VALUES (now - 5/1440, 300, a.type, a.started, a.min, a.max, a.avg, a.stddev, a.median);
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method implementing statsQueueTime
@@ -309,6 +310,7 @@ BEGIN
     VALUES (now - 5/1440, 300, a.type, a.svcclass, a.dispatched, a.min, a.max, a.avg, a.stddev, a.median);
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method implementing statsGarbageCollection
@@ -369,6 +371,7 @@ BEGIN
     VALUES (now - 5/1440, 300, a.diskserver, a.type, a.deleted, a.totalsize, a.min, a.max, a.avg, a.stddev, a.median);
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method implementing statsRequest
@@ -437,6 +440,7 @@ BEGIN
     VALUES (now - 5/1440, 300, a.type, a.hostname, a.euid, a.requests);
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method implementing statsDiskCachEfficiency
@@ -522,6 +526,7 @@ BEGIN
     VALUES (now - 5/1440, 300, a.wait, a.type, a.svcclass, a.d2d, a.recall, a.staged, a.total);
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method implementing statsMigratedFiles
@@ -566,6 +571,7 @@ BEGIN
     VALUES (now - 5/1440, 300, a.svcclass, a.tapepool, a.files, a.totalsize);
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method implementing statsReplication
@@ -612,6 +618,7 @@ BEGIN
     VALUES (now - 5/1440, 300, a.src, a.dest, a.transferred, a.totalsize, a.min, a.max, a.avg, a.stddev, a.median);
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method implementing statsTapeRecalled
@@ -692,6 +699,7 @@ BEGIN
     VALUES (now - 5/1440, 300, a.type, a.username, a.groupname, a.tapevid, a.tapestatus, a.files, a.totalsize, a.mounted);
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method implementing statsProcessingTime
@@ -754,6 +762,7 @@ BEGIN
     VALUES (now - 5/1440, 300, a.daemon, a.type, a.requests, a.min, a.max, a.avg, a.stddev, a.median);
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method implementing statsClientVersion
@@ -786,6 +795,7 @@ BEGIN
     VALUES (now - 5/1440, 300, a.clientVersion, a.requests);
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method implementing createPartition */
@@ -880,6 +890,7 @@ BEGIN
     END LOOP;
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method implementing archiveData */
@@ -938,6 +949,7 @@ BEGIN
     EXECUTE IMMEDIATE 'ALTER TABLESPACE '||a.tablespace_name||' READ ONLY';
   END LOOP;
 END;
+/
 
 
 /* Remove scheduler jobs before recreation */
@@ -947,6 +959,7 @@ BEGIN
     DBMS_SCHEDULER.DROP_JOB(a.job_name, TRUE);
   END LOOP;
 END;
+/
 
 
 BEGIN
@@ -994,12 +1007,14 @@ BEGIN
       ENABLED         => TRUE,
       COMMENTS        => 'CASTOR2 Monitoring Statistics (5 Minute Frequency)');
 END;
+/
 
 
 /* Trigger the initial creation of partitions */
 BEGIN
   createPartitions();
 END;
+/
 
 
 /* End-of-File */
