@@ -42,12 +42,12 @@ BEGIN
    *   (We use these timestamps to configure next 5 minutes timewindow)
    * ->expiry period: Delete Data Older than Expiry Period
    */ 
-  sql_txt := 'CREATE TABLE ConfigSchema (expiry NUMBER, reqsmaxtime DATE,dhmaxtime DATE,dcmaxtime DATE, trmaxtime DATE, gcmaxtime DATE, totallatmaxtime DATE)';
+  sql_txt := 'CREATE TABLE ConfigSchema (expiry NUMBER, reqsmaxtime DATE,dhmaxtime DATE,dcmaxtime DATE, trmaxtime DATE, gcmaxtime DATE, totallatmaxtime DATE,migsmaxtime DATE)';
   execute immediate sql_txt;
   commit;
   /*ConfigSchema Initialization
    */
-  sql_txt := 'INSERT INTO ConfigSchema (expiry, reqsmaxtime,dhmaxtime,dcmaxtime,trmaxtime,gcmaxtime,totallatmaxtime) VALUES (30, '''||to_date(temp,'DD-MON-RR HH24.MI.SS')||''' , '''||to_date(temp,'DD-MON-RR HH24.MI.SS')||''' , '''||to_date(temp,'DD-MON-RR HH24.MI.SS')||''' , '''||to_date(temp,'DD-MON-RR HH24.MI.SS')||''' , '''||to_date(temp,'DD-MON-RR HH24.MI.SS')||''','''||to_date(temp,'DD-MON-RR HH24.MI.SS')||''')';
+  sql_txt := 'INSERT INTO ConfigSchema (expiry, reqsmaxtime,dhmaxtime,dcmaxtime,trmaxtime,gcmaxtime,totallatmaxtime,migsmaxtime) VALUES (30, '''||to_date(temp,'DD-MON-RR HH24.MI.SS')||''' , '''||to_date(temp,'DD-MON-RR HH24.MI.SS')||''' , '''||to_date(temp,'DD-MON-RR HH24.MI.SS')||''' , '''||to_date(temp,'DD-MON-RR HH24.MI.SS')||''' , '''||to_date(temp,'DD-MON-RR HH24.MI.SS')||''','''||to_date(temp,'DD-MON-RR HH24.MI.SS')||''','''||to_date(temp,'DD-MON-RR HH24.MI.SS')||''')';
   execute immediate sql_txt;
   commit;
   /*Requests Table
@@ -81,7 +81,7 @@ BEGIN
   /*GCFiles Table
    *Info about Garbage Collection
    */
-  sql_txt := 'CREATE TABLE GCFiles(timestamp DATE NOT NULL,FileSize NUMBER, FileAge NUMBER)
+  sql_txt := 'CREATE TABLE GCFiles(timestamp DATE NOT NULL,nsfileid NUMBER NOT NULL,FileSize NUMBER, FileAge NUMBER)
   PARTITION BY RANGE (timestamp) (PARTITION ' ||CreationDate || ' VALUES LESS THAN ( to_date('''||ts_var||''',''DD-MON-YYYY'')))';
   execute immediate sql_txt;
   commit;
@@ -113,15 +113,16 @@ CREATE INDEX i_dcopy_timestamp ON  DiskCopy (timestamp) LOCAL;
 CREATE INDEX i_trecall_timestamp ON  TapeRecall (timestamp) LOCAL;
 CREATE INDEX i_gcfiles_timestamp ON GCFiles (timestamp) LOCAL;
 CREATE INDEX i_xrootd_timestamp ON Xrootd (timestamp) LOCAL;
+
 /*Materialized View - Files Requested After Deletion*/
 CREATE MATERIALIZED VIEW req_del
 REFRESH FORCE ON COMMIT
-AS select a.timestamp, round((a.timestamp - b.timestamp)*24,5) dif
+AS (select a.timestamp, round((a.timestamp - b.timestamp)*24,5) dif
    from requests a , gcfiles b
    where a.nsfileid = b.nsfileid
          and a.state = 'TapeRecall'
      	 and a.timestamp > b.timestamp
-	 and (a.timestamp - b.timestamp)*24 <= 24;
+	 and (a.timestamp - b.timestamp)*24 <= 24);
 
 /*Error Log Tables
  *We use these tables to avoid loops into populating procedures
@@ -341,7 +342,7 @@ BEGIN
 		WHERE timestamp > maxtimestamp);
 	COMMIT;
 END;
-
+/
 --procedure that clears old db data(deletes old partitions) and keeps last 'ConfigSchema.expiry' days of data
 CREATE OR REPLACE PROCEDURE cleanOldData AS
 maxdate 	NUMBER;
