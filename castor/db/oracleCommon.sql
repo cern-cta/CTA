@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.678 $ $Date: 2008/11/06 13:20:05 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.679 $ $Date: 2008/11/06 15:18:31 $ $Author: itglp $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -351,7 +351,7 @@ CREATE INDEX I_NbTapeCopiesInFS_Stream ON NbTapeCopiesInFS(Stream);
  * weight of all filesystems). Locking the diskserver only was fine but
  * was introducing a possible deadlock with a place where the FileSystem
  * is locked before the DiskServer. Thus this table..... */
-CREATE TABLE LockTable (DiskServerId NUMBER PRIMARY KEY, TheLock NUMBER);
+CREATE TABLE LockTable (DiskServerId NUMBER CONSTRAINT I_LockTable_DSId PRIMARY KEY, TheLock NUMBER);
 INSERT INTO LockTable SELECT id, id FROM DiskServer;
 
 
@@ -359,7 +359,7 @@ INSERT INTO LockTable SELECT id, id FROM DiskServer;
 /* FileSystemsToCheck used to optimise the processing of filesystems */
 /* when they change status                                           */
 /*********************************************************************/
-CREATE TABLE FileSystemsToCheck (FileSystem NUMBER PRIMARY KEY, ToBeChecked NUMBER);
+CREATE TABLE FileSystemsToCheck (FileSystem NUMBER CONSTRAINT I_FSToCheck_FS PRIMARY KEY, ToBeChecked NUMBER);
 INSERT INTO FileSystemsToCheck SELECT id, 0 FROM FileSystem;
 
 
@@ -398,7 +398,7 @@ CREATE TABLE Accounting (euid INTEGER, svcClass INTEGER, nbBytes INTEGER);
  * Few notes :
  *   diskCopyStatus can be STAGED(0) or CANBEMIGR(10)
  */
-CREATE TABLE GcPolicy (name VARCHAR2(2048) NOT NULL PRIMARY KEY,
+CREATE TABLE GcPolicy (name VARCHAR2(2048) CONSTRAINT I_GcPolicy_name PRIMARY KEY,
                        userWeight VARCHAR2(2048) NOT NULL,
                        recallWeight VARCHAR2(2048) NOT NULL,
                        copyWeight VARCHAR2(2048) NOT NULL,
