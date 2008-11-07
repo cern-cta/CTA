@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/10/02 08:09:07 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/11/07 14:44:29 $ $Author: itglp $
  *
  * Abstract CASTOR thread pool
  *
@@ -32,7 +32,6 @@
 #include "castor/exception/Internal.hpp"
 #include "Cinit.h"
 #include "Cuuid.h"
-#include "Cpool_api.h"
 #include "castor/logstream.h"
 #include <sstream>
 #include <iomanip>
@@ -41,9 +40,10 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::server::BaseThreadPool::BaseThreadPool(const std::string poolName,
-                                               castor::server::IThread* thread) :
+                                               castor::server::IThread* thread,
+                                               unsigned int nbThreads) :
   BaseObject(), m_threadPoolId(-1),
-  m_nbThreads(castor::server::DEFAULT_THREAD_NUMBER),
+  m_nbThreads(nbThreads),
   m_poolName(poolName), m_thread(thread) {}
 
 //------------------------------------------------------------------------------
@@ -84,24 +84,15 @@ bool castor::server::BaseThreadPool::shutdown() throw()
 //------------------------------------------------------------------------------
 // setNbThreads
 //------------------------------------------------------------------------------
-void castor::server::BaseThreadPool::setNbThreads(int value)
+void castor::server::BaseThreadPool::setNbThreads(unsigned int value)
 {
   m_nbThreads = value;
 }
 
 //------------------------------------------------------------------------------
-// join XXX to be implemented later
+// _threadRun
 //------------------------------------------------------------------------------
-//void castor::server::BaseThreadPool::join(int tid)
-//{
-//  Cthread_join(tid, NULL);
-//}
-
-
-//------------------------------------------------------------------------------
-// _thread_run
-//------------------------------------------------------------------------------
-void* castor::server::_thread_run(void* param)
+void* castor::server::BaseThreadPool::_threadRun(void* param)
 {
   castor::server::BaseThreadPool* pool = 0;
   struct threadArgs *args;
@@ -113,7 +104,6 @@ void* castor::server::_thread_run(void* param)
   args = (struct threadArgs*)param;
   pool = dynamic_cast<castor::server::BaseThreadPool*>(args->handler);
   if (pool == 0 || pool->m_thread == 0) {
-    delete args;
     return 0;
   }
 
@@ -128,7 +118,6 @@ void* castor::server::_thread_run(void* param)
                  << pool->m_poolName << std::endl;
   }
   
-  delete args;
   return 0;
 }
 

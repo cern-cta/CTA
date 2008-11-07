@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/09/10 17:14:58 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/11/07 14:44:29 $ $Author: itglp $
  *
  * Abstract CASTOR thread pool
  *
@@ -38,7 +38,7 @@ namespace castor {
  namespace server {
 
   /**
-   * default number of threads in the pool
+   * default number of threads in a pool
    */
   static const int DEFAULT_THREAD_NUMBER = 20;
 
@@ -60,7 +60,8 @@ namespace castor {
      * constructor
      */
     BaseThreadPool(const std::string poolName,
-                   castor::server::IThread* thread);
+                   castor::server::IThread* thread,
+                   unsigned int nbThreads = castor::server::DEFAULT_THREAD_NUMBER);
 
     /*
      * destructor
@@ -89,11 +90,10 @@ namespace castor {
      */
     virtual bool shutdown() throw();
      
-
     /**
      * Sets the number of threads
      */
-    void setNbThreads(int value);
+    virtual void setNbThreads(unsigned int value);
 
     /**
      * Gets the message service log stream
@@ -119,7 +119,7 @@ namespace castor {
       return m_poolName[0];
     }
     
-    const int getNbThreads() {
+    const unsigned int getNbThreads() {
       return m_nbThreads;
     }
 
@@ -129,13 +129,13 @@ namespace castor {
     /**
      * The id of the pool created
      */
-    int m_threadPoolId;
+    unsigned int m_threadPoolId;
 
     /**
      * Number of threads in the pool.
      * The pool uses the Cthread API even if this is 1.
      */
-    int m_nbThreads;
+    unsigned int m_nbThreads;
 
     /**
      * Name of the pool
@@ -147,24 +147,20 @@ namespace castor {
      */
     IThread* m_thread;
     
-    /// Thread entrypoint made friend to access private fields.
-    friend void* _thread_run(void* param);
+    /**
+     * Generic entrypoint for any thread
+     */
+    static void* _threadRun(void* param);
 
   };
-
-
-  /**
-   * External entrypoint for the thread.
-   * It is passed to Cpool_assign or Cthread_create_detached
-   */
-  void* _thread_run(void* param);
 
  } // end of namespace server
 
 } // end of namespace castor
 
+
 /**
- * Structure used to pass arguments to the thread through Cpool_assign
+ * Structure used to pass arguments to the threads
  */
 struct threadArgs {
   castor::server::BaseThreadPool *handler;
