@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.46 $ $Release$ $Date: 2008/10/14 16:09:21 $ $Author: itglp $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.47 $ $Release$ $Date: 2008/11/07 16:42:34 $ $Author: sponcec3 $
  *
  * 
  *
@@ -188,12 +188,14 @@ int rtcpcld_updateNsSegmentAttributes(
                                       tape,
                                       file,
                                       tapeCopyNb,
-                                      castorFile
+                                      castorFile,
+                                      last_mod_time
                                       )
      tape_list_t *tape;
      file_list_t *file;
      int tapeCopyNb;
      struct Cns_fileid *castorFile;
+     time_t last_mod_time;
 {
   rtcpTapeRequest_t *tapereq;
   rtcpFileRequest_t *filereq;
@@ -488,7 +490,8 @@ int rtcpcld_updateNsSegmentAttributes(
                                repackvid,
                                nsSegAttrs->vid,
                                nbSegms,
-                               nsSegAttrs
+                               nsSegAttrs,
+                               last_mod_time
                                );
 
          free(oldSegattrs);
@@ -503,7 +506,8 @@ int rtcpcld_updateNsSegmentAttributes(
                           (char *)NULL, // CASTOR file name 
                           &castorFileId,
                           nbSegms,
-                          nsSegAttrs
+                          nsSegAttrs,
+                          last_mod_time
                           );
     }
     if ( rc == 0 ) {
@@ -550,6 +554,27 @@ int rtcpcld_updateNsSegmentAttributes(
                           sstrerror(save_serrno)
                           );
         }
+        rc = 0;
+      } else if ( save_serrno == ENSFILECHG ) {
+        /*
+         * We ignore ENSFILECHG. This means that the file had alrady be
+         * overwritten by the user before it was migrated.
+         */
+        (void)dlf_write(
+                        (inChild == 0 ? mainUuid : childUuid),
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_IGNORE_ENSFILECHG),
+                        (struct Cns_fileid *)&castorFileId,
+                        3,
+                        "SYSCALL",
+                        DLF_MSG_PARAM_STR,
+                        "Cns_setsegattrs/Cns_replacetapecopy",
+                        "RETRY",
+                        DLF_MSG_PARAM_INT,
+                        retryNsUpdate,
+                        "ERROR_STR",
+                        DLF_MSG_PARAM_STR,
+                        sstrerror(save_serrno)
+                        );
         rc = 0;
       } else {
         (void)dlf_write(

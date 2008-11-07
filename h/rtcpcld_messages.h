@@ -109,6 +109,7 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_WRONGSTARTFSEQ,
     RTCPCLD_MSG_IGNORE_ERROR,
     RTCPCLD_MSG_IGNORE_SIGNAL,
+    RTCPCLD_MSG_IGNORE_ENSFILECHG,
     RTCPCLD_MSG_RESERVED0,
     RTCPCLD_MSG_RESERVED1
 };
@@ -207,6 +208,7 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_WRONGSTARTFSEQ, DLF_LVL_ALERT, "VMGR start FSEQ check failed"},
     { RTCPCLD_MSG_IGNORE_ERROR, DLF_LVL_WARNING, "Continue processing after non-fatal error"},
     { RTCPCLD_MSG_IGNORE_SIGNAL, DLF_LVL_WARNING, "Signal caught but not handled"},
+    { RTCPCLD_MSG_IGNORE_ENSFILECHG, DLF_LVL_WARNING, "File overwritten during migration. Error ignored"},
     { RTCPCLD_MSG_RESERVED0, DLF_LVL_DEBUG,""},
     { RTCPCLD_MSG_RESERVED1, DLF_LVL_DEBUG,""}
 };

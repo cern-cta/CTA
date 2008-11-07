@@ -146,7 +146,7 @@ static PyObject* wrap_cns_setsegattrs(PyObject* self, PyObject* args) {
 	// Call C function
        
        i--;
-       ret=Cns_replaceseg(file_uniqueid.server,file_uniqueid.fileid,&segattrs[i],&repackSeg);
+       ret=Cns_replaceseg(file_uniqueid.server,file_uniqueid.fileid,&segattrs[i],&repackSeg,0);
        
        
        if (ret<0){

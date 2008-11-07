@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.56 $ $Release$ $Date: 2007/12/07 16:29:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.57 $ $Release$ $Date: 2008/11/07 16:42:34 $ $Author: sponcec3 $
  *
  * 
  *
@@ -182,6 +182,7 @@ int migratorCallbackFileCopied(
   int filesWritten = 0;
   struct Cns_fileid *castorFileId = NULL;
   char *blkid, *svcClassName = NULL;
+  time_t last_mod_time;
 
   if ( (tapereq == NULL) || (filereq == NULL) ) {
     (void)dlf_write(
@@ -224,6 +225,7 @@ int migratorCallbackFileCopied(
   if ( blkid == NULL ) blkid = strdup("unknown");
   (void)rtcpcld_getOwner(castorFileId,&ownerUid,&ownerGid);
   (void)rtcpcld_getMigrSvcClassName(file,&svcClassName);
+  (void)rtcpcld_getLastModificationTime(file,&last_mod_time);
 
   if ( ((filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED)) ||
        ((filereq->cprc == -1) && ((filereq->err.errorcode == ENOSPC) ||
@@ -286,7 +288,7 @@ int migratorCallbackFileCopied(
     if ( (filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED) &&
          (filesWritten == 1) ) {
       (void)rtcpcld_getTapeCopyNumber(file,&tapeCopyNb);
-      rc = rtcpcld_updateNsSegmentAttributes(tape,file,tapeCopyNb,castorFileId);
+      rc = rtcpcld_updateNsSegmentAttributes(tape,file,tapeCopyNb,castorFileId,last_mod_time);
       if ( rc == -1 ) {
         save_serrno = serrno;
         (void)dlf_write(

@@ -356,6 +356,10 @@ int rtcpcld_getMigrSvcClassName _PROTO((
                                         file_list_t *,
                                         char **
                                         ));
+int rtcpcld_getLastModificationTime _PROTO((
+                                        file_list_t *,
+                                        time_t *
+                                        ));
 int rtcpcld_getTapePoolName _PROTO((
                                     tape_list_t *,
                                     char **
@@ -378,7 +382,8 @@ int rtcpcld_updateNsSegmentAttributes _PROTO((
                                               tape_list_t *,
                                               file_list_t *,
                                               int,
-					      struct Cns_fileid*
+                                              struct Cns_fileid*,
+                                              time_t
                                               ));
 int rtcpcld_checkNsSegment _PROTO((
                                    tape_list_t *,

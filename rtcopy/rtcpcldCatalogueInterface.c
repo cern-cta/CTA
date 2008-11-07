@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.169 $ $Release$ $Date: 2008/07/28 16:51:41 $ $Author: waldron $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.170 $ $Release$ $Date: 2008/11/07 16:42:34 $ $Author: sponcec3 $
  *
  *
  *
@@ -2056,6 +2056,37 @@ int rtcpcld_getMigrSvcClassName(
   }
 
   Cstager_SvcClass_name(svcClass,(CONST char **)svcClassName);
+  return(0);
+}
+
+int rtcpcld_getLastModificationTime(
+                                file,
+                                last_mod_time
+                                )
+     file_list_t *file;
+     time_t *last_mod_time;
+{
+  struct Cstager_Segment_t *segment = NULL;
+  struct Cstager_TapeCopy_t *tapeCopy = NULL;
+  struct Cstager_CastorFile_t *castorFile = NULL;
+
+  if ( (file == NULL) || (file->dbRef == NULL) || (file->dbRef->row == NULL) ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  segment = (struct Cstager_Segment_t *)file->dbRef->row;
+  Cstager_Segment_copy(segment,&tapeCopy);
+  if ( tapeCopy == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+
+  Cstager_TapeCopy_castorFile(tapeCopy,&castorFile);
+  if ( castorFile == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  Cstager_CastorFile_lastUpdateTime(castorFile, last_mod_time);
   return(0);
 }
 

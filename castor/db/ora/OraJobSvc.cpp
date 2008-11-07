@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.51 $ $Release$ $Date: 2008/11/03 07:38:49 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.52 $ $Release$ $Date: 2008/11/07 16:43:17 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -641,23 +641,32 @@ void castor::db::ora::OraJobSvc::prepareForMigration
       // Update the size of file and its checksum if possible
       int rc = 0;
       if (useChkSum) {
-	rc = Cns_setfsizecs(0, &fileid, fileSize, csumtype.c_str(), csumvalue.c_str());
+	rc = Cns_setfsizecs(0, &fileid, fileSize, csumtype.c_str(), csumvalue.c_str(), timeStamp);
       } else {
-	rc = Cns_setfsize(0, &fileid, fileSize);
+	rc = Cns_setfsize(0, &fileid, fileSize, timeStamp);
       }
 
       if (rc != 0) {
-	castor::exception::Exception ex(serrno);
-	ex.getMessage()
-	  << "prepareForMigration : "
-	  << (useChkSum == true ? "Cns_setfsizecs" : "Cns_setfsize")
-	  << " failed : ";
-	if (!strcmp(cns_error_buffer, "")) {
+        if (serrno == ENSFILECHG) {
+          // special case where the setfsize was not taken into
+          // account due to concurrent modifications on the same
+          // file on another stager. This is ok, but we still log
+          // something
+          // "setfsize ignored by nameserver because of concurrent file modification in another stager"
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, DLF_BASE_ORACLELIB + 18, 0, 0, &fileid);
+        } else {
+          castor::exception::Exception ex(serrno);
+          ex.getMessage()
+            << "prepareForMigration : "
+            << (useChkSum == true ? "Cns_setfsizecs" : "Cns_setfsize")
+            << " failed : ";
+          if (!strcmp(cns_error_buffer, "")) {
 	  ex.getMessage() << sstrerror(serrno);
-	} else {
-	  ex.getMessage() << cns_error_buffer;
-	}
-        throw ex;
+          } else {
+            ex.getMessage() << cns_error_buffer;
+          }
+          throw ex;
+        }
       }
     }
   } catch (oracle::occi::SQLException e) {
