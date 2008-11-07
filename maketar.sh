@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.77 2008/11/04 15:23:59 sponcec3 Exp $
+# $Id: maketar.sh,v 1.78 2008/11/07 07:18:24 waldron Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -248,6 +248,23 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
       sed 's/ //g'`
     if [ -n "${conflicts}" ]; then
 	echo "Conflicts: ${conflicts}" >> CASTOR.spec
+    fi
+    #
+    ## Get Obsoletes
+    #
+    obsoletes=`cat debian/control | perl -e '
+      $package=shift;
+      $what=shift;
+      $this = do { local $/; <> };
+      $this =~ s/.*Package: $package[^\w\-]//sg;
+      $this =~ s/Package:.*//sg;
+      map {if (/([^:]+):(.+)/) {$this{$1}=$2};} split("\n",$this);
+      if (defined($this{$what})) {
+        print "$this{$what}\n";
+      }' $package Obsoletes |
+      sed 's/ //g'`
+    if [ -n "${obsoletes}" ]; then
+        echo "Obsoletes: ${obsoletes}" >> CASTOR.spec
     fi
     #
     ## Get description
