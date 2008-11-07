@@ -199,6 +199,7 @@ char *sys_mserrlist[EMSMAXERR-EMSBASEOFF+2] =
 char *sys_nserrlist[ENSMAXERR-ENSBASEOFF+2] =
   {"Error 0",
    "Name server not active",
+   "File has been overwritten, request ignored",
    "BAD ERROR NUMBER"
   };
 
