@@ -1,3 +1,4 @@
+
 /******************************************************************************
  *                    ListenerThreadPool.cpp
  *
@@ -17,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/02/01 11:20:27 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/11/07 14:56:12 $ $Author: itglp $
  *
  * Abstract class defining a listener thread pool
  *
@@ -42,7 +43,7 @@ castor::server::ListenerThreadPool::ListenerThreadPool(const std::string poolNam
                                                int listenPort,
                                                bool listenerOnOwnThread) throw() :
   BaseThreadPool(poolName, thread), m_sock(0), m_port(listenPort),
-  m_spawnListener(listenerOnOwnThread) {}
+  m_spawnListener(listenerOnOwnThread), m_threadPoolId(-1) {}
 
 //------------------------------------------------------------------------------
 // run
@@ -123,7 +124,7 @@ void castor::server::ListenerThreadPool::threadAssign(void *param) {
   args->param = param;
   if (m_nbThreads > 0) {
     int assign_rc = Cpool_assign(m_threadPoolId,
-                                 &castor::server::_thread_run,
+                                 (void *(*)(void *))&castor::server::BaseThreadPool::_threadRun,
                                  args,
                                  -1);
     if (assign_rc < 0) {
@@ -132,7 +133,7 @@ void castor::server::ListenerThreadPool::threadAssign(void *param) {
   } else {
     // In this case we run the user thread code in the same thread.
     // Note that during the user thread execution we cannot listen.
-    castor::server::_thread_run(args);
+    castor::server::BaseThreadPool::_threadRun(args);
   }
 }
 

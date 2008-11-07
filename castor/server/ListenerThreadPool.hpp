@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/02/01 11:20:27 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/11/07 14:56:12 $ $Author: itglp $
  *
  * Abstract class defining a listener thread pool
  *
@@ -122,6 +122,8 @@ namespace castor {
     bool m_spawnListener;
     
   private:
+
+    int m_threadPoolId;
 
     /// Thread entrypoint made friend to access private fields.
     friend void* _listener_run(void* param);
