@@ -202,6 +202,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-stager-client
 Architecture: any
+Obsoletes: castor-commands
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
  Stager clients
@@ -250,7 +251,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-vdqm2-client
 Architecture: any
-Replaces: castor-vdqm-client
+Obsoletes: castor-vdqm-client
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
  Volume Drive and Queue Manager clients version 2
@@ -263,7 +264,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-vdqm2-lib-oracle
 Architecture: any
-Replaces: castor-vdqm-server
+Obsoletes: castor-vdqm-server
 Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  Volume Drive and Queue Manager server version 2 library
