@@ -81,9 +81,9 @@ namespace aggregator {
      * Handles the request with the specified cuuid on the specified socket.
      *
      * @param cuuid The cuuid of the request
-     * @param sock The socket
+     * @param socket The socket
      */
-    void handleRequest(Cuuid_t &cuuid, castor::io::ServerSocket &sock)
+    void handleRequest(Cuuid_t &cuuid, castor::io::ServerSocket &socket)
       throw(castor::exception::Exception);
 
   }; // class RequestHandlerThread

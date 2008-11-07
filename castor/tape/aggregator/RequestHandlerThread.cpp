@@ -25,6 +25,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/RequestHandlerThread.hpp"
+#include "castor/tape/aggregator/SocketHelper.hpp"
 
 
 //-----------------------------------------------------------------------------
@@ -98,18 +99,25 @@ void castor::tape::aggregator::RequestHandlerThread::stop()
 // handleRequest
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RequestHandlerThread::handleRequest(
-  Cuuid_t &cuuid, castor::io::ServerSocket &sock)
+  Cuuid_t &cuuid, castor::io::ServerSocket &socket)
   throw(castor::exception::Exception) {
 
+
+  //The magic Number of the message on the socket
+  unsigned int magicNumber;
+
+  // get the incoming request
   try {
-
-
-  } catch(castor::exception::Exception &e) {
-    castor::exception::Internal ie;
-
-    ie.getMessage() << "Caught ProtocolFacade exception: "
-      << e.getMessage().str();
-
-    throw ie;
+    // First check of the Protocol
+    magicNumber = SocketHelper::readMagicNumber(socket);
+  } catch (castor::exception::Exception &e) {
+    // "Unable to read Request from socket" message
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Standard Message", sstrerror(e.code())),
+      castor::dlf::Param("Precise Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_FAILED_TO_READ_MAGIC, 2, params);
   }
+
+//switch (magicNumber) {
 }

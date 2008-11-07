@@ -32,7 +32,7 @@ DEBUG  = -g
 #endif
 
 INCLUDES = -I FileName(FileName(FileName(..,..),..),h) -I FileName(FileName(..,..),..)
-CPPFLAGS = -pedantic -Werror $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
+CPPFLAGS = -pedantic -Wall -Werror $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 CFLAGS = -O -I$(INCLUDES) $(THREADFLAGS)
 
 LIBS = -lshift -lcastorCnvs -Wl,-rpath-link,FileName(FileName(FileName(..,..),..),shlib)
@@ -41,7 +41,9 @@ AGGREGATORBIN_SRCS = \
   AggregatorDlfMessageStrings.cpp \
   AggregatorDaemon.cpp \
   AggregatorMain.cpp \
-  RequestHandlerThread.cpp
+  Marshaller.cpp \
+  RequestHandlerThread.cpp \
+  SocketHelper.cpp
 
 MANPAGES_AGGREGATOR = FileName($(MANDIR),aggregatord.$(MANSUFFIX))
 EMANPAGES_AGGREGATOR = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),aggregatord.$(MANSUFFIX)))
