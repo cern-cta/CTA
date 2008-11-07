@@ -2411,7 +2411,7 @@ static void *produce64_thread(int *ptr)
             log(LOG_DEBUG,"produce64_thread: checksums OK!\n");
           }
           else {
-            log(LOG_ERR,"produce64_thread: checksums doesn't match %s != %s\n",ckSumbufdisk,ckSumbuf);
+            log(LOG_ERR,"produce64_thread: checksums do not match %s != %s\n",ckSumbufdisk,ckSumbuf);
             array[produced64 % daemonv3_rdmt_nbuf].len = -(SECHECKSUM); /* setting errno= Bad checksum */
             error = -1;
           }
@@ -2458,7 +2458,7 @@ static void *consume64_thread(int *ptr)
       useCksum=0;
     }
     else if (mode & O_RDWR ){
-      log(LOG_ERR,"consume64_thread: file opened in O_RDWR, skipping checksums\n");
+      log(LOG_INFO,"consume64_thread: file opened in O_RDWR, skipping checksums\n");
       useCksum=0;
     }
     else if(fsetxattr(fd,"user.castor.checksum.value","0", 1,0)) {
