@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/02/12 13:10:30 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/11/07 14:42:33 $ $Author: itglp $
  *
  * A base multithreaded daemon supporting signal handling
  * Credits to Jean-Damien Durand for the original C code
@@ -113,13 +113,10 @@ namespace castor {
     /// a mutex for the signal handler thread
     Mutex* m_signalMutex;
 
-    /// signal handler; friend function to access private fields.
-    friend void* _signalThread_run(void* arg);
+    /// entrypoint for the signal handler thread
+    static void* _signalThreadRun(void* arg);
 	
   };
-
-  // entrypoint for the signal handler thread
-  void* _signalThread_run(void* arg);
 
  } // end of namespace server
 

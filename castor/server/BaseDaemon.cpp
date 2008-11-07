@@ -85,7 +85,7 @@ void castor::server::BaseDaemon::init() throw (castor::exception::Exception)
   }
 
   // Start the thread handling all the signals
-  Cthread_create_detached(castor::server::_signalThread_run, this);
+  Cthread_create_detached((void *(*)(void *))&_signalThreadRun, this);
 
   // Create the DLF related threads. This is done here because it is after
   // daemonization and signal handler creation.
@@ -245,9 +245,9 @@ void castor::server::BaseDaemon::waitAllThreads(bool beGraceful) throw()
 
 
 //------------------------------------------------------------------------------
-// _signalThread_run
+// _signalThreadRun
 //------------------------------------------------------------------------------
-void* castor::server::_signalThread_run(void* arg)
+void* castor::server::BaseDaemon::_signalThreadRun(void* arg)
 {
   castor::server::BaseDaemon* daemon = (castor::server::BaseDaemon*)arg;
   
