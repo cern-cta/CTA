@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DLFInit.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/05/30 08:22:23 $ $Author: itglp $
+ * @(#)$RCSfile: DLFInit.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/11/07 16:43:14 $ $Author: sponcec3 $
  *
  * Initialization of the DLF messages for the ORACLE part
  *
@@ -59,6 +59,7 @@ castor::db::ora::DLFInit::DLFInit() {
      { 15, "Error caught in nsFilesDeleted"},
      { 16, "Error caught in stgFilesDeleted"},
      { 17, "rollback called"},
+     { 18, "setfsize ignored by nameserver because of concurrent file modification in another stager"},
      { -1, ""} };
   try {
     castor::dlf::dlf_addMessages(DLF_BASE_ORACLELIB, messages);
