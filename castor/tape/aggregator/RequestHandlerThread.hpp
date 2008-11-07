@@ -25,6 +25,7 @@
 #ifndef CASTOR_TAPE_AGGREGATOR_REQUESTHANDLERTHREAD_HPP
 #define CASTOR_TAPE_AGGREGATOR_REQUESTHANDLERTHREAD_HPP 1
 
+#include "castor/io/ServerSocket.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/server/Queue.hpp"
 
@@ -75,6 +76,15 @@ namespace aggregator {
      * here in order to detect erronous clients.
      */
     castor::server::Queue m_jobQueue;
+
+    /**
+     * Handles the request with the specified cuuid on the specified socket.
+     *
+     * @param cuuid The cuuid of the request
+     * @param sock The socket
+     */
+    void handleRequest(Cuuid_t &cuuid, castor::io::ServerSocket &sock)
+      throw(castor::exception::Exception);
 
   }; // class RequestHandlerThread
 

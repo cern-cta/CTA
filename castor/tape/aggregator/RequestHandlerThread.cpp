@@ -22,6 +22,8 @@
  * @author Steven Murray Steven.Murray@cern.ch
  *****************************************************************************/
 
+#include "castor/exception/Internal.hpp"
+#include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/RequestHandlerThread.hpp"
 
 
@@ -52,7 +54,6 @@ void castor::tape::aggregator::RequestHandlerThread::init()
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RequestHandlerThread::run(void *param)
   throw() {
-/*
   Cuuid_t cuuid = nullCuuid;
 
   // Gives a Cuuid to the request
@@ -70,22 +71,18 @@ void castor::tape::aggregator::RequestHandlerThread::run(void *param)
 
     handleRequest(cuuid, *socket);
 
-    // Maybe the scheduler has some work to do
-    castor::server::NotifierThread::getInstance()->doNotify('D');
-
   } catch(castor::exception::Exception &e) {
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("Standard Message", sstrerror(e.code())),
       castor::dlf::Param("Precise Message", e.getMessage().str())
     };
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, VDQM_HANDLE_REQUEST_EXCEPT, 2,
-      params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_HANDLE_REQUEST_EXCEPT, 2, params);
   }
 
   // De-allocate the socket
   delete socket;
-*/
 }
 
 
@@ -94,4 +91,25 @@ void castor::tape::aggregator::RequestHandlerThread::run(void *param)
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RequestHandlerThread::stop()
   throw() {
+}
+
+
+//-----------------------------------------------------------------------------
+// handleRequest
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::RequestHandlerThread::handleRequest(
+  Cuuid_t &cuuid, castor::io::ServerSocket &sock)
+  throw(castor::exception::Exception) {
+
+  try {
+
+
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << "Caught ProtocolFacade exception: "
+      << e.getMessage().str();
+
+    throw ie;
+  }
 }
