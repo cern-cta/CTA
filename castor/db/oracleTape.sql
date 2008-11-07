@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.689 $ $Date: 2008/11/07 13:53:50 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.690 $ $Date: 2008/11/07 16:35:23 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1208,24 +1208,27 @@ END;
 
 
 /* PL/SQL method implementing rtcpclientdCleanUp */
-
-create or replace
-PROCEDURE rtcpclientdCleanUp AS
-tpIds "numList";
+CREATE OR REPLACE PROCEDURE rtcpclientdCleanUp AS
+  tpIds "numList";
 BEGIN
-  --MIGRATION
-  -- resurrect tapecopies for migration 
-  UPDATE TapeCopy SET status = 1 WHERE status=3;
-  -- clean up the stream
-  UPDATE Stream SET status = 0 WHERE status NOT IN (0,5,6,7) returning tape bulk collect into tpIds; --PENDING CREATED STOPPED WAITPOLICY 
+  -- Deal with Migrations
+  -- 1) Ressurect tapecopies for migration
+  UPDATE TapeCopy SET status = 1 WHERE status = 3;
+  -- 2) Clean up the streams
+  UPDATE Stream SET status = 0 
+   WHERE status NOT IN (0, 5, 6, 7) --PENDING, CREATED, STOPPED, WAITPOLICY
+  RETURNING tape BULK COLLECT INTO tpIds;
   UPDATE Stream SET tape = 0 WHERE tape != 0;
-  -- reset the tape for migration
+  -- 3) Reset the tape for migration
   FORALL i IN tpIds.FIRST .. tpIds.LAST  
-    UPDATE tape SET stream=0, status = 1 WHERE status IN (2, 3, 4) AND id=tpIds(i);
-  --RECALL
-  UPDATE Segment SET status=0 WHERE status=7; -- resurrect SELECTED segment
-  UPDATE tape SET status=1 WHERE tpmode=0 AND status IN (2,3,4); -- resurrect the tapes running for recall 
-  UPDATE tape A SET status=8 WHERE status IN (0,6,7) AND EXISTS (SELECT id FROM Segment WHERE status=0 and tape=A.id) ; --retry the failed one (filtered with the policy) 
+    UPDATE tape SET stream = 0, status = 1 WHERE status IN (2, 3, 4) AND id = tpIds(i);
+
+  -- Deal with Recalls
+  UPDATE Segment SET status = 0 WHERE status = 7; -- Resurrect SELECTED segment
+  UPDATE tape SET status = 1 WHERE tpmode = 0 AND status IN (2, 3, 4); -- Resurrect the tapes running for recall
+  UPDATE tape A SET status = 8 
+   WHERE status IN (0, 6, 7) AND EXISTS
+    (SELECT id FROM Segment WHERE status = 0 AND tape = A.id);
 END;
 /
 
