@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.688 $ $Date: 2008/11/06 18:16:00 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.689 $ $Date: 2008/11/07 13:53:50 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1208,15 +1208,24 @@ END;
 
 
 /* PL/SQL method implementing rtcpclientdCleanUp */
-CREATE OR REPLACE PROCEDURE rtcpclientdCleanUp AS
+
+create or replace
+PROCEDURE rtcpclientdCleanUp AS
+tpIds "numList";
 BEGIN
-  EXECUTE IMMEDIATE 'TRUNCATE TABLE Stream2TapeCopy';
-  UPDATE NbTapeCopiesInFS SET NbTapeCopies = 0;
-  UPDATE TapeCopy SET status = 1 WHERE status IN (2, 3, 7);
-  UPDATE Stream SET status = 0;
-  UPDATE tape SET status = 1 WHERE status IN (2, 3, 4);
-  UPDATE tape SET stream = 0 WHERE stream != 0;
+  --MIGRATION
+  -- resurrect tapecopies for migration 
+  UPDATE TapeCopy SET status = 1 WHERE status=3;
+  -- clean up the stream
+  UPDATE Stream SET status = 0 WHERE status NOT IN (0,5,6,7) returning tape bulk collect into tpIds; --PENDING CREATED STOPPED WAITPOLICY 
   UPDATE Stream SET tape = 0 WHERE tape != 0;
+  -- reset the tape for migration
+  FORALL i IN tpIds.FIRST .. tpIds.LAST  
+    UPDATE tape SET stream=0, status = 1 WHERE status IN (2, 3, 4) AND id=tpIds(i);
+  --RECALL
+  UPDATE Segment SET status=0 WHERE status=7; -- resurrect SELECTED segment
+  UPDATE tape SET status=1 WHERE tpmode=0 AND status IN (2,3,4); -- resurrect the tapes running for recall 
+  UPDATE tape A SET status=8 WHERE status IN (0,6,7) AND EXISTS (SELECT id FROM Segment WHERE status=0 and tape=A.id) ; --retry the failed one (filtered with the policy) 
 END;
 /
 
