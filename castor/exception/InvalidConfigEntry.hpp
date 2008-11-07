@@ -45,7 +45,8 @@ namespace castor { namespace exception {
        * @param entryName The name of the configuration entry.
        * @param entryValue The (invalid) value of the configuration entry.
        */
-      InvalidConfigEntry(char *category, char *entryName, char *entryValue);
+      InvalidConfigEntry(const char *const category,
+        const char *const entryName, const char *const entryValue);
 
       /**
        * Returns the category of the configuration entry.
