@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 1993-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Date: 2008/11/06 13:30:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Date: 2008/11/07 07:16:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
 
 COMM 	Make stage daemon programs. 
 
@@ -360,7 +360,7 @@ IPROGS_S = FileName($(BIN),ProgramTargetName(stageupdc)) FileName($(BIN),Program
 EPROGS_S = $(EXPORTBIN)/stageupdc $(EXPORTBIN)/stagechng $(EXPORTBIN)/stageping
 #endif
 
-all: $(STGLIB) $(PROGS_C) $(PROGS_D) $(PROGS_S) $(PROGS_Z) $(DBOBJS_ALL) $(PROGS_CPDSKDSK)
+all: $(STGLIB) $(PROGS_C) $(PROGS_D) $(PROGS_S) $(PROGS_Z) $(PROGS_CPDSKDSK)
 
 MakeDepSharedLibrary(shlib,shift)
 
@@ -404,6 +404,8 @@ NormalProgramTarget(stagestat,stagestat.Osuf,$(GLOBLIB),$(LIBS) $(MATHLIB))
 cpdskdsk: cpdskdsk.sh
 	sed -e s!CPSHELL!$(CPSHELL)! cpdskdsk.sh | sed -e s!BINDIR!$(BIN)! > cpdskdsk
 	chmod 755 cpdskdsk
+
+install: $(BIN) $(IPROGS_C) $(IPROGS_D) $(IPROGS_S) $(IPROGS_Z) $(IPROGS_CPDSKDSK)
 
 export: $(EPROGS_C) $(EPROGS_D) $(EPROGS_S) $(EPROGS_Z) $(EPROGS_CPDSKDSK)
 
@@ -587,7 +589,7 @@ clean:
 
 clobber:	clean
 	@echo clobbering in CurDir
-	-@RemoveFiles($(PROGS_C) $(PROGS_D) $(PROGS_S) $(PROGS_Z) $(DBOBJS_ALL) $(STGLIB_OBJS) $(PROGS_CPDSKDSK))
+	-@RemoveFiles($(PROGS_C) $(PROGS_D) $(PROGS_S) $(PROGS_Z) $(STGLIB_OBJS) $(PROGS_CPDSKDSK))
 
 #if _WIN32
 depend:
