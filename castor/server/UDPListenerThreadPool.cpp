@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: UDPListenerThreadPool.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/09/17 06:59:20 $ $Author: waldron $
+ * @(#)$RCSfile: UDPListenerThreadPool.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/11/07 14:46:16 $ $Author: itglp $
  *
  * A listener thread pool listening on an UDP port
  *
@@ -71,7 +71,7 @@ void castor::server::UDPListenerThreadPool::listenLoop() {
       // socket resulting in a bad file descriptor during the thread shutdown
       // process. If we encounter this problem we exit the loop.
       if (any.code() == EBADF) {
-	break;
+        break;
       }
       clog() << ERROR << "Error while reading datagrams from port " << m_port << ": "
              << any.getMessage().str() << std::endl;
