@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/04/02 17:32:03 $ $Author: itglp $
+ * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/11/07 14:45:34 $ $Author: itglp $
  *
  * A pool of forked processes
  *
@@ -60,7 +60,7 @@ castor::server::ForkedProcessPool::ForkedProcessPool
 //------------------------------------------------------------------------------
 castor::server::ForkedProcessPool::~ForkedProcessPool() throw()
 {
-  for(int i = 0; i < m_nbThreads; i++) {
+  for(unsigned i = 0; i < m_nbThreads; i++) {
     if(m_childPipe[i] != NULL) {
       delete m_childPipe[i];
     }
@@ -77,7 +77,7 @@ bool castor::server::ForkedProcessPool::shutdown() throw()
   // for the time being, we just kill the children without notifying them
   // that we have to shutdown. We need to kill otherwise they stay waiting
   // to read on the pipe being closed!
-  for(int i = 0; i < m_nbThreads; i++) {
+  for(unsigned i = 0; i < m_nbThreads; i++) {
     if (m_childPid[i] > 0) {
       kill(m_childPid[i], SIGTERM);
     }
@@ -104,7 +104,7 @@ void castor::server::ForkedProcessPool::init()
   // create pool of forked processes
   // we do it here so it is done before daemonization (BaseServer::init())
   m_childPid = new int[m_nbThreads];
-  for (int i = 0; i < m_nbThreads; i++) {
+  for (unsigned i = 0; i < m_nbThreads; i++) {
     // create a pipe for the child
     castor::io::PipeSocket* ps = new castor::io::PipeSocket();
     m_childPid[i] = 0;
@@ -197,7 +197,7 @@ void castor::server::ForkedProcessPool::dispatch(castor::IObject& obj)
   }
 
   // get the idle child
-  for (int child = 0; child < m_nbThreads; child++) {
+  for (unsigned child = 0; child < m_nbThreads; child++) {
     if (FD_ISSET(m_childPipe[child]->getFdWrite(), &writepipes)) {
       // dispatch the object to the child (this can throw exceptions)
       m_childPipe[child]->sendObject(obj);
