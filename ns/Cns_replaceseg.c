@@ -19,7 +19,7 @@
 #include "serrno.h"
 
 int DLL_DECL
-Cns_replaceseg(char *server, u_signed64 fileid, struct Cns_segattrs *oldsegattrs, struct Cns_segattrs *newsegattrs)
+Cns_replaceseg(char *server, u_signed64 fileid, struct Cns_segattrs *oldsegattrs, struct Cns_segattrs *newsegattrs, time_t last_mod_time)
 {
   int c;
   char func[16];
@@ -62,7 +62,7 @@ Cns_replaceseg(char *server, u_signed64 fileid, struct Cns_segattrs *oldsegattrs
   /* Build request header */
 
   sbp = sendbuf;
-  marshall_LONG (sbp, CNS_MAGIC4);
+  marshall_LONG (sbp, CNS_MAGIC6);
   marshall_LONG (sbp, CNS_REPLACESEG);
   q = sbp;        /* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;
@@ -73,6 +73,7 @@ Cns_replaceseg(char *server, u_signed64 fileid, struct Cns_segattrs *oldsegattrs
   marshall_LONG (sbp, uid);
   marshall_LONG (sbp, gid);
   marshall_HYPER (sbp, fileid);
+  marshall_TIME_T (sbp, last_mod_time);
   marshall_WORD (sbp, oldsegattrs->copyno);
   marshall_WORD (sbp, oldsegattrs->fsec);
 

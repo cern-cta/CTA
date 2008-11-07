@@ -4508,6 +4508,7 @@ int Cns_srv_replaceseg(magic, req_data, clienthost, thip)
   char *user;
   char vid[CA_MAXVIDLEN+1];
   int checksum_ok;
+  time_t last_mod_time;
 
   strcpy (func, "Cns_srv_replaceseg");
   rbp = req_data;
@@ -4516,6 +4517,9 @@ int Cns_srv_replaceseg(magic, req_data, clienthost, thip)
   get_client_actual_id (thip, &uid, &gid, &user);
   nslogit (func, NS092, "replaceseg", user, uid, gid, clienthost);
   unmarshall_HYPER (rbp, fileid);
+  if (magic >= CNS_MAGIC6) {
+    unmarshall_TIME_T (rbp, last_mod_time);
+  }
   unmarshall_WORD (rbp, copyno);
   unmarshall_WORD (rbp, fsec);
   sprintf (logbuf, "replaceseg %s %d %d",
@@ -4540,6 +4544,14 @@ int Cns_srv_replaceseg(magic, req_data, clienthost, thip)
 
   if (filentry.filemode & S_IFDIR)
     RETURN (EISDIR);
+
+  /* check that the file in nameserver is not newer than what
+     is given. This can happen in case of multiple stagers
+     concurrently modifying a file.
+     In such a case, raise the appropriate error and ignore the request. */
+  if (filentry.mtime > last_mod_time) {
+    RETURN (ENSFILECHG);
+  }
 
   if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1))
     RETURN (EINVAL);
@@ -4643,6 +4655,7 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
   gid_t gid;
   uid_t uid;
   char *user;
+  time_t last_mod_time;
 
   struct Cns_seg_metadata new_smd_entry[CA_MAXSEGS];
   struct Cns_seg_metadata old_smd_entry[CA_MAXSEGS];
@@ -4666,6 +4679,10 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
   get_client_actual_id (thip, &uid, &gid, &user);
   nslogit (func, NS092, "replacetapecopy", user, uid, gid, clienthost);
   unmarshall_HYPER (rbp, fileid);
+  if (magic >= CNS_MAGIC6) {
+    unmarshall_TIME_T (rbp, last_mod_time);
+  }
+
   if (unmarshall_STRINGN (rbp, newvid, CA_MAXVIDLEN+1))
     RETURN (EINVAL);
   if (unmarshall_STRINGN (rbp, oldvid, CA_MAXVIDLEN+1))
@@ -4689,6 +4706,14 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
   /* check if the entry is a regular file */
   if (filentry.filemode & S_IFDIR)
     RETURN (EISDIR);
+
+  /* check that the file in nameserver is not newer than what
+     is given. This can happen in case of multiple stagers
+     concurrently modifying a file.
+     In such a case, raise the appropriate error and ignore the request. */
+  if (filentry.mtime > last_mod_time) {
+    RETURN (ENSFILECHG);
+  }
 
   /* get the old segs for a file */
   copyno = -1;
@@ -5261,6 +5286,7 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
   char tmpbuf2[21];
   uid_t uid;
   char *user;
+  time_t lastmodtime;
 
   strcpy (func, "Cns_srv_setfsize");
   rbp = req_data;
@@ -5275,6 +5301,7 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
   unmarshall_HYPER (rbp, filesize);
+  unmarshall_TIME_T (rbp, lastmodtime);
   get_cwd_path (thip, cwd, cwdpath);
   sprintf (logbuf, "setfsize %s %s %s %s", u64tostr (fileid, tmpbuf, 0),
            path, u64tostr (filesize, tmpbuf2, 0), cwdpath);
@@ -5314,6 +5341,14 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
       Cns_chkentryperm (&filentry, S_IWRITE, uid, gid, clienthost))
     RETURN (EACCES);
 
+  /* check that the file in nameserver is not newer than what
+     is given. This can happen in case of multiple stagers
+     concurrently modifying a file.
+     In such a case, raise the appropriate error and ignore the request. */
+  if (filentry.mtime > lastmodtime) {
+    RETURN (ENSFILECHG);
+  }
+
   /* update entry */
 
   filentry.filesize = filesize;
@@ -5352,7 +5387,8 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
   char *user;
   char csumtype[3];
   char csumvalue[CA_MAXCKSUMLEN+1];
-
+  time_t lastmodtime;
+  
   strcpy (func, "Cns_srv_setfsizecs");
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
@@ -5370,6 +5406,7 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
     RETURN (EINVAL);
   if (unmarshall_STRINGN (rbp, csumvalue, CA_MAXCKSUMLEN+1))
     RETURN (EINVAL);
+  unmarshall_TIME_T (rbp, lastmodtime);
   get_cwd_path (thip, cwd, cwdpath);
   sprintf (logbuf, "setfsizecs %s %s %s %s %s %s", u64tostr (fileid, tmpbuf, 0),
            path, u64tostr (filesize, tmpbuf2, 0), csumvalue, csumtype, cwdpath);
@@ -5413,6 +5450,14 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
   if (uid != filentry.uid &&
       Cns_chkentryperm (&filentry, S_IWRITE, uid, gid, clienthost))
     RETURN (EACCES);
+
+  /* check that the file in nameserver is not newer than what
+     is given. This can happen in case of multiple stagers
+     concurrently modifying a file.
+     In such a case, raise the appropriate error and ignore the request. */
+  if (filentry.mtime > lastmodtime) {
+    RETURN (ENSFILECHG);
+  }
 
   if ((strcmp(filentry.csumtype,"PA") == 0 && strcmp(csumtype,"AD") == 0) ||
       (strcmp(filentry.csumtype,"PC") == 0 && strcmp(csumtype,"CS") == 0) ||
@@ -5459,7 +5504,8 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
   char tmpbuf[21];
   uid_t uid;
   char *user;
-
+  time_t lastmodtime;
+  
   strcpy (func, "Cns_srv_setfsizeg");
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
@@ -5475,6 +5521,7 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
     RETURN (EINVAL);
   if (unmarshall_STRINGN (rbp, csumvalue, CA_MAXCKSUMLEN+1))
     RETURN (EINVAL);
+  unmarshall_TIME_T (rbp, lastmodtime);
   sprintf (logbuf, "setfsizeg %s %s", guid, u64tostr (filesize, tmpbuf, 0));
   Cns_logreq (func, logbuf);
   if (*csumtype &&
@@ -5506,6 +5553,14 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
   if (uid != filentry.uid &&
       Cns_chkentryperm (&filentry, S_IWRITE, uid, gid, clienthost))
     RETURN (EACCES);
+
+  /* check that the file in nameserver is not newer than what
+     is given. This can happen in case of multiple stagers
+     concurrently modifying a file.
+     In such a case, raise the appropriate error and ignore the request. */
+  if (filentry.mtime > lastmodtime) {
+    RETURN (ENSFILECHG);
+  }
 
   /* update entry */
 
@@ -5749,6 +5804,7 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
   char tmpbuf3[50];
   uid_t uid;
   char *user;
+  time_t last_mod_time;
 
   strcpy (func, "Cns_srv_setsegattrs");
   rbp = req_data;
@@ -5760,6 +5816,9 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
   unmarshall_HYPER (rbp, fileid);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
+  if (magic >= CNS_MAGIC6) {
+    unmarshall_TIME_T (rbp, last_mod_time);
+  }
   unmarshall_WORD (rbp, nbseg);
   get_cwd_path (thip, cwd, cwdpath);
   sprintf (logbuf, "setsegattrs %s %s %s",
@@ -5792,9 +5851,16 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
   }
 
   /* check if the entry is a regular file */
-
   if (filentry.filemode & S_IFDIR)
     RETURN (EISDIR);
+
+  /* check that the file in nameserver is not newer than what
+     is given. This can happen in case of multiple stagers
+     concurrently modifying a file.
+     In such a case, raise the appropriate error and ignore the request. */
+  if (filentry.mtime > last_mod_time) {
+    RETURN (ENSFILECHG);
+  }
 
   for (i = 0; i < nbseg; i++) {
     memset ((char *) &smd_entry, 0, sizeof(smd_entry));

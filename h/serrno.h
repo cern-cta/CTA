@@ -210,8 +210,9 @@
  * NS (Name Server) errors
  *------------------------------------------------------------------------
  */
-#define	ENSNACT		ENSBASEOFF+1	/* name server not active or service being drained */
-#define ENSMAXERR	ENSBASEOFF+1
+#define	ENSNACT    ENSBASEOFF+1	/* Name server not active */
+#define	ENSFILECHG ENSBASEOFF+2	/* File has been overwritten, request ignored */
+#define ENSMAXERR  ENSBASEOFF+2
 
 /*
  *------------------------------------------------------------------------

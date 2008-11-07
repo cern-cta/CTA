@@ -278,7 +278,7 @@ int main(argc, argv)
 	errflg++;
       }	
     } else {
-      if (Cns_replaceseg(NULL, stat.fileid, &(segattrs[i]), &newsegattrs)) {
+      if (Cns_replaceseg(NULL, stat.fileid, &(segattrs[i]), &newsegattrs, stat.mtime)) {
 	fprintf (stderr, "%s: failed to replace segment checksum: %s\n", 
 		 argv[0], sstrerror(serrno));
 	errflg++;

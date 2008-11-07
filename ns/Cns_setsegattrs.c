@@ -19,7 +19,7 @@
 #include "serrno.h"
 
 int DLL_DECL
-Cns_setsegattrs(const char *path, struct Cns_fileid *file_uniqueid, int nbseg, struct Cns_segattrs *segattrs)
+Cns_setsegattrs(const char *path, struct Cns_fileid *file_uniqueid, int nbseg, struct Cns_segattrs *segattrs, time_t last_mod_time)
 {
   char *actual_path;
   int c;
@@ -68,7 +68,7 @@ Cns_setsegattrs(const char *path, struct Cns_fileid *file_uniqueid, int nbseg, s
   /* Build request header */
 
   sbp = sendbuf;
-  marshall_LONG (sbp, CNS_MAGIC4);
+  marshall_LONG (sbp, CNS_MAGIC6);
   marshall_LONG (sbp, CNS_SETSEGAT);
   q = sbp;        /* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;
@@ -86,6 +86,7 @@ Cns_setsegattrs(const char *path, struct Cns_fileid *file_uniqueid, int nbseg, s
     marshall_HYPER (sbp, zero);
     marshall_STRING (sbp, actual_path);
   }
+  marshall_TIME_T (sbp, last_mod_time);
   marshall_WORD (sbp, nbseg);
   for (i = 0; i < nbseg; i++) {
     marshall_WORD (sbp, (segattrs+i)->copyno);

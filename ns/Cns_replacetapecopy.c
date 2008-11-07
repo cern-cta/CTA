@@ -19,7 +19,7 @@
 #include "serrno.h"
 
 int DLL_DECL
-Cns_replacetapecopy(struct Cns_fileid *file_uniqueid, const char* oldvid, const char* newvid, int nbseg, struct Cns_segattrs *newsegattrs)
+Cns_replacetapecopy(struct Cns_fileid *file_uniqueid, const char* oldvid, const char* newvid, int nbseg, struct Cns_segattrs *newsegattrs, time_t last_mod_time)
 {
   int c,i;
   int msglen;
@@ -65,7 +65,7 @@ Cns_replacetapecopy(struct Cns_fileid *file_uniqueid, const char* oldvid, const 
 
   /* Build request header */
   sbp = sendbuf;
-  marshall_LONG (sbp, CNS_MAGIC4);
+  marshall_LONG (sbp, CNS_MAGIC6);
   marshall_LONG (sbp, CNS_REPLACETAPECOPY);
   q = sbp;        /* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;
@@ -76,6 +76,7 @@ Cns_replacetapecopy(struct Cns_fileid *file_uniqueid, const char* oldvid, const 
   marshall_LONG (sbp, uid);
   marshall_LONG (sbp, gid);
   marshall_HYPER (sbp, file_uniqueid->fileid);
+  marshall_TIME_T (sbp, last_mod_time);
   marshall_STRING (sbp, newvid);
   marshall_STRING (sbp, oldvid);
 
