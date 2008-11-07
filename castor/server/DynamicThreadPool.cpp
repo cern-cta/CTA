@@ -17,32 +17,33 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DynamicThreadPool.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/11/04 11:02:02 $ $Author: murrayc3 $
+ * @(#)$RCSfile: DynamicThreadPool.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/11/07 14:45:07 $ $Author: itglp $
  *
  * @author Dennis Waldron
  *****************************************************************************/
 
 // Include files
 #include "castor/server/DynamicThreadPool.hpp"
+#include "castor/logstream.h"
 
 
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
 castor::server::DynamicThreadPool::DynamicThreadPool
-(unsigned int initThreads, 
+(const std::string poolName,
+ castor::server::IThread* thread,
+ unsigned int initThreads, 
  unsigned int maxThreads,
  unsigned int threshold,
  unsigned int maxTasks)
   throw(castor::exception::Exception) :
+  BaseThreadPool(poolName, thread, 0),
   m_taskQueue(maxTasks),
   m_terminated(false),
-  m_threadCount(0),
   m_lastPoolShrink(0) {
 
-  // Variables
-  pthread_t t;
-  int       rv;
+  int rv;
 
   // Prevent users setting an extremely large thread pool size.
   if (maxThreads > MAX_THREADPOOL_SIZE) {
@@ -50,133 +51,166 @@ castor::server::DynamicThreadPool::DynamicThreadPool
     e.getMessage() << "maxThreads cannot exceed " << MAX_THREADPOOL_SIZE;
     throw e;
   }
-
+  
   // Threadpool defaults
   m_maxThreads  = maxThreads;
-  m_initThreads = initThreads > m_maxThreads ? m_maxThreads : initThreads;
+  m_initThreads = initThreads > maxThreads ? maxThreads : initThreads;
   m_threshold   = 
     ((m_initThreads == m_maxThreads) || (threshold > 100)) ? 0 :
     (maxTasks / 100) * threshold;
 
-  // Initialize globus mutexes
+  // Initialize global mutexes
   rv = pthread_mutex_init(&m_lock, NULL);
   if (rv != 0) {
     castor::exception::Exception e(errno);
     e.getMessage() << "Failed to pthread_mutex_init(m_lock)";
     throw e;
   }
+}
 
-  // Initialize thread attributes
-  pthread_attr_init(&m_attr);
-  pthread_attr_setdetachstate(&m_attr, 1);
-  pthread_attr_setstacksize(&m_attr, DEFAULT_THREAD_STACKSIZE);
-  
-  // Create the initial pool of threads. The threads themselves just act as
-  // consumers of the task queue and wait for tasks to process.
-  for (unsigned int i = 0; i < m_initThreads; i++) {
-    rv = pthread_create(&t, &m_attr, (void *(*)(void *))&castor::server::DynamicThreadPool::_consumer, this);
-    if (rv != 0) {
-      break;
-    }
-    m_threadCount++;
-  }
-
-  // Thread creation failed. Note: exceptions in constructors do not call the
-  // destructor so we flag the thread pool for termination so that any threads
-  // that were created successfully destroy themselves.
-  if (rv != 0) {
-    m_terminated = true;
-
-    // Throw exception
-    castor::exception::Exception e(errno);
-    e.getMessage() << "Failed to create " << m_initThreads << " initial "
-		   << "threads in the pool";
-    throw e;
+//------------------------------------------------------------------------------
+// setNbThreads
+//------------------------------------------------------------------------------
+void castor::server::DynamicThreadPool::setNbThreads(unsigned int value)
+{
+  m_initThreads = value;
+  if(m_maxThreads < m_initThreads) {
+    m_maxThreads = m_initThreads;
+    m_threshold = 0;
   }
 }
 
+//------------------------------------------------------------------------------
+// run
+//------------------------------------------------------------------------------
+void castor::server::DynamicThreadPool::run() throw (castor::exception::Exception) {  
+  pthread_t t;
+  int       rv;
+  
+  if(m_initThreads > 0) {
+    // Initialize thread attributes
+    pthread_attr_init(&m_attr);
+    pthread_attr_setdetachstate(&m_attr, 1);
+    pthread_attr_setstacksize(&m_attr, DEFAULT_THREAD_STACKSIZE);
+    
+    // Create the initial pool of threads. The threads themselves just act as
+    // consumers of the task queue and wait for tasks to process.
+    for (unsigned int i = 0; i < m_initThreads; i++) {
+      rv = pthread_create(&t, &m_attr, (void *(*)(void *))&castor::server::DynamicThreadPool::_consumer, this);
+      if (rv != 0) {
+        break;
+      }
+      m_nbThreads++;
+    }
+    
+    // Thread creation failed. We flag the thread pool for termination
+    // so that any threads that were created successfully destroy themselves.
+    if (rv != 0) {
+      m_terminated = true;
+      
+      // Throw exception
+      castor::exception::Exception e(errno);
+      e.getMessage() << "Failed to create " << m_initThreads << " initial "
+      << "threads in the pool";
+      throw e;
+    }
+  }
+
+  // Threads have been created
+  clog() << DEBUG << "Dynamic thread pool '" << m_poolName << "' created with "
+         << m_initThreads << " of " << m_maxThreads << " threads" << std::endl;
+
+  // Initialize the underlying user thread. We do it here once for the whole thread
+  // pool instead of once per thread as the threads are created in a suspended
+  // state and will get some work only when the listener socket will have
+  // something to dispatch
+  m_thread->init();
+}
 
 //-----------------------------------------------------------------------------
 // Destructor
 //-----------------------------------------------------------------------------
 castor::server::DynamicThreadPool::~DynamicThreadPool() throw() {
 
+  // Destroy global mutexes
+  pthread_mutex_destroy(&m_lock);
+  
+  // Destroy thread attributes
+  pthread_attr_destroy(&m_attr);
+}
+
+//-----------------------------------------------------------------------------
+// Shutdown
+//-----------------------------------------------------------------------------
+bool castor::server::DynamicThreadPool::shutdown() throw() {
+
   // Update the termination flag to true and notify the task queue of the
   // termination.
   m_terminated = true;
   m_taskQueue.terminate();
 
-  // Wait for all threads to shutdown before destroying the queue
-  while (m_threadCount > 0) {
-    usleep(20 * 1000); // 20 millisecond spin lock
-  }
-
-  // Destroy global mutexes
-  pthread_mutex_destroy(&m_lock);
-
-  // Destroy thread attributes
-  pthread_attr_destroy(&m_attr);
+  // Inform whether we're done
+  return (m_nbThreads == 0);
 }
-
 
 //-----------------------------------------------------------------------------
 // Consumer
 //-----------------------------------------------------------------------------
 void* castor::server::DynamicThreadPool::_consumer(void *arg) {
-
+  
   // Variables
   DynamicThreadPool *pool = (DynamicThreadPool *)arg;
-
+  
   // Task processing loop.
   while (!pool->m_terminated) {
- 
+    
     // Wait for a task to be available from the queue.
     void *args = 0;
     try {
       args = pool->m_taskQueue.pop
-	((pool->m_threadCount == pool->m_initThreads));
+        ((pool->m_nbThreads == pool->m_initThreads));
     } catch (castor::exception::Exception e) {
       if (e.code() == EPERM) {
-	break;          // Queue terminated, destroy thread
+        break;          // Queue terminated, destroy thread
       } else if (e.code() == EINTR) {
-	continue;       // Interrupted
+        continue;       // Interrupted
       } else if (e.code() ==  EAGAIN) {
-	// As we are in non-blocking mode we sleep very briefly to prevent
-	// thrashing of the thread pool
-	usleep(5000);
+        // As we are in non-blocking mode we sleep very briefly to prevent
+        // thrashing of the thread pool
+        usleep(5000);
       }
     }
-  
-    // Invoke the user defined execute method
+    
+    // Invoke the user code
     try {
       if (args != 0)
-	pool->execute(args);
+        pool->m_thread->run(args);
     } catch (...) {
       // Do nothing. It is the responsibility of the user implementing the
       // run method to log errors.
     }
-
+    
     // Destroy any threads over the initial thread limit if the number of tasks
     // in the task queue has dropped to acceptable limits.
     pthread_mutex_lock(&pool->m_lock);
     if ((pool->m_taskQueue.size() < pool->m_threshold) &&
-	(pool->m_threadCount > pool->m_initThreads) &&
-	(time(NULL) - pool->m_lastPoolShrink > 10)) {
-      pool->m_threadCount--;
+        (pool->m_nbThreads > pool->m_initThreads) &&
+        (time(NULL) - pool->m_lastPoolShrink > 10)) {
+      pool->m_nbThreads--;
       pool->m_lastPoolShrink = time(NULL);
-
+      
       pthread_mutex_unlock(&pool->m_lock);
       pthread_exit(0);
       return NULL;  // Should not be here
     }
     pthread_mutex_unlock(&pool->m_lock);
   }
-
+  
   // Register thread destruction
   pthread_mutex_lock(&pool->m_lock);
-  pool->m_threadCount--;
+  pool->m_nbThreads--;
   pthread_mutex_unlock(&pool->m_lock);
-
+  
   pthread_exit(0);
   return NULL;  // Should not be here
 }
@@ -186,12 +220,12 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
 // Add Task
 //-----------------------------------------------------------------------------
 void castor::server::DynamicThreadPool::addTask(void *data, bool wait)
-  throw(castor::exception::Exception) {
-
+throw(castor::exception::Exception) {
+  
   // Variables
   pthread_t t;
   int       rv;
-
+  
   // Push the task to the queue. We ignore interrupts here!
   while (1) {
     try {
@@ -199,20 +233,20 @@ void castor::server::DynamicThreadPool::addTask(void *data, bool wait)
       break;
     } catch (castor::exception::Exception e) {
       if (e.code() == EINTR) {
-	continue; // Interrupted
+        continue; // Interrupted
       }
       throw e;
     }
   }
-
+  
   // Check to see if additional threads need to be started
   pthread_mutex_lock(&m_lock);
-  if ((m_threadCount == 0) ||
-      ((m_threadCount < m_maxThreads) &&
+  if ((m_nbThreads == 0) ||
+      ((m_nbThreads < m_maxThreads) &&
        (m_taskQueue.size() > m_threshold))) {
     rv = pthread_create(&t, &m_attr, (void *(*)(void *))&castor::server::DynamicThreadPool::_consumer, this);
     if (rv == 0) {
-      m_threadCount++;
+      m_nbThreads++;
     }
   }
   pthread_mutex_unlock(&m_lock);

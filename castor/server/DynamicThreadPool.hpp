@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DynamicThreadPool.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/11/04 11:02:02 $ $Author: murrayc3 $
+ * @(#)$RCSfile: DynamicThreadPool.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/11/07 14:45:07 $ $Author: itglp $
  *
  * This header file describes the implementation of a generic thread pool with
  * dynamic thread creation and destruction. A thread pool is a set of threads
@@ -29,9 +29,8 @@
  * already been reached. If the number of pending tasks is below the threshold
  * then a thread will be destroyed every 10 seconds until either the threshold
  * or initial number of threads is reached.
- *
- * Note: This class cannot be used directly and must be used from a derived
- * class which implements the execute method.
+ * Note: this thread pool is not suitable for database interaction because 
+ * dropping and recreating db connections creates too much overhead on Oracle.
  *
  * The base implementation is adapted from the following two projects:
  * @see apr_thread_pool.h (Apache Portable Runtime Utils)
@@ -44,9 +43,10 @@
 #define DYNAMIC_THREAD_POOL_HPP 1
 
 // Include files
-#include "castor/server/Queue.hpp"
+#include "castor/server/BaseThreadPool.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/server/Queue.hpp"
 #include <pthread.h>
 #include <errno.h>
 #include <queue>
@@ -68,9 +68,15 @@ namespace castor {
     /**
      * DynamicThreadPool
      */
-    class DynamicThreadPool: public virtual castor::server::IThread {
+    class DynamicThreadPool: public BaseThreadPool {
 
     public:
+
+      /**
+       * Empty constructor
+       */
+      DynamicThreadPool() : 
+         BaseThreadPool(), m_initThreads(0), m_maxThreads(0), m_threshold(0) {};
 
       /**
        * Default Constructor.
@@ -89,16 +95,34 @@ namespace castor {
        * queued pending execution by the threads in the pool.
        * @exception Exception in case of error
        */
-      DynamicThreadPool(unsigned int initThreads = DEFAULT_INITTHREADS,
-			unsigned int maxThreads  = DEFAULT_MAXTHREADS,
-			unsigned int threshold   = DEFAULT_THRESHOLD,
-			unsigned int maxTasks    = DEFAULT_MAXTASKS)
-	throw(castor::exception::Exception);
+      DynamicThreadPool(const std::string poolName,
+        castor::server::IThread* thread,
+        unsigned int initThreads = DEFAULT_INITTHREADS,
+        unsigned int maxThreads  = DEFAULT_MAXTHREADS,
+        unsigned int threshold   = DEFAULT_THRESHOLD,
+        unsigned int maxTasks    = DEFAULT_MAXTASKS)
+        throw(castor::exception::Exception);
 
       /**
        * Default Destructor
        */
       virtual ~DynamicThreadPool() throw();
+
+      /**
+       * Pre-daemonization initialization. Empty for this pool.
+       */
+      virtual void init() throw (castor::exception::Exception) {};
+
+      /**
+       * Shutdowns the pool by terminating the task queue.
+       * @return true if the pool has stopped.
+       */
+      virtual bool shutdown() throw();
+      
+      /**
+       * Sets the number of threads
+       */
+      virtual void setNbThreads(unsigned int value);
 
       /**
        * Add a task to the thread pool
@@ -113,13 +137,12 @@ namespace castor {
        *           to be non-blocking.
        */
       void addTask(void *data, bool wait = true)
-	throw(castor::exception::Exception);
-
+        throw(castor::exception::Exception);
+        
       /**
-       * Not implemented (MUST BE THREAD SAFE)
-       * @param arg The task extracted from the task queue
+       * Starts the threads in suspended mode
        */
-      virtual void execute(void *arg) = 0;       
+      virtual void run() throw (castor::exception::Exception);
 
     private:
 
@@ -130,8 +153,6 @@ namespace castor {
        */
       static void* _consumer(void *arg);
 
-    private:
-
       /// Mutex to protect access counters
       pthread_mutex_t m_lock;
 
@@ -141,17 +162,16 @@ namespace castor {
       /// A FIFO bounded queue storing tasks pending execution
       castor::server::Queue m_taskQueue;
 
+    protected:
+
       /// Flag to indicate whether the thread pool is terminated
       bool m_terminated;
-
-      /// The maximum number of threads allowed in the pool
-      unsigned int m_maxThreads;
 
       /// The initial (minimum) number of threads
       unsigned int m_initThreads;
 
-      /// The total number of threads in the pool
-      unsigned int m_threadCount;  
+      /// The maximum number of threads allowed in the pool
+      unsigned int m_maxThreads;
 
       /// Percentage occupancy of the queue that must be reached before new
       /// threads are created
