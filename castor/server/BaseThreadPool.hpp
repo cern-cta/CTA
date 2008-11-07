@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/11/07 14:44:29 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/11/07 14:53:53 $ $Author: itglp $
  *
  * Abstract CASTOR thread pool
  *
@@ -125,11 +125,6 @@ namespace castor {
 
 
   protected:
-
-    /**
-     * The id of the pool created
-     */
-    unsigned int m_threadPoolId;
 
     /**
      * Number of threads in the pool.

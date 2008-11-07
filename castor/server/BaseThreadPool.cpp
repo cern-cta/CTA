@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/11/07 14:44:29 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/11/07 14:53:53 $ $Author: itglp $
  *
  * Abstract CASTOR thread pool
  *
@@ -42,7 +42,7 @@
 castor::server::BaseThreadPool::BaseThreadPool(const std::string poolName,
                                                castor::server::IThread* thread,
                                                unsigned int nbThreads) :
-  BaseObject(), m_threadPoolId(-1),
+  BaseObject(),
   m_nbThreads(nbThreads),
   m_poolName(poolName), m_thread(thread) {}
 
