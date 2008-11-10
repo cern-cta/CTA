@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.53 $ $Release$ $Date: 2008/11/10 09:31:17 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.54 $ $Release$ $Date: 2008/11/10 16:08:34 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -641,9 +641,9 @@ void castor::db::ora::OraJobSvc::prepareForMigration
       // Update the size of file and its checksum if possible
       int rc = 0;
       if (useChkSum) {
-	rc = Cns_setfsizecs(0, &fileid, fileSize, csumtype.c_str(), csumvalue.c_str(), timeStamp);
+	rc = Cns_setfsizecs(0, &fileid, fileSize, csumtype.c_str(), csumvalue.c_str(), timeStamp, timeStamp);
       } else {
-	rc = Cns_setfsize(0, &fileid, fileSize, timeStamp);
+	rc = Cns_setfsize(0, &fileid, fileSize, timeStamp, timeStamp);
       }
 
       if (rc != 0) {
