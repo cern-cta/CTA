@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.691 $ $Date: 2008/11/10 09:29:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.692 $ $Date: 2008/11/10 14:03:37 $ $Author: itglp $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -658,7 +658,7 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
-			    0,
+                            0,
                             lastUpdateTime);
       -- Since we recursively called ourselves, we should not do
       -- any update in the outer call
@@ -688,7 +688,7 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
-			    optimized,
+                            optimized,
                             lastUpdateTime);
     END IF;
 END;
@@ -861,7 +861,7 @@ END;
 /* PL/SQL method implementing bestFileSystemForSegment */
 CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskServerName OUT VARCHAR2,
                                                      rmountPoint OUT VARCHAR2, rpath OUT VARCHAR2,
-                                                     dcid OUT INTEGER, optimized IN INTEGER) AS
+                                                     dcid OUT INTEGER) AS
   fileSystemId NUMBER;
   cfid NUMBER;
   fsDiskServer NUMBER;
@@ -906,14 +906,12 @@ BEGIN
                      (SELECT id, svcClass from StageGetRequest UNION ALL
                       SELECT id, svcClass from StagePrepareToGetRequest UNION ALL
                       SELECT id, svcClass from StageRepackRequest UNION ALL
-                      SELECT id, svcClass from StageGetNextRequest UNION ALL
                       SELECT id, svcClass from StageUpdateRequest UNION ALL
-                      SELECT id, svcClass from StagePrepareToUpdateRequest UNION ALL
-                      SELECT id, svcClass from StageUpdateNextRequest) Request,
+                      SELECT id, svcClass from StagePrepareToUpdateRequest) Request,
                       SubRequest, CastorFile
                WHERE CastorFile.id = cfid
                  AND SubRequest.castorfile = cfid
-                 AND SubRequest.status = 4
+                 AND SubRequest.status = 4 -- SUBREQUEST_WAITTAPERECALL
                  AND Request.id = SubRequest.request
                  AND Request.svcclass = DiskPool2SvcClass.child
                  AND FileSystem.diskpool = DiskPool2SvcClass.parent
@@ -921,21 +919,14 @@ BEGIN
                  AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
                  AND DiskServer.id = FileSystem.diskServer
                  AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
-                 -- Ignore diskservers where a recaller already exists
-                 AND DiskServer.id NOT IN (
-                   SELECT DISTINCT(FileSystem.diskServer)
-                     FROM FileSystem
-                    WHERE nbRecallerStreams != 0
-                      AND optimized = 1
-                 )
-		 -- Ignore filesystems where a migrator is running
-                 AND FileSystem.id NOT IN (
-                   SELECT DISTINCT(FileSystem.id)
-                     FROM FileSystem
-                    WHERE nbMigratorStreams != 0
-                      AND optimized = 1
-                 )
-            ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC, dbms_random.value)
+            ORDER BY -- first prefer DSs without concurrent migrators/recallers
+                     DiskServer.nbMigratorStreams ASC, DiskServer.nbRecallerStreams ASC,
+                     -- then order by rate as defined by the function
+                     fileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
+                                    FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams,
+                                    FileSystem.nbRecallerStreams) DESC,
+                     -- finally use randomness to avoid preferring always the same FS
+                     DBMS_Random.value)
     LOOP
       diskServerName := a.name;
       rmountPoint    := a.mountPoint;
@@ -943,8 +934,9 @@ BEGIN
       -- Check that we don't already have a copy of this file on this filesystem.
       -- This will never happen in normal operations but may be the case if a filesystem
       -- was disabled and did come back while the tape recall was waiting.
-      -- Even if we could optimize by cancelling remaining unneeded tape recalls when a
-      -- fileSystem comes backs, the ones running at the time of the come back will have
+      -- Even if we optimize by cancelling remaining unneeded tape recalls when a
+      -- fileSystem comes back, the ones running at the time of the come back will have
+      -- the problem.
       SELECT count(*) INTO nb
         FROM DiskCopy
        WHERE fileSystem = a.id
@@ -961,29 +953,10 @@ BEGIN
       RETURN;
     END LOOP;
 
-    -- If we didn't find a filesystem rerun with optimization disabled
     IF fileSystemId = 0 THEN
-      IF optimized = 1 THEN
-        bestFileSystemForSegment(segmentId, diskServerName, rmountPoint, rpath, dcid, 0);
-	RETURN;
-      ELSE
-        RAISE NO_DATA_FOUND; -- we did not find any suitable FS, even without optimization
-      END IF;
+      RAISE NO_DATA_FOUND; -- we did not find any suitable FS
     END IF;
   END IF;
-
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- Just like in bestTapeCopyForStream if we were called with optimization enabled
-    -- and nothing was found, rerun the procedure again with optimization disabled to
-    -- truly make sure nothing is found!
-    IF optimized = 1 THEN
-      bestFileSystemForSegment(segmentId, diskServerName, rmountPoint, rpath, dcid, 0);
-      -- Since we recursively called ourselves, we should not do
-      -- any update in the outer call
-      RETURN;
-    ELSE
-      RAISE;
-    END IF;
 END;
 /
 
