@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.47 $ $Release$ $Date: 2008/11/07 16:42:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.48 $ $Release$ $Date: 2008/11/10 13:11:11 $ $Author: sponcec3 $
  *
  * 
  *
@@ -576,6 +576,8 @@ int rtcpcld_updateNsSegmentAttributes(
                         sstrerror(save_serrno)
                         );
         rc = 0;
+        // no need to retry here. We believe the nameserver, not like for ENOENT
+        break;
       } else {
         (void)dlf_write(
                         (inChild == 0 ? mainUuid : childUuid),
