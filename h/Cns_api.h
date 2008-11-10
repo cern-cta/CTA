@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_api.h,v 1.19 2008/11/07 16:41:54 sponcec3 Exp $
+ * $Id: Cns_api.h,v 1.20 2008/11/10 16:08:01 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.19 $ $Date: 2008/11/07 16:41:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.20 $ $Date: 2008/11/10 16:08:01 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_API_H
@@ -345,10 +345,10 @@ EXTERN_C int DLL_DECL Cns_setacl _PROTO((const char *, int, struct Cns_acl *));
 EXTERN_C int DLL_DECL Cns_setatime _PROTO((const char *, struct Cns_fileid *));
 EXTERN_C int DLL_DECL Cns_setcomment _PROTO((const char *, char *));
 EXTERN_C int DLL_DECL Cns_seterrbuf _PROTO((char *, int));
-EXTERN_C int DLL_DECL Cns_setfsize _PROTO((const char *, struct Cns_fileid *, u_signed64, time_t));
-EXTERN_C int DLL_DECL Cns_setfsizecs _PROTO((const char *, struct Cns_fileid *, u_signed64, const char *, const char *, time_t));
-EXTERN_C int DLL_DECL Cns_setsegattrs _PROTO((const char *, struct Cns_fileid *, int, struct Cns_segattrs *, time_t last_mod_time));
-EXTERN_C int DLL_DECL Cns_setfsizeg _PROTO((const char *, u_signed64, const char *, char *,time_t));
+EXTERN_C int DLL_DECL Cns_setfsize _PROTO((const char *, struct Cns_fileid *, u_signed64, time_t, time_t));
+EXTERN_C int DLL_DECL Cns_setfsizecs _PROTO((const char *, struct Cns_fileid *, u_signed64, const char *, const char *, time_t, time_t));
+EXTERN_C int DLL_DECL Cns_setsegattrs _PROTO((const char *, struct Cns_fileid *, int, struct Cns_segattrs *, time_t));
+EXTERN_C int DLL_DECL Cns_setfsizeg _PROTO((const char *, u_signed64, const char *, char *,time_t,time_t));
 EXTERN_C int DLL_DECL Cns_setptime _PROTO((const char *, time_t));
 EXTERN_C int DLL_DECL Cns_setratime _PROTO((const char *));
 EXTERN_C int DLL_DECL Cns_setrstatus _PROTO((const char *, const char));

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_setfsize.man,v $ $Revision: 1.3 $ $Date: 2008/11/10 09:56:28 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_setfsize.man,v $ $Revision: 1.4 $ $Date: 2008/11/10 16:07:59 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_SETFSIZE 3 "$Date: 2008/11/10 09:56:28 $" CASTOR "Cns Library Functions"
+.TH CNS_SETFSIZE 3 "$Date: 2008/11/10 16:07:59 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_setfsize \- set filesize for a regular file; set also last modification time to the current time
 .SH SYNOPSIS
@@ -13,6 +13,7 @@ Cns_setfsize \- set filesize for a regular file; set also last modification time
 .BI "int Cns_setfsize (const char *" path ,
 .BI "struct Cns_fileid *" file_uniqueid ,
 .BI "u_signed64 " filesize,
+.BI "time_t " new_mod_time,
 .BI "time_t " last_mod_time )
 .SH DESCRIPTION
 .B Cns_setfsize
@@ -32,6 +33,9 @@ is used.
 .I path
 specifies the logical pathname relative to the current CASTOR directory or
 the full CASTOR pathname.
+.TP
+.I new_mod_time
+specifies the new modification time of the file.
 .TP
 .I last_mod_time
 specifies the last modification time of the file, as known by the caller. This is used to double check that the file was not modified concurrently by somebody else.

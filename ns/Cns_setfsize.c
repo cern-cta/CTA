@@ -20,7 +20,9 @@
 #include "serrno.h"
 
 int DLL_DECL
-Cns_setfsize(const char *path, struct Cns_fileid *file_uniqueid, u_signed64 filesize, time_t last_mod_time)
+Cns_setfsize(const char *path, struct Cns_fileid *file_uniqueid,
+             u_signed64 filesize, time_t new_mod_time,
+             time_t last_mod_time)
 {
   char *actual_path;
   int c;
@@ -86,6 +88,7 @@ Cns_setfsize(const char *path, struct Cns_fileid *file_uniqueid, u_signed64 file
     marshall_STRING (sbp, actual_path);
   }
   marshall_HYPER (sbp, filesize);
+  marshall_TIME_T (sbp, new_mod_time);
   marshall_TIME_T (sbp, last_mod_time);
   
   msglen = sbp - sendbuf;
@@ -97,7 +100,9 @@ Cns_setfsize(const char *path, struct Cns_fileid *file_uniqueid, u_signed64 file
 }
 
 int DLL_DECL
-Cns_setfsizeg(const char *guid, u_signed64 filesize, const char *csumtype, char *csumvalue, time_t last_mod_time)
+Cns_setfsizeg(const char *guid, u_signed64 filesize, const char *csumtype,
+              char *csumvalue, time_t new_mod_time,
+              time_t last_mod_time)
 {
   int c;
   char func[16];
@@ -159,6 +164,7 @@ Cns_setfsizeg(const char *guid, u_signed64 filesize, const char *csumtype, char 
   } else {
     marshall_STRING (sbp, "");
   }
+  marshall_TIME_T (sbp, new_mod_time);
   marshall_TIME_T (sbp, last_mod_time);
 
   msglen = sbp - sendbuf;
@@ -169,7 +175,10 @@ Cns_setfsizeg(const char *guid, u_signed64 filesize, const char *csumtype, char 
 }
 
 int DLL_DECL
-Cns_setfsizecs(const char *path, struct Cns_fileid *file_uniqueid, u_signed64 filesize, const char *csumtype, const char *csumvalue, time_t last_mod_time)
+Cns_setfsizecs(const char *path, struct Cns_fileid *file_uniqueid,
+               u_signed64 filesize, const char *csumtype,
+               const char *csumvalue, time_t new_mod_time,
+               time_t last_mod_time)
 {
   char *actual_path;
   int c;
@@ -252,6 +261,7 @@ Cns_setfsizecs(const char *path, struct Cns_fileid *file_uniqueid, u_signed64 fi
   } else {
     marshall_STRING (sbp, "");
   }
+  marshall_TIME_T (sbp, new_mod_time);
   marshall_TIME_T (sbp, last_mod_time);
 
   msglen = sbp - sendbuf;

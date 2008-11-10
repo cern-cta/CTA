@@ -5288,6 +5288,7 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
   uid_t uid;
   char *user;
   time_t last_mod_time = 0;
+  time_t new_mod_time = 0;
 
   strcpy (func, "Cns_srv_setfsize");
   rbp = req_data;
@@ -5303,6 +5304,7 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
     RETURN (SENAMETOOLONG);
   unmarshall_HYPER (rbp, filesize);
   if (magic >= CNS_MAGIC2) {
+    unmarshall_TIME_T (rbp, new_mod_time);
     unmarshall_TIME_T (rbp, last_mod_time);
   }
   get_cwd_path (thip, cwd, cwdpath);
@@ -5356,7 +5358,11 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
   /* update entry */
 
   filentry.filesize = filesize;
-  filentry.mtime = time (0);
+  if (magic >= CNS_MAGIC2) {
+    filentry.mtime = new_mod_time;
+  } else {
+    filentry.mtime = time (0);
+  }
   filentry.ctime = filentry.mtime;
   *filentry.csumtype = '\0';
   *filentry.csumvalue = '\0';
@@ -5392,6 +5398,7 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
   char csumtype[3];
   char csumvalue[CA_MAXCKSUMLEN+1];
   time_t last_mod_time = 0;
+  time_t new_mod_time = 0;
   
   strcpy (func, "Cns_srv_setfsizecs");
   rbp = req_data;
@@ -5411,6 +5418,7 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
   if (unmarshall_STRINGN (rbp, csumvalue, CA_MAXCKSUMLEN+1))
     RETURN (EINVAL);
   if (magic >= CNS_MAGIC2) {
+    unmarshall_TIME_T (rbp, new_mod_time);
     unmarshall_TIME_T (rbp, last_mod_time);
   }
   get_cwd_path (thip, cwd, cwdpath);
@@ -5480,7 +5488,11 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
   /* update entry */
 
   filentry.filesize = filesize;
-  filentry.mtime = time (0);
+  if (magic >= CNS_MAGIC2) {
+    filentry.mtime = new_mod_time;
+  } else {
+    filentry.mtime = time (0);
+  }
   filentry.ctime = filentry.mtime;
   strcpy (filentry.csumtype, csumtype);
   strcpy (filentry.csumvalue, csumvalue);
@@ -5512,6 +5524,7 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
   uid_t uid;
   char *user;
   time_t last_mod_time = 0;
+  time_t new_mod_time = 0;
   
   strcpy (func, "Cns_srv_setfsizeg");
   rbp = req_data;
@@ -5529,6 +5542,7 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
   if (unmarshall_STRINGN (rbp, csumvalue, CA_MAXCKSUMLEN+1))
     RETURN (EINVAL);
   if (magic >= CNS_MAGIC2) {
+    unmarshall_TIME_T (rbp, new_mod_time);
     unmarshall_TIME_T (rbp, last_mod_time);
   }
   sprintf (logbuf, "setfsizeg %s %s %lld", guid, u64tostr (filesize, tmpbuf, 0),
@@ -5575,7 +5589,11 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
   /* update entry */
 
   filentry.filesize = filesize;
-  filentry.mtime = time (0);
+  if (magic >= CNS_MAGIC2) {
+    filentry.mtime = new_mod_time;
+  } else {
+    filentry.mtime = time (0);
+  }
   filentry.ctime = filentry.mtime;
   strcpy (filentry.csumtype, csumtype);
   strcpy (filentry.csumvalue, csumvalue);

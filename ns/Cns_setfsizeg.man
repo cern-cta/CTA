@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_setfsizeg.man,v $ $Revision: 1.3 $ $Date: 2008/11/10 09:56:28 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_setfsizeg.man,v $ $Revision: 1.4 $ $Date: 2008/11/10 16:07:59 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2004-2005 by CERN/IT/GD/CT
 .\" All rights reserved
 .\"
-.TH CNS_SETFSIZEG 3 "$Date: 2008/11/10 09:56:28 $" CASTOR "Cns Library Functions"
+.TH CNS_SETFSIZEG 3 "$Date: 2008/11/10 16:07:59 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_setfsizeg \- set filesize for a regular file having the given GUID; set also last modification time to the current time
 .SH SYNOPSIS
@@ -14,6 +14,7 @@ Cns_setfsizeg \- set filesize for a regular file having the given GUID; set also
 .BI "u_signed64 " filesize ,
 .BI "const char *" csumtype ,
 .BI "char *" csumvalue,
+.BI "time_t " new_mod_time,
 .BI "time_t " last_mod_time )
 .SH DESCRIPTION
 .B Cns_setfsizeg
@@ -41,6 +42,9 @@ Adler 32 bits checksum
 .B MD
 MD5 128 bits checksum
 .RE
+.TP
+.I new_mod_time
+specifies the new modification time of the file.
 .TP
 .I last_mod_time
 specifies the last modification time of the file, as known by the caller. This is used to double check that the file was not modified concurrently by somebody else.
