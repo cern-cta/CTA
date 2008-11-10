@@ -114,7 +114,7 @@ const std::string castor::db::ora::OraTapeSvc::s_streamsForTapePoolStatementStri
 
 /// SQL statement for bestFileSystemForSegment
 const std::string castor::db::ora::OraTapeSvc::s_bestFileSystemForSegmentStatementString =
-  "BEGIN bestFileSystemForSegment(:1, :2, :3, :4, :5, :6); END;";
+  "BEGIN bestFileSystemForSegment(:1, :2, :3, :4, :5); END;";
 
 /// SQL statement for fileRecalled
 const std::string castor::db::ora::OraTapeSvc::s_fileRecalledStatementString =
@@ -361,12 +361,9 @@ castor::db::ora::OraTapeSvc::bestFileSystemForSegment
         (3, oracle::occi::OCCISTRING, 2048);
       m_bestFileSystemForSegmentStatement->registerOutParam
         (4, oracle::occi::OCCISTRING, 2048);
-      m_bestFileSystemForSegmentStatement->registerOutParam
-        (5, oracle::occi::OCCIDOUBLE);
     }
     // execute the statement and see whether we found something
     m_bestFileSystemForSegmentStatement->setDouble(1, segment->id());
-    m_bestFileSystemForSegmentStatement->setInt(6, 1);
     unsigned int nb =
       m_bestFileSystemForSegmentStatement->executeUpdate();
     if (nb == 0) {
