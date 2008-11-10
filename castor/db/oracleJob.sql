@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.667 $ $Date: 2008/11/06 18:17:27 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.668 $ $Date: 2008/11/10 09:35:31 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -185,21 +185,25 @@ BEGIN
     raise_application_error(-20107, 'This job has already started for this DiskCopy. Giving up.');
   END IF;
   -- Get older castorFiles with the same name and drop their lastKnownFileName
-  UPDATE /*+ INDEX (castorFile) */ CastorFile SET lastKnownFileName = TO_CHAR(id)
+  UPDATE /*+ INDEX (CastorFile) */ CastorFile
+     SET lastKnownFileName = TO_CHAR(id)
    WHERE id IN (
-    SELECT /*+ INDEX (cfOld) */ cfOld.id FROM CastorFile cfOld, CastorFile cfNew, SubRequest
+    SELECT /*+ INDEX (cfOld) */ cfOld.id 
+      FROM CastorFile cfOld, CastorFile cfNew, SubRequest
      WHERE cfOld.lastKnownFileName = cfNew.lastKnownFileName
        AND cfOld.fileid <> cfNew.fileid
        AND cfNew.id = SubRequest.castorFile
        AND SubRequest.id = srId);
   -- In case the DiskCopy was in WAITFS_SCHEDULING,
   -- restart the waiting SubRequests
-  UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0 -- SUBREQUEST_RESTART
+  UPDATE SubRequest 
+     SET status = 1, lastModificationTime = getTime(), parent = 0 -- SUBREQUEST_RESTART
    WHERE parent = srId;
   -- link DiskCopy and FileSystem and update DiskCopyStatus
-  UPDATE DiskCopy SET status = 6, -- DISKCOPY_STAGEOUT
-                      fileSystem = fsId,
-                      nbCopyAccesses = nbCopyAccesses + 1
+  UPDATE DiskCopy 
+     SET status = 6, -- DISKCOPY_STAGEOUT
+         fileSystem = fsId,
+         nbCopyAccesses = nbCopyAccesses + 1
    WHERE id = rdcId
    RETURNING status, path
    INTO rdcStatus, rdcPath;
