@@ -4,7 +4,16 @@ set linesize 1000
 column cmd format a1000
 set trimspool on
 
+prompt -- Deleting oracleDropAllObjects.tmp
+!rm -f oracleDropAllObjects.tmp
+
 spool oracleDropAllObjects.tmp
+prompt -- Drop procedures
+select unique
+  'drop ' || object_type || ' "' || object_name || '";' as cmd
+  from user_objects
+  where object_type='PROCEDURE';
+prompt
 prompt -- Drop triggers
 select unique
   'drop ' || object_type || ' "' || object_name || '";' as cmd
