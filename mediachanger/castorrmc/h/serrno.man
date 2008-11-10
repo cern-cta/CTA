@@ -447,7 +447,9 @@ The following error values are returned only by the message package:
 The following error values are returned only by the name server package:
 .TP 1.9i
 .B ENSNACT
-(1401) name server not active or service being drained
+(1401) Name server not active
+.B ENSFILECHG
+(1402) File has been overwritten, request ignored
 
 .SH RFIO ERRORS
 The following error values are returned only by the remote file I/O package:
