@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.673 $ $Date: 2008/11/10 09:42:04 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.674 $ $Date: 2008/11/10 16:10:57 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -681,7 +681,8 @@ END;
 /
 
 
-/* Deal with stuck recalls */
+/* Deal with stuck recalls - this workaround should be dropped
+   after rtcpclientd is reviewed */
 CREATE OR REPLACE PROCEDURE restartStuckRecalls AS
 BEGIN
   UPDATE Segment SET status = 0 WHERE status = 7 and tape IN
@@ -706,7 +707,6 @@ BEGIN
   SELECT TO_NUMBER(value) INTO t FROM CastorConfig
    WHERE class = 'cleaning' AND key = 'failedDCsTimeout';
   deleteFailedDiskCopies(t*3600);
-  restartStuckRecalls();
 
   -- Loop over all tables which support row movement and recover space from
   -- the object and all dependant objects. We deliberately ignore tables
@@ -753,7 +753,7 @@ BEGIN
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
   END LOOP;
 
-  -- Creates a db job to be run every 20 minutes executing the deleteTerminatedRequests procedure
+  -- Create a db job to be run every 20 minutes executing the deleteTerminatedRequests procedure
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'houseKeepingJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
@@ -763,7 +763,7 @@ BEGIN
       ENABLED         => TRUE,
       COMMENTS        => 'Cleaning of terminated requests');
 
-  -- Creates a db job to be run twice a day executing the cleanup procedure
+  -- Create a db job to be run twice a day executing the cleanup procedure
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'cleanupJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
@@ -773,7 +773,7 @@ BEGIN
       ENABLED         => TRUE,
       COMMENTS        => 'Database maintenance');
 
-  -- Creates a db job to be run every 5 minutes executing the bulkCheckFSBackInProd procedure
+  -- Create a db job to be run every 5 minutes executing the bulkCheckFSBackInProd procedure
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'bulkCheckFSBackInProdJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
@@ -782,5 +782,15 @@ BEGIN
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
       ENABLED         => TRUE,
       COMMENTS        => 'Bulk operation to processing filesystem state changes');
+  
+  -- Create a db job to be run every hour executing the restartStuckRecalls workaround procedure
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'restartStuckRecallsJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN restartStuckRecalls(); END;',
+      START_DATE      => SYSDATE + 60/1440,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Workaround to restart stuck recalls');
 END;
 /
