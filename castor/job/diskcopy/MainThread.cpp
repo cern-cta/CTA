@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/10/17 09:13:49 $ $Author: waldron $
+ * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/11/10 09:30:10 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -472,8 +472,10 @@ void castor::job::diskcopy::MainThread::run(void *param) {
 			  diskCopy->mountPoint() +
 			  diskCopy->diskCopyPath()),
        castor::dlf::Param("Protocol", m_protocol),
+       castor::dlf::Param("ChkSumType", sourceDiskCopy->csumType()),
+       castor::dlf::Param("ChkSumValue", sourceDiskCopy->csumValue()),
        castor::dlf::Param(m_subRequestUuid)};
-    castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_SYSTEM, 28, 4, params, &m_fileId);
+    castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_SYSTEM, 28, 6, params, &m_fileId);
     m_mover->destination(diskCopy, sourceDiskCopy);
   } catch (castor::exception::Exception e) {
 
