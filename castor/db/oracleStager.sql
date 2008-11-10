@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.698 $ $Date: 2008/11/06 18:17:27 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.699 $ $Date: 2008/11/10 09:33:02 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -645,25 +645,6 @@ END;
 /
 
 
-/* PL/SQL method implementing maxReplicaNbForSvcClass */
-CREATE OR REPLACE FUNCTION maxReplicaNbForSvcClass(SvcClassId IN NUMBER)
-RETURN NUMBER AS
-  maxReplicaNb NUMBER;
-BEGIN
-  -- Return the max replica number for the service class where the value is
-  -- capped to the total number of diskservers in that service class.
-  SELECT decode(sign(count(DISTINCT(FileSystem.diskserver)) - max(SvcClass.maxreplicanb)),
-         0, max(SvcClass.maxreplicanb), count(DISTINCT(FileSystem.diskserver)))
-    INTO maxReplicaNb
-    FROM FileSystem, DiskPool2SvcClass, SvcClass
-   WHERE FileSystem.diskpool = DiskPool2SvcClass.parent
-     AND DiskPool2SvcClass.child = SvcClass.id
-     AND SvcClass.id = SvcClassId;
-  RETURN maxReplicaNb;
-END;
-/
-
-
 /* PL/SQL method implementing getBestDiskCopyToReplicate. */
 CREATE OR REPLACE PROCEDURE getBestDiskCopyToReplicate
   (cfId IN NUMBER, reuid IN NUMBER, regid IN NUMBER, internal IN NUMBER,
@@ -960,7 +941,7 @@ BEGIN
                    AND DiskCopy.castorfile = cfId
                    AND FileSystem.diskpool = DiskPool2SvcClass.parent
                    AND DiskPool2SvcClass.child = SvcClass.id
-                   AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
+                   AND DiskCopy.status IN (0, 1, 10)  -- STAGED, WAITDISK2DISKCOPY, CANBEMIGR
                    AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
                    AND DiskServer.id = FileSystem.diskserver
                    AND DiskServer.status IN (0, 1)  -- PRODUCTION, DRAINING
@@ -970,7 +951,7 @@ BEGIN
              -- additional copies need to be created
              WHERE results.id = SvcClass.id
                AND SvcClass.replicateOnClose = 1
-               AND results.available < maxReplicaNbForSvcClass(SvcClass.id))
+               AND results.available < SvcClass.maxReplicaNb)
   LOOP
     -- Ignore this replication if there is already a pending replication request
     -- for the given castorfile in the target/destination service class. Once
