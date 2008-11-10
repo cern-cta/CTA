@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_setfsize.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:20 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_setfsize.man,v $ $Revision: 1.3 $ $Date: 2008/11/10 09:56:28 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_SETFSIZE 3 "$Date: 2006/01/26 15:36:20 $" CASTOR "Cns Library Functions"
+.TH CNS_SETFSIZE 3 "$Date: 2008/11/10 09:56:28 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_setfsize \- set filesize for a regular file; set also last modification time to the current time
 .SH SYNOPSIS
@@ -12,11 +12,13 @@ Cns_setfsize \- set filesize for a regular file; set also last modification time
 .sp
 .BI "int Cns_setfsize (const char *" path ,
 .BI "struct Cns_fileid *" file_uniqueid ,
-.BI "u_signed64 " filesize )
+.BI "u_signed64 " filesize,
+.BI "time_t " last_mod_time )
 .SH DESCRIPTION
 .B Cns_setfsize
 sets the filesize for a regular file; set also the last modification time to the
-current time.
+current time. Takes care that the file was not modified by somebody else in the mean time.
+If it was, ignores the request and fail with ENSFILECHG.
 This function should only be called by the stager after the last write
 operation has been performed on the file.
 The file can be identified by
@@ -30,6 +32,9 @@ is used.
 .I path
 specifies the logical pathname relative to the current CASTOR directory or
 the full CASTOR pathname.
+.TP
+.I last_mod_time
+specifies the last modification time of the file, as known by the caller. This is used to double check that the file was not modified concurrently by somebody else.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
@@ -49,6 +54,9 @@ Search permission is denied on a component of the
 .I path
 prefix or the caller effective user ID does not match the owner ID of the file
 or write permission on the file itself is denied.
+.TP
+.B ENSFILECHG
+The file has been changed/overwritten by somebody else since the last_mod_time given. Request was thus ignored.
 .TP
 .B EFAULT
 .I path

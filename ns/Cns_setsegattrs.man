@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_setsegattrs.man,v $ $Revision: 1.3 $ $Date: 2008/11/03 10:26:08 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_setsegattrs.man,v $ $Revision: 1.4 $ $Date: 2008/11/10 09:56:28 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_SETSEGATTRS 3 "$Date: 2008/11/03 10:26:08 $" CASTOR "Cns Library Functions"
+.TH CNS_SETSEGATTRS 3 "$Date: 2008/11/10 09:56:28 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_setsegattrs \- set file segment attributes
 .SH SYNOPSIS
@@ -13,10 +13,12 @@ Cns_setsegattrs \- set file segment attributes
 .BI "int Cns_setsegattrs (const char *" path ,
 .BI "struct Cns_fileid *" file_uniqueid ,
 .BI "int " nbseg ,
-.BI "struct Cns_segattrs *" segattrs )
+.BI "struct Cns_segattrs *" segattrs,
+.BI "time_t " last_mod_time )
 .SH DESCRIPTION
 .B Cns_setsegattrs
-sets the file segment(s) attributes.
+sets the file segment(s) attributes. Takes care that the file was not modified by somebody else in the mean time.
+If it was, ignores the request and fail with ENSFILECHG.
 This function should be called by the stager to set segment size, tape
 visual identifier and file sequence number or blockid when all segments
 which belong to a file have been written to tape.
@@ -60,6 +62,9 @@ value.
 .I fsec
 is the file segment number, It is 1 for single volume files and >= 1 for files
 spanning over several tapes.
+.TP
+.I last_mod_time
+specifies the last modification time of the file, as known by the caller. This is used to double check that the file was not modified concurrently by somebody else.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
@@ -75,6 +80,9 @@ Search permission is denied on a component of the
 .I path
 prefix or the caller effective user ID does not match the owner ID of the file
 or write permission on the file itself is denied.
+.TP
+.B ENSFILECHG
+The file has been changed/overwritten by somebody else since the last_mod_time given. Request was thus ignored.
 .TP
 .B EFAULT
 .I path

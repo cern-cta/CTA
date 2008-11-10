@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_replaceseg.man,v $ $Revision: 1.3 $ $Date: 2008/11/03 10:26:08 $ CERN IT-DS/HSM Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_replaceseg.man,v $ $Revision: 1.4 $ $Date: 2008/11/10 09:56:28 $ CERN IT-DS/HSM Jean-Philippe Baud
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH CNS_REPLACESEG 3 "$Date: 2008/11/03 10:26:08 $" CASTOR "Cns Library Functions"
+.TH CNS_REPLACESEG 3 "$Date: 2008/11/10 09:56:28 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_replaceseg \- replace file segment attributes
 .SH SYNOPSIS
@@ -13,10 +13,12 @@ Cns_replaceseg \- replace file segment attributes
 .BI "int Cns_replaceseg (char *" server ,
 .BI "u_signed64 " fileid ,
 .BI "struct Cns_segattrs *" oldsegattrs ,
-.BI "struct Cns_segattrs *" newsegattrs )
+.BI "struct Cns_segattrs *" newsegattrs ,
+.BI "time_t " last_mod_time )
 .SH DESCRIPTION
 .B Cns_replaceseg
-replaces the file segment attributes.
+replaces the file segment attributes. Takes care that the file was not modified by somebody else in the mean time.
+If it was, ignores the request and fail with ENSFILECHG.
 This function should be called by the repack utility to replace tape
 visual identifier, file sequence number and blockid when a segment
 has been moved from one tape to another.
@@ -48,6 +50,9 @@ struct Cns_segattrs {
 };
 .ft
 .fi
+.TP
+.I last_mod_time
+specifies the last modification time of the file, as known by the caller. This is used to double check that the file was not modified concurrently by somebody else.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
@@ -60,6 +65,9 @@ The referenced file does not exist anymore.
 .TP
 .B EACCES
 The caller does not have ADMIN privilege in the Cupv database.
+.TP
+.B ENSFILECHG
+The file has been changed/overwritten by somebody else since the last_mod_time given. Request was thus ignored.
 .TP
 .B EFAULT
 .I oldsegattrs
