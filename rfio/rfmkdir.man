@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfmkdir.man,v 1.6 2006/07/05 14:36:18 riojac3 Exp $
+.\" $Id: rfmkdir.man,v 1.7 2008/11/10 17:32:33 waldron Exp $
 .\"
 .\" @(#)rfmkdir.man	1.1 09/07/98     CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 1998-2002 by CERN/IT/PDP
 .\" All rights reserved
 .\"
-.TH RFMKDIR 1 "$Date: 2006/07/05 14:36:18 $" CASTOR "Rfio User Commands"
+.TH RFMKDIR 1 "$Date: 2008/11/10 17:32:33 $" CASTOR "Rfio User Commands"
 .SH NAME
 rfmkdir \- make remote directories
 .SH SYNOPSIS
@@ -63,7 +63,9 @@ With this option,
 .B rfmkdir
 creates
 .B dirname
-by creating all the non-existing parent directories first.
+by creating all the non-existing parent directories first. If the
+.B dirname
+already exists no error will be reported.
 .SH "SEE ALSO"
 .BR mkdir(1),
 .BR umask(1),

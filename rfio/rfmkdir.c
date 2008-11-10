@@ -8,6 +8,7 @@
  */
 
 #include <limits.h>
+#include <errno.h>
 #include <string.h>
 #include <sys/types.h>
 #include <stdio.h>
@@ -90,8 +91,12 @@ int main(argc, argv)
       while ( strlen(root_path) != strlen(path) ) {
         root_path[strlen(root_path)] = '/';
         if ( rfio_mkdir(root_path,mode) ) {
-          rfio_perror("mkdir()");
-          exit(1);
+	  if (errno != ENOENT) {
+	    rfio_perror("mkdir()");
+	    exit(1);
+	  } else {
+	    exit(0);
+	  }
         }
       }
       free(root_path);
