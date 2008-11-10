@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.690 $ $Date: 2008/11/07 16:35:23 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.691 $ $Date: 2008/11/10 09:29:44 $ $Author: sponcec3 $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -220,7 +220,8 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
                                                   path OUT VARCHAR2, dci OUT INTEGER,
                                                   castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                   nsHost OUT VARCHAR2, fileSize OUT INTEGER,
-                                                  tapeCopyId OUT INTEGER, optimized IN INTEGER) AS
+                                                  tapeCopyId OUT INTEGER, optimized IN INTEGER,
+                                                  lastUpdateTime OUT INTEGER) AS
   policy VARCHAR(2048);
 BEGIN
   -- get the policy name
@@ -236,8 +237,8 @@ BEGIN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     policy := 'defaultMigrSelPolicy';
   END;
-  EXECUTE IMMEDIATE 'BEGIN ' || policy || '(:streamId, :diskServerName, :mountPoint, :path, :dci, :castorFileId, :fileId, :nsHost, :fileSize, :tapeCopyId, :optimized); END;'
-    USING IN streamId, OUT diskServerName, OUT mountPoint, OUT path, OUT dci, OUT castorFileId, OUT fileId, OUT nsHost, OUT fileSize, OUT tapeCopyId, IN optimized;
+  EXECUTE IMMEDIATE 'BEGIN ' || policy || '(:streamId, :diskServerName, :mountPoint, :path, :dci, :castorFileId, :fileId, :nsHost, :fileSize, :tapeCopyId, :optimized, :lastUpdateTime); END;'
+    USING IN streamId, OUT diskServerName, OUT mountPoint, OUT path, OUT dci, OUT castorFileId, OUT fileId, OUT nsHost, OUT fileSize, OUT tapeCopyId, IN optimized, OUT lastUpdateTime;
 END;
 /
 
@@ -247,7 +248,8 @@ CREATE OR REPLACE PROCEDURE defaultMigrSelPolicy(streamId IN INTEGER,
                                                  path OUT VARCHAR2, dci OUT INTEGER,
                                                  castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                  nsHost OUT VARCHAR2, fileSize OUT INTEGER,
-                                                 tapeCopyId OUT INTEGER, optimized IN INTEGER) AS
+                                                 tapeCopyId OUT INTEGER, optimized IN INTEGER,
+                                                 lastUpdateTime OUT INTEGER) AS
   fileSystemId INTEGER := 0;
   dsid NUMBER;
   fsDiskServer NUMBER;
@@ -288,8 +290,8 @@ BEGIN
            AND ST.child = T.id
            AND T.castorfile = D.castorfile
            AND ROWNUM < 2;
-        SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize
-          INTO fileId, nsHost, fileSize
+        SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize, CastorFile.lastUpdateTime
+          INTO fileId, nsHost, fileSize, lastUpdateTime
           FROM CastorFile
          WHERE Id = castorFileId;
         -- we found one, no need to go for new filesystem
@@ -362,8 +364,8 @@ BEGIN
        AND ST.child = T.id
        AND T.castorfile = D.castorfile
        AND ROWNUM < 2;
-    SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize
-      INTO fileId, nsHost, fileSize
+    SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize, CastorFile.lastUpdateTime
+      INTO fileId, nsHost, fileSize, lastUpdateTime
       FROM CastorFile
      WHERE id = castorFileId;
   END IF;
@@ -420,7 +422,8 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
-			    0);
+			    0,
+                            lastUpdateTime);
       -- Since we recursively called ourselves, we should not do
       -- any update in the outer call
       RETURN;
@@ -449,7 +452,8 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
-			    optimized);
+			    optimized,
+                            lastUpdateTime);
     END IF;
 END;
 /
@@ -460,7 +464,8 @@ CREATE OR REPLACE PROCEDURE drainDiskMigrSelPolicy(streamId IN INTEGER,
                                                    path OUT VARCHAR2, dci OUT INTEGER,
                                                    castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                    nsHost OUT VARCHAR2, fileSize OUT INTEGER,
-                                                   tapeCopyId OUT INTEGER, optimized IN INTEGER) AS
+                                                   tapeCopyId OUT INTEGER, optimized IN INTEGER,
+                                                   lastUpdateTime OUT INTEGER) AS
   fileSystemId INTEGER := 0;
   dsid NUMBER;
   fsDiskServer NUMBER;
@@ -490,8 +495,8 @@ BEGIN
            AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
         -- we are within the time range, so we try to reuse the filesystem
         SELECT P.path, P.diskcopy_id, P.castorfile,
-             C.fileId, C.nsHost, C.fileSize, P.id
-        INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
+             C.fileId, C.nsHost, C.fileSize, P.id, C.lastUpdateTime
+        INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
         FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TapeCopy_CF_Status_2) INDEX(ST I_PK_Stream2TapeCopy) */
               D.path, D.diskcopy_id, D.castorfile, T.id
                 FROM (SELECT /*+ INDEX(DK I_DiskCopy_FS_Status_10) */
@@ -582,8 +587,8 @@ BEGIN
          ) FN
      WHERE ROWNUM < 2;
     SELECT P.path, P.diskcopy_id, P.castorfile,
-           C.fileId, C.nsHost, C.fileSize, P.id
-      INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
+           C.fileId, C.nsHost, C.fileSize, P.id, C.lastUpdateTime
+      INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
       FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TapeCopy_CF_Status_2) INDEX(ST I_PK_Stream2TapeCopy) */
             D.path, D.diskcopy_id, D.castorfile, T.id
               FROM (SELECT /*+ INDEX(DK I_DiskCopy_FS_Status_10) */
@@ -653,7 +658,8 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
-			    0);
+			    0,
+                            lastUpdateTime);
       -- Since we recursively called ourselves, we should not do
       -- any update in the outer call
       RETURN;
@@ -682,7 +688,8 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
-			    optimized);
+			    optimized,
+                            lastUpdateTime);
     END IF;
 END;
 /
@@ -693,7 +700,8 @@ CREATE OR REPLACE PROCEDURE repackMigrSelPolicy(streamId IN INTEGER,
                                                 path OUT VARCHAR2, dci OUT INTEGER,
                                                 castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                 nsHost OUT VARCHAR2, fileSize OUT INTEGER,
-                                                tapeCopyId OUT INTEGER, optimized IN INTEGER) AS
+                                                tapeCopyId OUT INTEGER, optimized IN INTEGER,
+                                                lastUpdateTime OUT INTEGER) AS
   fileSystemId INTEGER := 0;
   dsid NUMBER;
   fsDiskServer NUMBER;
@@ -759,8 +767,8 @@ BEGIN
      AND ST.child = T.id
      AND T.castorfile = D.castorfile
      AND ROWNUM < 2;
-  SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize
-    INTO fileId, nsHost, fileSize
+  SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize, CastorFile.lastUpdateTime
+    INTO fileId, nsHost, fileSize, lastUpdateTime
     FROM CastorFile
    WHERE id = castorFileId;
   -- update status of selected tapecopy and stream
@@ -814,7 +822,8 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
-			    0);
+			    0,
+                            lastUpdateTime);
       -- Since we recursively called ourselves, we should not do
       -- any update in the outer call
       RETURN;
@@ -843,7 +852,8 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
-			    optimized);
+			    optimized,
+                            lastUpdateTime);
     END IF;
 END;
 /
