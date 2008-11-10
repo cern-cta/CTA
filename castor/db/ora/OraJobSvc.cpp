@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.52 $ $Release$ $Date: 2008/11/07 16:43:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.53 $ $Release$ $Date: 2008/11/10 09:31:17 $ $Author: waldron $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -410,11 +410,11 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
     // checksums using the RFIO protocol is only computed over the network when
     // running an rfiod process i.e. a server. It is not stored at the clients
     // local disk!
-    bool useChkSum = false;
+    bool useChkSum = true;
     const char *confvalue = getconfent("CNS", "USE_CKSUM", 0);
     if (confvalue != NULL) {
-      if (!strncasecmp(confvalue, "yes", 3)) {
-	useChkSum = true;
+      if (!strncasecmp(confvalue, "no", 2)) {
+	useChkSum = false;
       }
     }
 
@@ -630,11 +630,11 @@ void castor::db::ora::OraJobSvc::prepareForMigration
     if (timeStamp != 0) {
 
       // Update size in the nameserver and checksum in name server
-      bool useChkSum = false;
+      bool useChkSum = true;
       const char *confvalue = getconfent("CNS", "USE_CKSUM", 0);
       if ((confvalue != NULL) && (csumtype != "") && (csumvalue != "")) {
-	if (!strncasecmp(confvalue, "yes", 3)) {
-	  useChkSum = true;
+	if (!strncasecmp(confvalue, "no", 2)) {
+	  useChkSum = false;
 	}
       }
 
