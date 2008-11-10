@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.672 $ $Date: 2008/11/06 18:17:03 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.673 $ $Date: 2008/11/10 09:42:04 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -547,6 +547,7 @@ END;
 CREATE OR REPLACE PROCEDURE deleteTerminatedRequests AS
   timeOut INTEGER;
   rate INTEGER;
+  srIds "numList";
 BEGIN
   -- select requested timeout from configuration table
   SELECT TO_NUMBER(value) INTO timeOut FROM CastorConfig
@@ -561,10 +562,20 @@ BEGIN
     timeOut := 500000 / rate * 1800;  -- keep 500k requests max
   END IF;
 
-  -- now delete the SubRequests
-  bulkDelete('SELECT id FROM SubRequest WHERE status IN (9, 11)
-                AND lastModificationTime < getTime() - '|| timeOut ||';',
-             'SubRequest');
+  -- now delete the SubRequests. Here we don't use bulkDelete
+  -- to be able to pass timeout as a bind variable and make it sharable
+  -- original call was:
+  -- bulkDelete('SELECT id FROM SubRequest WHERE status IN (9, 11)
+  --   AND lastModificationTime < getTime() - '|| timeOut ||';',
+  --   'SubRequest');
+  SELECT id BULK COLLECT INTO srIds FROM SubRequest 
+   WHERE status IN (9, 11) 
+     AND lastModificationTime < getTime() - timeOut; 
+
+  FORALL i IN srIds.FIRST..srIds.LAST 
+    DELETE FROM Id2Type WHERE id = srIds(i); 
+  FORALL i IN srIds.FIRST..srIds.LAST 
+    DELETE FROM SubRequest WHERE id = srIds(i);
   COMMIT;
 
   -- and then related Requests + Clients
