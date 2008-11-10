@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RfioMover.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/09/02 09:29:06 $ $Author: waldron $
+ * @(#)$RCSfile: RfioMover.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/11/10 09:33:40 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -139,12 +139,23 @@ void castor::job::RfioMover::destination
   }
 
   // Keep a record of the checksum information of the file
-  const char *confvalue = getconfent("RFIO", "USE_CKSUM", 0);
+  bool useChkSum = true;
+  const char *confvalue = getconfent("RFIOD", "USE_CKSUM", 0);
   if (confvalue != NULL) {
-    if (!strncasecmp(confvalue, "yes", 3)) {
-      m_csumType  = sourceDiskCopy->csumType();
-      m_csumValue = sourceDiskCopy->csumValue();
+    if (!strncasecmp(confvalue, "no", 2)) {
+      useChkSum = false;
     }
+  }
+  if (useChkSum) {
+    // Convert checksum type for extended attributes
+    if (sourceDiskCopy->csumType() == "AD") {
+      m_csumType = "ADLER32";
+    } else if (sourceDiskCopy->csumType() == "CS") {
+      m_csumType = "CRC32";
+    } else if (sourceDiskCopy->csumType() == "MD") {
+      m_csumType = "MD5";
+    }
+    m_csumValue = sourceDiskCopy->csumValue();
   }
 
   // Copy the file
