@@ -62,7 +62,7 @@ Cns_replaceseg(char *server, u_signed64 fileid, struct Cns_segattrs *oldsegattrs
   /* Build request header */
 
   sbp = sendbuf;
-  marshall_LONG (sbp, CNS_MAGIC6);
+  marshall_LONG (sbp, CNS_MAGIC5);
   marshall_LONG (sbp, CNS_REPLACESEG);
   q = sbp;        /* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;

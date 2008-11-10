@@ -67,7 +67,7 @@ Cns_setfsize(const char *path, struct Cns_fileid *file_uniqueid, u_signed64 file
   /* Build request header */
 
   sbp = sendbuf;
-  marshall_LONG (sbp, CNS_MAGIC);
+  marshall_LONG (sbp, CNS_MAGIC2);
   marshall_LONG (sbp, CNS_SETFSIZE);
   q = sbp;        /* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;
@@ -137,7 +137,7 @@ Cns_setfsizeg(const char *guid, u_signed64 filesize, const char *csumtype, char 
   /* Build request header */
 
   sbp = sendbuf;
-  marshall_LONG (sbp, CNS_MAGIC);
+  marshall_LONG (sbp, CNS_MAGIC2);
   marshall_LONG (sbp, CNS_SETFSIZEG);
   q = sbp;        /* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;
@@ -222,7 +222,7 @@ Cns_setfsizecs(const char *path, struct Cns_fileid *file_uniqueid, u_signed64 fi
   /* Build request header */
 
   sbp = sendbuf;
-  marshall_LONG (sbp, CNS_MAGIC);
+  marshall_LONG (sbp, CNS_MAGIC2);
   marshall_LONG (sbp, CNS_SETFSIZECS);
   q = sbp;        /* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;

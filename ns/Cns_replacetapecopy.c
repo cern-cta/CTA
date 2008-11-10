@@ -65,7 +65,7 @@ Cns_replacetapecopy(struct Cns_fileid *file_uniqueid, const char* oldvid, const 
 
   /* Build request header */
   sbp = sendbuf;
-  marshall_LONG (sbp, CNS_MAGIC6);
+  marshall_LONG (sbp, CNS_MAGIC5);
   marshall_LONG (sbp, CNS_REPLACETAPECOPY);
   q = sbp;        /* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;

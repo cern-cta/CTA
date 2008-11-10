@@ -68,7 +68,7 @@ Cns_setsegattrs(const char *path, struct Cns_fileid *file_uniqueid, int nbseg, s
   /* Build request header */
 
   sbp = sendbuf;
-  marshall_LONG (sbp, CNS_MAGIC6);
+  marshall_LONG (sbp, CNS_MAGIC5);
   marshall_LONG (sbp, CNS_SETSEGAT);
   q = sbp;        /* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;

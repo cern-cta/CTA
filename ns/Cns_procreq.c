@@ -4508,7 +4508,7 @@ int Cns_srv_replaceseg(magic, req_data, clienthost, thip)
   char *user;
   char vid[CA_MAXVIDLEN+1];
   int checksum_ok;
-  time_t last_mod_time;
+  time_t last_mod_time = 0;
 
   strcpy (func, "Cns_srv_replaceseg");
   rbp = req_data;
@@ -4517,13 +4517,14 @@ int Cns_srv_replaceseg(magic, req_data, clienthost, thip)
   get_client_actual_id (thip, &uid, &gid, &user);
   nslogit (func, NS092, "replaceseg", user, uid, gid, clienthost);
   unmarshall_HYPER (rbp, fileid);
-  if (magic >= CNS_MAGIC6) {
+  if (magic >= CNS_MAGIC5) {
     unmarshall_TIME_T (rbp, last_mod_time);
   }
   unmarshall_WORD (rbp, copyno);
   unmarshall_WORD (rbp, fsec);
-  sprintf (logbuf, "replaceseg %s %d %d",
-           u64tostr (fileid, tmpbuf, 0), copyno, fsec);
+  sprintf (logbuf, "replaceseg %s %lld %d %d",
+           u64tostr (fileid, tmpbuf, 0), 
+	   (long long int)last_mod_time, copyno, fsec);
   Cns_logreq (func, logbuf);
 
   /* check if the user is authorized to replace segment attributes */
@@ -4549,7 +4550,7 @@ int Cns_srv_replaceseg(magic, req_data, clienthost, thip)
      is given. This can happen in case of multiple stagers
      concurrently modifying a file.
      In such a case, raise the appropriate error and ignore the request. */
-  if (filentry.mtime > last_mod_time) {
+  if ((filentry.mtime > last_mod_time) && (last_mod_time > 0)) {
     RETURN (ENSFILECHG);
   }
 
@@ -4655,7 +4656,7 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
   gid_t gid;
   uid_t uid;
   char *user;
-  time_t last_mod_time;
+  time_t last_mod_time = 0;
 
   struct Cns_seg_metadata new_smd_entry[CA_MAXSEGS];
   struct Cns_seg_metadata old_smd_entry[CA_MAXSEGS];
@@ -4679,7 +4680,7 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
   get_client_actual_id (thip, &uid, &gid, &user);
   nslogit (func, NS092, "replacetapecopy", user, uid, gid, clienthost);
   unmarshall_HYPER (rbp, fileid);
-  if (magic >= CNS_MAGIC6) {
+  if (magic >= CNS_MAGIC5) {
     unmarshall_TIME_T (rbp, last_mod_time);
   }
 
@@ -4688,7 +4689,7 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
   if (unmarshall_STRINGN (rbp, oldvid, CA_MAXVIDLEN+1))
     RETURN (EINVAL);
 
-  sprintf (logbuf, "replacetapecopy %lld %s->%s",fileid, oldvid, newvid);
+  sprintf (logbuf, "replacetapecopy %lld %s->%s", fileid, oldvid, newvid);
   Cns_logreq (func, logbuf);
 
   /* check if the user is authorized to replacetapecopy */
@@ -4711,7 +4712,7 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
      is given. This can happen in case of multiple stagers
      concurrently modifying a file.
      In such a case, raise the appropriate error and ignore the request. */
-  if (filentry.mtime > last_mod_time) {
+  if ((filentry.mtime > last_mod_time) && (last_mod_time > 0)) {
     RETURN (ENSFILECHG);
   }
 
@@ -5286,7 +5287,7 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
   char tmpbuf2[21];
   uid_t uid;
   char *user;
-  time_t lastmodtime;
+  time_t last_mod_time = 0;
 
   strcpy (func, "Cns_srv_setfsize");
   rbp = req_data;
@@ -5301,9 +5302,12 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
   unmarshall_HYPER (rbp, filesize);
-  unmarshall_TIME_T (rbp, lastmodtime);
+  if (magic >= CNS_MAGIC2) {
+    unmarshall_TIME_T (rbp, last_mod_time);
+  }
   get_cwd_path (thip, cwd, cwdpath);
-  sprintf (logbuf, "setfsize %s %s %s %s", u64tostr (fileid, tmpbuf, 0),
+  sprintf (logbuf, "setfsize %s %lld %s %s %s", u64tostr (fileid, tmpbuf, 0),
+	   (long long int)last_mod_time,
            path, u64tostr (filesize, tmpbuf2, 0), cwdpath);
   Cns_logreq (func, logbuf);
 
@@ -5345,7 +5349,7 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
      is given. This can happen in case of multiple stagers
      concurrently modifying a file.
      In such a case, raise the appropriate error and ignore the request. */
-  if (filentry.mtime > lastmodtime) {
+  if ((filentry.mtime > last_mod_time) && (last_mod_time > 0)) {
     RETURN (ENSFILECHG);
   }
 
@@ -5387,7 +5391,7 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
   char *user;
   char csumtype[3];
   char csumvalue[CA_MAXCKSUMLEN+1];
-  time_t lastmodtime;
+  time_t last_mod_time = 0;
   
   strcpy (func, "Cns_srv_setfsizecs");
   rbp = req_data;
@@ -5406,9 +5410,12 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
     RETURN (EINVAL);
   if (unmarshall_STRINGN (rbp, csumvalue, CA_MAXCKSUMLEN+1))
     RETURN (EINVAL);
-  unmarshall_TIME_T (rbp, lastmodtime);
+  if (magic >= CNS_MAGIC2) {
+    unmarshall_TIME_T (rbp, last_mod_time);
+  }
   get_cwd_path (thip, cwd, cwdpath);
-  sprintf (logbuf, "setfsizecs %s %s %s %s %s %s", u64tostr (fileid, tmpbuf, 0),
+  sprintf (logbuf, "setfsizecs %s %lld %s %s %s %s %s", 
+	   u64tostr (fileid, tmpbuf, 0), (long long int)last_mod_time,
            path, u64tostr (filesize, tmpbuf2, 0), csumvalue, csumtype, cwdpath);
   Cns_logreq (func, logbuf);
   if (*csumtype &&
@@ -5455,7 +5462,7 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
      is given. This can happen in case of multiple stagers
      concurrently modifying a file.
      In such a case, raise the appropriate error and ignore the request. */
-  if (filentry.mtime > lastmodtime) {
+  if ((filentry.mtime > last_mod_time) && (last_mod_time > 0)) {
     RETURN (ENSFILECHG);
   }
 
@@ -5504,7 +5511,7 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
   char tmpbuf[21];
   uid_t uid;
   char *user;
-  time_t lastmodtime;
+  time_t last_mod_time = 0;
   
   strcpy (func, "Cns_srv_setfsizeg");
   rbp = req_data;
@@ -5521,8 +5528,11 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
     RETURN (EINVAL);
   if (unmarshall_STRINGN (rbp, csumvalue, CA_MAXCKSUMLEN+1))
     RETURN (EINVAL);
-  unmarshall_TIME_T (rbp, lastmodtime);
-  sprintf (logbuf, "setfsizeg %s %s", guid, u64tostr (filesize, tmpbuf, 0));
+  if (magic >= CNS_MAGIC2) {
+    unmarshall_TIME_T (rbp, last_mod_time);
+  }
+  sprintf (logbuf, "setfsizeg %s %s %lld", guid, u64tostr (filesize, tmpbuf, 0),
+	   (long long int)last_mod_time);
   Cns_logreq (func, logbuf);
   if (*csumtype &&
       strcmp (csumtype, "CS") &&
@@ -5558,7 +5568,7 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
      is given. This can happen in case of multiple stagers
      concurrently modifying a file.
      In such a case, raise the appropriate error and ignore the request. */
-  if (filentry.mtime > lastmodtime) {
+  if ((filentry.mtime > last_mod_time) && (last_mod_time > 0)) {
     RETURN (ENSFILECHG);
   }
 
@@ -5804,7 +5814,7 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
   char tmpbuf3[50];
   uid_t uid;
   char *user;
-  time_t last_mod_time;
+  time_t last_mod_time = 0;
 
   strcpy (func, "Cns_srv_setsegattrs");
   rbp = req_data;
@@ -5816,13 +5826,14 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
   unmarshall_HYPER (rbp, fileid);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
-  if (magic >= CNS_MAGIC6) {
+  if (magic >= CNS_MAGIC5) {
     unmarshall_TIME_T (rbp, last_mod_time);
   }
   unmarshall_WORD (rbp, nbseg);
   get_cwd_path (thip, cwd, cwdpath);
-  sprintf (logbuf, "setsegattrs %s %s %s",
-           u64tostr (fileid, tmpbuf, 0), path, cwdpath);
+  sprintf (logbuf, "setsegattrs %s %lld %s %s",
+           u64tostr (fileid, tmpbuf, 0), 
+	   (long long int)last_mod_time, path, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -5858,7 +5869,7 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
      is given. This can happen in case of multiple stagers
      concurrently modifying a file.
      In such a case, raise the appropriate error and ignore the request. */
-  if (filentry.mtime > last_mod_time) {
+  if ((filentry.mtime > last_mod_time) && (last_mod_time > 0)) {
     RETURN (ENSFILECHG);
   }
 
