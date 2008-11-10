@@ -106,7 +106,7 @@ const std::string castor::db::ora::OraTapeSvc::s_anyTapeCopyForStreamStatementSt
 
 /// SQL statement for bestTapeCopyForStream
 const std::string castor::db::ora::OraTapeSvc::s_bestTapeCopyForStreamStatementString =
-  "BEGIN bestTapeCopyForStream(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11); END;";
+  "BEGIN bestTapeCopyForStream(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12); END;";
 
 /// SQL statement for streamsForTapePool
 const std::string castor::db::ora::OraTapeSvc::s_streamsForTapePoolStatementString =
@@ -474,6 +474,8 @@ castor::db::ora::OraTapeSvc::bestTapeCopyForStream
         (9, oracle::occi::OCCIDOUBLE);
       m_bestTapeCopyForStreamStatement->registerOutParam
         (10, oracle::occi::OCCIDOUBLE);
+      m_bestTapeCopyForStreamStatement->registerOutParam
+        (12, oracle::occi::OCCIDOUBLE);
       m_bestTapeCopyForStreamStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
@@ -505,6 +507,8 @@ castor::db::ora::OraTapeSvc::bestTapeCopyForStream
     castorFile->setNsHost(m_bestTapeCopyForStreamStatement->getString(8));
     castorFile->setFileSize
       ((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(9));
+    castorFile->setLastUpdateTime
+      ((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(12));
     result->setId((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(10));
     diskCopy->setCastorFile(castorFile);
     castorFile->addDiskCopies(diskCopy);
