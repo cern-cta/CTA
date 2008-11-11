@@ -68,7 +68,7 @@ class RfioPreRequisitesCase(unittest.TestCase):
                 print '  Reason: Permission denied - (RFIO directory filtering enabled)'
                 print '  The following test cases will only be checked for \'Permission Denied\' error responses:'
                 print '     localToRemote  (RfioTest.RfioRfcpSimpleCase)'
-                print '     remoteToLocal  (RfioTest.RfioRfcpSimpleCase'
+                print '     remoteToLocal  (RfioTest.RfioRfcpSimpleCase)'
                 print '     remoteToRemote (RfioTest.RfioRfcpSimpleCase)'
                 print '     remoteToCastor (RfioTest.RfioRfcpScenarium1)'
                 print '     castorToRemote (RfioTest.RfioRfcpScenarium1)'
