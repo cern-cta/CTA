@@ -9,11 +9,11 @@ CREATE TABLE RepackSubRequest (vid VARCHAR2(2048), xsize INTEGER, filesMigrating
 
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_8_2');
+INSERT INTO CastorVersion VALUES ('-', '2_1_8_3');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.13  Release Date: 2008/10/02 12:21:09  Author: waldron 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.14  Release Date: 2008/11/06 13:20:07  Author: waldron 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -38,6 +38,7 @@ BEGIN
   SELECT (SYSDATE - to_date('01-jan-1970 01:00:00','dd-mon-yyyy HH:MI:SS')) * (24*60*60) INTO ret FROM DUAL;
   RETURN ret;
 END;
+/
 
 /* Global tables */
 CREATE GLOBAL TEMPORARY TABLE listOfStrs(id VARCHAR(2048)) ON COMMIT DELETE ROWS;
@@ -51,8 +52,10 @@ CREATE OR REPLACE PACKAGE repack AS
   TYPE "cnumList" IS TABLE OF NUMBER INDEX BY binary_integer;
   TYPE "strList" IS TABLE OF VARCHAR2(2048) INDEX BY binary_integer;
 END repack;
+/
 
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
+/
 
 /* Table for cleaning  with default values */
 
@@ -102,6 +105,7 @@ BEGIN
   END LOOP;
   COMMIT;
 END;
+/
 
 
 
@@ -121,6 +125,7 @@ BEGIN
     SELECT vid, xsize, status, filesmigrating, filesstaging, files, filesfailed, cuuid, submittime, filesstaged, filesfailedsubmit, retrynb, id, repackrequest
       FROM RepackSubRequest WHERE id member of srIds;
 END;
+/
 
 /* PL/SQL method implementing changeSubRequestsStatus */
 
@@ -165,6 +170,7 @@ BEGIN
      SELECT vid, xsize, status, filesmigrating, filesstaging,files,filesfailed,cuuid,submittime,filesstaged,filesfailedsubmit,retrynb,id,repackrequest
       	FROM RepackSubRequest WHERE id in (select id from listOfIds); 
 END;
+/
 
 /* PL/SQL method implementing getAllSubRequests */
 
@@ -174,6 +180,7 @@ BEGIN
    SELECT vid, xsize, status, filesmigrating, filesstaging, files, filesfailed, cuuid, submittime, filesstaged, filesfailedsubmit, retrynb, id, repackrequest
      FROM RepackSubRequest WHERE status != 8 ORDER BY submittime DESC; -- not ARCHIVED
 END;
+/
 
 
 /* PL/SQL method implementing getSegmentsForSubRequest */
@@ -186,6 +193,7 @@ BEGIN
        	FROM RepackSegment WHERE repacksubrequest=srId; -- not archived 
        	      	
 END;
+/
 
 /* PL/SQL method implementing getSubRequestByVid */
 
@@ -196,6 +204,7 @@ BEGIN
      SELECT vid, xsize, status, filesmigrating, filesstaging,files,filesfailed,cuuid,submittime,filesstaged,filesfailedsubmit,retrynb,id,repackrequest
        	FROM RepackSubRequest WHERE vid=rvid AND status!=8; -- not archived       	      	
 END;
+/
 
 
 /* PL/SQL method implementing getSubRequestsByStatus */
@@ -213,6 +222,7 @@ BEGIN
      SELECT RepackSubRequest.vid, RepackSubRequest.xsize, RepackSubRequest.status,  RepackSubRequest.filesmigrating, RepackSubRequest.filesstaging, RepackSubRequest.files,RepackSubRequest.filesfailed,RepackSubRequest.cuuid,RepackSubRequest.submittime,RepackSubRequest.filesstaged,RepackSubRequest.filesfailedsubmit,RepackSubRequest.retrynb,RepackSubRequest.id,RepackSubRequest.repackrequest
        	FROM RepackSubRequest, RepackRequest WHERE RepackSubRequest.status=st and RepackRequest.id=RepackSubRequest.repackrequest ORDER BY RepackRequest.creationtime; 
 END;
+/
 
 /* PL/SQL method implementing restartSubRequest */
 
@@ -233,6 +243,7 @@ BEGIN
   INSERT INTO id2type (id,type) VALUES (newSrId,97); -- new repacksubrequest
   COMMIT;
 END;
+/
 
 /* PL/SQL method implementing resurrectTapesOnHold */
 create or replace PROCEDURE              resurrectTapesOnHold (maxFiles IN INTEGER, maxTapes IN INTEGER)AS
@@ -262,6 +273,7 @@ BEGIN
 		END;
 	END LOOP;
 END;
+/
 
 
 /* PL/SQL method implementing storeRequest */
@@ -303,6 +315,7 @@ BEGIN
        	FROM RepackSubRequest
        	 WHERE vid IN (SELECT id FROM listOfStrs ) AND status=0; -- TOBECHECKED
 END;
+/
 
 
 /* PL/SQL method implementing updateSubRequestSegments */
@@ -318,6 +331,7 @@ BEGIN
  	END LOOP;
  	COMMIT;
 END;
+/
 
 
 /* PL/SQL method implementing validateRepackSubRequest */
@@ -346,5 +360,6 @@ END IF;
 EXCEPTION  WHEN NO_DATA_FOUND THEN
   ret := 0;
 END;
+/
 
 

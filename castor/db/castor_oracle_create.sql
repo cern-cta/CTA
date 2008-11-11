@@ -1,188 +1,182 @@
 /* SQL statements for type BaseAddress */
-CREATE TABLE BaseAddress (objType NUMBER, cnvSvcName VARCHAR2(2048), cnvSvcType NUMBER, target INTEGER, id INTEGER CONSTRAINT I_BaseAddress_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE BaseAddress (objType NUMBER, cnvSvcName VARCHAR2(2048), cnvSvcType NUMBER, target INTEGER, id INTEGER CONSTRAINT PK_BaseAddress_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type Client */
-CREATE TABLE Client (ipAddress NUMBER, port NUMBER, version NUMBER, secure NUMBER, id INTEGER CONSTRAINT I_Client_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE Client (ipAddress NUMBER, port NUMBER, version NUMBER, secure NUMBER, id INTEGER CONSTRAINT PK_Client_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type Disk2DiskCopyDoneRequest */
-CREATE TABLE Disk2DiskCopyDoneRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskCopyId INTEGER, sourceDiskCopyId INTEGER, fileId INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT I_Disk2DiskCopyDoneRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE Disk2DiskCopyDoneRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskCopyId INTEGER, sourceDiskCopyId INTEGER, fileId INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT PK_Disk2DiskCopyDoneRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type GetUpdateDone */
-CREATE TABLE GetUpdateDone (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, fileId INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT I_GetUpdateDone_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE GetUpdateDone (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, fileId INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT PK_GetUpdateDone_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type GetUpdateFailed */
-CREATE TABLE GetUpdateFailed (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, fileId INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT I_GetUpdateFailed_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE GetUpdateFailed (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, fileId INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT PK_GetUpdateFailed_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type PutFailed */
-CREATE TABLE PutFailed (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, fileId INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT I_PutFailed_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE PutFailed (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, fileId INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT PK_PutFailed_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type Files2Delete */
-CREATE TABLE Files2Delete (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskServer VARCHAR2(2048), id INTEGER CONSTRAINT I_Files2Delete_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE Files2Delete (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskServer VARCHAR2(2048), id INTEGER CONSTRAINT PK_Files2Delete_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type FilesDeleted */
-CREATE TABLE FilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_FilesDeleted_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE FilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_FilesDeleted_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type FilesDeletionFailed */
-CREATE TABLE FilesDeletionFailed (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_FilesDeletionFailed_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE FilesDeletionFailed (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_FilesDeletionFailed_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type GCFile */
-CREATE TABLE GCFile (diskCopyId INTEGER, id INTEGER CONSTRAINT I_GCFile_Id PRIMARY KEY, request INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE GCFile (diskCopyId INTEGER, id INTEGER CONSTRAINT PK_GCFile_Id PRIMARY KEY, request INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type GCLocalFile */
-CREATE TABLE GCLocalFile (fileName VARCHAR2(2048), diskCopyId INTEGER, fileId INTEGER, nsHost VARCHAR2(2048), lastAccessTime INTEGER, nbAccesses NUMBER, gcWeight NUMBER, gcTriggeredBy VARCHAR2(2048), id INTEGER CONSTRAINT I_GCLocalFile_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE GCLocalFile (fileName VARCHAR2(2048), diskCopyId INTEGER, fileId INTEGER, nsHost VARCHAR2(2048), lastAccessTime INTEGER, nbAccesses NUMBER, gcWeight NUMBER, gcTriggeredBy VARCHAR2(2048), svcClassName VARCHAR2(2048), id INTEGER CONSTRAINT PK_GCLocalFile_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type MoverCloseRequest */
-CREATE TABLE MoverCloseRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, fileSize INTEGER, timeStamp INTEGER, fileId INTEGER, nsHost VARCHAR2(2048), csumType VARCHAR2(2048), csumValue VARCHAR2(2048), id INTEGER CONSTRAINT I_MoverCloseRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE MoverCloseRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, fileSize INTEGER, timeStamp INTEGER, fileId INTEGER, nsHost VARCHAR2(2048), csumType VARCHAR2(2048), csumValue VARCHAR2(2048), id INTEGER CONSTRAINT PK_MoverCloseRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type PutStartRequest */
-CREATE TABLE PutStartRequest (subreqId INTEGER, diskServer VARCHAR2(2048), fileSystem VARCHAR2(2048), fileId INTEGER, nsHost VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_PutStartRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE PutStartRequest (subreqId INTEGER, diskServer VARCHAR2(2048), fileSystem VARCHAR2(2048), fileId INTEGER, nsHost VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_PutStartRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type PutDoneStart */
-CREATE TABLE PutDoneStart (subreqId INTEGER, diskServer VARCHAR2(2048), fileSystem VARCHAR2(2048), fileId INTEGER, nsHost VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_PutDoneStart_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE PutDoneStart (subreqId INTEGER, diskServer VARCHAR2(2048), fileSystem VARCHAR2(2048), fileId INTEGER, nsHost VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_PutDoneStart_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type GetUpdateStartRequest */
-CREATE TABLE GetUpdateStartRequest (subreqId INTEGER, diskServer VARCHAR2(2048), fileSystem VARCHAR2(2048), fileId INTEGER, nsHost VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_GetUpdateStartRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE GetUpdateStartRequest (subreqId INTEGER, diskServer VARCHAR2(2048), fileSystem VARCHAR2(2048), fileId INTEGER, nsHost VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_GetUpdateStartRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type QueryParameter */
-CREATE TABLE QueryParameter (value VARCHAR2(2048), id INTEGER CONSTRAINT I_QueryParameter_Id PRIMARY KEY, query INTEGER, queryType INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE QueryParameter (value VARCHAR2(2048), id INTEGER CONSTRAINT PK_QueryParameter_Id PRIMARY KEY, query INTEGER, queryType INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StagePrepareToGetRequest */
-CREATE TABLE StagePrepareToGetRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StagePrepareToGetRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StagePrepareToGetRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StagePrepareToGetRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StagePrepareToPutRequest */
-CREATE TABLE StagePrepareToPutRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StagePrepareToPutRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StagePrepareToPutRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StagePrepareToPutRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StagePrepareToUpdateRequest */
-CREATE TABLE StagePrepareToUpdateRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StagePrepareToUpdateReque_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StagePrepareToUpdateRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StagePrepareToUpdateRequ_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StagePutRequest */
-CREATE TABLE StagePutRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StagePutRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StagePutRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StagePutRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StageUpdateRequest */
-CREATE TABLE StageUpdateRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StageUpdateRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StageUpdateRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageUpdateRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StageRmRequest */
-CREATE TABLE StageRmRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StageRmRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StageRmRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageRmRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StagePutDoneRequest */
-CREATE TABLE StagePutDoneRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, parentUuid VARCHAR2(2048), id INTEGER CONSTRAINT I_StagePutDoneRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, parent INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StagePutDoneRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, parentUuid VARCHAR2(2048), id INTEGER CONSTRAINT PK_StagePutDoneRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, parent INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StageFileQueryRequest */
-CREATE TABLE StageFileQueryRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, fileName VARCHAR2(2048), id INTEGER CONSTRAINT I_StageFileQueryRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-/* SQL statements for type StageRequestQueryRequest */
-CREATE TABLE StageRequestQueryRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StageRequestQueryRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-/* SQL statements for type StageFindRequestRequest */
-CREATE TABLE StageFindRequestRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StageFindRequestRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StageFileQueryRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, fileName VARCHAR2(2048), id INTEGER CONSTRAINT PK_StageFileQueryRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type SubRequest */
-CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, answered NUMBER, errorCode NUMBER, errorMessage VARCHAR2(2048), requestedFileSystems VARCHAR2(2048), id INTEGER CONSTRAINT I_SubRequest_Id PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER, getNextStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, answered NUMBER, errorCode NUMBER, errorMessage VARCHAR2(2048), requestedFileSystems VARCHAR2(2048), svcHandler VARCHAR2(2048), id INTEGER CONSTRAINT PK_SubRequest_Id PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER, getNextStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StageReleaseFilesRequest */
-CREATE TABLE StageReleaseFilesRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StageReleaseFilesRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StageReleaseFilesRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageReleaseFilesRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StageAbortRequest */
-CREATE TABLE StageAbortRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StageAbortRequest_Id PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StageAbortRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageAbortRequest_Id PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StageGetNextRequest */
-CREATE TABLE StageGetNextRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StageGetNextRequest_Id PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StageGetNextRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageGetNextRequest_Id PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StagePutNextRequest */
-CREATE TABLE StagePutNextRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StagePutNextRequest_Id PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StagePutNextRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StagePutNextRequest_Id PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StageUpdateNextRequest */
-CREATE TABLE StageUpdateNextRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StageUpdateNextRequest_Id PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StageUpdateNextRequest (parentUuid VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageUpdateNextRequest_Id PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type Tape */
-CREATE TABLE Tape (vid VARCHAR2(2048), side NUMBER, tpmode NUMBER, errMsgTxt VARCHAR2(2048), errorCode NUMBER, severity NUMBER, vwAddress VARCHAR2(2048), id INTEGER CONSTRAINT I_Tape_Id PRIMARY KEY, stream INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE Tape (vid VARCHAR2(2048), side NUMBER, tpmode NUMBER, errMsgTxt VARCHAR2(2048), errorCode NUMBER, severity NUMBER, vwAddress VARCHAR2(2048), id INTEGER CONSTRAINT PK_Tape_Id PRIMARY KEY, stream INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type Segment */
-CREATE TABLE Segment (fseq NUMBER, offset INTEGER, bytes_in INTEGER, bytes_out INTEGER, host_bytes INTEGER, segmCksumAlgorithm VARCHAR2(2048), segmCksum NUMBER, errMsgTxt VARCHAR2(2048), errorCode NUMBER, severity NUMBER, blockId0 INTEGER, blockId1 INTEGER, blockId2 INTEGER, blockId3 INTEGER, creationTime INTEGER, priority INTEGER, id INTEGER CONSTRAINT I_Segment_Id PRIMARY KEY, tape INTEGER, copy INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE Segment (fseq NUMBER, offset INTEGER, bytes_in INTEGER, bytes_out INTEGER, host_bytes INTEGER, segmCksumAlgorithm VARCHAR2(2048), segmCksum NUMBER, errMsgTxt VARCHAR2(2048), errorCode NUMBER, severity NUMBER, blockId0 INTEGER, blockId1 INTEGER, blockId2 INTEGER, blockId3 INTEGER, creationTime INTEGER, priority INTEGER, id INTEGER CONSTRAINT PK_Segment_Id PRIMARY KEY, tape INTEGER, copy INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type TapePool */
-CREATE TABLE TapePool (name VARCHAR2(2048), migrSelectPolicy VARCHAR2(2048), id INTEGER CONSTRAINT I_TapePool_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE TapePool (name VARCHAR2(2048), migrSelectPolicy VARCHAR2(2048), id INTEGER CONSTRAINT PK_TapePool_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type TapeCopy */
-CREATE TABLE TapeCopy (copyNb NUMBER, id INTEGER CONSTRAINT I_TapeCopy_Id PRIMARY KEY, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE TapeCopy (copyNb NUMBER, id INTEGER CONSTRAINT PK_TapeCopy_Id PRIMARY KEY, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type CastorFile */
-CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER, creationTime INTEGER, lastAccessTime INTEGER, lastKnownFileName VARCHAR2(2048), lastUpdateTime INTEGER, id INTEGER CONSTRAINT I_CastorFile_Id PRIMARY KEY, svcClass INTEGER, fileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER, creationTime INTEGER, lastAccessTime INTEGER, lastKnownFileName VARCHAR2(2048), lastUpdateTime INTEGER, id INTEGER CONSTRAINT PK_CastorFile_Id PRIMARY KEY, svcClass INTEGER, fileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type DiskCopy */
-CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight NUMBER, creationTime INTEGER, lastAccessTime INTEGER, diskCopySize INTEGER, nbCopyAccesses NUMBER, owneruid NUMBER, ownergid NUMBER, id INTEGER CONSTRAINT I_DiskCopy_Id PRIMARY KEY, gcType INTEGER, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight NUMBER, creationTime INTEGER, lastAccessTime INTEGER, diskCopySize INTEGER, nbCopyAccesses NUMBER, owneruid NUMBER, ownergid NUMBER, id INTEGER CONSTRAINT PK_DiskCopy_Id PRIMARY KEY, gcType INTEGER, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type FileSystem */
-CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minFreeSpace NUMBER, minAllowedFreeSpace NUMBER, maxFreeSpace NUMBER, totalSize INTEGER, readRate INTEGER, writeRate INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbReadWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT I_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minFreeSpace NUMBER, minAllowedFreeSpace NUMBER, maxFreeSpace NUMBER, totalSize INTEGER, readRate INTEGER, writeRate INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbReadWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT PK_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type SvcClass */
-CREATE TABLE SvcClass (nbDrives NUMBER, name VARCHAR2(2048), defaultFileSize INTEGER, maxReplicaNb NUMBER, replicationPolicy VARCHAR2(2048), migratorPolicy VARCHAR2(2048), recallerPolicy VARCHAR2(2048), streamPolicy VARCHAR2(2048), gcPolicy VARCHAR2(2048), disk1Behavior NUMBER, replicateOnClose NUMBER, failJobsWhenNoSpace NUMBER, id INTEGER CONSTRAINT I_SvcClass_Id PRIMARY KEY, forcedFileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE SvcClass (nbDrives NUMBER, name VARCHAR2(2048), defaultFileSize INTEGER, maxReplicaNb NUMBER, migratorPolicy VARCHAR2(2048), recallerPolicy VARCHAR2(2048), streamPolicy VARCHAR2(2048), gcPolicy VARCHAR2(2048), disk1Behavior NUMBER, replicateOnClose NUMBER, failJobsWhenNoSpace NUMBER, id INTEGER CONSTRAINT PK_SvcClass_Id PRIMARY KEY, forcedFileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE TABLE SvcClass2TapePool (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
 CREATE INDEX I_SvcClass2TapePool_C on SvcClass2TapePool (child);
 CREATE INDEX I_SvcClass2TapePool_P on SvcClass2TapePool (parent);
 
 /* SQL statements for type DiskPool */
-CREATE TABLE DiskPool (name VARCHAR2(2048), id INTEGER CONSTRAINT I_DiskPool_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE DiskPool (name VARCHAR2(2048), id INTEGER CONSTRAINT PK_DiskPool_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE TABLE DiskPool2SvcClass (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
 CREATE INDEX I_DiskPool2SvcClass_C on DiskPool2SvcClass (child);
 CREATE INDEX I_DiskPool2SvcClass_P on DiskPool2SvcClass (parent);
 
 /* SQL statements for type Stream */
-CREATE TABLE Stream (initialSizeToTransfer INTEGER, lastFileSystemChange INTEGER, id INTEGER CONSTRAINT I_Stream_Id PRIMARY KEY, tape INTEGER, lastFileSystemUsed INTEGER, lastButOneFileSystemUsed INTEGER, tapePool INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE Stream (initialSizeToTransfer INTEGER, lastFileSystemChange INTEGER, id INTEGER CONSTRAINT PK_Stream_Id PRIMARY KEY, tape INTEGER, lastFileSystemUsed INTEGER, lastButOneFileSystemUsed INTEGER, tapePool INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE TABLE Stream2TapeCopy (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
 CREATE INDEX I_Stream2TapeCopy_C on Stream2TapeCopy (child);
 CREATE INDEX I_Stream2TapeCopy_P on Stream2TapeCopy (parent);
 
 /* SQL statements for type FileClass */
-CREATE TABLE FileClass (name VARCHAR2(2048), nbCopies NUMBER, id INTEGER CONSTRAINT I_FileClass_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE FileClass (name VARCHAR2(2048), nbCopies NUMBER, id INTEGER CONSTRAINT PK_FileClass_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type DiskServer */
-CREATE TABLE DiskServer (name VARCHAR2(2048), readRate INTEGER, writeRate INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbReadWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT I_DiskServer_Id PRIMARY KEY, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE DiskServer (name VARCHAR2(2048), readRate INTEGER, writeRate INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbReadWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT PK_DiskServer_Id PRIMARY KEY, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type SetFileGCWeight */
-CREATE TABLE SetFileGCWeight (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, weight NUMBER, id INTEGER CONSTRAINT I_SetFileGCWeight_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE SetFileGCWeight (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, weight NUMBER, id INTEGER CONSTRAINT PK_SetFileGCWeight_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StageRepackRequest */
-CREATE TABLE StageRepackRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, repackVid VARCHAR2(2048), id INTEGER CONSTRAINT I_StageRepackRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StageRepackRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, repackVid VARCHAR2(2048), id INTEGER CONSTRAINT PK_StageRepackRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StageDiskCopyReplicaRequest */
-CREATE TABLE StageDiskCopyReplicaRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StageDiskCopyReplicaReque_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, sourceSvcClass INTEGER, destDiskCopy INTEGER, sourceDiskCopy INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StageDiskCopyReplicaRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageDiskCopyReplicaRequ_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, sourceSvcClass INTEGER, destDiskCopy INTEGER, sourceDiskCopy INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type NsFilesDeleted */
-CREATE TABLE NsFilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT I_NsFilesDeleted_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE NsFilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT PK_NsFilesDeleted_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type Disk2DiskCopyStartRequest */
-CREATE TABLE Disk2DiskCopyStartRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskCopyId INTEGER, sourceDiskCopyId INTEGER, diskServer VARCHAR2(2048), mountPoint VARCHAR2(2048), fileId INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT I_Disk2DiskCopyStartRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE Disk2DiskCopyStartRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskCopyId INTEGER, sourceDiskCopyId INTEGER, diskServer VARCHAR2(2048), mountPoint VARCHAR2(2048), fileId INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT PK_Disk2DiskCopyStartReques_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type FirstByteWritten */
-CREATE TABLE FirstByteWritten (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, fileId INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT I_FirstByteWritten_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE FirstByteWritten (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, fileId INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT PK_FirstByteWritten_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StageGetRequest */
-CREATE TABLE StageGetRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StageGetRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StageGetRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageGetRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StgFilesDeleted */
-CREATE TABLE StgFilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT I_StgFilesDeleted_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StgFilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT PK_StgFilesDeleted_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type DiskPoolQuery */
-CREATE TABLE DiskPoolQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskPoolName VARCHAR2(2048), id INTEGER CONSTRAINT I_DiskPoolQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE DiskPoolQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskPoolName VARCHAR2(2048), id INTEGER CONSTRAINT PK_DiskPoolQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type VersionQuery */
-CREATE TABLE VersionQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_VersionQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE VersionQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_VersionQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type ChangePrivilege */
-CREATE TABLE ChangePrivilege (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, isGranted NUMBER, id INTEGER CONSTRAINT I_ChangePrivilege_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE ChangePrivilege (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, isGranted NUMBER, id INTEGER CONSTRAINT PK_ChangePrivilege_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type BWUser */
-CREATE TABLE BWUser (euid NUMBER, egid NUMBER, id INTEGER CONSTRAINT I_BWUser_Id PRIMARY KEY, request INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE BWUser (euid NUMBER, egid NUMBER, id INTEGER CONSTRAINT PK_BWUser_Id PRIMARY KEY, request INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type RequestType */
-CREATE TABLE RequestType (reqType NUMBER, id INTEGER CONSTRAINT I_RequestType_Id PRIMARY KEY, request INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE RequestType (reqType NUMBER, id INTEGER CONSTRAINT PK_RequestType_Id PRIMARY KEY, request INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type ListPrivileges */
-CREATE TABLE ListPrivileges (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, userId NUMBER, groupId NUMBER, requestType NUMBER, id INTEGER CONSTRAINT I_ListPrivileges_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE ListPrivileges (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, userId NUMBER, groupId NUMBER, requestType NUMBER, id INTEGER CONSTRAINT PK_ListPrivileges_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type TapeRequestState */
-CREATE TABLE TapeRequestState (accessMode NUMBER, pid INTEGER, startTime INTEGER, lastVdqmPingTime INTEGER, vdqmVolReqId NUMBER, id INTEGER CONSTRAINT I_TapeRequestState_Id PRIMARY KEY, streamMigration INTEGER, TapeRecall INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE TapeRequestState (accessMode NUMBER, pid INTEGER, startTime INTEGER, lastVdqmPingTime INTEGER, vdqmVolReqId NUMBER, id INTEGER CONSTRAINT PK_TapeRequestState_Id PRIMARY KEY, streamMigration INTEGER, TapeRecall INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for constraints on SvcClass */
 ALTER TABLE SvcClass2TapePool
@@ -201,7 +195,7 @@ ALTER TABLE Stream2TapeCopy
 
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_8_2');
+INSERT INTO CastorVersion VALUES ('-', '2_1_8_3');
 
 /* Fill Type2Obj metatable */
 CREATE TABLE Type2Obj (type INTEGER CONSTRAINT I_Type2Obj_Type PRIMARY KEY NOT NULL, object VARCHAR2(100) NOT NULL, svcHandler VARCHAR2(100));
@@ -229,14 +223,12 @@ INSERT INTO Type2Obj (type, object) VALUES (29, 'Tape');
 INSERT INTO Type2Obj (type, object) VALUES (30, 'TapeCopy');
 INSERT INTO Type2Obj (type, object) VALUES (31, 'TapePool');
 INSERT INTO Type2Obj (type, object) VALUES (33, 'StageFileQueryRequest');
-INSERT INTO Type2Obj (type, object) VALUES (34, 'StageFindRequestRequest');
 INSERT INTO Type2Obj (type, object) VALUES (35, 'StageGetRequest');
 INSERT INTO Type2Obj (type, object) VALUES (36, 'StagePrepareToGetRequest');
 INSERT INTO Type2Obj (type, object) VALUES (37, 'StagePrepareToPutRequest');
 INSERT INTO Type2Obj (type, object) VALUES (38, 'StagePrepareToUpdateRequest');
 INSERT INTO Type2Obj (type, object) VALUES (39, 'StagePutDoneRequest');
 INSERT INTO Type2Obj (type, object) VALUES (40, 'StagePutRequest');
-INSERT INTO Type2Obj (type, object) VALUES (41, 'StageRequestQueryRequest');
 INSERT INTO Type2Obj (type, object) VALUES (42, 'StageRmRequest');
 INSERT INTO Type2Obj (type, object) VALUES (43, 'StageUpdateFileStatusRequest');
 INSERT INTO Type2Obj (type, object) VALUES (44, 'StageUpdateRequest');
@@ -291,9 +283,7 @@ INSERT INTO Type2Obj (type, object) VALUES (106, 'StringResponse');
 INSERT INTO Type2Obj (type, object) VALUES (107, 'Response');
 INSERT INTO Type2Obj (type, object) VALUES (108, 'IOResponse');
 INSERT INTO Type2Obj (type, object) VALUES (109, 'AbortResponse');
-INSERT INTO Type2Obj (type, object) VALUES (110, 'RequestQueryResponse');
 INSERT INTO Type2Obj (type, object) VALUES (111, 'FileQueryResponse');
-INSERT INTO Type2Obj (type, object) VALUES (112, 'FindReqResponse');
 INSERT INTO Type2Obj (type, object) VALUES (113, 'GetUpdateStartResponse');
 INSERT INTO Type2Obj (type, object) VALUES (114, 'BasicResponse');
 INSERT INTO Type2Obj (type, object) VALUES (115, 'StartResponse');
@@ -346,7 +336,7 @@ INSERT INTO Type2Obj (type, object) VALUES (161, 'TapeRecall');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleCommon.sql,v  Revision: 1.671  Date: 2008/09/01 17:33:20  Author: waldron 
+ * @(#)RCSfile: oracleCommon.sql,v  Revision: 1.681  Date: 2008/11/06 18:17:27  Author: waldron 
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -355,17 +345,17 @@ INSERT INTO Type2Obj (type, object) VALUES (161, 'TapeRecall');
  *******************************************************************/
 
 /* A small table used to cross check code and DB versions */
-UPDATE CastorVersion SET schemaVersion = '2_1_8_0';
+UPDATE CastorVersion SET schemaVersion = '2_1_8_3';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
 
 /* SQL statements for object types */
-CREATE TABLE Id2Type (id INTEGER CONSTRAINT I_Id2Type_Id PRIMARY KEY, type NUMBER) ENABLE ROW MOVEMENT;
+CREATE TABLE Id2Type (id INTEGER CONSTRAINT PK_Id2Type_Id PRIMARY KEY, type NUMBER) ENABLE ROW MOVEMENT;
 
 /* SQL statements for requests status */
 /* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */
-CREATE TABLE newRequests (type NUMBER(38) NOT NULL, id NUMBER(38) NOT NULL, creation DATE NOT NULL, CONSTRAINT I_NewRequests_Type_Id PRIMARY KEY (type, id))
+CREATE TABLE newRequests (type NUMBER(38) NOT NULL, id NUMBER(38) NOT NULL, creation DATE NOT NULL, CONSTRAINT PK_NewRequests_Type_Id PRIMARY KEY (type, id))
 ORGANIZATION INDEX
 COMPRESS
 PARTITION BY LIST (type)
@@ -414,10 +404,11 @@ DROP TABLE SubRequest;
 CREATE TABLE SubRequest
   (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048),
    xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER,
-   modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER,
+   modeBits NUMBER, creationTime INTEGER NOT NULL, lastModificationTime INTEGER,
    answered NUMBER, errorCode NUMBER, errorMessage VARCHAR2(2048), id NUMBER NOT NULL,
    diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER,
-   request INTEGER, getNextStatus INTEGER, requestedFileSystems VARCHAR2(2048)
+   request INTEGER, getNextStatus INTEGER, requestedFileSystems VARCHAR2(2048),
+   svcHandler VARCHAR2(2048) NOT NULL
   )
   PCTFREE 50 PCTUSED 40 INITRANS 50
   ENABLE ROW MOVEMENT
@@ -438,7 +429,19 @@ CREATE TABLE SubRequest
 
 /* SQL statements for constraints on SubRequest */
 ALTER TABLE SubRequest
-  ADD CONSTRAINT I_SubRequest_PK PRIMARY KEY (ID);
+  ADD CONSTRAINT PK_SubRequest_Id PRIMARY KEY (ID);
+CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) LOCAL
+ (PARTITION P_STATUS_0_1_2,
+  PARTITION P_STATUS_3_13_14,
+  PARTITION P_STATUS_4,
+  PARTITION P_STATUS_5,
+  PARTITION P_STATUS_6,
+  PARTITION P_STATUS_7,
+  PARTITION P_STATUS_8,
+  PARTITION P_STATUS_9_10,
+  PARTITION P_STATUS_11,
+  PARTITION P_STATUS_12,
+  PARTITION P_STATUS_OTHER);  
 
 /* Indexes related to most used entities */
 CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
@@ -476,7 +479,7 @@ CREATE INDEX I_StagePutRequest_ReqId ON StagePutRequest (reqId);
 CREATE INDEX I_StageRepackRequest_ReqId ON StageRepackRequest (reqId);
 
 /* A primary key index for better scan of Stream2TapeCopy */
-CREATE UNIQUE INDEX I_pk_Stream2TapeCopy ON Stream2TapeCopy (parent, child);
+CREATE UNIQUE INDEX I_PK_Stream2TapeCopy ON Stream2TapeCopy (parent, child);
 
 /* Some index on the GCFile table to speed up garbage collection */
 CREATE INDEX I_GCFile_Request ON GCFile (request);
@@ -484,10 +487,13 @@ CREATE INDEX I_GCFile_Request ON GCFile (request);
 /* Indexing segments by Tape */
 CREATE INDEX I_Segment_Tape ON Segment (tape);
 
-/* Some constraints */
-ALTER TABLE FileSystem ADD CONSTRAINT diskserver_fk FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
+/* FileSystem constraints */
+ALTER TABLE FileSystem ADD CONSTRAINT FK_FileSystem_DiskServer 
+  FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
 ALTER TABLE FileSystem MODIFY (status NOT NULL);
 ALTER TABLE FileSystem MODIFY (diskServer NOT NULL);
+
+/* DiskServer constraints */
 ALTER TABLE DiskServer MODIFY (status NOT NULL);
 
 /* An index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */
@@ -505,11 +511,9 @@ ALTER TABLE Tape ADD CONSTRAINT I_Tape_VIDSideTpMode UNIQUE (VID, side, tpMode);
 /* Add unique constraint on svcClass name */
 ALTER TABLE SvcClass ADD CONSTRAINT I_SvcClass_Name UNIQUE (NAME);
 
-/* The primary key in this table allows for materialized views */
-ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT I_DiskPool2SvcCla_ParentChild PRIMARY KEY (parent, child);
-
 /* Custom type to handle int arrays */
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
+/
 
 /* Default policy for migration */
 ALTER TABLE TapePool MODIFY (migrSelectPolicy DEFAULT 'defaultMigrSelPolicy');
@@ -521,6 +525,22 @@ ALTER TABLE SvcClass MODIFY (name NOT NULL)
 /* DiskCopy constraints */
 ALTER TABLE DiskCopy MODIFY (nbCopyAccesses DEFAULT 0);
 ALTER TABLE DiskCopy MODIFY (gcType DEFAULT NULL);
+ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_CastorFile
+  FOREIGN KEY (castorFile) REFERENCES CastorFile (id)
+  INITIALLY DEFERRED DEFERRABLE;
+
+/* CastorFile constraints */
+ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_SvcClass
+  FOREIGN KEY (svcClass) REFERENCES SvcClass (id)
+  INITIALLY DEFERRED DEFERRABLE;
+
+ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
+  FOREIGN KEY (fileClass) REFERENCES FileClass (id)
+  INITIALLY DEFERRED DEFERRABLE;
+
+/* Stream constraints */
+ALTER TABLE Stream ADD CONSTRAINT FK_Stream_TapePool
+  FOREIGN KEY (tapePool) REFERENCES TapePool (id);
 
 /* Global temporary table to handle output of the filesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
@@ -553,7 +573,7 @@ CREATE TABLE CleanupJobLog
    operation INTEGER NOT NULL);
 
 /* Temporary table to handle removing of priviledges */
-CREATE GLOBAL TEMPORARY TABLE removePrivilegeTmpTable
+CREATE GLOBAL TEMPORARY TABLE RemovePrivilegeTmpTable
   (svcClass VARCHAR2(2048),
    euid NUMBER,
    egid NUMBER,
@@ -561,7 +581,17 @@ CREATE GLOBAL TEMPORARY TABLE removePrivilegeTmpTable
   ON COMMIT DELETE ROWS;
 
 /* Global temporary table to store ids temporarily in the bulkCreateObj procedures */
-CREATE GLOBAL TEMPORARY TABLE bulkSelectHelper(objId NUMBER) ON COMMIT DELETE ROWS;
+CREATE GLOBAL TEMPORARY TABLE BulkSelectHelper
+  (objId NUMBER)
+  ON COMMIT DELETE ROWS;
+
+/* Global temporary table to store the information on diskcopyies which need to
+ * processed to see if too many replicas are online. This temporary table is
+ * required to solve the error: `ORA-04091: table is mutating, trigger/function`
+ */
+CREATE GLOBAL TEMPORARY TABLE TooManyReplicasHelper
+  (id NUMBER, fileSystem NUMBER, castorFile NUMBER)
+  ON COMMIT DELETE ROWS;
 
 /* SQL statements for table PriorityMap */
 CREATE TABLE PriorityMap (euid INTEGER, egid INTEGER, priority INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -656,7 +686,7 @@ CREATE INDEX I_NbTapeCopiesInFS_Stream ON NbTapeCopiesInFS(Stream);
  * weight of all filesystems). Locking the diskserver only was fine but
  * was introducing a possible deadlock with a place where the FileSystem
  * is locked before the DiskServer. Thus this table..... */
-CREATE TABLE LockTable (DiskServerId NUMBER PRIMARY KEY, TheLock NUMBER);
+CREATE TABLE LockTable (DiskServerId NUMBER CONSTRAINT PK_LockTable_DSId PRIMARY KEY, TheLock NUMBER);
 INSERT INTO LockTable SELECT id, id FROM DiskServer;
 
 
@@ -664,7 +694,7 @@ INSERT INTO LockTable SELECT id, id FROM DiskServer;
 /* FileSystemsToCheck used to optimise the processing of filesystems */
 /* when they change status                                           */
 /*********************************************************************/
-CREATE TABLE FileSystemsToCheck (FileSystem NUMBER PRIMARY KEY, ToBeChecked NUMBER);
+CREATE TABLE FileSystemsToCheck (FileSystem NUMBER CONSTRAINT PK_FSToCheck_FS PRIMARY KEY, ToBeChecked NUMBER);
 INSERT INTO FileSystemsToCheck SELECT id, 0 FROM FileSystem;
 
 
@@ -703,7 +733,7 @@ CREATE TABLE Accounting (euid INTEGER, svcClass INTEGER, nbBytes INTEGER);
  * Few notes :
  *   diskCopyStatus can be STAGED(0) or CANBEMIGR(10)
  */
-CREATE TABLE GcPolicy (name VARCHAR2(2048) NOT NULL PRIMARY KEY,
+CREATE TABLE GcPolicy (name VARCHAR2(2048) CONSTRAINT PK_GcPolicy_name PRIMARY KEY,
                        userWeight VARCHAR2(2048) NOT NULL,
                        recallWeight VARCHAR2(2048) NOT NULL,
                        copyWeight VARCHAR2(2048) NOT NULL,
@@ -754,6 +784,7 @@ RETURN NUMBER DETERMINISTIC IS
 BEGIN
   RETURN - nbReadStreams - nbWriteStreams - nbReadWriteStreams - nbMigratorStreams - nbRecallerStreams;
 END;
+/
 
 
 /* FileSystem index based on the rate. */
@@ -767,6 +798,7 @@ CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
 BEGIN
   RETURN (SYSDATE - to_date('01-jan-1970 01:00:00','dd-mon-yyyy HH:MI:SS')) * (24*60*60);
 END;
+/
 
 
 /* Generate a universally unique id (UUID) */
@@ -776,10 +808,9 @@ BEGIN
   -- Note: the guid generator provided by ORACLE produces sequential uuid's, not
   -- random ones. The reason for this is because random uuid's are not good for
   -- indexing!
-  SELECT lower(regexp_replace(sys_guid(), '(.{8})(.{4})(.{4})(.{4})(.{12})', '\1-\2-\3-\4-\5'))
-    INTO ret FROM Dual;
-  RETURN ret;
+  RETURN lower(regexp_replace(sys_guid(), '(.{8})(.{4})(.{4})(.{4})(.{12})', '\1-\2-\3-\4-\5'));
 END;
+/
 
 
 /* Function to check if a service class exists by name. This function can return
@@ -813,6 +844,27 @@ BEGIN
   END IF;
   RETURN ret;
 END;
+/
+
+
+/* Function to return a comma separate list of service classes that a
+ * filesystem belongs too.
+ */
+CREATE OR REPLACE FUNCTION getSvcClassList(fsId NUMBER) RETURN VARCHAR2 IS
+  svcClassList VARCHAR2(4000) := NULL;
+BEGIN
+  FOR a IN (SELECT Distinct(SvcClass.name)
+              FROM FileSystem, DiskPool2SvcClass, SvcClass
+             WHERE FileSystem.id = fsId
+               AND FileSystem.diskpool = DiskPool2SvcClass.parent
+               AND DiskPool2SvcClass.child = SvcClass.id
+             ORDER BY SvcClass.name)
+  LOOP
+    svcClassList := svcClassList || ',' || a.name;
+  END LOOP;
+  RETURN ltrim(svcClassList, ',');
+END;
+/
 
 
 /* PL/SQL method deleting tapecopies (and segments) of a castorfile */
@@ -832,6 +884,7 @@ BEGIN
     DELETE FROM TapeCopy WHERE id = t.id;
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method canceling a given recall */
@@ -845,7 +898,7 @@ BEGIN
    WHERE id = cfId FOR UPDATE;
   -- Cancel the recall
   deleteTapeCopies(cfId);
-  -- Delete the DiskCopy
+  -- Invalidate the DiskCopy
   UPDATE DiskCopy SET status = 7 WHERE id = dcId; -- INVALID
   -- Look for request associated to the recall and fail
   -- it and all the waiting ones
@@ -854,9 +907,12 @@ BEGIN
   UPDATE SubRequest
      SET status = newSubReqStatus, parent = 0 -- FAILED
    WHERE status = 5 -- WAITSUBREQ
-     AND parent IN (SELECT /*+ CARDINALITY(sridTable 5) */ * FROM TABLE(srIds) sridTable)
+     AND parent IN
+       (SELECT /*+ CARDINALITY(sridTable 5) */ *
+          FROM TABLE(srIds) sridTable)
      AND castorfile = cfId;
 END;
+/
 
 
 /* PL/SQL method FOR canceling a recall by tape VID, The subrequests associated with
@@ -875,6 +931,7 @@ BEGIN
     cancelRecall(a.castorfile, a.id, 7);
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method to delete a CastorFile only when no Disk|TapeCopies are left for it */
@@ -919,14 +976,20 @@ BEGIN
             -- from the name server
             INSERT INTO FilesDeletedProcOutput VALUES (fid, nsh);
           END IF;
+        EXCEPTION WHEN NO_DATA_FOUND THEN
+          -- ignore, this means that the castor file did not exist.
+          -- There is thus no way to find out whether to remove the
+          -- file from the nameserver. For safety, we thus keep it
+          NULL;
         END;
       END IF;
     END IF;
   END IF;
 END;
+/
 /*******************************************************************
  *
- * @(#)RCSfile: oraclePerm.sql,v  Revision: 1.650  Date: 2008/09/22 13:15:12  Author: waldron 
+ * @(#)RCSfile: oraclePerm.sql,v  Revision: 1.652  Date: 2008/11/06 13:20:06  Author: waldron 
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -980,6 +1043,7 @@ BEGIN
     END IF;
   END IF;
 END;
+/
 
 
 /* Function to wrap the checkPermission procedure so that is can be
@@ -1006,6 +1070,7 @@ BEGIN
   END IF;
   RETURN 1;
 END;
+/
 
 
 /**
@@ -1070,6 +1135,7 @@ CREATE OR REPLACE PACKAGE castorBW AS
                            iegid IN NUMBER, ireqType IN NUMBER,
                            plist OUT PrivilegeExt_Cur);
 END castorBW;
+/
 
 CREATE OR REPLACE PACKAGE BODY castorBW AS
 
@@ -1139,7 +1205,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     empty_privilege EXCEPTION;
     PRAGMA EXCEPTION_INIT(empty_privilege, -20109);
   BEGIN
-    DELETE FROM removePrivilegeTmpTable;
+    DELETE FROM RemovePrivilegeTmpTable;
     FOR r IN (SELECT * FROM WhiteList) LOOP
       BEGIN
         wlr.svcClass := r.svcClass;
@@ -1147,7 +1213,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
         wlr.egid := r.egid;
         wlr.reqType := r.reqType;
         tmp := intersection(wlr, p);
-        INSERT INTO removePrivilegeTmpTable
+        INSERT INTO RemovePrivilegeTmpTable
         VALUES (tmp.svcClass, tmp.euid, tmp.egid, tmp.reqType);
       EXCEPTION WHEN empty_privilege THEN
         NULL;
@@ -1312,7 +1378,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
       blr.egid := r.egid;
       blr.reqType := r.reqType;
       intersectionWithWhiteList(blr);
-      SELECT COUNT(*) INTO c FROM removePrivilegeTmpTable;
+      SELECT COUNT(*) INTO c FROM RemovePrivilegeTmpTable;
       IF c = 0 THEN
         -- we can safely drop this line
         DELETE FROM BlackList
@@ -1338,7 +1404,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
   BEGIN
     -- Check first whether there is something to remove
     intersectionWithWhiteList(P);
-    SELECT COUNT(*) INTO c FROM removePrivilegeTmpTable;
+    SELECT COUNT(*) INTO c FROM RemovePrivilegeTmpTable;
     IF c = 0 THEN RETURN; END IF;
     -- Remove effectively what can be removed
     FOR r IN (SELECT * FROM WHITELIST) LOOP
@@ -1361,7 +1427,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     SELECT COUNT(*) INTO c FROM removePrivilegeTmpTable;
     IF c = 0 THEN RETURN; END IF;
     -- If any, add them to blackList
-    FOR q IN (SELECT * FROM removePrivilegeTmpTable) LOOP
+    FOR q IN (SELECT * FROM RemovePrivilegeTmpTable) LOOP
       wlr.svcClass := q.svcClass;
       wlr.euid := q.euid;
       wlr.egid := q.egid;
@@ -1416,10 +1482,11 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
   END;
 
 END castorBW;
+/
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleStager.sql,v  Revision: 1.686  Date: 2008/10/07 15:46:39  Author: waldron 
+ * @(#)RCSfile: oracleStager.sql,v  Revision: 1.699  Date: 2008/11/10 09:33:02  Author: waldron 
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1445,8 +1512,8 @@ CREATE OR REPLACE PACKAGE castor AS
     tapePoolId NUMBER,
     tapePoolName VARCHAR2(2048));
   TYPE Stream_Cur IS REF CURSOR RETURN StreamCore;
-  TYPE "strList" IS TABLE OF VARCHAR2(2048) index by binary_integer;
-  TYPE "cnumList" IS TABLE OF NUMBER index by binary_integer;
+  TYPE "strList" IS TABLE OF VARCHAR2(2048) index BY binary_integer;
+  TYPE "cnumList" IS TABLE OF NUMBER INDEX BY binary_integer;
   TYPE QueryLine IS RECORD (
     fileid INTEGER,
     nshost VARCHAR2(2048),
@@ -1525,6 +1592,7 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE DbRecallInfo_Cur IS REF CURSOR RETURN DbRecallInfo;
   TYPE PriorityMap_Cur IS REF CURSOR RETURN PriorityMap%ROWTYPE;
 END castor;
+/
 
 
 /* Checks consistency of DiskCopies when a FileSystem comes
@@ -1557,21 +1625,24 @@ BEGIN
                 AND e.fileSystem != fsId
                 AND d.status = 6 -- STAGEOUT
                 AND e.status IN (0, 10, 2, 5, 6, 11)) LOOP -- STAGED/CANBEMIGR/WAITTAPERECALL/WAITFS/STAGEOUT/WAITFS_SCHEDULING
-    -- Delete the DiskCopy
+    -- Invalidate the DiskCopy
     UPDATE DiskCopy
        SET status = 7  -- INVALID
      WHERE id = cf.id;
-    -- Look for request associated to the diskCopy and restart
+    -- Look for requests associated to the diskCopy and restart
     -- it and all the waiting ones
     UPDATE SubRequest SET status = 7 -- FAILED
      WHERE diskCopy = cf.id RETURNING id BULK COLLECT INTO srIds;
     UPDATE SubRequest
        SET status = 7, parent = 0 -- FAILED
      WHERE status = 5 -- WAITSUBREQ
-       AND parent MEMBER OF srIds
+       AND parent IN
+         (SELECT /*+ CARDINALITY(sridTable 5) */ *
+            FROM TABLE(srIds) sridTable)
        AND castorfile = cf.castorfile;
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method implementing bulkCheckFSBackInProd for processing
@@ -1603,6 +1674,7 @@ BEGIN
     cancelRecall(cf.castorfile, cf.id, 1); -- RESTART
   END LOOP;
 END;
+/
 
 
 /* Used to check consistency of diskcopies when a filesytem
@@ -1617,10 +1689,11 @@ DECLARE
   s NUMBER;
 BEGIN
   SELECT status INTO s FROM DiskServer WHERE id = :old.diskServer;
-  IF (s = 0) THEN
+  IF s = 0 THEN
     checkFSBackInProd(:old.id);
   END IF;
 END;
+/
 
 
 /* Used to check consistency of diskcopies when filesytems
@@ -1633,14 +1706,82 @@ WHEN (old.status IN (1, 2) AND -- DRAINING, DISABLED
       new.status = 0) -- PRODUCTION
 BEGIN
   FOR fs IN (SELECT id, status FROM FileSystem WHERE diskServer = :old.id) LOOP
-    IF (fs.status = 0) THEN
+    IF fs.status = 0 THEN
       checkFSBackInProd(fs.id);
     END IF;
   END LOOP;
 END;
+/
 
 
-/* Trigger used to update the accounting (Quota) information */
+/* Trigger used to check if the maxReplicaNb has been exceeded
+ * after a diskcopy has changed its status to STAGED or CANBEMIGR
+ */
+CREATE OR REPLACE TRIGGER tr_DiskCopy_Stmt_Online
+AFTER UPDATE OF STATUS ON DISKCOPY
+DECLARE
+  svcId NUMBER;
+  maxReplicaNb NUMBER;
+  srIds "numList";
+BEGIN
+  -- Loop over the diskcopies to be processed
+  FOR a IN (SELECT * FROM TooManyReplicasHelper)
+  LOOP
+    -- Get the service class id and max replica number of the
+    -- service class the diskcopy belongs too
+    SELECT SvcClass.id, SvcClass.maxReplicaNb
+      INTO svcId, maxReplicaNb
+      FROM FileSystem, DiskPool2SvcClass, SvcClass
+     WHERE FileSystem.diskpool = DiskPool2SvcClass.parent
+       AND DiskPool2SvcClass.child = SvcClass.id
+       AND FileSystem.id = a.filesystem;
+    -- Produce a list of diskcopies to invalidate should too
+    -- many replicas be online.
+    -- Note: This check deliberately ignores the status of the
+    -- filesystems and diskservers!
+    FOR b IN (SELECT DiskCopy.id FROM (
+                SELECT rownum ind, DiskCopy.id
+                  FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass, DiskServer
+                 WHERE DiskCopy.filesystem = FileSystem.id
+                   AND FileSystem.diskpool = DiskPool2SvcClass.parent
+                   AND FileSystem.diskserver = DiskServer.id
+                   AND DiskPool2SvcClass.child = SvcClass.id
+                   AND DiskCopy.castorfile = a.castorfile
+                   -- Ignore the diskcopy being processed!!!!!
+                   AND DiskCopy.id != a.id
+                   AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
+                   AND SvcClass.id = svcId  
+                 -- Select DISABLED or DRAINING hardware first
+                 ORDER BY decode(FileSystem.status, 0,
+                          decode(DiskServer.status, 0, 0, 1), 1) ASC,
+                          DiskCopy.gcWeight DESC) DiskCopy
+              WHERE ind > (maxReplicaNb - 1))
+    LOOP
+      -- Invalidate the diskcopy
+      UPDATE DiskCopy
+         SET status = 7,  -- INVALID
+             gcType = 2   -- Too many replicas
+       WHERE id = b.id;
+      -- Look for requests associated to the diskCopy and restart
+      -- it and all the waiting ones
+      UPDATE SubRequest SET status = 7 -- FAILED
+       WHERE diskCopy = b.id RETURNING id BULK COLLECT INTO srIds;
+      UPDATE SubRequest
+         SET status = 7, parent = 0 -- FAILED
+       WHERE status = 5 -- WAITSUBREQ
+         AND parent IN
+           (SELECT /*+ CARDINALITY(sridTable 5) */ *
+              FROM TABLE(srIds) sridTable)
+         AND castorfile = a.castorfile;
+    END LOOP;
+  END LOOP;
+END;
+/
+
+
+/* Trigger used to update the accounting (Quota) information and
+ * provide input to the statement level trigger defined above
+ */
 CREATE OR REPLACE TRIGGER tr_DiskCopy_Online
 AFTER UPDATE OF status ON DiskCopy
 FOR EACH ROW
@@ -1658,7 +1799,16 @@ BEGIN
    WHEN MATCHED THEN UPDATE SET nbBytes = nbBytes + DC.fileSize
    WHEN NOT MATCHED THEN INSERT (euid, nbBytes, svcClass)
                          VALUES (DC.euid, DC.fileSize, DC.SvcClass);
+
+  -- Insert the information about the diskcopy being processed into
+  -- the TooManyReplicasHelper. This information will be used later
+  -- on the DiskCopy AFTER UPDATE statement level trigger. We cannot
+  -- do the work of that trigger here as it would result in
+  -- `ORA-04091: table is mutating, trigger/function` errors
+  INSERT INTO TooManyReplicasHelper
+  VALUES (:new.id, :new.filesystem, :new.castorfile);
 END;
+/
 
 
 /* Trigger used to update the accounting (Quota) information */
@@ -1678,6 +1828,7 @@ BEGIN
            WHERE FileSystem.id = :new.FileSystem
              AND DiskPool2SvcClass.parent = FileSystem.DiskPool);
 END;
+/
 
 
 /***************************************/
@@ -1697,6 +1848,7 @@ BEGIN
   SELECT id INTO unused FROM CastorFile
    WHERE id = :new.castorFile FOR UPDATE;
 END;
+/
 
 
 /* Used to avoid LOCK TABLE TapeCopy whenever someone wants
@@ -1712,6 +1864,7 @@ BEGIN
   SELECT id INTO unused FROM CastorFile
    WHERE id = :new.castorFile FOR UPDATE;
 END;
+/
 
 
 /* PL/SQL method to get the next SubRequest to do according to the given service */
@@ -1719,43 +1872,31 @@ CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
                                            srId OUT INTEGER, srRetryCounter OUT INTEGER, srFileName OUT VARCHAR2,
                                            srProtocol OUT VARCHAR2, srXsize OUT INTEGER, srPriority OUT INTEGER,
                                            srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
-                                           srSubReqId OUT VARCHAR2, srAnswered OUT INTEGER) AS
-LockError EXCEPTION;
+                                           srSubReqId OUT VARCHAR2, srAnswered OUT INTEGER, srSvcHandler OUT VARCHAR2) AS
 InvalidRowid EXCEPTION;
-PRAGMA EXCEPTION_INIT (LockError, -54);
 PRAGMA EXCEPTION_INIT (InvalidRowid, -10632);
-CURSOR c IS
-   SELECT id
-     FROM SubRequest
-    WHERE status in (0,1,2)  -- START, RESTART, RETRY
-      AND EXISTS
-         (SELECT /*+ index(a I_Id2Type_id) */ 'x'
-            FROM Id2Type a, Type2Obj
-           WHERE a.id = SubRequest.request
-             AND a.type = Type2Obj.type
-             AND Type2Obj.svcHandler = service)
-    FOR UPDATE SKIP LOCKED;
 BEGIN
   srId := 0;
-  OPEN c;
-  FETCH c INTO srId;
-  UPDATE SubRequest SET status = 3, subReqId = nvl(subReqId, uuidGen())
-   WHERE id = srId  -- WAITSCHED
-    RETURNING retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags, subReqId, answered
-    INTO srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus, srModeBits, srFlags, srSubReqId, srAnswered;
-  CLOSE c;
+  UPDATE SubRequest SET status = 3, subReqId = nvl(subReqId, uuidGen()) -- WAITSCHED
+   WHERE id = (
+     SELECT id FROM (
+       SELECT /*+ INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
+         FROM SubRequest PARTITION (P_STATUS_0_1_2) SR
+        WHERE SR.svcHandler = service
+        ORDER BY SR.creationTime ASC
+     )
+      WHERE ROWNUM < 2
+  )
+  RETURNING id, retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags, subReqId, answered, svcHandler
+  INTO srId, srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus, srModeBits, srFlags, srSubReqId, srAnswered, srSvcHandler;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- just return srId = 0, nothing to do
-  NULL;
-WHEN LockError THEN
-  -- We have observed ORA-00054 errors (resource busy and acquire with NOWAIT) even with
-  -- the SKIP LOCKED clause. This is a workaround to ignore the error until we understand
-  -- what to do, another thread will pick up the request so we don't do anything.
   NULL;
 WHEN InvalidRowid THEN
   -- Ignore random ORA-10632 errors (invalid rowid) due to interferences with the online shrinking
   NULL;
 END;
+/
 
 
 /* PL/SQL method to get the next failed SubRequest to do according to the given service */
@@ -1765,12 +1906,15 @@ CREATE OR REPLACE PROCEDURE subRequestFailedToDo(srId OUT INTEGER, srRetryCounte
                                                  srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
                                                  srSubReqId OUT VARCHAR2, srErrorCode OUT NUMBER,
                                                  srErrorMessage OUT VARCHAR2) AS
+LockError EXCEPTION;
+PRAGMA EXCEPTION_INIT (LockError, -54);
 InvalidRowid EXCEPTION;
 PRAGMA EXCEPTION_INIT (InvalidRowid, -10632);
 CURSOR c IS
    SELECT id, answered
      FROM SubRequest
     WHERE status = 7  -- FAILED
+      AND ROWNUM < 2
     FOR UPDATE SKIP LOCKED;
 srAnswered INTEGER;
 BEGIN
@@ -1795,7 +1939,13 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 WHEN InvalidRowid THEN
   -- Ignore random ORA-10632 errors (invalid rowid) due to interferences with the online shrinking
   NULL;
+WHEN LockError THEN
+  -- We have observed ORA-00054 errors (resource busy and acquire with NOWAIT) even with
+  -- the SKIP LOCKED clause. This is a workaround to ignore the error until we understand
+  -- what to do, another thread will pick up the request so we don't do anything.
+  NULL;
 END;
+/
 
 
 /* PL/SQL method to get the next request to do according to the given service */
@@ -1810,6 +1960,7 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN
   rId := 0;   -- nothing to do
 END;
+/
 
 
 /* PL/SQL method to make a SubRequest wait on another one, linked to the given DiskCopy */
@@ -1833,6 +1984,7 @@ BEGIN
         lastModificationTime = getTime()
   WHERE SubRequest.id = srId;
 END;
+/
 
 
 /* PL/SQL method to delete one single request */
@@ -1879,6 +2031,7 @@ BEGIN  -- delete Request, Client and SubRequests
     (SELECT id FROM SubRequest WHERE request = rId);
   DELETE FROM SubRequest WHERE request = rId;
 END;
+/
 
 
 /* PL/SQL method to archive a SubRequest */
@@ -1912,6 +2065,7 @@ BEGIN
   -- Check that we don't have too many requests for this file in the DB
   -- XXX dropped for the time being as it introduced deadlocks with itself and with selectFiles2Delete!
 END;
+/
 
 
 /* PL/SQL method checking whether a given service class
@@ -1926,10 +2080,10 @@ RETURN NUMBER AS
 BEGIN
   -- Determine if the service class is D1 and the default
   -- file size. If the default file size is 0 we assume 2G
-  SELECT failJobsWhenNoSpace, 
+  SELECT failJobsWhenNoSpace,
          decode(defaultFileSize, 0, 2000000000, defaultFileSize)
     INTO failJobsFlag, defFileSize
-    FROM SvcClass 
+    FROM SvcClass
    WHERE id = svcClassId;
   -- If D1 check that the pool has space
   IF (failJobsFlag = 1) THEN
@@ -1947,6 +2101,7 @@ BEGIN
   END IF;
   RETURN 0;
 END;
+/
 
 /* PL/SQL method checking whether the given service class
  * doesn't provide tape backend and the given file class asks for tape copies.
@@ -1964,7 +2119,7 @@ BEGIN
   -- we assume we have tape backend and we let the job
   SELECT nvl(nbCopies, nbTCs) INTO nbForcedTCs
     FROM FileClass, SvcClass
-   WHERE SvcClass.forcedFileClass = FileClass.id(+) 
+   WHERE SvcClass.forcedFileClass = FileClass.id(+)
      AND SvcClass.id = svcClassId;
   IF nbTCs > nbForcedTCs THEN
     -- typically, when nbTCs = 1 and nbForcedTCs = 0: fail the job
@@ -1973,24 +2128,7 @@ BEGIN
     RETURN 0;
   END IF;
 END;
-
-
-/* PL/SQL method implementing maxReplicaNbForSvcClass */
-CREATE OR REPLACE FUNCTION maxReplicaNbForSvcClass(SvcClassId IN NUMBER)
-RETURN NUMBER AS
-  maxReplicaNb NUMBER;
-BEGIN
-  -- Return the max replica number for the service class where the value is
-  -- capped to the total number of diskservers in that service class.
-  SELECT decode(sign(count(DISTINCT(FileSystem.diskserver)) - max(SvcClass.maxreplicanb)),
-         0, max(SvcClass.maxreplicanb), count(DISTINCT(FileSystem.diskserver)))
-    INTO maxReplicaNb
-    FROM FileSystem, DiskPool2SvcClass, SvcClass
-   WHERE FileSystem.diskpool = DiskPool2SvcClass.parent
-     AND DiskPool2SvcClass.child = SvcClass.id
-     AND SvcClass.id = SvcClassId;
-  RETURN maxReplicaNb;
-END;
+/
 
 
 /* PL/SQL method implementing getBestDiskCopyToReplicate. */
@@ -2036,6 +2174,7 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN
   RAISE; -- No diskcopy found that could be replicated
 END;
+/
 
 
 /* PL/SQL method implementing getBestDiskCopyToRead used to return the
@@ -2066,6 +2205,7 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN
   RAISE; -- No file found to be read
 END;
+/
 
 
 /* PL/SQL method implementing checkForD2DCopyOrRecall
@@ -2179,6 +2319,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     END IF;
   END;
 END;
+/
 
 
 /* Build diskCopy path from fileId */
@@ -2191,6 +2332,7 @@ BEGIN
                  CONCAT(TO_CHAR(fid), '@')),
                  nsHost), CONCAT('.', TO_CHAR(dcid)));
 END;
+/
 
 
 /* PL/SQL method implementing createDiskCopyReplicaRequest */
@@ -2250,9 +2392,9 @@ BEGIN
   INSERT INTO SubRequest
     (retrycounter, filename, protocol, xsize, priority, subreqid, flags, modebits,
      creationtime, lastmodificationtime, answered, id, diskcopy, castorfile, parent,
-     status, request, getnextstatus, errorcode)
+     status, request, getnextstatus, errorcode, svcHandler)
   VALUES (0, fileName, 'rfio', fileSize, 0, uuidgen(), 0, 0, gettime(), gettime(),
-     0, srId, destDcId, cfId, 0, 13, reqId, 0, 0);
+     0, srId, destDcId, cfId, 0, 13, reqId, 0, 0, 'NotNullNeeded');
   INSERT INTO Id2Type (id, type) VALUES (srId, 27);  -- OBJ_SubRequest
 
   -- Create the DiskCopy without filesystem
@@ -2262,8 +2404,8 @@ BEGIN
      gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid)
   VALUES (rpath, destDcId, 0, cfId, 1, getTime(), getTime(), 0, fileSize, 0, ouid, ogid);  -- WAITDISK2DISKCOPY
   INSERT INTO Id2Type (id, type) VALUES (destDcId, 5);  -- OBJ_DiskCopy
-  COMMIT;
 END;
+/
 
 
 /* PL/SQL method implementing replicateOnClose */
@@ -2279,23 +2421,23 @@ BEGIN
   FOR a IN (SELECT SvcClass.id FROM (
               -- Determine the number of copies of the file in all service classes
               SELECT * FROM (
-                SELECT SvcClass.id, count(*) found
+                SELECT SvcClass.id, count(*) available
                   FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
-                 WHERE DiskCopy.filesystem = filesystem.id
+                 WHERE DiskCopy.filesystem = FileSystem.id
                    AND DiskCopy.castorfile = cfId
                    AND FileSystem.diskpool = DiskPool2SvcClass.parent
                    AND DiskPool2SvcClass.child = SvcClass.id
-                   AND DiskCopy.status IN (0, 1, 6, 10)  -- STAGED, WAITDISK2DISKCOPY, STAGEOUT, CANBEMIGR
-                   AND FileSystem.status = 0  -- PRODUCTION
+                   AND DiskCopy.status IN (0, 1, 10)  -- STAGED, WAITDISK2DISKCOPY, CANBEMIGR
+                   AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
                    AND DiskServer.id = FileSystem.diskserver
-                   AND DiskServer.status = 0  -- PRODUCTION
+                   AND DiskServer.status IN (0, 1)  -- PRODUCTION, DRAINING
                  GROUP BY SvcClass.id)
              ) results, SvcClass
              -- Join the results with the service class table and determine if
              -- additional copies need to be created
              WHERE results.id = SvcClass.id
                AND SvcClass.replicateOnClose = 1
-               AND results.found < maxReplicaNbForSvcClass(SvcClass.id))
+               AND results.available < SvcClass.maxReplicaNb)
   LOOP
     -- Ignore this replication if there is already a pending replication request
     -- for the given castorfile in the target/destination service class. Once
@@ -2303,13 +2445,15 @@ BEGIN
     -- This insures that only one replication request is active at any given time
     -- and that we don't create too many replication requests that may exceed
     -- the maxReplicaNb defined on the service class
-    SELECT count(*) INTO ignoreSvcClass
-      FROM DiskCopy, StageDiskCopyReplicaRequest
-     WHERE StageDiskCopyReplicaRequest.destdiskcopy = DiskCopy.id
-       AND StageDiskCopyReplicaRequest.svcclass = a.id
-       AND DiskCopy.castorfile = cfId
-       AND DiskCopy.status = 1;  -- WAITDISK2DISKCOPY
-    IF ignoreSvcClass = 0 THEN
+    BEGIN
+      SELECT DiskCopy.id INTO unused
+        FROM DiskCopy, StageDiskCopyReplicaRequest
+       WHERE StageDiskCopyReplicaRequest.destdiskcopy = DiskCopy.id
+         AND StageDiskCopyReplicaRequest.svcclass = a.id
+         AND DiskCopy.castorfile = cfId
+         AND DiskCopy.status = 1  -- WAITDISK2DISKCOPY
+         AND rownum < 2;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
       BEGIN
         -- Select the best diskcopy to be replicated. Note: we force that the
         -- replication must happen internally within the service class. This
@@ -2321,9 +2465,10 @@ BEGIN
       EXCEPTION WHEN NO_DATA_FOUND THEN
         NULL;  -- No copies to replicate from
       END;
-    END IF;
+    END;
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method implementing getDiskCopiesForJob */
@@ -2490,6 +2635,7 @@ BEGIN
     END;
   END IF;
 END;
+/
 
 
 /* PL/SQL method internalPutDoneFunc, used by fileRecalled and putDoneFunc.
@@ -2567,6 +2713,7 @@ BEGIN
   -- Trigger the creation of additional copies of the file, if necessary.
   replicateOnClose(cfId, ouid, ogid);
 END;
+/
 
 
 /* PL/SQL method implementing putDoneFunc */
@@ -2582,6 +2729,7 @@ BEGIN
   -- and execute the internal putDoneFunc with the number of TapeCopies to be created
   internalPutDoneFunc(cfId, fs, context, nc, svcClassId);
 END;
+/
 
 
 /* PL/SQL procedure implementing startRepackMigration */
@@ -2636,6 +2784,7 @@ BEGIN
   UPDATE DiskCopy SET status = 10  -- DISKCOPY_CANBEMIGR
    WHERE castorFile = cfId AND status = 0;  -- DISKCOPY_STAGED
 END;
+/
 
 
 /* PL/SQL method implementing processPrepareRequest */
@@ -2805,6 +2954,7 @@ BEGIN
     result := -1;  -- user error
   END IF;
 END;
+/
 
 
 /* PL/SQL method implementing processPutDoneRequest */
@@ -2858,23 +3008,24 @@ BEGIN
        AND DiskPool2SvcClass.child = svcClassId
        AND FileSystem.diskserver = DiskServer.id
        AND DiskCopy.status = 6;  -- STAGEOUT
-    IF nbDCs > 0 THEN
-      -- we have it
-      result := 1;
-      putDoneFunc(cfId, fs, 2, svcClassId);   -- context = PutDone
-    ELSE
+    IF nbDCs = 0 THEN
       -- This is a PutDone without a put (otherwise we would have found
       -- a DiskCopy on a FileSystem), so we fail the subrequest.
       UPDATE SubRequest SET
-        status = 7,
+        status = 7,  -- FAILED
         errorCode = 1,  -- EPERM
         errorMessage = 'putDone without a put, or wrong service class'
       WHERE id = rsubReqId;
       result := 0;  -- no go
       COMMIT;
+      RETURN;
     END IF;
+    -- All checks have been completed, let's do it
+    putDoneFunc(cfId, fs, 2, svcClassId);   -- context = PutDone
+    result := 1;
   END;
 END;
+/
 
 
 /* PL/SQL method implementing recreateCastorFile */
@@ -3107,6 +3258,7 @@ BEGIN
   -- we don't commit here, the stager will do that when
   -- the subRequest status will be updated to 6
 END;
+/
 
 
 /* PL/SQL method implementing selectCastorFile */
@@ -3142,6 +3294,7 @@ EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
   SELECT id, fileSize INTO rid, rfs FROM CastorFile
     WHERE fileId = fid AND nsHost = nh;
 END;
+/
 
 /* PL/SQL method implementing stageRelease */
 CREATE OR REPLACE PROCEDURE stageRelease (fid IN INTEGER,
@@ -3177,6 +3330,7 @@ BEGIN
    WHERE castorFile = cfId AND status = 0; -- STAGED
   ret := 0;
 END;
+/
 
 /* PL/SQL method implementing stageForcedRm */
 CREATE OR REPLACE PROCEDURE stageForcedRm (fid IN INTEGER,
@@ -3225,6 +3379,8 @@ BEGIN
     UPDATE DiskCopy SET status = 7 -- INVALID
      WHERE id = dcsToRm(i);
 END;
+/
+
 
 /* PL/SQL method implementing stageRm */
 CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
@@ -3237,6 +3393,7 @@ CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
   nbRes INTEGER;
   dcsToRm "numList";
   sr "numList";
+	dcStatus INTEGER;
 BEGIN
   ret := 0;
   BEGIN
@@ -3257,7 +3414,8 @@ BEGIN
   END;
   -- First select involved diskCopies
   scId := svcClassId;
-  IF scId > 0 THEN
+  dcStatus := 0;
+	IF scId > 0 THEN
     SELECT id BULK COLLECT INTO dcsToRm FROM (
       -- first physical diskcopies
       SELECT DC.id
@@ -3289,12 +3447,36 @@ BEGIN
       RETURN;
     END IF;
     -- Check whether something else is left: if not, do as
-    -- we are performing a stageRm everywhere
-    SELECT count(*) INTO nbRes FROM DiskCopy
-     WHERE castorFile = cfId
-       AND status IN (0, 1, 2, 5, 6, 10, 11)  -- WAITDISK2DISKCOPY, WAITTAPERECALL, STAGED, STAGEOUT, CANBEMIGR, WAITFS, WAITFS_SCHEDULING
-       AND id NOT IN (SELECT /*+ CARDINALITY(dcidTable 5) */ *
-                        FROM TABLE(dcsToRm) dcidTable);
+    -- we are performing a stageRm everywhere.
+    -- First select current status of the diskCopies: if CANBEMIGR,
+    -- make sure we don't drop the last remaining valid migrable copy,
+    -- i.e. drop the disk only copies from the count.
+    SELECT status INTO dcStatus
+      FROM DiskCopy
+     WHERE id = dcsToRm(1);
+    IF dcStatus = 10 THEN  -- CANBEMIGR
+      SELECT count(*) INTO nbRes FROM DiskCopy
+       WHERE castorFile = cfId
+         AND status IN (1, 10)  -- WAITDISK2DISKCOPY, CANBEMIGR
+         AND id NOT IN (
+           (SELECT /*+ CARDINALITY(dcidTable 5) */ *
+              FROM TABLE(dcsToRm) dcidTable)
+           UNION
+           (SELECT DC.id     -- all diskcopies in Tape0 pools
+              FROM DiskCopy DC, FileSystem, DiskPool2SvcClass D2S, SvcClass, FileClass
+             WHERE DC.castorFile = cfId
+               AND DC.fileSystem = FileSystem.id
+               AND FileSystem.diskPool = D2S.parent
+               AND D2S.child = SvcClass.id
+               AND SvcClass.forcedFileClass = FileClass.id
+               AND FileClass.nbCopies = 0));
+    ELSE
+      SELECT count(*) INTO nbRes FROM DiskCopy
+         WHERE castorFile = cfId
+           AND status IN (0, 1, 2, 5, 6, 10, 11)  -- WAITDISK2DISKCOPY, WAITTAPERECALL, STAGED, STAGEOUT, CANBEMIGR, WAITFS, WAITFS_SCHEDULING
+           AND id NOT IN (SELECT /*+ CARDINALITY(dcidTable 5) */ *
+                            FROM TABLE(dcsToRm) dcidTable);
+    END IF;
     IF nbRes = 0 THEN
       scId := 0;
     END IF;
@@ -3366,7 +3548,7 @@ BEGIN
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- Nothing running
       deleteTapeCopies(cfId);
-      -- Delete the DiskCopies
+      -- Invalidate the DiskCopies
       UPDATE DiskCopy
          SET status = 7  -- INVALID
        WHERE status = 2  -- WAITTAPERECALL
@@ -3393,7 +3575,7 @@ BEGIN
   FORALL i IN sr.FIRST..sr.LAST
     UPDATE SubRequest
        SET status = 7, parent = 0,  -- FAILED
-           errorCode = 4,  -- EINT
+           errorCode = 4,  -- EINTR
            errorMessage = 'Canceled by another user request'
      WHERE id = sr(i) OR parent = sr(i);
   -- Set selected DiskCopies to INVALID. In any case keep
@@ -3405,6 +3587,7 @@ BEGIN
      WHERE id = dcsToRm(i);
   ret := 1;  -- ok
 END;
+/
 
 
 /* PL/SQL method implementing a setFileGCWeight request */
@@ -3431,7 +3614,7 @@ BEGIN
   FOR dc in dcs LOOP
     gcw := dc.gcWeight;
     -- compute actual gc weight to be used
-    if gcwProc IS NOT NULL THEN
+    IF gcwProc IS NOT NULL THEN
       EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:oldGcw, :delta); END;'
         USING OUT gcw, IN gcw, weight;
     END IF;
@@ -3440,6 +3623,7 @@ BEGIN
     ret := 1;   -- some diskcopies found, ok
   END LOOP;
 END;
+/
 
 
 /* PL/SQL procedure which is executed whenever a files has been written to tape by the migrator to
@@ -3466,6 +3650,7 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN
   NULL;
 END;
+/
 
 
 /* PL/SQL method implementing updateAndCheckSubRequest */
@@ -3496,6 +3681,7 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
   result := 0;
 END;
+/
 
 
 /* PL/SQL method implementing storeClusterStatus */
@@ -3613,6 +3799,7 @@ BEGIN
     COMMIT;
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method implementing selectPriority */
@@ -3628,6 +3815,7 @@ BEGIN
        AND (egid = inGid OR inGid = -1)
        AND (priority = inPriority OR inPriority = -1);
 END;
+/
 
 /* PL/SQL method implementing enterPriority
    it can raise constraint violation exception */
@@ -3639,6 +3827,7 @@ BEGIN
   INSERT INTO PriorityMap (euid, egid, priority)
   VALUES (inUid, inGid, inPriority);
 END;
+/
 
 
 /* PL/SQL method implementing deletePriority */
@@ -3650,9 +3839,10 @@ BEGIN
    WHERE (euid = inUid OR inUid = -1)
      AND (egid = inGid OR inGid = -1);
 END;
+/
 /*******************************************************************
  *
- * @(#)RCSfile: oracleJob.sql,v  Revision: 1.662  Date: 2008/10/07 15:04:02  Author: itglp 
+ * @(#)RCSfile: oracleJob.sql,v  Revision: 1.668  Date: 2008/11/10 09:35:31  Author: waldron 
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -3671,6 +3861,7 @@ BEGIN
                         free = free - fileSize   -- just an evaluation, monitoring will update it
    WHERE id = fs;
 END;
+/
 
 
 /* PL/SQL method to update FileSystem nb of streams when files are closed */
@@ -3685,6 +3876,7 @@ BEGIN
   UPDATE FileSystem SET nbReadWriteStreams = decode(sign(nbReadWriteStreams-1),-1,0,nbReadWriteStreams-1)
   WHERE id = fs;
 END;
+/
 
 
 /* This method should be called when the first byte is written to a file
@@ -3699,7 +3891,7 @@ CREATE OR REPLACE PROCEDURE firstByteWrittenProc(srId IN INTEGER) AS
   fclassId NUMBER;
   sclassId NUMBER;
 BEGIN
-  -- Get data and lock the Castorfile
+  -- Get data and lock the CastorFile
   SELECT castorfile, diskCopy INTO cfId, dcId
     FROM SubRequest WHERE id = srId;
   SELECT fileclass INTO fclassId FROM CastorFile WHERE id = cfId FOR UPDATE;
@@ -3769,7 +3961,12 @@ BEGIN
     -- Suppress all Tapecopies (avoid migration of previous version of the file)
     deleteTapeCopies(cfId);
   END IF;
+  -- Invalidate any ongoing replications
+  UPDATE DiskCopy SET status = 7 -- INVALID
+   WHERE castorFile = cfId
+     AND status = 1; -- WAITDISK2DISKCOPY
 END;
+/
 
 
 /* Checks whether the protocol used is supporting updates and when not
@@ -3783,6 +3980,7 @@ BEGIN
     firstByteWrittenProc(srId);
   END IF;
 END;
+/
 
 
 /* PL/SQL method implementing putStart */
@@ -3829,25 +4027,30 @@ BEGIN
     raise_application_error(-20107, 'This job has already started for this DiskCopy. Giving up.');
   END IF;
   -- Get older castorFiles with the same name and drop their lastKnownFileName
-  UPDATE /*+ INDEX (castorFile) */ CastorFile SET lastKnownFileName = TO_CHAR(id)
+  UPDATE /*+ INDEX (CastorFile) */ CastorFile
+     SET lastKnownFileName = TO_CHAR(id)
    WHERE id IN (
-    SELECT /*+ INDEX (cfOld) */ cfOld.id FROM CastorFile cfOld, CastorFile cfNew, SubRequest
+    SELECT /*+ INDEX (cfOld) */ cfOld.id 
+      FROM CastorFile cfOld, CastorFile cfNew, SubRequest
      WHERE cfOld.lastKnownFileName = cfNew.lastKnownFileName
        AND cfOld.fileid <> cfNew.fileid
        AND cfNew.id = SubRequest.castorFile
        AND SubRequest.id = srId);
   -- In case the DiskCopy was in WAITFS_SCHEDULING,
   -- restart the waiting SubRequests
-  UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0 -- SUBREQUEST_RESTART
+  UPDATE SubRequest 
+     SET status = 1, lastModificationTime = getTime(), parent = 0 -- SUBREQUEST_RESTART
    WHERE parent = srId;
   -- link DiskCopy and FileSystem and update DiskCopyStatus
-  UPDATE DiskCopy SET status = 6, -- DISKCOPY_STAGEOUT
-                      fileSystem = fsId,
-                      nbCopyAccesses = nbCopyAccesses + 1
+  UPDATE DiskCopy 
+     SET status = 6, -- DISKCOPY_STAGEOUT
+         fileSystem = fsId,
+         nbCopyAccesses = nbCopyAccesses + 1
    WHERE id = rdcId
    RETURNING status, path
    INTO rdcStatus, rdcPath;
 END;
+/
 
 
 /* PL/SQL method implementing getUpdateStart */
@@ -3898,7 +4101,7 @@ BEGIN
     raise_application_error(-20114, 'Job scheduled to the wrong service class. Giving up.');
   END;
   -- Try to find local DiskCopy
-  SELECT /*+ INDEX(DISKCOPY I_DISKCOPY_CASTORFILE) */ id, nbCopyAccesses, gcWeight, creationTime
+  SELECT /*+ INDEX(DiskCopy I_DiskCopy_Castorfile) */ id, nbCopyAccesses, gcWeight, creationTime
     INTO dcId, nbac, gcw, cTime
     FROM DiskCopy
    WHERE DiskCopy.castorfile = cfId
@@ -3968,6 +4171,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   dci := 0;
   rpath := '';
 END;
+/
 
 
 /* PL/SQL method implementing disk2DiskCopyStart */
@@ -4061,6 +4265,7 @@ BEGIN
     raise_application_error(-20110, 'A transfer has already started for this DiskCopy.');
   END IF;
 END;
+/
 
 
 /* PL/SQL method implementing disk2DiskCopyDone */
@@ -4069,8 +4274,6 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   srId INTEGER;
   cfId INTEGER;
   fsId INTEGER;
-  maxRepl INTEGER;
-  repl INTEGER;
   srcStatus INTEGER;
   proto VARCHAR2(2048);
   reqId NUMBER;
@@ -4081,88 +4284,75 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   ouid INTEGER;
   ogid INTEGER;
 BEGIN
-  -- try to get the source status
-  SELECT status, gcWeight, diskCopySize INTO srcStatus, gcw, fileSize
-    FROM DiskCopy WHERE id = srcDcId;
-  -- In case the status is null, it means that the source has been GCed
-  -- while the disk to disk copy was processed. We will invalidate the
-  -- brand new copy as we don't know in which status is should be
-  IF srcStatus IS NULL THEN
+  -- Lock the CastorFile
+  SELECT castorFile INTO cfId
+    FROM DiskCopy
+   WHERE id = dcId;
+  SELECT id INTO cfId FROM CastorFile WHERE id = cfId FOR UPDATE;
+  -- Try to get the source diskcopy status
+  BEGIN
+    SELECT status, gcWeight, diskCopySize
+      INTO srcStatus, gcw, fileSize
+      FROM DiskCopy
+     WHERE id = srcDcId
+       AND status IN (0, 10);  -- STAGED, CANBEMIGR
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- If no diskcopy was returned it means that the source has either:
+    --   A) Been GCed while the copying was taking place or
+    --   B) The diskcopy is no longer in a STAGED or CANBEMIGR state.
+    -- As we do not know which status to put the new copy in and/or
+    -- cannot trust that the file was not modified mid transfer, we
+    -- invalidate the new copy.
     UPDATE DiskCopy SET status = 7 WHERE id = dcId -- INVALID
     RETURNING CastorFile, FileSystem INTO cfId, fsId;
-    -- restart the SubRequests waiting for the copy
+    -- Restart the SubRequests waiting for the copy
     UPDATE SubRequest SET status = 1, -- SUBREQUEST_RESTART
                           lastModificationTime = getTime()
      WHERE diskCopy = dcId RETURNING id INTO srId;
     UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
      WHERE parent = srId; -- SUBREQUEST_RESTART
-    -- update filesystem status
+    -- Update filesystem status
     updateFsFileClosed(fsId);
-    -- archive the diskCopy replica request
+    -- Archive the diskCopy replica request
     archiveSubReq(srId);
     RETURN;
-  END IF;
-  -- otherwise, we can validate the new diskcopy
+  END;
+  -- Otherwise, we can validate the new diskcopy
   -- update SubRequest and get data
   UPDATE SubRequest SET status = 6, -- SUBREQUEST_READY
                         getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
                         lastModificationTime = getTime()
    WHERE diskCopy = dcId RETURNING id, protocol, request
     INTO srId, proto, reqId;
-  SELECT SvcClass.id, maxReplicaNb
-    INTO svcClassId, maxRepl
+  SELECT SvcClass.id INTO svcClassId
     FROM SvcClass, StageDiskCopyReplicaRequest Req, SubRequest
    WHERE SubRequest.id = srId
      AND SubRequest.request = Req.id
      AND Req.svcClass = SvcClass.id;
-  -- compute gcWeight
+  -- Compute gcWeight
   gcwProc := castorGC.getCopyWeight(svcClassId);
   EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:size, :status, :gcw); END;'
     USING OUT gcw, IN fileSize, srcStatus, gcw;
-  -- update status
+  -- Update status
   UPDATE DiskCopy
      SET status = srcStatus,
          gcWeight = gcw
    WHERE id = dcId
   RETURNING castorFile, fileSystem, owneruid, ownergid
     INTO cfId, fsId, ouid, ogid;
-  -- Lock the castorfile
-  SELECT id INTO cfId FROM CastorFile WHERE id = cfId FOR UPDATE;
-  -- If the maxReplicaNb is exceeded, update one of the diskcopies in a
-  -- DRAINING filesystem to INVALID.
-  SELECT count(*) INTO repl
-    FROM DiskCopy, FileSystem, DiskPool2SvcClass DP2SC
-   WHERE castorFile = cfId
-     AND DiskCopy.fileSystem = FileSystem.id
-     AND FileSystem.diskPool = DP2SC.parent
-     AND DP2SC.child = svcClassId
-     AND DiskCopy.status IN (0, 10);  -- STAGED, CANBEMIGR
-  IF repl > maxRepl THEN
-    -- We did replicate only because of a DRAINING filesystem.
-    -- Invalidate one of the original diskcopies, not all of them for
-    -- fault resiliency purposes
-    UPDATE DiskCopy SET status = 7
-     WHERE status IN (0, 10)  -- STAGED, CANBEMIGR
-       AND castorFile = cfId
-       AND fileSystem IN (
-         SELECT FileSystem.id
-           FROM FileSystem, DiskPool2SvcClass DP2SC
-          WHERE FileSystem.diskPool = DP2SC.parent
-            AND DP2SC.child = svcClassId
-            AND status = 1)  -- DRAINING
-       AND ROWNUM < 2;
-  END IF;
-  -- archive the diskCopy replica request
-  archiveSubReq(srId);
-  -- update filesystem status
+  -- Update filesystem status
   updateFsFileClosed(fsId);
+  -- Archive the diskCopy replica request
+  archiveSubReq(srId);
   -- Trigger the creation of additional copies of the file, if necessary.
   replicateOnClose(cfId, ouid, ogid);
   -- Wake up waiting subrequests
   UPDATE SubRequest SET status = 1,  -- SUBREQUEST_RESTART
-         lastModificationTime = getTime(), parent = 0
+                        lastModificationTime = getTime(),
+                        parent = 0
    WHERE parent = srId;
 END;
+/
 
 
 /* PL/SQL method implementing disk2DiskCopyFailed */
@@ -4208,8 +4398,11 @@ BEGIN
     updateFsFileClosed(fsId);
   END IF;
   -- Trigger the creation of additional copies of the file, if necessary.
+  -- Note: We do this also on failure to be able to recover from transient
+  -- errors. E.g timeouts while waiting to be scheduled.
   replicateOnClose(cfId, ouid, ogid);
 END;
+/
 
 
 /* PL/SQL method implementing prepareForMigration */
@@ -4230,8 +4423,10 @@ CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
   contextPIPP INTEGER;
 BEGIN
   errorCode := 0;
-  -- get CastorFile
+  -- Get CastorFile
   SELECT castorFile, diskCopy INTO cfId, dcId FROM SubRequest WHERE id = srId;
+  -- Lock the CastorFile
+  SELECT id INTO cfId FROM CastorFile WHERE id = cfId FOR UPDATE;
   -- Determine the context (Put inside PrepareToPut or not)
   -- check that we are a Put or an Update
   SELECT Request.id INTO unused
@@ -4241,7 +4436,7 @@ BEGIN
    WHERE SubRequest.id = srId
      AND Request.id = SubRequest.request;
   BEGIN
-    -- check that there is a PrepareToPut/Update going on. There can be only a single one
+    -- Check that there is a PrepareToPut/Update going on. There can be only a single one
     -- or none. If there was a PrepareTo, any subsequent PPut would be rejected and any
     -- subsequent PUpdate would be directly archived (cf. processPrepareRequest).
     SELECT SubRequest.diskCopy INTO unused
@@ -4257,22 +4452,21 @@ BEGIN
     -- here we are a standalone Put
     contextPIPP := 1;
   END;
-
   -- Check whether the diskCopy is still in STAGEOUT. If not, the file
   -- was deleted via stageRm while being written to. Thus, we should just give up
   BEGIN
     SELECT status INTO unused
       FROM DiskCopy WHERE id = dcId AND status = 6; -- STAGEOUT
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- so we are in the case, we give up
+    -- So we are in the case, we give up
     errorCode := 1;
-    -- but we still would like to have the fileId and nameserver
+    -- But we still would like to have the fileId and nameserver
     -- host for logging reasons
     SELECT fileId, nsHost INTO fId, nh
       FROM CastorFile WHERE id = cfId;
     RETURN;
   END;
-  -- now we can safely update CastorFile's file size
+  -- Now we can safely update CastorFile's file size
   UPDATE CastorFile SET fileSize = fs, lastUpdateTime = ts
    WHERE id = cfId AND (lastUpdateTime IS NULL OR ts > lastUpdateTime);
   -- If ts < lastUpdateTime, we were late and another job already updated the
@@ -4283,18 +4477,16 @@ BEGIN
     FROM CastorFile
     WHERE id = cfId
     FOR UPDATE;
-  -- get uid, gid and svcclass from Request
+  -- Get uid, gid and svcclass from Request
   SELECT euid, egid, svcClass INTO userId, groupId, scId
     FROM SubRequest,
       (SELECT euid, egid, id, svcClass from StagePutRequest UNION ALL
        SELECT euid, egid, id, svcClass from StageUpdateRequest UNION ALL
        SELECT euid, egid, id, svcClass from StagePutDoneRequest) Request
    WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
-
+  -- Get the filesystem of the DiskCopy
   SELECT fileSystem INTO fsId from DiskCopy
    WHERE castorFile = cfId AND status = 6;
-  updateFsFileClosed(fsId);
-
   IF contextPIPP != 0 THEN
     -- If not a put inside a PrepareToPut/Update, create TapeCopies
     -- and update DiskCopy status
@@ -4310,10 +4502,13 @@ BEGIN
           AND SubRequest.castorFile = cfId
           AND SubRequest.status = 5); -- WAITSUBREQ
   END IF;
-  -- archive Subrequest
+  -- Update filesystem status
+  updateFsFileClosed(fsId);
+  -- Archive Subrequest
   archiveSubReq(srId);
   COMMIT;
 END;
+/
 
 
 /* PL/SQL method implementing getUpdateDone */
@@ -4322,6 +4517,7 @@ CREATE OR REPLACE PROCEDURE getUpdateDoneProc
 BEGIN
   archiveSubReq(subReqId);
 END;
+/
 
 
 /* PL/SQL method implementing getUpdateFailed */
@@ -4333,6 +4529,7 @@ BEGIN
   UPDATE SubRequest SET status = 1 -- RESTART
    WHERE parent = srId;
 END;
+/
 
 
 /* PL/SQL method implementing putFailedProc */
@@ -4353,10 +4550,10 @@ BEGIN
     IF fsId > 0 THEN
       updateFsFileClosed(fsId);
     END IF;
-  -- ELSE the subRequest is not linked to a diskCopy: should never happen,
-  -- but we observed NO DATA FOUND errors and the above SELECT is the only
-  -- query that could trigger them! Anyway it's fine to ignore the FS update,
-  -- it will be properly updated by the monitoring.
+    -- ELSE the subRequest is not linked to a diskCopy: should never happen,
+    -- but we observed NO DATA FOUND errors and the above SELECT is the only
+    -- query that could trigger them! Anyway it's fine to ignore the FS update,
+    -- it will be properly updated by the monitoring.
   END IF;
   -- Determine the context (Put inside PrepareToPut/Update ?)
   BEGIN
@@ -4388,6 +4585,7 @@ BEGIN
     deleteCastorFile(cfId);
   END;
 END;
+/
 
 
 /* PL/SQL method implementing getSchedulerResources */
@@ -4406,6 +4604,7 @@ BEGIN
            AND FileSystem.diskPool = DiskPool2SvcClass.parent
            AND DiskPool2SvcClass.child = SvcClass.id;
 END;
+/
 
 
 /* PL/SQL method implementing failSchedulerJob */
@@ -4456,6 +4655,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   res := 0;
   RETURN;
 END;
+/
 
 
 /* PL/SQL method implementing postJobChecks */
@@ -4476,6 +4676,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   res := 0;
   RETURN;
 END;
+/
 
 
 /* PL/SQL method implementing jobToSchedule */
@@ -4585,9 +4786,10 @@ BEGIN
          AND DiskCopy.status IN (0, 1, 2, 10); -- STAGED, DISK2DISKCOPY, WAITTAPERECALL, CANBEMIGR
   END IF;
 END;
+/
 /*******************************************************************
  *
- * @(#)RCSfile: oracleQuery.sql,v  Revision: 1.643  Date: 2008/09/01 17:18:14  Author: waldron 
+ * @(#)RCSfile: oracleQuery.sql,v  Revision: 1.647  Date: 2008/11/06 13:20:06  Author: waldron 
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -4612,10 +4814,10 @@ BEGIN
       SELECT fileId, nsHost, dcId, path, fileSize, status, machine, mountPoint, nbCopyAccesses, lastKnownFileName
          FROM (SELECT
              -- we need to give these hints to the optimizer otherwise it goes for a full table scan (!)
-             UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id as dcId,
+             UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id AS dcId,
              DC.path, CastorFile.fileSize,
              CASE WHEN DC.id IS NULL THEN
-                 nvl((SELECT UNIQUE decode(SubRequest.status, 0,2, 3,2, -1)
+                 nvl((SELECT UNIQUE decode(SubRequest.status, 0, 2, 3, 2, -1)
                     FROM SubRequest,
                         (SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
                          SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
@@ -4623,14 +4825,14 @@ BEGIN
                          SELECT id, svcClass FROM StageRepackRequest UNION ALL
                          SELECT id, svcClass FROM StageGetRequest) Req
                           WHERE SubRequest.CastorFile = CastorFile.id
-                            AND Subrequest.status in (0,3)
+                            AND Subrequest.status IN (0, 3)
                             AND request = Req.id), -1)
-                  ELSE DC.status END as status,
+                  ELSE DC.status END AS status,
              DC.machine, DC.mountPoint,
              DC.nbCopyAccesses, CastorFile.lastKnownFileName
         FROM CastorFile,
-             (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name as machine, FileSystem.mountPoint,
-                     DiskPool2SvcClass.child as dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile, DiskCopy.nbCopyAccesses
+             (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name AS machine, FileSystem.mountPoint,
+                     DiskPool2SvcClass.child AS dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile, DiskCopy.nbCopyAccesses
                 FROM FileSystem, DiskServer, DiskPool2SvcClass,
                      (SELECT id, status, filesystem, castorFile, path, nbCopyAccesses FROM DiskCopy
                        WHERE CastorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
@@ -4643,7 +4845,7 @@ BEGIN
                  AND nvl(DiskServer.status, 0) = 0 -- PRODUCTION
                  AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool) DC
        WHERE CastorFile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
-         AND CastorFile.id = DC.castorFile(+))    -- search for valid diskcopy
+         AND CastorFile.id = DC.castorFile(+))  -- search for valid diskcopy
     WHERE status != -1 -- when no diskcopy and no subrequest available, ignore garbage
     ORDER BY fileid, nshost;
   ELSE
@@ -4654,7 +4856,7 @@ BEGIN
       SELECT fileId, nsHost, dcId, path, fileSize, srStatus, machine, mountPoint, nbCopyAccesses, lastKnownFileName
         FROM (SELECT
             -- we need to give these hints to the optimizer otherwise it goes for a full table scan (!)
-            UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id as dcId,
+            UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id AS dcId,
             DC.path, CastorFile.fileSize, DC.status,
             CASE WHEN DC.dcSvcClass = svcClassId THEN DC.status
                  WHEN DC.fileSystem = 0 THEN
@@ -4669,7 +4871,7 @@ BEGIN
                            AND request = Req.id
                            AND svcClass = svcClassId)
                  WHEN DC.id IS NULL THEN
-                (SELECT UNIQUE decode(SubRequest.status, 0,2, 3,2, -1)
+                (SELECT UNIQUE decode(SubRequest.status, 0, 2, 3, 2, -1)
                    FROM SubRequest,
                        (SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
                         SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
@@ -4678,12 +4880,12 @@ BEGIN
                         SELECT id, svcClass FROM StageGetRequest) Req
                          WHERE SubRequest.CastorFile = CastorFile.id
                            AND request = Req.id
-                           AND svcClass = svcClassId) END as srStatus,
+                           AND svcClass = svcClassId) END AS srStatus,
             DC.machine, DC.mountPoint,
             DC.nbCopyAccesses, CastorFile.lastKnownFileName
        FROM CastorFile,
-            (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name as machine, FileSystem.mountPoint,
-                    DiskPool2SvcClass.child as dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile, DiskCopy.nbCopyAccesses
+            (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name AS machine, FileSystem.mountPoint,
+                    DiskPool2SvcClass.child AS dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile, DiskCopy.nbCopyAccesses
                FROM FileSystem, DiskServer, DiskPool2SvcClass,
                     (SELECT id, status, filesystem, castorFile, path, nbCopyAccesses FROM DiskCopy
                       WHERE CastorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
@@ -4696,11 +4898,12 @@ BEGIN
                 AND nvl(DiskServer.status, 0) = 0 -- PRODUCTION
                 AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool) DC
       WHERE CastorFile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
-        AND CastorFile.id = DC.castorFile(+))    -- search for valid diskcopy
+        AND CastorFile.id = DC.castorFile(+))  -- search for valid diskcopy
       WHERE srStatus != -1
       ORDER BY fileid, nshost;
    END IF;
 END;
+/
 
 
 /*
@@ -4713,12 +4916,12 @@ CREATE OR REPLACE PROCEDURE fileNameStageQuery
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
 BEGIN
-  IF substr(fn, -1, 1) = '/' THEN    -- files in a 'subdirectory'
+  IF substr(fn, -1, 1) = '/' THEN  -- files in a 'subdirectory'
     SELECT /*+ INDEX(CastorFile I_CastorFile_LastKnownFileName) */ id BULK COLLECT INTO cfs
       FROM CastorFile
      WHERE lastKnownFileName LIKE fn||'%'
        AND ROWNUM <= maxNbResponses + 1;
-  ELSE                                  -- exact match
+  ELSE  -- exact match
     SELECT /*+ INDEX(CastorFile I_CastorFile_LastKnownFileName) */ id BULK COLLECT INTO cfs
       FROM CastorFile
      WHERE lastKnownFileName = REGEXP_REPLACE(fn,'(/){2,}','/');
@@ -4729,6 +4932,7 @@ BEGIN
   END IF;
   internalStageQuery(cfs, svcClassId, result);
 END;
+/
 
 
 /*
@@ -4738,12 +4942,26 @@ CREATE OR REPLACE PROCEDURE fileIdStageQuery
  (fid IN NUMBER,
   nh IN VARCHAR2,
   svcClassId IN INTEGER,
+  fileName IN VARCHAR2,
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
+  currentFileName VARCHAR2(2048);  
 BEGIN
+  -- Extract CastorFile ids FROM the fileid
   SELECT id BULK COLLECT INTO cfs FROM CastorFile WHERE fileId = fid AND nshost = nh;
+  -- Check and fix when needed the LastKnownFileNames
+  SELECT lastKnownFileName INTO currentFileName
+    FROM CastorFile
+   WHERE id = cfs(cfs.FIRST);
+  IF currentFileName != fileName THEN
+    UPDATE CastorFile SET lastKnownFileName = fileName
+     WHERE id = cfs(cfs.FIRST);
+    COMMIT;
+  END IF;
+  -- Finally issue the actual query
   internalStageQuery(cfs, svcClassId, result);
 END;
+/
 
 
 /*
@@ -4788,6 +5006,7 @@ BEGIN
     notfound := 1;
   END IF;
 END;
+/
 
 
 /*
@@ -4828,6 +5047,7 @@ BEGIN
     notfound := 1;
   END IF;
 END;
+/
 
 
 /*
@@ -4855,7 +5075,7 @@ BEGIN
            WHERE reqid LIKE rid
           );
   IF reqs.COUNT > 0 THEN
-    FORALL i in reqs.FIRST..reqs.LAST
+    FORALL i IN reqs.FIRST..reqs.LAST
       UPDATE SubRequest SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED
        WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
          AND request = reqs(i)
@@ -4865,6 +5085,7 @@ BEGIN
     notfound := 1;
   END IF;
 END;
+/
 
 
 /*
@@ -4888,7 +5109,7 @@ BEGIN
            WHERE userTag LIKE tag
           );
   IF reqs.COUNT > 0 THEN
-    FORALL i in reqs.FIRST..reqs.LAST
+    FORALL i IN reqs.FIRST..reqs.LAST
       UPDATE SubRequest SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED
        WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
          AND request = reqs(i)
@@ -4898,6 +5119,7 @@ BEGIN
     notfound := 1;
   END IF;
 END;
+/
 
 
 /*
@@ -4911,34 +5133,58 @@ BEGIN
   -- get both the list of filesystems and a summary per diskserver and per
   -- diskpool. The grouping analytic function also allows to mark the summary
   -- lines for easy detection in the C++ code
-  OPEN result FOR
-    SELECT grouping(ds.name) AS IsDSGrouped,
-           grouping(fs.mountPoint) AS IsFSGrouped,
-           dp.name,
-           ds.name, ds.status, fs.mountPoint,
-           sum(decode(sign(fs.free - fs.minAllowedFreeSpace * fs.totalSize), -1, 0,
-	       fs.free - fs.minAllowedFreeSpace * fs.totalSize)) AS freeSpace,
-           sum(fs.totalSize),
-           fs.minFreeSpace, fs.maxFreeSpace, fs.status
-      FROM FileSystem fs, DiskServer ds, DiskPool dp,
-           DiskPool2SvcClass d2s, SvcClass sc
-     WHERE (sc.name = svcClassName OR svcClassName IS NULL)
-       AND sc.id = d2s.child
-       AND checkPermissionOnSvcClass(sc.name, reqEuid, reqEgid, 103) = 0
-       AND d2s.parent = dp.id
-       AND dp.id = fs.diskPool
-       AND ds.id = fs.diskServer
-       GROUP BY grouping sets(
-           (dp.name, ds.name, ds.status, fs.mountPoint,
-             decode(sign(fs.free - fs.minAllowedFreeSpace * fs.totalSize), -1, 0,
-	       fs.free - fs.minAllowedFreeSpace * fs.totalSize),
-             fs.totalSize,
-             fs.minFreeSpace, fs.maxFreeSpace, fs.status),
-           (dp.name, ds.name, ds.status),
-           (dp.name)
-          )
-       ORDER BY dp.name, IsDSGrouped DESC, ds.name, IsFSGrouped DESC, fs.mountpoint;
-
+  IF svcClassName IS NULL THEN
+    OPEN result FOR
+      SELECT grouping(ds.name) AS IsDSGrouped,
+            grouping(fs.mountPoint) AS IsFSGrouped,
+              dp.name,
+             ds.name, ds.status, fs.mountPoint,
+             sum(decode(sign(fs.free - fs.minAllowedFreeSpace * fs.totalSize), -1, 0,
+	         fs.free - fs.minAllowedFreeSpace * fs.totalSize)) AS freeSpace,
+             sum(fs.totalSize),
+             fs.minFreeSpace, fs.maxFreeSpace, fs.status
+        FROM FileSystem fs, DiskServer ds, DiskPool dp
+       WHERE dp.id = fs.diskPool
+         AND ds.id = fs.diskServer
+         GROUP BY grouping sets(
+             (dp.name, ds.name, ds.status, fs.mountPoint,
+               decode(sign(fs.free - fs.minAllowedFreeSpace * fs.totalSize), -1, 0,
+	         fs.free - fs.minAllowedFreeSpace * fs.totalSize),
+               fs.totalSize,
+               fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+             (dp.name, ds.name, ds.status),
+             (dp.name)
+            )
+         ORDER BY dp.name, IsDSGrouped DESC, ds.name, IsFSGrouped DESC, fs.mountpoint;
+  ELSE 
+    OPEN result FOR
+      SELECT grouping(ds.name) AS IsDSGrouped,
+             grouping(fs.mountPoint) AS IsFSGrouped,
+              dp.name,
+             ds.name, ds.status, fs.mountPoint,
+             sum(decode(sign(fs.free - fs.minAllowedFreeSpace * fs.totalSize), -1, 0,
+  	       fs.free - fs.minAllowedFreeSpace * fs.totalSize)) AS freeSpace,
+             sum(fs.totalSize),
+             fs.minFreeSpace, fs.maxFreeSpace, fs.status
+        FROM FileSystem fs, DiskServer ds, DiskPool dp,
+             DiskPool2SvcClass d2s, SvcClass sc
+       WHERE sc.name = svcClassName
+         AND sc.id = d2s.child
+         AND checkPermissionOnSvcClass(sc.name, reqEuid, reqEgid, 103) = 0
+         AND d2s.parent = dp.id
+         AND dp.id = fs.diskPool
+         AND ds.id = fs.diskServer
+         GROUP BY grouping sets(
+             (dp.name, ds.name, ds.status, fs.mountPoint,
+               decode(sign(fs.free - fs.minAllowedFreeSpace * fs.totalSize), -1, 0,
+	         fs.free - fs.minAllowedFreeSpace * fs.totalSize),
+               fs.totalSize,
+               fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+             (dp.name, ds.name, ds.status),
+             (dp.name)
+            )
+         ORDER BY dp.name, IsDSGrouped DESC, ds.name, IsFSGrouped DESC, fs.mountpoint;
+  END IF;
   -- If no results are available, check to see if any diskpool exists and if
   -- access to view all the diskpools has been revoked. The information extracted
   -- here will be used to send an appropriate error message to the client.
@@ -4952,6 +5198,7 @@ BEGIN
        AND (sc.name = svcClassName OR svcClassName IS NULL);
   END IF;
 END;
+/
 
 
 
@@ -4966,31 +5213,53 @@ BEGIN
   -- get both the list of filesystems and a summary per diskserver and per
   -- diskpool. The grouping analytic function also allows to mark the summary
   -- lines for easy detection in the C++ code
-  OPEN result FOR
-    SELECT grouping(ds.name) AS IsDSGrouped,
-           grouping(fs.mountPoint) AS IsGrouped,
-           ds.name, ds.status, fs.mountPoint,
-           sum(fs.free - fs.minAllowedFreeSpace * fs.totalSize) AS freeSpace,
-           sum(fs.totalSize),
-           fs.minFreeSpace, fs.maxFreeSpace, fs.status
-      FROM FileSystem fs, DiskServer ds, DiskPool dp,
-           DiskPool2SvcClass d2s, SvcClass sc
-     WHERE (sc.name = svcClassName OR svcClassName IS NULL)
-       AND sc.id = d2s.child
-       AND d2s.parent = dp.id
-       AND dp.id = fs.diskPool
-       AND ds.id = fs.diskServer
-       AND dp.name = diskPoolName
-       group by grouping sets(
-           (ds.name, ds.status, fs.mountPoint,
-             fs.free - fs.minAllowedFreeSpace * fs.totalSize,
-             fs.totalSize,
-             fs.minFreeSpace, fs.maxFreeSpace, fs.status),
-           (ds.name, ds.status),
-           (dp.name)
-          )
-       order by IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint;
-
+  IF svcClassName IS NULL THEN
+    OPEN result FOR
+      SELECT grouping(ds.name) AS IsDSGrouped,
+             grouping(fs.mountPoint) AS IsGrouped,
+             ds.name, ds.status, fs.mountPoint,
+             sum(fs.free - fs.minAllowedFreeSpace * fs.totalSize) AS freeSpace,
+             sum(fs.totalSize),
+             fs.minFreeSpace, fs.maxFreeSpace, fs.status
+        FROM FileSystem fs, DiskServer ds, DiskPool dp
+       WHERE dp.id = fs.diskPool
+         AND ds.id = fs.diskServer
+         AND dp.name = diskPoolName
+         GROUP BY grouping sets(
+             (ds.name, ds.status, fs.mountPoint,
+               fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+               fs.totalSize,
+               fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+             (ds.name, ds.status),
+             (dp.name)
+            )
+         ORDER BY IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint;
+  ELSE
+    OPEN result FOR
+      SELECT grouping(ds.name) AS IsDSGrouped,
+             grouping(fs.mountPoint) AS IsGrouped,
+             ds.name, ds.status, fs.mountPoint,
+             sum(fs.free - fs.minAllowedFreeSpace * fs.totalSize) AS freeSpace,
+             sum(fs.totalSize),
+             fs.minFreeSpace, fs.maxFreeSpace, fs.status
+        FROM FileSystem fs, DiskServer ds, DiskPool dp,
+             DiskPool2SvcClass d2s, SvcClass sc
+       WHERE sc.name = svcClassName
+         AND sc.id = d2s.child
+         AND d2s.parent = dp.id
+         AND dp.id = fs.diskPool
+         AND ds.id = fs.diskServer
+         AND dp.name = diskPoolName
+         GROUP BY grouping sets(
+             (ds.name, ds.status, fs.mountPoint,
+               fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+               fs.totalSize,
+               fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+             (ds.name, ds.status),
+             (dp.name)
+            )
+         ORDER BY IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint;
+  END IF;
   -- If no results are available, check to see if any diskpool exists and if
   -- access to view all the diskpools has been revoked. The information extracted
   -- here will be used to send an appropriate error message to the client.
@@ -5003,15 +5272,15 @@ BEGIN
        AND (sc.name = svcClassName OR svcClassName IS NULL);
   END IF;
 END;
+/
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTape.sql,v  Revision: 1.681  Date: 2008/09/22 12:53:38  Author: waldron 
+ * @(#)RCSfile: oracleTape.sql,v  Revision: 1.692  Date: 2008/11/10 14:03:37  Author: itglp 
  *
  * PL/SQL code for the interface to the tape system
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
-
 
 /* Used to create a row INTO NbTapeCopiesInFS whenever a new
    Stream is created */
@@ -5023,6 +5292,7 @@ BEGIN
     INSERT INTO NbTapeCopiesInFS (FS, Stream, NbTapeCopies) VALUES (item.id, :new.id, 0);
   END LOOP;
 END;
+/
 
 
 /* Used to delete rows IN NbTapeCopiesInFS whenever a
@@ -5033,6 +5303,7 @@ FOR EACH ROW
 BEGIN
   DELETE FROM NbTapeCopiesInFS WHERE Stream = :old.id;
 END;
+/
 
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
@@ -5055,6 +5326,7 @@ BEGIN
                    AND DiskCopy.status = 10) -- CANBEMIGR
      AND Stream = :new.parent;
 END;
+/
 
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
@@ -5076,6 +5348,7 @@ BEGIN
                    AND DiskCopy.status = 10) -- CANBEMIGR
      AND Stream = :old.parent;
 END;
+/
 
 /************************************************/
 /* Triggers to keep NbTapeCopiesInFS consistent */
@@ -5092,6 +5365,7 @@ BEGIN
   END LOOP;
   INSERT INTO FileSystemsToCheck (FileSystem, ToBeChecked) VALUES (:new.id, 0);
 END;
+/
 
 /* Used to delete rows in NbTapeCopiesInFS and FileSystemsToCheck
    whenever a FileSystem is deleted */
@@ -5102,6 +5376,7 @@ BEGIN
   DELETE FROM NbTapeCopiesInFS WHERE FS = :old.id;
   DELETE FROM FileSystemsToCheck WHERE FileSystem = :old.id;
 END;
+/
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
    whenever a DiskCopy has been replicated and the new one
@@ -5113,8 +5388,8 @@ FOR EACH ROW
 WHEN (old.status = 1 AND -- WAITDISK2DISKCOPY
       new.status = 10) -- CANBEMIGR
 BEGIN
--- added this lock because of severaval copies of different file systems
---  from different streams which can cause deadlock
+  -- added this lock because of severval copies on different file systems
+  -- from different streams which can cause deadlock
   LOCK TABLE  NbTapeCopiesInFS IN ROW SHARE MODE;
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
    WHERE FS = :new.fileSystem
@@ -5124,6 +5399,7 @@ BEGIN
                        AND Stream2TapeCopy.child = TapeCopy.id
                        AND TapeCopy.status = 2); -- WAITINSTREAMS
 END;
+/
 
 
 /* Used to create a row INTO LockTable whenever a new
@@ -5134,6 +5410,7 @@ FOR EACH ROW
 BEGIN
   INSERT INTO LockTable (DiskServerId, TheLock) VALUES (:new.id, 0);
 END;
+/
 
 
 /* Used to delete rows IN LockTable whenever a
@@ -5144,6 +5421,7 @@ FOR EACH ROW
 BEGIN
   DELETE FROM LockTable WHERE DiskServerId = :old.id;
 END;
+/
 
 
 
@@ -5156,6 +5434,7 @@ BEGIN
   UPDATE DiskServer SET nbMigratorStreams = nbMigratorStreams + 1 WHERE id = ds;
   UPDATE FileSystem SET nbMigratorStreams = nbMigratorStreams + 1 WHERE id = fs;
 END;
+/
 
 /* PL/SQL methods to update FileSystem weight for new recaller streams */
 CREATE OR REPLACE PROCEDURE updateFsRecallerOpened
@@ -5168,6 +5447,7 @@ BEGIN
                         free = free - fileSize   -- just an evaluation, monitoring will update it
    WHERE id = fs;
 END;
+/
 
 
 /* PL/SQL method implementing anyTapeCopyForStream.
@@ -5206,6 +5486,7 @@ EXCEPTION
  WHEN NO_DATA_FOUND THEN
   res := 0;
 END;
+/
 
 
 /* PL/SQL method implementing bestTapeCopyForStream */
@@ -5214,7 +5495,8 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
                                                   path OUT VARCHAR2, dci OUT INTEGER,
                                                   castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                   nsHost OUT VARCHAR2, fileSize OUT INTEGER,
-                                                  tapeCopyId OUT INTEGER, optimized IN INTEGER) AS
+                                                  tapeCopyId OUT INTEGER, optimized IN INTEGER,
+                                                  lastUpdateTime OUT INTEGER) AS
   policy VARCHAR(2048);
 BEGIN
   -- get the policy name
@@ -5230,9 +5512,10 @@ BEGIN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     policy := 'defaultMigrSelPolicy';
   END;
-  EXECUTE IMMEDIATE 'BEGIN ' || policy || '(:streamId, :diskServerName, :mountPoint, :path, :dci, :castorFileId, :fileId, :nsHost, :fileSize, :tapeCopyId, :optimized); END;'
-    USING IN streamId, OUT diskServerName, OUT mountPoint, OUT path, OUT dci, OUT castorFileId, OUT fileId, OUT nsHost, OUT fileSize, OUT tapeCopyId, IN optimized;
+  EXECUTE IMMEDIATE 'BEGIN ' || policy || '(:streamId, :diskServerName, :mountPoint, :path, :dci, :castorFileId, :fileId, :nsHost, :fileSize, :tapeCopyId, :optimized, :lastUpdateTime); END;'
+    USING IN streamId, OUT diskServerName, OUT mountPoint, OUT path, OUT dci, OUT castorFileId, OUT fileId, OUT nsHost, OUT fileSize, OUT tapeCopyId, IN optimized, OUT lastUpdateTime;
 END;
+/
 
 /* default migration candidate selection policy */
 CREATE OR REPLACE PROCEDURE defaultMigrSelPolicy(streamId IN INTEGER,
@@ -5240,7 +5523,8 @@ CREATE OR REPLACE PROCEDURE defaultMigrSelPolicy(streamId IN INTEGER,
                                                  path OUT VARCHAR2, dci OUT INTEGER,
                                                  castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                  nsHost OUT VARCHAR2, fileSize OUT INTEGER,
-                                                 tapeCopyId OUT INTEGER, optimized IN INTEGER) AS
+                                                 tapeCopyId OUT INTEGER, optimized IN INTEGER,
+                                                 lastUpdateTime OUT INTEGER) AS
   fileSystemId INTEGER := 0;
   dsid NUMBER;
   fsDiskServer NUMBER;
@@ -5271,18 +5555,18 @@ BEGIN
            AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
         -- we are within the time range, so we try to reuse the filesystem
         SELECT /*+ FIRST_ROWS(1)  LEADING(D T ST) */
-               DiskCopy.path, DiskCopy.id, DiskCopy.castorfile, TapeCopy.id
+               D.path, D.id, D.castorfile, T.id
           INTO path, dci, castorFileId, tapeCopyId
-          FROM DiskCopy, TapeCopy, Stream2TapeCopy
-         WHERE DiskCopy.status = 10 -- CANBEMIGR
-           AND DiskCopy.filesystem = lastButOneFSUsed
-           AND Stream2TapeCopy.parent = streamId
-           AND TapeCopy.status = 2 -- WAITINSTREAMS
-           AND Stream2TapeCopy.child = TapeCopy.id
-           AND TapeCopy.castorfile = DiskCopy.castorfile
+          FROM DiskCopy D, TapeCopy T, Stream2TapeCopy ST
+         WHERE D.status = 10 -- CANBEMIGR
+           AND D.filesystem = lastButOneFSUsed
+           AND ST.parent = streamId
+           AND T.status = 2 -- WAITINSTREAMS
+           AND ST.child = T.id
+           AND T.castorfile = D.castorfile
            AND ROWNUM < 2;
-        SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize
-          INTO fileId, nsHost, fileSize
+        SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize, CastorFile.lastUpdateTime
+          INTO fileId, nsHost, fileSize, lastUpdateTime
           FROM CastorFile
          WHERE Id = castorFileId;
         -- we found one, no need to go for new filesystem
@@ -5345,18 +5629,18 @@ BEGIN
          ) FN
      WHERE ROWNUM < 2;
     SELECT /*+ FIRST_ROWS(1)  LEADING(D T ST) */
-           DiskCopy.path, DiskCopy.id, DiskCopy.castorfile, TapeCopy.id
+           D.path, D.id, D.castorfile, T.id
       INTO path, dci, castorFileId, tapeCopyId
-      FROM DiskCopy, TapeCopy, Stream2TapeCopy
-     WHERE DiskCopy.status = 10 -- CANBEMIGR
-       AND DiskCopy.filesystem = fileSystemId
-       AND Stream2TapeCopy.parent = streamId
-       AND TapeCopy.status = 2 -- WAITINSTREAMS
-       AND Stream2TapeCopy.child = TapeCopy.id
-       AND TapeCopy.castorfile = DiskCopy.castorfile
+      FROM DiskCopy D, TapeCopy T, Stream2TapeCopy ST
+     WHERE D.status = 10 -- CANBEMIGR
+       AND D.filesystem = fileSystemId
+       AND ST.parent = streamId
+       AND T.status = 2 -- WAITINSTREAMS
+       AND ST.child = T.id
+       AND T.castorfile = D.castorfile
        AND ROWNUM < 2;
-    SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize
-      INTO fileId, nsHost, fileSize
+    SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize, CastorFile.lastUpdateTime
+      INTO fileId, nsHost, fileSize, lastUpdateTime
       FROM CastorFile
      WHERE id = castorFileId;
   END IF;
@@ -5413,7 +5697,8 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
-			    0);
+			    0,
+                            lastUpdateTime);
       -- Since we recursively called ourselves, we should not do
       -- any update in the outer call
       RETURN;
@@ -5442,9 +5727,11 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
-			    optimized);
+			    optimized,
+                            lastUpdateTime);
     END IF;
 END;
+/
 
 /* drain disk migration candidate selection policy */
 CREATE OR REPLACE PROCEDURE drainDiskMigrSelPolicy(streamId IN INTEGER,
@@ -5452,7 +5739,8 @@ CREATE OR REPLACE PROCEDURE drainDiskMigrSelPolicy(streamId IN INTEGER,
                                                    path OUT VARCHAR2, dci OUT INTEGER,
                                                    castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                    nsHost OUT VARCHAR2, fileSize OUT INTEGER,
-                                                   tapeCopyId OUT INTEGER, optimized IN INTEGER) AS
+                                                   tapeCopyId OUT INTEGER, optimized IN INTEGER,
+                                                   lastUpdateTime OUT INTEGER) AS
   fileSystemId INTEGER := 0;
   dsid NUMBER;
   fsDiskServer NUMBER;
@@ -5482,15 +5770,15 @@ BEGIN
            AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
         -- we are within the time range, so we try to reuse the filesystem
         SELECT P.path, P.diskcopy_id, P.castorfile,
-             C.fileId, C.nsHost, C.fileSize, P.id
-        INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
-        FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
+             C.fileId, C.nsHost, C.fileSize, P.id, C.lastUpdateTime
+        INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
+        FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TapeCopy_CF_Status_2) INDEX(ST I_PK_Stream2TapeCopy) */
               D.path, D.diskcopy_id, D.castorfile, T.id
-                FROM (SELECT /*+ INDEX(DK I_DISKCOPY_FS_STATUS_10) */
-                             DiskCopy.path path, DiskCopy.id diskcopy_id, DiskCopy.castorfile
-                        FROM DiskCopy
-                       WHERE decode(DiskCopy.status,10,DiskCopy.status,null) = 10 -- CANBEMIGR
-                         AND DiskCopy.filesystem = lastFSUsed) D,
+                FROM (SELECT /*+ INDEX(DK I_DiskCopy_FS_Status_10) */
+                             DK.path path, DK.id diskcopy_id, DK.castorfile
+                        FROM DiskCopy DK
+                       WHERE decode(DK.status,10,DK.status,null) = 10 -- CANBEMIGR
+                         AND DK.filesystem = lastFSUsed) D,
                       TapeCopy T, Stream2TapeCopy ST
                WHERE T.castorfile = D.castorfile
                  AND ST.child = T.id
@@ -5574,15 +5862,15 @@ BEGIN
          ) FN
      WHERE ROWNUM < 2;
     SELECT P.path, P.diskcopy_id, P.castorfile,
-           C.fileId, C.nsHost, C.fileSize, P.id
-      INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
-      FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
+           C.fileId, C.nsHost, C.fileSize, P.id, C.lastUpdateTime
+      INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
+      FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TapeCopy_CF_Status_2) INDEX(ST I_PK_Stream2TapeCopy) */
             D.path, D.diskcopy_id, D.castorfile, T.id
-              FROM (SELECT /*+ INDEX(DK I_DISKCOPY_FS_STATUS_10) */
-                           DiskCopy.path path, DiskCopy.id diskcopy_id, DiskCopy.castorfile
-                      FROM DiskCopy
-                     WHERE decode(DiskCopy.status,10,DiskCopy.status,null) = 10 -- CANBEMIGR
-                       AND DiskCopy.filesystem = fileSystemId) D,
+              FROM (SELECT /*+ INDEX(DK I_DiskCopy_FS_Status_10) */
+                           DK.path path, DK.id diskcopy_id, DK.castorfile
+                      FROM DiskCopy DK
+                     WHERE decode(DK.status,10,DK.status,null) = 10 -- CANBEMIGR
+                       AND DK.filesystem = fileSystemId) D,
                     TapeCopy T, Stream2TapeCopy ST
              WHERE T.castorfile = D.castorfile
                AND ST.child = T.id
@@ -5645,7 +5933,8 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
-			    0);
+                            0,
+                            lastUpdateTime);
       -- Since we recursively called ourselves, we should not do
       -- any update in the outer call
       RETURN;
@@ -5674,9 +5963,11 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
-			    optimized);
+                            optimized,
+                            lastUpdateTime);
     END IF;
 END;
+/
 
 /* repack migration candidate selection policy */
 CREATE OR REPLACE PROCEDURE repackMigrSelPolicy(streamId IN INTEGER,
@@ -5684,7 +5975,8 @@ CREATE OR REPLACE PROCEDURE repackMigrSelPolicy(streamId IN INTEGER,
                                                 path OUT VARCHAR2, dci OUT INTEGER,
                                                 castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                 nsHost OUT VARCHAR2, fileSize OUT INTEGER,
-                                                tapeCopyId OUT INTEGER, optimized IN INTEGER) AS
+                                                tapeCopyId OUT INTEGER, optimized IN INTEGER,
+                                                lastUpdateTime OUT INTEGER) AS
   fileSystemId INTEGER := 0;
   dsid NUMBER;
   fsDiskServer NUMBER;
@@ -5740,18 +6032,18 @@ BEGIN
        ) FN
    WHERE ROWNUM < 2;
   SELECT /*+ FIRST_ROWS(1)  LEADING(D T ST) */
-         DiskCopy.path, DiskCopy.id, DiskCopy.castorfile, TapeCopy.id
+         D.path, D.id, D.castorfile, T.id
     INTO path, dci, castorFileId, tapeCopyId
-    FROM DiskCopy, TapeCopy, Stream2TapeCopy
-   WHERE DiskCopy.status = 10 -- CANBEMIGR
-     AND DiskCopy.filesystem = fileSystemId
-     AND Stream2TapeCopy.parent = streamId
-     AND TapeCopy.status = 2 -- WAITINSTREAMS
-     AND Stream2TapeCopy.child = TapeCopy.id
-     AND TapeCopy.castorfile = DiskCopy.castorfile
+    FROM DiskCopy D, TapeCopy T, Stream2TapeCopy ST
+   WHERE D.status = 10 -- CANBEMIGR
+     AND D.filesystem = fileSystemId
+     AND ST.parent = streamId
+     AND T.status = 2 -- WAITINSTREAMS
+     AND ST.child = T.id
+     AND T.castorfile = D.castorfile
      AND ROWNUM < 2;
-  SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize
-    INTO fileId, nsHost, fileSize
+  SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize, CastorFile.lastUpdateTime
+    INTO fileId, nsHost, fileSize, lastUpdateTime
     FROM CastorFile
    WHERE id = castorFileId;
   -- update status of selected tapecopy and stream
@@ -5805,7 +6097,8 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
-			    0);
+			    0,
+                            lastUpdateTime);
       -- Since we recursively called ourselves, we should not do
       -- any update in the outer call
       RETURN;
@@ -5834,14 +6127,16 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
-			    optimized);
+			    optimized,
+                            lastUpdateTime);
     END IF;
 END;
+/
 
 /* PL/SQL method implementing bestFileSystemForSegment */
 CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskServerName OUT VARCHAR2,
                                                      rmountPoint OUT VARCHAR2, rpath OUT VARCHAR2,
-                                                     dcid OUT INTEGER, optimized IN INTEGER) AS
+                                                     dcid OUT INTEGER) AS
   fileSystemId NUMBER;
   cfid NUMBER;
   fsDiskServer NUMBER;
@@ -5886,14 +6181,12 @@ BEGIN
                      (SELECT id, svcClass from StageGetRequest UNION ALL
                       SELECT id, svcClass from StagePrepareToGetRequest UNION ALL
                       SELECT id, svcClass from StageRepackRequest UNION ALL
-                      SELECT id, svcClass from StageGetNextRequest UNION ALL
                       SELECT id, svcClass from StageUpdateRequest UNION ALL
-                      SELECT id, svcClass from StagePrepareToUpdateRequest UNION ALL
-                      SELECT id, svcClass from StageUpdateNextRequest) Request,
+                      SELECT id, svcClass from StagePrepareToUpdateRequest) Request,
                       SubRequest, CastorFile
                WHERE CastorFile.id = cfid
                  AND SubRequest.castorfile = cfid
-                 AND SubRequest.status = 4
+                 AND SubRequest.status = 4 -- SUBREQUEST_WAITTAPERECALL
                  AND Request.id = SubRequest.request
                  AND Request.svcclass = DiskPool2SvcClass.child
                  AND FileSystem.diskpool = DiskPool2SvcClass.parent
@@ -5901,21 +6194,14 @@ BEGIN
                  AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
                  AND DiskServer.id = FileSystem.diskServer
                  AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
-                 -- Ignore diskservers where a recaller already exists
-                 AND DiskServer.id NOT IN (
-                   SELECT DISTINCT(FileSystem.diskServer)
-                     FROM FileSystem
-                    WHERE nbRecallerStreams != 0
-                      AND optimized = 1
-                 )
-		 -- Ignore filesystems where a migrator is running
-                 AND FileSystem.id NOT IN (
-                   SELECT DISTINCT(FileSystem.id)
-                     FROM FileSystem
-                    WHERE nbMigratorStreams != 0
-                      AND optimized = 1
-                 )
-            ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC, dbms_random.value)
+            ORDER BY -- first prefer DSs without concurrent migrators/recallers
+                     DiskServer.nbMigratorStreams ASC, DiskServer.nbRecallerStreams ASC,
+                     -- then order by rate as defined by the function
+                     fileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
+                                    FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams,
+                                    FileSystem.nbRecallerStreams) DESC,
+                     -- finally use randomness to avoid preferring always the same FS
+                     DBMS_Random.value)
     LOOP
       diskServerName := a.name;
       rmountPoint    := a.mountPoint;
@@ -5923,8 +6209,9 @@ BEGIN
       -- Check that we don't already have a copy of this file on this filesystem.
       -- This will never happen in normal operations but may be the case if a filesystem
       -- was disabled and did come back while the tape recall was waiting.
-      -- Even if we could optimize by cancelling remaining unneeded tape recalls when a
-      -- fileSystem comes backs, the ones running at the time of the come back will have
+      -- Even if we optimize by cancelling remaining unneeded tape recalls when a
+      -- fileSystem comes back, the ones running at the time of the come back will have
+      -- the problem.
       SELECT count(*) INTO nb
         FROM DiskCopy
        WHERE fileSystem = a.id
@@ -5941,30 +6228,12 @@ BEGIN
       RETURN;
     END LOOP;
 
-    -- If we didn't find a filesystem rerun with optimization disabled
     IF fileSystemId = 0 THEN
-      IF optimized = 1 THEN
-        bestFileSystemForSegment(segmentId, diskServerName, rmountPoint, rpath, dcid, 0);
-	RETURN;
-      ELSE
-        RAISE NO_DATA_FOUND; -- we did not find any suitable FS, even without optimization
-      END IF;
+      RAISE NO_DATA_FOUND; -- we did not find any suitable FS
     END IF;
   END IF;
-
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- Just like in bestTapeCopyForStream if we were called with optimization enabled
-    -- and nothing was found, rerun the procedure again with optimization disabled to
-    -- truly make sure nothing is found!
-    IF optimized = 1 THEN
-      bestFileSystemForSegment(segmentId, diskServerName, rmountPoint, rpath, dcid, 0);
-      -- Since we recursively called ourselves, we should not do
-      -- any update in the outer call
-      RETURN;
-    ELSE
-      RAISE;
-    END IF;
 END;
+/
 
 
 /* PL/SQL method implementing fileRecallFailed */
@@ -5995,6 +6264,7 @@ BEGIN
      WHERE parent = SubRequestId;
   END IF;
 END;
+/
 
 
 /* PL/SQL method implementing streamsToDo */
@@ -6021,6 +6291,7 @@ BEGIN
      WHERE Stream.id MEMBER OF streams
        AND Stream.TapePool = TapePool.id;
 END;
+/
 
 
 /* PL/SQL method implementing fileRecalled */
@@ -6096,6 +6367,7 @@ BEGIN
   -- Trigger the creation of additional copies of the file, if necessary.
   replicateOnClose(cfId, ouid, ogid);
 END;
+/
 
 
 /* PL/SQL method implementing resetStream */
@@ -6117,7 +6389,7 @@ BEGIN
        AND status = 2 -- TAPECOPY_WAITINSTREAMS
        AND ROWNUM < 2;
     -- We'we found one, update stream status
-    UPDATE Stream SET status = 6, tape = 0, lastFileSystemChange = 0
+    UPDATE Stream SET status = 6, tape = null, lastFileSystemChange = null
      WHERE id = sid; -- STREAM_STOPPED
     -- to avoid to by-pass the stream policy if it is used
   EXCEPTION  WHEN NO_DATA_FOUND THEN
@@ -6127,8 +6399,9 @@ BEGIN
     DELETE FROM Stream WHERE id = sid;
   END;
   -- in any case, unlink tape and stream
-  UPDATE Tape SET Stream = 0 WHERE Stream = sid;
+  UPDATE Tape SET Stream = null WHERE Stream = sid;
 END;
+/
 
 
 /* PL/SQL method implementing segmentsForTape */
@@ -6160,6 +6433,7 @@ BEGIN
       FROM Segment
      WHERE id IN (SELECT /*+ CARDINALITY(segsTable 5) */ * FROM TABLE(segs) segsTable);
 END;
+/
 
 
 /* PL/SQL method implementing anySegmentsForTape */
@@ -6174,6 +6448,7 @@ BEGIN
     WHERE id = tapeId;
   END IF;
 END;
+/
 
 
 /* PL/SQL method implementing failedSegments */
@@ -6187,19 +6462,33 @@ BEGIN
       FROM Segment
      WHERE Segment.status = 6; -- SEGMENT_FAILED
 END;
+/
 
 
 /* PL/SQL method implementing rtcpclientdCleanUp */
 CREATE OR REPLACE PROCEDURE rtcpclientdCleanUp AS
+  tpIds "numList";
 BEGIN
-  EXECUTE IMMEDIATE 'TRUNCATE TABLE Stream2TapeCopy';
-  UPDATE NbTapeCopiesInFS SET NbTapeCopies = 0;
-  UPDATE TapeCopy SET status = 1 WHERE status IN (2, 3, 7);
-  UPDATE Stream SET status = 0;
-  UPDATE tape SET status = 1 WHERE status IN (2, 3, 4);
-  UPDATE tape SET stream = 0 WHERE stream != 0;
+  -- Deal with Migrations
+  -- 1) Ressurect tapecopies for migration
+  UPDATE TapeCopy SET status = 1 WHERE status = 3;
+  -- 2) Clean up the streams
+  UPDATE Stream SET status = 0 
+   WHERE status NOT IN (0, 5, 6, 7) --PENDING, CREATED, STOPPED, WAITPOLICY
+  RETURNING tape BULK COLLECT INTO tpIds;
   UPDATE Stream SET tape = 0 WHERE tape != 0;
+  -- 3) Reset the tape for migration
+  FORALL i IN tpIds.FIRST .. tpIds.LAST  
+    UPDATE tape SET stream = 0, status = 1 WHERE status IN (2, 3, 4) AND id = tpIds(i);
+
+  -- Deal with Recalls
+  UPDATE Segment SET status = 0 WHERE status = 7; -- Resurrect SELECTED segment
+  UPDATE tape SET status = 1 WHERE tpmode = 0 AND status IN (2, 3, 4); -- Resurrect the tapes running for recall
+  UPDATE tape A SET status = 8 
+   WHERE status IN (0, 6, 7) AND EXISTS
+    (SELECT id FROM Segment WHERE status = 0 AND tape = A.id);
 END;
+/
 
 
 /** Functions for the MigHunterDaemon **/
@@ -6223,6 +6512,7 @@ BEGIN
      WHERE svcId = svcclass2tapepool.parent);
   COMMIT;
 END;
+/
 
 /* Get input for python migration policy */
 CREATE OR REPLACE PROCEDURE inputForMigrationPolicy
@@ -6241,27 +6531,19 @@ BEGIN
 
   UPDATE TapeCopy A SET status = 7
    WHERE status IN (0, 1) AND
-    EXISTS (SELECT 'x' FROM  SubRequest, StageRepackRequest
-             WHERE StageRepackRequest.svcclass = svcId
-               AND SubRequest.request = StageRepackRequest.id
-               AND SubRequest.status = 12  -- SUBREQUEST_REPACK
-               AND A.castorfile = SubRequest.castorfile
-    ) RETURNING A.id -- CREATED / TOBEMIGRATED
-    BULK COLLECT INTO tcIds;
-  COMMIT;
-  -- if we didn't find anything, we look
-  -- the usual svcclass from castorfile table.
-  -- we update atomically WAITPOLICY
-  IF tcIds.count = 0 THEN
-    UPDATE TapeCopy A SET status = 7
-     WHERE status IN (0, 1) AND
-      EXISTS ( SELECT 'x' FROM  CastorFile
+    ( EXISTS (SELECT 'x' FROM SubRequest, StageRepackRequest
+               WHERE StageRepackRequest.svcclass = svcId
+                 AND SubRequest.request = StageRepackRequest.id
+                 AND SubRequest.status = 12  -- SUBREQUEST_REPACK
+                 AND A.castorfile = SubRequest.castorfile
+    ) OR EXISTS (
+       SELECT 'x' FROM CastorFile
      	WHERE A.castorFile = CastorFile.id
           AND CastorFile.svcClass = svcId
-      ) RETURNING A.id -- CREATED / TOBEMIGRATED
-      BULK COLLECT INTO tcIds;
-      COMMIT;
-  END IF;
+      ) )
+    RETURNING A.id -- CREATED / TOBEMIGRATED
+    BULK COLLECT INTO tcIds;
+  COMMIT;
   -- return the full resultset
   OPEN dbInfo FOR
     SELECT TapeCopy.id, TapeCopy.copyNb, CastorFile.lastknownfilename,
@@ -6270,6 +6552,7 @@ BEGIN
      WHERE CastorFile.id = TapeCopy.castorfile
        AND TapeCopy.id IN (SELECT /*+ CARDINALITY(tcidTable 5) */ * FROM table(tcIds) tcidTable);
 END;
+/
 
 /* Get input for python Stream Policy */
 CREATE OR REPLACE PROCEDURE inputForStreamPolicy
@@ -6313,6 +6596,7 @@ BEGIN
        AND Stream.status = 7
      GROUP BY Stream.id;
 END;
+/
 
 /* createOrUpdateStream */
 CREATE OR REPLACE PROCEDURE createOrUpdateStream
@@ -6404,7 +6688,7 @@ BEGIN
         INSERT INTO Stream
           (id, initialsizetotransfer, lastFileSystemChange, tape, lastFileSystemUsed,
            lastButOneFileSystemUsed, tapepool, status)
-        VALUES (ids_seq.nextval, initSize, 0, 0, 0, 0, tpId, 5) RETURN id INTO strId;
+        VALUES (ids_seq.nextval, initSize, null, null, null, null, tpId, 5) RETURN id INTO strId;
         INSERT INTO Id2Type (id, type) values (strId,26); -- Stream type
     	IF doClone = 1 THEN
 	  BEGIN
@@ -6429,6 +6713,7 @@ BEGIN
     END IF;
   END IF;
 END;
+/
 
 /* attach tapecopies to stream */
 CREATE OR REPLACE PROCEDURE attachTapeCopiesToStreams
@@ -6481,6 +6766,7 @@ BEGIN
   END LOOP;
   COMMIT;
 END;
+/
 
 /* start choosen stream */
 CREATE OR REPLACE PROCEDURE startChosenStreams
@@ -6495,6 +6781,7 @@ BEGIN
        AND id = streamIds(i);
   COMMIT;
 END;
+/
 
 /* stop chosen stream */
 CREATE OR REPLACE PROCEDURE stopChosenStreams
@@ -6516,6 +6803,7 @@ BEGIN
     END;
   END LOOP;
 END;
+/
 
 /* resurrect Candidates */
 CREATE OR REPLACE PROCEDURE resurrectCandidates
@@ -6527,6 +6815,7 @@ BEGIN
     UPDATE TapeCopy SET Status = 1 WHERE Status = 7 AND id = migrationCandidates(i);
   COMMIT;
 END;
+/
 
 /* invalidate tape copies */
 CREATE OR REPLACE PROCEDURE invalidateTapeCopies
@@ -6537,6 +6826,7 @@ BEGIN
     UPDATE TapeCopy SET status = 6 WHERE id = tapecopyIds(i) AND status = 7;
   COMMIT;
 END;
+/
 
 /** Functions for the RecHandlerDaemon **/
 
@@ -6556,6 +6846,7 @@ BEGIN
      GROUP BY Tape.id, Tape.vid
      HAVING count(distinct segment.id) > 0;
 END;
+/
 
 /* resurrect tapes */
 CREATE OR REPLACE PROCEDURE resurrectTapes
@@ -6567,9 +6858,10 @@ BEGIN
   END LOOP;
   COMMIT;
 END;
+/
 /*******************************************************************
  *
- * @(#)RCSfile: oracleGC.sql,v  Revision: 1.667  Date: 2008/09/29 17:24:40  Author: itglp 
+ * @(#)RCSfile: oracleGC.sql,v  Revision: 1.675  Date: 2008/11/10 16:11:55  Author: itglp 
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -6586,7 +6878,8 @@ CREATE OR REPLACE PACKAGE castorGC AS
         lastAccessTime INTEGER,
         nbAccesses NUMBER,
         gcWeight NUMBER,
-        gcTriggeredBy VARCHAR2(2048));
+        gcTriggeredBy VARCHAR2(2048),
+        svcClassName VARCHAR2(2048));
   TYPE SelectFiles2DeleteLine_Cur IS REF CURSOR RETURN SelectFiles2DeleteLine;
   TYPE JobLogEntry IS RECORD (
     fileid NUMBER,
@@ -6617,6 +6910,7 @@ CREATE OR REPLACE PACKAGE castorGC AS
   FUNCTION LRUFirstAccessHook(oldGcWeight NUMBER, creationTime NUMBER) RETURN NUMBER;
   FUNCTION LRUAccessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER) RETURN NUMBER;
 END castorGC;
+/
 
 CREATE OR REPLACE PACKAGE BODY castorGC AS
 
@@ -6775,6 +7069,7 @@ CREATE OR REPLACE PACKAGE BODY castorGC AS
   END;
 
 END castorGC;
+/
 
 /* PL/SQL method implementing selectFiles2Delete
    This is the standard garbage collector: it sorts STAGED
@@ -6813,7 +7108,7 @@ BEGIN
               WHERE FileSystem.diskServer = DiskServer.id
                 AND DiskServer.name = diskServerName
              ORDER BY dbms_random.value) LOOP
-                
+
     -- Count the number of diskcopies on this filesystem that are in a
     -- BEINGDELETED state. These need to be reselected in any case.
     freed := 0;
@@ -6839,10 +7134,10 @@ BEGIN
        AND rownum <= 10000 - totalCount
     RETURNING id BULK COLLECT INTO dcIds;
     COMMIT;
-       
+
     -- If we have more than 10,000 files to GC, exit the loop. There is no point
-    -- processing more as the maximum sent back to the client in one call is 
-    -- 10,000. This protects the garbage collector from being overwhelmed with 
+    -- processing more as the maximum sent back to the client in one call is
+    -- 10,000. This protects the garbage collector from being overwhelmed with
     -- requests and reduces the stager DB load. Furthermore, if too much data is
     -- sent back to the client, the transfer time between the stager and client
     -- becomes very long and the message may timeout or may not even fit in the
@@ -6869,7 +7164,7 @@ BEGIN
       -- If space is still required even after removal of INVALID files, consider
       -- removing STAGED files until we are below the free space watermark
       IF freed < toBeFreed THEN
-        -- Loop on file deletions. Select only enough files until we reach the 
+        -- Loop on file deletions. Select only enough files until we reach the
         -- 10000 return limit.
         FOR dc IN (SELECT id, castorFile FROM (
                      SELECT id, castorFile FROM DiskCopy
@@ -6877,7 +7172,7 @@ BEGIN
                         AND status = 0 -- STAGED
                         AND NOT EXISTS (
                             SELECT 'x' FROM SubRequest
-                             WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id
+                             WHERE SubRequest.diskcopy = DiskCopy.id
                                AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14)) -- All but FINISHED, FAILED*, ARCHIVED
                         ORDER BY gcWeight ASC)
                    WHERE rownum <= 10000 - totalCount) LOOP
@@ -6892,7 +7187,7 @@ BEGIN
           -- Shall we continue ?
           IF toBeFreed <= freed THEN
             EXIT;
-          END IF;                
+          END IF;
         END LOOP;
       END IF;
       COMMIT;
@@ -6903,13 +7198,15 @@ BEGIN
 
   -- Now select all the BEINGDELETED diskcopies in this diskserver for the gcDaemon
   OPEN files FOR
-    SELECT /*+ INDEX(CastorFile I_CastorFile_ID) */ FileSystem.mountPoint || DiskCopy.path,
+    SELECT /*+ INDEX(CastorFile PK_CastorFile_ID) */ FileSystem.mountPoint || DiskCopy.path,
            DiskCopy.id,
            Castorfile.fileid, Castorfile.nshost,
            DiskCopy.lastAccessTime, DiskCopy.nbCopyAccesses, DiskCopy.gcWeight,
            CASE WHEN DiskCopy.gcType = 0 THEN 'Automatic'
                 WHEN DiskCopy.gcType = 1 THEN 'User Requested'
-                ELSE 'Unknown' END
+                WHEN DiskCopy.gcType = 2 THEN 'Too many replicas'
+                ELSE 'Unknown' END,
+           getSvcClassList(FileSystem.id)
       FROM CastorFile, DiskCopy, FileSystem, DiskServer
      WHERE decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9 -- BEINGDELETED
        AND DiskCopy.castorfile = CastorFile.id
@@ -6918,6 +7215,7 @@ BEGIN
        AND DiskServer.name = diskServerName
        AND rownum <= 10000;
 END;
+/
 
 
 /*
@@ -6951,6 +7249,7 @@ BEGIN
   END IF;
   OPEN fileIds FOR SELECT * FROM FilesDeletedProcOutput;
 END;
+/
 
 /*
  * PL/SQL method removing completely a file from the stager
@@ -6995,6 +7294,7 @@ BEGIN
   FORALL i IN cfIds.FIRST .. cfIds.LAST
     DELETE FROM CastorFile WHERE id = cfIds(i);
 END;
+/
 
 /* PL/SQL method implementing filesDeletionFailedProc */
 CREATE OR REPLACE PROCEDURE filesDeletionFailedProc
@@ -7008,6 +7308,7 @@ BEGIN
        WHERE id = dcIds(i);
   END IF;
 END;
+/
 
 
 
@@ -7038,6 +7339,7 @@ BEGIN
   -- return orphan ones
   OPEN orphans FOR SELECT * FROM NsFilesDeletedOrphans;
 END;
+/
 
 
 /* PL/SQL method implementing stgFilesDeletedProc */
@@ -7060,6 +7362,7 @@ BEGIN
         SELECT 'x' FROM DiskCopy
          WHERE id = diskCopyId);
 END;
+/
 
 
 /** Cleanup job **/
@@ -7084,6 +7387,7 @@ BEGIN
     END LOOP;
   END;';
 END;
+/
 
 /* A generic method to delete requests of a given type */
 CREATE OR REPLACE Procedure bulkDeleteRequests(reqType IN VARCHAR) AS
@@ -7098,11 +7402,13 @@ BEGIN
     reqType);
   COMMIT;
 END;
+/
 
 /* Search and delete old archived/failed subrequests and their requests */
 CREATE OR REPLACE PROCEDURE deleteTerminatedRequests AS
   timeOut INTEGER;
   rate INTEGER;
+  srIds "numList";
 BEGIN
   -- select requested timeout from configuration table
   SELECT TO_NUMBER(value) INTO timeOut FROM CastorConfig
@@ -7117,10 +7423,20 @@ BEGIN
     timeOut := 500000 / rate * 1800;  -- keep 500k requests max
   END IF;
 
-  -- now delete the SubRequests
-  bulkDelete('SELECT id FROM SubRequest WHERE status IN (9, 11)
-                AND lastModificationTime < getTime() - '|| timeOut ||';',
-             'SubRequest');
+  -- now delete the SubRequests. Here we don't use bulkDelete
+  -- to be able to pass timeout as a bind variable and make it sharable
+  -- original call was:
+  -- bulkDelete('SELECT id FROM SubRequest WHERE status IN (9, 11)
+  --   AND lastModificationTime < getTime() - '|| timeOut ||';',
+  --   'SubRequest');
+  SELECT id BULK COLLECT INTO srIds FROM SubRequest 
+   WHERE status IN (9, 11) 
+     AND lastModificationTime < getTime() - timeOut; 
+
+  FORALL i IN srIds.FIRST..srIds.LAST 
+    DELETE FROM Id2Type WHERE id = srIds(i); 
+  FORALL i IN srIds.FIRST..srIds.LAST 
+    DELETE FROM SubRequest WHERE id = srIds(i);
   COMMIT;
 
   -- and then related Requests + Clients
@@ -7145,6 +7461,7 @@ BEGIN
     ---- DiskCopyReplica ----
   bulkDeleteRequests('StageDiskCopyReplicaRequest');
 END;
+/
 
 
 /* Search and delete old diskCopies in bad states */
@@ -7163,7 +7480,7 @@ BEGIN
     FROM DiskCopy
    WHERE (status = 4 OR (status = 7 AND fileSystem = 0))
      AND creationTime < getTime() - timeOut;
-  SELECT /*+ INDEX(DC I_DiskCopy_ID) */ UNIQUE castorFile
+  SELECT /*+ INDEX(DC PK_DiskCopy_ID) */ UNIQUE castorFile
     BULK COLLECT INTO cfIds
     FROM DiskCopy DC
    WHERE id IN (SELECT /*+ CARDINALITY(ids 5) */ * FROM TABLE(dcIds) ids);
@@ -7188,6 +7505,7 @@ BEGIN
     COMMIT;
   END IF;
 END;
+/
 
 /* Deal with old diskCopies in STAGEOUT */
 CREATE OR REPLACE PROCEDURE deleteOutOfDateStageOutDCs(timeOut IN NUMBER) AS
@@ -7221,9 +7539,11 @@ BEGIN
   END LOOP;
   COMMIT;
 END;
+/
 
 
-/* Deal with stuck recalls */
+/* Deal with stuck recalls - this workaround should be dropped
+   after rtcpclientd is reviewed */
 CREATE OR REPLACE PROCEDURE restartStuckRecalls AS
 BEGIN
   UPDATE Segment SET status = 0 WHERE status = 7 and tape IN
@@ -7233,6 +7553,7 @@ BEGIN
     (SELECT tape FROM Segment WHERE status in (0, 7));
   COMMIT;
 END;
+/
 
 
 /* Runs cleanup operations and a table shrink for maintenance purposes */
@@ -7247,7 +7568,6 @@ BEGIN
   SELECT TO_NUMBER(value) INTO t FROM CastorConfig
    WHERE class = 'cleaning' AND key = 'failedDCsTimeout';
   deleteFailedDiskCopies(t*3600);
-  restartStuckRecalls();
 
   -- Loop over all tables which support row movement and recover space from
   -- the object and all dependant objects. We deliberately ignore tables
@@ -7263,6 +7583,7 @@ BEGIN
     EXECUTE IMMEDIATE 'ALTER TABLE '|| t.table_name ||' SHRINK SPACE CASCADE';
   END LOOP;
 END;
+/
 
 
 /* PL/SQL method used by the stager to log what it has been done by the cleanup job */
@@ -7278,6 +7599,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   -- nothing to do
   NULL;
 END;
+/
 
 
 
@@ -7287,12 +7609,12 @@ END;
 BEGIN
   -- Remove database jobs before recreating them
   FOR j IN (SELECT job_name FROM user_scheduler_jobs
-             WHERE job_name IN ('HOUSEKEEPINGJOB', 'CLEANUPJOB', 'BULKCHECKFSBACKINPRODJOB'))
+             WHERE job_name IN ('HOUSEKEEPINGJOB', 'CLEANUPJOB', 'BULKCHECKFSBACKINPRODJOB', 'RESTARTSTUCKRECALLSJOB'))
   LOOP
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
   END LOOP;
 
-  -- Creates a db job to be run every 20 minutes executing the deleteTerminatedRequests procedure
+  -- Create a db job to be run every 20 minutes executing the deleteTerminatedRequests procedure
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'houseKeepingJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
@@ -7302,7 +7624,7 @@ BEGIN
       ENABLED         => TRUE,
       COMMENTS        => 'Cleaning of terminated requests');
 
-  -- Creates a db job to be run twice a day executing the cleanup procedure
+  -- Create a db job to be run twice a day executing the cleanup procedure
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'cleanupJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
@@ -7312,7 +7634,7 @@ BEGIN
       ENABLED         => TRUE,
       COMMENTS        => 'Database maintenance');
 
-  -- Creates a db job to be run every 5 minutes executing the bulkCheckFSBackInProd procedure
+  -- Create a db job to be run every 5 minutes executing the bulkCheckFSBackInProd procedure
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'bulkCheckFSBackInProdJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
@@ -7321,21 +7643,34 @@ BEGIN
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
       ENABLED         => TRUE,
       COMMENTS        => 'Bulk operation to processing filesystem state changes');
+  
+  -- Create a db job to be run every hour executing the restartStuckRecalls workaround procedure
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'restartStuckRecallsJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN restartStuckRecalls(); END;',
+      START_DATE      => SYSDATE + 60/1440,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Workaround to restart stuck recalls');
 END;
+/
 /*******************************************************************
  *
- * @(#)RCSfile: oracleDebug.sql,v  Revision: 1.9  Date: 2008/09/01 17:34:21  Author: waldron 
+ * @(#)RCSfile: oracleDebug.sql,v  Revision: 1.12  Date: 2008/11/06 18:12:49  Author: waldron 
  *
  * Some SQL code to ease support and debugging
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
-CREATE OR REPLACE PACKAGE castor_debug AS
+/* PL/SQL declaration for the castorDebug package */
+CREATE OR REPLACE PACKAGE castorDebug AS
   TYPE DiskCopyDebug_typ IS RECORD (
     id INTEGER,
     diskPool VARCHAR2(2048),
     location VARCHAR2(2048),
+    available CHAR(1),
     status NUMBER,
     creationtime DATE,
     gcWeight NUMBER);
@@ -7365,6 +7700,7 @@ CREATE OR REPLACE PACKAGE castor_debug AS
     SegErr VARCHAR2(2048));
   TYPE TapeCopyDebug IS TABLE OF TapeCopyDebug_typ;
 END;
+/
 
 
 /* Return the castor file id associated with the reference number */
@@ -7389,17 +7725,19 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- fileid ?
   SELECT id INTO cfId FROM CastorFile WHERE fileId = ref;
   RETURN cfId;
 END;
+/
 
 
 /* Get the diskcopys associated with the reference number */
-CREATE OR REPLACE FUNCTION getDCs(ref number) RETURN castor_debug.DiskCopyDebug PIPELINED AS
+CREATE OR REPLACE FUNCTION getDCs(ref number) RETURN castorDebug.DiskCopyDebug PIPELINED AS
 BEGIN
-  FOR d IN (SELECT diskCopy.id,
-                   diskPool.name AS diskpool,
-                   diskServer.name || ':' || fileSystem.mountPoint || diskCopy.path AS location,
-                   diskCopy.status AS status,
+  FOR d IN (SELECT DiskCopy.id,
+                   DiskPool.name AS diskpool,
+                   DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path AS location,
+                   decode(DiskServer.status, 2, 'N', decode(FileSystem.status, 2, 'N', 'Y')) AS available,
+                   DiskCopy.status AS status,
                    to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationtime AS creationtime,
-                   diskCopy.gcWeight AS gcweight
+                   DiskCopy.gcWeight AS gcweight
               FROM DiskCopy, FileSystem, DiskServer, DiskPool
              WHERE DiskCopy.fileSystem = FileSystem.id(+)
                AND FileSystem.diskServer = diskServer.id(+)
@@ -7408,10 +7746,11 @@ BEGIN
      PIPE ROW(d);
   END LOOP;
 END;
+/
 
 
 /* Get the tapecopys, segments and streams associated with the reference number */
-CREATE OR REPLACE FUNCTION getTCs(ref number) RETURN castor_debug.TapeCopyDebug PIPELINED AS
+CREATE OR REPLACE FUNCTION getTCs(ref number) RETURN castorDebug.TapeCopyDebug PIPELINED AS
 BEGIN
   FOR t IN (SELECT TapeCopy.id AS TCId, TapeCopy.status AS TCStatus,
                    Segment.Id, Segment.status AS SegStatus, Segment.errorCode AS SegErrCode,
@@ -7428,23 +7767,25 @@ BEGIN
      PIPE ROW(t);
   END LOOP;
 END;
+/
 
 
 /* Get the subrequests associated with the reference number. (By castorfile/diskcopy/
  * subrequest/tapecopy or fileid
  */
-CREATE OR REPLACE FUNCTION getSRs(ref number) RETURN castor_debug.SubRequestDebug PIPELINED AS
+CREATE OR REPLACE FUNCTION getSRs(ref number) RETURN castorDebug.SubRequestDebug PIPELINED AS
 BEGIN
   FOR d IN (SELECT * FROM SubRequest WHERE castorfile = getCF(ref)) LOOP
      PIPE ROW(d);
   END LOOP;
 END;
+/
 
 
 /* Get the requests associated with the reference number. (By castorfile/diskcopy/
  * subrequest/tapecopy or fileid
  */
-CREATE OR REPLACE FUNCTION getRs(ref number) RETURN castor_debug.RequestDebug PIPELINED AS
+CREATE OR REPLACE FUNCTION getRs(ref number) RETURN castorDebug.RequestDebug PIPELINED AS
 BEGIN
   FOR d IN (SELECT to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationtime AS creationtime,
                    SubRequest.id AS SubReqId, SubRequest.parent AS SubReqParentId, SubRequest.Status,
@@ -7467,3 +7808,4 @@ BEGIN
      PIPE ROW(d);
   END LOOP;
 END;
+/

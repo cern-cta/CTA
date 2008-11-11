@@ -17,13 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)RCSfile: oracleCreate.sql,v  Release: 1.2  Release Date: 2008/08/08 09:25:16  Author: itglp 
+ * @(#)RCSfile: oracleCreate.sql,v  Release: 1.2  Release Date: 2008/11/06 13:18:27  Author: waldron 
  *
  * This script creates a new Castor Volume Manager schema
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
-
 
 CREATE TABLE vmgr_tape_info (
 	vid VARCHAR2(6),

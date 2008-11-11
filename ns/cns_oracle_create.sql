@@ -1,4 +1,4 @@
-*****************************************************************************
+/*****************************************************************************
  *              oracleCreate.sql
  *
  * This file is part of the Castor project.
@@ -17,13 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)RCSfile: oracleCreate.sql,v  Release: 1.2  Release Date: 2008/08/08 09:25:16  Author: itglp 
+ * @(#)RCSfile: oracleCreate.sql,v  Release: 1.2  Release Date: 2008/11/06 13:20:07  Author: waldron 
  *
  * This script creates a new Castor Name Server schema
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
-
 
 CREATE TABLE Cns_class_metadata (
        classid NUMBER(5),
@@ -147,7 +146,7 @@ ALTER TABLE Cns_file_replica
 
 -- Create the Cns_version table
 CREATE TABLE Cns_version (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO Cns_version VALUES ('2_1_8_0', '2_1_8_2');
+INSERT INTO Cns_version VALUES ('2_1_8_0', '2_1_8_3');
 
 -- Create an index on Cns_file_metadata(PARENT_FILEID)
 CREATE INDEX PARENT_FILEID_IDX on Cns_file_metadata(PARENT_FILEID);
@@ -177,3 +176,4 @@ BEGIN
    END IF;
    RETURN p;
 END;
+/
