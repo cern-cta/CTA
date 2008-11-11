@@ -361,6 +361,8 @@ castor::db::ora::OraTapeSvc::bestFileSystemForSegment
         (3, oracle::occi::OCCISTRING, 2048);
       m_bestFileSystemForSegmentStatement->registerOutParam
         (4, oracle::occi::OCCISTRING, 2048);
+      m_bestFileSystemForSegmentStatement->registerOutParam   
+	(5, oracle::occi::OCCIDOUBLE); 
     }
     // execute the statement and see whether we found something
     m_bestFileSystemForSegmentStatement->setDouble(1, segment->id());
