@@ -173,7 +173,7 @@ int rfio_handle_close(void *ctx,
   int      useCksum;
   int      xattr_len;
   char     csumvalue[CA_MAXCKSUMLEN+1];
-  char     csumtype[17];
+  char     csumtype[CA_MAXCKSUMNAMELEN+1];
   char     *conf_ent;
 
   if (internal_context != NULL) {
@@ -204,14 +204,14 @@ int rfio_handle_close(void *ctx,
 	      }
 	      if (useCksum) {
 		/* first we try to read a file xattr for checksum */
-		if ((xattr_len = getxattr(internal_context->pfn, "user.castor.checksum.value", csumvalue, 32)) == -1) {
+		if ((xattr_len = getxattr(internal_context->pfn, "user.castor.checksum.value", csumvalue, CA_MAXCKSUMLEN)) == -1) {
 		  log(LOG_ERR, "rfio_handle_close : fgetxattr for checksum value failed, error=%d\n", errno);
 		  log(LOG_ERR, "rfio_handle_close : skipping checksums for castor NS\n");
 		  useCksum = 0; /* we don't have the file checksum, and will not fill it in castor NS database */
 		} else {
 		  csumvalue[xattr_len] = '\0';
 		  log(LOG_DEBUG,"rfio_handle_close : csumvalue for the file on the disk=0x%s\n", csumvalue);
-		  if ((xattr_len = getxattr(internal_context->pfn, "user.castor.checksum.type", csumtype, 16)) == -1) {
+		  if ((xattr_len = getxattr(internal_context->pfn, "user.castor.checksum.type", csumtype, CA_MAXCKSUMNAMELEN)) == -1) {
 		    log(LOG_ERR, "rfio_handle_close : fgetxattr for checksum type failed, error=%d\n", errno);
 		    log(LOG_ERR, "rfio_handle_close : skipping checksums for castor NS\n");
 		    useCksum = 0; /* we don't have the file checksum, and will not fill it in castor NS database */
@@ -219,14 +219,15 @@ int rfio_handle_close(void *ctx,
 		    csumtype[xattr_len] = '\0';
 		    log(LOG_DEBUG, "rfio_handle_close : csumtype is %s\n", csumtype);
 		    /* now we have csumtype from disk and have to convert it for castor name server database */
-		    for (xattr_len = 0; xattr_len < csumalgnum; xattr_len++)
-		      if (strncmp(csumtype, csumtypeDiskNs[xattr_len * 2], 16) == 0) {
+		    for (xattr_len = 0; xattr_len < csumalgnum; xattr_len++) {
+		      if (strncmp(csumtype, csumtypeDiskNs[xattr_len * 2], CA_MAXCKSUMNAMELEN) == 0) {
 			/* we have found something */
 			strcpy(csumtype, csumtypeDiskNs[xattr_len * 2 + 1]);
 			useCksum = 2;
 			break;
 		      }
-		    if(useCksum != 2) {
+		    }
+		    if (useCksum != 2) {
 		      log(LOG_ERR, "rfio_handle_close : unknown checksum type %s\n", csumtype);
 		      log(LOG_ERR, "rfio_handle_close : skipping checksums for castor NS\n");
 		      useCksum = 0; /* we don't have the file checksum, and will not fill it in castor NS database */
