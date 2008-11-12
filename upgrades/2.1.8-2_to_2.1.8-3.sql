@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.8-2_to_2.1.8-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/11/11 10:50:27 $ $Author: waldron $
+ * @(#)$RCSfile: 2.1.8-2_to_2.1.8-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/11/12 19:25:29 $ $Author: waldron $
  *
  * This script upgrades a CASTOR v2.1.8-2 STAGER database into v2.1.8-3
  *
@@ -1149,10 +1149,20 @@ DECLARE
   svcId NUMBER;
   maxReplicaNb NUMBER;
   srIds "numList";
+  svcCount NUMBER;
 BEGIN
   -- Loop over the diskcopies to be processed
   FOR a IN (SELECT * FROM TooManyReplicasHelper)
   LOOP
+    -- If the filesystem belongs to multiple service classes
+    -- do nothing as this is not supported!
+    SELECT count(*) INTO svcCount
+      FROM FileSystem, DiskPool2SvcClass
+     WHERE FileSystem.diskpool = DiskPool2SvcClass.parent
+       AND FileSystem.id = a.filesystem;
+    IF svcCount > 1 THEN
+      RETURN;  -- Not supported
+    END IF;
     -- Get the service class id and max replica number of the
     -- service class the diskcopy belongs too
     SELECT SvcClass.id, SvcClass.maxReplicaNb
