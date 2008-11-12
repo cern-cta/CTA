@@ -1486,7 +1486,7 @@ END castorBW;
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleStager.sql,v  Revision: 1.699  Date: 2008/11/10 09:33:02  Author: waldron 
+ * @(#)RCSfile: oracleStager.sql,v  Revision: 1.700  Date: 2008/11/12 19:25:29  Author: waldron 
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1723,10 +1723,20 @@ DECLARE
   svcId NUMBER;
   maxReplicaNb NUMBER;
   srIds "numList";
+  svcCount NUMBER;
 BEGIN
   -- Loop over the diskcopies to be processed
   FOR a IN (SELECT * FROM TooManyReplicasHelper)
   LOOP
+    -- If the filesystem belongs to multiple service classes
+    -- do nothing as this is not supported!
+    SELECT count(*) INTO svcCount
+      FROM FileSystem, DiskPool2SvcClass
+     WHERE FileSystem.diskpool = DiskPool2SvcClass.parent
+       AND FileSystem.id = a.filesystem;
+    IF svcCount > 1 THEN
+      RETURN;  -- Not supported
+    END IF;
     -- Get the service class id and max replica number of the
     -- service class the diskcopy belongs too
     SELECT SvcClass.id, SvcClass.maxReplicaNb
