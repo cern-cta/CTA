@@ -8,10 +8,10 @@
   #6019:  Disk Resident check sums
   #20356: An interrupted put followed by another put for same file may be processed in wrong
           order
-  #21688: RFE CASTOR not sufficiently aware of its tape device status
   #21783: listSvcClass gives oracle errors
   #22102: 'stager_qry -s' output wrong in case of a disk pool shared among more svc classes
   #23005: stage_rm return code
+  #27311: please ensure MAXREPLICANB is respected
   #27587: nsls truncates user/group names
   #29078: cleanup query request
   #31772: CLI interface to DISABLE and un-DISABLE segments
@@ -21,6 +21,7 @@
   #33866: putDone is allowed for (root,root)
   #33910: The name server should always record absolute filenames 
   #40215: Failed to open file: /etc/castor/policies/migration.py
+  #40364: listSvcClass gives perl errors when database connection fails
   #40365: Stager tries to recall from disabled tape even if 2nd copy available
   #41513: repacking 2nd copy fails if 1st copy already staged
   #42577: Document scheduler customized pending reasons
