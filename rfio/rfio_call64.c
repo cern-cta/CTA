@@ -2358,16 +2358,16 @@ static void *produce64_thread(int *ptr)
   char     *ckSumalg="ADLER32";
   int      xattr_len;
 
+  /* Check if checksum support is enabled */
   useCksum = 1;
   if ((conf_ent = getconfent("RFIOD","USE_CKSUM",0)) != NULL)
     if (!strncasecmp(conf_ent,"no",2)) useCksum = 0;
 
   if (useCksum) {
-    /* first we try to read a file xattr for checksum */
     if ((xattr_len = fgetxattr(fd,"user.castor.checksum.value",ckSumbufdisk,CA_MAXCKSUMLEN)) == -1) {
-      log(LOG_ERR,"produce64_thread: fgetxattr failed, error=%d\n",errno);
+      log(LOG_ERR,"produce64_thread: fgetxattr failed for user.castor.checksum.value, error=%d\n",errno);
       log(LOG_ERR,"produce64_thread: skipping checksums check\n");
-      useCksum = 0; /* we don't have the file checksum, and will not calculate it on the fly */
+      useCksum = 0;
     } else {
       ckSumbufdisk[xattr_len] = '\0';
       ckSum = adler32(0L,Z_NULL,0);
@@ -2388,9 +2388,9 @@ static void *produce64_thread(int *ptr)
 
     if (byte_read > 0) {
       total_produced += byte_read;
-      /* printf("Has read in buf %d (len %d)\n",produced64 % daemonv3_rdmt_nbuf,byte_read);  */
       log(LOG_DEBUG, "Has read in buf %d (len %d)\n",produced64 % daemonv3_rdmt_nbuf,byte_read);
       array[produced64 % daemonv3_rdmt_nbuf].len = byte_read;
+      /* Check for checksum mismatch. */
       if (useCksum) {
         ckSum = adler32(ckSum,(unsigned char*)array[produced64 % daemonv3_rdmt_nbuf].p,(unsigned int)byte_read);
         log(LOG_DEBUG,"produce64_thread: current checksum=0x%lx\n",ckSum);
@@ -2400,7 +2400,6 @@ static void *produce64_thread(int *ptr)
       if (byte_read == 0)  {
         log(LOG_DEBUG,"produce64_thread: End of reading : total produced = %s,buffers=%d\n",
             u64tostr(total_produced,tmpbuf,0),produced64);
-        /* array[produced64 % daemonv3_rdmt_nbuf].p = NULL; */
         array[produced64 % daemonv3_rdmt_nbuf].len = 0;
         if (useCksum) {
           sprintf(ckSumbuf,"%x", ckSum);
@@ -2445,30 +2444,30 @@ static void *consume64_thread(int *ptr)
   char     *ckSumalg="ADLER32";
   int      mode;
 
+  /* Check if checksum support is enabled */
   useCksum = 1;
   if ((conf_ent=getconfent("RFIOD","USE_CKSUM",0)) != NULL)
     if (!strncasecmp(conf_ent,"no",2)) useCksum = 0;
 
+  /* Deal with cases where checksums should not be calculated */
   if (useCksum) {
-    /* first of all we will check the mode for the file and will do nothing for O_RDWR - Update */
     mode = fcntl(fd,F_GETFL);
     if (mode == -1) {
       log(LOG_ERR,"consume64_thread: fcntl (F_GETFL) failed, error=%d\n",errno);
       useCksum = 0;
     }
+    /* Checksums on updates are not supported */
     else if (mode & O_RDWR) {
       log(LOG_INFO,"consume64_thread: file opened in O_RDWR, skipping checksums\n");
       useCksum = 0;
     }
+    /* If we are writing to the file and a checksum already exists, we
+     * remove the checksum value but leave the type.
+     */
     else if ((mode & O_WRONLY) &&
 	     (fgetxattr(fd,"user.castor.checksum.type",ckSumbufdisk,CA_MAXCKSUMLEN) != -1)) {
       log(LOG_INFO,"consume64_thread: file opened in O_WRONLY and checksum already exists, removing checksum\n");
       fremovexattr(fd,"user.castor.checksum.value");
-      useCksum = 0;
-    }
-    else if (fsetxattr(fd,"user.castor.checksum.value","0",1,0)) {
-      log(LOG_ERR,"consume64_thread: fsetxattr failed, error=%d\n",errno);
-      log(LOG_ERR,"consume64_thread: skipping ckecksums check\n");
       useCksum = 0;
     } else {
       ckSum = adler32(0L,Z_NULL,0);
@@ -2521,7 +2520,7 @@ static void *consume64_thread(int *ptr)
         total_consumed += byte_written;
         log(LOG_DEBUG,"consume64_thread: Has written buf %d to disk (len %d)\n",
             consumed64 % daemonv3_wrmt_nbuf, byte_written);
-        if(useCksum) {
+        if (useCksum) {
           ckSum = adler32(ckSum,(unsigned char*)buffer_to_write,(unsigned int)byte_written);
           log(LOG_DEBUG,"consume64_thread: current checksum=0x%lx\n",ckSum);
         }
@@ -2531,14 +2530,6 @@ static void *consume64_thread(int *ptr)
       if (len_to_write == 0) {
         log(LOG_DEBUG,"consume64_thread: End of writing : total consumed = %s, buffers=%d\n",
             u64tostr(total_consumed,tmpbuf,0),consumed64);
-        if (useCksum) { /* sets the file extended attribute */
-          sprintf(ckSumbuf,"%x",ckSum);
-          log(LOG_DEBUG,"consume64_thread: file checksum=0x%s\n",ckSumbuf);
-          if (fsetxattr(fd,"user.castor.checksum.value",ckSumbuf,strlen(ckSumbuf),0))
-            log(LOG_ERR,"consume64_thread: fsetxattr failed, error=%d\n",errno);
-          else if (fsetxattr(fd,"user.castor.checksum.type",ckSumalg,strlen(ckSumalg),0))
-            log(LOG_ERR,"consume64_thread: fsetxattr failed, error=%d\n",errno);
-        }
         end = 1;
       } else {
         /* Error indicated by the thread reading from network, this thread just terminates */
@@ -2552,6 +2543,19 @@ static void *consume64_thread(int *ptr)
     log(LOG_DEBUG, "consume64_thread: calling Csemaphore_up(&empty64)\n");
     Csemaphore_up(&empty64);
   }  /* End of while   */
+
+  /* Record the checksum value and type in the extended attributes of the file.
+   * This is done in all cases, including errors!
+   */
+  if (useCksum) {
+    sprintf(ckSumbuf,"%x",ckSum);
+    log(LOG_DEBUG,"consume64_thread: file checksum=0x%s\n",ckSumbuf);
+    /* Always try and set the type first! */
+    if (fsetxattr(fd,"user.castor.checksum.type",ckSumalg,strlen(ckSumalg),0)) 
+      log(LOG_ERR,"consume64_thread: fsetxattr failed for user.castor.checksum.type, error=%d\n",errno);
+    else if (fsetxattr(fd,"user.castor.checksum.value",ckSumbuf,strlen(ckSumbuf),0))
+      log(LOG_ERR,"consume64_thread: fsetxattr failed for user.castor.checksum.value, error=%d\n",errno);
+  }
   return(NULL);
 }
 

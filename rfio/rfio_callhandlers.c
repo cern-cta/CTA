@@ -205,14 +205,14 @@ int rfio_handle_close(void *ctx,
 	      if (useCksum) {
 		/* first we try to read a file xattr for checksum */
 		if ((xattr_len = getxattr(internal_context->pfn, "user.castor.checksum.value", csumvalue, CA_MAXCKSUMLEN)) == -1) {
-		  log(LOG_ERR, "rfio_handle_close : fgetxattr for checksum value failed, error=%d\n", errno);
+		  log(LOG_ERR, "rfio_handle_close : fgetxattr failed for user.castor.checksum.value, error=%d\n", errno);
 		  log(LOG_ERR, "rfio_handle_close : skipping checksums for castor NS\n");
 		  useCksum = 0; /* we don't have the file checksum, and will not fill it in castor NS database */
 		} else {
 		  csumvalue[xattr_len] = '\0';
 		  log(LOG_DEBUG,"rfio_handle_close : csumvalue for the file on the disk=0x%s\n", csumvalue);
 		  if ((xattr_len = getxattr(internal_context->pfn, "user.castor.checksum.type", csumtype, CA_MAXCKSUMNAMELEN)) == -1) {
-		    log(LOG_ERR, "rfio_handle_close : fgetxattr for checksum type failed, error=%d\n", errno);
+		    log(LOG_ERR, "rfio_handle_close : fgetxattr failed for user.castor.checksum.type, error=%d\n", errno);
 		    log(LOG_ERR, "rfio_handle_close : skipping checksums for castor NS\n");
 		    useCksum = 0; /* we don't have the file checksum, and will not fill it in castor NS database */
 		  } else {
