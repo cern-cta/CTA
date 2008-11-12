@@ -101,7 +101,7 @@ void castor::job::stagerjob::XRootPlugin::postForkHook
       castor::dlf::Param params[] =
 	{castor::dlf::Param("JobId", getenv("LSB_JOBID")),
 	 castor::dlf::Param("Mover Path", progfullpath),
-	 castor::dlf::Param("ErrorMessage", sstrerror(errno)),
+	 castor::dlf::Param("Error Message", sstrerror(errno)),
 	 castor::dlf::Param(args.subRequestUuid)};
       castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
 			      MOVERNOTEXEC, 4, params, &args.fileId);

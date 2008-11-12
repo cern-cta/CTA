@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/10/02 12:17:40 $ $Author: waldron $
+ * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/11/12 12:49:02 $ $Author: waldron $
  *
  * Castor LSF External Plugin - Phase 2 (Python)
  *
@@ -843,7 +843,7 @@ extern "C" {
       // "Missing handler specific data in notification phase"
       castor::dlf::Param params[] =
 	{castor::dlf::Param("HashKey", key),
-	 castor::dlf::Param("JobID", j->jobId),
+	 castor::dlf::Param("JobId", j->jobId),
 	 castor::dlf::Param("JobStatus", j->status)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 80, 3, params);
       return -1;
@@ -865,7 +865,7 @@ extern "C" {
 	(handler->selectedFileSystem == "")) {
       // "LSF Job already notified, skipping notification phase"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("JobID", handler->jobId),
+	{castor::dlf::Param("JobId", handler->jobId),
 	 castor::dlf::Param("JobStatus", j->status),
 	 castor::dlf::Param(handler->subReqId)};
       castor::dlf::dlf_writep(handler->reqId, DLF_LVL_DEBUG, 35, 3, params,
@@ -883,7 +883,7 @@ extern "C" {
     if (!fin) {
       // "Failed to open notification file"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("JobID", handler->jobId),
+	{castor::dlf::Param("JobId", handler->jobId),
 	 castor::dlf::Param("Filename", handler->notifyFile),
 	 castor::dlf::Param(handler->subReqId)};
       castor::dlf::dlf_writep(handler->reqId, DLF_LVL_ERROR, 33, 3, params,
@@ -905,7 +905,7 @@ extern "C" {
 
     // "Wrote notification file"
     castor::dlf::Param param[] =
-      {castor::dlf::Param("JobID", handler->jobId),
+      {castor::dlf::Param("JobId", handler->jobId),
        castor::dlf::Param("Filename", handler->notifyFile),
        castor::dlf::Param("OpenFlags", handler->openFlags),
        castor::dlf::Param("Content", ipath.str()),

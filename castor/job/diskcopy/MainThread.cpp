@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/11/10 09:30:10 $ $Author: waldron $
+ * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2008/11/12 12:49:01 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -418,8 +418,8 @@ void castor::job::diskcopy::MainThread::run(void *param) {
   // "DiskCopyTransfer started"
   castor::dlf::Param params[] =
     {castor::dlf::Param("JobId", getenv("LSB_JOBID") != NULL ? getenv("LSB_JOBID") : "Unknown"),
-     castor::dlf::Param("DiskCopy", m_diskCopyId),
-     castor::dlf::Param("SourceDiskCopy", m_sourceDiskCopyId),
+     castor::dlf::Param("DiskCopyId", m_diskCopyId),
+     castor::dlf::Param("SourceDiskCopyId", m_sourceDiskCopyId),
      castor::dlf::Param("Protocol", m_protocol),
      castor::dlf::Param("TotalWaitTime",
 			totalWaitTime > 0 ? totalWaitTime * 0.000001 : 0),
@@ -447,7 +447,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("Type", sstrerror(e.code())),
        castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("SourceDiskCopy", m_sourceDiskCopyId),
+       castor::dlf::Param("SourceDiskCopyId", m_sourceDiskCopyId),
        castor::dlf::Param(m_subRequestUuid)};
     castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 26, 4, params, &m_fileId);
     terminate(0, EXIT_FAILURE);

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/09/25 13:27:20 $ $Author: waldron $
+ * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/11/12 12:49:00 $ $Author: waldron $
  *
  * Synchronization thread used to check periodically whether files need to be
  * deleted
@@ -478,7 +478,7 @@ void castor::gc::SynchronizationThread::synchronizeFiles
       if (errno != ENOENT) {
 	// "Failed to stat file"
 	castor::dlf::Param params[] =
-	  {castor::dlf::Param("Fileanem", filePaths.find(*it)->second),
+	  {castor::dlf::Param("Filename", filePaths.find(*it)->second),
 	   castor::dlf::Param("Error", strerror(errno))};
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 41, 2, params, &fileId);
       }

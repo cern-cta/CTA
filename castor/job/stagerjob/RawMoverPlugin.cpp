@@ -118,8 +118,8 @@ void castor::job::stagerjob::RawMoverPlugin::preForkHook
   if (close(context.socket) < 0) {
     // This is not fatal
     castor::dlf::Param params[] =
-      {castor::dlf::Param("ErrorCode", errno),
-       castor::dlf::Param("ErrorMessage", strerror(errno)),
+      {castor::dlf::Param("Error Code", errno),
+       castor::dlf::Param("Error Message", strerror(errno)),
        castor::dlf::Param(args.subRequestUuid)};
     castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
                             SCLOSEFAILED, 3, params, &args.fileId);

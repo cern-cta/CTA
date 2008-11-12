@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2008/09/22 12:33:51 $ $Author: waldron $
+ * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2008/11/12 12:49:01 $ $Author: waldron $
  *
  * The Submission Process is used to submit new jobs into the scheduler. It is
  * run inside a separate process allowing for setuid and setgid calls to take
@@ -471,7 +471,7 @@ void castor::jobmanager::SubmissionProcess::submitJob
 
       // "Job successfully submitted into LSF"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("JobID", (u_signed64)jobId),
+	{castor::dlf::Param("JobId", (u_signed64)jobId),
 	 castor::dlf::Param("Type", castor::ObjectsIdStrings[request->requestType()]),
 	 castor::dlf::Param("Username", request->username()),
 	 castor::dlf::Param("SvcClass", request->svcClass()),

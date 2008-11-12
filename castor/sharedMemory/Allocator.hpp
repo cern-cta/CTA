@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2007/04/10 16:26:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/11/12 12:49:02 $ $Author: waldron $
  *
  * Allocator for the Shared Memory space
  *
@@ -134,7 +134,7 @@ T* castor::sharedMemory::Allocator<T, BK>::allocate
     // Log exception "Exception caught in allocate"
     std::cout << e.getMessage().str() << std::endl;
     castor::dlf::Param initParams[] =
-      {castor::dlf::Param("Original error", e.getMessage().str())};
+      {castor::dlf::Param("Original Error", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
 			    DLF_BASE_SHAREDMEMORY + 6, 1, initParams);
     // and throw standard exception
@@ -155,7 +155,7 @@ void castor::sharedMemory::Allocator<T, BK>::deallocate
   } catch (castor::exception::Exception e) {
     // Log exception "Exception caught in allocate"
     castor::dlf::Param initParams[] =
-      {castor::dlf::Param("Original error", e.getMessage().str())};
+      {castor::dlf::Param("Original Error", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
 			    DLF_BASE_SHAREDMEMORY + 6, 1, initParams);
   }

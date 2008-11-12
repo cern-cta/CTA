@@ -215,10 +215,10 @@ void castor::job::stagerjob::GridFTPPlugin::postForkHook
   castor::dlf::Param params[] =
     {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
      castor::dlf::Param("Command Line", cmdLine.str()),
-     castor::dlf::Param("tcp_port_range", tcprange.str()),
-     castor::dlf::Param("tcp_source_range", sourcerange.str()),
-     castor::dlf::Param("certificate", env.globus_x509_user_cert),
-     castor::dlf::Param("user key", env.globus_x509_user_key),
+     castor::dlf::Param("TCP Port Range", tcprange.str()),
+     castor::dlf::Param("TCP Source Range", sourcerange.str()),
+     castor::dlf::Param("Certificate", env.globus_x509_user_cert),
+     castor::dlf::Param("User Key", env.globus_x509_user_key),
      castor::dlf::Param(args.subRequestUuid)};
   castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_DEBUG,
                           MOVERFORK, 7, params, &args.fileId);
@@ -288,8 +288,8 @@ void castor::job::stagerjob::GridFTPPlugin::execMover
   int s;
   if (dup2(s, 0) < 0 || dup2(s, 1) < 0 || dup2(s, 2) < 0) {
     castor::dlf::Param params[] =
-      {castor::dlf::Param("ErrorCode", errno),
-       castor::dlf::Param("ErrorMessage", strerror(errno)),
+      {castor::dlf::Param("Error Code", errno),
+       castor::dlf::Param("Error Message", strerror(errno)),
        castor::dlf::Param(args.subRequestUuid)};
     castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
                             DUP2FAILED, 3, params, &args.fileId);

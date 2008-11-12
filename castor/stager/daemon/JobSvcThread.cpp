@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.61 $ $Release$ $Date: 2008/09/22 13:30:31 $ $Author: waldron $
+ * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.62 $ $Release$ $Date: 2008/11/12 12:49:02 $ $Author: waldron $
  *
  * Service thread for job related requests
  *
@@ -224,7 +224,7 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyStartRequest
     // "Invoking disk2DiskCopyStart"
     castor::dlf::Param params[] = {
       castor::dlf::Param("DiskCopyId", uReq->diskCopyId()),
-      castor::dlf::Param("SourceDcId", uReq->sourceDiskCopyId()),
+      castor::dlf::Param("SourceDiskCopyId", uReq->sourceDiskCopyId()),
       castor::dlf::Param("DiskServer", uReq->diskServer()),
       castor::dlf::Param("FileSystem", uReq->mountPoint())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_D2DCS,
@@ -330,7 +330,7 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyDoneRequest
       // "Invoking disk2DiskCopyDone"
       castor::dlf::Param params[] =
         {castor::dlf::Param("DiskCopyId", uReq->diskCopyId()),
-         castor::dlf::Param("SourceDcId", srcDcId)};
+         castor::dlf::Param("SourceDiskCopyId", srcDcId)};
       castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_D2DCOK,
 			      fileId, nsHost, 2, params);
       jobSvc->disk2DiskCopyDone(uReq->diskCopyId(), srcDcId, fileId, nsHost);
