@@ -4850,13 +4850,13 @@ void *produce_thread(int *ptr)
 
 void *consume_thread(int *ptr)
 {
-  int fd = *ptr;
-  int byte_written = -1;
-  int error = 0, end = 0;
-  int total_consumed = 0;
-  char *buffer_to_write;
-  int len_to_write;
-  int saved_errno;
+  int      fd = *ptr;
+  int      byte_written = -1;
+  int      error = 0, end = 0;
+  int      total_consumed = 0;
+  char     *buffer_to_write;
+  int      len_to_write;
+  int      saved_errno;
   unsigned int ckSum;
   char     ckSumbuf[CA_MAXCKSUMLEN+1]; /* max check sum 256bit 32x8+'\0'*/
   char     ckSumbufdisk[CA_MAXCKSUMLEN+1];
