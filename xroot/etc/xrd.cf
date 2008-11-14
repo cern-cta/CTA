@@ -9,7 +9,7 @@ all.export / nolock
 all.trace none
 ofs.trace none
 ###########################################################
-xrd.port 1094
+xrd.port 1095
 ofs.authlib /opt/xrootd/lib/libXrdxCastor2ServerAcc.so
 ofs.authorize
 ###########################################################
