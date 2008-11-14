@@ -4874,12 +4874,12 @@ void *consume_thread(int *ptr)
   if (useCksum) {
     mode = fcntl(fd,F_GETFL);
     if (mode == -1) {
-      log(LOG_ERR,"consume64_thread: fcntl (F_GETFL) failed, error=%d\n",errno);
+      log(LOG_ERR,"consume_thread: fcntl (F_GETFL) failed, error=%d\n",errno);
       useCksum = 0;
     }
     /* Checksums on updates are not supported */
     else if (mode & O_RDWR) {
-      log(LOG_INFO,"consume64_thread: file opened in O_RDWR, skipping checksums\n");
+      log(LOG_INFO,"consume_thread: file opened in O_RDWR, skipping checksums\n");
       useCksum = 0;
     }
     /* If we are writing to the file and a checksum already exists, we
@@ -4887,12 +4887,12 @@ void *consume_thread(int *ptr)
      */
     else if ((mode & O_WRONLY) &&
 	     (fgetxattr(fd,"user.castor.checksum.type",ckSumbufdisk,CA_MAXCKSUMLEN) != -1)) {
-      log(LOG_INFO,"consume64_thread: file opened in O_WRONLY and checksum already exists, removing checksum\n");
+      log(LOG_INFO,"consume_thread: file opened in O_WRONLY and checksum already exists, removing checksum\n");
       fremovexattr(fd,"user.castor.checksum.value");
       useCksum = 0;
     } else {
       ckSum = adler32(0L,Z_NULL,0);
-      log(LOG_DEBUG,"consume64_thread: checksum init for %s\n",ckSumalg);
+      log(LOG_DEBUG,"consume_thread: checksum init for %s\n",ckSumalg);
     }
   }
 
@@ -4963,12 +4963,12 @@ void *consume_thread(int *ptr)
    */
   if (useCksum) {
     sprintf(ckSumbuf,"%x",ckSum);
-    log(LOG_DEBUG,"consume64_thread: file checksum=0x%s\n",ckSumbuf);
+    log(LOG_DEBUG,"consume_thread: file checksum=0x%s\n",ckSumbuf);
     /* Always try and set the type first! */
     if (fsetxattr(fd,"user.castor.checksum.type",ckSumalg,strlen(ckSumalg),0)) 
-      log(LOG_ERR,"consume64_thread: fsetxattr failed for user.castor.checksum.type, error=%d\n",errno);
+      log(LOG_ERR,"consume_thread: fsetxattr failed for user.castor.checksum.type, error=%d\n",errno);
     else if (fsetxattr(fd,"user.castor.checksum.value",ckSumbuf,strlen(ckSumbuf),0))
-      log(LOG_ERR,"consume64_thread: fsetxattr failed for user.castor.checksum.value, error=%d\n",errno);
+      log(LOG_ERR,"consume_thread: fsetxattr failed for user.castor.checksum.value, error=%d\n",errno);
   }
   return(NULL);
 }
