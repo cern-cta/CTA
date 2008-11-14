@@ -230,6 +230,7 @@ void castor::io::ServerSocket::bind()
       // this is a server-side daemon trying to bind to an used port
       // don't retry and fire exception
       castor::exception::Communication e("Port in use", EADDRINUSE);
+      e.getMessage() << "Failed to bind: Port in use: " << port;
       throw e;
     }
   }
