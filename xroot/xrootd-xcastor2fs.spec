@@ -33,16 +33,12 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 
 %post
 /sbin/chkconfig --add xrd
+/sbin/service xrd condrestart > /dev/null 2>&1
 
 %preun
 if [ $1 = 0 ]; then
         /sbin/service xrd stop > /dev/null 2>&1
         /sbin/chkconfig --del xrd
-fi
-
-%postun
-if [ "$1" -ge "1" ]; then
-	/sbin/service xrd condrestart > /dev/null 2>&1
 fi
 
 %files
