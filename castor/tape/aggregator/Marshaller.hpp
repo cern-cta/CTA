@@ -27,6 +27,7 @@
 #define CASTOR_TAPE_AGGREGATOR_MARSHALLER_HPP 1
 
 #include <stdint.h>
+#include <string>
 
 
 namespace castor {
@@ -40,6 +41,16 @@ namespace aggregator {
   public:
 
     /**
+     * Marshalls the specified unsigned 32-bit integer into the specified
+     * message buffer.
+     *
+     * @param ptr pointer to where the value should be marshalled
+     * @param value the value to be marshalled
+     * @return pointer to the first byte after the marshalled value
+     */
+    static char* marshallUint32(char *const ptr, uint32_t value) throw();
+
+    /**
      * Marshalls the specified string into the specified message buffer.
      *
      * @param ptr pointer to where the value should be marshalled
@@ -47,6 +58,16 @@ namespace aggregator {
      * @return pointer to the first byte after the marshalled value
      */
     static char* marshallString(char *const ptr, const char *const value)
+      throw();
+
+    /**
+     * Marshalls the specified string into the specified message buffer.
+     *
+     * @param ptr pointer to where the value should be marshalled
+     * @param value the value to be marshalled
+     * @return pointer to the first byte after the marshalled value
+     */
+    static char* marshallString(char *const ptr, const std::string value)
       throw();
 
     /**

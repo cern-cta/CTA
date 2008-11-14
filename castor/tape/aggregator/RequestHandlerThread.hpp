@@ -29,6 +29,8 @@
 #include "castor/server/IThread.hpp"
 #include "castor/server/Queue.hpp"
 
+#include <map>
+
 
 namespace castor {
 namespace tape {
@@ -70,6 +72,37 @@ namespace aggregator {
   private:
 
     /**
+     * Pointer to handler function, where handler function is a member of
+     * RequestHandler.
+     */
+    typedef void (RequestHandlerThread::*Handler)
+      (Cuuid_t &cuuid, castor::io::ServerSocket &socket);
+
+    /**
+     * A map from request type to handler function.
+     */
+    typedef std::map<uint32_t, Handler> HandlerMap;
+
+    /**
+     * A map from magic number to mape of request type to handler function.
+     */
+    typedef std::map<uint32_t, HandlerMap*> MagicToHandlersMap;
+
+    /**
+     * A map of maps for handling incoming requests.
+     *
+     * The outer map is from magic number to HandlerMap, and the inner
+     * HandlerMap is from request type to handler function.
+     */
+    MagicToHandlersMap m_magicToHandlers;
+
+    /**
+     * Map from supported RTCOPY_MAGIC_OLD0 request types to their
+     * corresponding handler functions.
+     */
+    HandlerMap m_rtcopyMagicOld0Handlers;
+
+    /**
      * Queue of remote copy jobs to be worked on.
      *
      * This queue should only ever contain a maximum of 1 job.  The queue is
@@ -78,13 +111,20 @@ namespace aggregator {
     castor::server::Queue m_jobQueue;
 
     /**
-     * Handles the request with the specified cuuid on the specified socket.
+     * Dispatches the incoming request on the specified socket to the
+     * appropriate request handler.
      *
      * @param cuuid The cuuid of the request
      * @param socket The socket
      */
-    void handleRequest(Cuuid_t &cuuid, castor::io::ServerSocket &socket)
+    void dispatchRequest(Cuuid_t &cuuid, castor::io::ServerSocket &socket)
       throw(castor::exception::Exception);
+
+    /**
+     * Handles the submisison of a remote copy job from the VDQM.
+     */
+    void handleJobSubmission(Cuuid_t &cuuid, castor::io::ServerSocket &socket)
+      throw();
 
   }; // class RequestHandlerThread
 

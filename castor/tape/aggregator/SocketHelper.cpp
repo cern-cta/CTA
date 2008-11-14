@@ -21,21 +21,10 @@
  * @author castor dev team
  *****************************************************************************/
 
-/*
-#include <net.h>
-#include <netdb.h>
-#include <errno.h>
-#include <serrno.h>
-#include <unistd.h> // for close()
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <string>
-*/
 
 #include "castor/exception/Internal.hpp"
 #include "castor/io/ServerSocket.hpp"
+#include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/Marshaller.hpp"
 #include "castor/tape/aggregator/SocketHelper.hpp"
 #include "h/net.h"
@@ -78,49 +67,54 @@ void castor::tape::aggregator::SocketHelper::printSocketDescription(
 
 
 //------------------------------------------------------------------------------
-// readMagicNumber
+// readUint32
 //------------------------------------------------------------------------------
-uint32_t castor::tape::aggregator::SocketHelper::readMagicNumber(
+uint32_t castor::tape::aggregator::SocketHelper::readUint32(
   castor::io::ServerSocket &socket) throw (castor::exception::Exception) {
 
-  uint32_t magic = 0;
-  char     buffer[sizeof(magic)];
+  uint32_t value = 0;
+  char     buffer[sizeof(value)];
 
-  // Read the magic number from the socket
-  int rc = netread(socket.socket(), buffer, sizeof(magic));
+  const int netreadRc    = netread(socket.socket(), buffer, sizeof(value));
+  const int netreadErrno = errno;
 
-  switch(rc) {
+  switch(netreadRc) {
   case -1:
     {
+      char strerrbuf[STRERRORBUFLEN];
+      if(strerror_r(netreadErrno, strerrbuf, sizeof(strerrbuf))) {
+        strncpy(strerrbuf, "Uknown", sizeof(strerrbuf));
+        strerrbuf[sizeof(strerrbuf)-1] = '\0';
+      }
       castor::exception::Exception ex(serrno);
       std::ostream &os = ex.getMessage();
-      os << "Failed to read Magic Number from socket: ";
+      os << "Failed to read unsigned 32-bit integer from socket: ";
       printSocketDescription(os, socket);
-      os << ": " << errno << " - " << strerror(errno);
+      os << ": " << netreadErrno << " - " << strerrbuf;
       throw ex;
     }
   case 0:
     {
       castor::exception::Internal ex;
       std::ostream &os = ex.getMessage();
-      os << "Failed to read Magic Number from socket: ";
+      os << "Failed to read unsigned 32-bit integer from socket: ";
       printSocketDescription(os, socket);
       os << ": connection was closed by the remote end";
       throw ex;
     }
   default:
-    if (rc != sizeof(unsigned int)) {
+    if (netreadRc != sizeof(value)) {
       castor::exception::Internal ex;
       std::ostream &os = ex.getMessage();
-      os << "Failed to read Magic Number from socket: ";
+      os << "Failed to read unsigned 32-bit from socket: ";
       printSocketDescription(os, socket);
-      os << ": received the wrong number of bytes: received: " << rc
-         << " expected: " << sizeof(unsigned int);
+      os << ": received the wrong number of bytes: received: " << netreadRc
+         << " expected: " << sizeof(value);
       throw ex;
     }
   }
 
-  Marshaller::unmarshallUint32(buffer, magic);
+  Marshaller::unmarshallUint32(buffer, value);
 
-  return magic;
+  return value;
 }

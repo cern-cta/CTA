@@ -70,14 +70,12 @@ namespace aggregator {
       castor::io::ServerSocket &socket) throw();
 
     /**
-     * Reads the first four bytes of the header. This function was added to 
-     * support also the older VDQM protocol. The magic number defines, which
-     * protocol is used.
-     * 
+     * Reads an unsigned 32-bit integer from the specified socket.
+     *
      * @param the socket to be read from.
-     * @return the magic number.
+     * @return the unsigned 32-bit integer.
      */
-    static uint32_t readMagicNumber(castor::io::ServerSocket &socket)
+    static uint32_t readUint32(castor::io::ServerSocket &socket)
       throw (castor::exception::Exception);
 
   }; // class SocketHelper
