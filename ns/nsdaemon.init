@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: nsdaemon.init,v $ $Revision: 1.14 $ $Release$ $Date: 2008/11/10 13:48:25 $ $Author: waldron $
+# @(#)$RCSfile: nsdaemon.init,v $ $Revision: 1.15 $ $Release$ $Date: 2008/11/14 09:46:38 $ $Author: waldron $
 #
 # chkconfig: 345 66 39
 # description: NS server daemo
@@ -72,6 +72,7 @@ start() {
                         echo -n $"- already started"
                         failure
                         echo
+                        FRETVAL=1
                 else
                         cd /var/spool/ns
                         daemon /usr/bin/$prog $NSDAEMON_OPTIONS
