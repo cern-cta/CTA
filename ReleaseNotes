@@ -135,7 +135,7 @@
     will be crosschecked against the predefined value and an error returned to the client if
     a mismatch is detected. Furthermore, the checksum of the file on disk will also be
     checked at migration time to make sure that the data recorded on disk is consistent with
-    data that was written to tape. (#6019)
+    the data that was written to tape. (#6019)
 
     Example:
       [lxcastordev10] nstouch /castor/cern.ch/dev/w/waldron/checksumtest
@@ -160,7 +160,7 @@
     the -s option.
 
   - Fixed a bug in the vmgrmodifytape command which when called with no arguments returned:
-    'vmgrmodifytape (null): Bad address'. Now the command returns an error indicated that
+    'vmgrmodifytape (null): Bad address'. Now the command returns an error indicating that
     the mandatory VID option is missing.
 
   - Fixed stager_qry by file id.
@@ -270,7 +270,7 @@
 
     Notes: 
       - It is highly recommended to test the upgrade of the database on an exported copy
-        prior to performing the upgrade live (Maybe several days before). There are many 
+        prior to performing the upgrade live (maybe several days before). There are many 
         constraints added in this release and as a consequence it may not be possible to
         apply the upgrade script if the database has lots of orphaned entries. If you
         encounter any error upgrading please contact the CASTOR development team.
@@ -307,8 +307,8 @@
                   If a recompilation error occurs an ORA-24344: success with compilation 
                   error will be observed.
 
-       6. Upgrade the software on the headnodes and diskservers to 2.1.8-3. All daemons will be
-          automatically restarted.
+       6. Upgrade the software on the headnodes and diskservers to 2.1.8-3. All daemons will
+          be automatically restarted.
 
        7. Restart the service
 
