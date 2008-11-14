@@ -14,6 +14,6 @@ DAEMON_COREFILE_LIMIT=unlimited
 # What roles should the rhserver run for. For each role you can overwrite
 # the default options using a dedicate sysconfig file 
 # e.g. /etc/sysconfig/rhserver.<role>. The role based mechanism allows for
-# multiple nsdaemon's running with different options to be controlled via
+# multiple rhserver's running with different options to be controlled via
 # the same initd script
 #ROLES=
