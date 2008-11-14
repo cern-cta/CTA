@@ -2,8 +2,8 @@
 ## Makefile.am for xCastor2 FS plugin
 ##
 ##
-## Version info: $Id: Makefile.am,v 1.9 2008/10/16 14:28:08 apeters Exp $
-## Checked in by $Author: apeters $
+## Version info: $Id: Makefile.am,v 1.10 2008/11/14 09:44:39 waldron Exp $
+## Checked in by $Author: waldron $
 #######################################################################
 
 lib_LTLIBRARIES = libXrdxCastor2Fs.la libXrdxCastor2ServerAcc.la libXrdxCastor2Ofs.la libXrdxCastor2Xmi.la
@@ -45,7 +45,7 @@ libXrdxCastor2Fs_la_SOURCES = \
 
 
 libXrdxCastor2Fs_la_LIBADD = -L$(XROOTD_LOCATION)/lib$(MARK64)/  -lXrdSys -lXrdOuc -lXrdClient -lXrdCms -lXrdOfs -lcrypto -luuid -L$(CASTOR_LOCATION)/lib$(MARK64)/ -lshift
-EXTRA_DIST = configure.ac bootstrap.sh xrootd-xcastor2fs.spec xrootd-publickey.spec keys/pkey.pem keys/key.pem etc/xrd.cf x2castorjob x2cp etc/init.d/x2castormond x2castormonitoring.pl etc/logrotate.d/x2castormond etc/sysconfig/x2castormond.example 
+EXTRA_DIST = configure.ac bootstrap.sh xrootd-xcastor2fs.spec xrootd-publickey.spec etc/xrd.cf x2castorjob x2cp etc/init.d/x2castormond x2castormonitoring.pl etc/logrotate.d/x2castormond etc/sysconfig/x2castormond.example etc/logrotate.d/xrd etc/init.d/xrd etc/sysconfig/xrd.example
 
 
 libXrdxCastor2ServerAcc_la_SOURCES = \
@@ -86,16 +86,19 @@ mon-install:
 	$(INSTALL) -m 644 $(srcdir)/etc/sysconfig/x2castormond.example $(DESTDIR)/etc/sysconfig/x2castormond.example
 
 install-exec-local: client-install
-	mkdir -p $(DESTDIR)/$(prefix)/keys/
-	mkdir -p $(DESTDIR)/$(prefix)/bin/
+	mkdir -p $(DESTDIR)/$(prefix)/bin
+	mkdir -p $(DESTDIR)/var/log/xroot/server/proc
+	mkdir -p $(DESTDIR)/var/log/xroot/empty
+	mkdir -p $(DESTDIR)/var/spool/xroot/admin
+	mkdir -p $(DESTDIR)/var/spool/xroot/core
+	mkdir -p $(DESTDIR)/etc/rc.d/init.d
+	mkdir -p $(DESTDIR)/etc/logrotate.d
 	mkdir -p $(DESTDIR)/etc/sysconfig
-	mkdir -p $(DESTDIR)/etc/init.d
 	$(INSTALL) -m 644 $(srcdir)/etc/xrd.cf $(DESTDIR)/etc/xrd.cf
 	$(INSTALL) -m 755 $(srcdir)/x2castorjob $(DESTDIR)/$(prefix)/bin/x2castorjob
-	$(INSTALL) -m 755 $(srcdir)/x2castormonitoring.pl $(DESTDIR)/$(prefix)/bin/x2castormonitoring.pl
-	$(INSTALL) -m 755 $(srcdir)/etc/init.d/x2castormond $(DESTDIR)/etc/init.d/x2castormond
-#	$(INSTALL) -m 644 $(srcdir)/keys/pkey.pem $(DESTDIR)/$(prefix)/keys/ 
-#	$(INSTALL) -m 400 $(srcdir)/keys/key.pem $(DESTDIR)/$(prefix)/keys/ 
+	$(INSTALL) -m 755 $(srcdir)/etc/init.d/xrd $(DESTDIR)/etc/rc.d/init.d/xrd
+	$(INSTALL) -m 644 $(srcdir)/etc/logrotate.d/xrd $(DESTDIR)/etc/logrotate.d/xrd
+	$(INSTALL) -m 644 $(srcdir)/etc/sysconfig/xrd.example $(DESTDIR)/etc/sysconfig/xrd.example
 
 client-uninstall:
 	rm -f $(DESTDIR)/$(prefix)/bin/x2cp
