@@ -53,8 +53,8 @@ namespace aggregator {
      * Prints the string form of specified IP using the specified output
      * stream.
      *
-     * @param os the output stream.
-     * @param ip the IP address in host byte order.
+     * @param os the output stream
+     * @param ip the IP address in host byte order
      */
     static void printIp(std::ostream &os, const unsigned long ip) throw();
 
@@ -62,9 +62,9 @@ namespace aggregator {
      * Prints a textual description of the specified socket to the specified
      * output stream.
      *
-     * @param os the output stream to which the string is to be printed.
+     * @param os the output stream to which the string is to be printed
      * @param the socket whose textual description is to be printed to the
-     * stream.
+     * stream
      */
     static void printSocketDescription(std::ostream &os,
       castor::io::ServerSocket &socket) throw();
@@ -72,10 +72,26 @@ namespace aggregator {
     /**
      * Reads an unsigned 32-bit integer from the specified socket.
      *
-     * @param the socket to be read from.
-     * @return the unsigned 32-bit integer.
+     * @param the socket to be read from
+     * @param netReadWriteTimeout the timeout to be used when performing
+     * network reads and writes
+     * @return the unsigned 32-bit integer
      */
-    static uint32_t readUint32(castor::io::ServerSocket &socket)
+    static uint32_t readUint32(castor::io::ServerSocket &socket,
+      const int netReadWriteTimeout) throw (castor::exception::Exception);
+
+    /**
+     * Reads the specified number of bytes from the specified socket and writes
+     * the result into the specified buffer.
+     *
+     * @param the socket to be read from
+     * @param netReadWriteTimeout the timeout to be used when performing
+     * network reads and writes
+     * @param nbBytes the number of bytes to be read
+     * @param buf the buffer into which the bytes will be written
+     */
+    static void readBytes(castor::io::ServerSocket &socket,
+      const int netReadWriteTimeout, const int nbBytes, char *buf)
       throw (castor::exception::Exception);
 
   }; // class SocketHelper

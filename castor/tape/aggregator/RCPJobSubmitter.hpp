@@ -54,6 +54,8 @@ namespace aggregator {
      * 
      * @param host the hostname of the RTCPD or tape aggregator daemon
      * @param port the port number of the RTCPD or tape aggregator daemon
+     * @param netReadWriteTimeout the timeout to be used when performing
+     * network reads and writes
      * @param remoteCopyType remote copy type to be used for exception messages
      * @param tapeRequestID tape request ID
      * @param clientUserName client user name
@@ -65,17 +67,18 @@ namespace aggregator {
      * @param tapeDriveName tape drive name
      */
     static void submit(
-      const std::string &host,
-      const unsigned     port,
-      const char        *remoteCopyType,
-      const u_signed64   tapeRequestID,
-      const std::string &clientUserName,
-      const std::string &clientHost,
-      const int          clientPort,
-      const int          clientEuid,
-      const int          clientEgid,
-      const std::string &deviceGroupName,
-      const std::string &tapeDriveName)
+      const std::string  &host,
+      const unsigned int  port,
+      const int           netReadWriteTimeout,
+      const char         *remoteCopyType,
+      const u_signed64    tapeRequestID,
+      const std::string  &clientUserName,
+      const std::string  &clientHost,
+      const int           clientPort,
+      const int           clientEuid,
+      const int           clientEgid,
+      const std::string  &deviceGroupName,
+      const std::string  &tapeDriveName)
       throw (castor::exception::Exception);    
 
       
@@ -83,12 +86,17 @@ namespace aggregator {
       
     /**
      * This is a helper function for sendJob() to read the reply of the RTCOPY
-     * or tape aggregator daemon
+     * or tape aggregator daemon.
      * 
+     * @param socket the socket of the connection to the RTCOPY or tape
+     * aggregator daemon
+     * @param netReadWriteTimeout the timeout to be used when performing
+     * network reads and writes
      * @param remoteCopyType remote copy type to be used for exception messages
      */
     static void readReply(castor::io::AbstractTCPSocket &socket,
-      const char *remoteCopyType) throw (castor::exception::Exception);    
+      const int netReadWriteTimeout, const char *remoteCopyType)
+      throw (castor::exception::Exception);    
 
   }; // class RCPJobSubmitter
 

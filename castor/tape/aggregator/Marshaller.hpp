@@ -26,6 +26,8 @@
 #ifndef CASTOR_TAPE_AGGREGATOR_MARSHALLER_HPP
 #define CASTOR_TAPE_AGGREGATOR_MARSHALLER_HPP 1
 
+#include "castor/exception/Exception.hpp"
+
 #include <stdint.h>
 #include <string>
 
@@ -33,7 +35,7 @@
 namespace castor {
 namespace tape {
 namespace aggregator {
-  	
+    
   /**
    * Collection of static methods to marshall / unmarshall network messages.
    */
@@ -42,42 +44,77 @@ namespace aggregator {
 
     /**
      * Marshalls the specified unsigned 32-bit integer into the specified
-     * message buffer.
+     * destination buffer.
      *
-     * @param ptr pointer to where the value should be marshalled
-     * @param value the value to be marshalled
-     * @return pointer to the first byte after the marshalled value
+     * @param src the unsigned 32-bit integer to be marshalled
+     * @param dst in/out parameter, before invocation points to the destination
+     * buffer where the unsigned 32-bit integer should be marshalled to and on
+     * return points to the byte in the destination buffer immediately after
+     * the marshalled unsigned 32-bit integer
      */
-    static char* marshallUint32(char *const ptr, uint32_t value) throw();
+    static void marshallUint32(uint32_t src, char * &dst)
+      throw(castor::exception::Exception);
 
     /**
-     * Marshalls the specified string into the specified message buffer.
+     * Unmarshalls an unsigned 32-bit integer from the specified source buffer
+     * into the specified* destination unsigned 32-bit integer.
      *
-     * @param ptr pointer to where the value should be marshalled
-     * @param value the value to be marshalled
-     * @return pointer to the first byte after the marshalled value
+     * @param src in/out parameter, before invocation points to the source
+     * buffer where the unsigned 32-bit integer should be unmarshalled from and
+     * on return points to the byte in the source buffer immediately after the
+     * unmarshalled unsigned 32-bit integer
+     * @param srcLen in/our parameter, before invocation is the length of the
+     * source buffer from where the unsigned 32-bit integer should unmarshalled
+     * and on return is the number of bytes remaining in the source buffer
+     * @param dst the destination unsigned 32-bit integer
      */
-    static char* marshallString(char *const ptr, const char *const value)
-      throw();
+    static void unmarshallUint32(char * &src, size_t &srcLen, uint32_t &dst)
+      throw(castor::exception::Exception);
 
     /**
-     * Marshalls the specified string into the specified message buffer.
+     * Marshalls the specified string into the specified destination buffer.
      *
-     * @param ptr pointer to where the value should be marshalled
-     * @param value the value to be marshalled
-     * @return pointer to the first byte after the marshalled value
+     * @param src the string to be marshalled
+     * @param dst in/out parameter, before invocation points to the destination
+     * buffer where the string should be marshalled to and on return points to
+     * the byte in the destination buffer immediately after the marshalled
+     * string
      */
-    static char* marshallString(char *const ptr, const std::string value)
-      throw();
+    static void marshallString(const char *src, char * &dst)
+      throw(castor::exception::Exception);
 
     /**
-     * Unmarshalls an unsigned 32 bit integer from the specified buffer.
+     * Marshalls the specified string into the specified destination buffer.
      *
-     * @param ptr pointer to where the integer should be unmarshalled from
-     * @param value the unmarshalled value
-     * @return pointer to the first byte after the unmarshalled value
+     * @param src the string to be marshalled
+     * @param dst in/out parameter, before invocation points to the destination
+     * buffer where the string should be marshalled to and on return points to
+     * the byte in the destination buffer immediately after the marshalled
+     * string
      */
-    static char* unmarshallUint32(char *const ptr, uint32_t &value) throw();
+    static void marshallString(const std::string &src, char * &dst)
+      throw(castor::exception::Exception);
+
+    /**
+     * Unmarshalls a string from the specified source buffer into the specified
+     * destination buffer.
+     *
+     * @param src in/out parameter, before invocation points to the source
+     * buffer where the string should be unmarshalled from and on return points
+     * to the byte in the source buffer immediately after the unmarshalled
+     * string
+     * @param srcLen in/our parameter, before invocation is the length of the
+     * source buffer from where the string should unmarshalled and on return
+     * is the number of bytes remaining in the source buffer
+     * @param dst in/out parameter, before invocation points to the destination
+     * buffer where the string should be unmarshalled to and on return points
+     * to the byte in the destination buffer immediately after the unmarshalled
+     * string 
+     * @param dstLen the length of the destination buffer where the string
+     * should unmarshalled to
+     */
+    static void unmarshallString(char * &src, size_t &srcLen, char *dst,
+      const size_t dstLen) throw(castor::exception::Exception);
 
   }; // class Utils
 

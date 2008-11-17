@@ -42,17 +42,18 @@
 // submit
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::RCPJobSubmitter::submit(
-  const std::string &host,
-  const unsigned     port,
-  const char        *remoteCopyType,
-  const u_signed64   tapeRequestID,
-  const std::string &clientUserName,
-  const std::string &clientHost,
-  const int          clientPort,
-  const int          clientEuid,
-  const int          clientEgid,
-  const std::string &deviceGroupName,
-  const std::string &tapeDriveName)
+  const std::string  &host,
+  const unsigned int  port,
+  const int           netReadWriteTimeout,
+  const char         *remoteCopyType,
+  const u_signed64    tapeRequestID,
+  const std::string  &clientUserName,
+  const std::string  &clientHost,
+  const int           clientPort,
+  const int           clientEuid,
+  const int           clientEgid,
+  const std::string  &deviceGroupName,
+  const std::string  &tapeDriveName)
   throw (castor::exception::Exception) {
 
   castor::io::ClientSocket socket(port, host);
@@ -72,7 +73,7 @@ void castor::tape::aggregator::RCPJobSubmitter::submit(
   // But for historical reasons, we will do a downcast of the
   // id, which is then still unique, because a tapeRequest has
   // a very short lifetime, compared to the number of new IDs
-  int len =
+  uint32_t len =
     4*sizeof(uint32_t)       +
     clientHost.length()      +
     deviceGroupName.length() +
@@ -80,28 +81,38 @@ void castor::tape::aggregator::RCPJobSubmitter::submit(
     clientUserName.length()  +
     4; // 4 = the number of string termination characters
 
+  // If the contents for the message are larger than the message body buffer
+  if(len > MSGBUFSIZ - 3 * sizeof(uint32_t)) {
+    castor::exception::Exception ex(EMSGSIZE);
+
+    ex.getMessage() << "Contents for job submission message are larger than "
+      "the message body buffer: Message body buffer length: "
+      << (MSGBUFSIZ - 3 * sizeof(uint32_t)) << ": Contents length: " << len;
+
+    throw ex;
+  }
+
   char buf[MSGBUFSIZ];
   char *p = buf;
 
-  p = Marshaller::marshallUint32(p, RTCOPY_MAGIC_OLD0); // Magic number
-  p = Marshaller::marshallUint32(p, VDQM_CLIENTINFO); // Request type
-  p = Marshaller::marshallUint32(p, len);
-
-  p = Marshaller::marshallUint32(p, tapeRequestID); // Downcast to 32-bits
-  p = Marshaller::marshallUint32(p, clientPort);
-  p = Marshaller::marshallUint32(p, clientEuid);
-  p = Marshaller::marshallUint32(p, clientEgid);
-  p = Marshaller::marshallString(p, clientHost);
-  p = Marshaller::marshallString(p, deviceGroupName);
-  p = Marshaller::marshallString(p, tapeDriveName);
-  p = Marshaller::marshallString(p, clientUserName);
+  Marshaller::marshallUint32(RTCOPY_MAGIC_OLD0, p); // Magic number
+  Marshaller::marshallUint32(VDQM_CLIENTINFO  , p); // Request type
+  Marshaller::marshallUint32(len              , p);
+  Marshaller::marshallUint32(tapeRequestID    , p); // Downcast to 32-bits
+  Marshaller::marshallUint32(clientPort       , p);
+  Marshaller::marshallUint32(clientEuid       , p);
+  Marshaller::marshallUint32(clientEgid       , p);
+  Marshaller::marshallString(clientHost       , p);
+  Marshaller::marshallString(deviceGroupName  , p);
+  Marshaller::marshallString(tapeDriveName    , p);
+  Marshaller::marshallString(clientUserName   , p);
 
   // Calculate the length of header + body ready for netwrite
   len += 3 * sizeof(uint32_t);
 
   // After marshalling we can send the information to the RTCPD or tape
   // aggregator daemon
-  int rc = netwrite_timeout(socket.socket(), buf, len, NETRW_TIMEOUT);
+  int rc = netwrite_timeout(socket.socket(), buf, len, netReadWriteTimeout);
 
   if (rc == -1) {
     serrno = SECOMERR;
@@ -114,11 +125,11 @@ void castor::tape::aggregator::RCPJobSubmitter::submit(
     serrno = SECONNDROP;
     castor::exception::Exception ex(serrno);
     ex.getMessage() << __PRETTY_FUNCTION__
-      << ": netwrite(REQ) to " << remoteCopyType << ": connection dropped";
+      << ": netwrite(REQ) to " << remoteCopyType << ": Connection dropped";
     throw ex;
   }
 
-  readReply(socket, remoteCopyType);
+  readReply(socket, netReadWriteTimeout, remoteCopyType);
 }
 
 
@@ -126,13 +137,13 @@ void castor::tape::aggregator::RCPJobSubmitter::submit(
 // readReply
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::RCPJobSubmitter::readReply(
-  castor::io::AbstractTCPSocket &socket, const char *remoteCopyType)
-  throw (castor::exception::Exception) {
+  castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
+  const char *remoteCopyType) throw (castor::exception::Exception) {
 
   char buf[MSGBUFSIZ];
 
   int rc = netread_timeout(socket.socket(), buf, sizeof(uint32_t)*3,
-    NETRW_TIMEOUT);
+    netReadWriteTimeout);
 
   switch (rc) {
   case -1:
@@ -153,11 +164,12 @@ void castor::tape::aggregator::RCPJobSubmitter::readReply(
     }
   }
 
-  char *p = buf;
+  char   *p     = buf;
+  size_t bufLen = sizeof(buf);
 
   // Unmarshall the magic number
   uint32_t magic = 0;
-  p = Marshaller::unmarshallUint32(p, magic);
+  Marshaller::unmarshallUint32(p, bufLen, magic);
 
   // If the magic number is invalid
   if(magic != RTCOPY_MAGIC && magic != RTCOPY_MAGIC_OLD0) {
@@ -165,16 +177,16 @@ void castor::tape::aggregator::RCPJobSubmitter::readReply(
 
      ex.getMessage() << __PRETTY_FUNCTION__
        << std::hex
-       << ": invalid header from " << remoteCopyType
-       << ": invalid magic number: expected: 0x" << RTCOPY_MAGIC << " or 0x"
-       << RTCOPY_MAGIC_OLD0 << ": received: 0x" << magic;
+       << ": Invalid header from " << remoteCopyType
+       << ": Invalid magic number: Expected: 0x" << RTCOPY_MAGIC << " or 0x"
+       << RTCOPY_MAGIC_OLD0 << ": Received: 0x" << magic;
 
      throw ex;
   }
 
   // Unmarshall the request type
   uint32_t reqtype = 0;
-  p = Marshaller::unmarshallUint32(p, reqtype);
+  Marshaller::unmarshallUint32(p, bufLen, reqtype);
 
   // If the request type is invalid
   if(reqtype != VDQM_CLIENTINFO) {
@@ -182,44 +194,44 @@ void castor::tape::aggregator::RCPJobSubmitter::readReply(
 
     ex.getMessage() << __PRETTY_FUNCTION__
       << std::hex
-      << ": invalid header from " << remoteCopyType
-      << ": invalid request type: expected: 0x" << VDQM_CLIENTINFO
-      << ": received 0x" << reqtype;
+      << ": Invalid header from " << remoteCopyType
+      << ": Invalid request type: Expected: 0x" << VDQM_CLIENTINFO
+      << ": Received 0x" << reqtype;
 
     throw ex;
   }
 
   // Unmarshall the length of the message body
-  uint32_t len = 0;
-  p = Marshaller::unmarshallUint32(p, len);
+  uint32_t bodyLen = 0;
+  Marshaller::unmarshallUint32(p, bufLen, bodyLen);
 
   // If the message body is not large enough for a status number and an empty
   // error string
-  if(len < sizeof(uint32_t) + 1) {
+  if(bodyLen < sizeof(uint32_t) + 1) {
     castor::exception::Exception ex(EMSGSIZE);
 
     ex.getMessage() << __PRETTY_FUNCTION__
-      << ": invalid header from " << remoteCopyType
-      << ": message body not large enough for a status number and an empty "
-      "string: minimum size expected: " << (sizeof(uint32_t) + 1)
-      << ": received: " << len;
+      << ": Invalid header from " << remoteCopyType
+      << ": Message body not large enough for a status number and an empty "
+      "string: Minimum size expected: " << (sizeof(uint32_t) + 1)
+      << ": Received: " << bodyLen;
 
     throw ex;
   }
 
   // If the message body is too large
-  if(len > MSGBUFSIZ - 3*sizeof(uint32_t) ) {
+  if(bodyLen > MSGBUFSIZ - 3*sizeof(uint32_t) ) {
     castor::exception::Exception ex(EMSGSIZE);
 
     ex.getMessage() << __PRETTY_FUNCTION__
-      << ": invalid header from " << remoteCopyType
-      << ": message body too large: maximum length: "
-      << (MSGBUFSIZ-3*sizeof(uint32_t)) << " actual length: " << len;
+      << ": Invalid header from " << remoteCopyType
+      << ": Message body too large: Maximum length: "
+      << (MSGBUFSIZ-3*sizeof(uint32_t)) << " Actual length: " << bodyLen;
 
     throw ex;
   }
 
-  rc = netread_timeout(socket.socket(), p, len, NETRW_TIMEOUT);
+  rc = netread_timeout(socket.socket(), p, bodyLen, netReadWriteTimeout);
   switch (rc) {
   case -1:
     {
@@ -234,18 +246,18 @@ void castor::tape::aggregator::RCPJobSubmitter::readReply(
       serrno = SECONNDROP;
       castor::exception::Exception ex(serrno);
         ex.getMessage() << __PRETTY_FUNCTION__
-        << ": netread(HDR) from " << remoteCopyType << ": connection dropped";
+        << ": netread(HDR) from " << remoteCopyType << ": Connection dropped";
       throw ex;
     }
   }
 
   // Unmarshall the status number
   uint32_t status = 0;
-  p = Marshaller::unmarshallUint32(p, status);
+  Marshaller::unmarshallUint32(p, bufLen, status);
 
   // The size of the received error message is the size of the mesaage body
   // minus the size of the status number
-  const size_t receivedErrMsgSize = len - sizeof(uint32_t);
+  const size_t receivedErrMsgSize = bodyLen - sizeof(uint32_t);
 
   // Unmarshall the error message
   char errMsg[1024];
@@ -260,8 +272,8 @@ void castor::tape::aggregator::RCPJobSubmitter::readReply(
     castor::exception::Exception ex(ECANCELED);
 
     ex.getMessage() << __PRETTY_FUNCTION__
-      << ": " << remoteCopyType << " returned an error message: status: "
-      << status << ": error message: " << errMsg;
+      << ": " << remoteCopyType << " Returned an error message: Status: "
+      << status << ": Error message: " << errMsg;
 
     throw ex;
   }

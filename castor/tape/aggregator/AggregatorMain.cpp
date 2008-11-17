@@ -54,9 +54,9 @@ int main(int argc, char *argv[]) {
         std::cout << std::endl;
         return 0;
       }
-    } catch (castor::exception::Exception &e) {
+    } catch (castor::exception::Exception &ex) {
       std::cerr << std::endl << "Failed to parse the command-line: "
-        << e.getMessage().str() << std::endl;
+        << ex.getMessage().str() << std::endl;
       castor::tape::aggregator::AggregatorDaemon::usage(std::cerr, argv[0]);
       std::cerr << std::endl;
       return 1;
@@ -92,9 +92,9 @@ int main(int argc, char *argv[]) {
 
     daemon.start();
 
-  } catch (castor::exception::Exception &e) {
+  } catch (castor::exception::Exception &ex) {
     std::cerr << std::endl << "Failed to start daemon: "
-      << e.getMessage().str() << std::endl << std::endl;
+      << ex.getMessage().str() << std::endl << std::endl;
     castor::tape::aggregator::AggregatorDaemon::usage(std::cerr, argv[0]);
     std::cerr << std::endl;
     return 1;
