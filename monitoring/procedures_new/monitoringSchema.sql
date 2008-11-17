@@ -519,7 +519,7 @@ order by reqs.timestamp
 	COMMIT;
 	--Update maximum timestamp in ConfigSchema Table
 	select max(timestamp) into new_timestamp from DiskCopy WHERE timestamp > maxtimestamp;
-	if (new_timestamp is NULL) then
+	if ((new_timestamp is NULL)or(new_timestamp - maxtimestamp < 5/1440)) then
 		begin
 			UPDATE ConfigSchema
 			SET dcmaxtime = dcmaxtime + 5/1440;
@@ -535,7 +535,7 @@ order by reqs.timestamp
 END;
 /
 -- Taperecall Procedure - Populates Taperecall Table
-CREATE OR REPLACE procedure tapeRecallProc AS
+create or replace procedure tapeRecallProc AS
 maxtimestamp 	DATE;
 new_timestamp	DATE;
 subid 		VARCHAR2(36);
@@ -585,7 +585,7 @@ BEGIN
 	END;
 	---Update maximum timestamp in ConfigSchema Table
 	select max(timestamp) into new_timestamp from TapeRecall WHERE timestamp > maxtimestamp;
-	if (new_timestamp is NULL) then 
+  if ((new_timestamp is NULL)or(new_timestamp - maxtimestamp < 5/1440)) then 
 		begin
 			UPDATE ConfigSchema
 			SET trmaxtime = trmaxtime + 5/1440;
@@ -676,8 +676,6 @@ BEGIN
 	END LOOP;
 END;
 /
-show err
---GCFiles Procedure - Extract Info about Garbage Collection
 create or replace procedure GCFilesProc
 AS
 maxtimestamp 	DATE;
@@ -691,8 +689,8 @@ BEGIN
 	SELECT gcmaxtime INTO maxtimestamp 
 	FROM ConfigSchema;
 	INSERT INTO GCFiles
-	(timestamp, FileSize, FileAge)
-	select a.timestamp, max(decode(a.name, 'FileSize', to_number(a.value), NULL)) FileSize,
+	(timestamp,nsfileid, FileSize, FileAge)
+	select a.timestamp,b.nsfileid, max(decode(a.name, 'FileSize', to_number(a.value), NULL)) FileSize,
 		max(decode(A.name, 'FileAge', to_number(a.value), NULL)) FileAge
 	from castor_dlf.dlf_num_param_values a, castor_dlf.dlf_messages b 
 	where b.facility=8 and b.msg_no=11 and a.id=b.id  and a.name in ('FileSize','FileAge')
@@ -700,34 +698,38 @@ BEGIN
 	and b.timestamp > maxtimestamp
 	and a.timestamp <= maxtimestamp  + 5/1440 
 	and b.timestamp <= maxtimestamp  + 5/1440 
-	group by a.timestamp;
+	group by a.timestamp,b.nsfileid;
 	COMMIT;
 	--Update maximum gc timestamp in ConfigSchema Table
 	SELECT max(timestamp) into new_timestamp FROM GCFiles WHERE timestamp > maxtimestamp;
-	if (new_timestamp is not NULL) then 
+	if ((new_timestamp is NULL)or(new_timestamp - maxtimestamp < 5/1440)) then
 		begin
-		UPDATE ConfigSchema
-		SET gcmaxtime = (
-			SELECT max(timestamp) FROM GCFiles 
-			WHERE timestamp > maxtimestamp);
-		COMMIT;
+			UPDATE ConfigSchema
+			SET gcmaxtime = gcmaxtime + 5/1440;
+			COMMIT;
+		end;
+	else
+		begin
+			UPDATE ConfigSchema
+			SET gcmaxtime = new_timestamp;
+			COMMIT;
 		end;
 	end if;
+END;
 
 -- (select to_number(value) NbAccesses from castor_dlf.dlf_num_param_values a, castor_dlf.dlf_messages b where b.facility=8 and b.msg_no=11 and a.id=b.id  and a.name='NbAccesses' and
 --	AND a.timestamp > now - 10/1440
 --        and b.timestamp > now - 10/1440
 --	and a.timestamp <= now - 5/1440
 --	and b.timestamp <= now - 5/1440)
-
-END;
 /
 
 --Reqs Procedure - Extraxt Info for file Requests 
 --Global Requests Info 
 --
-CREATE OR REPLACE  PROCEDURE reqs AS
+create or replace PROCEDURE reqs AS
 maxtimestamp DATE;
+new_maxtime  date;
 --define unique constraint exception
 --Use exception handling to avoid proc failure
 --Expected Unique Constraint Violation because of repeated message in DLF DB
@@ -764,16 +766,26 @@ BEGIN
 	ORDER BY mes.timestamp
 	LOG ERRORS INTO Err_Requests REJECT LIMIT UNLIMITED;
 	COMMIT;
-	UPDATE ConfigSchema
-	SET reqsmaxtime = (
-		SELECT max(timestamp) FROM Requests 
-		WHERE timestamp > maxtimestamp);
-	COMMIT;
+  select max(timestamp) into new_maxtime from requests;
+  if ((new_maxtime is NULL)or(new_maxtime - maxtimestamp < 5/1440)) then
+		begin
+			UPDATE ConfigSchema
+			SET reqsmaxtime = reqsmaxtime + 5/1440;
+			COMMIT;
+		end;
+	else
+		begin
+			UPDATE ConfigSchema
+			SET reqsmaxtime = new_maxtime;
+			COMMIT;
+		end;
+	end if;
 END;
 /
 --Migs Procedure - Info about File Migration
-CREATE OR REPLACE  PROCEDURE migs AS
+create or replace PROCEDURE migs AS
 maxtimestamp DATE;
+new_maxtime DATE;
 con_violation EXCEPTION;
 PRAGMA EXCEPTION_INIT (con_violation, -0001);
 BEGIN
@@ -805,11 +817,20 @@ BEGIN
 	ORDER BY mes.timestamp
 	LOG ERRORS INTO Err_Migration REJECT LIMIT UNLIMITED;
 	COMMIT;
-	UPDATE ConfigSchema
-	SET migsmaxtime = (
-		SELECT max(timestamp) FROM Requests 
-		WHERE timestamp > maxtimestamp);
-	COMMIT;
+  select max(timestamp) into new_maxtime from migration;
+  if ((new_maxtime is NULL)or(new_maxtime - maxtimestamp < 5/1440)) then
+		begin
+			UPDATE ConfigSchema
+			SET migsmaxtime = migsmaxtime + 5/1440;
+			COMMIT;
+		end;
+	else
+		begin
+			UPDATE ConfigSchema
+			SET migsmaxtime = new_maxtime;
+			COMMIT;
+		end;
+	end if;
 END;
 /
 
@@ -858,11 +879,11 @@ JOB_ACTION      => 'BEGIN
 			reqs;
 			diskcopyproc;
 			taperecallproc;
+			migs;
 			TotalLat;
 			GCFilesProc;
-			migs;
 			END;',
-START_DATE      => SYSDATE,
+START_DATE      => SYSDATE + 1/1440,
 REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
 ENABLED         => TRUE,
 COMMENTS        => 'CASTOR2 Monitoring(5 Minute Frequency)');
