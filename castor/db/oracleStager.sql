@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.701 $ $Date: 2008/11/14 09:59:59 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.702 $ $Date: 2008/11/18 18:01:59 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1799,13 +1799,13 @@ CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
 BEGIN
   BEGIN
-    -- try to find an existing file
+    -- try to find an existing file and lock it
     SELECT id, fileSize INTO rid, rfs FROM CastorFile
-      WHERE fileId = fid AND nsHost = nh;
+     WHERE fileId = fid AND nsHost = nh FOR UPDATE;
     -- update lastAccess time
     UPDATE CastorFile SET LastAccessTime = getTime(),
                           lastKnownFileName = REGEXP_REPLACE(fn,'(/){2,}','/')
-      WHERE id = rid;
+     WHERE id = rid;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- insert new row
     INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
@@ -1817,7 +1817,7 @@ BEGIN
 EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
   -- retry the select since a creation was done in between
   SELECT id, fileSize INTO rid, rfs FROM CastorFile
-    WHERE fileId = fid AND nsHost = nh;
+    WHERE fileId = fid AND nsHost = nh FOR UPDATE;
 END;
 /
 

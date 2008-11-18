@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.681 $ $Date: 2008/11/06 18:17:27 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.682 $ $Date: 2008/11/18 18:01:59 $ $Author: itglp $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -602,18 +602,23 @@ END;
 /* Internally used in filesDeletedProc, putFailedProc and deleteOutOfDateDiskCopies */
 CREATE OR REPLACE PROCEDURE deleteCastorFile(cfId IN NUMBER) AS
   nb NUMBER;
+  LockError EXCEPTION;
+  PRAGMA EXCEPTION_INIT (LockError, -54);
 BEGIN
-  -- See whether the castorfile has no other DiskCopy
+  -- First try to lock the castorFile
+  SELECT id INTO nb FROM CastorFile
+   WHERE id = cfId FOR UPDATE NOWAIT;
+  -- See whether it has any DiskCopy
   SELECT count(*) INTO nb FROM DiskCopy
    WHERE castorFile = cfId;
   -- If any DiskCopy, give up
   IF nb = 0 THEN
-    -- See whether the castorfile has any TapeCopy
+    -- See whether it has any TapeCopy
     SELECT count(*) INTO nb FROM TapeCopy
      WHERE castorFile = cfId AND status != 6; -- FAILED
     -- If any TapeCopy, give up
     IF nb = 0 THEN
-      -- See whether the castorfile has any pending SubRequest
+      -- See whether pending SubRequests exist
       SELECT count(*) INTO nb FROM SubRequest
        WHERE castorFile = cfId
          AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 13, 14);   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
@@ -640,14 +645,17 @@ BEGIN
             -- from the name server
             INSERT INTO FilesDeletedProcOutput VALUES (fid, nsh);
           END IF;
-        EXCEPTION WHEN NO_DATA_FOUND THEN
-          -- ignore, this means that the castor file did not exist.
-          -- There is thus no way to find out whether to remove the
-          -- file from the nameserver. For safety, we thus keep it
-          NULL;
         END;
       END IF;
     END IF;
   END IF;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- ignore, this means that the castorFile did not exist.
+  -- There is thus no way to find out whether to remove the
+  -- file from the nameserver. For safety, we thus keep it
+  NULL;
+WHEN LockError THEN
+  -- ignore, somebody else is dealing with this castorFile, 
+  NULL;
 END;
 /
