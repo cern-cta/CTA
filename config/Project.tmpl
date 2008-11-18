@@ -658,6 +658,10 @@ VDQMCPPDIR = vdqm
 AGGREGATORCPPDIR = aggregator
 TAPECPPDIR = tape
 #endif
+#if BuildTapeFormatCpp
+TAPEFORMATCPPDIR = format
+TAPECPPDIR = tape
+#endif
 #if BuildRepack
 REPACKDIR = repack
 #endif
@@ -675,7 +679,7 @@ INFOPOLICYDIR = infoPolicy
 #if BuildGCCpp
 GCCPPDIR = gc
 #endif
-#if BuildCastorClientCPPLibrary || BuildRHCpp || BuildVDQMCpp || BuildGCCpp || BuildOraCpp || BuildPgCpp || BuildMyCpp || BuildStageDaemonCpp || BuildRmMasterCpp || BuildRmNodeCpp || BuildAggregatorCpp
+#if BuildCastorClientCPPLibrary || BuildRHCpp || BuildVDQMCpp || BuildGCCpp || BuildOraCpp || BuildPgCpp || BuildMyCpp || BuildStageDaemonCpp || BuildRmMasterCpp || BuildRmNodeCpp || BuildAggregatorCpp || BuildTapeFormatCpp
 COMMONCPPDIR = castor
 #endif
 #if BuildOraCpp
