@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.693 $ $Date: 2008/11/18 10:18:44 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.694 $ $Date: 2008/11/18 10:48:48 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1279,7 +1279,9 @@ BEGIN
            CastorFile.nsHost, CastorFile.fileid, CastorFile.filesize
       FROM Tapecopy,CastorFile
      WHERE CastorFile.id = TapeCopy.castorfile
-       AND TapeCopy.id IN (SELECT /*+ CARDINALITY(tcidTable 5) */ * FROM table(tcIds) tcidTable);
+       AND TapeCopy.id IN 
+         (SELECT /*+ CARDINALITY(tcidTable 5) */ * 
+            FROM table(tcIds) tcidTable);
 END;
 /
 
