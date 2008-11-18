@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.692 $ $Date: 2008/11/10 14:03:37 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.693 $ $Date: 2008/11/18 10:18:44 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1254,19 +1254,23 @@ BEGIN
     FROM SvcClass
    WHERE SvcClass.name = svcClassName;
 
-  UPDATE TapeCopy A SET status = 7
-   WHERE status IN (0, 1) AND
-    ( EXISTS (SELECT 'x' FROM SubRequest, StageRepackRequest
-               WHERE StageRepackRequest.svcclass = svcId
-                 AND SubRequest.request = StageRepackRequest.id
-                 AND SubRequest.status = 12  -- SUBREQUEST_REPACK
-                 AND A.castorfile = SubRequest.castorfile
-    ) OR EXISTS (
-       SELECT 'x' FROM CastorFile
-     	WHERE A.castorFile = CastorFile.id
-          AND CastorFile.svcClass = svcId
-      ) )
-    RETURNING A.id -- CREATED / TOBEMIGRATED
+  UPDATE /*+ INDEX(TC I_TAPECOPY_STATUS) */
+         TapeCopy TC 
+     SET status = 7
+   WHERE status IN (0, 1)
+     AND (EXISTS
+       (SELECT 'x' FROM SubRequest, StageRepackRequest
+         WHERE StageRepackRequest.svcclass = svcId
+           AND SubRequest.request = StageRepackRequest.id
+           AND SubRequest.status = 12  -- SUBREQUEST_REPACK
+           AND TC.castorfile = SubRequest.castorfile
+      ) OR EXISTS (
+        SELECT /*+ INDEX(CF PK_CASTORFILE_ID)
+                   NO_INDEX(CF I_CASTORFILE_SVCCLASS) */ 'x' 
+          FROM CastorFile CF
+         WHERE TC.castorFile = CF.id
+           AND CF.svcClass = svcId))
+    RETURNING TC.id -- CREATED / TOBEMIGRATED
     BULK COLLECT INTO tcIds;
   COMMIT;
   -- return the full resultset
