@@ -159,6 +159,10 @@ files = ['CastorTestSuite.py',
 for f in files:
     cmd = 'cp ../CASTOR2/test/testsuite/' + f + ' .'
     runCommand(cmd, 'Error while creating fast testsuite')
+# create a tar ball of the test suite
+os.chdir(intReleaseDir)
+cmd = 'tar czf fastTestSuite.tar.gz fastTestSuite'
+runCommand(cmd, 'Error while taring the testsuite')
 
 # and build the doxygen documentation in it
 print "Building doxygen documentation"
