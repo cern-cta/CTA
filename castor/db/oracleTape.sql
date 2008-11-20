@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.694 $ $Date: 2008/11/18 10:48:48 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.695 $ $Date: 2008/11/20 10:22:32 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1204,7 +1204,7 @@ BEGIN
   UPDATE Stream SET tape = 0 WHERE tape != 0;
   -- 3) Reset the tape for migration
   FORALL i IN tpIds.FIRST .. tpIds.LAST  
-    UPDATE tape SET stream = 0, status = 1 WHERE status IN (2, 3, 4) AND id = tpIds(i);
+    UPDATE tape SET stream = 0, status = 0 WHERE status IN (2, 3, 4) AND id = tpIds(i);
 
   -- Deal with Recalls
   UPDATE Segment SET status = 0 WHERE status = 7; -- Resurrect SELECTED segment
@@ -1212,6 +1212,7 @@ BEGIN
   UPDATE tape A SET status = 8 
    WHERE status IN (0, 6, 7) AND EXISTS
     (SELECT id FROM Segment WHERE status = 0 AND tape = A.id);
+  COMMIT;
 END;
 /
 
