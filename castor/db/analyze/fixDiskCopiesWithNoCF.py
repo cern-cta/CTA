@@ -51,7 +51,8 @@ BEGIN
     FROM diskcopy, filesystem, diskpool2svcclass d2s 
    WHERE diskcopy.id = dcId 
      and diskcopy.filesystem = filesystem.id
-     and filesystem.diskpool = d2s.parent;
+     and filesystem.diskpool = d2s.parent
+     and rownum < 2;  -- take the first one randomly if more than one
   selectCastorFile(fid, nh, scId, fcId, fileSize, fname, cfId, unused);
   UPDATE DiskCopy set castorFile = cfId, status = 7 WHERE id = dcId;
   COMMIT;
@@ -65,7 +66,7 @@ END;'''
     sqlList = '''
 SELECT diskcopy.id, substr(path, instr(path, '/',1,1)+1, instr(path,'@',1,1)-instr(path, '/',1,1)-1)
   FROM DiskCopy
- WHERE (castorFile = 0 or castorFile is null)'''
+ WHERE not exists (select 1 from CastorFile where id = DiskCopy.castorFile)'''
     dbcursor.execute(sqlList)
     files = dbcursor.fetchall()
     if len(files) == 0:
