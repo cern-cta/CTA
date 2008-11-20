@@ -1,4 +1,35 @@
 #!/usr/bin/python
+#/******************************************************************************
+# *                      fixDiskCopiesWithNoCF.py
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @(#)$RCSfile: fixDiskCopiesWithNoCF.py,v $ $Revision: 1.6 $ $Release$ $Date: 2008/11/20 18:51:21 $ $Author: itglp $
+# *
+# * Fixes the DiskCopy.castorFile FK values by reinserting all needed entries in
+# * CastorFile and make the orphaned DiskCopies point to them. The affected
+# * DiskCopies will also be invalidated.
+# * It is recommended to run this script prior to an upgrade to 2.1.8-3 as from
+# * this release on, a FK constraint will be enforced and previous orphaned
+# * entries will make the upgrade script fail.
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
 import os
 import sys
 import getopt
