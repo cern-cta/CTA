@@ -440,9 +440,11 @@ void castor::vdqm::RTCPJobSubmitterThread::submitJob(const Cuuid_t &cuuid,
       castor::dlf::Param("clientEuid", client->euid()),
       castor::dlf::Param("clientEgid", client->egid()),
       castor::dlf::Param("deviceGroupName", dgn->dgName()),
-      castor::dlf::Param("tapeDriveName", tapeDrive->driveName())};
+      castor::dlf::Param("tapeDriveName", tapeDrive->driveName()),
+      castor::dlf::Param("tapeServerName", tapeServer->serverName()),
+      castor::dlf::Param("tapeServerPort", port)};
 
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_SEND_RTCPD_JOB, 9,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_SEND_RTCPD_JOB, 11,
       params);
   }
 
