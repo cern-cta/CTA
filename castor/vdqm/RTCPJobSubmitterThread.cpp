@@ -240,7 +240,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
       int        driveStatusAfter       = -1;
       u_signed64 runningRequestIdBefore = 0;
       u_signed64 runningRequestIdAfter  = 0;
-      bool       requestExists          = FALSE;
+      bool       requestExists          = false;
       int        requestStatusBefore    = -1;
       int        requestStatusAfter     = -1;
       u_signed64 requestDriveIdBefore   = 0;
@@ -423,7 +423,8 @@ void castor::vdqm::RTCPJobSubmitterThread::submitJob(const Cuuid_t &cuuid,
     castor::exception::Internal ie;
 
     ie.getMessage()
-      << "Failed to connect to tape aggregator: " << e.getMessage().str();
+      << "Failed to connect to " << remoteCopyType << ": "
+      << e.getMessage().str();
 
     throw ie;
   }
