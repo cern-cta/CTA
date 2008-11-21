@@ -243,57 +243,97 @@ void castor::tape::aggregator::RequestHandlerThread::handleJobSubmission(
   char   *p      = body;
   size_t bodyLen = len;
 
-strcpy(clientHost, "UKNWN");
-
-std::cout << "p: 0x" << std::hex << (uint64_t)p << " bodylen: " << std::dec << bodyLen << ": START" << std::endl;
   Marshaller::unmarshallUint32(p, bodyLen, ui32);
   tapeRequestID = (u_signed64)ui32; // Cast from 32-bits to 64-bits
-std::cout << "p: 0x" << std::hex << (uint64_t)p << " bodylen: " << std::dec << bodyLen << " tapeRequestID: " << tapeRequestID << std::endl;
   Marshaller::unmarshallUint32(p, bodyLen, clientPort);
-std::cout << "p: 0x" << std::hex << (uint64_t)p << " bodylen: " << std::dec << bodyLen << ": clientPort: " << clientPort << std::endl;
   Marshaller::unmarshallUint32(p, bodyLen, clientEuid);
-std::cout << "p: 0x" << std::hex << (uint64_t)p << " bodylen: " << std::dec << bodyLen << " clientEuid: " << clientEuid << std::endl;
   Marshaller::unmarshallUint32(p, bodyLen, clientEgid);
-std::cout << "p: 0x" << std::hex << (uint64_t)p << " bodylen: " << std::dec << bodyLen << " clientEgid: " << clientEgid << std::endl;
   Marshaller::unmarshallString(p, bodyLen, clientHost, sizeof(clientHost));
-std::cout << "p: 0x" << std::hex << (uint64_t)p << " bodylen: " << std::dec << bodyLen << " clientHost: " << clientHost << std::endl;
   Marshaller::unmarshallString(p, bodyLen, dgn, sizeof(dgn));
-std::cout << "p: 0x" << std::hex << (uint64_t)p << " bodylen: " << bodyLen << " dgn: " << dgn << std::endl;
   Marshaller::unmarshallString(p, bodyLen, driveName, sizeof(driveName));
-std::cout << "p: 0x" << std::hex << (uint64_t)p << " bodylen: " << std::dec << bodyLen << " driveName: " << driveName << std::endl;
-  Marshaller::unmarshallString(p, bodyLen, clientUsername, sizeof(clientUsername));
-std::cout << "p: 0x" << std::hex << (uint64_t)p << " bodylen: " << std::dec << bodyLen << " clientUsername: " << clientUsername << std::endl;
+  Marshaller::unmarshallString(p, bodyLen, clientUsername,
+    sizeof(clientUsername));
+
+  castor::dlf::Param param[] = {
+    castor::dlf::Param("tapeRequestID" , tapeRequestID ),
+    castor::dlf::Param("clientPort"    , clientPort    ),
+    castor::dlf::Param("clientEuid"    , clientEuid    ),
+    castor::dlf::Param("clientEgid"    , clientEgid    ),
+    castor::dlf::Param("clientHost"    , clientHost    ),
+    castor::dlf::Param("dgn"           , dgn           ),
+    castor::dlf::Param("driveName"     , driveName     ),
+    castor::dlf::Param("clientUsername", clientUsername)};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    AGGREGATOR_HANDLE_JOB_MESSAGE, 8, param);
 
 /*
-  // Unmarshall tape request ID
-  Marshaller::unmarshall
-  char        *remoteCopyType,
-  const u_signed64   tapeRequestID,
-  const std::string &clientUserName,
-  const std::string &clientHost,
-  const int          clientEgid,
-  const std::string &deviceGroupName,
-  const std::string &tapeDriveName
-
   try {
-  RCPJobSubmitter::submit(
+    RCPJobSubmitter::submit(
     "localhost",   // host
     RTCOPY_PORT,   // port
     NETRW_TIMEOUT, // netReadWriteTimeout
     "RTCPD",       // remoteCopyType
     tapeRequestID,
-    clientUserName,
+    clientUsername,
     clientHost,
     clientPort,
     clientEuid,
     clientEgid,
-    deviceGroupName,
-    tapeDriveName);
-  } catch(castor::Exception::Exception &ex) {
+    dgn,
+    driveName);
+  } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Message", e.getMessage().str())};
+      castor::dlf::Param("Message", ex.getMessage().str())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
       AGGREGATOR_FAILED_TO_SUBMIT_JOB_TO_RTCPD, 1, params);
+
+    return;
   }
 */
+}
+
+
+void castor::tape::aggregator::RequestHandlerThread::marshallRTCPAckn(
+  char *dst, const size_t dstLen, const uint32_t status, const char *errorMsg)
+  throw (castor::exception::Exception) {
+
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  // Minimum buffer length = magic number + request type + length + status code
+  // + the string termination character '\0'
+  if(dstLen < 4*sizeof(uint32_t) + 1) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Destination buffer length is too small: "
+      "Expected minimum length: " << (4*sizeof(uint32_t) + 1)
+       << ": Actual length: " << dstLen;
+    throw ex;
+  }
+
+  if(errorMsg == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Pointer to error message is NULL";
+    throw ex;
+  }
+
+  const size_t errorMsgLen      = strlen(errorMsg);
+  const size_t maxErrorMsgLen   = dstLen - 4*sizeof(uint32_t) - 1;
+  const size_t errorMsg2SendLen = errorMsgLen > maxErrorMsgLen ? maxErrorMsgLen
+    : errorMsgLen;
+
+  const uint32_t len = errorMsg2SendLen + 1; // + 1 for the string terminator
+
+  Marshaller::marshallUint32(RTCOPY_MAGIC_OLD0, dst); // Magic number
+  Marshaller::marshallUint32(VDQM_CLIENTINFO  , dst); // Request type
+  Marshaller::marshallUint32(len              , dst); // Length
+  Marshaller::marshallUint32(status           , dst); // status code
+
+  memcpy(dst, errorMsg, errorMsg2SendLen);
+  *(dst+errorMsg2SendLen) = '\0';
 }

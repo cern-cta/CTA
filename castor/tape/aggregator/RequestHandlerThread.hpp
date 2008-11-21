@@ -146,6 +146,20 @@ namespace aggregator {
       const uint32_t reqtype, const uint32_t len, char *body,
       castor::io::ServerSocket &socket) throw();
 
+    /**
+     * Marshalls the specified status code and possible error message into
+     * the specified destination buffer in order to create an RTCP acknowledge
+     * message.
+     *
+     * @param dst The destination message buffer
+     * @param dstLen The length of the destination buffer
+     * @param status The status code to be marshalled
+     * @param errorMsg The error message to be marshalled
+     */
+    void marshallRTCPAckn(char *dst, const size_t dstLen,
+      const uint32_t status, const char *errorMsg)
+      throw (castor::exception::Exception);
+
   }; // class RequestHandlerThread
 
 } // namespace aggregator
