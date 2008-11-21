@@ -4744,7 +4744,7 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
   if ( copyno == -1 ){
     sprintf (logbuf, "replacetapecopy cannot find old copyno");
     Cns_logreq (func, logbuf);
-    RETURN (-1);
+    RETURN (ENOENT);
   }
 
   /* after we have the copyno, we get the old segs by this no */
@@ -4777,7 +4777,7 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
   if ( !nboldsegs ) {
     sprintf (logbuf, "replacetapecopy cannot find old segs for copyno %d", copyno);
     Cns_logreq (func, logbuf);
-    RETURN (-1);
+    RETURN (ENOENT);
   }
 
   unmarshall_WORD(rbp, nbseg);
