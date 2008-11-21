@@ -169,17 +169,13 @@ char **msgaddr;
 	int fd;
 	FILE *fopen();
 	int n;
-	char pssline[80];
 	int resid = 0;
 	struct stat sbuf;
 	struct stat sbufa;
 	static char *sg_buffer;
 	static int sg_bufsiz = 0;
 	struct sg_header *sg_hd;
-	int sg_index;
-	FILE *sgf;
 	char sgpath[80];
-	int st_index;
 	static int Timeout = 0;
 	int sg_big_buff_val =  SG_BIG_BUFF;
 	int procfd, nbread;
@@ -243,7 +239,8 @@ char **msgaddr;
 #endif
 			return (-1);
 		}
-                /*
+
+                /* get the major device ID of the sg devices ... */
 		if (stat ("/dev/sg0", &sbufa) < 0) {
 			serrno = errno;
 #if defined(TAPE)
@@ -254,24 +251,12 @@ char **msgaddr;
 #endif
 			return (-1);
 		}
-		if (major (sbuf.st_rdev) == major (sbufa.st_rdev)) {
+                /* ... to detect links and use the path directly! */
+		if (major(sbuf.st_rdev) == major(sbufa.st_rdev)) {
 			strcpy (sgpath, path);
 		} else {
-			sg_index = -1;
-			st_index = -1;
-			sgf = fopen ("/proc/scsi/scsi", "r");
-			while (fgets (pssline, sizeof(pssline), sgf)) {
-				if (strncmp (pssline, "  Type:", 7)) continue;
-				sg_index++;
-				if (strncmp (pssline+10, "Sequential-Access", 17)) continue;
-				st_index++;
-				if (st_index == (sbuf.st_rdev & 0x1F)) break;
-			}
-			fclose (sgf);
-			sprintf (sgpath, "/dev/sg%d", sg_index);
+                        find_sgpath(sgpath, major(sbuf.st_rdev), minor(sbuf.st_rdev));  
 		}
-                */
-                find_sgpath(sgpath, major(sbuf.st_rdev), minor(sbuf.st_rdev));
 
 		if ((fd = open (sgpath, O_RDWR)) < 0) {
 			serrno = errno;
