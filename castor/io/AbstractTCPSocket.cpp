@@ -199,7 +199,7 @@ void castor::io::AbstractTCPSocket::readBuffer(const unsigned int magic,
   // For security purposes we restrict the maximum possible length of the data
   // returned
   n = header[1];
-  if ((n > m_maxNetDataSize) || (n < 0)){
+  if ((n > m_maxNetDataSize) || (n < 0)) {
     castor::exception::Exception ex(ESTMEM);
     ex.getMessage() << "Message body is too long";
     throw ex;

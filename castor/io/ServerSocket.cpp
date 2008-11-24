@@ -221,7 +221,7 @@ void castor::io::ServerSocket::bind()
   }
 
   // randomly select a free port in the allowed port range
-  while (0 != rc){
+  while (0 != rc) {
     port=(rand() % (m_highPort-m_lowPort+1)) + m_lowPort;
     m_saddr.sin_port = htons(port);
     rc = ::bind(m_socket, (struct sockaddr *)&m_saddr, sizeof(m_saddr));

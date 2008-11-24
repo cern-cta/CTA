@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/09/22 13:36:29 $ $Author: waldron $
+ * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/11/24 17:47:25 $ $Author: waldron $
  *
  * @author Benjamin Couturier
  *****************************************************************************/
@@ -52,11 +52,11 @@ castor::io::AuthServerSocket::AuthServerSocket(int socket) throw () :
   ServerSocket(socket) {
   if (loader() == -1) {
     castor::exception::Exception ex(serrno);
-    ex.getMessage() << "dynamic library was not proprely loaded";
+    ex.getMessage() << "Dynamic library was not properly loaded";
     throw ex;
   }
 
-  if (getServer_initContext(&m_security_context,CSEC_SERVICE_TYPE_HOST ,NULL) < 0) {
+  if (getServer_initContext(&m_security_context, CSEC_SERVICE_TYPE_HOST, NULL) < 0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "The initialization of the security context failed";
     throw ex;
@@ -73,11 +73,11 @@ castor::io::AuthServerSocket::AuthServerSocket(const bool reusable)
 
   if (loader() == -1) {
     castor::exception::Exception ex(serrno);
-    ex.getMessage() << "dynamic library was not proprely loaded";
+    ex.getMessage() << "Dynamic library was not properly loaded";
     throw ex;
   }
 
-  if (getServer_initContext(&m_security_context,CSEC_SERVICE_TYPE_HOST ,NULL) < 0) {
+  if (getServer_initContext(&m_security_context, CSEC_SERVICE_TYPE_HOST, NULL) < 0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "The initialization of the security context failed";
     throw ex;
@@ -94,11 +94,11 @@ castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
   ServerSocket(port, reusable) {
   if (loader() == -1) {
     castor::exception::Exception ex(serrno);
-    ex.getMessage() << "dynamic library was not proprely loaded";
+    ex.getMessage() << "Dynamic library was not properly loaded";
     throw ex;
   }
 
-  if (getServer_initContext(&m_security_context,CSEC_SERVICE_TYPE_HOST ,NULL) < 0) {
+  if (getServer_initContext(&m_security_context, CSEC_SERVICE_TYPE_HOST, NULL) < 0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "The initialization of the security context failed";
     throw ex;
@@ -117,11 +117,11 @@ castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
   ServerSocket(port, host, reusable) {
   if (loader() == -1) {
     castor::exception::Exception ex(serrno);
-    ex.getMessage() << "dynamic library was not proprely loaded";
+    ex.getMessage() << "Dynamic library was not properly loaded";
     throw ex;
   }
 
-  if (getServer_initContext(&m_security_context,CSEC_SERVICE_TYPE_HOST ,NULL) < 0) {
+  if (getServer_initContext(&m_security_context, CSEC_SERVICE_TYPE_HOST, NULL) < 0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "The initialization of the security context failed";
     throw ex;
@@ -140,11 +140,11 @@ castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
   ServerSocket(port, ip, reusable) {
   if (loader() == -1) {
     castor::exception::Exception ex(serrno);
-    ex.getMessage() << "dynamic library was not proprely loaded";
+    ex.getMessage() << "Dynamic library was not properly loaded";
     throw ex;
   }
 
-  if (getServer_initContext(&m_security_context,CSEC_SERVICE_TYPE_HOST ,NULL) < 0) {
+  if (getServer_initContext(&m_security_context, CSEC_SERVICE_TYPE_HOST, NULL) < 0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "The initialization of the security context failed";
     throw ex;
@@ -166,7 +166,7 @@ castor::io::AuthServerSocket::AuthServerSocket(castor::io::ServerSocket* cs,
   delete cs;
   m_security_context = context;
 
-  if (getServer_establishContext(&m_security_context ,m_socket) < 0) {
+  if (getServer_establishContext(&m_security_context, m_socket) < 0) {
     close();
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "The initialization of the security context failed";
