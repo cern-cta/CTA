@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: castor_oracle_drop.sql,v $ $Revision: 1.44 $ $Date: 2008/11/06 13:20:05 $ $Author: waldron $
+ * @(#)$RCSfile: castor_oracle_drop.sql,v $ $Revision: 1.45 $ $Date: 2008/11/24 17:39:55 $ $Author: waldron $
  *
  * This file drops all defined entities from a (stager) database.
  * For the time being, it does NOT drop the monitoring-related ones. 
@@ -14,7 +14,9 @@ BEGIN
   EXECUTE IMMEDIATE 'PURGE RECYCLEBIN';
  
   -- Drop all objects (ignore monitoring ones!)
-  FOR rec IN (SELECT object_name, object_type FROM user_objects
+  FOR rec IN (SELECT object_name, object_type
+                FROM user_objects
+               WHERE object_name NOT LIKE 'SYS_PLSQL_%'
                ORDER BY object_name, object_type)
   LOOP
     IF rec.object_type = 'TABLE' THEN
