@@ -39,6 +39,9 @@ int main(int argc, char *argv[]) {
     castor::tape::aggregator::AggregatorDaemon daemon;
 
 
+    daemon.logStart(argc, argv);
+
+
     //-----------------------
     // Parse the command line
     //-----------------------

@@ -56,6 +56,11 @@ public:
   ~AggregatorDaemon() throw();
 
   /**
+   * Logs the start of the daemon.
+   */
+  void logStart(const int argc, const char *const *const argv) throw();
+
+  /**
    * Parses the command-line arguments and sets the daemon options accordingly.
    *
    * @param argc Argument count from the executable's entry function: main().

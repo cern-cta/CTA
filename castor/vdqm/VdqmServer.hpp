@@ -51,6 +51,12 @@ namespace castor {
       VdqmServer() throw(castor::exception::Exception);
 
       /**
+       * Logs the start of the server.
+       */
+      void logStart(Cuuid_t &cuuid, const int argc,
+        const char *const *const argv) throw();
+
+      /**
        * Parses the command line and sets the server options accordingly.
        *
        * In case of an error this method writes the appriopriate error messages

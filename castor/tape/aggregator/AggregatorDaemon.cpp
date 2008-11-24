@@ -70,30 +70,34 @@ void castor::tape::aggregator::AggregatorDaemon::usage(std::ostream &os)
 
 
 //------------------------------------------------------------------------------
+// logStart
+//------------------------------------------------------------------------------
+void castor::tape::aggregator::AggregatorDaemon::logStart(const int argc,
+  const char *const *const argv) throw() {
+  std::string concatenatedArgs;
+
+  // Concatenate all of the command-line arguments into one string
+  for(int i=0; i < argc; i++) {
+    if(i != 0) {
+      concatenatedArgs += " ";
+    }
+
+    concatenatedArgs += argv[i];
+  }
+
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("argv", concatenatedArgs)};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, AGGREGATOR_STARTED, 1,
+    params);
+}
+
+
+//------------------------------------------------------------------------------
 // parseCommandLine
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
   const int argc, char **argv, bool &helpOption)
   throw(castor::exception::Exception) {
-
-  // Log the start message
-  {
-    std::string concatenatedArgs;
-
-    // Concatenate all of the command-line arguments into one string
-    for(int i=0; i < argc; i++) {
-      if(i != 0) {
-        concatenatedArgs += " ";
-      }
-
-      concatenatedArgs += argv[i];
-    }
-
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("argv", concatenatedArgs)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, AGGREGATOR_STARTED, 1,
-      params);
-  }
 
   static struct Coptions longopts[] = {
     {"foreground", NO_ARGUMENT      , NULL, 'f'},

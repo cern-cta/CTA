@@ -66,28 +66,32 @@ castor::vdqm::VdqmServer::VdqmServer() throw(castor::exception::Exception) :
 
 
 //------------------------------------------------------------------------------
+// logStart
+//------------------------------------------------------------------------------
+void castor::vdqm::VdqmServer::logStart(Cuuid_t &cuuid, const int argc,
+  const char *const *const argv) throw() {
+  std::string concatenatedArgs;
+
+  // Concatenate all of the command-line arguments into one string
+  for(int i=0; i < argc; i++) {
+    if(i != 0) {
+      concatenatedArgs += " ";
+    }
+
+    concatenatedArgs += argv[i];
+  }
+
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("argv", concatenatedArgs)};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_STARTED, 1, params);
+}
+
+
+//------------------------------------------------------------------------------
 // parseCommandLine
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmServer::parseCommandLine(Cuuid_t &cuuid,
   const int argc, char **argv) throw() {
-
-  // Log the start message
-  {
-    std::string concatenatedArgs;
-
-    // Concatenate all of the command-line arguments into one string
-    for(int i=0; i < argc; i++) {
-      if(i != 0) {
-        concatenatedArgs += " ";
-      }
-
-      concatenatedArgs += argv[i];
-    }
-
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("argv", concatenatedArgs)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, VDQM_STARTED, 1, params);
-  }
 
   static struct Coptions longopts[] = {
     {"foreground"             , NO_ARGUMENT      , NULL, 'f'},

@@ -48,24 +48,10 @@ int main(int argc, char *argv[]) {
     castor::server::BaseThreadPool *rtcpJobSubmitterThreadPool = NULL;
 
 
-    //---------------
-    // Create a cuuid
-    //---------------
-
     Cuuid_create(&cuuid);
 
-
-    //-----------------------
-    // Parse the command line
-    //-----------------------
-
+    server.logStart(cuuid, argc, argv);
     server.parseCommandLine(cuuid, argc, argv);
-
-
-    //--------------------------------
-    // Initialise the database service
-    //--------------------------------
-
     server.initDatabaseService(cuuid);
 
 
