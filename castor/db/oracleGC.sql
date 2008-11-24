@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.677 $ $Date: 2008/11/24 17:36:19 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.678 $ $Date: 2008/11/24 18:01:15 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -553,9 +553,7 @@ CREATE OR REPLACE PROCEDURE deleteTerminatedRequests AS
   srIds "numList";
 BEGIN
   -- select requested timeout from configuration table
-  SELECT TO_NUMBER(value) INTO timeOut FROM CastorConfig
-   WHERE class = 'cleaning' AND key = 'terminatedRequestsTimeout';
-  timeOut := timeOut*3600;
+  timeout := 3600*TO_NUMBER(getConfigOption('cleaning', 'terminatedRequestsTimeout', '120'));
   -- get a rough estimate of the current request processing rate
   SELECT count(*) INTO rate
     FROM SubRequest
@@ -571,14 +569,23 @@ BEGIN
   -- bulkDelete('SELECT id FROM SubRequest WHERE status IN (9, 11)
   --   AND lastModificationTime < getTime() - '|| timeOut ||';',
   --   'SubRequest');
-  SELECT id BULK COLLECT INTO srIds FROM SubRequest 
-   WHERE status IN (9, 11) 
-     AND lastModificationTime < getTime() - timeOut; 
-
-  FORALL i IN srIds.FIRST..srIds.LAST 
-    DELETE FROM Id2Type WHERE id = srIds(i); 
-  FORALL i IN srIds.FIRST..srIds.LAST 
-    DELETE FROM SubRequest WHERE id = srIds(i);
+  DECLARE
+    CURSOR s IS SELECT id FROM SubRequest 
+     WHERE status IN (9, 11) 
+       AND lastModificationTime < getTime() - timeOut;
+    ids "numList";
+  BEGIN
+    OPEN s;
+    LOOP
+      FETCH s BULK COLLECT INTO ids LIMIT 10000;
+      FORALL i IN ids.FIRST..ids.LAST
+         DELETE FROM Id2Type WHERE id = ids(i); 
+       FORALL i IN ids.FIRST..ids.LAST
+         DELETE FROM SubRequest WHERE id = ids(i);
+       COMMIT;
+    EXIT WHEN s%NOTFOUND;
+    END LOOP;
+  END;
   COMMIT;
 
   -- and then related Requests + Clients
@@ -704,11 +711,9 @@ CREATE OR REPLACE PROCEDURE cleanup AS
 BEGIN
   -- First perform some cleanup of old stuff:
   -- for each, read relevant timeout from configuration table
-  SELECT TO_NUMBER(value) INTO t FROM CastorConfig
-   WHERE class = 'cleaning' AND key = 'outOfDateStageOutDCsTimeout';
+  t := TO_NUMBER(getConfigOption('cleaning', 'outOfDateStageOutDCsTimeout', '72'));
   deleteOutOfDateStageOutDCs(t*3600);
-  SELECT TO_NUMBER(value) INTO t FROM CastorConfig
-   WHERE class = 'cleaning' AND key = 'failedDCsTimeout';
+  t := TO_NUMBER(getConfigOption('cleaning', 'failedDCsTimeout', '72'));
   deleteFailedDiskCopies(t*3600);
 
   -- Loop over all tables which support row movement and recover space from
