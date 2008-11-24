@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.682 $ $Date: 2008/11/18 18:01:59 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.683 $ $Date: 2008/11/24 16:44:23 $ $Author: sponcec3 $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -365,7 +365,7 @@ INSERT INTO FileSystemsToCheck SELECT id, 0 FROM FileSystem;
 /**************/
 /* Accounting */
 /**************/
-CREATE TABLE Accounting (euid INTEGER, svcClass INTEGER, nbBytes INTEGER);
+CREATE TABLE Accounting (euid INTEGER, diskPool INTEGER, nbBytes INTEGER);
 
 
 /************************************/
