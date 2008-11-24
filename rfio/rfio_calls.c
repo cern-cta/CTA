@@ -4888,13 +4888,14 @@ void *consume_thread(int *ptr)
     else if ((mode & O_WRONLY) &&
 	     (fgetxattr(fd,"user.castor.checksum.type",ckSumbufdisk,CA_MAXCKSUMLEN) != -1)) {
       log(LOG_INFO,"consume_thread: file opened in O_WRONLY and checksum already exists, removing checksum\n");
-      fremovexattr(fd,"user.castor.checksum.value");
       useCksum = 0;
     } else {
       ckSum = adler32(0L,Z_NULL,0);
       log(LOG_DEBUG,"consume_thread: checksum init for %s\n",ckSumalg);
     }
   }
+  /* Always remove the checksum value */
+  fremovexattr(fd,"user.castor.checksum.value");
 
   while ((! error) && (! end)) {
     Csemaphore_down(&full);
