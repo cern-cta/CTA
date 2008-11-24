@@ -36,8 +36,7 @@
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
   try {
-    castor::tape::aggregator::AggregatorDaemon daemon("aggregatord", argc,
-      argv);
+    castor::tape::aggregator::AggregatorDaemon daemon;
 
 
     //-----------------------
@@ -46,7 +45,7 @@ int main(int argc, char *argv[]) {
 
     try {
       bool helpOption = false;  // True if help option found on command-line
-      daemon.parseCommandLine(helpOption);
+      daemon.parseCommandLine(argc, argv, helpOption);
 
       // Display usage message and exit if help option found on command-line
       if(helpOption) {

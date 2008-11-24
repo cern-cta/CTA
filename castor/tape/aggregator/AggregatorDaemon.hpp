@@ -47,11 +47,8 @@ public:
    * Constructor.
    *
    * @param daemonName The name of the daemon.
-   * @param argc Argument count from the executable's entry function: main().
-   * @param argv Argument vector from the executable's entry function: main().
    */
-  AggregatorDaemon(const char *const daemonName, const int argc, char **argv)
-    throw(castor::exception::Exception);
+  AggregatorDaemon() throw(castor::exception::Exception);
 
   /**
    * Destructor.
@@ -61,18 +58,13 @@ public:
   /**
    * Parses the command-line arguments and sets the daemon options accordingly.
    *
+   * @param argc Argument count from the executable's entry function: main().
+   * @param argv Argument vector from the executable's entry function: main().
    * @param helpOption This method sets this parameter to true if the help
    * option was found on the command-line, else this method sets it to false.
-   *
    */
-  void parseCommandLine(bool &helpRequested)
+  void parseCommandLine(const int argc, char **argv, bool &helpRequested)
     throw(castor::exception::Exception);
-
-  /**
-   * Logs a start message and then calls the start method of the super class,
-   * in other words castor::server::BaseDaemon::start().
-   */
-  virtual void start() throw (castor::exception::Exception);
 
   /**
    * Writes the command-line usage message of the daemon onto the specified
@@ -95,16 +87,6 @@ private:
    * DLF message strings.
    */
   static castor::dlf::Message s_dlfMessages[];
-
-  /**
-   * Argument count from the executable's entry function: main().
-   */
-  const int m_argc;
-
-  /**
-   * Argument vector from the executable's entry function: main().
-   */
-  char **m_argv;
 
   /**
    * Checks if the specified string is a valid unsigned integer.

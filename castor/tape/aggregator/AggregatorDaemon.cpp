@@ -35,10 +35,9 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::aggregator::AggregatorDaemon::AggregatorDaemon(
-  const char *const daemonName, const int argc, char **argv)
+castor::tape::aggregator::AggregatorDaemon::AggregatorDaemon()
   throw(castor::exception::Exception) :
-  castor::server::BaseDaemon(daemonName), m_argc(argc), m_argv(argv) {
+  castor::server::BaseDaemon("aggregatord") {
   // Initializes the DLF logging including the definition of the predefined
   // messages.  Please not that castor::server::BaseServer::dlfInit can throw a
   // castor::exception::Exception.
@@ -74,7 +73,27 @@ void castor::tape::aggregator::AggregatorDaemon::usage(std::ostream &os)
 // parseCommandLine
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
-  bool &helpOption) throw(castor::exception::Exception) {
+  const int argc, char **argv, bool &helpOption)
+  throw(castor::exception::Exception) {
+
+  // Log the start message
+  {
+    std::string concatenatedArgs;
+
+    // Concatenate all of the command-line arguments into one string
+    for(int i=0; i < argc; i++) {
+      if(i != 0) {
+        concatenatedArgs += " ";
+      }
+
+      concatenatedArgs += argv[i];
+    }
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("argv", concatenatedArgs)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, AGGREGATOR_STARTED, 1,
+      params);
+  }
 
   static struct Coptions longopts[] = {
     {"foreground", NO_ARGUMENT      , NULL, 'f'},
@@ -87,7 +106,7 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
   Copterr = 0;
 
   char c;
-  while ((c = Cgetopt_long(m_argc, m_argv, "fc:p:h", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long(argc, argv, "fc:p:h", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;
@@ -164,7 +183,7 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
     }
   }
 
-  if(Coptind > m_argc) {
+  if(Coptind > argc) {
     std::stringstream oss;
       oss << "Internal error.  Invalid value for Coptind: " << Coptind;
 
@@ -179,10 +198,10 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
   }
 
   // If there is some extra text on the command-line which has not been parsed
-  if(Coptind < m_argc)
+  if(Coptind < argc)
   {
     std::stringstream oss;
-      oss << "Unexpected command-line argument: " << m_argv[Coptind]
+      oss << "Unexpected command-line argument: " << argv[Coptind]
       << std::endl;
 
     // Log and throw an exception
@@ -194,32 +213,6 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
     e.getMessage() << oss.str();
     throw e;
   }
-}
-
-
-//------------------------------------------------------------------------------
-// start()
-//------------------------------------------------------------------------------
-void castor::tape::aggregator::AggregatorDaemon::start()
-  throw (castor::exception::Exception) {
-  std::stringstream oss;
-
-  // Concatenate all of the command-line arguments into one string
-  for(int i=0; i < m_argc; i++) {
-    if(i != 0) {
-      oss << " ";
-    }
-
-    oss << m_argv[i];
-  }
-
-  castor::dlf::Param params[] = {
-    castor::dlf::Param("argv", oss.str())};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, AGGREGATOR_STARTED, 1,
-    params);
-
-  // Call the start() method of the super class
-  castor::server::BaseDaemon::start();
 }
 
 
