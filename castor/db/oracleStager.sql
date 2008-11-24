@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.702 $ $Date: 2008/11/18 18:01:59 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.703 $ $Date: 2008/11/24 16:09:06 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1809,8 +1809,8 @@ BEGIN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- insert new row
     INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
-                            creationTime, lastAccessTime, lastKnownFileName)
-      VALUES (ids_seq.nextval, fId, nh, sc, fc, fs, getTime(), getTime(), REGEXP_REPLACE(fn,'(/){2,}','/'))
+                            creationTime, lastAccessTime, lastupdatetime, lastKnownFileName)
+      VALUES (ids_seq.nextval, fId, nh, sc, fc, fs, getTime(), getTime(), getTime(), REGEXP_REPLACE(fn,'(/){2,}','/'))
       RETURNING id, fileSize INTO rid, rfs;
     INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
   END;
