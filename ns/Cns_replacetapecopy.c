@@ -35,13 +35,11 @@ Cns_replacetapecopy(struct Cns_fileid *file_uniqueid, const char* oldvid, const 
   char sendbuf[REQBUFSZ];
   struct Cns_api_thread_info *thip;
 
-
   strcpy (func, "Cns_replacetapecopy");
   if (Cns_apiinit (&thip))
     return (-1);
   Cns_getid(&uid, &gid);
 
-  #
 #if defined(_WIN32)
     if (uid < 0 || gid < 0) {
       Cns_errmsg (func, NS053);
