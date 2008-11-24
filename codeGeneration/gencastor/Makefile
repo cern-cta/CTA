@@ -1,5 +1,5 @@
 DEV=$(CASTORDEV_HOME)/codeGeneration/gencastor
-UMBRELLOBASE=kdesdk-3.5.9
+UMBRELLOBASE=kdesdk-3.5.10
 
 UMBRELLO=$(UMBRELLOBASE)/umbrello/umbrello
 UMBRELLOOBJBASE=$(UMBRELLOBASE)
@@ -19,7 +19,7 @@ OWNGENSRCS=classifier.cpp classifierinfo.cpp classimport.cpp codegenfactory.cpp 
 OWNGENOBJS=$(patsubst %.cpp,umbrello/codegenerators/%.lo,$(OWNGENSRCS))
 OWNGENRAWOBJS=$(patsubst %.cpp,umbrello/codegenerators/%.o,$(OWNGENSRCS))
 
-INCLUDES=-I$(DEV)/umbrello -I$(DEV)/umbrello/codegenerators -I$(UMBRELLO) -I$(UMBRELLOOBJBASE) -I$(UMBRELLOOBJ) -I$(UMBRELLO)/codegenerators -I$(UMBRELLOOBJ)/dialogs -I/usr/include/kde -I/usr/include/qt3 -I/usr/X11R6/include -DQT_THREAD_SUPPORT -D_REENTRANT
+INCLUDES=-I$(DEV)/umbrello -I$(DEV)/umbrello/codegenerators -I$(UMBRELLO) -I$(UMBRELLOOBJBASE) -I$(UMBRELLOOBJ) -I$(UMBRELLO)/codegenerators -I$(UMBRELLOOBJ)/dialogs -I/usr/include/kde -I/usr/include/qt3 -I/usr/lib64/qt-3.3/include/ -I/usr/X11R6/include -DQT_THREAD_SUPPORT -D_REENTRANT
 COMPILEFLAGS= --mode=compile --tag=CXX g++
 LINKFLAGS= --mode=link --tag=CXX g++ -pthread
 LINKDEPS=-lfl -lkdeprint -lkio -lxslt
