@@ -47,8 +47,10 @@ public:
    * Constructor.
    *
    * @param daemonName The name of the daemon.
+   * @param argc Argument count from the executable's entry function: main().
+   * @param argv Argument vector from the executable's entry function: main().
    */
-  AggregatorDaemon(const char *const daemonName)
+  AggregatorDaemon(const char *const daemonName, const int argc, char **argv)
     throw(castor::exception::Exception);
 
   /**
@@ -59,14 +61,18 @@ public:
   /**
    * Parses the command-line arguments and sets the daemon options accordingly.
    *
-   * @param argc Number of command-line arguments.
-   * @param argv Command-line argument values.
    * @param helpOption This method sets this parameter to true if the help
    * option was found on the command-line, else this method sets it to false.
    *
    */
-  void parseCommandLine(int argc, char *argv[], bool &helpRequested)
+  void parseCommandLine(bool &helpRequested)
     throw(castor::exception::Exception);
+
+  /**
+   * Logs a start message and then calls the start method of the super class,
+   * in other words castor::server::BaseDaemon::start().
+   */
+  virtual void start() throw (castor::exception::Exception);
 
   /**
    * Writes the command-line usage message of the daemon onto the specified
@@ -75,7 +81,7 @@ public:
    * @param os Output stream to be written to.
    * @param programName The program name of the aggregator daemon.
    */
-  static void usage(std::ostream &os, const char *const programName) throw();
+  static void usage(std::ostream &os) throw();
 
   /**
    * Returns the port on which the server will listen.
@@ -91,12 +97,22 @@ private:
   static castor::dlf::Message s_dlfMessages[];
 
   /**
+   * Argument count from the executable's entry function: main().
+   */
+  const int m_argc;
+
+  /**
+   * Argument vector from the executable's entry function: main().
+   */
+  char **m_argv;
+
+  /**
    * Checks if the specified string is a valid unsigned integer.
    *
    * @param str The string to be checked.
    * @returns true if the string is a valid unsigned integer, else false.
    */
-  static bool isAValidUInt(char *str);
+  static bool isAValidUInt(char *str) throw();
 
 }; // class AggregatorDaemon
 

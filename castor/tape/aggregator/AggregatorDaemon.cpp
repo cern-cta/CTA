@@ -36,15 +36,13 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::aggregator::AggregatorDaemon::AggregatorDaemon(
-  const char *const daemonName) throw(castor::exception::Exception) :
-  castor::server::BaseDaemon(daemonName) {
+  const char *const daemonName, const int argc, char **argv)
+  throw(castor::exception::Exception) :
+  castor::server::BaseDaemon(daemonName), m_argc(argc), m_argv(argv) {
   // Initializes the DLF logging including the definition of the predefined
   // messages.  Please not that castor::server::BaseServer::dlfInit can throw a
   // castor::exception::Exception.
   castor::server::BaseServer::dlfInit(s_dlfMessages);
-
-  // Log the aggregator daemon has been started
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, AGGREGATOR_STARTED);
 }
 
 
@@ -58,9 +56,9 @@ castor::tape::aggregator::AggregatorDaemon::~AggregatorDaemon() throw() {
 //------------------------------------------------------------------------------
 // usage
 //------------------------------------------------------------------------------
-void castor::tape::aggregator::AggregatorDaemon::usage(std::ostream &os,
-  const char *const programName) throw() {
-  os << "\nUsage: " << programName << " [options]\n"
+void castor::tape::aggregator::AggregatorDaemon::usage(std::ostream &os)
+  throw() {
+  os << "\nUsage: aggregatord [options]\n"
     "\n"
     "where options can be:\n"
     "\n"
@@ -75,8 +73,8 @@ void castor::tape::aggregator::AggregatorDaemon::usage(std::ostream &os,
 //------------------------------------------------------------------------------
 // parseCommandLine
 //------------------------------------------------------------------------------
-void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(int argc,
-  char *argv[], bool &helpOption) throw(castor::exception::Exception) {
+void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
+  bool &helpOption) throw(castor::exception::Exception) {
 
   static struct Coptions longopts[] = {
     {"foreground", NO_ARGUMENT      , NULL, 'f'},
@@ -89,7 +87,7 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(int argc,
   Copterr = 0;
 
   char c;
-  while ((c = Cgetopt_long (argc, argv, "fc:p:h", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long(m_argc, m_argv, "fc:p:h", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;
@@ -110,9 +108,9 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(int argc,
             castor::dlf::Param("reason", oss.str())};
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
             AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
-          castor::exception::InvalidArgument e;
-          e.getMessage() << oss.str();
-          throw e;
+          castor::exception::InvalidArgument ex;
+          ex.getMessage() << oss.str();
+          throw ex;
         }
       }
       setenv("PATH_CONFIG", Coptarg, 1);
@@ -130,9 +128,9 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(int argc,
           castor::dlf::Param("reason", oss.str())};
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
           AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
-        castor::exception::InvalidArgument e;
-        e.getMessage() << oss.str();
-        throw e;
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() << oss.str();
+        throw ex;
       }
     case ':':
       {
@@ -144,9 +142,9 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(int argc,
           castor::dlf::Param("reason", oss.str())};
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
           AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
-        castor::exception::InvalidArgument e;
-        e.getMessage() << oss.str();
-        throw e;
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() << oss.str();
+        throw ex;
       }
     default:
       {
@@ -159,43 +157,69 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(int argc,
           castor::dlf::Param("reason", oss.str())};
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
           AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
-        castor::exception::Internal e;
-        e.getMessage() << oss.str();
-        throw e;
+        castor::exception::Internal ex;
+        ex.getMessage() << oss.str();
+        throw ex;
       }
     }
   }
 
-  if(Coptind > argc) {
+  if(Coptind > m_argc) {
     std::stringstream oss;
-      oss << "Internal error.  Invalid value for Coptind: " << Coptind
-        << std::endl;
+      oss << "Internal error.  Invalid value for Coptind: " << Coptind;
 
     // Log and throw an exception
     castor::dlf::Param params[] = {
       castor::dlf::Param("reason", oss.str())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-        AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
-      castor::exception::Internal e;
-      e.getMessage() << oss.str();
-      throw e;
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+      AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
+    castor::exception::Internal ex;
+    ex.getMessage() << oss.str();
+    throw ex;
   }
 
   // If there is some extra text on the command-line which has not been parsed
-  if(Coptind < argc)
+  if(Coptind < m_argc)
   {
     std::stringstream oss;
-      oss << "Unexpected command-line argument: " << argv[Coptind] << std::endl;
+      oss << "Unexpected command-line argument: " << m_argv[Coptind]
+      << std::endl;
 
     // Log and throw an exception
     castor::dlf::Param params[] = {
       castor::dlf::Param("reason", oss.str())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-        AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
-      castor::exception::InvalidArgument e;
-      e.getMessage() << oss.str();
-      throw e;
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+      AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
+    castor::exception::InvalidArgument e;
+    e.getMessage() << oss.str();
+    throw e;
   }
+}
+
+
+//------------------------------------------------------------------------------
+// start()
+//------------------------------------------------------------------------------
+void castor::tape::aggregator::AggregatorDaemon::start()
+  throw (castor::exception::Exception) {
+  std::stringstream oss;
+
+  // Concatenate all of the command-line arguments into one string
+  for(int i=0; i < m_argc; i++) {
+    if(i != 0) {
+      oss << " ";
+    }
+
+    oss << m_argv[i];
+  }
+
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("argv", oss.str())};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, AGGREGATOR_STARTED, 1,
+    params);
+
+  // Call the start() method of the super class
+  castor::server::BaseDaemon::start();
 }
 
 
@@ -229,7 +253,8 @@ int castor::tape::aggregator::AggregatorDaemon::getListenPort()
 //------------------------------------------------------------------------------
 // isAValidUInt
 //------------------------------------------------------------------------------
-bool castor::tape::aggregator::AggregatorDaemon::isAValidUInt(char *str) {
+bool castor::tape::aggregator::AggregatorDaemon::isAValidUInt(char *str)
+  throw() {
   // An empty string is not a valid unsigned integer
   if(*str == '\0') {
     return false;

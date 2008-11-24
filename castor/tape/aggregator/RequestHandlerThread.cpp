@@ -85,12 +85,11 @@ void castor::tape::aggregator::RequestHandlerThread::run(void *param)
 
     dispatchRequest(cuuid, *socket);
 
-  } catch(castor::exception::Exception &e) {
+  } catch(castor::exception::Exception &ex) {
 
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Standard Message", sstrerror(e.code())),
-      castor::dlf::Param("Precise Message", e.getMessage().str())
-    };
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code"   , ex.code())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
       AGGREGATOR_HANDLE_REQUEST_EXCEPT, 2, params);
   }
@@ -120,11 +119,12 @@ void castor::tape::aggregator::RequestHandlerThread::dispatchRequest(
   uint32_t magic = 0;
   try {
     magic = SocketHelper::readUint32(socket, NETRW_TIMEOUT);
-  } catch (castor::exception::Exception &e) {
+  } catch (castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Message", e.getMessage().str())};
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code"   , ex.code())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_READ_MAGIC, 1, params);
+      AGGREGATOR_FAILED_TO_READ_MAGIC, 2, params);
 
     return;
   }
@@ -146,11 +146,12 @@ void castor::tape::aggregator::RequestHandlerThread::dispatchRequest(
   uint32_t reqtype = 0;
   try {
     reqtype = SocketHelper::readUint32(socket, NETRW_TIMEOUT);
-  } catch (castor::exception::Exception &e) {
+  } catch (castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Message", e.getMessage().str())};
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code"   , ex.code())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_READ_REQUEST_TYPE, 1, params);
+      AGGREGATOR_FAILED_TO_READ_REQUEST_TYPE, 2, params);
 
     return;
   }
@@ -173,11 +174,12 @@ void castor::tape::aggregator::RequestHandlerThread::dispatchRequest(
   uint32_t len = 0;
   try {
     len = SocketHelper::readUint32(socket, NETRW_TIMEOUT);
-  } catch (castor::exception::Exception &e) {
+  } catch (castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Message", e.getMessage().str())};
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code"   , ex.code())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_READ_MESSAGE_BODY_LENGTH, 1, params);
+      AGGREGATOR_FAILED_TO_READ_MESSAGE_BODY_LENGTH, 2, params);
 
     return;
   }
@@ -200,11 +202,12 @@ void castor::tape::aggregator::RequestHandlerThread::dispatchRequest(
   // Read the message body from the socket
   try {
     SocketHelper::readBytes(socket, NETRW_TIMEOUT, len, body);
-  } catch (castor::exception::Exception &e) {
+  } catch (castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Message", e.getMessage().str())};
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code"   , ex.code())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_READ_MESSAGE_BODY, 1, params);
+      AGGREGATOR_FAILED_TO_READ_MESSAGE_BODY, 2, params);
 
     return;
   }
@@ -266,6 +269,46 @@ void castor::tape::aggregator::RequestHandlerThread::handleJobSubmission(
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
     AGGREGATOR_HANDLE_JOB_MESSAGE, 8, param);
 
+  // TEMPORARY
+  // Acknowledge the VDQM
+  char ackMsg[MSGBUFSIZ];
+
+  size_t ackMsgLen = 0;
+
+  try {
+    ackMsgLen = marshallRTCPAckn(ackMsg, sizeof(ackMsg), 0, "");
+  } catch(castor::exception::Exception &ex) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code"   , ex.code())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_FAILED_TO_MARSHALL_RTCP_ACKN, 2, params);
+  }
+
+  const int rc = netwrite_timeout(socket.socket(), ackMsg, ackMsgLen,
+    NETRW_TIMEOUT);
+
+  try {
+    if(rc == -1) {
+      castor::exception::Exception ex(SECOMERR);
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": netwrite(REQ) to VDQM: " << neterror();
+      throw ex;
+    } else if(rc == 0) {
+      castor::exception::Exception ex(SECONNDROP);
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": netwrite(REQ) to VDQM: Connection dropped";
+      throw ex;
+    }
+  } catch(castor::exception::Exception &ex) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code"   , ex.code())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_FAILED_TO_SEND_RTCP_ACKN_TO_VDQM, 2, params);
+  }
+
+
 /*
   try {
     RCPJobSubmitter::submit(
@@ -283,9 +326,10 @@ void castor::tape::aggregator::RequestHandlerThread::handleJobSubmission(
     driveName);
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Message", ex.getMessage().str())};
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code"   , ex.code())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_SUBMIT_JOB_TO_RTCPD, 1, params);
+      AGGREGATOR_FAILED_TO_SUBMIT_JOB_TO_RTCPD, 2, params);
 
     return;
   }
@@ -293,7 +337,10 @@ void castor::tape::aggregator::RequestHandlerThread::handleJobSubmission(
 }
 
 
-void castor::tape::aggregator::RequestHandlerThread::marshallRTCPAckn(
+//-----------------------------------------------------------------------------
+// marshallRTCPAckn
+//-----------------------------------------------------------------------------
+size_t castor::tape::aggregator::RequestHandlerThread::marshallRTCPAckn(
   char *dst, const size_t dstLen, const uint32_t status, const char *errorMsg)
   throw (castor::exception::Exception) {
 
@@ -336,4 +383,6 @@ void castor::tape::aggregator::RequestHandlerThread::marshallRTCPAckn(
 
   memcpy(dst, errorMsg, errorMsg2SendLen);
   *(dst+errorMsg2SendLen) = '\0';
+
+  return 3*sizeof(uint32_t) + len; // Header + body
 }

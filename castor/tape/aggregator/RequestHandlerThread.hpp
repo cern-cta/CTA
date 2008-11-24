@@ -155,8 +155,9 @@ namespace aggregator {
      * @param dstLen The length of the destination buffer
      * @param status The status code to be marshalled
      * @param errorMsg The error message to be marshalled
+     * @return The total length of the message (header + body)
      */
-    void marshallRTCPAckn(char *dst, const size_t dstLen,
+    size_t marshallRTCPAckn(char *dst, const size_t dstLen,
       const uint32_t status, const char *errorMsg)
       throw (castor::exception::Exception);
 

@@ -36,7 +36,8 @@
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
   try {
-    castor::tape::aggregator::AggregatorDaemon daemon("aggregatord");
+    castor::tape::aggregator::AggregatorDaemon daemon("aggregatord", argc,
+      argv);
 
 
     //-----------------------
@@ -45,19 +46,19 @@ int main(int argc, char *argv[]) {
 
     try {
       bool helpOption = false;  // True if help option found on command-line
-      daemon.parseCommandLine(argc, argv, helpOption);
+      daemon.parseCommandLine(helpOption);
 
       // Display usage message and exit if help option found on command-line
       if(helpOption) {
         std::cout << std::endl;
-        castor::tape::aggregator::AggregatorDaemon::usage(std::cout, argv[0]);
+        castor::tape::aggregator::AggregatorDaemon::usage(std::cout);
         std::cout << std::endl;
         return 0;
       }
     } catch (castor::exception::Exception &ex) {
       std::cerr << std::endl << "Failed to parse the command-line: "
         << ex.getMessage().str() << std::endl;
-      castor::tape::aggregator::AggregatorDaemon::usage(std::cerr, argv[0]);
+      castor::tape::aggregator::AggregatorDaemon::usage(std::cerr);
       std::cerr << std::endl;
       return 1;
     }
@@ -95,7 +96,7 @@ int main(int argc, char *argv[]) {
   } catch (castor::exception::Exception &ex) {
     std::cerr << std::endl << "Failed to start daemon: "
       << ex.getMessage().str() << std::endl << std::endl;
-    castor::tape::aggregator::AggregatorDaemon::usage(std::cerr, argv[0]);
+    castor::tape::aggregator::AggregatorDaemon::usage(std::cerr);
     std::cerr << std::endl;
     return 1;
   }

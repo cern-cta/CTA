@@ -112,18 +112,16 @@ void castor::tape::aggregator::RCPJobSubmitter::submit(
 
   // After marshalling we can send the information to the RTCPD or tape
   // aggregator daemon
-  int rc = netwrite_timeout(socket.socket(), buf, len, netReadWriteTimeout);
+  const int rc = netwrite_timeout(socket.socket(), buf, len,
+    netReadWriteTimeout);
 
-  if (rc == -1) {
-    serrno = SECOMERR;
-    castor::exception::Exception ex(serrno);
+  if(rc == -1) {
+    castor::exception::Exception ex(SECOMERR);
     ex.getMessage() << __PRETTY_FUNCTION__
       << ": netwrite(REQ) to " << remoteCopyType << ": " << neterror();
     throw ex;
-  }
-  else if (rc == 0) {
-    serrno = SECONNDROP;
-    castor::exception::Exception ex(serrno);
+  } else if(rc == 0) {
+    castor::exception::Exception ex(SECONNDROP);
     ex.getMessage() << __PRETTY_FUNCTION__
       << ": netwrite(REQ) to " << remoteCopyType << ": Connection dropped";
     throw ex;
