@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.48 $ $Release$ $Date: 2008/11/10 13:11:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.49 $ $Release$ $Date: 2008/11/24 17:44:44 $ $Author: waldron $
  *
  * 
  *
@@ -529,7 +529,7 @@ int rtcpcld_updateNsSegmentAttributes(
                           2,
                           "SYSCALL",
                            DLF_MSG_PARAM_STR,
-                          "Cns_setsegattrs/Cns_replacetapecopy",
+                          "Cns_setsegattrs()/Cns_replacetapecopy()",
                           "RETRY",
                           DLF_MSG_PARAM_INT,
                           retryNsUpdate
@@ -545,7 +545,7 @@ int rtcpcld_updateNsSegmentAttributes(
                           3,
                           "SYSCALL",
                           DLF_MSG_PARAM_STR,
-                          "Cns_setsegattrs/Cns_replacetapecopy",
+                          "Cns_setsegattrs()/Cns_replacetapecopy()",
                           "RETRY",
                           DLF_MSG_PARAM_INT,
                           retryNsUpdate,
@@ -567,7 +567,7 @@ int rtcpcld_updateNsSegmentAttributes(
                         3,
                         "SYSCALL",
                         DLF_MSG_PARAM_STR,
-                        "Cns_setsegattrs/Cns_replacetapecopy",
+                        "Cns_setsegattrs()/Cns_replacetapecopy()",
                         "RETRY",
                         DLF_MSG_PARAM_INT,
                         retryNsUpdate,
