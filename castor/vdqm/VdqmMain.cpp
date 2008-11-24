@@ -41,7 +41,7 @@
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
 
-  castor::vdqm::VdqmServer       server;
+  castor::vdqm::VdqmServer       server(argc, argv);
   Cuuid_t                        cuuid                       = cuuid;
   castor::server::BaseThreadPool *requestHandlerThreadPool   = NULL;
   castor::server::BaseThreadPool *driveSchedulerThreadPool   = NULL;
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
   // Parse the command line
   //-----------------------
 
-  server.parseCommandLine(cuuid, argc, argv);
+  server.parseCommandLine(cuuid);
 
 
   //--------------------------------

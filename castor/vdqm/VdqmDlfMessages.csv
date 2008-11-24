@@ -116,3 +116,4 @@ VDQM_REQUEST_SUBMITTED_DB_WRITE_FAILED,113,"Failed to write request submitted st
 VDQM_SEND_AGGREGATOR_JOB,114,"Sending job to tape aggregator"
 VDQM_REMOTECONNECTION_DAEMON_ERROR,115,"RTCPD or tape aggregator daemon returned an error"
 VDQM_REMOTECONNECTION_MSG_TOO_LARGE,116,"RTCPD or tape aggregator daemon message is too large"
+VDQM_STARTED,117,"vdqmserver started"

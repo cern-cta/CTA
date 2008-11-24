@@ -53,9 +53,9 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::vdqm::VdqmServer::VdqmServer()
-  throw():
+castor::vdqm::VdqmServer::VdqmServer(const int argc, char **argv) throw() :
   castor::server::BaseDaemon("Vdqm"),
+  m_argc(argc), m_argv(argv),
   m_requestHandlerThreadNumber(REQUESTHANDLERDEFAULTTHREADNUMBER),
   m_RTCPJobSubmitterThreadNumber(RTCPJOBSUBMITTERDEFAULTTHREADNUMBER),
   m_schedulerThreadNumber(SCHEDULERDEFAULTTHREADNUMBER) {
@@ -68,8 +68,7 @@ castor::vdqm::VdqmServer::VdqmServer()
 //------------------------------------------------------------------------------
 // parseCommandLine
 //------------------------------------------------------------------------------
-void castor::vdqm::VdqmServer::parseCommandLine(Cuuid_t &cuuid, int argc,
-  char *argv[]) throw() {
+void castor::vdqm::VdqmServer::parseCommandLine(Cuuid_t &cuuid) throw() {
 
   static struct Coptions longopts[] = {
     {"foreground"             , NO_ARGUMENT      , NULL, 'f'},
@@ -85,7 +84,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(Cuuid_t &cuuid, int argc,
   Copterr = 0;
 
   char c;
-  while ((c = Cgetopt_long (argc, argv, "fc:hr:j:s:", longopts, NULL)) != -1) {
+  while((c=Cgetopt_long(m_argc, m_argv, "fc:hr:j:s:", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;
@@ -110,14 +109,14 @@ void castor::vdqm::VdqmServer::parseCommandLine(Cuuid_t &cuuid, int argc,
           // Print error and usage to stderr and then abort
           std::cerr << std::endl << "Error: " << oss.str()
             << std::endl << std::endl;
-          usage(argv[0]);
+          usage();
           exit(1);
         }
       }
       setenv("PATH_CONFIG", Coptarg, 1);
       break;
     case 'h':
-      usage(argv[0]);
+      usage();
       exit(0);
     case 'r':
       m_requestHandlerThreadNumber = atoi(Coptarg);
@@ -142,7 +141,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(Cuuid_t &cuuid, int argc,
         // Print error and usage to stderr and then abort
         std::cerr << std::endl << "Error: " << oss.str()
           << std::endl << std::endl;
-        usage(argv[0]);
+        usage();
         exit(1);
       }
     case ':':
@@ -159,7 +158,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(Cuuid_t &cuuid, int argc,
         // Print error and usage to stderr and then abort
         std::cerr << std::endl << "Error: " << oss.str()
           << std::endl << std::endl;
-        usage(argv[0]);
+        usage();
         exit(1);
       }
     default:
@@ -177,13 +176,13 @@ void castor::vdqm::VdqmServer::parseCommandLine(Cuuid_t &cuuid, int argc,
         // Print error and usage to stderr and then abort
         std::cerr << std::endl << "Error: " << oss.str()
           << std::endl << std::endl;
-        usage(argv[0]);
+        usage();
         exit(1);
       }
     }
   }
 
-  if(Coptind > argc) {
+  if(Coptind > m_argc) {
     std::stringstream oss;
     oss << "Internal error.  Invalid value for Coptind: " << Coptind;
 
@@ -196,16 +195,16 @@ void castor::vdqm::VdqmServer::parseCommandLine(Cuuid_t &cuuid, int argc,
     // Print error and usage to stderr and then abort
     std::cerr << std::endl << "Error: " << oss.str()
       << std::endl << std::endl;
-    usage(argv[0]);
+    usage();
     exit(1);
   }
 
   // Best to abort if there is some extra text on the command-line which has
   // not been parsed as it could indicate that a valid option never got parsed
-  if(Coptind < argc)
+  if(Coptind < m_argc)
   {
     std::stringstream oss;
-    oss << "Unexpected command-line argument: " << argv[Coptind];
+    oss << "Unexpected command-line argument: " << m_argv[Coptind];
 
     // Log
     castor::dlf::Param params[] = {
@@ -216,7 +215,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(Cuuid_t &cuuid, int argc,
     // Print error and usage to stderr and then abort
     std::cerr << std::endl << "Error: " << oss.str()
       << std::endl << std::endl;
-    usage(argv[0]);
+    usage();
     exit(1);
   }
 }
@@ -225,9 +224,9 @@ void castor::vdqm::VdqmServer::parseCommandLine(Cuuid_t &cuuid, int argc,
 //------------------------------------------------------------------------------
 // usage
 //------------------------------------------------------------------------------
-void castor::vdqm::VdqmServer::usage(std::string programName)
+void castor::vdqm::VdqmServer::usage()
   throw() {
-  std::cerr << "Usage: " << programName << " [options]\n"
+  std::cerr << "Usage: vdqmserver [options]\n"
     "\n"
     "where options can be:\n"
     "\n"
@@ -427,4 +426,29 @@ int castor::vdqm::VdqmServer::getRTCPJobSubmitterThreadNumber() {
 //------------------------------------------------------------------------------
 int castor::vdqm::VdqmServer::getSchedulerThreadNumber() {
   return m_schedulerThreadNumber;
+}
+
+
+//------------------------------------------------------------------------------
+// start
+//------------------------------------------------------------------------------
+void castor::vdqm::VdqmServer::start() throw (castor::exception::Exception) {
+  std::stringstream oss;
+std::cout << "castor::vdqm::VdqmServer::start()" << std::endl;
+
+  // Concatenate all of the command-line arguments into one string
+  for(int i=0; i < m_argc; i++) {
+    if(i != 0) {
+      oss << " ";
+    }
+
+    oss << m_argv[i];
+  }
+
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("argv", oss.str())};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, VDQM_STARTED, 1, params);
+
+  // Call the start() method of the super class
+  castor::server::BaseDaemon::start();
 }
