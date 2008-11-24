@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.695 $ $Date: 2008/11/20 10:22:32 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.696 $ $Date: 2008/11/24 17:35:20 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -976,7 +976,8 @@ BEGIN
      AND DiskCopy.castorFile = TapeCopy.castorFile
      AND SubRequest.diskcopy(+) = DiskCopy.id
      AND DiskCopy.status = 2; -- DISKCOPY_WAITTAPERECALL
-  UPDATE DiskCopy SET status = 4 WHERE id = dci RETURNING fileSystem INTO fsid; -- DISKCOPY_FAILED
+  UPDATE DiskCopy SET status = 4 
+   WHERE id = dci RETURNING fileSystem INTO fsid; -- DISKCOPY_FAILED
   IF SubRequestId IS NOT NULL THEN
     UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
                           getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED (not strictly correct but the request is over anyway)
@@ -1226,11 +1227,25 @@ AS
 BEGIN
   SELECT id INTO svcId FROM SvcClass WHERE name = svcName;
   -- clean up tapecopies , WAITPOLICY reset into TOBEMIGRATED
-  UPDATE TapeCopy A SET status = 1
-   WHERE status = 7 AND EXISTS (
-     SELECT 'x' FROM CastorFile
-      WHERE CastorFile.id = A.castorfile
-        AND CastorFile.svcclass = svcId);
+  UPDATE /*+ BEGIN_OUTLINE_DATA
+             IGNORE_OPTIM_EMBEDDED_HINTS
+             ALL_ROWS
+             OUTLINE_LEAF(@"SEL$3FF8579E")
+             UNNEST(@"SEL$1")
+             OUTLINE(@"UPD$1")
+             OUTLINE(@"SEL$1")
+             INDEX_RS_ASC(@"SEL$3FF8579E" "TC"@"UPD$1" ("TAPECOPY"."STATUS"))
+             INDEX_RS_ASC(@"SEL$3FF8579E" "CF"@"SEL$1" ("CASTORFILE"."ID"))
+             LEADING(@"SEL$3FF8579E" "TC"@"UPD$1" "CF"@"SEL$1")
+             USE_NL(@"SEL$3FF8579E" "CF"@"SEL$1") */
+         TapeCopy TC
+     SET status = 1
+   WHERE status = 7 
+     AND EXISTS (
+       SELECT 'x' 
+         FROM CastorFile CF
+        WHERE TC.castorFile = CF.id
+          AND CF.svcclass = svcId);
   -- clean up streams, WAITPOLICY reset into CREATED
   UPDATE Stream SET status = 5 WHERE status = 7 AND tapepool IN
    (SELECT svcclass2tapepool.child
@@ -1255,7 +1270,17 @@ BEGIN
     FROM SvcClass
    WHERE SvcClass.name = svcClassName;
 
-  UPDATE /*+ INDEX(TC I_TAPECOPY_STATUS) */
+  UPDATE /*+ BEGIN_OUTLINE_DATA
+             IGNORE_OPTIM_EMBEDDED_HINTS
+             ALL_ROWS
+             OUTLINE_LEAF(@"SEL$3FF8579E")
+             UNNEST(@"SEL$1")
+             OUTLINE(@"UPD$1")
+             OUTLINE(@"SEL$1")
+             INDEX_RS_ASC(@"SEL$3FF8579E" "TC"@"UPD$1" ("TAPECOPY"."STATUS"))
+             INDEX_RS_ASC(@"SEL$3FF8579E" "CF"@"SEL$1" ("CASTORFILE"."ID"))
+             LEADING(@"SEL$3FF8579E" "TC"@"UPD$1" "CF"@"SEL$1")
+             USE_NL(@"SEL$3FF8579E" "CF"@"SEL$1") */
          TapeCopy TC 
      SET status = 7
    WHERE status IN (0, 1)
@@ -1266,8 +1291,7 @@ BEGIN
            AND SubRequest.status = 12  -- SUBREQUEST_REPACK
            AND TC.castorfile = SubRequest.castorfile
       ) OR EXISTS (
-        SELECT /*+ INDEX(CF PK_CASTORFILE_ID)
-                   NO_INDEX(CF I_CASTORFILE_SVCCLASS) */ 'x' 
+        SELECT 'x'
           FROM CastorFile CF
          WHERE TC.castorFile = CF.id
            AND CF.svcClass = svcId))
