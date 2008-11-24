@@ -1,5 +1,5 @@
 /*
- * $Id: Cupv_constants.h,v 1.1 2004/10/21 13:47:45 jdurand Exp $
+ * $Id: Cupv_constants.h,v 1.2 2008/11/24 17:47:47 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cupv_constants.h,v $ $Revision: 1.1 $ $Date: 2004/10/21 13:47:45 $ CERN IT-PDP/DM Ben Couturier
+ * @(#)$RCSfile: Cupv_constants.h,v $ $Revision: 1.2 $ $Date: 2008/11/24 17:47:47 $ CERN IT-PDP/DM Ben Couturier
  */
 
 #ifndef _CUPV_CONSTANTS_H
@@ -50,7 +50,7 @@
 #define P_NONE            0x0
 #define P_OPERATOR        0x1
 #define P_TAPE_OPERATOR   0x2
-#define P_GRP_ADMIN      0x4
+#define P_GRP_ADMIN       0x4
 #define P_ADMIN           0x8
 #define P_UPV_ADMIN       0x10
 #define P_TAPE_SYSTEM     0x20
