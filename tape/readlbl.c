@@ -1,5 +1,5 @@
 /*
- * $Id: readlbl.c,v 1.17 2008/10/28 08:04:11 wiebalck Exp $
+ * $Id: readlbl.c,v 1.18 2008/11/24 13:41:04 wiebalck Exp $
  */
 
 /*	readlbl - read one possible label record 
@@ -107,10 +107,10 @@ char *lblbuf;
                                 if (ioctl (tapefd, MTIOCGET, &mt_info) >= 0) {
                                         if (GMT_EOD(mt_info.mt_gstat)) {
                                                 /* blank tape - end of data */
-                                                usrmsg (func, "read 0 bytes, EOD detected, tape blank\n");
+                                                usrmsg (func, "read 0 bytes, EOD detected\n");
                                                 RETURN(3);	
                                         } else {
-                                                usrmsg (func, "read 0 bytes, not at EOD, tape not blank\n");
+                                                usrmsg (func, "read 0 bytes, but not at EOD\n");
                                         }
                                 } else {
                                         usrmsg (func, "MTIOCGET failed\n");   
