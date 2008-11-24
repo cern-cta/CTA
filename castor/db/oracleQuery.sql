@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.647 $ $Date: 2008/11/06 13:20:06 $ $Author: waldron $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.648 $ $Date: 2008/11/24 15:59:29 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -161,13 +161,15 @@ BEGIN
   -- Extract CastorFile ids FROM the fileid
   SELECT id BULK COLLECT INTO cfs FROM CastorFile WHERE fileId = fid AND nshost = nh;
   -- Check and fix when needed the LastKnownFileNames
-  SELECT lastKnownFileName INTO currentFileName
-    FROM CastorFile
-   WHERE id = cfs(cfs.FIRST);
-  IF currentFileName != fileName THEN
-    UPDATE CastorFile SET lastKnownFileName = fileName
+  IF (cfs.COUNT > 0) THEN
+    SELECT lastKnownFileName INTO currentFileName
+      FROM CastorFile
      WHERE id = cfs(cfs.FIRST);
-    COMMIT;
+    IF currentFileName != fileName THEN
+      UPDATE CastorFile SET lastKnownFileName = fileName
+       WHERE id = cfs(cfs.FIRST);
+      COMMIT;
+    END IF;
   END IF;
   -- Finally issue the actual query
   internalStageQuery(cfs, svcClassId, result);
