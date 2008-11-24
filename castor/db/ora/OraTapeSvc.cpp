@@ -600,8 +600,8 @@ void castor::db::ora::OraTapeSvc::streamsForTapePool
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in streamsForTapePool."
-        << std::endl << e.what();
-      throw ex;
+      << std::endl << e.what();
+    throw ex;
   }
 }
 
@@ -786,7 +786,7 @@ castor::db::ora::OraTapeSvc::selectTapeCopiesForMigration
     m_selectTapeCopiesForMigrationStatement =
       createStatement(s_selectTapeCopiesForMigrationStatementString);
     m_selectTapeCopiesForMigrationStatement->registerOutParam
-        (2, oracle::occi::OCCICURSOR);
+      (2, oracle::occi::OCCICURSOR);
     m_selectTapeCopiesForMigrationStatement->setAutoCommit(true);
   }
   // Execute statement and get result
@@ -825,7 +825,7 @@ castor::db::ora::OraTapeSvc::selectTapeCopiesForMigration
 void castor::db::ora::OraTapeSvc::resetStream
 (castor::stager::Stream* stream)
   throw (castor::exception::Exception) {
-    try {
+  try {
     // Check whether the statements are ok
     if (0 == m_resetStreamStatement) {
       m_resetStreamStatement =
@@ -949,7 +949,8 @@ void castor::db::ora::OraTapeSvc::rtcpclientdCleanUp()
     // Check whether the statements are ok
     if (0 == m_rtcpclientdCleanUpStatement) {
       m_rtcpclientdCleanUpStatement =
-	createStatement(s_rtcpclientdCleanUpStatementString);
+        createStatement(s_rtcpclientdCleanUpStatementString);
+      m_rtcpclientdCleanUpStatement->setAutoCommit(true);
     }
     // Execute the statement
     (void)m_rtcpclientdCleanUpStatement->executeUpdate();
