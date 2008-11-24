@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.683 $ $Date: 2008/11/24 16:44:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.684 $ $Date: 2008/11/24 17:34:35 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -310,6 +310,9 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('cleaning', 'failedDCsTimeout', '72', 'Timeout for failed diskCopies in hours');
 
+INSERT INTO CastorConfig
+  VALUES ('stager', 'nsHost', 'undefined', 'The name of the name server host to set in the CastorFile table overriding the CNS/HOST option defined in castor.conf');
+
 COMMIT;
 
 
@@ -527,6 +530,26 @@ BEGIN
     svcClassList := svcClassList || ',' || a.name;
   END LOOP;
   RETURN ltrim(svcClassList, ',');
+END;
+/
+
+
+/* Function to extract a configuration option from the castor config
+ * table.
+ */
+CREATE OR REPLACE FUNCTION getConfigOption
+(className VARCHAR2, optionName VARCHAR2, defaultValue VARCHAR2) 
+RETURN VARCHAR2 IS
+  returnValue VARCHAR2(204) := defaultValue;
+BEGIN
+  SELECT value INTO returnValue
+    FROM CastorConfig
+   WHERE class = className
+     AND key = optionName
+     AND value != 'undefined';
+  RETURN returnValue;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  RETURN returnValue;
 END;
 /
 
