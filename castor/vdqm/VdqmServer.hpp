@@ -47,13 +47,8 @@ namespace castor {
 
       /**
        * Constructor
-       *
-       * @param argc Argument count from the executable's entry function:
-       * main().
-       * @param argv Argument vector from the executable's entry function:
-       * main().
        */
-      VdqmServer(const int argc, char **argv) throw();
+      VdqmServer() throw(castor::exception::Exception);
 
       /**
        * Parses the command line and sets the server options accordingly.
@@ -62,8 +57,13 @@ namespace castor {
        * to both standard error and DLF and then calls exit with a value of 1.
        *
        * @param cuuid the cuuid to be used for logging
+       * @param argc Argument count from the executable's entry function:
+       * main().
+       * @param argv Argument vector from the executable's entry function:
+       * main().
        */
-      void parseCommandLine(Cuuid_t &cuuid) throw();
+      void parseCommandLine(Cuuid_t &cuuid, const int argc, char **argv)
+        throw();
 
       /**
        * Initialises the database service.
@@ -115,12 +115,6 @@ namespace castor {
        */
       int getSchedulerThreadNumber();
 
-      /**
-       * Logs a start message and then calls the start method of the super
-       * class, in other words castor::server::BaseDaemon::start().
-       */
-      virtual void start() throw (castor::exception::Exception);
-      
 
     private:
 
@@ -128,16 +122,6 @@ namespace castor {
        * DLF message strings.
        */
       static castor::dlf::Message s_dlfMessages[];
-
-      /**
-       * Argument count from the executable's entry function: main().
-       */
-      const int m_argc;
-
-      /**
-       * Argument vector from the executable's entry function: main().
-       */
-      char **m_argv;
 
       /**
        * Number of request handler threads.

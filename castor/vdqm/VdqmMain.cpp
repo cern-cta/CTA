@@ -40,217 +40,229 @@
 // main method
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
-
-  castor::vdqm::VdqmServer       server(argc, argv);
-  Cuuid_t                        cuuid                       = cuuid;
-  castor::server::BaseThreadPool *requestHandlerThreadPool   = NULL;
-  castor::server::BaseThreadPool *driveSchedulerThreadPool   = NULL;
-  castor::server::BaseThreadPool *rtcpJobSubmitterThreadPool = NULL;
-
-
-  //---------------
-  // Create a cuuid
-  //---------------
-
-  Cuuid_create(&cuuid);
-
-
-  //-----------------------
-  // Parse the command line
-  //-----------------------
-
-  server.parseCommandLine(cuuid);
-
-
-  //--------------------------------
-  // Initialise the database service
-  //--------------------------------
-
-  server.initDatabaseService(cuuid);
-
-
-  //------------------------
-  // Create the thread pools
-  //------------------------
-
-  {
-    int vdqmPort = 0;
-
-    try {
-      vdqmPort = server.getListenPort();
-    } catch(castor::exception::InvalidConfigEntry &ex) {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("invalidValue", ex.getEntryValue())};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-        castor::vdqm::VDQM_INVALID_PORT_ENTRY, 1, params);
-
-      std::cerr << std::endl << "Error: " << ex.getMessage().str() << std::endl;
-
-      return 1;
-    }
-
-    server.addThreadPool(
-      new castor::server::TCPListenerThreadPool("RequestHandlerThreadPool",
-        new castor::vdqm::RequestHandlerThread(), vdqmPort));
-
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("vdqmPort", vdqmPort)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      castor::vdqm::VDQM_SET_VDQMPORT, 1, params);
-  }
-
-  {
-    int timeout = 0;
-
-    try {
-      timeout = server.getSchedulerTimeout();
-    } catch(castor::exception::InvalidConfigEntry &ex) {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("invalidValue", ex.getEntryValue())};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-        castor::vdqm::VDQM_INVALID_SCHEDULERTIMEOUT_ENTRY, 1, params);
-
-      std::cerr << std::endl << "Error: " << ex.getMessage().str() << std::endl;
-
-      return 1;
-    }
-
-    server.addThreadPool(
-      new castor::server::SignalThreadPool("DriveSchedulerThreadPool",
-        new castor::vdqm::DriveSchedulerThread(), timeout));
-
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("timeout", timeout)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      castor::vdqm::VDQM_SET_SCHEDULERTIMEOUT, 1, params);
-  }
-
-  {
-    int timeout = 0;
-
-    try {
-      timeout = server.getRTCPJobSubmitterTimeout();
-    } catch(castor::exception::InvalidConfigEntry &ex) {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("invalidValue", ex.getEntryValue())};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-        castor::vdqm::VDQM_INVALID_RTCPJOBSUBMITTERTIMEOUT_ENTRY, 1, params);
-
-      std::cerr << std::endl << "Error: " << ex.getMessage().str() << std::endl;
-
-      return 1;
-    }
-
-    server.addThreadPool(
-      new castor::server::SignalThreadPool("JobSubmitterThreadPool",
-        new castor::vdqm::RTCPJobSubmitterThread(), timeout));
-
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("timeout", timeout)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      castor::vdqm::VDQM_SET_RTCPJOBSUBMITTERTIMEOUT, 1, params);
-  }
-
-  // Add a dedicated UDP thread pool for getting wakeup notifications
-  {
-    int notifyPort = 0;
-
-    try {
-      notifyPort = server.getNotifyPort();
-    } catch(castor::exception::InvalidConfigEntry &ex) {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("invalidValue", ex.getEntryValue())};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-        castor::vdqm::VDQM_INVALID_NOTIFYPORT_ENTRY, 1, params);
-
-      std::cerr << std::endl << "Error: " << ex.getMessage().str() << std::endl;
-
-      return 1;
-    }
-
-    server.addNotifierThreadPool(notifyPort);
-
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("notifyPort", notifyPort)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      castor::vdqm::VDQM_SET_NOTIFYPORT, 1, params);
-  }
-
-
-  //----------------------------------------------
-  // Set the number of threads in each thread pool
-  //----------------------------------------------
-
-  requestHandlerThreadPool = server.getThreadPool('R');
-  if(requestHandlerThreadPool == NULL) {
-    std::cerr << "Failed to get RequestHandlerThreadPool" << std::endl;
-    return 1;
-  }
-
-  {
-    int nbThreads = server.getRequestHandlerThreadNumber();
-
-    requestHandlerThreadPool->setNbThreads(nbThreads);
-
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("nbThreads", nbThreads)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      castor::vdqm::VDQM_SET_REQUEST_HANDLER_THREAD_NB, 1, params);
-  }
-
-  driveSchedulerThreadPool = server.getThreadPool('D');
-  if(driveSchedulerThreadPool == NULL) {
-    std::cerr << "Failed to get DriveSchedulerThreadPool" << std::endl;
-    return 1;
-  }
-
-  {
-    int nbThreads = server.getSchedulerThreadNumber();
-
-    driveSchedulerThreadPool->setNbThreads(nbThreads);
-
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("nbThreads", nbThreads)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      castor::vdqm::VDQM_SET_SCHEDULER_THREAD_NB, 1, params);
-  }
-
-  rtcpJobSubmitterThreadPool = server.getThreadPool('J');
-  if(rtcpJobSubmitterThreadPool == NULL) {
-    std::cerr << "Failed to get JobSubmitterThreadPool" << std::endl;
-    return 1;
-  }
-
-  {
-    int nbThreads = server.getRTCPJobSubmitterThreadNumber();
-
-    rtcpJobSubmitterThreadPool->setNbThreads(nbThreads);
-
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("nbThreads", nbThreads)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      castor::vdqm::VDQM_SET_RTCP_JOB_SUBMITTER_THREAD_NB, 1, params);
-  }
-
-
   try {
+    castor::vdqm::VdqmServer       server;
+    Cuuid_t                        cuuid                       = cuuid;
+    castor::server::BaseThreadPool *requestHandlerThreadPool   = NULL;
+    castor::server::BaseThreadPool *driveSchedulerThreadPool   = NULL;
+    castor::server::BaseThreadPool *rtcpJobSubmitterThreadPool = NULL;
 
-    //-----------------
-    // Start the server
-    //-----------------
 
-    server.start();
+    //---------------
+    // Create a cuuid
+    //---------------
 
-  } catch (castor::exception::Exception &e) {
+    Cuuid_create(&cuuid);
+
+
+    //-----------------------
+    // Parse the command line
+    //-----------------------
+
+    server.parseCommandLine(cuuid, argc, argv);
+
+
+    //--------------------------------
+    // Initialise the database service
+    //--------------------------------
+
+    server.initDatabaseService(cuuid);
+
+
+    //------------------------
+    // Create the thread pools
+    //------------------------
+
+    {
+      int vdqmPort = 0;
+
+      try {
+        vdqmPort = server.getListenPort();
+      } catch(castor::exception::InvalidConfigEntry &ex) {
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("invalidValue", ex.getEntryValue())};
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+          castor::vdqm::VDQM_INVALID_PORT_ENTRY, 1, params);
+
+        std::cerr << std::endl << "Error: " << ex.getMessage().str()
+          << std::endl;
+
+        return 1;
+      }
+
+      server.addThreadPool(
+        new castor::server::TCPListenerThreadPool("RequestHandlerThreadPool",
+          new castor::vdqm::RequestHandlerThread(), vdqmPort));
+
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("vdqmPort", vdqmPort)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        castor::vdqm::VDQM_SET_VDQMPORT, 1, params);
+    }
+
+    {
+      int timeout = 0;
+
+      try {
+        timeout = server.getSchedulerTimeout();
+      } catch(castor::exception::InvalidConfigEntry &ex) {
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("invalidValue", ex.getEntryValue())};
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+          castor::vdqm::VDQM_INVALID_SCHEDULERTIMEOUT_ENTRY, 1, params);
+
+        std::cerr << std::endl << "Error: " << ex.getMessage().str()
+          << std::endl;
+
+        return 1;
+      }
+
+      server.addThreadPool(
+        new castor::server::SignalThreadPool("DriveSchedulerThreadPool",
+          new castor::vdqm::DriveSchedulerThread(), timeout));
+
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("timeout", timeout)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        castor::vdqm::VDQM_SET_SCHEDULERTIMEOUT, 1, params);
+    }
+
+    {
+      int timeout = 0;
+
+      try {
+        timeout = server.getRTCPJobSubmitterTimeout();
+      } catch(castor::exception::InvalidConfigEntry &ex) {
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("invalidValue", ex.getEntryValue())};
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+          castor::vdqm::VDQM_INVALID_RTCPJOBSUBMITTERTIMEOUT_ENTRY, 1, params);
+
+        std::cerr << std::endl << "Error: " << ex.getMessage().str()
+          << std::endl;
+
+        return 1;
+      }
+
+      server.addThreadPool(
+        new castor::server::SignalThreadPool("JobSubmitterThreadPool",
+          new castor::vdqm::RTCPJobSubmitterThread(), timeout));
+
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("timeout", timeout)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        castor::vdqm::VDQM_SET_RTCPJOBSUBMITTERTIMEOUT, 1, params);
+    }
+
+    // Add a dedicated UDP thread pool for getting wakeup notifications
+    {
+      int notifyPort = 0;
+
+      try {
+        notifyPort = server.getNotifyPort();
+      } catch(castor::exception::InvalidConfigEntry &ex) {
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("invalidValue", ex.getEntryValue())};
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+          castor::vdqm::VDQM_INVALID_NOTIFYPORT_ENTRY, 1, params);
+
+        std::cerr << std::endl << "Error: " << ex.getMessage().str()
+          << std::endl;
+
+        return 1;
+      }
+
+      server.addNotifierThreadPool(notifyPort);
+
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("notifyPort", notifyPort)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        castor::vdqm::VDQM_SET_NOTIFYPORT, 1, params);
+    }
+
+
+    //----------------------------------------------
+    // Set the number of threads in each thread pool
+    //----------------------------------------------
+
+    requestHandlerThreadPool = server.getThreadPool('R');
+    if(requestHandlerThreadPool == NULL) {
+      std::cerr << "Failed to get RequestHandlerThreadPool" << std::endl;
+      return 1;
+    }
+
+    {
+      int nbThreads = server.getRequestHandlerThreadNumber();
+
+      requestHandlerThreadPool->setNbThreads(nbThreads);
+
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("nbThreads", nbThreads)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        castor::vdqm::VDQM_SET_REQUEST_HANDLER_THREAD_NB, 1, params);
+    }
+
+    driveSchedulerThreadPool = server.getThreadPool('D');
+    if(driveSchedulerThreadPool == NULL) {
+      std::cerr << "Failed to get DriveSchedulerThreadPool" << std::endl;
+      return 1;
+    }
+
+    {
+      int nbThreads = server.getSchedulerThreadNumber();
+
+      driveSchedulerThreadPool->setNbThreads(nbThreads);
+
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("nbThreads", nbThreads)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        castor::vdqm::VDQM_SET_SCHEDULER_THREAD_NB, 1, params);
+    }
+
+    rtcpJobSubmitterThreadPool = server.getThreadPool('J');
+    if(rtcpJobSubmitterThreadPool == NULL) {
+      std::cerr << "Failed to get JobSubmitterThreadPool" << std::endl;
+      return 1;
+    }
+
+    {
+      int nbThreads = server.getRTCPJobSubmitterThreadNumber();
+
+      rtcpJobSubmitterThreadPool->setNbThreads(nbThreads);
+
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("nbThreads", nbThreads)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        castor::vdqm::VDQM_SET_RTCP_JOB_SUBMITTER_THREAD_NB, 1, params);
+    }
+
+
+    try {
+
+      //-----------------
+      // Start the server
+      //-----------------
+
+      server.start();
+
+    } catch (castor::exception::Exception &e) {
+      std::cerr << "Failed to start VDQM server : "
+                << sstrerror(e.code()) << std::endl
+                << e.getMessage().str() << std::endl;
+
+      return 1;
+    } catch (...) {
+      std::cerr << "Failed to start VDQM server : Caught general exception!"
+        << std::endl;
+    
+      return 1;
+    }
+
+  } catch(castor::exception::Exception &e) {
     std::cerr << "Failed to start VDQM server : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
 
-    return 1;
-  } catch (...) {
-    std::cerr << "Failed to start VDQM server : Caught general exception!"
-      << std::endl;
-    
     return 1;
   }
   

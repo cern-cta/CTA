@@ -53,22 +53,41 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::vdqm::VdqmServer::VdqmServer(const int argc, char **argv) throw() :
+castor::vdqm::VdqmServer::VdqmServer() throw(castor::exception::Exception) :
   castor::server::BaseDaemon("Vdqm"),
-  m_argc(argc), m_argv(argv),
   m_requestHandlerThreadNumber(REQUESTHANDLERDEFAULTTHREADNUMBER),
   m_RTCPJobSubmitterThreadNumber(RTCPJOBSUBMITTERDEFAULTTHREADNUMBER),
   m_schedulerThreadNumber(SCHEDULERDEFAULTTHREADNUMBER) {
   // Initializes the DLF logging including the definition of the predefined
-  // messages.
-  dlfInit(s_dlfMessages);
+  // messages.  Please not that castor::server::BaseServer::dlfInit can throw a
+  // castor::exception::Exception.
+  castor::server::BaseServer::dlfInit(s_dlfMessages);
 }
 
 
 //------------------------------------------------------------------------------
 // parseCommandLine
 //------------------------------------------------------------------------------
-void castor::vdqm::VdqmServer::parseCommandLine(Cuuid_t &cuuid) throw() {
+void castor::vdqm::VdqmServer::parseCommandLine(Cuuid_t &cuuid,
+  const int argc, char **argv) throw() {
+
+  // Log the start message
+  {
+    std::string concatenatedArgs;
+
+    // Concatenate all of the command-line arguments into one string
+    for(int i=0; i < argc; i++) {
+      if(i != 0) {
+        concatenatedArgs += " ";
+      }
+
+      concatenatedArgs += argv[i];
+    }
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("argv", concatenatedArgs)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, VDQM_STARTED, 1, params);
+  }
 
   static struct Coptions longopts[] = {
     {"foreground"             , NO_ARGUMENT      , NULL, 'f'},
@@ -84,7 +103,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(Cuuid_t &cuuid) throw() {
   Copterr = 0;
 
   char c;
-  while((c=Cgetopt_long(m_argc, m_argv, "fc:hr:j:s:", longopts, NULL)) != -1) {
+  while((c=Cgetopt_long(argc, argv, "fc:hr:j:s:", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;
@@ -182,7 +201,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(Cuuid_t &cuuid) throw() {
     }
   }
 
-  if(Coptind > m_argc) {
+  if(Coptind > argc) {
     std::stringstream oss;
     oss << "Internal error.  Invalid value for Coptind: " << Coptind;
 
@@ -201,10 +220,10 @@ void castor::vdqm::VdqmServer::parseCommandLine(Cuuid_t &cuuid) throw() {
 
   // Best to abort if there is some extra text on the command-line which has
   // not been parsed as it could indicate that a valid option never got parsed
-  if(Coptind < m_argc)
+  if(Coptind < argc)
   {
     std::stringstream oss;
-    oss << "Unexpected command-line argument: " << m_argv[Coptind];
+    oss << "Unexpected command-line argument: " << argv[Coptind];
 
     // Log
     castor::dlf::Param params[] = {
@@ -426,29 +445,4 @@ int castor::vdqm::VdqmServer::getRTCPJobSubmitterThreadNumber() {
 //------------------------------------------------------------------------------
 int castor::vdqm::VdqmServer::getSchedulerThreadNumber() {
   return m_schedulerThreadNumber;
-}
-
-
-//------------------------------------------------------------------------------
-// start
-//------------------------------------------------------------------------------
-void castor::vdqm::VdqmServer::start() throw (castor::exception::Exception) {
-  std::stringstream oss;
-std::cout << "castor::vdqm::VdqmServer::start()" << std::endl;
-
-  // Concatenate all of the command-line arguments into one string
-  for(int i=0; i < m_argc; i++) {
-    if(i != 0) {
-      oss << " ";
-    }
-
-    oss << m_argv[i];
-  }
-
-  castor::dlf::Param params[] = {
-    castor::dlf::Param("argv", oss.str())};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, VDQM_STARTED, 1, params);
-
-  // Call the start() method of the super class
-  castor::server::BaseDaemon::start();
 }
