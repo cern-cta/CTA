@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/11/06 13:20:07 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/11/24 17:46:36 $ $Author: waldron $
  *
  * This script create a new DLF schema
  *
@@ -514,8 +514,9 @@ BEGIN
              -- Filter the subrequests so that we only process requests which entered
              -- the system through the request handler in the last sampling interval.
              -- This stops us from recounting subrequests that were restarted
-             INNER JOIN CacheEfficiencyHelper helper
-                ON results.reqid = helper.reqid)
+             WHERE results.reqid IN 
+               (SELECT /*+ CARDINALITY(helper 1000) */ * 
+                  FROM CacheEfficiencyHelper helper))
          ) WHERE rank = 1
        GROUP BY type, svcclass, msg_no)
      GROUP BY type, svcclass
