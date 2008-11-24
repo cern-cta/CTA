@@ -94,12 +94,12 @@ class RfioPreRequisitesCase(unittest.TestCase):
                 print '     castorToRemote (RfioTest.RfioRfcpNewTurl6)'
                 print '     remoteToCastor (RfioTest.RfioRfcpNewTurl7)'
                 print '     castorToRemote (RfioTest.RfioRfcpNewTurl7)'
-                print '     remoteRfcat (RfioTest.RfioOtherCmdSimpleCase)'
-                print '     remoteRfchmod (RfioTest.RfioOtherCmdSimpleCase)'
-                print '     remoteRfdir (RfioTest.RfioOtherCmdSimpleCase)'
+                print '     remoteRfcat    (RfioTest.RfioOtherCmdSimpleCase)'
+                print '     remoteRfchmod  (RfioTest.RfioOtherCmdSimpleCase)'
+                print '     remoteRfdir    (RfioTest.RfioOtherCmdSimpleCase)'
                 print '     remoteRfrename (RfioTest.RfioOtherCmdSimpleCase)'
-                print '     remoteRfrm (RfioTest.RfioOtherCmdSimpleCase)'
-                print '     remoteRfstat (RfioTest.RfioOtherCmdSimpleCase) ... ',
+                print '     remoteRfrm     (RfioTest.RfioOtherCmdSimpleCase)'
+                print '     remoteRfstat   (RfioTest.RfioOtherCmdSimpleCase) ... ',
                 rfioRemoteDirOk=0
         except IOError:
             assert 0==-1, "An error in the preparation of the main setting occurred ... test is not valid"
