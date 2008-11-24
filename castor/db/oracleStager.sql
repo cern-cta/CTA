@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.704 $ $Date: 2008/11/24 16:44:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.705 $ $Date: 2008/11/24 17:36:19 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1795,11 +1795,14 @@ CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
                                               rfs OUT INTEGER) AS
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
+  nsHostName VARCHAR2(2048);
 BEGIN
+  -- Get the stager/nsHost configuration option
+  nsHostName := getConfigOption('stager', 'nsHost', nh);
   BEGIN
     -- try to find an existing file and lock it
     SELECT id, fileSize INTO rid, rfs FROM CastorFile
-     WHERE fileId = fid AND nsHost = nh FOR UPDATE;
+     WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
     -- update lastAccess time
     UPDATE CastorFile SET LastAccessTime = getTime(),
                           lastKnownFileName = REGEXP_REPLACE(fn,'(/){2,}','/')
@@ -1807,15 +1810,15 @@ BEGIN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- insert new row
     INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
-                            creationTime, lastAccessTime, lastupdatetime, lastKnownFileName)
-      VALUES (ids_seq.nextval, fId, nh, sc, fc, fs, getTime(), getTime(), getTime(), REGEXP_REPLACE(fn,'(/){2,}','/'))
+                            creationTime, lastAccessTime, lastUpdateTime, lastKnownFileName)
+      VALUES (ids_seq.nextval, fId, nsHostName, sc, fc, fs, getTime(), getTime(), getTime(), REGEXP_REPLACE(fn,'(/){2,}','/'))
       RETURNING id, fileSize INTO rid, rfs;
     INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
   END;
 EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
   -- retry the select since a creation was done in between
   SELECT id, fileSize INTO rid, rfs FROM CastorFile
-    WHERE fileId = fid AND nsHost = nh FOR UPDATE;
+    WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
 END;
 /
 
@@ -1825,12 +1828,15 @@ CREATE OR REPLACE PROCEDURE stageRelease (fid IN INTEGER,
                                           ret OUT INTEGER) AS
   cfId INTEGER;
   nbRes INTEGER;
+  nsHostName VARCHAR2(2048);
 BEGIN
+  -- Get the stager/nsHost configuration option
+  nsHostName := getConfigOption('stager', 'nsHost', nh);
   -- Lock the access to the CastorFile
   -- This, together with triggers will avoid new TapeCopies
   -- or DiskCopies to be added
   SELECT id INTO cfId FROM CastorFile
-   WHERE fileId = fid AND nsHost = nh FOR UPDATE;
+   WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
   -- check if removal is possible for TapeCopies
   SELECT count(*) INTO nbRes FROM TapeCopy
    WHERE status = 3 -- TAPECOPY_SELECTED
@@ -1862,14 +1868,17 @@ CREATE OR REPLACE PROCEDURE stageForcedRm (fid IN INTEGER,
   cfId INTEGER;
   nbRes INTEGER;
   dcsToRm "numList";
+  nsHostName VARCHAR2(2048);
 BEGIN
   -- by default, we are successful
   result := 1;
+  -- Get the stager/nsHost configuration option
+  nsHostName := getConfigOption('stager', 'nsHost', nh);
   -- Lock the access to the CastorFile
   -- This, together with triggers will avoid new TapeCopies
   -- or DiskCopies to be added
   SELECT id INTO cfId FROM CastorFile
-   WHERE fileId = fid AND nsHost = nh FOR UPDATE;
+   WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
   -- list diskcopies
   SELECT id BULK COLLECT INTO dcsToRm
     FROM DiskCopy
@@ -1916,15 +1925,18 @@ CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
   nbRes INTEGER;
   dcsToRm "numList";
   sr "numList";
-	dcStatus INTEGER;
+  dcStatus INTEGER;
+  nsHostName VARCHAR2(2048);
 BEGIN
   ret := 0;
+  -- Get the stager/nsHost configuration option
+  nsHostName := getConfigOption('stager', 'nsHost', nh);
   BEGIN
     -- Lock the access to the CastorFile
     -- This, together with triggers will avoid new TapeCopies
     -- or DiskCopies to be added
     SELECT id INTO cfId FROM CastorFile
-     WHERE fileId = fid AND nsHost = nh FOR UPDATE;
+     WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- This file does not exist in the stager catalog
     -- so we just fail the request
@@ -2121,7 +2133,7 @@ CREATE OR REPLACE PROCEDURE setFileGCWeightProc
     FROM DiskCopy, CastorFile
    WHERE castorFile.id = diskcopy.castorFile
      AND fileid = fid
-     AND nshost = nh
+     AND nshost = getConfigOption('stager', 'nsHost', nh)
      AND fileSystem IN (
        SELECT FileSystem.id
          FROM FileSystem, DiskPool2SvcClass D2S

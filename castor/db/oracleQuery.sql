@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.648 $ $Date: 2008/11/24 15:59:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.649 $ $Date: 2008/11/24 17:36:19 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -156,10 +156,14 @@ CREATE OR REPLACE PROCEDURE fileIdStageQuery
   fileName IN VARCHAR2,
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
-  currentFileName VARCHAR2(2048);  
+  currentFileName VARCHAR2(2048);
+  nsHostName VARCHAR2(2048);  
 BEGIN
+  -- Get the stager/nsHost configuration option
+  nsHostName := getConfigOption('stager', 'nsHost', nh);
   -- Extract CastorFile ids FROM the fileid
-  SELECT id BULK COLLECT INTO cfs FROM CastorFile WHERE fileId = fid AND nshost = nh;
+  SELECT id BULK COLLECT INTO cfs FROM CastorFile 
+   WHERE fileId = fid AND nshost = nsHostName;
   -- Check and fix when needed the LastKnownFileNames
   IF (cfs.COUNT > 0) THEN
     SELECT lastKnownFileName INTO currentFileName

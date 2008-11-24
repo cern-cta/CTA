@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.676 $ $Date: 2008/11/19 15:53:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.677 $ $Date: 2008/11/24 17:36:19 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -453,21 +453,24 @@ END;
 
 /* PL/SQL method implementing nsFilesDeletedProc */
 CREATE OR REPLACE PROCEDURE nsFilesDeletedProc
-(nsh IN VARCHAR2,
+(nh IN VARCHAR2,
  fileIds IN castor."cnumList",
  orphans OUT castor.IdRecord_Cur) AS
   unused NUMBER;
+  nsHostName VARCHAR2(2048);
 BEGIN
   IF fileIds.COUNT <= 0 THEN
     RETURN;
   END IF;
+  -- Get the stager/nsHost configuration option
+  nsHostName := getConfigOption('stager', 'nsHost', nh);
   -- Loop over the deleted files and split the orphan ones
   -- from the normal ones
   FOR fid in fileIds.FIRST .. fileIds.LAST LOOP
     BEGIN
       SELECT id INTO unused FROM CastorFile
-       WHERE fileid = fileIds(fid) AND nsHost = nsh;
-      stageForcedRm(fileIds(fid), nsh, unused);
+       WHERE fileid = fileIds(fid) AND nsHost = nsHostName;
+      stageForcedRm(fileIds(fid), nsHostName, unused);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- this file was dropped from nameServer AND stager
       -- and still exists on disk. We put it into the list
@@ -547,6 +550,7 @@ END;
 CREATE OR REPLACE PROCEDURE deleteTerminatedRequests AS
   timeOut INTEGER;
   rate INTEGER;
+  srIds "numList";
 BEGIN
   -- select requested timeout from configuration table
   SELECT TO_NUMBER(value) INTO timeOut FROM CastorConfig
@@ -563,23 +567,20 @@ BEGIN
 
   -- now delete the SubRequests. Here we don't use bulkDelete
   -- to be able to pass timeout as a bind variable and make it sharable
-  DECLARE
-    CURSOR s IS SELECT id FROM SubRequest 
-     WHERE status IN (9, 11) 
-       AND lastModificationTime < getTime() - timeOut;
-    ids "numList";
-  BEGIN
-    OPEN s;
-    LOOP
-      FETCH s BULK COLLECT INTO ids LIMIT 10000;
-      FORALL i IN ids.FIRST..ids.LAST
-        DELETE FROM Id2Type WHERE id = ids(i); 
-      FORALL i IN ids.FIRST..ids.LAST
-        DELETE FROM SubRequest WHERE id = ids(i);
-      COMMIT;
-    EXIT WHEN s%NOTFOUND;
-    END LOOP;
-  END;
+  -- original call was:
+  -- bulkDelete('SELECT id FROM SubRequest WHERE status IN (9, 11)
+  --   AND lastModificationTime < getTime() - '|| timeOut ||';',
+  --   'SubRequest');
+  SELECT id BULK COLLECT INTO srIds FROM SubRequest 
+   WHERE status IN (9, 11) 
+     AND lastModificationTime < getTime() - timeOut; 
+
+  FORALL i IN srIds.FIRST..srIds.LAST 
+    DELETE FROM Id2Type WHERE id = srIds(i); 
+  FORALL i IN srIds.FIRST..srIds.LAST 
+    DELETE FROM SubRequest WHERE id = srIds(i);
+  COMMIT;
+
   -- and then related Requests + Clients
     ---- Get ----
   bulkDeleteRequests('StageGetRequest');
@@ -743,7 +744,6 @@ END;
 /
 
 
-
 /*
  * Database jobs
  */
@@ -760,6 +760,7 @@ BEGIN
       JOB_NAME        => 'houseKeepingJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN deleteTerminatedRequests(); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=20',
       ENABLED         => TRUE,
@@ -770,6 +771,7 @@ BEGIN
       JOB_NAME        => 'cleanupJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN cleanup(); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=HOURLY; INTERVAL=12',
       ENABLED         => TRUE,
@@ -780,6 +782,7 @@ BEGIN
       JOB_NAME        => 'bulkCheckFSBackInProdJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN bulkCheckFSBackInProd(); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
       ENABLED         => TRUE,
@@ -790,6 +793,7 @@ BEGIN
       JOB_NAME        => 'restartStuckRecallsJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN restartStuckRecalls(); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
       ENABLED         => TRUE,
