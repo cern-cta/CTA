@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.8-3-1_to_2.1.8-3-2.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/11/25 10:17:16 $ $Author: waldron $
+ * @(#)$RCSfile: 2.1.8-3-1_to_2.1.8-3-2.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/11/25 10:40:09 $ $Author: waldron $
  *
  * This script upgrades a CASTOR v2.1.8-3-1 STAGER database into v2.1.8-3-2
  *
@@ -181,13 +181,6 @@ BEGIN
 END;
 /
 
-
-/* Update all lastUpdateTime of 10s to avoid falling into the bug
- * of the nameserver taking the request arrival time instead of
- * the file closing time as lastUpdateTime
- */
-UPDATE Castorfile SET lastUpdateTime = lastUpdateTime + 10 WHERE lastUpdatetime > 0;
-COMMIT;
 
 /* Add new option to CastorConfig */
 INSERT INTO CastorConfig
