@@ -146,16 +146,14 @@ void castor::tape::aggregator::RCPJobSubmitter::readReply(
   switch (rc) {
   case -1:
     {
-      serrno = SECOMERR;
-      castor::exception::Exception ex(serrno);
+      castor::exception::Exception ex(SECOMERR);
       ex.getMessage() << __PRETTY_FUNCTION__
         << ": netread(HDR) from " << remoteCopyType << ": " << neterror();
       throw ex;
     }
   case 0:
     {
-      serrno = SECONNDROP;
-      castor::exception::Exception ex(serrno);
+      castor::exception::Exception ex(SECONNDROP);
       ex.getMessage() << __PRETTY_FUNCTION__
         << ": netread(HDR) from " << remoteCopyType << ": connection dropped";
       throw ex;
@@ -233,16 +231,14 @@ void castor::tape::aggregator::RCPJobSubmitter::readReply(
   switch (rc) {
   case -1:
     {
-      serrno = SECOMERR;
-      castor::exception::Exception ex(serrno);
+      castor::exception::Exception ex(SECOMERR);
       ex.getMessage() << __PRETTY_FUNCTION__
         << ": netread(HDR) from " << remoteCopyType << ": " << neterror();
       throw ex;
     }
   case 0:
     {
-      serrno = SECONNDROP;
-      castor::exception::Exception ex(serrno);
+      castor::exception::Exception ex(SECONNDROP);
         ex.getMessage() << __PRETTY_FUNCTION__
         << ": netread(HDR) from " << remoteCopyType << ": Connection dropped";
       throw ex;
