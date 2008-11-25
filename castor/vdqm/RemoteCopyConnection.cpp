@@ -303,6 +303,20 @@ bool castor::vdqm::RemoteCopyConnection::readAnswer(const Cuuid_t &cuuid,
     if ( (magic != RTCOPY_MAGIC && magic != RTCOPY_MAGIC_OLD0) ||
          reqtype != VDQM_CLIENTINFO ) return false;
 
+    // If the message body is not large enough for a status number and an empty
+    // error string
+    if(len < LONGSIZE + 1) {
+      castor::exception::Exception ex(EMSGSIZE);
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Invalid header from " << remoteCopyType
+        << ": Message body not large enough for a status number and an empty "
+        "string: Minimum size expected: " << (LONGSIZE + 1)
+        << ": Received: " << len;
+
+      throw ex;
+    }
+
     DO_MARSHALL(LONG, p, status, ReceiveFrom);
 
     msglen = len - LONGSIZE -1;
