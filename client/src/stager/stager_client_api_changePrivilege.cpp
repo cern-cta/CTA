@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api_changePrivilege.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/06/25 12:40:51 $ $Author: waldron $
+ * @(#)$RCSfile: stager_client_api_changePrivilege.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/11/25 17:45:52 $ $Author: sponcec3 $
  *
  * api to handle privileges i.e. modify the black and white list
  *
@@ -44,10 +44,14 @@
 //-----------------------------------------------------------------------------
 // getUserId
 //-----------------------------------------------------------------------------
-int getUserId(std::string name)
+void getUserId(std::string name, castor::bwlist::BWUser *u)
   throw (castor::exception::InvalidArgument) {
   // empty user name means any and is thus mapped to -1
-  if (name.size() == 0) return -1;
+  if (name.size() == 0) {
+    u->setEuid(-1);
+    u->setEgid(-1);
+    return;
+  }
   // get user id
   struct passwd *pass = getpwnam(name.c_str());
   if (0 == pass) {
@@ -55,16 +59,19 @@ int getUserId(std::string name)
     e.getMessage() << "Unknown user " << name;
     throw e;
   }
-  return pass->pw_uid;
+  u->setEuid(pass->pw_uid);
+  u->setEgid(pass->pw_gid);
 }
 
 //-----------------------------------------------------------------------------
 // getGroupId
 //-----------------------------------------------------------------------------
-int getGroupId(std::string name)
+void getGroupId(std::string name, castor::bwlist::BWUser *u)
   throw (castor::exception::InvalidArgument) {
-  // empty group name means any and is thus mapped to -1
-  if (name.size() == 0) return -1;
+  // empty group name, just ignore
+  if (name.size() == 0) {
+    return;
+  }
   // get group id
   struct group *grp = getgrnam(name.c_str());
   if (0 == grp) {
@@ -72,7 +79,7 @@ int getGroupId(std::string name)
     e.getMessage() << "Unknown group " << name;
     throw e;
   }
-  return grp->gr_gid;
+  u->setEgid(grp->gr_gid);
 }
 
 //-----------------------------------------------------------------------------
@@ -119,11 +126,10 @@ void parseUsers(char *susers,
     try {
       std::string::size_type colonPos = couple.find_first_of(':');
       if (colonPos == std::string::npos) {
-        u->setEuid(getUserId(couple));
-        u->setEgid(-1);
+        getUserId(couple, u);
       } else {
-        u->setEuid(getUserId(couple.substr(0, colonPos)));
-        u->setEgid(getGroupId(couple.substr(colonPos+1)));
+        getUserId(couple.substr(0, colonPos), u);
+        getGroupId(couple.substr(colonPos+1), u);
       }
       u->setRequest(req);
       users.push_back(u);
