@@ -17,13 +17,13 @@
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 .\"
-.\" @(#)$RCSfile: stager_addprivilege.man,v $ $Release: 1.2 $ $Release$ $Date: 2008/06/16 07:44:19 $ $Author: waldron $
+.\" @(#)$RCSfile: stager_addprivilege.man,v $ $Release: 1.2 $ $Release$ $Date: 2008/11/25 16:45:01 $ $Author: sponcec3 $
 .\"
 .\" man page for stager_add/removeprivilege
 .\"
 .\" @author Castor Dev team, castor-dev@cern.ch
 .\"****************************************************************************"
-.TH STAGER_ADDPRIVILEGE 1castor "$Date: 2008/06/16 07:44:19 $" CASTOR "STAGER Commands"
+.TH STAGER_ADDPRIVILEGE 1castor "$Date: 2008/11/25 16:45:01 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_addprivilege, stager_removeprivilege \- add/remove privileges to/from the B/W list of CASTOR
 .SH SYNOPSIS
@@ -85,7 +85,8 @@ Removing all privileges for stage:st will not change anything.
 specifies the list of users concerned by the new privileges. The list is
 a comma separated set of users, given as "[username][:[groupName]]". Note
 that an empty list is however not allowed. To specify that any user and any
-group is concerned, use ":".
+group is concerned, use ":". In case a user is given with no group, the
+group will be filled with the primary group of the user.
 .TP
 .BI \-R,\ \-\-reqTypes " type[,type]*"
 specifies the list of request types concerned by the new privileges. The list is
@@ -96,8 +97,14 @@ This parameter can be ommited, defaulting then to all request types.
 .TP
 .BI \-S,\ \-\-service_class " service_class"
 specifies the service class concerned by the new privileges.
-This parameter can be ommited, defaulting then to all request types.
-Note that is this parameter is not specified and the environment variable
+This parameter can be ommited, defaulting then to all service classes. Note
+that ommiting the parameter is the only way to address all service classes.
+Giving the value '*' will only use the string '*' as the service class name. This
+has to be used in case you handle some particular privileges (e.g. querying, privilege listing)
+where there is a notion of cross service class action. You can thus allow
+querying on a given service class, but not cross service class. See the example below.
+.fi
+Note finally that is the \-S parameter is not specified and the environment variable
 .B STAGE_SVCCLASS
 is set, its value will be used.
 .TP
@@ -132,17 +139,26 @@ $ stager_removeprivilege -U 'stage:st' -R ChangePrivilege
 Change done successfully
 
 .fi
+# and remove the privilege to do cross service class queries
+.fi
+$ stager_removeprivilege -U ':' -R StageFileQueryRequest -S '*'
+.fi
+Change done successfully
+
+.fi
 # and here is the result
 .fi
 $ stager_listprivileges 
 .fi
 ServiceClass    User     Group    RequestType           Status
 .fi
-*               stage    st       ChangePrivilege      Denied
+*               stage    st       ChangePrivilege       Denied
 .fi
-*               stage    st       *                    Granted
+*               stage    st       *                     Granted
 .fi
-default         *        *        *                    Granted
+default         *        *        *                     Granted
+.fi
+'*'             *        *        StageFileQueryRequest Denied
 .fi
 
 .SH EXIT STATUS
