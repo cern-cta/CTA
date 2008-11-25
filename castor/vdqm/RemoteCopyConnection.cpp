@@ -277,7 +277,7 @@ bool castor::vdqm::RemoteCopyConnection::readAnswer(const Cuuid_t &cuuid,
         serrno = SECOMERR;
         castor::exception::Exception ex(serrno);
         ex.getMessage() << __PRETTY_FUNCTION__
-          << ": netread(HDR) from " << remoteCopyType << ": " << neterror();
+          << ": netread(REQ) from " << remoteCopyType << ": " << neterror();
         throw ex;
       }
     case 0:
@@ -285,7 +285,7 @@ bool castor::vdqm::RemoteCopyConnection::readAnswer(const Cuuid_t &cuuid,
         serrno = SECONNDROP;
         castor::exception::Exception ex(serrno);
         ex.getMessage() << __PRETTY_FUNCTION__
-          << ": netread(HDR) from " << remoteCopyType << ": connection dropped";
+          << ": netread(REQ) from " << remoteCopyType << ": connection dropped";
         throw ex;
       }
     }
