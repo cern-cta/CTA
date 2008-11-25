@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.8-3-1_to_2.1.8-3-2.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/11/25 10:40:09 $ $Author: waldron $
+ * @(#)$RCSfile: 2.1.8-3-1_to_2.1.8-3-2.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/11/25 18:30:46 $ $Author: waldron $
  *
  * This script upgrades a CASTOR v2.1.8-3-1 STAGER database into v2.1.8-3-2
  *
@@ -47,6 +47,13 @@
  * - Added support for overriding the nshost field of the castorfile table
  *   using the stager/nsHost configuration option defined in the CastorConfig 
  *   database table.
+ *
+ * - Fixed a bug in the deleteCastorFile procedure which could allow a castorfile
+ *   entry to be removed from the Stager database despite the fact that it maybe
+ *   still linked to an ongoing repack subrequest.
+ *
+ * - Fixed a bug in the cleanup logic which did not remove castorfile entries from
+ *   the Stager database once all entries pointing to the file had been deleted.
  *
  * - Modified all dbms_scheduler jobs to be associated with a specific DB
  *   job_class. Prior to this modification it was possible for RAC based DB
@@ -230,7 +237,7 @@ BEGIN
       -- See whether pending SubRequests exist
       SELECT count(*) INTO nb FROM SubRequest
        WHERE castorFile = cfId
-         AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 13, 14);   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+         AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
       -- If any SubRequest, give up
       IF nb = 0 THEN
         DECLARE
@@ -1069,17 +1076,29 @@ BEGIN
     CURSOR s IS SELECT id FROM SubRequest 
      WHERE status IN (9, 11) 
        AND lastModificationTime < getTime() - timeOut;
+    CURSOR t IS SELECT UNIQUE castorfile FROM SubRequest 
+     WHERE status IN (9, 11) 
+       AND lastModificationTime < getTime() - timeOut;
     ids "numList";
   BEGIN
+    OPEN t;
+    LOOP
+      FETCH t BULK COLLECT INTO ids LIMIT 1000;
+      FOR i IN ids.FIRST..ids.LAST LOOP
+        deleteCastorFile(ids(i));
+      END LOOP;
+      COMMIT;
+      EXIT WHEN t%NOTFOUND;
+    END LOOP;
     OPEN s;
     LOOP
       FETCH s BULK COLLECT INTO ids LIMIT 10000;
       FORALL i IN ids.FIRST..ids.LAST
-         DELETE FROM Id2Type WHERE id = ids(i); 
-       FORALL i IN ids.FIRST..ids.LAST
-         DELETE FROM SubRequest WHERE id = ids(i);
-       COMMIT;
-    EXIT WHEN s%NOTFOUND;
+        DELETE FROM Id2Type WHERE id = ids(i); 
+      FORALL i IN ids.FIRST..ids.LAST
+        DELETE FROM SubRequest WHERE id = ids(i);
+      COMMIT;
+      EXIT WHEN s%NOTFOUND;
     END LOOP;
   END;
   COMMIT;
