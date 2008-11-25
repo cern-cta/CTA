@@ -342,7 +342,8 @@ int rtcpcld_updcMigrFailed _PROTO((
                                    ));
 int rtcpcld_updcRecallFailed _PROTO((
                                      tape_list_t *,
-                                     file_list_t *
+                                     file_list_t *,
+                                     int del_file
                                      ));
 int rtcpcld_updcFileMigrated _PROTO((
                                      tape_list_t *,
