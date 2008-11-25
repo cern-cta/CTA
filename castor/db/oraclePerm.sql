@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.652 $ $Date: 2008/11/06 13:20:06 $ $Author: waldron $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.653 $ $Date: 2008/11/25 15:43:31 $ $Author: itglp $
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -111,37 +111,37 @@ CREATE OR REPLACE PACKAGE castorBW AS
     isGranted NUMBER);
   -- a cursor of privileges
   TYPE PrivilegeExt_Cur IS REF CURSOR RETURN PrivilegeExt;
-  -- Intersection of 2 priviledges
+  -- Intersection of 2 privileges
   -- raises -20109, "Empty privilege" in case the intersection is empty
   FUNCTION intersection(p1 IN Privilege, p2 IN Privilege) RETURN Privilege;
-  -- Does one priviledge P1 contain another one P2 ?
+  -- Does one privilege P1 contain another one P2 ?
   FUNCTION contains(p1 Privilege, p2 Privilege) RETURN Boolean;
-  -- Intersection of a priviledge P with the WhiteList
+  -- Intersection of a privilege P with the WhiteList
   -- The result is stored in the temporary table removePrivilegeTmpTable
   -- that is cleaned up when the procedure starts
   PROCEDURE intersectionWithWhiteList(p Privilege);
-  -- Difference between priviledge P1 and priviledge P2
+  -- Difference between privilege P1 and privilege P2
   -- raises -20108, "Invalid privilege intersection" in case the difference
   -- can not be computed
   -- raises -20109, "Empty privilege" in case the difference is empty
   FUNCTION diff(P1 Privilege, P2 Privilege) RETURN Privilege;
-  -- remove priviledge P from list L
+  -- remove privilege P from list L
   PROCEDURE removePrivilegeFromBlackList(p Privilege);
-  -- Add priviledge P to WhiteList
+  -- Add privilege P to WhiteList
   PROCEDURE addPrivilegeToWL(p Privilege);
-  -- Add priviledge P to BlackList
+  -- Add privilege P to BlackList
   PROCEDURE addPrivilegeToBL(p Privilege);
   -- cleanup BlackList after privileges were removed from the whitelist
   PROCEDURE cleanupBL;
-  -- Add priviledge P
+  -- Add privilege P
   PROCEDURE addPrivilege(P Privilege);
-  -- Remove priviledge P
+  -- Remove privilege P
   PROCEDURE removePrivilege(P Privilege);
-  -- Add priviledge(s)
+  -- Add privilege(s)
   PROCEDURE addPrivilege(svcClassName VARCHAR2, euid NUMBER, egid NUMBER, reqType NUMBER);
-  -- Remove priviledge(S)
+  -- Remove privilege(S)
   PROCEDURE removePrivilege(svcClassName VARCHAR2, euid NUMBER, egid NUMBER, reqType NUMBER);
-  -- List priviledge(s)
+  -- List privilege(s)
   PROCEDURE listPrivileges(svcClassName IN VARCHAR2, ieuid IN NUMBER,
                            iegid IN NUMBER, ireqType IN NUMBER,
                            plist OUT PrivilegeExt_Cur);
@@ -150,7 +150,7 @@ END castorBW;
 
 CREATE OR REPLACE PACKAGE BODY castorBW AS
 
-  -- Intersection of 2 priviledges
+  -- Intersection of 2 privileges
   FUNCTION intersection(p1 IN Privilege, p2 IN Privilege)
   RETURN Privilege AS
     res Privilege;
@@ -186,7 +186,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     RETURN res;
   END;
 
-  -- Does one priviledge P1 contain another one P2 ?
+  -- Does one privilege P1 contain another one P2 ?
   FUNCTION contains(p1 Privilege, p2 Privilege) RETURN Boolean AS
   BEGIN
     IF p1.euid IS NOT NULL -- p1 NULL means it contains everything !
@@ -208,7 +208,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     RETURN TRUE;
   END;
 
-  -- Intersection of a priviledge P with the WhiteList
+  -- Intersection of a privilege P with the WhiteList
   -- The result is stored in the temporary table removePrivilegeTmpTable
   PROCEDURE intersectionWithWhiteList(p Privilege) AS
     wlr Privilege;
@@ -232,7 +232,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     END LOOP;
   END;
 
-  -- Difference between priviledge P1 and priviledge P2
+  -- Difference between privilege P1 and privilege P2
   FUNCTION diff(P1 Privilege, P2 Privilege) RETURN Privilege AS
     empty_privilege EXCEPTION;
     PRAGMA EXCEPTION_INIT(empty_privilege, -20109);
@@ -262,7 +262,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     END IF;
   END;
 
-  -- remove priviledge P from list L
+  -- remove privilege P from list L
   PROCEDURE removePrivilegeFromBlackList(p Privilege) AS
     blr Privilege;
     tmp Privilege;
@@ -288,7 +288,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     END LOOP;
   END;
 
-  -- Add priviledge P to list L :
+  -- Add privilege P to list L :
   PROCEDURE addPrivilegeToWL(p Privilege) AS
     wlr Privilege;
     extended boolean := FALSE;
@@ -333,7 +333,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     END IF;
   END;
 
-  -- Add priviledge P to list L :
+  -- Add privilege P to list L :
   PROCEDURE addPrivilegeToBL(p Privilege) AS
     blr Privilege;
     extended boolean := FALSE;
@@ -401,14 +401,14 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     END LOOP;
   END;
 
-  -- Add priviledge P
+  -- Add privilege P
   PROCEDURE addPrivilege(P Privilege) AS
   BEGIN
     removePrivilegeFromBlackList(P);
     addPrivilegeToWL(P);
   END;
 
-  -- Remove priviledge P
+  -- Remove privilege P
   PROCEDURE removePrivilege(P Privilege) AS
     c NUMBER;
     wlr Privilege;
@@ -447,7 +447,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     END LOOP;
   END;
 
-  -- Add priviledge
+  -- Add privilege
   PROCEDURE addPrivilege(svcClassName VARCHAR2, euid NUMBER, egid NUMBER, reqType NUMBER) AS
     p castorBW.Privilege;
   BEGIN
@@ -458,7 +458,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     addPrivilege(p);
   END;
 
-  -- Remove priviledge
+  -- Remove privilege
   PROCEDURE removePrivilege(svcClassName VARCHAR2, euid NUMBER, egid NUMBER, reqType NUMBER) AS
     p castorBW.Privilege;
   BEGIN
@@ -469,13 +469,13 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     removePrivilege(p);
   END;
 
-  -- Remove priviledge
+  -- List privileges
   PROCEDURE listPrivileges(svcClassName IN VARCHAR2, ieuid IN NUMBER,
                            iegid IN NUMBER, ireqType IN NUMBER,
                            plist OUT PrivilegeExt_Cur) AS
   BEGIN
     OPEN plist FOR
-      SELECT decode(svcClass, NULL, '*', svcClass),
+      SELECT decode(svcClass, NULL, '*', '*', '''*''', svcClass),
              euid, egid, reqType, 1
         FROM WhiteList
        WHERE (WhiteList.svcClass = svcClassName OR WhiteList.svcClass IS  NULL OR svcClassName IS NULL)
@@ -483,7 +483,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
          AND (WhiteList.egid = iegid OR WhiteList.egid IS NULL OR iegid = -1)
          AND (WhiteList.reqType = ireqType OR WhiteList.reqType IS NULL OR ireqType = 0)
     UNION
-      SELECT decode(svcClass, NULL, '*', svcClass),
+      SELECT decode(svcClass, NULL, '*', '*', '''*''', svcClass),
              euid, egid, reqType, 0
         FROM BlackList
        WHERE (BlackList.svcClass = svcClassName OR BlackList.svcClass IS  NULL OR svcClassName IS NULL)
