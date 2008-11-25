@@ -45,8 +45,10 @@ namespace aggregator {
 
     /**
      * Constructor
+     *
+     * @param listenPort The TCP/IP port to which RTCPD should connect.
      */
-    RequestHandlerThread() throw();
+    RequestHandlerThread(const int listenPort) throw();
 
     /**
      * Destructor
@@ -70,6 +72,11 @@ namespace aggregator {
 
 
   private:
+
+    /**
+     * The TCP/IP port to which RTCPD should connect.
+     */
+    const int m_listenPort;
 
     /**
      * Pointer to handler function, where handler function is a member of

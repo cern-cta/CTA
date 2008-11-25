@@ -30,6 +30,7 @@
 #include "castor/tape/aggregator/RequestHandlerThread.hpp"
 #include "castor/tape/aggregator/RCPJobSubmitter.hpp"
 #include "castor/tape/aggregator/SocketHelper.hpp"
+#include "h/common.h"
 #include "h/rtcp_constants.h"
 #include "h/vdqm_constants.h"
 
@@ -37,8 +38,8 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::RequestHandlerThread::RequestHandlerThread()
-  throw () : m_jobQueue(1) {
+castor::tape::aggregator::RequestHandlerThread::RequestHandlerThread(
+  const int listenPort) throw () : m_listenPort(listenPort), m_jobQueue(1) {
 
   m_rtcopyMagicOld0Handlers[VDQM_CLIENTINFO] =
     &RequestHandlerThread::handleJobSubmission;
@@ -224,6 +225,40 @@ void castor::tape::aggregator::RequestHandlerThread::handleJobSubmission(
   Cuuid_t &cuuid, const uint32_t magic, const uint32_t reqtype,
   const uint32_t len, char *body, castor::io::ServerSocket &socket) throw() {
 
+  // Check that the peer host is authorized
+  {
+    char peerHost[CA_MAXHOSTNAMELEN+1];
+
+
+    const int rc = isadminhost(socket.socket(), peerHost);
+    if(rc == -1 && serrno != SENOTADMIN) {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("Reason", "Failed to lookup connection"),
+        castor::dlf::Param("Peer Host", peerHost)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+        AGGREGATOR_RECEIVED_RTCP_JOB_FROM_UNAUTHORIZED_HOST, 2, params);
+      return;
+    }
+
+    if(*peerHost == '\0' ) {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("Reason", "Peer host name is empty"),
+        castor::dlf::Param("Peer Host", peerHost)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+        AGGREGATOR_RECEIVED_RTCP_JOB_FROM_UNAUTHORIZED_HOST, 2, params);
+      return;
+    }
+
+    if(rc != 0) {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("Reason", "Unauthorized host"),
+        castor::dlf::Param("Peer Host", peerHost)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+        AGGREGATOR_RECEIVED_RTCP_JOB_FROM_UNAUTHORIZED_HOST, 2, params);
+      return;
+    }
+  }
+
   // If the message body is too small
   if(len < 4 * sizeof(uint32_t) + 4) {
     castor::dlf::Param params[] = {
@@ -270,6 +305,35 @@ void castor::tape::aggregator::RequestHandlerThread::handleJobSubmission(
     AGGREGATOR_HANDLE_JOB_MESSAGE, 8, param);
 
   // TEMPORARY
+  // Pass a modified version of the request through to RTCPD, setting the
+  // clientHost and clientPort parameters to identify the tape aggregator as
+  // being a proxy for RTCPClientD
+
+  try {
+    RCPJobSubmitter::submit(
+    "localhost",    // host
+    RTCOPY_PORT,    // port
+    NETRW_TIMEOUT,  // netReadWriteTimeout
+    "RTCPD",        // remoteCopyType
+    tapeRequestID,
+    clientUsername,
+    "localhost",    // clientHost
+    m_listenPort,   // clientPort
+    clientEuid,
+    clientEgid,
+    dgn,
+    driveName);
+  } catch(castor::exception::Exception &ex) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code"   , ex.code())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_FAILED_TO_SUBMIT_JOB_TO_RTCPD, 2, params);
+
+    return;
+  }
+
+  // TEMPORARY
   // Acknowledge the VDQM
   char ackMsg[MSGBUFSIZ];
 
@@ -308,33 +372,6 @@ void castor::tape::aggregator::RequestHandlerThread::handleJobSubmission(
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
       AGGREGATOR_FAILED_TO_SEND_RTCP_ACKN_TO_VDQM, 2, params);
   }
-
-
-/*
-  try {
-    RCPJobSubmitter::submit(
-    "localhost",   // host
-    RTCOPY_PORT,   // port
-    NETRW_TIMEOUT, // netReadWriteTimeout
-    "RTCPD",       // remoteCopyType
-    tapeRequestID,
-    clientUsername,
-    clientHost,
-    clientPort,
-    clientEuid,
-    clientEgid,
-    dgn,
-    driveName);
-  } catch(castor::exception::Exception &ex) {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Message", ex.getMessage().str()),
-      castor::dlf::Param("Code"   , ex.code())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_SUBMIT_JOB_TO_RTCPD, 2, params);
-
-    return;
-  }
-*/
 }
 
 

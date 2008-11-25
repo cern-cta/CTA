@@ -70,10 +70,12 @@ int main(int argc, char *argv[]) {
     // Create the thread pools
     //------------------------
 
+    const int listenPort = daemon.getListenPort();
+
     daemon.addThreadPool(
     new castor::server::TCPListenerThreadPool("RequestHandlerThreadPool",
-      new castor::tape::aggregator::RequestHandlerThread(),
-        daemon.getListenPort()));
+      new castor::tape::aggregator::RequestHandlerThread(listenPort),
+        listenPort));
 
     castor::server::BaseThreadPool *requestHandlerThreadPool =
       daemon.getThreadPool('R');
