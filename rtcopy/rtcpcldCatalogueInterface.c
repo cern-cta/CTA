@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.171 $ $Release$ $Date: 2008/11/25 10:25:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.172 $ $Release$ $Date: 2008/11/25 10:52:41 $ $Author: sponcec3 $
  *
  *
  *
@@ -1378,7 +1378,7 @@ static int nextSegmentToRecall(
       strncpy(filereq->err.errmsgtxt,
               Cstager_ITapeSvc_errorMsg(*stgsvc),
               sizeof(filereq->err.errmsgtxt)-1);
-      (void)rtcpcld_updcRecallFailed(tape,fl);
+      (void)rtcpcld_updcRecallFailed(tape,fl,0);
       serrno = save_serrno;
       return(-1);
     }
@@ -1409,7 +1409,7 @@ static int nextSegmentToRecall(
       filereq->err.severity = RTCP_FAILED;
       strcpy(filereq->err.errmsgtxt,
              "Cstager_ITapeSvc_bestFileSystemForSegment() returned no candidate");
-      (void)rtcpcld_updcRecallFailed(tape,fl);
+      (void)rtcpcld_updcRecallFailed(tape,fl,0);
       if ( fl == flOld ) return(-1);
       flOld = fl;
       fl = NULL;
@@ -1492,7 +1492,7 @@ static int nextSegmentToRecall(
     filereq->err.severity = RTCP_FAILED;
     strcpy(filereq->err.errmsgtxt,
            "Failed to construct pathname");
-    (void)rtcpcld_updcRecallFailed(tape,fl);
+    (void)rtcpcld_updcRecallFailed(tape,fl,0);
     serrno = save_serrno;
     return(-1);
   }
@@ -2728,10 +2728,12 @@ int rtcpcld_updcMigrFailed(
 
 int rtcpcld_updcRecallFailed(
                              tape,
-                             file
+                             file,
+                             del_file
                              )
      tape_list_t *tape;
      file_list_t *file;
+     int del_file;
 {
   struct Cstager_Segment_t *segment;
   struct Cstager_Tape_t *tp;
@@ -2848,30 +2850,32 @@ int rtcpcld_updcRecallFailed(
 
   C_IAddress_delete(iAddr);
 
-  /*
-   * Remove local diskcopy if any
-   */
-  save_rc = rc;
-  save_serrno = serrno;
-  rc = rfio_unlink(filereq->file_path);
-  if (rc != 0) {
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
-                    (struct Cns_fileid *)fileid,
-                    RTCPCLD_NB_PARAMS+2,
-                    "REASON",
-                    DLF_MSG_PARAM_STR,
-                    "Removal of local file failed. May now be orphaned",
-                    "local file name",
-                    DLF_MSG_PARAM_STR,
-                    filereq->file_path,
-                    RTCPCLD_LOG_WHERE
-                    );
+  if (del_file) {
+    /*
+     * Remove local diskcopy if any
+     */
+    save_rc = rc;
+    save_serrno = serrno;
+    rc = rfio_unlink(filereq->file_path);
+    if (rc != 0) {
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
+                      (struct Cns_fileid *)fileid,
+                      RTCPCLD_NB_PARAMS+2,
+                      "REASON",
+                      DLF_MSG_PARAM_STR,
+                      "Removal of local file failed. May now be orphaned",
+                      "local file name",
+                      DLF_MSG_PARAM_STR,
+                      filereq->file_path,
+                      RTCPCLD_LOG_WHERE
+                      );
+    }
+    rc = save_rc;
+    serrno = save_serrno;
   }
-  rc = save_rc;
-  serrno = save_serrno;
-
+  
   return(rc);
 }
 
