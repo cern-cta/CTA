@@ -1,5 +1,5 @@
 /*
- * $Id: lseek64.c,v 1.3 2008/07/31 07:09:13 sponcec3 Exp $
+ * $Id: lseek64.c,v 1.4 2008/11/25 09:53:34 dhsmith Exp $
  */
 
 /*
@@ -205,6 +205,14 @@ off64_t DLL_DECL rfio_lseek64(s, offset, how)
   }
   else {
     rfilefdt[s_index]->offset64 = offset ;
+    /*
+     * If RFIO are buffered,
+     * data in cache is invalidated.
+     */
+    if ( rfilefdt[s_index]->_iobuf.base ) {
+      rfilefdt[s_index]->_iobuf.count=0;
+      rfilefdt[s_index]->_iobuf.ptr = iodata(rfilefdt[s_index]) ;
+    }
   }
   END_TRACE() ;
   return rfilefdt[s_index]->offset64 ;

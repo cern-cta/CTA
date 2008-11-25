@@ -1,5 +1,5 @@
 /*
- * $Id: stream64.c,v 1.12 2008/07/31 07:09:14 sponcec3 Exp $
+ * $Id: stream64.c,v 1.13 2008/11/25 09:53:34 dhsmith Exp $
  */
 
 /*
@@ -264,6 +264,7 @@ int rfio_open64_ext_v3(filepath, flags, mode,uid,gid,passwd,reqhost)
    */
   if ((rfp_index = rfio_rfilefdt_allocentry(rfp->s)) == -1) {
     TRACE(2, "rfio", "rfio_open64_ext_v3: freeing RFIO descriptor at 0X%X", rfp);
+    (void) close(rfp->s);
     (void) free(rfp);
     END_TRACE();
     errno= EMFILE ;

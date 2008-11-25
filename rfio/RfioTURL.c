@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.24 $ $Release$ $Date: 2008/07/31 07:09:13 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.25 $ $Release$ $Date: 2008/11/25 09:53:34 $ $Author: dhsmith $
  *
  *
  *
@@ -310,9 +310,9 @@ int rfioTURLFromString(
   /* to remove the // or /// because of srm1 problems */
 
      if (_tURL.rfioPath && (strstr(_tURL.rfioPath,"//")==_tURL.rfioPath )){
-       strcpy(_tURL.rfioPath,(char*)&_tURL.rfioPath[1]);
+       memmove(_tURL.rfioPath,(char*)&_tURL.rfioPath[1],strlen(_tURL.rfioPath));
        if (_tURL.rfioPath && (strstr(_tURL.rfioPath,"//") == _tURL.rfioPath)){
-         strcpy(_tURL.rfioPath,(char*)&_tURL.rfioPath[1]);
+         memmove(_tURL.rfioPath,(char*)&_tURL.rfioPath[1],strlen(_tURL.rfioPath));
        }
      }
 

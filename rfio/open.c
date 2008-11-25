@@ -1,5 +1,5 @@
 /*
- * $Id: open.c,v 1.33 2008/07/31 07:09:13 sponcec3 Exp $
+ * $Id: open.c,v 1.34 2008/11/25 09:53:34 dhsmith Exp $
  */
 
 /*
@@ -372,6 +372,7 @@ int rfio_open_ext(filepath, flags, mode,uid,gid,passwd,reqhost,vmstr)
    */
   if ((rfp_index = rfio_rfilefdt_allocentry(rfp->s)) == -1) {
     TRACE(2, "rfio", "freeing RFIO descriptor at 0X%X", rfp);
+    (void) close(rfp->s);
     (void) free(rfp);
     END_TRACE();
     errno= EMFILE ;

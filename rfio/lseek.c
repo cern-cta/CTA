@@ -1,5 +1,5 @@
 /*
- * $Id: lseek.c,v 1.18 2008/07/31 07:09:13 sponcec3 Exp $
+ * $Id: lseek.c,v 1.19 2008/11/25 09:53:34 dhsmith Exp $
  */
 
 /*
@@ -198,6 +198,14 @@ off_t DLL_DECL rfio_lseek(s, offset, how)
   }
   else {
     rfilefdt[s_index]->offset= offset ;
+    /*
+     * If RFIO are buffered,
+     * data in cache is invalidated.
+     */
+    if ( rfilefdt[s_index]->_iobuf.base ) {
+      rfilefdt[s_index]->_iobuf.count=0;
+      rfilefdt[s_index]->_iobuf.ptr = iodata(rfilefdt[s_index]) ;
+    }
   }
   END_TRACE() ;
   return rfilefdt[s_index]->offset ;

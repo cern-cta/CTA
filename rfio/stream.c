@@ -307,6 +307,7 @@ int rfio_open_ext_v3(filepath, flags, mode,uid,gid,passwd,reqhost,vmstr)
    */
   if ((rfp_index = rfio_rfilefdt_allocentry(rfp->s)) == -1) {
     TRACE(2, "rfio", "freeing RFIO descriptor at 0X%X", rfp);
+    (void) close(rfp->s);
     (void) free(rfp);
     END_TRACE();
     errno= EMFILE ;

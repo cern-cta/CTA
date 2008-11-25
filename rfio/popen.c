@@ -1,5 +1,5 @@
 /*
- * $Id: popen.c,v 1.13 2008/07/31 07:09:13 sponcec3 Exp $
+ * $Id: popen.c,v 1.14 2008/11/25 09:53:34 dhsmith Exp $
  */
 
 /*
@@ -139,6 +139,7 @@ RFILE DLL_DECL *rfio_popen( rcom , type )
    */
   if ((rfp_index = rfio_rfilefdt_allocentry(rfp->s)) == -1) {
     TRACE(2, "rfio", "freeing RFIO descriptor at 0X%X", rfp);
+    (void) close(rfp->s);
     (void) free((char *)rfp);
     END_TRACE();
     errno= EMFILE ;
