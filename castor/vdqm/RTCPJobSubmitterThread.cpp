@@ -445,7 +445,7 @@ void castor::vdqm::RTCPJobSubmitterThread::submitJob(const Cuuid_t &cuuid,
       castor::dlf::Param("tapeServerName", tapeServer->serverName()),
       castor::dlf::Param("tapeServerPort", port)};
 
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_SEND_RTCPD_JOB, 11,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_SEND_RTCOPY_JOB, 11,
       params);
   }
 
