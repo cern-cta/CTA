@@ -221,12 +221,10 @@ bool castor::vdqm::RemoteCopyConnection::sendJob(
 bool castor::vdqm::RemoteCopyConnection::readAnswer(const Cuuid_t &cuuid,
   const char *remoteCopyType) throw (castor::exception::Exception) {
 
-  int rc, magic, reqtype, len, errmsglen, msglen, status;
-  char errmsg[1024];
   char buffer[VDQM_MSGBUFSIZ];
-  char* p;
 
-  rc = netread_timeout(m_socket, buffer, LONGSIZE*3, VDQM_TIMEOUT);
+
+  int rc = netread_timeout(m_socket, buffer, LONGSIZE*3, VDQM_TIMEOUT);
 #ifdef PRINT_NETWORK_MESSAGES
   castor::vdqm::DevTools::printMessage(std::cout, false, true, m_socket,
     buffer);
@@ -251,13 +249,16 @@ bool castor::vdqm::RemoteCopyConnection::readAnswer(const Cuuid_t &cuuid,
     }
   }
 
-  p = buffer;
+  LONG magic   = 0;
+  LONG reqtype = 0;
+  LONG len     = 0;
 
+  // Unmarshall the header to get the length of the message body
+  char *p = buffer;
   unmarshall_LONG(p, magic);
   unmarshall_LONG(p, reqtype);
   unmarshall_LONG(p, len);
 
-  rc = 0;
   if ( len > 0 ) {
     if ( len > VDQM_MSGBUFSIZ - 3*LONGSIZE ) {
       castor::dlf::Param params[] = {
@@ -290,18 +291,18 @@ bool castor::vdqm::RemoteCopyConnection::readAnswer(const Cuuid_t &cuuid,
       }
     }
 
-    // Acknowledge message
+    // Unmarshall the header, this time for the magic number, request type and
+    // message body length
     p = buffer;
-    errmsglen = 1024;
-    *errmsg = '\0';
-    status = 0;
+    unmarshall_LONG(p, magic);
+    unmarshall_LONG(p, reqtype);
+    unmarshall_LONG(p, len);
 
-    DO_MARSHALL(LONG, p, magic, ReceiveFrom);
-    DO_MARSHALL(LONG, p, reqtype, ReceiveFrom);
-    DO_MARSHALL(LONG, p, len, ReceiveFrom);
-
+    // If the magic number and request type are not valid
     if ( (magic != RTCOPY_MAGIC && magic != RTCOPY_MAGIC_OLD0) ||
-         reqtype != VDQM_CLIENTINFO ) return false;
+         reqtype != VDQM_CLIENTINFO ) {
+      return false;
+    }
 
     // If the message body is not large enough for a status number and an empty
     // error string
@@ -317,24 +318,25 @@ bool castor::vdqm::RemoteCopyConnection::readAnswer(const Cuuid_t &cuuid,
       throw ex;
     }
 
+    LONG status = 0;
     DO_MARSHALL(LONG, p, status, ReceiveFrom);
 
-    msglen = len - LONGSIZE -1;
-    msglen = msglen < errmsglen-1 ? msglen : errmsglen-1;
-    strncpy(errmsg, p, msglen);
-    errmsg[msglen] = '\0';
-    errmsglen = msglen;
+    const size_t receivedMsgLen = len - LONGSIZE - 1; // minus status minus '\0'
+    char errmsg[1024];
+    const size_t msgLen = receivedMsgLen < sizeof(errmsg) ? receivedMsgLen :
+      sizeof(errmsg) - 1;
 
-    len += 3*LONGSIZE;
+    memcpy(errmsg, p, msgLen);
+    errmsg[msgLen] = '\0';
 
-    if ( errmsglen > 0 ) {
+    if ( msgLen > 0 ) {
       // RTCOPY or tape aggregator daemon returned an error message
       castor::dlf::Param params[] = {
         castor::dlf::Param("remoteCopyType", remoteCopyType),
         castor::dlf::Param("status", status),
         castor::dlf::Param("error msg", errmsg)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-        VDQM_REMOTECONNECTION_DAEMON_ERROR, 2, params);
+        VDQM_REMOTECONNECTION_DAEMON_ERROR, 3, params);
 
       return false;
     }
