@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.170 $ $Release$ $Date: 2008/11/07 16:42:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.171 $ $Release$ $Date: 2008/11/25 10:25:19 $ $Author: sponcec3 $
  *
  *
  *
@@ -1384,16 +1384,25 @@ static int nextSegmentToRecall(
     }
 
     if ( recallCandidate == NULL ) {
-      LOG_DBCALLANDKEY_ERR("Cstager_ITapeSvc_bestFileSystemForSegment()",
-                           "Unexpected successful return without candidate. Continuing with next segment (if any)",
-                           fl->dbRef->key);
+      char *_dbErr = NULL;
+      int _save_serrno = serrno;
+      (void)dlf_write((inChild == 0 ? mainUuid : childUuid),
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_RECALLCANCELED),
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+2,
+                      "DBCALL",
+                      DLF_MSG_PARAM_STR,
+                      "Cstager_ITapeSvc_bestFileSystemForSegment()"
+                      "DBKEY",
+                      DLF_MSG_PARAM_INT64,
+                      fl->dbRef->key,
+                      RTCPCLD_LOG_WHERE
+                      );
+      if ( _dbErr != NULL ) free(_dbErr);
+      serrno = _save_serrno;
       /*
        * Force something else than ENOENT here because this an error that
-       * can only happen if:
-       *  1) the client cancelled the request with stager_rm
-       *  2) there are no available disk resources
-       *  3) there is a bug
-       *
+       * can only happen if the client cancelled the request with stager_rm
        * Mark the segment as failed
        */
       filereq->err.errorcode = ENOENT;
