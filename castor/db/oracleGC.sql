@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.678 $ $Date: 2008/11/24 18:01:15 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.679 $ $Date: 2008/11/25 16:21:33 $ $Author: sponcec3 $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -573,17 +573,29 @@ BEGIN
     CURSOR s IS SELECT id FROM SubRequest 
      WHERE status IN (9, 11) 
        AND lastModificationTime < getTime() - timeOut;
+    CURSOR t IS SELECT UNIQUE castorfile FROM SubRequest 
+     WHERE status IN (9, 11) 
+       AND lastModificationTime < getTime() - timeOut;
     ids "numList";
   BEGIN
+    OPEN t;
+    LOOP
+      FETCH t BULK COLLECT INTO ids LIMIT 1000;
+      FOR i IN ids.FIRST..ids.LAST LOOP
+        deleteCastorFile(ids(i));
+      END LOOP;
+      COMMIT;
+      EXIT WHEN t%NOTFOUND;
+    END LOOP;
     OPEN s;
     LOOP
       FETCH s BULK COLLECT INTO ids LIMIT 10000;
       FORALL i IN ids.FIRST..ids.LAST
-         DELETE FROM Id2Type WHERE id = ids(i); 
-       FORALL i IN ids.FIRST..ids.LAST
-         DELETE FROM SubRequest WHERE id = ids(i);
-       COMMIT;
-    EXIT WHEN s%NOTFOUND;
+        DELETE FROM Id2Type WHERE id = ids(i); 
+      FORALL i IN ids.FIRST..ids.LAST
+        DELETE FROM SubRequest WHERE id = ids(i);
+      COMMIT;
+      EXIT WHEN s%NOTFOUND;
     END LOOP;
   END;
   COMMIT;
