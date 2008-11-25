@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.28 $ $Release$ $Date: 2007/05/31 13:32:58 $ $Author: obarring $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.29 $ $Release$ $Date: 2008/11/25 10:52:01 $ $Author: sponcec3 $
  *
  * 
  *
@@ -277,8 +277,8 @@ int recallerCallbackFileCopied(
       LOG_SYSCALL_ERR("rtcpcld_checkNsSegment()");
       (void)rtcpcld_updcRecallFailed(
                                      tape,
-                                     file
-                                     );
+                                     file,
+                                     1);
       (void)rtcpcld_unlockTape();
       (void)updateSegmCount(0,0,1);
       serrno = save_serrno;
@@ -294,8 +294,8 @@ int recallerCallbackFileCopied(
       LOG_SYSCALL_ERR("rtcpcld_updcFileRecalled()");
       (void)rtcpcld_updcRecallFailed(
                                      tape,
-                                     file
-                                     );
+                                     file,
+                                     1);
       (void)rtcpcld_unlockTape();
       /*
        * SEINTERNAL means that there was probably a database problem 
@@ -361,8 +361,8 @@ int recallerCallbackFileCopied(
      */
     rc = rtcpcld_updcRecallFailed(
                                   tape,
-                                  file
-                                  );
+                                  file,
+                                  1);
     if ( rc == -1 ) {
       save_serrno = serrno;
       LOG_SYSCALL_ERR("rtcpcld_updcRecallFailed()");
