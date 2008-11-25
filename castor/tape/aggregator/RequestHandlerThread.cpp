@@ -277,6 +277,7 @@ void castor::tape::aggregator::RequestHandlerThread::handleJobSubmission(
 
   try {
     ackMsgLen = marshallRTCPAckn(ackMsg, sizeof(ackMsg), 0, "");
+//  ackMsgLen = marshallRTCPAckn(ackMsg, sizeof(ackMsg), 5, "Steve was here!!");
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("Message", ex.getMessage().str()),
@@ -374,7 +375,10 @@ size_t castor::tape::aggregator::RequestHandlerThread::marshallRTCPAckn(
   const size_t errorMsg2SendLen = errorMsgLen > maxErrorMsgLen ? maxErrorMsgLen
     : errorMsgLen;
 
-  const uint32_t len = errorMsg2SendLen + 1; // + 1 for the string terminator
+  // Length of message body equals the size fo the status code plus the length
+  // of the error message string plus the size of the string termination
+  // characater '\0'
+  const uint32_t len = sizeof(uint32_t) + errorMsg2SendLen + 1;
 
   Marshaller::marshallUint32(RTCOPY_MAGIC_OLD0, dst); // Magic number
   Marshaller::marshallUint32(VDQM_CLIENTINFO  , dst); // Request type
