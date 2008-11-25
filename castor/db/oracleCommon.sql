@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.684 $ $Date: 2008/11/24 17:34:35 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.685 $ $Date: 2008/11/25 16:18:45 $ $Author: sponcec3 $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -644,7 +644,7 @@ BEGIN
       -- See whether pending SubRequests exist
       SELECT count(*) INTO nb FROM SubRequest
        WHERE castorFile = cfId
-         AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 13, 14);   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+         AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
       -- If any SubRequest, give up
       IF nb = 0 THEN
         DECLARE
