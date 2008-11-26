@@ -1,5 +1,5 @@
 /*
- * $Id: stager_mapper.c,v 1.11 2007/02/21 09:46:22 sponcec3 Exp $
+ * $Id: stager_mapper.c,v 1.12 2008/11/26 14:41:16 sponcec3 Exp $
  */
 
 /*
@@ -32,7 +32,6 @@ char stgpoolenv[CA_MAXLINELEN+1];
 char svcclassenv[CA_MAXLINELEN+1];
 char *stgversion2env = "RFIO_USE_CASTOR_V2=YES";
 
-EXTERN_C int  DLL_DECL stage_errmsg  _PROTO((char *, char *, ...));
 EXTERN_C void DLL_DECL stage_trace   _PROTO((int, char *, ...));
 
 
@@ -71,7 +70,6 @@ get_mapping(enum mapping_type mt,
   }
 
   if (stager == NULL && svcclass == NULL) {
-    stage_errmsg(func, "Both parameters are NULL");
     serrno = EINVAL;
     return -1;
   }
@@ -102,7 +100,6 @@ get_mapping(enum mapping_type mt,
     free_list(vals, nbvals); 
   } else {
     /* errno should have been set already */
-    stage_errmsg(func, "Could not find mapping for %\n", name);
     return -1;
   }
   return 0;
@@ -119,7 +116,6 @@ get_stager_type(const char *name) {
   enum stager_type ret = V1;
 
   if (name == NULL) {
-    stage_errmsg(func, "parameter is NULL");
     serrno = EINVAL;
     return -1;
   }
@@ -152,7 +148,6 @@ stage_mapper_setenv(const char *username,
   enum stager_type stgtype;
 
   if (username == NULL && groupname == NULL) {
-    stage_errmsg(func, "Both parameters are NULL");
     serrno = EINVAL;
     return -1;
   }
@@ -240,7 +235,6 @@ int
   enum stager_type stgtype;
 
   if (username == NULL && groupname == NULL) {
-    stage_errmsg(func, "Both parameters are NULL");
     serrno = EINVAL;
     return -1;
   }
