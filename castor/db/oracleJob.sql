@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.668 $ $Date: 2008/11/10 09:35:31 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.669 $ $Date: 2008/11/26 10:46:44 $ $Author: sponcec3 $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -626,7 +626,7 @@ BEGIN
   END;
   -- Now we can safely update CastorFile's file size
   UPDATE CastorFile SET fileSize = fs, lastUpdateTime = ts
-   WHERE id = cfId AND (lastUpdateTime IS NULL OR ts > lastUpdateTime);
+   WHERE id = cfId AND (lastUpdateTime IS NULL OR ts >= lastUpdateTime);
   -- If ts < lastUpdateTime, we were late and another job already updated the
   -- CastorFile. So we nevertheless retrieve the real file size, and
   -- we take a lock on the CastorFile. Together with triggers, this insures that
