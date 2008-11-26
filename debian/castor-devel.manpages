@@ -71,9 +71,9 @@ debian/castor/usr/share/man/man3/dlf_init.3castor
 debian/castor/usr/share/man/man3/dlf_write.3castor
 debian/castor/usr/share/man/man3/dlf_regtext.3castor
 debian/castor/usr/share/man/man3/dlf_shutdown.3castor
-debian/castor/usr/share/man/man3/expert_receive_data.1castor
-debian/castor/usr/share/man/man3/expert_send_data.1castor
-debian/castor/usr/share/man/man3/expert_send_request.1castor
+debian/castor/usr/share/man/man3/expert_receive_data.3castor
+debian/castor/usr/share/man/man3/expert_send_data.3castor
+debian/castor/usr/share/man/man3/expert_send_request.3castor
 debian/castor/usr/share/man/man3/getacct.3castor
 debian/castor/usr/share/man/man3/getacctent.3castor
 debian/castor/usr/share/man/man3/getcompstat.3castor
