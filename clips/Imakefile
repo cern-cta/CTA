@@ -2,39 +2,16 @@ COMM
 COMM  Copyright (C) 2005 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Date: 2007/04/17 12:21:03 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Date: 2008/11/26 14:51:56 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make clips programs.
 
-#include <Project.tmpl>
-
 SPOOL = PolicySpool
 
-IPROGS_CLIPS = FileName($(SPOOL),replica.pl) FileName($(SPOOL),recaller.pl) FileName($(SPOOL),migrator.pl) FileName($(SPOOL),recallerRetryPolicy.pl) FileName($(SPOOL),migratorRetryPolicy.pl)
-
-all:
-
-install: $(SPOOL) $(IPROGS_CLIPS)
-
 MakeDir($(SPOOL),root,bin,0755)
+
 InstallNonExecFile(recaller.pl,$(SPOOL),root,bin,0644)
 InstallNonExecFile(migrator.pl,$(SPOOL),root,bin,0644)
 InstallNonExecFile(recallerRetryPolicy.pl,$(SPOOL),root,bin,0644)
 InstallNonExecFile(migratorRetryPolicy.pl,$(SPOOL),root,bin,0644)
 InstallNonExecFile(replica.pl,$(SPOOL),root,bin,0644)
-
-install.man:
-
-export:
-
-exportman:
-
-COMM###################### CLEANING RULES #######################
-
-clean:
-clobber:
-depend:
-Makefiles:
-FORCE:
-
-COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.

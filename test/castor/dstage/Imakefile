@@ -17,68 +17,22 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Release$ $Date: 2005/02/03 18:22:46 $ $Author: bcouturi $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Release$ $Date: 2008/11/26 14:51:59 $ $Author: sponcec3 $
 #
 # Make Castor RH library
 #
 # @author Ben Couturier, ben.couturier@cern.ch
 #
 
-#include <Project.tmpl>
+CPPFLAGS = -g -O0 -I../../../h -I../../.. $(MTCCFLAGS)
+LD = g++
 
-#if !defined(_WIN32)
-#if linux
-DEBUG  = -g -O0
-#else
-DEBUG  = -g
-#endif
-#endif
-
-INCLUDES = -I FileName(FileName(..,FileName(..,..)),h) -I FileName(..,FileName(..,..))
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
-
-LIBS = -lshift -lcastorCommonOra $(MTLDLIBS)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(castor/db/newora,castorcommonora)
 
 RRTEST_SRCS = RrTest.Osuf \
               ../../../castor/replier/RequestReplier.Osuf \
               ../../../castor/replier/ClientConnection.Osuf
-
 RRTEST_OBJS = $(RRTEST_SRCS:.cpp=.Osuf)
 
-DEPLIB = DepSharedLibraryTargetName(FileName(../..,shlib),shift) \
-         DepSharedLibraryTargetName(FileName(../..,shlib),castorCommonOra)
-
-LDFLAGS = -L FileName(FileName(..,FileName(..,..)),shlib) 
-LD = g++
-
-all:: ProgramTargetName(RrTest)
-
-NormalProgramTarget(RrTest,$(RRTEST_OBJS),$(DEPLIB),$(LIBS))
-
-MakeDepSharedLibrary(FileName(../..,shlib),shift)
-MakeDepSharedLibrary(FileName(../..,shlib),castorCommonOra)
-
-Makefiles:
-
-#if defined(_WIN32)
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend $(INCLUDES) $(RRTEST_SRCS) 2> /dev/null
-#endif
-
-install:
-
-exportman:
-
-clean:
-	@echo cleaning in CurDir
-	-@RemoveFiles(FilesToClean)
-
-clobber:	clean
-	@echo clobbering in CurDir
-	-@RemoveFiles(ProgramTargetName(RrTest))
-
-FORCE:
-
+NormalProgramTarget(RrTest,$(RRTEST_OBJS),$(DEPLIB),$(LIBS),root,bin,755)

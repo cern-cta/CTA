@@ -24,41 +24,4 @@ COMM
 COMM @author castor-dev team
 COMM
 
-#include <Project.tmpl>
-
 SUBDIRS = internal external
-
-all:
-
-MakeSubdirs(all,$(SUBDIRS))
-MakeSubdirs(install,$(SUBDIRS))
-MakeSubdirs(install.man,$(SUBDIRS))
-MakeSubdirs(exportman,$(SUBDIRS))
-MakeCondSubdirs(clean,$(SUBDIRS),)
-MakeCondSubdirs(clobber,$(SUBDIRS),)
-
-Makefiles:
-	@. ../setosflags ;\
-	for i in $(SUBDIRS) ;\
-	do (if [ -d $$i ] ;\
-	    then \
-	      (echo " $$i:" ; cd $$i ;\
-	      ../../imake/imake -I../../config -DOSMajorVersion="$$OSMAJNO" -DOSMinorVersion="$$OSMINNO" ;\
-	      $(MAKE) $(MFLAGS) $@) ;\
-	    else \
-	      (echo "ERROR : No directory $$i" ;\
-	      exit 1) ;\
-	    fi )\
-	done ;
-
-depend:
-	for i in $(SUBDIRS) ;\
-	do (if [ -d $$i ] ;\
-	    then \
-	      (echo " $$i:" ; cd $$i ;\
-	      $(MAKE) $(MFLAGS) $@) ;\
-	    else \
-	      (echo "ERROR : No directory $$i" ;\
-	      exit 1) ;\
-	    fi )\
-	done ;

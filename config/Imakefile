@@ -1,4 +1,4 @@
-COMM       $Id: Imakefile,v 1.6 2005/05/24 12:10:02 jdurand Exp $
+COMM       $Id: Imakefile,v 1.7 2008/11/26 14:51:56 sponcec3 Exp $
 COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
@@ -6,30 +6,7 @@ COMM
 
 COMM		Make config files
 
-#include <Project.tmpl>
-
-CONFIG_OBJS = castor.example castor_compiler.example castor_db.example castor_paths.example castor_env.example
-ICONFIG_OBJS = FileName($(CONFIGDIR),castor.example) FileName($(CONFIGDIR),castor_compiler.example) FileName($(CONFIGDIR),castor_db.example) FileName($(CONFIGDIR),castor_paths.example) FileName($(CONFIGDIR),castor_env.example)
-
-all:
-
-install: $(DESTDIR)$(CONFIGDIR) $(ICONFIG_OBJS)
-
-export:
-
-exportman:
-
-exportshr:
-
-install.man:
-
-clobber:
-
-Makefiles:
-
-clean:
-
-MakeDir($(DESTDIR)$(CONFIGDIR),root,bin,0755)
+MakeDir($(CONFIGDIR),root,bin,0755)
 
 InstallNonExecFile(castor.example,$(CONFIGDIR),root,bin,0644)
 InstallNonExecFile(castor_compiler.example,$(CONFIGDIR),root,bin,0644)

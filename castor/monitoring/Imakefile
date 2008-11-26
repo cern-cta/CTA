@@ -23,14 +23,15 @@
 #
 # @author Castor Dev team, castor-dev@cern.ch
 
-#include <Project.tmpl>
+SUBDIRS = rmmaster rmnode admin
 
-SUBDIRS = $(RMMASTERDIR) $(RMNODEDIR) $(RMADMINDIR)
+INCLUDES = -I ../../h -I ../..
+CPPFLAGS = -g -O0 $(INCLUDES) $(MTCCFLAGS) -DRH_HOST=\"$(RH_HOST)\"
+LDFLAGS += -g -O0 $(MTLDFLAGS)
+LD = g++
 
-OSLIBS = -L FileName(../..,shlib) -lshift $(ADNSLIB) -lnsl -ldl
-DEBUG  = -g -O0
-INCLUDES = -I FileName(../..,h) -I ../..
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DRH_HOST=\"$(RH_HOST)\"
+DependsOnLibrary(../common,castorcommon)
+DependsOnLibrary(,castorclient)
 
 STGLIB_SRCS = ClusterStatus.cpp \
               DiskServerStatus.cpp \
@@ -53,83 +54,14 @@ STGLIB_SRCS = ClusterStatus.cpp \
               ../io/StreamFileSystemStateReportCnv.cpp \
               ../io/StreamFileSystemStateAckCnv.cpp \
               ../io/StreamMonitorMessageAckCnv.cpp
-
-RMGETNODESBIN_SRCS = RmGetNodes.cpp
-RMGETNODESBIN_OBJS = $(RMGETNODESBIN_SRCS:.cpp=.Osuf)
-RMADMINNODESBIN_SRCS = admin/RmAdminNode.cpp
-RMADMINNODESBIN_OBJS = $(RMADMINNODESBIN_SRCS:.cpp=.Osuf)
-DUMPSHAREDMEMORYBIN_SRCS = DumpSharedMemory.cpp
-DUMPSHAREDMEMORYBIN_OBJS = $(DUMPSHAREDMEMORYBIN_SRCS:.cpp=.Osuf)
-
-LIBS = $(OSLIBS) $(MTLDLIBS) -lcastorMonitor -lshift -Wl,-rpath-link,../../shlib
-DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),castorMonitor) \
-         DepSharedLibraryTargetName(FileName(..,shlib),shift)
-
 STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
-COMMONLIB = LibraryTargetName(castorMonitor)
-GLOBLIB = DepSharedLibraryTargetName(shlib,shift)
+SharedLibraryTarget(castormonitor,$(STGLIB_OBJS),$(DEPLIB),$(LIBS))
 
-LDFLAGS += $(DEBUG) $(MTLDFLAGS)
-LD = g++
+RMGETNODESDEPLIB = DepSharedLibraryTargetName(monitoring,castormonitor)
+RMGETNODESLIBS = -L. -lcastormonitor
+NormalProgramTarget(rmGetNodes,RmGetNodes.Osuf,$(RMGETNODESDEPLIB) $(DEPLIB),$(RMGETNODESLIBS) $(LIBS),root,bin,750)
 
-all: $(COMMONLIB) ProgramTargetName(rmGetNodes) ProgramTargetName(rmAdminNode)
 
-MakeDepSharedLibrary(shlib,shift)
-NormalLibraryTarget(castorMonitor,$(STGLIB_OBJS))
-
-NormalProgramTarget(rmGetNodes,$(RMGETNODESBIN_OBJS),$(DEPLIB),$(LIBS))
-NormalProgramTarget(rmAdminNode,$(RMADMINNODESBIN_OBJS),$(DEPLIB),$(LIBS))
-NormalProgramTarget(dumpSharedMemory,$(DUMPSHAREDMEMORYBIN_OBJS),$(DEPLIB),$(LIBS))
-
-MakeDepSharedLibrary(FileName(..,shlib),castorMonitor)
-MakeDepSharedLibrary(FileName(..,shlib),shift)
-
-MakeSubdirs(all,$(SUBDIRS))
-MakeSubdirs(install,$(SUBDIRS))
-MakeSubdirs(install.man,$(SUBDIRS))
-MakeSubdirs(exportman,$(SUBDIRS))
-MakeCondSubdirs(clean,$(SUBDIRS),clean0)
-MakeCondSubdirs(clobber,$(SUBDIRS),clobber0)
-
-Makefiles:
-	@. ../../setosflags ;\
-	for i in $(SUBDIRS) ;\
-	do (if [ -d $$i ] ;\
-	    then \
-	      (echo " $$i:" ; cd $$i ;\
-	      ../../../imake/imake -I../../../config -DOSMajorVersion="$$OSMAJNO" -DOSMinorVersion="$$OSMINNO" ;\
-	      $(MAKE) $(MFLAGS) $@) ;\
-	    else \
-	      (echo "ERROR : No directory $$i" ;\
-	      exit 1) ;\
-	    fi )\
-	done ;
-
-depend:
-	makedepend -- $(INCLUDES) -- $(STGLIB_SRCS) $(RMGETNODESBIN_SRCS) $(RMADMINNODEBIN_SRCS) $(DUMPSHAREDMEMORYBIN_SRCS) 2> /dev/null; \
-	for i in $(SUBDIRS) ;\
-	do (if [ -d $$i ] ;\
-	    then \
-	      (echo " $$i:" ; cd $$i ;\
-	      $(MAKE) $(MFLAGS) $@) ;\
-	    else \
-	      (echo "ERROR : No directory $$i" ;\
-	      exit 1) ;\
-	    fi )\
-	done ;
-
-install: FileName($(BIN),rmGetNodes) FileName($(BIN),rmAdminNode)
-
-InstallProgram(rmGetNodes,$(BIN),root,bin,750)
-InstallProgram(rmAdminNode,$(BIN),root,bin,755)
-
-clean0:
-	@echo cleaning in CurDir
-	-@RemoveFiles($(STGLIB_OBJS) $(RMGETNODESBIN_OBJS) $(RMADMINNODESBIN_OBJS) $(DUMPSHAREDMEMORYBIN_OBJS))
-
-clobber0:	clean
-	@echo clobbering in CurDir
-	-@RemoveFiles($(COMMONLIB) rmGetNodes rmAdminNode dumpSharedMemory)
-
-FORCE:
-
+DUMPSHAREDMEMORYDEPLIB = DepSharedLibraryTargetName(monitoring,castormonitor)
+DUMPSHAREDMEMORYLIBS = -L. -lcastormonitor
+NormalProgramTarget(dumpSharedMemory,DumpSharedMemory.Osuf,$(DUMPSHAREDMEMORYDEPLIB) $(DEPLIB),$(DUMPSHAREDMEMORYLIBS) $(LIBS),root,bin,750)

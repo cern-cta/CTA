@@ -24,62 +24,14 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-#include <Project.tmpl>
-
-DEBUG  = -g -O0
-MANPAGES = FileName($(MANDIR),rmAdminNode.$(MANSUFFIX))
-EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rmAdminNode.$(MANSUFFIX)))
-
-INCLUDES = -I FileName(../../..,h) -I FileName(../..,..)
-
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
-
-LIBS = -lcastorMonitor -lshift -Wl,-rpath-link,../../../shlib
-RMMASTERADMINBIN_SRCS = RmAdminNode.cpp
-
-RMMASTERADMINBIN_OBJS = $(RMMASTERADMINBIN_SRCS:.cpp=.Osuf)
-
-DEPLIB = DepSharedLibraryTargetName(../../shlib,castorMonitor) \
-         DepSharedLibraryTargetName(../../shlib,shift)
-
-LDFLAGS += -L FileName(../../..,shlib) $(MTLDFLAGS)
+CPPFLAGS = -g -O0 -I ../../../h -I ../../.. $(MTCCFLAGS)
+LDFLAGS += $(MTLDFLAGS)
 LD = g++
 
-all:ProgramTargetName(rmAdminNode)
+DependsOnLibrary(../../common,castorcommon)
+DependsOnLibrary(../../dlf,castordlf)
+DependsOnLibrary(..,castorclient)
+DependsOnLibrary(,castormonitor)
 
-NormalProgramTarget(rmAdminNode,$(RMMASTERADMINBIN_OBJS),$(DEPLIB),$(LIBS))
-
-MakeDepSharedLibrary(../../shlib,castorMonitor)
-MakeDepSharedLibrary(../../shlib,shift)
-
-Makefiles:
-
-#if defined(_WIN32)
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend $(INCLUDES) $(RMMASTERADMINBIN_SRCS) 2> /dev/null
-#endif
-
-install: FileName($(BIN),rmAdminNode)
-
-InstallProgram(rmAdminNode,$(BIN),root,bin,755)
-
-install.man: $(MANDIR) $(MANPAGES)
-MakeDir($(MANDIR),root,bin,0755)
-IMANPAGE(rmAdminNode,$(MANDIR),$(MANSUFFIX))
-EMANPAGE(rmAdminNode,$(EXPORTMAN)/man1,$(MANSUFFIX))
-
-exportman: $(EXPORTMANPAGES)
-
-clean:
-	@echo rmmaster in CurDir
-	-@RemoveFiles(FilesToClean)
-
-clobber:	clean
-	@echo clobbering in CurDir
-	-@RemoveFiles(ProgramTargetName(rmAdminNode))
-
-FORCE:
-
+NormalProgramTarget(rmAdminNode,RmAdminNode.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
+EXEMANPAGE(rmAdminNode)

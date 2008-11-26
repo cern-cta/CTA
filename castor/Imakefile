@@ -17,13 +17,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.201 $ $Release$ $Date: 2008/11/03 19:27:40 $ $Author: murrayc3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.202 $ $Release$ $Date: 2008/11/26 14:51:53 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
 # @author Castor Dev team, castor-dev@cern.ch
-
-#include <Project.tmpl>
 
 #ifdef StagerSuperUser
 STAGERSUPERUSER0 = StagerSuperUser
@@ -38,58 +36,18 @@ STAGERSUPERGROUP0 = st
 STAGERSUPERUSER  = -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER0)\"
 STAGERSUPERGROUP = -DSTAGERSUPERGROUP=\"$(STAGERSUPERGROUP0)\"
 
-RH_HOST=RhHost
-
 SUBDIRS = $(DBCPPDIR) $(RHCPPDIR) $(VDQMCPPDIR) $(GCCPPDIR) $(REPACKDIR) $(MONITORINGDIR) $(STAGERDIR) $(JOBMANAGERDIR) $(JOBDIR) $(INFOPOLICYDIR) $(RTCOPYDIR) $(SCHEDULERDIR) $(TAPECPPDIR)
-DEPENDDIRS = $(DBCPPDIR) $(RHCPPDIR) $(VDQMCPPDIR) $(GCCPPDIR) $(REPACKDIR) $(CLEANINGDIR) $(MONITORINGDIR) $(STAGERDIR) $(JOBMANAGERDIR) $(JOBDIR) $(INFOPOLICYDIR) $(RTCOPYDIR) $(SCHEDULERDIR) $(TAPECPPDIR)
+DEBUG  = -g -O0 -pedantic -Wall -Wno-long-long
+STAGEFLAGS = -DSTAGEMAP=\"StageMapFile\" -DSTAGETYPE=\"StageTypeFile\"
+#if BuildSecurity
+SECURITYFLAG=-DCSEC
+#endif
+RH_HOST=RhHost
+STAGEHOST=StageHost
+CFLAGS = $(DEBUG) -I ../h -I .. $(SECURITYFLAG) $(MTCCFLAGS) $(STAGEFLAGS) -DSTAGEHOST=\"$(STAGEHOST)\"
+CPPFLAGS = $(DEBUG) -I ../h -I .. $(MTCCFLAGS) -DRH_HOST=\"$(RH_HOST)\" $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
 
-#if _AIX
-OSLIBS = -L FileName(..,shlib) -lshift
-#else
-#if defined(__alpha) && defined(__osf__)
-OSLIBS = -no_so -L FileName(..,shlib) -lshift -so_archive
-#else
-#if hpux
-OSLIBS = -L FileName(..,shlib) -lshift
-#else
-#if linux
-OSLIBS = -L FileName(..,shlib) -lshift $(ADNSLIB) -lnsl
-#else
-#if sgi
-OSLIBS = -L FileName(..,shlib) -lshift
-#else
-#if SOLARIS
-OSLIBS = -L FileName(..,shlib) -lshift -lsocket -lnsl
-#else
-#if _WIN32
-OSLIBS = DepLibraryTargetName(lib,shift) ws2_32.lib advapi32.lib
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
-LIBS = $(OSLIBS) $(MTLDLIBS) -ldl
-
-#if !_WIN32
-#if linux
-DEBUG  = -g -O0 -pedantic -ansi -Wall -Wno-long-long
-#else
-DEBUG  = -g
-#endif
-#endif
-
-DEPLIB = DepSharedLibraryTargetName(shlib,shift)
-
-#if !_WIN32
-INCLUDES = -I FileName(..,h) -I ..
-#else
-INCLUDES = -I FileName(..,h) -I .. -I FileName(..,win32)
-#endif
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DRH_HOST=\"$(RH_HOST)\" $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
-
-STGLIB_SRCS0 = IAddressCInt.cpp \
+STGLIB_SRCS = IAddressCInt.cpp \
               BaseAddress.cpp \
               VectorAddress.cpp \
               BaseAddressCInt.cpp \
@@ -430,106 +388,42 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               sharedMemory/LocalBlock.cpp \
               sharedMemory/BlockKey.cpp \
               sharedMemory/BlockDict.cpp \
-              sharedMemory/DLFInit.cpp
+              sharedMemory/DLFInit.cpp \
+              server/BaseDaemon.cpp \
+              server/BaseServer.cpp
 
-#if !defined(_WIN32)
-STGLIB_SRCSNW32 =  server/BaseDaemon.cpp  server/BaseServer.cpp
-#endif
+STAGERLIB_OBJS = \
+		../client/src/stager/stager_client_api_common.Osuf \
+		../client/src/stager/stager_client_commandline.Osuf \
+		../client/src/stager/stager_client_changePrivilege.Osuf \
+		../client/src/stager/stager_client_api_get.Osuf \
+		../client/src/stager/stager_client_api_put.Osuf \
+		../client/src/stager/stager_client_api_update.Osuf \
+		../client/src/stager/stager_client_api_open.Osuf \
+		../client/src/stager/stager_client_api_query.Osuf \
+		../client/src/stager/stager_client_api_rm.Osuf \
+		../client/src/stager/stager_client_api_setFileGCWeight.Osuf \
+		../client/src/stager/stager_client_api_next.Osuf \
+		../client/src/stager/stager_client_api_version.Osuf \
+		../client/src/stager/stager_client_api_changePrivilege.Osuf \
+		../client/src/stager/stager_client_api_listPrivileges.Osuf \
+		../client/src/stager/stager_errmsg.Osuf \
+		../client/src/stager/stager_mapper.Osuf
 
 #if BuildDlfLibrary
-STGLIB_SRCS2 = DlfMsgSvc.cpp \
+STGLIB_SRCS += DlfMsgSvc.cpp \
                dlfbuf.cpp
 #endif
 
-STGLIB_SRCS = $(STGLIB_SRCS0) $(STGLIB_SRCSNW32) $(STGLIB_SRCS2)
-
-STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
-
-
-#if BuildCastorClientCPPLibrary
-COMMONLIB = SharedLibraryTargetName(castorClient)
-#endif
-
-GLOBLIB = DepSharedLibraryTargetName(shlib,shift)
-
-ifeq ($(MAJOR_CASTOR_VERSION)x,x)
-  MAJOR_CASTOR_VERSION=__MAJOR_CASTOR_VERSION__
-endif
-ifeq ($(MINOR_CASTOR_VERSION)x,x)
-  MINOR_CASTOR_VERSION=__MINOR_CASTOR_VERSION__
-endif
-
-LDFLAGS += $(DEBUG) $(MTLDFLAGS) -Wl,-soname,libcastorClient.so.$(MAJOR_CASTOR_VERSION)
+LDFLAGS += $(DEBUG) $(MTLDFLAGS)
 LD = g++
 
-all: $(COMMONLIB)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(ns,castorns)
+DependsOnLibrary(dlf,castordlf)
 
-MakeDepSharedLibrary(shlib,shift)
-SharedLibraryTarget(castorClient,$(STGLIB_OBJS),,)
-
-MakeSubdirs(all,$(SUBDIRS))
-MakeSubdirs(install,$(SUBDIRS))
-MakeSubdirs(install.man,$(SUBDIRS))
-MakeSubdirs(exportman,$(SUBDIRS))
-MakeCondSubdirs(clean,$(SUBDIRS),clean0)
-MakeCondSubdirs(clobber,$(SUBDIRS),clobber0)
-
-#if _WIN32
-Makefiles:
-	-@for %i in ( $(SUBDIRS) ) \
-	do @(echo %i - & cd %i & \
-		..\..\imake\imake -I..\..\config & \
-		$(MAKE) $(MFLAGS) $@ & cd .. )
-
-depend:
-	@echo Not supported on this platform
-#else
-Makefiles:
-	@. ../setosflags ;\
-	for i in $(SUBDIRS) ;\
-	do (if [ -d $$i ] ;\
-	    then \
-	      (echo " $$i:" ; cd $$i ;\
-	      ../../imake/imake -I../../config -DOSMajorVersion="$$OSMAJNO" -DOSMinorVersion="$$OSMINNO" ;\
-	      $(MAKE) $(MFLAGS) $@) ;\
-	    else \
-	      (echo "ERROR : No directory $$i" ;\
-	      exit 1) ;\
-	    fi )\
-	done ;
-
-depend:
-	makedepend -- $(INCLUDES) -- $(STGLIB_SRCS) 2> /dev/null; \
-	for i in $(DEPENDDIRS) ;\
-	do (if [ -d $$i ] ;\
-	    then \
-	      (echo " $$i:" ; cd $$i ;\
-	      $(MAKE) $(MFLAGS) $@) ;\
-	    else \
-	      (echo "ERROR : No directory $$i" ;\
-	      exit 1) ;\
-	    fi )\
-	done ;
-
+#if BuildCastorClientCPPLibrary
+STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
+SharedLibraryTarget(castorclient,$(STGLIB_OBJS) $(STAGERLIB_OBJS),$(DEPLIB),$(LIBS))
 #endif
-
-#if _WIN32
-COMM
-COMM Because of cmd length limit in shell expansion
-COMM
-STGLIB_OBJS_WIN32=*.obj dlf\*.obj io\*.obj rh\*.obj stager\*.obj vdqm\*.obj exception\*.obj vdqm\handler\*.obj client\*.obj replier\*.obj server\*.obj
-clean0:
-        @echo cleaning in CurDir
-        -@RemoveFiles($(STGLIB_OBJS_WIN32))
-#else
-clean0:
-	@echo cleaning in CurDir
-	-@RemoveFiles($(STGLIB_OBJS))
-#endif
-
-clobber0:	clean
-	@echo clobbering in CurDir
-	-@RemoveFiles($(COMMONLIB))
-
-FORCE:
 

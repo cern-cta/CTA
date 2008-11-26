@@ -23,22 +23,17 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-#include <Project.tmpl>
+CPPFLAGS = -pedantic -Werror -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\" -g -O0 -I ../.. -I ../../h $(MTCCFLAGS)
+CFLAGS = -O -I ../.. -I ../../h $(THREADFLAGS)
+LDFLAGS += $(MTLDFLAGS)
+LD = g++
 
-#if !defined(_WIN32)
-#if linux
-DEBUG  = -g -O0
-#else
-DEBUG  = -g
-#endif
-#endif
-
-INCLUDES = -I FileName(..,..) -I FileName(FileName(..,..),h)
-#CPPFLAGS = -DPRINT_NETWORK_MESSAGES -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\" $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
-CPPFLAGS = -pedantic -Werror -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\" $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
-CFLAGS = -O -I$(INCLUDES) $(THREADFLAGS)
-
-LIBS = -lshift -lcastorCnvs -Wl,-rpath-link,../../shlib
+DependsOnLibrary(../common,castorcommon)
+DependsOnLibrary(../dlf,castordlf)
+DependsOnLibrary(,castorclient)
+DependsOnLibrary(db/cnv,castorcnvs)
+DependsOnLibrary(../upv,castorupv)
+DependsOnLibrary(../vmgr,castorvmgr)
 
 VDQMBIN_SRCS = CDevTools.cpp \
                DatabaseHelper.cpp \
@@ -67,52 +62,6 @@ VDQMBIN_SRCS = CDevTools.cpp \
                handler/VdqmMagic2RequestHandler.cpp \
                handler/VdqmMagic3RequestHandler.cpp \
                handler/VdqmMagic4RequestHandler.cpp
-
-MANPAGES_VDQM = FileName($(MANDIR),vdqmserver.$(MANSUFFIX))
-EMANPAGES_VDQM = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),vdqmserver.$(MANSUFFIX)))
-
 VDQMBIN_OBJS = $(VDQMBIN_SRCS:.cpp=.Osuf)
-
-DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift)
-
-LDFLAGS += -L FileName(..,FileName(..,shlib)) $(MTLDFLAGS)
-LD = g++
-
-all: ProgramTargetName(vdqmserver)
-
-NormalProgramTarget(vdqmserver,$(VDQMBIN_OBJS),$(DEPLIB),$(LIBS))
-
-MakeDepSharedLibrary(FileName(..,shlib),shift)
-
-Makefiles:
-
-#if defined(_WIN32)
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend $(INCLUDES) $(VDQMBIN_SRCS) 2> /dev/null
-#endif
-
-install: FileName($(BIN),vdqmserver)
-
-InstallProgram(vdqmserver,$(BIN),root,bin,750)
-
-install.man: $(MANDIR) $(MANPAGES_VDQM)
-MakeDir($(MANDIR),root,bin,0755)
-IMANPAGE(vdqmserver,$(MANDIR),$(MANSUFFIX))
-
-exportman: $(EMANPAGES_VDQM)
-
-EMANPAGE(vdqmserver,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-
-clean:
-	@echo cleaning in CurDir
-	-@RemoveFiles(FilesToClean $(VDQMBIN_OBJS))
-
-clobber:	clean
-	@echo clobbering in CurDir
-	-@RemoveFiles(ProgramTargetName(vdqmserver))
-
-FORCE:
-
+NormalProgramTarget(vdqmserver,$(VDQMBIN_OBJS),$(DEPLIB),$(LIBS),root,bin,750)
+EXEMANPAGE(vdqmserver)

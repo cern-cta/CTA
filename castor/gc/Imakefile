@@ -24,73 +24,20 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-#include <Project.tmpl>
-
-#if !defined(_WIN32)
-#if linux
-DEBUG  = -g -O0
-#else
-DEBUG  = -g
-#endif
-#endif
-
-MANPAGES = $(MANDIR)/gcDaemon.$(MANSUFFIX)
-EXPORTMANPAGES = $(EXPORTMAN)/man1/gcDaemon.$(MANSUFFIX)
-
-INCLUDES = -I FileName(FileName(..,..),h) -I FileName(..,..)
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
-
-LIBS = -lshift -ldl -lcastorClient -Wl,-rpath-link,../../shlib
-
-GCBIN_SRCS = GcDaemon.cpp DeletionThread.cpp SynchronizationThread.cpp
-
-GCBIN_OBJS = $(GCBIN_SRCS:.cpp=.Osuf)
-
-DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift)
-
-LDFLAGS += -L FileName(..,FileName(..,shlib)) -L FileName(..,FileName(..,$(COMMONCPPDIR))) $(MTLDFLAGS)
+CPPFLAGS = -g -O0 -I ../../h -I ../.. $(MTCCFLAGS)
+LDFLAGS += $(MTLDFLAGS)
 LD = g++
-
 #if BuildSecurity
 SECURITYFLAG=-DCSEC
-# LIBS+= -ldl
 #endif
 
-all: ProgramTargetName(gcDaemon)
+DependsOnLibrary(../common,castorcommon)
+DependsOnLibrary(../dlf,castordlf)
+DependsOnLibrary(../ns,castorns)
+DependsOnLibrary(,castorclient)
 
-NormalProgramTarget(gcDaemon,$(GCBIN_OBJS),$(DEPLIB),$(LIBS))
-
-MakeDepSharedLibrary(FileName(..,shlib),shift)
-
-Makefiles:
-
-#if defined(_WIN32)
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend $(INCLUDES) $(GCBIN_SRCS) 2> /dev/null
-#endif
-
-install: FileName($(BIN),gcDaemon)
-
-InstallProgram(gcDaemon,$(BIN),root,bin,750)
-
-install.man: $(MANDIR) $(MANPAGES)
-MakeDir($(MANDIR),root,bin,0755)
-IMANPAGE(gcDaemon,$(MANDIR),$(MANSUFFIX))
-EMANPAGE(gcDaemon,$(EXPORTMAN)/man1,$(MANSUFFIX))
-
-
-exportman: $(EXPORTMANPAGES)
-
-clean:
-	@echo cleaning in CurDir
-	-@RemoveFiles(FilesToClean)
-
-clobber:	clean
-	@echo clobbering in CurDir
-	-@RemoveFiles(ProgramTargetName(gcDaemon))
-
-FORCE:
+GCBIN_SRCS = GcDaemon.cpp DeletionThread.cpp SynchronizationThread.cpp
+GCBIN_OBJS = $(GCBIN_SRCS:.cpp=.Osuf)
+NormalProgramTarget(gcDaemon,$(GCBIN_OBJS),$(DEPLIB),$(LIBS),root,bin,0755)
+ADMMANPAGE(gcDaemon)
 

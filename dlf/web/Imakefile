@@ -17,36 +17,12 @@ COMM  USA.                                                                      
 COMM                                                                                                      #
 COMM -----------------------------------------------------------------------------------------------------#
 
-#include <Project.tmpl>
-
-IFILES = $(DLFWEB)/config.php          \
-	 $(DLFWEB)/dbview.php          \
-	 $(DLFWEB)/index.php           \
-	 $(DLFCONF)/login.conf.example \
-	 $(DLFWEB)/query.php           \
-	 $(DLFWEB)/results.php         \
-	 $(DLFWEB)/site.css            \
-	 $(DLFWEB)/utils.php           \
-	 $(DLFWEB)/db/oracle.php       \
-	 $(DLFWEB)/js/CalendarPopup.js \
-	 $(DLFWEB)/js/Date.js          \
-	 $(DLFWEB)/images/backdrop.png \
-	 $(DLFWEB)/images/css.png      \
-	 $(DLFWEB)/images/php.png      \
-	 $(DLFWEB)/images/xhtml.png    \
-
-all:
-
-install: directories $(IFILES)
-
-directories:
-	mkdir -p $(DESTDIR)$(DLFWEB)/db
-	mkdir -p $(DESTDIR)$(DLFWEB)/js
-	mkdir -p $(DESTDIR)$(DLFWEB)/images
-	mkdir -p $(DESTDIR)$(DLFCONF)
+MakeDir($(DLFWEB)/db,root,bin,755)
+MakeDir($(DLFWEB)/js,root,bin,755)
+MakeDir($(DLFWEB)/images,root,bin,755)
+MakeDir($(DLFCONF),root,bin,755)
 
 InstallNonExecFile(login.conf.example,$(DLFCONF),root,apache,640)
-
 InstallNonExecFile(config.php,$(DLFWEB),root,root,644)
 InstallNonExecFile(dbview.php,$(DLFWEB),root,root,644)
 InstallNonExecFile(index.php,$(DLFWEB),root,root,644)
@@ -67,15 +43,3 @@ InstallNonExecFile(backdrop.png,$(DLFWEB)/images,root,root,644)
 InstallNonExecFile(css.png,$(DLFWEB)/images,root,root,644)
 InstallNonExecFile(php.png,$(DLFWEB)/images,root,root,644)
 InstallNonExecFile(xhtml.png,$(DLFWEB)/images,root,root,644)
-
-clean:
-
-clobber:        clean
-
-depend:
-
-Makefiles:
-
-COMM -- End-of-File -------------------------------------------------------------------------------------#
-
-COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.

@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.17 $ $Date: 2008/01/09 09:29:45 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.18 $ $Date: 2008/11/26 14:52:00 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand
 COMM
 COMM  Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -6,80 +6,27 @@ COMM
 
 COMM		Make CASTOR tests for "rfio" directory
 
-#include <Project.tmpl>
-
-INCLUDES = FileName(FileName(..,..),h)
-#if linux
-LIBS = -L../../shlib -lshift $(ADNSLIB) -lnsl
-#else
-#if SOLARIS
-LIBS = -L../../lib -lshift -lsocket -lnsl
-#else
-#if defined(__alpha) && defined(__osf__)
-LIBS = -no_so -L../../lib -lshift -so_archive
-#else
-#if _WIN32
-LIBS = ..\..\lib\shift.lib wsock32.lib advapi32.lib
-#else
-LIBS = -L../../lib -lshift
-#endif
-#endif
-#endif
-#endif
-
-#ifndef _WIN32
-PROGSUNIX = ProgramTargetName(mstat_test_fork)
-#endif
-
-PROGS = ProgramTargetName(tpreseek)  ProgramTargetName(tpreseek64) ProgramTargetName(mstat_test_thread) $(PROGSUNIX) ProgramTargetName(munlink_test) ProgramTargetName(mstat_test_sequential) ProgramTargetName(msymlink_test) ProgramTargetName(stat_test) ProgramTargetName(mstat_test) ProgramTargetName(unlink_test) ProgramTargetName(symlink_test) ProgramTargetName(fxxx_test) ProgramTargetName(xxx_test) ProgramTargetName(regression_tests) ProgramTargetName(test_longpaths) ProgramTargetName(dataSource) ProgramTargetName(parallelFileAccess)
-
-CFLAGS = -I$(INCLUDES) $(MTCCFLAGS)
+CFLAGS = -I../../h $(MTCCFLAGS)
 LDFLAGS = $(MTLDFLAGS)
 
-GLOBLIB = DepLibraryTargetName(FileName(..,lib),shift)
+DependsOnLibrary(../common,castorcommon)
+DependsOnLibrary(../rfio,castorrfio)
+DependsOnLibrary(../ns,castorns)
 
-all: $(PROGS)
-
-NormalProgramTarget(tpreseek,tpreseek.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
-NormalProgramTarget(tpreseek64,tpreseek64.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
-NormalProgramTarget(mstat_test_thread,mstat_test_thread.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
-#ifndef _WIN32
-NormalProgramTarget(mstat_test_fork,mstat_test_fork.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
-#endif
-NormalProgramTarget(munlink_test,munlink_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
-NormalProgramTarget(mstat_test_sequential,mstat_test_sequential.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
-NormalProgramTarget(msymlink_test,msymlink_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
-NormalProgramTarget(stat_test,stat_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
-NormalProgramTarget(mstat_test,mstat_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
-NormalProgramTarget(unlink_test,unlink_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
-NormalProgramTarget(symlink_test,symlink_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
-NormalProgramTarget(fxxx_test,fxxx_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
-NormalProgramTarget(xxx_test,xxx_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
-NormalProgramTarget(regression_tests,regression_tests.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
-NormalProgramTarget(test_longpaths,test_longpaths.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
-NormalProgramTarget(dataSource,dataSource.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
-NormalProgramTarget(parallelFileAccess,parallelFileAccess.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
-
-MakeDepLibrary(FileName(..,lib),shift)
-
-clean:
-	-@RemoveFiles(FilesToClean)
- 
-clobber:        clean
-	-@RemoveFiles($(PROGS))
- 
-#if _WIN32
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend -Y$(INCLUDES) *.c 2> /dev/null
-#endif
-
-Makefiles:
- 
-FORCE:
-
-COMM###################### DEPENDENCIES ##########################
-
-COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.
+NormalProgramTarget(tpreseek,tpreseek.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(tpreseek64,tpreseek64.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(mstat_test_thread,mstat_test_thread.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(mstat_test_fork,mstat_test_fork.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(munlink_test,munlink_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(mstat_test_sequential,mstat_test_sequential.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(msymlink_test,msymlink_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(stat_test,stat_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(mstat_test,mstat_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(unlink_test,unlink_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(symlink_test,symlink_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(fxxx_test,fxxx_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(xxx_test,xxx_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(regression_tests,regression_tests.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(test_longpaths,test_longpaths.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(dataSource,dataSource.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(parallelFileAccess,parallelFileAccess.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS),root,bin,755)

@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Date: 2004/06/09 16:10:39 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.11 $ $Date: 2008/11/26 14:51:59 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1999 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -6,85 +6,20 @@ COMM
 
 COMM		Make CASTOR tests for "common" directory
 
-#include <Project.tmpl>
-
-INCLUDES = FileName(FileName(..,..),h)
-INCLUDESWIN32 = FileName(FileName(..,..),win32)
-
-#ifndef _WIN32
-DEBUG          = -g
-#else
-INCLUDESWIN32 = FileName(FileName(..,..),win32)
-INCLUDESWIN32I = -I$(INCLUDESWIN32)
-#endif
-
-COMM --------------------------
-COMM Resume there ALL the flags
-COMM --------------------------
-CFLAGS         = $(MTCCFLAGS) -I$(INCLUDES) $(INCLUDESWIN32I) $(DEBUG)
+CFLAGS         = $(MTCCFLAGS) -I../../h -g
 LDFLAGS        = $(MTLDFLAGS)
 
-OBJS = Csched_test.Osuf Cglobals_test.Osuf tuxid.Osuf Csetprocname_test.Osuf Cthread_kill.Osuf Cregexp_test.Osuf Cuuid_test.Osuf Cpool_test.Osuf Cpool_test2.Osuf Cpool_test_next_index.Osuf Cpool_multiple_pools.Osuf Cpool_ext_multiple_pools.Osuf Cpool_forevertest.Osuf 
-
-#ifdef _WIN32
-PROGS = ProgramTargetName(Cglobals_test) ProgramTargetName(tuxid) ProgramTargetName(Cregexp_test)
-#else
-PROGS = ProgramTargetName(Csched_test) ProgramTargetName(Cglobals_test) ProgramTargetName(tuxid) ProgramTargetName(Csetprocname_test) ProgramTargetName(Cthread_kill) ProgramTargetName(Cregexp_test) ProgramTargetName(Cuuid_test) ProgramTargetName(Cpool_test) ProgramTargetName(Cpool_test2) ProgramTargetName(Cpool_test_next_index) ProgramTargetName(Cpool_multiple_pools) ProgramTargetName(Cpool_ext_multiple_pools) ProgramTargetName(Cpool_forevertest)
-#endif
-
-DEPLIBS = DepLibraryTargetName(FileName(..,common),common)
-
-#ifdef _WIN32
-SLIB          = advapi32.lib wsock32.lib mpr.lib
-#else
-#ifdef SOLARIS
-COMM Because of h_errno external and POSIX4 library
-SLIB         = -lnsl -lposix4
-#else
-#ifdef __osf__
-SLIB         = -lrt
-#endif
-#endif
-#endif
-
-all: $(PROGS)
-
-#ifndef _WIN32
-NormalProgramTarget(Csched_test,Csched_test.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
-#endif
-NormalProgramTarget(Cpool_test,Cpool_test.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
-NormalProgramTarget(Cpool_test2,Cpool_test2.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
-NormalProgramTarget(Cpool_test_next_index,Cpool_test_next_index.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
-NormalProgramTarget(Cpool_multiple_pools,Cpool_multiple_pools.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
-NormalProgramTarget(Cpool_ext_multiple_pools,Cpool_ext_multiple_pools.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
-NormalProgramTarget(Cpool_forevertest,Cpool_forevertest.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
-NormalProgramTarget(Cglobals_test,Cglobals_test.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
-NormalProgramTarget(tuxid,tuxid.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
-NormalProgramTarget(Csetprocname_test,Csetprocname_test.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
-NormalProgramTarget(Cthread_kill,Cthread_kill.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
-NormalProgramTarget(Cregexp_test,Cregexp_test.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB))
-NormalProgramTarget(Cuuid_test,Cuuid_test.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
-MakeDepLibrary(FileName(..,common),common)
-
-clean:
-	-@RemoveFiles(FilesToClean)
-
-clobber:        clean
-	-@RemoveFiles($(PROGS))
-
-#if _WIN32
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend -Y$(INCLUDES) *.c 2> /dev/null
-#endif
-
-Makefiles:
-
-FORCE:
-
-COMM -------------------------
-COMM DEPENDENCIES of *.c files
-COMM -------------------------
-COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.
+DependsOnLibrary(../common,castorcommon)
+NormalProgramTarget(Csched_test,Csched_test.Osuf,$(DEPLIBS),$(DEPLIBS) $(ADNSLIB) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(Cpool_test,Cpool_test.Osuf,$(DEPLIBS),$(DEPLIBS) $(ADNSLIB) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(Cpool_test2,Cpool_test2.Osuf,$(DEPLIBS),$(DEPLIBS) $(ADNSLIB) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(Cpool_test_next_index,Cpool_test_next_index.Osuf,$(DEPLIBS),$(DEPLIBS) $(ADNSLIB) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(Cpool_multiple_pools,Cpool_multiple_pools.Osuf,$(DEPLIBS),$(DEPLIBS) $(ADNSLIB) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(Cpool_ext_multiple_pools,Cpool_ext_multiple_pools.Osuf,$(DEPLIBS),$(DEPLIBS) $(ADNSLIB) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(Cpool_forevertest,Cpool_forevertest.Osuf,$(DEPLIBS),$(DEPLIBS) $(ADNSLIB) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(Cglobals_test,Cglobals_test.Osuf,$(DEPLIBS),$(DEPLIBS) $(ADNSLIB) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(tuxid,tuxid.Osuf,$(DEPLIBS),$(DEPLIBS) $(ADNSLIB) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(Csetprocname_test,Csetprocname_test.Osuf,$(DEPLIBS),$(DEPLIBS) $(ADNSLIB) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(Cthread_kill,Cthread_kill.Osuf,$(DEPLIBS),$(DEPLIBS) $(ADNSLIB) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(Cregexp_test,Cregexp_test.Osuf,$(DEPLIBS),$(DEPLIBS) $(ADNSLIB),root,bin,755)
+NormalProgramTarget(Cuuid_test,Cuuid_test.Osuf,$(DEPLIBS),$(DEPLIBS) $(ADNSLIB) $(MTLDLIBS),root,bin,755)

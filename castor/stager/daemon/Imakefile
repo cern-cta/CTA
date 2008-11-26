@@ -24,15 +24,14 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-#include <Project.tmpl>
+CPPFLAGS = -g -O0 -I ../../../h -I ../../.. $(MTCCFLAGS) -DORACDBC=1
+LDFLAGS += $(MTLDFLAGS)
+LD = g++
 
-DEBUG  = -g -O0
-#MANPAGES = 
-#EXPORTMANPAGES = 
-
-INCLUDES = -I FileName(../../..,h) -I FileName(../..,..)
-
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DORACDBC=1
+DependsOnLibrary(../../common,castorcommon)
+DependsOnLibrary(../../dlf,castordlf)
+DependsOnLibrary(..,castorclient)
+DependsOnLibrary(../db/cnv,castorcnvs)
 
 DBSERVICEDAEMONBIN_SRCS = \
 	CnsHelper.cpp \
@@ -60,53 +59,5 @@ DBSERVICEDAEMONBIN_SRCS = \
 	ErrorSvcThread.cpp \
         JobSvcThread.cpp \
 	CleaningThread.cpp
-
 DBSERVICEDAEMONBIN_OBJS = $(DBSERVICEDAEMONBIN_SRCS:.cpp=.Osuf)
-
-DEPLIB = DepSharedLibraryTargetName(../../shlib,castorCnvs) \
-         DepSharedLibraryTargetName(../../castor,castorClient) \
-         DepSharedLibraryTargetName(../../shlib,shift)
-
-LDFLAGS += -L FileName(../../..,shlib) -L FileName(../../..,$(COMMONCPPDIR)) $(MTLDFLAGS)
-LD = g++
-GLOBLIB = -lshift -lcastorCnvs -lcastorClient -lcastorns -lcastorvmgr -lcastorupv -lcastorrfio
-
-PROGS_STAGER = ProgramTargetName(stagerDaemon)
-IPROGS_STAGER = FileName($(BIN),ProgramTargetName(stagerDaemon))
-
-all:$(DBSERVICEDAEMONBIN_OBJS) $(PROGS_STAGER)
-
-MakeDepSharedLibrary(../../shlib,castorCnvs)
-MakeDepSharedLibrary(../../shlib,shift)
-
-NormalProgramTarget(stagerDaemon,$(DBSERVICEDAEMONBIN_OBJS),$(DEPLIB),$(GLOBLIB))
-
-Makefiles:
-
-#if defined(_WIN32)
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend $(INCLUDES) $(DBSERVICEDAEMONBIN_SRCS) 2> /dev/null
-#endif
-
-install: $(BIN) $(IPROGS_STAGER)
-
-InstallProgram(stagerDaemon,$(BIN),root,bin,750)
-MakeDir($(BIN),root,bin,0755)
-
-install.man: $(MANDIR) $(MANPAGES)
-
-exportman: $(EXPORTMANPAGES)
-
-clean:
-	@echo  in CurDir
-	-@RemoveFiles(FilesToClean)
-
-clobber:	clean
-	@echo clobbering in CurDir
-	-@RemoveFiles($(PROGS_STAGER))
-
-FORCE:
-
+NormalProgramTarget(stagerDaemon,$(DBSERVICEDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),root,bin,750)

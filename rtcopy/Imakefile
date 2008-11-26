@@ -7,18 +7,13 @@ COMM Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
 
-#include <Project.tmpl>
-
 COMM         Make RTCOPY API library and server
-
-INCLUDES = FileName(..,h)
-INCLUDES_CPP = FileName(..,/)
 
 COMM
 COMM Define the remote tape copy daemon log file.
 COMM
 SPOOL = RtcopySpool
-LOGFILE = FileName($(SPOOL),rtcopyd.log)
+LOGFILE = $(SPOOL)/rtcopyd.log
 
 COMM
 COMM Define the working directory of 
@@ -31,7 +26,7 @@ COMM Define the file indicating that more
 COMM tape request should be submit on the
 COMM server.
 COMM
-NOMORETAPES = FileName(OperatorDir,nomoretapes)
+NOMORETAPES = OperatorDir.nomoretapes
 
 COMM
 COMM Define the file indicating the hosts
@@ -54,19 +49,11 @@ NS_ROOT = NsRoot
 COMM
 COMM Set this flag to -O for optimization, or -g for debug
 COMM
-#ifdef _WIN32
-CCOPTIM =
-#else
 CCOPTIM = -g
-#endif
 
 #if defined(SONYRAW)
 SONYRFLG = -DSONYRAW
 #endif
-
-VMGRFLG = -DVMGR
-VMGRSERV = rtcp_CallVMGR.Osuf
-VMGRLIB = rtcpc_CallVMGR.Osuf
 
 #if BuildVdqmLibrary
 VDQMFLG = -DVDQM
@@ -80,16 +67,14 @@ CTAPEFLG = -DCTAPE_DUMMIES
 
 OPSGRP = OperatorGid
 
-#if Accounting
 ACCTON= -DACCTON
 SACCTDIR = SacctDir
-SACCTFILE = FileName($(SACCTDIR),sacct)
+SACCTFILE = $(SACCTDIR)/sacct
 ACCTFILE = -DACCTFILE=\"$(SACCTFILE)\"
-ERRLISTDIR = FileName(InstallLibDir,rtcopy)
-ERRLISTFILE = FileName($(ERRLISTDIR),err_messages)
-ESTATD = FileName(FileName(FileName($(EXPORTSHR),lib),rtcopy),err_messages)
+ERRLISTDIR = InstallLibDir/rtcopy
+ERRLISTFILE = $(ERRLISTDIR)/err_messages
+ESTATD = $(EXPORTSHR)/lib/rtcopy/err_messages
 RTCOPYERRLIST = -DRTCOPYERRLIST=\"$(ERRLISTFILE)\"
-#endif
 
 SCONFIGFILE = ShiftConfigFile
 CONFIGFILE = -DCONFIGFILE=\"$(SCONFIGFILE)\"
@@ -112,112 +97,101 @@ RTCPCLDGROUP = st
 #endif
 
 RTCPCLDFLAGS = -DRTCPCLD_NOTIFY_HOST=\"$(RTCPCLDHOST)\" -DRTCPCLD_USER=\"$(RTCPCLDUSER)\" -DRTCPCLD_GROUP=\"$(RTCPCLDGROUP)\"
-
 THREADFLAGS = $(MTCCFLAGS)
-
-#if linux
-LDLIBS = $(ADNSLIB) -lnsl -Wl,-rpath-link,../shlib
-#else
-#if _WIN32
-LDLIBS = ..\lib\shift.lib ws2_32.lib advapi32.lib
-#endif
-#endif
-
 CKSUMLIB = -lz
-
 #if BuildRtcopyServer
 RTCPFLAG=-DRTCP_SERVER
-#else
-RTCPFLAG=
 #endif
-
-CPFILES = rtcpc_CheckReq.c rtcpc_log.c rtcpc_SendRecv.c rtcpc_CallVMGR.c
 
 #if BuildSecureRtcopy
 SECURITYFLAG=-DCSEC
-LDLIBS+= -ldl
+LIBS = -ldl
 #endif  
-COMM######################### FLAGS ##############################
-DFLAGS = -DBIN=\"$(BIN)\" \
-	 -DRTCOPY_LOGFILE=\"$(LOGFILE)\" \
-	 -DNOMORETAPES=\"$(NOMORETAPES)\" \
-	 -DAUTH_HOSTS=\"$(AUTHORIZEDHOSTS)\" \
-	 -DDOMAINNAME=\"$(DOMAINNAME)\" \
-	 -DWORKDIR=\"$(RTCOPYWORKDIR)\" \
-	 -DNS_ROOT=\"$(NS_ROOT)\" \
-	 $(ACCTON) $(SONYRFLG) $(CONFIGFILE) $(RTCOPYERRLIST) $(TPCONFIG) \
-	 $(RTCPFLAG) $(VMGRFLG) $(VDQMFLG) $(CTAPEFLG) $(ACCTFLAG) \
-	 $(ACCTFILE) $(RTCPCLDFLAGS)
 
-CFLAGS = $(CCOPTIM) -I$(INCLUDES) -I$(INCLUDES_CPP) $(THREADFLAGS) $(DFLAGS) $(SECURITYFLAG)
+DFLAGS = -DBIN=\"$(BIN)\" -DRTCOPY_LOGFILE=\"$(LOGFILE)\" -DNOMORETAPES=\"$(NOMORETAPES)\" \
+	 -DAUTH_HOSTS=\"$(AUTHORIZEDHOSTS)\" -DDOMAINNAME=\"$(DOMAINNAME)\" -DWORKDIR=\"$(RTCOPYWORKDIR)\" \
+	 -DNS_ROOT=\"$(NS_ROOT)\" $(ACCTON) $(SONYRFLG) $(CONFIGFILE) $(RTCOPYERRLIST) $(TPCONFIG) \
+	 $(RTCPFLAG) -DVMGR $(VDQMFLG) $(CTAPEFLG) $(ACCTFLAG) $(ACCTFILE) $(RTCPCLDFLAGS)
+CFLAGS = $(CCOPTIM) -I../h -I.. $(THREADFLAGS) $(DFLAGS) $(SECURITYFLAG)
 
-COMM######################### DEPENDENCY LIBRARIES ###############
-DEPLIB = DepSharedLibraryTargetName(shlib,shift)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(ns,castorns)
+DependsOnLibrary(vmgr,castorvmgr)
+DependsOnLibrary(vdqm,castorvdqm)
+DependsOnLibrary(tape,castortape)
+DependsOnLibrary(expert,castorexpert)
 
-#if !defined(_WIN32)
-GLOBLIB = -L../shlib -lshift
+rtcpc_SendRecv.c:	DepSourceName(rtcopy,rtcp_SendRecv.c)
+			RemoveFiles(rtcpc_SendRecv.c)
+			$(CP) rtcp_SendRecv.c rtcpc_SendRecv.c
+rtcpc_log.c:		DepSourceName(rtcopy,rtcp_log.c)
+			RemoveFiles(rtcpc_log.c)
+			$(CP) rtcp_log.c rtcpc_log.c
+rtcpc_CallVMGR.c:	DepSourceName(rtcopy,rtcp_CallVMGR.c)
+			RemoveFiles(rtcpc_CallVMGR.c)
+			$(CP) rtcp_CallVMGR.c rtcpc_CallVMGR.c
+rtcpc_CheckReq.c:	DepSourceName(rtcopy,rtcp_CheckReq.c)
+			RemoveFiles(rtcpc_CheckReq.c)
+			$(CP) rtcp_CheckReq.c rtcpc_CheckReq.c
+rtcpc_SendRecv.Osuf:	rtcpc_SendRecv.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
+	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I../h rtcpc_SendRecv.c
+rtcpc_log.Osuf:		rtcpc_log.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
+	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I../h rtcpc_log.c
+rtcpc_CallVMGR.Osuf:	rtcpc_CallVMGR.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
+	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I../h -DVMGR rtcpc_CallVMGR.c
+rtcpc_CheckReq.Osuf:	rtcpc_CheckReq.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
+	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I../h rtcpc_CheckReq.c
+FileToClean += rtcpc_log.c rtcpc_SendRecv.c rtcpc_CallVMGR.c rtcpc_CheckReq.c
+
+#if BuildRtcopyLibrary
+RTCPLIB_OBJS =	rtcpc_SendRecv.Osuf rtcp_InitNW.Osuf rtcpc_log.Osuf rtcpc_CallVMGR.Osuf rtcp_Listen.Osuf rtcpapi.Osuf rtcpc_BuildReq.Osuf rtcp_RetvalSHIFT.Osuf rtcpc_CheckReq.Osuf
+SharedLibraryTarget(castorrtcopy,$(RTCPLIB_OBJS),$(DEPLIB),$(LIBS))
 #endif
-
-COMM######################### RULES ##############################
+RTCPDEPLIB = SharedLibraryTargetName(castorrtcopy)
+RTCPLIBS = -L. -lcastorrtcopy
 
 #if BuildRtcopyClient
+tpread.Osuf:		tpread.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
+	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I../h tpread.c
+dumptape.Osuf:		dumptape.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
+	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I../h dumptape.c
+NormalProgramTarget(tpread,tpread.Osuf,$(RTCPDEPLIB) $(DEPLIB),$(RTCPLIBS) $(LIBS),root,bin,0755)
+LinkFile(tpwrite,tpread,root,bin,755)
+NormalProgramTarget(dumptape,dumptape.Osuf,$(RTCPDEPLIB) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),root,bin,0755)
+EXEMANPAGE(tpread)
+EXEMANPAGE(tpwrite)
+EXEMANPAGE(dumptape)
+COMM Because nroff does not like to change hierachy of dir we copy the man page sourced by dumptape
+dumptape.man: DepSourceName(tape,dumptape.man)
+	RemoveFiles(dumptape.man)
+	$(CP) $? $@
 #if BuildRtstat
-PROGS_RTSTAT = ProgramTargetName(rtstat)
-IPROGS_RTSTAT = FileName($(BIN),ProgramTargetName(rtstat)) $(ERRLISTFILE)
-EPROGS_RTSTAT = FileName($(EXPORTBIN),rtstat)
-MANPAGES_RTSTAT = FileName($(MANDIR),rtstat.$(MANSUFFIX))
-EMANPAGES_RTSTAT = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtstat.$(MANSUFFIX)))
+rtstat.Osuf:		rtstat.c ../h/vdqm.h ../h/osdep.h ../h/net.h
+	$(CC) -c $(CFLAGS) rtstat.c
+NormalProgramTarget(rtstat,rtstat.Osuf,$(DEPLIB),$(MTLDFLAGS) $(LIBS),root,bin,0755)
+EXEMANPAGE(rtstat)
 #endif
-PROGS_C = ProgramTargetName(tpread) \
-	  ProgramTargetName(tpwrite) \
-	  ProgramTargetName(dumptape) $(PROGS_RTSTAT)
-IPROGS_C = FileName($(BIN),ProgramTargetName(tpread)) \
-	   FileName($(BIN),ProgramTargetName(tpwrite)) \
-	   FileName($(BIN),ProgramTargetName(dumptape)) $(IPROGS_RTSTAT)
-EPROGS_C = FileName($(EXPORTBIN),tpread) FileName($(EXPORTBIN),tpwrite) \
-	   FileName($(EXPORTBIN),dumptape) \
-	   $(EPROGS_RTSTAT)
-MANPAGES_C = FileName($(MANDIR),tpread.$(MANSUFFIX)) \
-	     FileName($(MANDIR),tpwrite.$(MANSUFFIX)) \
-	     FileName($(MANDIR),dumptape.$(MANSUFFIX)) $(MANPAGES_RTSTAT)
-EMANPAGES_C = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tpread.$(MANSUFFIX))) \
-	FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tpwrite.$(MANSUFFIX))) \
-	FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),dumptape.$(MANSUFFIX))) $(EMANPAGES_RTSTAT)
-#endif
-#if BuildRtcopyServer
-DEPLIB += DepLibraryTargetName(tape,tape)
-PROGS_D = ProgramTargetName(rtcpd) \
-	   ProgramTargetName(killjid)
-IPROGS_D = FileName($(BIN),ProgramTargetName(rtcpd)) \
-	    FileName($(BIN),ProgramTargetName(killjid))
-EPROGS_S =
-MANPAGES_S = FileName($(MANDIR),rtcpd.$(MANSUFFIX)) \
-	     FileName($(MANDIR),killjid.$(MANSUFFIX))
-EMANPAGES_S =FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpd.$(MANSUFFIX))) \
-	FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),killjid.$(MANSUFFIX))) 
 #endif
 
 #if BuildRtcpclientd
-PROGS_C += ProgramTargetName(rtcpcldCleanupDB)
-IPROGS_C += FileName($(BIN),ProgramTargetName(rtcpcldCleanupDB))
-PROGS_D += ProgramTargetName(rtcpclientd) \
-	   ProgramTargetName(recaller) \
-	   ProgramTargetName(migrator) \
-	   ProgramTargetName(TapeErrorHandler)
-IPROGS_D += FileName($(BIN),ProgramTargetName(rtcpclientd)) \
-	    FileName($(BIN),ProgramTargetName(recaller)) \
-	    FileName($(BIN),ProgramTargetName(migrator)) \
-	    FileName($(BIN),ProgramTargetName(TapeErrorHandler)) 
-EPROGS_C += FileName($(EXPORTBIN),rtcpcldCleanupDB) \
-	   FileName($(EXPORTBIN),rtcpclientd) \
-	   FileName($(EXPORTBIN),recaller) \
-	   FileName($(EXPORTBIN),migrator) \
-	   FileName($(EXPORTBIN),TapeErrorHandler)
-MANPAGES_C += FileName($(MANDIR),rtcpclientd.$(MANSUFFIX)) FileName($(MANDIR),rtcpcldCleanupDB.$(MANSUFFIX))
-EMANPAGES_C += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpclientd.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpcldCleanupDB.$(MANSUFFIX)))
+RTCPCLD_MT_OBJS = rtcpcldcommon_mt.Osuf
+RTCPCLD_OBJS =	rtcpcldcommon.Osuf rtcpcldCatalogueInterface.Osuf rtcpcldVmgrInterface.Osuf rtcpcldNsInterface.Osuf
+NormalProgramTarget(rtcpcldCleanupDB,rtcpcldCleanupDB.Osuf $(RTCPCLD_OBJS),$(RTCPDEPLIB) $(DEPLIB),$(RTCPLIBS) $(LIBS),root,bin,0750)
+NormalProgramTarget(rtcpclientd,rtcpclientd.Osuf $(RTCPCLD_OBJS),$(RTCPDEPLIB) $(DEPLIB),$(RTCPLIBS) $(LIBS),root,bin,0750)
+NormalProgramTarget(recaller,recaller.Osuf $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(RTCPDEPLIB) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),root,bin,0750)
+NormalProgramTarget(migrator,migrator.Osuf $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(RTCPDEPLIB) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),root,bin,0750)
+NormalProgramTarget(TapeErrorHandler,TapeErrorHandler.Osuf $(RTCPCLD_OBJS),$(RTCPDEPLIB) $(DEPLIB),$(RTCPLIBS) $(LIBS),root,bin,0750)
+EXEMANPAGE(rtcpcldCleanupDB)
+EXEMANPAGE(rtcpclientd)
 #endif
 
-RTCPD_OBJS =	rtcpd.Osuf $(VMGRSERV) rtcp_CheckReq.Osuf \
+#if BuildRtcopyServer
+MakeDir($(SPOOL),root,bin,0755)
+MakeDir($(RTCOPYWORKDIR),root,bin,777)
+MakeDir($(SACCTDIR),root,bin,0777)
+RTCPD_OBJS =	rtcpd.Osuf rtcp_CallVMGR.Osuf rtcp_CheckReq.Osuf \
 		rtcp_Listen.Osuf rtcp_SendRecv.Osuf rtcp_log.Osuf \
 		rtcpd_ClientListen.Osuf rtcpd_Ctape.Osuf rtcpd_Disk.Osuf \
 		rtcpd_MainCntl.Osuf rtcpd_SelfMonitor.Osuf rtcpd_Tape.Osuf \
@@ -225,113 +199,13 @@ RTCPD_OBJS =	rtcpd.Osuf $(VMGRSERV) rtcp_CheckReq.Osuf \
 		rtcpd_ConvertData.Osuf rtcpd_SHIFTClients.Osuf \
 		rtcpc_BuildReq.Osuf rtcpapi.Osuf rtcp_RetvalSHIFT.Osuf \
 		rtcpd_tpdump.Osuf Ctape_dummies.Osuf rtcp_accounting.Osuf		
-
-RTCPLIB_OBJS =	rtcpc_SendRecv.Osuf rtcp_InitNW.Osuf rtcpc_log.Osuf \
-		$(VMGRLIB) rtcp_Listen.Osuf rtcpapi.Osuf \
-		rtcpc_BuildReq.Osuf rtcp_RetvalSHIFT.Osuf rtcpc_CheckReq.Osuf
-
-TPREAD_OBJS =	tpread.Osuf
-RECALLER_OBJS = recaller.Osuf
-MIGRATOR_OBJS = migrator.Osuf
-TAPEERRORHANDLER_OBJS = TapeErrorHandler.Osuf
-RTCPCLIENTD_OBJS = rtcpclientd.Osuf
-RTCPCLD_OBJS =	rtcpcldcommon.Osuf rtcpcldCatalogueInterface.Osuf \
-		rtcpcldVmgrInterface.Osuf rtcpcldNsInterface.Osuf
-RTCPCLD_MT_OBJS =	rtcpcldcommon_mt.Osuf
-RTCPCLD_CLEANUP_OBJS = rtcpcldCleanupDB.Osuf
-DUMPTAPE_OBJS =	dumptape.Osuf
-#if BuildRtstat
-RTSTAT_OBJS = rtstat.Osuf
+NormalProgramTarget(rtcpd,$(RTCPD_OBJS),$(DEPLIB),$(MTLDFLAGS) $(LIBS) $(CKSUMLIB),root,bin,0750) 
+NormalProgramTarget(killjid,killjid.Osuf,$(RTCPDEPLIB) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),root,$(OPSGRP),0750)
+EXEMANPAGE(rtcpd)
+EXEMANPAGE(killjid)
 #endif
 
-#if BuildRtcopyLibrary
-RTCPLIBTARGET=SharedLibraryTargetName(castorrtcopy)
-#endif
-
-all: $(RTCPLIBTARGET) $(PROGS_C) $(PROGS_D)
-
-rtcpc_SendRecv.c:	DepSourceName(rtcopy,rtcp_SendRecv.c)
-			RemoveFile(rtcpc_SendRecv.c)
-			$(CP) rtcp_SendRecv.c rtcpc_SendRecv.c
-
-rtcpc_log.c:		DepSourceName(rtcopy,rtcp_log.c)
-			RemoveFile(rtcpc_log.c)
-			$(CP) rtcp_log.c rtcpc_log.c
-
-rtcpc_CallVMGR.c:	DepSourceName(rtcopy,rtcp_CallVMGR.c)
-			RemoveFile(rtcpc_CallVMGR.c)
-			$(CP) rtcp_CallVMGR.c rtcpc_CallVMGR.c
-
-rtcpc_CheckReq.c:	DepSourceName(rtcopy,rtcp_CheckReq.c)
-			RemoveFile(rtcpc_CheckReq.c)
-			$(CP) rtcp_CheckReq.c rtcpc_CheckReq.c
-
-rtcpc_SendRecv.Osuf:	rtcpc_SendRecv.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
-	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) rtcpc_SendRecv.c
-rtcpc_log.Osuf:		rtcpc_log.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
-	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) rtcpc_log.c
-rtcpc_CallVMGR.Osuf:	rtcpc_CallVMGR.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
-	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) $(VMGRFLG) rtcpc_CallVMGR.c
-rtcpc_CheckReq.Osuf:	rtcpc_CheckReq.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
-	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) rtcpc_CheckReq.c
-tpread.Osuf:		tpread.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
-	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) tpread.c
-dumptape.Osuf:		dumptape.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
-	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) dumptape.c
-
-#if BuildRtstat
-rtstat.Osuf:		rtstat.c ../h/vdqm.h ../h/osdep.h ../h/net.h
-	$(CC) -c $(CFLAGS) rtstat.c
-#endif
-
-NormalProgramTarget(tpread,$(TPREAD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(GLOBLIB) $(LDLIBS))
-
-NormalProgramTarget(recaller,$(RECALLER_OBJS) $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS) $(RTCPLIB_OBJS),$(DEPLIB) $(DBLIBS),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
-
-NormalProgramTarget(migrator,$(MIGRATOR_OBJS) $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS) $(RTCPLIB_OBJS),$(DEPLIB) $(DBLIBS),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
-
-NormalProgramTarget(TapeErrorHandler,$(TAPEERRORHANDLER_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB) $(DBLIBS),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
-
-NormalProgramTarget(rtcpclientd,$(RTCPCLIENTD_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB) $(DBLIBS),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
-
-NormalProgramTarget(rtcpcldCleanupDB,$(RTCPCLD_CLEANUP_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB) $(DBLIBS),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
-
-NormalProgramTarget(dumptape,$(DUMPTAPE_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(MTLDLIBS))
-
-#if BuildRtstat
-NormalProgramTarget(rtstat,$(RTSTAT_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(MTLDLIBS))
-#endif
-
-LinkFile(ProgramTargetName(tpwrite),ProgramTargetName(tpread))
-
-NormalProgramTarget(rtcpd,$(RTCPD_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(CKSUMLIB) $(MTLDLIBS)) 
-
-NormalProgramTarget(killjid,killjid.Osuf $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(MTLDLIBS))
-
-SharedLibraryTarget(castorrtcopy,$(RTCPLIB_OBJS),,)
-
-MakeDepSharedLibrary(shlib,shift)
-
-#if BuildRtcopyServer
-install: $(BIN) $(ERRLISTDIR) $(IPROGS_C) $(IPROGS_D) $(RTCOPYWORKDIR) $(SPOOL) $(SACCTDIR)
-#else
-install: $(BIN) $(ERRLISTDIR) $(IPROGS_C) $(IPROGS_D)
-#endif
-
-InstallProgram(rtcpd,$(BIN),root,bin,0750)
-InstallProgram(killjid,$(BIN),root,$(OPSGRP),0750)
-InstallProgram(tpread,$(BIN),root,bin,0755)
-InstallProgram(tpwrite,$(BIN),root,bin,0755)
-InstallProgram(dumptape,$(BIN),root,bin,0755)
-InstallProgram(rtcpclientd,$(BIN),root,bin,0750)
-InstallProgram(recaller,$(BIN),root,bin,0750)
-InstallProgram(migrator,$(BIN),root,bin,0750)
-InstallProgram(TapeErrorHandler,$(BIN),root,bin,0750)
-InstallProgram(rtcpcldCleanupDB,$(BIN),root,bin,0750)
-#if BuildRtstat
-InstallProgram(rtstat,$(BIN),root,bin,0755)
-#endif
-
+MakeDir($(ERRLISTDIR),root,bin,755)
 InstallNonExecFile(err_messages,$(ERRLISTDIR),root,bin,644)
 
 $(ESTATD): err_messages
@@ -339,85 +213,3 @@ $(ESTATD): err_messages
 	-mv $(@D)/$? $(@D)/OLD$?
 	cp $? $@
 
-MakeDir($(BIN),root,bin,0755)
-MakeDir($(SPOOL),root,bin,0755)
-MakeDir($(RTCOPYWORKDIR),root,bin,777)
-
-#if Accounting
-MakeDir($(ERRLISTDIR),root,bin,755)
-MakeDir($(SACCTDIR),root,bin,0777)
-#endif
-
-
-install.man: $(MANDIR) $(MANPAGES_C) $(MANPAGES_S)
-
-MakeDir($(MANDIR),root,bin,0755)
-
-COMM Because nroff does not like to change hierachy of dir
-COMM we copy the man page sourced by dumptape
-dumptape.man: DepSourceName(tape,dumptape.man)
-	RemoveFile(dumptape.man)
-	$(CP) $? $@
-
-IMANPAGE(tpread,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(tpwrite,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(dumptape,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(rtcpd,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(killjid,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(rtcpclientd,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(rtcpcldCleanupDB,$(MANDIR),$(MANSUFFIX))
-#if BuildRtstat
-IMANPAGE(rtstat,$(MANDIR),$(MANSUFFIX))
-#endif
-
-export: $(EPROGS_C) $(EPROGS_S)
-IEXPORT(tpread,$(EXPORTBIN),755)
-IEXPORT(tpwrite,$(EXPORTBIN),755)
-IEXPORT(dumptape,$(EXPORTBIN),755)
-IEXPORT(rtcpd,$(EXPORTBIN),750)
-IEXPORT(rtcpclientd,$(EXPORTBIN),750)
-IEXPORT(recaller,$(EXPORTBIN),750)
-IEXPORT(migrator,$(EXPORTBIN),750)
-IEXPORT(TapeErrorHandler,$(EXPORTBIN),750)
-IEXPORT(rtcpcldCleanupDB,$(EXPORTBIN),750)
-#if BuildRtstat
-IEXPORT(rtstat,$(EXPORTBIN),755)
-#endif
-
-exportman: $(EMANPAGES_C) $(EMANPAGES_S)
-EMANPAGE(tpread,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(tpwrite,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(dumptape,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(rtcpd,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(killjid,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(rtcpclientd,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(rtcpcldCleanupDB,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-#if BuildRtstat
-EMANPAGE(rtstat,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-#endif
-
-exportshr: $(ESTATD)
-
-COMM###################### CLEANING RULES #######################
-
-clean:
-	@echo cleaning in CurDir
-	-@RemoveFiles(FilesToClean)
-
-clobber:	clean
-	@echo clobbering in CurDir
-	-@RemoveFiles($(PROGS_RTSTAT) $(PROGS_C) $(PROGS_D) $(CPFILES) SharedLibraryTargetName(castorrtcopy))
-
-#if _WIN32
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend -Y -- $(CFLAGS) -- *.c 2> /dev/null
-#endif
-
-Makefiles:
-
-FORCE:
-
-COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.

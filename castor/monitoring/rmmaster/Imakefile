@@ -24,72 +24,18 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-#include <Project.tmpl>
-
-#if !defined(_WIN32)
-#if linux
-DEBUG  = -g -O0
-#else
-DEBUG  = -g
-#endif
-#endif
-
-MANPAGES =
-EXPORTMANPAGES =
-INCLUDES = -I FileName($(ORACLE_HOME)/rdbms,public) -I FileName(../../..,h) -I FileName(../..,..)
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DORACDBC=1
-
-LIBS = -lcastorMonitor -lbat -llsf -llsbstream -lshift -lcastorCommonOra -lcastorCnvs -L$(ORACLE_HOME)/lib -locci -Wl,-rpath-link,../../../shlib
-RMMASTERDAEMONBIN_SRCS = RmMasterDaemon.cpp CollectorThread.cpp DatabaseActuatorThread.cpp UpdateThread.cpp \
-         HeartbeatThread.cpp LSFStatus.cpp ora/OraRmMasterSvc.cpp ora/StatusUpdateHelper.cpp
-
-RMMASTERDAEMONBIN_OBJS = $(RMMASTERDAEMONBIN_SRCS:.cpp=.Osuf)
-
-DEPLIB = DepSharedLibraryTargetName(../../shlib,castorMonitor) \
-         DepSharedLibraryTargetName(../../shlib,castorCommonOra) \
-         DepSharedLibraryTargetName(../../shlib,castorCnvs) \
-         DepSharedLibraryTargetName(../../shlib,shift)
-
-LDFLAGS += -L FileName(../../..,shlib) $(MTLDFLAGS)
+CPPFLAGS = -g -O0 -I $(ORACLE_HOME)/rdbms/public -I ../../../h -I ../../.. $(MTCCFLAGS) -DORACDBC=1
+LDFLAGS += $(MTLDFLAGS)
 LD = g++
+LIBS = -lbat -llsf -llsbstream -L$(ORACLE_HOME)/lib -locci -lclntsh
 
-all:ProgramTargetName(rmMasterDaemon)
+DependsOnLibrary(../../common,castorcommon)
+DependsOnLibrary(../../dlf,castordlf)
+DependsOnLibrary(..,castorclient)
+DependsOnLibrary(,castormonitor)
+DependsOnLibrary(../db/newora,castorcommonora)
+DependsOnLibrary(../db/cnv,castorcnvs)
 
-NormalProgramTarget(rmMasterDaemon,$(RMMASTERDAEMONBIN_OBJS),$(DEPLIB),$(LIBS))
-
-MakeDepSharedLibrary(../../shlib,castorMonitor)
-MakeDepSharedLibrary(../../shlib,castorCommonOra)
-MakeDepSharedLibrary(../../shlib,castorCnvs)
-MakeDepSharedLibrary(../../shlib,shift)
-
-Makefiles:
-
-#if defined(_WIN32)
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend $(INCLUDES) $(RMMASTERDAEMONBIN_SRCS) 2> /dev/null
-#endif
-
-install: FileName($(BIN),rmMasterDaemon)
-
-InstallProgram(rmMasterDaemon,$(BIN),root,bin,750)
-
-install.man: $(MANDIR) $(MANPAGES)
-MakeDir($(MANDIR),root,bin,0755)
-IMANPAGE(rmMasterDaemon,$(MANDIR),$(MANSUFFIX))
-EMANPAGE(rmMasterDaemon,$(EXPORTMAN)/man1,$(MANSUFFIX))
-
-exportman: $(EXPORTMANPAGES)
-
-clean:
-	@echo rmmaster in CurDir
-	-@RemoveFiles(FilesToClean $(RMMASTERDAEMONBIN_OBJS))
-
-clobber:	clean
-	@echo clobbering in CurDir
-	-@RemoveFiles(ProgramTargetName(rmMasterDaemon))
-
-FORCE:
-
+RMMASTERDAEMONBIN_SRCS = RmMasterDaemon.cpp CollectorThread.cpp DatabaseActuatorThread.cpp UpdateThread.cpp HeartbeatThread.cpp LSFStatus.cpp ora/OraRmMasterSvc.cpp ora/StatusUpdateHelper.cpp
+RMMASTERDAEMONBIN_OBJS = $(RMMASTERDAEMONBIN_SRCS:.cpp=.Osuf)
+NormalProgramTarget(rmMasterDaemon,$(RMMASTERDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),root,bin,750)

@@ -24,74 +24,19 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-#include <Project.tmpl>
-
-#if !defined(_WIN32)
-#if linux
-DEBUG  = -g -O0
-#else
-DEBUG  = -g
-#endif
-#endif
-
-MANPAGES = $(MANDIR)/migHunterDaemon.$(MANSUFFIX)
-EXPORTMANPAGES = $(EXPORTMAN)/man1/migHunterDaemon.$(MANSUFFIX)
-
-CASTOR_HOME = ../../..
-INCLUDES = -I FileName($(ORACLE_HOME)/rdbms,public) -I FileName(../../..,h) -I FileName(../..,..) $(PYTHONINC)
-
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) 
-LIBS = -lshift -lcastorCnvs -lcastorInfoPolicy -lcastorCommonOra -L$(ORACLE_HOME)/lib -locci -lclntsh -Wl,-rpath-link,../../../shlib
-MIGHUNTERDAEMONBIN_SRCS = \
-	MigHunterDaemon.cpp \
-	MigHunterThread.cpp 
-
-MIGHUNTERDAEMONBIN_OBJS = $(MIGHUNTERDAEMONBIN_SRCS:.cpp=.Osuf)
-
-DEPLIB = DepSharedLibraryTargetName(FileName(../..,shlib),shift) \
-         DepSharedLibraryTargetName(FileName(../..,shlib),castorCnvs) \
-         DepSharedLibraryTargetName(FileName(../..,shlib),castorCommonOra) \
-         DepSharedLibraryTargetName(FileName(../..,shlib),castorInfoPolicy)
-
-LDFLAGS += -L FileName(../../..,shlib) $(MTLDFLAGS) 
+CPPFLAGS = -g -O0 -I $(ORACLE_HOME)/rdbms/public -I ../../../h -I ../../.. $(PYTHONINC) $(MTCCFLAGS) 
+LDFLAGS += $(MTLDFLAGS) 
 LD = g++
+LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh $(PYTHONLIBS)
 
-all:ProgramTargetName(migHunterDaemon)
+DependsOnLibrary(../../common,castorcommon)
+DependsOnLibrary(../../dlf,castordlf)
+DependsOnLibrary(..,castorclient)
+DependsOnLibrary(../db/newora,castorcommonora)
+DependsOnLibrary(../db/cnv,castorcnvs)
+DependsOnLibrary(../infoPolicy,castorinfopolicy)
 
-NormalProgramTarget(migHunterDaemon,$(MIGHUNTERDAEMONBIN_OBJS),$(DEPLIB),$(LIBS))
-
-MakeDepSharedLibrary(FileName(../..,shlib),shift)
-MakeDepSharedLibrary(FileName(../..,shlib),castorCnvs)
-MakeDepSharedLibrary(FileName(../..,shlib),castorInfoPolicy)
-
-Makefiles:
-
-#if defined(_WIN32)
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend $(INCLUDES) $(MIGHUNTERDAEMONBIN_SRCS) 2> /dev/null
-#endif
-
-install: FileName($(BIN),migHunterDaemon)
-
-InstallProgram(migHunterDaemon,$(BIN),root,bin,750)
-
-install.man: $(MANDIR) $(MANPAGES)
-MakeDir($(MANDIR),root,bin,0755)
-IMANPAGE(migHunterDaemon,$(MANDIR),$(MANSUFFIX))
-EMANPAGE(migHunterDaemon,$(EXPORTMAN)/man1,$(MANSUFFIX))
-
-exportman: $(EXPORTMANPAGES)
-
-clean:
-	@echo cleaning in CurDir
-	-@RemoveFiles(FilesToClean)
-
-clobber:	clean
-	@echo clobbering in CurDir
-	-@RemoveFiles(ProgramTargetName(migHunterDaemon))
-
-FORCE:
-
+MIGHUNTERDAEMONBIN_SRCS = MigHunterDaemon.cpp MigHunterThread.cpp 
+MIGHUNTERDAEMONBIN_OBJS = $(MIGHUNTERDAEMONBIN_SRCS:.cpp=.Osuf)
+NormalProgramTarget(migHunterDaemon,$(MIGHUNTERDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),root,bin,750)
+ADMMANPAGE(migHunterDaemon)

@@ -17,25 +17,21 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.20 $ $Release$ $Date: 2008/07/29 06:29:14 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.21 $ $Release$ $Date: 2008/11/26 14:51:53 $ $Author: sponcec3 $
 #
 # Make Castor Oracle library for CDBC API
 #
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-#include <Project.tmpl>
+INCLUDES = -I $(ORACLE_HOME)/rdbms/public -I ../../../h -I ../../..
+CPPFLAGS = -g -O0 $(INCLUDES) $(MTCCFLAGS) -DORASTAGERCONFIGFILE=\"OraStagerConfigFile\" -DORACDBC=1
+LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh
+LD = g++
 
-#if !defined(_WIN32)
-#if linux
-DEBUG  = -g -O0
-#else
-DEBUG  = -g
-#endif
-#endif
-
-INCLUDES = -I FileName($(ORACLE_HOME)/rdbms,public) -I FileName(FileName(FileName(..,..),..),h) -I FileName(FileName(..,..),..)
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DORASTAGERCONFIGFILE=\"OraStagerConfigFile\" -DORACDBC=1
+DependsOnLibrary(cnv,castorcnvs)
+DependsOnLibrary(../../dlf,castordlf)
+DependsOnLibrary(../../vmgr,castorvmgr)
 
 ORALIB_SRCS = OraCnvSvc.cpp \
             OraStatement.cpp \
@@ -48,47 +44,11 @@ ORALIB_SRCS = OraCnvSvc.cpp \
             ../ora/OraGCSvc.cpp \
             ../ora/OraQuerySvc.cpp \
             DLFInit.cpp
-
 ORALIB_OBJS = $(ORALIB_SRCS:.cpp=.Osuf)
-COMMONLIB = LibraryTargetName(castorCommonOra)
-LD = g++
+SharedLibraryTarget(castorcommonora,$(ORALIB_OBJS),$(DEPLIB),$(LIBS))
 
 #if BuildVDQMCpp
-#VDQM related objects
 ORAVDQMLIB_SRCS = ../ora/OraVdqmSvc.cpp
-
 ORAVDQMLIB_OBJS = $(ORAVDQMLIB_SRCS:.cpp=.Osuf)
-VDQMLIB = LibraryTargetName(castorVdqmOra)
+SharedLibraryTarget(castorvdqmora,$(ORAVDQMLIB_OBJS),$(DEPLIB),$(LIBS))
 #endif
-
-
-all: $(COMMONLIB) $(VDQMLIB)
-
-MakeDepSharedLibrary(FileName(FileName(..,..),shlib),shift)
-MakeDepSharedLibrary(FileName(FileName(..,..),shlib),castorCnvs)
-
-NormalLibraryTarget(castorCommonOra,$(ORALIB_OBJS))
-#if BuildVDQMCpp
-NormalLibraryTarget(castorVdqmOra,$(ORAVDQMLIB_OBJS))
-#endif
-
-Makefiles:
-
-#if defined(_WIN32)
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend $(INCLUDES) $(ORALIB_SRCS) 2> /dev/null
-#endif
-
-clean:
-	@echo cleaning in CurDir
-	-@RemoveFiles(FilesToClean $(ORALIB_OBJS) $(ORAVDQMLIB_OBJS))
-
-clobber:	clean
-	@echo clobbering in CurDir
-	-@RemoveFiles($(COMMONLIB))
-
-FORCE:
-

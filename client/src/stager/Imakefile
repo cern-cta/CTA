@@ -3,186 +3,40 @@ COMM  @(#)Imakefile,v 1.52 2005/11/25 14:27:22 CERN IT-ADC/CA Jean-Damien Durand
 COMM
 COMM  Make stager clients.
 
-#include <Project.tmpl>
-
-INCLUDES = ../../../h
-INCLUDES_CPP = ../../..
-
-COMM
-COMM Set this flag to -O for optimization, or -g for debug
-COMM
-#if _WIN32
-CCOPTIM =
-#else
-CCOPTIM = -g
-#endif
-
 STAGEHOST=StageHost
-
 STAGEFLAGS = -DSTAGEMAP=\"StageMapFile\" -DSTAGETYPE=\"StageTypeFile\"
-
-THREADFLAGS = $(MTCCFLAGS)
 LDFLAGS += $(MTLDFLAGS)
-
-#if linux
-LDLIBS = $(ADNSLIB) -lnsl -Wl,-rpath-link,../../../shlib
-#endif
-#if _WIN32
-LDLIBS = ..\..\..\lib\shift.lib wsock32.lib ws2_32.lib advapi32.lib
-#endif
-
 #if BuildSecurity
 SECURITYFLAG=-DCSEC
 #endif
-
-CFLAGS = $(CCOPTIM) -I$(INCLUDES) -I$(INCLUDES_CPP) $(SECURITYFLAG) $(THREADFLAGS) $(STAGEFLAGS) -DSTAGEHOST=\"$(STAGEHOST)\"
+CFLAGS = -g -I../../../h -I../../.. $(SECURITYFLAG) $(MTCCFLAGS) $(STAGEFLAGS) -DSTAGEHOST=\"$(STAGEHOST)\"
 CPPFLAGS=$(CFLAGS)
 
-DEPLIB = DepSharedLibraryTargetName(../../shlib,shift)
+DependsOnLibrary(../../common,castorcommon)
+DependsOnLibrary(../../ns,castorns)
+DependsOnLibrary(../../castor,castorclient)
 
-#if !defined(_WIN32)
-GLOBLIB = -L../../../shlib -lshift
-#endif
+NormalProgramTarget(stager_get,stager_get.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
+NormalProgramTarget(stager_update,stager_update.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
+NormalProgramTarget(stager_put,stager_put.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
+NormalProgramTarget(stager_putdone,stager_putdone.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
+NormalProgramTarget(stager_qry,stager_qry.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
+NormalProgramTarget(stager_rm,stager_rm.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
+NormalProgramTarget(stager_setfilegcweight,stager_setFileGCWeight.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
+NormalProgramTarget(castor,castor.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
+NormalProgramTarget(newacct,newacct.Osuf,$(DEPLIB),$(LIBS),root,bin,4755)
+NormalProgramTarget(stager_addprivilege,stager_addPrivilege.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
+NormalProgramTarget(stager_removeprivilege,stager_removePrivilege.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
+NormalProgramTarget(stager_listprivileges,stager_listPrivileges.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
 
-MANPAGES_STAGER = FileName($(MANDIR),stager_get.$(MANSUFFIX)) FileName($(MANDIR),stager_update.$(MANSUFFIX)) FileName($(MANDIR),stager_put.$(MANSUFFIX)) FileName($(MANDIR),stager_putdone.$(MANSUFFIX)) FileName($(MANDIR),stager_qry.$(MANSUFFIX)),FileName($(MANDIR),stager_rm.$(MANSUFFIX)),FileName($(MANDIR),stager_setfilegcweight.$(MANSUFFIX)) FileName($(MANDIR),newacct.$(MANSUFFIX)) FileName($(MANDIR),stager_addprivilege.$(MANSUFFIX)) FileName($(MANDIR),stager_removeprivilege.$(MANSUFFIX)) FileName($(MANDIR),stager_listprivileges.$(MANSUFFIX)) 
-EMANPAGES_STAGER = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_get.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_update.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_put.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_putdone.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_qry.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_rm.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_setfilegcweight.$(MANSUFFIX)))  FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),newacct.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_addprivilege.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_removeprivilege.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_listprivileges.$(MANSUFFIX)))
-
-#if BuildSecurity
-GLOBLIB += -ldl
-#endif
-
-STAGERLIB_OBJS = \
-		stager_client_api_common.Osuf \
-		stager_client_commandline.Osuf \
-		stager_client_changePrivilege.Osuf \
-		stager_client_api_get.Osuf \
-		stager_client_api_put.Osuf \
-		stager_client_api_update.Osuf \
-		stager_client_api_open.Osuf \
-		stager_client_api_query.Osuf \
-		stager_client_api_rm.Osuf \
-		stager_client_api_setFileGCWeight.Osuf \
-		stager_client_api_next.Osuf \
-		stager_client_api_version.Osuf \
-		stager_client_api_changePrivilege.Osuf \
-		stager_client_api_listPrivileges.Osuf \
-		stager_errmsg.Osuf \
-		stager_mapper.Osuf
-
-PROGS_STAGERCLIENT=ProgramTargetName(stager_get) ProgramTargetName(stager_update) ProgramTargetName(stager_put) ProgramTargetName(stager_qry) \
-        ProgramTargetName(stager_putdone) ProgramTargetName(stager_rm) ProgramTargetName(stager_setfilegcweight) ProgramTargetName(castor) ProgramTargetName(newacct) \
-        ProgramTargetName(stager_addprivilege) ProgramTargetName(stager_removeprivilege) ProgramTargetName(stager_listprivileges)
-IPROGS_STAGERCLIENT = FileName($(BIN),ProgramTargetName(stager_get)) FileName($(BIN),ProgramTargetName(stager_update)) FileName($(BIN),ProgramTargetName(stager_qry)) \
-        FileName($(BIN),ProgramTargetName(stager_put)) FileName($(BIN),ProgramTargetName(stager_putdone)) \
-        FileName($(BIN),ProgramTargetName(stager_rm)) FileName($(BIN),ProgramTargetName(stager_setfilegcweight)) \
-        FileName($(BIN),ProgramTargetName(castor)) FileName($(BIN),ProgramTargetName(newacct)) \
-        FileName($(BIN),ProgramTargetName(stager_addprivilege)) FileName($(BIN),ProgramTargetName(stager_removeprivilege)) FileName($(BIN),ProgramTargetName(stager_listprivileges))
-EPROGS_STAGERCLIENT = FileName($(EXPORTBIN),stager_get) FileName($(EXPORTBIN),stager_update) FileName($(EXPORTBIN),stager_qry) \
-        FileName($(EXPORTBIN),stager_put) FileName($(EXPORTBIN),stager_putdone) \
-        FileName($(EXPORTBIN),stager_rm) FileName($(EXPORTBIN),stager_setfilegcweight) \
-        FileName($(EXPORTBIN),castor) FileName($(EXPORTBIN),newacct) \
-        FileName($(EXPORTBIN),stager_addprivilege) FileName($(EXPORTBIN),stager_removeprivilege) FileName($(EXPORTBIN),stager_listprivileges)
-
-all: $(PROGS_STAGERCLIENT)
-
-NormalProgramTarget(stager_get,stager_get.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
-NormalProgramTarget(stager_update,stager_update.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
-NormalProgramTarget(stager_put,stager_put.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
-NormalProgramTarget(stager_putdone,stager_putdone.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
-NormalProgramTarget(stager_qry,stager_qry.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
-NormalProgramTarget(stager_rm,stager_rm.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
-NormalProgramTarget(stager_setfilegcweight,stager_setFileGCWeight.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
-NormalProgramTarget(castor,castor.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
-NormalProgramTarget(newacct,newacct.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
-NormalProgramTarget(stager_addprivilege,stager_addPrivilege.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
-NormalProgramTarget(stager_removeprivilege,stager_removePrivilege.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
-NormalProgramTarget(stager_listprivileges,stager_listPrivileges.Osuf,$(DEPLIB),$(GLOBLIB) $(LDLIBS))
-
-NormalLibraryTarget(stager,$(STAGERLIB_OBJS))
-
-MakeDepSharedLibrary(../../shlib,shift)
-
-install: $(BIN) $(IPROGS_STAGERCLIENT)
-
-InstallProgram(stager_get,$(BIN),root,bin,0755)
-InstallProgram(stager_update,$(BIN),root,bin,0755)
-InstallProgram(stager_put,$(BIN),root,bin,0755)
-InstallProgram(stager_putdone,$(BIN),root,bin,0755)
-InstallProgram(stager_qry,$(BIN),root,bin,0755)
-InstallProgram(stager_rm,$(BIN),root,bin,0755)
-InstallProgram(stager_setfilegcweight,$(BIN),root,bin,0755)
-InstallProgram(castor,$(BIN),root,bin,755)
-InstallProgram(newacct,$(BIN),root,bin,4755)
-InstallProgram(stager_addprivilege,$(BIN),root,bin,0755)
-InstallProgram(stager_removeprivilege,$(BIN),root,bin,0755)
-InstallProgram(stager_listprivileges,$(BIN),root,bin,0755)
-
-install.man: $(MANDIR) $(MANPAGES_STAGER)
-
-IMANPAGE(stager_get,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(stager_update,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(stager_put,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(stager_putdone,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(stager_qry,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(stager_rm,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(stager_setfilegcweight,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(newacct,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(stager_addprivilege,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(stager_removeprivilege,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(stager_listprivileges,$(MANDIR),$(MANSUFFIX))
-
-export: $(EPROGS_STAGERCLIENT)
-
-IEXPORT(stager_get,$(EXPORTBIN),755)
-IEXPORT(stager_update,$(EXPORTBIN),755)
-IEXPORT(stager_put,$(EXPORTBIN),755)
-IEXPORT(stager_putdone,$(EXPORTBIN),755)
-IEXPORT(stager_qry,$(EXPORTBIN),755)
-IEXPORT(stager_rm,$(EXPORTBIN),755)
-IEXPORT(stager_setfilegcweight,$(EXPORTBIN),755)
-IEXPORT(castor,$(EXPORTBIN),755);
-IEXPORT(newacct,$(EXPORTBIN),755);
-IEXPORT(stager_addprivilege,$(EXPORTBIN),755)
-IEXPORT(stager_removeprivilege,$(EXPORTBIN),755)
-IEXPORT(stager_listprivileges,$(EXPORTBIN),755)
-
-exportman: $(EMANPAGES_STAGER)
-
-EMANPAGE(stager_get,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(stager_update,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(stager_put,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(stager_putdone,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(stager_qry,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(stager_rm,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(stager_setfilegcweight,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(newacct,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(stager_addprivilege,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(stager_removeprivilege,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(stager_listprivileges,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-
-MakeDir($(BIN),root,bin,0755)
-MakeDir($(MANDIR),root,bin,0755)
-
-COMM###################### CLEANING RULES #######################
-
-clean:
-	@echo cleaning in CurDir
-	-@RemoveFiles(FilesToClean)
-
-clobber: clean
-	@echo clobbering in CurDir
-	-@RemoveFiles($(PROGS_STAGERCLIENT))
-
-#if _WIN32
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend  -Y -- $(CFLAGS) -- *.c *.cpp 2> /dev/null
-#endif
-
-Makefiles:
-
-FORCE:
-
-COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.
+EXEMANPAGE(stager_get)
+EXEMANPAGE(stager_update)
+EXEMANPAGE(stager_put)
+EXEMANPAGE(stager_putdone)
+EXEMANPAGE(stager_qry)
+EXEMANPAGE(stager_rm)
+EXEMANPAGE(stager_setfilegcweight)
+EXEMANPAGE(newacct)
+EXEMANPAGE(stager_addprivilege)
+EXEMANPAGE(stager_removeprivilege)
+EXEMANPAGE(stager_listprivileges)

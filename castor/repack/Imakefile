@@ -17,29 +17,25 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.27 $ $Release$ $Date: 2008/07/29 06:29:15 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.28 $ $Release$ $Date: 2008/11/26 14:51:54 $ $Author: sponcec3 $
 #
 # Make Castor Repack System
 #
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-#include <Project.tmpl>
+INCLUDES = -I $(ORACLE_HOME)/rdbms/public -I ../../h -I ../..
+CPPFLAGS = -g -O0 $(INCLUDES) $(MTCCFLAGS) -DDEFAULT_CNS=castorns -DORAREPACKCONFIGFILE=\"/etc/castor/ORAREPACKCONFIG\" -DORACDBC=1
+LDFLAGS += $(MTLDFLAGS)
+LD = g++
+SERVLIBS = -L../db/newora -lcastorcommonora -lcastorcommonora -Wl,-rpath-link,../../shlib -L$(ORACLE_HOME)/lib -locci -lclntsh
+SERVDEPLIB += DepSharedLibraryTargetName(db/newora,castorcommonora)
 
-#if !defined(_WIN32)
-#if linux
-DEBUG  = -g -O0
-#else
-DEBUG  = -g
-#endif
-#endif
-
-INCLUDES = -I FileName($(ORACLE_HOME)/rdbms,public) -I FileName(FileName(..,..),h) -I FileName(..,..)
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DDEFAULT_CNS=castorns -DORAREPACKCONFIGFILE=\"/etc/castor/ORAREPACKCONFIG\" -DORACDBC=1
-
-REPACKLIB = LibraryTargetName(castorRepack)
-
-LIBS = -lshift -lcastorCnvs -lcastorCommonOra -Wl,-rpath-link,../../shlib -L$(ORACLE_HOME)/lib -locci
+DependsOnLibrary(../common,castorcommon)
+DependsOnLibrary(../dlf,castordlf)
+DependsOnLibrary(,castorclient)
+DependsOnLibrary(../vmgr,castorvmgr)
+DependsOnLibrary(db/cnv,castorcnvs)
 
 REPACKCOMMON_SRC = ../io/StreamRepackRequestCnv.cpp \
 		../io/StreamRepackSubRequestCnv.cpp \
@@ -56,10 +52,6 @@ REPACKCOMMON_SRC = ../io/StreamRepackRequestCnv.cpp \
                 FileListHelper.cpp \
                 RepackUtility.cpp
 
-REPACKDBCNVSRC =../db/cnv/DbRepackRequestCnv.cpp \
-		../db/cnv/DbRepackSegmentCnv.cpp \
-		../db/cnv/DbRepackSubRequestCnv.cpp
-
 REPACKSERVERBIN_SRCS =  RepackServer.cpp \
 		RepackWorker.cpp \
 		RepackFileStager.cpp \
@@ -67,75 +59,17 @@ REPACKSERVERBIN_SRCS =  RepackServer.cpp \
 		RepackCleaner.cpp \
 		RepackFileChecker.cpp \
 		ora/OraRepackSvc.cpp \
-		$(REPACKDBCNVSRC) \
+		../db/cnv/DbRepackRequestCnv.cpp \
+		../db/cnv/DbRepackSegmentCnv.cpp \
+		../db/cnv/DbRepackSubRequestCnv.cpp \
 		$(REPACKCOMMON_SRC)
-
-REPACKBIN_SRCS =  RepackClient.cpp \
-		../io/ClientSocket.cpp \
-		$(REPACKCOMMON_SRC)
-
-MANPAGES_REPACK = FileName($(MANDIR),repack.$(MANSUFFIX)) FileName($(MANDIR),repackserver.$(MANSUFFIX))
-EMANPAGES_REPACK = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),repack.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),repackserver.$(MANSUFFIX)))
-
-#Repack library
-REPACKLIB_SRCS = $(REPACKCOMMON_SRC)
-REPACKLIB_OBJS = $(REPACKLIB_SRCS:.cpp=.Osuf)
-
 REPACKSERVERBIN_OBJS = $(REPACKSERVERBIN_SRCS:.cpp=.Osuf)
+MakeDepSharedLibrary(db/newora,castorcommonora)
+NormalProgramTarget(repackserver,$(REPACKSERVERBIN_OBJS),$(DEPLIB) $(SERVDEPLIB),$(LIBS) $(SERVLIBS),root,bin,750)
+
+REPACKBIN_SRCS =  RepackClient.cpp ../io/ClientSocket.cpp $(REPACKCOMMON_SRC)
 REPACKBIN_OBJS = $(REPACKBIN_SRCS:.cpp=.Osuf)
+NormalProgramTarget(repack,$(REPACKBIN_OBJS),$(DEPLIB),$(LIBS),root,bin,755)
 
-DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift)
-
-LDFLAGS += -L FileName(..,FileName(..,shlib)) $(MTLDFLAGS)
-LD = g++
-
-all: $(REPACKLIB) \
-	ProgramTargetName(repackserver) \
-	ProgramTargetName(repack)
-
-NormalProgramTarget(repackserver,$(REPACKSERVERBIN_OBJS),$(DEPLIB),$(LIBS))
-NormalProgramTarget(repack,$(REPACKBIN_OBJS),$(DEPLIB),$(LIBS))
-
-MakeDepSharedLibrary(FileName(..,shlib),shift)
-MakeDepSharedLibrary(FileName(..,shlib),castorCnvs)
-
-# The repack Library
-NormalLibraryTarget(castorRepack,$(REPACKLIB_OBJS))
-
-Makefiles:
-
-#if defined(_WIN32)
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend $(INCLUDES) $(REPACKSERVERBIN_SRCS) 2> /dev/null
-	makedepend $(INCLUDES) $(REPACKBIN_SRCS) 2> /dev/null
-#endif
-
-install: FileName($(BIN),repackserver) \
-FileName($(BIN),repack)
-
-InstallProgram(repackserver,$(BIN),root,bin,750)
-InstallProgram(repack,$(BIN),root,bin,755)
-
-install.man: $(MANDIR) $(MANPAGES_REPACK)
-
-IMANPAGE(repack,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(repackserver,$(MANDIR),$(MANSUFFIX))
-
-exportman: $(EMANPAGES_REPACK)
-
-EMANPAGE(repack,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(repackserver,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-
-clean:
-	@echo cleaning in CurDir
-	-@RemoveFiles(FilesToClean $(REPACKSERVERBIN_OBJS))
-
-clobber:	clean
-	@echo clobbering in CurDir
-	-@RemoveFiles(ProgramTargetName(repackserver))
-	-@RemoveFiles(ProgramTargetName(repack))
-
-FORCE:
+EXEMANPAGE(repack)
+EXEMANPAGE(repackserver)

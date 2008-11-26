@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# $Id: makeshlib.sh,v 1.7 2007/12/12 13:34:46 sponcec3 Exp $
+# $Id: makeshlib.sh,v 1.8 2008/11/26 14:51:58 sponcec3 Exp $
 
 if (( $# < 3 )); then
 	echo This script is internally executed by make to build or install the shared libraries.
@@ -22,34 +22,8 @@ ln -s $target.$MAJOR_CASTOR_VERSION.$MINOR_CASTOR_VERSION $3.$MAJOR_CASTOR_VERSI
 rm -f $3
 ln -s $target.$MAJOR_CASTOR_VERSION $3
 
-elif [ "$1" = "preinstall" ]; then
-
-echo  preinstalling $target
-
-rm -f $3.$MAJOR_CASTOR_VERSION.$MINOR_CASTOR_VERSION
-ln -s $target $3.$MAJOR_CASTOR_VERSION.$MINOR_CASTOR_VERSION
-rm -f $3.$MAJOR_CASTOR_VERSION
-ln -s $3.$MAJOR_CASTOR_VERSION.$MINOR_CASTOR_VERSION $3.$MAJOR_CASTOR_VERSION
-rm -f $3
-ln -s $3.$MAJOR_CASTOR_VERSION $3
-
 else
-
-cmd=$1
-echo  building $target.$MAJOR_CASTOR_VERSION
-
-# this nasty trick allows getting all the args from the 3rd one on
-shift
-shift
-cd tmp$target ; \
-$cmd -Wl,-soname,$target.$MAJOR_CASTOR_VERSION -o ../$target.$MAJOR_CASTOR_VERSION.$MINOR_CASTOR_VERSION *.o $@ ; \
-cd ..
-
-rm -rf tmp$target
-rm -f $target.$MAJOR_CASTOR_VERSION
-ln -s $target.$MAJOR_CASTOR_VERSION.$MINOR_CASTOR_VERSION $target.$MAJOR_CASTOR_VERSION
-rm -f $target
-ln -s $target.$MAJOR_CASTOR_VERSION $target
-
+	echo This script does not support command \'"$1"\'
+	exit 1
 fi
 

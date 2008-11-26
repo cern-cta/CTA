@@ -24,16 +24,6 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-#include <Project.tmpl>
-
-#if !defined(_WIN32)
-#if linux
-DEBUG  = -g -O0
-#else
-DEBUG  = -g
-#endif
-#endif
-
 #ifdef StagerSuperUser
 STAGERSUPERUSER0 = StagerSuperUser
 #else
@@ -47,57 +37,15 @@ STAGERSUPERGROUP0 = st
 STAGERSUPERUSER  = -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER0)\"
 STAGERSUPERGROUP = -DSTAGERSUPERGROUP=\"$(STAGERSUPERGROUP0)\"
 
-MANPAGES =
-EXPORTMANPAGES =
-INCLUDES = -I FileName(../../..,h) -I FileName(../..,..)
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
+CPPFLAGS = -g -O0 -I ../../../h -I ../../.. $(MTCCFLAGS) $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
+LDFLAGS += $(MTLDFLAGS)
+LD = g++
 
-LIBS = -lcastorMonitor -lshift -Wl,-rpath-link,../../../shlib
+DependsOnLibrary(../../common,castorcommon)
+DependsOnLibrary(../../dlf,castordlf)
+DependsOnLibrary(..,castorclient)
+DependsOnLibrary(,castormonitor)
 
 RMNODEDAEMONBIN_SRCS = MetricsThread.cpp StateThread.cpp RmNodeDaemon.cpp
 RMNODEDAEMONBIN_OBJS = $(RMNODEDAEMONBIN_SRCS:.cpp=.Osuf)
-
-DEPLIB = DepSharedLibraryTargetName(FileName(../..,shlib),castorMonitor) \
-         DepSharedLibraryTargetName(FileName(../..,shlib),shift)
-
-LDFLAGS += -L FileName(..,FileName(../..,shlib)) $(MTLDFLAGS)
-LD = g++
-
-all:ProgramTargetName(rmNodeDaemon)
-
-NormalProgramTarget(rmNodeDaemon,$(RMNODEDAEMONBIN_OBJS),$(DEPLIB),$(LIBS))
-
-MakeDepSharedLibrary(FileName(../..,shlib),castorMonitor)
-MakeDepSharedLibrary(FileName(../..,shlib),shift)
-
-Makefiles:
-
-#if defined(_WIN32)
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend $(INCLUDES) $(RMNODEDAEMONBIN_SRCS) 2> /dev/null
-#endif
-
-install: FileName($(BIN),rmNodeDaemon)
-
-InstallProgram(rmNodeDaemon,$(BIN),root,bin,750)
-
-install.man: $(MANDIR) $(MANPAGES)
-MakeDir($(MANDIR),root,bin,0755)
-IMANPAGE(rmNodeDaemon,$(MANDIR),$(MANSUFFIX))
-EMANPAGE(rmNodeDaemon,$(EXPORTMAN)/man1,$(MANSUFFIX))
-
-exportman: $(EXPORTMANPAGES)
-
-clean:
-	@echo rmnode in CurDir
-	-@RemoveFiles(FilesToClean $(RMNODEDAEMONBIN_OBJS))
-
-clobber:	clean
-	@echo clobbering in CurDir
-	-@RemoveFiles(ProgramTargetName(rmNodeDaemon))
-
-FORCE:
-
+NormalProgramTarget(rmNodeDaemon,$(RMNODEDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),root,bin,750)

@@ -304,10 +304,6 @@
 #undef BuildVdqmLibrary
 #define BuildVdqmLibrary YES
 #endif
-#if !Accounting
-#undef Accounting
-#define Accounting YES
-#endif
 #if !BuildVolumeMgrLibrary
 #undef BuildVolumeMgrLibrary
 #define BuildVolumeMgrLibrary YES
@@ -736,5 +732,46 @@ GRIDFTPDIR = gridftp2
 
 /* Those directories are always defined because we always build at least */
 /* COMMON library */
-LIBDIR=lib
 SHLIBDIR=shlib
+
+.PHONY : all install clean clobber Makefiles depend checkDESTDIR
+
+all:
+
+checkDESTDIR:
+	@if [ "${DESTDIR}" == '' ]; \
+	then \
+	  echo "Please set DESTDIR environment variable before invoking make install."; \
+	  exit -1; \
+	fi
+
+install: checkDESTDIR all
+
+clean:
+	RemoveFiles($(FilesToClean))
+	GotoSubdirs($(SUBDIRS))
+
+clobber: clean
+	RemoveFiles($(FilesToClobber))
+	GotoSubdirs($(SUBDIRS))
+
+Makefiles:
+	@for i in $(SUBDIRS);\
+	do (if [ -d $$i ] ;\
+	    then \
+	      (echo " $$i:" ; cd $$i ;\
+	      $(CASTOR_ROOT)/imake/imake -I$(CASTOR_ROOT)/config;\
+	      $(MAKE) $(MFLAGS) $@) ;\
+	    else \
+	      (echo "ERROR : No directory $$i" ;\
+	      exit 1) ;\
+	    fi )\
+	done ;
+
+MakeSubdirs(all,$(SUBDIRS))
+MakeSubdirs(install,$(SUBDIRS))
+MakeSubdirs(exportman,$(SUBDIRS))
+
+depend:
+	makedepend $(INCLUDES) *.cpp *.hpp *.h 2> /dev/null
+	GotoSubdirs($(SUBDIRS))

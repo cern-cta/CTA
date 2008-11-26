@@ -23,20 +23,10 @@
 #
 # @author Castor Dev team, castor-dev@cern.ch
 
-#include <Project.tmpl>
+INCLUDES = -I ../../../h -I ../../..
+CPPFLAGS = -g -O0 $(INCLUDES) $(MTCCFLAGS)
+LD = g++
 
-#if !defined(_WIN32)
-#if linux
-DEBUG  = -g -O0
-#else
-DEBUG  = -g
-#endif
-#endif
-
-INCLUDES = -I FileName(FileName(FileName(..,..),..),h) -I FileName(FileName(..,..),..)
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
-
-# generated via ls *.cpp | gawk '{ print "     " $1 " \\" }'
 CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbBaseCnv.cpp \
      DbCastorFileCnv.cpp \
@@ -107,35 +97,9 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      ../DbParamsSvc.cpp \
      ../../server/SelectProcessThread.cpp \
      ../../server/BaseDbThread.cpp
-
 CNVSLIB_OBJS = $(CNVSLIB_SRCS:.cpp=.Osuf)
 
-COMMONLIB = LibraryTargetName(castorCnvs)
-LD = g++
-
-all: $(COMMONLIB)
-
-MakeDepSharedLibrary(FileName(FileName(..,..),shlib),shift)
-
-NormalLibraryTarget(castorCnvs,$(CNVSLIB_OBJS))
-
-Makefiles:
-
-#if defined(_WIN32)
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend $(INCLUDES) $(CNVSLIB_SRCS) 2> /dev/null
-#endif
-
-clean:
-	@echo cleaning in CurDir
-	-@RemoveFiles(FilesToClean $(CNVSLIB_OBJS))
-
-clobber:	clean
-	@echo clobbering in CurDir
-	-@RemoveFiles($(COMMONLIB))
-
-FORCE:
+DependsOnLibrary(..,castorclient)
+DependsOnLibrary(../../dlf,castordlf)
+SharedLibraryTarget(castorcnvs,$(CNVSLIB_OBJS),$(DEPLIB),$(LIBS))
 

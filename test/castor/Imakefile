@@ -17,57 +17,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Release$ $Date: 2007/10/02 09:00:24 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Release$ $Date: 2008/11/26 14:51:59 $ $Author: sponcec3 $
 #
 # Make Castor tests
 #
 # @author Sebastien Ponce, sebastien.ponce@cern.ch
 #
 
-#include <Project.tmpl>
-
-SUBDIRS = $(DBTESTCPPDIR) $(IOTESTCPPDIR) $(DBCTESTCPPDIR) $(STGSVCTESTCPPDIR) $(MONITORINGTESTCPPDIR)
-DEPENDDIRS = $(DBTESTCPPDIR) $(IOTESTCPPDIR) $(DBCTESTCPPDIR) $(STGSVCTESTCPPDIR)
-
-MakeSubdirs(all,$(SUBDIRS))
-MakeCondSubdirs(clean,$(SUBDIRS),)
-MakeCondSubdirs(clobber,$(SUBDIRS),)
-
-#if defined(_WIN32)
-Makefiles:
-	@for %i in ( $(SUBDIRS) ) \
-	do @(echo %i - & cd %i & \
-		..\..\..\imake\imake -I..\..\..\config & \
-		$(MAKE) $(MFLAGS) $@ & cd .. )
-
-depend:
-	@echo Not supported on this platform
-#else
-Makefiles:
-	@. ../../setosflags ;\
-	for i in $(SUBDIRS) ;\
-	do (if [ -d $$i ] ;\
-	    then \
-	      (echo " $$i:" ; cd $$i ;\
-	      ../../../imake/imake -I../../../config -DOSMajorVersion="$$OSMAJNO" -DOSMinorVersion="$$OSMINNO" ;\
-	      $(MAKE) $(MFLAGS) $@) ;\
-	    else \
-	      (echo "ERROR : No directory $$i" ;\
-	      exit 1) ;\
-	    fi )\
-	done ;
-
-depend:
-	for i in $(DEPENDDIRS) ;\
-	do (if [ -d $$i ] ;\
-	    then \
-	      (echo " $$i:" ; cd $$i ;\
-	      $(MAKE) $(MFLAGS) $@) ;\
-	    else \
-	      (echo "ERROR : No directory $$i" ;\
-	      exit 1) ;\
-	    fi )\
-	done ;
-
-#endif
-
+SUBDIRS = db io dbC stgSvc monitoring dstage

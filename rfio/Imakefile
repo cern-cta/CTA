@@ -11,29 +11,17 @@ COMM Define the file indicating that no more RFIO requests
 COMM should be issued.
 COMM
 
-#include <Project.tmpl>
-
-NOMORERFIO = FileName(OperatorDir,nomorerfio)
-
-INCLUDES = FileName(..,h)
+NOMORERFIO = OperatorDir/nomorerfio
 SPOOL = RfioSpool
-LOGFILE = FileName($(SPOOL),rfiod.log)
+LOGFILE = $(SPOOL)/rfiod.log
 STAGEHOST = StageHost
 
 #if BuildNameServerLibrary
 CNS_ROOT_DIR = NsRoot
 CNS_ROOT = -DCNS_ROOT=\"$(CNS_ROOT_DIR)\"
 #endif
-ERFIODSCRIPT = FileName(FileName(FileName($(EXPORTSHR),etc),init.d),rfiod.scripts)
 
-#if ClientLogging
-LOGGINGO=logging.Osuf
-DUMPLOG=ProgramTargetName(dump_log)
-DUMPINSTALL=FileName($(BIN),ProgramTargetName(dump_log))
-CLIENTLOG=-DCLIENTLOG
-#endif
-
-RFIO_ALRM= FileName(RfioSpool,RfioAlarmFile)
+RFIO_ALRM= RfioSpool/RfioAlarmFile
 DOMAINNAME = DomainName
 
 #ifdef StagerSuperUser
@@ -50,11 +38,6 @@ RFIOFLAGS=-DNOMORERFIO=\"$(NOMORERFIO)\" \
 	  -DRFIO_ALRM=\"$(RFIO_ALRM)\" $(CNS_ROOT) $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
 CTHREAD_FLAGS = $(MTCCFLAGS)
 
-#if !defined(_WIN32)
-COMM Uncomment the following to compile in debug mode RFIO package
-DEBUG  = -g
-#endif
-
 NFSROOT0 = NfsRoot
 NFSROOT  = -DNFSROOT=\"$(NFSROOT0)\"
 
@@ -62,22 +45,12 @@ NFSROOT  = -DNFSROOT=\"$(NFSROOT0)\"
 CSEC = -DCSEC
 #endif
 
-CFLAGS = $(DEBUG) -I$(INCLUDES) -I.. $(CTHREAD_FLAGS) $(CLIENTLOG) $(CCOPTFLAGS) $(DEFCFLAGS) $(RFIOFLAGS) $(ACCTFLAG) -DFORTRAN $(SUPPORT_CS2) $(CPPUFL) $(NFSROOT) $(CSEC) -DSTAGEHOST=\"$(STAGEHOST)\"
+CFLAGS = -g -I../h -I.. $(CTHREAD_FLAGS) $(CCOPTFLAGS) $(DEFCFLAGS) $(RFIOFLAGS) $(ACCTFLAG) -DFORTRAN $(SUPPORT_CS2) $(CPPUFL) $(NFSROOT) $(CSEC) -DSTAGEHOST=\"$(STAGEHOST)\"
 
 FIOO=fio.Osuf
-#if _WIN32
-NTSERVICEO=service.obj
-#endif
 FFLAGS = $(FFOPTFLAGS) $(FPPUFL)
-#if linux
-LDLIBS = -L../shlib -lshift $(ADNSLIB) -lnsl $(MTLDLIBS) -Wl,-rpath-link,../shlib
-#else
-#if _WIN32
-LDLIBS = ..\lib\shift.lib ws2_32.lib advapi32.lib mpr.lib
-#else
-LDLIBS = -L../shlib -lshift $(MTLDLIBS)
-#endif
-#endif
+LIBS = $(MTLDLIBS)
+RFIOLIB = -L. -lcastorrfio
 
 #if BuildSecurity
 SECURITYFLAG = -DCSEC
@@ -91,192 +64,23 @@ GLOBUS_FLAVOUR=GlobusFlavour/**/pthr
 GLOBUS_LIBS=-L$(GLOBUS_LOCATION)/lib -lcrypto_$(GLOBUS_FLAVOUR)
 LIBCSEC += $(GLOBUS_LIBS)
 #endif
-LDLIBS += -ldl
+LIBS += -ldl
 #endif
 
-#if defined(linux)
 #if UseXFSPrealloc
 CFLAGS += -DUSE_XFSPREALLOC
 XFSLIBS = -lxfs
 #endif
-#endif
 
 CKSUMLIB = -lz
-LIBS = $(OPTLIBS)
+
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(ns,castorns)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(security,castorsecurity)
+DependsOnLibrary(castor,castorclient)
 
 #if BuildRfioLibrary
-RFIOLIBTARGET=SharedLibraryTargetName(castorrfio)
-#endif
-
-MANPAGES = FileName($(MANDIR),rfiod.$(MANSUFFIX)) \
-	   FileName($(MANDIR),rfcat.$(MANSUFFIX)) \
-	   FileName($(MANDIR),rfchmod.$(MANSUFFIX)) \
-	   FileName($(MANDIR),rfcp.$(MANSUFFIX)) \
-	   FileName($(MANDIR),rfdir.$(MANSUFFIX)) \
-	   FileName($(MANDIR),rfmkdir.$(MANSUFFIX)) \
-	   FileName($(MANDIR),rfrename.$(MANSUFFIX)) \
-	   FileName($(MANDIR),rfrm.$(MANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_access.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_chmod.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_chown.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_close.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_closedir.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_fchmod.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_fclose.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_feof.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_ferror.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_fflush.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_fileno.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_fopen.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_fopen64.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_fread.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_fseek.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_fseeko64.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_fstat.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_fstat64.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_ftell.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_ftello64.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_fwrite.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_lockf.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_lockf64.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_lseek.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_lseek64.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_lstat.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_lstat64.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_mkdir.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_mstat.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_mstat64.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_munlink.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_msymlink.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_open.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_open64.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_opendir.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_pclose.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_perror.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_popen.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_preseek.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_preseek64.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_read.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_readdir.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_readlink.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_rename.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_rewinddir.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_rmdir.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_serror.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_stat.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_stat64.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_statfs.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_symlink.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_unlink.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfio_write.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfioreadopt.$(LIBMANSUFFIX)) \
-	   FileName($(LIBMANDIR),rfiosetopt.$(LIBMANSUFFIX))
-
-EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rfiod.$(MANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rfcat.$(MANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rfchmod.$(MANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rfcp.$(MANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rfdir.$(MANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rfmkdir.$(MANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rfrename.$(MANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rfrm.$(MANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_access.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_chmod.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_chown.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_close.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_closedir.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_fchmod.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_fclose.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_feof.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_ferror.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_fflush.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_fileno.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_fopen.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_fopen64.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_fread.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_fseek.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_fseeko64.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_fstat.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_fstat64.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_ftell.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_ftello64.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_fwrite.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_lockf.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_lockf64.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_lseek.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_lseek64.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_lstat.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_lstat64.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_mkdir.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_mstat.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_mstat64.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_munlink.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_msymlink.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_open.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_open64.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_opendir.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_pclose.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_perror.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_popen.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_preseek.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_preseek64.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_read.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_readdir.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_readlink.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_rename.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_rewinddir.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_rmdir.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_serror.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_stat.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_stat64.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_statfs.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_symlink.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_unlink.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfio_write.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfioreadopt.$(LIBMANSUFFIX))) \
-	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfiosetopt.$(LIBMANSUFFIX)))
-
-#if BuildRfioClient
-CLIENT = ProgramTargetName(rfcat) ProgramTargetName(rfchmod) \
-	 ProgramTargetName(rfcp) ProgramTargetName(rfdir) \
-	 ProgramTargetName(rfmkdir) ProgramTargetName(rfrename) \
-	 ProgramTargetName(rfrm) ProgramTargetName(rfstat)
-IPROGC = FileName($(BIN),ProgramTargetName(rfcat)) \
-	 FileName($(BIN),ProgramTargetName(rfchmod)) \
-	 FileName($(BIN),ProgramTargetName(rfcp)) \
-	 FileName($(BIN),ProgramTargetName(rfdir)) \
-	 FileName($(BIN),ProgramTargetName(rfmkdir)) \
-	 FileName($(BIN),ProgramTargetName(rfrename)) \
-	 FileName($(BIN),ProgramTargetName(rfrm)) \
-	 FileName($(BIN),ProgramTargetName(rfstat))
-EPROGC = FileName($(EXPORTBIN),rfcat) \
-	 FileName($(EXPORTBIN),rfchmod) \
-	 FileName($(EXPORTBIN),rfcp) \
-	 FileName($(EXPORTBIN),rfdir) \
-	 FileName($(EXPORTBIN),rfmkdir) \
-	 FileName($(EXPORTBIN),rfrename) \
-	 FileName($(EXPORTBIN),rfrm) \
-	 FileName($(EXPORTBIN),rfstat)
-#endif
-#if BuildRfioServer
-SERVER = ProgramTargetName(rfiod)
-IPROGS = FileName($(BIN),ProgramTargetName(rfiod))
-EPROGS = FileName($(EXPORTBIN),rfiod)
-#endif
-
-SRVOBJS = $(NTSERVICEO) Csemaphore.Osuf rfio_serv.Osuf rfio_calls.Osuf \
-		rfio_call64.Osuf rfio_fcalls.Osuf rfio_callhandlers.Osuf switch_req.Osuf \
-		checkkey.Osuf $(FIOO) $(CRAYFORTRANO) rfstatfs.Osuf alrm.Osuf \
-		rfioacct.Osuf RemoteJobSvc.Osuf stager_catalogInterface.Osuf \
-		stager_util.Osuf stager_messages.Osuf stager_extern_globals.Osuf \
-		stager_uuid.Osuf
-
-#if defined(linux)
-#if UseXFSPrealloc
-SRVOBJS += rfio_alignedbuf.Osuf rfio_xfsprealloc.Osuf
-#endif
-#endif
-
 OBSOLETE_OBJS = \
             ../client/src/rfio/buildupath.Osuf \
 	    ../client/src/rfio/send2stgd_api.Osuf \
@@ -285,14 +89,13 @@ OBSOLETE_OBJS = \
 	    ../client/src/rfio/stage_errmsg.Osuf \
 	    ../client/src/rfio/stage_updc.Osuf \
 	    ../client/src/rfio/stage_util.Osuf
-
 RFIOLIB_OBJS = access.Osuf alrm.Osuf chdir.Osuf checkkey.Osuf chmod.Osuf \
 		chown.Osuf close.Osuf closedir.Osuf connect.Osuf error.Osuf \
 		fchmod.Osuf fchown.Osuf fclose.Osuf feof.Osuf ferror.Osuf \
 		fflush.Osuf fileno.Osuf $(FIOO) fopen.Osuf \
-		$(CRAYFORTRANO) fread.Osuf fseek.Osuf fstat.Osuf ftell.Osuf \
+		fread.Osuf fseek.Osuf fstat.Osuf ftell.Osuf \
 		fwrite.Osuf getc.Osuf getcwd.Osuf lockf.Osuf \
-		$(LOGGINGO) lseek.Osuf lstat.Osuf lun2fn.Osuf misc.Osuf \
+		lseek.Osuf lstat.Osuf lun2fn.Osuf misc.Osuf \
 		mkdir.Osuf mstat.Osuf msymlink.Osuf munlink.Osuf open.Osuf opendir.Osuf parse.Osuf  \
 		pclose.Osuf popen.Osuf pread.Osuf preseek.Osuf pwrite.Osuf \
 		read.Osuf readdir.Osuf readlink.Osuf rename.Osuf rewinddir.Osuf \
@@ -303,257 +106,94 @@ RFIOLIB_OBJS = access.Osuf alrm.Osuf chdir.Osuf checkkey.Osuf chmod.Osuf \
 		fopen64.Osuf fseeko64.Osuf fstat64.Osuf ftello64.Osuf \
 		lockf64.Osuf lseek64.Osuf open64.Osuf \
 		preseek64.Osuf read64.Osuf stream64.Osuf write64.Osuf RfioTURL.Osuf $(OBSOLETE_OBJS)
+SharedLibraryTarget(castorrfio,$(RFIOLIB_OBJS),$(DEPLIB),$(LIBS))
+#endif
 
-all:    $(RFIOLIBTARGET) $(CLIENT) $(SERVER) $(DUMPLOG)
+#if BuildRfioClient
+NormalProgramTarget(rfcat,rfcat.Osuf, $(RFIOTARGETLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),root,bin,755)
+NormalProgramTarget(rfchmod,rfchmod.Osuf, $(RFIOTARGETLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),root,bin,755)
+NormalProgramTarget(rfcp,rfcp.Osuf, $(RFIOTARGETLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),root,bin,755)
+NormalProgramTarget(rfstat,rfstat.Osuf, $(RFIOTARGETLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),root,bin,755)
+NormalProgramTarget(rfrm,rfrm.Osuf, $(RFIOTARGETLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),root,bin,755)
+NormalProgramTarget(rfdir,rfdir.Osuf, $(RFIOTARGETLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),root,bin,755)
+NormalProgramTarget(rfmkdir,rfmkdir.Osuf, $(RFIOTARGETLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),root,bin,755)
+NormalProgramTarget(rfrename,rfrename.Osuf, $(RFIOTARGETLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),root,bin,755)
+#endif
 
 #if BuildRfioServer
-install: $(BIN) $(IPROGC) $(IPROGS) $(SPOOL) $(DUMPINSTALL)
-#else
-install: $(BIN) $(IPROGC) $(IPROGS) $(DUMPINSTALL)
-#endif
-
-export: $(EPROGS) $(EPROGC)
-
-exportman: $(EXPORTMANPAGES)
-
-exportshr: $(ERFIODSCRIPT)
-
-$(ERFIODSCRIPT): rfiod.scripts
-	-mkdir -p $(@D)
-	-mv $(@D)/$? $(@D)/OLD$?
-	cp $? $@
-	chmod 750 $@
-
-SharedLibraryTarget(castorrfio,$(RFIOLIB_OBJS),,)
-
-NormalProgramTarget(rfiod,$(SRVOBJS),DepSharedLibraryTargetName(shlib,shift), \
- $(MTLDFLAGS) $(RTFLAGS) $(RTLIBS) $(LIBCSEC) $(LDLIBS) $(XFSLIBS) $(CKSUMLIB))
-
-#if _WIN32
-service.c:	..\win32\service.c
-	RemoveFile(service.c)
-	copy ..\win32\service.c service.c
-#endif
-
-NormalProgramTarget(dump_log,dump_log.Osuf,DepLibraryTargetName(common,common), \
- $(LDLIBS))
-
-NormalProgramTarget(rfcat,rfcat.Osuf, \
- SharedLibraryTargetName(castorrfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
-
-NormalProgramTarget(rfchmod,rfchmod.Osuf, \
- SharedLibraryTargetName(castorrfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
-
-NormalProgramTarget(rfcp,rfcp.Osuf, \
- SharedLibraryTargetName(castorrfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
-
-NormalProgramTarget(rfstat,rfstat.Osuf, \
- SharedLibraryTargetName(castorrfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
-
-NormalProgramTarget(rfrm,rfrm.Osuf, \
- SharedLibraryTargetName(castorrfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
-
-NormalProgramTarget(rfdir,rfdir.Osuf, \
- SharedLibraryTargetName(castorrfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
-
-NormalProgramTarget(rfmkdir,rfmkdir.Osuf, \
- SharedLibraryTargetName(castorrfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
-
-NormalProgramTarget(rfrename,rfrename.Osuf, \
- SharedLibraryTargetName(castorrfio) DepSharedLibraryTargetName(shlib,shift), $(LDLIBS))
-
-InstallProgram(rfiod,$(BIN),root,bin,755)
-IEXPORT(rfiod,$(EXPORTBIN),755)
-
-InstallProgram(rfcat,$(BIN),root,bin,755)
-IEXPORT(rfcat,$(EXPORTBIN),755)
-
-InstallProgram(rfchmod,$(BIN),root,bin,755)
-IEXPORT(rfchmod,$(EXPORTBIN),755)
-
-InstallProgram(rfcp,$(BIN),root,bin,755)
-IEXPORT(rfcp,$(EXPORTBIN),755)
-
-InstallProgram(rfstat,$(BIN),root,bin,755)
-IEXPORT(rfstat,$(EXPORTBIN),755)
-
-InstallProgram(rfrm,$(BIN),root,bin,755)
-IEXPORT(rfrm,$(EXPORTBIN),755)
-
-InstallProgram(rfdir,$(BIN),root,bin,755)
-IEXPORT(rfdir,$(EXPORTBIN),755)
-
-InstallProgram(rfmkdir,$(BIN),root,bin,755)
-IEXPORT(rfmkdir,$(EXPORTBIN),755)
-
-InstallProgram(rfrename,$(BIN),root,bin,755)
-IEXPORT(rfrename,$(EXPORTBIN),755)
-
-InstallProgram(dump_log,$(BIN),root,bin,755)
-
-MakeDir($(BIN),root,bin,0755)
 MakeDir($(SPOOL),root,bin,0755)
-
-install.man: $(MANDIR) $(LIBMANDIR) $(MANPAGES)
-
-MakeDir($(MANDIR),root,bin,0755)
-MakeDir($(LIBMANDIR),root,bin,0755)
-
-IMANPAGE(rfiod,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(rfcat,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(rfchmod,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(rfcp,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(rfdir,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(rfmkdir,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(rfrename,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(rfrm,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(rfio_access,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_chmod,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_chown,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_close,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_closedir,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_fchmod,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_fclose,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_feof,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_ferror,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_fflush,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_fileno,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_fopen,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_fopen64,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_fread,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_fseek,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_fseeko64,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_fstat,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_fstat64,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_ftell,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_ftello64,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_fwrite,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_lockf,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_lockf64,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_lseek,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_lseek64,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_lstat,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_lstat64,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_mkdir,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_mstat,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_mstat64,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_munlink,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_msymlink,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_open,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_open64,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_opendir,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_pclose,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_perror,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_popen,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_preseek,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_preseek64,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_read,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_readdir,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_readlink,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_rename,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_rewinddir,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_rmdir,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_serror,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_stat,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_stat64,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_statfs,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_symlink,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_unlink,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfio_write,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfioreadopt,$(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(rfiosetopt,$(LIBMANDIR),$(LIBMANSUFFIX))
-EMANPAGE(rfiod,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(rfcat,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(rfchmod,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(rfcp,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(rfdir,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(rfmkdir,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(rfrename,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(rfrm,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(rfio_access,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_chmod,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_chown,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_close,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_closedir,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_fchmod,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_fclose,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_feof,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_ferror,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_fflush,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_fileno,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_fopen,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_fopen64,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_fread,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_fseek,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_fseeko64,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_fstat,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_fstat64,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_ftell,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_ftello64,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_fwrite,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_lockf,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_lockf64,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_lseek,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_lseek64,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_lstat,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_lstat64,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_mkdir,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_mstat,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_mstat64,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_munlink,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_msymlink,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_open,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_open64,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_opendir,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_pclose,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_perror,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_popen,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_preseek,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_preseek64,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_read,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_readdir,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_readlink,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_rename,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_rewinddir,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_rmdir,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_serror,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_stat,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_stat64,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_statfs,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_symlink,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_unlink,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfio_write,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfioreadopt,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-EMANPAGE(rfiosetopt,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
-
-clean:
-	@echo cleaning in CurDir
-	-@RemoveFiles(FilesToClean $(CRAYFORTRANF) $(OBSOLETE_OBJS))
-
-clobber:        clean
-	@echo clobbering in CurDir
-	-@RemoveFiles(ProgramTargetName(rfcat) ProgramTargetName(rfchmod))
-	-@RemoveFiles(ProgramTargetName(rfcp) ProgramTargetName(rfstat))
-	-@RemoveFiles(ProgramTargetName(rfrm) ProgramTargetName(rfdir))
-	-@RemoveFiles(ProgramTargetName(rfmkdir) ProgramTargetName(rfrename))
-	-@RemoveFiles(ProgramTargetName(rfiod) $(DUMPLOG))
-
-#if _WIN32
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend -Y$(INCLUDES) *.c 2> /dev/null
+SRVOBJS = Csemaphore.Osuf rfio_serv.Osuf rfio_calls.Osuf \
+		rfio_call64.Osuf rfio_fcalls.Osuf rfio_callhandlers.Osuf switch_req.Osuf \
+		checkkey.Osuf $(FIOO) rfstatfs.Osuf alrm.Osuf \
+		rfioacct.Osuf RemoteJobSvc.Osuf stager_catalogInterface.Osuf \
+		stager_util.Osuf stager_messages.Osuf stager_extern_globals.Osuf \
+		stager_uuid.Osuf
+#if UseXFSPrealloc
+SRVOBJS += rfio_alignedbuf.Osuf rfio_xfsprealloc.Osuf
+#endif
+NormalProgramTarget(rfiod,$(SRVOBJS),$(RFIOTARGETLIB) $(DEPLIB), $(MTLDFLAGS) $(RTFLAGS) $(RTLIBS) $(LIBCSEC) $(RFIOLIB) $(LIBS) $(XFSLIBS) $(CKSUMLIB),root,bin,755)
 #endif
 
-Makefiles:
-
-MakeDepLibrary(common,common)
-MakeDepSharedLibrary(shlib,shift)
-
-FORCE:
-
-COMM
-COMM Dependencies
-COMM
-COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.
+EXEMANPAGE(rfiod)
+EXEMANPAGE(rfcat)
+EXEMANPAGE(rfchmod)
+EXEMANPAGE(rfcp)
+EXEMANPAGE(rfdir)
+EXEMANPAGE(rfmkdir)
+EXEMANPAGE(rfrename)
+EXEMANPAGE(rfrm)
+LIBMANPAGE(rfio_access)
+LIBMANPAGE(rfio_chmod)
+LIBMANPAGE(rfio_chown)
+LIBMANPAGE(rfio_close)
+LIBMANPAGE(rfio_closedir)
+LIBMANPAGE(rfio_fchmod)
+LIBMANPAGE(rfio_fclose)
+LIBMANPAGE(rfio_feof)
+LIBMANPAGE(rfio_ferror)
+LIBMANPAGE(rfio_fflush)
+LIBMANPAGE(rfio_fileno)
+LIBMANPAGE(rfio_fopen)
+LIBMANPAGE(rfio_fopen64)
+LIBMANPAGE(rfio_fread)
+LIBMANPAGE(rfio_fseek)
+LIBMANPAGE(rfio_fseeko64)
+LIBMANPAGE(rfio_fstat)
+LIBMANPAGE(rfio_fstat64)
+LIBMANPAGE(rfio_ftell)
+LIBMANPAGE(rfio_ftello64)
+LIBMANPAGE(rfio_fwrite)
+LIBMANPAGE(rfio_lockf)
+LIBMANPAGE(rfio_lockf64)
+LIBMANPAGE(rfio_lseek)
+LIBMANPAGE(rfio_lseek64)
+LIBMANPAGE(rfio_lstat)
+LIBMANPAGE(rfio_lstat64)
+LIBMANPAGE(rfio_mkdir)
+LIBMANPAGE(rfio_mstat)
+LIBMANPAGE(rfio_mstat64)
+LIBMANPAGE(rfio_munlink)
+LIBMANPAGE(rfio_msymlink)
+LIBMANPAGE(rfio_open)
+LIBMANPAGE(rfio_open64)
+LIBMANPAGE(rfio_opendir)
+LIBMANPAGE(rfio_pclose)
+LIBMANPAGE(rfio_perror)
+LIBMANPAGE(rfio_popen)
+LIBMANPAGE(rfio_preseek)
+LIBMANPAGE(rfio_preseek64)
+LIBMANPAGE(rfio_read)
+LIBMANPAGE(rfio_readdir)
+LIBMANPAGE(rfio_readlink)
+LIBMANPAGE(rfio_rename)
+LIBMANPAGE(rfio_rewinddir)
+LIBMANPAGE(rfio_rmdir)
+LIBMANPAGE(rfio_serror)
+LIBMANPAGE(rfio_stat)
+LIBMANPAGE(rfio_stat64)
+LIBMANPAGE(rfio_statfs)
+LIBMANPAGE(rfio_symlink)
+LIBMANPAGE(rfio_unlink)
+LIBMANPAGE(rfio_write)
+LIBMANPAGE(rfioreadopt)
+LIBMANPAGE(rfiosetopt)

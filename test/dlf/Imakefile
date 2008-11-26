@@ -17,52 +17,10 @@ COMM  USA.                                                                      
 COMM                                                                                                      #
 COMM -----------------------------------------------------------------------------------------------------#
 
-#include <Project.tmpl>
-
-INCLUDES = FileName(FileName(..,..),h)
-#if linux
-LIBS = -L../../dlf -ldlf -L../../common -lcommon -lnsl
-#else
-#if SOLARIS
-LIBS = -L../../dlf -ldlf -L../../common -lcommon -lsocket -lnsl
-#else
-LIBS = -L../../dlf -ldlf -L../../common -lcommon
-#endif
-#endif
-
-CFLAGS  = -pedantic -Wno-long-long -I$(INCLUDES) -I../../dlf/
+CFLAGS  = -pedantic -Wno-long-long -I../../h -I../../dlf/
 LDFLAGS = $(MTLDFLAGS)
-PROGS   = ProgramTargetName(dlftest)
 
-DEPLIBS = DepLibraryTargetName(FileName(..,dlf),dlf) \
-	  DepLibraryTargetName(FileName(..,common),common)
+DependsOnLibrary(../common,castorcommon)
+DependsOnLibrary(../dlf,castordlf)
 
-all: $(PROGS)
-
-NormalProgramTarget(dlftest,dlftest.Osuf,$(DEPLIBS),$(LIBS) $(MTLDLIBS))
-
-MakeDepLibrary(FileName(..,common),common)
-MakeDepLibrary(FileName(..,dlf),dlf)
-
-#if _WIN32
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend -Y$(INCLUDES) *.c 2> /dev/null
-#endif
-
-Makefiles:
-
-clean:
-	-@RemoveFiles(FilesToClean $(PROGS))
-
-clobber: clean
-	-@RemoveFiles($(PROGS))
-
-FORCE:
-
-
-COMM -- End-of-File -------------------------------------------------------------------------------------#
-
-COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.
+NormalProgramTarget(dlftest,dlftest.Osuf,$(DEPLIBS),$(LIBS) $(MTLDLIBS),root,bin,755)

@@ -6,456 +6,102 @@ COMM       @(#)Imakefile,v 1.24 2005/12/06 10:52:56 CERN IT-PDP/DM Jean-Philippe
 
 COMM    Make HSM admin tools.
 
-#include <Project.tmpl>
-
-INCLUDES = FileName(..,h) -I FileName(..,job)
-INCLUDES_CPP = FileName(..,/)
-
-#if UseTms
-TMS = TMS
-#else
-TMS = NOTMS
-#endif
-#if _AIX
-LIBS = -L../shlib -lshift
-#else
-#if defined(__alpha) && defined(__osf__)
-LIBS = -no_so -L../shlib -lshift -so_archive
-#else
-#if hpux
-LIBS = -L../shlib -lshift
-#else
-#if linux
-LIBS = -L../shlib -lshift -lcastorCnvs $(ADNSLIB) -lnsl -Wl,-rpath-link,../shlib
-#else
-#if sgi
-LIBS = -L../shlib -lshift
-#else
-#if SOLARIS
-LIBS = -L../shlib -lshift -lsocket -lnsl
-#else
-#if _WIN32
-LIBS = ..\lib\shift.lib wsock32.lib ws2_32.lib /NODEFAULTLIB:libc.lib advapi32.lib
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
-#if _WIN32
-LIBS2 = $(LIBS)
-#else
-LIBS2 = $(LIBS) -L../shlib
-#endif
 SPOOL = HsmToolsSpool
-
 CKSUMLIB = -lz
-
-COMM######################### FLAGS ##############################
-
 DOMAINNAME= DomainName
-
-DFLAGS = -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\" -D$(TMS) -g -pthread
-
-CPPFLAGS = -I$(INCLUDES) -I$(INCLUDES_CPP) $(DFLAGS)
-CFLAGS = -I$(INCLUDES) -I$(INCLUDES_CPP) $(DFLAGS)
-
-#if !defined(_WIN32)
+DFLAGS = -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\" -g -pthread
+CPPFLAGS = -I../h -I.. $(DFLAGS)
+CFLAGS = $(CPPFLAGS)
 LD = g++
-#endif
 
-COMM######################### DEPENDENCY LIBRARIES ###############
-
-DEPLIB = DepSharedLibraryTargetName(shlib,shift)
-DEPLIB2 = $(DEPLIB)
-COMM######################### RULES ##############################
-
-MANPAGES = $(MANDIR)/reclaim.$(MANSUFFIX) \
-	   $(MANDIR)/cleanLostFiles.$(MANSUFFIX) \
-	   $(MANDIR)/enterFileClass.$(MANSUFFIX) \
-	   $(MANDIR)/enterSvcClass.$(MANSUFFIX) \
-	   $(MANDIR)/modifyFileClass.$(MANSUFFIX) \
-	   $(MANDIR)/modifySvcClass.$(MANSUFFIX) \
-	   $(MANDIR)/deleteFileClass.$(MANSUFFIX) \
-	   $(MANDIR)/deleteSvcClass.$(MANSUFFIX) \
-	   $(MANDIR)/diskServer_qry.$(MANSUFFIX) \
-	   $(MANDIR)/listFileClass.$(MANSUFFIX) \
-	   $(MANDIR)/listSvcClass.$(MANSUFFIX) \
-	   $(MANDIR)/printFileClass.$(MANSUFFIX) \
-	   $(MANDIR)/printSvcClass.$(MANSUFFIX) \
-	   $(MANDIR)/moveDiskServer.$(MANSUFFIX) \
-	   $(MANDIR)/c2probe.$(MANSUFFIX) \
-	   $(MANDIR)/adler32.$(MANSUFFIX) \
-	   $(MANDIR)/adminMultiInstance.$(MANSUFFIX) \
-           $(MANDIR)/listPriority.$(MANSUFFIX) \
-	   $(MANDIR)/enterPriority.$(MANSUFFIX) \
-           $(MANDIR)/deletePriority.$(MANSUFFIX)
-EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),cleanLostFiles.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),enterFileClass.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),enterSvcClass.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),modifyFileClass.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),modifySvcClass.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),deleteFileClass.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),deleteSvcClass.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),diskServer_qry.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),listFileClass.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),listSvcClass.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),printFileClass.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),printSvcClass.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),moveDiskServer.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),c2probe.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),adler32.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),adminMultiInstance.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),listPriority.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),enterPriority.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),deletePriority.$(MANSUFFIX)))
-
-COMM Warning Warning, our default clean rule deletes PROGS... Changed it to use PROGS_TO_CLEAN
-
-PROGS_TO_CLEAN =  ProgramTargetName(reclaim) \
-	 ProgramTargetName(enterFileClass) \
-	 ProgramTargetName(enterSvcClass) \
-	 ProgramTargetName(modifyFileClass) \
-	 ProgramTargetName(modifySvcClass) \
-	 ProgramTargetName(deleteFileClass) \
-	 ProgramTargetName(deleteSvcClass) \
-	 ProgramTargetName(c2probe) \
-	 ProgramTargetName(adler32) \
-	 ProgramTargetName(rfcpupd) \
-         ProgramTargetName(listPriority) \
-         ProgramTargetName(enterPriority) \
-	 ProgramTargetName(deletePriority)
-
-#if BuildVDQMCpp
-MANPAGES += $(MANDIR)/vdqmDBInit.$(MANSUFFIX)
-EXPORTMANPAGES += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),vdqmDBInit.$(MANSUFFIX)))
-PROGS_TO_CLEAN += ProgramTargetName(vdqmDBInit)
-
-MANPAGES += $(MANDIR)/vdqmsetpriority.$(MANSUFFIX)
-EXPORTMANPAGES += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),vdqmsetpriority.$(MANSUFFIX)))
-PROGS_TO_CLEAN += ProgramTargetName(vdqmsetpriority)
-
-MANPAGES += $(MANDIR)/vdqmdeletepriority.$(MANSUFFIX)
-EXPORTMANPAGES += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),vdqmdeletepriority.$(MANSUFFIX)))
-PROGS_TO_CLEAN += ProgramTargetName(vdqmdeletepriority)
-
-MANPAGES += $(MANDIR)/vdqmlistpriority.$(MANSUFFIX)
-EXPORTMANPAGES += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),vdqmlistpriority.$(MANSUFFIX)))
-PROGS_TO_CLEAN += ProgramTargetName(vdqmlistpriority)
-
-MANPAGES += $(MANDIR)/vdqmlistrequest.$(MANSUFFIX)
-EXPORTMANPAGES += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),vdqmlistrequest.$(MANSUFFIX)))
-PROGS_TO_CLEAN += ProgramTargetName(vdqmlistrequest)
-#endif
-
-#if !defined(_WIN32)
-PROGS_TO_KEEP =  ProgramTargetName(cleanLostFiles) \
-	 ProgramTargetName(diskServer_qry) \
-	 ProgramTargetName(listFileClass) \
-	 ProgramTargetName(listSvcClass) \
-	 ProgramTargetName(printFileClass) \
-	 ProgramTargetName(printSvcClass) \
-	 ProgramTargetName(moveDiskServer) \
-	 ProgramTargetName(dedicateTapeDrive) \
-	 ProgramTargetName(listDedications) \
-	 ProgramTargetName(checkreplicas)
-#endif
-
-IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
-	 FileName($(BIN),ProgramTargetName(cleanLostFiles)) \
-	 FileName($(BIN),ProgramTargetName(enterFileClass)) \
-	 FileName($(BIN),ProgramTargetName(enterSvcClass)) \
-	 FileName($(BIN),ProgramTargetName(modifyFileClass)) \
-	 FileName($(BIN),ProgramTargetName(modifySvcClass)) \
-	 FileName($(BIN),ProgramTargetName(deleteFileClass)) \
-	 FileName($(BIN),ProgramTargetName(deleteSvcClass)) \
-	 FileName($(BIN),ProgramTargetName(diskServer_qry)) \
-	 FileName($(BIN),ProgramTargetName(listFileClass)) \
-	 FileName($(BIN),ProgramTargetName(listSvcClass)) \
-	 FileName($(BIN),ProgramTargetName(printFileClass)) \
-	 FileName($(BIN),ProgramTargetName(printSvcClass)) \
-	 FileName($(BIN),ProgramTargetName(moveDiskServer)) \
-	 FileName($(BIN),ProgramTargetName(dedicateTapeDrive)) \
-	 FileName($(BIN),ProgramTargetName(listDedications)) \
-	 FileName($(BIN),ProgramTargetName(c2probe)) \
-	 FileName($(BIN),ProgramTargetName(adler32)) \
-	 FileName($(BIN),ProgramTargetName(checkreplicas)) \
-	 FileName($(BIN),ProgramTargetName(rfcpupd)) \
-	 FileName($(BIN),ProgramTargetName(listPriority)) \
-         FileName($(BIN),ProgramTargetName(enterPriority)) \
-         FileName($(BIN),ProgramTargetName(deletePriority))
-#if BuildVDQMCpp
-IPROGS += FileName($(BIN),ProgramTargetName(vdqmDBInit))
-IPROGS += FileName($(BIN),ProgramTargetName(vdqmsetpriority))
-IPROGS += FileName($(BIN),ProgramTargetName(vdqmdeletepriority))
-IPROGS += FileName($(BIN),ProgramTargetName(vdqmlistpriority))
-IPROGS += FileName($(BIN),ProgramTargetName(vdqmlistrequest))
-#endif
-
-EPROGS = $(EXPORTBIN)/reclaim \
-	 $(EXPORTBIN)/cleanLostFiles \
-	 $(EXPORTBIN)/enterFileClass \
-	 $(EXPORTBIN)/enterSvcClass \
-	 $(EXPORTBIN)/modifyFileClass \
-	 $(EXPORTBIN)/modifySvcClass \
-	 $(EXPORTBIN)/deleteFileClass \
-	 $(EXPORTBIN)/deleteSvcClass \
-	 $(EXPORTBIN)/diskServer_qry \
-	 $(EXPORTBIN)/listFileClass \
-	 $(EXPORTBIN)/listSvcClass \
-	 $(EXPORTBIN)/printFileClass \
-	 $(EXPORTBIN)/printSvcClass \
-	 $(EXPORTBIN)/moveDiskServer \
-	 $(EXPORTBIN)/dedicateTapeDrive \
-	 $(EXPORTBIN)/listDedications \
-	 $(EXPORTBIN)/c2probe \
-	 $(EXPORTBIN)/adler32 \
-	 $(EXPORTBIN)/checkreplicas
-
-
-#if BuildVDQMCpp
-EPROGS += $(EXPORTBIN)/vdqmDBInit
-EPROGS += $(EXPORTBIN)/vdqmsetpriority
-EPROGS += $(EXPORTBIN)/vdqmdeletepriority
-EPROGS += $(EXPORTBIN)/vdqmlistpriority
-EPROGS += $(EXPORTBIN)/vdqmlistrequest
-#endif
-
-IPERL = FileName($(PERLLIBDIR),castor_tools.pm)
-IPYTHON = FileName($(PYTHONLIBDIR),castor_tools.py)
-
-all: $(PROGS_TO_KEEP) $(PROGS_TO_CLEAN)
-
-NormalProgramTarget(reclaim,reclaim.Osuf,$(DEPLIB),$(LIBS))
-NormalProgramTarget(enterFileClass,enterFileClass.Osuf,$(DEPLIB2),$(LIBS2))
-NormalProgramTarget(enterSvcClass,enterSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
-NormalProgramTarget(modifyFileClass,modifyFileClass.Osuf,$(DEPLIB2),$(LIBS2))
-NormalProgramTarget(modifySvcClass,modifySvcClass.Osuf,$(DEPLIB2),$(LIBS2))
-NormalProgramTarget(deleteFileClass,deleteFileClass.Osuf,$(DEPLIB2),$(LIBS2))
-NormalProgramTarget(deleteSvcClass,deleteSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
-NormalProgramTarget(adler32,adler32.Osuf,$(DEPLIB2),$(LIBS2) $(CKSUMLIB))
-NormalProgramTarget(c2probe,c2probe.Osuf,$(DEPLIB2),-pthread $(LIBS2))
-NormalProgramTarget(listPriority,listPriority.Osuf,$(DEPLIB2),$(LIBS2))
-NormalProgramTarget(enterPriority,enterPriority.Osuf,$(DEPLIB2),$(LIBS2))
-NormalProgramTarget(deletePriority,deletePriority.Osuf,$(DEPLIB2),$(LIBS2))
-
-NOMORERFIO = FileName(OperatorDir,nomorerfio)
+NOMORERFIO = OperatorDir/nomorerfio
 DOMAINNAME = DomainName
-LOGFILE = FileName($(SPOOL),rfiod.log)
-
+LOGFILE = $(SPOOL)/rfiod.log
 #if BuildNameServerLibrary
 CNS_ROOT_DIR = NsRoot
 CNS_ROOT = -DCNS_ROOT=\"$(CNS_ROOT_DIR)\"
 #endif
-
-RFIO_ALRM= FileName(RfioSpool,RfioAlarmFile)
-
-RFIOFLAGS=-DNOMORERFIO=\"$(NOMORERFIO)\" \
-	  -DDOMAINNAME=\"$(DOMAINNAME)\" -DLOGFILE=\"$(LOGFILE)\" \
+RFIO_ALRM= RfioSpool/RfioAlarmFile
+RFIOFLAGS=-DNOMORERFIO=\"$(NOMORERFIO)\" -DDOMAINNAME=\"$(DOMAINNAME)\" -DLOGFILE=\"$(LOGFILE)\" \
 	  -DRFIO_ALRM=\"$(RFIO_ALRM)\" $(CNS_ROOT) $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
 
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(castor/db/cnv,castorcnvs)
+DependsOnLibrary(ns,castorns)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(vmgr,castorvmgr)
+DependsOnLibrary(rfio,castorrfio)
+
+NormalProgramTarget(reclaim,reclaim.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
+NormalProgramTarget(enterFileClass,enterFileClass.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
+NormalProgramTarget(enterSvcClass,enterSvcClass.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
+NormalProgramTarget(modifyFileClass,modifyFileClass.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
+NormalProgramTarget(modifySvcClass,modifySvcClass.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
+NormalProgramTarget(deleteFileClass,deleteFileClass.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
+NormalProgramTarget(deleteSvcClass,deleteSvcClass.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
+NormalProgramTarget(adler32,adler32.Osuf,$(DEPLIB),$(LIBS) $(CKSUMLIB),root,bin,755)
+NormalProgramTarget(c2probe,c2probe.Osuf,$(DEPLIB),-pthread $(LIBS),root,bin,755)
+NormalProgramTarget(listPriority,listPriority.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
+NormalProgramTarget(enterPriority,enterPriority.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
+NormalProgramTarget(deletePriority,deletePriority.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
 rfcpupd.c: ../rfio/rfcp.c
 	sed 's/| *O_TRUNC//' $< | sed 's/O_RDONLY/O_RDWR/' | sed 's/O_WRONLY/O_RDWR|O_APPEND/' > $@
-
 rfcpupd.Osuf: rfcpupd.c
-	$(CC) $(DEBUG) -I$(INCLUDES) $(MTCCFLAGS) $(RFIOFLAGS) $(ACCTFLAG) -c -o $@ $<
-
-NormalProgramTarget(rfcpupd,rfcpupd.Osuf,DepSharedLibraryTargetName(shlib,shift), $(LIBS))
-
-#if BuildVDQMCpp
-NormalProgramTarget(vdqmDBInit,vdqmDBInit.Osuf,$(DEPLIB2),$(LIBS2))
-NormalProgramTarget(vdqmsetpriority,vdqmsetpriority.Osuf,$(DEPLIB2),$(LIBS2))
-NormalProgramTarget(vdqmdeletepriority,vdqmdeletepriority.Osuf,$(DEPLIB2),$(LIBS2))
-NormalProgramTarget(vdqmlistpriority,vdqmlistpriority.Osuf,$(DEPLIB2),$(LIBS2))
-NormalProgramTarget(vdqmlistrequest,vdqmlistrequest.Osuf,$(DEPLIB2),$(LIBS2))
-#endif
-
-MakeDepSharedLibrary(shlib,shift)
-
-install: $(BIN) $(IPROGS) $(SPOOL) $(PERLLIBDIR) $(IPERL) $(PYTHONLIBDIR) $(IPYTHON)
-
-InstallProgram(reclaim,$(BIN),root,bin,755)
-IEXPORT(reclaim,$(EXPORTBIN),755);
-
-
-InstallProgram(cleanLostFiles,$(BIN),root,bin,755)
-IEXPORT(cleanLostFiles,$(EXPORTBIN),755);
-
-InstallProgram(enterFileClass,$(BIN),root,bin,755)
-IEXPORT(enterFileClass,$(EXPORTBIN),755);
-
-InstallProgram(enterSvcClass,$(BIN),root,bin,755)
-IEXPORT(enterSvcClass,$(EXPORTBIN),755);
-
-InstallProgram(modifyFileClass,$(BIN),root,bin,755)
-IEXPORT(modifyFileClass,$(EXPORTBIN),755);
-
-InstallProgram(modifySvcClass,$(BIN),root,bin,755)
-IEXPORT(modifySvcClass,$(EXPORTBIN),755);
-
-InstallProgram(deleteFileClass,$(BIN),root,bin,755)
-IEXPORT(deleteFileClass,$(EXPORTBIN),755);
-
-InstallProgram(deleteSvcClass,$(BIN),root,bin,755)
-IEXPORT(deleteSvcClass,$(EXPORTBIN),755);
-
-InstallProgram(diskServer_qry,$(BIN),root,bin,755)
-IEXPORT(diskServer_qry,$(EXPORTBIN),755);
-
-InstallProgram(listFileClass,$(BIN),root,bin,755)
-IEXPORT(listFileClass,$(EXPORTBIN),755);
-
-InstallProgram(listSvcClass,$(BIN),root,bin,755)
-IEXPORT(listSvcClass,$(EXPORTBIN),755);
-
-InstallProgram(printFileClass,$(BIN),root,bin,755)
-IEXPORT(printFileClass,$(EXPORTBIN),755);
-
-InstallProgram(moveDiskServer,$(BIN),root,bin,755)
-IEXPORT(moveDiskServer,$(EXPORTBIN),755);
-
-InstallProgram(checkreplicas,$(BIN),root,bin,755)
-IEXPORT(checkreplicas,$(EXPORTBIN),755);
-
-InstallProgram(c2probe,$(BIN),root,bin,755)
-IEXPORT(c2probe,$(EXPORTBIN),755);
-
-InstallProgram(adler32,$(BIN),root,bin,755)
-IEXPORT(adler32,$(EXPORTBIN),755);
+	$(CC) $(DEBUG) -I../h $(MTCCFLAGS) $(RFIOFLAGS) $(ACCTFLAG) -c -o $@ $<
+FilesToClean += rfcpupd.c
+NormalProgramTarget(rfcpupd,rfcpupd.Osuf,$(DEPLIB), $(LIBS),root,bin,755)
 
 #if BuildVDQMCpp
-InstallProgram(vdqmDBInit,$(BIN),root,bin,755)
-IEXPORT(vdqmDBInit,$(EXPORTBIN),755);
-
-InstallProgram(vdqmsetpriority,$(BIN),root,bin,755)
-IEXPORT(vdqmsetpriority,$(EXPORTBIN),755);
-
-InstallProgram(vdqmdeletepriority,$(BIN),root,bin,755)
-IEXPORT(vdqmdeletepriority,$(EXPORTBIN),755);
-
-InstallProgram(vdqmlistpriority,$(BIN),root,bin,755)
-IEXPORT(vdqmlistpriority,$(EXPORTBIN),755);
-
-InstallProgram(vdqmlistrequest,$(BIN),root,bin,755)
-IEXPORT(vdqmlistrequest,$(EXPORTBIN),755);
+NormalProgramTarget(vdqmDBInit,vdqmDBInit.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
+NormalProgramTarget(vdqmsetpriority,vdqmsetpriority.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
+NormalProgramTarget(vdqmdeletepriority,vdqmdeletepriority.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
+NormalProgramTarget(vdqmlistpriority,vdqmlistpriority.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
+NormalProgramTarget(vdqmlistrequest,vdqmlistrequest.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
 #endif
 
-InstallProgram(printSvcClass,$(BIN),root,bin,755)
-IEXPORT(printSvcClass,$(EXPORTBIN),755);
+InstallTarget(cleanLostFiles,root,bin,755,$(BIN))
+InstallTarget(diskServer_qry,root,bin,755,$(BIN))
+InstallTarget(listFileClass,root,bin,755,$(BIN))
+InstallTarget(listSvcClass,root,bin,755,$(BIN))
+InstallTarget(printFileClass,root,bin,755,$(BIN))
+InstallTarget(printSvcClass,root,bin,755,$(BIN))
+InstallTarget(moveDiskServer,root,bin,755,$(BIN))
+InstallTarget(dedicateTapeDrive,root,bin,755,$(BIN))
+InstallTarget(listDedications,root,bin,755,$(BIN))
+InstallTarget(checkreplicas,root,bin,755,$(BIN))
 
+MakeDir($(PERLLIBDIR),root,bin,0755)
+MakeDir($(PYTHONLIBDIR),root,bin,0755)
+MakeDir($(SPOOL),root,bin,0755)
 InstallNonExecFile(castor_tools.pm,$(PERLLIBDIR),root,bin,755)
 InstallNonExecFile(castor_tools.py,$(PYTHONLIBDIR),root,bin,755)
 
-InstallProgram(dedicateTapeDrive,$(BIN),root,bin,755)
-IEXPORT(dedicateTapeDrive,$(EXPORTBIN),755);
-
-InstallProgram(listDedications,$(BIN),root,bin,755)
-IEXPORT(listDedications,$(EXPORTBIN),755);
-
-InstallProgram(rfcpupd,$(BIN),root,bin,755)
-IEXPORT(rfcpupd,$(EXPORTBIN),755);
-
-InstallProgram(listPriority,$(BIN),root,bin,755)
-IEXPORT(listPriority,$(EXPORTBIN),755);
-
-InstallProgram(enterPriority,$(BIN),root,bin,755)
-IEXPORT(enterPriority,$(EXPORTBIN),755);
-
-InstallProgram(deletePriority,$(BIN),root,bin,755)
-IEXPORT(deletePriority,$(EXPORTBIN),755);
-
-MakeDir($(BIN),root,bin,0755)
-MakeDir($(SPOOL),root,bin,0755)
-MakeDir($(PERLLIBDIR),root,bin,0755)
-MakeDir($(PYTHONLIBDIR),root,bin,0755)
-
-install.man: $(MANDIR) $(MANPAGES)
-
-MakeDir($(MANDIR),root,bin,0755)
-
-IMANPAGE(reclaim,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(cleanLostFiles,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(enterFileClass,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(enterSvcClass,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(modifyFileClass,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(modifySvcClass,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(deleteFileClass,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(deleteSvcClass,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(diskServer_qry,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(listFileClass,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(listSvcClass,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(printFileClass,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(printSvcClass,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(moveDiskServer,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(c2probe,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(adler32,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(adminMultiInstance,$(MANDIR),$(MANSUFFIX))
-EMANPAGE(reclaim,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(cleanLostFiles,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(enterFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(enterSvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(modifyFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(modifySvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(deleteFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(deleteSvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(diskServer_qry,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(listFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(listSvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(printFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(printSvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(moveDiskServer,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(c2probe,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(adler32,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(adminMultiInstance,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(listPriority,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(enterPriority,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(deletePriority,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EXEMANPAGE(reclaim)
+EXEMANPAGE(cleanLostFiles)
+EXEMANPAGE(enterFileClass)
+EXEMANPAGE(enterSvcClass)
+EXEMANPAGE(modifyFileClass)
+EXEMANPAGE(modifySvcClass)
+EXEMANPAGE(deleteFileClass)
+EXEMANPAGE(deleteSvcClass)
+EXEMANPAGE(diskServer_qry)
+EXEMANPAGE(listFileClass)
+EXEMANPAGE(listSvcClass)
+EXEMANPAGE(printFileClass)
+EXEMANPAGE(printSvcClass)
+EXEMANPAGE(moveDiskServer)
+EXEMANPAGE(c2probe)
+EXEMANPAGE(adler32)
+EXEMANPAGE(adminMultiInstance)
+EXEMANPAGE(listPriority)
+EXEMANPAGE(enterPriority)
+EXEMANPAGE(deletePriority)
 
 #if BuildVDQMCpp
-IMANPAGE(vdqmDBInit,$(MANDIR),$(MANSUFFIX))
-EMANPAGE(vdqmDBInit,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-
-IMANPAGE(vdqmsetpriority,$(MANDIR),$(MANSUFFIX))
-EMANPAGE(vdqmsetpriority,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-
-IMANPAGE(vdqmdeletepriority,$(MANDIR),$(MANSUFFIX))
-EMANPAGE(vdqmdeletepriority,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-
-IMANPAGE(vdqmlistpriority,$(MANDIR),$(MANSUFFIX))
-EMANPAGE(vdqmlistpriority,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-
-IMANPAGE(vdqmlistrequest,$(MANDIR),$(MANSUFFIX))
-EMANPAGE(vdqmlistrequest,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EXEMANPAGE(vdqmDBInit)
+EXEMANPAGE(vdqmsetpriority)
+EXEMANPAGE(vdqmdeletepriority)
+EXEMANPAGE(vdqmlistpriority)
+EXEMANPAGE(vdqmlistrequest)
 #endif
-
-export: $(EPROGS)
-
-exportman: $(EXPORTMANPAGES)
-
-exportshr:
-
-COMM###################### CLEANING RULES ########################
-
-clean:
-	-@RemoveFiles(FilesToClean) rfcpupd.c
-
-clobber:        clean
-	-@RemoveFiles($(PROGS_TO_CLEAN))
-
-#if _WIN32
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend -Y$(INCLUDES) *.c 2> /dev/null
-#endif
-
-Makefiles:
-
-FORCE:
-
-COMM###################### DEPENDENCIES ##########################
-
-COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.

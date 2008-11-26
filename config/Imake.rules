@@ -4,250 +4,151 @@
  */
 
 /*
- * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.23 $ $Date: 2007/11/20 17:27:03 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.24 $ $Date: 2008/11/26 14:51:56 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #define NullParameter
 
-#ifndef ManPageTargetName
-#if defined(__STDC__)
-#define ManPageTargetName(name,dir,suffix)dir/name.suffix##castor
-#define UglyTarget(suffix) 's/^\.so \.?\/?(\w+)(.*)/\.so man'##suffix##'\/$${1}\.'##suffix##'castor/g'
-#else
 #define ManPageTargetName(name,dir,suffix)dir/name.suffix/**/castor
 #define UglyTarget(suffix) 's/^\.so \.?\/?(\w+)(.*)/\.so man'/**/suffix/**/'\/$${1}\.'/**/suffix/**/'castor/g'
-#endif
-#endif
 
-#ifndef _WIN32
-#if HasNroff
-#define IMANPAGE(name,dir,suffix) \
-dir/name.suffix:	$(MANSUBDIR)name.man	@@\
-	cat $(MANSUBDIR)name.man | perl -pe 's/^\.TH +([^ ]+) *\"?(\d+)\"?/\.TH $${1} \"$${2}castor\"/g' | perl -pe UglyTarget(suffix) | nroff -man > ManPageTargetName(name,dir,suffix)
-#else
-#define IMANPAGE(name,dir,suffix) \
-dir/name.suffix:	$(MANSUBDIR)name.man	@@\
-	cat $(MANSUBDIR)name.cat | perl -pe 's/^\.TH +([^ ]+) *\"?(\d+)\"?/\.TH $${1} \"$${2}castor\"/g' | perl -pe UglyTarget(suffix) > ManPageTargetName(name,dir,suffix)
-#endif
-#else
-#if HasNroff
-#define IMANPAGE(name,dir,suffix) \
-dir/name.suffix:	$(MANSUBDIR)name.man	@@\
-	nroff -man $(MANSUBDIR)name.man > ManPageTargetName(name,dir,suffix)
-#else
-#define IMANPAGE(name,dir,suffix) \
-dir/name.suffix:	$(MANSUBDIR)name.man	@@\
-	cp $(MANSUBDIR)name.cat ManPageTargetName(name,dir,suffix)
-#endif
-#endif
+#define MANPAGE(name,suffix) \
+$(EXPORTMAN)/man/**/suffix/name.suffix:	$(MANSUBDIR)name.man	@@\
+	@install -d $(EXPORTMAN)/man/**/suffix                  @@\
+	cat $(MANSUBDIR)name.man | perl -pe 's/^.TH +([^ ]+) *\"?(\d+)\"?/\.TH $${1} \"$${2}castor\"/g' | perl -pe UglyTarget(suffix) > ManPageTargetName(name,$(EXPORTMAN)/man/**/suffix,suffix) @@\
+exportman: $(EXPORTMAN)/man/**/suffix/name.suffix
 
-#ifndef _WIN32
-#define EMANPAGE(name,dir,suffix) \
-dir/name.suffix:	$(MANSUBDIR)name.man	@@\
-	cat $(MANSUBDIR)name.man | perl -pe 's/^.TH +([^ ]+) *\"?(\d+)\"?/\.TH $${1} \"$${2}castor\"/g' | perl -pe UglyTarget(suffix) > ManPageTargetName(name,dir,suffix)
-#else
-#define EMANPAGE(name,dir,suffix) \
-dir/name.suffix:	$(MANSUBDIR)name.man	@@\
-	$(MANSUBDIR)name.man ManPageTargetName(name,dir,suffix)
-#endif
+#define EXEMANPAGE(name) MANPAGE(name,1)
+#define SYSMANPAGE(name) MANPAGE(name,2)
+#define LIBMANPAGE(name) MANPAGE(name,3)
+#define FILEMANPAGE(name) MANPAGE(name,4)
+#define ADMMANPAGE(name) MANPAGE(name,8)
 
-#define IEXPORT(name,dir,mode) \
-dir/name: name  @@\
-	@(if [ ! -d $(DESTDIR)dir ]; then mkdir -p $(DESTDIR)dir ; fi ; ) @@\
-	@cp name $(DESTDIR)dir/name @@\
-	@chmod mode $(DESTDIR)dir/name @@\
-	@echo $(DESTDIR)dir/name installed
+#define RemoveFiles(files) rm -f files
 
-#define LinkFile(tofile,fromfile) \
-tofile: fromfile				@@\
-	RemoveFile($@)				@@\
-	$(LN) $? $@ 
+#define InstallTarget(file,owner,group,mode,dest) \
+$(DESTDIR)dest/file: $(INSUBDIR)file	        @@\
+	@if [ "`whoami`" = "root" ]; then install -d $(DESTDIR)dest -o owner -g group -m 0755; else install -d $(DESTDIR)dest -m 0755; fi @@\
+	if [ "`whoami`" = "root" ]; then install -o owner -g group -m mode $? $(DESTDIR)dest; else install -m mode $? $(DESTDIR)dest; fi  @@\
+install: $(DESTDIR)dest/file                    @@\
 
-#ifndef DepSourceName
+#define InstallLink(tofile,fromfile,owner,group,mode,dest) \
+$(DESTDIR)dest/tofile: fromfile	        @@\
+	@if [ "`whoami`" = "root" ]; then install -d $(DESTDIR)dest -o owner -g group -m 0755; else install -d $(DESTDIR)dest -m 0755; fi @@\
+	ln -s $? $@                     @@\
+	@if [ "`whoami`" = "root" ]; then chown owner:group $@; chmod mode $@; fi @@\
+install: $(DESTDIR)dest/tofile
+
+#define LinkFile(tofile,fromfile,user,group,mode) \
+tofile: fromfile                @@\
+	RemoveFiles($@)         @@\
+	ln -s $? $@             @@\
+all: tofile                     @@\
+InstallLink(tofile,fromfile,user,group,mode,$(BIN))
+
 #define DepSourceName(dirname,source)../dirname/source
-#endif
-
-#ifndef FileName
-#define FileName(dirname,basename)dirname/basename
-#endif
-
-#ifndef LibraryTargetName
-#if defined(__STDC__)
-#define LibraryTargetName(libname)lib##libname.a
-#else
-#define LibraryTargetName(libname)lib/**/libname.a
-#endif
-#endif
-
-#ifndef NormalLibraryTarget
-#define NormalLibraryTarget(libname,objects) \
-LibraryTargetName(libname): objects			@@\
-	$(AR) $(ARFLAGS) $@ $?				@@\
-	$(RANLIB) $@
-#endif
-
-#ifndef ExtendedLibraryTarget
-#define ExtendedLibraryTarget(libname,objects,libs,deplibs) \
-LibraryTargetName(libname): objects deplibs			@@\
-	$(AR) $(ARFLAGS) $@ objects libs	@@\
-	$(RANLIB) $@
-#endif
-
-#ifndef DepLibraryTargetName
-#define DepLibraryTargetName(dir,libname)../dir/LibraryTargetName(libname)
-#endif
-
-#ifndef SharedLibraryTargetName
-#if defined(__STDC__)
-#define SharedLibraryTargetName(libname)lib##libname.so
-#else
 #define SharedLibraryTargetName(libname)lib/**/libname.so
-#endif
-#endif
+#define BareSharedLibraryTargetName(libname)libname.so
+#define SharedLibraryName(libname)BareSharedLibraryTargetName(libname).$(MAJOR_CASTOR_VERSION)
+#define SharedLibraryFullName(libname)SharedLibraryName(libname).$(MINOR_CASTOR_VERSION)
+#define DepSharedLibraryTargetName(dir,libname)../dir/BareSharedLibraryTargetName(lib/**/libname)
 
-#ifndef DepSharedLibraryTargetName
-#define DepSharedLibraryTargetName(dir,libname)../dir/SharedLibraryTargetName(libname)
-#endif
+#define BareSharedLibraryTarget(libname,objects,deplibs,libs,dir) \
+SharedLibraryFullName(libname): objects deplibs              @@\
+	$(LD) -shared -o $@ $(LDFLAGS) -Wl,-soname,SharedLibraryName(libname) objects libs             @@\
+SharedLibraryName(libname): SharedLibraryFullName(libname)   @@\
+	rm -f $@                                             @@\
+	ln -s $< $@                                          @@\
+BareSharedLibraryTargetName(libname): SharedLibraryName(libname) @@\
+	rm -f $@                                             @@\
+	ln -s $< $@                                          @@\
+$(DESTDIR)/dir/BareSharedLibraryTargetName(libname): BareSharedLibraryTargetName(libname)            @@\
+	@install -d $(DESTDIR)/dir                                                           @@\
+	install SharedLibraryFullName(libname) $(DESTDIR)/dir/SharedLibraryFullName(libname) @@\
+	rm -f $(DESTDIR)/dir/SharedLibraryName(libname) $@                                   @@\
+	ln -s SharedLibraryFullName(libname) $(DESTDIR)/dir/SharedLibraryName(libname)       @@\
+	ln -s SharedLibraryName(libname) $@                                                        @@\
+install: dir $(DESTDIR)/dir/BareSharedLibraryTargetName(libname)                                     @@\
+all: BareSharedLibraryTargetName(libname)                                                              @@\
+FilesToClean += objects                                                                            @@\
+FilesToClobber += SharedLibraryFullName(libname) SharedLibraryName(libname) BareSharedLibraryTargetName(libname)
 
-#ifndef SharedLibraryTarget
-#define SharedLibraryTarget(libname,objects,deplibs,libs) \
-SharedLibraryTargetName(libname): objects deplibs     @@\
-	$(LD) -shared -o $@ $(LDFLAGS) objects libs
-#endif
+#define SharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,objects,deplibs,libs,$(LIBDIR))
+#define PlacedSharedLibraryTarget(libname,objects,deplibs,libs,dir) BareSharedLibraryTarget(lib/**/libname,objects,deplibs,libs,dir)
 
-#ifndef DepSharedLibraryTargetName
-#define DepSharedLibraryTargetName(dir,libname)../dir/SharedLibraryTargetName(libname)
-#endif
-
-#ifndef MakeDepLibrary
-#define MakeDepLibrary(dir,libname) \
-DepLibraryTargetName(dir,libname):	FORCE		@@\
-	cd ../dir ; $(MAKE) LibraryTargetName(libname)
-#endif
-
-#ifndef MakeDepSharedLibrary
 #define MakeDepSharedLibrary(dir,libname) \
-DepSharedLibraryTargetName(dir,libname):	FORCE		@@\
-	cd ../dir ; $(MAKE) SharedLibraryTargetName(libname)
-#endif
+../dir/BareSharedLibraryTargetName(libname):		@@\
+	cd ../dir ; $(MAKE) BareSharedLibraryTargetName(libname)
 
-#ifndef ProgramTargetName
-#define ProgramTargetName(target)target
-#endif
-
-#ifndef NormalProgramTarget
-#define NormalProgramTarget(program,objects,deplibs,libs) \
-ProgramTargetName(program): objects deplibs		@@\
-	$(LD) -o $@ $(LDFLAGS) objects libs
-#endif
-
-#ifndef MakeSubdirs
-#define MakeSubdirs(name,dirs) \
-name:						@@\
-	@for i in dirs ;\			@@\
-	do (if [ -d $$i ] ;\                    @@\
-	    then \                              @@\
-	      (echo " $$i:" ; cd $$i ;\		@@\
-	      $(MAKE) $(MFLAGS) $@) ;\		@@\
-            else \                              @@\
-	      (echo "ERROR : No directory $$i" ;\  @@\
-	      exit 1) ;\                        @@\
-	    fi ) ;\                             @@\
+#define GotoSubdirs(dirs)                 \
+	@for i in dirs ;                  \
+	do (if [ -d $$i ] ;               \
+	    then                          \
+	      (echo " $$i:" ; cd $$i ;    \
+	      $(MAKE) $(MFLAGS) $@) ;     \
+	     else                         \
+	      (echo "ERROR : No directory $$i" ;\
+	      exit 1) ;                   \
+	    fi ) ;                        \
 	done;
-#endif
 
-#ifndef MakeCondSubdirs
+#define MakeSubdirs(name,dirs) \
+name:			     @@\
+	GotoSubdirs(dirs)
+
 #define MakeCondSubdirs(name,dirs,cond) \
-name:: cond						@@\
-	@for i in dirs ;\			@@\
-	do (echo " $$i:" ; cd $$i ;\		@@\
-		$(MAKE) $(MFLAGS) $@ \		@@\
+name: cond			      @@\
+	@for i in dirs ;                \
+	do (echo " $$i:" ; cd $$i ;     \
+		$(MAKE) $(MFLAGS) $@    \
 	) ; done
-#endif
 
-#ifndef RemoveFile
-#define RemoveFile(file) $(RM) -f file
-#endif
-
-#ifndef RemoveFiles
-#define RemoveFiles(files) $(RM) -f files
-#endif
-
-#if linux
-#ifndef InstallTarget
-#define InstallTarget(file,owner,group,mode,dest)	@@\
-dest/file: $(INSUBDIR)file				@@\
-	if [ "`whoami`" = "root" ]; then install -o owner -g group -m mode $? $(DESTDIR)dest; else install -m mode $? $(DESTDIR)dest; fi
-#endif
-#else
-#ifndef InstallTarget
-#define InstallTarget(file,owner,group,mode,dest)	@@\
-dest/file: $(INSUBDIR)file				@@\
-	-mv $(DESTDIR)$@ $(DESTDIR)dest/OLD$?		@@\
-	cp $? $(DESTDIR)$@				@@\
-	[ "`whoami`" = "root" ] && chown owner $(DESTDIR)$@	@@\
-	[ "`whoami`" = "root" ] && chgrp group $(DESTDIR)$@	@@\
-	chmod mode $(DESTDIR)$@
-#endif
-#endif
-
-#if linux
-#ifndef InstallLibrary
-#define InstallLibrary(libname,dest,owner,group,mode)	@@\
-dest/LibraryTargetName(libname): LibraryTargetName(libname)	@@\
-	if [ "`whoami`" = "root" ]; then install -o owner -g group -m mode $? $(DESTDIR)dest; else install -m mode $? $(DESTDIR)dest; fi
-#endif
-#else
-#ifndef InstallLibrary
-#define InstallLibrary(libname,dest,owner,group,mode)	@@\
-dest/LibraryTargetName(libname): LibraryTargetName(libname)	@@\
-	-mv $(DESTDIR)$@ $(DESTDIR)dest/OLD$?		@@\
-	cp $? $(DESTDIR)$@				@@\
-	@$(RANLIB) $(DESTDIR)$(LIB)/$?			@@\
-	[ "`whoami`" = "root" ] && chown owner $(DESTDIR)$@	@@\
-	[ "`whoami`" = "root" ] && chgrp group $(DESTDIR)$@	@@\
-	chmod mode $(DESTDIR)$@
-#endif
-#endif
-
-#define InstallNonExecFile(file,dest,owner,group,mode)	@@\
+#define InstallNonExecFile(file,dest,owner,group,mode) \
 InstallTarget(file,owner,group,mode,dest)
 
-#define InstallProgram(program,dest,owner,group,mode)	@@\
-InstallTarget(ProgramTargetName(program),owner,group,mode,dest)
+#define MakeDir(dirname,owner,group,mode)   \
+$(DESTDIR)dirname:			          @@\
+	if [ "`whoami`" = "root" ]; then install -d $(DESTDIR)dirname -o owner -g group -m mode; else install -d $(DESTDIR)dirname -m mode; fi @@\
+install: $(DESTDIR)dirname
 
-#if linux
-#ifndef InstallSharedLibrary
-#define InstallSharedLibrary(libname,maj,min,dest)		@@\
-dest/SharedLibraryTargetName(libname): SharedLibraryTargetName(libname)	@@\
-	../shlib/makeshlib.sh install $? $(DESTDIR)$@
-#endif
-#else
-/* itglp: not used anymore? */
-#ifndef InstallSharedLibrary
-#define InstallSharedLibrary(libname,maj,min,dest)		@@\
-dest/SharedLibraryTargetName(libname): SharedLibraryTargetName(libname)	@@\
-	cp $?.maj.min $(DESTDIR)$@.maj.min		@@\
-	RemoveFile($(DESTDIR)$@.maj)			@@\
-	ln -s $?.maj.min $(DESTDIR)$@.maj		@@\
-	RemoveFile($(DESTDIR)$@)			@@\
-	ln -s $?.maj $(DESTDIR)$@
-#endif
-#endif
+#define NormalProgramTarget(program,objects,deplibs,libs,user,group,mode) \
+program: objects deplibs		      @@\
+	$(LD) -o $@ $(LDFLAGS) objects libs   @@\
+all: program                                  @@\
+InstallTarget(program,user,group,mode,$(BIN)) @@\
+FilesToClean += objects                       @@\
+FilesToClobber += program
 
-#if linux
-#ifndef MakeDir
-#define MakeDir(dirname,owner,group,mode)		@@\
-dirname:						@@\
-	if [ "`whoami`" = "root" ]; then install -d $(DESTDIR)dirname -o owner -g group -m mode; else install -d $(DESTDIR)dirname -m mode; fi
-#endif
-#else
-#ifndef MakeDir
-#define MakeDir(dirname,owner,group,mode)		@@\
-dirname:						@@\
-	-mkdir -p $(DESTDIR)$@				@@\
-	[ "`whoami`" = "root" ] && chown owner $(DESTDIR)$@	@@\
-	[ "`whoami`" = "root" ] && chgrp group $(DESTDIR)$@	@@\
-	chmod mode $(DESTDIR)/$@
-#endif
-#endif
+/* manual list of dependencies to solve the -rpath issue. Not very nice */
+#define commonRPath -Wl,-rpath-link,$(CASTOR_ROOT)/common
+#define upvRPath -Wl,-rpath-link,$(CASTOR_ROOT)/upv
+#define securityRPath -Wl,-rpath-link,$(CASTOR_ROOT)/security
+#define dlfRPath -Wl,-rpath-link,$(CASTOR_ROOT)/dlf
+#define rfioRPath -Wl,-rpath-link,$(CASTOR_ROOT)/rfio
+#define nsRPath -Wl,-rpath-link,$(CASTOR_ROOT)/ns
+#define vmgrRPath -Wl,-rpath-link,$(CASTOR_ROOT)/vmgr
+#define vdqmRPath -Wl,-rpath-link,$(CASTOR_ROOT)/vdqm
+#define castorRPath -Wl,-rpath-link,$(CASTOR_ROOT)/castor
+#define cnvRPath -Wl,-rpath-link,$(CASTOR_ROOT)/castor/db/cnv
+#define oraRPath -Wl,-rpath-link,$(CASTOR_ROOT)/castor/db/newora
+#define BuildRPathcastorcommon 
+#define BuildRPathcastorupv commonRPath
+#define BuildRPathcastorsecurity commonRPath
+#define BuildRPathcastordlf commonRPath
+#define BuildRPathcastorcnvs commonRPath
+#define BuildRPathcastorvdqm commonRPath
+#define BuildRPathcastorvmgr commonRPath upvRPath
+#define BuildRPathcastorns commonRPath securityRPath upvRPath
+#define BuildRPathcastorclient commonRPath securityRPath upvRPath dlfRPath nsRPath
+#define BuildRPathcastorexpert commonRPath upvRPath nsRPath vmgrRPath vdqmRPath
+#define BuildRPathcastorrtcopy commonRPath dlfRPath castorRPath 
+#define BuildRPathcastorrfio commonRPath securityRPath castorRPath dlfRPath nsRPath
+#define BuildRPathcastortape commonRPath securityRPath rfioRPath vmgrRPath upvRPath castorRPath vdqmRPath nsRPath
+#define BuildRPathcastormonitor commonRPath castorRPath
+#define BuildRPathcastorcommonora commonRPath cnvRPath dlfRPath vmgrRPath upvRPath
+#define BuildRPathcastorinfopolicy commonRPath castorRPath oraRPath cnvRPath
+
+#define DependsOnLibrary(dir,libname)               \
+DEPLIB += DepSharedLibraryTargetName(dir,libname) @@\
+LIBS += -L ../dir -l libname BuildRPath/**/libname  @@\
+MakeDepSharedLibrary(dir,lib/**/libname)

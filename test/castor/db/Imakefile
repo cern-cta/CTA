@@ -17,53 +17,16 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Release$ $Date: 2005/09/23 09:36:14 $ $Author: itglp $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Release$ $Date: 2008/11/26 14:51:59 $ $Author: sponcec3 $
 #
 # Make Castor DB example
 #
 # @author Sebastien Ponce, sebastien.ponce@cern.ch
 #
 
-#include <Project.tmpl>
-
-#if !defined(_WIN32)
-#if linux
-DEBUG  = -g -O0
-#else
-DEBUG  = -g
-#endif
-#endif
-
-INCLUDES = -I FileName(../../..,h) -I FileName(../../..,)
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
-
-LIBS = -lshift
-
-TEST_OBJ = testdb.Osuf
-
-DEPLIB = DepSharedLibraryTargetName(../../shlib,shift)
-
-LDFLAGS = -L ../../../shlib
+CPPFLAGS = -g -O0 -I../../../h -I../../.. $(MTCCFLAGS)
 LD = g++
 
-all: ProgramTargetName(testdb)
+DependsOnLibrary(castor,castorclient)
 
-NormalProgramTarget(testdb,$(TEST_OBJ),$(DEPLIB),$(LIBS))
-
-Makefiles:
-
-clean:
-	@echo cleaning in CurDir
-	-@RemoveFiles(FilesToClean)
-
-clobber:	clean
-	@echo clobbering in CurDir
-	-@RemoveFiles(ProgramTargetName(testdb))
-
-#if _WIN32
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend $(DFLAGS) -Y../../../h -Y../../.. *.cpp 2> /dev/null
-#endif
+NormalProgramTarget(testdb,testdb.Osuf,$(DEPLIB),$(LIBS),root,bin,755)

@@ -10,75 +10,33 @@
 #define NO	0
 #define YES	1
 #include <site.def>
-#if _AIX && _IBMR2
-#include <aix.cf>
-#endif
-#if hpux
-#include <hp.cf>
-#endif
-#if linux
-#if defined(ppc64)
-#include <linux_ppc64.cf>
-#else
 #include <linux.cf>
-#endif
-#endif
-#if __Lynx__
-#include <lynx.cf>
-#endif
-#if sgi
-#include <sgi.cf>
-#endif
-#if sun
-#include <sun.cf>
-#endif
-#if __osf__ && __alpha
-#include <alpha_osf.cf>
-#endif
-#if _WIN32
-#include <Win32.cf>
-#endif
 
-#if Accounting
 ACCTFLAG=-DSACCT
-#endif
 BIN = InstallBinDir
+LIBDIR = InstallLibDir
 #ifdef DefaultCCOptions
 DEFCFLAGS = DefaultCCOptions
 #endif
 CONFIGDIR = InstallConfigDir
-FILMANDIR = FilManDir
-FILMANSUFFIX = FilManSuffix
-LIBMANDIR = LibManDir
-LIBMANSUFFIX = LibManSuffix
-MANDIR = ManDir
-MANSUFFIX = ManSuffix
-#if !defined(_WIN32)
 CP = cp
 LD = cc
 LDFLAGS = -Wl,--defsym,CastorVersion_v$(MAJOR_CASTOR_VERSION).$(MINOR_CASTOR_VERSION)=0
 LN = ln
-#endif
 #if HasRanlib
 RANLIB = ranlib
 #else
 RANLIB = echo '-> '
 #endif
-#if _WIN32
-SHELL = cmd
-#else
 SHELL = /bin/sh
-#endif
 
 #ifndef CurDir
 #define CurDir `pwd`
-#endif
-#ifndef FilesToClean
-#define FilesToClean *.o *.a *.so ,* .es1 core
 #endif
 #ifndef Osuf
 #define Osuf o
 #endif
 
 #include <Imake.rules>
+#include <Project.tmpl>
 #include INCLUDE_IMAKEFILE

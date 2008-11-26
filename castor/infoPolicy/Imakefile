@@ -23,20 +23,15 @@
 #
 # @author Castor Dev team, castor-dev@cern.ch
 
-#include <Project.tmpl>
+CPPFLAGS = -g -O0 -I $(ORACLE_HOME)/rdbms/public -I ../../h -I ../.. $(MTCCFLAGS) -DORACDBC=1 $(PYTHONINC)
+LDFLAGS += -g -O0 $(MTLDFLAGS)
+LD = g++
+LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh
 
-DEBUG  = -g -O0
-
-
-INCLUDES = -I FileName($(ORACLE_HOME)/rdbms,public) -I FileName(FileName(..,..),h) -I FileName(..,..)
-CASTOR_HOME = ../..
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DORACDBC=1 $(PYTHONINC)
-
-#ifdef _WIN32
-EXTSHARED=dll
-#else
-EXTSHARED=so
-#endif
+DependsOnLibrary(../common,castorcommon)
+DependsOnLibrary(,castorclient)
+DependsOnLibrary(db/newora,castorcommonora)
+DependsOnLibrary(db/cnv,castorcnvs)
 
 POLICYLIB_SRCS = CnsInfoMigrationPolicy.cpp \
 	DbInfoMigrationPolicy.cpp \
@@ -48,43 +43,5 @@ POLICYLIB_SRCS = CnsInfoMigrationPolicy.cpp \
 	PySvc.cpp \
 	RecallPySvc.cpp \
 	ora/OraPolicySvc.cpp
-
-LIBS = -lshift -lcastorCommonOra -lcastorCnvs -L$(ORACLE_HOME)/lib -locci
-
-DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift)
-
 POLICYLIB_OBJS = $(POLICYLIB_SRCS:.cpp=.Osuf)
-COMMONLIB = LibraryTargetName(castorInfoPolicy)
-GLOBLIB = DepSharedLibraryTargetName(shlib,shift)
-
-LDFLAGS += $(DEBUG) $(MTLDFLAGS)
-LD = g++
-
-all: $(COMMONLIB)
-
-NormalLibraryTarget(castorInfoPolicy,$(POLICYLIB_OBJS))
-
-MakeDepSharedLibrary(../../shlib,castorCommonOra)
-MakeDepSharedLibrary(../../shlib,castorCnvs)
-MakeDepSharedLibrary(../../shlib,shift)
-
-Makefiles:
-
-#if defined(_WIN32)
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend $(INCLUDES) $(POLICYLIB_SRCS) 2> /dev/null
-#endif
-
-clean:
-	@echo cleaning in CurDir
-	-@RemoveFiles($(POLICYLIB_OBJS))
-
-clobber:	clean
-	@echo clobbering in CurDir
-	-@RemoveFiles($(COMMONLIB))
-
-FORCE:
-
+SharedLibraryTarget(castorinfopolicy,$(POLICYLIB_OBJS),$(DEPLIB),$(LIBS))

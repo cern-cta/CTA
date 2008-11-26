@@ -17,39 +17,21 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Release$ $Date: 2008/07/29 06:21:14 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Release$ $Date: 2008/11/26 14:51:54 $ $Author: sponcec3 $
 #
 # Makefile for the CASTOR2 stagerjob
 #
 # @author Castor Dev team, castor-dev@cern.ch
 
-#include <Project.tmpl>
+CPPFLAGS = -g -O0 -I ../../../h -I ../../.. $(MTCCFLAGS) -DSTAGERSUPERUSER=stage -DSTAGERSUPERGROUP=st `curl-config --cflags`
+LIBS = -ldl -lbat -llsf -llsbstream -lnsl `curl-config --libs`
+LDFLAGS += $(MTLDFLAGS)
+LD = g++
 
-#if !defined(_WIN32)
-#if linux
-DEBUG  = -g -O0
-#else
-DEBUG  = -g
-#endif
-#endif
-
-#ifdef StagerSuperUser
-STAGERSUPERUSER0 = StagerSuperUser
-#else
-STAGERSUPERUSER0 = stage
-#endif
-#ifdef StagerSuperGroup
-STAGERSUPERGROUP0 = StagerSuperGroup
-#else
-STAGERSUPERGROUP0 = st
-#endif
-STAGERSUPERUSER  = -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER0)\"
-STAGERSUPERGROUP = -DSTAGERSUPERGROUP=\"$(STAGERSUPERGROUP0)\"
-
-INCLUDES = -I FileName(FileName(../..,..),h) -I FileName(../..,..)
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) $(STAGERSUPERUSER) $(STAGERSUPERGROUP) `curl-config --cflags`
-
-LIBS = -lshift -ldl -lbat -llsf -llsbstream -lnsl `curl-config --libs` -Wl,-rpath-link,../../../shlib
+DependsOnLibrary(../../common,castorcommon)
+DependsOnLibrary(../../dlf,castordlf)
+DependsOnLibrary(..,castorclient)
+DependsOnLibrary(../../rfio,castorrfio)
 
 JOB_SRCS = StagerJob.cpp \
            InputArguments.cpp \
@@ -61,43 +43,5 @@ JOB_SRCS = StagerJob.cpp \
            XRootPlugin.cpp \
            GridFTPPlugin.cpp \
            ../SharedResourceHelper.cpp
-
-JOB_OBJS = $(JOB_SRCS:.cpp=.Osuf)
-
-DEPLIB = DepSharedLibraryTargetName(../../shlib,shift)
-
-LDFLAGS += -L FileName(../../..,shlib) $(MTLDFLAGS)
-LD = g++
-
-all: ProgramTargetName(stagerJob)
-
-NormalProgramTarget(stagerJob,$(JOB_OBJS),$(DEPLIB),$(LIBS))
-
-MakeDepSharedLibrary(../../shlib,shift)
-
-Makefiles:
-
-#if defined(_WIN32)
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend $(INCLUDES) $(JOB_SRCS) 2> /dev/null
-#endif
-
-install: FileName($(BIN),stagerJob)
-
-InstallProgram(stagerJob,$(BIN),$(STAGERSUPERUSER0),$(STAGERSUPERGROUP0),6755)
-
-install.man: $(MANDIR)
-MakeDir($(MANDIR),root,bin,0755)
-
-exportman:
-
-clean:
-	-@RemoveFiles(FilesToClean $(JOB_OBJS))
-
-clobber: clean
-	-@RemoveFiles(ProgramTargetName(stagerJob))
-
-FORCE:
+JOBS_OBJS = $(JOB_SRCS:.cpp=.Osuf)
+NormalProgramTarget(stagerJob,$(JOBS_OBJS),$(DEPLIB),$(LIBS),stage,st,6755)

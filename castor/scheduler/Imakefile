@@ -17,83 +17,25 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Release$ $Date: 2008/11/03 07:44:25 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Release$ $Date: 2008/11/26 14:51:55 $ $Author: sponcec3 $
 #
 # Makefile for the CASTOR2 LSF External Plugin
 #
 # @author Castor Dev team, castor-dev@cern.ch
 
-#include <Project.tmpl>
+CPPFLAGS = -g -O0 -I ../../h -I ../.. $(PYTHONINC) $(MTCCFLAGS)
+LIBS = -lbat -llsf -llsbstream -lm
 
-#if !defined(_WIN32)
-#if linux
-DEBUG = -g -O0
-#else
-DEBUG = -g
-#endif
-#endif
-
-#ifdef _WIN32
-EXTSHARED = dll
-#else
-EXTSHARED = so
-#endif
-
-CASTOR_HOME = ../..
-MANPAGES = FileName($(MANDIR),schmod_castor.$(MANSUFFIX))
-EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),schmod_castor.$(MANSUFFIX)))
-INCLUDES = -I FileName(FileName(..,..),h) -I FileName(..,..)
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
-
-LIBS = -lshift -lbat -llsf -llsbstream -lcastorMonitor -lm -L../../shlib -Wl,-rpath-link,../../shlib
-DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift) \
-         DepSharedLibraryTargetName(FileName(..,shlib),castorMonitor)
-LIBDIR = InstallLibDir
+DependsOnLibrary(../common,castorcommon)
+DependsOnLibrary(../dlf,castordlf)
+DependsOnLibrary(monitoring,castormonitor)
 
 SCHMOD_SHMEM_SRCS = schmod_shmem.cpp HandlerData.cpp
 SCHMOD_SHMEM_OBJS = $(SCHMOD_SHMEM_SRC:.pp=.Osuf)
+BareSharedLibraryTarget(schmod_shmem,$(SCHMOD_SHMEM_OBJS),$(DEPLIB),$(LIBS),$(LIBDIR))
 
 SCHMOD_PYTHON_SRCS = schmod_python.cpp HandlerData.cpp Python.cpp
 SCHMOD_PYTHON_OBJS = $(SCHMOD_PYTHON_SRC:.pp=.Osuf)
+BareSharedLibraryTarget(schmod_python,$(SCHMOD_PYTHON_OBJS),$(DEPLIB),$(LIBS) $(PYTHONLIBS),$(LIBDIR))
 
-all: schmod_shmem.$(EXTSHARED) schmod_python.$(EXTSHARED)
-
-schmod_shmem.$(EXTSHARED): $(SCHMOD_SHMEM_OBJS)
-	$(CXX) -shared $(CPPFLAGS) -o schmod_shmem.$(EXTSHARED) $(SCHMOD_SHMEM_SRCS) $(LIBS)
-
-schmod_python.$(EXTSHARED): $(SCHMOD_PYTHON_OBJS)
-	$(CXX) -shared $(CPPFLAGS) -o schmod_python.$(EXTSHARED) $(SCHMOD_PYTHON_SRCS) $(LIBS) $(PYTHONLIBS) $(PYTHONINC)
-
-Makefiles:
-
-#if defined(_WIN32)
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend $(INCLUDES) $(SCHMOD_SHMEM_SRCS) $(SCHMOD_PYTHON_SRCS) *.cpp 2> /dev/null
-#endif
-
-install: FileName($(LIBDIR),ProgramTargetName(schmod_shmem.$(EXTSHARED))) FileName($(LIBDIR),ProgramTargetName(schmod_python.$(EXTSHARED)))
-
-install.man: $(MANDIR) $(MANPAGES)
-MakeDir($(MANDIR),root,bin,0755)
-IMANPAGE(schmod_castor,$(MANDIR),$(MANSUFFIX))
-EMANPAGE(schmod_castor,$(EXPORTMAN)/man1,$(MANSUFFIX))
-
-export: install
-
-exportman: $(EXPORTMANPAGES)
-
-exportshr:
-InstallTarget(schmod_shmem.$(EXTSHARED),root,bin,0755,$(LIBDIR))
-InstallTarget(schmod_python.$(EXTSHARED),root,bin,0755,$(LIBDIR))
-
-clean:
-	-@RemoveFiles(FilesToClean $(SCHMOD_SHMEM_OBJS) $(SCHMOD_PYTHON_OBJS))
-
-clobber: clean
-	-@RemoveFiles(ProgramTargetName(schmod_shmem.$(EXTSHARED)))
-	-@RemoveFiles(ProgramTargetName(schmod_python.$(EXTSHARED)))
-
-FORCE:
+EXEMANPAGE(schmod_castor)

@@ -6,275 +6,66 @@ COMM       @(#)Imakefile,v 1.3 2005/01/23 08:49:33 CERN IT-PDP/DM Ben Couturier
 
 COMM    Make UPV programs.
 
-#include <Project.tmpl>
-
-INCLUDES = FileName(..,h)
-#if linux
-LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl -Wl,-rpath-link,../shlib
-#else
-#if _WIN32
-LIBS = ..\lib\shift.lib wsock32.lib advapi32.lib
-#endif
-#endif
+INCLUDES = ../h
+CUPVLIB = -L. -lcastorupv
 OPSGRP = OperatorGid
 SPOOL = CupvSpool
-LOGFILE = FileName($(SPOOL),log)
-#if Accounting
+LOGFILE = $(SPOOL)/log
 SACCTDIR = SacctDir
-SACCTFILE = FileName(SacctDir,sacct)
+SACCTFILE = SacctDir/sacct
 ACCTFILE = -DACCTFILE=\"$(SACCTFILE)\"
-#endif
 CUPVCONFIG = CupvConfigFile
 CUPV_HOST = CupvHost
-#if UseOracle
-DBOBJS = Cupv_oracle_ifce.Osuf
 ORAFLG = -DUSE_ORACLE
-#if defined(_WIN32)
-ORAINC = -I$(ORACLE_HOME)\PRO80\C\INCLUDE
-LIBORA = $(ORACLE_HOME)\PRO80\LIB\MSVC\SQLLIB80.LIB
-WNT_SYS_INCLUDE = "INCLUDE=$(MSDEVDIR)\..\Vc\Include"
-#else
 ORAINC = -I$(ORACLE_HOME)/precomp/public
-#endif
-#else
-#if UseRaima
-DBOBJS = Cupv_raima_ifce.Osuf
-#if _WIN32
-RDSFLG = -DUSE_RAIMA -DWIN32_NT
-#else
-RDSFLG = -DUSE_RAIMA -DUNIX
-#endif
-RDSHOME = RaimaDir
-RDSINC = -I$(RDSHOME)/include
-RDSLIB = $(RDSHOME)/lib/libCadm.so $(RDSHOME)/lib/libCrdm.so \
-	 $(RDSHOME)/lib/libCncp.so $(RDSHOME)/lib/libCrpc.so \
-	 $(RDSHOME)/lib/libCrm.so $(RDSHOME)/lib/libCenc.so
-LIBRDS = -L$(RDSHOME)/lib -lCadm -lCrdm -lCncp -lCrpc -lCrm -lCenc
-#else
-CDBANA = FileName(FileName(..,db),ProgramTargetName(Cdbana))
-DBOBJS = Cupv_db.Osuf Cupv_Cdb_ifce.Osuf
-#endif
-#endif 
 USE_CUPV=-DUSE_CUPV
 #if BuildSecureCupv
 SECURITYFLAG=-DCSEC
-LIBS+= -ldl
 #endif  
 
-COMM######################### FLAGS ##############################
-
 DFLAGS = -DBIN=\"$(BIN)\" -DCUPV_HOST=\"$(CUPV_HOST)\" $(USE_CUPV) \
-         -DLOGFILE=\"$(LOGFILE)\" \
-         -DCUPVCONFIG=\"$(CUPVCONFIG)\" \
+         -DLOGFILE=\"$(LOGFILE)\" -DCUPVCONFIG=\"$(CUPVCONFIG)\" \
          $(ACCTFLAG) $(ACCTFILE) $(RDSFLG) $(ORAFLG)
-
 CFLAGS = -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(RDSINC) $(ORAINC) $(SECURITYFLAG)
 
-COMM######################### DEPENDENCY LIBRARIES ###############
-
-DEPLIB = DepSharedLibraryTargetName(shlib,shift)
-
-COMM######################### RULES ##############################
-
-MANPAGES = $(LIBMANDIR)/Cupv_add.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cupv_check.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cupv_delete.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cupv_list.$(LIBMANSUFFIX) \
-	   $(LIBMANDIR)/Cupv_modify.$(LIBMANSUFFIX) \
-	   $(MANDIR)/Cupvadd.$(MANSUFFIX) \
-	   $(MANDIR)/Cupvcheck.$(MANSUFFIX) \
-	   $(MANDIR)/Cupvdelete.$(MANSUFFIX) \
-	   $(MANDIR)/Cupvlist.$(MANSUFFIX) \
-	   $(MANDIR)/Cupvdaemon.$(MANSUFFIX) \
-	   $(MANDIR)/Cupvmodify.$(MANSUFFIX)
-
-EXPORTMANPAGES = $(EXPORTMAN)/man3/Cupv_add.$(LIBMANSUFFIX) \
-	   $(EXPORTMAN)/man3/Cupv_check.$(LIBMANSUFFIX) \
-	   $(EXPORTMAN)/man3/Cupv_delete.$(LIBMANSUFFIX) \
-	   $(EXPORTMAN)/man3/Cupv_list.$(LIBMANSUFFIX) \
-	   $(EXPORTMAN)/man3/Cupv_modify.$(LIBMANSUFFIX) \
-	   $(EXPORTMAN)/man1/Cupvadd.$(MANSUFFIX) \
-	   $(EXPORTMAN)/man1/Cupvcheck.$(MANSUFFIX) \
-	   $(EXPORTMAN)/man1/Cupvdelete.$(MANSUFFIX) \
-	   $(EXPORTMAN)/man1/Cupvlist.$(MANSUFFIX) \
-	   $(EXPORTMAN)/man1/Cupvdaemon.$(MANSUFFIX) \
-	   $(EXPORTMAN)/man1/Cupvmodify.$(MANSUFFIX)
-
-#if BuildCupvLibrary
-UPVLIBTARGET = SharedLibraryTargetName(castorupv)
-#endif
-#if BuildCupvClient
-CLIENT = ProgramTargetName(Cupvadd) \
-	 ProgramTargetName(Cupvmodify) \
-	 ProgramTargetName(Cupvcheck) \
-	 ProgramTargetName(Cupvdelete) \
-	 ProgramTargetName(Cupvlist)
-
-IPROGS_C = FileName($(BIN),ProgramTargetName(Cupvadd)) \
-	   FileName($(BIN),ProgramTargetName(Cupvmodify)) \
-	   FileName($(BIN),ProgramTargetName(Cupvcheck)) \
-	   FileName($(BIN),ProgramTargetName(Cupvdelete)) \
-	   FileName($(BIN),ProgramTargetName(Cupvlist))	
-EPROGS_C = $(EXPORTBIN)/Cupvadd \
-	   $(EXPORTBIN)/Cupvmodify \
-	   $(EXPORTBIN)/Cupvdelete \
-	   $(EXPORTBIN)/Cupvcheck \
-	   $(EXPORTBIN)/Cupvlist
-#endif
+DependsOnLibrary(common,castorcommon)
 
 #if BuildCupvDaemon
-PROGS_D = ProgramTargetName(Cupvdaemon)
-
-IPROGS_D = FileName($(BIN),ProgramTargetName(Cupvdaemon))
-
-EPROGS_D = $(EXPORTBIN)/Cupvdaemon
-
-#endif
-
-CUPVDAEMON_OBJS	=	Cupv_main.Osuf \
-			$(DBOBJS) \
-			Cupv_procreq.Osuf \
-			sendrep.Osuf \
-			Cupv_util.Osuf \
-			Cupvlogit.Osuf
-
-CUPVLIB_OBJS	=	Cupv_apiinit.Osuf \
-			Cupv_errmsg.Osuf \
-			send2Cupv.Osuf \
-			Cupv_delete.Osuf \
-			Cupv_list.Osuf \
-			Cupv_util.Osuf \
-			Cupv_check.Osuf \
-			Cupv_modify.Osuf \
-			Cupv_add.Osuf
-
-
-all: $(UPVLIBTARGET) $(CLIENT) $(PROGS_D)
-
-#undef YES
 Cupv_oracle_ifce.c: Cupv_oracle_ifce.pc
-	proc INAME=Cupv_oracle_ifce INCLUDE=$(INCLUDES) THREADS=YES CHAR_MAP=STRING PARSE=FULL $(WNT_SYS_INCLUDE)
-#define YES 1
-
-Cupv_db.c Cupv_db.h: $(CDBANA) Cupv_db.des FileName($(INCLUDES),Castor_limits.h)
-	$(CDBANA) -c Cupv_db.c -h Cupv_db.h Cupv_db.des
-
-#if UseOracle && !defined(_WIN32)
-Cupvdaemon: $(CUPVDAEMON_OBJS) $(DEPLIB)
-	$(MAKE) -f oralink.mk Cupvdaemon CUPVDAEMON_OBJS="$(CUPVDAEMON_OBJS)" CLDFLAGS=$(MTLDFLAGS) LIBS="$(LIBS) $(MTLDLIBS)"
-#else
-NormalProgramTarget(Cupvdaemon,$(CUPVDAEMON_OBJS), $(DEPLIB), $(MTLDFLAGS) $(LIBS) $(MTLDLIBS) $(LIBORA) $(LIBRDS))
-#endif
-
-NormalProgramTarget(Cupvadd, Cupvadd.Osuf,SharedLibraryTargetName(castorupv) $(DEPLIB),$(CUPVLIB) $(LIBS))
-NormalProgramTarget(Cupvmodify, Cupvmodify.Osuf,SharedLibraryTargetName(castorupv) $(DEPLIB),$(CUPVLIB) $(LIBS))
-NormalProgramTarget(Cupvcheck, Cupvcheck.Osuf,SharedLibraryTargetName(castorupv) $(DEPLIB),$(CUPVLIB) $(LIBS))
-NormalProgramTarget(Cupvdelete, Cupvdelete.Osuf,SharedLibraryTargetName(castorupv) $(DEPLIB),$(CUPVLIB) $(LIBS))
-NormalProgramTarget(Cupvlist, Cupvlist.Osuf,SharedLibraryTargetName(castorupv) $(DEPLIB),$(CUPVLIB) $(LIBS))
-
-SharedLibraryTarget(castorupv,$(CUPVLIB_OBJS),,)
-
-MakeDepSharedLibrary(shlib,shift)
-
-#if UseOracle == NO && UseRaima == NO
-#if defined(_WIN32)
-$(CDBANA): FORCE
-	pushd ..\db & $(MAKE) Cdbana.exe & popd
-#else
-$(CDBANA): FORCE
-	cd ../db ; $(MAKE) Cdbana
-#endif
-#endif
-
-#if BuildCupvDaemon
-install: $(BIN) $(IPROGS_C) $(IPROGS_D) $(SPOOL) $(SACCTDIR)
-#else
-install: $(BIN) $(IPROGS_C)
-#endif
-
-InstallProgram(Cupvdaemon,$(BIN),root,bin,750)
-IEXPORT(Cupvdaemon,$(EXPORTBIN),750);
-
-InstallProgram(Cupvadd,$(BIN),root,bin,755)
-IEXPORT(Cupvadd,$(EXPORTBIN),755);
-
-InstallProgram(Cupvmodify,$(BIN),root,bin,755)
-IEXPORT(Cupvmodify,$(EXPORTBIN),755);
-
-InstallProgram(Cupvcheck,$(BIN),root,bin,755)
-IEXPORT(Cupvcheck,$(EXPORTBIN),755);
-
-InstallProgram(Cupvdelete,$(BIN),root,bin,755)
-IEXPORT(Cupvdelete,$(EXPORTBIN),755);
-
-InstallProgram(Cupvlist,$(BIN),root,bin,755)
-IEXPORT(Cupvlist,$(EXPORTBIN),755);
-
-MakeDir($(BIN),root,bin,0755)
+	proc iname=Cupv_oracle_ifce include=$(INCLUDES) threads=yes CHAR_MAP=STRING PARSE=FULL
+FilesToClean += Cupv_oracle_ifce.c Cupv_oracle_ifce.lis
+CUPVDAEMON_OBJS = Cupv_main.Osuf Cupv_oracle_ifce.Osuf Cupv_procreq.Osuf sendrep.Osuf Cupv_util.Osuf Cupvlogit.Osuf
 MakeDir($(SPOOL),root,bin,0755)
-
-#if Accounting
 MakeDir($(SACCTDIR),root,bin,0777)
+ORALIBS= -L$(ORACLE_HOME)/lib -lclntsh
+NormalProgramTarget(Cupvdaemon,$(CUPVDAEMON_OBJS), $(DEPLIB), $(ORALIBS) $(MTLDFLAGS) $(LIBS),root,bin,750)
+ADMMANPAGE(Cupvdaemon)
 #endif
 
-install.man: $(MANDIR) $(MANPAGES)
-
-MakeDir($(MANDIR),root,bin,0755)
-
-IMANPAGE(Cupv_add, $(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(Cupv_check, $(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(Cupv_delete, $(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(Cupv_list, $(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(Cupv_modify, $(LIBMANDIR),$(LIBMANSUFFIX))
-IMANPAGE(Cupvadd, $(MANDIR),$(MANSUFFIX))
-IMANPAGE(Cupvcheck, $(MANDIR),$(MANSUFFIX))
-IMANPAGE(Cupvdelete, $(MANDIR),$(MANSUFFIX))
-IMANPAGE(Cupvlist, $(MANDIR),$(MANSUFFIX))
-IMANPAGE(Cupvdaemon, $(MANDIR),$(MANSUFFIX))
-IMANPAGE(Cupvmodify, $(MANDIR),$(MANSUFFIX))
-
-EMANPAGE(Cupv_add, $(EXPORTMAN)/man$(LIBMANSUFFIX),$(LIBMANSUFFIX))
-EMANPAGE(Cupv_check, $(EXPORTMAN)/man$(LIBMANSUFFIX),$(LIBMANSUFFIX))
-EMANPAGE(Cupv_delete, $(EXPORTMAN)/man$(LIBMANSUFFIX),$(LIBMANSUFFIX))
-EMANPAGE(Cupv_list, $(EXPORTMAN)/man$(LIBMANSUFFIX),$(LIBMANSUFFIX))
-EMANPAGE(Cupv_modify, $(EXPORTMAN)/man$(LIBMANSUFFIX),$(LIBMANSUFFIX))
-EMANPAGE(Cupvadd, $(EXPORTMAN)/man$(MANSUFFIX),$(MANSUFFIX))
-EMANPAGE(Cupvcheck, $(EXPORTMAN)/man$(MANSUFFIX),$(MANSUFFIX))
-EMANPAGE(Cupvdelete, $(EXPORTMAN)/man$(MANSUFFIX),$(MANSUFFIX))
-EMANPAGE(Cupvlist, $(EXPORTMAN)/man$(MANSUFFIX),$(MANSUFFIX))
-EMANPAGE(Cupvdaemon, $(EXPORTMAN)/man$(MANSUFFIX),$(MANSUFFIX))
-EMANPAGE(Cupvmodify, $(EXPORTMAN)/man$(MANSUFFIX),$(MANSUFFIX))
-
-export: $(EPROGS_C) $(EPROGS_D)
-
-exportman: $(EXPORTMANPAGES)
-
-exportshr:
-
-COMM###################### CLEANING RULES ########################
-
-clean:
-	-@RemoveFiles(FilesToClean)
-
-clobber:        clean
-	-@RemoveFiles($(CLIENT) $(PROGS_D) Cupv_oracle_ifce.c Cupv_oracle_ifce.lis tp*)
-
-#if _WIN32
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend -Y$(INCLUDES) *.c 2> /dev/null
+#if BuildCupvClient
+UPVDEP = SharedLibraryTargetName(castorupv)
+NormalProgramTarget(Cupvadd, Cupvadd.Osuf,$(UPVDEP) $(DEPLIB),$(CUPVLIB) $(LIBS),root,bin,755)
+NormalProgramTarget(Cupvmodify, Cupvmodify.Osuf,$(UPVDEP) $(DEPLIB),$(CUPVLIB) $(LIBS),root,bin,755)
+NormalProgramTarget(Cupvcheck, Cupvcheck.Osuf,$(UPVDEP) $(DEPLIB),$(CUPVLIB) $(LIBS),root,bin,755)
+NormalProgramTarget(Cupvdelete, Cupvdelete.Osuf,$(UPVDEP) $(DEPLIB),$(CUPVLIB) $(LIBS),root,bin,755)
+NormalProgramTarget(Cupvlist, Cupvlist.Osuf,$(UPVDEP) $(DEPLIB),$(CUPVLIB) $(LIBS),root,bin,755)
+EXEMANPAGE(Cupvadd)
+EXEMANPAGE(Cupvmodify)
+EXEMANPAGE(Cupvcheck)
+EXEMANPAGE(Cupvdelete)
+EXEMANPAGE(Cupvlist)
 #endif
 
-Makefiles:
+CUPVLIB_OBJS = Cupv_apiinit.Osuf Cupv_errmsg.Osuf send2Cupv.Osuf Cupv_delete.Osuf Cupv_list.Osuf Cupv_util.Osuf Cupv_check.Osuf Cupv_modify.Osuf Cupv_add.Osuf
+SharedLibraryTarget(castorupv,$(CUPVLIB_OBJS),$(DEPLIB),$(LIBS))
 
-FORCE:
+LIBMANPAGE(Cupv_add)
+LIBMANPAGE(Cupv_check)
+LIBMANPAGE(Cupv_delete)
+LIBMANPAGE(Cupv_list)
+LIBMANPAGE(Cupv_modify)
 
-COMM###################### DEPENDENCIES ##########################
-
-COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.
-
+FilesToClobber += Cupv_oracle_ifce.c Cupv_oracle_ifce.lis
 
 
 

@@ -1,5 +1,5 @@
 /*
- * $Id: site.Win32.def,v 1.8 2008/11/04 15:24:00 sponcec3 Exp $
+ * $Id: site.Win32.def,v 1.9 2008/11/26 14:51:56 sponcec3 Exp $
  */
 /*
  * Copyright (C) 1993-2003 by CERN/IT/ADC/CA
@@ -7,7 +7,7 @@
  */
 
 /*
- * @(#)$RCSfile: site.Win32.def,v $ $Revision: 1.8 $ $Date: 2008/11/04 15:24:00 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: site.Win32.def,v $ $Revision: 1.9 $ $Date: 2008/11/26 14:51:56 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Platform is normally guessed from the CPP predefined symbols
    But you may define special flags, for example
@@ -55,7 +55,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #else
 #define RmNodeConfigFile	/etc/castor/RMNODECONFIG
 #endif
-#define	DMSCDir	/dms/fbs/src
 #if defined(_WIN32)
 #define DbConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\DBCONFIG
 #else
@@ -180,8 +179,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #else
 #define MyStagerConfigFile  /etc/castor/MYSTAGERCONFIG
 #endif
-#define StagerSuperGroup	st
-#define StagerSuperUser	stage
 #define StageHost	"stagepublic"
 #define StageSpool	/var/spool/stage
 #define StagerGid	st
@@ -228,9 +225,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildExamples	NO
 #define BuildGcDaemon	NO
 #define BuildHsmTools	YES
-#define BuildMonitorClient	YES
-#define BuildMonitorServer	NO
-#define BuildMonitorLibrary	YES
 #define BuildMsgClient	YES
 #define BuildMsgServer	NO
 #define BuildMsgLibrary	YES
@@ -280,13 +274,8 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildCastorClientCPPLibrary	YES
 #define BuildCppTest	NO
 
-#define Accounting	YES
 #define ClientLogging	NO
-#define HasNis	NO
-#define HasNroff	NO
 #define HasCDK	NO
-#define UseAdns	NO
-#define UseDMSCapi	NO
 #define UseMtx	NO
 #define UseMySQL	NO
 #define UseOracle	NO

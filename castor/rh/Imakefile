@@ -17,22 +17,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.16 $ $Release$ $Date: 2008/08/08 12:35:35 $ $Author: riojac3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.17 $ $Release$ $Date: 2008/11/26 14:51:55 $ $Author: sponcec3 $
 #
 # Make Castor RH library
 #
 # @author Castor Dev team, castor-dev@cern.ch
 #
-
-#include <Project.tmpl>
-
-#if !defined(_WIN32)
-#if linux
-DEBUG  = -g -O0
-#else
-DEBUG  = -g
-#endif
-#endif
 
 #if UseGSI
 GLOBUS_LOCATION=GlobusLocation
@@ -45,61 +35,16 @@ GLOBUS_LIBS=-L$(GLOBUS_LOCATION)/lib -lcrypto_$(GLOBUS_FLAVOUR)
 LIBS += $(GLOBUS_LIBS)
 #endif
 
-
-INCLUDES = -I FileName(FileName(..,..),h) -I FileName(..,..)
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
-
-LIBS += -lshift -Wl,-rpath-link,../../shlib
-
-RHBIN_SRCS = Server.cpp RHThread.cpp
-
-RHBIN_OBJS = $(RHBIN_SRCS:.cpp=.Osuf)
-
-DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift)
-
-LDFLAGS += -L FileName(..,FileName(..,shlib)) $(MTLDFLAGS)
+CPPFLAGS = -g -O0 -I ../../h -I ../.. $(MTCCFLAGS)
+LDFLAGS += $(MTLDFLAGS)
 LD = g++
 
-MANPAGES_RH = FileName($(MANDIR),rhserver.$(MANSUFFIX))
-EMANPAGES_RH = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rhserver.$(MANSUFFIX)))
+DependsOnLibrary(../common,castorcommon)
+DependsOnLibrary(../dlf,castordlf)
+DependsOnLibrary(,castorclient)
+DependsOnLibrary(../security,castorsecurity)
 
-all: ProgramTargetName(rhserver)
-
-NormalProgramTarget(rhserver,$(RHBIN_OBJS),$(DEPLIB),$(LIBS))
-
-MakeDepSharedLibrary(FileName(..,shlib),shift)
-
-Makefiles:
-
-#if defined(_WIN32)
-depend:
-	@echo Not supported on this platform
-#else
-depend:
-	makedepend $(INCLUDES) $(RHBIN_SRCS) 2> /dev/null
-#endif
-
-install: FileName($(BIN),rhserver)
-
-InstallProgram(rhserver,$(BIN),root,bin,750)
-
-install.man: $(MANDIR) $(MANPAGES_RH)
-
-IMANPAGE(rhserver,$(MANDIR),$(MANSUFFIX))
-
-exportman: $(EMANPAGES_RH)
-
-EMANPAGE(rhserver,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-
-MakeDir($(MANDIR),root,bin,0755)
-
-clean:
-	@echo cleaning in CurDir
-	-@RemoveFiles(FilesToClean)
-
-clobber:	clean
-	@echo clobbering in CurDir
-	-@RemoveFiles(ProgramTargetName(rhserver))
-
-FORCE:
-
+RHBIN_SRCS = Server.cpp RHThread.cpp
+RHBIN_OBJS = $(RHBIN_SRCS:.cpp=.Osuf)
+NormalProgramTarget(rhserver,$(RHBIN_OBJS),$(DEPLIB),$(LIBS),root,bin,750)
+EXEMANPAGE(rhserver)
