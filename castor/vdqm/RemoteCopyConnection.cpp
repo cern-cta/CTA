@@ -184,7 +184,7 @@ bool castor::vdqm::RemoteCopyConnection::sendJob(
   stringValue = (char *)clientUserName.c_str();
   DO_MARSHALL_STRING(p, stringValue, SendTo, sizeof(vdqmVolReq.client_name));
 
-  len += 3*LONGSIZE;
+  len += 3 * LONGSIZE;
 
   // After marshalling we can send the information to the RTCPD or tape
   // aggregator daemon
@@ -260,15 +260,15 @@ bool castor::vdqm::RemoteCopyConnection::readAnswer(const Cuuid_t &cuuid,
   unmarshall_LONG(p, len);
 
   if ( len > 0 ) {
-    if ( len > VDQM_MSGBUFSIZ - 3*LONGSIZE ) {
+    if ( len > VDQM_MSGBUFSIZ - 3 * LONGSIZE ) {
       castor::dlf::Param params[] = {
         castor::dlf::Param("remoteCopyType", remoteCopyType),
-        castor::dlf::Param("valid length", (VDQM_MSGBUFSIZ-3*LONGSIZE)),
+        castor::dlf::Param("valid length", (VDQM_MSGBUFSIZ - 3 * LONGSIZE)),
         castor::dlf::Param("requested length", len)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
         VDQM_REMOTECONNECTION_MSG_TOO_LARGE, 2, params);
 
-      len = VDQM_MSGBUFSIZ - 3*LONGSIZE;
+      len = VDQM_MSGBUFSIZ - 3 * LONGSIZE;
     }
 
     rc = netread_timeout(m_socket, p, len, VDQM_TIMEOUT);
