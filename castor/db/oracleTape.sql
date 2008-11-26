@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.697 $ $Date: 2008/11/26 10:45:04 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.698 $ $Date: 2008/11/26 12:29:58 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1209,8 +1209,8 @@ BEGIN
 
   -- Deal with Recalls
   UPDATE Segment SET status = 0 WHERE status = 7; -- Resurrect SELECTED segment
-  UPDATE tape SET status = 1 WHERE tpmode = 0 AND status IN (2, 3, 4); -- Resurrect the tapes running for recall
-  UPDATE tape A SET status = 8 
+  UPDATE Tape SET status = 1 WHERE tpmode = 0 AND status IN (2, 3, 4); -- Resurrect the tapes running for recall
+  UPDATE Tape A SET status = 8 
    WHERE status IN (0, 6, 7) AND EXISTS
     (SELECT id FROM Segment WHERE status = 0 AND tape = A.id);
   COMMIT;
