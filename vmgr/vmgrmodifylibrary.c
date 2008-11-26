@@ -9,6 +9,7 @@
 #include <pwd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include "Cgetopt.h"

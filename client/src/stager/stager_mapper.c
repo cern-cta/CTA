@@ -1,5 +1,5 @@
 /*
- * $Id: stager_mapper.c,v 1.12 2008/11/26 14:41:16 sponcec3 Exp $
+ * $Id: stager_mapper.c,v 1.13 2008/11/26 18:22:38 waldron Exp $
  */
 
 /*
@@ -57,8 +57,6 @@ get_mapping(enum mapping_type mt,
 	    const char *name, 
 	    char **stager, 
 	    char **svcclass) {
-
-  char *func = "get_mapping";
   char *category;
   char **vals = NULL;
   int nbvals = 0, rc;
@@ -111,7 +109,6 @@ enum stager_type { V1, V2 };
 
 static enum stager_type
 get_stager_type(const char *name) {
-  char *func = "get_stager_type";
   char *val;
   enum stager_type ret = V1;
 
@@ -143,7 +140,6 @@ stage_mapper_setenv(const char *username,
 		    char **mstager,
 		    char **msvcclass,
 		    int *isV2) {
-  char *func = "stage_mapper_setenv";
   char *stager = NULL, *svcclass = NULL;
   enum stager_type stgtype;
 
@@ -165,7 +161,7 @@ stage_mapper_setenv(const char *username,
   if (stager == NULL 
       && svcclass == NULL
       && groupname != NULL) {
-      if (get_mapping(GROUPMAPPING,
+    if (get_mapping(GROUPMAPPING,
 		    groupname,
 		    &stager,
 		    &svcclass) != 0) {
@@ -214,7 +210,6 @@ stage_mapper_setenv(const char *username,
     } else {
       *isV2 = 0;
     }
-
   }
 
   return 0;
@@ -224,12 +219,11 @@ stage_mapper_setenv(const char *username,
 /* without setting Enviroment Variable*/
 
 int 
- just_stage_mapper(const char *username, 
-		    const char *groupname,
-		    char **mstager,
-		    char **msvcclass,
-		    int *isV2) {
-  char *func = "just_stage_mapper";
+just_stage_mapper(const char *username, 
+		  const char *groupname,
+		  char **mstager,
+		  char **msvcclass,
+		  int *isV2) {
 
   char *stager = NULL, *svcclass = NULL;
   enum stager_type stgtype;
@@ -251,7 +245,7 @@ int
   if (stager == NULL 
       && svcclass == NULL
       && groupname != NULL) {
-      if (get_mapping(GROUPMAPPING,
+    if (get_mapping(GROUPMAPPING,
 		    groupname,
 		    &stager,
 		    &svcclass) != 0) {
@@ -260,10 +254,9 @@ int
   }
  
   if (stager != NULL) stgtype = get_stager_type(stager) ;
-    else stgtype=V1;
+  else stgtype=V1;
 
   if (stager!= NULL) {
-    
     if (mstager != NULL) {
       *mstager = stager;
     } else {
@@ -272,7 +265,6 @@ int
   }
  
   if (svcclass!= NULL) {
- 
     if (msvcclass != NULL) {
       *msvcclass = svcclass;
     } else {
@@ -286,7 +278,6 @@ int
     } else {
       *isV2 = 0;
     }
-
   }
 
   return 0;

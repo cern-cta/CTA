@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.42 $ $Release$ $Date: 2008/10/24 03:01:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.43 $ $Release$ $Date: 2008/11/26 18:22:40 $ $Author: waldron $
  *
  * the client API to the castor stager
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.42 $
- * @date $Date: 2008/10/24 03:01:38 $
+ * @version $Revision: 1.43 $
+ * @date $Date: 2008/11/26 18:22:40 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.42 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.43 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -935,17 +935,17 @@ EXTERN_C int DLL_DECL stage_removePrivilege _PROTO ((char* users,
  * Response structure for list privileges
  */
 struct stage_listpriv_resp {
-  /// service class, null means any
+  // service class, null means any
   char* svcClass;
-  /// user, -1 means any
+  // user, -1 means any
   int uid;
-  /// group, -1 means any
+  // group, -1 means any
   int gid;
-  /// request type, 0 means any
+  // request type, 0 means any
   unsigned int requestType;
-  /// whether it's granted or denied
+  // whether it's granted or denied
   int isGranted;
- };
+};
 
 /**
  * stage_listPrivileges

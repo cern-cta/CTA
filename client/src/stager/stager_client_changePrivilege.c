@@ -112,7 +112,7 @@ int changePrivilege(int argc, char *argv[], int isAdd) {
   char *users = "";
   char *reqTypes = "";
 
-  /* default values, + environment */
+  // default values, + environment
   opts.stage_host = NULL;
   opts.service_class = NULL;
   opts.stage_port=0;
@@ -122,7 +122,7 @@ int changePrivilege(int argc, char *argv[], int isAdd) {
                       &opts.service_class,
                       &opts.stage_version);
 
-  /* Parsing the command line */
+  // Parsing the command line
   memset(&errbuf,  '\0', sizeof(errbuf));
   errflg = cmd_parse(argc, argv, &users, &reqTypes, &opts.service_class);
   if (errflg != 0) {
@@ -130,10 +130,10 @@ int changePrivilege(int argc, char *argv[], int isAdd) {
     exit (EXIT_FAILURE);
   }
 
-  /* Setting the error buffer */
+  // Setting the error buffer
   stager_seterrbuf(errbuf, sizeof(errbuf));
 
-  /* Performing the actual call */
+  // Performing the actual call
   if (isAdd) {
     rc = stage_addPrivilege(users, reqTypes, &opts);
   } else {
@@ -145,7 +145,7 @@ int changePrivilege(int argc, char *argv[], int isAdd) {
     exit(EXIT_FAILURE);
   }
 
-  /* success */
+  // success
   fprintf(stdout, "Change done successfully\n");
   return 0;
 }
