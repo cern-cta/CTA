@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.8-3-1_to_2.1.8-3-2.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/11/25 18:30:46 $ $Author: waldron $
+ * @(#)$RCSfile: 2.1.8-3-1_to_2.1.8-3-2.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/11/26 12:37:23 $ $Author: waldron $
  *
  * This script upgrades a CASTOR v2.1.8-3-1 STAGER database into v2.1.8-3-2
  *
@@ -920,6 +920,65 @@ BEGIN
   END IF;
   -- Finally issue the actual query
   internalStageQuery(cfs, svcClassId, result);
+END;
+/
+
+
+/* PL/SQL method implementing rtcpclientdCleanUp */
+CREATE OR REPLACE PROCEDURE rtcpclientdCleanUp AS
+  tpIds "numList";
+BEGIN
+  -- Deal with Migrations
+  -- 1) Ressurect tapecopies for migration
+  UPDATE TapeCopy SET status = 1 WHERE status = 3;
+  -- 2) Clean up the streams
+  UPDATE Stream SET status = 0 
+   WHERE status NOT IN (0, 5, 6, 7) --PENDING, CREATED, STOPPED, WAITPOLICY
+  RETURNING tape BULK COLLECT INTO tpIds;
+  UPDATE Stream SET tape = 0 WHERE tape != 0;
+  -- 3) Reset the tape for migration
+  FORALL i IN tpIds.FIRST .. tpIds.LAST  
+    UPDATE tape SET stream = 0, status = 0 WHERE status IN (2, 3, 4) AND id = tpIds(i);
+
+  -- Deal with Recalls
+  UPDATE Segment SET status = 0 WHERE status = 7; -- Resurrect SELECTED segment
+  UPDATE Tape SET status = 1 WHERE tpmode = 0 AND status IN (2, 3, 4); -- Resurrect the tapes running for recall
+  UPDATE Tape A SET status = 8 
+   WHERE status IN (0, 6, 7) AND EXISTS
+    (SELECT id FROM Segment WHERE status = 0 AND tape = A.id);
+  COMMIT;
+END;
+/
+
+
+/* PL/SQL method implementing fileRecallFailed */
+CREATE OR REPLACE PROCEDURE fileRecallFailed(tapecopyId IN INTEGER) AS
+ SubRequestId NUMBER;
+ dci NUMBER;
+ fsId NUMBER;
+ fileSize NUMBER;
+BEGIN
+  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize
+    INTO SubRequestId, dci, fileSize
+    FROM TapeCopy, SubRequest, DiskCopy, CastorFile
+   WHERE TapeCopy.id = tapecopyId
+     AND CastorFile.id = TapeCopy.castorFile
+     AND DiskCopy.castorFile = TapeCopy.castorFile
+     AND SubRequest.diskcopy(+) = DiskCopy.id
+     AND DiskCopy.status = 2; -- DISKCOPY_WAITTAPERECALL
+  UPDATE DiskCopy SET status = 4 
+   WHERE id = dci RETURNING fileSystem INTO fsid; -- DISKCOPY_FAILED
+  IF SubRequestId IS NOT NULL THEN
+    UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
+                          getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED (not strictly correct but the request is over anyway)
+                          lastModificationTime = getTime()
+     WHERE id = SubRequestId;
+    UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
+                          getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
+                          lastModificationTime = getTime(),
+                          parent = 0
+     WHERE parent = SubRequestId;
+  END IF;
 END;
 /
 
