@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.685 $ $Date: 2008/11/25 16:18:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.686 $ $Date: 2008/11/26 15:55:56 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -167,13 +167,13 @@ CREATE INDEX I_QueryParameter_Query ON QueryParameter (query);
 CREATE INDEX I_Segment_Copy ON Segment (copy);
 
 /* Constraint on FileClass name */
-ALTER TABLE FileClass ADD CONSTRAINT I_FileClass_Name UNIQUE (name);
+ALTER TABLE FileClass ADD CONSTRAINT UN_FileClass_Name UNIQUE (name);
 
 /* Add unique constraint on tapes */
-ALTER TABLE Tape ADD CONSTRAINT I_Tape_VIDSideTpMode UNIQUE (VID, side, tpMode);
+ALTER TABLE Tape ADD CONSTRAINT UN_Tape_VIDSideTpMode UNIQUE (VID, side, tpMode);
 
 /* Add unique constraint on svcClass name */
-ALTER TABLE SvcClass ADD CONSTRAINT I_SvcClass_Name UNIQUE (NAME);
+ALTER TABLE SvcClass ADD CONSTRAINT UN_SvcClass_Name UNIQUE (NAME);
 
 /* Custom type to handle int arrays */
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
@@ -259,7 +259,7 @@ CREATE GLOBAL TEMPORARY TABLE TooManyReplicasHelper
 
 /* SQL statements for table PriorityMap */
 CREATE TABLE PriorityMap (euid INTEGER, egid INTEGER, priority INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-ALTER TABLE PriorityMap ADD CONSTRAINT U_Priority_euid_egid UNIQUE (euid, egid);
+ALTER TABLE PriorityMap ADD CONSTRAINT UN_Priority_euid_egid UNIQUE (euid, egid);
 
 /*
  * Black and while list mechanism
@@ -299,6 +299,7 @@ ALTER TABLE StageDiskCopyReplicaRequest MODIFY machine DEFAULT 'stager';
 /* Define a table for some configuration key-value pairs and populate it */
 CREATE TABLE CastorConfig
   (class VARCHAR2(2048) NOT NULL, key VARCHAR2(2048) NOT NULL, value VARCHAR2(2048) NOT NULL, description VARCHAR2(2048));
+ALTER TABLE CastorConfig ADD CONSTRAINT UN_CastorConfig_class_key UNIQUE (class, key);
 
 INSERT INTO CastorConfig
   VALUES ('general', 'instance', 'castorstager', 'Name of this Castor instance');  -- to be overridden
