@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.696 $ $Date: 2008/11/24 17:35:20 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.697 $ $Date: 2008/11/26 10:45:04 $ $Author: sponcec3 $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -954,7 +954,7 @@ BEGIN
     END LOOP;
 
     IF fileSystemId = 0 THEN
-      RAISE NO_DATA_FOUND; -- we did not find any suitable FS
+      raise_application_error(-20115, 'No suitable filesystem found for this recalled segment');
     END IF;
   END IF;
 END;
