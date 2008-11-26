@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.705 $ $Date: 2008/11/24 17:36:19 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.706 $ $Date: 2008/11/26 10:48:21 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1811,7 +1811,7 @@ BEGIN
     -- insert new row
     INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
                             creationTime, lastAccessTime, lastUpdateTime, lastKnownFileName)
-      VALUES (ids_seq.nextval, fId, nsHostName, sc, fc, fs, getTime(), getTime(), getTime(), REGEXP_REPLACE(fn,'(/){2,}','/'))
+      VALUES (ids_seq.nextval, fId, nsHostName, sc, fc, fs, getTime(), getTime(), getTime()-10, REGEXP_REPLACE(fn,'(/){2,}','/'))
       RETURNING id, fileSize INTO rid, rfs;
     INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
   END;
