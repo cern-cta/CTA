@@ -253,6 +253,8 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildCastorClientCPPLibrary	NO
 #define BuildCppTest	NO
 #define BuildRepack	NO
+#define BuildAggregatorCpp	NO
+#define BuildTapeFormatCpp	NO
 
 #define BuildMigHunterDaemon	NO
 #define BuildRecHandlerDaemon	NO
