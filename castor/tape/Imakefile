@@ -22,6 +22,4 @@
 # @author Sebastien Ponce, sebastien.ponce@cern.ch
 #
 
-#include <Project.tmpl>
-
 SUBDIRS = aggregator
