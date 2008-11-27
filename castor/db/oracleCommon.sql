@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.686 $ $Date: 2008/11/26 15:55:56 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.687 $ $Date: 2008/11/27 17:54:01 $ $Author: itglp $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -520,6 +520,7 @@ END;
  */
 CREATE OR REPLACE FUNCTION getSvcClassList(fsId NUMBER) RETURN VARCHAR2 IS
   svcClassList VARCHAR2(4000) := NULL;
+  c INTEGER := 0;
 BEGIN
   FOR a IN (SELECT Distinct(SvcClass.name)
               FROM FileSystem, DiskPool2SvcClass, SvcClass
@@ -529,6 +530,11 @@ BEGIN
              ORDER BY SvcClass.name)
   LOOP
     svcClassList := svcClassList || ',' || a.name;
+    c := c + 1;
+    IF c = 5 THEN
+      svcClassList := svcClassList || ',...';
+      EXIT;
+    END IF;
   END LOOP;
   RETURN ltrim(svcClassList, ',');
 END;
