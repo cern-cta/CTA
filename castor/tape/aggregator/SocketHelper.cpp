@@ -23,7 +23,7 @@
 
 
 #include "castor/exception/Internal.hpp"
-#include "castor/io/ServerSocket.hpp"
+#include "castor/io/AbstractTCPSocket.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/Marshaller.hpp"
 #include "castor/tape/aggregator/SocketHelper.hpp"
@@ -48,7 +48,7 @@ void castor::tape::aggregator::SocketHelper::printIp(std::ostream &os,
 // printSocketDescription
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::SocketHelper::printSocketDescription(
-  std::ostream &os, castor::io::ServerSocket &socket) throw() {
+  std::ostream &os, castor::io::AbstractTCPSocket &socket) throw() {
   unsigned short localPort = 0;
   unsigned long  localIp   = 0;
   unsigned short peerPort  = 0;
@@ -70,7 +70,7 @@ void castor::tape::aggregator::SocketHelper::printSocketDescription(
 // readUint32
 //------------------------------------------------------------------------------
 uint32_t castor::tape::aggregator::SocketHelper::readUint32(
-  castor::io::ServerSocket &socket, const int netReadWriteTimeout)
+  castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout)
   throw (castor::exception::Exception) {
 
   uint32_t value = 0;
@@ -129,7 +129,7 @@ uint32_t castor::tape::aggregator::SocketHelper::readUint32(
 // readBytes
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::SocketHelper::readBytes(
-  castor::io::ServerSocket &socket, const int netReadWriteTimeout,
+  castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
   const int nbBytes, char *buf) throw (castor::exception::Exception) {
 
   const int netreadRc = netread_timeout(socket.socket(), buf, nbBytes,

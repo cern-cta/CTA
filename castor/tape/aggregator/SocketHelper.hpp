@@ -35,7 +35,7 @@ namespace castor {
 
   namespace io {
     // Forward declaration
-    class ServerSocket;
+    class AbstractTCPSocket;
   }
 
 namespace tape {
@@ -67,7 +67,7 @@ namespace aggregator {
      * stream
      */
     static void printSocketDescription(std::ostream &os,
-      castor::io::ServerSocket &socket) throw();
+      castor::io::AbstractTCPSocket &socket) throw();
 
     /**
      * Reads an unsigned 32-bit integer from the specified socket.
@@ -77,7 +77,7 @@ namespace aggregator {
      * network reads and writes
      * @return the unsigned 32-bit integer
      */
-    static uint32_t readUint32(castor::io::ServerSocket &socket,
+    static uint32_t readUint32(castor::io::AbstractTCPSocket &socket,
       const int netReadWriteTimeout) throw (castor::exception::Exception);
 
     /**
@@ -90,7 +90,7 @@ namespace aggregator {
      * @param nbBytes the number of bytes to be read
      * @param buf the buffer into which the bytes will be written
      */
-    static void readBytes(castor::io::ServerSocket &socket,
+    static void readBytes(castor::io::AbstractTCPSocket &socket,
       const int netReadWriteTimeout, const int nbBytes, char *buf)
       throw (castor::exception::Exception);
 

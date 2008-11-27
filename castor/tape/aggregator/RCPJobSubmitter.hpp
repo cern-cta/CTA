@@ -25,6 +25,7 @@
 #ifndef _CASTOR_TAPE_AGGREGATOR_RCPJOBSUBMITTER_HPP_
 #define _CASTOR_TAPE_AGGREGATOR_RCPJOBSUBMITTER_HPP_
 
+#include "castor/tape/aggregator/exception/RTCPDErrorMessage.hpp"
 #include "h/net.h"
 
 #include <string>
@@ -79,7 +80,8 @@ namespace aggregator {
       const int           clientEgid,
       const std::string  &deviceGroupName,
       const std::string  &tapeDriveName)
-      throw (castor::exception::Exception);    
+      throw (castor::tape::aggregator::exception::RTCPDErrorMessage,
+        castor::exception::Exception);    
 
       
   private:
@@ -96,7 +98,8 @@ namespace aggregator {
      */
     static void readReply(castor::io::AbstractTCPSocket &socket,
       const int netReadWriteTimeout, const char *remoteCopyType)
-      throw (castor::exception::Exception);    
+      throw (castor::tape::aggregator::exception::RTCPDErrorMessage,
+        castor::exception::Exception);    
 
   }; // class RCPJobSubmitter
 

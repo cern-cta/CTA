@@ -30,6 +30,7 @@
 #include "castor/tape/aggregator/RequestHandlerThread.hpp"
 #include "castor/tape/aggregator/RCPJobSubmitter.hpp"
 #include "castor/tape/aggregator/SocketHelper.hpp"
+#include "castor/tape/aggregator/exception/RTCPDErrorMessage.hpp"
 #include "h/common.h"
 #include "h/rtcp_constants.h"
 #include "h/vdqm_constants.h"
@@ -185,20 +186,20 @@ void castor::tape::aggregator::RequestHandlerThread::dispatchRequest(
     return;
   }
 
+  // Only need a buffer for the message body, the header has already been read
+  // from the socket and unmarshalled
+  char body[MSGBUFSIZ - 3 * sizeof(uint32_t)];
+
   // If the message body is larger than the message body buffer
-  if(len > MSGBUFSIZ - 3 * sizeof(uint32_t)) {
+  if(len > sizeof(body)) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Maximum length", MSGBUFSIZ - 3 * sizeof(uint32_t)),
+      castor::dlf::Param("Maximum length", sizeof(body)),
       castor::dlf::Param("Actual length", len)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
       AGGREGATOR_MESSAGE_BODY_LENGTH_TOO_LARGE, 2, params);
 
     return;
   }
-
-  // Only need a buffer for the message body, the header has already been read
-  // from the socket and unmarshalled
-  char body[MSGBUFSIZ - 3 * sizeof(uint32_t)];
 
   // Read the message body from the socket
   try {
@@ -236,7 +237,7 @@ void castor::tape::aggregator::RequestHandlerThread::handleJobSubmission(
         castor::dlf::Param("Reason", "Failed to lookup connection"),
         castor::dlf::Param("Peer Host", peerHost)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_RECEIVED_RTCP_JOB_FROM_UNAUTHORIZED_HOST, 2, params);
+        AGGREGATOR_RECEIVED_RCP_JOB_FROM_UNAUTHORIZED_HOST, 2, params);
       return;
     }
 
@@ -245,7 +246,7 @@ void castor::tape::aggregator::RequestHandlerThread::handleJobSubmission(
         castor::dlf::Param("Reason", "Peer host name is empty"),
         castor::dlf::Param("Peer Host", peerHost)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_RECEIVED_RTCP_JOB_FROM_UNAUTHORIZED_HOST, 2, params);
+        AGGREGATOR_RECEIVED_RCP_JOB_FROM_UNAUTHORIZED_HOST, 2, params);
       return;
     }
 
@@ -254,7 +255,7 @@ void castor::tape::aggregator::RequestHandlerThread::handleJobSubmission(
         castor::dlf::Param("Reason", "Unauthorized host"),
         castor::dlf::Param("Peer Host", peerHost)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_RECEIVED_RTCP_JOB_FROM_UNAUTHORIZED_HOST, 2, params);
+        AGGREGATOR_RECEIVED_RCP_JOB_FROM_UNAUTHORIZED_HOST, 2, params);
       return;
     }
   }
@@ -323,6 +324,12 @@ void castor::tape::aggregator::RequestHandlerThread::handleJobSubmission(
     clientEgid,
     dgn,
     driveName);
+  } catch(castor::tape::aggregator::exception::RTCPDErrorMessage &ex) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code"   , ex.code())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_RECEIVED_RTCPD_ERROR_MESSAGE, 2, params);
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("Message", ex.getMessage().str()),
@@ -425,5 +432,5 @@ size_t castor::tape::aggregator::RequestHandlerThread::marshallRTCPAckn(
   memcpy(dst, errorMsg, errorMsg2SendLen);
   *(dst+errorMsg2SendLen) = '\0';
 
-  return 3*sizeof(uint32_t) + len; // Header + body
+  return 3 * sizeof(uint32_t) + len; // Header + body
 }

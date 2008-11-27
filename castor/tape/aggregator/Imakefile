@@ -26,10 +26,10 @@ CFLAGS = -O -I../../../h -I../../.. $(THREADFLAGS)
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
 
-DependsOnLibrary(dlf,castorcommon)
-DependsOnLibrary(common,castordlf)
-DependsOnLibrary(castor,castorclient)
-DependsOnLibrary(castor/db/cnv,castorcnvs)
+DependsOnLibrary(../../common,castorcommon)
+DependsOnLibrary(../../dlf,castordlf)
+DependsOnLibrary(..,castorclient)
+DependsOnLibrary(../db/cnv,castorcnvs)
 
 AGGREGATORBIN_SRCS = \
   AggregatorDlfMessageStrings.cpp \
@@ -38,7 +38,8 @@ AGGREGATORBIN_SRCS = \
   Marshaller.cpp \
   RCPJobSubmitter.cpp \
   RequestHandlerThread.cpp \
-  SocketHelper.cpp
+  SocketHelper.cpp \
+  exception/RTCPDErrorMessage.cpp
 AGGREGATORBIN_OBJS = $(AGGREGATORBIN_SRCS:.cpp=.Osuf)
 
 NormalProgramTarget(aggregatord,$(AGGREGATORBIN_OBJS),$(DEPLIB),$(LIBS),root,bin,750)
