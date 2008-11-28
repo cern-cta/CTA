@@ -61,3 +61,5 @@ DBSERVICEDAEMONBIN_SRCS = \
 	CleaningThread.cpp
 DBSERVICEDAEMONBIN_OBJS = $(DBSERVICEDAEMONBIN_SRCS:.cpp=.Osuf)
 NormalProgramTarget(stagerDaemon,$(DBSERVICEDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),root,bin,750)
+ADMMANPAGE(stagerDaemon)
+
