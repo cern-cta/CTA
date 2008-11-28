@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cupvdaemon.man,v $ $Revision: 1.2 $ $Date: 2008/02/21 17:11:47 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: Cupvdaemon.man,v $ $Revision: 1.3 $ $Date: 2008/11/28 12:58:06 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 2003 by CERN/IT/ADC/CA
 .\" All rights reserved
 .\"
-.TH CUPVDAEMON 1 "$Date: 2008/02/21 17:11:47 $" CASTOR "Cupv Administrator Commands"
+.TH CUPVDAEMON 8 "$Date: 2008/11/28 12:58:06 $" CASTOR "Cupv Administrator Commands"
 .SH NAME
 Cupvdaemon \- start the user privilege validation daemon
 .SH SYNOPSIS

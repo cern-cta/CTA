@@ -1,5 +1,5 @@
-.lf 1 dlfserver.man
-.TH dlfserver 1 "CERN IT-FIO" CASTOR "DLF Server"
+.lf 8 dlfserver.man
+.TH dlfserver 8 "CERN IT-FIO" CASTOR "DLF Server"
 .SH NAME
 dlfserver \- start the CASTOR Distributed Logginf Facility server
 .SH SYNOPSIS

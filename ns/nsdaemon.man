@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: nsdaemon.man,v $ $Revision: 1.4 $ $Date: 2008/07/28 15:00:27 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: nsdaemon.man,v $ $Revision: 1.5 $ $Date: 2008/11/28 12:58:05 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2005 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSDAEMON 1 "$Date: 2008/07/28 15:00:27 $" CASTOR "Cns Administrator Commands"
+.TH NSDAEMON 8 "$Date: 2008/11/28 12:58:05 $" CASTOR "Cns Administrator Commands"
 .SH NAME
 nsdaemon \- start the name server
 .SH SYNOPSIS

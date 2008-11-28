@@ -1,4 +1,4 @@
-.TH gcDaemon 1 "$Date: 2008/03/03 13:54:25 $" CASTOR "Garbage Collector daemon"
+.TH gcDaemon 8 "$Date: 2008/11/28 12:58:05 $" CASTOR "Garbage Collector daemon"
 .SH NAME
 gcDaemon \- CASTOR2 Garbage Collector daemon
 .SH SYNOPSIS

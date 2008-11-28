@@ -1,4 +1,4 @@
-.TH jobManager 1 "$Date: 2007/08/07 14:56:32 $" CASTOR "CASTOR2 Job Manager Daemon"
+.TH jobManager 8 "$Date: 2008/11/28 12:58:05 $" CASTOR "CASTOR2 Job Manager Daemon"
 .SH NAME
 jobManager \- CASTOR2 job manager deamon
 .SH SYNOPSIS

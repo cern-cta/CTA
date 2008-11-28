@@ -1,5 +1,5 @@
-.lf 1 rhserver.man
-.TH RHSERVER 1 "2007/08/16 16:50:00 CERN IT-FIO" CASTOR "request handler"
+.lf 8 rhserver.man
+.TH RHSERVER 8 "2007/08/16 16:50:00 CERN IT-FIO" CASTOR "request handler"
 .SH NAME
 rhserver \- start the CASTOR Request Handler daemon
 .SH SYNOPSIS

@@ -1,4 +1,4 @@
-.TH RECHANDLERDAEMON 1 "2006/02/28 12:00:00 CERN IT-FIO" CASTOR "recHandler daemon"
+.TH RECHANDLERDAEMON 8 "2006/02/28 12:00:00 CERN IT-FIO" CASTOR "recHandler daemon"
 .SH NAME
 recHandlerDaemon \- start the CASTOR Garbage Collector daemon
 .SH SYNOPSIS

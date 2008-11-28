@@ -1,4 +1,4 @@
-.TH MIGHUNTERDAEMON 1 "$Date: 2008/01/09 12:51:10 $" CASTOR "RTCOPY Operator Commands"
+.TH MIGHUNTERDAEMON 8 "$Date: 2008/11/28 12:58:05 $" CASTOR "RTCOPY Operator Commands"
 .SH NAME
 migHunterDaemon \- default migration candidate hunter
 .SH SYNOPSIS

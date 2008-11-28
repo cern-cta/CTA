@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: rmcdaemon.man,v $ $Revision: 1.1 $ $Date: 2002/12/06 15:58:33 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rmcdaemon.man,v $ $Revision: 1.2 $ $Date: 2008/11/28 12:58:06 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RMCDAEMON 1 "$Date: 2002/12/06 15:58:33 $" CASTOR "rmc Administrator Commands"
+.TH RMCDAEMON 8 "$Date: 2008/11/28 12:58:06 $" CASTOR "rmc Administrator Commands"
 .SH NAME
 rmcdaemon \- start the Remote Media Changer daemon
 .SH SYNOPSIS
