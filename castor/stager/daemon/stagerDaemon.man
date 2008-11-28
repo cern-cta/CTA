@@ -1,5 +1,5 @@
-.lf 1 stagerDaemon.man
-.TH stagerDaemon 8 "$Date: 2008/11/28 13:56:56 $" CASTOR "stager"
+.lf 8 stagerDaemon.man
+.TH stagerDaemon 8 "$Date: 2008/11/28 14:40:24 $" CASTOR "stager"
 .SH NAME
 stagerDaemon \- start the CASTOR Request Handler daemon
 .SH SYNOPSIS
