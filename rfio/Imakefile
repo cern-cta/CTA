@@ -110,6 +110,7 @@ SharedLibraryTarget(castorrfio,$(RFIOLIB_OBJS),$(DEPLIB),$(LIBS))
 #endif
 
 #if BuildRfioClient
+RFIOTARGETLIB = SharedLibraryTargetName(castorrfio)
 NormalProgramTarget(rfcat,rfcat.Osuf, $(RFIOTARGETLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),root,bin,755)
 NormalProgramTarget(rfchmod,rfchmod.Osuf, $(RFIOTARGETLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),root,bin,755)
 NormalProgramTarget(rfcp,rfcp.Osuf, $(RFIOTARGETLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),root,bin,755)
