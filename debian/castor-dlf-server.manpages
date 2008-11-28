@@ -1,4 +1,4 @@
-debian/castor/usr/share/man/man1/dlfserver.1castor
+debian/castor/usr/share/man/man8/dlfserver.8castor
 debian/castor/usr/share/man/man3/dlf_child.3castor
 debian/castor/usr/share/man/man3/dlf_create_threads.3castor
 debian/castor/usr/share/man/man3/dlf_init.3castor
