@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Release$ $Date: 2008/11/26 14:51:55 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Release$ $Date: 2008/11/28 14:40:04 $ $Author: waldron $
 #
 # Makefile for the CASTOR2 LSF External Plugin
 #
@@ -31,11 +31,9 @@ DependsOnLibrary(../dlf,castordlf)
 DependsOnLibrary(monitoring,castormonitor)
 
 SCHMOD_SHMEM_SRCS = schmod_shmem.cpp HandlerData.cpp
-SCHMOD_SHMEM_OBJS = $(SCHMOD_SHMEM_SRC:.pp=.Osuf)
-BareSharedLibraryTarget(schmod_shmem,$(SCHMOD_SHMEM_OBJS),$(DEPLIB),$(LIBS),$(LIBDIR))
+SchModTarget(schmod_shmem,$(SCHMOD_SHMEM_SRCS),$(DEPLIB),$(LIBS),$(LIBDIR))
 
 SCHMOD_PYTHON_SRCS = schmod_python.cpp HandlerData.cpp Python.cpp
-SCHMOD_PYTHON_OBJS = $(SCHMOD_PYTHON_SRC:.pp=.Osuf)
-BareSharedLibraryTarget(schmod_python,$(SCHMOD_PYTHON_OBJS),$(DEPLIB),$(LIBS) $(PYTHONLIBS),$(LIBDIR))
+SchModTarget(schmod_python,$(SCHMOD_PYTHON_SRCS),$(DEPLIB),$(LIBS) $(PYTHONLIBS),$(LIBDIR))
 
 EXEMANPAGE(schmod_castor)

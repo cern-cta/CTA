@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.24 $ $Date: 2008/11/26 14:51:56 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.25 $ $Date: 2008/11/28 14:40:03 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #define NullParameter
@@ -53,24 +53,35 @@ InstallLink(tofile,fromfile,user,group,mode,$(BIN))
 #define SharedLibraryFullName(libname)SharedLibraryName(libname).$(MINOR_CASTOR_VERSION)
 #define DepSharedLibraryTargetName(dir,libname)../dir/BareSharedLibraryTargetName(lib/**/libname)
 
-#define BareSharedLibraryTarget(libname,objects,deplibs,libs,dir) \
-SharedLibraryFullName(libname): objects deplibs              @@\
-	$(LD) -shared -o $@ $(LDFLAGS) -Wl,-soname,SharedLibraryName(libname) objects libs             @@\
-SharedLibraryName(libname): SharedLibraryFullName(libname)   @@\
-	rm -f $@                                             @@\
-	ln -s $< $@                                          @@\
-BareSharedLibraryTargetName(libname): SharedLibraryName(libname) @@\
-	rm -f $@                                             @@\
-	ln -s $< $@                                          @@\
-$(DESTDIR)/dir/BareSharedLibraryTargetName(libname): BareSharedLibraryTargetName(libname)            @@\
+#define SchModTarget(libname,src,deplibs,libs,dir)                                                                \
+BareSharedLibraryTargetName(libname): src deplibs                                                               @@\
+	$(LD) -shared -fPIC -o $@ $(CPPFLAGS) src libs                                                          @@\
+$(DESTDIR)/dir/BareSharedLibraryTargetName(libname): BareSharedLibraryTargetName(libname)                       @@\
+	@install -d $(DESTDIR)/dir                                                                              @@\
+	install -m 644 BareSharedLibraryTargetName(libname) $(DESTDIR)/dir/BareSharedLibraryTargetName(libname) @@\
+install: dir $(DESTDIR)/dir/BareSharedLibraryTargetName(libname)                                                @@\
+all: BareSharedLibraryTargetName(libname)                                                                       @@\
+FilesToClean += BareSharedLibraryTargetName(libname)
+FilesToClobber += BareSharedLibraryTargetName(libname)
+
+#define BareSharedLibraryTarget(libname,objects,deplibs,libs,dir)                              \
+SharedLibraryFullName(libname): objects deplibs                                              @@\
+	$(LD) -shared -o $@ $(LDFLAGS) -Wl,-soname,SharedLibraryName(libname) objects libs   @@\
+SharedLibraryName(libname): SharedLibraryFullName(libname)                                   @@\
+	rm -f $@                                                                             @@\
+	ln -s $< $@                                                                          @@\
+BareSharedLibraryTargetName(libname): SharedLibraryName(libname)                             @@\
+	rm -f $@                                                                             @@\
+	ln -s $< $@                                                                          @@\
+$(DESTDIR)/dir/BareSharedLibraryTargetName(libname): BareSharedLibraryTargetName(libname)    @@\
 	@install -d $(DESTDIR)/dir                                                           @@\
 	install SharedLibraryFullName(libname) $(DESTDIR)/dir/SharedLibraryFullName(libname) @@\
 	rm -f $(DESTDIR)/dir/SharedLibraryName(libname) $@                                   @@\
 	ln -s SharedLibraryFullName(libname) $(DESTDIR)/dir/SharedLibraryName(libname)       @@\
-	ln -s SharedLibraryName(libname) $@                                                        @@\
-install: dir $(DESTDIR)/dir/BareSharedLibraryTargetName(libname)                                     @@\
-all: BareSharedLibraryTargetName(libname)                                                              @@\
-FilesToClean += objects                                                                            @@\
+	ln -s SharedLibraryName(libname) $@                                                  @@\
+install: dir $(DESTDIR)/dir/BareSharedLibraryTargetName(libname)                             @@\
+all: BareSharedLibraryTargetName(libname)                                                    @@\
+FilesToClean += objects                                                                      @@\
 FilesToClobber += SharedLibraryFullName(libname) SharedLibraryName(libname) BareSharedLibraryTargetName(libname)
 
 #define SharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,objects,deplibs,libs,$(LIBDIR))
