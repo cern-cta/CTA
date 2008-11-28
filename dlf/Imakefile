@@ -26,7 +26,7 @@ LOGFILE   = $(SPOOL)/log
 DLFCONFIG = DlfConfigFile
 
 DBFLAG    = -DUSE_ORACLE
-ORAINC = -I$(ORACLE_HOME)/precomp/public
+ORAINC    = -I$(ORACLE_HOME)/precomp/public
 DFLAGS    = -DLOGFILE=\"$(LOGFILE)\" -DDLFCONFIG=\"$(DLFCONFIG)\" $(DBFLAG)
 CFLAGS    = -pedantic -Wno-long-long -g -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(ORAINC)
 
@@ -47,7 +47,7 @@ DLFLIB_OBJS = queue.Osuf hash.Osuf common.Osuf dlf_lib.Osuf
 SharedLibraryTarget(castordlf,$(DLFLIB_OBJS),$(DEPLIB),-L../common -lcastorcommon)
 #endif
 
-EXEMANPAGE(dlfserver)
+ADMMANPAGE(dlfserver)
 LIBMANPAGE(dlf_child)
 LIBMANPAGE(dlf_create_threads)
 LIBMANPAGE(dlf_init)

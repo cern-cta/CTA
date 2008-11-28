@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Release$ $Date: 2008/11/26 14:51:54 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Release$ $Date: 2008/11/28 12:51:01 $ $Author: waldron $
 #
 # Makefile for the CASTOR2 Job submission daemon
 #
@@ -39,4 +39,4 @@ DependsOnLibrary(db/cnv,castorcnvs)
 JOBMANAGER_SRCS = JobManagerDaemon.cpp ManagementThread.cpp DispatchThread.cpp SubmissionProcess.cpp JobSubmissionRequest.cpp DiskServerResource.cpp FileSystemResource.cpp ../io/StreamJobSubmissionRequestCnv.cpp ora/OraJobManagerSvc.cpp
 JOBMANAGER_OBJS = $(JOBMANAGER_SRCS:.cpp=.Osuf)
 NormalProgramTarget(jobManager,$(JOBMANAGER_OBJS),$(DEPLIB),$(LIBS),root,bin,750)
-EXEMANPAGE(jobManager)
+ADMMANPAGE(jobManager)
