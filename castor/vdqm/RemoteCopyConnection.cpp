@@ -329,6 +329,8 @@ bool castor::vdqm::RemoteCopyConnection::readAnswer(const Cuuid_t &cuuid,
     memcpy(errmsg, p, msgLen);
     errmsg[msgLen] = '\0';
 
+    // Checking the size of the error message because the status maybe non-zero
+    // even if there is no error
     if ( msgLen > 0 ) {
       // RTCOPY or tape aggregator daemon returned an error message
       castor::dlf::Param params[] = {
