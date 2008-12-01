@@ -75,6 +75,9 @@ int main(int argc, char* argv[]){
   // new BaseDaemon as Server 
     
   castor::rtcopy::mighunter::MigHunterDaemon newMigHunter; //dlf available now
+
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 0,NULL);
+  
     
   // create the policy
   try{
@@ -192,6 +195,7 @@ castor::rtcopy::mighunter::MigHunterDaemon::MigHunterDaemon() : castor::server::
    {12, "No Policy file available"},
    {13,"Error in executing the policy script"},
    {14,"Fatal Error"},
+   {15,"Parameters used"},
    {-1, ""}
   };
   dlfInit(messages);
@@ -206,21 +210,31 @@ void castor::rtcopy::mighunter::MigHunterDaemon::parseCommandLine(int argc, char
   Coptind = 1;
   Copterr = 1;
   int c; // ???? 
+
+  std::string optionStr="Option used: ";
+   
   while ( (c = Cgetopt(argc,argv,"Ct:v:fh")) != -1 ) {
     switch (c) {
     case 'C':
+      optionStr+=" -C "; 
       m_doClone = true;
       break;
     case 't':
+      optionStr+=" -t ";
+      optionStr+=Coptarg; 
       m_timeSleep = strutou64(Coptarg);
       break;
     case 'v':
+      optionStr+=" -v ";
+      optionStr+=Coptarg; 
       m_byteVolume = strutou64(Coptarg);
       break;
     case 'f':
+      optionStr+=" -f "; 
       m_foreground = true;
       break;
     case 'h':
+      optionStr+=" -h "; 
       usage();
       exit(0);
     default:
@@ -229,10 +243,23 @@ void castor::rtcopy::mighunter::MigHunterDaemon::parseCommandLine(int argc, char
     }
   }
 
+  std::string svcClassesStr="Used the following Svc Classes: ";
+
   for (int i=Coptind; i<argc; i++ ) {
    m_listSvcClass.push_back(argv[i]);
+   svcClassesStr+=" ";
+   svcClassesStr+=argv[i];
+   svcClassesStr+=" ";
   }
-  if (m_listSvcClass.empty())  m_listSvcClass.push_back("default"); 
+  if (m_listSvcClass.empty()) { 
+    m_listSvcClass.push_back("default"); 
+    svcClassesStr+=" default "; 
+  }
+  
+  castor::dlf::Param params[] = {castor::dlf::Param("message", optionStr.c_str()),
+				 castor::dlf::Param("message", svcClassesStr.c_str()),};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 15, 2, params);
+
 }
 
 void castor::rtcopy::mighunter::MigHunterDaemon::usage(){
