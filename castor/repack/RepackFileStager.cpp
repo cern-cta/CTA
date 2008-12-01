@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2008/06/05 16:25:00 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2008/12/01 13:58:40 $ $Author: gtaur $
  *
  *
  *
@@ -235,7 +235,7 @@ void  RepackFileStager::abortRepack(RepackSubRequest* sreq) throw (){
     };
 
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 24, 3, params);
-    sreq->setStatus(RSUBREQUEST_TOBEREMOVED);
+    sreq->setStatus(RSUBREQUEST_TOBECLEANED); // we failed the request even if the abort failed
     m_dbSvc->updateSubRequest(sreq);
     return;
   }

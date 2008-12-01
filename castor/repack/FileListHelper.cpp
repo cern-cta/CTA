@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.35 $ $Release$ 
- * $Date: 2008/06/05 16:25:00 $ $Author: gtaur $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.36 $ $Release$ 
+ * $Date: 2008/12/01 13:58:40 $ $Author: gtaur $
  *
  *
  *
@@ -103,15 +103,20 @@ std::vector<std::string>* FileListHelper::getFilePathnames(castor::repack::Repac
   {
 	  /** get the full path and push it into the list */
     if ( Cns_getpath((char*)m_ns.c_str(), tmp->at(i), path) < 0 ) {
+      // we continue with the rest.
       Cuuid_t cuuid;
       cuuid = stringtoCuuid(subreq->cuuid());
-      castor::exception::Internal ex;
-      ex.getMessage() << "FileListHelper::getFilePathnames(...):" 
-                      << sstrerror(serrno) << std::endl;
+
+      Cns_fileid file_uniqueid; 
+      memset(&file_uniqueid,'\0',sizeof(file_uniqueid));
+      sprintf(file_uniqueid.server,"%s",(char*)m_ns.c_str());  
+      file_uniqueid.fileid=tmp->at(i) ;
+
       castor::dlf::Param params[] =
-      {castor::dlf::Param("Standard Message", sstrerror(ex.code()))};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 59, 1, params);
-      throw ex;
+	{castor::dlf::Param("VID", subreq->vid()),
+	 castor::dlf::Param("Standard Message", "impossible to resolve the path of such fileid")
+	};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 59, 2, params, &file_uniqueid);
     }
     else{
       pathlist->push_back(path);
