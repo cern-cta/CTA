@@ -221,18 +221,45 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
 
 
 //------------------------------------------------------------------------------
-// getListenPort()
+// getVdqmListenPort()
 //------------------------------------------------------------------------------
-int castor::tape::aggregator::AggregatorDaemon::getListenPort()
+int castor::tape::aggregator::AggregatorDaemon::getVdqmListenPort()
   throw(castor::exception::InvalidConfigEntry) {
-  int port = AGGREGATOR_PORT; // Initialise to default value
-  char *const configEntry = getconfent("TAPEAGGREGATOR", "PORT", 0);
+  int port = AGGREGATOR_VDQMPORT; // Initialise to default value
+  const char *const configEntry = getconfent("TAPEAGGREGATOR", "VDQMPORT", 0);
 
   if(configEntry != NULL) {
     if(isAValidUInt(configEntry)) {
       port = atoi(configEntry);
     } else {
-      castor::exception::InvalidConfigEntry ex("TAPEAGGREGATOR", "PORT",
+      castor::exception::InvalidConfigEntry ex("TAPEAGGREGATOR", "VDQMPORT",
+        configEntry);
+
+      ex.getMessage() << "Invalid configuration entry: "
+        << ex.getEntryCategory() << " " << ex.getEntryName() << " "
+        << ex.getEntryValue();
+
+      throw ex;
+    }
+  }
+
+  return port;
+}
+
+
+//------------------------------------------------------------------------------
+// getRtcpdListenPort()
+//------------------------------------------------------------------------------
+int castor::tape::aggregator::AggregatorDaemon::getRtcpdListenPort()
+  throw(castor::exception::InvalidConfigEntry) {
+  int port = AGGREGATOR_RTCPDPORT; // Initialise to default value
+  const char *const configEntry = getconfent("TAPEAGGREGATOR", "RTCPDPORT", 0);
+
+  if(configEntry != NULL) {
+    if(isAValidUInt(configEntry)) {
+      port = atoi(configEntry);
+    } else {
+      castor::exception::InvalidConfigEntry ex("TAPEAGGREGATOR", "RTCPDPORT",
         configEntry);
 
       ex.getMessage() << "Invalid configuration entry: "
@@ -250,7 +277,7 @@ int castor::tape::aggregator::AggregatorDaemon::getListenPort()
 //------------------------------------------------------------------------------
 // isAValidUInt
 //------------------------------------------------------------------------------
-bool castor::tape::aggregator::AggregatorDaemon::isAValidUInt(char *str)
+bool castor::tape::aggregator::AggregatorDaemon::isAValidUInt(const char *str)
   throw() {
   // An empty string is not a valid unsigned integer
   if(*str == '\0') {

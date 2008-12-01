@@ -37,8 +37,8 @@ AGGREGATORBIN_SRCS = \
   AggregatorMain.cpp \
   Marshaller.cpp \
   RCPJobSubmitter.cpp \
-  RequestHandlerThread.cpp \
   SocketHelper.cpp \
+  VdqmRequestHandlerThread.cpp \
   exception/RTCPDErrorMessage.cpp
 AGGREGATORBIN_OBJS = $(AGGREGATORBIN_SRCS:.cpp=.Osuf)
 

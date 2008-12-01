@@ -269,7 +269,9 @@ void castor::tape::aggregator::RCPJobSubmitter::readReply(
   errMsg[errMsgSize - 1] = '\0';
 
   // If RTCOPY or tape aggregator daemon returned an error message
-  if(status != 0 || errMsgSize > 1) {
+  // Checking the size of the error message because the status maybe non-zero
+  // even if there is no error
+  if(errMsgSize > 1) {
     castor::exception::Exception ex(status);
 
     ex.getMessage() << errMsg;

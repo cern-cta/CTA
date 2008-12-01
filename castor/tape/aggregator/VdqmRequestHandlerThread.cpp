@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/aggregator/RequestHandlerThread.cpp
+ *                castor/tape/aggregator/VdqmRequestHandlerThread.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -27,7 +27,7 @@
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/Marshaller.hpp"
-#include "castor/tape/aggregator/RequestHandlerThread.hpp"
+#include "castor/tape/aggregator/VdqmRequestHandlerThread.hpp"
 #include "castor/tape/aggregator/RCPJobSubmitter.hpp"
 #include "castor/tape/aggregator/SocketHelper.hpp"
 #include "castor/tape/aggregator/exception/RTCPDErrorMessage.hpp"
@@ -39,11 +39,11 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::RequestHandlerThread::RequestHandlerThread(
+castor::tape::aggregator::VdqmRequestHandlerThread::VdqmRequestHandlerThread(
   const int listenPort) throw () : m_listenPort(listenPort), m_jobQueue(1) {
 
   m_rtcopyMagicOld0Handlers[VDQM_CLIENTINFO] =
-    &RequestHandlerThread::handleJobSubmission;
+    &VdqmRequestHandlerThread::handleJobSubmission;
 
   m_magicToHandlers[RTCOPY_MAGIC_OLD0] = &m_rtcopyMagicOld0Handlers;
 }
@@ -52,7 +52,7 @@ castor::tape::aggregator::RequestHandlerThread::RequestHandlerThread(
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::RequestHandlerThread::~RequestHandlerThread()
+castor::tape::aggregator::VdqmRequestHandlerThread::~VdqmRequestHandlerThread()
   throw () {
 }
 
@@ -60,7 +60,7 @@ castor::tape::aggregator::RequestHandlerThread::~RequestHandlerThread()
 //-----------------------------------------------------------------------------
 // init
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::RequestHandlerThread::init()
+void castor::tape::aggregator::VdqmRequestHandlerThread::init()
   throw() {
 }
 
@@ -68,7 +68,7 @@ void castor::tape::aggregator::RequestHandlerThread::init()
 //-----------------------------------------------------------------------------
 // run
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::RequestHandlerThread::run(void *param)
+void castor::tape::aggregator::VdqmRequestHandlerThread::run(void *param)
   throw() {
   Cuuid_t cuuid = nullCuuid;
 
@@ -105,7 +105,7 @@ void castor::tape::aggregator::RequestHandlerThread::run(void *param)
 //-----------------------------------------------------------------------------
 // stop
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::RequestHandlerThread::stop()
+void castor::tape::aggregator::VdqmRequestHandlerThread::stop()
   throw() {
 }
 
@@ -113,7 +113,7 @@ void castor::tape::aggregator::RequestHandlerThread::stop()
 //-----------------------------------------------------------------------------
 // dispatchRequest
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::RequestHandlerThread::dispatchRequest(
+void castor::tape::aggregator::VdqmRequestHandlerThread::dispatchRequest(
   Cuuid_t &cuuid, castor::io::ServerSocket &socket)
   throw(castor::exception::Exception) {
 
@@ -222,7 +222,7 @@ void castor::tape::aggregator::RequestHandlerThread::dispatchRequest(
 //-----------------------------------------------------------------------------
 // handleJobSubmission
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::RequestHandlerThread::handleJobSubmission(
+void castor::tape::aggregator::VdqmRequestHandlerThread::handleJobSubmission(
   Cuuid_t &cuuid, const uint32_t magic, const uint32_t reqtype,
   const uint32_t len, char *body, castor::io::ServerSocket &socket) throw() {
 
@@ -305,11 +305,14 @@ void castor::tape::aggregator::RequestHandlerThread::handleJobSubmission(
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
     AGGREGATOR_HANDLE_JOB_MESSAGE, 8, param);
 
-  // TEMPORARY
+  // Prepare a positive response which will be overwritten if RTCPD replies to
+  // the tape aggregator with an error message
+  uint32_t    errorStatusForVdqm  = VDQM_CLIENTINFO; // Strange status code
+  std::string errorMessageForVdqm = "";
+
   // Pass a modified version of the request through to RTCPD, setting the
   // clientHost and clientPort parameters to identify the tape aggregator as
   // being a proxy for RTCPClientD
-
   try {
     RCPJobSubmitter::submit(
     "localhost",    // host
@@ -330,6 +333,10 @@ void castor::tape::aggregator::RequestHandlerThread::handleJobSubmission(
       castor::dlf::Param("Code"   , ex.code())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
       AGGREGATOR_RECEIVED_RTCPD_ERROR_MESSAGE, 2, params);
+
+    // Override positive response with the error message from RTCPD
+    errorStatusForVdqm  = ex.code();
+    errorMessageForVdqm = ex.getMessage().str();
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("Message", ex.getMessage().str()),
@@ -340,15 +347,15 @@ void castor::tape::aggregator::RequestHandlerThread::handleJobSubmission(
     return;
   }
 
-  // TEMPORARY
-  // Acknowledge the VDQM
+  // Acknowledge the VDQM - maybe postive or negative depending on reply from
+  // RTCPD
   char ackMsg[MSGBUFSIZ];
 
   size_t ackMsgLen = 0;
 
   try {
-    ackMsgLen = marshallRTCPAckn(ackMsg, sizeof(ackMsg), 0, "");
-//  ackMsgLen = marshallRTCPAckn(ackMsg, sizeof(ackMsg), 5, "Steve was here!!");
+    ackMsgLen = marshallRTCPAckn(ackMsg, sizeof(ackMsg), errorStatusForVdqm,
+      errorMessageForVdqm.c_str());
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("Message", ex.getMessage().str()),
@@ -385,7 +392,7 @@ void castor::tape::aggregator::RequestHandlerThread::handleJobSubmission(
 //-----------------------------------------------------------------------------
 // marshallRTCPAckn
 //-----------------------------------------------------------------------------
-size_t castor::tape::aggregator::RequestHandlerThread::marshallRTCPAckn(
+size_t castor::tape::aggregator::VdqmRequestHandlerThread::marshallRTCPAckn(
   char *dst, const size_t dstLen, const uint32_t status, const char *errorMsg)
   throw (castor::exception::Exception) {
 

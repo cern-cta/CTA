@@ -81,9 +81,16 @@ public:
   static void usage(std::ostream &os) throw();
 
   /**
-   * Returns the port on which the server will listen.
+   * Returns the port on which the server will listen for connections from the
+   * VDQM.
    */
-   int getListenPort() throw(castor::exception::InvalidConfigEntry);
+   int getVdqmListenPort() throw(castor::exception::InvalidConfigEntry);
+
+  /**
+   * Returns the port on which the server will listen for connections from
+   * RTCPD.
+   */
+   int getRtcpdListenPort() throw(castor::exception::InvalidConfigEntry);
 
 
 private:
@@ -99,7 +106,7 @@ private:
    * @param str The string to be checked.
    * @returns true if the string is a valid unsigned integer, else false.
    */
-  static bool isAValidUInt(char *str) throw();
+  static bool isAValidUInt(const char *str) throw();
 
 }; // class AggregatorDaemon
 

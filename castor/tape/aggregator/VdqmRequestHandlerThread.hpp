@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/aggregator/RequestHandlerThread.hpp
+ *                castor/tape/aggregator/VdqmRequestHandlerThread.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Steven Murray Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_REQUESTHANDLERTHREAD_HPP
-#define CASTOR_TAPE_AGGREGATOR_REQUESTHANDLERTHREAD_HPP 1
+#ifndef CASTOR_TAPE_AGGREGATOR_VDQMREQUESTHANDLERTHREAD_HPP
+#define CASTOR_TAPE_AGGREGATOR_VDQMREQUESTHANDLERTHREAD_HPP 1
 
 #include "castor/io/ServerSocket.hpp"
 #include "castor/server/IThread.hpp"
@@ -37,9 +37,9 @@ namespace tape {
 namespace aggregator {
 
   /**
-   * Handles the requests of the VDQM server's client.
+   * Handles the requests from the VDQM server.
    */
-  class RequestHandlerThread : public castor::server::IThread {
+  class VdqmRequestHandlerThread : public castor::server::IThread {
 
   public:
 
@@ -48,12 +48,12 @@ namespace aggregator {
      *
      * @param listenPort The TCP/IP port to which RTCPD should connect.
      */
-    RequestHandlerThread(const int listenPort) throw();
+    VdqmRequestHandlerThread(const int listenPort) throw();
 
     /**
      * Destructor
      */
-    ~RequestHandlerThread() throw();
+    ~VdqmRequestHandlerThread() throw();
 
     /**
      * Initialization of the thread.
@@ -91,7 +91,7 @@ namespace aggregator {
      * bytes.
      * @param socket the from which the request body should be read from
      */
-    typedef void (RequestHandlerThread::*Handler) (Cuuid_t &cuuid,
+    typedef void (VdqmRequestHandlerThread::*Handler) (Cuuid_t &cuuid,
        const uint32_t magic, const uint32_t reqtype, const uint32_t len,
        char *body,  castor::io::ServerSocket &socket);
 
@@ -168,10 +168,10 @@ namespace aggregator {
       const uint32_t status, const char *errorMsg)
       throw (castor::exception::Exception);
 
-  }; // class RequestHandlerThread
+  }; // class VdqmRequestHandlerThread
 
 } // namespace aggregator
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_REQUESTHANDLERTHREAD_HPP
+#endif // CASTOR_TAPE_AGGREGATOR_VDQMREQUESTHANDLERTHREAD_HPP

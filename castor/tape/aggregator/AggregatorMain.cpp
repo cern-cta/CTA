@@ -28,7 +28,7 @@
 #include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/tape/aggregator/AggregatorDaemon.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
-#include "castor/tape/aggregator/RequestHandlerThread.hpp"
+#include "castor/tape/aggregator/VdqmRequestHandlerThread.hpp"
 
 
 //------------------------------------------------------------------------------
@@ -70,18 +70,18 @@ int main(int argc, char *argv[]) {
     // Create the thread pools
     //------------------------
 
-    const int listenPort = daemon.getListenPort();
+    const int vdqmListenPort = daemon.getVdqmListenPort();
 
     daemon.addThreadPool(
-    new castor::server::TCPListenerThreadPool("RequestHandlerThreadPool",
-      new castor::tape::aggregator::RequestHandlerThread(listenPort),
-        listenPort));
+    new castor::server::TCPListenerThreadPool("VdqmRequestHandlerThreadPool",
+      new castor::tape::aggregator::VdqmRequestHandlerThread(vdqmListenPort),
+        vdqmListenPort));
 
     castor::server::BaseThreadPool *requestHandlerThreadPool =
-      daemon.getThreadPool('R');
+      daemon.getThreadPool('V');
     if(requestHandlerThreadPool == NULL) {
       std::stringstream oss;
-      oss << "Failed to get RequestHandlerThreadPool" << std::endl;
+      oss << "Failed to get VdqmRequestHandlerThreadPool" << std::endl;
 
       // Log and throw an exception
       castor::dlf::Param params[] = {
