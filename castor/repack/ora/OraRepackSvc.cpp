@@ -90,9 +90,8 @@ const std::string castor::repack::ora::OraRepackSvc::s_changeSubRequestsStatusSt
 /// SQL to changeAllSubRequestsStatus
 const std::string castor::repack::ora::OraRepackSvc::s_changeAllSubRequestsStatusStatementString="BEGIN changeAllSubRequestsStatus(:1,:2); END;";
 
-/// SQL for getting lattest information of a tapy copy to do a repack undo TODO properly 
-const std::string castor::repack::ora::OraRepackSvc::s_selectLastSegmentsSituationStatementString=
-  "select repacksubrequest.id from repacksubrequest,repackrequest where repacksubrequest.requestid=repackrequest.id and repackrequest.creationtime in (select max(creationtime) from (select * from repackrequest where id in (select requestid from repacksubrequest where vid=:1))) and repacksubrequest.vid=:1";
+/// SQL for getting lattest information of a tapy copy to do a repack undo  
+const std::string castor::repack::ora::OraRepackSvc::s_selectLastSegmentsSituationStatementString= "BEGIN selectLastSegmentsSituation(:1, :2, :3); END;";
 
 
 //------------------------------------------------------------------------------
@@ -1199,51 +1198,85 @@ castor::repack::RepackAck*  castor::repack::ora::OraRepackSvc::changeAllSubReque
 //------------------------------------------------------------------------------
 //  getLastTapeInformation 
 //------------------------------------------------------------------------------
-castor::repack::RepackRequest* 
-castor::repack::ora::OraRepackSvc::getLastTapeInformation(std::string vidName)
-  throw ()
+std::vector<castor::repack::RepackSegment*> 
+castor::repack::ora::OraRepackSvc::getLastTapeInformation(std::string vidName, u_signed64* creationTime)
+  throw (castor::exception::Exception)
 {
  
-  // TODO AGAIN
-  castor::repack::RepackRequest* result=NULL;
-  /* try {
+  std::vector<castor::repack::RepackSegment*> result;
+  oracle::occi::ResultSet *rset=NULL;
 
-     if (vidName.length() ==0) {
-     castor::exception::Internal ex;
-     ex.getMessage() << "passed Parameter is NULL" << std::endl;
-     throw ex;
-     }
+  try {
+    if (vidName.length() ==0) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "passed Parameter is NULL" << std::endl;
+      throw ex;
+    }
   
-     if ( m_selectLastSegmentsSituationStatement == NULL ) {
-     m_selectLastSegmentsSituationStatement = 
-     createStatement(s_selectLastSegmentsSituationStatementString);
-     }
+    if ( m_selectLastSegmentsSituationStatement == NULL ) {
+      m_selectLastSegmentsSituationStatement = 
+	createStatement(s_selectLastSegmentsSituationStatementString);
+      
+      m_selectLastSegmentsSituationStatement->registerOutParam(2, oracle::occi::OCCICURSOR); 
+      m_selectLastSegmentsSituationStatement->registerOutParam(3, oracle::occi::OCCIDOUBLE);
+      
+    }
 
-     m_selectLastSegmentsSituationStatement->setString(1,vidName);
-     oracle::occi::ResultSet *rset = m_selectLastSegmentsSituationStatement->executeQuery();
+    m_selectLastSegmentsSituationStatement->setString(1,vidName);
+    
+    // execute the procedure
 
-     if ( rset->next() ){
-     /// get the request we found
-     u_signed64 id = (u_signed64)rset->getDouble(1);
-     result = getSubRequest(id);
+    m_selectLastSegmentsSituationStatement->executeUpdate();
 
-     castor::BaseAddress ad;
-     ad.setCnvSvcName("DbCnvSvc");
-     ad.setCnvSvcType(castor::SVC_DBCNV);
+    // get the Cursor
+    rset =m_selectLastSegmentsSituationStatement->getCursor(2);
 
-     svcs()->fillObj(&ad,result,OBJ_RepackRequest);
-     svcs()->fillObj(&ad,result,OBJ_RepackSegment);
-     }
-     delete rset;
-     }catch (oracle::occi::SQLException ex) {
-     castor::exception::Internal ex;
-     ex.getMessage()
+    // get the creationTime
+
+     if (creationTime != NULL) *creationTime=( u_signed64 ) m_selectLastSegmentsSituationStatement->getDouble(3);
+
+
+    // run the cursor and fill in the array
+    
+    oracle::occi::ResultSet::Status status = rset->next();
+    
+    while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+
+      RepackSegment* seg = new RepackSegment();
+
+      seg->setFileid((u_signed64)rset->getDouble(1));
+      seg->setSegsize((u_signed64)rset->getDouble(2));
+      seg->setCompression((u_signed64)rset->getDouble(3));
+      seg->setFilesec(rset->getInt(4));
+      seg->setCopyno(rset->getInt(5));
+      seg->setBlockid((u_signed64)rset->getDouble(6));
+      seg->setFileseq(rset->getInt(7));
+
+      result.push_back(seg);
+
+      status = rset->next();
+    } 
+
+  }catch (oracle::occi::SQLException ex) {
+     castor::exception::Internal e;
+     e.getMessage()
      << "OraRepackSvc::getLastTapeInformation(...):"
      << "Unable to get all RepackSubRequests" 
-     << std::endl << e.getMessage();
-     throw ex;
+     << std::endl<<ex.what();
+
+     if (rset)  m_selectLastSegmentsSituationStatement->closeResultSet(rset);
+     if (!result.empty()){
+       std::vector<castor::repack::RepackSegment*>::iterator item= result.begin();
+       while (item != result.end()){
+	 if (*item) delete (*item);
+	 item ++;
+       }
+       result.clear();
      }
-     return  (result==NULL)? NULL:(result->repackrequest());
-  */
+       
+     throw e;
+  }
+
+  if (rset)  m_selectLastSegmentsSituationStatement->closeResultSet(rset);
   return result;
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRepackSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/09/09 09:18:41 $ $Author: gtaur $
+ * @(#)$RCSfile: OraRepackSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/12/01 13:53:57 $ $Author: gtaur $
  *
  *
  * @author castordev
@@ -151,7 +151,8 @@ namespace castor {
 	/**
 	 * getLastTapeInformation 
 	 */
-	virtual castor::repack::RepackRequest* getLastTapeInformation(std::string vidName) throw ();
+	
+	virtual std::vector<castor::repack::RepackSegment*>  getLastTapeInformation(std::string vidName, u_signed64* creationTime) throw (castor::exception::Exception);
 
      private:
 

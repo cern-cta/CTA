@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IRepackSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/09/09 09:18:39 $ $Author: gtaur $
+ * @(#)$RCSfile: IRepackSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/12/01 13:53:57 $ $Author: gtaur $
  *
  * This class provides methods related to tape handling
  *
@@ -181,8 +181,7 @@ namespace castor {
 	 * Used for the undo (separate component)
 	 */
 
-	virtual castor::repack::RepackRequest* getLastTapeInformation(std::string vidName) throw ()=0;
-
+	virtual std::vector<castor::repack::RepackSegment*>  getLastTapeInformation(std::string vidName, u_signed64* creationTime) throw (castor::exception::Exception)=0;
 
     }; // end of class IRepackSvc
 

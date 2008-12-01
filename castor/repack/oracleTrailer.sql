@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.14 $ $Release$ $Date: 2008/11/06 13:20:07 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.15 $ $Release$ $Date: 2008/12/01 13:58:55 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -349,4 +349,17 @@ EXCEPTION  WHEN NO_DATA_FOUND THEN
 END;
 /
 
+/* PL/SQL method implementing getLastTapeInformation */
 
+create or replace
+PROCEDURE  getLastTapeInformation(inputVid IN VARCHAR2, outputSegments OUT repack.RepackSegment_Cur, outputTime OUT NUMBER) AS
+rsrId NUMBER;
+BEGIN
+  rsrId:=0;
+  SELECT repackrequest.creationTime, repacksubrequest.id  INTO outputTime, rsrId FROM repackrequest, repacksubrequest WHERE
+  repacksubrequest.repackrequest=repackrequest.id AND repackrequest.creationtime in (SELECT MAX(creationtime) FROM (SELECT * FROM repackrequest WHERE id IN (SELECT repackrequest FROM repacksubrequest WHERE vid=inputVid))) AND repacksubrequest.vid=inputVid AND ROWNUM < 2;
+  OPEN outputSegments FOR
+    SELECT fileid, segsize, compression, filesec,copyno, blockid, fileseq, errorCode, errorMessage,id, repacksubrequest FROM RepackSegment 
+    WHERE repacksubrequest=rsrId;  
+END;
+/
