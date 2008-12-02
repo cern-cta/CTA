@@ -52,6 +52,11 @@
 #define WD 30
 #define SETW std::setw(WD) << std::left <<
 
+#ifndef DEFAULT_SOCKET_NETTIMEOUT
+#define DEFAULT_SOCKET_NETTIMEOUT   20    // XXX this value is ALSO defined in AbstractSocket.cpp
+#endif
+// TODO this class should reuse AbstractTCPSocket for the communication layer
+
 //-----------------------------------------------------------------------------
 // constructors
 //-----------------------------------------------------------------------------
@@ -358,7 +363,7 @@ void castor::replier::ClientConnection::send()
 #endif
   while (written < buflen) {
 #if !defined(_WIN32)
-    rc = write(m_fd, (char *)(buf + written), buflen - written);
+    rc = netwrite_timeout(m_fd, (char *)(buf + written), buflen - written, DEFAULT_SOCKET_NETTIMEOUT);
 #else
     rc = ::send(m_fd, (char *)(buf + written), buflen - written, 0);
 #endif
