@@ -28,6 +28,7 @@
 #include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/tape/aggregator/AggregatorDaemon.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
+#include "castor/tape/aggregator/RtcpdHandlerThread.hpp"
 #include "castor/tape/aggregator/VdqmRequestHandlerThread.hpp"
 
 
@@ -66,34 +67,57 @@ int main(int argc, char *argv[]) {
     }
 
 
-    //------------------------
-    // Create the thread pools
-    //------------------------
+    //----------------------------------------
+    // Create the VdqmRequestHandlerThreadPool
+    //----------------------------------------
 
-    const int vdqmListenPort = daemon.getVdqmListenPort();
+    const int vdqmListenPort  = daemon.getVdqmListenPort();
+    const int rtcpdListenPort = daemon.getRtcpdListenPort();
 
     daemon.addThreadPool(
     new castor::server::TCPListenerThreadPool("VdqmRequestHandlerThreadPool",
-      new castor::tape::aggregator::VdqmRequestHandlerThread(vdqmListenPort),
+      new castor::tape::aggregator::VdqmRequestHandlerThread(rtcpdListenPort),
         vdqmListenPort));
 
-    castor::server::BaseThreadPool *requestHandlerThreadPool =
-      daemon.getThreadPool('V');
-    if(requestHandlerThreadPool == NULL) {
-      std::stringstream oss;
-      oss << "Failed to get VdqmRequestHandlerThreadPool" << std::endl;
+    {
+      castor::server::BaseThreadPool *const vdqmRequestHandlerThreadPool =
+        daemon.getThreadPool('V');
 
-      // Log and throw an exception
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("reason", oss.str())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-        castor::tape::aggregator::AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 1,
-        params);
-      castor::exception::Internal e;
-      e.getMessage() << oss.str();
-      throw e;
+      if(vdqmRequestHandlerThreadPool == NULL) {
+        castor::exception::Internal ie;
+
+        ie.getMessage() << "Failed to get VdqmRequestHandlerThreadPool";
+        throw ie;
+      }
+      vdqmRequestHandlerThreadPool->setNbThreads(0);
     }
-    requestHandlerThreadPool->setNbThreads(0);
+
+
+    //----------------------------------
+    // Create the RtcpdHandlerThreadPool
+    //----------------------------------
+
+    daemon.addThreadPool(
+    new castor::server::TCPListenerThreadPool("RtcpdHandlerThreadPool",
+      new castor::tape::aggregator::RtcpdHandlerThread(), rtcpdListenPort));
+
+    {
+      castor::server::BaseThreadPool *const rtcpdHandlerThreadPool =
+        daemon.getThreadPool('R');
+
+      if(rtcpdHandlerThreadPool == NULL) {
+        castor::exception::Internal ie;
+
+        ie.getMessage() << "Failed to get RtcpdHandlerThreadPool";
+        throw ie;
+      }
+      rtcpdHandlerThreadPool->setNbThreads(0);
+    }
+
+
+    //------------------
+    // Start the threads
+    //------------------
 
     daemon.start();
 

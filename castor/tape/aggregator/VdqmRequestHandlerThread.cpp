@@ -40,11 +40,14 @@
 // constructor
 //-----------------------------------------------------------------------------
 castor::tape::aggregator::VdqmRequestHandlerThread::VdqmRequestHandlerThread(
-  const int listenPort) throw () : m_listenPort(listenPort), m_jobQueue(1) {
+  const int rtcpdListenPort) throw () :
+  m_rtcpdListenPort(rtcpdListenPort), m_jobQueue(1) {
 
+  // Create the RTCOPY_MAGIC_OLD0 request handler map
   m_rtcopyMagicOld0Handlers[VDQM_CLIENTINFO] =
     &VdqmRequestHandlerThread::handleJobSubmission;
 
+  // Create the magic number map
   m_magicToHandlers[RTCOPY_MAGIC_OLD0] = &m_rtcopyMagicOld0Handlers;
 }
 
@@ -77,7 +80,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::run(void *param)
 
   if(param == NULL) {
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_REQUEST_HANDLER_SOCKET_IS_NULL);
+      AGGREGATOR_VDQM_REQUEST_HANDLER_SOCKET_IS_NULL);
     return;
   }
 
@@ -93,7 +96,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::run(void *param)
       castor::dlf::Param("Message", ex.getMessage().str()),
       castor::dlf::Param("Code"   , ex.code())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_HANDLE_REQUEST_EXCEPT, 2, params);
+      AGGREGATOR_HANDLE_VDQM_REQUEST_EXCEPT, 2, params);
   }
 
   // Close and de-allocate the socket
@@ -315,14 +318,14 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::handleJobSubmission(
   // being a proxy for RTCPClientD
   try {
     RCPJobSubmitter::submit(
-    "localhost",    // host
-    RTCOPY_PORT,    // port
-    NETRW_TIMEOUT,  // netReadWriteTimeout
-    "RTCPD",        // remoteCopyType
+    "localhost",       // host
+    RTCOPY_PORT,       // port
+    NETRW_TIMEOUT,     // netReadWriteTimeout
+    "RTCPD",           // remoteCopyType
     tapeRequestID,
     clientUsername,
-    "localhost",    // clientHost
-    m_listenPort,   // clientPort
+    "localhost",       // clientHost
+    m_rtcpdListenPort, // clientPort
     clientEuid,
     clientEgid,
     dgn,

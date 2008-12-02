@@ -37,6 +37,7 @@ AGGREGATORBIN_SRCS = \
   AggregatorMain.cpp \
   Marshaller.cpp \
   RCPJobSubmitter.cpp \
+  RtcpdHandlerThread.cpp \
   SocketHelper.cpp \
   VdqmRequestHandlerThread.cpp \
   exception/RTCPDErrorMessage.cpp

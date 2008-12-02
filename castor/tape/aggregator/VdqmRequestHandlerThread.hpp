@@ -46,9 +46,10 @@ namespace aggregator {
     /**
      * Constructor
      *
-     * @param listenPort The TCP/IP port to which RTCPD should connect.
+     * @param rtcpdListenPort The port on which the tape aggregator listens for
+     * connections from RTCPD.
      */
-    VdqmRequestHandlerThread(const int listenPort) throw();
+    VdqmRequestHandlerThread(const int rtcpdListenPort) throw();
 
     /**
      * Destructor
@@ -74,9 +75,10 @@ namespace aggregator {
   private:
 
     /**
-     * The TCP/IP port to which RTCPD should connect.
+     * The port on which the tape aggregator listens for connections from
+     * RTCPD.
      */
-    const int m_listenPort;
+    const int m_rtcpdListenPort;
 
     /**
      * Pointer to handler function, where handler function is a member of
