@@ -87,7 +87,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::run(void *param)
     castor::dlf::Param params[] = {
       castor::dlf::Param("IP"  , castor::dlf::IPAddress(ip)),
       castor::dlf::Param("Port", port)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_RTCPD_CONNECTION_WITH_INFO, 2, params);
 
   } catch(castor::exception::Exception &ex) {

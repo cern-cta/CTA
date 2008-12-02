@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
         ie.getMessage() << "Failed to get RtcpdHandlerThreadPool";
         throw ie;
       }
-      rtcpdHandlerThreadPool->setNbThreads(0);
+      rtcpdHandlerThreadPool->setNbThreads(10);
     }
 
 
