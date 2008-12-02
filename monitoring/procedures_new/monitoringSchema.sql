@@ -345,7 +345,7 @@ BEGIN
 	--    
 	SELECT 'P_'||TO_CHAR(SYSDATE, 'YYYYMMDD') into CreationDate FROM DUAL;
 	SELECT to_char(trunc(sysdate +1),'DD-MON-YYYY') INTO ts_var FROM dual;
-	select to_char(trunc(sysdate),'DD-MON-RR HH24.MI.SS') into temp from dual;
+	select to_char(sysdate,'DD-MON-RR HH24.MI.SS') into temp from dual;
 	-- ConfigSchema Table 
 	--Contains: 
 	--->maxtimestamp for each of the next tables: Requests,DiskHit,DiskCopy,TapeRecall,TotalLat
