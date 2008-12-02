@@ -344,7 +344,7 @@ char **clienthost;
 			rmclogit (func, RMC46, REQBUFSZ);
                         tl_rmcdaemon.tl_log( &tl_rmcdaemon, 46, 2,
                                              "func"   , TL_MSG_PARAM_STR, "getreq",
-                                             "MaxSize", TL_MSG_PARAM_STR,  REQBUFSZ);                        
+                                             "MaxSize", TL_MSG_PARAM_INT,  REQBUFSZ);                        
 			return (-1);
 		}
 		l = msglen - sizeof(req_hdr);
