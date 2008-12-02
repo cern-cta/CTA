@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.49 $ $Release$ $Date: 2008/11/24 17:44:44 $ $Author: waldron $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.50 $ $Release$ $Date: 2008/12/02 16:42:10 $ $Author: sponcec3 $
  *
  * 
  *
@@ -563,6 +563,29 @@ int rtcpcld_updateNsSegmentAttributes(
         (void)dlf_write(
                         (inChild == 0 ? mainUuid : childUuid),
                         RTCPCLD_LOG_MSG(RTCPCLD_MSG_IGNORE_ENSFILECHG),
+                        (struct Cns_fileid *)&castorFileId,
+                        3,
+                        "SYSCALL",
+                        DLF_MSG_PARAM_STR,
+                        "Cns_setsegattrs()/Cns_replacetapecopy()",
+                        "RETRY",
+                        DLF_MSG_PARAM_INT,
+                        retryNsUpdate,
+                        "ERROR_STR",
+                        DLF_MSG_PARAM_STR,
+                        sstrerror(save_serrno)
+                        );
+        rc = 0;
+        // no need to retry here. We believe the nameserver, not like for ENOENT
+        break;
+      } else if ( save_serrno == ENSNOSEG ) {
+        /*
+         * We ignore ENSNOSEG. This means that the segment we are replacing
+         * had alrady been removed. Probably a concurrent overwrite of the file
+         */
+        (void)dlf_write(
+                        (inChild == 0 ? mainUuid : childUuid),
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_IGNORE_ENSNOSEG),
                         (struct Cns_fileid *)&castorFileId,
                         3,
                         "SYSCALL",
