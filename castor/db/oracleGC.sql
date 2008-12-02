@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.679 $ $Date: 2008/11/25 16:21:33 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.680 $ $Date: 2008/12/02 17:18:05 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -269,7 +269,7 @@ BEGIN
        AND NOT EXISTS
         (SELECT 'x' FROM SubRequest
           WHERE SubRequest.diskcopy = DiskCopy.id
-            AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14)) -- All but FINISHED, FAILED*, ARCHIVED
+            AND SubRequest.status IN (4, 5, 6, 12, 13, 14)) -- being processed (WAIT*, READY, *SCHED)
        AND rownum <= 10000 - totalCount
     RETURNING id BULK COLLECT INTO dcIds;
     COMMIT;
@@ -312,7 +312,7 @@ BEGIN
                         AND NOT EXISTS (
                             SELECT 'x' FROM SubRequest
                              WHERE SubRequest.diskcopy = DiskCopy.id
-                               AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14)) -- All but FINISHED, FAILED*, ARCHIVED
+                               AND SubRequest.status IN (4, 5, 6, 12, 13, 14)) -- being processed (WAIT*, READY, *SCHED)
                         ORDER BY gcWeight ASC)
                    WHERE rownum <= 10000 - totalCount) LOOP
           -- Mark the DiskCopy
@@ -422,7 +422,7 @@ BEGIN
          errorCode = 16,  -- EBUSY
          errorMessage = 'Request canceled by another user request'
    WHERE castorfile IN (SELECT cfId FROM FilesClearedProcHelper)
-     AND status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14);
+     AND status IN (4, 5, 6, 12, 13, 14);  -- being processed (WAIT*, READY, *SCHED)
   -- Loop over the deleted files for cleaning the tape copies
   FOR i in cfIds.FIRST .. cfIds.LAST LOOP
     deleteTapeCopies(cfIds(i));
@@ -520,13 +520,14 @@ BEGIN
     OPEN s;
     LOOP
       FETCH s BULK COLLECT INTO ids LIMIT 10000;
+      EXIT WHEN s%NOTFOUND;
       FORALL i IN ids.FIRST..ids.LAST
         DELETE FROM Id2Type WHERE id = ids(i);
       FORALL i IN ids.FIRST..ids.LAST
         DELETE FROM '||tab||' WHERE id = ids(i);
       COMMIT;
-      EXIT WHEN s%NOTFOUND;
     END LOOP;
+    CLOSE s;
   END;';
 END;
 /
@@ -573,32 +574,33 @@ BEGIN
     CURSOR s IS SELECT id FROM SubRequest 
      WHERE status IN (9, 11) 
        AND lastModificationTime < getTime() - timeOut;
-    CURSOR t IS SELECT UNIQUE castorfile FROM SubRequest 
-     WHERE status IN (9, 11) 
+    CURSOR t IS SELECT UNIQUE castorFile FROM SubRequest 
+     WHERE status IN (9, 11)
        AND lastModificationTime < getTime() - timeOut;
     ids "numList";
   BEGIN
     OPEN t;
     LOOP
       FETCH t BULK COLLECT INTO ids LIMIT 1000;
+      EXIT WHEN t%NOTFOUND;
       FOR i IN ids.FIRST..ids.LAST LOOP
         deleteCastorFile(ids(i));
       END LOOP;
       COMMIT;
-      EXIT WHEN t%NOTFOUND;
     END LOOP;
+    CLOSE t;
     OPEN s;
     LOOP
       FETCH s BULK COLLECT INTO ids LIMIT 10000;
+      EXIT WHEN s%NOTFOUND;
       FORALL i IN ids.FIRST..ids.LAST
         DELETE FROM Id2Type WHERE id = ids(i); 
       FORALL i IN ids.FIRST..ids.LAST
         DELETE FROM SubRequest WHERE id = ids(i);
       COMMIT;
-      EXIT WHEN s%NOTFOUND;
     END LOOP;
+    CLOSE s;
   END;
-  COMMIT;
 
   -- and then related Requests + Clients
     ---- Get ----
