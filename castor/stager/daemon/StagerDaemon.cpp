@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.58 $ $Release$ $Date: 2008/09/30 06:20:31 $ $Author: waldron $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.59 $ $Release$ $Date: 2008/12/02 17:28:46 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -37,6 +37,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/PortsConfig.hpp"
 #include "castor/server/SignalThreadPool.hpp"
+#include "castor/replier/RequestReplier.hpp"
 
 #include "castor/stager/daemon/StagerDaemon.hpp"
 #include "castor/stager/daemon/JobRequestSvcThread.hpp"
@@ -297,4 +298,10 @@ void castor::stager::daemon::StagerDaemon::help(std::string programName)
     "\t--Gthreads    or -G {integer >= 0}  \tNumber of threads for the GC service\n"
     "\n"
     "Comments to: Castor.Support@cern.ch\n";
+}
+
+void castor::stager::daemon::StagerDaemon::waitAllThreads() throw()
+{
+  castor::server::BaseDaemon::waitAllThreads();
+  castor::replier::RequestReplier::getInstance()->terminate();
 }
