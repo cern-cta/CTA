@@ -200,6 +200,7 @@ char *sys_nserrlist[ENSMAXERR-ENSBASEOFF+2] =
   {"Error 0",
    "Name server not active",
    "File has been overwritten, request ignored",
+   "Segment had been deleted",
    "BAD ERROR NUMBER"
   };
 
