@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.698 $ $Date: 2008/11/26 12:29:58 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.699 $ $Date: 2008/12/02 16:45:49 $ $Author: sponcec3 $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1202,7 +1202,7 @@ BEGIN
   UPDATE Stream SET status = 0 
    WHERE status NOT IN (0, 5, 6, 7) --PENDING, CREATED, STOPPED, WAITPOLICY
   RETURNING tape BULK COLLECT INTO tpIds;
-  UPDATE Stream SET tape = 0 WHERE tape != 0;
+  UPDATE Stream SET tape = NULL WHERE tape != 0;
   -- 3) Reset the tape for migration
   FORALL i IN tpIds.FIRST .. tpIds.LAST  
     UPDATE tape SET stream = 0, status = 0 WHERE status IN (2, 3, 4) AND id = tpIds(i);
