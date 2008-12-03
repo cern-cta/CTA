@@ -27,6 +27,7 @@
 #define CASTOR_TAPE_AGGREGATOR_MARSHALLER_HPP 1
 
 #include "castor/exception/Exception.hpp"
+#include "castor/tape/aggregator/RcpJobRequest.hpp"
 #include "castor/tape/aggregator/RtcpTapeRequest.hpp"
 
 #include <stdint.h>
@@ -144,6 +145,19 @@ namespace aggregator {
       const size_t dstLen) throw(castor::exception::Exception);
 
     /**
+     * Marshalls the specified RCP job submission request into the specified
+     * destination buffer in order to create an RCP job submission request
+     * message.
+     *
+     * @param dst The destination message buffer
+     * @param dstLen The length of the destination buffer
+     * @param request The RCP job submission request request
+     * @return The total length of the message (header + body)
+     */
+    static size_t marshallRcpJobRequest(char *const dst, const size_t dstLen,
+      const RcpJobRequest &request) throw (castor::exception::Exception);
+
+    /**
      * Marshalls the specified status code and possible error message into
      * the specified destination buffer in order to create an RTCP acknowledge
      * message.
@@ -154,7 +168,7 @@ namespace aggregator {
      * @param errorMsg The error message to be marshalled
      * @return The total length of the message (header + body)
      */
-    static size_t marshallRTCPAckn(char *dst, const size_t dstLen,
+    static size_t marshallRtcpAckn(char *const dst, const size_t dstLen,
       const uint32_t status, const char *errorMsg)
       throw (castor::exception::Exception);
 
@@ -167,7 +181,7 @@ namespace aggregator {
      * @param request The tape request
      * @return The total length of the message (header + body)
      */
-    static size_t marshallRTCPTapeRequest(char *dst, const size_t dstLen,
+    static size_t marshallRTCPTapeRequest(char *const dst, const size_t dstLen,
       const RtcpTapeRequest &request) throw (castor::exception::Exception);
 
   }; // class Utils

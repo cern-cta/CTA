@@ -28,7 +28,7 @@
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/Marshaller.hpp"
 #include "castor/tape/aggregator/VdqmRequestHandlerThread.hpp"
-#include "castor/tape/aggregator/RCPJobSubmitter.hpp"
+#include "castor/tape/aggregator/RcpJobSubmitter.hpp"
 #include "castor/tape/aggregator/SocketHelper.hpp"
 #include "castor/tape/aggregator/exception/RTCPDErrorMessage.hpp"
 #include "h/common.h"
@@ -317,7 +317,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::handleJobSubmission(
   // clientHost and clientPort parameters to identify the tape aggregator as
   // being a proxy for RTCPClientD
   try {
-    RCPJobSubmitter::submit(
+    RcpJobSubmitter::submit(
     "localhost",       // host
     RTCOPY_PORT,       // port
     NETRW_TIMEOUT,     // netReadWriteTimeout
@@ -357,7 +357,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::handleJobSubmission(
   size_t ackMsgLen = 0;
 
   try {
-    ackMsgLen = Marshaller::marshallRTCPAckn(ackMsg, sizeof(ackMsg),
+    ackMsgLen = Marshaller::marshallRtcpAckn(ackMsg, sizeof(ackMsg),
       errorStatusForVdqm, errorMessageForVdqm.c_str());
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {

@@ -23,6 +23,7 @@
  * @author Steven Murray Steven.Murray@cern.ch
  *****************************************************************************/
 
+#include "castor/exception/Internal.hpp"
 #include "castor/tape/aggregator/Marshaller.hpp"
 #include "h/rtcp_constants.h"
 #include "h/vdqm_constants.h"
@@ -231,10 +232,80 @@ void castor::tape::aggregator::Marshaller::unmarshallString(char * &src,
 
 
 //-----------------------------------------------------------------------------
-// marshallRTCPAckn
+// marshallRcpJobRequest
 //-----------------------------------------------------------------------------
-size_t castor::tape::aggregator::Marshaller::marshallRTCPAckn(
-  char *dst, const size_t dstLen, const uint32_t status, const char *errorMsg)
+size_t castor::tape::aggregator::Marshaller::marshallRcpJobRequest(
+  char *const dst, const size_t dstLen, const RcpJobRequest &request)
+  throw (castor::exception::Exception) {
+
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  // Calculate the length of the message body
+  const uint32_t len =
+    4*sizeof(uint32_t)              +
+    strlen(request.clientHost)      +
+    strlen(request.deviceGroupName) +
+    strlen(request.tapeDriveName)   +
+    strlen(request.clientUserName)  +
+    4; // 4 = the number of string termination characters
+
+  // Calculate the total length of the message (header + body)
+  // Message header = magic + reqtype + len = 3 * sizeof(uint32_t)
+  const size_t totalLen = 3 * sizeof(uint32_t) + len;
+
+  // Check that the message buffer is big enough
+  if(sizeof(dstLen) <  totalLen) {
+    castor::exception::Exception ex(EMSGSIZE);
+
+    ex.getMessage() << "Buffer too small for job submission request message: "
+      "Required size: " << totalLen << " Actual size: " << dstLen;
+
+    throw ex;
+  }
+
+  // Marshall the whole message (header + body)
+  char *p = dst;
+  marshallUint32(RTCOPY_MAGIC_OLD0        , p);
+  marshallUint32(VDQM_CLIENTINFO          , p);
+  marshallUint32(len                      , p);
+  marshallUint32(request.tapeRequestID    , p);
+  marshallUint32(request.clientPort       , p);
+  marshallUint32(request.clientEuid       , p);
+  marshallUint32(request.clientEgid       , p);
+  marshallString(request.clientHost       , p);
+  marshallString(request.deviceGroupName  , p);
+  marshallString(request.tapeDriveName    , p);
+  marshallString(request.clientUserName   , p);
+
+  // Calculate the number of bytes actually marshalled
+  const size_t nbBytesMarshalled = p - dst;
+
+  // Check that the number of bytes marshalled was what was expected
+  if(totalLen != nbBytesMarshalled) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << "Mismatch between the expected total length of the "
+      "RCP job submission request message and the actual number of bytes "
+      "marshalled: Expected length: " << totalLen << " Marshalled: "
+      << nbBytesMarshalled;
+
+    throw ie;
+  }
+
+  return totalLen;
+}
+
+
+//-----------------------------------------------------------------------------
+// marshallRtcpAckn
+//-----------------------------------------------------------------------------
+size_t castor::tape::aggregator::Marshaller::marshallRtcpAckn(char *const dst,
+  const size_t dstLen, const uint32_t status, const char *errorMsg)
   throw (castor::exception::Exception) {
 
   if(dst == NULL) {
@@ -271,16 +342,40 @@ size_t castor::tape::aggregator::Marshaller::marshallRTCPAckn(
   // of the error message string plus the size of the string termination
   // characater '\0'
   const uint32_t len = sizeof(uint32_t) + errorMsg2SendLen + 1;
+ 
+  char *p = dst;
+  marshallUint32(RTCOPY_MAGIC_OLD0, p); // Magic number
+  marshallUint32(VDQM_CLIENTINFO  , p); // Request type
+  marshallUint32(len              , p); // Length
+  marshallUint32(status           , p); // status code
 
-  marshallUint32(RTCOPY_MAGIC_OLD0, dst); // Magic number
-  marshallUint32(VDQM_CLIENTINFO  , dst); // Request type
-  marshallUint32(len              , dst); // Length
-  marshallUint32(status           , dst); // status code
+  // Marshall the error message without the terminatiing null byte
+  memcpy(p, errorMsg, errorMsg2SendLen);
+  p += errorMsg2SendLen;
 
-  memcpy(dst, errorMsg, errorMsg2SendLen);
-  *(dst+errorMsg2SendLen) = '\0';
+  // Marshall the terminatiing null byte of the error message
+  *p = '\0';
+  p += 1;
 
-  return 3 * sizeof(uint32_t) + len; // Header + body
+  // Calculate the number of bytes actually marshalled
+  const size_t nbBytesMarshalled = p - dst;
+
+  // Calculate the total length of the message (header + body)
+  // Message header = magic + reqtype + len = 3 * sizeof(uint32_t)
+  const size_t totalLen = 3 * sizeof(uint32_t) + len;
+
+  // Check that the number of bytes marshalled was what was expected
+  if(totalLen != nbBytesMarshalled) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << "Mismatch between the expected total length of the "
+      "RTCP acknowledge message and the actual number of bytes marshalled: "
+      "Expected length: " << totalLen << " Marshalled: " << nbBytesMarshalled;
+
+    throw ie;
+  }
+
+  return totalLen;
 }
 
 
@@ -298,7 +393,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRTCPTapeRequest(char *dst,
     // Plus the size of the err member which is of type rtcpErrMsg_t
     4 * sizeof(uint32_t) + strlen(request.err.errmsgtxt) + 1;
 
-  // Calculate the total length of the message
+  // Calculate the total length of the message (header + body)
   // Message header = magic + reqtype + len = 3 * sizeof(uint32_t)
   const size_t totalLen = 3 * sizeof(uint32_t) + len;
 
@@ -312,6 +407,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRTCPTapeRequest(char *dst,
     throw ex;
   }
 
+  // Marshall the whole message (header + body)
   char *p = dst;
   marshallUint32(RTCOPY_MAGIC                              , p);
   marshallUint32(RTCP_TAPEERR_REQ                          , p);
@@ -352,6 +448,20 @@ size_t castor::tape::aggregator::Marshaller::marshallRTCPTapeRequest(char *dst,
   marshallUint32(request.err.errorcode                     , p);
   marshallUint32(request.err.max_tpretry                   , p);
   marshallUint32(request.err.max_cpretry                   , p);
+
+  // Calculate the number of bytes actually marshalled
+  const size_t nbBytesMarshalled = p - dst;
+
+  // Check that the number of bytes marshalled was what was expected
+  if(totalLen != nbBytesMarshalled) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << "Mismatch between the expected total length of the "
+      "RTCP tape request message and the actual number of bytes marshalled: "
+      "Expected length: " << totalLen << " Marshalled: " << nbBytesMarshalled;
+
+    throw ie;
+  }
 
   return totalLen;
 }

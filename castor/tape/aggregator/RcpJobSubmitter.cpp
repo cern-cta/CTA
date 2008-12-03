@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      RCPJobSubmitter.cpp
+ *                      RcpJobSubmitter.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,11 +23,13 @@
  * @author Steven Murray Steven.Murray@cern.ch
  *****************************************************************************/
 
+#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/io/ClientSocket.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/Marshaller.hpp"
-#include "castor/tape/aggregator/RCPJobSubmitter.hpp"
+#include "castor/tape/aggregator/RcpJobRequest.hpp"
+#include "castor/tape/aggregator/RcpJobSubmitter.hpp"
 #include "castor/tape/aggregator/SocketHelper.hpp"
 #include "h/net.h"
 #include "h/osdep.h"
@@ -43,7 +45,7 @@
 //------------------------------------------------------------------------------
 // submit
 //------------------------------------------------------------------------------
-void castor::tape::aggregator::RCPJobSubmitter::submit(
+void castor::tape::aggregator::RcpJobSubmitter::submit(
   const std::string  &host,
   const unsigned int  port,
   const int           netReadWriteTimeout,
@@ -59,6 +61,74 @@ void castor::tape::aggregator::RCPJobSubmitter::submit(
   throw (castor::tape::aggregator::exception::RTCPDErrorMessage,
     castor::exception::Exception) {
 
+  RcpJobRequest request;
+
+  // Check the validity of the parameters of this function
+  if(clientHost.length() > sizeof(request.clientHost) - 1) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Length of clientHost string is too large: "
+      "Maximum: " << (sizeof(request.clientHost) - 1) << " Actual: "
+      << clientHost.length();
+
+    throw ex;
+  }
+  if(deviceGroupName.length() > sizeof(request.deviceGroupName) - 1) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Length of deviceGroupName string is too large: "
+      "Maximum: " << (sizeof(request.deviceGroupName) - 1) << " Actual: "
+      << deviceGroupName.length();
+
+    throw ex;
+  }
+  if(tapeDriveName.length() > sizeof(request.tapeDriveName) - 1) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Length of tapeDriveName string is too large: "
+      "Maximum: " << (sizeof(request.tapeDriveName) - 1) << " Actual: "
+      << tapeDriveName.length();
+
+    throw ex;
+  }
+  if(clientUserName.length() > sizeof(request.clientUserName) - 1) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Length of clientUserName string is too large: "
+      "Maximum: " << (sizeof(request.clientUserName) - 1) << " Actual: "
+      << clientUserName.length();
+
+    throw ex;
+  }
+
+  // Prepare the job submission request information ready for marshalling
+  // The validity of the string length were check above
+  request.tapeRequestID = tapeRequestID;
+  request.clientPort    = clientPort;
+  request.clientEuid    = clientEuid;
+  request.clientEgid    = clientEgid;
+  strcpy(request.clientHost     , clientHost.c_str());
+  strcpy(request.deviceGroupName, deviceGroupName.c_str());
+  strcpy(request.tapeDriveName  , tapeDriveName.c_str());
+  strcpy(request.clientUserName , clientUserName.c_str());
+
+  // Marshall the job submission request message
+  char buf[MSGBUFSIZ];
+  size_t totalLen = 0;
+
+  try {
+    totalLen = Marshaller::marshallRcpJobRequest(&buf[0], sizeof(buf), request);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Internal ie;
+
+    ie.getMessage()
+      << "Failed to marshall RCP job submission request message: "
+      << ex.getMessage().str();
+
+    throw ie;
+  }
+
+  // Connect to the RTCPD or tape aggregator daemon
   castor::io::ClientSocket socket(port, host);
 
   try {
@@ -71,51 +141,9 @@ void castor::tape::aggregator::RCPJobSubmitter::submit(
       << connectex.getMessage().str();
   }
 
-  // Let's count the length of the message for the header.
-  // Please notice: Normally the ID is a 64Bit number!!
-  // But for historical reasons, we will do a downcast of the
-  // id, which is then still unique, because a tapeRequest has
-  // a very short lifetime, compared to the number of new IDs
-  uint32_t len =
-    4*sizeof(uint32_t)       +
-    clientHost.length()      +
-    deviceGroupName.length() +
-    tapeDriveName.length()   +
-    clientUserName.length()  +
-    4; // 4 = the number of string termination characters
-
-  // If the contents for the message are larger than the message body buffer
-  if(len > MSGBUFSIZ - 3 * sizeof(uint32_t)) {
-    castor::exception::Exception ex(EMSGSIZE);
-
-    ex.getMessage() << "Contents for job submission message are larger than "
-      "the message body buffer: Message body buffer length: "
-      << (MSGBUFSIZ - 3 * sizeof(uint32_t)) << ": Contents length: " << len;
-
-    throw ex;
-  }
-
-  char buf[MSGBUFSIZ];
-  char *p = buf;
-
-  Marshaller::marshallUint32(RTCOPY_MAGIC_OLD0, p); // Magic number
-  Marshaller::marshallUint32(VDQM_CLIENTINFO  , p); // Request type
-  Marshaller::marshallUint32(len              , p);
-  Marshaller::marshallUint32(tapeRequestID    , p); // Downcast to 32-bits
-  Marshaller::marshallUint32(clientPort       , p);
-  Marshaller::marshallUint32(clientEuid       , p);
-  Marshaller::marshallUint32(clientEgid       , p);
-  Marshaller::marshallString(clientHost       , p);
-  Marshaller::marshallString(deviceGroupName  , p);
-  Marshaller::marshallString(tapeDriveName    , p);
-  Marshaller::marshallString(clientUserName   , p);
-
-  // Calculate the length of header + body ready for netwrite
-  len += 3 * sizeof(uint32_t);
-
-  // After marshalling we can send the information to the RTCPD or tape
-  // aggregator daemon
-  const int rc = netwrite_timeout(socket.socket(), buf, len,
+  // Send the job submission request message to the RTCPD or tape aggregator
+  // daemon
+  const int rc = netwrite_timeout(socket.socket(), buf, totalLen,
     netReadWriteTimeout);
 
   if(rc == -1) {
@@ -130,6 +158,7 @@ void castor::tape::aggregator::RCPJobSubmitter::submit(
     throw ex;
   }
 
+  // Read the reply from the RTCPD or tape aggregator daemon
   readReply(socket, netReadWriteTimeout, remoteCopyType);
 }
 
@@ -137,7 +166,7 @@ void castor::tape::aggregator::RCPJobSubmitter::submit(
 //------------------------------------------------------------------------------
 // readReply
 //------------------------------------------------------------------------------
-void castor::tape::aggregator::RCPJobSubmitter::readReply(
+void castor::tape::aggregator::RcpJobSubmitter::readReply(
   castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
   const char *remoteCopyType)
   throw (castor::tape::aggregator::exception::RTCPDErrorMessage,

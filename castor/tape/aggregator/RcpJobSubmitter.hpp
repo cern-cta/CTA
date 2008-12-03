@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      RCPJobSubmitter.hpp
+ *                      RcpJobSubmitter.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -46,7 +46,7 @@ namespace aggregator {
    * A helper class for submitting remote copy jobs to either RTCPD or tape
    * aggregator daemons.
    */
-  class RCPJobSubmitter {
+  class RcpJobSubmitter {
 
   public:
 
@@ -101,7 +101,7 @@ namespace aggregator {
       throw (castor::tape::aggregator::exception::RTCPDErrorMessage,
         castor::exception::Exception);    
 
-  }; // class RCPJobSubmitter
+  }; // class RcpJobSubmitter
 
 } // namespace aggregator
 } // namespace tape

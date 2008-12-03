@@ -29,6 +29,8 @@
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
 
+#include <stdint.h>
+
 
 namespace castor     {
 namespace tape       {
@@ -67,4 +69,4 @@ namespace aggregator {
 } // namespace tape
 } // namespace castor
 
-#endif
+#endif // CASTOR_TAPE_AGGREGATOR_RTCPTAPEREQUEST

@@ -28,7 +28,8 @@
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/Marshaller.hpp"
 #include "castor/tape/aggregator/RtcpdHandlerThread.hpp"
-#include "castor/tape/aggregator/RCPJobSubmitter.hpp"
+#include "castor/tape/aggregator/RtcpTapeRequest.hpp"
+#include "castor/tape/aggregator/RcpJobSubmitter.hpp"
 #include "castor/tape/aggregator/SocketHelper.hpp"
 #include "castor/tape/aggregator/exception/RTCPDErrorMessage.hpp"
 #include "h/common.h"
@@ -148,6 +149,20 @@ void castor::tape::aggregator::RtcpdHandlerThread::stop()
 //-----------------------------------------------------------------------------
 std::string castor::tape::aggregator::RtcpdHandlerThread::getVidFromRtcpd(
   castor::io::AbstractTCPSocket &socket) throw(castor::exception::Exception) {
+
+  char buffer[MSGBUFSIZ];
+  RtcpTapeRequest request;
+
+  try {
+    Marshaller::marshallRTCPTapeRequest(&buffer[0], sizeof(buffer), request);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << "Failed to marshall RTCP request message: "
+      << ex.getMessage().str();
+
+    throw ie;
+  }
 
   return "NOTIMP";
 /*
