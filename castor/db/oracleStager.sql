@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.706 $ $Date: 2008/11/26 10:48:21 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.707 $ $Date: 2008/12/03 16:39:48 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -565,7 +565,8 @@ CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
   rtype INTEGER;
 BEGIN
   UPDATE SubRequest
-     SET status = 8, parent = 0 -- FINISHED
+     SET status = 8, -- FINISHED
+         parent = NULL, diskCopy = NULL  -- unlink this subrequest as it's dead now
    WHERE id = srId
   RETURNING request, castorFile INTO rId, cfId;
 
@@ -1266,12 +1267,12 @@ BEGIN
   UPDATE DiskCopy SET status = 6  -- DISKCOPY_STAGEOUT
    WHERE id = dcId RETURNING fileSystem INTO fsId;
   -- how many do we have to create ?
-  -- select subrequest in status 3 in case of repack with already staged diskcopy
   SELECT count(StageRepackRequest.repackVid) INTO nbTC
     FROM SubRequest, StageRepackRequest
-   WHERE subrequest.castorfile = cfId
-     AND SubRequest.request = StageRepackRequest.id
-     AND SubRequest.status IN (3, 4, 5, 6);  -- SUBREQUEST_WAITSCHED, WAITTAPERECALL, WAITSUBREQ, READY
+   WHERE SubRequest.request = StageRepackRequest.id
+     AND (SubRequest.id = srId
+       OR (SubRequest.castorFile = cfId
+         AND SubRequest.status IN (4, 5)));  -- WAITTAPERECALL, WAITSUBREQ
   SELECT nbCopies INTO nbTCInFC
     FROM FileClass, CastorFile
    WHERE CastorFile.id = cfId
@@ -1281,15 +1282,15 @@ BEGIN
     nbTC := nbTCInFC;
   END IF;
 
-  -- we need to update other subrequests with the diskcopy
-  -- we also update status so that we don't reschedule them
+  -- update all the Repack subRequests for this file. The status REPACK
+  -- stays until the migration to the new tape is over.
   UPDATE SubRequest
      SET diskCopy = dcId, status = 12  -- SUBREQUEST_REPACK
    WHERE SubRequest.castorFile = cfId
      AND SubRequest.status IN (4, 5, 6)  -- SUBREQUEST_WAITTAPERECALL, WAITSUBREQ, READY
      AND SubRequest.request IN
        (SELECT id FROM StageRepackRequest);
-
+   
   -- get the service class, uid and gid
   SELECT R.svcClass, euid, egid INTO svcClassId, reuid, regid
     FROM StageRepackRequest R, SubRequest
@@ -1984,7 +1985,7 @@ BEGIN
     -- Check whether something else is left: if not, do as
     -- we are performing a stageRm everywhere.
     -- First select current status of the diskCopies: if CANBEMIGR,
-    -- make sure we don't drop the last remaining valid migrable copy,
+    -- make sure we don't drop the last remaining valid migratable copy,
     -- i.e. drop the disk only copies from the count.
     SELECT status INTO dcStatus
       FROM DiskCopy
@@ -2013,6 +2014,9 @@ BEGIN
                             FROM TABLE(dcsToRm) dcidTable);
     END IF;
     IF nbRes = 0 THEN
+      -- nothing found, so we're dropping the last copy; then
+      -- we need to perform all the checks to make sure we can
+      -- allow the removal.
       scId := 0;
     END IF;
   END IF;
@@ -2161,33 +2165,6 @@ END;
 /
 
 
-/* PL/SQL procedure which is executed whenever a files has been written to tape by the migrator to
- * check, whether the file information has to be added to the NameServer or to replace an entry
- * (repack case)
- */
-CREATE OR REPLACE PROCEDURE checkFileForRepack(fid IN INTEGER, ret OUT VARCHAR2) AS
-  sreqid NUMBER;
-BEGIN
-  ret := NULL;
-  -- Get the repackvid field from the existing request (if none, then we are not in a repack process)
-  SELECT SubRequest.id, StageRepackRequest.repackvid
-    INTO sreqid, ret
-    FROM SubRequest, DiskCopy, CastorFile, StageRepackRequest
-   WHERE stagerepackrequest.id = subrequest.request
-     AND diskcopy.id = subrequest.diskcopy
-     AND diskcopy.status = 10 -- CANBEMIGR
-     AND subrequest.status = 12 -- SUBREQUEST_REPACK
-     AND diskcopy.castorfile = castorfile.id
-     AND castorfile.fileid = fid
-     AND ROWNUM < 2;
-  UPDATE SubRequest SET status = 11  -- SUBREQUEST_ARCHIVED
-   WHERE SubRequest.id = sreqid;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  NULL;
-END;
-/
-
-
 /* PL/SQL method implementing updateAndCheckSubRequest */
 CREATE OR REPLACE PROCEDURE updateAndCheckSubRequest(srId IN INTEGER, newStatus IN INTEGER, result OUT INTEGER) AS
   reqId INTEGER;
@@ -2229,6 +2206,10 @@ CREATE OR REPLACE PROCEDURE storeClusterStatus
  machine NUMBER := 0;
  fs NUMBER := 0;
 BEGIN
+  -- Sanity check
+  IF machines.COUNT = 0 OR fileSystems.COUNT = 0 THEN
+    RETURN;
+  END IF;
   -- First Update Machines
   FOR i in machines.FIRST .. machines.LAST LOOP
     ind := machineValues.FIRST + 9 * (i - machines.FIRST);
