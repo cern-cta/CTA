@@ -158,14 +158,14 @@ void castor::job::stagerjob::GridFTPPlugin::getEnvironment
 
   const char *globus_logfile_netlogger = getconfent("GSIFTP", "NETLOGFILE", 0);
   if (globus_logfile_netlogger == NULL) {
-    globus_logfile_netlogger = "/var/log/globus-gridftp.log";
+    env.globus_logfile_netlogger = "/var/log/globus-gridftp.log";
   } else {
     env.globus_logfile_netlogger = globus_logfile_netlogger;
   }
 
   const char *globus_loglevel = getconfent("GSIFTP", "LOGLEVEL", 0);
   if (globus_loglevel == NULL) {
-    globus_loglevel = "ALL";
+    env.globus_loglevel = "ALL";
   } else {
     env.globus_loglevel = globus_loglevel;
   }
@@ -173,14 +173,14 @@ void castor::job::stagerjob::GridFTPPlugin::getEnvironment
   // Get certificate and key file names
   const char *globus_x509_user_cert = getconfent("GSIFTP", "X509_USER_CERT", 0);
   if (globus_x509_user_cert == NULL) {
-    globus_x509_user_cert = "/etc/grid-security/castor-gridftp-dsi-int/castor-gridftp-dsi-int-cert.pem";
+    env.globus_x509_user_cert = "/etc/grid-security/castor-gridftp-dsi-int/castor-gridftp-dsi-int-cert.pem";
   } else {
     env.globus_x509_user_cert = globus_x509_user_cert;
   }
 
   const char *globus_x509_user_key = getconfent("GSIFTP", "X509_USER_KEY", 0);
   if (globus_x509_user_key == NULL) {
-    globus_x509_user_key = "/etc/grid-security/castor-gridftp-dsi-int/castor-gridftp-dsi-int-key.pem";
+    env.globus_x509_user_key = "/etc/grid-security/castor-gridftp-dsi-int/castor-gridftp-dsi-int-key.pem";
   } else {
     env.globus_x509_user_key = globus_x509_user_key;
   }
