@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.699 $ $Date: 2008/12/02 16:45:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.700 $ $Date: 2008/12/03 16:41:20 $ $Author: itglp $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -963,32 +963,22 @@ END;
 
 /* PL/SQL method implementing fileRecallFailed */
 CREATE OR REPLACE PROCEDURE fileRecallFailed(tapecopyId IN INTEGER) AS
- SubRequestId NUMBER;
- dci NUMBER;
- fsId NUMBER;
- fileSize NUMBER;
+ cfId NUMBER;
 BEGIN
-  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize
-    INTO SubRequestId, dci, fileSize
-    FROM TapeCopy, SubRequest, DiskCopy, CastorFile
-   WHERE TapeCopy.id = tapecopyId
-     AND CastorFile.id = TapeCopy.castorFile
-     AND DiskCopy.castorFile = TapeCopy.castorFile
-     AND SubRequest.diskcopy(+) = DiskCopy.id
-     AND DiskCopy.status = 2; -- DISKCOPY_WAITTAPERECALL
-  UPDATE DiskCopy SET status = 4 
-   WHERE id = dci RETURNING fileSystem INTO fsid; -- DISKCOPY_FAILED
-  IF SubRequestId IS NOT NULL THEN
-    UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
-                          getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED (not strictly correct but the request is over anyway)
-                          lastModificationTime = getTime()
-     WHERE id = SubRequestId;
-    UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
-                          getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
-                          lastModificationTime = getTime(),
-                          parent = 0
-     WHERE parent = SubRequestId;
-  END IF;
+  SELECT castorFile INTO cfId FROM TapeCopy
+   WHERE id = tapecopyId;
+  UPDATE DiskCopy SET status = 4 -- DISKCOPY_FAILED
+   WHERE castorFile = cfId
+     AND status = 2; -- DISKCOPY_WAITTAPERECALL
+  UPDATE SubRequest 
+     SET status = 7, -- SUBREQUEST_FAILED
+         getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED (not strictly correct but the request is over anyway)
+         lastModificationTime = getTime(),
+         errorCode = 1015,  -- SEINTERNAL
+         errorMessage = 'File recall from tape has failed, please try again later',
+         parent = 0
+   WHERE castorFile = cfId
+     AND status IN (4, 5); -- WAITTAPERECALL, WAITSUBREQ
 END;
 /
 
@@ -1187,6 +1177,34 @@ BEGIN
            creationTime, id, tape, copy, status, priority
       FROM Segment
      WHERE Segment.status = 6; -- SEGMENT_FAILED
+END;
+/
+
+
+/* PL/SQL procedure which is executed whenever a files has been written to tape by the migrator to
+ * check, whether the file information has to be added to the NameServer or to replace an entry
+ * (repack case)
+ */
+CREATE OR REPLACE PROCEDURE checkFileForRepack(fid IN INTEGER, ret OUT VARCHAR2) AS
+  sreqid NUMBER;
+BEGIN
+  ret := NULL;
+  -- Get the repackvid field from the existing request (if none, then we are not in a repack process)
+  SELECT SubRequest.id, StageRepackRequest.repackvid
+    INTO sreqid, ret
+    FROM SubRequest, DiskCopy, CastorFile, StageRepackRequest
+   WHERE stagerepackrequest.id = subrequest.request
+     AND diskcopy.id = subrequest.diskcopy
+     AND diskcopy.status = 10 -- CANBEMIGR
+     AND subrequest.status = 12 -- SUBREQUEST_REPACK
+     AND diskcopy.castorfile = castorfile.id
+     AND castorfile.fileid = fid
+     AND ROWNUM < 2;
+  UPDATE SubRequest SET status = 11  -- SUBREQUEST_ARCHIVED XXX this step is to be moved after the operation
+                                     -- has been successful once the migrator is properly rewritten
+   WHERE SubRequest.id = sreqid;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  NULL;
 END;
 /
 
@@ -1517,9 +1535,8 @@ BEGIN
   END LOOP; -- loop tapecopies
 
   -- resurrect the one never attached
-  FOR i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST LOOP
+  FORALL i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST
     UPDATE TapeCopy SET Status = 1 WHERE id = tapeCopyIds(i) AND Status = 7;
-  END LOOP;
   COMMIT;
 END;
 /
@@ -1545,18 +1562,16 @@ CREATE OR REPLACE PROCEDURE stopChosenStreams
   nbTc NUMBER;
 BEGIN
   FOR i IN streamIds.FIRST .. streamIds.LAST LOOP
-    BEGIN
-      SELECT count(*) INTO nbTc FROM stream2tapecopy WHERE parent = streamIds(i);
-      IF nbTc = 0 THEN
-        DELETE FROM Stream WHERE id = streamIds(i);
-      ELSE
-        UPDATE Stream
-           SET status = 0 -- PENDING
-         WHERE Stream.status = 7 -- WAITPOLICY
-           AND id = streamIds(i);
-      END IF;
-      COMMIT;
-    END;
+    SELECT count(*) INTO nbTc FROM stream2tapecopy WHERE parent = streamIds(i);
+    IF nbTc = 0 THEN
+      DELETE FROM Stream WHERE id = streamIds(i);
+    ELSE
+      UPDATE Stream
+         SET status = 0 -- PENDING
+       WHERE Stream.status = 7 -- WAITPOLICY
+         AND id = streamIds(i);
+    END IF;
+    COMMIT;
   END LOOP;
 END;
 /
@@ -1609,9 +1624,8 @@ CREATE OR REPLACE PROCEDURE resurrectTapes
 (tapeIds IN castor."cnumList")
 AS
 BEGIN
-  FOR i IN tapeIds.FIRST .. tapeIds.LAST LOOP
+  FORALL i IN tapeIds.FIRST .. tapeIds.LAST
     UPDATE Tape SET status = 1 WHERE status = 8 AND id = tapeIds(i);
-  END LOOP;
   COMMIT;
 END;
 /
