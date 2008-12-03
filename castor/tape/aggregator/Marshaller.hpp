@@ -20,13 +20,14 @@
  *
  *
  *
- * @author Castor dev team
+ * @author Steven Murray Steven.Murray@cern.ch
  *****************************************************************************/
 
 #ifndef CASTOR_TAPE_AGGREGATOR_MARSHALLER_HPP
 #define CASTOR_TAPE_AGGREGATOR_MARSHALLER_HPP 1
 
 #include "castor/exception/Exception.hpp"
+#include "castor/tape/aggregator/RtcpTapeRequest.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -41,6 +42,32 @@ namespace aggregator {
    */
   class Marshaller {
   public:
+
+    /**
+     * Marshalls the specified unsigned 8-bit integer into the specified
+     * destination buffer.
+     *
+     * @param src the unsigned 8-bit integer to be marshalled
+     * @param dst in/out parameter, before invocation points to the destination
+     * buffer where the unsigned 8-bit integer should be marshalled to and on
+     * return points to the byte in the destination buffer immediately after
+     * the marshalled unsigned 8-bit integer
+     */
+    static void marshallUint8(uint8_t src, char * &dst)
+      throw(castor::exception::Exception);
+
+    /**
+     * Marshalls the specified unsigned 16-bit integer into the specified
+     * destination buffer.
+     *
+     * @param src the unsigned 16-bit integer to be marshalled
+     * @param dst in/out parameter, before invocation points to the destination
+     * buffer where the unsigned 16-bit integer should be marshalled to and on
+     * return points to the byte in the destination buffer immediately after
+     * the marshalled unsigned 16-bit integer
+     */
+    static void marshallUint16(uint16_t src, char * &dst)
+      throw(castor::exception::Exception);
 
     /**
      * Marshalls the specified unsigned 32-bit integer into the specified
@@ -115,6 +142,33 @@ namespace aggregator {
      */
     static void unmarshallString(char * &src, size_t &srcLen, char *dst,
       const size_t dstLen) throw(castor::exception::Exception);
+
+    /**
+     * Marshalls the specified status code and possible error message into
+     * the specified destination buffer in order to create an RTCP acknowledge
+     * message.
+     *
+     * @param dst The destination message buffer
+     * @param dstLen The length of the destination buffer
+     * @param status The status code to be marshalled
+     * @param errorMsg The error message to be marshalled
+     * @return The total length of the message (header + body)
+     */
+    static size_t marshallRTCPAckn(char *dst, const size_t dstLen,
+      const uint32_t status, const char *errorMsg)
+      throw (castor::exception::Exception);
+
+    /**
+     * Marshalls the specified tape request into the specified destination
+     * buffer in order to create an RTCP tape request message.
+     *
+     * @param dst The destination message buffer
+     * @param dstLen The length of the destination buffer
+     * @param request The tape request
+     * @return The total length of the message (header + body)
+     */
+    static size_t marshallRTCPTapeRequest(char *dst, const size_t dstLen,
+      const RtcpTapeRequest &request) throw (castor::exception::Exception);
 
   }; // class Utils
 

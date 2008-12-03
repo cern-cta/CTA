@@ -20,7 +20,7 @@
  *
  *
  *
- * @author Castor Dev team, castor-dev@cern.ch
+ * @author Steven Murray Steven.Murray@cern.ch
  *****************************************************************************/
 #ifndef _CASTOR_TAPE_AGGREGATOR_RCPJOBSUBMITTER_HPP_
 #define _CASTOR_TAPE_AGGREGATOR_RCPJOBSUBMITTER_HPP_

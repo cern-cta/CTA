@@ -68,6 +68,17 @@ namespace aggregator {
      */
     virtual void stop() throw();
 
+  private:
+
+    /**
+     * Get the VID associated with the remote copy job from RTCPD.
+     *
+     * @param socket The socket of the connection with RTCPD.
+     * @return The VID.
+     */
+    std::string getVidFromRtcpd(castor::io::AbstractTCPSocket &socket)
+      throw(castor::exception::Exception);
+
   }; // class RtcpdHandlerThread
 
 } // namespace aggregator

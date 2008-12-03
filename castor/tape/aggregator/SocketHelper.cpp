@@ -18,9 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author castor dev team
+ * @author Steven Murray Steven.Murray@cern.ch
  *****************************************************************************/
-
 
 #include "castor/exception/Internal.hpp"
 #include "castor/io/AbstractTCPSocket.hpp"

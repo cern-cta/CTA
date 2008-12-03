@@ -20,7 +20,7 @@
  *
  *
  *
- * @author Castor dev team
+ * @author Steven Murray Steven.Murray@cern.ch
  *****************************************************************************/
 
 #ifndef CASTOR_TAPE_AGGREGATOR_CONSTANTS_HPP

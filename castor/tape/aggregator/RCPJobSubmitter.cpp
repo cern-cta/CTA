@@ -20,7 +20,7 @@
  *
  *
  *
- * @author Castor Dev team, castor-dev@cern.ch
+ * @author Steven Murray Steven.Murray@cern.ch
  *****************************************************************************/
 
 #include "castor/exception/InvalidArgument.hpp"

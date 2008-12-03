@@ -32,8 +32,7 @@
 #include "castor/tape/aggregator/SocketHelper.hpp"
 #include "castor/tape/aggregator/exception/RTCPDErrorMessage.hpp"
 #include "h/common.h"
-#include "h/rtcp_constants.h"
-#include "h/vdqm_constants.h"
+#include "h/rtcp.h"
 
 
 //-----------------------------------------------------------------------------
@@ -77,6 +76,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::run(void *param)
 
   castor::io::ServerSocket *socket = (castor::io::ServerSocket*)param;
 
+  // Log the new connection
   try {
     unsigned short port = 0; // Client port
     unsigned long  ip   = 0; // Client IP
@@ -98,6 +98,37 @@ void castor::tape::aggregator::RtcpdHandlerThread::run(void *param)
       AGGREGATOR_RTCPD_CONNECTION_WITHOUT_INFO, 2, params);
   }
 
+  std::string vid;
+
+{
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", "Just before getVidFromRtcpd")};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_NULL, 1, params);
+}
+
+  try {
+    vid = getVidFromRtcpd(*socket);
+
+{
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", "Just after getVidFromRtcpd")};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_NULL, 1, params);
+}
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("VID", vid)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_GOT_VID_FROM_RTCPD, 1, params);
+  } catch(castor::exception::Exception &ex) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code"   , ex.code())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_FAILED_TO_GET_VID_FROM_RTCPD, 2, params);
+  }
+
   // Close and de-allocate the socket
   socket->close();
   delete socket;
@@ -109,4 +140,74 @@ void castor::tape::aggregator::RtcpdHandlerThread::run(void *param)
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpdHandlerThread::stop()
   throw() {
+}
+
+
+//-----------------------------------------------------------------------------
+// getVidFromRtcpd
+//-----------------------------------------------------------------------------
+std::string castor::tape::aggregator::RtcpdHandlerThread::getVidFromRtcpd(
+  castor::io::AbstractTCPSocket &socket) throw(castor::exception::Exception) {
+
+  return "NOTIMP";
+/*
+  SOCKET            s = socket.socket();
+  rtcpHdr_t         hdr;
+  rtcpTapeRequest_t tapereq;
+
+  hdr.magic   = RTCOPY_MAGIC;
+  hdr.reqtype = RTCP_TAPEERR_REQ;
+  hdr.len     = -1;
+
+  tapereq.vid[0] = '\0';
+
+  if(rtcp_SendReq(&s, &hdr, NULL, &tapereq, NULL) == -1) {
+    const int se = serrno;
+    castor::exception::Exception ex(se);
+
+    ex.getMessage() << "Failed to send request for VID to RTCPD: "
+      << sstrerror(se);
+
+    throw ex;
+  }
+
+  if(rtcp_RecvAckn(&s, hdr.reqtype) == -1) {
+    const int se = serrno;
+    castor::exception::Exception ex(se);
+
+    ex.getMessage() << "Failed to receive acknowldege from RTCPD after sending"
+      " request for VID: " << sstrerror(se);
+
+    throw ex;
+  }
+
+  if(rtcp_RecvReq(&s, &hdr, NULL, &tapereq, NULL) == -1) {
+    const int se = serrno;
+    castor::exception::Exception ex(se);
+
+    ex.getMessage() << "Failed to receive VID from RTCPD after receiving the"
+      " acknowledge: " << sstrerror(se);
+
+    throw ex;
+  }
+
+  if(rtcp_SendAckn(&s, hdr.reqtype) == -1) {
+    const int se = serrno;
+    castor::exception::Exception ex(se);
+
+    ex.getMessage() << "Failed to send acknowledge to RTCPD after receiving"
+      " the VID: " << sstrerror(se);
+
+    throw ex;
+  }
+
+  if(tapereq.VolReqID <= 0) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to get VID from RTCPD: No volume request ID";
+    throw ex;
+  }
+
+  return tapereq.vid;
+*/
 }

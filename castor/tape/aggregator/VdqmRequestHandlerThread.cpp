@@ -357,8 +357,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::handleJobSubmission(
   size_t ackMsgLen = 0;
 
   try {
-    ackMsgLen = marshallRTCPAckn(ackMsg, sizeof(ackMsg), errorStatusForVdqm,
-      errorMessageForVdqm.c_str());
+    ackMsgLen = Marshaller::marshallRTCPAckn(ackMsg, sizeof(ackMsg),
+      errorStatusForVdqm, errorMessageForVdqm.c_str());
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("Message", ex.getMessage().str()),
@@ -389,58 +389,4 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::handleJobSubmission(
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
       AGGREGATOR_FAILED_TO_SEND_RTCP_ACKN_TO_VDQM, 2, params);
   }
-}
-
-
-//-----------------------------------------------------------------------------
-// marshallRTCPAckn
-//-----------------------------------------------------------------------------
-size_t castor::tape::aggregator::VdqmRequestHandlerThread::marshallRTCPAckn(
-  char *dst, const size_t dstLen, const uint32_t status, const char *errorMsg)
-  throw (castor::exception::Exception) {
-
-  if(dst == NULL) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << "Pointer to destination buffer is NULL";
-    throw ex;
-  }
-
-  // Minimum buffer length = magic number + request type + length + status code
-  // + the string termination character '\0'
-  if(dstLen < 4*sizeof(uint32_t) + 1) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << "Destination buffer length is too small: "
-      "Expected minimum length: " << (4*sizeof(uint32_t) + 1)
-       << ": Actual length: " << dstLen;
-    throw ex;
-  }
-
-  if(errorMsg == NULL) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << "Pointer to error message is NULL";
-    throw ex;
-  }
-
-  const size_t errorMsgLen      = strlen(errorMsg);
-  const size_t maxErrorMsgLen   = dstLen - 4*sizeof(uint32_t) - 1;
-  const size_t errorMsg2SendLen = errorMsgLen > maxErrorMsgLen ? maxErrorMsgLen
-    : errorMsgLen;
-
-  // Length of message body equals the size fo the status code plus the length
-  // of the error message string plus the size of the string termination
-  // characater '\0'
-  const uint32_t len = sizeof(uint32_t) + errorMsg2SendLen + 1;
-
-  Marshaller::marshallUint32(RTCOPY_MAGIC_OLD0, dst); // Magic number
-  Marshaller::marshallUint32(VDQM_CLIENTINFO  , dst); // Request type
-  Marshaller::marshallUint32(len              , dst); // Length
-  Marshaller::marshallUint32(status           , dst); // status code
-
-  memcpy(dst, errorMsg, errorMsg2SendLen);
-  *(dst+errorMsg2SendLen) = '\0';
-
-  return 3 * sizeof(uint32_t) + len; // Header + body
 }
