@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.15 $ $Release$ $Date: 2008/12/01 13:58:55 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.16 $ $Release$ $Date: 2008/12/03 14:03:39 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -233,28 +233,31 @@ END;
 /
 
 /* PL/SQL method implementing resurrectTapesOnHold */
-create or replace PROCEDURE              resurrectTapesOnHold (maxFiles IN INTEGER, maxTapes IN INTEGER)AS
+
+create or replace PROCEDURE  resurrectTapesOnHold (maxFiles IN INTEGER, maxTapes IN INTEGER)AS
 filesOnGoing INTEGER;
 tapesOnGoing INTEGER;
 newFiles NUMBER;
 BEGIN
-	SELECT count(vid), sum(filesStaging) + sum(filesMigrating) INTO  tapesOnGoing, filesOnGoing FROM RepackSubrequest WHERE  status IN (1,2); -- TOBESTAGED ONGOING 
+	SELECT count(vid), sum(filesStaging) + sum(filesMigrating) INTO  tapesOnGoing, filesOnGoing FROM RepackSubrequest WHERE  status IN (1,2); -- TOBESTAGED ONGOING
 -- Set the subrequest to TOBESTAGED FROM ON-HOLD if there is no ongoing repack for any of the files on the tape
-	FOR sr IN (SELECT RepackSubRequest.id FROM RepackSubRequest,RepackRequest WHERE  RepackRequest.id=RepackSubrequest.repackrequest AND RepackSubRequest.status=9 ORDER BY RepackRequest.creationTime ) LOOP 
-		BEGIN 
+	FOR sr IN (SELECT RepackSubRequest.id FROM RepackSubRequest,RepackRequest WHERE  RepackRequest.id=RepackSubrequest.repackrequest AND RepackSubRequest.status=9 ORDER BY RepackRequest.creationTime ) LOOP
+		BEGIN
 			UPDATE RepackSubRequest SET status=1 WHERE id=sr.id AND status=9
 			AND filesOnGoing + files <= maxFiles AND tapesOnGoing+1 <= maxTapes
-			AND NOT EXISTS (SELECT 'x' FROM RepackSegment WHERE 
-				RepackSegment.RepackSubRequest=sr.id AND 
+			AND NOT EXISTS (SELECT 'x' FROM RepackSegment WHERE
+				RepackSegment.RepackSubRequest=sr.id AND
 				RepackSegment.fileid IN (SELECT DISTINCT RepackSegment.fileid FROM RepackSegment
-			             WHERE RepackSegment.RepackSubrequest 
-			             	IN (SELECT RepackSubRequest.id FROM RepackSubRequest WHERE RepackSubRequest.id<>sr.id AND RepackSubRequest.status NOT IN (4,5,8,9) 
+			             WHERE RepackSegment.RepackSubrequest
+			             	IN (SELECT RepackSubRequest.id FROM RepackSubRequest WHERE RepackSubRequest.id<>sr.id AND RepackSubRequest.status NOT IN (4,5,8,9)
 			             	 )
-				) 
+				)
 			) RETURNING files INTO newFiles; -- FINISHED ARCHIVED FAILED ONHOLD
-			COMMIT;  
-			filesOnGoing:=filesOnGoing+newFiles;
-			tapesOnGoing:=tapesOnGoing+1;
+      IF newFiles IS NOT NULL THEN  
+        COMMIT;
+        filesOnGoing:=filesOnGoing+newFiles;
+        tapesOnGoing:=tapesOnGoing+1;
+      END IF;  
 		EXCEPTION WHEN NO_DATA_FOUND THEN
 		NULL;
 		END;
