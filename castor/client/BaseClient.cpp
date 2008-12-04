@@ -668,7 +668,18 @@ throw (castor::exception::Exception) {
   req->setPid(getpid());
   
   // Machine
-  req->setMachine(castor::System::getHostName());
+  std::string hostName;
+
+  hostName  = castor::System::getHostName();
+  if (hostName == ""){
+    castor::exception::Exception e(errno);
+    e.getMessage() << "Could not get the localhost"
+                   <<  strerror(errno);
+    throw e;
+  }
+  stage_trace(3, "LocalHost is : %s", hostName.c_str() );
+
+  req->setMachine(hostName);
   if (m_rhHost == "") {
     castor::exception::Exception e(errno);
     e.getMessage() << "Could not get RH host name"
