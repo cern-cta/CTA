@@ -20,24 +20,47 @@ int loader(){
   
   handle = Cdlopen ("libcastorsecurity.so", RTLD_LAZY);
   if (!handle) {
-    fprintf (stderr, "%s\n", dlerror());
+    fprintf (stderr, "%s\n", Cdlerror());
     return -1;
   }
   Cdlerror(); // Clear any existing error 
   *(void **) (&Cclient_initContext) = Cdlsym(handle, "Csec_client_initContext");
-  *(void **) (&Cserver_initContext) = Cdlsym(handle, "Csec_server_initContext");
-  *(void **) (&Cclient_establishContext) = Cdlsym(handle, "Csec_client_establishContext");
-  *(void **) (&Cserver_establishContext) = Cdlsym(handle, "Csec_server_establishContext");
-  *(void **) (&CclearContext) = Cdlsym(handle, "Csec_clearContext");
-  *(void **) (&CgetClientId) = Cdlsym(handle, "Csec_server_getClientId");
-  *(void **) (&CmapUser) = Cdlsym(handle, "Csec_mapToLocalUser");
-
-  if ((error = Cdlerror()) != NULL)  {
-    fprintf (stderr, "%s\n", error);
+  if (!Cclient_initContext) {
+    fprintf (stderr, "%s\n", Cdlerror());
     return -1;
-  }    
-  loaded = 1;
+  }
+  *(void **) (&Cserver_initContext) = Cdlsym(handle, "Csec_server_initContext");
+  if (!Cserver_initContext) {
+    fprintf (stderr, "%s\n", Cdlerror());
+    return -1;
+  }
+  *(void **) (&Cclient_establishContext) = Cdlsym(handle, "Csec_client_establishContext");
+  if (!Cclient_establishContext) {
+    fprintf (stderr, "%s\n", Cdlerror());
+    return -1;
+  }
+  *(void **) (&Cserver_establishContext) = Cdlsym(handle, "Csec_server_establishContext");
+  if (!Cserver_establishContext) {
+    fprintf (stderr, "%s\n", Cdlerror());
+    return -1;
+  }
+  *(void **) (&CclearContext) = Cdlsym(handle, "Csec_clearContext");
+  if (!CclearContext) {
+    fprintf (stderr, "%s\n", Cdlerror());
+    return -1;
+  }
+  *(void **) (&CgetClientId) = Cdlsym(handle, "Csec_server_getClientId");
+  if (!CgetClientId) {
+    fprintf (stderr, "%s\n", Cdlerror());
+    return -1;
+  }
+  *(void **) (&CmapUser) = Cdlsym(handle, "Csec_mapToLocalUser");
+  if (!CmapUser) {
+    fprintf (stderr, "%s\n", Cdlerror());
+    return -1;
+  }
 
+  loaded = 1;
   return 0;
 }
 
@@ -68,6 +91,4 @@ int getMapUser(const char *mech, const char *principal, char *username, size_t u
 int getClearContext(Csec_context_t *security_context){
   return  (*CclearContext)(security_context);
 }
-
-
 
