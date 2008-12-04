@@ -811,7 +811,7 @@ doit(arg)
      void *arg;
 {
   int c;
-  const char *clienthost = NULL;
+  char *clienthost = NULL;
   int magic;
   char *req_data;
   char reqbuf[REQBUFSZ-3*LONGSIZE];
@@ -822,12 +822,33 @@ doit(arg)
   /*There is a field in the Cns_srv_thread to expecified if the socket is the secure or not     */
   /*It should be removed once the unsecure mode is not supported anymore, and next "if" as well */
   char username[CA_MAXUSRNAMELEN+1];
+  char *clientip=NULL;
+  int clientport;
+  struct sockaddr_in from;
+  socklen_t fromlen = sizeof(from);
+  struct hostent *hp;
+  char buff[50];
 
   if (thip->secOn) {
+   if (getpeername (thip->s, (struct sockaddr *) &from, &fromlen) < 0) {
+      nslogit (func, NS002, "getpeername", neterror());
+      return NULL;
+    }
+    hp = Cgethostbyaddr ((char *)(&from.sin_addr),
+                         sizeof(struct in_addr), from.sin_family);
+    if (hp == NULL)
+      clienthost = inet_ntoa (from.sin_addr);
+    else
+      clienthost = hp->h_name ;
+
+    clientport=ntohs(from.sin_port);
+    clientip=inet_ntop(AF_INET, &from.sin_addr, buff, sizeof(buff));
+    nslogit (func, "Incoming request from:%s, IP: %s[%d]\n", clienthost, clientip,clientport);
+    
     Csec_server_reinitContext (&thip->sec_ctx, CSEC_SERVICE_TYPE_HOST, NULL);
     if (Csec_server_establishContext (&thip->sec_ctx, thip->s) < 0) {
-      nslogit (func, "Could not establish security context: %s !\n",
-               Csec_getErrorMessage());
+      nslogit (func, "Could not establish security context with %s[%d]: %s!\n",
+               clientip,clientport, Csec_getErrorMessage());
       sendrep (thip->s, CNS_RC, ESEC_NO_CONTEXT);
       thip->s = -1;
       return NULL;
@@ -835,7 +856,7 @@ doit(arg)
     Csec_server_getClientId (&thip->sec_ctx, &thip->Csec_mech, &thip->Csec_auth_id);
     if (Csec_mapToLocalUser (thip->Csec_mech, thip->Csec_auth_id,
                              username,CA_MAXUSRNAMELEN, &thip->Csec_uid, &thip->Csec_gid) < 0) {
-      nslogit (func, "Could not map to local user: %s !\n",sstrerror (serrno));
+      nslogit (func, "Could not map to local user from %s [%d}: %s !\n",clientip,clientport,sstrerror (serrno));    
       sendrep (thip->s, CNS_RC, serrno);
       thip->s = -1;
       return NULL;

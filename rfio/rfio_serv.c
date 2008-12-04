@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.32 2008/07/31 13:16:55 sponcec3 Exp $
+ * $Id: rfio_serv.c,v 1.33 2008/12/04 16:18:25 riojac3 Exp $
  */
 
 /*
@@ -997,6 +997,7 @@ int doit(s, fromp, mode, uid, gid)
   struct   rfiostat info;
   int      is_remote = 0;              /* Is requestor in another site ? */
   char     from_host[MAXHOSTNAMELEN];  /* Where the request comes from   */
+  int      from_port;                  /* Port of the client socket      */
   char     * p1 ;
 #if defined(sgi)
   register int    ndpri;
@@ -1020,8 +1021,6 @@ int doit(s, fromp, mode, uid, gid)
   char *Csec_mech;
   char *Csec_auth_id;
 
-  log(LOG_INFO, "Entering the secure block\n");
-
   /* Check that the uid and gid is set and user is not root */
   /* Condition to be replaced when trusted host is supported */
   if (uid > 0 && gid > 0) {
@@ -1030,20 +1029,28 @@ int doit(s, fromp, mode, uid, gid)
 
     log(LOG_INFO, "The user is %d in the group %d\n", uid, gid);
 
+    hp =  Cgethostbyaddr((char *)(&fromp->sin_addr), sizeof(struct in_addr), fromp->sin_family);
+    if ( hp == NULL)  {
+      strcpy(from_host,(char *)inet_ntoa(fromp->sin_addr));
+    } else    {
+      strcpy(from_host,hp->h_name);
+    }
+
+    from_port=ntohs(fromp->sin_port);
+    log(LOG_INFO, "Connection from  %s [%d]\n", from_host, from_port);
+
     if (Csec_server_initContext(&ctx, CSEC_SERVICE_TYPE_HOST, NULL)<0) {
-      log(LOG_ERR, "Could not initailize context: %s\n", Csec_getErrorMessage());
+      log(LOG_ERR, "Could not initialize context with %s [%d]: %s\n", from_host,from_port, Csec_getErrorMessage());
       closesocket(s);
       exit(1);
     }
 
-    log(LOG_INFO, "Establishing context set\n");
     if (Csec_server_establishContext(&ctx, s)<0) {
-      log(LOG_ERR, "Could not establish context: %s\n", Csec_getErrorMessage());
+      log(LOG_ERR, "Could not establish context with %s [%d]: %s\n",  from_host,from_port,Csec_getErrorMessage());
       closesocket(s);
       exit(1);
     }
 
-    log(LOG_INFO, "Getting client id\n");
     /* Getting the client identity */
     Csec_server_getClientId(&ctx, &Csec_mech, &Csec_auth_id);
     log(LOG_INFO, "The client principal is %s %s\n", Csec_mech,Csec_auth_id);
@@ -1056,17 +1063,15 @@ int doit(s, fromp, mode, uid, gid)
     //   log(LOG_INFO, "CSEC: Client is castor service type: %d\n", Csec_service_type);
     //  }
     //  else {
-    log(LOG_INFO, "mapping user\n");
     if (Csec_mapToLocalUser(Csec_mech, Csec_auth_id,
                             username, CA_MAXUSRNAMELEN,
                             &peer_uid, &peer_gid) < 0) {
-      log(LOG_ERR, "CSEC: Could not map user %s/%s\n", Csec_mech, Csec_auth_id);
+      log(LOG_ERR, "CSEC: Could not map user %s/%s from %s [%d]\n", Csec_mech, Csec_auth_id,from_host,from_port);
     }
     //  closesocket(s);
     //  exit(1);
     // }
     /*Checking if the user just mapped match with the same that started the request */
-    log(LOG_INFO, "Comparing uid %d and peer_uid %d \n",uid ,peer_uid);
     if(peer_uid != uid){
       log(LOG_ERR, "CSEC: The user do not match with the initial oner %s/%d\n", Csec_mech, peer_uid);
       closesocket(s);
