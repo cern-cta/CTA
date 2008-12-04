@@ -124,7 +124,7 @@ namespace castor{
       {
         
         ReplyHelper* stgReplyHelper = NULL;
-	castor::stager::DiskCopyInfo *diskCopy = NULL;
+        castor::stager::DiskCopyInfo *diskCopy = NULL;
         try{
           handlerSettings();
           
@@ -137,33 +137,34 @@ namespace castor{
             if(stgRequestHelper->subrequest->answered() == 0) {
               stgReplyHelper = new ReplyHelper();
               if(stgRequestHelper->subrequest->protocol() == "xroot") {
-		diskCopy = stgRequestHelper->stagerService->
-		  getBestDiskCopyToRead(stgRequestHelper->subrequest->castorFile(),
-					stgRequestHelper->svcClass);
+                diskCopy = stgRequestHelper->stagerService->
+                  getBestDiskCopyToRead(stgRequestHelper->subrequest->castorFile(),
+					                    stgRequestHelper->svcClass);
               }
-	      if (diskCopy) {
-		stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "", diskCopy);
-	      } else {              
+              if (diskCopy) {
+                stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "", diskCopy);
+              } else {              
                 stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "");
               }
               stgReplyHelper->endReplyToClient(stgRequestHelper);
             
               delete stgReplyHelper;
-	      stgReplyHelper = 0;
-	      if (diskCopy)
-		delete diskCopy;
+              stgReplyHelper = 0;
+              if (diskCopy)
+                delete diskCopy;
             }
             else {
-              // no reply needs to be sent to the client, hence update subRequest and commit the db transaction
-              stgRequestHelper->dbSvc->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+              // no reply needs to be sent to the client, just commit the transaction
+              stgRequestHelper->dbSvc->commit();
             }
-          }	  
-	}catch(castor::exception::Exception e){
+          }
+        }
+        catch(castor::exception::Exception e){
           
           /* since if an error happens we are gonna reply to the client(and internally, update subreq on DB)*/
           /* we don t execute: dbSvc->updateRep ..*/
           if(stgReplyHelper != NULL) delete stgReplyHelper;
-	  if(diskCopy != NULL) delete diskCopy;
+          if(diskCopy != NULL) delete diskCopy;
           
           if(e.getMessage().str().empty()) {
             e.getMessage() << sstrerror(e.code());
