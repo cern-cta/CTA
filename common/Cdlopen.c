@@ -1,9 +1,9 @@
 /*
- * $Id: Cdlopen.c,v 1.4 2005/11/14 13:25:35 jdurand Exp $
+ * $Id: Cdlopen.c,v 1.5 2008/12/04 15:05:20 itglp Exp $
  */
 
 /*
- * $RCSfile: Cdlopen.c,v $ $Revision: 1.4 $ $Date: 2005/11/14 13:25:35 $ CERN IT-ADC/CA Jean-Damien Durand
+ * $RCSfile: Cdlopen.c,v $ $Revision: 1.5 $ $Date: 2008/12/04 15:05:20 $ CERN IT-ADC/CA Jean-Damien Durand
  */
 
 
@@ -82,13 +82,18 @@ char DLL_DECL *Cdlerror(void) {
   int rc;
 
   rc = Cmutex_lock(&Cdlopen_mutex,10); /* Oupss */
-  Csnprintf(Cdlopen_buffer, CDLOPEN_BUFLEN, "%s", dlerror());
-  Cdlopen_buffer[CDLOPEN_BUFLEN] = '\0'; /* Who knows */
+  char* buf = dlerror();
+  if (buf != NULL) {
+    Csnprintf(Cdlopen_buffer, CDLOPEN_BUFLEN, "%s", buf);
+    Cdlopen_buffer[CDLOPEN_BUFLEN] = '\0'; /* Who knows */
+    buf = Cdlopen_buffer;
+  }
   if (rc == 0) {
     Cmutex_unlock(&Cdlopen_mutex);
   }
-  return(Cdlopen_buffer);
+  return buf;
 }
+
 void DLL_DECL *Cdlsym(void *handler, CONST char *symbol) {
   return(dlsym(handler, symbol));
 }
