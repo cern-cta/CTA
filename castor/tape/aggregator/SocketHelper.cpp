@@ -87,9 +87,12 @@ uint32_t castor::tape::aggregator::SocketHelper::readUint32(
         strncpy(strerrbuf, "Uknown", sizeof(strerrbuf));
         strerrbuf[sizeof(strerrbuf)-1] = '\0';
       }
+
       castor::exception::Exception ex(serrno);
+
+      ex.getMessage() << __PRETTY_FUNCTION__;
       std::ostream &os = ex.getMessage();
-      os << "Failed to read unsigned 32-bit integer from socket: ";
+      os << ": Failed to read unsigned 32-bit integer from socket: ";
       printSocketDescription(os, socket);
       os << ": " << netreadErrno << " - " << strerrbuf;
       throw ex;
@@ -97,26 +100,31 @@ uint32_t castor::tape::aggregator::SocketHelper::readUint32(
   case 0:
     {
       castor::exception::Internal ex;
+
+      ex.getMessage() << __PRETTY_FUNCTION__;
       std::ostream &os = ex.getMessage();
-      os << "Failed to read unsigned 32-bit integer from socket: ";
+      os << ": Failed to read unsigned 32-bit integer from socket: ";
       printSocketDescription(os, socket);
-      os << ": connection was closed by the remote end";
+      os << ": Connection was closed by the remote end";
       throw ex;
     }
   default:
     if (netreadRc != sizeof(value)) {
       castor::exception::Internal ex;
+
+      ex.getMessage() << __PRETTY_FUNCTION__;
       std::ostream &os = ex.getMessage();
-      os << "Failed to read unsigned 32-bit from socket: ";
+      os << ": Failed to read unsigned 32-bit from socket: ";
       printSocketDescription(os, socket);
-      os << ": received the wrong number of bytes: received: " << netreadRc
-         << " expected: " << sizeof(value);
+      os << ": Read the wrong number of bytes"
+        << ": Expected: " << sizeof(value)
+        << ": Read: " << netreadRc;
       throw ex;
     }
   }
 
-  char   *p     = buf;
-  size_t bufLen = sizeof(buf);
+  const char *p     = buf;
+  size_t     bufLen = sizeof(buf);
 
   Marshaller::unmarshallUint32(p, bufLen, value);
 
@@ -143,30 +151,87 @@ void castor::tape::aggregator::SocketHelper::readBytes(
         strncpy(strerrbuf, "Uknown", sizeof(strerrbuf));
         strerrbuf[sizeof(strerrbuf)-1] = '\0';
       }
+
       castor::exception::Exception ex(serrno);
+
+      ex.getMessage() << __PRETTY_FUNCTION__;
       std::ostream &os = ex.getMessage();
-      os << "Failed to read " << nbBytes << " bytes  from socket: ";
+      os << ": Failed to read " << nbBytes << " bytes from socket: ";
       printSocketDescription(os, socket);
       os << ": " << netreadErrno << " - " << strerrbuf;
       throw ex;
     }
   case 0:
     {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex(SECONNDROP);
+
+      ex.getMessage() << __PRETTY_FUNCTION__;
       std::ostream &os = ex.getMessage();
-      os << "Failed to read " << nbBytes << " bytes  from socket: ";
+      os << "Failed to read " << nbBytes << " bytes from socket: ";
       printSocketDescription(os, socket);
-      os << ": connection was closed by the remote end";
+      os << ": Connection was closed by the remote end";
       throw ex;
     }
   default:
     if (netreadRc != nbBytes) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex(SECOMERR);
+
+      ex.getMessage() << __PRETTY_FUNCTION__;
       std::ostream &os = ex.getMessage();
-      os << "Failed to read " << nbBytes << " bytes  from socket: ";
+      os << "Failed to read " << nbBytes << " bytes from socket: ";
       printSocketDescription(os, socket);
-      os << ": received the wrong number of bytes: received: " << netreadRc
-         << " expected: " << nbBytes;
+      os << "Read the wrong number of bytes"
+        << ": Expected: " << nbBytes
+        << ": Read: " << netreadRc;
+      throw ex;
+    }
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// writeBytes
+//------------------------------------------------------------------------------
+void castor::tape::aggregator::SocketHelper::writeBytes(
+  castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
+  const int nbBytes, char *const buf)
+  throw (castor::exception::Exception) {
+
+  const int netwriteRc = netwrite_timeout(socket.socket(), buf, nbBytes,
+    netReadWriteTimeout);
+
+  switch(netwriteRc) {
+  case -1:
+    {
+      castor::exception::Exception ex(SECOMERR);
+      ex.getMessage() << __PRETTY_FUNCTION__;
+      std::ostream &os = ex.getMessage();
+      os << ": Failed to write " << nbBytes << " bytes to socket: ";
+      printSocketDescription(os, socket);
+      os << ": " << neterror();
+      throw ex;
+    }
+  case 0:
+    {
+      castor::exception::Exception ex(SECONNDROP);
+      ex.getMessage() << __PRETTY_FUNCTION__;
+      std::ostream &os = ex.getMessage();
+      os << ": Failed to write " << nbBytes << " bytes to socket: ";
+      printSocketDescription(os, socket);
+      os << ": Connection dropped";
+      throw ex;
+    }
+  default:
+    if(netwriteRc != nbBytes) {
+      castor::exception::Exception ex(SECOMERR);
+
+      ex.getMessage() << __PRETTY_FUNCTION__;
+      std::ostream &os = ex.getMessage();
+      os << "Failed to write " << nbBytes << " bytes to socket: ";
+      printSocketDescription(os, socket);
+      os << "Wrote the wrong number of bytes"
+        << ": Expected: " << nbBytes
+        << ": Wrote: " << netwriteRc;
       throw ex;
     }
   }

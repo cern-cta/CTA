@@ -27,6 +27,7 @@
 #define CASTOR_TAPE_AGGREGATOR_MARSHALLER_HPP 1
 
 #include "castor/exception/Exception.hpp"
+#include "castor/tape/aggregator/RcpJobReply.hpp"
 #include "castor/tape/aggregator/RcpJobRequest.hpp"
 #include "castor/tape/aggregator/RtcpTapeRequest.hpp"
 
@@ -96,8 +97,8 @@ namespace aggregator {
      * and on return is the number of bytes remaining in the source buffer
      * @param dst the destination unsigned 32-bit integer
      */
-    static void unmarshallUint32(char * &src, size_t &srcLen, uint32_t &dst)
-      throw(castor::exception::Exception);
+    static void unmarshallUint32(const char * &src, size_t &srcLen,
+      uint32_t &dst) throw(castor::exception::Exception);
 
     /**
      * Marshalls the specified string into the specified destination buffer.
@@ -141,7 +142,7 @@ namespace aggregator {
      * @param dstLen the length of the destination buffer where the string
      * should unmarshalled to
      */
-    static void unmarshallString(char * &src, size_t &srcLen, char *dst,
+    static void unmarshallString(const char * &src, size_t &srcLen, char *dst,
       const size_t dstLen) throw(castor::exception::Exception);
 
     /**
@@ -156,6 +157,22 @@ namespace aggregator {
      */
     static size_t marshallRcpJobRequest(char *const dst, const size_t dstLen,
       const RcpJobRequest &request) throw (castor::exception::Exception);
+
+    /**
+     * Unmarshalls the message body of an RCP job reply from the specified
+     * source buffer into the specified destination RCP job reply structure.
+     *
+     * @param src in/out parameter, before invocation points to the source
+     * buffer where the message body should be unmarshalled from and on return
+     * points to the byte in the source buffer immediately after the
+     * unmarshalled message body
+     * @param srcLen in/our parameter, before invocation is the length of the
+     * source buffer from where the message body should unmarshalled and on
+     * return is the number of bytes remaining in the source buffer
+     * @param dst the destination RCP job reply structure
+     */
+    static void unmarshallRcpJobReply(const char * &src, size_t &srcLen,
+      RcpJobReply &dst) throw(castor::exception::Exception);
 
     /**
      * Marshalls the specified status code and possible error message into
@@ -181,8 +198,24 @@ namespace aggregator {
      * @param request The tape request
      * @return The total length of the message (header + body)
      */
-    static size_t marshallRTCPTapeRequest(char *const dst, const size_t dstLen,
-      const RtcpTapeRequest &request) throw (castor::exception::Exception);
+    static size_t marshallRtcpTapeRequest(char *const dst, const size_t dstLen,
+      const RtcpTapeRequest &request) throw(castor::exception::Exception);
+
+    /**
+     * Unmarshalls the message body of a tape request from the specified source
+     * buffer into the specified destination tape request structure.
+     *
+     * @param src in/out parameter, before invocation points to the source
+     * buffer where the message body should be unmarshalled from and on return
+     * points to the byte in the source buffer immediately after the
+     * unmarshalled message body
+     * @param srcLen in/our parameter, before invocation is the length of the
+     * source buffer from where the message body should unmarshalled and on
+     * return is the number of bytes remaining in the source buffer
+     * @param dst the destination tape request structure
+     */
+    static void unmarshallRtcpTapeRequest(const char * &src, size_t &srcLen,
+      RtcpTapeRequest &request) throw(castor::exception::Exception);
 
   }; // class Utils
 

@@ -28,6 +28,7 @@
 #include "castor/io/ServerSocket.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/server/Queue.hpp"
+#include "castor/tape/aggregator/RtcpTapeRequest.hpp"
 
 #include <map>
 
@@ -88,6 +89,17 @@ namespace aggregator {
      */
     uint32_t receiveRtcpdAcknowledge(castor::io::AbstractTCPSocket &socket,
       const int netReadWriteTimeout) throw(castor::exception::Exception);
+
+    /**
+     * Receives an RTCPD tape request message from RTCPD.
+     *
+     * @param socket The socket of the connection with RTCPD.
+     * @param request The request which will be filled with the contents of the
+     * received message.
+     */
+    void receiveRtcpTapeRequest(castor::io::AbstractTCPSocket &socket,
+      const int netReadWriteTimeout, const RtcpTapeRequest &request)
+      throw(castor::exception::Exception);
 
   }; // class RtcpdHandlerThread
 

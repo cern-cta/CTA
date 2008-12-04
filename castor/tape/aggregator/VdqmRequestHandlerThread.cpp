@@ -294,8 +294,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::handleJobSubmission(
   char       driveName[CA_MAXUNMLEN+1];
   char       clientUsername[CA_MAXUSRNAMELEN+1];
 
-  char   *p      = body;
-  size_t bodyLen = len;
+  const char *p      = body;
+  size_t     bodyLen = len;
 
   Marshaller::unmarshallUint32(p, bodyLen, ui32);
   tapeRequestID = (u_signed64)ui32; // Cast from 32-bits to 64-bits
@@ -384,20 +384,17 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::handleJobSubmission(
       AGGREGATOR_FAILED_TO_MARSHALL_RTCP_ACKN, 3, params);
   }
 
-  const int rc = netwrite_timeout(socket.socket(), ackMsg, ackMsgLen,
-    NETRWTIMEOUT);
-
   try {
-    if(rc == -1) {
-      castor::exception::Exception ex(SECOMERR);
-      ex.getMessage() << __PRETTY_FUNCTION__
-        << ": netwrite(REQ) to VDQM: " << neterror();
-      throw ex;
-    } else if(rc == 0) {
-      castor::exception::Exception ex(SECONNDROP);
-      ex.getMessage() << __PRETTY_FUNCTION__
-        << ": netwrite(REQ) to VDQM: Connection dropped";
-      throw ex;
+    try {
+      SocketHelper::writeBytes(socket, NETRWTIMEOUT, ackMsgLen, ackMsg);
+    } catch(castor::exception::Exception &ex) {
+      castor::exception::Exception ex2(SECOMERR);
+
+      ex2.getMessage() << __PRETTY_FUNCTION__
+        << ": Failed to send acknowledge to VDQM: "
+        << ex.getMessage().str();
+
+      throw ex2;
     }
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {

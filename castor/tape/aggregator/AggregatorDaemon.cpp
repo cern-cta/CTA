@@ -133,7 +133,8 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
             AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 2, params);
           castor::exception::InvalidArgument ex;
-          ex.getMessage() << oss.str();
+          ex.getMessage() << __PRETTY_FUNCTION__
+            << ": " << oss.str();
           throw ex;
         }
       }
@@ -154,7 +155,8 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
           AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 2, params);
         castor::exception::InvalidArgument ex;
-        ex.getMessage() << oss.str();
+        ex.getMessage() << __PRETTY_FUNCTION__
+          << ": " << oss.str();
         throw ex;
       }
     case ':':
@@ -169,7 +171,8 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
           AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 2, params);
         castor::exception::InvalidArgument ex;
-        ex.getMessage() << oss.str();
+        ex.getMessage() << __PRETTY_FUNCTION__
+          << ": " << oss.str();
         throw ex;
       }
     default:
@@ -185,7 +188,8 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
           AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 2, params);
         castor::exception::Internal ex;
-        ex.getMessage() << oss.str();
+        ex.getMessage() << __PRETTY_FUNCTION__
+          << ": " << oss.str();
         throw ex;
       }
     }
@@ -202,7 +206,8 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
       AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 2, params);
     castor::exception::Internal ex;
-    ex.getMessage() << oss.str();
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": " << oss.str();
     throw ex;
   }
 
@@ -219,9 +224,10 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
       castor::dlf::Param("Reason"  , oss.str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
       AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 2, params);
-    castor::exception::InvalidArgument e;
-    e.getMessage() << oss.str();
-    throw e;
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": " << oss.str();
+    throw ex;
   }
 }
 
@@ -241,7 +247,8 @@ int castor::tape::aggregator::AggregatorDaemon::getVdqmListenPort()
       castor::exception::InvalidConfigEntry ex("TAPEAGGREGATOR", "VDQMPORT",
         configEntry);
 
-      ex.getMessage() << "Invalid configuration entry: "
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Invalid configuration entry: "
         << ex.getEntryCategory() << " " << ex.getEntryName() << " "
         << ex.getEntryValue();
 
@@ -268,7 +275,8 @@ int castor::tape::aggregator::AggregatorDaemon::getRtcpdListenPort()
       castor::exception::InvalidConfigEntry ex("TAPEAGGREGATOR", "RTCPDPORT",
         configEntry);
 
-      ex.getMessage() << "Invalid configuration entry: "
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Invalid configuration entry: "
         << ex.getEntryCategory() << " " << ex.getEntryName() << " "
         << ex.getEntryValue();
 

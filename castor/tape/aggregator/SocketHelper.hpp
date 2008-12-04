@@ -78,7 +78,7 @@ namespace aggregator {
      * @return the unsigned 32-bit integer
      */
     static uint32_t readUint32(castor::io::AbstractTCPSocket &socket,
-      const int netReadWriteTimeout) throw (castor::exception::Exception);
+      const int netReadWriteTimeout) throw(castor::exception::Exception);
 
     /**
      * Reads the specified number of bytes from the specified socket and writes
@@ -92,7 +92,15 @@ namespace aggregator {
      */
     static void readBytes(castor::io::AbstractTCPSocket &socket,
       const int netReadWriteTimeout, const int nbBytes, char *buf)
-      throw (castor::exception::Exception);
+      throw(castor::exception::Exception);
+
+    /**
+     * Writes the specified number of bytes from the specified buffer to the
+     * specified socket.
+     */
+    static void writeBytes(castor::io::AbstractTCPSocket &socket,
+      const int netReadWriteTimeout, const int nbBytes, char *const buf)
+      throw(castor::exception::Exception);
 
   }; // class SocketHelper
 

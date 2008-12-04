@@ -86,7 +86,8 @@ int main(int argc, char *argv[]) {
       if(vdqmRequestHandlerThreadPool == NULL) {
         castor::exception::Internal ie;
 
-        ie.getMessage() << "Failed to get VdqmRequestHandlerThreadPool";
+        ie.getMessage() << __PRETTY_FUNCTION__
+          << ": Failed to get VdqmRequestHandlerThreadPool";
         throw ie;
       }
       vdqmRequestHandlerThreadPool->setNbThreads(0);
@@ -108,7 +109,8 @@ int main(int argc, char *argv[]) {
       if(rtcpdHandlerThreadPool == NULL) {
         castor::exception::Internal ie;
 
-        ie.getMessage() << "Failed to get RtcpdHandlerThreadPool";
+        ie.getMessage() << __PRETTY_FUNCTION__
+          << ": Failed to get RtcpdHandlerThreadPool";
         throw ie;
       }
       rtcpdHandlerThreadPool->setNbThreads(10);
