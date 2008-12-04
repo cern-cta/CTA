@@ -93,10 +93,11 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::run(void *param)
   } catch(castor::exception::Exception &ex) {
 
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Message", ex.getMessage().str()),
-      castor::dlf::Param("Code"   , ex.code())};
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("Message" , ex.getMessage().str()),
+      castor::dlf::Param("Code"    , ex.code())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_HANDLE_VDQM_REQUEST_EXCEPT, 2, params);
+      AGGREGATOR_HANDLE_VDQM_REQUEST_EXCEPT, 3, params);
   }
 
   // Close and de-allocate the socket
@@ -123,13 +124,14 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::dispatchRequest(
   // Read and unmarshall the magic number of the request
   uint32_t magic = 0;
   try {
-    magic = SocketHelper::readUint32(socket, NETRW_TIMEOUT);
+    magic = SocketHelper::readUint32(socket, NETRWTIMEOUT);
   } catch (castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Message", ex.getMessage().str()),
-      castor::dlf::Param("Code"   , ex.code())};
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("Message" , ex.getMessage().str()),
+      castor::dlf::Param("Code"    , ex.code())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_READ_MAGIC, 2, params);
+      AGGREGATOR_FAILED_TO_READ_MAGIC, 3, params);
 
     return;
   }
@@ -139,8 +141,9 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::dispatchRequest(
   if(handlerMapItor == m_magicToHandlers.end()) {
     // Unknown magic number
     castor::dlf::Param params[] = {
+      castor::dlf::Param("Function"    , __PRETTY_FUNCTION__),
       castor::dlf::Param("Magic Number", magic)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, AGGREGATOR_UNKNOWN_MAGIC, 1,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, AGGREGATOR_UNKNOWN_MAGIC, 2,
       params);
 
     return;
@@ -150,13 +153,14 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::dispatchRequest(
   // Read and unmarshall the type of the request
   uint32_t reqtype = 0;
   try {
-    reqtype = SocketHelper::readUint32(socket, NETRW_TIMEOUT);
+    reqtype = SocketHelper::readUint32(socket, NETRWTIMEOUT);
   } catch (castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Message", ex.getMessage().str()),
-      castor::dlf::Param("Code"   , ex.code())};
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("Message" , ex.getMessage().str()),
+      castor::dlf::Param("Code"    , ex.code())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_READ_REQUEST_TYPE, 2, params);
+      AGGREGATOR_FAILED_TO_READ_REQUEST_TYPE, 3, params);
 
     return;
   }
@@ -166,10 +170,11 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::dispatchRequest(
   if(handlerItor == handlers->end()) {
     // Unknown request type
     castor::dlf::Param params[] = {
+      castor::dlf::Param("Function"    , __PRETTY_FUNCTION__),
       castor::dlf::Param("Magic Number", magic),
       castor::dlf::Param("Request Type", reqtype)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_UNKNOWN_REQUEST_TYPE, 2, params);
+      AGGREGATOR_UNKNOWN_REQUEST_TYPE, 3, params);
 
     return;
   }
@@ -178,13 +183,14 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::dispatchRequest(
   // Read and unmarshall the length of the message body of the request
   uint32_t len = 0;
   try {
-    len = SocketHelper::readUint32(socket, NETRW_TIMEOUT);
+    len = SocketHelper::readUint32(socket, NETRWTIMEOUT);
   } catch (castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Message", ex.getMessage().str()),
-      castor::dlf::Param("Code"   , ex.code())};
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("Message" , ex.getMessage().str()),
+      castor::dlf::Param("Code"    , ex.code())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_READ_MESSAGE_BODY_LENGTH, 2, params);
+      AGGREGATOR_FAILED_TO_READ_MESSAGE_BODY_LENGTH, 3, params);
 
     return;
   }
@@ -196,23 +202,25 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::dispatchRequest(
   // If the message body is larger than the message body buffer
   if(len > sizeof(body)) {
     castor::dlf::Param params[] = {
+      castor::dlf::Param("Function"      , __PRETTY_FUNCTION__),
       castor::dlf::Param("Maximum length", sizeof(body)),
-      castor::dlf::Param("Actual length", len)};
+      castor::dlf::Param("Actual length" , len)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_MESSAGE_BODY_LENGTH_TOO_LARGE, 2, params);
+      AGGREGATOR_MESSAGE_BODY_LENGTH_TOO_LARGE, 3, params);
 
     return;
   }
 
   // Read the message body from the socket
   try {
-    SocketHelper::readBytes(socket, NETRW_TIMEOUT, len, body);
+    SocketHelper::readBytes(socket, NETRWTIMEOUT, len, body);
   } catch (castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Message", ex.getMessage().str()),
-      castor::dlf::Param("Code"   , ex.code())};
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("Message" , ex.getMessage().str()),
+      castor::dlf::Param("Code"    , ex.code())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_READ_MESSAGE_BODY, 2, params);
+      AGGREGATOR_FAILED_TO_READ_MESSAGE_BODY, 3, params);
 
     return;
   }
@@ -237,28 +245,31 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::handleJobSubmission(
     const int rc = isadminhost(socket.socket(), peerHost);
     if(rc == -1 && serrno != SENOTADMIN) {
       castor::dlf::Param params[] = {
-        castor::dlf::Param("Reason", "Failed to lookup connection"),
+        castor::dlf::Param("Function" , __PRETTY_FUNCTION__),
+        castor::dlf::Param("Reason"   , "Failed to lookup connection"),
         castor::dlf::Param("Peer Host", peerHost)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_RECEIVED_RCP_JOB_FROM_UNAUTHORIZED_HOST, 2, params);
+        AGGREGATOR_RECEIVED_RCP_JOB_FROM_UNAUTHORIZED_HOST, 3, params);
       return;
     }
 
     if(*peerHost == '\0' ) {
       castor::dlf::Param params[] = {
-        castor::dlf::Param("Reason", "Peer host name is empty"),
+        castor::dlf::Param("Function" , __PRETTY_FUNCTION__),
+        castor::dlf::Param("Reason"   , "Peer host name is empty"),
         castor::dlf::Param("Peer Host", peerHost)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_RECEIVED_RCP_JOB_FROM_UNAUTHORIZED_HOST, 2, params);
+        AGGREGATOR_RECEIVED_RCP_JOB_FROM_UNAUTHORIZED_HOST, 3, params);
       return;
     }
 
     if(rc != 0) {
       castor::dlf::Param params[] = {
-        castor::dlf::Param("Reason", "Unauthorized host"),
+        castor::dlf::Param("Function" , __PRETTY_FUNCTION__),
+        castor::dlf::Param("Reason"   , "Unauthorized host"),
         castor::dlf::Param("Peer Host", peerHost)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_RECEIVED_RCP_JOB_FROM_UNAUTHORIZED_HOST, 2, params);
+        AGGREGATOR_RECEIVED_RCP_JOB_FROM_UNAUTHORIZED_HOST, 3, params);
       return;
     }
   }
@@ -266,10 +277,11 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::handleJobSubmission(
   // If the message body is too small
   if(len < 4 * sizeof(uint32_t) + 4) {
     castor::dlf::Param params[] = {
+      castor::dlf::Param("Function"      , __PRETTY_FUNCTION__),
       castor::dlf::Param("Minimum Length", 4 * sizeof(uint32_t) + 4),
-      castor::dlf::Param("Actual Length", len)};
+      castor::dlf::Param("Actual Length" , len)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_JOB_MESSAGE_BODY_LENGTH_TOO_SHORT, 2, params);
+      AGGREGATOR_JOB_MESSAGE_BODY_LENGTH_TOO_SHORT, 3, params);
   }
 
   uint32_t   ui32          = 0; // Used to for casts
@@ -296,17 +308,19 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::handleJobSubmission(
   Marshaller::unmarshallString(p, bodyLen, clientUsername,
     sizeof(clientUsername));
 
-  castor::dlf::Param param[] = {
-    castor::dlf::Param("tapeRequestID" , tapeRequestID ),
-    castor::dlf::Param("clientPort"    , clientPort    ),
-    castor::dlf::Param("clientEuid"    , clientEuid    ),
-    castor::dlf::Param("clientEgid"    , clientEgid    ),
-    castor::dlf::Param("clientHost"    , clientHost    ),
-    castor::dlf::Param("dgn"           , dgn           ),
-    castor::dlf::Param("driveName"     , driveName     ),
-    castor::dlf::Param("clientUsername", clientUsername)};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-    AGGREGATOR_HANDLE_JOB_MESSAGE, 8, param);
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("tapeRequestID" , tapeRequestID ),
+      castor::dlf::Param("clientPort"    , clientPort    ),
+      castor::dlf::Param("clientEuid"    , clientEuid    ),
+      castor::dlf::Param("clientEgid"    , clientEgid    ),
+      castor::dlf::Param("clientHost"    , clientHost    ),
+      castor::dlf::Param("dgn"           , dgn           ),
+      castor::dlf::Param("driveName"     , driveName     ),
+      castor::dlf::Param("clientUsername", clientUsername)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_HANDLE_JOB_MESSAGE, 8, params);
+  }
 
   // Prepare a positive response which will be overwritten if RTCPD replies to
   // the tape aggregator with an error message
@@ -318,34 +332,36 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::handleJobSubmission(
   // being a proxy for RTCPClientD
   try {
     RcpJobSubmitter::submit(
-    "localhost",       // host
-    RTCOPY_PORT,       // port
-    NETRW_TIMEOUT,     // netReadWriteTimeout
-    "RTCPD",           // remoteCopyType
-    tapeRequestID,
-    clientUsername,
-    "localhost",       // clientHost
-    m_rtcpdListenPort, // clientPort
-    clientEuid,
-    clientEgid,
-    dgn,
-    driveName);
+      "localhost",       // host
+      RTCOPY_PORT,       // port
+      NETRWTIMEOUT,     // netReadWriteTimeout
+      "RTCPD",           // remoteCopyType
+      tapeRequestID,
+      clientUsername,
+      "localhost",       // clientHost
+      m_rtcpdListenPort, // clientPort
+      clientEuid,
+      clientEgid,
+      dgn,
+      driveName);
   } catch(castor::tape::aggregator::exception::RTCPDErrorMessage &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Message", ex.getMessage().str()),
-      castor::dlf::Param("Code"   , ex.code())};
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("Message" , ex.getMessage().str()),
+      castor::dlf::Param("Code"    , ex.code())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_RECEIVED_RTCPD_ERROR_MESSAGE, 2, params);
+      AGGREGATOR_RECEIVED_RTCPD_ERROR_MESSAGE, 3, params);
 
     // Override positive response with the error message from RTCPD
     errorStatusForVdqm  = ex.code();
     errorMessageForVdqm = ex.getMessage().str();
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Message", ex.getMessage().str()),
-      castor::dlf::Param("Code"   , ex.code())};
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("Message" , ex.getMessage().str()),
+      castor::dlf::Param("Code"    , ex.code())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_SUBMIT_JOB_TO_RTCPD, 2, params);
+      AGGREGATOR_FAILED_TO_SUBMIT_JOB_TO_RTCPD, 3, params);
 
     return;
   }
@@ -361,14 +377,15 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::handleJobSubmission(
       errorStatusForVdqm, errorMessageForVdqm.c_str());
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Message", ex.getMessage().str()),
-      castor::dlf::Param("Code"   , ex.code())};
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("Message" , ex.getMessage().str()),
+      castor::dlf::Param("Code"    , ex.code())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_MARSHALL_RTCP_ACKN, 2, params);
+      AGGREGATOR_FAILED_TO_MARSHALL_RTCP_ACKN, 3, params);
   }
 
   const int rc = netwrite_timeout(socket.socket(), ackMsg, ackMsgLen,
-    NETRW_TIMEOUT);
+    NETRWTIMEOUT);
 
   try {
     if(rc == -1) {
@@ -384,9 +401,10 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::handleJobSubmission(
     }
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Message", ex.getMessage().str()),
-      castor::dlf::Param("Code"   , ex.code())};
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("Message" , ex.getMessage().str()),
+      castor::dlf::Param("Code"    , ex.code())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_SEND_RTCP_ACKN_TO_VDQM, 2, params);
+      AGGREGATOR_FAILED_TO_SEND_RTCP_ACKN_TO_VDQM, 3, params);
   }
 }

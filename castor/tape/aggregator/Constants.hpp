@@ -34,7 +34,7 @@ namespace tape {
 namespace aggregator {
   	
 const size_t STRERRORBUFLEN = 256;
-const int    NETRW_TIMEOUT  = 300;
+const int    NETRWTIMEOUT   = 300;
 const size_t HDRBUFSIZ      = 3 * sizeof(uint32_t);
 const size_t MSGBUFSIZ      = 1024;
 

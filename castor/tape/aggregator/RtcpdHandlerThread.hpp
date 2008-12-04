@@ -76,8 +76,18 @@ namespace aggregator {
      * @param socket The socket of the connection with RTCPD.
      * @return The VID.
      */
-    std::string getVidFromRtcpd(castor::io::AbstractTCPSocket &socket)
-      throw(castor::exception::Exception);
+    std::string getVidFromRtcpd(castor::io::AbstractTCPSocket &socket,
+      const int netReadWriteTimeout) throw(castor::exception::Exception);
+
+    /**
+     * Receives an acknowledge message from RTCPD and returns the status code
+     * embedded within the message.
+     *
+     * @param socket The socket of the connection with RTCPD.
+     * @return The status code embedded within the message.
+     */
+    uint32_t receiveRtcpdAcknowledge(castor::io::AbstractTCPSocket &socket,
+      const int netReadWriteTimeout) throw(castor::exception::Exception);
 
   }; // class RtcpdHandlerThread
 

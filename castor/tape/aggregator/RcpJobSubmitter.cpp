@@ -175,7 +175,7 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
   // Read and unmarshall the magic number of the request
   uint32_t magic = 0;
   try {
-    magic = SocketHelper::readUint32(socket, NETRW_TIMEOUT);
+    magic = SocketHelper::readUint32(socket, NETRWTIMEOUT);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EIO);
 
@@ -202,7 +202,7 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
   // Read and unmarshall the type of the request
   uint32_t reqtype = 0;
   try {
-    reqtype = SocketHelper::readUint32(socket, NETRW_TIMEOUT);
+    reqtype = SocketHelper::readUint32(socket, NETRWTIMEOUT);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EIO);
 
@@ -229,7 +229,7 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
   // Read and unmarshall the type of the request
   uint32_t len = 0;
   try {
-    len = SocketHelper::readUint32(socket, NETRW_TIMEOUT);
+    len = SocketHelper::readUint32(socket, NETRWTIMEOUT);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EIO);
 
@@ -272,7 +272,7 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
 
   // Read the message body from the socket
   try {
-    SocketHelper::readBytes(socket, NETRW_TIMEOUT, len, body);
+    SocketHelper::readBytes(socket, NETRWTIMEOUT, len, body);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EIO);
 

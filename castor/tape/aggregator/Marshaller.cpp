@@ -259,7 +259,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobRequest(
   const size_t totalLen = 3 * sizeof(uint32_t) + len;
 
   // Check that the message buffer is big enough
-  if(sizeof(dstLen) <  totalLen) {
+  if(totalLen > dstLen) {
     castor::exception::Exception ex(EMSGSIZE);
 
     ex.getMessage() << "Buffer too small for job submission request message: "
@@ -398,7 +398,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRTCPTapeRequest(char *dst,
   const size_t totalLen = 3 * sizeof(uint32_t) + len;
 
   // Check that the message buffer is big enough
-  if(sizeof(dstLen) <  totalLen) {
+  if(totalLen > dstLen) {
     castor::exception::Exception ex(EMSGSIZE);
 
     ex.getMessage() << "Buffer too small for tape request message: "
