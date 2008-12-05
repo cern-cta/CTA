@@ -36,10 +36,10 @@ namespace aggregator {
    */
   struct RtcpErrorMessage {
     char errmsgtxt[CA_MAXLINELEN+1];
-    int severity;                    // Defined in rtcp_constants.h
-    int errorcode;                   // Defined in rtcp_constants.h
-    int max_tpretry;                 // Nb. of retries left on mount/pos
-    int max_cpretry;                 // Nb. of retries left on copy
+    uint32_t severity;               // Defined in rtcp_constants.h
+    uint32_t errorcode;              // Defined in rtcp_constants.h
+    uint32_t max_tpretry;            // Nb. of retries left on mount/pos
+    uint32_t max_cpretry;            // Nb. of retries left on copy
   }; // struct RtcpErrorMessage
 
 } // namespace aggregator

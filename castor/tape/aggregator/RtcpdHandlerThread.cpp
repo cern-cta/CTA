@@ -168,8 +168,7 @@ std::string castor::tape::aggregator::RtcpdHandlerThread::getVidFromRtcpd(
   size_t totalLen = 0;
 
   try {
-    totalLen = Marshaller::marshallRtcpTapeRequest(&buf[0], sizeof(buf),
-      request);
+    totalLen = Marshaller::marshallRtcpTapeRequest(buf, request);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 

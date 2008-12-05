@@ -211,7 +211,7 @@ namespace aggregator {
      * to the byte in the source buffer immediately after the unmarshalled
      * string
      * @param srcLen in/our parameter, before invocation is the length of the
-     * source buffer from where the string should unmarshalled and on return
+     * source buffer from where the string should be unmarshalled and on return
      * is the number of bytes remaining in the source buffer
      * @param dst in/out parameter, before invocation points to the destination
      * buffer where the string should be unmarshalled to and on return points
@@ -224,17 +224,50 @@ namespace aggregator {
       const size_t dstLen) throw(castor::exception::Exception);
 
     /**
-     * Marshalls the specified RCP job submission request into the specified
-     * destination buffer in order to create an RCP job submission request
-     * message.
+     * Unmarshalls a string from the specified source buffer into the specified
+     * destination buffer.
+     *
+     * @param src in/out parameter, before invocation points to the source
+     * buffer where the string should be unmarshalled from and on return points
+     * to the byte in the source buffer immediately after the unmarshalled
+     * string
+     * @param srcLen in/our parameter, before invocation is the length of the
+     * source buffer from where the string should be unmarshalled and on return
+     * is the number of bytes remaining in the source buffer
+     * @param dst in/out parameter, before invocation points to the destination
+     * buffer where the string should be unmarshalled to and on return points
+     * to the byte in the destination buffer immediately after the unmarshalled
+     * string
+     */
+    template< int n > static void unmarshallString(const char * &src,
+      size_t &srcLen, char (&dst)[n]) throw(castor::exception::Exception) {
+      unmarshallString(src, srcLen, dst, n);
+    }
+
+    /**
+     * Marshalls the specified source RCP job submission request structure into
+     * the specified destination buffer.
      *
      * @param dst The destination message buffer
      * @param dstLen The length of the destination buffer
-     * @param request The RCP job submission request request
+     * @param src The source structure
      * @return The total length of the message (header + body)
      */
     static size_t marshallRcpJobRequest(char *const dst, const size_t dstLen,
-      const RcpJobRequest &request) throw (castor::exception::Exception);
+      const RcpJobRequest &src) throw (castor::exception::Exception);
+
+    /**
+     * Marshalls the specified source RCP job submission request structure into
+     * the specified destination buffer.
+     *
+     * @param dst The destination message buffer
+     * @param src The source structure
+     * @return The total length of the message (header + body)
+     */
+    template< int n> static size_t marshallRcpJobRequest(char (&dst)[n],
+      const RcpJobRequest &src) throw(castor::exception::Exception) {
+      return  marshallRcpJobRequest(dst, n, src);
+    }
 
     /**
      * Unmarshalls the message body of an RCP job submission request from the
@@ -285,16 +318,29 @@ namespace aggregator {
       throw (castor::exception::Exception);
 
     /**
-     * Marshalls the specified tape request into the specified destination
-     * buffer in order to create an RTCP tape request message.
+     * Marshalls the specified source tape request structure into the specified
+     * destination buffer.
      *
      * @param dst The destination message buffer
      * @param dstLen The length of the destination buffer
-     * @param request The tape request
+     * @param src The source structure
      * @return The total length of the message (header + body)
      */
     static size_t marshallRtcpTapeRequest(char *const dst, const size_t dstLen,
-      const RtcpTapeRequest &request) throw(castor::exception::Exception);
+      const RtcpTapeRequest &src) throw(castor::exception::Exception);
+
+    /**
+     * Marshalls the specified source tape request structure into the specified
+     * destination buffer.
+     *
+     * @param dst The destination message buffer
+     * @param src The source structure
+     * @return The total length of the message (header + body)
+     */
+    template< int n > static size_t marshallRtcpTapeRequest(char (&dst)[n],
+      const RtcpTapeRequest &src) throw(castor::exception::Exception) {
+      return marshallRtcpTapeRequest(dst, src);
+    }
 
     /**
      * Unmarshalls the message body of a tape request from the specified source
@@ -310,7 +356,7 @@ namespace aggregator {
      * @param dst the destination request structure
      */
     static void unmarshallRtcpTapeRequest(const char * &src, size_t &srcLen,
-      RtcpTapeRequest &request) throw(castor::exception::Exception);
+      RtcpTapeRequest &dst) throw(castor::exception::Exception);
 
   }; // class Utils
 

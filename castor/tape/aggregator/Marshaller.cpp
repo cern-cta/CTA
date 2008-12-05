@@ -210,7 +210,7 @@ void castor::tape::aggregator::Marshaller::unmarshallString(const char * &src,
 // marshallRcpJobRequest
 //-----------------------------------------------------------------------------
 size_t castor::tape::aggregator::Marshaller::marshallRcpJobRequest(
-  char *const dst, const size_t dstLen, const RcpJobRequest &request)
+  char *const dst, const size_t dstLen, const RcpJobRequest &src)
   throw (castor::exception::Exception) {
 
   if(dst == NULL) {
@@ -223,11 +223,11 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobRequest(
 
   // Calculate the length of the message body
   const uint32_t len =
-    4*sizeof(uint32_t)              +
-    strlen(request.clientHost)      +
-    strlen(request.deviceGroupName) +
-    strlen(request.driveName)       +
-    strlen(request.clientUserName)  +
+    4*sizeof(uint32_t)          +
+    strlen(src.clientHost)      +
+    strlen(src.deviceGroupName) +
+    strlen(src.driveName)       +
+    strlen(src.clientUserName)  +
     4; // 4 = the number of string termination characters
 
   // Calculate the total length of the message (header + body)
@@ -247,17 +247,17 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobRequest(
 
   // Marshall the whole message (header + body)
   char *p = dst;
-  marshallUint32(RTCOPY_MAGIC_OLD0      , p);
-  marshallUint32(VDQM_CLIENTINFO        , p);
-  marshallUint32(len                    , p);
-  marshallUint32(request.tapeRequestID  , p);
-  marshallUint32(request.clientPort     , p);
-  marshallUint32(request.clientEuid     , p);
-  marshallUint32(request.clientEgid     , p);
-  marshallString(request.clientHost     , p);
-  marshallString(request.deviceGroupName, p);
-  marshallString(request.driveName      , p);
-  marshallString(request.clientUserName , p);
+  marshallUint32(RTCOPY_MAGIC_OLD0  , p);
+  marshallUint32(VDQM_CLIENTINFO    , p);
+  marshallUint32(len                , p);
+  marshallUint32(src.tapeRequestID  , p);
+  marshallUint32(src.clientPort     , p);
+  marshallUint32(src.clientEuid     , p);
+  marshallUint32(src.clientEgid     , p);
+  marshallString(src.clientHost     , p);
+  marshallString(src.deviceGroupName, p);
+  marshallString(src.driveName      , p);
+  marshallString(src.clientUserName , p);
 
   // Calculate the number of bytes actually marshalled
   const size_t nbBytesMarshalled = p - dst;
@@ -411,15 +411,22 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpAckn(char *const dst,
 // marshallRtcpTapeRequest
 //-----------------------------------------------------------------------------
 size_t castor::tape::aggregator::Marshaller::marshallRtcpTapeRequest(char *dst,
-  const size_t dstLen, const RtcpTapeRequest &request)
+  const size_t dstLen, const RtcpTapeRequest &src)
   throw (castor::exception::Exception) {
 
   // Calculate the length of the message body
-  const uint32_t len = 14 * sizeof(uint32_t) + strlen(request.vid) +
-    strlen(request.vsn) + strlen(request.label) + strlen(request.devtype) +
-    strlen(request.density) + strlen(request.unit) + 6 + sizeof(Cuuid_t) +
-    // Plus the size of the err member which is of type rtcpErrMsg_t
-    4 * sizeof(uint32_t) + strlen(request.err.errmsgtxt) + 1;
+  const uint32_t len =
+    14 * sizeof(uint32_t)     +
+    strlen(src.vid)           +
+    strlen(src.vsn)           +
+    strlen(src.label)         +
+    strlen(src.devtype)       +
+    strlen(src.density)       +
+    strlen(src.unit)          +
+    sizeof(Cuuid_t)           +
+    4 * sizeof(uint32_t)      + // 4 uint32_t's of err member (rtcpErrMsg_t)
+    strlen(src.err.errmsgtxt) +
+    7;                          // 7 = number of null terminator characters
 
   // Calculate the total length of the message (header + body)
   // Message header = magic + reqtype + len = 3 * sizeof(uint32_t)
@@ -438,45 +445,45 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpTapeRequest(char *dst,
 
   // Marshall the whole message (header + body)
   char *p = dst;
-  marshallUint32(RTCOPY_MAGIC                              , p);
-  marshallUint32(RTCP_TAPEERR_REQ                          , p);
-  marshallUint32(len                                       , p);
-  marshallString(request.vid                               , p);
-  marshallString(request.vsn                               , p);
-  marshallString(request.label                             , p);
-  marshallString(request.devtype                           , p);
-  marshallString(request.density                           , p);
-  marshallString(request.unit                              , p);
-  marshallUint32(request.VolReqID                          , p);
-  marshallUint32(request.jobID                             , p);
-  marshallUint32(request.mode                              , p);
-  marshallUint32(request.start_file                        , p);
-  marshallUint32(request.end_file                          , p);
-  marshallUint32(request.side                              , p);
-  marshallUint32(request.tprc                              , p);
-  marshallUint32(request.TStartRequest                     , p);
-  marshallUint32(request.TEndRequest                       , p);
-  marshallUint32(request.TStartRtcpd                       , p);
-  marshallUint32(request.TStartMount                       , p);
-  marshallUint32(request.TEndMount                         , p);
-  marshallUint32(request.TStartUnmount                     , p);
-  marshallUint32(request.TEndUnmount                       , p);
-  marshallUint32(request.rtcpReqId.time_low                , p);
-  marshallUint16(request.rtcpReqId.time_mid                , p);
-  marshallUint16(request.rtcpReqId.time_hi_and_version     , p);
-  marshallUint8(request.rtcpReqId.clock_seq_hi_and_reserved, p);
-  marshallUint8(request.rtcpReqId.clock_seq_low            , p);
-  marshallUint8(request.rtcpReqId.node[0]                  , p);
-  marshallUint8(request.rtcpReqId.node[1]                  , p);
-  marshallUint8(request.rtcpReqId.node[2]                  , p);
-  marshallUint8(request.rtcpReqId.node[3]                  , p);
-  marshallUint8(request.rtcpReqId.node[4]                  , p);
-  marshallUint8(request.rtcpReqId.node[5]                  , p);
-  marshallString(request.err.errmsgtxt                     , p);
-  marshallUint32(request.err.severity                      , p);
-  marshallUint32(request.err.errorcode                     , p);
-  marshallUint32(request.err.max_tpretry                   , p);
-  marshallUint32(request.err.max_cpretry                   , p);
+  marshallUint32(RTCOPY_MAGIC                          , p);
+  marshallUint32(RTCP_TAPEERR_REQ                      , p);
+  marshallUint32(len                                   , p);
+  marshallString(src.vid                               , p);
+  marshallString(src.vsn                               , p);
+  marshallString(src.label                             , p);
+  marshallString(src.devtype                           , p);
+  marshallString(src.density                           , p);
+  marshallString(src.unit                              , p);
+  marshallUint32(src.VolReqID                          , p);
+  marshallUint32(src.jobID                             , p);
+  marshallUint32(src.mode                              , p);
+  marshallUint32(src.start_file                        , p);
+  marshallUint32(src.end_file                          , p);
+  marshallUint32(src.side                              , p);
+  marshallUint32(src.tprc                              , p);
+  marshallUint32(src.TStartRequest                     , p);
+  marshallUint32(src.TEndRequest                       , p);
+  marshallUint32(src.TStartRtcpd                       , p);
+  marshallUint32(src.TStartMount                       , p);
+  marshallUint32(src.TEndMount                         , p);
+  marshallUint32(src.TStartUnmount                     , p);
+  marshallUint32(src.TEndUnmount                       , p);
+  marshallUint32(src.rtcpReqId.time_low                , p);
+  marshallUint16(src.rtcpReqId.time_mid                , p);
+  marshallUint16(src.rtcpReqId.time_hi_and_version     , p);
+  marshallUint8(src.rtcpReqId.clock_seq_hi_and_reserved, p);
+  marshallUint8(src.rtcpReqId.clock_seq_low            , p);
+  marshallUint8(src.rtcpReqId.node[0]                  , p);
+  marshallUint8(src.rtcpReqId.node[1]                  , p);
+  marshallUint8(src.rtcpReqId.node[2]                  , p);
+  marshallUint8(src.rtcpReqId.node[3]                  , p);
+  marshallUint8(src.rtcpReqId.node[4]                  , p);
+  marshallUint8(src.rtcpReqId.node[5]                  , p);
+  marshallString(src.err.errmsgtxt                     , p);
+  marshallUint32(src.err.severity                      , p);
+  marshallUint32(src.err.errorcode                     , p);
+  marshallUint32(src.err.max_tpretry                   , p);
+  marshallUint32(src.err.max_cpretry                   , p);
 
   // Calculate the number of bytes actually marshalled
   const size_t nbBytesMarshalled = p - dst;
@@ -501,45 +508,43 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpTapeRequest(char *dst,
 // unmarshallRtcpTapeRequest
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Marshaller::unmarshallRtcpTapeRequest(
-  const char * &src, size_t &srcLen, RtcpTapeRequest &request)
+  const char * &src, size_t &srcLen, RtcpTapeRequest &dst)
   throw(castor::exception::Exception) {
 
-/*
-  unmarshallString(src, srcLen, request.vid);
-  unmarshallString(src, srcLen, request.vsn);
-  unmarshallString(src, srcLen, request.label);
-  unmarshallString(src, srcLen, request.devtype);
-  unmarshallString(src, srcLen, request.density);
-  unmarshallString(src, srcLen, request.unit);
-  unmarshallUint32(src, srcLen, request.VolReqID);
-  unmarshallUint32(src, srcLen, request.jobID);
-  unmarshallUint32(src, srcLen, request.mode);
-  unmarshallUint32(src, srcLen, request.start_file);
-  unmarshallUint32(src, srcLen, request.end_file);
-  unmarshallUint32(src, srcLen, request.side);
-  unmarshallUint32(src, srcLen, request.tprc);
-  unmarshallUint32(src, srcLen, request.TStartRequest);
-  unmarshallUint32(src, srcLen, request.TEndRequest);
-  unmarshallUint32(src, srcLen, request.TStartRtcpd);
-  unmarshallUint32(src, srcLen, request.TStartMount);
-  unmarshallUint32(src, srcLen, request.TEndMount);
-  unmarshallUint32(src, srcLen, request.TStartUnmount);
-  unmarshallUint32(src, srcLen, request.TEndUnmount);
-  unmarshallUint32(src, srcLen, request.rtcpReqId.time_low);
-  unmarshallUint16(src, srcLen, request.rtcpReqId.time_mid);
-  unmarshallUint16(src, srcLen, request.rtcpReqId.time_hi_and_version);
-  unmarshallUint8(src, srcLen, request.rtcpReqId.clock_seq_hi_and_reserved);
-  unmarshallUint8(src, srcLen, request.rtcpReqId.clock_seq_low);
-  unmarshallUint8(src, srcLen, request.rtcpReqId.node[0]);
-  unmarshallUint8(src, srcLen, request.rtcpReqId.node[1]);
-  unmarshallUint8(src, srcLen, request.rtcpReqId.node[2]);
-  unmarshallUint8(src, srcLen, request.rtcpReqId.node[3]);
-  unmarshallUint8(src, srcLen, request.rtcpReqId.node[4]);
-  unmarshallUint8(src, srcLen, request.rtcpReqId.node[5]);
-  unmarshallString(src, srcLen, request.err.errmsgtxt);
-  unmarshallUint32(src, srcLen, request.err.severity);
-  unmarshallUint32(src, srcLen, request.err.errorcode);
-  unmarshallUint32(src, srcLen, request.err.max_tpretry);
-  unmarshallUint32(src, srcLen, request.err.max_cpretry);
-*/
+  unmarshallString(src, srcLen, dst.vid);
+  unmarshallString(src, srcLen, dst.vsn);
+  unmarshallString(src, srcLen, dst.label);
+  unmarshallString(src, srcLen, dst.devtype);
+  unmarshallString(src, srcLen, dst.density);
+  unmarshallString(src, srcLen, dst.unit);
+  unmarshallUint32(src, srcLen, dst.VolReqID);
+  unmarshallUint32(src, srcLen, dst.jobID);
+  unmarshallUint32(src, srcLen, dst.mode);
+  unmarshallUint32(src, srcLen, dst.start_file);
+  unmarshallUint32(src, srcLen, dst.end_file);
+  unmarshallUint32(src, srcLen, dst.side);
+  unmarshallUint32(src, srcLen, dst.tprc);
+  unmarshallUint32(src, srcLen, dst.TStartRequest);
+  unmarshallUint32(src, srcLen, dst.TEndRequest);
+  unmarshallUint32(src, srcLen, dst.TStartRtcpd);
+  unmarshallUint32(src, srcLen, dst.TStartMount);
+  unmarshallUint32(src, srcLen, dst.TEndMount);
+  unmarshallUint32(src, srcLen, dst.TStartUnmount);
+  unmarshallUint32(src, srcLen, dst.TEndUnmount);
+  unmarshallUint32(src, srcLen, dst.rtcpReqId.time_low);
+  unmarshallUint16(src, srcLen, dst.rtcpReqId.time_mid);
+  unmarshallUint16(src, srcLen, dst.rtcpReqId.time_hi_and_version);
+  unmarshallUint8(src, srcLen, dst.rtcpReqId.clock_seq_hi_and_reserved);
+  unmarshallUint8(src, srcLen, dst.rtcpReqId.clock_seq_low);
+  unmarshallUint8(src, srcLen, dst.rtcpReqId.node[0]);
+  unmarshallUint8(src, srcLen, dst.rtcpReqId.node[1]);
+  unmarshallUint8(src, srcLen, dst.rtcpReqId.node[2]);
+  unmarshallUint8(src, srcLen, dst.rtcpReqId.node[3]);
+  unmarshallUint8(src, srcLen, dst.rtcpReqId.node[4]);
+  unmarshallUint8(src, srcLen, dst.rtcpReqId.node[5]);
+  unmarshallString(src, srcLen, dst.err.errmsgtxt);
+  unmarshallUint32(src, srcLen, dst.err.severity);
+  unmarshallUint32(src, srcLen, dst.err.errorcode);
+  unmarshallUint32(src, srcLen, dst.err.max_tpretry);
+  unmarshallUint32(src, srcLen, dst.err.max_cpretry);
 }

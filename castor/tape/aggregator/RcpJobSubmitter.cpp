@@ -122,7 +122,7 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   size_t totalLen = 0;
 
   try {
-    totalLen = Marshaller::marshallRcpJobRequest(&buf[0], sizeof(buf), request);
+    totalLen = Marshaller::marshallRcpJobRequest(buf, request);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 
