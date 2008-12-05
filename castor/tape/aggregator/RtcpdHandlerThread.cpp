@@ -104,151 +104,11 @@ void castor::tape::aggregator::RtcpdHandlerThread::run(void *param)
       AGGREGATOR_RTCPD_CONNECTION_WITHOUT_INFO, 3, params);
   }
 
-  std::string vid;
-
-{
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-      castor::dlf::Param("Message" , "Just before getVidFromRtcpd")};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NULL, 2, params);
-}
-
-  try {
-    vid = getVidFromRtcpd(cuuid, *socket, NETRWTIMEOUT);
-
-{
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-      castor::dlf::Param("Message" , "Just after getVidFromRtcpd")};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NULL, 2, params);
-}
-
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("VID"     , vid)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_GOT_VID_FROM_RTCPD, 1, params);
-  } catch(castor::exception::Exception &ex) {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-      castor::dlf::Param("Message" , ex.getMessage().str()),
-      castor::dlf::Param("Code"    , ex.code())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_GET_VID_FROM_RTCPD, 3, params);
-  }
-
-  // Close and de-allocate the socket
-  socket->close();
-  delete socket;
-}
-
-
-//-----------------------------------------------------------------------------
-// stop
-//-----------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpdHandlerThread::stop()
-  throw() {
-}
-
-
-//-----------------------------------------------------------------------------
-// getVidFromRtcpd
-//-----------------------------------------------------------------------------
-std::string castor::tape::aggregator::RtcpdHandlerThread::getVidFromRtcpd(
-  const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &socket,
-  const int netReadWriteTimeout) throw(castor::exception::Exception) {
-
-  char buf[MSGBUFSIZ];
+  // Get the tape arequest associated with the remote copy job from RTCPD
   RtcpTapeRequest request;
-
-  memset(&request, '\0', sizeof(request));
-
-{
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-      castor::dlf::Param("Message" , "Just after memset(&request, '\\0', sizeof(request));")};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NULL, 2, params);
-}
-
-  // Marshall the request for VID message
-  size_t totalLen = 0;
   try {
-    totalLen = Marshaller::marshallRtcpTapeRequest(buf, request);
-  } catch(castor::exception::Exception &ex) {
-    castor::exception::Internal ie;
+    getTapeRequestFromRtcpd(cuuid, *socket, NETRWTIMEOUT, request);
 
-    ie.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to marshall RTCP request message: "
-      << ex.getMessage().str();
-
-    throw ie;
-  }
-
-{
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-      castor::dlf::Param("Message" , "Just after marshall of request for VID message")};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NULL, 2, params);
-}
-
-  // Send the request for a VID to RTCPD
-  try {
-    SocketHelper::writeBytes(socket, netReadWriteTimeout, totalLen, buf);
-  } catch(castor::exception::Exception &ex) {
-    castor::exception::Exception ex2(SECOMERR);
-
-    ex2.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to send the request for a VID to RTCPD: "
-      << ex.getMessage().str();
-  }
-
-{
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-      castor::dlf::Param("Message" , "Just after send of request for a VID to RTCPD")};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NULL, 2, params);
-}
-
-  // Receive acknowledge from RTCPD
-  uint32_t status = 0;
-  try {
-    status = receiveRtcpdAcknowledge(cuuid, socket, netReadWriteTimeout);
-  } catch(castor::exception::Exception &ex) {
-    castor::exception::Exception ex2(EPROTO);
-
-    ex2.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to receive acknowledge from RTCPD: "
-      << ex.getMessage().str();
-    throw ex2;
-  }
-
-  // If the acknowledge is negative
-  if(status != 0) {
-    castor::exception::Exception ex(ECANCELED);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Received negative acknowledge from RTCPD";
-    throw ex;
-  }
-
-  // Receive tape request message from RTCPD
-  memset(&request, '\0', sizeof(request));
-  try {
-    receiveRtcpTapeRequest(cuuid, socket, netReadWriteTimeout, request);
-  } catch(castor::exception::Exception &ex) {
-    castor::exception::Exception ex2(EPROTO);
-
-    ex2.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to receive tape request from RTCPD: "
-      << ex.getMessage().str();
-    throw ex2;
-  }
-
-  {
     castor::dlf::Param params[] = {
       castor::dlf::Param("vid"            , request.vid            ),
       castor::dlf::Param("vsn"            , request.vsn            ),
@@ -278,6 +138,124 @@ std::string castor::tape::aggregator::RtcpdHandlerThread::getVidFromRtcpd(
       castor::dlf::Param("err.max_cpretry", request.err.max_cpretry)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_RECEIVED_TAPE_REQUEST, 26, params);
+  } catch(castor::exception::Exception &ex) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("Message" , ex.getMessage().str()),
+      castor::dlf::Param("Code"    , ex.code())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_FAILED_TO_RECEIVE_TAPE_REQUEST, 3, params);
+  }
+
+  // Close and de-allocate the socket
+  socket->close();
+  delete socket;
+}
+
+
+//-----------------------------------------------------------------------------
+// stop
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::RtcpdHandlerThread::stop()
+  throw() {
+}
+
+
+//-----------------------------------------------------------------------------
+// getTapeRequestFromRtcpd
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::RtcpdHandlerThread::
+  getTapeRequestFromRtcpd(const Cuuid_t &cuuid,
+  castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
+  RtcpTapeRequest &request) throw(castor::exception::Exception) {
+
+  char buf[MSGBUFSIZ];
+
+  memset(&request, '\0', sizeof(request));
+
+  // Marshall the request for VID message
+  size_t totalLen = 0;
+  try {
+    totalLen = Marshaller::marshallRtcpTapeRequest(buf, request);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to marshall RTCP request message: "
+      << ex.getMessage().str();
+
+    throw ie;
+  }
+
+  // Send the request for a VID to RTCPD
+  try {
+    SocketHelper::writeBytes(socket, netReadWriteTimeout, totalLen, buf);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(SECOMERR);
+
+    ex2.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to send the request for a VID to RTCPD: "
+      << ex.getMessage().str();
+  }
+
+  // Receive acknowledge from RTCPD
+  RtcpdAcknowledge ackMsg;
+  try {
+    receiveRtcpdAcknowledge(cuuid, socket, netReadWriteTimeout, ackMsg);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(EPROTO);
+
+    ex2.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to receive acknowledge from RTCPD: "
+      << ex.getMessage().str();
+    throw ex2;
+  }
+
+  // If the magic number is invalid
+  if(ackMsg.magic != RTCOPY_MAGIC) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Invalid magic number from RTCPD"
+      << ": Expected: 0x" << std::hex << RTCOPY_MAGIC
+      << ": Received: " << ackMsg.magic;
+
+    throw ex;
+  }
+
+  // If the request type is invalid
+  if(ackMsg.reqtype != RTCP_TAPEERR_REQ) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Invalid request type from RTCPD"
+      << ": Expected: 0x" << std::hex << RTCP_TAPEERR_REQ
+      << ": Received: " << ackMsg.reqtype;
+
+    throw ex;
+  }
+
+  // If the acknowledge is negative
+  if(ackMsg.status != 0) {
+    castor::exception::Exception ex(ECANCELED);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Received negative acknowledge from RTCPD"
+         ": Status: " << ackMsg.status;
+    throw ex;
+  }
+
+  // Receive tape request message from RTCPD
+  memset(&request, '\0', sizeof(request));
+  try {
+    receiveRtcpTapeRequest(cuuid, socket, netReadWriteTimeout, request);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(EPROTO);
+
+    ex2.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to receive tape request from RTCPD: "
+      << ex.getMessage().str();
+    throw ex2;
   }
 
   // Send acknowledge to RTCP
@@ -294,31 +272,20 @@ TO BE DONE!!!!!
     throw ex;
   }
 */
-
-  // If there is no volume request ID
-  if(request.VolReqID <= 0) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to get VID from RTCPD: No volume request ID";
-    throw ex;
-  }
-
-  return request.vid;
 }
 
 
 //-----------------------------------------------------------------------------
 // receiveRtcpdAcknowledge
 //-----------------------------------------------------------------------------
-uint32_t castor::tape::aggregator::RtcpdHandlerThread::receiveRtcpdAcknowledge(
+void castor::tape::aggregator::RtcpdHandlerThread::receiveRtcpdAcknowledge(
   const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &socket,
-  const int netReadWriteTimeout) throw(castor::exception::Exception) {
+  const int netReadWriteTimeout, RtcpdAcknowledge &message)
+  throw(castor::exception::Exception) {
 
   // Read and unmarshall the magic number
-  uint32_t magic = 0;
   try {
-    magic = SocketHelper::readUint32(socket, NETRWTIMEOUT);
+    message.magic = SocketHelper::readUint32(socket, NETRWTIMEOUT);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 
@@ -329,31 +296,9 @@ uint32_t castor::tape::aggregator::RtcpdHandlerThread::receiveRtcpdAcknowledge(
     throw ie;
   }
 
-{
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-      castor::dlf::Param("Message" ,
-        "Just after read and unmarshall the magic number")};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NULL, 2, params);
-}
-
-  // If the magic number is invalid
-  if(magic != RTCOPY_MAGIC) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Invalid magic number from RTCPD"
-      << ": Expected: 0x" << std::hex << RTCOPY_MAGIC
-      << ": Received: " << magic;
-
-    throw ex;
-  }
-
   // Read and unmarshall the request type
-  uint32_t reqtype = 0;
   try {
-    reqtype = SocketHelper::readUint32(socket, NETRWTIMEOUT);
+    message.reqtype = SocketHelper::readUint32(socket, NETRWTIMEOUT);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 
@@ -364,31 +309,9 @@ uint32_t castor::tape::aggregator::RtcpdHandlerThread::receiveRtcpdAcknowledge(
     throw ie;
   }
 
-{
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-      castor::dlf::Param("Message" ,
-        "Just after read and unmarshall the magic number")};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NULL, 2, params);
-}
-
-  // If the request type is invalid
-  if(reqtype != RTCP_TAPEERR_REQ) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Invalid request type from RTCPD"
-      << ": Expected: 0x" << std::hex << RTCP_TAPEERR_REQ
-      << ": Received: " << reqtype;
-
-    throw ex;
-  }
-
   // Read and unmarshall the status
-  uint32_t status = 0;
   try {
-    status = SocketHelper::readUint32(socket, NETRWTIMEOUT);
+    message.status = SocketHelper::readUint32(socket, NETRWTIMEOUT);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 
@@ -398,8 +321,22 @@ uint32_t castor::tape::aggregator::RtcpdHandlerThread::receiveRtcpdAcknowledge(
 
     throw ie;
   }
+}
 
-  return status;
+
+//-----------------------------------------------------------------------------
+// sendRtcpdAcknowledge
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::RtcpdHandlerThread::sendRtcpdAcknowledge(
+  const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &socket,
+  const int netReadWriteTimeout, const RtcpdAcknowledge &message)
+  throw(castor::exception::Exception) {
+
+  castor::exception::Internal ie;
+
+  ie.getMessage() << "Not implemented";
+
+  throw ie;
 }
 
 
@@ -424,15 +361,6 @@ void castor::tape::aggregator::RtcpdHandlerThread::receiveRtcpTapeRequest(
 
     throw ex2;
   }
-
-{
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-      castor::dlf::Param("Message" ,
-        "Just after read and unmarshall the magic number")};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NULL, 2, params);
-}
 
   // If the magic number is invalid
   if(magic != RTCOPY_MAGIC) {
@@ -460,15 +388,6 @@ void castor::tape::aggregator::RtcpdHandlerThread::receiveRtcpTapeRequest(
 
     throw ex2;
   }
-
-{
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-      castor::dlf::Param("Message" ,
-        "Just after read and unmarshall the magic number")};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NULL, 2, params);
-}
 
   // If the request type is invalid
   if(reqtype != RTCP_TAPEERR_REQ) {

@@ -81,6 +81,18 @@ namespace aggregator {
       const int netReadWriteTimeout) throw(castor::exception::Exception);
 
     /**
+     * Writes the specified unsigned 32-bit integer to the specified socket.
+     *
+     * @param socket the socket to be written to
+     * @param netReadWriteTimeout the timeout to be used when performing
+     * network reads and writes
+     * @param value the unsigned 32-bit integer to be written to the socket
+     */
+    static void writeUint32(castor::io::AbstractTCPSocket &socket,
+      const int netReadWriteTimeout, uint32_t value)
+      throw(castor::exception::Exception);
+
+    /**
      * Reads the specified number of bytes from the specified socket and writes
      * the result into the specified buffer.
      *
@@ -97,6 +109,12 @@ namespace aggregator {
     /**
      * Writes the specified number of bytes from the specified buffer to the
      * specified socket.
+     *
+     * @param socket the socket to be written to
+     * @param netReadWriteTimeout the timeout to be used when performing
+     * network reads and writes
+     * @param nbBytes the number of bytes to be written
+     * @param buf the buffer of bytes to be written to the socket
      */
     static void writeBytes(castor::io::AbstractTCPSocket &socket,
       const int netReadWriteTimeout, const int nbBytes, char *const buf)

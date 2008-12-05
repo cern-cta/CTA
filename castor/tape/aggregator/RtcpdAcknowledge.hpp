@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/RcpJobReply.hpp
+ *                      castor/tape/aggregator/RtcpdAcknowledge.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Steven Murray Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_RCPJOBREPLY
-#define CASTOR_TAPE_AGGREGATOR_RCPJOBREPLY
+#ifndef CASTOR_TAPE_AGGREGATOR_RTCPDACKNOWLEDGE
+#define CASTOR_TAPE_AGGREGATOR_RTCPDACKNOWLEDGE
 
 #include "h/Castor_limits.h"
 
@@ -36,15 +36,16 @@ namespace tape       {
 namespace aggregator {
 
   /**
-   * An RCP job reply message.
+   * An RTCPD acknowledge message.
    */
-  struct RcpJobReply {
+  struct RtcpdAcknowledge {
+    uint32_t magic;
+    uint32_t reqtype;
     uint32_t status;
-    char errorMessage[1024];
   };
 
 } // namespace aggregator
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_RCPJOBREPLY
+#endif // CASTOR_TAPE_AGGREGATOR_RTCPDACKNOWLEDGE

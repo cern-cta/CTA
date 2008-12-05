@@ -60,6 +60,7 @@ void castor::tape::aggregator::Marshaller::unmarshallUint8(const char * &src,
 void castor::tape::aggregator::Marshaller::marshallUint16(uint16_t src,
   char * &dst) throw (castor::exception::Exception) {
 
+  src = htons(src);
   marshall(src, dst);
 }
 
@@ -71,6 +72,7 @@ void castor::tape::aggregator::Marshaller::unmarshallUint16(const char * &src,
   size_t &srcLen, uint16_t &dst) throw(castor::exception::Exception) {
 
   unmarshall(src, srcLen, dst);
+  dst = ntohs(dst);
 }
 
 
@@ -80,6 +82,7 @@ void castor::tape::aggregator::Marshaller::unmarshallUint16(const char * &src,
 void castor::tape::aggregator::Marshaller::marshallUint32(uint32_t src,
   char * &dst) throw (castor::exception::Exception) {
 
+  src = htonl(src);
   marshall(src, dst);
 }
 
@@ -91,6 +94,7 @@ void castor::tape::aggregator::Marshaller::unmarshallUint32(const char * &src,
   size_t &srcLen, uint32_t &dst) throw(castor::exception::Exception) {
 
   unmarshall(src, srcLen, dst);
+  dst = ntohl(dst);
 }
 
 

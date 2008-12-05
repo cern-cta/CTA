@@ -46,6 +46,12 @@ namespace aggregator {
   class Marshaller {
   private:
 
+    /**
+     * Function template to help in marshalling simple data types.  Please note
+     * that this function does not perform a host to network byte order
+     * conversion.  If such a conversion is necessary, then it must be done
+     * before calling this function.
+     */
     template<class T> static void marshall(T src, char * &dst)
       throw (castor::exception::Exception) {
 
@@ -56,13 +62,17 @@ namespace aggregator {
         throw ex;
       }
 
-      src = htonl(src);
-
       memcpy(dst, &src, sizeof(src));
 
       dst += sizeof(src);
     }
 
+    /**
+     * Function template to help in unmarshalling simple data types.  Please
+     * note that this function does not perform a network to host byte order
+     * conversion.  If such a conversion is necessary, then it must be done
+     * after this function has returned.
+     */
     template<class T> static void unmarshall(const char * &src, size_t &srcLen,
       T &dst) throw(castor::exception::Exception) {
 
@@ -83,7 +93,6 @@ namespace aggregator {
       }
 
       memcpy(&dst, src, sizeof(dst));
-      dst = ntohl(dst);
 
       src    += sizeof(dst);
       srcLen -= sizeof(dst);

@@ -133,6 +133,55 @@ uint32_t castor::tape::aggregator::SocketHelper::readUint32(
 
 
 //------------------------------------------------------------------------------
+// writeUint32
+//------------------------------------------------------------------------------
+void castor::tape::aggregator::SocketHelper::writeUint32(
+  castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
+  uint32_t value) throw(castor::exception::Exception) {
+
+;
+  const int netwriteRc = netwrite_timeout(socket.socket(), &value,
+    sizeof(value), netReadWriteTimeout);
+
+  switch(netwriteRc) {
+  case -1:
+    {
+      castor::exception::Exception ex(SECOMERR);
+      ex.getMessage() << __PRETTY_FUNCTION__;
+      std::ostream &os = ex.getMessage();
+      os << ": Failed to write unsigned 32-bit integer to socket: ";
+      printSocketDescription(os, socket);
+      os << ": " << neterror();
+      throw ex;
+    }
+  case 0:
+    {
+      castor::exception::Exception ex(SECONNDROP);
+      ex.getMessage() << __PRETTY_FUNCTION__;
+      std::ostream &os = ex.getMessage();
+      os << ": Failed to write unsigned 32-bit integer to socket: ";
+      printSocketDescription(os, socket);
+      os << ": Connection dropped";
+      throw ex;
+    }
+  default:
+    if(netwriteRc != sizeof(value)) {
+      castor::exception::Exception ex(SECOMERR);
+
+      ex.getMessage() << __PRETTY_FUNCTION__;
+      std::ostream &os = ex.getMessage();
+      os << "Failed to write unsigned 32-bit integer to socket: ";
+      printSocketDescription(os, socket);
+      os << "Wrote the wrong number of bytes"
+        << ": Expected: " << sizeof(value)
+        << ": Wrote: " << netwriteRc;
+      throw ex;
+    }
+  }
+}
+
+
+//------------------------------------------------------------------------------
 // readBytes
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::SocketHelper::readBytes(
