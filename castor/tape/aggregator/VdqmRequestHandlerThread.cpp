@@ -288,7 +288,16 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::handleJobSubmission(
   RcpJobRequest request;
   const char *p           = body;
   size_t     remainingLen = len;
-  Marshaller::unmarshallRcpJobRequest(p, remainingLen, request);
+  try {
+    Marshaller::unmarshallRcpJobRequest(p, remainingLen, request);
+  } catch(castor::exception::Exception &ex) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("Message" , ex.getMessage().str()),
+      castor::dlf::Param("Code"    , ex.code())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_FAILED_TO_UNMARSHALL_MESSAGE_BODY, 3, params);
+  }
 
   {
     castor::dlf::Param params[] = {

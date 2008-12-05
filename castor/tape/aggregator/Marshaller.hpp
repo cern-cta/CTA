@@ -239,7 +239,7 @@ namespace aggregator {
      * to the byte in the destination buffer immediately after the unmarshalled
      * string
      */
-    template< int n > static void unmarshallString(const char * &src,
+    template<int n> static void unmarshallString(const char * &src,
       size_t &srcLen, char (&dst)[n]) throw(castor::exception::Exception) {
       unmarshallString(src, srcLen, dst, n);
     }
@@ -264,7 +264,7 @@ namespace aggregator {
      * @param src The source structure
      * @return The total length of the message (header + body)
      */
-    template< int n> static size_t marshallRcpJobRequest(char (&dst)[n],
+    template<int n> static size_t marshallRcpJobRequest(char (&dst)[n],
       const RcpJobRequest &src) throw(castor::exception::Exception) {
       return  marshallRcpJobRequest(dst, n, src);
     }
@@ -337,9 +337,9 @@ namespace aggregator {
      * @param src The source structure
      * @return The total length of the message (header + body)
      */
-    template< int n > static size_t marshallRtcpTapeRequest(char (&dst)[n],
+    template<int n> static size_t marshallRtcpTapeRequest(char (&dst)[n],
       const RtcpTapeRequest &src) throw(castor::exception::Exception) {
-      return marshallRtcpTapeRequest(dst, src);
+      return marshallRtcpTapeRequest(dst, n, src);
     }
 
     /**

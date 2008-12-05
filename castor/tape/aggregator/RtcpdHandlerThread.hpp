@@ -74,32 +74,37 @@ namespace aggregator {
     /**
      * Get the VID associated with the remote copy job from RTCPD.
      *
+     * @param cuuid The ccuid to be used for logging.
      * @param socket The socket of the connection with RTCPD.
      * @return The VID.
      */
-    std::string getVidFromRtcpd(castor::io::AbstractTCPSocket &socket,
-      const int netReadWriteTimeout) throw(castor::exception::Exception);
+    std::string getVidFromRtcpd(const Cuuid_t &cuuid,
+      castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout)
+      throw(castor::exception::Exception);
 
     /**
      * Receives an acknowledge message from RTCPD and returns the status code
      * embedded within the message.
      *
+     * @param cuuid The ccuid to be used for logging.
      * @param socket The socket of the connection with RTCPD.
      * @return The status code embedded within the message.
      */
-    uint32_t receiveRtcpdAcknowledge(castor::io::AbstractTCPSocket &socket,
-      const int netReadWriteTimeout) throw(castor::exception::Exception);
+    uint32_t receiveRtcpdAcknowledge(const Cuuid_t &cuuid,
+      castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout)
+      throw(castor::exception::Exception);
 
     /**
      * Receives an RTCPD tape request message from RTCPD.
      *
+     * @param cuuid The ccuid to be used for logging.
      * @param socket The socket of the connection with RTCPD.
      * @param request The request which will be filled with the contents of the
      * received message.
      */
-    void receiveRtcpTapeRequest(castor::io::AbstractTCPSocket &socket,
-      const int netReadWriteTimeout, const RtcpTapeRequest &request)
-      throw(castor::exception::Exception);
+    void receiveRtcpTapeRequest(const Cuuid_t &cuuid,
+      castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
+      RtcpTapeRequest &request) throw(castor::exception::Exception);
 
   }; // class RtcpdHandlerThread
 
