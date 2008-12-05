@@ -47,10 +47,10 @@ namespace aggregator {
   private:
 
     /**
-     * Function template to help in marshalling simple data types.  Please note
-     * that this function does not perform a host to network byte order
-     * conversion.  If such a conversion is necessary, then it must be done
-     * before calling this function.
+     * Function template to help marshall simple data types.  Please note that
+     * this function does not perform a host to network byte order conversion.
+     * If such a conversion is necessary, then it must be done before calling
+     * this function.
      */
     template<class T> static void marshall(T src, char * &dst)
       throw (castor::exception::Exception) {
@@ -68,10 +68,10 @@ namespace aggregator {
     }
 
     /**
-     * Function template to help in unmarshalling simple data types.  Please
-     * note that this function does not perform a network to host byte order
-     * conversion.  If such a conversion is necessary, then it must be done
-     * after this function has returned.
+     * Function template to help unmarshal simple data types.  Please note that
+     * this function does not perform a network to host byte order conversion.
+     * If such a conversion is necessary, then it must be done after this
+     * function has returned.
      */
     template<class T> static void unmarshall(const char * &src, size_t &srcLen,
       T &dst) throw(castor::exception::Exception) {
