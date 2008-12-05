@@ -30,8 +30,9 @@ int main(int argc, char** argv) {
     file_name_length,
     payloadSize;          // int -> 2 Bytes (or 4)
  
-  ALB0100Unmarshaller unmarshallObj;
-  const ALB0100Unmarshaller::Header *myHeader;
+  ALB0100Unmarshaller                       unmarshallObj;
+  const ALB0100Unmarshaller::Header        *myHeader;
+  const ALB0100Unmarshaller::ALB0100Header *myALB0100Header;
 
   //-------------------------------------------------------------------------------  
   buffLength =       BLOCK_SIZE; 	     // 256 KiB
@@ -59,12 +60,16 @@ int main(int argc, char** argv) {
       ex.getMessage() << "Failed to call 'unmarshallObj.unmarshallHeader'";
       throw ex;
     }
+    try{
+      myALB0100Header = dynamic_cast<const ALB0100Unmarshaller::ALB0100Header*>(myHeader);
+    }catch(castor::exception::Exception ex ) {
+      ex.getMessage() << "Failed to call 'unmarshallObj.unmarshallHeader'";
+      throw ex;
+    }
 
-    const ALB0100Unmarshaller::ALB0100Header &myALB0100Header = dynamic_cast<const ALB0100Unmarshaller::ALB0100Header&>(*myHeader);
-
-    if(myALB0100Header.file_block_count == 0){// is the first file block!! open a new file.
+    if(myALB0100Header->file_block_count == 0){// is the first file block!! open a new file.
       char str[alb0100::FILE_NAME_LEN+1];
-      strcpy(str, myALB0100Header.file_name);
+      strcpy(str, myALB0100Header->file_name);
       strcat(str, ".NEW");// Recreate the file in the same source location, whit the same name + '.NEW'
       fileout.open(str, ios::binary | ios::out); // open as text file
       if(!fileout) { // file couldn't be opened
@@ -73,9 +78,9 @@ int main(int argc, char** argv) {
       }  
     }
       
-    if(myALB0100Header.file_block_count+payloadSize >= myALB0100Header.file_size){// Is the last block of the unmarshalling file?
+    if(myALB0100Header->file_block_count+payloadSize >= myALB0100Header->file_size){// Is the last block of the unmarshalling file?
 	
-      fileout.write(buffer+payloadOffset, myALB0100Header.file_size - myALB0100Header.file_block_count);
+      fileout.write(buffer+payloadOffset, myALB0100Header->file_size - myALB0100Header->file_block_count);
       fileout.close();
       if(fileout.fail()){fileout.clear();} 
       first = true;	  

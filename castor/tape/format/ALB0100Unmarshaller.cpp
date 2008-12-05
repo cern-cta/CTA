@@ -8,6 +8,7 @@
 
 
 //==============================================================================
+
 const char *castor::tape::format::ALB0100Unmarshaller::headerName_V0[]={
   "VERSION_NUMBER",
   "HEADER_SIZE",
@@ -46,7 +47,7 @@ bool  m_errorList[castor::tape::format::HEADER_ELEMENTS]; /* true = 1; (default)
 const castor::tape::format::ALB0100Unmarshaller::Header* castor::tape::format::ALB0100Unmarshaller::unmarshallHeader(char* block, bool newFile){
 
   ALB0100Header header;
-  uint16_t j;
+  uint16_t      j;
 
   // Re-set errosList
   for(j=0; j<HEADER_ELEMENTS; j++)m_errorList[j]=false; // Fix header set before
@@ -90,8 +91,7 @@ const castor::tape::format::ALB0100Unmarshaller::Header* castor::tape::format::A
     if(!my_memcmp(block+VERSION_NUMBER_OFFSET, VERSION_NUMBER_LEN, m_header.version_number)){
       
       m_errorList[0]= true;// Differents IL format version! Rise an exception
-      throw "Version nummer mismatch";
-      //return &m_header;
+      throw "Version number mismatch";
     }
     j = 0;
     m_errorList[j++]= false; // Has the correct IL version
@@ -153,6 +153,10 @@ const castor::tape::format::ALB0100Unmarshaller::Header* castor::tape::format::A
     uint32_t check; 
     check = adler32(m_header.file_progressive_checksum, (Bytef*)(block+HEADER_SIZE),m_header.file_size-m_header.file_block_count);
     m_errorList[19]|=(m_header.file_checksum != check);
+    { //-----------------> visual returmm <------------------
+      std::cout<<"Filename: "<<m_header.file_name<<" Checksum: "<<m_header.file_checksum<<std::endl;
+    } //-----------------------------------------------------
+
   }
 
   // TEST progressive checksum
@@ -171,20 +175,19 @@ const castor::tape::format::ALB0100Unmarshaller::Header* castor::tape::format::A
     result|=m_errorList[j];
   } 
   if(result){
-    printHeader(m_header);
+    printHeader(m_header);//    Visual Return ------------------------
     
     castor::exception::Exception ex(EINVAL);
     ex.getMessage() << "One or more ERRORs foud during unmarshall. Check m_errorList[] for details.";
-
     throw ex;
-
-    // return &m_header ;
   }
   
   return &m_header;
 }
 
-
+//==============================================================================
+//                      Print Header
+//==============================================================================
 void castor::tape::format::ALB0100Unmarshaller::printHeader(ALB0100Header &header){
 
   using std::cout;
@@ -220,20 +223,5 @@ void castor::tape::format::ALB0100Unmarshaller::printHeader(ALB0100Header &heade
   cout<<" "<<m_errorList[23]<<"     "<<headerName_V0[23]<<"          "<<m_header.file_block_count <<endl;  
   cout<<" "<<m_errorList[24]<<"     "<<headerName_V0[24]<<"                 "<<m_header.file_name <<endl<<endl<<endl;
 }
-
-
-
-
-
-
-
-//==============================================================================
-//                      Unmarshaller_V1
-//==============================================================================
-
-/* implementation of the Unmarshaller for the next IL format......*/
-
-//==============================================================================
-
 
 

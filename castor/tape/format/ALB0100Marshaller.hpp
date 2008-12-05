@@ -24,8 +24,6 @@ public:
    */
   struct MigHeader: public Header {
 
-    //char        version_number[VERSION_NUMBER_LEN+1];               //  5 bytes
-    //uint16_t    header_size;                                        //  2 bytes original values 5 digits
     char        checksum_algorithm[alb0100::CHECKSUM_ALGORITHM_LEN+1];// 10 bytes original value 32 bit binary
 
     uint64_t    tape_mark_count;                                      //  8 bytes original value 32/64 bit binary
@@ -33,11 +31,11 @@ public:
     uint64_t    block_count;                                          //  8 bytes original value 32/64 bit binary      // NEED THE FIRST ONE!!!!
 
     char        stager_version[alb0100::STAGER_VERSION_LEN+1];        // 15 bytes
-    char       *stager_host;                                          //    TO BE TRUNCATE
+    const char *stager_host;                                          //    TO BE TRUNCATE
     char        drive_name[alb0100::DRIVE_NAME_LEN+1];                // 10 bytes
     char        drive_serial[alb0100::DRIVE_SERIAL_LEN+1];            // 20 bytes 
     char        drive_firmware[alb0100::DRIVE_FIRMWARE_LEN+1];        // 10 bytes
-    char       *drive_host;                                           //    TO BE TRUNCATE   
+    const char *drive_host;                                           //    TO BE TRUNCATE   
     char        vol_density[alb0100::VOL_DENSITY_LEN+1];              // 10 bytes
     char        vol_id[alb0100::VOL_ID_LEN+1];                        // 20 bytes
     char        vol_serial[alb0100::VOL_SERIAL_LEN+1];                // 20 bytes
@@ -49,26 +47,25 @@ public:
    * Structure used to iniatialize the header with all file specific data
    */
   struct FileHeader: public  Header {
-    uint64_t  file_size;
-    uint32_t  file_checksum;
-    char     *file_ns_host;
-    uint64_t  file_ns_id;
-    char     *file_name;
+    uint64_t    file_size;
+    uint32_t    file_checksum;
+    const char *file_ns_host;
+    uint64_t    file_ns_id;
+    char       *file_name;
   };
 
 
 private:
 
-  // private by default
-  char        m_headerStamp[HEADER_SIZE+1];  
-  uint64_t    m_block_count;                // 8 bytes 
-  uint64_t    m_file_block_count;           // 4 bytes original value 32 bit binary. Data file offset of the data in this block (0, 255, 510, ...)
-  uint32_t    m_block_size;
-  uint32_t    m_file_progressive_checksum;  // 4 bytes original value 32 bit binary
-  uint32_t    m_header_checksum;		  
-  uint32_t    m_payload_size;
-  uint64_t    m_file_size;
-  uint32_t    m_file_checksum;
+  char          m_headerStamp[HEADER_SIZE+1];  
+  uint64_t      m_block_count;                // 8 bytes 
+  uint64_t      m_file_block_count;           // 4 bytes original value 32 bit binary. Data file offset of the data in this block (0, 255, 510, ...)
+  uint32_t      m_block_size;
+  uint32_t      m_file_progressive_checksum;  // 4 bytes original value 32 bit binary
+  uint32_t      m_header_checksum;		  
+  uint32_t      m_payload_size;
+  uint64_t      m_file_size;
+  uint32_t      m_file_checksum;
     
 public:
 
@@ -91,7 +88,7 @@ public:
    *
    * @param data reference to a structure containind the file specific data.
    */
-  void startFile(Header &data);
+  void startFile(Header &data) throw (castor::exception::Exception);
 
   /**
    * Method that compute the required values block specific.
@@ -105,9 +102,9 @@ public:
 private:
 
   /** Internal method that visualize on the terminal the header content 
+   *
    *  @param block pointer to the memory area containing the data to be marshall.
    */
-
   void printHeader(char *buff);
 }; 
 

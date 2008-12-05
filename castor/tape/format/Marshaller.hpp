@@ -28,22 +28,34 @@ public:
     virtual ~Header() {}
   };
 
-
+  /**
+   * Destructor
+   */
   virtual~Marshaller();
 
 
 protected:
-  /* Those (3) methodes are on porpuse declared "virtual",
-   * to force the code structure of the futures IL tape format implementation.
+  /** Virtual method to enforce the implementation architecture of futures IL tape formats.
+   *
+   *  @param data  structure containing migration specific data.
    */
   virtual void startMigration(Header& data) = 0;
 
+  /** Virtual method to enforce the implementation architecture of futures IL tape formats.
+   *
+   *  @param data  structure containing file specific data.
+   */
   virtual void startFile(Header& data) = 0;
 
+  /** Virtual method to enforce the implementation architecture of futures IL tape formats.
+   *
+   *  @param block reference to a memory block containing the file data to marshall.
+   */
   virtual void marshall(char* block) = 0;
 
   /** 
    *  Internal method to format the values and store them at the correct location of the header.
+   *
    *  @param buff   pointer to the memory block containing the header and the dada;
    *  @param value  pointer to the array of char containing the value to be Marshall;
    *  @param length length of the char array;

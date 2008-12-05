@@ -29,40 +29,47 @@ public:
   };
 
 
- /** Return the version number and
-   * store all the values of the header.
+  /** 
+   * Return the version number and store all the values of the header.
    */
   char *readVersion(char *block);
 
-/**
-  * Function that verify that all parameter in the header of a block
-  * mach with its paylod.
-  * @param block pointer the the memory containing the block readed.
-  * @param variable set to TRUE if the block belong to a new file. 
-  */
+  /**
+   * Function that verify that all parameter in the header of a block
+   * mach with its paylod.
+   *
+   * @param block pointer the the memory containing the block readed.
+   * @param variable set to TRUE if the block belong to a new file. 
+   */
   virtual const Header *unmarshallHeader(char* block, bool newFile) = 0;
 
-/** 
-  * Destructor
-  */
+  /** 
+   * Destructor
+   */
   virtual~Unmarshaller();
 
 protected:
 
   Header m_fix_header;
 
- /** Template Function that convert a numeric string into a uintXX_t
-   * Return 1 if the string contain non digit or 
-   *          if the length of the string bring to an oveflow of the variable "num",
-   *          "num" is set to Zero.
-   * Return 0 if OK and the result in the reference "num".
+  /** 
+   * Template Function that convert a numeric string into a uintXX_t
+   * Return FALSE if the string contain non digit or 
+   *              if the length of the string bring to an oveflow of the variable "num",
+   *              "num" is set to Zero.
+   * Return TRUE  if OK and the result in the reference "num".
+   *
+   * @param str     pointer to the begin of the strint to check;
+   * @param length  length of the string;
+   * @param num     return value.
    */ 
   template<typename T> 
   bool my_atoi(const char *str, const size_t &length, T &num);
-
- /** Template Function that Compare the value pointed by "offset" long "length"
+  
+  /** Template Function that Compare the value pointed by "offset" long "length"
    * with the value of "marterValue".
-   * Return:     THRUE if equels.
+   * Return:     TRUE if equels.
+   *
    * @param offset      pointer to the begin of the strint to check;
    * @param length      length of the string;
    * @param masterValue master value to compare with.
@@ -70,9 +77,11 @@ protected:
   template<typename T> 
   bool my_memcmp(const char *offset, const size_t &length, T &masterValue);
 
- /** Template Function that Copy the value pointed by "offset" long "length" minus tha padding
+  /** 
+   * Template Function that Copy the value pointed by "offset" long "length" minus tha padding
    * with the value ofin the variable referencec by "returnValue".
-   * Return:     THRUE if OK.
+   * Return:     TRUE if OK. 
+   *
    * @param offset pointer to the begin of the strint to check;
    * @param length length of the string;
    * @param returnValue reference to the destination variable.

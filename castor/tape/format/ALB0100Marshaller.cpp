@@ -20,8 +20,16 @@ castor::tape::format::ALB0100Marshaller::~ALB0100Marshaller() {
 void castor::tape::format::ALB0100Marshaller::startMigration(Header &data)
 throw(castor::exception::Exception) {
     
-  char str[31];
-  MigHeader *mig = dynamic_cast<MigHeader*>(&data);
+  char       str[31];
+  MigHeader *mig;
+
+  try{
+    mig = dynamic_cast<MigHeader*>(&data);
+  }catch(std::bad_cast e){
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage()<<e.what() << "Failed to dynamic cast header to MigHeader";
+    throw ex;
+  }
 
   if(mig == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -29,7 +37,7 @@ throw(castor::exception::Exception) {
     throw ex;
   }
 
-  memset(m_headerStamp, 'x', 1024);  // for visual effect!!!! <------------------------------
+  memset(m_headerStamp, 'x', HEADER_SIZE);  // for visual effect!!!! <------------------------------
     
  
   m_block_count = mig->block_count;  // save the block counter in a variable, NOT in the header!    
@@ -61,26 +69,34 @@ throw(castor::exception::Exception) {
 //------------------------------------------------------------------------------------
 //  startFile
 //------------------------------------------------------------------------------------
-void castor::tape::format::ALB0100Marshaller::startFile(Header &data){
+void castor::tape::format::ALB0100Marshaller::startFile(Header &data)
+throw(castor::exception::Exception) {
     
-  char str[31];
-  // Dynamic cast to the current header structure version
-  FileHeader &file = dynamic_cast<FileHeader&>(data);
+  char        str[31];
+  FileHeader *file;
 
+  // Dynamic cast to the current header structure version
+  try{
+   file = dynamic_cast<FileHeader*>(&data);
+  }catch(std::bad_cast e){
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage()<<e.what() << "Failed to dynamic cast header to FileHeader";
+    throw ex;
+  }
   //Reset the progressive checksum
   m_file_progressive_checksum = adler32(0L,Z_NULL,0);
   m_file_block_count = 0;
     
-  m_file_size = file.file_size;  // Part of the object status
-  sprintf(str,"%lu", file.file_size);
-  parseCharData(m_headerStamp, str              , alb0100::FILE_SIZE_LEN    , alb0100::FILE_SIZE_OFFSET    , '0');
-  m_file_checksum = file.file_checksum;
-  sprintf(str,"%u", file.file_checksum);
-  parseCharData(m_headerStamp, str              , alb0100::FILE_CHECKSUM_LEN, alb0100::FILE_CHECKSUM_OFFSET, '0');
-  parseCharData(m_headerStamp, file.file_ns_host, alb0100::FILE_NS_HOST_LEN , alb0100::FILE_NS_HOST_OFFSET , ' ');
-  sprintf(str,"%lu", file.file_ns_id);
-  parseCharData(m_headerStamp, str              , alb0100::FILE_NS_ID_LEN   , alb0100::FILE_NS_ID_OFFSET   , '0');
-  parseCharData(m_headerStamp, file.file_name   , alb0100::FILE_NAME_LEN    , alb0100::FILE_NAME_OFFSET    , ' ');
+  m_file_size = file->file_size;  // Part of the object status
+  sprintf(str,"%lu", file->file_size);
+  parseCharData(m_headerStamp, str               , alb0100::FILE_SIZE_LEN    , alb0100::FILE_SIZE_OFFSET    , '0');
+  m_file_checksum = file->file_checksum;
+  sprintf(str,"%u", file->file_checksum);
+  parseCharData(m_headerStamp, str               , alb0100::FILE_CHECKSUM_LEN, alb0100::FILE_CHECKSUM_OFFSET, '0');
+  parseCharData(m_headerStamp, file->file_ns_host, alb0100::FILE_NS_HOST_LEN , alb0100::FILE_NS_HOST_OFFSET , ' ');
+  sprintf(str,"%lu", file->file_ns_id);
+  parseCharData(m_headerStamp, str               , alb0100::FILE_NS_ID_LEN   , alb0100::FILE_NS_ID_OFFSET   , '0');
+  parseCharData(m_headerStamp, file->file_name   , alb0100::FILE_NAME_LEN    , alb0100::FILE_NAME_OFFSET    , ' ');
     
 }
 
@@ -89,7 +105,7 @@ void castor::tape::format::ALB0100Marshaller::startFile(Header &data){
 //------------------------------------------------------------------------------------
 void castor::tape::format::ALB0100Marshaller::marshall(char* block){
 
-  char str[21];
+  char     str[21];
   uint64_t timestamp;
        
   sprintf(str,"%lu", m_block_count);
@@ -104,8 +120,13 @@ void castor::tape::format::ALB0100Marshaller::marshall(char* block){
   // Test for the last block of the file 
   if(m_file_block_count >=  m_file_size){// Check the file ckecksum is correct
     uint32_t temp_checksum  = adler32( m_file_progressive_checksum, (Bytef*)(block+HEADER_SIZE), m_payload_size-(m_file_block_count- m_file_size));
-    if(m_file_checksum != temp_checksum){
-      // RISE AN EXCERPTION
+  { //----------------------
+    char str[40];
+    memcpy(str, m_headerStamp+alb0100::FILE_NAME_OFFSET ,40 );
+    str[40]='\0';
+    std::cout<<"Filename: "<<str <<" Checksum: "<< temp_checksum <<std::endl;
+   }//----------------------
+   if(m_file_checksum != temp_checksum){// RISE AN EXCERPTION
       castor::exception::Exception ex(EINVAL);
       ex.getMessage() << "File checksum mistmach.";
       throw ex;
