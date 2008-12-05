@@ -284,40 +284,22 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::handleJobSubmission(
       AGGREGATOR_JOB_MESSAGE_BODY_LENGTH_TOO_SHORT, 3, params);
   }
 
-  uint32_t   ui32          = 0; // Used to for casts
-  u_signed64 tapeRequestID = 0;
-  uint32_t   clientPort    = 0;
-  uint32_t   clientEuid    = 0;
-  uint32_t   clientEgid    = 0;
-  char       clientHost[CA_MAXHOSTNAMELEN+1];
-  char       dgn[CA_MAXDGNLEN+1];
-  char       driveName[CA_MAXUNMLEN+1];
-  char       clientUsername[CA_MAXUSRNAMELEN+1];
-
-  const char *p      = body;
-  size_t     bodyLen = len;
-
-  Marshaller::unmarshallUint32(p, bodyLen, ui32);
-  tapeRequestID = (u_signed64)ui32; // Cast from 32-bits to 64-bits
-  Marshaller::unmarshallUint32(p, bodyLen, clientPort);
-  Marshaller::unmarshallUint32(p, bodyLen, clientEuid);
-  Marshaller::unmarshallUint32(p, bodyLen, clientEgid);
-  Marshaller::unmarshallString(p, bodyLen, clientHost, sizeof(clientHost));
-  Marshaller::unmarshallString(p, bodyLen, dgn, sizeof(dgn));
-  Marshaller::unmarshallString(p, bodyLen, driveName, sizeof(driveName));
-  Marshaller::unmarshallString(p, bodyLen, clientUsername,
-    sizeof(clientUsername));
+  // Unmarshall the message body
+  RcpJobRequest request;
+  const char *p           = body;
+  size_t     remainingLen = len;
+  Marshaller::unmarshallRcpJobRequest(p, remainingLen, request);
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("tapeRequestID" , tapeRequestID ),
-      castor::dlf::Param("clientPort"    , clientPort    ),
-      castor::dlf::Param("clientEuid"    , clientEuid    ),
-      castor::dlf::Param("clientEgid"    , clientEgid    ),
-      castor::dlf::Param("clientHost"    , clientHost    ),
-      castor::dlf::Param("dgn"           , dgn           ),
-      castor::dlf::Param("driveName"     , driveName     ),
-      castor::dlf::Param("clientUsername", clientUsername)};
+      castor::dlf::Param("tapeRequestID"  , request.tapeRequestID  ),
+      castor::dlf::Param("clientPort"     , request.clientPort     ),
+      castor::dlf::Param("clientEuid"     , request.clientEuid     ),
+      castor::dlf::Param("clientEgid"     , request.clientEgid     ),
+      castor::dlf::Param("clientHost"     , request.clientHost     ),
+      castor::dlf::Param("deviceGroupName", request.deviceGroupName),
+      castor::dlf::Param("driveName"      , request.driveName      ),
+      castor::dlf::Param("clientUserName" , request.clientUserName )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_HANDLE_JOB_MESSAGE, 8, params);
   }
@@ -332,18 +314,18 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::handleJobSubmission(
   // being a proxy for RTCPClientD
   try {
     RcpJobSubmitter::submit(
-      "localhost",       // host
-      RTCOPY_PORT,       // port
-      NETRWTIMEOUT,     // netReadWriteTimeout
-      "RTCPD",           // remoteCopyType
-      tapeRequestID,
-      clientUsername,
-      "localhost",       // clientHost
-      m_rtcpdListenPort, // clientPort
-      clientEuid,
-      clientEgid,
-      dgn,
-      driveName);
+      "localhost",            // host
+      RTCOPY_PORT,            // port
+      NETRWTIMEOUT,           // netReadWriteTimeout
+      "RTCPD",                // remoteCopyType
+      request.tapeRequestID,
+      request.clientUserName,
+      "localhost",            // clientHost
+      m_rtcpdListenPort,      // clientPort
+      request.clientEuid,
+      request.clientEgid,
+      request.deviceGroupName,
+      request.driveName);
   } catch(castor::tape::aggregator::exception::RTCPDErrorMessage &ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("Function", __PRETTY_FUNCTION__),

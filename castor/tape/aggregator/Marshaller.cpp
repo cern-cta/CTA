@@ -263,7 +263,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobRequest(
     4*sizeof(uint32_t)              +
     strlen(request.clientHost)      +
     strlen(request.deviceGroupName) +
-    strlen(request.tapeDriveName)   +
+    strlen(request.driveName)       +
     strlen(request.clientUserName)  +
     4; // 4 = the number of string termination characters
 
@@ -293,7 +293,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobRequest(
   marshallUint32(request.clientEgid     , p);
   marshallString(request.clientHost     , p);
   marshallString(request.deviceGroupName, p);
-  marshallString(request.tapeDriveName  , p);
+  marshallString(request.driveName      , p);
   marshallString(request.clientUserName , p);
 
   // Calculate the number of bytes actually marshalled
@@ -313,6 +313,25 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobRequest(
   }
 
   return totalLen;
+}
+
+
+//-----------------------------------------------------------------------------
+// unmarshallRcpJobRequest
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::Marshaller::unmarshallRcpJobRequest(
+  const char * &src, size_t &srcLen, RcpJobRequest &dst)
+  throw(castor::exception::Exception) {
+
+  unmarshallUint32(src, srcLen, dst.tapeRequestID);
+  unmarshallUint32(src, srcLen, dst.clientPort);
+  unmarshallUint32(src, srcLen, dst.clientEuid);
+  unmarshallUint32(src, srcLen, dst.clientEgid);
+  unmarshallString(src, srcLen, dst.clientHost, sizeof(dst.clientHost));
+  unmarshallString(src, srcLen, dst.deviceGroupName,
+    sizeof(dst.deviceGroupName));
+  unmarshallString(src, srcLen, dst.driveName, sizeof(dst.driveName));
+  unmarshallString(src, srcLen, dst.clientUserName, sizeof(dst.clientUserName));
 }
 
 

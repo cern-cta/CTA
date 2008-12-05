@@ -44,7 +44,7 @@ namespace aggregator {
     uint32_t clientEgid;
     char clientHost[CA_MAXHOSTNAMELEN+1];
     char deviceGroupName[CA_MAXDGNLEN+1];
-    char tapeDriveName[CA_MAXUNMLEN+1];
+    char driveName[CA_MAXUNMLEN+1];
     char clientUserName[CA_MAXUSRNAMELEN+1];
   }; // struct RtcpTapeRequest
 

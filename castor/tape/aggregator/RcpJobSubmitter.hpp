@@ -65,7 +65,7 @@ namespace aggregator {
      * @param clientEuid client user ID
      * @param clientEgid client group ID
      * @param deviceGroupName device group name
-     * @param tapeDriveName tape drive name
+     * @param driveName tape drive name
      */
     static void submit(
       const std::string  &host,
@@ -79,7 +79,7 @@ namespace aggregator {
       const int           clientEuid,
       const int           clientEgid,
       const std::string  &deviceGroupName,
-      const std::string  &tapeDriveName)
+      const std::string  &driveName)
       throw (castor::tape::aggregator::exception::RTCPDErrorMessage,
         castor::exception::Exception);    
 

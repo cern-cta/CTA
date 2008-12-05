@@ -159,8 +159,9 @@ namespace aggregator {
       const RcpJobRequest &request) throw (castor::exception::Exception);
 
     /**
-     * Unmarshalls the message body of an RCP job reply from the specified
-     * source buffer into the specified destination RCP job reply structure.
+     * Unmarshalls the message body of an RCP job submission request from the
+     * specified source buffer into the specified destination request
+     * structure.
      *
      * @param src in/out parameter, before invocation points to the source
      * buffer where the message body should be unmarshalled from and on return
@@ -169,7 +170,23 @@ namespace aggregator {
      * @param srcLen in/our parameter, before invocation is the length of the
      * source buffer from where the message body should unmarshalled and on
      * return is the number of bytes remaining in the source buffer
-     * @param dst the destination RCP job reply structure
+     * @param dst the destination request structure
+     */
+    static void unmarshallRcpJobRequest(const char * &src, size_t &srcLen,
+      RcpJobRequest &dst) throw(castor::exception::Exception);
+
+    /**
+     * Unmarshalls the message body of an RCP job reply from the specified
+     * source buffer into the specified destination reply structure.
+     *
+     * @param src in/out parameter, before invocation points to the source
+     * buffer where the message body should be unmarshalled from and on return
+     * points to the byte in the source buffer immediately after the
+     * unmarshalled message body
+     * @param srcLen in/our parameter, before invocation is the length of the
+     * source buffer from where the message body should unmarshalled and on
+     * return is the number of bytes remaining in the source buffer
+     * @param dst the destination reply structure
      */
     static void unmarshallRcpJobReply(const char * &src, size_t &srcLen,
       RcpJobReply &dst) throw(castor::exception::Exception);
@@ -203,7 +220,7 @@ namespace aggregator {
 
     /**
      * Unmarshalls the message body of a tape request from the specified source
-     * buffer into the specified destination tape request structure.
+     * buffer into the specified destination request structure.
      *
      * @param src in/out parameter, before invocation points to the source
      * buffer where the message body should be unmarshalled from and on return
@@ -212,7 +229,7 @@ namespace aggregator {
      * @param srcLen in/our parameter, before invocation is the length of the
      * source buffer from where the message body should unmarshalled and on
      * return is the number of bytes remaining in the source buffer
-     * @param dst the destination tape request structure
+     * @param dst the destination request structure
      */
     static void unmarshallRtcpTapeRequest(const char * &src, size_t &srcLen,
       RtcpTapeRequest &request) throw(castor::exception::Exception);

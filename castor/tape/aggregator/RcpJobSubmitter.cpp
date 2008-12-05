@@ -58,7 +58,7 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   const int           clientEuid,
   const int           clientEgid,
   const std::string  &deviceGroupName,
-  const std::string  &tapeDriveName)
+  const std::string  &driveName)
   throw (castor::tape::aggregator::exception::RTCPDErrorMessage,
     castor::exception::Exception) {
 
@@ -85,13 +85,13 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
 
     throw ex;
   }
-  if(tapeDriveName.length() > sizeof(request.tapeDriveName) - 1) {
+  if(driveName.length() > sizeof(request.driveName) - 1) {
     castor::exception::Exception ex(EINVAL);
 
     ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Length of tapeDriveName string is too large: "
-      "Maximum: " << (sizeof(request.tapeDriveName) - 1) << " Actual: "
-      << tapeDriveName.length();
+      << ": Length of driveName string is too large: "
+      "Maximum: " << (sizeof(request.driveName) - 1) << " Actual: "
+      << driveName.length();
 
     throw ex;
   }
@@ -114,7 +114,7 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   request.clientEgid    = clientEgid;
   strcpy(request.clientHost     , clientHost.c_str());
   strcpy(request.deviceGroupName, deviceGroupName.c_str());
-  strcpy(request.tapeDriveName  , tapeDriveName.c_str());
+  strcpy(request.driveName      , driveName.c_str());
   strcpy(request.clientUserName , clientUserName.c_str());
 
   // Marshall the job submission request message
