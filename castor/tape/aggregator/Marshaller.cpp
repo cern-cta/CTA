@@ -40,19 +40,17 @@
 void castor::tape::aggregator::Marshaller::marshallUint8(uint8_t src,
   char * &dst) throw (castor::exception::Exception) {
 
-  if(dst == NULL) {
-    castor::exception::Exception ex(EINVAL);
+  marshall(src, dst);
+}
 
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Pointer to destination buffer is NULL";
-    throw ex;
-  }
 
-  src = htonl(src);
+//------------------------------------------------------------------------------
+// unmarshallUint8
+//------------------------------------------------------------------------------
+void castor::tape::aggregator::Marshaller::unmarshallUint8(const char * &src,
+  size_t &srcLen, uint8_t &dst) throw(castor::exception::Exception) {
 
-  memcpy(dst, &src, sizeof(src));
-
-  dst += sizeof(src);
+  unmarshall(src, srcLen, dst);
 }
 
 
@@ -62,19 +60,17 @@ void castor::tape::aggregator::Marshaller::marshallUint8(uint8_t src,
 void castor::tape::aggregator::Marshaller::marshallUint16(uint16_t src,
   char * &dst) throw (castor::exception::Exception) {
 
-  if(dst == NULL) {
-    castor::exception::Exception ex(EINVAL);
+  marshall(src, dst);
+}
 
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Pointer to destination buffer is NULL";
-    throw ex;
-  }
 
-  src = htonl(src);
+//------------------------------------------------------------------------------
+// unmarshallUint16
+//------------------------------------------------------------------------------
+void castor::tape::aggregator::Marshaller::unmarshallUint16(const char * &src,
+  size_t &srcLen, uint16_t &dst) throw(castor::exception::Exception) {
 
-  memcpy(dst, &src, sizeof(src));
-
-  dst += sizeof(src);
+  unmarshall(src, srcLen, dst);
 }
 
 
@@ -84,50 +80,17 @@ void castor::tape::aggregator::Marshaller::marshallUint16(uint16_t src,
 void castor::tape::aggregator::Marshaller::marshallUint32(uint32_t src,
   char * &dst) throw (castor::exception::Exception) {
 
-  if(dst == NULL) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Pointer to destination buffer is NULL";
-    throw ex;
-  }
-
-  src = htonl(src);
-
-  memcpy(dst, &src, sizeof(src));
-
-  dst += sizeof(src);
+  marshall(src, dst);
 }
 
 
 //------------------------------------------------------------------------------
-// unmarshallInt32
+// unmarshallUint32
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::Marshaller::unmarshallUint32(const char * &src,
   size_t &srcLen, uint32_t &dst) throw(castor::exception::Exception) {
 
-  if(src == NULL) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Pointer to source buffer is NULL";
-    throw ex;
-  }
-
-  if(srcLen < sizeof(dst)) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Source buffer length is too small: Expected length: "
-      << sizeof(dst) << ": Actual length: " << srcLen;
-    throw ex;
-  }
-
-  memcpy(&dst, src, sizeof(dst));
-  dst = ntohl(dst);
-
-  src    += sizeof(dst);
-  srcLen -= sizeof(dst);
+  unmarshall(src, srcLen, dst);
 }
 
 
@@ -540,10 +503,43 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpTapeRequest(char *dst,
 void castor::tape::aggregator::Marshaller::unmarshallRtcpTapeRequest(
   const char * &src, size_t &srcLen, RtcpTapeRequest &request)
   throw(castor::exception::Exception) {
-  castor::exception::Internal ie;
 
-  ie.getMessage() << __PRETTY_FUNCTION__
-    << ": Not implemented";
-
-  throw ie;
+/*
+  unmarshallString(src, srcLen, request.vid);
+  unmarshallString(src, srcLen, request.vsn);
+  unmarshallString(src, srcLen, request.label);
+  unmarshallString(src, srcLen, request.devtype);
+  unmarshallString(src, srcLen, request.density);
+  unmarshallString(src, srcLen, request.unit);
+  unmarshallUint32(src, srcLen, request.VolReqID);
+  unmarshallUint32(src, srcLen, request.jobID);
+  unmarshallUint32(src, srcLen, request.mode);
+  unmarshallUint32(src, srcLen, request.start_file);
+  unmarshallUint32(src, srcLen, request.end_file);
+  unmarshallUint32(src, srcLen, request.side);
+  unmarshallUint32(src, srcLen, request.tprc);
+  unmarshallUint32(src, srcLen, request.TStartRequest);
+  unmarshallUint32(src, srcLen, request.TEndRequest);
+  unmarshallUint32(src, srcLen, request.TStartRtcpd);
+  unmarshallUint32(src, srcLen, request.TStartMount);
+  unmarshallUint32(src, srcLen, request.TEndMount);
+  unmarshallUint32(src, srcLen, request.TStartUnmount);
+  unmarshallUint32(src, srcLen, request.TEndUnmount);
+  unmarshallUint32(src, srcLen, request.rtcpReqId.time_low);
+  unmarshallUint16(src, srcLen, request.rtcpReqId.time_mid);
+  unmarshallUint16(src, srcLen, request.rtcpReqId.time_hi_and_version);
+  unmarshallUint8(src, srcLen, request.rtcpReqId.clock_seq_hi_and_reserved);
+  unmarshallUint8(src, srcLen, request.rtcpReqId.clock_seq_low);
+  unmarshallUint8(src, srcLen, request.rtcpReqId.node[0]);
+  unmarshallUint8(src, srcLen, request.rtcpReqId.node[1]);
+  unmarshallUint8(src, srcLen, request.rtcpReqId.node[2]);
+  unmarshallUint8(src, srcLen, request.rtcpReqId.node[3]);
+  unmarshallUint8(src, srcLen, request.rtcpReqId.node[4]);
+  unmarshallUint8(src, srcLen, request.rtcpReqId.node[5]);
+  unmarshallString(src, srcLen, request.err.errmsgtxt);
+  unmarshallUint32(src, srcLen, request.err.severity);
+  unmarshallUint32(src, srcLen, request.err.errorcode);
+  unmarshallUint32(src, srcLen, request.err.max_tpretry);
+  unmarshallUint32(src, srcLen, request.err.max_cpretry);
+*/
 }

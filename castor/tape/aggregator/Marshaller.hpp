@@ -31,6 +31,7 @@
 #include "castor/tape/aggregator/RcpJobRequest.hpp"
 #include "castor/tape/aggregator/RtcpTapeRequest.hpp"
 
+#include <errno.h>
 #include <stdint.h>
 #include <string>
 
@@ -43,6 +44,51 @@ namespace aggregator {
    * Collection of static methods to marshall / unmarshall network messages.
    */
   class Marshaller {
+  private:
+
+    template<class T> static void marshall(T src, char * &dst)
+      throw (castor::exception::Exception) {
+
+      if(dst == NULL) {
+        castor::exception::Exception ex(EINVAL);
+
+        ex.getMessage() << ": Pointer to destination buffer is NULL";
+        throw ex;
+      }
+
+      src = htonl(src);
+
+      memcpy(dst, &src, sizeof(src));
+
+      dst += sizeof(src);
+    }
+
+    template<class T> static void unmarshall(const char * &src, size_t &srcLen,
+      T &dst) throw(castor::exception::Exception) {
+
+      if(src == NULL) {
+        castor::exception::Exception ex(EINVAL);
+
+        ex.getMessage() << ": Pointer to source buffer is NULL";
+        throw ex;
+      }
+
+      if(srcLen < sizeof(dst)) {
+        castor::exception::Exception ex(EINVAL);
+
+        ex.getMessage() << __PRETTY_FUNCTION__
+          << ": Source buffer length is too small: Expected length: "
+          << sizeof(dst) << ": Actual length: " << srcLen;
+        throw ex;
+      }
+
+      memcpy(&dst, src, sizeof(dst));
+      dst = ntohl(dst);
+
+      src    += sizeof(dst);
+      srcLen -= sizeof(dst);
+    }
+
   public:
 
     /**
@@ -59,6 +105,22 @@ namespace aggregator {
       throw(castor::exception::Exception);
 
     /**
+     * Unmarshalls an unsigned 8-bit integer from the specified source buffer
+     * into the specified destination unsigned 8-bit integer.
+     *
+     * @param src in/out parameter, before invocation points to the source
+     * buffer where the unsigned 8-bit integer should be unmarshalled from and
+     * on return points to the byte in the source buffer immediately after the
+     * unmarshalled unsigned 8-bit integer
+     * @param srcLen in/our parameter, before invocation is the length of the
+     * source buffer from where the unsigned 8-bit integer should unmarshalled
+     * and on return is the number of bytes remaining in the source buffer
+     * @param dst the destination unsigned 8-bit integer
+     */
+    static void unmarshallUint8(const char * &src, size_t &srcLen,
+      uint8_t &dst) throw(castor::exception::Exception);
+
+    /**
      * Marshalls the specified unsigned 16-bit integer into the specified
      * destination buffer.
      *
@@ -70,6 +132,22 @@ namespace aggregator {
      */
     static void marshallUint16(uint16_t src, char * &dst)
       throw(castor::exception::Exception);
+
+    /**
+     * Unmarshalls an unsigned 16-bit integer from the specified source buffer
+     * into the specified destination unsigned 16-bit integer.
+     *
+     * @param src in/out parameter, before invocation points to the source
+     * buffer where the unsigned 16-bit integer should be unmarshalled from and
+     * on return points to the byte in the source buffer immediately after the
+     * unmarshalled unsigned 16-bit integer
+     * @param srcLen in/our parameter, before invocation is the length of the
+     * source buffer from where the unsigned 16-bit integer should unmarshalled
+     * and on return is the number of bytes remaining in the source buffer
+     * @param dst the destination unsigned 16-bit integer
+     */
+    static void unmarshallUint16(const char * &src, size_t &srcLen,
+      uint16_t &dst) throw(castor::exception::Exception);
 
     /**
      * Marshalls the specified unsigned 32-bit integer into the specified
@@ -86,7 +164,7 @@ namespace aggregator {
 
     /**
      * Unmarshalls an unsigned 32-bit integer from the specified source buffer
-     * into the specified* destination unsigned 32-bit integer.
+     * into the specified destination unsigned 32-bit integer.
      *
      * @param src in/out parameter, before invocation points to the source
      * buffer where the unsigned 32-bit integer should be unmarshalled from and
