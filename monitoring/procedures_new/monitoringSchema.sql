@@ -24,316 +24,6 @@
  * @author Theodoros Rekatsinas, 
  *****************************************************************************/
 /* Create Patritioned Tables*/
-
-CREATE TABLE svcclass_map (svcclass varchar2(20));
-DECLARE
-cluster_n varchar2(20) :='&1' ;
-begin
-
-if (cluster_n = 'c2alice') then
-	begin
-		insert into svcclass_map
-		(svcclass)
-		values
-		('alimdc');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('default');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('spare');
-		commit;
-	end;
-elsif (cluster_n = 'c2atlas') then
-	begin
-		insert into svcclass_map
-		(svcclass)
-		values
-		('atlasgroupdisk');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('atlasuserdisk');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('atlcal');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('atldata');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('atlprod');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('atlspecial');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('atlt3');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('default');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('spare');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('t0atlas');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('t0merge');
-		commit;
-	end;
-elsif (cluster_n = 'c2cernt3') then
-	begin
-		insert into svcclass_map
-		(svcclass)
-		values	
-		('atlaslocalgroupdisk');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('cmscaft2');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('default');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('spare');
-		commit;
-		end;
-elsif (cluster_n = 'c2cms') then
-		begin
-		insert into svcclass_map
-		(svcclass)
-		values
-		('cmscaf');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('cmscafuser');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('cmsprod');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('cmsprodlogs');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('cmst3');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('default');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('spare');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('t0export');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('t0input');
-		insert into svcclass_map
-		(svcclass)
-		values	
-		('t0test');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('t1transfer');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('wan');
-		commit;
-	end;
-elsif (cluster_n = 'c2dev') then	
-	begin
-		insert into svcclass_map
-		(svcclass)
-		values
-		('server');
-		commit;
-	end;
-elsif (cluster_n = 'c2itdc') then
-	begin	
-		insert into svcclass_map
-		(svcclass)
-		values
-		('default');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('diskonly');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('itdc');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('repack');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('replicate');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('retire');
-		commit;
-	end;
-elsif (cluster_n = 'c2lhcb') then
-	begin
-		insert into svcclass_map
-		(svcclass)
-		values
-		('default');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('lhcbdata');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('lhcbfailover');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('lhcbmdst');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('lhcbraw');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('lhcbuser');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('lhcbt3');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('lhcbrdst');
-		commit;
-	end;
-	elsif (cluster_n = 'c2pps') then
-	begin
-		insert into svcclass_map
-		(svcclass)
-		values
-		('dbserver');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('default');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('repack');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('spare');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('srm2_d1t0');
-		commit;
-		end;	
-elsif (	cluster_n = 'c2public') then
-		begin
-		insert into svcclass_map
-		(svcclass)
-		values
-		('cdr');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('compass004d');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('compasscdr');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('compasschunks');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('compassmdst');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('default');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('dteam');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('na48');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('na48goldcmp');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('na48raw');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('na61');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('repack');
-		insert into svcclass_map
-		(svcclass)
-		values
-		('spare');
-		commit;
-	end;
-	elsif (cluster_n = 'c2repack') then
-	begin
-		insert into svcclass_map
-		(svcclass)
-		values
-		('default');
-	commit;
-	end;
-	else 
-		begin
-		dbms_output.put_line('Please Configure SvcClass_Map Table Manually');
-		dbms_output.put_line('cluster_n = (c2atlas, c2cernt3 , c2cms, c2dev, c2itdc, c2lhcb, c2pps, c2public, c2repack)');
-		end;
-	end if;
-END;
-/
 DECLARE
 	ts_var varchar2(15);
 	temp varchar2(100);
@@ -952,10 +642,24 @@ BEGIN
 DBMS_SCHEDULER.CREATE_JOB (
 JOB_NAME        => 'cleanJob',
 JOB_TYPE        => 'PLSQL_BLOCK',
-JOB_ACTION      => 'BEGIN
+JOB_ACTION      => 'declare
+                    sql_txt VARCHAR2(50);
+                    BEGIN
+                    sql_txt := ''truncate table err_requests'';               
+                    execute immediate sql_txt;
+		    sql_txt := ''truncate table err_diskcopy'';               
+                    execute immediate sql_txt;
+		    sql_txt := ''truncate table err_errors'';               
+                    execute immediate sql_txt;
+		    sql_txt := ''truncate table err_taperecall'';               
+                    execute immediate sql_txt;
+		    sql_txt := ''truncate table err_migration'';               
+                    execute immediate sql_txt;
+		    sql_txt := ''truncate table err_latency'';               
+                    execute immediate sql_txt;
 			newPartitions;
 			cleanOldData;
-			END;',
+		    END;',
 START_DATE      => TRUNC(SYSDATE) + 1,
 REPEAT_INTERVAL => 'FREQ=DAILY',
 ENABLED         => TRUE,
@@ -964,7 +668,11 @@ COMMENTS        => 'daily data deletion');
 DBMS_SCHEDULER.CREATE_JOB (
 JOB_NAME        => 'populateJob',
 JOB_TYPE        => 'PLSQL_BLOCK',
-JOB_ACTION      => 'BEGIN
+JOB_ACTION      => 'declare
+                    sql_txt VARCHAR2(50);
+                    BEGIN
+                    sql_txt := ''truncate table err_requests'';               
+                    execute immediate sql_txt;
 			reqs;
 			diskcopyproc;
 			internaldiskcopyproc;
@@ -973,7 +681,7 @@ JOB_ACTION      => 'BEGIN
 			errorproc;
 			TotalLat;
 			GCFilesProc;
-			END;',
+		    END;',
 START_DATE      => SYSDATE + 5/1440,
 REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
 ENABLED         => TRUE,
