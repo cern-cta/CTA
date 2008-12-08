@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.25 $ $Date: 2008/11/28 14:40:03 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.26 $ $Date: 2008/12/08 13:47:05 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #define NullParameter
@@ -35,6 +35,7 @@ install: $(DESTDIR)dest/file                    @@\
 #define InstallLink(tofile,fromfile,owner,group,mode,dest) \
 $(DESTDIR)dest/tofile: fromfile	        @@\
 	@if [ "`whoami`" = "root" ]; then install -d $(DESTDIR)dest -o owner -g group -m 0755; else install -d $(DESTDIR)dest -m 0755; fi @@\
+	RemoveFiles($@)                 @@\
 	ln -s $? $@                     @@\
 	@if [ "`whoami`" = "root" ]; then chown owner:group $@; chmod mode $@; fi @@\
 install: $(DESTDIR)dest/tofile
