@@ -18,19 +18,6 @@ updInputFile=""
 localDir=""
 dirCastor=outputDir+"/tmpClientTest"+ticket+"/"
 
-def makeBigFile(fileStart):
-    size=0
-    fout=open("/tmp/bigFile"+ticket,"wb")
-    fin=open(fileStart,"r")
-    while size < 2000 :
-        outBuf=fin.read()
-        size+=len(outBuf)
-        fout.write(outBuf)
-        fin.seek(0)
-    fin.close()
-    fout.close()
-    return "/tmp/bigFile"+ticket
-
 def checkSvcClass(output, svcClass):
     if output.find("Using "+svcClass) != -1 or output.find("Opt SVCCLASS="+svcClass) != -1:
         return True
@@ -1084,7 +1071,7 @@ class StagerDiskOnlyCase(unittest.TestCase):
 
 class StagerExtraTestCase(unittest.TestCase):
     def putDoneAndLongFile(self):
-        fileBig=makeBigFile(inputFile)
+        fileBig=UtilityForCastorTest.getBigFile(100, ticket)  # 100 MB file
 
         cmd1=["stager_put -M "+dirCastor+"fileClientPutDoneLongFile"+ticket,"rfcp "+fileBig+" "+dirCastor+"fileClientPutDoneLongFile"+ticket,"stager_rm -M "+dirCastor+"fileClientPutDoneLongFile"+ticket,"stager_putdone -M "+dirCastor+"fileClientPutDoneLongFile"+ticket]
 

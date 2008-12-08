@@ -338,3 +338,25 @@ def testCastorBasicFunctionality(inputFile,castorFile,localOut,scenario):
 
     runOnShell(["rm "+localOut+"fileRfioFineCopy","rm "+localOut+"fileRfioFine2Copy"],scenario)
     return [0,"Everything fine"]
+
+# creates a file as least as big as sizeMB MBs
+# may reuse old files bigger than what was asked
+def getBigFile(sizeMB, ticket):
+    fileName = "/tmp/bigFile" + ticket
+    # check whether to reuse existing file
+    reuse = True
+    try:
+        size = os.stat(fileName).st_size / 0x10000
+        if size < sizeMB:
+            reuse = False
+    except OSError:
+        reuse = False
+    if not reuse:
+        # create it with random data
+        fout = open(fileName,"wb")
+        fin = open("/dev/urandom")
+        for i in range(sizeMB) :
+            fout.write(fin.read(0x100000)) # 1 MB
+        fin.close()
+        fout.close()
+    return fileName
