@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvc.h,v $ $Revision: 1.12 $ $Release$ $Date: 2008/07/29 06:13:14 $ $Author: waldron $
+ * @(#)$RCSfile: ITapeSvc.h,v $ $Revision: 1.13 $ $Release$ $Date: 2008/12/08 13:51:22 $ $Author: sponcec3 $
  *
  *
  *
@@ -268,6 +268,30 @@ int Cstager_ITapeSvc_tapesToDo(struct Cstager_ITapeSvc_t* tpSvc,
 int Cstager_ITapeSvc_streamsToDo(struct Cstager_ITapeSvc_t* tpSvc,
                                    struct Cstager_Stream_t*** streamArray,
                                    int *nbItems);
+
+/**
+ * Retrieves a tape from the database based on its vid,
+ * side and tpmode. If no tape is found, creates one.
+ * Note that this method creates a lock on the row of the
+ * given tape and does not release it. It is the
+ * responsability of the caller to commit the transaction.
+ * The caller is also responsible for the deletion of the
+ * allocated object
+ * @param tpSvc the ITapeSvc used
+ * @paraem tape the tape. the return value can never be 0
+ * @param vid the vid of the tape
+ * @param side the side of the tape
+ * @param tpmode the tpmode of the tape
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_ITapeSvc_errorMsg
+ */
+int Cstager_ITapeSvc_selectTape(struct Cstager_ITapeSvc_t* tpSvc,
+                                struct Cstager_Tape_t** tape,
+                                const char* vid,
+                                const int side,
+                                const int tpmode);
 
 /**
  * Returns the error message associated to the last error.
