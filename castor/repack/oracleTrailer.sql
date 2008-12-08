@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.16 $ $Release$ $Date: 2008/12/03 14:03:39 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.17 $ $Release$ $Date: 2008/12/08 13:07:24 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -345,24 +345,15 @@ END IF;
 			             	 )
 			) 
 		) AND filesOnGoing + files <= maxFiles AND tapesOnGoing+1 <= maxTapes RETURNING id INTO unused; -- FINISHED ARCHIVED FAILED ONHOLD
-		ret:=1;
-		COMMIT;
+	ret:=1;
+
+	IF unused  IS NULL THEN  
+         ret:=0;
+      	END IF;  	
+	COMMIT;
 EXCEPTION  WHEN NO_DATA_FOUND THEN
   ret := 0;
 END;
 /
 
-/* PL/SQL method implementing getLastTapeInformation */
 
-create or replace
-PROCEDURE  getLastTapeInformation(inputVid IN VARCHAR2, outputSegments OUT repack.RepackSegment_Cur, outputTime OUT NUMBER) AS
-rsrId NUMBER;
-BEGIN
-  rsrId:=0;
-  SELECT repackrequest.creationTime, repacksubrequest.id  INTO outputTime, rsrId FROM repackrequest, repacksubrequest WHERE
-  repacksubrequest.repackrequest=repackrequest.id AND repackrequest.creationtime in (SELECT MAX(creationtime) FROM (SELECT * FROM repackrequest WHERE id IN (SELECT repackrequest FROM repacksubrequest WHERE vid=inputVid))) AND repacksubrequest.vid=inputVid AND ROWNUM < 2;
-  OPEN outputSegments FOR
-    SELECT fileid, segsize, compression, filesec,copyno, blockid, fileseq, errorCode, errorMessage,id, repacksubrequest FROM RepackSegment 
-    WHERE repacksubrequest=rsrId;  
-END;
-/
