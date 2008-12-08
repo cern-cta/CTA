@@ -4,6 +4,7 @@ import sys
 import time
 import threading
 import re
+from threading import Thread
 import UtilityForCastorTest
 from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDir,configFile,testCastorV1,testDefaultEnv
 
@@ -132,6 +133,17 @@ class RfioPreRequisitesCase(unittest.TestCase):
         except IOError:
            assert castorConf == "no", "It is not possible to read /etc/castor/castor.conf."
 
+class rfioWriteThread(Thread):
+    def __init__ (self,inputFile,outputFile,logFile):
+       Thread.__init__(self)
+       self.inputFile=inputFile
+       self.outputFile=outputFile
+       self.logFile=logFile
+       
+    def run(self):
+        cmd=["rfcp "+self.inputFile+" "+self.outputFile]
+        UtilityForCastorTest.saveOnFile(self.logFile,cmd)
+        
 
 ########################
 #                      #
@@ -167,7 +179,7 @@ class RfioRfcpSimpleCase(unittest.TestCase):
         if rfioRemoteDirOk:
             assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "rfio doesn't work from local to remote"
         else:
-            assert re.search('Permission denied', buffOut) != None, "rfio directory filter dosen't work from local to remote"
+            assert re.search('Permission denied', buffOut) != None, "rfio directory filter doesn't work from local to remote"
 
     def remoteToLocal(self):
         cmd=["rfcp "+inputFile+" "+remoteDir+"fileRfioRemoteToLocal"+ticket,"rfcp "+remoteDir+"fileRfioRemoteToLocal"+ticket+" "+localDir+"fileRfioRemoteToLocalCopy"+ticket,"diff "+inputFile+" "+localDir+"fileRfioRemoteToLocalCopy"+ticket]
@@ -215,6 +227,25 @@ class RfioRfcpSimpleCase(unittest.TestCase):
 
         assert os.stat(localDir+"fileRfioRemoteToRemoteCopyCopy"+ticket)[6] != 0, "rfio doesn't work from remote to remote"
         assert os.stat(localDir+"RfioSimpleRemoteToRemote3")[6] == 0, "rfio doesn't work from remote to remote"
+
+    def concurrentWrites(self):
+        fileBig=UtilityForCastorTest.getBigFile(100,ticket) # 100 MB file
+        remoteFile = remoteDir+"concurrentWrites"+ticket
+        localFile = localDir+"concurrentWrites"+ticket
+        logFile = localDir+"concurrentWrites"
+        write1=rfioWriteThread(fileBig,remoteFile,logFile+"BigWrite")
+        write1.start()
+        time.sleep(.2)
+        write2=rfioWriteThread(inputFile,remoteFile,logFile+"SmallWrite")
+        write2.start()
+        write1.join()
+        write2.join()
+        cmd=["rfcp "+remoteFile+" "+" /dev/null"]
+        UtilityForCastorTest.saveOnFile(logFile,cmd)
+        fi=open(localDir+"concurrentWrites","r")
+        buffOut=fi.read()
+        fi.close()
+        assert re.search('through eth[0-1] \(in\) and local \(out\)', buffOut) != None, "concurrent rfio writes are failing"
 
 
 ### OTHER CMD RFIO ###
@@ -972,7 +1003,7 @@ class RfioOtherCmdNewTurl11(RfioCastorNewTurl11,RfioOtherCmdCastor):
 ##########################################################################################################
 
 casesPreReq=("mainScenariumSetUp","stageMapSituation","castorConfSituation")
-casesRfcpSimple=("localToLocal","localToRemote","remoteToLocal","remoteToRemote")
+casesRfcpSimple=("localToLocal","localToRemote","remoteToLocal","remoteToRemote","concurrentWrites")
 casesOtherCmdSimple=("localRfcat","remoteRfcat","localRfchmod","remoteRfchmod","localRfdir","remoteRfdir","localRfmkdir","remoteRfmkdir","localRfrename","remoteRfrename","localRfrm","remoteRfrm","localRfstat","remoteRfstat")
 casesRfcpCastor=("localToCastor","castorToLocal","remoteToCastor","castorToRemote","castorToCastor")
 casesOtherCmdCastor=("castorRfcat","castorRfchmod","castorRfdir","castorRfmkdir","castorRfrename","castorRfrm","castorRfstat")
