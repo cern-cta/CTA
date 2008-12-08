@@ -4965,11 +4965,19 @@ void *consume_thread(int *ptr)
   if (useCksum) {
     sprintf(ckSumbuf,"%x",ckSum);
     log(LOG_DEBUG,"consume_thread: file checksum=0x%s\n",ckSumbuf);
-    /* Always try and set the type first! */
-    if (fsetxattr(fd,"user.castor.checksum.type",ckSumalg,strlen(ckSumalg),0)) 
-      log(LOG_ERR,"consume_thread: fsetxattr failed for user.castor.checksum.type, error=%d\n",errno);
-    else if (fsetxattr(fd,"user.castor.checksum.value",ckSumbuf,strlen(ckSumbuf),0))
-      log(LOG_ERR,"consume_thread: fsetxattr failed for user.castor.checksum.value, error=%d\n",errno);
+    /* Double check whether the checksum is set on disk. If yes, it means
+       it appeared while we were writing. this means that concurrent writing
+       is taking place. Thus we reset the checksum rather than setting it */
+    if (fgetxattr(fd,"user.castor.checksum.value",ckSumbufdisk,CA_MAXCKSUMLEN) != -1) {
+      log(LOG_INFO,"consume64_thread: concurrent writing detected, removing checksum\n");
+      fremovexattr(fd,"user.castor.checksum.value");
+    } else {
+      /* Always try and set the type first! */
+      if (fsetxattr(fd,"user.castor.checksum.type",ckSumalg,strlen(ckSumalg),0)) 
+        log(LOG_ERR,"consume64_thread: fsetxattr failed for user.castor.checksum.type, error=%d\n",errno);
+      else if (fsetxattr(fd,"user.castor.checksum.value",ckSumbuf,strlen(ckSumbuf),0))
+        log(LOG_ERR,"consume64_thread: fsetxattr failed for user.castor.checksum.value, error=%d\n",errno);
+    }
   }
   return(NULL);
 }
