@@ -28,8 +28,8 @@
 #include "castor/io/ServerSocket.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/server/Queue.hpp"
-#include "castor/tape/aggregator/RtcpdAcknowledge.hpp"
-#include "castor/tape/aggregator/RtcpTapeRequest.hpp"
+#include "castor/tape/aggregator/RtcpAcknowledgeMessage.hpp"
+#include "castor/tape/aggregator/RtcpTapeRequestMessage.hpp"
 
 
 namespace castor {
@@ -80,7 +80,7 @@ namespace aggregator {
      */
     void getTapeRequestFromRtcpd(const Cuuid_t &cuuid,
       castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
-      RtcpTapeRequest &request) throw(castor::exception::Exception);
+      RtcpTapeRequestMessage &request) throw(castor::exception::Exception);
 
     /**
      * Receives an acknowledge message from RTCPD and returns the status code
@@ -91,17 +91,18 @@ namespace aggregator {
      * @param message The message structure to be filled with the acknowledge
      * message.
      */
-    void receiveRtcpdAcknowledge(const Cuuid_t &cuuid,
+    void receiveRtcpAcknowledge(const Cuuid_t &cuuid,
       castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
-      RtcpdAcknowledge &message) throw(castor::exception::Exception);
+      RtcpAcknowledgeMessage &message) throw(castor::exception::Exception);
 
     /**
      * Sends the specified RTCPD acknowledge message to RTCPD using the
      * specified socket.
      */
-    void sendRtcpdAcknowledge(const Cuuid_t &cuuid,
+    void sendRtcpAcknowledge(const Cuuid_t &cuuid,
       castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
-      const RtcpdAcknowledge &message) throw(castor::exception::Exception);
+      const RtcpAcknowledgeMessage &message)
+      throw(castor::exception::Exception);
 
     /**
      * Receives an RTCPD tape request message from RTCPD.
@@ -113,7 +114,7 @@ namespace aggregator {
      */
     void receiveRtcpTapeRequest(const Cuuid_t &cuuid,
       castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
-      RtcpTapeRequest &request) throw(castor::exception::Exception);
+      RtcpTapeRequestMessage &request) throw(castor::exception::Exception);
 
   }; // class RtcpdHandlerThread
 

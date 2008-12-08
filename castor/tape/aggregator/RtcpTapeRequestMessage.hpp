@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/RtcpTapeRequest.hpp
+ *                      castor/tape/aggregator/RtcpTapeRequestMessage.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Steven Murray Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_RTCPTAPEREQUEST
-#define CASTOR_TAPE_AGGREGATOR_RTCPTAPEREQUEST
+#ifndef CASTOR_TAPE_AGGREGATOR_RTCPTAPEREQUESTMESSAGE
+#define CASTOR_TAPE_AGGREGATOR_RTCPTAPEREQUESTMESSAGE
 
 #include "castor/tape/aggregator/RtcpErrorMessage.hpp"
 #include "h/Castor_limits.h"
@@ -39,7 +39,7 @@ namespace aggregator {
   /**
    * An RTCP tape request message.
    */
-  struct RtcpTapeRequest {
+  struct RtcpTapeRequestMessage {
     char vid[CA_MAXVIDLEN+1];
     char vsn[CA_MAXVSNLEN+1];
     char label[CA_MAXLBLTYPLEN+1];
@@ -63,10 +63,10 @@ namespace aggregator {
     Cuuid_t rtcpReqId;      // Unique request id assigned by RTCOPY
     RtcpErrorMessage err;   // Error reporting
 
-  }; // struct RtcpTapeRequest
+  }; // struct RtcpTapeRequestMessage
 
 } // namespace aggregator
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_RTCPTAPEREQUEST
+#endif // CASTOR_TAPE_AGGREGATOR_RTCPTAPEREQUESTMESSAGE

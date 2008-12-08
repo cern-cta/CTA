@@ -28,6 +28,7 @@
 #include "castor/io/ServerSocket.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/server/Queue.hpp"
+#include "castor/tape/aggregator/MessageHeader.hpp"
 
 #include <map>
 
@@ -84,18 +85,15 @@ namespace aggregator {
      * Pointer to handler function, where handler function is a member of
      * RequestHandler.
      *
-     * @param cuuid the cuuid of the request
-     * @param magic the already read and unmarshalled magic number of the
-     * request
-     * @param reqtype the already read and unmarshalled request type
-     * @param len the length of the yet to be read message body
-     * @param msgBody the body of the message already read out as an array of
-     * bytes.
-     * @param socket the from which the request body should be read from
+     * @param cuuid The cuuid of the request.
+     * @param header The already unmarshalled message header structure.
+     * @param bodyBuf The buffer containing the message body which has not yet
+     * been unmarshalled.
+     * @param socket The from which the request body should be read from.
      */
     typedef void (VdqmRequestHandlerThread::*Handler) (Cuuid_t &cuuid,
-       const uint32_t magic, const uint32_t reqtype, const uint32_t len,
-       char *body,  castor::io::ServerSocket &socket);
+       const MessageHeader &header, const char *bodyBuf,
+       castor::io::ServerSocket &socket);
 
     /**
      * A map from request type to handler function.
@@ -143,17 +141,13 @@ namespace aggregator {
      * Handles the submisison of a remote copy job from the VDQM.
      *
      * @param cuuid The cuuid of the request
-     * @param magic The already read and unmarshalled magic number of the
-     * request
-     * @param reqtype The already read and unmarshalled request type
-     * @param len The length of the yet to be read message body
-     * @param msgBody the body of the message already read out as an array of
-     * bytes.
+     * @param header The already unmarshalled message header structure.
+     * @param bodyBuf The buffer containing the message body which has not yet
+     * been unmarshalled.
      * @param socket the from which the request body should be read from
      */
-    void handleJobSubmission(Cuuid_t &cuuid, const uint32_t magic,
-      const uint32_t reqtype, const uint32_t len, char *body,
-      castor::io::ServerSocket &socket) throw();
+    void handleJobSubmission(Cuuid_t &cuuid, const MessageHeader &header,
+      const char *bodyBuf, castor::io::ServerSocket &socket) throw();
 
   }; // class VdqmRequestHandlerThread
 

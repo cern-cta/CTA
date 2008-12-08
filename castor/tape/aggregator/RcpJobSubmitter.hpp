@@ -25,7 +25,6 @@
 #ifndef _CASTOR_TAPE_AGGREGATOR_RCPJOBSUBMITTER_HPP_
 #define _CASTOR_TAPE_AGGREGATOR_RCPJOBSUBMITTER_HPP_
 
-#include "castor/tape/aggregator/exception/RTCPDErrorMessage.hpp"
 #include "h/net.h"
 
 #include <string>
@@ -53,19 +52,21 @@ namespace aggregator {
     /**
      * Submits a remote copy job to either a RTCPD or tape aggregator daemon.
      * 
-     * @param host the hostname of the RTCPD or tape aggregator daemon
-     * @param port the port number of the RTCPD or tape aggregator daemon
-     * @param netReadWriteTimeout the timeout to be used when performing
-     * network reads and writes
-     * @param remoteCopyType remote copy type to be used for exception messages
-     * @param tapeRequestID tape request ID
-     * @param clientUserName client user name
-     * @param clientHost client host
-     * @param clientPort client port
-     * @param clientEuid client user ID
-     * @param clientEgid client group ID
-     * @param deviceGroupName device group name
-     * @param driveName tape drive name
+     * @param host The hostname of the RTCPD or tape aggregator daemon.
+     * @param port The port number of the RTCPD or tape aggregator daemon.
+     * @param netReadWriteTimeout The timeout to be used when performing
+     * network reads and writes.
+     * @param remoteCopyType The remote copy type to be used for exception
+     * messages
+     * @param tapeRequestID The tape request ID.
+     * @param clientUserName The client user name.
+     * @param clientHost The client host.
+     * @param clientPort The client port.
+     * @param clientEuid The client user ID.
+     * @param clientEgid The client group ID.
+     * @param deviceGroupName The device group name.
+     * @param driveName The tape drive name.
+     * @param reply The reply from RTCPD which may be positive or negative.
      */
     static void submit(
       const std::string  &host,
@@ -79,27 +80,27 @@ namespace aggregator {
       const int           clientEuid,
       const int           clientEgid,
       const std::string  &deviceGroupName,
-      const std::string  &driveName)
-      throw (castor::tape::aggregator::exception::RTCPDErrorMessage,
-        castor::exception::Exception);    
+      const std::string  &driveName,
+      RcpJobReplyMessage &reply)
+      throw(castor::exception::Exception);    
 
       
   private:
       
     /**
-     * This is a helper function for sendJob() to read the reply of the RTCOPY
-     * or tape aggregator daemon.
+     * Reads the reply of the RTCOPY or tape aggregator daemon.
      * 
-     * @param socket the socket of the connection to the RTCOPY or tape
-     * aggregator daemon
-     * @param netReadWriteTimeout the timeout to be used when performing
-     * network reads and writes
-     * @param remoteCopyType remote copy type to be used for exception messages
+     * @param socket The socket of the connection to the RTCOPY or tape
+     * aggregator daemon.
+     * @param netReadWriteTimeout The timeout to be used when performing
+     * network reads and writes.
+     * @param remoteCopyType The remote copy type to be used for exception
+     * messages.
+     * @param reply The reply from RTCPD.
      */
     static void readReply(castor::io::AbstractTCPSocket &socket,
-      const int netReadWriteTimeout, const char *remoteCopyType)
-      throw (castor::tape::aggregator::exception::RTCPDErrorMessage,
-        castor::exception::Exception);    
+      const int netReadWriteTimeout, const char *remoteCopyType,
+      RcpJobReplyMessage &reply) throw(castor::exception::Exception);    
 
   }; // class RcpJobSubmitter
 

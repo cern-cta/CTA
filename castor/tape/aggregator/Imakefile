@@ -39,8 +39,7 @@ AGGREGATORBIN_SRCS = \
   RcpJobSubmitter.cpp \
   RtcpdHandlerThread.cpp \
   SocketHelper.cpp \
-  VdqmRequestHandlerThread.cpp \
-  exception/RTCPDErrorMessage.cpp
+  VdqmRequestHandlerThread.cpp
 AGGREGATORBIN_OBJS = $(AGGREGATORBIN_SRCS:.cpp=.Osuf)
 
 NormalProgramTarget(aggregatord,$(AGGREGATORBIN_OBJS),$(DEPLIB),$(LIBS),root,bin,750)

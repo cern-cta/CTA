@@ -45,9 +45,9 @@ sub writeConstantsFile {
   my $currentMessageNb = 0;
   while(<MESSAGES>) {
     $currentMessageNb = $currentMessageNb + 1;
-    m/^([A-Z0-9_]*),(\d*),(.*)/;
-    $const_name = $1;
-    $const_val  = $2;
+    m/^(\d*),([A-Z0-9_]*),(.*)/;
+    $const_val  = $1;
+    $const_name = $2;
     $msg        = $3;
 
     # If this is not the last message
@@ -98,9 +98,9 @@ sub writeStringsFile {
   my $const_val;
   my $msg;
   while(<MESSAGES>) {
-    m/^([A-Z0-9_]*),(\d*),(.*)/;
-    $const_name = $1;
-    $const_val  = $2;
+    m/^(\d*),([A-Z0-9_]*),(".*")$/;
+    $const_val  = $1;
+    $const_name = $2;
     $msg        = $3;
 
     print(STRINGS "{${const_name}, ${msg}},\n");

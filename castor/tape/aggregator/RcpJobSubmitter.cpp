@@ -28,8 +28,8 @@
 #include "castor/io/ClientSocket.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/Marshaller.hpp"
-#include "castor/tape/aggregator/RcpJobRequest.hpp"
-#include "castor/tape/aggregator/RcpJobReply.hpp"
+#include "castor/tape/aggregator/RcpJobRequestMessage.hpp"
+#include "castor/tape/aggregator/RcpJobReplyMessage.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
 #include "castor/tape/aggregator/SocketHelper.hpp"
 #include "h/net.h"
@@ -58,11 +58,11 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   const int           clientEuid,
   const int           clientEgid,
   const std::string  &deviceGroupName,
-  const std::string  &driveName)
-  throw (castor::tape::aggregator::exception::RTCPDErrorMessage,
-    castor::exception::Exception) {
+  const std::string  &driveName,
+  RcpJobReplyMessage &reply)
+  throw(castor::exception::Exception) {
 
-  RcpJobRequest request;
+  RcpJobRequestMessage request;
 
   // Check the validity of the parameters of this function
   if(clientHost.length() > sizeof(request.clientHost) - 1) {
@@ -122,13 +122,13 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   size_t totalLen = 0;
 
   try {
-    totalLen = Marshaller::marshallRcpJobRequest(buf, request);
+    totalLen = Marshaller::marshallRcpJobRequestMessage(buf, request);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 
     ie.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to marshall RCP job submission request message: "
-      << ex.getMessage().str();
+      << ": Failed to marshall RCP job submission request message"
+      << ": " << ex.getMessage().str();
 
     throw ie;
   }
@@ -138,13 +138,14 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
 
   try {
     socket.connect();
-  } catch(castor::exception::Exception &connectex) {
+  } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex(ECONNABORTED);
 
     ex.getMessage() << __PRETTY_FUNCTION__
       << ": Failed to connect to " << remoteCopyType
-      << ": host: " << host << ": port: " << port << ": "
-      << connectex.getMessage().str();
+      << ": Host: " << host
+      << ": Port: " << port
+      << ": " << ex.getMessage().str();
   }
 
   // Send the job submission request message to the RTCPD or tape aggregator
@@ -163,7 +164,7 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   }
 
   // Read the reply from the RTCPD or tape aggregator daemon
-  readReply(socket, netReadWriteTimeout, remoteCopyType);
+  readReply(socket, netReadWriteTimeout, remoteCopyType, reply);
 }
 
 
@@ -172,26 +173,41 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::RcpJobSubmitter::readReply(
   castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
-  const char *remoteCopyType)
-  throw (castor::tape::aggregator::exception::RTCPDErrorMessage,
-    castor::exception::Exception) {
+  const char *remoteCopyType, RcpJobReplyMessage &reply)
+  throw(castor::exception::Exception) {
 
-  // Read and unmarshall the magic number
-  uint32_t magic = 0;
+  // Read in the message header
+  char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    magic = SocketHelper::readUint32(socket, NETRWTIMEOUT);
+    SocketHelper::readBytes(socket, NETRWTIMEOUT, sizeof(headerBuf), headerBuf);
   } catch (castor::exception::Exception &ex) {
-    castor::exception::Exception ex2(EIO);
+    castor::exception::Exception ex2(SECOMERR);
 
     ex2.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to read magic number from " << remoteCopyType
+      << "Failed to read message header from " << remoteCopyType
+      << ": " << ex.getMessage().str();
+
+    throw ex2;
+  }
+
+  // Unmarshall the messager header
+  MessageHeader header;
+  try {
+    const char *p           = headerBuf;
+    size_t     remainingLen = sizeof(headerBuf);
+    Marshaller::unmarshallMessageHeader(p, remainingLen, header);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(EBADMSG);
+
+    ex2.getMessage() << __PRETTY_FUNCTION__
+      << "Failed to unmarshall message header from " << remoteCopyType
       << ": " << ex.getMessage().str();
 
     throw ex2;
   }
 
   // If the magic number is invalid
-  if(magic != RTCOPY_MAGIC && magic != RTCOPY_MAGIC_OLD0) {
+  if(header.magic != RTCOPY_MAGIC && header.magic != RTCOPY_MAGIC_OLD0) {
     castor::exception::Exception ex(EBADMSG);
 
      ex.getMessage() << __PRETTY_FUNCTION__
@@ -199,101 +215,74 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
        << ": Invalid magic number from " << remoteCopyType
        << ": Expected: 0x" << RTCOPY_MAGIC << " or 0x"
        << RTCOPY_MAGIC_OLD0
-       << ": Received: 0x" << magic;
+       << ": Received: 0x" << header.magic;
 
      throw ex;
   }
 
-  // Read and unmarshall the request type
-  uint32_t reqtype = 0;
-  try {
-    reqtype = SocketHelper::readUint32(socket, NETRWTIMEOUT);
-  } catch (castor::exception::Exception &ex) {
-    castor::exception::Exception ex2(EIO);
-
-    ex2.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to read request type from " << remoteCopyType
-      << ": " << ex.getMessage().str();
-
-    throw ex2;
-  }
-
   // If the request type is invalid
-  if(reqtype != VDQM_CLIENTINFO) {
+  if(header.reqtype != VDQM_CLIENTINFO) {
     castor::exception::Exception ex(EBADMSG);
 
     ex.getMessage() << __PRETTY_FUNCTION__
       << std::hex
       << ": Invalid request type from " << remoteCopyType
       << ": Expected: 0x" << VDQM_CLIENTINFO
-      << ": Received: 0x" << reqtype;
+      << ": Received: 0x" << header.reqtype;
 
     throw ex;
-  }
-
-  // Read and unmarshall the type of the request
-  uint32_t len = 0;
-  try {
-    len = SocketHelper::readUint32(socket, NETRWTIMEOUT);
-  } catch (castor::exception::Exception &ex) {
-    castor::exception::Exception ex2(EIO);
-
-    ex2.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to read message body length from " << remoteCopyType
-      << ": "<< ex.getMessage().str();
-
-    throw ex2;
   }
 
   // If the message body is not large enough for a status number and an empty
   // error string
-  if(len < sizeof(uint32_t) + 1) {
-    castor::exception::Exception ex(EMSGSIZE);
+  {
+    const size_t minimumLen = sizeof(uint32_t) + 1;
+    if(header.len < minimumLen) {
+      castor::exception::Exception ex(EMSGSIZE);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Invalid header from " << remoteCopyType
-      << ": Message body not large enough for a status number and an empty "
-         "string: Minimum size expected: " << (sizeof(uint32_t) + 1)
-      << ": Received: " << len;
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Invalid header from " << remoteCopyType
+        << ": Message body not large enough for a status number and an empty "
+           "string: Minimum size expected: " << minimumLen
+        << ": Received: " << header.len;
 
-    throw ex;
+      throw ex;
+    }
   }
 
-  // Only need a buffer for the message body, the header has already been read
-  // from the socket and unmarshalled
-  char body[MSGBUFSIZ - 3 * sizeof(uint32_t)];
+  // Length of message header = 3 * sizeof(uint32_t)
+  char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
 
-  // If the message body is too large
-  if(len > sizeof(body)) {
+  // If the message body is larger than the message body buffer
+  if(header.len > sizeof(bodyBuf)) {
     castor::exception::Exception ex(EMSGSIZE);
 
     ex.getMessage() << __PRETTY_FUNCTION__
       << ": Message body from " <<  remoteCopyType << " is too large"
-         ": Maximum: " << sizeof(body)
-      << ": Received: " << len;
+         ": Maximum: " << sizeof(bodyBuf)
+      << ": Received: " << header.len;
 
     throw ex;
   }
 
   // Read the message body
   try {
-    SocketHelper::readBytes(socket, NETRWTIMEOUT, len, body);
+    SocketHelper::readBytes(socket, NETRWTIMEOUT, header.len, bodyBuf);
   } catch (castor::exception::Exception &ex) {
-    castor::exception::Exception ex2(EIO);
+    castor::exception::Exception ex2(SECOMERR);
 
     ex2.getMessage() << __PRETTY_FUNCTION__
       << ": Failed to read message body from " << remoteCopyType
-      << ": "<< ex.getMessage().str();
+      << ": " << ex.getMessage().str();
 
     throw ex2;
   }
 
   // Unmarshall the job submission reply
-  const char  *p           = body;
-  size_t      remainingLen = len;
-  RcpJobReply reply;
   try {
-    Marshaller::unmarshallRcpJobReply(p, remainingLen, reply);
+    const char *p           = bodyBuf;
+    size_t     remainingLen = header.len;
+    Marshaller::unmarshallRcpJobReplyMessage(p, remainingLen, reply);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 
@@ -302,17 +291,5 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
       << ex.getMessage().str();
 
     throw ie;
-  }
-
-  // If RTCOPY or tape aggregator daemon returned an error message
-  // Checking the size of the error message because the status maybe non-zero
-  // even if there is no error
-  if(strlen(reply.errorMessage) > 1) {
-    castor::exception::Exception ex(reply.status);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": " << reply.errorMessage;
-
-    throw ex;
   }
 }

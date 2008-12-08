@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/RcpJobRequest.hpp
+ *                      castor/tape/aggregator/MessageHeader.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,12 +22,13 @@
  * @author Steven Murray Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_RCPJOBREQUEST
-#define CASTOR_TAPE_AGGREGATOR_RCPJOBREQUEST
+#ifndef CASTOR_TAPE_AGGREGATOR_MESSAGEHEADER
+#define CASTOR_TAPE_AGGREGATOR_MESSAGEHEADER
 
 #include "h/Castor_limits.h"
 
 #include <stdint.h>
+#include <string>
 
 
 namespace castor     {
@@ -35,21 +36,16 @@ namespace tape       {
 namespace aggregator {
 
   /**
-   * An RCP job submission request message.
+   * A message header
    */
-  struct RcpJobRequest {
-    uint32_t tapeRequestID;
-    uint32_t clientPort;
-    uint32_t clientEuid;
-    uint32_t clientEgid;
-    char clientHost[CA_MAXHOSTNAMELEN+1];
-    char deviceGroupName[CA_MAXDGNLEN+1];
-    char driveName[CA_MAXUNMLEN+1];
-    char clientUserName[CA_MAXUSRNAMELEN+1];
-  }; // struct RtcpTapeRequest
+  struct MessageHeader {
+    uint32_t magic;
+    uint32_t reqtype;
+    uint32_t len;
+  };
 
 } // namespace aggregator
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_RCPJOBREQUEST
+#endif // CASTOR_TAPE_AGGREGATOR_MESSAGEHEADER
