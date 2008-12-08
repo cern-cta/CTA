@@ -263,8 +263,10 @@ namespace castor{
           // get the castorFile from the stagerService and fill it on the subrequest
           // note that for a Put request we should truncate the size, but this is done later on by
           // recreateCastorFile after all necessary checks
-          castorFile = stagerService->selectCastorFile(cnsFileId.fileid,
-          cnsFileId.server, svcClassId, fileClassId, stgCnsHelper->cnsFilestat.filesize, subrequest->fileName());
+          castorFile = stagerService->selectCastorFile
+	    (cnsFileId.fileid, cnsFileId.server, svcClassId, fileClassId,
+	     stgCnsHelper->cnsFilestat.filesize,
+	     subrequest->fileName(), stgCnsHelper->cnsFilestat.ctime);
           
           subrequest->setCastorFile(castorFile);
           castorFile->setFileClass(fileClass);
