@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.264 $ $Release$ $Date: 2008/11/03 09:30:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.265 $ $Release$ $Date: 2008/12/08 14:10:09 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -123,7 +123,7 @@ const std::string castor::db::ora::OraStagerSvc::s_createDiskCopyReplicaRequestS
 
 /// SQL statement for selectCastorFile
 const std::string castor::db::ora::OraStagerSvc::s_selectCastorFileStatementString =
-  "BEGIN selectCastorFile(:1, :2, :3, :4, :5, :6, :7, :8); END;";
+  "BEGIN selectCastorFile(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;";
 
 /// SQL statement for getBestDiskCopyToRead
 const std::string castor::db::ora::OraStagerSvc::s_getBestDiskCopyToReadStatementString =
@@ -758,16 +758,17 @@ castor::stager::CastorFile*
 castor::db::ora::OraStagerSvc::selectCastorFile
 (const u_signed64 fileId, const std::string nsHost,
  u_signed64 svcClass, u_signed64 fileClass,
- u_signed64 fileSize, std::string fileName)
+ u_signed64 fileSize, std::string fileName,
+ time_t lastUpdateTime)
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_selectCastorFileStatement) {
     m_selectCastorFileStatement =
       createStatement(s_selectCastorFileStatementString);
     m_selectCastorFileStatement->registerOutParam
-      (7, oracle::occi::OCCIDOUBLE);
-    m_selectCastorFileStatement->registerOutParam
       (8, oracle::occi::OCCIDOUBLE);
+    m_selectCastorFileStatement->registerOutParam
+      (9, oracle::occi::OCCIDOUBLE);
     m_selectCastorFileStatement->setAutoCommit(true);
   }
   // Execute statement and get result
@@ -778,6 +779,7 @@ castor::db::ora::OraStagerSvc::selectCastorFile
     m_selectCastorFileStatement->setDouble(4, fileClass);
     m_selectCastorFileStatement->setDouble(5, fileSize);
     m_selectCastorFileStatement->setString(6, fileName);
+    m_selectCastorFileStatement->setDouble(7, lastUpdateTime);
 
     int nb  = m_selectCastorFileStatement->executeUpdate();
     if (0 == nb) {
@@ -790,10 +792,10 @@ castor::db::ora::OraStagerSvc::selectCastorFile
     // Found the CastorFile, so create it in memory
     castor::stager::CastorFile* result =
       new castor::stager::CastorFile();
-    result->setId((u_signed64)m_selectCastorFileStatement->getDouble(7));
+    result->setId((u_signed64)m_selectCastorFileStatement->getDouble(8));
     result->setFileId(fileId);
     result->setNsHost(nsHost);
-    result->setFileSize((u_signed64)m_selectCastorFileStatement->getDouble(8));
+    result->setFileSize((u_signed64)m_selectCastorFileStatement->getDouble(9));
     return result;
   } catch (oracle::occi::SQLException e) {
     handleException(e);

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.98 $ $Release$ $Date: 2008/11/03 07:42:38 $ $Author: waldron $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.99 $ $Release$ $Date: 2008/12/08 14:10:09 $ $Author: sponcec3 $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -189,13 +189,17 @@ namespace castor {
        * Used only in case of creation of a new castor file.
        * @param fileName the name of the castor file at the time
        * of this call. This will go to the DB as lastKnownFileName.
+       * @param lastUpdateTime the time of the last modification of
+       * this file at the time of this call. This will be used in
+       * case a new CastorFile will be created
        * @return the CastorFile, or 0 if none found
        * @exception Exception in case of error
        */
       virtual castor::stager::CastorFile* selectCastorFile
       (const u_signed64 fileId, const std::string nsHost,
        u_signed64 svcClass, u_signed64 fileClass,
-       u_signed64 fileSize, const std::string fileName)
+       u_signed64 fileSize, const std::string fileName,
+       time_t lastUpdateTime)
         throw (castor::exception::Exception) = 0;
 
       /**
