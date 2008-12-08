@@ -90,8 +90,9 @@ const std::string castor::repack::ora::OraRepackSvc::s_changeSubRequestsStatusSt
 /// SQL to changeAllSubRequestsStatus
 const std::string castor::repack::ora::OraRepackSvc::s_changeAllSubRequestsStatusStatementString="BEGIN changeAllSubRequestsStatus(:1,:2); END;";
 
-/// SQL for getting lattest information of a tapy copy to do a repack undo  
-const std::string castor::repack::ora::OraRepackSvc::s_selectLastSegmentsSituationStatementString= "BEGIN selectLastSegmentsSituation(:1, :2, :3); END;";
+/// SQL for getting lattest information of a tapy copy to do a repack undo
+const std::string castor::repack::ora::OraRepackSvc::s_selectLastSegmentsSituationStatementString= 
+"BEGIN selectLastSegmentsSituation(:1, :2, :3); END;";
 
 
 //------------------------------------------------------------------------------
@@ -327,6 +328,7 @@ castor::repack::RepackAck* castor::repack::ora::OraRepackSvc::storeRequest(casto
 
       }
       endTransation();
+      m_storeRequestStatement->closeResultSet(rset);
 
     } catch (oracle::occi::SQLException ex) {
 
@@ -351,7 +353,6 @@ castor::repack::RepackAck* castor::repack::ora::OraRepackSvc::storeRequest(casto
     
   }  
   
-  m_storeRequestStatement->closeResultSet(rset);
   if (buffer) free(buffer);
   buffer=NULL;
   if (lens) free(lens);
@@ -593,9 +594,10 @@ void castor::repack::ora::OraRepackSvc::getSegmentsForSubRequest(RepackSubReques
       rsub->addRepacksegment(seg);
       status = rset->next();
     }
-    
-  } catch(oracle::occi::SQLException e){
     m_getSegmentsForSubRequestStatement->closeResultSet(rset);
+
+  } catch(oracle::occi::SQLException e){
+   
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -603,7 +605,6 @@ void castor::repack::ora::OraRepackSvc::getSegmentsForSubRequest(RepackSubReques
       << std::endl << e.what();
     throw ex;
   }
-  m_getSegmentsForSubRequestStatement->closeResultSet(rset);
 
 }
 
@@ -669,6 +670,8 @@ castor::repack::ora::OraRepackSvc::getSubRequestByVid(std::string vid, bool fill
       result->setErrorMessage("Unknown vid");
       
     }
+    
+    m_getSubRequestByVidStatement->closeResultSet(rset);
 
   } catch (oracle::occi::SQLException ex) {
     
@@ -698,8 +701,6 @@ castor::repack::ora::OraRepackSvc::getSubRequestByVid(std::string vid, bool fill
     result->setErrorMessage("repacksever not available");
   
   }
-
-  m_getSubRequestByVidStatement->closeResultSet(rset);
   return result;
 
 }
@@ -759,7 +760,7 @@ castor::repack::ora::OraRepackSvc::getSubRequestsByStatus( castor::repack::Repac
       status = rset->next();
 
     }
-
+    m_getSubRequestsByStatusStatement->closeResultSet(rset); 
   }catch (oracle::occi::SQLException ex) {
 
     // log the error in Dlf
@@ -783,7 +784,6 @@ castor::repack::ora::OraRepackSvc::getSubRequestsByStatus( castor::repack::Repac
     subs.clear();
   } 
 
-  m_getSubRequestsByStatusStatement->closeResultSet(rset); 
   return subs;	
 }
 
@@ -836,7 +836,8 @@ castor::repack::ora::OraRepackSvc::getAllSubRequests()
       status = rset->next();
 
     }
-
+    m_getAllSubRequestsStatement->closeResultSet(rset);  
+  
   }catch (oracle::occi::SQLException ex) {
 
     // log the error in Dlf
@@ -856,7 +857,6 @@ castor::repack::ora::OraRepackSvc::getAllSubRequests()
     ack->addRepackresponse(resp);
   }
 
-  m_getAllSubRequestsStatement->closeResultSet(rset);  
   return ack;	
 }
 
@@ -1083,6 +1083,7 @@ castor::repack::RepackAck*  castor::repack::ora::OraRepackSvc::changeSubRequests
     }
 
     endTransation();
+    m_changeSubRequestsStatusStatement->closeResultSet(rset);
 
   }catch (oracle::occi::SQLException ex) {
 
@@ -1103,8 +1104,6 @@ castor::repack::RepackAck*  castor::repack::ora::OraRepackSvc::changeSubRequests
     ack->addRepackresponse(resp);
   }
 
-  m_changeSubRequestsStatusStatement->closeResultSet(rset);
-    
   if (buffer) free(buffer);
   buffer=NULL;
   if (lens)   free(lens);
@@ -1168,7 +1167,7 @@ castor::repack::RepackAck*  castor::repack::ora::OraRepackSvc::changeAllSubReque
       status = rset->next();
     } 
     endTransation();
-
+    m_changeAllSubRequestsStatusStatement->closeResultSet(rset);
   }catch (oracle::occi::SQLException ex) {
 
     // log the error in Dlf
@@ -1189,10 +1188,9 @@ castor::repack::RepackAck*  castor::repack::ora::OraRepackSvc::changeAllSubReque
     resp->setErrorMessage("Oracle Exception");
     ack->addRepackresponse(resp);
   }
-
-  m_changeAllSubRequestsStatusStatement->closeResultSet(rset);
   return ack;
 }
+
 
 
 //------------------------------------------------------------------------------
@@ -1256,15 +1254,13 @@ castor::repack::ora::OraRepackSvc::getLastTapeInformation(std::string vidName, u
 
       status = rset->next();
     } 
-
+    if (rset)  m_selectLastSegmentsSituationStatement->closeResultSet(rset);
   }catch (oracle::occi::SQLException ex) {
      castor::exception::Internal e;
      e.getMessage()
      << "OraRepackSvc::getLastTapeInformation(...):"
      << "Unable to get all RepackSubRequests" 
      << std::endl<<ex.what();
-
-     if (rset)  m_selectLastSegmentsSituationStatement->closeResultSet(rset);
      if (!result.empty()){
        std::vector<castor::repack::RepackSegment*>::iterator item= result.begin();
        while (item != result.end()){
@@ -1276,7 +1272,7 @@ castor::repack::ora::OraRepackSvc::getLastTapeInformation(std::string vidName, u
        
      throw e;
   }
-
-  if (rset)  m_selectLastSegmentsSituationStatement->closeResultSet(rset);
   return result;
 }
+
+
