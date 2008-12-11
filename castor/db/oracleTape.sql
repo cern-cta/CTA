@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.700 $ $Date: 2008/12/03 16:41:20 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.701 $ $Date: 2008/12/11 13:48:39 $ $Author: itglp $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -26,6 +26,10 @@ CREATE OR REPLACE TRIGGER tr_Stream_Delete
 BEFORE DELETE ON Stream
 FOR EACH ROW
 BEGIN
+  -- Access to NbTapeCopiesInFS needs to be serialized
+  -- because of several copies of different file systems
+  -- from different streams which can cause deadlock
+  LOCK TABLE NbTapeCopiesInFS IN EXCLUSIVE MODE;
   DELETE FROM NbTapeCopiesInFS WHERE Stream = :old.id;
 END;
 /
@@ -40,13 +44,14 @@ FOR EACH ROW
 DECLARE
   cfSize NUMBER;
 BEGIN
-  -- added this lock because of several copies of different file systems
+  -- Access to NbTapeCopiesInFS needs to be serialized
+  -- because of several copies of different file systems
   -- from different streams which can cause deadlock
-  LOCK TABLE NbTapeCopiesInFS IN ROW SHARE MODE;
+  LOCK TABLE NbTapeCopiesInFS IN EXCLUSIVE MODE;
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
-   WHERE FS IN (SELECT DiskCopy.FileSystem
+   WHERE FS IN (SELECT DiskCopy.fileSystem
                   FROM DiskCopy, TapeCopy
-                 WHERE DiskCopy.CastorFile = TapeCopy.castorFile
+                 WHERE DiskCopy.castorFile = TapeCopy.castorFile
                    AND TapeCopy.id = :new.child
                    AND DiskCopy.status = 10) -- CANBEMIGR
      AND Stream = :new.parent;
@@ -62,13 +67,14 @@ REFERENCING NEW AS NEW OLD AS OLD
 FOR EACH ROW
 DECLARE cfSize NUMBER;
 BEGIN
-  -- added this lock because of several copies of different file systems
+  -- Access to NbTapeCopiesInFS needs to be serialized
+  -- because of several copies of different file systems
   -- from different streams which can cause deadlock
-  LOCK TABLE NbTapeCopiesInFS IN ROW SHARE MODE;
+  LOCK TABLE NbTapeCopiesInFS IN EXCLUSIVE MODE;
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies - 1
-   WHERE FS IN (SELECT DiskCopy.FileSystem
+   WHERE FS IN (SELECT DiskCopy.fileSystem
                   FROM DiskCopy, TapeCopy
-                 WHERE DiskCopy.CastorFile = TapeCopy.castorFile
+                 WHERE DiskCopy.castorFile = TapeCopy.castorFile
                    AND TapeCopy.id = :old.child
                    AND DiskCopy.status = 10) -- CANBEMIGR
      AND Stream = :old.parent;
