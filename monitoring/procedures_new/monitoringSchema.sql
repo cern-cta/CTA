@@ -1,5 +1,5 @@
 /******************************************************************************
- *              monitoringSchema.sqlplus
+ *              monitoringSchema.sql
  *
  * This file is part of the Castor Monitoring project.
  * See http://castor.web.cern.ch/castor
