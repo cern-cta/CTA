@@ -82,7 +82,7 @@ BEGIN
 	--DiskCopy Table
 	--Specific Info about DiskCopy's Subcategory
 	--
-	sql_txt := 'CREATE TABLE DiskCopy(subreqid CHAR(36) NOT NULL PRIMARY KEY,timestamp DATE NOT NULL, OriginalPool VARCHAR2(255), TargetPool VARCHAR2(255),ReadLatency INTEGER,CopyLatency INTEGER, NumCopiesInPools INTEGER,CONSTRAINT fk_column_dcopy FOREIGN KEY (subreqid) REFERENCES requests (subreqid) ON DELETE CASCADE)
+	sql_txt := 'CREATE TABLE DiskCopy(subreqid CHAR(36) NOT NULL PRIMARY KEY,timestamp DATE NOT NULL, OriginalPool VARCHAR2(255), TargetPool VARCHAR2(255),dest_host Number, src_host VARCHAR2(255), ReadLatency INTEGER,CopyLatency INTEGER, NumCopiesInPools INTEGER,CONSTRAINT fk_column_dcopy FOREIGN KEY (subreqid) REFERENCES requests (subreqid) ON DELETE CASCADE)
 	PARTITION BY RANGE (timestamp) (PARTITION ' ||CreationDate || ' VALUES LESS THAN ( to_date('''||ts_var||''',''DD-MON-YYYY'')))';
 	execute immediate sql_txt;
 	commit;
@@ -259,20 +259,25 @@ BEGIN
 	SELECT dcmaxtime INTO maxtimestamp
 	FROM ConfigSchema;
 	--Extract and Insert new Data
-	--Info about external file replication: source - target SvcClass
+	--Info about external file replication: source - target SvcClass (source and target servers)
 	INSERT INTO DiskCopy
-	(subreqid, timestamp, OriginalPool,TargetPool)
-	select distinct reqs.subreqid ,reqs.timestamp, temp.src,temp.dest
+	(subreqid, timestamp, OriginalPool,TargetPool,dest_host,src_host)
+	select distinct reqs.subreqid ,reqs.timestamp, temp.src,temp.dest,temp.dest_host,temp.src_host
 	from requests reqs, (
-	SELECT a.nsfileid nsfileid, substr(b.value, 0, instr(b.value, '->', 1) - 2) src, substr(b.value, instr(b.value, '->', 1) + 3) dest
-	FROM castor_dlf.dlf_messages a ,castor_dlf.dlf_str_param_values b
+	SELECT a.nsfileid nsfileid,
+  max(case when a.msg_no = 39 and b.name = 'Direction' then substr(b.value, 0, instr(b.value, '->', 1) - 2) else null end) src, 
+  max(case when a.msg_no = 39 and b.name = 'Direction' then substr(b.value, instr(b.value, '->', 1) + 3) else null end) dest ,
+  max(case when a.msg_no = 28 and b.name = 'SourcePath' then a.hostid else null end) dest_host, 
+  max(case when a.msg_no = 28 and b.name = 'SourcePath' then substr(b.value, 0, instr(b.value, '.', 1) - 1) else null end) src_host
+  FROM castor_dlf.dlf_messages a ,castor_dlf.dlf_str_param_values b
 	WHERE a.id = b.id
-	AND a.facility = 23
-	AND a.msg_no = 39
-	AND a.timestamp >= maxtimestamp
-	and b.timestamp >= maxtimestamp
-	and a.timestamp < maxtimestamp + 5/1440
-	and b.timestamp < maxtimestamp + 5/1440
+    AND a.facility = 23
+    AND a.msg_no in (39,28)
+    AND a.timestamp >= maxtimestamp
+    and b.timestamp >= maxtimestamp
+    and a.timestamp < maxtimestamp + 5/1440
+    and b.timestamp < maxtimestamp + 5/1440
+  group by nsfileid
 	) temp
 	where reqs.nsfileid = temp.nsfileid
 	and reqs.timestamp >= maxtimestamp
