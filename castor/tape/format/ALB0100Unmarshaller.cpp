@@ -91,7 +91,10 @@ const castor::tape::format::ALB0100Unmarshaller::Header* castor::tape::format::A
     if(!my_memcmp(block+VERSION_NUMBER_OFFSET, VERSION_NUMBER_LEN, m_header.version_number)){
       
       m_errorList[0]= true;// Differents IL format version! Rise an exception
-      throw "Version number mismatch";
+
+      castor::exception::Exception ex(EINVAL);
+      ex.getMessage() << "Version number mismatch!.";
+      throw ex;
     }
     j = 0;
     m_errorList[j++]= false; // Has the correct IL version

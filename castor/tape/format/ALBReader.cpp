@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <fstream>
 #include <iostream>
+#include <errno.h>
 #include <cstdlib>  // for exit function
 #include <cstdlib>  // for exit function
 
@@ -15,31 +16,45 @@ using std::cout;
 using std::endl;
 using std::ios;
 
-/* Program that read a file containing haeder data+file data and 
+
+/**
+ * Implementation of a simple auto pointer for a char array.
+ */
+//==============================================================================
+template <typename T>
+class Array_auto_ptr
+{
+public:
+  Array_auto_ptr(T *p) : p_(p) { }
+  ~Array_auto_ptr()            { delete [] p_; }
+  T* get()                     { return (p_); }
+private:
+  T* p_;
+};
+
+
+/**
+ * Program that read a file containing haeder data+file data and 
  * return different separate files (as they were before the marshall) 
  */
+//==============================================================================
 int main(int argc, char** argv) {
   
   using namespace castor::tape::format;
   //-------------------------------------------------------------------------------  
   ifstream file;   
   ofstream fileout;
-  char     *buffer;       // pointer 32 or 64 bit
-  int      buffLength, 
-    payloadOffset, 
-    file_name_length,
-    payloadSize;          // int -> 2 Bytes (or 4)
+  int      payloadSize;
+  bool     first;
  
   ALB0100Unmarshaller                       unmarshallObj;
   const ALB0100Unmarshaller::Header        *myHeader;
   const ALB0100Unmarshaller::ALB0100Header *myALB0100Header;
 
   //-------------------------------------------------------------------------------  
-  buffLength =       BLOCK_SIZE; 	     // 256 KiB
-  payloadOffset =    HEADER_SIZE;     	     // 1 KiB
-  buffer =           new char[buffLength];   // Header + payload 256 KiB
-  file_name_length = 1000*sizeof(char);
-  payloadSize =      BLOCK_SIZE-HEADER_SIZE; // 255 KiB
+  Array_auto_ptr<char> buffer(new char[BLOCK_SIZE]);
+  payloadSize =        BLOCK_SIZE-HEADER_SIZE;
+  first =              true; // to specify 'first block of a file'
     
   //-------------------------------------------------------------------------------  
   file.open("./TXTfiles/fileout.txt"); // open as text file
@@ -48,23 +63,22 @@ int main(int argc, char** argv) {
     exit(1);
   }    
 
-  file.read(buffer, buffLength);
-  unmarshallObj.readVersion(buffer);
-  bool first = true; // to specify 'first block of a file'
+  file.read(buffer.get(), BLOCK_SIZE);
+  unmarshallObj.readVersion(buffer.get());
 
   while(! file.eof() ){
      
     try{ 
-      myHeader = unmarshallObj.unmarshallHeader(buffer, first);
+      myHeader = unmarshallObj.unmarshallHeader(buffer.get(), first);
     }catch(castor::exception::Exception ex ) {
-      ex.getMessage() << "Failed to call 'unmarshallObj.unmarshallHeader'";
-      throw ex;
+      std::cout << ex.getMessage() << "Failed to call 'unmarshallObj.unmarshallHeader'"<< std::endl;
+      break;
     }
     try{
       myALB0100Header = dynamic_cast<const ALB0100Unmarshaller::ALB0100Header*>(myHeader);
-    }catch(castor::exception::Exception ex ) {
-      ex.getMessage() << "Failed to call 'unmarshallObj.unmarshallHeader'";
-      throw ex;
+    }catch(std::bad_cast e ) {
+      std::cout<<e.what() << "Failed to dynamic_cast in call 'unmarshallObj.unmarshallHeader'"<<std::endl;
+      break;
     }
 
     if(myALB0100Header->file_block_count == 0){// is the first file block!! open a new file.
@@ -80,27 +94,23 @@ int main(int argc, char** argv) {
       
     if(myALB0100Header->file_block_count+payloadSize >= myALB0100Header->file_size){// Is the last block of the unmarshalling file?
 	
-      fileout.write(buffer+payloadOffset, myALB0100Header->file_size - myALB0100Header->file_block_count);
+      fileout.write(buffer.get()+HEADER_SIZE, myALB0100Header->file_size - myALB0100Header->file_block_count);
       fileout.close();
       if(fileout.fail()){fileout.clear();} 
       first = true;	  
     }
     else{// Is not the last block of the unmarshalling file
 
-      first= false;
-      fileout.write(buffer+payloadOffset, payloadSize);
+      first = false;
+      fileout.write(buffer.get()+HEADER_SIZE, payloadSize);
     }
    
-
-    file.read(buffer, buffLength);
+    file.read(buffer.get(), BLOCK_SIZE);
     
   }// end while file
 
-
   file.close();
   if(file.fail()){file.clear();} 
-
-  delete[] buffer;
-    
+  
   return (EXIT_SUCCESS);
 }

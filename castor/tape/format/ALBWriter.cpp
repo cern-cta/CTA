@@ -4,6 +4,8 @@
 #include <sys/stat.h>
 #include <fstream>
 #include <iostream>
+#include <errno.h>
+#include <memory>
 
 using std::ifstream;
 using std::ofstream;
@@ -13,20 +15,67 @@ using std::endl;
 using std::ios;
 
 
-const size_t MAX_FILE_NAME_LEN =         1024;
+/**
+ * Implementation of a simple auto pointer for a char array.
+ */
+//==============================================================================
+template <typename T>
+class Array_auto_ptr
+{
+public:
+  Array_auto_ptr(T *p) : p_(p) { }
+  ~Array_auto_ptr()            { delete [] p_; }
+  T* get()                     { return (p_); }
+private:
+  T* p_;
+};
+
+/**
+ * Function to copy a strig (char*) to another strig (char*)
+ * of maximun lenght <= dstLen.
+ */
+//==============================================================================
+void copyString(const char *src, char *dst, size_t dstLen)
+  throw(castor::exception::Exception) {
+  if(src == NULL) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Source variable = NULL";
+    throw ex;
+  }
+
+  if(dstLen < strlen(src)) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Destination variable too small";
+    throw ex;
+  }
+
+  strcpy(dst, src);
+}
+
+/**
+ * Template function to copy a strig (char*) to a char array.
+ * Automatic trasformation from array to pointer ("decay").
+ */
+//==============================================================================
+template< int n > 
+void copyString(const char *src, char (&dst)[n])
+  throw(castor::exception::Exception) {
+  copyString(src, dst, n);
+}
 
 
-
-// The program open a file containing a list of files delimitated by "\n".
-// Read each of them as binary file per block (256Bytes) and copy the blocks
-// into a single output file.
+/**
+ * The program open a file containing a list of files delimitated by "\n".
+ * Read each of them as binary file per block (256Bytes) and copy the blocks
+ * into a single output file.
+ */
+//==============================================================================
 int main(int argc, char** argv) {
 
   using namespace castor::tape::format;    
 
   ifstream    indata, filelist;
   ofstream    fout;  
-  char       *buffer;
   int         payloadSize;    
   long        size;
   struct stat results;         // Need for 'stat' command
@@ -34,19 +83,17 @@ int main(int argc, char** argv) {
   ALB0100Marshaller             blockObject;
   ALB0100Marshaller::MigHeader  mig;
   ALB0100Marshaller::FileHeader file;
-    
-  //-------------------------------------------------------------------------------
-  file.file_name =   new char[MAX_FILE_NAME_LEN];
-  buffer =           new char[BLOCK_SIZE];  // Header + payload
-  payloadSize =      BLOCK_SIZE-HEADER_SIZE;// 255 KiB
+  
+  Array_auto_ptr<char> buffer(new char[BLOCK_SIZE]); 
+  payloadSize =       BLOCK_SIZE-HEADER_SIZE;
     
   //=== define migration datails ==================================================  
   mig.header_size =     HEADER_SIZE;
   mig.tape_mark_count = 777;
   mig.block_size =      262144;
   mig.block_count =     0;
-  mig.stager_host=      "----------------------------X----------c2cmsstager.cern.ch";
-  mig.drive_host=       "------------X-------------tpsrv250.cern.ch";
+  copyString("X----------c2cmsstager.cern.ch", mig.stager_host);
+  copyString("X-------------tpsrv250.cern.ch", mig.drive_host);
   strcpy(mig.version_number,     "2.99");
   strcpy(mig.checksum_algorithm, "Adler-32");
   strcpy(mig.stager_version,     "2.7.1.18");
@@ -76,12 +123,12 @@ int main(int argc, char** argv) {
     
   while( !filelist.eof() ){
 
-    filelist.getline(file.file_name, MAX_FILE_NAME_LEN );      // Read file name form filelist
+    filelist.getline(file.file_name, sizeof(file.file_name));      // Read file name form filelist
 
     if(filelist.eof() ) { break;}	
     if((filelist.rdstate() & ifstream::failbit ) != 0 ){
-      if((uint)filelist.gcount() == MAX_FILE_NAME_LEN-1){
-	cerr<< "ERROR: File_name readed from filelist.txt longer then "<<MAX_FILE_NAME_LEN<<" characters."<<endl
+      if((uint)filelist.gcount() == sizeof(file.file_name)-1){
+	cerr<< "ERROR: File_name readed from filelist.txt longer then "<<sizeof(file.file_name)<<" characters."<<endl
 	    << "Line exceded: "<< file.file_name<<"..."<<endl;
       }
       else{
@@ -100,8 +147,7 @@ int main(int argc, char** argv) {
       break;
     }
             
-    // fill up the file specific data
-    //====================================================
+    //==fill up the file specific data====================
     {
       FILE *fp;// code to generate Adler32 checksum runtime
       char s[alb0100::FILE_NAME_LEN]="adler32 ";
@@ -111,9 +157,10 @@ int main(int argc, char** argv) {
       char  strA[100];
       fscanf (fp, "%s %s %10d",strA, strA ,&file.file_checksum); // How to get the Third 'string'
       pclose(fp);
-      file.file_ns_host= "castorns.cern.ch";
+      copyString("castorns.cern.ch", file.file_ns_host);
       file.file_ns_id = 226994274;
     }
+    //====================================================
 
     blockObject.startFile(file);
 	    
@@ -122,17 +169,17 @@ int main(int argc, char** argv) {
     while ( !indata.eof() ){
                 
       if (size < payloadSize-1){                  // !!! LAST FILE BLOCK !!!
-	memset(buffer+HEADER_SIZE, '0', payloadSize-1);
-	memset(buffer+HEADER_SIZE+payloadSize-1, '\n', 1);
-	indata.read(buffer+HEADER_SIZE, size+1);  // remove to have 256 blocks
-	blockObject.marshall(buffer); 	    // compute the header
-	fout.write(buffer, BLOCK_SIZE);           // write the output on a file
+	memset(buffer.get()+HEADER_SIZE, '0', payloadSize-1);
+	memset(buffer.get()+HEADER_SIZE+payloadSize-1, '\n', 1);
+	indata.read(buffer.get()+HEADER_SIZE, size+1);  // remove to have 256 blocks
+	blockObject.marshall(buffer.get()); 	    // compute the header
+	fout.write(buffer.get(), BLOCK_SIZE);           // write the output on a file
       }
       else {
 	size -= payloadSize;
-	indata.read(buffer+HEADER_SIZE, payloadSize);
-	blockObject.marshall(buffer); 	    // compute the header
-	fout.write(buffer,BLOCK_SIZE );	    // write the output on a file
+	indata.read(buffer.get()+HEADER_SIZE, payloadSize);
+	blockObject.marshall(buffer.get()); 	    // compute the header
+	fout.write(buffer.get(),BLOCK_SIZE );	    // write the output on a file
       }
     }// end of while ( !indata.eof() )
     indata.close();
@@ -145,9 +192,6 @@ int main(int argc, char** argv) {
 
   filelist.close();
   if(filelist.fail()){ filelist.clear();} 	    // in case of .close() failure it clear the variable
- 
-  delete[] buffer;
-  delete[] file.file_name;
     
   return (EXIT_SUCCESS);
 }
