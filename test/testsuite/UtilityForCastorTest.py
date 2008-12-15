@@ -167,6 +167,9 @@ def getTicket():
     newTime=time.gmtime()
     return str(((newTime[7]*24+newTime[3])*60 + newTime[4])*60 +newTime[5])
 
+# get a global, universal ticket
+ticket = getTicket()
+
 # function called if one of the request takes too much time
 
 def timeOut(myCmd):

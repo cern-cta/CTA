@@ -6,7 +6,7 @@ from threading import Thread
 import signal
 import thread
 import UtilityForCastorTest
-from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDirTape,configFile
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDirTape,configFile,ticket
 
 endThread=0
 # global variable to avoid the join, due to thread limitation in handling signals
@@ -17,7 +17,6 @@ def handlerKeyInt(signum, frame):
     raise KeyboardInterrupt, "Keyboard interrupt"
 
 
-ticket=""
 dirCastor=""
 inputFile=""
 localDir=""
@@ -137,8 +136,7 @@ class MigratingThread(Thread):
 class PreRequisitesCase(unittest.TestCase):
     def mainScenarium(self):
         assert (UtilityForCastorTest.checkUser() != -1), "you don't have acccess to directory \"" + outputDirTape + "\" where you wanted to run the test"
-        global ticket,dirCastor,myScen,localDir,inputFile,recallDir
-        ticket=UtilityForCastorTest.getTicket()
+        global dirCastor,myScen,localDir,inputFile,recallDir
         dirCastor=outputDirTape+"/tmpTapeTest"+ticket+"/"
         myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion)
         params = UtilityForCastorTest.parseConfigFile(configFile, "Tape")

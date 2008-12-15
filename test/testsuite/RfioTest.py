@@ -6,14 +6,13 @@ import threading
 import re
 from threading import Thread
 import UtilityForCastorTest
-from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDir,configFile,testCastorV1,testDefaultEnv
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDir,configFile,testCastorV1,testDefaultEnv,ticket
 
 # Parameters
 remoteHost=""
 stageMap="no"
 castorConf="no"
 castorEnv="no"
-ticket=UtilityForCastorTest.getTicket()
 
 # Variables used for different enviroment
 myTurl=""
@@ -60,7 +59,7 @@ class RfioPreRequisitesCase(unittest.TestCase):
                 if elems !=[] and elems[0]=="DiskServer" and elems[2]=="DISKSERVER_PRODUCTION":
                     remoteHost=elems[1]
             global remoteDir
-            remoteDir=remoteHost+":"+"/tmp/tmpRfio"+ticket
+            remoteDir=remoteHost+":"+"/srv/castor/01/01/tmpRfio"+ticket
             cmd=['rfmkdir '+remoteDir]
             myOut=UtilityForCastorTest.runOnShell(cmd,myScen)[0]
             rfioRemoteDirOk=1

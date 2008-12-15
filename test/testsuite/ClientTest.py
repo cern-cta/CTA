@@ -6,10 +6,9 @@ import sys
 import time
 import threading
 import UtilityForCastorTest
-from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDir,configFile
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDir,configFile,ticket
 
 # parameters
-ticket= UtilityForCastorTest.getTicket()
 myScen=""
 
 # files and directories
