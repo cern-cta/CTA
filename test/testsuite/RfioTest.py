@@ -67,39 +67,40 @@ class RfioPreRequisitesCase(unittest.TestCase):
                 print '\n  Failed to create remote directory: '+remoteDir
                 print '  Reason: Permission denied - (RFIO directory filtering enabled)'
                 print '  The following test cases will only be checked for \'Permission Denied\' error responses:'
-                print '     localToRemote  (RfioTest.RfioRfcpSimpleCase)'
-                print '     remoteToLocal  (RfioTest.RfioRfcpSimpleCase)'
-                print '     remoteToRemote (RfioTest.RfioRfcpSimpleCase)'
-                print '     remoteToCastor (RfioTest.RfioRfcpScenarium1)'
-                print '     castorToRemote (RfioTest.RfioRfcpScenarium1)'
-                print '     remoteToCastor (RfioTest.RfioRfcpScenarium2)'
-                print '     castorToRemote (RfioTest.RfioRfcpScenarium2)'
-                print '     remoteToCastor (RfioTest.RfioRfcpScenarium3)'
-                print '     castorToRemote (RfioTest.RfioRfcpScenarium3)'
-                print '     remoteToCastor (RfioTest.RfioRfcpScenarium4)'
-                print '     castorToRemote (RfioTest.RfioRfcpScenarium5)'
-                print '     remoteToCastor (RfioTest.RfioRfcpScenarium2)'
-                print '     castorToRemote (RfioTest.RfioRfcpScenarium2)'
-                print '     remoteToCastor (RfioTest.RfioRfcpNewTurl1)'
-                print '     castorToRemote (RfioTest.RfioRfcpNewTurl1)'
-                print '     remoteToCastor (RfioTest.RfioRfcpNewTurl2)'
-                print '     castorToRemote (RfioTest.RfioRfcpNewTurl2)'
-                print '     remoteToCastor (RfioTest.RfioRfcpNewTurl3)'
-                print '     castorToRemote (RfioTest.RfioRfcpNewTurl3)'
-                print '     remoteToCastor (RfioTest.RfioRfcpNewTurl4)'
-                print '     castorToRemote (RfioTest.RfioRfcpNewTurl4)'
-                print '     remoteToCastor (RfioTest.RfioRfcpNewTurl5)'
-                print '     castorToRemote (RfioTest.RfioRfcpNewTurl5)'
-                print '     remoteToCastor (RfioTest.RfioRfcpNewTurl6)'
-                print '     castorToRemote (RfioTest.RfioRfcpNewTurl6)'
-                print '     remoteToCastor (RfioTest.RfioRfcpNewTurl7)'
-                print '     castorToRemote (RfioTest.RfioRfcpNewTurl7)'
-                print '     remoteRfcat    (RfioTest.RfioOtherCmdSimpleCase)'
-                print '     remoteRfchmod  (RfioTest.RfioOtherCmdSimpleCase)'
-                print '     remoteRfdir    (RfioTest.RfioOtherCmdSimpleCase)'
-                print '     remoteRfrename (RfioTest.RfioOtherCmdSimpleCase)'
-                print '     remoteRfrm     (RfioTest.RfioOtherCmdSimpleCase)'
-                print '     remoteRfstat   (RfioTest.RfioOtherCmdSimpleCase) ... ',
+                print '     localToRemote    (RfioTest.RfioRfcpSimpleCase)'
+                print '     remoteToLocal    (RfioTest.RfioRfcpSimpleCase)'
+                print '     remoteToRemote   (RfioTest.RfioRfcpSimpleCase)'
+                print '     concurrentWrites (RfioTest.RfioRfcpSimpleCase)'
+                print '     remoteToCastor   (RfioTest.RfioRfcpScenarium1)'
+                print '     castorToRemote   (RfioTest.RfioRfcpScenarium1)'
+                print '     remoteToCastor   (RfioTest.RfioRfcpScenarium2)'
+                print '     castorToRemote   (RfioTest.RfioRfcpScenarium2)'
+                print '     remoteToCastor   (RfioTest.RfioRfcpScenarium3)'
+                print '     castorToRemote   (RfioTest.RfioRfcpScenarium3)'
+                print '     remoteToCastor   (RfioTest.RfioRfcpScenarium4)'
+                print '     castorToRemote   (RfioTest.RfioRfcpScenarium5)'
+                print '     remoteToCastor   (RfioTest.RfioRfcpScenarium2)'
+                print '     castorToRemote   (RfioTest.RfioRfcpScenarium2)'
+                print '     remoteToCastor   (RfioTest.RfioRfcpNewTurl1)'
+                print '     castorToRemote   (RfioTest.RfioRfcpNewTurl1)'
+                print '     remoteToCastor   (RfioTest.RfioRfcpNewTurl2)'
+                print '     castorToRemote   (RfioTest.RfioRfcpNewTurl2)'
+                print '     remoteToCastor   (RfioTest.RfioRfcpNewTurl3)'
+                print '     castorToRemote   (RfioTest.RfioRfcpNewTurl3)'
+                print '     remoteToCastor   (RfioTest.RfioRfcpNewTurl4)'
+                print '     castorToRemote   (RfioTest.RfioRfcpNewTurl4)'
+                print '     remoteToCastor   (RfioTest.RfioRfcpNewTurl5)'
+                print '     castorToRemote   (RfioTest.RfioRfcpNewTurl5)'
+                print '     remoteToCastor   (RfioTest.RfioRfcpNewTurl6)'
+                print '     castorToRemote   (RfioTest.RfioRfcpNewTurl6)'
+                print '     remoteToCastor   (RfioTest.RfioRfcpNewTurl7)'
+                print '     castorToRemote   (RfioTest.RfioRfcpNewTurl7)'
+                print '     remoteRfcat      (RfioTest.RfioOtherCmdSimpleCase)'
+                print '     remoteRfchmod    (RfioTest.RfioOtherCmdSimpleCase)'
+                print '     remoteRfdir      (RfioTest.RfioOtherCmdSimpleCase)'
+                print '     remoteRfrename   (RfioTest.RfioOtherCmdSimpleCase)'
+                print '     remoteRfrm       (RfioTest.RfioOtherCmdSimpleCase)'
+                print '     remoteRfstat     (RfioTest.RfioOtherCmdSimpleCase) ... ',
                 rfioRemoteDirOk=0
         except IOError:
             assert 0==-1, "An error in the preparation of the main setting occurred ... test is not valid"
@@ -190,7 +191,7 @@ class RfioRfcpSimpleCase(unittest.TestCase):
         if rfioRemoteDirOk:
             assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "rfio doesn't work from remote to local"
         else:
-            assert re.search('Permission denied', buffOut) != None, "rfio directory filter dosen't work from remote to local"
+            assert re.search('Permission denied', buffOut) != None, "rfio directory filter doesn't work from remote to local"
             return
 
         fi=open(localDir+"RfioSimpleRemoteToLocal1","r")
@@ -211,7 +212,7 @@ class RfioRfcpSimpleCase(unittest.TestCase):
         if rfioRemoteDirOk:
             assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None, "rfio doesn't work from remote to remote"
         else:
-            assert re.search('Permission denied', buffOut) != None, "rfio directory filter dosen't work from remote to remote"
+            assert re.search('Permission denied', buffOut) != None, "rfio directory filter doesn't work from remote to remote"
             return
 
         fi=open(localDir+"RfioSimpleRemoteToRemote1","r")
@@ -228,23 +229,27 @@ class RfioRfcpSimpleCase(unittest.TestCase):
         assert os.stat(localDir+"RfioSimpleRemoteToRemote3")[6] == 0, "rfio doesn't work from remote to remote"
 
     def concurrentWrites(self):
-        fileBig=UtilityForCastorTest.getBigFile(100,ticket) # 100 MB file
         remoteFile = remoteDir+"concurrentWrites"+ticket
         localFile = localDir+"concurrentWrites"+ticket
         logFile = localDir+"concurrentWrites"
-        write1=rfioWriteThread(fileBig,remoteFile,logFile+"BigWrite")
-        write1.start()
-        time.sleep(.2)
-        write2=rfioWriteThread(inputFile,remoteFile,logFile+"SmallWrite")
-        write2.start()
-        write1.join()
-        write2.join()
+        if rfioRemoteDirOk:
+            fileBig=UtilityForCastorTest.getBigFile(100,ticket) # 100 MB file
+            write1=rfioWriteThread(fileBig,remoteFile,logFile+"BigWrite")
+            write1.start()
+            time.sleep(.2)
+            write2=rfioWriteThread(inputFile,remoteFile,logFile+"SmallWrite")
+            write2.start()
+            write1.join()
+            write2.join()
         cmd=["rfcp "+remoteFile+" "+" /dev/null"]
         UtilityForCastorTest.saveOnFile(logFile,cmd)
         fi=open(localDir+"concurrentWrites","r")
         buffOut=fi.read()
         fi.close()
-        assert re.search('through eth[0-1] \(in\) and local \(out\)', buffOut) != None, "concurrent rfio writes are failing"
+        if rfioRemoteDirOk:
+            assert re.search('through eth[0-1] \(in\) and local \(out\)', buffOut) != None, "concurrent rfio writes are failing"
+        else:
+            assert re.search('Permission denied', buffOut) != None, "rfio directory filter doesn't work for concurrent writes"
 
 
 ### OTHER CMD RFIO ###
@@ -662,7 +667,7 @@ class RfioRfcpCastor(unittest.TestCase):
         if rfioRemoteDirOk:
             assert re.search('through local \(in\) and eth[0-1] \(out\)',buffOut) != None or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from local to remote"
         else:
-            assert re.search('Permission denied', buffOut) != None, "rfio directory filter dosen't work from local to remote"
+            assert re.search('Permission denied', buffOut) != None, "rfio directory filter doesn't work from local to remote"
             return
 
         fi=open(localDir+"RfioRfcpRemoteToCastor"+myTag+"1","r")
@@ -693,7 +698,7 @@ class RfioRfcpCastor(unittest.TestCase):
         if rfioRemoteDirOk:
             assert re.search('through eth[0-1] \(in\) and eth[0-1] \(out\)',buffOut) != None or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from castor to remote"
         else:
-            assert re.search('Permission denied', buffOut) != None, "rfio directory filter dosen't work from local to remote"
+            assert re.search('Permission denied', buffOut) != None, "rfio directory filter doesn't work from local to remote"
             return
 
         fi=open(localDir+"RfioRfcpCastorToRemote"+myTag+"2","r")
