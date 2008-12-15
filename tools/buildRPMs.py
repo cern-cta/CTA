@@ -31,7 +31,7 @@ if rpmOutput.find('Wrote:') == -1:
     rpmLog.write(rpmOutput)
     rpmLog.close()
     print 'The RPM build failed, output in ' + workDir + '/castorBuildOutput Exiting'
-    os.remove('/tmp/buildRPMs.py')
+    os.remove(sys.argv[0])
     sys.exit(2)
 # Now build the nostk version of the castor-tape-server RPM
 cmd2 = "CASTOR_NOSTK=YES " + basecmd + "' -tb " + tarball
@@ -42,7 +42,7 @@ if rpmOutput2.find('Wrote:') == -1:
     rpmLog.write(rpmOutput2)
     rpmLog.close()
     print 'The RPM build for nostk tapeserver failed, output in ' + workDir + '/castorBuildOutput.nostk Exiting'
-    os.remove('/tmp/buildRPMs.py')
+    os.remove(sys.argv[0])
     sys.exit(2)
 
 rpmDir = workDir + os.sep + 'RPMS' + os.sep + targetArch
@@ -62,4 +62,4 @@ print 'Release done successfully on ' + targetOs + '/' + targetArch
 # cleanup
 shutil.rmtree(workDir)
 os.remove(tarball)
-os.remove('/tmp/buildRPMs.py')
+os.remove(sys.argv[0])
