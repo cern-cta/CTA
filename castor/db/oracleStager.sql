@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.708 $ $Date: 2008/12/08 14:10:10 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.709 $ $Date: 2008/12/16 10:41:24 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1285,9 +1285,9 @@ BEGIN
   -- update all the Repack subRequests for this file. The status REPACK
   -- stays until the migration to the new tape is over.
   UPDATE SubRequest
-     SET diskCopy = dcId, status = 12  -- SUBREQUEST_REPACK
+     SET diskCopy = dcId, status = 12  -- REPACK
    WHERE SubRequest.castorFile = cfId
-     AND SubRequest.status IN (4, 5, 6)  -- SUBREQUEST_WAITTAPERECALL, WAITSUBREQ, READY
+     AND SubRequest.status IN (3, 4, 5)  -- WAITSCHED, WAITTAPERECALL, WAITSUBREQ
      AND SubRequest.request IN
        (SELECT id FROM StageRepackRequest);
    
