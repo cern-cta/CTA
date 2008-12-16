@@ -53,7 +53,6 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/Internal.hpp"
-#include "castor/exception/RequestCanceled.hpp"
 
 // Static map s_plugins
 static std::map<std::string, castor::job::stagerjob::IPlugin*> *s_plugins = 0;
@@ -318,107 +317,98 @@ void bindSocketAndListen
 //------------------------------------------------------------------------------
 void process(castor::job::stagerjob::InputArguments* args)
   throw (castor::exception::Exception) {
-  try {
-    // First switch to stage:st privileges
-    switchToCastorSuperuser(args);
-    // Get an instance of the job service
-    castor::stager::IJobSvc* jobSvc = getJobSvc();
-    // Get full path of the file we handle
-    castor::job::stagerjob::PluginContext context;
-    context.host = castor::System::getHostName();
-    context.mask = S_IRWXG|S_IRWXO;
-    context.jobSvc = jobSvc;
-    context.fullDestPath = startAndGetPath(args, context);
-    if ("" == context.fullDestPath) {
-      // No DiskCopy return, nothing should be done
-      // The job was scheduled for nothing
-      // This happens in particular when a diskCopy gets invalidated
-      // while the job waits in the scheduler queue
-      // we've already logged, so just quit
-      return;
-    }
-    // Get proper plugin
-    castor::job::stagerjob::IPlugin* plugin =
-      castor::job::stagerjob::getPlugin(args->protocol);
-    // Create the socket that the user will connect too. Note:
-    // xrootd requires no socket as users will connect to the
-    // xrd daemon on the machine itself!
-    if (args->protocol != "xroot") {
-      // Create a socket
-      context.socket = socket(AF_INET, SOCK_STREAM, 0);
-      if (context.socket < 0) {
-	castor::exception::Exception e(errno);
-	e.getMessage() << "Error caught in call to socket";
-	throw e;
-      }
-      int rcode = 1;
-      int rc = setsockopt(context.socket, SOL_SOCKET, SO_REUSEADDR,
-			  (char *)&rcode, sizeof(rcode));
-      if (rc < 0) {
-	castor::exception::Exception e(errno);
-	e.getMessage() << "Error caught in call to setsockopt";
-	throw e;
-      }
-      // Get available port range for the socket
-      std::pair<int,int> portRange = plugin->getPortRange(*args);
-      // Bind socket and listen for client connection
-      bindSocketAndListen(context, portRange);
-      // "Mover will use the following port"
-      std::ostringstream sPortRange;
-      sPortRange << portRange.first << ":" << portRange.second;
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("Protocol", args->protocol),
-	 castor::dlf::Param("Available port range", sPortRange.str()),
-	 castor::dlf::Param("Port used", context.port),
-	 castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-	 castor::dlf::Param(args->subRequestUuid)};
-      castor::dlf::dlf_writep
-	(args->requestUuid, DLF_LVL_DEBUG,
-	 castor::job::stagerjob::MOVERPORT, 5, params, &args->fileId);
-    }
-    // Prefork hook for the different movers
-    plugin->preForkHook(*args, context);
-    // Set our mask to the most restrictive mode
-    umask(context.mask);
-    // chdir into something else but the root system...
-    if (chdir("/tmp") != 0) {
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-         castor::dlf::Param(args->subRequestUuid)};
-      castor::dlf::dlf_writep
-        (args->requestUuid, DLF_LVL_ERROR,
-         castor::job::stagerjob::CHDIRFAILED, 2, params, &args->fileId);
-      // Not fatal, we just ignore the error
-    }
-    // Fork and execute the mover
-    dlf_prepare();
-    context.childPid = fork();
-    if (context.childPid < 0) {
-      dlf_parent();
+  // First switch to stage:st privileges
+  switchToCastorSuperuser(args);
+  // Get an instance of the job service
+  castor::stager::IJobSvc* jobSvc = getJobSvc();
+  // Get full path of the file we handle
+  castor::job::stagerjob::PluginContext context;
+  context.host = castor::System::getHostName();
+  context.mask = S_IRWXG|S_IRWXO;
+  context.jobSvc = jobSvc;
+  context.fullDestPath = startAndGetPath(args, context);
+  if ("" == context.fullDestPath) {
+    // No DiskCopy return, nothing should be done
+    // The job was scheduled for nothing
+    // This happens in particular when a diskCopy gets invalidated
+    // while the job waits in the scheduler queue
+    // we've already logged, so just quit
+    return;
+  }
+  // Get proper plugin
+  castor::job::stagerjob::IPlugin* plugin =
+    castor::job::stagerjob::getPlugin(args->protocol);
+  // Create the socket that the user will connect too. Note:
+  // xrootd requires no socket as users will connect to the
+  // xrd daemon on the machine itself!
+  if (args->protocol != "xroot") {
+    // Create a socket
+    context.socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (context.socket < 0) {
       castor::exception::Exception e(errno);
-      e.getMessage() << "Error caught in call to fork";
+      e.getMessage() << "Error caught in call to socket";
       throw e;
     }
-    if (context.childPid == 0) {
-      // Child side of the fork
-      dlf_child();
-      // This call will never come back, since it call execl
-      plugin->execMover(*args, context);
-      // But in case, let's fail
-      dlf_shutdown(5);
-      exit(EXIT_FAILURE);
+    int rcode = 1;
+    int rc = setsockopt(context.socket, SOL_SOCKET, SO_REUSEADDR,
+                        (char *)&rcode, sizeof(rcode));
+    if (rc < 0) {
+      castor::exception::Exception e(errno);
+      e.getMessage() << "Error caught in call to setsockopt";
+      throw e;
     }
-    // Parent side of the fork
-    dlf_parent();
-    plugin->postForkHook(*args, context);
-  } catch (castor::exception::RequestCanceled ex) {
+    // Get available port range for the socket
+    std::pair<int,int> portRange = plugin->getPortRange(*args);
+    // Bind socket and listen for client connection
+    bindSocketAndListen(context, portRange);
+    // "Mover will use the following port"
+    std::ostringstream sPortRange;
+    sPortRange << portRange.first << ":" << portRange.second;
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Protocol", args->protocol),
+       castor::dlf::Param("Available port range", sPortRange.str()),
+       castor::dlf::Param("Port used", context.port),
+       castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+       castor::dlf::Param(args->subRequestUuid)};
+    castor::dlf::dlf_writep
+      (args->requestUuid, DLF_LVL_DEBUG,
+       castor::job::stagerjob::MOVERPORT, 5, params, &args->fileId);
+  }
+  // Prefork hook for the different movers
+  plugin->preForkHook(*args, context);
+  // Set our mask to the most restrictive mode
+  umask(context.mask);
+  // chdir into something else but the root system...
+  if (chdir("/tmp") != 0) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
        castor::dlf::Param(args->subRequestUuid)};
     castor::dlf::dlf_writep
-      (args->requestUuid, DLF_LVL_SYSTEM,
-       castor::job::stagerjob::REQCANCELED, 2, params, &args->fileId);
+      (args->requestUuid, DLF_LVL_ERROR,
+       castor::job::stagerjob::CHDIRFAILED, 2, params, &args->fileId);
+    // Not fatal, we just ignore the error
   }
+  // Fork and execute the mover
+  dlf_prepare();
+  context.childPid = fork();
+  if (context.childPid < 0) {
+    dlf_parent();
+    castor::exception::Exception e(errno);
+    e.getMessage() << "Error caught in call to fork";
+    throw e;
+  }
+  if (context.childPid == 0) {
+    // Child side of the fork
+    dlf_child();
+    // This call will never come back, since it call execl
+    plugin->execMover(*args, context);
+    // But in case, let's fail
+    dlf_shutdown(5);
+    exit(EXIT_FAILURE);
+  }
+  // Parent side of the fork
+  dlf_parent();
+  plugin->postForkHook(*args, context);
 }
 
 //------------------------------------------------------------------------------
@@ -591,16 +581,27 @@ int main(int argc, char** argv) {
     delete arguments;
 
   } catch (castor::exception::Exception e) {
-    // "Job failed"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Error", sstrerror(e.code())),
-       castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-       castor::dlf::Param(arguments->subRequestUuid)};
-    castor::dlf::dlf_writep
-      (arguments->requestUuid, DLF_LVL_ERROR,
-       castor::job::stagerjob::JOBFAILED, 4, params, &arguments->fileId);
-
+    if (e.code() == ESTREQCANCELED) {
+      // "manually" catch the RequestCanceled exception
+      // these are converted to regular Exception objects
+      // by the internal remote procedure call mechanism
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+         castor::dlf::Param(arguments->subRequestUuid)};
+      castor::dlf::dlf_writep
+        (arguments->requestUuid, DLF_LVL_SYSTEM,
+         castor::job::stagerjob::REQCANCELED, 2, params, &arguments->fileId);
+    } else {
+      // "Job failed"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Error", sstrerror(e.code())),
+         castor::dlf::Param("Message", e.getMessage().str()),
+         castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+         castor::dlf::Param(arguments->subRequestUuid)};
+      castor::dlf::dlf_writep
+        (arguments->requestUuid, DLF_LVL_ERROR,
+         castor::job::stagerjob::JOBFAILED, 4, params, &arguments->fileId);
+    }
     // Try to answer the client
     try {
       castor::rh::IOResponse ioResponse;
