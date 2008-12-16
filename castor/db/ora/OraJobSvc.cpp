@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.54 $ $Release$ $Date: 2008/11/10 16:08:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.55 $ $Release$ $Date: 2008/12/16 14:50:04 $ $Author: itglp $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -328,7 +328,8 @@ castor::db::ora::OraJobSvc::putStart
     if (e.getErrorCode() == 20104) {
       // SubRequest canceled while queuing in scheduler error
       castor::exception::RequestCanceled ex;
-      ex.getMessage() << e.what();
+      std::string error = e.what();
+      ex.getMessage() << error.substr(error.find("ORA-")+11, error.find("ORA-", 4));
       throw ex;
     }
     castor::exception::Internal ex;
@@ -444,17 +445,17 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
       std::string csumtype = "";
       std::string csumvalue = statbuf.csumvalue;
       if ((strcmp(statbuf.csumtype, "AD") == 0) ||
-	  (strcmp(statbuf.csumtype, "CS") == 0) ||
-	  (strcmp(statbuf.csumtype, "MD") == 0)) {
-	csumtype = statbuf.csumtype;
+          (strcmp(statbuf.csumtype, "CS") == 0) ||
+          (strcmp(statbuf.csumtype, "MD") == 0)) {
+        csumtype = statbuf.csumtype;
       }
 
       // Set the source and destination diskcopy checksum attributes.
       if ((csumtype != "") && (csumvalue != "")) {
-	diskCopy->setCsumType(csumtype);
-	diskCopy->setCsumValue(csumvalue);
-	sourceDiskCopy->setCsumType(csumtype);
-	sourceDiskCopy->setCsumValue(csumvalue);
+        diskCopy->setCsumType(csumtype);
+        diskCopy->setCsumValue(csumvalue);
+        sourceDiskCopy->setCsumType(csumtype);
+        sourceDiskCopy->setCsumValue(csumvalue);
       }
     }
 
@@ -462,17 +463,19 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
     cnvSvc()->commit();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
+    if ((e.getErrorCode() == 20108) ||
+        (e.getErrorCode() == 20109) ||
+        (e.getErrorCode() == 20110)) {
+      // job was canceled while queueing in the scheduler
+      castor::exception::RequestCanceled ex;
+      std::string error = e.what();
+      ex.getMessage() << error.substr(error.find("ORA-")+11, error.find("ORA-", 4));
+      throw ex;
+    }
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Error caught in disk2DiskCopyStart. ";
-    if ((e.getErrorCode() == 20108) ||
-	(e.getErrorCode() == 20109) ||
-	(e.getErrorCode() == 20110)) {
-      std::string error = e.what();
-      ex.getMessage() << error.substr(0, error.find("ORA-", 4));
-    } else {
-      ex.getMessage() << std::endl << e.what();
-    }
+      << "Error caught in disk2DiskCopyStart. "
+      << std::endl << e.what();
     throw ex;
   }
 }
