@@ -30,7 +30,7 @@ int main(int argc, char**argv) {
   int c;
   int errflg = 0;
   int hflg = 0;
-  u_signed64 fileid = -1;
+  u_signed64 fileid = 0;
   char *server = NULL;
   char filepath[CA_MAXPATHLEN + 1];
   char tmpbuf[21];
@@ -68,7 +68,7 @@ int main(int argc, char**argv) {
   if (hflg) {
     usage (0, argv[0]);
   }
-  if (errflg || (server == NULL) || (fileid == -1)) {
+  if (errflg || (server == NULL) || (fileid == 0)) {
     usage (USERR, argv[0]);
   }
 
