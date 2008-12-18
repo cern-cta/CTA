@@ -131,6 +131,7 @@ namespace castor{
             stgReplyHelper = new ReplyHelper();
             stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "No error");
             stgReplyHelper->endReplyToClient(stgRequestHelper);
+            stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_RMPERFORMED, &(stgCnsHelper->cnsFileid));
             delete stgReplyHelper;
             stgReplyHelper = NULL;
             stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
