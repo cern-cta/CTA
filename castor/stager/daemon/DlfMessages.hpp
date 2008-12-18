@@ -54,7 +54,7 @@ namespace castor{
 	STAGER_SETGC = 38, /* "SetGC Request" */
 	STAGER_SETGC_DETAILS = 39, /* "SetGC details" *//* SYSTEM LEVEL ALSO */
 	STAGER_RM = 40, /* Rm Request" */
-	STAGER_RM_DETAILS = 41, /* Rm details" *//* SYSTEM LEVEL ALSO */
+	STAGER_RMPERFORMED = 41, /* Rm performed" */
 	STAGER_PUTDONE = 42, /* "PutDone Request" */
 	STAGER_CHGPRIV = 43, /* "ChangePrivilege Request" */
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.60 $ $Release$ $Date: 2008/12/02 17:39:12 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.61 $ $Release$ $Date: 2008/12/18 14:31:41 $ $Author: sponcec3 $
  *
  * Main stager daemon
  *
@@ -180,7 +180,7 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_SETGC,"SetGC Request"},
     { STAGER_SETGC_DETAILS, "SetGC details"},/* SYSTEM LEVEL ALSO */
     { STAGER_RM, "Rm Request"},
-    { STAGER_RM_DETAILS, "Rm details"},/* SYSTEM LEVEL ALSO */
+    { STAGER_RMPERFORMED, "Rm performed"},
     { STAGER_PUTDONE,"PutDone Request"},
     { STAGER_CHGPRIV,"ChangePrivilege Request"},
 
