@@ -1126,19 +1126,18 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
    * the down state.
    *
    * If the state of the request cannot be moved to REQUEST_SUBMITTED, then
-   * this procedure will take the appropriate actions.
+   * this procedure will do nothing.
    *
-   * All the details of the actions taken by this procedure, both in success
-   * and failure, are reflected in the xxxxBeforeVar and xxxxAfterVar OUT
-   * parameters of this procedure.
+   * All the details of the actions taken by this procedure are reflected in
+   * the xxxxBeforeVar and xxxxAfterVar OUT parameters of this procedure.
    *
    * Note that except for database ids, a xxxxBefore or a xxxxAfter
    * parameter will contain the value -1 if the actual value is unknown.
    * In the case of database ids, a value of NULL may mean unknown or
    * NULL.
    *
-   * @param tapeDriveIdVar the ID of the drive
-   * @param tapeRequestIdVar the ID of the tape request
+   * @param driveIdVar the ID of the drive
+   * @param requestIdVar the ID of the tape request
    * @param returnVar has a value of 1 if the state of the request was
    * successfully moved to REQUEST_SUBMITTED, else 0
    * @param driveExistsVar -1 = unknown, 0 = no drive, 1 = drive exists
@@ -2411,13 +2410,18 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
       runningRequestIdAfterVar := runningRequestIdBeforeVar; -- No change yet
     EXCEPTION
       WHEN NO_DATA_FOUND THEN
-        driveExistsVar := 0; -- Drive row does not exist
+        driveExistsVar := 0; -- Drive does not exist
     END;
+
+    -- If the drive no longer exists, then do nothing
+    IF driveExistsVar = 0 THEN
+      RETURN;
+    END IF;
 
     -- Try to get a lock on and the status of the request row
     BEGIN
       SELECT TapeRequest.status    , TapeRequest.tapeDrive
-        INTO requestStatusBeforeVar, RequestDriveIdBeforeVar
+        INTO requestStatusBeforeVar, requestDriveIdBeforeVar
         FROM TapeRequest
         WHERE TapeRequest.id = requestIdVar
         FOR UPDATE;
@@ -2430,60 +2434,18 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
         requestExistsVar := 0; -- Request does not exist
     END;
 
-    -- If the drive exists and the request does not exist
-    IF driveExistsVar = 1 AND requestExistsVar = 0 THEN
-      UPDATE TapeDrive
-        SET
-          TapeDrive.status         = 7,   -- STATUS_UNKNOWN = 7
-          TapeDrive.runningTapeReq = NULL -- No running request
-        WHERE TapeDrive.id = driveIdVar;
-
-      -- Set out parameters and return
-      driveStatusAfterVar      := 7;    -- STATUS_UNKNOWN = 7
-      runningRequestIdAfterVar := NULL; -- No running request
-      returnVar                := 0;    -- Failed
+    -- If the request no longer exists, then do nothing
+    IF requestExistsVar = 0 THEN
       RETURN;
     END IF;
 
-    -- If the drive does not exist and the request does exist
-    IF driveExistsVar = 0 AND requestExistsVar = 1 THEN
-      UPDATE TapeRequest
-        SET
-          TapeRequest.status    = 0,   -- REQUEST_PENDING = 0
-          TapeRequest.tapeDrive = NULL -- No drive
-        WHERE TapeRequest.id = requestIdVar;
-
-      -- Set out parameters and return
-      requestStatusAfterVar  := 0;    -- REQUEST_PENDING = 0
-      requestDriveIdAfterVar := NULL; -- No drive
-      returnVar              := 0;    -- Failed
-      RETURN;
-    END IF;
-
-    -- If the state of the request cannot be moved to REQUEST_SUBMITTED
-    IF driveStatusBeforeVar      != 1 OR         --Not UNIT_STARTING
-       requestStatusBeforeVar    != 2 OR         --Not REQUEST_BEINGSUBMITTED
-       runningRequestIdBeforeVar != requestIdVar --Drive not paired with request
+    -- If the state of the request cannot be moved to REQUEST_SUBMITTED, then
+    -- do nothing
+    IF driveStatusBeforeVar      != 1            OR -- 1=UNIT_STARTING
+       requestStatusBeforeVar    != 2            OR -- 2=REQUEST_BEINGSUBMITTED
+       runningRequestIdBeforeVar != requestIdVar OR
+       requestDriveIdBeforeVar   != driveIdVar
       THEN
-
-      UPDATE TapeDrive
-        SET
-          TapeDrive.status         = 7,   -- STATUS_UNKNOWN = 7
-          TapeDrive.runningTapeReq = NULL -- No running request
-        WHERE TapeDrive.id = driveIdVar;
-
-      UPDATE TapeRequest
-        SET
-          TapeRequest.status    = 0,   -- REQUEST_PENDING = 0
-          TapeRequest.tapeDrive = NULL -- No drive
-        WHERE TapeRequest.id = requestIdVar;
-
-      -- Set out parameters and return
-      driveStatusAfterVar      := 7;    -- STATUS_UNKNOWN = 7
-      runningRequestIdAfterVar := NULL; -- No running request
-      requestStatusAfterVar    := 0;    -- REQUEST_PENDING = 0
-      requestDriveIdAfterVar   := NULL; -- No drive
-      returnVar                := 0;    -- Failed
       RETURN;
     END IF;
 
