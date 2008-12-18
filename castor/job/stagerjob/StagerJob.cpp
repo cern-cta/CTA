@@ -601,23 +601,23 @@ int main(int argc, char** argv) {
       castor::dlf::dlf_writep
         (arguments->requestUuid, DLF_LVL_ERROR,
          castor::job::stagerjob::JOBFAILED, 4, params, &arguments->fileId);
-    }
-    // Try to answer the client
-    try {
-      castor::rh::IOResponse ioResponse;
-      ioResponse.setErrorCode(e.code());
-      ioResponse.setErrorMessage(e.getMessage().str());
-      castor::job::stagerjob::sendResponse(arguments->client, ioResponse);
-    } catch (castor::exception::Exception e2) {
-      // "Could not send answer to client"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Error", sstrerror(e2.code())),
-         castor::dlf::Param("Message", e2.getMessage().str()),
-         castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-         castor::dlf::Param(arguments->subRequestUuid)};
-      castor::dlf::dlf_writep
-        (arguments->requestUuid, DLF_LVL_ERROR,
-         castor::job::stagerjob::NOANSWERSENT, 4, params, &arguments->fileId);
+      // Try to answer the client
+      try {
+        castor::rh::IOResponse ioResponse;
+        ioResponse.setErrorCode(e.code());
+        ioResponse.setErrorMessage(e.getMessage().str());
+        castor::job::stagerjob::sendResponse(arguments->client, ioResponse);
+      } catch (castor::exception::Exception e2) {
+        // "Could not send answer to client"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Error", sstrerror(e2.code())),
+           castor::dlf::Param("Message", e2.getMessage().str()),
+           castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+           castor::dlf::Param(arguments->subRequestUuid)};
+        castor::dlf::dlf_writep
+          (arguments->requestUuid, DLF_LVL_ERROR,
+           castor::job::stagerjob::NOANSWERSENT, 4, params, &arguments->fileId);
+      }
     }
     // Memory cleanup
     if (0 != arguments) delete arguments;
