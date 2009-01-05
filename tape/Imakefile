@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 1990-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.14 $ $Date: 2008/11/26 14:51:58 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.15 $ $Date: 2009/01/05 16:21:23 $ CERN IT-PDP/DM Jean-Philippe Baud
 
 COMM 	Make tape daemon programs. 
 
@@ -24,10 +24,6 @@ CONFIGFILE = -DCONFIGFILE=\"$(SCONFIGFILE)\"
 TAPEACCT = tapeacct.Osuf
 STAGERSUPERUSER = StagerSuperUser
 TPCONFIG = TapeConfigFile
-#if defined(SONYRAW)
-SONYRFLG = -DSONYRAW
-SONYR_OBJ = sonysubr.o
-#endif
 #if !CASTOR_NOSTK && HasCDK
 CDK = CDKDir
 CDKFLG = -DCDK -DLINUX
@@ -50,7 +46,7 @@ DFLAGS = -DBIN=\"$(BIN)\" \
 	 -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER)\" \
 	 -DTPCONFIG=\"$(TPCONFIG)\" \
 	 -D$(TMS) $(PCTAFLAG) $(ADSTARFLG) $(ACCTFLAG) $(ACCTFILE) \
-	 $(CONFIGFILE) $(SONYRFLG) $(CDKFLG) $(VDQMFLG) $(VMGRFLG) 
+	 $(CONFIGFILE) $(CDKFLG) $(VDQMFLG) $(VMGRFLG) 
 
 CFLAGS = -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(CDKINC) $(SECURITYFLAG)
 
@@ -144,9 +140,9 @@ MakeDir($(SPOOL),root,bin,0755)
 MakeDir($(SACCTDIR),root,bin,0777)
 TPDAEMON_OBJS = tpdaemon.Osuf checkjobdied.Osuf cvtden.Osuf sendrep.Osuf tplogit.Osuf usrmsg.Osuf
 CONFDRIVE_OBJS = confdrive.Osuf sendrep.Osuf tplogit.Osuf
-MOUNTTAPE_OBJS = mounttape.Osuf asc2ebc.Osuf buildhdrlbl.Osuf buildvollbl.Osuf ebc2asc.Osuf getdrvstatus.Osuf inquiry.Osuf lddisplay.Osuf rbtsubr.Osuf readlbl.Osuf rwndtape.Osuf send2tpd.Osuf sendrep.Osuf sendtmsmount.Osuf sendscsicmd.Osuf setdens.Osuf skiptape.Osuf smcsubr.Osuf $(SONYR_OBJ) tperror.Osuf tplogit.Osuf unldtape.Osuf usrmsg.Osuf writelbl.Osuf wrttpmrk.Osuf mircheck.Osuf
-POSOVL_OBJS = posovl.Osuf buildhdrlbl.Osuf builduhl.Osuf buildvollbl.Osuf ebc2asc.Osuf getdrvstatus.Osuf inquiry.Osuf locate.Osuf posittape.Osuf readlbl.Osuf rwndtape.Osuf send2tpd.Osuf sendrep.Osuf sendscsicmd.Osuf skiptape.Osuf $(SONYR_OBJ) tperror.Osuf tplogit.Osuf usrmsg.Osuf
-RLSTAPE_OBJS = rlstape.Osuf getdrvstatus.Osuf lddisplay.Osuf rbtsubr.Osuf send2tpd.Osuf sendscsicmd.Osuf smcsubr.Osuf sendrep.Osuf sendtmsmount.Osuf $(SONYR_OBJ) tperror.Osuf tplogit.Osuf usrmsg.Osuf unldtape.Osuf tapealertcheck.Osuf 
+MOUNTTAPE_OBJS = mounttape.Osuf asc2ebc.Osuf buildhdrlbl.Osuf buildvollbl.Osuf ebc2asc.Osuf getdrvstatus.Osuf inquiry.Osuf lddisplay.Osuf rbtsubr.Osuf readlbl.Osuf rwndtape.Osuf send2tpd.Osuf sendrep.Osuf sendtmsmount.Osuf sendscsicmd.Osuf setdens.Osuf skiptape.Osuf smcsubr.Osuf tperror.Osuf tplogit.Osuf unldtape.Osuf usrmsg.Osuf writelbl.Osuf wrttpmrk.Osuf mircheck.Osuf
+POSOVL_OBJS = posovl.Osuf buildhdrlbl.Osuf builduhl.Osuf buildvollbl.Osuf ebc2asc.Osuf getdrvstatus.Osuf inquiry.Osuf locate.Osuf posittape.Osuf readlbl.Osuf rwndtape.Osuf send2tpd.Osuf sendrep.Osuf sendscsicmd.Osuf skiptape.Osuf tperror.Osuf tplogit.Osuf usrmsg.Osuf
+RLSTAPE_OBJS = rlstape.Osuf getdrvstatus.Osuf lddisplay.Osuf rbtsubr.Osuf send2tpd.Osuf sendscsicmd.Osuf smcsubr.Osuf sendrep.Osuf sendtmsmount.Osuf tperror.Osuf tplogit.Osuf usrmsg.Osuf unldtape.Osuf tapealertcheck.Osuf 
 NormalProgramTarget(tpdaemon,$(TPDAEMON_OBJS) $(IBMR2_OBJS) $(TAPEACCT), $(TAPEDEP) $(DEPLIB),$(LIBS) $(TAPELIB),root,$(OPSGRP),750)
 NormalProgramTarget(confdrive,$(CONFDRIVE_OBJS) $(TAPEACCT),$(TAPEDEP) $(DEPLIB),$(LIBS) $(TAPELIB),root,$(OPSGRP),750)
 NormalProgramTarget(mounttape,$(MOUNTTAPE_OBJS) $(TAPEACCT),$(TAPEDEP) $(DEPLIB),$(LIBS) $(TAPELIB) $(LIBCDK),root,$(OPSGRP),750)
