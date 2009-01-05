@@ -541,16 +541,15 @@ void castor::repack::ora::OraRepackSvc::insertSubRequestSegments(
     svcs()->updateRep(&ad, obj, false);
     svcs()->fillRep(&ad,obj,OBJ_RepackSegment,false); // segments too 
 
-  } catch (oracle::occi::SQLException ex) {
+  } catch (castor::exception::Exception ex) {
     
     // log the error in Dlf
     castor::dlf::Param params[] =
       {
-	castor::dlf::Param("Precise Message", ex.getMessage()),
+	castor::dlf::Param("Precise Message",ex.getMessage().str()),
 	castor::dlf::Param("VID", obj->vid())
       };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 49, 2, params);
-    handleException(ex);
     
   }
 }
