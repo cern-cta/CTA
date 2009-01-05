@@ -24,7 +24,7 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-CPPFLAGS = -g -O0 -I ../../../h -I ../../.. $(MTCCFLAGS) -DORACDBC=1
+CPPFLAGS = -g -O0 -I ../../../h -I ../../.. $(MTCCFLAGS)
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
 

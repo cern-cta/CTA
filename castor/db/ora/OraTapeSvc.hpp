@@ -29,11 +29,7 @@
 
 // Include Files
 #include "castor/BaseSvc.hpp"
-#ifdef ORACDBC
 #include "castor/db/newora/OraCommonSvc.hpp"
-#else
-#include "castor/db/ora/OraCommonSvc.hpp"
-#endif
 #include "castor/stager/BaseTapeSvc.hpp"
 #include "occi.h"
 #include <vector>

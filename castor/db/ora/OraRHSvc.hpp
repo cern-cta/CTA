@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/06/03 11:01:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRHSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/01/05 15:53:56 $ $Author: sponcec3 $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -28,11 +28,7 @@
 #define ORA_ORARHSVC_HPP 1
 
 // Include Files
-#ifdef ORACDBC
 #include "castor/db/newora/OraCommonSvc.hpp"
-#else
-#include "castor/db/ora/OraCommonSvc.hpp"
-#endif
 #include "castor/rh/IRHSvc.hpp"
 #include <vector>
 #include "occi.h"

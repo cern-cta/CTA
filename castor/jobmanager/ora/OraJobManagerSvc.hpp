@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobManagerSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/04/21 11:53:01 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobManagerSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/01/05 15:53:57 $ $Author: sponcec3 $
  *
  * Implementation of the IJobManagerSvc for Oracle
  *
@@ -29,11 +29,7 @@
 
 // Include files
 #include "castor/BaseSvc.hpp"
-#ifdef ORACDBC
 #include "castor/db/newora/OraCommonSvc.hpp"
-#else
-#include "castor/db/ora/OraCommonSvc.hpp"
-#endif
 #include "castor/jobmanager/IJobManagerSvc.hpp"
 #include "castor/jobmanager/JobSubmissionRequest.hpp"
 #include "occi.h"

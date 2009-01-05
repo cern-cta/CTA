@@ -23,7 +23,7 @@
 #
 # @author Castor Dev team, castor-dev@cern.ch
 
-CPPFLAGS = -g -O0 -I $(ORACLE_HOME)/rdbms/public -I ../../h -I ../.. $(MTCCFLAGS) -DORACDBC=1 $(PYTHONINC)
+CPPFLAGS = -g -O0 -I $(ORACLE_HOME)/rdbms/public -I ../../h -I ../.. $(MTCCFLAGS) $(PYTHONINC)
 LDFLAGS += -g -O0 $(MTLDFLAGS)
 LD = g++
 LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/10/21 03:27:57 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.20 $ $Release$ $Date: 2009/01/05 15:53:56 $ $Author: sponcec3 $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -30,11 +30,7 @@
 // Include Files
 #include "castor/BaseSvc.hpp"
 #include "castor/stager/DiskCopyInfo.hpp"
-#ifdef ORACDBC
 #include "castor/db/newora/OraCommonSvc.hpp"
-#else
-#include "castor/db/ora/OraCommonSvc.hpp"
-#endif
 #include "castor/query/IQuerySvc.hpp"
 #include "occi.h"
 #include <list>

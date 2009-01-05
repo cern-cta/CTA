@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.29 $ $Release$ $Date: 2008/11/28 12:51:01 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.30 $ $Release$ $Date: 2009/01/05 15:53:57 $ $Author: sponcec3 $
 #
 # Make Castor Repack System
 #
@@ -25,7 +25,7 @@
 #
 
 INCLUDES = -I $(ORACLE_HOME)/rdbms/public -I ../../h -I ../..
-CPPFLAGS = -g -O0 $(INCLUDES) $(MTCCFLAGS) -DDEFAULT_CNS=castorns -DORAREPACKCONFIGFILE=\"/etc/castor/ORAREPACKCONFIG\" -DORACDBC=1
+CPPFLAGS = -g -O0 $(INCLUDES) $(MTCCFLAGS) -DDEFAULT_CNS=castorns -DORAREPACKCONFIGFILE=\"/etc/castor/ORAREPACKCONFIG\"
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
 SERVLIBS = -L../db/newora -lcastorcommonora -lcastorcommonora -Wl,-rpath-link,../../shlib -L$(ORACLE_HOME)/lib -locci -lclntsh

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRmMasterSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/03/12 10:43:34 $ $Author: waldron $
+ * @(#)$RCSfile: OraRmMasterSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/01/05 15:53:57 $ $Author: sponcec3 $
  *
  * Implementation of the IRmMasterSvc for Oracle
  *
@@ -29,11 +29,7 @@
 
 // Include Files
 #include "castor/BaseSvc.hpp"
-#ifdef ORACDBC
 #include "castor/db/newora/OraCommonSvc.hpp"
-#else
-#include "castor/db/ora/OraCommonSvc.hpp"
-#endif
 #include "castor/monitoring/rmmaster/IRmMasterSvc.hpp"
 #include "occi.h"
 #include "castor/monitoring/ClusterStatus.hpp"
