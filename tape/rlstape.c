@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.52 $ $Date: 2008/09/19 09:25:22 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.53 $ $Date: 2009/01/05 16:17:29 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -80,9 +80,6 @@ char	**argv;
 	int rlsflags;
 	char *sbp;
 	char sendbuf[REQBUFSZ];
-#if SONYRAW
-	int sonyraw;
-#endif
 	int tapefd;
 	uid_t uid;
 	int ux;
@@ -156,21 +153,11 @@ char	**argv;
                                     "vid"     , TL_MSG_PARAM_STR  , vid,
                                     "TPVID"   , TL_MSG_PARAM_TPVID, vid );
                 sleep(slp);
-        }
-        
-#if SONYRAW
-	if (strcmp (devtype, "DIR1") == 0 && den == SRAW)
-		sonyraw = 1;
-	else
-		sonyraw = 0;
-#endif
+        }        
 
 	(void) Ctape_seterrbuf (errbuf, sizeof(errbuf));
 	devinfo = Ctape_devinfo (devtype);
 
-#if SONYRAW
-    if (! sonyraw) {
-#endif
 #if defined(ADSTAR)
 	while ((tapefd = open (dvn, O_RDONLY|O_NDELAY)) < 0 &&
 	    (errno == EBUSY || errno == EAGAIN))
@@ -271,15 +258,6 @@ char	**argv;
                                                     "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                         }
  	}
-#if SONYRAW
-    } else {
-       tplogit (func, "tape alerts: no information available\n");
-       tl_tpdaemon.tl_log( &tl_tpdaemon, 81, 3,
-                           "func"   , TL_MSG_PARAM_STR,   func,
-                           "Message", TL_MSG_PARAM_STR,   "tape alerts: no information available",
-                           "TPVID"  , TL_MSG_PARAM_TPVID, vid );
-    }
-#endif
 
 	/* delay VDQM_UNIT_RELEASE so that a new request for the same volume
 	   has a chance to keep the volume mounted */
@@ -332,9 +310,6 @@ char	**argv;
         FD_ZERO (&readmask);
 
 unload_loop:
-#if SONYRAW
-	if (! sonyraw) {
-#endif
 #if defined(ADSTAR)
 	while ((tapefd = open (dvn, O_RDONLY|O_NDELAY)) < 0 &&
 	    (errno == EBUSY || errno == EAGAIN))
@@ -393,31 +368,6 @@ unload_loop:
                                                     "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                         }
 	}
-#if SONYRAW
-    } else {
-	while ((tapefd = open (dvn, O_RDWR|O_NDELAY)) < 0 && errno == EBUSY)
-		sleep (UCHECKI);
-	if (tapefd >= 0) {
-		if (chkdriveready_sony (tapefd) > 0) {
-			if (unldtape_sony (tapefd, dvn) < 0)
-					configdown (drive);
-#if SACCT
-			tapeacct (TPUNLOAD, uid, gid, jid, dgn, drive, vid, 0, 0);
-#endif
-		}
-		close (tapefd);
-	} else {
-		tplogit (func, TP042, dvn, "open", strerror(errno));
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 6,
-                                    "func"   , TL_MSG_PARAM_STR,   func,
-                                    "dvn"    , TL_MSG_PARAM_STR,   dvn,
-                                    "Message", TL_MSG_PARAM_STR,   "open",
-                                    "Error"  , TL_MSG_PARAM_STR,   strerror(errno),
-                                    "JobID"  , TL_MSG_PARAM_INT  , jid,
-                                    "TPVID"  , TL_MSG_PARAM_TPVID, vid );
-        }
-    }
-#endif
 	c = 0;
 
 	if (*loader != 'm') {

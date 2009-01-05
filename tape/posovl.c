@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.37 $ $Date: 2008/07/08 17:19:37 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.38 $ $Date: 2009/01/05 16:17:29 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -86,9 +86,6 @@ char	**argv;
 	char *sbp;
 	int scsi;
 	char sendbuf[REQBUFSZ];
-#if SONYRAW
-	int sonyraw;
-#endif
 	char tpfid[CA_MAXFIDLEN+1];
 	char uhl1[LBLBUFSZ];
 	int ux;
@@ -155,12 +152,6 @@ char	**argv;
 #else
 	scsi = 1;
 #endif
-#if SONYRAW
-	if (strcmp (devtype, "DIR1") == 0 && den == SRAW)
-		sonyraw = 1;
-	else
-		sonyraw = 0;
-#endif
 
 	c = 0;
 	(void) Ctape_seterrbuf (errbuf, sizeof(errbuf));
@@ -170,38 +161,6 @@ char	**argv;
 
 	/* open device and check drive ready */
 
-#if SONYRAW
-	if (sonyraw) {
-		tapefd = open (path, O_RDWR|O_NDELAY);
-		if (tapefd < 0) {
-			c = errno;
-			if (errno == ENXIO)	/* drive not operational */
-				configdown (drive);
-			else {
-				usrmsg (func, TP042, path, "open",
-					strerror(errno));
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
-                                                    "func"   , TL_MSG_PARAM_STR  , func,
-                                                    "path"   , TL_MSG_PARAM_STR  , path,
-                                                    "Message", TL_MSG_PARAM_STR  , "open",
-                                                    "JobID"  , TL_MSG_PARAM_INT  , jid,
-                                                    "TPVID"  , TL_MSG_PARAM_TPVID, vid );
-                        }
-			goto reply;
-		}
-		if (chkdriveready_sony (tapefd) <= 0) {
-			usrmsg (func, TP054);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 54, 2,
-                                            "func" , TL_MSG_PARAM_STR  , func,
-                                            "TPVID", TL_MSG_PARAM_TPVID, vid );
-			c = ETNRDY;
-			goto reply;
-		}
-		if (fseq < 600) fseq = 7000;
-		if (c = locate_sony (tapefd, path, fseq)) goto reply;
-		cfseq = fseq;
-	} else {
-#endif
 #ifndef SOLARIS
 		if (!scsi)
 #endif
@@ -274,9 +233,6 @@ char	**argv;
 		if (mode == WRITE_ENABLE)
 			if ((c = read_pos (tapefd, path, blockid)))
 				goto reply;
-#if SONYRAW
-	}
-#endif
 
 	/* tape is positionned */
 

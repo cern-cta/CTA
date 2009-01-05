@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.71 $ $Date: 2008/10/28 08:04:11 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.72 $ $Date: 2009/01/05 16:17:29 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -113,9 +113,6 @@ char	**argv;
 	char *sbp;
 	int scsi;
 	int side;
-#if SONYRAW
-	int sonyraw;
-#endif
 #if defined(_AIX) && defined(_IBMR2) && (defined(RS6000PCTA) || defined(ADSTAR))
 	int status;
 #endif
@@ -196,12 +193,6 @@ char	**argv;
 	scsi = strncmp (dvrname, "mtdd", 4);
 #else
 	scsi = 1;
-#endif
-#if SONYRAW
-	if (strcmp (devtype, "DIR1") == 0 && den == SRAW)
-		sonyraw = 1;
-	else
-		sonyraw = 0;
 #endif
 
 	c = 0;
@@ -286,9 +277,6 @@ char	**argv;
 #endif
 
 	if (tpmounted) {	/* tape already mounted */
-#if SONYRAW
-	    if (! sonyraw) {
-#endif
 #ifndef SOLARIS25
 		if (!scsi)
 #endif
@@ -301,15 +289,6 @@ char	**argv;
 			if (chkdriveready (tapefd) > 0) goto mounted;
 			else close (tapefd);
 		}
-#if SONYRAW
-	    } else {
-		tapefd = open (path, O_RDWR|O_NDELAY);
-		if (tapefd >= 0) {
-			if (chkdriveready_sony (tapefd) > 0) goto mounted;
-			else close (tapefd);
-		}
-	    }
-#endif
 	}
 
 	/* build mount message */
@@ -404,25 +383,12 @@ remount_loop:
 #endif
 #ifndef SOLARIS
 #if !defined(_IBMR2) || defined(RS6000PCTA)
-#if SONYRAW
-			    if (! sonyraw) {
-#endif
 				if ((tapefd = open (path, O_RDONLY|O_NDELAY)) >= 0) {
 					if (chkdriveready (tapefd) > 0) {
 						tpmode = chkwriteprot (tapefd);
 						break;
 					} else close (tapefd);
 				} else c = errno;
-#if SONYRAW
-			    } else {
-				if ((tapefd = open (path, O_RDWR|O_NDELAY)) >= 0) {
-					if (chkdriveready_sony (tapefd) > 0) {
-						tpmode = chkwriteprot_sony (tapefd);
-						break;
-					} else close (tapefd);
-				} else c = errno;
-			    }
-#endif
 #endif
 #if defined(_AIX) && defined(_IBMR2)
 			}
@@ -538,9 +504,6 @@ remount_loop:
 				goto reply;
 			}
 		}
-#endif
-#if SONYRAW
-		if (sonyraw) break;
 #endif
 #if linux
 		mtop.mt_op = MTSETBLK;
@@ -922,9 +885,6 @@ mounted:
 	/* do the prelabel if flag is set */
 
 	if (prelabel >= 0) {
-#if SONYRAW
-	    if (! sonyraw) {
-#endif
 		if ((c = rwndtape (tapefd, path))) goto reply;
 		close (tapefd);
 		if ((tapefd = open (path, O_WRONLY)) < 0) {
@@ -967,11 +927,6 @@ mounted:
 			if  ((c = wrttpmrk (tapefd, path, 1)) < 0) goto reply;
 		if (strcmp (devtype, "SD3") == 0 && ! Tflag)	/* flush buffer */
 			if  ((c = wrttpmrk (tapefd, path, 0)) < 0) goto reply;
-#if SONYRAW
-	    } else {
-		if (c = erase_sony (tapefd, path)) goto reply;
-	    }
-#endif
 		goto reply;
 	}
 
