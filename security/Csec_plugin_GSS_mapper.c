@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint 
-static char sccsid[] = "@(#)$RCSfile: Csec_plugin_GSS_mapper.c,v $ $Revision: 1.10 $ $Date: 2008/01/16 15:37:28 $ CERN IT/ADC/CA Benjamin Couturier";
-#endif
-
 /** 
  * Csec_plugin_GSS_mapper.c - Provides functions for mapping a principal to a local user.
  */
@@ -73,8 +69,7 @@ static char *GSI_DN_header = "";
  * Maps the credential to the corresponding name
  */
 int (CSEC_METHOD_NAME(Csec_map2name, MECH))(FPARG, Csec_context_t *ctx, const char *principal, char *name, int maxnamelen) {
-    char *p,*pri;
-    char *func = "Csec_map2name";
+    char *p;
 #ifdef KRB5
     p = strchr(principal, SEP);
     if (p== NULL) {
@@ -93,7 +88,8 @@ int (CSEC_METHOD_NAME(Csec_map2name, MECH))(FPARG, Csec_context_t *ctx, const ch
 
 
 #ifdef GSI
-
+    char *pri;
+    char *func = "Csec_map2name";
     Csec_trace(func, "Looking for mapping for <%s>\n", principal);
 
     pri = strdup(principal);

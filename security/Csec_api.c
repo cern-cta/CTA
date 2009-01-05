@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Csec_api.c,v $ $Revision: 1.20 $ $Date: 2008/01/16 15:37:27 $ CERN IT/ADC/CA Benjamin Couturier";
-#endif
-
 /*
  * Csec_api.c - API function used for authentication in CASTOR
  */
@@ -147,8 +143,6 @@ int Csec_server_initContext(Csec_context_t *ctx,
 int Csec_server_reinitContext(Csec_context_t *ctx, 
 			     int service_type,
 			     Csec_protocol *protocol) {
-  char *func="Csec_server_reinitContext";
-
   Csec_clearContext(ctx);
   return Csec_server_initContext(ctx, service_type, protocol);
 }
@@ -618,8 +612,6 @@ char *Csec_server_get_service_name(Csec_context_t *ctx) {
 }
 
 int Csec_client_get_service_type (Csec_context_t *ctx) {
-  char *func = "Csec_client_get_service_type";
-
   return ctx->server_service_type;
 }
 
@@ -862,8 +854,6 @@ int Csec_server_getAuthorizationId(Csec_context_t *ctx, char **mech, char **prin
  * Returns the principal or DN of the client connecting to the server.
  */
 int Csec_server_getClientId(Csec_context_t *ctx, char **mech, char **principal) {
-  char *func = "Csec_server_getClientId";
-
   if (mech != NULL)
     *mech = ctx->protocols[ctx->current_protocol].id;
 

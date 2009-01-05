@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Csec_protocol_policy.c,v $ $Revision: 1.14 $ $Date: 2008/01/16 15:37:28 $ IT/ADC/CA Benjamin Couturier";
-#endif
-		
 /*
  * Csec_protocol_policy.c 
  */
@@ -916,7 +912,7 @@ int Csec_client_negociate_protocol(int s, int timeout, Csec_context_t *ctx) {
  */
 int Csec_initialize_protocols_from_list(Csec_context_t *ctx,
 					Csec_protocol *protocol) {
-  int rc, i;
+  int i;
   Csec_protocol *p = protocol;
   char *func = "Csec_initialize_protocols_from_list";
 

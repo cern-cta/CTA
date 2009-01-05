@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Csec_api_loader.c,v $ $Revision: 1.13 $ $Date: 2008/01/16 15:37:28 $ CERN IT/ADC/CA Benjamin Couturier";
-#endif
-
 /*
  * Csec_api_loader.c - API function used for authentication in CASTOR
  */

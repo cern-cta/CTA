@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Csec_plugin_GSS.c,v $ $Revision: 1.15 $ $Date: 2008/01/16 15:37:28 $ CERN IT/ADC/CA Benjamin Couturier";
-#endif
-
 /*
  * Csec_plugin_GSS.c - Plugin function used for authentication in CASTOR
  */
@@ -93,15 +89,18 @@ static void DLL_DECL _Csec_gss_to_csec _PROTO ((csec_buffer_t, gss_buffer_t));
 
 static int DLL_DECL _Csec_make_target_name _PROTO ((FPARG, const char *server_dn, gss_name_t *target_name_P));
 
+#if defined(GSI) && defined(USE_VOMS)
 static int DLL_DECL _Csec_get_voms_creds _PROTO ((FPARG, Csec_context_t *ctx, 
 						  gss_ctx_id_t context_handle));
-
+#endif
 
 /**
  * Locks
  */
 
+#ifdef GSI
 static int activate_lock;
+#endif
 
 /******************************************************************************/
 /* EXPORTED FUNCTIONS */
@@ -111,13 +110,9 @@ int (CSEC_METHOD_NAME(Csec_activate, MECH))(FP,ctx)
      FPARG;
      Csec_context_t *ctx;
 {
-#ifdef GSI
-  char *func = "Csec_activate_GSI";
-#else
-  char *func = "Csec_activate_KRB5";
-#endif
 
 #ifdef GSI
+  char *func = "Csec_activate_GSI";
   SSL_CTX *ssl_context;
   static int once=0;
 
@@ -148,13 +143,9 @@ int (CSEC_METHOD_NAME(Csec_deactivate, MECH))(FP,ctx)
      FPARG;
      Csec_context_t *ctx;
 {
-#ifdef GSI
-  char *func = "Csec_deactivate_GSI";
-#else
-  char *func = "Csec_deactivate_KRB5";
-#endif
 
 #ifdef GSI
+  char *func = "Csec_deactivate_GSI";
   Csec_trace(func, "Calling globus_module_deactivate()s\n");
 
   (void)globus_module_deactivate(GLOBUS_GSI_CREDENTIAL_MODULE);
@@ -213,8 +204,6 @@ int (CSEC_METHOD_NAME(Csec_delete_connection_context, MECH))(FP,ctx)
  */
 static int _Csec_delete_deleg_creds(Csec_context_t *ctx)
 {
-  OM_uint32 maj_stat, min_stat;
-
   if (ctx->flags & CSEC_CTX_DELEG_CRED_LOADED) {
     free(ctx->deleg_credentials);
     ctx->flags &= ~CSEC_CTX_DELEG_CRED_LOADED;
@@ -989,7 +978,9 @@ static void _Csec_gss_to_csec(csec_buffer_t csec, gss_buffer_t gss) {
 static int _Csec_make_target_name(FPARG, const char *server_dn, gss_name_t *target_name_P) {
   char *func= "_Csec_make_target_name";
   gss_buffer_desc send_tok;
+#ifdef GSI
   char *p;
+#endif
   OM_uint32 maj_stat, min_stat;
 
   *target_name_P = GSS_C_NO_NAME;

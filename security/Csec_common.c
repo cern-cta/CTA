@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Csec_common.c,v $ $Revision: 1.10 $ $Date: 2008/01/16 15:37:28 $ CERN IT/ADC/CA Benjamin Couturier";
-#endif
-
 /*
  * Csec_common.c - Common function in the Csecurity API 
  */
@@ -31,8 +27,6 @@ static char sccsid[] = "@(#)$RCSfile: Csec_common.c,v $ $Revision: 1.10 $ $Date:
 #include <unistd.h>
 
 #include "Csec.h"
-
-static int nlock;
 
 /**
  * Checks the environment to setup the trace mode,

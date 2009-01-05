@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Csec_errmsg.c,v $ $Revision: 1.6 $ $Date: 2008/01/16 15:37:28 $ CERN IT/ADC/CA Benjamin Couturier";
-#endif /* not lint */
-
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
