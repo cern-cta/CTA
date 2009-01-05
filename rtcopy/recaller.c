@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.29 $ $Release$ $Date: 2008/11/25 10:52:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.30 $ $Release$ $Date: 2009/01/05 10:42:59 $ $Author: sponcec3 $
  *
  * 
  *
@@ -274,7 +274,22 @@ int recallerCallbackFileCopied(
                                 );
     if ( rc == -1 ) {
       save_serrno = serrno;
-      LOG_SYSCALL_ERR("rtcpcld_checkNsSegment()");
+      // Log the error, with proper fileid
+      struct Cns_fileid *castorFileId = NULL;
+      rtcpcld_getFileId(file,&castorFileId);
+      dlf_write((inChild == 0 ? mainUuid : childUuid),
+                RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
+                castorFileId,
+                RTCPCLD_NB_PARAMS+2,
+                "SYSCALL",
+                DLF_MSG_PARAM_STR,
+                "rtcpcld_checkNsSegment()",
+                "ERROR_STRING",
+                DLF_MSG_PARAM_STR,
+                sstrerror(serrno),
+                RTCPCLD_LOG_WHERE);
+      if ( castorFileId != NULL ) free(castorFileId);
+      // cleanup
       (void)rtcpcld_updcRecallFailed(
                                      tape,
                                      file,

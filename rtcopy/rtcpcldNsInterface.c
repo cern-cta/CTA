@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.50 $ $Release$ $Date: 2008/12/02 16:42:10 $ $Author: sponcec3 $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.51 $ $Release$ $Date: 2009/01/05 10:42:59 $ $Author: sponcec3 $
  *
  * 
  *
@@ -663,7 +663,17 @@ int rtcpcld_checkNsSegment(
   if ( (rc == -1) ||
        (nbSegms <= 0) ||
        (currentSegattrs == NULL) ) {
-    LOG_SYSCALL_ERR("Cns_getsegattrs()");
+    dlf_write((inChild == 0 ? mainUuid : childUuid),
+              RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
+              castorFileId,
+              RTCPCLD_NB_PARAMS+2,
+              "SYSCALL",
+              DLF_MSG_PARAM_STR,
+              "Cns_getsegattrs()",
+              "ERROR_STRING",
+              DLF_MSG_PARAM_STR,
+              sstrerror(serrno),
+              RTCPCLD_LOG_WHERE);
     if ( castorFileId != NULL ) free(castorFileId);  
     return(-1);
   }
