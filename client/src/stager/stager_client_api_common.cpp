@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.38 2008/10/31 08:53:54 waldron Exp $
+ * $Id: stager_client_api_common.cpp,v 1.39 2009/01/06 14:44:51 sponcec3 Exp $
  */
 
 /*
@@ -37,6 +37,7 @@
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "castor/stager/FileSystemStatusCodes.hpp"
 #include "stager_client_api_authid.hpp"
+#include "castor/exception/Exception.hpp"
 
 /* ================= */
 /* Internal routines */
@@ -341,16 +342,14 @@ void DLL_DECL castor::client::setClientAuthorizationId
   client.setAuthorizationId(authUid, authGid);
 }
 
-int DLL_DECL setDefaultOption(struct stage_options* opts) {
-
-  if (!opts){
-    opts=(struct stage_options*)malloc(sizeof(struct stage_options));
-    opts->stage_host= (char*)DEFAULT_HOST;
-    opts->stage_port = DEFAULT_PORT2;
-    opts->service_class = (char*)DEFAULT_SVCCLASS;
-    return -1;
+int setDefaultOption(struct stage_options* opts) 
+  throw(castor::exception::Exception) {
+  if ((!opts) || (!opts->stage_host)) {
+    castor::exception::Exception e(SENOSHOST);
+    e.getMessage() << "Unable to find a value for STAGE_HOST.\n"
+                   << "Please check castor.conf and/or your environment" << std::endl;
+    throw e;
   }
-  if (!opts->stage_host){opts->stage_host = (char*)DEFAULT_HOST;}
   if (!opts->stage_port){ opts->stage_port = DEFAULT_PORT2;}
   if (!opts->service_class){ opts->service_class = (char*)DEFAULT_SVCCLASS;}
   return 0;

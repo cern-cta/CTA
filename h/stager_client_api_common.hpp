@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.hpp,v 1.4 2008/03/10 17:25:33 itglp Exp $
+ * $Id: stager_client_api_common.hpp,v 1.5 2009/01/06 14:45:33 sponcec3 Exp $
  *
  * Header file for internal stager client functions.
  * Note that this is only included from C++ code and it *is* C++
@@ -12,8 +12,8 @@
 #include <sys/types.h>
 #include "osdep.h"
 #include "stager_errmsg.h"
+#include "castor/exception/Exception.hpp"
 
-#define DEFAULT_HOST "stagepublic"
 #define DEFAULT_PORT1 5007
 #define DEFAULT_PORT2 9002
 #define DEFAULT_SEC_PORT 9007
@@ -48,7 +48,7 @@ stage_getid(uid_t *uid, gid_t *gid);
 EXTERN_C int DLL_DECL
 stage_resetid();
 
-EXTERN_C int DLL_DECL 
-setDefaultOption(struct stage_options* opts);
+int setDefaultOption(struct stage_options* opts)
+  throw(castor::exception::Exception);
 
 #endif /* STAGER_CLIENT_API_COMMON_HPP */
