@@ -7,19 +7,6 @@
  * @(#)$RCSfile$ $Revision$ $Date$ CERN IT-ADC/CA Jean-Damien Durand
  */
 
-/* ============================= */
-/* Build dependencies v.s. flags */
-/* ============================= */
-
-/* CUPVDAEMON,NAMESERVERDAEMON,VMGRDAEMON,DLFDAEMON need a Database */
-/* ---------------------------------------------------------------- */
-#if BuildCupvDaemon || BuildNameServerDaemon || BuildVolumeMgrDaemon || BuildDlfDaemon
-#if !UseOracle && !UsePgSQL
-#undef UseOracle
-#define UseOracle YES
-#endif
-#endif
-
 /* ========================================== */
 /* Implicit dependencies because of libraries */
 /* ========================================== */
@@ -679,11 +666,7 @@ GCCPPDIR = gc
 COMMONCPPDIR = castor
 #endif
 #if BuildOraCpp
-#if UseOraCDBC
 ORACPPDIR = newora
-#else
-ORACPPDIR = ora
-#endif
 DBCPPDIR = db
 #endif
 #if BuildMyCpp
@@ -737,6 +720,7 @@ SHLIBDIR=shlib
 .PHONY : all install clean clobber Makefiles depend checkDESTDIR
 
 all:
+	GotoSubdirs($(SUBDIRS))
 
 checkDESTDIR:
 	@if [ "${DESTDIR}" == '' ]; \
@@ -768,9 +752,11 @@ Makefiles:
 	    fi )\
 	done ;
 
-MakeSubdirs(all,$(SUBDIRS))
-MakeSubdirs(install,$(SUBDIRS))
-MakeSubdirs(exportman,$(SUBDIRS))
+install:
+	GotoSubdirs($(SUBDIRS))
+
+exportman:
+	GotoSubdirs($(SUBDIRS))
 
 depend:
 	makedepend $(INCLUDES) *.cpp *.hpp *.h 2> /dev/null
