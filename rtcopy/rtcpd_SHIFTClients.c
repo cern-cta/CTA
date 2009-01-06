@@ -159,12 +159,6 @@ static int rtcp_CheckClientAuth(rtcpHdr_t *hdr, shift_client_t *req) {
                         authorized = 1;
                         break;
                     }
-                    strcat(buf,".");
-                    strcat(buf, DOMAINNAME);
-                    if ( strcmp(buf, req->clienthost) == 0 ) {
-                        authorized = 1;
-                        break;
-                    }
                 }
             }
             fclose(fs);

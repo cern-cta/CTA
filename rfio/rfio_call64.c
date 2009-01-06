@@ -17,9 +17,6 @@
  */
 #define DEBUG           0
 #define RFIO_KERNEL     1
-#ifndef DOMAINNAME
-#define DOMAINNAME "cern.ch"
-#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

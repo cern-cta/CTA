@@ -22,9 +22,6 @@
  */
 #define DEBUG           0
 #define RFIO_KERNEL     1
-#ifndef DOMAINNAME
-#define DOMAINNAME "cern.ch"
-#endif
 #include <pwd.h>
 #include <grp.h>
 #include <errno.h>
@@ -614,7 +611,6 @@ int check_path_whitelist(hostname,path,rfiod_permstrs,opath,opathsize,travel_sym
   char *test_path_prefix;
   char *test_path;
   int test_path_type;
-  char hostname1[MAXHOSTNAMELEN];
   char **white_list = NULL, **additional = NULL;
   int count = 0, count2 = 0;
 
@@ -629,20 +625,15 @@ int check_path_whitelist(hostname,path,rfiod_permstrs,opath,opathsize,travel_sym
     char *p = NULL;
     for(n = 0; !found && (permstr = rfiod_permstrs[n]) != NULL; ++n) {
       if ( (cp=getconfent("RFIOD", permstr, 1)) != NULL ) {
-	p = (char*)malloc(strlen(cp)+1);
-	strcpy(p, cp);
-	for (cp=strtok(p,"\t ");cp!=NULL;cp=strtok(NULL,"\t ")) {
-	  if ( !strcmp(hostname,cp) ) {
-	    found ++;
-	    break;
-	  }
-	  sprintf(hostname1,"%s.%s",cp,DOMAINNAME);
-	  if ( !strcmp(hostname1,hostname) ) {
-	    found ++;
-	    break;
-	  }
-	}
-	if (p != NULL) { free(p); p = NULL; }
+        p = (char*)malloc(strlen(cp)+1);
+        strcpy(p, cp);
+        for (cp=strtok(p,"\t ");cp!=NULL;cp=strtok(NULL,"\t ")) {
+          if ( !strcmp(hostname,cp) ) {
+            found ++;
+            break;
+          }
+        }
+        if (p != NULL) { free(p); p = NULL; }
       }
     }
     if (p != NULL) free(p);
@@ -3990,21 +3981,15 @@ static int chksuser(uid,gid,hostname,ptrcode,permstr)
   char ptr[BUFSIZ];
   int found = 0;
   char *cp , *p;
-  char hostname1[MAXHOSTNAMELEN];
 
   if ( uid < 100  ) {
     if ( permstr != NULL && hostname != NULL && (p=getconfent("RFIOD", permstr, 1)) != NULL ) {
       strcpy(ptr,p);
       for (cp=strtok(ptr,"\t ");cp!=NULL;cp=strtok(NULL,"\t ")) {
-	if ( !strcmp(hostname,cp) ) {
-	  found ++;
-	  break;
-	}
-	sprintf(hostname1,"%s.%s",cp,DOMAINNAME);
-	if ( !strcmp(hostname1,hostname) ) {
-	  found ++;
-	  break;
-	}
+        if ( !strcmp(hostname,cp) ) {
+          found ++;
+          break;
+        }
       }
     }
     if (!found) {
