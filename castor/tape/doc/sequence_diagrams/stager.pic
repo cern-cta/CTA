@@ -1,0 +1,94 @@
+.PS
+
+###############################################################################
+# File: stager.pic
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# Author: Steven Murray Steven.Murray@cern.ch
+###############################################################################
+
+###############################################################################
+# This diagram shows the sequence of messages sent between rtcpcld, recaller,
+# vdqm and rtcpd in order to recall one of more files from tape.
+###############################################################################
+
+copy "sequence.pic";
+
+# Define the objects
+object(D,"rtcpcld");
+object(V,"vdqm");
+object(R,"rtcpd");
+placeholder_object(C);
+
+step();
+
+# Message sequences
+active(D);
+message(D,V,"connect");
+active(V);
+message(D,V,"volume request");
+message(V,D,"acknowledge");
+message(V,D,"volReqID");
+message(D,V,"acknowledge");
+message(D,V,"disconnect");
+inactive(V);
+
+step();
+
+active(V);
+message(V,R,"connect");
+active(R);
+message(V,R,"RcpJob");
+message(R,V,"RcpJobReply");
+message(R,V,"disconnect");
+inactive(V);
+
+message(R,D,"connect");
+message(D,R,"request volReqId");
+message(R,D,"acknowledge");
+message(R,D,"volReqId");
+message(D,R,"acknowledge");
+
+create_message(D,C,"recaller");
+active(C);
+message(C,R,"client info");
+message(R,C,"acknowledge");
+message(C,R,"disconnect");
+
+
+message(R,C,"connect");
+message(C,R,"volume");
+message(R,C,"acknowledge");
+
+message(C,R,"file");
+message(R,C,"acknowledge");
+
+message(C,R,"no more work");
+message(R,C,"acknowledge");
+
+inactive(R);
+inactive(C);
+inactive(D);
+
+complete(D);
+complete(V);
+complete(R);
+complete(C);
+
+.PE
+

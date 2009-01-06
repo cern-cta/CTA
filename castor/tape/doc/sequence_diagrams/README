@@ -1,0 +1,20 @@
+How to generate sequence diagrams from the source in this directory
+===================================================================
+
+1. Install the GNU plotutils package from http://www.gnu.org/software/plotutils
+
+2. Install UMLGraph from http://www.umlgraph.org, for example:
+
+   wget 'http://www.umlgraph.org/UMLGraph-5.2.tar.gz'
+   tar -xvzf UMLGraph-5.2.tar.gz
+
+3. Create a symbolic link to the pic2plot macros from UMLGraph for generating
+   UML sequence diagrams:
+
+   ln -s UMLGraph-5.2/src/sequence.pic sequence.pic
+
+3. Run pic2plot to generate the sequence diagrams:
+
+   pic2plot -T ps stager.pic > stager.ps; gv stager.ps
+   pic2plot -T ps tpread.pic > tpread.ps; gv tpread.ps
+
