@@ -77,14 +77,9 @@ extern "C" {
 //------------------------------------------------------------------------------
 // String constants
 //------------------------------------------------------------------------------
-const char *castor::client::HOST_ENV_ALT = "STAGE_HOST";
-const char *castor::client::HOST_ENV = "STAGER_HOST";
-const char *castor::client::PORT_ENV_ALT = "STAGE_PORT";
-const char *castor::client::PORT_ENV = "STAGER_PORT";
-const char *castor::client::SEC_PORT_ENV_ALT = "STAGE_SEC_PORT";
-const char *castor::client::SEC_PORT_ENV = "STAGER_SEC_PORT";
-const char *castor::client::SVCCLASS_ENV_ALT = "SVCCLASS";
-const char *castor::client::SVCCLASS_ENV = "STAGE_SVCCLASS";
+const char *castor::client::HOST_ENV = "STAGE_HOST";
+const char *castor::client::PORT_ENV = "STAGE_PORT";
+const char *castor::client::SEC_PORT_ENV = "STAGE_SEC_PORT";
 const char *castor::client::CATEGORY_CONF = "STAGER";
 const char *castor::client::HOST_CONF = "HOST";
 const char *castor::client::PORT_CONF = "PORT";
@@ -408,22 +403,20 @@ throw (castor::exception::Exception) {
     char* port;
     if (m_hasSecAuthorization) {
       if ((port = getenv (castor::client::SEC_PORT_ENV)) != 0 
-        || (port = getenv (castor::client::SEC_PORT_ENV_ALT)) != 0
-      || (port = getconfent((char *)castor::client::CATEGORY_CONF,
-        (char *)castor::client::SEC_PORT_CONF,0)) != 0) {
-      m_rhPort = castor::System::porttoi(port);
-        } else {
-          m_rhPort = CSP_RHSERVER_SEC_PORT;
-        }
+          || (port = getconfent((char *)castor::client::CATEGORY_CONF,
+                                (char *)castor::client::SEC_PORT_CONF,0)) != 0) {
+        m_rhPort = castor::System::porttoi(port);
+      } else {
+        m_rhPort = CSP_RHSERVER_SEC_PORT;
+      }
     } else {
       if ((port = getenv (castor::client::PORT_ENV)) != 0 
-        || (port = getenv (castor::client::PORT_ENV_ALT)) != 0
-      || (port = getconfent((char *)castor::client::CATEGORY_CONF,
-        (char *)castor::client::PORT_CONF,0)) != 0) {
-      m_rhPort = castor::System::porttoi(port);
-        } else {
-          m_rhPort = CSP_RHSERVER_PORT;
-        }
+          || (port = getconfent((char *)castor::client::CATEGORY_CONF,
+                                (char *)castor::client::PORT_CONF,0)) != 0) {
+        m_rhPort = castor::System::porttoi(port);
+      } else {
+        m_rhPort = CSP_RHSERVER_PORT;
+      }
     }
   }
   stage_trace(3, "Looking up RH port - Using %d", m_rhPort);
@@ -440,21 +433,23 @@ throw (castor::exception::Exception) {
 void castor::client::BaseClient::setRhHost(std::string optHost)
 throw (castor::exception::Exception) {
   // RH server host. Can be passed given through the
-  // RH_HOST environment variable or in the castor.conf
-  // file as a RH/HOST entry
+  // STAGER_HOST environment variable or in the castor.conf
+  // file as a STAGER/HOST entry
   if (optHost.compare("")) {
     m_rhHost = optHost;
-  }
-  else {
+  } else {
     char* host;
     if ((host = getenv (castor::client::HOST_ENV)) != 0
-      || (host = getenv (castor::client::HOST_ENV_ALT)) != 0
-    || (host = getconfent((char *)castor::client::CATEGORY_CONF,
-      (char *)castor::client::HOST_CONF,0)) != 0) {
-    m_rhHost = host;
-      } else {
-        m_rhHost = RH_HOST;
-      }
+        || (host = getconfent((char *)castor::client::CATEGORY_CONF,
+                              (char *)castor::client::HOST_CONF,0)) != 0) {
+      m_rhHost = host;
+    } else {
+      // could not find a value for STAGER_HOST. Giving up
+      castor::exception::Exception e(SENOSHOST);
+      e.getMessage() << "Unable to find a value for STAGE_HOST.\n"
+                     << "Please check castor.conf and/or your environment" << std::endl;
+      throw e;
+    }
   }
   stage_trace(3, "Looking up RH host - Using %s", m_rhHost.c_str());
 }
@@ -477,11 +472,11 @@ throw (castor::exception::Exception) {
   } else {
     char* svc;
     if ((svc = getenv ("STAGE_SVCCLASS")) != 0
-      || (svc = getconfent("STAGER", "SVCCLASS",0)) != 0) {
-    m_rhSvcClass = svc;
-      } else {
-        m_rhSvcClass = "";
-      }
+        || (svc = getconfent("STAGER", "SVCCLASS",0)) != 0) {
+      m_rhSvcClass = svc;
+    } else {
+      m_rhSvcClass = "";
+    }
   }
   if (!m_rhSvcClass.empty()) {
     stage_trace(3, "Looking up service class - Using %s", m_rhSvcClass.c_str());
@@ -528,8 +523,7 @@ throw(castor::exception::Exception) {
     castor::exception::Exception e(serrno);
     e.getMessage() << "Error in stage_getid" << std::endl;
     throw e;
-  }
-  else {
+  } else {
     m_hasAuthorizationId = true;
   } 
 }
