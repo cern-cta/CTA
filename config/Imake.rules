@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.26 $ $Date: 2008/12/08 13:47:05 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.27 $ $Date: 2009/01/06 14:51:30 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #define NullParameter
@@ -92,28 +92,20 @@ FilesToClobber += SharedLibraryFullName(libname) SharedLibraryName(libname) Bare
 ../dir/BareSharedLibraryTargetName(libname):		@@\
 	cd ../dir ; $(MAKE) BareSharedLibraryTargetName(libname)
 
-#define GotoSubdirs(dirs)                 \
-	@for i in dirs ;                  \
-	do (if [ -d $$i ] ;               \
-	    then                          \
-	      (echo " $$i:" ; cd $$i ;    \
-	      $(MAKE) $(MFLAGS) $@) ;     \
-	     else                         \
-	      (echo "ERROR : No directory $$i" ;\
-	      exit 1) ;                   \
-	    fi ) ;                        \
+#define DealWithSubdirs(cmd,dir)             \
+	if [ -d dir ] ;                      \
+	then                                 \
+	  (echo " dir:" ; cd dir ;           \
+	  $(MAKE) $(MFLAGS) cmd) ;           \
+	else                                 \
+	  (echo "ERROR : No directory dir" ; \
+	  exit 1) ;                          \
+	fi;
+
+#define GotoSubdirs(dirs)         \
+	@for i in dirs ; do       \
+	  (DealWithSubdirs($@, $$i)); \
 	done;
-
-#define MakeSubdirs(name,dirs) \
-name:			     @@\
-	GotoSubdirs(dirs)
-
-#define MakeCondSubdirs(name,dirs,cond) \
-name: cond			      @@\
-	@for i in dirs ;                \
-	do (echo " $$i:" ; cd $$i ;     \
-		$(MAKE) $(MFLAGS) $@    \
-	) ; done
 
 #define InstallNonExecFile(file,dest,owner,group,mode) \
 InstallTarget(file,owner,group,mode,dest)
