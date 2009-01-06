@@ -1,5 +1,5 @@
 /*
- * $Id: stager_constants.h,v 1.18 2006/06/22 10:43:25 itglp Exp $
+ * $Id: stager_constants.h,v 1.19 2009/01/06 14:41:31 sponcec3 Exp $
  */
 
 #ifndef __stager_constants_h
@@ -29,7 +29,6 @@
 #define STAGER_DEFAULT_FACILITY   "stager"               /* Default Facility name */
 #define STAGER_DEFAULT_LOG        "stderr"               /* Default logging outside of DLF */
 #define STAGER_DEFAULT_IGNORECOMMANDLINE   0             /* Default ignore-comamnd-line mode (!= 0 means yes) */
-#define STAGER_DEFAULT_HOST       "castorstager"         /* Default stager host */
 
 #define STAGER_CLASS              "STAGER"               /* Label in config file (1st column) */
 
