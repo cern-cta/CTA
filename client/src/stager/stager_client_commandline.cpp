@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_commandline.cpp,v 1.12 2008/08/05 15:31:38 riojac3 Exp $
+ * $Id: stager_client_commandline.cpp,v 1.13 2009/01/06 14:45:16 sponcec3 Exp $
  *
  * Copyright (C) 2004-2006 by CERN/IT/FIO/FD
  * All rights reserved
@@ -101,7 +101,6 @@ int DLL_DECL getDefaultForGlobal(
 	    free(hostDefault);
 	    hostDefault = NULL;
 	  }
-	  hostDefault = strdup(DEFAULT_HOST);
 	}
       } else {
 	if (hostDefault != NULL) {
@@ -188,7 +187,7 @@ int DLL_DECL getDefaultForGlobal(
     }
   }
 
-  if (*host == NULL || strcmp(*host, "")) {
+  if ((*host == NULL || strcmp(*host, "")) && (hostDefault != NULL)) {
     *host = strdup(hostDefault);
   }
   if (port == NULL || *port <= 0) {
