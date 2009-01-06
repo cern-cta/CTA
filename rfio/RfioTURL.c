@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.25 $ $Release$ $Date: 2008/11/25 09:53:34 $ $Author: dhsmith $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.26 $ $Release$ $Date: 2009/01/06 16:33:44 $ $Author: sponcec3 $
  *
  *
  *
@@ -49,7 +49,6 @@
 #include <grp.h>
 #include <sys/types.h>
 #include <common.h>
-#define DEFAULT_HOST "stagepublic"
 #define DEFAULT_PORT2 9002
 #define DEFAULT_PORT1 5007
 #define DEFAULT_SVCCLASS ""
