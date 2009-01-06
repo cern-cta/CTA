@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.172 $ $Release$ $Date: 2008/11/25 10:52:41 $ $Author: sponcec3 $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.173 $ $Release$ $Date: 2009/01/06 14:54:56 $ $Author: sponcec3 $
  *
  *
  *
@@ -2095,7 +2095,9 @@ int rtcpcld_getLastModificationTime(
     serrno = EINVAL;
     return(-1);
   }
-  Cstager_CastorFile_lastUpdateTime(castorFile, last_mod_time);
+  u_signed64 t;
+  Cstager_CastorFile_lastUpdateTime(castorFile, &t);
+  *last_mod_time = t;
   return(0);
 }
 
