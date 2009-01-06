@@ -26,7 +26,7 @@
 SUBDIRS = rmmaster rmnode admin
 
 INCLUDES = -I ../../h -I ../..
-CPPFLAGS = -g -O0 $(INCLUDES) $(MTCCFLAGS) -DRH_HOST=\"$(RH_HOST)\"
+CPPFLAGS = -g -O0 $(INCLUDES) $(MTCCFLAGS)
 LDFLAGS += -g -O0 $(MTLDFLAGS)
 LD = g++
 
