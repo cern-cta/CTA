@@ -28,7 +28,6 @@
 #include "h/rtcp_constants.h"
 #include "h/vdqm_constants.h"
 
-#include <arpa/inet.h>
 #include <errno.h>
 #include <iostream>
 #include <string.h>
@@ -40,7 +39,15 @@
 void castor::tape::aggregator::Marshaller::marshallUint8(uint8_t src,
   char * &dst) throw (castor::exception::Exception) {
 
-  marshall(src, dst);
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  *dst++ = src;
 }
 
 
@@ -50,7 +57,25 @@ void castor::tape::aggregator::Marshaller::marshallUint8(uint8_t src,
 void castor::tape::aggregator::Marshaller::unmarshallUint8(const char * &src,
   size_t &srcLen, uint8_t &dst) throw(castor::exception::Exception) {
 
-  unmarshall(src, srcLen, dst);
+  if(src == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Pointer to source buffer is NULL";
+    throw ex;
+  }
+
+  if(srcLen < sizeof(dst)) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Source buffer length is too small: Expected length: "
+      << sizeof(dst) << ": Actual length: " << srcLen;
+    throw ex;
+  }
+
+  dst = *src++;
+  srcLen -= sizeof(dst);
 }
 
 
@@ -60,8 +85,20 @@ void castor::tape::aggregator::Marshaller::unmarshallUint8(const char * &src,
 void castor::tape::aggregator::Marshaller::marshallUint16(uint16_t src,
   char * &dst) throw (castor::exception::Exception) {
 
-  src = htons(src);
-  marshall(src, dst);
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  char *const src_ptr = (char *)(&src);
+
+  // src: Intel x86 (little endian)
+  // dst: Network   (big    endian)
+  *dst++ = *(src_ptr + 1);
+  *dst++ = *src_ptr;
 }
 
 
@@ -71,8 +108,31 @@ void castor::tape::aggregator::Marshaller::marshallUint16(uint16_t src,
 void castor::tape::aggregator::Marshaller::unmarshallUint16(const char * &src,
   size_t &srcLen, uint16_t &dst) throw(castor::exception::Exception) {
 
-  unmarshall(src, srcLen, dst);
-  dst = ntohs(dst);
+  if(src == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Pointer to source buffer is NULL";
+    throw ex;
+  }
+
+  if(srcLen < sizeof(dst)) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Source buffer length is too small: Expected length: "
+      << sizeof(dst) << ": Actual length: " << srcLen;
+    throw ex;
+  }
+
+  char *const dst_ptr = (char *)(&dst);
+
+  // src: Network   (big    endian)
+  // dst: Intel x86 (little endian)
+  *(dst_ptr + 1) = *src++;
+  *dst_ptr       = *src++;
+
+  srcLen -= sizeof(dst);
 }
 
 
@@ -82,8 +142,22 @@ void castor::tape::aggregator::Marshaller::unmarshallUint16(const char * &src,
 void castor::tape::aggregator::Marshaller::marshallUint32(uint32_t src,
   char * &dst) throw (castor::exception::Exception) {
 
-  src = htonl(src);
-  marshall(src, dst);
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  char *const src_ptr = (char *)(&src);
+
+  // src: Intel x86 (little endian)
+  // dst: Network   (big    endian)
+  *dst++ = *(src_ptr + 3);
+  *dst++ = *(src_ptr + 2);
+  *dst++ = *(src_ptr + 1);
+  *dst++ = *src_ptr;
 }
 
 
@@ -93,8 +167,102 @@ void castor::tape::aggregator::Marshaller::marshallUint32(uint32_t src,
 void castor::tape::aggregator::Marshaller::unmarshallUint32(const char * &src,
   size_t &srcLen, uint32_t &dst) throw(castor::exception::Exception) {
 
-  unmarshall(src, srcLen, dst);
-  dst = ntohl(dst);
+  if(src == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Pointer to source buffer is NULL";
+    throw ex;
+  }
+
+  if(srcLen < sizeof(dst)) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Source buffer length is too small: Expected length: "
+      << sizeof(dst) << ": Actual length: " << srcLen;
+    throw ex;
+  }
+
+  char *const dst_ptr = (char *)(&dst);
+
+  // src: Network   (big    endian)
+  // dst: Intel x86 (little endian)
+  *(dst_ptr + 3) = *src++;
+  *(dst_ptr + 2) = *src++;
+  *(dst_ptr + 1) = *src++;
+  *dst_ptr       = *src++;
+
+  srcLen -= sizeof(dst);
+}
+
+
+//------------------------------------------------------------------------------
+// marshallUint64
+//------------------------------------------------------------------------------
+void castor::tape::aggregator::Marshaller::marshallUint64(uint64_t src,
+  char * &dst) throw (castor::exception::Exception) {
+
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  char *const src_ptr = (char *)(&src);
+
+  // src: Intel x86 (little endian)
+  // dst: Network   (big    endian)
+  *dst++ = *(src_ptr + 7);
+  *dst++ = *(src_ptr + 6);
+  *dst++ = *(src_ptr + 5);
+  *dst++ = *(src_ptr + 4);
+  *dst++ = *(src_ptr + 3);
+  *dst++ = *(src_ptr + 2);
+  *dst++ = *(src_ptr + 1);
+  *dst++ = *src_ptr;
+}
+
+
+//------------------------------------------------------------------------------
+// unmarshallUint64
+//------------------------------------------------------------------------------
+void castor::tape::aggregator::Marshaller::unmarshallUint64(const char * &src,
+  size_t &srcLen, uint64_t &dst) throw(castor::exception::Exception) {
+
+  if(src == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Pointer to source buffer is NULL";
+    throw ex;
+  }
+
+  if(srcLen < sizeof(dst)) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Source buffer length is too small: Expected length: "
+      << sizeof(dst) << ": Actual length: " << srcLen;
+    throw ex;
+  }
+
+  char *const dst_ptr = (char *)(&dst);
+
+  // src: Network   (big    endian)
+  // dst: Intel x86 (little endian)
+  *(dst_ptr + 7) = *src++;
+  *(dst_ptr + 6) = *src++;
+  *(dst_ptr + 5) = *src++;
+  *(dst_ptr + 4) = *src++;
+  *(dst_ptr + 3) = *src++;
+  *(dst_ptr + 2) = *src++;
+  *(dst_ptr + 1) = *src++;
+  *dst_ptr       = *src++;
+
+  srcLen -= sizeof(dst);
 }
 
 
@@ -489,7 +657,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpTapeRequestMessage(
     strlen(src.density)       +
     strlen(src.unit)          +
     sizeof(Cuuid_t)           +
-    4 * sizeof(uint32_t)      + // 4 uint32_t's of err member (rtcpErrMsg_t)
+    4 * sizeof(uint32_t)      + // 4 uint32_t's of RtcpErrorMessage
     strlen(src.err.errmsgtxt) +
     7;                          // 7 = number of null terminator characters
 
@@ -685,4 +853,205 @@ void castor::tape::aggregator::Marshaller::unmarshallRtcpAcknowledgeMessage(
   unmarshallUint32(src, srcLen, dst.magic);
   unmarshallUint32(src, srcLen, dst.reqtype);
   unmarshallUint32(src, srcLen, dst.status);
+}
+
+
+//-----------------------------------------------------------------------------
+// marshallRtcpFileRequestMessage
+//-----------------------------------------------------------------------------
+size_t castor::tape::aggregator::Marshaller::marshallRtcpFileRequestMessage(
+  char *dst, const size_t dstLen, const RtcpFileRequestMessage &src)
+  throw (castor::exception::Exception) {
+
+  // Calculate the length of the message body
+  const uint32_t len =
+    strlen(src.filePath)  +
+    strlen(src.tapePath)  +
+    strlen(src.recfm)     +
+    strlen(src.fid)       +
+    strlen(src.ifce)      +
+    strlen(src.stageId)   +
+    24 * sizeof(uint32_t) +
+    4                     +
+    8 * sizeof(uint64_t)  +
+    strlen(src.segAttr.nameServerHostName) +
+    strlen(src.segAttr.segmCksumAlgorithm) +
+    sizeof(uint32_t)          + // 1 uint32_t of RtcpSegmentAttributes
+    sizeof(uint64_t)          + // 1 uint64_t of RtcpSegmentAttributes
+    sizeof(Cuuid_t)           +
+    4 * sizeof(uint32_t)      + // 4 uint32_t's of RtcpErrorMessage
+    strlen(src.err.errmsgtxt) +
+    9;                          // 9 = number of null terminator characters
+
+  // Calculate the total length of the message (header + body)
+  // Message header = magic + reqtype + len = 3 * sizeof(uint32_t)
+  const size_t totalLen = 3 * sizeof(uint32_t) + len;
+
+  // Check that the message buffer is big enough
+  if(totalLen > dstLen) {
+    castor::exception::Exception ex(EMSGSIZE);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Buffer too small for file request message: "
+      "Required size: " << totalLen << " Actual size: " << dstLen;
+
+    throw ex;
+  }
+
+  // Marshall the whole message (header + body)
+  char *p = dst;
+
+  marshallUint32(RTCOPY_MAGIC                         , p);
+  marshallUint32(RTCP_FILEERR_REQ                     , p);
+  marshallUint32(len                                  , p);
+  marshallString(src.filePath                         , p);
+  marshallString(src.tapePath                         , p);
+  marshallString(src.recfm                            , p);
+  marshallString(src.fid                              , p);
+  marshallString(src.ifce                             , p);
+  marshallString(src.stageId                          , p);
+  marshallUint32(src.volReqID                         , p);
+  marshallUint32(src.jobID                            , p);
+  marshallUint32(src.stageSubreqID                    , p);
+  marshallUint32(src.umask                            , p);
+  marshallUint32(src.tapeFseq                         , p);
+  marshallUint32(src.diskFseq                         , p);
+  marshallUint32(src.blocksize                        , p);
+  marshallUint32(src.recordLength                     , p);
+  marshallUint32(src.retention                        , p);
+  marshallUint32(src.defAlloc                         , p);
+  marshallUint32(src.rtcpErrAction                    , p);
+  marshallUint32(src.tpErrAction                      , p);
+  marshallUint32(src.convert                          , p);
+  marshallUint32(src.checkFid                         , p);
+  marshallUint32(src.concat                           , p);
+  marshallUint32(src.procStatus                       , p);
+  marshallUint32(src.cprc                             , p);
+  marshallUint32(src.tStartPosition                   , p);
+  marshallUint32(src.tEndPosition                     , p);
+  marshallUint32(src.tStartTransferDisk               , p);
+  marshallUint32(src.tEndTransferDisk                 , p);
+  marshallUint32(src.tStartTransferTape               , p);
+  marshallUint32(src.tEndTransferTape                 , p);
+  marshallUint8(src.blockId[0]                        , p);
+  marshallUint8(src.blockId[1]                        , p);
+  marshallUint8(src.blockId[2]                        , p);
+  marshallUint8(src.blockId[3]                        , p);
+  marshallUint64(src.offset                           , p);
+  marshallUint64(src.bytesIn                          , p);
+  marshallUint64(src.bytesOut                         , p);
+  marshallUint64(src.hostBytes                        , p);
+  marshallUint64(src.nbRecs                           , p);
+  marshallUint64(src.maxNbRec                         , p);
+  marshallUint64(src.maxSize                          , p);
+  marshallUint64(src.startSize                        , p);
+  marshallString(src.segAttr.nameServerHostName       , p);
+  marshallString(src.segAttr.segmCksumAlgorithm       , p);
+  marshallUint32(src.segAttr.segmCksum                , p);
+  marshallUint64(src.segAttr.castorFileId             , p);
+  marshallUint32(src.stgReqId.time_low                , p);
+  marshallUint16(src.stgReqId.time_mid                , p);
+  marshallUint16(src.stgReqId.time_hi_and_version     , p);
+  marshallUint8(src.stgReqId.clock_seq_hi_and_reserved, p);
+  marshallUint8(src.stgReqId.clock_seq_low            , p);
+  marshallUint8(src.stgReqId.node[0]                  , p);
+  marshallUint8(src.stgReqId.node[1]                  , p);
+  marshallUint8(src.stgReqId.node[2]                  , p);
+  marshallUint8(src.stgReqId.node[3]                  , p);
+  marshallUint8(src.stgReqId.node[4]                  , p);
+  marshallUint8(src.stgReqId.node[5]                  , p);
+  marshallString(src.err.errmsgtxt                    , p);
+  marshallUint32(src.err.severity                     , p);
+  marshallUint32(src.err.errorcode                    , p);
+  marshallUint32(src.err.max_tpretry                  , p);
+  marshallUint32(src.err.max_cpretry                  , p);
+
+  // Calculate the number of bytes actually marshalled
+  const size_t nbBytesMarshalled = p - dst;
+
+  // Check that the number of bytes marshalled was what was expected
+  if(totalLen != nbBytesMarshalled) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << __PRETTY_FUNCTION__
+      << ": Mismatch between the expected total length of the "
+         "RTCP file request message and the actual number of bytes marshalled"
+         ": Expected: " << totalLen
+      << ": Marshalled: " << nbBytesMarshalled;
+
+    throw ie;
+  }
+
+  return totalLen;
+}
+
+
+//-----------------------------------------------------------------------------
+// unmarshallRtcpFileRequestMessage
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::Marshaller::unmarshallRtcpFileRequestMessage(
+  const char * &src, size_t &srcLen, RtcpFileRequestMessage &dst)
+  throw(castor::exception::Exception) {
+
+  unmarshallString(src, srcLen, dst.filePath);
+  unmarshallString(src, srcLen, dst.tapePath);
+  unmarshallString(src, srcLen, dst.recfm);
+  unmarshallString(src, srcLen, dst.fid);
+  unmarshallString(src, srcLen, dst.ifce);
+  unmarshallString(src, srcLen, dst.stageId);
+  unmarshallUint32(src, srcLen, dst.volReqID);
+  unmarshallUint32(src, srcLen, dst.jobID);
+  unmarshallUint32(src, srcLen, dst.stageSubreqID);
+  unmarshallUint32(src, srcLen, dst.umask);
+  unmarshallUint32(src, srcLen, dst.tapeFseq);
+  unmarshallUint32(src, srcLen, dst.diskFseq);
+  unmarshallUint32(src, srcLen, dst.blocksize);
+  unmarshallUint32(src, srcLen, dst.recordLength);
+  unmarshallUint32(src, srcLen, dst.retention);
+  unmarshallUint32(src, srcLen, dst.defAlloc);
+  unmarshallUint32(src, srcLen, dst.rtcpErrAction);
+  unmarshallUint32(src, srcLen, dst.tpErrAction);
+  unmarshallUint32(src, srcLen, dst.convert);
+  unmarshallUint32(src, srcLen, dst.checkFid);
+  unmarshallUint32(src, srcLen, dst.concat);
+  unmarshallUint32(src, srcLen, dst.procStatus);
+  unmarshallUint32(src, srcLen, dst.cprc);
+  unmarshallUint32(src, srcLen, dst.tStartPosition);
+  unmarshallUint32(src, srcLen, dst.tEndPosition);
+  unmarshallUint32(src, srcLen, dst.tStartTransferDisk);
+  unmarshallUint32(src, srcLen, dst.tEndTransferDisk);
+  unmarshallUint32(src, srcLen, dst.tStartTransferTape);
+  unmarshallUint32(src, srcLen, dst.tEndTransferTape);
+  unmarshallUint8(src, srcLen, dst.blockId[0]);
+  unmarshallUint8(src, srcLen, dst.blockId[1]);
+  unmarshallUint8(src, srcLen, dst.blockId[2]);
+  unmarshallUint8(src, srcLen, dst.blockId[3]);
+  unmarshallUint64(src, srcLen, dst.offset);
+  unmarshallUint64(src, srcLen, dst.bytesIn);
+  unmarshallUint64(src, srcLen, dst.bytesOut);
+  unmarshallUint64(src, srcLen, dst.hostBytes);
+  unmarshallUint64(src, srcLen, dst.nbRecs);
+  unmarshallUint64(src, srcLen, dst.maxNbRec);
+  unmarshallUint64(src, srcLen, dst.maxSize);
+  unmarshallUint64(src, srcLen, dst.startSize);
+  unmarshallString(src, srcLen, dst.segAttr.nameServerHostName);
+  unmarshallString(src, srcLen, dst.segAttr.segmCksumAlgorithm);
+  unmarshallUint32(src, srcLen, dst.segAttr.segmCksum);
+  unmarshallUint64(src, srcLen, dst.segAttr.castorFileId);
+  unmarshallUint32(src, srcLen, dst.stgReqId.time_low);
+  unmarshallUint16(src, srcLen, dst.stgReqId.time_mid);
+  unmarshallUint16(src, srcLen, dst.stgReqId.time_hi_and_version);
+  unmarshallUint8(src, srcLen, dst.stgReqId.clock_seq_hi_and_reserved);
+  unmarshallUint8(src, srcLen, dst.stgReqId.clock_seq_low);
+  unmarshallUint8(src, srcLen, dst.stgReqId.node[0]);
+  unmarshallUint8(src, srcLen, dst.stgReqId.node[1]);
+  unmarshallUint8(src, srcLen, dst.stgReqId.node[2]);
+  unmarshallUint8(src, srcLen, dst.stgReqId.node[3]);
+  unmarshallUint8(src, srcLen, dst.stgReqId.node[4]);
+  unmarshallUint8(src, srcLen, dst.stgReqId.node[5]);
+  unmarshallString(src, srcLen, dst.err.errmsgtxt);
+  unmarshallUint32(src, srcLen, dst.err.severity);
+  unmarshallUint32(src, srcLen, dst.err.errorcode);
+  unmarshallUint32(src, srcLen, dst.err.max_tpretry);
+  unmarshallUint32(src, srcLen, dst.err.max_cpretry);
 }

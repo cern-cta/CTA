@@ -31,6 +31,7 @@
 #include "castor/tape/aggregator/RcpJobReplyMessage.hpp"
 #include "castor/tape/aggregator/RcpJobRequestMessage.hpp"
 #include "castor/tape/aggregator/RtcpAcknowledgeMessage.hpp"
+#include "castor/tape/aggregator/RtcpFileRequestMessage.hpp"
 #include "castor/tape/aggregator/RtcpTapeRequestMessage.hpp"
 
 #include <errno.h>
@@ -46,67 +47,6 @@ namespace aggregator {
    * Collection of static methods to marshall / unmarshall network messages.
    */
   class Marshaller {
-  private:
-
-    /**
-     * Function template to help marshall simple data types.  Please note that
-     * this function does not perform a host to network byte order conversion.
-     * If such a conversion is necessary, then it must be done before calling
-     * this function.
-     *
-     * @param src The source data to be marshalled.
-     * @param dst The destination buffer where the data will be marshalled to.
-     */
-    template<class T> static void marshall(T src, char * &dst)
-      throw (castor::exception::Exception) {
-
-      if(dst == NULL) {
-        castor::exception::Exception ex(EINVAL);
-
-        ex.getMessage() << ": Pointer to destination buffer is NULL";
-        throw ex;
-      }
-
-      memcpy(dst, &src, sizeof(src));
-
-      dst += sizeof(src);
-    }
-
-    /**
-     * Function template to help unmarshal simple data types.  Please note that
-     * this function does not perform a network to host byte order conversion.
-     * If such a conversion is necessary, then it must be done after this
-     * function has returned.
-     *
-     * @param src The source buffer from the where the data will be
-     * unmarshalled.
-     * @param dst The destination data to which the data will be unmarshalled.
-     */
-    template<class T> static void unmarshall(const char * &src, size_t &srcLen,
-      T &dst) throw(castor::exception::Exception) {
-
-      if(src == NULL) {
-        castor::exception::Exception ex(EINVAL);
-
-        ex.getMessage() << ": Pointer to source buffer is NULL";
-        throw ex;
-      }
-
-      if(srcLen < sizeof(dst)) {
-        castor::exception::Exception ex(EINVAL);
-
-        ex.getMessage() << __PRETTY_FUNCTION__
-          << ": Source buffer length is too small: Expected length: "
-          << sizeof(dst) << ": Actual length: " << srcLen;
-        throw ex;
-      }
-
-      memcpy(&dst, src, sizeof(dst));
-
-      src    += sizeof(dst);
-      srcLen -= sizeof(dst);
-    }
-
   public:
 
     /**
@@ -131,8 +71,9 @@ namespace aggregator {
      * on return points to the byte in the source buffer immediately after the
      * unmarshalled unsigned 8-bit integer.
      * @param srcLen In/our parameter, before invocation is the length of the
-     * source buffer from where the unsigned 8-bit integer should unmarshalled
-     * and on return is the number of bytes remaining in the source buffer.
+     * source buffer from where the unsigned 8-bit integer should be
+     * unmarshalled and on return is the number of bytes remaining in the
+     * source buffer.
      * @param dst The destination unsigned 8-bit integer.
      */
     static void unmarshallUint8(const char * &src, size_t &srcLen,
@@ -160,8 +101,9 @@ namespace aggregator {
      * on return points to the byte in the source buffer immediately after the
      * unmarshalled unsigned 16-bit integer.
      * @param srcLen In/our parameter, before invocation is the length of the
-     * source buffer from where the unsigned 16-bit integer should unmarshalled
-     * and on return is the number of bytes remaining in the source buffer.
+     * source buffer from where the unsigned 16-bit integer should be
+     * unmarshalled and on return is the number of bytes remaining in the
+     * source buffer.
      * @param dst The destination unsigned 16-bit integer.
      */
     static void unmarshallUint16(const char * &src, size_t &srcLen,
@@ -189,12 +131,43 @@ namespace aggregator {
      * on return points to the byte in the source buffer immediately after the
      * unmarshalled unsigned 32-bit integer.
      * @param srcLen In/our parameter, before invocation is the length of the
-     * source buffer from where the unsigned 32-bit integer should unmarshalled
-     * and on return is the number of bytes remaining in the source buffer.
+     * source buffer from where the unsigned 32-bit integer should be
+     * unmarshalled and on return is the number of bytes remaining in the
+     * source buffer.
      * @param dst The destination unsigned 32-bit integer.
      */
     static void unmarshallUint32(const char * &src, size_t &srcLen,
       uint32_t &dst) throw(castor::exception::Exception);
+
+    /**
+     * Marshalls the specified unsigned 64-bit integer into the specified
+     * destination buffer.
+     *
+     * @param src The unsigned 64-bit integer to be marshalled.
+     * @param dst In/out parameter, before invocation points to the destination
+     * buffer where the unsigned 64-bit integer should be marshalled to and on
+     * return points to the byte in the destination buffer immediately after
+     * the marshalled unsigned 64-bit integer.
+     */
+    static void marshallUint64(uint64_t src, char * &dst)
+      throw(castor::exception::Exception);
+
+    /**
+     * Unmarshalls an unsigned 64-bit integer from the specified source buffer
+     * into the specified destination unsigned 64-bit integer.
+     *
+     * @param src In/out parameter, before invocation points to the source
+     * buffer where the unsigned 64-bit integer should be unmarshalled from and
+     * on return points to the byte in the source buffer immediately after the
+     * unmarshalled unsigned 64-bit integer.
+     * @param srcLen In/our parameter, before invocation is the length of the
+     * source buffer from where the unsigned 64-bit integer should be
+     * unmarshalled and on return is the number of bytes remaining in the
+     * source buffer.
+     * @param dst The destination unsigned 64-bit integer.
+     */
+    static void unmarshallUint64(const char * &src, size_t &srcLen,
+      uint64_t &dst) throw(castor::exception::Exception);
 
     /**
      * Marshalls the specified string into the specified destination buffer.
@@ -236,7 +209,7 @@ namespace aggregator {
      * to the byte in the destination buffer immediately after the unmarshalled
      * string .
      * @param dstLen The length of the destination buffer where the string
-     * should unmarshalled to.
+     * should be unmarshalled to.
      */
     static void unmarshallString(const char * &src, size_t &srcLen, char *dst,
       const size_t dstLen) throw(castor::exception::Exception);
@@ -296,7 +269,7 @@ namespace aggregator {
      * return points to the byte in the source buffer immediately after the
      * unmarshalled message header.
      * @param srcLen In/our parameter, before invocation is the length of the
-     * source buffer from where the message header should unmarshalled and on
+     * source buffer from where the message header should be unmarshalled and on
      * return is the number of bytes remaining in the source buffer.
      * @param dst The destination structure.
      */
@@ -339,7 +312,7 @@ namespace aggregator {
      * points to the byte in the source buffer immediately after the
      * unmarshalled message body.
      * @param srcLen In/our parameter, before invocation is the length of the
-     * source buffer from where the message body should unmarshalled and on
+     * source buffer from where the message body should be unmarshalled and on
      * return is the number of bytes remaining in the source buffer.
      * @param dst The destination request structure.
      */
@@ -382,7 +355,7 @@ namespace aggregator {
      * points to the byte in the source buffer immediately after the
      * unmarshalled message body.
      * @param srcLen In/our parameter, before invocation is the length of the
-     * source buffer from where the message body should unmarshalled and on
+     * source buffer from where the message body should be unmarshalled and on
      * return is the number of bytes remaining in the source buffer.
      * @param dst The destination reply structure.
      */
@@ -425,7 +398,7 @@ namespace aggregator {
      * points to the byte in the source buffer immediately after the
      * unmarshalled message body.
      * @param srcLen In/our parameter, before invocation is the length of the
-     * source buffer from where the message body should unmarshalled and on
+     * source buffer from where the message body should be unmarshalled and on
      * return is the number of bytes remaining in the source buffer.
      * @param dst The destination request structure.
      */
@@ -470,12 +443,56 @@ namespace aggregator {
      * points to the byte in the source buffer immediately after the
      * unmarshalled message body.
      * @param srcLen In/our parameter, before invocation is the length of the
-     * source buffer from where the message body should unmarshalled and on
+     * source buffer from where the message body should be unmarshalled and on
      * return is the number of bytes remaining in the source buffer.
      * @param dst The destination message structure.
      */
     static void unmarshallRtcpAcknowledgeMessage(const char * &src,
       size_t &srcLen, RtcpAcknowledgeMessage &dst)
+      throw(castor::exception::Exception);
+
+    /**
+     * Marshalls the specified source file request structure into the specified
+     * destination buffer.
+     *
+     * @param dst The destination message buffer.
+     * @param dstLen The length of the destination buffer.
+     * @param src The source structure.
+     * @return The total length of the message (header + body).
+     */
+    static size_t marshallRtcpFileRequestMessage(char *const dst,
+      const size_t dstLen, const RtcpFileRequestMessage &src)
+      throw(castor::exception::Exception);
+
+    /**
+     * Marshalls the specified source filee request structure into the specified
+     * destination buffer.
+     *
+     * @param dst The destination message buffer.
+     * @param src The source structure.
+     * @return The total length of the message (header + body).
+     */
+    template<int n> static size_t marshallRtcpFileRequestMessage(
+      char (&dst)[n], const RtcpFileRequestMessage &src)
+      throw(castor::exception::Exception) {
+      return marshallRtcpFileRequestMessage(dst, n, src);
+    }
+
+    /**
+     * Unmarshalls the message body of a file request from the specified source
+     * buffer into the specified destination request structure.
+     *
+     * @param src In/out parameter, before invocation points to the source
+     * buffer where the message body should be unmarshalled from and on return
+     * points to the byte in the source buffer immediately after the
+     * unmarshalled message body.
+     * @param srcLen In/our parameter, before invocation is the length of the
+     * source buffer from where the message body should be unmarshalled and on
+     * return is the number of bytes remaining in the source buffer.
+     * @param dst The destination request structure.
+     */
+    static void unmarshallRtcpFileRequestMessage(const char * &src,
+      size_t &srcLen, RtcpFileRequestMessage &dst)
       throw(castor::exception::Exception);
 
   }; // class Utils

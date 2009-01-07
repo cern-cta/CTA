@@ -30,7 +30,7 @@
 #include "castor/server/Queue.hpp"
 #include "castor/tape/aggregator/RtcpAcknowledgeMessage.hpp"
 #include "castor/tape/aggregator/RtcpTapeRequestMessage.hpp"
-
+#include "h/rtcp_constants.h"
 
 namespace castor {
 namespace tape {
@@ -71,16 +71,36 @@ namespace aggregator {
   private:
 
     /**
-     * Get a tape request from RTCPD.
+     * Get the volume request ID from RTCPD.
      *
      * @param cuuid The ccuid to be used for logging.
      * @param socket The socket of the connection with RTCPD.
-     * @param request The request structure to filled with the request from
-     * RTCPD
+     * @param reply The request structure to be filled with the reply from
+     * RTCPD.
      */
-    void getTapeRequestFromRtcpd(const Cuuid_t &cuuid,
+    void getVolumeRequestIdFromRtcpd(const Cuuid_t &cuuid,
       castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
-      RtcpTapeRequestMessage &request) throw(castor::exception::Exception);
+      RtcpTapeRequestMessage &reply) throw(castor::exception::Exception);
+
+    /**
+     * Send volume to RTCPD.
+     *
+     * @param cuuid The ccuid to be used for logging.
+     * @param socket The socket of the connection with RTCPD.
+     * @param reply The request structure to be filled with the reply from
+     * RTCPD.
+     * @param vid The VID of the volume.
+     * @param vsn The VSN of the volume.
+     * @param label The label of the volume.
+     * @param density The density of the volume.
+     * @param volReqId The volume request ID.
+     * @param tStartRequest The start time of the request.
+     */
+    void sendVolumeToRtcpd(const Cuuid_t &cuuid,
+      castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
+      RtcpTapeRequestMessage &reply, const char *vid, const char *vsn,
+      const char *label, const char *density, const uint32_t volReqId,
+      const uint32_t tStartRequest) throw(castor::exception::Exception);
 
     /**
      * Receives an acknowledge message from RTCPD and returns the status code

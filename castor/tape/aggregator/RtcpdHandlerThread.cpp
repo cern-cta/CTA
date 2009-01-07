@@ -30,11 +30,12 @@
 #include "castor/tape/aggregator/RtcpdHandlerThread.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
 #include "castor/tape/aggregator/SocketHelper.hpp"
+#include "castor/tape/aggregator/Utils.hpp"
 #include "h/common.h"
 #include "h/rtcp.h"
-#include "h/rtcp_constants.h"
 
 #include <string.h>
+#include <time.h>
 
 
 //-----------------------------------------------------------------------------
@@ -103,47 +104,98 @@ void castor::tape::aggregator::RtcpdHandlerThread::run(void *param)
       AGGREGATOR_RTCPD_CONNECTION_WITHOUT_INFO, 3, params);
   }
 
-  // Get the tape arequest associated with the remote copy job from RTCPD
-  RtcpTapeRequestMessage request;
-  try {
-    getTapeRequestFromRtcpd(cuuid, *socket, NETRWTIMEOUT, request);
+  // Get the volume request ID associated with the remote copy job from RTCPD
+  uint32_t volReqId = 0;
+  {
+    RtcpTapeRequestMessage reply;
+    try {
+      getVolumeRequestIdFromRtcpd(cuuid, *socket, NETRWTIMEOUT, reply);
+      volReqId = reply.VolReqID;
 
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("vid"            , request.vid            ),
-      castor::dlf::Param("vsn"            , request.vsn            ),
-      castor::dlf::Param("label"          , request.label          ),
-      castor::dlf::Param("devtype"        , request.devtype        ),
-      castor::dlf::Param("density"        , request.density        ),
-      castor::dlf::Param("unit"           , request.unit           ),
-      castor::dlf::Param("VolReqID"       , request.VolReqID       ),
-      castor::dlf::Param("jobID"          , request.jobID          ),
-      castor::dlf::Param("mode"           , request.mode           ),
-      castor::dlf::Param("start_file"     , request.start_file     ),
-      castor::dlf::Param("end_file"       , request.end_file       ),
-      castor::dlf::Param("side"           , request.side           ),
-      castor::dlf::Param("tprc"           , request.tprc           ),
-      castor::dlf::Param("TStartRequest"  , request.TStartRequest  ),
-      castor::dlf::Param("TEndRequest"    , request.TEndRequest    ),
-      castor::dlf::Param("TStartRtcpd"    , request.TStartRtcpd    ),
-      castor::dlf::Param("TStartMount"    , request.TStartMount    ),
-      castor::dlf::Param("TEndMount"      , request.TEndMount      ),
-      castor::dlf::Param("TStartUnmount"  , request.TStartUnmount  ),
-      castor::dlf::Param("TEndUnmount"    , request.TEndUnmount    ),
-      castor::dlf::Param("rtcpReqId"      , request.rtcpReqId      ),
-      castor::dlf::Param("err.errmsgtxt"  , request.err.errmsgtxt  ),
-      castor::dlf::Param("err.severity"   , request.err.severity   ),
-      castor::dlf::Param("err.errorcode"  , request.err.errorcode  ),
-      castor::dlf::Param("err.max_tpretry", request.err.max_tpretry),
-      castor::dlf::Param("err.max_cpretry", request.err.max_cpretry)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_RECEIVED_TAPE_REQUEST, 26, params);
-  } catch(castor::exception::Exception &ex) {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-      castor::dlf::Param("Message" , ex.getMessage().str()),
-      castor::dlf::Param("Code"    , ex.code())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_RECEIVE_TAPE_REQUEST, 3, params);
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("vid"            , reply.vid            ),
+        castor::dlf::Param("vsn"            , reply.vsn            ),
+        castor::dlf::Param("label"          , reply.label          ),
+        castor::dlf::Param("devtype"        , reply.devtype        ),
+        castor::dlf::Param("density"        , reply.density        ),
+        castor::dlf::Param("unit"           , reply.unit           ),
+        castor::dlf::Param("VolReqID"       , reply.VolReqID       ),
+        castor::dlf::Param("jobID"          , reply.jobID          ),
+        castor::dlf::Param("mode"           , reply.mode           ),
+        castor::dlf::Param("start_file"     , reply.start_file     ),
+        castor::dlf::Param("end_file"       , reply.end_file       ),
+        castor::dlf::Param("side"           , reply.side           ),
+        castor::dlf::Param("tprc"           , reply.tprc           ),
+        castor::dlf::Param("TStartRequest"  , reply.TStartRequest  ),
+        castor::dlf::Param("TEndRequest"    , reply.TEndRequest    ),
+        castor::dlf::Param("TStartRtcpd"    , reply.TStartRtcpd    ),
+        castor::dlf::Param("TStartMount"    , reply.TStartMount    ),
+        castor::dlf::Param("TEndMount"      , reply.TEndMount      ),
+        castor::dlf::Param("TStartUnmount"  , reply.TStartUnmount  ),
+        castor::dlf::Param("TEndUnmount"    , reply.TEndUnmount    ),
+        castor::dlf::Param("rtcpReqId"      , reply.rtcpReqId      ),
+        castor::dlf::Param("err.errmsgtxt"  , reply.err.errmsgtxt  ),
+        castor::dlf::Param("err.severity"   , reply.err.severity   ),
+        castor::dlf::Param("err.errorcode"  , reply.err.errorcode  ),
+        castor::dlf::Param("err.max_tpretry", reply.err.max_tpretry),
+        castor::dlf::Param("err.max_cpretry", reply.err.max_cpretry)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_GOT_VOLREQID, 26, params);
+    } catch(castor::exception::Exception &ex) {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+        castor::dlf::Param("Message" , ex.getMessage().str()),
+        castor::dlf::Param("Code"    , ex.code())};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+        AGGREGATOR_FAILED_TO_GET_VOLREQID, 3, params);
+    }
+  }
+
+  // Send volume to RTCPD
+  uint32_t tStartRequest = time(NULL); // CASTOR2/rtcopy/rtcpclientd.c:1494
+  {
+    RtcpTapeRequestMessage reply;
+    try {
+      sendVolumeToRtcpd(cuuid, *socket, NETRWTIMEOUT, reply, "I10547", "I10547",
+        "aul", "700GC", volReqId, tStartRequest);
+
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("vid"            , reply.vid            ),
+        castor::dlf::Param("vsn"            , reply.vsn            ),
+        castor::dlf::Param("label"          , reply.label          ),
+        castor::dlf::Param("devtype"        , reply.devtype        ),
+        castor::dlf::Param("density"        , reply.density        ),
+        castor::dlf::Param("unit"           , reply.unit           ),
+        castor::dlf::Param("VolReqID"       , reply.VolReqID       ),
+        castor::dlf::Param("jobID"          , reply.jobID          ),
+        castor::dlf::Param("mode"           , reply.mode           ),
+        castor::dlf::Param("start_file"     , reply.start_file     ),
+        castor::dlf::Param("end_file"       , reply.end_file       ),
+        castor::dlf::Param("side"           , reply.side           ),
+        castor::dlf::Param("tprc"           , reply.tprc           ),
+        castor::dlf::Param("TStartRequest"  , reply.TStartRequest  ),
+        castor::dlf::Param("TEndRequest"    , reply.TEndRequest    ),
+        castor::dlf::Param("TStartRtcpd"    , reply.TStartRtcpd    ),
+        castor::dlf::Param("TStartMount"    , reply.TStartMount    ),
+        castor::dlf::Param("TEndMount"      , reply.TEndMount      ),
+        castor::dlf::Param("TStartUnmount"  , reply.TStartUnmount  ),
+        castor::dlf::Param("TEndUnmount"    , reply.TEndUnmount    ),
+        castor::dlf::Param("rtcpReqId"      , reply.rtcpReqId      ),
+        castor::dlf::Param("err.errmsgtxt"  , reply.err.errmsgtxt  ),
+        castor::dlf::Param("err.severity"   , reply.err.severity   ),
+        castor::dlf::Param("err.errorcode"  , reply.err.errorcode  ),
+        castor::dlf::Param("err.max_tpretry", reply.err.max_tpretry),
+        castor::dlf::Param("err.max_cpretry", reply.err.max_cpretry)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_SENT_VOLUME, 26, params);
+    } catch(castor::exception::Exception &ex) {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+        castor::dlf::Param("Message" , ex.getMessage().str()),
+        castor::dlf::Param("Code"    , ex.code())};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+        AGGREGATOR_FAILED_TO_SEND_VOLUME, 3, params);
+    }
   }
 
   // Close and de-allocate the socket
@@ -161,18 +213,19 @@ void castor::tape::aggregator::RtcpdHandlerThread::stop()
 
 
 //-----------------------------------------------------------------------------
-// getTapeRequestFromRtcpd
+// getVolumeRequestIdFromRtcpd
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpdHandlerThread::
-  getTapeRequestFromRtcpd(const Cuuid_t &cuuid,
+  getVolumeRequestIdFromRtcpd(const Cuuid_t &cuuid,
   castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
-  RtcpTapeRequestMessage &request) throw(castor::exception::Exception) {
+  RtcpTapeRequestMessage &reply) throw(castor::exception::Exception) {
 
+  // Prepare logical request for volume request ID
+  RtcpTapeRequestMessage request;
+  Utils::setBytes(request, '\0');
+
+  // Marshall the request
   char buf[MSGBUFSIZ];
-
-  memset(&request, '\0', sizeof(request));
-
-  // Marshall the request for VID message
   size_t totalLen = 0;
   try {
     totalLen = Marshaller::marshallRtcpTapeRequestMessage(buf, request);
@@ -180,20 +233,20 @@ void castor::tape::aggregator::RtcpdHandlerThread::
     castor::exception::Internal ie;
 
     ie.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to marshall RTCP request message: "
+      << ": Failed to marshall request for volume request ID: "
       << ex.getMessage().str();
 
     throw ie;
   }
 
-  // Send the request for a VID to RTCPD
+  // Send the request
   try {
     SocketHelper::writeBytes(socket, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(SECOMERR);
 
     ex2.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to send the request for a VID to RTCPD: "
+      << ": Failed to send request for volume request ID to RTCPD: "
       << ex.getMessage().str();
   }
 
@@ -244,10 +297,124 @@ void castor::tape::aggregator::RtcpdHandlerThread::
     throw ex;
   }
 
-  // Receive tape request message from RTCPD
-  memset(&request, '\0', sizeof(request));
+  // Receive reply from RTCPD
+  Utils::setBytes(reply, '\0');
   try {
-    receiveRtcpTapeRequest(cuuid, socket, netReadWriteTimeout, request);
+    receiveRtcpTapeRequest(cuuid, socket, netReadWriteTimeout, reply);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(EPROTO);
+
+    ex2.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to receive tape request from RTCPD"
+         ": " << ex.getMessage().str();
+    throw ex2;
+  }
+
+  // Send acknowledge to RTCPD
+  try {
+    sendRtcpAcknowledge(cuuid, socket, netReadWriteTimeout, ackMsg);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(EPROTO);
+
+    ex2.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to send acknowledge to RTCPD"
+         ": " << ex.getMessage().str();
+    throw ex2;
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// sendVolumeToRtcpd
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::RtcpdHandlerThread::
+  sendVolumeToRtcpd(const Cuuid_t &cuuid,
+  castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
+  RtcpTapeRequestMessage &reply, const char *vid, const char *vsn,
+  const char *label, const char *density, const uint32_t volReqId,
+  const uint32_t tStartRequest) throw(castor::exception::Exception) {
+
+  // Prepare logical volume message
+  RtcpTapeRequestMessage volume;
+  Utils::setBytes(volume, '\0');
+
+  // Marshall the message
+  char buf[MSGBUFSIZ];
+  size_t totalLen = 0;
+  try {
+    totalLen = Marshaller::marshallRtcpTapeRequestMessage(buf, volume);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to marshall volume message: "
+      << ex.getMessage().str();
+
+    throw ie;
+  }
+
+  // Send the message
+  try {
+    SocketHelper::writeBytes(socket, netReadWriteTimeout, totalLen, buf);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(SECOMERR);
+
+    ex2.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to send volume message to RTCPD: "
+      << ex.getMessage().str();
+  }
+
+  // Receive acknowledge from RTCPD
+  RtcpAcknowledgeMessage ackMsg;
+  try {
+    receiveRtcpAcknowledge(cuuid, socket, netReadWriteTimeout, ackMsg);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(EPROTO);
+
+    ex2.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to receive acknowledge from RTCPD: "
+      << ex.getMessage().str();
+    throw ex2;
+  }
+
+  // If the magic number is invalid
+  if(ackMsg.magic != RTCOPY_MAGIC) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Invalid magic number from RTCPD"
+      << ": Expected: 0x" << std::hex << RTCOPY_MAGIC
+      << ": Received: " << ackMsg.magic;
+
+    throw ex;
+  }
+
+  // If the request type is invalid
+  if(ackMsg.reqtype != RTCP_TAPEERR_REQ) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Invalid request type from RTCPD"
+      << ": Expected: 0x" << std::hex << RTCP_TAPEERR_REQ
+      << ": Received: " << ackMsg.reqtype;
+
+    throw ex;
+  }
+
+  // If the acknowledge is negative
+  if(ackMsg.status != 0) {
+    castor::exception::Exception ex(ECANCELED);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Received negative acknowledge from RTCPD"
+         ": Status: " << ackMsg.status;
+    throw ex;
+  }
+
+  // Receive reply from RTCPD
+  Utils::setBytes(reply, '\0');
+  try {
+    receiveRtcpTapeRequest(cuuid, socket, netReadWriteTimeout, reply);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EPROTO);
 
@@ -289,7 +456,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::receiveRtcpAcknowledge(
     castor::exception::Exception ex2(SECOMERR);
 
     ex2.getMessage() << __PRETTY_FUNCTION__
-      << "Failed to read RTCPD acknowledge message"
+      << ": Failed to read RTCPD acknowledge message"
       << ": " << ex.getMessage().str();
 
     throw ex2;
@@ -304,7 +471,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::receiveRtcpAcknowledge(
     castor::exception::Exception ex2(EBADMSG);
 
     ex2.getMessage() << __PRETTY_FUNCTION__
-      << "Failed to unmarshall RTCPD acknowledge message"
+      << ": Failed to unmarshall RTCPD acknowledge message"
          ": " << ex.getMessage().str();
 
     throw ex2;
@@ -365,7 +532,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::receiveRtcpTapeRequest(
     castor::exception::Exception ex2(SECOMERR);
 
     ex2.getMessage() << __PRETTY_FUNCTION__
-      << "Failed to read message header from RTCPD"
+      << ": Failed to read message header from RTCPD"
       << ": " << ex.getMessage().str();
 
     throw ex2;
@@ -381,7 +548,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::receiveRtcpTapeRequest(
     castor::exception::Exception ex2(EBADMSG);
 
     ex2.getMessage() << __PRETTY_FUNCTION__
-      << "Failed to unmarshall message header from RTCPD"
+      << ": Failed to unmarshall message header from RTCPD"
          ": " << ex.getMessage().str();
 
     throw ex2;

@@ -128,7 +128,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::dispatchRequest(
     castor::exception::Exception ex2(SECOMERR);
 
     ex2.getMessage() << __PRETTY_FUNCTION__
-      << "Failed to read message header"
+      << ": Failed to read message header"
       << ": " << ex.getMessage().str();
 
     throw ex2;
@@ -144,7 +144,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::dispatchRequest(
     castor::exception::Exception ex2(EBADMSG);
 
     ex2.getMessage() << __PRETTY_FUNCTION__
-      << "Failed to unmarshall message header"
+      << ": Failed to unmarshall message header"
          ": " << ex.getMessage().str();
 
     throw ex2;
@@ -157,7 +157,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::dispatchRequest(
     castor::exception::Exception ex(EBADMSG);
 
     ex.getMessage() << __PRETTY_FUNCTION__
-      << "Unknown magic number: 0x" << std::hex << header.magic;
+      << ": Unknown magic number: 0x" << std::hex << header.magic;
 
     throw ex;
   }
@@ -169,7 +169,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::dispatchRequest(
     castor::exception::Exception ex(EBADMSG);
 
     ex.getMessage() << __PRETTY_FUNCTION__
-      << "Unknown request type: 0x" << header.reqtype;
+      << ": Unknown request type: 0x" << header.reqtype;
 
     throw ex;
   }
