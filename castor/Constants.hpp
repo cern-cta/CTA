@@ -248,7 +248,7 @@ namespace castor {
     SVC_DBRHSVC = 41,
     SVC_ORARHSVC = 42,
     SVC_ORAPOLICYSVC = 43,
-    SVC_ORAREPACKSVC =44
+    SVC_ORAREPACKSVC = 44
   };
 
   /**
