@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SelectProcessThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/05/30 14:08:25 $ $Author: itglp $
+ * @(#)$RCSfile: SelectProcessThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/01/08 09:28:46 $ $Author: itglp $
  *
  * Base thread for the select/process model: it loops until select() returns
  * something to do, or until a stop signal is received.
@@ -25,7 +25,7 @@
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-#include "castor/server/ServiceThread.hpp"
+#include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/SelectProcessThread.hpp"
 #include "castor/Services.hpp"
 
@@ -34,8 +34,8 @@
 //------------------------------------------------------------------------------
 void castor::server::SelectProcessThread::run(void* param) {
   //castor::IService* svc = getService();
-  ServiceThread* st = (ServiceThread*)param;
-  while(!st->stopped()) {
+  SignalThreadPool* p = (SignalThreadPool*)param;
+  while(!p->stopped()) {
     castor::IObject* selectOutput = select(); //svc);
     if(selectOutput == 0)
       break;
