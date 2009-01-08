@@ -159,23 +159,21 @@ namespace castor{
           serrno = 0;
           if(newFile && (0 != Cns_creatx(subReq->fileName().c_str(), subReq->modeBits(), &cnsFileid)) && (serrno != EEXIST)) {
             castor::dlf::Param params[]={
-	      castor::dlf::Param("Filename", subReq->fileName()),
+              castor::dlf::Param("Filename", subReq->fileName()),
               castor::dlf::Param("Function", "Cns_creatx"),
               castor::dlf::Param("Error", sstrerror(serrno))};
 	    
-	    if ((serrno == ENOENT) || (serrno == EACCES) || (serrno == ENOTDIR) ||
-		(serrno == ENAMETOOLONG) || (serrno == EMLINK)) {
-	      castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, 
-				      STAGER_CNS_EXCEPTION, 3, params);      
-	    } else {
-	      castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR,
-				      STAGER_CNS_EXCEPTION, 3, params);	
-	      serrno = SEINTERNAL;
-	    }
-	    castor::exception::Exception ex(serrno);
-	    ex.getMessage() << "Failed to (re)create the file";
-	    throw ex;
-	  }
+            if ((serrno == ENOENT) || (serrno == EACCES) || (serrno == ENOTDIR) ||
+                (serrno == ENAMETOOLONG) || (serrno == EMLINK)) {
+              castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_CNS_EXCEPTION, 3, params);      
+            } else {
+              castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 3, params);	
+              serrno = SEINTERNAL;
+            }
+            castor::exception::Exception ex(serrno);
+            ex.getMessage() << "Failed to (re)create the file";
+            throw ex;
+          }
           else if(serrno == EEXIST) {
             // the file exists: this might happen if two threads are concurrently 
             // creating the same file and they both got ENOENT at the Cns_statx call above.

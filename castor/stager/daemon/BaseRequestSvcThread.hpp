@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseRequestSvcThread.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/01/18 16:01:06 $ $Author: itglp $
+ * @(#)$RCSfile: BaseRequestSvcThread.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2009/01/08 15:40:06 $ $Author: itglp $
  *
  * Base service thread for handling stager requests
  *
@@ -51,11 +51,9 @@ namespace castor {
         BaseRequestSvcThread(std::string name, std::string dbSvcName, int dbSvcType) throw() :
           SelectProcessThread(), m_name(name), 
           m_dbSvcName(dbSvcName), m_dbSvcType(dbSvcType) {};
+        
         virtual ~BaseRequestSvcThread() throw() {};
         
-        /***************************************************************************/
-        /* abstract functions inherited from the SelectProcessThread to implement */
-        /*************************************************************************/
         virtual castor::IObject* select() throw();
         
         void handleException(RequestHelper* stgRequestHelper, CnsHelper* stgCnsHelper, int errorCode, std::string errorMessage) throw();
