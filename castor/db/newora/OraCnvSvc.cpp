@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2008/08/18 16:13:55 $ $Author: waldron $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2009/01/08 09:33:32 $ $Author: itglp $
  *
  * The conversion service to Oracle
  *
@@ -208,7 +208,7 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     if (codeVersion != DBVersion) {
       dropConnection();
       castor::exception::BadVersion e;
-      e.getMessage() << "Version mismatch between the database and the code : \""
+      e.getMessage() << "Version mismatch between the database and the software : \""
                      << DBVersion << "\" versus \""
                      << codeVersion << "\"";
       throw e;
@@ -262,6 +262,7 @@ void castor::db::ora::OraCnvSvc::dropConnection() throw() {
     if (0 != m_environment) {
       oracle::occi::Environment::terminateEnvironment(m_environment);
     }
+    clog() << SYSTEM << "Oracle connection dropped" << std::endl;
   } catch (oracle::occi::SQLException e) {
     clog() << ERROR << "Failed to drop the Oracle connection: "
            << e.what() << std::endl;
