@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.61 $ $Release$ $Date: 2008/12/18 14:31:41 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.62 $ $Release$ $Date: 2009/01/08 15:39:33 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -300,8 +300,8 @@ void castor::stager::daemon::StagerDaemon::help(std::string programName)
     "Comments to: Castor.Support@cern.ch\n";
 }
 
-void castor::stager::daemon::StagerDaemon::waitAllThreads(bool beGraceful) throw()
+void castor::stager::daemon::StagerDaemon::waitAllThreads() throw()
 {
-  castor::server::BaseDaemon::waitAllThreads(beGraceful);
+  castor::server::BaseDaemon::waitAllThreads();
   castor::replier::RequestReplier::getInstance()->terminate();
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/12/02 17:39:12 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2009/01/08 15:39:33 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -56,7 +56,7 @@ namespace castor{
         
       protected:
         
-        virtual void waitAllThreads(bool beGraceful) throw();
+        virtual void waitAllThreads() throw();
 
       }; /* end class StagerDaemon */
 
