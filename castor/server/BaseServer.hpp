@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/08/22 19:35:49 $ $Author: murrayc3 $
+ * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2009/01/08 09:25:15 $ $Author: itglp $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -48,12 +48,14 @@ namespace castor {
   public:
 
     /**
-     * constructor
+     * Constructor
+     * @param serverName a friendly name for this daemon,
+     * used to initialize the logging facility.
      */
     BaseServer(const std::string serverName);
 
     /*
-     * destructor
+     * Destructor
      */
     virtual ~BaseServer() throw();
 

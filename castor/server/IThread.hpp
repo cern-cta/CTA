@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IThread.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/05/30 09:32:20 $ $Author: itglp $
+ * @(#)$RCSfile: IThread.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2009/01/08 09:25:44 $ $Author: itglp $
  *
  * Abstract interface for the CASTOR multithread framework
  *
@@ -47,7 +47,7 @@ namespace castor {
     /**
      * default destructor
      */
-    virtual ~IThread() throw() {}
+    virtual ~IThread() throw() {};
 
     /**
      * Initialization of the thread.
