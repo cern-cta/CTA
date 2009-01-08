@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: AuthListenerThreadPool.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/07/25 15:31:43 $ $Author: itglp $
+* @(#)$RCSfile: AuthListenerThreadPool.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2009/01/08 09:24:57 $ $Author: itglp $
 *
 * A ListenerThreadPool which uses AuthSockets to handle the connections
 *
@@ -29,6 +29,37 @@
 #include "castor/io/AuthServerSocket.hpp"
 #include "castor/server/AuthListenerThreadPool.hpp"
 #include "castor/exception/Exception.hpp"
+
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
+castor::server::AuthListenerThreadPool::AuthListenerThreadPool
+(const std::string poolName,
+ castor::server::IThread* thread,
+ unsigned int listenPort,
+ bool listenerOnOwnThread,
+ unsigned int nbThreads) throw(castor::exception::Exception) :
+  TCPListenerThreadPool(poolName, thread, listenPort, listenerOnOwnThread, nbThreads) {}
+
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
+castor::server::AuthListenerThreadPool::AuthListenerThreadPool
+(const std::string poolName,
+ castor::server::IThread* thread,
+ unsigned int listenPort,
+ bool listenerOnOwnThread,
+ unsigned int initThreads,
+ unsigned int maxThreads,
+ unsigned int threshold,
+ unsigned int maxTasks) throw(castor::exception::Exception) :
+  TCPListenerThreadPool(poolName, thread, listenPort, listenerOnOwnThread,
+                        initThreads, maxThreads, threshold, maxTasks) {}
+
+//------------------------------------------------------------------------------
+// Destructor
+//------------------------------------------------------------------------------
+castor::server::AuthListenerThreadPool::~AuthListenerThreadPool() throw() {}
 
 //------------------------------------------------------------------------------
 // bind

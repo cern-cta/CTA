@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthListenerThreadPool.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/05/30 14:05:57 $ $Author: itglp $
+ * @(#)$RCSfile: AuthListenerThreadPool.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2009/01/08 09:24:57 $ $Author: itglp $
  *
  * A ListenerThreadPool which uses AuthSockets to handle the connections
  *
@@ -49,20 +49,31 @@ namespace castor {
      * Empty constructor
      */
     AuthListenerThreadPool() throw() : 
-       castor::server::TCPListenerThreadPool::TCPListenerThreadPool() {};
+       TCPListenerThreadPool() {};
 
     /**
-     * Inherited constructor. See castor::server::TCPListenerThreadPool
+     * Inherited constructor, see TCPListenerThreadPool
      */
     AuthListenerThreadPool(const std::string poolName, castor::server::IThread* thread,
-       int port, bool listenerOnOwnThread = true) throw() :
-       castor::server::TCPListenerThreadPool::TCPListenerThreadPool
-         (poolName, thread, port, listenerOnOwnThread) {};
+                       unsigned int listenPort, bool listenerOnOwnThread = true,
+                       unsigned int nbThreads = DEFAULT_THREAD_NUMBER)
+      throw (castor::exception::Exception);
 
-    /*
-     * destructor
+    /**
+     * Inherited constructor, see TCPListenerThreadPool
      */
-    virtual ~AuthListenerThreadPool() throw() {};
+    AuthListenerThreadPool(const std::string poolName, castor::server::IThread* thread,
+                       unsigned int listenPort, bool listenerOnOwnThread,
+                       unsigned int initThreads,
+                       unsigned int maxThreads,
+                       unsigned int threshold = DEFAULT_THRESHOLD,
+                       unsigned int maxTasks  = DEFAULT_MAXTASKS)      
+      throw (castor::exception::Exception);               
+
+    /**
+     * Destructor
+     */
+    virtual ~AuthListenerThreadPool() throw();
 
   protected:
 

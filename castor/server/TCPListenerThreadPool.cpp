@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TCPListenerThreadPool.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/08/12 11:46:52 $ $Author: waldron $
+ * @(#)$RCSfile: TCPListenerThreadPool.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2009/01/08 09:24:57 $ $Author: itglp $
  *
  * Listener thread pool based on TCP
  *
@@ -33,15 +33,36 @@
 #include <errno.h>
 
 //------------------------------------------------------------------------------
-// constructor
+// Constructor
 //------------------------------------------------------------------------------
 castor::server::TCPListenerThreadPool::TCPListenerThreadPool
 (const std::string poolName,
  castor::server::IThread* thread,
- int listenPort,
- bool listenerOnOwnThread) throw() :
-  ListenerThreadPool(poolName, thread, listenPort, listenerOnOwnThread) {}
+ unsigned int listenPort,
+ bool listenerOnOwnThread,
+ unsigned int nbThreads) throw(castor::exception::Exception) :
+  ListenerThreadPool(poolName, thread, listenPort, listenerOnOwnThread, nbThreads) {}
 
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
+castor::server::TCPListenerThreadPool::TCPListenerThreadPool
+(const std::string poolName,
+ castor::server::IThread* thread,
+ unsigned int listenPort,
+ bool listenerOnOwnThread,
+ unsigned int initThreads,
+ unsigned int maxThreads,
+ unsigned int threshold,
+ unsigned int maxTasks) throw(castor::exception::Exception) :
+  ListenerThreadPool(poolName, thread, listenPort, listenerOnOwnThread,
+                     initThreads, maxThreads, threshold, maxTasks) {}
+
+//------------------------------------------------------------------------------
+// Destructor
+//------------------------------------------------------------------------------
+castor::server::TCPListenerThreadPool::~TCPListenerThreadPool() throw() {}
+  
 //------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
@@ -76,7 +97,19 @@ void castor::server::TCPListenerThreadPool::listenLoop() {
       }
       clog() << ERROR << "Error while accepting connections to port " << m_port << ": "
              << sstrerror(any.code()) << " - " 
-	     << any.getMessage().str() << std::endl;
+             << any.getMessage().str() << std::endl;
     }
   }
+}
+
+//------------------------------------------------------------------------------
+// terminate
+//------------------------------------------------------------------------------
+void castor::server::TCPListenerThreadPool::terminate(void* param) {
+  castor::io::ServerSocket* s = (castor::io::ServerSocket*)param;
+  
+  // Here a proper implementation is to answer the client to try again later on.
+  // As the standard castor clients have no retry mechanism, we simply close the
+  // connection, which will make them fail (the process would have failed anyway).
+  s->close();
 }
