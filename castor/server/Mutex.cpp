@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Mutex.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/07/09 17:11:48 $ $Author: itglp $
+ * @(#)$RCSfile: Mutex.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/01/08 09:27:30 $ $Author: itglp $
  *
  * C++ interface to mutex handling with the Cthread API
  *
@@ -33,7 +33,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::server::Mutex::Mutex(int value, int timeout)
+castor::server::Mutex::Mutex(int value, unsigned int timeout)
   throw (castor::exception::Exception) :
   m_var(value), m_timeout(timeout), m_mutexCthread(0)
 {
@@ -50,6 +50,8 @@ castor::server::Mutex::Mutex(int value, int timeout)
 castor::server::Mutex::~Mutex()
 {
   Cthread_mutex_unlock_ext(m_mutexCthread);
+  // Cthread_mutex_destroy(m_mutexCthread);  // XXX this causes a deadlock!
+  // XXX to be eventually replaced by standard pthread mutexes
 }
 
 //------------------------------------------------------------------------------
