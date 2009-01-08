@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2008/11/03 09:29:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2009/01/08 09:38:40 $ $Author: itglp $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -57,6 +57,7 @@
 //------------------------------------------------------------------------------
 castor::rh::RHThread::RHThread(bool useAccessLists)
 throw (castor::exception::Exception) :
+  BaseDbThread(),
   m_useAccessLists(useAccessLists) {
   m_stagerHost = castor::PortsConfig::getInstance()->
     getHostName(castor::CASTOR_STAGER);
@@ -77,6 +78,21 @@ throw (castor::exception::Exception) :
   m_svcHandler[OBJ_SetFileGCWeight] = "StageReqSvc";
 }
 
+//------------------------------------------------------------------------------
+// Destructor
+//------------------------------------------------------------------------------
+castor::rh::RHThread::~RHThread() throw ()
+{
+/*
+This empty destructor has to be implemented here and NOT inline,
+otherwise the following error will happen at linking time:
+  
+RHThread.o(.text+0x469): In function `castor::rh::RHThread::RHThread(bool)':
+.../castor/rh/RHThread.cpp:61: undefined reference to `VTT for castor::rh::RHThread'
+
+See e.g. http://www.daniweb.com/forums/thread114299.html for more details.
+*/
+}
 
 //------------------------------------------------------------------------------
 // run

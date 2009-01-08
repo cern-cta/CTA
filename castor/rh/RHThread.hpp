@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/11/03 09:29:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2009/01/08 09:38:40 $ $Author: itglp $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -25,10 +25,9 @@
 #ifndef RH_RHTHREAD_HPP
 #define RH_RHTHREAD_HPP 1
 
-#include "castor/server/IThread.hpp"
+#include "castor/server/BaseDbThread.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/BaseAddress.hpp"
-#include "castor/BaseObject.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/io/AuthServerSocket.hpp"
 #include "castor/exception/Exception.hpp"
@@ -42,7 +41,7 @@ namespace castor {
     /**
      * The Request Handler main thread.
      */
-    class RHThread : public castor::server::IThread, public castor::BaseObject {
+    class RHThread : public castor::server::BaseDbThread {
 
     public:
 
@@ -51,23 +50,22 @@ namespace castor {
        * @param useAccessLists whether to use access lists
        */
       RHThread(bool useAccessLists) throw (castor::exception::Exception);
-
+      
       /**
-       * Default destructor
+       * Destructor. See the cpp file for details.
        */
-      ~RHThread() throw() {};
+      virtual ~RHThread() throw();
+      
+      /**
+       * Init method; empty implementation for the RH
+       */
+      virtual void init() {};
 
       /**
        * Method called once per request, where all the code resides
-       * @param param the socket obtained from the calling thread pool
+       * @param param the socket obtained from the listener thread
        */
       virtual void run(void *param);
-      
-      /// Not implemented
-      virtual void init() {};
-
-      /// Not implemented
-      virtual void stop() {};
       
     private:
       
