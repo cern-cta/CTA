@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/11/07 14:53:53 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.19 $ $Release$ $Date: 2009/01/08 09:24:24 $ $Author: itglp $
  *
  * Abstract CASTOR thread pool
  *
@@ -38,7 +38,7 @@ namespace castor {
  namespace server {
 
   /**
-   * default number of threads in a pool
+   * Default number of threads in a pool
    */
   static const int DEFAULT_THREAD_NUMBER = 20;
 
@@ -51,20 +51,24 @@ namespace castor {
   public:
 
     /**
-     * empty constructor
+     * Empty constructor
      */
     BaseThreadPool() : 
        BaseObject(), m_poolName(""), m_thread(0) {};
 
     /**
-     * constructor
+     * Constructor
+     * @param poolName the name of this pool
+     * @param thread the user code to be run
+     * @param nbThreads the number of threads to be executed
      */
     BaseThreadPool(const std::string poolName,
                    castor::server::IThread* thread,
-                   unsigned int nbThreads = castor::server::DEFAULT_THREAD_NUMBER);
+                   unsigned int nbThreads = DEFAULT_THREAD_NUMBER)
+      throw (castor::exception::Exception);
 
     /*
-     * destructor
+     * Destructor
      */
     virtual ~BaseThreadPool() throw();
 
@@ -81,14 +85,17 @@ namespace castor {
     virtual void run() throw (castor::exception::Exception) {};
     
     /**
-     * Performs a graceful shutdown of the pool. This function is
+     * Performs a graceful shutdown of the pool. This method is
      * supposed to asynchronously signal all threads in the pool 
-     * in order to stop them. This implementation only calls the
-     * thread's stop() method.
-     * @return true if the pool is idle, false if it is not: in the
-     * second case, the caller is supposed to wait and try again later.
+     * in order to stop them. This implementation always returns
+     * true, ignoring the argument.
+     * @param wait if true, the call blocks until all threads
+     * are over.
+     * @return true if the pool is idle, false if it is not and
+     * the wait argument was false: in the second case, the
+     * caller is supposed to wait and try again later.
      */
-    virtual bool shutdown() throw();
+    virtual bool shutdown(bool wait = false) throw();
      
     /**
      * Sets the number of threads
@@ -96,16 +103,7 @@ namespace castor {
     virtual void setNbThreads(unsigned int value);
 
     /**
-     * Gets the message service log stream
-     * Note that the service has to be released after usage
-     * @return a pointer to the message service or 0 if none
-     * is available.
-     */
-    std::ostream& log() throw (castor::exception::Exception);
-
-
-    /**
-     * Gets the underlying working thread
+     * Gets the underlying worker thread
      * @return pointer to the thread
      */
     castor::server::IThread* getThread() {
@@ -119,48 +117,40 @@ namespace castor {
       return m_poolName[0];
     }
     
+    /**
+     * Gets the number of threads belonging to this pool
+     */
     const unsigned int getNbThreads() {
       return m_nbThreads;
     }
 
+    /**
+     * Tells whether the pool has been terminated
+     * @return the value of the m_stopped flag
+     */
+    const bool stopped() {
+      return m_stopped;
+    }
 
   protected:
 
-    /**
-     * Number of threads in the pool.
-     * The pool uses the Cthread API even if this is 1.
-     */
+    /// Number of threads in the pool
     unsigned int m_nbThreads;
 
-    /**
-     * Name of the pool
-     */
+    /// Name of the pool
     std::string m_poolName;
 
-    /**
-     * The worker thread
-     */
+    /// The worker thread
     IThread* m_thread;
     
-    /**
-     * Generic entrypoint for any thread
-     */
-    static void* _threadRun(void* param);
+    /// Flag to indicate whether the thread pool is stopped
+    bool m_stopped;
 
   };
 
  } // end of namespace server
 
 } // end of namespace castor
-
-
-/**
- * Structure used to pass arguments to the threads
- */
-struct threadArgs {
-  castor::server::BaseThreadPool *handler;
-  void *param;
-};
 
 
 #endif // CASTOR_SERVER_BASETHREADPOOL_HPP

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/11/07 14:56:12 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2009/01/08 09:24:24 $ $Author: itglp $
  *
  * Abstract class defining a listener thread pool
  *
@@ -29,7 +29,7 @@
 
 #include <iostream>
 #include <string>
-#include "castor/server/BaseThreadPool.hpp"
+#include "castor/server/DynamicThreadPool.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/AbstractSocket.hpp"
 
@@ -41,35 +41,48 @@ namespace castor {
    * Listener thread pool: allows processing upcoming
    * requests in dedicated threads.
    */
-  class ListenerThreadPool : public BaseThreadPool {
+  class ListenerThreadPool : public DynamicThreadPool {
 
   public:
 
     /**
-     * empty constructor
+     * Empty constructor
      */
     ListenerThreadPool() throw() : 
-      BaseThreadPool() {};
+      DynamicThreadPool() {};
 
     /**
-     * constructor
+     * Constructor for a listener with a fixed number of threads.
      * @param poolName, thread as in BaseThreadPool
-     * @param listenPort the port to which to attach the listening socket.
+     * @param listenPort the port to be used by the listening socket.
      * @param listenereOnOwnThread if false the listener loop is run directly. See run().
+     * @param nbThreads number of threads in the pool
      */
     ListenerThreadPool(const std::string poolName, castor::server::IThread* thread,
-                       int listenPort, bool listenerOnOwnThread = true) throw();
+                       unsigned int listenPort, bool listenerOnOwnThread = true,
+                       unsigned int nbThreads = DEFAULT_THREAD_NUMBER)
+      throw (castor::exception::Exception);
 
     /**
-     * destructor
+     * Constructor for a listener with a dynamic number of threads.
+     * @param poolName, thread as in BaseThreadPool
+     * @param listenPort the port to be used by the listening socket.
+     * @param listenereOnOwnThread if false the listener loop is run directly. See run().
+     * @param initThreads, maxThreads, threshold, maxTasks as in DynamicThreadPool
      */
-    virtual ~ListenerThreadPool() throw() {};
-	
+    ListenerThreadPool(const std::string poolName, castor::server::IThread* thread,
+                       unsigned int listenPort, bool listenerOnOwnThread,
+                       unsigned int initThreads,
+                       unsigned int maxThreads,
+                       unsigned int threshold = DEFAULT_THRESHOLD,
+                       unsigned int maxTasks  = DEFAULT_MAXTASKS)      
+      throw (castor::exception::Exception);
+                       
     /**
-     * Pre-daemonization initialization. Empty for this pool.
+     * Destructor
      */
-    virtual void init() throw (castor::exception::Exception) {};
-
+    virtual ~ListenerThreadPool() throw();
+    
     /**
      * Starts the listener loop to accept connections.
      * If m_spawnListener (default), the loop is started on a separate thread,
@@ -80,15 +93,17 @@ namespace castor {
     virtual void run() throw (castor::exception::Exception);
     
     /**
-     * Shutdowns the pool by closing the underlying server socket.
-     * @return true.
+     * Shutdowns the pool by closing the underlying server socket and
+     * calling the parent's shutdown method.
+     * @return true if the pool has stopped.
      */
-    virtual bool shutdown() throw();
+    virtual bool shutdown(bool wait = false) throw();
 
     /**
      * Sets the port on which this ThreadPool should listen
      */
-    inline void setPort(int port) { m_port = port; }
+    inline void setPort(unsigned int port)
+      { m_port = port; }
 	
   protected:
   
@@ -97,7 +112,7 @@ namespace castor {
      * this method according to the type of socket they need to use.
      * @throw castor::exception::Internal if the port is busy.
      */
-    virtual void bind() throw (castor::exception::Exception) = 0; 
+    virtual void bind() throw (castor::exception::Exception) = 0;
 
     /**
      * The listening loop implementation for this Listener.
@@ -111,27 +126,30 @@ namespace castor {
      * @param param user parameter passed to thread->run().
      */
     virtual void threadAssign(void* param);
+    
+    /**
+     * Terminates the work to be done when the thread pool is exhausted.
+     * By default, this does nothing, but on a TCP-based pool it is adviced to
+     * at least close the connection to the client.
+     * @param param user parameter that would have been passed to a thread
+     */
+    virtual void terminate(void* param) {};
 
     /// The socket used to accept connections
     castor::io::AbstractSocket* m_sock;
     
     /// TCP port to listen for
-    int m_port;
+    unsigned int m_port;
     
     /// flag to decide whether the listener loop has to run in a separate thread
     bool m_spawnListener;
     
   private:
-
-    int m_threadPoolId;
-
-    /// Thread entrypoint made friend to access private fields.
-    friend void* _listener_run(void* param);
+    
+    /// Thread entrypoint for the listener loop
+    static void* _listener(void* param);
+    
   };
-
-
-  // Entrypoint for the listener loop
-  void* _listener_run(void* param);
 
  } // end of namespace server
 

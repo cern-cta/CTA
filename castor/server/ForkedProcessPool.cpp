@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/11/07 14:45:34 $ $Author: itglp $
+ * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2009/01/08 09:24:24 $ $Author: itglp $
  *
  * A pool of forked processes
  *
@@ -48,11 +48,12 @@ static bool _childStop = false;
 // constructor
 //------------------------------------------------------------------------------
 castor::server::ForkedProcessPool::ForkedProcessPool
-(const std::string poolName, castor::server::IThread* thread) :
+(const std::string poolName, castor::server::IThread* thread)
+  throw(castor::exception::Exception) :
   BaseThreadPool(poolName, thread), 
-  m_writeHighFd(0),
-  m_stopped(true) {
+  m_writeHighFd(0) {
   FD_ZERO(&m_writePipes);
+  m_stopped = true;   // dispatch is closed until real start
 }
 
 //------------------------------------------------------------------------------
@@ -71,7 +72,7 @@ castor::server::ForkedProcessPool::~ForkedProcessPool() throw()
 //------------------------------------------------------------------------------
 // shutdown
 //------------------------------------------------------------------------------
-bool castor::server::ForkedProcessPool::shutdown() throw()
+bool castor::server::ForkedProcessPool::shutdown(bool wait) throw()
 {
   m_stopped = true;
   // for the time being, we just kill the children without notifying them

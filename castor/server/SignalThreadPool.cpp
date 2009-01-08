@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2008/11/07 14:45:54 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2009/01/08 09:24:24 $ $Author: itglp $
  *
  * Thread pool supporting wakeup on signals and periodical run after timeout
  *
@@ -26,7 +26,6 @@
 
 // Include Files
 #include "castor/server/SignalThreadPool.hpp"
-#include "castor/server/ServiceThread.hpp"
 #include "castor/exception/Internal.hpp"
 
 extern "C" {
@@ -39,18 +38,22 @@ extern "C" {
 //------------------------------------------------------------------------------
 castor::server::SignalThreadPool::SignalThreadPool(const std::string poolName,
                                  castor::server::IThread* thread,
-                                 const int timeout) :
-  BaseThreadPool(poolName, new castor::server::ServiceThread(thread)),
-  m_timeout(timeout) {}
+                                 const int timeout, 
+                                 const unsigned int nbThreads,
+                                 const unsigned int startingThreads) 
+  throw(castor::exception::Exception) :
+  BaseThreadPool(poolName, thread, nbThreads),
+  m_poolMutex(-1, (unsigned)timeout), m_notified(startingThreads)
+{
+  // number of threads currently running the service
+  m_nbActiveThreads = 0;
+}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 castor::server::SignalThreadPool::~SignalThreadPool() throw()
-{
-  delete m_poolMutex;
-}
-
+{}
 
 //------------------------------------------------------------------------------
 // init
@@ -58,38 +61,46 @@ castor::server::SignalThreadPool::~SignalThreadPool() throw()
 void castor::server::SignalThreadPool::init()
   throw (castor::exception::Exception)
 {
-  // Initialize shared variables (former singleService structure)
-  m_nbActiveThreads = 0;  /* Number of threads currently running the service */
-  m_notified = 0;         /* By default no signal yet has been received */
-  m_notTheFirstTime = false;
-
-  // Create a mutex (could throw exception)
-  m_poolMutex = new Mutex(-1, m_timeout);
+  // nbThreads == 0 is not acceptable for this type of pool
+  if(m_nbThreads == 0) {
+    castor::exception::Exception e(EINVAL);
+    e.getMessage() << "nbThreads must be > 0";
+    throw e;
+  }
+  if(m_notified > (int)m_nbThreads) {
+    m_notified = m_nbThreads;
+  }
 }
 
 //------------------------------------------------------------------------------
 // shutdown
 //------------------------------------------------------------------------------
-bool castor::server::SignalThreadPool::shutdown() throw()
+bool castor::server::SignalThreadPool::shutdown(bool wait) throw()
 {
   try {
-    m_poolMutex->lock();
-    if(m_nbActiveThreads > 0) {
-      // This is generally advisory, but BaseDbThread respects it.
-      // It is recommended that db-oriented threads inherit from BaseDbThread
-      // in order to properly cleanup the db connection.
-      m_thread->stop();
-      m_poolMutex->release();
-      return false;
+    if(m_stopped) {
+      // quick answer if we were already told to stop
+      return (m_notified + m_nbActiveThreads == 0);
+    }    
+    m_poolMutex.lock();
+    m_stopped = true;
+    // notify all idle threads so that they can properly shutdown
+    m_notified = m_nbThreads - m_nbActiveThreads;
+    m_poolMutex.signal();
+    m_poolMutex.release();
+    if(wait) {
+      // Spin lock to make sure no thread is still active
+      while(m_notified > 0) {
+        usleep(100000);
+      }
     }
-    else
-      return true;
+    return (m_notified + m_nbActiveThreads == 0);
   }
   catch (castor::exception::Exception e) {
-    // this can happen if the user thread threw an exception when stopping,
-    // or in case of mutex problems. We just try again at the next round.
+    // This can happen in case of mutex problems.
+    // We just try again at the next round.
     try {
-      m_poolMutex->release();
+      m_poolMutex.release();
     } catch(castor::exception::Exception ignored) {};
     return false;
   }
@@ -102,24 +113,16 @@ bool castor::server::SignalThreadPool::shutdown() throw()
 void castor::server::SignalThreadPool::run()
   throw (castor::exception::Exception)
 {
-  // don't do anything if nbThreads = 0
-  if(m_nbThreads == 0) {
-    return;
-  }
-  int n = 0;
-  struct threadArgs *args = new threadArgs();
-  args->handler = this;
-  args->param = this;
+  unsigned int n = 0;
 
   // create pool of detached threads
   for (unsigned i = 0; i < m_nbThreads; i++) {
     if (Cthread_create_detached(
-         (void *(*)(void *))&castor::server::BaseThreadPool::_threadRun,
-         args) >= 0) {
+         (void *(*)(void *))&SignalThreadPool::_runner, this) >= 0) {
       ++n;
     }
   }
-  if (n <= 0) {
+  if (n == 0) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to create pool " << m_poolName;
     throw ex;
@@ -133,58 +136,30 @@ void castor::server::SignalThreadPool::run()
 
 
 //------------------------------------------------------------------------------
-// commitRun
-//------------------------------------------------------------------------------
-void castor::server::SignalThreadPool::commitRun()
-  throw (castor::exception::Exception)
-{
-  // get lock on the shared mutex
-  m_poolMutex->lock();
-
-  // at startup we assume that a service can start at least once right /now/
-  if (!m_notTheFirstTime) {
-    m_notified++;   // hack to not pass in the mutex/cond loop the 1st time, cf. ServiceThread
-    m_notTheFirstTime = true;
-  }
-
-  // unlock the mutex
-  m_poolMutex->release();
-}
-
-
-//------------------------------------------------------------------------------
 // waitSignalOrTimeout
 //------------------------------------------------------------------------------
 void castor::server::SignalThreadPool::waitSignalOrTimeout()
   throw (castor::exception::Exception)
 {
-  /* Wait for a notification or a timeout, unless we were already notified */
-  if (m_notified == 0) {
-    m_poolMutex->wait();
-  }
-
-  /* We can be here because: */
-  /* - we were notified */
-  /* - we got timeout */
-  /* - waiting on condition variable got interrupted */
-  /* - the very first time that service is running, m_notified is already 1, bypassing the wait */
-
-  /* In case we were waked up because of a notification, make sure we reset the notification flag */
+  m_poolMutex.lock();
+  
+  // Check if we were notified
   if (m_notified > 0) {
     m_notified--;
   }
-
-  /* Notify that the calling thread is a running service */
+  else {
+    // in the general case we wait for a notification or timeout
+    m_poolMutex.release();
+    m_poolMutex.wait();
+    // check again if at this point we were notified
+    if(m_notified > 0) {
+      m_notified--;
+    }
+  }
+  // We can be here either because we were notified or for a timeout;
+  // in any case we are now a running thread, update internal counter
   m_nbActiveThreads++;
-
-  /* Unlock the mutex */
-  try {
-    m_poolMutex->release();
-  }
-  catch (castor::exception::Exception e) {
-    m_nbActiveThreads--;
-    throw e;
-  }
+  m_poolMutex.release();
 }
 
 
@@ -192,14 +167,72 @@ void castor::server::SignalThreadPool::waitSignalOrTimeout()
 // commitRelease
 //------------------------------------------------------------------------------
 void castor::server::SignalThreadPool::commitRelease()
+  throw (castor::exception::Exception)
 {
   try {
-    /* The calling thread is not anymore a running service */
-    m_poolMutex->lock();
+    m_poolMutex.lock();
     m_nbActiveThreads--;
   }
   catch (castor::exception::Exception e) {
     m_nbActiveThreads--;   // unsafe
     throw e;
   }
+  m_poolMutex.release();
+}
+
+
+//------------------------------------------------------------------------------
+// _runner
+//------------------------------------------------------------------------------
+void* castor::server::SignalThreadPool::_runner(void* param) {
+  SignalThreadPool* pool = (SignalThreadPool*)param;
+
+  try {
+    // Perform user initialization
+    pool->m_thread->init();
+    
+    while (!pool->m_stopped) {
+      // wait to be woken up by a signal or for a timeout
+      pool->waitSignalOrTimeout();
+
+      // we may have been stopped while sleeping
+      if(!pool->m_stopped) {
+      
+        // reset errno and serrno
+        errno = 0;
+        serrno = 0;
+  
+        // do the user job: catch any exception for logging purposes
+        try {
+          // we pass the pool itself as parameter to allow e.g.
+          // SelectProcessThreads to call our stopped() method
+          pool->m_thread->run(pool);
+        }
+        catch (castor::exception::Exception e) {
+          pool->clog() << ERROR << "Exception caught in the user thread: "
+            << e.getMessage().str() << std::endl;
+        }
+      }
+
+      // notify that we are not anymore a running service
+      pool->commitRelease();
+
+      // and continue forever until shutdown() is called
+    }
+    
+    // notify the user thread that we are over,
+    // e.g. for dropping a db connection
+    pool->m_thread->stop();
+  }
+  catch (castor::exception::Exception any) {
+    try {
+      pool->m_thread->stop();
+      pool->m_poolMutex.release();
+    }
+    catch(...) {}
+    pool->clog() << ERROR << "Thread runner error: "
+      << any.getMessage().str() << std::endl;
+  }
+   
+  return 0;
 }

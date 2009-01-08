@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DynamicThreadPool.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/11/07 14:45:07 $ $Author: itglp $
+ * @(#)$RCSfile: DynamicThreadPool.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2009/01/08 09:24:24 $ $Author: itglp $
  *
  * This header file describes the implementation of a generic thread pool with
  * dynamic thread creation and destruction. A thread pool is a set of threads
@@ -56,7 +56,7 @@
 #define DEFAULT_INITTHREADS      5
 #define DEFAULT_MAXTHREADS       20
 #define DEFAULT_THRESHOLD        50
-#define DEFAULT_MAXTASKS         1000
+#define DEFAULT_MAXTASKS         10
 
 #define MAX_THREADPOOL_SIZE      512
 
@@ -80,6 +80,7 @@ namespace castor {
 
       /**
        * Default Constructor.
+       * @param poolName, thread as in BaseThreadPool
        * @param initThreads The number of threads to initially be created in
        * the pool.
        * @param maxThreads The maximum number of threads that can be created.
@@ -117,7 +118,7 @@ namespace castor {
        * Shutdowns the pool by terminating the task queue.
        * @return true if the pool has stopped.
        */
-      virtual bool shutdown() throw();
+      virtual bool shutdown(bool wait = true) throw();
       
       /**
        * Sets the number of threads
@@ -163,9 +164,6 @@ namespace castor {
       castor::server::Queue m_taskQueue;
 
     protected:
-
-      /// Flag to indicate whether the thread pool is terminated
-      bool m_terminated;
 
       /// The initial (minimum) number of threads
       unsigned int m_initThreads;

@@ -1,4 +1,3 @@
-
 /******************************************************************************
  *                    ListenerThreadPool.cpp
  *
@@ -18,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/11/07 14:56:12 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2009/01/08 09:24:24 $ $Author: itglp $
  *
  * Abstract class defining a listener thread pool
  *
@@ -30,21 +29,42 @@
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/server/ListenerThreadPool.hpp"
 #include "castor/exception/Internal.hpp"
-#include "Cinit.h"
-#include "Cpool_api.h"
+#include "Cthread_api.h"
 #include "castor/logstream.h"
 #include <iomanip>
 
 //------------------------------------------------------------------------------
-// constructor
+// Constructor
 //------------------------------------------------------------------------------
 castor::server::ListenerThreadPool::ListenerThreadPool(const std::string poolName,
                                                castor::server::IThread* thread,
-                                               int listenPort,
-                                               bool listenerOnOwnThread) throw() :
-  BaseThreadPool(poolName, thread), m_sock(0), m_port(listenPort),
-  m_spawnListener(listenerOnOwnThread), m_threadPoolId(-1) {}
+                                               unsigned int listenPort,
+                                               bool listenerOnOwnThread,
+                                               unsigned int nbThreads)
+  throw(castor::exception::Exception) :
+  DynamicThreadPool(poolName, thread, nbThreads, nbThreads),
+  m_sock(0), m_port(listenPort), m_spawnListener(listenerOnOwnThread) {}
 
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
+castor::server::ListenerThreadPool::ListenerThreadPool(const std::string poolName,
+                                               castor::server::IThread* thread,
+                                               unsigned int listenPort,
+                                               bool listenerOnOwnThread,
+                                               unsigned int initThreads,
+                                               unsigned int maxThreads,
+                                               unsigned int threshold,
+                                               unsigned int maxTasks)
+  throw(castor::exception::Exception) :
+  DynamicThreadPool(poolName, thread, initThreads, maxThreads, threshold, maxTasks),
+  m_sock(0), m_port(listenPort), m_spawnListener(listenerOnOwnThread) {}
+
+//------------------------------------------------------------------------------
+// Destructor
+//------------------------------------------------------------------------------
+castor::server::ListenerThreadPool::~ListenerThreadPool() throw() {}
+  
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
@@ -53,37 +73,11 @@ void castor::server::ListenerThreadPool::run() throw (castor::exception::Excepti
   bind();
 
   // create the thread pool
-  if(m_nbThreads > 0) {
-    int actualNbThreads;
-    m_threadPoolId = Cpool_create(m_nbThreads, &actualNbThreads);
-    if (m_threadPoolId < 0) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Listener thread pool '" << m_poolName << "' creation error: "
-             << m_threadPoolId << std::endl;
-      clog() << ALERT << ex.getMessage().str();
-      throw ex;
-    }
-    else {
-      m_nbThreads = actualNbThreads;
-      clog() << DEBUG << "Listener thread pool '" << m_poolName << "' created with "
-             << m_nbThreads << " threads" << std::endl;
-    }
-  }
-  else {
-    // this is allowed, cf. threadAssign()
-    clog() << DEBUG << "Listener thread '" << m_poolName 
-           << "' created with no worker threads" << std::endl;
-  }
-  
-  // Initialize the underlying thread. We do it here once for the whole thread
-  // pool instead of once per thread as the threads are created in a suspended
-  // state and will get some work only when the listener socket will have
-  // something to dispatch
-  m_thread->init();
+  DynamicThreadPool::run();
   
   // start the listening loop
   if(m_spawnListener || m_nbThreads == 0) {
-    Cthread_create_detached(castor::server::_listener_run, this);
+    Cthread_create_detached((void *(*)(void *))&_listener, this);
   } else {
     listenLoop();
   }
@@ -92,23 +86,22 @@ void castor::server::ListenerThreadPool::run() throw (castor::exception::Excepti
 //------------------------------------------------------------------------------
 // shutdown
 //------------------------------------------------------------------------------
-bool castor::server::ListenerThreadPool::shutdown() throw() {
+bool castor::server::ListenerThreadPool::shutdown(bool wait) throw() {
   // stop accepting connections
   if(m_sock != 0) {
-    m_sock->close();
+    try {
+      m_sock->close();
+    } 
+    catch(castor::exception::Exception ignored) {}
   }
   
-  // For the time being we assume threads will end very soon, so we just inherit
-  // the default behavior.
-  // A better implementation is to call Cpool_next_index_timeout(m_threadPoolId, 0)
-  // until it says that all threads are idle.
-  return castor::server::BaseThreadPool::shutdown();
+  return castor::server::DynamicThreadPool::shutdown(wait);
 }
 
 //------------------------------------------------------------------------------
-// _listener_run
+// _listenerRun
 //------------------------------------------------------------------------------
-void* castor::server::_listener_run(void* param) {
+void* castor::server::ListenerThreadPool::_listener(void* param) {
   castor::server::ListenerThreadPool* tp = (castor::server::ListenerThreadPool*)param;
   tp->listenLoop();
   return 0;
@@ -118,22 +111,32 @@ void* castor::server::_listener_run(void* param) {
 // threadAssign
 //------------------------------------------------------------------------------
 void castor::server::ListenerThreadPool::threadAssign(void *param) {
-  // Initializing the arguments to pass to the static request processor
-  struct threadArgs *args = new threadArgs();
-  args->handler = this;
-  args->param = param;
-  if (m_nbThreads > 0) {
-    int assign_rc = Cpool_assign(m_threadPoolId,
-                                 (void *(*)(void *))&castor::server::BaseThreadPool::_threadRun,
-                                 args,
-                                 -1);
-    if (assign_rc < 0) {
-      clog() << "Error while spawning thread in pool " << m_poolName << std::endl;
-    }
-  } else {
+  if (m_nbThreads == 0) {
     // In this case we run the user thread code in the same thread.
-    // Note that during the user thread execution we cannot listen.
-    castor::server::BaseThreadPool::_threadRun(args);
+    // Note that during the user thread execution we cannot accept connections.
+    try {
+      m_thread->run(param);
+    } catch(...) {
+      clog() << ERROR << "Uncaught GENERAL exception in a thread from pool "
+             << m_poolName << std::endl;
+    }
+    return;
+  }
+  
+  // Otherwise, dispatch the task
+  try {
+    addTask(param, false);
+  } catch(castor::exception::Exception &e) {
+    if(e.code() == EAGAIN) {
+      // the thread pool is exhausted
+      clog() << ERROR << "No idle thread in pool " << m_poolName 
+             << " to dispatch this request to at the moment" << std::endl;
+      terminate(param);
+    }
+    else {
+      // just log any other exception
+      clog() << ERROR << "Error while dispatching to a thread in pool " 
+      << m_poolName << " : " << e.getMessage().str(); 
+    }
   }
 }
-

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DynamicThreadPool.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/11/07 14:45:07 $ $Author: itglp $
+ * @(#)$RCSfile: DynamicThreadPool.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2009/01/08 09:24:24 $ $Author: itglp $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -26,6 +26,7 @@
 #include "castor/server/DynamicThreadPool.hpp"
 #include "castor/logstream.h"
 
+#include "linux/unistd.h"
 
 //-----------------------------------------------------------------------------
 // Constructor
@@ -40,7 +41,6 @@ castor::server::DynamicThreadPool::DynamicThreadPool
   throw(castor::exception::Exception) :
   BaseThreadPool(poolName, thread, 0),
   m_taskQueue(maxTasks),
-  m_terminated(false),
   m_lastPoolShrink(0) {
 
   int rv;
@@ -73,10 +73,15 @@ castor::server::DynamicThreadPool::DynamicThreadPool
 //------------------------------------------------------------------------------
 void castor::server::DynamicThreadPool::setNbThreads(unsigned int value)
 {
-  m_initThreads = value;
-  if(m_maxThreads < m_initThreads) {
-    m_maxThreads = m_initThreads;
-    m_threshold = 0;
+  if(m_initThreads == m_maxThreads) {
+    m_initThreads = m_maxThreads = value;
+  } else {
+    m_maxThreads += (int)(value - m_initThreads);
+    m_initThreads = value;
+    if(m_maxThreads < value) {
+      m_maxThreads = value;
+      m_threshold = 0;
+    }
   }
 }
 
@@ -106,7 +111,7 @@ void castor::server::DynamicThreadPool::run() throw (castor::exception::Exceptio
     // Thread creation failed. We flag the thread pool for termination
     // so that any threads that were created successfully destroy themselves.
     if (rv != 0) {
-      m_terminated = true;
+      m_stopped = true;
       
       // Throw exception
       castor::exception::Exception e(errno);
@@ -122,8 +127,7 @@ void castor::server::DynamicThreadPool::run() throw (castor::exception::Exceptio
 
   // Initialize the underlying user thread. We do it here once for the whole thread
   // pool instead of once per thread as the threads are created in a suspended
-  // state and will get some work only when the listener socket will have
-  // something to dispatch
+  // state and will get some work only when the addTask method is called
   m_thread->init();
 }
 
@@ -142,13 +146,20 @@ castor::server::DynamicThreadPool::~DynamicThreadPool() throw() {
 //-----------------------------------------------------------------------------
 // Shutdown
 //-----------------------------------------------------------------------------
-bool castor::server::DynamicThreadPool::shutdown() throw() {
+bool castor::server::DynamicThreadPool::shutdown(bool wait) throw() {
 
-  // Update the termination flag to true and notify the task queue of the
-  // termination.
-  m_terminated = true;
+  // Update the termination flag to true and notify both the task queue and
+  // the user thread of the termination.
+  m_stopped = true;
   m_taskQueue.terminate();
 
+  if(wait) {
+    // Spin lock to make sure we're over
+    while(m_nbThreads > 0) {
+      usleep(100000);
+    }
+  }
+  
   // Inform whether we're done
   return (m_nbThreads == 0);
 }
@@ -162,7 +173,7 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
   DynamicThreadPool *pool = (DynamicThreadPool *)arg;
   
   // Task processing loop.
-  while (!pool->m_terminated) {
+  while (!pool->m_stopped) {
     
     // Wait for a task to be available from the queue.
     void *args = 0;
@@ -183,11 +194,15 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
     
     // Invoke the user code
     try {
-      if (args != 0)
+      if (args != 0) {
         pool->m_thread->run(args);
-    } catch (...) {
-      // Do nothing. It is the responsibility of the user implementing the
-      // run method to log errors.
+      }
+    } catch(castor::exception::Exception any) {
+      pool->clog() << ERROR << "Uncaught exception in a thread from pool "
+                   << pool->m_poolName << " : " << any.getMessage().str() << std::endl;
+    } catch(...) {
+      pool->clog() << ERROR << "Uncaught GENERAL exception in a thread from pool "
+                   << pool->m_poolName << std::endl;
     }
     
     // Destroy any threads over the initial thread limit if the number of tasks
@@ -200,6 +215,9 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
       pool->m_lastPoolShrink = time(NULL);
       
       pthread_mutex_unlock(&pool->m_lock);
+      
+      // Notify we're exiting
+      pool->m_thread->stop();
       pthread_exit(0);
       return NULL;  // Should not be here
     }
@@ -211,6 +229,8 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
   pool->m_nbThreads--;
   pthread_mutex_unlock(&pool->m_lock);
   
+  // Notify we're exiting
+  pool->m_thread->stop();
   pthread_exit(0);
   return NULL;  // Should not be here
 }

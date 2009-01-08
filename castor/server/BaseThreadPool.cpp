@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/11/07 14:53:53 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2009/01/08 09:24:24 $ $Author: itglp $
  *
  * Abstract CASTOR thread pool
  *
@@ -26,25 +26,37 @@
 
 // Include Files
 #include <signal.h>
+#include <sstream>
+#include <iomanip>
+#include <errno.h>
+
+#include "Cinit.h"
+#include "Cuuid.h"
+#include "serrno.h"
+#include "castor/logstream.h"
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/MsgSvc.hpp"
 #include "castor/Services.hpp"
 #include "castor/exception/Internal.hpp"
-#include "Cinit.h"
-#include "Cuuid.h"
-#include "castor/logstream.h"
-#include <sstream>
-#include <iomanip>
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::server::BaseThreadPool::BaseThreadPool(const std::string poolName,
                                                castor::server::IThread* thread,
-                                               unsigned int nbThreads) :
+                                               unsigned int nbThreads)
+throw (castor::exception::Exception) :
   BaseObject(),
   m_nbThreads(nbThreads),
-  m_poolName(poolName), m_thread(thread) {}
+  m_poolName(poolName),
+  m_thread(thread),
+  m_stopped(false) {
+  if (m_thread == 0) {
+    castor::exception::Exception e(EINVAL);
+    e.getMessage() << "A valid thread must be specified";
+    throw e;
+  }  
+}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -54,6 +66,7 @@ castor::server::BaseThreadPool::~BaseThreadPool() throw()
   shutdown();
   if(m_thread != 0) {
     delete m_thread;
+    m_thread = 0;
   }
 }
 
@@ -71,13 +84,10 @@ void castor::server::BaseThreadPool::init() throw (castor::exception::Exception)
 //------------------------------------------------------------------------------
 // shutdown
 //------------------------------------------------------------------------------
-bool castor::server::BaseThreadPool::shutdown() throw()
+bool castor::server::BaseThreadPool::shutdown(bool wait) throw()
 {
-  if(m_thread != 0) {
-    try {
-      m_thread->stop();
-    } catch(castor::exception::Exception ignored) {}
-  }
+  // Children of this class implement a proper shutdown mechanism,
+  // here we just return.
   return true;
 }
 
@@ -88,36 +98,3 @@ void castor::server::BaseThreadPool::setNbThreads(unsigned int value)
 {
   m_nbThreads = value;
 }
-
-//------------------------------------------------------------------------------
-// _threadRun
-//------------------------------------------------------------------------------
-void* castor::server::BaseThreadPool::_threadRun(void* param)
-{
-  castor::server::BaseThreadPool* pool = 0;
-  struct threadArgs *args;
-
-  if (param == NULL) {
-    return 0;
-  }
-
-  args = (struct threadArgs*)param;
-  pool = dynamic_cast<castor::server::BaseThreadPool*>(args->handler);
-  if (pool == 0 || pool->m_thread == 0) {
-    return 0;
-  }
-
-  // Executes the thread
-  try {
-    pool->m_thread->run(args->param);
-  } catch(castor::exception::Exception any) {
-    pool->clog() << ERROR << "Uncaught exception in a thread from pool "
-                 << pool->m_poolName << " : " << any.getMessage().str() << std::endl;
-  } catch(...) {
-    pool->clog() << ERROR << "Uncaught GENERAL exception in a thread from pool "
-                 << pool->m_poolName << std::endl;
-  }
-  
-  return 0;
-}
-

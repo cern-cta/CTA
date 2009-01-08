@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/04/02 17:34:54 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2009/01/08 09:24:24 $ $Author: itglp $
  *
  * Thread pool supporting wakeup on signals and periodical run after timeout
  *
@@ -31,7 +31,6 @@
 /* System headers */
 /* ============== */
 #include <errno.h>                      /* For EINVAL etc... */
-#include "osdep.h"
 #include <sys/types.h>
 #include <iostream>
 #include <string>
@@ -39,6 +38,7 @@
 /* ============= */
 /* Local headers */
 /* ============= */
+#include "osdep.h"
 #include "serrno.h"                     /* CASTOR error numbers */
 #include "Cnetdb.h"                     /* For Cgetservbyname() */
 #include "Cthread_api.h"
@@ -66,32 +66,38 @@ namespace castor {
   class SignalThreadPool : public BaseThreadPool {
 
   /**
-   * NotifierThread and ServiceThread must be friend as 
-   * they closely interact with the internal mutex for
+   * NotifierThread must be friend as it closely
+   * interacta with the internal mutex for
    * waking up waiting threads or pausing them
    */
   friend class NotifierThread;
-  friend class ServiceThread;
 
   public:
 
     /**
-     * empty constructor
+     * Empty constructor
      */
-     SignalThreadPool() :
-       BaseThreadPool(), m_poolMutex(0) {};
+    SignalThreadPool() :
+      BaseThreadPool(), m_poolMutex(-1), m_notified(0) {};
 
     /**
-     * constructor
+     * Constructor
+     * @param poolName, thread as in BaseThreadPool
+     * @param timeout
+     * @param nbThreads
+     * @param startingThreads
      */
     SignalThreadPool(const std::string poolName,
-                   castor::server::IThread* thread,
-                   const int timeout = castor::server::Mutex::TIMEOUT);
+                     castor::server::IThread* thread,
+                     const int timeout = castor::server::Mutex::TIMEOUT,
+                     const unsigned int nbThreads = DEFAULT_THREAD_NUMBER,
+                     const unsigned int startingThreads = 1)
+      throw (castor::exception::Exception);
 
     /**
-     * destructor
+     * Destructor
      */
-     virtual ~SignalThreadPool() throw();
+    virtual ~SignalThreadPool() throw();
 
     /**
      * Initializes the pool
@@ -105,46 +111,27 @@ namespace castor {
     virtual void run() throw (castor::exception::Exception);
 
     /**
-     * Shutdowns the pool. Waits for all thread of this pool to end.
+     * Shutdowns the pool.
+     * @param wait flag to indicate to wait for all thread of this
+     * pool to terminate.
      * @return true iff no thread is active (i.e. m_nbActiveThreads == 0).
      */
-    virtual bool shutdown() throw ();
+    virtual bool shutdown(bool wait = true) throw ();
 
     /**
-     * Gets this thread pool's mutex.
-     * used by threads for thread-safe operations.
-     * @return m_poolMutex.
-     */
-    Mutex* getMutex() {
-      return m_poolMutex;
-    }
-
-    /**
-     * Get this thread pool's active threads count.
-     * The function is not taking any lock, hence its clients
-     * (e.g. BaseDaemon::waitAllThreads()) shall handle
-     * this pool's mutex accordingly.
+     * Gets this thread pool's active threads count.
      * @return int m_nbActiveThreads
      */
-    int getActiveThreads()
-      throw (castor::exception::Exception) {
+    const int getActiveThreads() {
       return m_nbActiveThreads;
     }
 
   private:
 
     /**
-     * Commit a thread in the list of active threads
-     * for this pool. Uses the internal mutex to be thread-safe.
-     * @throw exception if a mutex call fails
-     */
-    void commitRun()
-      throw (castor::exception::Exception);
-
-    /**
      * Waits for a signal or for a timeout.
      * Uses the internal mutex to be thread-safe.
-     * @throw exception if a mutex call fails
+     * @throw Exception if a mutex call fails
      */
     void waitSignalOrTimeout()
       throw (castor::exception::Exception);
@@ -152,23 +139,22 @@ namespace castor {
     /**
      * Release a thread from the list of active threads
      * for this pool. Uses the internal mutex to be thread-safe.
+     * @throw Exception if a mutex call fails
      */
-    void commitRelease();
+    void commitRelease()
+      throw (castor::exception::Exception);
 
-    /// timeout between two subsequent wake ups of the underlying threads
-    int m_timeout;
-
+    /// mutex used by the threads to safely access this class' fields
+    Mutex m_poolMutex;
+    
     /// count of the current number of busy threads in the pool
     int m_nbActiveThreads;
     
     /// if > 0, nb of threads that need to be signaled
     int m_notified;
-    
-    /// flag used to make sure a thread is started straight away at startup
-    bool m_notTheFirstTime;
 
-    /// mutex used by the threads to safely access this class' fields
-    Mutex* m_poolMutex;
+    /// thread entrypoint
+    static void* _runner(void* param);
 
   };
 

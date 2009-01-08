@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/02/21 15:23:17 $ $Author: waldron $
+ * @(#)$RCSfile: ForkedProcessPool.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2009/01/08 09:24:24 $ $Author: itglp $
  *
  * A pool of forked processes
  *
@@ -51,13 +51,14 @@ namespace castor {
        * empty constructor
        */
       ForkedProcessPool() :
-	BaseThreadPool() {};
+        BaseThreadPool() {};
       
       /**
        * constructor
        */
       ForkedProcessPool(const std::string poolName,
-			castor::server::IThread* thread);
+        castor::server::IThread* thread)
+        throw (castor::exception::Exception);
       
       /*
        * destructor
@@ -73,7 +74,7 @@ namespace castor {
       /**
        * Shutdowns the pool. Kills all children.
        */
-      virtual bool shutdown() throw ();
+      virtual bool shutdown(bool wait) throw ();
       
       /**
        * Runs the pool. The forking phase is done in init, thus this
@@ -84,10 +85,10 @@ namespace castor {
       /**
        * Entry point to dispatch a task to an idle process
        * @throw exception in case either select() or the transmission
-       * through the pipe fail.
+       * through the pipe fails.
        */
       void dispatch(castor::IObject& obj)
-	throw (castor::exception::Exception);
+        throw (castor::exception::Exception);
       
     protected:
       
@@ -108,10 +109,7 @@ namespace castor {
       
       /// The highest numbered writing file descriptor
       int m_writeHighFd;
-      
-      /// Is the pool able to dispatch ?
-      bool m_stopped;
-      
+            
     };
     
   } // end of namespace server
