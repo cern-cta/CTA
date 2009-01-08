@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/11/07 14:42:33 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2009/01/08 09:18:25 $ $Author: itglp $
  *
  * A base multithreaded daemon supporting signal handling
  * Credits to Jean-Damien Durand for the original C code
@@ -60,12 +60,13 @@ namespace castor {
   public:
 
     /**
-     * constructor
+     * Constructor
+     * @param serverName as in BaseServer
      */
     BaseDaemon(const std::string serverName);
 
     /**
-     * destructor
+     * Destructor
      */
     virtual ~BaseDaemon() throw() {};
 
@@ -98,23 +99,22 @@ namespace castor {
     virtual void init() throw (castor::exception::Exception);
 
     /**
-     * Sends a shutdown message to all thread pools. If beGraceful is true,
-     * waits all threads to terminate before returning.
-     * This implements a graceful kill and is triggered by SIGINT or SIGTERM.
-     * @param beGraceful true to be really graceful.
+     * Sends a shutdown message to all thread pools, then
+     * waits for all threads to terminate before returning.
+     * This implements a graceful kill and is triggered by SIGTERM.
      */
-    void waitAllThreads(bool beGraceful) throw ();
+    virtual void waitAllThreads() throw ();
 
   private:
 
-    /// set of catched signal
+    /// set of caught signals
     sigset_t m_signalSet;
 
     /// a mutex for the signal handler thread
     Mutex* m_signalMutex;
 
     /// entrypoint for the signal handler thread
-    static void* _signalThreadRun(void* arg);
+    static void* _signalHandler(void* arg);
 	
   };
 

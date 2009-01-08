@@ -69,7 +69,10 @@ void castor::server::BaseDaemon::init() throw (castor::exception::Exception)
   // Mask all signals so that user threads are not unpredictably
   // interrupted by them  
   sigemptyset(&m_signalSet);
-  sigaddset(&m_signalSet, SIGINT);
+  if(m_foreground) {
+    // in foreground we catch Ctrl-C as well
+    sigaddset(&m_signalSet, SIGINT);
+  }
   sigaddset(&m_signalSet, SIGTERM);
   sigaddset(&m_signalSet, SIGHUP);
   sigaddset(&m_signalSet, SIGABRT);
@@ -85,7 +88,7 @@ void castor::server::BaseDaemon::init() throw (castor::exception::Exception)
   }
 
   // Start the thread handling all the signals
-  Cthread_create_detached((void *(*)(void *))&_signalThreadRun, this);
+  Cthread_create_detached((void *(*)(void *))&_signalHandler, this);
 
   // Create the DLF related threads. This is done here because it is after
   // daemonization and signal handler creation.
@@ -146,17 +149,9 @@ void castor::server::BaseDaemon::handleSignals()
         case STOP_GRACEFULLY:
           clog() << SYSTEM << "GRACEFUL STOP [SIGTERM] - Shutting down the service" << std::endl;
           // Wait on all threads/processes to terminate
-          waitAllThreads(true);
+          waitAllThreads();
           clog() << SYSTEM << "GRACEFUL STOP [SIGTERM] - Shut down successfully completed" << std::endl;
           dlf_shutdown(10);
-          exit(EXIT_SUCCESS);
-          break;
-        
-        case STOP_NOW:
-          clog() << ERROR << "IMMEDIATE STOP [SIGINT]" << std::endl;
-          // Stop as fast as possible
-          waitAllThreads(false);
-          dlf_shutdown(1);
           exit(EXIT_SUCCESS);
           break;
         
@@ -209,32 +204,32 @@ void castor::server::BaseDaemon::handleSignals()
 //------------------------------------------------------------------------------
 // waitAllThreads
 //------------------------------------------------------------------------------
-void castor::server::BaseDaemon::waitAllThreads(bool beGraceful) throw()
+void castor::server::BaseDaemon::waitAllThreads() throw()
 {
   std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
   std::vector<castor::server::BaseThreadPool*> busyTPools;
-  // shutdown all pools, and keep the busy ones
+  // Shutdown and destroy all pools, but keep the busy ones
   for(tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
-    if(!tp->second->shutdown()) {
+    if(!tp->second->shutdown(false)) {
       busyTPools.push_back(tp->second);
     }
+    else
+      delete tp->second;
   }
   
   // Reap child processes
   pid_t pid;
   while( (pid = waitpid(-1, NULL, WNOHANG)) > 0) {}
 
-  if(!beGraceful) {
-    // on a SIGINT we want to stop as soon as possible
-    return;
-  }
-
-  // now loop waiting on the remaining busy ones 
+  // Now loop waiting on the remaining busy ones;
+  // this is a best effort attempt, which may get interrupted
+  // by the OS aborting the process.
   while(busyTPools.size() > 0) {
-    sleep(1);     // wait before trying again
+    usleep(100000);     // wait before trying again
     for(unsigned i = 0; i < busyTPools.size(); ) {
-      if(busyTPools[i]->shutdown()) {
+      if(busyTPools[i]->shutdown(false)) {
         // it's idle now, let's remove it
+        delete busyTPools[i];
         busyTPools.erase(busyTPools.begin() + i);
       }
       else
@@ -245,9 +240,9 @@ void castor::server::BaseDaemon::waitAllThreads(bool beGraceful) throw()
 
 
 //------------------------------------------------------------------------------
-// _signalThreadRun
+// _signalHandler
 //------------------------------------------------------------------------------
-void* castor::server::BaseDaemon::_signalThreadRun(void* arg)
+void* castor::server::BaseDaemon::_signalHandler(void* arg)
 {
   castor::server::BaseDaemon* daemon = (castor::server::BaseDaemon*)arg;
   
@@ -272,27 +267,24 @@ void* castor::server::BaseDaemon::_signalThreadRun(void* arg)
       }
 
       switch (sig_number) {       
-      case SIGABRT:
-      case SIGTERM:
-        daemon->m_signalMutex->setValueNoMutex(castor::server::STOP_GRACEFULLY);
-        break;
-        
-      case SIGINT:
-        daemon->m_signalMutex->setValueNoMutex(castor::server::STOP_NOW);
-        break;
-        
-      case SIGCHLD:
-        daemon->m_signalMutex->setValueNoMutex(castor::server::CHILD_STOPPED);
-        break;
-	
-      case SIGPIPE:
-        // ignore
-        break;
-	
-      default:
-        // all other signals
-        daemon->m_signalMutex->setValueNoMutex(-1*sig_number);
-        break;
+        case SIGABRT:
+        case SIGTERM:
+        case SIGINT:
+          daemon->m_signalMutex->setValueNoMutex(castor::server::STOP_GRACEFULLY);
+          break;
+          
+        case SIGCHLD:
+          daemon->m_signalMutex->setValueNoMutex(castor::server::CHILD_STOPPED);
+          break;
+    
+        case SIGPIPE:
+          // ignore
+          break;
+    
+        default:
+          // all other signals
+          daemon->m_signalMutex->setValueNoMutex(-1*sig_number);
+          break;
       }
       // signal the main thread to process the signal we got
       daemon->m_signalMutex->signal();
