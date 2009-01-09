@@ -21,7 +21,7 @@ SUBDIRS   = web
 INCLUDES  = ../h
 MANSUBDIR = doc/man/
 
-SPOOL     = DlfSpool
+SPOOL     = /var/spool/dlf
 LOGFILE   = $(SPOOL)/log
 DLFCONFIG = DlfConfigFile
 
