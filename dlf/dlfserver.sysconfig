@@ -2,7 +2,7 @@
 #   -d             enable debugging mode
 #   -f             keep process in the foreground, do not fork
 #   -h             display help and exit
-#   -l <path>      path to the log file (default: config/site.def/DlfSpool)
+#   -l <path>      path to the log file (default: /var/spool/dlf/log)
 #   -p <int>       the server listening port (default: 5036)
 #   -T <int>       number of handler/transport threads
 #
