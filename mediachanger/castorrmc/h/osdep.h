@@ -1,5 +1,5 @@
 /*
- * $Id: osdep.h,v 1.20 2008/07/28 16:55:05 waldron Exp $
+ * $Id: osdep.h,v 1.21 2009/01/09 14:44:36 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: osdep.h,v $ $Revision: 1.20 $ $Date: 2008/07/28 16:55:05 $ CERN IT-PDP/IP Frederic Hemmer
+ * @(#)$RCSfile: osdep.h,v $ $Revision: 1.21 $ $Date: 2009/01/09 14:44:36 $ CERN IT-PDP/IP Frederic Hemmer
  */
 
 /* osdep.h      Operating system dependencies                           */
@@ -61,7 +61,6 @@ typedef struct  {
 #define LONGADDR(x)     (((char *)&(x))+sizeof(LONG)-LONGSIZE)
 #define QUADADDR(x)     (((char *)&(x))+sizeof(QUAD)-QUADSIZE)
 
-#ifndef HPSS_IFCE
 #ifndef _WIN32
 typedef long long		signed64;
 typedef unsigned long long	u_signed64;
@@ -76,12 +75,6 @@ typedef int socklen_t;
 
 typedef signed64 HYPER;
 typedef u_signed64 U_HYPER;
-#else
-typedef long long		signed64_castor;
-typedef unsigned long long	u_signed64_castor;
-typedef signed64_castor HYPER;
-typedef u_signed64_castor U_HYPER;
-#endif
 typedef U_HYPER TIME_T;
 
 #define ONE_KB 0x400
