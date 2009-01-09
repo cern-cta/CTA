@@ -1,9 +1,9 @@
 .lf 1 expertd.man
-.\" @(#)$RCSfile: expertd.man,v $ $Revision: 1.4 $ $Date: 2007/06/28 06:26:02 $ CERN IT-ADC Vitaly Motyakov
+.\" @(#)$RCSfile: expertd.man,v $ $Revision: 1.5 $ $Date: 2009/01/09 14:41:29 $ CERN IT-ADC Vitaly Motyakov
 .\" Copyright (C) 2004 by CERN/IT/ADC
 .\" All rights reserved
 .\"
-.TH EXPERTD 1 "$Date: 2007/06/28 06:26:02 $" CASTOR "Expert Administrator Commands"
+.TH EXPERTD 1 "$Date: 2009/01/09 14:41:29 $" CASTOR "Expert Administrator Commands"
 .SH NAME
 expertd \- start the CASTOR Expert daemon
 .SH SYNOPSIS
@@ -20,8 +20,7 @@ When a request arrives the daemon forks a child which processes the request.
 The child reads the configuration file and if the request is valid and
 can be fulfilled it replaces itself by the external program.
 .LP
-All error messages are kept in a log. The log directory is taken
-from the definition of ExpertSpool in site.def.
+All error messages are kept in a log, in /var/spool/expert/log.
 .LP
 The Expert daemon listen port number can be defined on client hosts
 and on the machine where the Expert daemon runs in either of the
