@@ -257,20 +257,6 @@
 #endif
 #endif
 
-/* ----------------- */
-/* OLD STAGE CLIENTS */
-/* ----------------- */
-#if BuildStageClientOld
-#if !BuildStageLibrary
-#undef BuildStageLibrary
-#define BuildStageLibrary YES
-#endif
-#if !BuildRfioLibrary
-#undef BuildRfioLibrary
-#define BuildRfioLibrary YES
-#endif
-#endif
-
 /* ---- */
 /* TAPE */
 /* ---- */
@@ -606,15 +592,9 @@ STAGERJOBDIR = stagerjob
 #if BuildRtcopyClient || BuildRtcopyServer || BuildRtcopyLibrary || BuildRtstat
 RTCOPYDIR = rtcopy
 #endif
-#if BuildStageClient || BuildStageDaemon || BuildStageLibrary
-STAGEDIR = stage
-#endif
 #if BuildStageDaemonCpp
 STAGERDIR = stager
 DAEMONDIR = daemon
-#endif
-#if BuildStageClientOld
-STAGEDIROLD = stage
 #endif
 #if BuildTapeClient || BuildTapeDaemon || BuildTapeLibrary || BuildTpusage
 TAPEDIR = tape
