@@ -10,12 +10,12 @@ CLIENT          EXTRAQRY   NO
 CLIENT          DISKONLY   NO
 CLIENT          EXTRATEST  NO
 
-RFIO            BASIC_RFCP                   NO
-RFIO            BASIC_OTHERCMD               NO
-RFIO            CASTOR_RFCP                  NO
-RFIO            CASTOR_RFCP_NEW_TURL         NO
-RFIO            CASTOR_OTHERCMD              NO
-RFIO            CASTOR_OTHERCMD_NEW_TURL     NO
+RFIO            BASIC_RFCP                   YES
+RFIO            BASIC_OTHERCMD               YES
+RFIO            CASTOR_RFCP                  YES
+RFIO            CASTOR_RFCP_NEW_TURL         YES
+RFIO            CASTOR_OTHERCMD              YES
+RFIO            CASTOR_OTHERCMD_NEW_TURL     YES
 
 ROOT            RFIO       NO
 ROOT            CASTOR     NO
@@ -29,17 +29,17 @@ TAPE            TAPE_ONLY                    NO
 *** Generic parameters ***
 
 # Note that STAGE_HOST can be overwritten by the -h flag on the command line
-STAGE_HOST        castoritdc
+STAGE_HOST        lxcastordev01
 STAGE_PORT        9002
-STAGE_SVCCLASS    itdc
+STAGE_SVCCLASS    default
 CASTOR_V2         YES
 EXTRA_SVCCLASS    default
 TIMEOUT           400
 DISKONLY_SVCCLASS diskonly
 FORCED_FILECLASS  temp
 
-OUTPUT_DIR        /castor/cern.ch/c3/testsuite/notape
-OUTPUT_DIR_TAPE   /castor/cern.ch/c3/testsuite/tape
+OUTPUT_DIR        /castor/cern.ch/dev/s/sponcec3/notape
+OUTPUT_DIR_TAPE   /castor/cern.ch/dev/s/sponcec3/notape
 QUIET_MODE        NO
 
 # Enable the following option if you wish to test CASTOR1
@@ -53,7 +53,7 @@ TEST_DEFAULT_ENV  YES
 
 USE_CASTOR_ENV    NO
 USE_STAGEMAP      NO
-USE_CASTOR_CONF   NO
+USE_CASTOR_CONF   YES
 
 LOG_DIR           /tmp/tmpRfio
 INPUT_FILE        /etc/group

@@ -59,7 +59,7 @@ class RfioPreRequisitesCase(unittest.TestCase):
                 if elems !=[] and elems[0]=="DiskServer" and elems[2]=="DISKSERVER_PRODUCTION":
                     remoteHost=elems[1]
             global remoteDir
-            remoteDir=remoteHost+":"+"/srv/castor/01/01/tmpRfio"+ticket
+            remoteDir=remoteHost+":"+"/tmp/tmpRfio"+ticket
             cmd=['rfmkdir '+remoteDir]
             myOut=UtilityForCastorTest.runOnShell(cmd,myScen)[0]
             rfioRemoteDirOk=1
