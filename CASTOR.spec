@@ -93,7 +93,7 @@ export MINOR_CASTOR_VERSION
 echo "### Warning, no ORACLE environment"
 echo "The following packages will NOT be built:"
 echo "castor-devel-oracle, castor-dlf-server, castor-lib-oracle, castor-lsf-plugin, castor-ns-server, castor-rh-server, castor-repack-server, castor-rtcopy-clientserver, castor-stager-server, castor-upv-server, castor-vmgr-server, castor-rmmaster-server, castor-jobmanager-server castor-lib-policy castor-mighunter-server"
-for this in BuildCupvDaemon BuildDlfDaemon BuildNameServerDaemon BuildRHCpp BuildRepack BuildRtcpclientd BuildSchedPlugin BuildVolumeMgrDaemon UseScheduler BuildOraCpp BuildStageDaemonCpp BuildVDQMCpp BuildDbTools BuildRmMasterCpp BuildJobManagerCpp BuildInfoPolicyLibrary BuildMigHunterDaemon BuildRecHandlerDaemon; do
+for this in BuildCupvDaemon BuildDlfDaemon BuildNameServerDaemon BuildRHCpp BuildRepack BuildRtcpclientd BuildSchedPlugin BuildVolumeMgrDaemon BuildOraCpp BuildStageDaemonCpp BuildVDQMCpp BuildDbTools BuildRmMasterCpp BuildJobManagerCpp BuildInfoPolicyLibrary BuildMigHunterDaemon BuildRecHandlerDaemon; do
 	perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tNO/g" config/site.def
 done
 %else
@@ -119,7 +119,7 @@ done
 %endif
 %if %compiling_nostk
 echo "### Warning, compiling only castor-tape-server-nostk"
-for this in BuildCommands BuildCupvClient BuildCupvDaemon BuildCupvLibrary BuildDlfDaemon BuildDlfLibrary BuildDlfWeb BuildExpertClient BuildExpertDaemon BuildExpertLibrary BuildGCCpp BuildHsmTools BuildJobManagerCpp BuildNameServerClient BuildNameServerDaemon BuildNameServerLibrary BuildRHCpp BuildRfioClient BuildRfioLibrary BuildRfioServer BuildRmMasterCpp BuildRmNodeCpp BuildRmcLibrary BuildRmcServer BuildRtcopyClient BuildRtcopyServer BuildRtcpclientd BuildRtstat BuildSchedPlugin BuildSecureCns BuildSecureCupv BuildSecureRfio BuildSecureRtcopy BuildSecureStage BuildSecureTape BuildSecureVdqm BuildSecureVmgr BuildStageClient BuildStageClientOld BuildStageDaemonCpp BuildTapeClient BuildTapeLibrary BuildTpusage BuildVdqmClient BuildVdqmLibrary BuildVolumeMgrClient BuildVolumeMgrDaemon BuildVolumeMgrLibrary BuildVDQMCpp BuildRepack BuildMigHunterDaemon BuildRecHandlerDaemon BuildInfoPolicyLibrary BuildGridFTP HasCDK; do
+for this in BuildCommands BuildCupvClient BuildCupvDaemon BuildCupvLibrary BuildDlfDaemon BuildDlfLibrary BuildDlfWeb BuildExpertClient BuildExpertDaemon BuildExpertLibrary BuildGCCpp BuildHsmTools BuildJobManagerCpp BuildNameServerClient BuildNameServerDaemon BuildNameServerLibrary BuildRHCpp BuildRfioClient BuildRfioLibrary BuildRfioServer BuildRmMasterCpp BuildRmNodeCpp BuildRmcLibrary BuildRmcServer BuildRtcopyClient BuildRtcopyServer BuildRtcpclientd BuildRtstat BuildSchedPlugin BuildSecureCns BuildSecureCupv BuildSecureRfio BuildSecureRtcopy BuildSecureStage BuildSecureTape BuildSecureVdqm BuildSecureVmgr BuildStageClient BuildStageDaemonCpp BuildTapeClient BuildTapeLibrary BuildTpusage BuildVdqmClient BuildVdqmLibrary BuildVolumeMgrClient BuildVolumeMgrDaemon BuildVolumeMgrLibrary BuildVDQMCpp BuildRepack BuildMigHunterDaemon BuildRecHandlerDaemon BuildInfoPolicyLibrary BuildGridFTP HasCDK; do
 	perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tNO/g" config/site.def
 done
 %endif
@@ -232,7 +232,7 @@ done
 %package -n CASTOR-client
 Summary: Cern Advanced mass STORage
 Group: Application/Castor
-Requires: castor-stager-clientold,castor-lib,castor-doc,castor-rtcopy-client,castor-upv-client,castor-rtcopy-messages,castor-ns-client,castor-stager-client,castor-vdqm2-client,castor-rfio-client,castor-vmgr-client,castor-devel,castor-tape-client,castor-lib-compat
+Requires: castor-lib,castor-doc,castor-rtcopy-client,castor-upv-client,castor-rtcopy-messages,castor-ns-client,castor-stager-client,castor-vdqm2-client,castor-rfio-client,castor-vmgr-client,castor-devel,castor-tape-client,castor-lib-compat
 %description -n CASTOR-client
 castor (Cern Advanced STORage system)  Meta package for CASTOR-client from castor1 transition to castor2
 %files -n CASTOR-client
