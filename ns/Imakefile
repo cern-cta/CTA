@@ -16,9 +16,6 @@ LIBS = -luuid
 NSLIB = -L. -lcastorns
 SPOOL = NsSpool
 LOGFILE = $(SPOOL)/log
-SACCTDIR = SacctDir
-SACCTFILE = SacctDir/sacct
-ACCTFILE = -DACCTFILE=\"$(SACCTFILE)\"
 LCGDM_MAPFILE = IdMapFile
 NSCONFIG = NsConfigFile
 ORAFLG = -DUSE_ORACLE
@@ -46,7 +43,7 @@ DFLAGS = -DBIN=\"$(BIN)\" -DCNS_HOST=\"$(CNS_HOST)\" \
          -DLCGDM_MAPFILE=\"$(LCGDM_MAPFILE)\" \
          -DLOGFILE=\"$(LOGFILE)\" \
          -DNSCONFIG=\"$(NSCONFIG)\" \
-         $(ACCTFLAG) $(ACCTFILE) $(RDSFLG) $(ORAFLG)
+         $(RDSFLG) $(ORAFLG)
 
 CFLAGS = -g -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(RDSINC) $(ORAINC) $(SECURITYFLAG)
 
@@ -147,7 +144,6 @@ Cns_oracle_ifce.c: Cns_oracle_ifce.pc
 	proc iname=Cns_oracle_ifce include=$(INCLUDES) threads=yes char_map=string parse=full
 FilesToClean += Cns_oracle_ifce.c Cns_oracle_ifce.lis
 MakeDir($(SPOOL),root,bin,0755)
-MakeDir($(SACCTDIR),root,bin,0777)
 ORALIBS= -L$(ORACLE_HOME)/lib -lclntsh
 NormalProgramTarget(nsdaemon,$(NSDAEMON_OBJS), $(DEPLIB), $(ORALIBS) $(MTLDFLAGS) $(LIBS) $(LIBCSEC),root,bin,750)
 ADMMANPAGE(nsdaemon)
