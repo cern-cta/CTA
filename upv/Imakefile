@@ -11,9 +11,6 @@ CUPVLIB = -L. -lcastorupv
 OPSGRP = OperatorGid
 SPOOL = CupvSpool
 LOGFILE = $(SPOOL)/log
-SACCTDIR = SacctDir
-SACCTFILE = SacctDir/sacct
-ACCTFILE = -DACCTFILE=\"$(SACCTFILE)\"
 CUPVCONFIG = CupvConfigFile
 CUPV_HOST = CupvHost
 ORAFLG = -DUSE_ORACLE
@@ -25,7 +22,7 @@ SECURITYFLAG=-DCSEC
 
 DFLAGS = -DBIN=\"$(BIN)\" -DCUPV_HOST=\"$(CUPV_HOST)\" $(USE_CUPV) \
          -DLOGFILE=\"$(LOGFILE)\" -DCUPVCONFIG=\"$(CUPVCONFIG)\" \
-         $(ACCTFLAG) $(ACCTFILE) $(RDSFLG) $(ORAFLG)
+         $(RDSFLG) $(ORAFLG)
 CFLAGS = -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(RDSINC) $(ORAINC) $(SECURITYFLAG)
 
 DependsOnLibrary(common,castorcommon)
@@ -36,7 +33,6 @@ Cupv_oracle_ifce.c: Cupv_oracle_ifce.pc
 FilesToClean += Cupv_oracle_ifce.c Cupv_oracle_ifce.lis
 CUPVDAEMON_OBJS = Cupv_main.Osuf Cupv_oracle_ifce.Osuf Cupv_procreq.Osuf sendrep.Osuf Cupv_util.Osuf Cupvlogit.Osuf
 MakeDir($(SPOOL),root,bin,0755)
-MakeDir($(SACCTDIR),root,bin,0777)
 ORALIBS= -L$(ORACLE_HOME)/lib -lclntsh
 NormalProgramTarget(Cupvdaemon,$(CUPVDAEMON_OBJS), $(DEPLIB), $(ORALIBS) $(MTLDFLAGS) $(LIBS),root,bin,750)
 ADMMANPAGE(Cupvdaemon)
