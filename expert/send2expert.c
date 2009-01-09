@@ -62,11 +62,7 @@ int reql;
 	if ((p = getenv ("EXPERT_HOST")) || (p = getconfent ("EXPERT", "HOST", 0)))
 	  strncpy (exphost, p, CA_MAXHOSTNAMELEN);
 	else
-#if defined(EXPERT_HOST)
-	  strncpy (exphost, EXPERT_HOST, CA_MAXHOSTNAMELEN);
-#else
 	  gethostname (exphost, sizeof(exphost));
-#endif
 	if (socketp == NULL || *socketp < 0) {	/* connection not opened yet */
        		sin.sin_family = AF_INET;
 		sin.sin_port = htons ((unsigned short)port);
