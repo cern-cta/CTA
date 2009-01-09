@@ -49,7 +49,7 @@ struct sqlca *sqlca;
 	    sqlca->sqlcode == -32102 || sqlca->sqlcode == -3135  || 
 	    sqlca->sqlcode == -12170 || sqlca->sqlcode == -12541 || 
 	    sqlca->sqlcode == -1012  || sqlca->sqlcode == -1003  || 
-	    sqlca->sqlcode == -12571 || sqlca->sqlcode == -25408 || 
+	    sqlca->sqlcode == -12571 || (sqlca->sqlcode <= -25401 && sqlca->sqlcode >= -25409) ||
 	    sqlca->sqlcode == -1033  || sqlca->sqlcode == -1089) {
 		vmgrlogit (func, "Trying to reconnect\n");
 		vmgr_closedb (dbfd);
