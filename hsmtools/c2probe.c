@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: c2probe.c,v $ $Revision: 1.5 $ $Release$ $Date: 2008/11/03 10:37:47 $ $Author: waldron $
+ * @(#)$RCSfile: c2probe.c,v $ $Revision: 1.6 $ $Release$ $Date: 2009/01/09 14:45:23 $ $Author: sponcec3 $
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -34,7 +34,7 @@
 #include <rfio.h>
 #include <serrno.h>
 #include <log.h>
-#include <stage_api.h>
+#include <stager_api.h>
 #include <Cpwd.h>
 #include <Cinit.h>
 #include <Cuuid.h>
@@ -42,6 +42,7 @@
 #include <stager_api.h>
 #include <Cthread_api.h>
 #include <stager_client_commandline.h>
+#include <stager_errmsg.h>
 #include <Cpool_api.h>
 #include <u64subr.h>
 #define ERRBUFSIZE 255
@@ -328,7 +329,7 @@ int qryFile(char *svcClass, char *path)
   memset(&errbuf,  '\0', sizeof(errbuf));
 
   /* Setting the error buffer */
-  stage_seterrbuf(errbuf, sizeof(errbuf));
+  stager_seterrbuf(errbuf, sizeof(errbuf));
 
   create_query_req(&qrequests,1);
   qrequests[0].type = BY_FILENAME;
@@ -370,7 +371,7 @@ int rmFile(char *svcClass, char *path)
   memset(&errbuf,  '\0', sizeof(errbuf));
 
   /* Setting the error buffer */
-  stage_seterrbuf(errbuf, sizeof(errbuf));
+  stager_seterrbuf(errbuf, sizeof(errbuf));
 
   nbreqs = 1;
   create_filereq(&reqs,nbreqs);
