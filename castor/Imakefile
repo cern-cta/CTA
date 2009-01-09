@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.204 $ $Release$ $Date: 2009/01/08 09:32:30 $ $Author: itglp $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.205 $ $Release$ $Date: 2009/01/09 14:38:14 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -42,8 +42,7 @@ STAGEFLAGS = -DSTAGEMAP=\"StageMapFile\" -DSTAGETYPE=\"StageTypeFile\"
 #if BuildSecurity
 SECURITYFLAG=-DCSEC
 #endif
-STAGEHOST=StageHost
-CFLAGS = $(DEBUG) -I ../h -I .. $(SECURITYFLAG) $(MTCCFLAGS) $(STAGEFLAGS) -DSTAGEHOST=\"$(STAGEHOST)\"
+CFLAGS = $(DEBUG) -I ../h -I .. $(SECURITYFLAG) $(MTCCFLAGS) $(STAGEFLAGS)
 CPPFLAGS = $(DEBUG) -I ../h -I .. $(MTCCFLAGS) $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
 
 STGLIB_SRCS = IAddressCInt.cpp \
