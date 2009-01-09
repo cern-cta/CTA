@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.43 $ $Release$ $Date: 2008/11/26 18:22:40 $ $Author: waldron $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.44 $ $Release$ $Date: 2009/01/09 14:44:19 $ $Author: sponcec3 $
  *
  * the client API to the castor stager
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.43 $
- * @date $Date: 2008/11/26 18:22:40 $
+ * @version $Revision: 1.44 $
+ * @date $Date: 2009/01/09 14:44:19 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.43 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.44 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -1374,26 +1374,6 @@ EXTERN_C int DLL_DECL stage_requestquery _PROTO((struct stage_query_req *request
                                                  struct stage_requestquery_resp **responses,
                                                  int *nbresps,
                                                  struct stage_options* opts));
-
-
-/**********************************************************
- *    stage_seterrbuf                                     *
- **********************************************************/
-
-/**
- * stage_seterrbuf
- * Sets the error buffer in which the detail of the error messages
- * is copied.
- * \ingroup Functions
- * 
- * @param buffer     Pointer buffer where the error strings should be copied
- * @param buflen     Actual length of the buffer
- *
- * @returns 0 in case of success, -1 otherwise
- */
-EXTERN_C int DLL_DECL stage_seterrbuf _PROTO((char *buffer, int buflen));
-
-
 
 
 /**********************************************************
