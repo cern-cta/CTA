@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2009/01/08 09:33:32 $ $Author: itglp $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2009/01/09 13:57:46 $ $Author: itglp $
  *
  * The conversion service to Oracle
  *
@@ -386,5 +386,15 @@ void castor::db::ora::OraCnvSvc::handleException(std::exception& e) {
     // - error #32102 'invalid OCI handle' seems to happen after an uncaught
     // Oracle side error, and a priori should act as a catch-all case.
     dropConnection();  // reset values and drop the connection
+  }
+  else if(errcode == 25402) {
+    // error #25402 'transaction must roll back' has been observed after a
+    // lost connection event and requires the client to rollback;
+    // see service request #106643 for more details.
+    try {
+      rollback();
+    } catch (castor::exception::Exception any) {
+      dropConnection();
+    }
   }
 }
