@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2001-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Date: 2008/11/26 14:51:58 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Date: 2009/01/09 14:48:13 $ CERN IT-PDP/DM Jean-Philippe Baud
 
 COMM 	Make SCSI media changer server programs. 
 
@@ -17,7 +17,7 @@ DependsOnLibrary(tape,castortape)
 #if BuildRmcServer
 RMCDAEMON_OBJS = rmc_serv.Osuf rmc_procreq.Osuf rmclogit.Osuf sendrep.Osuf usrmsg.Osuf
 OPSGRP = OperatorGid
-NormalProgramTarget(rmcdaemon,$(RMCDAEMON_OBJS),$(GLOBLIB),$(LIBS),root,$(OPSGRP),750)
+NormalProgramTarget(rmcdaemon,$(RMCDAEMON_OBJS),$(DEPLIB),$(LIBS),root,$(OPSGRP),750)
 MakeDir($(SPOOL),root,bin,0755)
 ADMMANPAGE(rmcdaemon)
 #endif
