@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2009/01/09 13:57:46 $ $Author: itglp $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2009/01/09 14:46:17 $ $Author: itglp $
  *
  * The conversion service to Oracle
  *
@@ -372,7 +372,7 @@ void castor::db::ora::OraCnvSvc::handleException(std::exception& e) {
   int errcode = ((oracle::occi::SQLException&)e).getErrorCode();
   if (errcode == 28 || errcode == 3113 || errcode == 3114 || errcode == 32102
       || errcode == 3135 || errcode == 12170 || errcode == 12541 || errcode == 1012
-      || errcode == 1003 || errcode == 12571 || errcode == 25408 || errcode == 1033
+      || errcode == 1003 || errcode == 12571 || errcode == 1033
       || errcode == 1089 || errcode == 12537) {  
     // here we lost the connection due to an Oracle restart or network glitch
     // and this is the current list of errors acknowledged as a lost connection.
@@ -387,10 +387,11 @@ void castor::db::ora::OraCnvSvc::handleException(std::exception& e) {
     // Oracle side error, and a priori should act as a catch-all case.
     dropConnection();  // reset values and drop the connection
   }
-  else if(errcode == 25402) {
+  else if(errcode >= 25401 && errcode <= 25409) {
     // error #25402 'transaction must roll back' has been observed after a
     // lost connection event and requires the client to rollback;
-    // see service request #106643 for more details.
+    // see service request #106643 for more details. Similarly for the
+    // other errors in this range, as suggested by Nilo.
     try {
       rollback();
     } catch (castor::exception::Exception any) {
