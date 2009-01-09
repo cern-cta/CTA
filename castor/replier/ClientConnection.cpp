@@ -332,7 +332,7 @@ void castor::replier::ClientConnection::sendNextMessage()  throw(castor::excepti
 void castor::replier::ClientConnection::send()
   throw(castor::exception::Exception) {
 
-  const char *func = "cc::send ";
+  const char *func = "ClientConnection::send ";
   castor::io::biniostream *response;
   ClientResponse message;
 
@@ -385,8 +385,9 @@ void castor::replier::ClientConnection::send()
       clog() << ERROR << SETW func  << this->toString() << " msg:" << message.messageId
 	     << " WRITE FAILURE (isLast:"
 	     << ((message.isLast)?1:0)
-	     << ")rc:" << rc
-	     <<  " (len:" << buflen << ") error: " << strerror(errno)
+	     << ") rc:" << rc
+	     <<  " (len:" << buflen << ")"
+	     << (errno != 0) ? "error: " << strerror(errno) : ""
              << std::endl;
       setStatus(DONE_FAILURE);
       m_errorMessage = std::string("Error while sending: ") 
