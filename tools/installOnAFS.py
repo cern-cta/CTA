@@ -10,14 +10,28 @@ afsdir = '/afs/cern.ch/sw/lcg/external/castor/'
 version = sys.argv[1]
 packages = ['ns-client', 'doc', 'rtcopy-client', 'upv-client', 'stager-client', 'vdqm-client', 'rfio-server', 'lib', 'devel', 'stager-clientold', 'vmgr-client', 'rtcopy-messages', 'tape-client', 'rfio-client']
 
-platformConversion = {'SLC4' : 'slc4'}
-archConversion = {'i386' : 'ia32', 'x86_64' : 'amd64'}
-gccVersion = {'SLC4' : 'gcc34'}
+platformConversion = {'SLC4' : 'slc4', 'SLC5' : 'slc5'}
+oldArchConversion = {'i386' : 'ia32', 'x86_64' : 'amd64'}
+archConversion = {'i386' : 'i686', 'x86_64' : 'x86_64'}
+oldGccVersion = {'SLC4' : 'gcc34'}
+gccVersions = {'SLC5' : ['gcc41-opt', 'gcc34-opt', 'gcc43-opt']}
 
-for plat in ('SLC4',):
+def buildSFTdir(plat, arch):
+    if plat == 'SLC4':   # old conventions
+        return [afsdir + version + '/' + platformConversion[plat] + '_' + oldArchConversion[arch] + '_' + oldGccVersion[plat]]
+    else:
+        base = afsdir + version + '/' + archConversion[arch] + '-' + platformConversion[plat] + '-'
+        ret = []
+        for v in gccVersions[plat]:
+            ret.append(base + v)
+        return ret
+
+for plat in ('SLC4', 'SLC5'):
     for arch in ('i386', 'x86_64'):
-        archdir = afsdir + version + '/' + platformConversion[plat] + '_' + archConversion[arch] + '_' + gccVersion[plat]
+        archdirs = buildSFTdir(plat, arch)
         rpmdir = castordir + 'CASTOR.pkg/' + version + '/' + plat + '/' + arch + '/'
-        print 'mkdir -p ' + archdir + ';cd ' + archdir
+        print 'mkdir -p ' + archdirs[0] + ';cd ' + archdirs[0]
         for p in packages:
-          print 'rpm2cpio ' + rpmdir + 'castor-' + p + '-' + version + '.' + arch + '.rpm | cpio -idmv'
+            print 'rpm2cpio ' + rpmdir + 'castor-' + p + '-' + version + '.' + arch + '.rpm | cpio -idmv'
+        for d in archdirs[1:]:
+            print 'ln -s ' + archdirs[0] + " " + d
