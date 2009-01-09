@@ -2,32 +2,27 @@ COMM
 COMM  Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.13 $ $Date: 2008/11/26 14:52:00 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.14 $ $Date: 2009/01/09 14:30:08 $ CERN IT-PDP/DM Jean-Philippe Baud
 
 COMM    Make volume manager programs.
 
 OPSGRP = OperatorGid
-SPOOL = VmgrSpool
+SPOOL = /var/spool/vmgr
 LOGFILE = $(SPOOL)/log
-SACCTDIR = SacctDir
-SACCTFILE = SacctDir/sacct
-ACCTFILE = -DACCTFILE=\"$(SACCTFILE)\"
 VMGRCONFIG = VmgrConfigFile
-VMGR_HOST = VmgrHost
 ORAFLG = -DUSE_ORACLE
 ORAINC = -I$(ORACLE_HOME)/precomp/public
 #if BuildSecureVmgr
 SECURITYFLAG=-DCSEC
 LIBS+= -ldl
 #endif  
-CFLAGS = -g -I../h $(MTCCFLAGS) -DBIN=\"$(BIN)\" -DVMGR_HOST=\"$(VMGR_HOST)\" -DLOGFILE=\"$(LOGFILE)\" -DVMGRCONFIG=\"$(VMGRCONFIG)\" $(ACCTFLAG) $(ACCTFILE) $(RDSFLG) $(ORAFLG) $(RDSINC) $(ORAINC) $(SECURITYFLAG)
+CFLAGS = -g -I../h $(MTCCFLAGS) -DBIN=\"$(BIN)\" -DLOGFILE=\"$(LOGFILE)\" -DVMGRCONFIG=\"$(VMGRCONFIG)\" $(RDSFLG) $(ORAFLG) $(RDSINC) $(ORAINC) $(SECURITYFLAG)
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(upv,castorupv)
 
 #if BuildVolumeMgrDaemon
 MakeDir($(SPOOL),root,bin,0755)
-MakeDir($(SACCTDIR),root,bin,0777)
 vmgr_oracle_ifce.c: vmgr_oracle_ifce.pc
 	proc iname=vmgr_oracle_ifce include=../h  threads=yes char_map=string parse=full
 FilesToClean += vmgr_oracle_ifce.c vmgr_oracle_ifce.lis

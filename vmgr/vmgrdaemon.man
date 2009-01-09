@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrdaemon.man,v $ $Revision: 1.7 $ $Date: 2008/11/28 12:58:06 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrdaemon.man,v $ $Revision: 1.8 $ $Date: 2009/01/09 14:30:08 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRDAEMON 8 "$Date: 2008/11/28 12:58:06 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRDAEMON 8 "$Date: 2009/01/09 14:30:08 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrdaemon \- start the volume manager
 .SH SYNOPSIS
@@ -76,8 +76,7 @@ VMGR	HOST	castor5
 .RE
 .RE
 .LP
-If none of these methods is used, the default host is taken from the
-definition of VmgrHost in site.def.
+If none of these methods is used, the default host is localhost.
 .LP
 The volume manager database keeps the information about tapes like vid, vsn,
 device group, density and status.

@@ -90,11 +90,7 @@ int user_repbuf_len;
 		if ((p = getenv ("VMGR_HOST")) || (p = getconfent ("VMGR", "HOST", 0)))
 			strcpy (vmgrhost, p);
 		else {
-#if defined(VMGR_HOST)
-			strcpy (vmgrhost, VMGR_HOST);
-#else
 			gethostname (vmgrhost, sizeof(vmgrhost));
-#endif
 			serrno = 0;
 		}
 		if ((hp = Cgethostbyname (vmgrhost)) == NULL) {
