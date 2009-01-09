@@ -9,10 +9,10 @@ object(V,"vdqm");
 object(R,"rtcpd");
 placeholder_object(RF);
 placeholder_object(A);
+placeholder_object(T);
 placeholder_object(D1);
 placeholder_object(D2);
 placeholder_object(D3);
-placeholder_object(T);
 
 step();
 
@@ -58,7 +58,10 @@ message(RF,C,"connect");
 message(C,RF,"volume");
 message(RF,C,"acknowledge");
 
-message(C,RF,"file");
+message(C,RF,"file1");
+message(RF,C,"acknowledge");
+
+message(C,RF,"file2");
 message(RF,C,"acknowledge");
 
 message(C,RF,"RTCP_NOMORE_REQ");
@@ -70,11 +73,24 @@ message(RF,C,"connect");
 
 create_message(RF,A,"abort");
 
+create_message(RF,T,"tape IO");
+
 create_message(RF,D1,"disk IO 1");
 create_message(RF,D2,"disk IO 2");
 create_message(RF,D3,"disk IO 3");
 
-create_message(RF,T,"tape IO");
+message(T,C,"UNKNOWN file 1");
+message(T,C,"RTCP_POSITIONED file 1");
+
+message(T,C,"UNKNOWN file 2");
+message(T,C,"RTCP_POSITIONED file 2");
+
+message(D1,C,"RTCP_FINISHED file 1");
+
+message(D2,C,"RTCP_FINISHED file 2");
+
+message(T,C,"RTCP_ENDOF_REQ");
+message(C,T,"acknowledge");
 
 inactive(RF);
 inactive(C);
@@ -85,11 +101,11 @@ complete(C);
 complete(V);
 complete(R);
 complete(RF);
+complete(T);
 complete(A);
 complete(D1);
 complete(D2);
 complete(D3);
-complete(T);
 
 .PE
 
