@@ -1284,7 +1284,6 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                  if ( rc == 0 && AbortFlag != 0 && (severity & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) \
                     rtcpd_SetReqStatus(X,Y,(AbortFlag == 1 ? ERTUSINTR : ERTOPINTR),rtcpd_CheckProcError()); \
                  (void) tellClient(&client_socket,X,Y,-1); \
-                 (void) rtcpd_stageupdc(nexttape,(tmpfile!=NULL?tmpfile:nextfile)); \
                  (void)rtcp_WriteAccountRecord(client,nexttape,(tmpfile!=NULL?tmpfile:nextfile),RTCPEMSG); \
              } \
              (void)rtcpd_FreeBuffers(); \
@@ -1688,12 +1687,6 @@ void *tapeIOthread(void *arg) {
                 CHECK_PROC_ERR(nexttape,NULL,"tellClient() error");
                 rc = tellClient(&client_socket,NULL,nextfile,save_rc);
                 CHECK_PROC_ERR(NULL,nextfile,"tellClient() error");
-                if ( mode == WRITE_ENABLE ) {
-                    TP_STATUS(RTCP_PS_STAGEUPDC);
-                    rc = rtcpd_stageupdc(nexttape,nextfile);
-                    TP_STATUS(RTCP_PS_NOBLOCKING);
-                    CHECK_PROC_ERR(NULL,nextfile,"rtcpd_stageupdc() error");
-                }
 
                 TP_STATUS(RTCP_PS_WAITMTX);
                 rc = rtcpd_SignalFilePositioned(nexttape,nextfile);
@@ -1757,9 +1750,6 @@ void *tapeIOthread(void *arg) {
                         rtcpd_BroadcastException();
                         if ( mode == WRITE_ENABLE ) {
                             (void)tellClient(&client_socket,NULL,tmpfile,-1);
-                            TP_STATUS(RTCP_PS_STAGEUPDC);
-                            rc = rtcpd_stageupdc(nexttape,tmpfile);
-                            TP_STATUS(RTCP_PS_NOBLOCKING);
                             rtcpd_SetProcError(severity);
                             (void)rtcp_WriteAccountRecord(client,nexttape,tmpfile,RTCPEMSG);
                             if ( tmpfile != nextfile ) free(tmpfile);
@@ -1914,10 +1904,6 @@ void *tapeIOthread(void *arg) {
                 }
                 rc = tellClient(&client_socket,NULL,nextfile,0);
                 CHECK_PROC_ERR(NULL,nextfile,"tellClient() error");
-                TP_STATUS(RTCP_PS_STAGEUPDC);
-                rc = rtcpd_stageupdc(nexttape,nextfile);
-                TP_STATUS(RTCP_PS_NOBLOCKING);
-                CHECK_PROC_ERR(NULL,nextfile,"rtcpd_stageupdc() error");
                 (void)rtcp_WriteAccountRecord(client,nexttape,nextfile,RTCPPRC);
             } /* if ( nexttape->tapereq.mode == WRITE_ENABLE ) */
         } CLIST_ITERATE_END(nexttape->file,nextfile);

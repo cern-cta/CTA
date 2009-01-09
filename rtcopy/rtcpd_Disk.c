@@ -1661,10 +1661,6 @@ static int DiskToMemory(int disk_fd, int pool_index,
                 rtcpd_SetProcError(severity); \
             else if ( (severity & RTCP_LOCAL_RETRY) == 0 ) \
                 rtcpd_SetProcError(RTCP_FAILED); \
-            if ( rtcpd_stageupdc(tape,file) == -1 ) { \
-                rtcpd_CheckReqStatus((X),(Y),NULL,&severity); \
-                rtcpd_SetProcError(severity); \
-            } \
             if ( (severity & RTCP_LOCAL_RETRY) == 0 ) { \
                 rtcp_log(LOG_DEBUG,"diskIOthread() return RC=-1 to client\n"); \
                 tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, \
@@ -1757,30 +1753,12 @@ void *diskIOthread(void *arg) {
     rc = 0;
     disk_fd = -1;
     severity = RTCP_OK;
-    /*
-     * For a stagein request (tape read from a stager) we must wait
-     * for the stageupdc after the tape position (in tapeIOthread)
-     * since the stager may have selected a new path.
-     * We have to be careful with setting processing error. If we
-     * are writing to tape the tape IO is behind us and it must be
-     * able to finish with previous files before detecting the error.
-     * On tape read, we are behind the tape IO so we can safely 
-     * interrupt the whole processing if there was an error.
-     */
-    DK_STATUS(RTCP_PS_WAITMTX);
-    rc = rtcpd_WaitForPosition(tape, file);
-    DK_STATUS(RTCP_PS_NOBLOCKING);
-    CHECK_PROC_ERR(file->tape,file,"rtcpd_WaitForPosition() error");
 
     /*
      * EOD on read is processed later (not always an error).
      */
     if ( (mode == WRITE_ENABLE) || ((severity & RTCP_EOD) == 0) ) {
         if ( mode == WRITE_DISABLE ) {
-            DK_STATUS(RTCP_PS_STAGEUPDC);
-            rc = rtcpd_stageupdc(tape,file);
-            DK_STATUS(RTCP_PS_NOBLOCKING);
-            CHECK_PROC_ERR(NULL,file,"rtcpd_stageupdc() error");
             if ( ENOSPC_occurred == TRUE ) {
                 rtcp_log(LOG_INFO,"diskIOthread() exit for synchronization due to ENOSPC\n");
                 tl_rtcpd.tl_log( &tl_rtcpd, 10, 2, 
@@ -1941,23 +1919,6 @@ void *diskIOthread(void *arg) {
 
         rc = tellClient(&client_socket,NULL,file,save_rc);
         CHECK_PROC_ERR(NULL,file,"tellClient() error");
-        /*
-         * If we are reading from tape, we must tell the
-         * stager that the data has successfully arrived at
-         * its final destination. Note, for tape write it is
-         * the tape IO thread who will update the stager.
-         */
-        DK_STATUS(RTCP_PS_STAGEUPDC);
-        rc = rtcpd_stageupdc(tape,file);
-        DK_STATUS(RTCP_PS_NOBLOCKING);
-        /*
-         * Make sure that stageupdc errors are handled. Note that
-         * processing errors from other threads does not need to be
-         * handled here since we're going to exit anyway. Besides,
-         * handling them will cause a duplicate stage_updc_filcp()
-         * which in turn can be pretty bad for the stager.
-         */
-        if ( rc == -1 ) CHECK_PROC_ERR(NULL,file,"rtcpd_stageupdc() error");
 
         (void)rtcp_WriteAccountRecord(client,tape,file,RTCPPRC); 
 

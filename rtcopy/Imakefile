@@ -185,8 +185,8 @@ RTCPD_OBJS =	rtcpd.Osuf rtcp_CallVMGR.Osuf rtcp_CheckReq.Osuf \
 		rtcp_Listen.Osuf rtcp_SendRecv.Osuf rtcp_log.Osuf \
 		rtcpd_ClientListen.Osuf rtcpd_Ctape.Osuf rtcpd_Disk.Osuf \
 		rtcpd_MainCntl.Osuf rtcpd_SelfMonitor.Osuf rtcpd_Tape.Osuf \
-		rtcpd_TapeIO.Osuf rtcpd_stageupdc.Osuf rtcp_InitNW.Osuf \
-		rtcpd_ConvertData.Osuf rtcpd_SHIFTClients.Osuf \
+		rtcpd_TapeIO.Osuf rtcp_InitNW.Osuf \
+		rtcpd_ConvertData.Osuf \
 		rtcpc_BuildReq.Osuf rtcpapi.Osuf rtcp_RetvalSHIFT.Osuf \
 		rtcpd_tpdump.Osuf Ctape_dummies.Osuf rtcp_accounting.Osuf		
 NormalProgramTarget(rtcpd,$(RTCPD_OBJS),$(DEPLIB),$(MTLDFLAGS) $(LIBS) $(CKSUMLIB),root,bin,0750) 

@@ -2376,25 +2376,6 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     return(-1);
   } else reqtype = rc;
 
-  if ( reqtype != VDQM_CLIENTINFO ) {
-    /*
-     * This is an old client
-     */
-    SHIFTclient = TRUE;
-    rtcp_log(LOG_INFO,"Running old (SHIFT) client request\n");
-    tl_rtcpd.tl_log( &tl_rtcpd, 10, 2, 
-                     "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
-                     "Message", TL_MSG_PARAM_STR, "Running old (SHIFT) client request" );
-
-    rc = rtcp_RunOld(accept_socket,&hdr);
-
-    (void)rtcp_CloseConnection(accept_socket);
-    if ( client != NULL ) {
-      free(client);
-      client = NULL;
-    }
-    return(rc);
-  }
   /*
    * Not SHIFT request. We only allow connections from VDQM or 
    * authorised hosts.
@@ -2705,21 +2686,6 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     rtcpd_FreeResources(&client_socket,&client,&tape);
     return(-1);
   }
-  /*
-   * Initialise the stage API
-   */
-  rc = rtcpd_init_stgupdc(tape);
-  if ( rc == -1 ) {
-    /*
-     * Not Fatal. Only means that stage logging initialisation failed.
-     */
-    rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcpd_init_stgupdc(): %s\n",
-             sstrerror(serrno));
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
-                     "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
-                     "Message", TL_MSG_PARAM_STR, "rtcpd_init_stgupdc" );    
-  }
-
   /*
    * Start up the disk IO thread pool (only once on NT).
    */
