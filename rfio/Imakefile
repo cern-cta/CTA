@@ -14,7 +14,6 @@ COMM
 NOMORERFIO = OperatorDir/nomorerfio
 SPOOL = RfioSpool
 LOGFILE = $(SPOOL)/rfiod.log
-STAGEHOST = StageHost
 
 #if BuildNameServerLibrary
 CNS_ROOT_DIR = NsRoot
@@ -43,7 +42,7 @@ NFSROOT  = -DNFSROOT=\"$(NFSROOT0)\"
 CSEC = -DCSEC
 #endif
 
-CFLAGS = -g -I../h -I.. $(CTHREAD_FLAGS) $(CCOPTFLAGS) $(DEFCFLAGS) $(RFIOFLAGS) $(ACCTFLAG) -DFORTRAN $(SUPPORT_CS2) $(CPPUFL) $(NFSROOT) $(CSEC) -DSTAGEHOST=\"$(STAGEHOST)\"
+CFLAGS = -g -I../h -I.. $(CTHREAD_FLAGS) $(CCOPTFLAGS) $(DEFCFLAGS) $(RFIOFLAGS) $(ACCTFLAG) -DFORTRAN $(SUPPORT_CS2) $(CPPUFL) $(NFSROOT) $(CSEC)
 
 FIOO=fio.Osuf
 FFLAGS = $(FFOPTFLAGS) $(FPPUFL)
@@ -79,14 +78,6 @@ DependsOnLibrary(security,castorsecurity)
 DependsOnLibrary(castor,castorclient)
 
 #if BuildRfioLibrary
-OBSOLETE_OBJS = \
-            ../client/src/rfio/buildupath.Osuf \
-	    ../client/src/rfio/send2stgd_api.Osuf \
-	    ../client/src/rfio/send2stgd_compat.Osuf \
-	    ../client/src/rfio/stage_api.Osuf \
-	    ../client/src/rfio/stage_errmsg.Osuf \
-	    ../client/src/rfio/stage_updc.Osuf \
-	    ../client/src/rfio/stage_util.Osuf
 RFIOLIB_OBJS = access.Osuf alrm.Osuf chdir.Osuf checkkey.Osuf chmod.Osuf \
 		chown.Osuf close.Osuf closedir.Osuf connect.Osuf error.Osuf \
 		fchmod.Osuf fchown.Osuf fclose.Osuf feof.Osuf ferror.Osuf \
@@ -103,7 +94,7 @@ RFIOLIB_OBJS = access.Osuf alrm.Osuf chdir.Osuf checkkey.Osuf chmod.Osuf \
 		xyread.Osuf xywrite.Osuf \
 		fopen64.Osuf fseeko64.Osuf fstat64.Osuf ftello64.Osuf \
 		lockf64.Osuf lseek64.Osuf open64.Osuf \
-		preseek64.Osuf read64.Osuf stream64.Osuf write64.Osuf RfioTURL.Osuf $(OBSOLETE_OBJS)
+		preseek64.Osuf read64.Osuf stream64.Osuf write64.Osuf RfioTURL.Osuf
 SharedLibraryTarget(castorrfio,$(RFIOLIB_OBJS),$(DEPLIB),$(LIBS))
 #endif
 

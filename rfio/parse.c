@@ -30,9 +30,7 @@
 #include "stager_client_commandline.h"
 
 extern char *getconfent();
-#if defined(CNS_ROOT)
 extern int rfio_HsmIf_IsCnsFile _PROTO((char *));
-#endif
 EXTERN_C int DLL_DECL Cdomainname _PROTO((char *, int));
 static int rfio_parseln_old _PROTO((char *, char **, char **,int));
 
@@ -223,7 +221,6 @@ static int rfio_parseln_old(name, host, path, ln) /* parse name to host and path
       cp3[0]='\0' ;
       return (1) ;
     }
-#if defined(CNS_ROOT)
     TRACE(3,"rfio","rfio_parseln() check %s against castor root %s",
           name_1,CNS_ROOT);
     if ( rfio_HsmIf_IsCnsFile(name_1) > 0 ) {
@@ -246,7 +243,6 @@ static int rfio_parseln_old(name, host, path, ln) /* parse name to host and path
             *host,*path);
       return(0);
     }
-#endif /* CNS_ROOT */
     {
       int sav_serrno = serrno;
       cp2 = getconfent("RFIO","NFS_ROOT", 0);

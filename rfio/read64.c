@@ -1,5 +1,5 @@
 /*
- * $Id: read64.c,v 1.5 2008/07/31 07:09:13 sponcec3 Exp $
+ * $Id: read64.c,v 1.6 2009/01/09 14:47:39 sponcec3 Exp $
  */
 
 /*
@@ -57,7 +57,6 @@ int rfio_read64_v2(s, ptr, size)
      int     s, size;
 {
   int status ;  /* Status and return code from remote   */
-  int HsmType, save_errno;
   int nbytes ;   /* Bytes still to read   */
   int s_index;
   char tmpbuf[21];
@@ -77,35 +76,12 @@ int rfio_read64_v2(s, ptr, size)
 #endif
 
   /*
-   * Check HSM type. The CASTOR HSM uses normal RFIO (local or remote)
-   * to perform the I/O. Thus we don't call rfio_HsmIf_read().
-   */
-  HsmType = rfio_HsmIf_GetHsmType(s,NULL);
-  if ( HsmType > 0 ) {
-    if ( HsmType != RFIO_HSM_CNS ) {
-      status = rfio_HsmIf_read(s,ptr,size);
-      if ( status == -1 ) {
-        save_errno = errno;
-        rfio_HsmIf_IOError(s,errno);
-        errno = save_errno;
-      }
-      END_TRACE();
-      return(status);
-    }
-  }
-
-  /*
    * The file is local.
    */
   if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) == -1) {
     TRACE(2,"rfio","rfio_read: using local read(%d, %x, %d)", s, ptr, nbytes);
     status = read(s, ptr, nbytes);
     if ( status < 0 ) serrno = 0;
-    if ( HsmType == RFIO_HSM_CNS ) {
-      save_errno = errno;
-      rfio_HsmIf_IOError(s,errno);
-      errno = save_errno;
-    }
     END_TRACE();
 
     rfio_errno = 0;
@@ -222,8 +198,6 @@ int rfio_read64_v2(s, ptr, size)
     if ( (status= rfio_filbuf64(s,ptr,size)) < 0 ) {
       TRACE(2,"rfio","rfio_read64: rfio_filbuf64 returned %d",status);
       rfilefdt[s_index]->readissued= 0 ;
-      if ( HsmType == RFIO_HSM_CNS )
-        rfio_HsmIf_IOError(s,(rfio_errno > 0 ? rfio_errno : serrno));
       END_TRACE() ;
       return status ;
     }
@@ -303,8 +277,6 @@ int rfio_read64_v2(s, ptr, size)
     TRACE(2,"rfio","rfio_read64: rfio_filbuf64 returned %d",status);
     if ( status < 0 ) {
       rfilefdt[s_index]->readissued= 0 ;
-      if ( HsmType == RFIO_HSM_CNS )
-        rfio_HsmIf_IOError(s,(rfio_errno > 0 ? rfio_errno : serrno));
       END_TRACE() ;
       return -1 ;
     }

@@ -1,5 +1,5 @@
 /*
- * $Id: close.c,v 1.7 2008/07/31 07:09:13 sponcec3 Exp $
+ * $Id: close.c,v 1.8 2009/01/09 14:47:39 sponcec3 Exp $
  */
 
 /*
@@ -49,7 +49,7 @@ int rfio_close_v2(s)
 {
   char     rfio_buf[BUFSIZ] ;
   char   * p  ;
-  int HsmType, status, status1;
+  int status, status1;
   char  * trp ;  /* Pointer to a temporary buffer  */
   int temp= 0 ;  /* A temporary buffer has been allocated */
   int s_index;
@@ -62,23 +62,10 @@ int rfio_close_v2(s)
   TRACE(1, "rfio", "rfio_close(%d)", s);
 
   /*
-   * Check if file is Hsm. For CASTOR HSM files, the file is
-   * closed using normal RFIO (local or remote) close().
-   */
-  HsmType = rfio_HsmIf_GetHsmType(s,NULL);
-  if ( HsmType > 0 && HsmType != RFIO_HSM_CNS ) {
-    status = rfio_HsmIf_close(s);
-    END_TRACE() ;
-    return(status);
-  }
-  /*
    * The file is local
    */
   if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) == -1) {
-    char upath[CA_MAXHOSTNAMELEN+CA_MAXPATHLEN+2];
 
-    if ( HsmType == RFIO_HSM_CNS )
-      status1 = rfio_HsmIf_getipath(s,upath);
     TRACE(2, "rfio", "rfio_close: using local close(%d)",s) ;
     status= close(s) ;
     if ( status < 0 ) serrno = 0;
@@ -87,17 +74,9 @@ int rfio_close_v2(s)
     /* Client logging */
     rfio_logcl(s);
 #endif
-    if ( HsmType == RFIO_HSM_CNS ) {
-      if ( status1 == 1 ) {
-        status1 = rfio_HsmIf_reqtoput(upath);
-        if ( status1 == 0 ) errno = save_errno;
-      }
-    } else {
-      status1 = 0;
-    }
     END_TRACE() ;
     rfio_errno = 0;
-    return (status ? status : status1) ;
+    return (status ? status : 0) ;
   }
 #if defined (CLIENTLOG)
   /* Client logging */

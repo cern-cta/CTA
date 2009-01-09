@@ -1,5 +1,5 @@
 /*
- * $Id: fclose.c,v 1.16 2008/07/31 07:09:13 sponcec3 Exp $
+ * $Id: fclose.c,v 1.17 2009/01/09 14:47:39 sponcec3 Exp $
  */
 
 /*
@@ -21,11 +21,8 @@
 int DLL_DECL rfio_fclose(fp)             /* Remote file close           */
      RFILE *fp;                      /* Remote file pointer                  */
 {
-  int     HsmType;
   int     save_errno;
   int     status;
-  int     status1;
-
 
   INIT_TRACE("RFIO_TRACE");
   TRACE(1, "rfio", "rfio_fclose(%x)", fp);
@@ -44,31 +41,12 @@ int DLL_DECL rfio_fclose(fp)             /* Remote file close           */
    * The file is local : this is the only way to detect it !
    */
   if (rfio_rfilefdt_findptr(fp,FINDRFILE_WITH_SCAN) == -1) {
-    char upath[CA_MAXHOSTNAMELEN+CA_MAXPATHLEN+2];
-    int fd = fileno((FILE *)fp);
-    HsmType = rfio_HsmIf_GetHsmType(fd,NULL);
-    if ( HsmType > 0 ) {
-      if ( HsmType != RFIO_HSM_CNS ) {
-        status = rfio_HsmIf_close(fd);
-        END_TRACE() ;
-        return(status);
-      }
-      status1 = rfio_HsmIf_getipath(fd,upath);
-    }
     status= fclose((FILE *)fp) ;
     if ( status < 0 ) serrno = 0;
     save_errno = errno;
-    if ( HsmType == RFIO_HSM_CNS ) {
-      if ( status1 == 1 ) {
-        status1 = rfio_HsmIf_reqtoput(upath);
-        if ( status1 == 0 ) errno = save_errno;
-      }
-    } else {
-      status1 = 0;
-    }
     END_TRACE() ;
     rfio_errno = 0;
-    return (status ? status : status1) ;
+    return (status ? status : 0) ;
   }
 
   /*

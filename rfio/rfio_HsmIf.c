@@ -33,28 +33,14 @@
 /*BC Added include for new stager */
 #include "stager_api.h"
 #define MAXPATH 1024
-#include "stage_api.h"
 #include "rfio.h"
 #include "osdep.h"
 #include "stager_client_commandline.h"
-
-#if defined(CNS_ROOT)
-
 
 extern int tStageHostKey;
 extern int tStagePortKey;
 extern int tSvcClassKey;
 extern int tCastorVersionKey;
-
-typedef struct CnsFiles {
-  int s;
-  int mode;
-  int written_to;
-  stage_hsm_t *hsmfile;
-} CnsFiles_t;
-static CnsFiles_t *CnsFilesfdt[MAXRFD];
-static CnsFiles_t dummyCnsFile;
-#endif /* CNS_ROOT */
 
 static int cwdserver_key = -1;
 static int cwdtype_key = -1;
@@ -64,9 +50,7 @@ typedef struct rfio_HsmIf_DIRcontext {
   DIR *dirp;
   char dirpath[CA_MAXPATHLEN+1];
   char *current_entry;
-#if defined(CNS_ROOT)
   struct Cns_filestat Cns_st;
-#endif /* CNS_ROOT */
   struct dirent *de;
   int HsmType;
   int GetStat;
@@ -74,120 +58,23 @@ typedef struct rfio_HsmIf_DIRcontext {
 
 static rfio_HsmIf_DIRcontext_t *HsmDirs[MAXRFD];
 
-#if defined(CNS_ROOT)
 #define FINDCNSFILES_WITH_SCAN     1
 #define FINDCNSFILES_WITHOUT_SCAN  0
-static int rfio_CnsFilesfdt_allocentry _PROTO((int));
-static int rfio_CnsFilesfdt_findentry _PROTO((int,int));
-static int rfio_CnsFilesfdt_freeentry _PROTO((int));
 
 EXTERN_C char *getconfent _PROTO(());   /* CASTOR /etc/castor.conf util */
-int DLL_DECL use_castor2_api _PROTO(());
 
-/*
- * Internal file info. table. Note that those routines do not
- * guarantee atomicity. Concurrent writer threads to a single file
- * may have problems (they would anyway!).
- */
-static int AddCnsFileDescriptor(int fd, int mode, stage_hsm_t *hsmfile) {
-  int s_index;
-  CnsFiles_t *thisCnsFile;
 
-  if ((s_index = rfio_CnsFilesfdt_allocentry(fd)) < 0) {
-    serrno = SEINTERNAL;
-    return(-1);
-  }
-  if ((thisCnsFile = malloc(sizeof(CnsFiles_t))) == NULL) {
-    rfio_CnsFilesfdt_freeentry(s_index);
-    serrno = SEINTERNAL;
-    return(-1);
-  }
-  CnsFilesfdt[s_index]          = thisCnsFile;
-  CnsFilesfdt[s_index]->s       = fd;
-  CnsFilesfdt[s_index]->hsmfile = hsmfile;
-  CnsFilesfdt[s_index]->mode    = mode;
-  CnsFilesfdt[s_index]->written_to = 0;
-  return(0);
-}
-static int SetCnsWrittenTo(int fd) {
-  int s_index;
-
-  if ((s_index = rfio_CnsFilesfdt_findentry(fd,FINDCNSFILES_WITHOUT_SCAN)) < 0) {
-    serrno = SEINTERNAL;
-    return(-1);
-  }
-  if ( CnsFilesfdt[s_index]->hsmfile == NULL ) {
-    serrno = ENOENT;
-    return(-1);
-  }
-  CnsFilesfdt[s_index]->written_to = 1;
-  return(0);
-}
-
-static int GetCnsFileDescriptor(int fd, int *mode, stage_hsm_t **hsmfile,
-                                int *written_to) {
-  int s_index;
-
-  if ((s_index = rfio_CnsFilesfdt_findentry(fd,FINDCNSFILES_WITHOUT_SCAN)) < 0) {
-    serrno = SEINTERNAL;
-    return(-1);
-  }
-  if ( CnsFilesfdt[s_index]->hsmfile == NULL ) {
-    serrno = ENOENT;
-    return(-1);
-  }
-  if ( hsmfile != NULL ) *hsmfile = CnsFilesfdt[s_index]->hsmfile;
-  if ( mode != NULL ) *mode = CnsFilesfdt[s_index]->mode;
-  if ( written_to ) *written_to = CnsFilesfdt[s_index]->written_to;
-  return(0);
-}
-
-static int FindCnsPhysicalPath(char *Cns_path, char **physical_path) {
-  int fd;
-
-  if ( Cns_path == NULL || physical_path == NULL ) return(-1);
-  for ( fd = 0; fd < MAXRFD; fd++ ) {
-    if ( (CnsFilesfdt[fd] == NULL) || (CnsFilesfdt[fd] == &dummyCnsFile) ) continue;
-    if ( (CnsFilesfdt[fd]->hsmfile != NULL) &&
-         strcmp(CnsFilesfdt[fd]->hsmfile->xfile,Cns_path) == 0 ) {
-      *physical_path = CnsFilesfdt[fd]->hsmfile->upath;
-      return(1);
-    }
-  }
-  return(0);
-}
-
-static int DelCnsFileDescriptor(int fd) {
-  int s_index;
-
-  if ((s_index = rfio_CnsFilesfdt_findentry(fd,FINDCNSFILES_WITHOUT_SCAN)) < 0) {
-    serrno = SEINTERNAL;
-    return(-1);
-  }
-  rfio_CnsFilesfdt_freeentry(s_index);
-  return(0);
-}
-static int CnsCleanup(stage_hsm_t **hsmfile) {
-  if ( hsmfile == NULL || *hsmfile == NULL) return(0);
-  if ( (*hsmfile)->xfile != NULL ) free((*hsmfile)->xfile);
-  if ( (*hsmfile)->upath != NULL ) free((*hsmfile)->upath);
-  free(*hsmfile);
-  return(0);
-}
 void rfio_stglog(int type, char *msg) {
   TRACE(3,"rfio","rfio_stglog: %s",msg);
   return;
 }
-#endif /* CNS_ROOT */
 
 int rfio_HsmIf_IsCnsFile(const char *path) {
   int rc = 0;
-#if defined(CNS_ROOT)
   char *q = (char *)path + strlen(CNS_ROOT);
   if ( strncmp(path,CNS_ROOT,strlen(CNS_ROOT)) == 0 &&
        ( *q == '/' || *q == '\0' ) ) rc = 1;
   else if ( *path != '/' && rfio_HsmIf_GetCwdType() == RFIO_HSM_CNS ) rc = 1;
-#endif /* CNS_ROOT */
   return(rc);
 }
 
@@ -232,7 +119,6 @@ int DLL_DECL rfio_HsmIf_IsHsmDirEntry(DIR *HsmDir) {
 
 int DLL_DECL rfio_HsmIf_IsHsmFile(const char *path) {
   int rc = 0;
-
   if ( (rc = rfio_HsmIf_IsCnsFile(path)) == 1 ) return(rc);
   return(rc);
 }
@@ -268,87 +154,44 @@ int DLL_DECL rfio_HsmIf_SetCwdType(int n) {
   return(0);
 }
 
-int DLL_DECL rfio_HsmIf_GetHsmType(int fd, int *WrittenTo) {
-  int rc = -1;
-
-#if defined(CNS_ROOT)
-  {
-    int s_index;
-    if ((s_index = rfio_CnsFilesfdt_findentry(fd,FINDCNSFILES_WITHOUT_SCAN)) >= 0) {
-      if ( CnsFilesfdt[s_index]->hsmfile != NULL ) {
-        rc = RFIO_HSM_CNS;
-        if ( WrittenTo != NULL ) *WrittenTo = CnsFilesfdt[s_index]->written_to;
-      }
-    }
-  }
-#endif /* CNS_ROOT */
-  return(rc);
-}
-
-int DLL_DECL rfio_HsmIf_FindPhysicalPath(char *hsm_path, char **physical_path) {
-  int rc = -1;
-#if defined(CNS_ROOT)
-  rc = FindCnsPhysicalPath(hsm_path,physical_path);
-#endif /* CNS_ROOT */
-
-  return(rc);
-}
-
 int DLL_DECL rfio_HsmIf_access(const char *path, int amode) {
   int rc = -1;
 
-#if defined(CNS_ROOT)
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     rc = Cns_access(path,amode);
   }
-#endif /* CNS_ROOT */
   return(rc);
 }
 
 int DLL_DECL rfio_HsmIf_chdir(const char *path) {
   int rc = -1;
 
-#if defined(CNS_ROOT)
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     if ( (rc = Cns_chdir(path)) == 0)
       rfio_HsmIf_SetCwdType(RFIO_HSM_CNS);
   }
-#endif /* CNS_ROOT */
   return(rc);
 }
 
 int DLL_DECL rfio_HsmIf_chmod(const char *path, mode_t mode) {
   int rc = -1;
 
-#if defined(CNS_ROOT)
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     rc = Cns_chmod(path,mode);
   }
-#endif /* CNS_ROOT */
   return(rc);
 }
 
 int DLL_DECL rfio_HsmIf_chown(const char *path, uid_t new_uid, gid_t new_gid) {
   int rc = -1;
-
-#if defined(CNS_ROOT)
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     rc = Cns_chown(path,new_uid,new_gid);
   }
-#endif /* CNS_ROOT */
   return(rc);
 }
 
 int DLL_DECL rfio_HsmIf_close(int fd) {
-  int rc = -1;
-#if defined(CNS_ROOT)
-  char upath[CA_MAXHOSTNAMELEN+MAXPATH+2];
-
-  rc = rfio_HsmIf_getipath(fd,upath);
-  if (rc == 1)
-    rc = rfio_HsmIf_reqtoput(upath);
-#endif /* CNS_ROOT */
-  return(rc);
+  return 0;
 }
 
 int DLL_DECL rfio_HsmIf_closedir(DIR *dirp) {
@@ -357,7 +200,6 @@ int DLL_DECL rfio_HsmIf_closedir(DIR *dirp) {
   int rc = -1;
 
   tmp = (rfio_HsmIf_DIRcontext_t *)dirp;
-#if defined(CNS_ROOT)
   if ( tmp->HsmType == RFIO_HSM_CNS ) {
     rc = Cns_closedir((Cns_DIR *)(tmp->dirp));
     rfio_HsmIf_DelDirEntry(tmp);
@@ -369,86 +211,39 @@ int DLL_DECL rfio_HsmIf_closedir(DIR *dirp) {
     if (tmp->de != NULL) free(tmp->de);
     free(tmp);
   }
-#endif /* CNS_ROOT */
   return(rc);
 }
 
 int DLL_DECL rfio_HsmIf_creat(const char *path, mode_t mode) {
   int rc = -1;
-
-#if defined(CNS_ROOT)
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     rc = Cns_creat(path,mode);
   }
-#endif /* CNS_ROOT */
   return(rc);
 }
 
 char DLL_DECL *rfio_HsmIf_getcwd(char *buf, int size) {
   char *cwd = NULL;
-
-#if defined(CNS_ROOT)
   if ( rfio_HsmIf_GetCwdType() == RFIO_HSM_CNS )
     cwd = Cns_getcwd(buf, size);
-#endif /* CNS_ROOT */
   return(cwd);
-}
-
-/* Output is: -1 if error */
-/*          :  0 if rfio_HsmIf_reqtoput(name) is NOT to be done */
-/*          :  1 if rfio_HsmIf_reqtoput(name) IS to be done */
-/* Note: name should point to a buffer of size CA_MAXHOSTNAMELEN+MAXPATH+2 */
-int DLL_DECL rfio_HsmIf_getipath(int fd, char *name) {
-  int rc = -1;
-#if defined(CNS_ROOT)
-  int flags, written_to;
-  stage_hsm_t *hsmfile = NULL;
-#endif /* CNS_ROOT */
-
-#if defined(CNS_ROOT)
-  /*
-   * No specific close needed
-   */
-  rc = GetCnsFileDescriptor(fd,&flags,&hsmfile,&written_to);
-  (void)DelCnsFileDescriptor(fd);
-  if ( rc == -1 ) return(-1);
-  if ( (flags & (O_RDONLY|O_RDWR|O_WRONLY)) != O_RDONLY && written_to != 0 )
-    rc = 1;
-  else
-    rc = 0;
-  /* Before cleanup of hsmfile we copy content of name */
-  if (name != NULL) strcpy(name, hsmfile->upath);
-  (void)CnsCleanup(&hsmfile);
-#endif /* CNS_ROOT */
-  return(rc);
 }
 
 int DLL_DECL rfio_HsmIf_mkdir(const char *path, mode_t mode) {
   int rc = -1;
-
-#if defined(CNS_ROOT)
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     rc = Cns_mkdir(path,mode);
   }
-#endif /* CNS_ROOT */
   return(rc);
 }
-
-
-
-
 
 int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64, int streaming) {
   int rc = -1;
   int ret;
   int save_serrno, save_errno;
+  struct Cns_filestat st;
   int* auxVal;
   char ** auxPoint;
-#if defined(CNS_ROOT)
-  stage_hsm_t *hsmfile = NULL;
-  struct Cns_filestat st;
-  void (*this_stglog) _PROTO((int, char *)) = NULL;
-#endif /* CNS_ROOT */
   struct stage_options opts;
   opts.stage_host=NULL;
   opts.stage_port=0;
@@ -473,7 +268,7 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
   }
 
   ret= getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
-#if defined(CNS_ROOT)
+
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     char *mover_protocol_rfio = MOVER_PROTOCOL_RFIO;
     if (streaming) {
@@ -491,252 +286,11 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
      */
     if ( rc == -1 || ((flags & O_TRUNC) != 0)) st.filesize = 0;
 
-    if ((stage_getlog((void (**) _PROTO((int,char *))) &this_stglog) == 0) &&
-        (this_stglog == NULL)) {
-      stage_setlog((void (*) _PROTO((int,char *)))&rfio_stglog);
-    }
-    if (use_castor2_api()) {
-      /** NOW CALL THE NEW STAGER API */
-      struct stage_io_fileresp *response;
-      char *requestId, *url;
+    /** NOW CALL THE NEW STAGER API */
+    struct stage_io_fileresp *response;
+    char *requestId, *url;
 
-      for (;;) {
-        TRACE(3,"rfio","Calling stage_open with: %s %x %x",
-              path, flags, mode);
-        rc = stage_open(NULL,
-                        mover_protocol_rfio,
-                        path,
-                        flags,
-                        mode,
-                        0,
-                        &response,
-                        &requestId,
-                        &opts);
-        save_errno = errno;
-        save_serrno = serrno;
-        if (rc < 0) {
-          if ( (save_serrno == SECOMERR) ||
-               (save_serrno == SETIMEDOUT) ||
-#ifdef _WIN32
-               (save_serrno == WSAECONNREFUSED) ||
-#else
-               (save_serrno == ECONNREFUSED) ||
-#endif
-#ifdef _WIN32
-               (save_errno == WSAECONNREFUSED)
-#else
-               (save_errno == ECONNREFUSED)
-#endif
-               ) {
-            int retrySleepTime;
-            retrySleepTime = 1 + (int)(10.0*rand()/(RAND_MAX+1.0));
-            sleep(retrySleepTime);
-            continue;
-          }
-          return -1;
-        } else break;
-      }
-
-      if (response == NULL) {
-        TRACE(3,"rfio","Received NULL response");
-        serrno = SEINTERNAL;
-        return -1;
-      }
-
-      if (response->errorCode != 0) {
-        TRACE(3,"rfio","stage_open error: %d/%s",
-              response->errorCode, response->errorMessage);
-        serrno = response->errorCode;
-        return -1;
-      }
-
-      url = stage_geturl(response);
-      if (url == 0) {
-        free(response);
-        return -1;
-      }
-
-      /*
-       * Warning, this is a special case for castor2 when a file is recreated
-       * with O_TRUNC but without O_CREAT: the correct behaviour is to
-       * recreate the castorfile and schedule access to the new diskcopy.
-       * However, because of there is no O_CREAT the mover open will fail
-       * to create the new diskcopy. We must therefore add O_CREAT but
-       * only after stage_open() has processed the request and recreated
-       * the castorfile.
-       */
-      if ( (flags & O_TRUNC) == O_TRUNC ) flags |= O_CREAT;
-
-      if (mode64) {
-        rc = rfio_open64(url, flags, mode);
-      } else {
-        rc = rfio_open(url, flags, mode);
-      }
-
-      free(response);
-      free(url);
-    } else {
-      TRACE(3,"rfio","Using OLD stage API\n");
-      /*
-       * Do the work
-       */
-      hsmfile = (stage_hsm_t *)calloc(1,sizeof(stage_hsm_t));
-      hsmfile->xfile = (char *)malloc(strlen(path)+1);
-      hsmfile->upath = (char *)malloc(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN+2);
-      strcpy(hsmfile->xfile,path);
-      hsmfile->size = st.filesize;
-      hsmfile->next = NULL;
-      {
-        struct stgcat_entry stcp_input;
-        int nstcp_output;
-        struct stgcat_entry *stcp_output = NULL;
-
-        memset(&stcp_input, 0, sizeof(struct stgcat_entry));
-        if (strlen(path) > STAGE_MAX_HSMLENGTH) {
-          /* Oupsss... Stager api limitation */
-          if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
-          (void)CnsCleanup(&hsmfile);
-          serrno = SENAMETOOLONG;
-          return(-1);
-        }
-        strcpy(stcp_input.u1.h.xfile,path);
-        if ( (flags & (O_RDONLY|O_RDWR|O_WRONLY)) == O_RDONLY || st.filesize > 0 )
-          rc = stage_in_hsm((u_signed64) 0,          /* Ebusy is possible... */
-                            (int) flags,             /* open flags */
-                            (char *) NULL,           /* hostname */
-                            (char *) NULL,           /* pooluser */
-                            (int) 1,                 /* nstcp_input */
-                            (struct stgcat_entry *) &stcp_input, /* stcp_input */
-                            (int *) &nstcp_output,   /* nstcp_output */
-                            (struct stgcat_entry **) &stcp_output, /* stcp_output */
-                            (int) 0,                 /* nstpp_input */
-                            (struct stgpath_entry *) NULL /* stpp_input */
-                            );
-        else
-          rc = stage_out_hsm((u_signed64) 0,          /* Ebusy is possible... */
-                             (int) flags,             /* open flags */
-                             (mode_t) mode,           /* open mode (c.f. also umask) */
-                             (char *) NULL,           /* hostname */
-                             (char *) NULL,           /* pooluser */
-                             (int) 1,                 /* nstcp_input */
-                             (struct stgcat_entry *) &stcp_input, /* stcp_input */
-                             (int *) &nstcp_output,   /* nstcp_output */
-                             (struct stgcat_entry **) &stcp_output, /* stcp_output */
-                             (int) 0,                       /* nstpp_input */
-                             (struct stgpath_entry *) NULL  /* stpp_input */
-                             );
-        if ( rc == -1 ) {
-          save_serrno = serrno;
-          if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
-          (void)CnsCleanup(&hsmfile);
-          serrno = save_serrno;
-          return(-1);
-        }
-        if ((nstcp_output != 1) || (stcp_output == NULL) || (*(stcp_output->ipath) == '\0')) {
-          /* Impossible */
-          save_serrno = SEINTERNAL;
-          if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
-          (void)CnsCleanup(&hsmfile);
-          serrno = save_serrno;
-          if (stcp_output != NULL) free(stcp_output);
-          return(-1);
-        }
-        strcpy(hsmfile->upath,stcp_output->ipath);
-        free(stcp_output);
-      }
-      if (mode64)
-        rc = rfio_open64(hsmfile->upath,flags,mode);
-      else
-        rc = rfio_open(hsmfile->upath,flags,mode);
-      if ( rc == -1 ) {
-        save_serrno = (rfio_errno > 0 ? rfio_errno : serrno);
-        if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
-        (void)CnsCleanup(&hsmfile);
-        serrno = save_serrno;
-        return(-1);
-      }
-      if ( AddCnsFileDescriptor(rc,flags,hsmfile) == -1 ) {
-        save_serrno = serrno;
-        if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
-        (void)CnsCleanup(&hsmfile);
-        rfio_close(rc);
-        serrno = save_serrno;
-        return(-1);
-      }
-      if ( st.filesize == 0 ) SetCnsWrittenTo(rc);
-      if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
-    }
-  }
-#endif /* CNS_ROOT */
-  return(rc);
-}
-
-int DLL_DECL rfio_HsmIf_open_limbysz(const char *path, int flags, mode_t mode, u_signed64 maxsize, int mode64) {
-  int rc = -1;
-  int ret;
-  int save_serrno;
-#if defined(CNS_ROOT)
-  stage_hsm_t *hsmfile = NULL;
-  struct Cns_filestat st;
-  void (*this_stglog) _PROTO((int, char *)) = NULL;
-#endif /* CNS_ROOT */
-
-#if defined(CNS_ROOT)
-  if ( rfio_HsmIf_IsCnsFile(path) ) {
-    char *mover_protocol_rfio = MOVER_PROTOCOL_RFIO;
-    int* auxVal;
-    char ** auxPoint;
-    struct stage_options opts;
-    opts.stage_host=NULL;
-    opts.stage_port=0;
-    opts.service_class=NULL;
-    opts.stage_version=0;
-
-    ret=Cglobals_get(& tStageHostKey, (void**) &auxPoint,sizeof(void*));
-    if(ret==1){
-      opts.stage_host=*auxPoint;
-    }
-    ret=Cglobals_get(& tStagePortKey, (void**) &auxVal,sizeof(int));
-    if(ret==1){
-      opts.stage_port=*auxVal;
-    }
-    ret=Cglobals_get(& tCastorVersionKey, (void**) &auxVal,sizeof(int));
-    if(ret==1){
-      opts.stage_version=*auxVal;
-    }
-    ret=Cglobals_get(& tSvcClassKey, (void**) &auxPoint,sizeof(void*));
-    if (ret==1){
-      opts.service_class=*auxPoint;
-    }
-
-    ret= getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
-
-    /*
-     * Check if an existing file is going to be updated
-     */
-    memset(&st,'\0',sizeof(st));
-    rc = Cns_stat(path,&st);
-    /*
-     * Make sure that filesize is 0 if file doesn't exist (a
-     * overdoing) or that we will create (stage_out) if O_TRUNC.
-     */
-    if ( rc == -1 || ((flags & O_TRUNC) != 0)) st.filesize = 0;
-    /*
-     * Do the work
-     */
-    hsmfile = (stage_hsm_t *)calloc(1,sizeof(stage_hsm_t));
-    hsmfile->xfile = (char *)malloc(strlen(path)+1);
-    hsmfile->upath = (char *)malloc(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN+2);
-    strcpy(hsmfile->xfile,path);
-    hsmfile->size = st.filesize;
-    hsmfile->next = NULL;
-
-
-    /* New stager API call */
-    if (use_castor2_api()) {
-      struct stage_io_fileresp *response;
-      char *requestId, *url;
-
+    for (;;) {
       TRACE(3,"rfio","Calling stage_open with: %s %x %x",
             path, flags, mode);
       rc = stage_open(NULL,
@@ -744,146 +298,81 @@ int DLL_DECL rfio_HsmIf_open_limbysz(const char *path, int flags, mode_t mode, u
                       path,
                       flags,
                       mode,
-                      maxsize,
+                      0,
                       &response,
                       &requestId,
                       &opts);
+      save_errno = errno;
+      save_serrno = serrno;
       if (rc < 0) {
-        return -1;
-      }
-
-      if (response == NULL) {
-        TRACE(3,"rfio","Received NULL response");
-        serrno = SEINTERNAL;
-        return -1;
-      }
-
-      if (response->errorCode != 0) {
-        TRACE(3,"rfio","stage_open error: %d/%s",
-              response->errorCode, response->errorMessage);
-        serrno = response->errorCode;
-        return -1;
-      }
-
-      url = stage_geturl(response);
-      if (url == 0) {
-        free(response);
-        return -1;
-      }
-
-      if (mode64) {
-        rc = rfio_open64(url, flags, mode);
-      } else {
-        rc = rfio_open(url, flags, mode);
-      }
-
-      free(response);
-      free(url);
-
-    } else {
-      /* Old stager copatibility mode */
-      if ((stage_getlog((void (**) _PROTO((int,char *))) &this_stglog) == 0) && (this_stglog == NULL)) {
-        stage_setlog((void (*) _PROTO((int,char *)))&rfio_stglog);
-      }
-      {
-        struct stgcat_entry stcp_input;
-        int nstcp_output;
-        struct stgcat_entry *stcp_output = NULL;
-
-        memset(&stcp_input, 0, sizeof(struct stgcat_entry));
-        if (strlen(path) > STAGE_MAX_HSMLENGTH) {
-          /* Oupsss... Stager api limitation */
-          if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
-          (void)CnsCleanup(&hsmfile);
-          serrno = SENAMETOOLONG;
-          return(-1);
+        if ( (save_serrno == SECOMERR) ||
+             (save_serrno == SETIMEDOUT) ||
+#ifdef _WIN32
+             (save_serrno == WSAECONNREFUSED) ||
+#else
+             (save_serrno == ECONNREFUSED) ||
+#endif
+#ifdef _WIN32
+             (save_errno == WSAECONNREFUSED)
+#else
+             (save_errno == ECONNREFUSED)
+#endif
+             ) {
+          int retrySleepTime;
+          retrySleepTime = 1 + (int)(10.0*rand()/(RAND_MAX+1.0));
+          sleep(retrySleepTime);
+          continue;
         }
-        strcpy(stcp_input.u1.h.xfile,path);
-        if (maxsize > 0) stcp_input.size = maxsize;
-        if ( (flags & (O_RDONLY|O_RDWR|O_WRONLY)) == O_RDONLY || st.filesize > 0 ) {
-          rc = stage_in_hsm((u_signed64) 0,          /* Ebusy is possible... */
-                            (int) flags,             /* open flags */
-                            (char *) NULL,           /* hostname */
-                            (char *) NULL,           /* pooluser */
-                            (int) 1,                 /* nstcp_input */
-                            (struct stgcat_entry *) &stcp_input, /* stcp_input */
-                            (int *) &nstcp_output,   /* nstcp_output */
-                            (struct stgcat_entry **) &stcp_output, /* stcp_output */
-                            (int) 0,                 /* nstpp_input */
-                            (struct stgpath_entry *) NULL /* stpp_input */
-                            );
-          if ((rc != 0) && (serrno == ERTLIMBYSZ)) {
-            /* It is by definition possible to have 'File limited by size' error on a recall */
-            /* where we specified the maximum number of files to transfer */
-            /* This is called by rfcp.c only btw */
-            rc = 0;
-          }
-        } else {
-          rc = stage_out_hsm((u_signed64) 0,          /* Ebusy is possible... */
-                             (int) flags,             /* open flags */
-                             (mode_t) mode,           /* open mode (c.f. also umask) */
-                             (char *) NULL,           /* hostname */
-                             (char *) NULL,           /* pooluser */
-                             (int) 1,                 /* nstcp_input */
-                             (struct stgcat_entry *) &stcp_input, /* stcp_input */
-                             (int *) &nstcp_output,   /* nstcp_output */
-                             (struct stgcat_entry **) &stcp_output, /* stcp_output */
-                             (int) 0,                       /* nstpp_input */
-                             (struct stgpath_entry *) NULL  /* stpp_input */
-                             );
-        }
-        if ( rc == -1 ) {
-          save_serrno = serrno;
-          if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
-          (void)CnsCleanup(&hsmfile);
-          serrno = save_serrno;
-          return(-1);
-        }
-        if ((nstcp_output != 1) || (stcp_output == NULL) || (*(stcp_output->ipath) == '\0')) {
-          /* Impossible */
-          save_serrno = SEINTERNAL;
-          if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
-          (void)CnsCleanup(&hsmfile);
-          serrno = save_serrno;
-          if (stcp_output != NULL) free(stcp_output);
-          return(-1);
-        }
-        strcpy(hsmfile->upath,stcp_output->ipath);
-        free(stcp_output);
-      }
-      if (mode64)
-        rc = rfio_open64(hsmfile->upath,flags,mode);
-      else
-        rc = rfio_open(hsmfile->upath,flags,mode);
-      if ( rc == -1 ) {
-        save_serrno = (rfio_errno > 0 ? rfio_errno : serrno);
-        if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
-        (void)CnsCleanup(&hsmfile);
-        serrno = save_serrno;
-        return(-1);
-      }
-      if ( AddCnsFileDescriptor(rc,flags,hsmfile) == -1 ) {
-        save_serrno = serrno;
-        if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
-        (void)CnsCleanup(&hsmfile);
-        rfio_close(rc);
-        serrno = save_serrno;
-        return(-1);
-      }
-      if ( st.filesize == 0 ) SetCnsWrittenTo(rc);
-      if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
-
+        return -1;
+      } else break;
     }
+
+    if (response == NULL) {
+      TRACE(3,"rfio","Received NULL response");
+      serrno = SEINTERNAL;
+      return -1;
+    }
+
+    if (response->errorCode != 0) {
+      TRACE(3,"rfio","stage_open error: %d/%s",
+            response->errorCode, response->errorMessage);
+      serrno = response->errorCode;
+      return -1;
+    }
+
+    url = stage_geturl(response);
+    if (url == 0) {
+      free(response);
+      return -1;
+    }
+
+    /*
+     * Warning, this is a special case for castor2 when a file is recreated
+     * with O_TRUNC but without O_CREAT: the correct behaviour is to
+     * recreate the castorfile and schedule access to the new diskcopy.
+     * However, because of there is no O_CREAT the mover open will fail
+     * to create the new diskcopy. We must therefore add O_CREAT but
+     * only after stage_open() has processed the request and recreated
+     * the castorfile.
+     */
+    if ( (flags & O_TRUNC) == O_TRUNC ) flags |= O_CREAT;
+
+    if (mode64) {
+      rc = rfio_open64(url, flags, mode);
+    } else {
+      rc = rfio_open(url, flags, mode);
+    }
+
+    free(response);
+    free(url);
+
   }
-#endif /* CNS_ROOT */
   return(rc);
 }
 
 DIR DLL_DECL *rfio_HsmIf_opendir(const char *path) {
   rfio_HsmIf_DIRcontext_t *tmp = NULL;
   char *p;
-
-#if defined(CNS_ROOT)
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     tmp=(rfio_HsmIf_DIRcontext_t *)malloc(sizeof(rfio_HsmIf_DIRcontext_t));
     if ( tmp == NULL ) return(NULL);
@@ -908,54 +397,22 @@ DIR DLL_DECL *rfio_HsmIf_opendir(const char *path) {
      */
     tmp->GetStat = 1;
   }
-#endif /* CNS_ROOT */
   if ( tmp != NULL && rfio_HsmIf_AddDirEntry(tmp) == -1 ) {
-#if defined(CNS_ROOT)
     (void) Cns_closedir((Cns_DIR *)(tmp->dirp));
     free(tmp->de);
     free(tmp);
-#endif /* CNS_ROOT */
     return(NULL);
   }
   return((DIR *)tmp);
 }
 
-int DLL_DECL rfio_HsmIf_reqtoput(char *name) {
-  int rc = -1;
-  int save_serrno;
-#if defined(CNS_ROOT)
-
-
-  if (use_castor2_api()) {
-    rc = 0;
-  } else {
-    stage_hsm_t hsmfile;
-    void (*this_stglog) _PROTO((int, char *)) = NULL;
-    if ((stage_getlog((void (**) _PROTO((int,char *))) &this_stglog) == 0) && (this_stglog == NULL)) {
-      stage_setlog((void (*) _PROTO((int,char *)))&rfio_stglog);
-    }
-    memset(&hsmfile, 0, sizeof(stage_hsm_t));
-    hsmfile.upath = name;
-    rc = stage_updc_user((char *) NULL, (stage_hsm_t *) &hsmfile);
-    save_serrno = serrno;
-    if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
-    serrno = save_serrno;
-  }
-#endif
-  return(rc);
-}
-
 int DLL_DECL rfio_HsmIf_stat(const char *path, struct stat *st) {
   rfio_HsmIf_DIRcontext_t **myDIRcontext = NULL;
-#if defined(CNS_ROOT)
   struct Cns_filestat statbuf;
-#endif /* CNS_ROOT */
   char *current_entry = NULL;
   char *dirpath = NULL;
   char *p = NULL;
   int rc = -1;
-
-#if defined(CNS_ROOT)
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     Cglobals_get(&DIRcontext_key,(void **)&myDIRcontext,
                  sizeof(rfio_HsmIf_DIRcontext_t));
@@ -988,21 +445,16 @@ int DLL_DECL rfio_HsmIf_stat(const char *path, struct stat *st) {
       st->st_ctime = statbuf.ctime;
     }
   }
-#endif /* CNS_ROOT */
   return(rc);
 }
 
 int DLL_DECL rfio_HsmIf_stat64(const char *path, struct stat64 *st) {
   rfio_HsmIf_DIRcontext_t **myDIRcontext = NULL;
-#if defined(CNS_ROOT)
   struct Cns_filestat statbuf;
-#endif /* CNS_ROOT */
   char *current_entry = NULL;
   char *dirpath = NULL;
   char *p = NULL;
   int rc = -1;
-
-#if defined(CNS_ROOT)
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     Cglobals_get(&DIRcontext_key,(void **)&myDIRcontext,
                  sizeof(rfio_HsmIf_DIRcontext_t));
@@ -1035,19 +487,13 @@ int DLL_DECL rfio_HsmIf_stat64(const char *path, struct stat64 *st) {
       st->st_ctime = statbuf.ctime;
     }
   }
-#endif /* CNS_ROOT */
   return(rc);
 }
 
 int DLL_DECL rfio_HsmIf_read(int fd, void *buffer, int size) {
   int rc = -1;
-
-#if defined(CNS_ROOT)
-  /*
-   * For CASTOR HSM this is a no-op.
-   */
+  // For CASTOR HSM this is a no-op.
   rc = size;
-#endif /* CNS_ROOT */
   return(rc);
 }
 
@@ -1055,12 +501,9 @@ struct dirent DLL_DECL *rfio_HsmIf_readdir(DIR *dirp) {
   rfio_HsmIf_DIRcontext_t *tmp = NULL;
   rfio_HsmIf_DIRcontext_t **myDIRcontext = NULL;
   struct dirent *tmpdirent = NULL;
-#if defined(CNS_ROOT)
   struct Cns_direnstat *tmp_ds;
-#endif /* CNS_ROOT */
 
   tmp = (rfio_HsmIf_DIRcontext_t *)dirp;
-#if defined(CNS_ROOT)
   if ( tmp->HsmType == RFIO_HSM_CNS ) {
     if ( tmp->GetStat == 0 )
       tmpdirent = Cns_readdir((Cns_DIR *)(tmp->dirp));
@@ -1091,277 +534,60 @@ struct dirent DLL_DECL *rfio_HsmIf_readdir(DIR *dirp) {
                  sizeof(rfio_HsmIf_DIRcontext_t *));
     if ( myDIRcontext != NULL ) *myDIRcontext = tmp;
   } else serrno = EBADF;
-#endif /* CNS_ROOT */
   return(tmpdirent);
 }
 
 int DLL_DECL rfio_HsmIf_rename(const char *opath, const char *npath) {
   int rc = -1;
-
-#if defined(CNS_ROOT)
   if ( rfio_HsmIf_IsCnsFile(opath) &&
        rfio_HsmIf_IsCnsFile(npath) ) {
     rc =Cns_rename(opath,npath);
   }
-#endif /* CNS_ROOT */
   return(rc);
 }
 
 void DLL_DECL rfio_HsmIf_rewinddir(DIR *dirp) {
   rfio_HsmIf_DIRcontext_t *tmp = NULL;
-
   tmp = (rfio_HsmIf_DIRcontext_t *)dirp;
-#if defined(CNS_ROOT)
   if ( tmp->HsmType == RFIO_HSM_CNS )
     Cns_rewinddir((Cns_DIR *)(tmp->dirp));
-#endif /* CNS_ROOT */
   return;
 }
 
 int DLL_DECL rfio_HsmIf_rmdir(const char *path) {
   int rc = -1;
-
-#if defined(CNS_ROOT)
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     rc = Cns_rmdir(path);
   }
-#endif /* CNS_ROOT */
   return(rc);
 }
 
 int DLL_DECL rfio_HsmIf_unlink(const char *path) {
   int rc = -1;
-
-#if defined(CNS_ROOT)
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     rc = Cns_unlink(path);
   }
-#endif /* CNS_ROOT */
   return(rc);
 }
 
 int DLL_DECL rfio_HsmIf_write(int fd, void *buffer, int size) {
   int rc = -1;
-
-#if defined(CNS_ROOT)
-  /*
-   * For CASTOR HSM this is a no-op.
-   */
+  // For CASTOR HSM this is a no-op.
   rc = size;
-#endif /* CNS_ROOT */
   return(rc);
 }
 
 int DLL_DECL rfio_HsmIf_FirstWrite(int fd, void *buffer, int size) {
-  int rc = 0;
-  int flags, written_to;
-  int save_serrno;
-#if defined(CNS_ROOT)
-  stage_hsm_t *hsmfile;
-  void (*this_stglog) _PROTO((int, char *)) = NULL;
-#endif /* CNS_ROOT */
-
-  if ( size == 0 )
-    return (0);
   if ( size < 0 ) {
     serrno = EINVAL;
     return (-1);
   }
-#if defined(CNS_ROOT)
-
-  if (use_castor2_api()) {
-    rc = 0;
-  } else {
-
-    /*BC Not needed by the new stager anymore */
-    if ( GetCnsFileDescriptor(fd,&flags,&hsmfile,&written_to) < 0 )
-      return (-1);
-    if ( (flags & (O_WRONLY|O_RDWR|O_APPEND)) == 0 ) {
-      serrno = EBADF;
-      return (-1);
-    }
-    if ( written_to )
-      return (0);
-    if ((stage_getlog((void (**) _PROTO((int,char *))) &this_stglog) == 0) && (this_stglog == NULL)) {
-      stage_setlog((void (*) _PROTO((int,char *)))&rfio_stglog);
-    }
-    rc = stage_updc_filchg((char *) NULL,(stage_hsm_t *) hsmfile);
-    save_serrno = serrno;
-    if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
-    serrno = save_serrno;
-    if ( rc == -1 ) return(-1);
-    rc = SetCnsWrittenTo(fd);
-    rc = 0;
-  }
-#endif /* CNS_ROOT */
-  return(rc);
+  return(0);
 }
 
 int DLL_DECL rfio_HsmIf_IOError(int fd, int errorcode) {
   int rc = -1;
-
-#if defined(CNS_ROOT)
-  /*
-   * Should handle ENOSPC on write here
-   */
+  // Should handle ENOSPC on write here
   rc = 0;
-#endif /* CNS_ROOT */
   return(rc);
-}
-
-#if defined(CNS_ROOT)
-/*
- * Seach for a free index in the CnsFilesfdt table
- */
-static int rfio_CnsFilesfdt_allocentry(s)
-     int s;
-{
-#ifdef _WIN32
-  int i;
-  int rc;
-
-  if (Cmutex_lock((void *) CnsFilesfdt,-1) != 0) {
-    return(-1);
-  }
-  /* Scan it */
-
-  for (i = 0; i < MAXRFD; i++) {
-    if (CnsFilesfdt[i] == NULL) {
-      rc = i;
-      CnsFilesfdt[i] = &dummyCnsFile;
-      goto _rfio_CnsFilesfdt_allocentry_return;
-    }
-  }
-
-  serrno = ENOENT;
-  rc = -1;
-
- _rfio_CnsFilesfdt_allocentry_return:
-  if (Cmutex_unlock((void *) CnsFilesfdt) != 0) {
-    return(-1);
-  }
-  return(rc);
-#else /* _WIN32 */
-  return(((s >= 0) && (s < MAXRFD)) ? s : -1);
-#endif /* _WIN32 */
-}
-
-/*
- * Seach for a given index in the CnsFilesfdt table
- * On UNIX, if scanflag is FINDCNSFILES_WITH_SCAN,
- * a scan of table content is performed, otherwise
- * only boundary and content within the boundary
- * is performed.
- */
-static int rfio_CnsFilesfdt_findentry(s,scanflag)
-     int s;
-     int scanflag;
-{
-  int i;
-#ifdef _WIN32
-  int rc;
-
-  if (Cmutex_lock((void *) CnsFilesfdt,-1) != 0) {
-    return(-1);
-  }
-  /* Scan it */
-
-  for (i = 0; i < MAXRFD; i++) {
-    if (CnsFilesfdt[i] != NULL) {
-      if (CnsFilesfdt[i]->s == s) {
-        rc = i;
-        goto _rfio_CnsFilesfdt_findentry_return;
-      }
-    }
-  }
-
-  serrno = ENOENT;
-  rc = -1;
-
- _rfio_CnsFilesfdt_findentry_return:
-  if (Cmutex_unlock((void *) CnsFilesfdt) != 0) {
-    return(-1);
-  }
-  return(rc);
-#else /* _WIN32 */
-  if (scanflag == FINDCNSFILES_WITH_SCAN) {
-    for (i = 0; i < MAXRFD; i++) {
-      if (CnsFilesfdt[i] != NULL) {
-        if (CnsFilesfdt[i]->s == s) {
-          return(i);
-        }
-      }
-    }
-    return(-1);
-  } else {
-    return(((s >= 0) && (s < MAXRFD) && (CnsFilesfdt[s] != NULL)) ? s : -1);
-  }
-#endif /* _WIN32 */
-}
-
-
-/*
- * Free a given index in the CnsFilesfdt table
- * Warning : the argument is REALLY an index
- */
-static int rfio_CnsFilesfdt_freeentry(s)
-     int s;
-{
-#ifdef _WIN32
-  if (Cmutex_lock((void *) CnsFilesfdt,-1) != 0) {
-    return(-1);
-  }
-  if (CnsFilesfdt[s] != NULL) {
-    if (CnsFilesfdt[s] != &dummyCnsFile) free(CnsFilesfdt[s]);
-    CnsFilesfdt[s] = NULL;
-  }
-  if (Cmutex_unlock((void *) CnsFilesfdt) != 0) {
-    return(-1);
-  }
-#else /* _WIN32 */
-  if ((s >= 0) && (s < MAXRFD) && (CnsFilesfdt[s] != NULL)) {
-    if (CnsFilesfdt[s] != &dummyCnsFile) free((char *)CnsFilesfdt[s]);
-    CnsFilesfdt[s] = NULL;
-  }
-#endif /* _WIN32 */
-  return(0);
-}
-#endif /* CNS_ROOT */
-
-/* Function that is saying if we work in old CASTOR1 compat mode (default) or CASTOR2 mode */
-int DLL_DECL use_castor2_api() {
-  /* Function that is saying if we work in old CASTOR1 compat mode (default) or CASTOR2 mode */
-  int ret=0;
-  char** globalHost;
-  char** globalSvc;
-  int* globalVersion;
-  int* globalPort;
-  globalHost=globalSvc=0;
-  globalVersion=globalPort=0;
-
-
-  ret=Cglobals_get(& tCastorVersionKey, (void**) &globalVersion,sizeof(int));
-  if(ret==0 && (*globalVersion==1 ||*globalVersion==2)){
-    return (*globalVersion-1);
-
-  }
-  if (ret<0) return 0;
-
-  /* Let's now find the global variable thread specific */
-
-  ret=Cglobals_get(&tStageHostKey,(void **)&globalHost,sizeof(void*));
-  if (ret<0) return 0;
-
-  ret=Cglobals_get(&tSvcClassKey,(void **)&globalSvc,sizeof(void*));
-  if (ret<0) return 0;
-
-  ret=Cglobals_get(&tStagePortKey,(void **)&globalPort,sizeof(int));
-  if (ret<0) return 0;
-
-  ret=getDefaultForGlobal(globalHost,globalPort,globalSvc,globalVersion);
-  if (ret<0) return 0;
-  if (globalVersion) return (*globalVersion)-1;
-  // This should never happen since getDefaultForGlobal
-  // should always set globalVersion
-  return 0;
 }

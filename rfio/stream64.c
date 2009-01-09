@@ -1,5 +1,5 @@
 /*
- * $Id: stream64.c,v 1.13 2008/11/25 09:53:34 dhsmith Exp $
+ * $Id: stream64.c,v 1.14 2009/01/09 14:47:39 sponcec3 Exp $
  */
 
 /*
@@ -523,7 +523,6 @@ int DLL_DECL rfio_read64_v3(ctrl_sock, ptr, size)
      int     ctrl_sock, size;
 {
   int status ; /* Return code of called func */
-  int HsmType, save_errno;
   char   * p ;  /* Pointer to buffer  */
   fd_set fdvar;
   struct timeval t;
@@ -553,34 +552,11 @@ int DLL_DECL rfio_read64_v3(ctrl_sock, ptr, size)
 #endif
 
   /*
-   * Check HSM type. The CASTOR HSM uses normal RFIO (local or remote)
-   * to perform the I/O. Thus we don't call rfio_HsmIf_read().
-   */
-  HsmType = rfio_HsmIf_GetHsmType(ctrl_sock,NULL);
-  if ( HsmType > 0 ) {
-    if ( HsmType != RFIO_HSM_CNS ) {
-      status = rfio_HsmIf_read(ctrl_sock,ptr,size);
-      if ( status == -1 ) {
-        save_errno = errno;
-        rfio_HsmIf_IOError(ctrl_sock,errno);
-        errno = save_errno;
-      }
-      END_TRACE();
-      return(status);
-    }
-  }
-
-  /*
    * The file is local.
    */
   if ((ctrl_sock_index = rfio_rfilefdt_findentry(ctrl_sock,FINDRFILE_WITHOUT_SCAN)) == -1) {
     TRACE(2, "rfio", "rfio_read64_v3: using local read(%d, %x, %d)", ctrl_sock, ptr, size);
     status = read(ctrl_sock, ptr, size);
-    if ( HsmType == RFIO_HSM_CNS ) {
-      save_errno = errno;
-      rfio_HsmIf_IOError(ctrl_sock,errno);
-      errno = save_errno;
-    }
     END_TRACE();
     rfio_errno = 0;
     return(status);
@@ -711,8 +687,6 @@ int DLL_DECL rfio_read64_v3(ctrl_sock, ptr, size)
           return -1 ;
         }
 
-        if ( HsmType == RFIO_HSM_CNS )
-          rfio_HsmIf_IOError(ctrl_sock,(rfio_errno > 0 ? rfio_errno : serrno));
         END_TRACE();
         return(-1);
       }
@@ -780,7 +754,6 @@ int DLL_DECL rfio_write64_v3(ctrl_sock, ptr, size)
      int     ctrl_sock, size;
 {
   int status ; /* Return code of called func */
-  int HsmType, save_errno, written_to;
   char   * p ; /* Pointer to buffer  */
   fd_set fdvar;
   struct timeval t;
@@ -803,35 +776,11 @@ int DLL_DECL rfio_write64_v3(ctrl_sock, ptr, size)
 #endif
 
   /*
-   * Check HSM type and if file has been written to. The CASTOR HSM
-   * uses normal RFIO (local or remote) to perform the I/O. Thus we
-   * don't call rfio_HsmIf_write().
-   */
-  HsmType = rfio_HsmIf_GetHsmType(ctrl_sock,&written_to);
-  if ( HsmType > 0 ) {
-    if ( written_to == 0 && (status = rfio_HsmIf_FirstWrite(ctrl_sock,ptr,size)) < 0 ) {
-      END_TRACE();
-      return(status);
-    }
-    if ( HsmType != RFIO_HSM_CNS ) {
-      status = rfio_HsmIf_write(ctrl_sock,ptr,size);
-      if ( status == -1 ) rfio_HsmIf_IOError(ctrl_sock,errno);
-      END_TRACE();
-      return(status);
-    }
-  }
-
-  /*
    * The file is local.
    */
   if ((ctrl_sock_index = rfio_rfilefdt_findentry(ctrl_sock,FINDRFILE_WITHOUT_SCAN)) == -1) {
     TRACE(2, "rfio", "rfio_write64_v3: using local write(%d, %x, %d)", ctrl_sock, ptr, size);
     status = write(ctrl_sock, ptr, size);
-    if ( HsmType == RFIO_HSM_CNS ) {
-      save_errno = errno;
-      rfio_HsmIf_IOError(ctrl_sock,errno);
-      errno = save_errno;
-    }
 
     END_TRACE();
     rfio_errno = 0;
@@ -958,7 +907,7 @@ int DLL_DECL rfio_close64_v3(s)
 {
   int      req;
   char     *p  ;
-  int      rcode,status,status1,HsmType;
+  int      rcode,status;
   struct   timeval t;
   fd_set   fdvar;
   char *dummy;
@@ -976,23 +925,9 @@ int DLL_DECL rfio_close64_v3(s)
   TRACE(1, "rfio", "rfio_close64_v3(%d)", s);
 
   /*
-   * Check if file is Hsm. For CASTOR HSM files, the file is
-   * closed using normal RFIO (local or remote) close().
-   */
-  HsmType = rfio_HsmIf_GetHsmType(s,NULL);
-  if ( HsmType > 0 && HsmType != RFIO_HSM_CNS ) {
-    status = rfio_HsmIf_close(s);
-    END_TRACE() ;
-    return(status);
-  }
-  /*
    * The file is local
    */
   if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) == -1) {
-    char upath[CA_MAXHOSTNAMELEN+CA_MAXPATHLEN+2];
-
-    if ( HsmType == RFIO_HSM_CNS )
-      status1 = rfio_HsmIf_getipath(s,upath);
     TRACE(2, "rfio", "rfio_close64_v3: using local close(%d)",s) ;
     status= close(s) ;
     save_errno = errno;
@@ -1000,15 +935,9 @@ int DLL_DECL rfio_close64_v3(s)
     /* Client logging */
     rfio_logcl(s);
 #endif
-    if ( HsmType == RFIO_HSM_CNS ) {
-      if ( status1 == 1 )
-        status1 = rfio_HsmIf_reqtoput(upath);
-      if ( status1 == 0 ) errno = save_errno;
-    } else
-      status1 = 0;
     END_TRACE() ;
     rfio_errno = 0;
-    return (status ? status : status1) ;
+    return (status ? status : 0) ;
   }
 
   /*

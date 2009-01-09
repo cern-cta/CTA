@@ -1,5 +1,5 @@
 /*
- * $Id: open.c,v 1.34 2008/11/25 09:53:34 dhsmith Exp $
+ * $Id: open.c,v 1.35 2009/01/09 14:47:39 sponcec3 Exp $
  */
 
 /*
@@ -102,7 +102,6 @@ int     rfio_cleanup(s)         /* cleanup rfio descriptor              */
      int     s;
 {
   int s_index;
-  int     HsmType;
 
   INIT_TRACE("RFIO_TRACE");
   TRACE(1, "rfio", "rfio_cleanup(%d)", s);
@@ -120,14 +119,6 @@ int     rfio_cleanup(s)         /* cleanup rfio descriptor              */
     TRACE(2, "rfio", "freeing RFIO descriptor at 0X%X", rfilefdt[s_index]);
     rfio_rfilefdt_freeentry(s_index);
     TRACE(2, "rfio", "closing %d",s) ;
-    HsmType = rfio_HsmIf_GetHsmType(s,NULL);
-    if ( HsmType > 0 ) {
-      int status = rfio_HsmIf_close(s);
-      if ( HsmType != RFIO_HSM_CNS ) {
-        END_TRACE();
-        return(status);
-      }
-    }
     (void) close(s) ;
   }
   END_TRACE();
