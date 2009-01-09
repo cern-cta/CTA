@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.45 $ $Date: 2008/02/21 17:28:08 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.46 $ $Date: 2009/01/09 14:44:36 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -137,14 +137,6 @@ EXTERN_C int DLL_DECL rfio_lseek_v3 _PROTO((int, int, int));
 #define lseek64 _lseeki64
 #define open64 open
 #define stat64 _stati64
-#endif
-#if defined(HPSSCLIENT)
-EXTERN_C int rfio_setcos  (int, int, int);
-EXTERN_C int rfio_readlist  (int, int, int, int, int (*worker)(int fd, char *buf, int buflen, off64_t offset),char *,int);
-EXTERN_C int rfio_writelist (int, int, int, int, int (*worker)(int fd, char *buf, int buflen, off64_t offset),char *,int);
-EXTERN_C int rfio_setcos64  (int, off64_t, int);
-EXTERN_C off64_t rfio_readlist64  (int, off64_t, off64_t, int, int (*worker)(int fd, char *buf, int buflen, off64_t offset),char *,int);
-EXTERN_C off64_t rfio_writelist64 (int, off64_t, off64_t, int, int (*worker)(int fd, char *buf, int buflen, off64_t offset),char *,int);
 #endif
 
 #if ! defined(linux) || defined(_LARGEFILE64_SOURCE)

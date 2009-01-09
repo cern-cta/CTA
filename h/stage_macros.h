@@ -1,5 +1,5 @@
 /*
- * $Id: stage_macros.h,v 1.6 2004/03/17 14:02:14 jdurand Exp $
+ * $Id: stage_macros.h,v 1.7 2009/01/09 14:44:36 sponcec3 Exp $
  */
 
 #ifndef __stage_macros_h
@@ -80,11 +80,6 @@
 #endif
 #define ISCASTORFREE4MIG(stcp) (((stcp)->status == STAGEOUT) || ((stcp)->status == (STAGEOUT|PUT_FAILED)) || ((stcp)->status == (STAGEOUT|CAN_BE_MIGR)) || ((stcp)->status == (STAGEOUT|CAN_BE_MIGR|PUT_FAILED)) || ((stcp)->status == (STAGEWRT|CAN_BE_MIGR|PUT_FAILED)))
 
-#ifdef ISHPPSMIG
-#undef ISHPPSMIG
-#endif
-#define ISHPSSMIG(stcp) (((stcp)->t_or_d == 'm') && (((stcp)->status == STAGEPUT) || ((stcp)->status == STAGEWRT)))
-
 #ifdef ISUIDROOT
 #undef ISUIDROOT
 #endif
@@ -99,16 +94,6 @@
 #undef ISROOT
 #endif
 #define ISROOT(uid,gid) (ISUIDROOT(uid) || ISGIDROOT(gid))
-
-#ifdef ISHPSS
-#undef ISHPSS
-#endif
-#define ISHPSS(xfile)   (strncmp (xfile, "/hpss/"  , 6) == 0 || strstr (xfile, ":/hpss/"  ) != NULL)
-
-#ifdef ISHPSSHOST
-#undef ISHPSSHOST
-#endif
-#define ISHPSSHOST(xfile) (strstr(xfile,"hpss") == xfile )
 
 #ifdef ISCASTOR
 #undef ISCASTOR
@@ -135,11 +120,6 @@
 #endif
 #endif
 #endif
-
-#ifdef HPSSFILE
-#undef HPSSFILE
-#endif
-#define HPSSFILE(xfile)   strstr(xfile,"/hpss/")
 
 #ifdef CASTORFILE
 #undef CASTORFILE

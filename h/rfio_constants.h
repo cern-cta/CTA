@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_constants.h,v 1.2 2004/08/12 13:03:57 motiakov Exp $
+ * $Id: rfio_constants.h,v 1.3 2009/01/09 14:44:36 sponcec3 Exp $
  */
 
 /*
@@ -103,9 +103,6 @@
 #define MAXRFD         4096     /* max number of remote file descriptors*/
 #define MAXCOMSIZ      1024     /* Maximum length of a user's command   */
 #define MAXVMSTRING     256     /* Maximum length for VMS string        */
-#if defined(HPSS)
-#define RFIO_MAX_PORTS  10      /* Maximum number of network stripes    */
-#endif /* HPSS */
 
 #define DEFASNFNAM      ".rfassign"     /* default assign file name     */
 
@@ -191,15 +188,6 @@
 #define RQST_REWINDDIR  0x500d          /* request for rewinddir()      */
 #define RQST_RMDIR      0x500e          /* request for rmdir()          */
 #define RQST_CHMOD      0x500f          /* request for chmod()          */
-
-#if defined(HPSS)
-#define RQST_READLIST   0x6002
-#define RQST_WRITELIST  0x6003
-#define RQST_SETCOS     0x6004
-#define RQST_READLIST64 0x6802
-#define RQST_WRITLIST64 0x6803
-#define RQST_SETCOS64   0x6804
-#endif /* HPSS */
 
 #define RQST_OPEN64     0x2801          /* request for open64()         */
 #define RQST_READ64     0x2802          /* request for read64()         */

@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio.h,v $ $Revision: 1.32 $ $Date: 2007/08/10 11:33:49 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio.h,v $ $Revision: 1.33 $ $Date: 2009/01/09 14:44:36 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -50,15 +50,8 @@
 #if ! defined(_WIN32)
 #include <sys/file.h>           /* define L_XTND, L_INCR and L_SET      */
 #endif
-#if defined(_AIX) && defined(_IBMR2)
-#include <sys/select.h>         /*some of the defs are in this file     */
-#endif /* AIX */
 #include <time.h>
-#if defined(HPSS) /* To avoid clash with dce    */
-#include "../h/marshall.h"
-#else /*  HPSS */
 #include <marshall.h>           /* marshalling macros and definitions   */
-#endif /* HPSS */
 #include <serrno.h>             /* special error numbers                */
 #include <trace.h>              /* tracing definitions                  */
 
