@@ -13,15 +13,7 @@ CPPFLAGS = -I../h -I.. $(DFLAGS)
 CFLAGS = $(CPPFLAGS)
 LD = g++
 
-NOMORERFIO = OperatorDir/nomorerfio
-LOGFILE = $(SPOOL)/rfiod.log
-#if BuildNameServerLibrary
-CNS_ROOT_DIR = NsRoot
-CNS_ROOT = -DCNS_ROOT=\"$(CNS_ROOT_DIR)\"
-#endif
-RFIO_ALRM= RfioSpool/RfioAlarmFile
-RFIOFLAGS=-DNOMORERFIO=\"$(NOMORERFIO)\" -DLOGFILE=\"$(LOGFILE)\" \
-	  -DRFIO_ALRM=\"$(RFIO_ALRM)\" $(CNS_ROOT) $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
+RFIOFLAGS=$(STAGERSUPERUSER) $(STAGERSUPERGROUP)
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
