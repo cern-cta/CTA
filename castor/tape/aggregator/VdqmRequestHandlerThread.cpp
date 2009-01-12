@@ -85,6 +85,29 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::run(void *param)
 
   castor::io::ServerSocket *socket = (castor::io::ServerSocket*)param;
 
+  // Log the new connection
+  try {
+    unsigned short port = 0; // Client port
+    unsigned long  ip   = 0; // Client IP
+
+    // Get client IP info
+    socket->getPeerIp(port, ip);
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("IP"  , castor::dlf::IPAddress(ip)),
+      castor::dlf::Param("Port", port)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_VDQM_CONNECTION_WITH_INFO, 2, params);
+
+  } catch(castor::exception::Exception &ex) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("Message" , ex.getMessage().str()),
+      castor::dlf::Param("Code"    , ex.code())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_VDQM_CONNECTION_WITHOUT_INFO, 3, params);
+  }
+
   try {
 
     dispatchRequest(cuuid, *socket);
@@ -175,7 +198,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::dispatchRequest(
   }
   Handler handler = handlerItor->second;
 
-  // Length of message header = 3 * sizeof(uint32_t)
+  // Length of message body buffer = Length of message buffer - length of header
   char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
 
   // If the message body is larger than the message body buffer
@@ -271,7 +294,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::handleJobSubmission(
   const char *p           = bodyBuf;
   size_t     remainingLen = header.len;
   try {
-    Marshaller::unmarshallRcpJobRequestMessage(p, remainingLen, request);
+    Marshaller::unmarshallRcpJobRequestMessageBody(p, remainingLen, request);
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("Function", __PRETTY_FUNCTION__),

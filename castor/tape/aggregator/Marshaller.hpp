@@ -316,7 +316,7 @@ namespace aggregator {
      * return is the number of bytes remaining in the source buffer.
      * @param dst The destination request structure.
      */
-    static void unmarshallRcpJobRequestMessage(const char * &src,
+    static void unmarshallRcpJobRequestMessageBody(const char * &src,
       size_t &srcLen, RcpJobRequestMessage &dst)
       throw(castor::exception::Exception);
 
@@ -359,8 +359,9 @@ namespace aggregator {
      * return is the number of bytes remaining in the source buffer.
      * @param dst The destination reply structure.
      */
-    static void unmarshallRcpJobReplyMessage(const char * &src, size_t &srcLen,
-      RcpJobReplyMessage &dst) throw(castor::exception::Exception);
+    static void unmarshallRcpJobReplyMessageBody(const char * &src,
+      size_t &srcLen, RcpJobReplyMessage &dst)
+      throw(castor::exception::Exception);
 
     /**
      * Marshalls the specified source tape request structure into the specified
@@ -402,7 +403,7 @@ namespace aggregator {
      * return is the number of bytes remaining in the source buffer.
      * @param dst The destination request structure.
      */
-    static void unmarshallRtcpTapeRequestMessage(const char * &src,
+    static void unmarshallRtcpTapeRequestMessageBody(const char * &src,
       size_t &srcLen, RtcpTapeRequestMessage &dst)
       throw(castor::exception::Exception);
 
@@ -447,7 +448,7 @@ namespace aggregator {
      * return is the number of bytes remaining in the source buffer.
      * @param dst The destination message structure.
      */
-    static void unmarshallRtcpAcknowledgeMessage(const char * &src,
+    static void unmarshallRtcpAcknowledgeMessageBody(const char * &src,
       size_t &srcLen, RtcpAcknowledgeMessage &dst)
       throw(castor::exception::Exception);
 
@@ -491,7 +492,7 @@ namespace aggregator {
      * return is the number of bytes remaining in the source buffer.
      * @param dst The destination request structure.
      */
-    static void unmarshallRtcpFileRequestMessage(const char * &src,
+    static void unmarshallRtcpFileRequestMessageBody(const char * &src,
       size_t &srcLen, RtcpFileRequestMessage &dst)
       throw(castor::exception::Exception);
 

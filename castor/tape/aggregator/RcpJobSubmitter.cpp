@@ -282,7 +282,7 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
   try {
     const char *p           = bodyBuf;
     size_t     remainingLen = header.len;
-    Marshaller::unmarshallRcpJobReplyMessage(p, remainingLen, reply);
+    Marshaller::unmarshallRcpJobReplyMessageBody(p, remainingLen, reply);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 

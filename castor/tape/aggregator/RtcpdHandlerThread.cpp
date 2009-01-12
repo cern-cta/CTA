@@ -466,7 +466,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::receiveRtcpAcknowledge(
   try {
     const char *p           = messageBuf;
     size_t     remainingLen = sizeof(messageBuf);
-    Marshaller::unmarshallRtcpAcknowledgeMessage(p, remainingLen, message);
+    Marshaller::unmarshallRtcpAcknowledgeMessageBody(p, remainingLen, message);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EBADMSG);
 
@@ -612,7 +612,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::receiveRtcpTapeRequest(
   try {
     const char *p           = bodyBuf;
     size_t     remainingLen = header.len;
-    Marshaller::unmarshallRtcpTapeRequestMessage(p, remainingLen, request);
+    Marshaller::unmarshallRtcpTapeRequestMessageBody(p, remainingLen, request);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 

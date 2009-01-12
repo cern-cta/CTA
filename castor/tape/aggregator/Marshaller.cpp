@@ -488,9 +488,9 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobRequestMessage(
 
   // Marshall the whole message (header + body)
   char *p = dst;
-  marshallUint32(RTCOPY_MAGIC_OLD0  , p);
-  marshallUint32(VDQM_CLIENTINFO    , p);
-  marshallUint32(len                , p);
+  marshallUint32(RTCOPY_MAGIC_OLD0  , p); // Magic number
+  marshallUint32(VDQM_CLIENTINFO    , p); // Request type
+  marshallUint32(len                , p); // Length of message body
   marshallUint32(src.tapeRequestID  , p);
   marshallUint32(src.clientPort     , p);
   marshallUint32(src.clientEuid     , p);
@@ -522,9 +522,9 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobRequestMessage(
 
 
 //-----------------------------------------------------------------------------
-// unmarshallRcpJobRequestMessage
+// unmarshallRcpJobRequestMessageBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Marshaller::unmarshallRcpJobRequestMessage(
+void castor::tape::aggregator::Marshaller::unmarshallRcpJobRequestMessageBody(
   const char * &src, size_t &srcLen, RcpJobRequestMessage &dst)
   throw(castor::exception::Exception) {
 
@@ -614,9 +614,9 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobReplyMessage(
 
 
 //-----------------------------------------------------------------------------
-// unmarshallRcpJobReplyMessage
+// unmarshallRcpJobReplyMessageBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Marshaller::unmarshallRcpJobReplyMessage(
+void castor::tape::aggregator::Marshaller::unmarshallRcpJobReplyMessageBody(
   const char * &src, size_t &srcLen, RcpJobReplyMessage &dst)
   throw(castor::exception::Exception) {
 
@@ -739,9 +739,9 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpTapeRequestMessage(
 
 
 //-----------------------------------------------------------------------------
-// unmarshallRtcpTapeRequestMessage
+// unmarshallRtcpTapeRequestMessageBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Marshaller::unmarshallRtcpTapeRequestMessage(
+void castor::tape::aggregator::Marshaller::unmarshallRtcpTapeRequestMessageBody(
   const char * &src, size_t &srcLen, RtcpTapeRequestMessage &dst)
   throw(castor::exception::Exception) {
 
@@ -844,9 +844,9 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpAcknowledgeMessage(
 
 
 //-----------------------------------------------------------------------------
-// unmarshallRtcpAcknowledgeMessage
+// unmarshallRtcpAcknowledgeMessageBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Marshaller::unmarshallRtcpAcknowledgeMessage(
+void castor::tape::aggregator::Marshaller::unmarshallRtcpAcknowledgeMessageBody(
   const char * &src, size_t &srcLen, RtcpAcknowledgeMessage &dst)
   throw(castor::exception::Exception) {
 
@@ -987,9 +987,9 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpFileRequestMessage(
 
 
 //-----------------------------------------------------------------------------
-// unmarshallRtcpFileRequestMessage
+// unmarshallRtcpFileRequestMessageBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Marshaller::unmarshallRtcpFileRequestMessage(
+void castor::tape::aggregator::Marshaller::unmarshallRtcpFileRequestMessageBody(
   const char * &src, size_t &srcLen, RtcpFileRequestMessage &dst)
   throw(castor::exception::Exception) {
 
