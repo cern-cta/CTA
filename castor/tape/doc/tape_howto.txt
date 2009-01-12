@@ -1,0 +1,1802 @@
+Development servers
+===================
+
+VDQM servers:
+  lxb8294       (dedicated PC)
+  lxcastordev04 (virtual PC)
+  
+Disk servers:
+  lxc2disk07
+  lxc2disk08
+
+Current tape servers:
+  tpsrv202 (ibmlib1)
+  tpsrv203 (ibmlib1)
+
+Past tape servers (do not use):
+  tpsrv250 (ibmlib3)
+  tpsrv222 (ibmlib3)
+  tpsrv233 (ibmlib1)
+  tpsrv234 (ibmlib1) 
+
+Tape pools:
+  vdqm2_test
+  vdqm2_special
+
+
+How to find SLC4 rpms
+=====================
+
+ssh lxservb04
+cd /var/www/html/swrep/x86_64_slc4
+
+
+How to build the VDQM v2_1_7_20
+===============================
+
+export CVSROOT=":kserver:isscvs.cern.ch:/local/reps/castor"
+export ORACLE_HOME="/afs/cern.ch/project/oracle/@sys/10203"
+export ORACLE_LIB="$ORACLE_HOME/lib"
+export ORACLE_BIN="$ORACLE_HOME/bin"
+# /usr/bin/X11 is in the path for the makedepend command
+export PATH="$ORACLE_BIN:/usr/bin/X11:${PATH}"
+unset LD_LIBRARY_PATH
+
+export MAJOR_CASTOR_VERSION=2.1
+export MINOR_CASTOR_VERSION=7.20
+
+cvs co -r v2_1_7_20 CASTOR2
+cd CASTOR2
+sed -i 's/BuildHsmTools\s\+NO/BuildHsmTools\t\tYES/;s/BuildStageClient\s\+NO/BuildStageClient\tYES/;s/BuildVDQMCpp\s\+NO/BuildVDQMCpp\t\tYES/' config/site.def
+make -f Makefile.ini Makefiles
+make depend
+make; make
+
+
+How to build the head of the VDQM
+=================================
+
+export CVSROOT=":kserver:isscvs.cern.ch:/local/reps/castor"
+export ORACLE_HOME="/afs/cern.ch/project/oracle/@sys/10203"
+export ORACLE_LIB="$ORACLE_HOME/lib"
+export ORACLE_BIN="$ORACLE_HOME/bin"
+# /usr/bin/X11 is in the path for the makedepend command
+export PATH="$ORACLE_BIN:/usr/bin/X11:${PATH}"
+unset LD_LIBRARY_PATH
+
+export MAJOR_CASTOR_VERSION=9.9
+export MINOR_CASTOR_VERSION=9.9
+
+cvs co CASTOR2
+cd CASTOR2
+sed -i 's/BuildHsmTools\s\+NO/BuildHsmTools\t\tYES/;s/BuildVdqmClient\s\+NO/BuildVdqmClient\t\tYES/;s/BuildVDQMCpp\s\+NO/BuildVDQMCpp\t\tYES/' config/site.def
+make -f Makefile.ini Makefiles
+make depend
+make
+
+
+How to increase the maximum number of simultenous XE sessions and processes
+===========================================================================
+
+alter system set sessions=250 scope=spfile;
+alter system set processes=200 scope=spfile;
+
+
+How to disable all of the tapes in a pool
+=========================================
+
+vmgrlisttape -P tape_dev | awk '{print "sudo -u gordon vmgrmodifytape -V " $1 " --st DISABLED";};' > doit.sh
+sh doit.sh
+vmgrlisttape -P tape_dev
+I10547   I10547 IBM_LIB1 700GC    aul tape_dev        700.00GiB 20081103
+DISABLED
+I10548   I10548 IBM_LIB1 700GC    aul tape_dev        700.00GiB 20081024
+DISABLED
+I10549   I10549 IBM_LIB1 700GC    aul tape_dev        700.00GiB 20081013
+DISABLED
+I10550   I10550 IBM_LIB1 700GC    aul tape_dev        700.00GiB 20081028
+DISABLED
+I10551   I10551 IBM_LIB1 700GC    aul tape_dev        700.00GiB 00000000
+DISABLED
+I10552   I10552 IBM_LIB1 700GC    aul tape_dev        700.00GiB 00000000
+DISABLED
+I10553   I10553 IBM_LIB1 700GC    aul tape_dev        700.00GiB 00000000
+DISABLED
+I10554   I10554 IBM_LIB1 700GC    aul tape_dev        700.00GiB 00000000
+DISABLED
+
+
+How to determine the columns of a multi-column unique constraint
+================================================================
+
+[root@lxcastordev04 CASTOR2]# sqlplus castor@castor
+
+SQL*Plus: Release 10.2.0.3.0 - Production on Tue Nov 11 13:41:37 2008
+
+Copyright (c) 1982, 2006, Oracle.  All Rights Reserved.
+
+Enter password:
+
+Connected to:
+Oracle Database 10g Enterprise Edition Release 10.2.0.3.0 - 64bit Production
+With the Partitioning, Real Application Clusters and Data Mining options
+
+SQL> column column_name format a11
+SQL> select index_name
+  from user_constraints
+  where constraint_name = 'TAPESEG';
+
+INDEX_NAME
+------------------------------
+TAPESEG
+
+SQL> select table_name, column_name, column_position
+  from user_ind_columns
+  where index_name = 'TAPESEG';
+
+TABLE_NAME                     COLUMN_NAME COLUMN_POSITION
+------------------------------ ----------- ---------------
+CNS_SEG_METADATA               VID                       1
+CNS_SEG_METADATA               SIDE                      2
+CNS_SEG_METADATA               FSEQ                      3
+
+SQL>
+
+
+How to modify posovl to log its command-line arguments
+======================================================
+
+RCS file: /local/reps/castor/CASTOR2/tape/posovl.c,v
+retrieving revision 1.37
+diff -r1.37 posovl.c
+103a104,135
+> {
+>   int  bufLen = 1024;
+>   char buf[bufLen];
+>   char *arg = NULL;
+>   int  resultLen = 0;
+>   int  argLen = 0;
+>   int  i=0;
+>
+>   for(i=0; i<argc; i++) {
+> //  tplogit(func, "argv[%d]=%s\n", i, argv[i]);
+>
+>     arg    = argv[i];
+>     argLen = strlen(arg);
+>
+>     if(
+>       (resultLen + argLen + 3) > /* 3 = leading space plus 2 quotes */
+>       (bufLen - 3) /* 3 = carriage return (max 2 chars) plus end of string*/
+>     ) {
+>       tplogit(func, "posovl command-line is too long");
+>     } else {
+>       strncpy(&(buf[resultLen]), " '", 2);
+>       resultLen += 2;
+>       strncpy(&(buf[resultLen]), arg, argLen);
+>       resultLen += argLen;
+>       strncpy(&(buf[resultLen]), "'", 1);
+>       resultLen += 1;
+>     }
+>   }
+>   strcpy(&(buf[resultLen]), "\n");
+>   tplogit(func, buf);
+> }
+>
+
+
+How to attach to posovl
+=======================
+
+`ps -ef | grep posovl | grep -v grep | awk '{print "gdb attach " $2;}'`
+
+
+How to use CVS and build CASTOR2
+================================
+
+CVSROOT:
+
+export CVSROOT=:kserver:isscvs.cern.ch:/local/reps/castor
+
+Check out CASTOR2 without using CVSROOT:
+
+cvs -d :kserver:isscvs.cern.ch:/local/reps/castor co CASTOR2
+
+Build CASTOR2 after modifying CASTOR2/config/site.def accordingly:
+
+cd CASTOR2
+make -f Makefile.ini Makefiles
+make depend
+make -j 4; make -j 4
+
+
+How to list the contents of an rpm in the repository
+====================================================
+
+rpm -qlp http://swrepsrv.cern.ch/swrep/x86_64_slc4/castor-vdqm-server-2.1.7-4.x86_64.rpm
+
+
+How to find the test resources
+==============================
+
+Tape drives:
+
+  35923004@tpsrv222
+  35923005@tpsrv250
+
+Tapes:
+
+# vmgrlisttape -P vdqm2_test
+I07754   I07754 IBM_LIB3 700GC    nl  vdqm2_test      700.00GiB 20081006
+I07762   I07762 IBM_LIB3 700GC    nl  vdqm2_test      700.00GiB 20081006
+I07764   I07764 IBM_LIB3 700GC    nl  vdqm2_test      700.00GiB 20081006
+I07766   I07766 IBM_LIB3 700GC    nl  vdqm2_test      700.00GiB 20081006
+I10486   I10486 IBM_LIB3 700GC    aul vdqm2_test      698.68GiB 20081006
+I10487   I10487 IBM_LIB3 700GC    aul vdqm2_test      700.00GiB 20081006
+I10488   I10488 IBM_LIB3 700GC    aul vdqm2_test      700.00GiB 20081006
+I10489   I10489 IBM_LIB3 700GC    aul vdqm2_test      700.00GiB 20081006
+# vmgrlisttape -P vdqm2_special
+T16624   T16624 SL8500_1 500GC    aul vdqm2_special   500.00GiB 00000000
+T20676   T20676 SL8500_1 500GC    aul vdqm2_special   500.00GiB 20080211
+T20815   T20815 SL8600_0 500GC    aul vdqm2_special   500.00GiB 00000000
+T20851   T20851 SL8600_0 500GC    aul vdqm2_special   500.00GiB 00000000
+# vmgrlisttape -P tape_dev
+I10547   I10547 IBM_LIB1 700GC    aul tape_dev        700.00GiB 20081102
+I10548   I10548 IBM_LIB1 700GC    aul tape_dev        700.00GiB 20081024
+I10549   I10549 IBM_LIB1 700GC    aul tape_dev        700.00GiB 20081013
+I10550   I10550 IBM_LIB1 700GC    aul tape_dev        700.00GiB 20081028
+I10551   I10551 IBM_LIB1 700GC    aul tape_dev        700.00GiB 00000000
+I10552   I10552 IBM_LIB1 700GC    aul tape_dev        700.00GiB 00000000
+I10553   I10553 IBM_LIB1 700GC    aul tape_dev        700.00GiB 00000000
+I10554   I10554 IBM_LIB1 700GC    aul tape_dev        700.00GiB 00000000
+
+
+Umbrello service
+================
+
+lxcastorsrv102
+
+
+Database resources
+==================
+
+stage_dev04@castor64
+vdqm_dev04@castor64
+vdqm_dev04_writer@castor64
+
+# vdqm@castordev64
+# vdqm_writer@castordev64
+
+# vdqm@c2vdqmdb
+
+# vdqm@stevelap
+# vdqm_writer@stevelap
+
+
+How to give access rights to create a new tape pool
+===================================================
+
+Cupvadd --user nbessone --group cs --src lxcastordev08.cern.ch --tgt lxcastordev04.cern.ch --priv ADMIN
+
+
+How to create a new tape pool
+=============================
+
+vmgrenterpool --group st --name vdqm2_special --user stage
+
+vmgrenterpool --group st --name nbessone_dev --user stage
+
+
+How to add a tape to a pool
+===========================
+
+vmgrmodifytape -V I50068 -P vdqm2_special
+
+
+How to set up VMGR mount permissions
+====================================
+
+Cupvadd --uid 0 --gid 0 --src '^tpsrv.*.cern.ch' --tgt lxcastordev04 --priv TP_SYSTEM
+
+
+How to set populate a new VMGR database
+=======================================
+
+vmgrenterpool --group st --name tape_dev --user stage
+vmgrentermodel --mo 3592 --ml J --mc 250
+vmgrenterlibrary --name IBM_LIB1 --capacity 6600
+vmgrenterdgnmap -g 3592B1 --mo 3592 --library IBM_LIB1
+vmgrenterdenmap -d 700GC --ml J --mo 3592 --nc 700G
+
+vmgrentertape -V I10547 -v I10547 --mo 3592 --ml J --li IBM_LIB1 -d 700GC -l aul --po tape_dev
+vmgrentertape -V I10548 -v I10548 --mo 3592 --ml J --li IBM_LIB1 -d 700GC -l aul --po tape_dev
+vmgrentertape -V I10549 -v I10549 --mo 3592 --ml J --li IBM_LIB1 -d 700GC -l aul --po tape_dev
+vmgrentertape -V I10550 -v I10550 --mo 3592 --ml J --li IBM_LIB1 -d 700GC -l aul --po tape_dev
+vmgrentertape -V I10551 -v I10551 --mo 3592 --ml J --li IBM_LIB1 -d 700GC -l aul --po tape_dev
+vmgrentertape -V I10552 -v I10552 --mo 3592 --ml J --li IBM_LIB1 -d 700GC -l aul --po tape_dev
+vmgrentertape -V I10553 -v I10553 --mo 3592 --ml J --li IBM_LIB1 -d 700GC -l aul --po tape_dev
+vmgrentertape -V I10554 -v I10554 --mo 3592 --ml J --li IBM_LIB1 -d 700GC -l aul --po tape_dev
+
+
+VMGR permissions
+================
+
+P_ADMIN vmgr_srv_reclaim
+P_TAPE_OPERATOR vmgr_srv_modifytape
+
+
+How to reclaim a tape
+=====================
+
+Make sure th tape has no file entries in the name server:
+
+nslistape -V I07754
+nsrm the_full_path_name
+
+Set the status of the tape to FULL:
+
+su gordon -c 'vmgrmodifytape -V I07754 --st FULL'
+
+Code generation scripts:
+
+vmgrlisttape -P vdqm2_test | awk '{print "nslisttape -V "$1;}'
+
+vmgrlisttape -P vdqm2_test | awk "{print \"su gordon -c 'vmgrmodifytape -V \"
+\$1 \" --st FULL'\";}"
+
+vmgrlisttape -P vdqm2_test | awk "{print \"su gordon -c 'reclaim -V \" \$1
+\"'\";}"
+
+
+How to determine tape server status
+===================================
+
+  tpstat
+  mt status
+
+
+How to bring a up and down a tape drive
+=======================================
+
+Either:
+  tpmaint --start
+  tpmaint --stop
+
+or:
+  network tpconfig 35923005 up
+  network tpconfig 35923005 down
+
+
+How to modify a quattor template
+================================
+
+[lxadm02] /afs/cern.ch/user/m/murrayc3 > cdbop
+quattor CDB CLI: Version 2.1.14
+Connecting to https://cdbserv.cern.ch...
+Welcome to CDB Command Line Interface
+Opening session...
+[INFO] session opened with ID <YsyZp0uDAQ>
+Type 'help' for more info
+<cdbop@cdbserv.cern.ch: ~> get profiles/profile_lxb1366
+[INFO] 'profiles/profile_lxb1366.tpl': received
+<cdbop@cdbserv.cern.ch: ~> get profiles/profile_lxb
+Display all 4070 possibilities? (y or n)
+<cdbop@cdbserv.cern.ch: ~> !pico profiles/profile_lxb1366.tpl
+<cdbop@cdbserv.cern.ch: ~> up profiles/profile_lxb1366.tpl
+[INFO] '/profiles/profile_lxb1366': scheduled to be updated
+<cdbop@cdbserv.cern.ch: ~> com
+[INFO] '/profiles/profile_lxb1366': will be updated
+please confirm [yes]:
+[INFO] please wait...
+[INFO] commit OK
+<cdbop@cdbserv.cern.ch: ~>
+ 
+[root@lxb1366 root]# ccm-fetch
+[root@lxb1366 root]# ncm-ncd --co castorconf
+
+
+Commands for setting up the environment of a stager client:
+
+export STAGE_HOST=lxb1366.cern.ch
+export RFIO_USE_CASTOR_V2=YES
+export STAGE_SVCCLASS=vdqm2_test
+
+Command for setting up the environment of a VDQM client:
+
+export VDQM_HOST=lab8294.cern.ch
+
+Command used to display the environment of a stager client:
+
+env | egrep "STAGE_HOST|RFIO_USE_CASTOR_V2|STAGE_SVCCLASS"
+
+
+How to upgrage castordev04
+==========================
+
+Stop all daemons
+
+/etc/init.d/dlfserver stop
+/etc/init.d/expertd stop
+/etc/init.d/jobManager stop
+/etc/init.d/rhserver stop
+/etc/init.d/rmMasterDaemon stop
+/etc/init.d/stager stop
+
+
+STAGER DB
+drop
+http://isscvs.cern.ch/cgi-bin/viewcvs-all.cgi/CASTOR2/castor/db/castor_oracle_drop.sqlplus?revision=1.14&root=castor
+create:
+http://isscvs.cern.ch/cgi-bin/viewcvs-all.cgi/CASTOR2/castor/db/castor_oracle_create.sqlplus?revision=1.87&root=castor
+
+ssh murrayc3@lxadm
+cdbop
+get prod/services/castordev/service/castordev04
+!vi prod/services/castordev/service/castordev04.tpl
+up prod/services/castordev/service/castordev04.tpl
+com
+exit
+exit
+
+ssh root@lxcastordev04
+spma_wrapper.sh
+
+Start all daemons
+
+/etc/init.d/dlfserver start
+/etc/init.d/expertd start
+/etc/init.d/jobManager start
+/etc/init.d/rhserver start
+/etc/init.d/rmMasterDaemon start
+/etc/init.d/stager start
+
+Wait 10 seconds for rmMasterDaemon to learn about the existence of the disk
+servers.
+
+for cname  in `nslistclass | grep NAME | awk '{print $2}'` ; do enterFileClass --Name $cname --GetFromCns ; done
+enterSvcClass --Name default --DiskPools default 
+enterSvcClass --Name dev --DiskPools extra
+enterSvcClass --Name diskonly --DiskPools extra --DiskOnlyBehavior yes --ForcedFileClass temp
+moveDiskServer default lxc2disk07.cern.ch
+moveDiskServer extra lxc2disk08.cern.ch
+rmAdminNode -n lxc2disk07.cern.ch -r -R
+rmAdminNode -n lxc2disk08.cern.ch -r -R
+
+
+How to create a new service class
+=================================
+
+enterSvcClass --Name vdqm2_test --NbDrives 2 --TapePools vdqm2_test --DiskPools default
+modifySvcClass --Name vdqm2_test --RemoveDiskPool default
+modifySvcClass --Name vdqm2_test --AddDiskPool vdqm2_test
+
+
+How to add a tape pool to and enable a stream for a service class
+=================================================================
+
+modifySvcClass --Name default --AddTapePools vdqm2_test
+modifySvcClass --Name default --NbDrives 1
+
+
+How to configure LSF
+====================
+
+Add a new queue with the same name as the service class:
+  cd /usr/local/lsf/mnt/conf/lsbatch/c2test/configdir/
+  vi lsb.queues
+
+Add a new resource with the same name as the service class:
+  cd /usr/local/lsf/mnt/conf/
+  vi ego.shared
+
+Map one of the disk servers to the service class:
+  cd /usr/local/lsf/mnt/conf/
+  vi ego.cluster.c2test
+
+Load the new configuration
+  badmin reconfig
+  bqueues
+  lsadmin reconfig
+  bhosts
+  lshosts
+  moveDiskServer vdqm2_test lxfsrk5502.cern.ch
+  service lsf restart
+
+
+How to restart the CASTOR servers within a stager
+=================================================
+
+/etc/init.d/rechandler restart
+/etc/init.d/stager restart
+/etc/init.d/rtcpclientd restart
+/etc/init.d/jobManager restart
+/etc/init.d/mighunter restart default
+
+
+How to create files full of random data
+=======================================
+
+dd if=/dev/urandom of=/tmp/murrayc3/twoGFile bs=1G count=2
+dd if=/dev/urandom of=/tmp/murrayc3/oneGFile bs=1M count=1024
+
+
+How to write a file to the end of a tape using tpwrite
+======================================================
+
+sudo -u stage tpwrite -V I10547 -l aul -F F -q n1 lxc2disk07:/tmp/murrayc3/oneGFile
+sudo -u stage tpwrite -V I10548 -l aul -F F -q n1 lxc2disk07:/tmp/murrayc3/oneGFile
+sudo -u stage tpwrite -V I10549 -l aul -F F -q n1 lxc2disk07:/tmp/murrayc3/oneGFile
+sudo -u stage tpwrite -V I10550 -l aul -F F -q n1 lxc2disk07:/tmp/murrayc3/oneGFile
+sudo -u stage tpwrite -V I10551 -l aul -F F -q n1 lxc2disk07:/tmp/murrayc3/oneGFile
+
+
+How to test the drive down with more request for other tapes
+============================================================
+
+ssh tpsrv202 tpmaint -stop
+sudo -u stage tpread -V I10547 -q 1 -FF lxc2disk07:/dev/null &
+sudo -u stage tpread -V I10548 -q 1 -FF lxc2disk07:/dev/null &
+ssh tpsrv202 tpmaint -start
+sleep 5
+ssh tpsrv202 tpmaint -stop
+
+
+How to test the drive up and down status messages from two drives
+=================================================================
+
+i=0; while true; do let i=i+1; echo -n "$i: "; date; echo "$i: Bringing drive
+up"; ssh tpsrv202 tpconfig 35921001 up; echo "$i: Deleting drive"; vdqm_admin
+-deldrv -dgn 3592B1 -drive 35921001 -server tpsrv202 ; echo "$i: Bringing
+drive down"; ssh tpsrv202 tpconfig 35921001 down; echo "$i: Deleting drive";
+vdqm_admin -deldrv -dgn 3592B1 -drive 35921001 -server tpsrv202 ; done
+
+
+How do execute the same command on all of the tape servers of a DGN
+===================================================================
+
+wassh -c tapeserver/3592b2 -l root 'grep -c "Error in smcmount" /var/spool/tape/log' |sort
+
+
+How to read a segment from tape using tpread
+============================================
+
+sudo -u stage tpread -V I10547 -q 1 -FF lxc2disk07:/dev/null
+sudo -u stage tpread -V I10548 -q 1 -FF lxc2disk07:/dev/null
+
+
+How to write 1000 2G files to the disk cache
+============================================
+
+i=1; while test $i -lt 500; do
+filename=/castor/cern.ch/user/m/murrayc3/vdqm_test2/test$i; echo $filename;
+rfcp twoGFile $filename; let i=i+1; done;
+
+
+How to write many times the same file to several tapes
+======================================================
+
+export VDQM_HOST=lxcastordev04; tapes=`vmgrlisttape -P vdqm2_test | grep  ul| egrep -v "READ-ONLY|DISABLED" | awk '{print $1;}'` ; for tape in $tapes ; do i=0 ; while test $i -lt 10 ; do file=/tmp/murrayc3/oneGFile; cmd="sudo -u stage tpwrite -V $tape -F F -q n1 $file" ; echo $cmd; sh -c "$cmd &" ; let i=i+1 ; done ; done
+
+
+How to read several times the first segment from each of serveral tapes
+=======================================================================
+
+export VDQM_HOST=lxcastordev04; dest=lxc2disk07; tapes=`vmgrlisttape -P vdqm2_test | egrep -v "READ-ONLY|DISABLED" | awk '{print $1;}'`; for tape in $tapes; do i=0; while test $i -lt 10; do cmd="sudo -u stage tpread -V $tape -q 1 -FF ${dest}:/dev/null"; sh -c "$cmd &"; let i=i+1; done; done
+
+export VDQM_HOST=lxcastordev04; dest=lxc2disk07; tapes=`vmgrlisttape -P tape_dev | egrep -v "READ-ONLY|DISABLED" | awk '{print $1;}'`; for tape in $tapes; do i=0; while test $i -lt 10; do cmd="sudo -u stage tpread -V $tape -q 1 -FF ${dest}:/dev/null"; sh -c "$cmd &"; let i=i+1; done; done
+
+export VDQM_HOST=lxcastordev04; dest=lxc2disk08; tapes=`vmgrlisttape -P tape_dev | egrep -v "READ-ONLY|DISABLED" | awk '{print $1;}'`; for tape in $tapes; do i=0; while test $i -lt 10; do cmd="sudo -u stage tpread -V $tape -q 1 -FF ${dest}:/dev/null"; sh -c "$cmd &"; let i=i+1; done; done
+
+
+How to read twice, read and then write, write twice, write and then read
+========================================================================
+
+# Read twice
+export TAPE=I10554; export DISKFILE=lxc2disk07:/tmp/murrayc3/test; ssh root@lxcastordev04 'echo -e "\n\n"`date`" : read read test\n\n" >> /var/spool/vdqm/log'; sh -c "sudo -u stage tpread -V $TAPE -q 1 -FF $DISKFILE &"; sleep 5; sh -c "sudo -u stage tpread -V $TAPE -q 1 -FF $DISKFILE &"
+
+# Read then write
+export TAPE=I10554; export DISKFILE=lxc2disk07:/tmp/murrayc3/test; ssh root@lxcastordev04 'echo -e "\n\n"`date`" : read write test\n\n" >> /var/spool/vdqm/log'; sh -c "sudo -u stage tpread -V $TAPE -q 1 -FF $DISKFILE &"; sleep 5; sh -c "sudo -u stage tpwrite -V $TAPE -F F -q n1 $DISKFILE &"
+
+# Write twice
+export TAPE=I10554; export DISKFILE=lxc2disk07:/tmp/murrayc3/test; ssh root@lxcastordev04 'echo -e "\n\n"`date`" : write write test\n\n" >> /var/spool/vdqm/log'; sh -c "sudo -u stage tpwrite -V $TAPE -F F -q n1 $DISKFILE &" ; sleep 5; sh -c "sudo -u stage tpwrite -V $TAPE -F F -q n1 $DISKFILE &"
+
+# Write then read
+export TAPE=I10554; export DISKFILE=lxc2disk07:/tmp/murrayc3/test; ssh root@lxcastordev04 'echo -e "\n\n"`date`" : write read test\n\n" >> /var/spool/vdqm/log'; sh -c "sudo -u stage tpwrite -V $TAPE -F F -q n1 $DISKFILE &" ; sleep 5; sh -c "sudo -u stage tpread -V $TAPE -q 1 -FF $DISKFILE &"
+
+
+How to remove all drives from the VDQM
+======================================
+
+echo "export VDQM_HOST=lxcastordev04" > tmp.sh
+
+showqueues -D -x | sed 's/@/ /' | awk '{print "echo vdqm_admin -deldrv -dgn " $2 " -drive " $3 " -server " $4 "\nvdqm_admin -deldrv -dgn " $2 " -drive " $3 " -server " $4}' >> tmp.sh
+
+sh tmp.sh
+rm -f tmp.sh
+
+
+How to remove all requests from the VDQM
+========================================
+
+echo "export VDQM_HOST=lxcastordev04" > tmp.sh
+
+showqueues -x | egrep "^Q" | awk '{print "vdqm_admin -delvol -reqid " $5;}' >> tmp.sh
+
+sh tmp.sh
+rm -f tmp.sh
+
+
+How to write 1000 files as one file to a tape and then read them back using dd
+==============================================================================
+
+# Create the files
+i=0; padded=000; while test $i -lt 1000; do if test $i -lt 10; then padded=00$i; elif test $i -lt 100; then padded=0$i; else padded=$i; fi; echo value=${padded} > file${padded}.txt; let i=i+1; done
+
+# Tpwrite the files
+su stage
+bash
+`echo -n "tpwrite -V I10487 -F F -q 1"; i=0; padded=000; while test $i -lt 1000; do if test $i -lt 10; then padded=00$i; elif test $i -lt 100; then padded=0$i; else padded=$i; fi; echo -n " lxc2disk07:/tmp/murrayc3/file${padded}.txt" ; let i=i+1; done; echo`
+
+# Mount the tape
+smc -m -D 5 -h ibmlib3rmc -l /dev/smc -V I10487
+
+# Read all blocks up to and including the two consequtive tape marks at the end
+# of the tape.  First block is block 0
+mt rewind; i=0; while test $i -lt 12; do echo "READING BLOCK $i"; dd if=/dev/nst0 count=1 ibs=256k; let i=i+1; done
+
+
+How to see the status of a tape robot
+=====================================
+
+smc -h ibmlib3rmc -l /dev/smc -q D
+
+
+How to mount, unload and then dismount a tape
+=============================================
+
+smc -m -D 5 -h ibmlib3rmc -l /dev/smc -V I07754
+mt -f /dev/nst0 eject
+smc -d -D 5 -h ibmlib3rmc -l /dev/smc
+
+
+How to set the read priority of tape for a single-mount
+=======================================================
+
+[root@castorsrv203 ~]# vdqmsetpriority -v I02522 -a read -l singleMount -p
+1000
+[root@castorsrv203 ~]# vdqmsetpriority -v I02926 -a read -l singleMount -p
+1000
+[root@castorsrv203 ~]# vdqmlistrequest | egrep "I02522|I02926"
+3889467 3592B1  I02926  read    Nov 12 15:56:24 1000
+3889473 3592B1  I02522  read    Nov 12 15:56:25 1000
+
+
+How to force recalls
+====================
+
+stager_rm -S'*'  -M /castor....
+stager_get -M /castor.....
+
+
+How to test dedications
+===========================
+
+# Hold all requests
+vdqm_admin -dedicate -dgn 3592B1 -drive 35921001 -server tpsrv202 -match host=pippo; vdqm_admin -dedicate -dgn 3592B1 -drive 35921002 -server tpsrv203 -match host=pippo
+
+# Launch read requests
+
+unset DISPLAY; tapes="I10550 I10554"; i=0; while test $i -lt 10; do let i=i+1; for tape in $tapes; do cmd="ssh root@lxc2disk07 sudo -u stage tpread -V $tape -q 1 -FF lxc2disk07:/tmp/murrayc3/test1"; sh -c "$cmd &"; cmd="ssh root@lxc2disk08 sudo -u stage tpread -V $tape -q 1 -FF lxc2disk08:/tmp/murrayc3/test2"; sh -c "$cmd &"; done; done
+
+# Initial VID
+
+ssh root@lxcastordev04 'echo -e "\n\n"`date`" : dedicate test tpsrv202=I10550 tpsrv203=I10554\n\n" >> /var/spool/vdqm/log'; vdqm_admin -dedicate -dgn 3592B1 -drive 35921001 -server tpsrv202 -match vid='I10550'; vdqm_admin -dedicate -dgn 3592B1 -drive 35921002 -server tpsrv203 -match vid='I10554'
+
+# Swapped VID
+
+ssh root@lxcastordev04 'echo -e "\n\n"`date`" : dedicate test tpsrv202=I10554 tpsrv203=I10550\n\n" >> /var/spool/vdqm/log'; vdqm_admin -dedicate -dgn 3592B1 -drive 35921001 -server tpsrv202 -match vid='I10554'; vdqm_admin -dedicate -dgn 3592B1 -drive 35921002 -server tpsrv203 -match vid='I10550'
+
+# Initial host
+
+ssh root@lxcastordev04 'echo -e "\n\n"`date`" : dedicate test tpsrv202=lxc2disk07 tpsrv203=lxc2disk08\n\n" >> /var/spool/vdqm/log'; vdqm_admin -dedicate -dgn 3592B1 -drive 35921001 -server tpsrv202 -match host=lxc2disk07; vdqm_admin -dedicate -dgn 3592B1 -drive 35921002 -server tpsrv203 -match host=lxc2disk08
+
+# Swapped host
+
+ssh root@lxcastordev04 'echo -e "\n\n"`date`" : dedicate test tpsrv202=lxc2disk08 tpsrv203=lxc2disk07\n\n" >> /var/spool/vdqm/log'; vdqm_admin -dedicate -dgn 3592B1 -drive 35921001 -server tpsrv202 -match host=lxc2disk08; vdqm_admin -dedicate -dgn 3592B1 -drive 35921002 -server tpsrv203 -match host=lxc2disk07
+
+# Delete all request so we can now launch a mixture of read and write requests
+
+ssh root@lxc2disk07 killall -2 tpread; ssh root@lxc2disk08 killall -2 tpread
+
+# Launch read and write requests
+
+unset DISPLAY; tapes="I10553 I10554"; i=0; while test $i -lt 10; do let i=i+1; for tape in $tapes; do cmd="ssh root@lxc2disk07 sudo -u stage tpread -V $tape -q 1 -FF /dev/null"; sh -c "$cmd &"; cmd="ssh root@lxc2disk08 sudo -u stage tpread -V $tape -q 1 -FF /dev/null"; sh -c "$cmd &"; cmd="ssh root@lxc2disk07 sudo -u stage tpwrite -V $tape -l aul -F F -q n1 /tmp/murrayc3/oneGFile"; sh -c "$cmd &"; cmd="ssh root@lxc2disk08 sudo -u stage tpwrite -V $tape -l aul -F F -q n1 /tmp/murrayc3/oneGFile"; sh -c "$cmd &"; done; done
+
+# Initial access modes
+
+ssh root@lxcastordev04 'echo -e "\n\n"`date`" : dedicate test tpsrv202=0 tpsrv203=1\n\n" >> /var/spool/vdqm/log'; vdqm_admin -dedicate -dgn 3592B1 -drive 35921001 -server tpsrv202 -match mode=0; vdqm_admin -dedicate -dgn 3592B1 -drive 35921002 -server tpsrv203 -match mode=1
+
+# Swap access modes
+
+ssh root@lxcastordev04 'echo -e "\n\n"`date`" : dedicate test tpsrv202=1 tpsrv203=0\n\n" >> /var/spool/vdqm/log'; vdqm_admin -dedicate -dgn 3592B1 -drive 35921001 -server tpsrv202 -match mode=1; vdqm_admin -dedicate -dgn 3592B1 -drive 35921002 -server tpsrv203 -match mode=0
+
+
+How to generate the database and conversion code
+================================================
+
+ssh murrayc3@seblap.cern.ch
+export CVS_RSH=ssh
+export CVSROOT=:ext:isscvs.cern.ch:/local/reps/castor
+cvs co CASTOR2
+cd CASTOR2
+
+# Use umbrello do modify the UML model
+# Note that DB classes should inherit from IObject and IPeristent
+umbrello codeGeneration/VDQM.xmi
+gencastor codeGeneration/VDQM.xmi
+mv castor/db/oracleSchema.sql castor/vdqm/
+
+# scp files that were upgraded or created
+# Note that .h and CInt.cpp files can be ignored
+DEST=root@lxb8294:/usr/local/src/CASTOR2
+scp castor/db/cnv/DbVolumePriorityCnv.hpp $DEST/castor/db/cnv
+scp castor/db/cnv/DbVolumePriorityCnv.cpp $DEST/castor/db/cnv
+scp castor/vdqm/oracleSchema.sql          $DEST/castor/vdqm
+scp castor/vdqm/VolumePriority.hpp        $DEST/castor/vdqm
+scp castor/vdqm/VolumePriority.cpp        $DEST/castor/vdqm
+scp codeGeneration/VDQM.xmi               $DEST/codeGeneration
+
+# Update the list of database identifier types in Constants.hpp by adding
+# any new object type ids to the end of the ObjectsIds enumeration and by
+# updating the macro OBJECT_IDS_NB appropriately.
+vi castor/Constants.hpp
+
+# Update the list of database identifier types in Constants.cpp by adding
+# any new object type id names to the end of the string array
+# castor::ObjectsIdStrings.
+vi castor/Constants.cpp
+
+How to force recalls
+====================
+
+cd $CASTOR_CVS
+gencastor codeGeneration/VDQM.xmi
+
+
+How to find the disabling of a given tape
+=========================================
+
+Determine the library in which the tape is located:
+vmgrlisttape -V T06162
+
+In this example the output of vmgrlisttape was:
+T06162   T06162 SL8500_1 500GC    aul na48_new1              0B 20080327 FULL
+
+This means the library of tape T06162 was:
+SL8500_1
+
+Determine the DGN of the library:
+vmgrlistdgnmap | grep SL8500_1
+
+In this example the output of vmgrlistdgnmap was:
+T10KR1 T10000 SL8500_1
+
+This means the DGN of the library was:
+T10KR1
+
+Determine the tape servers within the DGN:
+showqueues -x | egrep "^D.*T10KR1" | awk '{print $3}' | sed 's/^[^@]*@//' | sort
+
+Scan the Lemon log file /var/log/edg-fmon-agent.log on each of the tape
+servers for tape disabled messages:
+
+tpsrvs=`showqueues -x | egrep "^D.*T10KR1" | awk '{print $3}' | sed 's/^[^@]*@//' | sort`
+
+for tpsrv in $tpsrvs; do
+  ssh root@$tpsrv 'egrep -H -n "Tape.*has been disabled" /var/log/edg-fmon-agent.log' 2>&1 | sed "s/^/$tpsrv: /" | grep T06162
+done
+
+
+How to delete a tape drive
+==========================
+
+$CASTOR_CVS/vdqm/vdqm_admin -deldrv -dgn 3592B3 -server tpsrv248 -drive 35923002
+$CASTOR_CVS/vdqm/vdqm_admin -deldrv -dgn 3592B3 -server tpsrv249 -drive 35923003
+
+
+How to dedicate a tape drive
+============================
+
+$CASTOR_CVS/vdqm/vdqm_admin -dedicate -dgn 3592B3 -server tpsrv248 -drive 35923002 -match 'vid=I10489'
+$CASTOR_CVS/vdqm/vdqm_admin -dedicate -dgn 3592B3 -server tpsrv249 -drive 35923003 -match 'vid=I10489'
+
+
+How to measure network bandwidth
+================================
+
+#!/usr/bin/perl -w
+
+use strict;
+
+my $query           = "cat /proc/net/dev | grep eth0";
+my $dev_before      = 0;
+my $dev_after       = 0;
+my $delta_t         = 5;
+my $bytes_before    = 0;
+my $bytes_after     = 0;
+my $delta_bytes     = 0;
+my $bytes_per_sec   = 0;
+my $m_bytes_per_sec = 0;
+my $date            = "";
+
+while(1) {
+  $dev_before = `$query`;
+  sleep($delta_t);
+  $dev_after = `$query`;
+
+  if($dev_before =~ m/eth0:(\d+)/) {
+    $bytes_before = $1;
+
+    if($dev_after =~ m/eth0:(\d+)/) {
+      $bytes_after     = $1;
+      $delta_bytes     = $bytes_after - $bytes_before;
+      $bytes_per_sec   = $delta_bytes / $delta_t;
+      $m_bytes_per_sec = $bytes_per_sec / 1024 / 1024;
+      $date            = `date`;
+      chomp($date);
+
+#     print("$date: bytes_before    = $bytes_before\n");
+#     print("$date: bytes_after     = $bytes_after\n");
+#     print("$date: delta_bytes     = $delta_bytes\n");
+#     print("$date: bytes_per_sec   = $bytes_per_sec\n");
+      print("$date: m_bytes_per_sec = $m_bytes_per_sec\n");
+    }
+  }
+}
+
+
+How to install iperf on a 64-bit PC with SLC 4
+==============================================
+
+rpm -ivh http://swrepsrv.cern.ch/swrep/x86_64_slc4/iperf-2.0.2-2.el4.rf.x86_64.rpm
+
+
+How to run iperf
+================
+
+SERVER:
+[root@tpsrv250 ~]# iperf -s -V -p 12345
+
+CLIENT:
+[root@lxfsra1008 ~]# iperf -c tpsrv250 -V -p 12345 -f M -i 5 -t 60
+
+
+How to test the performance of the disk responsible for /tmp
+============================================================
+
+[root@lxfsra1008 ~]# df -h
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/sda3              15G  3.6G   11G  26% /
+/dev/sda1            1012M   63M  898M   7% /boot
+none                 1004M     0 1004M   0% /dev/shm
+/dev/sda2              15G  171M   14G   2% /tmp
+/dev/sda6             2.0G   83M  1.8G   5% /usr/vice/cache
+/dev/sda5             111G  757M  104G   1% /var
+AFS                   8.6G     0  8.6G   0% /afs
+/dev/sdb1             1.5T  2.1G  1.5T   1% /srv/castor/01
+/dev/sdc1             188G  2.1G  186G   2% /srv/castor/02
+/dev/sdd1             188G  2.1G  186G   2% /srv/castor/03
+[root@lxfsra1008 ~]# hdparm -t /dev/sda2
+
+
+How to concatenate 100 x 100M disk files into a single 10G tape file
+====================================================================
+
+`echo -n "./tpwrite -V I10487 -F F -q 1"; i=0; while test $i -lt 100; do echo -n " lxfsra1008:/srv/castor/01/murrayc3/100M" ; let i=i+1; done; echo`
+
+
+How to list the disk servers of repack running with the itdc stager
+===================================================================
+
+sqlplus castor_stager@c2itdcstgdb
+
+with pool as (
+  select id
+  from diskpool
+  where name = 'repack'
+)
+select unique name
+from diskserver
+inner join filesystem
+on diskserver.id = filesystem.diskserver
+inner join pool
+on filesystem.diskpool=pool.id
+order by name;
+
+NAME
+--------------------------------------------------------------------------------
+lxfsra1008.cern.ch
+lxfsrd1206.cern.ch
+lxfsrd1208.cern.ch
+lxfsre0905.cern.ch
+lxfsrk3901.cern.ch
+lxfsrk4106.cern.ch
+
+6 rows selected.
+
+SQL>
+
+
+How to generate a series of random content files
+================================================
+
+#!/bin/sh
+
+MAX_BS=100000
+SIZE=1
+BS=1
+COUNT=1
+CMD="NONE"
+while test $SIZE -le 10000000000; do
+  if test $SIZE -lt $MAX_BS; then
+    let BS=$SIZE
+  else
+    let BS=$MAX_BS
+  fi
+
+  let COUNT=$SIZE/BS
+
+  CMD="dd if=/dev/urandom of=$SIZE bs=$BS count=$COUNT"
+  echo $CMD
+  `$CMD`
+
+  let SIZE=SIZE*10
+done
+
+
+How to create a single 10G tape file using, 1000, 100, 10 small disk files
+==========================================================================
+
+#!/usr/bin/perl -w
+
+use strict;
+
+my $srvs_file      = "~murrayc3/public/castor/repack/disksrvs.txt";
+my @disk_srvs      = `cat $srvs_file`;
+my $disk_file_dir  = "/srv/castor/01/murrayc3";
+my $tape_file_size = 10000000000;
+my $tpwrite        = "$ENV{'CASTOR_CVS'}/rtcopy/tpwrite";
+my $vid            = "I10487";
+my $log_file       = "results.log";
+
+chomp(@disk_srvs);
+
+system("echo -n > $log_file");
+
+my $disk_file_size = 10000000;
+my $nb_files       = 0;
+my $file_index     = 0;
+my $srv_index      = 0;
+my $srv            = "";
+my $cmd            = "";
+
+while($disk_file_size <= $tape_file_size) {
+  $nb_files   = $tape_file_size / $disk_file_size;
+  $file_index = 0;
+  $srv_index  = 0;
+  $cmd        = "$tpwrite -V $vid -F F -q 1";
+
+  while($file_index < $nb_files) {
+    $srv        = $disk_srvs[$srv_index];
+    $cmd        = "$cmd $srv:$disk_file_dir/$disk_file_size";
+    $file_index = $file_index + 1;
+    $srv_index  = $srv_index  + 1;
+
+    if($srv_index == @disk_srvs) {
+      $srv_index = 0;
+    }
+  }
+
+  $cmd = "2>&1 $cmd | tee -a $log_file";
+
+  print("nb_files=$nb_files\n");
+  print("$cmd\n");
+  open(LOG, ">> $log_file") or die("Cannot open $log_file: $!\n");
+  print(LOG "$cmd\n");
+  close(LOG);
+  system($cmd);
+
+  $disk_file_size = $disk_file_size * 10;
+}
+
+
+How to configure rtcpd
+======================
+
+RTCOPYD BUFSZ 5242880
+RTCOPYD MOUNT_TIME 900
+RTCOPYD NB_BUFS 573
+RTCOPYD SELF_MONITOR YES
+
+#RTCOPYD BUFSZ 104857600
+#RTCOPYD MOUNT_TIME 900
+#RTCOPYD NB_BUFS 2
+#RTCOPYD SELF_MONITOR YES
+#RTCOPYD THREAD_POOL 2
+#RTCOPYD DEBUG 1
+#RTCOPYD LOGLEVEL 7
+
+
+How to turn on and off the compression of an IBM 3295 drive
+===========================================================
+
+Turn compression on and check that it is:
+
+mt -f /dev/nst0 compression 1
+# DCE = Data Compression Enable
+sdparm -q --get=DCE --long /dev/nst0
+
+Turn compression off and check that it is:
+
+mt -f /dev/nst0 compression 0
+# DCE = Data Compression Enable
+sdparm -q --get=DCE --long /dev/nst0
+
+
+How to write to tape at full speed
+==================================
+
+# Mount the tape
+smc -h ibmlib3rmc -l /dev/smc -m -D 5 -V I10487
+
+# Turn off compression
+mt -f /dev/nst0 compression 0
+
+# Check compression is off (DCE = Data Compression Enable)
+sdparm -q --get=DCE --long /dev/nst0
+
+# Write 10G of data using the devices default block size (40960 * 262144 = 10G)
+dd if=/dev/zero of=/dev/nst0 bs=262144 count=40960
+
+
+How to create a virtual file of any size independent of disk space
+==================================================================
+
+Example 1:
+Console A:
+rm -f test; mkfifo test; dd if=/dev/zero of=test bs=65536 count=163840
+
+Console B:
+time cat test > /dev/null
+
+
+Example 2:
+Console A:
+cd /var/tmp/murrayc3
+rm -f test; mkfifo test; dd if=/dev/zero of=test bs=65536 count=163840
+
+Console B:
+cd /var/tmp/murrayc3
+rfcp test test_file
+
+Example output wuth final file size error:
+[lxcastordev04] /var/tmp/murrayc3 > rfcp test test_file
+10737418240 bytes in 275 seconds through local (in) and local (out) (38130
+KB/sec)
+10737418240 bytes in remote file
+System error : got 10737418240 bytes instead of 0 bytes
+
+
+How to add a new project to the CASTOR make system
+==================================================
+
+Assuming the following:
+
+  * One wants to build a new project located at CASTOR2/castor/tape/aggregator
+  * One doesn't want to build any manual pages
+
+1. Add the following lines to CASTOR2/config/Project.tmpl
+
+#if BuildAggregatorCpp
+AGGREGATORCPPDIR = aggregator
+TAPECPPDIR = tape
+#endif
+
+2. Add the following condition to the rule for deciding whether or not
+   COMMONCPPDIR should be set to castor
+
+ || BuildAggregatorCpp
+
+   For example:
+
+#if BuildCastorClientCPPLibrary || BuildRHCpp || BuildVDQMCpp || BuildGCCpp ||
+BuildOraCpp || BuildPgCpp || BuildMyCpp || BuildStageDaemonCpp ||
+BuildRmMasterCpp || BuildRmNodeCpp || BuildAggregatorCpp
+COMMONCPPDIR = castor
+#endif
+
+3. Add the following element to the SUBDIRS and DEPENDDIRS macros of
+   CASTOR2/castor/Imakefile:
+
+$(TAPECPPDIR)
+
+4. Add the following line to CASTOR2/config/site.def:
+
+#define BuildAggregatorCpp      YES
+
+
+How to label a tape
+===================
+
+Logon to a tape server and run tplable, please note that the -f option forces
+the labelling to take place if the tape already has data on it:
+
+[root@tpsrv250 ~]# tplabel -D 35923005 -d 700GC -g 3592B3 -l aul -V I10487 -v
+I10487 -f
+
+
+How to run valgrind with the vdqmserver
+=======================================
+
+valgrind -v --leak-check=full --log-file=vdqm_valgrind.log --suppressions=/afs/cern.ch/user/m/murrayc3/public/castor/valgrind/vdqm2.supp /usr/local/src/CASTOR2/castor/vdqm/vdqmserver -f -c /root/castor.conf
+
+valgrind -v --leak-check=full --log-file=vdqm_valgrind.log --suppressions=/afs/cern.ch/user/m/murrayc3/public/castor/valgrind/vdqm2.supp vdqmserver -f -c /root/castor.conf
+
+How to spot memory leaks
+========================
+
+Look at the lost blocks counts after grepping the valgrind log for them:
+
+grep -n "lost in" vdqm_valgrind.log.15729
+
+
+How to print a memory leak with a thread-safe time stamp
+========================================================
+
+if(ptr_tapeDrive->tape() != NULL) {
+  time_t ltime;
+  char buf[50];
+
+  time(&ltime);
+  std::cout << "LEAK!!!!!: " << ctime_r(&ltime, buf);
+}
+
+
+How to create a valgrind supressions file for the VDQM2
+=======================================================
+
+Use a here-document to create the suppressions file:
+
+cat << 'HERE' > vdqm2.supp.test
+{
+   vdqm1
+   Memcheck:Param
+   write(buf)
+   obj:/lib64/tls/libpthread-2.3.4.so
+   fun:snttwrite
+   fun:nttwr
+   fun:nsntwrn
+   fun:nspsend
+   fun:nsdofls
+   fun:nsdo
+   fun:nsdosend
+   fun:nioqrc
+   fun:ttcdrv
+   fun:nioqwa
+   fun:upirtrc
+}
+{
+  Oracle's library, use of uninitialized value
+  Memcheck:Value4
+  obj:*/libclntsh.so*
+}
+{
+  Oracle's library, use of uninitialized value size 8 in clntsh
+  Memcheck:Value8
+  obj:*/libclntsh.so*
+}
+{
+  Oracle's library, use of uninitialized value size 8 in nnz10
+  Memcheck:Value8
+  obj:*/libnnz10.so*
+}
+{
+  Oracle's library, jump depending on uninitialized value in clntsh
+  Memcheck:Cond
+  obj:*/libclntsh.so*
+}
+{
+  Oracle's library, jump depending on uninitialized value in nnz10
+  Memcheck:Cond
+  obj:*/libnnz10.so*
+}
+{
+  Oracle's library, Invalid read of size 8 in nnz10
+  Memcheck:Addr8
+  obj:*libnnz10.so
+}
+{
+   Oracle's call to times
+   Memcheck:Param
+   times(buf)
+   fun:times
+   fun:kghinp
+}
+{
+   Oracle's call to pthread
+   core:PThread
+   fun:pthread_error
+   fun:pthread_mutex_destroy
+   fun:snsbittrm_ts
+}
+{
+   Oracle's call to pthread(2)
+   core:PThread
+   fun:pthread_error
+   fun:pthread_mutex_destroy
+   fun:sltsmxd
+}
+{
+   Oracle's call to free
+   Memcheck:Free
+   obj:*/libclntsh.so*
+}
+{
+   Oracle's mismatch free() / delete / delete
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN6oracle4occi14ConnectionImplD0Ev
+   fun:_ZN6oracle4occi15EnvironmentImpl19terminateConnectionEPNS0_10ConnectionE
+}
+{
+   libc Invalid free() / delete / delete[]
+   Memcheck:Free
+   fun:free
+   obj:/lib/tls/libc-2.3.2.so
+   fun:__libc_freeres
+   fun:_vgw__freeres
+}
+{
+   Oracle leak when creating conneciton
+   Memcheck:Leak
+   fun:malloc
+   obj:/lib/tls/libc-2.3.2.so
+   fun:__nss_database_lookup
+}
+HERE
+
+
+How to test an aggregator VDQM message
+======================================
+
+Use a here-document to create the Makefile:
+
+cat << 'HERE' > Makefile
+CASTOR_SRC = /usr/local/src/CASTOR2
+MAJOR_CASTOR_VERSION = __MAJOR_CASTOR_VERSION__
+MINOR_CASTOR_VERSION = __MINOR_CASTOR_VERSION__
+THREADFLAGS = -pthread -DCTHREAD_POSIX -D_THREAD_SAFE -D_REENTRANT
+CPPFLAGS = -g -pedantic -Wall -Werror -Wno-long-long
+
+default: testaggregator
+
+testaggregator: testaggregator.o
+        g++ $(CPPFLAGS) $(THREADFLAGS) -o $@ $^ -L$(CASTOR_SRC)/shlib -lshift
+
+testaggregator.o: testaggregator.cpp
+        g++ $(CPPFLAGS) $(THREADFLAGS) -o $@ $^ -c -I /usr/local/src/CASTOR2/h
+
+clean:
+        rm -f testaggregator testaggregator.o
+HERE
+
+
+Use a here-document to create the source file:
+
+cat << 'HERE' > testaggregator.cpp
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <Castor_limits.h>
+#include <serrno.h>
+#include <osdep.h>
+#include <net.h>
+#include <Ctape_constants.h>
+#include <Ctape_api.h>
+#include <vdqm_api.h>
+
+#include <string.h>
+#include <errno.h>
+
+int main(int argc, char **argv) {
+    int rc, sock, port, VolReqID;
+    socklen_t len = 0;
+    char *dgn, *VID;
+    struct sockaddr_in sin ; /* Internet address */
+
+    if ( argc < 3 ) {
+        fprintf(stderr,"Usage: %s dgn vid\n",argv[0]);
+        exit(2);
+    }
+    dgn = argv[1];
+    VID = argv[2];
+
+    sock = socket(AF_INET,SOCK_STREAM,0);
+    if ( sock == -1 ) {
+        fprintf(stderr,"socket(): %s\n",strerror(errno));
+        exit(1);
+    }
+
+    /*
+     * Bind to an arbitrary port
+     */
+    port = 0;
+    sin.sin_addr.s_addr = htonl(INADDR_ANY);
+    sin.sin_family = AF_INET;
+    sin.sin_port = htons((u_short)port);
+    rc = bind(sock, (struct sockaddr *)&sin, sizeof(sin));
+    if ( rc == -1 ) {
+        fprintf(stderr,"bind(): %s\n",strerror(errno));
+        exit(1);
+    }
+
+    rc = listen(sock,100);
+    if ( rc == -1 ) {
+        fprintf(stderr,"listen(): %s\n",strerror(errno));
+        exit(1);
+    }
+    /*
+     * Get the port number
+     */
+    len = sizeof(sin);
+    rc = getsockname(sock,(struct sockaddr *)&sin,&len);
+    if ( rc == -1 ) {
+        fprintf(stderr,"getsockname(): %s\n",sstrerror(errno));
+        exit(1);
+    }
+    port = ntohs(sin.sin_port);
+
+    /*
+     * Send the request to read a tape
+     */
+    rc = vdqm_SendAggregatorVolReq(NULL,&VolReqID,VID,dgn, NULL,NULL,
+      WRITE_DISABLE,port);
+    if ( rc == -1 ) {
+        fprintf(stderr,"vdqm_SendAggregatorVolReq(): %s\n",sstrerror(serrno));
+        exit(1);
+    }
+    /*
+     * Wait for connection from a tape server
+     */
+    len = sizeof(sin);
+    rc = accept(sock,(struct sockaddr *)&sin,&len);
+    /*
+     * Start the tape request ...
+     */
+    exit(0);
+}
+HERE
+
+
+How to use the testaggregator command
+=====================================
+
+Login in as root on your development PC and run the testaggregator shell script:
+
+ssh root@lxcastordev04
+~murrayc3/public/castor/test_aggregator/testaggregator.sh
+
+
+How to list a users database jobs
+=================================
+
+select job_name from user_scheduler_jobs order by job_name;
+
+
+How to replace (delete then create) a database job
+==================================================
+
+/**
+ * Table used to monitor the progress of the drive scheduler job.
+ */
+CREATE TABLE SchedulerMonitor(
+  nbJobCalls INTEGER CONSTRAINT NN_SchedulerMonitor_nbJobCall NOT NULL,
+  nbSchedulerCalls INTEGER CONSTRAINT NN_SchedulerMonitor_nbSchdCall NOT NULL,
+  nbAllocations INTEGER CONSTRAINT NN_SchedulerMonitor_nbAlloc NOT NULL,
+  nbNoMatches INTEGER CONSTRAINT NN_SchedulerMonitor_nbNoMatch NOT NULL,
+  nbConflicts INTEGER CONSTRAINT NN_SchedulerMonitor_nbConflict NOT NULL,
+  nbExceptions INTEGER CONSTRAINT NN_SchedulerMonitor_nbExcept NOT NULL
+);
+
+
+/**
+ * Set the intial value of all the counters in the drive scheduler monitor
+ * table to 0.
+ */
+INSERT INTO SchedulerMonitor(nbJobCalls, nbSchedulerCalls, nbAllocations,
+  nbNoMatches, nbConflicts, nbExceptions)
+  VALUES(0, 0, 0, 0, 0, 0);
+COMMIT;
+
+
+/**
+ * Create the drive scheduler job.
+ */
+BEGIN
+  BEGIN
+    DBMS_SCHEDULER.DROP_JOB('scheduler', TRUE);
+  EXCEPTION
+    WHEN OTHERS THEN
+      NULL;
+  END;
+
+  DBMS_SCHEDULER.CREATE_JOB (
+    JOB_NAME        => 'scheduler',
+    JOB_TYPE        => 'PLSQL_BLOCK',
+    JOB_ACTION      => '
+      DECLARE
+        returnVar         NUMBER;
+        tapeDriveIdVar    NUMBER;
+        tapeDriveNameVar  VARCHAR2(255);
+        tapeRequestIdVar  NUMBER;
+        tapeRequestVidVar VARCHAR2(255);
+      BEGIN
+        UPDATE SchedulerMonitor
+          SET nbJobCalls = nbJobCalls + 1;
+
+        LOOP
+          UPDATE SchedulerMonitor
+            SET nbSchedulerCalls = nbSchedulerCalls + 1;
+
+          castorVdqm.allocateDrive(
+            returnVar,
+            tapeDriveIdVar,
+            tapeDriveNameVar,
+            tapeRequestIdVar,
+            tapeRequestVidVar);
+          COMMIT;
+
+          IF returnVar = 1 THEN
+            UPDATE SchedulerMonitor
+              SET nbAllocations = nbAllocations + 1;
+          ELSIF returnVar = 0 THEN
+            UPDATE SchedulerMonitor
+              SET nbNoMatches = nbNoMatches + 1;
+          ELSIF returnVar = -1 THEN
+            UPDATE SchedulerMonitor
+              SET nbConflicts = nbConflicts + 1;
+          END IF;
+
+          EXIT WHEN returnVar = 0;
+        END LOOP;
+
+      EXCEPTION
+        WHEN OTHERS THEN
+          UPDATE SchedulerMonitor
+            SET nbExceptions = nbExceptions + 1;
+      END;',
+    START_DATE      => SYSDATE,
+    REPEAT_INTERVAL => 'SYSDATE + 1/24/60/12', -- 5 seconds
+    ENABLED         => TRUE,
+    COMMENTS        => 'Allocates free drives to volume requests');
+END;
+
+
+/**
+ * Table used to monitor the progress of the volume priority cleaner job.
+ */
+CREATE TABLE PrioCleanerMonitor(
+  nbJobCalls INTEGER CONSTRAINT NN_PrioCleanerMon_nbJobCall NOT NULL,
+  nbDeletes INTEGER CONSTRAINT NN_PrioCleanerMon_nbDelete NOT NULL,
+  nbExceptions INTEGER CONSTRAINT NN_PrioCleanerMon_nbExcept NOT NULL
+);
+
+
+/**
+ * Set the intial value of all the counters in the volume priority cleaner
+ * monitor table to 0.
+ */
+INSERT INTO PrioCleanerMonitor(nbJobCalls, nbDeletes, nbExceptions)
+  VALUES(0, 0, 0);
+COMMIT;
+
+
+/**
+ * Create the volume priority cleaner job.
+ */
+BEGIN
+  BEGIN
+    DBMS_SCHEDULER.DROP_JOB('priocleaner', TRUE);
+  EXCEPTION
+    WHEN OTHERS THEN
+      NULL;
+  END;
+
+  DBMS_SCHEDULER.CREATE_JOB (
+    JOB_NAME        => 'priocleaner',
+    JOB_TYPE        => 'PLSQL_BLOCK',
+    JOB_ACTION      => '
+      DECLARE
+        maxAgeVar            NUMBER := 86400;
+        prioritiesDeletedVar NUMBER := 0;
+      BEGIN
+        UPDATE PrioCleanerMonitor
+          SET nbJobCalls = nbJobCalls + 1;
+
+        castorVdqm.deleteOldVolPriorities(maxAgeVar, prioritiesDeletedVar);
+
+        IF prioritiesDeletedVar > 0 THEN
+          UPDATE PrioCleanerMonitor
+            SET nbDeletes = nbDeletes + prioritiesDeletedVar;
+        END IF;
+      EXCEPTION
+        WHEN OTHERS THEN
+          UPDATE PrioCleanerMonitor
+            SET nbExceptions = nbExceptions + 1;
+      END;',
+    START_DATE      => SYSDATE,
+    REPEAT_INTERVAL => 'SYSDATE + 1/24', -- 1 hour
+    ENABLED         => TRUE,
+    COMMENTS        => 'Deletes old volume priorities');
+END;
+
+
+How to determine which castor servers/daemons listen on which ports
+===================================================================
+
+find -name "*.h*" -exec grep -H PORT {} \; | grep define | egrep "[0-9]" |
+egrep -v 'HPP|MAX|IMPORT|EXPORT|VALID_PORT|EMONBASEOFF' > ports.txt
+
+./castor/client/BaseClient.hpp:#define CSP_RHSERVER_PORT 9002
+./castor/client/BaseClient.hpp:#define CSP_RHSERVER_SEC_PORT 9007
+./castor/rh/Server.hpp:#define CSP_RHSERVER_PORT 9002
+./castor/rh/Server.hpp:#define CSP_RHSERVER_SEC_PORT 9007
+./castor/rh/Server.hpp:#define CSP_NOTIFICATION_PORT 9001
+./castor/Constants.hpp:#define RHSERVER_PORT 9002
+./h/vdqm_constants.h:#define SVDQM_PORT       (5512)
+./h/vdqm_constants.h:#define VDQM_PORT        (5012)
+./h/vdqm_constants.h:#define VDQMBC_PORT      (9390)
+./h/vdqm_constants.h:#define VDQMBC_PORT      (8890)
+./h/stage_constants.h:#define STAGE_PORT 5007
+./h/tape_aggregator_constants.h:#define TAPE_AGGREGATOR_PORT (5070)
+./h/Cns_constants.h:#define CNS_SEC_PORT 5510
+./h/Cns_constants.h:#define CNS_PORT 5010
+./h/Ctape_constants.h:#define STAPE_PORT 5511
+./h/Ctape_constants.h:#define TAPE_PORT 5011
+./h/rmc_constants.h:#define RMC_PORT 5014
+./h/rtcp_constants.h:#define RTCOPY_PORT        (5503)
+./h/rtcp_constants.h:#define RTCOPY_PORT        (5003)
+./h/rtcp_constants.h:#define RTCOPY_PORT_DEBUG  (8889)
+./h/stager_client_api_common.hpp:#define DEFAULT_PORT1 5007
+./h/stager_client_api_common.hpp:#define DEFAULT_PORT2 9002
+./h/stager_client_api_common.hpp:#define DEFAULT_SEC_PORT 9007
+./h/stager_constants.h:#define STAGER_DEFAULT_SECURE_PORT 5515
+/* Default secure port number */
+./h/stager_constants.h:#define STAGER_DEFAULT_PORT        5015
+/* Default port number */
+./h/stager_constants.h:#define STAGER_DEFAULT_NOTIFY_PORT 55015
+/* Default notify port number */
+./h/expert_constants.h:#define EXPERT_PORT 5045
+./h/rfio_constants.h:#define RFIO_PORT 5001
+./h/rfio_constants.h:#define SRFIO_PORT 5501
+./h/Cupv_constants.h:#define SCUPV_PORT 5520
+./h/Cupv_constants.h:#define CUPV_PORT 56013
+./h/dmc.h:#define DMC_PORT 8888
+./h/dmc.h:#define DMC_OP_PORT 8889
+./h/vmgr_constants.h:#define SVMGR_PORT 5513
+./h/vmgr_constants.h:#define VMGR_PORT 5013
+./h/rtcpcld_constants.h:#define RTCPCLD_NOTIFY_PORT (5050)     /* rtcpclientd
+notification (UDP) port */
+./dlf/server.h:#define DEFAULT_SERVER_PORT      5036       /**< the default
+port to listen on                       */
+
+
+How to restart the aggregatord daemons quickly
+==============================================
+
+stopallaggregators.sh;  make -C /usr/local/src/CASTOR2/castor/tape/aggregator; packageaggregator.sh; waitallaggregatordsstopped.sh; distributeaggregator.sh; restartaggregator.sh
+
+
+How to restart the aggregatordaemons completely
+===============================================
+
+stopallaggregators.sh;  make -C /usr/local/src/CASTOR2/castor/tape/aggregator; packageaggregator.sh; waitallaggregatordsstopped.sh; distributeallaggregator.sh; restartaggregator.sh
+
+
+How to use the strace to monitor network access
+===============================================
+
+Original command:
+sudo -u stage tpread -V I10547 -q 1 -FF lxc2disk07:/dev/null
+
+Command with strace:
+sudo -u stage strace -e trace=network -o /tmp/thetrace.txt tpread -V I10547 -q
+1 -FF lxc2disk07:/dev/null
+
+
+How to determine which process is using which TCP/IP port
+=========================================================
+
+[root@lxcastordev04 vdqm]# lsof -i | grep 5013
+vmgrdaemo  4628     root    2u  IPv4  7624051       TCP *:5013 (LISTEN)
+
+
+How to enable access to RFIOD /dev on a disk server
+===================================================
+
+Add or modify the following line in /etc/castor/castor.conf to include /dev
+
+RFIOD PathWhiteList /tmp/murrayc3 /dev
+
+
+How to move the VDQM state of a tape drive from UNKNOWN to FREE
+===============================================================
+
+ssh tpsrv202 tpmaint -stop; ssh tpsrv202 tpmaint -start
+
+
+How to create a sequence diagram
+================================
+
+Install the GNU plotutils package from http://www.gnu.org/software/plotutils
+
+Install UMLGraph from http://www.umlgraph.org, for example:
+
+wget 'http://www.umlgraph.org/UMLGraph-5.2.tar.gz'
+tar -xvzf UMLGraph-5.2.tar.gz
+
+Make a symbolic link to the UMLGraph pic2plot macros for creating UML sequence
+diagrams:
+
+ln -s UMLGraph-5.2/src/sequence.pic sequence.pic
+
+Create a sequence disgram pic2plot source file, for example:
+
+cat << HERE > aggregatord.pic
+.PS
+
+copy "sequence.pic";
+
+# Define the objects
+object(V,"vdqmserver");
+object(A,"aggregatord");
+object(R,"rtcpd");
+
+step();
+
+# Message sequences
+active(V);
+message(V,A,"connect");
+active(A);
+message(V,A,"RcpJob");
+message(A,R,"connect");
+active(R);
+message(A,R,"RcpJob");
+message(R,A,"RcpJobReply");
+message(A,V,"RcpJobReply");
+inactive(A);
+inactive(V);
+message(R,A,"connect");
+active(A);
+message(A,R,"RtcpTapeRequest");
+message(R,A,"RtcpAcknowledge");
+message(R,A,"RtcpTapeRequest");
+message(A,R,"RtcpAcknowledge");
+
+complete(V);
+complete(A);
+complete(R);
+
+.PE
+HERE
+
+Generate the sequence diagram, for example:
+
+pic2plot -T ps aggregatord.pic > out.ps ; gv -scale=4 out.ps
+
+
+How to create a finite state transition network
+===============================================
+
+cat << HERE > vdqm_drive.dot
+digraph finite_state_machine {
+	rankdir=LR;
+	size="8,5"
+	node [shape = doublecircle];
+	START;
+	node [shape = circle];
+	START   -> FREE    [ label = "drive up"                 ];
+	FREE    -> RUNNING [ label = "drive assigned"           ];
+	RUNNING -> RELEASE [ label = "drive released"           ];
+	RELEASE -> FREE    [ label = "drive up"                 ];
+	FREE    -> DOWN    [ label = "drive down"               ];
+	DOWN    -> FREE    [ label = "drive up"                 ];
+	DOWN    -> DOWN    [ label = "job submission succeeded" ];
+	DOWN    -> UNKNOWN [ label = "job submission failed"    ];
+	UNKNOWN -> FREE    [ label = "drive up"                 ];
+}
+HERE
+
+dot -T ps vdqm_drive.dot -o out.ps ; gv out.ps
+
+
+How to see the doxygen output from processing the CASTOR source code
+====================================================================
+
+Open the following web page:
+
+https://savannah.cern.ch/files/?group=castor
+
+Click on the CASTOR2 link of the version to be displayed
+Then click on doc/
+Then click on html/
+
+
+How to run a locally compiled version of RTCPD
+==============================================
+
+cat << HERE > rtcpd.sh
+#!/bin/sh
+CASTOR_CVS=/root/rtcpd/CASTOR2
+export PATH=$CASTOR_CVS/rtcopy
+export LD_LIBRARY_PATH="\
+$CASTOR_CVS/common:\
+$CASTOR_CVS/castor:\
+$CASTOR_CVS/castor/db/cnv:\
+$CASTOR_CVS/dlf:\
+$CASTOR_CVS/expert:\
+$CASTOR_CVS/ns:\
+$CASTOR_CVS/rfio:\
+$CASTOR_CVS/security:castor/db/newora:\
+$CASTOR_CVS/tape:\
+$CASTOR_CVS/upv:\
+$CASTOR_CVS/vdqm:\
+$CASTOR_CVS/vmgr\
+"
+
+$CASTOR_CVS/rtcopy/rtcpd
+HERE
+
+
+How to list the file names that are within a binary's the debug information
+===========================================================================
+
+Try:
+
+objdump -t -j .debug_line ./rtcpd | egrep '\.c$' | awk '{print $6;}'
+
+Or:
+
+[root@tpsrv202 rtcopy]# readelf -wl libcastorrtcopy.so | grep '\.c'
+  1     0       0       0       rtcpc_SendRecv.c
+  1     0       0       0       rtcp_InitNW.c
+  1     0       0       0       rtcpc_log.c
+  1     0       0       0       rtcpc_CallVMGR.c
+  1     0       0       0       rtcp_Listen.c
+  1     0       0       0       rtcpapi.c
+  1     0       0       0       rtcpc_BuildReq.c
+  1     0       0       0       rtcp_RetvalSHIFT.c
+  1     0       0       0       rtcpc_CheckReq.c
+
+[root@tpsrv202 vdqm]# readelf -wl libcastorvdqm.so | grep '\.c'
+  1     0       0       0       vdqmapi.c
+  1     0       0       0       vdqmc_SendRecv.c
+
+Strange:
+
+[root@tpsrv202 rtcopy]# objdump -t -j .debug_line ./rtcpd | egrep '\.c$' | awk
+'{print $6;}' | egrep '_CallVMGR\.c|_CheckReq\.c|_SendRecv\.c|_log\.c'
+rtcp_CallVMGR.c
+rtcp_CheckReq.c
+rtcp_SendRecv.c
+rtcp_log.c
+[root@tpsrv202 rtcopy]# objdump -t -j .debug_line ./libcastorrtcopy.so | egrep
+'\.c$' | awk '{print $6;}' | egrep
+'_CallVMGR\.c|_CheckReq\.c|_SendRecv\.c|_log\.c'
+rtcpc_SendRecv.c
+rtcpc_log.c
+rtcpc_CallVMGR.c
+rtcpc_CheckReq.c
+
