@@ -58,12 +58,17 @@ message(RF,C,"connect");
 message(RF,C,"connect");
 
 create_message(RF,A,"abort");
+active(A);
 
 create_message(RF,T,"tape IO");
+active(T);
 
 create_message(RF,D1,"disk IO 1");
+active(D1);
 create_message(RF,D2,"disk IO 2");
+active(D2);
 create_message(RF,D3,"disk IO 3");
+active(D3);
 
 message(T,C,"UNKNOWN file1");
 message(T,C,"RTCP_POSITIONED file1");
@@ -72,12 +77,19 @@ message(T,C,"UNKNOWN file2");
 message(T,C,"RTCP_POSITIONED file2");
 
 message(D1,C,"RTCP_FINISHED file1");
+message(C,D1,"acknowledge");
+inactive(D1);
 
 message(D2,C,"RTCP_FINISHED file2");
+message(C,D2,"acknowledge");
+inactive(D2);
 
 message(T,C,"RTCP_ENDOF_REQ");
 message(C,T,"acknowledge");
+inactive(T);
 
+inactive(D3);
+inactive(A);
 inactive(RF);
 inactive(C);
 
