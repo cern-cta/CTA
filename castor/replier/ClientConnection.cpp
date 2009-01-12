@@ -386,9 +386,11 @@ void castor::replier::ClientConnection::send()
 	     << " WRITE FAILURE (isLast:"
 	     << ((message.isLast)?1:0)
 	     << ") rc:" << rc
-	     <<  " (len:" << buflen << ")"
-	     << (errno != 0) ? "error: " << strerror(errno) : ""
-             << std::endl;
+	     <<  " (len:" << buflen << ")";
+      if (errno != 0) {
+        clog() << "error: " << strerror(errno);
+      }
+      clog() << std::endl;
       setStatus(DONE_FAILURE);
       m_errorMessage = std::string("Error while sending: ") 
         + std::string(strerror(errno));
