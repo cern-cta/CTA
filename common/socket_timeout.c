@@ -342,7 +342,12 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
 
 #ifndef _WIN32
 	/* Restore previous handlers */
-	_netsignal(SIGPIPE, sigpipe);
+  {
+    int save_errno = errno;
+    _netsignal(SIGPIPE, sigpipe);
+    errno = save_errno;
+  }
+  
 #endif
 
 	if (flag != 0) {
