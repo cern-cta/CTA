@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_constants.h,v 1.5 2008/07/16 07:44:03 wiebalck Exp $
+ * $Id: Ctape_constants.h,v 1.6 2009/01/12 08:32:34 wiebalck Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_constants.h,v $ $Revision: 1.5 $ $Date: 2008/07/16 07:44:03 $ CERN IT-PDP/DM Jean-Philippe Baud - Benjamin Couturier
+ * @(#)$RCSfile: Ctape_constants.h,v $ $Revision: 1.6 $ $Date: 2009/01/12 08:32:34 $ CERN IT-PDP/DM Jean-Philippe Baud - Benjamin Couturier
  */
 
 #ifndef _CTAPE_CONSTANTS_H
@@ -21,7 +21,7 @@
 #define TAPE_PORT 5011
 
 /* From Castor_limits.h */
-#define CA_MAXDENNUM   29    /* Maximum number of known densities for tapes */
+#define CA_MAXDENNUM   30    /* Maximum number of known densities for tapes */
 
 			/* tape daemon request options */
 
