@@ -559,7 +559,7 @@ int Cns_srv_chclass(magic, req_data, clienthost, thip)
 
   if (classid > 0) {
     if (Cns_get_class_by_id (&thip->dbfd, classid, &new_class_entry,
-                             1, &new_rec_addrc)) {
+                             0, &new_rec_addrc)) {
       if (serrno == ENOENT) {
         sendrep (thip->s, MSG_ERR, "No such class\n");
         RETURN (EINVAL);
@@ -594,22 +594,9 @@ int Cns_srv_chclass(magic, req_data, clienthost, thip)
   /* update entries */
 
   if (fmd_entry.fileclass != new_class_entry.classid) {
-    if (fmd_entry.fileclass > 0) {
-      if (Cns_get_class_by_id (&thip->dbfd, fmd_entry.fileclass,
-                               &old_class_entry, 1, &old_rec_addrc))
-        RETURN (serrno);
-      old_class_entry.nbdirs_using_class--;
-      if (Cns_update_class_entry (&thip->dbfd, &old_rec_addrc,
-                                  &old_class_entry))
-        RETURN (serrno);
-    }
     fmd_entry.fileclass = new_class_entry.classid;
     fmd_entry.ctime = time (0);
     if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &fmd_entry))
-      RETURN (serrno);
-    new_class_entry.nbdirs_using_class++;
-    if (Cns_update_class_entry (&thip->dbfd, &new_rec_addrc,
-                                &new_class_entry))
       RETURN (serrno);
   }
   RETURN (0);
@@ -1253,8 +1240,6 @@ int Cns_srv_deleteclass(magic, req_data, clienthost, thip)
                                1, &rec_addr))
       RETURN (serrno);
   }
-  if (class_entry.nbdirs_using_class)
-    RETURN (EEXIST);
   while (Cns_get_tppool_by_cid (&thip->dbfd, bol, class_entry.classid,
                                 &tppool_entry, 1, &rec_addrt, 0, &dblistptr) == 0) {
     if (Cns_delete_tppool_entry (&thip->dbfd, &rec_addrt))
@@ -3177,17 +3162,6 @@ int Cns_srv_mkdir(magic, req_data, clienthost, thip)
   parent_dir.ctime = parent_dir.mtime;
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addrp, &parent_dir))
     RETURN (serrno);
-
-  /* update nbdirs_using_class in Cns_class_metadata */
-
-  if (direntry.fileclass > 0) {
-    if (Cns_get_class_by_id (&thip->dbfd, direntry.fileclass,
-                             &class_entry, 1, &rec_addrc))
-      RETURN (serrno);
-    class_entry.nbdirs_using_class++;
-    if (Cns_update_class_entry (&thip->dbfd, &rec_addrc, &class_entry))
-      RETURN (serrno);
-  }
   RETURN (0);
 }
 
@@ -4957,17 +4931,6 @@ int Cns_srv_rmdir(magic, req_data, clienthost, thip)
   parent_dir.ctime = parent_dir.mtime;
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addrp, &parent_dir))
     RETURN (serrno);
-
-  /* update nbdirs_using_class in Cns_class_metadata */
-
-  if (direntry.fileclass > 0) {
-    if (Cns_get_class_by_id (&thip->dbfd, direntry.fileclass,
-                             &class_entry, 1, &rec_addrc))
-      RETURN (serrno);
-    class_entry.nbdirs_using_class--;
-    if (Cns_update_class_entry (&thip->dbfd, &rec_addrc, &class_entry))
-      RETURN (serrno);
-  }
   RETURN (0);
 }
 

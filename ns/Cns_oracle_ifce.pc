@@ -232,7 +232,7 @@ Cns_dbrec_addr *rec_addr;
 		 FLAGS, MAXDRIVES,
 		 MAX_SEGSIZE, MIGR_TIME_INTERVAL,
 		 MINTIME_BEFOREMIGR, NBCOPIES,
-		 NBDIRS_USING_CLASS, RETENP_ON_DISK
+		 RETENP_ON_DISK
 		FROM Cns_class_metadata
 		WHERE classid = :classid;
 	EXEC SQL DECLARE classid_cursor4upd CURSOR FOR
@@ -243,7 +243,7 @@ Cns_dbrec_addr *rec_addr;
 		 FLAGS, MAXDRIVES,
 		 MAX_SEGSIZE, MIGR_TIME_INTERVAL,
 		 MINTIME_BEFOREMIGR, NBCOPIES,
-		 NBDIRS_USING_CLASS, RETENP_ON_DISK
+		 RETENP_ON_DISK
 		FROM Cns_class_metadata
 		WHERE classid = :classid
 		FOR UPDATE;
@@ -262,7 +262,7 @@ Cns_dbrec_addr *rec_addr;
 		 :class_entry->flags, :class_entry->maxdrives,
 		 :class_entry->max_segsize, :class_entry->migr_time_interval,
 		 :class_entry->mintime_beforemigr, :class_entry->nbcopies,
-		 :class_entry->nbdirs_using_class, :class_entry->retenp_on_disk;
+		 :class_entry->retenp_on_disk;
 	} else {
 		EXEC SQL OPEN classid_cursor;
 		if (sqlca.sqlcode) {
@@ -276,7 +276,7 @@ Cns_dbrec_addr *rec_addr;
 		 :class_entry->flags, :class_entry->maxdrives,
 		 :class_entry->max_segsize, :class_entry->migr_time_interval,
 		 :class_entry->mintime_beforemigr, :class_entry->nbcopies,
-		 :class_entry->nbdirs_using_class, :class_entry->retenp_on_disk;
+		 :class_entry->retenp_on_disk;
 	}
 	switch (sqlca.sqlcode) {
 	case 0:
@@ -310,7 +310,7 @@ Cns_dbrec_addr *rec_addr;
 		 FLAGS, MAXDRIVES,
 		 MAX_SEGSIZE, MIGR_TIME_INTERVAL,
 		 MINTIME_BEFOREMIGR, NBCOPIES,
-		 NBDIRS_USING_CLASS, RETENP_ON_DISK
+		 RETENP_ON_DISK
 		FROM Cns_class_metadata
 		WHERE name = :class_name;
 	EXEC SQL DECLARE classname_cursor4upd CURSOR FOR
@@ -321,7 +321,7 @@ Cns_dbrec_addr *rec_addr;
 		 FLAGS, MAXDRIVES,
 		 MAX_SEGSIZE, MIGR_TIME_INTERVAL,
 		 MINTIME_BEFOREMIGR, NBCOPIES,
-		 NBDIRS_USING_CLASS, RETENP_ON_DISK
+		 RETENP_ON_DISK
 		FROM Cns_class_metadata
 		WHERE name = :class_name
 		FOR UPDATE;
@@ -340,7 +340,7 @@ Cns_dbrec_addr *rec_addr;
 		 :class_entry->flags, :class_entry->maxdrives,
 		 :class_entry->max_segsize, :class_entry->migr_time_interval,
 		 :class_entry->mintime_beforemigr, :class_entry->nbcopies,
-		 :class_entry->nbdirs_using_class, :class_entry->retenp_on_disk;
+		 :class_entry->retenp_on_disk;
 	} else {
 		EXEC SQL OPEN classname_cursor;
 		if (sqlca.sqlcode) {
@@ -354,7 +354,7 @@ Cns_dbrec_addr *rec_addr;
 		 :class_entry->flags, :class_entry->maxdrives,
 		 :class_entry->max_segsize, :class_entry->migr_time_interval,
 		 :class_entry->mintime_beforemigr, :class_entry->nbcopies,
-		 :class_entry->nbdirs_using_class, :class_entry->retenp_on_disk;
+		 :class_entry->retenp_on_disk;
 	}
 	switch (sqlca.sqlcode) {
 	case 0:
@@ -1630,7 +1630,7 @@ struct Cns_class_metadata *class_entry;
 		 FLAGS, MAXDRIVES,
 		 MAX_SEGSIZE, MIGR_TIME_INTERVAL,
 		 MINTIME_BEFOREMIGR, NBCOPIES,
-		 NBDIRS_USING_CLASS, RETENP_ON_DISK)
+		 RETENP_ON_DISK)
 		VALUES
 		(:class_entry->classid, :class_entry->name,
 		 :class_entry->uid, :class_entry->gid,
@@ -1638,7 +1638,7 @@ struct Cns_class_metadata *class_entry;
 		 :class_entry->flags, :class_entry->maxdrives,
 		 :class_entry->max_segsize, :class_entry->migr_time_interval,
 		 :class_entry->mintime_beforemigr, :class_entry->nbcopies,
-		 :class_entry->nbdirs_using_class, :class_entry->retenp_on_disk);
+		 :class_entry->retenp_on_disk);
 	switch (sqlca.sqlcode) {
 	case 0:
 		return (0);
@@ -1915,7 +1915,7 @@ DBLISTPTR *dblistptr;
 		 FLAGS, MAXDRIVES,
 		 MAX_SEGSIZE, MIGR_TIME_INTERVAL,
 		 MINTIME_BEFOREMIGR, NBCOPIES,
-		 NBDIRS_USING_CLASS, RETENP_ON_DISK
+		 RETENP_ON_DISK
 		FROM Cns_class_metadata
 		ORDER BY classid;
 
@@ -1936,7 +1936,7 @@ DBLISTPTR *dblistptr;
 	 :class_entry->flags, :class_entry->maxdrives,
 	 :class_entry->max_segsize, :class_entry->migr_time_interval,
 	 :class_entry->mintime_beforemigr, :class_entry->nbcopies,
-	 :class_entry->nbdirs_using_class, :class_entry->retenp_on_disk;
+	 :class_entry->retenp_on_disk;
 	switch (sqlca.sqlcode) {
 	case 0:
 		return (0);
@@ -2230,7 +2230,7 @@ struct Cns_dbfd *dbfd;
 	char db_srv[CA_MAXLINELEN+1];
 	char db_name[CA_MAXLINELEN+1];
 	char dbversion[21] = "";
-	char codeversion[21] = "2_1_8_0";
+	char codeversion[21] = "2_1_9_0";
 	char *p;
 	FILE *fp;
 
@@ -2337,7 +2337,6 @@ struct Cns_class_metadata *class_entry;
 		MIGR_TIME_INTERVAL= :class_entry->migr_time_interval,
 		MINTIME_BEFOREMIGR= :class_entry->mintime_beforemigr,
 		NBCOPIES= :class_entry->nbcopies,
-		NBDIRS_USING_CLASS= :class_entry->nbdirs_using_class,
 		RETENP_ON_DISK= :class_entry->retenp_on_disk
 		WHERE ROWID = :rowid_value;
 	if (sqlca.sqlcode) {

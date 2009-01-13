@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_server.h,v 1.24 2008/11/03 10:33:10 waldron Exp $
+ * $Id: Cns_server.h,v 1.25 2009/01/13 17:23:36 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.24 $ $Date: 2008/11/03 10:33:10 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.25 $ $Date: 2009/01/13 17:23:36 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_SERVER_H
@@ -93,7 +93,6 @@ struct Cns_class_metadata {
 	int		migr_time_interval;
 	int		mintime_beforemigr;
 	int		nbcopies;
-	int		nbdirs_using_class;
 	int		retenp_on_disk;
 };
 
