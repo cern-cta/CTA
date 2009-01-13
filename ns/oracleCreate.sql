@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/01/13 17:25:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/01/13 18:24:38 $ $Author: itglp $
  *
  * This script creates a new Castor Name Server schema
  *
@@ -112,36 +112,47 @@ CREATE SEQUENCE Cns_unique_id START WITH 3 INCREMENT BY 1;
 ALTER TABLE Cns_class_metadata
        ADD CONSTRAINT pk_classid PRIMARY KEY (classid)
        ADD CONSTRAINT classname UNIQUE (name);
+
 ALTER TABLE Cns_file_metadata
        ADD CONSTRAINT pk_fileid PRIMARY KEY (fileid)
        ADD CONSTRAINT file_full_id UNIQUE (parent_fileid, name)
        ADD CONSTRAINT file_guid UNIQUE (guid)
 	USING INDEX STORAGE (INITIAL 2M NEXT 2M PCTINCREASE 0)
-       ADD CONSTRAINT fk_class FOREIGN KEY (fileclass) REFERENCES Cns_class_metadata(classid)
-        ON DELETE RESTRICT;
+       ADD CONSTRAINT fk_class FOREIGN KEY (fileclass) REFERENCES Cns_class_metadata(classid);
+
 ALTER TABLE Cns_user_metadata
        ADD CONSTRAINT pk_u_fileid PRIMARY KEY (u_fileid);
+
 ALTER TABLE Cns_seg_metadata
        ADD CONSTRAINT pk_s_fileid PRIMARY KEY (s_fileid, copyno, fsec);
+
 ALTER TABLE Cns_symlinks
        ADD CONSTRAINT pk_l_fileid PRIMARY KEY (fileid);
+
 ALTER TABLE Cns_file_replica
        ADD CONSTRAINT repl_sfn UNIQUE (sfn);
+
 ALTER TABLE Cns_groupinfo
        ADD CONSTRAINT map_groupname UNIQUE (groupname);
+
 ALTER TABLE Cns_userinfo
        ADD CONSTRAINT map_username UNIQUE (username);
+
 CREATE INDEX replica_id ON Cns_file_replica(fileid);
 
 ALTER TABLE Cns_user_metadata
        ADD CONSTRAINT fk_u_fileid FOREIGN KEY (u_fileid) REFERENCES Cns_file_metadata(fileid);
+
 ALTER TABLE Cns_seg_metadata
        ADD CONSTRAINT fk_s_fileid FOREIGN KEY (s_fileid) REFERENCES Cns_file_metadata(fileid)
        ADD CONSTRAINT tapeseg UNIQUE (vid, side, fseq);
+
 ALTER TABLE Cns_tp_pool
        ADD CONSTRAINT classpool UNIQUE (classid, tape_pool);
+
 ALTER TABLE Cns_symlinks
        ADD CONSTRAINT fk_l_fileid FOREIGN KEY (fileid) REFERENCES Cns_file_metadata(fileid);
+
 ALTER TABLE Cns_file_replica
        ADD CONSTRAINT fk_r_fileid FOREIGN KEY (fileid) REFERENCES Cns_file_metadata(fileid);
 
