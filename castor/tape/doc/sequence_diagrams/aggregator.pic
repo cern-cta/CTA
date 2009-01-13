@@ -1,7 +1,7 @@
 .PS
 
-###############################################################################
-# File: stager.pic
+##############################################################################
+# File: aggregator.pic
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -25,16 +25,16 @@
 ###############################################################################
 
 ###############################################################################
-# This diagram shows the sequence of messages sent between rtcpcld, recaller,
-# vdqm and rtcpd in order to recall one of more files from tape.
+# This diagram shows the sequence of messages sent between tape gateway, vdqm
+# and rtcpd in order to recall one of more files from tape.
 ###############################################################################
 
 copy "sequence.pic";
 
 # Define the objects
-object(RC,"rtcpcld");
-placeholder_object(C);
+object(C,"gateway");
 object(V,"vdqm");
+object(AG,"aggregator");
 object(R,"rtcpd");
 placeholder_object(RF);
 placeholder_object(A);
@@ -46,59 +46,55 @@ placeholder_object(D3);
 step();
 
 # Message sequences
-active(RC);
-message(RC,V,"connect");
+active(C);
+message(C,V,"connect");
 active(V);
-message(RC,V,"volume request");
-message(V,RC,"acknowledge");
-message(V,RC,"volReqID");
-message(RC,V,"acknowledge");
-message(RC,V,"disconnect");
+message(C,V,"volume request");
+message(V,C,"acknowledge");
+message(V,C,"volReqID");
+message(C,V,"acknowledge");
+message(C,V,"disconnect");
 inactive(V);
 
 step();
 
 active(V);
-message(V,R,"connect");
+message(V,AG,"connect");
+active(AG);
+message(V,AG,"RcpJob");
+message(AG,R,"connect");
 active(R);
 create_message(R,RF,"main cntl");
 active(RF);
 inactive(R);
-
-message(V,RF,"RcpJob");
-message(RF,V,"RcpJobReply");
-message(RF,V,"disconnect");
+message(AG,RF,"RcpJob");
+message(RF,AG,"RcpJobReply");
+message(AG,V,"RcpJobReply");
+message(AG,V,"disconnect");
+message(RF,AG,"disconnect");
 inactive(V);
 
-message(RF,RC,"connect");
-message(RC,RF,"request volReqId");
-message(RF,RC,"acknowledge");
-message(RF,RC,"volReqId");
-message(RC,RF,"acknowledge");
+message(RF,AG,"connect");
+message(AG,RF,"request volReqId");
+message(RF,AG,"acknowledge");
+message(RF,AG,"volReqId");
+message(AG,RF,"acknowledge");
 
-create_message(RC,C,"recaller");
-active(C);
-message(C,RF,"client info");
-message(RF,C,"acknowledge");
-message(C,RF,"disconnect");
+message(AG,RF,"volume");
+message(RF,AG,"acknowledge");
 
+message(AG,RF,"file1");
+message(RF,AG,"acknowledge");
 
-message(RF,C,"connect");
-message(C,RF,"volume");
-message(RF,C,"acknowledge");
+message(AG,RF,"file2");
+message(RF,AG,"acknowledge");
 
-message(C,RF,"file1");
-message(RF,C,"acknowledge");
+message(AG,RF,"RTCP_NOMORE_REQ");
+message(RF,AG,"acknowledge");
 
-message(C,RF,"file2");
-message(RF,C,"acknowledge");
-
-message(C,RF,"RTCP_NOMORE_REQ");
-message(RF,C,"acknowledge");
-
-message(RF,C,"connect");
-message(RF,C,"connect");
-message(RF,C,"connect");
+message(RF,AG,"connect");
+message(RF,AG,"connect");
+message(RF,AG,"connect");
 
 create_message(RF,A,"abort");
 active(A);
@@ -113,33 +109,33 @@ active(D2);
 create_message(RF,D3,"disk IO 3");
 active(D3);
 
-message(T,C,"UNKNOWN file 1");
-message(T,C,"RTCP_POSITIONED file 1");
+message(T,AG,"UNKNOWN file 1");
+message(T,AG,"RTCP_POSITIONED file 1");
 
-message(T,C,"UNKNOWN file 2");
-message(T,C,"RTCP_POSITIONED file 2");
+message(T,AG,"UNKNOWN file 2");
+message(T,AG,"RTCP_POSITIONED file 2");
 
-message(D1,C,"RTCP_FINISHED file 1");
-message(C,D1,"acknowledge");
+message(D1,AG,"RTCP_FINISHED file 1");
+message(AG,D1,"acknowledge");
 inactive(D1);
 
-message(D2,C,"RTCP_FINISHED file 2");
-message(C,D2,"acknowledge");
+message(D2,AG,"RTCP_FINISHED file 2");
+message(AG,D2,"acknowledge");
 inactive(D2);
 
-message(T,C,"RTCP_ENDOF_REQ");
-message(C,T,"acknowledge");
+message(T,AG,"RTCP_ENDOF_REQ");
+message(AG,T,"acknowledge");
 inactive(T);
 
 inactive(D3);
 inactive(A);
 inactive(RF);
+inactive(AG);
 inactive(C);
-inactive(RC);
 
-complete(RC);
 complete(C);
 complete(V);
+complete(AG);
 complete(R);
 complete(RF);
 complete(T);

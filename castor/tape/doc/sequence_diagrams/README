@@ -15,6 +15,7 @@ How to generate sequence diagrams from the source in this directory
 
 3. Run pic2plot to generate the sequence diagrams:
 
-   pic2plot -T ps stager.pic > stager.ps; gv stager.ps
-   pic2plot -T ps tpread.pic > tpread.ps; gv tpread.ps
+   pic2plot -T ps stager.pic     > stager.ps    ; gv stager.ps
+   pic2plot -T ps tpread.pic     > tpread.ps    ; gv tpread.ps
+   pic2plot -T ps aggregator.pic > aggregator.ps; gv aggregator.ps
 
