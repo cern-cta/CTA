@@ -30,6 +30,7 @@
 #include "castor/server/Queue.hpp"
 #include "castor/tape/aggregator/RtcpAcknowledgeMessage.hpp"
 #include "castor/tape/aggregator/RtcpTapeRequestMessage.hpp"
+#include "castor/tape/aggregator/RtcpFileRequestMessage.hpp"
 #include "h/rtcp_constants.h"
 
 namespace castor {
@@ -83,24 +84,56 @@ namespace aggregator {
       RtcpTapeRequestMessage &reply) throw(castor::exception::Exception);
 
     /**
+     * Receives an RTCPD tape request message from RTCPD.
+     *
+     * @param cuuid The ccuid to be used for logging.
+     * @param socket The socket of the connection with RTCPD.
+     * @param request The request which will be filled with the contents of the
+     * received message.
+     */
+    void receiveRtcpTapeRequest(const Cuuid_t &cuuid,
+      castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
+      RtcpTapeRequestMessage &request) throw(castor::exception::Exception);
+
+    /**
      * Send volume to RTCPD.
      *
      * @param cuuid The ccuid to be used for logging.
      * @param socket The socket of the connection with RTCPD.
-     * @param reply The request structure to be filled with the reply from
+     * @param request The request to be sent to RTCPD.
+     * @param reply The structure to be filled with the reply from
      * RTCPD.
-     * @param vid The VID of the volume.
-     * @param vsn The VSN of the volume.
-     * @param label The label of the volume.
-     * @param density The density of the volume.
-     * @param volReqId The volume request ID.
-     * @param tStartRequest The start time of the request.
      */
     void sendVolumeToRtcpd(const Cuuid_t &cuuid,
       castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
-      RtcpTapeRequestMessage &reply, const char *vid, const char *vsn,
-      const char *label, const char *density, const uint32_t volReqId,
-      const uint32_t tStartRequest) throw(castor::exception::Exception);
+      RtcpTapeRequestMessage &request, RtcpTapeRequestMessage &reply)
+      throw(castor::exception::Exception);
+
+    /**
+     * Receives an RTCPD file request message from RTCPD.
+     *
+     * @param cuuid The ccuid to be used for logging.
+     * @param socket The socket of the connection with RTCPD.
+     * @param request The request which will be filled with the contents of the
+     * received message.
+     */
+    void receiveRtcpFileRequest(const Cuuid_t &cuuid,
+      castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
+      RtcpFileRequestMessage &request) throw(castor::exception::Exception);
+
+    /**
+     * Send file to RTCPD.
+     *
+     * @param cuuid The ccuid to be used for logging.
+     * @param socket The socket of the connection with RTCPD.
+     * @param request The request to be sent to RTCPD.
+     * @param reply The structure to be filled with the reply from
+     * RTCPD.
+     */
+    void sendFileToRtcpd(const Cuuid_t &cuuid,
+      castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
+      RtcpFileRequestMessage &request, RtcpFileRequestMessage &reply)
+      throw(castor::exception::Exception);
 
     /**
      * Receives an acknowledge message from RTCPD and returns the status code
@@ -123,18 +156,6 @@ namespace aggregator {
       castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
       const RtcpAcknowledgeMessage &message)
       throw(castor::exception::Exception);
-
-    /**
-     * Receives an RTCPD tape request message from RTCPD.
-     *
-     * @param cuuid The ccuid to be used for logging.
-     * @param socket The socket of the connection with RTCPD.
-     * @param request The request which will be filled with the contents of the
-     * received message.
-     */
-    void receiveRtcpTapeRequest(const Cuuid_t &cuuid,
-      castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
-      RtcpTapeRequestMessage &request) throw(castor::exception::Exception);
 
   }; // class RtcpdHandlerThread
 

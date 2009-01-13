@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/RtcpErrorMessage.hpp
+ *                      castor/tape/aggregator/RtcpErrorAppendix.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Steven Murray Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_RTCPERRORMESSAGE
-#define CASTOR_TAPE_AGGREGATOR_RTCPERRORMESSAGE
+#ifndef CASTOR_TAPE_AGGREGATOR_RTCPERRORAPPENDIX
+#define CASTOR_TAPE_AGGREGATOR_RTCPERRORAPPENDIX
 
 #include "h/Castor_limits.h"
 
@@ -32,18 +32,19 @@ namespace tape       {
 namespace aggregator {
 
   /**
-   * Error reporting message embedded within an RTCP tape request message.
+   * Error reporting appendix embedded within an RTCP tape and file request
+   * messages.
    */
-  struct RtcpErrorMessage {
+  struct RtcpErrorAppendix {
     char errmsgtxt[CA_MAXLINELEN+1];
     uint32_t severity;               // Defined in rtcp_constants.h
     uint32_t errorcode;              // Defined in rtcp_constants.h
-    uint32_t max_tpretry;            // Nb. of retries left on mount/pos
-    uint32_t max_cpretry;            // Nb. of retries left on copy
-  }; // struct RtcpErrorMessage
+    int32_t  maxTpRetry;            // Nb. of retries left on mount/pos
+    int32_t  maxCpRetry;            // Nb. of retries left on copy
+  }; // struct RtcpErrorAppendix
 
 } // namespace aggregator
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_RTCPERRORMESSAGE
+#endif // CASTOR_TAPE_AGGREGATOR_RTCPERRORAPPENDIX

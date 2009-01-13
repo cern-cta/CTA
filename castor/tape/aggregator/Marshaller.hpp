@@ -140,6 +140,36 @@ namespace aggregator {
       uint32_t &dst) throw(castor::exception::Exception);
 
     /**
+     * Marshalls the specified signed 32-bit integer into the specified
+     * destination buffer.
+     *
+     * @param src The signed 32-bit integer to be marshalled.
+     * @param dst In/out parameter, before invocation points to the destination
+     * buffer where the signed 32-bit integer should be marshalled to and on
+     * return points to the byte in the destination buffer immediately after
+     * the marshalled signed 32-bit integer.
+     */
+    static void marshallInt32(int32_t src, char * &dst)
+      throw(castor::exception::Exception);
+
+    /**
+     * Unmarshalls a signed 32-bit integer from the specified source buffer
+     * into the specified destination unsigned 32-bit integer.
+     *
+     * @param src In/out parameter, before invocation points to the source
+     * buffer where the signed 32-bit integer should be unmarshalled from and
+     * on return points to the byte in the source buffer immediately after the
+     * unmarshalled signed 32-bit integer.
+     * @param srcLen In/our parameter, before invocation is the length of the
+     * source buffer from where the signed 32-bit integer should be
+     * unmarshalled and on return is the number of bytes remaining in the
+     * source buffer.
+     * @param dst The destination signed 32-bit integer.
+     */
+    static void unmarshallInt32(const char * &src, size_t &srcLen,
+      int32_t &dst) throw(castor::exception::Exception);
+
+    /**
      * Marshalls the specified unsigned 64-bit integer into the specified
      * destination buffer.
      *
@@ -496,6 +526,88 @@ namespace aggregator {
       size_t &srcLen, RtcpFileRequestMessage &dst)
       throw(castor::exception::Exception);
 
+  private:
+
+    /**
+     * Marshalls the specified integer into the specified destination buffer.
+     *
+     * The type of the source integer is a typename template variable to allow
+     * this implementation to be instantiated for unsigned and signed integers
+     * and for integers of different sizes (8, 16, 32, and 64).
+     *
+     * @param src The integer to be marshalled.
+     * @param dst In/out parameter, before invocation points to the destination
+     * buffer where the integer should be marshalled to and on
+     * return points to the byte in the destination buffer immediately after
+     * the marshalled integer.
+     */
+    template<typename T> static void marshallInteger(T src, char * &dst)
+      throw(castor::exception::Exception) {
+
+      if(dst == NULL) {
+        castor::exception::Exception ex(EINVAL);
+
+        ex.getMessage() << __PRETTY_FUNCTION__
+          << ": Pointer to destination buffer is NULL";
+        throw ex;
+      }
+
+      char *const src_ptr = (char *)(&src);
+
+      // src: Intel x86 (little endian)
+      // dst: Network   (big    endian)
+      for(size_t i=sizeof(src); i>0; i--) {
+        *dst++ = *(src_ptr + i - 1);
+      }
+    }
+
+    /**
+     * Unmarshalls an integer from the specified source buffer into the
+     * specified destination integer.
+     *
+     * The type of the destination integer is a typename template variable to
+     * allow this implementation to be instantiated for unsigned and signed
+     * integers and for integers of different sizes (8, 16, 32, and 64).
+     *
+     * @param src In/out parameter, before invocation points to the source
+     * buffer where the integer should be unmarshalled from and on return
+     * points to the byte in the source buffer immediately after the
+     * unmarshalled integer.
+     * @param srcLen In/our parameter, before invocation is the length of the
+     * source buffer from where the integer should be unmarshalled and on
+     * return is the number of bytes remaining in the source buffer.
+     * @param dst The destination integer.
+     */
+    template<typename T> static void unmarshallInteger(const char * &src,
+      size_t &srcLen, T &dst) throw(castor::exception::Exception) {
+
+      if(src == NULL) {
+        castor::exception::Exception ex(EINVAL);
+
+        ex.getMessage() << __PRETTY_FUNCTION__
+          << ": Pointer to source buffer is NULL";
+        throw ex;
+      }
+
+      if(srcLen < sizeof(dst)) {
+        castor::exception::Exception ex(EINVAL);
+
+        ex.getMessage() << __PRETTY_FUNCTION__
+          << ": Source buffer length is too small: Expected length: "
+          << sizeof(dst) << ": Actual length: " << srcLen;
+        throw ex;
+      }
+
+      char *const dst_ptr = (char *)(&dst);
+
+      // src: Network   (big    endian)
+      // dst: Intel x86 (little endian)
+      for(size_t i=sizeof(dst); i>0; i--) {
+        *(dst_ptr + i - 1) = *src++;
+      }
+
+      srcLen -= sizeof(dst);
+    }
   }; // class Utils
 
 } // namespace aggregator

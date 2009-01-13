@@ -25,7 +25,7 @@
 #ifndef CASTOR_TAPE_AGGREGATOR_RTCPTAPEREQUESTMESSAGE
 #define CASTOR_TAPE_AGGREGATOR_RTCPTAPEREQUESTMESSAGE
 
-#include "castor/tape/aggregator/RtcpErrorMessage.hpp"
+#include "castor/tape/aggregator/RtcpErrorAppendix.hpp"
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
 
@@ -46,22 +46,22 @@ namespace aggregator {
     char devtype[CA_MAXDVTLEN+1];
     char density[CA_MAXDENLEN+1];
     char unit[CA_MAXUNMLEN+1];
-    uint32_t VolReqID;      // VDQM volume request ID
-    uint32_t jobID;         // Local RTCOPY server job ID
+    uint32_t volReqId;      // VDQM volume request ID
+    uint32_t jobId;         // Local RTCOPY server job ID
     uint32_t mode;          // WRITE_DISABLE or WRITE_ENABLE
     uint32_t start_file;    // Start file if mapped VID
     uint32_t end_file;      // End file if mapped VID
     uint32_t side;          // Disk side number
     uint32_t tprc;          // Return code from last Ctape
-    uint32_t TStartRequest; // Start time of request (set by client)
-    uint32_t TEndRequest;   // End time of request (set by client)
-    uint32_t TStartRtcpd;   // Time when request is received by rtcpd server
-    uint32_t TStartMount;   // Time when mount request is sent to Ctape
-    uint32_t TEndMount;     // Time when mount request returns
-    uint32_t TStartUnmount; // Time when unmount request is sent to Ctape
-    uint32_t TEndUnmount;   // Time when unmount request returns
+    uint32_t tStartRequest; // Start time of request (set by client)
+    uint32_t tEndRequest;   // End time of request (set by client)
+    uint32_t tStartRtcpd;   // Time when request is received by rtcpd server
+    uint32_t tStartMount;   // Time when mount request is sent to Ctape
+    uint32_t tEndMount;     // Time when mount request returns
+    uint32_t tStartUnmount; // Time when unmount request is sent to Ctape
+    uint32_t tEndUnmount;   // Time when unmount request returns
     Cuuid_t rtcpReqId;      // Unique request id assigned by RTCOPY
-    RtcpErrorMessage err;   // Error reporting
+    RtcpErrorAppendix err;   // Error reporting
 
   }; // struct RtcpTapeRequestMessage
 

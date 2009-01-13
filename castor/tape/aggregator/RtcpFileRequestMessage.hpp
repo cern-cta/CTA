@@ -25,7 +25,7 @@
 #ifndef CASTOR_TAPE_AGGREGATOR_RTCPFILEREQUESTMESSAGE
 #define CASTOR_TAPE_AGGREGATOR_RTCPFILEREQUESTMESSAGE
 
-#include "castor/tape/aggregator/RtcpErrorMessage.hpp"
+#include "castor/tape/aggregator/RtcpErrorAppendix.hpp"
 #include "castor/tape/aggregator/RtcpSegmentAttributes.hpp"
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
@@ -41,31 +41,31 @@ namespace aggregator {
    * An RTCP file request message.
    */
   struct RtcpFileRequestMessage {
-    char filePath[CA_MAXPATHLEN+1]; // Disk file path
-    char tapePath[CA_MAXPATHLEN+1]; // Tape device file
+    char filePath[CA_MAXPATHLEN+1];  // Disk file path
+    char tapePath[CA_MAXPATHLEN+1];  // Tape device file
     char recfm[CA_MAXRECFMLEN+1];                            
     char fid[CA_MAXFIDLEN+1];        // Tape file ID
     char ifce[5];                    // Network interface name
     char stageId[CA_MAXSTGRIDLEN+1]; // Stage request ID
 
-    uint32_t volReqID;       // VDQM volume request ID
-    uint32_t jobID;          // Local RTCOPY server job ID
-    uint32_t stageSubreqID;  // Stage subrequest ID (-1 for SHIFT)
+    uint32_t volReqId;       // VDQM volume request ID
+    int32_t  jobId;          // Local RTCOPY server job ID
+    int32_t  stageSubReqId;  // Stage subrequest ID (-1 for SHIFT)
     uint32_t umask;          // Client umask
     uint32_t positionMethod; // TPPOSIT_FSEQ, TPPOSIT_FID, TPPOSIT_EOI and TPPOSIT_BLKID
     uint32_t tapeFseq;       // If position_method == TPPOSIT_FSEQ
     uint32_t diskFseq;       // Disk file sequence number. This is the order number of the
                              // current disk file in the request.                    
-    uint32_t blocksize;      // Tape blocksize (bytes)
-    uint32_t recordLength;   // Tape record length (bytes)
-    uint32_t retention;      // File retention time
-    uint32_t defAlloc;       // 0 = no deferred allocation
+    int32_t  blockSize;      // Tape blocksize (bytes)
+    int32_t  recordLength;   // Tape record length (bytes)
+    int32_t  retention;      // File retention time
+    int32_t  defAlloc;       // 0 = no deferred allocation
 
     // Flags
-    uint32_t rtcpErrAction; // SKIPBAD or KEEPFILE
-    uint32_t tpErrAction;   // NOTRLCHK and IGNOREEOI
-    uint32_t convert;       // EBCCONV, FIXVAR
-    uint32_t checkFid;      // CHECK_FILE, NEW_FILE
+    int32_t  rtcpErrAction; // SKIPBAD or KEEPFILE
+    int32_t  tpErrAction;   // NOTRLCHK and IGNOREEOI
+    int32_t  convert;       // EBCCONV, FIXVAR
+    int32_t  checkFid;      // CHECK_FILE, NEW_FILE
     uint32_t concat;        // CONCAT, CONCAT_TO_EOD, NOCONCAT or NOCONCAT_TO_EOD
 
     // Intermediate processing status used mainly to checkpoint in case of a retry of a
@@ -101,7 +101,7 @@ namespace aggregator {
     RtcpSegmentAttributes segAttr;
 
     Cuuid_t stgReqId;     // Unique identifier given by the stager
-    RtcpErrorMessage err; // Error reporting
+    RtcpErrorAppendix err; // Error reporting
 
   }; // struct RtcpFileRequestMessage
 
