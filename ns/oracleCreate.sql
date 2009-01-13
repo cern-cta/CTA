@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/11/11 10:48:25 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/01/13 17:25:19 $ $Author: sponcec3 $
  *
  * This script creates a new Castor Name Server schema
  *
@@ -37,7 +37,6 @@ CREATE TABLE Cns_class_metadata (
        migr_time_interval NUMBER,
        mintime_beforemigr NUMBER,
        nbcopies NUMBER(1),
-       nbdirs_using_class NUMBER,
        retenp_on_disk NUMBER);
 
 CREATE TABLE Cns_tp_pool (
@@ -117,7 +116,9 @@ ALTER TABLE Cns_file_metadata
        ADD CONSTRAINT pk_fileid PRIMARY KEY (fileid)
        ADD CONSTRAINT file_full_id UNIQUE (parent_fileid, name)
        ADD CONSTRAINT file_guid UNIQUE (guid)
-	USING INDEX STORAGE (INITIAL 2M NEXT 2M PCTINCREASE 0);
+	USING INDEX STORAGE (INITIAL 2M NEXT 2M PCTINCREASE 0)
+       ADD CONSTRAINT fk_class FOREIGN KEY (fileclass) REFERENCES Cns_class_metadata(classid)
+        ON DELETE RESTRICT;
 ALTER TABLE Cns_user_metadata
        ADD CONSTRAINT pk_u_fileid PRIMARY KEY (u_fileid);
 ALTER TABLE Cns_seg_metadata
@@ -146,10 +147,11 @@ ALTER TABLE Cns_file_replica
 
 -- Create the Cns_version table
 CREATE TABLE Cns_version (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO Cns_version VALUES ('2_1_8_0', 'releaseTag');
+INSERT INTO Cns_version VALUES ('2_1_9_0', 'releaseTag');
 
--- Create an index on Cns_file_metadata(PARENT_FILEID)
+-- Create indexes on Cns_file_metadata
 CREATE INDEX PARENT_FILEID_IDX on Cns_file_metadata(PARENT_FILEID);
+CREATE INDEX I_file_metadata_fileclass on Cns_file_metadata(fileclass);
 
 -- Temporary table to support Cns_bulkexist calls
 CREATE GLOBAL TEMPORARY TABLE Cns_files_exist_tmp
