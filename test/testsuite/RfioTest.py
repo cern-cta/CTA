@@ -6,7 +6,7 @@ import threading
 import re
 from threading import Thread
 import UtilityForCastorTest
-from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDir,configFile,testCastorV1,testDefaultEnv,ticket
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDir,configFile,testDefaultEnv,ticket
 
 # Parameters
 remoteHost=""
@@ -48,7 +48,7 @@ class RfioPreRequisitesCase(unittest.TestCase):
             os.system("rfmkdir "+castorDir)
             os.system("mkdir "+localDir)
             cmd=["stager_qry -s"]
-            myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion)
+            myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass)
             myOut=UtilityForCastorTest.runOnShell(cmd,myScen)[0]
             index=myOut.find("DiskServer")
             assert index>=0, "Remote Host has not retrived correctly with the stager_qry"
@@ -71,8 +71,6 @@ class RfioPreRequisitesCase(unittest.TestCase):
                 print '     remoteToLocal    (RfioTest.RfioRfcpSimpleCase)'
                 print '     remoteToRemote   (RfioTest.RfioRfcpSimpleCase)'
                 print '     concurrentWrites (RfioTest.RfioRfcpSimpleCase)'
-                print '     remoteToCastor   (RfioTest.RfioRfcpScenarium1)'
-                print '     castorToRemote   (RfioTest.RfioRfcpScenarium1)'
                 print '     remoteToCastor   (RfioTest.RfioRfcpScenarium2)'
                 print '     castorToRemote   (RfioTest.RfioRfcpScenarium2)'
                 print '     remoteToCastor   (RfioTest.RfioRfcpScenarium3)'
@@ -484,15 +482,6 @@ class RfioOtherCmdSimpleCase(unittest.TestCase):
 
 # Scenaria Castor  #
 
-class RfioCastorScenarium1(unittest.TestCase):
-    def setUp(self):
-        global myTag
-        myTag="Env1"
-        global myTurl
-        myTurl=castorDir
-        global caseScen
-        caseScen=UtilityForCastorTest.createScenarium(-1,-1,-1,-1,None)
-
 class RfioCastorScenarium2(unittest.TestCase):
     def setUp(self):
         global myTag
@@ -500,7 +489,7 @@ class RfioCastorScenarium2(unittest.TestCase):
         global myTurl
         myTurl=castorDir
         global caseScen
-        caseScen=UtilityForCastorTest.createScenarium(stagerHost,-1,-1,stagerVersion,castorEnv)
+        caseScen=UtilityForCastorTest.createScenarium(stagerHost,-1,-1,castorEnv)
 
 class RfioCastorScenarium3(unittest.TestCase):
     def setUp(self):
@@ -509,7 +498,7 @@ class RfioCastorScenarium3(unittest.TestCase):
         global myTurl
         myTurl=castorDir
         global caseScen
-        caseScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,-1,stagerVersion,castorEnv)
+        caseScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,-1,castorEnv)
 
 class RfioCastorScenarium4(unittest.TestCase):
     def setUp(self):
@@ -518,7 +507,7 @@ class RfioCastorScenarium4(unittest.TestCase):
         global myTurl
         myTurl=castorDir
         global caseScen
-        caseScen=UtilityForCastorTest.createScenarium(stagerHost,-1,stagerSvcClass,stagerVersion,castorEnv)
+        caseScen=UtilityForCastorTest.createScenarium(stagerHost,-1,stagerSvcClass,castorEnv)
 
 class RfioCastorScenarium5(unittest.TestCase):
     def setUp(self):
@@ -527,14 +516,14 @@ class RfioCastorScenarium5(unittest.TestCase):
         global myTurl
         myTurl=castorDir
         global caseScen
-        caseScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,castorEnv)
+        caseScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,castorEnv)
 
 class RfioCastorNewTurl1(unittest.TestCase):
     def setUp(self):
         global myTag
         myTag="Turl1"
         global caseScen
-        caseScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,castorEnv)
+        caseScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,castorEnv)
         global myTurl
         myTurl="/"+castorDir
 
@@ -543,7 +532,7 @@ class RfioCastorNewTurl2(unittest.TestCase):
         global myTag
         myTag="Turl2"
         global caseScen
-        caseScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,castorEnv)
+        caseScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,castorEnv)
         global myTurl
         myTurl=castorDir
 
@@ -552,7 +541,7 @@ class RfioCastorNewTurl3(unittest.TestCase):
         global myTag
         myTag="Turl3"
         global caseScen
-        caseScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,castorEnv)
+        caseScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,castorEnv)
         global myTurl
         myTurl="/castor\\?path="+castorDir
 
@@ -561,7 +550,7 @@ class RfioCastorNewTurl4(unittest.TestCase):
         global myTag
         myTag="Turl4"
         global caseScen
-        caseScen=UtilityForCastorTest.createScenarium(-1,stagerPort,stagerSvcClass,stagerVersion,castorEnv)
+        caseScen=UtilityForCastorTest.createScenarium(-1,stagerPort,stagerSvcClass,castorEnv)
         global myTurl
         myTurl=stagerHost+"/castor\\?path="+castorDir
 
@@ -570,7 +559,7 @@ class RfioCastorNewTurl5(unittest.TestCase):
         global myTag
         myTag="Turl5"
         global caseScen
-        caseScen=UtilityForCastorTest.createScenarium(-1,stagerPort,stagerSvcClass,stagerVersion,castorEnv)
+        caseScen=UtilityForCastorTest.createScenarium(-1,stagerPort,stagerSvcClass,castorEnv)
         global myTurl
         myTurl=stagerHost+"//castor\\?path="+castorDir
 
@@ -578,7 +567,7 @@ class RfioCastorNewTurl6(unittest.TestCase):
     def setUp(self):
         global myTag
         myTag="Turl6"
-        UtilityForCastorTest.createScenarium(-1,-1,stagerSvcClass,stagerVersion,castorEnv)
+        UtilityForCastorTest.createScenarium(-1,-1,stagerSvcClass,castorEnv)
         global myTurl
         myTurl=stagerHost+":"+stagerPort+"/castor\\?path="+castorDir
 
@@ -587,7 +576,7 @@ class RfioCastorNewTurl7(unittest.TestCase):
         global myTag
         myTag="Turl7"
         global caseScen
-        caseScen=UtilityForCastorTest.createScenarium(-1,stagerPort,stagerSvcClass,stagerVersion,castorEnv)
+        caseScen=UtilityForCastorTest.createScenarium(-1,stagerPort,stagerSvcClass,castorEnv)
         global myTurl
         myTurl=stagerHost+"/castor\\?path="+castorDir
 
@@ -596,7 +585,7 @@ class RfioCastorNewTurl8(unittest.TestCase):
         global myTag
         myTag="Turl8"
         global caseScen
-        caseScen=UtilityForCastorTest.createScenarium(-1,-1,stagerSvcClass,stagerVersion,castorEnv)
+        caseScen=UtilityForCastorTest.createScenarium(-1,-1,stagerSvcClass,castorEnv)
         global myTurl
         myTurl=stagerHost+":"+stagerPort+"/castor\\?path="+castorDir
 
@@ -605,7 +594,7 @@ class RfioCastorNewTurl9(unittest.TestCase):
         global myTag
         myTag="Turl9"
         global caseScen
-        caseScen=UtilityForCastorTest.createScenarium(-1,-1,stagerSvcClass,stagerVersion,castorEnv)
+        caseScen=UtilityForCastorTest.createScenarium(-1,-1,stagerSvcClass,castorEnv)
         global myTurl
         myTurl=stagerHost+":"+stagerPort+"/"+castorDir
 
@@ -614,18 +603,9 @@ class RfioCastorNewTurl10(unittest.TestCase):
         global myTag
         myTag="Turl10"
         global caseScen
-        caseScen=UtilityForCastorTest.createScenarium(-1,-1,stagerSvcClass,stagerVersion,castorEnv)
+        caseScen=UtilityForCastorTest.createScenarium(-1,-1,stagerSvcClass,castorEnv)
         global myTurl
         myTurl=stagerHost+":"+stagerPort+castorDir
-
-class RfioCastorNewTurl11(unittest.TestCase):
-    def setUp(self):
-        global myTag
-        myTag="Turl11"
-        global caseScen
-        caseScen=UtilityForCastorTest.createScenarium(-1,-1,-1,-1,castorEnv)
-        global myTurl
-        myTurl=stagerHost+":"+stagerPort+"/castor\\?svcClass="+stagerSvcClass+"\\&castorVersion="+str(stagerVersion)+"\\&path="+castorDir
 
 
 ###  RFCP   ###
@@ -734,11 +714,6 @@ class RfioRfcpCastor(unittest.TestCase):
 
 ### Rfcp with different enviroment ###
 
-class RfioRfcpScenarium1(RfioCastorScenarium1,RfioRfcpCastor):
-    def __init__(self, methodName):
-        self.protocol=""
-        RfioRfcpCastor.__init__(self, methodName)
-
 class RfioRfcpScenarium2(RfioCastorScenarium2,RfioRfcpCastor):
     def __init__(self, methodName):
         self.protocol=""
@@ -805,11 +780,6 @@ class RfioRfcpNewTurl9(RfioCastorNewTurl9,RfioRfcpCastor):
         RfioRfcpCastor.__init__(self, methodName)
 
 class RfioRfcpNewTurl10(RfioCastorNewTurl10,RfioRfcpCastor):
-    def __init__(self, methodName):
-        self.protocol="rfio://"
-        RfioRfcpCastor.__init__(self, methodName)
-
-class RfioRfcpNewTurl11(RfioCastorNewTurl11,RfioRfcpCastor):
     def __init__(self, methodName):
         self.protocol="rfio://"
         RfioRfcpCastor.__init__(self, methodName)
@@ -922,11 +892,6 @@ class RfioOtherCmdCastor(unittest.TestCase):
 
 ### other cmd with different enviroment ###
 
-class RfioOtherCmdScenarium1(RfioCastorScenarium1,RfioOtherCmdCastor):
-    def __init__(self, methodName):
-        self.protocol=""
-        RfioOtherCmdCastor.__init__(self, methodName)
-
 class RfioOtherCmdScenarium2(RfioCastorScenarium2,RfioOtherCmdCastor):
     def __init__(self,methodName):
         self.protocol=""
@@ -997,11 +962,6 @@ class RfioOtherCmdNewTurl10(RfioCastorNewTurl10,RfioOtherCmdCastor):
         self.protocol="rfio://"
         RfioOtherCmdCastor.__init__(self, methodName)
 
-class RfioOtherCmdNewTurl11(RfioCastorNewTurl11,RfioOtherCmdCastor):
-    def __init__(self, methodName):
-        self.protocol="rfio://"
-        RfioOtherCmdCastor.__init__(self, methodName)
-
 
 ##########################################################################################################
 ##########################################################################################################
@@ -1035,10 +995,6 @@ class RfioOtherCmdSimpleSuite(unittest.TestSuite):
 
 # Rfcp
 
-class RfioRfcpEnv1Suite(unittest.TestSuite):
-    def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioRfcpScenarium1,casesRfcpCastor))
-
 class RfioRfcpEnv2Suite(unittest.TestSuite):
     def __init__(self):
         unittest.TestSuite.__init__(self,map(RfioRfcpScenarium2,casesRfcpCastor))
@@ -1057,10 +1013,6 @@ class RfioRfcpEnv5Suite(unittest.TestSuite):
 
 
 # Other cmd
-
-class RfioOtherCmdEnv1Suite(unittest.TestSuite):
-    def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioOtherCmdScenarium1,casesOtherCmdCastor))
 
 class RfioOtherCmdEnv2Suite(unittest.TestSuite):
     def __init__(self):
@@ -1083,10 +1035,8 @@ class RfioOtherCmdEnv5Suite(unittest.TestSuite):
 
 class RfioRfcpEnvSuite(unittest.TestSuite):
     def __init__(self):
-        global testCastorV1, testDefaultEnv
+        global testDefaultEnv
         tests = []
-        if testCastorV1:
-            tests.append(RfioRfcpEnv1Suite())
         if testDefaultEnv:
             tests.append(RfioRfcpEnv2Suite())
             tests.append(RfioRfcpEnv3Suite())
@@ -1099,10 +1049,8 @@ class RfioRfcpEnvSuite(unittest.TestSuite):
 
 class RfioOtherCmdEnvSuite(unittest.TestSuite):
     def __init__(self):
-        global testCastorV1, testDefaultEnv
+        global testDefaultEnv
         tests = []
-        if testCastorV1:
-            tests.append(RfioOtherCmdEnv1Suite())
         if testDefaultEnv:
             tests.append(RfioOtherCmdEnv2Suite())
             tests.append(RfioOtherCmdEnv3Suite())
@@ -1158,10 +1106,6 @@ class RfioRfcpNewTurl10Suite(unittest.TestSuite):
     def __init__(self):
         unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl10,casesRfcpCastor))
 
-class RfioRfcpNewTurl11Suite(unittest.TestSuite):
-    def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl11,casesRfcpCastor))
-
 # other cmd
 
 class RfioOtherCmdNewTurl1Suite(unittest.TestSuite):
@@ -1204,16 +1148,12 @@ class RfioOtherCmdNewTurl10Suite(unittest.TestSuite):
     def __init__(self):
         unittest.TestSuite.__init__(self,map(RfioOtherCmdNewTurl10,casesOtherCmdCastor))
 
-class RfioOtherCmdNewTurl11Suite(unittest.TestSuite):
-    def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioOtherCmdNewTurl11,casesOtherCmdCastor))
-
 ###  BIG TEST SUITE WITH ALL NEW TURL CASES
 
 class RfioRfcpNewTurlSuite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,(RfioRfcpNewTurl1Suite(),RfioRfcpNewTurl2Suite(),RfioRfcpNewTurl3Suite(),RfioRfcpNewTurl4Suite(),RfioRfcpNewTurl5Suite(),RfioRfcpNewTurl6Suite(),RfioRfcpNewTurl7Suite(),RfioRfcpNewTurl8Suite(),RfioRfcpNewTurl9Suite(),RfioRfcpNewTurl10Suite(),RfioRfcpNewTurl11Suite()))
+        unittest.TestSuite.__init__(self,(RfioRfcpNewTurl1Suite(),RfioRfcpNewTurl2Suite(),RfioRfcpNewTurl3Suite(),RfioRfcpNewTurl4Suite(),RfioRfcpNewTurl5Suite(),RfioRfcpNewTurl6Suite(),RfioRfcpNewTurl7Suite(),RfioRfcpNewTurl8Suite(),RfioRfcpNewTurl9Suite(),RfioRfcpNewTurl10Suite()))
 
 class RfioOtherCmdNewTurlSuite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,(RfioOtherCmdNewTurl1Suite(),RfioOtherCmdNewTurl2Suite(),RfioOtherCmdNewTurl3Suite(),RfioOtherCmdNewTurl4Suite(),RfioOtherCmdNewTurl5Suite(),RfioOtherCmdNewTurl6Suite(),RfioOtherCmdNewTurl7Suite(),RfioOtherCmdNewTurl8Suite(),RfioOtherCmdNewTurl9Suite(),RfioOtherCmdNewTurl10Suite(),RfioOtherCmdNewTurl11Suite()))
+        unittest.TestSuite.__init__(self,(RfioOtherCmdNewTurl1Suite(),RfioOtherCmdNewTurl2Suite(),RfioOtherCmdNewTurl3Suite(),RfioOtherCmdNewTurl4Suite(),RfioOtherCmdNewTurl5Suite(),RfioOtherCmdNewTurl6Suite(),RfioOtherCmdNewTurl7Suite(),RfioOtherCmdNewTurl8Suite(),RfioOtherCmdNewTurl9Suite(),RfioOtherCmdNewTurl10Suite()))

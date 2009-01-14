@@ -4,7 +4,7 @@ import unittest
 import string
 
 import UtilityForCastorTest
-from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,configFile
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,configFile
 import ClientTest
 import RfioTest
 import RootTest

@@ -6,7 +6,7 @@ from threading import Thread
 import signal
 import thread
 import UtilityForCastorTest
-from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDirTape,configFile,ticket
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDirTape,configFile,ticket
 
 endThread=0
 # global variable to avoid the join, due to thread limitation in handling signals
@@ -138,7 +138,7 @@ class PreRequisitesCase(unittest.TestCase):
         assert (UtilityForCastorTest.checkUser() != -1), "you don't have acccess to directory \"" + outputDirTape + "\" where you wanted to run the test"
         global dirCastor,myScen,localDir,inputFile,recallDir
         dirCastor=outputDirTape+"/tmpTapeTest"+ticket+"/"
-        myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion)
+        myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass)
         params = UtilityForCastorTest.parseConfigFile(configFile, "Tape")
         localDir=params["LOG_DIR"]
         localDir=localDir+ticket+"/"

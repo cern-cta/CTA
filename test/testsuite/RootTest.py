@@ -5,7 +5,7 @@ import sys
 import time
 import threading
 import UtilityForCastorTest
-from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDir,configFile,ticket
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDir,configFile,ticket
 import RfioTest
 from RfioTest import myTurl, myTag
 
@@ -36,7 +36,7 @@ class PreRequisitesCase(unittest.TestCase):
             else:
                 rootsys = params["ROOTSYS"]
             rootbin = rootsys+"/bin/root -b -l"
-            myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,None,[["STAGER_TRACE","3"]])
+            myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,None,[["STAGER_TRACE","3"]])
             myShell=os.popen('ls -l /bin/sh').read()
             if myShell.find("bash") != -1:
                 myScen="export ROOTSYS="+rootsys+";"+myScen
@@ -164,11 +164,6 @@ class RootRfioNewTurl10(RfioTest.RfioCastorNewTurl10,RootCase):
         self.protocol = "RFIO"
         RootCase.__init__(self, methodName)
 
-class RootRfioNewTurl11(RfioTest.RfioCastorNewTurl11,RootCase):
-    def __init__(self, methodName):
-        self.protocol = "RFIO"
-        RootCase.__init__(self, methodName)
-
 # TRFIO suites
 
 class RootRfioNewTurl1Suite(unittest.TestSuite):
@@ -210,10 +205,6 @@ class RootRfioNewTurl9Suite(unittest.TestSuite):
 class RootRfioNewTurl10Suite(unittest.TestSuite):
     def __init__(self):
         unittest.TestSuite.__init__(self,map(RootRfioNewTurl10,casesRoot))
-
-class RootRfioNewTurl11Suite(unittest.TestSuite):
-    def __init__(self):
-        unittest.TestSuite.__init__(self,map(RootRfioNewTurl11,casesRoot))
 
 
 # TCastor cases
@@ -268,11 +259,6 @@ class RootCastorNewTurl10(RfioTest.RfioCastorNewTurl10,RootCase):
         self.protocol = "Castor"
         RootCase.__init__(self, methodName)
 
-class RootCastorNewTurl11(RfioTest.RfioCastorNewTurl11,RootCase):
-    def __init__(self, methodName):
-        self.protocol = "Castor"
-        RootCase.__init__(self, methodName)
-
 # TCastor suites
 
 class RootCastorNewTurl1Suite(unittest.TestSuite):
@@ -316,19 +302,15 @@ class RootCastorNewTurl10Suite(unittest.TestSuite):
     def __init__(self):
         unittest.TestSuite.__init__(self,map(RootCastorNewTurl10,casesRoot))
 
-class RootCastorNewTurl11Suite(unittest.TestSuite):
-    def __init__(self):
-        unittest.TestSuite.__init__(self,map(RootCastorNewTurl11,casesRoot))
-
 ## Test Suite with all the TRFIO cases
 
 class RootRfioNewTurlSuite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,(RootRfioNewTurl1Suite(),RootRfioNewTurl2Suite(),RootRfioNewTurl3Suite(),RootRfioNewTurl4Suite(),RootRfioNewTurl5Suite(),RootRfioNewTurl6Suite(),RootRfioNewTurl7Suite(),RootRfioNewTurl8Suite(),RootRfioNewTurl9Suite(),RootRfioNewTurl10Suite(),RootRfioNewTurl11Suite()))
+        unittest.TestSuite.__init__(self,(RootRfioNewTurl1Suite(),RootRfioNewTurl2Suite(),RootRfioNewTurl3Suite(),RootRfioNewTurl4Suite(),RootRfioNewTurl5Suite(),RootRfioNewTurl6Suite(),RootRfioNewTurl7Suite(),RootRfioNewTurl8Suite(),RootRfioNewTurl9Suite(),RootRfioNewTurl10Suite()))
 
 ## Test Suite with all the TCastor cases
 
 class RootCastorNewTurlSuite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,(RootCastorNewTurl1Suite(),RootCastorNewTurl2Suite(),RootCastorNewTurl3Suite(),RootCastorNewTurl4Suite(),RootCastorNewTurl5Suite(),RootCastorNewTurl6Suite(),RootCastorNewTurl7Suite(),RootCastorNewTurl8Suite(),RootCastorNewTurl9Suite(),RootCastorNewTurl10Suite(),RootCastorNewTurl11Suite()))
+        unittest.TestSuite.__init__(self,(RootCastorNewTurl1Suite(),RootCastorNewTurl2Suite(),RootCastorNewTurl3Suite(),RootCastorNewTurl4Suite(),RootCastorNewTurl5Suite(),RootCastorNewTurl6Suite(),RootCastorNewTurl7Suite(),RootCastorNewTurl8Suite(),RootCastorNewTurl9Suite(),RootCastorNewTurl10Suite()))
 

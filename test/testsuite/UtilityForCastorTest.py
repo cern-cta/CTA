@@ -47,8 +47,8 @@ class configuration:
     """ a singleton, initializing global parameters on loading """
     def gatherParameters(self):
         # parse command line
-        myArg={"-s":"","-p":"","-S":"","-e":"","-v":"","-c":"","-q":"False","-o":"","-h":""}
-        optionCmdLine = getopt.getopt(sys.argv[1:],'s:S:e:v:p:c:qo:h:')
+        myArg={"-s":"","-p":"","-S":"","-e":"","-c":"","-q":"False","-o":"","-h":""}
+        optionCmdLine = getopt.getopt(sys.argv[1:],'s:S:e:p:c:qo:h:')
         optionCmdLine = optionCmdLine[0]
         for elemLine in optionCmdLine:
             if elemLine != []:
@@ -63,7 +63,6 @@ class configuration:
         self.stagerHost=""
         self.stagerPort=""
         self.stagerSvcClass=""
-        self.stagerVersion=""
         self.timeOut=0
         self.stagerExtraSvcClass=""
         self.stagerDiskOnlySvcClass=""
@@ -71,17 +70,12 @@ class configuration:
         self.quietMode = False
         self.outputDir = ""
         self.outputDirTape = ""
-        self.testCastorV1 = True
         self.testDefaultEnv = True
         # Parse config file content
         params = parseConfigFile(self.configFile, "Generic")
         if params.has_key("STAGE_HOST"): self.stagerHost=params["STAGE_HOST"]
         if params.has_key("STAGE_PORT"): self.stagerPort=params["STAGE_PORT"]
         if params.has_key("STAGE_SVCCLASS"): self.stagerSvcClass=params["STAGE_SVCCLASS"]
-        if params.has_key("CASTOR_V2"):
-            self.stagerVersion = -1;
-            if params["CASTOR_V2"].lower() == "yes":
-                self.stagerVersion = 2;
         if params.has_key("TIMEOUT"): self.timeOut=int(params["TIMEOUT"])
         if params.has_key("EXTRA_SVCCLASS"): self.stagerExtraSvcClass=params["EXTRA_SVCCLASS"]
         if params.has_key("DISKONLY_SVCCLASS"): self.stagerDiskOnlySvcClass=params["DISKONLY_SVCCLASS"]
@@ -92,7 +86,6 @@ class configuration:
         self.outputDirTape = self.outputDir
         if params.has_key("OUTPUT_DIR_TAPE"): self.outputDirTape = params["OUTPUT_DIR_TAPE"]
         if params.has_key("TEST_DEFAULT_ENV") and params["TEST_DEFAULT_ENV"].lower() == "no": self.testDefaultEnv = False
-        if params.has_key("TEST_CASTOR_V1") and params["TEST_CASTOR_V1"].lower() == "no": self.testCastorV1 = False
         # Overwrite with command line values when needed
         if myArg["-s"] !="":
             self.stagerHost=myArg["-s"]
@@ -100,11 +93,6 @@ class configuration:
             self.stagerPort=myArg["-p"]
         if myArg["-S"] != "":
             self.stagerSvcClass=myArg["-S"]
-        if myArg["-v"] != "":
-            if myArg["-v"] == "2":
-                self.stagerVersion=2
-            else:
-                self.stagerVersion=-1
         if myArg["-e"] != "":
             self.stagerExtraSvcClass=myArg["-e"]
         if myArg["-q"] == "":
@@ -115,7 +103,7 @@ class configuration:
             self.stagerHost=myArg["-h"]
     isInitialized = False
     def __init__(self):
-        global stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,configFile,quietMode,outputDir,outputDirTape,testCastorV1,testDefaultEnv
+        global stagerHost,stagerPort,stagerSvcClass,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,configFile,quietMode,outputDir,outputDirTape,testDefaultEnv
         # gather parameters if needed
         if not self.isInitialized:
             self.isInitialized = True
@@ -126,7 +114,6 @@ class configuration:
                 print "    outputDirectory : ", self.outputDir
                 print "    tapeOutputDirectory : ", self.outputDirTape
                 print "    testDefaultEnv : ", self.testDefaultEnv
-                print "    testCastorV1 : ", self.testCastorV1
                 print "    stagerSvcClass : ", self.stagerSvcClass
                 print "    stagerExtraSvcClass : ", self.stagerExtraSvcClass
                 print "    stagerDiskOnlySvcClass : ", self.stagerDiskOnlySvcClass
@@ -135,7 +122,6 @@ class configuration:
         stagerHost = self.stagerHost
         stagerPort = self.stagerPort
         stagerSvcClass = self.stagerSvcClass
-        stagerVersion = self.stagerVersion
         stagerTimeOut = self.timeOut
         stagerExtraSvcClass = self.stagerExtraSvcClass
         stagerDiskOnlySvcClass = self.stagerDiskOnlySvcClass
@@ -144,7 +130,6 @@ class configuration:
         quietMode = self.quietMode
         outputDir = self.outputDir
         outputDirTape = self.outputDirTape
-        testCastorV1 = self.testCastorV1
         testDefaultEnv = self.testDefaultEnv
 
 # force to initialize the configuration
@@ -253,7 +238,7 @@ def checkRfcpOutput(buf, put, update=0):
         return (s.group(1) == s.group(2))
 
 #different scenarium for env
-def createScenarium(host,port,serviceClass,version,useEnv=None,opt=None):
+def createScenarium(host,port,serviceClass,useEnv=None,opt=None):
     myShell=os.popen('ls -l /bin/sh').read()
     myScen=""
     if myShell.find("bash") != -1:
@@ -263,8 +248,6 @@ def createScenarium(host,port,serviceClass,version,useEnv=None,opt=None):
             myScen+="export STAGE_PORT="+port+";"
         if serviceClass !=-1:
             myScen+="export STAGE_SVCCLASS="+serviceClass+";"
-        if version !=-1:
-            myScen+="export RFIO_USE_CASTOR_V2=yes;"
         if opt != None:
             for envVar in opt:
                 if envVar[1] != -1:
@@ -277,8 +260,6 @@ def createScenarium(host,port,serviceClass,version,useEnv=None,opt=None):
                 myScen+="unset STAGE_PORT;"
             if serviceClass ==-1:
                 myScen+="unset STAGE_SVCCLASS;"
-            if version ==-1:
-                myScen+="unset RFIO_USE_CASTOR_V2;"
             if opt != None:
                 for envVar in opt:
                     if envVar[1] == -1:
@@ -292,8 +273,6 @@ def createScenarium(host,port,serviceClass,version,useEnv=None,opt=None):
             myScen+="setenv STAGE_PORT  "+port+";"
         if serviceClass !=-1:
             myScen+="setenv STAGE_SVCCLASS "+serviceClass+";"
-        if version !=-1:
-            myScen+="setenv RFIO_USE_CASTOR_V2 yes;"
         if opt != None:
             for envVar in opt:
                 if envVar[1] != -1:
@@ -306,8 +285,6 @@ def createScenarium(host,port,serviceClass,version,useEnv=None,opt=None):
                 myScen+="unsetenv STAGE_PORT;"
             if serviceClass == -1:
                 myScen+="unsetenv STAGE_SVCCLASS;"
-            if version == -1:
-                myScen+="unsetenv RFIO_USE_CASTOR_V2;"
             if opt != None:
                 for envVar in opt:
                     if envVar[1] == -1:

@@ -6,7 +6,7 @@ import sys
 import time
 import threading
 import UtilityForCastorTest
-from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDir,configFile,ticket
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDir,configFile,ticket
 
 # parameters
 myScen=""
@@ -35,7 +35,7 @@ class PreRequisitesCase(unittest.TestCase):
             inputFile = params["INPUT_FILE"]
             updInputFile = localDir+"rfcpupdFile"
             os.system("echo 'extra data' > "+updInputFile)
-            myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,None,[["STAGER_TRACE","3"]])
+            myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,None,[["STAGER_TRACE","3"]])
             UtilityForCastorTest.runOnShell(["nsmkdir "+dirCastor],myScen)
 
             notEnoughSvcClasses=0
@@ -466,7 +466,7 @@ class StagerUpdCase(unittest.TestCase):
         if notEnoughSvcClasses:
             return
 
-        replEnv = UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerExtraSvcClass,stagerVersion)
+        replEnv = UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerExtraSvcClass)
         cmd=["rfcp "+inputFile+" "+dirCastor+"fileClient"+rfiover+"pupdExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pupdExistingFileReplicated"+ticket,replEnv+"rfcp "+dirCastor+"fileClient"+rfiover+"pupdExistingFileReplicated"+ticket+" "+localDir+"fileClient"+rfiover+"pupdExistingFileReplicated","stager_qry -M "+dirCastor+"fileClient"+rfiover+"pupdExistingFileReplicated"+ticket+ " -S "+stagerExtraSvcClass,"stager_update -M "+dirCastor+"fileClient"+rfiover+"pupdExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"pupdExistingFileReplicated"+ticket]
         UtilityForCastorTest.saveOnFile(localDir+"Client"+rfiover+"pupdExistingFileReplicated",cmd,myScen)
 
@@ -537,7 +537,7 @@ class StagerUpdCase(unittest.TestCase):
         if notEnoughSvcClasses:
             return
 
-        replEnv = UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerExtraSvcClass,stagerVersion)
+        replEnv = UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerExtraSvcClass)
         cmd=["rfcp "+inputFile+" "+dirCastor+"fileClient"+rfiover+"updExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"updExistingFileReplicated"+ticket,replEnv+"rfcp "+dirCastor+"fileClient"+rfiover+"updExistingFileReplicated"+ticket+" "+localDir+"fileClient"+rfiover+"updExistingFileReplicated","stager_qry -M "+dirCastor+"fileClient"+rfiover+"updExistingFileReplicated"+ticket+" -S "+stagerExtraSvcClass,"rfcpupd "+rfiover+" "+updInputFile+" "+dirCastor+"fileClient"+rfiover+"updExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"updExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClient"+rfiover+"updExistingFileReplicated"+ticket+" -S "+stagerExtraSvcClass,"rfcp "+dirCastor+"fileClient"+rfiover+"updExistingFileReplicated"+ticket+" "+localDir+"Read"+rfiover+"updExistingFileReplicated"]
         UtilityForCastorTest.saveOnFile(localDir+"Client"+rfiover+"updExistingFileReplicated",cmd,myScen)
 
