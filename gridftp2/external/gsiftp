@@ -14,7 +14,6 @@ service gsiftp
         env             += GLOBUS_TCP_PORT_RANGE=20000,21000
         env             += GLOBUS_TCP_SOURCE_RANGE=20000,21000
         env             += LD_LIBRARY_PATH=/opt/globus/lib
-        env             += RFIO_USE_CASTOR_V2=YES
         #env             += STAGE_SVCCLASS=default
         env             += X509_USER_CERT=/etc/grid-security/castor-gridftp-dsi-ext/castor-gridftp-dsi-ext-cert.pem
         env             += X509_USER_KEY=/etc/grid-security/castor-gridftp-dsi-ext/castor-gridftp-dsi-ext-key.pem
