@@ -1569,8 +1569,7 @@ egrep -v 'HPP|MAX|IMPORT|EXPORT|VALID_PORT|EMONBASEOFF' > ports.txt
 ./h/rtcp_constants.h:#define RTCOPY_PORT        (5503)
 ./h/rtcp_constants.h:#define RTCOPY_PORT        (5003)
 ./h/rtcp_constants.h:#define RTCOPY_PORT_DEBUG  (8889)
-./h/stager_client_api_common.hpp:#define DEFAULT_PORT1 5007
-./h/stager_client_api_common.hpp:#define DEFAULT_PORT2 9002
+./h/stager_client_api_common.hpp:#define DEFAULT_PORT 9002
 ./h/stager_client_api_common.hpp:#define DEFAULT_SEC_PORT 9007
 ./h/stager_constants.h:#define STAGER_DEFAULT_SECURE_PORT 5515
 /* Default secure port number */
