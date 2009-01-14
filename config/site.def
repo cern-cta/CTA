@@ -67,7 +67,6 @@
 #define SacctDir	LOGPATH(sacct)
 #define ShiftConfigFile	CONFIGPATH(castor.conf)
 #define StageMapFile    CONFIGPATH(stagemap.conf)
-#define StageTypeFile   CONFIGPATH(stagetype.conf)
 #define OraStagerConfigFile CONFIGPATH(ORASTAGERCONFIG)
 #define StagerSuperGroup    st
 #define StagerSuperUser	stage

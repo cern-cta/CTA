@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.205 $ $Release$ $Date: 2009/01/09 14:38:14 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.206 $ $Release$ $Date: 2009/01/14 17:30:51 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -38,7 +38,7 @@ STAGERSUPERGROUP = -DSTAGERSUPERGROUP=\"$(STAGERSUPERGROUP0)\"
 
 SUBDIRS = $(DBCPPDIR) $(RHCPPDIR) $(VDQMCPPDIR) $(GCCPPDIR) $(REPACKDIR) $(MONITORINGDIR) $(STAGERDIR) $(JOBMANAGERDIR) $(JOBDIR) $(INFOPOLICYDIR) $(RTCOPYDIR) $(SCHEDULERDIR) $(TAPECPPDIR)
 DEBUG  = -g -O0 -pedantic -Wall -Wno-long-long
-STAGEFLAGS = -DSTAGEMAP=\"StageMapFile\" -DSTAGETYPE=\"StageTypeFile\"
+STAGEFLAGS = -DSTAGEMAP=\"StageMapFile\"
 #if BuildSecurity
 SECURITYFLAG=-DCSEC
 #endif
