@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.hpp,v 1.5 2009/01/06 14:45:33 sponcec3 Exp $
+ * $Id: stager_client_api_common.hpp,v 1.6 2009/01/14 17:38:07 sponcec3 Exp $
  *
  * Header file for internal stager client functions.
  * Note that this is only included from C++ code and it *is* C++
@@ -14,11 +14,9 @@
 #include "stager_errmsg.h"
 #include "castor/exception/Exception.hpp"
 
-#define DEFAULT_PORT1 5007
-#define DEFAULT_PORT2 9002
+#define DEFAULT_PORT 9002
 #define DEFAULT_SEC_PORT 9007
 #define DEFAULT_SVCCLASS ""  
-#define DEFAULT_VERSION 1
 
 #define STAGER_TRACE_NAME  "STAGER_TRACE"
 
