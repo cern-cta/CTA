@@ -23,7 +23,7 @@ def buildUuid():
 def buildEnv(instance, svcClass, isDebug):
     debugLevel = 0
     if isDebug: debugLevel = 3
-    return "STAGE_HOST=" + instance + " STAGER_TRACE=" + str(debugLevel) + " RFIO_USE_CASTOR_V2=YES STAGE_SVCCLASS=" + svcClass + " LD_LIBRARY_PATH=" + getCastorLibPath() + " "
+    return "STAGE_HOST=" + instance + " STAGER_TRACE=" + str(debugLevel) + " STAGE_SVCCLASS=" + svcClass + " LD_LIBRARY_PATH=" + getCastorLibPath() + " "
 
 def getHost():
     return socket.gethostname()
