@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.687 $ $Date: 2008/11/27 17:54:01 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.688 $ $Date: 2009/01/14 16:38:40 $ $Author: itglp $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -468,7 +468,6 @@ BEGIN
 END;
 /
 
-
 /* Generate a universally unique id (UUID) */
 CREATE OR REPLACE FUNCTION uuidGen RETURN VARCHAR2 IS
   ret VARCHAR2(36);
@@ -479,7 +478,6 @@ BEGIN
   RETURN lower(regexp_replace(sys_guid(), '(.{8})(.{4})(.{4})(.{4})(.{12})', '\1-\2-\3-\4-\5'));
 END;
 /
-
 
 /* Function to check if a service class exists by name. This function can return
  * a boolean value or raise an application error if the named service class does
@@ -514,7 +512,6 @@ BEGIN
 END;
 /
 
-
 /* Function to return a comma separate list of service classes that a
  * filesystem belongs too.
  */
@@ -540,7 +537,6 @@ BEGIN
 END;
 /
 
-
 /* Function to extract a configuration option from the castor config
  * table.
  */
@@ -557,6 +553,22 @@ BEGIN
   RETURN returnValue;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   RETURN returnValue;
+END;
+/
+
+/* Function to canonicalize a filepath, i.e. to drop multiple '/'s and resolve any '..' */
+CREATE OR REPLACE FUNCTION canonicalizePath(path IN VARCHAR2) RETURN VARCHAR2 IS
+  buf VARCHAR2(2048);
+  ret VARCHAR2(2048);
+BEGIN
+  ret := REGEXP_REPLACE(path, '(/){2,}', '/');
+  LOOP
+    buf := ret;
+    -- a path component is by definition anything between two slashes
+    ret := REGEXP_REPLACE(buf, '/[^/]+/../', '/');
+    EXIT WHEN ret = buf;
+  END LOOP;
+  RETURN ret;
 END;
 /
 
@@ -579,7 +591,6 @@ BEGIN
   END LOOP;
 END;
 /
-
 
 /* PL/SQL method canceling a given recall */
 CREATE OR REPLACE PROCEDURE cancelRecall
@@ -608,7 +619,6 @@ BEGIN
 END;
 /
 
-
 /* PL/SQL method FOR canceling a recall by tape VID, The subrequests associated with
    the recall with be FAILED */
 CREATE OR REPLACE PROCEDURE cancelRecallForTape (vid IN VARCHAR2) AS
@@ -626,7 +636,6 @@ BEGIN
   END LOOP;
 END;
 /
-
 
 /* PL/SQL method to delete a CastorFile only when no Disk|TapeCopies are left for it */
 /* Internally used in filesDeletedProc, putFailedProc and deleteOutOfDateDiskCopies */

@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.710 $ $Date: 2008/12/18 16:38:13 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.711 $ $Date: 2009/01/14 16:38:40 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1807,13 +1807,13 @@ BEGIN
      WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
     -- update lastAccess time
     UPDATE CastorFile SET LastAccessTime = getTime(),
-                          lastKnownFileName = REGEXP_REPLACE(fn,'(/){2,}','/')
+                          lastKnownFileName = canonicalizePath(fn)
      WHERE id = rid;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- insert new row
     INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
                             creationTime, lastAccessTime, lastUpdateTime, lastKnownFileName)
-      VALUES (ids_seq.nextval, fId, nsHostName, sc, fc, fs, getTime(), getTime(), lut, REGEXP_REPLACE(fn,'(/){2,}','/'))
+      VALUES (ids_seq.nextval, fId, nsHostName, sc, fc, fs, getTime(), getTime(), lut, canonicalizePath(fn))
       RETURNING id, fileSize INTO rid, rfs;
     INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
   END;

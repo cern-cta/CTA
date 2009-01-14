@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.650 $ $Date: 2008/11/24 18:47:09 $ $Author: waldron $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.651 $ $Date: 2009/01/14 16:38:40 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -135,7 +135,7 @@ BEGIN
   ELSE  -- exact match
     SELECT /*+ INDEX(CastorFile I_CastorFile_LastKnownFileName) */ id BULK COLLECT INTO cfs
       FROM CastorFile
-     WHERE lastKnownFileName = REGEXP_REPLACE(fn,'(/){2,}','/');
+     WHERE lastKnownFileName = canonicalizePath(fn);
   END IF;
   IF cfs.COUNT > maxNbResponses THEN
     -- We have too many rows, we just give up
