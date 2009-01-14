@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2008/12/01 13:58:40 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.48 $ $Release$ $Date: 2009/01/14 17:31:17 $ $Author: sponcec3 $
  *
  *
  *
@@ -493,11 +493,10 @@ void  RepackFileStager::sendRepackRemoveRequest( RepackSubRequest*sreq)throw(cas
   }
   
   /* we need the stager name and service class for correct removal
-   * the port and version has to be set be the BaseClient. Nevertheless the 
-   * values have to be 0.
+   * the port has to be set by the BaseClient. Nevertheless the 
+   * values has to be 0.
    */
   opts.stage_port = 0; 
-  opts.stage_version = 0;
 
   castor::client::BaseClient client(stage_getClientTimeout(),stage_getClientTimeout());
 

@@ -142,7 +142,6 @@ namespace castor {
       opts->service_class = (char*)sreq->repackrequest()->svcclass().c_str();
       opts->stage_host = (char*)sreq->repackrequest()->stager().c_str();
       opts->stage_port = opts->stage_port = DEFAULT_STAGER_PORT;
-      opts->stage_version = 0;
     }
     else {
       castor::exception::Internal ex;
