@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2Stager.cc,v 1.1 2008/09/15 10:04:02 apeters Exp $
+//          $Id: XrdxCastor2Stager.cc,v 1.2 2009/01/14 17:40:44 sponcec3 Exp $
 
 #ifndef __XCASTOR2FS__STAGER__HH
 #define __XCASTOR2FS__STAGER__HH
@@ -44,7 +44,6 @@ XrdxCastor2Stager::Prepare2Get(XrdOucErrInfo &error, uid_t uid, gid_t gid, const
   ZTRACE(stager,"uid=" << uid << " gid=" << gid << " path=" << path << " stagehost=" << stagehost << " serviceclass=" << serviceclass);
   Opts.stage_host    = (char*)stagehost;
   Opts.service_class = (char*)serviceclass;
-  Opts.stage_version = 2;
   Opts.stage_port    = 0;
   
   const char* stageTag = "xCastor2P2Get";
@@ -133,7 +132,6 @@ XrdxCastor2Stager::Get(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char* pa
 
   Opts.stage_host    = (char*)stagehost;
   Opts.service_class = (char*)serviceclass;
-  Opts.stage_version = 2;
   Opts.stage_port    = 0;
   
   const char* stageTag = "xCastor2Get";
@@ -221,7 +219,6 @@ XrdxCastor2Stager::Put(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char* pa
 
   Opts.stage_host    = (char*)stagehost;
   Opts.service_class = (char*)serviceclass;
-  Opts.stage_version = 2;
   Opts.stage_port    = 0;
   
   const char* stageTag = "xCastor2Put";
@@ -316,7 +313,6 @@ XrdxCastor2Stager::Update(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char*
 
   Opts.stage_host    = (char*)stagehost;
   Opts.service_class = (char*)serviceclass;
-  Opts.stage_version = 2;
   Opts.stage_port    = 0;
   
   const char* stageTag = "xCastor2Update";
@@ -655,7 +651,6 @@ XrdxCastor2Stager::StagerQuery(XrdOucErrInfo &error, uid_t uid, gid_t gid, const
 
   Opts.stage_host    = (char*)stagehost;
   Opts.service_class = (char*)serviceclass;
-  Opts.stage_version = 2;
   Opts.stage_port    = 0;
 
   // Initialize objects used for get processing.
