@@ -133,8 +133,7 @@ globus_l_gfs_CASTOR2ext_start(
 	if(0 == stage_mapper_setenv(pwd->pw_name,  /* const char *username */
                         grp->gr_name,		   /* const char *groupname */
                         &mstager,                  /* char **mstager */
-                        &msvcclass,		   /* char **msvcclass */
-                        NULL			   /* int* isV2 */
+                        &msvcclass		   /* char **msvcclass */
 			)){
 	    	if(mstager!=NULL) globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: user has been mapped to STAGE_HOST: %s\n",func, mstager);
 		if(msvcclass!=NULL) globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: user has been mapped to STAGE_CVSCLASS: %s\n",func, msvcclass);
