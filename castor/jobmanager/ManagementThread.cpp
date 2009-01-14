@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/09/22 12:35:10 $ $Author: waldron $
+ * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2009/01/14 08:28:28 $ $Author: sponcec3 $
  *
  * Cancellation thread used to cancel jobs in the LSF with have been in a
  * PENDING status for too long
@@ -664,7 +664,7 @@ bool castor::jobmanager::ManagementThread::terminateRequest
 
   // LSF has the capacity to kill jobs on bulk (lsb_killbulkjobs). However
   // testing has shown that this call fails to invoke the deletion hook of the
-  // scheduler plugin and results in a memory leak in the plugin. (Definately
+  // scheduler plugin and results in a memory leak in the plugin. (Definitely
   // a LSF bug!)
   if (jobId > 0) {
     if (lsb_forcekilljob(jobId) < 0) {
