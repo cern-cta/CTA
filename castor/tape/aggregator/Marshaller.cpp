@@ -739,7 +739,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpFileRequestMessage(
     strlen(src.ifce)      +
     strlen(src.stageId)   +
     24 * sizeof(uint32_t) +
-    4                     +
+    4                     + // 4 = blockId[4]
     8 * sizeof(uint64_t)  +
     strlen(src.segAttr.nameServerHostName) +
     strlen(src.segAttr.segmCksumAlgorithm) +
@@ -830,8 +830,8 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpFileRequestMessage(
   marshallString(src.err.errmsgtxt                    , p);
   marshallUint32(src.err.severity                     , p);
   marshallUint32(src.err.errorcode                    , p);
-  marshallUint32(src.err.maxTpRetry                  , p);
-  marshallUint32(src.err.maxCpRetry                  , p);
+  marshallUint32(src.err.maxTpRetry                   , p);
+  marshallUint32(src.err.maxCpRetry                   , p);
 
   // Calculate the number of bytes actually marshalled
   const size_t nbBytesMarshalled = p - dst;

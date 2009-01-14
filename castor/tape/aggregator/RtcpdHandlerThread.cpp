@@ -221,7 +221,6 @@ void castor::tape::aggregator::RtcpdHandlerThread::run(void *param)
   // Send file to RTCPD
   {
     RtcpFileRequestMessage request;
-    RtcpFileRequestMessage reply;
 
     Utils::setBytes(request, '\0');
     try {
@@ -256,10 +255,12 @@ void castor::tape::aggregator::RtcpdHandlerThread::run(void *param)
     request.err.maxTpRetry = -1;
     request.err.maxCpRetry = -1;
 
-    try {
+    RtcpFileRequestMessage reply;
 
+    try {
       sendFileToRtcpd(cuuid, *socket, NETRWTIMEOUT, request, reply);
 
+/*
       castor::dlf::Param params[] = {
         castor::dlf::Param("filePath", reply.filePath),
         castor::dlf::Param("tapePath", reply.tapePath),
@@ -330,6 +331,9 @@ void castor::tape::aggregator::RtcpdHandlerThread::run(void *param)
         castor::dlf::Param("err.maxCpRetry", reply.err.maxCpRetry)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_SENT_FILE, 11111, params);
+*/
+
+castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, AGGREGATOR_SENT_FILE);
 
     } catch(castor::exception::Exception &ex) {
       castor::dlf::Param params[] = {
@@ -340,7 +344,6 @@ void castor::tape::aggregator::RtcpdHandlerThread::run(void *param)
         AGGREGATOR_FAILED_TO_SEND_FILE, 3, params);
     }
   }
-
   // Close and de-allocate the socket
   socket->close();
   delete socket;
@@ -549,6 +552,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::
     throw ex;
   }
 
+/*
   // Receive reply from RTCPD
   Utils::setBytes(reply, '\0');
   try {
@@ -573,6 +577,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::
          ": " << ex.getMessage().str();
     throw ex2;
   }
+*/
 }
 
 
@@ -703,7 +708,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::
     castor::exception::Internal ie;
 
     ie.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to marshall volume message: "
+      << ": Failed to marshall file message: "
       << ex.getMessage().str();
 
     throw ie;
@@ -716,7 +721,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::
     castor::exception::Exception ex2(SECOMERR);
 
     ex2.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to send volume message to RTCPD: "
+      << ": Failed to send file message to RTCPD: "
       << ex.getMessage().str();
   }
 
@@ -767,6 +772,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::
     throw ex;
   }
 
+/*
   // Receive reply from RTCPD
   Utils::setBytes(reply, '\0');
   try {
@@ -791,6 +797,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::
          ": " << ex.getMessage().str();
     throw ex2;
   }
+*/
 }
 
 
