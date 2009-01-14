@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfcp.man,v 1.18 2008/03/14 13:36:10 itglp Exp $
+.\" $Id: rfcp.man,v 1.19 2009/01/14 17:39:21 sponcec3 Exp $
 .\"
-.\" @(#)$RCSfile: rfcp.man,v $ $Revision: 1.18 $ $Date: 2008/03/14 13:36:10 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand
+.\" @(#)$RCSfile: rfcp.man,v $ $Revision: 1.19 $ $Date: 2009/01/14 17:39:21 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand
 .\" Copyright (C) 1998-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFCP 1 "$Date: 2008/03/14 13:36:10 $" CASTOR "Rfio User Commands"
+.TH RFCP 1 "$Date: 2009/01/14 17:39:21 $" CASTOR "Rfio User Commands"
 .SH NAME
 rfcp \- Remote file copy
 .SH SYNOPSIS
@@ -60,11 +60,11 @@ character. Then directory in output is not supported.
 .LP
 For castor files the new TURL sintax may be used, with the following variants:
 .LP
- "rfio://[stagehost][:port]/?[svcClass=MySvcClass&][castorVersion=MyCastorVersion&]path=/castor/cern.ch/user/n/nobody/Myfile"
+ "rfio://[stagehost][:port]/?[svcClass=MySvcClass&]path=/castor/cern.ch/user/n/nobody/Myfile"
 .LP
 .B or
 .LP
- "rfio://[stagehost][:port]/[/castor/cern.ch/user/n/nobody/file][?[svcClass=MySvcClass&][castorVersion=MyCastorVersion]]"
+ "rfio://[stagehost][:port]/[/castor/cern.ch/user/n/nobody/file][?[svcClass=MySvcClass]]"
 .LP
 If there is the pamameter "path", it must be the last one. The order of the other options is not taken into account.
 .LP

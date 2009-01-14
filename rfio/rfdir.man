@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfdir.man,v 1.6 2006/07/05 14:36:18 riojac3 Exp $
+.\" $Id: rfdir.man,v 1.7 2009/01/14 17:39:21 sponcec3 Exp $
 .\"
 .\" @(#)rfdir.man	1.2 09/21/98     CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 1998-2002 by CERN/IT/PDP
 .\" All rights reserved
 .\"
-.TH RFDIR 1 "$Date: 2006/07/05 14:36:18 $" CASTOR "Rfio User Commands"
+.TH RFDIR 1 "$Date: 2009/01/14 17:39:21 $" CASTOR "Rfio User Commands"
 .SH NAME
 rfdir \- Remote directory list
 .SH SYNOPSIS
@@ -38,11 +38,11 @@ command for listing local files or directories.
 
 For castor files we can use as remote file the new Turl sintax, there are two way to specify it:
 .LP
- 'rfio://[stagehost][:port]/?[svcClass=MySvcClass&][castorVersion=MyCastorVersion&]path=/castor/cern.ch/user/n/nobody/Myfile' 
+ 'rfio://[stagehost][:port]/?[svcClass=MySvcClass&]path=/castor/cern.ch/user/n/nobody/Myfile' 
 .LP
 .B or
 .LP
- 'rfio://[stagehost][:port]/[/castor/cern.ch/user/n/nobody/file][?[svcClass=MySvcClass&][castorVersion=MyCastorVersion]]'
+ 'rfio://[stagehost][:port]/[/castor/cern.ch/user/n/nobody/file][?[svcClass=MySvcClass]]'
 .LP
 If there is the pamameter "path", it must be the last one. The order of the other option is not taken into account.
 .LP

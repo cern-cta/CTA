@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.26 $ $Release$ $Date: 2009/01/06 16:33:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.27 $ $Release$ $Date: 2009/01/14 17:39:21 $ $Author: sponcec3 $
  *
  *
  *
@@ -27,13 +27,11 @@
  *   - TURL: rfio:////castor/cern.ch/user/n/nobody/abc.123 or
  *           rfio://STAGE_HOST:STAGE_PORT/?
  *                     svcClass=myClass
- *                      &castorVersion=2
  *                       &path=/castor/cern.ch/user/n/nobody/abc.123
  *           rfio://STAGE_HOST:STAGE_PORT//castor/cern.ch/user/n/nobody/abc.123?
  *                     svcClass=myClass
- *                      &castorVersion=2
  *
- *           SvcClass and CastorVersion can be undefined  and default values are used.
+ *           SvcClass can be undefined and default value is used.
  *
  *   - RFIO path: /castor/cern.ch/user/n/nobody/abc.123
  *
@@ -49,10 +47,8 @@
 #include <grp.h>
 #include <sys/types.h>
 #include <common.h>
-#define DEFAULT_PORT2 9002
-#define DEFAULT_PORT1 5007
+#define DEFAULT_PORT 9002
 #define DEFAULT_SVCCLASS ""
-#define DEFAULT_VERSION 1
 
 static int tURLPrefixKey = -1;
 static int tURLPrefixLenKey = -1;
@@ -60,7 +56,6 @@ static int tURLPrefixLenKey = -1;
 int tStageHostKey = -1;
 int tStagePortKey = -1;
 int tSvcClassKey = -1;
-int tCastorVersionKey = -1;
 // functions used only in this file.
 
 static int checkAlphaNum(char *p)
@@ -114,18 +109,17 @@ int rfioTURLFromString(
   char *p, *q, *q1, *orig, *prefix;
   RfioTURL_t _tURL;
   int ret;
-  char *path1, *path2, *mySvcClass, *myCastorVersion;
-  int versionNum=0;
+  char *path1, *path2, *mySvcClass;
   //void ** auxPointer=0;
   char endMark;
 
   char ** globalHost,  **globalSvc;
-  int *globalVersion, *globalPort;
+  int *globalPort;
 
   globalHost=globalSvc=0;
-  globalVersion=globalPort=0;
+  globalPort=0;
 
-  path1=path2=mySvcClass=myCastorVersion=NULL;
+  path1=path2=mySvcClass=NULL;
   if ( tURLStr == NULL || tURL == NULL ) {
     serrno = EINVAL;
     return(-1);
@@ -242,13 +236,6 @@ int rfioTURLFromString(
 
     }
 
-
-    myCastorVersion=strstr(p,"castorVersion=");
-    if (myCastorVersion){
-      myCastorVersion+=14; // to remove "castorVersion="
-
-    }
-
     path2=strstr(p,"path=");
     if (path2){
       path2+=5; // to remove "path="
@@ -258,10 +245,6 @@ int rfioTURLFromString(
     if (mySvcClass){
       q1=strstr(mySvcClass,"&");
       if (q1){*q1='\0';}
-    }
-    if (myCastorVersion){
-      q1=strstr(myCastorVersion,"&");
-      if(q1){*q1='\0';}
     }
     if (path2){
       q1=strstr(path2,"&");
@@ -320,16 +303,6 @@ int rfioTURLFromString(
     /* from here setting the proper enviroment variable */
     /* getting default value that can be used */
 
-    if (myCastorVersion){
-      if (!strcmp(myCastorVersion,"2")){
-        versionNum=2;
-      }
-      if (!strcmp(myCastorVersion,"1")){
-        versionNum=1;
-      }
-
-    }
-
     /* Let's now set the global variable thread specific */
 
     ret=Cglobals_get(&tStageHostKey,(void **)&globalHost,sizeof(void*));
@@ -373,21 +346,7 @@ int rfioTURLFromString(
     if (_tURL.rfioPort){
       *globalPort=_tURL.rfioPort;
     }
-    ret=Cglobals_get(&tCastorVersionKey,(void **)&globalVersion,sizeof(int));
-
-    if (ret<0){
-      serrno = EINVAL;
-      if(*globalHost!=NULL){free(*globalHost);*globalHost=NULL;}
-      if(*globalSvc!=NULL){free(*globalSvc);*globalSvc=NULL;}
-      free(orig);
-      return -1;
-
-    }
-    *globalVersion=0;
-    if (versionNum){
-      *globalVersion=versionNum;
-    }
-    ret=getDefaultForGlobal(globalHost,globalPort,globalSvc,globalVersion);
+    ret=getDefaultForGlobal(globalHost,globalPort,globalSvc);
     if (ret<0){
       serrno = EINVAL;
       if(*globalHost!=NULL){free(*globalHost);*globalHost=NULL;}

@@ -5,8 +5,6 @@
 
 /* rfio_HsmIf.c       Remote File I/O - generic HSM client interface         */
 
-#define RFIO_USE_CASTOR_V2 "RFIO_USE_CASTOR_V2"
-
 #include "Cmutex.h"
 #include <stdlib.h>
 #if !defined(_WIN32)
@@ -40,7 +38,6 @@
 extern int tStageHostKey;
 extern int tStagePortKey;
 extern int tSvcClassKey;
-extern int tCastorVersionKey;
 
 static int cwdserver_key = -1;
 static int cwdtype_key = -1;
@@ -248,7 +245,6 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
   opts.stage_host=NULL;
   opts.stage_port=0;
   opts.service_class=NULL;
-  opts.stage_version=0;
 
   ret=Cglobals_get(& tStageHostKey, (void**) &auxPoint,sizeof(void*));
   if(ret==0){
@@ -258,16 +254,12 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
   if(ret==0){
     opts.stage_port=*auxVal;
   }
-  ret=Cglobals_get(& tCastorVersionKey, (void**) &auxVal,sizeof(int));
-  if(ret==0){
-    opts.stage_version=*auxVal;
-  }
   ret=Cglobals_get(& tSvcClassKey, (void**) &auxPoint,sizeof(void*));
   if (ret==0){
     opts.service_class=*auxPoint;
   }
 
-  ret= getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
+  ret= getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class);
 
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     char *mover_protocol_rfio = MOVER_PROTOCOL_RFIO;

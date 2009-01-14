@@ -47,7 +47,6 @@
 extern int tStageHostKey;
 extern int tStagePortKey;
 extern int tSvcClassKey;
-extern int tCastorVersionKey;
 
 extern int serrno ;
 extern int rfio_errno ;
