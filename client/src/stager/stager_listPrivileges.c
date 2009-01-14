@@ -160,11 +160,9 @@ int main(int argc, char *argv[]) {
   opts.stage_host = NULL;
   opts.service_class = NULL;
   opts.stage_port=0;
-  opts.stage_version=2;
   getDefaultForGlobal(&opts.stage_host,
                       &opts.stage_port,
-                      &opts.service_class,
-                      &opts.stage_version);
+                      &opts.service_class);
 
   /* Parsing the command line */
   memset(&errbuf,  '\0', sizeof(errbuf));

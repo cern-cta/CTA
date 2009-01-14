@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_commandline.cpp,v 1.13 2009/01/06 14:45:16 sponcec3 Exp $
+ * $Id: stager_client_commandline.cpp,v 1.14 2009/01/14 17:33:32 sponcec3 Exp $
  *
  * Copyright (C) 2004-2006 by CERN/IT/FIO/FD
  * All rights reserved
@@ -37,7 +37,7 @@
 
 /********************************************************************************************************************
  * This Function:                                                                                                   *
- * if *host or *svc are null or empty strings retrive the values, the same if *port and *version are <= 0.          *
+ * if *host or *svc are null or empty strings retrieve the values, the same if *port <= 0.                          *
  * To retrive the values it looks if:                                                                               *
  * enviroment variables are set or stager_mapper as values defined or castor.conf or (if it doesn't have valid)     *
  * it uses default hard coded values.                                                                               *
@@ -47,20 +47,19 @@
 int DLL_DECL getDefaultForGlobal(
 				 char** host,
 				 int* port,
-				 char** svc,
-				 int* version)
+				 char** svc)
 {
   char *hostMap, *hostDefault, *svcMap, *svcDefault;
-  int versionMap,versionDefault, portDefault, ret;
+  int portDefault, ret;
   char* aux=NULL;
   struct group* grp=NULL;
   char* security=NULL;
   gid_t gid;
 
   hostMap = hostDefault = svcMap = svcDefault = NULL;
-  versionMap = versionDefault = portDefault = ret = 0;
+  portDefault = ret = 0;
 
-  if (host == NULL || port == NULL || svc == NULL || version == NULL) {
+  if (host == NULL || port == NULL || svc == NULL) {
     return (-1);
   }
   if (*host) hostDefault = strdup(*host);
@@ -70,15 +69,14 @@ int DLL_DECL getDefaultForGlobal(
   else svcDefault = NULL;
 
   portDefault = *port;
-  versionDefault = *version;
 
   gid = getgid();
   grp = getgrgid(gid);
 
   if (grp != NULL) {
-    ret = just_stage_mapper(getenv("USER"), grp->gr_name, &hostMap, &svcMap, &versionMap);
+    ret = just_stage_mapper(getenv("USER"), grp->gr_name, &hostMap, &svcMap);
   } else {
-    ret = just_stage_mapper(getenv("USER"), NULL, &hostMap, &svcMap, &versionMap);
+    ret = just_stage_mapper(getenv("USER"), NULL, &hostMap, &svcMap);
   }
 
   if (hostDefault == NULL || strcmp(hostDefault, "") == 0) {
@@ -144,25 +142,6 @@ int DLL_DECL getDefaultForGlobal(
     }
   }
 
-  if (versionDefault <= 0) {
-    aux = getenv("RFIO_USE_CASTOR_V2");
-    if (aux) {
-      versionDefault = strcasecmp(aux, "YES") == 0 ? 2 : 1;
-    } else {
-      versionDefault = 0;
-    }
-    if (versionDefault <= 0) {
-      versionDefault = versionMap + 1;
-      if (versionDefault <= 0) {
-	aux = (char*)getconfent("STAGER", "VERSION", 0);
-	versionDefault = aux == NULL ? 0 : atoi(aux);
-	if (versionDefault <= 0) {
-	  versionDefault = DEFAULT_VERSION;
-	}
-      }
-    }
-  }
-
   if (portDefault <= 0) {
     if ((security = getenv ("SECURE_CASTOR")) != 0 && strcasecmp(security, "YES") == 0) {
       aux = getenv("STAGE_SEC_PORT");
@@ -181,7 +160,7 @@ int DLL_DECL getDefaultForGlobal(
 	aux = (char*)getconfent("STAGER", "PORT", 0);
 	portDefault = aux == NULL ? 0 : atoi(aux);
 	if (portDefault <= 0) {
-	  portDefault = versionDefault == 2 ? DEFAULT_PORT2 : DEFAULT_PORT1;
+	  portDefault = DEFAULT_PORT;
 	}
       }
     }
@@ -195,9 +174,6 @@ int DLL_DECL getDefaultForGlobal(
   }
   if (*svc == NULL || strcmp(*svc, "")) {
     *svc = strdup(svcDefault);
-  }
-  if (version == NULL || *version <= 0) {
-    *version = versionDefault;
   }
 
   return (1);

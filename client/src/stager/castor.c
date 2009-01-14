@@ -1,5 +1,5 @@
 /*
- * $Id: castor.c,v 1.8 2007/12/06 14:51:15 itglp Exp $
+ * $Id: castor.c,v 1.9 2009/01/14 17:33:32 sponcec3 Exp $
  */
 
 /*	castor - display current CASTOR version */
@@ -18,8 +18,7 @@ int main(int argc, char ** argv) {
   opts.stage_host = NULL;
   opts.service_class = NULL;
   opts.stage_port=0;
-  opts.stage_version=2;
-  ret=getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
+  ret=getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class);
 
   while ((c = getopt (argc, argv, "hvs")) != EOF) {
     switch (c) {

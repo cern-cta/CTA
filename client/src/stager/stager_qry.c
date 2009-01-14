@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.33 2008/10/21 03:51:07 sponcec3 Exp $
+ * $Id: stager_qry.c,v 1.34 2009/01/14 17:33:32 sponcec3 Exp $
  */
 
 /*
@@ -188,7 +188,6 @@ void handleFileQuery(int argc, char *argv[], int nbArgs) {
 #endif
   args.opts.stage_host = NULL;
   args.opts.service_class = NULL;
-  args.opts.stage_version = 2;
   args.opts.stage_port = 0;
   args.nbreqs = nbArgs;
 
@@ -209,7 +208,7 @@ void handleFileQuery(int argc, char *argv[], int nbArgs) {
   stager_seterrbuf(errbuf, sizeof(errbuf));
 
   /* Getting env and default arguments */
-  getDefaultForGlobal(&args.opts.stage_host,&args.opts.stage_port,&args.opts.service_class,&args.opts.stage_version);
+  getDefaultForGlobal(&args.opts.stage_host,&args.opts.stage_port,&args.opts.service_class);
 
   /* Actual call to fileQuery */
   rc = stage_filequery(args.requests,
@@ -266,7 +265,6 @@ void handleDiskPoolQuery(int argc, char *argv[], int nbArgs) {
   opts.stage_host = NULL;
   opts.stage_port = 0;
   opts.service_class = NULL;
-  opts.stage_version = 2;
   errflg = parseCmdLineDiskPoolQuery
     (argc, argv, &diskPool, &(opts.service_class), &siflag);
   if (errflg != 0) {
@@ -278,7 +276,7 @@ void handleDiskPoolQuery(int argc, char *argv[], int nbArgs) {
   stager_seterrbuf(errbuf, sizeof(errbuf));
 
   /* Getting env and default arguments */
-  getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
+  getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class);
 
   /* Setting the error buffer */
   stager_seterrbuf(errbuf, sizeof(errbuf));

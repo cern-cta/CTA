@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_setFileGCWeight.c,v $ $Revision: 1.7 $ $Release$ $Date: 2008/06/02 10:18:50 $ $Author: itglp $
+ * @(#)$RCSfile: stager_setFileGCWeight.c,v $ $Revision: 1.8 $ $Release$ $Date: 2009/01/14 17:33:32 $ $Author: sponcec3 $
  *
  * command line for stager_setFileGCWeight
  *
@@ -52,14 +52,13 @@ int main(int argc, char *argv[]) {
   opts.stage_host = NULL;
   opts.service_class = NULL;
   opts.stage_port=0;
-  opts.stage_version=2;
   float weight = 0.0;
   int nbresps, nbreqs;
   char *reqid;
   char errbuf[ERRBUFSIZE+1];
   int errflg, rc;
   
-  getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
+  getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class);
 
   /* Parsing the command line */
   memset(&errbuf,  '\0', sizeof(errbuf));

@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.h,v $ $Revision: 1.6 $ $Release$ $Date: 2007/12/06 14:35:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RfioTURL.h,v $ $Revision: 1.7 $ $Release$ $Date: 2009/01/14 17:38:21 $ $Author: sponcec3 $
  *
  *
  *
@@ -27,13 +27,11 @@
  *   - TURL: rfio:////castor/cern.ch/user/n/nobody/abc.123 or 
  *           rfio://STAGE_HOST:STAGE_PORT/?
  *                     svcClass=myClass
- *                      &castorVersion=2
  *                       &path=/castor/cern.ch/user/n/nobody/abc.123
  *           
  *            rfio://STAGE_HOST:STAGE_PORT//castor/cern.ch/user/n/nobody/abc.123?
  *                     svcClass=myClass
- *                      &castorVersion=2
- *            SvcClass and CastorVersion can be undefined  and default values are used.
+ *            SvcClass can be undefined and default value is used.
  *  
  *   - RFIO path: /castor/cern.ch/user/n/nobody/abc.123
  *

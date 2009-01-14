@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.39 2009/01/06 14:44:51 sponcec3 Exp $
+ * $Id: stager_client_api_common.cpp,v 1.40 2009/01/14 17:33:32 sponcec3 Exp $
  */
 
 /*
@@ -350,7 +350,7 @@ int setDefaultOption(struct stage_options* opts)
                    << "Please check castor.conf and/or your environment" << std::endl;
     throw e;
   }
-  if (!opts->stage_port){ opts->stage_port = DEFAULT_PORT2;}
+  if (!opts->stage_port){ opts->stage_port = DEFAULT_PORT;}
   if (!opts->service_class){ opts->service_class = (char*)DEFAULT_SVCCLASS;}
   return 0;
 }

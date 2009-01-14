@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_putdone.c,v $ $Revision: 1.14 $ $Release$ $Date: 2008/06/02 15:54:00 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_putdone.c,v $ $Revision: 1.15 $ $Release$ $Date: 2009/01/14 17:33:32 $ $Author: sponcec3 $
  *
  * command line for stage_putDone
  *
@@ -69,7 +69,6 @@ main(int argc, char *argv[]) {
   opts.stage_host = NULL;
   opts.service_class = NULL;
   opts.stage_port=0;
-  opts.stage_version=2;
   usertag = NULL;
   filenb = 0;
 
@@ -81,7 +80,7 @@ main(int argc, char *argv[]) {
   }
   total_nb_files = filenb;
 
-  ret=getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
+  ret=getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class);
 
   /* Setting the error buffer and preparing the array of file requests */
   stager_seterrbuf(errbuf, sizeof(errbuf));

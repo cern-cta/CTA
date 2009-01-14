@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_commandline.h,v 1.4 2008/06/02 15:54:18 sponcec3 Exp $
+ * $Id: stager_client_commandline.h,v 1.5 2009/01/14 17:38:21 sponcec3 Exp $
  *
  * Internal header file for command line stager clients and for the RFIO plugin.
  */
@@ -18,7 +18,7 @@
  * getDefaultForGlobal
  *
  * if *host or *svcClass are null or empty strings retrieve 
- * the values, the same if *port and *version are <= 0.
+ * the values, the same if *port is <= 0.
  * 
  * To retrieve the values it looks if:
  * - enviroment variables are set
@@ -30,10 +30,9 @@
  * @param host       stager (RH) host
  * @param port       stager port
  * @param svcClass   service class
- * @param version    castor version
  */
 EXTERN_C int DLL_DECL getDefaultForGlobal _PROTO((
-  char** host, int* port, char** svcClass, int* version));
+  char** host, int* port, char** svcClass));
 
 
 /* Common functions for command line executables */

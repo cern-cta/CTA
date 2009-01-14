@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_mapper.h,v $ $Revision: 1.5 $ $Release$ $Date: 2008/08/11 16:52:18 $ $Author: itglp $
+ * @(#)$RCSfile: stager_mapper.h,v $ $Revision: 1.6 $ $Release$ $Date: 2009/01/14 17:38:21 $ $Author: sponcec3 $
  *
  *
  *
@@ -25,15 +25,15 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_mapper.h,v $
- * @version $Revision: 1.5 $
- * @date $Date: 2008/08/11 16:52:18 $
+ * @version $Revision: 1.6 $
+ * @date $Date: 2009/01/14 17:38:21 $
  */
 /** @mainpage CASTOR Mapper
- * $RCSfile: stager_mapper.h,v $ $Revision: 1.5 $
+ * $RCSfile: stager_mapper.h,v $ $Revision: 1.6 $
  *
  * @section intro Introduction
  * The stage mapper consists of utility functions to help applications
- * switching between the stager v1 and stager v2 of CASTOR.
+ * to connect to the right stager and service class though user mappings
  * Its main usage is for the CASTOR SRM and GridFTP servers.
  *
  * @section overview Overview
@@ -45,15 +45,6 @@
  * USTGMAP <username> <stager> [<pool>]
  * The environment variables STAGE_HOST, STAGE_POOL and STAGE_SVCCLASS
  * are set accordingly.
- *
- * If the user is mapped to a stager, then the method looks for the stager
- * in the list of V2 castor stagers in /etc/castor/stagetype.conf
- * If the is and entry:
- * STGTYPE <hostname> v2
- * or
- * STGTYPE <hostname> V2
- * then the method will define the RFIO_USE_CASTOR_V2 environment
- * variable.
  */
 
 #ifndef stager_mapper_h
@@ -74,9 +65,6 @@
 
 #define USER_MAPPING_CATEGORY  "USTGMAP"
 #define GROUP_MAPPING_CATEGORY "GSTGMAP"
-#define STAGER_TYPE_CATEGORY   "STGTYPE"
-#define STAGER_TYPE_V2         "V2"
-#define STAGER_TYPE_V2_ALT     "v2"
 
 /**********************************************************
  *    stage_mapper_setenv                                 *
@@ -94,8 +82,7 @@
 EXTERN_C int DLL_DECL stage_mapper_setenv _PROTO((const char *username,
 						   const char *groupname,
 						   char **mstager,
-						   char **msvcclass,
-				                   int* isV2));
+						   char **msvcclass));
 
 /*\@}*/
 
@@ -111,8 +98,7 @@ EXTERN_C int DLL_DECL stage_mapper_setenv _PROTO((const char *username,
 EXTERN_C int DLL_DECL just_stage_mapper _PROTO((const char *username,
 						   const char *groupname,
 						   char **mstager,
-						   char **msvcclass,
-				                   int* isV2));
+						   char **msvcclass));
 
 /*\@}*/
 #endif /* stager_mapper_h */

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: c2probe.c,v $ $Revision: 1.6 $ $Release$ $Date: 2009/01/09 14:45:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: c2probe.c,v $ $Revision: 1.7 $ $Release$ $Date: 2009/01/14 17:38:35 $ $Author: sponcec3 $
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -318,13 +318,11 @@ int qryFile(char *svcClass, char *path)
 
   opts.stage_host = stageHost;
   opts.service_class = svcClass;
-  opts.stage_version=2;
   opts.stage_port=0;
   rc=getDefaultForGlobal(
                          &opts.stage_host,
                          &opts.stage_port,
-                         &opts.service_class,
-                         &opts.stage_version
+                         &opts.service_class
                          );
   memset(&errbuf,  '\0', sizeof(errbuf));
 
@@ -360,13 +358,11 @@ int rmFile(char *svcClass, char *path)
 
   opts.stage_host = stageHost;
   opts.service_class = svcClass;
-  opts.stage_version=2;
   opts.stage_port=0;
   rc=getDefaultForGlobal(
                          &opts.stage_host,
                          &opts.stage_port,
-                         &opts.service_class,
-                         &opts.stage_version
+                         &opts.service_class
                          );
   memset(&errbuf,  '\0', sizeof(errbuf));
 
@@ -501,7 +497,7 @@ void *svcClassProbe(
   myRootPath  = (char *)malloc(strlen("rfio://") +
                                strlen(stageHost) + strlen("/") +
                                strlen("?svcClass=") + strlen(mySvcClass) +
-                               strlen("&castorVersion=2&path=") +
+                               strlen("&path=") +
                                strlen(directoryName)+strlen("/") +
                                strlen("c2probe/") +
                                strlen(stageHost)+strlen("/") +
@@ -510,21 +506,21 @@ void *svcClassProbe(
     log(LOG_ERR,"malloc(): %s\n",sstrerror(errno));
     return(NULL);
   }
-  sprintf(myRootPath,"rfio://%s/?svcClass=%s&castorVersion=2&path=%s/c2probe",
+  sprintf(myRootPath,"rfio://%s/?svcClass=%s&path=%s/c2probe",
           stageHost,mySvcClass,directoryName);
   rc = rfio_mkdir(myRootPath,0755);
   if ( rc == -1 ) {
     log(LOG_ERR,"rfio_mkdir(%s): %s\n",myRootPath,rfio_serror());
     if ( rfio_serrno() != EEXIST ) return(NULL);
   }
-  sprintf(myRootPath,"rfio://%s/?svcClass=%s&castorVersion=2&path=%s/c2probe/%s",
+  sprintf(myRootPath,"rfio://%s/?svcClass=%s&path=%s/c2probe/%s",
           stageHost,mySvcClass,directoryName,stageHost);
   rc = rfio_mkdir(myRootPath,0755);
   if ( rc == -1 ) {
     log(LOG_ERR,"rfio_mkdir(%s): %s\n",myRootPath,rfio_serror());
     if ( rfio_serrno() != EEXIST ) return(NULL);
   }
-  sprintf(myRootPath,"rfio://%s/?svcClass=%s&castorVersion=2&path=%s/c2probe/%s/%s",
+  sprintf(myRootPath,"rfio://%s/?svcClass=%s&path=%s/c2probe/%s/%s",
           stageHost,mySvcClass,directoryName,stageHost,mySvcClass);
   rc = rfio_mkdir(myRootPath,0755);
   if ( rc == -1 ) {

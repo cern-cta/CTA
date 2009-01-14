@@ -1,5 +1,5 @@
 /*
- * $Id: stager_mapper.c,v 1.13 2008/11/26 18:22:38 waldron Exp $
+ * $Id: stager_mapper.c,v 1.14 2009/01/14 17:33:32 sponcec3 Exp $
  */
 
 /*
@@ -30,7 +30,6 @@
 char stghostenv[CA_MAXLINELEN+1];
 char stgpoolenv[CA_MAXLINELEN+1];
 char svcclassenv[CA_MAXLINELEN+1];
-char *stgversion2env = "RFIO_USE_CASTOR_V2=YES";
 
 EXTERN_C void DLL_DECL stage_trace   _PROTO((int, char *, ...));
 
@@ -104,32 +103,6 @@ get_mapping(enum mapping_type mt,
 }
 
 
-enum stager_type { V1, V2 };
-
-
-static enum stager_type
-get_stager_type(const char *name) {
-  char *val;
-  enum stager_type ret = V1;
-
-  if (name == NULL) {
-    serrno = EINVAL;
-    return -1;
-  }
-  val = getconfent_fromfile(STAGETYPE,
-			    STAGER_TYPE_CATEGORY,
-			    (char *)name,
-			    0);
-  if (val != NULL) {
-    if ((strcmp(val, STAGER_TYPE_V2) == 0)
-	|| (strcmp(val, STAGER_TYPE_V2_ALT) == 0)) {
-      ret = V2;
-    }
-  }
-  return ret;
-}
-
-
 /* ================= */
 /* External routines */
 /* ================= */
@@ -138,10 +111,8 @@ int
 stage_mapper_setenv(const char *username, 
 		    const char *groupname,
 		    char **mstager,
-		    char **msvcclass,
-		    int *isV2) {
+		    char **msvcclass) {
   char *stager = NULL, *svcclass = NULL;
-  enum stager_type stgtype;
 
   if (username == NULL && groupname == NULL) {
     serrno = EINVAL;
@@ -168,11 +139,6 @@ stage_mapper_setenv(const char *username,
       return -1;
     }
   }
-
-  if (stager != NULL) {
-    stgtype = get_stager_type(stager) ;
-  }
-
 
   if (stager!= NULL) {
     Csnprintf(stghostenv,  CA_MAXLINELEN, "STAGE_HOST=%s", stager);
@@ -199,19 +165,6 @@ stage_mapper_setenv(const char *username,
     }
   }
   
-  if (stgtype == V2) {
-    putenv(stgversion2env);
-    stage_trace(3, stgversion2env);
-  }
-
-  if (isV2 != NULL) {
-    if (stgtype == V2) {
-      *isV2 = 1;
-    } else {
-      *isV2 = 0;
-    }
-  }
-
   return 0;
 }
 
@@ -222,11 +175,9 @@ int
 just_stage_mapper(const char *username, 
 		  const char *groupname,
 		  char **mstager,
-		  char **msvcclass,
-		  int *isV2) {
+		  char **msvcclass) {
 
   char *stager = NULL, *svcclass = NULL;
-  enum stager_type stgtype;
 
   if (username == NULL && groupname == NULL) {
     serrno = EINVAL;
@@ -253,9 +204,6 @@ just_stage_mapper(const char *username,
     }
   }
  
-  if (stager != NULL) stgtype = get_stager_type(stager) ;
-  else stgtype=V1;
-
   if (stager!= NULL) {
     if (mstager != NULL) {
       *mstager = stager;
@@ -269,14 +217,6 @@ just_stage_mapper(const char *username,
       *msvcclass = svcclass;
     } else {
       free(svcclass);
-    }
-  }
-
-  if (isV2 != NULL) {
-    if (stgtype == V2) {
-      *isV2 = 1;
-    } else {
-      *isV2 = 0;
     }
   }
 
