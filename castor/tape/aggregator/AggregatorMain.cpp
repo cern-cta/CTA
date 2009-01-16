@@ -36,6 +36,7 @@
 // main
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
+
   try {
     castor::tape::aggregator::AggregatorDaemon daemon;
 

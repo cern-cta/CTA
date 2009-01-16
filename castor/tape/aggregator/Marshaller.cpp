@@ -732,23 +732,32 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpFileRequestMessage(
 
   // Calculate the length of the message body
   const uint32_t len =
+    // Fields before segAttr
     strlen(src.filePath)  +
     strlen(src.tapePath)  +
     strlen(src.recfm)     +
     strlen(src.fid)       +
     strlen(src.ifce)      +
     strlen(src.stageId)   +
-    24 * sizeof(uint32_t) +
+    24 * sizeof(uint32_t) + // Number of 32-bit integers before segAttr
     4                     + // 4 = blockId[4]
-    8 * sizeof(uint64_t)  +
+    8 * sizeof(uint64_t)  + // Number of 64-bit integers before segAttr
+    6                     + // Number of string terminators before segAttr
+
+    // segAttr
     strlen(src.segAttr.nameServerHostName) +
     strlen(src.segAttr.segmCksumAlgorithm) +
     sizeof(uint32_t)          + // 1 uint32_t of RtcpSegmentAttributes
     sizeof(uint64_t)          + // 1 uint64_t of RtcpSegmentAttributes
+    2                         + // Number of segAttr string terminators
+
+    // stgRedId
     sizeof(Cuuid_t)           +
+
+    // err
     4 * sizeof(uint32_t)      + // 4 uint32_t's of RtcpErrorAppendix
     strlen(src.err.errmsgtxt) +
-    9;                          // 9 = number of null terminator characters
+    1;                          // err.errmsgtxt string terminator
 
   // Calculate the total length of the message (header + body)
   // Message header = magic + reqtype + len = 3 * sizeof(uint32_t)
@@ -781,6 +790,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpFileRequestMessage(
   marshallUint32(src.jobId                            , p);
   marshallUint32(src.stageSubReqId                    , p);
   marshallUint32(src.umask                            , p);
+  marshallUint32(src.positionMethod                   , p);
   marshallUint32(src.tapeFseq                         , p);
   marshallUint32(src.diskFseq                         , p);
   marshallUint32(src.blockSize                        , p);
@@ -870,6 +880,7 @@ void castor::tape::aggregator::Marshaller::unmarshallRtcpFileRequestMessageBody(
   unmarshallInt32(src, srcLen, dst.jobId);
   unmarshallInt32(src, srcLen, dst.stageSubReqId);
   unmarshallUint32(src, srcLen, dst.umask);
+  unmarshallUint32(src, srcLen, dst.positionMethod);
   unmarshallUint32(src, srcLen, dst.tapeFseq);
   unmarshallUint32(src, srcLen, dst.diskFseq);
   unmarshallInt32(src, srcLen, dst.blockSize);

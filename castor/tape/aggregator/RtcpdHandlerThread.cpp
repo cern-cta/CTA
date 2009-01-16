@@ -258,9 +258,9 @@ void castor::tape::aggregator::RtcpdHandlerThread::run(void *param)
     RtcpFileRequestMessage reply;
 
     try {
+
       sendFileToRtcpd(cuuid, *socket, NETRWTIMEOUT, request, reply);
 
-/*
       castor::dlf::Param params[] = {
         castor::dlf::Param("filePath", reply.filePath),
         castor::dlf::Param("tapePath", reply.tapePath),
@@ -330,10 +330,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::run(void *param)
         castor::dlf::Param("err.maxTpRetry", reply.err.maxTpRetry),
         castor::dlf::Param("err.maxCpRetry", reply.err.maxCpRetry)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_SENT_FILE, 11111, params);
-*/
-
-castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, AGGREGATOR_SENT_FILE);
+        AGGREGATOR_SENT_FILE, 62, params);
 
     } catch(castor::exception::Exception &ex) {
       castor::dlf::Param params[] = {
@@ -551,33 +548,6 @@ void castor::tape::aggregator::RtcpdHandlerThread::
          ": Status: " << ackMsg.status;
     throw ex;
   }
-
-/*
-  // Receive reply from RTCPD
-  Utils::setBytes(reply, '\0');
-  try {
-    receiveRtcpTapeRequest(cuuid, socket, netReadWriteTimeout, reply);
-  } catch(castor::exception::Exception &ex) {
-    castor::exception::Exception ex2(EPROTO);
-
-    ex2.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to receive tape request from RTCPD"
-         ": " << ex.getMessage().str();
-    throw ex2;
-  }
-
-  // Send acknowledge to RTCPD
-  try {
-    sendRtcpAcknowledge(cuuid, socket, netReadWriteTimeout, ackMsg);
-  } catch(castor::exception::Exception &ex) {
-    castor::exception::Exception ex2(EPROTO);
-
-    ex2.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to send acknowledge to RTCPD"
-         ": " << ex.getMessage().str();
-    throw ex2;
-  }
-*/
 }
 
 
@@ -751,12 +721,12 @@ void castor::tape::aggregator::RtcpdHandlerThread::
   }
 
   // If the request type is invalid
-  if(ackMsg.reqtype != RTCP_TAPEERR_REQ) {
+  if(ackMsg.reqtype != RTCP_FILEERR_REQ) {
     castor::exception::Exception ex(EINVAL);
 
     ex.getMessage() << __PRETTY_FUNCTION__
       << ": Invalid request type from RTCPD"
-      << ": Expected: 0x" << std::hex << RTCP_TAPEERR_REQ
+      << ": Expected: 0x" << std::hex << RTCP_FILEERR_REQ
       << ": Received: " << ackMsg.reqtype;
 
     throw ex;
@@ -771,33 +741,6 @@ void castor::tape::aggregator::RtcpdHandlerThread::
          ": Status: " << ackMsg.status;
     throw ex;
   }
-
-/*
-  // Receive reply from RTCPD
-  Utils::setBytes(reply, '\0');
-  try {
-    receiveRtcpFileRequest(cuuid, socket, netReadWriteTimeout, reply);
-  } catch(castor::exception::Exception &ex) {
-    castor::exception::Exception ex2(EPROTO);
-
-    ex2.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to receive tape request from RTCPD"
-         ": " << ex.getMessage().str();
-    throw ex2;
-  }
-
-  // Send acknowledge to RTCPD
-  try {
-    sendRtcpAcknowledge(cuuid, socket, netReadWriteTimeout, ackMsg);
-  } catch(castor::exception::Exception &ex) {
-    castor::exception::Exception ex2(EPROTO);
-
-    ex2.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to send acknowledge to RTCPD"
-         ": " << ex.getMessage().str();
-    throw ex2;
-  }
-*/
 }
 
 
