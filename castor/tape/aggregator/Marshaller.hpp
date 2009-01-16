@@ -526,6 +526,50 @@ namespace aggregator {
       size_t &srcLen, RtcpFileRequestMessage &dst)
       throw(castor::exception::Exception);
 
+    /**
+     * Marshalls a "no more requests" message into the specified destination
+     * buffer.
+     *
+     * Please note that a "no more requests" message is bodiless with body
+     * length field of the header being set to 0.
+     *
+     * @param dst The destination message buffer.
+     * @param dstLen The length of the destination buffer.
+     * @return The total length of the message (header + body).
+     */
+    static size_t marshallRtcpNoMoreRequestsMessage(char *const dst,
+      const size_t dstLen) throw(castor::exception::Exception);
+
+    /**
+     * Marshalls a "no more requests" message into the specified destination
+     * buffer.
+     *
+     * Please note that a "no more requests" message is bodiless with body
+     * length field of the header being set to 0.
+     *
+     * @param dst The destination message buffer.
+     * @param dstLen The length of the destination buffer.
+     * @return The total length of the message (header + body).
+     */
+    static size_t marshallRtcpNoMoreRequestsMessage(char *const dst)
+      throw(castor::exception::Exception);
+
+    /**
+     * Marshalls a "no more requests" message into the specified destination
+     * buffer.
+     *
+     * Please note that a "no more requests" message is bodiless with body
+     * length field of the header being set to 0.
+     *
+     * @param dst The destination message buffer.
+     * @return The total length of the message (header + body).
+     */
+    template<int n> static size_t marshallRtcpNoMoreRequestsMessage(
+      char (&dst)[n], const RtcpFileRequestMessage &src)
+      throw(castor::exception::Exception) {
+      return marshallRtcpNoMoreRequestsMessage(dst, n, src);
+    }
+
   private:
 
     /**

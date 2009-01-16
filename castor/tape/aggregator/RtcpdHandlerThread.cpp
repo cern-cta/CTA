@@ -151,7 +151,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::run(void *param)
     }
   }
 
-  // Send volume to RTCPD
+  // Give volume ID to RTCPD
   {
     uint32_t tStartRequest = time(NULL); // CASTOR2/rtcopy/rtcpclientd.c:1494
     RtcpTapeRequestMessage request;
@@ -177,7 +177,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::run(void *param)
     
     try {
 
-      sendVolumeToRtcpd(cuuid, *socket, NETRWTIMEOUT, request, reply);
+      giveVolumeIdToRtcpd(cuuid, *socket, NETRWTIMEOUT, request, reply);
 
       castor::dlf::Param params[] = {
         castor::dlf::Param("vid"            , reply.vid            ),
@@ -218,7 +218,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::run(void *param)
     }
   }
 
-  // Send file to RTCPD
+  // Give file information to RTCPD
   {
     RtcpFileRequestMessage request;
 
@@ -259,7 +259,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::run(void *param)
 
     try {
 
-      sendFileToRtcpd(cuuid, *socket, NETRWTIMEOUT, request, reply);
+      giveFileInfoToRtcpd(cuuid, *socket, NETRWTIMEOUT, request, reply);
 
       castor::dlf::Param params[] = {
         castor::dlf::Param("filePath", reply.filePath),
@@ -341,6 +341,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::run(void *param)
         AGGREGATOR_FAILED_TO_SEND_FILE, 3, params);
     }
   }
+
   // Close and de-allocate the socket
   socket->close();
   delete socket;
@@ -468,13 +469,12 @@ void castor::tape::aggregator::RtcpdHandlerThread::
 
 
 //-----------------------------------------------------------------------------
-// sendVolumeToRtcpd
+// giveVolumeIdToRtcpd
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpdHandlerThread::
-  sendVolumeToRtcpd(const Cuuid_t &cuuid,
-  castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
-  RtcpTapeRequestMessage &request, RtcpTapeRequestMessage &reply)
-  throw(castor::exception::Exception) {
+void castor::tape::aggregator::RtcpdHandlerThread::giveVolumeIdToRtcpd(
+  const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &socket,
+  const int netReadWriteTimeout, RtcpTapeRequestMessage &request,
+  RtcpTapeRequestMessage &reply) throw(castor::exception::Exception) {
 
   // Marshall the message
   char buf[MSGBUFSIZ];
@@ -661,13 +661,12 @@ void castor::tape::aggregator::RtcpdHandlerThread::receiveRtcpTapeRequest(
 
 
 //-----------------------------------------------------------------------------
-// sendFileToRtcpd
+// giveFileInfoToRtcpd
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpdHandlerThread::
-  sendFileToRtcpd(const Cuuid_t &cuuid,
-  castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
-  RtcpFileRequestMessage &request, RtcpFileRequestMessage &reply)
-  throw(castor::exception::Exception) {
+void castor::tape::aggregator::RtcpdHandlerThread::giveFileInfoToRtcpd(
+  const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &socket,
+  const int netReadWriteTimeout, RtcpFileRequestMessage &request,
+  RtcpFileRequestMessage &reply) throw(castor::exception::Exception) {
 
   // Marshall the message
   char buf[MSGBUFSIZ];
