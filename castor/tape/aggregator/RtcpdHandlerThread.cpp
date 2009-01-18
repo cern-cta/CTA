@@ -210,14 +210,14 @@ void castor::tape::aggregator::RtcpdHandlerThread::run(void *param)
         castor::dlf::Param("err.maxTpRetry", reply.err.maxTpRetry),
         castor::dlf::Param("err.maxCpRetry", reply.err.maxCpRetry)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_SENT_VOLUME, 26, params);
+        AGGREGATOR_GAVE_VOLUME_INFO, 26, params);
     } catch(castor::exception::Exception &ex) {
       castor::dlf::Param params[] = {
         castor::dlf::Param("Function", __PRETTY_FUNCTION__),
         castor::dlf::Param("Message" , ex.getMessage().str()),
         castor::dlf::Param("Code"    , ex.code())};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_FAILED_TO_SEND_VOLUME, 3, params);
+        AGGREGATOR_FAILED_TO_GIVE_VOLUME_INFO, 3, params);
     }
   }
 
@@ -334,7 +334,7 @@ void castor::tape::aggregator::RtcpdHandlerThread::run(void *param)
         castor::dlf::Param("err.maxTpRetry", reply.err.maxTpRetry),
         castor::dlf::Param("err.maxCpRetry", reply.err.maxCpRetry)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_SENT_FILE, 62, params);
+        AGGREGATOR_GAVE_FILE_INFO, 62, params);
 
     } catch(castor::exception::Exception &ex) {
       castor::dlf::Param params[] = {
@@ -342,8 +342,23 @@ void castor::tape::aggregator::RtcpdHandlerThread::run(void *param)
         castor::dlf::Param("Message" , ex.getMessage().str()),
         castor::dlf::Param("Code"    , ex.code())};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_FAILED_TO_SEND_FILE, 3, params);
+        AGGREGATOR_FAILED_TO_GIVE_FILE_INFO, 3, params);
     }
+  }
+
+  // Signal the end of the file list to RTCPD
+  try {
+    Transceiver::signalNoMoreRequestsToRtcpd(cuuid, *socket, NETRWTIMEOUT);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_SIGNALLED_NO_MORE_REQUESTS);
+
+  } catch(castor::exception::Exception &ex) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("Message" , ex.getMessage().str()),
+      castor::dlf::Param("Code"    , ex.code())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_FAILED_TO_SIGNAL_NO_MORE_REQUESTS, 3, params);
   }
 
   // Close and de-allocate the socket

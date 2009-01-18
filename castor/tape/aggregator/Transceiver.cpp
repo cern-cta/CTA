@@ -613,9 +613,9 @@ void castor::tape::aggregator::Transceiver::sendRtcpAcknowledge(
 
 
 //-----------------------------------------------------------------------------
-// signalEndOfRequestsToRtcpd
+// signalNoMoreRequestsToRtcpd
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::signalEndOfRequestsToRtcpd(
+void castor::tape::aggregator::Transceiver::signalNoMoreRequestsToRtcpd(
   const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &socket,
   const int netReadWriteTimeout) throw(castor::exception::Exception) {
 

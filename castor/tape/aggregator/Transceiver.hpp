@@ -93,7 +93,7 @@ public:
    * @param cuuid The ccuid to be used for logging.
    * @param socket The socket of the connection with RTCPD.
    */
-  static void signalEndOfRequestsToRtcpd(const Cuuid_t &cuuid,
+  static void signalNoMoreRequestsToRtcpd(const Cuuid_t &cuuid,
     castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout)
     throw(castor::exception::Exception);
 
