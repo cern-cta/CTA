@@ -75,6 +75,14 @@ public:
 
     copyString(dst, src, n);
   }
+
+private:
+
+  /**
+   * Private constructor to inhibit instances of this class from being
+   * instantiated.
+   */
+  Utils() {}
 }; // class Utils
 
 } // namespace aggregator
