@@ -105,6 +105,26 @@ int Cstager_TapeCopy_copyNb(struct Cstager_TapeCopy_t* instance, unsigned int* v
 int Cstager_TapeCopy_setCopyNb(struct Cstager_TapeCopy_t* instance, unsigned int new_var);
 
 /**
+ * Get the value of errorCode
+ */
+int Cstager_TapeCopy_errorCode(struct Cstager_TapeCopy_t* instance, int* var);
+
+/**
+ * Set the value of errorCode
+ */
+int Cstager_TapeCopy_setErrorCode(struct Cstager_TapeCopy_t* instance, int new_var);
+
+/**
+ * Get the value of nbRetry
+ */
+int Cstager_TapeCopy_nbRetry(struct Cstager_TapeCopy_t* instance, int* var);
+
+/**
+ * Set the value of nbRetry
+ */
+int Cstager_TapeCopy_setNbRetry(struct Cstager_TapeCopy_t* instance, int new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

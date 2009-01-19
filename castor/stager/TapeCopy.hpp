@@ -125,6 +125,38 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_errorCode
+       * @return the value of m_errorCode
+       */
+      int errorCode() const {
+        return m_errorCode;
+      }
+
+      /**
+       * Set the value of m_errorCode
+       * @param new_var the new value of m_errorCode
+       */
+      void setErrorCode(int new_var) {
+        m_errorCode = new_var;
+      }
+
+      /**
+       * Get the value of m_nbRetry
+       * @return the value of m_nbRetry
+       */
+      int nbRetry() const {
+        return m_nbRetry;
+      }
+
+      /**
+       * Set the value of m_nbRetry
+       * @param new_var the new value of m_nbRetry
+       */
+      void setNbRetry(int new_var) {
+        m_nbRetry = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -236,6 +268,10 @@ namespace castor {
 
       /// The copy number allows to identify the different copies on tape of a single file
       unsigned int m_copyNb;
+
+      int m_errorCode;
+
+      int m_nbRetry;
 
       /// The id of this object
       u_signed64 m_id;

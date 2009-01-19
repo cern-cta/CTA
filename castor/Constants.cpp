@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.68 $ $Release$ $Date: 2008/10/24 06:54:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.69 $ $Release$ $Date: 2009/01/19 17:33:00 $ $Author: gtaur $
  *
  *
  *
@@ -203,7 +203,25 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "VectorAddress",
   "Tape2DriveDedication",
 
-  "TapeRecall"
+  "TapeRecall",
+ 
+  "FileDiskLocation",
+  "FileMigratedResponse",
+  "FileRecalledResponse",
+  "FileToMigrateRequest",
+  "FileToMigrateResponse",
+  "FileToRecallRequest",
+  "FileToRecallResponse",
+  "NsFileInformation",
+  "StartWorkerRequest",
+  "StartWorkerResponse",
+  "TapeRequestState",
+  "DbInfoRetryPolicy",
+  "EndWorkerRequest",
+  "EndWorkerResponse",
+  "FileUpdateResponse",
+  "TapeFileNsAttribute", 
+  "RmMasterReport"
 };
 
 
@@ -248,8 +266,7 @@ const char* castor::ServicesIdStrings[ServicesIdsNb] = {
   "DELETED SERVICE",
   "DELETED SERVICE",
   "DELETED SERVICE",
-  "MYCNV",
-
+  "MYCNV",  
   "DBSRMSVC",
   "DBSRMDAEMONSVC",
 
@@ -260,8 +277,11 @@ const char* castor::ServicesIdStrings[ServicesIdsNb] = {
 
   "DBRHSVC",
   "ORARHSVC",
-  "ORAPOLICYSVC",
-  "ORAREPACKSVC"
+  "DELETED SERVICE",
+  "ORAREPACKSVC" ,
+  "ORATAPEGATEWAYSVC",
+  "ORAMIGHUNTERSVC",
+  "ORARECHANDLERSVC"
 };
 
 //=============================================================================

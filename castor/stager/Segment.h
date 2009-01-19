@@ -282,16 +282,6 @@ int Cstager_Segment_id(struct Cstager_Segment_t* instance, u_signed64* var);
 int Cstager_Segment_setId(struct Cstager_Segment_t* instance, u_signed64 new_var);
 
 /**
- * Get the value of tape
- */
-int Cstager_Segment_tape(struct Cstager_Segment_t* instance, struct Cstager_Tape_t** var);
-
-/**
- * Set the value of tape
- */
-int Cstager_Segment_setTape(struct Cstager_Segment_t* instance, struct Cstager_Tape_t* new_var);
-
-/**
  * Get the value of copy
  */
 int Cstager_Segment_copy(struct Cstager_Segment_t* instance, struct Cstager_TapeCopy_t** var);
@@ -310,5 +300,15 @@ int Cstager_Segment_status(struct Cstager_Segment_t* instance, enum Cstager_Segm
  * Set the value of status
  */
 int Cstager_Segment_setStatus(struct Cstager_Segment_t* instance, enum Cstager_SegmentStatusCodes_t new_var);
+
+/**
+ * Get the value of tape
+ */
+int Cstager_Segment_tape(struct Cstager_Segment_t* instance, struct Cstager_Tape_t** var);
+
+/**
+ * Set the value of tape
+ */
+int Cstager_Segment_setTape(struct Cstager_Segment_t* instance, struct Cstager_Tape_t* new_var);
 
 #endif /* CASTOR_STAGER_SEGMENT_H */

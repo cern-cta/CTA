@@ -374,22 +374,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_Segment_tape
-  //----------------------------------------------------------------------------
-  int Cstager_Segment_tape(castor::stager::Segment* instance, castor::stager::Tape** var) {
-    *var = instance->tape();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Segment_setTape
-  //----------------------------------------------------------------------------
-  int Cstager_Segment_setTape(castor::stager::Segment* instance, castor::stager::Tape* new_var) {
-    instance->setTape(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_Segment_copy
   //----------------------------------------------------------------------------
   int Cstager_Segment_copy(castor::stager::Segment* instance, castor::stager::TapeCopy** var) {
@@ -418,6 +402,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_Segment_setStatus(castor::stager::Segment* instance, castor::stager::SegmentStatusCodes new_var) {
     instance->setStatus(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Segment_tape
+  //----------------------------------------------------------------------------
+  int Cstager_Segment_tape(castor::stager::Segment* instance, castor::stager::Tape** var) {
+    *var = instance->tape();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Segment_setTape
+  //----------------------------------------------------------------------------
+  int Cstager_Segment_setTape(castor::stager::Segment* instance, castor::stager::Tape* new_var) {
+    instance->setTape(new_var);
     return 0;
   }
 

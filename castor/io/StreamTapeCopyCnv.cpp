@@ -93,6 +93,8 @@ void castor::io::StreamTapeCopyCnv::createRep(castor::IAddress* address,
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->copyNb();
+  ad->stream() << obj->errorCode();
+  ad->stream() << obj->nbRetry();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
@@ -110,6 +112,12 @@ castor::IObject* castor::io::StreamTapeCopyCnv::createObj(castor::IAddress* addr
   unsigned int copyNb;
   ad->stream() >> copyNb;
   object->setCopyNb(copyNb);
+  int errorCode;
+  ad->stream() >> errorCode;
+  object->setErrorCode(errorCode);
+  int nbRetry;
+  ad->stream() >> nbRetry;
+  object->setNbRetry(nbRetry);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

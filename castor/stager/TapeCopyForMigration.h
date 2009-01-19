@@ -105,6 +105,26 @@ int Cstager_TapeCopyForMigration_copyNb(struct Cstager_TapeCopyForMigration_t* i
 int Cstager_TapeCopyForMigration_setCopyNb(struct Cstager_TapeCopyForMigration_t* instance, unsigned int new_var);
 
 /**
+ * Get the value of errorCode
+ */
+int Cstager_TapeCopyForMigration_errorCode(struct Cstager_TapeCopyForMigration_t* instance, int* var);
+
+/**
+ * Set the value of errorCode
+ */
+int Cstager_TapeCopyForMigration_setErrorCode(struct Cstager_TapeCopyForMigration_t* instance, int new_var);
+
+/**
+ * Get the value of nbRetry
+ */
+int Cstager_TapeCopyForMigration_nbRetry(struct Cstager_TapeCopyForMigration_t* instance, int* var);
+
+/**
+ * Set the value of nbRetry
+ */
+int Cstager_TapeCopyForMigration_setNbRetry(struct Cstager_TapeCopyForMigration_t* instance, int new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

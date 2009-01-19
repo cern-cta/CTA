@@ -489,6 +489,33 @@
 #endif
 #endif
 
+/* -------------------- */
+/* TapeGateway          */
+/* -------------------- */
+
+#if BuildTapeGatewayCpp
+#if !BuildOraCpp && !BuildPgCpp && !BuildMyCpp
+#undef BuildOraCpp
+#define BuildOraCpp YES
+#endif
+#if !BuildStageLibrary
+#undef BuildStageLibrary
+#define BuildStageLibrary YES
+#endif
+#if !BuildCastorClientCPPLibrary
+#undef BuildCastorClientCPPLibrary
+#define BuildCastorClientCPPLibrary YES
+#endif
+#if BuildDlfLibrary != YES
+#undef BuildDlfLibrary
+#define BuildDlfLibrary YES
+#endif
+#if !BuildInfoPolicyLibrary
+#undef BuildInfoPolicyLibrary
+#define BuildInfoPolicyLibrary YES
+#endif
+#endif
+
 /* ------------------ */
 /* Garbage Collection */
 /* ------------------ */
@@ -638,6 +665,10 @@ RTCOPYDIR = rtcopy
 #endif
 #if BuildInfoPolicyLibrary
 INFOPOLICYDIR = infoPolicy
+#endif
+#if BuildTapeGatewayCpp
+TAPEGATEWAYCPPDIR = tapegateway
+TAPECPPDIR = tape
 #endif
 #if BuildGCCpp
 GCCPPDIR = gc

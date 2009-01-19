@@ -195,8 +195,8 @@ void castor::io::StreamSegmentCnv::marshalObject(castor::IObject* object,
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->tape(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->copy(), address, alreadyDone);
+    cnvSvc()->marshalObject(obj->tape(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -217,11 +217,11 @@ castor::IObject* castor::io::StreamSegmentCnv::unmarshalObject(castor::io::binio
   castor::stager::Segment* obj = 
     dynamic_cast<castor::stager::Segment*>(object);
   ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objTape = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setTape(dynamic_cast<castor::stager::Tape*>(objTape));
-  ad.setObjType(castor::OBJ_INVALID);
   castor::IObject* objCopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setCopy(dynamic_cast<castor::stager::TapeCopy*>(objCopy));
+  ad.setObjType(castor::OBJ_INVALID);
+  castor::IObject* objTape = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setTape(dynamic_cast<castor::stager::Tape*>(objTape));
   return object;
 }
 

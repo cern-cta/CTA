@@ -248,6 +248,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_Tape_status
+  //----------------------------------------------------------------------------
+  int Cstager_Tape_status(castor::stager::Tape* instance, castor::stager::TapeStatusCodes* var) {
+    *var = instance->status();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Tape_setStatus
+  //----------------------------------------------------------------------------
+  int Cstager_Tape_setStatus(castor::stager::Tape* instance, castor::stager::TapeStatusCodes new_var) {
+    instance->setStatus(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_Tape_addSegments
   //----------------------------------------------------------------------------
   int Cstager_Tape_addSegments(castor::stager::Tape* instance, castor::stager::Segment* obj) {
@@ -273,22 +289,6 @@ extern "C" {
     for (int i = 0; i < *len; i++) {
       (*var)[i] = result[i];
     }
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Tape_status
-  //----------------------------------------------------------------------------
-  int Cstager_Tape_status(castor::stager::Tape* instance, castor::stager::TapeStatusCodes* var) {
-    *var = instance->status();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Tape_setStatus
-  //----------------------------------------------------------------------------
-  int Cstager_Tape_setStatus(castor::stager::Tape* instance, castor::stager::TapeStatusCodes new_var) {
-    instance->setStatus(new_var);
     return 0;
   }
 

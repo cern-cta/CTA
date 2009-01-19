@@ -202,19 +202,19 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Fill the database with objects of type Tape refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepTape(castor::stager::Segment* obj)
-          throw (castor::exception::Exception);
-
-        /**
          * Fill the database with objects of type TapeCopy refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepTapeCopy(castor::stager::Segment* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Fill the database with objects of type Tape refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepTape(castor::stager::Segment* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -230,19 +230,19 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Retrieve from the database objects of type Tape refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjTape(castor::stager::Segment* obj)
-          throw (castor::exception::Exception);
-
-        /**
          * Retrieve from the database objects of type TapeCopy refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjTapeCopy(castor::stager::Segment* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type Tape refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjTape(castor::stager::Segment* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -289,18 +289,6 @@ namespace castor {
         /// SQL statement object for type deletion
         castor::db::IDbStatement *m_deleteTypeStatement;
 
-        /// SQL checkExist statement for member tape
-        static const std::string s_checkTapeExistStatementString;
-
-        /// SQL checkExist statement object for member tape
-        castor::db::IDbStatement *m_checkTapeExistStatement;
-
-        /// SQL update statement for member tape
-        static const std::string s_updateTapeStatementString;
-
-        /// SQL update statement object for member tape
-        castor::db::IDbStatement *m_updateTapeStatement;
-
         /// SQL checkExist statement for member copy
         static const std::string s_checkTapeCopyExistStatementString;
 
@@ -312,6 +300,18 @@ namespace castor {
 
         /// SQL update statement object for member copy
         castor::db::IDbStatement *m_updateTapeCopyStatement;
+
+        /// SQL checkExist statement for member tape
+        static const std::string s_checkTapeExistStatementString;
+
+        /// SQL checkExist statement object for member tape
+        castor::db::IDbStatement *m_checkTapeExistStatement;
+
+        /// SQL update statement for member tape
+        static const std::string s_updateTapeStatementString;
+
+        /// SQL update statement object for member tape
+        castor::db::IDbStatement *m_updateTapeStatement;
 
       }; // end of class DbSegmentCnv
 

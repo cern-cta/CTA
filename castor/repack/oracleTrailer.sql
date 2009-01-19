@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.17 $ $Release$ $Date: 2008/12/08 13:07:24 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.18 $ $Release$ $Date: 2009/01/19 17:33:01 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -356,4 +356,24 @@ EXCEPTION  WHEN NO_DATA_FOUND THEN
 END;
 /
 
+/* PL/SQL method implementing removeAllForRepack, to be called by operators */
 
+create or replace PROCEDURE removeAllForRepack (inputVid IN VARCHAR2) AS
+ cfIds "numList";
+ tcIds "numList";
+BEGIN 
+ -- put subrequests as failed
+ UPDATE Subrequest SET status=9 WHERE request in ( SELECT id FROM stagerepackrequest WHERE repackvid=inputVid) RETURNING castorfile  BULK COLLECT INTO cfIds;
+ -- invalidate segments
+ UPDATE diskcopy SET status=7 WHERE castorfile MEMBER OF cfIds;
+ -- delete tapecopies from stream
+ DELETE FROM id2type WHERE id in (SELECT id FROM TAPECOPY WHERE castorfile  MEMBER OF cfIds) RETURNING id BULK COLLECT INTO tcIds;
+ DELETE FROM stream2tapecopy WHERE child member of tcIds;
+ DELETE FROM tapecopy WHERE id MEMBER OF tcIds;
+ -- delete segments to recall
+ DELETE FROM id2type WHERE id in (SELECT id FROM Segment WHERE tape in (SELECT id FROM tape WHERE vid=inputVid));
+ DELETE FROM segment WHERE tape in (SELECT id FROM tape WHERE vid=inputVid);
+ -- put the tape as not used
+ UPDATE tape set status=0 where vid=inputVid and tpmode=0;
+ COMMIT;
+ END;

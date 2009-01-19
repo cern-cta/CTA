@@ -50,14 +50,15 @@ namespace castor {
       DISKCOPY_INVALID = 7,
       DISKCOPY_BEINGDELETED = 9,
       DISKCOPY_CANBEMIGR = 10,
-      DISKCOPY_WAITFS_SCHEDULING = 11
+      DISKCOPY_WAITFS_SCHEDULING = 11,
+      DISKCOPY_FAILED_TO_MIGRATE = 12
     }; /* end of enum DiskCopyStatusCodes */
 
     /**
      * Names of the differents representations, used to display
      * correctly the DiskCopyStatusCodes enum
      */
-    extern const char* DiskCopyStatusCodesStrings[12];
+    extern const char* DiskCopyStatusCodesStrings[13];
 
 #ifdef __cplusplus
   } /* end of namespace stager */

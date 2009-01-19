@@ -118,6 +118,38 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_TapeCopy_errorCode
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopy_errorCode(castor::stager::TapeCopy* instance, int* var) {
+    *var = instance->errorCode();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopy_setErrorCode
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopy_setErrorCode(castor::stager::TapeCopy* instance, int new_var) {
+    instance->setErrorCode(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopy_nbRetry
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopy_nbRetry(castor::stager::TapeCopy* instance, int* var) {
+    *var = instance->nbRetry();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopy_setNbRetry
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopy_setNbRetry(castor::stager::TapeCopy* instance, int new_var) {
+    instance->setNbRetry(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_TapeCopy_id
   //----------------------------------------------------------------------------
   int Cstager_TapeCopy_id(castor::stager::TapeCopy* instance, u_signed64* var) {

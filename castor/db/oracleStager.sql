@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.711 $ $Date: 2009/01/14 16:38:40 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.712 $ $Date: 2009/01/19 17:33:00 $ $Author: gtaur $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -8,7 +8,8 @@
  *******************************************************************/
 
 /* PL/SQL declaration for the castor package */
-CREATE OR REPLACE PACKAGE castor AS
+
+create or replace PACKAGE castor AS
   TYPE DiskCopyCore IS RECORD (
     id INTEGER,
     path VARCHAR2(2048),
@@ -18,7 +19,23 @@ CREATE OR REPLACE PACKAGE castor AS
     diskServer VARCHAR2(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
   TYPE TapeCopy_Cur IS REF CURSOR RETURN TapeCopy%ROWTYPE;
+  TYPE Tape_Cur IS REF CURSOR RETURN Tape%ROWTYPE;
   TYPE Segment_Cur IS REF CURSOR RETURN Segment%ROWTYPE;
+  TYPE TapeRequestStateExtended IS RECORD (
+    accessMode NUMBER,
+    id NUMBER,
+    starttime NUMBER,
+    lastvdqmpingtime NUMBER, 
+    vdqmvolreqid NUMBER, 
+    status NUMBER,
+    vid VARCHAR2(2048));
+  TYPE TapeRequestState_Cur IS REF CURSOR RETURN TapeRequestStateExtended;
+   TYPE TapeRequestStateCore IS RECORD (
+    tpmode INTEGER,
+    side INTEGER,
+    vid VARCHAR2(2048),
+    tapeRequestId NUMBER);
+  TYPE TapeRequestStateCore_Cur IS REF CURSOR RETURN TapeRequestStateCore;
   TYPE StreamCore IS RECORD (
     id INTEGER,
     initialSizeToTransfer INTEGER,
@@ -26,8 +43,8 @@ CREATE OR REPLACE PACKAGE castor AS
     tapePoolId NUMBER,
     tapePoolName VARCHAR2(2048));
   TYPE Stream_Cur IS REF CURSOR RETURN StreamCore;
-  TYPE "strList" IS TABLE OF VARCHAR2(2048) index BY binary_integer;
-  TYPE "cnumList" IS TABLE OF NUMBER INDEX BY binary_integer;
+  TYPE "strList" IS TABLE OF VARCHAR2(2048) index by binary_integer;
+  TYPE "cnumList" IS TABLE OF NUMBER index by binary_integer;
   TYPE QueryLine IS RECORD (
     fileid INTEGER,
     nshost VARCHAR2(2048),

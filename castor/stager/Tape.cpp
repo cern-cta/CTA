@@ -97,6 +97,7 @@ void castor::stager::Tape::print(std::ostream& stream,
   } else {
     stream << indent << "  null" << std::endl;
   }
+  stream << indent << "status : " << TapeStatusCodesStrings[m_status] << std::endl;
   {
     stream << indent << "Segments : " << std::endl;
     int i;
@@ -108,7 +109,6 @@ void castor::stager::Tape::print(std::ostream& stream,
       (*it)->print(stream, indent + "    ", alreadyPrinted);
     }
   }
-  stream << indent << "status : " << TapeStatusCodesStrings[m_status] << std::endl;
 }
 
 //------------------------------------------------------------------------------

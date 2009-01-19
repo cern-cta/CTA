@@ -263,6 +263,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_status
+       * @return the value of m_status
+       */
+      TapeStatusCodes status() const {
+        return m_status;
+      }
+
+      /**
+       * Set the value of m_status
+       * @param new_var the new value of m_status
+       */
+      void setStatus(TapeStatusCodes new_var) {
+        m_status = new_var;
+      }
+
+      /**
        * Add a Segment* object to the m_segmentsVector list
        */
       void addSegments(Segment* add_object) {
@@ -291,22 +307,6 @@ namespace castor {
         return m_segmentsVector;
       }
 
-      /**
-       * Get the value of m_status
-       * @return the value of m_status
-       */
-      TapeStatusCodes status() const {
-        return m_status;
-      }
-
-      /**
-       * Set the value of m_status
-       * @param new_var the new value of m_status
-       */
-      void setStatus(TapeStatusCodes new_var) {
-        m_status = new_var;
-      }
-
     private:
 
       /// Tape visual identifier
@@ -333,9 +333,9 @@ namespace castor {
 
       Stream* m_stream;
 
-      std::vector<Segment*> m_segmentsVector;
-
       TapeStatusCodes m_status;
+
+      std::vector<Segment*> m_segmentsVector;
 
     }; /* end of class Tape */
 

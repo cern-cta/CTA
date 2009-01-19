@@ -92,13 +92,13 @@ CREATE TABLE StageUpdateNextRequest (parentUuid VARCHAR2(2048), flags INTEGER, u
 CREATE TABLE Tape (vid VARCHAR2(2048), side NUMBER, tpmode NUMBER, errMsgTxt VARCHAR2(2048), errorCode NUMBER, severity NUMBER, vwAddress VARCHAR2(2048), id INTEGER CONSTRAINT PK_Tape_Id PRIMARY KEY, stream INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type Segment */
-CREATE TABLE Segment (fseq NUMBER, offset INTEGER, bytes_in INTEGER, bytes_out INTEGER, host_bytes INTEGER, segmCksumAlgorithm VARCHAR2(2048), segmCksum NUMBER, errMsgTxt VARCHAR2(2048), errorCode NUMBER, severity NUMBER, blockId0 INTEGER, blockId1 INTEGER, blockId2 INTEGER, blockId3 INTEGER, creationTime INTEGER, priority INTEGER, id INTEGER CONSTRAINT PK_Segment_Id PRIMARY KEY, tape INTEGER, copy INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE Segment (fseq NUMBER, offset INTEGER, bytes_in INTEGER, bytes_out INTEGER, host_bytes INTEGER, segmCksumAlgorithm VARCHAR2(2048), segmCksum NUMBER, errMsgTxt VARCHAR2(2048), errorCode NUMBER, severity NUMBER, blockId0 INTEGER, blockId1 INTEGER, blockId2 INTEGER, blockId3 INTEGER, creationTime INTEGER, priority INTEGER, id INTEGER CONSTRAINT PK_Segment_Id PRIMARY KEY, copy INTEGER, status INTEGER, tape INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type TapePool */
 CREATE TABLE TapePool (name VARCHAR2(2048), migrSelectPolicy VARCHAR2(2048), id INTEGER CONSTRAINT PK_TapePool_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type TapeCopy */
-CREATE TABLE TapeCopy (copyNb NUMBER, id INTEGER CONSTRAINT PK_TapeCopy_Id PRIMARY KEY, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE TapeCopy (copyNb NUMBER, errorCode NUMBER, nbRetry NUMBER, id INTEGER CONSTRAINT PK_TapeCopy_Id PRIMARY KEY, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type CastorFile */
 CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER, creationTime INTEGER, lastAccessTime INTEGER, lastKnownFileName VARCHAR2(2048), lastUpdateTime INTEGER, id INTEGER CONSTRAINT PK_CastorFile_Id PRIMARY KEY, svcClass INTEGER, fileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -176,7 +176,7 @@ CREATE TABLE RequestType (reqType NUMBER, id INTEGER CONSTRAINT PK_RequestType_I
 CREATE TABLE ListPrivileges (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, userId NUMBER, groupId NUMBER, requestType NUMBER, id INTEGER CONSTRAINT PK_ListPrivileges_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type TapeRequestState */
-CREATE TABLE TapeRequestState (accessMode NUMBER, pid INTEGER, startTime INTEGER, lastVdqmPingTime INTEGER, vdqmVolReqId NUMBER, id INTEGER CONSTRAINT PK_TapeRequestState_Id PRIMARY KEY, streamMigration INTEGER, TapeRecall INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE TapeRequestState (accessMode NUMBER, startTime INTEGER, lastVdqmPingTime INTEGER, vdqmVolReqId NUMBER, id INTEGER CONSTRAINT PK_TapeRequestState_Id PRIMARY KEY, streamMigration INTEGER, tapeRecall INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for constraints on SvcClass */
 ALTER TABLE SvcClass2TapePool

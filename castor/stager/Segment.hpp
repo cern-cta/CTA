@@ -397,22 +397,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_tape
-       * @return the value of m_tape
-       */
-      Tape* tape() const {
-        return m_tape;
-      }
-
-      /**
-       * Set the value of m_tape
-       * @param new_var the new value of m_tape
-       */
-      void setTape(Tape* new_var) {
-        m_tape = new_var;
-      }
-
-      /**
        * Get the value of m_copy
        * @return the value of m_copy
        */
@@ -442,6 +426,22 @@ namespace castor {
        */
       void setStatus(SegmentStatusCodes new_var) {
         m_status = new_var;
+      }
+
+      /**
+       * Get the value of m_tape
+       * @return the value of m_tape
+       */
+      Tape* tape() const {
+        return m_tape;
+      }
+
+      /**
+       * Set the value of m_tape
+       * @param new_var the new value of m_tape
+       */
+      void setTape(Tape* new_var) {
+        m_tape = new_var;
       }
 
     private:
@@ -489,11 +489,11 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-      Tape* m_tape;
-
       TapeCopy* m_copy;
 
       SegmentStatusCodes m_status;
+
+      Tape* m_tape;
 
     }; /* end of class Segment */
 

@@ -195,6 +195,16 @@ int Cstager_Tape_stream(struct Cstager_Tape_t* instance, struct Cstager_Stream_t
 int Cstager_Tape_setStream(struct Cstager_Tape_t* instance, struct Cstager_Stream_t* new_var);
 
 /**
+ * Get the value of status
+ */
+int Cstager_Tape_status(struct Cstager_Tape_t* instance, enum Cstager_TapeStatusCodes_t* var);
+
+/**
+ * Set the value of status
+ */
+int Cstager_Tape_setStatus(struct Cstager_Tape_t* instance, enum Cstager_TapeStatusCodes_t new_var);
+
+/**
  * Add a struct Cstager_Segment_t* object to the segments list
  */
 int Cstager_Tape_addSegments(struct Cstager_Tape_t* instance, struct Cstager_Segment_t* obj);
@@ -209,15 +219,5 @@ int Cstager_Tape_removeSegments(struct Cstager_Tape_t* instance, struct Cstager_
  * the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_Tape_segments(struct Cstager_Tape_t* instance, struct Cstager_Segment_t*** var, int* len);
-
-/**
- * Get the value of status
- */
-int Cstager_Tape_status(struct Cstager_Tape_t* instance, enum Cstager_TapeStatusCodes_t* var);
-
-/**
- * Set the value of status
- */
-int Cstager_Tape_setStatus(struct Cstager_Tape_t* instance, enum Cstager_TapeStatusCodes_t new_var);
 
 #endif /* CASTOR_STAGER_TAPE_H */

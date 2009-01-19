@@ -59,20 +59,20 @@ castor::stager::Segment::Segment() throw() :
   m_creationTime(0),
   m_priority(0),
   m_id(0),
-  m_tape(0),
   m_copy(0),
-  m_status(SegmentStatusCodes(0)) {
+  m_status(SegmentStatusCodes(0)),
+  m_tape(0) {
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::Segment::~Segment() throw() {
-  if (0 != m_tape) {
-    m_tape->removeSegments(this);
-  }
   if (0 != m_copy) {
     m_copy->removeSegments(this);
+  }
+  if (0 != m_tape) {
+    m_tape->removeSegments(this);
   }
 }
 
@@ -107,12 +107,6 @@ void castor::stager::Segment::print(std::ostream& stream,
   stream << indent << "priority : " << m_priority << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "Tape : " << std::endl;
-  if (0 != m_tape) {
-    m_tape->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
   stream << indent << "Copy : " << std::endl;
   if (0 != m_copy) {
     m_copy->print(stream, indent + "  ", alreadyPrinted);
@@ -120,6 +114,12 @@ void castor::stager::Segment::print(std::ostream& stream,
     stream << indent << "  null" << std::endl;
   }
   stream << indent << "status : " << SegmentStatusCodesStrings[m_status] << std::endl;
+  stream << indent << "Tape : " << std::endl;
+  if (0 != m_tape) {
+    m_tape->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
 }
 
 //------------------------------------------------------------------------------

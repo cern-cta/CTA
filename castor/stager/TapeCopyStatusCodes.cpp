@@ -32,7 +32,7 @@
 //------------------------------------------------------------------------------
 // TapeCopyStatusCodesStrings
 //------------------------------------------------------------------------------
-const char* castor::stager::TapeCopyStatusCodesStrings[8] = {
+const char* castor::stager::TapeCopyStatusCodesStrings[10] = {
   "TAPECOPY_CREATED",
   "TAPECOPY_TOBEMIGRATED",
   "TAPECOPY_WAITINSTREAMS",
@@ -40,6 +40,8 @@ const char* castor::stager::TapeCopyStatusCodesStrings[8] = {
   "TAPECOPY_TOBERECALLED",
   "TAPECOPY_STAGED",
   "TAPECOPY_FAILED",
-  "TAPECOPY_WAITPOLICY"
+  "TAPECOPY_WAITPOLICY",
+  "TAPECOPY_REC_RETRY",
+  "TAPECOPY_MIG_RETRY"
 };
 

@@ -198,12 +198,33 @@ namespace castor {
     OBJ_VectorAddress = 159,
 
     /* VDQM objects to be moved to a different range */
+
     OBJ_Tape2DriveDedication = 160,
 
     /* Special constant used by the B/W list to determine if a user has rights
      * to issue tape recalls.
      */
-    OBJ_TapeRecall = 161
+    OBJ_TapeRecall = 161,
+
+    /* TapeGateWay Objects */
+  
+    OBJ_FileDiskLocation = 162,
+    OBJ_FileMigratedResponse = 163,
+    OBJ_FileRecalledResponse = 164,
+    OBJ_FileToMigrateRequest = 165,
+    OBJ_FileToMigrateResponse = 166,
+    OBJ_FileToRecallRequest = 167,
+    OBJ_FileToRecallResponse = 168,
+    OBJ_NsFileInformation = 169,
+    OBJ_StartWorkerRequest = 170,
+    OBJ_StartWorkerResponse = 171,
+    OBJ_TapeRequestState = 172,
+    OBJ_DbInfoRetryPolicy = 173,
+    OBJ_EndWorkerRequest = 174,
+    OBJ_EndWorkerResponse = 175,
+    OBJ_FileUpdateResponse = 176,
+    OBJ_TapeFileNsAttribute = 177,
+    OBJ_RmMasterReport = 178
   };
 
   /**
@@ -248,7 +269,10 @@ namespace castor {
     SVC_DBRHSVC = 41,
     SVC_ORARHSVC = 42,
     SVC_ORAPOLICYSVC = 43,
-    SVC_ORAREPACKSVC = 44
+    SVC_ORAREPACKSVC = 44,
+    SVC_ORATAPEGATEWAYSVC = 45,
+    SVC_ORAMIGHUNTERSVC = 46,
+    SVC_ORARECHANDLERSVC = 47
   };
 
   /**
@@ -281,7 +305,8 @@ namespace castor {
    * declared outside of any function.
    */
 
-#define OBJECT_IDS_NB 162
+#define OBJECT_IDS_NB 179
+
   static const unsigned int ObjectsIdsNb = OBJECT_IDS_NB;
 
   /**
@@ -292,7 +317,7 @@ namespace castor {
    * declared outside of any function.
    */
 
-#define SERVICES_IDS_NB 45
+#define SERVICES_IDS_NB 48
   static const unsigned int ServicesIdsNb = SERVICES_IDS_NB;
 
 
