@@ -1,0 +1,69 @@
+
+#
+#                      castor/tape/tapegateway/Imakefile
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+#
+# @author Giulia Taurelli, Giulia.Taurelli@cern.ch
+#
+
+
+CPPFLAGS = -g -O0 -I $(ORACLE_HOME)/rdbms/public -I ../../../h -I ../../.. $(PYTHONINC) $(MTCCFLAGS) 
+LDFLAGS += $(MTLDFLAGS) 
+LD = g++
+LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh $(PYTHONLIBS)
+
+DependsOnLibrary(../../common,castorcommon)
+DependsOnLibrary(../../dlf,castordlf)
+DependsOnLibrary(../../vdqm,castorvdqm)
+DependsOnLibrary(../../vmgr,castorvmgr)
+DependsOnLibrary(..,castorclient)
+DependsOnLibrary(../db/newora,castorcommonora)
+DependsOnLibrary(../db/cnv,castorcnvs)
+DependsOnLibrary(../infoPolicy,castorinfopolicy)
+
+
+TAPEGATEWAYDAEMONBIN_SRCS = TapeGatewayDaemon.cpp WorkerThread.cpp \
+	MigratorErrorHandlerThread.cpp RecallerErrorHandlerThread.cpp \
+	TapeStreamLinkerThread.cpp VdqmRequestsCheckerThread.cpp VdqmRequestsProducerThread.cpp \
+	VmgrTapeGatewayHelper.cpp VdqmTapeGatewayHelper.cpp NsTapeGatewayHelper.cpp RmMasterTapeGatewayHelper.cpp
+
+TAPEGATEWAY_MESSAGES_SRCS = \
+	ConvertCommandCode.cpp FileDiskLocation.cpp FileMigratedResponse.cpp \
+        FileRecalledResponse.cpp FileToMigrateRequest.cpp FileToMigrateResponse.cpp \
+        FileToRecallRequest.cpp  FileToRecallResponse.cpp  NsFileInformation.cpp \
+	PositionCommandCode.cpp RecordFormatCode.cpp  StartWorkerRequest.cpp \
+	StartWorkerResponse.cpp TapeRequestState.cpp TapeRequestStateCode.cpp \
+	EndWorkerRequest.cpp EndWorkerResponse.cpp FileUpdateResponse.cpp \
+	TapeFileNsAttribute.cpp
+
+TAPEGATEWAY_IO_SRCS = \
+	../../io/StreamFileDiskLocationCnv.cpp  ../../io/StreamFileMigratedResponseCnv.cpp \
+	../../io/StreamFileRecalledResponseCnv.cpp \
+	../../io/StreamFileToMigrateRequestCnv.cpp ../../io/StreamFileToMigrateResponseCnv.cpp \
+	../../io/StreamFileToRecallRequestCnv.cpp ../../io/StreamFileToRecallResponseCnv.cpp \
+	../../io/StreamNsFileInformationCnv.cpp  ../../io/StreamTapeFileNsAttributeCnv.cpp \
+	../../io/StreamStartWorkerRequestCnv.cpp ../../io/StreamStartWorkerResponseCnv.cpp
+
+TAPEGATEWAY_DB_SRCS = ../../db/cnv/DbTapeRequestStateCnv.cpp ora/OraTapeGatewaySvc.cpp
+
+TAPEGATEWAYBIN_SRCS = $(TAPEGATEWAYDAEMONBIN_SRCS) $(TAPEGATEWAY_MESSAGES_SRCS) $(TAPEGATEWAY_IO_SRCS) $(TAPEGATEWAY_DB_SRCS)
+
+TAPEGATEWAYBIN_OBJS = $(TAPEGATEWAYBIN_SRCS:.cpp=.Osuf)
+NormalProgramTarget(tapegateway,$(TAPEGATEWAYBIN_OBJS),$(DEPLIB),$(LIBS),root,bin,750)
+ADMMANPAGE(tapegateway)
