@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunterThread.hpp,v $ $Author: sponcec3 $
+ * @(#)$RCSfile: MigHunterThread.hpp,v $ $Author: gtaur $
  *
  *
  *
@@ -32,10 +32,9 @@
 
 #include "castor/infoPolicy/MigrationPySvc.hpp"
 #include "castor/infoPolicy/CnsInfoMigrationPolicy.hpp"
-#include "castor/infoPolicy/IPolicySvc.hpp"
 #include "castor/infoPolicy/StreamPySvc.hpp"
 #include "castor/server/BaseDbThread.hpp"
-
+#include "castor/rtcopy/mighunter/IMigHunterSvc.hpp"
 namespace castor {
 
   namespace rtcopy{
@@ -46,7 +45,7 @@ namespace castor {
      */
     
       class MigHunterThread :public castor::server::BaseDbThread {
-	castor::infoPolicy::IPolicySvc* m_policySvc;
+	castor::rtcopy::mighunter::IMigHunterSvc* m_dbSvc;
 	u_signed64 m_byteVolume;
 	std::vector<std::string> m_listSvcClass;
         bool m_doClone;
@@ -59,7 +58,7 @@ namespace castor {
        * constructor
        * @param maximum numbers of hours that an archived  request can stay in the datebase before being deleted.
        */
-      MigHunterThread(castor::infoPolicy::IPolicySvc* svc, std::vector<std::string> svcClassArray, u_signed64 minByte, bool doClone,	castor::infoPolicy::MigrationPySvc* migrPy, castor::infoPolicy::StreamPySvc* StrPy);
+      MigHunterThread(castor::rtcopy::mighunter::IMigHunterSvc* svc, std::vector<std::string> svcClassArray, u_signed64 minByte, bool doClone,	castor::infoPolicy::MigrationPySvc* migrPy, castor::infoPolicy::StreamPySvc* StrPy);
       
       castor::infoPolicy::CnsInfoMigrationPolicy* getInfoFromNs
       (std::string nsHost,u_signed64 fileId,std::string &svcClassName);

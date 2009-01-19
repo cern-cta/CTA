@@ -37,7 +37,7 @@ DependsOnLibrary(../db/cnv,castorcnvs)
 DependsOnLibrary(../infoPolicy,castorinfopolicy)
 DependsOnLibrary(../../vdqm,castorvdqm)
 
-RECHANDLERDAEMONBIN_SRCS = RecHandlerDaemon.cpp RecHandlerThread.cpp
+RECHANDLERDAEMONBIN_SRCS = RecHandlerDaemon.cpp RecHandlerThread.cpp  ora/OraRecHandlerSvc.cpp
 RECHANDLERDAEMONBIN_OBJS = $(RECHANDLERDAEMONBIN_SRCS:.cpp=.Osuf)
 NormalProgramTarget(recHandlerDaemon,$(RECHANDLERDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),root,bin,750)
 ADMMANPAGE(recHandlerDaemon)

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: sponcec3 $
+ * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: gtaur $
  *
  *
  *
@@ -55,8 +55,8 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::rtcopy::mighunter::MigHunterThread::MigHunterThread(castor::infoPolicy::IPolicySvc* svc, std::vector<std::string> svcClassArray, u_signed64 minByte, bool doClone,castor::infoPolicy::MigrationPySvc* migrPy,castor::infoPolicy::StreamPySvc* strPy ){
-  m_policySvc=svc; 
+castor::rtcopy::mighunter::MigHunterThread::MigHunterThread(castor::rtcopy::mighunter::IMigHunterSvc* svc, std::vector<std::string> svcClassArray, u_signed64 minByte, bool doClone,castor::infoPolicy::MigrationPySvc* migrPy,castor::infoPolicy::StreamPySvc* strPy ){
+  m_dbSvc=svc; 
   m_listSvcClass=svcClassArray;
   m_byteVolume=minByte;
   m_doClone=doClone;
@@ -95,7 +95,8 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
       
 	// tapecopy id and extra information retrieved from the db for the python policy       
    
-	infoCandidateTapeCopies=m_policySvc->inputForMigrationPolicy(*svcClassName,&initialSizeToTransfer);
+	infoCandidateTapeCopies=m_dbSvc->inputForMigrationPolicy(*svcClassName,&initialSizeToTransfer);
+
 
 	if (infoCandidateTapeCopies.empty()){	
 	   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 3, 1, params0);
@@ -110,12 +111,12 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	}
       
           
-	int ret=m_policySvc->createOrUpdateStream((*svcClassName),initialSizeToTransfer,m_byteVolume,initialSizeCeiling,m_doClone,infoCandidateTapeCopies); 
+	int ret=m_dbSvc->createOrUpdateStream((*svcClassName),initialSizeToTransfer,m_byteVolume,initialSizeCeiling,m_doClone,infoCandidateTapeCopies); 
      // log error on DLF for the stream
 
 	if (ret<0){
 	 // resurrect candidates
-	  m_policySvc->resurrectTapeCopies(infoCandidateTapeCopies);
+	  m_dbSvc->resurrectTapeCopies(infoCandidateTapeCopies);
           if(ret==-1){
 	    castor::dlf::Param params1[]= {castor::dlf::Param("message", "No tapepools Candidate")};
             castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 4, 1, params1);
@@ -209,7 +210,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 
 	try {
 	//attach the eligible tape copies
-	  m_policySvc->attachTapeCopiesToStreams(eligibleCandidates);
+	  m_dbSvc->attachTapeCopiesToStreams(eligibleCandidates);
 	}catch(castor::exception::Exception e){
 	  castor::dlf::Param params[] =
 	    {
@@ -218,8 +219,8 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	     castor::dlf::Param("message", e.getMessage().str())};
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 8, 3, params);
 
-	  m_policySvc->resurrectTapeCopies(eligibleCandidates);
-	  m_policySvc->resurrectTapeCopies(candidatesToRestore);
+	  m_dbSvc->resurrectTapeCopies(eligibleCandidates);
+	  m_dbSvc->resurrectTapeCopies(candidatesToRestore);
 	  castor::exception::Internal ex;
 	  ex.getMessage()
 	    << "Error in attaching tapecopies";
@@ -228,17 +229,17 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 
 	// resurrect tape copies not eligible
 
-	m_policySvc->resurrectTapeCopies(candidatesToRestore);
+	m_dbSvc->resurrectTapeCopies(candidatesToRestore);
       
 	// delete tapecopies which refers to files which are not in the nameserver
 
-	m_policySvc->invalidateTapeCopies(invalidTapeCopies);
+	m_dbSvc->invalidateTapeCopies(invalidTapeCopies);
 
 
 	// retrieve information from the db to know which stream should be started and attach the eligible tapecopy
       
        
-	infoCandidateStreams=m_policySvc->inputForStreamPolicy((*svcClassName));
+	infoCandidateStreams=m_dbSvc->inputForStreamPolicy((*svcClassName));
       
 	if  (infoCandidateStreams.empty()) {
 	  // log error and continue with the next svc class
@@ -341,9 +342,9 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	initialSizeForStream= (initialSizeCeiling > 0 && initialSizeForStream>initialSizeCeiling)?initialSizeCeiling:initialSizeForStream;
 
 
-	m_policySvc->startChosenStreams(eligibleStreams,initialSizeForStream);
+	m_dbSvc->startChosenStreams(eligibleStreams,initialSizeForStream);
 
-	m_policySvc->stopChosenStreams(streamsToRestore);
+	m_dbSvc->stopChosenStreams(streamsToRestore);
 
       } catch (castor::exception::Exception e){
 	// exception due to problems specific to the service class

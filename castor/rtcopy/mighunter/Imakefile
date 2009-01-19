@@ -36,7 +36,7 @@ DependsOnLibrary(../db/newora,castorcommonora)
 DependsOnLibrary(../db/cnv,castorcnvs)
 DependsOnLibrary(../infoPolicy,castorinfopolicy)
 
-MIGHUNTERDAEMONBIN_SRCS = MigHunterDaemon.cpp MigHunterThread.cpp 
+MIGHUNTERDAEMONBIN_SRCS = MigHunterDaemon.cpp MigHunterThread.cpp ora/OraMigHunterSvc.cpp
 MIGHUNTERDAEMONBIN_OBJS = $(MIGHUNTERDAEMONBIN_SRCS:.cpp=.Osuf)
 NormalProgramTarget(migHunterDaemon,$(MIGHUNTERDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),root,bin,750)
 ADMMANPAGE(migHunterDaemon)

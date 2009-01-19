@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
   
   // service to access the database
 
-  castor::IService* orasvc = castor::BaseObject::services()->service("OraPolicySvc", castor::SVC_ORAPOLICYSVC);
+  castor::IService* orasvc = castor::BaseObject::services()->service("OraPolicySvc", castor::SVC_ORARECHANDLERSVC);
   castor::infoPolicy::IPolicySvc* myService = dynamic_cast<castor::infoPolicy::IPolicySvc*>(orasvc);
   if (0 == myService) {
     // we don't have DLF yet, and this is a major fault, so log to stderr and exit
