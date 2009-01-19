@@ -26,22 +26,21 @@
 CPPFLAGS = -g -O0 -I $(ORACLE_HOME)/rdbms/public -I ../../h -I ../.. $(MTCCFLAGS) $(PYTHONINC)
 LDFLAGS += -g -O0 $(MTLDFLAGS)
 LD = g++
-LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh
+LIBS = 
 
 DependsOnLibrary(../common,castorcommon)
 DependsOnLibrary(,castorclient)
-DependsOnLibrary(db/newora,castorcommonora)
-DependsOnLibrary(db/cnv,castorcnvs)
 
 POLICYLIB_SRCS = CnsInfoMigrationPolicy.cpp \
 	DbInfoMigrationPolicy.cpp \
 	DbInfoRecallPolicy.cpp \
 	DbInfoStreamPolicy.cpp \
+	DbInfoRetryPolicy.cpp \
 	MigrationPySvc.cpp \
         StreamPySvc.cpp \
 	PolicyObj.cpp \
 	PySvc.cpp \
 	RecallPySvc.cpp \
-	ora/OraPolicySvc.cpp
+	TapeRetryPySvc.cpp
 POLICYLIB_OBJS = $(POLICYLIB_SRCS:.cpp=.Osuf)
 SharedLibraryTarget(castorinfopolicy,$(POLICYLIB_OBJS),$(DEPLIB),$(LIBS))
