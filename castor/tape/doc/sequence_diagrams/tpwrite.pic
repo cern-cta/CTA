@@ -1,0 +1,63 @@
+.PS
+
+copy "sequence.pic";
+
+# Define the objects
+object(C,"tpwrite");
+object(V,"vdqm");
+object(R,"rtcpd");
+placeholder_object(RF);
+placeholder_object(A);
+placeholder_object(T);
+placeholder_object(D1);
+placeholder_object(D2);
+placeholder_object(D3);
+
+step();
+
+# Message sequences
+active(C);
+message(C,V,"connect");
+active(V);
+message(C,V,"volume request");
+message(V,C,"acknowledge");
+message(V,C,"volReqID");
+message(C,V,"acknowledge");
+message(C,V,"disconnect");
+inactive(V);
+
+step();
+
+active(V);
+message(V,R,"connect");
+active(R);
+create_message(R,RF,"main cntl");
+active(RF);
+inactive(R);
+
+message(V,RF,"RcpJob");
+message(RF,V,"RcpJobReply");
+message(RF,V,"disconnect");
+inactive(V);
+
+message(RF,C,"connect");
+message(C,RF,"volume");
+message(RF,C,"acknowledge");
+
+inactive(D3);
+inactive(A);
+inactive(RF);
+inactive(C);
+
+complete(C);
+complete(V);
+complete(R);
+complete(RF);
+complete(A);
+complete(T);
+complete(D1);
+complete(D2);
+complete(D3);
+
+.PE
+

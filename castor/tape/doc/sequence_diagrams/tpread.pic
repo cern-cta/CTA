@@ -1,34 +1,5 @@
 .PS
 
-##############################################################################
-# File: tpread.pic
-#
-# This file is part of the Castor project.
-# See http://castor.web.cern.ch/castor
-#
-# Copyright (C) 2003  CERN
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-#
-# Authors:
-#   Nicola Bessone Nicola.Bessone@cern.ch
-#   Steven Murray  Steven.Murray@cern.ch
-###############################################################################
-
-###############################################################################
-# This diagram shows the sequence of messages sent between tpread, vdqm and
-# rtcpd in order to recall one of more files from tape.
-###############################################################################
-
 copy "sequence.pic";
 
 # Define the objects
@@ -82,36 +53,42 @@ message(RF,C,"acknowledge");
 message(C,RF,"RTCP_NOMORE_REQ");
 message(RF,C,"acknowledge");
 
-message(RF,C,"connect");
-message(RF,C,"connect");
-message(RF,C,"connect");
-
 create_message(RF,A,"abort");
 active(A);
+
+message(RF,C,"connect for tape IO");
 
 create_message(RF,T,"tape IO");
 active(T);
 
-create_message(RF,D1,"disk IO 1");
+message(RF,C,"connect for disk IO");
+message(RF,C,"connect for disk IO");
+message(RF,C,"connect for disk IO");
+
+create_message(RF,D1,"disk IO");
 active(D1);
-create_message(RF,D2,"disk IO 2");
+create_message(RF,D2,"disk IO");
 active(D2);
-create_message(RF,D3,"disk IO 3");
+create_message(RF,D3,"disk IO");
 active(D3);
 
-message(T,C,"UNKNOWN file1");
-message(T,C,"RTCP_POSITIONED file1");
+message(T,C,"positioned for file1 (tape req)");
+message(C,T,"acknowledge");
+message(T,C,"positioned for file1 (file req)");
+message(C,T,"acknowledge");
 
-message(T,C,"UNKNOWN file2");
-message(T,C,"RTCP_POSITIONED file2");
-
-message(D1,C,"RTCP_FINISHED file1");
-message(C,D1,"acknowledge");
-inactive(D1);
+message(T,C,"positioned for file2 (tape req)");
+message(C,T,"acknowledge");
+message(T,C,"positioned for file2 (file req)");
+message(C,T,"acknowledge");
 
 message(D2,C,"RTCP_FINISHED file2");
 message(C,D2,"acknowledge");
 inactive(D2);
+
+message(D1,C,"RTCP_FINISHED file1");
+message(C,D1,"acknowledge");
+inactive(D1);
 
 message(T,C,"RTCP_ENDOF_REQ");
 message(C,T,"acknowledge");

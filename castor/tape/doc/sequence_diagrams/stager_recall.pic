@@ -1,0 +1,164 @@
+.PS
+
+copy "sequence.pic";
+
+# Define the objects
+object(RC,"rtcpcld");
+placeholder_object(C);
+object(V,"vdqm");
+object(R,"rtcpd");
+placeholder_object(RF);
+placeholder_object(A);
+placeholder_object(T);
+placeholder_object(D1);
+placeholder_object(D2);
+placeholder_object(D3);
+
+step();
+
+# Message sequences
+active(RC);
+message(RC,V,"connect");
+active(V);
+message(RC,V,"volume request");
+message(V,RC,"acknowledge");
+message(V,RC,"volReqID");
+message(RC,V,"acknowledge");
+message(RC,V,"disconnect");
+inactive(V);
+
+step();
+
+active(V);
+message(V,R,"connect");
+active(R);
+create_message(R,RF,"main cntl");
+active(RF);
+inactive(R);
+
+message(V,RF,"RcpJob");
+message(RF,V,"RcpJobReply");
+message(RF,V,"disconnect");
+inactive(V);
+
+message(RF,RC,"connect");
+message(RC,RF,"request volReqId");
+message(RF,RC,"acknowledge");
+message(RF,RC,"volReqId");
+message(RC,RF,"acknowledge");
+
+create_message(RC,C,"recaller");
+active(C);
+message(C,RF,"client info");
+message(RF,C,"acknowledge");
+message(C,RF,"disconnect");
+
+
+message(RF,C,"connect");
+
+# Start of getRequestList
+message(C,RF,"volume");
+message(RF,C,"acknowledge");
+
+message(C,RF,"RTCP_REQUEST_MORE_WORK");
+message(RF,C,"acknowledge");
+
+message(C,RF,"RTCP_NOMORE_REQ");
+message(RF,C,"acknowledge");
+# End of getRequestList
+
+create_message(RF,A,"abort");
+active(A);
+
+message(RF,C,"connect for tape IO");
+
+create_message(RF,T,"tape IO");
+active(T);
+
+message(RF,C,"connect for disk IO");
+message(RF,C,"connect for disk IO");
+message(RF,C,"connect for disk IO");
+
+create_message(RF,D1,"disk IO");
+active(D1);
+create_message(RF,D2,"disk IO");
+active(D2);
+create_message(RF,D3,"disk IO");
+active(D3);
+
+message(T,C,"RTCP_REQUEST_MORE_WORK");
+# Acknowledge comes after getRequestList()
+
+# Start of getRequestList
+message(C,T,"file1");
+message(T,C,"acknowledge");
+
+message(C,T,"RTCP_NOMORE_REQ");
+message(T,C,"acknowledge");
+# End of getRequestList
+
+# Better late than never
+# Acknowledge of tape IO's request for more work
+message(T,C,"acknowledge of RTCP_REQUEST_MORE_WORK");
+
+message(T,C,"positioned for file1 (tape req)");
+message(C,T,"acknowledge");
+message(T,C,"positioned for file1 (file req)");
+message(C,T,"acknowledge");
+
+message(T,C,"RTCP_REQUEST_MORE_WORK");
+# Acknowledge comes after getRequestList()
+
+message(D1,C,"RTCP_FINISHED file 1");
+message(C,D1,"acknowledge");
+
+message(C,T,"file2");
+message(T,C,"acknowledge");
+
+message(C,T,"RTCP_REQUEST_MORE_WORK");
+message(T,C,"acknowledge");
+
+message(C,T,"RTCP_NOMORE_REQ");
+message(T,C,"acknowledge");
+# End of getRequestList
+
+# Better late than never
+# Acknowledge of tape IO's request for more work
+message(T,C,"acknowledge of RTCP_REQUEST_MORE_WORK");
+
+message(T,C,"RTCP_REQUEST_MORE_WORK");
+# Acknowledge comes after getRequestList()
+
+message(D1,C,"RTCP_FINISHED file 1");
+message(C,D1,"acknowledge");
+
+message(C,T,"RTCP_NOMORE_REQ");
+message(T,C,"acknowledge");
+# End of EMPTY getRequestList
+
+# Better late than never
+# Acknowledge of tape IO's request for more work
+message(T,C,"acknowledge of RTCP_REQUEST_MORE_WORK");
+
+message(T,C,"RTCP_ENDOF_REQ");
+message(C,T,"acknowledge");
+inactive(T);
+
+inactive(A);
+inactive(RF);
+inactive(C);
+inactive(RC);
+
+complete(RC);
+complete(C);
+complete(V);
+complete(R);
+complete(RF);
+complete(T);
+complete(A);
+complete(D1);
+complete(D2);
+complete(D3);
+
+.PE
+

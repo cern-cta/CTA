@@ -1,0 +1,79 @@
+.PS
+
+copy "sequence.pic";
+
+# Define the objects
+object(RC,"rtcpcld");
+placeholder_object(C);
+object(V,"vdqm");
+object(R,"rtcpd");
+placeholder_object(RF);
+placeholder_object(A);
+placeholder_object(T);
+placeholder_object(D1);
+placeholder_object(D2);
+placeholder_object(D3);
+
+step();
+
+# Message sequences
+active(RC);
+message(RC,V,"connect");
+active(V);
+message(RC,V,"volume request");
+message(V,RC,"acknowledge");
+message(V,RC,"volReqID");
+message(RC,V,"acknowledge");
+message(RC,V,"disconnect");
+inactive(V);
+
+step();
+
+active(V);
+message(V,R,"connect");
+active(R);
+create_message(R,RF,"main cntl");
+active(RF);
+inactive(R);
+
+message(V,RF,"RcpJob");
+message(RF,V,"RcpJobReply");
+message(RF,V,"disconnect");
+inactive(V);
+
+message(RF,RC,"connect");
+message(RC,RF,"request volReqId");
+message(RF,RC,"acknowledge");
+message(RF,RC,"volReqId");
+message(RC,RF,"acknowledge");
+
+create_message(RC,C,"migrator");
+active(C);
+message(C,RF,"client info");
+message(RF,C,"acknowledge");
+message(C,RF,"disconnect");
+
+
+message(RF,C,"connect");
+message(C,RF,"volume");
+message(RF,C,"acknowledge");
+
+inactive(T);
+inactive(A);
+inactive(RF);
+inactive(C);
+inactive(RC);
+
+complete(RC);
+complete(C);
+complete(V);
+complete(R);
+complete(RF);
+complete(T);
+complete(A);
+complete(D1);
+complete(D2);
+complete(D3);
+
+.PE
+
