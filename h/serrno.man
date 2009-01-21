@@ -448,8 +448,12 @@ The following error values are returned only by the name server package:
 .TP 1.9i
 .B ENSNACT
 (1401) Name server not active
+.TP
 .B ENSFILECHG
 (1402) File has been overwritten, request ignored
+.TP
+.B ENSNOSEG
+(1403) Segment had been deleted
 
 .SH RFIO ERRORS
 The following error values are returned only by the remote file I/O package:
