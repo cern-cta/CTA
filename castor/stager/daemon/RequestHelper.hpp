@@ -89,7 +89,6 @@ namespace castor{
 	castor::stager::FileRequest* fileRequest;
 
 	/* service class */
-	std::string svcClassName;
 	castor::stager::SvcClass* svcClass;
 		
 	/* castorFile attached to the subrequest*/
@@ -106,35 +105,22 @@ namespace castor{
 	
 	timeval tvStart;
 
-	/****************************************************/
-	/*  called on the different thread (job, pre, stg) */
 	RequestHelper(castor::stager::SubRequest* subRequestToProcess, int &typeRequest) throw(castor::exception::Exception);
 
 	/* destructor */
 	~RequestHelper() throw();
 
-	/****************************************************************************************/
-	/* get svClass by selecting with stagerService                                         */
-	/* (using the svcClassName:getting from request OR defaultName (!!update on request)) */
-	/*************************************************************************************/
-	void getSvcClass() throw(castor::exception::Exception);
+	/**
+   * resolve the svClass if not resolved yet by using the stagerService
+   */
+	void resolveSvcClass() throw(castor::exception::Exception);
 	   
-	/*******************************************************************************/
-	/* update request in DB, create and fill request->svcClass link on DB         */ 
-	/*****************************************************************************/
-	void linkRequestToSvcClassOnDB() throw(castor::exception::Exception);
-      
-     	/******************************************************************************************/
-	/* get and (create or initialize) Cuuid_t subrequest and request                         */
-	/* and copy to the thread-safe variables (subrequestUuid and requestUuid)               */
-	/***************************************************************************************/
-
 	/* get subrequest and request uuids */
 	void setUuids() throw ();
 	
-	/*******************************************************************************************************************************************/
-	/*  link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name) ): called in Request.jobOriented()*/
-	/*****************************************************************************************************************************************/
+	/**
+	 *  link the castorFile to the ServiceClass
+	 */
 	void getCastorFileFromSvcClass(castor::stager::daemon::CnsHelper* stgCnsHelper) throw(castor::exception::Exception);
        
 	/************************************************************************************/

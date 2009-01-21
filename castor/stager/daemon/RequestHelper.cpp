@@ -123,7 +123,7 @@ namespace castor{
             castor::dlf::Param("Filename", subrequest->fileName()),
             castor::dlf::Param("Username", username),
             castor::dlf::Param("Groupname", groupname),
-            castor::dlf::Param("SvcClass", svcClassName),
+            castor::dlf::Param("SvcClass", (svcClass ? svcClass->name() : "Unknown")),
             castor::dlf::Param("ProcessingTime", procTime * 0.000001)
           };
           castor::dlf::dlf_writep(requestUuid, DLF_LVL_MONITORING, STAGER_REQ_PROCESSED, 7, params, &cnsFileId);
@@ -190,8 +190,8 @@ namespace castor{
       {
         // reqUuid
         if(fileRequest->reqId().empty() ||
-          /*convert to the Cuuid_t version and copy in our thread safe variable */
-        (string2Cuuid(&requestUuid, (char*) fileRequest->reqId().c_str()) != 0)) {
+           /* convert to the Cuuid_t version and copy in our thread safe variable */
+           (string2Cuuid(&requestUuid, (char*) fileRequest->reqId().c_str()) != 0)) {
           requestUuid = nullCuuid;
         }
         // subreqUuid: this is never empty
@@ -200,43 +200,35 @@ namespace castor{
         }
       }
       
-      
-      /****************************************************************************************/
-      /* get svClass by selecting with stagerService                                         */
-      /* (using the svcClassName:getting from request OR defaultName (!!update on request)) */
-      /*************************************************************************************/
-      void RequestHelper::getSvcClass() throw(castor::exception::Exception){
-        this->svcClassName=fileRequest->svcClassName();
-        
-        if(this->svcClassName.empty()){  /* we set the default svcClassName */
-          this->svcClassName="default";
-          fileRequest->setSvcClassName(this->svcClassName);
-        }
-        
-        svcClass=stagerService->selectSvcClass(this->svcClassName);  //check if it is NULL
-        if(this->svcClass == NULL) {
-          logToDlf(DLF_LVL_USER_ERROR, STAGER_SVCCLASS_EXCEPTION);
+      void RequestHelper::resolveSvcClass() throw(castor::exception::Exception){
+        // check if the service class has been resolved
+        // XXX note that this is not fully thread safe, meaning that the resolution
+        // XXX will be performed for a number of requests and only large requests
+        // XXX with many subrequests (e.g. repack) will benefit from this.
+        dbSvc->fillObj(baseAddr, fileRequest, castor::OBJ_SvcClass, false);
+        if(fileRequest->svcClass() == 0) {
+          // not yet
+          std::string scName = fileRequest->svcClassName();
+          if(scName.empty()) {  // set the hard coded default
+            scName = "default";
+          }
+          svcClass = stagerService->selectSvcClass(scName);
+          if(svcClass == 0) {
+            logToDlf(DLF_LVL_USER_ERROR, STAGER_SVCCLASS_EXCEPTION);
           
-          castor::exception::Exception ex(SESVCCLASSNFND);
-          ex.getMessage()<<"Service Class not found";
-          throw ex;
+            castor::exception::Exception ex(SESVCCLASSNFND);
+            ex.getMessage()<<"Service Class not found";
+            throw ex;
+          }
+
+          fileRequest->setSvcClass(svcClass);
+          dbSvc->fillRep(baseAddr, fileRequest, castor::OBJ_SvcClass, false);
         }
+        else
+          svcClass = fileRequest->svcClass();
         
+        // if defined, this is the forced file class
         dbSvc->fillObj(baseAddr, svcClass, castor::OBJ_FileClass, false);
-      }
-      
-      
-      /*******************************************************************************/
-      /* update request in DB, create and fill request->svcClass link on DB         */
-      /*****************************************************************************/
-      void RequestHelper::linkRequestToSvcClassOnDB() throw(castor::exception::Exception){
-        
-        /* update request on DB */
-        dbSvc->updateRep(baseAddr, fileRequest, false);
-        fileRequest->setSvcClass(svcClass);
-        
-        /* fill the svcClass object using the request as a key  */
-        dbSvc->fillRep(baseAddr, fileRequest, castor::OBJ_SvcClass, false);
       }
       
       
@@ -264,15 +256,14 @@ namespace castor{
           // note that for a Put request we should truncate the size, but this is done later on by
           // recreateCastorFile after all necessary checks
           castorFile = stagerService->selectCastorFile
-	    (cnsFileId.fileid, cnsFileId.server, svcClassId, fileClassId,
-	     stgCnsHelper->cnsFilestat.filesize,
-	     subrequest->fileName(), stgCnsHelper->cnsFilestat.ctime);
+            (cnsFileId.fileid, cnsFileId.server, svcClassId, fileClassId,
+             stgCnsHelper->cnsFilestat.filesize,
+             subrequest->fileName(), stgCnsHelper->cnsFilestat.ctime);
           
           subrequest->setCastorFile(castorFile);
           castorFile->setFileClass(fileClass);
           
-          // create links in db and in memory
-          
+          // create links in db
           dbSvc->fillRep(baseAddr, subrequest, castor::OBJ_CastorFile, false);
           dbSvc->fillRep(baseAddr, castorFile, castor::OBJ_FileClass, false);
         }
@@ -378,16 +369,13 @@ namespace castor{
           castor::dlf::Param("Filename", subrequest->fileName()),
           castor::dlf::Param("Username", username),
           castor::dlf::Param("Groupname", groupname),
-          castor::dlf::Param("SvcClass", svcClassName)
+          castor::dlf::Param("SvcClass", (svcClass ? svcClass->name() : "Unknown"))
         };
         castor::dlf::dlf_writep(requestUuid, level, messageNb, 6, params, fid);
       }
-      
-      
-      
-      
-      
-      
-    }//end namespace daemon
-  }//end namespace stager
-}//end namespace castor
+
+    } //end namespace daemon
+
+  } //end namespace stager
+
+} //end namespace castor

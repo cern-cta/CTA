@@ -53,10 +53,7 @@ namespace castor{
         stgRequestHelper->setUsernameAndGroupname();
 
         /* get the svcClass */
-        stgRequestHelper->getSvcClass();
-        
-        /* create and fill request->svcClass link on DB */
-        stgRequestHelper->linkRequestToSvcClassOnDB();
+        stgRequestHelper->resolveSvcClass();
         
         /* we create the CnsHelper inside and we pass the requestUuid needed for logging */
         this->stgCnsHelper = new CnsHelper(stgRequestHelper->requestUuid);
