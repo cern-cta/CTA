@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.49 $ $Release$ $Date: 2008/10/21 03:27:57 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.50 $ $Release$ $Date: 2009/01/21 16:40:17 $ $Author: waldron $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -181,7 +181,7 @@ castor::db::ora::OraQuerySvc::diskCopies4FileName
 (std::string fileName, u_signed64 svcClassId)
   throw (castor::exception::Exception) {
   // default value for the maximal number of responses to give
-  unsigned long maxNbResponses = 1000;
+  unsigned long maxNbResponses = 10000;
   try {
     // Check whether the statements are ok
     if (0 == m_diskCopies4FileNameStatement) {
