@@ -34,7 +34,7 @@ namespace castor{
       class CnsHelper;
       class ReplyHelper;
       
-      class RequestHandler : public virtual castor::BaseObject{
+      class RequestHandler : public castor::BaseObject{
         
       public:
         

@@ -38,7 +38,7 @@ namespace castor{
     namespace daemon{
       
       
-      class JobRequestHandler : public virtual RequestHandler{
+      class JobRequestHandler : public RequestHandler{
         
       public:
         JobRequestHandler() throw() : m_notifyJobManager(false) {};

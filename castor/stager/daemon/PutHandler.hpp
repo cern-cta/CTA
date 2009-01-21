@@ -45,7 +45,7 @@ namespace castor{
       class RequestHelper;
       class CnsHelper;
 
-      class PutHandler : public virtual JobRequestHandler{
+      class PutHandler : public JobRequestHandler{
 
 	
       public:
