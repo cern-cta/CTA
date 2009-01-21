@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.62 $ $Release$ $Date: 2009/01/08 15:39:33 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.63 $ $Release$ $Date: 2009/01/21 15:28:52 $ $Author: itglp $
  *
  * Main stager daemon
  *

@@ -73,10 +73,7 @@ namespace castor{
         stgCnsHelper->cnsSetEuidAndEgid(stgRequestHelper->fileRequest);
         
         /* get the svcClass */
-        stgRequestHelper->getSvcClass();
-        
-        /* create and fill request->svcClass link on DB */
-        stgRequestHelper->linkRequestToSvcClassOnDB();
+        stgRequestHelper->resolveSvcClass();
         
         /* check the existence of the file, if the user hasTo/can create it and set the fileId and server for the file */
         /* create the file if it is needed/possible */

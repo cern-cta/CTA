@@ -99,7 +99,7 @@ namespace castor{
                 castor::dlf::Param("Filename", stgRequestHelper->subrequest->fileName()),
                 castor::dlf::Param("Username", stgRequestHelper->username),
                 castor::dlf::Param("Groupname", stgRequestHelper->groupname),
-                castor::dlf::Param("SvcClass", stgRequestHelper->svcClassName),
+                castor::dlf::Param("SvcClass", stgRequestHelper->svcClass->name()),
                 castor::dlf::Param("TPVID", tape->vid()),
                 castor::dlf::Param("TapeStatus", castor::stager::TapeStatusCodesStrings[tape->status()]),
                 castor::dlf::Param("FileSize", stgRequestHelper->subrequest->castorFile()->fileSize()),

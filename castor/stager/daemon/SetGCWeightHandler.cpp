@@ -62,7 +62,7 @@ namespace castor{
             castor::dlf::Param("Filename", stgRequestHelper->subrequest->fileName()),
             castor::dlf::Param("Username", stgRequestHelper->username),
             castor::dlf::Param("Groupname", stgRequestHelper->groupname),
-            castor::dlf::Param("SvcClass", stgRequestHelper->svcClassName),
+            castor::dlf::Param("SvcClass", stgRequestHelper->svcClass->name()),
 	    castor::dlf::Param("Weight", setGCWeightReq->weight())
           };
           castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_SETGC,

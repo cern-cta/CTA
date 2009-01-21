@@ -55,11 +55,11 @@ namespace castor{
       void PutHandler::handlerSettings() throw(castor::exception::Exception)
       {	
         /* get the request's size required on disk */
-        this->xsize = this->stgRequestHelper->subrequest->xsize();
+        xsize = stgRequestHelper->subrequest->xsize();
         
-        if(this->xsize > 0){
+        if(xsize > 0){
           
-          if( this->xsize < (this->stgCnsHelper->cnsFilestat.filesize) ){
+          if(xsize < stgCnsHelper->cnsFilestat.filesize) {
             /* print warning! */
           }
         }else{
@@ -70,7 +70,7 @@ namespace castor{
           }
         }
         
-        this->default_protocol = "rfio";
+        default_protocol = "rfio";
       }
       
       /*********************************/
