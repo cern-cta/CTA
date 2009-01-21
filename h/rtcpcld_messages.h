@@ -211,8 +211,8 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_IGNORE_ERROR, DLF_LVL_WARNING, "Continue processing after non-fatal error"},
     { RTCPCLD_MSG_IGNORE_SIGNAL, DLF_LVL_WARNING, "Signal caught but not handled"},
     { RTCPCLD_MSG_IGNORE_ENSFILECHG, DLF_LVL_WARNING, "File overwritten during migration. Error ignored"},
-    { RTCPCLD_MSG_RECALLCANCELED, DLF_LVL_WARNING, "Recalled has been canceled by user"},
-    { RTCPCLD_MSG_IGNORE_ENSNOSEG, DLF_LVL_WARNING, "The segment to replace had been deleted already, migration canceled"},
+    { RTCPCLD_MSG_RECALLCANCELED, DLF_LVL_WARNING, "Recall has been canceled by user"},
+    { RTCPCLD_MSG_IGNORE_ENSNOSEG, DLF_LVL_WARNING, "The segment to replace has been deleted already, migration canceled"},
     { RTCPCLD_MSG_RESERVED0, DLF_LVL_DEBUG,""},
     { RTCPCLD_MSG_RESERVED1, DLF_LVL_DEBUG,""}
 };
