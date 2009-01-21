@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.680 $ $Date: 2008/12/02 17:18:05 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.681 $ $Date: 2009/01/21 16:47:05 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -769,7 +769,10 @@ END;
 BEGIN
   -- Remove database jobs before recreating them
   FOR j IN (SELECT job_name FROM user_scheduler_jobs
-             WHERE job_name IN ('HOUSEKEEPINGJOB', 'CLEANUPJOB', 'BULKCHECKFSBACKINPRODJOB', 'RESTARTSTUCKRECALLSJOB'))
+             WHERE job_name IN ('HOUSEKEEPINGJOB', 
+                                'CLEANUPJOB', 
+                                'BULKCHECKFSBACKINPRODJOB', 
+                                'RESTARTSTUCKRECALLSJOB'))
   LOOP
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
   END LOOP;
@@ -819,3 +822,4 @@ BEGIN
       COMMENTS        => 'Workaround to restart stuck recalls');
 END;
 /
+

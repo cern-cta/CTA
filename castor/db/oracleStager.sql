@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.712 $ $Date: 2009/01/19 17:33:00 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.713 $ $Date: 2009/01/21 16:47:04 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -212,7 +212,7 @@ END;
    comes back to production after having been disabled for
    some time */
 CREATE OR REPLACE TRIGGER tr_FileSystem_Update
-BEFORE UPDATE of status ON FileSystem
+BEFORE UPDATE OF status ON FileSystem
 FOR EACH ROW
 WHEN (old.status IN (1, 2) AND -- DRAINING, DISABLED
       new.status = 0) -- PRODUCTION
@@ -231,7 +231,7 @@ END;
    comes back to production after having been disabled for
    some time */
 CREATE OR REPLACE TRIGGER tr_DiskServer_Update
-BEFORE UPDATE of status ON DiskServer
+BEFORE UPDATE OF status ON DiskServer
 FOR EACH ROW
 WHEN (old.status IN (1, 2) AND -- DRAINING, DISABLED
       new.status = 0) -- PRODUCTION
@@ -2234,9 +2234,10 @@ BEGIN
     IF machineValues(ind + 1) = 3 THEN -- ADMIN DELETED
       BEGIN
         SELECT id INTO machine FROM DiskServer WHERE name = machines(i);
-        DELETE FROM id2Type WHERE id IN (SELECT machine from dual
-                                         UNION ALL
-                                         SELECT id FROM FileSystem WHERE diskServer = machine);
+        DELETE FROM id2Type WHERE id IN 
+          (SELECT machine FROM dual
+            UNION ALL
+           SELECT id FROM FileSystem WHERE diskServer = machine);
         DELETE FROM FileSystem WHERE diskServer = machine;
         DELETE FROM DiskServer WHERE name = machines(i);
       EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -2281,7 +2282,8 @@ BEGIN
     ELSE
       IF fileSystemValues(ind + 1) = 3 THEN -- ADMIN DELETED
         BEGIN
-          SELECT id INTO fs FROM FileSystem WHERE mountPoint = fileSystems(i) AND diskServer = machine;
+          SELECT id INTO fs FROM FileSystem 
+           WHERE mountPoint = fileSystems(i) AND diskServer = machine;
           DELETE FROM id2Type WHERE id = fs;
           DELETE FROM FileSystem WHERE id = fs;
         EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -2374,3 +2376,4 @@ BEGIN
      AND (egid = inGid OR inGid = -1);
 END;
 /
+
