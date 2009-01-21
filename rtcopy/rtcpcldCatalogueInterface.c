@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.173 $ $Release$ $Date: 2009/01/06 14:54:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.174 $ $Release$ $Date: 2009/01/21 13:42:59 $ $Author: waldron $
  *
  *
  *
@@ -1384,7 +1384,6 @@ static int nextSegmentToRecall(
     }
 
     if ( recallCandidate == NULL ) {
-      char *_dbErr = NULL;
       int _save_serrno = serrno;
       (void)dlf_write((inChild == 0 ? mainUuid : childUuid),
                       RTCPCLD_LOG_MSG(RTCPCLD_MSG_RECALLCANCELED),
@@ -1392,13 +1391,12 @@ static int nextSegmentToRecall(
                       RTCPCLD_NB_PARAMS+2,
                       "DBCALL",
                       DLF_MSG_PARAM_STR,
-                      "Cstager_ITapeSvc_bestFileSystemForSegment()"
+                      "Cstager_ITapeSvc_bestFileSystemForSegment()",
                       "DBKEY",
                       DLF_MSG_PARAM_INT64,
                       fl->dbRef->key,
                       RTCPCLD_LOG_WHERE
                       );
-      if ( _dbErr != NULL ) free(_dbErr);
       serrno = _save_serrno;
       /*
        * Force something else than ENOENT here because this an error that
