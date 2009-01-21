@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.688 $ $Date: 2009/01/14 16:38:40 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.689 $ $Date: 2009/01/21 12:54:55 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -9,7 +9,7 @@
  *******************************************************************/
 
 /* A small table used to cross check code and DB versions */
-UPDATE CastorVersion SET schemaVersion = '2_1_8_3';
+UPDATE CastorVersion SET schemaVersion = '2_1_8_4';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -483,11 +483,11 @@ END;
  * a boolean value or raise an application error if the named service class does
  * not exist.
  * @param svcClasName The name of the service class (Note: can be NULL)
- * @param allowNull Flag to indicate whether NULL or '' service class names are
- *                  permitted.
- * @param throwException Flag to indicate whether the function should raise an
- *                  application error when the service class doesn't exist or
- *                  return a boolean value of 0.
+ * @param allowNull   Flag to indicate whether NULL or '' service class names are
+ *                    permitted.
+ * @param raiseError  Flag to indicate whether the function should raise an
+ *                    application error when the service class doesn't exist or
+ *                    return a boolean value of 0.
  */
 CREATE OR REPLACE FUNCTION checkForValidSvcClass
 (svcClassName VARCHAR2, allowNull NUMBER, raiseError NUMBER) RETURN NUMBER IS
