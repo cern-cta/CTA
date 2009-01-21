@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.18 $ $Release$ $Date: 2009/01/19 17:33:01 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.19 $ $Release$ $Date: 2009/01/21 14:12:25 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -50,15 +50,15 @@ CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 CREATE TABLE RepackConfig
   (class VARCHAR2(2048) NOT NULL, key VARCHAR2(2048) NOT NULL, value VARCHAR2(2048) NOT NULL, description VARCHAR2(2048));
 
-INSERT INTO RepackConfig (class,key,value,description) VALUES ('Repack','CleaningTimeout','72','time out to clean archived repacksubrequest');
+INSERT INTO RepackConfig 
+  VALUES ('Repack', 'CleaningTimeout', '72', 'Timeout to clean archived repacksubrequest');
 
 
 /* SQL procedures */
 
 
 /* repack cleanup cronjob */
-
-create or replace PROCEDURE repackCleanup AS
+CREATE OR REPLACE PROCEDURE repackCleanup AS
   t INTEGER;
   srIds "numList";
   rIds "numList";
@@ -79,8 +79,7 @@ BEGIN
   -- Loop over all tables which support row movement and recover space from 
   -- the object and all dependant objects. We deliberately ignore tables 
   -- with function based indexes here as the 'shrink space' option is not 
-  -- supported.
-  
+  -- supported.  
   FOR t IN (SELECT table_name FROM user_tables
              WHERE row_movement = 'ENABLED'
                AND table_name NOT IN (
@@ -95,10 +94,33 @@ END;
 /
 
 
+/*
+ * Database jobs
+ */
+BEGIN
+  -- Remove database jobs before recreating them
+  FOR j IN (SELECT job_name FROM user_scheduler_jobs
+             WHERE job_name IN ('REPACKCLEANUPJOB'))
+  LOOP
+    DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
+  END LOOP;
+
+  -- Create a db job to be run twice a day executing the cleanup procedure
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'repackCleanupJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN repackCleanup(); END;',
+      START_DATE      => SYSDATE + 60/1440,
+      REPEAT_INTERVAL => 'FREQ=HOURLY; INTERVAL=12',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Database maintenance');
+END;
+/
+
 
 /* PL/SQL method implementing changeAllSubRequestsStatus */
 
-create or replace PROCEDURE changeAllSubRequestsStatus
+CREATE OR REPLACE PROCEDURE changeAllSubRequestsStatus
 (st IN INTEGER, rsr OUT repack.RepackSubRequest_Cur) AS
   srIds "numList";
 BEGIN
@@ -116,7 +138,7 @@ END;
 
 /* PL/SQL method implementing changeSubRequestsStatus */
 
-create or replace
+CREATE OR REPLACE
 PROCEDURE changeSubRequestsStatus
 (tapeVids IN repack."strList", st IN INTEGER, rsr OUT repack.RepackSubRequest_Cur) AS
 srId NUMBER;
@@ -161,7 +183,7 @@ END;
 
 /* PL/SQL method implementing getAllSubRequests */
 
-create or replace PROCEDURE getAllSubRequests (rsr OUT repack.RepackSubRequest_Cur ) AS
+CREATE OR REPLACE PROCEDURE getAllSubRequests (rsr OUT repack.RepackSubRequest_Cur ) AS
 BEGIN 
  OPEN rsr FOR
    SELECT vid, xsize, status, filesmigrating, filesstaging, files, filesfailed, cuuid, submittime, filesstaged, filesfailedsubmit, retrynb, id, repackrequest
@@ -172,7 +194,7 @@ END;
 
 /* PL/SQL method implementing getSegmentsForSubRequest */
 
-create or replace PROCEDURE getSegmentsForSubRequest
+CREATE OR REPLACE PROCEDURE getSegmentsForSubRequest
 ( srId NUMBER,  rs OUT repack.RepackSegment_Cur) AS
 BEGIN
  OPEN rs FOR
@@ -184,7 +206,7 @@ END;
 
 /* PL/SQL method implementing getSubRequestByVid */
 
-create or replace PROCEDURE getSubRequestByVid
+CREATE OR REPLACE PROCEDURE getSubRequestByVid
 ( rvid IN VARCHAR2, rsr OUT repack.RepackSubRequest_Cur) AS
 BEGIN
  OPEN rsr FOR
@@ -196,7 +218,7 @@ END;
 
 /* PL/SQL method implementing getSubRequestsByStatus */
 
-create or replace PROCEDURE getSubRequestsByStatus(st IN INTEGER, srs OUT repack.RepackSubRequest_Cur) AS
+CREATE OR REPLACE PROCEDURE getSubRequestsByStatus(st IN INTEGER, srs OUT repack.RepackSubRequest_Cur) AS
 srIds "numList";
 BEGIN 
 -- File Checker st = TOBECHECKED
@@ -213,7 +235,7 @@ END;
 
 /* PL/SQL method implementing restartSubRequest */
 
-create or replace PROCEDURE restartSubRequest (srId IN NUMBER) AS
+CREATE OR REPLACE PROCEDURE restartSubRequest (srId IN NUMBER) AS
  oldVid VARCHAR2(2048);
  oldCuuid VARCHAR2(2048);
  oldRetrynb NUMBER;
@@ -234,7 +256,7 @@ END;
 
 /* PL/SQL method implementing resurrectTapesOnHold */
 
-create or replace PROCEDURE  resurrectTapesOnHold (maxFiles IN INTEGER, maxTapes IN INTEGER)AS
+CREATE OR REPLACE PROCEDURE  resurrectTapesOnHold (maxFiles IN INTEGER, maxTapes IN INTEGER)AS
 filesOnGoing INTEGER;
 tapesOnGoing INTEGER;
 newFiles NUMBER;
@@ -268,7 +290,7 @@ END;
 
 /* PL/SQL method implementing storeRequest */
 
-create or replace PROCEDURE storeRequest
+CREATE OR REPLACE PROCEDURE storeRequest
 ( rmachine IN VARCHAR2, ruserName IN VARCHAR2, rcreationTime IN NUMBER, rpool IN VARCHAR2, rpid IN NUMBER,
   rsvcclass IN VARCHAR2, rcommand IN INTEGER, rstager IN VARCHAR2, 
   ruserid IN NUMBER, rgroupid IN NUMBER, rretrymax IN NUMBER, rreclaim IN INTEGER, rfinalPool IN VARCHAR2, listVids IN repack."strList",rsr  OUT repack.RepackSubRequest_Cur) AS
@@ -310,7 +332,7 @@ END;
 
 /* PL/SQL method implementing updateSubRequestSegments */
 
-create or replace PROCEDURE updateSubRequestSegments 
+CREATE OR REPLACE PROCEDURE updateSubRequestSegments 
  (srId IN NUMBER, fileIds IN repack."cnumList",
   errorCodes IN repack."cnumList",
   errorMessages IN repack."strList") AS 
@@ -326,7 +348,7 @@ END;
 
 /* PL/SQL method implementing validateRepackSubRequest */
 
-create or replace PROCEDURE  validateRepackSubRequest(srId IN NUMBER, maxFiles IN INTEGER, maxTapes IN INTEGER, ret OUT INT) AS
+CREATE OR REPLACE PROCEDURE  validateRepackSubRequest(srId IN NUMBER, maxFiles IN INTEGER, maxTapes IN INTEGER, ret OUT INT) AS
 unused NUMBER;
 filesOnGoing INTEGER;
 tapesOnGoing INTEGER;
@@ -358,7 +380,7 @@ END;
 
 /* PL/SQL method implementing removeAllForRepack, to be called by operators */
 
-create or replace PROCEDURE removeAllForRepack (inputVid IN VARCHAR2) AS
+CREATE OR REPLACE PROCEDURE removeAllForRepack (inputVid IN VARCHAR2) AS
  cfIds "numList";
  tcIds "numList";
 BEGIN 
