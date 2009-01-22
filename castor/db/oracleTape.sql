@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.702 $ $Date: 2009/01/22 13:58:59 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.703 $ $Date: 2009/01/22 15:42:04 $ $Author: itglp $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -425,7 +425,7 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
-			    optimized,
+                            0,
                             lastUpdateTime);
     END IF;
 END;
@@ -631,7 +631,7 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
-                            optimized,
+                            0,
                             lastUpdateTime);
     END IF;
 END;
@@ -772,6 +772,7 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
+                            0,
                             lastUpdateTime);
     END IF;
 END;
