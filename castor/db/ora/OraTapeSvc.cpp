@@ -106,7 +106,7 @@ const std::string castor::db::ora::OraTapeSvc::s_anyTapeCopyForStreamStatementSt
 
 /// SQL statement for bestTapeCopyForStream
 const std::string castor::db::ora::OraTapeSvc::s_bestTapeCopyForStreamStatementString =
-  "BEGIN bestTapeCopyForStream(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12); END;";
+  "BEGIN bestTapeCopyForStream(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11); END;";
 
 /// SQL statement for streamsForTapePool
 const std::string castor::db::ora::OraTapeSvc::s_streamsForTapePoolStatementString =
@@ -474,12 +474,11 @@ castor::db::ora::OraTapeSvc::bestTapeCopyForStream
       m_bestTapeCopyForStreamStatement->registerOutParam
         (10, oracle::occi::OCCIDOUBLE);
       m_bestTapeCopyForStreamStatement->registerOutParam
-        (12, oracle::occi::OCCIDOUBLE);
+        (11, oracle::occi::OCCIDOUBLE);
       m_bestTapeCopyForStreamStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
     m_bestTapeCopyForStreamStatement->setDouble(1, searchItem->id());
-    m_bestTapeCopyForStreamStatement->setInt(11, 1);
     unsigned int nb =
       m_bestTapeCopyForStreamStatement->executeUpdate();
     if (nb == 0) {

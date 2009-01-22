@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.703 $ $Date: 2009/01/22 15:42:04 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.704 $ $Date: 2009/01/22 15:48:11 $ $Author: itglp $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -226,8 +226,7 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
                                                   path OUT VARCHAR2, dci OUT INTEGER,
                                                   castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                   nsHost OUT VARCHAR2, fileSize OUT INTEGER,
-                                                  tapeCopyId OUT INTEGER, optimized IN INTEGER,
-                                                  lastUpdateTime OUT INTEGER) AS
+                                                  tapeCopyId OUT INTEGER, lastUpdateTime OUT INTEGER) AS
   policy VARCHAR(2048);
 BEGIN
   -- get the policy name
@@ -425,7 +424,6 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
-                            0,
                             lastUpdateTime);
     END IF;
 END;
@@ -631,7 +629,6 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
-                            0,
                             lastUpdateTime);
     END IF;
 END;
@@ -772,7 +769,6 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
-                            0,
                             lastUpdateTime);
     END IF;
 END;
