@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.701 $ $Date: 2008/12/11 13:48:39 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.702 $ $Date: 2009/01/22 13:58:59 $ $Author: itglp $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -243,8 +243,8 @@ BEGIN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     policy := 'defaultMigrSelPolicy';
   END;
-  EXECUTE IMMEDIATE 'BEGIN ' || policy || '(:streamId, :diskServerName, :mountPoint, :path, :dci, :castorFileId, :fileId, :nsHost, :fileSize, :tapeCopyId, :optimized, :lastUpdateTime); END;'
-    USING IN streamId, OUT diskServerName, OUT mountPoint, OUT path, OUT dci, OUT castorFileId, OUT fileId, OUT nsHost, OUT fileSize, OUT tapeCopyId, IN optimized, OUT lastUpdateTime;
+  EXECUTE IMMEDIATE 'BEGIN ' || policy || '(:streamId, :diskServerName, :mountPoint, :path, :dci, :castorFileId, :fileId, :nsHost, :fileSize, :tapeCopyId, :lastUpdateTime); END;'
+    USING IN streamId, OUT diskServerName, OUT mountPoint, OUT path, OUT dci, OUT castorFileId, OUT fileId, OUT nsHost, OUT fileSize, OUT tapeCopyId, OUT lastUpdateTime;
 END;
 /
 
@@ -254,8 +254,7 @@ CREATE OR REPLACE PROCEDURE defaultMigrSelPolicy(streamId IN INTEGER,
                                                  path OUT VARCHAR2, dci OUT INTEGER,
                                                  castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                  nsHost OUT VARCHAR2, fileSize OUT INTEGER,
-                                                 tapeCopyId OUT INTEGER, optimized IN INTEGER,
-                                                 lastUpdateTime OUT INTEGER) AS
+                                                 tapeCopyId OUT INTEGER, lastUpdateTime OUT INTEGER) AS
   fileSystemId INTEGER := 0;
   dsid NUMBER;
   fsDiskServer NUMBER;
@@ -326,17 +325,13 @@ BEGIN
               AND FS.status IN (0, 1)         -- PRODUCTION, DRAINING
               AND DiskServer.id = FS.diskserver
               AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
-              -- Ignore diskservers where a migrator already exists
-              AND DiskServer.id NOT IN (
-                SELECT DISTINCT(FileSystem.diskServer)
-                  FROM FileSystem, Stream
-                 WHERE FileSystem.id = Stream.lastfilesystemused
-                   AND Stream.status IN (3)   -- SELECTED
-                   AND optimized = 1
-              )
-            ORDER BY DiskServer.nbMigratorStreams ASC,
-                     FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
-                     FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
+            ORDER BY -- first prefer diskservers where no migrator runs and filesystems with no recalls
+                     DiskServer.nbMigratorStreams ASC, FS.nbRecallerStreams ASC,
+                     -- then order by rate as defined by the function
+                     fileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
+                                    FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC,
+                     -- finally use randomness to avoid preferring always the same FS
+                     DBMS_Random.value
             ) DS
         WHERE ROWNUM < 2)
     RETURNING diskServerId INTO dsid;
@@ -378,18 +373,17 @@ BEGIN
   -- update status of selected tapecopy and stream
   UPDATE TapeCopy SET status = 3 -- SELECTED
    WHERE id = tapeCopyId;
-  -- get locks on all the stream we will handle in order to avoid a
+  -- get locks on all the streams we will handle in order to avoid a
   -- deadlock with the attachTapeCopiesToStreams procedure
   --
   -- the deadlock would occur with updates to the NbTapeCopiesInFS
   -- table performed by the tr_stream2tapecopy_delete trigger triggered
   -- by the "DELETE FROM Stream2TapeCopy" statement below
-  SELECT 1 BULK COLLECT
-    INTO unused
-    FROM Stream
-    WHERE id IN (SELECT parent FROM Stream2TapeCopy WHERE child = tapeCopyId)
-    ORDER BY id
-    FOR UPDATE;
+  SELECT 1 BULK COLLECT INTO unused
+    FROM Stream, Stream2TapeCopy S2TC
+   WHERE S2TC.parent = Stream.id AND S2TC.child = tapeCopyId
+   ORDER BY Stream.id
+     FOR UPDATE OF Stream.id;
   UPDATE Stream
      SET status = 3, -- RUNNING
          lastFileSystemUsed = fileSystemId, lastButOneFileSystemUsed = lastFileSystemUsed
@@ -407,33 +401,6 @@ BEGIN
   updateFSMigratorOpened(fsDiskServer, fileSystemId, 0);
 
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- If the procedure was called with optimization enabled,
-    -- rerun it again with optimization disabled to make sure
-    -- there is really nothing to migrate!! Why? optimization
-    -- excludes filesystems as being migration candidates if
-    -- a migration stream is already running there. This allows
-    -- us to maximise bandwidth to tape and not to saturate a
-    -- diskserver with too many streams. However, in small disk
-    -- pools this behaviour results in mounting, writing one
-    -- file and dismounting of tapes as the tpdaemon reads ahead
-    -- many files at a time! (#28097)
-    IF optimized = 1 THEN
-      bestTapeCopyForStream(streamId,
-                            diskServerName,
-                            mountPoint,
-                            path,
-                            dci,
-                            castorFileId,
-                            fileId,
-                            nsHost,
-                            fileSize,
-                            tapeCopyId,
-			    0,
-                            lastUpdateTime);
-      -- Since we recursively called ourselves, we should not do
-      -- any update in the outer call
-      RETURN;
-    END IF;
     -- Reset last filesystems used
     UPDATE Stream
        SET lastFileSystemUsed = 0, lastButOneFileSystemUsed = 0
@@ -470,8 +437,7 @@ CREATE OR REPLACE PROCEDURE drainDiskMigrSelPolicy(streamId IN INTEGER,
                                                    path OUT VARCHAR2, dci OUT INTEGER,
                                                    castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                    nsHost OUT VARCHAR2, fileSize OUT INTEGER,
-                                                   tapeCopyId OUT INTEGER, optimized IN INTEGER,
-                                                   lastUpdateTime OUT INTEGER) AS
+                                                   tapeCopyId OUT INTEGER, lastUpdateTime OUT INTEGER) AS
   fileSystemId INTEGER := 0;
   dsid NUMBER;
   fsDiskServer NUMBER;
@@ -493,7 +459,7 @@ BEGIN
     IF nbMigrators = 1 THEN
       BEGIN
         -- check states of the diskserver and filesystem and get mountpoint and diskserver name
-	SELECT diskserver.id, name, mountPoint, FileSystem.id INTO dsid, diskServerName, mountPoint, fileSystemId
+        SELECT diskserver.id, name, mountPoint, FileSystem.id INTO dsid, diskServerName, mountPoint, fileSystemId
           FROM FileSystem, DiskServer
          WHERE FileSystem.diskServer = DiskServer.id
            AND FileSystem.id = lastFSUsed
@@ -562,15 +528,13 @@ BEGIN
                 AND FS.status IN (0, 1)         -- PRODUCTION, DRAINING
                 AND DiskServer.id = FS.diskserver
                 AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
-                -- Ignore diskservers where a migrator already exists
-                AND DiskServer.id NOT IN (
-                  SELECT DISTINCT(FileSystem.diskServer)
-                    FROM FileSystem, Stream
-                   WHERE FileSystem.id = Stream.lastfilesystemused
-                     AND Stream.status IN (3)   -- SELECTED
-                     AND optimized = 1
-                )
-              ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
+              ORDER BY -- first prefer diskservers where no migrator runs and filesystems with no recalls
+                       DiskServer.nbMigratorStreams ASC, FS.nbRecallerStreams ASC,
+                       -- then order by rate as defined by the function
+                       fileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
+                                      FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC,
+                       -- finally use randomness to avoid preferring always the same FS
+                       DBMS_Random.value
               ) DS
           WHERE ROWNUM < 2)
       RETURNING diskServerId INTO dsid;
@@ -643,33 +607,6 @@ BEGIN
   updateFSMigratorOpened(fsDiskServer, fileSystemId, 0);
 
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- If the procedure was called with optimization enabled,
-    -- rerun it again with optimization disabled to make sure
-    -- there is really nothing to migrate!! Why? optimization
-    -- excludes filesystems as being migration candidates if
-    -- a migration stream is already running there. This allows
-    -- us to maximise bandwidth to tape and not to saturate a
-    -- diskserver with too many streams. However, in small disk
-    -- pools this behaviour results in mounting, writing one
-    -- file and dismounting of tapes as the tpdaemon reads ahead
-    -- many files at a time! (#28097)
-    IF optimized = 1 THEN
-      bestTapeCopyForStream(streamId,
-                            diskServerName,
-                            mountPoint,
-                            path,
-                            dci,
-                            castorFileId,
-                            fileId,
-                            nsHost,
-                            fileSize,
-                            tapeCopyId,
-                            0,
-                            lastUpdateTime);
-      -- Since we recursively called ourselves, we should not do
-      -- any update in the outer call
-      RETURN;
-    END IF;
     -- Reset last filesystems used
     UPDATE Stream
        SET lastFileSystemUsed = 0, lastButOneFileSystemUsed = 0
@@ -706,8 +643,7 @@ CREATE OR REPLACE PROCEDURE repackMigrSelPolicy(streamId IN INTEGER,
                                                 path OUT VARCHAR2, dci OUT INTEGER,
                                                 castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                 nsHost OUT VARCHAR2, fileSize OUT INTEGER,
-                                                tapeCopyId OUT INTEGER, optimized IN INTEGER,
-                                                lastUpdateTime OUT INTEGER) AS
+                                                tapeCopyId OUT INTEGER, lastUpdateTime OUT INTEGER) AS
   fileSystemId INTEGER := 0;
   dsid NUMBER;
   fsDiskServer NUMBER;
@@ -734,11 +670,13 @@ BEGIN
             AND FS.status IN (0, 1)         -- PRODUCTION, DRAINING
             AND DiskServer.id = FS.diskserver
             AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
-            -- Ignore diskservers where a migrator already exists
-            AND ((FS.nbMigratorStreams = 0 AND FS.nbRecallerStreams = 0) OR (optimized != 1))
-          ORDER BY DiskServer.nbMigratorStreams ASC,
-                   FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
-                   FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
+          ORDER BY -- first prefer diskservers where no migrator runs and filesystems with no recalls
+                   DiskServer.nbMigratorStreams ASC, FS.nbRecallerStreams ASC,
+                   -- then order by rate as defined by the function
+                   fileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
+                                  FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC,
+                   -- finally use randomness to avoid preferring always the same FS
+                   DBMS_Random.value
           ) DS
       WHERE ROWNUM < 2)
   RETURNING diskServerId INTO dsid;
@@ -756,10 +694,13 @@ BEGIN
          AND NbTapeCopiesInFS.Stream = StreamId
          AND FS.status IN (0, 1)    -- PRODUCTION, DRAINING
          AND FS.diskserver = dsId
-         AND ((FS.nbMigratorStreams = 0 AND FS.nbRecallerStreams = 0) OR (optimized != 1))
-       ORDER BY DiskServer.nbMigratorStreams ASC,
-                FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
-                FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
+    ORDER BY -- first prefer diskservers where no migrator runs and filesystems with no recalls
+             DiskServer.nbMigratorStreams ASC, FS.nbRecallerStreams ASC,
+             -- then order by rate as defined by the function
+             fileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
+                            FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC,
+             -- finally use randomness to avoid preferring always the same FS
+             DBMS_Random.value
        ) FN
    WHERE ROWNUM < 2;
   SELECT /*+ FIRST_ROWS(1)  LEADING(D T ST) */
@@ -807,33 +748,6 @@ BEGIN
   updateFSMigratorOpened(fsDiskServer, fileSystemId, 0);
 
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- If the procedure was called with optimization enabled,
-    -- rerun it again with optimization disabled to make sure
-    -- there is really nothing to migrate!! Why? optimization
-    -- excludes filesystems as being migration candidates if
-    -- a migration stream is already running there. This allows
-    -- us to maximise bandwidth to tape and not to saturate a
-    -- diskserver with too many streams. However, in small disk
-    -- pools this behaviour results in mounting, writing one
-    -- file and dismounting of tapes as the tpdaemon reads ahead
-    -- many files at a time! (#28097)
-    IF optimized = 1 THEN
-      bestTapeCopyForStream(streamId,
-                            diskServerName,
-                            mountPoint,
-                            path,
-                            dci,
-                            castorFileId,
-                            fileId,
-                            nsHost,
-                            fileSize,
-                            tapeCopyId,
-			    0,
-                            lastUpdateTime);
-      -- Since we recursively called ourselves, we should not do
-      -- any update in the outer call
-      RETURN;
-    END IF;
     -- Reset last filesystems used
     UPDATE Stream
        SET lastFileSystemUsed = 0, lastButOneFileSystemUsed = 0
@@ -858,7 +772,6 @@ BEGIN
                             nsHost,
                             fileSize,
                             tapeCopyId,
-			    optimized,
                             lastUpdateTime);
     END IF;
 END;
@@ -926,7 +839,7 @@ BEGIN
                  AND DiskServer.id = FileSystem.diskServer
                  AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
             ORDER BY -- first prefer DSs without concurrent migrators/recallers
-                     DiskServer.nbMigratorStreams ASC, DiskServer.nbRecallerStreams ASC,
+                     DiskServer.nbRecallerStreams ASC, FileSystem.nbMigratorStreams ASC,
                      -- then order by rate as defined by the function
                      fileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
                                     FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams,
