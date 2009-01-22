@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.651 $ $Date: 2009/01/14 16:38:40 $ $Author: itglp $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.652 $ $Date: 2009/01/22 07:18:55 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -125,23 +125,34 @@ CREATE OR REPLACE PROCEDURE fileNameStageQuery
   svcClassId IN INTEGER,
   maxNbResponses IN INTEGER,
   result OUT castor.QueryLine_Cur) AS
-  cfs "numList";
+  cfIds "numList";
 BEGIN
   IF substr(fn, -1, 1) = '/' THEN  -- files in a 'subdirectory'
-    SELECT /*+ INDEX(CastorFile I_CastorFile_LastKnownFileName) */ id BULK COLLECT INTO cfs
-      FROM CastorFile
-     WHERE lastKnownFileName LIKE fn||'%'
+    SELECT /*+ INDEX(DiskPool2SvcClass I_DiskPool2SvcClass_C) */ CastorFile.id
+      BULK COLLECT INTO cfIds
+      FROM DiskCopy, FileSystem, DiskPool2SvcClass, CastorFile
+     WHERE CastorFile.lastKnownFileName LIKE fn||'%'
+       AND DiskCopy.castorFile = CastorFile.id
+       AND DiskCopy.fileSystem = FileSystem.id
+       AND FileSystem.diskPool = DiskPool2SvcClass.parent
+       AND (DiskPool2SvcClass.child = svcClassId OR svcClassId = 0)
        AND ROWNUM <= maxNbResponses + 1;
   ELSE  -- exact match
-    SELECT /*+ INDEX(CastorFile I_CastorFile_LastKnownFileName) */ id BULK COLLECT INTO cfs
-      FROM CastorFile
-     WHERE lastKnownFileName = canonicalizePath(fn);
+    SELECT /*+ INDEX(DiskPool2SvcClass I_DiskPool2SvcClass_C) */ CastorFile.id
+      BULK COLLECT INTO cfIds
+      FROM DiskCopy, FileSystem, DiskPool2SvcClass, CastorFile
+     WHERE CastorFile.lastKnownFileName = canonicalizePath(fn)
+       AND DiskCopy.castorFile = CastorFile.id
+       AND DiskCopy.fileSystem = FileSystem.id
+       AND FileSystem.diskPool = DiskPool2SvcClass.parent
+       AND (DiskPool2SvcClass.child = svcClassId OR svcClassId = 0)
+       AND ROWNUM <= maxNbResponses + 1;
   END IF;
-  IF cfs.COUNT > maxNbResponses THEN
+  IF cfIds.COUNT > maxNbResponses THEN
     -- We have too many rows, we just give up
     raise_application_error(-20102, 'Too many matching files');
   END IF;
-  internalStageQuery(cfs, svcClassId, result);
+  internalStageQuery(cfIds, svcClassId, result);
 END;
 /
 
