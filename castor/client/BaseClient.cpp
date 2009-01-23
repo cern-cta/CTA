@@ -671,7 +671,7 @@ throw (castor::exception::Exception) {
                    <<  strerror(errno);
     throw e;
   }
-  stage_trace(3, "LocalHost is : %s", hostName.c_str() );
+  stage_trace(3, "Localhost is: %s", hostName.c_str() );
 
   req->setMachine(hostName);
   if (m_rhHost == "") {
