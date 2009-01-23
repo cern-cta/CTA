@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: server.c,v 1.15 2008/04/21 11:57:44 waldron Exp $
+ * $Id: server.c,v 1.16 2009/01/23 16:23:23 waldron Exp $
  */
 
 /* headers */
@@ -50,8 +50,8 @@
 
 
 /* queues and pools */
-handler_t  *hpool[MAX_THREADS];          /**< thread pool for handlers      */
-queue_t    *queue;                       /**< internal server fifo queue    */
+handler_t  *hpool[MAX_THREADS];   /**< thread pool for handlers              */
+queue_t    *queue;                /**< internal server fifo queue            */
 
 /* mutexes
  *    - used to block multiple worker threads from picking up the same connection
@@ -59,8 +59,9 @@ queue_t    *queue;                       /**< internal server fifo queue    */
 static int server_mutex;
 
 /* server variables */
-long server_mode  = MODE_DEFAULT;        /**< servers mode e.g. suspended   */
-long server_start = 0;                   /**< the servers start-up time     */
+long server_mode  = MODE_DEFAULT; /**< servers mode e.g. suspended           */
+long server_start = 0;            /**< the servers start-up time             */
+int  handler_threads = 0;         /**< the number of running handler threads */
 
 /*
  * Worker
@@ -278,6 +279,11 @@ void worker(handler_t *h) {
 			h->clients[i].fd = -1;
 		}
 	}
+
+	/* decrease the number of running handler threads */
+	Cthread_mutex_lock(&server_mutex);
+	handler_threads--;
+	Cthread_mutex_unlock(&server_mutex);
 
 	/* exit */
 	Cthread_exit(0);
@@ -576,6 +582,7 @@ int main(int argc, char **argv) {
 
 		/* assign thread to handler pool */
 		hpool[i] = h;
+	        handler_threads++;
 	}
 
 	sleep(2);
@@ -596,6 +603,11 @@ int main(int argc, char **argv) {
 
 	log(LOG_NOTICE, "Initiating server shutdown\n");
 
+	/* wait for all handler threads to terminate */
+	while (handler_threads != 0) {
+		usleep(20 * 1000);
+	}
+	
 	/* destroy handler thread pool */
 	for (i = 0; i < MAX_THREADS; i++) {
 		if (hpool[i] != NULL) {

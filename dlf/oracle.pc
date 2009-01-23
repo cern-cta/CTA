@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.pc,v 1.30 2008/04/21 11:57:44 waldron Exp $
+ * $Id: oracle.pc,v 1.31 2009/01/23 16:23:23 waldron Exp $
  */
 
 /* headers */
@@ -42,13 +42,14 @@
 
 
 /* pools */
-static database_t   *dpool[MAX_THREADS];     /**< thread pool for database connections  */
+static database_t   *dpool[MAX_THREADS];     /**< thread pool for database connections   */
+int database_threads = 0;                    /**< the number of running database threads */
 
 /* hashes */
-static hash_t       *hosthash     = NULL;    /**< hostname hash                         */
-static hash_t       *nshosthash   = NULL;    /**< name server hostname hash             */
-static hash_t       *msgtexthash  = NULL;    /**< message text hash                     */
-static hash_t       *facilityhash = NULL;    /**< facility hash                         */  
+static hash_t       *hosthash     = NULL;    /**< hostname hash                          */
+static hash_t       *nshosthash   = NULL;    /**< name server hostname hash              */
+static hash_t       *msgtexthash  = NULL;    /**< message text hash                      */
+static hash_t       *facilityhash = NULL;    /**< facility hash                          */  
 
 /* mutexes
  *   - used to generate msg sequence numbers and lock access to arrays
@@ -56,18 +57,18 @@ static hash_t       *facilityhash = NULL;    /**< facility hash                 
 static int database_mutex;
 
 /* database sequences */
-static long   seq_id       = -1;             /**< primary key id for dlf_messages       */
-static long   seq_hostid   = -1;             /**< primary key id for dlf_host_map       */
-static long   seq_nshostid = -1;             /**< primary key id for dlf_nshost_map     */
+static long   seq_id       = -1;             /**< primary key id for dlf_messages        */
+static long   seq_hostid   = -1;             /**< primary key id for dlf_host_map        */
+static long   seq_nshostid = -1;             /**< primary key id for dlf_nshost_map      */
 
 /* global variables */
-static time_t last_monitoring = 0;           /**< time of last call to dlf_monitoring() */
-static time_t last_mode       = 0;           /**< time of last call to dlf_mode()       */
+static time_t last_monitoring = 0;           /**< time of last call to dlf_monitoring()  */
+static time_t last_mode       = 0;           /**< time of last call to dlf_mode()        */
 
 /* externs */
-extern int       server_mode;                /**< server mode                           */
-extern long      server_start;               /**< server startup time                   */
-extern queue_t   *queue;                     /**< internal server fifo queue            */
+extern int       server_mode;                /**< server mode                            */
+extern long      server_start;               /**< server startup time                    */
+extern queue_t   *queue;                     /**< internal server fifo queue             */
 
 /**
  * structures
@@ -261,6 +262,7 @@ int DLL_DECL db_init(int threads) {
 
 		/* assign thread to database pool */
 		dpool[i] = db;
+		database_threads++;
 	}
 
 	/* initialise internal sequence numbers
@@ -453,6 +455,11 @@ int DLL_DECL db_shutdown(void) {
 	/* variables */
 	struct    sqlca sqlca;
 	int       i;
+
+	/* wait for all database threads to terminated */
+	while (database_threads != 0) {
+		usleep(20 * 1000);
+	}
 
 	/* destroy database thread pool */
 	for (i = 0; i < MAX_THREADS; i++) {
@@ -1345,6 +1352,11 @@ void DLL_DECL db_worker(database_t *db) {
 		/* free messages */
 		free_message(message);
 	}
+
+	/* decrease the number of running database threads */
+	Cthread_mutex_lock(&database_mutex);
+	database_threads--;
+	Cthread_mutex_unlock(&database_mutex);
 
 	/* exit */
 	Cthread_exit(0);
