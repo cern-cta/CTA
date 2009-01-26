@@ -143,6 +143,18 @@ public:
     const RtcpAcknowledgeMessage &message)
     throw(castor::exception::Exception);
 
+  /**
+   * Receives an RTCP job submission message.
+   *
+   * @param cuuid The ccuid to be used for logging.
+   * @param socket The socket of the connection with RTCPD.
+   * @param request The request which will be filled with the contents of the
+   * received message.
+   */
+  static void receiveRcpJobRequest(const Cuuid_t &cuuid,
+    castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
+    RcpJobRequestMessage &request) throw(castor::exception::Exception);
+
 
 private:
 

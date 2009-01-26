@@ -33,6 +33,7 @@
 #include "h/common.h"
 #include "h/rtcp.h"
 #include "h/rtcp_constants.h"
+#include "h/vdqm_constants.h"
 
 #include <string.h>
 #include <time.h>
@@ -690,5 +691,130 @@ void castor::tape::aggregator::Transceiver::signalNoMoreRequestsToRtcpd(
       << ": Received negative acknowledge from RTCPD"
          ": Status: " << ackMsg.status;
     throw ex;
+  }
+}
+
+//-----------------------------------------------------------------------------
+// receiveRcpJobRequest
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::Transceiver::receiveRcpJobRequest(
+  const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &socket,
+  const int netReadWriteTimeout, RcpJobRequestMessage &request)
+  throw (castor::exception::Exception) {
+
+  // Read in the message header
+  char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
+  try {
+    SocketHelper::readBytes(socket, NETRWTIMEOUT, sizeof(headerBuf), headerBuf);
+  } catch (castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(SECOMERR);
+
+    ex2.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to read message header from RCP job submitter"
+      << ": " << ex.getMessage().str();
+
+    throw ex2;
+  }
+
+  // Unmarshall the messager header
+  MessageHeader header;
+  try {
+    const char *p           = headerBuf;
+    size_t     remainingLen = sizeof(headerBuf);
+    Marshaller::unmarshallMessageHeader(p, remainingLen, header);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(EBADMSG);
+
+    ex2.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to unmarshall message header from RCP job submitter"
+         ": " << ex.getMessage().str();
+
+    throw ex2;
+  }
+
+  // If the magic number is invalid
+  if(header.magic != RTCOPY_MAGIC_OLD0) {
+    castor::exception::Exception ex(EBADMSG);
+
+     ex.getMessage() << __PRETTY_FUNCTION__
+       << std::hex
+       << ": Invalid magic number from RCP job submitter"
+       << ": Expected: 0x" << RTCOPY_MAGIC
+       << ": Received: 0x" << header.magic;
+
+     throw ex;
+  }
+
+  // If the request type is invalid
+  if(header.reqtype != VDQM_CLIENTINFO) {
+    castor::exception::Exception ex(EBADMSG);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << std::hex
+      << ": Invalid request type from RCP job submitter"
+      << ": Expected: 0x" << RTCP_TAPEERR_REQ
+      << ": Received: 0x" << header.reqtype;
+
+    throw ex;
+  }
+
+  // Length of body buffer = Length of message buffer - length of header
+  char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
+
+  // If the message body is too large
+  if(header.len > sizeof(bodyBuf)) {
+    castor::exception::Exception ex(EMSGSIZE);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Message body from RCP job submitter is too large"
+         ": Maximum: " << sizeof(bodyBuf)
+      << ": Received: " << header.len;
+
+    throw ex;
+  }
+
+  // If the message body is too small
+  {
+    // The minimum size of a RcpJobRequestMessage is 4 uint32_t's and the
+    // termination characters of 4 strings
+    const size_t minimumLen = 4 * sizeof(uint32_t) + 4;
+    if(header.len < minimumLen) {
+      castor::exception::Exception ex(EMSGSIZE);
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Message body from RCP job submitter is too small"
+           ": Minimum: " << minimumLen
+        << ": Received: " << header.len;
+
+      throw ex;
+    }
+  }
+
+  // Read the message body
+  try {
+    SocketHelper::readBytes(socket, NETRWTIMEOUT, header.len, bodyBuf);
+  } catch (castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(EIO);
+
+    ex2.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to read message body from RCP job submitter"
+      << ": "<< ex.getMessage().str();
+
+    throw ex2;
+  }
+
+  // Unmarshall the message body
+  try {
+    const char *p           = bodyBuf;
+    size_t     remainingLen = header.len;
+    Marshaller::unmarshallRcpJobRequestMessageBody(p, remainingLen, request);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to unmarshall message body from RCP job submitter"
+      << ": "<< ex.getMessage().str();
+
+    throw ie;
   }
 }

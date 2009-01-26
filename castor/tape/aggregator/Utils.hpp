@@ -30,6 +30,7 @@
 
 #include <errno.h>
 #include <string.h>
+#include <iostream>
 
 namespace castor {
 namespace tape {
@@ -76,6 +77,35 @@ public:
     copyString(dst, src, n);
   }
 
+  /**
+   * Creates a listener socket including, creation, binding and marking as a
+   * listener socket.
+   *
+   * @param port The port number to listen on or 0 if one should be allocated.
+   * @return The socket file descriptor.
+   */
+  static int createListenerSocket(const unsigned short port)
+    throw (castor::exception::Exception);
+
+  /**
+   * Gets the local IP and port number of the specified socket.
+   *
+   * @param socketFd The socket file descriptor.
+   * @param ip The IP to be filled.
+   * @param port The port to be filled.
+   */
+  static void getLocalIpAndPort(const int socketFd, unsigned long& ip,
+    unsigned short& port) throw (castor::exception::Exception);
+
+  /**
+   * Prints the string form of specified IP using the specified output
+   * stream.
+   *
+   * @param os the output stream.
+   * @param ip the IP address in host byte order.
+   */
+  static void printIp(std::ostream &os, const unsigned long ip) throw();
+
 private:
 
   /**
@@ -83,6 +113,7 @@ private:
    * instantiated.
    */
   Utils() {}
+
 }; // class Utils
 
 } // namespace aggregator

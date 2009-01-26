@@ -82,44 +82,6 @@ namespace aggregator {
     const int m_rtcpdListenPort;
 
     /**
-     * Pointer to handler function, where handler function is a member of
-     * RequestHandler.
-     *
-     * @param cuuid The cuuid of the request.
-     * @param header The already unmarshalled message header structure.
-     * @param bodyBuf The buffer containing the message body which has not yet
-     * been unmarshalled.
-     * @param socket The from which the request body should be read from.
-     */
-    typedef void (VdqmRequestHandlerThread::*Handler) (Cuuid_t &cuuid,
-       const MessageHeader &header, const char *bodyBuf,
-       castor::io::ServerSocket &socket);
-
-    /**
-     * A map from request type to handler function.
-     */
-    typedef std::map<uint32_t, Handler> HandlerMap;
-
-    /**
-     * A map from magic number to mape of request type to handler function.
-     */
-    typedef std::map<uint32_t, HandlerMap*> MagicToHandlersMap;
-
-    /**
-     * A map of maps for handling incoming requests.
-     *
-     * The outer map is from magic number to HandlerMap, and the inner
-     * HandlerMap is from request type to handler function.
-     */
-    MagicToHandlersMap m_magicToHandlers;
-
-    /**
-     * Map from supported RTCOPY_MAGIC_OLD0 request types to their
-     * corresponding handler functions.
-     */
-    HandlerMap m_rtcopyMagicOld0Handlers;
-
-    /**
      * Queue of remote copy jobs to be worked on.
      *
      * This queue should only ever contain a maximum of 1 job.  The queue is
@@ -128,14 +90,13 @@ namespace aggregator {
     castor::server::Queue m_jobQueue;
 
     /**
-     * Dispatches the incoming request on the specified socket to the
-     * appropriate request handler.
+     * Throws an exception if the peer host associated of the specified socket
+     * is not an authorised RCP job submitter.
      *
-     * @param cuuid The cuuid of the request
-     * @param socket The socket
+     * @param socket The socket.
      */
-    void dispatchRequest(Cuuid_t &cuuid, castor::io::ServerSocket &socket)
-      throw(castor::exception::Exception);
+    void checkRcpJobSubmitterIsAuthorised(castor::io::AbstractTCPSocket &socket)
+      throw (castor::exception::Exception);
 
     /**
      * Handles the submisison of a remote copy job from the VDQM.
@@ -148,6 +109,14 @@ namespace aggregator {
      */
     void handleJobSubmission(Cuuid_t &cuuid, const MessageHeader &header,
       const char *bodyBuf, castor::io::ServerSocket &socket) throw();
+
+    /**
+     * Recalls one or more files from tape.
+     *
+     * @param cuuid The cuuid of the request
+     * @param socket The socket ....
+     */
+  void recall(Cuuid_t &cuuid, castor::io::ServerSocket &socket) throw();
 
   }; // class VdqmRequestHandlerThread
 

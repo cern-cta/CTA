@@ -37,7 +37,6 @@ AGGREGATORBIN_SRCS = \
   AggregatorMain.cpp \
   Marshaller.cpp \
   RcpJobSubmitter.cpp \
-  RtcpdHandlerThread.cpp \
   SocketHelper.cpp \
   Transceiver.cpp \
   Utils.cpp \

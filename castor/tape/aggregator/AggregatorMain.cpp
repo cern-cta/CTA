@@ -28,7 +28,6 @@
 #include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/tape/aggregator/AggregatorDaemon.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
-#include "castor/tape/aggregator/RtcpdHandlerThread.hpp"
 #include "castor/tape/aggregator/VdqmRequestHandlerThread.hpp"
 
 
@@ -92,29 +91,6 @@ int main(int argc, char *argv[]) {
         throw ie;
       }
       vdqmRequestHandlerThreadPool->setNbThreads(0);
-    }
-
-
-    //----------------------------------
-    // Create the RtcpdHandlerThreadPool
-    //----------------------------------
-
-    daemon.addThreadPool(
-    new castor::server::TCPListenerThreadPool("RtcpdHandlerThreadPool",
-      new castor::tape::aggregator::RtcpdHandlerThread(), rtcpdListenPort));
-
-    {
-      castor::server::BaseThreadPool *const rtcpdHandlerThreadPool =
-        daemon.getThreadPool('R');
-
-      if(rtcpdHandlerThreadPool == NULL) {
-        castor::exception::Internal ie;
-
-        ie.getMessage() << __PRETTY_FUNCTION__
-          << ": Failed to get RtcpdHandlerThreadPool";
-        throw ie;
-      }
-      rtcpdHandlerThreadPool->setNbThreads(10);
     }
 
 
