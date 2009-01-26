@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_server.h,v 1.25 2009/01/13 17:23:36 sponcec3 Exp $
+ * $Id: Cns_server.h,v 1.26 2009/01/26 09:15:28 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.25 $ $Date: 2009/01/13 17:23:36 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.26 $ $Date: 2009/01/26 09:15:28 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_SERVER_H
@@ -140,8 +140,7 @@ struct Cns_srv_thread_info {
 	gid_t		Csec_gid;
 	char		*Csec_mech;
 	char		*Csec_auth_id;
-        /* This variable is to distingues when you are running in dual security mode if the socket is the one in the secure port (1) or not*/
-        int             secOn;  /* This variable won't be necessary once the unsecure mode is not supported */
+	int             secure;         /* flag to indicate whether security is enabled */
 #endif
         u_signed64      starttime;
 };
