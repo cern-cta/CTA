@@ -1,12 +1,13 @@
-.\" @(#)$RCSfile: nssetsegment.man,v $ $Revision: 1.1 $ $Date: 2008/11/03 10:10:24 $ CERN IT/DM
+.\" @(#)$RCSfile: nssetsegment.man,v $ $Revision: 1.2 $ $Date: 2009/01/26 09:10:59 $ CERN IT/DM
 .\" Copyright (C) 2004 by CERN/IT/DM
 .\" All rights reserved
 .\"
-.TH NSSETSEGMENT 1 "$Date: 2008/11/03 10:10:24 $" CASTOR "Cns User Commands"
+.TH NSSETSEGMENT 1 "$Date: 2009/01/26 09:10:59 $" CASTOR "Cns User Commands"
 .SH NAME
 nssetsegment \- utility to change the checksum and status for a tape segment
 .SH SYNOPSIS
-.B nssetchecksum [OPTION]... PATH
+.B nssetchecksum 
+[\fIOPTION\fR]... \fIPATH\fR
 .SH DESCRIPTION
 .B nssetchecksum
 is a utility to change the checksum and status for a tape segment. Requires the ADMIN
