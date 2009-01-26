@@ -73,7 +73,7 @@ int get_client_actual_id (thip, uid, gid, user)
   struct passwd *pw;
 
 #ifdef CSEC
-  if (thip->secOn) {
+  if (thip->secure) {
     *uid = thip->Csec_uid;
     *gid = thip->Csec_gid;
     *user = thip->Csec_auth_id;
@@ -519,8 +519,6 @@ int Cns_srv_chclass(magic, req_data, clienthost, thip)
   char logbuf[CA_MAXPATHLEN+CA_MAXCLASNAMELEN+16];
   struct Cns_class_metadata new_class_entry;
   Cns_dbrec_addr new_rec_addrc;
-  struct Cns_class_metadata old_class_entry;
-  Cns_dbrec_addr old_rec_addrc;
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
@@ -3065,7 +3063,6 @@ int Cns_srv_mkdir(magic, req_data, clienthost, thip)
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
 {
-  struct Cns_class_metadata class_entry;
   u_signed64 cwd;
   struct Cns_file_metadata direntry;
   char func[16];
@@ -3078,7 +3075,6 @@ int Cns_srv_mkdir(magic, req_data, clienthost, thip)
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
-  Cns_dbrec_addr rec_addrc;
   Cns_dbrec_addr rec_addrp;
   uid_t uid;
   char *user;
@@ -4847,7 +4843,6 @@ int Cns_srv_rmdir(magic, req_data, clienthost, thip)
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
 {
-  struct Cns_class_metadata class_entry;
   u_signed64 cwd;
   struct Cns_file_metadata direntry;
   char func[16];
@@ -4858,7 +4853,6 @@ int Cns_srv_rmdir(magic, req_data, clienthost, thip)
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
   Cns_dbrec_addr rec_addr;
-  Cns_dbrec_addr rec_addrc;
   Cns_dbrec_addr rec_addrp;
   Cns_dbrec_addr rec_addru;
   uid_t uid;
