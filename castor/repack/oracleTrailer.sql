@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.19 $ $Release$ $Date: 2009/01/21 14:12:25 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.20 $ $Release$ $Date: 2009/01/26 09:53:36 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -263,8 +263,7 @@ newFiles NUMBER;
 BEGIN
 	SELECT count(vid), sum(filesStaging) + sum(filesMigrating) INTO  tapesOnGoing, filesOnGoing FROM RepackSubrequest WHERE  status IN (1,2); -- TOBESTAGED ONGOING
 -- Set the subrequest to TOBESTAGED FROM ON-HOLD if there is no ongoing repack for any of the files on the tape
-	FOR sr IN (SELECT RepackSubRequest.id FROM RepackSubRequest,RepackRequest WHERE  RepackRequest.id=RepackSubrequest.repackrequest AND RepackSubRequest.status=9 ORDER BY RepackRequest.creationTime ) LOOP
-		BEGIN
+  FOR sr IN (SELECT RepackSubRequest.id FROM RepackSubRequest,RepackRequest WHERE  RepackRequest.id=RepackSubrequest.repackrequest AND RepackSubRequest.status=9 ORDER BY RepackRequest.creationTime ) LOOP
 			UPDATE RepackSubRequest SET status=1 WHERE id=sr.id AND status=9
 			AND filesOnGoing + files <= maxFiles AND tapesOnGoing+1 <= maxTapes
 			AND NOT EXISTS (SELECT 'x' FROM RepackSegment WHERE
@@ -275,15 +274,12 @@ BEGIN
 			             	 )
 				)
 			) RETURNING files INTO newFiles; -- FINISHED ARCHIVED FAILED ONHOLD
-      IF newFiles IS NOT NULL THEN  
-        COMMIT;
+      IF newFiles IS NOT NULL THEN
         filesOnGoing:=filesOnGoing+newFiles;
         tapesOnGoing:=tapesOnGoing+1;
-      END IF;  
-		EXCEPTION WHEN NO_DATA_FOUND THEN
-		NULL;
-		END;
-	END LOOP;
+      END IF;
+      COMMIT;
+   END LOOP;
 END;
 /
 
