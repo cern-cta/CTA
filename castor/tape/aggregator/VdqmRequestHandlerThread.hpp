@@ -98,26 +98,6 @@ namespace aggregator {
     void checkRcpJobSubmitterIsAuthorised(castor::io::AbstractTCPSocket &socket)
       throw (castor::exception::Exception);
 
-    /**
-     * Handles the submisison of a remote copy job from the VDQM.
-     *
-     * @param cuuid The cuuid of the request
-     * @param header The already unmarshalled message header structure.
-     * @param bodyBuf The buffer containing the message body which has not yet
-     * been unmarshalled.
-     * @param socket the from which the request body should be read from
-     */
-    void handleJobSubmission(Cuuid_t &cuuid, const MessageHeader &header,
-      const char *bodyBuf, castor::io::ServerSocket &socket) throw();
-
-    /**
-     * Recalls one or more files from tape.
-     *
-     * @param cuuid The cuuid of the request
-     * @param socket The socket ....
-     */
-  void recall(Cuuid_t &cuuid, castor::io::ServerSocket &socket) throw();
-
   }; // class VdqmRequestHandlerThread
 
 } // namespace aggregator
