@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.713 $ $Date: 2009/01/21 16:47:04 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.714 $ $Date: 2009/01/27 10:00:33 $ $Author: gtaur $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -122,59 +122,32 @@ create or replace PACKAGE castor AS
     priority NUMBER);
   TYPE DbRecallInfo_Cur IS REF CURSOR RETURN DbRecallInfo;
   TYPE PriorityMap_Cur IS REF CURSOR RETURN PriorityMap%ROWTYPE;
+  TYPE FileToRecallCore IS RECORD (
+   fileId NUMBER,
+   NsHost VARCHAR2(2048),
+   copyNo NUMBER,
+   diskserver VARCHAR2(2048),
+   mountPoint VARCHAR(2048),
+   path VARCHAR2(2048)
+   );
+  TYPE FileToRecallCore_Cur IS REF CURSOR RETURN  FileToRecallCore;  
+  TYPE FileToMigrateCore IS RECORD (
+   fileId NUMBER,
+   NsHost VARCHAR2(2048),
+   copyNo NUMBER,
+   diskserver VARCHAR2(2048),
+   mountPoint VARCHAR(2048),
+   path VARCHAR2(2048),
+   lastUpdateTime NUMBER
+   );
+  TYPE FileToMigrateCore_Cur IS REF CURSOR RETURN  FileToMigrateCore;  
+  TYPE StreamReport IS RECORD (
+   diskserver VARCHAR2(2048),
+   mountPoint VARCHAR(2048)
+   );
+  TYPE StreamReport_Cur IS REF CURSOR RETURN  StreamReport;  
 END castor;
 /
-
-
-/* Checks consistency of DiskCopies when a FileSystem comes
- * back in production after a period spent in a DRAINING or a
- * DISABLED status.
- * Current checks/fixes include :
- *   - Canceling recalls for files that are STAGED or CANBEMIGR
- *     on the fileSystem that comes back. (Scheduled for bulk
- *     operation)
- *   - Dealing with files that are STAGEOUT on the fileSystem
- *     coming back but already exist on another one
- */
-CREATE OR REPLACE PROCEDURE checkFSBackInProd(fsId NUMBER) AS
-  srIds "numList";
-BEGIN
-  -- Flag the filesystem for processing in a bulk operation later.
-  -- We need to do this because some operations are database intensive
-  -- and therefore it is often better to process several filesystems
-  -- simultaneous with one query as opposed to one by one. Especially
-  -- where full table scans are involved.
-  UPDATE FileSystemsToCheck SET toBeChecked = 1
-   WHERE fileSystem = fsId;
-  -- Look for files that are STAGEOUT on the filesystem coming back to life
-  -- but already STAGED/CANBEMIGR/WAITTAPERECALL/WAITFS/STAGEOUT/
-  -- WAITFS_SCHEDULING somewhere else
-  FOR cf IN (SELECT UNIQUE d.castorfile, d.id
-               FROM DiskCopy d, DiskCopy e
-              WHERE d.castorfile = e.castorfile
-                AND d.fileSystem = fsId
-                AND e.fileSystem != fsId
-                AND d.status = 6 -- STAGEOUT
-                AND e.status IN (0, 10, 2, 5, 6, 11)) LOOP -- STAGED/CANBEMIGR/WAITTAPERECALL/WAITFS/STAGEOUT/WAITFS_SCHEDULING
-    -- Invalidate the DiskCopy
-    UPDATE DiskCopy
-       SET status = 7  -- INVALID
-     WHERE id = cf.id;
-    -- Look for requests associated to the diskCopy and restart
-    -- it and all the waiting ones
-    UPDATE SubRequest SET status = 7 -- FAILED
-     WHERE diskCopy = cf.id RETURNING id BULK COLLECT INTO srIds;
-    UPDATE SubRequest
-       SET status = 7, parent = 0 -- FAILED
-     WHERE status = 5 -- WAITSUBREQ
-       AND parent IN
-         (SELECT /*+ CARDINALITY(sridTable 5) */ *
-            FROM TABLE(srIds) sridTable)
-       AND castorfile = cf.castorfile;
-  END LOOP;
-END;
-/
-
 
 /* PL/SQL method implementing bulkCheckFSBackInProd for processing
  * filesystems in one bulk operation to optimise database performance
