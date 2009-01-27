@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStartWorkerRequestCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/01/27 09:52:12 $ $Author: gtaur $
+ * @(#)$RCSfile: StreamStartWorkerRequestCnv.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2009/01/27 16:07:41 $ $Author: gtaur $
  *
  * 
  *
@@ -89,7 +89,6 @@ void castor::io::StreamStartWorkerRequestCnv::createRep(castor::IAddress* addres
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->vdqmVolReqId();
-  ad->stream() << obj->side();
   ad->stream() << obj->unit();
   ad->stream() << obj->mode();
   ad->stream() << obj->id();
@@ -108,9 +107,6 @@ castor::IObject* castor::io::StreamStartWorkerRequestCnv::createObj(castor::IAdd
   int vdqmVolReqId;
   ad->stream() >> vdqmVolReqId;
   object->setVdqmVolReqId(vdqmVolReqId);
-  int side;
-  ad->stream() >> side;
-  object->setSide(side);
   std::string unit;
   ad->stream() >> unit;
   object->setUnit(unit);

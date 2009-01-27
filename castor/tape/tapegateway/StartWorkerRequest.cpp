@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StartWorkerRequest.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/01/27 09:51:44 $ $Author: gtaur $
+ * @(#)$RCSfile: StartWorkerRequest.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2009/01/27 16:08:06 $ $Author: gtaur $
  *
  * 
  *
@@ -40,7 +40,6 @@
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::StartWorkerRequest::StartWorkerRequest() throw() :
   m_vdqmVolReqId(0),
-  m_side(0),
   m_unit(""),
   m_mode(0),
   m_id(0) {
@@ -66,7 +65,6 @@ void castor::tape::tapegateway::StartWorkerRequest::print(std::ostream& stream,
   }
   // Output of all members
   stream << indent << "vdqmVolReqId : " << m_vdqmVolReqId << std::endl;
-  stream << indent << "side : " << m_side << std::endl;
   stream << indent << "unit : " << m_unit << std::endl;
   stream << indent << "mode : " << m_mode << std::endl;
   stream << indent << "id : " << m_id << std::endl;

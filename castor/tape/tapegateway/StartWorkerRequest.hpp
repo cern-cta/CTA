@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StartWorkerRequest.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/01/27 09:51:44 $ $Author: gtaur $
+ * @(#)$RCSfile: StartWorkerRequest.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2009/01/27 16:08:06 $ $Author: gtaur $
  *
  * 
  *
@@ -115,22 +115,6 @@ namespace castor {
         }
 
         /**
-         * Get the value of m_side
-         * @return the value of m_side
-         */
-        int side() const {
-          return m_side;
-        }
-
-        /**
-         * Set the value of m_side
-         * @param new_var the new value of m_side
-         */
-        void setSide(int new_var) {
-          m_side = new_var;
-        }
-
-        /**
          * Get the value of m_unit
          * @return the value of m_unit
          */
@@ -183,8 +167,6 @@ namespace castor {
       private:
 
         int m_vdqmVolReqId;
-
-        int m_side;
 
         std::string m_unit;
 
