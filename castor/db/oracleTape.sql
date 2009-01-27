@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.705 $ $Date: 2009/01/27 09:59:04 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.706 $ $Date: 2009/01/27 11:02:02 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -876,39 +876,24 @@ BEGIN
 END;
 /
 
-
 /* PL/SQL method implementing fileRecallFailed */
-
-create or replace
-PROCEDURE fileRecallFailed(tapecopyId IN INTEGER) AS
- SubRequestId NUMBER;
- dci NUMBER;
- fsId NUMBER;
- fileSize NUMBER;
+CREATE OR REPLACE PROCEDURE fileRecallFailed(tapecopyId IN INTEGER) AS
+ cfId NUMBER;
 BEGIN
-  BEGIN
-    SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize
-      INTO SubRequestId, dci, fileSize FROM TapeCopy, SubRequest, DiskCopy, CastorFile
-      WHERE TapeCopy.id = tapecopyId
-      AND CastorFile.id = TapeCopy.castorFile
-      AND DiskCopy.castorFile = TapeCopy.castorFile
-      AND SubRequest.diskcopy(+) = DiskCopy.id
-      AND DiskCopy.status = 2; -- DISKCOPY_WAITTAPERECALL
-    UPDATE DiskCopy SET status = 4 WHERE id = dci RETURNING fileSystem INTO fsid; -- DISKCOPY_FAILED
-    IF SubRequestId IS NOT NULL THEN
-       UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
-                          getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED (not strictly correct but the request is over anyway)
-                          lastModificationTime = getTime()
-      WHERE id = SubRequestId;
-      UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
-                          getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
-                          lastModificationTime = getTime(),
-                          parent = 0
-     WHERE parent = SubRequestId;
-    END IF;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    NULL; -- I give -1 to the databuffer because it cannot be NULL
-  END;
+  SELECT castorFile INTO cfId FROM TapeCopy
+   WHERE id = tapecopyId;
+  UPDATE DiskCopy SET status = 4 -- DISKCOPY_FAILED
+   WHERE castorFile = cfId
+     AND status = 2; -- DISKCOPY_WAITTAPERECALL
+  UPDATE SubRequest 
+     SET status = 7, -- SUBREQUEST_FAILED
+         getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED (not strictly correct but the request is over anyway)
+         lastModificationTime = getTime(),
+         errorCode = 1015,  -- SEINTERNAL
+         errorMessage = 'File recall from tape has failed, please try again later',
+         parent = 0
+   WHERE castorFile = cfId
+     AND status IN (4, 5); -- WAITTAPERECALL, WAITSUBREQ
 END;
 /
 
@@ -1629,7 +1614,7 @@ create or replace PROCEDURE getTapesToCheck
 (timeLimit IN NUMBER, taperequest OUT castor.TapeRequestState_Cur) AS
 trIds "numList";
 BEGIN 
-UPDATE taperequeststate SET lastVdqmPingTime = gettime() WHERE status=2 AND  gettime() - TapeRequestState.lastVdqmPingTime > timeLimit RETURNING id BULK COLLECT into trIds;
+UPDATE taperequeststate SET lastVdqmPingTime = gettime() WHERE status IN (2,3) AND  gettime() - TapeRequestState.lastVdqmPingTime > timeLimit RETURNING id BULK COLLECT into trIds;
  OPEN taperequest FOR
     SELECT TapeRequestState.accessMode, TapeRequestState.id,TapeRequestState.starttime, TapeRequestState.lastvdqmpingtime, TapeRequestState.vdqmvolreqid,TapeRequestState.status, Tape.vid  
       FROM Stream,TapeRequestState,Tape 
@@ -1871,13 +1856,16 @@ BEGIN
 -- I mark as failed the hopeless recall
   FOR i IN tcToFail.FIRST .. tcToFail.LAST  LOOP
     -- clean up diskcopy and subrequest
-    fileRecallFailed(tcToFail(i)); 
+    -- might be -2 because the databuffer cannot be empty
+    IF 	tcToFail(i) != -1 THEN 
+    	fileRecallFailed(tcToFail(i)); 
     -- clean up tapecopy and segment
-    DELETE FROM tapecopy where id= tcToFail(i);
-    DELETE FROM id2type WHERE id =  tcToFail(i);
-    DELETE FROM segment WHERE copy= tcToFail(i) RETURNING id BULK COLLECT INTO segIds;
-    FORALL j IN segIds.FIRST .. segIds.LAST 
-     DELETE FROM id2type WHERE id=segIds(j);    
+    	DELETE FROM tapecopy where id= tcToFail(i);
+    	DELETE FROM id2type WHERE id =  tcToFail(i);
+    	DELETE FROM segment WHERE copy= tcToFail(i) RETURNING id BULK COLLECT INTO segIds;
+    	FORALL j IN segIds.FIRST .. segIds.LAST 
+     		DELETE FROM id2type WHERE id=segIds(j);  
+    END IF;	  
   END LOOP;
   COMMIT;
 END;
