@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.689 $ $Date: 2009/01/21 12:54:55 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.690 $ $Date: 2009/01/27 16:32:06 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -543,7 +543,7 @@ END;
 CREATE OR REPLACE FUNCTION getConfigOption
 (className VARCHAR2, optionName VARCHAR2, defaultValue VARCHAR2) 
 RETURN VARCHAR2 IS
-  returnValue VARCHAR2(204) := defaultValue;
+  returnValue VARCHAR2(2048) := defaultValue;
 BEGIN
   SELECT value INTO returnValue
     FROM CastorConfig
