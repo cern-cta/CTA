@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamNsFileInformationCnv.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/01/19 17:33:01 $ $Author: gtaur $
+ * @(#)$RCSfile: StreamNsFileInformationCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/01/27 09:52:12 $ $Author: gtaur $
  *
  * 
  *
@@ -93,6 +93,7 @@ void castor::io::StreamNsFileInformationCnv::createRep(castor::IAddress* address
   ad->stream() << obj->fileid();
   ad->stream() << obj->fileSize();
   ad->stream() << obj->lastModificationTime();
+  ad->stream() << obj->lastKnownFileName();
   ad->stream() << obj->id();
 }
 
@@ -118,6 +119,9 @@ castor::IObject* castor::io::StreamNsFileInformationCnv::createObj(castor::IAddr
   u_signed64 lastModificationTime;
   ad->stream() >> lastModificationTime;
   object->setLastModificationTime(lastModificationTime);
+  std::string lastKnownFileName;
+  ad->stream() >> lastKnownFileName;
+  object->setLastKnownFileName(lastKnownFileName);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
@@ -141,7 +145,7 @@ void castor::io::StreamNsFileInformationCnv::marshalObject(castor::IObject* obje
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->tapefilensattribute(), address, alreadyDone);
+    cnvSvc()->marshalObject(obj->tapeFileNsAttribute(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -162,8 +166,8 @@ castor::IObject* castor::io::StreamNsFileInformationCnv::unmarshalObject(castor:
   castor::tape::tapegateway::NsFileInformation* obj = 
     dynamic_cast<castor::tape::tapegateway::NsFileInformation*>(object);
   ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objTapefilensattribute = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setTapefilensattribute(dynamic_cast<castor::tape::tapegateway::TapeFileNsAttribute*>(objTapefilensattribute));
+  castor::IObject* objTapeFileNsAttribute = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setTapeFileNsAttribute(dynamic_cast<castor::tape::tapegateway::TapeFileNsAttribute*>(objTapeFileNsAttribute));
   return object;
 }
 

@@ -53,7 +53,7 @@ namespace castor {
        * constructor
        */
 
-	WorkerThread();
+	WorkerThread(castor::tape::tapegateway::ITapeGatewaySvc* dbSvc);
 
 	/**
 	 * Not implemented
@@ -79,21 +79,27 @@ namespace castor {
 
       private:
 
+	// dbSvc
+	
+	castor::tape::tapegateway::ITapeGatewaySvc* m_dbSvc;
+	
 	// handlers used with the different message types
 
-	castor::IObject* handleRecallUpdate(castor::io::ServerSocket* sock, std::string vid, castor::IObject* obj, castor::tape::tapegateway::ITapeGatewaySvc* dbSvc  ) throw();
+	castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker(castor::io::ServerSocket* sock, castor::IObject* obj, castor::tape::tapegateway::ITapeGatewaySvc* dbSvc ) throw();
 
-	castor::IObject* handleMigrationUpdate( castor::io::ServerSocket* sock,std::string vid, castor::IObject* obj, castor::tape::tapegateway::ITapeGatewaySvc* dbSvc ) throw();
+	castor::IObject* handleRecallUpdate(castor::io::ServerSocket* sock,  castor::IObject* obj, castor::tape::tapegateway::ITapeGatewaySvc* dbSvc  ) throw();
 
-	castor::IObject* handleRecallMoreWork( castor::io::ServerSocket* sock, std::string vid, castor::IObject* obj, castor::tape::tapegateway::ITapeGatewaySvc* dbSvc ) throw();
+	castor::IObject* handleMigrationUpdate( castor::io::ServerSocket* sock,  castor::IObject* obj, castor::tape::tapegateway::ITapeGatewaySvc* dbSvc ) throw();
 
-	castor::IObject* handleMigrationMoreWork( castor::io::ServerSocket* sock,std::string vid, castor::IObject* obj, castor::tape::tapegateway::ITapeGatewaySvc* dbSvc ) throw();
+	castor::IObject* handleRecallMoreWork( castor::io::ServerSocket* sock, castor::IObject* obj, castor::tape::tapegateway::ITapeGatewaySvc* dbSvc ) throw();
 
-	castor::IObject* endWorker( castor::io::ServerSocket* sock,std::string vid, castor::IObject* obj, castor::tape::tapegateway::ITapeGatewaySvc* dbSvc ) throw();
+	castor::IObject* handleMigrationMoreWork( castor::io::ServerSocket* sock, castor::IObject* obj, castor::tape::tapegateway::ITapeGatewaySvc* dbSvc ) throw();
+
+	castor::IObject* handleEndWorker( castor::io::ServerSocket* sock, castor::IObject* obj, castor::tape::tapegateway::ITapeGatewaySvc* dbSvc ) throw();
 
 	// map to deal with the different request types
 
-	typedef castor::IObject* (WorkerThread::*Handler) (castor::io::ServerSocket* sock,std::string vid, castor::IObject* obj, castor::tape::tapegateway::ITapeGatewaySvc* dbSvc );
+	typedef castor::IObject* (WorkerThread::*Handler) (castor::io::ServerSocket* sock, castor::IObject* obj, castor::tape::tapegateway::ITapeGatewaySvc* dbSvc );
 
 	typedef std::map<u_signed64, Handler> HandlerMap;
 	HandlerMap m_handlerMap;

@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileToRecallResponse.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/01/19 17:20:33 $ $Author: gtaur $
+ * @(#)$RCSfile: FileToRecallResponse.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/01/27 09:51:44 $ $Author: gtaur $
  *
  * 
  *
@@ -31,7 +31,9 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/tape/tapegateway/ConvertCommandCode.hpp"
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
+#include "castor/tape/tapegateway/RecordFormatCode.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -47,7 +49,6 @@ namespace castor {
 
       // Forward declarations
       class NsFileInformation;
-      class FileDiskLocation;
 
       /**
        * class FileToRecallResponse
@@ -136,6 +137,70 @@ namespace castor {
         }
 
         /**
+         * Get the value of m_path
+         * @return the value of m_path
+         */
+        std::string path() const {
+          return m_path;
+        }
+
+        /**
+         * Set the value of m_path
+         * @param new_var the new value of m_path
+         */
+        void setPath(std::string new_var) {
+          m_path = new_var;
+        }
+
+        /**
+         * Get the value of m_transactionId
+         * @return the value of m_transactionId
+         */
+        u_signed64 transactionId() const {
+          return m_transactionId;
+        }
+
+        /**
+         * Set the value of m_transactionId
+         * @param new_var the new value of m_transactionId
+         */
+        void setTransactionId(u_signed64 new_var) {
+          m_transactionId = new_var;
+        }
+
+        /**
+         * Get the value of m_concat
+         * @return the value of m_concat
+         */
+        bool concat() const {
+          return m_concat;
+        }
+
+        /**
+         * Set the value of m_concat
+         * @param new_var the new value of m_concat
+         */
+        void setConcat(bool new_var) {
+          m_concat = new_var;
+        }
+
+        /**
+         * Get the value of m_deferedAllocation
+         * @return the value of m_deferedAllocation
+         */
+        bool deferedAllocation() const {
+          return m_deferedAllocation;
+        }
+
+        /**
+         * Set the value of m_deferedAllocation
+         * @param new_var the new value of m_deferedAllocation
+         */
+        void setDeferedAllocation(bool new_var) {
+          m_deferedAllocation = new_var;
+        }
+
+        /**
          * Get the value of m_id
          * The id of this object
          * @return the value of m_id
@@ -154,51 +219,67 @@ namespace castor {
         }
 
         /**
-         * Get the value of m_filedisklocation
-         * @return the value of m_filedisklocation
+         * Get the value of m_nsFileInformation
+         * @return the value of m_nsFileInformation
          */
-        FileDiskLocation* filedisklocation() const {
-          return m_filedisklocation;
+        NsFileInformation* nsFileInformation() const {
+          return m_nsFileInformation;
         }
 
         /**
-         * Set the value of m_filedisklocation
-         * @param new_var the new value of m_filedisklocation
+         * Set the value of m_nsFileInformation
+         * @param new_var the new value of m_nsFileInformation
          */
-        void setFiledisklocation(FileDiskLocation* new_var) {
-          m_filedisklocation = new_var;
+        void setNsFileInformation(NsFileInformation* new_var) {
+          m_nsFileInformation = new_var;
         }
 
         /**
-         * Get the value of m_nsfileinformation
-         * @return the value of m_nsfileinformation
+         * Get the value of m_positionCommandCode
+         * @return the value of m_positionCommandCode
          */
-        NsFileInformation* nsfileinformation() const {
-          return m_nsfileinformation;
+        PositionCommandCode positionCommandCode() const {
+          return m_positionCommandCode;
         }
 
         /**
-         * Set the value of m_nsfileinformation
-         * @param new_var the new value of m_nsfileinformation
+         * Set the value of m_positionCommandCode
+         * @param new_var the new value of m_positionCommandCode
          */
-        void setNsfileinformation(NsFileInformation* new_var) {
-          m_nsfileinformation = new_var;
+        void setPositionCommandCode(PositionCommandCode new_var) {
+          m_positionCommandCode = new_var;
         }
 
         /**
-         * Get the value of m_positioncommandcode
-         * @return the value of m_positioncommandcode
+         * Get the value of m_convertCommandCode
+         * @return the value of m_convertCommandCode
          */
-        PositionCommandCode positioncommandcode() const {
-          return m_positioncommandcode;
+        ConvertCommandCode convertCommandCode() const {
+          return m_convertCommandCode;
         }
 
         /**
-         * Set the value of m_positioncommandcode
-         * @param new_var the new value of m_positioncommandcode
+         * Set the value of m_convertCommandCode
+         * @param new_var the new value of m_convertCommandCode
          */
-        void setPositioncommandcode(PositionCommandCode new_var) {
-          m_positioncommandcode = new_var;
+        void setConvertCommandCode(ConvertCommandCode new_var) {
+          m_convertCommandCode = new_var;
+        }
+
+        /**
+         * Get the value of m_recordFormatCode
+         * @return the value of m_recordFormatCode
+         */
+        RecordFormatCode recordFormatCode() const {
+          return m_recordFormatCode;
+        }
+
+        /**
+         * Set the value of m_recordFormatCode
+         * @param new_var the new value of m_recordFormatCode
+         */
+        void setRecordFormatCode(RecordFormatCode new_var) {
+          m_recordFormatCode = new_var;
         }
 
       private:
@@ -207,14 +288,24 @@ namespace castor {
 
         std::string m_errorMessage;
 
+        std::string m_path;
+
+        u_signed64 m_transactionId;
+
+        bool m_concat;
+
+        bool m_deferedAllocation;
+
         /// The id of this object
         u_signed64 m_id;
 
-        FileDiskLocation* m_filedisklocation;
+        NsFileInformation* m_nsFileInformation;
 
-        NsFileInformation* m_nsfileinformation;
+        PositionCommandCode m_positionCommandCode;
 
-        PositionCommandCode m_positioncommandcode;
+        ConvertCommandCode m_convertCommandCode;
+
+        RecordFormatCode m_recordFormatCode;
 
       }; /* end of class FileToRecallResponse */
 

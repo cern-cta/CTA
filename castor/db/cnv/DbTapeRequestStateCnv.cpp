@@ -58,7 +58,7 @@ static castor::CnvFactory<castor::db::cnv::DbTapeRequestStateCnv>* s_factoryDbTa
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbTapeRequestStateCnv::s_insertStatementString =
-"INSERT INTO TapeRequestState (accessMode, startTime, lastVdqmPingTime, vdqmVolReqId, id, streamMigration, tapeRecall, status) VALUES (:1,:2,:3,:4,ids_seq.nextval,:5,:6,:7) RETURNING id INTO :8";
+"INSERT INTO TapeRequestState (accessMode, startTime, lastVdqmPingTime, vdqmVolReqId, nbRetry, id, streamMigration, tapeRecall, status) VALUES (:1,:2,:3,:4,:5,ids_seq.nextval,:6,:7,:8) RETURNING id INTO :9";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbTapeRequestStateCnv::s_deleteStatementString =
@@ -66,7 +66,7 @@ const std::string castor::db::cnv::DbTapeRequestStateCnv::s_deleteStatementStrin
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbTapeRequestStateCnv::s_selectStatementString =
-"SELECT accessMode, startTime, lastVdqmPingTime, vdqmVolReqId, id, streamMigration, tapeRecall, status FROM TapeRequestState WHERE id = :1";
+"SELECT accessMode, startTime, lastVdqmPingTime, vdqmVolReqId, nbRetry, id, streamMigration, tapeRecall, status FROM TapeRequestState WHERE id = :1";
 
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbTapeRequestStateCnv::s_bulkSelectStatementString =
@@ -77,7 +77,7 @@ const std::string castor::db::cnv::DbTapeRequestStateCnv::s_bulkSelectStatementS
    BEGIN \
      FORALL i IN ids.FIRST..ids.LAST \
        INSERT INTO bulkSelectHelper VALUES(ids(i)); \
-     OPEN objs FOR SELECT accessMode, startTime, lastVdqmPingTime, vdqmVolReqId, id, streamMigration, tapeRecall, status \
+     OPEN objs FOR SELECT accessMode, startTime, lastVdqmPingTime, vdqmVolReqId, nbRetry, id, streamMigration, tapeRecall, status \
                      FROM TapeRequestState t, bulkSelectHelper h \
                     WHERE t.id = h.objId; \
      DELETE FROM bulkSelectHelper; \
@@ -88,7 +88,7 @@ const std::string castor::db::cnv::DbTapeRequestStateCnv::s_bulkSelectStatementS
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbTapeRequestStateCnv::s_updateStatementString =
-"UPDATE TapeRequestState SET accessMode = :1, startTime = :2, lastVdqmPingTime = :3, vdqmVolReqId = :4, status = :5 WHERE id = :6";
+"UPDATE TapeRequestState SET accessMode = :1, startTime = :2, lastVdqmPingTime = :3, vdqmVolReqId = :4, nbRetry = :5, status = :6 WHERE id = :7";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbTapeRequestStateCnv::s_storeTypeStatementString =
@@ -331,7 +331,7 @@ void castor::db::cnv::DbTapeRequestStateCnv::fillObjStream(castor::tape::tapegat
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 streamMigrationId = rset->getInt64(6);
+  u_signed64 streamMigrationId = rset->getInt64(7);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -369,7 +369,7 @@ void castor::db::cnv::DbTapeRequestStateCnv::fillObjTape(castor::tape::tapegatew
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapeRecallId = rset->getInt64(7);
+  u_signed64 tapeRecallId = rset->getInt64(8);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -407,7 +407,7 @@ void castor::db::cnv::DbTapeRequestStateCnv::createRep(castor::IAddress* address
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(8, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(9, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -417,11 +417,12 @@ void castor::db::cnv::DbTapeRequestStateCnv::createRep(castor::IAddress* address
     m_insertStatement->setUInt64(2, obj->startTime());
     m_insertStatement->setUInt64(3, obj->lastVdqmPingTime());
     m_insertStatement->setInt(4, obj->vdqmVolReqId());
-    m_insertStatement->setUInt64(5, (type == OBJ_Stream && obj->streamMigration() != 0) ? obj->streamMigration()->id() : 0);
-    m_insertStatement->setUInt64(6, (type == OBJ_Tape && obj->tapeRecall() != 0) ? obj->tapeRecall()->id() : 0);
-    m_insertStatement->setInt(7, (int)obj->status());
+    m_insertStatement->setInt(5, obj->nbRetry());
+    m_insertStatement->setUInt64(6, (type == OBJ_Stream && obj->streamMigration() != 0) ? obj->streamMigration()->id() : 0);
+    m_insertStatement->setUInt64(7, (type == OBJ_Tape && obj->tapeRecall() != 0) ? obj->tapeRecall()->id() : 0);
+    m_insertStatement->setInt(8, (int)obj->status());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(8));
+    obj->setId(m_insertStatement->getUInt64(9));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -443,6 +444,7 @@ void castor::db::cnv::DbTapeRequestStateCnv::createRep(castor::IAddress* address
                     << "  startTime : " << obj->startTime() << std::endl
                     << "  lastVdqmPingTime : " << obj->lastVdqmPingTime() << std::endl
                     << "  vdqmVolReqId : " << obj->vdqmVolReqId() << std::endl
+                    << "  nbRetry : " << obj->nbRetry() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  streamMigration : " << obj->streamMigration() << std::endl
                     << "  tapeRecall : " << obj->tapeRecall() << std::endl
@@ -472,7 +474,7 @@ void castor::db::cnv::DbTapeRequestStateCnv::bulkCreateRep(castor::IAddress* add
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(8, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(9, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -553,6 +555,25 @@ void castor::db::cnv::DbTapeRequestStateCnv::bulkCreateRep(castor::IAddress* add
     }
     m_insertStatement->setDataBuffer
       (4, vdqmVolReqIdBuffer, castor::db::DBTYPE_INT, sizeof(vdqmVolReqIdBuffer[0]), vdqmVolReqIdBufLens);
+    // build the buffers for nbRetry
+    int* nbRetryBuffer = (int*) malloc(nb * sizeof(int));
+    if (nbRetryBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(nbRetryBuffer);
+    unsigned short* nbRetryBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (nbRetryBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(nbRetryBufLens);
+    for (int i = 0; i < nb; i++) {
+      nbRetryBuffer[i] = objs[i]->nbRetry();
+      nbRetryBufLens[i] = sizeof(int);
+    }
+    m_insertStatement->setDataBuffer
+      (5, nbRetryBuffer, castor::db::DBTYPE_INT, sizeof(nbRetryBuffer[0]), nbRetryBufLens);
     // build the buffers for streamMigration
     double* streamMigrationBuffer = (double*) malloc(nb * sizeof(double));
     if (streamMigrationBuffer == 0) {
@@ -571,7 +592,7 @@ void castor::db::cnv::DbTapeRequestStateCnv::bulkCreateRep(castor::IAddress* add
       streamMigrationBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (5, streamMigrationBuffer, castor::db::DBTYPE_UINT64, sizeof(streamMigrationBuffer[0]), streamMigrationBufLens);
+      (6, streamMigrationBuffer, castor::db::DBTYPE_UINT64, sizeof(streamMigrationBuffer[0]), streamMigrationBufLens);
     // build the buffers for tapeRecall
     double* tapeRecallBuffer = (double*) malloc(nb * sizeof(double));
     if (tapeRecallBuffer == 0) {
@@ -590,7 +611,7 @@ void castor::db::cnv::DbTapeRequestStateCnv::bulkCreateRep(castor::IAddress* add
       tapeRecallBufLens[i] = sizeof(double);
     }
     m_insertStatement->setDataBuffer
-      (6, tapeRecallBuffer, castor::db::DBTYPE_UINT64, sizeof(tapeRecallBuffer[0]), tapeRecallBufLens);
+      (7, tapeRecallBuffer, castor::db::DBTYPE_UINT64, sizeof(tapeRecallBuffer[0]), tapeRecallBufLens);
     // build the buffers for status
     int* statusBuffer = (int*) malloc(nb * sizeof(int));
     if (statusBuffer == 0) {
@@ -609,7 +630,7 @@ void castor::db::cnv::DbTapeRequestStateCnv::bulkCreateRep(castor::IAddress* add
       statusBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (7, statusBuffer, castor::db::DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
+      (8, statusBuffer, castor::db::DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     if (idBuffer == 0) {
@@ -624,7 +645,7 @@ void castor::db::cnv::DbTapeRequestStateCnv::bulkCreateRep(castor::IAddress* add
     }
     allocMem.push_back(idBufLens);
     m_insertStatement->setDataBuffer
-      (8, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
+      (9, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
@@ -698,8 +719,9 @@ void castor::db::cnv::DbTapeRequestStateCnv::updateRep(castor::IAddress* address
     m_updateStatement->setUInt64(2, obj->startTime());
     m_updateStatement->setUInt64(3, obj->lastVdqmPingTime());
     m_updateStatement->setInt(4, obj->vdqmVolReqId());
-    m_updateStatement->setInt(5, (int)obj->status());
-    m_updateStatement->setUInt64(6, obj->id());
+    m_updateStatement->setInt(5, obj->nbRetry());
+    m_updateStatement->setInt(6, (int)obj->status());
+    m_updateStatement->setUInt64(7, obj->id());
     m_updateStatement->execute();
     if (endTransaction) {
       cnvSvc()->commit();
@@ -788,8 +810,9 @@ castor::IObject* castor::db::cnv::DbTapeRequestStateCnv::createObj(castor::IAddr
     object->setStartTime(rset->getUInt64(2));
     object->setLastVdqmPingTime(rset->getUInt64(3));
     object->setVdqmVolReqId(rset->getInt(4));
-    object->setId(rset->getUInt64(5));
-    object->setStatus((enum castor::tape::tapegateway::TapeRequestStateCode)rset->getInt(8));
+    object->setNbRetry(rset->getInt(5));
+    object->setId(rset->getUInt64(6));
+    object->setStatus((enum castor::tape::tapegateway::TapeRequestStateCode)rset->getInt(9));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -839,8 +862,9 @@ castor::db::cnv::DbTapeRequestStateCnv::bulkCreateObj(castor::IAddress* address)
       object->setStartTime(rset->getUInt64(2));
       object->setLastVdqmPingTime(rset->getUInt64(3));
       object->setVdqmVolReqId(rset->getInt(4));
-      object->setId(rset->getUInt64(5));
-      object->setStatus((enum castor::tape::tapegateway::TapeRequestStateCode)rset->getInt(8));
+      object->setNbRetry(rset->getInt(5));
+      object->setId(rset->getUInt64(6));
+      object->setStatus((enum castor::tape::tapegateway::TapeRequestStateCode)rset->getInt(9));
       // store object in results and loop;
       res.push_back(object);
       status = rset->next();
@@ -882,8 +906,9 @@ void castor::db::cnv::DbTapeRequestStateCnv::updateObj(castor::IObject* obj)
     object->setStartTime(rset->getUInt64(2));
     object->setLastVdqmPingTime(rset->getUInt64(3));
     object->setVdqmVolReqId(rset->getInt(4));
-    object->setId(rset->getUInt64(5));
-    object->setStatus((enum castor::tape::tapegateway::TapeRequestStateCode)rset->getInt(8));
+    object->setNbRetry(rset->getInt(5));
+    object->setId(rset->getUInt64(6));
+    object->setStatus((enum castor::tape::tapegateway::TapeRequestStateCode)rset->getInt(9));
     delete rset;
   } catch (castor::exception::SQLError e) {
     castor::exception::InvalidArgument ex;

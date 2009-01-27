@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.1 $ $Release$ 
- * $Date: 2009/01/19 17:20:34 $ $Author: gtaur $
+ * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.2 $ $Release$ 
+ * $Date: 2009/01/27 09:51:44 $ $Author: gtaur $
  *
  *
  *
@@ -39,7 +39,6 @@
 #include <u64subr.h>
 
 #include "castor/stager/TapePool.hpp"
-#include "castor/tape/tapegateway/FileDiskLocation.hpp"
 #include "castor/tape/tapegateway/NsFileInformation.hpp"
 #include "castor/tape/tapegateway/TapeFileNsAttribute.hpp"
 
@@ -251,17 +250,16 @@ int  castor::tape::tapegateway::VmgrTapeGatewayHelper::resetBusyTape(castor::sta
 }
 
 
-int  castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(std::string vid, castor::tape::tapegateway::FileMigratedResponse* file ){
+int  castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::tape::tapegateway::FileMigratedResponse* file ){
 
   int save_serrno=0;
 
   // check input 
-  if ( vid.empty()) return -1; 
+
   if (file == NULL ) return -1;
 
-  int side=file->nsfileinformation()->tapefilensattribute()->side(); // supposed 1 segment
-  u_signed64 bytesWritten = file->filedisklocation()->bytes();
-  u_signed64 fileSize =  file->nsfileinformation()->fileSize();
+  int side=file->nsFileInformation()->tapeFileNsAttribute()->side(); // supposed 1 segment
+  u_signed64 fileSize =  file->nsFileInformation()->fileSize();
 
   serrno = 0;
 
@@ -271,7 +269,7 @@ int  castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(std::str
   char dgnBuffer[8];
 
   while(1){
-    int rc = vmgr_querytape(vid.c_str(),side,&vmgrTapeInfo,dgnBuffer);
+    int rc = vmgr_querytape(file->nsFileInformation()->tapeFileNsAttribute()->vid().c_str(),side,&vmgrTapeInfo,dgnBuffer);
     save_serrno = serrno;
 
     if ( rc == 0 ) {
@@ -305,8 +303,9 @@ int  castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(std::str
 
   // check if the fseq is not too big, in this case we mark it as error. 
 
- int fseq= file->nsfileinformation()->tapefilensattribute()->fseq();
+ int fseq= file->nsFileInformation()->tapeFileNsAttribute()->fseq();
  int maxFseq =0;
+ int bytesWritten=0;
    
  if ((strcmp(vmgrTapeInfo.lbltype,"al") == 0) ||  /* Ansi Label */
      (strcmp(vmgrTapeInfo.lbltype,"sl") == 0))    /* Standard Label */
@@ -321,8 +320,8 @@ int  castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(std::str
  if (maxFseq <= 0 || fseq >= maxFseq ) { 
    // set as RDONLY
    flags = TAPE_RDONLY;
-   bytesWritten = file->filedisklocation()->bytes();
-   int rc = vmgr_updatetape( vid.c_str(), side, bytesWritten, 100, 0, flags ); 
+   bytesWritten = file->nsFileInformation()->fileSize();
+   int rc = vmgr_updatetape(file->nsFileInformation()->tapeFileNsAttribute()->vid().c_str(), side, bytesWritten, 100, 0, flags ); 
    if (rc<0) { //TODO LOG
    }
    return -1;
@@ -335,8 +334,8 @@ int  castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(std::str
 
    if ( (flags & (TAPE_FULL|DISABLED|EXPORTED|TAPE_RDONLY|ARCHIVED)) == 0 ) 
      flags = TAPE_FULL;
-   bytesWritten = file->filedisklocation()->bytes(); 
-   int rc = vmgr_updatetape( vid.c_str(), side, bytesWritten, 100, 0, flags ); // no files written
+   bytesWritten = file->nsFileInformation()->fileSize();
+   int rc = vmgr_updatetape( file->nsFileInformation()->tapeFileNsAttribute()->vid().c_str(), side, bytesWritten, 100, 0, flags ); // no files written
    return rc;
    
  }
@@ -349,7 +348,7 @@ int  castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(std::str
   else compressionFactor = (fileSize * 100) / bytesWritten;
   if ( strcmp( vmgrTapeInfo.model,"3592") && compressionFactor<95 ) compressionFactor = 100; // devtype
 
-  int rc = vmgr_updatetape( vid.c_str(), side, bytesWritten, compressionFactor, 1, flags ); // number files always one
+  int rc = vmgr_updatetape(file->nsFileInformation()->tapeFileNsAttribute()->vid().c_str(), side, bytesWritten, compressionFactor, 1, flags ); // number files always one
   return rc;
 
 }

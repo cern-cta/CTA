@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StartWorkerResponse.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/01/19 17:20:33 $ $Author: gtaur $
+ * @(#)$RCSfile: StartWorkerResponse.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/01/27 09:51:44 $ $Author: gtaur $
  *
  * 
  *
@@ -42,6 +42,7 @@ castor::tape::tapegateway::StartWorkerResponse::StartWorkerResponse() throw() :
   m_errorCode(0),
   m_errorMessage(""),
   m_vid(""),
+  m_transactionId(0),
   m_id(0) {
 }
 
@@ -67,6 +68,7 @@ void castor::tape::tapegateway::StartWorkerResponse::print(std::ostream& stream,
   stream << indent << "errorCode : " << m_errorCode << std::endl;
   stream << indent << "errorMessage : " << m_errorMessage << std::endl;
   stream << indent << "vid : " << m_vid << std::endl;
+  stream << indent << "transactionId : " << m_transactionId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

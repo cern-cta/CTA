@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.1 $ $Release$ 
- * $Date: 2009/01/19 17:20:33 $ $Author: gtaur $
+ * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.2 $ $Release$ 
+ * $Date: 2009/01/27 09:51:44 $ $Author: gtaur $
  *
  *
  *
@@ -29,7 +29,6 @@
 
 #include "castor/tape/tapegateway/NsTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/TapeFileNsAttribute.hpp"
-#include "castor/tape/tapegateway/FileDiskLocation.hpp"
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
 #include "osdep.h"
 #include "Cns_api.h"
@@ -54,10 +53,10 @@ int castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile( tape::ta
   memset(&castorFileId,'\0',sizeof(castorFileId));
   strncpy(
           castorFileId.server,
-          file-> nsfileinformation()->nshost().c_str(),
+          file-> nsFileInformation()->nshost().c_str(),
           sizeof(castorFileId.server)-1
           );
-  castorFileId.fileid = file->nsfileinformation()->fileid();
+  castorFileId.fileid = file->nsFileInformation()->fileid();
 
 
   // fill in the information of the tape file to update the nameserver
@@ -71,13 +70,13 @@ int castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile( tape::ta
   if ( nsSegAttrs == NULL )  return -1;
   
 
-  nsSegAttrs->copyno = file->nsfileinformation()->tapefilensattribute()->copyNo();
+  nsSegAttrs->copyno = file->nsFileInformation()->tapeFileNsAttribute()->copyNo();
   nsSegAttrs->fsec = 1; // always one
-  u_signed64 nsSize=file->nsfileinformation()->fileSize();
+  u_signed64 nsSize=file->nsFileInformation()->fileSize();
   nsSegAttrs->segsize = nsSize;
   int compressionFactor=0;
   if (nsSize !=0 ){
-    compressionFactor= file->filedisklocation()->bytes() * 100 / nsSize;
+    compressionFactor= file->nsFileInformation()->fileSize()* 100 / nsSize;
   }
   /* TODO devtype check */
   
@@ -92,27 +91,27 @@ int castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile( tape::ta
     compressionFactor = 0;
     } */
 
-  strncpy(nsSegAttrs->vid, file->nsfileinformation()->tapefilensattribute()->vid().c_str(),CA_MAXVIDLEN);
-  nsSegAttrs->side = file-> nsfileinformation()->tapefilensattribute()->side();
+  strncpy(nsSegAttrs->vid, file->nsFileInformation()->tapeFileNsAttribute()->vid().c_str(),CA_MAXVIDLEN);
+  nsSegAttrs->side = file-> nsFileInformation()->tapeFileNsAttribute()->side();
   
   // pain to convert the blockid
   
-  unsigned int repackBlockid=file->nsfileinformation()->tapefilensattribute()->blockId(); 
+  unsigned int repackBlockid=file->nsFileInformation()->tapeFileNsAttribute()->blockId(); 
   nsSegAttrs->blockid[3]=(unsigned char)((repackBlockid/0x1000000)%0x100);
   nsSegAttrs->blockid[2]=(unsigned char)((repackBlockid/0x10000)%0x100);
   nsSegAttrs->blockid[1]=(unsigned char)((repackBlockid/0x100)%0x100); 
   nsSegAttrs->blockid[0]=(unsigned char)((repackBlockid/0x1)%0x100);
 
-  nsSegAttrs->fseq = file->nsfileinformation()->tapefilensattribute()->fseq();
+  nsSegAttrs->fseq = file->nsFileInformation()->tapeFileNsAttribute()->fseq();
 
   strncpy(
 	  nsSegAttrs->checksum_name,
-	  file->nsfileinformation()->tapefilensattribute()->checksumName().c_str(),
+	  file->nsFileInformation()->tapeFileNsAttribute()->checksumName().c_str(),
 	  CA_MAXCKSUMNAMELEN
 	  );
-  nsSegAttrs->checksum = file->nsfileinformation()->tapefilensattribute()->checksum();
+  nsSegAttrs->checksum = file->nsFileInformation()->tapeFileNsAttribute()->checksum();
   int save_serrno=0;
-  time_t lastModificationTime = file->nsfileinformation()->lastModificationTime(); //... TODO
+  time_t lastModificationTime = file->nsFileInformation()->lastModificationTime(); //... TODO
   while(1){
     serrno=0;
     rc = Cns_setsegattrs(
@@ -169,10 +168,10 @@ int castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile( tape::ta
   memset(&castorFileId,'\0',sizeof(castorFileId));
   strncpy(
           castorFileId.server,
-          file->nsfileinformation()->nshost().c_str(),
+          file->nsFileInformation()->nshost().c_str(),
           sizeof(castorFileId.server)-1
           );
-  castorFileId.fileid = file->nsfileinformation()->fileid();
+  castorFileId.fileid = file->nsFileInformation()->fileid();
 
 
   // fill in the information of the tape file to update the nameserver
@@ -180,19 +179,19 @@ int castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile( tape::ta
   int nbSegms = 1; // NEVER more than one segment
 
   struct Cns_segattrs * nsSegAttrs = (struct Cns_segattrs *)calloc(
-                                             nbSegms,
+                                            nbSegms,
                                              sizeof(struct Cns_segattrs)
                                              );
   if ( nsSegAttrs == NULL )  return -1;
   
 
-  nsSegAttrs->copyno = file->nsfileinformation()->tapefilensattribute()->copyNo();
+  nsSegAttrs->copyno = file->nsFileInformation()->tapeFileNsAttribute()->copyNo();
   nsSegAttrs->fsec = 1; // always one
-  u_signed64 nsSize=file->nsfileinformation()->fileSize();
+  u_signed64 nsSize=file->nsFileInformation()->fileSize();
   nsSegAttrs->segsize = nsSize;
   int compressionFactor=0;
   if (nsSize !=0 ){
-    compressionFactor= file->filedisklocation()->bytes() * 100 / nsSize;
+    compressionFactor= file->nsFileInformation()->fileSize() * 100 / nsSize;
   }
   /* TODO dev check */
   
@@ -207,25 +206,25 @@ int castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile( tape::ta
     compressionFactor = 0;
     } */
 
-  strncpy(nsSegAttrs->vid,file->nsfileinformation()->tapefilensattribute()->vid().c_str(),CA_MAXVIDLEN);
-  nsSegAttrs->side = file->nsfileinformation()->tapefilensattribute()->side();
+  strncpy(nsSegAttrs->vid,file->nsFileInformation()->tapeFileNsAttribute()->vid().c_str(),CA_MAXVIDLEN);
+  nsSegAttrs->side = file->nsFileInformation()->tapeFileNsAttribute()->side();
   
   // pain to convert the blockid
   
-  unsigned int repackBlockid=file->nsfileinformation()->tapefilensattribute()->blockId(); 
+  unsigned int repackBlockid=file->nsFileInformation()->tapeFileNsAttribute()->blockId(); 
   nsSegAttrs->blockid[3]=(unsigned char)((repackBlockid/0x1000000)%0x100);
   nsSegAttrs->blockid[2]=(unsigned char)((repackBlockid/0x10000)%0x100);
   nsSegAttrs->blockid[1]=(unsigned char)((repackBlockid/0x100)%0x100); 
   nsSegAttrs->blockid[0]=(unsigned char)((repackBlockid/0x1)%0x100);
 
-  nsSegAttrs->fseq = file->nsfileinformation()->tapefilensattribute()->fseq();
+  nsSegAttrs->fseq = file->nsFileInformation()->tapeFileNsAttribute()->fseq();
 
   strncpy(
             nsSegAttrs->checksum_name,
-            file->nsfileinformation()->tapefilensattribute()->checksumName().c_str(),
+            file->nsFileInformation()->tapeFileNsAttribute()->checksumName().c_str(),
             CA_MAXCKSUMNAMELEN
             );
-  nsSegAttrs->checksum = file->nsfileinformation()->tapefilensattribute()->checksum();
+  nsSegAttrs->checksum = file->nsFileInformation()->tapeFileNsAttribute()->checksum();
 
   serrno = rc = 0; 
 
@@ -274,7 +273,7 @@ int castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile( tape::ta
   
   // replace the tapecopy
   
-  time_t lastModificationTime = file->nsfileinformation()->lastModificationTime();
+  time_t lastModificationTime = file->nsFileInformation()->lastModificationTime();
 
   rc = Cns_replacetapecopy(&castorFileId, repackVid.c_str(),nsSegAttrs->vid,nbSegms,nsSegAttrs,lastModificationTime);
        
@@ -288,7 +287,7 @@ int castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile( tape::ta
 
 int  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate(castor::tape::tapegateway::FileToMigrateResponse* file) throw (castor::exception::Exception) {
   
-  if ( file == NULL || file->nsfileinformation() == NULL || file->nsfileinformation()->tapefilensattribute()->vid().empty()) {
+  if ( file == NULL || file->nsFileInformation() == NULL || file->nsFileInformation()->tapeFileNsAttribute()->vid().empty()) {
     return -1;
   }
 
@@ -305,10 +304,10 @@ int  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate(castor::
   memset(&castorFileId,'\0',sizeof(castorFileId));
   strncpy(
           castorFileId.server,
-          file->nsfileinformation()->nshost().c_str(),
+          file->nsFileInformation()->nshost().c_str(),
           sizeof(castorFileId.server)-1
           );
-  castorFileId.fileid = file->nsfileinformation()->fileid();
+  castorFileId.fileid = file->nsFileInformation()->fileid();
 
 
   int nbSegs=0;
@@ -322,7 +321,7 @@ int  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate(castor::
   // let's check if there is already a file on that tape ... completely changed check dual copies
 
   for ( int i=0; i< nbSegs ;i++) {
-    if ( strcmp(segArray[i].vid ,(file->nsfileinformation()->tapefilensattribute()->vid()).c_str()) == 0 )
+    if ( strcmp(segArray[i].vid ,(file->nsFileInformation()->tapeFileNsAttribute()->vid()).c_str()) == 0 )
       return -1; // copy already on that tape
     nbCopies++;
   }
@@ -351,12 +350,9 @@ int  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate(castor::
 }
 
 
-int  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToRecall(tape::tapegateway::FileToRecallResponse* file) throw (castor::exception::Exception){
-
-  //TODO how to check that there are all segment? removed that logic
- 
-  if ( file == NULL || file->nsfileinformation() == NULL || file->nsfileinformation() == NULL ||
-       file->nsfileinformation()->tapefilensattribute() == NULL || file->nsfileinformation()->tapefilensattribute()->vid().empty()) {
+int castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToRecall(castor::tape::tapegateway::FileToRecallResponse* file) throw (castor::exception::Exception) {
+  
+  if ( file == NULL || file->nsFileInformation() == NULL ||  file->nsFileInformation()->tapeFileNsAttribute() == NULL ) {
     return -1;
   }
 
@@ -367,53 +363,43 @@ int  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToRecall(tape::tap
   if (rc <0 || nsErrMsg == NULL) return -1;
   else  *nsErrMsg = '\0';
 
-  // get segments for this fileid
+ 
+  // get segments for this fileid 
 
   struct Cns_fileid castorFileId;
   memset(&castorFileId,'\0',sizeof(castorFileId));
   strncpy(
           castorFileId.server,
-          file->nsfileinformation()->nshost().c_str(),
+          file->nsFileInformation()->nshost().c_str(),
           sizeof(castorFileId.server)-1
           );
-  castorFileId.fileid = file->nsfileinformation()->fileid();
-
+  castorFileId.fileid = file->nsFileInformation()->fileid();
 
   int nbSegs=0;
-  struct Cns_segattrs *segattrs = NULL;
-
-  rc = Cns_getsegattrs( NULL, &castorFileId,&nbSegs, &segattrs);
+  struct Cns_segattrs *segArray = NULL;
   
-  if ( (rc == -1) || (nbSegs <= 0) || (segattrs == NULL) ) return -1;
-
-  /*
-   * Find this segment
-   */
-  castor::tape::tapegateway::TapeFileNsAttribute* seg = file->nsfileinformation()->tapefilensattribute();
-
-  //check the segment
-  
-  for ( int i=0; i<nbSegs; i++ ) {
-      if ( strcmp (segattrs[i].vid , seg->vid().c_str()) != 0 ) continue;
-      if ( segattrs[i].side != seg->side() ) continue;
-      if ( segattrs[i].fseq != seg->fseq() ) continue;
-      
-      if ( (file->positioncommandcode() == castor::tape::tapegateway::TPPOSIT_BLKID)){
-	unsigned int repackBlockid= seg->blockId(); 
-	char convertedBlockId[4];
-	convertedBlockId[3]=(unsigned char)((repackBlockid/0x1000000)%0x100);
-	convertedBlockId[2]=(unsigned char)((repackBlockid/0x10000)%0x100);
-	convertedBlockId[1]=(unsigned char)((repackBlockid/0x100)%0x100); 
-	convertedBlockId[0]=(unsigned char)((repackBlockid/0x1)%0x100);
-	if ( memcmp(segattrs[i].blockid,convertedBlockId, sizeof(convertedBlockId)) != 0)  continue;
-      }
-
-      return 0;
-  }
-
-  // if I'm here I could not find the segment anymore
-  return -1;
  
+  rc = Cns_getsegattrs(NULL,&castorFileId,&nbSegs,&segArray);
+  if ( rc == -1 ) return -1;
+
+
+  // let's get the copy number that we are refering to
+
+  for ( int i=0; i< nbSegs ;i++) {
+    if ( segArray[i].copyno == file->nsFileInformation()->tapeFileNsAttribute()->copyNo()) {
+      // here it is the right segment we want to recall
+      file->nsFileInformation()->tapeFileNsAttribute()->setFsec(segArray[i].fsec);
+      file->nsFileInformation()->tapeFileNsAttribute()->setBlockId(segArray[i].blockid[0]+segArray[i].blockid[1]*0x100+ segArray[i].blockid[2]*0x10000 + segArray[i].blockid[3]*0x1000000);
+      file->nsFileInformation()->tapeFileNsAttribute()->setCompression(segArray[i].compression);
+      file->nsFileInformation()->tapeFileNsAttribute()->setSide(segArray[i].side);
+      file->nsFileInformation()->tapeFileNsAttribute()->setChecksumName(segArray[i].checksum_name);
+      file->nsFileInformation()->tapeFileNsAttribute()->setChecksum(segArray[i].checksum);
+      file->nsFileInformation()->tapeFileNsAttribute()->setVid(segArray[i].vid);
+      if (file->nsFileInformation()->tapeFileNsAttribute()->blockId()==0) file->setPositionCommandCode(TPPOSIT_FSEQ);
+      return 0;
+    }
+  }
+  return -1;
 }
 
 int castor::tape::tapegateway::NsTapeGatewayHelper::getFileOwner(castor::tape::tapegateway::NsFileInformation* nsInfo, u_signed64 &uid, u_signed64 &gid ) throw (castor::exception::Exception){
@@ -454,8 +440,8 @@ int castor::tape::tapegateway::NsTapeGatewayHelper::getFileOwner(castor::tape::t
 
 int  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::tape::tapegateway::FileRecalledResponse* file) throw (castor::exception::Exception) {
 
-   if ( file == NULL || file->nsfileinformation() == NULL || file->nsfileinformation() == NULL ||
-       file->nsfileinformation()->tapefilensattribute() == NULL || file->nsfileinformation()->tapefilensattribute()->vid().empty()) {
+   if ( file == NULL || file->nsFileInformation() == NULL || file->nsFileInformation() == NULL ||
+       file->nsFileInformation()->tapeFileNsAttribute() == NULL || file->nsFileInformation()->tapeFileNsAttribute()->vid().empty()) {
     return -1;
   }
 
@@ -472,10 +458,10 @@ int  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::t
   memset(&castorFileId,'\0',sizeof(castorFileId));
   strncpy(
           castorFileId.server,
-          file->nsfileinformation()->nshost().c_str(),
+          file->nsFileInformation()->nshost().c_str(),
           sizeof(castorFileId.server)-1
           );
-  castorFileId.fileid = file->nsfileinformation()->fileid();
+  castorFileId.fileid = file->nsFileInformation()->fileid();
 
 
   int nbSegs=0;
@@ -494,13 +480,13 @@ int  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::t
 
   for ( int i=0; i<nbSegs; i++ ) {
 
-    if ( strcmp(segattrs[i].vid,file->nsfileinformation()->tapefilensattribute()->vid().c_str()) != 0 ) continue;
-    if ( segattrs[i].side != file->nsfileinformation()->tapefilensattribute()->side()) continue;
-    if ( segattrs[i].fseq != file->nsfileinformation()->tapefilensattribute()->fseq() ) continue;
+    if ( strcmp(segattrs[i].vid,file->nsFileInformation()->tapeFileNsAttribute()->vid().c_str()) != 0 ) continue;
+    if ( segattrs[i].side != file->nsFileInformation()->tapeFileNsAttribute()->side()) continue;
+    if ( segattrs[i].fseq != file->nsFileInformation()->tapeFileNsAttribute()->fseq() ) continue;
     // check the blockid depending the positioning method
-    if ( file->positioncommandcode() == TPPOSIT_BLKID) {
+    if ( file->positionCommandCode() == TPPOSIT_BLKID) {
       // get the block id in the nameserver format
-      unsigned int repackBlockid= file->nsfileinformation()->tapefilensattribute()->blockId(); 
+      unsigned int repackBlockid= file->nsFileInformation()->tapeFileNsAttribute()->blockId(); 
       char convertedBlockId[4];
       convertedBlockId[3]=(unsigned char)((repackBlockid/0x1000000)%0x100);
       convertedBlockId[2]=(unsigned char)((repackBlockid/0x10000)%0x100);
@@ -509,14 +495,14 @@ int  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::t
       if ( memcmp(segattrs[i].blockid,convertedBlockId, sizeof(convertedBlockId)) != 0)  continue;
     }
 
-    if ( segattrs[i].fsec != file->nsfileinformation()->tapefilensattribute()->fsec() ) continue;
-    if ( segattrs[i].copyno != file->nsfileinformation()->tapefilensattribute()->copyNo() ) continue;
+    if ( segattrs[i].fsec != file->nsFileInformation()->tapeFileNsAttribute()->fsec() ) continue;
+    if ( segattrs[i].copyno != file->nsFileInformation()->tapeFileNsAttribute()->copyNo() ) continue;
     
     // All the checks were successfull let's check checksum  
 
     // check the checksum (mandatory)
 
-    if (file->nsfileinformation()->tapefilensattribute()->checksumName().empty() && segattrs[i].checksum_name[0] == '\0') return 1; // no checksum
+    if (file->nsFileInformation()->tapeFileNsAttribute()->checksumName().empty() && segattrs[i].checksum_name[0] == '\0') return 1; // no checksum
 
     if (segattrs[i].checksum_name[0] == '\0') {
       // old segment without checksum we set the new one
@@ -524,10 +510,10 @@ int  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::t
       memcpy(&newSegattrs,&segattrs[i],sizeof(segattrs));
       strncpy(
               newSegattrs->checksum_name,
-              file->nsfileinformation()->tapefilensattribute()->checksumName().c_str(),
+              file->nsFileInformation()->tapeFileNsAttribute()->checksumName().c_str(),
               CA_MAXCKSUMNAMELEN
               );
-      newSegattrs->checksum = file->nsfileinformation()->tapefilensattribute()->checksum(); 
+      newSegattrs->checksum = file->nsFileInformation()->tapeFileNsAttribute()->checksum(); 
 
       int rc = Cns_updateseg_checksum(
                                   castorFileId.server,
@@ -541,7 +527,7 @@ int  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::t
 
     }
 
-    if (strcmp(file->nsfileinformation()->tapefilensattribute()->checksumName().c_str(),segattrs[i].checksum_name)== 0 && file->nsfileinformation()->tapefilensattribute()->checksum() != segattrs[i].checksum ) return 0; // checksum is correct
+    if (strcmp(file->nsFileInformation()->tapeFileNsAttribute()->checksumName().c_str(),segattrs[i].checksum_name)== 0 && file->nsFileInformation()->tapeFileNsAttribute()->checksum() != segattrs[i].checksum ) return 0; // checksum is correct
 
     else return -1; // you cannot change checksum on the fly
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VmgrTapeGatewayHelper.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/01/19 17:20:34 $ $Author: gtaur $
+ * @(#)$RCSfile: VmgrTapeGatewayHelper.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/01/27 09:51:44 $ $Author: gtaur $
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -50,7 +50,7 @@ namespace castor {
 	std::string getDgnFromVmgr(castor::stager::Tape* tape);
 	int getTapeStatusInVmgr(castor::stager::Tape* tape);	
 	int resetBusyTape(castor::stager::Tape* tape);
-	int updateTapeInVmgr(std::string vid, castor::tape::tapegateway::FileMigratedResponse* file);
+	int updateTapeInVmgr(castor::tape::tapegateway::FileMigratedResponse* file);
       };
     
     } // end of namespace tapegateway

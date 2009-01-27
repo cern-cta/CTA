@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StartWorkerResponse.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/01/19 17:20:33 $ $Author: gtaur $
+ * @(#)$RCSfile: StartWorkerResponse.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/01/27 09:51:44 $ $Author: gtaur $
  *
  * 
  *
@@ -147,6 +147,22 @@ namespace castor {
         }
 
         /**
+         * Get the value of m_transactionId
+         * @return the value of m_transactionId
+         */
+        u_signed64 transactionId() const {
+          return m_transactionId;
+        }
+
+        /**
+         * Set the value of m_transactionId
+         * @param new_var the new value of m_transactionId
+         */
+        void setTransactionId(u_signed64 new_var) {
+          m_transactionId = new_var;
+        }
+
+        /**
          * Get the value of m_id
          * The id of this object
          * @return the value of m_id
@@ -171,6 +187,8 @@ namespace castor {
         std::string m_errorMessage;
 
         std::string m_vid;
+
+        u_signed64 m_transactionId;
 
         /// The id of this object
         u_signed64 m_id;

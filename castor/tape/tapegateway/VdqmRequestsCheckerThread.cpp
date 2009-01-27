@@ -26,6 +26,8 @@
 
 #include "castor/tape/tapegateway/VdqmRequestsCheckerThread.hpp"
 #include "castor/tape/tapegateway/VdqmTapeGatewayHelper.hpp"
+#include "castor/tape/tapegateway/VmgrTapeGatewayHelper.hpp"
+#include "castor/stager/Stream.hpp"
 
 #include <sys/types.h>
 #include <stdlib.h>
@@ -54,6 +56,8 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
 {
 
   std::vector<castor::tape::tapegateway::TapeRequestState*> tapeRequests;
+  std::vector<castor::stager::Tape*> tapesToReset;
+  std::vector<castor::stager::Tape*>::iterator tapeToReset;
   
   try {
      // get tapes to check from the db
@@ -91,6 +95,12 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
     if (ret<0) {
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 13, 1, params);
       tapesToRetry.push_back(*tapeRequest);
+      if ((*tapeRequest)->accessMode() == 1 && (*tapeRequest)->status() == ONGOING ){
+	castor::stager::Tape* tapeToReset= new 	castor::stager::Tape();
+	tapeToReset->setTpmode(1);
+	tapeToReset->setVid((*tapeRequest)->streamMigration()->tape()->vid());
+	tapesToReset.push_back(tapeToReset);
+      }
     }
     tapeRequest++;
   }
@@ -100,6 +110,23 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
   try {
     if (!tapesToRetry.empty())
       m_dbSvc->updateCheckedTapes(tapesToRetry); 
+
+    // if the db update succeeded I update vmgr releasing the busy tapes     
+
+    tapeToReset = tapesToReset.begin();
+    while (tapeToReset != tapesToReset.end()){
+      castor::tape::tapegateway::VmgrTapeGatewayHelper vmgrHelper;
+      int ret= vmgrHelper.resetBusyTape(*tapeToReset);
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("VID", (*tapeToReset)->vid())};
+      if (ret<0) 
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 69, 1, params);
+      else 
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 70, 1, params);
+    
+      tapeToReset++;
+    }
+
   } catch (castor::exception::Exception e){
      
     // impossible to update the information of checked tape
@@ -120,9 +147,17 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
     *tapeRequest=NULL;
     tapeRequest++;
   }
+
+  tapeToReset=tapesToReset.begin();
+  while (tapeToReset != tapesToReset.end()){
+    if (*tapeToReset) delete *tapeToReset;
+    *tapeToReset=NULL;
+    tapeToReset++;
+  }
+
   tapeRequests.clear();
   tapesToRetry.clear();
-  
+  tapesToReset.clear();  
 
 }
 

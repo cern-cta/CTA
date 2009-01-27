@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NsFileInformation.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/01/19 17:20:33 $ $Author: gtaur $
+ * @(#)$RCSfile: NsFileInformation.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/01/27 09:51:44 $ $Author: gtaur $
  *
  * 
  *
@@ -44,8 +44,9 @@ castor::tape::tapegateway::NsFileInformation::NsFileInformation() throw() :
   m_fileid(0),
   m_fileSize(0),
   m_lastModificationTime(0),
+  m_lastKnownFileName(""),
   m_id(0),
-  m_tapefilensattribute(0) {
+  m_tapeFileNsAttribute(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -71,11 +72,12 @@ void castor::tape::tapegateway::NsFileInformation::print(std::ostream& stream,
   stream << indent << "fileid : " << m_fileid << std::endl;
   stream << indent << "fileSize : " << m_fileSize << std::endl;
   stream << indent << "lastModificationTime : " << m_lastModificationTime << std::endl;
+  stream << indent << "lastKnownFileName : " << m_lastKnownFileName << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "Tapefilensattribute : " << std::endl;
-  if (0 != m_tapefilensattribute) {
-    m_tapefilensattribute->print(stream, indent + "  ", alreadyPrinted);
+  stream << indent << "TapeFileNsAttribute : " << std::endl;
+  if (0 != m_tapeFileNsAttribute) {
+    m_tapeFileNsAttribute->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
   }

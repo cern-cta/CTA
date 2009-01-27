@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamFileMigratedResponseCnv.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/01/19 17:33:01 $ $Author: gtaur $
+ * @(#)$RCSfile: StreamFileMigratedResponseCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/01/27 09:52:12 $ $Author: gtaur $
  *
  * 
  *
@@ -39,7 +39,6 @@
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
-#include "castor/tape/tapegateway/FileDiskLocation.hpp"
 #include "castor/tape/tapegateway/FileMigratedResponse.hpp"
 #include "castor/tape/tapegateway/NsFileInformation.hpp"
 #include "osdep.h"
@@ -92,6 +91,7 @@ void castor::io::StreamFileMigratedResponseCnv::createRep(castor::IAddress* addr
   ad->stream() << obj->type();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
+  ad->stream() << obj->transactionId();
   ad->stream() << obj->id();
 }
 
@@ -111,6 +111,9 @@ castor::IObject* castor::io::StreamFileMigratedResponseCnv::createObj(castor::IA
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
+  u_signed64 transactionId;
+  ad->stream() >> transactionId;
+  object->setTransactionId(transactionId);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
@@ -134,8 +137,7 @@ void castor::io::StreamFileMigratedResponseCnv::marshalObject(castor::IObject* o
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->nsfileinformation(), address, alreadyDone);
-    cnvSvc()->marshalObject(obj->filedisklocation(), address, alreadyDone);
+    cnvSvc()->marshalObject(obj->nsFileInformation(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -156,11 +158,8 @@ castor::IObject* castor::io::StreamFileMigratedResponseCnv::unmarshalObject(cast
   castor::tape::tapegateway::FileMigratedResponse* obj = 
     dynamic_cast<castor::tape::tapegateway::FileMigratedResponse*>(object);
   ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objNsfileinformation = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setNsfileinformation(dynamic_cast<castor::tape::tapegateway::NsFileInformation*>(objNsfileinformation));
-  ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objFiledisklocation = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setFiledisklocation(dynamic_cast<castor::tape::tapegateway::FileDiskLocation*>(objFiledisklocation));
+  castor::IObject* objNsFileInformation = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setNsFileInformation(dynamic_cast<castor::tape::tapegateway::NsFileInformation*>(objNsFileInformation));
   return object;
 }
 

@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileRecalledResponse.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/01/19 17:20:33 $ $Author: gtaur $
+ * @(#)$RCSfile: FileRecalledResponse.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/01/27 09:51:44 $ $Author: gtaur $
  *
  * 
  *
@@ -47,7 +47,6 @@ namespace castor {
 
       // Forward declarations
       class NsFileInformation;
-      class FileDiskLocation;
 
       /**
        * class FileRecalledResponse
@@ -136,6 +135,22 @@ namespace castor {
         }
 
         /**
+         * Get the value of m_transactionId
+         * @return the value of m_transactionId
+         */
+        u_signed64 transactionId() const {
+          return m_transactionId;
+        }
+
+        /**
+         * Set the value of m_transactionId
+         * @param new_var the new value of m_transactionId
+         */
+        void setTransactionId(u_signed64 new_var) {
+          m_transactionId = new_var;
+        }
+
+        /**
          * Get the value of m_id
          * The id of this object
          * @return the value of m_id
@@ -154,51 +169,35 @@ namespace castor {
         }
 
         /**
-         * Get the value of m_nsfileinformation
-         * @return the value of m_nsfileinformation
+         * Get the value of m_nsFileInformation
+         * @return the value of m_nsFileInformation
          */
-        NsFileInformation* nsfileinformation() const {
-          return m_nsfileinformation;
+        NsFileInformation* nsFileInformation() const {
+          return m_nsFileInformation;
         }
 
         /**
-         * Set the value of m_nsfileinformation
-         * @param new_var the new value of m_nsfileinformation
+         * Set the value of m_nsFileInformation
+         * @param new_var the new value of m_nsFileInformation
          */
-        void setNsfileinformation(NsFileInformation* new_var) {
-          m_nsfileinformation = new_var;
+        void setNsFileInformation(NsFileInformation* new_var) {
+          m_nsFileInformation = new_var;
         }
 
         /**
-         * Get the value of m_positioncommandcode
-         * @return the value of m_positioncommandcode
+         * Get the value of m_positionCommandCode
+         * @return the value of m_positionCommandCode
          */
-        PositionCommandCode positioncommandcode() const {
-          return m_positioncommandcode;
+        PositionCommandCode positionCommandCode() const {
+          return m_positionCommandCode;
         }
 
         /**
-         * Set the value of m_positioncommandcode
-         * @param new_var the new value of m_positioncommandcode
+         * Set the value of m_positionCommandCode
+         * @param new_var the new value of m_positionCommandCode
          */
-        void setPositioncommandcode(PositionCommandCode new_var) {
-          m_positioncommandcode = new_var;
-        }
-
-        /**
-         * Get the value of m_filedisklocation
-         * @return the value of m_filedisklocation
-         */
-        FileDiskLocation* filedisklocation() const {
-          return m_filedisklocation;
-        }
-
-        /**
-         * Set the value of m_filedisklocation
-         * @param new_var the new value of m_filedisklocation
-         */
-        void setFiledisklocation(FileDiskLocation* new_var) {
-          m_filedisklocation = new_var;
+        void setPositionCommandCode(PositionCommandCode new_var) {
+          m_positionCommandCode = new_var;
         }
 
       private:
@@ -207,14 +206,14 @@ namespace castor {
 
         std::string m_errorMessage;
 
+        u_signed64 m_transactionId;
+
         /// The id of this object
         u_signed64 m_id;
 
-        NsFileInformation* m_nsfileinformation;
+        NsFileInformation* m_nsFileInformation;
 
-        PositionCommandCode m_positioncommandcode;
-
-        FileDiskLocation* m_filedisklocation;
+        PositionCommandCode m_positionCommandCode;
 
       }; /* end of class FileRecalledResponse */
 

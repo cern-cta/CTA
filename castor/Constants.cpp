@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.69 $ $Release$ $Date: 2009/01/19 17:33:00 $ $Author: gtaur $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.70 $ $Release$ $Date: 2009/01/27 09:52:34 $ $Author: gtaur $
  *
  *
  *
@@ -205,7 +205,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
 
   "TapeRecall",
  
-  "FileDiskLocation",
+  "DELETED TYPE",
   "FileMigratedResponse",
   "FileRecalledResponse",
   "FileToMigrateRequest",

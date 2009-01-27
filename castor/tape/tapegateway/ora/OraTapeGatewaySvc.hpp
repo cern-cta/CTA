@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/01/19 17:20:34 $ $Author: gtaur $
+ * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/01/27 09:51:45 $ $Author: gtaur $
  *
  * Implementation of the ITapeGatewaySvc for Oracle
  *
@@ -129,7 +129,7 @@ namespace castor {
          * Get the best file to migrate at a certain point
          */
 
-        virtual castor::tape::tapegateway::FileToMigrateResponse* fileToMigrate(std::string vid)
+	virtual castor::tape::tapegateway::FileToMigrateResponse* fileToMigrate(castor::tape::tapegateway::FileToMigrateRequest* req)
           throw (castor::exception::Exception);
 
         /*
@@ -137,22 +137,22 @@ namespace castor {
 	 * calling fileMigrated or fileFailedToMigrate
          */
 
-        virtual void  fileMigrationUpdate (castor::tape::tapegateway::FileMigratedResponse* resp)
+        virtual castor::tape::tapegateway::FileUpdateResponse*  fileMigrationUpdate (castor::tape::tapegateway::FileMigratedResponse* resp)
           throw (castor::exception::Exception);
 
         /*
 	 * Get the best fileToRecall at a certain moment
          */
-        virtual castor::tape::tapegateway::FileToRecallResponse* fileToRecall
-        (std::string vid)
+	
+	virtual castor::tape::tapegateway::FileToRecallResponse* fileToRecall(castor::tape::tapegateway::FileToRecallRequest* req)
           throw (castor::exception::Exception);
+
 
         /**
          * Update the db for a file which has been recalled successfully or not
-         * calling extendedFileRecalled, fileRecalled and fileFailedToRecall
 	 */
-        virtual void  fileRecallUpdate(castor::tape::tapegateway::FileRecalledResponse* resp)
-          throw (castor::exception::Exception);
+
+        virtual castor::tape::tapegateway::FileUpdateResponse* fileRecallUpdate(castor::tape::tapegateway::FileRecalledResponse* resp) throw (castor::exception::Exception);
 
 	/**
 	 * Get Input for migration retries
@@ -192,13 +192,13 @@ namespace castor {
 	 * Update the database when the tape aggregator allows us to serve a request 
 	 */
 
-	virtual castor::tape::tapegateway::TapeRequestState*  updateDbStartTape(castor::tape::tapegateway::StartWorkerRequest* startReq ,std::string  vwAddress) throw (castor::exception::Exception); 
+	virtual castor::tape::tapegateway::StartWorkerResponse*  updateDbStartTape(castor::tape::tapegateway::StartWorkerRequest* startReq) throw (castor::exception::Exception); 
 
 	/*
 	 * Update the database when the tape request has been served 
 	 */
 
-	virtual void  updateDbEndTape(castor::tape::tapegateway::TapeRequestState* tapeRequest) throw (castor::exception::Exception); 
+	virtual castor::stager::Tape*  updateDbEndTape(castor::tape::tapegateway::EndWorkerRequest* endRequest) throw (castor::exception::Exception); 
 
 	
 	/*
@@ -206,12 +206,6 @@ namespace castor {
 	 */
 
 	virtual void  invalidateSegment(castor::tape::tapegateway::FileToRecallResponse* file) throw (castor::exception::Exception); 
-
-	/*
-	 * To clean up the db at the start up
-	 */
-
-	virtual std::vector<castor::stager::Tape*> tapeGatewayCleanUp() throw (castor::exception::Exception);
 
 
       private:
@@ -324,12 +318,6 @@ namespace castor {
         /// SQL statement object for function invalidateSegmnet  
         oracle::occi::Statement *m_invalidateSegmentStatement;
 
-
-	// SQL statement object for function tapeGatewayCleanUp
-        static const std::string s_tapeGatewayCleanUpStatementString;
-
-        /// SQL statement object for function tapeGatewayCleanUp  
-        oracle::occi::Statement *m_tapeGatewayCleanUpStatement;
 
       }; // end of class OraTapeGateway
 

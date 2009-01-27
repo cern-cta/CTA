@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamFileToRecallResponseCnv.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/01/19 17:33:01 $ $Author: gtaur $
+ * @(#)$RCSfile: StreamFileToRecallResponseCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/01/27 09:52:12 $ $Author: gtaur $
  *
  * 
  *
@@ -39,10 +39,11 @@
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
-#include "castor/tape/tapegateway/FileDiskLocation.hpp"
+#include "castor/tape/tapegateway/ConvertCommandCode.hpp"
 #include "castor/tape/tapegateway/FileToRecallResponse.hpp"
 #include "castor/tape/tapegateway/NsFileInformation.hpp"
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
+#include "castor/tape/tapegateway/RecordFormatCode.hpp"
 #include "osdep.h"
 #include <string>
 
@@ -93,8 +94,14 @@ void castor::io::StreamFileToRecallResponseCnv::createRep(castor::IAddress* addr
   ad->stream() << obj->type();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
+  ad->stream() << obj->path();
+  ad->stream() << obj->transactionId();
+  ad->stream() << obj->concat();
+  ad->stream() << obj->deferedAllocation();
   ad->stream() << obj->id();
-  ad->stream() << obj->positioncommandcode();
+  ad->stream() << obj->positionCommandCode();
+  ad->stream() << obj->convertCommandCode();
+  ad->stream() << obj->recordFormatCode();
 }
 
 //------------------------------------------------------------------------------
@@ -113,12 +120,30 @@ castor::IObject* castor::io::StreamFileToRecallResponseCnv::createObj(castor::IA
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
+  std::string path;
+  ad->stream() >> path;
+  object->setPath(path);
+  u_signed64 transactionId;
+  ad->stream() >> transactionId;
+  object->setTransactionId(transactionId);
+  bool concat;
+  ad->stream() >> concat;
+  object->setConcat(concat);
+  bool deferedAllocation;
+  ad->stream() >> deferedAllocation;
+  object->setDeferedAllocation(deferedAllocation);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
-  int positioncommandcode;
-  ad->stream() >> positioncommandcode;
-  object->setPositioncommandcode((castor::tape::tapegateway::PositionCommandCode)positioncommandcode);
+  int positionCommandCode;
+  ad->stream() >> positionCommandCode;
+  object->setPositionCommandCode((castor::tape::tapegateway::PositionCommandCode)positionCommandCode);
+  int convertCommandCode;
+  ad->stream() >> convertCommandCode;
+  object->setConvertCommandCode((castor::tape::tapegateway::ConvertCommandCode)convertCommandCode);
+  int recordFormatCode;
+  ad->stream() >> recordFormatCode;
+  object->setRecordFormatCode((castor::tape::tapegateway::RecordFormatCode)recordFormatCode);
   return object;
 }
 
@@ -139,8 +164,7 @@ void castor::io::StreamFileToRecallResponseCnv::marshalObject(castor::IObject* o
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->filedisklocation(), address, alreadyDone);
-    cnvSvc()->marshalObject(obj->nsfileinformation(), address, alreadyDone);
+    cnvSvc()->marshalObject(obj->nsFileInformation(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -161,11 +185,8 @@ castor::IObject* castor::io::StreamFileToRecallResponseCnv::unmarshalObject(cast
   castor::tape::tapegateway::FileToRecallResponse* obj = 
     dynamic_cast<castor::tape::tapegateway::FileToRecallResponse*>(object);
   ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objFiledisklocation = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setFiledisklocation(dynamic_cast<castor::tape::tapegateway::FileDiskLocation*>(objFiledisklocation));
-  ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objNsfileinformation = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setNsfileinformation(dynamic_cast<castor::tape::tapegateway::NsFileInformation*>(objNsfileinformation));
+  castor::IObject* objNsFileInformation = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setNsFileInformation(dynamic_cast<castor::tape::tapegateway::NsFileInformation*>(objNsFileInformation));
   return object;
 }
 

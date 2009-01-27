@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: EndWorkerResponse.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/01/19 17:20:33 $ $Author: gtaur $
+ * @(#)$RCSfile: EndWorkerResponse.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/01/27 09:51:44 $ $Author: gtaur $
  *
  * 
  *
@@ -41,6 +41,7 @@
 castor::tape::tapegateway::EndWorkerResponse::EndWorkerResponse() throw() :
   m_errorCode(0),
   m_errorMessage(""),
+  m_transactionId(0),
   m_id(0) {
 }
 
@@ -65,6 +66,7 @@ void castor::tape::tapegateway::EndWorkerResponse::print(std::ostream& stream,
   // Output of all members
   stream << indent << "errorCode : " << m_errorCode << std::endl;
   stream << indent << "errorMessage : " << m_errorMessage << std::endl;
+  stream << indent << "transactionId : " << m_transactionId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

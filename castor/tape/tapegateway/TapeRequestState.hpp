@@ -173,6 +173,22 @@ namespace castor {
         }
 
         /**
+         * Get the value of m_nbRetry
+         * @return the value of m_nbRetry
+         */
+        int nbRetry() const {
+          return m_nbRetry;
+        }
+
+        /**
+         * Set the value of m_nbRetry
+         * @param new_var the new value of m_nbRetry
+         */
+        void setNbRetry(int new_var) {
+          m_nbRetry = new_var;
+        }
+
+        /**
          * Get the value of m_id
          * The id of this object
          * @return the value of m_id
@@ -247,6 +263,8 @@ namespace castor {
         u_signed64 m_lastVdqmPingTime;
 
         int m_vdqmVolReqId;
+
+        int m_nbRetry;
 
         /// The id of this object
         u_signed64 m_id;

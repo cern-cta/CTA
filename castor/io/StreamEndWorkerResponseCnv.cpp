@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamEndWorkerResponseCnv.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/01/19 17:33:01 $ $Author: gtaur $
+ * @(#)$RCSfile: StreamEndWorkerResponseCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/01/27 09:52:12 $ $Author: gtaur $
  *
  * 
  *
@@ -90,6 +90,7 @@ void castor::io::StreamEndWorkerResponseCnv::createRep(castor::IAddress* address
   ad->stream() << obj->type();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
+  ad->stream() << obj->transactionId();
   ad->stream() << obj->id();
 }
 
@@ -109,6 +110,9 @@ castor::IObject* castor::io::StreamEndWorkerResponseCnv::createObj(castor::IAddr
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
+  u_signed64 transactionId;
+  ad->stream() >> transactionId;
+  object->setTransactionId(transactionId);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

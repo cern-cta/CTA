@@ -44,7 +44,7 @@ TAPEGATEWAYDAEMONBIN_SRCS = TapeGatewayDaemon.cpp WorkerThread.cpp \
 	VmgrTapeGatewayHelper.cpp VdqmTapeGatewayHelper.cpp NsTapeGatewayHelper.cpp RmMasterTapeGatewayHelper.cpp
 
 TAPEGATEWAY_MESSAGES_SRCS = \
-	ConvertCommandCode.cpp FileDiskLocation.cpp FileMigratedResponse.cpp \
+	ConvertCommandCode.cpp FileMigratedResponse.cpp \
         FileRecalledResponse.cpp FileToMigrateRequest.cpp FileToMigrateResponse.cpp \
         FileToRecallRequest.cpp  FileToRecallResponse.cpp  NsFileInformation.cpp \
 	PositionCommandCode.cpp RecordFormatCode.cpp  StartWorkerRequest.cpp \
@@ -53,7 +53,7 @@ TAPEGATEWAY_MESSAGES_SRCS = \
 	TapeFileNsAttribute.cpp
 
 TAPEGATEWAY_IO_SRCS = \
-	../../io/StreamFileDiskLocationCnv.cpp  ../../io/StreamFileMigratedResponseCnv.cpp \
+	 ../../io/StreamFileMigratedResponseCnv.cpp \
 	../../io/StreamFileRecalledResponseCnv.cpp \
 	../../io/StreamFileToMigrateRequestCnv.cpp ../../io/StreamFileToMigrateResponseCnv.cpp \
 	../../io/StreamFileToRecallRequestCnv.cpp ../../io/StreamFileToRecallResponseCnv.cpp \

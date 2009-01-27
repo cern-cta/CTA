@@ -99,6 +99,22 @@ namespace castor {
         /* End of IObject abstract class */
         /*********************************/
         /**
+         * Get the value of m_transactionId
+         * @return the value of m_transactionId
+         */
+        u_signed64 transactionId() const {
+          return m_transactionId;
+        }
+
+        /**
+         * Set the value of m_transactionId
+         * @param new_var the new value of m_transactionId
+         */
+        void setTransactionId(u_signed64 new_var) {
+          m_transactionId = new_var;
+        }
+
+        /**
          * Get the value of m_id
          * The id of this object
          * @return the value of m_id
@@ -117,6 +133,8 @@ namespace castor {
         }
 
       private:
+
+        u_signed64 m_transactionId;
 
         /// The id of this object
         u_signed64 m_id;

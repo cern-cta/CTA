@@ -39,6 +39,7 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::FileToRecallRequest::FileToRecallRequest() throw() :
+  m_transactionId(0),
   m_id(0) {
 }
 
@@ -61,6 +62,7 @@ void castor::tape::tapegateway::FileToRecallRequest::print(std::ostream& stream,
     return;
   }
   // Output of all members
+  stream << indent << "transactionId : " << m_transactionId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

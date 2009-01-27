@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileUpdateResponse.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/01/19 17:20:33 $ $Author: gtaur $
+ * @(#)$RCSfile: FileUpdateResponse.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/01/27 09:51:44 $ $Author: gtaur $
  *
  * 
  *
@@ -42,8 +42,9 @@
 castor::tape::tapegateway::FileUpdateResponse::FileUpdateResponse() throw() :
   m_errorCode(0),
   m_errorMessage(""),
+  m_transactionId(0),
   m_id(0),
-  m_nsfileinformation(0) {
+  m_nsFileInformation(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -67,11 +68,12 @@ void castor::tape::tapegateway::FileUpdateResponse::print(std::ostream& stream,
   // Output of all members
   stream << indent << "errorCode : " << m_errorCode << std::endl;
   stream << indent << "errorMessage : " << m_errorMessage << std::endl;
+  stream << indent << "transactionId : " << m_transactionId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "Nsfileinformation : " << std::endl;
-  if (0 != m_nsfileinformation) {
-    m_nsfileinformation->print(stream, indent + "  ", alreadyPrinted);
+  stream << indent << "NsFileInformation : " << std::endl;
+  if (0 != m_nsFileInformation) {
+    m_nsFileInformation->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
   }

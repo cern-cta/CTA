@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NsFileInformation.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/01/19 17:20:33 $ $Author: gtaur $
+ * @(#)$RCSfile: NsFileInformation.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/01/27 09:51:44 $ $Author: gtaur $
  *
  * 
  *
@@ -166,6 +166,22 @@ namespace castor {
         }
 
         /**
+         * Get the value of m_lastKnownFileName
+         * @return the value of m_lastKnownFileName
+         */
+        std::string lastKnownFileName() const {
+          return m_lastKnownFileName;
+        }
+
+        /**
+         * Set the value of m_lastKnownFileName
+         * @param new_var the new value of m_lastKnownFileName
+         */
+        void setLastKnownFileName(std::string new_var) {
+          m_lastKnownFileName = new_var;
+        }
+
+        /**
          * Get the value of m_id
          * The id of this object
          * @return the value of m_id
@@ -184,19 +200,19 @@ namespace castor {
         }
 
         /**
-         * Get the value of m_tapefilensattribute
-         * @return the value of m_tapefilensattribute
+         * Get the value of m_tapeFileNsAttribute
+         * @return the value of m_tapeFileNsAttribute
          */
-        TapeFileNsAttribute* tapefilensattribute() const {
-          return m_tapefilensattribute;
+        TapeFileNsAttribute* tapeFileNsAttribute() const {
+          return m_tapeFileNsAttribute;
         }
 
         /**
-         * Set the value of m_tapefilensattribute
-         * @param new_var the new value of m_tapefilensattribute
+         * Set the value of m_tapeFileNsAttribute
+         * @param new_var the new value of m_tapeFileNsAttribute
          */
-        void setTapefilensattribute(TapeFileNsAttribute* new_var) {
-          m_tapefilensattribute = new_var;
+        void setTapeFileNsAttribute(TapeFileNsAttribute* new_var) {
+          m_tapeFileNsAttribute = new_var;
         }
 
       private:
@@ -209,10 +225,12 @@ namespace castor {
 
         u_signed64 m_lastModificationTime;
 
+        std::string m_lastKnownFileName;
+
         /// The id of this object
         u_signed64 m_id;
 
-        TapeFileNsAttribute* m_tapefilensattribute;
+        TapeFileNsAttribute* m_tapeFileNsAttribute;
 
       }; /* end of class NsFileInformation */
 

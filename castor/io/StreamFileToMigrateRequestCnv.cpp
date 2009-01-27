@@ -87,6 +87,7 @@ void castor::io::StreamFileToMigrateRequestCnv::createRep(castor::IAddress* addr
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
+  ad->stream() << obj->transactionId();
   ad->stream() << obj->id();
 }
 
@@ -100,6 +101,9 @@ castor::IObject* castor::io::StreamFileToMigrateRequestCnv::createObj(castor::IA
   // create the new Object
   castor::tape::tapegateway::FileToMigrateRequest* object = new castor::tape::tapegateway::FileToMigrateRequest();
   // Now retrieve and set members
+  u_signed64 transactionId;
+  ad->stream() >> transactionId;
+  object->setTransactionId(transactionId);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

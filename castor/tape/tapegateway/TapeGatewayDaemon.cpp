@@ -153,40 +153,7 @@ int main(int argc, char* argv[]){
 
     tgDaemon.runAsStagerSuperuser();
 
-    // clean up the database
-
-    std::vector<castor::stager::Tape*> tapesToFree;
-
-    try {
-       tapesToFree=oraSvc->tapeGatewayCleanUp();
-
-    } catch (castor::exception::Exception e) {
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("errorCode",sstrerror(e.code())),
-	 castor::dlf::Param("errorMessage",e.getMessage().str())
-	};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3, 2, params);
-      return -1;
-    }
-
-    castor::tape::tapegateway::VmgrTapeGatewayHelper vmgrHelper;
-    std::vector<castor::stager::Tape*>::iterator tape= tapesToFree.begin();
-    while (tape != tapesToFree.end()){
-      int ret= vmgrHelper.resetBusyTape(*tape);
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("VID", (*tape)->vid())};
-      if (ret<0) 
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 69, 1, params);
-      else 
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 70, 1, params);
-      if (*tape) delete *tape;
-      *tape=NULL;
-      tape++;
-    }
-
-    tapesToFree.clear();
-
-    // send request to vdmq
+     // send request to vdmq
     
     tgDaemon.addThreadPool(
 			   new castor::server::SignalThreadPool("ProducerOfVdqmRequestsThread", new castor::tape::tapegateway::VdqmRequestsProducerThread(oraSvc,tgDaemon.listenPort()), DEFAULT_SLEEP_INTERVAL)); // port used just to be sent to vdqm
@@ -220,7 +187,7 @@ int main(int argc, char* argv[]){
     // recaller/migration dynamic thread pool
 
     tgDaemon.addThreadPool(
-			   new castor::server::TCPListenerThreadPool("WorkerThread", new castor::tape::tapegateway::WorkerThread(),tgDaemon.listenPort(),true, 1, WORKER_THREADS_THRESHOLD )); // TODO min e max 
+			   new castor::server::TCPListenerThreadPool("WorkerThread", new castor::tape::tapegateway::WorkerThread(oraSvc),tgDaemon.listenPort(),true, 1, WORKER_THREADS_THRESHOLD )); // TODO min e max 
     
     // start the daemon
 
@@ -292,7 +259,7 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
    {32, "RecallerErrorHandlerThread: impossible to update the db with the result of the retry policy"},
    {33, "Worker: impossible to connect to the database"},
    {34, "Worker: impossible to get client information"},
-   {35, "Worker: received a request"},
+   {35, "Worker: received a StartWorkerRequest"},
    {36, "Worker: received an invalid request"},
    {37, "Worker: impossible to read the request"},
    {38, "Worker: impossible to update the db"},
