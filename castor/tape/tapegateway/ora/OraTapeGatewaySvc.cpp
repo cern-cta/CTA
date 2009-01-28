@@ -120,6 +120,8 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_updateDbE
 /// SQL statement for function invalidateSegment
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_invalidateSegmentStatementString="BEGIN invalidateSegment(:1,:2,:3);END;";
 
+/// SQL statement for function invalidateTapeCopy
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_invalidateTapeCopyStatementString="BEGIN invalidateTapeCopy(:1,:2,:3,:4);END;";
 
 //------------------------------------------------------------------------------
 // OraTapeGatewaySvc
@@ -144,7 +146,8 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   m_getRepackVidStatement(0),
   m_updateDbStartTapeStatement(0),
   m_updateDbEndTapeStatement(0),
-  m_invalidateSegmentStatement(0){
+  m_invalidateSegmentStatement(0),
+  m_invalidateTapeCopyStatement(0){
 }
 
 //------------------------------------------------------------------------------
@@ -195,7 +198,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_updateDbStartTapeStatement) deleteStatement(m_updateDbStartTapeStatement);
     if ( m_updateDbEndTapeStatement) deleteStatement(m_updateDbEndTapeStatement);
     if ( m_invalidateSegmentStatement) deleteStatement(m_invalidateSegmentStatement);
-
+    if ( m_invalidateTapeCopyStatement) deleteStatement(m_invalidateTapeCopyStatement);
   } catch (oracle::occi::SQLException e) {};
 
   // Now reset all pointers to 0
@@ -218,6 +221,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   m_updateDbStartTapeStatement = 0;
   m_updateDbEndTapeStatement = 0; 
   m_invalidateSegmentStatement = 0;
+  m_invalidateTapeCopyStatement = 0;
 
 }
 
@@ -1416,6 +1420,38 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::invalidateSegment(castor
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in invalidate segment"
+      << std::endl << e.what();
+    throw ex;
+  }
+
+}
+
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::invalidateTapeCopy(castor::tape::tapegateway::FileToMigrateResponse* file) throw (castor::exception::Exception){
+ 
+ try {
+    // Check whether the statements are ok
+
+    if (0 == m_invalidateSegmentStatement) {
+      m_invalidateTapeCopyStatement =
+        createStatement(s_invalidateTapeCopyStatementString);
+ 
+    }
+
+    m_invalidateSegmentStatement->setDouble(1,(double)file->nsFileInformation()->fileid());
+    m_invalidateSegmentStatement->setString(2,file->nsFileInformation()->nshost());
+    m_invalidateSegmentStatement->setInt(3,file->nsFileInformation()->tapeFileNsAttribute()->copyNo());
+
+    m_invalidateTapeCopyStatement->setInt(4,file->errorCode());
+    // execute the statement 
+
+    m_invalidateTapeCopyStatement->executeUpdate();
+
+
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in invalidate tapecopy"
       << std::endl << e.what();
     throw ex;
   }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VmgrTapeGatewayHelper.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/01/27 09:51:44 $ $Author: gtaur $
+ * @(#)$RCSfile: VmgrTapeGatewayHelper.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2009/01/28 15:42:30 $ $Author: gtaur $
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -34,6 +34,7 @@
 #include "castor/stager/Tape.hpp"
 
 #include "castor/tape/tapegateway/FileMigratedResponse.hpp"
+#include "castor/exception/Exception.hpp"
 
 
 namespace castor {
@@ -45,12 +46,12 @@ namespace castor {
       class VmgrTapeGatewayHelper {
         public:
 	
-	castor::stager::Tape* getTapeForStream(castor::stager::Stream* streamToResolve);
+	castor::stager::Tape* getTapeForStream(castor::stager::Stream* streamToResolve) throw (castor::exception::Exception);
 	
-	std::string getDgnFromVmgr(castor::stager::Tape* tape);
-	int getTapeStatusInVmgr(castor::stager::Tape* tape);	
-	int resetBusyTape(castor::stager::Tape* tape);
-	int updateTapeInVmgr(castor::tape::tapegateway::FileMigratedResponse* file);
+	std::string getDgnFromVmgr(castor::stager::Tape* tape) throw (castor::exception::Exception);
+	int getTapeStatusInVmgr(castor::stager::Tape* tape) throw (castor::exception::Exception);	
+	void resetBusyTape(castor::stager::Tape* tape) throw (castor::exception::Exception);
+	void updateTapeInVmgr(castor::tape::tapegateway::FileMigratedResponse* file) throw (castor::exception::Exception);
       };
     
     } // end of namespace tapegateway

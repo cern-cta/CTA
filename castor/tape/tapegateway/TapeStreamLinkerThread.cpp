@@ -79,7 +79,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
   std::vector<std::string> vids;
   std::vector<castor::stager::Tape*> tapesUsed;
   std::vector<castor::stager::Tape*>::iterator tapeItem;
-
+  castor::stager::Tape* tapeToUse=NULL;
   VmgrTapeGatewayHelper vmgrHelper;
 
   std::vector<castor::stager::Stream*>::iterator strItem=streamsToResolve.begin();
@@ -92,9 +92,13 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
       {castor::dlf::Param("StreamId",(*strItem)->id())
       };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 17, 1, params0);
-
-    castor::stager::Tape* tapeToUse=vmgrHelper.getTapeForStream(*strItem);
-
+    try {
+      tapeToUse=vmgrHelper.getTapeForStream(*strItem);
+    } catch(castor::exception::Exception e) {
+      strItem++;
+      continue;
+      // in case of errors we don't change the status from TO_BE_RESOLVED to TO_BE_SENT_TO_VDQM -- NO NEED OF WAITSPACE status
+    }
     if ( tapeToUse != NULL ){ 
       // got the tape
       castor::dlf::Param params[] =
@@ -108,8 +112,6 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
       tapesUsed.push_back(tapeToUse);
       
     }
-    
-    // in case of errors we don't change the status from TO_BE_RESOLVED to TO_BE_SENT_TO_VDQM -- NO NEED OF WAITSPACE status
    
     strItem++;
 
@@ -129,8 +131,12 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
       castor::dlf::Param params[] =
 	{castor::dlf::Param("VID",(*tapeItem)->vid())};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 20, 1, params);
-
-      vmgrHelper.resetBusyTape(*tapeItem);
+      try {
+	vmgrHelper.resetBusyTape(*tapeItem);
+      } catch (castor::exception::Exception e){
+	// log TODO
+	
+      }
       tapeItem++;
     }
   }

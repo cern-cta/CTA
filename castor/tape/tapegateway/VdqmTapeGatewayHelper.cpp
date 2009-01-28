@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VdqmTapeGatewayHelper.cpp,v $ $Revision: 1.1 $ $Release$ 
- * $Date: 2009/01/19 17:20:34 $ $Author: gtaur $
+ * @(#)$RCSfile: VdqmTapeGatewayHelper.cpp,v $ $Revision: 1.2 $ $Release$ 
+ * $Date: 2009/01/28 15:42:30 $ $Author: gtaur $
  *
  *
  *
@@ -37,7 +37,7 @@
 #include "net.h"
 #include "vdqm_api.h"
 
-int castor::tape::tapegateway::VdqmTapeGatewayHelper::submitTapeToVdqm( castor::stager::Tape* tape, std::string dgn, int port) {
+int castor::tape::tapegateway::VdqmTapeGatewayHelper::submitTapeToVdqm( castor::stager::Tape* tape, std::string dgn, int port) throw (castor::exception::Exception){
 
   // send vol request
 
@@ -47,26 +47,31 @@ int castor::tape::tapegateway::VdqmTapeGatewayHelper::submitTapeToVdqm( castor::
   
   strcpy(vidForC, tape->vid().c_str());
   strcpy (dgnForC, dgn.c_str());
-
+  
+  serrno=0;
   int ret = vdqm_SendAggregatorVolReq (NULL,&reqId,vidForC,dgnForC,NULL,NULL,tape->tpmode(),port);
 
-  if (ret<0) return -1;
+  if (ret<0) {
+    castor::exception::Exception ex(serrno);
+    ex.getMessage()
+      << "castor::tape::tapegateway::VdqmTapeGatewayHelper::submitTapeToVdqm"
+      <<" vdqm_SendAggregatorVolReq failed";
+    throw ex;
+  }
+
   return reqId;
 
 }
 
- int castor::tape::tapegateway::VdqmTapeGatewayHelper::checkVdqmForRequest( castor::tape::tapegateway::TapeRequestState* tapeRequest) {
-
+ void castor::tape::tapegateway::VdqmTapeGatewayHelper::checkVdqmForRequest( castor::tape::tapegateway::TapeRequestState* tapeRequest) throw (castor::exception::Exception) {
+   serrno=0;
    int rc = vdqm_PingServer(NULL,NULL,tapeRequest->vdqmVolReqId()); // I don't give the dgn
 
-   if ( rc == -1 ) {
-     int save_serrno = serrno;
-     if ( (save_serrno != EVQHOLD) && (save_serrno != SECOMERR) ) {
-       // for these errors we send it again.
-       return -1;
-     }
-     // ignored other errors
-
+   if (rc<0) {
+     castor::exception::Exception ex(serrno);
+     ex.getMessage()
+       << "castor::tape::tapegateway::VdqmTapeGatewayHelper::submitTapeToVdqm"
+       << "vdqm_PingServer failed";
+     throw ex;
    }
-   return 0; 
-}
+ }

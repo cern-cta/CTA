@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NsTapeGatewayHelper.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/01/19 17:20:33 $ $Author: gtaur $
+ * @(#)$RCSfile: NsTapeGatewayHelper.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/01/28 15:42:30 $ $Author: gtaur $
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -45,17 +45,17 @@ namespace castor {
       class NsTapeGatewayHelper {
         public:
 	
-	int updateMigratedFile(castor::tape::tapegateway::FileMigratedResponse* file) throw (castor::exception::Exception);
+	void updateMigratedFile(castor::tape::tapegateway::FileMigratedResponse* file) throw (castor::exception::Exception);
      
-	int updateRepackedFile( tape::tapegateway::FileMigratedResponse* file , std::string repackVid ) throw (castor::exception::Exception);
+	void updateRepackedFile( tape::tapegateway::FileMigratedResponse* file , std::string repackVid ) throw (castor::exception::Exception);
 
-	int  checkRecalledFile(castor::tape::tapegateway::FileRecalledResponse* file) throw (castor::exception::Exception);
+	void  checkRecalledFile(castor::tape::tapegateway::FileRecalledResponse* file) throw (castor::exception::Exception);
       
-	int  checkFileToMigrate(castor::tape::tapegateway::FileToMigrateResponse* file) throw (castor::exception::Exception);
+	void  checkFileToMigrate(castor::tape::tapegateway::FileToMigrateResponse* file) throw (castor::exception::Exception);
       
-	int  checkFileToRecall(tape::tapegateway::FileToRecallResponse* file) throw (castor::exception::Exception);
+	void  checkFileToRecall(tape::tapegateway::FileToRecallResponse* file) throw (castor::exception::Exception);
 
-	int  getFileOwner(castor::tape::tapegateway::NsFileInformation* file, u_signed64 &uid, u_signed64 &gid ) throw (castor::exception::Exception);
+	void  getFileOwner(castor::tape::tapegateway::NsFileInformation* file, u_signed64 &uid, u_signed64 &gid ) throw (castor::exception::Exception);
 
       };
     

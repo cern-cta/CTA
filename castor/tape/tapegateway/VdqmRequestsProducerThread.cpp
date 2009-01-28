@@ -89,31 +89,36 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
     if  ((*tapeItem)->accessMode() == 0)
       tape=(*tapeItem)->tapeRecall();
     else tape=(*tapeItem)->streamMigration()->tape();
-
-    std::string dgn = vmgrHelper.getDgnFromVmgr(tape);
+    std::string dgn;
+    try {
+      dgn = vmgrHelper.getDgnFromVmgr(tape);
  
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("VID", tape->vid())
-      };
+    } catch (castor::exception::Exception e) {
+      // log TODO
+    }
     
     if (!dgn.empty()) {
       
       // tape is fine
 
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 8, 1, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 8, 0, NULL);
       
       VdqmTapeGatewayHelper vdqmHelper;
-      int vdqmReqId= vdqmHelper.submitTapeToVdqm(tape, dgn, m_port );
-      
+      int vdqmReqId=0;
+      try {
+	vdqmReqId= vdqmHelper.submitTapeToVdqm(tape, dgn, m_port );
+      } catch ( castor::exception::Exception e){
+	//log TODO
+      }
       if ( vdqmReqId  > 0 ){
 	// submition went fine	
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 9, 1, params);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 9, 0, NULL);
 	(*tapeItem)->setVdqmVolReqId(vdqmReqId);
 	submittedTapes.push_back(*tapeItem);
       }
       
-      tapeItem++;
     }
+    tapeItem++;
   }
   
   try {
