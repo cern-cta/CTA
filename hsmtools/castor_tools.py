@@ -17,7 +17,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.7 $ $Release$ $Date: 2008/11/03 15:28:42 $ $Author: itglp $
+# * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.8 $ $Release$ $Date: 2009/01/28 17:39:02 $ $Author: sponcec3 $
 # *
 # * utility functions for castor tools written in python
 # *
@@ -60,8 +60,8 @@ def getStagerDBConnectParams():
     checkValueFound("DB name", dbname, inst, 'ORASTAGERCONFIG')
     return user, passwd, dbname
 
-def getNSDBConnectParam():
-    line = open('/etc/castor/NSCONFIG').readline()
+def getNSDBConnectParam(file):
+    line = open('/etc/castor/' + file).readline()
     line = line[0:len(line)-1] #drop trailing \n
     sl = line.find('/')
     if sl == -1:
@@ -72,9 +72,9 @@ def getNSDBConnectParam():
     user = line[0:sl]
     passwd = line[sl+1:ar]
     dbname = line[ar+1:]
-    checkValueFound("user name", user, 'nameserver', 'NSCONFIG')
-    checkValueFound("password", passwd, 'nameserver', 'NSCONFIG')
-    checkValueFound("DB name", dbname, 'nameserver', 'NSCONFIG')
+    checkValueFound("user name", user, 'nameserver', file)
+    checkValueFound("password", passwd, 'nameserver', file)
+    checkValueFound("DB name", dbname, 'nameserver', file)
     return user, passwd, dbname
 
 def importOracle():
@@ -95,7 +95,11 @@ def connectToStager():
     return connectToDB(user, passwd, dbname)
 
 def connectToNS():
-    user, passwd, dbname = getNSDBConnectParam()
+    user, passwd, dbname = getNSDBConnectParam('NSCONFIG')
+    return connectToDB(user, passwd, dbname)
+
+def connectToDLF():
+    user, passwd, dbname = getNSDBConnectParam('DLFCONFIG')
     return connectToDB(user, passwd, dbname)
 
 def disconnectDB(connection):
