@@ -41,6 +41,13 @@ my @FsStatus = ("FILESYSTEM_PRODUCTION",
                 "FILESYSTEM_DRAINING",
                 "FILESYSTEM_DISABLED",
                 "FILESYSTEM_NONE");
+my @TcStatus = ("TAPECOPY_CREATED",
+		"TAPECOPY_TOBEMIGRATED",
+		"TAPECOPY_WAITINSTREAMS",
+		"TAPECOPY_SELECTED",
+		"TAPECOPY_TOBERECALLED",
+		"TAPECOPY_STAGED",
+		"TAPECOPY_FAILED");
 my @ServerStatus = ("DISKSERVER_PRODUCTION",
                     "DISKSERVER_DRAINING",
                     "DISKSERVER_DISABLED",
@@ -88,13 +95,28 @@ $diskpool{0} = "none";
 sub getstatus() {
     my $filepath = shift;
 
-    my $filestatus = `/usr/bin/nsls -l --class $filepath`;
-    ($fileclassid, $perm, $one, $user, $group, $nslsfilesize, $nsmonth, $nsdate, $nstime, $rest) = split (/\s+/, $filestatus);
+    my $filestatus = `/usr/bin/nsls -l --class $filepath 2>&1`;
+    my $shit;
+    if ($filestatus =~ m/No such file or directory/i) {
+      printf ("nsls -l --class: $filestatus");
+      exit(1);
+    }
+    if ($filestatus =~ m/Permission denied/i) {
+      printf ("nsls -l --class: $filestatus");
+      exit(1);
+    }
+    #($shit, $fileclassid, $perm, $one, $user, $group, $nslsfilesize, $nsmonth, $nsdate, $nstime, $rest) = split (/\s+/, $filestatus);
+    ( $fileclassid, $perm, $one, $user, $group, $nslsfilesize, $nsmonth, $nsdate, $nstime, $rest) = split (/\s+/, $filestatus);
+    if ($fileclassid !~ /\d+/) {
+      ($shit, $fileclassid, $perm, $one, $user, $group, $nslsfilesize, $nsmonth, $nsdate, $nstime, $rest) = split (/\s+/, $filestatus);
+    }
+    printf ("fileclassid= $fileclassid\n") if ($debug);
+    printf ("perm= $perm\n") if ($debug);
     printf ("nsls -l --class: $filestatus");
+    undef @vids;
+    undef @checksums;
     if ($perm =~ m/^m\S+$/i ){ # migrated
       printf ("File migrated\n");
-      undef @vids;
-      undef @checksums;
       open (NSLST, "/usr/bin/nsls -T --checksum $filepath |") or die "cannot open nsls -T --checksum $filepath - $!\n";
       while (<NSLST>) {
         ($segmentstat, $copynum, $filesegmentnum, $vid, $fileseqnumintape, $blockid, $segmentsize, $compfactor, $checksumtype, $checksum, $filename) = split (/\s+/, $_);
@@ -103,6 +125,8 @@ sub getstatus() {
         push (@checksums, $checksum);
         if ($segmentsize != $nslsfilesize){
           printf ("Warning: NSLS SIZE=$nslsfilesize SEGMENT SIZE=$segmentsize,\n");
+          printf ("Could fix with segment size:\n");
+          print ("./nssetfssize $filepath $segmentsize\n");
         }
       }
       close(NSLST);
@@ -265,7 +289,13 @@ while (@results) {
       }
       $Sth->finish;
     }
-  
+
+    if (not defined $diskpool{$fsystem}) {
+      $diskpool{$fsystem} = "undefined";
+    }
+    if (not defined $mountpoint{$fsystem}) {
+      $mountpoint{$fsystem} = "undefined";
+    }
     if ($stat <= $#DiskCopyStatus) {
       $readable = $DiskCopyStatus[$stat];
     } else {
@@ -274,7 +304,11 @@ while (@results) {
     if ($status{$fsystem} <= $#FsStatus) {
       $readablefs = $FsStatus[$status{$fsystem}];
     } else {
-      $readablefs = "Unknown status : " . $status{$fsystem};
+      if (defined $status{$fsystem}) {
+        $readablefs = "Unknown status : " . $status{$fsystem};
+      } else {
+        $readablefs = "UndefinedFilesystemStatus";
+      }
     }
     if ($serverstat{$fsystem} <= $#ServerStatus) {
       $readableserver = $ServerStatus[$serverstat{$fsystem}];
@@ -307,21 +341,130 @@ while (@results) {
       my $diskchecksumout = `./adler32 $server{$fsystem}:$mountpoint{$fsystem}$path 2>&1`;
       print ("adler32: $diskchecksumout\n") if ($debug);
       my ($first, $equalsign, $deccheck, $hexcheck) = split (/\s+/, $diskchecksumout);
-      my ($firstzero, $diskchecksum) = split (/x/, $hexcheck);
       for my $tapechecksum (@checksums) {
         my $vid = shift(@vids);
         unshift(@vids,$vid);
-        if ( $tapechecksum eq $diskchecksum) {
+        my $dectapechecksum = hex($tapechecksum); # tapechecksum hex without 0x
+        my $decdiskchecksum = oct($hexcheck); # hexcheck has 0x in front
+        # Avoid string comparison below
+        if ( $dectapechecksum == $decdiskchecksum) {
           print ("checksum OK\n");
-          print ("disk checksum = $diskchecksum tape checksum = $tapechecksum VID = $vid\n") if ($debug);
+          print ("disk checksum = $hexcheck $decdiskchecksum tape checksum = $tapechecksum $dectapechecksum VID = $vid\n") if ($debug);
         } else {
           print ("checksum WRONG\n");
-          print ("disk checksum = $diskchecksum tape checksum = $tapechecksum VID = $vid\n") if ($debug);
+          print ("disk checksum = $hexcheck $decdiskchecksum tape checksum = $tapechecksum $dectapechecksum VID = $vid\n") if ($debug);
         }
       }
     }
   
-    if ($readable eq 'DISKCOPY_STAGEOUT') {
+    if ($readable eq 'DISKCOPY_CANBEMIGR') {
+      my $Sth = $Dbh->prepare(qq{
+        select id, status
+        from castor_stager.tapecopy
+        where castorfile in (
+          select id
+          from castor_stager.castorfile
+          where fileid=$fileid)
+               });
+      $Sth->execute;
+      my @tcids;
+      while (my @list = $Sth->fetchrow_array) {
+        die("columns mismatch: @list") unless @list == 2;
+        my ($id, $tapecopystat) = @list;
+        my $readableTc;
+        if ($tapecopystat <= $#TcStatus) {
+          $readableTc = $TcStatus[$tapecopystat];
+        } else {
+          $readableTc = "Unknown status : " . $tapecopystat;
+        }
+
+        printf ("TapeCopy ID=$id $readableTc\n");
+        push (@tcids, $id);
+      }
+      while (@tcids) {
+        my $tapecopyid = shift(@tcids);
+        my $instream = 0;
+        my $Sth = $Dbh->prepare(qq{select stream.id, stream.status, tapepool.name from stream, tapepool where tapepool.id=stream.tapepool and stream.id in 
+            (select parent from stream2tapecopy where child=$tapecopyid)
+            });
+        $Sth->execute;
+        while (my @list = $Sth->fetchrow_array) {
+          die("columns mismatch: @list") unless @list == 3;
+          $instream = 1;
+          my ($stream, $streamstatus, $tapepool) = @list;
+          printf ("TapeCopy in Stream ID=$stream STATUS=$streamstatus TAPEPOOL=$tapepool\n");
+          if ($streamstatus == 3){
+            my $Sth2 = $Dbh->prepare(qq{
+                select id, vid, status
+                from castor_stager.tape
+                where tpmode=1 and id in
+                ( select tape from stream where id=$stream)
+              });
+            $Sth2->execute;
+            while (my @list2 = $Sth2->fetchrow_array) {
+              my $invalid=0;
+              die("columns mismatch: @list2") unless @list2 == 3;
+              my ($id, $dbvid, $tapedbstat) = @list2;
+              printf ("    Tape ID=$id VID=$dbvid STATUS=$tapedbstat\n");
+              my $shoqstat = `showqueues -x |grep $dbvid`;
+              printf ("    Tape queue status = ");
+              if (length($shoqstat) != 0 ) {
+                printf ("$shoqstat");
+              }else{
+                printf ("nothing in showqueues for VID=$dbvid\n");
+              }
+            }
+            $Sth2->finish;
+          } # if streamstatus == 3
+        } # while
+        if (not $instream) {
+          printf ("TapeCopy not in any Stream\n");
+        }
+      }
+      $Sth->finish;
+      if ($dorfdir) {
+        print ("# file in CANBEMIGR\n");
+        my $rfdirstat = `rfdir $server{$fsystem}:$mountpoint{$fsystem}$path 2>&1`;
+        if ($rfdirstat =~ m/\(error\s+\d+\s+on\s+\S+\)/i) {
+          if ($rfdirstat =~ m/No such file or directory/i) {
+            print ("# no file in server\n");
+          } else {
+            print ("rfdir failed : $rfdirstat");
+          }
+        } else {
+          my ($rfperm, $rfone, $rfuser, $rfgroup, $rfdirfilesize, $rfmonth, $rfdate, $rftime, $rfrest) = split (/\s+/, $rfdirstat);
+          #if ($perm !~ m/^m\S+$/i ){ # not migrated
+            #if (1){ # filesize 0 in ns
+             if ($nslsfilesize == 0){ # filesize 0 in ns
+              if ($rfdirfilesize != 0){ # filesize not 0 in diskserver
+                print ("# filesize 0 in ns and not 0 in diskserver\n");
+                print ("./nssetfssize $filepath $rfdirfilesize\n");
+                print ("update castorfile set filesize=$rfdirfilesize where filesize=0 and id=$castorfile;\n");
+                print ("commit;\n");
+                #print ("call putDoneFunc($castorfile,$rfdirfilesize,0);\n");
+                #print ("commit;\n");
+              } else { # filesize 0 both in ns and diskserver
+                print ("# filesize 0 both in ns and diskserver\n");
+                print ("/usr/bin/cleanLostFiles $diskcopyid\n");
+              }
+            } elsif ($nslsfilesize == $rfdirfilesize) {
+              if ( "$rfmonth $rfdate $rftime" eq "$nsmonth $nsdate $nstime") {
+                #print ("call putDoneFunc($castorfile,$rfdirfilesize,0);\n");
+                #print ("commit;\n");
+              }
+            } elsif ($nslsfilesize != $rfdirfilesize) {
+              print ("# size mismatch\n");
+              print ("# diskcopy from $rfmonth $rfdate $rftime\n");
+              print ("# ns entry from $nsmonth $nsdate $nstime\n");
+              print ("# Could fix with\n");
+              print ("./nssetfssize $filepath $rfdirfilesize\n");
+              print ("update castorfile set filesize=$rfdirfilesize where filesize=$nslsfilesize and id=$castorfile;\n");
+              print ("commit;\n");
+            }
+          #}
+        }
+      }
+    } elsif ($readable eq 'DISKCOPY_STAGEOUT') {
       print ("# file in STAGEOUT\n");
       my $rfdirstat = `rfdir $server{$fsystem}:$mountpoint{$fsystem}$path 2>&1`;
       if ($rfdirstat =~ m/\(error\s+\d+\s+on\s+\S+\)/i) {
@@ -334,9 +477,10 @@ while (@results) {
       } else {
         my ($rfperm, $rfone, $rfuser, $rfgroup, $rfdirfilesize, $rfmonth, $rfdate, $rftime, $rfrest) = split (/\s+/, $rfdirstat);
         if ($perm !~ m/^m\S+$/i ){ # not migrated
-          if ($nslsfilesize == 0){ # filesize 0 in ns
+          #if (1){ # filesize 0 in ns
+           if ($nslsfilesize == 0){ # filesize 0 in ns
             if ($rfdirfilesize != 0){ # filesize not 0 in diskserver
-              print ("# filesize 0 in ns and not 0 in diskserver");
+              print ("# filesize 0 in ns and not 0 in diskserver\n");
               print ("./nssetfssize $filepath $rfdirfilesize\n");
               print ("update castorfile set filesize=$rfdirfilesize where filesize=0 and id=$castorfile;\n");
               print ("commit;\n");
@@ -352,9 +496,53 @@ while (@results) {
               print ("commit;\n");
             }
           }
+        } else {
+          print ("# Could fix with\n");
+          print ("./nssetfssize $filepath $rfdirfilesize\n");
+          print ("update castorfile set filesize=$rfdirfilesize where filesize=$nslsfilesize and id=$castorfile;\n");
+          print ("call putDoneFunc($castorfile,$rfdirfilesize,0);\n");
+          print ("commit;\n");
         }
       }
-    } elsif ($readable eq 'DISKCOPY_WAITTAPERECALL') {
+    } elsif ($readable eq 'DISKCOPY_WAITDISK2DISKCOPY') {
+      my $Sth = $Dbh->prepare(qq{
+        select status,count(*)
+        from castor_stager.subrequest
+        where castorfile in (
+          select id
+          from castor_stager.castorfile
+          where fileid=$fileid) group by status
+               });
+      $Sth->execute;
+      printf ("SubRequest STATUS\tCOUNT(*)\n");
+      while (my @list = $Sth->fetchrow_array) {
+        my $invalid=0;
+        die("columns mismatch: @list") unless @list == 2;
+        my ($subrequeststat, $subrequestcount) = @list;
+      printf ("           $subrequeststat\t\t$subrequestcount\n");
+      }
+      $Sth->finish;
+
+      print ("diskcopyid=$diskcopyid\n") if ($debug);
+      $Sth = $Dbh->prepare(qq{
+        select id, status
+        from castor_stager.subrequest
+        where diskcopy=$diskcopyid 
+               });
+      $Sth->execute;
+      while (my @list = $Sth->fetchrow_array) {
+        my $invalid=0;
+        die("columns mismatch: @list") unless @list == 2;
+        my ($subrequestid, $subrequeststat) = @list;
+        printf ("SubRequest ID=$subrequestid, STATUS=$subrequeststat\n");
+        printf ("Could eventually restart SubRequest in stager DB with\n");
+        printf ("update diskcopy set status=7 where status=1 and id=$diskcopyid;\n");
+        printf ("update subrequest set status=1 where status=$subrequeststat and id=$subrequestid;\n");
+        printf ("commit;\n");
+      }
+      $Sth->finish;
+    } elsif (($readable eq 'DISKCOPY_WAITTAPERECALL') or ($readable eq 'DISKCOPY_FAILED')) {
+    #} else {
       while (@vids) {
         my $vid = shift(@vids);
         my $shoqstat = `showqueues -x |grep $vid`;
@@ -393,7 +581,16 @@ while (@results) {
         my $invalid=0;
         die("columns mismatch: @list") unless @list == 2;
         my ($id, $tapecopystat) = @list;
-        printf ("TapeCopy ID=$id STATUS=$tapecopystat\n");
+        my $readableTc;
+        if ($tapecopystat <= $#TcStatus) {
+          $readableTc = $TcStatus[$tapecopystat];
+        } else {
+          $readableTc = "Unknown status : " . $tapecopystat;
+        }
+        printf ("TapeCopy ID=$id $readableTc\n");
+        #printf ("delete from Id2Type where id=$id;\n");
+        #printf ("delete from tapecopy where id=$id;\n");
+        #printf ("commit;\n");
         push (@tcids, $id);
       }
       $Sth->finish;
@@ -411,6 +608,9 @@ while (@results) {
           die("columns mismatch: @list") unless @list == 4;
           my ($id, $segmentstat, $vid, $tapeid) = @list;
           printf ("Segment ID=$id STATUS=$segmentstat pointing to tape ID=$tapeid VID=$vid\n");
+          #printf ("delete from Id2Type where id=$id;\n");
+          #printf ("delete from segment where id=$id;\n");
+          #printf ("commit;\n");
         }
         $Sth->finish;
       }
@@ -444,10 +644,10 @@ while (@results) {
         die("columns mismatch: @list") unless @list == 2;
         my ($subrequestid, $subrequeststat) = @list;
         printf ("SubRequest ID=$subrequestid, STATUS=$subrequeststat\n");
-        #printf ("Could eventually restart SubRequest in stager DB with\n");
-        #printf ("update diskcopy set status=7 where status=2 and id=$diskcopyid;\n");
-        #printf ("update subrequest set status=1 where status=$subrequeststat and id=$subrequestid;\n");
-        #printf ("commit;\n");
+        printf ("Could eventually restart SubRequest in stager DB with\n");
+        printf ("update diskcopy set status=7 where status=2 and id=$diskcopyid;\n");
+        printf ("update subrequest set status=1 where status=$subrequeststat and id=$subrequestid;\n");
+        printf ("commit;\n");
       }
       $Sth->finish;
   
