@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.53 $ $Date: 2009/01/05 16:17:29 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.54 $ $Date: 2009/01/29 13:53:27 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -501,7 +501,7 @@ unsigned int *demountforce;
 	case 0:
 		return (0);
 	case RBT_FAST_RETRY:
-                tplogit (func, "RBT_FAST_RETRY %s", msg);
+                tplogit (func, "RBT_FAST_RETRY %s\n", msg);
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "Message", TL_MSG_PARAM_STR, msg );        
@@ -537,7 +537,7 @@ unsigned int *demountforce;
 		return (-1);
 	case RBT_UNLD_DMNT:
                 /* add a delay of  RBTUNLDDMNTI */
-                tplogit (func, "RBT_UNLD_DMNT %s", msg);
+                tplogit (func, "RBT_UNLD_DMNT %s\n", msg);
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "Message", TL_MSG_PARAM_STR, msg );        
