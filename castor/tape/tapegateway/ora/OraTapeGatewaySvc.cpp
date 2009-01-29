@@ -1427,20 +1427,22 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::invalidateSegment(castor
 }
 
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::invalidateTapeCopy(castor::tape::tapegateway::FileToMigrateResponse* file) throw (castor::exception::Exception){
+
+
+
  
  try {
+
     // Check whether the statements are ok
 
-    if (0 == m_invalidateSegmentStatement) {
+    if (0 == m_invalidateTapeCopyStatement) {
       m_invalidateTapeCopyStatement =
         createStatement(s_invalidateTapeCopyStatementString);
- 
     }
 
-    m_invalidateSegmentStatement->setDouble(1,(double)file->nsFileInformation()->fileid());
-    m_invalidateSegmentStatement->setString(2,file->nsFileInformation()->nshost());
-    m_invalidateSegmentStatement->setInt(3,file->nsFileInformation()->tapeFileNsAttribute()->copyNo());
-
+    m_invalidateTapeCopyStatement->setDouble(1,(double)file->nsFileInformation()->fileid());
+    m_invalidateTapeCopyStatement->setString(2,file->nsFileInformation()->nshost());
+    m_invalidateTapeCopyStatement->setInt(3,file->nsFileInformation()->tapeFileNsAttribute()->copyNo());
     m_invalidateTapeCopyStatement->setInt(4,file->errorCode());
     // execute the statement 
 

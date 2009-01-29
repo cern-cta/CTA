@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.706 $ $Date: 2009/01/27 11:02:02 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.707 $ $Date: 2009/01/29 14:22:32 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -2000,3 +2000,18 @@ OPEN tapeToFree FOR
  SELECT vid, side, tpmode, errmsgtxt, errorCode, severity, vwaddress, id,  stream,status FROM tape WHERE id MEMBER OF tIds;
 END;
 /
+
+/* SQL Function invalidateTapeCopy */
+
+create or replace PROCEDURE invalidateTapeCopies
+(tapecopyIds IN castor."cnumList") -- tapecopies not in the nameserver
+AS
+BEGIN
+  FORALL i IN tapecopyIds.FIRST .. tapecopyIds.LAST
+    UPDATE TapeCopy SET status = 6 WHERE id = tapecopyIds(i) AND status = 7;
+  COMMIT;
+END;
+/
+
+
+
