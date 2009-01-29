@@ -59,7 +59,8 @@
 #define  TAPEGATEWAY_DEFAULT_PORT 62801
 #define  DEFAULT_SLEEP_INTERVAL   10
 #define  VDQM_TIME_OUT_INTERVAL 600 // Timeout between two polls on a VDQM request 
-#define WORKER_THREADS_THRESHOLD 240
+#define  MIN_WORKER_THREADS 5
+#define  MAX_WORKER_THREADS 240
 
 extern "C" {
   char* getconfent(const char *, const char *, int);
@@ -146,7 +147,29 @@ int main(int argc, char* argv[]){
     //recaller
     if (!retryRecallPolicyName.empty() && !recallFunctionName.empty())
       retryRecallSvc = new castor::infoPolicy::TapeRetryPySvc(retryRecallPolicyName,recallFunctionName);
+
+    // Get the min and max number of thread used by the Worker
     
+    int minThreadsNumber = MIN_WORKER_THREADS;
+    int maxThreadsNumber = MAX_WORKER_THREADS;
+
+    char* tmp=NULL;
+    if ( (tmp= getconfent("TAPEGATEWAY","MINWORKERTHREADS",0)) != NULL ){ 
+      char* dp = tmp;
+      minThreadsNumber= strtoul(tmp, &dp, 0);      
+      if (*dp != 0 || minThreadsNumber <=0 ) {
+        minThreadsNumber = MIN_WORKER_THREADS;
+      }
+    }
+
+    if ( (tmp= getconfent("TAPEGATEWAY","MAXWORKERTHREADS",0)) != NULL ){ 
+      char* dp = tmp;
+      maxThreadsNumber= strtoul(tmp, &dp, 0);      
+      if (*dp != 0 || maxThreadsNumber <=0 ) {
+        maxThreadsNumber = MAX_WORKER_THREADS;
+      }
+    }
+
     tgDaemon.parseCommandLine(argc, argv);
 
     // run as stage st
@@ -187,7 +210,7 @@ int main(int argc, char* argv[]){
     // recaller/migration dynamic thread pool
 
     tgDaemon.addThreadPool(
-			   new castor::server::TCPListenerThreadPool("WorkerThread", new castor::tape::tapegateway::WorkerThread(oraSvc),tgDaemon.listenPort(),true, 1, WORKER_THREADS_THRESHOLD )); // TODO min e max 
+			   new castor::server::TCPListenerThreadPool("WorkerThread", new castor::tape::tapegateway::WorkerThread(oraSvc),tgDaemon.listenPort(),true, minThreadsNumber, maxThreadsNumber )); 
     
     // start the daemon
 
