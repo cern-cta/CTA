@@ -20,7 +20,7 @@
  *
  *
  *
- * @author Steven Murray Steven.Murray@cern.ch
+ * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
 #include "castor/exception/Internal.hpp"
@@ -37,7 +37,7 @@
 // marshallUint8
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::Marshaller::marshallUint8(uint8_t src,
-  char * &dst) throw (castor::exception::Exception) {
+  char * &dst) throw(castor::exception::Exception) {
 
   marshallInteger(src, dst);
 }
@@ -57,7 +57,7 @@ void castor::tape::aggregator::Marshaller::unmarshallUint8(const char * &src,
 // marshallUint16
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::Marshaller::marshallUint16(uint16_t src,
-  char * &dst) throw (castor::exception::Exception) {
+  char * &dst) throw(castor::exception::Exception) {
 
   marshallInteger(src, dst);
 }
@@ -77,7 +77,7 @@ void castor::tape::aggregator::Marshaller::unmarshallUint16(const char * &src,
 // marshallUint32
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::Marshaller::marshallUint32(uint32_t src,
-  char * &dst) throw (castor::exception::Exception) {
+  char * &dst) throw(castor::exception::Exception) {
 
   marshallInteger(src, dst);
 }
@@ -97,7 +97,7 @@ void castor::tape::aggregator::Marshaller::unmarshallUint32(const char * &src,
 // marshallInt32
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::Marshaller::marshallInt32(int32_t src,
-  char * &dst) throw (castor::exception::Exception) {
+  char * &dst) throw(castor::exception::Exception) {
 
   marshallInteger(src, dst);
 }
@@ -117,7 +117,7 @@ void castor::tape::aggregator::Marshaller::unmarshallInt32(const char * &src,
 // marshallUint64
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::Marshaller::marshallUint64(uint64_t src,
-  char * &dst) throw (castor::exception::Exception) {
+  char * &dst) throw(castor::exception::Exception) {
 
   marshallInteger(src, dst);
 }
@@ -178,7 +178,7 @@ void castor::tape::aggregator::Marshaller::marshallString(
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::Marshaller::unmarshallString(const char * &src,
   size_t &srcLen, char *dst, const size_t dstLen)
-  throw (castor::exception::Exception) {
+  throw(castor::exception::Exception) {
 
   if(src == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -318,7 +318,7 @@ void castor::tape::aggregator::Marshaller::unmarshallMessageHeader(
 //-----------------------------------------------------------------------------
 size_t castor::tape::aggregator::Marshaller::marshallRcpJobRequestMessage(
   char *const dst, const size_t dstLen, const RcpJobRequestMessage &src)
-  throw (castor::exception::Exception) {
+  throw(castor::exception::Exception) {
 
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -512,7 +512,7 @@ void castor::tape::aggregator::Marshaller::unmarshallRcpJobReplyMessageBody(
 //-----------------------------------------------------------------------------
 size_t castor::tape::aggregator::Marshaller::marshallRtcpTapeRequestMessage(
   char *dst, const size_t dstLen, const RtcpTapeRequestMessage &src)
-  throw (castor::exception::Exception) {
+  throw(castor::exception::Exception) {
 
   // Calculate the length of the message body
   const uint32_t len =
@@ -728,7 +728,7 @@ void castor::tape::aggregator::Marshaller::unmarshallRtcpAcknowledgeMessageBody(
 //-----------------------------------------------------------------------------
 size_t castor::tape::aggregator::Marshaller::marshallRtcpFileRequestMessage(
   char *dst, const size_t dstLen, const RtcpFileRequestMessage &src)
-  throw (castor::exception::Exception) {
+  throw(castor::exception::Exception) {
 
   // Calculate the length of the message body
   const uint32_t len =
@@ -940,7 +940,7 @@ void castor::tape::aggregator::Marshaller::unmarshallRtcpFileRequestMessageBody(
 //-----------------------------------------------------------------------------
 size_t castor::tape::aggregator::Marshaller::marshallRtcpNoMoreRequestsMessage(
   char *dst, const size_t dstLen)
-  throw (castor::exception::Exception) {
+  throw(castor::exception::Exception) {
 
   // Calculate the length of the message body
   const uint32_t len = 0;

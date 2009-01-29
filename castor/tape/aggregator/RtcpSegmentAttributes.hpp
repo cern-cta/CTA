@@ -19,7 +19,7 @@
  *
  *
  *
- * @author Steven Murray Steven.Murray@cern.ch
+ * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
 #ifndef CASTOR_TAPE_AGGREGATOR_RTCPSEGMENTATTRIBUTES

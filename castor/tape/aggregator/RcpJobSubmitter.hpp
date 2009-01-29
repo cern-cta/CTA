@@ -20,7 +20,7 @@
  *
  *
  *
- * @author Steven Murray Steven.Murray@cern.ch
+ * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 #ifndef _CASTOR_TAPE_AGGREGATOR_RCPJOBSUBMITTER_HPP_
 #define _CASTOR_TAPE_AGGREGATOR_RCPJOBSUBMITTER_HPP_

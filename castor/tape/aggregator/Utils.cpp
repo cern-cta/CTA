@@ -34,7 +34,7 @@
 // copyString
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Utils::copyString(char *const dst,
-  const char *src, const size_t n) throw (castor::exception::Exception) {
+  const char *src, const size_t n) throw(castor::exception::Exception) {
 
   const size_t srcLen = strlen(src);
 
@@ -50,84 +50,4 @@ void castor::tape::aggregator::Utils::copyString(char *const dst,
 
   strncpy(dst, src, n);
     *(dst+n-1) = '\0'; // Ensure destination is null terminated
-}
-
-
-//-----------------------------------------------------------------------------
-// createListenerSocket
-//-----------------------------------------------------------------------------
-int castor::tape::aggregator::Utils::createListenerSocket(
-  const unsigned short port) throw (castor::exception::Exception) {
-  int    socketFd = 0;
-  struct sockaddr_in address;
-
-  if ((socketFd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-    castor::exception::Exception ex(errno);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to create a listener socket";
-    
-    throw ex;
-  }
-
-  setBytes(address, 0);
-  address.sin_family = AF_INET;
-  address.sin_addr.s_addr = htonl(INADDR_ANY);
-  address.sin_port = htons(port);
-
-  if(bind(socketFd, (struct sockaddr *) &address, sizeof(address)) < 0) {
-    castor::exception::Exception ex(errno);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to bind listener socket";
-
-    throw ex;
-  }
-
-  if(listen(socketFd, LISTENBACKLOG) < 0) {
-    castor::exception::Exception ex(errno);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to mark listener socket as being a listener socket";
-
-    throw ex;
-  }
-
-  return socketFd;
-}
-
-
-//-----------------------------------------------------------------------------
-// getLocalIpAndPort
-//-----------------------------------------------------------------------------
-void castor::tape::aggregator::Utils::getLocalIpAndPort(const int socketFd,
-  unsigned long& ip, unsigned short& port)
-  throw (castor::exception::Exception) {
-
-  struct sockaddr_in address;
-  socklen_t addressLen = sizeof(address);
-
-  if(getsockname(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
-    castor::exception::Exception ex(errno);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to get socket name";
-
-    throw ex;
-  }
-
-  ip   = ntohl(address.sin_addr.s_addr);
-  port = ntohs(address.sin_port);
-}
-
-
-//------------------------------------------------------------------------------
-// printIp
-//------------------------------------------------------------------------------
-void castor::tape::aggregator::Utils::printIp(std::ostream &os,
-  const unsigned long ip) throw() {
-  os << ((ip >> 24) & 0x000000FF) << "."
-     << ((ip >> 16) & 0x000000FF) << "."
-     << ((ip >>  8) & 0x000000FF) << "."
-     << ( ip        & 0x000000FF);
 }

@@ -26,9 +26,9 @@
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/Marshaller.hpp"
+#include "castor/tape/aggregator/Net.hpp"
 #include "castor/tape/aggregator/Transceiver.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
-#include "castor/tape/aggregator/SocketHelper.hpp"
 #include "castor/tape/aggregator/Utils.hpp"
 #include "h/common.h"
 #include "h/rtcp.h"
@@ -43,9 +43,9 @@
 // getVolumeRequestIdFromRtcpd
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::
-  getVolumeRequestIdFromRtcpd(const Cuuid_t &cuuid,
-  castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
-  RtcpTapeRequestMessage &reply) throw(castor::exception::Exception) {
+  getVolumeRequestIdFromRtcpd(const int socketFd,
+  const int netReadWriteTimeout, RtcpTapeRequestMessage &reply)
+  throw(castor::exception::Exception) {
 
   // Prepare logical request for volume request ID
   RtcpTapeRequestMessage request;
@@ -68,7 +68,7 @@ void castor::tape::aggregator::Transceiver::
 
   // Send the request
   try {
-    SocketHelper::writeBytes(socket, netReadWriteTimeout, totalLen, buf);
+    Net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(SECOMERR);
 
@@ -80,7 +80,7 @@ void castor::tape::aggregator::Transceiver::
   // Receive acknowledge from RTCPD
   RtcpAcknowledgeMessage ackMsg;
   try {
-    receiveRtcpAcknowledge(cuuid, socket, netReadWriteTimeout, ackMsg);
+    receiveRtcpAcknowledge(socketFd, netReadWriteTimeout, ackMsg);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EPROTO);
 
@@ -127,7 +127,7 @@ void castor::tape::aggregator::Transceiver::
   // Receive reply from RTCPD
   Utils::setBytes(reply, '\0');
   try {
-    receiveRtcpTapeRequest(cuuid, socket, netReadWriteTimeout, reply);
+    receiveRtcpTapeRequest(socketFd, netReadWriteTimeout, reply);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EPROTO);
 
@@ -139,7 +139,7 @@ void castor::tape::aggregator::Transceiver::
 
   // Send acknowledge to RTCPD
   try {
-    sendRtcpAcknowledge(cuuid, socket, netReadWriteTimeout, ackMsg);
+    sendRtcpAcknowledge(socketFd, netReadWriteTimeout, ackMsg);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EPROTO);
 
@@ -155,9 +155,9 @@ void castor::tape::aggregator::Transceiver::
 // giveVolumeIdToRtcpd
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::giveVolumeIdToRtcpd(
-  const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &socket,
-  const int netReadWriteTimeout, RtcpTapeRequestMessage &request,
-  RtcpTapeRequestMessage &reply) throw(castor::exception::Exception) {
+  const int socketFd, const int netReadWriteTimeout,
+  RtcpTapeRequestMessage &request, RtcpTapeRequestMessage &reply)
+  throw(castor::exception::Exception) {
 
   // Marshall the message
   char buf[MSGBUFSIZ];
@@ -176,7 +176,7 @@ void castor::tape::aggregator::Transceiver::giveVolumeIdToRtcpd(
 
   // Send the message
   try {
-    SocketHelper::writeBytes(socket, netReadWriteTimeout, totalLen, buf);
+    Net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(SECOMERR);
 
@@ -188,7 +188,7 @@ void castor::tape::aggregator::Transceiver::giveVolumeIdToRtcpd(
   // Receive acknowledge from RTCPD
   RtcpAcknowledgeMessage ackMsg;
   try {
-    receiveRtcpAcknowledge(cuuid, socket, netReadWriteTimeout, ackMsg);
+    receiveRtcpAcknowledge(socketFd, netReadWriteTimeout, ackMsg);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EPROTO);
 
@@ -238,14 +238,13 @@ void castor::tape::aggregator::Transceiver::giveVolumeIdToRtcpd(
 // receiveRtcpTapeRequest
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::receiveRtcpTapeRequest(
-  const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &socket,
-  const int netReadWriteTimeout, RtcpTapeRequestMessage &request)
-  throw (castor::exception::Exception) {
+  const int socketFd, const int netReadWriteTimeout,
+  RtcpTapeRequestMessage &request) throw(castor::exception::Exception) {
 
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    SocketHelper::readBytes(socket, NETRWTIMEOUT, sizeof(headerBuf), headerBuf);
+    Net::readBytes(socketFd, NETRWTIMEOUT, sizeof(headerBuf), headerBuf);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(SECOMERR);
 
@@ -315,7 +314,7 @@ void castor::tape::aggregator::Transceiver::receiveRtcpTapeRequest(
 
   // Read the message body
   try {
-    SocketHelper::readBytes(socket, NETRWTIMEOUT, header.len, bodyBuf);
+    Net::readBytes(socketFd, NETRWTIMEOUT, header.len, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EIO);
 
@@ -347,9 +346,9 @@ void castor::tape::aggregator::Transceiver::receiveRtcpTapeRequest(
 // giveFileInfoToRtcpd
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::giveFileInfoToRtcpd(
-  const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &socket,
-  const int netReadWriteTimeout, RtcpFileRequestMessage &request,
-  RtcpFileRequestMessage &reply) throw(castor::exception::Exception) {
+  const int socketFd, const int netReadWriteTimeout,
+  RtcpFileRequestMessage &request, RtcpFileRequestMessage &reply)
+  throw(castor::exception::Exception) {
 
   // Marshall the message
   char buf[MSGBUFSIZ];
@@ -368,7 +367,7 @@ void castor::tape::aggregator::Transceiver::giveFileInfoToRtcpd(
 
   // Send the message
   try {
-    SocketHelper::writeBytes(socket, netReadWriteTimeout, totalLen, buf);
+    Net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(SECOMERR);
 
@@ -380,7 +379,7 @@ void castor::tape::aggregator::Transceiver::giveFileInfoToRtcpd(
   // Receive acknowledge from RTCPD
   RtcpAcknowledgeMessage ackMsg;
   try {
-    receiveRtcpAcknowledge(cuuid, socket, netReadWriteTimeout, ackMsg);
+    receiveRtcpAcknowledge(socketFd, netReadWriteTimeout, ackMsg);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EPROTO);
 
@@ -430,14 +429,13 @@ void castor::tape::aggregator::Transceiver::giveFileInfoToRtcpd(
 // receiveRtcpFileRequest
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::receiveRtcpFileRequest(
-  const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &socket,
-  const int netReadWriteTimeout, RtcpFileRequestMessage &request)
-  throw (castor::exception::Exception) {
+  const int socketFd, const int netReadWriteTimeout,
+  RtcpFileRequestMessage &request) throw(castor::exception::Exception) {
 
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    SocketHelper::readBytes(socket, NETRWTIMEOUT, sizeof(headerBuf), headerBuf);
+    Net::readBytes(socketFd, NETRWTIMEOUT, sizeof(headerBuf), headerBuf);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(SECOMERR);
 
@@ -507,7 +505,7 @@ void castor::tape::aggregator::Transceiver::receiveRtcpFileRequest(
 
   // Read the message body
   try {
-    SocketHelper::readBytes(socket, NETRWTIMEOUT, header.len, bodyBuf);
+    Net::readBytes(socketFd, NETRWTIMEOUT, header.len, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EIO);
 
@@ -539,15 +537,14 @@ void castor::tape::aggregator::Transceiver::receiveRtcpFileRequest(
 // receiveRtcpAcknowledge
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::receiveRtcpAcknowledge(
-  const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &socket,
-  const int netReadWriteTimeout, RtcpAcknowledgeMessage &message)
-  throw(castor::exception::Exception) {
+  const int socketFd, const int netReadWriteTimeout,
+  RtcpAcknowledgeMessage &message) throw(castor::exception::Exception) {
 
   // Read in the RTCPD acknowledge message (there is no separate header and
   // body)
   char messageBuf[3 * sizeof(uint32_t)]; // magic + request type + status
   try {
-    SocketHelper::readBytes(socket, NETRWTIMEOUT, sizeof(messageBuf),
+    Net::readBytes(socketFd, NETRWTIMEOUT, sizeof(messageBuf),
       messageBuf);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(SECOMERR);
@@ -580,9 +577,8 @@ void castor::tape::aggregator::Transceiver::receiveRtcpAcknowledge(
 // sendRtcpAcknowledge
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::sendRtcpAcknowledge(
-  const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &socket,
-  const int netReadWriteTimeout, const RtcpAcknowledgeMessage &message)
-  throw(castor::exception::Exception) {
+  const int socketFd, const int netReadWriteTimeout,
+  const RtcpAcknowledgeMessage &message) throw(castor::exception::Exception) {
 
   char buf[MSGBUFSIZ];
   size_t totalLen = 0;
@@ -600,7 +596,7 @@ void castor::tape::aggregator::Transceiver::sendRtcpAcknowledge(
   }
 
   try {
-    SocketHelper::writeBytes(socket, netReadWriteTimeout, totalLen, buf);
+    Net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(SECOMERR);
 
@@ -617,8 +613,8 @@ void castor::tape::aggregator::Transceiver::sendRtcpAcknowledge(
 // signalNoMoreRequestsToRtcpd
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::signalNoMoreRequestsToRtcpd(
-  const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &socket,
-  const int netReadWriteTimeout) throw(castor::exception::Exception) {
+  const int socketFd, const int netReadWriteTimeout)
+  throw(castor::exception::Exception) {
 
   // Marshall the message
   char buf[MSGBUFSIZ];
@@ -637,7 +633,7 @@ void castor::tape::aggregator::Transceiver::signalNoMoreRequestsToRtcpd(
 
   // Send the message
   try {
-    SocketHelper::writeBytes(socket, netReadWriteTimeout, totalLen, buf);
+    Net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(SECOMERR);
 
@@ -649,7 +645,7 @@ void castor::tape::aggregator::Transceiver::signalNoMoreRequestsToRtcpd(
   // Receive acknowledge from RTCPD
   RtcpAcknowledgeMessage ackMsg;
   try {
-    receiveRtcpAcknowledge(cuuid, socket, netReadWriteTimeout, ackMsg);
+    receiveRtcpAcknowledge(socketFd, netReadWriteTimeout, ackMsg);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EPROTO);
 
@@ -698,14 +694,13 @@ void castor::tape::aggregator::Transceiver::signalNoMoreRequestsToRtcpd(
 // receiveRcpJobRequest
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::receiveRcpJobRequest(
-  const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &socket,
-  const int netReadWriteTimeout, RcpJobRequestMessage &request)
-  throw (castor::exception::Exception) {
+  const int socketFd, const int netReadWriteTimeout,
+  RcpJobRequestMessage &request) throw(castor::exception::Exception) {
 
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    SocketHelper::readBytes(socket, NETRWTIMEOUT, sizeof(headerBuf), headerBuf);
+    Net::readBytes(socketFd, NETRWTIMEOUT, sizeof(headerBuf), headerBuf);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(SECOMERR);
 
@@ -792,7 +787,7 @@ void castor::tape::aggregator::Transceiver::receiveRcpJobRequest(
 
   // Read the message body
   try {
-    SocketHelper::readBytes(socket, NETRWTIMEOUT, header.len, bodyBuf);
+    Net::readBytes(socketFd, NETRWTIMEOUT, header.len, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EIO);
 
@@ -817,4 +812,80 @@ void castor::tape::aggregator::Transceiver::receiveRcpJobRequest(
 
     throw ie;
   }
+}
+
+
+//-----------------------------------------------------------------------------
+// giveFileListToRtcpd
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::Transceiver::giveFileListToRtcpd(
+  const int socketFd, const int netReadWriteTimeout, const uint32_t volReqId,
+  const char *const filePath, const uint32_t umask, const bool requestMoreWork)
+  throw(castor::exception::Exception) {
+
+  RtcpFileRequestMessage request;
+  RtcpFileRequestMessage reply;
+
+
+  // Give file information to RTCPD
+  {
+    Utils::setBytes(request, '\0');
+    Utils::copyString(request.filePath, filePath);
+    Utils::copyString(request.recfm, "F");
+
+    request.volReqId       = volReqId;
+    request.jobId          = -1;
+    request.stageSubReqId  = -1;
+    request.umask          = umask;
+    request.tapeFseq       = 1;
+    request.diskFseq       = 1;
+    request.blockSize      = -1;
+    request.recordLength   = -1;
+    request.retention      = -1;
+    request.defAlloc       = -1;
+    request.rtcpErrAction  = -1;
+    request.tpErrAction    = -1;
+    request.convert        = -1;
+    request.checkFid       = -1;
+    request.concat         = 1;
+    request.procStatus     = RTCP_WAITING;
+    request.err.severity   = 1;
+    request.err.maxTpRetry = -1;
+    request.err.maxCpRetry = -1;
+
+    giveFileInfoToRtcpd(socketFd, NETRWTIMEOUT, request, reply);
+
+    // TBD - process reply
+  }
+
+  if(requestMoreWork) {
+    Utils::setBytes(request, '\0');
+    Utils::copyString(request.recfm, "F");
+
+    request.volReqId       = volReqId;
+    request.jobId          = -1;
+    request.stageSubReqId  = -1;
+    request.tapeFseq       = 1;
+    request.diskFseq       = 1;
+    request.blockSize      = -1;
+    request.recordLength   = -1;
+    request.retention      = -1;
+    request.defAlloc       = -1;
+    request.rtcpErrAction  = -1;
+    request.tpErrAction    = -1;
+    request.convert        = -1;
+    request.checkFid       = -1;
+    request.concat         = 1;
+    request.procStatus     = RTCP_REQUEST_MORE_WORK;
+    request.err.severity   = 1;
+    request.err.maxTpRetry = -1;
+    request.err.maxCpRetry = -1;
+
+    giveFileInfoToRtcpd(socketFd, NETRWTIMEOUT, request, reply);
+
+    // TBD - process reply
+  }
+
+  // Signal the end of the file list to RTCPD
+  signalNoMoreRequestsToRtcpd(socketFd, NETRWTIMEOUT);
 }

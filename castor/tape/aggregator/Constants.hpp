@@ -20,7 +20,7 @@
  *
  *
  *
- * @author Steven Murray Steven.Murray@cern.ch
+ * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
 #ifndef CASTOR_TAPE_AGGREGATOR_CONSTANTS_HPP
@@ -30,15 +30,17 @@
 #include <stdlib.h>
 
 
-namespace castor {
-namespace tape {
+namespace castor     {
+namespace tape       {
 namespace aggregator {
   	
-const size_t HDRBUFSIZ      = 3 * sizeof(uint32_t);
-const size_t MSGBUFSIZ      = 1024;
-const int    NETRWTIMEOUT   = 300;
-const size_t STRERRORBUFLEN = 256;
-const int    LISTENBACKLOG  = 2;
+const size_t HDRBUFSIZ         = 3 * sizeof(uint32_t);
+const size_t HOSTNAMEBUFLEN    = 256;
+const int    LISTENBACKLOG     = 2;
+const size_t MSGBUFSIZ         = 1024;
+const int    NETRWTIMEOUT      = 300;
+const size_t SERVICENAMEBUFLEN = 256;
+const size_t STRERRORBUFLEN    = 256;
 
 } // namespace aggregator
 } // namespace tape

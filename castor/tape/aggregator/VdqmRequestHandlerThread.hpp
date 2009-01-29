@@ -29,6 +29,7 @@
 #include "castor/server/IThread.hpp"
 #include "castor/server/Queue.hpp"
 #include "castor/tape/aggregator/MessageHeader.hpp"
+#include "castor/tape/aggregator/RcpJobRequestMessage.hpp"
 
 #include <map>
 
@@ -90,13 +91,35 @@ namespace aggregator {
     castor::server::Queue m_jobQueue;
 
     /**
-     * Throws an exception if the peer host associated of the specified socket
-     * is not an authorised RCP job submitter.
+     * Processes a job submission request message from the specified
+     * connection.
      *
-     * @param socket The socket.
+     * If the processing of the request is successfull then this function will
+     * have passed the request onto RTCPD and will have given as output the
+     * contents of the job submission request and the file descriptor of the
+     * listener socket which will be used to accept callback connections from
+     * RTCPD.
+     *
+     * @param cuuid The ccuid to be used for logging.
+     * @param vdqmSocketFd The socket file descriptor of the connection from
+     * which the request is to be processed.
+     * @param jobRequest Out parameter.  The job request message structure
+     * which will be filled by this function.
+     * @rtcpdCallbackSocketFd The file descriptor of the listener socket which
+     * will be used to accept callback connections from RTCPD.
      */
-    void checkRcpJobSubmitterIsAuthorised(castor::io::AbstractTCPSocket &socket)
-      throw (castor::exception::Exception);
+    void processJobSubmissionRequest(const Cuuid_t &cuuid,
+      const int vdqmSocketFd, RcpJobRequestMessage &jobRequest,
+      int &rtcpdCallbackSocketFd) throw(castor::exception::Exception);
+
+    /**
+     * Throws an exception if the peer host associated with the specified
+     * socket is not an authorised RCP job submitter.
+     *
+     * @param socketFd The socket file descriptor.
+     */
+    void checkRcpJobSubmitterIsAuthorised(const int socketFd)
+      throw(castor::exception::Exception);
 
   }; // class VdqmRequestHandlerThread
 

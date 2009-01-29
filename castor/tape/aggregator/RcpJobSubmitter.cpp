@@ -20,7 +20,7 @@
  *
  *
  *
- * @author Steven Murray Steven.Murray@cern.ch
+ * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
 #include "castor/exception/Internal.hpp"
@@ -28,10 +28,10 @@
 #include "castor/io/ClientSocket.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/Marshaller.hpp"
+#include "castor/tape/aggregator/Net.hpp"
 #include "castor/tape/aggregator/RcpJobRequestMessage.hpp"
 #include "castor/tape/aggregator/RcpJobReplyMessage.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
-#include "castor/tape/aggregator/SocketHelper.hpp"
 #include "h/net.h"
 #include "h/osdep.h"
 #include "h/rtcp_constants.h"
@@ -151,7 +151,7 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   // Send the job submission request message to the RTCPD or tape aggregator
   // daemon
   try {
-    SocketHelper::writeBytes(socket, netReadWriteTimeout, totalLen, buf);
+    Net::writeBytes(socket.socket(), netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(SECOMERR);
 
@@ -179,7 +179,7 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    SocketHelper::readBytes(socket, NETRWTIMEOUT, sizeof(headerBuf), headerBuf);
+    Net::readBytes(socket.socket(), NETRWTIMEOUT, sizeof(headerBuf), headerBuf);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(SECOMERR);
 
@@ -267,7 +267,7 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
 
   // Read the message body
   try {
-    SocketHelper::readBytes(socket, NETRWTIMEOUT, header.len, bodyBuf);
+    Net::readBytes(socket.socket(), NETRWTIMEOUT, header.len, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(SECOMERR);
 
