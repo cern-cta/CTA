@@ -358,7 +358,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobRequestMessage(
   marshallUint32(RTCOPY_MAGIC_OLD0  , p); // Magic number
   marshallUint32(VDQM_CLIENTINFO    , p); // Request type
   marshallUint32(len                , p); // Length of message body
-  marshallUint32(src.tapeRequestID  , p);
+  marshallUint32(src.tapeRequestId  , p);
   marshallUint32(src.clientPort     , p);
   marshallUint32(src.clientEuid     , p);
   marshallUint32(src.clientEgid     , p);
@@ -395,7 +395,7 @@ void castor::tape::aggregator::Marshaller::unmarshallRcpJobRequestMessageBody(
   const char * &src, size_t &srcLen, RcpJobRequestMessage &dst)
   throw(castor::exception::Exception) {
 
-  unmarshallUint32(src, srcLen, dst.tapeRequestID);
+  unmarshallUint32(src, srcLen, dst.tapeRequestId);
   unmarshallUint32(src, srcLen, dst.clientPort);
   unmarshallUint32(src, srcLen, dst.clientEuid);
   unmarshallUint32(src, srcLen, dst.clientEgid);

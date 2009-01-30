@@ -38,7 +38,7 @@ namespace aggregator {
    * An RCP job submission request message.
    */
   struct RcpJobRequestMessage {
-    uint32_t tapeRequestID;
+    uint32_t tapeRequestId;
     uint32_t clientPort;
     uint32_t clientEuid;
     uint32_t clientEgid;

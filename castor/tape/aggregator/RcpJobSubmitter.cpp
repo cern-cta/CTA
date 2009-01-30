@@ -51,7 +51,7 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   const unsigned int  port,
   const int           netReadWriteTimeout,
   const char         *remoteCopyType,
-  const u_signed64    tapeRequestID,
+  const u_signed64    tapeRequestId,
   const std::string  &clientUserName,
   const std::string  &clientHost,
   const int           clientPort,
@@ -108,7 +108,7 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
 
   // Prepare the job submission request information ready for marshalling
   // The validity of the string length were check above
-  request.tapeRequestID = tapeRequestID;
+  request.tapeRequestId = tapeRequestId;
   request.clientPort    = clientPort;
   request.clientEuid    = clientEuid;
   request.clientEgid    = clientEgid;
