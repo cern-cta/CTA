@@ -816,6 +816,47 @@ void castor::tape::aggregator::Transceiver::receiveRcpJobRequest(
 
 
 //-----------------------------------------------------------------------------
+// giveRequestForMoreWorkToRtcpd
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::Transceiver::giveRequestForMoreWorkToRtcpd(
+  const int socketFd, const int netReadWriteTimeout, const uint32_t volReqId)
+  throw(castor::exception::Exception) {
+
+  RtcpFileRequestMessage request;
+  RtcpFileRequestMessage reply;
+
+  Utils::setBytes(request, '\0');
+  Utils::copyString(request.recfm, "F");
+
+  request.volReqId       = volReqId;
+  request.jobId          = -1;
+  request.stageSubReqId  = -1;
+  request.tapeFseq       = 1;
+  request.diskFseq       = 1;
+  request.blockSize      = -1;
+  request.recordLength   = -1;
+  request.retention      = -1;
+  request.defAlloc       = -1;
+  request.rtcpErrAction  = -1;
+  request.tpErrAction    = -1;
+  request.convert        = -1;
+  request.checkFid       = -1;
+  request.concat         = 1;
+  request.procStatus     = RTCP_REQUEST_MORE_WORK;
+  request.err.severity   = 1;
+  request.err.maxTpRetry = -1;
+  request.err.maxCpRetry = -1;
+
+  giveFileInfoToRtcpd(socketFd, NETRWTIMEOUT, request, reply);
+
+  // TBD - process reply
+
+  // Signal the end of the file list to RTCPD
+  signalNoMoreRequestsToRtcpd(socketFd, NETRWTIMEOUT);
+}
+
+
+//-----------------------------------------------------------------------------
 // giveFileListToRtcpd
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::giveFileListToRtcpd(

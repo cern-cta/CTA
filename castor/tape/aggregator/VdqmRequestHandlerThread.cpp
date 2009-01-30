@@ -60,8 +60,66 @@ castor::tape::aggregator::VdqmRequestHandlerThread::~VdqmRequestHandlerThread()
 //-----------------------------------------------------------------------------
 // init
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::VdqmRequestHandlerThread::init()
-  throw() {
+void castor::tape::aggregator::VdqmRequestHandlerThread::init() throw() {
+/* TEST CODE
+  Cuuid_t cuuid = nullCuuid;
+
+  // Give a Cuuid to the test code
+  Cuuid_create(&cuuid);
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("TEST", "Start of test code")};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, AGGREGATOR_NULL, 1, params);
+  }
+
+  try {
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("TEST", "Creating listener socket")};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, AGGREGATOR_NULL, 1,
+        params);
+    }
+
+    // Create, bind and mark a listener socket
+    const int listenSocketFd = Net::createListenerSocket(12345);
+
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("TEST", "Waiting for a connection")};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, AGGREGATOR_NULL, 1,
+        params);
+    }
+
+    // Accept a connection with a timeout
+    const int connectedSocketFd = Net::acceptConnection(listenSocketFd,
+      10);
+
+    unsigned short port = 0; // Client port
+    unsigned long  ip   = 0; // Client IP
+    char           hostName[HOSTNAMEBUFLEN];
+
+    Net::getPeerIpAndPort(connectedSocketFd, ip, port);
+    Net::getPeerHostName(connectedSocketFd, hostName);
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("TEST"    , "Accepted a connection"),
+      castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)),
+      castor::dlf::Param("Port"    , port),
+      castor::dlf::Param("HostName", hostName)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_NULL, 4, params);
+
+  } catch(castor::exception::Exception &ex) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("TEST"    , "Test code through as exception"),
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("Message" , ex.getMessage().str()),
+      castor::dlf::Param("Code"    , ex.code())};
+
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, AGGREGATOR_NULL, 4, params);
+  }
+*/
 }
 
 
@@ -234,17 +292,30 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::run(void *param)
   }
 
   // Accept the initial incoming RTCPD callback connection
-  struct sockaddr_in acceptedAddress;
-  unsigned int 	     len = sizeof(acceptedAddress);
-  const int          rtcpdInitialSocketFd =
-    accept(rtcpdCallbackSocketFd, (struct sockaddr *)  &acceptedAddress, &len);
-  castor::io::AbstractTCPSocket rtcpdInitialSocket(rtcpdInitialSocketFd);
+  int rtcpdInitialSocketFd = 0;
+  try {
+    rtcpdInitialSocketFd = Net::acceptConnection(rtcpdCallbackSocketFd,
+      NETRWTIMEOUT);
 
-  if(rtcpdInitialSocketFd > 0) {
+    unsigned short port = 0; // Client port
+    unsigned long  ip   = 0; // Client IP
+    char           hostName[HOSTNAMEBUFLEN];
+
+    Net::getPeerIpAndPort(rtcpdInitialSocketFd, ip, port);
+    Net::getPeerHostName(rtcpdInitialSocketFd, hostName);
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)),
+      castor::dlf::Param("Port"    , port),
+      castor::dlf::Param("HostName", hostName)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_INITIAL_RTCPD_CALLBACK_WITH_INFO, 3, params);
+  } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-      castor::dlf::Param("Message" , "Accepted initial RTCPD connection")};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, AGGREGATOR_NULL, 2, params);
+      castor::dlf::Param("Message" , ex.getMessage().str()),
+      castor::dlf::Param("Code"    , ex.code())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, AGGREGATOR_NULL, 3, params);
   }
 
   // Give the volume ID from the VDQM job submission message to RTCPD
@@ -295,163 +366,16 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::run(void *param)
   }
 
   // Give file information to RTCPD
-  {
-    RtcpFileRequestMessage request;
-
-    Utils::setBytes(request, '\0');
-    try {
-      Utils::copyString(request.filePath, "lxc2disk07:/dev/null");
-      Utils::copyString(request.recfm, "F");
-    } catch(castor::exception::Exception &ex) {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-        castor::dlf::Param("Message" , ex.getMessage().str()),
-        castor::dlf::Param("Code"    , ex.code())};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_NULL, 3, params);
-      return;
-    }
-    request.volReqId       = vdqmJobRequest.tapeRequestID;
-    request.jobId          = -1;
-    request.stageSubReqId  = -1;
-    request.umask          = 18;
-    request.tapeFseq	   = 1;
-    request.diskFseq   	   = 1;
-    request.blockSize	   = -1;
-    request.recordLength   = -1;
-    request.retention	   = -1;
-    request.defAlloc	   = -1;
-    request.rtcpErrAction  = -1;
-    request.tpErrAction	   = -1;
-    request.convert        = -1;
-    request.checkFid       = -1;
-    request.concat         = 1;
-    request.procStatus     = RTCP_WAITING;
-    request.err.severity   = 1;
-    request.err.maxTpRetry = -1;
-    request.err.maxCpRetry = -1;
-
-    RtcpFileRequestMessage reply;
-
-    try {
-
-      Transceiver::giveFileInfoToRtcpd(rtcpdInitialSocketFd, NETRWTIMEOUT,
-        request, reply);
-
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("filePath", reply.filePath),
-        castor::dlf::Param("tapePath", reply.tapePath),
-        castor::dlf::Param("recfm", reply.recfm),
-        castor::dlf::Param("fid", reply.fid),
-        castor::dlf::Param("ifce", reply.ifce),
-        castor::dlf::Param("stageId", reply.stageId),
-       	castor::dlf::Param("volReqId", reply.volReqId),
-       	castor::dlf::Param("jobId", reply.jobId),
-	castor::dlf::Param("stageSubReqId", reply.stageSubReqId),
-	castor::dlf::Param("umask", reply.umask),
-	castor::dlf::Param("positionMethod", reply.positionMethod),
-	castor::dlf::Param("tapeFseq", reply.tapeFseq),
-        castor::dlf::Param("diskFseq", reply.diskFseq),
-        castor::dlf::Param("blockSize", reply.blockSize),
-        castor::dlf::Param("recordLength", reply.recordLength),
-        castor::dlf::Param("retention", reply.retention),
-        castor::dlf::Param("defAlloc", reply.defAlloc),
-        castor::dlf::Param("rtcpErrAction", reply.rtcpErrAction),
-        castor::dlf::Param("tpErrAction", reply.tpErrAction),
-        castor::dlf::Param("convert", reply.convert),
-        castor::dlf::Param("checkFid", reply.checkFid),
-        castor::dlf::Param("concat", reply.concat),
-        castor::dlf::Param("procStatus", reply.procStatus),
-        castor::dlf::Param("cprc", reply.cprc),
-        castor::dlf::Param("tStartPosition", reply.tStartPosition),
-        castor::dlf::Param("tEndPosition", reply.tEndPosition),
-        castor::dlf::Param("tStartTransferDisk", reply.tStartTransferDisk),
-        castor::dlf::Param("tEndTransferDisk", reply.tEndTransferDisk),
-        castor::dlf::Param("tStartTransferTape", reply.tStartTransferTape),
-        castor::dlf::Param("tEndTransferTape", reply.tEndTransferTape),
-        castor::dlf::Param("blockId[0]", reply.blockId[0]),
-        castor::dlf::Param("blockId[1]", reply.blockId[1]),
-        castor::dlf::Param("blockId[2]", reply.blockId[2]),
-        castor::dlf::Param("blockId[3]", reply.blockId[3]),
-        castor::dlf::Param("offset", reply.offset),
-        castor::dlf::Param("bytesIn", reply.bytesIn),
-        castor::dlf::Param("bytesOut", reply.bytesOut),
-        castor::dlf::Param("hostBytes", reply.hostBytes),
-        castor::dlf::Param("nbRecs", reply.nbRecs),
-        castor::dlf::Param("maxNbRec", reply.maxNbRec),
-        castor::dlf::Param("maxSize", reply.maxSize),
-        castor::dlf::Param("startSize", reply.startSize),
-        castor::dlf::Param("segAttr.nameServerHostName",
-          reply.segAttr.nameServerHostName),
-        castor::dlf::Param("segAttr.segmCksumAlgorithm",
-          reply.segAttr.segmCksumAlgorithm),
-        castor::dlf::Param("segAttr.segmCksum", reply.segAttr.segmCksum),
-        castor::dlf::Param("segAttr.castorFileId", reply.segAttr.castorFileId),
-        castor::dlf::Param("stgReqId.time_low", reply.stgReqId.time_low),
-        castor::dlf::Param("stgReqId.time_mid", reply.stgReqId.time_mid),
-        castor::dlf::Param("stgReqId.time_hi_and_version",
-          reply.stgReqId.time_hi_and_version),
-        castor::dlf::Param("stgReqId.clock_seq_hi_and_reserved",
-          reply.stgReqId.clock_seq_hi_and_reserved),
-        castor::dlf::Param("stgReqId.clock_seq_low",
-          reply.stgReqId.clock_seq_low),
-        castor::dlf::Param("stgReqId.node[0]", reply.stgReqId.node[0]),
-        castor::dlf::Param("stgReqId.node[1]", reply.stgReqId.node[1]),
-        castor::dlf::Param("stgReqId.node[2]", reply.stgReqId.node[2]),
-        castor::dlf::Param("stgReqId.node[3]", reply.stgReqId.node[3]),
-        castor::dlf::Param("stgReqId.node[4]", reply.stgReqId.node[4]),
-        castor::dlf::Param("stgReqId.node[5]", reply.stgReqId.node[5]),
-        castor::dlf::Param("err.errmsgtxt", reply.err.errmsgtxt),
-        castor::dlf::Param("err.severity", reply.err.severity),
-        castor::dlf::Param("err.errorcode", reply.err.errorcode),
-        castor::dlf::Param("err.maxTpRetry", reply.err.maxTpRetry),
-        castor::dlf::Param("err.maxCpRetry", reply.err.maxCpRetry)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_GAVE_FILE_INFO, 62, params);
-
-    } catch(castor::exception::Exception &ex) {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-        castor::dlf::Param("Message" , ex.getMessage().str()),
-        castor::dlf::Param("Code"    , ex.code())};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_FAILED_TO_GIVE_FILE_INFO, 3, params);
-    }
-  }
-
-  // Signal the end of the file list to RTCPD
   try {
-    Transceiver::signalNoMoreRequestsToRtcpd(rtcpdInitialSocketFd,
-      NETRWTIMEOUT);
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_SIGNALLED_NO_MORE_REQUESTS);
-
+    Transceiver::giveFileListToRtcpd(rtcpdInitialSocketFd, NETRWTIMEOUT,
+      vdqmJobRequest.tapeRequestID, "lxc2disk07:/dev/null", 18, false);
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("Function", __PRETTY_FUNCTION__),
       castor::dlf::Param("Message" , ex.getMessage().str()),
       castor::dlf::Param("Code"    , ex.code())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_SIGNAL_NO_MORE_REQUESTS, 3, params);
-  }
-
-//==========================================
-
-  {
-    struct sockaddr_in acceptedAddress;
-    unsigned int       len = sizeof(acceptedAddress);
-    int                rtcpdInitialSocketFd;
-
-    for(int i=1;;i++) {
-      rtcpdInitialSocketFd = accept(rtcpdCallbackSocketFd, (struct sockaddr *)
-        &acceptedAddress, &len);
-
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("AcceptedConnection", rtcpdInitialSocketFd  ),
-        castor::dlf::Param("LoopNb"          , i                     )};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-          AGGREGATOR_NULL, 2, params);
-    }
+      AGGREGATOR_FAILED_TO_GIVE_FILE_INFO, 3, params);
   }
 
   // Select loop

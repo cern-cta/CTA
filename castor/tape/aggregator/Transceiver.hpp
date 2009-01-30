@@ -164,6 +164,18 @@ public:
     throw(castor::exception::Exception);
 
   /**
+   * Gives a request for more work to RTCPD by sending and receiving the
+   * necessary messages.
+   *
+   * A request for more work is infact a file list with one special file
+   * request which does not contain any file information, but instead contains
+   * a flag indicating a request for more work.
+   */ 
+  static void giveRequestForMoreWorkToRtcpd(const int socketFd,
+    const int netReadWriteTimeout, const uint32_t volReqId)
+    throw(castor::exception::Exception);
+
+  /**
    * Gives the specified file list of one and only one actual file description
    * to RTCPD by sending and receiving the necessary messages.
    *

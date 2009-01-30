@@ -31,7 +31,9 @@
 
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <sys/select.h>
 #include <sys/socket.h>
+#include <time.h>
 
 
 //-----------------------------------------------------------------------------
@@ -75,6 +77,115 @@ int castor::tape::aggregator::Net::createListenerSocket(
   }
 
   return socketFd;
+}
+
+
+//-----------------------------------------------------------------------------
+// acceptConnection
+//-----------------------------------------------------------------------------
+int castor::tape::aggregator::Net::acceptConnection(
+  const int listenSocketFd, const int netReadWriteTimeout)
+  throw(castor::exception::Exception) {
+
+  const time_t startTime     = time(NULL);
+  time_t       remainingTime = netReadWriteTimeout;
+  time_t       elapsedTime   = netReadWriteTimeout;
+  bool         selectAgain   = true;
+  int          selectRc      = 0;
+  int          selectErrno   = 0;
+  fd_set       fdSet;
+  timeval      timeout;
+
+  // While a connection request has not arrived and the timeout has not expired
+  while(selectAgain) {
+    FD_ZERO(&fdSet);
+    FD_SET(listenSocketFd, &fdSet);
+
+    timeout.tv_sec  = remainingTime;
+    timeout.tv_usec = 0;
+
+    selectRc = select(listenSocketFd + 1, &fdSet, NULL, NULL, &timeout);
+    selectErrno = errno;
+
+    switch(selectRc) {
+    case 0: // Select timed out
+      {
+        castor::exception::Exception ex(ETIMEDOUT);
+
+        ex.getMessage() << __PRETTY_FUNCTION__
+          << ": Timed out after " << netReadWriteTimeout
+          << " seconds whilst trying to accept a connection";
+
+        throw ex;
+      }
+      break;
+    case -1: // Select encountered an error
+      // If select was interrupted
+      if(errno == EINTR) {
+        elapsedTime = time(NULL) - startTime;
+
+        // Recalculate the amount of remaining time ready for another call to
+        // select
+        if(elapsedTime >= netReadWriteTimeout) {
+          remainingTime = 0; // One last non-blocking select
+        } else {
+          remainingTime = netReadWriteTimeout - elapsedTime;
+        }
+      } else {
+        char strerrorBuf[STRERRORBUFLEN];
+        char *const errorStr = strerror_r(selectErrno, strerrorBuf,
+          sizeof(strerrorBuf));
+
+        castor::exception::Exception ex(selectErrno);
+
+        ex.getMessage() << __PRETTY_FUNCTION__
+          << ": Failed to accept connection"
+             ": Select failed: " << errorStr;
+
+        throw ex;
+      }
+      break;
+    default: // Select found a file descriptor awaiting attention
+      // If there is a connection request
+      if(FD_ISSET(listenSocketFd, &fdSet)) {
+
+        // The select loop should now finish
+        selectAgain = false;
+
+      // Else the file descriptor set does not make sense
+      } else {
+        castor::exception::Exception ex(selectErrno);
+
+        ex.getMessage() << __PRETTY_FUNCTION__
+          << ": Failed to accept connection "
+             ": Invalid file descriptor set";
+
+        throw ex;
+      }
+    }
+  }
+
+  struct sockaddr_in peerAddress;
+  unsigned int       peerAddressLen = sizeof(peerAddress);
+
+  const int connectedSocketFd = accept(listenSocketFd,
+    (struct sockaddr *)&peerAddress, &peerAddressLen);
+
+  if(connectedSocketFd < 0) {
+    char strerrorBuf[STRERRORBUFLEN];
+    char *const errorStr = strerror_r(selectErrno, strerrorBuf,
+      sizeof(strerrorBuf));
+
+    castor::exception::Exception ex(selectErrno);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to accept connection"
+         ": Accept failed: " << errorStr;
+
+    throw ex;
+  }
+
+  return connectedSocketFd;
 }
 
 
