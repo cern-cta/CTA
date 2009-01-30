@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.715 $ $Date: 2009/01/27 10:31:30 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.716 $ $Date: 2009/01/30 07:12:03 $ $Author: gtaur $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -111,7 +111,8 @@ create or replace PACKAGE castor AS
   TYPE DbStreamInfo IS RECORD (
     id NUMBER,
     numFile NUMBER,
-    byteVolume NUMBER);
+    byteVolume NUMBER,
+    age NUMBER);
   TYPE DbStreamInfo_Cur IS REF CURSOR RETURN DbStreamInfo;
   TYPE DbRecallInfo IS RECORD (
     vid VARCHAR2(2048),

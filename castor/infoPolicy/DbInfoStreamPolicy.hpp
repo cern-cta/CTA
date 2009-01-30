@@ -178,6 +178,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_age
+       * @return the value of m_age
+       */
+      u_signed64 age() const {
+        return m_age;
+      }
+
+      /**
+       * Set the value of m_age
+       * @param new_var the new value of m_age
+       */
+      void setAge(u_signed64 new_var) {
+        m_age = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -206,6 +222,8 @@ namespace castor {
       u_signed64 m_streamId;
 
       u_signed64 m_maxNumStreams;
+
+      u_signed64 m_age;
 
       /// The id of this object
       u_signed64 m_id;

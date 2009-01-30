@@ -44,6 +44,7 @@ castor::infoPolicy::DbInfoStreamPolicy::DbInfoStreamPolicy() throw() :
   m_numBytes(0),
   m_streamId(0),
   m_maxNumStreams(0),
+  m_age(0),
   m_id(0) {
 }
 
@@ -71,6 +72,7 @@ void castor::infoPolicy::DbInfoStreamPolicy::print(std::ostream& stream,
   stream << indent << "numBytes : " << m_numBytes << std::endl;
   stream << indent << "streamId : " << m_streamId << std::endl;
   stream << indent << "maxNumStreams : " << m_maxNumStreams << std::endl;
+  stream << indent << "age : " << m_age << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

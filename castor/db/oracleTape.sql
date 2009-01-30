@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.707 $ $Date: 2009/01/29 14:22:32 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.708 $ $Date: 2009/01/30 07:12:03 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1226,7 +1226,9 @@ END;
 /
 
 /* Get input for python Stream Policy */
-CREATE OR REPLACE PROCEDURE inputForStreamPolicy
+
+create or replace
+PROCEDURE inputForStreamPolicy
 (svcClassName IN VARCHAR2,
  policyName OUT VARCHAR2,
  runningStreams OUT INTEGER,
@@ -1257,7 +1259,7 @@ BEGIN
   COMMIT;
   --- return for policy
   OPEN dbInfo FOR
-    SELECT Stream.id, count(distinct Stream2TapeCopy.child), sum(CastorFile.filesize)
+    SELECT Stream.id, count(distinct Stream2TapeCopy.child), sum(CastorFile.filesize), gettime() - min(CastorFile.lastupdatetime)
       FROM Stream2TapeCopy, TapeCopy, CastorFile, Stream
      WHERE
        Stream.id IN (SELECT /*+ CARDINALITY(stridTable 5) */ * FROM TABLE(strIds) stridTable)

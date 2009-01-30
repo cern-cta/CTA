@@ -457,6 +457,7 @@ std::vector<castor::infoPolicy::PolicyObj*> castor::rtcopy::mighunter::ora::OraM
       item->setStreamId((u_signed64)rs->getDouble(1));
       item->setNumFiles((u_signed64)rs->getDouble(2));
       item->setNumBytes((u_signed64)rs->getDouble(3));
+      item->setAge((u_signed64)rs->getDouble(4));
       item->setRunningStream(runningStream);
       resultItem->addDbInfoPolicy(item); 
       result.push_back(resultItem);
