@@ -31,6 +31,7 @@
 #include "castor/tape/aggregator/MessageHeader.hpp"
 #include "castor/tape/aggregator/RcpJobRequestMessage.hpp"
 
+#include <list>
 #include <map>
 
 
@@ -111,22 +112,50 @@ namespace aggregator {
       const int rtcpdCallbackSocketFd) throw(castor::exception::Exception);
 
     /**
-     * The main select loop responsible for processing:
+     * Processes an incomming error message on the initial RTCPD connection.
+     *
+     * @param cuuid The ccuid to be used for logging.
+     * @param jobRequest The job request message received from the VDQM.  To be
+     * used for logging purposes.
+     * @param rtcpdInitialSocketFd The socket file descriptor of initial RTCPD
+     * connection.
+     */
+    void processErrorOnInitialRtcpdConnection(const Cuuid_t &cuuid,
+      const RcpJobRequestMessage &vdqmJobRequest,
+      const int rtcpdInitialSocketFd) throw(castor::exception::Exception);
+
+    /**
+     * Accepts an RTCPD connection using the specified listener socket and adds
+     * the newly created connected socket to the specified list of connected
+     * sockets.
+     *
+     * @param cuuid The ccuid to be used for logging.
+     * @param vdqmJobRequest The job request message received from the VDQM.
+     * @param rtcpdCallbackSocketFd The file descriptor of the listener socket
+     * to be used to accept callback connections from RTCPD.
+     * @param connectedSockets In/out parameter - The list of connected sockets
+     */
+    void acceptRtcpdConnection(const Cuuid_t &cuuid,
+      const RcpJobRequestMessage &vdqmJobRequest,
+      const int rtcpdCallbackSocketFd, std::list<int> &connectedSockets)
+      throw(castor::exception::Exception);
+
+    /**
+     * Processes the following RTCPD sockets:
      * <ul>
-     * <li>The incoming callback connection request from the tape I/O thread.
-     * <li>The incoming callback connection requests from the disk I/O threads.
-     * <li>Any incoming messages sent from RTCPD over any of the connected
-     * sockets, including the initial RTCPD connection.
+     * <li>The connected socket of the initial RTCPD connection
+     * <li>The RTCPD callback listener socket
+     * <li>The connected sockets of the tape and disk I/O threads
      * </ul>
      *
      * @param cuuid The ccuid to be used for logging.
      * @param vdqmJobRequest The job request message received from the VDQM.
      * @param rtcpdCallbackSocketFd The file descriptor of the listener socket
      * to be used to accept callback connections from RTCPD.
-     * @param rtcpdInitialSocketFd The socket file descriptor of the initial
-     * connection made by RTCPD.
+     * @param rtcpdInitialSocketFd The socket file descriptor of initial RTCPD
+     * connection.
      */
-    void selectLoop(const Cuuid_t &cuuid,
+    void processRtcpdSockets(const Cuuid_t &cuuid,
       const RcpJobRequestMessage &vdqmJobRequest,
       const int rtcpdCallbackSocketFd, const int rtcpdInitialSocketFd)
       throw(castor::exception::Exception);

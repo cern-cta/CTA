@@ -179,7 +179,8 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    Net::readBytes(socket.socket(), NETRWTIMEOUT, sizeof(headerBuf), headerBuf);
+    Net::readBytes(socket.socket(), RTCPDNETRWTIMEOUT, sizeof(headerBuf),
+      headerBuf);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(SECOMERR);
 
@@ -267,7 +268,7 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
 
   // Read the message body
   try {
-    Net::readBytes(socket.socket(), NETRWTIMEOUT, header.len, bodyBuf);
+    Net::readBytes(socket.socket(), RTCPDNETRWTIMEOUT, header.len, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(SECOMERR);
 

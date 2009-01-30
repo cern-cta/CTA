@@ -244,7 +244,7 @@ void castor::tape::aggregator::Transceiver::receiveRtcpTapeRequest(
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    Net::readBytes(socketFd, NETRWTIMEOUT, sizeof(headerBuf), headerBuf);
+    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, sizeof(headerBuf), headerBuf);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(SECOMERR);
 
@@ -314,7 +314,7 @@ void castor::tape::aggregator::Transceiver::receiveRtcpTapeRequest(
 
   // Read the message body
   try {
-    Net::readBytes(socketFd, NETRWTIMEOUT, header.len, bodyBuf);
+    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.len, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EIO);
 
@@ -435,7 +435,7 @@ void castor::tape::aggregator::Transceiver::receiveRtcpFileRequest(
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    Net::readBytes(socketFd, NETRWTIMEOUT, sizeof(headerBuf), headerBuf);
+    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, sizeof(headerBuf), headerBuf);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(SECOMERR);
 
@@ -505,7 +505,7 @@ void castor::tape::aggregator::Transceiver::receiveRtcpFileRequest(
 
   // Read the message body
   try {
-    Net::readBytes(socketFd, NETRWTIMEOUT, header.len, bodyBuf);
+    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.len, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EIO);
 
@@ -544,7 +544,7 @@ void castor::tape::aggregator::Transceiver::receiveRtcpAcknowledge(
   // body)
   char messageBuf[3 * sizeof(uint32_t)]; // magic + request type + status
   try {
-    Net::readBytes(socketFd, NETRWTIMEOUT, sizeof(messageBuf),
+    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, sizeof(messageBuf),
       messageBuf);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(SECOMERR);
@@ -700,7 +700,7 @@ void castor::tape::aggregator::Transceiver::receiveRcpJobRequest(
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    Net::readBytes(socketFd, NETRWTIMEOUT, sizeof(headerBuf), headerBuf);
+    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, sizeof(headerBuf), headerBuf);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(SECOMERR);
 
@@ -787,7 +787,7 @@ void castor::tape::aggregator::Transceiver::receiveRcpJobRequest(
 
   // Read the message body
   try {
-    Net::readBytes(socketFd, NETRWTIMEOUT, header.len, bodyBuf);
+    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.len, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EIO);
 
@@ -847,12 +847,12 @@ void castor::tape::aggregator::Transceiver::giveRequestForMoreWorkToRtcpd(
   request.err.maxTpRetry = -1;
   request.err.maxCpRetry = -1;
 
-  giveFileInfoToRtcpd(socketFd, NETRWTIMEOUT, request, reply);
+  giveFileInfoToRtcpd(socketFd, RTCPDNETRWTIMEOUT, request, reply);
 
   // TBD - process reply
 
   // Signal the end of the file list to RTCPD
-  signalNoMoreRequestsToRtcpd(socketFd, NETRWTIMEOUT);
+  signalNoMoreRequestsToRtcpd(socketFd, RTCPDNETRWTIMEOUT);
 }
 
 
@@ -894,7 +894,7 @@ void castor::tape::aggregator::Transceiver::giveFileListToRtcpd(
     request.err.maxTpRetry = -1;
     request.err.maxCpRetry = -1;
 
-    giveFileInfoToRtcpd(socketFd, NETRWTIMEOUT, request, reply);
+    giveFileInfoToRtcpd(socketFd, RTCPDNETRWTIMEOUT, request, reply);
 
     // TBD - process reply
   }
@@ -922,11 +922,11 @@ void castor::tape::aggregator::Transceiver::giveFileListToRtcpd(
     request.err.maxTpRetry = -1;
     request.err.maxCpRetry = -1;
 
-    giveFileInfoToRtcpd(socketFd, NETRWTIMEOUT, request, reply);
+    giveFileInfoToRtcpd(socketFd, RTCPDNETRWTIMEOUT, request, reply);
 
     // TBD - process reply
   }
 
   // Signal the end of the file list to RTCPD
-  signalNoMoreRequestsToRtcpd(socketFd, NETRWTIMEOUT);
+  signalNoMoreRequestsToRtcpd(socketFd, RTCPDNETRWTIMEOUT);
 }
