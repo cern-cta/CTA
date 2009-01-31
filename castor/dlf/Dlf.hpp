@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Dlf.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/03/14 10:41:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Dlf.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/01/31 10:22:58 $ $Author: murrayc3 $
  *
  * C++ interface to DLF
  *
@@ -94,7 +94,27 @@ namespace castor {
                      int numparams = 0,
                      castor::dlf::Param params[] = 0,
                      struct Cns_fileid *ns_invariant = 0) throw();
-  
+
+    /**
+     * prints a message into dlf. Note that no exception will ever
+     * be thrown in case of failure. Failures will actually be silently
+     * ignored in order to not impact the processing.
+     * @param uuid the uuid of the component issuing the message
+     * @param message_no the message number in the facility.
+     * @param severity the severity of the message.
+     * @param numparams the number of parameters in the message
+     * @param params the parameters of the message, given as an array
+     * @ns_invariant the castor file concerned by the message
+     * (if any), given as a name server fileId.
+     */
+    template<int n>
+      void dlf_writep (Cuuid_t uuid,
+                       int severity,
+                       int message_no,
+                       castor::dlf::Param (&params)[n],
+                       struct Cns_fileid *ns_invariant = 0) throw() {
+      dlf_writep(uuid, severity, message_no, n, params, 0);
+    }
 
     /**
      * wrapper to dlf_writte but it compounds the struct Cns_fileId
