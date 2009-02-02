@@ -141,6 +141,17 @@ namespace aggregator {
       throw(castor::exception::Exception);
 
     /**
+     * Processes the connected sockets of the tape and disk I/O threads.
+     *
+     * @param cuuid The ccuid to be used for logging.
+     * @param vdqmJobRequest The job request message received from the VDQM.
+     * @param connectedSockets In/out parameter - The list of connected sockets
+     */
+    void processTapeDiskIoConnections(const Cuuid_t &cuuid,
+      const RcpJobRequestMessage &vdqmJobRequest,
+      std::list<int> &connectedSockets) throw(castor::exception::Exception);
+
+    /**
      * Processes the following RTCPD sockets:
      * <ul>
      * <li>The connected socket of the initial RTCPD connection

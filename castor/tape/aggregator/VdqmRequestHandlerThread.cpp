@@ -307,6 +307,30 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 
 
 //-----------------------------------------------------------------------------
+// processTapeDiskIoConnections
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::VdqmRequestHandlerThread::
+  processTapeDiskIoConnections(const Cuuid_t &cuuid,
+  const RcpJobRequestMessage &vdqmJobRequest, std::list<int> &connectedSockets)
+  throw(castor::exception::Exception) {
+/*
+  // Give file information to RTCPD
+  try {
+    Transceiver::giveFileListToRtcpd(rtcpdInitialSocketFd, RTCPDNETRWTIMEOUT,
+      vdqmJobRequest.tapeRequestId, "lxc2disk07:/dev/null", 18, false);
+  } catch(castor::exception::Exception &ex) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("Message" , ex.getMessage().str()),
+      castor::dlf::Param("Code"    , ex.code())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_FAILED_TO_GIVE_FILE_INFO, 3, params);
+  }
+*/
+}
+
+
+//-----------------------------------------------------------------------------
 // processRtcpdSockets
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandlerThread::
@@ -386,21 +410,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 
         // Else there are one or messages from the tape and disk I/O threads
         } else {
-          // TBD
-/*
-  // Give file information to RTCPD
-  try {
-    Transceiver::giveFileListToRtcpd(rtcpdInitialSocketFd, RTCPDNETRWTIMEOUT,
-      vdqmJobRequest.tapeRequestId, "lxc2disk07:/dev/null", 18, false);
-  } catch(castor::exception::Exception &ex) {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-      castor::dlf::Param("Message" , ex.getMessage().str()),
-      castor::dlf::Param("Code"    , ex.code())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_GIVE_FILE_INFO, 3, params);
-  }
-*/
+          processTapeDiskIoConnections(cuuid, vdqmJobRequest, connectedSockets);
         }
       }
     }
