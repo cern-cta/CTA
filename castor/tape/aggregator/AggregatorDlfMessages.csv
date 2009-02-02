@@ -38,3 +38,4 @@
 37,AGGREGATOR_MAIN_SELECT_FAILED,"The select of the main select loop encountered an error other than an interruption"
 38,AGGREGATOR_GAVE_REQUEST_FOR_MORE_WORK,"Gave request for more work to RTCPD"
 39,AGGREGATOR_DATA_ON_INITIAL_RTCPD_CONNECTION,"Data has arrived on the initial RTCPD connection"
+40,AGGREGATOR_RECEIVED_RTCP_ENDOF_REQ,"Received RTCP_ENDOF_REQ"

@@ -346,7 +346,7 @@ namespace aggregator {
      * return is the number of bytes remaining in the source buffer.
      * @param dst The destination request structure.
      */
-    static void unmarshallRcpJobRequestMsgBodyBody(const char * &src,
+    static void unmarshallRcpJobRequestMsgBody(const char * &src,
       size_t &srcLen, RcpJobRequestMsgBody &dst)
       throw(castor::exception::Exception);
 
@@ -389,7 +389,7 @@ namespace aggregator {
      * return is the number of bytes remaining in the source buffer.
      * @param dst The destination reply structure.
      */
-    static void unmarshallRcpJobReplyMsgBodyBody(const char * &src,
+    static void unmarshallRcpJobReplyMsgBody(const char * &src,
       size_t &srcLen, RcpJobReplyMsgBody &dst)
       throw(castor::exception::Exception);
 
@@ -433,7 +433,7 @@ namespace aggregator {
      * return is the number of bytes remaining in the source buffer.
      * @param dst The destination request structure.
      */
-    static void unmarshallRtcpTapeRequestMsgBodyBody(const char * &src,
+    static void unmarshallRtcpTapeRequestMsgBody(const char * &src,
       size_t &srcLen, RtcpTapeRequestMsgBody &dst)
       throw(castor::exception::Exception);
 
@@ -478,7 +478,7 @@ namespace aggregator {
      * return is the number of bytes remaining in the source buffer.
      * @param dst The destination message structure.
      */
-    static void unmarshallRtcpAcknowledgeMsgBodyBody(const char * &src,
+    static void unmarshallRtcpAcknowledgeMsgBody(const char * &src,
       size_t &srcLen, RtcpAcknowledgeMsgBody &dst)
       throw(castor::exception::Exception);
 
@@ -522,7 +522,7 @@ namespace aggregator {
      * return is the number of bytes remaining in the source buffer.
      * @param dst The destination request structure.
      */
-    static void unmarshallRtcpFileRequestMsgBodyBody(const char * &src,
+    static void unmarshallRtcpFileRequestMsgBody(const char * &src,
       size_t &srcLen, RtcpFileRequestMsgBody &dst)
       throw(castor::exception::Exception);
 

@@ -263,46 +263,87 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
   Transceiver::receiveRtcpMessageHeader(socketFd, RTCPDNETRWTIMEOUT,
     header);
 
-//switch(header.reqType) {
-//case RTCP_FILE_REQ:
+  switch(header.reqType) {
+  case RTCP_FILE_REQ:
+    {
+      RtcpFileRequestMsgBody body;
 
-  // Crazy code to make it work
+      Transceiver::receiveRtcpFileRequestBody(socketFd, RTCPDNETRWTIMEOUT,
+        header, body);
 
-  // Length of body buffer = Length of message buffer - length of header
-  char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
+      if(body.procStatus == RTCP_REQUEST_MORE_WORK) {
 
-  // Read the message body
-  try {
-    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.len, bodyBuf);
-  } catch (castor::exception::Exception &ex) {
-    castor::exception::Exception ex2(EIO);
+        // Give file information to RTCPD
+        try {
+          Transceiver::giveFileListToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
+            vdqmJobRequest.tapeRequestId, "lxc2disk07:/dev/null", 18, false);
+        } catch(castor::exception::Exception &ex) {
+          castor::dlf::Param params[] = {
+            castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+            castor::dlf::Param("Message" , ex.getMessage().str()),
+            castor::dlf::Param("Code"    , ex.code())};
+          castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+            AGGREGATOR_FAILED_TO_GIVE_FILE_INFO, 3, params);
+        }
 
-    ex2.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to read message body"
-      << ": "<< ex.getMessage().str();
+        // Acknowledge request for more work from RTCPD
+        RtcpAcknowledgeMsgBody ackMsg;
+        ackMsg.magic   = RTCOPY_MAGIC;
+        ackMsg.reqType = RTCP_FILE_REQ;
+        ackMsg.status  = 0;
+        Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+      } else {
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+          castor::dlf::Param("Message" , "Pandora's box"),
+          castor::dlf::Param("RtcpFileRequestMsgBody.proc_status",
+            body.procStatus)};
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, AGGREGATOR_NULL, params);
+      }
+    }
+    break;
+  case RTCP_TAPE_REQ:
+    {
+      RtcpTapeRequestMsgBody body;
 
-    throw ex2;
+      Transceiver::receiveRtcpTapeRequestBody(socketFd, RTCPDNETRWTIMEOUT,
+        header, body);
+
+      // Acknowledge tape request
+      RtcpAcknowledgeMsgBody ackMsg;
+      ackMsg.magic   = RTCOPY_MAGIC;
+      ackMsg.reqType = RTCP_TAPE_REQ;
+      ackMsg.status  = 0;
+      Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+    }
+    break;
+  case RTCP_ENDOF_REQ:
+    {
+      // An RTCP_ENDOF_REQ message is bodiless
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_RECEIVED_RTCP_ENDOF_REQ);
+
+      // Acknowledge RTCP_ENDOF_REQ message
+      RtcpAcknowledgeMsgBody ackMsg;
+      ackMsg.magic   = RTCOPY_MAGIC;
+      ackMsg.reqType = RTCP_ENDOF_REQ;
+      ackMsg.status  = 0;
+      Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+
+      // TBD
+      // Do something to end this madness
+      break;
+    }
+  default:
+    {
+      castor::exception::Exception ex(EINVAL);
+
+      ex.getMessage() << "Unexpected request type: 0x" << std::hex
+        << header.reqType;
+
+      throw ex;
+    }
   }
-
-  // Give file information to RTCPD
-  try {
-    Transceiver::giveFileListToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
-      vdqmJobRequest.tapeRequestId, "lxc2disk07:/dev/null", 18, false);
-  } catch(castor::exception::Exception &ex) {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-      castor::dlf::Param("Message" , ex.getMessage().str()),
-      castor::dlf::Param("Code"    , ex.code())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_GIVE_FILE_INFO, 3, params);
-  }
-
-  // Acknowledge request for more work from RTCPD
-  RtcpAcknowledgeMsgBody ackMsg;
-  ackMsg.magic   = RTCOPY_MAGIC;
-  ackMsg.reqType = RTCP_FILE_REQ;
-  ackMsg.status  = 0;
-  Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
 }
 
 

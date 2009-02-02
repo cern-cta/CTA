@@ -346,7 +346,7 @@ void castor::tape::aggregator::Transceiver::receiveRtcpAcknowledge(
   try {
     const char *p           = messageBuf;
     size_t     remainingLen = sizeof(messageBuf);
-    Marshaller::unmarshallRtcpAcknowledgeMsgBodyBody(p, remainingLen, message);
+    Marshaller::unmarshallRtcpAcknowledgeMsgBody(p, remainingLen, message);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EBADMSG);
 
@@ -588,7 +588,7 @@ void castor::tape::aggregator::Transceiver::receiveRcpJobRequest(
   try {
     const char *p           = bodyBuf;
     size_t     remainingLen = header.len;
-    Marshaller::unmarshallRcpJobRequestMsgBodyBody(p, remainingLen, request);
+    Marshaller::unmarshallRcpJobRequestMsgBody(p, remainingLen, request);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 
@@ -761,7 +761,7 @@ void castor::tape::aggregator::Transceiver::receiveRtcpMessageHeader(
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::receiveRtcpFileRequestBody(
   const int socketFd, const int netReadWriteTimeout,
-  const MessageHeader &header, RtcpFileRequestMsgBody &request)
+  const MessageHeader &header, RtcpFileRequestMsgBody &body)
   throw(castor::exception::Exception) {
 
   // If the magic number is invalid
@@ -822,7 +822,7 @@ void castor::tape::aggregator::Transceiver::receiveRtcpFileRequestBody(
   try {
     const char *p           = bodyBuf;
     size_t     remainingLen = header.len;
-    Marshaller::unmarshallRtcpFileRequestMsgBodyBody(p, remainingLen, request);
+    Marshaller::unmarshallRtcpFileRequestMsgBody(p, remainingLen, body);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 
@@ -841,7 +841,7 @@ void castor::tape::aggregator::Transceiver::receiveRtcpFileRequestBody(
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::receiveRtcpTapeRequestBody(
   const int socketFd, const int netReadWriteTimeout,
-  const MessageHeader &header, RtcpTapeRequestMsgBody &request)
+  const MessageHeader &header, RtcpTapeRequestMsgBody &body)
   throw(castor::exception::Exception) {
 
   // If the magic number is invalid
@@ -902,7 +902,7 @@ void castor::tape::aggregator::Transceiver::receiveRtcpTapeRequestBody(
   try {
     const char *p           = bodyBuf;
     size_t     remainingLen = header.len;
-    Marshaller::unmarshallRtcpTapeRequestMsgBodyBody(p, remainingLen, request);
+    Marshaller::unmarshallRtcpTapeRequestMsgBody(p, remainingLen, body);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 

@@ -186,12 +186,12 @@ public:
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
    * @param header The message header which has already been received.
-   * @param request The request which will be filled with the contents of the
-   * received message.
+   * @param body The body structure which will be filled with the contents of
+   * the received message body.
    */
   static void receiveRtcpFileRequestBody(const int socketFd,
     const int netReadWriteTimeout, const MessageHeader &header,
-    RtcpFileRequestMsgBody &request) throw(castor::exception::Exception);
+    RtcpFileRequestMsgBody &body) throw(castor::exception::Exception);
 
   /**
    * Receives the body of an RTCPD tape request message from RTCPD.
@@ -200,12 +200,12 @@ public:
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
    * @param header The message header which has already been received.
-   * @param request The request which will be filled with the contents of the
-   * received message.
+   * @param body The body structure which will be filled with the contents of
+   * the received message body.
    */
   static void receiveRtcpTapeRequestBody(const int socketFd,
     const int netReadWriteTimeout, const MessageHeader &header,
-    RtcpTapeRequestMsgBody &request) throw(castor::exception::Exception);
+    RtcpTapeRequestMsgBody &body) throw(castor::exception::Exception);
 
 private:
 

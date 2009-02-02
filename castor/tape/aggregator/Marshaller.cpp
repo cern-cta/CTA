@@ -389,9 +389,9 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobRequestMsgBody(
 
 
 //-----------------------------------------------------------------------------
-// unmarshallRcpJobRequestMsgBodyBody
+// unmarshallRcpJobRequestMsgBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Marshaller::unmarshallRcpJobRequestMsgBodyBody(
+void castor::tape::aggregator::Marshaller::unmarshallRcpJobRequestMsgBody(
   const char * &src, size_t &srcLen, RcpJobRequestMsgBody &dst)
   throw(castor::exception::Exception) {
 
@@ -481,9 +481,9 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobReplyMsgBody(
 
 
 //-----------------------------------------------------------------------------
-// unmarshallRcpJobReplyMsgBodyBody
+// unmarshallRcpJobReplyMsgBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Marshaller::unmarshallRcpJobReplyMsgBodyBody(
+void castor::tape::aggregator::Marshaller::unmarshallRcpJobReplyMsgBody(
   const char * &src, size_t &srcLen, RcpJobReplyMsgBody &dst)
   throw(castor::exception::Exception) {
 
@@ -606,9 +606,9 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpTapeRequestMsgBody(
 
 
 //-----------------------------------------------------------------------------
-// unmarshallRtcpTapeRequestMsgBodyBody
+// unmarshallRtcpTapeRequestMsgBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Marshaller::unmarshallRtcpTapeRequestMsgBodyBody(
+void castor::tape::aggregator::Marshaller::unmarshallRtcpTapeRequestMsgBody(
   const char * &src, size_t &srcLen, RtcpTapeRequestMsgBody &dst)
   throw(castor::exception::Exception) {
 
@@ -711,9 +711,9 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpAcknowledgeMsgBody(
 
 
 //-----------------------------------------------------------------------------
-// unmarshallRtcpAcknowledgeMsgBodyBody
+// unmarshallRtcpAcknowledgeMsgBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Marshaller::unmarshallRtcpAcknowledgeMsgBodyBody(
+void castor::tape::aggregator::Marshaller::unmarshallRtcpAcknowledgeMsgBody(
   const char * &src, size_t &srcLen, RtcpAcknowledgeMsgBody &dst)
   throw(castor::exception::Exception) {
 
@@ -864,9 +864,9 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpFileRequestMsgBody(
 
 
 //-----------------------------------------------------------------------------
-// unmarshallRtcpFileRequestMsgBodyBody
+// unmarshallRtcpFileRequestMsgBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Marshaller::unmarshallRtcpFileRequestMsgBodyBody(
+void castor::tape::aggregator::Marshaller::unmarshallRtcpFileRequestMsgBody(
   const char * &src, size_t &srcLen, RtcpFileRequestMsgBody &dst)
   throw(castor::exception::Exception) {
 
