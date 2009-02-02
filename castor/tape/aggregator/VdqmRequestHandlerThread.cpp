@@ -307,11 +307,11 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 
 
 //-----------------------------------------------------------------------------
-// processTapeDiskIoConnections
+// processTapeDiskIoConnection
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandlerThread::
-  processTapeDiskIoConnections(const Cuuid_t &cuuid,
-  const RcpJobRequestMessage &vdqmJobRequest, std::list<int> &connectedSockets)
+  processTapeDiskIoConnection(const Cuuid_t &cuuid,
+  const RcpJobRequestMessage &vdqmJobRequest, const int connectedSocket)
   throw(castor::exception::Exception) {
 /*
   // Give file information to RTCPD
@@ -396,22 +396,36 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
         }
         break;
       default: // One or more select file descriptors require attention
-        // If there is an incoming message on the initial RTCPD connection
-        if(FD_ISSET(rtcpdInitialSocketFd, &readFdSet)) {
+        // For each bit that has been set
+        for(int i=0; i<selectRc; i++) {
+          // If there is an incoming message on the initial RTCPD connection
+          if(FD_ISSET(rtcpdInitialSocketFd, &readFdSet)) {
 
-          processErrorOnInitialRtcpdConnection(cuuid, vdqmJobRequest,
-            rtcpdInitialSocketFd);
+            processErrorOnInitialRtcpdConnection(cuuid, vdqmJobRequest,
+              rtcpdInitialSocketFd);
 
-        // Else if there is a callback connection request from RTCPD
-        } else if(FD_ISSET(rtcpdCallbackSocketFd, &readFdSet)) {
+            FD_CLR(rtcpdInitialSocketFd, &readFdSet);
 
-          acceptRtcpdConnection(cuuid, vdqmJobRequest, rtcpdCallbackSocketFd,
-            connectedSockets);
+          // Else if there is a callback connection request from RTCPD
+          } else if(FD_ISSET(rtcpdCallbackSocketFd, &readFdSet)) {
 
-        // Else there are one or messages from the tape and disk I/O threads
-        } else {
-          processTapeDiskIoConnections(cuuid, vdqmJobRequest, connectedSockets);
-        }
+            acceptRtcpdConnection(cuuid, vdqmJobRequest, rtcpdCallbackSocketFd,
+              connectedSockets);
+
+            FD_CLR(rtcpdInitialSocketFd, &readFdSet);
+
+          // Else there are one or more messages from the tape/disk I/O threads
+          } else {  
+            for(std::list<int>::iterator itor=connectedSockets.begin(); 
+                itor != connectedSockets.end(); itor++) {
+
+              processTapeDiskIoConnection(cuuid, vdqmJobRequest,
+                *itor);
+
+              FD_CLR(*itor, &readFdSet);
+            }
+          }
+        } // For each bit that has been set
       }
     }
   } catch(castor::exception::Exception &ex) {
