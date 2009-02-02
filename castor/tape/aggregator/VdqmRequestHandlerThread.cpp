@@ -29,9 +29,9 @@
 #include "castor/tape/aggregator/Marshaller.hpp"
 #include "castor/tape/aggregator/Net.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
-#include "castor/tape/aggregator/RtcpAcknowledgeMessage.hpp"
-#include "castor/tape/aggregator/RtcpTapeRequestMessage.hpp"
-#include "castor/tape/aggregator/RtcpFileRequestMessage.hpp"
+#include "castor/tape/aggregator/RtcpAcknowledgeMsgBody.hpp"
+#include "castor/tape/aggregator/RtcpTapeRequestMsgBody.hpp"
+#include "castor/tape/aggregator/RtcpFileRequestMsgBody.hpp"
 #include "castor/tape/aggregator/Transceiver.hpp"
 #include "castor/tape/aggregator/Utils.hpp"
 #include "castor/tape/aggregator/VdqmRequestHandlerThread.hpp"
@@ -63,65 +63,6 @@ castor::tape::aggregator::VdqmRequestHandlerThread::~VdqmRequestHandlerThread()
 // init
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandlerThread::init() throw() {
-/* TEST CODE
-  Cuuid_t cuuid = nullCuuid;
-
-  // Give a Cuuid to the test code
-  Cuuid_create(&cuuid);
-
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("TEST", "Start of test code")};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, AGGREGATOR_NULL, 1, params);
-  }
-
-  try {
-    {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("TEST", "Creating listener socket")};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, AGGREGATOR_NULL, 1,
-        params);
-    }
-
-    // Create, bind and mark a listener socket
-    const int listenSocketFd = Net::createListenerSocket(12345);
-
-    {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("TEST", "Waiting for a connection")};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, AGGREGATOR_NULL, 1,
-        params);
-    }
-
-    // Accept a connection with a timeout
-    const int connectedSocketFd = Net::acceptConnection(listenSocketFd,
-      10);
-
-    unsigned short port = 0; // Client port
-    unsigned long  ip   = 0; // Client IP
-    char           hostName[HOSTNAMEBUFLEN];
-
-    Net::getPeerIpAndPort(connectedSocketFd, ip, port);
-    Net::getPeerHostName(connectedSocketFd, hostName);
-
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("TEST"    , "Accepted a connection"),
-      castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)),
-      castor::dlf::Param("Port"    , port),
-      castor::dlf::Param("HostName", hostName)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NULL, 4, params);
-
-  } catch(castor::exception::Exception &ex) {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("TEST"    , "Test code through as exception"),
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-      castor::dlf::Param("Message" , ex.getMessage().str()),
-      castor::dlf::Param("Code"    , ex.code())};
-
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, AGGREGATOR_NULL, 4, params);
-  }
-*/
 }
 
 
@@ -130,7 +71,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::init() throw() {
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandlerThread::
   processJobSubmissionRequest(const Cuuid_t &cuuid, const int vdqmSocketFd,
-  RcpJobRequestMessage &jobRequest, const int rtcpdCallbackSocketFd)
+  RcpJobRequestMsgBody &jobRequest, const int rtcpdCallbackSocketFd)
   throw(castor::exception::Exception) {
 
   // Log the new connection
@@ -158,7 +99,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
       AGGREGATOR_VDQM_CONNECTION_WITHOUT_INFO, 3, params);
   }
 
-  Utils::setBytes(jobRequest, 0);
+  Utils::setBytes(jobRequest, '\0');
 
   checkRcpJobSubmitterIsAuthorised(vdqmSocketFd);
 
@@ -195,7 +136,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_SUBMITTING_JOB_TO_RTCPD, 1, params);
   }
-  RcpJobReplyMessage rtcpdReply;
+  RcpJobReplyMsgBody rtcpdReply;
   RcpJobSubmitter::submit(
     "localhost",               // host
     RTCOPY_PORT,               // port
@@ -238,7 +179,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
   char vdqmReplyBuf[MSGBUFSIZ];
   size_t vdqmReplyLen = 0;
 
-  vdqmReplyLen = Marshaller::marshallRcpJobReplyMessage(vdqmReplyBuf,
+  vdqmReplyLen = Marshaller::marshallRcpJobReplyMsgBody(vdqmReplyBuf,
     rtcpdReply);
 
   Net::writeBytes(vdqmSocketFd, RTCPDNETRWTIMEOUT, vdqmReplyLen, vdqmReplyBuf);
@@ -250,7 +191,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandlerThread::
   processErrorOnInitialRtcpdConnection(const Cuuid_t &cuuid,
-  const RcpJobRequestMessage &vdqmJobRequest, const int rtcpdInitialSocketFd)
+  const RcpJobRequestMsgBody &vdqmJobRequest, const int rtcpdInitialSocketFd)
   throw(castor::exception::Exception) {
 
   {
@@ -260,10 +201,13 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
       AGGREGATOR_DATA_ON_INITIAL_RTCPD_CONNECTION, 1, params);
   }
 
-  RtcpTapeRequestMessage request;
+  MessageHeader          header;
+  RtcpTapeRequestMsgBody request;
 
-  Transceiver::receiveRtcpTapeRequest(rtcpdInitialSocketFd, RTCPDNETRWTIMEOUT,
-    request);
+  Transceiver::receiveRtcpMessageHeader(rtcpdInitialSocketFd, RTCPDNETRWTIMEOUT,
+    header);
+  Transceiver::receiveRtcpTapeRequestBody(rtcpdInitialSocketFd,
+    RTCPDNETRWTIMEOUT, header, request);
 
   // TBD - Process incoming request?
 }
@@ -274,8 +218,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandlerThread::
   acceptRtcpdConnection(const Cuuid_t &cuuid,
-  const RcpJobRequestMessage &vdqmJobRequest, const int rtcpdCallbackSocketFd,
-  std::list<int> &connectedSockets) throw(castor::exception::Exception) {
+  const RcpJobRequestMsgBody &vdqmJobRequest, const int rtcpdCallbackSocketFd,
+  std::list<int> &connectedSocketFds) throw(castor::exception::Exception) {
 
   const int connectedSocketFd = Net::acceptConnection(rtcpdCallbackSocketFd,
     RTCPDCALLBACKTIMEOUT);
@@ -302,7 +246,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
       AGGREGATOR_RTCPD_CALLBACK_WITHOUT_INFO, 1, params);
   }
 
-  connectedSockets.push_back(connectedSocketFd);
+  connectedSocketFds.push_back(connectedSocketFd);
 }
 
 
@@ -311,12 +255,38 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandlerThread::
   processTapeDiskIoConnection(const Cuuid_t &cuuid,
-  const RcpJobRequestMessage &vdqmJobRequest, const int connectedSocket)
+  const RcpJobRequestMsgBody &vdqmJobRequest, const int socketFd)
   throw(castor::exception::Exception) {
-/*
+
+  MessageHeader header;
+
+  Transceiver::receiveRtcpMessageHeader(socketFd, RTCPDNETRWTIMEOUT,
+    header);
+
+//switch(header.reqType) {
+//case RTCP_FILE_REQ:
+
+  // Crazy code to make it work
+
+  // Length of body buffer = Length of message buffer - length of header
+  char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
+
+  // Read the message body
+  try {
+    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.len, bodyBuf);
+  } catch (castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(EIO);
+
+    ex2.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to read message body"
+      << ": "<< ex.getMessage().str();
+
+    throw ex2;
+  }
+
   // Give file information to RTCPD
   try {
-    Transceiver::giveFileListToRtcpd(rtcpdInitialSocketFd, RTCPDNETRWTIMEOUT,
+    Transceiver::giveFileListToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
       vdqmJobRequest.tapeRequestId, "lxc2disk07:/dev/null", 18, false);
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
@@ -326,7 +296,13 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
       AGGREGATOR_FAILED_TO_GIVE_FILE_INFO, 3, params);
   }
-*/
+
+  // Acknowledge request for more work from RTCPD
+  RtcpAcknowledgeMsgBody ackMsg;
+  ackMsg.magic   = RTCOPY_MAGIC;
+  ackMsg.reqType = RTCP_FILE_REQ;
+  ackMsg.status  = 0;
+  Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
 }
 
 
@@ -335,10 +311,17 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandlerThread::
   processRtcpdSockets(const Cuuid_t &cuuid,
-  const RcpJobRequestMessage &vdqmJobRequest, const int rtcpdCallbackSocketFd,
+  const RcpJobRequestMsgBody &vdqmJobRequest, const int rtcpdCallbackSocketFd,
   const int rtcpdInitialSocketFd) throw(castor::exception::Exception) {
 
-  std::list<int> connectedSockets;
+{
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+    castor::dlf::Param("Message" , "Entered processRtcpdSockets")};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, AGGREGATOR_NULL, params);
+}
+
+  std::list<int> connectedSocketFds;
   int selectRc = 0;
   int selectErrno = 0;
   fd_set readFdSet;
@@ -352,14 +335,15 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 
       // Build the file descriptor set ready for the select call
       FD_ZERO(&readFdSet);
+      FD_SET(rtcpdCallbackSocketFd, &readFdSet);
       FD_SET(rtcpdInitialSocketFd, &readFdSet);
       if(rtcpdCallbackSocketFd > rtcpdInitialSocketFd) {
         maxFd = rtcpdCallbackSocketFd;
       } else {
         maxFd = rtcpdInitialSocketFd;
       }
-      for(std::list<int>::iterator itor = connectedSockets.begin();
-        itor != connectedSockets.end(); itor++) {
+      for(std::list<int>::iterator itor = connectedSocketFds.begin();
+        itor != connectedSocketFds.end(); itor++) {
 
         FD_SET(*itor, &readFdSet);
 
@@ -380,6 +364,12 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
           AGGREGATOR_MAIN_SELECT_TIMEDOUT);
         break;
       case -1: // Select encountered an error
+{
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+    castor::dlf::Param("Message" , "select->-1")};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, AGGREGATOR_NULL, params);
+}
         // If select encountered an error other than an interruption
         if(selectErrno != EINTR) {
           char strerrorBuf[STRERRORBUFLEN];
@@ -396,6 +386,14 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
         }
         break;
       default: // One or more select file descriptors require attention
+{
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+    castor::dlf::Param("Message" , "select->default"),
+    castor::dlf::Param("selectRc", selectRc)};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, AGGREGATOR_NULL, params);
+}
+
         // For each bit that has been set
         for(int i=0; i<selectRc; i++) {
           // If there is an incoming message on the initial RTCPD connection
@@ -410,19 +408,29 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
           } else if(FD_ISSET(rtcpdCallbackSocketFd, &readFdSet)) {
 
             acceptRtcpdConnection(cuuid, vdqmJobRequest, rtcpdCallbackSocketFd,
-              connectedSockets);
+              connectedSocketFds);
 
             FD_CLR(rtcpdInitialSocketFd, &readFdSet);
 
           // Else there are one or more messages from the tape/disk I/O threads
           } else {  
-            for(std::list<int>::iterator itor=connectedSockets.begin(); 
-                itor != connectedSockets.end(); itor++) {
+            for(std::list<int>::iterator itor=connectedSocketFds.begin(); 
+                itor != connectedSocketFds.end(); itor++) {
 
-              processTapeDiskIoConnection(cuuid, vdqmJobRequest,
-                *itor);
+              if(FD_ISSET(*itor, &readFdSet)) {
+{
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+    castor::dlf::Param("Message" , "connected socket has a message"),
+    castor::dlf::Param("*itor", *itor)};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, AGGREGATOR_NULL, params);
+}
 
-              FD_CLR(*itor, &readFdSet);
+                processTapeDiskIoConnection(cuuid, vdqmJobRequest,
+                  *itor);
+
+                FD_CLR(*itor, &readFdSet);
+              }
             }
           }
         } // For each bit that has been set
@@ -440,8 +448,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 
   // Close all connected sockets
   for(
-    std::list<int>::iterator itor = connectedSockets.begin();
-    itor != connectedSockets.end();
+    std::list<int>::iterator itor = connectedSocketFds.begin();
+    itor != connectedSocketFds.end();
     itor++) {
     close(*itor);
   }
@@ -452,7 +460,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 // coordinateRemoteCopy
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
-  const Cuuid_t &cuuid, const RcpJobRequestMessage &vdqmJobRequest,
+  const Cuuid_t &cuuid, const RcpJobRequestMsgBody &vdqmJobRequest,
   const int rtcpdCallbackSocketFd) throw(castor::exception::Exception) {
 
   // Accept the initial incoming RTCPD callback connection
@@ -483,8 +491,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
 
     try {
       uint32_t tStartRequest = time(NULL); // CASTOR2/rtcopy/rtcpclientd.c:1494
-      RtcpTapeRequestMessage request;
-      RtcpTapeRequestMessage reply;
+      RtcpTapeRequestMsgBody request;
+      RtcpTapeRequestMsgBody reply;
 
       Utils::setBytes(request, '\0');
       Utils::copyString(request.vid    , "I10547");
@@ -578,7 +586,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::run(void *param)
 
   int rtcpdCallbackSocketFd = 0;
   bool processedJobSubmissionRequest = false;
-  RcpJobRequestMessage vdqmJobRequest;
+  RcpJobRequestMsgBody vdqmJobRequest;
 
   try {
     // Create, bind and mark a listener socket for RTCPD callback connections

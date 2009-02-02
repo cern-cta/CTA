@@ -53,7 +53,7 @@ int castor::tape::aggregator::Net::createListenerSocket(
     throw ex;
   }
 
-  Utils::setBytes(address, 0);
+  Utils::setBytes(address, '\0');
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = htonl(INADDR_ANY);
   address.sin_port = htons(port);

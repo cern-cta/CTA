@@ -81,7 +81,7 @@ namespace aggregator {
       const int           clientEgid,
       const std::string  &deviceGroupName,
       const std::string  &driveName,
-      RcpJobReplyMessage &reply)
+      RcpJobReplyMsgBody &reply)
       throw(castor::exception::Exception);    
 
       
@@ -100,7 +100,7 @@ namespace aggregator {
      */
     static void readReply(castor::io::AbstractTCPSocket &socket,
       const int netReadWriteTimeout, const char *remoteCopyType,
-      RcpJobReplyMessage &reply) throw(castor::exception::Exception);    
+      RcpJobReplyMsgBody &reply) throw(castor::exception::Exception);    
 
   }; // class RcpJobSubmitter
 

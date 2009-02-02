@@ -261,7 +261,7 @@ size_t castor::tape::aggregator::Marshaller::marshallMessageHeader(
   }
 
   // Calculate the length of the message header
-  const uint32_t totalLen = 3 * sizeof(uint32_t);  // magic + reqtype + len
+  const uint32_t totalLen = 3 * sizeof(uint32_t);  // magic + reqType + len
 
   // Check that the message header buffer is big enough
   if(totalLen > dstLen) {
@@ -277,7 +277,7 @@ size_t castor::tape::aggregator::Marshaller::marshallMessageHeader(
   // Marshall the message header
   char *p = dst;
   marshallUint32(src.magic  , p);
-  marshallUint32(src.reqtype, p);
+  marshallUint32(src.reqType, p);
   marshallUint32(src.len    , p);
 
   // Calculate the number of bytes actually marshalled
@@ -308,16 +308,16 @@ void castor::tape::aggregator::Marshaller::unmarshallMessageHeader(
   throw(castor::exception::Exception) {
 
   unmarshallUint32(src, srcLen, dst.magic);
-  unmarshallUint32(src, srcLen, dst.reqtype);
+  unmarshallUint32(src, srcLen, dst.reqType);
   unmarshallUint32(src, srcLen, dst.len);
 }
 
 
 //-----------------------------------------------------------------------------
-// marshallRcpJobRequestMessage
+// marshallRcpJobRequestMsgBody
 //-----------------------------------------------------------------------------
-size_t castor::tape::aggregator::Marshaller::marshallRcpJobRequestMessage(
-  char *const dst, const size_t dstLen, const RcpJobRequestMessage &src)
+size_t castor::tape::aggregator::Marshaller::marshallRcpJobRequestMsgBody(
+  char *const dst, const size_t dstLen, const RcpJobRequestMsgBody &src)
   throw(castor::exception::Exception) {
 
   if(dst == NULL) {
@@ -338,7 +338,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobRequestMessage(
     4; // 4 = the number of string termination characters
 
   // Calculate the total length of the message (header + body)
-  // Message header = magic + reqtype + len = 3 * sizeof(uint32_t)
+  // Message header = magic + reqType + len = 3 * sizeof(uint32_t)
   const size_t totalLen = 3 * sizeof(uint32_t) + len;
 
   // Check that the message buffer is big enough
@@ -389,10 +389,10 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobRequestMessage(
 
 
 //-----------------------------------------------------------------------------
-// unmarshallRcpJobRequestMessageBody
+// unmarshallRcpJobRequestMsgBodyBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Marshaller::unmarshallRcpJobRequestMessageBody(
-  const char * &src, size_t &srcLen, RcpJobRequestMessage &dst)
+void castor::tape::aggregator::Marshaller::unmarshallRcpJobRequestMsgBodyBody(
+  const char * &src, size_t &srcLen, RcpJobRequestMsgBody &dst)
   throw(castor::exception::Exception) {
 
   unmarshallUint32(src, srcLen, dst.tapeRequestId);
@@ -407,10 +407,10 @@ void castor::tape::aggregator::Marshaller::unmarshallRcpJobRequestMessageBody(
 
 
 //-----------------------------------------------------------------------------
-// marshallRcpJobReplyMessage
+// marshallRcpJobReplyMsgBody
 //-----------------------------------------------------------------------------
-size_t castor::tape::aggregator::Marshaller::marshallRcpJobReplyMessage(
-  char *const dst, const size_t dstLen, const RcpJobReplyMessage &src)
+size_t castor::tape::aggregator::Marshaller::marshallRcpJobReplyMsgBody(
+  char *const dst, const size_t dstLen, const RcpJobReplyMsgBody &src)
   throw(castor::exception::Exception) {
 
   if(dst == NULL) {
@@ -437,7 +437,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobReplyMessage(
   // Calculate the length of the error message to be sent taking into account
   // the fact that the error message should be right trimmed if it is too large
   // to fit in the destination buffer.
-  const size_t headerLen = 3 * sizeof(uint32_t); // magic + reqtype + len
+  const size_t headerLen = 3 * sizeof(uint32_t); // magic + reqType + len
   // free space = total - header - status - terminating null character
   const size_t freeSpace = dstLen - headerLen - sizeof(uint32_t) - 1;
   const size_t errLenToSend = strlen(src.errorMessage) < freeSpace ?
@@ -481,10 +481,10 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobReplyMessage(
 
 
 //-----------------------------------------------------------------------------
-// unmarshallRcpJobReplyMessageBody
+// unmarshallRcpJobReplyMsgBodyBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Marshaller::unmarshallRcpJobReplyMessageBody(
-  const char * &src, size_t &srcLen, RcpJobReplyMessage &dst)
+void castor::tape::aggregator::Marshaller::unmarshallRcpJobReplyMsgBodyBody(
+  const char * &src, size_t &srcLen, RcpJobReplyMsgBody &dst)
   throw(castor::exception::Exception) {
 
   // Unmarshall the status number
@@ -508,10 +508,10 @@ void castor::tape::aggregator::Marshaller::unmarshallRcpJobReplyMessageBody(
 
 
 //-----------------------------------------------------------------------------
-// marshallRtcpTapeRequestMessage
+// marshallRtcpTapeRequestMsgBody
 //-----------------------------------------------------------------------------
-size_t castor::tape::aggregator::Marshaller::marshallRtcpTapeRequestMessage(
-  char *dst, const size_t dstLen, const RtcpTapeRequestMessage &src)
+size_t castor::tape::aggregator::Marshaller::marshallRtcpTapeRequestMsgBody(
+  char *dst, const size_t dstLen, const RtcpTapeRequestMsgBody &src)
   throw(castor::exception::Exception) {
 
   // Calculate the length of the message body
@@ -529,7 +529,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpTapeRequestMessage(
     7;                          // 7 = number of null terminator characters
 
   // Calculate the total length of the message (header + body)
-  // Message header = magic + reqtype + len = 3 * sizeof(uint32_t)
+  // Message header = magic + reqType + len = 3 * sizeof(uint32_t)
   const size_t totalLen = 3 * sizeof(uint32_t) + len;
 
   // Check that the message buffer is big enough
@@ -606,10 +606,10 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpTapeRequestMessage(
 
 
 //-----------------------------------------------------------------------------
-// unmarshallRtcpTapeRequestMessageBody
+// unmarshallRtcpTapeRequestMsgBodyBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Marshaller::unmarshallRtcpTapeRequestMessageBody(
-  const char * &src, size_t &srcLen, RtcpTapeRequestMessage &dst)
+void castor::tape::aggregator::Marshaller::unmarshallRtcpTapeRequestMsgBodyBody(
+  const char * &src, size_t &srcLen, RtcpTapeRequestMsgBody &dst)
   throw(castor::exception::Exception) {
 
   unmarshallString(src, srcLen, dst.vid);
@@ -652,10 +652,10 @@ void castor::tape::aggregator::Marshaller::unmarshallRtcpTapeRequestMessageBody(
 
 
 //-----------------------------------------------------------------------------
-// marshallRtcpAcknowledgeMessage
+// marshallRtcpAcknowledgeMsgBody
 //-----------------------------------------------------------------------------
-size_t castor::tape::aggregator::Marshaller::marshallRtcpAcknowledgeMessage(
-  char *const dst, const size_t dstLen, const RtcpAcknowledgeMessage &src)
+size_t castor::tape::aggregator::Marshaller::marshallRtcpAcknowledgeMsgBody(
+  char *const dst, const size_t dstLen, const RtcpAcknowledgeMsgBody &src)
   throw(castor::exception::Exception) {
   castor::exception::Internal ie;
 
@@ -669,7 +669,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpAcknowledgeMessage(
 
   // Calculate the total length of the message (there is no separate header and
   // body)
-  const uint32_t totalLen = 3 * sizeof(uint32_t); // magic + reqtype + status
+  const uint32_t totalLen = 3 * sizeof(uint32_t); // magic + reqType + status
 
   // Check that the message buffer is big enough
   if(totalLen > dstLen) {
@@ -686,7 +686,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpAcknowledgeMessage(
   // Marshall the message
   char *p = dst;
   marshallUint32(src.magic  , p);
-  marshallUint32(src.reqtype, p);
+  marshallUint32(src.reqType, p);
   marshallUint32(src.status , p);
 
   // Calculate the number of bytes actually marshalled
@@ -711,23 +711,23 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpAcknowledgeMessage(
 
 
 //-----------------------------------------------------------------------------
-// unmarshallRtcpAcknowledgeMessageBody
+// unmarshallRtcpAcknowledgeMsgBodyBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Marshaller::unmarshallRtcpAcknowledgeMessageBody(
-  const char * &src, size_t &srcLen, RtcpAcknowledgeMessage &dst)
+void castor::tape::aggregator::Marshaller::unmarshallRtcpAcknowledgeMsgBodyBody(
+  const char * &src, size_t &srcLen, RtcpAcknowledgeMsgBody &dst)
   throw(castor::exception::Exception) {
 
   unmarshallUint32(src, srcLen, dst.magic);
-  unmarshallUint32(src, srcLen, dst.reqtype);
+  unmarshallUint32(src, srcLen, dst.reqType);
   unmarshallUint32(src, srcLen, dst.status);
 }
 
 
 //-----------------------------------------------------------------------------
-// marshallRtcpFileRequestMessage
+// marshallRtcpFileRequestMsgBody
 //-----------------------------------------------------------------------------
-size_t castor::tape::aggregator::Marshaller::marshallRtcpFileRequestMessage(
-  char *dst, const size_t dstLen, const RtcpFileRequestMessage &src)
+size_t castor::tape::aggregator::Marshaller::marshallRtcpFileRequestMsgBody(
+  char *dst, const size_t dstLen, const RtcpFileRequestMsgBody &src)
   throw(castor::exception::Exception) {
 
   // Calculate the length of the message body
@@ -760,7 +760,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpFileRequestMessage(
     1;                          // err.errmsgtxt string terminator
 
   // Calculate the total length of the message (header + body)
-  // Message header = magic + reqtype + len = 3 * sizeof(uint32_t)
+  // Message header = magic + reqType + len = 3 * sizeof(uint32_t)
   const size_t totalLen = 3 * sizeof(uint32_t) + len;
 
   // Check that the message buffer is big enough
@@ -864,10 +864,10 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpFileRequestMessage(
 
 
 //-----------------------------------------------------------------------------
-// unmarshallRtcpFileRequestMessageBody
+// unmarshallRtcpFileRequestMsgBodyBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Marshaller::unmarshallRtcpFileRequestMessageBody(
-  const char * &src, size_t &srcLen, RtcpFileRequestMessage &dst)
+void castor::tape::aggregator::Marshaller::unmarshallRtcpFileRequestMsgBodyBody(
+  const char * &src, size_t &srcLen, RtcpFileRequestMsgBody &dst)
   throw(castor::exception::Exception) {
 
   unmarshallString(src, srcLen, dst.filePath);
@@ -946,7 +946,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpNoMoreRequestsMessage(
   const uint32_t len = 0;
 
   // Calculate the total length of the message (header + body)
-  // Message header = magic + reqtype + len = 3 * sizeof(uint32_t)
+  // Message header = magic + reqType + len = 3 * sizeof(uint32_t)
   const size_t totalLen = 3 * sizeof(uint32_t) + len;
 
   // Check that the message buffer is big enough

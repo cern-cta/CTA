@@ -40,7 +40,7 @@ namespace aggregator {
    */
   struct MessageHeader {
     uint32_t magic;
-    uint32_t reqtype;
+    uint32_t reqType;
     uint32_t len;
   };
 

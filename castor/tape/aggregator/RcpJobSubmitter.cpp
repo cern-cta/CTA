@@ -29,8 +29,8 @@
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/Marshaller.hpp"
 #include "castor/tape/aggregator/Net.hpp"
-#include "castor/tape/aggregator/RcpJobRequestMessage.hpp"
-#include "castor/tape/aggregator/RcpJobReplyMessage.hpp"
+#include "castor/tape/aggregator/RcpJobRequestMsgBody.hpp"
+#include "castor/tape/aggregator/RcpJobReplyMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
 #include "h/net.h"
 #include "h/osdep.h"
@@ -59,10 +59,10 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   const int           clientEgid,
   const std::string  &deviceGroupName,
   const std::string  &driveName,
-  RcpJobReplyMessage &reply)
+  RcpJobReplyMsgBody &reply)
   throw(castor::exception::Exception) {
 
-  RcpJobRequestMessage request;
+  RcpJobRequestMsgBody request;
 
   // Check the validity of the parameters of this function
   if(clientHost.length() > sizeof(request.clientHost) - 1) {
@@ -122,7 +122,7 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   size_t totalLen = 0;
 
   try {
-    totalLen = Marshaller::marshallRcpJobRequestMessage(buf, request);
+    totalLen = Marshaller::marshallRcpJobRequestMsgBody(buf, request);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 
@@ -173,7 +173,7 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::RcpJobSubmitter::readReply(
   castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
-  const char *remoteCopyType, RcpJobReplyMessage &reply)
+  const char *remoteCopyType, RcpJobReplyMsgBody &reply)
   throw(castor::exception::Exception) {
 
   // Read in the message header
@@ -222,14 +222,14 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
   }
 
   // If the request type is invalid
-  if(header.reqtype != VDQM_CLIENTINFO) {
+  if(header.reqType != VDQM_CLIENTINFO) {
     castor::exception::Exception ex(EBADMSG);
 
     ex.getMessage() << __PRETTY_FUNCTION__
       << std::hex
       << ": Invalid request type from " << remoteCopyType
       << ": Expected: 0x" << VDQM_CLIENTINFO
-      << ": Received: 0x" << header.reqtype;
+      << ": Received: 0x" << header.reqType;
 
     throw ex;
   }
@@ -283,7 +283,7 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
   try {
     const char *p           = bodyBuf;
     size_t     remainingLen = header.len;
-    Marshaller::unmarshallRcpJobReplyMessageBody(p, remainingLen, reply);
+    Marshaller::unmarshallRcpJobReplyMsgBodyBody(p, remainingLen, reply);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 

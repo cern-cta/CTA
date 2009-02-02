@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/RtcpFileRequestMessage.hpp
+ *                      castor/tape/aggregator/RtcpFileRequestMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_RTCPFILEREQUESTMESSAGE
-#define CASTOR_TAPE_AGGREGATOR_RTCPFILEREQUESTMESSAGE
+#ifndef CASTOR_TAPE_AGGREGATOR_RTCPFILEREQUESTMSGBODY
+#define CASTOR_TAPE_AGGREGATOR_RTCPFILEREQUESTMSGBODY
 
 #include "castor/tape/aggregator/RtcpErrorAppendix.hpp"
 #include "castor/tape/aggregator/RtcpSegmentAttributes.hpp"
@@ -40,7 +40,7 @@ namespace aggregator {
   /**
    * An RTCP file request message.
    */
-  struct RtcpFileRequestMessage {
+  struct RtcpFileRequestMsgBody {
     char filePath[CA_MAXPATHLEN+1];  // Disk file path
     char tapePath[CA_MAXPATHLEN+1];  // Tape device file
     char recfm[CA_MAXRECFMLEN+1];                            
@@ -103,10 +103,10 @@ namespace aggregator {
     Cuuid_t stgReqId;     // Unique identifier given by the stager
     RtcpErrorAppendix err; // Error reporting
 
-  }; // struct RtcpFileRequestMessage
+  }; // struct RtcpFileRequestMsgBody
 
 } // namespace aggregator
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_RTCPFILEREQUESTMESSAGE
+#endif // CASTOR_TAPE_AGGREGATOR_RTCPFILEREQUESTMSGBODY

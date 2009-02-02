@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/RtcpAcknowledgeMessage.hpp
+ *                      castor/tape/aggregator/RtcpAcknowledgeMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_RTCPACKNOWLEDGEMESSAGE
-#define CASTOR_TAPE_AGGREGATOR_RTCPACKNOWLEDGEMESSAGE
+#ifndef CASTOR_TAPE_AGGREGATOR_RTCPACKNOWLEDGEMSGBODY
+#define CASTOR_TAPE_AGGREGATOR_RTCPACKNOWLEDGEMSGBODY
 
 #include "h/Castor_limits.h"
 
@@ -38,9 +38,9 @@ namespace aggregator {
   /**
    * An RTCP acknowledge message.
    */
-  struct RtcpAcknowledgeMessage {
+  struct RtcpAcknowledgeMsgBody {
     uint32_t magic;
-    uint32_t reqtype;
+    uint32_t reqType;
     uint32_t status;
   };
 
@@ -48,4 +48,4 @@ namespace aggregator {
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_RTCPACKNOWLEDGEMESSAGE
+#endif // CASTOR_TAPE_AGGREGATOR_RTCPACKNOWLEDGEMSGBODY

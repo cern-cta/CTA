@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/RcpJobRequestMessage.hpp
+ *                      castor/tape/aggregator/RcpJobReplyMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,12 +22,13 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_RCPJOBREQUESTMESSAGE
-#define CASTOR_TAPE_AGGREGATOR_RCPJOBREQUESTMESSAGE
+#ifndef CASTOR_TAPE_AGGREGATOR_RCPJOBREPLYMSGBODY
+#define CASTOR_TAPE_AGGREGATOR_RCPJOBREPLYMSGBODY
 
 #include "h/Castor_limits.h"
 
 #include <stdint.h>
+#include <string>
 
 
 namespace castor     {
@@ -35,21 +36,15 @@ namespace tape       {
 namespace aggregator {
 
   /**
-   * An RCP job submission request message.
+   * An RCP job reply message.
    */
-  struct RcpJobRequestMessage {
-    uint32_t tapeRequestId;
-    uint32_t clientPort;
-    uint32_t clientEuid;
-    uint32_t clientEgid;
-    char clientHost[CA_MAXHOSTNAMELEN+1];
-    char deviceGroupName[CA_MAXDGNLEN+1];
-    char driveName[CA_MAXUNMLEN+1];
-    char clientUserName[CA_MAXUSRNAMELEN+1];
+  struct RcpJobReplyMsgBody {
+    uint32_t status;
+    char errorMessage[1024];
   };
 
 } // namespace aggregator
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_RCPJOBREQUESTMESSAGE
+#endif // CASTOR_TAPE_AGGREGATOR_RCPJOBREPLYMSGBODY
