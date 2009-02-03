@@ -266,9 +266,9 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
   switch(header.reqType) {
   case RTCP_FILE_REQ:
     {
-      RtcpFileRqstErrMsgBody body;
+      RtcpFileRqstMsgBody body;
 
-      Transceiver::receiveRtcpFileRqstErrBody(socketFd, RTCPDNETRWTIMEOUT,
+      Transceiver::receiveRtcpFileRqstBody(socketFd, RTCPDNETRWTIMEOUT,
         header, body);
 
       if(body.procStatus == RTCP_REQUEST_MORE_WORK) {
@@ -304,9 +304,9 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
     break;
   case RTCP_TAPE_REQ:
     {
-      RtcpTapeRqstErrMsgBody body;
+      RtcpTapeRqstMsgBody body;
 
-      Transceiver::receiveRtcpTapeRqstErrBody(socketFd, RTCPDNETRWTIMEOUT,
+      Transceiver::receiveRtcpTapeRqstBody(socketFd, RTCPDNETRWTIMEOUT,
         header, body);
 
       // Acknowledge tape request
@@ -339,7 +339,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
       castor::exception::Exception ex(EINVAL);
 
       ex.getMessage() << "Unexpected request type: 0x" << std::hex
-        << header.reqType;
+        << header.reqType
+        << "(" << Utils::rtcopyReqTypeToStr(header.reqType) << ")";
 
       throw ex;
     }
