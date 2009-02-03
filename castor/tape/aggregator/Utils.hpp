@@ -77,6 +77,22 @@ public:
     copyString(dst, src, n);
   }
 
+  /**
+   * Returns the string representation of the specified RTCP request type
+   * integer.
+   *
+   * @param reqType The RTCP request type.
+   */
+  static const char *rtcpReqTypeToStr(const int reqType);
+
+  /**
+   * Returns the string representation of the specified file request status
+   * code.
+   *
+   * @param reqType The file request status code.
+   */
+  static const char *procStatusToStr(const int procStatus);
+
 private:
 
   /**

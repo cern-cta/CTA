@@ -25,6 +25,7 @@
 
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/Utils.hpp"
+#include "h/rtcp_constants.h"
 
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -50,4 +51,46 @@ void castor::tape::aggregator::Utils::copyString(char *const dst,
 
   strncpy(dst, src, n);
     *(dst+n-1) = '\0'; // Ensure destination is null terminated
+}
+
+
+//-----------------------------------------------------------------------------
+// rtcpReqTypeToStr
+//-----------------------------------------------------------------------------
+const char *castor::tape::aggregator::Utils::rtcpReqTypeToStr(
+  const int reqType) {
+  switch(reqType) {
+  case RTCP_TAPE_REQ     : return "RTCP_TAPE_REQ";
+  case RTCP_FILE_REQ     : return "RTCP_FILE_REQ";
+  case RTCP_NOMORE_REQ   : return "RTCP_NOMORE_REQ";
+  case RTCP_TAPEERR_REQ  : return "RTCP_TAPEERR_REQ";
+  case RTCP_FILEERR_REQ  : return "RTCP_FILEERR_REQ";
+  case RTCP_ENDOF_REQ    : return "RTCP_ENDOF_REQ";
+  case RTCP_ABORT_REQ    : return "RTCP_ABORT_REQ";
+  case RTCP_DUMP_REQ     : return "RTCP_DUMP_REQ";
+  case RTCP_DUMPTAPE_REQ : return "RTCP_DUMPTAPE_REQ";
+  case RTCP_KILLJID_REQ  : return "RTCP_KILLJID_REQ";
+  case RTCP_RSLCT_REQ    : return "RTCP_RSLCT_REQ";
+  case RTCP_PING_REQ     : return "RTCP_PING_REQ";
+  case RTCP_HAS_MORE_WORK: return "RTCP_HAS_MORE_WORK";
+  default                : return "UNKNOWN";
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// procStatusToStr
+//-----------------------------------------------------------------------------
+const char *castor::tape::aggregator::Utils::procStatusToStr(
+  const int procStatus) {
+  switch(procStatus) {
+  case RTCP_WAITING           : return "RTCP_WAITING";
+  case RTCP_POSITIONED        : return "RTCP_POSITIONED";
+  case RTCP_PARTIALLY_FINISHED: return "RTCP_PARTIALLY_FINISHED";
+  case RTCP_FINISHED          : return "RTCP_FINISHED";
+  case RTCP_EOV_HIT           : return "RTCP_EOV_HIT";
+  case RTCP_UNREACHABLE       : return "RTCP_UNREACHABLE";
+  case RTCP_REQUEST_MORE_WORK : return "RTCP_REQUEST_MORE_WORK";
+  default                     : return "UNKNOWN";
+  }
 }
