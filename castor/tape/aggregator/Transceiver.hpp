@@ -30,6 +30,10 @@
 #include "castor/tape/aggregator/RtcpTapeRequestMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpFileRequestMsgBody.hpp"
 
+#include <iostream>
+#include <stdint.h>
+
+
 namespace castor     {
 namespace tape       {
 namespace aggregator {
@@ -214,6 +218,29 @@ private:
    * instantiated.
    */
   Transceiver() {}
+
+  /**
+   * Throws an exception if the expected magic number is not equal to the
+   * actual value.
+   *
+   * @param expected The expected magic number.
+   * @param actual The actual magic number.
+   * @param function The name of the caller function.
+   */
+  static void checkMagic(const uint32_t expected, const uint32_t actual,
+    const char *function) throw(castor::exception::Exception);
+
+  /**
+   * Throws an exception if the expected RTCOPY_MAGIC request type is not equal
+   * to the actual value.
+   *
+   * @param expected The expected request type.
+   * @param received The actual request type.
+   * @param function The name of the caller function.
+   */
+  static void checkRtcopyReqType(const uint32_t expected,
+    const uint32_t actual, const char *function)
+    throw(castor::exception::Exception);
 
 }; // class Transceiver
 

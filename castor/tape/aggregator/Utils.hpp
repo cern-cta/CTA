@@ -29,8 +29,8 @@
 #include "castor/exception/Exception.hpp"
 
 #include <errno.h>
+#include <stdint.h>
 #include <string.h>
-#include <iostream>
 
 namespace castor {
 namespace tape {
@@ -78,12 +78,19 @@ public:
   }
 
   /**
-   * Returns the string representation of the specified RTCP request type
-   * integer.
+   * Returns the string representation of the specified magic number.
+   *
+   * @param magic The magic number.
+   */
+  static const char *magicToStr(const uint32_t magic);
+
+  /**
+   * Returns the string representation of the specified RTCOPY_MAGIC request
+   * type.
    *
    * @param reqType The RTCP request type.
    */
-  static const char *rtcpReqTypeToStr(const int reqType);
+  static const char *rtcopyReqTypeToStr(const uint32_t reqType);
 
   /**
    * Returns the string representation of the specified file request status
@@ -91,7 +98,7 @@ public:
    *
    * @param reqType The file request status code.
    */
-  static const char *procStatusToStr(const int procStatus);
+  static const char *procStatusToStr(const uint32_t procStatus);
 
 private:
 

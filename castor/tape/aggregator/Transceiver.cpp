@@ -90,29 +90,8 @@ void castor::tape::aggregator::Transceiver::
     throw ex2;
   }
 
-  // If the magic number is invalid
-  if(ackMsg.magic != RTCOPY_MAGIC) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Invalid magic number from RTCPD"
-      << ": Expected: 0x" << std::hex << RTCOPY_MAGIC
-      << ": Received: " << ackMsg.magic;
-
-    throw ex;
-  }
-
-  // If the request type is invalid
-  if(ackMsg.reqType != RTCP_TAPEERR_REQ) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Invalid request type from RTCPD"
-      << ": Expected: 0x" << std::hex << RTCP_TAPEERR_REQ
-      << ": Received: " << ackMsg.reqType;
-
-    throw ex;
-  }
+  checkMagic(RTCOPY_MAGIC, ackMsg.magic, __PRETTY_FUNCTION__);
+  checkRtcopyReqType(RTCP_TAPEERR_REQ, ackMsg.reqType, __PRETTY_FUNCTION__);
 
   // If the acknowledge is negative
   if(ackMsg.status != 0) {
@@ -200,29 +179,8 @@ void castor::tape::aggregator::Transceiver::giveVolumeIdToRtcpd(
     throw ex2;
   }
 
-  // If the magic number is invalid
-  if(ackMsg.magic != RTCOPY_MAGIC) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Invalid magic number from RTCPD"
-      << ": Expected: 0x" << std::hex << RTCOPY_MAGIC
-      << ": Received: " << ackMsg.magic;
-
-    throw ex;
-  }
-
-  // If the request type is invalid
-  if(ackMsg.reqType != RTCP_TAPEERR_REQ) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Invalid request type from RTCPD"
-      << ": Expected: 0x" << std::hex << RTCP_TAPEERR_REQ
-      << ": Received: " << ackMsg.reqType;
-
-    throw ex;
-  }
+  checkMagic(RTCOPY_MAGIC, ackMsg.magic, __PRETTY_FUNCTION__);
+  checkRtcopyReqType(RTCP_TAPEERR_REQ, ackMsg.reqType, __PRETTY_FUNCTION__);
 
   // If the acknowledge is negative
   if(ackMsg.status != 0) {
@@ -283,29 +241,8 @@ void castor::tape::aggregator::Transceiver::giveFileInfoToRtcpd(
     throw ex2;
   }
 
-  // If the magic number is invalid
-  if(ackMsg.magic != RTCOPY_MAGIC) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Invalid magic number from RTCPD"
-      << ": Expected: 0x" << std::hex << RTCOPY_MAGIC
-      << ": Received: " << ackMsg.magic;
-
-    throw ex;
-  }
-
-  // If the request type is invalid
-  if(ackMsg.reqType != RTCP_FILEERR_REQ) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Invalid request type from RTCPD"
-      << ": Expected: 0x" << std::hex << RTCP_FILEERR_REQ
-      << ": Received: " << ackMsg.reqType;
-
-    throw ex;
-  }
+  checkMagic(RTCOPY_MAGIC, ackMsg.magic, __PRETTY_FUNCTION__);
+  checkRtcopyReqType(RTCP_FILEERR_REQ, ackMsg.reqType, __PRETTY_FUNCTION__);
 
   // If the acknowledge is negative
   if(ackMsg.status != 0) {
@@ -441,29 +378,8 @@ void castor::tape::aggregator::Transceiver::signalNoMoreRequestsToRtcpd(
     throw ex2;
   }
 
-  // If the magic number is invalid
-  if(ackMsg.magic != RTCOPY_MAGIC) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Invalid magic number from RTCPD"
-      << ": Expected: 0x" << std::hex << RTCOPY_MAGIC
-      << ": Received: " << ackMsg.magic;
-
-    throw ex;
-  }
-
-  // If the request type is invalid
-  if(ackMsg.reqType != RTCP_NOMORE_REQ) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Invalid request type from RTCPD"
-      << ": Expected: 0x" << std::hex << RTCP_FILEERR_REQ
-      << ": Received: " << ackMsg.reqType;
-
-    throw ex;
-  }
+  checkMagic(RTCOPY_MAGIC, ackMsg.magic, __PRETTY_FUNCTION__);
+  checkRtcopyReqType(RTCP_NOMORE_REQ, ackMsg.reqType, __PRETTY_FUNCTION__);
 
   // If the acknowledge is negative
   if(ackMsg.status != 0) {
@@ -513,31 +429,8 @@ void castor::tape::aggregator::Transceiver::receiveRcpJobRequest(
     throw ex2;
   }
 
-  // If the magic number is invalid
-  if(header.magic != RTCOPY_MAGIC_OLD0) {
-    castor::exception::Exception ex(EBADMSG);
-
-     ex.getMessage() << __PRETTY_FUNCTION__
-       << std::hex
-       << ": Invalid magic number from RCP job submitter"
-       << ": Expected: 0x" << RTCOPY_MAGIC
-       << ": Received: 0x" << header.magic;
-
-     throw ex;
-  }
-
-  // If the request type is invalid
-  if(header.reqType != VDQM_CLIENTINFO) {
-    castor::exception::Exception ex(EBADMSG);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << std::hex
-      << ": Invalid request type from RCP job submitter"
-      << ": Expected: 0x" << RTCP_TAPEERR_REQ
-      << ": Received: 0x" << header.reqType;
-
-    throw ex;
-  }
+  checkMagic(RTCOPY_MAGIC_OLD0, header.magic, __PRETTY_FUNCTION__);
+  checkRtcopyReqType(VDQM_CLIENTINFO, header.reqType, __PRETTY_FUNCTION__);
 
   // Length of body buffer = Length of message buffer - length of header
   char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
@@ -764,31 +657,8 @@ void castor::tape::aggregator::Transceiver::receiveRtcpFileRequestBody(
   const MessageHeader &header, RtcpFileRequestMsgBody &body)
   throw(castor::exception::Exception) {
 
-  // If the magic number is invalid
-  if(header.magic != RTCOPY_MAGIC) {
-    castor::exception::Exception ex(EBADMSG);
-
-     ex.getMessage() << __PRETTY_FUNCTION__
-       << std::hex
-       << ": Invalid magic number from RTCPD"
-       << ": Expected: 0x" << RTCOPY_MAGIC
-       << ": Received: 0x" << header.magic;
-
-     throw ex;
-  }
-
-  // If the request type is invalid
-  if(header.reqType != RTCP_FILEERR_REQ) {
-    castor::exception::Exception ex(EBADMSG);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << std::hex
-      << ": Invalid request type from RTCPD"
-      << ": Expected: 0x" << RTCP_TAPEERR_REQ
-      << ": Received: 0x" << header.reqType;
-
-    throw ex;
-  }
+  checkMagic(RTCOPY_MAGIC, header.magic, __PRETTY_FUNCTION__);
+  checkRtcopyReqType(RTCP_FILEERR_REQ, header.reqType, __PRETTY_FUNCTION__);
 
   // Length of body buffer = Length of message buffer - length of header
   char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
@@ -844,31 +714,8 @@ void castor::tape::aggregator::Transceiver::receiveRtcpTapeRequestBody(
   const MessageHeader &header, RtcpTapeRequestMsgBody &body)
   throw(castor::exception::Exception) {
 
-  // If the magic number is invalid
-  if(header.magic != RTCOPY_MAGIC) {
-    castor::exception::Exception ex(EBADMSG);
-
-     ex.getMessage() << __PRETTY_FUNCTION__
-       << std::hex
-       << ": Invalid magic number from RTCPD"
-       << ": Expected: 0x" << RTCOPY_MAGIC
-       << ": Received: 0x" << header.magic;
-
-     throw ex;
-  }
-
-  // If the request type is invalid
-  if(header.reqType != RTCP_TAPEERR_REQ) {
-    castor::exception::Exception ex(EBADMSG);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << std::hex
-      << ": Invalid request type from RTCPD"
-      << ": Expected: 0x" << RTCP_TAPEERR_REQ
-      << ": Received: 0x" << header.reqType;
-
-    throw ex;
-  }
+  checkMagic(RTCOPY_MAGIC, header.magic, __PRETTY_FUNCTION__);
+  checkRtcopyReqType(RTCP_TAPEERR_REQ, header.reqType, __PRETTY_FUNCTION__);
 
   // Length of body buffer = Length of message buffer - length of header
   char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
@@ -911,5 +758,49 @@ void castor::tape::aggregator::Transceiver::receiveRtcpTapeRequestBody(
       << ": "<< ex.getMessage().str();
 
     throw ie;
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// checkMagic
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::Transceiver::checkMagic(const uint32_t expected,
+  const uint32_t actual, const char *function)
+  throw(castor::exception::Exception) {
+
+  if(expected != actual) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << function
+      << ": Invalid magic number"
+         ": Expected: 0x" << std::hex << expected
+      << "(" << Utils::magicToStr(expected) << ")"
+         ": Actual: 0x" << std::hex << actual
+      << "(" << Utils::magicToStr(actual) << ")";
+
+    throw ex;
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// checkRtcopyReqType
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::Transceiver::checkRtcopyReqType(
+  const uint32_t expected, const uint32_t actual, const char *function)
+  throw(castor::exception::Exception) {
+
+  if(expected != actual) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << function
+      << ": Invalid RTCOPY_MAGIC request type"
+         ": Expected: 0x" << std::hex << expected
+      << "(" << Utils::rtcopyReqTypeToStr(expected) << ")"
+         ": Actual: 0x" << std::hex << actual
+      << "(" << Utils::rtcopyReqTypeToStr(actual) << ")";
+
+    throw ex;
   }
 }

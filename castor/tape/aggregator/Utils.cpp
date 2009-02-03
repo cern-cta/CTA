@@ -55,10 +55,25 @@ void castor::tape::aggregator::Utils::copyString(char *const dst,
 
 
 //-----------------------------------------------------------------------------
-// rtcpReqTypeToStr
+// magicToStr
 //-----------------------------------------------------------------------------
-const char *castor::tape::aggregator::Utils::rtcpReqTypeToStr(
-  const int reqType) {
+const char *castor::tape::aggregator::Utils::magicToStr(const uint32_t magic) {
+  switch(magic) {
+  case RTCOPY_MAGIC_VERYOLD: return "RTCOPY_MAGIC_VERYOLD";
+  case RTCOPY_MAGIC_SHIFT  : return "RTCOPY_MAGIC_SHIFT";
+  case RTCOPY_MAGIC_OLD0   : return "RTCOPY_MAGIC_OLD0";
+  case RTCOPY_MAGIC        : return "RTCOPY_MAGIC";
+  case RFIO2TPREAD_MAGIC   : return "RFIO2TPREAD_MAGIC";
+  default                  : return "UNKNOWN";
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// rtcopyReqTypeToStr
+//-----------------------------------------------------------------------------
+const char *castor::tape::aggregator::Utils::rtcopyReqTypeToStr(
+  const uint32_t reqType) {
   switch(reqType) {
   case RTCP_TAPE_REQ     : return "RTCP_TAPE_REQ";
   case RTCP_FILE_REQ     : return "RTCP_FILE_REQ";
@@ -82,7 +97,7 @@ const char *castor::tape::aggregator::Utils::rtcpReqTypeToStr(
 // procStatusToStr
 //-----------------------------------------------------------------------------
 const char *castor::tape::aggregator::Utils::procStatusToStr(
-  const int procStatus) {
+  const uint32_t procStatus) {
   switch(procStatus) {
   case RTCP_WAITING           : return "RTCP_WAITING";
   case RTCP_POSITIONED        : return "RTCP_POSITIONED";

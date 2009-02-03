@@ -355,13 +355,6 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
   const RcpJobRequestMsgBody &vdqmJobRequest, const int rtcpdCallbackSocketFd,
   const int rtcpdInitialSocketFd) throw(castor::exception::Exception) {
 
-{
-  castor::dlf::Param params[] = {
-    castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-    castor::dlf::Param("Message" , "Entered processRtcpdSockets")};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, AGGREGATOR_NULL, params);
-}
-
   std::list<int> connectedSocketFds;
   int selectRc = 0;
   int selectErrno = 0;
@@ -401,16 +394,13 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 
       switch(selectRc) {
       case 0: // Select timed out
+
         castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
           AGGREGATOR_MAIN_SELECT_TIMEDOUT);
         break;
+
       case -1: // Select encountered an error
-{
-  castor::dlf::Param params[] = {
-    castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-    castor::dlf::Param("Message" , "select->-1")};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, AGGREGATOR_NULL, params);
-}
+
         // If select encountered an error other than an interruption
         if(selectErrno != EINTR) {
           char strerrorBuf[STRERRORBUFLEN];
@@ -426,14 +416,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
           throw ex;
         }
         break;
+
       default: // One or more select file descriptors require attention
-{
-  castor::dlf::Param params[] = {
-    castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-    castor::dlf::Param("Message" , "select->default"),
-    castor::dlf::Param("selectRc", selectRc)};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, AGGREGATOR_NULL, params);
-}
 
         // For each bit that has been set
         for(int i=0; i<selectRc; i++) {
@@ -459,16 +443,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
                 itor != connectedSocketFds.end(); itor++) {
 
               if(FD_ISSET(*itor, &readFdSet)) {
-{
-  castor::dlf::Param params[] = {
-    castor::dlf::Param("Function", __PRETTY_FUNCTION__),
-    castor::dlf::Param("Message" , "connected socket has a message"),
-    castor::dlf::Param("*itor", *itor)};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, AGGREGATOR_NULL, params);
-}
 
-                processTapeDiskIoConnection(cuuid, vdqmJobRequest,
-                  *itor);
+                processTapeDiskIoConnection(cuuid, vdqmJobRequest, *itor);
 
                 FD_CLR(*itor, &readFdSet);
               }
