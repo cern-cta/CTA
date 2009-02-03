@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/RtcpTapeRequestMsgBody.hpp
+ *                      castor/tape/aggregator/RtcpTapeRqstErrMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_RTCPTAPEREQUESTMSGBODY
-#define CASTOR_TAPE_AGGREGATOR_RTCPTAPEREQUESTMSGBODY
+#ifndef CASTOR_TAPE_AGGREGATOR_RTCPTAPERQSTERRMSGBODY
+#define CASTOR_TAPE_AGGREGATOR_RTCPTAPERQSTERRMSGBODY
 
 #include "castor/tape/aggregator/RtcpErrorAppendix.hpp"
 #include "h/Castor_limits.h"
@@ -37,9 +37,12 @@ namespace tape       {
 namespace aggregator {
 
   /**
-   * An RTCP tape request message.
+   * An RTCP tape request with error appendix message.
+   *
+   * Please note that the presence of an error appendix does not necessarily
+   * indicate an error.
    */
-  struct RtcpTapeRequestMsgBody {
+  struct RtcpTapeRqstErrMsgBody {
     char vid[CA_MAXVIDLEN+1];
     char vsn[CA_MAXVSNLEN+1];
     char label[CA_MAXLBLTYPLEN+1];
@@ -63,10 +66,10 @@ namespace aggregator {
     Cuuid_t rtcpReqId;      // Unique request id assigned by RTCOPY
     RtcpErrorAppendix err;   // Error reporting
 
-  }; // struct RtcpTapeRequestMsgBody
+  }; // struct RtcpTapeRqstErrMsgBody
 
 } // namespace aggregator
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_RTCPTAPEREQUESTMSGBODY
+#endif // CASTOR_TAPE_AGGREGATOR_RTCPTAPERQSTERRMSGBODY

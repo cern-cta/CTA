@@ -27,8 +27,8 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/aggregator/RtcpAcknowledgeMsg.hpp"
-#include "castor/tape/aggregator/RtcpTapeRequestMsgBody.hpp"
-#include "castor/tape/aggregator/RtcpFileRequestMsgBody.hpp"
+#include "castor/tape/aggregator/RtcpTapeRqstErrMsgBody.hpp"
+#include "castor/tape/aggregator/RtcpFileRqstErrMsgBody.hpp"
 
 #include <iostream>
 #include <stdint.h>
@@ -57,7 +57,7 @@ public:
    * RTCPD.
    */
   static void getVolumeRequestIdFromRtcpd(const int socketFd,
-    const int netReadWriteTimeout, RtcpTapeRequestMsgBody &reply)
+    const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &reply)
     throw(castor::exception::Exception);
 
   /**
@@ -72,8 +72,8 @@ public:
    * RTCPD.
    */
   static void giveVolumeIdToRtcpd(const int socketFd,
-    const int netReadWriteTimeout, RtcpTapeRequestMsgBody &request,
-    RtcpTapeRequestMsgBody &reply) throw(castor::exception::Exception);
+    const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &request,
+    RtcpTapeRqstErrMsgBody &reply) throw(castor::exception::Exception);
 
   /**
    * Gives the description of a file to RTCPD by sending and receiving the
@@ -87,8 +87,8 @@ public:
    * RTCPD.
    */
   static void giveFileInfoToRtcpd(const int socketFd,
-    const int netReadWriteTimeout, RtcpFileRequestMsgBody &request,
-    RtcpFileRequestMsgBody &reply) throw(castor::exception::Exception);
+    const int netReadWriteTimeout, RtcpFileRqstErrMsgBody &request,
+    RtcpFileRqstErrMsgBody &reply) throw(castor::exception::Exception);
 
   /**
    * Signals the end of the file list to RTCPD by sending and receiving the
@@ -137,8 +137,8 @@ public:
    * @param request The request which will be filled with the contents of the
    * received message.
    */
-  static void receiveRcpJobRequest(const int socketFd,
-    const int netReadWriteTimeout, RcpJobRequestMsgBody &request)
+  static void receiveRcpJobRqst(const int socketFd,
+    const int netReadWriteTimeout, RcpJobRqstMsgBody &request)
     throw(castor::exception::Exception);
 
   /**
@@ -179,12 +179,13 @@ public:
    * @param request The request which will be filled with the contents of the
    * received message.
    */
-  static void receiveRtcpMessageHeader(const int socketFd,
+  static void receiveRtcpMsgHeader(const int socketFd,
     const int netReadWriteTimeout, MessageHeader &header)
     throw(castor::exception::Exception);
 
   /**
-   * Receives the body of an RTCPD file request message from RTCPD.
+   * Receives the body of an RTCPD file request with error appendix message
+   * from RTCPD.
    *
    * @param socketFd The socket file desscriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
@@ -193,12 +194,13 @@ public:
    * @param body The body structure which will be filled with the contents of
    * the received message body.
    */
-  static void receiveRtcpFileRequestBody(const int socketFd,
+  static void receiveRtcpFileRqstErrBody(const int socketFd,
     const int netReadWriteTimeout, const MessageHeader &header,
-    RtcpFileRequestMsgBody &body) throw(castor::exception::Exception);
+    RtcpFileRqstErrMsgBody &body) throw(castor::exception::Exception);
 
   /**
-   * Receives the body of an RTCPD tape request message from RTCPD.
+   * Receives the body of an RTCPD file request without error appendix message
+   * from RTCPD.
    *
    * @param socketFd The socket file desscriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
@@ -207,9 +209,39 @@ public:
    * @param body The body structure which will be filled with the contents of
    * the received message body.
    */
-  static void receiveRtcpTapeRequestBody(const int socketFd,
+  static void receiveRtcpFileRqstBody(const int socketFd,
     const int netReadWriteTimeout, const MessageHeader &header,
-    RtcpTapeRequestMsgBody &body) throw(castor::exception::Exception);
+    RtcpFileRqstMsgBody &body) throw(castor::exception::Exception);
+
+  /**
+   * Receives the body of an RTCPD tape request with error appendix message
+   * from RTCPD.
+   *
+   * @param socketFd The socket file desscriptor of the connection with RTCPD.
+   * @param netReadWriteTimeout The timeout to be applied when performing
+   * network read and write operations.
+   * @param header The message header which has already been received.
+   * @param body The body structure which will be filled with the contents of
+   * the received message body.
+   */
+  static void receiveRtcpTapeRqstErrBody(const int socketFd,
+    const int netReadWriteTimeout, const MessageHeader &header,
+    RtcpTapeRqstErrMsgBody &body) throw(castor::exception::Exception);
+
+  /**
+   * Receives the body of an RTCPD tape request without error appendix message
+   * from RTCPD.
+   *
+   * @param socketFd The socket file desscriptor of the connection with RTCPD.
+   * @param netReadWriteTimeout The timeout to be applied when performing
+   * network read and write operations.
+   * @param header The message header which has already been received.
+   * @param body The body structure which will be filled with the contents of
+   * the received message body.
+   */
+  static void receiveRtcpTapeRqstBody(const int socketFd,
+    const int netReadWriteTimeout, const MessageHeader &header,
+    RtcpTapeRqstMsgBody &body) throw(castor::exception::Exception);
 
 private:
 

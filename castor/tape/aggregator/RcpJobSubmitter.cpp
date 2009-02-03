@@ -29,7 +29,7 @@
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/Marshaller.hpp"
 #include "castor/tape/aggregator/Net.hpp"
-#include "castor/tape/aggregator/RcpJobRequestMsgBody.hpp"
+#include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobReplyMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
 #include "h/net.h"
@@ -62,7 +62,7 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   RcpJobReplyMsgBody &reply)
   throw(castor::exception::Exception) {
 
-  RcpJobRequestMsgBody request;
+  RcpJobRqstMsgBody request;
 
   // Check the validity of the parameters of this function
   if(clientHost.length() > sizeof(request.clientHost) - 1) {
@@ -122,7 +122,7 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   size_t totalLen = 0;
 
   try {
-    totalLen = Marshaller::marshallRcpJobRequestMsgBody(buf, request);
+    totalLen = Marshaller::marshallRcpJobRqstMsgBody(buf, request);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 

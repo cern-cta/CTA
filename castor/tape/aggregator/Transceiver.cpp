@@ -44,18 +44,18 @@
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::
   getVolumeRequestIdFromRtcpd(const int socketFd,
-  const int netReadWriteTimeout, RtcpTapeRequestMsgBody &reply)
+  const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &reply)
   throw(castor::exception::Exception) {
 
   // Prepare logical request for volume request ID
-  RtcpTapeRequestMsgBody request;
+  RtcpTapeRqstErrMsgBody request;
   Utils::setBytes(request, '\0');
 
   // Marshall the request
   char buf[MSGBUFSIZ];
   size_t totalLen = 0;
   try {
-    totalLen = Marshaller::marshallRtcpTapeRequestMsgBody(buf, request);
+    totalLen = Marshaller::marshallRtcpTapeRqstErrMsgBody(buf, request);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 
@@ -107,8 +107,8 @@ void castor::tape::aggregator::Transceiver::
   Utils::setBytes(reply, '\0');
   try {
     MessageHeader header;
-    receiveRtcpMessageHeader(socketFd, netReadWriteTimeout, header);
-    receiveRtcpTapeRequestBody(socketFd, netReadWriteTimeout, header, reply);
+    receiveRtcpMsgHeader(socketFd, netReadWriteTimeout, header);
+    receiveRtcpTapeRqstErrBody(socketFd, netReadWriteTimeout, header, reply);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EPROTO);
 
@@ -137,14 +137,14 @@ void castor::tape::aggregator::Transceiver::
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::giveVolumeIdToRtcpd(
   const int socketFd, const int netReadWriteTimeout,
-  RtcpTapeRequestMsgBody &request, RtcpTapeRequestMsgBody &reply)
+  RtcpTapeRqstErrMsgBody &request, RtcpTapeRqstErrMsgBody &reply)
   throw(castor::exception::Exception) {
 
   // Marshall the message
   char buf[MSGBUFSIZ];
   size_t totalLen = 0;
   try {
-    totalLen = Marshaller::marshallRtcpTapeRequestMsgBody(buf, request);
+    totalLen = Marshaller::marshallRtcpTapeRqstErrMsgBody(buf, request);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 
@@ -199,14 +199,14 @@ void castor::tape::aggregator::Transceiver::giveVolumeIdToRtcpd(
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::giveFileInfoToRtcpd(
   const int socketFd, const int netReadWriteTimeout,
-  RtcpFileRequestMsgBody &request, RtcpFileRequestMsgBody &reply)
+  RtcpFileRqstErrMsgBody &request, RtcpFileRqstErrMsgBody &reply)
   throw(castor::exception::Exception) {
 
   // Marshall the message
   char buf[MSGBUFSIZ];
   size_t totalLen = 0;
   try {
-    totalLen = Marshaller::marshallRtcpFileRequestMsgBody(buf, request);
+    totalLen = Marshaller::marshallRtcpFileRqstErrMsgBody(buf, request);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 
@@ -393,11 +393,11 @@ void castor::tape::aggregator::Transceiver::signalNoMoreRequestsToRtcpd(
 }
 
 //-----------------------------------------------------------------------------
-// receiveRcpJobRequest
+// receiveRcpJobRqst
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::receiveRcpJobRequest(
+void castor::tape::aggregator::Transceiver::receiveRcpJobRqst(
   const int socketFd, const int netReadWriteTimeout,
-  RcpJobRequestMsgBody &request) throw(castor::exception::Exception) {
+  RcpJobRqstMsgBody &request) throw(castor::exception::Exception) {
 
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
@@ -449,7 +449,7 @@ void castor::tape::aggregator::Transceiver::receiveRcpJobRequest(
 
   // If the message body is too small
   {
-    // The minimum size of a RcpJobRequestMsgBody is 4 uint32_t's and the
+    // The minimum size of a RcpJobRqstMsgBody is 4 uint32_t's and the
     // termination characters of 4 strings
     const size_t minimumLen = 4 * sizeof(uint32_t) + 4;
     if(header.len < minimumLen) {
@@ -481,7 +481,7 @@ void castor::tape::aggregator::Transceiver::receiveRcpJobRequest(
   try {
     const char *p           = bodyBuf;
     size_t     remainingLen = header.len;
-    Marshaller::unmarshallRcpJobRequestMsgBody(p, remainingLen, request);
+    Marshaller::unmarshallRcpJobRqstMsgBody(p, remainingLen, request);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 
@@ -501,8 +501,8 @@ void castor::tape::aggregator::Transceiver::giveRequestForMoreWorkToRtcpd(
   const int socketFd, const int netReadWriteTimeout, const uint32_t volReqId)
   throw(castor::exception::Exception) {
 
-  RtcpFileRequestMsgBody request;
-  RtcpFileRequestMsgBody reply;
+  RtcpFileRqstErrMsgBody request;
+  RtcpFileRqstErrMsgBody reply;
 
   Utils::setBytes(request, '\0');
   Utils::copyString(request.recfm, "F");
@@ -543,8 +543,8 @@ void castor::tape::aggregator::Transceiver::giveFileListToRtcpd(
   const char *const filePath, const uint32_t umask, const bool requestMoreWork)
   throw(castor::exception::Exception) {
 
-  RtcpFileRequestMsgBody request;
-  RtcpFileRequestMsgBody reply;
+  RtcpFileRqstErrMsgBody request;
+  RtcpFileRqstErrMsgBody reply;
 
 
   // Give file information to RTCPD
@@ -612,9 +612,9 @@ void castor::tape::aggregator::Transceiver::giveFileListToRtcpd(
 
 
 //-----------------------------------------------------------------------------
-// receiveRtcpMessageHeader
+// receiveRtcpMsgHeader
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::receiveRtcpMessageHeader(
+void castor::tape::aggregator::Transceiver::receiveRtcpMsgHeader(
   const int socketFd, const int netReadWriteTimeout,
   MessageHeader &header) throw(castor::exception::Exception) {
 
@@ -650,11 +650,11 @@ void castor::tape::aggregator::Transceiver::receiveRtcpMessageHeader(
 
 
 //-----------------------------------------------------------------------------
-// receiveRtcpFileRequestBody
+// receiveRtcpFileRqstErrBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::receiveRtcpFileRequestBody(
+void castor::tape::aggregator::Transceiver::receiveRtcpFileRqstErrBody(
   const int socketFd, const int netReadWriteTimeout,
-  const MessageHeader &header, RtcpFileRequestMsgBody &body)
+  const MessageHeader &header, RtcpFileRqstErrMsgBody &body)
   throw(castor::exception::Exception) {
 
   checkMagic(RTCOPY_MAGIC, header.magic, __PRETTY_FUNCTION__);
@@ -692,7 +692,7 @@ void castor::tape::aggregator::Transceiver::receiveRtcpFileRequestBody(
   try {
     const char *p           = bodyBuf;
     size_t     remainingLen = header.len;
-    Marshaller::unmarshallRtcpFileRequestMsgBody(p, remainingLen, body);
+    Marshaller::unmarshallRtcpFileRqstErrMsgBody(p, remainingLen, body);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 
@@ -705,13 +705,68 @@ void castor::tape::aggregator::Transceiver::receiveRtcpFileRequestBody(
 }
 
 
+//-----------------------------------------------------------------------------
+// receiveRtcpFileRqstBody
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::Transceiver::receiveRtcpFileRqstBody(
+  const int socketFd, const int netReadWriteTimeout,
+  const MessageHeader &header, RtcpFileRqstMsgBody &body)
+  throw(castor::exception::Exception) {
+
+  checkMagic(RTCOPY_MAGIC, header.magic, __PRETTY_FUNCTION__);
+  checkRtcopyReqType(RTCP_FILE_REQ, header.reqType, __PRETTY_FUNCTION__);
+
+  // Length of body buffer = Length of message buffer - length of header
+  char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
+
+  // If the message body is too large
+  if(header.len > sizeof(bodyBuf)) {
+    castor::exception::Exception ex(EMSGSIZE);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Message body from RTCPD is too large"
+         ": Maximum: " << sizeof(bodyBuf)
+      << ": Received: " << header.len;
+
+    throw ex;
+  }
+
+  // Read the message body
+  try {
+    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.len, bodyBuf);
+  } catch (castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(EIO);
+
+    ex2.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to read message body from RTCPD"
+      << ": "<< ex.getMessage().str();
+
+    throw ex2;
+  }
+
+  // Unmarshall the message body
+  try {
+    const char *p           = bodyBuf;
+    size_t     remainingLen = header.len;
+    Marshaller::unmarshallRtcpFileRqstMsgBody(p, remainingLen, body);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to unmarshall message body from RTCPD"
+      << ": "<< ex.getMessage().str();
+
+    throw ie;
+  }
+}
+
 
 //-----------------------------------------------------------------------------
-// receiveRtcpTapeRequestBody
+// receiveRtcpTapeRqstErrBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::receiveRtcpTapeRequestBody(
+void castor::tape::aggregator::Transceiver::receiveRtcpTapeRqstErrBody(
   const int socketFd, const int netReadWriteTimeout,
-  const MessageHeader &header, RtcpTapeRequestMsgBody &body)
+  const MessageHeader &header, RtcpTapeRqstErrMsgBody &body)
   throw(castor::exception::Exception) {
 
   checkMagic(RTCOPY_MAGIC, header.magic, __PRETTY_FUNCTION__);
@@ -749,7 +804,63 @@ void castor::tape::aggregator::Transceiver::receiveRtcpTapeRequestBody(
   try {
     const char *p           = bodyBuf;
     size_t     remainingLen = header.len;
-    Marshaller::unmarshallRtcpTapeRequestMsgBody(p, remainingLen, body);
+    Marshaller::unmarshallRtcpTapeRqstErrMsgBody(p, remainingLen, body);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to unmarshall message body from RTCPD"
+      << ": "<< ex.getMessage().str();
+
+    throw ie;
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// receiveRtcpTapeRqstBody
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::Transceiver::receiveRtcpTapeRqstBody(
+  const int socketFd, const int netReadWriteTimeout,
+  const MessageHeader &header, RtcpTapeRqstMsgBody &body)
+  throw(castor::exception::Exception) {
+
+  checkMagic(RTCOPY_MAGIC, header.magic, __PRETTY_FUNCTION__);
+  checkRtcopyReqType(RTCP_TAPE_REQ, header.reqType, __PRETTY_FUNCTION__);
+
+  // Length of body buffer = Length of message buffer - length of header
+  char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
+
+  // If the message body is too large
+  if(header.len > sizeof(bodyBuf)) {
+    castor::exception::Exception ex(EMSGSIZE);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Message body from RTCPD is too large"
+         ": Maximum: " << sizeof(bodyBuf)
+      << ": Received: " << header.len;
+
+    throw ex;
+  }
+
+  // Read the message body
+  try {
+    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.len, bodyBuf);
+  } catch (castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(EIO);
+
+    ex2.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to read message body from RTCPD"
+      << ": "<< ex.getMessage().str();
+
+    throw ex2;
+  }
+
+  // Unmarshall the message body
+  try {
+    const char *p           = bodyBuf;
+    size_t     remainingLen = header.len;
+    Marshaller::unmarshallRtcpTapeRqstMsgBody(p, remainingLen, body);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 

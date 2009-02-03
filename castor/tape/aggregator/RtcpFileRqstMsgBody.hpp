@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/RtcpFileRequestMsgBody.hpp
+ *                      castor/tape/aggregator/RtcpFileRqstMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_RTCPFILEREQUESTMSGBODY
-#define CASTOR_TAPE_AGGREGATOR_RTCPFILEREQUESTMSGBODY
+#ifndef CASTOR_TAPE_AGGREGATOR_RTCPFILERQSTMSGBODY
+#define CASTOR_TAPE_AGGREGATOR_RTCPFILERQSTMSGBODY
 
 #include "castor/tape/aggregator/RtcpErrorAppendix.hpp"
 #include "castor/tape/aggregator/RtcpSegmentAttributes.hpp"
@@ -38,9 +38,9 @@ namespace tape       {
 namespace aggregator {
 
   /**
-   * An RTCP file request message.
+   * An RTCP file request without error appendix message.
    */
-  struct RtcpFileRequestMsgBody {
+  struct RtcpFileRqstMsgBody {
     char filePath[CA_MAXPATHLEN+1];  // Disk file path
     char tapePath[CA_MAXPATHLEN+1];  // Tape device file
     char recfm[CA_MAXRECFMLEN+1];                            
@@ -68,8 +68,8 @@ namespace aggregator {
     int32_t  checkFid;      // CHECK_FILE, NEW_FILE
     uint32_t concat;        // CONCAT, CONCAT_TO_EOD, NOCONCAT or NOCONCAT_TO_EOD
 
-    // Intermediate processing status used mainly to checkpoint in case of a retry of a
-    // partially successful request.            
+    // Intermediate processing status used mainly to checkpoint in case of a
+    // retry of a partially successful request.            
     uint32_t procStatus; // RTCP_WAITING, RTC_POSITIONED, RTCP_FINISHED
 
     // Final return code and timing information                         
@@ -101,12 +101,11 @@ namespace aggregator {
     RtcpSegmentAttributes segAttr;
 
     Cuuid_t stgReqId;     // Unique identifier given by the stager
-    RtcpErrorAppendix err; // Error reporting
 
-  }; // struct RtcpFileRequestMsgBody
+  }; // struct RtcpFileRqstMsgBody
 
 } // namespace aggregator
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_RTCPFILEREQUESTMSGBODY
+#endif // CASTOR_TAPE_AGGREGATOR_RTCPFILERQSTMSGBODY

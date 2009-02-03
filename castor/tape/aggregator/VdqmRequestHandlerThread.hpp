@@ -29,7 +29,7 @@
 #include "castor/server/IThread.hpp"
 #include "castor/server/Queue.hpp"
 #include "castor/tape/aggregator/MessageHeader.hpp"
-#include "castor/tape/aggregator/RcpJobRequestMsgBody.hpp"
+#include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 
 #include <list>
 #include <map>
@@ -108,7 +108,7 @@ namespace aggregator {
      * to be used to accept callback connections from RTCPD.
      */
     void processJobSubmissionRequest(const Cuuid_t &cuuid,
-      const int vdqmSocketFd, RcpJobRequestMsgBody &jobRequest,
+      const int vdqmSocketFd, RcpJobRqstMsgBody &jobRequest,
       const int rtcpdCallbackSocketFd) throw(castor::exception::Exception);
 
     /**
@@ -121,7 +121,7 @@ namespace aggregator {
      * connection.
      */
     void processErrorOnInitialRtcpdConnection(const Cuuid_t &cuuid,
-      const RcpJobRequestMsgBody &vdqmJobRequest,
+      const RcpJobRqstMsgBody &vdqmJobRequest,
       const int rtcpdInitialSocketFd) throw(castor::exception::Exception);
 
     /**
@@ -137,7 +137,7 @@ namespace aggregator {
      * socket file descriptors.
      */
     void acceptRtcpdConnection(const Cuuid_t &cuuid,
-      const RcpJobRequestMsgBody &vdqmJobRequest,
+      const RcpJobRqstMsgBody &vdqmJobRequest,
       const int rtcpdCallbackSocketFd, std::list<int> &connectedSocketFds)
       throw(castor::exception::Exception);
 
@@ -150,7 +150,7 @@ namespace aggregator {
      * or disk I/O thread.
      */
     void processTapeDiskIoConnection(const Cuuid_t &cuuid,
-      const RcpJobRequestMsgBody &vdqmJobRequest, const int socketFd)
+      const RcpJobRqstMsgBody &vdqmJobRequest, const int socketFd)
       throw(castor::exception::Exception);
 
     /**
@@ -169,7 +169,7 @@ namespace aggregator {
      * connection.
      */
     void processRtcpdSockets(const Cuuid_t &cuuid,
-      const RcpJobRequestMsgBody &vdqmJobRequest,
+      const RcpJobRqstMsgBody &vdqmJobRequest,
       const int rtcpdCallbackSocketFd, const int rtcpdInitialSocketFd)
       throw(castor::exception::Exception);
 
@@ -183,7 +183,7 @@ namespace aggregator {
      * to be used to accept callback connections from RTCPD.
      */
     void coordinateRemoteCopy(const Cuuid_t &cuuid,
-      const RcpJobRequestMsgBody &vdqmJobRequest,
+      const RcpJobRqstMsgBody &vdqmJobRequest,
       const int rtcpdCallbackSocketFd) throw(castor::exception::Exception);
 
     /**

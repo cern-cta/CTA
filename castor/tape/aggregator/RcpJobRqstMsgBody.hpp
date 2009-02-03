@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/RcpJobRequestMsgBody.hpp
+ *                      castor/tape/aggregator/RcpJobRqstMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_RCPJOBREQUESTMSGBODY
-#define CASTOR_TAPE_AGGREGATOR_RCPJOBREQUESTMSGBODY
+#ifndef CASTOR_TAPE_AGGREGATOR_RCPJOBRQSTMSGBODY
+#define CASTOR_TAPE_AGGREGATOR_RCPJOBRQSTMSGBODY
 
 #include "h/Castor_limits.h"
 
@@ -37,7 +37,7 @@ namespace aggregator {
   /**
    * An RCP job submission request message.
    */
-  struct RcpJobRequestMsgBody {
+  struct RcpJobRqstMsgBody {
     uint32_t tapeRequestId;
     uint32_t clientPort;
     uint32_t clientEuid;
@@ -52,4 +52,4 @@ namespace aggregator {
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_RCPJOBREQUESTMSGBODY
+#endif // CASTOR_TAPE_AGGREGATOR_RCPJOBRQSTMSGBODY
