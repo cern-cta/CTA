@@ -29,7 +29,7 @@
 #include "castor/tape/aggregator/Marshaller.hpp"
 #include "castor/tape/aggregator/Net.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
-#include "castor/tape/aggregator/RtcpAcknowledgeMsgBody.hpp"
+#include "castor/tape/aggregator/RtcpAcknowledgeMsg.hpp"
 #include "castor/tape/aggregator/RtcpTapeRequestMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpFileRequestMsgBody.hpp"
 #include "castor/tape/aggregator/Transceiver.hpp"
@@ -287,7 +287,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
         }
 
         // Acknowledge request for more work from RTCPD
-        RtcpAcknowledgeMsgBody ackMsg;
+        RtcpAcknowledgeMsg ackMsg;
         ackMsg.magic   = RTCOPY_MAGIC;
         ackMsg.reqType = RTCP_FILE_REQ;
         ackMsg.status  = 0;
@@ -310,7 +310,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
         header, body);
 
       // Acknowledge tape request
-      RtcpAcknowledgeMsgBody ackMsg;
+      RtcpAcknowledgeMsg ackMsg;
       ackMsg.magic   = RTCOPY_MAGIC;
       ackMsg.reqType = RTCP_TAPE_REQ;
       ackMsg.status  = 0;
@@ -324,7 +324,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
         AGGREGATOR_RECEIVED_RTCP_ENDOF_REQ);
 
       // Acknowledge RTCP_ENDOF_REQ message
-      RtcpAcknowledgeMsgBody ackMsg;
+      RtcpAcknowledgeMsg ackMsg;
       ackMsg.magic   = RTCOPY_MAGIC;
       ackMsg.reqType = RTCP_ENDOF_REQ;
       ackMsg.status  = 0;

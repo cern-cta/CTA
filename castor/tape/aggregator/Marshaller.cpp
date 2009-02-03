@@ -652,10 +652,10 @@ void castor::tape::aggregator::Marshaller::unmarshallRtcpTapeRequestMsgBody(
 
 
 //-----------------------------------------------------------------------------
-// marshallRtcpAcknowledgeMsgBody
+// marshallRtcpAcknowledgeMsg
 //-----------------------------------------------------------------------------
-size_t castor::tape::aggregator::Marshaller::marshallRtcpAcknowledgeMsgBody(
-  char *const dst, const size_t dstLen, const RtcpAcknowledgeMsgBody &src)
+size_t castor::tape::aggregator::Marshaller::marshallRtcpAcknowledgeMsg(
+  char *const dst, const size_t dstLen, const RtcpAcknowledgeMsg &src)
   throw(castor::exception::Exception) {
   castor::exception::Internal ie;
 
@@ -711,10 +711,10 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpAcknowledgeMsgBody(
 
 
 //-----------------------------------------------------------------------------
-// unmarshallRtcpAcknowledgeMsgBody
+// unmarshallRtcpAcknowledgeMsg
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Marshaller::unmarshallRtcpAcknowledgeMsgBody(
-  const char * &src, size_t &srcLen, RtcpAcknowledgeMsgBody &dst)
+void castor::tape::aggregator::Marshaller::unmarshallRtcpAcknowledgeMsg(
+  const char * &src, size_t &srcLen, RtcpAcknowledgeMsg &dst)
   throw(castor::exception::Exception) {
 
   unmarshallUint32(src, srcLen, dst.magic);
@@ -936,9 +936,9 @@ void castor::tape::aggregator::Marshaller::unmarshallRtcpFileRequestMsgBody(
 
 
 //-----------------------------------------------------------------------------
-// marshallRtcpNoMoreRequestsMessage
+// marshallRtcpNoMoreRequestsMsgBody
 //-----------------------------------------------------------------------------
-size_t castor::tape::aggregator::Marshaller::marshallRtcpNoMoreRequestsMessage(
+size_t castor::tape::aggregator::Marshaller::marshallRtcpNoMoreRequestsMsgBody(
   char *dst, const size_t dstLen)
   throw(castor::exception::Exception) {
 

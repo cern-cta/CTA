@@ -26,7 +26,7 @@
 #define CASTOR_TAPE_AGGREGATOR_TRANSCEIVER_HPP 1
 
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/aggregator/RtcpAcknowledgeMsgBody.hpp"
+#include "castor/tape/aggregator/RtcpAcknowledgeMsg.hpp"
 #include "castor/tape/aggregator/RtcpTapeRequestMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpFileRequestMsgBody.hpp"
 
@@ -108,7 +108,7 @@ public:
    * message.
    */
   static void receiveRtcpAcknowledge(const int socketFd,
-    const int netReadWriteTimeout, RtcpAcknowledgeMsgBody &message)
+    const int netReadWriteTimeout, RtcpAcknowledgeMsg &message)
     throw(castor::exception::Exception);
 
   /**
@@ -121,7 +121,7 @@ public:
    * @param message The message to be sent.
    */
   static void sendRtcpAcknowledge(const int socketFd,
-    const int netReadWriteTimeout, const RtcpAcknowledgeMsgBody &message)
+    const int netReadWriteTimeout, const RtcpAcknowledgeMsg &message)
     throw(castor::exception::Exception);
 
   /**

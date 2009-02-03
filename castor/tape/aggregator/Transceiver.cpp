@@ -78,7 +78,7 @@ void castor::tape::aggregator::Transceiver::
   }
 
   // Receive acknowledge from RTCPD
-  RtcpAcknowledgeMsgBody ackMsg;
+  RtcpAcknowledgeMsg ackMsg;
   try {
     receiveRtcpAcknowledge(socketFd, netReadWriteTimeout, ackMsg);
   } catch(castor::exception::Exception &ex) {
@@ -188,7 +188,7 @@ void castor::tape::aggregator::Transceiver::giveVolumeIdToRtcpd(
   }
 
   // Receive acknowledge from RTCPD
-  RtcpAcknowledgeMsgBody ackMsg;
+  RtcpAcknowledgeMsg ackMsg;
   try {
     receiveRtcpAcknowledge(socketFd, netReadWriteTimeout, ackMsg);
   } catch(castor::exception::Exception &ex) {
@@ -271,7 +271,7 @@ void castor::tape::aggregator::Transceiver::giveFileInfoToRtcpd(
   }
 
   // Receive acknowledge from RTCPD
-  RtcpAcknowledgeMsgBody ackMsg;
+  RtcpAcknowledgeMsg ackMsg;
   try {
     receiveRtcpAcknowledge(socketFd, netReadWriteTimeout, ackMsg);
   } catch(castor::exception::Exception &ex) {
@@ -324,7 +324,7 @@ void castor::tape::aggregator::Transceiver::giveFileInfoToRtcpd(
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::receiveRtcpAcknowledge(
   const int socketFd, const int netReadWriteTimeout,
-  RtcpAcknowledgeMsgBody &message) throw(castor::exception::Exception) {
+  RtcpAcknowledgeMsg &message) throw(castor::exception::Exception) {
 
   // Read in the RTCPD acknowledge message (there is no separate header and
   // body)
@@ -346,7 +346,7 @@ void castor::tape::aggregator::Transceiver::receiveRtcpAcknowledge(
   try {
     const char *p           = messageBuf;
     size_t     remainingLen = sizeof(messageBuf);
-    Marshaller::unmarshallRtcpAcknowledgeMsgBody(p, remainingLen, message);
+    Marshaller::unmarshallRtcpAcknowledgeMsg(p, remainingLen, message);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EBADMSG);
 
@@ -364,13 +364,13 @@ void castor::tape::aggregator::Transceiver::receiveRtcpAcknowledge(
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::sendRtcpAcknowledge(
   const int socketFd, const int netReadWriteTimeout,
-  const RtcpAcknowledgeMsgBody &message) throw(castor::exception::Exception) {
+  const RtcpAcknowledgeMsg &message) throw(castor::exception::Exception) {
 
   char buf[MSGBUFSIZ];
   size_t totalLen = 0;
 
   try {
-    totalLen = Marshaller::marshallRtcpAcknowledgeMsgBody(buf, message);
+    totalLen = Marshaller::marshallRtcpAcknowledgeMsg(buf, message);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 
@@ -406,7 +406,7 @@ void castor::tape::aggregator::Transceiver::signalNoMoreRequestsToRtcpd(
   char buf[MSGBUFSIZ];
   size_t totalLen = 0;
   try {
-    totalLen = Marshaller::marshallRtcpNoMoreRequestsMessage(buf);
+    totalLen = Marshaller::marshallRtcpNoMoreRequestsMsgBody(buf);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Internal ie;
 
@@ -429,7 +429,7 @@ void castor::tape::aggregator::Transceiver::signalNoMoreRequestsToRtcpd(
   }
 
   // Receive acknowledge from RTCPD
-  RtcpAcknowledgeMsgBody ackMsg;
+  RtcpAcknowledgeMsg ackMsg;
   try {
     receiveRtcpAcknowledge(socketFd, netReadWriteTimeout, ackMsg);
   } catch(castor::exception::Exception &ex) {

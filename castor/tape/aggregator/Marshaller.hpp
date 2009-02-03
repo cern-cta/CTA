@@ -30,7 +30,7 @@
 #include "castor/tape/aggregator/MessageHeader.hpp"
 #include "castor/tape/aggregator/RcpJobReplyMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobRequestMsgBody.hpp"
-#include "castor/tape/aggregator/RtcpAcknowledgeMsgBody.hpp"
+#include "castor/tape/aggregator/RtcpAcknowledgeMsg.hpp"
 #include "castor/tape/aggregator/RtcpFileRequestMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpTapeRequestMsgBody.hpp"
 
@@ -446,8 +446,8 @@ namespace aggregator {
      * @param src The source structure.
      * @return The total length of the message (header + body).
      */
-    static size_t marshallRtcpAcknowledgeMsgBody(char *const dst,
-      const size_t dstLen, const RtcpAcknowledgeMsgBody &src)
+    static size_t marshallRtcpAcknowledgeMsg(char *const dst,
+      const size_t dstLen, const RtcpAcknowledgeMsg &src)
       throw(castor::exception::Exception);
 
     /**
@@ -458,10 +458,10 @@ namespace aggregator {
      * @param src The source structure.
      * @return The total length of the message (header + body).
      */
-    template<int n> static size_t marshallRtcpAcknowledgeMsgBody(
-      char (&dst)[n], const RtcpAcknowledgeMsgBody &src)
+    template<int n> static size_t marshallRtcpAcknowledgeMsg(
+      char (&dst)[n], const RtcpAcknowledgeMsg &src)
       throw(castor::exception::Exception) {
-      return marshallRtcpAcknowledgeMsgBody(dst, n, src);
+      return marshallRtcpAcknowledgeMsg(dst, n, src);
     }
 
     /**
@@ -478,8 +478,8 @@ namespace aggregator {
      * return is the number of bytes remaining in the source buffer.
      * @param dst The destination message structure.
      */
-    static void unmarshallRtcpAcknowledgeMsgBody(const char * &src,
-      size_t &srcLen, RtcpAcknowledgeMsgBody &dst)
+    static void unmarshallRtcpAcknowledgeMsg(const char * &src,
+      size_t &srcLen, RtcpAcknowledgeMsg &dst)
       throw(castor::exception::Exception);
 
     /**
@@ -537,7 +537,7 @@ namespace aggregator {
      * @param dstLen The length of the destination buffer.
      * @return The total length of the message (header + body).
      */
-    static size_t marshallRtcpNoMoreRequestsMessage(char *const dst,
+    static size_t marshallRtcpNoMoreRequestsMsgBody(char *const dst,
       const size_t dstLen) throw(castor::exception::Exception);
 
     /**
@@ -550,10 +550,10 @@ namespace aggregator {
      * @param dst The destination message buffer.
      * @return The total length of the message (header + body).
      */
-    template<int n> static size_t marshallRtcpNoMoreRequestsMessage(
+    template<int n> static size_t marshallRtcpNoMoreRequestsMsgBody(
       char (&dst)[n])
       throw(castor::exception::Exception) {
-      return marshallRtcpNoMoreRequestsMessage(dst, n);
+      return marshallRtcpNoMoreRequestsMsgBody(dst, n);
     }
 
   private:
