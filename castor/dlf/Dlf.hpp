@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Dlf.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2009/02/04 10:18:45 $ $Author: murrayc3 $
+ * @(#)$RCSfile: Dlf.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2009/02/04 11:13:37 $ $Author: murrayc3 $
  *
  * C++ interface to DLF
  *
@@ -35,12 +35,24 @@
 #include <vector>
 
 /**
- * DLF macro which automatically generates and passes the context information
- * of file, line and function to the castor::dlf::dlf_writepc template
- * function.
+ * Logs a message and adds the context information of file, line and function
+ * as three parameters of the message.
+ */
+#define CASTOR_DLF_WRITEC(uuid, severity, message_no) \
+  castor::dlf::dlf_writepc( \
+    __FILE__, \
+    __LINE__, \
+    __PRETTY_FUNCTION__, \
+    uuid, \
+    severity, \
+    message_no)
+
+/**
+ * Logs a message with a set of parameters and automatically generates and
+ * adds the context information of file, line and function to the parameters.
  */
 #define CASTOR_DLF_WRITEPC(uuid, severity, message_no, params) \
-  dlf_writepc( \
+  castor::dlf::dlf_writepc( \
     __FILE__, \
     __LINE__, \
     __PRETTY_FUNCTION__, \
