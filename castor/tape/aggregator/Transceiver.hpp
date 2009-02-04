@@ -129,6 +129,16 @@ public:
     throw(castor::exception::Exception);
 
   /**
+   * Pings RTCPD using the specified socket.
+   *
+   * @param socketFd The socket file descriptor of the connection with RTCPD.
+   * @param netReadWriteTimeout The timeout to be applied when performing
+   * network read and write operations.
+   */
+  static void pingRtcpd(const int socketFd,
+    const int netReadWriteTimeout) throw(castor::exception::Exception);
+
+  /**
    * Receives an RTCP job submission message.
    *
    * @param socketFd The socket file descriptor of the connection with RTCPD.
@@ -160,6 +170,7 @@ public:
    * @param socketFd The socket file descriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
    * @param filePath The file path.
+   * @param tapePath The tape path.
    * @param umask The umask of the file.
    * @param requestMoreWork Set to true if RTCPD should be told that there is
    * a possibility of more work in the future.
@@ -167,8 +178,9 @@ public:
    */
   static void giveFileListToRtcpd(const int socketFd,
     const int netReadWriteTimeout, const uint32_t volReqId,
-    const char *const filePath, const uint32_t umask,
-    const bool requestMoreWork) throw(castor::exception::Exception);
+    const char *const filePath, const char *const tapePath,
+    const uint32_t umask, const bool requestMoreWork)
+    throw(castor::exception::Exception);
 
   /**
    * Receives a message header.

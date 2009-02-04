@@ -144,12 +144,22 @@ namespace aggregator {
     /**
      * Processes the connected socket of a tape and disk I/O thread.
      *
+     * Along with other request types, this function has to process the
+     * RTCP_ENDOF_REQ request type.  A message of this type is sent by RTCPD
+     * at the end of a migration.  The reception of such a message should end
+     * the current thread's current migration, in other words it should cause
+     * the main select loop to exit.  This method returns true if the main
+     * select loop should continue or false if it has received an
+     * RTCP_ENDOF_REQ request.
+     *
      * @param cuuid The ccuid to be used for logging.
      * @param vdqmJobRequest The job request message received from the VDQM.
      * @param socketFd The file descriptor of the connected socket of a tape
      * or disk I/O thread.
+     * @return true if the main select loop should continue or false if a
+     * RTCP_ENDOF_REQ request has been received.
      */
-    void processTapeDiskIoConnection(const Cuuid_t &cuuid,
+    bool processTapeDiskIoConnection(const Cuuid_t &cuuid,
       const RcpJobRqstMsgBody &vdqmJobRequest, const int socketFd)
       throw(castor::exception::Exception);
 

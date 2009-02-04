@@ -40,6 +40,7 @@ const int    LISTENBACKLOG        = 2;
 const size_t MSGBUFSIZ            = 1024;
 const int    RTCPDNETRWTIMEOUT    = 5;
 const int    RTCPDCALLBACKTIMEOUT = 5;
+const int    RTCPDPINGTIMEOUT     = 10;
 const size_t SERVICENAMEBUFLEN    = 256;
 const size_t STRERRORBUFLEN       = 256;
 

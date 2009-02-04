@@ -252,11 +252,12 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 //-----------------------------------------------------------------------------
 // processTapeDiskIoConnection
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::VdqmRequestHandlerThread::
+bool castor::tape::aggregator::VdqmRequestHandlerThread::
   processTapeDiskIoConnection(const Cuuid_t &cuuid,
   const RcpJobRqstMsgBody &vdqmJobRequest, const int socketFd)
   throw(castor::exception::Exception) {
 
+  bool continueMainSelectLoop = true;
   MessageHeader header;
 
   Transceiver::receiveRtcpMsgHeader(socketFd, RTCPDNETRWTIMEOUT,
@@ -267,38 +268,113 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
     {
       RtcpFileRqstMsgBody body;
 
+      // Receive what should be a request for more work
       Transceiver::receiveRtcpFileRqstBody(socketFd, RTCPDNETRWTIMEOUT,
         header, body);
 
-      if(body.procStatus == RTCP_REQUEST_MORE_WORK) {
+      switch(body.procStatus) {
+      case RTCP_REQUEST_MORE_WORK:
+        {
+          // Give file information to RTCPD
+          try {
+            Transceiver::giveFileListToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
+              vdqmJobRequest.tapeRequestId, "lxc2disk07:/dev/null",
+              body.tapePath, 18, false);
+            castor::dlf::Param params[] = {
+              castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId),
+              castor::dlf::Param("filePath","lxc2disk07:/dev/null"),
+              castor::dlf::Param("tapePath", body.tapePath)};
+            castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+              AGGREGATOR_GAVE_FILE_INFO, params);
+          } catch(castor::exception::Exception &ex) {
+            castor::dlf::Param params[] = {
+              castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId),
+              castor::dlf::Param("filePath","lxc2disk07:/dev/null"),
+              castor::dlf::Param("tapePath", body.tapePath),
+              castor::dlf::Param("Message" , ex.getMessage().str()),
+              castor::dlf::Param("Code"    , ex.code())};
+            CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
+              AGGREGATOR_FAILED_TO_GIVE_FILE_INFO, params);
+          }
 
-        // Give file information to RTCPD
-        try {
-          Transceiver::giveFileListToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
-            vdqmJobRequest.tapeRequestId, "lxc2disk07:/dev/null", 18, false);
-        } catch(castor::exception::Exception &ex) {
+          // Acknowledge request for more work from RTCPD
+          RtcpAcknowledgeMsg ackMsg;
+          ackMsg.magic   = RTCOPY_MAGIC;
+          ackMsg.reqType = RTCP_FILE_REQ;
+          ackMsg.status  = 0;
+          Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+        } 
+        break;
+      case RTCP_POSITIONED:
+        {
           castor::dlf::Param params[] = {
-            castor::dlf::Param("Message" , ex.getMessage().str()),
-            castor::dlf::Param("Code"    , ex.code())};
-          CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
-            AGGREGATOR_FAILED_TO_GIVE_FILE_INFO, params);
-        }
+            castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId),
+            castor::dlf::Param("filePath", "lxc2disk07:/dev/null"),
+            castor::dlf::Param("tapePath", body.tapePath)};
+          castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+            AGGREGATOR_TAPE_POSITIONED_FILE_REQ, params);
 
-        // Acknowledge request for more work from RTCPD
-        RtcpAcknowledgeMsg ackMsg;
-        ackMsg.magic   = RTCOPY_MAGIC;
-        ackMsg.reqType = RTCP_FILE_REQ;
-        ackMsg.status  = 0;
-        Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
-      } else {
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("Message" , "Pandora's box"),
-          castor::dlf::Param("RtcpFileRqstErrMsgBody.proc_status",
-            body.procStatus)};
-        CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR, AGGREGATOR_NULL, params);
+          RtcpAcknowledgeMsg ackMsg;
+          ackMsg.magic   = RTCOPY_MAGIC;
+          ackMsg.reqType = RTCP_FILE_REQ;
+          ackMsg.status  = 0;
+          Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+        }
+        break;
+      case RTCP_FINISHED:
+        {
+          castor::dlf::Param params[] = {
+            castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId),
+            castor::dlf::Param("filePath", "lxc2disk07:/dev/null"),
+            castor::dlf::Param("tapePath", body.tapePath)};
+          castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+            AGGREGATOR_FILE_TRANSFERED, params);
+
+          RtcpAcknowledgeMsg ackMsg;
+          ackMsg.magic   = RTCOPY_MAGIC;
+          ackMsg.reqType = RTCP_FILE_REQ;
+          ackMsg.status  = 0;
+          Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+        }
+        break;
+      default:  
+        {
+          castor::exception::Exception ex(EBADMSG);
+
+          ex.getMessage() << __PRETTY_FUNCTION__
+            << ": Received unexpected file request process status 0x"
+            << std::hex << body.procStatus
+            << "(" << Utils::procStatusToStr(body.procStatus) << ")";
+
+          throw ex;
+        }
       }
     }
     break;
+
+  case RTCP_FILEERR_REQ:
+    {
+     RtcpFileRqstErrMsgBody body;
+
+      Transceiver::receiveRtcpFileRqstErrBody(socketFd, RTCPDNETRWTIMEOUT,
+        header, body);
+
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("Message" , "Think we got an error"),
+        castor::dlf::Param("RtcpFileRqstErrMsgBody.proc_status",
+          body.procStatus),
+        castor::dlf::Param("RtcpFileRqstErrMsgBody.err.errmsgtxt",
+          body.err.errmsgtxt)};
+      CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR, AGGREGATOR_NULL, params);
+
+      RtcpAcknowledgeMsg ackMsg;
+      ackMsg.magic   = RTCOPY_MAGIC;
+      ackMsg.reqType = RTCP_FILEERR_REQ;
+      ackMsg.status  = 0;
+      Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+    }
+    break;
+
   case RTCP_TAPE_REQ:
     {
       RtcpTapeRqstMsgBody body;
@@ -327,8 +403,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
       ackMsg.status  = 0;
       Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
 
-      // TBD
-      // Do something to end this madness
+      continueMainSelectLoop = false;
       break;
     }
   default:
@@ -342,6 +417,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
       throw ex;
     }
   }
+
+  return continueMainSelectLoop;
 }
 
 
@@ -362,8 +439,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 
   try {
     // Select loop
-    bool selectAgain = true;
-    while(selectAgain) {
+    bool continueMainSelectLoop = true;
+    while(continueMainSelectLoop) {
 
       // Build the file descriptor set ready for the select call
       FD_ZERO(&readFdSet);
@@ -384,7 +461,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
         }
       }
 
-      timeout.tv_sec  = RTCPDNETRWTIMEOUT;
+      timeout.tv_sec  = RTCPDPINGTIMEOUT;
       timeout.tv_usec = 0;
 
       selectRc = select(maxFd + 1, &readFdSet, NULL, NULL, &timeout);
@@ -393,8 +470,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
       switch(selectRc) {
       case 0: // Select timed out
 
-        castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-          AGGREGATOR_MAIN_SELECT_TIMEDOUT);
+        Transceiver::pingRtcpd(rtcpdInitialSocketFd, RTCPDNETRWTIMEOUT);
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, AGGREGATOR_PINGED_RTCPD);
         break;
 
       case -1: // Select encountered an error
@@ -442,7 +519,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 
               if(FD_ISSET(*itor, &readFdSet)) {
 
-                processTapeDiskIoConnection(cuuid, vdqmJobRequest, *itor);
+                continueMainSelectLoop = processTapeDiskIoConnection(cuuid,
+                  vdqmJobRequest, *itor);
 
                 FD_CLR(*itor, &readFdSet);
               }

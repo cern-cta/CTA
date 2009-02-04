@@ -333,6 +333,48 @@ void castor::tape::aggregator::Transceiver::sendRtcpAcknowledge(
 
 
 //-----------------------------------------------------------------------------
+// pingRtcpd
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::Transceiver::pingRtcpd(
+  const int socketFd, const int netReadWriteTimeout)
+  throw(castor::exception::Exception) {
+
+  char buf[MSGBUFSIZ];
+  size_t totalLen = 0;
+
+  MessageHeader header;
+  header.magic   = RTCOPY_MAGIC;
+  header.reqType = RTCP_PING_REQ;
+  header.len     = 0;
+
+  try {
+    // The RTCPD message is a bodiless RTCP message
+    totalLen = Marshaller::marshallMessageHeader(buf, header);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to marshall RCPD ping message : "
+      << ex.getMessage().str();
+
+    throw ie;
+  }
+
+  try {
+    Net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(SECOMERR);
+
+    ex2.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to send the RCPD ping message to RTCPD"
+         ": " << ex.getMessage().str();
+
+    throw ex2;
+  }
+}
+
+
+//-----------------------------------------------------------------------------
 // signalNoMoreRequestsToRtcpd
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::signalNoMoreRequestsToRtcpd(
@@ -540,8 +582,8 @@ void castor::tape::aggregator::Transceiver::giveRequestForMoreWorkToRtcpd(
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::giveFileListToRtcpd(
   const int socketFd, const int netReadWriteTimeout, const uint32_t volReqId,
-  const char *const filePath, const uint32_t umask, const bool requestMoreWork)
-  throw(castor::exception::Exception) {
+  const char *const filePath, const char *const tapePath, const uint32_t umask,
+  const bool requestMoreWork) throw(castor::exception::Exception) {
 
   RtcpFileRqstErrMsgBody request;
   RtcpFileRqstErrMsgBody reply;
@@ -551,6 +593,7 @@ void castor::tape::aggregator::Transceiver::giveFileListToRtcpd(
   {
     Utils::setBytes(request, '\0');
     Utils::copyString(request.filePath, filePath);
+    Utils::copyString(request.tapePath, tapePath);
     Utils::copyString(request.recfm, "F");
 
     request.volReqId       = volReqId;
