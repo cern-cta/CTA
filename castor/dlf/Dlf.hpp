@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Dlf.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/01/31 10:22:58 $ $Author: murrayc3 $
+ * @(#)$RCSfile: Dlf.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2009/02/04 10:18:45 $ $Author: murrayc3 $
  *
  * C++ interface to DLF
  *
@@ -33,6 +33,21 @@
 #include "castor/dlf/Param.hpp"
 #include "castor/exception/Exception.hpp"
 #include <vector>
+
+/**
+ * DLF macro which automatically generates and passes the context information
+ * of file, line and function to the castor::dlf::dlf_writepc template
+ * function.
+ */
+#define CASTOR_DLF_WRITEPC(uuid, severity, message_no, params) \
+  dlf_writepc( \
+    __FILE__, \
+    __LINE__, \
+    __PRETTY_FUNCTION__, \
+    uuid, \
+    severity, \
+    message_no, \
+    params)
 
 namespace castor {
 
@@ -96,9 +111,27 @@ namespace castor {
                      struct Cns_fileid *ns_invariant = 0) throw();
 
     /**
-     * prints a message into dlf. Note that no exception will ever
+     * A template function that wraps dlf_writep in order to get the compiler
+     * to automatically determine the size of the params parameter, therefore
+     * removing the need for the devloper to provide it explicity.
+     */
+    template<int n>
+      void dlf_writep (Cuuid_t uuid,
+                       int severity,
+                       int message_no,
+                       castor::dlf::Param (&params)[n],
+                       struct Cns_fileid *ns_invariant = 0) throw() {
+      dlf_writep(uuid, severity, message_no, n, params, ns_invariant);
+    }
+
+    /**
+     * prints a message together with the context information file, line and
+     * function into dlf. Note that no exception will ever
      * be thrown in case of failure. Failures will actually be silently
      * ignored in order to not impact the processing.
+     * @param file the name of the file where dlf_writepc was called.
+     * @param line the number of the line where dlf_writepc was called.
+     * @param function the name of the function where dlf_writepc was called.
      * @param uuid the uuid of the component issuing the message
      * @param message_no the message number in the facility.
      * @param severity the severity of the message.
@@ -107,13 +140,32 @@ namespace castor {
      * @ns_invariant the castor file concerned by the message
      * (if any), given as a name server fileId.
      */
+    void dlf_writepc (const char *file,
+                      const int line,
+                      const char *function,
+                      Cuuid_t uuid,
+                      int severity,
+                      int message_no,
+                      int numparams = 0,
+                      castor::dlf::Param params[] = 0,
+                      struct Cns_fileid *ns_invariant = 0) throw();
+
+    /**
+     * A template function that wraps dlf_writepc in order to get the compiler
+     * to automatically determine the size of the params parameter, therefore
+     * removing the need for the devloper to provide it explicity.
+     */
     template<int n>
-      void dlf_writep (Cuuid_t uuid,
-                       int severity,
-                       int message_no,
-                       castor::dlf::Param (&params)[n],
-                       struct Cns_fileid *ns_invariant = 0) throw() {
-      dlf_writep(uuid, severity, message_no, n, params, 0);
+      void dlf_writepc (const char *file,
+                        const int line,
+                        const char *function,
+                        Cuuid_t uuid,
+                        int severity,
+                        int message_no,
+                        castor::dlf::Param (&params)[n],
+                        struct Cns_fileid *ns_invariant = 0) throw() {
+      dlf_writepc(file, line, function, uuid, severity, message_no, n, params,
+        ns_invariant);
     }
 
     /**

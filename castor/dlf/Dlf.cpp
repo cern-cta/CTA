@@ -138,3 +138,42 @@ void castor::dlf::dlf_writep
                ns_invariant, numparams, cparams);
   delete[] cparams;
 }
+
+// -----------------------------------------------------------------------
+// dlf_writepc
+// -----------------------------------------------------------------------
+void castor::dlf::dlf_writepc
+(const char *file,
+ const int line,
+ const char *function,
+ Cuuid_t uuid,
+ int severity,
+ int message_no,
+ int numparams,
+ castor::dlf::Param params[],
+ struct Cns_fileid *ns_invariant) throw() {
+  // Place holder for the C version of the parameters, allocate 3 more
+  // parameters for the context parameters: file, line and function
+  const int numcontextparams = 3;
+  const int numcparams = numparams + numcontextparams;
+  dlf_write_param_t* cparams = new dlf_write_param_t[numcparams];
+
+  // Fill the context parameters: file, line and function
+  cparams[0].name           = "File";
+  cparams[0].type           = DLF_MSG_PARAM_STR;
+  cparams[0].par.par_string = (char *)file;
+  cparams[1].name           = "Line";
+  cparams[1].type           = DLF_MSG_PARAM_INT;
+  cparams[1].par.par_int    = line;
+  cparams[2].name           = "Function";
+  cparams[2].type           = DLF_MSG_PARAM_STR;
+  cparams[2].par.par_string = (char*)function;
+
+  // Translate parameters from C++ to C
+  for (int i = 0; i < numparams; i++) {
+    cparams[i+numcontextparams] = params[i].cParam();
+  }
+  ::dlf_writep(uuid, severity, message_no,
+               ns_invariant, numcparams, cparams);
+  delete[] cparams;
+}
