@@ -22,6 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
+#include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
@@ -92,11 +93,10 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
       castor::dlf::Param("Message" , ex.getMessage().str()),
       castor::dlf::Param("Code"    , ex.code())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_VDQM_CONNECTION_WITHOUT_INFO, 3, params);
+    CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_VDQM_CONNECTION_WITHOUT_INFO, params);
   }
 
   Utils::setBytes(jobRequest, '\0');
@@ -163,11 +163,10 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
   if(strlen(rtcpdReply.errorMessage) > 0) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", jobRequest.tapeRequestId),
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__     ),
       castor::dlf::Param("Message" , rtcpdReply.errorMessage ),
       castor::dlf::Param("Code"    , rtcpdReply.status       )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_RECEIVED_RTCPD_ERROR_MESSAGE, 4, params);
+    CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_RECEIVED_RTCPD_ERROR_MESSAGE, params);
 
     // Override positive response with the error message from RTCPD
     errorStatusForVdqm  = rtcpdReply.status;
@@ -197,8 +196,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
   {
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_DATA_ON_INITIAL_RTCPD_CONNECTION, 1, params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
+      AGGREGATOR_DATA_ON_INITIAL_RTCPD_CONNECTION, params);
   }
 
   MessageHeader          header;
@@ -279,11 +278,10 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
             vdqmJobRequest.tapeRequestId, "lxc2disk07:/dev/null", 18, false);
         } catch(castor::exception::Exception &ex) {
           castor::dlf::Param params[] = {
-            castor::dlf::Param("Function", __PRETTY_FUNCTION__),
             castor::dlf::Param("Message" , ex.getMessage().str()),
             castor::dlf::Param("Code"    , ex.code())};
-          castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-            AGGREGATOR_FAILED_TO_GIVE_FILE_INFO, 3, params);
+          CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
+            AGGREGATOR_FAILED_TO_GIVE_FILE_INFO, params);
         }
 
         // Acknowledge request for more work from RTCPD
@@ -294,11 +292,10 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
         Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
       } else {
         castor::dlf::Param params[] = {
-          castor::dlf::Param("Function", __PRETTY_FUNCTION__),
           castor::dlf::Param("Message" , "Pandora's box"),
           castor::dlf::Param("RtcpFileRqstErrMsgBody.proc_status",
             body.procStatus)};
-        castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, AGGREGATOR_NULL, params);
+        CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR, AGGREGATOR_NULL, params);
       }
     }
     break;
@@ -457,11 +454,10 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId),
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__         ),
       castor::dlf::Param("Message" , ex.getMessage().str()       ),
       castor::dlf::Param("Code"    , ex.code()                   )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_MAIN_SELECT_FAILED, 4, params);
+    CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR, AGGREGATOR_MAIN_SELECT_FAILED,
+      params);
   }
 
   // Close all connected sockets
@@ -503,7 +499,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_INITIAL_RTCPD_CALLBACK_WITH_INFO, 4, params);
     } catch(castor::exception::Exception &ex) {
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+      CASTOR_DLF_WRITEC(cuuid, DLF_LVL_ERROR,
         AGGREGATOR_INITIAL_RTCPD_CALLBACK_WITHOUT_INFO);
     }
 
@@ -551,11 +547,10 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
     } catch(castor::exception::Exception &ex) {
       castor::dlf::Param params[] = {
         castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId),
-        castor::dlf::Param("Function", __PRETTY_FUNCTION__         ),
         castor::dlf::Param("Message" , ex.getMessage().str()       ),
         castor::dlf::Param("Code"    , ex.code()                   )};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_FAILED_TO_GIVE_VOLUME_INFO, 4, params);
+      CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
+        AGGREGATOR_FAILED_TO_GIVE_VOLUME_INFO, params);
     }
 
     try {
@@ -564,11 +559,10 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
     } catch(castor::exception::Exception &ex) {
       castor::dlf::Param params[] = {
         castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId),
-        castor::dlf::Param("Function", __PRETTY_FUNCTION__         ),
         castor::dlf::Param("Message" , ex.getMessage().str()       ),
         castor::dlf::Param("Code"    , ex.code()                   )};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_PROCESS_RTCPD_CONNECTIONS_FAILED, 4, params);
+      CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
+        AGGREGATOR_PROCESS_RTCPD_CONNECTIONS_FAILED, params);
     }
 
     close(rtcpdInitialSocketFd);
@@ -594,7 +588,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::run(void *param)
   Cuuid_create(&cuuid);
 
   if(param == NULL) {
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+    CASTOR_DLF_WRITEC(cuuid, DLF_LVL_ERROR,
       AGGREGATOR_VDQM_REQUEST_HANDLER_SOCKET_IS_NULL);
     return;
   }
@@ -616,19 +610,17 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::run(void *param)
       processedJobSubmissionRequest = true;
     } catch(castor::exception::Exception &ex) {
       castor::dlf::Param params[] = {
-        castor::dlf::Param("Function", __PRETTY_FUNCTION__),
         castor::dlf::Param("Message" , ex.getMessage().str()),
         castor::dlf::Param("Code"    , ex.code())};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_FAILED_TO_PROCESS_RCP_JOB_SUBMISSION, 3, params);
+      CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
+        AGGREGATOR_FAILED_TO_PROCESS_RCP_JOB_SUBMISSION, params);
     }
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
       castor::dlf::Param("Message" , ex.getMessage().str()),
       castor::dlf::Param("Code"    , ex.code())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_CREATE_RTCPD_CALLBACK_SOCKET, 3, params);
+    CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_FAILED_TO_CREATE_RTCPD_CALLBACK_SOCKET, params);
   }
 
   // Close and de-allocate the VDQM socket no matter if the processing of the
@@ -648,11 +640,10 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::run(void *param)
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId),
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__         ),
       castor::dlf::Param("Message" , ex.getMessage().str()       ),
       castor::dlf::Param("Code"    , ex.code()                   )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_COORDINATE_REMOTE_COPY, 4, params);
+    CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_FAILED_TO_COORDINATE_REMOTE_COPY, params);
   }
 
   // Close RTCPD callback listener socket

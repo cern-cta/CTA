@@ -130,8 +130,8 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
           castor::dlf::Param params[] = {
             castor::dlf::Param("Function", __PRETTY_FUNCTION__),
             castor::dlf::Param("Reason"  , oss.str())};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-            AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 2, params);
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR,
+            AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
           castor::exception::InvalidArgument ex;
           ex.getMessage() << __PRETTY_FUNCTION__
             << ": " << oss.str();
@@ -152,8 +152,8 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
         castor::dlf::Param params[] = {
           castor::dlf::Param("Function", __PRETTY_FUNCTION__),
           castor::dlf::Param("Reason"  , oss.str())};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-          AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 2, params);
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR,
+          AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
         castor::exception::InvalidArgument ex;
         ex.getMessage() << __PRETTY_FUNCTION__
           << ": " << oss.str();
@@ -168,8 +168,8 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
         castor::dlf::Param params[] = {
           castor::dlf::Param("Function", __PRETTY_FUNCTION__),
           castor::dlf::Param("Reason"  , oss.str())};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-          AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 2, params);
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR,
+          AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
         castor::exception::InvalidArgument ex;
         ex.getMessage() << __PRETTY_FUNCTION__
           << ": " << oss.str();
@@ -185,8 +185,8 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
         castor::dlf::Param params[] = {
           castor::dlf::Param("Function", __PRETTY_FUNCTION__),
           castor::dlf::Param("Reason"  , oss.str())};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-          AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 2, params);
+        CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR,
+          AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
         castor::exception::Internal ex;
         ex.getMessage() << __PRETTY_FUNCTION__
           << ": " << oss.str();
@@ -203,8 +203,8 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
     castor::dlf::Param params[] = {
       castor::dlf::Param("Function", __PRETTY_FUNCTION__),
       castor::dlf::Param("Reason", oss.str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 2, params);
+    CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR,
+      AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
     castor::exception::Internal ex;
     ex.getMessage() << __PRETTY_FUNCTION__
       << ": " << oss.str();
@@ -222,8 +222,8 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
     castor::dlf::Param params[] = {
       castor::dlf::Param("Function", __PRETTY_FUNCTION__),
       castor::dlf::Param("Reason"  , oss.str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, 2, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR,
+      AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
     castor::exception::InvalidArgument ex;
     ex.getMessage() << __PRETTY_FUNCTION__
       << ": " << oss.str();
