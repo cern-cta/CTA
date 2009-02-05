@@ -20,6 +20,8 @@ RFIO            CASTOR_OTHERCMD_NEW_TURL     NO
 ROOT            RFIO       NO
 ROOT            CASTOR     NO
 
+XROOT           ROOT       NO
+
 TAPE            MIGRATION                    NO
 TAPE            RECALL                       NO
 TAPE            MIGRATION_AND_RECALL         NO

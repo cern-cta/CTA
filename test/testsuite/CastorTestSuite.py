@@ -8,6 +8,7 @@ from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerExtr
 import ClientTest
 import RfioTest
 import RootTest
+import XRootTest
 import TapeTest
 
 
@@ -26,13 +27,17 @@ class RootSuite(unittest.TestSuite):
     def __init__(self):
         unittest.TestSuite.__init__(self)
 
+class XRootSuite(unittest.TestSuite):
+    def __init__(self):
+        unittest.TestSuite.__init__(self)
+
 class TapeSuite(unittest.TestSuite):
     def __init__(self):
         unittest.TestSuite.__init__(self)
 
 #####  allCastorSuites is a dictonary with a test suite for each module ###########
 
-allCastorSuites= {'CLIENT':ClientSuite(),'RFIO':RfioSuite(),'ROOT':RootSuite(),'TAPE':TapeSuite()}
+allCastorSuites= {'CLIENT':ClientSuite(),'RFIO':RfioSuite(),'ROOT':RootSuite(),'XROOT':XRootSuite(),'TAPE':TapeSuite()}
 
 ################ for each module all the possible test suites included #######################
 
@@ -42,9 +47,11 @@ rfioTest={'PREREQ':RfioTest.RfioPreRequisitesSuite(),'BASIC_RFCP':RfioTest.RfioR
 
 rootTest={'PREREQ':RootTest.RootPreRequisitesSuite(),'RFIO':RootTest.RootRfioNewTurlSuite(),'CASTOR':RootTest.RootCastorNewTurlSuite()}
 
+xrootTest={'PREREQ':XRootTest.XRootPreRequisitesSuite(),'ROOT':XRootTest.XRootCastorNewTurlSuite()}
+
 tapeTest={'PREREQ':TapeTest.TapePreSuite(),'MIGRATION':TapeTest.TapeMigrationSuite(),'RECALL':TapeTest.TapeRecallSuite(),'MIGRATION_AND_RECALL':TapeTest.TapeMigrationAndRecallSuite(), 'STRESS_CASTOR':TapeTest.TapeStressCastorSuite(),'TAPE_ONLY':TapeTest.TapeTapeOnlySuite()}
 
-listOfTest={'CLIENT':clientTest,'RFIO':rfioTest,'ROOT':rootTest,'TAPE':tapeTest}
+listOfTest={'CLIENT':clientTest,'RFIO':rfioTest,'ROOT':rootTest,'XROOT':xrootTest,'TAPE':tapeTest}
 
 
 #################### opening the file with the list of tests wanted  ################################
