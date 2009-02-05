@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.690 $ $Date: 2009/01/27 16:32:06 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.691 $ $Date: 2009/02/05 18:03:27 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -19,7 +19,7 @@ CREATE TABLE Id2Type (id INTEGER CONSTRAINT PK_Id2Type_Id PRIMARY KEY, type NUMB
 
 /* SQL statements for requests status */
 /* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */
-CREATE TABLE newRequests (type NUMBER(38) NOT NULL, id NUMBER(38) NOT NULL, creation DATE NOT NULL, CONSTRAINT PK_NewRequests_Type_Id PRIMARY KEY (type, id))
+CREATE TABLE newRequests (type NUMBER(38), id NUMBER(38), creation DATE, CONSTRAINT PK_NewRequests_Type_Id PRIMARY KEY (type, id))
 ORGANIZATION INDEX
 COMPRESS
 PARTITION BY LIST (type)
@@ -61,6 +61,16 @@ PARTITION BY LIST (type)
   PARTITION notlisted VALUES (default) TABLESPACE stager_data
  );
 
+/* NewRequest constraints */
+ALTER TABLE NewRequests
+  MODIFY (type CONSTRAINT NN_NewRequests_Type NOT NULL);
+
+ALTER TABLE NewRequests
+  MODIFY (id CONSTRAINT NN_NewRequests_Id NOT NULL);
+
+ALTER TABLE NewRequests
+  MODIFY (creation CONSTRAINT NN_NewRequests_Creation NOT NULL);
+
 /* Redefinition of table SubRequest to make it partitioned by status */
 /* Unfortunately it has already been defined, so we drop and recreate it */
 /* Note that if the schema changes, this part has to be updated manually! */
@@ -68,11 +78,11 @@ DROP TABLE SubRequest;
 CREATE TABLE SubRequest
   (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048),
    xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER,
-   modeBits NUMBER, creationTime INTEGER NOT NULL, lastModificationTime INTEGER,
-   answered NUMBER, errorCode NUMBER, errorMessage VARCHAR2(2048), id NUMBER NOT NULL,
+   modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER,
+   answered NUMBER, errorCode NUMBER, errorMessage VARCHAR2(2048), id NUMBER,
    diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER,
    request INTEGER, getNextStatus INTEGER, requestedFileSystems VARCHAR2(2048),
-   svcHandler VARCHAR2(2048) NOT NULL
+   svcHandler VARCHAR2(2048)
   )
   PCTFREE 50 PCTUSED 40 INITRANS 50
   ENABLE ROW MOVEMENT
@@ -91,7 +101,7 @@ CREATE TABLE SubRequest
     PARTITION P_STATUS_OTHER   VALUES (DEFAULT)
    );
 
-/* SQL statements for constraints on SubRequest */
+/* SQL statements for constraints on the SubRequest table */
 ALTER TABLE SubRequest
   ADD CONSTRAINT PK_SubRequest_Id PRIMARY KEY (ID);
 CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) LOCAL
@@ -106,6 +116,16 @@ CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) L
   PARTITION P_STATUS_11,
   PARTITION P_STATUS_12,
   PARTITION P_STATUS_OTHER);  
+
+/* SubRequest constraints */
+ALTER TABLE SubRequest
+  MODIFY (creationTime CONSTRAINT NN_SubRequest_CreationTime NOT NULL);
+
+ALTER TABLE SubRequest
+  MODIFY (id CONSTRAINT NN_SubRequest_Id NOT NULL);
+
+ALTER TABLE SubRequest
+  MODIFY (svcHandler CONSTRAINT NN_SubRequest_SvcHandler NOT NULL);
 
 /* Indexes related to most used entities */
 CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
@@ -148,17 +168,25 @@ CREATE UNIQUE INDEX I_PK_Stream2TapeCopy ON Stream2TapeCopy (parent, child);
 /* Some index on the GCFile table to speed up garbage collection */
 CREATE INDEX I_GCFile_Request ON GCFile (request);
 
-/* Indexing segments by Tape */
+/* Indexing Segments by Tape */
 CREATE INDEX I_Segment_Tape ON Segment (tape);
+
+/* Indexing Stream by TapePool */
+CREATE INDEX I_Stream_TapePool ON Stream (tapePool); 
 
 /* FileSystem constraints */
 ALTER TABLE FileSystem ADD CONSTRAINT FK_FileSystem_DiskServer 
   FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
-ALTER TABLE FileSystem MODIFY (status NOT NULL);
-ALTER TABLE FileSystem MODIFY (diskServer NOT NULL);
+
+ALTER TABLE FileSystem
+  MODIFY (status CONSTRAINT NN_FileSystem_Status NOT NULL);
+
+ALTER TABLE FileSystem
+  MODIFY (diskServer CONSTRAINT NN_FileSystem_DiskServer NOT NULL);
 
 /* DiskServer constraints */
-ALTER TABLE DiskServer MODIFY (status NOT NULL);
+ALTER TABLE DiskServer
+  MODIFY (status CONSTRAINT NN_DiskServer_Status NOT NULL);
 
 /* An index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */
 CREATE INDEX I_QueryParameter_Query ON QueryParameter (query);
@@ -183,12 +211,16 @@ CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 ALTER TABLE TapePool MODIFY (migrSelectPolicy DEFAULT 'defaultMigrSelPolicy');
 
 /* SvcClass constraints */
-ALTER TABLE SvcClass MODIFY (name NOT NULL)
-                     MODIFY (gcPolicy DEFAULT 'default');
+ALTER TABLE SvcClass
+  MODIFY (name CONSTRAINT NN_SvcClass_Name NOT NULL);
+
+ALTER TABLE SvcClass MODIFY (gcPolicy DEFAULT 'default');
 
 /* DiskCopy constraints */
 ALTER TABLE DiskCopy MODIFY (nbCopyAccesses DEFAULT 0);
+
 ALTER TABLE DiskCopy MODIFY (gcType DEFAULT NULL);
+
 ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_CastorFile
   FOREIGN KEY (castorFile) REFERENCES CastorFile (id)
   INITIALLY DEFERRED DEFERRABLE;
@@ -233,9 +265,17 @@ CREATE GLOBAL TEMPORARY TABLE StgFilesDeletedOrphans
 
 /* Tables to log the activity performed by the cleanup job */
 CREATE TABLE CleanupJobLog
-  (fileId NUMBER NOT NULL, nsHost VARCHAR2(2048) NOT NULL,
-   operation INTEGER NOT NULL);
+  (fileId NUMBER, nsHost VARCHAR2(2048), operation INTEGER);
 
+ALTER TABLE CleanupJobLog
+  MODIFY (fileId CONSTRAINT NN_CleanupJobLog_FileId NOT NULL);
+
+ALTER TABLE CleanupJobLog
+  MODIFY (nsHost CONSTRAINT NN_CleanupJobLog_NsHost NOT NULL);
+ 
+ALTER TABLE CleanupJobLog
+  MODIFY (operation CONSTRAINT NN_CleanupJobLog_Operation NOT NULL);
+ 
 /* Temporary table to handle removing of priviledges */
 CREATE GLOBAL TEMPORARY TABLE RemovePrivilegeTmpTable
   (svcClass VARCHAR2(2048),
@@ -295,15 +335,27 @@ ALTER TABLE StageDiskCopyReplicaRequest MODIFY mask DEFAULT 0;
 ALTER TABLE StageDiskCopyReplicaRequest MODIFY pid DEFAULT 0;
 ALTER TABLE StageDiskCopyReplicaRequest MODIFY machine DEFAULT 'stager';
 
+/* Indexing StageDiskCopyReplicaRequest by source diskcopy id */
+CREATE INDEX I_StageDiskCopyReplic_SourceDC 
+  ON StageDiskCopyReplicaRequest (sourceDiskCopy);
 
 /* Define a table for some configuration key-value pairs and populate it */
 CREATE TABLE CastorConfig
-  (class VARCHAR2(2048) NOT NULL, key VARCHAR2(2048) NOT NULL, value VARCHAR2(2048) NOT NULL, description VARCHAR2(2048));
+  (class VARCHAR2(2048), key VARCHAR2(2048), value VARCHAR2(2048), description VARCHAR2(2048));
+
+ALTER TABLE CastorConfig
+  MODIFY (class CONSTRAINT NN_CastorConfig_Class NOT NULL);
+
+ALTER TABLE CastorConfig
+  MODIFY (key CONSTRAINT NN_CastorConfig_Key NOT NULL);
+
+ALTER TABLE CastorConfig
+  MODIFY (value CONSTRAINT NN_CastorConfig_Value NOT NULL);
+
 ALTER TABLE CastorConfig ADD CONSTRAINT UN_CastorConfig_class_key UNIQUE (class, key);
 
 INSERT INTO CastorConfig
   VALUES ('general', 'instance', 'castorstager', 'Name of this Castor instance');  -- to be overridden
-
 INSERT INTO CastorConfig
   VALUES ('cleaning', 'terminatedRequestsTimeout', '120', 'Maximum timeout for successful and failed requests in hours');
 INSERT INTO CastorConfig
@@ -402,12 +454,22 @@ CREATE TABLE Accounting (euid INTEGER, diskPool INTEGER, nbBytes INTEGER);
  *   diskCopyStatus can be STAGED(0) or CANBEMIGR(10)
  */
 CREATE TABLE GcPolicy (name VARCHAR2(2048) CONSTRAINT PK_GcPolicy_name PRIMARY KEY,
-                       userWeight VARCHAR2(2048) NOT NULL,
-                       recallWeight VARCHAR2(2048) NOT NULL,
-                       copyWeight VARCHAR2(2048) NOT NULL,
+                       userWeight VARCHAR2(2048),
+                       recallWeight VARCHAR2(2048),
+                       copyWeight VARCHAR2(2048),
                        firstAccessHook VARCHAR2(2048) DEFAULT NULL,
                        accessHook VARCHAR2(2048) DEFAULT NULL,
                        userSetGCWeight VARCHAR2(2048) DEFAULT NULL);
+
+/* GcPolicy constraints */
+ALTER TABLE GcPolicy
+  MODIFY (userWeight CONSTRAINT NN_GcPolicy_UserWeight NOT NULL);
+
+ALTER TABLE GcPolicy
+  MODIFY (recallWeight CONSTRAINT NN_GcPolicy_RecallWeight NOT NULL);
+
+ALTER TABLE GcPolicy
+  MODIFY (copyWeight CONSTRAINT NN_GcPolicy_CopyWeight NOT NULL);
 
 /* Default policy, mainly based on file sizes */
 INSERT INTO GcPolicy VALUES ('default',
