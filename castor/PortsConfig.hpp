@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: PortsConfig.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/11/29 14:43:31 $ $Author: itglp $
+ * @(#)$RCSfile: PortsConfig.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2009/02/05 13:21:31 $ $Author: murrayc3 $
  *
  * A central place to provide notification hosts and ports of the Castor daemons
  *
@@ -32,13 +32,10 @@
 #include <map>
 #include "castor/BaseObject.hpp"
 #include "castor/Constants.hpp"
+#include "castor/PortNumbers.hpp"
 #include "castor/exception/Exception.hpp"
 
 namespace castor {
-  
-  static const int STAGER_DEFAULT_NOTIFYPORT = 55015;
-  static const int JOBMANAGER_DEFAULT_NOTIFYPORT = 15011;
-  static const int RTCPCLIENTD_DEFAULT_NOTIFYPORT = 5050;  // for future use
   
   enum castorDaemon {
     CASTOR_STAGER = 0,
