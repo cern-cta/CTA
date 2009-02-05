@@ -30,6 +30,8 @@
 #include "castor/tape/aggregator/Transceiver.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
 #include "castor/tape/aggregator/Utils.hpp"
+#include "castor/tape/tapegateway/StartWorkerRequest.hpp"
+#include "castor/tape/tapegateway/StartWorkerResponse.hpp"
 #include "h/common.h"
 #include "h/rtcp.h"
 #include "h/rtcp_constants.h"
@@ -957,4 +959,30 @@ void castor::tape::aggregator::Transceiver::checkRtcopyReqType(
 
     throw ex;
   }
+}
+
+
+//-----------------------------------------------------------------------------
+// tellGatewayToStartWorker
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::Transceiver::tellGatewayToStartWorker(
+  const std::string gatewayhost, const unsigned short gatewayPort,
+  const uint32_t volReqId, const char *const unit, const uint32_t mode,
+  int &gatewayErrorCode, std::string &gatewayErrorMsg, std::string &gatewayVid)
+  throw(castor::exception::Exception) {
+
+  tapegateway::StartWorkerRequest request;
+
+  request.setVdqmVolReqId(volReqId);
+  request.setUnit(unit);
+  request.setMode(mode);
+
+  castor::io::ClientSocket socket(gatewayPort, gatewayhost);
+
+  std::auto_ptr<tapegateway::StartWorkerResponse> response(
+    dynamic_cast<tapegateway::StartWorkerResponse*>(socket.readObject()));
+
+  gatewayErrorCode = response->errorCode();
+  gatewayErrorMsg  = response->errorMessage();
+  gatewayVid       = response->vid();
 }
