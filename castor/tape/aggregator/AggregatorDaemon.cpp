@@ -23,11 +23,11 @@
  *****************************************************************************/
  
  
+#include "castor/PortNumbers.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/AggregatorDaemon.hpp"
-#include "h/tape_aggregator_constants.h"
 #include "h/Cgetopt.h"
 #include "h/common.h"
 
