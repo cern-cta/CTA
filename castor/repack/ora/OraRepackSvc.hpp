@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRepackSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/12/01 13:53:57 $ $Author: gtaur $
+ * @(#)$RCSfile: OraRepackSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2009/02/05 15:51:20 $ $Author: gtaur $
  *
  *
  * @author castordev
@@ -37,14 +37,13 @@
 #include "occi.h"
 
 #include "castor/BaseAddress.hpp"
-#include "occi.h"
+
 #include <Cuuid.h>
 #include <fcntl.h>
-#include <string>
-#include <vector>
-#include "castor/repack/RepackSubRequestStatusCode.hpp"
-#include "castor/repack/RepackAck.hpp"
-#include "castor/repack/RepackCommonHeader.hpp"
+
+#include "castor/repack/IRepackSvc.hpp"
+
+
 
 
 namespace castor {
@@ -88,65 +87,65 @@ namespace castor {
 	/**
 	 * storeRequest 
 	 */
-	virtual castor::repack::RepackAck* storeRequest(castor::repack::RepackRequest* rreq)throw ();
+	virtual castor::repack::RepackAck* storeRequest(castor::repack::RepackRequest* rreq)throw (castor::exception::Exception);
 
 	/**
 	 * updateSubRequest
 	 */
-	virtual void updateSubRequest(castor::repack::RepackSubRequest* obj) throw ();
+	virtual void updateSubRequest(castor::repack::RepackSubRequest* obj) throw (castor::exception::Exception);
 	
 	/**
 	 * updateSubRequestSegments
 	 */
-	virtual void updateSubRequestSegments(castor::repack::RepackSubRequest* obj, std::vector<RepackSegment*> listToUpdate) throw ();
+	virtual void updateSubRequestSegments(castor::repack::RepackSubRequest* obj, std::vector<RepackSegment*> listToUpdate) throw (castor::exception::Exception);
 	
 	/**
 	 * insert SubRequestSegments
 	 */
-	virtual void insertSubRequestSegments(castor::repack::RepackSubRequest* obj) throw ();
+	virtual void insertSubRequestSegments(castor::repack::RepackSubRequest* obj) throw (castor::exception::Exception);
 	
 	/**
 	 * getSubRequestByVid 
 	 */
-	virtual castor::repack::RepackResponse* getSubRequestByVid(std::string vid, bool fill) throw ();
+	virtual castor::repack::RepackResponse* getSubRequestByVid(std::string vid, bool fill) throw (castor::exception::Exception);
 	
 	/**
 	 * getSubRequestsByStatus
 	 */
-	virtual std::vector<castor::repack::RepackSubRequest*> getSubRequestsByStatus(castor::repack::RepackSubRequestStatusCode st, bool fill) throw ();
+	virtual std::vector<castor::repack::RepackSubRequest*> getSubRequestsByStatus(castor::repack::RepackSubRequestStatusCode st, bool fill) throw (castor::exception::Exception);
 	
 	/**
 	 * getAllSubRequests
 	 */
-	virtual castor::repack::RepackAck *getAllSubRequests() throw ();
+	virtual castor::repack::RepackAck *getAllSubRequests() throw (castor::exception::Exception);
 
 	/**
 	 * validateRepackSubrequest
 	 */ 
 
-	virtual bool  validateRepackSubRequest( RepackSubRequest* tape, int numFiles, int numTapes) throw ();
+	virtual bool  validateRepackSubRequest( RepackSubRequest* tape, int numFiles, int numTapes) throw (castor::exception::Exception);
 	
 	/**
 	 * resurrectTapesOnHold
 	 */ 
 
-	virtual void  resurrectTapesOnHold(int numFiles, int numTapes) throw ();
+	virtual void  resurrectTapesOnHold(int numFiles, int numTapes) throw (castor::exception::Exception);
 
 	/* 
 	 * restartSubRequestTapes
 	 */
 
-	virtual void restartSubRequest(u_signed64 srId) throw ();
+	virtual void restartSubRequest(u_signed64 srId) throw (castor::exception::Exception);
 	
 	/**
 	 * changeSubRequestsStatus
 	 */
-	virtual castor::repack::RepackAck* changeSubRequestsStatus(std::vector<castor::repack::RepackSubRequest*> srs, castor::repack::RepackSubRequestStatusCode st) throw ();
+	virtual castor::repack::RepackAck* changeSubRequestsStatus(std::vector<castor::repack::RepackSubRequest*> srs, castor::repack::RepackSubRequestStatusCode st) throw (castor::exception::Exception);
 	
 	/**
 	 * changeAllSubRequestsStatus
 	 */ 
-	virtual castor::repack::RepackAck* changeAllSubRequestsStatus(castor::repack::RepackSubRequestStatusCode st) throw ();
+	virtual castor::repack::RepackAck* changeAllSubRequestsStatus(castor::repack::RepackSubRequestStatusCode st) throw (castor::exception::Exception);
 	
 	/**
 	 * getLastTapeInformation 
@@ -156,7 +155,7 @@ namespace castor {
 
      private:
 
-	virtual void endTransation() throw ();
+	virtual void endTransation() throw (castor::exception::Exception);
 
 	virtual void getSegmentsForSubRequest(RepackSubRequest* rsub) throw (castor::exception::Exception);
 

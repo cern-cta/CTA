@@ -25,12 +25,22 @@
 
 // Include Files
 #include "RepackMonitor.hpp"
-#include "castor/rh/FileQryResponse.hpp"
+#include "FileListHelper.hpp"
+#include "stager_client_api.h"
 #include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/StageFileQueryRequest.hpp"
-#include "castor/Services.hpp"
 #include "RepackSubRequestStatusCode.hpp"
-#include "RepackUtility.hpp"
+
+#include "castor/client/BaseClient.hpp"
+#include "castor/client/VectorResponseHandler.hpp"
+#include "castor/repack/RepackUtility.hpp"
+#include "castor/exception/InvalidArgument.hpp"
+
+#include <sys/types.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+
 
 namespace castor {
   namespace repack {
@@ -40,9 +50,7 @@ namespace castor {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-  RepackMonitor::RepackMonitor(RepackServer *svr){
-    m_dbSvc = NULL;
-    
+  RepackMonitor::RepackMonitor(RepackServer *svr){    
     ptr_server = svr;
   }
 
@@ -51,8 +59,6 @@ namespace castor {
 // Destructor
 //------------------------------------------------------------------------------
   RepackMonitor::~RepackMonitor() throw() {
-    if (m_dbSvc != NULL) delete m_dbSvc;
-    m_dbSvc=NULL;
   }
 
 
@@ -64,22 +70,9 @@ namespace castor {
     std::vector<RepackSubRequest*> tapelist;
     std::vector<RepackSubRequest*>::iterator tape;
     try {
-      if (m_dbSvc == 0){
-	// service to access the database
-	castor::IService* orasvc = castor::BaseObject::services()->service("OraRepackSvc", castor::SVC_ORAREPACKSVC);
-  
-	m_dbSvc = dynamic_cast<castor::repack::IRepackSvc*>(orasvc);
-	if (m_dbSvc == 0) {
-	  // FATAL ERROR
-	  castor::dlf::Param params0[] =
-	    {castor::dlf::Param("Standard Message", "RepackMonitor fatal error"),};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params0);
-	  return;
-	}
-      }
-
+     
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 34, 0, 0);
-      tapelist = m_dbSvc->getSubRequestsByStatus(RSUBREQUEST_ONGOING,false);
+      tapelist = ptr_server->repackDbSvc()->getSubRequestsByStatus(RSUBREQUEST_ONGOING,false);
       tape=tapelist.begin();
 
       while (tape != tapelist.end()){ 
@@ -91,22 +84,31 @@ namespace castor {
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 35, 3, params);
 
 	// get information for this tape querying the stager
+	try {
 	  updateTape(*tape);
-	  freeRepackObj(*(tape));
+	} catch (castor::exception::Exception e){
+	  	  
+	  castor::dlf::Param params[] =
+	    {
+	      castor::dlf::Param("Precise Message", e.getMessage().str()),
+	      castor::dlf::Param("VID", (*tape)->vid())
+	    };
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 66, 2, params);
+	}
+
+	freeRepackObj(*(tape));
 
 	}
 
 	tape++;
       }
 
-    } catch (...) {
-      if (!tapelist.empty()){
-	tape=tapelist.begin();
-	while (tape != tapelist.end()){
-	  freeRepackObj(*tape);
-	  tape++;
-	}
-      }
+    } catch (castor::exception::Exception e) {
+      // db error asking the tapes to Monitor
+
+      castor::dlf::Param params[] = {castor::dlf::Param("ErrorCode", e.code()),
+				     castor::dlf::Param("Precise Message", e.getMessage().str())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 65, 2,params);
     }
   }
     
@@ -145,7 +147,7 @@ void RepackMonitor::getStats(RepackSubRequest* sreq,
   par->setQueryType( (castor::stager::RequestQueryType) BY_REQID );
   par->setValue(sreq->cuuid());
   par->setQuery(&req);
-  stage_trace(3,"Querying the Stager for reqID %s ",sreq->cuuid().c_str());
+
   req.addParameters(par);
 
   // send the FileRequest, throws Exception (time out)! 
@@ -177,7 +179,7 @@ void RepackMonitor::getStats(RepackSubRequest* sreq,
 //------------------------------------------------------------------------------
 
 void RepackMonitor::updateTape(RepackSubRequest *sreq)
-                          throw ()
+                          throw (castor::exception::Exception)
 { 
   /** status counters */
 
@@ -196,12 +198,12 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
   } catch (castor::exception::InvalidArgument inval) {
     // CLEANED BY THE STAGER
     sreq->setStatus(RSUBREQUEST_TOBECLEANED);
-    m_dbSvc->updateSubRequest(sreq);
+    ptr_server->repackDbSvc()->updateSubRequest(sreq);
     return;
   } catch (castor::exception::Exception e) {
     // the stager might time out
     sreq->setStatus(RSUBREQUEST_ONGOING);
-    m_dbSvc->updateSubRequest(sreq);
+    ptr_server->repackDbSvc()->updateSubRequest(sreq);
     return;
   }
 
@@ -259,7 +261,7 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
 
       invalid_status+=sreq->filesFailedSubmit();
       sreq->setStatus(RSUBREQUEST_TOBECLEANED);
-      m_dbSvc->updateSubRequest(sreq);
+      ptr_server->repackDbSvc()->updateSubRequest(sreq);
 
       if (!invalid_status){
 
@@ -277,7 +279,7 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
 	   {castor::dlf::Param("VID", sreq->vid()),
 	    castor::dlf::Param("STATUS", sreq->status())};
 	  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 39, 2, params);
-	  return;
+	
 	}	
       
     } else {
@@ -285,10 +287,9 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
     // Still ON_GOING
   
       // call to the nameserver
-
-      FileListHelper filelisthelper(ptr_server->getNsName());
+      FileListHelper filehelper(ptr_server->getNsName());
       
-      u_signed64 filesOnTape=filelisthelper.countFilesOnTape(sreq->vid());
+      u_signed64 filesOnTape= filehelper.countFilesOnTape(sreq->vid());
 
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 0, 0);
 
@@ -303,11 +304,8 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
       sreq->setFilesStaged( staged_status );
       sreq->setStatus(RSUBREQUEST_ONGOING);
     
-      m_dbSvc->updateSubRequest(sreq);
-
-      stage_trace(3,"Updating RepackSubRequest with %d responses: Mig: %d\tStaging: %d\t Invalid: %d\t FailedSubmition: %d\t Staged: %d\n",
-    fr.size(), sreq->filesMigrating(), sreq->filesStaging(),sreq->filesFailed(),sreq->filesFailedSubmit(),sreq->filesStaged());  
-
+      ptr_server->repackDbSvc()->updateSubRequest(sreq);
+  
     }
   }
   fr.clear();

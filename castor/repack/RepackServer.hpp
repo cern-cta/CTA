@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/09/09 09:18:40 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2009/02/05 15:51:19 $ $Author: gtaur $
  *
  *
  *
@@ -27,19 +27,9 @@
 #ifndef REPACKSERVER_HPP
 #define REPACKSERVER_HPP 1
 
-#include "RepackCommonHeader.hpp"
-
-#include "castor/server/TCPListenerThreadPool.hpp"
-#include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/BaseDaemon.hpp"
-#include "castor/server/BaseThreadPool.hpp"
+#include "castor/repack/IRepackSvc.hpp"
 
-#include "RepackWorker.hpp"
-#include "RepackFileChecker.hpp"
-#include "RepackFileStager.hpp"
-#include "RepackCleaner.hpp"
-
-#include "RepackMonitor.hpp"
 
 namespace castor {
 
@@ -66,19 +56,19 @@ namespace castor {
   
     /** Retrieves the Nameserver name */
     std::string getNsName() const {
-      return (*m_ns);
+      return (m_ns);
     }
     /** Retrieves the Stager name */
     std::string getStagerName() const {
-      return (*m_stager);
+      return (m_stager);
     }
     /** Retrieves the service class for repack process */
     std::string getServiceClass() const {
-      return (*m_serviceClass);
+      return (m_serviceClass);
     }
     /** Retrieves the protocol for file transfer */
     std::string getProtocol() const {
-      return (*m_protocol);
+      return (m_protocol);
     }
 
    /** Retrieves Port from env (if given) */
@@ -101,6 +91,11 @@ namespace castor {
       return m_maxTapes;
     }
 
+    /** Retrieves max number of tapes ONGOING **/
+    castor::repack::IRepackSvc* repackDbSvc() const {
+      return m_repackDbSvc;
+    }
+
     
     /** Overloaded method from BaseServer for individual command line parser */
     virtual void parseCommandLine(int argc, char *argv[]);
@@ -113,19 +108,19 @@ namespace castor {
     
     // The Nameserver (this name is queries by RepackFileStager and RepackCleaner (config file)
       
-    std::string* m_ns;
+    std::string  m_ns;
     
     // The Request Handler,RH to contact (config file)
       
-    std::string* m_stager;
+    std::string m_stager;
      
     //The default service class to use (config file)
       
-    std::string* m_serviceClass;
+    std::string m_serviceClass;
     
     // The default transfer protocol to use (config file)
      
-    std::string* m_protocol;
+    std::string m_protocol;
 
     // The port to accept connections (environment)
      
@@ -140,6 +135,10 @@ namespace castor {
     int m_maxFiles;
     
     int m_maxTapes;
+
+    // service to access the db
+
+    IRepackSvc* m_repackDbSvc;
 
   };
 

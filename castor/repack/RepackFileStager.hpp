@@ -1,28 +1,45 @@
+
+/******************************************************************************
+ *                      RepackFileStager.hpp
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * @(#)$RCSfile: RepackFileStager.hpp,v $ $Revision: 1.20 $ $Release$ $Date: 2009/02/05 15:51:19 $ $Author: gtaur $
+ *
+ *
+ *
+ * @author Giulia Taurelli
+ *****************************************************************************/
+
 #ifndef _REPACKFILESTAGER_HPP_
 #define _REPACKFILESTAGER_HPP_
 
-#include "FileListHelper.hpp"
+
 #include "castor/server/IThread.hpp"
-#include "stager_client_api.h"
-#include "castor/repack/IRepackSvc.hpp"
-
-#include <common.h>
-/* for sending the request to stager */
+#include "RepackServer.hpp"
+#include "RepackSubRequest.hpp"
+#include "RepackSegment.hpp"
 #include "castor/stager/StageRepackRequest.hpp"
-#include "castor/stager/SubRequest.hpp"
-#include "castor/rh/Response.hpp"
-#include "castor/rh/FileResponse.hpp"
-#include "castor/client/VectorResponseHandler.hpp"
-#include "castor/client/BaseClient.hpp"
+#include "stager_client_api.h"
 
-/*************************************/
 
 namespace castor {
 
   namespace repack {
-
-    /** forward declaration */
-    class RepackServer;
 
 
     /**
@@ -69,7 +86,7 @@ namespace castor {
        * @param sreq The RepackSubRequest to stage in files
        * @throws castor::exeption::Exception in case of an error
        */
-      void stageFiles(RepackSubRequest* sreq) throw (castor::exception::Exception);
+      std::vector<RepackSegment*>  stageFiles(RepackSubRequest* sreq) throw (castor::exception::Exception);
 
 
       /** Sends the request to the stager.
@@ -83,45 +100,19 @@ namespace castor {
        * @throws castor::exeption::Internal in case of an error
        */
 
-      void sendStagerRepackRequest( RepackSubRequest* rsreq,
+      std::vector<RepackSegment*>  sendStagerRepackRequest( RepackSubRequest* rsreq,
                                    castor::stager::StageRepackRequest* req,
                                    std::string *reqId,
                                    struct stage_options* opts
                                    )
-        throw ();
+        throw (castor::exception::Exception);
 
       /**
        * Excutes stage_files and updates the RepackSubRequest. In case
        * stage_files gives an error the state is set to FAILED.
        */
-      void startRepack(RepackSubRequest* sreq) throw ();
+      void startRepack(RepackSubRequest* sreq) throw (castor::exception::Exception);
 
-
-       /**
-       * Abort a RepackSubRequest. 
-       */
-
-      void abortRepack(RepackSubRequest* sreq) throw ();
-
-
-      /** 
-       * Send stager_rm for the file of the request
-       */
-
-      void sendRepackRemoveRequest( RepackSubRequest*sreq)throw(castor::exception::Exception);
-
-
-      /**
-       * Pointer to DatabaseHelper instance. Created by the contructor.
-       * Stores and updates RepackRequest.
-       */
-
-       castor::repack::IRepackSvc* m_dbSvc;
-
-      /**
-       * Pointer to a FileListHelper instance. Created by the contructor.
-       */
-      FileListHelper* m_filehelper;
 
       /**
        * A pointer to the server instance, which keeps information

@@ -26,12 +26,12 @@
 #ifndef _REPACKCLEANER_HPP_
 #define _REPACKCLEANER_HPP_
 
-#include "RepackCommonHeader.hpp"
-#include "FileListHelper.hpp"
+
 #include "castor/server/IThread.hpp"
-#include "stager_client_api.h"
-#include "castor/stager/SubRequestStatusCodes.hpp"
-#include "castor/repack/IRepackSvc.hpp"
+#include "RepackServer.hpp"
+#include "RepackSubRequest.hpp"
+#include "castor/exception/Exception.hpp"
+
 
 namespace castor {
 	namespace repack {
@@ -67,14 +67,14 @@ namespace castor {
        * @param sreq The RepackSubRequest to cleanup
        * @throws exception in case on an error.
 			 */
-			int cleanupTape(RepackSubRequest* sreq) throw(castor::exception::Exception);
+	  int cleanupTape(RepackSubRequest* sreq) throw(castor::exception::Exception);
 		  
 
       /**
         * Removes the files for this RepackSubRequest from the stager. In fact
         * it sends a stage_rm command with the filelist.
         */
-      void removeFilesFromStager(RepackSubRequest* sreq) throw(castor::exception::Exception);
+	  void removeFilesFromStager(RepackSubRequest* sreq) throw(castor::exception::Exception);
 
 
       /**
@@ -83,19 +83,13 @@ namespace castor {
         */
       
 	  
-      void checkTape(castor::repack::RepackSubRequest*);
+	  void checkTape(castor::repack::RepackSubRequest* sreq) throw (castor::exception::Exception);
 
-		
-      /**
-       * The Database Svc  for updatting finished jobs in the Repack Tables
-       */
-			
-      castor::repack::IRepackSvc  *m_dbSvc;
       
       /**
        * Pointer to the server instance, which I was added to.
        */
-      RepackServer* ptr_server;
+	  RepackServer* ptr_server;
 	};
 	      
 		

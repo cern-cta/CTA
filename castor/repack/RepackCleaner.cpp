@@ -20,14 +20,15 @@
  *
  *
  *
- * @author Felix Ehm
+ * @author Giulia Taurelli
  *****************************************************************************/
 
 
-
+#include "FileListHelper.hpp"
 #include "RepackCleaner.hpp"
-#include "castor/Services.hpp"
 #include "RepackUtility.hpp"
+#include "vmgr_api.h"
+
 
 namespace castor{
 	namespace repack {
@@ -36,16 +37,14 @@ namespace castor{
 // Constructor
 //------------------------------------------------------------------------------
 RepackCleaner::RepackCleaner(RepackServer* svr){
-  m_dbSvc = NULL;
   ptr_server = svr;
+
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 RepackCleaner::~RepackCleaner() throw() {
-    if (m_dbSvc != NULL) delete m_dbSvc;
-    m_dbSvc=NULL;
 }
 		
 //------------------------------------------------------------------------------
@@ -55,30 +54,14 @@ void RepackCleaner::run(void* param) {
   std::vector<RepackSubRequest*> tapes;
   std::vector<RepackSubRequest*>::iterator tape; 
   try {
-    if (m_dbSvc == 0){
- // service to access the database
-      castor::IService* orasvc = castor::BaseObject::services()->service("OraRepackSvc", castor::SVC_ORAREPACKSVC);
- 
-      m_dbSvc = dynamic_cast<castor::repack::IRepackSvc*>(orasvc);
-
-      if (m_dbSvc == 0) {
-	// FATAL ERROR
-	castor::dlf::Param params0[] =
-	  {castor::dlf::Param("Standard Message", "RepackCleaner fatal error")};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3, 1, params0);
-	return;
-      }
-    
-    }
   
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 41, 0, 0);
 
-  // get all the tape
-    tapes = m_dbSvc->getSubRequestsByStatus(RSUBREQUEST_TOBECLEANED,false);
+    // get all the tape
+    tapes =  ptr_server->repackDbSvc()->getSubRequestsByStatus(RSUBREQUEST_TOBECLEANED,false);
+    
 
-    if (tapes.empty()) return;
-
-  // loop over the tapes
+      // loop over the tapes
     tape=tapes.begin();
 
     while (tape!=tapes.end()){
@@ -89,8 +72,20 @@ void RepackCleaner::run(void* param) {
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 42, 3, params);
      
       if ( (*tape) != NULL )	{  
-	checkTape(*tape);
-	m_dbSvc->updateSubRequest((*tape));
+	try {
+	  checkTape(*tape);
+	  ptr_server->repackDbSvc()->updateSubRequest((*tape));
+	} catch (castor::exception::Exception e){
+	  
+	    castor::dlf::Param params[] =
+	      {
+		castor::dlf::Param("Precise Message", e.getMessage().str()),
+		castor::dlf::Param("VID", (*tape)->vid())
+	      };
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 53, 2, params);
+
+
+	}
 	freeRepackObj((*tape)); 
 	tape++;
       }
@@ -99,17 +94,31 @@ void RepackCleaner::run(void* param) {
   // we check if we are able to restart one of the subrequest on-hold
 
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 43, 0, 0);
+    
+    try {
+      
+      ptr_server->repackDbSvc()->resurrectTapesOnHold(ptr_server->maxFiles(),ptr_server->maxTapes());
+      
+    } catch (castor::exception::Exception e){
 
-    m_dbSvc->resurrectTapesOnHold(ptr_server->maxFiles(),ptr_server->maxTapes());
+       // log the error in Dlf
 
-  } catch (...) {
-     if (!tapes.empty()){
-      tape=tapes.begin();
-      while (tape != tapes.end()){
-	freeRepackObj(*tape);
-	tape++;
-      }
+      castor::dlf::Param params[] =
+	{
+	  castor::dlf::Param("Precise Message", e.getMessage().str())
+	};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 54, 1, params);   
+
+      
     }
+
+  } catch (castor::exception::Exception e) {
+
+    // db error asking the tapes to clean
+
+    castor::dlf::Param params[] = {castor::dlf::Param("ErrorCode", e.code()),
+				   castor::dlf::Param("Precise Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 52, 2,params);
   }
 
 }
@@ -119,7 +128,7 @@ void RepackCleaner::run(void* param) {
 //-----------------------------------------------------------------------------
 
 
-void  RepackCleaner::checkTape(RepackSubRequest* tape){
+void  RepackCleaner::checkTape(RepackSubRequest* tape) throw (castor::exception::Exception){
  
 //file list helper get files on tape
   Cuuid_t cuuid;
@@ -151,20 +160,19 @@ void  RepackCleaner::checkTape(RepackSubRequest* tape){
 
     if (tape->repackrequest()->reclaim() == 1){
       if (vmgr_reclaim((char*) tape->vid().c_str())<0){
-	castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 61, 1, params1);
+	castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 48, 1, params1);
       } else {
-	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 62, 1, params1);
-      }
-      
+	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 49, 1, params1);
+      }     
     }
    
     //change tapepool
 
     if  (!tape->repackrequest()->finalPool().empty()){
       if (vmgr_modifytape((char*) tape->vid().c_str(),NULL,NULL,NULL,NULL,NULL,NULL,(char *)tape->repackrequest()->finalPool().c_str(),-1)<0){
-	castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 63, 1, params1);
+	castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 50, 1, params1);
       } else {
-	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 64, 1, params1);
+	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 51, 1, params1);
       }
     }
 
@@ -182,19 +190,16 @@ void  RepackCleaner::checkTape(RepackSubRequest* tape){
      int numRetry= tape->retryNb();
 
      if (numRetry > 0){
-	  numRetry--;
-	  tape->setRetryNb(numRetry);
-	  tape->setStatus(RSUBREQUEST_TOBERESTARTED);
-	  m_dbSvc->updateSubRequest(tape);
-
-	  castor::dlf::Param params[] =
-	   {castor::dlf::Param("VID", tape->vid()),
-	    castor::dlf::Param("STATUS", tape->status())};
-	    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 38, 2, params);
-	   
+       castor::dlf::Param params[] =
+	 {castor::dlf::Param("VID", tape->vid()),
+	  castor::dlf::Param("STATUS", tape->status())};
+       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 38, 2, params);
+       
+       numRetry--;
+       tape->setRetryNb(numRetry);
+       tape->setStatus(RSUBREQUEST_TOBERESTARTED);
+       
      } 
-
-
   }   
  }
 

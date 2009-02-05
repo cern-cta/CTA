@@ -24,16 +24,16 @@
  * @author Giulia Taurelli
  *****************************************************************************/
 
-// Include Files
-#include "castor/IAddress.hpp"
-#include "castor/IObject.hpp"
-#include "castor/IFactory.hpp"
-#include "castor/SvcFactory.hpp"
+
+
 #include "castor/repack/ora/OraRepackSvc.hpp"
 #include "castor/Services.hpp"
-#include "castor/repack/RepackResponse.hpp"
 #include "castor/repack/RepackUtility.hpp"
 #include "castor/BaseAddress.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
+#include "castor/exception/OutOfMemory.hpp"
+#include "castor/repack/RepackResponse.hpp"
 
 #include <iostream>
 #include <string>
@@ -149,7 +149,7 @@ void castor::repack::ora::OraRepackSvc::reset() throw() {
     if (m_storeRequestStatement)  deleteStatement(m_storeRequestStatement);
     if (m_updateSubRequestSegmentsStatement)  deleteStatement(m_updateSubRequestSegmentsStatement);
     if (m_getSegmentsForSubRequestStatement) deleteStatement(m_getSegmentsForSubRequestStatement);
-    if (m_getSubRequestByVidStatement) deleteStatement(m_getSubRequestByVidStatement);
+   if (m_getSubRequestByVidStatement) deleteStatement(m_getSubRequestByVidStatement);
     if (m_getSubRequestsByStatusStatement) deleteStatement(m_getSubRequestsByStatusStatement);
     if (m_getAllSubRequestsStatement) deleteStatement(m_getAllSubRequestsStatement);
     if (m_validateRepackSubRequestStatement) deleteStatement(m_validateRepackSubRequestStatement);
@@ -178,15 +178,11 @@ void castor::repack::ora::OraRepackSvc::reset() throw() {
 //------------------------------------------------------------------------------
 // private: endTransation
 //------------------------------------------------------------------------------
-void castor::repack::ora::OraRepackSvc::endTransation() throw (){
-  try {
+void castor::repack::ora::OraRepackSvc::endTransation() throw (castor::exception::Exception){
     castor::BaseAddress ad;
     ad.setCnvSvcName("DbCnvSvc");
     ad.setCnvSvcType(castor::SVC_DBCNV); 
     svcs()->commit(&ad);
-  } catch (castor::exception::Exception e){
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 58, 0, 0);
-  }
 }
 
 
@@ -194,14 +190,13 @@ void castor::repack::ora::OraRepackSvc::endTransation() throw (){
 // storeRequest 
 //------------------------------------------------------------------------------
 castor::repack::RepackAck* castor::repack::ora::OraRepackSvc::storeRequest(castor::repack::RepackRequest* rreq)
-  throw ()
+  throw (castor::exception::Exception)
 {
   RepackAck* ack=NULL;
   oracle::occi::ResultSet *rset =NULL;
   ub2 *lens = NULL;
   char *buffer = NULL;
 
-  stage_trace(2,"Storing Request in DB" );
   if (rreq != NULL) {
     try {
 
@@ -252,12 +247,14 @@ castor::repack::RepackAck* castor::repack::ora::OraRepackSvc::storeRequest(casto
       }
       
       if (numTapes==0 || maxLen==0){
+
 	ack=new RepackAck();
 	RepackResponse* resp=new RepackResponse();
 	resp->setErrorCode(-1);
 	resp->setErrorMessage("No Tape given");
 	ack->addRepackresponse(resp);
 	return ack;
+	
       }
 
       unsigned int bufferCellSize = maxLen * sizeof(char);
@@ -265,6 +262,14 @@ castor::repack::RepackAck* castor::repack::ora::OraRepackSvc::storeRequest(casto
       lens = (ub2*) malloc(maxLen * sizeof(ub2));
       buffer =
 	(char*) malloc(numTapes * bufferCellSize);
+
+      
+      if ( buffer == 0 || lens == 0   ) {
+	if (buffer != 0) free(buffer);
+	if (lens != 0) free(lens);
+	castor::exception::OutOfMemory e; 
+	throw e;
+      }
 
       // Fill in the structure
 
@@ -330,29 +335,37 @@ castor::repack::RepackAck* castor::repack::ora::OraRepackSvc::storeRequest(casto
       endTransation();
       m_storeRequestStatement->closeResultSet(rset);
 
-    } catch (oracle::occi::SQLException ex) {
-
-      // log the error in Dlf
-
-      castor::dlf::Param params[] =
-	{
-	  castor::dlf::Param("Precise Message", ex.getMessage())
-	};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 46, 1, params);
+    } catch (oracle::occi::SQLException e) {
+      // clean up
+      if (buffer) free(buffer);
+      buffer=NULL;
+      if (lens) free(lens);
+      lens=NULL;
+      if (ack) freeRepackObj(ack);
+      // forward the exception
       
-      //handle the exception 
+      handleException(e);
+      castor::exception::Internal ex;
+      ex.getMessage()
+	<< "Error caught in storeRequest"
+	<< std::endl << e.what();
+      throw ex;
 
-      handleException(ex);
-      freeRepackObj(ack);
-      ack=new RepackAck();
-      RepackResponse* resp=new RepackResponse();
-      resp->setErrorCode(-1);
-      resp->setErrorMessage("Oracle Exception");
-      ack->addRepackresponse(resp);
+    } catch (castor::exception::Exception ex){
+      // clean up
+      if (buffer) free(buffer);
+      buffer=NULL;
+      if (lens) free(lens);
+      lens=NULL;
+      if (ack) freeRepackObj(ack);
+      // forward the exception
+      throw ex;
     }
     
   }  
-  
+
+  //clean up
+
   if (buffer) free(buffer);
   buffer=NULL;
   if (lens) free(lens);
@@ -366,10 +379,9 @@ castor::repack::RepackAck* castor::repack::ora::OraRepackSvc::storeRequest(casto
 //------------------------------------------------------------------------------
 void castor::repack::ora::OraRepackSvc::updateSubRequest(
 							 castor::repack::RepackSubRequest* obj) 
-  throw ()
+  throw (castor::exception::Exception)
 {
-  
-  try {
+ 
     /// stores it into the database
 
     castor::BaseAddress ad;
@@ -378,27 +390,13 @@ void castor::repack::ora::OraRepackSvc::updateSubRequest(
     
     svcs()->updateRep(&ad, obj, true);
 
-    /// Exception handling
-
-  } catch (oracle::occi::SQLException  ex) {
-    // log the error in Dlf
-
-    castor::dlf::Param params[] =
-      {
-	castor::dlf::Param("Precise Message", ex.getMessage()),
-	castor::dlf::Param("VID", obj->vid())
-      };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 47, 2, params);
-
-    handleException(ex);
-  }
 }
 
 
 //------------------------------------------------------------------------------
 // updateSubRequestSegments
 //------------------------------------------------------------------------------
-void castor::repack::ora::OraRepackSvc::updateSubRequestSegments(castor::repack::RepackSubRequest* obj,std::vector<RepackSegment*> listToUpdate) throw ()
+void castor::repack::ora::OraRepackSvc::updateSubRequestSegments(castor::repack::RepackSubRequest* obj,std::vector<RepackSegment*> listToUpdate) throw (castor::exception::Exception)
 {
 
   if (listToUpdate.empty()) { 
@@ -416,6 +414,15 @@ void castor::repack::ora::OraRepackSvc::updateSubRequestSegments(castor::repack:
 
   ub2 *lensErrorCode=(ub2 *)malloc (sizeof(ub2)*nb);
   ub2 *lensErrorMessage=NULL;
+
+  if ( bufferFileId ==0 || lensFileId == 0 || bufferErrorCode == 0 || lensErrorCode == 0  ) {
+       if (bufferFileId != 0) free(bufferFileId);
+       if (bufferErrorCode != 0) free(bufferErrorCode);
+       castor::exception::OutOfMemory e; 
+       throw e;
+    }
+
+
 
   try {
     /// stores it into the database
@@ -447,6 +454,18 @@ void castor::repack::ora::OraRepackSvc::updateSubRequestSegments(castor::repack:
 
     lensErrorMessage = (ub2*) malloc(nb * sizeof(ub2));
     bufferErrorMessage = (char*) malloc(nb * bufferCellSize);
+
+    if (lensErrorMessage == 0 || bufferErrorMessage == 0  ) {
+       if (lensErrorMessage != 0) free(lensErrorMessage);
+       if (bufferErrorMessage != 0) free(bufferErrorMessage);  
+       if (bufferFileId != 0) free(bufferFileId);
+       if (bufferErrorCode != 0) free(bufferErrorCode);
+       if (lensFileId != 0) free(lensFileId);
+       if (lensErrorCode != 0) free(lensErrorCode);
+       castor::exception::OutOfMemory e; 
+       throw e;
+    }
+
 
     elem=listToUpdate.begin();
     unsigned int i=0;
@@ -492,19 +511,53 @@ void castor::repack::ora::OraRepackSvc::updateSubRequestSegments(castor::repack:
 
     m_updateSubRequestSegmentsStatement->executeUpdate();
 
-  } catch (oracle::occi::SQLException  ex) {
+  } catch (oracle::occi::SQLException  e) {
+    // clean up
 
-    // log the error in Dlf
-    castor::dlf::Param params[] =
-      {
-	castor::dlf::Param("Precise Message", ex.getMessage()),
-	castor::dlf::Param("VID", obj->vid())
-      };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 48, 2, params);
-    handleException(ex);
+    if (bufferFileId) free(bufferFileId);
+    bufferFileId=NULL;
+    if (bufferErrorCode) free(bufferErrorCode);
+    bufferErrorCode=NULL;
+    if (bufferErrorMessage) free(bufferErrorMessage);
+    bufferErrorMessage=NULL;
+    if (lensFileId) free(lensFileId);
+    lensFileId=NULL;
+    if (lensErrorCode) free(lensErrorCode);
+    lensErrorCode=NULL;
+    if (lensErrorMessage) free(lensErrorMessage);
+    lensErrorMessage=NULL;
+    
+    // forward the exception
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught updateSubRequestSegments"
+      << std::endl << e.what();
+    throw ex;   
+  }  catch (castor::exception::Exception ex) {
+    
+    // clean up
+
+    if (bufferFileId) free(bufferFileId);
+    bufferFileId=NULL;
+    if (bufferErrorCode) free(bufferErrorCode);
+    bufferErrorCode=NULL;
+    if (bufferErrorMessage) free(bufferErrorMessage);
+    bufferErrorMessage=NULL;
+    if (lensFileId) free(lensFileId);
+    lensFileId=NULL;
+    if (lensErrorCode) free(lensErrorCode);
+    lensErrorCode=NULL;
+    if (lensErrorMessage) free(lensErrorMessage);
+    lensErrorMessage=NULL;
+    
+    //forward the exception
+    throw ex;
+
   }
   
-  // CLEAN UP
+  
+  // clean up
 
   if (bufferFileId) free(bufferFileId);
   bufferFileId=NULL;
@@ -512,7 +565,6 @@ void castor::repack::ora::OraRepackSvc::updateSubRequestSegments(castor::repack:
   bufferErrorCode=NULL;
   if (bufferErrorMessage) free(bufferErrorMessage);
   bufferErrorMessage=NULL;
-  
   if (lensFileId) free(lensFileId);
   lensFileId=NULL;
   if (lensErrorCode) free(lensErrorCode);
@@ -529,10 +581,9 @@ void castor::repack::ora::OraRepackSvc::updateSubRequestSegments(castor::repack:
 
 void castor::repack::ora::OraRepackSvc::insertSubRequestSegments(
 								 castor::repack::RepackSubRequest* obj) 
-  throw ()
+  throw (castor::exception::Exception)
 {
   
-  try {
     /// stores it into the database
 
     castor::BaseAddress ad;
@@ -540,18 +591,6 @@ void castor::repack::ora::OraRepackSvc::insertSubRequestSegments(
     ad.setCnvSvcType(castor::SVC_DBCNV);   
     svcs()->updateRep(&ad, obj, false);
     svcs()->fillRep(&ad,obj,OBJ_RepackSegment,false); // segments too 
-
-  } catch (castor::exception::Exception ex) {
-    
-    // log the error in Dlf
-    castor::dlf::Param params[] =
-      {
-	castor::dlf::Param("Precise Message",ex.getMessage().str()),
-	castor::dlf::Param("VID", obj->vid())
-      };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 49, 2, params);
-    
-  }
 }
 
 
@@ -596,7 +635,7 @@ void castor::repack::ora::OraRepackSvc::getSegmentsForSubRequest(RepackSubReques
     m_getSegmentsForSubRequestStatement->closeResultSet(rset);
 
   } catch(oracle::occi::SQLException e){
-   
+    //forward the exception
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -612,7 +651,7 @@ void castor::repack::ora::OraRepackSvc::getSegmentsForSubRequest(RepackSubReques
 // getSubRequestByVid 
 //------------------------------------------------------------------------------
 castor::repack::RepackResponse* 
-castor::repack::ora::OraRepackSvc::getSubRequestByVid(std::string vid, bool fill) throw () { 
+castor::repack::ora::OraRepackSvc::getSubRequestByVid(std::string vid, bool fill) throw (castor::exception::Exception) { 
   RepackResponse* result = new RepackResponse();
   RepackSubRequest* sub = new RepackSubRequest();
   sub->setVid(vid);
@@ -672,33 +711,22 @@ castor::repack::ora::OraRepackSvc::getSubRequestByVid(std::string vid, bool fill
     
     m_getSubRequestByVidStatement->closeResultSet(rset);
 
-  } catch (oracle::occi::SQLException ex) {
-    
-    // log the error in Dlf
+  } catch (oracle::occi::SQLException e) {
+    //clean up
+    if (result) freeRepackObj(result);
+    //forward the exception
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in getSubRequestByVid"
+      << std::endl << e.what();
+    throw ex;
 
-    castor::dlf::Param params[] =
-      {
-	castor::dlf::Param("Precise Message", ex.getMessage()),
-	castor::dlf::Param("VID", vid)
-      };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 50, 2, params);
-    result->setErrorCode(-1);
-    result->setErrorMessage("repacksever not available");
-    handleException(ex);
-  
-  }catch (castor::exception::Exception  e) {
-    
-    // log the error in Dlf
-
-    castor::dlf::Param params[] =
-      {
-	castor::dlf::Param("Precise Message", e.getMessage().str()),
-	castor::dlf::Param("VID", vid)
-      };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 17, 2, params);
-    result->setErrorCode(-1);
-    result->setErrorMessage("repacksever not available");
-  
+  } catch (castor::exception::Exception  e) {
+    //clean up
+    if (result) freeRepackObj(result);
+    // forward the exception
+    throw e;
   }
   return result;
 
@@ -709,7 +737,7 @@ castor::repack::ora::OraRepackSvc::getSubRequestByVid(std::string vid, bool fill
 // getSubRequestsByStatus
 //------------------------------------------------------------------------------
 std::vector<castor::repack::RepackSubRequest*> 
-castor::repack::ora::OraRepackSvc::getSubRequestsByStatus( castor::repack::RepackSubRequestStatusCode st, bool fill)throw ()
+castor::repack::ora::OraRepackSvc::getSubRequestsByStatus( castor::repack::RepackSubRequestStatusCode st, bool fill)throw (castor::exception::Exception)
 {
   std::vector<RepackSubRequest*> subs;
   
@@ -744,14 +772,14 @@ castor::repack::ora::OraRepackSvc::getSubRequestsByStatus( castor::repack::Repac
       resp->setRetryNb((u_signed64)rset->getDouble(12));
       resp->setId((u_signed64)rset->getDouble(13));
       
-      // GET REQUEST
+      // get request
 
       castor::BaseAddress ad;
       ad.setCnvSvcName("DbCnvSvc");
       ad.setCnvSvcType(castor::SVC_DBCNV);
       svcs()->fillObj(&ad,resp,OBJ_RepackRequest); //get the request
 
-      // SEGMENTS NEEDED
+      // get segments if needed
       
       if (fill) getSegmentsForSubRequest(resp);
       
@@ -760,20 +788,27 @@ castor::repack::ora::OraRepackSvc::getSubRequestsByStatus( castor::repack::Repac
 
     }
     m_getSubRequestsByStatusStatement->closeResultSet(rset); 
-  }catch (oracle::occi::SQLException ex) {
-
-    // log the error in Dlf
-
-    castor::dlf::Param params[] =
-      {
-	castor::dlf::Param("Precise Message", ex.getMessage())
-      };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 51, 1, params);
-
-    handleException(ex);    
+  }catch (oracle::occi::SQLException e) { 
     
-    //clean up for errors
+    // clean up
+    std::vector<RepackSubRequest*>::iterator toDelete= subs.begin();
+    while (toDelete != subs.end()){
+      if (*toDelete) freeRepackObj(*toDelete);
+      toDelete++;
+    }
+    subs.clear();
+    
+    // forward the exception
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in getSubRequests"
+      << std::endl << e.what();
+    throw ex;
 
+  } catch (castor::exception::Exception ex) {
+
+    //clean up
     std::vector<RepackSubRequest*>::iterator toDelete= subs.begin();
     while (toDelete != subs.end()){
       if (*toDelete) freeRepackObj(*toDelete);
@@ -781,6 +816,8 @@ castor::repack::ora::OraRepackSvc::getSubRequestsByStatus( castor::repack::Repac
       toDelete++;
     }
     subs.clear();
+    // forward the exception
+    throw ex;
   } 
 
   return subs;	
@@ -792,7 +829,7 @@ castor::repack::ora::OraRepackSvc::getSubRequestsByStatus( castor::repack::Repac
 //------------------------------------------------------------------------------
 castor::repack::RepackAck* 
 castor::repack::ora::OraRepackSvc::getAllSubRequests()
-  throw ()
+  throw (castor::exception::Exception)
 {
   castor::repack::RepackAck* ack=new castor::repack::RepackAck();
   castor::repack::RepackResponse* resp = NULL;
@@ -837,23 +874,24 @@ castor::repack::ora::OraRepackSvc::getAllSubRequests()
     }
     m_getAllSubRequestsStatement->closeResultSet(rset);  
   
-  }catch (oracle::occi::SQLException ex) {
+  }catch (oracle::occi::SQLException e) {
 
-    // log the error in Dlf
+    // clean up
+    if (ack) freeRepackObj(ack);
+    
+    // forward the exception
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in getAllSubRequests"
+      << std::endl << e.what();
+    throw ex;
 
-    castor::dlf::Param params[] =
-      {
-	castor::dlf::Param("Precise Message", ex.getMessage())
-      };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 52, 1, params);
-
-    handleException(ex); 
-    freeRepackObj(ack);
-    ack=new RepackAck();
-    RepackResponse* resp=new RepackResponse();
-    resp->setErrorCode(-1);
-    resp->setErrorMessage("Oracle Exception");
-    ack->addRepackresponse(resp);
+  } catch (castor::exception::Exception ex) {
+    // clean up
+    if (ack) freeRepackObj(ack);
+    //forward the exception
+    throw ex;
   }
 
   return ack;	
@@ -863,8 +901,8 @@ castor::repack::ora::OraRepackSvc::getAllSubRequests()
 //------------------------------------------------------------------------------
 // validateRepackSubRequest
 //------------------------------------------------------------------------------
-bool  castor::repack::ora::OraRepackSvc::validateRepackSubRequest( RepackSubRequest* tape, int numFiles, int numTapes)  throw (){
-  stage_trace(3,"Validate tape  %s",tape->vid().c_str());
+bool  castor::repack::ora::OraRepackSvc::validateRepackSubRequest( RepackSubRequest* tape, int numFiles, int numTapes)  throw (castor::exception::Exception){
+
   try{
     /// Check whether the statements are ok
     if ( m_validateRepackSubRequestStatement == NULL ) {
@@ -881,18 +919,14 @@ bool  castor::repack::ora::OraRepackSvc::validateRepackSubRequest( RepackSubRequ
     /// get the request we found
     bool ret =  (u_signed64)  m_validateRepackSubRequestStatement->getInt(4) == 1?true:false;
     return ret;
-  }catch (oracle::occi::SQLException ex) {
-
-    // log the error in Dlf
-
-    castor::dlf::Param params[] =
-      {
-	castor::dlf::Param("Precise Message", ex.getMessage())
-      };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 53, 1, params);   
-
-    handleException(ex);
-
+  }catch (oracle::occi::SQLException e) {
+    // forward the exception
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in validateRepackSubRequest"
+      << std::endl << e.what();
+    throw ex;
   }
   return false;
 }
@@ -902,8 +936,8 @@ bool  castor::repack::ora::OraRepackSvc::validateRepackSubRequest( RepackSubRequ
 // resurrectTapesOnHold
 //------------------------------------------------------------------------------
 
-void  castor::repack::ora::OraRepackSvc::resurrectTapesOnHold(int numFiles, int numTapes)  throw (){
-  stage_trace(3,"Resurrecting  tapes");
+void  castor::repack::ora::OraRepackSvc::resurrectTapesOnHold(int numFiles, int numTapes)  throw (castor::exception::Exception){
+
   try{
     /// Check whether the statements are ok
     if ( m_resurrectTapesOnHoldStatement == NULL ) {
@@ -915,17 +949,15 @@ void  castor::repack::ora::OraRepackSvc::resurrectTapesOnHold(int numFiles, int 
     m_resurrectTapesOnHoldStatement->executeUpdate();
     
 
-  }catch (oracle::occi::SQLException ex) {
+  }catch (oracle::occi::SQLException e) {
+    // forward the exception
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in resurrectTapesOnHold"
+      << std::endl << e.what();
+    throw ex;
 
-    // log the error in Dlf
-
-    castor::dlf::Param params[] =
-      {
-	castor::dlf::Param("Precise Message", ex.getMessage())
-      };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 54, 1, params);   
-
-    handleException(ex);
   }  
 }
 
@@ -934,8 +966,8 @@ void  castor::repack::ora::OraRepackSvc::resurrectTapesOnHold(int numFiles, int 
 // restartSubRequest
 //------------------------------------------------------------------------------
 void  castor::repack::ora::OraRepackSvc::restartSubRequest(u_signed64 srId)
-  throw (){
-  stage_trace(3,"Restarting Tape");
+  throw (castor::exception::Exception){
+
   try{
     /// Check whether the statements are ok
     if ( m_restartSubRequestStatement == NULL ) {
@@ -946,17 +978,15 @@ void  castor::repack::ora::OraRepackSvc::restartSubRequest(u_signed64 srId)
     m_restartSubRequestStatement->executeUpdate();
     
 
-  }catch (oracle::occi::SQLException ex) {
+  } catch (oracle::occi::SQLException e) {
+    //forward the exception
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in restartSubRequest"
+      << std::endl << e.what();
+    throw ex;
 
-    // log the error in Dlf
-
-    castor::dlf::Param params[] =
-      {
-	castor::dlf::Param("Precise Message", ex.getMessage())
-      };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 55, 1, params); 
-    
-    handleException(ex);
    
   }  
 }
@@ -965,8 +995,9 @@ void  castor::repack::ora::OraRepackSvc::restartSubRequest(u_signed64 srId)
 //------------------------------------------------------------------------------
 // changeSubRequestsStatus
 //------------------------------------------------------------------------------
+
 castor::repack::RepackAck*  castor::repack::ora::OraRepackSvc::changeSubRequestsStatus(std::vector<castor::repack::RepackSubRequest*> srs,  castor::repack::RepackSubRequestStatusCode st)
-  throw (){
+  throw (castor::exception::Exception){
   RepackAck* ack=new castor::repack::RepackAck();
   oracle::occi::ResultSet *rset =NULL;
   ub2 *lens = NULL;
@@ -1013,6 +1044,14 @@ castor::repack::RepackAck*  castor::repack::ora::OraRepackSvc::changeSubRequests
     lens = (ub2*) malloc(maxLen * sizeof(ub2));
     buffer =
       (char*) malloc(numTapes * bufferCellSize);
+
+    if ( buffer == 0 ||  lens == 0 ) {
+       if (buffer != 0) free(buffer);
+       if (lens != 0) free(lens);
+       castor::exception::OutOfMemory e; 
+       throw e;
+    }
+
 
     // Fill in the structure
 
@@ -1084,24 +1123,36 @@ castor::repack::RepackAck*  castor::repack::ora::OraRepackSvc::changeSubRequests
     endTransation();
     m_changeSubRequestsStatusStatement->closeResultSet(rset);
 
-  }catch (oracle::occi::SQLException ex) {
-
-    // log the error in Dlf
+  }catch (oracle::occi::SQLException e) {
+    //clean up
+    if (ack) freeRepackObj(ack);
+    if (buffer) free(buffer);
+    buffer=NULL;
+    if (lens)   free(lens);
+    lens=NULL;
     
-    castor::dlf::Param params[] =
-      {
-	castor::dlf::Param("Precise Message", ex.getMessage())
-      };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 56, 1, params);
+    // forward the exception
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in changeSubRequestsStatus"
+      << std::endl << e.what();
+    throw ex;
 
-    handleException(ex);
-    freeRepackObj(ack);
-    ack=new RepackAck();
-    RepackResponse* resp=new RepackResponse();
-    resp->setErrorCode(-1);
-    resp->setErrorMessage("Oracle Exception");
-    ack->addRepackresponse(resp);
+
+ 
+  }catch (castor::exception::Exception ex){
+    // clean up
+    if (ack) freeRepackObj(ack);
+    if (buffer) free(buffer);
+    buffer=NULL;
+    if (lens)   free(lens);
+    lens=NULL;
+    //forward the exception
+    throw ex;
   }
+  
+  // clean up
 
   if (buffer) free(buffer);
   buffer=NULL;
@@ -1116,7 +1167,7 @@ castor::repack::RepackAck*  castor::repack::ora::OraRepackSvc::changeSubRequests
 // changeAllSubRequestsStatus
 //------------------------------------------------------------------------------
 castor::repack::RepackAck*  castor::repack::ora::OraRepackSvc::changeAllSubRequestsStatus(castor::repack::RepackSubRequestStatusCode st)
-  throw (){
+  throw (castor::exception::Exception){
   castor::repack::RepackAck* ack=new castor::repack::RepackAck();
   oracle::occi::ResultSet *rset =NULL;
 
@@ -1129,8 +1180,7 @@ castor::repack::RepackAck*  castor::repack::ora::OraRepackSvc::changeAllSubReque
     }	
     m_changeAllSubRequestsStatusStatement->setInt(1,(int)st);
     m_changeAllSubRequestsStatusStatement->executeUpdate();
-    
-    // RETURN
+
     rset = m_changeAllSubRequestsStatusStatement->getCursor(2);
     // Run through the cursor
     oracle::occi::ResultSet::Status status = rset->next();
@@ -1167,26 +1217,23 @@ castor::repack::RepackAck*  castor::repack::ora::OraRepackSvc::changeAllSubReque
     } 
     endTransation();
     m_changeAllSubRequestsStatusStatement->closeResultSet(rset);
-  }catch (oracle::occi::SQLException ex) {
-
-    // log the error in Dlf
-
-    castor::dlf::Param params[] =
-      {
-	castor::dlf::Param("Precise Message", ex.getMessage())
-      };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 57, 1, params);    
-
-    handleException(ex);
-
-    freeRepackObj(ack);
-
-    ack=new RepackAck();
-    RepackResponse* resp=new RepackResponse();
-    resp->setErrorCode(-1);
-    resp->setErrorMessage("Oracle Exception");
-    ack->addRepackresponse(resp);
+  }catch (oracle::occi::SQLException e) {
+    //clean up
+    if (ack) freeRepackObj(ack);
+    //forward the exception
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in changeAllSubRequestsStatus"
+      << std::endl << e.what();
+    throw ex;
+   
+  } catch(castor::exception::Exception ex){
+    //cleanup
+    if (ack) freeRepackObj(ack);
+    throw ex;
   }
+
   return ack;
 }
 
@@ -1254,22 +1301,36 @@ castor::repack::ora::OraRepackSvc::getLastTapeInformation(std::string vidName, u
       status = rset->next();
     } 
     if (rset)  m_selectLastSegmentsSituationStatement->closeResultSet(rset);
-  }catch (oracle::occi::SQLException ex) {
-     castor::exception::Internal e;
-     e.getMessage()
-     << "OraRepackSvc::getLastTapeInformation(...):"
-     << "Unable to get all RepackSubRequests" 
-     << std::endl<<ex.what();
-     if (!result.empty()){
-       std::vector<castor::repack::RepackSegment*>::iterator item= result.begin();
-       while (item != result.end()){
-	 if (*item) delete (*item);
+  }catch (oracle::occi::SQLException e) {
+    //clean up
+    
+    std::vector<castor::repack::RepackSegment*>::iterator item= result.begin();
+    while (item != result.end()){
+	 if (*item) delete(*item);
 	 item ++;
-       }
-       result.clear();
-     }
-       
-     throw e;
+    }
+    result.clear();
+
+    // forward the exception
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in selectLastSegmentsSituationStatement"
+      << std::endl << e.what();
+    throw ex;
+    
+    
+  } catch (castor::exception::Exception ex){
+    //clean up
+    std::vector<castor::repack::RepackSegment*>::iterator item= result.begin();
+    while (item != result.end()){
+	 if (*item) delete(*item);
+	 item ++;
+    }
+    result.clear();
+
+    // forward the exception
+    throw ex;
   }
   return result;
 }

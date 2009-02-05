@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/RepackMonitor.hpp
+ *                       RepackMonitor.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,17 +20,16 @@
  *
  *
  *
- * @author Felix Ehm
+ * @author Giulia Taurelli
  *****************************************************************************/
 #ifndef REPACKMONITOR_HPP
 #define REPACKMONITOR_HPP 1
 
-#include "RepackCommonHeader.hpp"
+#include "RepackServer.hpp"
+#include "RepackSubRequest.hpp"
 #include "castor/rh/FileQryResponse.hpp"
-#include "castor/repack/IRepackSvc.hpp"
-#include "FileListHelper.hpp"
 #include "castor/server/IThread.hpp"
-#include "stager_client_api.h"
+
 
 
 namespace castor {
@@ -74,7 +73,7 @@ namespace castor {
        * information of the RepackRequest into account)
        * @throws castor::exception::Exception in case of an error.
        */
-      void updateTape(RepackSubRequest*)throw ();
+      void updateTape(RepackSubRequest*)throw (castor::exception::Exception);
   
       /** Retrieves the stats from a request (by the given cuuid in the
        *  RepackSubRequest). Beware that the returned objects in the vector
@@ -90,8 +89,14 @@ namespace castor {
 
 
     private:
-      castor::repack::IRepackSvc* m_dbSvc;
+
+      /**
+       * A pointer to the server instance, which keeps information
+       * about Nameserver, stager etc.
+       */
+
       RepackServer* ptr_server;
+
     };
 
   }

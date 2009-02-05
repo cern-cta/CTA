@@ -1,6 +1,6 @@
 
 /******************************************************************************
- *                      RepackServerReqSvcThread.cpp
+ *                       FileListHelper.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,18 +18,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.36 $ $Release$ 
- * $Date: 2008/12/01 13:58:40 $ $Author: gtaur $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.37 $ $Release$ 
+ * $Date: 2009/02/05 15:51:19 $ $Author: gtaur $
  *
  *
  *
- * @author Felix Ehm
+ * @author Giulia Taurelli
  *****************************************************************************/
 
 
-#include "castor/repack/FileListHelper.hpp"
+#include "FileListHelper.hpp"
+#include "RepackSegment.hpp"
 #include "RepackUtility.hpp"
-
+#include "Cns_api.h"
+#include "castor/dlf/Dlf.hpp"
+#include "castor/exception/Internal.hpp"
+#include <iostream>
+#include <iomanip>
 
 namespace castor {
 
@@ -58,20 +63,20 @@ FileListHelper::FileListHelper(std::string nameserver)
 // getFileList
 //------------------------------------------------------------------------------
 
-std::vector<u_signed64>* FileListHelper::getFileList(castor::repack::RepackSubRequest *subreq) 
+std::vector<u_signed64> FileListHelper::getFileList(castor::repack::RepackSubRequest *subreq) 
   throw()
 {
   double vecsize = 0;
   std::vector<RepackSegment*>::iterator iterseg;
   /** pointer to vector of all Segments */
-  std::vector<u_signed64>* parentlist = new std::vector<u_signed64>();
+  std::vector<u_signed64> parentlist; 
   vecsize = subreq->repacksegment().size();
 
   if ( vecsize > 0 ) {
     /** make up a new list with all parent_fileids */
     iterseg=subreq->repacksegment().begin();
     while ( iterseg!=subreq->repacksegment().end() ) {
-      parentlist->push_back( (*iterseg)->fileid() );
+      parentlist.push_back( (*iterseg)->fileid() );
       iterseg++;
     }
   }
@@ -86,23 +91,23 @@ std::vector<u_signed64>* FileListHelper::getFileList(castor::repack::RepackSubRe
 //------------------------------------------------------------------------------
 // getFilePathnames
 //------------------------------------------------------------------------------
-std::vector<std::string>* FileListHelper::getFilePathnames(castor::repack::RepackSubRequest *subreq)
+std::vector<std::string> FileListHelper::getFilePathnames(castor::repack::RepackSubRequest *subreq)
                                               throw (castor::exception::Exception)
 {
   unsigned int i=0;
   char path[CA_MAXPATHLEN+1];
   
-  std::vector<u_signed64>* tmp;
-  std::vector<std::string>* pathlist = new std::vector<std::string>();
+  std::vector<u_signed64> tmp;
+  std::vector<std::string> pathlist;
   
   /** this function already checks if subreq is not NULL
      and get the parentfileids */
   tmp = getFileList(subreq);
   
-  for ( i=0; i< tmp->size(); i++ )
+  for ( i=0; i< tmp.size(); i++ )
   {
 	  /** get the full path and push it into the list */
-    if ( Cns_getpath((char*)m_ns.c_str(), tmp->at(i), path) < 0 ) {
+    if ( Cns_getpath((char*)m_ns.c_str(), tmp.at(i), path) < 0 ) {
       // we continue with the rest.
       Cuuid_t cuuid;
       cuuid = stringtoCuuid(subreq->cuuid());
@@ -110,16 +115,16 @@ std::vector<std::string>* FileListHelper::getFilePathnames(castor::repack::Repac
       Cns_fileid file_uniqueid; 
       memset(&file_uniqueid,'\0',sizeof(file_uniqueid));
       sprintf(file_uniqueid.server,"%s",(char*)m_ns.c_str());  
-      file_uniqueid.fileid=tmp->at(i) ;
+      file_uniqueid.fileid=tmp.at(i) ;
 
       castor::dlf::Param params[] =
 	{castor::dlf::Param("VID", subreq->vid()),
 	 castor::dlf::Param("Standard Message", "impossible to resolve the path of such fileid")
 	};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 59, 2, params, &file_uniqueid);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 46, 2, params, &file_uniqueid);
     }
     else{
-      pathlist->push_back(path);
+      pathlist.push_back(path);
     }
   }
   return pathlist;
@@ -210,7 +215,7 @@ void FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
       {castor::dlf::Param("Vid", subreq->vid()),
        castor::dlf::Param("Segments", subreq->repacksegment().size()),
        castor::dlf::Param("DiskSpace", subreq->xsize())};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 60, 3, params);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 47, 3, params);
       
   }
   else{

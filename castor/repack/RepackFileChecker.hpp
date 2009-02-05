@@ -26,13 +26,8 @@
 #ifndef _REPACKFILECHECKER_HPP_
 #define _REPACKFILECHECKER_HPP_
 
-#include "RepackCommonHeader.hpp"
-#include "FileListHelper.hpp"
 #include "castor/server/IThread.hpp"
-#include "stager_client_api.h"
-#include "castor/stager/SubRequestStatusCodes.hpp"
-#include "castor/repack/IRepackSvc.hpp"
-
+#include "RepackServer.hpp"
 
 namespace castor {
 	namespace repack {
@@ -61,11 +56,7 @@ namespace castor {
 		
 		private:
 
-	          /**
-		   * The Database Svc  for updatting finished jobs in the Repack Tables
-		   */
-	           castor::repack::IRepackSvc* m_dbSvc;
-      
+     
 	          /**
                    * Pointer to the server instance, which I was added to.
                    */

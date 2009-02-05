@@ -17,20 +17,32 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2008/09/09 09:18:40 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2009/02/05 15:51:19 $ $Author: gtaur $
  *
  *
  *
- * @author Felix Ehm
+ * @author Giulia Taurelli
  *****************************************************************************/
 
 
 
 #include "RepackWorker.hpp"
-#include "castor/Services.hpp"
-#include "RepackAck.hpp"
 #include "RepackCommandCode.hpp"
 #include "RepackUtility.hpp"
+#include "castor/IObject.hpp"
+#include "castor/BaseObject.hpp"
+#include "castor/io/ServerSocket.hpp"
+#include "FileListHelper.hpp"
+#include "RepackResponse.hpp"
+
+
+#include "vmgr_api.h"
+
+#include <sys/types.h>
+#include <time.h>
+#include <common.h> 
+#include <vector>
+#include <errno.h>
 
 
 
@@ -43,8 +55,7 @@ namespace castor {
 // constructor
 //------------------------------------------------------------------------------
 RepackWorker::RepackWorker(RepackServer* pserver)
-{
-  m_dbSvc =NULL;  
+{ 
   ptr_server = pserver;
 }
 
@@ -55,8 +66,6 @@ RepackWorker::RepackWorker(RepackServer* pserver)
 //------------------------------------------------------------------------------
 RepackWorker::~RepackWorker() throw()
 {
-    if (m_dbSvc != NULL) delete m_dbSvc;
-    m_dbSvc=NULL;
 
 }
 
@@ -69,85 +78,60 @@ void RepackWorker::run(void* param)
 {
   RepackAck* ack=NULL;
   RepackRequest* rreq = NULL;
-  castor::io::ServerSocket* sock=NULL; 
+  castor::io::ServerSocket* sock=NULL;    
+    
+  unsigned short port=0;
+  unsigned long ip=0;
+ 
+  // we will continue if no error have been logged in ack. 
+
+  sock = (castor::io::ServerSocket*) param;
+
+  // Retrieve info on the client
 
   try {
-   
-    if ( m_dbSvc == NULL ){
- // service to access the database
-
-      castor::IService* orasvc = castor::BaseObject::services()->service("OraRepackSvc", castor::SVC_ORAREPACKSVC);
-      m_dbSvc = dynamic_cast<castor::repack::IRepackSvc*>(orasvc);
-      if (m_dbSvc == 0) {
-      // FATAL ERROR
-	castor::dlf::Param params0[] =
-	  {castor::dlf::Param("Standard Message", "RepackWorker fatal error"),};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params0);
-	ack=new RepackAck();
-	RepackResponse* resp=new RepackResponse();
-	resp->setErrorCode(-1);
-	resp->setErrorMessage("Repack Server not available at the moment");
-	ack->addRepackresponse(resp);
-      }
+	
+    sock->getPeerIp(port, ip);
   
-    }
-
-    unsigned short port=0;
-    unsigned long ip=0;
- 
-    // we will continue if no error have been logged in ack. 
- 
-    if (ack == NULL) {
-      stage_trace(3, "RepackWorker started and Request is now handled!");
-
-      sock = (castor::io::ServerSocket*) param;
-
-      // Retrieve info on the client
-
-      try {
-	sock->getPeerIp(port, ip);
-      } catch(castor::exception::Exception e) {
+  } catch(castor::exception::Exception e) {
       // "Exception caught : ignored" message
 	castor::dlf::Param params[] =
 	  {castor::dlf::Param("Standard Message", sstrerror(e.code())),
 	   castor::dlf::Param("Precise Message", e.getMessage().str())};
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 4, 2, params);
 	return;
-      }
-  
-      stage_trace(2, "Request from %3d.%3d.%3d.%3d:%d", 
-  				 (ip%265),((ip >> 8)%256),((ip >> 16)%256),(ip >> 24), port);
-    
+  } 
 
-      // get the incoming request
-      try {
-	castor::IObject* obj = sock->readObject();
-	rreq = dynamic_cast<castor::repack::RepackRequest*>(obj);
-	if (0 == rreq) {
-	  delete obj; 
-	  // "Invalid Request" message
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6);
-	  ack=new RepackAck();
-	  RepackResponse* resp=new RepackResponse();
-	  resp->setErrorCode(EINVAL);
-	  resp->setErrorMessage("Invalid Request!");
-	  ack->addRepackresponse(resp);
-	}
-      } catch (castor::exception::Exception e) {
-	// "Unable to read Request from socket" message
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("Message", e.getMessage().str())};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 1, params);
-	ack=new RepackAck();
-	RepackResponse* resp=new RepackResponse();
-	resp->setErrorCode(EINVAL);
-	resp->setErrorMessage(e.getMessage().str());
-	ack->addRepackresponse(resp);
-	stage_trace(3, (char*)e.getMessage().str().c_str());
-      }
+  // get the incoming request
+  try {
+    castor::IObject* obj = sock->readObject();
+    rreq = dynamic_cast<castor::repack::RepackRequest*>(obj);
+    if (0 == rreq) {
+      delete obj; 
+      // "Invalid Request" message
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6);
+      ack=new RepackAck();
+      RepackResponse* resp=new RepackResponse();
+      resp->setErrorCode(EINVAL);
+      resp->setErrorMessage("Invalid Request!");
+      ack->addRepackresponse(resp);
     }
+  } catch (castor::exception::Exception e) {
+    // "Unable to read Request from socket" message
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 1, params);
+    ack=new RepackAck();
+    RepackResponse* resp=new RepackResponse();
+    resp->setErrorCode(EINVAL);
+    resp->setErrorMessage(e.getMessage().str());
+    ack->addRepackresponse(resp);
+
+  }
+    
   
 /****************************************************************************/
+
     if (ack == NULL) { //everything went fine up to know
  
       // Performe the request 
@@ -157,58 +141,76 @@ void RepackWorker::run(void* param)
 	 castor::dlf::Param("Port", port),
 	 castor::dlf::Param("Command", rreq->command())};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 3, params);
-    
-      switch ( rreq->command() ){
+      try {
 
-      case REMOVE:            
-	ack=removeRequest(rreq);
-	break;
+	switch ( rreq->command() ){
+
+	case REMOVE:            
+	  ack=removeRequest(rreq);
+	  break;
   
-      case RESTART:           
-	ack=restartRequest(rreq);
-	break;
+	case RESTART:           
+	  ack=restartRequest(rreq);
+	  break;
 
-      case REPACK:            
-	ack=handleRepack(rreq);
-	break;
+	case REPACK:            
+	  ack=handleRepack(rreq);
+	  break;
 
-      case GET_STATUS:
-	ack=getStatus(rreq);
-	break;
+	case GET_STATUS:
+	  ack=getStatus(rreq);
+	  break;
 
-      case GET_ERROR:
-	ack=queryForErrors(rreq); 
-	break;
+	case GET_ERROR:
+	  ack=getSubRequestsWithSegments(rreq); 
+	  break;
       
-      case GET_NS_STATUS:             
-	ack=getNsStatus(rreq);
-	break;
+	case GET_NS_STATUS:             
+	  ack=getSubRequestsWithSegments(rreq);
+	  break;
 
-      case GET_STATUS_ALL:   
-	ack=getStatusAll(rreq);
-	break;
+	case GET_STATUS_ALL:   
+	  ack=getStatusAll(rreq);
+	  break;
 
-      case ARCHIVE:           
-	ack=archiveSubRequests(rreq);
-	break;
+	case ARCHIVE:           
+	  ack=archiveSubRequests(rreq);
+	  break;
 
-      case ARCHIVE_ALL:       
-	ack=archiveAllSubRequests(rreq);
-	break;
-      default: 
+	case ARCHIVE_ALL:       
+	  ack=archiveAllSubRequests(rreq);
+	  break;
+	default: 
+	  RepackResponse* globalError=new RepackResponse();
+	  ack=new RepackAck();
+	  globalError->setErrorCode(-1);
+	  globalError->setErrorMessage("Unknow command");
+	  ack->addRepackresponse(globalError);
+
+	}
+
+
+      } catch (castor::exception::Exception e){
+	
+	castor::dlf::Param params[] = {castor::dlf::Param("ErrorCode", e.code()),
+				       castor::dlf::Param("Precise Message", e.getMessage().str())};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 67, 2,params);
+	
 	RepackResponse* globalError=new RepackResponse();
 	ack=new RepackAck();
-	globalError->setErrorCode(-1);
-	globalError->setErrorMessage("Unknow command");
+	globalError->setErrorCode(e.code());
+	globalError->setErrorMessage(e.getMessage().str());
 	ack->addRepackresponse(globalError);
-
-      }
-      ack->setCommand(rreq->command());
+       
+      } 
     }
+
+    if (ack !=NULL && rreq !=NULL)
+      ack->setCommand(rreq->command());
 
 /****************************************************************************/ 
 
-  // Answer the client
+      // Answer the client
 
     try {
     
@@ -222,7 +224,7 @@ void RepackWorker::run(void* param)
 
     } catch (castor::exception::Exception e) {
   	
-    // "Unable to send Ack to client" message
+      // "Unable to send Ack to client" message
       castor::dlf::Param params[] =
 	{castor::dlf::Param("Standard Message", sstrerror(e.code())),
 	 castor::dlf::Param("Precise Message", e.getMessage().str())};
@@ -230,17 +232,17 @@ void RepackWorker::run(void* param)
       std::cerr << e.getMessage();
     }
 
-  } catch (...){}
 
-  /** Clean everything. */ 
+
+    /** Clean everything. */ 
  
-  if(rreq !=NULL) freeRepackObj(rreq);
-  if (ack!= NULL) freeRepackObj(ack);
-  rreq = NULL;
-  ack=NULL;
+    if(rreq !=NULL) freeRepackObj(rreq);
+    if (ack!= NULL) freeRepackObj(ack);
+    rreq = NULL;
+    ack=NULL;
 
-  if (sock !=NULL) delete sock;  // originally created from RepackServer
-  sock=NULL;
+    if (sock !=NULL) delete sock;  // originally created from RepackServer
+    sock=NULL;
 }
 
 
@@ -258,31 +260,33 @@ void RepackWorker::stop()
 // Retrieves the subrequest for client answer
 //------------------------------------------------------------------------------
 
-RepackAck*  RepackWorker::getNsStatus(RepackRequest* rreq) throw ()
+RepackAck*  RepackWorker::getSubRequestsWithSegments(RepackRequest* rreq) throw (castor::exception::Exception)
 {
-  /** this method takes only 1! subrequest, this is normaly ensured by the 
-    * repack client 
-    */
-
-  RepackAck* ack=new RepackAck();
 
   if ( rreq== NULL || rreq->repacksubrequest().size()==0 ) {
-    RepackResponse* globalError=new RepackResponse();
-    globalError->setErrorCode(-1);
-    globalError->setErrorMessage("Incomplete request");
-    ack->addRepackresponse(globalError);
-    return ack;
-    
+    castor::exception::Exception e(EINVAL);
+    throw e;
   }
+
+  RepackAck* ack=new RepackAck();
 
   /** Get the SubRequest. We query by VID and receive a full subrequest */
 
   // we give all the segments information to gather information from the name server
 
   std::vector<RepackSubRequest*>::iterator tape=rreq->repacksubrequest().begin();
-  
+  RepackResponse* resp=NULL;
   while (tape != rreq->repacksubrequest().end()){
-    RepackResponse* resp= m_dbSvc->getSubRequestByVid((*tape)->vid(),true); // get the segments
+    try {
+
+      resp=ptr_server->repackDbSvc()->getSubRequestByVid((*tape)->vid(),true); // get the segments
+
+    } catch (castor::exception::Exception e){
+      RepackResponse* resp= new RepackResponse();
+      resp->setErrorCode(e.code());
+      resp->setErrorMessage(e.getMessage().str());
+      
+    }
     ack->addRepackresponse(resp); 
     tape++;
   }
@@ -294,9 +298,14 @@ RepackAck*  RepackWorker::getNsStatus(RepackRequest* rreq) throw ()
 // Retrieves all the not archived subrequests in the repack system 
 //------------------------------------------------------------------------------
 
-RepackAck*  RepackWorker::getStatusAll(RepackRequest* rreq) throw ()
+RepackAck*  RepackWorker::getStatusAll(RepackRequest* rreq) throw (castor::exception::Exception)
 {
-  RepackAck* result = m_dbSvc->getAllSubRequests();
+
+  if ( rreq== NULL) {
+    castor::exception::Exception e(EINVAL);
+    throw e;
+  }
+  RepackAck* result = ptr_server->repackDbSvc()->getAllSubRequests();
   return result;
 }
 
@@ -305,9 +314,14 @@ RepackAck*  RepackWorker::getStatusAll(RepackRequest* rreq) throw ()
 // Archive the finished tapes
 //------------------------------------------------------------------------------
 
-RepackAck* RepackWorker::archiveSubRequests(RepackRequest* rreq) throw ()
+RepackAck* RepackWorker::archiveSubRequests(RepackRequest* rreq) throw (castor::exception::Exception)
 { 
-  RepackAck* result= m_dbSvc->changeSubRequestsStatus(rreq->repacksubrequest(),RSUBREQUEST_ARCHIVED);
+  if ( rreq== NULL) {
+    castor::exception::Exception e(EINVAL);
+    throw e;
+  }
+
+  RepackAck* result= ptr_server->repackDbSvc()->changeSubRequestsStatus(rreq->repacksubrequest(),RSUBREQUEST_ARCHIVED);
   return result;
 }
 
@@ -315,20 +329,28 @@ RepackAck* RepackWorker::archiveSubRequests(RepackRequest* rreq) throw ()
 //------------------------------------------------------------------------------
 // Archives all finished tapes
 //------------------------------------------------------------------------------
-RepackAck* RepackWorker::archiveAllSubRequests(RepackRequest* rreq) throw ()
+RepackAck* RepackWorker::archiveAllSubRequests(RepackRequest* rreq) throw (castor::exception::Exception)
 {
- RepackAck* result=m_dbSvc->changeAllSubRequestsStatus(RSUBREQUEST_ARCHIVED);
- return result;
+  if ( rreq== NULL) {
+    castor::exception::Exception e(EINVAL);
+    throw e;
+  }
+  RepackAck* result=ptr_server->repackDbSvc()->changeAllSubRequestsStatus(RSUBREQUEST_ARCHIVED);
+  return result;
 }
 
 
 //------------------------------------------------------------------------------
 // Restart a  repack subrequest
 //------------------------------------------------------------------------------
-RepackAck* RepackWorker::restartRequest(RepackRequest* rreq) throw ()
+RepackAck* RepackWorker::restartRequest(RepackRequest* rreq) throw (castor::exception::Exception)
 {   
-   RepackAck* result=m_dbSvc->changeSubRequestsStatus(rreq->repacksubrequest(),RSUBREQUEST_TOBERESTARTED);
-   return result;
+  if ( rreq== NULL) {
+    castor::exception::Exception e(EINVAL);
+    throw e;
+  }
+  RepackAck* result=ptr_server->repackDbSvc()->changeSubRequestsStatus(rreq->repacksubrequest(),RSUBREQUEST_TOBERESTARTED);
+  return result;
 }
 
 
@@ -336,9 +358,13 @@ RepackAck* RepackWorker::restartRequest(RepackRequest* rreq) throw ()
 //------------------------------------------------------------------------------
 // Remove a request from repack
 //------------------------------------------------------------------------------
-RepackAck* RepackWorker::removeRequest(RepackRequest* rreq) throw ()
+RepackAck* RepackWorker::removeRequest(RepackRequest* rreq) throw (castor::exception::Exception)
 {
-  RepackAck* result=m_dbSvc->changeSubRequestsStatus(rreq->repacksubrequest(),RSUBREQUEST_TOBEREMOVED);    
+  if ( rreq== NULL) {
+    castor::exception::Exception e(EINVAL);
+    throw e;
+  }
+  RepackAck* result=ptr_server->repackDbSvc()->changeSubRequestsStatus(rreq->repacksubrequest(),RSUBREQUEST_TOBEREMOVED);    
   return result;
  
 }
@@ -348,28 +374,21 @@ RepackAck* RepackWorker::removeRequest(RepackRequest* rreq) throw ()
 //------------------------------------------------------------------------------
 // handleRepack
 //------------------------------------------------------------------------------
-RepackAck* RepackWorker::handleRepack(RepackRequest* rreq) throw ()
+RepackAck* RepackWorker::handleRepack(RepackRequest* rreq) throw (castor::exception::Exception)
 {
   RepackAck* ack= NULL;
   std::vector<RepackResponse*> badVmgrTapes;
 
   if (rreq==NULL) {
-    RepackResponse* result=new RepackResponse();
-    result->setErrorCode(-1);
-    result->setErrorMessage("invalid request");
-    ack->addRepackresponse(result);
-    return ack;
+    castor::exception::Exception e(EINVAL);
+    throw e;
   }
 
   // If an input tapepool is given, the tapepool tapes are retrieved from vmgr 
  
   if (  rreq->pool().length() > 0){
-     if ( getPoolVmgrInfo(rreq)) {
-       RepackResponse* result=new RepackResponse();
-       result->setErrorCode(-1);
-       result->setErrorMessage("invalid tapepool in vmgr");
-       return ack;
-     }
+    // get the tapes if the repack of a pool is issued
+    getPoolVmgrInfo(rreq); 
   } 
   
   // all the input tape are checked querying the vmgr
@@ -380,8 +399,12 @@ RepackAck* RepackWorker::handleRepack(RepackRequest* rreq) throw ()
   Cuuid2string(buf, CUUID_STRING_LEN+1, &cuuid);
   std::string tmp (buf,CUUID_STRING_LEN);
 
+  if (rreq->repacksubrequest().empty()){
+    castor::exception::Exception e(EINVAL);
+    throw e;
+  }
+
   std::vector<RepackSubRequest*>::iterator tape=rreq->repacksubrequest().begin(); 
-  
 
   std::vector<RepackResponse*>::iterator errorVmgr;
   RepackRequest* requestToSubmit=new RepackRequest();
@@ -403,26 +426,27 @@ RepackAck* RepackWorker::handleRepack(RepackRequest* rreq) throw ()
   requestToSubmit->setFinalPool(rreq->finalPool());
  
   while ( tape != rreq->repacksubrequest().end() ){
-
-    if ( checkTapeVmgrStatus((*tape)->vid())) {
-       (*tape)->setStatus(RSUBREQUEST_TOBECHECKED);  
-       (*tape)->setCuuid(tmp);
-       (*tape)->setRetryNb(rreq->retryMax()); 
-       requestToSubmit->addRepacksubrequest(*tape);
-      // answer that the submition succeeded 
-       
-    } else { 
+    // answer that the submition succeeded 
+    try{
+      checkTapeVmgrStatus((*tape)->vid());
+      (*tape)->setStatus(RSUBREQUEST_TOBECHECKED);  
+      (*tape)->setCuuid(tmp);
+      (*tape)->setRetryNb(rreq->retryMax()); 
+      requestToSubmit->addRepacksubrequest(*tape);
+      
+    } catch (castor::exception::Exception e) { 
       // failure vmgr 
-       RepackResponse* resp=new RepackResponse();
-       RepackSubRequest* sub= new RepackSubRequest();
-       sub->setVid((*tape)->vid());
-       sub->setRepackrequest(NULL);
-       resp->setErrorCode(-1); 
-       resp->setErrorMessage("invalid vmgr status");
-       resp->setRepacksubrequest(sub);
-       badVmgrTapes.push_back(resp);  
+      RepackResponse* resp=new RepackResponse();
+      RepackSubRequest* sub= new RepackSubRequest();
+      sub->setVid((*tape)->vid());
+      sub->setRepackrequest(NULL);
+      resp->setErrorCode(e.code()); 
+      resp->setErrorMessage(e.getMessage().str());
+      resp->setRepacksubrequest(sub);
+      badVmgrTapes.push_back(resp);  
     }
     tape++;
+    
   }
 
   /// set the default serviceclass if none is given
@@ -434,12 +458,9 @@ RepackAck* RepackWorker::handleRepack(RepackRequest* rreq) throw ()
   if ( requestToSubmit->stager().length() == 0 ){
     requestToSubmit->setStager(ptr_server->getStagerName());
   }
+ 
   if (!requestToSubmit->repacksubrequest().empty())
-    ack = m_dbSvc->storeRequest(requestToSubmit);
-  if (ack==NULL){
-    ack=new RepackAck();
-    ack->setCommand(requestToSubmit->command());
-  }
+    ack = ptr_server->repackDbSvc()->storeRequest(requestToSubmit);
 
   if (!badVmgrTapes.empty()){
     // report failure due to vmgr problems
@@ -458,7 +479,7 @@ RepackAck* RepackWorker::handleRepack(RepackRequest* rreq) throw ()
 //------------------------------------------------------------------------------
 // Retrieves Information about the Pool of the Request
 //------------------------------------------------------------------------------
-bool RepackWorker::getPoolVmgrInfo(castor::repack::RepackRequest* rreq) throw ()
+void RepackWorker::getPoolVmgrInfo(castor::repack::RepackRequest* rreq) throw (castor::exception::Exception)
 {
 	char *pool_name;
 	int flags;
@@ -470,8 +491,10 @@ bool RepackWorker::getPoolVmgrInfo(castor::repack::RepackRequest* rreq) throw ()
 	
 	pool_name = (char*)rreq->pool().c_str();
 			
+	serrno=0;
 	if (vmgr_querypool (pool_name, NULL, NULL, NULL, NULL) < 0) {
-	  return false;
+	  castor::exception::Exception e(serrno);
+	  throw e;
 	}
 			
 	// get the tapes, check them and add them to the Request 
@@ -488,7 +511,6 @@ bool RepackWorker::getPoolVmgrInfo(castor::repack::RepackRequest* rreq) throw ()
 	}
 			
 	vmgr_listtape (NULL, pool_name, VMGR_LIST_END, &list);
-	return true;
 }
 
 
@@ -496,90 +518,67 @@ bool RepackWorker::getPoolVmgrInfo(castor::repack::RepackRequest* rreq) throw ()
 // Validates the status of the tape
 //------------------------------------------------------------------------------
 
-bool RepackWorker::checkTapeVmgrStatus(std::string tapename) throw ()
+void RepackWorker::checkTapeVmgrStatus(std::string tapename) throw (castor::exception::Exception)
 {
 
   /* check if the volume exists and get its status */
   struct vmgr_tape_info tape_info;
   char *vid = (char*)tapename.c_str();
-
+  serrno=0;
   if (vmgr_querytape (vid, 0, &tape_info, NULL) < 0) {
     castor::dlf::Param params[] =
-        {castor::dlf::Param("VID", vid),
-         castor::dlf::Param("ErrorText", sstrerror(serrno))};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 11, 1, params);
-      return false;
+      {castor::dlf::Param("VID", vid),
+       castor::dlf::Param("ErrorText", sstrerror(serrno))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 11, 1, params);
+    castor::exception::Exception e(serrno);
+    throw e;
   }
 
   if ( !(tape_info.status & TAPE_FULL) && !(tape_info.status & TAPE_RDONLY)) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("VID", vid)};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 12, 1, params);
-    return false;
+    castor::exception::Exception e(EINVAL);
+    throw e;
   }
 
-  return true;
 }
 
 //-----------------------------------------------------------------------------
 // Get Status
 //-----------------------------------------------------------------------------
 
- RepackAck* RepackWorker::getStatus(RepackRequest* rreq) throw (){
-    RepackAck* ack=new RepackAck();
-    if (rreq==NULL) {
-      RepackResponse* result=new RepackResponse();
-      result->setErrorCode(-1);
-      result->setErrorMessage("invalid request");
-      ack->addRepackresponse(result);
-      return ack;
-    }
+ RepackAck* RepackWorker::getStatus(RepackRequest* rreq) throw (castor::exception::Exception){
+  
+   if ( rreq== NULL) {
+     castor::exception::Exception e(EINVAL);
+     throw e;
+   }
+   RepackAck* ack=new RepackAck();
+   std::vector<castor::repack::RepackSubRequest*> sreqs=rreq->repacksubrequest();
+   std::vector<castor::repack::RepackSubRequest*>::iterator sreq=sreqs.begin();
+   RepackResponse* resp=NULL;
 
-    std::vector<castor::repack::RepackSubRequest*> sreqs=rreq->repacksubrequest();
-    std::vector<castor::repack::RepackSubRequest*>::iterator sreq=sreqs.begin();
-    
-    while (sreq != sreqs.end()){  
+   while (sreq != sreqs.end()){  
 
-    /** get the information from the db  */
+     /** get the information from the db  */
+     try {
 
-      RepackResponse* tape=m_dbSvc->getSubRequestByVid((*sreq)->vid(),false); // no segments
-      ack->addRepackresponse(tape);
-      sreq++;
+       resp=ptr_server->repackDbSvc()->getSubRequestByVid((*sreq)->vid(),false); // no segments
 
-    }
-    return ack;
+     } catch (castor::exception::Exception e) {
+       RepackResponse* resp= new RepackResponse();
+       resp->setErrorCode(e.code());
+       resp->setErrorMessage(e.getMessage().str());
+     }
+     ack->addRepackresponse(resp);
+     sreq++;
+     
+   }
+   return ack;
  }
 
 
-//------------------------------------------------------------------------------
-// Query for Errors 
-//------------------------------------------------------------------------------
-
-  RepackAck* RepackWorker::queryForErrors(RepackRequest* rreq) throw (){
-    RepackAck* ack=new RepackAck();
-    if (rreq==NULL) {
-      RepackResponse* result=new RepackResponse();
-      result->setErrorCode(-1);
-      result->setErrorMessage("invalid request");
-      ack->addRepackresponse(result);
-      return ack;
-    }
-
-    std::vector<castor::repack::RepackSubRequest*> sreqs=rreq->repacksubrequest();
-    std::vector<castor::repack::RepackSubRequest*>::iterator sreq=sreqs.begin();
-
-    while (sreq != sreqs.end()){ 
-
-    /** get the information from the db  */
-
-      RepackResponse* tape=m_dbSvc->getSubRequestByVid((*sreq)->vid(),true); //segments
-      ack->addRepackresponse(tape);
-      sreq++;
-
-    }
-    return ack;
- }
-
- }  // END Namespace Repack
+}  // END Namespace Repack
 }  // END Namespace Castor
 

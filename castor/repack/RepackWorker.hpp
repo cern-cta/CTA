@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.27 $ $Release$ $Date: 2008/06/05 16:25:00 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.28 $ $Release$ $Date: 2009/02/05 15:51:19 $ $Author: gtaur $
  *
  *
  *
@@ -27,28 +27,12 @@
 #ifndef REPACKWORKER_HPP
 #define REPACKWORKER_HPP 1
 
-#include "castor/repack/RepackCommonHeader.hpp" /* the Common Header */
-#include <sys/types.h>
-#include <time.h>
-#include <common.h>     /* for conversion of numbers to char */
-#include <vector>
-#include <map>
 
 
-
-/* ============= */
-/* Local headers */
-/* ============= */
-
-#include "vmgr_api.h"
-#include "castor/IObject.hpp"
 #include "castor/server/IThread.hpp"
-#include "castor/MessageAck.hpp"
-#include "castor/BaseObject.hpp"
-#include "castor/io/ServerSocket.hpp"
-#include "FileListHelper.hpp"
-#include "castor/repack/IRepackSvc.hpp"
-#include "castor/repack/RepackAck.hpp"
+#include "RepackAck.hpp"
+#include "RepackServer.hpp"
+#include "RepackRequest.hpp"
 
 
 namespace castor {
@@ -83,35 +67,27 @@ namespace castor {
 
     private:
 
-      bool  checkTapeVmgrStatus(std::string) throw ();
+      void  checkTapeVmgrStatus(std::string) throw (castor::exception::Exception);
 
-      bool  getPoolVmgrInfo(castor::repack::RepackRequest* rreq) throw ();
+      void  getPoolVmgrInfo(castor::repack::RepackRequest* rreq) throw (castor::exception::Exception);
 
-      RepackAck* handleRepack(RepackRequest* rreq) throw ();
+      RepackAck* handleRepack(RepackRequest* rreq) throw (castor::exception::Exception);
 
-      RepackAck* removeRequest(RepackRequest* rreq) throw ();
+      RepackAck* removeRequest(RepackRequest* rreq) throw (castor::exception::Exception);
 
-      RepackAck* restartRequest(RepackRequest* rreq) throw ();
+      RepackAck* restartRequest(RepackRequest* rreq) throw (castor::exception::Exception);
 
-      RepackAck* archiveSubRequests(RepackRequest* rreq) throw ();
+      RepackAck* archiveSubRequests(RepackRequest* rreq) throw (castor::exception::Exception);
 
-      RepackAck* archiveAllSubRequests(RepackRequest* rreq) throw ();
+      RepackAck* archiveAllSubRequests(RepackRequest* rreq) throw (castor::exception::Exception);
 
-      RepackAck*  getNsStatus(RepackRequest* rreq) throw ();
+      RepackAck*  getSubRequestsWithSegments(RepackRequest* rreq) throw (castor::exception::Exception);
 
 
-      RepackAck* getStatusAll(RepackRequest* rreq) throw ();
-
-      RepackAck* queryForErrors(RepackRequest* rreq) throw ();
+      RepackAck* getStatusAll(RepackRequest* rreq) throw (castor::exception::Exception);
       
-      RepackAck* getStatus(RepackRequest* rreq) throw ();
+      RepackAck* getStatus(RepackRequest* rreq) throw (castor::exception::Exception);
 
-
-      /**
-       * the Database Service, which helps to store the Request in the DB.
-       */
-
-      castor::repack::IRepackSvc* m_dbSvc;
 
       /**
        * The RepackServer instance pointer.

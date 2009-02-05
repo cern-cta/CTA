@@ -23,14 +23,37 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/repack/RepackServer.hpp"
-
+#include "RepackServer.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/db/DbParamsSvc.hpp"
 #include "castor/Constants.hpp"
+#include "castor/server/TCPListenerThreadPool.hpp"
+#include "castor/server/SignalThreadPool.hpp"
+#include "RepackWorker.hpp"
+#include "RepackFileChecker.hpp"
+#include "RepackFileStager.hpp" 
+#include "RepackMonitor.hpp" 
+#include "RepackCleaner.hpp"
+#include "RepackServer.hpp"
+
 #include "castor/Services.hpp"
+#include <Cgetopt.h>
+#include <u64subr.h>
+
+
+extern "C" {
+  char* getconfent(const char *, const char *, int);
+}
 
 // hardcoded schema version of the Repack database
 const std::string REPACKSCHEMAVERSION = "2_1_8_0";
+
+#define SLEEP_TIME 10 
+#define DEFAULT_MAX_FILES 6000000
+#define DEFAULT_MAX_TAPES 300
+#define CSP_REPACKPOLLTIME 240 // the standard polling time
+#define CSP_REPACKSERVER_PORT 62800
 
 
 //------------------------------------------------------------------------------
@@ -41,19 +64,28 @@ int main(int argc, char *argv[]) {
   try {
 
     castor::repack::RepackServer server;
-	
+  
     // Create a db parameters service and fill with appropriate defaults
     castor::IService* s = castor::BaseObject::sharedServices()->service("DbParamsSvc", castor::SVC_DBPARAMSSVC);
     castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
-     if(params == 0) {
-        castor::exception::Internal e;
-        e.getMessage() << "Could not instantiate the parameters service";
-        throw e;
-     }
-     params->setSchemaVersion(REPACKSCHEMAVERSION);
-     params->setDbAccessConfFile(ORAREPACKCONFIGFILE);
+    if(params == 0) {
+      std::cerr << "Could not instantiate the parameters service" << std::endl;
+      return -1;
+    }
 
-
+    params->setSchemaVersion(REPACKSCHEMAVERSION);
+    params->setDbAccessConfFile(ORAREPACKCONFIGFILE);
+    
+    // service to access the database
+    castor::IService* orasvc = castor::BaseObject::services()->service("OraRepackSvc", castor::SVC_ORAREPACKSVC);
+    castor::repack::IRepackSvc* mySvc = dynamic_cast<castor::repack::IRepackSvc*>(orasvc);
+  
+    
+    if (0 == mySvc) {
+      // we don't have DLF yet, and this is a major fault, so log to stderr and exit
+      std::cerr << "Couldn't load the ora repack  service, check the castor.conf for DynamicLib entries" << std::endl;
+      return -1;
+    }
 
     /// The Repack Worker Instance
      server.addThreadPool(
@@ -68,7 +100,7 @@ int main(int argc, char *argv[]) {
      server.addThreadPool(
       new castor::server::SignalThreadPool("checker",
 					   new castor::repack::RepackFileChecker(&server),
-					   10
+					   SLEEP_TIME
                                              ));
      server.getThreadPool('c')->setNbThreads(1); 
 
@@ -76,7 +108,7 @@ int main(int argc, char *argv[]) {
 	  server.addThreadPool(
       new castor::server::SignalThreadPool("Stager", 
 					   new castor::repack::RepackFileStager(&server),
-					   10
+					   SLEEP_TIME
                                           ));
 	  server.getThreadPool('S')->setNbThreads(1);
 
@@ -91,7 +123,7 @@ int main(int argc, char *argv[]) {
     /// The Repack Cleaner
 	  server.addThreadPool(
       new castor::server::SignalThreadPool("Cleaner",
-                                            new castor::repack::RepackCleaner(&server),10));
+                                            new castor::repack::RepackCleaner(&server),SLEEP_TIME));
 	  server.getThreadPool('C')->setNbThreads(1); 
 
 
@@ -144,8 +176,8 @@ castor::repack::RepackServer::RepackServer() :
      {16, "RepackFileChecker : Tape can be submitted"},
      {17, "RepackFileChecker : Tape is kept on-hold"},
      {18, "RepackFileStager : Getting tapes to handle"},
-     {19, "RepackFileStager : Abort issued for tape"},
-     {20, "RepackFileStager : Restart issued for tape"},
+     {19, "RepackKiller : Abort issued for tape"},
+     {20, "RepackRestarter : Restart issued for tape"},
      {21, "RepackFileStager : Submition issued for tape"},
      {22, "RepackFileStager : No files on tape to repack"},
      {23, "RepackFileStager : Staging files"},
@@ -171,25 +203,28 @@ castor::repack::RepackServer::RepackServer() :
      {43, "RepackCleaner : Resurrecting on-hold tapes" },
      {44, "RepackCleaner : Files left on the tape" },
      {45, "RepackCleaner : Success in repacking the tape" },
-     {46, "OraRepackSvc : error in storeRequest" },
-     {47, "OraRepackSvc : error in updateSubRequest" },
-     {48, "OraRepackSvc : error in updateSubRequestSegments" },
-     {49, "OraRepackSvc : error in insertSubRequestSegments" },
-     {50, "OraRepackSvc : error in getSubRequestByVid" },
-     {51, "OraRepackSvc : error in getSubRequestsByStatus" },     
-     {52, "OraRepackSvc : error in getAllSubRequests" },
-     {53, "OraRepackSvc : error in validateRepackSubRequests" }, 
-     {54, "OraRepackSvc : error in resurrectTapesOnHold" }, 
-     {55, "OraRepackSvc : error in restartSubRequest" }, 
-     {56, "OraRepackSvc : error in changeSubRequestsStatus" }, 
-     {57, "OraRepackSvc : error in changeAllSubRequestsStatus" },
-     {58, "OraRepackSvc : commit" },
-     {59, "FileListHelper : error in getting the file path from the nameserver" },
-     {60, "FileListHelper : list of files  retrieved from  the nameserver" },
-     {61, "RepackCleaner : impossible to reclaim the tape" },
-     {62, "RepackCleaner : reclaimed tape" },
-     {63, "RepackCleaner : impossible to change tapepool" },
-     {64, "RepackCleaner : changed tapepool" },
+     {46, "FileListHelper : error in getting the file path from the nameserver" },
+     {47, "FileListHelper : list of files  retrieved from  the nameserver" },
+     {48, "RepackCleaner : impossible to reclaim the tape" },
+     {49, "RepackCleaner : reclaimed tape" },
+     {50, "RepackCleaner : impossible to change tapepool" },
+     {51, "RepackCleaner : changed tapepool" },
+     {52, "RepackCleaner : impossible to get tapes to clean" },
+     {53, "RepackCleaner : impossible to update tape" },
+     {54, "RepackCleaner : impossible to restart  on-hold tapes" },
+     {55, "RepackFileChecker : impossible to get tapes to check" },
+     {56, "RepackFileChecker : impossible to update tape" },
+     {57, "RepackFileStager : impossible to get tapes to stage" },
+     {58, "RepackFileStager : impossible to stage subrequest" },
+     {59, "RepackKiller : impossible to get tapes to abort" },
+     {60, "RepackKiller : impossible to abort subrequest" },
+     {61, "RepackRestarter : impossible to get tapes to restart" },
+     {62, "RepackRestarter : impossible to restart tape" },
+     {63, "RepackKiller : Getting tapes to handle"},
+     {64, "RepackRestarter : Getting tapes to handle"},
+     {65, "RepackMonitor : impossible to get tapes to monitor" },
+     {66, "RepackMonitor : impossible to get statistics about tape" },
+     {67, "RepackWorker : impossible to perform"},
      {-1, ""}};
 
   dlfInit(messages);
@@ -224,7 +259,10 @@ castor::repack::RepackServer::RepackServer() :
     }
   }
   else
-    m_listenPort = castor::repack::CSP_REPACKSERVER_PORT;
+    m_listenPort = CSP_REPACKSERVER_PORT;
+
+  if (tmp) free(tmp);
+  tmp=NULL;
 
 
 
@@ -242,8 +280,9 @@ castor::repack::RepackServer::RepackServer() :
 		    << std::endl;
     throw ex; 
   }
-  m_ns = new std::string(tmp);
-
+  m_ns = std::string(tmp);
+  if (tmp) free(tmp);
+  tmp=NULL;
 
   /* --------------------------------------------------------------------- */
 
@@ -258,7 +297,9 @@ castor::repack::RepackServer::RepackServer() :
 		    << std::endl;
     throw ex; 
   }
-  m_stager = new std::string(tmp);
+  m_stager = std::string(tmp);
+  if (tmp) free(tmp);
+  tmp=NULL;
 
 
   /* --------------------------------------------------------------------- */
@@ -274,7 +315,9 @@ castor::repack::RepackServer::RepackServer() :
 		    << std::endl;
     throw ex; 
   }
-  m_serviceClass = new std::string(tmp);
+  m_serviceClass = std::string(tmp);
+  if (tmp) free(tmp);
+  tmp=NULL;
 
  
   // Parameters to limitate concurrent repack processes 
@@ -285,25 +328,29 @@ castor::repack::RepackServer::RepackServer() :
      dp=tmp;
      m_maxFiles = strtoul(tmp, &dp, 0);
      if  (*dp != 0 || m_maxFiles<=0) {
-       m_maxFiles = castor::repack::DEFAULT_MAX_FILES;
+       m_maxFiles = DEFAULT_MAX_FILES;
      }
    } else {
-     m_maxFiles = castor::repack::DEFAULT_MAX_FILES;   
+     m_maxFiles = DEFAULT_MAX_FILES;   
    }
   
+   if (tmp) free(tmp);
+   tmp=NULL;
+
    // Number of tapes
 
    if ( tmp = getconfent("REPACK", "MAXTAPES",0)){
      dp=tmp;
      m_maxTapes = strtoul(tmp, &dp, 0);
      if  (*dp != 0 || m_maxTapes<=0) {
-       m_maxTapes = castor::repack::DEFAULT_MAX_TAPES;
+       m_maxTapes = DEFAULT_MAX_TAPES;
      }
    } else {
-     m_maxTapes = castor::repack::DEFAULT_MAX_TAPES; 
+     m_maxTapes = DEFAULT_MAX_TAPES; 
    }
   
-
+     if (tmp) free(tmp);
+     tmp=NULL;
 
 
   /* --------------------------------------------------------------------- */
@@ -318,8 +365,10 @@ castor::repack::RepackServer::RepackServer() :
                     << "entry in castor config file" << std::endl;
     throw ex; 
   }
-  m_protocol = new std::string(tmp);
+  m_protocol = std::string(tmp);
 
+  if (tmp) free(tmp);
+  tmp=NULL;
   /* --------------------------------------------------------------------- */
 
   /** Get the polling time for the Monitor and service. This value should be not less
@@ -343,11 +392,43 @@ castor::repack::RepackServer::RepackServer() :
     }
   }
   else
-    m_pollingTime = castor::repack::CSP_REPACKPOLLTIME;
+    m_pollingTime = CSP_REPACKPOLLTIME;
   /* --------------------------------------------------------------------- */
 
   if (tmp) free(tmp);
   tmp=NULL;
+
+ /* --------------------------------------------------------------------- */
+  
+  /** Get IRepackSvc */
+
+  // Create a db parameters service and fill with appropriate defaults
+  castor::IService* s = castor::BaseObject::sharedServices()->service("DbParamsSvc", castor::SVC_DBPARAMSSVC);
+  castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
+  if(params == 0) {
+    
+    castor::exception::Internal ex;
+    ex.getMessage() << "Could not instantiate the parameters service " 
+		    << std::endl;
+    throw ex;
+  }
+
+  params->setSchemaVersion(REPACKSCHEMAVERSION);
+  params->setDbAccessConfFile(ORAREPACKCONFIGFILE);
+    
+  // service to access the database
+  castor::IService* orasvc = castor::BaseObject::services()->service("OraRepackSvc", castor::SVC_ORAREPACKSVC);
+  castor::repack::IRepackSvc* mySvc = dynamic_cast<castor::repack::IRepackSvc*>(orasvc);
+  
+    
+  if (0 == mySvc) {
+
+    castor::exception::Internal ex;
+    ex.getMessage() <<  "Couldn't load the ora repack  service, check the castor.conf for DynamicLib entries" << std::endl;
+    throw ex;
+
+  }
+  m_repackDbSvc=mySvc;
 
 }
 
@@ -356,10 +437,11 @@ castor::repack::RepackServer::RepackServer() :
 
 castor::repack::RepackServer::~RepackServer() throw()
 {
-    if ( m_ns != NULL ) delete m_ns;
-    if ( m_stager != NULL ) delete m_stager;
-    if ( m_serviceClass != NULL ) delete m_serviceClass;
-    if ( m_protocol != NULL ) delete m_protocol;
+    m_ns.clear();
+    m_stager.clear();
+    m_serviceClass.clear();
+    m_protocol.clear();
+    if (m_repackDbSvc != NULL) delete m_repackDbSvc;
     m_maxFiles=0;
     m_maxTapes=0;
     m_pollingTime = 0;

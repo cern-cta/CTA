@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2008/09/17 15:26:32 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2009/02/05 15:51:19 $ $Author: gtaur $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -29,7 +29,7 @@
  * REPACK_PORT and REPACK_PORT_ALT : same as for the REPACK_HOST
  *
  * 
- * @author Felix Ehm
+ * @author Giulia Taurelli
  *****************************************************************************/
 
 
@@ -53,7 +53,7 @@
 #include "castor/repack/RepackResponse.hpp"
 #include "RepackUtility.hpp"
 
-
+#define CSP_REPACKSERVER_PORT 62800
 
 void printTime(time_t* rawtime){
   if (!rawtime || *rawtime==0){
@@ -733,7 +733,6 @@ void RepackClient::setRemotePort()
     m_defaultport = iport;
   }
   
-  stage_trace(3, "Setting up Server Port - Using %d", m_defaultport);
 }
 
 //------------------------------------------------------------------------------
@@ -756,7 +755,7 @@ void RepackClient::setRemoteHost()
         << "No repack server hostname in config file or in enviroment found" << std::endl;
       throw e;
   }
-  stage_trace(3, "Looking up Server Host - Using %s", m_defaulthost.c_str());
+
 }
 
 

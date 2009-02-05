@@ -17,20 +17,26 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.48 $ $Release$ $Date: 2009/01/14 17:31:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.49 $ $Release$ $Date: 2009/02/05 15:51:19 $ $Author: gtaur $
  *
- *
- *
- * @author Felix Ehm
+ * @author Giulia Taurelli
  *****************************************************************************/
  
 #include "RepackFileStager.hpp"
-#include "castor/rh/FileQryResponse.hpp"
-#include "castor/stager/StageRmRequest.hpp"
-#include "castor/repack/RepackSubRequestStatusCode.hpp"
-#include "castor/Services.hpp"
-#include "castor/repack/RepackUtility.hpp"
+#include "RepackSubRequestStatusCode.hpp"
+#include "RepackUtility.hpp"
+
+
+#include "FileListHelper.hpp"
+
+#include "castor/stager/StageRepackRequest.hpp"
+#include "castor/stager/SubRequest.hpp"
+#include "castor/rh/Response.hpp"
+#include "castor/rh/FileResponse.hpp"
+#include "castor/client/VectorResponseHandler.hpp"
 #include "castor/client/BaseClient.hpp"
+#include "RepackRequest.hpp"
+
 
 namespace castor {
 	namespace repack {
@@ -43,8 +49,7 @@ namespace castor {
 RepackFileStager::RepackFileStager(RepackServer* srv) 
 {
   ptr_server = srv;
-  m_filehelper = new FileListHelper(ptr_server->getNsName());
-  m_dbSvc = NULL;	
+  	
 }
 
 
@@ -52,9 +57,6 @@ RepackFileStager::RepackFileStager(RepackServer* srv)
 // Destructor
 //------------------------------------------------------------------------------
 RepackFileStager::~RepackFileStager() throw() {
-  if (m_dbSvc != NULL) delete m_dbSvc;
-  m_dbSvc=NULL;
-  delete m_filehelper;
 }
 
 
@@ -65,58 +67,12 @@ void RepackFileStager::run(void *param) throw() {
   std::vector<RepackSubRequest*> sreqs;
   std::vector<RepackSubRequest*>::iterator sreq;
   try {
-    if (m_dbSvc == NULL ) {
-      // service to access the database
-      castor::IService* orasvc = castor::BaseObject::services()->service("OraRepackSvc", castor::SVC_ORAREPACKSVC);
-  
-      m_dbSvc = dynamic_cast<castor::repack::IRepackSvc*>(orasvc);
-      if (m_dbSvc == 0) {
-	// FATAL ERROR
-	castor::dlf::Param params0[] =
-	  {castor::dlf::Param("Standard Message", "RepackFileStager fatal error"),};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params0);
-	return;
-      }
-    
-    }
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 18, 0, 0);
-        
-    // remove
-          
-    sreqs = m_dbSvc->getSubRequestsByStatus(RSUBREQUEST_TOBEREMOVED,true); // segments needed
-    sreq=sreqs.begin();
-    
-    while (sreq != sreqs.end()){
-      castor::dlf::Param params[] =
-	 {castor::dlf::Param("VID", (*sreq)->vid()),
-	   castor::dlf::Param("ID", (*sreq)->id()),
-	   castor::dlf::Param("STATUS", (*sreq)->status())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 19, 3, params);
-      abortRepack(*sreq);
-      freeRepackObj(*sreq);
-      sreq++;
-    }
-  
- 	 
-    // restart
-        
-    sreqs = m_dbSvc->getSubRequestsByStatus(RSUBREQUEST_TOBERESTARTED,false); // segments not needed
-    sreq=sreqs.begin();
-    while (sreq != sreqs.end()){
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("VID", (*sreq)->vid()),
-	  castor::dlf::Param("ID", (*sreq)->id()),
-	 castor::dlf::Param("STATUS", (*sreq)->status())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 20, 3, params);
 
-      m_dbSvc->restartSubRequest((*sreq)->id());
-      freeRepackObj(*sreq);
-      sreq++;
-    }
-    
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 18, 0, 0);
+          
     // start
 
-    sreqs = m_dbSvc->getSubRequestsByStatus(RSUBREQUEST_TOBESTAGED,true); // segments needed
+    sreqs = ptr_server->repackDbSvc()->getSubRequestsByStatus(RSUBREQUEST_TOBESTAGED,true); // segments needed
     sreq=sreqs.begin();
     while (sreq != sreqs.end()){
       castor::dlf::Param params[] =
@@ -124,20 +80,29 @@ void RepackFileStager::run(void *param) throw() {
 	 castor::dlf::Param("ID", (*sreq)->id()),
 	 castor::dlf::Param("STATUS", (*sreq)->status())};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 21, 3, params);
+      try {
 
-      startRepack(*sreq);
+	startRepack(*sreq);
+	
+      } catch (castor::exception::Exception e){
+	castor::dlf::Param params[] =
+	  {
+	    castor::dlf::Param("Precise Message", e.getMessage().str()),
+	    castor::dlf::Param("VID", (*sreq)->vid())
+	  };
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 58, 2, params);
+
+      }
       freeRepackObj(*sreq);
       sreq++;
     }
      
-  }catch (...) {
-    if (!sreqs.empty()){
-      sreq=sreqs.begin();
-      while (sreq != sreqs.end()){
-	freeRepackObj(*sreq);
-	sreq++;
-      }
-    }
+  }catch ( castor::exception::Exception e) {
+    // db error asking the tapes to stage
+
+    castor::dlf::Param params[] = {castor::dlf::Param("ErrorCode", e.code()),
+				   castor::dlf::Param("Precise Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 57, 2,params);
   }    
 
 }
@@ -152,9 +117,46 @@ void RepackFileStager::stop() throw() {
 
 
 //------------------------------------------------------------------------------
+// startRepack
+//------------------------------------------------------------------------------
+void RepackFileStager::startRepack(RepackSubRequest* sreq) throw (castor::exception::Exception){
+  _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
+  std::vector<RepackSegment*> failedSegments;
+  std::vector<RepackSegment*>::iterator failedSegment;
+  try {
+    failedSegments =stageFiles(sreq);
+  }catch (castor::exception::Exception ex){
+    // failure in stagin the file
+    castor::dlf::Param params[] =
+    {castor::dlf::Param("Standard Message", sstrerror(ex.code())),
+     castor::dlf::Param("Precise Message", ex.getMessage().str()),
+     castor::dlf::Param("VID", sreq->vid())
+    };
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 29, 3, params);
+    // just one segment without fileid => all failed    
+
+    RepackSegment* seg= new RepackSegment();
+    seg->setErrorCode(ex.code());
+    seg->setErrorMessage(ex.getMessage().str());
+    seg->setFileid(0);
+    failedSegments.push_back(seg);
+  }
+
+  // let's update the database 
+  if (failedSegments.empty())
+    ptr_server->repackDbSvc()->updateSubRequest(sreq);
+  else 
+    ptr_server->repackDbSvc()->updateSubRequestSegments(sreq,failedSegments);
+  
+
+}
+
+
+
+//------------------------------------------------------------------------------
 // stageFiles
 //------------------------------------------------------------------------------
-void RepackFileStager::stageFiles(RepackSubRequest* sreq) 
+std::vector<RepackSegment*> RepackFileStager::stageFiles(RepackSubRequest* sreq) 
                                             throw (castor::exception::Exception)
 {
 
@@ -168,21 +170,24 @@ void RepackFileStager::stageFiles(RepackSubRequest* sreq)
   if ( !sreq->repacksegment().size() ){
     // no file to submit
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 22, 0, 0);
-    sreq->setStatus(RSUBREQUEST_DONE);
-    m_dbSvc->updateSubRequest(sreq);  
-    return;
+    sreq->setStatus(RSUBREQUEST_DONE);  
+    return sreq->repacksegment();
   }
 
-  stage_trace(3,"Getting Pathnames");
   // ---------------------------------------------------------------
   // This part has to be removed, if the stager also accepts only fileid
   // as parameter. For now we have to get the paths first.
-  std::vector<std::string>* filelist = m_filehelper->getFilePathnames(sreq);
-  std::vector<std::string>::iterator filename = filelist->begin();
+  
+  FileListHelper filehelper(ptr_server->getNsName());
+  
+  std::vector<std::string> filelist = filehelper.getFilePathnames(sreq);
+
+ 
+  std::vector<std::string>::iterator filename = filelist.begin();
 
   /// here we build the Request for the stager 
 
-  while (filename != filelist->end()) {
+  while (filename != filelist.end()) {
     castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
     subreq->setFileName((*filename));
     subreq->setProtocol(ptr_server->getProtocol()); // we have to specify a protocol, otherwise our call is not scheduled!
@@ -192,8 +197,7 @@ void RepackFileStager::stageFiles(RepackSubRequest* sreq)
   }
 
   
-  filelist->clear();
-  delete filelist;
+  filelist.clear();
 
   req.setRepackVid(sreq->vid());
   /// We need to set the stage options. 
@@ -205,94 +209,37 @@ void RepackFileStager::stageFiles(RepackSubRequest* sreq)
   /// Msg: Staging files
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 23, 0, 0);
 
-
-  stage_trace(3,"Sending Request");
-
   /// Here, we send the stager request and Update the db with the result
-
-  sendStagerRepackRequest(sreq, &req, &reqId, &opts);
-
-  /// delete the allocated Stager SubRequests
+  std::vector<RepackSegment*>failedSegments;
+  try {
+    failedSegments=sendStagerRepackRequest(sreq, &req, &reqId, &opts);
+  } catch (castor::exception::Exception e){
+    /// delete the allocated Stager SubRequests
+    stager_subreq = req.subRequests().begin();
+    while ( stager_subreq != req.subRequests().end() )
+      delete (*stager_subreq);
+    throw e;
+  }
   stager_subreq = req.subRequests().begin();
   while ( stager_subreq != req.subRequests().end() )
     delete (*stager_subreq);
 
+  return failedSegments;
 }
 
-//------------------------------------------------------------------------------
-// abortRepack
-//------------------------------------------------------------------------------
-
-void  RepackFileStager::abortRepack(RepackSubRequest* sreq) throw (){
-  _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
-  try {
-    sendRepackRemoveRequest(sreq);
-  }catch (castor::exception::Exception ex){
-    castor::dlf::Param params[] =
-    {castor::dlf::Param("Standard Message", sstrerror(ex.code())),
-     castor::dlf::Param("Precise Message", ex.getMessage().str()),
-     castor::dlf::Param("VID", sreq->vid())
-    };
-
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 24, 3, params);
-    sreq->setStatus(RSUBREQUEST_TOBECLEANED); // we failed the request even if the abort failed
-    m_dbSvc->updateSubRequest(sreq);
-    return;
-  }
-
-  sreq->setStatus(RSUBREQUEST_TOBECLEANED);
-  m_dbSvc->updateSubRequest(sreq);
-  stage_trace(2,"File are sent to stager, repack request updated.");
-  castor::dlf::dlf_writep(stringtoCuuid(sreq->cuuid()), DLF_LVL_DEBUG, 25, 0, 0);
- 
-}
-
-
-
-//------------------------------------------------------------------------------
-// startRepack
-//------------------------------------------------------------------------------
-void RepackFileStager::startRepack(RepackSubRequest* sreq) throw (){
-  _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
-  try {
-    stageFiles(sreq);
-  }catch (castor::exception::Exception ex){
-    castor::dlf::Param params[] =
-    {castor::dlf::Param("Standard Message", sstrerror(ex.code())),
-     castor::dlf::Param("Precise Message", ex.getMessage().str()),
-     castor::dlf::Param("VID", sreq->vid())
-    };
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 29, 3, params);
-    
-    std::vector<RepackSegment*>::iterator segFailed=sreq->repacksegment().begin();
-    while (segFailed != sreq->repacksegment().end() ){
-      (*segFailed)->setErrorCode(-1);
-      (*segFailed)->setErrorMessage(ex.getMessage().str());
-      segFailed++;
-    }
-    m_dbSvc->updateSubRequestSegments(sreq,sreq->repacksegment());
-    sreq->setStatus(RSUBREQUEST_TOBECLEANED);
-    m_dbSvc->updateSubRequest(sreq);
-    return;
-  }
-
-  m_dbSvc->updateSubRequest(sreq);
-  stage_trace(2,"File are sent to stager, repack request updated.");
-  castor::dlf::dlf_writep(stringtoCuuid(sreq->cuuid()), DLF_LVL_DEBUG, 25, 0, 0);
-
-}
 
 //-----------------------------------------------------------------------------
 // sendStagerRepackRequest
 //------------------------------------------------------------------------------
-void RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
+std::vector<RepackSegment*> RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
                                                 castor::stager::StageRepackRequest* req,
                                                 std::string *reqId,
                                                 struct stage_options* opts
-                                              ) throw ()
+                                              ) throw (castor::exception::Exception)
 {
   unsigned int failed = 0; /** counter for failed files during submit */	
   Cuuid_t cuuid = stringtoCuuid(rsreq->cuuid());
+  std::vector<RepackSegment*> failedSegments;
 
   /** Uses a BaseClient to handle the request */
   castor::client::BaseClient client(stage_getClientTimeout(),stage_getClientTimeout());
@@ -312,17 +259,6 @@ void RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
 
   } catch (castor::exception::Exception e) {
     // failure to reach the stager
-    std::vector<RepackSegment*>::iterator segFailed= rsreq->repacksegment().begin();
-    while (segFailed != rsreq->repacksegment().end()){
-      (*segFailed)->setErrorCode(-1);
-      (*segFailed)->setErrorMessage(e.getMessage().str());
-      segFailed++;
-    }
-    m_dbSvc->updateSubRequestSegments(rsreq,rsreq->repacksegment()); //failured reported
-
-    rsreq->setStatus(RSUBREQUEST_TOBECLEANED);
-    m_dbSvc->updateSubRequest(rsreq);
-
     //clean up
     std::vector<castor::rh::Response*>::iterator respToDelete=respvec.begin();
     while (respToDelete!=respvec.end()){
@@ -330,8 +266,8 @@ void RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
       respToDelete++; 
     }
     respvec.clear();
-
-    return;
+    throw e;
+    
   }
 
   /** 2. Get the  answer */
@@ -341,18 +277,15 @@ void RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
   rsreq->setStatus(RSUBREQUEST_ONGOING);
   rsreq->setFilesStaging(req->subRequests().size()); 
 
-  // log
 
-  stage_trace(3," Stagerrequest (now new RepackSubRequest CUUID ): %s",(char*)reqId->c_str());
+
   castor::dlf::Param param[] = {castor::dlf::Param("New reqID", *reqId)};
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 31, 1, param);
 
-  try{
+  try {
     client.pollAnswersFromStager(req,&rh);
-  }catch (castor::exception::Exception ex){
+  } catch (castor::exception::Exception ex){
     // time out that should be ignored .. however it has been submited
-    
-    m_dbSvc->updateSubRequest(rsreq); // to save the new cuuid
 
     castor::dlf::Param params[] =
     {castor::dlf::Param("Standard Message", sstrerror(ex.code())),
@@ -369,15 +302,12 @@ void RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
     }
     respvec.clear();
 
-    return;
+    return failedSegments; // don't know about how many files failed
   }
-
+  
    /** 3. Surf the stager answer  */
 
   /** like the normale api call, we have to check for errors in the answer*/
-
-  std::vector<RepackSegment*> failedSegments;
-  std::vector<RepackSegment*>::iterator seg;
 
   for (unsigned int i=0; i<respvec.size(); i++) {
 
@@ -385,7 +315,6 @@ void RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
     castor::rh::FileResponse* fr = dynamic_cast<castor::rh::FileResponse*>(respvec[i]);
     if (0 == fr) {
       // let's try later
-      m_dbSvc->updateSubRequest(rsreq); // to save the new cuuid
       castor::dlf::Param params[] =
 	{castor::dlf::Param("Precise Message", "Error in dynamic cast, stager response was not a file response. \n"),
 	 castor::dlf::Param("VID", req->repackVid())};
@@ -396,7 +325,7 @@ void RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
       for (unsigned int j=i; j<respvec.size();j++)
 	if (respvec[j]) delete respvec[i];
 
-      return;
+      return failedSegments;  // don't know about how many files failed
     }
 
     if ( fr->errorCode() || fr->status() != 6 ){
@@ -433,92 +362,12 @@ void RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
   } else {
     rsreq->setFilesStaging(rsreq->filesStaging()-failed);
   }
-
-  m_dbSvc->updateSubRequestSegments(rsreq,failedSegments);
-
-  // clean up 
-  std::vector<RepackSegment*>::iterator toClean=failedSegments.begin();
-  while ( toClean!=failedSegments.end()){
-    freeRepackObj(*toClean);
-    toClean++;
-  }
-  
-  failedSegments.clear();
   respvec.clear();
+  return failedSegments;
  
 }
 
-//-----------------------------------------------------------------------------------------------------------------
-// sendRepackRemoveRequest
-//-----------------------------------------------------------------------------------------------------------------
-
-
-void  RepackFileStager::sendRepackRemoveRequest( RepackSubRequest*sreq)throw(castor::exception::Exception)
-{
-  
-  struct stage_options opts;
-  castor::stager::StageRmRequest req;
-
- 
-  if ( sreq == NULL ){
-    castor::exception::Internal ex;
-    ex.getMessage() << "passed SubRequest is NULL" << std::endl; 
-    throw ex;
-  }
-  
-  /* get the files using the Filelisthelper */
-  FileListHelper flp(ptr_server->getNsName());
-  Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
-  std::vector<std::string>* filelist = flp.getFilePathnames(sreq);
-  std::vector<std::string>::iterator filename = filelist->begin();
-
-  if ( !filelist->size() ) {
-    /* this means that there are no files for a repack tape in SUBREQUEST_READYFORCLEANUP
-     * => ERROR, this must not happen!
-     * but we leave it to the Monitor Service to solve that problem
-     */
-    castor::exception::Internal ex;
-    ex.getMessage() << "No files found during cleanup phase for " << sreq->vid() 
-              << std::endl;
-    throw ex;
-  }
-
-  /* add the SubRequests to the Request */
-  while (filename != filelist->end()) {
-    castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
-    subreq->setFileName((*filename));
-    subreq->setRequest(&req);
-     req.addSubRequests(subreq);
-     filename++;
-  }
-  
-  /* we need the stager name and service class for correct removal
-   * the port has to be set by the BaseClient. Nevertheless the 
-   * values has to be 0.
-   */
-  opts.stage_port = 0; 
-
-  castor::client::BaseClient client(stage_getClientTimeout(),stage_getClientTimeout());
-
-  /* set the service class information from repackrequest */
-  
-  getStageOpts(&opts, sreq);
-  client.setOptions(&opts);
-
-  std::vector<castor::rh::Response *>respvec;
-  castor::client::VectorResponseHandler rh(&respvec);
-
-  client.setAuthorizationId(sreq->repackrequest()->userId(), sreq->repackrequest()->groupId());
-
-  client.sendRequest(&req,&rh); 
-
-  /** we ignore the results from the stager */
-
-  for (unsigned int i=0; i<respvec.size(); i++) {
-    delete respvec[i];
-  }
-}
 
 		
-	} //END NAMESPACE REPACK
+} //END NAMESPACE REPACK
 }//END NAMESPACE CASTOR
