@@ -48,6 +48,7 @@
 #include "castor/tape/tapegateway/RecordFormatCode.hpp"
 #include "castor/tape/tapegateway/ConvertCommandCode.hpp"
 #include "castor/tape/tapegateway/RmMasterTapeGatewayHelper.hpp"
+#include "castor/exception/OutOfMemory.hpp"
 
 #include "occi.h"
 #include <string>
@@ -314,6 +315,13 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::resolveStreams(std::vect
 
      ub2 *lensStrIds=(ub2 *)malloc (sizeof(ub2)*nb);
      ub2 *lensVids=NULL;
+     
+     if ( lensStrIds  == 0 || bufferStrIds == 0 ) {
+       if (lensStrIds != 0 ) free(lensStrIds);
+       if (bufferStrIds != 0) free(bufferStrIds);
+       castor::exception::OutOfMemory e; 
+       throw e;
+     }
 
      // get the maximum cell size
      unsigned int maxLen=0;
@@ -324,10 +332,12 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::resolveStreams(std::vect
      }
 
      if (maxLen == 0) {
-        castor::exception::Internal ex;
-	ex.getMessage() << "invalid VID in resolveStreams"
-			<< std::endl;
-	throw ex;
+       if (lensStrIds != 0 ) free(lensStrIds);
+       if (bufferStrIds != 0) free(bufferStrIds);
+       castor::exception::Internal ex;
+       ex.getMessage() << "invalid VID in resolveStreams"
+		       << std::endl;
+       throw ex;
 
      }
      
@@ -337,7 +347,14 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::resolveStreams(std::vect
      bufferVids =
 	(char*) malloc(numTapes * bufferCellSize);
 
-
+     if ( lensVids  == 0 || bufferVids == 0 ) {
+       if (lensStrIds != 0 ) free(lensStrIds);
+       if (bufferStrIds != 0) free(bufferStrIds);
+       if (lensVids != 0 ) free(lensVids);
+       if (bufferVids != 0) free(bufferVids);
+       castor::exception::OutOfMemory e; 
+       throw e;
+     }
 
      // DataBuffer with all the vid (one for each subrequest)
      
@@ -482,6 +499,16 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateSubmittedTapes(std
      
      unsigned char (*bufferVdqmIds)[21]=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
      ub2 *lensVdqmIds=(ub2 *)malloc (sizeof(ub2)*nb);
+
+     if ( lensIds == 0 || bufferIds == 0 || lensVdqmIds ==0 || bufferVdqmIds == 0 ) {
+       if (lensIds != 0 ) free(lensIds);
+       if (bufferIds != 0) free(bufferIds);
+       if (lensVdqmIds != 0 ) free(lensVdqmIds);
+       if (bufferVdqmIds != 0) free(bufferVdqmIds);
+       castor::exception::OutOfMemory e; 
+       throw e;
+     }
+
 
      // DataBuffer with all the vid (one for each subrequest)
 
@@ -634,6 +661,15 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateCheckedTapes(std::
     unsigned char (*bufferTapes)[21]=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
     
     ub2 *lensTapes=(ub2 *)malloc (sizeof(ub2)*nb);
+
+    
+    if ( lensTapes == 0 || bufferTapes == 0 ) {
+      if (lensTapes != 0 ) free(lensTapes);
+      if (bufferTapes != 0) free(bufferTapes);
+      castor::exception::OutOfMemory e; 
+      throw e;
+     }
+
 
     // Fill in the structure
 
@@ -1057,6 +1093,12 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateWithMigrationRetr
     unsigned char (*bufferRetry)[21]=(unsigned char(*)[21]) calloc((nbRetry) * 21, sizeof(unsigned char));
     ub2 *lensRetry=(ub2 *)malloc (sizeof(ub2)*nbRetry);
 
+    if ( lensRetry == 0 || bufferRetry == 0 ) {
+      if (lensRetry != 0 ) free(lensRetry);
+      if (bufferRetry != 0) free(bufferRetry);
+      castor::exception::OutOfMemory e; 
+      throw e;
+    }
 
     for (unsigned int i=0; i<tcToRetry.size();i++){
       
@@ -1085,6 +1127,14 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateWithMigrationRetr
     unsigned char (*bufferFail)[21]=(unsigned char(*)[21]) calloc((nbFail) * 21, sizeof(unsigned char));
     ub2 *lensFail = (ub2 *)malloc (sizeof(ub2)*nbFail);
 
+    if ( lensFail == 0 || bufferFail == 0 ) {
+      if (lensFail != 0 ) free(lensFail);
+      if (bufferFail != 0) free(bufferFail);
+      if (lensRetry != 0 ) free(lensRetry);
+      if (bufferRetry != 0) free(bufferRetry);
+      castor::exception::OutOfMemory e; 
+      throw e;
+    }
 
     for (unsigned int i=0; i<tcToFail.size();i++){
       
@@ -1194,7 +1244,13 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateWithRecallRetryPo
     nbRetry=nbRetry==0?1:nbRetry;
     unsigned char (*bufferRetry)[21]=(unsigned char(*)[21]) calloc((nbRetry) * 21, sizeof(unsigned char));
     ub2 *lensRetry=(ub2 *)malloc (sizeof(ub2)*nbRetry);
-
+   
+    if ( lensRetry == 0 || bufferRetry == 0 ) {
+      if (lensRetry != 0 ) free(lensRetry);
+      if (bufferRetry != 0) free(bufferRetry);
+      castor::exception::OutOfMemory e; 
+      throw e;
+    }
 
     for (unsigned int i=0; i<tcToRetry.size();i++){
       
@@ -1224,6 +1280,16 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateWithRecallRetryPo
     nbFail=nbFail==0?1:nbFail;
     unsigned char (*bufferFail)[21]=(unsigned char(*)[21]) calloc((nbFail) * 21, sizeof(unsigned char));
     ub2 *lensFail=(ub2 *)malloc (sizeof(ub2)*nbFail);
+
+    
+    if ( lensFail == 0 || bufferFail == 0 ) {
+      if (lensFail != 0 ) free(lensFail);
+      if (bufferFail != 0) free(bufferFail);
+      if (lensRetry != 0 ) free(lensRetry);
+      if (bufferRetry != 0) free(bufferRetry);
+      castor::exception::OutOfMemory e; 
+      throw e;
+    }
 
     for (unsigned int i=0; i<tcToFail.size();i++){
 	oracle::occi::Number n = (double)(tcToFail[i]);

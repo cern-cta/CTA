@@ -42,6 +42,7 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/OutOfMemory.hpp"
 #include "occi.h"
 
 #include "castor/infoPolicy/DbInfoRecallPolicy.hpp"
@@ -199,6 +200,14 @@ void castor::rtcopy::rechandler::ora::OraRecHandlerSvc::resurrectTapes(std::vect
 
     lens = (ub2 *)malloc (sizeof(ub2)*nb);
     buffer=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
+    
+    if ( buffer == 0 || lens == 0 ) {
+      if (buffer != 0) free(buffer);
+      if (lens != 0) free(lens);
+      castor::exception::OutOfMemory e; 
+      throw e;
+    }
+
     for (unsigned int i = 0; i < nb; i++) {
       oracle::occi::Number n = (double)(eligibleTapeIds.at(i));
       oracle::occi::Bytes b = n.toBytes();

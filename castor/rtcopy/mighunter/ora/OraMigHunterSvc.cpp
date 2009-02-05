@@ -41,6 +41,7 @@
 
 
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/OutOfMemory.hpp"
 #include "castor/exception/Internal.hpp"
 #include "occi.h"
 
@@ -364,6 +365,15 @@ void castor::rtcopy::mighunter::ora::OraMigHunterSvc::attachTapeCopiesToStreams(
     lens1=(ub2 *)malloc (sizeof(ub2)*nb);
     lens2=(ub2 *)malloc (sizeof(ub2)*nb);
 
+    if ( bufferTapeCopyId == 0 || bufferTapePoolId == 0 || lens1 == 0 || lens2 == 0  ) {
+       if (bufferTapeCopyId != 0) free(bufferTapeCopyId);
+       if (bufferTapePoolId != 0) free(bufferTapePoolId);
+       if (lens1 != 0) free(lens1);
+       if (lens2 != 0) free(lens2);
+       castor::exception::OutOfMemory e; 
+       throw e;
+    }
+
     for (unsigned int i = 0; i < nb; i++) {
       realInfo=dynamic_cast<castor::infoPolicy::DbInfoMigrationPolicy*>(outputFromMigrationPolicy[i]->dbInfoPolicy()[0]);
       oracle::occi::Number n1 = (double)(realInfo->tapeCopyId());
@@ -498,7 +508,14 @@ void  castor::rtcopy::mighunter::ora::OraMigHunterSvc::startChosenStreams(std::v
 
     lens = (ub2 *)malloc (sizeof(ub2)*nb);
     buffer=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
-    lens = (ub2 *)malloc (sizeof(ub2)*nb);
+
+    if ( buffer == 0 || lens == 0 ) {
+       if (buffer != 0) free(buffer);
+       if (lens != 0) free(lens);
+       castor::exception::OutOfMemory e; 
+       throw e;
+    }
+
 
     for (unsigned int i = 0; i < nb; i++) {
       oracle::occi::Number n = (double)(dynamic_cast<castor::infoPolicy::DbInfoStreamPolicy*>(outputFromStreamPolicy.at(i)->dbInfoPolicy()[0])->streamId());
@@ -548,9 +565,15 @@ void  castor::rtcopy::mighunter::ora::OraMigHunterSvc::stopChosenStreams(std::ve
 
     if (nb == 0 ) return;
 
-    lens = (ub2 *)malloc (sizeof(ub2)*nb);
     buffer=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
     lens = (ub2 *)malloc (sizeof(ub2)*nb);
+
+    if ( buffer == 0 || lens == 0 ) {
+      if (buffer != 0) free(buffer);
+      if (lens != 0) free(lens);
+      castor::exception::OutOfMemory e; 
+      throw e;
+    }
 
     for (unsigned int i = 0; i < nb; i++) {
       oracle::occi::Number n = (double)(dynamic_cast<castor::infoPolicy::DbInfoStreamPolicy*>(outputFromStreamPolicy.at(i)->dbInfoPolicy()[0])->streamId());
@@ -607,6 +630,13 @@ void  castor::rtcopy::mighunter::ora::OraMigHunterSvc::resurrectTapeCopies(std::
     if (nb!=0){
       buffer=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
       lens=(ub2 *)malloc (sizeof(ub2)*nb);
+      
+      if ( buffer == 0 || lens == 0 ) {
+	if (buffer != 0) free(buffer);
+	if (lens != 0) free(lens);
+	castor::exception::OutOfMemory e; 
+	throw e;
+      }
       for (unsigned int i = 0; i < nb; i++) {
 	oracle::occi::Number n = (double)(dynamic_cast<castor::infoPolicy::DbInfoMigrationPolicy*>(tapeCopiesInfo.at(i)->dbInfoPolicy()[0])->tapeCopyId());
 	oracle::occi::Bytes b = n.toBytes();
@@ -651,6 +681,13 @@ void   castor::rtcopy::mighunter::ora::OraMigHunterSvc::invalidateTapeCopies(std
     if (nb!=0){
       buffer=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
       lens=(ub2 *)malloc (sizeof(ub2)*nb);
+      
+      if ( buffer == 0 || lens == 0 ) {
+	if (buffer != 0) free(buffer);
+	if (lens != 0) free(lens);
+	castor::exception::OutOfMemory e; 
+	throw e;
+      }
       for (unsigned int i = 0; i < nb; i++) {
 	oracle::occi::Number n = (double)(dynamic_cast<castor::infoPolicy::DbInfoMigrationPolicy*>(tapeCopiesInfo.at(i)->dbInfoPolicy()[0])->tapeCopyId());
 	oracle::occi::Bytes b = n.toBytes();
