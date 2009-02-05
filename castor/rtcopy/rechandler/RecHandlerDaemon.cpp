@@ -60,8 +60,8 @@ int main(int argc, char* argv[]) {
   
   // service to access the database
 
-  castor::IService* orasvc = castor::BaseObject::services()->service("OraPolicySvc", castor::SVC_ORARECHANDLERSVC);
-  castor::infoPolicy::IPolicySvc* myService = dynamic_cast<castor::infoPolicy::IPolicySvc*>(orasvc);
+  castor::IService* orasvc = castor::BaseObject::services()->service("OraRecHandlerSvc", castor::SVC_ORARECHANDLERSVC);
+  castor::rtcopy::rechandler::IRecHandlerSvc* myService = dynamic_cast<castor::rtcopy::rechandler::IRecHandlerSvc*>(orasvc);
   if (0 == myService) {
     // we don't have DLF yet, and this is a major fault, so log to stderr and exit
     std::cerr << "Couldn't load the policy service, check the castor.conf for DynamicLib entries" << std::endl;

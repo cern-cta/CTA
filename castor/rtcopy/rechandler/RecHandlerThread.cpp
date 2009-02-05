@@ -34,7 +34,7 @@
 #include "castor/Services.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IService.hpp"
-#include "castor/infoPolicy/IPolicySvc.hpp"
+
 #include "castor/exception/Exception.hpp"
 #include "castor/infoPolicy/DbInfoRecallPolicy.hpp"
 #include "castor/infoPolicy/PolicyObj.hpp"
@@ -44,7 +44,7 @@
 #include <Cns_api.h>
 #include <u64subr.h>
 
-#include "castor/infoPolicy/RecallPySvc.hpp"
+#include "castor/rtcopy/rechandler/IRecHandlerSvc.hpp"
 
 #include "castor/infoPolicy/DbInfoRecallPolicy.hpp"
 #include "castor/infoPolicy/DbInfoPolicy.hpp"
@@ -65,8 +65,8 @@ namespace castor {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RecHandlerThread::RecHandlerThread(castor::infoPolicy::IPolicySvc* mySvc,castor::infoPolicy::RecallPySvc* recallPolicy) { 
-   m_policySvc=mySvc;
+RecHandlerThread::RecHandlerThread(castor::rtcopy::rechandler::IRecHandlerSvc* svc, castor::infoPolicy::RecallPySvc* recallPolicy) { 
+   m_dbSvc=svc;
    m_recallPolicy=recallPolicy;
 
 }
@@ -85,7 +85,7 @@ void RecHandlerThread::run(void* par)
   try{
 
       // get information from the db    
-      infoCandidateTape = m_policySvc->inputForRecallPolicy();
+      infoCandidateTape = m_dbSvc->inputForRecallPolicy();
       
       if (infoCandidateTape.empty()) {
 	 castor::dlf::Param params[] =
@@ -175,7 +175,7 @@ void RecHandlerThread::run(void* par)
 
       // call the db to put the tape as pending for that svcclass
       if (!eligibleTapeIds.empty()){
-	 m_policySvc->resurrectTapes(eligibleTapeIds);
+	 m_dbSvc->resurrectTapes(eligibleTapeIds);
       }
 
   }

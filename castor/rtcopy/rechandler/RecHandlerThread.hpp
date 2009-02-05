@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: RecHandlerThread.hpp,v $ $Author: waldron $
+* @(#)$RCSfile: RecHandlerThread.hpp,v $ $Author: gtaur $
 *
 *
 *
@@ -29,7 +29,7 @@
 
 // Include files
 #include "castor/infoPolicy/RecallPySvc.hpp"
-#include "castor/infoPolicy/IPolicySvc.hpp"
+#include "castor/rtcopy/rechandler/IRecHandlerSvc.hpp"
 #include "castor/server/BaseDbThread.hpp"
 
 namespace castor {
@@ -43,7 +43,7 @@ namespace castor {
      */
     
     class RecHandlerThread : public castor::server::BaseDbThread {
-      castor::infoPolicy::IPolicySvc* m_policySvc; // policy service to call the oracle procedure  
+      castor::rtcopy::rechandler::IRecHandlerSvc* m_dbSvc; 
       castor::infoPolicy::RecallPySvc* m_recallPolicy;
     
     public:
@@ -53,7 +53,7 @@ namespace castor {
        * @param maximum numbers of days that a request can stay in the datebase before being deleted.
        */    
 
-      RecHandlerThread( castor::infoPolicy::IPolicySvc* mySvc, castor::infoPolicy::RecallPySvc* recallPolicy);
+      RecHandlerThread(castor::rtcopy::rechandler::IRecHandlerSvc* svc, castor::infoPolicy::RecallPySvc* recallPolicy);
 
 
       /**
