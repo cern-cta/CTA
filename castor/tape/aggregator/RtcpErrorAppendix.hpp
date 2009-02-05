@@ -36,9 +36,9 @@ namespace aggregator {
    * messages.
    */
   struct RtcpErrorAppendix {
-    char errmsgtxt[CA_MAXLINELEN+1];
+    char     errorMsg[CA_MAXLINELEN+1];
     uint32_t severity;               // Defined in rtcp_constants.h
-    uint32_t errorcode;              // Defined in rtcp_constants.h
+    uint32_t errorCode;              // Defined in rtcp_constants.h
     int32_t  maxTpRetry;            // Nb. of retries left on mount/pos
     int32_t  maxCpRetry;            // Nb. of retries left on copy
   }; // struct RtcpErrorAppendix

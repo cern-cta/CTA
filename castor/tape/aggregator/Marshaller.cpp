@@ -525,7 +525,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpTapeRqstErrMsgBody(
     strlen(src.unit)          +
     sizeof(Cuuid_t)           +
     4 * sizeof(uint32_t)      + // 4 uint32_t's of RtcpErrorAppendix
-    strlen(src.err.errmsgtxt) +
+    strlen(src.err.errorMsg)  +
     7;                          // 7 = number of null terminator characters
 
   // Calculate the total length of the message (header + body)
@@ -579,11 +579,11 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpTapeRqstErrMsgBody(
   marshallUint8(src.rtcpReqId.node[3]                  , p);
   marshallUint8(src.rtcpReqId.node[4]                  , p);
   marshallUint8(src.rtcpReqId.node[5]                  , p);
-  marshallString(src.err.errmsgtxt                     , p);
+  marshallString(src.err.errorMsg                      , p);
   marshallUint32(src.err.severity                      , p);
-  marshallUint32(src.err.errorcode                     , p);
-  marshallUint32(src.err.maxTpRetry                   , p);
-  marshallUint32(src.err.maxCpRetry                   , p);
+  marshallUint32(src.err.errorCode                     , p);
+  marshallUint32(src.err.maxTpRetry                    , p);
+  marshallUint32(src.err.maxCpRetry                    , p);
 
   // Calculate the number of bytes actually marshalled
   const size_t nbBytesMarshalled = p - dst;
@@ -613,9 +613,9 @@ void castor::tape::aggregator::Marshaller::unmarshallRtcpTapeRqstErrMsgBody(
   throw(castor::exception::Exception) {
 
   unmarshallRtcpTapeRqstMsgBody(src, srcLen, (RtcpTapeRqstMsgBody&)dst);
-  unmarshallString(src, srcLen, dst.err.errmsgtxt);
+  unmarshallString(src, srcLen, dst.err.errorMsg);
   unmarshallUint32(src, srcLen, dst.err.severity);
-  unmarshallUint32(src, srcLen, dst.err.errorcode);
+  unmarshallUint32(src, srcLen, dst.err.errorCode);
   unmarshallInt32(src, srcLen, dst.err.maxTpRetry);
   unmarshallInt32(src, srcLen, dst.err.maxCpRetry);
 }
@@ -767,7 +767,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpFileRqstErrMsgBody(
 
     // err
     4 * sizeof(uint32_t)      + // 4 uint32_t's of RtcpErrorAppendix
-    strlen(src.err.errmsgtxt) +
+    strlen(src.err.errorMsg)  +
     1;                          // err.errmsgtxt string terminator
 
   // Calculate the total length of the message (header + body)
@@ -848,9 +848,9 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpFileRqstErrMsgBody(
   marshallUint8(src.stgReqId.node[3]                  , p);
   marshallUint8(src.stgReqId.node[4]                  , p);
   marshallUint8(src.stgReqId.node[5]                  , p);
-  marshallString(src.err.errmsgtxt                    , p);
+  marshallString(src.err.errorMsg                     , p);
   marshallUint32(src.err.severity                     , p);
-  marshallUint32(src.err.errorcode                    , p);
+  marshallUint32(src.err.errorCode                    , p);
   marshallUint32(src.err.maxTpRetry                   , p);
   marshallUint32(src.err.maxCpRetry                   , p);
 
@@ -881,9 +881,9 @@ void castor::tape::aggregator::Marshaller::unmarshallRtcpFileRqstErrMsgBody(
   const char * &src, size_t &srcLen, RtcpFileRqstErrMsgBody &dst)
   throw(castor::exception::Exception) {
   unmarshallRtcpFileRqstMsgBody(src, srcLen, (RtcpFileRqstMsgBody&)dst);
-  unmarshallString(src, srcLen, dst.err.errmsgtxt);
+  unmarshallString(src, srcLen, dst.err.errorMsg);
   unmarshallUint32(src, srcLen, dst.err.severity);
-  unmarshallUint32(src, srcLen, dst.err.errorcode);
+  unmarshallUint32(src, srcLen, dst.err.errorCode);
   unmarshallInt32(src, srcLen, dst.err.maxTpRetry);
   unmarshallInt32(src, srcLen, dst.err.maxCpRetry);
 }

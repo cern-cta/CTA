@@ -89,7 +89,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
       castor::dlf::Param("Port"    , port),
       castor::dlf::Param("HostName", hostName)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_VDQM_CONNECTION_WITH_INFO, 3, params);
+      AGGREGATOR_VDQM_CONNECTION_WITH_INFO, params);
 
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
@@ -116,7 +116,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
       castor::dlf::Param("driveName"      , jobRequest.driveName      ),
       castor::dlf::Param("clientUserName" , jobRequest.clientUserName )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_HANDLE_JOB_MESSAGE, 8, params);
+      AGGREGATOR_HANDLE_JOB_MESSAGE, params);
   }
 
   // Get the IP and port of the RTCPD callback socket
@@ -134,7 +134,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", jobRequest.tapeRequestId)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_SUBMITTING_JOB_TO_RTCPD, 1, params);
+      AGGREGATOR_SUBMITTING_JOB_TO_RTCPD, params);
   }
   RcpJobReplyMsgBody rtcpdReply;
   RcpJobSubmitter::submit(
@@ -237,12 +237,12 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
       castor::dlf::Param("Port"    , port),
       castor::dlf::Param("HostName", hostName)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_RTCPD_CALLBACK_WITH_INFO, 4, params);
+      AGGREGATOR_RTCPD_CALLBACK_WITH_INFO, params);
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_RTCPD_CALLBACK_WITHOUT_INFO, 1, params);
+      AGGREGATOR_RTCPD_CALLBACK_WITHOUT_INFO, params);
   }
 
   connectedSocketFds.push_back(connectedSocketFd);
@@ -260,8 +260,7 @@ bool castor::tape::aggregator::VdqmRequestHandlerThread::
   bool continueMainSelectLoop = true;
   MessageHeader header;
 
-  Transceiver::receiveRtcpMsgHeader(socketFd, RTCPDNETRWTIMEOUT,
-    header);
+  Transceiver::receiveRtcpMsgHeader(socketFd, RTCPDNETRWTIMEOUT, header);
 
   switch(header.reqType) {
   case RTCP_FILE_REQ:
@@ -278,8 +277,9 @@ bool castor::tape::aggregator::VdqmRequestHandlerThread::
           // Give file information to RTCPD
           try {
             Transceiver::giveFileListToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
-              vdqmJobRequest.tapeRequestId, "lxc2disk07:/dev/null",
-              body.tapePath, 18, false);
+              vdqmJobRequest.tapeRequestId,
+              "lxc2disk07:/tmp/murrayc3/test_04_02_09", body.tapePath, 18,
+              false);
             castor::dlf::Param params[] = {
               castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId),
               castor::dlf::Param("filePath","lxc2disk07:/dev/null"),
@@ -354,24 +354,23 @@ bool castor::tape::aggregator::VdqmRequestHandlerThread::
 
   case RTCP_FILEERR_REQ:
     {
-     RtcpFileRqstErrMsgBody body;
+      RtcpFileRqstErrMsgBody body;
 
       Transceiver::receiveRtcpFileRqstErrBody(socketFd, RTCPDNETRWTIMEOUT,
         header, body);
-
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("Message" , "Think we got an error"),
-        castor::dlf::Param("RtcpFileRqstErrMsgBody.proc_status",
-          body.procStatus),
-        castor::dlf::Param("RtcpFileRqstErrMsgBody.err.errmsgtxt",
-          body.err.errmsgtxt)};
-      CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR, AGGREGATOR_NULL, params);
 
       RtcpAcknowledgeMsg ackMsg;
       ackMsg.magic   = RTCOPY_MAGIC;
       ackMsg.reqType = RTCP_FILEERR_REQ;
       ackMsg.status  = 0;
       Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+
+      castor::exception::Exception ex(body.err.errorCode);
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Received an error from RTCPD:" << body.err.errorMsg;
+
+      throw ex;
     }
     break;
 
@@ -382,6 +381,11 @@ bool castor::tape::aggregator::VdqmRequestHandlerThread::
       Transceiver::receiveRtcpTapeRqstBody(socketFd, RTCPDNETRWTIMEOUT,
         header, body);
 
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
+        AGGREGATOR_TAPE_POSITIONED_TAPE_REQ, params);
+
       // Acknowledge tape request
       RtcpAcknowledgeMsg ackMsg;
       ackMsg.magic   = RTCOPY_MAGIC;
@@ -390,6 +394,29 @@ bool castor::tape::aggregator::VdqmRequestHandlerThread::
       Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
     }
     break;
+
+  case RTCP_TAPEERR_REQ:
+    {
+      RtcpTapeRqstErrMsgBody body;
+
+      Transceiver::receiveRtcpTapeRqstErrBody(socketFd, RTCPDNETRWTIMEOUT,
+        header, body);
+
+      RtcpAcknowledgeMsg ackMsg;
+      ackMsg.magic   = RTCOPY_MAGIC;
+      ackMsg.reqType = RTCP_TAPEERR_REQ;
+      ackMsg.status  = 0;
+      Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+
+      castor::exception::Exception ex(body.err.errorCode);
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Received an error from RTCPD:" << body.err.errorMsg;
+
+      throw ex;
+    }
+    break;
+
   case RTCP_ENDOF_REQ:
     {
       // An RTCP_ENDOF_REQ message is bodiless
@@ -575,7 +602,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
         castor::dlf::Param("Port"    , port                        ),
         castor::dlf::Param("HostName", hostName                    )};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_INITIAL_RTCPD_CALLBACK_WITH_INFO, 4, params);
+        AGGREGATOR_INITIAL_RTCPD_CALLBACK_WITH_INFO, params);
     } catch(castor::exception::Exception &ex) {
       CASTOR_DLF_WRITEC(cuuid, DLF_LVL_ERROR,
         AGGREGATOR_INITIAL_RTCPD_CALLBACK_WITHOUT_INFO);
@@ -609,7 +636,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
           castor::dlf::Param("devtype" , request.devtype             ),
           castor::dlf::Param("density" , request.density             )};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-          AGGREGATOR_GAVE_VOLUME_INFO, 6, params);
+          AGGREGATOR_GAVE_VOLUME_INFO, params);
       }
 
       Transceiver::giveRequestForMoreWorkToRtcpd(rtcpdInitialSocketFd,
@@ -619,7 +646,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
         castor::dlf::Param params[] = {
           castor::dlf::Param("volReqId", request.volReqId)};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-          AGGREGATOR_GAVE_REQUEST_FOR_MORE_WORK, 1, params);
+          AGGREGATOR_GAVE_REQUEST_FOR_MORE_WORK, params);
       }
 
     } catch(castor::exception::Exception &ex) {
@@ -650,7 +677,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
       castor::dlf::Param("Function", __PRETTY_FUNCTION__         ),
       castor::dlf::Param("Message" , ex.getMessage().str()       ),
       castor::dlf::Param("Code"    , ex.code()                   )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, AGGREGATOR_NULL, 4, params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, AGGREGATOR_NULL, params);
   }
 }
 
