@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: drop_oracle_schema.sql,v $ $Revision: 1.1 $ $Date: 2009/02/05 16:06:47 $ $Author: waldron $
+ * @(#)$RCSfile: drop_oracle_schema.sql,v $ $Revision: 1.2 $ $Date: 2009/02/05 18:01:52 $ $Author: waldron $
  *
  * This file drops all defined objects from a database schema.
  *
@@ -51,9 +51,7 @@ BEGIN
   END LOOP;
 
   -- This is a DLF based schema so we drop its associated tablespaces
-  SELECT SYS_CONTEXT('USERENV', 'CURRENT_USER') 
-    INTO username
-    FROM dual;
+  username := SYS_CONTEXT('USERENV', 'CURRENT_USER');
  
   -- Drop tablespaces
   FOR rec IN (SELECT tablespace_name, status
