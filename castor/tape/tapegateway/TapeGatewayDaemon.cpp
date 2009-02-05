@@ -55,8 +55,8 @@
 #include "castor/tape/tapegateway/RecallerErrorHandlerThread.hpp"
 #include "castor/tape/tapegateway/WorkerThread.hpp"
 #include "castor/tape/tapegateway/VmgrTapeGatewayHelper.hpp"
+#include "castor/PortNumbers.hpp"
 
-#define  TAPEGATEWAY_DEFAULT_PORT 62801
 #define  DEFAULT_SLEEP_INTERVAL   10
 #define  VDQM_TIME_OUT_INTERVAL 600 // Timeout between two polls on a VDQM request 
 #define  MIN_WORKER_THREADS 5
@@ -349,7 +349,7 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
         throw ex;
     }
   } else {
-     m_listenPort= TAPEGATEWAY_DEFAULT_PORT;
+     m_listenPort= castor::TAPEGATEWAY_DEFAULT_NOTIFYPORT;
   }
 
 }

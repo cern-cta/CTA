@@ -54,6 +54,11 @@ namespace castor {
    */
   static const int STAGER_DEFAULT_NOTIFYPORT = 55015;
 
+  /**
+   * The default port on which tapegateway listens for notifications.
+   */
+  static const int TAPEGATEWAY_DEFAULT_NOTIFYPORT = 62801;  // for future use
+
 } // namespace castor
 
 #endif // CASTOR_PORTNUMBERS
