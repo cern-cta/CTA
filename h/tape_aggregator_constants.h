@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 #if !defined(TAPE_AGGREGATOR_CONSTANTS_H)
-#define RTCP_CONSTANTS_H
+#define TAPE_AGGREGATOR_CONSTANTS_H
 
 /* Port on which the tape aggregator listens for connections from the VDQM */
 #define AGGREGATOR_VDQMPORT (5070)
