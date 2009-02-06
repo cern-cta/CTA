@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.70 $ $Release$ $Date: 2009/01/27 09:52:34 $ $Author: gtaur $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.71 $ $Release$ $Date: 2009/02/06 09:34:56 $ $Author: gtaur $
  *
  *
  *
@@ -213,12 +213,12 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "FileToRecallRequest",
   "FileToRecallResponse",
   "NsFileInformation",
-  "StartWorkerRequest",
-  "StartWorkerResponse",
+  "StartTransferRequest",
+  "StartTransferResponse",
   "TapeRequestState",
   "DbInfoRetryPolicy",
-  "EndWorkerRequest",
-  "EndWorkerResponse",
+  "EndTransferRequest",
+  "EndTransferResponse",
   "FileUpdateResponse",
   "TapeFileNsAttribute", 
   "RmMasterReport"
