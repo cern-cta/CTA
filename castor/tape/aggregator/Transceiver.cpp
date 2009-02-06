@@ -979,8 +979,30 @@ void castor::tape::aggregator::Transceiver::tellGatewayToStartWorker(
 
   castor::io::ClientSocket socket(gatewayPort, gatewayhost);
 
+  castor::IObject *obj = socket.readObject();
+
+  if(obj == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to get StartTransferResponse from tape gateway"
+         ": ClientSocket::readObject() returned null";
+
+    throw ex;
+  }
+
   std::auto_ptr<tapegateway::StartWorkerResponse> response(
-    dynamic_cast<tapegateway::StartWorkerResponse*>(socket.readObject()));
+    dynamic_cast<tapegateway::StartWorkerResponse*>(obj));
+
+  if(response.get() == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to get StartTransferResponse from tape gateway"
+         ": Failed to dynamic cast StartTransferResponse";
+
+    throw ex;
+  }
 
   gatewayErrorCode = response->errorCode();
   gatewayErrorMsg  = response->errorMessage();
