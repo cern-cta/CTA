@@ -62,7 +62,7 @@ extern "C" {
 int main(int argc, char* argv[]){
 
  // service to access the database
-  castor::IService* orasvc = castor::BaseObject::services()->service("OraPolicySvc", castor::SVC_ORAMIGHUNTERSVC);
+  castor::IService* orasvc = castor::BaseObject::services()->service("OraMigHunterSvc", castor::SVC_ORAMIGHUNTERSVC);
   castor::rtcopy::mighunter::IMigHunterSvc* mySvc = dynamic_cast<castor::rtcopy::mighunter::IMigHunterSvc*>(orasvc);
   
 
