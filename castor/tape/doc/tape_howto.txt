@@ -305,16 +305,23 @@ vmgrenterpool --group st --name tape_dev --user stage
 vmgrentermodel --mo 3592 --ml J --mc 250
 vmgrenterlibrary --name IBM_LIB1 --capacity 6600
 vmgrenterdgnmap -g 3592B1 --mo 3592 --library IBM_LIB1
-vmgrenterdenmap -d 700GC --ml J --mo 3592 --nc 700G
+vmgrenterdenmap -d  700GC --ml J --mo 3592 --nc  700G
+vmgrenterdenmap -d 1000GC --ml J --mo 3592 --nc 1000G
 
 vmgrentertape -V I10547 -v I10547 --mo 3592 --ml J --li IBM_LIB1 -d 700GC -l aul --po tape_dev
 vmgrentertape -V I10548 -v I10548 --mo 3592 --ml J --li IBM_LIB1 -d 700GC -l aul --po tape_dev
 vmgrentertape -V I10549 -v I10549 --mo 3592 --ml J --li IBM_LIB1 -d 700GC -l aul --po tape_dev
 vmgrentertape -V I10550 -v I10550 --mo 3592 --ml J --li IBM_LIB1 -d 700GC -l aul --po tape_dev
-vmgrentertape -V I10551 -v I10551 --mo 3592 --ml J --li IBM_LIB1 -d 700GC -l aul --po tape_dev
-vmgrentertape -V I10552 -v I10552 --mo 3592 --ml J --li IBM_LIB1 -d 700GC -l aul --po tape_dev
-vmgrentertape -V I10553 -v I10553 --mo 3592 --ml J --li IBM_LIB1 -d 700GC -l aul --po tape_dev
-vmgrentertape -V I10554 -v I10554 --mo 3592 --ml J --li IBM_LIB1 -d 700GC -l aul --po tape_dev
+vmgrentertape -V I10551 -v I10551 --mo 3592 --ml J --li IBM_LIB1 -d 1000GC -l aul --po tape_dev
+vmgrentertape -V I10552 -v I10552 --mo 3592 --ml J --li IBM_LIB1 -d 1000GC -l aul --po tape_dev
+vmgrentertape -V I10553 -v I10553 --mo 3592 --ml J --li IBM_LIB1 -d 1000GC -l aul --po tape_dev
+vmgrentertape -V I10554 -v I10554 --mo 3592 --ml J --li IBM_LIB1 -d 1000GC -l aul --po tape_dev
+
+
+How to modify the density of a tape
+===================================
+
+TAPES='I10551 I10552 I10553 I10554'; for TAPE in $TAPES;do echo "Checking $TAPE"; vmgrmodifytape -V $TAPE -d 1000GC; done
 
 
 VMGR permissions
@@ -1804,3 +1811,46 @@ How to give root the right to vdqm_admin on the CASTOR common services server
 =============================================================================
 
 Cupvadd --user root --group root --src '^castorsrv[1-2]0[1-3]$' --tgt '^castorsrv[1-2]0[1-3]$' --priv ADMIN
+
+
+How to generate and migrate a test file
+=======================================
+
+Create an executable script with the following contents and then run it:
+
+------------------------ START OF SCRIPT ------------------------------------
+#!/bin/sh
+
+if test e$STAGE_HOST = e; then
+  echo -n "ERROR: "
+  echo "The environment variable STAGE_HOST is not set"
+  exit -1
+fi
+
+if test e$TSTMIG_USER = e; then
+  echo -n "ERROR: "
+  echo "The environment variable TSTMIG_USER is not set"
+  exit -1
+fi
+
+export RFIO_USE_CASTOR_V2=YES
+
+LETTER_DIR=`echo $TSTMIG_USER | cut -c -1`
+SOURCEFILENAME=test_`date | sed 's/ /_/g;s/:/_/g'`.txt
+SOURCEPATH=/tmp/$SOURCEFILENAME
+DESTINATIONPATH=/castor/cern.ch/user/$LETTER_DIR/$TSTMIG_USER/$SOURCEFILENAME
+
+echo "Creating source file $SOURCEPATH as $TSTMIG_USER"
+sudo -u $TSTMIG_USER echo "Filename: $SOURCEPATH" > $SOURCEPATH
+
+echo "Migrating $SOURCEPATH to $DESTINATIONPATH as $TSTMIG_USER"
+sudo -u $TSTMIG_USER rfcp $SOURCEPATH $DESTINATIONPATH
+
+CMD="stager_qry -M $DESTINATIONPATH"
+echo $CMD
+$CMD
+
+CMD="/etc/init.d/mighunter restart default"
+echo $CMD
+$CMD
+-------------------------- END OF SCRIPT ------------------------------------
