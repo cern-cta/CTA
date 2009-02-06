@@ -27,6 +27,7 @@
 #include "castor/BaseAddress.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IService.hpp"
+#include "castor/PortNumbers.hpp"
 #include "castor/Services.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/vdqm/ClientIdentification.hpp"
@@ -43,7 +44,6 @@
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
 #include "h/rtcp_constants.h"
-#include "h/tape_aggregator_constants.h"
 
 
 //-----------------------------------------------------------------------------
