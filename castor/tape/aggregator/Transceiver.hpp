@@ -48,7 +48,7 @@ class Transceiver {
 public:
 
   /**
-   * Gets the volume request ID from RTCPD by sending and receiving the
+   * Gets the request information from RTCPD by sending and receiving the
    * necessary messages.
    *
    * @param socketFd The socket file descriptor of the connection with RTCPD.
@@ -57,13 +57,13 @@ public:
    * @param reply The request structure to be filled with the reply from
    * RTCPD.
    */
-  static void getVolumeRequestIdAndUnitFromRtcpd(const int socketFd,
+  static void getRequestInfoFromRtcpd(const int socketFd,
     const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &reply)
     throw(castor::exception::Exception);
 
   /**
-   * Gives a volume ID to RTCPD by sending and receiving the necessary
-   * messages.
+   * Gives information about a volume to RTCPD by sending and receiving the
+   * necessary messages.
    *
    * @param socketFd The socket file descriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
@@ -72,7 +72,7 @@ public:
    * @param reply The structure to be filled with the reply from
    * RTCPD.
    */
-  static void giveVolumeIdToRtcpd(const int socketFd,
+  static void giveVolumeInfoToRtcpd(const int socketFd,
     const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &request,
     RtcpTapeRqstErrMsgBody &reply) throw(castor::exception::Exception);
 

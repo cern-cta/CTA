@@ -270,7 +270,6 @@ bool castor::tape::aggregator::VdqmRequestHandlerThread::
   throw(castor::exception::Exception) {
 
   bool continueMainSelectLoop = true;
-  bool firstRequestForMoreWork = true;
   MessageHeader header;
 
   Transceiver::receiveRtcpMsgHeader(socketFd, RTCPDNETRWTIMEOUT, header);
@@ -285,46 +284,6 @@ bool castor::tape::aggregator::VdqmRequestHandlerThread::
 
       switch(body.procStatus) {
       case RTCP_REQUEST_MORE_WORK:
-
-        // THE FOLLOWING CODE IS A HACK TO TEST THE CONNECTION BETWEEN THE
-        // TAPE AGGREGATOR AND THE TAPE GATEWAY.  THIS CODE WILL BE REPLACED
-        // SOON.
-
-        if(firstRequestForMoreWork) {
-          firstRequestForMoreWork = false;
-
-          // Start a worker in the tape gateway
-          const char *unit = "PIPPO"; // For debugging only
-          int startTransferErrorCode = 0;
-          std::string startTransferErrorMsg;
-          std::string vid;
-          uint32_t mode = 0;
-          try {
-            Transceiver::tellGatewayToStartTransfer(vdqmJobRequest.clientHost,
-              vdqmJobRequest.clientPort, vdqmJobRequest.tapeRequestId,
-              unit, vid, mode, startTransferErrorCode, startTransferErrorMsg);
-
-            castor::dlf::Param params[] = {
-              castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId)};
-            castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-              AGGREGATOR_TOLD_GATEWAY_TO_START_TRANSFER, params);
-          } catch(castor::exception::Exception &ex) {
-            castor::dlf::Param params[] = {
-              castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId)};
-            CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_SYSTEM,
-              AGGRRGATOR_FAILED_TO_TELL_GATEWAY_TO_START_TRANSFER, params);
-          }
-
-          if(startTransferErrorCode != 0) {
-            castor::dlf::Param params[] = {
-              castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId),
-              castor::dlf::Param("Message" , startTransferErrorMsg),
-              castor::dlf::Param("Code"    , startTransferErrorCode)};
-            CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_SYSTEM,
-              AGGREGATOR_RECEIVED_START_TRANSFER_ERROR, params);
-          }
-        } // if(firstRequestForMoreWork)
-
         {
           // Give file information to RTCPD
           try {
@@ -660,24 +619,95 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
         AGGREGATOR_INITIAL_RTCPD_CALLBACK_WITHOUT_INFO);
     }
 
+    // Initiate the transfer by carrying out the following steps:
+    // 1. Get the request information from RTCPD.
+    // 2. Give the request information to RTCPD and get the volume information
+    //    in return
+    // 3. Give the volume information to RTCPD.
+    // 4. Request more work from RTCPD.
+    bool initiatedTransfer = false;
     try {
+
+      // Get the request informatiom from RTCPD
+      RtcpTapeRqstErrMsgBody rtcpdRequestInfoReply;
+      Transceiver::getRequestInfoFromRtcpd(rtcpdInitialSocketFd,
+        RTCPDNETRWTIMEOUT, rtcpdRequestInfoReply);
+
+      {
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("volReqId", rtcpdRequestInfoReply.volReqId),
+          castor::dlf::Param("unit"    , rtcpdRequestInfoReply.unit)};
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+          AGGREGATOR_GOT_REQUEST_INFO_FROM_RTCPD, params);
+      }
+
+      // If the VDQM and RTCPD volume request IDs do not match
+      if(rtcpdRequestInfoReply.volReqId != vdqmJobRequest.tapeRequestId) {
+
+        castor::exception::Exception ex(EINVAL);
+
+        ex.getMessage() << __PRETTY_FUNCTION__
+          << ": VDQM and RTCPD volume request Ids do not match"
+             ": VDQM volume request ID: " << vdqmJobRequest.tapeRequestId
+          << ": RTCPD volume request ID: " << rtcpdRequestInfoReply.volReqId;
+
+        throw ex;
+      }
+
+      // Give the request information to RTCPD and get the volume information
+      // in return by starting the transfer protocol with the tape gateway
+      std::string vid;
+      std::string density;
+      std::string label;
+      uint32_t mode = 0;
+
+vid     = "I10547";
+density = "700GC";
+label   = "aul";
+mode    = 0;
+/*
+      int startTransferErrorCode = 0;
+      std::string startTransferErrorMsg;
+
+      Transceiver::tellGatewayToStartTransfer(vdqmJobRequest.clientHost,
+        vdqmJobRequest.clientPort, vdqmJobRequest.tapeRequestId,
+        rtcpdRequestInfoReply.unit, vid, mode, startTransferErrorCode,
+        startTransferErrorMsg);
+
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", rtcpdRequestInfoReply.volReqId),
+        castor::dlf::Param("unit"    , rtcpdRequestInfoReply.unit)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_TOLD_GATEWAY_TO_START_TRANSFER, params);
+
+      if(startTransferErrorCode != 0) {
+        castor::exception::Exception ex(startTransferErrorCode);
+
+        ex.getMessage() << __PRETTY_FUNCTION__
+          << ": Received error from tape gateway when trying to start transfer"
+             ": " << startTransferErrorMsg;
+
+        throw ex;
+      }
+*/
+      // Give volume information to RTCPD
       uint32_t tStartRequest = time(NULL); // CASTOR2/rtcopy/rtcpclientd.c:1494
       RtcpTapeRqstErrMsgBody request;
       RtcpTapeRqstErrMsgBody reply;
 
       Utils::setBytes(request, '\0');
-      Utils::copyString(request.vid    , "I10547");
-      Utils::copyString(request.vsn    , "I10547");
-      Utils::copyString(request.label  , "aul"   );
-      Utils::copyString(request.density, "700GC" );
+      Utils::copyString(request.vid    , vid.c_str());
+      Utils::copyString(request.label  , label.c_str());
+      Utils::copyString(request.density, density.c_str());
+      request.mode           = mode;
       request.volReqId       = vdqmJobRequest.tapeRequestId;
       request.tStartRequest  = tStartRequest;
       request.err.severity   = 1;
       request.err.maxTpRetry = -1;
       request.err.maxCpRetry = -1;
 
-      Transceiver::giveVolumeIdToRtcpd(rtcpdInitialSocketFd, RTCPDNETRWTIMEOUT,
-        request, reply);
+      Transceiver::giveVolumeInfoToRtcpd(rtcpdInitialSocketFd,
+        RTCPDNETRWTIMEOUT, request, reply);
 
       {
         castor::dlf::Param params[] = {
@@ -693,6 +723,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
 
       Transceiver::giveRequestForMoreWorkToRtcpd(rtcpdInitialSocketFd,
         RTCPDNETRWTIMEOUT, vdqmJobRequest.tapeRequestId);
+      initiatedTransfer = true;
 
       {
         castor::dlf::Param params[] = {
@@ -707,21 +738,25 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
         castor::dlf::Param("Message" , ex.getMessage().str()       ),
         castor::dlf::Param("Code"    , ex.code()                   )};
       CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_FAILED_TO_GIVE_VOLUME_INFO, params);
+        AGGREGATOR_FAILED_TO_INITIATE_TRANSFER, params);
     }
 
-    try {
-      processRtcpdSockets(cuuid, vdqmJobRequest, rtcpdCallbackSocketFd,
-        rtcpdInitialSocketFd);
-    } catch(castor::exception::Exception &ex) {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId),
-        castor::dlf::Param("Message" , ex.getMessage().str()       ),
-        castor::dlf::Param("Code"    , ex.code()                   )};
-      CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_PROCESS_RTCPD_CONNECTIONS_FAILED, params);
+    if(initiatedTransfer) {
+      try {
+        processRtcpdSockets(cuuid, vdqmJobRequest, rtcpdCallbackSocketFd,
+          rtcpdInitialSocketFd);
+      } catch(castor::exception::Exception &ex) {
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId),
+          castor::dlf::Param("Message" , ex.getMessage().str()       ),
+          castor::dlf::Param("Code"    , ex.code()                   )};
+        CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
+          AGGREGATOR_PROCESS_RTCPD_CONNECTIONS_FAILED, params);
+      }
     }
 
+    // Close the initial RTCPD connection no matter if we are successfull or
+    // have encountered an error
     close(rtcpdInitialSocketFd);
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {

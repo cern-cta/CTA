@@ -42,12 +42,11 @@
 
 
 //-----------------------------------------------------------------------------
-// getVolumeRequestIdAndUnitFromRtcpd
+// getRequestInfoFromRtcpd
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::
-  getVolumeRequestIdAndUnitFromRtcpd(const int socketFd,
-  const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &reply)
-  throw(castor::exception::Exception) {
+void castor::tape::aggregator::Transceiver::getRequestInfoFromRtcpd(
+  const int socketFd, const int netReadWriteTimeout,
+  RtcpTapeRqstErrMsgBody &reply) throw(castor::exception::Exception) {
 
   // Prepare logical request for volume request ID
   RtcpTapeRqstErrMsgBody request;
@@ -135,9 +134,9 @@ void castor::tape::aggregator::Transceiver::
 
 
 //-----------------------------------------------------------------------------
-// giveVolumeIdToRtcpd
+// giveVolumeInfoToRtcpd
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::giveVolumeIdToRtcpd(
+void castor::tape::aggregator::Transceiver::giveVolumeInfoToRtcpd(
   const int socketFd, const int netReadWriteTimeout,
   RtcpTapeRqstErrMsgBody &request, RtcpTapeRqstErrMsgBody &reply)
   throw(castor::exception::Exception) {
