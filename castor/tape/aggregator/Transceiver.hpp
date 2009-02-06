@@ -57,7 +57,7 @@ public:
    * @param reply The request structure to be filled with the reply from
    * RTCPD.
    */
-  static void getVolumeRequestIdFromRtcpd(const int socketFd,
+  static void getVolumeRequestIdAndUnitFromRtcpd(const int socketFd,
     const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &reply)
     throw(castor::exception::Exception);
 
@@ -256,6 +256,27 @@ public:
     const int netReadWriteTimeout, const MessageHeader &header,
     RtcpTapeRqstMsgBody &body) throw(castor::exception::Exception);
 
+  /**
+   * Tells the tape gateway to start a transfer by sending and receiving the
+   * necessary messages.
+   *
+   * @param gatewayHost The tape gateway host name.
+   * @param gatewayPort The tape gateway port number.
+   * @param volReqId The volume request ID from the VDQM.
+   * @param unit The drive unit.
+   * @param mode Out parameter: The access mode returned by the tape gateway.
+   * @param vid Out parameter: The volume ID returned by the tape gateway.
+   * @param errorCode Out parameter: The error code returned by the tape
+   * gateway.
+   * @param errorMsg Out parameter: The error message returned by the tape
+   * gateway.
+   */
+  static void tellGatewayToStartTransfer(const std::string gatewayHost,
+    const unsigned short gatewayPort, const uint32_t volReqId,
+    const char *const unit, std::string &vid, uint32_t &mode, int &errorCode,
+    std::string &eErrorMsg) throw(castor::exception::Exception);
+
+
 private:
 
   /**
@@ -285,28 +306,6 @@ private:
    */
   static void checkRtcopyReqType(const uint32_t expected,
     const uint32_t actual, const char *function)
-    throw(castor::exception::Exception);
-
-  /**
-   * Tells the tape gateway to start a worker byi sending and receiving the
-   * necessary messages.
-   *
-   * @param gatewayHost The tape gateway host name.
-   * @param gatewayPort The tape gateway port number.
-   * @param volReqId The volume request ID from the VDQM.
-   * @param unit The drive unit.
-   * @param mode The access mode.
-   * @param gatewayErrorCode Out parameter.  The error code returned by the
-   * tape gateway.
-   * @param gatewayErrorMsg Out parameter. The error message returned by the
-   * tape gateway.
-   * @param gatewayVid Out parameter. The volume ID returned by the tape
-   * gateway.
-   */
-  static void tellGatewayToStartWorker(const std::string gatewayHost,
-    const unsigned short gatewayPort, const uint32_t volReqId,
-    const char *const unit, const uint32_t mode, int &gatewayErrorCode,
-    std::string &gatewayErrorMsg, std::string &gatewayVid)
     throw(castor::exception::Exception);
 
 }; // class Transceiver

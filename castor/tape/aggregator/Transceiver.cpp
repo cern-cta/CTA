@@ -30,8 +30,8 @@
 #include "castor/tape/aggregator/Transceiver.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
 #include "castor/tape/aggregator/Utils.hpp"
-#include "castor/tape/tapegateway/StartWorkerRequest.hpp"
-#include "castor/tape/tapegateway/StartWorkerResponse.hpp"
+#include "castor/tape/tapegateway/StartTransferRequest.hpp"
+#include "castor/tape/tapegateway/StartTransferResponse.hpp"
 #include "h/common.h"
 #include "h/rtcp.h"
 #include "h/rtcp_constants.h"
@@ -42,10 +42,10 @@
 
 
 //-----------------------------------------------------------------------------
-// getVolumeRequestIdFromRtcpd
+// getVolumeRequestIdAndUnitFromRtcpd
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::
-  getVolumeRequestIdFromRtcpd(const int socketFd,
+  getVolumeRequestIdAndUnitFromRtcpd(const int socketFd,
   const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &reply)
   throw(castor::exception::Exception) {
 
@@ -963,19 +963,18 @@ void castor::tape::aggregator::Transceiver::checkRtcopyReqType(
 
 
 //-----------------------------------------------------------------------------
-// tellGatewayToStartWorker
+// tellGatewayToStartTransfer
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::tellGatewayToStartWorker(
+void castor::tape::aggregator::Transceiver::tellGatewayToStartTransfer(
   const std::string gatewayhost, const unsigned short gatewayPort,
-  const uint32_t volReqId, const char *const unit, const uint32_t mode,
-  int &gatewayErrorCode, std::string &gatewayErrorMsg, std::string &gatewayVid)
+  const uint32_t volReqId, const char *const unit,  std::string &vid,
+  uint32_t &mode, int &errorCode, std::string &errorMsg)
   throw(castor::exception::Exception) {
 
-  tapegateway::StartWorkerRequest request;
+  tapegateway::StartTransferRequest request;
 
   request.setVdqmVolReqId(volReqId);
   request.setUnit(unit);
-  request.setMode(mode);
 
   castor::io::ClientSocket socket(gatewayPort, gatewayhost);
 
@@ -991,8 +990,8 @@ void castor::tape::aggregator::Transceiver::tellGatewayToStartWorker(
     throw ex;
   }
 
-  std::auto_ptr<tapegateway::StartWorkerResponse> response(
-    dynamic_cast<tapegateway::StartWorkerResponse*>(obj));
+  std::auto_ptr<tapegateway::StartTransferResponse> response(
+    dynamic_cast<tapegateway::StartTransferResponse*>(obj));
 
   if(response.get() == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -1004,7 +1003,8 @@ void castor::tape::aggregator::Transceiver::tellGatewayToStartWorker(
     throw ex;
   }
 
-  gatewayErrorCode = response->errorCode();
-  gatewayErrorMsg  = response->errorMessage();
-  gatewayVid       = response->vid();
+  vid       = response->vid();
+  mode      = response->mode();
+  errorCode = response->errorCode();
+  errorMsg  = response->errorMessage();
 }

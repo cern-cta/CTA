@@ -42,3 +42,6 @@
 41,AGGREGATOR_TAPE_POSITIONED_FILE_REQ,"Tape positioned"
 42,AGGREGATOR_TAPE_POSITIONED_TAPE_REQ,"Tape positioned (tape request)"
 43,AGGREGATOR_FILE_TRANSFERED,"File transfered"
+44,AGGREGATOR_TOLD_GATEWAY_TO_START_TRANSFER,"Told tape gateway to start transfer"
+45,AGGRRGATOR_FAILED_TO_TELL_GATEWAY_TO_START_TRANSFER,"Failed to tell tape gateway to start transfer"
+46,AGGREGATOR_RECEIVED_START_TRANSFER_ERROR,"Received start transfer error from tape gateway"
