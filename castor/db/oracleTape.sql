@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.708 $ $Date: 2009/01/30 07:12:03 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.709 $ $Date: 2009/02/06 09:23:19 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1900,23 +1900,25 @@ END;
 
 create or replace
 PROCEDURE  updateDbStartTape
-( inputVdqmReqId IN INTEGER, inputMode  IN INTEGER, outVid OUT VARCHAR2 ) AS
+( inputVdqmReqId IN INTEGER, outVid OUT VARCHAR2, outMode OUT INTEGER ) AS
 reqId NUMBER;
 tpId NUMBER;
+reqMode INTEGER;
 BEGIN
   -- set the request to ONGOING
-  UPDATE taperequeststate SET status=3 WHERE vdqmVolreqid = inputVdqmReqId AND accessmode= inputmode AND status =2 RETURNING id INTO reqId;
-  IF inputmode = 0 THEN
+  UPDATE taperequeststate SET status=3 WHERE vdqmVolreqid = inputVdqmReqId  AND status =2 RETURNING id , accessmode INTO reqId, reqMode;
+  IF reqMode = 0 THEN
     -- read tape mounted
-    UPDATE tape set status=4 WHERE id IN ( SELECT taperecall FROM taperequeststate WHERE id=reqId ) RETURNING vid INTO outVid; 
+    UPDATE tape set status=4 WHERE id IN ( SELECT taperecall FROM taperequeststate WHERE id=reqId ) RETURNING vid, tpmode INTO outVid,outMode; 
   ELSE
     -- write
     UPDATE stream set status=3 WHERE id IN ( SELECT streammigration FROM taperequeststate WHERE id=reqId ) returning id INTO tpId;
-    UPDATE tape set status=4  WHERE id = tpId and tpmode=1 RETURNING vid INTO outVid;
+    UPDATE tape set status=4  WHERE id = tpId and tpmode=1 RETURNING vid, tpmode INTO outVid, outmode;
   END IF; 
   COMMIT;
 END;
 /
+
 
 /* SQL Function updateDbEndTape */
 
