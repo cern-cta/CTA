@@ -31,7 +31,7 @@
 
 #include "castor/server/BaseDbThread.hpp"
 
-#include "castor/tape/tapegateway/StartWorkerRequest.hpp"
+#include "castor/tape/tapegateway/StartTransferRequest.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
 #include "castor/exception/Internal.hpp"

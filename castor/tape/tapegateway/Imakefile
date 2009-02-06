@@ -47,9 +47,9 @@ TAPEGATEWAY_MESSAGES_SRCS = \
 	ConvertCommandCode.cpp FileMigratedResponse.cpp \
         FileRecalledResponse.cpp FileToMigrateRequest.cpp FileToMigrateResponse.cpp \
         FileToRecallRequest.cpp  FileToRecallResponse.cpp  NsFileInformation.cpp \
-	PositionCommandCode.cpp RecordFormatCode.cpp  StartWorkerRequest.cpp \
-	StartWorkerResponse.cpp TapeRequestState.cpp TapeRequestStateCode.cpp \
-	EndWorkerRequest.cpp EndWorkerResponse.cpp FileUpdateResponse.cpp \
+	PositionCommandCode.cpp RecordFormatCode.cpp  StartTransferRequest.cpp \
+	StartTransferResponse.cpp TapeRequestState.cpp TapeRequestStateCode.cpp \
+	EndTransferRequest.cpp EndTransferResponse.cpp FileUpdateResponse.cpp \
 	TapeFileNsAttribute.cpp
 
 TAPEGATEWAY_IO_SRCS = \
@@ -58,7 +58,7 @@ TAPEGATEWAY_IO_SRCS = \
 	../../io/StreamFileToMigrateRequestCnv.cpp ../../io/StreamFileToMigrateResponseCnv.cpp \
 	../../io/StreamFileToRecallRequestCnv.cpp ../../io/StreamFileToRecallResponseCnv.cpp \
 	../../io/StreamNsFileInformationCnv.cpp  ../../io/StreamTapeFileNsAttributeCnv.cpp \
-	../../io/StreamStartWorkerRequestCnv.cpp ../../io/StreamStartWorkerResponseCnv.cpp
+	../../io/StreamStartTransferRequestCnv.cpp ../../io/StreamStartTransferResponseCnv.cpp
 
 TAPEGATEWAY_DB_SRCS = ../../db/cnv/DbTapeRequestStateCnv.cpp ora/OraTapeGatewaySvc.cpp
 

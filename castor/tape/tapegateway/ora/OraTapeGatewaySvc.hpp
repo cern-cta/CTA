@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2009/01/28 15:42:30 $ $Author: gtaur $
+ * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2009/02/06 09:21:07 $ $Author: gtaur $
  *
  * Implementation of the ITapeGatewaySvc for Oracle
  *
@@ -192,13 +192,13 @@ namespace castor {
 	 * Update the database when the tape aggregator allows us to serve a request 
 	 */
 
-	virtual castor::tape::tapegateway::StartWorkerResponse*  updateDbStartTape(castor::tape::tapegateway::StartWorkerRequest* startReq) throw (castor::exception::Exception); 
+	virtual castor::tape::tapegateway::StartTransferResponse*  updateDbStartTape(castor::tape::tapegateway::StartTransferRequest* startReq) throw (castor::exception::Exception); 
 
 	/*
 	 * Update the database when the tape request has been served 
 	 */
 
-	virtual castor::stager::Tape*  updateDbEndTape(castor::tape::tapegateway::EndWorkerRequest* endRequest) throw (castor::exception::Exception); 
+	virtual castor::stager::Tape*  updateDbEndTape(castor::tape::tapegateway::EndTransferRequest* endRequest) throw (castor::exception::Exception); 
 
 	
 	/*

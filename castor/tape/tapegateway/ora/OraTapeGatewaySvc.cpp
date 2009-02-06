@@ -1368,9 +1368,9 @@ std::string  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getRepackVid(cas
 //-------------------------------------------------------------------------- 
 	 
 
-castor::tape::tapegateway::StartWorkerResponse* castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateDbStartTape(castor::tape::tapegateway::StartWorkerRequest* startRequest) throw (castor::exception::Exception){ 
+castor::tape::tapegateway::StartTransferResponse* castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateDbStartTape(castor::tape::tapegateway::StartTransferRequest* startRequest) throw (castor::exception::Exception){ 
   
-  castor::tape::tapegateway::StartWorkerResponse* result=NULL;  
+  castor::tape::tapegateway::StartTransferResponse* result=NULL;  
 
   try {
     // Check whether the statements are ok
@@ -1378,11 +1378,12 @@ castor::tape::tapegateway::StartWorkerResponse* castor::tape::tapegateway::ora::
       m_updateDbStartTapeStatement =
         createStatement(s_updateDbStartTapeStatementString);
       m_updateDbStartTapeStatement->registerOutParam
-        (3, oracle::occi::OCCISTRING);
+        (2, oracle::occi::OCCISTRING);
+      m_updateDbStartTapeStatement->registerOutParam
+        (3, oracle::occi::OCCIINT);
     }
 
     m_updateDbStartTapeStatement->setInt(1,startRequest->vdqmVolReqId());
-    m_updateDbStartTapeStatement->setInt(2,startRequest->mode());
 
 
     // execute the statement
@@ -1390,11 +1391,14 @@ castor::tape::tapegateway::StartWorkerResponse* castor::tape::tapegateway::ora::
     m_updateDbStartTapeStatement->executeUpdate();
 
    std::string vid =
-      m_updateDbStartTapeStatement->getString(3);
- 
+      m_updateDbStartTapeStatement->getString(2);
    
    result->setVid(vid);
-
+   
+   int mode =
+      m_updateDbStartTapeStatement->getInt(3);
+   
+   result->setMode(mode);
     
 
   } catch (oracle::occi::SQLException e) {
@@ -1419,7 +1423,7 @@ castor::tape::tapegateway::StartWorkerResponse* castor::tape::tapegateway::ora::
 //----------------------------------------------------------------------------
 
 
-castor::stager::Tape*  castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateDbEndTape(castor::tape::tapegateway::EndWorkerRequest* endRequest) throw (castor::exception::Exception){
+castor::stager::Tape*  castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateDbEndTape(castor::tape::tapegateway::EndTransferRequest* endRequest) throw (castor::exception::Exception){
   
   castor::stager::Tape* result=NULL;
 

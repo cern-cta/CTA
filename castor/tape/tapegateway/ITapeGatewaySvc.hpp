@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeGatewaySvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2009/01/28 15:42:30 $ $Author: gtaur $
+ * @(#)$RCSfile: ITapeGatewaySvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2009/02/06 09:21:06 $ $Author: gtaur $
  *
  * This class provides methods related to tape handling
  *
@@ -47,9 +47,9 @@
 #include "castor/tape/tapegateway/FileToRecallRequest.hpp"
 #include "castor/tape/tapegateway/FileRecalledResponse.hpp"
 #include "castor/tape/tapegateway/FileUpdateResponse.hpp"
-#include "castor/tape/tapegateway/StartWorkerRequest.hpp"
-#include "castor/tape/tapegateway/StartWorkerResponse.hpp"
-#include "castor/tape/tapegateway/EndWorkerRequest.hpp"
+#include "castor/tape/tapegateway/StartTransferRequest.hpp"
+#include "castor/tape/tapegateway/StartTransferResponse.hpp"
+#include "castor/tape/tapegateway/EndTransferRequest.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/tape/tapegateway/TapeRequestState.hpp" 
@@ -175,14 +175,14 @@ namespace castor {
 	 * Update the database when the tape aggregator allows us to serve a request 
 	 */
 
-	virtual castor::tape::tapegateway::StartWorkerResponse*  updateDbStartTape(castor::tape::tapegateway::StartWorkerRequest* startReq) throw (castor::exception::Exception)=0; 
+	virtual castor::tape::tapegateway::StartTransferResponse*  updateDbStartTape(castor::tape::tapegateway::StartTransferRequest* startReq) throw (castor::exception::Exception)=0; 
 
 
 	/*
 	 * Update the database when the tape request has been served 
 	 */
 
-	virtual castor::stager::Tape* updateDbEndTape(castor::tape::tapegateway::EndWorkerRequest* endRequest) throw (castor::exception::Exception)=0; 
+	virtual castor::stager::Tape* updateDbEndTape(castor::tape::tapegateway::EndTransferRequest* endRequest) throw (castor::exception::Exception)=0; 
 
 	/*
 	 * Delete a segment which is not anymore in the nameserver 

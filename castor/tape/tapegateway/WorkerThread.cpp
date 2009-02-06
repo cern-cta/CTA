@@ -34,7 +34,7 @@
 #include "castor/Constants.hpp"
 #include "castor/IService.hpp"
 
-#include "castor/tape/tapegateway/StartWorkerResponse.hpp"
+#include "castor/tape/tapegateway/StartTransferResponse.hpp"
 #include "castor/tape/tapegateway/FileToRecallRequest.hpp"
 #include "castor/tape/tapegateway/FileToRecallResponse.hpp"
 #include "castor/tape/tapegateway/FileRecalledResponse.hpp"
@@ -43,9 +43,9 @@
 #include "castor/tape/tapegateway/FileToMigrateResponse.hpp"
 #include "castor/tape/tapegateway/FileMigratedResponse.hpp"
 
-#include "castor/tape/tapegateway/StartWorkerResponse.hpp"
-#include "castor/tape/tapegateway/EndWorkerRequest.hpp"
-#include "castor/tape/tapegateway/EndWorkerResponse.hpp"
+#include "castor/tape/tapegateway/StartTransferResponse.hpp"
+#include "castor/tape/tapegateway/EndTransferRequest.hpp"
+#include "castor/tape/tapegateway/EndTransferResponse.hpp"
 
 #include "castor/tape/tapegateway/FileUpdateResponse.hpp"
 
@@ -65,12 +65,12 @@
 castor::tape::tapegateway::WorkerThread::WorkerThread(castor::tape::tapegateway::ITapeGatewaySvc* dbSvc):BaseDbThread(){ 
   m_dbSvc=dbSvc; 
   // populate the map with the different handlers
-  m_handlerMap[OBJ_StartWorkerRequest] = &WorkerThread::handleStartWorker;
+  m_handlerMap[OBJ_StartTransferRequest] = &WorkerThread::handleStartWorker;
   m_handlerMap[OBJ_FileRecalledResponse] = &WorkerThread::handleRecallUpdate;
   m_handlerMap[OBJ_FileMigratedResponse] = &WorkerThread::handleMigrationUpdate;
   m_handlerMap[OBJ_FileToMigrateRequest] = &WorkerThread::handleRecallMoreWork;
   m_handlerMap[OBJ_FileToRecallRequest] = &WorkerThread::handleMigrationMoreWork;
-  m_handlerMap[OBJ_EndWorkerRequest] = &WorkerThread::handleEndWorker;
+  m_handlerMap[OBJ_EndTransferRequest] = &WorkerThread::handleEndWorker;
 
 }
 
@@ -195,12 +195,12 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker(cast
 
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 35, 0, NULL);
  
-  StartWorkerResponse* response = NULL;
-  StartWorkerRequest* startRequest = dynamic_cast<StartWorkerRequest*>(obj);
+  StartTransferResponse* response = NULL;
+  StartTransferRequest* startRequest = dynamic_cast<StartTransferRequest*>(obj);
   if (0 == startRequest) {
 	// "Invalid Request" message
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 36, 0, NULL);
-	response = new StartWorkerResponse();
+	response = new StartTransferResponse();
 	response->setErrorCode(-1);
 	response->setErrorMessage("invalid object");
 	return response;
@@ -211,7 +211,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker(cast
     
   } catch (castor::exception::Exception e){
     if (response) delete response;
-    response=new StartWorkerResponse();
+    response=new StartTransferResponse();
     response->setErrorCode(-1);
     response->setErrorMessage("TapeGateway server not available because of database problems");
      
@@ -414,9 +414,9 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
     }
     
     if (response  == NULL ) {
-      // I don't have anything to recall I send an EndWorkerRequest
+      // I don't have anything to recall I send an EndTransferRequest
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 45, 0, NULL);
-      EndWorkerRequest* endResponse = new EndWorkerRequest();
+      EndTransferRequest* endResponse = new EndTransferRequest();
       return endResponse;
     }
   
@@ -487,8 +487,8 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
       
     if ( response == NULL ) {
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 55, 0, NULL);
-      // I don't have anything to migrate I send an EndWorkerRequest
-      EndWorkerRequest* endResponse = new EndWorkerRequest();
+      // I don't have anything to migrate I send an EndTransferRequest
+      EndTransferRequest* endResponse = new EndTransferRequest();
       return endResponse;
     } 
     try {
@@ -521,13 +521,13 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
 
 
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( castor::io::ServerSocket* sock, castor::IObject* obj, castor::tape::tapegateway::ITapeGatewaySvc* m_dbSvc ) throw(){
-  	// I received an EndWorkerRequest, I send back an EndWorkerResponse
+  	// I received an EndTransferRequest, I send back an EndTransferResponse
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 52, 0, NULL);
 	
 	castor::stager::Tape* tape=NULL;
-	EndWorkerResponse* response = new EndWorkerResponse();
+	EndTransferResponse* response = new EndTransferResponse();
 	
-	EndWorkerRequest* endRequest = dynamic_cast<EndWorkerRequest*>(obj);
+	EndTransferRequest* endRequest = dynamic_cast<EndTransferRequest*>(obj);
 	if (0 == endRequest) {
 	  // "Invalid Request" message
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 36, 0, NULL);
