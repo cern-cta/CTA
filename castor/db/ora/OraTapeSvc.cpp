@@ -505,9 +505,9 @@ castor::db::ora::OraTapeSvc::bestTapeCopyForStream
     castorFile->setNsHost(m_bestTapeCopyForStreamStatement->getString(8));
     castorFile->setFileSize
       ((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(9));
-    castorFile->setLastUpdateTime
-      ((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(12));
     result->setId((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(10));
+    castorFile->setLastUpdateTime
+      ((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(11));
     diskCopy->setCastorFile(castorFile);
     castorFile->addDiskCopies(diskCopy);
     result->setCastorFile(castorFile);
