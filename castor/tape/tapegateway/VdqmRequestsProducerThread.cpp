@@ -91,13 +91,13 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
     else tape=(*tapeItem)->streamMigration()->tape();
     std::string dgn;
     try {
-      dgn = vmgrHelper.getDgnFromVmgr(tape);
+      vmgrHelper.getDataFromVmgr(tape);
  
     } catch (castor::exception::Exception e) {
       // log TODO
     }
     
-    if (!dgn.empty()) {
+    if (!tape->dgn().empty()) {
       
       // tape is fine
 
@@ -106,7 +106,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
       VdqmTapeGatewayHelper vdqmHelper;
       int vdqmReqId=0;
       try {
-	vdqmReqId= vdqmHelper.submitTapeToVdqm(tape, dgn, m_port );
+	vdqmReqId= vdqmHelper.submitTapeToVdqm(tape, tape->dgn(), m_port );
       } catch ( castor::exception::Exception e){
 	//log TODO
       }

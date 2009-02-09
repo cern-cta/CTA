@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.709 $ $Date: 2009/02/06 09:23:19 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.710 $ $Date: 2009/02/09 10:31:34 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1631,17 +1631,17 @@ END;
 /* SQL Function updateSubmittedTapes */
 
 create or replace
-PROCEDURE updateSubmittedTapes(tapeRequestIds IN castor."cnumList", vdqmIds IN castor."cnumList" ) AS
+PROCEDURE updateSubmittedTapes(tapeRequestIds IN castor."cnumList", vdqmIds IN castor."cnumList", dgns IN castor."strList", labels IN castor."strList", densities IN castor."strList" ) AS
 BEGIN
 -- update taperequeststate which have been submitted to vdqm
   FORALL i IN tapeRequestIds.FIRST .. tapeRequestIds.LAST
     UPDATE taperequeststate set status=2, lastvdqmpingtime=gettime(), starttime= gettime(), vdqmvolreqid=vdqmIds(i) WHERE id=tapeRequestIds(i); -- these are the ones waiting for vdqm to be sent again
 -- update tape for recall  
   FORALL i IN tapeRequestIds.FIRST .. tapeRequestIds.LAST
-    UPDATE tape SET status=2 WHERE id IN (SELECT taperecall FROM taperequeststate WHERE accessmode=0 AND  id=tapeRequestIds(i));
+    UPDATE tape SET status=2, dgn=dgns(i), label=labels(i), density= densities(i) WHERE id IN (SELECT taperecall FROM taperequeststate WHERE accessmode=0 AND  id=tapeRequestIds(i));
 -- update tape for migration    
   FORALL i IN tapeRequestIds.FIRST .. tapeRequestIds.LAST
-    UPDATE tape SET status=2 WHERE id IN (SELECT tape FROM stream WHERE id IN ( select streammigration FROM taperequeststate WHERE accessmode=1 AND  id=tapeRequestIds(i)));
+    UPDATE tape SET status=2, dgn=dgns(i), label=labels(i), density= densities(i) WHERE id IN (SELECT tape FROM stream WHERE id IN ( select streammigration FROM taperequeststate WHERE accessmode=1 AND  id=tapeRequestIds(i)));
 -- update stream for migration    
   FORALL i IN tapeRequestIds.FIRST .. tapeRequestIds.LAST
     UPDATE stream SET status=1 WHERE id IN (select streammigration FROM taperequeststate WHERE accessmode=1 AND  id=tapeRequestIds(i));

@@ -77,7 +77,7 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_resolveSt
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getTapesToSubmitStatementString="BEGIN getTapesToSubmit(:1);END;";
 
 /// SQL statement for function updateSubmittedTapes
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_updateSubmittedTapesStatementString="BEGIN updateSubmittedTapes(:1,:2);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_updateSubmittedTapesStatementString="BEGIN updateSubmittedTapes(:1,:2,:3,:4,:5);END;";
 
 /// SQL statement for function getTapesToCheck
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getTapesToCheckStatementString="BEGIN getTapesToCheck(:1,:2);END;";
@@ -509,8 +509,66 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateSubmittedTapes(std
        throw e;
      }
 
+     // dgn
 
-     // DataBuffer with all the vid (one for each subrequest)
+     char * bufferDgns=NULL;
+     ub2 *lensDgns=NULL;
+
+     unsigned int bufferCellSize = (CA_MAXDGNLEN+1) * sizeof(char);
+     lensDgns = (ub2*) malloc((CA_MAXDGNLEN+1) * sizeof(ub2));
+     bufferDgns = (char*) malloc(nb * bufferCellSize);
+
+     if ( lensDgns  == 0 || bufferDgns == 0 ) {
+       if (lensIds != 0 ) free(lensIds);
+       if (bufferIds != 0) free(bufferIds);
+       if (lensVdqmIds != 0 ) free(lensVdqmIds);
+       if (bufferVdqmIds != 0) free(bufferVdqmIds);
+       castor::exception::OutOfMemory e; 
+       throw e;
+     }
+
+     // density
+
+     char * bufferDensities=NULL;
+     ub2 *lensDensities=NULL;
+
+     bufferCellSize = (CA_MAXDENLEN +1)* sizeof(char);
+     lensDensities = (ub2*) malloc((CA_MAXDENLEN+1) * sizeof(ub2));
+     bufferDensities = (char*) malloc(nb * bufferCellSize);
+
+     if (lensDensities==0 || bufferDensities==0  ){
+       if ( lensDgns  != 0 ) free(lensDgns);
+       if ( bufferDgns != 0 ) free(bufferDgns);
+       if ( lensIds != 0 ) free(lensIds);
+       if ( bufferIds != 0) free(bufferIds);
+       if ( lensVdqmIds != 0 ) free(lensVdqmIds);
+       if ( bufferVdqmIds != 0) free(bufferVdqmIds);
+       castor::exception::OutOfMemory e; 
+       throw e;
+     }
+
+     // label
+
+     char * bufferLabels=NULL;
+     ub2 *lensLabels=NULL;
+
+     bufferCellSize = (CA_MAXLBLTYPLEN+1) * sizeof(char);
+     lensLabels = (ub2*) malloc((CA_MAXLBLTYPLEN+1) * sizeof(ub2));
+     bufferLabels = (char*) malloc(nb * bufferCellSize);
+
+     if (lensLabels==0 || bufferLabels==0){
+       if (lensDensities!=0 ) free (lensDensities);
+       if (bufferDensities!=0) free (bufferDensities);
+       if ( lensDgns  != 0 ) free(lensDgns);
+       if ( bufferDgns != 0 ) free(bufferDgns);
+       if ( lensIds != 0 ) free(lensIds);
+       if ( bufferIds != 0) free(bufferIds);
+       if ( lensVdqmIds != 0 ) free(lensVdqmIds);
+       if ( bufferVdqmIds != 0) free(bufferVdqmIds);
+       castor::exception::OutOfMemory e; 
+       throw e;
+     }
+
 
      
      // Fill in the structure
@@ -530,7 +588,26 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateSubmittedTapes(std
        n = (double)(tapeRequests[i]->vdqmVolReqId());
        b = n.toBytes();
        b.getBytes(bufferVdqmIds[i],b.length());
-       lensVdqmIds[i] = b.length();        
+       lensVdqmIds[i] = b.length();  
+
+       castor::stager::Tape* inputTape = NULL;
+       if (tapeRequests[i]->accessMode()) inputTape=tapeRequests[i]->streamMigration()->tape();
+       else inputTape=tapeRequests[i]->tapeRecall();
+
+       //dgn     
+       
+       lensDgns[i]= inputTape->dgn().length();
+       strncpy(bufferDgns+(bufferCellSize*i),inputTape->dgn().c_str(),lensDgns[i]);
+
+       //label
+
+       lensLabels[i]= inputTape->label().length();
+       strncpy(bufferLabels+(bufferCellSize*i),inputTape->label().c_str(),lensLabels[i]);
+
+       //density
+
+       lensDensities[i]= inputTape->density().length();
+       strncpy(bufferDensities+(bufferCellSize*i),inputTape->density().c_str(),lensDensities[i]);
 
      }
 
@@ -538,7 +615,10 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateSubmittedTapes(std
 
      m_updateSubmittedTapesStatement->setDataBufferArray(1,bufferIds, oracle::occi::OCCI_SQLT_NUM, nb, &unused, 21, lensIds);
      m_updateSubmittedTapesStatement->setDataBufferArray(2, bufferVdqmIds, oracle::occi::OCCI_SQLT_NUM, nb, &unused, 21, lensVdqmIds);
-
+     m_updateSubmittedTapesStatement->setDataBufferArray(3, bufferDgns, oracle::occi::OCCI_SQLT_CHR,nb, &nb, (CA_MAXDGNLEN+1), lensDgns);
+     m_updateSubmittedTapesStatement->setDataBufferArray(4, bufferLabels, oracle::occi::OCCI_SQLT_CHR,nb, &nb, (CA_MAXLBLTYPLEN+1), lensLabels);
+     m_updateSubmittedTapesStatement->setDataBufferArray(5, bufferDensities, oracle::occi::OCCI_SQLT_CHR,nb, &nb, (CA_MAXDENLEN+1), lensDensities);
+ 
      // execute the statement and see whether we found something
 
      m_updateSubmittedTapesStatement->executeUpdate();

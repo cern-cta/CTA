@@ -99,6 +99,10 @@ void castor::io::StreamTapeCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->errorCode();
   ad->stream() << obj->severity();
   ad->stream() << obj->vwAddress();
+  ad->stream() << obj->label();
+  ad->stream() << obj->density();
+  ad->stream() << obj->devtype();
+  ad->stream() << obj->dgn();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
@@ -134,6 +138,18 @@ castor::IObject* castor::io::StreamTapeCnv::createObj(castor::IAddress* address)
   std::string vwAddress;
   ad->stream() >> vwAddress;
   object->setVwAddress(vwAddress);
+  std::string label;
+  ad->stream() >> label;
+  object->setLabel(label);
+  std::string density;
+  ad->stream() >> density;
+  object->setDensity(density);
+  std::string devtype;
+  ad->stream() >> devtype;
+  object->setDevtype(devtype);
+  std::string dgn;
+  ad->stream() >> dgn;
+  object->setDgn(dgn);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

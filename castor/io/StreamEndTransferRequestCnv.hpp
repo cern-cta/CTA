@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamEndTransferRequestCnv.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/02/06 09:21:50 $ $Author: gtaur $
+ * @(#)$RCSfile: StreamEndTransferRequestCnv.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/02/09 10:31:35 $ $Author: gtaur $
  *
  * 
  *

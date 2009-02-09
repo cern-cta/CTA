@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStartTransferResponseCnv.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/02/06 09:21:51 $ $Author: gtaur $
+ * @(#)$RCSfile: StreamStartTransferResponseCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/02/09 10:31:35 $ $Author: gtaur $
  *
  * 
  *
@@ -93,6 +93,8 @@ void castor::io::StreamStartTransferResponseCnv::createRep(castor::IAddress* add
   ad->stream() << obj->vid();
   ad->stream() << obj->transactionId();
   ad->stream() << obj->mode();
+  ad->stream() << obj->label();
+  ad->stream() << obj->density();
   ad->stream() << obj->id();
 }
 
@@ -121,6 +123,12 @@ castor::IObject* castor::io::StreamStartTransferResponseCnv::createObj(castor::I
   int mode;
   ad->stream() >> mode;
   object->setMode(mode);
+  std::string label;
+  ad->stream() >> label;
+  object->setLabel(label);
+  std::string density;
+  ad->stream() >> density;
+  object->setDensity(density);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

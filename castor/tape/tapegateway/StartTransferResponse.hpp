@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StartTransferResponse.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/02/06 09:21:06 $ $Author: gtaur $
+ * @(#)$RCSfile: StartTransferResponse.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/02/09 10:31:35 $ $Author: gtaur $
  *
  * 
  *
@@ -179,6 +179,38 @@ namespace castor {
         }
 
         /**
+         * Get the value of m_label
+         * @return the value of m_label
+         */
+        std::string label() const {
+          return m_label;
+        }
+
+        /**
+         * Set the value of m_label
+         * @param new_var the new value of m_label
+         */
+        void setLabel(std::string new_var) {
+          m_label = new_var;
+        }
+
+        /**
+         * Get the value of m_density
+         * @return the value of m_density
+         */
+        std::string density() const {
+          return m_density;
+        }
+
+        /**
+         * Set the value of m_density
+         * @param new_var the new value of m_density
+         */
+        void setDensity(std::string new_var) {
+          m_density = new_var;
+        }
+
+        /**
          * Get the value of m_id
          * The id of this object
          * @return the value of m_id
@@ -207,6 +239,10 @@ namespace castor {
         u_signed64 m_transactionId;
 
         int m_mode;
+
+        std::string m_label;
+
+        std::string m_density;
 
         /// The id of this object
         u_signed64 m_id;

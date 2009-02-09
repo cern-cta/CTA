@@ -229,6 +229,70 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_label
+       * @return the value of m_label
+       */
+      std::string label() const {
+        return m_label;
+      }
+
+      /**
+       * Set the value of m_label
+       * @param new_var the new value of m_label
+       */
+      void setLabel(std::string new_var) {
+        m_label = new_var;
+      }
+
+      /**
+       * Get the value of m_density
+       * @return the value of m_density
+       */
+      std::string density() const {
+        return m_density;
+      }
+
+      /**
+       * Set the value of m_density
+       * @param new_var the new value of m_density
+       */
+      void setDensity(std::string new_var) {
+        m_density = new_var;
+      }
+
+      /**
+       * Get the value of m_devtype
+       * @return the value of m_devtype
+       */
+      std::string devtype() const {
+        return m_devtype;
+      }
+
+      /**
+       * Set the value of m_devtype
+       * @param new_var the new value of m_devtype
+       */
+      void setDevtype(std::string new_var) {
+        m_devtype = new_var;
+      }
+
+      /**
+       * Get the value of m_dgn
+       * @return the value of m_dgn
+       */
+      std::string dgn() const {
+        return m_dgn;
+      }
+
+      /**
+       * Set the value of m_dgn
+       * @param new_var the new value of m_dgn
+       */
+      void setDgn(std::string new_var) {
+        m_dgn = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -327,6 +391,14 @@ namespace castor {
 
       /// Vid worker address for killing requests
       std::string m_vwAddress;
+
+      std::string m_label;
+
+      std::string m_density;
+
+      std::string m_devtype;
+
+      std::string m_dgn;
 
       /// The id of this object
       u_signed64 m_id;

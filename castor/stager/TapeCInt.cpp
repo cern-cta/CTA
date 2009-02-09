@@ -216,6 +216,74 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_Tape_label
+  //----------------------------------------------------------------------------
+  int Cstager_Tape_label(castor::stager::Tape* instance, const char** var) {
+    *var = instance->label().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Tape_setLabel
+  //----------------------------------------------------------------------------
+  int Cstager_Tape_setLabel(castor::stager::Tape* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setLabel(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Tape_density
+  //----------------------------------------------------------------------------
+  int Cstager_Tape_density(castor::stager::Tape* instance, const char** var) {
+    *var = instance->density().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Tape_setDensity
+  //----------------------------------------------------------------------------
+  int Cstager_Tape_setDensity(castor::stager::Tape* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setDensity(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Tape_devtype
+  //----------------------------------------------------------------------------
+  int Cstager_Tape_devtype(castor::stager::Tape* instance, const char** var) {
+    *var = instance->devtype().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Tape_setDevtype
+  //----------------------------------------------------------------------------
+  int Cstager_Tape_setDevtype(castor::stager::Tape* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setDevtype(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Tape_dgn
+  //----------------------------------------------------------------------------
+  int Cstager_Tape_dgn(castor::stager::Tape* instance, const char** var) {
+    *var = instance->dgn().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Tape_setDgn
+  //----------------------------------------------------------------------------
+  int Cstager_Tape_setDgn(castor::stager::Tape* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setDgn(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_Tape_id
   //----------------------------------------------------------------------------
   int Cstager_Tape_id(castor::stager::Tape* instance, u_signed64* var) {

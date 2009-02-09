@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.3 $ $Release$ 
- * $Date: 2009/01/28 15:42:30 $ $Author: gtaur $
+ * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.4 $ $Release$ 
+ * $Date: 2009/02/09 10:31:36 $ $Author: gtaur $
  *
  *
  *
@@ -161,7 +161,7 @@ castor::stager::Tape* castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeF
 
 
 
-std::string castor::tape::tapegateway::VmgrTapeGatewayHelper::getDgnFromVmgr(castor::stager::Tape* tape) throw (castor::exception::Exception){
+void castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr(castor::stager::Tape* tape) throw (castor::exception::Exception){
 
   struct vmgr_tape_info vmgrTapeInfo;
   int save_serrno=0;
@@ -223,8 +223,9 @@ std::string castor::tape::tapegateway::VmgrTapeGatewayHelper::getDgnFromVmgr(cas
     }
   }
   
-  std::string dgn(dgnBuffer);
-  return dgn;
+  tape->setDgn(dgnBuffer);
+  tape->setLabel(vmgrTapeInfo.lbltype);
+  tape->setDensity(vmgrTapeInfo.density);
 
 }
 
