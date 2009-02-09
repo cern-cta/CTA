@@ -50,10 +50,10 @@ castor::stager::Tape::Tape() throw() :
   m_errorCode(0),
   m_severity(0),
   m_vwAddress(""),
+  m_dgn(""),
   m_label(""),
   m_density(""),
   m_devtype(""),
-  m_dgn(""),
   m_id(0),
   m_stream(0),
   m_status(TapeStatusCodes(0)) {
@@ -93,10 +93,10 @@ void castor::stager::Tape::print(std::ostream& stream,
   stream << indent << "errorCode : " << m_errorCode << std::endl;
   stream << indent << "severity : " << m_severity << std::endl;
   stream << indent << "vwAddress : " << m_vwAddress << std::endl;
+  stream << indent << "dgn : " << m_dgn << std::endl;
   stream << indent << "label : " << m_label << std::endl;
   stream << indent << "density : " << m_density << std::endl;
   stream << indent << "devtype : " << m_devtype << std::endl;
-  stream << indent << "dgn : " << m_dgn << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Stream : " << std::endl;

@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StartTransferResponse.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/02/09 10:31:35 $ $Author: gtaur $
+ * @(#)$RCSfile: StartTransferResponse.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2009/02/09 13:31:16 $ $Author: gtaur $
  *
  * 
  *
@@ -44,8 +44,8 @@ castor::tape::tapegateway::StartTransferResponse::StartTransferResponse() throw(
   m_vid(""),
   m_transactionId(0),
   m_mode(0),
-  m_label(""),
   m_density(""),
+  m_label(""),
   m_id(0) {
 }
 
@@ -73,8 +73,8 @@ void castor::tape::tapegateway::StartTransferResponse::print(std::ostream& strea
   stream << indent << "vid : " << m_vid << std::endl;
   stream << indent << "transactionId : " << m_transactionId << std::endl;
   stream << indent << "mode : " << m_mode << std::endl;
-  stream << indent << "label : " << m_label << std::endl;
   stream << indent << "density : " << m_density << std::endl;
+  stream << indent << "label : " << m_label << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

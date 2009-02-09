@@ -173,6 +173,16 @@ int Cstager_Tape_vwAddress(struct Cstager_Tape_t* instance, const char** var);
 int Cstager_Tape_setVwAddress(struct Cstager_Tape_t* instance, const char* new_var);
 
 /**
+ * Get the value of dgn
+ */
+int Cstager_Tape_dgn(struct Cstager_Tape_t* instance, const char** var);
+
+/**
+ * Set the value of dgn
+ */
+int Cstager_Tape_setDgn(struct Cstager_Tape_t* instance, const char* new_var);
+
+/**
  * Get the value of label
  */
 int Cstager_Tape_label(struct Cstager_Tape_t* instance, const char** var);
@@ -201,16 +211,6 @@ int Cstager_Tape_devtype(struct Cstager_Tape_t* instance, const char** var);
  * Set the value of devtype
  */
 int Cstager_Tape_setDevtype(struct Cstager_Tape_t* instance, const char* new_var);
-
-/**
- * Get the value of dgn
- */
-int Cstager_Tape_dgn(struct Cstager_Tape_t* instance, const char** var);
-
-/**
- * Set the value of dgn
- */
-int Cstager_Tape_setDgn(struct Cstager_Tape_t* instance, const char* new_var);
 
 /**
  * Get the value of id

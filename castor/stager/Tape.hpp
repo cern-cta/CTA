@@ -229,6 +229,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_dgn
+       * @return the value of m_dgn
+       */
+      std::string dgn() const {
+        return m_dgn;
+      }
+
+      /**
+       * Set the value of m_dgn
+       * @param new_var the new value of m_dgn
+       */
+      void setDgn(std::string new_var) {
+        m_dgn = new_var;
+      }
+
+      /**
        * Get the value of m_label
        * @return the value of m_label
        */
@@ -274,22 +290,6 @@ namespace castor {
        */
       void setDevtype(std::string new_var) {
         m_devtype = new_var;
-      }
-
-      /**
-       * Get the value of m_dgn
-       * @return the value of m_dgn
-       */
-      std::string dgn() const {
-        return m_dgn;
-      }
-
-      /**
-       * Set the value of m_dgn
-       * @param new_var the new value of m_dgn
-       */
-      void setDgn(std::string new_var) {
-        m_dgn = new_var;
       }
 
       /**
@@ -392,13 +392,13 @@ namespace castor {
       /// Vid worker address for killing requests
       std::string m_vwAddress;
 
+      std::string m_dgn;
+
       std::string m_label;
 
       std::string m_density;
 
       std::string m_devtype;
-
-      std::string m_dgn;
 
       /// The id of this object
       u_signed64 m_id;

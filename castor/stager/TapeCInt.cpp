@@ -216,6 +216,23 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_Tape_dgn
+  //----------------------------------------------------------------------------
+  int Cstager_Tape_dgn(castor::stager::Tape* instance, const char** var) {
+    *var = instance->dgn().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Tape_setDgn
+  //----------------------------------------------------------------------------
+  int Cstager_Tape_setDgn(castor::stager::Tape* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setDgn(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_Tape_label
   //----------------------------------------------------------------------------
   int Cstager_Tape_label(castor::stager::Tape* instance, const char** var) {
@@ -263,23 +280,6 @@ extern "C" {
   int Cstager_Tape_setDevtype(castor::stager::Tape* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setDevtype(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Tape_dgn
-  //----------------------------------------------------------------------------
-  int Cstager_Tape_dgn(castor::stager::Tape* instance, const char** var) {
-    *var = instance->dgn().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Tape_setDgn
-  //----------------------------------------------------------------------------
-  int Cstager_Tape_setDgn(castor::stager::Tape* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setDgn(snew_var);
     return 0;
   }
 
