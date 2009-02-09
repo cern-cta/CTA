@@ -112,7 +112,6 @@ DependsOnLibrary(vmgr,castorvmgr)
 DependsOnLibrary(vdqm,castorvdqm)
 DependsOnLibrary(tape,castortape)
 DependsOnLibrary(expert,castorexpert)
-DependsOnLibrary(castor/db/cnv,castorcnvs)
 
 rtcpc_SendRecv.c:	DepSourceName(rtcopy,rtcp_SendRecv.c)
 			RemoveFiles(rtcpc_SendRecv.c)
