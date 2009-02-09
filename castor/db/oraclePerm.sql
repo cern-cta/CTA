@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.653 $ $Date: 2008/11/25 15:43:31 $ $Author: itglp $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.654 $ $Date: 2009/02/09 18:53:52 $ $Author: itglp $
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -13,19 +13,25 @@ CREATE OR REPLACE PROCEDURE checkPermission(isvcClass IN VARCHAR2,
                                             ieuid IN NUMBER,
                                             iegid IN NUMBER,
                                             ireqType IN NUMBER,
+                                            ireqId IN NUMBER,
                                             res OUT NUMBER) AS
-  unused NUMBER;
+  c NUMBER;
+  svcId NUMBER;
+  reqName VARCHAR2(100);
 BEGIN
-  SELECT count(*) INTO unused
+  -- First resolve the service class
+  svcId := checkForValidSvcClass(isvcClass, 1, 0);
+  -- Perform the check
+  SELECT count(*) INTO c
     FROM WhiteList
    WHERE (svcClass = isvcClass OR svcClass IS NULL
           OR (length(isvcClass) IS NULL AND svcClass = 'default'))
      AND (egid = iegid OR egid IS NULL)
      AND (euid = ieuid OR euid IS NULL)
      AND (reqType = ireqType OR reqType IS NULL);
-  IF unused = 0 THEN
+  IF c = 0 THEN
     -- Not found in White list -> no access
-    IF checkForValidSvcClass(isvcClass, 1, 0) = 1 THEN
+    IF svcId > 0 THEN
       -- Service class exists, we give permission denied
       res := -1;
     -- Special case where we accept '*' as a service class for Qry,
@@ -38,16 +44,17 @@ BEGIN
       res := -2;
     END IF;
   ELSE
-    SELECT count(*) INTO unused
+    SELECT count(*) INTO c
       FROM BlackList
      WHERE (svcClass = isvcClass OR svcClass IS NULL
             OR (length(isvcClass) IS NULL AND svcClass = 'default'))
        AND (egid = iegid OR egid IS NULL)
        AND (euid = ieuid OR euid IS NULL)
        AND (reqType = ireqType OR reqType IS NULL);
-    IF unused = 0 THEN
+    IF c = 0 THEN
       -- Not Found in Black list -> access
-      res := 0;
+      -- in this case return the service class id
+      res := svcId;
     ELSE
       -- Found in Black list -> no access
       res := -1;
@@ -75,8 +82,8 @@ BEGIN
     RETURN 0;
   END IF;
   -- Check the users access rights
-  checkPermission(reqSvcClass, reqEuid, reqEgid, reqType, res);
-  IF res = 0 THEN
+  checkPermission(reqSvcClass, reqEuid, reqEgid, reqType, 0, res);
+  IF res > 0 THEN
     RETURN 0;
   END IF;
   RETURN 1;
