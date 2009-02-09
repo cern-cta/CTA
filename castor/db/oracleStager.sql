@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.716 $ $Date: 2009/01/30 07:12:03 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.717 $ $Date: 2009/02/09 18:52:07 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -625,9 +625,6 @@ BEGIN
       UPDATE SubRequest SET status = 11 WHERE request = rId;  -- ARCHIVED
     END IF;
   END IF;
-
-  -- Check that we don't have too many requests for this file in the DB
-  -- XXX dropped for the time being as it introduced deadlocks with itself and with selectFiles2Delete!
 END;
 /
 
@@ -800,7 +797,7 @@ BEGIN
   -- file in the target service class that could be used. So, we check
   -- to see if the user has the rights to create a file in the destination
   -- service class. I.e. check for StagePutRequest access rights
-  checkPermission(destSvcClass, reuid, regid, 40, authDest);
+  checkPermission(destSvcClass, reuid, regid, 40, 0, authDest);
   IF authDest != 0 THEN
       -- Fail the subrequest and notify the client
       dcId := -1;
@@ -867,7 +864,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Check whether the user has the rights to issue a tape recall to
     -- the destination service class.
-    checkPermission(destSvcClass, reuid, regid, 161, authDest);
+    checkPermission(destSvcClass, reuid, regid, 161, 0, authDest);
     IF authDest != 0 THEN
       -- Fail the subrequest and notify the client
       dcId := -1;
@@ -1848,13 +1845,13 @@ BEGIN
      WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
     -- update lastAccess time
     UPDATE CastorFile SET LastAccessTime = getTime(),
-                          lastKnownFileName = canonicalizePath(fn)
+                          lastKnownFileName = normalizePath(fn)
      WHERE id = rid;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- insert new row
     INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
                             creationTime, lastAccessTime, lastUpdateTime, lastKnownFileName)
-      VALUES (ids_seq.nextval, fId, nsHostName, sc, fc, fs, getTime(), getTime(), lut, canonicalizePath(fn))
+      VALUES (ids_seq.nextval, fId, nsHostName, sc, fc, fs, getTime(), getTime(), lut, normalizePath(fn))
       RETURNING id, fileSize INTO rid, rfs;
     INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
   END;
