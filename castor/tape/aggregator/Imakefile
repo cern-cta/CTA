@@ -70,6 +70,7 @@ AGGREGATORBIN_SRCS = \
   Marshaller.cpp \
   Net.cpp \
   RcpJobSubmitter.cpp \
+  SmartFd.cpp \
   Transceiver.cpp \
   Utils.cpp \
   VdqmRequestHandlerThread.cpp \
