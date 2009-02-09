@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.55 $ $Release$ $Date: 2008/12/16 14:50:04 $ $Author: itglp $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.56 $ $Release$ $Date: 2009/02/09 18:58:24 $ $Author: itglp $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -111,7 +111,7 @@ const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyDoneStatementString
 
 /// SQL statement for disk2DiskCopyFailed
 const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyFailedStatementString =
-  "BEGIN disk2DiskCopyFailed(:1, :2); END;";
+"BEGIN disk2DiskCopyFailed(:1, :2, :3); END;";
 
 /// SQL statement for prepareForMigration
 const std::string castor::db::ora::OraJobSvc::s_prepareForMigrationStatementString =
@@ -353,23 +353,72 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
  u_signed64 fileId,
  const std::string nsHost)
   throw (castor::exception::Exception) {
+
+  std::string csumtype;
+  std::string csumvalue;
   try {
     // Check whether the statements are ok
     if (0 == m_disk2DiskCopyStartStatement) {
       m_disk2DiskCopyStartStatement =
-	createStatement(s_disk2DiskCopyStartStatementString);
+        createStatement(s_disk2DiskCopyStartStatementString);
       m_disk2DiskCopyStartStatement->registerOutParam
-	(5, oracle::occi::OCCISTRING, 2048);
+        (5, oracle::occi::OCCISTRING, 2048);
       m_disk2DiskCopyStartStatement->registerOutParam
-	(6, oracle::occi::OCCISTRING, 2048);
+        (6, oracle::occi::OCCISTRING, 2048);
       m_disk2DiskCopyStartStatement->registerOutParam
-	(7, oracle::occi::OCCISTRING, 2048);
+        (7, oracle::occi::OCCISTRING, 2048);
       m_disk2DiskCopyStartStatement->registerOutParam
-	(8, oracle::occi::OCCISTRING, 2048);
+        (8, oracle::occi::OCCISTRING, 2048);
       m_disk2DiskCopyStartStatement->registerOutParam
-	(9, oracle::occi::OCCISTRING, 2048);
+        (9, oracle::occi::OCCISTRING, 2048);
       m_disk2DiskCopyStartStatement->registerOutParam
-	(10, oracle::occi::OCCISTRING, 2048);
+        (10, oracle::occi::OCCISTRING, 2048);
+    }
+    
+    // Extract the checksum information of the file from the name server. We
+    // need to pass the checksum information to the job as the generation of
+    // checksums using the RFIO protocol is only computed over the network when
+    // running an rfiod process i.e. a server. It is not stored at the clients
+    // local disk!
+    bool useChkSum = true;
+    const char *confvalue = getconfent("CNS", "USE_CKSUM", 0);
+    if (confvalue != NULL) {
+      if (!strncasecmp(confvalue, "no", 2)) {
+        useChkSum = false;
+      }
+    }
+
+    if (useChkSum) {
+      struct Cns_filestatcs statbuf;
+      struct Cns_fileid fileid;
+      char fileName[CA_MAXPATHLEN+1];
+      fileName[0] = '\0';
+
+      // Initialize structures
+      fileid.fileid = fileId;
+      strncpy(fileid.server, nsHost.c_str(), CA_MAXHOSTNAMELEN);
+
+      // Extract checksum information for file
+      // Note: we do not call Cns_setid here as there is no need to perform the
+      // Cns_statcsx call under the users uid and gid
+      if (Cns_statcsx(fileName, &fileid, &statbuf) != 0) {
+        castor::exception::Exception ex(serrno);
+        ex.getMessage()
+          << "disk2DiskCopyStart : Cns_statcsx failed - "
+          << sstrerror(serrno);
+        // Don't do anything in the db, disk2DiskCopyFailed
+        // will be called and this serrno will be taken into account
+        throw ex;
+      }
+
+      // Check that the checksum type is supported. If its not we ignore it.
+      csumtype = "";
+      csumvalue = statbuf.csumvalue;
+      if ((strcmp(statbuf.csumtype, "AD") == 0) ||
+          (strcmp(statbuf.csumtype, "CS") == 0) ||
+          (strcmp(statbuf.csumtype, "MD") == 0)) {
+        csumtype = statbuf.csumtype;
+      }
     }
 
     // Execute the statement and see if we found something
@@ -406,59 +455,14 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
     sourceDiskCopy->setFileId(fileId);
     sourceDiskCopy->setNsHost(nsHost);
 
-    // Extract the checksum information of the file from the name server. We
-    // need to pass the checksum information to the job as the generation of
-    // checksums using the RFIO protocol is only computed over the network when
-    // running an rfiod process i.e. a server. It is not stored at the clients
-    // local disk!
-    bool useChkSum = true;
-    const char *confvalue = getconfent("CNS", "USE_CKSUM", 0);
-    if (confvalue != NULL) {
-      if (!strncasecmp(confvalue, "no", 2)) {
-	useChkSum = false;
-      }
+    // Set the source and destination diskcopy checksum attributes.
+    if ((csumtype != "") && (csumvalue != "")) {
+      diskCopy->setCsumType(csumtype);
+      diskCopy->setCsumValue(csumvalue);
+      sourceDiskCopy->setCsumType(csumtype);
+      sourceDiskCopy->setCsumValue(csumvalue);
     }
-
-    if (useChkSum) {
-      struct Cns_filestatcs statbuf;
-      struct Cns_fileid fileid;
-      char fileName[CA_MAXPATHLEN+1];
-      fileName[0] = '\0';
-
-      // Initialize structures
-      fileid.fileid = fileId;
-      strncpy(fileid.server, nsHost.c_str(), CA_MAXHOSTNAMELEN);
-
-      // Note: we do not call Cns_setid here as there is no need to perform the
-      // Cns_statcsx call under the users uid and gid
-
-      // Extract checksum information for file
-      if (Cns_statcsx(fileName, &fileid, &statbuf) != 0) {
-	castor::exception::Exception ex(serrno);
-	ex.getMessage()
-	  << "disk2DiskCopyStart : Cns_statcsx failed - "
-	  << sstrerror(serrno);
-	throw ex;
-      }
-
-      // Check that the checksum type is supported. If its not we ignore it.
-      std::string csumtype = "";
-      std::string csumvalue = statbuf.csumvalue;
-      if ((strcmp(statbuf.csumtype, "AD") == 0) ||
-          (strcmp(statbuf.csumtype, "CS") == 0) ||
-          (strcmp(statbuf.csumtype, "MD") == 0)) {
-        csumtype = statbuf.csumtype;
-      }
-
-      // Set the source and destination diskcopy checksum attributes.
-      if ((csumtype != "") && (csumvalue != "")) {
-        diskCopy->setCsumType(csumtype);
-        diskCopy->setCsumValue(csumvalue);
-        sourceDiskCopy->setCsumType(csumtype);
-        sourceDiskCopy->setCsumValue(csumvalue);
-      }
-    }
-
+    
     // Return
     cnvSvc()->commit();
   } catch (oracle::occi::SQLException e) {
@@ -516,8 +520,7 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyDone
 //------------------------------------------------------------------------------
 void castor::db::ora::OraJobSvc::disk2DiskCopyFailed
 (u_signed64 diskCopyId,
- u_signed64 fileId,
- const std::string nsHost)
+ bool enoent)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -525,11 +528,12 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyFailed
       m_disk2DiskCopyFailedStatement =
         createStatement(s_disk2DiskCopyFailedStatementString);
       m_disk2DiskCopyFailedStatement->registerOutParam
-	(2, oracle::occi::OCCIDOUBLE);
+        (3, oracle::occi::OCCIDOUBLE);
       m_disk2DiskCopyFailedStatement->setAutoCommit(true);
     }
-    // execute the statement and see whether we found something
+    // execute the statement
     m_disk2DiskCopyFailedStatement->setDouble(1, diskCopyId);
+    m_disk2DiskCopyFailedStatement->setInt(2, (int)enoent);
     m_disk2DiskCopyFailedStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -620,9 +624,9 @@ void castor::db::ora::OraJobSvc::prepareForMigration
       ex.getMessage()
         << "prepareForMigration : Cns_setid failed : ";
       if (!strcmp(cns_error_buffer, "")) {
-	ex.getMessage() << sstrerror(serrno);
+        ex.getMessage() << sstrerror(serrno);
       } else {
-	ex.getMessage() << cns_error_buffer;
+        ex.getMessage() << cns_error_buffer;
       }
       throw ex;
     }
@@ -636,17 +640,17 @@ void castor::db::ora::OraJobSvc::prepareForMigration
       bool useChkSum = true;
       const char *confvalue = getconfent("CNS", "USE_CKSUM", 0);
       if ((confvalue != NULL) && (csumtype != "") && (csumvalue != "")) {
-	if (!strncasecmp(confvalue, "no", 2)) {
-	  useChkSum = false;
-	}
+        if (!strncasecmp(confvalue, "no", 2)) {
+          useChkSum = false;
+        }
       }
 
       // Update the size of file and its checksum if possible
       int rc = 0;
       if (useChkSum) {
-	rc = Cns_setfsizecs(0, &fileid, fileSize, csumtype.c_str(), csumvalue.c_str(), timeStamp, timeStamp);
+        rc = Cns_setfsizecs(0, &fileid, fileSize, csumtype.c_str(), csumvalue.c_str(), timeStamp, timeStamp);
       } else {
-	rc = Cns_setfsize(0, &fileid, fileSize, timeStamp, timeStamp);
+        rc = Cns_setfsize(0, &fileid, fileSize, timeStamp, timeStamp);
       }
 
       if (rc != 0) {
@@ -664,7 +668,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
             << (useChkSum == true ? "Cns_setfsizecs" : "Cns_setfsize")
             << " failed : ";
           if (!strcmp(cns_error_buffer, "")) {
-	  ex.getMessage() << sstrerror(serrno);
+          ex.getMessage() << sstrerror(serrno);
           } else {
             ex.getMessage() << cns_error_buffer;
           }
@@ -794,8 +798,8 @@ void castor::db::ora::OraJobSvc::firstByteWritten
       handleException(e);
       castor::exception::Internal ex;
       ex.getMessage()
-	<< "Error caught in firstByteWritten."
-	<< std::endl << e.what();
+        << "Error caught in firstByteWritten."
+        << std::endl << e.what();
       throw ex;
     }
   }

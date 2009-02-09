@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.669 $ $Date: 2008/11/26 10:46:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.670 $ $Date: 2009/02/09 18:58:24 $ $Author: itglp $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -515,27 +515,34 @@ END;
 
 /* PL/SQL method implementing disk2DiskCopyFailed */
 CREATE OR REPLACE PROCEDURE disk2DiskCopyFailed
-(dcId IN INTEGER, res OUT INTEGER) AS
+(dcId IN INTEGER, enoent IN INTEGER, res OUT INTEGER) AS
   fsId NUMBER;
   cfId NUMBER;
   ouid INTEGER;
   ogid INTEGER;
 BEGIN
-  -- Set the diskcopy status to INVALID so that it will be garbage collected
-  -- at a later date.
   fsId := 0;
   res := 0;
-  UPDATE DiskCopy SET status = 7 -- INVALID
-   WHERE status = 1 -- WAITDISK2DISKCOPY
-     AND id = dcId
-   RETURNING fileSystem, castorFile, owneruid, ownergid
-    INTO fsId, cfId, ouid, ogid;
+  IF enoent = 1 THEN
+    -- Set all diskcopies to FAILED. We're preemptying the NS synchronization here
+    UPDATE DiskCopy SET status = 4 -- FAILED
+     WHERE castorFile =
+       (SELECT castorFile FROM DiskCopy WHERE id = dcId); 
+  ELSE
+    -- Set the diskcopy status to INVALID so that it will be garbage collected
+    -- at a later date.
+    UPDATE DiskCopy SET status = 7 -- INVALID
+     WHERE status = 1 -- WAITDISK2DISKCOPY
+       AND id = dcId
+     RETURNING fileSystem, castorFile, owneruid, ownergid
+      INTO fsId, cfId, ouid, ogid;
+  END IF;
   -- Fail the corresponding subrequest
   UPDATE SubRequest SET status = 9, -- FAILED_FINISHED
          lastModificationTime = getTime()
    WHERE diskCopy = dcId
      AND status IN (6, 14) -- READY, BEINGSHCED
-   RETURNING id INTO res;
+  RETURNING id INTO res;
   IF res = 0 THEN
     -- Dont trigger replicateOnClose here as we may have been restarted
     RETURN;
@@ -557,8 +564,10 @@ BEGIN
   END IF;
   -- Trigger the creation of additional copies of the file, if necessary.
   -- Note: We do this also on failure to be able to recover from transient
-  -- errors. E.g timeouts while waiting to be scheduled.
-  replicateOnClose(cfId, ouid, ogid);
+  -- errors, e.g. timeouts while waiting to be scheduled, but we don't on ENOENT.
+  IF enoent = 0 THEN
+    replicateOnClose(cfId, ouid, ogid);
+  END IF;
 END;
 /
 
@@ -638,12 +647,12 @@ BEGIN
   -- Get uid, gid and svcclass from Request
   SELECT euid, egid, svcClass INTO userId, groupId, scId
     FROM SubRequest,
-      (SELECT euid, egid, id, svcClass from StagePutRequest UNION ALL
-       SELECT euid, egid, id, svcClass from StageUpdateRequest UNION ALL
-       SELECT euid, egid, id, svcClass from StagePutDoneRequest) Request
+      (SELECT euid, egid, id, svcClass FROM StagePutRequest UNION ALL
+       SELECT euid, egid, id, svcClass FROM StageUpdateRequest UNION ALL
+       SELECT euid, egid, id, svcClass FROM StagePutDoneRequest) Request
    WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
   -- Get the filesystem of the DiskCopy
-  SELECT fileSystem INTO fsId from DiskCopy
+  SELECT fileSystem INTO fsId FROM DiskCopy
    WHERE castorFile = cfId AND status = 6;
   IF contextPIPP != 0 THEN
     -- If not a put inside a PrepareToPut/Update, create TapeCopies

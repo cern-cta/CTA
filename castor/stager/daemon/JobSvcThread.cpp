@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.62 $ $Release$ $Date: 2008/11/12 12:49:02 $ $Author: waldron $
+ * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.63 $ $Release$ $Date: 2009/02/09 19:03:40 $ $Author: itglp $
  *
  * Service thread for job related requests
  *
@@ -256,7 +256,7 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyStartRequest
 	  {castor::dlf::Param("DiskCopyId", uReq->diskCopyId())};
 	castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_D2DCBAD,
 				fileId, nsHost, 1, params);
-	jobSvc->disk2DiskCopyFailed(uReq->diskCopyId(), fileId, nsHost);
+	jobSvc->disk2DiskCopyFailed(uReq->diskCopyId(), (e.code() == ENOENT));
       }
     } catch (castor::exception::Exception e) {
       // "Unexpected exception caught"
@@ -325,7 +325,7 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyDoneRequest
         {castor::dlf::Param("DiskCopyId", uReq->diskCopyId())};
       castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_D2DCBAD,
 			      fileId, nsHost, 1, params);
-      jobSvc->disk2DiskCopyFailed(uReq->diskCopyId(), fileId, nsHost);
+      jobSvc->disk2DiskCopyFailed(uReq->diskCopyId(), false);
     } else {
       // "Invoking disk2DiskCopyDone"
       castor::dlf::Param params[] =

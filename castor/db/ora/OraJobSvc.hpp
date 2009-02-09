@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.22 $ $Release$ $Date: 2009/01/05 15:53:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.23 $ $Release$ $Date: 2009/02/09 18:58:24 $ $Author: itglp $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -44,7 +44,7 @@ namespace castor {
        * Implementation of the IJobSvc for Oracle
        */
       class OraJobSvc : public OraCommonSvc,
-                       	public virtual castor::stager::IJobSvc {
+                        public virtual castor::stager::IJobSvc {
 
       public:
 
@@ -107,8 +107,8 @@ namespace castor {
          * @param fileSystem the selected FileSystem
          * @param emptyFile whether the resulting diskCopy
          * deals with the recall of an empty file
-	 * @param fileId the id of the castorFile
-	 * @param nsHost the name server hosting this castorFile
+         * @param fileId the id of the castorFile
+         * @param nsHost the name server hosting this castorFile
          * @return the DiskCopy to use for the data access or
          * a null pointer if the data access will have to wait
          * and there is nothing more to be done. Even in case
@@ -135,8 +135,8 @@ namespace castor {
          * responsability of the caller.
          * @param subreq the SubRequest to consider
          * @param fileSystem the selected FileSystem
-	 * @param fileId the id of the castorFile
-	 * @param nsHost the name server hosting this castorFile
+         * @param fileId the id of the castorFile
+         * @param nsHost the name server hosting this castorFile
          * @return the DiskCopy to use for the data access
          * @exception Exception in case of error
          */
@@ -160,10 +160,10 @@ namespace castor {
          * Changes are commited
          * @return diskCopy information about the destination DiskCopy
          * @return sourceDiskCopy information about the source DiskCopy
-	 * @param fileId the id of the castorFile
-	 * @param nsHost the name server hosting this castorFile
-	 * @param euid the uid of the user issuing the command
-	 * @param egid the gid of the user issuing the command
+         * @param fileId the id of the castorFile
+         * @param nsHost the name server hosting this castorFile
+         * @param euid the uid of the user issuing the command
+         * @param egid the gid of the user issuing the command
          * @exception Exception in case of error
          */
         virtual void disk2DiskCopyStart
@@ -185,9 +185,9 @@ namespace castor {
          * Changes are commited
          * @param diskcopyId the id of the new DiskCopy
          * @param sourceDiskCopyId the id of the source diskCopy
-	 * @param fileId the id of the castorFile
-	 * @param nsHost the name server hosting this castorFile
-	 * @exception Exception in case of error
+         * @param fileId the id of the castorFile
+         * @param nsHost the name server hosting this castorFile
+         * @exception Exception in case of error
          */
         virtual void disk2DiskCopyDone
         (u_signed64 diskCopyId,
@@ -200,14 +200,13 @@ namespace castor {
          * Updates database after a failure of a disk to disk copy.
          * Changes are commited
          * @param diskcopyId the id of the failed DiskCopy
-	 * @param fileId the id of the castorFile
-	 * @param nsHost the name server hosting this castorFile
+         * @param enoent flag set to 1 when the sourceDiskCopy did
+         * not exist, meaning that the process failed permanently
          * @exception Exception throws an Exception in case of error
          */
         virtual void disk2DiskCopyFailed
         (u_signed64 diskCopyId,
-         u_signed64 fileId,
-         const std::string nsHost)
+         bool enoent)
           throw (castor::exception::Exception);
 
         /**
@@ -224,11 +223,11 @@ namespace castor {
          * @param subreq The SubRequest handling the file to prepare
          * @param fileSize The actual size of the castor file
          * @param timeStamp To know if the fileSize is still valid
-	 * @param fileId the id of the castorFile
-	 * @param nsHost the name server hosting this castorFile
+         * @param fileId the id of the castorFile
+         * @param nsHost the name server hosting this castorFile
          * @param csumtype the checksum type of the castor file
          * @param csumvalue the checksum value of the castor file
-	 * @exception Exception in case of error
+         * @exception Exception in case of error
          */
 
         virtual void prepareForMigration
@@ -246,13 +245,13 @@ namespace castor {
          * The SubRequest and potentially the corresponding
          * Request will thus be removed from the DataBase
          * @param subReqId the id of the finished SubRequest
-	 * @param fileId the id of the castorFile
-	 * @param nsHost the name server hosting this castorFile
-	 * @exception Exception in case of error
-	 */
+         * @param fileId the id of the castorFile
+         * @param nsHost the name server hosting this castorFile
+         * @exception Exception in case of error
+         */
         virtual void getUpdateDone
-	(u_signed64 subReqId,
-	 u_signed64 fileId,
+        (u_signed64 subReqId,
+         u_signed64 fileId,
          const std::string nsHost)
           throw (castor::exception::Exception);
 
@@ -261,12 +260,12 @@ namespace castor {
          * (without write) failed.
          * The SubRequest's status will thus be set to FAILED
          * @param subReqId the id of the failing SubRequest
-	 * @param fileId the id of the castorFile
-	 * @param nsHost the name server hosting this castorFile
-	 * @exception Exception in case of error
+         * @param fileId the id of the castorFile
+         * @param nsHost the name server hosting this castorFile
+         * @exception Exception in case of error
          */
         virtual void getUpdateFailed
-	(u_signed64 subReqId,
+        (u_signed64 subReqId,
          u_signed64 fileId,
          const std::string nsHost)
           throw (castor::exception::Exception);
@@ -275,13 +274,13 @@ namespace castor {
          * Informs the stager the a Put SubRequest failed.
          * The SubRequest's status will thus be set to FAILED
          * @param subReqId the id of the failing SubRequest
-	 * @param fileId the id of the castorFile
-	 * @param nsHost the name server hosting this castorFile
-	 * @exception Exception in case of error
+         * @param fileId the id of the castorFile
+         * @param nsHost the name server hosting this castorFile
+         * @exception Exception in case of error
          */
         virtual void putFailed
-	(u_signed64 subReqId,
-	 u_signed64 fileId,
+        (u_signed64 subReqId,
+         u_signed64 fileId,
          const std::string nsHost)
           throw (castor::exception::Exception);
 
@@ -291,12 +290,12 @@ namespace castor {
          * be updated to STAGEOUT and the other diskcopies of the
          * CastorFile will be invalidated
          * @param subReqId the id of the SubRequest concerned
-	 * @param fileId the id of the castorFile
-	 * @param nsHost the name server hosting this castorFile
+         * @param fileId the id of the castorFile
+         * @param nsHost the name server hosting this castorFile
          * @exception Exception in case of error
          */
         virtual void firstByteWritten
-	(u_signed64 subRequestId,
+        (u_signed64 subRequestId,
          u_signed64 fileId,
          const std::string nsHost)
           throw (castor::exception::Exception);
