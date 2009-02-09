@@ -184,6 +184,21 @@ namespace aggregator {
       throw(castor::exception::Exception);
 
     /**
+     * Starts the transfer protocol with the tape gateway by carrying out the
+     * following steps in order:
+     * <ol>
+     * <li> Get request information from RTCPD.
+     * <li> Give request information to tape gateway and get volume information
+     * in return.
+     * <li> Give volume information to RTCPD.
+     * <li> Request more work from RTCPD.
+     * </ol>
+     */
+    void startGatewayProtocol(const Cuuid_t &cuuid,
+      const RcpJobRqstMsgBody &vdqmJobRequest, const int rtcpdInitialSocketFd)
+      throw(castor::exception::Exception);
+
+    /**
      * Coordinates the remote copy operations by sending and recieving the
      * necessary messages.
      *

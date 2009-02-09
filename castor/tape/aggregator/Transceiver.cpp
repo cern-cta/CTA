@@ -967,8 +967,8 @@ void castor::tape::aggregator::Transceiver::checkRtcopyReqType(
 void castor::tape::aggregator::Transceiver::tellGatewayToStartTransfer(
   const std::string gatewayhost, const unsigned short gatewayPort,
   const uint32_t volReqId, const char *const unit,  std::string &vid,
-  uint32_t &mode, int &errorCode, std::string &errorMsg)
-  throw(castor::exception::Exception) {
+  uint32_t &mode, std::string &label, std::string &density, int &errorCode,
+  std::string &errorMsg) throw(castor::exception::Exception) {
 
   tapegateway::StartTransferRequest request;
 
@@ -1004,6 +1004,8 @@ void castor::tape::aggregator::Transceiver::tellGatewayToStartTransfer(
 
   vid       = response->vid();
   mode      = response->mode();
+  label     = response->label();
+  density   = response->density();
   errorCode = response->errorCode();
   errorMsg  = response->errorMessage();
 }
