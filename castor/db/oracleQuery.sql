@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.652 $ $Date: 2009/01/22 07:18:55 $ $Author: waldron $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.653 $ $Date: 2009/02/09 18:46:33 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -118,7 +118,7 @@ END;
 
 
 /*
- * PL/SQL method implementing the stager_qry based on file name
+ * PL/SQL method implementing the stager_qry based on file name for directories
  */
 CREATE OR REPLACE PROCEDURE fileNameStageQuery
  (fn IN VARCHAR2,
@@ -131,34 +131,27 @@ BEGIN
     SELECT /*+ INDEX(DiskPool2SvcClass I_DiskPool2SvcClass_C) */ CastorFile.id
       BULK COLLECT INTO cfIds
       FROM DiskCopy, FileSystem, DiskPool2SvcClass, CastorFile
-     WHERE CastorFile.lastKnownFileName LIKE fn||'%'
+     WHERE CastorFile.lastKnownFileName LIKE normalizePath(fn)||'%'
        AND DiskCopy.castorFile = CastorFile.id
        AND DiskCopy.fileSystem = FileSystem.id
        AND FileSystem.diskPool = DiskPool2SvcClass.parent
        AND (DiskPool2SvcClass.child = svcClassId OR svcClassId = 0)
        AND ROWNUM <= maxNbResponses + 1;
-  ELSE  -- exact match
-    SELECT /*+ INDEX(DiskPool2SvcClass I_DiskPool2SvcClass_C) */ CastorFile.id
-      BULK COLLECT INTO cfIds
-      FROM DiskCopy, FileSystem, DiskPool2SvcClass, CastorFile
-     WHERE CastorFile.lastKnownFileName = canonicalizePath(fn)
-       AND DiskCopy.castorFile = CastorFile.id
-       AND DiskCopy.fileSystem = FileSystem.id
-       AND FileSystem.diskPool = DiskPool2SvcClass.parent
-       AND (DiskPool2SvcClass.child = svcClassId OR svcClassId = 0)
-       AND ROWNUM <= maxNbResponses + 1;
+  -- ELSE exact match, not implemented here any longer but in fileIdStageQuery 
   END IF;
   IF cfIds.COUNT > maxNbResponses THEN
     -- We have too many rows, we just give up
     raise_application_error(-20102, 'Too many matching files');
   END IF;
-  internalStageQuery(cfIds, svcClassId, result);
+  IF cfIds.COUNT > 0 THEN
+    internalStageQuery(cfIds, svcClassId, result);
+  END IF;
 END;
 /
 
 
 /*
- * PL/SQL method implementing the stager_qry based on file id
+ * PL/SQL method implementing the stager_qry based on file id or single filename
  */
 CREATE OR REPLACE PROCEDURE fileIdStageQuery
  (fid IN NUMBER,
@@ -349,6 +342,22 @@ BEGIN
 END;
 /
 
+/* Internal function used by describeDiskPool[s] to return free available
+ * space, i.e. the free space on PRODUCTION status resources */
+CREATE OR REPLACE FUNCTION getAvailFreeSpace(status IN NUMBER, freeSpace IN NUMBER) RETURN NUMBER IS
+BEGIN
+  IF status > 0 THEN
+    -- anything but PRODUCTION == 0 means no space
+    RETURN 0;
+  END IF;
+  IF freeSpace < 0 THEN
+    -- over used filesystems may report negative numbers, just cut to 0
+    RETURN 0;
+  ELSE
+    RETURN freeSpace;
+  END IF;
+END;
+/
 
 /*
  * PL/SQL method implementing the diskPoolQuery when listing pools
@@ -364,11 +373,10 @@ BEGIN
   IF svcClassName IS NULL THEN
     OPEN result FOR
       SELECT grouping(ds.name) AS IsDSGrouped,
-            grouping(fs.mountPoint) AS IsFSGrouped,
-              dp.name,
-             ds.name, ds.status, fs.mountPoint,
-             sum(decode(sign(fs.free - fs.minAllowedFreeSpace * fs.totalSize), -1, 0,
-	         fs.free - fs.minAllowedFreeSpace * fs.totalSize)) AS freeSpace,
+             grouping(fs.mountPoint) AS IsFSGrouped,
+             dp.name, ds.name, ds.status, fs.mountPoint,
+             sum(getAvailFreeSpace(fs.status + ds.status,
+                   fs.free - fs.minAllowedFreeSpace * fs.totalSize)) AS freeSpace,
              sum(fs.totalSize),
              fs.minFreeSpace, fs.maxFreeSpace, fs.status
         FROM FileSystem fs, DiskServer ds, DiskPool dp
@@ -376,8 +384,8 @@ BEGIN
          AND ds.id = fs.diskServer
          GROUP BY grouping sets(
              (dp.name, ds.name, ds.status, fs.mountPoint,
-               decode(sign(fs.free - fs.minAllowedFreeSpace * fs.totalSize), -1, 0,
-	         fs.free - fs.minAllowedFreeSpace * fs.totalSize),
+               getAvailFreeSpace(fs.status + ds.status,
+                 fs.free - fs.minAllowedFreeSpace * fs.totalSize),
                fs.totalSize,
                fs.minFreeSpace, fs.maxFreeSpace, fs.status),
              (dp.name, ds.name, ds.status),
@@ -388,10 +396,9 @@ BEGIN
     OPEN result FOR
       SELECT grouping(ds.name) AS IsDSGrouped,
              grouping(fs.mountPoint) AS IsFSGrouped,
-              dp.name,
-             ds.name, ds.status, fs.mountPoint,
-             sum(decode(sign(fs.free - fs.minAllowedFreeSpace * fs.totalSize), -1, 0,
-  	       fs.free - fs.minAllowedFreeSpace * fs.totalSize)) AS freeSpace,
+             dp.name, ds.name, ds.status, fs.mountPoint,
+             sum(getAvailFreeSpace(fs.status + ds.status,
+                 fs.free - fs.minAllowedFreeSpace * fs.totalSize)) AS freeSpace,
              sum(fs.totalSize),
              fs.minFreeSpace, fs.maxFreeSpace, fs.status
         FROM FileSystem fs, DiskServer ds, DiskPool dp,
@@ -404,8 +411,8 @@ BEGIN
          AND ds.id = fs.diskServer
          GROUP BY grouping sets(
              (dp.name, ds.name, ds.status, fs.mountPoint,
-               decode(sign(fs.free - fs.minAllowedFreeSpace * fs.totalSize), -1, 0,
-	         fs.free - fs.minAllowedFreeSpace * fs.totalSize),
+               getAvailFreeSpace(fs.status + ds.status,
+                 fs.free - fs.minAllowedFreeSpace * fs.totalSize),
                fs.totalSize,
                fs.minFreeSpace, fs.maxFreeSpace, fs.status),
              (dp.name, ds.name, ds.status),
@@ -446,7 +453,8 @@ BEGIN
       SELECT grouping(ds.name) AS IsDSGrouped,
              grouping(fs.mountPoint) AS IsGrouped,
              ds.name, ds.status, fs.mountPoint,
-             sum(fs.free - fs.minAllowedFreeSpace * fs.totalSize) AS freeSpace,
+             sum(getAvailFreeSpace(fs.status + ds.status,
+                 fs.free - fs.minAllowedFreeSpace * fs.totalSize)) AS freeSpace,
              sum(fs.totalSize),
              fs.minFreeSpace, fs.maxFreeSpace, fs.status
         FROM FileSystem fs, DiskServer ds, DiskPool dp
@@ -455,7 +463,8 @@ BEGIN
          AND dp.name = diskPoolName
          GROUP BY grouping sets(
              (ds.name, ds.status, fs.mountPoint,
-               fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+               getAvailFreeSpace(fs.status + ds.status,
+                 fs.free - fs.minAllowedFreeSpace * fs.totalSize),
                fs.totalSize,
                fs.minFreeSpace, fs.maxFreeSpace, fs.status),
              (ds.name, ds.status),
@@ -467,7 +476,8 @@ BEGIN
       SELECT grouping(ds.name) AS IsDSGrouped,
              grouping(fs.mountPoint) AS IsGrouped,
              ds.name, ds.status, fs.mountPoint,
-             sum(fs.free - fs.minAllowedFreeSpace * fs.totalSize) AS freeSpace,
+             sum(getAvailFreeSpace(fs.status + ds.status,
+                 fs.free - fs.minAllowedFreeSpace * fs.totalSize)) AS freeSpace,
              sum(fs.totalSize),
              fs.minFreeSpace, fs.maxFreeSpace, fs.status
         FROM FileSystem fs, DiskServer ds, DiskPool dp,
@@ -480,7 +490,8 @@ BEGIN
          AND dp.name = diskPoolName
          GROUP BY grouping sets(
              (ds.name, ds.status, fs.mountPoint,
-               fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+               getAvailFreeSpace(fs.status + ds.status,
+                 fs.free - fs.minAllowedFreeSpace * fs.totalSize),
                fs.totalSize,
                fs.minFreeSpace, fs.maxFreeSpace, fs.status),
              (ds.name, ds.status),
