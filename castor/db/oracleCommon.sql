@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.691 $ $Date: 2009/02/05 18:03:27 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.692 $ $Date: 2009/02/09 18:49:01 $ $Author: itglp $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -165,7 +165,6 @@ CREATE INDEX I_StageRepackRequest_ReqId ON StageRepackRequest (reqId);
 /* A primary key index for better scan of Stream2TapeCopy */
 CREATE UNIQUE INDEX I_PK_Stream2TapeCopy ON Stream2TapeCopy (parent, child);
 
-/* Some index on the GCFile table to speed up garbage collection */
 CREATE INDEX I_GCFile_Request ON GCFile (request);
 
 /* Indexing Segments by Tape */
@@ -304,7 +303,7 @@ ALTER TABLE PriorityMap ADD CONSTRAINT UN_Priority_euid_egid UNIQUE (euid, egid)
 /*
  * Black and while list mechanism
  * In order to be able to enter a request for a given service class, you need :
- *     - to be in the white list for this service class
+ *   - to be in the white list for this service class
  *   - to not be in the black list for this services class
  * Being in a list means :
  *   - either that your uid,gid is explicitely in the list
@@ -530,6 +529,7 @@ BEGIN
 END;
 /
 
+
 /* Generate a universally unique id (UUID) */
 CREATE OR REPLACE FUNCTION uuidGen RETURN VARCHAR2 IS
   ret VARCHAR2(36);
@@ -541,8 +541,9 @@ BEGIN
 END;
 /
 
+
 /* Function to check if a service class exists by name. This function can return
- * a boolean value or raise an application error if the named service class does
+ * the id of the named service class or raise an application error if it does
  * not exist.
  * @param svcClasName The name of the service class (Note: can be NULL)
  * @param allowNull   Flag to indicate whether NULL or '' service class names are
@@ -557,25 +558,32 @@ CREATE OR REPLACE FUNCTION checkForValidSvcClass
 BEGIN
   -- Check if the service class name is allowed to be NULL. This is quite often
   -- the case if the calling function supports '*' (null) to indicate that all
-  -- service classes are being targeted.
+  -- service classes are being targeted. Nevertheless, in such a case we
+  -- return the id of the default one.
   IF svcClassName IS NULL OR length(svcClassName) IS NULL THEN
     IF allowNull = 1 THEN
-      RETURN 1;
+      SELECT id INTO ret FROM SvcClass WHERE name = 'default';
+      RETURN ret;
     END IF;
   END IF;
-  -- Check to see if service class exists by name
-  SELECT count(*) INTO ret FROM SvcClass WHERE name = svcClassName;
-  -- If permitted to do so raise an application error if the service class does
-  -- not exist
-  IF raiseError = 1 AND ret = 0 THEN
-    raise_application_error(-20113, 'Invalid service class');
-  END IF;
-  RETURN ret;
+  -- Check to see if service class exists by name and return its id
+  BEGIN
+    SELECT id INTO ret FROM SvcClass WHERE name = svcClassName;
+    RETURN ret;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- If permitted to do so raise an application error if the service class does
+    -- not exist
+    IF raiseError = 1 THEN
+      raise_application_error(-20113, 'Invalid service class');
+    END IF;
+    RETURN 0;
+  END;
 END;
 /
 
+
 /* Function to return a comma separate list of service classes that a
- * filesystem belongs too.
+ * filesystem belongs to.
  */
 CREATE OR REPLACE FUNCTION getSvcClassList(fsId NUMBER) RETURN VARCHAR2 IS
   svcClassList VARCHAR2(4000) := NULL;
@@ -599,6 +607,7 @@ BEGIN
 END;
 /
 
+
 /* Function to extract a configuration option from the castor config
  * table.
  */
@@ -618,8 +627,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
-/* Function to canonicalize a filepath, i.e. to drop multiple '/'s and resolve any '..' */
-CREATE OR REPLACE FUNCTION canonicalizePath(path IN VARCHAR2) RETURN VARCHAR2 IS
+/* Function to normalize a filepath, i.e. to drop multiple '/'s and resolve any '..' */
+CREATE OR REPLACE FUNCTION normalizePath(path IN VARCHAR2) RETURN VARCHAR2 IS
   buf VARCHAR2(2048);
   ret VARCHAR2(2048);
 BEGIN
@@ -698,6 +707,7 @@ BEGIN
   END LOOP;
 END;
 /
+
 
 /* PL/SQL method to delete a CastorFile only when no Disk|TapeCopies are left for it */
 /* Internally used in filesDeletedProc, putFailedProc and deleteOutOfDateDiskCopies */
