@@ -1,20 +1,31 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.710 $ $Date: 2009/02/09 10:31:34 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.711 $ $Date: 2009/02/09 15:33:32 $ $Author: itglp $
  *
  * PL/SQL code for the interface to the tape system
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
+/************************************************/
+/* Triggers to keep NbTapeCopiesInFS consistent */
+/************************************************/
+ 
 /* Used to create a row INTO NbTapeCopiesInFS whenever a new
    Stream is created */
 CREATE OR REPLACE TRIGGER tr_Stream_Insert
 BEFORE INSERT ON Stream
 FOR EACH ROW
 BEGIN
+  -- Access to NbTapeCopiesInFS needs to be serialized
+  -- because several copies on different file systems
+  -- from different streams can cause deadlocks, in particular
+  -- between different migrators running bestTapeCopyForStream
+  -- or between a migrator and rtcpclientd running resetStream
+  LOCK TABLE NbTapeCopiesInFS IN EXCLUSIVE MODE;
   FOR item in (SELECT id FROM FileSystem) LOOP
-    INSERT INTO NbTapeCopiesInFS (FS, Stream, NbTapeCopies) VALUES (item.id, :new.id, 0);
+    INSERT INTO NbTapeCopiesInFS (FS, Stream, NbTapeCopies)
+      VALUES (item.id, :new.id, 0);
   END LOOP;
 END;
 /
@@ -26,9 +37,8 @@ CREATE OR REPLACE TRIGGER tr_Stream_Delete
 BEFORE DELETE ON Stream
 FOR EACH ROW
 BEGIN
-  -- Access to NbTapeCopiesInFS needs to be serialized
-  -- because of several copies of different file systems
-  -- from different streams which can cause deadlock
+  -- Access to NbTapeCopiesInFS needs to be serialized,
+  -- see tr_Stream_Insert
   LOCK TABLE NbTapeCopiesInFS IN EXCLUSIVE MODE;
   DELETE FROM NbTapeCopiesInFS WHERE Stream = :old.id;
 END;
@@ -38,15 +48,14 @@ END;
 /* Updates the count of tapecopies in NbTapeCopiesInFS
    whenever a TapeCopy is linked to a Stream */
 CREATE OR REPLACE TRIGGER tr_Stream2TapeCopy_Insert
-AFTER INSERT ON STREAM2TAPECOPY
+AFTER INSERT ON Stream2TapeCopy
 REFERENCING NEW AS NEW OLD AS OLD
 FOR EACH ROW
 DECLARE
   cfSize NUMBER;
 BEGIN
-  -- Access to NbTapeCopiesInFS needs to be serialized
-  -- because of several copies of different file systems
-  -- from different streams which can cause deadlock
+  -- Access to NbTapeCopiesInFS needs to be serialized,
+  -- see tr_Stream_Insert
   LOCK TABLE NbTapeCopiesInFS IN EXCLUSIVE MODE;
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
    WHERE FS IN (SELECT DiskCopy.fileSystem
@@ -62,14 +71,13 @@ END;
 /* Updates the count of tapecopies in NbTapeCopiesInFS
    whenever a TapeCopy is unlinked from a Stream */
 CREATE OR REPLACE TRIGGER tr_Stream2TapeCopy_Delete
-BEFORE DELETE ON STREAM2TAPECOPY
+BEFORE DELETE ON Stream2TapeCopy
 REFERENCING NEW AS NEW OLD AS OLD
 FOR EACH ROW
 DECLARE cfSize NUMBER;
 BEGIN
-  -- Access to NbTapeCopiesInFS needs to be serialized
-  -- because of several copies of different file systems
-  -- from different streams which can cause deadlock
+  -- Access to NbTapeCopiesInFS needs to be serialized,
+  -- see tr_Stream_Insert
   LOCK TABLE NbTapeCopiesInFS IN EXCLUSIVE MODE;
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies - 1
    WHERE FS IN (SELECT DiskCopy.fileSystem
@@ -80,10 +88,6 @@ BEGIN
      AND Stream = :old.parent;
 END;
 /
-
-/************************************************/
-/* Triggers to keep NbTapeCopiesInFS consistent */
-/************************************************/
 
 /* Used to create a row in NbTapeCopiesInFS and FileSystemsToCheck
    whenever a new FileSystem is created */
@@ -114,14 +118,14 @@ END;
    is put into CANBEMIGR status from the
    WAITDISK2DISKCOPY status */
 CREATE OR REPLACE TRIGGER tr_DiskCopy_Update
-AFTER UPDATE of status ON DiskCopy
+AFTER UPDATE OF status ON DiskCopy
 FOR EACH ROW
 WHEN (old.status = 1 AND -- WAITDISK2DISKCOPY
       new.status = 10) -- CANBEMIGR
 BEGIN
-  -- added this lock because of severval copies on different file systems
-  -- from different streams which can cause deadlock
-  LOCK TABLE  NbTapeCopiesInFS IN ROW SHARE MODE;
+  -- Access to NbTapeCopiesInFS needs to be serialized,
+  -- see tr_Stream_Insert
+  LOCK TABLE NbTapeCopiesInFS IN EXCLUSIVE MODE;
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
    WHERE FS = :new.fileSystem
      AND Stream IN (SELECT Stream2TapeCopy.parent
@@ -143,7 +147,6 @@ BEGIN
 END;
 /
 
-
 /* Used to delete rows IN LockTable whenever a
    DiskServer is deleted */
 CREATE OR REPLACE TRIGGER tr_DiskServer_Delete
@@ -153,7 +156,6 @@ BEGIN
   DELETE FROM LockTable WHERE DiskServerId = :old.id;
 END;
 /
-
 
 
 /* PL/SQL methods to update FileSystem weight for new migrator streams */
@@ -218,7 +220,6 @@ EXCEPTION
   res := 0;
 END;
 /
-
 
 /* PL/SQL method implementing bestTapeCopyForStream */
 CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
@@ -369,32 +370,28 @@ BEGIN
       FROM CastorFile
      WHERE id = castorFileId;
   END IF;
+  -- detach the tapecopy from the stream now that it is SELECTED;
+  -- the triggers will update NbTapeCopiesInFS accordingly, and
+  -- they will prevent deadlocks by taking a table lock on NbTapeCopiesInFS
+  DELETE FROM Stream2TapeCopy
+   WHERE child = tapeCopyId;
+
   -- update status of selected tapecopy and stream
   UPDATE TapeCopy SET status = 3 -- SELECTED
    WHERE id = tapeCopyId;
-  -- get locks on all the streams we will handle in order to avoid a
-  -- deadlock with the attachTapeCopiesToStreams procedure
-  --
-  -- the deadlock would occur with updates to the NbTapeCopiesInFS
-  -- table performed by the tr_stream2tapecopy_delete trigger triggered
-  -- by the "DELETE FROM Stream2TapeCopy" statement below
-  SELECT 1 BULK COLLECT INTO unused
-    FROM Stream, Stream2TapeCopy S2TC
-   WHERE S2TC.parent = Stream.id AND S2TC.child = tapeCopyId
-   ORDER BY Stream.id
-     FOR UPDATE OF Stream.id;
-  UPDATE Stream
-     SET status = 3, -- RUNNING
-         lastFileSystemUsed = fileSystemId, lastButOneFileSystemUsed = lastFileSystemUsed
-   WHERE id = streamId AND status IN (2,3);
   IF findNewFS = 1 THEN
-    -- time only if we changed FS
-    UPDATE Stream SET lastFileSystemChange = getTime() WHERE id = streamId;
+    UPDATE Stream
+       SET status = 3, -- RUNNING
+           lastFileSystemUsed = fileSystemId,
+           lastButOneFileSystemUsed = lastFileSystemUsed,
+           lastFileSystemChange = getTime()
+     WHERE id = streamId AND status IN (2,3);
+  ELSE
+    -- only update status
+    UPDATE Stream
+       SET status = 3 -- RUNNING
+     WHERE id = streamId AND status IN (2,3);
   END IF;
-  -- detach the tapecopy from the stream now that it is SELECTED
-  -- the triggers will update NbTapeCopiesInFS accordingly
-  DELETE FROM Stream2TapeCopy
-   WHERE child = tapeCopyId;
 
   -- Update Filesystem state
   updateFSMigratorOpened(fsDiskServer, fileSystemId, 0);
@@ -573,33 +570,28 @@ BEGIN
      WHERE P.castorfile = C.id;
 
   END IF;
+  -- detach the tapecopy from the stream now that it is SELECTED;
+  -- the triggers will update NbTapeCopiesInFS accordingly, and
+  -- they will prevent deadlocks by taking a table lock on NbTapeCopiesInFS
+  DELETE FROM Stream2TapeCopy
+   WHERE child = tapeCopyId;
+
   -- update status of selected tapecopy and stream
   UPDATE TapeCopy SET status = 3 -- SELECTED
    WHERE id = tapeCopyId;
-  -- get locks on all the stream we will handle in order to avoid a
-  -- deadlock with the attachTapeCopiesToStreams procedure
-  --
-  -- the deadlock would occur with updates to the NbTapeCopiesInFS
-  -- table performed by the tr_stream2tapecopy_delete trigger triggered
-  -- by the "DELETE FROM Stream2TapeCopy" statement below
-  SELECT 1
-    BULK COLLECT INTO unused
-    FROM Stream
-    WHERE id IN (SELECT parent FROM Stream2TapeCopy WHERE child = tapeCopyId)
-    ORDER BY id
-    FOR UPDATE;
-  UPDATE Stream
-     SET status = 3, -- RUNNING
-         lastFileSystemUsed = fileSystemId, lastButOneFileSystemUsed = dsid
-   WHERE id = streamId AND status IN (2,3);
   IF findNewFS = 1 THEN
-    -- time only if we changed FS
-    UPDATE Stream SET lastFileSystemChange = getTime() WHERE id = streamId;
+    UPDATE Stream
+       SET status = 3, -- RUNNING
+           lastFileSystemUsed = fileSystemId,
+           lastButOneFileSystemUsed = lastFileSystemUsed,
+           lastFileSystemChange = getTime()
+     WHERE id = streamId AND status IN (2,3);
+  ELSE
+    -- only update status
+    UPDATE Stream
+       SET status = 3 -- RUNNING
+     WHERE id = streamId AND status IN (2,3);
   END IF;
-  -- detach the tapecopy from the stream now that it is SELECTED
-  -- the triggers will update NbTapeCopiesInFS accordingly
-  DELETE FROM Stream2TapeCopy
-   WHERE child = tapeCopyId;
 
   -- Update Filesystem state
   updateFSMigratorOpened(fsDiskServer, fileSystemId, 0);
@@ -648,7 +640,7 @@ CREATE OR REPLACE PROCEDURE repackMigrSelPolicy(streamId IN INTEGER,
   lastFSUsed NUMBER;
   lastButOneFSUsed NUMBER;
   nbMigrators NUMBER := 0;
-  unused "numList";
+  streamIds "numList";
 BEGIN
   -- We lock here a given DiskServer. See the comment for the creation of the LockTable
   -- table for a full explanation of why we need such a stupid UPDATE statement
@@ -715,31 +707,22 @@ BEGIN
     INTO fileId, nsHost, fileSize, lastUpdateTime
     FROM CastorFile
    WHERE id = castorFileId;
+
+  -- detach the tapecopy from the stream now that it is SELECTED;
+  -- the triggers will update NbTapeCopiesInFS accordingly, and
+  -- they will prevent deadlocks by taking a table lock on NbTapeCopiesInFS
+  DELETE FROM Stream2TapeCopy
+   WHERE child = tapeCopyId;
+
   -- update status of selected tapecopy and stream
   UPDATE TapeCopy SET status = 3 -- SELECTED
    WHERE id = tapeCopyId;
-  -- get locks on all the stream we will handle in order to avoid a
-  -- deadlock with the attachTapeCopiesToStreams procedure
-  --
-  -- the deadlock would occur with updates to the NbTapeCopiesInFS
-  -- table performed by the tr_stream2tapecopy_delete trigger triggered
-  -- by the "DELETE FROM Stream2TapeCopy" statement below
-  SELECT 1 BULK COLLECT
-    INTO unused
-    FROM Stream
-    WHERE id IN (SELECT parent FROM Stream2TapeCopy WHERE child = tapeCopyId)
-    ORDER BY id
-    FOR UPDATE;
   UPDATE Stream
      SET status = 3, -- RUNNING
-         lastFileSystemUsed = fileSystemId, lastButOneFileSystemUsed = lastFileSystemUsed
+         lastFileSystemUsed = fileSystemId,
+         lastButOneFileSystemUsed = lastFileSystemUsed,
+         lastFileSystemChange = getTime()
    WHERE id = streamId AND status IN (2,3);
-  -- time only if we changed FS
-  UPDATE Stream SET lastFileSystemChange = getTime() WHERE id = streamId;
-  -- detach the tapecopy from the stream now that it is SELECTED
-  -- the triggers will update NbTapeCopiesInFS accordingly
-  DELETE FROM Stream2TapeCopy
-   WHERE child = tapeCopyId;
 
   -- Update Filesystem state
   updateFSMigratorOpened(fsDiskServer, fileSystemId, 0);
@@ -1008,12 +991,12 @@ create or replace PROCEDURE resetStream (sid IN INTEGER) AS
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -02292);
 BEGIN  
    DELETE FROM Stream WHERE id = sid;
-   DELETE FROM id2type WHERE id=sid;
-   UPDATE Tape SET status=0, Stream = null WHERE Stream = sid;
+   DELETE FROM Id2Type WHERE id = sid;
+   UPDATE Tape SET status = 0, stream = null WHERE stream = sid;
 EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
   -- constraint violation and we cannot delete the stream
   UPDATE Stream SET status = 6, tape = null, lastFileSystemChange = null WHERE id = sid; 
-  UPDATE Tape SET status=0, Stream = null WHERE Stream = sid;
+  UPDATE Tape SET status = 0, stream = null WHERE stream = sid;
 END;
 /
 
