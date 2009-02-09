@@ -33,6 +33,7 @@
 #include "castor/tape/aggregator/RtcpAcknowledgeMsg.hpp"
 #include "castor/tape/aggregator/RtcpTapeRqstErrMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstErrMsgBody.hpp"
+#include "castor/tape/aggregator/SmartFd.hpp"
 #include "castor/tape/aggregator/Transceiver.hpp"
 #include "castor/tape/aggregator/Utils.hpp"
 #include "castor/tape/aggregator/VdqmRequestHandlerThread.hpp"
@@ -795,40 +796,18 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::run(void *param)
 
   // Put the VDQM connection socket within an auto pointer.  When the auto
   // pointer goes out of scope it will delete the socket.  The destructor of
-  // the socket will in turn close connection.
+  // the socket will in turn close the connection.
   std::auto_ptr<castor::io::AbstractTCPSocket>
     vdqmSocket((castor::io::AbstractTCPSocket*)param);
 
   try {
-    int rtcpdCallbackSocketFd = 0;
+    // Create, bind and mark a listen socket for RTCPD callback connections
+    SmartFd rtcpdCallbackSocketFd(Net::createListenerSocket(0));
 
-    try {
-      // Create, bind and mark a listen socket for RTCPD callback connections
-      rtcpdCallbackSocketFd = Net::createListenerSocket(0);
-    } catch(castor::exception::Exception &ex) {
-      castor::exception::Exception e2(ex.code());
-
-      e2.getMessage() << __PRETTY_FUNCTION__
-        << ": Failed to create RTCPD callback listen socket"
-           ": " << ex.getMessage();
-
-      throw e2;
-    }
-
-    bool processedJobSubmissionRequest = false;
     RcpJobRqstMsgBody vdqmJobRequest;
 
-    try  {
-      processJobSubmissionRequest(cuuid, vdqmSocket->socket(), vdqmJobRequest,
-        rtcpdCallbackSocketFd);
-      processedJobSubmissionRequest = true;
-    } catch(castor::exception::Exception &ex) {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("Message" , ex.getMessage().str()),
-        castor::dlf::Param("Code"    , ex.code())};
-      CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_FAILED_TO_PROCESS_RCP_JOB_SUBMISSION, params);
-    }
+    processJobSubmissionRequest(cuuid, vdqmSocket->socket(), vdqmJobRequest,
+      rtcpdCallbackSocketFd.get());
 
     // Close the connection to the VDQM
     //
@@ -837,22 +816,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::run(void *param)
     // and close the connection a second time
     delete(vdqmSocket.release());
 
-    // CoordinateRemoteCopy
-    if(processedJobSubmissionRequest) {
-      try {
-        coordinateRemoteCopy(cuuid, vdqmJobRequest, rtcpdCallbackSocketFd);
-      } catch(castor::exception::Exception &ex) {
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId),
-          castor::dlf::Param("Message" , ex.getMessage().str()       ),
-          castor::dlf::Param("Code"    , ex.code()                   )};
-        CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
-          AGGREGATOR_FAILED_TO_COORDINATE_REMOTE_COPY, params);
-      }
-    }
-
-    // Close the RTCPD callback listen socket
-    close(rtcpdCallbackSocketFd);
+    coordinateRemoteCopy(cuuid, vdqmJobRequest, rtcpdCallbackSocketFd.get());
 
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {

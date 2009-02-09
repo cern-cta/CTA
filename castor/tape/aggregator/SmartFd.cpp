@@ -56,11 +56,12 @@ castor::tape::aggregator::SmartFd::~SmartFd() {
 int castor::tape::aggregator::SmartFd::get()
   throw(castor::exception::Exception) {
 
-  // If the smart file descriptor no longer owns a basic file descriptor
+  // If the smart file descriptor does not own a basic file descriptor
   if(m_fileDescriptor < 0) {
     castor::exception::Exception ex(EPERM);
 
-    ex.getMessage() << "It is not permitted to call get() after release()";
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Smart file descriptor does not own a basic file descriptor";
 
     throw ex;
   }
@@ -75,11 +76,12 @@ int castor::tape::aggregator::SmartFd::get()
 int castor::tape::aggregator::SmartFd::release()
   throw(castor::exception::Exception) {
 
-  // If the smart file descriptor no longer owns a basic file descriptor
+  // If the smart file descriptor does not own a basic file descriptor
   if(m_fileDescriptor < 0) {
     castor::exception::Exception ex(EPERM);
 
-    ex.getMessage() << "It is not permitted to call release more than once";
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Smart file descriptor does not own a basic file descriptor";
 
     throw ex;
   }
