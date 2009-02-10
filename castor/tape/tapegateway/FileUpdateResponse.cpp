@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileUpdateResponse.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/02/09 13:31:16 $ $Author: gtaur $
+ * @(#)$RCSfile: FileUpdateResponse.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/02/10 16:04:22 $ $Author: gtaur $
  *
  * 
  *
@@ -51,6 +51,10 @@ castor::tape::tapegateway::FileUpdateResponse::FileUpdateResponse() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::FileUpdateResponse::~FileUpdateResponse() throw() {
+  if (0 != m_nsFileInformation) {
+    delete m_nsFileInformation;
+    m_nsFileInformation = 0;
+  }
 }
 
 //------------------------------------------------------------------------------

@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileToRecallResponse.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/02/09 13:31:16 $ $Author: gtaur $
+ * @(#)$RCSfile: FileToRecallResponse.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/02/10 16:04:22 $ $Author: gtaur $
  *
  * 
  *
@@ -50,16 +50,20 @@ castor::tape::tapegateway::FileToRecallResponse::FileToRecallResponse() throw() 
   m_concat(false),
   m_deferedAllocation(false),
   m_id(0),
-  m_nsFileInformation(0),
   m_positionCommandCode(PositionCommandCode(0)),
   m_convertCommandCode(ConvertCommandCode(0)),
-  m_recordFormatCode(RecordFormatCode(0)) {
+  m_recordFormatCode(RecordFormatCode(0)),
+  m_nsFileInformation(0) {
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::FileToRecallResponse::~FileToRecallResponse() throw() {
+  if (0 != m_nsFileInformation) {
+    delete m_nsFileInformation;
+    m_nsFileInformation = 0;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -83,15 +87,15 @@ void castor::tape::tapegateway::FileToRecallResponse::print(std::ostream& stream
   stream << indent << "deferedAllocation : " << (m_deferedAllocation ? "Yes" : "No") << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "positionCommandCode : " << PositionCommandCodeStrings[m_positionCommandCode] << std::endl;
+  stream << indent << "convertCommandCode : " << ConvertCommandCodeStrings[m_convertCommandCode] << std::endl;
+  stream << indent << "recordFormatCode : " << RecordFormatCodeStrings[m_recordFormatCode] << std::endl;
   stream << indent << "NsFileInformation : " << std::endl;
   if (0 != m_nsFileInformation) {
     m_nsFileInformation->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
   }
-  stream << indent << "positionCommandCode : " << PositionCommandCodeStrings[m_positionCommandCode] << std::endl;
-  stream << indent << "convertCommandCode : " << ConvertCommandCodeStrings[m_convertCommandCode] << std::endl;
-  stream << indent << "recordFormatCode : " << RecordFormatCodeStrings[m_recordFormatCode] << std::endl;
 }
 
 //------------------------------------------------------------------------------

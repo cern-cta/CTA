@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileRecalledResponse.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/02/09 13:31:16 $ $Author: gtaur $
+ * @(#)$RCSfile: FileRecalledResponse.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/02/10 16:04:22 $ $Author: gtaur $
  *
  * 
  *
@@ -45,14 +45,18 @@ castor::tape::tapegateway::FileRecalledResponse::FileRecalledResponse() throw() 
   m_errorMessage(""),
   m_transactionId(0),
   m_id(0),
-  m_nsFileInformation(0),
-  m_positionCommandCode(PositionCommandCode(0)) {
+  m_positionCommandCode(PositionCommandCode(0)),
+  m_nsFileInformation(0) {
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::FileRecalledResponse::~FileRecalledResponse() throw() {
+  if (0 != m_nsFileInformation) {
+    delete m_nsFileInformation;
+    m_nsFileInformation = 0;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -73,13 +77,13 @@ void castor::tape::tapegateway::FileRecalledResponse::print(std::ostream& stream
   stream << indent << "transactionId : " << m_transactionId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "positionCommandCode : " << PositionCommandCodeStrings[m_positionCommandCode] << std::endl;
   stream << indent << "NsFileInformation : " << std::endl;
   if (0 != m_nsFileInformation) {
     m_nsFileInformation->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
   }
-  stream << indent << "positionCommandCode : " << PositionCommandCodeStrings[m_positionCommandCode] << std::endl;
 }
 
 //------------------------------------------------------------------------------

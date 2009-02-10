@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileRecalledResponse.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/02/09 13:31:16 $ $Author: gtaur $
+ * @(#)$RCSfile: FileRecalledResponse.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/02/10 16:04:22 $ $Author: gtaur $
  *
  * 
  *
@@ -169,22 +169,6 @@ namespace castor {
         }
 
         /**
-         * Get the value of m_nsFileInformation
-         * @return the value of m_nsFileInformation
-         */
-        NsFileInformation* nsFileInformation() const {
-          return m_nsFileInformation;
-        }
-
-        /**
-         * Set the value of m_nsFileInformation
-         * @param new_var the new value of m_nsFileInformation
-         */
-        void setNsFileInformation(NsFileInformation* new_var) {
-          m_nsFileInformation = new_var;
-        }
-
-        /**
          * Get the value of m_positionCommandCode
          * @return the value of m_positionCommandCode
          */
@@ -200,6 +184,22 @@ namespace castor {
           m_positionCommandCode = new_var;
         }
 
+        /**
+         * Get the value of m_nsFileInformation
+         * @return the value of m_nsFileInformation
+         */
+        NsFileInformation* nsFileInformation() const {
+          return m_nsFileInformation;
+        }
+
+        /**
+         * Set the value of m_nsFileInformation
+         * @param new_var the new value of m_nsFileInformation
+         */
+        void setNsFileInformation(NsFileInformation* new_var) {
+          m_nsFileInformation = new_var;
+        }
+
       private:
 
         int m_errorCode;
@@ -211,9 +211,9 @@ namespace castor {
         /// The id of this object
         u_signed64 m_id;
 
-        NsFileInformation* m_nsFileInformation;
-
         PositionCommandCode m_positionCommandCode;
+
+        NsFileInformation* m_nsFileInformation;
 
       }; /* end of class FileRecalledResponse */
 
