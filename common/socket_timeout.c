@@ -67,10 +67,10 @@ Sigfunc *_netsignal();
 #endif
 
 int DLL_DECL netconnect_timeout(fd, addr, addr_size, timeout)
-	SOCKET fd;
-	struct sockaddr *addr;
-	size_t addr_size;
-	int timeout;
+     SOCKET fd;
+     struct sockaddr *addr;
+     size_t addr_size;
+     int timeout;
 {
 	int rc, nonblocking;
 #ifndef _WIN32
@@ -153,10 +153,10 @@ int DLL_DECL netconnect_timeout(fd, addr, addr_size, timeout)
 
 
 ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
-	SOCKET fd;
-	void *vptr;
-	ssize_t n;
-	int timeout;
+     SOCKET fd;
+     void *vptr;
+     ssize_t n;
+     int timeout;
 {
 	size_t nleft;                /* Bytes to read */
 	ssize_t nread = 0;           /* Bytes yet read */
@@ -255,10 +255,10 @@ ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
 }
 
 ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
-	SOCKET fd;
-	void *vptr;
-	ssize_t n;
-	int timeout;
+     SOCKET fd;
+     void *vptr;
+     ssize_t n;
+     int timeout;
 {
 	size_t nleft;                /* Bytes to read */
 	ssize_t nwritten = 0;        /* Bytes yet read */
@@ -342,11 +342,11 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
 
 #ifndef _WIN32
 	/* Restore previous handlers */
-  {
-    int save_errno = errno;
-    _netsignal(SIGPIPE, sigpipe);
-    errno = save_errno;
-  }
+	{
+		int save_errno = errno;
+		_netsignal(SIGPIPE, sigpipe);
+		errno = save_errno;
+	}
   
 #endif
 
@@ -360,8 +360,8 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
 
 #ifndef _WIN32
 Sigfunc *_netsignal(signo, func)
-	int signo;
-	Sigfunc *func;
+int signo;
+Sigfunc *func;
 {
 	struct sigaction	act, oact;
 	int n = 0;
@@ -409,7 +409,7 @@ int _net_isclosed(fd)
 }
 #else
 int _net_isclosed(fd)
-	int fd;
+     int fd;
 {
 	fd_set         rset;
 	struct timeval tv;
@@ -436,8 +436,8 @@ int _net_isclosed(fd)
 
 #ifdef USE_POLL_INSTEAD_OF_SELECT
 int _net_writable(fd, timeout)
-	int fd;
-	int timeout;
+     int fd;
+     int timeout;
 {
 	struct pollfd pollit;
 	
@@ -450,8 +450,8 @@ int _net_writable(fd, timeout)
 }
 #else
 int _net_writable(fd, timeout)
-	int fd;
-	int timeout;
+     int fd;
+     int timeout;
 {
 	fd_set         rset;
 	struct timeval tv;
@@ -469,8 +469,8 @@ int _net_writable(fd, timeout)
 
 #ifdef USE_POLL_INSTEAD_OF_SELECT
 int _net_readable(fd, timeout)
-	int fd;
-	int timeout;
+     int fd;
+     int timeout;
 {
 	struct pollfd pollit;
 	
@@ -483,8 +483,8 @@ int _net_readable(fd, timeout)
 }
 #else
 int _net_readable(fd, timeout)
-	int fd;
-	int timeout;
+     int fd;
+     int timeout;
 {
 	fd_set         rset;
 	struct timeval tv;
@@ -501,8 +501,8 @@ int _net_readable(fd, timeout)
 #endif
 
 int _net_connectable(fd, timeout)
-	SOCKET fd;
-	int timeout;
+     SOCKET fd;
+     int timeout;
 {
 #ifdef USE_POLL_INSTEAD_OF_SELECT
 	struct pollfd pollit;
