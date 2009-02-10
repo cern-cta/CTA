@@ -1,0 +1,399 @@
+#!/usr/bin/python
+#******************************************************************************
+#                      draindiskserver
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# @(#)$RCSfile: draindiskserver,v $ $Revision: 1.1 $ $Release$ $Date: 2009/02/10 15:15:23 $ $Author: waldron $
+#
+# Tool to manage the draining of filesystems and diskservers.
+#
+# @author Castor Dev team, castor-dev@cern.ch
+#******************************************************************************
+
+# modules
+import sys
+import getopt
+import castor_tools;
+
+#
+# Usage
+#
+def usage(status):
+    if status != 0:
+        print >> sys.stderr, 'Try `' + sys.argv[0] + ' --help for more information.'
+    else:
+        print 'Usage: ' + sys.argv[0] + ' [OPTIONS]...'
+        print 'Tool to manage the draining of filesystems and diskservers.'
+        print
+        print 'Supported operations:                                                        '
+        print '  -a, --add                    Add a new filesystem or diskserver to the list'
+        print '                               of those to be drained.                       '
+        print '  -d, --delete                 Delete/Cancel the draining process of a given '
+        print '                               filesystem or diskserver.                     '
+        print '  -q, --query                  Query the filesystems currently being drained.'
+        print
+        print 'Add options (with -a or --add):                                              '
+        print '  -S, --svcclass=NAME          The name of the service class that files      '
+        print '                               should be replicated too.                     '
+        print '  -t, --transfers=NUM          The maximum number of transfers allowed to run'
+        print '                               concurrently per filesystem. (Default: 50)   '
+        print '      --auto-delete            Delete files automatically after replication. '
+        print '                               (Default: NO).                                '
+        print '      --file-mask=[STAGED|CANBEMIGR|ALL]                                     '
+        print '                               Mask used to decide which files need to be    '
+        print '                               replicated. (Default: CANBEMIGR)              '
+        print
+        print 'Query options (with -q or --query):                                          '
+        print '  -c, --config                 List the configuration options.               '
+        print '  -f, --failures               List the files which failed to be replicated  '
+        print '                               and if available the reason why.              '
+        print '  -r, --running                List only filesystems in a RUNNING status.    '
+        print
+        print '  Note: If no additional --query options are supplied, the default behaviour '
+        print '        is to display a summary of the draining process for all registered   '
+        print '        filesystems.                                                         '
+        print
+        print 'Common options for all operations:                                           '
+        print '  -n, --nodename=NODENAME      The name of the diskserver to perform the     '
+        print '                               operation on.                                 '
+        print '  -m, --mountpoint=MOUNTPOINT  The name of the mountpoint to perform the     '
+        print '                               operation on. Note: if the mountpoint option  '
+        print '                               is omitted, the operation will apply to all   '
+        print '                               filesystems associated with the diskserver.   '
+        print '      --script                 Display the output using a style suitable for '
+        print '                               parsing by scripts.                           '
+        print
+        print '      --help                   Display this help and exit                    '
+        print
+        print 'Report bugs to <castor-support@cern.ch>'
+
+    sys.exit(status)
+
+
+#
+# InvalidInput exception class
+#
+class InvalidInput(Exception):
+    pass
+
+
+#
+# Main
+#
+def main(argv):
+
+    # Variables
+    operation   = None
+    querytype   = 'overview'
+    querystyle  = 'table'
+    queryfilter = None
+
+    # Initialize the bind values
+    bind = { 'InNodeName':     None,
+             'InMountPoint':   None,
+             'InSvcClass':     None,
+             'InFileMask':     1,
+             'InAutoDelete':   0,
+             'InMaxTransfers': 50 }
+
+    # Parse command line arguments
+    try:
+        options, args = getopt.getopt(argv, 'adqn:m:S:tcfr',
+                                      ['add', 'delete', 'query', 'help',
+                                       'nodename=', 'mountpoint=', 'svcclass=',
+                                       'file-mask=', 'auto-delete', 'transfers=',
+                                       'config', 'failures', 'script',
+                                       'running'])
+        # Any positional arguments left over after parsing?
+        if len(args):
+            usage(1)
+    except getopt.GetoptError, e:
+        print >> sys.stderr, sys.argv[0] + ': ' + str(e)
+        usage(1)
+
+    # Process command line arguments
+    try:
+        operations = {}
+        for opt, arg in options:
+            if opt == '--help':
+                usage(0)
+            elif opt in ('-a', '--add'):
+                operations['add']    = None
+            elif opt in ('-d', '--delete'):
+                operations['delete'] = None
+            elif opt in ('-q', '--query'):
+                operations['query']   = None
+            elif opt in ('-n', '--nodename'):
+                bind['InNodeName'] = arg
+            elif opt in ('-m', '--mountpoint'):
+                bind['InMountPoint'] = arg
+            elif opt in ('-S', '--svcclass'):
+                bind['InSvcClass'] = arg
+            elif opt == '--file-mask':
+                # Check that the user supplied filemask argument is valid
+                values = { 'STAGED':    0,
+                           'CANBEMIGR': 1,
+                           'ALL':       2 }
+                if not values.has_key(arg.upper()):
+                    raise InvalidInput, 'invalid option for --file-mask, must be one of STAGED, CANBEMIGR or ALL'
+                bind['InFileMask'] = values[arg.upper()]
+            elif opt == '--auto-delete':
+                bind['InAutoDelete'] = 1
+            elif opt in ('-t', '--transfers'):
+                # Check that the argument is a valid integer and that the value
+                # is greater than 0. Setting the number of transfers per
+                # filesystem to 0 is pointless as the draining process will
+                # never start.
+                try:
+                    bind['InMaxTransfers'] = int(arg)
+                except ValueError:
+                    raise InvalidInput, 'invalid argument for option -t, --transfers, value is not a valid integer'
+                if bind['InMaxTransfers'] <= 0:
+                    raise InvalidInput, 'invalid argument for option -t, --transfers, value must be greater than 0'
+            elif opt in ('-c', '--config'):
+                querytype = 'config'
+            elif opt in ('-f', '--failures'):
+                querytype = 'failures'
+            elif opt == '--script':
+                querystyle = 'script'
+            elif opt in ('-r', '--running'):
+                queryfilter = 'RUNNING'
+
+        # Check for mutual exclusivity on the operation to be performed
+        if len(operations) == 0:
+            raise InvalidInput, 'missing operation, must specify one of --add, --delete or --query'
+        elif len(operations) > 1:
+            raise InvalidInput, 'options --add, --delete and --query are mutually exclusive'
+        operation = operations.keys()[0]
+
+        # Check that all arguments required for add and delete operations are
+        # supplied by the user
+        if operation in ('add', 'delete'):
+            if bind['InNodeName'] == None:
+                raise InvalidInput, 'missing -n, --nodename option'
+
+        # Check that the query filter argument is not specified for --config
+        # and --failures options
+        if operation == 'query':
+            if queryfilter and querytype in ('config', 'failures'):
+                raise InvalidInput, 'option --running cannot be used when specifying the --config or --failures options'
+
+    except InvalidInput, e:
+        print >> sys.stderr, sys.argv[0] + ': ' + str(e)
+        usage(1)
+
+    # Connect to the stager database and do some magic!
+    try:
+        connection = castor_tools.connectToStager();
+        cursor = connection.cursor()
+        cursor.arraysize = 50
+
+        if operation == 'add':
+            startDraining(cursor, bind)
+        elif operation == 'delete':
+            stopDraining(cursor, { 'InNodeName':   bind['InNodeName'],
+                                   'InMountPoint': bind['InMountPoint'] } )
+        elif operation == 'query':
+            queryDraining(cursor, { 'InNodeName':   bind['InNodeName'],
+                                    'InMountPoint': bind['InMountPoint'] },
+                          querytype, queryfilter, querystyle)
+
+        # Close the cursor and commit any pending changes
+        cursor.close()
+        connection.commit()
+
+        # Disconnect from the database
+        connection.close()
+
+    except Exception, e:
+        if len(e.args) == 1:
+            # For error codes in the 20000 range remove the stack trace provided by
+            # Oracle. Its nice but not meaningful for the end user.
+            error, = e.args
+            if error.code > 20000 and error.code < 21000:
+                print >> sys.stderr, error.message.split('\n')[0].replace('ORA-', 'ERROR ')
+                sys.exit(1)
+        print >> sys.stderr, str(e)
+        sys.exit(1)
+
+
+#
+# Add
+#
+def startDraining(c, bindvars):
+    c.execute('''BEGIN
+                   startDraining(InNodeName     => :InNodeName,
+                                 InMountPoint   => :InMountPoint,
+                                 InSvcClass     => :InSvcClass,
+                                 InFileMask     => :InFileMask,
+                                 InAutoDelete   => :InAutoDelete,
+                                 InMaxTransfers => :InMaxTransfers);
+                 END;''', bindvars)
+
+
+#
+# Delete
+#
+def stopDraining(c, bindvars):
+    c.execute('''BEGIN
+                   stopDraining(InNodeName   => :InNodeName,
+                                InMountPoint => :InMountPoint);
+                 END;''', bindvars)
+
+
+#
+# Query
+#
+def queryDraining(c, bindvars, type, filter, style):
+
+    # Metadata information
+    # Format is:
+    #  - Column name as returned by Oracle
+    #  - Alternative name to be displayed
+    #  - Minimum column width
+    #  - Index field
+    metadata = { 'overview':
+                 [ [ 'DiskServer',     '',       10, 0 ],
+                   [ 'MountPoint',     '',       10, 0 ],
+                   [ 'Created',        '',       20, 0 ],
+                   [ 'TotalFiles',     'TFiles', 6,  0 ],
+                   [ 'TotalSize',      'TSize',  6,  0 ],
+                   [ 'FilesRemaining', 'RFiles', 6,  0 ],
+                   [ 'SizeRemaining',  'RSize',  6,  0 ],
+                   [ 'Failed',         '',       6,  0 ],
+                   [ 'RunTime',        '',       11, 0 ],
+                   [ 'Progress',       '',       8,  0 ],
+                   [ 'ETC',            '',       11, 0 ],
+                   [ 'Status',         '',       12, 0 ] ],
+                 'config':
+                 [ [ 'DiskServer',     '',       10, 0 ],
+                   [ 'MountPoint',     '',       10, 0 ],
+                   [ 'Username',       '',       8,  0 ],
+                   [ 'Machine',        '',       7,  0 ],
+                   [ 'SvcClass',       '',       8,  0 ],
+                   [ 'FileMask',       '',       8,  0 ],
+                   [ 'AutoDelete',     '',       10, 0 ],
+                   [ 'MaxTransfers',   '',       12, 0 ] ] }
+
+    # Process the query type
+    if type == 'overview':
+        bindvars['InFilter'] = filter
+        c.execute('''SELECT *
+                       FROM DrainingOverview
+                      WHERE (DiskServer = :InNodeName
+                         OR  :InNodeName IS NULL)
+                        AND (MountPoint = :InMountPoint
+                         OR  :InMountPoint IS NULL)
+                        AND (status = :InFilter
+                         OR  :InFilter IS NULL)''', bindvars)
+
+    elif type == 'config':
+        bindvars['InFilter'] = filter
+        c.execute('''SELECT *
+                       FROM DrainingOverview
+                      WHERE (DiskServer = :InNodeName
+                         OR  :InNodeName IS NULL)
+                        AND (MountPoint = :InMountPoint
+                         OR  :InMountPoint IS NULL)
+                        AND (status = :InFilter
+                         OR  :InFilter IS NULL)''', bindvars)
+
+    elif type == 'failures':
+        c.execute('''SELECT DiskServer, Path, Comments
+                       FROM DrainingFailures
+                      WHERE (DiskServer = :InNodeName
+                         OR  :InNodeName IS NULL)
+                        AND (MountPoint = :InMountPoint
+                         OR  :InMountPoint IS NULL)''', bindvars)
+    else:
+        raise Exception, 'Unknown type: ' + type
+
+    # Check if the resultset has any rows
+    rset = c.fetchall()
+    if len(rset) == 0:
+        print 'No entries found'
+        return
+
+    # Print failure information
+    if type == 'failures':
+        for row in rset:
+            print row[0] + ' ' + row[1] + ' (' + row[2] + ')'
+        return
+
+    # Set the index field of the metadata structure
+    for i in range(len(c.description)):
+        for j in range(len(metadata[type])):
+            if c.description[i][0] == metadata[type][j][0].upper():
+                metadata[type][j][3] = i
+
+    # Determine the maximum length of all the columns
+    totallen = len(metadata[type])
+    for i in range(len(metadata[type])):
+        metadata[type][i].append(max([len(str(row[metadata[type][i][3]])) for row in rset]))
+        minwidth = metadata[type][i][2]
+        if minwidth > metadata[type][i][4]:
+            metadata[type][i][4] = minwidth
+        totallen += metadata[type][i][4]
+
+    # Output data
+    if style == 'script':
+        genSimple(rset, totallen, metadata[type])
+    else:
+        genTable(rset, totallen, metadata[type])
+
+
+#
+# genTable
+#
+def genTable(rset, totallen, metadata):
+
+    # Print column headings
+    print '-' * totallen
+    for i in range(len(metadata)):
+        name = metadata[i][0]
+        if len(metadata[i][1]) > 0:
+            name = metadata[i][1]
+        print name.ljust(metadata[i][4]),
+    print
+    print '-' * totallen
+
+    # Print the rows
+    for row in rset:
+        for i in range(len(metadata)):
+            print str(row[metadata[i][3]]).ljust(metadata[i][4]),
+        print ''
+    print '-' * totallen
+
+
+#
+# genSimple
+#
+def genSimple(rset, totallen, metadata):
+
+    # Print the rows
+    for row in rset:
+        for i in range(len(metadata)):
+            print metadata[i][0].rjust(14) + ': ' + str(row[metadata[i][3]])
+        print
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
+
+
+# end-of-file
