@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: drop_oracle_schema.sql,v $ $Revision: 1.2 $ $Date: 2009/02/05 18:01:52 $ $Author: waldron $
+ * @(#)$RCSfile: drop_oracle_schema.sql,v $ $Revision: 1.3 $ $Date: 2009/02/10 16:11:22 $ $Author: waldron $
  *
  * This file drops all defined objects from a database schema.
  *
@@ -9,6 +9,7 @@
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
+
 
 DECLARE
   username VARCHAR2(2048);
@@ -43,8 +44,9 @@ BEGIN
         DBMS_SCHEDULER.DROP_JOB(JOB_NAME => rec.object_name, FORCE => TRUE);
       END IF;
     EXCEPTION WHEN OTHERS THEN
-      -- Ignore ORA-04043: "object string does not exist" errors
-      IF SQLCODE != -04043 THEN
+      -- Ignore: ORA-04043: "object string does not exist" or
+      --         ORA-00942: "table or view does not exist" errors
+      IF SQLCODE != -04043 AND SQLCODE != -00942 THEN
         RAISE;
       END IF;
     END;
