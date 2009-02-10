@@ -307,20 +307,22 @@ int CASTOR2int_handle_open(char *path, int flags, int mode, globus_l_gfs_CASTOR2
    
    host=NULL;
    if(CASTOR2int_handle->use_uuid) { /* we will use fullDestPath instead of client "path", and "path" must be in uuid form */
-       uuid_path=path;
-       if( *uuid_path=='/') uuid_path++; /* path like  "/uuid" */
-	  if(strcmp(uuid_path,CASTOR2int_handle->uuid)==0){
-	      /* if clients uuid is the same as internal uuid we will access fullDestPath file then */
-	      globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: open file in uuid mode \"%s\"\n",func,CASTOR2int_handle->fullDestPath);
-	      rc = open64 (CASTOR2int_handle->fullDestPath,flags,mode);
-	      return (rc);
-	      }
+     uuid_path=path;
+     while(strchr(uuid_path, '/') != NULL) {
+       uuid_path = strchr(uuid_path, '/') + 1;   /* strip any preceding path to isolate only the uuid part */
+     }
+     if(strcmp(uuid_path,CASTOR2int_handle->uuid) == 0) {
+       /* if clients uuid is the same as internal uuid we will access fullDestPath file then */
+       globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: open file in uuid mode \"%s\"\n",func,CASTOR2int_handle->fullDestPath);
+       rc = open64 (CASTOR2int_handle->fullDestPath,flags,mode);
+       return (rc);
+	   }
 	   globus_gfs_log_message(GLOBUS_GFS_LOG_INFO,"%s: client and server uuids do not match in uuid mode \"%s\" != \"%s\"\n",
 		      func, uuid_path,CASTOR2int_handle->uuid);
 	   return (-1);
-	   }
+	 }
    return (-1);
-   }
+}
 
   /* receive from client */
 static
