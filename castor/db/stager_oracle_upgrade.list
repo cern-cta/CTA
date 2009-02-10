@@ -1,0 +1,9 @@
+oracleCommon.sql
+oraclePerm.sql
+oracleStager.sql
+oracleJob.sql
+oracleQuery.sql
+oracleTape.sql
+oracleGC.sql
+oracleDrain.sql
+oracleDebug.sql
