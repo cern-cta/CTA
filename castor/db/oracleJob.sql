@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.670 $ $Date: 2009/02/09 18:58:24 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.671 $ $Date: 2009/02/10 10:52:05 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -793,7 +793,7 @@ BEGIN
   IF reqType = 40 THEN -- Put
     putFailedProc(srId);
   ELSIF reqType = 133 THEN -- DiskCopyReplica
-    disk2DiskCopyFailed(dcId, res);
+    disk2DiskCopyFailed(dcId, 0, res);
     RETURN;
   ELSE -- Get or Update
     getUpdateFailedProc(srId);
@@ -933,7 +933,7 @@ BEGIN
       -- The source diskcopy has been removed before the jobManager could enter
       -- the job into LSF. Under this circumstance fail the diskcopy transfer.
       -- This will restart the subrequest and trigger a tape recall if possible
-      disk2DiskCopyFailed(reqDestDiskCopy, unused);
+      disk2DiskCopyFailed(reqDestDiskCopy, 0, unused);
       COMMIT;
       RAISE;
     END;
@@ -954,3 +954,5 @@ BEGIN
   END IF;
 END;
 /
+
+
