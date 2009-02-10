@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DumpSharedMemory.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/04/13 15:26:17 $ $Author: itglp $
+ * @(#)$RCSfile: DumpSharedMemory.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2009/02/10 15:06:01 $ $Author: waldron $
  *
  * this is a little executable able to dump the content of
  * the monitoring shared memory block for debugging purposes
@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
   p = (void**)(((char*)p) + sizeof(void*));
   std::cout << "header : " << std::hex << *p << "\n";
   p = (void**)(((char*)p) + sizeof(void*));
-  std::cout << "node_count : " << (int)(*p) << "\n";
+  std::cout << "node_count : " << (long)(*p) << "\n";
   p = (void**)(((char*)p) + sizeof(void*));
   std::cout << "key_compare : " << *p << std::endl;
   return 0;
