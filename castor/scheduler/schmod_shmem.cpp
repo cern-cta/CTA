@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: schmod_shmem.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/10/02 12:17:40 $ $Author: waldron $
+ * @(#)$RCSfile: schmod_shmem.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/02/10 13:21:53 $ $Author: waldron $
  *
  * Castor LSF External Plugin - Phase 1 (Shared Memory)
  *
@@ -28,6 +28,9 @@
  * eliminating machines at the very beginning of the processing stack we avoid
  * giving machines to LSF's other modules such as schmod_parallel therefore
  * reducing the processing time required.
+ *
+ * Note: The plugin deliberately doesn't use DLF logging. Any major errors
+ *       will be logged into LSF's log file
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -50,53 +53,21 @@ extern "C" {
   //---------------------------------------------------------------------------
   int sched_init(void *param) {
 
-    // Initialize DLF logging. Note: some of these messages are the same as
-    // those defined in shmem_python. If you change one, make sure to change
-    // the other!
-    try {
-      castor::dlf::Message messages[] = {
-	{  0, "LSF plugin initialization started" },
-	{  1, "Unable to access shared memory" },
-	{  2, "Shared memory doesn't exist, check the rmMasterDaemon is running" },
-	{  3, "Failed to initialize handler plugin" },
-	{ 10, "LSF plugin initialization successful" },
-	{ -1, ""}};
-      castor::dlf::dlf_init("Scheduler", messages);
-    } catch (castor::exception::Exception e) {
-      // Ignored. DLF failure is not a reason to stop the module loading
-    }
-
-    // Create the dlf thread for remote server logging. Normally this is done
-    // automatically by the BaseDaemon after daemonization. However, as the
-    // plugin does not daemonize we must call the dlf api ourselves.
-    dlf_create_threads(0);
-
-    // "LSF plugin initialization started"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Plugin", "schmod_shmem")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 0, 1, params);
-
     // Get pointer to the shared memory
     try {
       bool create = false;
       clusterStatus =
 	castor::monitoring::ClusterStatus::getClusterStatus(create);
     } catch (castor::exception::Exception e) {
-      // "Unable to access shared memory"
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("Type", sstrerror(e.code())),
-	 castor::dlf::Param("Error", e.getMessage().str()),
-	 castor::dlf::Param("Plugin", "schmod_shmem")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 1, 3, params);
+      ls_syslog(LOG_ERR, "shmod_shmem: failed to access shared memory: %s",
+		e.getMessage().str().c_str());
       return -1;
     }
 
     // Shared memory defined ?
     if (clusterStatus == NULL) {
-      // "Shared memory doesn't exist, check the rmMasterDaemon is running"
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("Plugin", "schmod_shmem")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params);
+      ls_syslog(LOG_ERR, "shmod_shmem: shared memory doesn't exist, check "
+		"rmMasterDaemon is running");
       return -1;
     }
 
@@ -104,11 +75,8 @@ extern "C" {
     RsrcReqHandlerType *handler =
       (RsrcReqHandlerType *) calloc(1, sizeof(RsrcReqHandlerType));
     if (handler == NULL) {
-      // "Failed to initialize handler plugin"
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("Error", strerror(errno)),
-	 castor::dlf::Param("Plugin", "schmod_shmem")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3, 2, params);
+      ls_syslog(LOG_ERR, "shmod_shmem: failed to allocate memory: %s",
+		strerror(errno));
       return -1;
     }
 
@@ -122,9 +90,6 @@ extern "C" {
 
     // LSF keeps a copy of the handler, so its safe to free it
     free(handler);
-
-    // "LSF plugin initialization successful"
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 10, 1, params);
 
     return 0;
   }
@@ -182,9 +147,6 @@ extern "C" {
     if ((candGroupList == NULL) || (reasonTb == NULL)) {
       return -1;
     }
-
-    // Increment the number of matches performed on this job
-    handler->matches++;
 
     // Loop over the list of candidate hosts LSF has provided and eliminate
     // those that do not fulfil the necessary requirements
