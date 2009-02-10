@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.31 2008/07/20 16:38:31 waldron Exp $
+ * $Id: dlf_lib.c,v 1.32 2009/02/10 13:26:24 waldron Exp $
  */
 
 /* headers */
@@ -88,6 +88,9 @@ int dlf_read(target_t *t, int *rtype, int *rcode) {
 	/* extract header */
 	len = netread_timeout(t->socket, header, sizeof(header), API_READ_TIMEOUT);
 	if (len != sizeof(header)) {
+		netclose(t->socket);
+		t->socket = -1;
+		ClrConnected(t->mode);
 		return APP_FAILURE;
 	}
 
@@ -103,6 +106,9 @@ int dlf_read(target_t *t, int *rtype, int *rcode) {
 	 *     incorrect protocol version!
 	 */
 	if (magic != DLF_MAGIC) {
+		netclose(t->socket);
+		t->socket = -1;
+		ClrConnected(t->socket);
 		SetShutdown(t->mode);
 		return APP_FAILURE;
 	}
@@ -166,6 +172,9 @@ int dlf_send(target_t *t, char *data, int len) {
 		opts = 1;
 		rv = setsockopt(t->socket, SOL_SOCKET, SO_KEEPALIVE, &opts, sizeof(opts));
 		if (rv != APP_SUCCESS) {
+			netclose(t->socket);
+			t->socket = -1;
+			ClrConnected(t->mode);
 			return errno;
 		}
 
@@ -181,7 +190,7 @@ int dlf_send(target_t *t, char *data, int len) {
 	}
 
 	/* attempt to send data to the server
-	 *   - a failure here updates sets the socket to -1
+	 *   - a failure here updates the socket to -1
 	 */
 	rv = netwrite_timeout(t->socket, data, len, API_WRITE_TIMEOUT);
 	if (rv < 0) {
@@ -306,9 +315,9 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 
 	/* update message size */
 	message->size += sizeof(message->hostname) + sizeof(message->reqid) + sizeof(message->nshostname)
-		      +  sizeof(message->nsfileid) + sizeof(unsigned char)  + sizeof(unsigned char)
-		      +  sizeof(unsigned short)    + sizeof(pid_t)          + sizeof(uid_t)
-		      +  sizeof(gid_t)             + sizeof(int)            + 4;
+		+  sizeof(message->nsfileid) + sizeof(unsigned char)  + sizeof(unsigned char)
+		+  sizeof(unsigned short)    + sizeof(pid_t)          + sizeof(uid_t)
+		+  sizeof(gid_t)             + sizeof(int)            + 4;
 
        	/* process parameter */
 	for (i = 0; i < numparams; i++) {
