@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.692 $ $Date: 2009/02/09 18:49:01 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.693 $ $Date: 2009/02/10 09:30:46 $ $Author: itglp $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -522,10 +522,27 @@ CREATE INDEX I_FileSystem_Rate
 	          nbReadStreams,nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams));
 
 
-/* Get current time as a time_t. Not that easy in ORACLE */
+/* get current time as a time_t. Not that easy in ORACLE */
 CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
+  epoch            TIMESTAMP WITH TIME ZONE;
+  now              TIMESTAMP WITH TIME ZONE;
+  interval         INTERVAL DAY(9) TO SECOND;
+  interval_days    NUMBER;
+  interval_hours   NUMBER;
+  interval_minutes NUMBER;
+  interval_seconds NUMBER;
 BEGIN
-  RETURN (SYSDATE - to_date('01-jan-1970 01:00:00','dd-mon-yyyy HH:MI:SS')) * (24*60*60);
+  epoch := TO_TIMESTAMP_TZ('01-JAN-1970 00:00:00 00:00',
+    'DD-MON-YYYY HH24:MI:SS TZH:TZM');
+  now := SYSTIMESTAMP AT TIME ZONE '00:00';
+  interval         := now - epoch;
+  interval_days    := EXTRACT(DAY    FROM (interval));
+  interval_hours   := EXTRACT(HOUR   FROM (interval));
+  interval_minutes := EXTRACT(MINUTE FROM (interval));
+  interval_seconds := EXTRACT(SECOND FROM (interval));
+
+  RETURN interval_days * 24 * 60 * 60 + interval_hours * 60 * 60 +
+    interval_minutes * 60 + interval_seconds;
 END;
 /
 
