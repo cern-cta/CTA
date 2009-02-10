@@ -21,9 +21,9 @@ active(RC);
 message(RC,V,"connect");
 active(V);
 message(RC,V,"volume request");
-message(V,RC,"acknowledge");
+message(V,RC,"ack");
 message(V,RC,"volReqID");
-message(RC,V,"acknowledge");
+message(RC,V,"ack");
 message(RC,V,"disconnect");
 inactive(V);
 
@@ -36,29 +36,116 @@ create_message(R,RF,"main cntl");
 active(RF);
 inactive(R);
 
-message(V,RF,"RcpJob");
+message(V,RF,"ClientInfo - job");
 message(RF,V,"RcpJobReply");
 message(RF,V,"disconnect");
 inactive(V);
 
-message(RF,RC,"connect");
-message(RC,RF,"request volReqId");
-message(RF,RC,"acknowledge");
-message(RF,RC,"volReqId");
-message(RC,RF,"acknowledge");
+step();
 
-create_message(RC,C,"migrator");
+message(RF,RC,"connect");
+message(RC,RF,"request ReqInfo");
+message(RF,RC,"ack");
+message(RF,RC,"ReqInfo");
+message(RC,RF,"ack");
+
+create_message(RC,C,"recaller");
 active(C);
-message(C,RF,"client info");
-message(RF,C,"acknowledge");
+message(C,RF,"ClientInfo - new callback");
+message(RF,C,"ack");
 message(C,RF,"disconnect");
 
+step();
 
 message(RF,C,"connect");
-message(C,RF,"volume");
-message(RF,C,"acknowledge");
 
+# Start of getRequestList
+message(C,RF,"volume info");
+message(RF,C,"ack");
+
+message(C,RF,"file 1");
+message(RF,C,"ack");
+
+message(C,RF,"Offer_MoreWork - Joker");
+message(RF,C,"ack");
+
+message(C,RF,"NoMore_Req");
+message(RF,C,"ack");
+# End of getRequestList
+
+create_message(RF,A,"abort");
+active(A);
+
+message(RF,C,"connect for tape IO");
+
+create_message(RF,T,"tape IO");
+active(T);
+
+message(RF,C,"connect for disk IO");
+message(RF,C,"connect for disk IO");
+message(RF,C,"connect for disk IO");
+
+create_message(RF,D1,"disk IO");
+active(D1);
+create_message(RF,D2,"disk IO");
+active(D2);
+create_message(RF,D3,"disk IO");
+active(D3);
+
+message(D1,C,"Request_MoreWork - Joker");
+# Acknowledge comes after getRequestList()
+
+# Start of getRequestList
+message(C,D1,"file 2");
+message(D1,C,"ack");
+
+message(C,D1,"Offer_MoreWork - Joker");
+message(D1,C,"ack");
+
+message(C,D1,"NoMore_Req");
+message(D1,C,"ack");
+
+message(D1,C,"Request_MoreWork - Joker");
+message(C,D1,"ack");
+
+message(C,D1,"NoMore_Req");
+message(D1,C,"ack");
+# End of getRequestList
+
+# Better late than never
+# Acknowledge of tape IO's request for more work
+message(C,D1,"ack of Request_MoreWork");
+
+step();
+
+message(T,C,"positioned for file 1 (tape req)");
+message(C,T,"ack");
+message(T,C,"positioned for file 1 (file req)");
+message(C,T,"ack");
+
+message(T,C,"Request_MoreWork - Joker");
+message(C,T,"ack");
+
+message(T,C,"Finished file 1");
+message(C,T,"ack");
+
+step();
+
+
+message(T,C,"positioned for file 2 (tape req)");
+message(C,T,"ack");
+message(T,C,"positioned for file 2 (file req)");
+message(C,T,"ack");
+
+message(T,C,"Finished file 2");
+message(C,T,"ack");
+
+step();
+
+message(T,C,"EndOf_Req");
+message(C,T,"ack");
 inactive(T);
+
 inactive(A);
 inactive(RF);
 inactive(C);

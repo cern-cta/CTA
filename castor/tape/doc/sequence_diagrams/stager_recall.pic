@@ -21,9 +21,9 @@ active(RC);
 message(RC,V,"connect");
 active(V);
 message(RC,V,"volume request");
-message(V,RC,"acknowledge");
+message(V,RC,"ack");
 message(V,RC,"volReqID");
-message(RC,V,"acknowledge");
+message(RC,V,"ack");
 message(RC,V,"disconnect");
 inactive(V);
 
@@ -45,14 +45,14 @@ step();
 
 message(RF,RC,"connect");
 message(RC,RF,"request ReqInfo");
-message(RF,RC,"acknowledge");
+message(RF,RC,"ack");
 message(RF,RC,"ReqInfo");
-message(RC,RF,"acknowledge");
+message(RC,RF,"ack");
 
 create_message(RC,C,"recaller");
 active(C);
 message(C,RF,"ClientInfo - new callback");
-message(RF,C,"acknowledge");
+message(RF,C,"ack");
 message(C,RF,"disconnect");
 
 step();
@@ -61,13 +61,13 @@ message(RF,C,"connect");
 
 # Start of getRequestList
 message(C,RF,"volume info");
-message(RF,C,"acknowledge");
+message(RF,C,"ack");
 
-message(C,RF,"RTCP_REQUEST_MORE_WORK");
-message(RF,C,"acknowledge");
+message(C,RF,"Offer_MoreWork - Joker");
+message(RF,C,"ack");
 
-message(C,RF,"RTCP_NOMORE_REQ");
-message(RF,C,"acknowledge");
+message(C,RF,"NoMore_Req");
+message(RF,C,"ack");
 # End of getRequestList
 
 create_message(RF,A,"abort");
@@ -89,65 +89,78 @@ active(D2);
 create_message(RF,D3,"disk IO");
 active(D3);
 
-message(T,C,"RTCP_REQUEST_MORE_WORK");
+message(T,C,"Request_MoreWork - Joker");
 # Acknowledge comes after getRequestList()
 
 # Start of getRequestList
-message(C,T,"file");
-message(T,C,"acknowledge");
+message(C,T,"file 1");
+message(T,C,"ack");
 
-message(C,T,"RTCP_REQUEST_MORE_WORK - joker");
-message(T,C,"acknowledge");
+message(C,T,"Offer_MoreWork - Joker");
+message(T,C,"ack");
 
-message(C,T,"RTCP_NOMORE_REQ");
-message(T,C,"acknowledge");
+message(C,T,"NoMore_Req");
+message(T,C,"ack");
 # End of getRequestList
 
 # Better late than never
 # Acknowledge of tape IO's request for more work
-message(C,T,"acknowledge of RTCP_REQUEST_MORE_WORK");
+message(C,T,"ack of Request_MoreWork");
 
 step();
 
-message(T,C,"positioned for file (tape req)");
-message(C,T,"acknowledge");
-message(T,C,"positioned for file (file req)");
-message(C,T,"acknowledge");
+message(T,C,"positioned for file 1 (tape req)");
+message(C,T,"ack");
+message(T,C,"positioned for file 1 (file req)");
+message(C,T,"ack");
 
-message(T,C,"RTCP_REQUEST_MORE_WORK");
+message(T,C,"Request_MoreWork - Joker");
+message(C,T,"ack");
+
+message(D1,C,"Finished file 1");
+message(C,D1,"ack");
+
+step();
+
+message(T,C,"Request_MoreWork - Joker");
 # Acknowledge comes after getRequestList()
 
-message(D1,C,"RTCP_FINISHED file ");
-message(C,D1,"acknowledge");
+message(C,T,"file 2");
+message(T,C,"ack");
 
-step();
+message(C,T,"Offer_MoreWork - Joker");
+message(T,C,"ack");
 
-#message(C,T,"file2");
-#message(T,C,"acknowledge");
-
-#message(C,T,"RTCP_REQUEST_MORE_WORK");
-#message(T,C,"acknowledge");
-
-#message(C,T,"RTCP_NOMORE_REQ");
-#message(T,C,"acknowledge");
+message(C,T,"NoMore_Req");
+message(T,C,"ack");
 # End of getRequestList
 
 # Better late than never
 # Acknowledge of tape IO's request for more work
-#message(T,C,"acknowledge of RTCP_REQUEST_MORE_WORK");
+message(C,T,"ack of Request_MoreWork");
 
-#message(T,C,"RTCP_REQUEST_MORE_WORK");
-# Acknowledge comes after getRequestList()
+step();
 
-#message(D1,C,"RTCP_FINISHED file 2");
-#message(C,D1,"acknowledge");
+message(T,C,"positioned for file 2 (tape req)");
+message(C,T,"ack");
+message(T,C,"positioned for file 2 (file req)");
+message(C,T,"ack");
 
-message(C,T,"RTCP_NOMORE_REQ");
-message(T,C,"acknowledge");
+message(T,C,"Request_MoreWork - Joker");
+message(C,T,"ack");
+
+message(D1,C,"Finished file 2");
+message(C,D1,"ack");
+
+step();
+
+
+message(C,T,"NoMore_Req");
+message(T,C,"ack");
 # End of EMPTY getRequestList
 
-message(T,C,"RTCP_ENDOF_REQ");
-message(C,T,"acknowledge");
+message(T,C,"EndOf_Req");
+message(C,T,"ack");
 inactive(T);
 
 inactive(A);
