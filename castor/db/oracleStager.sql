@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.717 $ $Date: 2009/02/09 18:52:07 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.718 $ $Date: 2009/02/10 15:41:32 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -283,8 +283,8 @@ BEGIN
   -- Loop over the diskcopies to be processed
   FOR a IN (SELECT * FROM TooManyReplicasHelper)
   LOOP
-    -- If the filesystem belongs to multiple service classes
-    -- do nothing as this is not supported!
+    -- If the filesystem belongs to multiple service classes do nothing as this
+    -- is not supported!
     SELECT count(*) INTO svcCount
       FROM FileSystem, DiskPool2SvcClass
      WHERE FileSystem.diskpool = DiskPool2SvcClass.parent
@@ -292,43 +292,43 @@ BEGIN
     IF svcCount > 1 THEN
       RETURN;  -- Not supported
     END IF;
-    -- Get the service class id and max replica number of the
-    -- service class the diskcopy belongs too
+    -- Get the service class id and max replica number of the service class the
+    -- diskcopy belongs too
     SELECT SvcClass.id, SvcClass.maxReplicaNb
       INTO svcId, maxReplicaNb
       FROM FileSystem, DiskPool2SvcClass, SvcClass
      WHERE FileSystem.diskpool = DiskPool2SvcClass.parent
        AND DiskPool2SvcClass.child = SvcClass.id
        AND FileSystem.id = a.filesystem;
-    -- Produce a list of diskcopies to invalidate should too
-    -- many replicas be online.
-    -- Note: This check deliberately ignores the status of the
-    -- filesystems and diskservers!
-    FOR b IN (SELECT DiskCopy.id FROM (
-                SELECT rownum ind, DiskCopy.id
-                  FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass, DiskServer
-                 WHERE DiskCopy.filesystem = FileSystem.id
-                   AND FileSystem.diskpool = DiskPool2SvcClass.parent
-                   AND FileSystem.diskserver = DiskServer.id
-                   AND DiskPool2SvcClass.child = SvcClass.id
-                   AND DiskCopy.castorfile = a.castorfile
-                   -- Ignore the diskcopy being processed!!!!!
-                   AND DiskCopy.id != a.id
-                   AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
-                   AND SvcClass.id = svcId  
-                 -- Select DISABLED or DRAINING hardware first
-                 ORDER BY decode(FileSystem.status, 0,
-                          decode(DiskServer.status, 0, 0, 1), 1) ASC,
-                          DiskCopy.gcWeight DESC) DiskCopy
-              WHERE ind > (maxReplicaNb - 1))
+    -- Produce a list of diskcopies to invalidate should too many replicas be
+    -- online.
+    FOR b IN (SELECT id FROM (
+                SELECT rownum ind, id FROM (
+                  SELECT DiskCopy.id
+                    FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass,
+                         DiskServer
+                   WHERE DiskCopy.filesystem = FileSystem.id
+                     AND FileSystem.diskpool = DiskPool2SvcClass.parent
+                     AND FileSystem.diskserver = DiskServer.id
+                     AND DiskPool2SvcClass.child = SvcClass.id
+                     AND DiskCopy.castorfile = a.castorfile
+                     -- Ignore the diskcopy being processed!!!!!
+                     AND DiskCopy.id != a.id
+                     AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
+                     AND SvcClass.id = svcId
+                   -- Select DISABLED or DRAINING hardware first
+                   ORDER BY decode(FileSystem.status, 0,
+                            decode(DiskServer.status, 0, 0, 1), 1) ASC,
+                            DiskCopy.gcWeight DESC))
+               WHERE ind > (maxReplicaNb - 1))
     LOOP
       -- Invalidate the diskcopy
       UPDATE DiskCopy
          SET status = 7,  -- INVALID
              gcType = 2   -- Too many replicas
        WHERE id = b.id;
-      -- Look for requests associated to the diskCopy and restart
-      -- it and all the waiting ones
+      -- Look for requests associated to the diskCopy and restart it and all
+      -- the waiting ones
       UPDATE SubRequest SET status = 7 -- FAILED
        WHERE diskCopy = b.id RETURNING id BULK COLLECT INTO srIds;
       UPDATE SubRequest
