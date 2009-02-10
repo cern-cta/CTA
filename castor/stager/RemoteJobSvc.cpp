@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2008/09/22 13:28:27 $ $Author: waldron $
+ * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2009/02/10 09:19:57 $ $Author: itglp $
  *
  *
  *
@@ -403,10 +403,11 @@ void castor::stager::RemoteJobSvc::disk2DiskCopyDone
 //------------------------------------------------------------------------------
 void castor::stager::RemoteJobSvc::disk2DiskCopyFailed
 (u_signed64 diskCopyId,
+ bool enoent,
  u_signed64 fileId,
  const std::string nsHost)
   throw (castor::exception::Exception) {
-  // Build the Disk2DiskCopyDoneRequest
+  // Build the Disk2DiskCopyDoneRequest; the enoent parameter is irrelevant here
   castor::stager::Disk2DiskCopyDoneRequest req;
   req.setDiskCopyId(diskCopyId);
   req.setSourceDiskCopyId(0);

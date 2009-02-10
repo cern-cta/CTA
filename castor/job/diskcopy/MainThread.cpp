@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2008/11/12 12:49:01 $ $Author: waldron $
+ * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2009/02/10 09:19:56 $ $Author: itglp $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -619,7 +619,7 @@ void castor::job::diskcopy::MainThread::terminate
   // Notify the stager to the failure in this transfer attempt
   try {
     if (diskCopyId != 0) {
-      m_jobSvc->disk2DiskCopyFailed(diskCopyId, m_fileId.fileid, m_fileId.server);
+      m_jobSvc->disk2DiskCopyFailed(diskCopyId, false, m_fileId.fileid, m_fileId.server);
     }
   } catch (castor::exception::Exception e) {
 

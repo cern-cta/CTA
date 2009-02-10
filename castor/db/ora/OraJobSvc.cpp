@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.56 $ $Release$ $Date: 2009/02/09 18:58:24 $ $Author: itglp $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.57 $ $Release$ $Date: 2009/02/10 09:19:56 $ $Author: itglp $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -520,7 +520,9 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyDone
 //------------------------------------------------------------------------------
 void castor::db::ora::OraJobSvc::disk2DiskCopyFailed
 (u_signed64 diskCopyId,
- bool enoent)
+ bool enoent,
+ u_signed64 fileId,
+ const std::string nsHost)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.18 $ $Release$ $Date: 2009/02/09 19:00:34 $ $Author: itglp $
+ * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.19 $ $Release$ $Date: 2009/02/10 09:19:57 $ $Author: itglp $
  *
  * This class provides stager methods related to job handling
  *
@@ -200,11 +200,15 @@ namespace castor {
        * @param diskcopyId the id of the failed DiskCopy
        * @param enoent flag set to 1 when the sourceDiskCopy did
        * not exist, meaning that the process failed permanently
+       * @param fileId the fileId of the CastorFile
+       * @param nsHost the name server to use
        * @exception Exception throws an Exception in case of error
        */
       virtual void disk2DiskCopyFailed
       (u_signed64 diskCopyId,
-       bool enoent)
+       bool enoent,
+       u_signed64 fileId,
+       const std::string nsHost)
         throw (castor::exception::Exception) = 0;
 
       /**
