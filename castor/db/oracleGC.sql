@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.681 $ $Date: 2009/01/21 16:47:05 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.682 $ $Date: 2009/02/10 15:37:44 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -571,10 +571,10 @@ BEGIN
   --   AND lastModificationTime < getTime() - '|| timeOut ||';',
   --   'SubRequest');
   DECLARE
-    CURSOR s IS SELECT id FROM SubRequest 
-     WHERE status IN (9, 11) 
+    CURSOR s IS SELECT id FROM SubRequest
+     WHERE status IN (9, 11)
        AND lastModificationTime < getTime() - timeOut;
-    CURSOR t IS SELECT UNIQUE castorFile FROM SubRequest 
+    CURSOR t IS SELECT UNIQUE castorFile FROM SubRequest
      WHERE status IN (9, 11)
        AND lastModificationTime < getTime() - timeOut;
     ids "numList";
@@ -594,7 +594,7 @@ BEGIN
       FETCH s BULK COLLECT INTO ids LIMIT 10000;
       EXIT WHEN s%NOTFOUND;
       FORALL i IN ids.FIRST..ids.LAST
-        DELETE FROM Id2Type WHERE id = ids(i); 
+        DELETE FROM Id2Type WHERE id = ids(i);
       FORALL i IN ids.FIRST..ids.LAST
         DELETE FROM SubRequest WHERE id = ids(i);
       COMMIT;
@@ -719,7 +719,7 @@ END;
 /
 
 
-/* Runs cleanup operations and a table shrink for maintenance purposes */
+/* Runs cleanup operations */
 CREATE OR REPLACE PROCEDURE cleanup AS
   t INTEGER;
 BEGIN
@@ -729,20 +729,6 @@ BEGIN
   deleteOutOfDateStageOutDCs(t*3600);
   t := TO_NUMBER(getConfigOption('cleaning', 'failedDCsTimeout', '72'));
   deleteFailedDiskCopies(t*3600);
-
-  -- Loop over all tables which support row movement and recover space from
-  -- the object and all dependant objects. We deliberately ignore tables
-  -- with function based indexes here as the 'shrink space' option is not
-  -- supported.
-  FOR t IN (SELECT table_name FROM user_tables
-             WHERE row_movement = 'ENABLED'
-               AND table_name NOT IN (
-                 SELECT table_name FROM user_indexes
-                  WHERE index_type LIKE 'FUNCTION-BASED%')
-               AND temporary = 'N')
-  LOOP
-    EXECUTE IMMEDIATE 'ALTER TABLE '|| t.table_name ||' SHRINK SPACE CASCADE';
-  END LOOP;
 END;
 /
 
@@ -769,9 +755,9 @@ END;
 BEGIN
   -- Remove database jobs before recreating them
   FOR j IN (SELECT job_name FROM user_scheduler_jobs
-             WHERE job_name IN ('HOUSEKEEPINGJOB', 
-                                'CLEANUPJOB', 
-                                'BULKCHECKFSBACKINPRODJOB', 
+             WHERE job_name IN ('HOUSEKEEPINGJOB',
+                                'CLEANUPJOB',
+                                'BULKCHECKFSBACKINPRODJOB',
                                 'RESTARTSTUCKRECALLSJOB'))
   LOOP
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
@@ -809,7 +795,7 @@ BEGIN
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
       ENABLED         => TRUE,
       COMMENTS        => 'Bulk operation to processing filesystem state changes');
-  
+
   -- Create a db job to be run every hour executing the restartStuckRecalls workaround procedure
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'restartStuckRecallsJob',
