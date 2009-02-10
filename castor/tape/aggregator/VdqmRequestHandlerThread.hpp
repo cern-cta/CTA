@@ -191,12 +191,22 @@ namespace aggregator {
      * <li> Give request information to tape gateway and get volume information
      * in return.
      * <li> Give volume information to RTCPD.
+     * <li> If migrating then get the information about the first file from the
+     * tape gateway and send it to RTCPD.  This will allow the tape server to
+     * start caching into memory the file from the disk server whilst the tape
+     * is being mounted.
      * <li> Request more work from RTCPD.
      * </ol>
+     *
+     * @param cuuid The ccuid to be used for logging.
+     * @param jobRequest The job request message received from the VDQM.
+     * @param rtcpdInitialSocketFd The socket file descriptor of initial RTCPD
+     * connection.
+     * @param mode Out parameter: The tape access mode.
      */
     void startGatewayProtocol(const Cuuid_t &cuuid,
-      const RcpJobRqstMsgBody &vdqmJobRequest, const int rtcpdInitialSocketFd)
-      throw(castor::exception::Exception);
+      const RcpJobRqstMsgBody &vdqmJobRequest, const int rtcpdInitialSocketFd,
+      uint32_t &mode) throw(castor::exception::Exception);
 
     /**
      * Coordinates the remote copy operations by sending and recieving the

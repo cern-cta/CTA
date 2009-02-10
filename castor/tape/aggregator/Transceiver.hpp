@@ -276,9 +276,25 @@ public:
    */
   static void tellGatewayToStartTransfer(const std::string gatewayHost,
     const unsigned short gatewayPort, const uint32_t volReqId,
-    const char *const unit, std::string &vid, uint32_t &mode,
-    std::string &label, std::string &density, int &errorCode,
-    std::string &errorMsg) throw(castor::exception::Exception);
+    const char *const unit, char (&vid)[CA_MAXVIDLEN+1], uint32_t &mode,
+    char (&label)[CA_MAXLBLTYPLEN+1], char (&density)[CA_MAXDENLEN+1],
+    int &errorCode, std::string &errorMsg) throw(castor::exception::Exception);
+
+  /**
+   * Gets a file to migrate from the tape tape gateway by sending and receiving
+   * the necessary messages.
+   *
+   * @param gatewayHost The tape gateway host name.
+   * @param gatewayPort The tape gateway port number.
+   * @param volReqId The volume request ID.
+   * @param errorCode Out parameter: The error code returned by the tape
+   * gateway.
+   * @param errorMsg Out parameter: The error message returned by the tape
+   * gateway.
+   */
+  static void getFileToMigrateFromGateway(const std::string gatewayHost,
+    const unsigned short gatewayPort, const uint32_t volReqId,
+    int &errorCode, std::string &errorMsg) throw(castor::exception::Exception);
 
 
 private:

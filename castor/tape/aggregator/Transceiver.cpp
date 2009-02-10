@@ -30,6 +30,10 @@
 #include "castor/tape/aggregator/Transceiver.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
 #include "castor/tape/aggregator/Utils.hpp"
+#include "castor/tape/tapegateway/FileToMigrateRequest.hpp"
+#include "castor/tape/tapegateway/FileToMigrateResponse.hpp"
+#include "castor/tape/tapegateway/FileToRecallRequest.hpp"
+#include "castor/tape/tapegateway/FileToRecallResponse.hpp"
 #include "castor/tape/tapegateway/StartTransferRequest.hpp"
 #include "castor/tape/tapegateway/StartTransferResponse.hpp"
 #include "h/common.h"
@@ -966,9 +970,10 @@ void castor::tape::aggregator::Transceiver::checkRtcopyReqType(
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::tellGatewayToStartTransfer(
   const std::string gatewayhost, const unsigned short gatewayPort,
-  const uint32_t volReqId, const char *const unit,  std::string &vid,
-  uint32_t &mode, std::string &label, std::string &density, int &errorCode,
-  std::string &errorMsg) throw(castor::exception::Exception) {
+  const uint32_t volReqId, const char *const unit, char (&vid)[CA_MAXVIDLEN+1],
+  uint32_t &mode, char (&label)[CA_MAXLBLTYPLEN+1],
+  char (&density)[CA_MAXDENLEN+1], int &errorCode, std::string &errorMsg)
+  throw(castor::exception::Exception) {
 
   tapegateway::StartTransferRequest request;
 
@@ -1002,10 +1007,71 @@ void castor::tape::aggregator::Transceiver::tellGatewayToStartTransfer(
     throw ex;
   }
 
+  Utils::copyString(vid, response->vid().c_str());
+  mode = response->mode();
+  Utils::copyString(vid, response->label().c_str());
+  Utils::copyString(density, response->density().c_str());
+  errorCode = response->errorCode();
+  errorMsg = response->errorMessage();
+}
+
+
+//-----------------------------------------------------------------------------
+// getFileToMigrateFromGateway
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::Transceiver::getFileToMigrateFromGateway(
+  const std::string gatewayHost, const unsigned short gatewayPort,
+  const uint32_t volReqId, int &errorCode, std::string &errorMsg)
+  throw(castor::exception::Exception) {
+/*
+  tapegateway::FileToMigrateRequest request;
+
+  request.setTransactionId(volReqId);
+
+  castor::io::ClientSocket socket(gatewayPort, gatewayhost);
+
+  castor::IObject *obj = socket.readObject();
+
+  if(obj == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to get FileToMigrateResponse from tape gateway"
+         ": ClientSocket::readObject() returned null";
+
+    throw ex;
+  }
+
+  std::auto_ptr<tapegateway::FileToMigrateResponse> response(
+    dynamic_cast<tapegateway::FileToMigrateResponse*>(obj));
+
+  if(response.get() == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to get FileToMigrateResponse from tape gateway"
+         ": Failed to dynamic cast FileToMigrateResponse";
+
+    throw ex;
+  }
+
+  if(response.transactonId() != volReqId) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to get FileToMigrateResponse from tape gateway"
+         ": Transaction ID does not match volume request ID"
+         ": Transaction ID = " << response.transactonId()
+      << ": Volume Request ID = " << volReqId;
+
+    throw ex;
+  }
+
   vid       = response->vid();
   mode      = response->mode();
   label     = response->label();
   density   = response->density();
   errorCode = response->errorCode();
   errorMsg  = response->errorMessage();
+*/
 }
