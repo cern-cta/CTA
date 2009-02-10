@@ -321,7 +321,7 @@ namespace castor {
       /// Accessor to lastRatingUpdate
       u_signed64 lastRatingUpdate() const {
 	return m_lastRatingUpdate;
-      }      
+      }
 
       /// Accessor to lastRatingError
       void setLastRatingError(u_signed64 new_var) {
@@ -331,7 +331,17 @@ namespace castor {
       /// Accessor to lastRatingError
       u_signed64 lastRatingError() const {
 	return m_lastRatingError;
-      } 
+      }
+
+      /// Accessor to toBeDeleted
+      bool toBeDeleted() const {
+        return m_toBeDeleted;
+      }
+
+      /// Accessor to toBeDeleted
+      void setToBeDeleted(bool new_var) {
+        m_toBeDeleted = new_var;
+      }
 
     private:
 
@@ -345,7 +355,7 @@ namespace castor {
       float m_minFreeSpace;
 
       /**
-       * The fraction of free space that the garbage collector is targeting 
+       * The fraction of free space that the garbage collector is targeting
        * when liberating space. This number must be < 1
        */
       float m_maxFreeSpace;
@@ -421,6 +431,9 @@ namespace castor {
 
       /// The last time a rating error occured (seconds since EPOCH)
       u_signed64 m_lastRatingError;
+
+      /// Flag to indicate that the FileSystem should be deleted.
+      bool m_toBeDeleted;
 
     }; /* end of class FileSystemStatus */
 

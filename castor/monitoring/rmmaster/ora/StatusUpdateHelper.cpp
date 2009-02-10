@@ -94,6 +94,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
   it->second.setRam(state->ram());
   it->second.setMemory(state->memory());
   it->second.setSwap(state->swap());
+  it->second.setToBeDeleted(false);
 
   // Announce a diskservers change of status ? (e.g. being re-enabled after
   // heartbeat check failure)
@@ -109,14 +110,19 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
   }
 
   // Update status if needed
-  if (it->second.adminStatus() == ADMIN_NONE ||
-      state->adminStatus() != ADMIN_NONE) {
-    it->second.setStatus(state->status());
-    if (state->adminStatus() == ADMIN_FORCE) {
-      it->second.setAdminStatus(ADMIN_FORCE);
-    } else {
-      it->second.setAdminStatus(ADMIN_NONE);
+  if (production) {
+    if (it->second.adminStatus() == ADMIN_NONE ||
+	state->adminStatus() != ADMIN_NONE) {
+      it->second.setStatus(state->status());
+      if (state->adminStatus() == ADMIN_FORCE) {
+	it->second.setAdminStatus(ADMIN_FORCE);
+      } else {
+	it->second.setAdminStatus(ADMIN_NONE);
+      }
     }
+  } else {
+    it->second.setStatus(state->status());
+    it->second.setAdminStatus(state->adminStatus());
   }
 
   // Update lastUpdate
@@ -157,16 +163,22 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
     it2->second.setMinFreeSpace((*itFs)->minFreeSpace());
     it2->second.setMaxFreeSpace((*itFs)->maxFreeSpace());
     it2->second.setMinAllowedFreeSpace((*itFs)->minAllowedFreeSpace());
+    it2->second.setToBeDeleted(false);
 
     // Update status if needed
-    if (it2->second.adminStatus() == ADMIN_NONE ||
-        (*itFs)->adminStatus() != ADMIN_NONE) {
-      it2->second.setStatus((*itFs)->status());
-      if ((*itFs)->adminStatus() == ADMIN_FORCE) {
-        it2->second.setAdminStatus(ADMIN_FORCE);
-      } else {
-        it2->second.setAdminStatus(ADMIN_NONE);
+    if (production) {
+      if (it2->second.adminStatus() == ADMIN_NONE ||
+	  (*itFs)->adminStatus() != ADMIN_NONE) {
+	it2->second.setStatus((*itFs)->status());
+	if ((*itFs)->adminStatus() == ADMIN_FORCE) {
+	  it2->second.setAdminStatus(ADMIN_FORCE);
+	} else {
+	  it2->second.setAdminStatus(ADMIN_NONE);
+	}
       }
+    } else {
+      it2->second.setStatus((*itFs)->status());
+      it2->second.setAdminStatus((*itFs)->adminStatus());
     }
 
     // Update lastUpdate

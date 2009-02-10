@@ -110,13 +110,14 @@ int main(int argc, char *argv[]) {
        castor::dlf::Param("Master", masterName)};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 2, 4, params);
 
-    // DB threadPool
+    // DB threadpool
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("DatabaseActuator",
         new castor::monitoring::rmmaster::DatabaseActuatorThread
         (daemon.clusterStatus()), updateInterval));
     daemon.getThreadPool('D')->setNbThreads(1);
+
     // Update threadpool
     daemon.addThreadPool
       (new castor::server::UDPListenerThreadPool

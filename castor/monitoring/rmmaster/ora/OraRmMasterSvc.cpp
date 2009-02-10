@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/03/12 10:43:34 $ $Author: waldron $
+ * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2009/02/10 15:09:17 $ $Author: waldron $
  *
  * Implementation of the IRmMasterSvc for Oracle
  *
@@ -46,6 +46,7 @@
 #include "castor/monitoring/AdminStatusCodes.hpp"
 #include "castor/monitoring/DiskServerStateReport.hpp"
 #include "castor/monitoring/FileSystemStateReport.hpp"
+#include "castor/monitoring/DiskServerStatus.hpp"
 #include "occi.h"
 #include <Cuuid.h>
 #include <osdep.h>
@@ -59,20 +60,20 @@
 // Instantiation of a static factory class
 //-----------------------------------------------------------------------------
 static castor::SvcFactory<castor::monitoring::rmmaster::ora::OraRmMasterSvc>* s_factoryOraRmMasterSvc =
-  new castor::SvcFactory<castor::monitoring::rmmaster::ora::OraRmMasterSvc>();
+new castor::SvcFactory<castor::monitoring::rmmaster::ora::OraRmMasterSvc>();
 
 //-----------------------------------------------------------------------------
 // Static constants initialization
 //-----------------------------------------------------------------------------
 /// SQL statement for storeClusterStatus
 const std::string castor::monitoring::rmmaster::ora::OraRmMasterSvc::s_storeClusterStatusStatementString =
-  "BEGIN storeClusterStatus(:1, :2, :3, :4); END;";
+"BEGIN storeClusterStatus(:1, :2, :3, :4); END;";
 
 const std::string castor::monitoring::rmmaster::ora::OraRmMasterSvc::s_getDiskServersStatementString =
-  "SELECT id, name, adminStatus, status FROM DiskServer";
+"SELECT id, name, adminStatus, status FROM DiskServer";
 
 const std::string castor::monitoring::rmmaster::ora::OraRmMasterSvc::s_getFileSystemsStatementString =
-  "SELECT mountPoint, adminStatus FROM FileSystem WHERE diskServer = :1";
+"SELECT mountPoint, adminStatus, status FROM FileSystem WHERE diskServer = :1";
 
 //-----------------------------------------------------------------------------
 // OraRmMasterSvc
@@ -143,14 +144,14 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
     try {
       // Check whether the statements are ok
       m_storeClusterStatusStatement =
-        createStatement(s_storeClusterStatusStatementString);
+	createStatement(s_storeClusterStatusStatementString);
       m_storeClusterStatusStatement->setAutoCommit(true);
     } catch (oracle::occi::SQLException e) {
       handleException(e);
       castor::exception::Internal ex;
       ex.getMessage()
-      << "Unable to create statement for storing monitoring data to DB :"
-      << std::endl << e.getMessage();
+	<< "Unable to create statement for storing monitoring data to DB :"
+	<< std::endl << e.getMessage();
       throw ex;
     }
   }
@@ -394,23 +395,37 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
       handleException(e);
       castor::exception::Internal ex;
       ex.getMessage()
-        << "Unable to create statements for retrieving monitoring data from DB :"
-        << std::endl << e.getMessage();
+	<< "Unable to create statements for retrieving monitoring data from DB :"
+	<< std::endl << e.getMessage();
       throw ex;
+    }
+  }
+
+  // Flag all objects in the shared memory for deletion
+  for (castor::monitoring::ClusterStatus::iterator it =
+	 clusterStatus->begin();
+       it != clusterStatus->end() && !dsDisabled;
+       it++) {
+    it->second.setToBeDeleted(true);
+    for (castor::monitoring::DiskServerStatus::iterator it2 =
+	   it->second.begin();
+	 it2 != it->second.end();
+	 it2++) {
+      it2->second.setToBeDeleted(true);
     }
   }
 
   StatusUpdateHelper* updater = 0;
   try {
-    // init the Status Update helper (shared with RmMasterDaemon/CollectorThread)
+    // Init the Status Update helper (shared with RmMasterDaemon/CollectorThread)
     updater = new StatusUpdateHelper(clusterStatus);
 
-    // Look for all DiskServers
+    // Loop over all DiskServers
     oracle::occi::ResultSet *dsRset = m_getDiskServersStatement->executeQuery();
     while (oracle::occi::ResultSet::END_OF_FETCH != dsRset->next()) {
       // Create a state report for each diskserver
       castor::monitoring::DiskServerStateReport* dsReport =
-        new castor::monitoring::DiskServerStateReport();
+	new castor::monitoring::DiskServerStateReport();
       dsReport->setName(dsRset->getString(2));
 
       // By default we start with everything disabled, when the node comes up
@@ -424,25 +439,30 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
 
       // Make sure an ADMIN_NONE status in db resets anything found before
       castor::monitoring::AdminStatusCodes adStatus =
-        (castor::monitoring::AdminStatusCodes)dsRset->getInt(3);
-      if(adStatus == castor::monitoring::ADMIN_NONE)
-        adStatus = castor::monitoring::ADMIN_RELEASE;
+	(castor::monitoring::AdminStatusCodes)dsRset->getInt(3);
+      if (adStatus == castor::monitoring::ADMIN_NONE)
+	adStatus = castor::monitoring::ADMIN_RELEASE;
       dsReport->setAdminStatus(adStatus);
 
       // Loop on its FileSystems
       m_getFileSystemsStatement->setDouble(1, dsRset->getDouble(1));
       oracle::occi::ResultSet *fsRset = m_getFileSystemsStatement->executeQuery();
       while (oracle::occi::ResultSet::END_OF_FETCH != fsRset->next()) {
-        castor::monitoring::FileSystemStateReport* fs =
-          new castor::monitoring::FileSystemStateReport();
-        fs->setMountPoint(fsRset->getString(1));
-        fs->setStatus(castor::stager::FILESYSTEM_DISABLED);
-        adStatus = (castor::monitoring::AdminStatusCodes)fsRset->getInt(2);
-        if(adStatus == castor::monitoring::ADMIN_NONE)
-          adStatus = castor::monitoring::ADMIN_RELEASE;
-        fs->setAdminStatus(adStatus);
-        dsReport->addFileSystemStatesReports(fs);
+	castor::monitoring::FileSystemStateReport* fs =
+	  new castor::monitoring::FileSystemStateReport();
+	fs->setMountPoint(fsRset->getString(1));
+	if (dsDisabled == false) {
+	  fs->setStatus((castor::stager::FileSystemStatusCodes)fsRset->getInt(3));
+	} else {
+	  fs->setStatus(castor::stager::FILESYSTEM_DISABLED);
+	}
+	adStatus = (castor::monitoring::AdminStatusCodes)fsRset->getInt(2);
+	if (adStatus == castor::monitoring::ADMIN_NONE)
+	  adStatus = castor::monitoring::ADMIN_RELEASE;
+	fs->setAdminStatus(adStatus);
+	dsReport->addFileSystemStatesReports(fs);
       }
+      m_getFileSystemsStatement->closeResultSet(fsRset);
 
       // "send" the report to update the cluster status
       updater->handleStateUpdate(dsReport);
@@ -450,8 +470,27 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
     }
     m_getDiskServersStatement->closeResultSet(dsRset);
     delete updater;
+
+    // Loop over all objects in the shared memory. For those which are flagged
+    // for deletion update the objects admin status to ADMIN_DELETED.
+    for (castor::monitoring::ClusterStatus::iterator it =
+	   clusterStatus->begin();
+	 it != clusterStatus->end() && !dsDisabled;
+	 it++) {
+      if (it->second.toBeDeleted()) {
+	it->second.setAdminStatus(castor::monitoring::ADMIN_DELETED);
+      }
+      for (castor::monitoring::DiskServerStatus::iterator it2 =
+	     it->second.begin();
+	   it2 != it->second.end();
+	   it2++) {
+	if (it2->second.toBeDeleted()) {
+	  it2->second.setAdminStatus(castor::monitoring::ADMIN_DELETED);
+	}
+      }
+    }
   } catch (oracle::occi::SQLException e) {
-    if(updater)
+    if (updater)
       delete updater;
     handleException(e);
     castor::exception::Internal ex;

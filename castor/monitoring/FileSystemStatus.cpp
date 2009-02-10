@@ -62,7 +62,8 @@ castor::monitoring::FileSystemStatus::FileSystemStatus() :
   m_lastStateUpdate(0),
   m_lastMetricsUpdate(0),
   m_lastRatingUpdate(0),
-  m_lastRatingError(0) { }
+  m_lastRatingError(0),
+  m_toBeDeleted(false) { }
 
 
 //-----------------------------------------------------------------------------

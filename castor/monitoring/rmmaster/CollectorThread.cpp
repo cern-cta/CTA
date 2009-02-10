@@ -63,6 +63,16 @@ castor::monitoring::rmmaster::CollectorThread::CollectorThread
 
 
 //-----------------------------------------------------------------------------
+// Destructor
+//-----------------------------------------------------------------------------
+castor::monitoring::rmmaster::CollectorThread::~CollectorThread() throw() {
+  if (m_updater != 0) {
+    delete m_updater;
+  }
+}
+
+
+//-----------------------------------------------------------------------------
 // Run
 //-----------------------------------------------------------------------------
 void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {

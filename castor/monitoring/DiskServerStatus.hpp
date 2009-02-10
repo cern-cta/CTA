@@ -311,6 +311,16 @@ namespace castor {
 	m_deltaNbRecallerStreams = new_var;
       }
 
+      /// Accessor to toBeDeleted
+      bool toBeDeleted() const {
+        return m_toBeDeleted;
+      }
+
+      /// Accessor to toBeDeleted
+      void setToBeDeleted(bool new_var) {
+        m_toBeDeleted = new_var;
+      }
+
     private:
 
       /// Total ram (in bytes)
@@ -384,6 +394,9 @@ namespace castor {
 
       /// Delta on the number of recaller streams, aggregated over all filesystems
       int m_deltaNbRecallerStreams;
+
+      /// Flag to indicate that the DiskServer should be deleted.
+      bool m_toBeDeleted;
 
     }; /* end of class DiskServerStatus */
 

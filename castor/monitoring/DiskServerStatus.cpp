@@ -59,7 +59,8 @@ castor::monitoring::DiskServerStatus::DiskServerStatus() :
   m_nbMigratorStreams(0),
   m_deltaNbMigratorStreams(0),
   m_nbRecallerStreams(0),
-  m_deltaNbRecallerStreams(0) { }
+  m_deltaNbRecallerStreams(0),
+  m_toBeDeleted(false) { }
 
 
 //-----------------------------------------------------------------------------

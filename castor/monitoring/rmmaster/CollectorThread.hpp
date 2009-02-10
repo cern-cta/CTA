@@ -54,6 +54,11 @@ namespace castor {
          */
         CollectorThread(castor::monitoring::ClusterStatus* clusterStatus);
 
+	/**
+	 * Destructor
+	 */
+        virtual ~CollectorThread() throw();
+
         /// Not implemented
         virtual void init() {};
 
