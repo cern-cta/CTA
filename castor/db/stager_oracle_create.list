@@ -1,5 +1,7 @@
 fillType2Obj.sql
 oracleCommon.sql
+oracleDrain.schema.sql
+oracleDrain.sql
 oraclePerm.sql
 oracleStager.sql
 oracleJob.sql

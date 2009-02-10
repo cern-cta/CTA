@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.12 $ $Date: 2008/11/06 18:12:49 $ $Author: waldron $
+ * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.13 $ $Date: 2009/02/10 17:56:48 $ $Author: waldron $
  *
  * Some SQL code to ease support and debugging
  *
@@ -15,12 +15,12 @@ CREATE OR REPLACE PACKAGE castorDebug AS
     location VARCHAR2(2048),
     available CHAR(1),
     status NUMBER,
-    creationtime DATE,
+    creationtime VARCHAR2(2048),
     gcWeight NUMBER);
   TYPE DiskCopyDebug IS TABLE OF DiskCopyDebug_typ;
   TYPE SubRequestDebug IS TABLE OF SubRequest%ROWTYPE;
   TYPE RequestDebug_typ IS RECORD (
-    creationtime DATE,
+    creationtime VARCHAR2(2048),
     SubReqId NUMBER,
     SubReqParentId NUMBER,
     Status NUMBER,
@@ -79,8 +79,8 @@ BEGIN
                    DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path AS location,
                    decode(DiskServer.status, 2, 'N', decode(FileSystem.status, 2, 'N', 'Y')) AS available,
                    DiskCopy.status AS status,
-                   to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationtime AS creationtime,
-                   DiskCopy.gcWeight AS gcweight
+                   getTimeString(creationtime) AS creationtime,
+                   trunc(DiskCopy.gcWeight, 2) AS gcweight
               FROM DiskCopy, FileSystem, DiskServer, DiskPool
              WHERE DiskCopy.fileSystem = FileSystem.id(+)
                AND FileSystem.diskServer = diskServer.id(+)
@@ -130,7 +130,7 @@ END;
  */
 CREATE OR REPLACE FUNCTION getRs(ref number) RETURN castorDebug.RequestDebug PIPELINED AS
 BEGIN
-  FOR d IN (SELECT to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationtime AS creationtime,
+  FOR d IN (SELECT getTimeString(creationtime) AS creationtime,
                    SubRequest.id AS SubReqId, SubRequest.parent AS SubReqParentId, SubRequest.Status,
                    username, machine, svcClassName, Request.id AS ReqId, Request.type AS ReqType
               FROM SubRequest,

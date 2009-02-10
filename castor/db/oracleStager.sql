@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.718 $ $Date: 2009/02/10 15:41:32 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.719 $ $Date: 2009/02/10 17:56:48 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -232,39 +232,62 @@ END;
 /
 
 
-/* Used to check consistency of diskcopies when a filesytem
-   comes back to production after having been disabled for
-   some time */
+/* SQL statement for the update trigger on the FileSystem table */
 CREATE OR REPLACE TRIGGER tr_FileSystem_Update
 BEFORE UPDATE OF status ON FileSystem
 FOR EACH ROW
-WHEN (old.status IN (1, 2) AND -- DRAINING, DISABLED
-      new.status = 0) -- PRODUCTION
-DECLARE
-  s NUMBER;
 BEGIN
-  SELECT status INTO s FROM DiskServer WHERE id = :old.diskServer;
-  IF s = 0 THEN
-    checkFSBackInProd(:old.id);
+  -- If the filesystem is coming back into PRODUCTION, initiate a consistency
+  -- check for the diskcopies which reside on the filesystem.
+  IF :old.status IN (1, 2) AND  -- DRAINING, DISABLED
+     :new.status = 0 THEN       -- PRODUCTION
+    checkFsBackInProd(:old.id);
+  END IF;
+  -- Cancel any ongoing draining operations if the filesystem is no longer in
+  -- a DRAINING state.
+  IF :old.status = 1 AND        -- DRAINING
+     :new.status IN (0, 2) THEN -- PRODUCTION, DISABLED
+    UPDATE DrainingFileSystem
+       SET status = 3  -- INTERRUPTED
+     WHERE fileSystem = :new.id
+       AND status IN (0, 1, 2);  -- CREATED, INITIALIZING, RUNNING
   END IF;
 END;
 /
 
 
-/* Used to check consistency of diskcopies when filesytems
-   comes back to production after having been disabled for
-   some time */
+/* SQL statement for the update trigger on the DiskServer table */
 CREATE OR REPLACE TRIGGER tr_DiskServer_Update
 BEFORE UPDATE OF status ON DiskServer
 FOR EACH ROW
-WHEN (old.status IN (1, 2) AND -- DRAINING, DISABLED
-      new.status = 0) -- PRODUCTION
 BEGIN
-  FOR fs IN (SELECT id, status FROM FileSystem WHERE diskServer = :old.id) LOOP
-    IF fs.status = 0 THEN
-      checkFSBackInProd(fs.id);
-    END IF;
-  END LOOP;
+  -- If the diskserver is coming back into PRODUCTION, initiate a consistency
+  -- check for all the diskcopies on its associated filesystems which are in
+  -- a PRODUCTION.
+  IF :old.status IN (1, 2) AND  -- DRAINING, DISABLED
+     :new.status = 0 THEN       -- PRODUCTION
+    FOR fs IN (SELECT id FROM FileSystem
+                WHERE diskServer = :old.id
+                  AND status = 0)  -- PRODUCTION
+    LOOP
+      checkFsBackInProd(fs.id);
+    END LOOP;
+  END IF;
+  -- Cancel any ongoing draining operations if:
+  --  A) The diskserver is going into a DISABLED state      or
+  --  B) The diskserver is going into PRODUCTION but its associated filesystems
+  --     are not in DRAINING.
+  IF :old.status = 1 AND        -- DRAINING
+     :new.status IN (0, 2) THEN -- PRODUCTION, DISABLED
+   UPDATE DrainingFileSystem
+      SET status = 3  -- INTERRUPTED
+    WHERE fileSystem IN
+      (SELECT id FROM FileSystem
+        WHERE diskServer = :old.id
+          AND (status != 1  --  FILESYSTEM_DRAINING
+           OR  :new.status = 2))  -- DISKSERVER_DISABLED
+      AND status IN (0, 1, 2);  -- CREATED, INITIALIZING, RUNNING
+  END IF;
 END;
 /
 
@@ -2241,48 +2264,73 @@ CREATE OR REPLACE PROCEDURE storeClusterStatus
  fileSystems IN castor."strList",
  machineValues IN castor."cnumList",
  fileSystemValues IN castor."cnumList") AS
- ind NUMBER;
+ found   NUMBER;
+ ind     NUMBER;
  machine NUMBER := 0;
- fs NUMBER := 0;
+ fs      NUMBER := 0;
+ fsIds   "numList";
 BEGIN
   -- Sanity check
   IF machines.COUNT = 0 OR fileSystems.COUNT = 0 THEN
     RETURN;
   END IF;
   -- First Update Machines
-  FOR i in machines.FIRST .. machines.LAST LOOP
+  FOR i IN machines.FIRST .. machines.LAST LOOP
     ind := machineValues.FIRST + 9 * (i - machines.FIRST);
     IF machineValues(ind + 1) = 3 THEN -- ADMIN DELETED
       BEGIN
-        SELECT id INTO machine FROM DiskServer WHERE name = machines(i);
-        DELETE FROM id2Type WHERE id IN 
-          (SELECT machine FROM dual
-            UNION ALL
-           SELECT id FROM FileSystem WHERE diskServer = machine);
-        DELETE FROM FileSystem WHERE diskServer = machine;
-        DELETE FROM DiskServer WHERE name = machines(i);
+        -- Resolve the machine name to its id
+        SELECT id INTO machine
+          FROM DiskServer
+         WHERE name = machines(i);
+        -- If any of the filesystems belonging to the diskserver are currently
+        -- in the process of being drained then do not delete the diskserver or
+        -- its associated filesystems. Why? Because of unique constraint
+        -- violations between the FileSystem and DrainingDiskCopy table.
+        SELECT fileSystem BULK COLLECT INTO fsIds
+          FROM DrainingFileSystem DFS, FileSystem FS
+         WHERE DFS.fileSystem = FS.id
+           AND FS.diskServer = machine;
+        IF fsIds.COUNT > 0 THEN
+          -- Entries found so flag the draining process as DELETING
+          UPDATE DrainingFileSystem
+             SET status = 6  -- DELETING
+           WHERE fileSystem IN
+             (SELECT /*+ CARDINALITY(fsIdTable 5) */ *
+                FROM TABLE (fsIds) fsIdTable);
+        ELSE
+          -- There is no outstanding process to drain the diskservers
+          -- filesystems so we can now delete it.
+          DELETE FROM Id2Type WHERE id = machine;
+          DELETE FROM Id2Type WHERE id IN
+            (SELECT /*+ CARDINALITY(fsIdTable 5) */ *
+               FROM TABLE (fsIds) fsIdTable);
+          DELETE FROM FileSystem WHERE diskServer = machine;
+          DELETE FROM DiskServer WHERE name = machines(i);
+        END IF;
       EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- Fine, was already deleted
-        NULL;
+        NULL;  -- Already deleted
       END;
     ELSE
       BEGIN
         SELECT id INTO machine FROM DiskServer WHERE name = machines(i);
         UPDATE DiskServer
-           SET status = machineValues(ind),
-               adminStatus = machineValues(ind + 1),
-               readRate = machineValues(ind + 2),
-               writeRate = machineValues(ind + 3),
-               nbReadStreams = machineValues(ind + 4),
-               nbWriteStreams = machineValues(ind + 5),
+           SET status             = machineValues(ind),
+               adminStatus        = machineValues(ind + 1),
+               readRate           = machineValues(ind + 2),
+               writeRate          = machineValues(ind + 3),
+               nbReadStreams      = machineValues(ind + 4),
+               nbWriteStreams     = machineValues(ind + 5),
                nbReadWriteStreams = machineValues(ind + 6),
-               nbMigratorStreams = machineValues(ind + 7),
-               nbRecallerStreams = machineValues(ind + 8)
+               nbMigratorStreams  = machineValues(ind + 7),
+               nbRecallerStreams  = machineValues(ind + 8)
          WHERE name = machines(i);
       EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- we should insert a new machine here
-        INSERT INTO DiskServer (name, id, status, adminStatus, readRate, writeRate, nbReadStreams,
-                 nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams)
+        -- We should insert a new machine here
+        INSERT INTO DiskServer (name, id, status, adminStatus, readRate,
+                                writeRate, nbReadStreams, nbWriteStreams,
+                                nbReadWriteStreams, nbMigratorStreams,
+                                nbRecallerStreams)
          VALUES (machines(i), ids_seq.nextval, machineValues(ind),
                  machineValues(ind + 1), machineValues(ind + 2),
                  machineValues(ind + 3), machineValues(ind + 4),
@@ -2303,42 +2351,55 @@ BEGIN
     ELSE
       IF fileSystemValues(ind + 1) = 3 THEN -- ADMIN DELETED
         BEGIN
-          SELECT id INTO fs FROM FileSystem 
-           WHERE mountPoint = fileSystems(i) AND diskServer = machine;
-          DELETE FROM id2Type WHERE id = fs;
-          DELETE FROM FileSystem WHERE id = fs;
+          -- Resolve the mountpoint name to its id
+          SELECT id INTO fs
+            FROM FileSystem
+           WHERE mountPoint = fileSystems(i)
+             AND diskServer = machine;
+          -- Check to see if the filesystem is currently in the process of
+          -- being drained. If so, we flag it for deletion.
+          found := 0;
+          UPDATE DrainingFileSystem
+             SET status = 6  -- DELETING
+           WHERE fileSystem = fs
+          RETURNING fs INTO found;
+          -- No entry found so delete the filesystem.
+          IF found = 0 THEN
+            DELETE FROM Id2Type WHERE id = fs;
+            DELETE FROM FileSystem WHERE id = fs;
+          END IF;
         EXCEPTION WHEN NO_DATA_FOUND THEN
-          -- Fine, was already deleted
-          NULL;
+          NULL;  -- Already deleted
         END;
       ELSE
         BEGIN
           SELECT diskServer INTO machine FROM FileSystem
            WHERE mountPoint = fileSystems(i) AND diskServer = machine;
           UPDATE FileSystem
-             SET status = fileSystemValues(ind),
-                 adminStatus = fileSystemValues(ind + 1),
-                 readRate = fileSystemValues(ind + 2),
-                 writeRate = fileSystemValues(ind + 3),
-                 nbReadStreams = fileSystemValues(ind + 4),
-                 nbWriteStreams = fileSystemValues(ind + 5),
-                 nbReadWriteStreams = fileSystemValues(ind + 6),
-                 nbMigratorStreams = fileSystemValues(ind + 7),
-                 nbRecallerStreams = fileSystemValues(ind + 8),
-                 free = fileSystemValues(ind + 9),
-                 totalSize = fileSystemValues(ind + 10),
-                 minFreeSpace = fileSystemValues(ind + 11),
-                 maxFreeSpace = fileSystemValues(ind + 12),
+             SET status              = fileSystemValues(ind),
+                 adminStatus         = fileSystemValues(ind + 1),
+                 readRate            = fileSystemValues(ind + 2),
+                 writeRate           = fileSystemValues(ind + 3),
+                 nbReadStreams       = fileSystemValues(ind + 4),
+                 nbWriteStreams      = fileSystemValues(ind + 5),
+                 nbReadWriteStreams  = fileSystemValues(ind + 6),
+                 nbMigratorStreams   = fileSystemValues(ind + 7),
+                 nbRecallerStreams   = fileSystemValues(ind + 8),
+                 free                = fileSystemValues(ind + 9),
+                 totalSize           = fileSystemValues(ind + 10),
+                 minFreeSpace        = fileSystemValues(ind + 11),
+                 maxFreeSpace        = fileSystemValues(ind + 12),
                  minAllowedFreeSpace = fileSystemValues(ind + 13)
-           WHERE mountPoint = fileSystems(i)
-             AND diskServer = machine;
+           WHERE mountPoint          = fileSystems(i)
+             AND diskServer          = machine;
         EXCEPTION WHEN NO_DATA_FOUND THEN
           -- we should insert a new filesystem here
-          INSERT INTO FileSystem (free, mountPoint,
-                 minFreeSpace, minAllowedFreeSpace, maxFreeSpace,
-                 totalSize, readRate, writeRate, nbReadStreams,
-                 nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams,
-                 id, diskPool, diskserver, status, adminStatus)
+          INSERT INTO FileSystem (free, mountPoint, minFreeSpace,
+                                  minAllowedFreeSpace, maxFreeSpace, totalSize,
+                                  readRate, writeRate, nbReadStreams,
+                                  nbWriteStreams, nbReadWriteStreams,
+                                  nbMigratorStreams, nbRecallerStreams, id,
+                                  diskPool, diskserver, status, adminStatus)
           VALUES (fileSystemValues(ind + 9), fileSystems(i), fileSystemValues(ind+11),
                   fileSystemValues(ind + 13), fileSystemValues(ind + 12),
                   fileSystemValues(ind + 10), fileSystemValues(ind + 2),

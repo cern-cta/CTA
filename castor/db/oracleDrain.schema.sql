@@ -1,0 +1,216 @@
+/*******************************************************************
+ * @(#)$RCSfile: oracleDrain.schema.sql,v $ $Revision: 1.1 $ $Date: 2009/02/10 17:56:48 $ $Author: waldron $
+ * Schema creation code for Draining FileSystems Logic
+ *
+ * @author Castor Dev team, castor-dev@cern.ch
+ *******************************************************************/
+
+/* SQL statement for the creation of the DrainingFileSystem table */
+CREATE TABLE DrainingFileSystem
+  (userName       VARCHAR2(30),
+   machine        VARCHAR2(500),
+   creationTime   NUMBER DEFAULT 0,
+   startTime      NUMBER DEFAULT 0,
+   lastUpdateTime NUMBER DEFAULT 0,
+   fileSystem     NUMBER,
+   /* Current state of the draining process, one of:
+    *   0 -- CREATED
+    *   1 -- INITIALIZING
+    *   2 -- RUNNING
+    *   3 -- INTERRUPTED
+    *   4 -- FAILED
+    *   5 -- COMPLETED
+    *   6 -- DELETING
+    */
+   status         NUMBER DEFAULT 0,
+   svcClass       NUMBER,
+   /* Flag to indicate whether files should be invalidated so that they can be
+    * removed by the garbage collection process after a file is replicated to
+    * another diskserver.
+    */
+   autoDelete     NUMBER DEFAULT 0,
+   /* Column to indicate which files should be replicated. Valid values are:
+    *   0 -- STAGED,
+    *   1 -- CANBEMIGR
+    *   2 -- ALL
+    */
+   fileMask       NUMBER DEFAULT 1,
+   /* The maximum number of current transfers (job slots) available for draining
+    * the filesystem.
+    */
+   maxTransfers   NUMBER DEFAULT 50,
+   totalFiles     NUMBER DEFAULT 0,
+   totalBytes     NUMBER DEFAULT 0)
+  /* Allow shrink operations */
+  ENABLE ROW MOVEMENT;
+
+/* SQL statement for primary key constraint on DrainingFileSystem */
+ALTER TABLE DrainingFileSystem
+  ADD CONSTRAINT PK_DrainingFs_FileSystem
+  PRIMARY KEY (fileSystem);
+
+/* SQL statements for not null constraints on the DrainingFileSystem table */
+ALTER TABLE DrainingFileSystem
+  MODIFY (userName CONSTRAINT NN_DrainingFs_UserName NOT NULL);
+
+ALTER TABLE DrainingFileSystem
+  MODIFY (machine CONSTRAINT NN_DrainingFs_Machine NOT NULL);
+
+ALTER TABLE DrainingFileSystem
+  MODIFY (fileSystem CONSTRAINT NN_DrainingFs_FileSystem NOT NULL);
+
+ALTER TABLE DrainingFileSystem
+  MODIFY (svcClass CONSTRAINT NN_DrainingFs_SvcClass NOT NULL);
+
+/* SQL statements for check constraints on the DrainingFileSystem table */
+ALTER TABLE DrainingFileSystem
+  ADD CONSTRAINT CK_DrainingFs_Status
+  CHECK (status IN (0, 1, 2, 3, 4, 5, 6));
+
+ALTER TABLE DrainingFileSystem
+  ADD CONSTRAINT CK_DrainingFs_FileMask
+  CHECK (fileMask IN (0, 1, 2));
+
+ALTER TABLE DrainingFileSystem
+  ADD CONSTRAINT CK_DrainingFs_AutoDelete
+  CHECK (autoDelete IN (0, 1));
+
+ALTER TABLE DrainingFileSystem
+  ADD CONSTRAINT CK_DrainingFs_MaxTransfers
+  CHECK (maxTransfers > 0);
+
+/* SQL statements for foreign key constraints on DrainingFileSystem */
+ALTER TABLE DrainingFileSystem
+  ADD CONSTRAINT FK_DrainingFs_SvcClass
+  FOREIGN KEY (svcClass)
+  REFERENCES SvcClass (id);
+
+ALTER TABLE DrainingFileSystem
+  ADD CONSTRAINT FK_DrainingFs_FileSystem
+  FOREIGN KEY (fileSystem)
+  REFERENCES FileSystem (id);
+
+/* SQL statements for indexes on DrainingFileSystem table */
+CREATE INDEX I_DrainingFileSystem_SvcClass
+  ON DrainingFileSystem (svcClass);
+
+
+/* SQL statements for the creation of the DrainingDiskCopy table
+ *
+ * The way the logic for draining a filesystems works is to essentially create
+ * a list of all the files that need to be replicated to other diskservers and
+ * to process that list until all files have been replicated.
+ *
+ * This list/queue could have been done with Oracle Advanced Queuing (AQ).
+ * However, due to the complexities of setting it up and the lack of prior
+ * experience on behalf of the CASTOR developers and CERN DBA's we create a
+ * simple queue using a standard table.
+ */
+CREATE TABLE DrainingDiskCopy
+  (fileSystem     NUMBER,
+   /* Status of the diskcopy to be replicated. Note: this is not the same as
+    * the status of the diskcopy i.e. STAGED, CANBEMIGR. It is an internal
+    * status assigned to each diskcopy (file) as a means of tracking how far the
+    * file is in the lifecycle of draining a filesystem.
+    * The status can be one of:
+    *   0 -- CREATED
+    *   1 -- RESTARTED
+    *   2 -- PROCESSING    (Transient state)
+    *   3 -- WAITD2D
+    *   4 -- FAILED
+    */
+   status         NUMBER DEFAULT 0,
+   /* A link to the diskcopy. Note: this is deliberately not enforced with a
+    * foreign key constraint!!!
+    */
+   diskCopy       NUMBER,
+   parent         NUMBER DEFAULT 0,
+   creationTime   NUMBER DEFAULT 0,
+   priority       NUMBER DEFAULT 0,
+   fileSize       NUMBER DEFAULT 0,
+   comments       VARCHAR2(2048) DEFAULT NULL)
+  /* Allow shrink operations */
+  ENABLE ROW MOVEMENT;
+
+/* SQL statement for primary key constraint on DrainingDiskCopy */
+ALTER TABLE DrainingDiskCopy
+  ADD CONSTRAINT PK_DrainingDCs_DiskCopy
+  PRIMARY KEY (diskCopy);
+
+/* SQL statements for not null constraints on the DrainingDiskCopy table */
+ALTER TABLE DrainingDiskCopy
+  MODIFY (fileSystem CONSTRAINT NN_DrainingDCs_FileSystem NOT NULL);
+
+ALTER TABLE DrainingDiskCopy
+  MODIFY (status CONSTRAINT NN_DrainingDCs_Status NOT NULL);
+
+ALTER TABLE DrainingDiskCopy
+  MODIFY (diskCopy CONSTRAINT NN_DrainingDCs_DiskCopy NOT NULL);
+
+ALTER TABLE DrainingDiskCopy
+  MODIFY (parent CONSTRAINT NN_DrainingDCs_Parent NOT NULL);
+
+ALTER TABLE DrainingDiskCopy
+  MODIFY (fileSize CONSTRAINT NN_DrainingDCs_FileSize NOT NULL);
+
+/* SQL statement for check constraints on the DrainingDiskCopy table */
+ALTER TABLE DrainingDiskCopy
+  ADD CONSTRAINT CK_DrainingDCs_Status
+  CHECK (status IN (0, 1, 2, 3, 4));
+
+/* SQL statement for foreign key constraints on DrainingDiskCopy */
+ALTER TABLE DrainingDiskCopy
+  ADD CONSTRAINT FK_DrainingDCs_FileSystem
+  FOREIGN KEY (fileSystem)
+  REFERENCES DrainingFileSystem (fileSystem);
+
+/* SQL statements for indexes on DrainingDiskCopy table */
+CREATE INDEX I_DrainingDCs_FileSystem
+  ON DrainingDiskCopy (fileSystem);
+
+/* Function based index on status 4 to help optimize the listing of FAILED
+ * transfers.
+ */
+CREATE INDEX I_DrainingDCs_Status_4
+  ON DrainingDiskCopy (decode(status, 4, status, NULL));
+
+/* This index is essentially the same as the one on the SubRequest table which
+ * allows us to process entries in order. In this case by priority and
+ * creationTime.
+ */
+CREATE INDEX I_DrainingDCs_PC
+  ON DrainingDiskCopy (priority, creationTime);
+
+CREATE INDEX I_DrainingDCs_Parent
+  ON DrainingDiskCopy (parent);
+
+
+/* SQL statements for the creation of a DrainingDiskCopy materialized view
+ * Refer too: http://www.sqlsnippets.com/en/topic-12924.html
+ */
+CREATE MATERIALIZED VIEW LOG ON DrainingDiskCopy
+WITH ROWID, PRIMARY KEY, SEQUENCE (fileSystem, status, filesize)
+INCLUDING NEW VALUES;
+
+CREATE MATERIALIZED VIEW DrainingDiskCopy_MV
+  BUILD IMMEDIATE
+  REFRESH FAST ON COMMIT
+  DISABLE QUERY REWRITE
+AS
+  SELECT fileSystem, status, count(*) nbFiles, sum(fileSize) totalFileSize
+    FROM DrainingDiskCopy
+   GROUP BY fileSystem, status;
+
+/* SQL statement to rename the NOT NULL constraints of the materialized view */
+BEGIN
+  FOR a IN (SELECT constraint_name, column_name
+              FROM user_cons_columns
+             WHERE table_name = 'DRAININGDISKCOPY_MV'
+               AND constraint_name LIKE 'SYS_%')
+  LOOP
+    EXECUTE IMMEDIATE 'ALTER MATERIALIZED VIEW DrainingDiskCopy_MV RENAME 
+                      CONSTRAINT '|| a.constraint_name||
+                      ' TO NN_DrainingDCs_MV_'|| a.column_name;
+  END LOOP;
+END;
+/

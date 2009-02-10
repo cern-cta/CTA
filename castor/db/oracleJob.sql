@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.671 $ $Date: 2009/02/10 10:52:05 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.672 $ $Date: 2009/02/10 17:56:48 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -429,18 +429,20 @@ END;
 /* PL/SQL method implementing disk2DiskCopyDone */
 CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
 (dcId IN INTEGER, srcDcId IN INTEGER) AS
-  srId INTEGER;
-  cfId INTEGER;
-  fsId INTEGER;
-  srcStatus INTEGER;
-  proto VARCHAR2(2048);
-  reqId NUMBER;
+  srId       INTEGER;
+  cfId       INTEGER;
+  fsId       INTEGER;
+  srcStatus  INTEGER;
+  srcFsId    NUMBER;
+  proto      VARCHAR2(2048);
+  reqId      NUMBER;
   svcClassId NUMBER;
-  gcwProc VARCHAR2(2048);
-  gcw NUMBER;
-  fileSize NUMBER;
-  ouid INTEGER;
-  ogid INTEGER;
+  gcwProc    VARCHAR2(2048);
+  gcw        NUMBER;
+  fileSize   NUMBER;
+  ouid       INTEGER;
+  ogid       INTEGER;
+  autoDelete NUMBER;
 BEGIN
   -- Lock the CastorFile
   SELECT castorFile INTO cfId
@@ -449,8 +451,8 @@ BEGIN
   SELECT id INTO cfId FROM CastorFile WHERE id = cfId FOR UPDATE;
   -- Try to get the source diskcopy status
   BEGIN
-    SELECT status, gcWeight, diskCopySize
-      INTO srcStatus, gcw, fileSize
+    SELECT status, gcWeight, diskCopySize, fileSystem
+      INTO srcStatus, gcw, fileSize, srcFsId
       FROM DiskCopy
      WHERE id = srcDcId
        AND status IN (0, 10);  -- STAGED, CANBEMIGR
@@ -458,21 +460,29 @@ BEGIN
     -- If no diskcopy was returned it means that the source has either:
     --   A) Been GCed while the copying was taking place or
     --   B) The diskcopy is no longer in a STAGED or CANBEMIGR state.
-    -- As we do not know which status to put the new copy in and/or
-    -- cannot trust that the file was not modified mid transfer, we
-    -- invalidate the new copy.
+    -- As we do not know which status to put the new copy in and/or cannot
+    -- trust that the file was not modified mid transfer, we invalidate the
+    -- new copy.
     UPDATE DiskCopy SET status = 7 WHERE id = dcId -- INVALID
     RETURNING CastorFile, FileSystem INTO cfId, fsId;
     -- Restart the SubRequests waiting for the copy
     UPDATE SubRequest SET status = 1, -- SUBREQUEST_RESTART
                           lastModificationTime = getTime()
      WHERE diskCopy = dcId RETURNING id INTO srId;
-    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
+    UPDATE SubRequest SET status = 1,
+                          lastModificationTime = getTime(),
+                          parent = 0
      WHERE parent = srId; -- SUBREQUEST_RESTART
     -- Update filesystem status
     updateFsFileClosed(fsId);
     -- Archive the diskCopy replica request
     archiveSubReq(srId);
+    -- Restart all entries in the snapshot of files to drain that maybe
+    -- waiting on the replication of the source diskcopy.
+    UPDATE DrainingDiskCopy
+       SET status = 1,  -- RESTARTED
+           parent = 0
+     WHERE diskCopy = srcDcId OR parent = srcDcId;
     RETURN;
   END;
   -- Otherwise, we can validate the new diskcopy
@@ -489,7 +499,8 @@ BEGIN
      AND Req.svcClass = SvcClass.id;
   -- Compute gcWeight
   gcwProc := castorGC.getCopyWeight(svcClassId);
-  EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:size, :status, :gcw); END;'
+  EXECUTE IMMEDIATE
+    'BEGIN :newGcw := ' || gcwProc || '(:size, :status, :gcw); END;'
     USING OUT gcw, IN fileSize, srcStatus, gcw;
   -- Update status
   UPDATE DiskCopy
@@ -509,6 +520,55 @@ BEGIN
                         lastModificationTime = getTime(),
                         parent = 0
    WHERE parent = srId;
+  -- Diskserver draining logic
+  BEGIN
+    -- Check to see if the source diskcopy involved in the replication request
+    -- is hosted on a filesystem that is currently under the control of the
+    -- diskserver draining logic. If so, the source maybe a candidate for
+    -- garbage collection.
+    --
+    -- Note: we make 100% sure here that another copy of the same file exists on
+    -- another diskserver elsewhere and that the target and source diskcopy's
+    -- share a common service class!!!
+    SELECT DFS.autoDelete INTO autoDelete
+      FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass,
+           DrainingDiskCopy DDC, DrainingFileSystem DFS
+     WHERE DiskCopy.fileSystem = filesystem.id
+       AND DiskCopy.castorFile = cfId
+       AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
+       AND DiskCopy.id != srcDcId
+       AND FileSystem.diskPool = DiskPool2SvcClass.parent
+       AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
+       AND FileSystem.diskServer = DiskServer.id
+       AND DiskServer.status IN (0, 1)  -- PRODUCTION, DRAINING
+       AND DiskPool2SvcClass.child = DFS.svcClass
+       AND DFS.fileSystem = DDC.fileSystem
+       AND DDC.diskcopy = srcDcId
+       AND DDC.status = 3  -- WAITD2D
+       AND rownum < 2;
+    -- Another copy was found so we delete the diskcopy from the snapshot.
+    DELETE FROM DrainingDiskCopy
+     WHERE diskCopy = srcDcId
+       AND filesystem = srcFsId;
+    -- Invalidate the source diskcopy so that it can be garbage collected.
+    IF autoDelete = 1 THEN
+      UPDATE DiskCopy
+         SET status = 7,  -- INVALID
+             gcType = 3   -- Draining filesystem
+       WHERE id = srcDcId AND fileSystem = srcFsId;
+    END IF;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Restart all entries in the snapshot of files to drain that maybe
+    -- waiting on the replication of the source diskcopy.
+    UPDATE DrainingDiskCopy
+       SET status = 1,  -- RESTARTED
+           parent = 0
+     WHERE diskCopy = srcDcId
+        OR parent = srcDcId;  -- RUNNING
+  END;
+  drainFileSystem(srcFsId);
+  -- WARNING: previous call to drainFileSystem has a COMMIT inside. So all
+  -- locks have been released!!
 END;
 /
 
@@ -516,10 +576,12 @@ END;
 /* PL/SQL method implementing disk2DiskCopyFailed */
 CREATE OR REPLACE PROCEDURE disk2DiskCopyFailed
 (dcId IN INTEGER, enoent IN INTEGER, res OUT INTEGER) AS
-  fsId NUMBER;
-  cfId NUMBER;
-  ouid INTEGER;
-  ogid INTEGER;
+  fsId    NUMBER;
+  cfId    NUMBER;
+  ouid    INTEGER;
+  ogid    INTEGER;
+  srcDcId NUMBER;
+  srcFsId NUMBER;
 BEGIN
   fsId := 0;
   res := 0;
@@ -568,6 +630,25 @@ BEGIN
   IF enoent = 0 THEN
     replicateOnClose(cfId, ouid, ogid);
   END IF;
+  -- Diskserver draining logic
+  BEGIN
+    -- Determine the source diskcopy and filesystem involved in the replication
+    SELECT sourceDiskCopy, fileSystem
+      INTO srcDcId, srcFsId
+      FROM DiskCopy, StageDiskCopyReplicaRequest
+     WHERE StageDiskCopyReplicaRequest.sourceDiskCopy = DiskCopy.id
+       AND StageDiskCopyReplicaRequest.destDiskCopy = dcId;
+    -- Restart all entries in the snapshot of files to drain that maybe
+    -- waiting on the replication of the source diskcopy.
+    UPDATE DrainingDiskCopy
+       SET status = 1,  -- RESTARTED
+           parent = 0
+     WHERE diskCopy = srcDcId
+        OR parent = srcDcId;
+    drainFileSystem(srcFsId);
+  END;
+  -- WARNING: previous call to drainFileSystem has a COMMIT inside. So all
+  -- locks have been released!!
 END;
 /
 
