@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2009/01/14 08:28:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2009/02/10 13:23:53 $ $Author: waldron $
  *
  * Cancellation thread used to cancel jobs in the LSF with have been in a
  * PENDING status for too long
@@ -374,18 +374,22 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
     svcClass = "default";
   }
 
+  // "Invoking ProcessJob"
+  castor::dlf::Param params2[] =
+    {castor::dlf::Param("JobId", (int)job->jobId),
+     castor::dlf::Param("Status", job->status),
+     castor::dlf::Param(subRequestId)};
+  castor::dlf::dlf_writep(requestId, DLF_LVL_DEBUG, 71, 3, params2, &fileId);
+
   // Processing for jobs which have finished
   if (IS_FINISH(job->status)) {
 
     // Common logging parameters
-    std::ostringstream jobStatus;
-    jobStatus << job->status << ":" << job->exitStatus;
-
     castor::dlf::Param params[] =
       {castor::dlf::Param("JobId", (int)job->jobId),
        castor::dlf::Param("Username", job->user),
        castor::dlf::Param("Type", castor::ObjectsIdStrings[requestType]),
-       castor::dlf::Param("Status", jobStatus.str()),
+       castor::dlf::Param("Status", job->status),
        castor::dlf::Param(subRequestId)};
 
     // Check for abnormal termination caused by administrative action such
@@ -661,6 +665,12 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
 //-----------------------------------------------------------------------------
 bool castor::jobmanager::ManagementThread::terminateRequest
 (LS_LONG_INT jobId, Cuuid_t requestId, Cuuid_t subRequestId, Cns_fileid fileId, int errorCode) {
+
+  // "Invoking TerminateRequest"
+  castor::dlf::Param params2[] =
+    {castor::dlf::Param("JobId", (int)jobId),
+     castor::dlf::Param(subRequestId)};
+  castor::dlf::dlf_writep(requestId, DLF_LVL_DEBUG, 72, 2, params2, &fileId);
 
   // LSF has the capacity to kill jobs on bulk (lsb_killbulkjobs). However
   // testing has shown that this call fails to invoke the deletion hook of the

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2008/09/22 12:33:51 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2009/02/10 13:23:53 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -244,6 +244,8 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
      { 38, "Failed to execute getSvcClassesWithNoSpace, continuing anyway" },
      { 39, "Job terminated, svcclass no longer has any space available" },
      { 70, "Job terminated, not enough hosts to meet jobs requirements" },
+     { 71, "Invoking ProcessJob" },
+     { 72, "Invoking TerminateRequest" },
 
      // Submission
      { 40, "Invalid JobManager/SubmitRetryAttempts option, using default" },
