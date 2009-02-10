@@ -1,11 +1,12 @@
 fillType2Obj.sql
-oracleCommon.sql
+oracleCommon.schema.sql
 oracleDrain.schema.sql
-oracleDrain.sql
+oracleCommon.sql
 oraclePerm.sql
 oracleStager.sql
 oracleJob.sql
 oracleQuery.sql
 oracleTape.sql
 oracleGC.sql
+oracleDrain.sql
 oracleDebug.sql
