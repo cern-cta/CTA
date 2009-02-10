@@ -4637,7 +4637,7 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
 
   char *rbp;
   char func[24];
-  char logbuf[CA_MAXPATHLEN+34];
+  char logbuf[CA_MAXLINELEN+1];
   char newvid[CA_MAXVIDLEN+1];
   char oldvid[CA_MAXVIDLEN+1];
 
@@ -4659,7 +4659,8 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
   if (unmarshall_STRINGN (rbp, oldvid, CA_MAXVIDLEN+1))
     RETURN (EINVAL);
 
-  sprintf (logbuf, "replacetapecopy %lld %s->%s", fileid, oldvid, newvid);
+  sprintf (logbuf, "replacetapecopy %lld %s->%s %lld", fileid, oldvid, newvid,
+	   (long long int)last_mod_time);
   Cns_logreq (func, logbuf);
 
   /* check if the user is authorized to replacetapecopy */
@@ -5235,7 +5236,7 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
   u_signed64 filesize;
   char func[17];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+52];
+  char logbuf[CA_MAXLINELEN+1];
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
@@ -5265,8 +5266,9 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
     unmarshall_TIME_T (rbp, last_mod_time);
   }
   get_cwd_path (thip, cwd, cwdpath);
-  sprintf (logbuf, "setfsize %s %lld %s %s %s", u64tostr (fileid, tmpbuf, 0),
+  sprintf (logbuf, "setfsize %s %lld %lld %s %s %s", u64tostr (fileid, tmpbuf, 0),
 	   (long long int)last_mod_time,
+	   (long long int)new_mod_time,
            path, u64tostr (filesize, tmpbuf2, 0), cwdpath);
   Cns_logreq (func, logbuf);
 
@@ -5343,7 +5345,7 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
   u_signed64 filesize;
   char func[19];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+90];
+  char logbuf[CA_MAXLINELEN+1];
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
@@ -5379,9 +5381,10 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
     unmarshall_TIME_T (rbp, last_mod_time);
   }
   get_cwd_path (thip, cwd, cwdpath);
-  sprintf (logbuf, "setfsizecs %s %lld %s %s %s %s %s", 
+  sprintf (logbuf, "setfsizecs %s %lld %lld %s %s %s %s %s", 
 	   u64tostr (fileid, tmpbuf, 0), (long long int)last_mod_time,
-           path, u64tostr (filesize, tmpbuf2, 0), csumvalue, csumtype, cwdpath);
+	   (long long int)new_mod_time, path, u64tostr (filesize, tmpbuf2, 0),
+	   csumvalue, csumtype, cwdpath);
   Cns_logreq (func, logbuf);
   if (*csumtype &&
       strcmp (csumtype, "CS") &&
@@ -5474,7 +5477,7 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
   char func[18];
   gid_t gid;
   char guid[CA_MAXGUIDLEN+1];
-  char logbuf[CA_MAXGUIDLEN+32];
+  char logbuf[CA_MAXLINELEN+1];
   char *rbp;
   Cns_dbrec_addr rec_addr;
   char tmpbuf[21];
@@ -5502,8 +5505,9 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
     unmarshall_TIME_T (rbp, new_mod_time);
     unmarshall_TIME_T (rbp, last_mod_time);
   }
-  sprintf (logbuf, "setfsizeg %s %s %lld", guid, u64tostr (filesize, tmpbuf, 0),
-	   (long long int)last_mod_time);
+  sprintf (logbuf, "setfsizeg %s %s %lld %lld", guid, 
+	   u64tostr (filesize, tmpbuf, 0),
+	   (long long int)last_mod_time, (long long int)new_mod_time);
   Cns_logreq (func, logbuf);
   if (*csumtype &&
       strcmp (csumtype, "CS") &&
