@@ -127,7 +127,7 @@ int main(argc, argv)
       break;
     case 'n':
       if (strlen(Coptarg) > CA_MAXCKSUMNAMELEN) {
-	fprintf (stderr, "%s: checksum name: %s exceeds %d characters in length\n", 
+	fprintf (stderr, "%s: checksum name: %s exceeds %d characters in length\n",
 		 argv[0], Coptarg, CA_MAXCKSUMNAMELEN);
 	errflg++;
       }
@@ -145,7 +145,7 @@ int main(argc, argv)
   if (hflg) {
     usage (0, argv[0]);
   }
-  
+
   /* Check command line arguments */
   if (errflg || (Coptind >= argc)) {  /* Too few arguments */
     errflg++;
@@ -227,14 +227,14 @@ int main(argc, argv)
     WSACleanup();
 #endif
     exit (USERR);
-  } 
+  }
   for (i = 0; i < nbseg; i++) {
-    if ((segattrs[i].copyno != copyno) &&
+    if ((segattrs[i].copyno != copyno) ||
 	(segattrs[i].fsec   != fsec)) {
       continue;  /* not interested */
     }
     found++;
-    
+
     /* Process status changes */
     if ((enable  && (segattrs[i].s_status != '-')) ||
 	(disable && (segattrs[i].s_status != 'D'))) {
@@ -273,17 +273,17 @@ int main(argc, argv)
     /* Update the checksum */
     if (update) {
       if (Cns_updateseg_checksum(NULL, stat.fileid, &(segattrs[i]), &newsegattrs)) {
-	fprintf (stderr, "%s: failed to update segment checksum: %s\n", 
-		 argv[0], sstrerror(serrno));
-	errflg++;
-      }	
-    } else {
-      if (Cns_replaceseg(NULL, stat.fileid, &(segattrs[i]), &newsegattrs, stat.mtime)) {
-	fprintf (stderr, "%s: failed to replace segment checksum: %s\n", 
+	fprintf (stderr, "%s: failed to update segment checksum: %s\n",
 		 argv[0], sstrerror(serrno));
 	errflg++;
       }
-    }   
+    } else {
+      if (Cns_replaceseg(NULL, stat.fileid, &(segattrs[i]), &newsegattrs, stat.mtime)) {
+	fprintf (stderr, "%s: failed to replace segment checksum: %s\n",
+		 argv[0], sstrerror(serrno));
+	errflg++;
+      }
+    }
 
     break;
   }
