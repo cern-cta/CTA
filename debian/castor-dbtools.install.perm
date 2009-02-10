@@ -2,6 +2,7 @@
 %attr(0755,root,bin) usr/bin/deleteFileClass
 %attr(0755,root,bin) usr/bin/deleteSvcClass
 %attr(0755,root,bin) usr/bin/diskServer_qry
+%attr(0755,root,bin) usr/bin/draindiskserver
 %attr(0755,root,bin) usr/bin/enterFileClass
 %attr(0755,root,bin) usr/bin/enterSvcClass
 %attr(0755,root,bin) usr/bin/listFileClass

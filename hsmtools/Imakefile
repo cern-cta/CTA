@@ -60,6 +60,7 @@ InstallTarget(moveDiskServer,root,bin,755,$(BIN))
 InstallTarget(dedicateTapeDrive,root,bin,755,$(BIN))
 InstallTarget(listDedications,root,bin,755,$(BIN))
 InstallTarget(checkreplicas,root,bin,755,$(BIN))
+InstallTarget(draindiskserver,root,bin,755,$(BIN))
 
 MakeDir($(PERLLIBDIR),root,bin,0755)
 MakeDir($(PYTHONLIBDIR),root,bin,0755)
@@ -87,6 +88,7 @@ EXEMANPAGE(adminMultiInstance)
 EXEMANPAGE(listPriority)
 EXEMANPAGE(enterPriority)
 EXEMANPAGE(deletePriority)
+EXEMANPAGE(draindiskserver)
 
 #if BuildVDQMCpp
 EXEMANPAGE(vdqmDBInit)
