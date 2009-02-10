@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.265 $ $Release$ $Date: 2008/12/08 14:10:09 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.266 $ $Release$ $Date: 2009/02/10 09:17:11 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1206,7 +1206,7 @@ int validateNsSegments(struct Cns_segattrs *nsSegments, int nbNsSegments)
     struct vmgr_tape_info vmgrTapeInfo;
     int rc = vmgr_querytape(nsSegments[i].vid, nsSegments[i].side, &vmgrTapeInfo, 0);
     if(-1 == rc) {
-      myErrno = SEINTERNAL;
+      myErrno = serrno;
       continue;
     }
     // check tape status; when STANDBY tapes will be supported, they will
@@ -1226,9 +1226,9 @@ int validateNsSegments(struct Cns_segattrs *nsSegments, int nbNsSegments)
     // we arbitrarily raise the last one.
     free(nsSegments);
     castor::exception::Exception e(myErrno);
-    e.getMessage() << (myErrno == SEINTERNAL ?
-                      "Failed to query the tape on VMGR"
-                      : sstrerror(e.code()) );
+    e.getMessage() << (myErrno != ESTTAPEOFFLINE && myErrno != ESTSEGNOACC ?
+                       "Failed to query the tape on VMGR: " : "")
+                   << sstrerror(e.code());
     throw e;
   }
 }
