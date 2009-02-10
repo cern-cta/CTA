@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: drop_oracle_schema.sql,v $ $Revision: 1.3 $ $Date: 2009/02/10 16:11:22 $ $Author: waldron $
+ * @(#)$RCSfile: drop_oracle_schema.sql,v $ $Revision: 1.4 $ $Date: 2009/02/10 16:12:47 $ $Author: waldron $
  *
  * This file drops all defined objects from a database schema.
  *
@@ -9,7 +9,6 @@
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
-
 
 DECLARE
   username VARCHAR2(2048);
