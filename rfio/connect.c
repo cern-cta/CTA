@@ -1,5 +1,5 @@
 /*
- * $Id: connect.c,v 1.18 2008/07/31 07:09:13 sponcec3 Exp $
+ * $Id: connect.c,v 1.19 2009/02/10 13:45:09 waldron Exp $
  */
 
 /*
@@ -88,7 +88,6 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
      int     *remote  ;              /* connected host is remote or not      */
 {
   register int    s;      /* socket descriptor                    */
-  struct servent  *sp;    /* service entry pointer                */
   struct hostent  *hp;    /* host entry pointer                   */
   struct sockaddr_in sin; /* socket address (internet) struct     */
   char    *host;          /* host name chararcter string          */
@@ -130,8 +129,6 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
 
   /*BC End parse the node name to check whether it contains the port*/
 
-
-
   /*
    * Should we use an alternate name ?
    */
@@ -149,8 +146,8 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
     crtycnt = rfioreadopt(RFIO_CONNECT_RETRY_COUNT_OPT);
     if ( crtycnt <= 0 ) {
       if ( (p = getenv("RFIO_CONRETRY")) != NULL ||
-           (p = getconfent("RFIO", "CONRETRY", 0)) != NULL )       {
-        if ((crtycnt = atoi(p)) <= 0)     {
+           (p = getconfent("RFIO", "CONRETRY", 0)) != NULL ) {
+        if ((crtycnt = atoi(p)) <= 0) {
           crtycnt = 0;
         }
       }
@@ -159,8 +156,8 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
     crtyint = rfioreadopt(RFIO_CONNECT_RETRY_INT_OPT);
     if ( crtyint <= 0 ) {
       if ( (p = getenv("RFIO_CONRETRYINT")) != NULL ||
-           (p = getconfent("RFIO", "CONRETRYINT", 0)) != NULL)        {
-        if ((crtyint = atoi(p)) <= 0)     {
+           (p = getconfent("RFIO", "CONRETRYINT", 0)) != NULL) {
+        if ((crtyint = atoi(p)) <= 0) {
           crtyint = 0;
         }
       }
@@ -176,14 +173,14 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
        (p=getconfent("RFIO", "RETRY", 0)) == NULL) {
     retrycnt=DEFRETRYCNT;
   }
-  else    {
+  else {
     retrycnt=atoi(p);
   }
   if ( (p = getenv("RFIO_RETRYINT")) == NULL &&
        (p=getconfent("RFIO", "RETRYINT", 0)) == NULL) {
     retryint=DEFRETRYINT;
   }
-  else    {
+  else {
     retryint=atoi(p);
   }
 
@@ -191,7 +188,7 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
        (p = getconfent("RFIO", "CONNTIMEOUT", 0)) == NULL) {
     timeout=DEFCONNTIMEOUT;
   }
-  else    {
+  else {
     timeout=atoi(p);
   }
 #ifdef CSEC
@@ -202,7 +199,7 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
     if (secure_connection) { /* Secure connection should be made to secure port */
       /* Try environment variable */
       TRACE(2, "srfio", "rfio_connect: getenv(%s)","SRFIO_PORT");
-      if ((p = getenv("SRFIO_PORT")) != NULL)  {
+      if ((p = getenv("SRFIO_PORT")) != NULL) {
         TRACE(2, "srfio", "rfio_connect: *** Warning: using port %s", p);
         sin.sin_port = htons(atoi(p));
       } else {
@@ -212,14 +209,9 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
           TRACE(2, "srfio", "rfio_connect: *** Warning: using port %s", p);
           sin.sin_port = htons(atoi(p));
         } else {
-          /* Try System configuration file */
-          TRACE(2, "srfio", "rfio_connect: Cgetservbyname(%s, %s)",SRFIO_NAME, SRFIO_PROTO);
-          if ((sp = Cgetservbyname(SRFIO_NAME,SRFIO_PROTO)) == NULL) {
-            TRACE(2, "srfio", "rfio_connect: srfio/tcp no such service - using default port number %d", (int) SRFIO_PORT);
-            sin.sin_port = htons((u_short) SRFIO_PORT);
-          } else {
-            sin.sin_port = sp->s_port;
-          }
+          /* Use default port number */
+	  TRACE(2, "srfio", "rfio_connect: using default port number %d", (int) SRFIO_PORT);
+	  sin.sin_port = htons((u_short) SRFIO_PORT);
         }
       }
     } else {
@@ -227,7 +219,7 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
       /* Connection is unsecure */
       /* Try environment variable */
       TRACE(2, "rfio", "rfio_connect: getenv(%s)","RFIO_PORT");
-      if ((p = getenv("RFIO_PORT")) != NULL)  {
+      if ((p = getenv("RFIO_PORT")) != NULL) {
         TRACE(2, "rfio", "rfio_connect: *** Warning: using port %s", p);
         sin.sin_port = htons(atoi(p));
       } else {
@@ -237,14 +229,9 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
           TRACE(2, "rfio", "rfio_connect: *** Warning: using port %s", p);
           sin.sin_port = htons(atoi(p));
         } else {
-          /* Try System configuration file */
-          TRACE(2, "rfio", "rfio_connect: Cgetservbyname(%s, %s)",RFIO_NAME, RFIO_PROTO);
-          if ((sp = Cgetservbyname(RFIO_NAME,RFIO_PROTO)) == NULL) {
-            TRACE(2, "rfio", "rfio_connect: rfio/tcp no such service - using default port number %d", (int) RFIO_PORT);
-            sin.sin_port = htons((u_short) RFIO_PORT);
-          } else {
-            sin.sin_port = sp->s_port;
-          }
+          /* Use default port number */
+	  TRACE(2, "rfio", "rfio_connect: using default port number %d", (int) RFIO_PORT);
+	  sin.sin_port = htons((u_short) RFIO_PORT);
         }
       }
 #ifdef CSEC
@@ -263,14 +250,14 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
   /* because we return a socket value, and do not depend afterwards on this static  */
   /* thread-specific address used in getconfent().                                  */
   if ( rfioreadopt(RFIO_NETOPT) != RFIO_NONET ) {
-    if ((host = getconfent("NET",node,1)) == NULL)  {
+    if ((host = getconfent("NET",node,1)) == NULL) {
       host = node;
     }
     else {
       TRACE(3,"rfio","set of hosts: %s",host);
     }
   }
-  else    {
+  else {
     host = node;
   }
 
@@ -295,14 +282,14 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
       TRACE(2, "rfio", "rfio_connect: using %s", cp);
       sin.sin_addr.s_addr = htonl(inet_addr(cp));
     }
-    else    {
+    else {
       TRACE(2, "rfio", "rfio_connect: %s: no such host",cp);
       serrno = SENOSHOST;     /* No such host                 */
       END_TRACE();
       return(-1);
     }
   }
-  else    {
+  else {
     sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
   }
 
@@ -316,7 +303,7 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
   sprintf(nomorebuf2, "%s.%s", nomorebuf1, cp);
  retry:
   if (!stat(nomorebuf1,&statbuf)) {
-    if (retrycnt-- >=0)  {
+    if (retrycnt-- >=0) {
       syslog(LOG_ALERT, "rfio: connect: all RFIO service suspended (pid=%d)\n", getpid());
       sleep(retryint);
       goto retry;
@@ -327,7 +314,7 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
     }
   }
   if (!stat(nomorebuf2, &statbuf)) {
-    if (retrycnt-- >=0)  {
+    if (retrycnt-- >=0) {
       syslog(LOG_ALERT, "rfio: connect: RFIO service to <%s> suspended (pid=%d)\n", cp, getpid());
       sleep(retryint);
       goto retry;
@@ -341,64 +328,64 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
  conretry:
   TRACE(2, "rfio", "rfio_connect: socket(%d, %d, %d)",
         AF_INET, SOCK_STREAM, 0);
-  if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0)  {
+  if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     TRACE(2, "rfio", "rfio_connect: socket(): ERROR occured (%s)", neterror());
     END_TRACE();
     return(-1);
   }
   TRACE(2, "rfio", "rfio_connect: netconnect_timeout(%d, %x, %d, %d)", s, &sin, sizeof(struct sockaddr_in),timeout);
-  if (netconnect_timeout(s, (struct sockaddr *)&sin, sizeof(struct sockaddr_in), timeout) < 0)   {
+  if (netconnect_timeout(s, (struct sockaddr *)&sin, sizeof(struct sockaddr_in), timeout) < 0)  {
     TRACE(2, "rfio", "rfio_connect: connect(): ERROR occured (%s)", neterror());
 #if defined(_WIN32)
     if (WSAGetLastError() == WSAECONNREFUSED)
 #else
       if (errno == ECONNREFUSED || serrno == ECONNREFUSED)
 #endif
-      {
-        syslog(LOG_ALERT, "rfio: connect: %d failed to connect %s", getpid(), cp);
-        if (crtycnt-- > 0)       {
-          if (crtyint) sleep(crtyint);
-          syslog(LOG_ALERT, "rfio: connect: %d retrying to connect %s", getpid(), cp);
-          /*
-           * connect() returns "Invalid argument when called twice,
-           * so socket needs to be closed and recreated first
-           */
+	{
+	  syslog(LOG_ALERT, "rfio: connect: %d failed to connect %s", getpid(), cp);
+	  if (crtycnt-- > 0) {
+	    if (crtyint) sleep(crtyint);
+	    syslog(LOG_ALERT, "rfio: connect: %d retrying to connect %s", getpid(), cp);
+	    /*
+	     * connect() returns "Invalid argument when called twice,
+	     * so socket needs to be closed and recreated first
+	     */
 
-          (void) close(s);
-          crtyattmpt ++ ;
-          goto conretry;
-        }
-        if ( ( cp = strtok(NULL," \t")) != NULL )  {
-          crtycnt =  crtycnts ;
-          syslog(LOG_ALERT, "rfio: connect: after ECONNREFUSED, changing host to %s", cp) ;
-          TRACE(3,"rfio","rfio: connect: after ECONNREFUSED, changing host to %s", cp) ;
-          (void) close(s);
-          goto conretryall;
-        }
-      }
+	    (void) close(s);
+	    crtyattmpt ++ ;
+	    goto conretry;
+	  }
+	  if ( ( cp = strtok(NULL," \t")) != NULL ) {
+	    crtycnt =  crtycnts ;
+	    syslog(LOG_ALERT, "rfio: connect: after ECONNREFUSED, changing host to %s", cp) ;
+	    TRACE(3,"rfio","rfio: connect: after ECONNREFUSED, changing host to %s", cp) ;
+	    (void) close(s);
+	    goto conretryall;
+	  }
+	}
 #if defined(_WIN32)
     if (WSAGetLastError()==WSAENETUNREACH ||
         WSAGetLastError()==WSAETIMEDOUT || serrno == SETIMEDOUT )
 #else
       if (errno==EHOSTUNREACH || errno==ETIMEDOUT || serrno == SETIMEDOUT )
 #endif
-      {
-        if ( ( cp = strtok(NULL," \t")) != NULL )  {
-          crtycnt =  crtycnts ;
+	{
+	  if ( ( cp = strtok(NULL," \t")) != NULL ) {
+	    crtycnt =  crtycnts ;
 #if defined(_WIN32)
-          if (WSAGetLastError() == WSAENETUNREACH)
+	    if (WSAGetLastError() == WSAENETUNREACH)
 #else
-            if (errno == EHOSTUNREACH)
+	      if (errno == EHOSTUNREACH)
 #endif
-              syslog(LOG_ALERT, "rfio: connect: after EHOSTUNREACH, changing host to %s", cp);
-            else
-              syslog(LOG_ALERT, "rfio: connect: after ETIMEDOUT, changing host to %s", cp);
+		syslog(LOG_ALERT, "rfio: connect: after EHOSTUNREACH, changing host to %s", cp);
+	      else
+		syslog(LOG_ALERT, "rfio: connect: after ETIMEDOUT, changing host to %s", cp);
 
-          (void) close(s);
-          goto conretryall;
-        }
+	    (void) close(s);
+	    goto conretryall;
+	  }
 
-      }
+	}
     (void) close(s);
     END_TRACE();
     return(-1);
@@ -419,7 +406,7 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
   strcpy(last_host, cp); /* remember to fetch back remote errs     */
   TRACE(2, "rfio", "rfio_connect: connected");
   TRACE(2, "rfio", "rfio_connect: calling setnetio(%d)", s);
-  if (setnetio(s) < 0)    {
+  if (setnetio(s) < 0) {
     close(s);
     END_TRACE();
     return(-1);
