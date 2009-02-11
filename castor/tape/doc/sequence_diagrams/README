@@ -38,7 +38,7 @@ http://www.gnu.org/software/plotutils/manual/html_node/plotutils_21.html
 Generate the .ps file with A3 font 0.014
 ==========================================
 
-pic2plot -T ps --page-size "a3"  f 0.014  stager_migration.pic  > stager_migration.ps
+pic2plot -T ps --page-size "a3" -f 0.014  stager_migration.pic  > stager_migration.ps
 
 
 Commandline to print on default printer
