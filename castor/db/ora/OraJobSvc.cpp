@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.57 $ $Release$ $Date: 2009/02/10 09:19:56 $ $Author: itglp $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.58 $ $Release$ $Date: 2009/02/11 07:50:09 $ $Author: waldron $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -111,7 +111,7 @@ const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyDoneStatementString
 
 /// SQL statement for disk2DiskCopyFailed
 const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyFailedStatementString =
-"BEGIN disk2DiskCopyFailed(:1, :2, :3); END;";
+  "BEGIN disk2DiskCopyFailed(:1, :2, :3); END;";
 
 /// SQL statement for prepareForMigration
 const std::string castor::db::ora::OraJobSvc::s_prepareForMigrationStatementString =
@@ -267,6 +267,14 @@ castor::db::ora::OraJobSvc::getUpdateStart
     return result;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
+    // Application specific errors
+    if (e.getErrorCode() == 20114) {
+      castor::exception::RequestCanceled ex;
+      std::string error = e.what();
+      ex.getMessage() << error.substr(error.find("ORA-") + 11,
+				      error.find("ORA-", 4) - 12);
+      throw ex;
+    }
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in getUpdateStart."
@@ -325,11 +333,14 @@ castor::db::ora::OraJobSvc::putStart
       delete result;
     }
     handleException(e);
-    if (e.getErrorCode() == 20104) {
-      // SubRequest canceled while queuing in scheduler error
+    // Application specific errors
+    if ((e.getErrorCode() == 20104) ||
+	(e.getErrorCode() == 20107) ||
+	(e.getErrorCode() == 20114)) {
       castor::exception::RequestCanceled ex;
       std::string error = e.what();
-      ex.getMessage() << error.substr(error.find("ORA-")+11, error.find("ORA-", 4));
+      ex.getMessage() << error.substr(error.find("ORA-") + 11,
+				      error.find("ORA-", 4) - 12);
       throw ex;
     }
     castor::exception::Internal ex;
@@ -374,7 +385,7 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
       m_disk2DiskCopyStartStatement->registerOutParam
         (10, oracle::occi::OCCISTRING, 2048);
     }
-    
+
     // Extract the checksum information of the file from the name server. We
     // need to pass the checksum information to the job as the generation of
     // checksums using the RFIO protocol is only computed over the network when
@@ -462,18 +473,21 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
       sourceDiskCopy->setCsumType(csumtype);
       sourceDiskCopy->setCsumValue(csumvalue);
     }
-    
+
     // Return
     cnvSvc()->commit();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
+    // Application specific errors
     if ((e.getErrorCode() == 20108) ||
         (e.getErrorCode() == 20109) ||
-        (e.getErrorCode() == 20110)) {
-      // job was canceled while queueing in the scheduler
+        (e.getErrorCode() == 20110) ||
+	(e.getErrorCode() == 20111) ||
+	(e.getErrorCode() == 20112)) {
       castor::exception::RequestCanceled ex;
       std::string error = e.what();
-      ex.getMessage() << error.substr(error.find("ORA-")+11, error.find("ORA-", 4));
+      ex.getMessage() << error.substr(error.find("ORA-") + 11,
+				      error.find("ORA-", 4) - 12);
       throw ex;
     }
     castor::exception::Internal ex;
@@ -670,7 +684,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
             << (useChkSum == true ? "Cns_setfsizecs" : "Cns_setfsize")
             << " failed : ";
           if (!strcmp(cns_error_buffer, "")) {
-          ex.getMessage() << sstrerror(serrno);
+	    ex.getMessage() << sstrerror(serrno);
           } else {
             ex.getMessage() << cns_error_buffer;
           }
@@ -791,18 +805,19 @@ void castor::db::ora::OraJobSvc::firstByteWritten
     m_firstByteWrittenStatement->setDouble(1, subRequestId);
     m_firstByteWrittenStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    // Application specific errors
     if (e.getErrorCode() == 20106) {
-      // File is busy
       castor::exception::Busy ex;
-      ex.getMessage() << e.getMessage();
-      throw ex;
-    } else {
-      handleException(e);
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "Error caught in firstByteWritten."
-        << std::endl << e.what();
+      std::string error = e.what();
+      ex.getMessage() << error.substr(error.find("ORA-") + 11,
+				      error.find("ORA-", 4) - 12);
       throw ex;
     }
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in firstByteWritten."
+      << std::endl << e.what();
+    throw ex;
   }
 }
