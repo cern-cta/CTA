@@ -63,7 +63,10 @@ Cns_getsegattrs(const char *path, struct Cns_fileid *file_uniqueid, int *nbseg, 
   }
 
   if (file_uniqueid && *file_uniqueid->server)
-    strcpy (server, file_uniqueid->server);
+    if (*thip->defserver)
+      strcpy (server, thip->defserver);
+    else
+      strcpy (server, file_uniqueid->server);
   else
     if (Cns_selectsrvr (path, thip->server, server, &actual_path))
       return (-1);

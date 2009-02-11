@@ -74,7 +74,6 @@ int send2nsdx(socketp, host, reqp, reql, user_repbuf, user_repbuf_len, repbuf2, 
   char * securemode;
   int securityOpt=0;
 
-
   strcpy (func, "send2nsd");
   if (socketp && *socketp >= 0) { /* connection opened by Cns_list... */
     s = *socketp;
@@ -88,14 +87,15 @@ int send2nsdx(socketp, host, reqp, reql, user_repbuf, user_repbuf_len, repbuf2, 
     else if ((p = getenv (CNS_HOST_ENV)) || (p = getconfent (CNS_SCE, "HOST", 0)))
       strcpy (Cnshost, p);
     else {
-      if ((securemode = getenv ("SECURE_CASTOR")) || (securemode = getconfent(CNS_SCE,"SECURITY",0))){
+      if ((securemode = getenv ("SECURE_CASTOR")) ||
+	  (securemode = getconfent(CNS_SCE, "SECURITY", 0))) {
 #if defined(SCNS_HOST)
         strcpy (Cnshost, SCNS_HOST);
 #else
-        serrno=SENOSHOST;
+        serrno = SENOSHOST;
         return -1;
 #endif
-      } else{
+      } else {
 #if defined(CNS_HOST)
         strcpy (Cnshost, CNS_HOST);
 #else
@@ -104,9 +104,9 @@ int send2nsdx(socketp, host, reqp, reql, user_repbuf, user_repbuf_len, repbuf2, 
         serrno = 0;
       }
     }
-    /*If the user has decided to enable the security mode then the port can not be set via host:port
-     * but with the specific SECURITY_PORT  options*/
-
+    /* If the user has decided to enable the security mode then the port can not be set
+     * via host:port but with the specific SECURITY_PORT options
+     */
     if ((p = strchr (Cnshost, ':'))) {
       *p = '\0';
       sin.sin_port = htons (atoi (p + 1));
@@ -118,20 +118,23 @@ int send2nsdx(socketp, host, reqp, reql, user_repbuf, user_repbuf_len, repbuf2, 
     }
     sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
     if (! sin.sin_port) {
-      /*If the security Option is set it will try ONLY in that port, if it fails to connect it won't retry in an unsecure port*/
-      // Check if the secure mode has been enable
-      if ((securemode = getenv ("SECURE_CASTOR")) || (securemode = getconfent(CNS_SCE,"SECURITY",0))){
+      /* If the security option is set it will try ONLY in that port, if it fails to
+       * connect it won't retry in an unsecure port
+       */
+      if ((securemode = getenv ("SECURE_CASTOR")) ||
+	  (securemode = getconfent(CNS_SCE, "SECURITY", 0))) {
         securityOpt = (strcasecmp(securemode, "YES") == 0);
       }
-      if (securityOpt){
-        if ((sec_p = getenv (CNS_SPORT_ENV)) || ((sec_p = getconfent (CNS_SCE, "SEC_PORT", 0)))) {
+      if (securityOpt) {
+        if ((sec_p = getenv (CNS_SPORT_ENV)) ||
+	    ((sec_p = getconfent (CNS_SCE, "SEC_PORT", 0)))) {
           sin.sin_port = htons ((unsigned short)atoi (sec_p));
         } else if ((sec_sp = getservbyname (CNS_SEC_SVC, "tcp"))) {
           sin.sin_port = sec_sp->s_port;
         } else {
           sin.sin_port = htons ((unsigned short)CNS_SEC_PORT);
         }
-      }else {
+      } else {
         if ((p = getenv (CNS_PORT_ENV)) || (p = getconfent (CNS_SCE, "PORT", 0))) {
           sin.sin_port = htons ((unsigned short)atoi (p));
         } else if ((sp = Cgetservbyname (CNS_SVC, "tcp"))) {
@@ -187,31 +190,27 @@ int send2nsdx(socketp, host, reqp, reql, user_repbuf, user_repbuf_len, repbuf2, 
 #else
             if (serrno == ECONNREFUSED)
 #endif
-            {
-              if (retrycnt == nbretry) {
-                Cns_errmsg (func, NS000, Cnshost);
-                (void) netclose (s);
-                serrno = ENSNACT;
-                return (-1);
-              }
-            } else {
-              if (retrycnt == nbretry) {
-                Cns_errmsg (func, NS002, "connect", neterror());
-                (void) netclose (s);
-                serrno = SECOMERR;
-                return (-1);
-              }
-            }
+	      {
+		if (retrycnt == nbretry) {
+		  Cns_errmsg (func, NS000, Cnshost);
+		  (void) netclose (s);
+		  serrno = ENSNACT;
+		  return (-1);
+		}
+	      } else {
+		if (retrycnt == nbretry) {
+		  Cns_errmsg (func, NS002, "connect", neterror());
+		  (void) netclose (s);
+		  serrno = SECOMERR;
+		  return (-1);
+		}
+	      }
         }
         (void) netclose (s);
       } else {
 #ifdef CSEC
-        if (securityOpt){
+        if (securityOpt) {
           Csec_client_initContext (&ctx, CSEC_SERVICE_TYPE_HOST, NULL);
-          // if (Cns_apiinit (&thip) == 0 && thip->use_authorization_id &&
-          // *thip->Csec_mech && *thip->Csec_auth_id)
-          // Csec_client_setAuthorizationId (&ctx, thip->Csec_mech,
-          // thip->Csec_auth_id);
           if (Csec_client_establishContext (&ctx, s) == 0)
             break;
 
@@ -250,7 +249,6 @@ int send2nsdx(socketp, host, reqp, reql, user_repbuf, user_repbuf_len, repbuf2, 
     }
 
 #ifdef CSEC
-    //TODO:Remove these CSEC def
     if (securityOpt)
       Csec_clearContext (&ctx);
 #endif

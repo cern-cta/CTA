@@ -9,15 +9,20 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <string.h>
 #include "Cglobals.h"
+#include "Cns.h"
 #include "Cns_api.h"
 #include "serrno.h"
+#include "getconfent.h"
+
 static int Cns_api_key = -1;
 
 int DLL_DECL
 Cns_apiinit(thip)
      struct Cns_api_thread_info **thip;
 {
+  char *p = NULL;
   Cglobals_get (&Cns_api_key,
                 (void **) thip, sizeof(struct Cns_api_thread_info));
   if (*thip == NULL) {
@@ -28,6 +33,10 @@ Cns_apiinit(thip)
     umask ((*thip)->mask = umask (0));
     (*thip)->initialized = 1;
     (*thip)->fd = -1;
+    (*thip)->defserver[0] = '\0';
+    if ((p = getenv (CNS_HOST_ENV)) || (p = getconfent (CNS_SCE, "HOST", 0))) {
+      strncpy((*thip)->defserver, p, sizeof((*thip)->defserver));
+    }
   }
   return (0);
 }

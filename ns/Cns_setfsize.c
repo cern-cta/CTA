@@ -61,7 +61,10 @@ Cns_setfsize(const char *path, struct Cns_fileid *file_uniqueid,
   }
 
   if (file_uniqueid && *file_uniqueid->server)
-    strcpy (server, file_uniqueid->server);
+    if (*thip->defserver)
+      strcpy (server, thip->defserver);
+    else
+      strcpy (server, file_uniqueid->server);
   else
     if (Cns_selectsrvr (path, thip->server, server, &actual_path))
       return (-1);
@@ -90,7 +93,7 @@ Cns_setfsize(const char *path, struct Cns_fileid *file_uniqueid,
   marshall_HYPER (sbp, filesize);
   marshall_TIME_T (sbp, new_mod_time);
   marshall_TIME_T (sbp, last_mod_time);
-  
+
   msglen = sbp - sendbuf;
   marshall_LONG (q, msglen); /* update length field */
 
@@ -223,7 +226,10 @@ Cns_setfsizecs(const char *path, struct Cns_fileid *file_uniqueid,
   }
 
   if (file_uniqueid && *file_uniqueid->server)
-    strcpy (server, file_uniqueid->server);
+    if (*thip->defserver)
+      strcpy (server, thip->defserver);
+    else
+      strcpy (server, file_uniqueid->server);
   else
     if (Cns_selectsrvr (path, thip->server, server, &actual_path))
       return (-1);

@@ -67,7 +67,8 @@ Cns_selectsrvr(path, current_directory_server, server, actual_path)
     *actual_path = p + 1;
   } else {
     *actual_path = (char *) path;
-    if ((p = getenv (CNS_HOST_ENV)) || (p = getconfent (CNS_SCE, "HOST", 0))) {
+    if ((p = getenv (CNS_HOST_ENV)) ||
+	(p = getconfent (CNS_SCE, "HOST", 0))) {
       if (strlen (p) > CA_MAXHOSTNAMELEN) {
         serrno = EINVAL;
         return (-1);
@@ -88,16 +89,17 @@ Cns_selectsrvr(path, current_directory_server, server, actual_path)
         server[0] = '\0'; /* use localhost */
         return (0);
       }
-      if ((securemode = getenv ("SECURE_CASTOR")) || (securemode = getconfent(CNS_SCE,"SECURITY",0))){
+      if ((securemode = getenv ("SECURE_CASTOR")) ||
+	  (securemode = getconfent(CNS_SCE, "SECURITY", 0))) {
         securityOpt = (strcasecmp(securemode, "YES") == 0);
       }
-      if (securityOpt){
+      if (securityOpt) {
         if (strlen (SCNSHOSTPFX) + strlen (p) + strlen (domain) +
             1 > CA_MAXHOSTNAMELEN) {
           serrno = EINVAL;
           return (-1);
-        }        
-        sprintf (server, "%s%s.%s", SCNSHOSTPFX, p, domain);     
+        }
+        sprintf (server, "%s%s.%s", SCNSHOSTPFX, p, domain);
       } else {
         if (strlen (CNSHOSTPFX) + strlen (p) + strlen (domain) +
             1 > CA_MAXHOSTNAMELEN) {

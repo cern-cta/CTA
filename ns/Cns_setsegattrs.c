@@ -40,13 +40,12 @@ Cns_setsegattrs(const char *path, struct Cns_fileid *file_uniqueid, int nbseg, s
     return (-1);
   Cns_getid(&uid, &gid);
 
-  #
 #if defined(_WIN32)
-    if (uid < 0 || gid < 0) {
-      Cns_errmsg (func, NS053);
-      serrno = SENOMAPFND;
-      return (-1);
-    }
+  if (uid < 0 || gid < 0) {
+    Cns_errmsg (func, NS053);
+    serrno = SENOMAPFND;
+    return (-1);
+  }
 #endif
 
   if ((! path && ! file_uniqueid) || ! segattrs) {
@@ -60,7 +59,10 @@ Cns_setsegattrs(const char *path, struct Cns_fileid *file_uniqueid, int nbseg, s
   }
 
   if (file_uniqueid && *file_uniqueid->server)
-    strcpy (server, file_uniqueid->server);
+    if (*thip->defserver)
+      strcpy (server, thip->defserver);
+    else
+      strcpy (server, file_uniqueid->server);
   else
     if (Cns_selectsrvr (path, thip->server, server, &actual_path))
       return (-1);
