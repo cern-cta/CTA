@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_api.h,v 1.20 2008/11/10 16:08:01 sponcec3 Exp $
+ * $Id: Cns_api.h,v 1.21 2009/02/11 16:44:41 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.20 $ $Date: 2008/11/10 16:08:01 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.21 $ $Date: 2009/02/11 16:44:41 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_API_H
@@ -43,6 +43,7 @@ struct Cns_api_thread_info {
 	int		fd;
 	mode_t		mask;		/* current HSM umask */
 	char		server[CA_MAXHOSTNAMELEN+1];	/* current HSM Name Server */
+	char            defserver[CA_MAXHOSTNAMELEN+1]; /* default HSM Name Server */
 #ifdef CSEC
 	uid_t		Csec_uid;
 	gid_t		Csec_gid;
