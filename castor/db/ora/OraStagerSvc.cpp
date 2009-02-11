@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.266 $ $Release$ $Date: 2009/02/10 09:17:11 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.267 $ $Release$ $Date: 2009/02/11 09:19:37 $ $Author: waldron $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1358,7 +1358,7 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     segment->setBlockId3(nsSegmentAttrs[i].blockid[3]);
     segment->setFseq(nsSegmentAttrs[i].fseq);
     segment->setOffset(totalSize);
-    segment->setCreationTime(time(NULL) + 3600); // Offset due to the database convention of using UTC+1
+    segment->setCreationTime(time(NULL));
     segment->setStatus(castor::stager::SEGMENT_UNPROCESSED);
     totalSize += nsSegmentAttrs[i].segsize;
 

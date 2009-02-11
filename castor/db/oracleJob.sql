@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.672 $ $Date: 2009/02/10 17:56:48 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.673 $ $Date: 2009/02/11 09:19:36 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -981,7 +981,7 @@ BEGIN
                  NULL sourceSvcClass
             FROM StageUpdateRequest
            UNION ALL
-          SELECT id, username, euid, egid, reqid, client, creationTime - 3600,
+          SELECT id, username, euid, egid, reqid, client, creationTime,
                  'w' direction, svcClass, sourceDiskCopy, destDiskCopy,
                  (SELECT name FROM SvcClass WHERE id = sourceSvcClass)
             FROM StageDiskCopyReplicaRequest) Request
