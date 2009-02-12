@@ -1,4 +1,4 @@
-//         $Id: XrdxCastor2Fs.hh,v 1.1 2008/09/15 10:04:02 apeters Exp $
+//         $Id: XrdxCastor2Fs.hh,v 1.2 2009/02/12 09:11:38 apeters Exp $
 
 #ifndef __XCASTOR2_FS_H__
 #define __XCASTOR2_FS_H__
@@ -724,6 +724,7 @@ static  XrdOucHash<XrdOucString> *stagertable;
 static  XrdOucHash<XrdOucString> *stagerpolicy;
 static  XrdOucHash<XrdOucString> *roletable;
 static  XrdOucHash<XrdOucString> *stringstore;
+static  XrdOucHash<XrdSecEntity> *secentitystore; 
 static  XrdOucHash<struct passwd> *passwdstore;
 static  XrdOucHash<XrdOucString>  *gridmapstore;
 static  XrdOucHash<XrdOucString>  *vomsmapstore;
@@ -739,6 +740,8 @@ static  int                       TokenLockTime;           // -> specifies the g
         XrdSysMutex     locatorLock;
         XrdSysMutex     PermissionMutex;      // -> protecting the permission hash
         XrdSysMutex     StoreMutex;           // -> protecting the string+pwd store hash
+        XrdSysMutex     MapMutex;             // -> protecting all ROLEMAP, GETID etc. functions
+        XrdSysMutex     SecEntityMutex;       // -> protecting the sec entity hash
         XrdSysMutex     GridMapMutex;         // -> protecting the gridmap store hash
         XrdSysMutex     VomsMapMutex;         // -> protecting the vomsmap store hash
         XrdSysMutex     ClientMutex;

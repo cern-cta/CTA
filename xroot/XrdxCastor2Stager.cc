@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2Stager.cc,v 1.2 2009/01/14 17:40:44 sponcec3 Exp $
+//          $Id: XrdxCastor2Stager.cc,v 1.3 2009/02/12 09:11:38 apeters Exp $
 
 #ifndef __XCASTOR2FS__STAGER__HH
 #define __XCASTOR2FS__STAGER__HH
@@ -26,6 +26,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/Communication.hpp"
 #include "stager_client_api_common.hpp"
+#include "stage_api.h"
 
 #include <sys/types.h>
 #include <XrdxCastor2Fs/XrdxCastor2Stager.hh>

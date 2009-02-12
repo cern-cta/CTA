@@ -1,5 +1,5 @@
 AC_PREREQ(2.57)
-AC_INIT(xrootd-xcastor2fs, 1.0.2,[andreas.joachim.peters@cern.ch])
+AC_INIT(xrootd-xcastor2fs, 1.0.4,[andreas.joachim.peters@cern.ch])
 AC_CONFIG_SRCDIR([XrdxCastor2Fs.cc])
 
 AM_INIT_AUTOMAKE(1.6 foreign)

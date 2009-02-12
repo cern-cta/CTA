@@ -1,7 +1,7 @@
 Summary:     The next generation xrootd@Castor2 interface
 Name: 	     xrootd-xcastor2fs
-Version:     1.0.2
-Release:     14
+Version:     1.0.4
+Release:     2
 License:     none
 Group:       Applications/Castor
 Source0:     %{name}-%{version}.tar.gz
@@ -59,9 +59,13 @@ fi
 %attr(-,stage,st) %dir /var/spool/xroot/core
 
 %changelog
-* Wed Oct 15 2008 root <root@pcitsmd01.cern.ch> - xcastor2-13
+* Tue Feb 03 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.4-2
+- converted ROLEMAP/GETID/GETALLGROUPS from XCFS prototype with properl hash protections and security context caching
+- added automatic stager settings from open function to stat function & fixed 'CANBEMIRG' typo
+  
+* Wed Oct 15 2008 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.2-13
 - Cleanup of spec file
 
-* Wed Aug 20 2008 root <root@pcitsmd01.cern.ch> - xcastor2-1
+* Wed Aug 20 2008 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.0-1
 - Initial build.
 
