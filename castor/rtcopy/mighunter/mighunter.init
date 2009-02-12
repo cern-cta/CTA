@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: mighunter.init,v $ $Revision: 1.10 $ $Release$ $Date: 2009/02/12 10:44:05 $ $Author: waldron $
+# @(#)$RCSfile: mighunter.init,v $ $Revision: 1.11 $ $Release$ $Date: 2009/02/12 11:00:29 $ $Author: waldron $
 #
 # chkconfig: 345 73 32
 # description: MigHunterDaemon Initialisation Script
@@ -74,7 +74,7 @@ start() {
                 # Note: we change the internal field separator here to loop 
                 # over the svcclass list using ':' as a delimiter
                 IFS=$':'
-	        for i in `echo $SVCCLASSES | xargs -n ${SVCCLASSES_PER_PROCESS} | awk '{ print $0 ":" }' | xargs | sed 's/: /:/g'`; do
+                for i in `echo $SVCCLASSES | xargs -n ${SVCCLASSES_PER_PROCESS} | awk '{ print $0 ":" }' | xargs | sed 's/: /:/g'`; do
                         
                         # Reset IFS so that the standard function calls 
                         # (e.g. daemon) work correctly.
