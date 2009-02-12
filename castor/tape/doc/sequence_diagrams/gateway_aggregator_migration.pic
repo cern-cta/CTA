@@ -44,8 +44,8 @@ step();
 
 message(A,G,"connect");
 active(G);
-message(A,G,"FileToRecallRequest");
-message(G,A,"FileToRecall");
+message(A,G,"FileToMigrateRequest");
+message(G,A,"FileToMigrate");
 message(A,G,"disconnect");
 inactive(G);
 
@@ -53,7 +53,7 @@ step();
 
 message(A,G,"connect");
 active(G);
-message(A,G,"FileRecalledNotication");
+message(A,G,"FileMigratedNotication");
 message(G,A,"NotificationAcknowledge");
 message(A,G,"disconnect");
 inactive(G);
@@ -62,7 +62,7 @@ step();
 
 message(A,G,"connect");
 active(G);
-message(A,G,"FileToRecallRequest");
+message(A,G,"FileToMigrateRequest");
 message(G,A,"NoMoreFiles");
 message(A,G,"disconnect");
 inactive(G);
