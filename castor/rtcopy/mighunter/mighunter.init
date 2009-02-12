@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#/******************************************************************************
+#/*****************************************************************************
 #                      mighunter.init
 #
 # This file is part of the Castor project.
@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: mighunter.init,v $ $Revision: 1.9 $ $Release$ $Date: 2008/11/14 09:46:38 $ $Author: waldron $
+# @(#)$RCSfile: mighunter.init,v $ $Revision: 1.10 $ $Release$ $Date: 2009/02/12 10:44:05 $ $Author: waldron $
 #
 # chkconfig: 345 73 32
 # description: MigHunterDaemon Initialisation Script
@@ -35,6 +35,7 @@ prog="migHunterDaemon"
 sysconfigfile="mighunter"
 FRETVAL=0
 RETVAL=0
+SVCCLASSES_PER_PROCESS=1
 
 # Source sysconfig files
 if [ -f /etc/sysconfig/castor ]; then
@@ -53,11 +54,55 @@ start() {
                 SVCCLASSES=$1
         elif [ -z "${SVCCLASSES}" ]; then
                 echo -n $"no service classes defined"
-                failure && echo && exit
+                failure && echo && exit 1
+        fi
+
+        # Check for multi process, multi service class mode
+        if [ "${SVCCLASSES_PER_PROCESS}" -gt 1 ]; then
+
+                # Check to see if the migHunterDaemon is already runnig
+                pid=`ps -eo pid,ppid,comm | egrep " 1 $prog\$" | awk '{print $1}' | xargs`
+                if [ -n "$pid" ]; then
+                        echo -n $"- already started"
+                        failure
+                        echo
+                        return $RETVAL;
+                fi
+                echo
+
+                # Loop over the service classes
+                # Note: we change the internal field separator here to loop 
+                # over the svcclass list using ':' as a delimiter
+                IFS=$':'
+	        for i in `echo $SVCCLASSES | xargs -n ${SVCCLASSES_PER_PROCESS} | awk '{ print $0 ":" }' | xargs | sed 's/: /:/g'`; do
+                        
+                        # Reset IFS so that the standard function calls 
+                        # (e.g. daemon) work correctly.
+                        unset IFS
+                        echo -n $"  For svcclasses: "
+                        if [ `echo $i | wc -m` -gt 35 ]; then
+                                echo -n "`$i | cut -c1-35`..."
+                        else
+                                echo -n "$i"
+                        fi
+
+                        # Start the mighunter
+                        cd /var/spool/mighunter
+                        daemon /usr/bin/$prog $MIGHUNTER_OPTIONS $i
+                        
+                        RETVAL=$?
+                        [ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
+                        echo
+                        [ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog || FRETVAL=$RETVAL
+                done
+                unset IFS
+
+                RETVAL=$FRETVAL
+                return $RETVAL
         fi
         echo
 
-        # Start mighunters
+        # Start mighunters with multiple processes
         for i in ${SVCCLASSES}; do
 
                 # Load the appropriate sysconfig file for service class
@@ -69,7 +114,7 @@ start() {
                                 . /etc/sysconfig/$sysconfigfile
                         fi
                 fi
-                echo -n $"Starting mighunter for svcclass: $i "
+                echo -n $"  For svcclass: $i "
 
                 # Checking to see if the migHunterDaemon is already running
                 pid=`ps -eo pid,ppid,comm,cmd | egrep " 1 $prog.*$i\$" | awk '{print $1}' | xargs`
@@ -120,16 +165,25 @@ stop() {
         echo
         if [ -n "$1" ]; then
                 [ -f /var/lock/subsys/$prog.$1 ] && rm -f /var/lock/subsys/$prog.$1
-        else 
+        else
+                rm -f /var/lock/subsys/$prog
                 rm -f /var/lock/subsys/$prog.*
         fi
         return $RETVAL
 }
 
-status() {
+migstatus() {
+        # If running in multi process, multi service class mode just check the
+        # existence of the main daemon
+        if [ "${SVCCLASSES_PER_PROCESS}" -gt 1 ]; then
+                status $prog
+                return $?
+        fi
+
         # Loop over mighunters
         for i in ${SVCCLASSES}; do
-                # Check if the mighunter associated to this service class running
+                # Check if the mighunter associated to this service class 
+                # running
                 pid=`ps -eo pid,ppid,comm,cmd | egrep " 1 $prog.*$i\$" | awk '{print $1}' | xargs`
                 if [ -n "$pid" ]; then
                         echo $"mighunter for svcclass: $i (pid $pid) is running..."
@@ -142,7 +196,7 @@ status() {
                                 echo $"mighunter for svcclass: $i is stopped"
                         fi
                         RETVAL=1
-                fi                        
+                fi
         done
         return $RETVAL
 }
@@ -151,6 +205,13 @@ restart() {
         stop $1
         start $1
 }
+
+# The svcclass option is not permitted when the migHunterDaemon is running in a
+# multi service class, multi process mode
+if [ "${SVCCLASSES_PER_PROCESS}" -gt 1 -a -n "$2" ]; then
+        echo -n $"svcclass option cannot be specified when SVCCLASSES_PER_PROCESS is greater than 1"
+        echo && exit 1
+fi
 
 # See how we were called
 case "$1" in
@@ -162,7 +223,7 @@ case "$1" in
                 stop $2
                 ;;
         status)
-                status
+                migstatus
                 ;;
         restart)
                 restart $2
