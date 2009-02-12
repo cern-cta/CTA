@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.673 $ $Date: 2009/02/11 09:19:36 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.674 $ $Date: 2009/02/12 11:02:59 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -483,6 +483,7 @@ BEGIN
        SET status = 1,  -- RESTARTED
            parent = 0
      WHERE diskCopy = srcDcId OR parent = srcDcId;
+    drainFileSystem(srcFsId);
     RETURN;
   END;
   -- Otherwise, we can validate the new diskcopy

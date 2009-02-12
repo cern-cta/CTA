@@ -1,4 +1,4 @@
-.TH draindiskserver 1 "$Date: 2009/02/10 15:15:23 $" CASTOR "Draining Diskserver Commands"
+.TH draindiskserver 1 "$Date: 2009/02/12 11:02:59 $" CASTOR "Draining Diskserver Commands"
 .SH NAME
 draindiskserver \- management of draining filesystems and diskservers
 
@@ -137,7 +137,7 @@ this, the filesystem must be placed into a \fBDRAINING\fR state using the
 `\fBrmAdminNode\fR` command and the filesystem resubmitted for draining.
 
 The \fBSTALLED\fR status is displayed when a filesystem that was being drained
-has not processed any files within the last 30 minutes.
+has not processed any files within the last 60 minutes.
 
 Filesystems that are in a \fBCOMPLETED\fR status will be automatically removed
 after 7 days or on an explicit call to delete the filesystem using the

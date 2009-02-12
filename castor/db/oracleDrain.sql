@@ -1,5 +1,5 @@
 /*******************************************************************
- * @(#)$RCSfile: oracleDrain.sql,v $ $Revision: 1.1 $ $Date: 2009/02/10 17:56:48 $ $Author: waldron $
+ * @(#)$RCSfile: oracleDrain.sql,v $ $Revision: 1.2 $ $Date: 2009/02/12 11:02:59 $ $Author: waldron $
  * PL/SQL code for Draining FileSystems Logic
  *
  * Additional procedures modified to support the DrainingFileSystems
@@ -156,7 +156,7 @@ AS
          -- time is more than 30 minutes ago the process is considered to be
          -- STALLED.
          decode(DFS.status, 0, 'CREATED', 1, 'INITIALIZING', 2,
-           decode(sign((getTime() - 1800) - DFS.lastUpdateTime),
+           decode(sign((getTime() - 3600) - DFS.lastUpdateTime),
                   -1, 'RUNNING', 'STALLED'),
                    3, 'INTERRUPTED',
                    4, 'FAILED',
@@ -185,7 +185,7 @@ AS
          -- is in a RUNNING status and more than 10% of the data has already by
          -- transferred.
          decode(DFS.status, 2,
-           decode(sign((getTime() - 1800) - DFS.lastUpdateTime), -1,
+           decode(sign((getTime() - 3600) - DFS.lastUpdateTime), -1,
              decode(sign((((DFS.totalBytes - nvl(DDCS.bytesRemaining, 0)) /
                             DFS.totalBytes) * 100) - 10), -1, 'N/A',
                getInterval(0, trunc(DDCS.bytesRemaining / ((DFS.totalBytes -
