@@ -261,34 +261,6 @@ int castor::tape::aggregator::AggregatorDaemon::getVdqmListenPort()
 
 
 //------------------------------------------------------------------------------
-// getRtcpdListenPort()
-//------------------------------------------------------------------------------
-int castor::tape::aggregator::AggregatorDaemon::getRtcpdListenPort()
-  throw(castor::exception::InvalidConfigEntry) {
-  int port = AGGREGATOR_RTCPDPORT; // Initialise to default value
-  const char *const configEntry = getconfent("TAPEAGGREGATOR", "RTCPDPORT", 0);
-
-  if(configEntry != NULL) {
-    if(isAValidUInt(configEntry)) {
-      port = atoi(configEntry);
-    } else {
-      castor::exception::InvalidConfigEntry ex("TAPEAGGREGATOR", "RTCPDPORT",
-        configEntry);
-
-      ex.getMessage() << __PRETTY_FUNCTION__
-        << ": Invalid configuration entry: "
-        << ex.getEntryCategory() << " " << ex.getEntryName() << " "
-        << ex.getEntryValue();
-
-      throw ex;
-    }
-  }
-
-  return port;
-}
-
-
-//------------------------------------------------------------------------------
 // isAValidUInt
 //------------------------------------------------------------------------------
 bool castor::tape::aggregator::AggregatorDaemon::isAValidUInt(const char *str)

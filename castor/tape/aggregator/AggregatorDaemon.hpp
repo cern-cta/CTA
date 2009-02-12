@@ -86,12 +86,6 @@ public:
    */
    int getVdqmListenPort() throw(castor::exception::InvalidConfigEntry);
 
-  /**
-   * Returns the port on which the server will listen for connections from
-   * RTCPD.
-   */
-   int getRtcpdListenPort() throw(castor::exception::InvalidConfigEntry);
-
 
 private:
 

@@ -71,6 +71,7 @@ AGGREGATORBIN_SRCS = \
   Net.cpp \
   RcpJobSubmitter.cpp \
   SmartFd.cpp \
+  TapeDiskRqstHandler.cpp \
   Transceiver.cpp \
   Utils.cpp \
   VdqmRequestHandlerThread.cpp \

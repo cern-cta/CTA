@@ -34,12 +34,6 @@ namespace castor {
   static const int AGGREGATOR_VDQMPORT = 5070;
 
   /**
-   * The default port on which the tape aggregator listens for connections from
-   * RTCPD.
-   */
-  static const int AGGREGATOR_RTCPDPORT = 5170;
-
-  /**
    * The default port on which the job manager listenes for notifications.
    */
   static const int JOBMANAGER_DEFAULT_NOTIFYPORT = 15011;

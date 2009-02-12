@@ -27,12 +27,11 @@
 
 #include "castor/io/ServerSocket.hpp"
 #include "castor/server/IThread.hpp"
-#include "castor/server/Queue.hpp"
 #include "castor/tape/aggregator/MessageHeader.hpp"
 #include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
+#include "castor/tape/aggregator/TapeDiskRqstHandler.hpp"
 
 #include <list>
-#include <map>
 
 
 namespace castor {
@@ -45,14 +44,6 @@ namespace aggregator {
   class VdqmRequestHandlerThread : public castor::server::IThread {
 
   public:
-
-    /**
-     * Constructor
-     *
-     * @param rtcpdListenPort The port on which the tape aggregator listens for
-     * connections from RTCPD.
-     */
-    VdqmRequestHandlerThread(const int rtcpdListenPort) throw();
 
     /**
      * Destructor
@@ -78,18 +69,9 @@ namespace aggregator {
   private:
 
     /**
-     * The port on which the tape aggregator listens for connections from
-     * RTCPD.
+     * Handler of requests from the tape and disk IO threads of RTCPD.
      */
-    const int m_rtcpdListenPort;
-
-    /**
-     * Queue of remote copy jobs to be worked on.
-     *
-     * This queue should only ever contain a maximum of 1 job.  The queue is
-     * here in order to detect erronous clients.
-     */
-    castor::server::Queue m_jobQueue;
+    TapeDiskRqstHandler m_tapeDiskRqstHandler;
 
     /**
      * Processes a job submission request message from the specified
@@ -142,28 +124,6 @@ namespace aggregator {
       throw(castor::exception::Exception);
 
     /**
-     * Processes the connected socket of a tape and disk I/O thread.
-     *
-     * Along with other request types, this function has to process the
-     * RTCP_ENDOF_REQ request type.  A message of this type is sent by RTCPD
-     * at the end of a migration.  The reception of such a message should end
-     * the current thread's current migration, in other words it should cause
-     * the main select loop to exit.  This method returns true if the main
-     * select loop should continue or false if it has received an
-     * RTCP_ENDOF_REQ request.
-     *
-     * @param cuuid The ccuid to be used for logging.
-     * @param vdqmJobRequest The job request message received from the VDQM.
-     * @param socketFd The file descriptor of the connected socket of a tape
-     * or disk I/O thread.
-     * @return true if the main select loop should continue or false if a
-     * RTCP_ENDOF_REQ request has been received.
-     */
-    bool processTapeDiskIoConnection(const Cuuid_t &cuuid,
-      const RcpJobRqstMsgBody &vdqmJobRequest, const int socketFd)
-      throw(castor::exception::Exception);
-
-    /**
      * Processes the following RTCPD sockets:
      * <ul>
      * <li>The connected socket of the initial RTCPD connection
@@ -184,18 +144,13 @@ namespace aggregator {
       throw(castor::exception::Exception);
 
     /**
-     * Starts the transfer protocol with the tape gateway by carrying out the
-     * following steps in order:
+     * Exchanges the request and volume information between the RTCPD and the
+     * tape gateway by carrying out the* following steps in order:
      * <ol>
      * <li> Get request information from RTCPD.
      * <li> Give request information to tape gateway and get volume information
      * in return.
      * <li> Give volume information to RTCPD.
-     * <li> If migrating then get the information about the first file from the
-     * tape gateway and send it to RTCPD.  This will allow the tape server to
-     * start caching into memory the file from the disk server whilst the tape
-     * is being mounted.
-     * <li> Request more work from RTCPD.
      * </ol>
      *
      * @param cuuid The ccuid to be used for logging.
@@ -204,7 +159,7 @@ namespace aggregator {
      * connection.
      * @param mode Out parameter: The tape access mode.
      */
-    void startGatewayProtocol(const Cuuid_t &cuuid,
+    void exchangeRequestAndVolumeInfo(const Cuuid_t &cuuid,
       const RcpJobRqstMsgBody &vdqmJobRequest, const int rtcpdInitialSocketFd,
       uint32_t &mode) throw(castor::exception::Exception);
 

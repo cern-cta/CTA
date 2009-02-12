@@ -28,8 +28,9 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/io/ClientSocket.hpp"
 #include "castor/tape/aggregator/RtcpAcknowledgeMsg.hpp"
-#include "castor/tape/aggregator/RtcpTapeRqstErrMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstErrMsgBody.hpp"
+#include "castor/tape/aggregator/RtcpTapeRqstErrMsgBody.hpp"
+#include "castor/tape/aggregator/RtcpTapeRqstMsgBody.hpp"
 
 #include <iostream>
 #include <stdint.h>
@@ -257,8 +258,8 @@ public:
     RtcpTapeRqstMsgBody &body) throw(castor::exception::Exception);
 
   /**
-   * Tells the tape gateway to start a transfer by sending and receiving the
-   * necessary messages.
+   * Gets the volume information from the tape gateway by sending and receiving
+   * the necessary messages.
    *
    * @param gatewayHost The tape gateway host name.
    * @param gatewayPort The tape gateway port number.
@@ -274,7 +275,7 @@ public:
    * @param errorMsg Out parameter: The error message returned by the tape
    * gateway.
    */
-  static void tellGatewayToStartTransfer(const std::string gatewayHost,
+  static void getVolumeInfoFromGateway(const std::string gatewayHost,
     const unsigned short gatewayPort, const uint32_t volReqId,
     const char *const unit, char (&vid)[CA_MAXVIDLEN+1], uint32_t &mode,
     char (&label)[CA_MAXLBLTYPLEN+1], char (&density)[CA_MAXDENLEN+1],
@@ -287,6 +288,7 @@ public:
    * @param gatewayHost The tape gateway host name.
    * @param gatewayPort The tape gateway port number.
    * @param volReqId The volume request ID.
+   * @param filePath Out parameter: The path of the disk file.
    * @param errorCode Out parameter: The error code returned by the tape
    * gateway.
    * @param errorMsg Out parameter: The error message returned by the tape
@@ -294,7 +296,10 @@ public:
    */
   static void getFileToMigrateFromGateway(const std::string gatewayHost,
     const unsigned short gatewayPort, const uint32_t volReqId,
-    int &errorCode, std::string &errorMsg) throw(castor::exception::Exception);
+    char (&filePath)[CA_MAXPATHLEN+1],
+    char (&tapeRecordFormat)[CA_MAXRECFMLEN+1],
+    char (&tapeFileId)[CA_MAXFIDLEN+1], int &errorCode, std::string &errorMsg)
+    throw(castor::exception::Exception);
 
 
 private:

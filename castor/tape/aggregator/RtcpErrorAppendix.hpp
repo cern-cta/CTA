@@ -27,6 +27,9 @@
 
 #include "h/Castor_limits.h"
 
+#include <stdint.h>
+
+
 namespace castor     {
 namespace tape       {
 namespace aggregator {

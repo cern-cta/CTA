@@ -72,11 +72,10 @@ int main(int argc, char *argv[]) {
     //----------------------------------------
 
     const int vdqmListenPort  = daemon.getVdqmListenPort();
-    const int rtcpdListenPort = daemon.getRtcpdListenPort();
 
     daemon.addThreadPool(
     new castor::server::TCPListenerThreadPool("VdqmRequestHandlerThreadPool",
-      new castor::tape::aggregator::VdqmRequestHandlerThread(rtcpdListenPort),
+      new castor::tape::aggregator::VdqmRequestHandlerThread(),
         vdqmListenPort));
 
     {

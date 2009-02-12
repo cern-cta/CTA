@@ -966,9 +966,9 @@ void castor::tape::aggregator::Transceiver::checkRtcopyReqType(
 
 
 //-----------------------------------------------------------------------------
-// tellGatewayToStartTransfer
+// getVolumeInfoFromGateway
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::tellGatewayToStartTransfer(
+void castor::tape::aggregator::Transceiver::getVolumeInfoFromGateway(
   const std::string gatewayhost, const unsigned short gatewayPort,
   const uint32_t volReqId, const char *const unit, char (&vid)[CA_MAXVIDLEN+1],
   uint32_t &mode, char (&label)[CA_MAXLBLTYPLEN+1],
@@ -980,11 +980,16 @@ void castor::tape::aggregator::Transceiver::tellGatewayToStartTransfer(
   request.setVdqmVolReqId(volReqId);
   request.setUnit(unit);
 
+  // Connect to the tape gateway
   castor::io::ClientSocket socket(gatewayPort, gatewayhost);
 
-  castor::IObject *obj = socket.readObject();
+  // Send the request for the volume information
+  socket.sendObject(request);
 
-  if(obj == NULL) {
+  // Receive the volume information
+  std::auto_ptr<castor::IObject> obj(socket.readObject());
+
+  if(obj.get() == NULL) {
     castor::exception::Exception ex(EINVAL);
 
     ex.getMessage() << __PRETTY_FUNCTION__
@@ -995,7 +1000,7 @@ void castor::tape::aggregator::Transceiver::tellGatewayToStartTransfer(
   }
 
   std::auto_ptr<tapegateway::StartTransferResponse> response(
-    dynamic_cast<tapegateway::StartTransferResponse*>(obj));
+    dynamic_cast<tapegateway::StartTransferResponse*>(obj.release()));
 
   if(response.get() == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -1021,9 +1026,12 @@ void castor::tape::aggregator::Transceiver::tellGatewayToStartTransfer(
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::Transceiver::getFileToMigrateFromGateway(
   const std::string gatewayHost, const unsigned short gatewayPort,
-  const uint32_t volReqId, int &errorCode, std::string &errorMsg)
+  const uint32_t volReqId, char (&filePath)[CA_MAXPATHLEN+1],
+  char (&tapeRecordFormat)[CA_MAXRECFMLEN+1],
+  char (&tapeFileId)[CA_MAXFIDLEN+1], int &errorCode, std::string &errorMsg)
   throw(castor::exception::Exception) {
 /*
+
   tapegateway::FileToMigrateRequest request;
 
   request.setTransactionId(volReqId);
