@@ -1,5 +1,5 @@
 /*******************************************************************
- * @(#)$RCSfile: oracleDrain.sql,v $ $Revision: 1.2 $ $Date: 2009/02/12 11:02:59 $ $Author: waldron $
+ * @(#)$RCSfile: oracleDrain.sql,v $ $Revision: 1.3 $ $Date: 2009/02/12 14:25:36 $ $Author: itglp $
  * PL/SQL code for Draining FileSystems Logic
  *
  * Additional procedures modified to support the DrainingFileSystems
@@ -24,7 +24,7 @@ DECLARE
      WHERE STDCRR.sourceDiskCopy = DDC.diskCopy
        AND SR.request = STDCRR.id
        AND decode(DDC.status, 4, DDC.status, NULL) = 4  -- FAILED
-       AND SR.status = 9  --FAILED
+       AND SR.status = 9  -- FAILED_FINISHED
        AND DDC.fileSystem = :old.fileSystem;
   reqIds    "numList";
   clientIds "numList";
@@ -153,7 +153,7 @@ AS
          -- The target service class
          SVC.name SvcClass,
          -- Determine the status of the draining process. If the last update
-         -- time is more than 30 minutes ago the process is considered to be
+         -- time is more than 60 minutes ago the process is considered to be
          -- STALLED.
          decode(DFS.status, 0, 'CREATED', 1, 'INITIALIZING', 2,
            decode(sign((getTime() - 3600) - DFS.lastUpdateTime),
@@ -564,7 +564,7 @@ BEGIN
     FROM StageDiskCopyReplicaRequest R, SubRequest
    WHERE SubRequest.request = R.id
      AND R.sourceDiskCopy = dcId
-     AND SubRequest.status = 9; -- FAILED
+     AND SubRequest.status = 9; -- FAILED_FINISHED
   IF res >= 10 THEN
     UPDATE DrainingDiskCopy
        SET status = 4,
