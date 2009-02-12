@@ -19,7 +19,6 @@ localDir=""
 rootbin=""
 rootsys=""
 
-
 dirCastor=outputDir+"/tmpXRootTest"+ticket+"/"
 
 class PreRequisitesCase(unittest.TestCase):
@@ -46,7 +45,7 @@ class PreRequisitesCase(unittest.TestCase):
         except IOError:
           assert 0==-1, "An error in the preparation of the main setting occurred ... test is not valid"
 
-    def rootHelloWorld(self):
+    def xrootHelloWorld(self):
         cmd=["echo 'printf(\"Hello World !\\n\");' | "+rootbin]
         UtilityForCastorTest.saveOnFile(localDir+"XRootHelloWorld",cmd,myScen)
         fi=open(localDir+"XRootHelloWorld","r")
@@ -65,9 +64,7 @@ ntuple->Fill(1,2,3);
 ntuple->Fill(4,5,6);
 f->Write();
 """
-
         cmd=["echo '"+fileContent+"' | "+rootbin, "sleep 5", "nsls -l "+dirCastor+"fileXRoot"+self.protocol+RfioTest.myTag+ticket]
-
         UtilityForCastorTest.saveOnFile(localDir+"XRootWrite."+self.protocol+RfioTest.myTag,cmd,myScen)
         message = "root with "+self.protocol+" protocol does not work for writing"
 
@@ -101,11 +98,8 @@ ntuple.Print();
         assert buffOut.rfind("*Tree    :ntuple    : test") != -1, message
         assert buffOut.rfind("*Entries :        2") != -1, message
 
-
-casesPreClient=("mainScenarium","rootHelloWorld")
+casesPreClient=("mainScenarium","xrootHelloWorld")
 casesXRoot=("xrootWrite", "xrootRead")
-
-
 
 class XRootPreRequisitesSuite(unittest.TestSuite):
     def __init__(self):
