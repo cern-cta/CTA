@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.2 $ $Date: 2009/02/13 10:37:39 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.3 $ $Date: 2009/02/13 11:14:59 $ $Author: itglp $
  *
  * This file contains all schema definitions which are not generated automatically.
  *
@@ -8,7 +8,7 @@
  *******************************************************************/
 
 /* A small table used to cross check code and DB versions */
-UPDATE CastorVersion SET schemaVersion = '2_1_8_4';
+UPDATE CastorVersion SET schemaVersion = '2_1_9_0';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -60,6 +60,7 @@ PARTITION BY LIST (type)
   PARTITION notlisted VALUES (default) TABLESPACE stager_data
  );
 
+
 /* Redefinition of table SubRequest to make it partitioned by status */
 /* Unfortunately it has already been defined, so we drop and recreate it */
 /* Note that if the schema changes, this part has to be updated manually! */
@@ -94,6 +95,7 @@ CREATE TABLE SubRequest
 /* SQL statements for constraints on the SubRequest table */
 ALTER TABLE SubRequest
   ADD CONSTRAINT PK_SubRequest_Id PRIMARY KEY (ID);
+
 CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) LOCAL
  (PARTITION P_STATUS_0_1_2,
   PARTITION P_STATUS_3_13_14,
@@ -106,6 +108,7 @@ CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) L
   PARTITION P_STATUS_11,
   PARTITION P_STATUS_12,
   PARTITION P_STATUS_OTHER);  
+
 
 /* Indexes related to most used entities */
 CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
