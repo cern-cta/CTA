@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.719 $ $Date: 2009/02/10 17:56:48 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.720 $ $Date: 2009/02/13 11:14:27 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -9,7 +9,7 @@
 
 /* PL/SQL declaration for the castor package */
 
-create or replace PACKAGE castor AS
+CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskCopyCore IS RECORD (
     id INTEGER,
     path VARCHAR2(2048),
@@ -509,7 +509,7 @@ BEGIN
   FETCH c INTO srId, srAnswered;
   IF srAnswered = 1 THEN
     -- already answered, ignore it
-    UPDATE SubRequest SET status = 9 WHERE id = srId;  -- FAILED_FINISHED
+    archiveSubReq(srId, 9);  -- FAILED_FINISHED
     srId := 0;
   ELSE
     UPDATE subrequest SET status = 10 WHERE id = srId   -- FAILED_ANSWERING
@@ -538,9 +538,10 @@ END;
 CREATE OR REPLACE PROCEDURE requestToDo(service IN VARCHAR2, rId OUT INTEGER) AS
 BEGIN
   DELETE FROM NewRequests
-   WHERE type IN (
-     SELECT type FROM Type2Obj
+   WHERE id = (
+     SELECT /*+ INDEX(NewRequests_H_CT_ID) */ id FROM NewRequests
       WHERE svcHandler = service
+      ORDER BY creationTime ASC
      )
    AND ROWNUM < 2 RETURNING id INTO rId;
 EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -573,79 +574,57 @@ END;
 /
 
 
-/* PL/SQL method to delete one single request */
-CREATE OR REPLACE PROCEDURE deleteRequest(rId IN INTEGER) AS
-  rtype INTEGER;
-  rclient INTEGER;
-BEGIN  -- delete Request, Client and SubRequests
-  -- delete request from Id2Type
-  DELETE FROM Id2Type WHERE id = rId RETURNING type INTO rtype;
-
-  -- delete request and get client id
-  IF rtype = 35 THEN -- StageGetRequest
-    DELETE FROM StageGetRequest WHERE id = rId RETURNING client INTO rclient;
-  ELSIF rtype = 40 THEN -- StagePutRequest
-    DELETE FROM StagePutRequest WHERE id = rId RETURNING client INTO rclient;
-  ELSIF rtype = 44 THEN -- StageUpdateRequest
-    DELETE FROM StageUpdateRequest WHERE id = rId RETURNING client INTO rclient;
-  ELSIF rtype = 39 THEN -- StagePutDoneRequest
-    DELETE FROM StagePutDoneRequest WHERE id = rId RETURNING client INTO rclient;
-  ELSIF rtype = 42 THEN -- StageRmRequest
-    DELETE FROM StageRmRequest WHERE id = rId RETURNING client INTO rclient;
-  ELSIF rtype = 51 THEN -- StageReleaseFilesRequest
-    DELETE FROM StageReleaseFilesRequest WHERE id = rId RETURNING client INTO rclient;
-  ELSIF rtype = 36 THEN -- StagePrepareToGetRequest
-    DELETE FROM StagePrepareToGetRequest WHERE id = rId RETURNING client INTO rclient;
-  ELSIF rtype = 37 THEN -- StagePrepareToPutRequest
-    DELETE FROM StagePrepareToPutRequest WHERE id = rId RETURNING client INTO rclient;
-  ELSIF rtype = 38 THEN -- StagePrepareToUpdateRequest
-    DELETE FROM StagePrepareToUpdateRequest WHERE id = rId RETURNING client INTO rclient;
-  ELSIF rtype = 95 THEN -- SetFileGCWeightRequest
-    DELETE FROM SetFileGCWeight WHERE id = rId RETURNING client INTO rclient;
-  ELSIF rtype = 119 THEN -- StageRepackRequest
-    DELETE FROM StageRepackRequest WHERE id = rId RETURNING client INTO rclient;
-  ELSIF rtype = 133 THEN -- StageDiskCopyReplicaRequest
-    DELETE FROM StageDiskCopyReplicaRequest WHERE id = rId RETURNING client INTO rclient;
-  END IF;
-
-  -- Delete Client
-  DELETE FROM Id2Type WHERE id = rclient;
-  DELETE FROM Client WHERE id = rclient;
-
-  -- Delete SubRequests
-  DELETE FROM Id2Type WHERE id IN
-    (SELECT id FROM SubRequest WHERE request = rId);
-  DELETE FROM SubRequest WHERE request = rId;
-END;
-/
-
 
 /* PL/SQL method to archive a SubRequest */
-CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
-  rId INTEGER;
+CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER, finalStatus IN INTEGER) AS
   nb INTEGER;
-  nbReqs INTEGER;
-  cfId NUMBER;
+  rId INTEGER;
   rtype INTEGER;
+  rname VARCHAR2(100);
+  srIds "numList";
+  clientId INTEGER;
 BEGIN
   UPDATE SubRequest
-     SET status = 8, -- FINISHED
-         parent = NULL, diskCopy = NULL  -- unlink this subrequest as it's dead now
+     SET parent = NULL, diskCopy = NULL,  -- unlink this subrequest as it's dead now
+         lastModificationTime = getTime(),
+         status = finalStatus
    WHERE id = srId
-  RETURNING request, castorFile INTO rId, cfId;
+  RETURNING request INTO rId;
 
   -- Try to see whether another subrequest in the same
-  -- request is still processing
+  -- request is still being processed
   SELECT count(*) INTO nb FROM SubRequest
-   WHERE request = rid AND status <> 8;  -- all but FINISHED
+   WHERE request = rId AND status NOT IN (8, 9);  -- all but {FAILED_,}FINISHED
 
   IF nb = 0 THEN
-    -- all subrequests have finished: archive or delete depending on the request type
-    SELECT type INTO rtype FROM Id2Type WHERE id = rId;
-    IF rtype IN (51, 95) THEN -- Release, SetFileGCWeight
-      deleteRequest(rId);
+    -- all subrequests have finished, we can archive
+    SELECT Type2Obj.type, object INTO rtype, rname
+      FROM Id2Type, Type2Obj
+     WHERE id = rId
+       AND Type2Obj.type = Id2Type.type;
+    -- drop the associated Client entity and all Id2Type entries
+    EXECUTE IMMEDIATE
+      'BEGIN SELECT client INTO :cId FROM '|| rname ||' WHERE id = :rId; END;'
+      USING OUT clientId, IN rId;
+    DELETE FROM Client WHERE id = clientId;
+    DELETE FROM Id2Type WHERE id IN (rId, clientId);
+    SELECT id BULK COLLECT INTO srIds
+      FROM SubRequest
+     WHERE request = rId;
+    FORALL i IN srIds.FIRST .. srIds.LAST
+      DELETE FROM Id2Type WHERE id = srIds(i);
+      
+    IF rtype = 95 THEN   -- OBJ_SetFileGCWeight
+      -- we don't care keeping this one
+      DELETE FROM SetFileGCWeight WHERE id = rId;
+      DELETE FROM Id2Type WHERE id = rId;
+      FORALL i IN srIds.FIRST .. srIds.LAST
+        DELETE FROM subRequest WHERE id = srIds(i);
     ELSE
-      UPDATE SubRequest SET status = 11 WHERE request = rId;  -- ARCHIVED
+      -- for all other types, we keep the subRequest+request for subsequent querying
+      UPDATE SubRequest SET status = 11    -- ARCHIVED
+       WHERE request = rId
+         AND status = 8;  -- FINISHED
     END IF;
   END IF;
 END;
@@ -749,7 +728,7 @@ BEGIN
              FROM StageDiskCopyReplicaRequest R, SubRequest
             WHERE SubRequest.request = R.id
               AND R.sourceDiskCopy = DiskCopy.id
-              AND SubRequest.status = 9 -- FAILED
+              AND SubRequest.status = 9 -- FAILED_FINISHED
            HAVING COUNT(*) >= 10)
        ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
                                FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
@@ -1277,11 +1256,11 @@ BEGIN
   -- If we are a real PutDone (and not a put outside of a prepareToPut/Update)
   -- then we have to archive the original prepareToPut/Update subRequest
   IF context = 2 THEN
+    -- There can be only a single PrepareTo request: any subsequent PPut would be
+    -- rejected and any subsequent PUpdate would be directly archived (cf. processPrepareRequest).
     DECLARE
       srId NUMBER;
     BEGIN
-      -- There can be only a single PrepareTo request: any subsequent PPut would be
-      -- rejected and any subsequent PUpdate would be directly archived (cf. processPrepareRequest).
       SELECT SubRequest.id INTO srId
         FROM SubRequest,
          (SELECT id FROM StagePrepareToPutRequest UNION ALL
@@ -1289,9 +1268,9 @@ BEGIN
        WHERE SubRequest.castorFile = cfId
          AND SubRequest.request = Request.id
          AND SubRequest.status = 6;  -- READY
-      archiveSubReq(srId);
+      archiveSubReq(srId, 8);  -- FINISHED
     EXCEPTION WHEN NO_DATA_FOUND THEN
-      NULL; -- Ignore the missing subrequest
+      NULL;   -- ignore the missing subrequest
     END;
   END IF;
   -- Trigger the creation of additional copies of the file, if necessary.
@@ -2223,37 +2202,6 @@ BEGIN
     UPDATE DiskCopy SET gcWeight = gcw WHERE id = dc.id;
     ret := 1;   -- some diskcopies found, ok
   END LOOP;
-END;
-/
-
-
-/* PL/SQL method implementing updateAndCheckSubRequest */
-CREATE OR REPLACE PROCEDURE updateAndCheckSubRequest(srId IN INTEGER, newStatus IN INTEGER, result OUT INTEGER) AS
-  reqId INTEGER;
-BEGIN
-  -- Lock the access to the Request
-  SELECT Id2Type.id INTO reqId
-    FROM SubRequest, Id2Type
-   WHERE SubRequest.id = srId
-     AND Id2Type.id = SubRequest.request
-     FOR UPDATE;
-  -- Update Status
-  UPDATE SubRequest SET status = newStatus,
-                        answered = 1,
-                        lastModificationTime = getTime() WHERE id = srId;
-  IF newStatus IN (6, 11) THEN  -- READY, ARCHIVED
-    UPDATE SubRequest SET getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
-     WHERE id = srId;
-  END IF;
-  -- Check whether it was the last subrequest in the request
-  result := 1;
-  SELECT id INTO result FROM SubRequest
-   WHERE request = reqId
-     AND status IN (0, 1, 2, 3, 4, 5, 7, 10, 12, 13, 14)   -- all but FINISHED, FAILED_FINISHED, ARCHIVED
-     AND answered = 0
-     AND ROWNUM < 2;
-EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
-  result := 0;
 END;
 /
 
