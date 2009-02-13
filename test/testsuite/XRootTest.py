@@ -29,7 +29,7 @@ class PreRequisitesCase(unittest.TestCase):
             params = UtilityForCastorTest.parseConfigFile(configFile, "Root")
             localDir = params["LOG_DIR"]
             localDir = localDir+ticket+"/"
-            os.system("mkdir "+localDir)
+            os.system("mkdir -p "+localDir)
             if os.environ.has_key("ROOTSYS"):
                 rootsys = os.environ["ROOTSYS"]
             else:
