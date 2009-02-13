@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.674 $ $Date: 2009/02/12 11:02:59 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.675 $ $Date: 2009/02/13 11:16:48 $ $Author: itglp $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -476,7 +476,7 @@ BEGIN
     -- Update filesystem status
     updateFsFileClosed(fsId);
     -- Archive the diskCopy replica request
-    archiveSubReq(srId);
+    archiveSubReq(srId, 8);  -- FINISHED
     -- Restart all entries in the snapshot of files to drain that maybe
     -- waiting on the replication of the source diskcopy.
     UPDATE DrainingDiskCopy
@@ -513,7 +513,7 @@ BEGIN
   -- Update filesystem status
   updateFsFileClosed(fsId);
   -- Archive the diskCopy replica request
-  archiveSubReq(srId);
+  archiveSubReq(srId, 8);  -- FINISHED
   -- Trigger the creation of additional copies of the file, if necessary.
   replicateOnClose(cfId, ouid, ogid);
   -- Wake up waiting subrequests
@@ -600,56 +600,58 @@ BEGIN
      RETURNING fileSystem, castorFile, owneruid, ownergid
       INTO fsId, cfId, ouid, ogid;
   END IF;
-  -- Fail the corresponding subrequest
-  UPDATE SubRequest SET status = 9, -- FAILED_FINISHED
-         lastModificationTime = getTime()
-   WHERE diskCopy = dcId
-     AND status IN (6, 14) -- READY, BEINGSHCED
-  RETURNING id INTO res;
-  IF res = 0 THEN
-    -- Dont trigger replicateOnClose here as we may have been restarted
-    RETURN;
-  END IF;
-  -- If no filesystem was set on the diskcopy then we can safely delete it
-  -- without waiting for garbage collection as the transfer was never started
-  IF fsId = 0 THEN
-    DELETE FROM DiskCopy WHERE id = dcId;
-    DELETE FROM Id2Type WHERE id = dcId;
-  END IF;
-  -- Wake up other subrequests waiting on it
-  UPDATE SubRequest SET status = 1, -- RESTART
-                        lastModificationTime = getTime(),
-                        parent = 0
-   WHERE parent = res;
-  -- Update filesystem status
-  IF fsId > 0 THEN
-    updateFsFileClosed(fsId);
-  END IF;
-  -- Trigger the creation of additional copies of the file, if necessary.
-  -- Note: We do this also on failure to be able to recover from transient
-  -- errors, e.g. timeouts while waiting to be scheduled, but we don't on ENOENT.
-  IF enoent = 0 THEN
-    replicateOnClose(cfId, ouid, ogid);
-  END IF;
-  -- Diskserver draining logic
   BEGIN
-    -- Determine the source diskcopy and filesystem involved in the replication
-    SELECT sourceDiskCopy, fileSystem
-      INTO srcDcId, srcFsId
-      FROM DiskCopy, StageDiskCopyReplicaRequest
-     WHERE StageDiskCopyReplicaRequest.sourceDiskCopy = DiskCopy.id
-       AND StageDiskCopyReplicaRequest.destDiskCopy = dcId;
-    -- Restart all entries in the snapshot of files to drain that maybe
-    -- waiting on the replication of the source diskcopy.
-    UPDATE DrainingDiskCopy
-       SET status = 1,  -- RESTARTED
-           parent = 0
-     WHERE diskCopy = srcDcId
-        OR parent = srcDcId;
-    drainFileSystem(srcFsId);
+    -- Get the corresponding subRequest, if it exists
+    SELECT id INTO res
+      FROM SubRequest
+     WHERE diskCopy = dcId
+       AND status IN (6, 14); -- READY, BEINGSHCED
+    -- Wake up other subrequests waiting on it
+    UPDATE SubRequest SET status = 1, -- RESTART
+                          parent = 0
+     WHERE parent = res;
+    -- Fail it
+    archiveSubReq(res, 9); -- FAILED_FINISHED
+    -- If no filesystem was set on the diskcopy then we can safely delete it
+    -- without waiting for garbage collection as the transfer was never started
+    IF fsId = 0 THEN
+      DELETE FROM DiskCopy WHERE id = dcId;
+      DELETE FROM Id2Type WHERE id = dcId;
+    END IF;
+    -- Update filesystem status
+    IF fsId > 0 THEN
+      updateFsFileClosed(fsId);
+    END IF;
+    -- Trigger the creation of additional copies of the file, if necessary.
+    -- Note: We do this also on failure to be able to recover from transient
+    -- errors, e.g. timeouts while waiting to be scheduled, but we don't on ENOENT.
+    IF enoent = 0 THEN
+      replicateOnClose(cfId, ouid, ogid);
+    END IF;
+    -- Diskserver draining logic
+    BEGIN
+      -- Determine the source diskcopy and filesystem involved in the replication
+      SELECT sourceDiskCopy, fileSystem
+        INTO srcDcId, srcFsId
+        FROM DiskCopy, StageDiskCopyReplicaRequest
+       WHERE StageDiskCopyReplicaRequest.sourceDiskCopy = DiskCopy.id
+         AND StageDiskCopyReplicaRequest.destDiskCopy = dcId;
+      -- Restart all entries in the snapshot of files to drain that maybe
+      -- waiting on the replication of the source diskcopy.
+      UPDATE DrainingDiskCopy
+         SET status = 1,  -- RESTARTED
+             parent = 0
+       WHERE diskCopy = srcDcId
+          OR parent = srcDcId;
+      drainFileSystem(srcFsId);
+    END;
+    -- WARNING: previous call to drainFileSystem has a COMMIT inside. So all
+    -- locks have been released!!
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- SubRequest not found, don't trigger replicateOnClose here
+    -- as we may have been restarted
+    NULL;
   END;
-  -- WARNING: previous call to drainFileSystem has a COMMIT inside. So all
-  -- locks have been released!!
 END;
 /
 
@@ -754,7 +756,7 @@ BEGIN
   -- Update filesystem status
   updateFsFileClosed(fsId);
   -- Archive Subrequest
-  archiveSubReq(srId);
+  archiveSubReq(srId, 8);  -- FINISHED
   COMMIT;
 END;
 /
@@ -762,9 +764,9 @@ END;
 
 /* PL/SQL method implementing getUpdateDone */
 CREATE OR REPLACE PROCEDURE getUpdateDoneProc
-(subReqId IN NUMBER) AS
+(srId IN NUMBER) AS
 BEGIN
-  archiveSubReq(subReqId);
+  archiveSubReq(srId, 8);  -- FINISHED
 END;
 /
 
@@ -773,10 +775,10 @@ END;
 CREATE OR REPLACE PROCEDURE getUpdateFailedProc
 (srId IN NUMBER) AS
 BEGIN
-  UPDATE SubRequest SET status = 9 -- FAILED_FINISHED
-   WHERE id = srId;
-  UPDATE SubRequest SET status = 1 -- RESTART
+  UPDATE SubRequest
+     SET parent = 0, status = 1 -- RESTART
    WHERE parent = srId;
+  archiveSubReq(srId, 9);  -- FAILED_FINISHED
 END;
 /
 
@@ -788,11 +790,11 @@ CREATE OR REPLACE PROCEDURE putFailedProc(srId IN NUMBER) AS
   cfId INTEGER;
   unused INTEGER;
 BEGIN
+  SELECT diskCopy, castorFile INTO dcId, cfId
+    FROM SubRequest
+   WHERE id = srId;
   -- Fail SubRequest
-  UPDATE SubRequest
-     SET status = 9 -- FAILED_FINISHED
-   WHERE id = srId
-  RETURNING diskCopy, castorFile INTO dcId, cfId;
+  archiveSubReq(srId, 9);  -- FAILED_FINISHED
   IF dcId > 0 THEN
     SELECT fileSystem INTO fsId FROM DiskCopy WHERE id = dcId;
     -- Take file closing into account
