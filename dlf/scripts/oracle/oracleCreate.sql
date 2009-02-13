@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/02/06 13:39:59 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/02/13 10:13:15 $ $Author: waldron $
  *
  * This script create a new DLF schema
  *
@@ -32,83 +32,83 @@ INSERT INTO dlf_version VALUES ('2_1_2_0', 'releaseTag');
 CREATE TABLE dlf_sequences(seq_name CHAR(15), seq_no NUMBER);
 
 /* SQL statement for table dlf_monitoring */
-CREATE TABLE dlf_monitoring(timestamp DATE NOT NULL, h_threads NUMBER, h_messages NUMBER, h_inits NUMBER, h_errors NUMBER, h_connections NUMBER, h_clientpeak NUMBER, h_timeouts NUMBER, db_threads NUMBER, db_commits NUMBER, db_errors NUMBER, db_inserts NUMBER, db_rollbacks NUMBER, db_selects NUMBER, db_updates NUMBER, db_cursors NUMBER, db_messages NUMBER, db_inits NUMBER, db_hashstats NUMBER, s_uptime NUMBER, s_mode NUMBER, s_queued NUMBER, s_response NUMBER(*,4), interval NUMBER)
+CREATE TABLE dlf_monitoring(timestamp DATE CONSTRAINT NN_Monitoring_Timestamp NOT NULL, h_threads NUMBER, h_messages NUMBER, h_inits NUMBER, h_errors NUMBER, h_connections NUMBER, h_clientpeak NUMBER, h_timeouts NUMBER, db_threads NUMBER, db_commits NUMBER, db_errors NUMBER, db_inserts NUMBER, db_rollbacks NUMBER, db_selects NUMBER, db_updates NUMBER, db_cursors NUMBER, db_messages NUMBER, db_inits NUMBER, db_hashstats NUMBER, s_uptime NUMBER, s_mode NUMBER, s_queued NUMBER, s_response NUMBER(*,4), interval NUMBER)
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statement for table dlf_config */
-CREATE TABLE dlf_config(name VARCHAR2(255) NOT NULL, value VARCHAR2(255), description VARCHAR2(255));
-ALTER TABLE dlf_config ADD CONSTRAINT i_config_name UNIQUE (name) ENABLE;
+CREATE TABLE dlf_config(name VARCHAR2(255) CONSTRAINT NN_Config_Name NOT NULL, value VARCHAR2(255), description VARCHAR2(255));
+ALTER TABLE dlf_config ADD CONSTRAINT UN_Config_Name UNIQUE (name) ENABLE;
 
 /* SQL statements for table dlf_messages */
-CREATE TABLE dlf_messages(id NUMBER, timestamp DATE NOT NULL, timeusec NUMBER, reqid CHAR(36), subreqid CHAR(36), hostid NUMBER, facility NUMBER(3), severity NUMBER(3), msg_no NUMBER(5), pid NUMBER(10), tid NUMBER(10), nshostid NUMBER, nsfileid NUMBER, tapevid VARCHAR2(20), userid NUMBER(10), groupid NUMBER(10), sec_type VARCHAR2(20), sec_name VARCHAR2(255))
+CREATE TABLE dlf_messages(id NUMBER, timestamp DATE CONSTRAINT NN_Messages_Timestamp NOT NULL, timeusec NUMBER, reqid CHAR(36), subreqid CHAR(36), hostid NUMBER, facility NUMBER(3), severity NUMBER(3), msg_no NUMBER(5), pid NUMBER(10), tid NUMBER(10), nshostid NUMBER, nsfileid NUMBER, tapevid VARCHAR2(20), userid NUMBER(10), groupid NUMBER(10), sec_type VARCHAR2(20), sec_name VARCHAR2(255))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
-CREATE INDEX i_msg_timestamp ON dlf_messages (timestamp) LOCAL;
-CREATE INDEX i_msg_fac ON dlf_messages (facility) LOCAL;
-CREATE INDEX i_msg_pid ON dlf_messages (pid) LOCAL;
-CREATE INDEX i_msg_reqid ON dlf_messages (reqid) LOCAL;
-CREATE INDEX i_msg_subreqid ON dlf_messages (subreqid) LOCAL;
-CREATE INDEX i_msg_hostid ON dlf_messages (hostid) LOCAL;
-CREATE INDEX i_msg_nshostid ON dlf_messages (nshostid) LOCAL;
-CREATE INDEX i_msg_fileid ON dlf_messages (nsfileid) LOCAL;
-CREATE INDEX i_msg_tapevid ON dlf_messages (tapevid) LOCAL;
-CREATE INDEX i_msg_userid ON dlf_messages (userid) LOCAL;
-CREATE INDEX i_msg_groupid ON dlf_messages (groupid) LOCAL;
-CREATE INDEX i_msg_sec_type ON dlf_messages (sec_type) LOCAL;
-CREATE INDEX i_msg_sec_name ON dlf_messages (sec_name) LOCAL;
+CREATE INDEX I_Messages_Timestamp ON dlf_messages (timestamp) LOCAL;
+CREATE INDEX I_Messages_Facility ON dlf_messages (facility) LOCAL;
+CREATE INDEX I_Messages_Pid ON dlf_messages (pid) LOCAL;
+CREATE INDEX I_Messages_Reqid ON dlf_messages (reqid) LOCAL;
+CREATE INDEX I_Messages_Subreqid ON dlf_messages (subreqid) LOCAL;
+CREATE INDEX I_Messages_Hostid ON dlf_messages (hostid) LOCAL;
+CREATE INDEX I_Messages_NSHostid ON dlf_messages (nshostid) LOCAL;
+CREATE INDEX I_Messages_NSFileid ON dlf_messages (nsfileid) LOCAL;
+CREATE INDEX I_Messages_Tapevid ON dlf_messages (tapevid) LOCAL;
+CREATE INDEX I_Messages_Userid ON dlf_messages (userid) LOCAL;
+CREATE INDEX I_Messages_Groupid ON dlf_messages (groupid) LOCAL;
+CREATE INDEX I_Messages_Sec_type ON dlf_messages (sec_type) LOCAL;
+CREATE INDEX I_Messages_Sec_name ON dlf_messages (sec_name) LOCAL;
 
 /* SQL statements for table dlf_num_param_values */
-CREATE TABLE dlf_num_param_values(id NUMBER, timestamp DATE NOT NULL, name VARCHAR2(20), value NUMBER)
+CREATE TABLE dlf_num_param_values(id NUMBER, timestamp DATE CONSTRAINT NN_Num_Param_Values_Timestamp NOT NULL, name VARCHAR2(20), value NUMBER)
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
-CREATE INDEX i_num_id ON dlf_num_param_values (id) LOCAL;
+CREATE INDEX I_Num_Param_Values_id ON dlf_num_param_values (id) LOCAL;
 
 /* SQL statements for table dlf_str_param_values */
-CREATE TABLE dlf_str_param_values(id NUMBER, timestamp DATE NOT NULL, name VARCHAR2(20), value VARCHAR2(2048))
+CREATE TABLE dlf_str_param_values(id NUMBER, timestamp DATE CONSTRAINT NN_Str_Param_Values_Timestamp NOT NULL, name VARCHAR2(20), value VARCHAR2(2048))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
-CREATE INDEX i_str_id ON dlf_str_param_values (id) LOCAL;
+CREATE INDEX I_Str_Param_Values_id ON dlf_str_param_values (id) LOCAL;
 
 /* SQL statements for table dlf_severities */
 CREATE TABLE dlf_severities(sev_no NUMBER(3), sev_name VARCHAR2(20));
 
-CREATE UNIQUE INDEX i_sev_no ON dlf_severities (sev_no);
-CREATE UNIQUE INDEX i_sev_name ON dlf_severities (sev_name);
+CREATE UNIQUE INDEX UN_Severities_Sev_No ON dlf_severities (sev_no);
+CREATE UNIQUE INDEX UN_Severities_Sev_Name ON dlf_severities (sev_name);
 
-ALTER TABLE dlf_severities ADD CONSTRAINT i_sev_no UNIQUE (sev_no) ENABLE;
-ALTER TABLE dlf_severities ADD CONSTRAINT i_sev_name UNIQUE (sev_name) ENABLE;
+ALTER TABLE dlf_severities ADD CONSTRAINT UN_Severities_Sev_No UNIQUE (sev_no) ENABLE;
+ALTER TABLE dlf_severities ADD CONSTRAINT UN_Severities_Sev_Name UNIQUE (sev_name) ENABLE;
 
 /* SQL statements for table dlf_facilities */
 CREATE TABLE dlf_facilities(fac_no NUMBER(3), fac_name VARCHAR2(20));
 
-CREATE UNIQUE INDEX i_fac_no ON dlf_facilities (fac_no);
-CREATE UNIQUE INDEX i_fac_name ON dlf_facilities (fac_name);
+CREATE UNIQUE INDEX UN_Facilities_Fac_No ON dlf_facilities (fac_no);
+CREATE UNIQUE INDEX UN_Facilities_Fac_Name ON dlf_facilities (fac_name);
 
-ALTER TABLE dlf_facilities ADD CONSTRAINT i_fac_no UNIQUE (fac_no) ENABLE;
-ALTER TABLE dlf_facilities ADD CONSTRAINT i_fac_name UNIQUE (fac_name) ENABLE;
+ALTER TABLE dlf_facilities ADD CONSTRAINT UN_Facilities_Fac_No UNIQUE (fac_no) ENABLE;
+ALTER TABLE dlf_facilities ADD CONSTRAINT UN_Facilities_Fac_Name UNIQUE (fac_name) ENABLE;
 
 /* SQL statements for table dlf_msg_texts */
 CREATE TABLE dlf_msg_texts(fac_no NUMBER(3), msg_no NUMBER(5), msg_text VARCHAR2(512));
 
-CREATE UNIQUE INDEX i_msg_texts ON dlf_msg_texts (fac_no, msg_no);
+CREATE UNIQUE INDEX UN_Msg_Texts_FacMsgNo ON dlf_msg_texts (fac_no, msg_no);
 
 /* SQL statements for dlf_host_map */
 CREATE TABLE dlf_host_map(hostid NUMBER, hostname VARCHAR2(64));
 
-CREATE UNIQUE INDEX i_hostid ON dlf_host_map (hostid);
-CREATE UNIQUE INDEX i_hostname ON dlf_host_map (hostname);
+CREATE UNIQUE INDEX UN_Host_Map_Hostid ON dlf_host_map (hostid);
+CREATE UNIQUE INDEX UN_Host_Map_Hostname ON dlf_host_map (hostname);
 
-ALTER TABLE dlf_host_map ADD CONSTRAINT i_hostid UNIQUE (hostid) ENABLE;
-ALTER TABLE dlf_host_map ADD CONSTRAINT i_hostname UNIQUE (hostname) ENABLE;
+ALTER TABLE dlf_host_map ADD CONSTRAINT UN_Host_Map_Hostid UNIQUE (hostid) ENABLE;
+ALTER TABLE dlf_host_map ADD CONSTRAINT UN_Host_Map_Hostname UNIQUE (hostname) ENABLE;
 
 /* SQL statements for dlf_nshost_map */
 CREATE TABLE dlf_nshost_map(nshostid NUMBER, nshostname VARCHAR2(64));
 
-CREATE UNIQUE INDEX i_nshostid ON dlf_nshost_map (nshostid);
-CREATE UNIQUE INDEX i_nshostname ON dlf_nshost_map (nshostname);
+CREATE UNIQUE INDEX UN_NSHost_Map_NSHostid ON dlf_nshost_map (nshostid);
+CREATE UNIQUE INDEX UN_NSHost_Map_NSHostname ON dlf_nshost_map (nshostname);
 
-ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostid UNIQUE (nshostid) ENABLE;
-ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostname UNIQUE (nshostname) ENABLE;
+ALTER TABLE dlf_nshost_map ADD CONSTRAINT UN_NSHost_Map_NsHostid UNIQUE (nshostid) ENABLE;
+ALTER TABLE dlf_nshost_map ADD CONSTRAINT UN_NSHost_Map_NsHostname UNIQUE (nshostname) ENABLE;
 
 /* Fill the dlf_config table */
 INSERT INTO dlf_config (name, value, description) VALUES ('instance', 'castordlf', 'The name of the castor2 instance');
