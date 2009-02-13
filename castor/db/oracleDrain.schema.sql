@@ -1,5 +1,5 @@
 /*******************************************************************
- * @(#)$RCSfile: oracleDrain.schema.sql,v $ $Revision: 1.1 $ $Date: 2009/02/10 17:56:48 $ $Author: waldron $
+ * @(#)$RCSfile: oracleDrain.schema.sql,v $ $Revision: 1.2 $ $Date: 2009/02/13 10:37:39 $ $Author: waldron $
  * Schema creation code for Draining FileSystems Logic
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -7,12 +7,12 @@
 
 /* SQL statement for the creation of the DrainingFileSystem table */
 CREATE TABLE DrainingFileSystem
-  (userName       VARCHAR2(30),
-   machine        VARCHAR2(500),
+  (userName       VARCHAR2(30) CONSTRAINT NN_DrainingFs_UserName NOT NULL,
+   machine        VARCHAR2(500) CONSTRAINT NN_DrainingFs_Machine NOT NULL,
    creationTime   NUMBER DEFAULT 0,
    startTime      NUMBER DEFAULT 0,
    lastUpdateTime NUMBER DEFAULT 0,
-   fileSystem     NUMBER,
+   fileSystem     NUMBER CONSTRAINT NN_DrainingFs_FileSystem NOT NULL,
    /* Current state of the draining process, one of:
     *   0 -- CREATED
     *   1 -- INITIALIZING
@@ -23,7 +23,7 @@ CREATE TABLE DrainingFileSystem
     *   6 -- DELETING
     */
    status         NUMBER DEFAULT 0,
-   svcClass       NUMBER,
+   svcClass       NUMBER CONSTRAINT NN_DrainingFs_SvcClass NOT NULL,
    /* Flag to indicate whether files should be invalidated so that they can be
     * removed by the garbage collection process after a file is replicated to
     * another diskserver.
@@ -48,19 +48,6 @@ CREATE TABLE DrainingFileSystem
 ALTER TABLE DrainingFileSystem
   ADD CONSTRAINT PK_DrainingFs_FileSystem
   PRIMARY KEY (fileSystem);
-
-/* SQL statements for not null constraints on the DrainingFileSystem table */
-ALTER TABLE DrainingFileSystem
-  MODIFY (userName CONSTRAINT NN_DrainingFs_UserName NOT NULL);
-
-ALTER TABLE DrainingFileSystem
-  MODIFY (machine CONSTRAINT NN_DrainingFs_Machine NOT NULL);
-
-ALTER TABLE DrainingFileSystem
-  MODIFY (fileSystem CONSTRAINT NN_DrainingFs_FileSystem NOT NULL);
-
-ALTER TABLE DrainingFileSystem
-  MODIFY (svcClass CONSTRAINT NN_DrainingFs_SvcClass NOT NULL);
 
 /* SQL statements for check constraints on the DrainingFileSystem table */
 ALTER TABLE DrainingFileSystem
@@ -107,7 +94,7 @@ CREATE INDEX I_DrainingFileSystem_SvcClass
  * simple queue using a standard table.
  */
 CREATE TABLE DrainingDiskCopy
-  (fileSystem     NUMBER,
+  (fileSystem     NUMBER CONSTRAINT NN_DrainingDCs_FileSystem NOT NULL,
    /* Status of the diskcopy to be replicated. Note: this is not the same as
     * the status of the diskcopy i.e. STAGED, CANBEMIGR. It is an internal
     * status assigned to each diskcopy (file) as a means of tracking how far the
@@ -119,15 +106,15 @@ CREATE TABLE DrainingDiskCopy
     *   3 -- WAITD2D
     *   4 -- FAILED
     */
-   status         NUMBER DEFAULT 0,
+   status         NUMBER DEFAULT 0 CONSTRAINT NN_DrainingDCs_Status NOT NULL,
    /* A link to the diskcopy. Note: this is deliberately not enforced with a
     * foreign key constraint!!!
     */
-   diskCopy       NUMBER,
-   parent         NUMBER DEFAULT 0,
+   diskCopy       NUMBER CONSTRAINT NN_DrainingDCs_DiskCopy NOT NULL,
+   parent         NUMBER DEFAULT 0 CONSTRAINT NN_DrainingDCs_Parent NOT NULL,
    creationTime   NUMBER DEFAULT 0,
    priority       NUMBER DEFAULT 0,
-   fileSize       NUMBER DEFAULT 0,
+   fileSize       NUMBER DEFAULT 0 CONSTRAINT NN_DrainingDCs_FileSize NOT NULL,
    comments       VARCHAR2(2048) DEFAULT NULL)
   /* Allow shrink operations */
   ENABLE ROW MOVEMENT;
@@ -136,22 +123,6 @@ CREATE TABLE DrainingDiskCopy
 ALTER TABLE DrainingDiskCopy
   ADD CONSTRAINT PK_DrainingDCs_DiskCopy
   PRIMARY KEY (diskCopy);
-
-/* SQL statements for not null constraints on the DrainingDiskCopy table */
-ALTER TABLE DrainingDiskCopy
-  MODIFY (fileSystem CONSTRAINT NN_DrainingDCs_FileSystem NOT NULL);
-
-ALTER TABLE DrainingDiskCopy
-  MODIFY (status CONSTRAINT NN_DrainingDCs_Status NOT NULL);
-
-ALTER TABLE DrainingDiskCopy
-  MODIFY (diskCopy CONSTRAINT NN_DrainingDCs_DiskCopy NOT NULL);
-
-ALTER TABLE DrainingDiskCopy
-  MODIFY (parent CONSTRAINT NN_DrainingDCs_Parent NOT NULL);
-
-ALTER TABLE DrainingDiskCopy
-  MODIFY (fileSize CONSTRAINT NN_DrainingDCs_FileSize NOT NULL);
 
 /* SQL statement for check constraints on the DrainingDiskCopy table */
 ALTER TABLE DrainingDiskCopy
