@@ -44,21 +44,23 @@ TAPEGATEWAYDAEMONBIN_SRCS = TapeGatewayDaemon.cpp WorkerThread.cpp \
 	VmgrTapeGatewayHelper.cpp VdqmTapeGatewayHelper.cpp NsTapeGatewayHelper.cpp RmMasterTapeGatewayHelper.cpp
 
 TAPEGATEWAY_MESSAGES_SRCS = \
-	ConvertCommandCode.cpp FileMigratedResponse.cpp \
-        FileRecalledResponse.cpp FileToMigrateRequest.cpp FileToMigrateResponse.cpp \
-        FileToRecallRequest.cpp  FileToRecallResponse.cpp  NsFileInformation.cpp \
-	PositionCommandCode.cpp RecordFormatCode.cpp  StartTransferRequest.cpp \
-	StartTransferResponse.cpp TapeRequestState.cpp TapeRequestStateCode.cpp \
-	EndTransferRequest.cpp EndTransferResponse.cpp FileUpdateResponse.cpp \
-	TapeFileNsAttribute.cpp
+	VolumeRequest.cpp Volume.cpp \
+	FileToMigrateRequest.cpp FileToMigrate.cpp \
+	FileToRecallRequest.cpp FileToRecall.cpp \
+	FileMigratedNotification.cpp FileRecalledNotification.cpp \
+	EndNotification.cpp NotificationAcknowledge.cpp \
+	NoMoreFiles.cpp ErrorReport.cpp \
+	BaseFileInfo.cpp PositionCommandCode.cpp TapeFileNsAttribute.cpp \
+	TapeRequestState.cpp TapeRequestStateCode.cpp 
 
 TAPEGATEWAY_IO_SRCS = \
-	 ../../io/StreamFileMigratedResponseCnv.cpp \
-	../../io/StreamFileRecalledResponseCnv.cpp \
-	../../io/StreamFileToMigrateRequestCnv.cpp ../../io/StreamFileToMigrateResponseCnv.cpp \
-	../../io/StreamFileToRecallRequestCnv.cpp ../../io/StreamFileToRecallResponseCnv.cpp \
-	../../io/StreamNsFileInformationCnv.cpp  ../../io/StreamTapeFileNsAttributeCnv.cpp \
-	../../io/StreamStartTransferRequestCnv.cpp ../../io/StreamStartTransferResponseCnv.cpp
+	../../io/StreamVolumeRequestCnv.cpp ../../io/StreamVolumeCnv.cpp \
+	../../io/StreamFileToMigrateRequestCnv.cpp ../../io/StreamFileToMigrateCnv.cpp \
+	../../io/StreamFileToRecallRequestCnv.cpp ../../io/StreamFileToRecallCnv.cpp \
+	../../io/StreamFileMigratedNotificationCnv.cpp ../../io/StreamFileRecalledNotificationCnv.cpp \
+	../../io/StreamEndNotificationCnv.cpp ../../io/StreamNotificationAcknowledgeCnv.cpp \
+	../../io/StreamNoMoreFilesCnv.cpp ../../io/StreamErrorReportCnv.cpp \
+	../../io/StreamBaseFileInfoCnv.cpp  ../../io/StreamTapeFileNsAttributeCnv.cpp 
 
 TAPEGATEWAY_DB_SRCS = ../../db/cnv/DbTapeRequestStateCnv.cpp ora/OraTapeGatewaySvc.cpp
 

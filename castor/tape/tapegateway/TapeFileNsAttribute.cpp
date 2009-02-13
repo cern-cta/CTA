@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeFileNsAttribute.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/02/10 16:04:22 $ $Author: gtaur $
+ * @(#)$RCSfile: TapeFileNsAttribute.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2009/02/13 08:51:33 $ $Author: gtaur $
  *
  * 
  *
@@ -41,13 +41,11 @@
 castor::tape::tapegateway::TapeFileNsAttribute::TapeFileNsAttribute() throw() :
   m_copyNo(0),
   m_fsec(0),
-  m_blockId(0),
   m_compression(0),
   m_side(0),
   m_checksumName(""),
   m_checksum(0),
   m_vid(""),
-  m_fseq(0),
   m_id(0) {
 }
 
@@ -72,13 +70,11 @@ void castor::tape::tapegateway::TapeFileNsAttribute::print(std::ostream& stream,
   // Output of all members
   stream << indent << "copyNo : " << m_copyNo << std::endl;
   stream << indent << "fsec : " << m_fsec << std::endl;
-  stream << indent << "blockId : " << m_blockId << std::endl;
   stream << indent << "compression : " << m_compression << std::endl;
   stream << indent << "side : " << m_side << std::endl;
   stream << indent << "checksumName : " << m_checksumName << std::endl;
   stream << indent << "checksum : " << m_checksum << std::endl;
   stream << indent << "vid : " << m_vid << std::endl;
-  stream << indent << "fseq : " << m_fseq << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeFileNsAttribute.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/02/10 16:04:22 $ $Author: gtaur $
+ * @(#)$RCSfile: TapeFileNsAttribute.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2009/02/13 08:51:33 $ $Author: gtaur $
  *
  * 
  *
@@ -131,22 +131,6 @@ namespace castor {
         }
 
         /**
-         * Get the value of m_blockId
-         * @return the value of m_blockId
-         */
-        u_signed64 blockId() const {
-          return m_blockId;
-        }
-
-        /**
-         * Set the value of m_blockId
-         * @param new_var the new value of m_blockId
-         */
-        void setBlockId(u_signed64 new_var) {
-          m_blockId = new_var;
-        }
-
-        /**
          * Get the value of m_compression
          * @return the value of m_compression
          */
@@ -227,22 +211,6 @@ namespace castor {
         }
 
         /**
-         * Get the value of m_fseq
-         * @return the value of m_fseq
-         */
-        int fseq() const {
-          return m_fseq;
-        }
-
-        /**
-         * Set the value of m_fseq
-         * @param new_var the new value of m_fseq
-         */
-        void setFseq(int new_var) {
-          m_fseq = new_var;
-        }
-
-        /**
          * Get the value of m_id
          * The id of this object
          * @return the value of m_id
@@ -266,8 +234,6 @@ namespace castor {
 
         int m_fsec;
 
-        u_signed64 m_blockId;
-
         int m_compression;
 
         int m_side;
@@ -277,8 +243,6 @@ namespace castor {
         u_signed64 m_checksum;
 
         std::string m_vid;
-
-        int m_fseq;
 
         /// The id of this object
         u_signed64 m_id;
