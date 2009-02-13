@@ -207,23 +207,23 @@ namespace castor {
     OBJ_TapeRecall = 161,
 
     /* TapeGateWay Objects */
-  
-    OBJ_FileDiskLocation = 162,
-    OBJ_FileMigratedResponse = 163,
-    OBJ_FileRecalledResponse = 164,
-    OBJ_FileToMigrateRequest = 165,
-    OBJ_FileToMigrateResponse = 166,
-    OBJ_FileToRecallRequest = 167,
-    OBJ_FileToRecallResponse = 168,
-    OBJ_NsFileInformation = 169,
-    OBJ_StartTransferRequest = 170,
-    OBJ_StartTransferResponse = 171,
-    OBJ_TapeRequestState = 172,
-    OBJ_DbInfoRetryPolicy = 173,
-    OBJ_EndTransferRequest = 174,
-    OBJ_EndTransferResponse = 175,
-    OBJ_FileUpdateResponse = 176,
-    OBJ_TapeFileNsAttribute = 177,
+ 
+    OBJ_FileMigratedNotification = 162,
+    OBJ_FileRecalledNotification = 163,
+    OBJ_FileToMigrateRequest = 164,
+    OBJ_FileToMigrate = 165,
+    OBJ_FileToRecallRequest = 166,
+    OBJ_FileToRecall = 167,
+    OBJ_VolumeRequest = 168,
+    OBJ_Volume = 169,
+    OBJ_TapeRequestState = 170,
+    OBJ_DbInfoRetryPolicy = 171,
+    OBJ_EndNotification = 172,
+    OBJ_NoMoreFiles = 173,
+    OBJ_NotificationAcknowledge = 174,
+    OBJ_TapeFileNsAttribute = 175,
+    OBJ_BaseFileInfo = 176,
+    OBJ_ErrorReport = 177,
     OBJ_RmMasterReport = 178
   };
 

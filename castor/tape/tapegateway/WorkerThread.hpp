@@ -31,10 +31,10 @@
 
 #include "castor/server/BaseDbThread.hpp"
 
-#include "castor/tape/tapegateway/StartTransferRequest.hpp"
+#include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/io/ServerSocket.hpp"
-#include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
 
 namespace castor {
 

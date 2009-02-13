@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.71 $ $Release$ $Date: 2009/02/06 09:34:56 $ $Author: gtaur $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.72 $ $Release$ $Date: 2009/02/13 08:53:28 $ $Author: gtaur $
  *
  *
  *
@@ -204,23 +204,22 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "Tape2DriveDedication",
 
   "TapeRecall",
- 
-  "DELETED TYPE",
-  "FileMigratedResponse",
-  "FileRecalledResponse",
+  "FileMigratedNotification",
+  "FileRecalledNotification",
   "FileToMigrateRequest",
-  "FileToMigrateResponse",
+  "FileToMigrate",
   "FileToRecallRequest",
-  "FileToRecallResponse",
-  "NsFileInformation",
-  "StartTransferRequest",
-  "StartTransferResponse",
+  "FileToRecall",
+  "VolumeRequest",
+  "Volume",
   "TapeRequestState",
   "DbInfoRetryPolicy",
-  "EndTransferRequest",
-  "EndTransferResponse",
-  "FileUpdateResponse",
-  "TapeFileNsAttribute", 
+  "EndNotification",
+  "NoMoreFiles",
+  "NotificationAcknowledge",
+  "TapeFileNsAttribute",
+  "BaseFileInfo",
+  "ErrorReport", 
   "RmMasterReport"
 };
 

@@ -34,24 +34,26 @@
 #include "castor/Constants.hpp"
 #include "castor/IService.hpp"
 
-#include "castor/tape/tapegateway/StartTransferResponse.hpp"
+#include "castor/tape/tapegateway/VolumeRequest.hpp"
+#include "castor/tape/tapegateway/Volume.hpp"
+
 #include "castor/tape/tapegateway/FileToRecallRequest.hpp"
-#include "castor/tape/tapegateway/FileToRecallResponse.hpp"
-#include "castor/tape/tapegateway/FileRecalledResponse.hpp"
+#include "castor/tape/tapegateway/FileToRecall.hpp"
+#include "castor/tape/tapegateway/FileRecalledNotification.hpp"
 
 #include "castor/tape/tapegateway/FileToMigrateRequest.hpp"
-#include "castor/tape/tapegateway/FileToMigrateResponse.hpp"
-#include "castor/tape/tapegateway/FileMigratedResponse.hpp"
+#include "castor/tape/tapegateway/FileToMigrate.hpp"
+#include "castor/tape/tapegateway/FileMigratedNotification.hpp"
 
-#include "castor/tape/tapegateway/StartTransferResponse.hpp"
-#include "castor/tape/tapegateway/EndTransferRequest.hpp"
-#include "castor/tape/tapegateway/EndTransferResponse.hpp"
-
-#include "castor/tape/tapegateway/FileUpdateResponse.hpp"
+#include "castor/tape/tapegateway/EndNotification.hpp"
+#include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
+#include "castor/tape/tapegateway/ErrorReport.hpp"
+#include "castor/tape/tapegateway/NoMoreFiles.hpp"
 
 #include <getconfent.h>
 #include <u64subr.h>
 #include <sstream>
+#include <errno.h>
 
 #include "castor/tape/tapegateway/VmgrTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/NsTapeGatewayHelper.hpp"
@@ -65,12 +67,12 @@
 castor::tape::tapegateway::WorkerThread::WorkerThread(castor::tape::tapegateway::ITapeGatewaySvc* dbSvc):BaseDbThread(){ 
   m_dbSvc=dbSvc; 
   // populate the map with the different handlers
-  m_handlerMap[OBJ_StartTransferRequest] = &WorkerThread::handleStartWorker;
-  m_handlerMap[OBJ_FileRecalledResponse] = &WorkerThread::handleRecallUpdate;
-  m_handlerMap[OBJ_FileMigratedResponse] = &WorkerThread::handleMigrationUpdate;
+  m_handlerMap[OBJ_VolumeRequest] = &WorkerThread::handleStartWorker;
+  m_handlerMap[OBJ_FileRecalledNotification] = &WorkerThread::handleRecallUpdate;
+  m_handlerMap[OBJ_FileMigratedNotification] = &WorkerThread::handleMigrationUpdate;
   m_handlerMap[OBJ_FileToMigrateRequest] = &WorkerThread::handleRecallMoreWork;
   m_handlerMap[OBJ_FileToRecallRequest] = &WorkerThread::handleMigrationMoreWork;
-  m_handlerMap[OBJ_EndTransferRequest] = &WorkerThread::handleEndWorker;
+  m_handlerMap[OBJ_EndNotification] = &WorkerThread::handleEndWorker;
 
 }
 
@@ -195,15 +197,15 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker(cast
 
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 35, 0, NULL);
  
-  StartTransferResponse* response = NULL;
-  StartTransferRequest* startRequest = dynamic_cast<StartTransferRequest*>(obj);
+  Volume* response = NULL;
+  VolumeRequest* startRequest = dynamic_cast<VolumeRequest*>(obj);
   if (0 == startRequest) {
 	// "Invalid Request" message
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 36, 0, NULL);
-	response = new StartTransferResponse();
-	response->setErrorCode(-1);
-	response->setErrorMessage("invalid object");
-	return response;
+	ErrorReport* errorReport=new ErrorReport();
+	errorReport->setErrorCode(EINVAL);
+	errorReport->setErrorMessage("invalid object");
+	return errorReport;
   }
   try {
     
@@ -211,9 +213,11 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker(cast
     
   } catch (castor::exception::Exception e){
     if (response) delete response;
-    response=new StartTransferResponse();
-    response->setErrorCode(-1);
-    response->setErrorMessage("TapeGateway server not available because of database problems");
+
+    ErrorReport* errorReport=new ErrorReport();
+    errorReport->setErrorCode(EINVAL);
+    errorReport->setErrorMessage("TapeGateway server not available because of database problems");
+    return errorReport;
      
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
@@ -230,18 +234,22 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker(cast
 castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate(castor::io::ServerSocket* sock,  castor::IObject* obj, castor::tape::tapegateway::ITapeGatewaySvc* m_dbSvc ) throw(){
       // I received a FileRecalledResponse
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 43, 0, NULL);
-
-      FileUpdateResponse* response = NULL;
       
-      FileRecalledResponse* fileRecalled = dynamic_cast<FileRecalledResponse*>(obj);
+      FileRecalledNotification* fileRecalled = dynamic_cast<FileRecalledNotification*>(obj);
       if (0 == fileRecalled) {
 	// "Invalid Request" message
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 41, 0, NULL);
-	response=new FileUpdateResponse();
-	response->setErrorCode(-1);
-	response->setErrorMessage("invalid object");
-	return response;
+
+	ErrorReport* errorReport=new ErrorReport();
+	errorReport->setErrorCode(EINVAL);
+	errorReport->setErrorMessage("invalid object");
+	return errorReport;
+
       }
+
+      NotificationAcknowledge* response = new NotificationAcknowledge();
+      response->setTransactionId(fileRecalled->transactionId());
+
       if ( !fileRecalled->errorCode()){
 	try {
 	  // check the nameserver if no error was faced already happened
@@ -258,7 +266,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate(cas
 
       try {
 
-	response = m_dbSvc->fileRecallUpdate(fileRecalled);
+	m_dbSvc->fileRecallUpdate(fileRecalled);
 	
       } catch (castor::exception::Exception e) {
 	castor::dlf::Param params[] =
@@ -267,10 +275,6 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate(cas
 	  };
        
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 48, 2, params);
-	if (response == NULL)
-	  response = new FileUpdateResponse();
-	response->setErrorCode(-1);
-	response->setErrorMessage("impossible to update the db");
        
       }
       
@@ -285,24 +289,30 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
   
   VmgrTapeGatewayHelper vmgrHelper;
   NsTapeGatewayHelper nsHelper;
-  FileUpdateResponse* response = NULL; 
 
   
-  FileMigratedResponse* fileMigrated = dynamic_cast<FileMigratedResponse*>(obj);
+  FileMigratedNotification* fileMigrated = dynamic_cast<FileMigratedNotification*>(obj);
   if (0 == fileMigrated) {
+
     // "Invalid Request" message
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 51, 0, NULL);
-    response= new FileUpdateResponse();
-    response->setErrorCode(-1);
-    response->setErrorMessage("invalid object");
-    return response;
+
+    ErrorReport* errorReport=new ErrorReport();
+    errorReport->setErrorCode(EINVAL);
+    errorReport->setErrorMessage("invalid object");
+    return errorReport;
+
   }
   
+  NotificationAcknowledge* response = new NotificationAcknowledge();
+  response->setTransactionId(fileMigrated->transactionId());
+
   if (!fileMigrated->errorCode()) {
 
     // update vmgr
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 60, 0, NULL);
     try {  
+      
       vmgrHelper.updateTapeInVmgr(fileMigrated);
 
       // check if it is repack case
@@ -311,6 +321,24 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
 	
 	repackVid=m_dbSvc->getRepackVid(fileMigrated);
       
+	try {
+	  if (repackVid.empty()) {
+      
+	    // update the name server (standard migration)
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 63, 0, NULL);
+	    nsHelper.updateMigratedFile(fileMigrated);
+	  } else {
+	    
+	    // update the name server (repacked file)
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 65, 0, NULL);
+	    nsHelper.updateRepackedFile(fileMigrated,repackVid);
+	  }
+
+	} catch (castor::exception::Exception e) {
+	  fileMigrated->setErrorCode(e.code());
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 64, 0, NULL);
+	}
+      
       } catch (castor::exception::Exception e){
 	castor::dlf::Param params[] =
 	  {castor::dlf::Param("errorCode",sstrerror(e.code())),
@@ -318,54 +346,23 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
 	  };
       
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 62, 2, params);
-	response->setErrorCode(-1);
-	response->setErrorMessage("db failure");
       
-      }
-      
-      if (response->errorCode() == 0) {
-	try {
-
-	  if (repackVid.empty()) {
-      
-	    // update the name server (standard migration)
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 63, 0, NULL);
-	    nsHelper.updateMigratedFile(fileMigrated);
-	  } else {
-	  
-	    // update the name server (repacked file)
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 65, 0, NULL);
-	    nsHelper.updateRepackedFile(fileMigrated,repackVid);
-	  }
-	} catch (castor::exception::Exception e) {
-	  fileMigrated->setErrorCode(e.code());
-	  fileMigrated->setErrorMessage("ns update failed");
-	  response->setErrorCode(e.code());
-	  response->setErrorMessage("ns update failed");
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 64, 0, NULL);
-	}
-      
-      } else {
-    
-	fileMigrated->setErrorCode(-1);
-	fileMigrated->setErrorMessage("check for repack failed");
+	fileMigrated->setErrorCode(e.code());
 	
       }
-
     
 
     } catch (castor::exception::Exception e){
       // vmgr exception
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 61, 0, NULL);
-      fileMigrated->setErrorCode(-1);
-      fileMigrated->setErrorMessage("vmgr update failed");
+      fileMigrated->setErrorCode(e.code());
     }
 
   }
   // update the db
   
   try {
-    response = m_dbSvc->fileMigrationUpdate(fileMigrated);
+    m_dbSvc->fileMigrationUpdate(fileMigrated);
   }catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
@@ -373,9 +370,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
       };
 
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 58, 2, params);
-    if (response == NULL ) response = new FileUpdateResponse();  
-    response->setErrorCode(-1);
-    response->setErrorMessage("impossible to update the db");
+    
   }
 
   return response;
@@ -388,64 +383,46 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
      
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 44, 0, NULL);
 
-  FileToRecallResponse* response=NULL;
+  FileToRecall* response=NULL;
 
   FileToRecallRequest* fileToRecall = dynamic_cast<FileToRecallRequest*>(obj);
   if (0 == fileToRecall) {
     // "Invalid Request" message
+
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 41, 0, NULL);
-    response->setErrorCode(-1);
-    response->setErrorMessage("invalid object");
-    return response;
+
+    ErrorReport* errorReport=new ErrorReport();
+    errorReport->setErrorCode(EINVAL);
+    errorReport->setErrorMessage("invalid object");
+    return errorReport;
   }
 
-  while (1) { // loop to find a valid segment
-    try {
-      response = m_dbSvc->fileToRecall(fileToRecall);
-    } catch (castor::exception::Exception e) {
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("errorCode",sstrerror(e.code())),
-	 castor::dlf::Param("errorMessage",e.getMessage().str())
+
+  try {
+    response = m_dbSvc->fileToRecall(fileToRecall);
+  } catch (castor::exception::Exception e) {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("errorCode",sstrerror(e.code())),
+       castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
     
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 49, 2, params);
-      response->setErrorCode(-1);
-      response->setErrorMessage("impossible to contact the db");
-    }
-    
-    if (response  == NULL ) {
-      // I don't have anything to recall I send an EndTransferRequest
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 45, 0, NULL);
-      EndTransferRequest* endResponse = new EndTransferRequest();
-      return endResponse;
-    }
-  
-    // check the file in the nameserver to see that it is still there
-    NsTapeGatewayHelper nsHelper;
-    try {
-
-      nsHelper.checkFileToRecall(response);
-      break; // found a valid file
-
-    }catch (castor::exception::Exception e) {
-      try {
-	m_dbSvc->invalidateSegment(response);
-      } catch (castor::exception::Exception ex){
-
-	// just log the error
-
-	castor::dlf::Param params[] =
-	{castor::dlf::Param("errorCode",sstrerror(e.code())),
-	 castor::dlf::Param("errorMessage",e.getMessage().str())
-	};
-    
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 49, 2, params);
-	
-      }
-    }  
-    // continue the loop the segment was not in the nameserver anylonger
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 49, 2, params);
+    ErrorReport* errorReport=new ErrorReport();
+    errorReport->setErrorCode(e.code());
+    errorReport->setErrorMessage(e.getMessage().str());
+    errorReport->setTransactionId(fileToRecall->transactionId());
+    return errorReport;
+     
   }
-  
+    
+  if (response  == NULL ) {
+    // I don't have anything to recall I send a NoMoreFiles
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 45, 0, NULL);
+    
+    NoMoreFiles* noMore= new NoMoreFiles();
+    noMore->setTransactionId(fileToRecall->transactionId());
+    return noMore;
+  }
   return response;
 }
 
@@ -457,65 +434,50 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
 
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 54, 0, NULL);
 
-  FileToMigrateResponse* response=NULL;
+  FileToMigrate* response=NULL;
 
-  while(1){
+  
+  FileToMigrateRequest* fileToMigrate = dynamic_cast<FileToMigrateRequest*>(obj);
+  if (0 == fileToMigrate) {
+    // "Invalid Request" message
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 51, 0, NULL);
+    ErrorReport* errorReport=new ErrorReport();
+    errorReport->setErrorCode(EINVAL);
+    errorReport->setErrorMessage("invalid object");
+    return errorReport;
+  }
 
-    FileToMigrateRequest* fileToMigrate = dynamic_cast<FileToMigrateRequest*>(obj);
-    if (0 == fileToMigrate) {
-      // "Invalid Request" message
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 51, 0, NULL);
-      response->setErrorCode(-1);
-      response->setErrorMessage("invalid object");
-      return response;
-    }
-
-    try {
+ 
+  try {
       
-      response=m_dbSvc->fileToMigrate(fileToMigrate);
+    response=m_dbSvc->fileToMigrate(fileToMigrate);
 
-    } catch (castor::exception::Exception e) {
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("errorCode",sstrerror(e.code())),
-	 castor::dlf::Param("errorMessage",e.getMessage().str())
-	};
+  } catch (castor::exception::Exception e) {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("errorCode",sstrerror(e.code())),
+       castor::dlf::Param("errorMessage",e.getMessage().str())
+      };
 
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 59, 2, params);
-      response->setErrorCode(-1);
-      response->setErrorMessage("impossible to contact the db");
-    }
-      
-    if ( response == NULL ) {
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 55, 0, NULL);
-      // I don't have anything to migrate I send an EndTransferRequest
-      EndTransferRequest* endResponse = new EndTransferRequest();
-      return endResponse;
-    } 
-    try {
-      NsTapeGatewayHelper nsHelper;
-      nsHelper.checkFileToMigrate(response);
-    } catch (castor::exception::Exception e) {
-      try {
-	m_dbSvc->invalidateTapeCopy(response);
-      } catch (castor::exception::Exception ex){
-
-	// just log the error
-
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("errorCode",sstrerror(e.code())),
-	   castor::dlf::Param("errorMessage",e.getMessage().str())
-	  };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 59, 2, params);
     
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 49, 2, params);
-       
-	
-      }  
-      continue; // get another tapecopy
-    }
+    ErrorReport* errorReport=new ErrorReport();
+    errorReport->setErrorCode(e.code());
+    errorReport->setErrorMessage(e.getMessage().str());
+    return errorReport;
 
-    return response; // check went fine
 
   }
+      
+  if ( response == NULL ) {
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 55, 0, NULL);
+    // I don't have anything to migrate I send an NoMoreFiles
+
+    NoMoreFiles* noMore= new NoMoreFiles();
+    noMore->setTransactionId(fileToMigrate->transactionId());
+    return noMore;
+  } 
+ 
+  return response; // check went fine
 
 }
 
@@ -525,15 +487,18 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( cast
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 52, 0, NULL);
 	
 	castor::stager::Tape* tape=NULL;
-	EndTransferResponse* response = new EndTransferResponse();
 	
-	EndTransferRequest* endRequest = dynamic_cast<EndTransferRequest*>(obj);
+	
+	EndNotification* endRequest = dynamic_cast<EndNotification*>(obj);
 	if (0 == endRequest) {
 	  // "Invalid Request" message
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 36, 0, NULL);
-	  response->setErrorCode(-1);
-	  response->setErrorMessage("invalid object");
-	  return response;
+
+	  ErrorReport* errorReport=new ErrorReport();
+	  errorReport->setErrorCode(EINVAL);
+	  errorReport->setErrorMessage("invalid object");
+	  return errorReport;
+
 	}
 
 	try {
@@ -546,14 +511,9 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( cast
 	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
 	     castor::dlf::Param("errorMessage",e.getMessage().str())
 	    };
-	  response->setErrorCode(-1);
-	  response->setErrorMessage("dbError");
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 38, 2, params);
-	  if (tape) delete tape;
-	  tape=NULL;
     
 	}
-
 
 	// release busy tape
 
@@ -565,15 +525,12 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( cast
 	  
 	   } catch (castor::exception::Exception e) {
 	     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 67, 0, NULL);
-	     response->setErrorCode(e.code());
-	     response->setErrorMessage("cannot release the tape");
 	  }
 	}
 
-
-	// TODO error codes nightmare in rtcpcld_workerFinished  and rc = rtcpcld_updateTape(tape,NULL, 0,workerErrorCode,NULL );
+	NotificationAcknowledge* response = new NotificationAcknowledge();
+	response->setTransactionId(endRequest->transactionId());
 	
-
 	return  response;
 
 }

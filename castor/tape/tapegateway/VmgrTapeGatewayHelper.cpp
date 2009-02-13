@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.4 $ $Release$ 
- * $Date: 2009/02/09 10:31:36 $ $Author: gtaur $
+ * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.5 $ $Release$ 
+ * $Date: 2009/02/13 08:51:33 $ $Author: gtaur $
  *
  *
  *
@@ -28,6 +28,7 @@
 
 
 #include "castor/tape/tapegateway/VmgrTapeGatewayHelper.hpp"
+#include "castor/tape/tapegateway/TapeFileNsAttribute.hpp"
 #include "vmgr_api.h"
 
 #include <sys/types.h>
@@ -39,8 +40,7 @@
 #include <u64subr.h>
 
 #include "castor/stager/TapePool.hpp"
-#include "castor/tape/tapegateway/NsFileInformation.hpp"
-#include "castor/tape/tapegateway/TapeFileNsAttribute.hpp"
+
 
 castor::stager::Tape* castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(castor::stager::Stream* streamToResolve) throw (castor::exception::Exception){
 
@@ -312,7 +312,7 @@ void  castor::tape::tapegateway::VmgrTapeGatewayHelper::resetBusyTape(castor::st
 }
 
 
-void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::tape::tapegateway::FileMigratedResponse* file ) throw (castor::exception::Exception){
+void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::tape::tapegateway::FileMigratedNotification* file ) throw (castor::exception::Exception){
 
   int save_serrno=0;
 
@@ -326,7 +326,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::
 
   }
 
-  int side=file->nsFileInformation()->tapeFileNsAttribute()->side(); // supposed 1 segment
+  int side=file->tapeFileNsAttribute()->side(); // supposed 1 segment
 
   // get information from vmgr
 
@@ -335,7 +335,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::
 
   while(1){
     serrno=0;
-    int rc = vmgr_querytape(file->nsFileInformation()->tapeFileNsAttribute()->vid().c_str(),side,&vmgrTapeInfo,dgnBuffer);
+    int rc = vmgr_querytape(file->tapeFileNsAttribute()->vid().c_str(),side,&vmgrTapeInfo,dgnBuffer);
     save_serrno = serrno;
 
     if ( rc == 0 ) {
@@ -377,7 +377,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::
 
   // check if the fseq is not too big, in this case we mark it as error. 
 
- int fseq= file->nsFileInformation()->tapeFileNsAttribute()->fseq();
+ int fseq= file->fseq();
  int maxFseq =0;
 
    
@@ -394,7 +394,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::
  if (maxFseq <= 0 || fseq >= maxFseq ) { 
    // set as RDONLY
    flags = TAPE_RDONLY;
-   int rc = vmgr_updatetape(file->nsFileInformation()->tapeFileNsAttribute()->vid().c_str(), side, file->nsFileInformation()->fileSize(), 100, 0, flags ); 
+   int rc = vmgr_updatetape(file->tapeFileNsAttribute()->vid().c_str(), side, file->fileSize(), 100, 0, flags ); 
    if (rc<0) {
      castor::exception::Exception ex(serrno);
      ex.getMessage()
@@ -419,7 +419,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::
    if ( (flags & (TAPE_FULL|DISABLED|EXPORTED|TAPE_RDONLY|ARCHIVED)) == 0 ) 
      flags = TAPE_FULL;
    serrno=0;
-   int rc = vmgr_updatetape( file->nsFileInformation()->tapeFileNsAttribute()->vid().c_str(), side, file->nsFileInformation()->fileSize(), 100, 0, flags ); // no files written
+   int rc = vmgr_updatetape( file->tapeFileNsAttribute()->vid().c_str(), side, file->fileSize(), 100, 0, flags ); // no files written
    if (rc <0) {
      castor::exception::Exception ex(serrno);
      ex.getMessage()
@@ -439,7 +439,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::
  // File migrated correctly, update vmgr and continue to migrate from the tape
  
  serrno=0;
- int rc = vmgr_updatetape(file->nsFileInformation()->tapeFileNsAttribute()->vid().c_str(), side, file->nsFileInformation()->fileSize(),file->nsFileInformation()->tapeFileNsAttribute()->compression() , 1, flags ); // number files always one
+ int rc = vmgr_updatetape(file->tapeFileNsAttribute()->vid().c_str(), side, file->fileSize(),file->tapeFileNsAttribute()->compression() , 1, flags ); // number files always one
  if (rc <0) {
    castor::exception::Exception ex(serrno);
    ex.getMessage()
