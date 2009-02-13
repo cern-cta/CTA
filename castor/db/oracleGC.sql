@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.682 $ $Date: 2009/02/10 15:37:44 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.683 $ $Date: 2009/02/13 11:15:57 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -517,17 +517,15 @@ BEGIN
     CURSOR s IS '||sel||'
     ids "numList";
   BEGIN
-    OPEN s;
     LOOP
-      FETCH s BULK COLLECT INTO ids LIMIT 10000;
+      OPEN s;
+      FETCH s BULK COLLECT INTO ids LIMIT 100000;
       EXIT WHEN s%NOTFOUND;
       FORALL i IN ids.FIRST..ids.LAST
-        DELETE FROM Id2Type WHERE id = ids(i);
-      FORALL i IN ids.FIRST..ids.LAST
         DELETE FROM '||tab||' WHERE id = ids(i);
+      CLOSE s;
       COMMIT;
     END LOOP;
-    CLOSE s;
   END;';
 END;
 /
@@ -535,15 +533,9 @@ END;
 /* A generic method to delete requests of a given type */
 CREATE OR REPLACE Procedure bulkDeleteRequests(reqType IN VARCHAR) AS
 BEGIN
-  -- first the clients
-  bulkDelete('SELECT client FROM '|| reqType ||' R WHERE
-    NOT EXISTS (SELECT ''x'' FROM SubRequest WHERE request = R.id);',
-    'Client');
-  -- then the requests: they could be merged to make it more efficient
   bulkDelete('SELECT id FROM '|| reqType ||' R WHERE
     NOT EXISTS (SELECT ''x'' FROM SubRequest WHERE request = R.id);',
     reqType);
-  COMMIT;
 END;
 /
 
@@ -579,27 +571,25 @@ BEGIN
        AND lastModificationTime < getTime() - timeOut;
     ids "numList";
   BEGIN
-    OPEN t;
     LOOP
-      FETCH t BULK COLLECT INTO ids LIMIT 1000;
+      OPEN t;
+      FETCH t BULK COLLECT INTO ids LIMIT 10000;
       EXIT WHEN t%NOTFOUND;
       FOR i IN ids.FIRST..ids.LAST LOOP
         deleteCastorFile(ids(i));
       END LOOP;
+      CLOSE t;
       COMMIT;
     END LOOP;
-    CLOSE t;
-    OPEN s;
     LOOP
-      FETCH s BULK COLLECT INTO ids LIMIT 10000;
+      OPEN s;
+      FETCH s BULK COLLECT INTO ids LIMIT 100000;
       EXIT WHEN s%NOTFOUND;
       FORALL i IN ids.FIRST..ids.LAST
-        DELETE FROM Id2Type WHERE id = ids(i);
-      FORALL i IN ids.FIRST..ids.LAST
-        DELETE FROM SubRequest WHERE id = ids(i);
+        DELETE FROM SubRequest WHERE id = ids(i); 
+      CLOSE s;
       COMMIT;
     END LOOP;
-    CLOSE s;
   END;
 
   -- and then related Requests + Clients
@@ -672,24 +662,35 @@ END;
 
 /* Deal with old diskCopies in STAGEOUT */
 CREATE OR REPLACE PROCEDURE deleteOutOfDateStageOutDCs(timeOut IN NUMBER) AS
+  srId NUMBER;
 BEGIN
   -- Deal with old DiskCopies in STAGEOUT/WAITFS. The rule is to drop
   -- the ones with 0 fileSize and issue a putDone for the others
   FOR f IN (SELECT c.filesize, c.id, c.fileId, c.nsHost, d.fileSystem, d.id AS dcId, d.status AS dcStatus
-               FROM DiskCopy d, Castorfile c
-              WHERE c.id = d.castorFile
-                AND d.creationTime < getTime() - timeOut
-                AND d.status IN (5, 6, 11) -- WAITFS, STAGEOUT, WAITFS_SCHEDULING
-                AND NOT EXISTS (
-                  SELECT 'x'
-                    FROM SubRequest, Id2Type
-                   WHERE castorFile = c.id
-                     AND SubRequest.request = Id2Type.id
-                     AND status IN (0, 1, 2, 3, 5, 6, 13, 14) -- all active
-                     AND type NOT IN (37, 38))) LOOP -- ignore PrepareToPut, PrepareToUpdate
+              FROM DiskCopy d, Castorfile c
+             WHERE c.id = d.castorFile
+               AND d.creationTime < getTime() - timeOut
+               AND d.status IN (5, 6, 11) -- WAITFS, STAGEOUT, WAITFS_SCHEDULING
+               AND NOT EXISTS (
+                 SELECT 'x'
+                   FROM SubRequest, Id2Type
+                  WHERE castorFile = c.id
+                    AND SubRequest.request = Id2Type.id
+                    AND status IN (0, 1, 2, 3, 5, 6, 13, 14) -- all active
+                    AND type NOT IN (37, 38))) LOOP -- ignore PrepareToPut, PrepareToUpdate
     IF (0 = f.fileSize) OR (f.dcStatus <> 6) THEN
       -- here we invalidate the diskcopy and let the GC run
-      UPDATE DiskCopy SET status = 7 WHERE id = f.dcid;
+      UPDATE DiskCopy SET status = 7  -- INVALID
+       WHERE id = f.dcid;
+      -- and we also fail the correspondent prepareToPut/Update request if it exists
+      BEGIN
+        SELECT id INTO srId   -- there can be only one outstanding PrepareToPut/Update, if any
+          FROM SubRequest
+         WHERE status = 6 AND diskCopy = f.dcid;
+        archiveSubReq(srId, 9);  -- FAILED_FINISHED
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        NULL;
+      END;
       INSERT INTO CleanupJobLog VALUES (f.fileId, f.nsHost, 0);
     ELSE
       -- here we issue a putDone
@@ -700,20 +701,6 @@ BEGIN
       INSERT INTO CleanupJobLog VALUES (f.fileId, f.nsHost, 1);
     END IF;
   END LOOP;
-  COMMIT;
-END;
-/
-
-
-/* Deal with stuck recalls - this workaround should be dropped
-   after rtcpclientd is reviewed */
-CREATE OR REPLACE PROCEDURE restartStuckRecalls AS
-BEGIN
-  UPDATE Segment SET status = 0 WHERE status = 7 and tape IN
-    (SELECT id from Tape WHERE tpmode = 0 AND status IN (0, 6) AND id IN
-      (SELECT tape FROM Segment WHERE status = 7));
-  UPDATE Tape SET status = 1 WHERE tpmode = 0 AND status IN (0, 6) AND id IN
-    (SELECT tape FROM Segment WHERE status in (0, 7));
   COMMIT;
 END;
 /
@@ -755,10 +742,9 @@ END;
 BEGIN
   -- Remove database jobs before recreating them
   FOR j IN (SELECT job_name FROM user_scheduler_jobs
-             WHERE job_name IN ('HOUSEKEEPINGJOB',
-                                'CLEANUPJOB',
-                                'BULKCHECKFSBACKINPRODJOB',
-                                'RESTARTSTUCKRECALLSJOB'))
+             WHERE job_name IN ('HOUSEKEEPINGJOB', 
+                                'CLEANUPJOB', 
+                                'BULKCHECKFSBACKINPRODJOB'))
   LOOP
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
   END LOOP;
@@ -795,17 +781,6 @@ BEGIN
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
       ENABLED         => TRUE,
       COMMENTS        => 'Bulk operation to processing filesystem state changes');
-
-  -- Create a db job to be run every hour executing the restartStuckRecalls workaround procedure
-  DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'restartStuckRecallsJob',
-      JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN restartStuckRecalls(); END;',
-      JOB_CLASS       => 'CASTOR_JOB_CLASS',
-      START_DATE      => SYSDATE + 60/1440,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
-      ENABLED         => TRUE,
-      COMMENTS        => 'Workaround to restart stuck recalls');
 END;
 /
 
