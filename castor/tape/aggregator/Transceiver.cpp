@@ -30,12 +30,6 @@
 #include "castor/tape/aggregator/Transceiver.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
 #include "castor/tape/aggregator/Utils.hpp"
-#include "castor/tape/tapegateway/FileToMigrateRequest.hpp"
-#include "castor/tape/tapegateway/FileToMigrateResponse.hpp"
-#include "castor/tape/tapegateway/FileToRecallRequest.hpp"
-#include "castor/tape/tapegateway/FileToRecallResponse.hpp"
-#include "castor/tape/tapegateway/StartTransferRequest.hpp"
-#include "castor/tape/tapegateway/StartTransferResponse.hpp"
 #include "h/common.h"
 #include "h/rtcp.h"
 #include "h/rtcp_constants.h"
@@ -974,6 +968,7 @@ void castor::tape::aggregator::Transceiver::getVolumeInfoFromGateway(
   uint32_t &mode, char (&label)[CA_MAXLBLTYPLEN+1],
   char (&density)[CA_MAXDENLEN+1], int &errorCode, std::string &errorMsg)
   throw(castor::exception::Exception) {
+/*
 
   tapegateway::StartTransferRequest request;
 
@@ -1018,6 +1013,7 @@ void castor::tape::aggregator::Transceiver::getVolumeInfoFromGateway(
   Utils::copyString(density, response->density().c_str());
   errorCode = response->errorCode();
   errorMsg = response->errorMessage();
+*/
 }
 
 

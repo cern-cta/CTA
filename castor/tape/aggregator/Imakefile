@@ -32,36 +32,39 @@ DependsOnLibrary(..,castorclient)
 DependsOnLibrary(../db/cnv,castorcnvs)
 
 TAPEGATEWAY_MESSAGES_SRCS = \
-  ../tapegateway/ConvertCommandCode.cpp  \
-  ../tapegateway/FileMigratedResponse.cpp \
-  ../tapegateway/FileRecalledResponse.cpp \
+  ../tapegateway/BaseFileInfo.cpp \
+  ../tapegateway/EndNotification.cpp \
+  ../tapegateway/ErrorReport.cpp \
+  ../tapegateway/FileMigratedNotification.cpp \
+  ../tapegateway/FileRecalledNotification.cpp \
+  ../tapegateway/FileToMigrate.cpp \
   ../tapegateway/FileToMigrateRequest.cpp \
-  ../tapegateway/FileToMigrateResponse.cpp \
+  ../tapegateway/FileToRecall.cpp \
   ../tapegateway/FileToRecallRequest.cpp \
-  ../tapegateway/FileToRecallResponse.cpp \
-  ../tapegateway/NsFileInformation.cpp \
+  ../tapegateway/NoMoreFiles.cpp \
+  ../tapegateway/NotificationAcknowledge.cpp \
   ../tapegateway/PositionCommandCode.cpp \
-  ../tapegateway/RecordFormatCode.cpp \
-  ../tapegateway/StartTransferRequest.cpp \
-  ../tapegateway/StartTransferResponse.cpp \
+  ../tapegateway/TapeFileNsAttribute.cpp \
   ../tapegateway/TapeRequestState.cpp \
   ../tapegateway/TapeRequestStateCode.cpp \
-  ../tapegateway/EndTransferRequest.cpp \
-  ../tapegateway/EndTransferResponse.cpp \
-  ../tapegateway/FileUpdateResponse.cpp \
-  ../tapegateway/TapeFileNsAttribute.cpp
+  ../tapegateway/Volume.cpp \
+  ../tapegateway/VolumeRequest.cpp
 
 TAPEGATEWAY_IO_SRCS = \
-  ../../io/StreamFileMigratedResponseCnv.cpp \
-  ../../io/StreamFileRecalledResponseCnv.cpp \
+  ../../io/StreamBaseFileInfoCnv.cpp \
+  ../../io/StreamEndNotificationCnv.cpp \
+  ../../io/StreamErrorReportCnv.cpp \
+  ../../io/StreamFileMigratedNotificationCnv.cpp \
+  ../../io/StreamFileRecalledNotificationCnv.cpp \
+  ../../io/StreamFileToMigrateCnv.cpp \
   ../../io/StreamFileToMigrateRequestCnv.cpp \
-  ../../io/StreamFileToMigrateResponseCnv.cpp \
+  ../../io/StreamFileToRecallCnv.cpp \
   ../../io/StreamFileToRecallRequestCnv.cpp \
-  ../../io/StreamFileToRecallResponseCnv.cpp \
-  ../../io/StreamNsFileInformationCnv.cpp \
+  ../../io/StreamNoMoreFilesCnv.cpp \
+  ../../io/StreamNotificationAcknowledgeCnv.cpp \
   ../../io/StreamTapeFileNsAttributeCnv.cpp \
-  ../../io/StreamStartTransferRequestCnv.cpp \
-  ../../io/StreamStartTransferResponseCnv.cpp
+  ../../io/StreamVolumeCnv.cpp \
+  ../../io/StreamVolumeRequestCnv.cpp
 
 AGGREGATORBIN_SRCS = \
   AggregatorDlfMessageStrings.cpp \
