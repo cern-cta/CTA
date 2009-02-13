@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.21 $ $Release$ $Date: 2009/01/30 15:15:23 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.22 $ $Release$ $Date: 2009/02/13 13:40:00 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -15,8 +15,8 @@ UPDATE CastorVersion SET schemaVersion = '2_1_8_0';
 CREATE SEQUENCE ids_seq CACHE 300;
 
 /* SQL statements for object types */
-CREATE TABLE Id2Type (id INTEGER PRIMARY KEY, type NUMBER);
-CREATE INDEX I_Id2Type_typeId on Id2Type (type, id);
+CREATE TABLE Id2Type (id INTEGER CONSTRAINT PK_Id2Type_Id PRIMARY KEY, type NUMBER);
+CREATE INDEX I_Id2Type_TypeId ON Id2Type (type, id);
 
 /* Get current time as a time_t. Not that easy in ORACLE */
 CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
@@ -48,7 +48,10 @@ CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 
 /* Define a table for some configuration key-value pairs and populate it */
 CREATE TABLE RepackConfig
-  (class VARCHAR2(2048) NOT NULL, key VARCHAR2(2048) NOT NULL, value VARCHAR2(2048) NOT NULL, description VARCHAR2(2048));
+  (class VARCHAR2(2048) CONSTRAINT NN_RepackConfig_Class NOT NULL, 
+   key VARCHAR2(2048) CONSTRAINT NN_RepackConfig_Key NOT NULL, 
+   value VARCHAR2(2048) CONSTRAINT NN_RepackConfig_Value NOT NULL, 
+   description VARCHAR2(2048));
 
 INSERT INTO RepackConfig 
   VALUES ('Repack', 'CleaningTimeout', '72', 'Timeout to clean archived repacksubrequest');
