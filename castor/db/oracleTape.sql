@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.711 $ $Date: 2009/02/09 15:33:32 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.712 $ $Date: 2009/02/13 13:33:33 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1662,7 +1662,7 @@ END;
 /* SQL Fuction fileToMigrate */
 
 create or replace
-PROCEDURE fileToMigrate (transactionId IN NUMBER, outputFile OUT castor.FileToMigrateCore_cur)  AS
+PROCEDURE fileToMigrate (transactionId IN NUMBER, outVid OUT VARCHAR2, outputFile OUT castor.FileToMigrateCore_cur)  AS
 strId NUMBER;
 ds VARCHAR2(2048);
 mp VARCHAR2(2048);
@@ -1674,19 +1674,23 @@ nsHost VARCHAR2(2048);
 fileSize  INTEGER;
 tcId  INTEGER;
 lastTime NUMBER;
-copyno NUMBER;
+tapeId NUMBER;
+knownName VARCHAR2(2048);
 BEGIN 
-   SELECT id INTO strId FROM Stream WHERE id in (select streammigration from taperequeststate where vdqmvolreqid=transactionId);
-   besttapecopyforstream(strId,ds,mp,path,dcid,cfId,fileid,nshost,filesize,tcid,1,lastTime);
-   UPDATE TapeCopy SET status=3 WHERE id=tcId RETURNING copynb INTO copyno;
+   SELECT id, tape INTO strId, tapeId FROM Stream WHERE id in (select streammigration from taperequeststate where vdqmvolreqid=transactionId);
+   SELECT vid INTO outVid FROM tape WHERE id=tapeId;
+   besttapecopyforstream(strId,ds,mp,path,dcid,cfId,fileid,nshost,filesize,tcid,lastTime);
+   UPDATE TapeCopy SET status=3 WHERE id=tcId RETURNING castorfile INTO cfId;
+   SELECT lastknownfilename into knownName from castorfile where id=cfId;
    DELETE FROM Stream2TapeCopy WHERE child=tcId;   
    OPEN outputFile FOR 
-    SELECT fileId,nshost,copyno,ds,mp,path,lastTime FROM DUAL;
+    SELECT fileId,nshost,lastTime,ds,mp,path,knownName, fseq FROM segment where copy=tcId and tape = tapeid;
    UPDATE TapeCopy SET status=3 WHERE id=tcId;
    DELETE FROM Stream2TapeCopy WHERE child=tcId;
 	 COMMIT;
 END;
 /
+
 
 /* SQL Function fileMigrationUpdate */
 
@@ -1731,23 +1735,25 @@ END;
 
 /* SQL Function fileToRecall */
 
-create or replace
-PROCEDURE fileToRecall (transactionId IN NUMBER, outputFile OUT castor.FileToRecallCore_Cur) AS
+create or replace PROCEDURE fileToRecall (transactionId IN NUMBER, vidOut OUT VARCHAR2, outputFile OUT castor.FileToRecallCore_Cur) AS
 ds VARCHAR2(2048);
 mp VARCHAR2(2048);
 path VARCHAR2(2048); 
 segId NUMBER;
 dcId NUMBER;
+tapeId NUMBER;
 BEGIN 
-  SELECT id INTO segId FROM Segment WHERE  tape IN (SELECT taperecall FROM taperequeststate WHERE vdqmVolReqId=transactionid)  AND status=0 AND rownum<2 order by fseq FOR UPDATE; 
+  SELECT id, vid INTO tapeId, vidOut FROM tape WHERE id IN  (SELECT taperecall FROM taperequeststate WHERE vdqmVolReqId=transactionid);
+  SELECT id INTO segId FROM Segment WHERE  tape = tapeId  AND status=0 AND rownum<2 order by fseq FOR UPDATE; 
   bestFileSystemForSegment(segId,ds,mp,path,dcId);
   UPDATE Segment set status=7 WHERE id=segId;
   OPEN outputFile FOR 
-   SELECT castorfile.fileid, castorfile.nshost, tapecopy.copyNb, ds, mp, path FROM tapecopy,castorfile,segment WHERE segment.id=segId AND segment.copy=tapecopy.copynb 
+   SELECT castorfile.fileid, castorfile.nshost, ds, mp, path FROM tapecopy,castorfile,segment WHERE segment.id=segId AND segment.copy=tapecopy.copynb 
          AND castorfile.id=tapecopy.castorfile;
   COMMIT; 
 END;
 /
+
 
 /* SQL Function fileRecallUpdate */
 

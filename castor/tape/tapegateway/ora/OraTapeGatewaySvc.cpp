@@ -85,13 +85,13 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getTapesT
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_updateCheckedTapesStatementString="BEGIN updateCheckedTapes(:1);END;";
   
 /// SQL statement for function fileToMigrate
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_fileToMigrateStatementString="BEGIN fileToMigrate(:1,:2);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_fileToMigrateStatementString="BEGIN fileToMigrate(:1,:2,:3);END;";
   
 /// SQL statement for function fileMigrationUpdate
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_fileMigrationUpdateStatementString="BEGIN fileMigrationUpdate(:1,:2,:3,:4,:5,:6);END;";
 
 /// SQL statement for function fileToRecall
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_fileToRecallStatementString="BEGIN fileToRecall(:1,:2);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_fileToRecallStatementString="BEGIN fileToRecall(:1,:2,:3);END;";
 
 /// SQL statement for function fileRecallUpdate
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_fileRecallUpdateStatementString="BEGIN fileRecallUpdate(:1,:2,:3,:4,:5,:6,:7,:8);END;";
@@ -795,13 +795,18 @@ castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTap
 	m_fileToMigrateStatement =
 	  createStatement(s_fileToMigrateStatementString);
 	m_fileToMigrateStatement->registerOutParam
-	  (2, oracle::occi::OCCICURSOR);
+	  (2, oracle::occi::OCCISTRING);
+	m_fileToMigrateStatement->registerOutParam
+	  (3, oracle::occi::OCCICURSOR);
       }
 
       m_fileToMigrateStatement->setDouble(1,(double)req->transactionId());
       m_fileToMigrateStatement->executeUpdate();
+
+      std::string vid=m_fileToMigrateStatement->getString(2);
+
       oracle::occi::ResultSet *rs =
-	m_fileToMigrateStatement->getCursor(2);
+	m_fileToMigrateStatement->getCursor(3);
 
       // Run through the cursor 
       
@@ -815,17 +820,15 @@ castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTap
       
 	result->setFileid((u_signed64)rs->getDouble(1));
 	result->setNshost(rs->getString(2));
-	// copy number ->setCopyNo(rs->getInt(3));
-	result->setLastModificationTime((u_signed64)rs->getDouble(4));
-	diskserver=rs->getString(5);
-	mountpoint=rs->getString(6);
-	result->setPath(diskserver.append(mountpoint).append(rs->getString(7))); 
-	result->setLastKnownFileName(rs->getString(8)); 
+	result->setLastModificationTime((u_signed64)rs->getDouble(3));
+	diskserver=rs->getString(4);
+	mountpoint=rs->getString(5);
+	result->setPath(diskserver.append(mountpoint).append(rs->getString(6))); 
+	result->setLastKnownFileName(rs->getString(7));
+	result->setFseq(rs->getInt(8));
+
 	result->setTransactionId(req->transactionId());
 	result->setPositionCommandCode(TPPOSIT_FSEQ);				   
-	result->setFseq(rs->getInt(9));
-	std::string vid=rs->getString(10);
-	
 
 	try {
 	  NsTapeGatewayHelper nsHelper;
@@ -973,9 +976,10 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
       if (0 == m_fileToRecallStatement) {
 	m_fileToRecallStatement =
 	  createStatement(s_fileToRecallStatementString);
-
 	m_fileToRecallStatement->registerOutParam
-	  (2, oracle::occi::OCCICURSOR);
+	  (2, oracle::occi::OCCISTRING);
+	m_fileToRecallStatement->registerOutParam
+	  (3, oracle::occi::OCCICURSOR);
       }
 
       m_fileToRecallStatement->setDouble(1,(double)req->transactionId());
@@ -985,8 +989,10 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
       m_fileToRecallStatement->executeUpdate();
 
 
+      std::string vid= m_fileToRecallStatement->getString(2);
+
       oracle::occi::ResultSet *rs =
-	m_fileToRecallStatement->getCursor(2);
+	m_fileToRecallStatement->getCursor(3);
 
       // Run through the cursor 
 
@@ -994,15 +1000,15 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
 
       // one at the moment
 
+
       if  (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
 
 	result= new  castor::tape::tapegateway::FileToRecall();
 	result->setFileid((u_signed64)rs->getDouble(1));
 	result->setNshost(rs->getString(2));
-	std::string vid = rs->getString(3);
-	diskserver=rs->getString(4);
-	mountpoint=rs->getString(5);
-	result->setPath(diskserver.append(mountpoint).append(rs->getString(6)));
+	diskserver=rs->getString(3);
+	mountpoint=rs->getString(4);
+	result->setPath(diskserver.append(mountpoint).append(rs->getString(5)));
 	result->setTransactionId(req->transactionId());
 	result->setPositionCommandCode(TPPOSIT_BLKID);
 

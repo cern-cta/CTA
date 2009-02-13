@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2009/02/13 08:51:33 $ $Author: gtaur $
+ * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/02/13 13:33:34 $ $Author: gtaur $
  *
  * Implementation of the ITapeGatewaySvc for Oracle
  *
@@ -200,6 +200,8 @@ namespace castor {
 
 	virtual castor::stager::Tape*  updateDbEndTape(castor::tape::tapegateway::EndNotification* endRequest) throw (castor::exception::Exception); 
 
+	
+      private:
 	
 	/*
 	 * Delete a segment which is not anymore in the nameserver 

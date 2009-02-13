@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeGatewaySvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2009/02/13 08:51:32 $ $Author: gtaur $
+ * @(#)$RCSfile: ITapeGatewaySvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/02/13 13:33:33 $ $Author: gtaur $
  *
  * This class provides methods related to tape handling
  *
@@ -185,6 +185,7 @@ namespace castor {
 
 	virtual castor::stager::Tape* updateDbEndTape(castor::tape::tapegateway::EndNotification* endRequest) throw (castor::exception::Exception)=0; 
 
+      private:
 	/*
 	 * Delete a segment which is not anymore in the nameserver 
 	 */
