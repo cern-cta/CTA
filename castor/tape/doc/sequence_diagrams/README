@@ -13,27 +13,21 @@ How to generate sequence diagrams from the source in this directory
 
    ln -s UMLGraph-5.2/src/sequence.pic sequence.pic
 
-3. Run pic2plot to generate the sequence diagrams:
+3. Run pic2plot followed by gv to generate and display the sequence diagrams
+   respectively:
 
-   pic2plot -T ps tpread.pic                    > tpread.ps
-   pic2plot -T ps tpwrite.pic                   > tpwrite.ps
-   pic2plot -T ps stager_recall.pic             > stager_recall.ps
-   pic2plot -T ps stager_migration.pic          > stager_migration.ps
-   pic2plot -T ps aggregator.pic                > aggregator.ps
-   pic2plot -T ps gateway_aggregator_recall.pic > gateway_aggregator_recall.ps
-
-4. Run gv to view the sequence diagrams:
-
-   gv tpread.ps
-   gv tpwrite.ps
-   gv stager_recall.ps
-   gv stager_migration.ps
-   gv aggregator.ps
-   gv gateway_aggregator_recall.ps
+   X=tpread                      ; pic2plot -T ps $X.pic > $X.ps; gv $X.ps
+   X=tpwrite                     ; pic2plot -T ps $X.pic > $X.ps; gv $X.ps
+   X=stager_recall               ; pic2plot -T ps $X.pic > $X.ps; gv $X.ps
+   X=stager_migration            ; pic2plot -T ps $X.pic > $X.ps; gv $X.ps
+   X=stager_migration_avoid_mount; pic2plot -T ps $X.pic > $X.ps; gv $X.ps
+   X=aggregator                  ; pic2plot -T ps $X.pic > $X.ps; gv $X.ps
+   X=gateway_aggregator_recall   ; pic2plot -T ps $X.pic > $X.ps; gv $X.ps
 
 
 GNU man page for pic2plot
 =========================================
+
 http://www.gnu.org/software/plotutils/manual/html_node/plotutils_21.html
 
 
@@ -49,7 +43,8 @@ Commandline to print on default printer
 a2ps -C --column 1  stager_migration.ps
 
 
-Commandline to print the .ps file to a .pdf
+Commandline to conver a .ps file to a .pdf
 ==========================================
 
 ps2pdf stager_migration.ps stager_migration.pdf
+
