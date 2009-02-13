@@ -144,26 +144,6 @@ namespace aggregator {
       throw(castor::exception::Exception);
 
     /**
-     * Exchanges the request and volume information between the RTCPD and the
-     * tape gateway by carrying out the* following steps in order:
-     * <ol>
-     * <li> Get request information from RTCPD.
-     * <li> Give request information to tape gateway and get volume information
-     * in return.
-     * <li> Give volume information to RTCPD.
-     * </ol>
-     *
-     * @param cuuid The ccuid to be used for logging.
-     * @param jobRequest The job request message received from the VDQM.
-     * @param rtcpdInitialSocketFd The socket file descriptor of initial RTCPD
-     * connection.
-     * @param mode Out parameter: The tape access mode.
-     */
-    void exchangeRequestAndVolumeInfo(const Cuuid_t &cuuid,
-      const RcpJobRqstMsgBody &vdqmJobRequest, const int rtcpdInitialSocketFd,
-      uint32_t &mode) throw(castor::exception::Exception);
-
-    /**
      * Coordinates the remote copy operations by sending and recieving the
      * necessary messages.
      *
