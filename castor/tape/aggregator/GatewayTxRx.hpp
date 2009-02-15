@@ -44,19 +44,38 @@ class GatewayTxRx {
 public:
 
   /**
+   * Gets a the volume to be mounted from the tape tape gateway by sending and
+   * receiving the necessary messages.
+   *
+   * @param gatewayHost The tape gateway host name.
+   * @param gatewayPort The tape gateway port number.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
+   * @param vid Out parameter: The volume ID returned by the tape gateway.
+   * @param mode Out parameter: The access mode returned by the tape gateway.
+   * @param label Out parameter: The volume label returned by the tape gateway.
+   * @param density Out parameter: The volume density returned by the tape
+   * @return True if there is a volume to mount.
+   */
+  static bool getVolumeFromGateway(const std::string gatewayHost,
+    const unsigned short gatewayPort, const uint32_t volReqId,
+    const char *const unit, char (&vid)[CA_MAXVIDLEN+1], uint32_t &mode,
+    char (&label)[CA_MAXLBLTYPLEN+1], char (&density)[CA_MAXDENLEN+1])
+    throw(castor::exception::Exception);
+
+
+  /**
    * Gets a file to migrate from the tape tape gateway by sending and receiving
    * the necessary messages.
    *
    * @param gatewayHost The tape gateway host name.
    * @param gatewayPort The tape gateway port number.
    * @param transactionId The transaction ID to be sent to the tape gateway.
-   * the tape gateway which should match the value sent.
    * @param filePath Out parameter: The path of the disk file.
    * @param recordFormat Out parameter: The record format.
    * @param nsHost Out parameter: The name server host.
    * @param fileId Out parmeter: The CASTOR file ID.
    * @param tapeFileSeq Out parameter: The tape file sequence number.
-   * @return True if there is file to migrate.
+   * @return True if there is a file to migrate.
    */
   static bool getFileToMigrateFromGateway(const std::string gatewayHost,
     const unsigned short gatewayPort, const uint32_t transactionId,

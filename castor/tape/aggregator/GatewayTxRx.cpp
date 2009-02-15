@@ -35,6 +35,21 @@
 
 
 //-----------------------------------------------------------------------------
+// getVolumeFromGateway
+//-----------------------------------------------------------------------------
+bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
+  const std::string gatewayHost, const unsigned short gatewayPort,
+  const uint32_t volReqId, const char *const unit, char (&vid)[CA_MAXVIDLEN+1],
+  uint32_t &mode, char (&label)[CA_MAXLBLTYPLEN+1],
+  char (&density)[CA_MAXDENLEN+1]) throw(castor::exception::Exception) {
+
+  bool thereIsAVolumeToMount = false;
+
+  return thereIsAVolumeToMount;
+}
+
+
+//-----------------------------------------------------------------------------
 // getFileToMigrateFromGateway
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
@@ -42,6 +57,8 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
   const uint32_t transactionId, char (&filePath)[CA_MAXPATHLEN+1],
   char (&recordFormat)[CA_MAXRECFMLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN],
   uint64_t &fileId, uint32_t &tapeFileSeq) throw(castor::exception::Exception) {
+
+  bool thereIsAFileToMigrate = false;
 
   // Prepare the request
   tapegateway::FileToMigrateRequest request;
@@ -107,8 +124,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
       throw ex;
     }
 
-    // There is a file to migrate
-    return true;
+    thereIsAFileToMigrate = true;
 
   case OBJ_NoMoreFiles:
     // Copy the reply information
@@ -136,9 +152,6 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
 
       throw ex;
     }
-
-    // There are no more files to migrate
-    return false;
 
   case OBJ_ErrorReport:
     {
@@ -192,4 +205,6 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
       throw ex;
     }
   }
+
+  return thereIsAFileToMigrate;
 }
