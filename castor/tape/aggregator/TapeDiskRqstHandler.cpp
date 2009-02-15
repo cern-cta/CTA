@@ -30,7 +30,7 @@
 #include "castor/tape/aggregator/RtcpTapeRqstErrMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpTapeRqstMsgBody.hpp"
 #include "castor/tape/aggregator/TapeDiskRqstHandler.hpp"
-#include "castor/tape/aggregator/Transceiver.hpp"
+#include "castor/tape/aggregator/RtcpTxRx.hpp"
 #include "castor/tape/aggregator/Utils.hpp"
 #include "h/rtcp_constants.h"
 
@@ -61,7 +61,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::processRequest(
 
   MessageHeader header;
 
-  Transceiver::receiveRtcpMsgHeader(socketFd, RTCPDNETRWTIMEOUT, header);
+  RtcpTxRx::receiveRtcpMsgHeader(socketFd, RTCPDNETRWTIMEOUT, header);
 
   // Find the message type's corresponding handler
   MsgBodyHandlerMap::iterator itor = m_handlers.find(header.reqType);
@@ -89,7 +89,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
 
   RtcpFileRqstMsgBody body;
 
-  Transceiver::receiveRtcpFileRqstBody(socketFd, RTCPDNETRWTIMEOUT, header,
+  RtcpTxRx::receiveRtcpFileRqstBody(socketFd, RTCPDNETRWTIMEOUT, header,
     body);
 
   switch(body.procStatus) {
@@ -97,7 +97,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
     {
       // Give file information to RTCPD
       try {
-        Transceiver::giveFileListToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
+        RtcpTxRx::giveFileListToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
           volReqId,
           "lxc2disk07:/tmp/murrayc3/test_04_02_09", body.tapePath, 18,
           false);
@@ -123,7 +123,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
       ackMsg.magic   = RTCOPY_MAGIC;
       ackMsg.reqType = RTCP_FILE_REQ;
       ackMsg.status  = 0;
-      Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+      RtcpTxRx::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
     }
     break;
   case RTCP_POSITIONED:
@@ -139,7 +139,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
       ackMsg.magic   = RTCOPY_MAGIC;
       ackMsg.reqType = RTCP_FILE_REQ;
       ackMsg.status  = 0;
-      Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+      RtcpTxRx::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
     }
     break;
   case RTCP_FINISHED:
@@ -155,7 +155,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
       ackMsg.magic   = RTCOPY_MAGIC;
       ackMsg.reqType = RTCP_FILE_REQ;
       ackMsg.status  = 0;
-      Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+      RtcpTxRx::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
     }
     break;
   default:
@@ -185,14 +185,14 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileErrReqHandler(
 
   RtcpFileRqstErrMsgBody body;
 
-  Transceiver::receiveRtcpFileRqstErrBody(socketFd, RTCPDNETRWTIMEOUT,
+  RtcpTxRx::receiveRtcpFileRqstErrBody(socketFd, RTCPDNETRWTIMEOUT,
     header, body);
 
   RtcpAcknowledgeMsg ackMsg;
   ackMsg.magic   = RTCOPY_MAGIC;
   ackMsg.reqType = RTCP_FILEERR_REQ;
   ackMsg.status  = 0;
-  Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+  RtcpTxRx::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
 
   castor::exception::Exception ex(body.err.errorCode);
 
@@ -212,7 +212,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeReqHandler(
 
   RtcpTapeRqstMsgBody body;
 
-  Transceiver::receiveRtcpTapeRqstBody(socketFd, RTCPDNETRWTIMEOUT,
+  RtcpTxRx::receiveRtcpTapeRqstBody(socketFd, RTCPDNETRWTIMEOUT,
     header, body);
 
   castor::dlf::Param params[] = {
@@ -225,7 +225,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeReqHandler(
   ackMsg.magic   = RTCOPY_MAGIC;
   ackMsg.reqType = RTCP_TAPE_REQ;
   ackMsg.status  = 0;
-  Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+  RtcpTxRx::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
 
   // There is a possibility of more work
   return true;
@@ -241,14 +241,14 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeErrReqHandler(
 
   RtcpTapeRqstErrMsgBody body;
 
-  Transceiver::receiveRtcpTapeRqstErrBody(socketFd, RTCPDNETRWTIMEOUT,
+  RtcpTxRx::receiveRtcpTapeRqstErrBody(socketFd, RTCPDNETRWTIMEOUT,
     header, body);
 
   RtcpAcknowledgeMsg ackMsg;
   ackMsg.magic   = RTCOPY_MAGIC;
   ackMsg.reqType = RTCP_TAPEERR_REQ;
   ackMsg.status  = 0;
-  Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+  RtcpTxRx::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
 
   castor::exception::Exception ex(body.err.errorCode);
 
@@ -275,7 +275,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpEndOfReqHandler(
   ackMsg.magic   = RTCOPY_MAGIC;
   ackMsg.reqType = RTCP_ENDOF_REQ;
   ackMsg.status  = 0;
-  Transceiver::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+  RtcpTxRx::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
 
   // There is no more work
   return false;

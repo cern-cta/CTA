@@ -37,6 +37,7 @@ namespace aggregator {
 const size_t HDRBUFSIZ            = 3 * sizeof(uint32_t);
 const size_t HOSTNAMEBUFLEN       = 256;
 const int    LISTENBACKLOG        = 2;
+const int    MAXINITMIGFILES      = 2;
 const size_t MSGBUFSIZ            = 1024;
 const int    RTCPDNETRWTIMEOUT    = 5;
 const int    RTCPDCALLBACKTIMEOUT = 5;

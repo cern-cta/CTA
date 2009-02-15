@@ -70,12 +70,13 @@ AGGREGATORBIN_SRCS = \
   AggregatorDlfMessageStrings.cpp \
   AggregatorDaemon.cpp \
   AggregatorMain.cpp \
+  GatewayTxRx.cpp \
   Marshaller.cpp \
   Net.cpp \
   RcpJobSubmitter.cpp \
+  RtcpTxRx.cpp \
   SmartFd.cpp \
   TapeDiskRqstHandler.cpp \
-  Transceiver.cpp \
   Utils.cpp \
   VdqmRequestHandlerThread.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \

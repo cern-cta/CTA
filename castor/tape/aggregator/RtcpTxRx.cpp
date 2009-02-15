@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/aggregator/Transceiver.cpp
+ *                castor/tape/aggregator/RtcpTxRx.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,14 +22,19 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
+#include "castor/Constants.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/Marshaller.hpp"
 #include "castor/tape/aggregator/Net.hpp"
-#include "castor/tape/aggregator/Transceiver.hpp"
+#include "castor/tape/aggregator/RtcpTxRx.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
 #include "castor/tape/aggregator/Utils.hpp"
+#include "castor/tape/tapegateway/ErrorReport.hpp"
+#include "castor/tape/tapegateway/FileToMigrate.hpp"
+#include "castor/tape/tapegateway/FileToMigrateRequest.hpp"
+#include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "h/common.h"
 #include "h/rtcp.h"
 #include "h/rtcp_constants.h"
@@ -42,7 +47,7 @@
 //-----------------------------------------------------------------------------
 // getRequestInfoFromRtcpd
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::getRequestInfoFromRtcpd(
+void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
   const int socketFd, const int netReadWriteTimeout,
   RtcpTapeRqstErrMsgBody &reply) throw(castor::exception::Exception) {
 
@@ -134,7 +139,7 @@ void castor::tape::aggregator::Transceiver::getRequestInfoFromRtcpd(
 //-----------------------------------------------------------------------------
 // giveVolumeInfoToRtcpd
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::giveVolumeInfoToRtcpd(
+void castor::tape::aggregator::RtcpTxRx::giveVolumeInfoToRtcpd(
   const int socketFd, const int netReadWriteTimeout,
   RtcpTapeRqstErrMsgBody &request, RtcpTapeRqstErrMsgBody &reply)
   throw(castor::exception::Exception) {
@@ -196,7 +201,7 @@ void castor::tape::aggregator::Transceiver::giveVolumeInfoToRtcpd(
 //-----------------------------------------------------------------------------
 // giveFileInfoToRtcpd
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::giveFileInfoToRtcpd(
+void castor::tape::aggregator::RtcpTxRx::giveFileInfoToRtcpd(
   const int socketFd, const int netReadWriteTimeout,
   RtcpFileRqstErrMsgBody &request, RtcpFileRqstErrMsgBody &reply)
   throw(castor::exception::Exception) {
@@ -258,7 +263,7 @@ void castor::tape::aggregator::Transceiver::giveFileInfoToRtcpd(
 //-----------------------------------------------------------------------------
 // receiveRtcpAcknowledge
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::receiveRtcpAcknowledge(
+void castor::tape::aggregator::RtcpTxRx::receiveRtcpAcknowledge(
   const int socketFd, const int netReadWriteTimeout,
   RtcpAcknowledgeMsg &message) throw(castor::exception::Exception) {
 
@@ -298,7 +303,7 @@ void castor::tape::aggregator::Transceiver::receiveRtcpAcknowledge(
 //-----------------------------------------------------------------------------
 // sendRtcpAcknowledge
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::sendRtcpAcknowledge(
+void castor::tape::aggregator::RtcpTxRx::sendRtcpAcknowledge(
   const int socketFd, const int netReadWriteTimeout,
   const RtcpAcknowledgeMsg &message) throw(castor::exception::Exception) {
 
@@ -334,7 +339,7 @@ void castor::tape::aggregator::Transceiver::sendRtcpAcknowledge(
 //-----------------------------------------------------------------------------
 // pingRtcpd
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::pingRtcpd(
+void castor::tape::aggregator::RtcpTxRx::pingRtcpd(
   const int socketFd, const int netReadWriteTimeout)
   throw(castor::exception::Exception) {
 
@@ -376,7 +381,7 @@ void castor::tape::aggregator::Transceiver::pingRtcpd(
 //-----------------------------------------------------------------------------
 // signalNoMoreRequestsToRtcpd
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::signalNoMoreRequestsToRtcpd(
+void castor::tape::aggregator::RtcpTxRx::signalNoMoreRequestsToRtcpd(
   const int socketFd, const int netReadWriteTimeout)
   throw(castor::exception::Exception) {
 
@@ -436,7 +441,7 @@ void castor::tape::aggregator::Transceiver::signalNoMoreRequestsToRtcpd(
 //-----------------------------------------------------------------------------
 // receiveRcpJobRqst
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::receiveRcpJobRqst(
+void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(
   const int socketFd, const int netReadWriteTimeout,
   RcpJobRqstMsgBody &request) throw(castor::exception::Exception) {
 
@@ -538,7 +543,7 @@ void castor::tape::aggregator::Transceiver::receiveRcpJobRqst(
 //-----------------------------------------------------------------------------
 // giveRequestForMoreWorkToRtcpd
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::giveRequestForMoreWorkToRtcpd(
+void castor::tape::aggregator::RtcpTxRx::giveRequestForMoreWorkToRtcpd(
   const int socketFd, const int netReadWriteTimeout, const uint32_t volReqId)
   throw(castor::exception::Exception) {
 
@@ -579,7 +584,7 @@ void castor::tape::aggregator::Transceiver::giveRequestForMoreWorkToRtcpd(
 //-----------------------------------------------------------------------------
 // giveFileListToRtcpd
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::giveFileListToRtcpd(
+void castor::tape::aggregator::RtcpTxRx::giveFileListToRtcpd(
   const int socketFd, const int netReadWriteTimeout, const uint32_t volReqId,
   const char *const filePath, const char *const tapePath, const uint32_t umask,
   const bool requestMoreWork) throw(castor::exception::Exception) {
@@ -656,7 +661,7 @@ void castor::tape::aggregator::Transceiver::giveFileListToRtcpd(
 //-----------------------------------------------------------------------------
 // receiveRtcpMsgHeader
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::receiveRtcpMsgHeader(
+void castor::tape::aggregator::RtcpTxRx::receiveRtcpMsgHeader(
   const int socketFd, const int netReadWriteTimeout,
   MessageHeader &header) throw(castor::exception::Exception) {
 
@@ -694,7 +699,7 @@ void castor::tape::aggregator::Transceiver::receiveRtcpMsgHeader(
 //-----------------------------------------------------------------------------
 // receiveRtcpFileRqstErrBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::receiveRtcpFileRqstErrBody(
+void castor::tape::aggregator::RtcpTxRx::receiveRtcpFileRqstErrBody(
   const int socketFd, const int netReadWriteTimeout,
   const MessageHeader &header, RtcpFileRqstErrMsgBody &body)
   throw(castor::exception::Exception) {
@@ -750,7 +755,7 @@ void castor::tape::aggregator::Transceiver::receiveRtcpFileRqstErrBody(
 //-----------------------------------------------------------------------------
 // receiveRtcpFileRqstBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::receiveRtcpFileRqstBody(
+void castor::tape::aggregator::RtcpTxRx::receiveRtcpFileRqstBody(
   const int socketFd, const int netReadWriteTimeout,
   const MessageHeader &header, RtcpFileRqstMsgBody &body)
   throw(castor::exception::Exception) {
@@ -806,7 +811,7 @@ void castor::tape::aggregator::Transceiver::receiveRtcpFileRqstBody(
 //-----------------------------------------------------------------------------
 // receiveRtcpTapeRqstErrBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::receiveRtcpTapeRqstErrBody(
+void castor::tape::aggregator::RtcpTxRx::receiveRtcpTapeRqstErrBody(
   const int socketFd, const int netReadWriteTimeout,
   const MessageHeader &header, RtcpTapeRqstErrMsgBody &body)
   throw(castor::exception::Exception) {
@@ -862,7 +867,7 @@ void castor::tape::aggregator::Transceiver::receiveRtcpTapeRqstErrBody(
 //-----------------------------------------------------------------------------
 // receiveRtcpTapeRqstBody
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::receiveRtcpTapeRqstBody(
+void castor::tape::aggregator::RtcpTxRx::receiveRtcpTapeRqstBody(
   const int socketFd, const int netReadWriteTimeout,
   const MessageHeader &header, RtcpTapeRqstMsgBody &body)
   throw(castor::exception::Exception) {
@@ -918,7 +923,7 @@ void castor::tape::aggregator::Transceiver::receiveRtcpTapeRqstBody(
 //-----------------------------------------------------------------------------
 // checkMagic
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::checkMagic(const uint32_t expected,
+void castor::tape::aggregator::RtcpTxRx::checkMagic(const uint32_t expected,
   const uint32_t actual, const char *function)
   throw(castor::exception::Exception) {
 
@@ -940,7 +945,7 @@ void castor::tape::aggregator::Transceiver::checkMagic(const uint32_t expected,
 //-----------------------------------------------------------------------------
 // checkRtcopyReqType
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::checkRtcopyReqType(
+void castor::tape::aggregator::RtcpTxRx::checkRtcopyReqType(
   const uint32_t expected, const uint32_t actual, const char *function)
   throw(castor::exception::Exception) {
 
@@ -956,126 +961,4 @@ void castor::tape::aggregator::Transceiver::checkRtcopyReqType(
 
     throw ex;
   }
-}
-
-
-//-----------------------------------------------------------------------------
-// getVolumeInfoFromGateway
-//-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::getVolumeInfoFromGateway(
-  const std::string gatewayhost, const unsigned short gatewayPort,
-  const uint32_t volReqId, const char *const unit, char (&vid)[CA_MAXVIDLEN+1],
-  uint32_t &mode, char (&label)[CA_MAXLBLTYPLEN+1],
-  char (&density)[CA_MAXDENLEN+1], int &errorCode, std::string &errorMsg)
-  throw(castor::exception::Exception) {
-/*
-
-  tapegateway::StartTransferRequest request;
-
-  request.setVdqmVolReqId(volReqId);
-  request.setUnit(unit);
-
-  // Connect to the tape gateway
-  castor::io::ClientSocket socket(gatewayPort, gatewayhost);
-
-  // Send the request for the volume information
-  socket.sendObject(request);
-
-  // Receive the volume information
-  std::auto_ptr<castor::IObject> obj(socket.readObject());
-
-  if(obj.get() == NULL) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to get StartTransferResponse from tape gateway"
-         ": ClientSocket::readObject() returned null";
-
-    throw ex;
-  }
-
-  std::auto_ptr<tapegateway::StartTransferResponse> response(
-    dynamic_cast<tapegateway::StartTransferResponse*>(obj.release()));
-
-  if(response.get() == NULL) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to get StartTransferResponse from tape gateway"
-         ": Failed to dynamic cast StartTransferResponse";
-
-    throw ex;
-  }
-
-  Utils::copyString(vid, response->vid().c_str());
-  mode = response->mode();
-  Utils::copyString(vid, response->label().c_str());
-  Utils::copyString(density, response->density().c_str());
-  errorCode = response->errorCode();
-  errorMsg = response->errorMessage();
-*/
-}
-
-
-//-----------------------------------------------------------------------------
-// getFileToMigrateFromGateway
-//-----------------------------------------------------------------------------
-void castor::tape::aggregator::Transceiver::getFileToMigrateFromGateway(
-  const std::string gatewayHost, const unsigned short gatewayPort,
-  const uint32_t volReqId, char (&filePath)[CA_MAXPATHLEN+1],
-  char (&tapeRecordFormat)[CA_MAXRECFMLEN+1],
-  char (&tapeFileId)[CA_MAXFIDLEN+1], int &errorCode, std::string &errorMsg)
-  throw(castor::exception::Exception) {
-/*
-
-  tapegateway::FileToMigrateRequest request;
-
-  request.setTransactionId(volReqId);
-
-  castor::io::ClientSocket socket(gatewayPort, gatewayhost);
-
-  castor::IObject *obj = socket.readObject();
-
-  if(obj == NULL) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to get FileToMigrateResponse from tape gateway"
-         ": ClientSocket::readObject() returned null";
-
-    throw ex;
-  }
-
-  std::auto_ptr<tapegateway::FileToMigrateResponse> response(
-    dynamic_cast<tapegateway::FileToMigrateResponse*>(obj));
-
-  if(response.get() == NULL) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to get FileToMigrateResponse from tape gateway"
-         ": Failed to dynamic cast FileToMigrateResponse";
-
-    throw ex;
-  }
-
-  if(response.transactonId() != volReqId) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to get FileToMigrateResponse from tape gateway"
-         ": Transaction ID does not match volume request ID"
-         ": Transaction ID = " << response.transactonId()
-      << ": Volume Request ID = " << volReqId;
-
-    throw ex;
-  }
-
-  vid       = response->vid();
-  mode      = response->mode();
-  label     = response->label();
-  density   = response->density();
-  errorCode = response->errorCode();
-  errorMsg  = response->errorMessage();
-*/
 }

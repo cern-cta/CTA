@@ -148,12 +148,11 @@ namespace aggregator {
      * necessary messages.
      *
      * @param cuuid The ccuid to be used for logging.
-     * @param jobRequest The job request message received from the VDQM.
+     * @param volReqId The volume request ID.
      * @param rtcpdCallbackSocketFd The file descriptor of the listener socket
      * to be used to accept callback connections from RTCPD.
      */
-    void coordinateRemoteCopy(const Cuuid_t &cuuid,
-      const RcpJobRqstMsgBody &vdqmJobRequest,
+    void coordinateRemoteCopy(const Cuuid_t &cuuid, const uint32_t volReqId,
       const int rtcpdCallbackSocketFd) throw(castor::exception::Exception);
 
     /**

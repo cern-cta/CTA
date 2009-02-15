@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/aggregator/Transceiver.hpp
+ *                castor/tape/aggregator/RtcpTxRx.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_TRANSCEIVER_HPP
-#define CASTOR_TAPE_AGGREGATOR_TRANSCEIVER_HPP 1
+#ifndef CASTOR_TAPE_AGGREGATOR_RTCPTXRX_HPP
+#define CASTOR_TAPE_AGGREGATOR_RTCPTXRX_HPP 1
 
 #include "castor/exception/Exception.hpp"
 #include "castor/io/ClientSocket.hpp"
@@ -41,10 +41,11 @@ namespace tape       {
 namespace aggregator {
 
 /**
- * Provides functions for sending and receiving the messages used by the tape
- * aggregator.
+ * Provides functions for sending and receiving the messages of the RTCOPY
+ * protocol, in other words the protocol used between the VDQM and RTCPD and
+ * between RTCPClientD and RTCPD.
  */
-class Transceiver {
+class RtcpTxRx {
 
 public:
 
@@ -257,50 +258,6 @@ public:
     const int netReadWriteTimeout, const MessageHeader &header,
     RtcpTapeRqstMsgBody &body) throw(castor::exception::Exception);
 
-  /**
-   * Gets the volume information from the tape gateway by sending and receiving
-   * the necessary messages.
-   *
-   * @param gatewayHost The tape gateway host name.
-   * @param gatewayPort The tape gateway port number.
-   * @param volReqId The volume request ID.
-   * @param unit The drive unit.
-   * @param vid Out parameter: The volume ID returned by the tape gateway.
-   * @param mode Out parameter: The access mode returned by the tape gateway.
-   * @param label Out parameter: The volume label returned by the tape gateway.
-   * @param density Out parameter: The volume density returned by the tape
-   * gateway.
-   * @param errorCode Out parameter: The error code returned by the tape
-   * gateway.
-   * @param errorMsg Out parameter: The error message returned by the tape
-   * gateway.
-   */
-  static void getVolumeInfoFromGateway(const std::string gatewayHost,
-    const unsigned short gatewayPort, const uint32_t volReqId,
-    const char *const unit, char (&vid)[CA_MAXVIDLEN+1], uint32_t &mode,
-    char (&label)[CA_MAXLBLTYPLEN+1], char (&density)[CA_MAXDENLEN+1],
-    int &errorCode, std::string &errorMsg) throw(castor::exception::Exception);
-
-  /**
-   * Gets a file to migrate from the tape tape gateway by sending and receiving
-   * the necessary messages.
-   *
-   * @param gatewayHost The tape gateway host name.
-   * @param gatewayPort The tape gateway port number.
-   * @param volReqId The volume request ID.
-   * @param filePath Out parameter: The path of the disk file.
-   * @param errorCode Out parameter: The error code returned by the tape
-   * gateway.
-   * @param errorMsg Out parameter: The error message returned by the tape
-   * gateway.
-   */
-  static void getFileToMigrateFromGateway(const std::string gatewayHost,
-    const unsigned short gatewayPort, const uint32_t volReqId,
-    char (&filePath)[CA_MAXPATHLEN+1],
-    char (&tapeRecordFormat)[CA_MAXRECFMLEN+1],
-    char (&tapeFileId)[CA_MAXFIDLEN+1], int &errorCode, std::string &errorMsg)
-    throw(castor::exception::Exception);
-
 
 private:
 
@@ -308,7 +265,7 @@ private:
    * Private constructor to inhibit instances of this class from being
    * instantiated.
    */
-  Transceiver() {}
+  RtcpTxRx() {}
 
   /**
    * Throws an exception if the expected magic number is not equal to the
@@ -333,10 +290,10 @@ private:
     const uint32_t actual, const char *function)
     throw(castor::exception::Exception);
 
-}; // class Transceiver
+}; // class RtcpTxRx
 
 } // namespace aggregator
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_TRANSCEIVER_HPP
+#endif // CASTOR_TAPE_AGGREGATOR_RTCPTXRX_HPP

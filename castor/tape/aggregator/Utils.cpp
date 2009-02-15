@@ -55,6 +55,16 @@ void castor::tape::aggregator::Utils::copyString(char *const dst,
 
 
 //-----------------------------------------------------------------------------
+// copyString
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::Utils::copyString(char *const dst,
+  const std::string &src) throw(castor::exception::Exception) {
+
+  copyString(dst, src.c_str());
+}
+
+
+//-----------------------------------------------------------------------------
 // magicToStr
 //-----------------------------------------------------------------------------
 const char *castor::tape::aggregator::Utils::magicToStr(const uint32_t magic) {
