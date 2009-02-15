@@ -204,7 +204,9 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
   const std::string gatewayHost, const unsigned short gatewayPort,
   const uint32_t transactionId, char (&filePath)[CA_MAXPATHLEN+1],
   char (&recordFormat)[CA_MAXRECFMLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN],
-  uint64_t &fileId, uint32_t &tapeFileSeq) throw(castor::exception::Exception) {
+  uint64_t &fileId, uint32_t &tapeFileSeq, uint64_t &fileSize,
+  char (&lastKnownFileName)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime)
+  throw(castor::exception::Exception) {
 
   bool thereIsAFileToMigrate = false;
 
@@ -251,6 +253,9 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
       Utils::copyString(nsHost, file.nshost());
       fileId = file.fileid();
       tapeFileSeq = file.fseq();
+      fileSize = file.fileSize();
+      Utils::copyString(lastKnownFileName, file.lastKnownFileName());
+      lastModificationTime = file.lastModificationTime();
     } catch(std::bad_cast &bc) {
       castor::exception::Internal ex;
 
@@ -357,4 +362,19 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
   }
 
   return thereIsAFileToMigrate;
+}
+
+
+//-----------------------------------------------------------------------------
+// getFileToRecallFromGateway
+//-----------------------------------------------------------------------------
+bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
+  const std::string gatewayHost, const unsigned short gatewayPort,
+  const uint32_t transactionId, char (&filePath)[CA_MAXPATHLEN+1],
+  char (&recordFormat)[CA_MAXRECFMLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN],
+  uint64_t &fileId, uint32_t &tapeFileSeq) throw(castor::exception::Exception) {
+
+  bool thereIsAFileToRecall = false;
+
+  return thereIsAFileToRecall;
 }
