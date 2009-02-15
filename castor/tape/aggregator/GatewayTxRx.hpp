@@ -58,7 +58,7 @@ public:
    */
   static bool getVolumeFromGateway(const std::string gatewayHost,
     const unsigned short gatewayPort, const uint32_t volReqId,
-    const char *const unit, char (&vid)[CA_MAXVIDLEN+1], uint32_t &mode,
+    char (&vid)[CA_MAXVIDLEN+1], uint32_t &mode,
     char (&label)[CA_MAXLBLTYPLEN+1], char (&density)[CA_MAXDENLEN+1])
     throw(castor::exception::Exception);
 

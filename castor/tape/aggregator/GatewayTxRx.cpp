@@ -32,6 +32,8 @@
 #include "castor/tape/tapegateway/FileToMigrate.hpp"
 #include "castor/tape/tapegateway/FileToMigrateRequest.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
+#include "castor/tape/tapegateway/Volume.hpp"
+#include "castor/tape/tapegateway/VolumeRequest.hpp"
 
 
 //-----------------------------------------------------------------------------
@@ -39,11 +41,157 @@
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
   const std::string gatewayHost, const unsigned short gatewayPort,
-  const uint32_t volReqId, const char *const unit, char (&vid)[CA_MAXVIDLEN+1],
-  uint32_t &mode, char (&label)[CA_MAXLBLTYPLEN+1],
-  char (&density)[CA_MAXDENLEN+1]) throw(castor::exception::Exception) {
+  const uint32_t volReqId, char (&vid)[CA_MAXVIDLEN+1], uint32_t &mode,
+  char (&label)[CA_MAXLBLTYPLEN+1], char (&density)[CA_MAXDENLEN+1])
+  throw(castor::exception::Exception) {
 
   bool thereIsAVolumeToMount = false;
+
+  // Prepare the request
+  tapegateway::VolumeRequest request;
+  request.setVdqmVolReqId(volReqId);
+
+  // Connect to the tape gateway
+  castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
+  gatewaySocket.connect();
+
+  // Send the request
+  gatewaySocket.sendObject(request);
+
+  // Receive the reply object wrapping it in an auto pointer so that it is
+  // automatically deallocated when it goes out of scope
+  std::auto_ptr<castor::IObject> reply(gatewaySocket.readObject());
+
+  // Close the connection to the tape gateway
+  gatewaySocket.close();
+
+  if(reply.get() == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to get reply object from the tape gateway"
+         ": ClientSocket::readObject() returned null";
+
+    throw ex;
+  }
+
+  // Temporary variable used to check for a transaction ID mistatch
+  uint64_t transactionIdFromGateway = 0;
+
+  switch(reply->type()) {
+  case OBJ_Volume:
+    // Copy the reply information
+    try {
+      tapegateway::Volume &volume = dynamic_cast<tapegateway::Volume&>(*reply);
+      transactionIdFromGateway = volume.transactionId();
+      Utils::copyString(vid, volume.vid());
+      mode = volume.mode();
+      Utils::copyString(label, volume.label());
+      Utils::copyString(density, volume.density());
+    } catch(std::bad_cast &bc) {
+      castor::exception::Internal ex;
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << "Failed to down cast reply object to tapegateway::Volume";
+
+      throw ex;
+    }
+
+    // If there is a transaction ID mismatch
+    if(transactionIdFromGateway != volReqId) {
+      castor::exception::Exception ex(EINVAL);
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Transaction ID mismatch"
+           ": Expected = " << volReqId
+        << ": Actual = " << transactionIdFromGateway;
+
+      throw ex;
+    }
+
+    thereIsAVolumeToMount = true;
+    break;
+
+  case OBJ_NoMoreFiles:
+    // Copy the reply information
+    try {
+      tapegateway::NoMoreFiles &noMoreFiles =
+        dynamic_cast<tapegateway::NoMoreFiles&>(*reply);
+      transactionIdFromGateway = noMoreFiles.transactionId();
+    } catch(std::bad_cast &bc) {
+      castor::exception::Internal ex;
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << "Failed to down cast reply object to tapegateway::NoMoreFiles";
+
+      throw ex;
+    }
+
+    // If there is a transaction ID mismatch
+    if(transactionIdFromGateway != volReqId) {
+      castor::exception::Exception ex(EINVAL);
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Transaction ID mismatch"
+           ": Expected = " << volReqId
+        << ": Actual = " << transactionIdFromGateway;
+
+      throw ex;
+    }
+    break;
+
+  case OBJ_ErrorReport:
+    {
+       int errorCode;
+       std::string errorMessage;
+
+      // Copy the reply information
+      try {
+        tapegateway::ErrorReport &errorReport =
+          dynamic_cast<tapegateway::ErrorReport&>(*reply);
+        transactionIdFromGateway = errorReport.transactionId();
+        errorCode = errorReport.errorCode();
+        errorMessage = errorReport.errorMessage();
+      } catch(std::bad_cast &bc) {
+        castor::exception::Internal ex;
+
+        ex.getMessage() << __PRETTY_FUNCTION__
+          << "Failed to down cast reply object to tapegateway::NoMoreFiles";
+
+        throw ex;
+      }
+
+      // If there is a transaction ID mismatch
+      if(transactionIdFromGateway != volReqId) {
+        castor::exception::Exception ex(EINVAL);
+
+        ex.getMessage() << __PRETTY_FUNCTION__
+          << ": Transaction ID mismatch"
+             ": Expected = " << volReqId
+          << ": Actual = " << transactionIdFromGateway;
+
+        throw ex;
+      }
+
+      // Translate the reception of the error report into a C++ exception
+      castor::exception::Exception ex(errorCode);
+
+      ex.getMessage() << errorMessage;
+
+      throw ex;
+    }
+    break;
+  default:
+    {
+      castor::exception::Exception ex(EINVAL);
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Unknown reply type "
+           ": Reply type = " << reply->type();
+
+      throw ex;
+    }
+  }
 
   return thereIsAVolumeToMount;
 }
@@ -125,6 +273,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
     }
 
     thereIsAFileToMigrate = true;
+    break;
 
   case OBJ_NoMoreFiles:
     // Copy the reply information
@@ -152,6 +301,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
 
       throw ex;
     }
+    break;
 
   case OBJ_ErrorReport:
     {
