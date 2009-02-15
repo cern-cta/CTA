@@ -31,6 +31,8 @@
 #include "castor/tape/tapegateway/ErrorReport.hpp"
 #include "castor/tape/tapegateway/FileToMigrate.hpp"
 #include "castor/tape/tapegateway/FileToMigrateRequest.hpp"
+#include "castor/tape/tapegateway/FileToRecall.hpp"
+#include "castor/tape/tapegateway/FileToRecallRequest.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
@@ -375,6 +377,154 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
   uint64_t &fileId, uint32_t &tapeFileSeq) throw(castor::exception::Exception) {
 
   bool thereIsAFileToRecall = false;
+
+  // Prepare the request
+  tapegateway::FileToRecallRequest request;
+  request.setTransactionId(transactionId);  
+
+  // Connect to the tape gateway
+  castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
+  gatewaySocket.connect();                                         
+
+  // Send the request
+  gatewaySocket.sendObject(request);
+
+  // Receive the reply object wrapping it in an auto pointer so that it is
+  // automatically deallocated when it goes out of scope                  
+  std::auto_ptr<castor::IObject> reply(gatewaySocket.readObject());       
+
+  // Close the connection to the tape gateway
+  gatewaySocket.close();
+
+  if(reply.get() == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to get reply object from the tape gateway"
+         ": ClientSocket::readObject() returned null";       
+
+    throw ex;
+  }          
+
+  // Temporary variable used to check for a transaction ID mistatch
+  uint64_t transactionIdFromGateway = 0;
+
+  switch(reply->type()) {
+  case OBJ_FileToRecall:
+    // Copy the reply information
+    try {                        
+      tapegateway::FileToRecall &file =
+        dynamic_cast<tapegateway::FileToRecall&>(*reply);
+      transactionIdFromGateway = file.transactionId();    
+      Utils::copyString(filePath, file.path());           
+      Utils::copyString(recordFormat, file.recordFormat());
+      Utils::copyString(nsHost, file.nshost());            
+      fileId = file.fileid();                              
+      tapeFileSeq = file.fseq();                           
+    } catch(std::bad_cast &bc) {                                     
+      castor::exception::Internal ex;                                
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << "Failed to down cast reply object to tapegateway::FileToRecall";
+
+      throw ex;
+    }          
+
+    // If there is a transaction ID mismatch
+    if(transactionIdFromGateway != transactionId) {
+      castor::exception::Exception ex(EINVAL);     
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Transaction ID mismatch"      
+           ": Expected = " << transactionId 
+        << ": Actual = " << transactionIdFromGateway;
+
+      throw ex;
+    }          
+
+    thereIsAFileToRecall = true;
+    break;                       
+
+  case OBJ_NoMoreFiles:
+    // Copy the reply information
+    try {                        
+      tapegateway::NoMoreFiles &noMoreFiles =
+        dynamic_cast<tapegateway::NoMoreFiles&>(*reply);
+      transactionIdFromGateway = noMoreFiles.transactionId();
+    } catch(std::bad_cast &bc) {                             
+      castor::exception::Internal ex;                        
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << "Failed to down cast reply object to tapegateway::NoMoreFiles";
+
+      throw ex;
+    }          
+
+    // If there is a transaction ID mismatch
+    if(transactionIdFromGateway != transactionId) {
+      castor::exception::Exception ex(EINVAL);     
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Transaction ID mismatch"      
+           ": Expected = " << transactionId 
+        << ": Actual = " << transactionIdFromGateway;
+
+      throw ex;
+    }          
+    break;     
+
+  case OBJ_ErrorReport:
+    {                  
+       int errorCode;  
+       std::string errorMessage;
+
+      // Copy the reply information
+      try {                        
+        tapegateway::ErrorReport &errorReport =
+          dynamic_cast<tapegateway::ErrorReport&>(*reply);
+        transactionIdFromGateway = errorReport.transactionId();
+        errorCode = errorReport.errorCode();                   
+        errorMessage = errorReport.errorMessage();             
+      } catch(std::bad_cast &bc) {                             
+        castor::exception::Internal ex;                        
+
+        ex.getMessage() << __PRETTY_FUNCTION__
+          << "Failed to down cast reply object to tapegateway::NoMoreFiles";
+
+        throw ex;
+      }          
+
+      // If there is a transaction ID mismatch
+      if(transactionIdFromGateway != transactionId) {
+        castor::exception::Exception ex(EINVAL);     
+
+        ex.getMessage() << __PRETTY_FUNCTION__
+          << ": Transaction ID mismatch"      
+             ": Expected = " << transactionId 
+          << ": Actual = " << transactionIdFromGateway;
+
+        throw ex;
+      }          
+
+      // Translate the reception of the error report into a C++ exception
+      castor::exception::Exception ex(errorCode);                        
+
+      ex.getMessage() << errorMessage;
+
+      throw ex;
+    }          
+    break;     
+  default:     
+    {          
+      castor::exception::Exception ex(EINVAL);
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Unknown reply type "          
+           ": Reply type = " << reply->type();
+
+      throw ex;
+    }          
+  }
 
   return thereIsAFileToRecall;
 }
