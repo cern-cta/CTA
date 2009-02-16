@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: template.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/02/05 16:15:18 $ $Author: waldron $
+ * @(#)$RCSfile: template.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/02/16 09:13:00 $ $Author: waldron $
  *
  * This script upgrades a CASTOR vprevRelease DBNAME database into vnewRelease
  *
@@ -63,19 +63,21 @@ END;
 /* Update and revalidation of PL-SQL code */
 /******************************************/
 
-/* Recompile all invalid procedures and triggers */
-/*************************************************/
+/* Recompile all invalid procedures, triggers and functions */
+/************************************************************/
 BEGIN
   FOR a IN (SELECT object_name, object_type
-              FROM all_objects
-             WHERE object_type IN ('PROCEDURE', 'TRIGGER')
+              FROM user_objects
+             WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION')
                AND status = 'INVALID')
   LOOP
     IF a.object_type = 'PROCEDURE' THEN
       EXECUTE IMMEDIATE 'ALTER PROCEDURE '||a.object_name||' COMPILE';
-    ELSE
+    ELSIF a.object_type = 'TRIGGER' THEN
       EXECUTE IMMEDIATE 'ALTER TRIGGER '||a.object_name||' COMPILE';
-    END IF;      
+    ELSE
+      EXECUTE IMMEDIATE 'ALTER FUNCTION '||a.object_name||' COMPILE';
+    END IF;
   END LOOP;
 END;
 /
