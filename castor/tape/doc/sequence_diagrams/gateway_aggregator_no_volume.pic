@@ -24,24 +24,25 @@ inactive(G);
 
 step();
 
-# Vdqm sends job to aggregator.  Aggregtor creates callback port and passes that# on in the job to RTCPD.
+# Vdqm sends job to aggregator.  Aggregtor passes the job onto RTCPD but with
+# the aggregator's callback port.
 active(V);
 message(V,A,"connect");
 active(A);
-message(A,A,"create callback port");
 message(V,A,"ClientInfo - job");
-message(R,A,"connect");
+message(A,R,"connect");
 active(R);
 message(A,R,"ClientInfo - job");
 message(R,A,"RcpJobReply");
+message(R,A,"disconnect");
 message(A,V,"RcpJobReply");
 message(A,V,"disconnect");
 inactive(V);
 
 step();
 
-# Aggregator gets volume request from RTCPD
-message(A,R,"connect");
+# RTCPD calls the aggregator back and the Aggregator gets the volume request
+message(R,A,"connect");
 message(A,R,"request ReqInfo");
 message(R,A,"ack");
 message(R,A,"ReqInfo");
