@@ -79,46 +79,6 @@ public:
     RtcpTapeRqstErrMsgBody &reply) throw(castor::exception::Exception);
 
   /**
-   * Gives the description of a file to RTCPD by sending and receiving the
-   * necessary messages.
-   *
-   * @param socketFd The socket file descriptor of the connection with RTCPD.
-   * @param netReadWriteTimeout The timeout to be applied when performing
-   * network read and write operations.
-   * @param request The request to be sent to RTCPD.
-   * @param reply The structure to be filled with the reply from
-   * RTCPD.
-   */
-  static void giveFileInfoToRtcpd(const int socketFd,
-    const int netReadWriteTimeout, RtcpFileRqstErrMsgBody &request,
-    RtcpFileRqstErrMsgBody &reply) throw(castor::exception::Exception);
-
-  /**
-   * Signals the end of the file list to RTCPD by sending and receiving the
-   * necessary messages.
-   *
-   * @param socketFd The socket file descriptor of the connection with RTCPD.
-   * @param netReadWriteTimeout The timeout to be applied when performing
-   * network read and write operations.
-   */
-  static void signalNoMoreRequestsToRtcpd(const int socketFd,
-    const int netReadWriteTimeout) throw(castor::exception::Exception);
-
-  /**
-   * Receives an acknowledge message from RTCPD and returns the status code
-   * embedded within the message.
-   *
-   * @param socketFd The socket file descriptor of the connection with RTCPD.
-   * @param netReadWriteTimeout The timeout to be applied when performing
-   * network read and write operations.
-   * @param message The message structure to be filled with the acknowledge
-   * message.
-   */
-  static void receiveRtcpAcknowledge(const int socketFd,
-    const int netReadWriteTimeout, RtcpAcknowledgeMsg &message)
-    throw(castor::exception::Exception);
-
-  /**
    * Sends the specified RTCPD acknowledge message to RTCPD using the
    * specified socket.
    *
@@ -266,6 +226,46 @@ private:
    * instantiated.
    */
   RtcpTxRx() {}
+
+  /**
+   * Gives the description of a file to RTCPD by sending and receiving the
+   * necessary messages.
+   *
+   * @param socketFd The socket file descriptor of the connection with RTCPD.
+   * @param netReadWriteTimeout The timeout to be applied when performing
+   * network read and write operations.
+   * @param request The request to be sent to RTCPD.
+   * @param reply The structure to be filled with the reply from
+   * RTCPD.
+   */
+  static void giveFileInfoToRtcpd(const int socketFd,
+    const int netReadWriteTimeout, RtcpFileRqstErrMsgBody &request,
+    RtcpFileRqstErrMsgBody &reply) throw(castor::exception::Exception);
+
+  /**
+   * Receives an acknowledge message from RTCPD and returns the status code
+   * embedded within the message.
+   *
+   * @param socketFd The socket file descriptor of the connection with RTCPD.
+   * @param netReadWriteTimeout The timeout to be applied when performing
+   * network read and write operations.
+   * @param message The message structure to be filled with the acknowledge
+   * message.
+   */
+  static void receiveRtcpAcknowledge(const int socketFd,
+    const int netReadWriteTimeout, RtcpAcknowledgeMsg &message)
+    throw(castor::exception::Exception);
+
+  /**
+   * Signals the end of the file list to RTCPD by sending and receiving the
+   * necessary messages.
+   *
+   * @param socketFd The socket file descriptor of the connection with RTCPD.
+   * @param netReadWriteTimeout The timeout to be applied when performing
+   * network read and write operations.
+   */
+  static void signalNoMoreRequestsToRtcpd(const int socketFd,
+    const int netReadWriteTimeout) throw(castor::exception::Exception);
 
   /**
    * Throws an exception if the expected magic number is not equal to the
