@@ -37,15 +37,14 @@ namespace aggregator {
 
 /**
  * Provides functions for sending and receiving the messages of the tape
- * gateway <-> aggregator protocol.
+ * gateway/aggregator protocol.
  */
 class GatewayTxRx {
 
 public:
 
   /**
-   * Gets a the volume to be mounted from the tape tape gateway by sending and
-   * receiving the necessary messages.
+   * Gets a the volume to be mounted from the tape tape gateway.
    *
    * @param gatewayHost The tape gateway host name.
    * @param gatewayPort The tape gateway port number.
@@ -64,8 +63,7 @@ public:
 
 
   /**
-   * Gets a file to migrate from the tape tape gateway by sending and receiving
-   * the necessary messages.
+   * Gets a file to migrate from the tape tape gateway.
    *
    * @param gatewayHost The tape gateway host name.
    * @param gatewayPort The tape gateway port number.
@@ -89,8 +87,7 @@ public:
     uint64_t &lastModificationTime) throw(castor::exception::Exception);
 
   /**
-   * Gets a file to recall from the tape tape gateway by sending and receiving
-   * the necessary messages.
+   * Gets a file to recall from the tape tape gateway.
    *
    * @param gatewayHost The tape gateway host name.
    * @param gatewayPort The tape gateway port number.
@@ -106,6 +103,40 @@ public:
     const unsigned short gatewayPort, const uint32_t transactionId,
     char (&filePath)[CA_MAXPATHLEN+1], char (&recordFormat)[CA_MAXRECFMLEN+1],
     char (&nsHost)[CA_MAXHOSTNAMELEN], uint64_t &fileId, uint32_t &tapeFileSeq)
+    throw(castor::exception::Exception);
+
+  /**
+   * Notifies the tape gateway of the successful migration of a file to tape.
+   *
+   * @param gatewayHost The tape gateway host name.
+   * @param gatewayPort The tape gateway port number.
+   * @param transactionId The transaction ID to be sent to the tape gateway.
+   */
+  static void notifyGatewayOfFileMigrated(const std::string gatewayHost,
+    const unsigned short gatewayPort, const uint32_t transactionId)
+    throw(castor::exception::Exception);
+
+  /**
+   * Notifies the tape gateway of the successful recall of a file from tape.
+   *
+   * @param gatewayHost The tape gateway host name.
+   * @param gatewayPort The tape gateway port number.
+   * @param transactionId The transaction ID to be sent to the tape gateway.
+   */
+  static void notifyGatewayOfFileRecalled(const std::string gatewayHost,
+    const unsigned short gatewayPort, const uint32_t transactionId)
+    throw(castor::exception::Exception);
+
+  /**
+   * Notifies the tape gateway of the end of the entire set of
+   * recalls/migrations.
+   *
+   * @param gatewayHost The tape gateway host name.
+   * @param gatewayPort The tape gateway port number.
+   * @param transactionId The transaction ID to be sent to the tape gateway.
+   */
+  static void notifyGatewayOfEnd(const std::string gatewayHost,
+    const unsigned short gatewayPort, const uint32_t transactionId)
     throw(castor::exception::Exception);
 
 
