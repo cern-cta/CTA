@@ -17,6 +17,7 @@ How to generate sequence diagrams from the source in this directory
    respectively:
 
    X=aggregator_recall           ; pic2plot -T ps $X.pic > $X.ps; gv $X.ps
+   X=gateway_aggregator_no_volume; pic2plot -T ps $X.pic > $X.ps; gv $X.ps
    X=gateway_aggregator_recall   ; pic2plot -T ps $X.pic > $X.ps; gv $X.ps
    X=stager_migration            ; pic2plot -T ps $X.pic > $X.ps; gv $X.ps
    X=stager_migration_avoid_mount; pic2plot -T ps $X.pic > $X.ps; gv $X.ps

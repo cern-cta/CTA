@@ -1,0 +1,71 @@
+.PS
+
+copy "sequence.pic";
+
+# Define the objects
+object(G,"gateway");
+object(V,"vdqm");
+object(A,"aggregator");
+object(R,"rtcpd");
+
+step();
+
+# Gateway registers volume request with VDQM
+active(G);
+message(G,V,"connect");
+active(V);
+message(G,V,"volume request");
+message(V,G,"ack");
+message(V,G,"volReqID");
+message(G,V,"ack");
+message(G,V,"disconnect");
+inactive(V);
+inactive(G);
+
+step();
+
+# Vdqm sends job to aggregator.  Aggregtor creates callback port and passes that# on in the job to RTCPD.
+active(V);
+message(V,A,"connect");
+active(A);
+message(A,A,"create callback port");
+message(V,A,"ClientInfo - job");
+message(R,A,"connect");
+active(R);
+message(A,R,"ClientInfo - job");
+message(R,A,"RcpJobReply");
+message(A,V,"RcpJobReply");
+message(A,V,"disconnect");
+inactive(V);
+
+step();
+
+# Aggregator gets volume request from RTCPD
+message(A,R,"connect");
+message(A,R,"request ReqInfo");
+message(R,A,"ack");
+message(R,A,"ReqInfo");
+message(A,R,"ack");
+
+step();
+
+# Aggregator trys to get volume from gateway
+message(A,G,"connect");
+active(G);
+message(A,G,"VolumeRequest");
+message(G,A,"NoMoreFiles");
+message(A,G,"disconnect");
+inactive(G);
+
+# Aggregator aborts mount
+message(A,R,"disconnect");
+inactive(R);
+inactive(A);
+
+complete(G);
+complete(V);
+complete(A);
+complete(R);
+
+.PE
+
