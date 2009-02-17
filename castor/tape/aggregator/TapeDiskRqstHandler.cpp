@@ -97,10 +97,18 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
     {
       // Give file information to RTCPD
       try {
-        RtcpTxRx::giveFileListToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
+        // Send: file to migrate  to RTCPD
+        RtcpTxRx::giveFileInfoToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
           volReqId,
-          "lxc2disk07:/tmp/murrayc3/test_04_02_09", body.tapePath, 18,
-          false);
+          "lxc2disk07:/tmp/murrayc3/test_04_02_09", body.tapePath, 18);
+
+        // Send joker More work to RTCPD
+        RtcpTxRx::giveRequestForMoreWorkToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
+          volReqId);
+
+        // Send EndOfFileList
+        RtcpTxRx::signalNoMoreRequestsToRtcpd(socketFd, RTCPDNETRWTIMEOUT);
+
         castor::dlf::Param params[] = {
           castor::dlf::Param("volReqId", volReqId),
           castor::dlf::Param("filePath","lxc2disk07:/dev/null"),

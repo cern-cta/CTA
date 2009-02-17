@@ -139,10 +139,10 @@ public:
    * a possibility of more work in the future.
    * network read and write operations.
    */
-  static void giveFileListToRtcpd(const int socketFd,
+  static void giveFileInfoToRtcpd(const int socketFd,
     const int netReadWriteTimeout, const uint32_t volReqId,
     const char *const filePath, const char *const tapePath,
-    const uint32_t umask, const bool requestMoreWork)
+    const uint32_t umask)
     throw(castor::exception::Exception);
 
   /**
@@ -218,6 +218,17 @@ public:
     const int netReadWriteTimeout, const MessageHeader &header,
     RtcpTapeRqstMsgBody &body) throw(castor::exception::Exception);
 
+  /**
+   * Signals the end of the file list to RTCPD by sending and receiving the
+   * necessary messages.
+   *
+   * @param socketFd The socket file descriptor of the connection with RTCPD.
+   * @param netReadWriteTimeout The timeout to be applied when performing
+   * network read and write operations.
+   */
+  static void signalNoMoreRequestsToRtcpd(const int socketFd,
+    const int netReadWriteTimeout) throw(castor::exception::Exception);
+
 
 private:
 
@@ -239,8 +250,8 @@ private:
    * RTCPD.
    */
   static void giveFileInfoToRtcpd(const int socketFd,
-    const int netReadWriteTimeout, RtcpFileRqstErrMsgBody &request,
-    RtcpFileRqstErrMsgBody &reply) throw(castor::exception::Exception);
+    const int netReadWriteTimeout, RtcpFileRqstErrMsgBody &request)
+    throw(castor::exception::Exception);
 
   /**
    * Receives an acknowledge message from RTCPD and returns the status code
@@ -255,17 +266,6 @@ private:
   static void receiveRtcpAcknowledge(const int socketFd,
     const int netReadWriteTimeout, RtcpAcknowledgeMsg &message)
     throw(castor::exception::Exception);
-
-  /**
-   * Signals the end of the file list to RTCPD by sending and receiving the
-   * necessary messages.
-   *
-   * @param socketFd The socket file descriptor of the connection with RTCPD.
-   * @param netReadWriteTimeout The timeout to be applied when performing
-   * network read and write operations.
-   */
-  static void signalNoMoreRequestsToRtcpd(const int socketFd,
-    const int netReadWriteTimeout) throw(castor::exception::Exception);
 
   /**
    * Throws an exception if the expected magic number is not equal to the

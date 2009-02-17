@@ -152,7 +152,7 @@ namespace aggregator {
      * @param rtcpdCallbackSocketFd The file descriptor of the listener socket
      * to be used to accept callback connections from RTCPD.
      */
-    void coordinateRemoteCopy(const Cuuid_t &cuuid, const uint32_t volReqId,
+    void coordinateRemoteCopy(const Cuuid_t &cuuid, const uint32_t volReqId, const uint32_t volPort, char volHost[CA_MAXHOSTNAMELEN+1],
       const int rtcpdCallbackSocketFd) throw(castor::exception::Exception);
 
     /**
