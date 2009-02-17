@@ -497,7 +497,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
     RtcpTxRx::giveVolumeInfoToRtcpd( rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT, 
       rtcpVolumeInfo, rtcpVolumeInfo); 
  
-    // Send: file to migrate  to RTCPD
+    // Send file to migrate  to RTCPD
     RtcpTxRx::giveFileInfoToRtcpd(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT, 
       volReqId, rtcpFileInfoRequest.filePath, rtcpFileInfoRequest.tapePath, 
       rtcpFileInfoRequest.umask);
