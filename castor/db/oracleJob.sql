@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.675 $ $Date: 2009/02/13 11:16:48 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.676 $ $Date: 2009/02/17 07:47:32 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -29,10 +29,11 @@ BEGIN
   /* We lock first the diskserver in order to lock all the
      filesystems of this DiskServer in an atomical way */
   SELECT DiskServer INTO ds FROM FileSystem WHERE id = fs;
-  UPDATE DiskServer SET nbReadWriteStreams = decode(sign(nbReadWriteStreams-1),-1,0,nbReadWriteStreams-1) WHERE id = ds;
+  UPDATE DiskServer SET nbReadWriteStreams = decode(sign(nbReadWriteStreams-1),-1,0,nbReadWriteStreams-1) 
+   WHERE id = ds;
   /* now we can safely go */
   UPDATE FileSystem SET nbReadWriteStreams = decode(sign(nbReadWriteStreams-1),-1,0,nbReadWriteStreams-1)
-  WHERE id = fs;
+   WHERE id = fs;
 END;
 /
 
@@ -510,17 +511,17 @@ BEGIN
    WHERE id = dcId
   RETURNING castorFile, fileSystem, owneruid, ownergid
     INTO cfId, fsId, ouid, ogid;
+  -- Wake up waiting subrequests
+  UPDATE SubRequest SET status = 1,  -- SUBREQUEST_RESTART
+                        lastModificationTime = getTime(),
+                        parent = 0
+   WHERE parent = srId;
   -- Update filesystem status
   updateFsFileClosed(fsId);
   -- Archive the diskCopy replica request
   archiveSubReq(srId, 8);  -- FINISHED
   -- Trigger the creation of additional copies of the file, if necessary.
   replicateOnClose(cfId, ouid, ogid);
-  -- Wake up waiting subrequests
-  UPDATE SubRequest SET status = 1,  -- SUBREQUEST_RESTART
-                        lastModificationTime = getTime(),
-                        parent = 0
-   WHERE parent = srId;
   -- Diskserver draining logic
   BEGIN
     -- Check to see if the source diskcopy involved in the replication request
@@ -610,6 +611,10 @@ BEGIN
     UPDATE SubRequest SET status = 1, -- RESTART
                           parent = 0
      WHERE parent = res;
+    -- Update filesystem status
+    IF fsId > 0 THEN
+      updateFsFileClosed(fsId);
+    END IF;
     -- Fail it
     archiveSubReq(res, 9); -- FAILED_FINISHED
     -- If no filesystem was set on the diskcopy then we can safely delete it
@@ -617,10 +622,6 @@ BEGIN
     IF fsId = 0 THEN
       DELETE FROM DiskCopy WHERE id = dcId;
       DELETE FROM Id2Type WHERE id = dcId;
-    END IF;
-    -- Update filesystem status
-    IF fsId > 0 THEN
-      updateFsFileClosed(fsId);
     END IF;
     -- Trigger the creation of additional copies of the file, if necessary.
     -- Note: We do this also on failure to be able to recover from transient
@@ -793,8 +794,6 @@ BEGIN
   SELECT diskCopy, castorFile INTO dcId, cfId
     FROM SubRequest
    WHERE id = srId;
-  -- Fail SubRequest
-  archiveSubReq(srId, 9);  -- FAILED_FINISHED
   IF dcId > 0 THEN
     SELECT fileSystem INTO fsId FROM DiskCopy WHERE id = dcId;
     -- Take file closing into account
@@ -806,6 +805,8 @@ BEGIN
     -- query that could trigger them! Anyway it's fine to ignore the FS update,
     -- it will be properly updated by the monitoring.
   END IF;
+  -- Fail SubRequest
+  archiveSubReq(srId, 9);  -- FAILED_FINISHED
   -- Determine the context (Put inside PrepareToPut/Update ?)
   BEGIN
     -- Check that there is a PrepareToPut/Update going on. There can be only a single one
