@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2008/08/22 19:35:49 $ $Author: murrayc3 $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2009/02/17 16:39:25 $ $Author: itglp $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -117,11 +117,11 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
 		      << "/dev/null" << std::endl;
       throw ex;
     }
+  }
     
-    // change identity to Castor superuser if requested
-    if (m_runAsStagerSuperuser) {
-      castor::System::switchToCastorSuperuser();
-    }
+  // change identity to Castor superuser if requested
+  if (m_runAsStagerSuperuser) {
+    castor::System::switchToCastorSuperuser();
   }
   
   // Ignore SIGPIPE (connection lost with client)
