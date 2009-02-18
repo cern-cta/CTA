@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.712 $ $Date: 2009/02/13 13:33:33 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.713 $ $Date: 2009/02/18 13:18:29 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1643,18 +1643,26 @@ strId NUMBER;
 
 BEGIN
  FOR i IN trIds.FIRST .. trIds.LAST LOOP
-    UPDATE taperequeststate set lastvdqmpingtime = null, starttime = null, status=1  WHERE id=trIds(i) AND status = 2; -- these are the lost ones    
-  -- get the one which were ONGOING and clean up the db 
-    UPDATE taperequeststate SET lastvdqmpingtime = null, starttime = null, status=1 WHERE status = 3 AND id = trIds(i) RETURNING id INTO trId;
-  -- clean up ongoing recalls
-    UPDATE tape SET status=0 WHERE tpmode=0 AND status=4  AND id IN (SELECT taperecall FROM taperequeststate WHERE id=trId) RETURNING id INTO tId;
-    UPDATE Segment set status=0 WHERE status = 7 AND tape=tId; -- resurrect SELECTED segment 
-    UPDATE tape SET status=8 WHERE id=tId AND EXISTS (SELECT 'x' FROM Segment WHERE tape =tId AND status=0);
- -- clean up ongoing migrations
-    SELECT streammigration INTO strId FROM taperequeststate WHERE id=trId;
-    resetstream(strId);  
-    COMMIT;    
+    UPDATE taperequeststate set lastvdqmpingtime = null, starttime = null, status=1  WHERE id=trIds(i) AND status =2 RETURNING id INTO trId; -- these are the lost ones
+    IF trid IS NULL THEN 
+      -- get the one which were ONGOING and clean up the db 
+      -- clean up ongoing recalls if any
+      DELETE taperequeststate WHERE status = 3 AND accessmode=0 AND id = trIds(i) RETURNING taperecall,id INTO tId,trId;
+      IF trId IS NOT NULL THEN 
+        DELETE FROM id2type WHERE id= trId;
+        UPDATE tape SET status=0 WHERE tpmode=0 AND status=4  AND id = tId;
+        UPDATE Segment set status=0 WHERE status = 7 AND tape=tId; -- resurrect SELECTED segment 
+        UPDATE tape SET status=8 WHERE id=tId AND EXISTS (SELECT 'x' FROM Segment WHERE tape =tId AND status=0);
+      END IF;
+      -- clean up ongoing migrations if any
+      DELETE taperequeststate WHERE status = 3 AND accessmode=1 AND id = trIds(i) RETURNING streammigration,id INTO strId,trId;
+      IF trId IS NOT NULL THEN 
+        DELETE FROM id2type WHERE id= trId;
+        resetstream(strId);
+      END IF;
+    END IF;    
   END LOOP;
+  COMMIT;
 END;
 /
 
@@ -1861,6 +1869,50 @@ BEGIN
   COMMIT;
 END;
 /
+
+
+/* SQL Function inputForMigrationRetryPolicy */
+
+create or replace
+PROCEDURE  inputForMigrationRetryPolicy
+(tcs OUT castor.TapeCopy_Cur) AS
+ids "numList";
+BEGIN
+  OPEN tcs FOR
+    SELECT copynb, id, castorfile, status,errorCode, nbretry 
+      FROM TapeCopy
+     WHERE status=9 ORDER BY id FOR UPDATE; 
+END;
+/
+
+
+/* SQL Function updateMigRetryPolicy */
+
+create or replace PROCEDURE  updateMigRetryPolicy
+(tcToRetry IN castor."cnumList", tcToFail IN castor."cnumList"  ) AS
+reqId NUMBER;
+BEGIN
+ -- restarted the one to be retried
+  FORALL i IN tctoretry.FIRST .. tctoretry.LAST 
+    UPDATE TapeCopy SET status=1,nbretry = nbretry+1  WHERE id = tcToRetry(i);
+  -- fail the tapecopies   
+  FORALL i IN tctofail.FIRST .. tctofail.LAST 
+    UPDATE TapeCopy SET status=6 WHERE id = tcToFail(i);
+ -- fail the diskcopy (FAIL TO MIGRATE STATE)
+  FORALL i IN tctofail.FIRST .. tctofail.LAST 
+    UPDATE DiskCopy SET status=12 WHERE castorfile in (SELECT castorfile FROM tapecopy WHERE  id = tcToFail(i)) AND status=10;
+ -- fail repack subrequests
+  FOR i IN tcToFail.FIRST .. tcToFail.LAST LOOP
+      UPDATE subrequest SET status=9 WHERE castorfile in (SELECT castorfile FROM tapecopy WHERE id= tctofail(i)  ) AND status=12  RETURNING request INTO reqId;
+     -- archive if necessary 
+      UPDATE subrequest SET status=11 WHERE request = reqId AND NOT EXISTS ( select 'x' FROM subrequest WHERE  request=reqId AND status NOT IN (8, 9, 11) ); 
+  END LOOP;
+  COMMIT;
+END;
+/
+
+
+
 
 /* SQL Function getRepackVid */
 
