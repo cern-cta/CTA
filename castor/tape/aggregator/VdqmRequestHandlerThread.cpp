@@ -494,8 +494,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
     } 
 
     // Send the volume to RTCPD
-    RtcpTxRx::giveVolumeInfoToRtcpd( rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT, 
-      rtcpVolumeInfo, rtcpVolumeInfo); 
+    RtcpTxRx::giveVolumeInfoToRtcpd(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT, 
+      rtcpVolumeInfo); 
  
     // Send file to migrate  to RTCPD
     char tapePath[CA_MAXPATHLEN+1];
@@ -514,7 +514,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
   } else { // It is a Recall
     // Send the volume to RTCPD
     RtcpTxRx::giveVolumeInfoToRtcpd(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT, 
-      rtcpVolumeInfo, rtcpVolumeInfo); 
+      rtcpVolumeInfo); 
 
     // Send joker More work to RTCPD
     RtcpTxRx::giveRequestForMoreWorkToRtcpd(rtcpdCallbackSocketFd,

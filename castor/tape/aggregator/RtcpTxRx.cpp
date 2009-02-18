@@ -141,8 +141,7 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::giveVolumeInfoToRtcpd(
   const int socketFd, const int netReadWriteTimeout,
-  RtcpTapeRqstErrMsgBody &request, RtcpTapeRqstErrMsgBody &reply)
-  throw(castor::exception::Exception) {
+  RtcpTapeRqstErrMsgBody &request) throw(castor::exception::Exception) {
 
   // Marshall the message
   char buf[MSGBUFSIZ];

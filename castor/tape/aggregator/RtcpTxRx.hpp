@@ -75,8 +75,8 @@ public:
    * RTCPD.
    */
   static void giveVolumeInfoToRtcpd(const int socketFd,
-    const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &request,
-    RtcpTapeRqstErrMsgBody &reply) throw(castor::exception::Exception);
+    const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &request)
+    throw(castor::exception::Exception);
 
   /**
    * Sends the specified RTCPD acknowledge message to RTCPD using the
