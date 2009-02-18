@@ -123,6 +123,11 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_invalidat
 /// SQL statement for function invalidateTapeCopy
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_invalidateTapeCopyStatementString="BEGIN invalidateTapeCopy(:1,:2,:3,:4);END;";
 
+
+/// SQL statement for function invalidateTapeCopy
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_commitTransactionStatementString="BEGIN COMMIT;END;";
+
+
 //------------------------------------------------------------------------------
 // OraTapeGatewaySvc
 //------------------------------------------------------------------------------
@@ -147,7 +152,8 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   m_updateDbStartTapeStatement(0),
   m_updateDbEndTapeStatement(0),
   m_invalidateSegmentStatement(0),
-  m_invalidateTapeCopyStatement(0){
+  m_invalidateTapeCopyStatement(0),
+  m_commitTransactionStatement(0){
 }
 
 //------------------------------------------------------------------------------
@@ -199,6 +205,8 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_updateDbEndTapeStatement) deleteStatement(m_updateDbEndTapeStatement);
     if ( m_invalidateSegmentStatement) deleteStatement(m_invalidateSegmentStatement);
     if ( m_invalidateTapeCopyStatement) deleteStatement(m_invalidateTapeCopyStatement);
+    if ( m_commitTransactionStatement) deleteStatement(m_commitTransactionStatement);
+
   } catch (oracle::occi::SQLException e) {};
 
   // Now reset all pointers to 0
@@ -222,6 +230,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   m_updateDbEndTapeStatement = 0; 
   m_invalidateSegmentStatement = 0;
   m_invalidateTapeCopyStatement = 0;
+  m_commitTransactionStatement = 0;
 
 }
 
@@ -294,7 +303,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::resolveStreams(std::vect
 
     if ( !strIds.size() || !vids.size() || vids.size() != strIds.size()) {
       // just release the lock no result
-      cnvSvc()->commit();
+      commitTransaction();
       return;
     }
      
@@ -469,7 +478,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateSubmittedTapes(std
   try {
 
     if ( !tapeRequests.size() ) {
-      cnvSvc()->commit();
+      commitTransaction();
       return;
     }
      
@@ -638,7 +647,7 @@ std::vector<castor::tape::tapegateway::TapeRequestState*> castor::tape::tapegate
   std::vector<tape::tapegateway::TapeRequestState*> result;
   try {
     // Check whether the statements are ok
-    if (0 == m_getTapesToSubmitStatement) {
+    if (0 == m_getTapesToCheckStatement) {
       m_getTapesToCheckStatement =
         createStatement(s_getTapesToCheckStatementString);
       m_getTapesToCheckStatement->registerOutParam
@@ -716,7 +725,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateCheckedTapes(std::
   try {
 
     if ( !tapes.size()) {
-      cnvSvc()->commit();
+      commitTransaction();
       return;
     }
      
@@ -1640,3 +1649,29 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::invalidateTapeCopy(casto
 
 }
 
+
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::commitTransaction() throw (castor::exception::Exception){
+   try {
+
+    // Check whether the statements are ok
+
+     if (0 == m_commitTransactionStatement) {
+       m_commitTransactionStatement =
+	 createStatement(s_commitTransactionStatementString);
+     }
+ 
+     // execute the statement 
+
+     m_commitTransactionStatement->executeUpdate();
+
+     
+   } catch (oracle::occi::SQLException e) {
+     handleException(e);
+     castor::exception::Internal ex;
+     ex.getMessage()
+       << "Error caught in commit transaction"
+       << std::endl << e.what();
+     throw ex;
+   }
+
+}

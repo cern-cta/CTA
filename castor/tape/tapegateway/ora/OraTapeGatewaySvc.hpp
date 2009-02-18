@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2009/02/18 13:21:19 $ $Author: gtaur $
+ * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/02/18 17:04:39 $ $Author: gtaur $
  *
  * Implementation of the ITapeGatewaySvc for Oracle
  *
@@ -216,6 +216,12 @@ namespace castor {
 
 	virtual void  invalidateTapeCopy(castor::tape::tapegateway::FileToMigrate& file) throw (castor::exception::Exception); 
 
+	/*
+	 * Commit transaction
+	 */
+
+	virtual void commitTransaction() throw (castor::exception::Exception); 
+
       private:
 
         /// SQL statement for function getStreamsToResolve
@@ -332,6 +338,11 @@ namespace castor {
         /// SQL statement object for function invalidateTapeCopy  
         oracle::occi::Statement *m_invalidateTapeCopyStatement;
 
+	// SQL statement object for function commitTransaction
+	static const std::string s_commitTransactionStatementString;
+
+	/// SQL statement object for function commitTransaction
+	oracle::occi::Statement *m_commitTransactionStatement;
 
       }; // end of class OraTapeGateway
 
