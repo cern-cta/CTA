@@ -377,9 +377,9 @@ void castor::tape::aggregator::RtcpTxRx::pingRtcpd(
 
 
 //-----------------------------------------------------------------------------
-// signalNoMoreRequestsToRtcpd
+// tellRtcpdEndOfFileList
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpTxRx::signalNoMoreRequestsToRtcpd(
+void castor::tape::aggregator::RtcpTxRx::tellRtcpdEndOfFileList(
   const int socketFd, const int netReadWriteTimeout)
   throw(castor::exception::Exception) {
 
@@ -571,8 +571,7 @@ void castor::tape::aggregator::RtcpTxRx::giveRequestForMoreWorkToRtcpd(
 
   giveFileInfoToRtcpd(socketFd, RTCPDNETRWTIMEOUT, request);
 
-  // Signal the end of the file list to RTCPD
-  signalNoMoreRequestsToRtcpd(socketFd, RTCPDNETRWTIMEOUT);
+  tellRtcpdEndOfFileList(socketFd, RTCPDNETRWTIMEOUT);
 }
 
 

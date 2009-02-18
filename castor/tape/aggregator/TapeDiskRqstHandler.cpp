@@ -88,6 +88,8 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
   const MessageHeader &header, const int socketFd)
   throw(castor::exception::Exception) {
 
+  bool thereIsMoreWork = true;
+
   RtcpFileRqstMsgBody body;
 
   RtcpTxRx::receiveRtcpFileRqstBody(socketFd, RTCPDNETRWTIMEOUT, header, body);
@@ -96,34 +98,29 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
 /*
   case RTCP_REQUEST_MORE_WORK:
     {
-      RtcpFileRqstErrMsgBody rtcpFileInfoRequest;
-      Utils::setBytes(rtcpFileInfoRequest, '\0');
-
-      RtcpFileRqstErrMsgBody rtcpFileInfoReply;
-      Utils::setBytes(rtcpFileInfoReply, '\0');
-
      // If migrating
      if(mode == WRITE_ENABLE) {
 
+       char     filePath[CA_MAXPATHLEN+1];
        char     nsHost[CA_MAXHOSTNAMELEN];
        uint64_t fileId;
+       uint32_t tapeFseq;
        uint64_t fileSize;
        char     lastKnownFileName[CA_MAXPATHLEN+1];
        uint64_t lastModificationTime;
 
        // If there is NO file to migrate?
        if(!GatewayTxRx::getFileToMigrateFromGateway(volHost, volPort,
-         volReqId, rtcpFileInfoRequest.filePath, rtcpFileInfoRequest.recfm,
-         nsHost, fileId, rtcpFileInfoRequest.tapeFseq, fileSize,
-         lastKnownFileName, lastModificationTime)) {
-I AM HERE
+         volReqId, filePath, nsHost, fileId, rtcpFileInfoRequest.tapeFseq,
+         fileSize, lastKnownFileName, lastModificationTime)) {
 
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("volReqId", volReqId     ),
-        castor::dlf::Param("Port"    , volPort      ),
-        castor::dlf::Param("HostName", volHost      )};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_NO_MIGRATION_REQUEST_FOR_VOLUME, params);
+         castor::dlf::Param params[] = {
+           castor::dlf::Param("volReqId", volReqId     ),
+           castor::dlf::Param("Port"    , volPort      ),
+         castor::dlf::Param("HostName", volHost      )};
+           castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+           AGGREGATOR_NO_MORE_FILES_TO_MIGRATE, params);
+I AM HERE
 
       return;
     }
@@ -212,8 +209,7 @@ I AM HERE
     }
   }
 
-  // There is a possibility of more work
-  return true;
+  return thereIsMoreWork;
 }
 
 

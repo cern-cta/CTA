@@ -219,14 +219,14 @@ public:
     RtcpTapeRqstMsgBody &body) throw(castor::exception::Exception);
 
   /**
-   * Signals the end of the file list to RTCPD by sending and receiving the
-   * necessary messages.
+   * Inidcates the end of the current file list to RTCPD by sending and
+   * receiving the necessary messages.
    *
    * @param socketFd The socket file descriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
    */
-  static void signalNoMoreRequestsToRtcpd(const int socketFd,
+  static void tellRtcpdEndOfFileList(const int socketFd,
     const int netReadWriteTimeout) throw(castor::exception::Exception);
 
 

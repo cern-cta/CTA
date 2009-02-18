@@ -488,7 +488,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
         castor::dlf::Param("Port"    , volPort      ),
         castor::dlf::Param("HostName", volHost      )}; 
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_NO_MIGRATION_REQUEST_FOR_VOLUME, params); 
+        AGGREGATOR_NO_FIRST_FILE_TO_MIGRATE, params); 
 
       return;
     } 
@@ -508,8 +508,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
       RTCPDNETRWTIMEOUT, volReqId);
 
     // Send EndOfFileList
-    RtcpTxRx::signalNoMoreRequestsToRtcpd(rtcpdCallbackSocketFd,
-      RTCPDNETRWTIMEOUT);
+    RtcpTxRx::tellRtcpdEndOfFileList(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT);
 
   } else { // It is a Recall
     // Send the volume to RTCPD
@@ -521,8 +520,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
       RTCPDNETRWTIMEOUT, volReqId);
 
     // Send EndOfFileList
-    RtcpTxRx::signalNoMoreRequestsToRtcpd(rtcpdCallbackSocketFd,
-      RTCPDNETRWTIMEOUT);
+    RtcpTxRx::tellRtcpdEndOfFileList(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT);
   }
 
   // Process the RTCPD sockets
