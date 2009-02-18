@@ -188,12 +188,12 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandlerThread::
   processErrorOnInitialRtcpdConnection(const Cuuid_t &cuuid,
-  const RcpJobRqstMsgBody &vdqmJobRequest, const int rtcpdInitialSocketFd)
+  const uint32_t volReqId, const int rtcpdInitialSocketFd)
   throw(castor::exception::Exception) {
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId)};
+      castor::dlf::Param("volReqId", volReqId)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_DATA_ON_INITIAL_RTCPD_CONNECTION, params);
   }
@@ -226,9 +226,9 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 // acceptRtcpdConnection
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandlerThread::
-  acceptRtcpdConnection(const Cuuid_t &cuuid,
-  const RcpJobRqstMsgBody &vdqmJobRequest, const int rtcpdCallbackSocketFd,
-  std::list<int> &connectedSocketFds) throw(castor::exception::Exception) {
+  acceptRtcpdConnection(const Cuuid_t &cuuid, const uint32_t volReqId,
+  const int rtcpdCallbackSocketFd, std::list<int> &connectedSocketFds)
+  throw(castor::exception::Exception) {
 
   const int connectedSocketFd = Net::acceptConnection(rtcpdCallbackSocketFd,
     RTCPDCALLBACKTIMEOUT);
@@ -242,7 +242,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
     Net::getPeerHostName(connectedSocketFd, hostName);
 
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId),
+      castor::dlf::Param("volReqId", volReqId),
       castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)),
       castor::dlf::Param("Port"    , port),
       castor::dlf::Param("HostName", hostName)};
@@ -250,7 +250,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
       AGGREGATOR_RTCPD_CALLBACK_WITH_INFO, params);
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId)};
+      castor::dlf::Param("volReqId", volReqId)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_RTCPD_CALLBACK_WITHOUT_INFO, params);
   }
@@ -263,8 +263,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 // processRtcpdSockets
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandlerThread::
-  processRtcpdSockets(const Cuuid_t &cuuid,
-  const RcpJobRqstMsgBody &vdqmJobRequest, const int rtcpdCallbackSocketFd,
+  processRtcpdSockets(const Cuuid_t &cuuid, const uint32_t volReqId,
+  const uint32_t mode, const int rtcpdCallbackSocketFd,
   const int rtcpdInitialSocketFd) throw(castor::exception::Exception) {
 
   std::list<int> connectedSocketFds;
@@ -336,7 +336,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
           // If there is an incoming message on the initial RTCPD connection
           if(FD_ISSET(rtcpdInitialSocketFd, &readFdSet)) {
 
-            processErrorOnInitialRtcpdConnection(cuuid, vdqmJobRequest,
+            processErrorOnInitialRtcpdConnection(cuuid, volReqId,
               rtcpdInitialSocketFd);
 
             FD_CLR(rtcpdInitialSocketFd, &readFdSet);
@@ -344,7 +344,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
           // Else if there is a callback connection request from RTCPD
           } else if(FD_ISSET(rtcpdCallbackSocketFd, &readFdSet)) {
 
-            acceptRtcpdConnection(cuuid, vdqmJobRequest, rtcpdCallbackSocketFd,
+            acceptRtcpdConnection(cuuid, volReqId, rtcpdCallbackSocketFd,
               connectedSocketFds);
 
             FD_CLR(rtcpdInitialSocketFd, &readFdSet);
@@ -357,7 +357,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
               if(FD_ISSET(*itor, &readFdSet)) {
 
                 continueMainSelectLoop = m_tapeDiskRqstHandler.processRequest(
-                  cuuid, vdqmJobRequest.tapeRequestId, *itor);
+                  cuuid, volReqId, mode, *itor);
 
                 FD_CLR(*itor, &readFdSet);
               }
@@ -368,9 +368,9 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
     }
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId),
-      castor::dlf::Param("Message" , ex.getMessage().str()       ),
-      castor::dlf::Param("Code"    , ex.code()                   )};
+      castor::dlf::Param("volReqId", volReqId             ),
+      castor::dlf::Param("Message" , ex.getMessage().str()),
+      castor::dlf::Param("Code"    , ex.code()            )};
     CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR, AGGREGATOR_MAIN_SELECT_FAILED,
       params);
   }
@@ -449,8 +449,9 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
   Utils::setBytes(rtcpVolumeInfo, '\0');
 
   // If there is NO Volume? 
-  if( !GatewayTxRx::getVolumeFromGateway( volHost, volPort, volReqId, 
-      rtcpVolumeInfo.vid, rtcpVolumeInfo.mode, rtcpVolumeInfo.label, rtcpVolumeInfo.density) ) {
+  if(!GatewayTxRx::getVolumeFromGateway( volHost, volPort, volReqId, 
+     rtcpVolumeInfo.vid, rtcpVolumeInfo.mode, rtcpVolumeInfo.label,
+     rtcpVolumeInfo.density)) {
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", volReqId     ),
@@ -463,13 +464,13 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
  
   }
 
-   RtcpFileRqstErrMsgBody rtcpFileInfoRequest;
-   Utils::setBytes(rtcpFileInfoRequest, '\0');
+  RtcpFileRqstErrMsgBody rtcpFileInfoRequest;
+  Utils::setBytes(rtcpFileInfoRequest, '\0');
 
-   RtcpFileRqstErrMsgBody rtcpFileInfoReply;
-   Utils::setBytes(rtcpFileInfoReply, '\0');
+  RtcpFileRqstErrMsgBody rtcpFileInfoReply;
+  Utils::setBytes(rtcpFileInfoReply, '\0');
 
-  // If it is a Migration?
+  // If it is a Migration
   if(rtcpVolumeInfo.mode == WRITE_ENABLE) {
 
     char     nsHost[CA_MAXHOSTNAMELEN];
@@ -479,10 +480,10 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
     uint64_t lastModificationTime;
 
     // If there is NO file to migrate? 
-    if ( !GatewayTxRx::getFileToMigrateFromGateway( volHost, volPort, volReqId,
-         rtcpFileInfoRequest.filePath, rtcpFileInfoRequest.recfm, nsHost, 
-         fileId, rtcpFileInfoRequest.tapeFseq, fileSize, lastKnownFileName, 
-         lastModificationTime) ){
+    if(!GatewayTxRx::getFileToMigrateFromGateway( volHost, volPort, volReqId,
+      rtcpFileInfoRequest.filePath, rtcpFileInfoRequest.recfm, nsHost, fileId,
+      rtcpFileInfoRequest.tapeFseq, fileSize, lastKnownFileName, 
+      lastModificationTime)) {
 
       castor::dlf::Param params[] = {
         castor::dlf::Param("volReqId", volReqId     ),
@@ -493,6 +494,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
 
       return;
     } 
+
     // Send the volume to RTCPD
     RtcpTxRx::giveVolumeInfoToRtcpd( rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT, 
       rtcpVolumeInfo, rtcpVolumeInfo); 
@@ -503,334 +505,30 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
       rtcpFileInfoRequest.umask);
 
     // Send joker More work to RTCPD
-    RtcpTxRx::giveRequestForMoreWorkToRtcpd(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT,
-      volReqId);
+    RtcpTxRx::giveRequestForMoreWorkToRtcpd(rtcpdCallbackSocketFd,
+      RTCPDNETRWTIMEOUT, volReqId);
 
     // Send EndOfFileList
-    RtcpTxRx::signalNoMoreRequestsToRtcpd(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT);
+    RtcpTxRx::signalNoMoreRequestsToRtcpd(rtcpdCallbackSocketFd,
+      RTCPDNETRWTIMEOUT);
 
-  } 
-  else {// is a Recall
+  } else { // It is a Recall
     // Send the volume to RTCPD
-    RtcpTxRx::giveVolumeInfoToRtcpd( rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT, 
+    RtcpTxRx::giveVolumeInfoToRtcpd(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT, 
       rtcpVolumeInfo, rtcpVolumeInfo); 
 
     // Send joker More work to RTCPD
-    RtcpTxRx::giveRequestForMoreWorkToRtcpd(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT, 
-      volReqId);
+    RtcpTxRx::giveRequestForMoreWorkToRtcpd(rtcpdCallbackSocketFd,
+      RTCPDNETRWTIMEOUT, volReqId);
 
     // Send EndOfFileList
-    RtcpTxRx::signalNoMoreRequestsToRtcpd(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT);
- 
+    RtcpTxRx::signalNoMoreRequestsToRtcpd(rtcpdCallbackSocketFd,
+      RTCPDNETRWTIMEOUT);
   }
 
-  // Process Socket
-
-
-
-
-
-
-/*-------------------------------------------------------
-  // Prepare a volume request
-  tapegateway::VolumeRequest volumeRequest;
-  volumeRequest.setVdqmVolReqId(volReqId);
-
-  // Connect to the tape gateway
-  castor::io::ClientSocket vSocket(gatewayPort, gatewayhost);
-  vSocket.connect();
-
-  // Send the volume request to the tape gateway
-  vSocket.sendObject(volumeRequest);
-
-  // Receive the reply object and close the connection to the tape gateway
-  std::auto_ptr<castor::IObject> volumeReply(vSocket.readObject());
-  vSocket.close();
-  if(volumeReply.get() == NULL) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to get reply object from the tape gateway"
-         ": ClientSocket::readObject() returned null";
-
-    throw ex;
-  }
-
-  switch(volumeReply->type()) {
-  case OBJ_Volume:
-    {
-      // Test if the reply object can be down casted
-      if(dynamic_cast<tapegateway::Volume*>(volumeReply.get()) == NULL) {
-        castor::exception::Internal ex;
-
-        ex.getMessage() << __PRETTY_FUNCTION__
-          << ": Failed to down cast reply to tapegateway::Volume";
-
-        throw ex;
-      }
-
-      // Give ownership of the reply object to a Volume auto pointer
-      std::auto_ptr<tapegateway::Volume>
-        volume(dynamic_cast<tapegateway::Volume*>(volumeReply.release()));
-
-      // If migrating then get the information about the first file from the
-      // tape gateway and send it to RTCPD.  This will allow the tape server to
-      // start caching into memory the file from the disk server whilst the tape
-      // is being mounted.
-      if(volume.mode() == WRITE_ENABLE) {
-
-        // Prepare a file to migrate request
-        tapegateway::FileToMigrateRequest fileToMigrateRequest;
-        fileToMigrateRequest.setTransactionId(volReq);
-
-        // Connect to the tape gateway
-        castor::io::ClientSocket mSocket(gatewayPort, gatewayhost);
-        mSocket.connect();
-     
-        // Send the file to migrate request
-        mSocket.sendObject(fileToMigrateRequest);
-
-        // Receive the reply object and close the connection
-        std::auto_ptr<castor::IObject> fileToMigrateReply(
-          vSocket.readObject());
-        mSocket.close();
-        if(fileToMigrateReply.get() == NULL) {
-          castor::exception::Exception ex(EINVAL);
-
-          ex.getMessage() << __PRETTY_FUNCTION__
-            << ": Failed to get reply object from the tape gateway"
-               ": ClientSocket::readObject() returned null";
-
-          throw ex;
-        }
-*/
-        // Dispatch the received reply message
-      /*  switch(fileToMigrateReply->type()) {
-        case OBJ_FileToMigrate:
-          {
-            // Test if the reply object can be down casted
-            if(dynamic_cast<tapegateway::FileToMigrate*>(
-                fileToMigrateReply.get()) == NULL) {
-              castor::exception::Internal ex;
-
-              ex.getMessage() << __PRETTY_FUNCTION__
-                << ": Failed to down cast reply to "
-                   "tapegateway::FileToMigrate";
-
-              throw ex;
-            }
-
-            // Give ownership of the reply object to a Volume auto pointer
-            std::auto_ptr<tapegateway::Volume> volume(
-              dynamic_cast<tapegateway::FileToMigrate*>(
-              fileToMigrateReply.release()));
-
-          }
-        case OBJ_NoMoreFiles:
-          {
-            // Test if the reply object can be down casted
-            if(dynamic_cast<tapegateway::NoMoreFiles*>(
-                fileToMigrateReply.get()) == NULL) {
-              castor::exception::Internal ex;
-
-              ex.getMessage() << __PRETTY_FUNCTION__
-                << ": Failed to down cast reply to tapegateway::NoMoreFiles";
-
-              throw ex;
-            }
-
-            // Give ownership of the reply object to a Volume auto pointer
-            std::auto_ptr<tapegateway::NoMoreFiles> volume(
-              dynamic_cast<tapegateway::NoMoreFiles*>(
-              fileToMigrateReply.release()));
-
-          }
-        case OBJ_ErrorReport:
-          {
-          // Test if the reply object can be down casted
-            if(dynamic_cast<tapegateway::ErrorReport*>(
-                fileToMigrateReply.get()) == NULL) {
-              castor::exception::Internal ex;
-
-              ex.getMessage() << __PRETTY_FUNCTION__
-                << ": Failed to down cast reply to tapegateway::ErrorReport";
-  
-              throw ex;
-            }
-
-            // Give ownership of the reply object to a Volume auto pointer
-            std::auto_ptr<tapegateway::ErrorReport>volume(
-              dynamic_cast<tapegateway::ErrorReport*>(
-              fileToMigrateReply.release()));
-
-            // Do something
-          }
-          break;
-        default:
-          castor::exception::Exception ex(EINVAL);
-
-          ex.getMessage() << __PRETTY_FUNCTION__
-            << ": Unknown reply type "
-               ": Reply type = " << fileToMigrateReply->type();
-
-          throw ex;
-
-        }// end if Migration
- */ 
-/*
-      // Give the volume information to RTCPD
-      uint32_t tStartRequest = time(NULL); // CASTOR2/rtcopy/rtcpclientd.c:1494
-      RtcpTapeRqstErrMsgBody request;
-      RtcpTapeRqstErrMsgBody reply;
-  
-      Utils::setBytes(request, '\0');
-      Utils::copyString(request.vid    , vid);
-      Utils::copyString(request.label  , label);
-      Utils::copyString(request.density, density);
-      request.mode           = mode;
-      request.volReqId       = vdqmJobRequest.tapeRequestId;
-      request.tStartRequest  = tStartRequest;
-      request.err.severity   = 1;
-      request.err.maxTpRetry = -1;
-      request.err.maxCpRetry = -1;
-
-      RtcpTxRx::giveVolumeInfoToRtcpd(rtcpdInitialSocketFd.get(),
-        RTCPDNETRWTIMEOUT, request, reply);
-
-      {
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId),
-          castor::dlf::Param("vid"     , request.vid                 ),
-          castor::dlf::Param("vsn"     , request.vsn                 ),
-          castor::dlf::Param("label"   , request.label               ),
-          castor::dlf::Param("devtype" , request.devtype             ),
-          castor::dlf::Param("density" , request.density             )};
-        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-          AGGREGATOR_GAVE_VOLUME_INFO, params);
-      }
-
-      // If its a Migration send file to be migrated
-      if(volume.mode() == WRITE_ENABLE) {
-
-        // Give the first file to be migrated to RTCPD
-        RtcpTxRx::giveFileListToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
-         vdqmJobRequest.tapeRequestId, "lxc2disk07:/tmp/murrayc3/test_04_02_09",
-         body.tapePath, 18, false);
-
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("volReqId", vdqmJobRequest.tapeRequestId),
-          castor::dlf::Param("filePath","lxc2disk07:/dev/null"),
-          castor::dlf::Param("tapePath", body.tapePath)};
-        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 
-          AGGREGATOR_GAVE_FILE_INFO, params);
-
-        // Else if there are no files to migrate then avoid a phantom tape mount
-        // by closing the connection to RTCPD
-        }
-      } // enf of "if migration"
-   
-    // Request more work from RTCPD
-    RtcpTxRx::giveRequestForMoreWorkToRtcpd(rtcpdInitialSocketFd,
-      RTCPDNETRWTIMEOUT, vdqmJobRequest.tapeRequestId);
-    {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("volReqId", vdqmJobRequest.volReqId)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_GAVE_REQUEST_FOR_MORE_WORK, params);
-    }
-
-    // Process the RTCPD sockets
-    processRtcpdSockets(cuuid, vdqmJobRequest, rtcpdCallbackSocketFd,
-      rtcpdInitialSocketFd.get());
-    
-    }
-    break;
-  
-  case OBJ_NoMoreFiles:
-    {
-      // Test if the reply object can be down casted
-      if(dynamic_cast<tapegateway::NoMoreFiles*>(
-          fileToMigrateReply.get()) == NULL) {
-        castor::exception::Internal ex;
-
-        ex.getMessage() << __PRETTY_FUNCTION__
-          << ": Failed to down cast reply to tapegateway::NoMoreFiles";
-
-        throw ex;
-      }
-
-      // Give ownership of the reply object to a Volume auto pointer
-      std::auto_ptr<tapegateway::NoMoreFiles> volume(
-        dynamic_cast<tapegateway::NoMoreFiles*>(
-        fileToMigrateReply.release()));
-
-    }
-    break;
-
-  case OBJ_ErrorReport:
-    {
-      // Test if the reply object can be down casted
-      if(dynamic_cast<tapegateway::ErrorReport*>(volumeReply.get()) == NULL) {
-        castor::exception::Internal ex;
-
-        ex.getMessage() << __PRETTY_FUNCTION__
-          << ": Failed to down cast reply to tapegateway::ErrorReport";
-
-        throw ex;
-      }
-
-      // Give ownership of the reply object to a Volume auto pointer
-      std::auto_ptr<tapegateway::ErrorReport>
-        volume(dynamic_cast<tapegateway::ErrorReport*>(volumeReply.release()));
-
-      // Do something
-    }
-    break;
-  default:
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Unknown reply type "
-         ": Reply type = " << volumeReply->type();
-
-    throw ex;
-  }// end of the "switch"
-
-
-
-  char vid[CA_MAXVIDLEN+1];
-  uint32_t mode = WRITE_DISABLE;
-  char label[CA_MAXLBLTYPLEN+1];
-  char density[CA_MAXDENLEN+1];
-
-  Utils::setBytes(vid    , '\0');
-  Utils::setBytes(label  , '\0');
-  Utils::setBytes(density, '\0');
-
-
-
-  RtcpTxRx::getVolumeInfoFromGateway(vdqmJobRequest.clientHost,
-    vdqmJobRequest.clientPort, vdqmJobRequest.tapeRequestId,
-    rtcpdRequestInfoReply.unit, vid, mode, label, density,
-    startTransferErrorCode, startTransferErrorMsg);
-
-  castor::dlf::Param params[] = {
-    castor::dlf::Param("volReqId", rtcpdRequestInfoReply.volReqId),
-    castor::dlf::Param("unit"    , rtcpdRequestInfoReply.unit)};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-    AGGREGATOR_TOLD_GATEWAY_TO_START_TRANSFER, params);
-
-  if(startTransferErrorCode != 0) {
-    castor::exception::Exception ex(startTransferErrorCode);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Received error from tape gateway when trying to get volume "
-         "information"
-         ": " << startTransferErrorMsg;
-
-    throw ex;
-  }
-*/
+  // Process the RTCPD sockets
+  processRtcpdSockets(cuuid, volReqId, rtcpVolumeInfo.mode,
+    rtcpdCallbackSocketFd, rtcpdInitialSocketFd.get());
 }
 
 
@@ -875,8 +573,9 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::run(void *param)
     // and close the connection a second time
     delete(vdqmSocket.release());
 
-    coordinateRemoteCopy(cuuid, vdqmJobRequest.tapeRequestId, vdqmJobRequest.clientPort, 
-      vdqmJobRequest.clientHost, rtcpdCallbackSocketFd.get());
+    coordinateRemoteCopy(cuuid, vdqmJobRequest.tapeRequestId,
+      vdqmJobRequest.clientPort, vdqmJobRequest.clientHost,
+      rtcpdCallbackSocketFd.get());
 
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {

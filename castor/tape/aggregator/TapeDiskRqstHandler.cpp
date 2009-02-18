@@ -56,8 +56,8 @@ castor::tape::aggregator::TapeDiskRqstHandler::TapeDiskRqstHandler()
 // processRequest
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::TapeDiskRqstHandler::processRequest(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd)
-  throw(castor::exception::Exception) {
+  const Cuuid_t &cuuid, const uint32_t volReqId, const uint32_t mode,
+  const int socketFd) throw(castor::exception::Exception) {
 
   MessageHeader header;
 
@@ -76,7 +76,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::processRequest(
   const MsgBodyHandler handler = itor->second;
 
   // Invoke the handler
-  return (this->*handler)(cuuid, volReqId, header, socketFd);
+  return (this->*handler)(cuuid, volReqId, mode, header, socketFd);
 }
 
 
@@ -84,17 +84,49 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::processRequest(
 // RTCP_FILE_REQ message body handler.
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const MessageHeader &header,
-  const int socketFd) throw(castor::exception::Exception) {
+  const Cuuid_t &cuuid, const uint32_t volReqId, const uint32_t mode,
+  const MessageHeader &header, const int socketFd)
+  throw(castor::exception::Exception) {
 
   RtcpFileRqstMsgBody body;
 
-  RtcpTxRx::receiveRtcpFileRqstBody(socketFd, RTCPDNETRWTIMEOUT, header,
-    body);
+  RtcpTxRx::receiveRtcpFileRqstBody(socketFd, RTCPDNETRWTIMEOUT, header, body);
 
   switch(body.procStatus) {
+/*
   case RTCP_REQUEST_MORE_WORK:
     {
+      RtcpFileRqstErrMsgBody rtcpFileInfoRequest;
+      Utils::setBytes(rtcpFileInfoRequest, '\0');
+
+      RtcpFileRqstErrMsgBody rtcpFileInfoReply;
+      Utils::setBytes(rtcpFileInfoReply, '\0');
+
+     // If migrating
+     if(mode == WRITE_ENABLE) {
+
+       char     nsHost[CA_MAXHOSTNAMELEN];
+       uint64_t fileId;
+       uint64_t fileSize;
+       char     lastKnownFileName[CA_MAXPATHLEN+1];
+       uint64_t lastModificationTime;
+
+       // If there is NO file to migrate?
+       if(!GatewayTxRx::getFileToMigrateFromGateway(volHost, volPort,
+         volReqId, rtcpFileInfoRequest.filePath, rtcpFileInfoRequest.recfm,
+         nsHost, fileId, rtcpFileInfoRequest.tapeFseq, fileSize,
+         lastKnownFileName, lastModificationTime)) {
+I AM HERE
+
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", volReqId     ),
+        castor::dlf::Param("Port"    , volPort      ),
+        castor::dlf::Param("HostName", volHost      )};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_NO_MIGRATION_REQUEST_FOR_VOLUME, params);
+
+      return;
+    }
       // Give file information to RTCPD
       try {
         // Send: file to migrate  to RTCPD
@@ -134,6 +166,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
       RtcpTxRx::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
     }
     break;
+*/
   case RTCP_POSITIONED:
     {
       castor::dlf::Param params[] = {
@@ -188,8 +221,9 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
 // RTCP_FILEERR_REQ message body handler.
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileErrReqHandler(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const MessageHeader &header,
-  const int socketFd) throw(castor::exception::Exception) {
+  const Cuuid_t &cuuid, const uint32_t volReqId, const uint32_t mode,
+  const MessageHeader &header, const int socketFd)
+  throw(castor::exception::Exception) {
 
   RtcpFileRqstErrMsgBody body;
 
@@ -215,8 +249,9 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileErrReqHandler(
 // RTCP_TAPEREQ message body handler.
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeReqHandler(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const MessageHeader &header,
-  const int socketFd) throw(castor::exception::Exception) {
+  const Cuuid_t &cuuid, const uint32_t volReqId, const uint32_t mode,
+  const MessageHeader &header, const int socketFd)
+  throw(castor::exception::Exception) {
 
   RtcpTapeRqstMsgBody body;
 
@@ -244,8 +279,9 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeReqHandler(
 // RTCP_TAPEERR message body handler.
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeErrReqHandler(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const MessageHeader &header,
-  const int socketFd) throw(castor::exception::Exception) {
+  const Cuuid_t &cuuid, const uint32_t volReqId, const uint32_t mode,
+  const MessageHeader &header, const int socketFd)
+  throw(castor::exception::Exception) {
 
   RtcpTapeRqstErrMsgBody body;
 
@@ -271,8 +307,9 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeErrReqHandler(
 // RTCP_ENDOF_REQ message body handler.
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpEndOfReqHandler(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const MessageHeader &header,
-  const int socketFd) throw(castor::exception::Exception) {
+  const Cuuid_t &cuuid, const uint32_t volReqId, const uint32_t mode,
+  const MessageHeader &header, const int socketFd)
+  throw(castor::exception::Exception) {
 
   // An RTCP_ENDOF_REQ message is bodiless
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,

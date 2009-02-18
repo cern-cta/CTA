@@ -97,14 +97,13 @@ namespace aggregator {
      * Processes an incomming error message on the initial RTCPD connection.
      *
      * @param cuuid The ccuid to be used for logging.
-     * @param jobRequest The job request message received from the VDQM.  To be
-     * used for logging purposes.
+     * @param volReqId The volume request ID.
      * @param rtcpdInitialSocketFd The socket file descriptor of initial RTCPD
      * connection.
      */
     void processErrorOnInitialRtcpdConnection(const Cuuid_t &cuuid,
-      const RcpJobRqstMsgBody &vdqmJobRequest,
-      const int rtcpdInitialSocketFd) throw(castor::exception::Exception);
+      const uint32_t volReqId, const int rtcpdInitialSocketFd)
+      throw(castor::exception::Exception);
 
     /**
      * Accepts an RTCPD connection using the specified listener socket and adds
@@ -112,14 +111,13 @@ namespace aggregator {
      * sockets.
      *
      * @param cuuid The ccuid to be used for logging.
-     * @param vdqmJobRequest The job request message received from the VDQM.
+     * @param volReqId The volume request ID.
      * @param rtcpdCallbackSocketFd The file descriptor of the listener socket
      * to be used to accept callback connections from RTCPD.
      * @param connectedSocketFds In/out parameter - The list of connected
      * socket file descriptors.
      */
-    void acceptRtcpdConnection(const Cuuid_t &cuuid,
-      const RcpJobRqstMsgBody &vdqmJobRequest,
+    void acceptRtcpdConnection(const Cuuid_t &cuuid, const uint32_t volReqId,
       const int rtcpdCallbackSocketFd, std::list<int> &connectedSocketFds)
       throw(castor::exception::Exception);
 
@@ -132,16 +130,16 @@ namespace aggregator {
      * </ul>
      *
      * @param cuuid The ccuid to be used for logging.
-     * @param vdqmJobRequest The job request message received from the VDQM.
+     * @param volReqId The volume request ID.
+     * @param mode The tape access mode.
      * @param rtcpdCallbackSocketFd The file descriptor of the listener socket
      * to be used to accept callback connections from RTCPD.
      * @param rtcpdInitialSocketFd The socket file descriptor of initial RTCPD
      * connection.
      */
-    void processRtcpdSockets(const Cuuid_t &cuuid,
-      const RcpJobRqstMsgBody &vdqmJobRequest,
-      const int rtcpdCallbackSocketFd, const int rtcpdInitialSocketFd)
-      throw(castor::exception::Exception);
+    void processRtcpdSockets(const Cuuid_t &cuuid, const uint32_t volReqId,
+      const uint32_t mode, const int rtcpdCallbackSocketFd,
+      const int rtcpdInitialSocketFd) throw(castor::exception::Exception);
 
     /**
      * Coordinates the remote copy operations by sending and recieving the
@@ -152,7 +150,8 @@ namespace aggregator {
      * @param rtcpdCallbackSocketFd The file descriptor of the listener socket
      * to be used to accept callback connections from RTCPD.
      */
-    void coordinateRemoteCopy(const Cuuid_t &cuuid, const uint32_t volReqId, const uint32_t volPort, char volHost[CA_MAXHOSTNAMELEN+1],
+    void coordinateRemoteCopy(const Cuuid_t &cuuid, const uint32_t volReqId,
+      const uint32_t volPort, char volHost[CA_MAXHOSTNAMELEN+1],
       const int rtcpdCallbackSocketFd) throw(castor::exception::Exception);
 
     /**
