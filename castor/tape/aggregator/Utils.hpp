@@ -45,6 +45,35 @@ class Utils {
 public:
 
   /**
+   * Writes the specified unsigned 64-bit integer into the specified
+   * destination character array as a hexadecimal string.
+   *
+   * This function allows user to allocate a character array on the stack and
+   * fill it with 64-bit hexadecimal string.
+   *
+   * @param i The unsigned 64-bit integer.
+   * @param dst The destination character array.
+   * @param dstLen The length of the destination character string.
+   */
+  static void toHex(const uint64_t i, char *dst, size_t dstLen)
+    throw(castor::exception::Exception);
+
+  /**
+   * Writes the specified unsigned 64-bit integer into the specified
+   * destination character array as a hexadecimal string.
+   *
+   * This function allows user to allocate a character array on the stack and
+   * fill it with 64-bit hexadecimal string.
+   *
+   * @param i The unsigned 64-bit integer.
+   * @param dst The destination character array.
+   */
+  template<int n> static void toHex(const uint64_t i, char (&dst)[n])
+    throw(castor::exception::Exception) {
+    toHex(i, dst, n);
+  }
+
+  /**
    * Sets all the bytes of the specified object to the value of c.
    *
    * @param object The object whose bytes are to be set.

@@ -30,6 +30,59 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
+#include <iostream>
+
+
+//-----------------------------------------------------------------------------
+// toHex
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::Utils::toHex(const uint64_t i, char *dst,
+  size_t dstLen) throw(castor::exception::Exception) {
+
+  // The largest 64-bit hexadecimal string "FFFFFFFFFFFFFFFF" would ocuppy 17
+  // characters (17 characters = 16 x 'F' + 1 x '\0')
+  const size_t minimumDstLen = 17;
+
+  // If the destination character string cannot store the largest 64-bit
+  // hexadecimal string
+  if(dstLen < minimumDstLen) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Destination character array is too small"
+         ": Minimum = " << minimumDstLen
+      << ": Actual = " << dstLen;
+
+    throw ex;
+  }
+
+  const char hexDigits[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    'A', 'B', 'C', 'D', 'E', 'F'};
+  char backwardsHexDigits[16];
+  Utils::setBytes(backwardsHexDigits, '\0');
+  uint64_t exponent = 0;
+  uint64_t quotient = i;
+  int nbDigits = 0;
+
+  for(exponent=0; exponent<16; exponent++) {
+    backwardsHexDigits[exponent] = hexDigits[quotient % 16];
+    nbDigits++;
+
+    quotient = quotient / 16;
+
+    if(quotient== 0) {
+      break;
+    }
+  }
+
+std::cout << "nbDigits=" << nbDigits << std::endl;
+
+  for(int d=0; d<nbDigits;d++) {
+    dst[d] = backwardsHexDigits[nbDigits-1-d];
+  }
+  dst[nbDigits] = '\0';
+}
+
 
 //-----------------------------------------------------------------------------
 // copyString
