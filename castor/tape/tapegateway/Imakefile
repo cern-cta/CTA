@@ -48,7 +48,7 @@ TAPEGATEWAY_MESSAGES_SRCS = \
 	FileToMigrateRequest.cpp FileToMigrate.cpp \
 	FileToRecallRequest.cpp FileToRecall.cpp \
 	FileMigratedNotification.cpp FileRecalledNotification.cpp \
-	EndNotification.cpp NotificationAcknowledge.cpp \
+	EndNotification.cpp NotificationAcknowledge.cpp EndNotificationErrorReport.cpp\
 	NoMoreFiles.cpp ErrorReport.cpp \
 	BaseFileInfo.cpp PositionCommandCode.cpp TapeFileNsAttribute.cpp \
 	TapeRequestState.cpp TapeRequestStateCode.cpp 
@@ -58,7 +58,7 @@ TAPEGATEWAY_IO_SRCS = \
 	../../io/StreamFileToMigrateRequestCnv.cpp ../../io/StreamFileToMigrateCnv.cpp \
 	../../io/StreamFileToRecallRequestCnv.cpp ../../io/StreamFileToRecallCnv.cpp \
 	../../io/StreamFileMigratedNotificationCnv.cpp ../../io/StreamFileRecalledNotificationCnv.cpp \
-	../../io/StreamEndNotificationCnv.cpp ../../io/StreamNotificationAcknowledgeCnv.cpp \
+	../../io/StreamEndNotificationCnv.cpp ../../io/StreamNotificationAcknowledgeCnv.cpp ../../io/StreamEndNotificationErrorReportCnv.cpp \
 	../../io/StreamNoMoreFilesCnv.cpp ../../io/StreamErrorReportCnv.cpp \
 	../../io/StreamBaseFileInfoCnv.cpp  ../../io/StreamTapeFileNsAttributeCnv.cpp 
 

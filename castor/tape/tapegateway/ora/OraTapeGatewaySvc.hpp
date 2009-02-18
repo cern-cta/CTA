@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/02/13 13:33:34 $ $Author: gtaur $
+ * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2009/02/18 13:21:19 $ $Author: gtaur $
  *
  * Implementation of the ITapeGatewaySvc for Oracle
  *
@@ -129,7 +129,7 @@ namespace castor {
          * Get the best file to migrate at a certain point
          */
 
-	virtual castor::tape::tapegateway::FileToMigrate* fileToMigrate(castor::tape::tapegateway::FileToMigrateRequest* req)
+	virtual castor::tape::tapegateway::FileToMigrate* fileToMigrate(castor::tape::tapegateway::FileToMigrateRequest& req)
           throw (castor::exception::Exception);
 
         /*
@@ -137,14 +137,14 @@ namespace castor {
 	 * calling fileMigrated or fileFailedToMigrate
          */
 
-        virtual void  fileMigrationUpdate (castor::tape::tapegateway::FileMigratedNotification* resp)
+        virtual void  fileMigrationUpdate (castor::tape::tapegateway::FileMigratedNotification& resp)
           throw (castor::exception::Exception);
 
         /*
 	 * Get the best fileToRecall at a certain moment
          */
 	
-	virtual castor::tape::tapegateway::FileToRecall* fileToRecall(castor::tape::tapegateway::FileToRecallRequest* req)
+	virtual castor::tape::tapegateway::FileToRecall* fileToRecall(castor::tape::tapegateway::FileToRecallRequest& req)
           throw (castor::exception::Exception);
 
 
@@ -152,7 +152,7 @@ namespace castor {
          * Update the db for a file which has been recalled successfully or not
 	 */
 
-        virtual void fileRecallUpdate(castor::tape::tapegateway::FileRecalledNotification* resp) throw (castor::exception::Exception);
+        virtual void fileRecallUpdate(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception);
 
 	/**
 	 * Get Input for migration retries
@@ -185,20 +185,20 @@ namespace castor {
 	 * Check file for repack returning the repackvid if any
 	 */
 
-	virtual std::string getRepackVid(castor::tape::tapegateway::FileMigratedNotification* file)throw (castor::exception::Exception);
+	virtual std::string getRepackVid(castor::tape::tapegateway::FileMigratedNotification& file)throw (castor::exception::Exception);
 	
 	
 	/*
 	 * Update the database when the tape aggregator allows us to serve a request 
 	 */
 
-	virtual castor::tape::tapegateway::Volume*  updateDbStartTape(castor::tape::tapegateway::VolumeRequest* startReq) throw (castor::exception::Exception); 
+	virtual castor::tape::tapegateway::Volume*  updateDbStartTape(castor::tape::tapegateway::VolumeRequest& startReq) throw (castor::exception::Exception); 
 
 	/*
 	 * Update the database when the tape request has been served 
 	 */
 
-	virtual castor::stager::Tape*  updateDbEndTape(castor::tape::tapegateway::EndNotification* endRequest) throw (castor::exception::Exception); 
+	virtual castor::stager::Tape*  updateDbEndTape(castor::tape::tapegateway::EndNotification& endRequest) throw (castor::exception::Exception); 
 
 	
       private:
@@ -207,14 +207,14 @@ namespace castor {
 	 * Delete a segment which is not anymore in the nameserver 
 	 */
 
-	virtual void  invalidateSegment(castor::tape::tapegateway::FileToRecall* file) throw (castor::exception::Exception); 
+	virtual void  invalidateSegment(castor::tape::tapegateway::FileToRecall& file) throw (castor::exception::Exception); 
 
 
 	/*
 	 * Delete a tapecopy which is not anymore in the nameserver 
 	 */
 
-	virtual void  invalidateTapeCopy(castor::tape::tapegateway::FileToMigrate* file) throw (castor::exception::Exception); 
+	virtual void  invalidateTapeCopy(castor::tape::tapegateway::FileToMigrate& file) throw (castor::exception::Exception); 
 
       private:
 

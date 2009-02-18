@@ -39,8 +39,6 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::EndNotification::EndNotification() throw() :
-  m_errorCode(0),
-  m_errorMessage(""),
   m_transactionId(0),
   m_id(0) {
 }
@@ -64,8 +62,6 @@ void castor::tape::tapegateway::EndNotification::print(std::ostream& stream,
     return;
   }
   // Output of all members
-  stream << indent << "errorCode : " << m_errorCode << std::endl;
-  stream << indent << "errorMessage : " << m_errorMessage << std::endl;
   stream << indent << "transactionId : " << m_transactionId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);

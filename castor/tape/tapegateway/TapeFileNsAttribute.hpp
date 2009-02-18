@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeFileNsAttribute.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2009/02/13 08:51:33 $ $Author: gtaur $
+ * @(#)$RCSfile: TapeFileNsAttribute.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2009/02/18 13:21:18 $ $Author: gtaur $
  *
  * 
  *

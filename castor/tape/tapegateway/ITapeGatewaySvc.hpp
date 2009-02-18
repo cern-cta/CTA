@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeGatewaySvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/02/13 13:33:33 $ $Author: gtaur $
+ * @(#)$RCSfile: ITapeGatewaySvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2009/02/18 13:21:18 $ $Author: gtaur $
  *
  * This class provides methods related to tape handling
  *
@@ -115,7 +115,7 @@ namespace castor {
          * Get the best file to migrate at a certain point
          */
 
-        virtual castor::tape::tapegateway::FileToMigrate* fileToMigrate(castor::tape::tapegateway::FileToMigrateRequest* req)
+        virtual castor::tape::tapegateway::FileToMigrate* fileToMigrate(castor::tape::tapegateway::FileToMigrateRequest& req)
           throw (castor::exception::Exception)=0;
 
         /*
@@ -123,20 +123,20 @@ namespace castor {
 	 * calling fileMigrated or fileFailedToMigrate
          */
 
-        virtual  void  fileMigrationUpdate(castor::tape::tapegateway::FileMigratedNotification* resp)
+        virtual  void  fileMigrationUpdate(castor::tape::tapegateway::FileMigratedNotification& resp)
           throw (castor::exception::Exception)=0;
 
         /*
 	 * Get the best fileToRecall at a certain moment
          */
-        virtual castor::tape::tapegateway::FileToRecall* fileToRecall(castor::tape::tapegateway::FileToRecallRequest* req)
+        virtual castor::tape::tapegateway::FileToRecall* fileToRecall(castor::tape::tapegateway::FileToRecallRequest&  req)
           throw (castor::exception::Exception)=0;
 
         /**
          * Update the db for a file which has been recalled successfully or not
          * calling extendedFileRecalled, fileRecalled and fileFailedToRecall
 	 */
-        virtual void  fileRecallUpdate(castor::tape::tapegateway::FileRecalledNotification* resp) throw (castor::exception::Exception)=0;
+        virtual void  fileRecallUpdate(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception)=0;
 
 	/**
 	 * Get Input for migration retries
@@ -170,33 +170,33 @@ namespace castor {
 	 * Check file for repack returning the repackvid if any
 	 */
 	
-	virtual std::string getRepackVid(castor::tape::tapegateway::FileMigratedNotification* file)throw (castor::exception::Exception)=0;
+	virtual std::string getRepackVid(castor::tape::tapegateway::FileMigratedNotification& file)throw (castor::exception::Exception)=0;
 
 	/*
 	 * Update the database when the tape aggregator allows us to serve a request 
 	 */
 
-	virtual castor::tape::tapegateway::Volume*  updateDbStartTape(castor::tape::tapegateway::VolumeRequest* startReq) throw (castor::exception::Exception)=0; 
+	virtual castor::tape::tapegateway::Volume*  updateDbStartTape(castor::tape::tapegateway::VolumeRequest& startReq) throw (castor::exception::Exception)=0; 
 
 
 	/*
 	 * Update the database when the tape request has been served 
 	 */
 
-	virtual castor::stager::Tape* updateDbEndTape(castor::tape::tapegateway::EndNotification* endRequest) throw (castor::exception::Exception)=0; 
+	virtual castor::stager::Tape* updateDbEndTape(castor::tape::tapegateway::EndNotification& endRequest) throw (castor::exception::Exception)=0; 
 
       private:
 	/*
 	 * Delete a segment which is not anymore in the nameserver 
 	 */
 
-	virtual void  invalidateSegment(castor::tape::tapegateway::FileToRecall* file) throw (castor::exception::Exception)=0; 
+	virtual void  invalidateSegment(castor::tape::tapegateway::FileToRecall& file) throw (castor::exception::Exception)=0; 
 	
 	/*
 	 * Delete a tapecopy which is not in the nameserver
 	 */
 
-	virtual void  invalidateTapeCopy(castor::tape::tapegateway::FileToMigrate* file) throw (castor::exception::Exception)=0;
+	virtual void  invalidateTapeCopy(castor::tape::tapegateway::FileToMigrate& file) throw (castor::exception::Exception)=0;
 
       }; // end of class ITapeGatewaySvc
 

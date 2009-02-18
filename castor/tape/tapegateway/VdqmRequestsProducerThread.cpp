@@ -91,10 +91,15 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
     else tape=(*tapeItem)->streamMigration()->tape();
     std::string dgn;
     try {
-      vmgrHelper.getDataFromVmgr(tape);
+      vmgrHelper.getDataFromVmgr(*tape);
  
     } catch (castor::exception::Exception e) {
-      // log TODO
+      
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Standard Message", sstrerror(e.code())),
+	 castor::dlf::Param("Precise Message", e.getMessage().str())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 74, 2, params);
+
     }
     
     if (!tape->dgn().empty()) {
@@ -108,7 +113,13 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
       try {
 	vdqmReqId= vdqmHelper.submitTapeToVdqm(tape, tape->dgn(), m_port );
       } catch ( castor::exception::Exception e){
-	//log TODO
+
+	castor::dlf::Param params[] =
+	{castor::dlf::Param("Standard Message", sstrerror(e.code())),
+	 castor::dlf::Param("Precise Message", e.getMessage().str())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 75, 2, params);
+	
+
       }
       if ( vdqmReqId  > 0 ){
 	// submition went fine	

@@ -132,22 +132,6 @@ namespace castor {
         }
 
         /**
-         * Get the value of m_recordFormat
-         * @return the value of m_recordFormat
-         */
-        std::string recordFormat() const {
-          return m_recordFormat;
-        }
-
-        /**
-         * Set the value of m_recordFormat
-         * @param new_var the new value of m_recordFormat
-         */
-        void setRecordFormat(std::string new_var) {
-          m_recordFormat = new_var;
-        }
-
-        /**
          * Get the value of m_nshost
          * @return the value of m_nshost
          */
@@ -250,8 +234,6 @@ namespace castor {
         u_signed64 m_transactionId;
 
         std::string m_path;
-
-        std::string m_recordFormat;
 
         std::string m_nshost;
 

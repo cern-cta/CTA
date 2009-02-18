@@ -177,11 +177,11 @@ int main(int argc, char* argv[]){
     tgDaemon.runAsStagerSuperuser();
 
      // send request to vdmq
-    
+       
     tgDaemon.addThreadPool(
 			   new castor::server::SignalThreadPool("ProducerOfVdqmRequestsThread", new castor::tape::tapegateway::VdqmRequestsProducerThread(oraSvc,tgDaemon.listenPort()), DEFAULT_SLEEP_INTERVAL)); // port used just to be sent to vdqm
 			   tgDaemon.getThreadPool('P')->setNbThreads(1);
-
+			   
      // check requests for vdmq
     
      tgDaemon.addThreadPool(
@@ -205,13 +205,13 @@ int main(int argc, char* argv[]){
 
     tgDaemon.addThreadPool(
       new castor::server::SignalThreadPool("RecallerErrorHandlerThread", new castor::tape::tapegateway::RecallerErrorHandlerThread(oraSvc,retryRecallSvc), DEFAULT_SLEEP_INTERVAL ));
-    tgDaemon.getThreadPool('R')->setNbThreads(1);
+      tgDaemon.getThreadPool('R')->setNbThreads(1); 
     
     // recaller/migration dynamic thread pool
 
     tgDaemon.addThreadPool(
 			   new castor::server::TCPListenerThreadPool("WorkerThread", new castor::tape::tapegateway::WorkerThread(oraSvc),tgDaemon.listenPort(),true, minThreadsNumber, maxThreadsNumber )); 
-    
+			   
     // start the daemon
 
     tgDaemon.start();
@@ -321,6 +321,8 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
    {71, "Recaller: impossible to recall the file"},
    {72, "Migrator: impossible to migrate the file"},
    {73, "Worker: impossible to send stream report to RmMasterDaemon"},
+   {74,  "VdqmRequestsProducer: vmgr error"},
+   {75,  "VdqmRequestsProducer: vdqm error"},
    {-1, ""}
   };
   dlfInit(messages);

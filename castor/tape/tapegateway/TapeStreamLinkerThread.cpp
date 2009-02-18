@@ -93,7 +93,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
       };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 17, 1, params0);
     try {
-      tapeToUse=vmgrHelper.getTapeForStream(*strItem);
+      tapeToUse=vmgrHelper.getTapeForStream(**strItem);
     } catch(castor::exception::Exception e) {
       strItem++;
       continue;
@@ -132,7 +132,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
 	{castor::dlf::Param("VID",(*tapeItem)->vid())};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 20, 1, params);
       try {
-	vmgrHelper.resetBusyTape(*tapeItem);
+	vmgrHelper.resetBusyTape(**tapeItem);
       } catch (castor::exception::Exception e){
 	// log TODO
 	

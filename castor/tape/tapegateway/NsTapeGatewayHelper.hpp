@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NsTapeGatewayHelper.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2009/02/13 08:51:32 $ $Author: gtaur $
+ * @(#)$RCSfile: NsTapeGatewayHelper.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2009/02/18 13:21:18 $ $Author: gtaur $
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -45,15 +45,15 @@ namespace castor {
       class NsTapeGatewayHelper {
         public:
 	
-	void updateMigratedFile(castor::tape::tapegateway::FileMigratedNotification* file) throw (castor::exception::Exception);
+	void updateMigratedFile(castor::tape::tapegateway::FileMigratedNotification& file) throw (castor::exception::Exception);
      
-	void updateRepackedFile( tape::tapegateway::FileMigratedNotification* file , std::string repackVid ) throw (castor::exception::Exception);
+	void updateRepackedFile( tape::tapegateway::FileMigratedNotification& file , std::string repackVid ) throw (castor::exception::Exception);
 
-	void  checkRecalledFile(castor::tape::tapegateway::FileRecalledNotification* file) throw (castor::exception::Exception);
+	void  checkRecalledFile(castor::tape::tapegateway::FileRecalledNotification& file) throw (castor::exception::Exception);
       
-	void  checkFileToMigrate(castor::tape::tapegateway::FileToMigrate* file, std::string vid) throw (castor::exception::Exception);
+	void  checkFileToMigrate(castor::tape::tapegateway::FileToMigrate& file, std::string vid) throw (castor::exception::Exception);
       
-	void  getBlockIdToRecall(tape::tapegateway::FileToRecall* file, std::string vid) throw (castor::exception::Exception);
+	void  getBlockIdToRecall(tape::tapegateway::FileToRecall& file, std::string vid) throw (castor::exception::Exception);
 
       };
     
