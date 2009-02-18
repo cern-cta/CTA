@@ -577,9 +577,14 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::run(void *param)
       rtcpdCallbackSocketFd.get());
 
   } catch(castor::exception::Exception &ex) {
+
+    char codeStr[1024];
+    sstrerror_r(ex.code(), codeStr, sizeof(codeStr));
+
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Message" , ex.getMessage().str()),
-      castor::dlf::Param("Code"    , ex.code())};
+      castor::dlf::Param("Message"   , ex.getMessage().str()),
+      castor::dlf::Param("Code"      , ex.code()),
+      castor::dlf::Param("CodeString", codeStr)};
     CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
       AGGREGATOR_TRANSFER_FAILED, params);
   }
