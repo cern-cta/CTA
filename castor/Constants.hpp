@@ -224,7 +224,8 @@ namespace castor {
     OBJ_TapeFileNsAttribute = 175,
     OBJ_BaseFileInfo = 176,
     OBJ_ErrorReport = 177,
-    OBJ_RmMasterReport = 178
+    OBJ_RmMasterReport = 178,
+    OBJ_EndNotificationErrorReport = 179
   };
 
   /**
@@ -305,7 +306,7 @@ namespace castor {
    * declared outside of any function.
    */
 
-#define OBJECT_IDS_NB 179
+#define OBJECT_IDS_NB 180
 
   static const unsigned int ObjectsIdsNb = OBJECT_IDS_NB;
 

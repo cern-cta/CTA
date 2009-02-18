@@ -92,7 +92,6 @@ void castor::io::StreamFileRecalledNotificationCnv::createRep(castor::IAddress* 
   ad->stream() << obj->type();
   ad->stream() << obj->transactionId();
   ad->stream() << obj->path();
-  ad->stream() << obj->recordFormat();
   ad->stream() << obj->nshost();
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
@@ -118,9 +117,6 @@ castor::IObject* castor::io::StreamFileRecalledNotificationCnv::createObj(castor
   std::string path;
   ad->stream() >> path;
   object->setPath(path);
-  std::string recordFormat;
-  ad->stream() >> recordFormat;
-  object->setRecordFormat(recordFormat);
   std::string nshost;
   ad->stream() >> nshost;
   object->setNshost(nshost);

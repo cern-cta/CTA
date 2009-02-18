@@ -41,7 +41,6 @@
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "osdep.h"
-#include <string>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
@@ -88,8 +87,6 @@ void castor::io::StreamEndNotificationCnv::createRep(castor::IAddress* address,
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
-  ad->stream() << obj->errorCode();
-  ad->stream() << obj->errorMessage();
   ad->stream() << obj->transactionId();
   ad->stream() << obj->id();
 }
@@ -104,12 +101,6 @@ castor::IObject* castor::io::StreamEndNotificationCnv::createObj(castor::IAddres
   // create the new Object
   castor::tape::tapegateway::EndNotification* object = new castor::tape::tapegateway::EndNotification();
   // Now retrieve and set members
-  int errorCode;
-  ad->stream() >> errorCode;
-  object->setErrorCode(errorCode);
-  std::string errorMessage;
-  ad->stream() >> errorMessage;
-  object->setErrorMessage(errorMessage);
   u_signed64 transactionId;
   ad->stream() >> transactionId;
   object->setTransactionId(transactionId);

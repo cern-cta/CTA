@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.72 $ $Release$ $Date: 2009/02/13 08:53:28 $ $Author: gtaur $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.73 $ $Release$ $Date: 2009/02/18 13:16:42 $ $Author: gtaur $
  *
  *
  *
@@ -220,7 +220,8 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "TapeFileNsAttribute",
   "BaseFileInfo",
   "ErrorReport", 
-  "RmMasterReport"
+  "RmMasterReport",
+  "EndNotificationErrorReport"
 };
 
 
