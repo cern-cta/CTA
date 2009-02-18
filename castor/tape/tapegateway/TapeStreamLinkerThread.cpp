@@ -119,8 +119,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
 
   // update the db 
   try {
-    if (!strIds.empty())
-      m_dbSvc->resolveStreams(strIds, vids);
+    m_dbSvc->resolveStreams(strIds, vids);
   } catch (castor::exception::Exception e){
     
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 19, 0, NULL);

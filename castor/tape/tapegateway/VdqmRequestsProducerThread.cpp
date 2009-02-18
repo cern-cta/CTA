@@ -135,7 +135,6 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
   try {
       
     // save vdqm ids 
-    if (!submittedTapes.empty())
       m_dbSvc->updateSubmittedTapes(submittedTapes);
     
   } catch (castor::exception::Exception e) {

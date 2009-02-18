@@ -110,8 +110,8 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
   // update the db to eventually send again some requests
 
   try {
-    if (!tapesToRetry.empty())
-      m_dbSvc->updateCheckedTapes(tapesToRetry); 
+
+    m_dbSvc->updateCheckedTapes(tapesToRetry); 
 
     // if the db update succeeded I update vmgr releasing the busy tapes     
 

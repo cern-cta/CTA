@@ -293,12 +293,10 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::resolveStreams(std::vect
   try {
 
     if ( !strIds.size() || !vids.size() || vids.size() != strIds.size()) {
-        castor::exception::Internal ex;
-	ex.getMessage() << "invalid input for resolveStreams"
-			<< std::endl; 
-	throw ex;
-
-     }
+      // just release the lock no result
+      cnvSvc()->commit();
+      return;
+    }
      
     // Check whether the statements are ok
     if (0 == m_resolveStreamsStatement) {
@@ -471,12 +469,9 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateSubmittedTapes(std
   try {
 
     if ( !tapeRequests.size() ) {
-        castor::exception::Internal ex;
-	ex.getMessage() << "nothing to update"
-			<< std::endl; 
-	throw ex;
-
-     }
+      cnvSvc()->commit();
+      return;
+    }
      
     // Check whether the statements are ok
     if (0 == m_updateSubmittedTapesStatement) {
@@ -721,12 +716,9 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateCheckedTapes(std::
   try {
 
     if ( !tapes.size()) {
-        castor::exception::Internal ex;
-	ex.getMessage() << "invalid input for updateCheckedTapes"
-			<< std::endl; 
-	throw ex;
-
-     }
+      cnvSvc()->commit();
+      return;
+    }
      
     // Check whether the statements are ok
     if (0 == m_updateCheckedTapesStatement) {
@@ -1601,7 +1593,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::invalidateSegment(castor
 
     m_invalidateSegmentStatement->setDouble(1,(double)file.fileid());
     m_invalidateSegmentStatement->setString(2,file.nshost());
-    // m_invalidateSegmentStatement->setInt(3,file->tapeFileNsAttribute()->copyNo()); TODO
 
     // execute the statement 
 
@@ -1632,8 +1623,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::invalidateTapeCopy(casto
 
     m_invalidateTapeCopyStatement->setDouble(1,(double)file.fileid());
     m_invalidateTapeCopyStatement->setString(2,file.nshost());
-    // m_invalidateTapeCopyStatement->setInt(3,file->tapeFileNsAttribute()->copyNo()); TODO
-    // m_invalidateTapeCopyStatement->setInt(4,file->errorCode()); TODO
+ 
     // execute the statement 
 
     m_invalidateTapeCopyStatement->executeUpdate();
