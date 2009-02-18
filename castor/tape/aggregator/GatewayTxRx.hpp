@@ -69,7 +69,6 @@ public:
    * @param gatewayPort The tape gateway port number.
    * @param transactionId The transaction ID to be sent to the tape gateway.
    * @param filePath Out parameter: The path of the disk file.
-   * @param recordFormat Out parameter: The record format.
    * @param nsHost Out parameter: The name server host.
    * @param fileId Out parmeter: The CASTOR file ID.
    * @param tapeFileSeq Out parameter: The tape file sequence number.
@@ -81,10 +80,10 @@ public:
    */
   static bool getFileToMigrateFromGateway(const std::string gatewayHost,
     const unsigned short gatewayPort, const uint32_t transactionId,
-    char (&filePath)[CA_MAXPATHLEN+1], char (&recordFormat)[CA_MAXRECFMLEN+1],
-    char (&nsHost)[CA_MAXHOSTNAMELEN], uint64_t &fileId, uint32_t &tapeFileSeq,
-    uint64_t &fileSize, char (&lastKnownFileName)[CA_MAXPATHLEN+1],
-    uint64_t &lastModificationTime) throw(castor::exception::Exception);
+    char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN],
+    uint64_t &fileId, uint32_t &tapeFileSeq, uint64_t &fileSize,
+    char (&lastKnownFileName)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime)
+    throw(castor::exception::Exception);
 
   /**
    * Gets a file to recall from the tape tape gateway.
@@ -93,7 +92,6 @@ public:
    * @param gatewayPort The tape gateway port number.
    * @param transactionId The transaction ID to be sent to the tape gateway.
    * @param filePath Out parameter: The path of the disk file.
-   * @param recordFormat Out parameter: The record format.
    * @param nsHost Out parameter: The name server host.
    * @param fileId Out parmeter: The CASTOR file ID.
    * @param tapeFileSeq Out parameter: The tape file sequence number.
@@ -101,8 +99,8 @@ public:
    */
   static bool getFileToRecallFromGateway(const std::string gatewayHost,
     const unsigned short gatewayPort, const uint32_t transactionId,
-    char (&filePath)[CA_MAXPATHLEN+1], char (&recordFormat)[CA_MAXRECFMLEN+1],
-    char (&nsHost)[CA_MAXHOSTNAMELEN], uint64_t &fileId, uint32_t &tapeFileSeq)
+    char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN],
+    uint64_t &fileId, uint32_t &tapeFileSeq)
     throw(castor::exception::Exception);
 
   /**

@@ -464,25 +464,23 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
  
   }
 
-  RtcpFileRqstErrMsgBody rtcpFileInfoRequest;
-  Utils::setBytes(rtcpFileInfoRequest, '\0');
-
   RtcpFileRqstErrMsgBody rtcpFileInfoReply;
   Utils::setBytes(rtcpFileInfoReply, '\0');
 
   // If it is a Migration
   if(rtcpVolumeInfo.mode == WRITE_ENABLE) {
 
+    char     filePath[CA_MAXPATHLEN+1];
     char     nsHost[CA_MAXHOSTNAMELEN];
     uint64_t fileId;
+    uint32_t tapeFseq;
     uint64_t fileSize;
     char     lastKnownFileName[CA_MAXPATHLEN+1];
     uint64_t lastModificationTime;
 
     // If there is NO file to migrate? 
     if(!GatewayTxRx::getFileToMigrateFromGateway( volHost, volPort, volReqId,
-      rtcpFileInfoRequest.filePath, rtcpFileInfoRequest.recfm, nsHost, fileId,
-      rtcpFileInfoRequest.tapeFseq, fileSize, lastKnownFileName, 
+      filePath, nsHost, fileId, tapeFseq, fileSize, lastKnownFileName,
       lastModificationTime)) {
 
       castor::dlf::Param params[] = {
@@ -500,9 +498,10 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
       rtcpVolumeInfo, rtcpVolumeInfo); 
  
     // Send file to migrate  to RTCPD
+    char tapePath[CA_MAXPATHLEN+1];
+    Utils::toHex(fileId, tapePath);
     RtcpTxRx::giveFileInfoToRtcpd(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT, 
-      volReqId, rtcpFileInfoRequest.filePath, rtcpFileInfoRequest.tapePath, 
-      rtcpFileInfoRequest.umask);
+      volReqId, filePath, tapePath, 022);
 
     // Send joker More work to RTCPD
     RtcpTxRx::giveRequestForMoreWorkToRtcpd(rtcpdCallbackSocketFd,

@@ -207,10 +207,9 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
 bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
   const std::string gatewayHost, const unsigned short gatewayPort,
   const uint32_t transactionId, char (&filePath)[CA_MAXPATHLEN+1],
-  char (&recordFormat)[CA_MAXRECFMLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN],
-  uint64_t &fileId, uint32_t &tapeFileSeq, uint64_t &fileSize,
-  char (&lastKnownFileName)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime)
-  throw(castor::exception::Exception) {
+  char (&nsHost)[CA_MAXHOSTNAMELEN], uint64_t &fileId, uint32_t &tapeFileSeq,
+  uint64_t &fileSize, char (&lastKnownFileName)[CA_MAXPATHLEN+1],
+  uint64_t &lastModificationTime) throw(castor::exception::Exception) {
 
   bool thereIsAFileToMigrate = false;
 
@@ -253,7 +252,6 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
         dynamic_cast<tapegateway::FileToMigrate&>(*reply);
       transactionIdFromGateway = file.transactionId();
       Utils::copyString(filePath, file.path());
-      Utils::copyString(recordFormat, file.recordFormat());
       Utils::copyString(nsHost, file.nshost());
       fileId = file.fileid();
       tapeFileSeq = file.fseq();
@@ -375,8 +373,8 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
 bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
   const std::string gatewayHost, const unsigned short gatewayPort,
   const uint32_t transactionId, char (&filePath)[CA_MAXPATHLEN+1],
-  char (&recordFormat)[CA_MAXRECFMLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN],
-  uint64_t &fileId, uint32_t &tapeFileSeq) throw(castor::exception::Exception) {
+  char (&nsHost)[CA_MAXHOSTNAMELEN], uint64_t &fileId, uint32_t &tapeFileSeq)
+  throw(castor::exception::Exception) {
 
   bool thereIsAFileToRecall = false;
 
@@ -419,7 +417,6 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
         dynamic_cast<tapegateway::FileToRecall&>(*reply);
       transactionIdFromGateway = file.transactionId();    
       Utils::copyString(filePath, file.path());           
-      Utils::copyString(recordFormat, file.recordFormat());
       Utils::copyString(nsHost, file.nshost());            
       fileId = file.fileid();                              
       tapeFileSeq = file.fseq();                           
