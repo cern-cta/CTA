@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.713 $ $Date: 2009/02/18 13:18:29 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.714 $ $Date: 2009/02/19 14:05:19 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1449,7 +1449,7 @@ BEGIN
       DELETE FROM Stream WHERE id = streamIds(i);
     ELSE
       UPDATE Stream
-         SET status = 0 -- PENDING
+         SET status = 6 -- STOPPED
        WHERE Stream.status = 7 -- WAITPOLICY
          AND id = streamIds(i);
     END IF;
