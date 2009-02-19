@@ -29,6 +29,7 @@
 #include "castor/tape/aggregator/GatewayTxRx.hpp"
 #include "castor/tape/aggregator/Utils.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
+#include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/ErrorReport.hpp"
 #include "castor/tape/tapegateway/FileToMigrate.hpp"
 #include "castor/tape/tapegateway/FileToMigrateRequest.hpp"
@@ -144,15 +145,15 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
     }
     break;
 
-  case OBJ_ErrorReport:
+  case OBJ_EndNotificationErrorReport:
     {
        int errorCode;
        std::string errorMessage;
 
       // Copy the reply information
       try {
-        tapegateway::ErrorReport &errorReport =
-          dynamic_cast<tapegateway::ErrorReport&>(*reply);
+        tapegateway::EndNotificationErrorReport &errorReport =
+          dynamic_cast<tapegateway::EndNotificationErrorReport&>(*reply);
         transactionIdFromGateway = errorReport.transactionId();
         errorCode = errorReport.errorCode();
         errorMessage = errorReport.errorMessage();
@@ -160,7 +161,8 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
         castor::exception::Internal ex;
 
         ex.getMessage() << __PRETTY_FUNCTION__
-          << "Failed to down cast reply object to tapegateway::NoMoreFiles";
+          << "Failed to down cast reply object to "
+             "tapegateway::EndNotificationErrorReport";
 
         throw ex;
       }
