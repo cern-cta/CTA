@@ -264,8 +264,10 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandlerThread::
   processRtcpdSockets(const Cuuid_t &cuuid, const uint32_t volReqId,
-  const uint32_t mode, const int rtcpdCallbackSocketFd,
-  const int rtcpdInitialSocketFd) throw(castor::exception::Exception) {
+  const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+  const unsigned short gatewayPort, const uint32_t mode,
+  const int rtcpdCallbackSocketFd, const int rtcpdInitialSocketFd)
+  throw(castor::exception::Exception) {
 
   std::list<int> connectedSocketFds;
   int selectRc = 0;
@@ -357,7 +359,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
               if(FD_ISSET(*itor, &readFdSet)) {
 
                 continueMainSelectLoop = m_tapeDiskRqstHandler.processRequest(
-                  cuuid, volReqId, mode, *itor);
+                  cuuid, volReqId, gatewayHost, gatewayPort, mode, *itor);
 
                 FD_CLR(*itor, &readFdSet);
               }
@@ -524,39 +526,40 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
       return;
     } 
 
-    // Send the volume to RTCPD
+    // Send volume to RTCPD
     RtcpTxRx::giveVolumeToRtcpd(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT, 
       rtcpVolume); 
  
-    // Send file to migrate  to RTCPD
+    // Send file to migrate to RTCPD
+    // Always use a umask of 022 when migrating
     char tapePath[CA_MAXPATHLEN+1];
     Utils::toHex(fileId, tapePath);
     RtcpTxRx::giveFileToRtcpd(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT, 
       volReqId, filePath, tapePath, 022);
 
-    // Send joker More work to RTCPD
+    // Send offer of more work to RTCPD
     RtcpTxRx::giveRequestForMoreWorkToRtcpd(rtcpdCallbackSocketFd,
       RTCPDNETRWTIMEOUT, volReqId);
 
-    // Send EndOfFileList
+    // Send end of file list to RTPCD
     RtcpTxRx::tellRtcpdEndOfFileList(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT);
 
   } else { // It is a Recall
-    // Send the volume to RTCPD
+    // Send volume to RTCPD
     RtcpTxRx::giveVolumeToRtcpd(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT, 
       rtcpVolume); 
 
-    // Send joker More work to RTCPD
+    // Send offer of more work to RTCPD
     RtcpTxRx::giveRequestForMoreWorkToRtcpd(rtcpdCallbackSocketFd,
       RTCPDNETRWTIMEOUT, volReqId);
 
-    // Send EndOfFileList
+    // Send end of file list to RTPCD
     RtcpTxRx::tellRtcpdEndOfFileList(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT);
   }
 
   // Process the RTCPD sockets
-  processRtcpdSockets(cuuid, volReqId, rtcpVolume.mode,
-    rtcpdCallbackSocketFd, rtcpdInitialSocketFd.get());
+  processRtcpdSockets(cuuid, volReqId, gatewayHost, gatewayPort,
+    rtcpVolume.mode, rtcpdCallbackSocketFd, rtcpdInitialSocketFd.get());
 }
 
 

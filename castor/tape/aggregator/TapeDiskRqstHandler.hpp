@@ -54,14 +54,17 @@ namespace aggregator {
      *
      * @param cuuid The cuuid of the request.
      * @param volReqId The volume request ID.
+     * @param gatewayHost The tape gateway host name.
+     * @param gatewayPort The tape gateway port number.
      * @param mode The tape access mode.
      * @param socketFd The file descriptor of the socket from which the message
      * should be read from.
      * @return True if there is a possibility of more work to do, else false.
      */
     bool processRequest(const Cuuid_t &cuuid, const uint32_t volReqId,
-      const uint32_t mode, const int socketFd)
-      throw(castor::exception::Exception);
+      const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+      const unsigned short gatewayPort, const uint32_t mode,
+      const int socketFd) throw(castor::exception::Exception);
 
 
   private:
@@ -72,6 +75,8 @@ namespace aggregator {
      *
      * @param cuuid The cuuid of the request.
      * @param volReqId The volume request ID.
+     * @param gatewayHost The tape gateway host name.
+     * @param gatewayPort The tape gateway port number.
      * @param mode The tape access mode.
      * @param header The already unmarshalled message header structure.
      * @param socketFd The file descriptor of the socket from which the message
@@ -79,7 +84,8 @@ namespace aggregator {
      * @return True if there is a possibility of more work to do, else false.
      */
     typedef bool (TapeDiskRqstHandler::*MsgBodyHandler) (const Cuuid_t &cuuid,
-       const uint32_t volReqId, const uint32_t mode,
+       const uint32_t volReqId, const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+       const unsigned short gatewayPort, const uint32_t mode,
        const MessageHeader &header, const int socketFd);
 
     /**
@@ -97,6 +103,8 @@ namespace aggregator {
      *
      * @param cuuid The cuuid of the request.
      * @param volReqId The volume request ID.
+     * @param gatewayHost The tape gateway host name.
+     * @param gatewayPort The tape gateway port number.
      * @param mode The tape access mode.
      * @param header The already unmarshalled message header structure.
      * @param socketFd The file descriptor of the socket from which the message
@@ -104,7 +112,9 @@ namespace aggregator {
      * @return True if there is a possibility of more work to do, else false.
      */
     bool rtcpFileReqHandler(const Cuuid_t &cuuid, const uint32_t volReqId,
-      const uint32_t mode, const MessageHeader &header, const int socketFd)
+      const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+      const unsigned short gatewayPort, const uint32_t mode,
+      const MessageHeader &header, const int socketFd)
       throw(castor::exception::Exception);
 
     /**
@@ -112,6 +122,8 @@ namespace aggregator {
      *
      * @param cuuid The cuuid of the request.
      * @param volReqId The volume request ID.
+     * @param gatewayHost The tape gateway host name.
+     * @param gatewayPort The tape gateway port number.
      * @param mode The tape access mode.
      * @param header The already unmarshalled message header structure.
      * @param socketFd The file descriptor of the socket from which the message
@@ -119,7 +131,9 @@ namespace aggregator {
      * @return True if there is a possibility of more work to do, else false.
      */
     bool rtcpFileErrReqHandler(const Cuuid_t &cuuid, const uint32_t volReqId,
-      const uint32_t mode, const MessageHeader &header, const int socketFd)
+      const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+      const unsigned short gatewayPort, const uint32_t mode,
+      const MessageHeader &header, const int socketFd)
       throw(castor::exception::Exception);
 
     /**
@@ -127,6 +141,8 @@ namespace aggregator {
      *
      * @param cuuid The cuuid of the request.
      * @param volReqId The volume request ID.
+     * @param gatewayHost The tape gateway host name.
+     * @param gatewayPort The tape gateway port number.
      * @param mode The tape access mode.
      * @param header The already unmarshalled message header structure.
      * @param socketFd The file descriptor of the socket from which the message
@@ -134,7 +150,9 @@ namespace aggregator {
      * @return True if there is a possibility of more work to do, else false.
      */
     bool rtcpTapeReqHandler(const Cuuid_t &cuuid, const uint32_t volReqId,
-      const uint32_t mode, const MessageHeader &header, const int socketFd)
+      const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+      const unsigned short gatewayPort, const uint32_t mode,
+      const MessageHeader &header, const int socketFd)
       throw(castor::exception::Exception);
 
     /**
@@ -142,6 +160,8 @@ namespace aggregator {
      *
      * @param cuuid The cuuid of the request.
      * @param volReqId The volume request ID.
+     * @param gatewayHost The tape gateway host name.
+     * @param gatewayPort The tape gateway port number.
      * @param mode The tape access mode.
      * @param header The already unmarshalled message header structure.
      * @param socketFd The file descriptor of the socket from which the message
@@ -149,7 +169,9 @@ namespace aggregator {
      * @return True if there is a possibility of more work to do, else false.
      */
     bool rtcpTapeErrReqHandler(const Cuuid_t &cuuid, const uint32_t volReqId,
-      const uint32_t mode, const MessageHeader &header, const int socketFd)
+      const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+      const unsigned short gatewayPort, const uint32_t mode,
+      const MessageHeader &header, const int socketFd)
       throw(castor::exception::Exception);
 
     /**
@@ -157,6 +179,8 @@ namespace aggregator {
      *
      * @param cuuid The cuuid of the request.
      * @param volReqId The volume request ID.
+     * @param gatewayHost The tape gateway host name.
+     * @param gatewayPort The tape gateway port number.
      * @param mode The tape access mode.
      * @param header The already unmarshalled message header structure.
      * @param socketFd The file descriptor of the socket from which the message
@@ -164,7 +188,9 @@ namespace aggregator {
      * @return True if there is a possibility of more work to do, else false.
      */
     bool rtcpEndOfReqHandler(const Cuuid_t &cuuid, const uint32_t volReqId,
-      const uint32_t mode, const MessageHeader &header, const int socketFd)
+      const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+      const unsigned short gatewayPort, const uint32_t mode,
+      const MessageHeader &header, const int socketFd)
       throw(castor::exception::Exception);
 
   }; // class TapeDiskRqstHandler

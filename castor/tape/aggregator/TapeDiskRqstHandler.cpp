@@ -56,8 +56,10 @@ castor::tape::aggregator::TapeDiskRqstHandler::TapeDiskRqstHandler()
 // processRequest
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::TapeDiskRqstHandler::processRequest(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const uint32_t mode,
-  const int socketFd) throw(castor::exception::Exception) {
+  const Cuuid_t &cuuid, const uint32_t volReqId,
+  const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+  const unsigned short gatewayPort,const uint32_t mode, const int socketFd)
+  throw(castor::exception::Exception) {
 
   MessageHeader header;
 
@@ -76,7 +78,8 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::processRequest(
   const MsgBodyHandler handler = itor->second;
 
   // Invoke the handler
-  return (this->*handler)(cuuid, volReqId, mode, header, socketFd);
+  return (this->*handler)(cuuid, volReqId, gatewayHost, gatewayPort, mode,
+    header, socketFd);
 }
 
 
@@ -84,7 +87,9 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::processRequest(
 // RTCP_FILE_REQ message body handler.
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const uint32_t mode,
+  const Cuuid_t &cuuid, const uint32_t volReqId,
+  const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+  const unsigned short gatewayPort, const uint32_t mode,
   const MessageHeader &header, const int socketFd)
   throw(castor::exception::Exception) {
 
@@ -98,32 +103,37 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
 /*
   case RTCP_REQUEST_MORE_WORK:
     {
-     // If migrating
-     if(mode == WRITE_ENABLE) {
+      // If migrating
+      if(mode == WRITE_ENABLE) {
 
-       char     filePath[CA_MAXPATHLEN+1];
-       char     nsHost[CA_MAXHOSTNAMELEN+1];
-       uint64_t fileId;
-       uint32_t tapeFseq;
-       uint64_t fileSize;
-       char     lastKnownFileName[CA_MAXPATHLEN+1];
-       uint64_t lastModificationTime;
+        char     filePath[CA_MAXPATHLEN+1];
+        char     nsHost[CA_MAXHOSTNAMELEN+1];
+        uint64_t fileId;
+        uint32_t tapeFseq;
+        uint64_t fileSize;
+        char     lastKnownFileName[CA_MAXPATHLEN+1];
+        uint64_t lastModificationTime;
 
-       // If there is a file to migrate?
-       if(GatewayTxRx::getFileToMigrateFromGateway(volHost, volPort,
-         volReqId, filePath, nsHost, fileId, rtcpFileRequest.tapeFseq,
-         fileSize, lastKnownFileName, lastModificationTime)) {
+        // If there is a file to migrate
+        if(GatewayTxRx::getFileToMigrateFromGateway(gatewayHost, gatewayPort,
+          volReqId, filePath, nsHost, fileId, rtcpFileRequest.tapeFseq,
+          fileSize, lastKnownFileName, lastModificationTime)) {
 
-         castor::dlf::Param params[] = {
-           castor::dlf::Param("volReqId", volReqId     ),
-           castor::dlf::Param("Port"    , volPort      ),
-         castor::dlf::Param("HostName", volHost      )};
-           castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-           AGGREGATOR_NO_MORE_FILES_TO_MIGRATE, params);
+          castor::dlf::Param params[] = {
+            castor::dlf::Param("volReqId"            , volReqId            ),
+            castor::dlf::Param("gatewayHost"         , gatewayHost         ),
+            castor::dlf::Param("gatewayPort"         , gatewayPort         ),
+            castor::dlf::Param("filePath"            , filePath            ),
+            castor::dlf::Param("nsHost"              , nsHost              ),
+            castor::dlf::Param("fileId"              , fileId              ),
+            castor::dlf::Param("tapeFseq"            , tapeFseq            ),
+            castor::dlf::Param("fileSize"            , fileSize            ),
+            castor::dlf::Param("lastKnownFileName"   , lastKnownFileName   ),
+            castor::dlf::Param("lastModificationTime", lastModificationTime)};
+          castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+            AGGREGATOR_FILE_TO_MIGRATE, params);
 
-         // Tell RTCPD there is no file by sending an empty file list
-         RtcpTxRx::tellRtcpdEndOfFileList(rtcpdCallbackSocketFd,
-           RTCPDNETRWTIMEOUT);
+I AM HERE
 
        // Else there is no file to migrate
        } else {
@@ -142,22 +152,20 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
            RTCPDNETRWTIMEOUT);
        }
 
-I AM HERE
-
       return;
     }
       // Give file information to RTCPD
       try {
-        // Send: file to migrate  to RTCPD
+        // Send file to migrate to RTCPD
         RtcpTxRx::giveFileToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
           volReqId,
           "lxc2disk07:/tmp/murrayc3/test_04_02_09", body.tapePath, 18);
 
-        // Send joker More work to RTCPD
+        // Send offer of more work to RTCPD
         RtcpTxRx::giveRequestForMoreWorkToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
           volReqId);
 
-        // Send EndOfFileList
+        // Send end of file list to RTPCD
         RtcpTxRx::signalNoMoreRequestsToRtcpd(socketFd, RTCPDNETRWTIMEOUT);
 
         castor::dlf::Param params[] = {
@@ -239,7 +247,9 @@ I AM HERE
 // RTCP_FILEERR_REQ message body handler.
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileErrReqHandler(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const uint32_t mode,
+  const Cuuid_t &cuuid, const uint32_t volReqId,
+  const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+  const unsigned short gatewayPort, const uint32_t mode,
   const MessageHeader &header, const int socketFd)
   throw(castor::exception::Exception) {
 
@@ -267,7 +277,9 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileErrReqHandler(
 // RTCP_TAPEREQ message body handler.
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeReqHandler(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const uint32_t mode,
+  const Cuuid_t &cuuid, const uint32_t volReqId,
+  const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+  const unsigned short gatewayPort, const uint32_t mode,
   const MessageHeader &header, const int socketFd)
   throw(castor::exception::Exception) {
 
@@ -297,7 +309,9 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeReqHandler(
 // RTCP_TAPEERR message body handler.
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeErrReqHandler(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const uint32_t mode,
+  const Cuuid_t &cuuid, const uint32_t volReqId,
+  const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+  const unsigned short gatewayPort, const uint32_t mode,
   const MessageHeader &header, const int socketFd)
   throw(castor::exception::Exception) {
 
@@ -325,7 +339,9 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeErrReqHandler(
 // RTCP_ENDOF_REQ message body handler.
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpEndOfReqHandler(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const uint32_t mode,
+  const Cuuid_t &cuuid, const uint32_t volReqId,
+  const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+  const unsigned short gatewayPort, const uint32_t mode,
   const MessageHeader &header, const int socketFd)
   throw(castor::exception::Exception) {
 

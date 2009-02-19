@@ -131,6 +131,8 @@ namespace aggregator {
      *
      * @param cuuid The ccuid to be used for logging.
      * @param volReqId The volume request ID.
+     * @param gatewayHost The tape gateway host name.
+     * @param gatewayPort The tape gateway port number.
      * @param mode The tape access mode.
      * @param rtcpdCallbackSocketFd The file descriptor of the listener socket
      * to be used to accept callback connections from RTCPD.
@@ -138,8 +140,10 @@ namespace aggregator {
      * connection.
      */
     void processRtcpdSockets(const Cuuid_t &cuuid, const uint32_t volReqId,
-      const uint32_t mode, const int rtcpdCallbackSocketFd,
-      const int rtcpdInitialSocketFd) throw(castor::exception::Exception);
+      const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+      const unsigned short gatewayPort, const uint32_t mode,
+      const int rtcpdCallbackSocketFd, const int rtcpdInitialSocketFd)
+      throw(castor::exception::Exception);
 
     /**
      * Coordinates the remote copy operations by sending and recieving the
