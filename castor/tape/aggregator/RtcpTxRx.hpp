@@ -74,7 +74,7 @@ public:
    * @param reply The structure to be filled with the reply from
    * RTCPD.
    */
-  static void giveVolumeInfoToRtcpd(const int socketFd,
+  static void giveVolumeToRtcpd(const int socketFd,
     const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &request)
     throw(castor::exception::Exception);
 
@@ -139,7 +139,7 @@ public:
    * a possibility of more work in the future.
    * network read and write operations.
    */
-  static void giveFileInfoToRtcpd(const int socketFd,
+  static void giveFileToRtcpd(const int socketFd,
     const int netReadWriteTimeout, const uint32_t volReqId,
     const char *const filePath, const char *const tapePath,
     const uint32_t umask)
@@ -249,7 +249,7 @@ private:
    * @param reply The structure to be filled with the reply from
    * RTCPD.
    */
-  static void giveFileInfoToRtcpd(const int socketFd,
+  static void giveFileToRtcpd(const int socketFd,
     const int netReadWriteTimeout, RtcpFileRqstErrMsgBody &request)
     throw(castor::exception::Exception);
 

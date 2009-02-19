@@ -137,9 +137,9 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
 
 
 //-----------------------------------------------------------------------------
-// giveVolumeInfoToRtcpd
+// giveVolumeToRtcpd
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpTxRx::giveVolumeInfoToRtcpd(
+void castor::tape::aggregator::RtcpTxRx::giveVolumeToRtcpd(
   const int socketFd, const int netReadWriteTimeout,
   RtcpTapeRqstErrMsgBody &request) throw(castor::exception::Exception) {
 
@@ -198,9 +198,9 @@ void castor::tape::aggregator::RtcpTxRx::giveVolumeInfoToRtcpd(
 
 
 //-----------------------------------------------------------------------------
-// giveFileInfoToRtcpd
+// giveFileToRtcpd
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpTxRx::giveFileInfoToRtcpd(
+void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   const int socketFd, const int netReadWriteTimeout,
   RtcpFileRqstErrMsgBody &request) throw(castor::exception::Exception) {
 
@@ -569,16 +569,16 @@ void castor::tape::aggregator::RtcpTxRx::giveRequestForMoreWorkToRtcpd(
   request.err.maxTpRetry = -1;
   request.err.maxCpRetry = -1;
 
-  giveFileInfoToRtcpd(socketFd, RTCPDNETRWTIMEOUT, request);
+  giveFileToRtcpd(socketFd, RTCPDNETRWTIMEOUT, request);
 
   tellRtcpdEndOfFileList(socketFd, RTCPDNETRWTIMEOUT);
 }
 
 
 //-----------------------------------------------------------------------------
-// giveFileInfoToRtcpd
+// giveFileToRtcpd
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpTxRx::giveFileInfoToRtcpd(
+void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   const int socketFd, const int netReadWriteTimeout, const uint32_t volReqId,
   const char *const filePath, const char *const tapePath, const uint32_t umask) 
   throw(castor::exception::Exception) {
@@ -612,7 +612,7 @@ void castor::tape::aggregator::RtcpTxRx::giveFileInfoToRtcpd(
   request.err.maxTpRetry = -1;
   request.err.maxCpRetry = -1;
 
-  giveFileInfoToRtcpd(socketFd, RTCPDNETRWTIMEOUT, request);
+  giveFileToRtcpd(socketFd, RTCPDNETRWTIMEOUT, request);
 }
 
 

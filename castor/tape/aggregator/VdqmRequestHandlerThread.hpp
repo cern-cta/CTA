@@ -147,12 +147,15 @@ namespace aggregator {
      *
      * @param cuuid The ccuid to be used for logging.
      * @param volReqId The volume request ID.
+     * @param gatewayHost The tape gateway host name.
+     * @param gatewayPort The tape gateway port number.
      * @param rtcpdCallbackSocketFd The file descriptor of the listener socket
      * to be used to accept callback connections from RTCPD.
      */
     void coordinateRemoteCopy(const Cuuid_t &cuuid, const uint32_t volReqId,
-      const uint32_t volPort, char volHost[CA_MAXHOSTNAMELEN+1],
-      const int rtcpdCallbackSocketFd) throw(castor::exception::Exception);
+      const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+      const unsigned short gatewayPort, const int rtcpdCallbackSocketFd)
+      throw(castor::exception::Exception);
 
     /**
      * Throws an exception if the peer host associated with the specified

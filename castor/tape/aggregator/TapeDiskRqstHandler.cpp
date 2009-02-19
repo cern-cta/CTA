@@ -102,16 +102,16 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
      if(mode == WRITE_ENABLE) {
 
        char     filePath[CA_MAXPATHLEN+1];
-       char     nsHost[CA_MAXHOSTNAMELEN];
+       char     nsHost[CA_MAXHOSTNAMELEN+1];
        uint64_t fileId;
        uint32_t tapeFseq;
        uint64_t fileSize;
        char     lastKnownFileName[CA_MAXPATHLEN+1];
        uint64_t lastModificationTime;
 
-       // If there is NO file to migrate?
-       if(!GatewayTxRx::getFileToMigrateFromGateway(volHost, volPort,
-         volReqId, filePath, nsHost, fileId, rtcpFileInfoRequest.tapeFseq,
+       // If there is a file to migrate?
+       if(GatewayTxRx::getFileToMigrateFromGateway(volHost, volPort,
+         volReqId, filePath, nsHost, fileId, rtcpFileRequest.tapeFseq,
          fileSize, lastKnownFileName, lastModificationTime)) {
 
          castor::dlf::Param params[] = {
@@ -120,6 +120,28 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
          castor::dlf::Param("HostName", volHost      )};
            castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
            AGGREGATOR_NO_MORE_FILES_TO_MIGRATE, params);
+
+         // Tell RTCPD there is no file by sending an empty file list
+         RtcpTxRx::tellRtcpdEndOfFileList(rtcpdCallbackSocketFd,
+           RTCPDNETRWTIMEOUT);
+
+       // Else there is no file to migrate
+       } else {
+         volReqId, filePath, nsHost, fileId, rtcpFileRequest.tapeFseq,
+         fileSize, lastKnownFileName, lastModificationTime)) {
+
+         castor::dlf::Param params[] = {
+           castor::dlf::Param("volReqId", volReqId     ),
+           castor::dlf::Param("Port"    , volPort      ),
+         castor::dlf::Param("HostName", volHost      )};
+           castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+           AGGREGATOR_NO_MORE_FILES_TO_MIGRATE, params);
+
+         // Tell RTCPD there is no file by sending an empty file list
+         RtcpTxRx::tellRtcpdEndOfFileList(rtcpdCallbackSocketFd,
+           RTCPDNETRWTIMEOUT);
+       }
+
 I AM HERE
 
       return;
@@ -127,7 +149,7 @@ I AM HERE
       // Give file information to RTCPD
       try {
         // Send: file to migrate  to RTCPD
-        RtcpTxRx::giveFileInfoToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
+        RtcpTxRx::giveFileToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
           volReqId,
           "lxc2disk07:/tmp/murrayc3/test_04_02_09", body.tapePath, 18);
 
