@@ -6,13 +6,11 @@ copy "sequence.pic";
 object(RC,"rtcpcld");
 placeholder_object(C);
 object(V,"vdqm");
-object(R,"rtcpd");
-placeholder_object(RF);
-placeholder_object(A);
-placeholder_object(T);
-placeholder_object(D1);
-placeholder_object(D2);
-placeholder_object(D3);
+
+placeholder_object(Fake_2);
+placeholder_object(Fake_3);
+
+object(RF,"rtcpd");
 
 step();
 
@@ -30,18 +28,14 @@ inactive(V);
 step();
 
 active(V);
-message(V,R,"connect");
-active(R);
-create_message(R,RF,"main cntl");
 active(RF);
-inactive(R);
+message(V,RF,"connect");
 
 message(V,RF,"ClientInfo - job");
 message(RF,V,"RcpJobReply");
 message(RF,V,"disconnect");
 inactive(V);
 
-step();
 
 message(RF,RC,"connect");
 message(RC,RF,"request ReqInfo");
@@ -70,100 +64,64 @@ message(C,RF,"NoMore_Req");
 message(RF,C,"ack");
 # End of getRequestList
 
-create_message(RF,A,"abort");
-active(A);
-
+step();
 message(RF,C,"connect for tape IO");
-
-create_message(RF,T,"tape IO");
-active(T);
-
 message(RF,C,"connect for disk IO");
 message(RF,C,"connect for disk IO");
 message(RF,C,"connect for disk IO");
+step();
 
-create_message(RF,D1,"disk IO");
-active(D1);
-create_message(RF,D2,"disk IO");
-active(D2);
-create_message(RF,D3,"disk IO");
-active(D3);
-
-message(T,C,"Request_MoreWork - Joker");
+message(RF,C,"Request_MoreWork (1)");
 # Acknowledge comes after getRequestList()
 
 # Start of getRequestList
-message(C,T,"file 1");
-message(T,C,"ack");
+message(C,RF,"file 1");
+message(RF,C,"ack");
 
-message(C,T,"Offer_MoreWork - Joker");
-message(T,C,"ack");
+message(C,RF,"Offer_MoreWork - Joker");
+message(RF,C,"ack");
 
-message(C,T,"NoMore_Req");
-message(T,C,"ack");
+message(C,RF,"NoMore_Req");
+message(RF,C,"ack");
 # End of getRequestList
+
+
+step();
+
+message(RF,C,"positioned for file 1 (tape req)");
+message(C,RF,"ack");
+message(RF,C,"positioned for file 1 (file req)");
+message(C,RF,"ack");
+
+message(RF,C,"Transfert file 1");
+message(C,RF,"ack");
 
 # Better late than never
 # Acknowledge of tape IO's request for more work
-message(C,T,"ack of Request_MoreWork");
+message(C,RF,"ack of Request_MoreWork (1)");
 
 step();
 
-message(T,C,"positioned for file 1 (tape req)");
-message(C,T,"ack");
-message(T,C,"positioned for file 1 (file req)");
-message(C,T,"ack");
-
-message(T,C,"Request_MoreWork - Joker");
-message(C,T,"ack");
-
-message(D1,C,"Finished file 1");
-message(C,D1,"ack");
-
-step();
-
-message(T,C,"Request_MoreWork - Joker");
-# Acknowledge comes after getRequestList()
-
-message(C,T,"file 2");
-message(T,C,"ack");
-
-message(C,T,"Offer_MoreWork - Joker");
-message(T,C,"ack");
-
-message(C,T,"NoMore_Req");
-message(T,C,"ack");
-# End of getRequestList
-
-# Better late than never
-# Acknowledge of tape IO's request for more work
-message(C,T,"ack of Request_MoreWork");
-
-step();
-
-message(T,C,"positioned for file 2 (tape req)");
-message(C,T,"ack");
-message(T,C,"positioned for file 2 (file req)");
-message(C,T,"ack");
-
-message(T,C,"Request_MoreWork - Joker");
-message(C,T,"ack");
-
-message(D1,C,"Finished file 2");
-message(C,D1,"ack");
-
-step();
+#---------------------------------------------
+# Begin of the second file transfert messaging
+message(RF,C,"Request_MoreWork (2)");
+message(C,RF,"ack");
 
 
-message(C,T,"NoMore_Req");
-message(T,C,"ack");
+# If ther are no more file to transfer
+message(C,RF,"End_of_List");
+message(RF,C,"ack");
 # End of EMPTY getRequestList
 
-message(T,C,"EndOf_Req");
-message(C,T,"ack");
-inactive(T);
+# Better late than never
+# Acknowledge of tape IO's request for more work
+message(C,RF,"ack of Request_MoreWork (2)");
 
-inactive(A);
+step();
+
+message(RF,C,"End_of_Req");
+message(C,RF,"ack");
+
 inactive(RF);
 inactive(C);
 inactive(RC);
@@ -171,13 +129,7 @@ inactive(RC);
 complete(RC);
 complete(C);
 complete(V);
-complete(R);
 complete(RF);
-complete(T);
-complete(A);
-complete(D1);
-complete(D2);
-complete(D3);
 
 .PE
 

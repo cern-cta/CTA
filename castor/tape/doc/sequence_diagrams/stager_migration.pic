@@ -6,13 +6,11 @@ copy "sequence.pic";
 object(RC,"rtcpcld");
 placeholder_object(C);
 object(V,"vdqm");
+
+placeholder_object(Fake_1);
+placeholder_object(Fake_2);
+
 object(R,"rtcpd");
-placeholder_object(RF);
-placeholder_object(A);
-placeholder_object(T);
-placeholder_object(D1);
-placeholder_object(D2);
-placeholder_object(D3);
 
 step();
 
@@ -32,119 +30,107 @@ step();
 active(V);
 message(V,R,"connect");
 active(R);
-create_message(R,RF,"main cntl");
-active(RF);
-inactive(R);
 
-message(V,RF,"ClientInfo - job");
-message(RF,V,"RcpJobReply");
-message(RF,V,"disconnect");
+message(V,R,"ClientInfo - job");
+message(R,V,"RcpJobReply");
+message(R,V,"disconnect");
 inactive(V);
 
-step();
+message(R,RC,"connect");
+message(RC,R,"request ReqInfo");
+message(R,RC,"ack");
+message(R,RC,"ReqInfo");
+message(RC,R,"ack");
 
-message(RF,RC,"connect");
-message(RC,RF,"request ReqInfo");
-message(RF,RC,"ack");
-message(RF,RC,"ReqInfo");
-message(RC,RF,"ack");
-
-create_message(RC,C,"recaller");
+create_message(RC,C,"migrator");
 active(C);
-message(C,RF,"ClientInfo - new callback");
-message(RF,C,"ack");
-message(C,RF,"disconnect");
+message(C,R,"ClientInfo - new callback");
+message(R,C,"ack");
+message(C,R,"disconnect");
 
 step();
 
-message(RF,C,"connect");
+message(R,C,"connect");
 
 # Start of getRequestList
-message(C,RF,"volume info");
-message(RF,C,"ack");
+message(C,R,"volume info");
+message(R,C,"ack");
 
-message(C,RF,"file 1");
-message(RF,C,"ack");
+message(C,R,"file 1");
+message(R,C,"ack");
 
-message(C,RF,"Offer_MoreWork - Joker");
-message(RF,C,"ack");
+message(C,R,"Offer_MoreWork - Joker");
+message(R,C,"ack");
 
-message(C,RF,"NoMore_Req");
-message(RF,C,"ack");
+message(C,R,"NoMore_Req");
+message(R,C,"ack");
 # End of getRequestList
 
-create_message(RF,A,"abort");
-active(A);
+step();
+message(R,C,"connect for tape IO");
+message(R,C,"connect for disk IO");
+message(R,C,"connect for disk IO");
+message(R,C,"connect for disk IO");
+step();
 
-message(RF,C,"connect for tape IO");
-
-create_message(RF,T,"tape IO");
-active(T);
-
-message(RF,C,"connect for disk IO");
-message(RF,C,"connect for disk IO");
-message(RF,C,"connect for disk IO");
-
-create_message(RF,D1,"disk IO");
-active(D1);
-create_message(RF,D2,"disk IO");
-active(D2);
-create_message(RF,D3,"disk IO");
-active(D3);
-
-message(D1,C,"Request_MoreWork - Joker");
+message(R,C,"Request_MoreWork (1)");
 # Acknowledge comes after getRequestList()
 
 # Start of getRequestList
-message(C,D1,"file 2");
-message(D1,C,"ack");
+message(C,R,"file 2");
+message(R,C,"ack");
 
-message(C,D1,"Offer_MoreWork - Joker");
-message(D1,C,"ack");
+message(C,R,"Offer_MoreWork - Joker");
+message(R,C,"ack");
 
-message(C,D1,"NoMore_Req");
-message(D1,C,"ack");
+message(C,R,"NoMore_Req");
+message(R,C,"ack");
 
-message(D1,C,"Request_MoreWork - Joker");
-message(C,D1,"ack");
-
-message(C,D1,"NoMore_Req");
-message(D1,C,"ack");
 # End of getRequestList
 
 # Better late than never
 # Acknowledge of tape IO's request for more work
-message(C,D1,"ack of Request_MoreWork");
+message(C,R,"ack of Request_MoreWork (1)");
 
 step();
 
-message(T,C,"positioned for file 1 (tape req)");
-message(C,T,"ack");
-message(T,C,"positioned for file 1 (file req)");
-message(C,T,"ack");
+message(R,C,"Request_MoreWork (2)");
+message(C,R,"ack");
 
-message(T,C,"Finished file 1");
-message(C,T,"ack");
+message(C,R,"End_of_List");
+message(R,C,"ack");
+
+# Better late than never
+# Acknowledge of tape IO's request for more work
+message(C,R,"ack of Request_MoreWork (2)");
+
+step();
+
+message(R,C,"positioned for file 1 (tape req)");
+message(C,R,"ack");
+message(R,C,"positioned for file 1 (file req)");
+message(C,R,"ack");
+
+message(R,C,"Transfert file 1");
+message(C,R,"ack");
 
 step();
 
 
-message(T,C,"positioned for file 2 (tape req)");
-message(C,T,"ack");
-message(T,C,"positioned for file 2 (file req)");
-message(C,T,"ack");
+message(R,C,"positioned for file 2 (tape req)");
+message(C,R,"ack");
+message(R,C,"positioned for file 2 (file req)");
+message(C,R,"ack");
 
-message(T,C,"Finished file 2");
-message(C,T,"ack");
+message(R,C,"Tranfert file 2");
+message(C,R,"ack");
 
 step();
 
-message(T,C,"EndOf_Req");
-message(C,T,"ack");
-inactive(T);
+message(R,C,"End_of_Req");
+message(C,R,"ack");
+inactive(R);
 
-inactive(A);
-inactive(RF);
 inactive(C);
 inactive(RC);
 
@@ -152,12 +138,6 @@ complete(RC);
 complete(C);
 complete(V);
 complete(R);
-complete(RF);
-complete(T);
-complete(A);
-complete(D1);
-complete(D2);
-complete(D3);
 
 .PE
 
