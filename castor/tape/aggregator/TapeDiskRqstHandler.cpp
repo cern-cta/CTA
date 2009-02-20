@@ -25,6 +25,7 @@
 
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
+#include "castor/tape/aggregator/GatewayTxRx.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstErrMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpTapeRqstErrMsgBody.hpp"
@@ -32,6 +33,7 @@
 #include "castor/tape/aggregator/TapeDiskRqstHandler.hpp"
 #include "castor/tape/aggregator/RtcpTxRx.hpp"
 #include "castor/tape/aggregator/Utils.hpp"
+#include "h/Ctape_constants.h"
 #include "h/rtcp_constants.h"
 
 #include <errno.h>
@@ -100,100 +102,70 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
   RtcpTxRx::receiveRtcpFileRqstBody(socketFd, RTCPDNETRWTIMEOUT, header, body);
 
   switch(body.procStatus) {
-/*
   case RTCP_REQUEST_MORE_WORK:
-    {
-      // If migrating
-      if(mode == WRITE_ENABLE) {
+    // If migrating
+    if(mode == WRITE_ENABLE) {
 
-        char     filePath[CA_MAXPATHLEN+1];
-        char     nsHost[CA_MAXHOSTNAMELEN+1];
-        uint64_t fileId;
-        uint32_t tapeFseq;
-        uint64_t fileSize;
-        char     lastKnownFileName[CA_MAXPATHLEN+1];
-        uint64_t lastModificationTime;
+      char     filePath[CA_MAXPATHLEN+1];
+      char     nsHost[CA_MAXHOSTNAMELEN+1];
+      uint64_t fileId;
+      uint32_t tapeFseq;
+      uint64_t fileSize;
+      char     lastKnownFileName[CA_MAXPATHLEN+1];
+      uint64_t lastModificationTime;
 
-        // If there is a file to migrate
-        if(GatewayTxRx::getFileToMigrateFromGateway(gatewayHost, gatewayPort,
-          volReqId, filePath, nsHost, fileId, rtcpFileRequest.tapeFseq,
-          fileSize, lastKnownFileName, lastModificationTime)) {
+      // If there is a file to migrate
+      if(GatewayTxRx::getFileToMigrateFromGateway(gatewayHost, gatewayPort,
+        volReqId, filePath, nsHost, fileId, tapeFseq, fileSize,
+        lastKnownFileName, lastModificationTime)) {
 
-          castor::dlf::Param params[] = {
-            castor::dlf::Param("volReqId"            , volReqId            ),
-            castor::dlf::Param("gatewayHost"         , gatewayHost         ),
-            castor::dlf::Param("gatewayPort"         , gatewayPort         ),
-            castor::dlf::Param("filePath"            , filePath            ),
-            castor::dlf::Param("nsHost"              , nsHost              ),
-            castor::dlf::Param("fileId"              , fileId              ),
-            castor::dlf::Param("tapeFseq"            , tapeFseq            ),
-            castor::dlf::Param("fileSize"            , fileSize            ),
-            castor::dlf::Param("lastKnownFileName"   , lastKnownFileName   ),
-            castor::dlf::Param("lastModificationTime", lastModificationTime)};
-          castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-            AGGREGATOR_FILE_TO_MIGRATE, params);
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("volReqId"            , volReqId            ),
+          castor::dlf::Param("gatewayHost"         , gatewayHost         ),
+          castor::dlf::Param("gatewayPort"         , gatewayPort         ),
+          castor::dlf::Param("filePath"            , filePath            ),
+          castor::dlf::Param("nsHost"              , nsHost              ),
+          castor::dlf::Param("fileId"              , fileId              ),
+          castor::dlf::Param("tapeFseq"            , tapeFseq            ),
+          castor::dlf::Param("fileSize"            , fileSize            ),
+          castor::dlf::Param("lastKnownFileName"   , lastKnownFileName   ),
+          castor::dlf::Param("lastModificationTime", lastModificationTime)};
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+          AGGREGATOR_FILE_TO_MIGRATE, params);
 
-I AM HERE
-
-       // Else there is no file to migrate
-       } else {
-         volReqId, filePath, nsHost, fileId, rtcpFileRequest.tapeFseq,
-         fileSize, lastKnownFileName, lastModificationTime)) {
-
-         castor::dlf::Param params[] = {
-           castor::dlf::Param("volReqId", volReqId     ),
-           castor::dlf::Param("Port"    , volPort      ),
-         castor::dlf::Param("HostName", volHost      )};
-           castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-           AGGREGATOR_NO_MORE_FILES_TO_MIGRATE, params);
-
-         // Tell RTCPD there is no file by sending an empty file list
-         RtcpTxRx::tellRtcpdEndOfFileList(rtcpdCallbackSocketFd,
-           RTCPDNETRWTIMEOUT);
-       }
-
-      return;
-    }
-      // Give file information to RTCPD
-      try {
-        // Send file to migrate to RTCPD
+        char tapePath[CA_MAXPATHLEN+1];
+        Utils::toHex(fileId, tapePath);
         RtcpTxRx::giveFileToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
-          volReqId,
-          "lxc2disk07:/tmp/murrayc3/test_04_02_09", body.tapePath, 18);
+          volReqId, filePath, tapePath, MIGRATEUMASK);
 
-        // Send offer of more work to RTCPD
         RtcpTxRx::giveRequestForMoreWorkToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
           volReqId);
 
-        // Send end of file list to RTPCD
-        RtcpTxRx::signalNoMoreRequestsToRtcpd(socketFd, RTCPDNETRWTIMEOUT);
+        RtcpTxRx::tellRtcpdEndOfFileList(socketFd, RTCPDNETRWTIMEOUT);
+
+      // Else there is no file to migrate
+      } else {
 
         castor::dlf::Param params[] = {
-          castor::dlf::Param("volReqId", volReqId),
-          castor::dlf::Param("filePath","lxc2disk07:/dev/null"),
-          castor::dlf::Param("tapePath", body.tapePath)};
+          castor::dlf::Param("volReqId"   , volReqId   ),
+          castor::dlf::Param("gatewayHost", gatewayHost),
+          castor::dlf::Param("gatewayPort", gatewayPort)};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-          AGGREGATOR_GAVE_FILE_INFO, params);
-      } catch(castor::exception::Exception &ex) {
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("volReqId", volReqId),
-          castor::dlf::Param("filePath","lxc2disk07:/dev/null"),
-          castor::dlf::Param("tapePath", body.tapePath),
-          castor::dlf::Param("Message" , ex.getMessage().str()),
-          castor::dlf::Param("Code"    , ex.code())};
-        CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
-          AGGREGATOR_FAILED_TO_GIVE_FILE_INFO, params);
+          AGGREGATOR_NO_MORE_FILES_TO_MIGRATE, params);
+
+        // Tell RTCPD there is no file by sending an empty file list
+        RtcpTxRx::tellRtcpdEndOfFileList(socketFd, RTCPDNETRWTIMEOUT);
+
+        thereIsMoreWork = false;
       }
 
-      // Acknowledge request for more work from RTCPD
-      RtcpAcknowledgeMsg ackMsg;
-      ackMsg.magic   = RTCOPY_MAGIC;
-      ackMsg.reqType = RTCP_FILE_REQ;
-      ackMsg.status  = 0;
-      RtcpTxRx::sendRtcpAcknowledge(socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+    // Else recalling
+    } else {
+
+        // TBD
+
     }
     break;
-*/
   case RTCP_POSITIONED:
     {
       castor::dlf::Param params[] = {

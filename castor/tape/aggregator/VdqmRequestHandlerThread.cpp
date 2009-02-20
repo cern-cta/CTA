@@ -483,7 +483,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
   RtcpFileRqstErrMsgBody rtcpFileReply;
   Utils::setBytes(rtcpFileReply, '\0');
 
-  // If it is a Migration
+  // If migrating
   if(rtcpVolume.mode == WRITE_ENABLE) {
 
     char     filePath[CA_MAXPATHLEN+1];
@@ -526,38 +526,30 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
       return;
     } 
 
-    // Send volume to RTCPD
-    RtcpTxRx::giveVolumeToRtcpd(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT, 
+    RtcpTxRx::giveVolumeToRtcpd(rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT, 
       rtcpVolume); 
  
-    // Send file to migrate to RTCPD
-    // Always use a umask of 022 when migrating
     char tapePath[CA_MAXPATHLEN+1];
     Utils::toHex(fileId, tapePath);
-    RtcpTxRx::giveFileToRtcpd(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT, 
-      volReqId, filePath, tapePath, 022);
+    RtcpTxRx::giveFileToRtcpd(rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT, 
+      volReqId, filePath, tapePath, MIGRATEUMASK);
 
-    // Send offer of more work to RTCPD
-    RtcpTxRx::giveRequestForMoreWorkToRtcpd(rtcpdCallbackSocketFd,
+    RtcpTxRx::giveRequestForMoreWorkToRtcpd(rtcpdInitialSocketFd.get(),
       RTCPDNETRWTIMEOUT, volReqId);
 
-    // Send end of file list to RTPCD
-    RtcpTxRx::tellRtcpdEndOfFileList(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT);
+    RtcpTxRx::tellRtcpdEndOfFileList(rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT);
 
-  } else { // It is a Recall
-    // Send volume to RTCPD
-    RtcpTxRx::giveVolumeToRtcpd(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT, 
+  // Else recalling
+  } else {
+    RtcpTxRx::giveVolumeToRtcpd(rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT, 
       rtcpVolume); 
 
-    // Send offer of more work to RTCPD
-    RtcpTxRx::giveRequestForMoreWorkToRtcpd(rtcpdCallbackSocketFd,
+    RtcpTxRx::giveRequestForMoreWorkToRtcpd(rtcpdInitialSocketFd.get(),
       RTCPDNETRWTIMEOUT, volReqId);
 
-    // Send end of file list to RTPCD
-    RtcpTxRx::tellRtcpdEndOfFileList(rtcpdCallbackSocketFd, RTCPDNETRWTIMEOUT);
+    RtcpTxRx::tellRtcpdEndOfFileList(rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT);
   }
 
-  // Process the RTCPD sockets
   processRtcpdSockets(cuuid, volReqId, gatewayHost, gatewayPort,
     rtcpVolume.mode, rtcpdCallbackSocketFd, rtcpdInitialSocketFd.get());
 }
